@@ -100,23 +100,26 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 			goto err;
 		}
 
-	if (top)
+	if (top != -1)
 		{
-		if (bit == 0)
+		if (top)
 			{
-			buf[0]=1;
-			buf[1]|=0x80;
+			if (bit	== 0)
+				{
+				buf[0]=1;
+				buf[1]|=0x80;
+				}
+			else
+				{
+				buf[0]|=(3<<(bit-1));
+				buf[0]&= ~(mask<<1);
+				}
 			}
 		else
 			{
-			buf[0]|=(3<<(bit-1));
+			buf[0]|=(1<<bit);
 			buf[0]&= ~(mask<<1);
 			}
-		}
-	else
-		{
-		buf[0]|=(1<<bit);
-		buf[0]&= ~(mask<<1);
 		}
 	if (bottom) /* set bottom bits to whatever odd is */
 		buf[bytes-1]|=1;
@@ -163,7 +166,7 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *range)
 		do
 			{
 			/* range = 11..._2, so each iteration succeeds with probability >= .75 */
-			if (!BN_rand(r, n, 0, 0)) return 0;
+			if (!BN_rand(r, n, -1, 0)) return 0;
 			}
 		while (BN_cmp(r, range) >= 0);
 		}
@@ -173,7 +176,7 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *range)
 		 * so  3*range (= 11..._2)  is exactly one bit longer than  range */
 		do
 			{
-			if (!BN_rand(r, n + 1, 0, 0)) return 0;
+			if (!BN_rand(r, n + 1, -1, 0)) return 0;
 			/* If  r < 3*range,  use  r := r MOD range
 			 * (which is either  r, r - range,  or  r - 2*range).
 			 * Otherwise, iterate once more.
