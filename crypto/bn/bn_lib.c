@@ -376,8 +376,12 @@ int words;
 memset(A,0x5c,sizeof(BN_ULONG)*(words+1));
 #if 1
 		B=b->d;
+		/* Check if the previous number needs to be copied */
 		if (B != NULL)
 			{
+			/* This lot is an unrolled loop to copy b->top 
+			 * BN_ULONGs from B to A
+			 */
 			for (i=b->top&(~7); i>0; i-=8)
 				{
 				A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
@@ -414,30 +418,35 @@ memset(A,0x5c,sizeof(BN_ULONG)*(words+1));
 				 */
 				;
 				}
-			B= &(b->d[b->top]);
-			j=b->max-8;
-			for (i=b->top; i<j; i+=8)
-				{
-				B[0]=0; B[1]=0; B[2]=0; B[3]=0;
-				B[4]=0; B[5]=0; B[6]=0; B[7]=0;
-				B+=8;
-				}
-			for (j+=8; i<j; i++)
-				{
-				B[0]=0;
-				B++;
-				}
+			Free(b->d);
+			}
+
+		b->d=a;
+		b->max=words;
+
+		/* Now need to zero any data between b->top and b->max */
+
+		B= &(b->d[b->top]);
+		j=(b->max - b->top) & ~7;
+		for (i=0; i<j; i+=8)
+			{
+			B[0]=0; B[1]=0; B[2]=0; B[3]=0;
+			B[4]=0; B[5]=0; B[6]=0; B[7]=0;
+			B+=8;
+			}
+		j=(b->max - b->top) & 7;
+		for (i=0; i<j; i++)
+			{
+			B[0]=0;
+			B++;
+			}
 #else
 			memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
 #endif
 		
 /*		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG)); */
 /*	{ int i; for (i=b->max; i<words+1; i++) p[i]=i;} */
-			Free(b->d);
-			}
 
-		b->d=a;
-		b->max=words;
 		}
 	return(b);
 	}

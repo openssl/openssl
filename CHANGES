@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Fix an evil bug in bn_expand2() which caused various BN functions to
+     fail when they extended the size of a BIGNUM.
+     [Steve Henson]
+
   *) Various utility functions to handle SXNet extension. Modify mkdef.pl to
      support typesafe stack.
      [Steve Henson]
