@@ -22,7 +22,7 @@ EX_LIBS=
  
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile engines.com install.com
+GENERAL=Makefile engines.com install.com engine_vector.mar
 TEST=
 APPS=
 
