@@ -57,6 +57,8 @@
 
 #ifdef VMS
 
+/* Hack a long name in crypto/asn1/a_mbstr.c */
+#define ASN1_STRING_set_default_mask_asc ASN1_STRING_set_def_mask_asc
 /* Hack the names created with DECLARE_STACK_OF(PKCS7_SIGNER_INFO) */
 #define sk_PKCS7_SIGNER_INFO_new	sk_PKCS7_SIGINF_new
 #define sk_PKCS7_SIGNER_INFO_new_null	sk_PKCS7_SIGINF_new_null
