@@ -64,7 +64,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "apps.h"
 #include <openssl/conf.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -98,6 +97,8 @@
 #    include <sys/file.h>
 #  endif
 #endif
+
+#include "apps.h"
 
 #ifndef W_OK
 #  define F_OK 0

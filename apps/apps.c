@@ -114,9 +114,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#define NON_MAIN
-#include "apps.h"
-#undef NON_MAIN
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -135,6 +132,10 @@
 #    include <strings.h>
 #  endif /* NO_STRINGS_H */
 #endif
+
+#define NON_MAIN
+#include "apps.h"
+#undef NON_MAIN
 
 #ifdef OPENSSL_SYS_WINDOWS
 #  include "bss_file.c"
