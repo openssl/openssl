@@ -101,6 +101,9 @@ asm/co86unix.cpp: asm/co-586.pl
 asm/sparcv8.o: asm/sparcv8.S
 	$(CC) -c -o asm/sparcv8.o asm/sparcv8.S
 
+asm/sparcv8plus: asm/sparcv8plus.S
+	$(CC) -c -xarch=v8plus -o asm/sparcv8plus.o asm/sparcv8plus.S
+
 # MIPS 64 bit assember 
 asm/mips3.o: asm/mips3.s
 	/usr/bin/as -mips3 -O2 -o asm/mips3.o asm/mips3.s            

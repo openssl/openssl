@@ -1,4 +1,4 @@
-.ident	"sparcv8.s, Version 1.2"
+.ident	"sparcv8plus.s, Version 1.2"
 .ident	"SPARC v8 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 /*
@@ -12,26 +12,136 @@
  * ====================================================================
  */
 
+
 /*
  * This is my modest contributon to OpenSSL project (see
  * http://www.openssl.org/ for more information about it) and is
- * a drop-in SuperSPARC ISA replacement for crypto/bn/bn_asm.c
+ * a drop-in UltraSPARC ISA replacement for crypto/bn/bn_asm.c
  * module. For updates see http://fy.chalmers.se/~appro/hpe/.
  *
- * See bn_asm.sparc.v8plus.S for more details.
+ * Questions-n-answers.
+ *
+ * Q. How to compile?
+ * A. With SC4.x/SC5.x:
+ *
+ *	cc -xarch=v8plus -c bn_asm.sparc.v8plus.S -o bn_asm.o
+ *
+ *    and with gcc:
+ *
+ *	gcc -mcpu=ultrasparc -c bn_asm.sparc.v8plus.S -o bn_asm.o
+ *
+ *    or if above fails (it does if you have gas installed):
+ *
+ *	gcc -E bn_asm.sparc.v8plus.S | as -xarch=v8plus /dev/fd/0 -o bn_asm.o
+ *
+ *    Quick-n-dirty way to fuse the module into the library.
+ *    Provided that the library is already configured and built
+ *    (in 0.9.2 case with no_asm option):
+ *
+ *	# cd crypto/bn
+ *	# cp /some/place/bn_asm.sparc.v8plus.S .
+ *	# cc -xarch=v8plus -c bn_asm.sparc.v8plus.S -o bn_asm.o
+ *	# make
+ *	# cd ../..
+ *	# make; make test
+ *
+ *    Quick-n-dirty way to get rid of it:
+ *
+ *	# cd crypto/bn
+ *	# touch bn_asm.c
+ *	# make
+ *	# cd ../..
+ *	# make; make test
+ *
+ * Q. What is v8plus exactly for architecture?
+ * A. Well, it's rather a programming model than architecture...
+ *    It's actually v9-compliant, i.e. *any* UltraSPARC, CPU under
+ *    special conditions, namely when kernel doesn't preserve upper
+ *    32 bits of otherwise 64-bit registers during a context switch.
+ *
+ * Q. Why just UltraSPARC? What about SuperSPARC?
+ * A. Original release did target UltraSPARC only. Now SuperSPARC
+ *    version is provided along. Both version share bn_*comba[48]
+ *    implementations (see comment later in code for explanation).
+ *    But what's so special about this UltraSPARC implementation?
+ *    Why didn't I let compiler do the job? Trouble is that most of
+ *    available compilers (well, SC5.0 is the only exception) don't
+ *    attempt to take advantage of UltraSPARC's 64-bitness under
+ *    32-bit kernels even though it's perfectly possible (see next
+ *    question).
+ *
+ * Q. 64-bit registers under 32-bit kernels? Didn't you just say it
+ *    doesn't work?
+ * A. You can't adress *all* registers as 64-bit wide:-( The catch is
+ *    that you actually may rely upon %o0-%o5 and %g1-%g4 being fully
+ *    preserved if you're in a leaf function, i.e. such never calling
+ *    any other functions. All functions in this module are leaf and
+ *    10 registers is a handful. And as a matter of fact none-"comba"
+ *    routines don't require even that much and I could even afford to
+ *    not allocate own stack frame for 'em:-)
+ *
+ * Q. What about 64-bit kernels?
+ * A. What about 'em? Just kidding:-) Pure 64-bits version is currently
+ *    under evaluation and development...
+ *
+ * Q. What about sharable libraries?
+ * A. What about 'em? Kidding again:-) Code does *not* contain any
+ *    code position dependencies and it's safe to include it into
+ *    sharable library as is.
+ *
+ * Q. How much faster does it get?
+ * A. Do you have a good benchmark? In either case below is what I
+ *    experience with crypto/bn/expspeed.c test program:
+ *
+ *	v8plus module on U10/300MHz against bn_asm.c compiled with:
+ *
+ *	cc-5.0 -xarch=v8plus -xO5 -xdepend	+7-12%
+ *	cc-4.2 -xarch=v8plus -xO5 -xdepend	+25-35%
+ *	egcs-1.1.2 -mcpu=ultrasparc -O3		+35-45%
+ *
+ *	v8 module on SS10/60MHz against bn_asm.c compiled with:
+ *
+ *	cc-5.0 -xarch=v8 -xO5 -xdepend		+7-10%
+ *	cc-4.2 -xarch=v8 -xO5 -xdepend		+10%
+ *	egcs-1.1.2 -mv8 -O3			+35-45%
+ *
+ *    As you can see it's damn hard to beat the new Sun C compiler
+ *    and it's in first hand GNU C users who will appreciate this
+ *    assembler implementation:-)	
  */
 
 /*
  * Revision history.
  *
+ * 1.0	- initial release;
  * 1.1	- new loop unrolling model(*);
+ *	- some more fine tuning;
  * 1.2	- made gas friendly;
+ *	- updates to documentation concerning v9;
+ *	- new performance comparison matrix;
  *
- * (*)	see bn_asm.sparc.v8plus.S for details
+ * (*)	Originally unrolled loop looked like this:
+ *	    for (;;) {
+ *		op(p+0); if (--n==0) break;
+ *		op(p+1); if (--n==0) break;
+ *		op(p+2); if (--n==0) break;
+ *		op(p+3); if (--n==0) break;
+ *		p+=4;
+ *	    }
+ *	I unroll according to following:
+ *	    while (n&~3) {
+ *		op(p+0); op(p+1); op(p+2); op(p+3);
+ *		p+=4; n=-4;
+ *	    }
+ *	    if (n) {
+ *		op(p+0); if (--n==0) return;
+ *		op(p+2); if (--n==0) return;
+ *		op(p+3); return;
+ *	    }
  */
 
 .section	".text",#alloc,#execinstr
-.file		"bn_asm.sparc.v8.S"
+.file		"bn_asm.sparc.v8plus.S"
 
 .align	32
 
@@ -43,117 +153,90 @@
  * BN_ULONG w;
  */
 bn_mul_add_words:
-	cmp	%o2,0
-	bg,a	.L_bn_mul_add_words_proceed
-	ld	[%o1],%g2
+	brgz,a	%o2,.L_bn_mul_add_words_proceed
+	lduw	[%o1],%g2
 	retl
 	clr	%o0
 
 .L_bn_mul_add_words_proceed:
+	clruw	%o3
 	andcc	%o2,-4,%g0
-	bz	.L_bn_mul_add_words_tail
+	bz,pn	%icc,.L_bn_mul_add_words_tail
 	clr	%o5
 
-	umul	%o3,%g2,%g2
-	ld	[%o0],%o4
-	rd	%y,%g1
-	addcc	%o4,%g2,%o4
-	ld	[%o1+4],%g3
-	addx	%g1,0,%o5
-	ba	.L_bn_mul_add_words_warm_loop
-	st	%o4,[%o0]
-
-.L_bn_mul_add_words_loop:
-	ld	[%o0],%o4
-	umul	%o3,%g2,%g2
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	ld	[%o1+4],%g3
-	addx	%g1,0,%g1
-	addcc	%o4,%g2,%o4
+.L_bn_mul_add_words_loop:	! wow! 32 aligned!
+	lduw	[%o0],%o4
+	mulx	%o3,%g2,%g2
+	add	%o4,%o5,%o4
+	add	%o4,%g2,%o4
+	lduw	[%o1+4],%g3
 	nop
-	addx	%g1,0,%o5
-	st	%o4,[%o0]
+	stuw	%o4,[%o0]
+	srlx	%o4,32,%o5
 
-.L_bn_mul_add_words_warm_loop:
-	ld	[%o0+4],%o4
-	umul	%o3,%g3,%g3
+	lduw	[%o0+4],%o4
+	mulx	%o3,%g3,%g3
 	dec	4,%o2
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	ld	[%o1+8],%g2
-	addx	%g1,0,%g1
-	addcc	%o4,%g3,%o4
-	addx	%g1,0,%o5
-	st	%o4,[%o0+4]
+	add	%o4,%o5,%o4
+	lduw	[%o1+8],%g2
+	add	%o4,%g3,%o4
+	stuw	%o4,[%o0+4]
+	srlx	%o4,32,%o5
 
-	ld	[%o0+8],%o4
-	umul	%o3,%g2,%g2
+	lduw	[%o0+8],%o4
+	mulx	%o3,%g2,%g2
 	inc	16,%o1
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	ld	[%o1-4],%g3
-	addx	%g1,0,%g1
-	addcc	%o4,%g2,%o4
-	addx	%g1,0,%o5
-	st	%o4,[%o0+8]
+	add	%o4,%o5,%o4
+	lduw	[%o1-4],%g3
+	add	%o4,%g2,%o4
+	stuw	%o4,[%o0+8]
+	srlx	%o4,32,%o5
 
-	ld	[%o0+12],%o4
-	umul	%o3,%g3,%g3
+	lduw	[%o0+12],%o4
+	mulx	%o3,%g3,%g3
+	add	%o4,%o5,%o4
 	inc	16,%o0
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	addx	%g1,0,%g1
-	addcc	%o4,%g3,%o4
-	addx	%g1,0,%o5
-	st	%o4,[%o0-4]
+	add	%o4,%g3,%o4
+	srlx	%o4,32,%o5
+	stuw	%o4,[%o0-4]
 	andcc	%o2,-4,%g0
-	bnz,a	.L_bn_mul_add_words_loop
-	ld	[%o1],%g2
+	bnz,a,pt	%icc,.L_bn_mul_add_words_loop
+	lduw	[%o1],%g2
 
-	tst	%o2
-	bnz,a	.L_bn_mul_add_words_tail
-	ld	[%o1],%g2
+	brnz,a,pn	%o2,.L_bn_mul_add_words_tail
+	lduw	[%o1],%g2
 .L_bn_mul_add_words_return:
 	retl
 	mov	%o5,%o0
-	nop
 
 .L_bn_mul_add_words_tail:
-	ld	[%o0],%o4
-	umul	%o3,%g2,%g2
-	addcc	%o4,%o5,%o4
-	rd	%y,%g1
-	addx	%g1,0,%g1
-	addcc	%o4,%g2,%o4
-	addx	%g1,0,%o5
-	deccc	%o2
-	bz	.L_bn_mul_add_words_return
-	st	%o4,[%o0]
+	lduw	[%o0],%o4
+	mulx	%o3,%g2,%g2
+	add	%o4,%o5,%o4
+	dec	%o2
+	add	%o4,%g2,%o4
+	srlx	%o4,32,%o5
+	brz,pt	%o2,.L_bn_mul_add_words_return
+	stuw	%o4,[%o0]
 
-	ld	[%o1+4],%g2
-	umul	%o3,%g2,%g2
-	ld	[%o0+4],%o4
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	nop
-	addx	%g1,0,%g1
-	addcc	%o4,%g2,%o4
-	addx	%g1,0,%o5
-	deccc	%o2
-	bz	.L_bn_mul_add_words_return
-	st	%o4,[%o0+4]
+	lduw	[%o1+4],%g2
+	mulx	%o3,%g2,%g2
+	lduw	[%o0+4],%o4
+	add	%o4,%o5,%o4
+	dec	%o2
+	add	%o4,%g2,%o4
+	srlx	%o4,32,%o5
+	brz,pt	%o2,.L_bn_mul_add_words_return
+	stuw	%o4,[%o0+4]
 
-	ld	[%o1+8],%g2
-	umul	%o3,%g2,%g2
-	ld	[%o0+8],%o4
-	rd	%y,%g1
-	addcc	%o4,%o5,%o4
-	addx	%g1,0,%g1
-	addcc	%o4,%g2,%o4
-	st	%o4,[%o0+8]
+	lduw	[%o1+8],%g2
+	mulx	%o3,%g2,%g2
+	lduw	[%o0+8],%o4
+	add	%o4,%o5,%o4
+	add	%o4,%g2,%o4
+	stuw	%o4,[%o0+8]
 	retl
-	addx	%g1,0,%o0
+	srlx	%o4,32,%o0
 
 .type	bn_mul_add_words,#function
 .size	bn_mul_add_words,(.-bn_mul_add_words)
@@ -168,86 +251,78 @@ bn_mul_add_words:
  * BN_ULONG w;
  */
 bn_mul_words:
-	cmp	%o2,0
-	bg,a	.L_bn_mul_words_proceeed
-	ld	[%o1],%g2
+	brgz,a	%o2,.L_bn_mul_words_proceeed
+	lduw	[%o1],%g2
 	retl
 	clr	%o0
 
 .L_bn_mul_words_proceeed:
+	clruw	%o3
 	andcc	%o2,-4,%g0
-	bz	.L_bn_mul_words_tail
+	bz,pn	%icc,.L_bn_mul_words_tail
 	clr	%o5
 
-.L_bn_mul_words_loop:
-	ld	[%o1+4],%g3
-	umul	%o3,%g2,%g2
-	addcc	%g2,%o5,%g2
-	rd	%y,%g1
-	addx	%g1,0,%o5
-	st	%g2,[%o0]
-
-	ld	[%o1+8],%g2
-	umul	%o3,%g3,%g3
-	addcc	%g3,%o5,%g3
-	rd	%y,%g1
-	dec	4,%o2
-	addx	%g1,0,%o5
-	st	%g3,[%o0+4]
-
-	ld	[%o1+12],%g3
-	umul	%o3,%g2,%g2
-	addcc	%g2,%o5,%g2
-	rd	%y,%g1
-	inc	16,%o1
-	st	%g2,[%o0+8]
-	addx	%g1,0,%o5
-
-	umul	%o3,%g3,%g3
-	addcc	%g3,%o5,%g3
-	rd	%y,%g1
-	inc	16,%o0
-	addx	%g1,0,%o5
-	st	%g3,[%o0-4]
-	andcc	%o2,-4,%g0
+.L_bn_mul_words_loop:		! wow! 32 aligned!
+	lduw	[%o1+4],%g3
+	mulx	%o3,%g2,%g2
+	add	%g2,%o5,%g2
 	nop
-	bnz,a	.L_bn_mul_words_loop
-	ld	[%o1],%g2
+	srlx	%g2,32,%o5
+	stuw	%g2,[%o0]
 
-	tst	%o2
-	bnz,a	.L_bn_mul_words_tail
-	ld	[%o1],%g2
+	lduw	[%o1+8],%g2
+	mulx	%o3,%g3,%g3
+	add	%g3,%o5,%g3
+	dec	4,%o2
+	stuw	%g3,[%o0+4]
+	srlx	%g3,32,%o5
+
+	lduw	[%o1+12],%g3
+	mulx	%o3,%g2,%g2
+	add	%g2,%o5,%g2
+	inc	16,%o1
+	stuw	%g2,[%o0+8]
+	srlx	%g2,32,%o5
+
+	mulx	%o3,%g3,%g3
+	inc	16,%o0
+	add	%g3,%o5,%g3
+	nop
+	stuw	%g3,[%o0-4]
+	srlx	%g3,32,%o5
+	andcc	%o2,-4,%g0
+	bnz,a,pt	%icc,.L_bn_mul_words_loop
+	lduw	[%o1],%g2
+	nop
+
+	brnz,a,pn	%o2,.L_bn_mul_words_tail
+	lduw	[%o1],%g2
 .L_bn_mul_words_return:
 	retl
 	mov	%o5,%o0
-	nop
 
 .L_bn_mul_words_tail:
-	umul	%o3,%g2,%g2
-	addcc	%g2,%o5,%g2
-	rd	%y,%g1
-	addx	%g1,0,%o5
-	deccc	%o2
-	bz	.L_bn_mul_words_return
-	st	%g2,[%o0]
-	nop
+	mulx	%o3,%g2,%g2
+	add	%g2,%o5,%g2
+	dec	%o2
+	srlx	%g2,32,%o5
+	brz,pt	%o2,.L_bn_mul_words_return
+	stuw	%g2,[%o0]
 
-	ld	[%o1+4],%g2
-	umul	%o3,%g2,%g2
-	addcc	%g2,%o5,%g2
-	rd	%y,%g1
-	addx	%g1,0,%o5
-	deccc	%o2
-	bz	.L_bn_mul_words_return
-	st	%g2,[%o0+4]
+	lduw	[%o1+4],%g2
+	mulx	%o3,%g2,%g2
+	add	%g2,%o5,%g2
+	dec	%o2
+	srlx	%g2,32,%o5
+	brz,pt	%o2,.L_bn_mul_words_return
+	stuw	%g2,[%o0+4]
 
-	ld	[%o1+8],%g2
-	umul	%o3,%g2,%g2
-	addcc	%g2,%o5,%g2
-	rd	%y,%g1
-	st	%g2,[%o0+8]
+	lduw	[%o1+8],%g2
+	mulx	%o3,%g2,%g2
+	add	%g2,%o5,%g2
+	stuw	%g2,[%o0+8]
 	retl
-	addx	%g1,0,%o0
+	srlx	%g2,32,%o0
 
 .type	bn_mul_words,#function
 .size	bn_mul_words,(.-bn_mul_words)
@@ -260,78 +335,77 @@ bn_mul_words:
  * int n;
  */
 bn_sqr_words:
-	cmp	%o2,0
-	bg,a	.L_bn_sqr_words_proceeed
-	ld	[%o1],%g2
+	brgz,a	%o2,.L_bn_sqr_words_proceeed
+	lduw	[%o1],%g2
 	retl
 	clr	%o0
 
 .L_bn_sqr_words_proceeed:
 	andcc	%o2,-4,%g0
-	bz	.L_bn_sqr_words_tail
-	clr	%o5
+	nop
+	bz,pn	%icc,.L_bn_sqr_words_tail
+	nop
 
-.L_bn_sqr_words_loop:
-	ld	[%o1+4],%g3
-	umul	%g2,%g2,%o4
-	st	%o4,[%o0]
-	rd	%y,%o5
-	st	%o5,[%o0+4]
+.L_bn_sqr_words_loop:		! wow! 32 aligned!
+	lduw	[%o1+4],%g3
+	mulx	%g2,%g2,%o4
+	stuw	%o4,[%o0]
+	srlx	%o4,32,%o5
+	stuw	%o5,[%o0+4]
+	nop
 
-	ld	[%o1+8],%g2
-	umul	%g3,%g3,%o4
+	lduw	[%o1+8],%g2
+	mulx	%g3,%g3,%o4
 	dec	4,%o2
-	st	%o4,[%o0+8]
-	rd	%y,%o5
-	st	%o5,[%o0+12]
+	stuw	%o4,[%o0+8]
+	srlx	%o4,32,%o5
 	nop
+	stuw	%o5,[%o0+12]
 
-	ld	[%o1+12],%g3
-	umul	%g2,%g2,%o4
-	st	%o4,[%o0+16]
-	rd	%y,%o5
+	lduw	[%o1+12],%g3
+	mulx	%g2,%g2,%o4
+	srlx	%o4,32,%o5
+	stuw	%o4,[%o0+16]
 	inc	16,%o1
-	st	%o5,[%o0+20]
+	stuw	%o5,[%o0+20]
 
-	umul	%g3,%g3,%o4
+	mulx	%g3,%g3,%o4
 	inc	32,%o0
-	st	%o4,[%o0-8]
-	rd	%y,%o5
-	st	%o5,[%o0-4]
+	stuw	%o4,[%o0-8]
+	srlx	%o4,32,%o5
 	andcc	%o2,-4,%g2
-	bnz,a	.L_bn_sqr_words_loop
-	ld	[%o1],%g2
-
-	tst	%o2
+	stuw	%o5,[%o0-4]
+	bnz,a,pt	%icc,.L_bn_sqr_words_loop
+	lduw	[%o1],%g2
 	nop
-	bnz,a	.L_bn_sqr_words_tail
-	ld	[%o1],%g2
+
+	brnz,a,pn	%o2,.L_bn_sqr_words_tail
+	lduw	[%o1],%g2
 .L_bn_sqr_words_return:
 	retl
 	clr	%o0
 
 .L_bn_sqr_words_tail:
-	umul	%g2,%g2,%o4
-	st	%o4,[%o0]
-	deccc	%o2
-	rd	%y,%o5
-	bz	.L_bn_sqr_words_return
-	st	%o5,[%o0+4]
+	mulx	%g2,%g2,%o4
+	dec	%o2
+	stuw	%o4,[%o0]
+	srlx	%o4,32,%o5
+	brz,pt	%o2,.L_bn_sqr_words_return
+	stuw	%o5,[%o0+4]
 
-	ld	[%o1+4],%g2
-	umul	%g2,%g2,%o4
-	st	%o4,[%o0+8]
-	deccc	%o2
-	rd	%y,%o5
-	nop
-	bz	.L_bn_sqr_words_return
-	st	%o5,[%o0+12]
+	lduw	[%o1+4],%g2
+	mulx	%g2,%g2,%o4
+	dec	%o2
+	stuw	%o4,[%o0+8]
+	srlx	%o4,32,%o5
+	brz,pt	%o2,.L_bn_sqr_words_return
+	stuw	%o5,[%o0+12]
 
-	ld	[%o1+8],%g2
-	umul	%g2,%g2,%o4
-	st	%o4,[%o0+16]
-	rd	%y,%o5
-	st	%o5,[%o0+20]
+	lduw	[%o1+8],%g2
+	mulx	%g2,%g2,%o4
+	srlx	%o4,32,%o5
+	stuw	%o4,[%o0+16]
+	stuw	%o5,[%o0+20]
 	retl
 	clr	%o0
 
@@ -339,17 +413,17 @@ bn_sqr_words:
 .size	bn_sqr_words,(.-bn_sqr_words)
 
 .align	32
-
 .global bn_div_words
 /*
  * BN_ULONG bn_div_words(h,l,d)
  * BN_ULONG h,l,d;
  */
 bn_div_words:
-	wr	%o0,%y
-	udiv	%o1,%o2,%o0
+	sllx	%o0,32,%o0
+	or	%o0,%o1,%o0
+	udivx	%o0,%o2,%o0
 	retl
-	nop
+	clruw	%o0
 
 .type	bn_div_words,#function
 .size	bn_div_words,(.-bn_div_words)
@@ -363,94 +437,91 @@ bn_div_words:
  * int n;
  */
 bn_add_words:
-	cmp	%o3,0
-	bg,a	.L_bn_add_words_proceed
-	ld	[%o1],%o4
+	brgz,a	%o3,.L_bn_add_words_proceed
+	lduw	[%o1],%o4
 	retl
 	clr	%o0
 
 .L_bn_add_words_proceed:
 	andcc	%o3,-4,%g0
-	bz	.L_bn_add_words_tail
-	clr	%g1
-	ld	[%o2],%o5
+	bz,pn	%icc,.L_bn_add_words_tail
+	addcc	%g0,0,%g0	! clear carry flag
+	nop
+	lduw	[%o2],%o5
 	dec	4,%o3
 	addcc	%o5,%o4,%o5
 	nop
-	st	%o5,[%o0]
+	stuw	%o5,[%o0]
 	ba	.L_bn_add_words_warm_loop
-	ld	[%o1+4],%o4
+	lduw	[%o1+4],%o4
 	nop
 
-.L_bn_add_words_loop:
-	ld	[%o1],%o4
+.L_bn_add_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
-	ld	[%o2],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0]
+	lduw	[%o2],%o5
+	nop
+	addccc	%o5,%o4,%o5
+	stuw	%o5,[%o0]
 
-	ld	[%o1+4],%o4
+	lduw	[%o1+4],%o4
 .L_bn_add_words_warm_loop:
 	inc	16,%o1
-	ld	[%o2+4],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0+4]
+	nop
+	lduw	[%o2+4],%o5
+	addccc	%o5,%o4,%o5
+	stuw	%o5,[%o0+4]
+	nop
 	
-	ld	[%o1-8],%o4
+	lduw	[%o1-8],%o4
 	inc	16,%o2
-	ld	[%o2-8],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0+8]
+	lduw	[%o2-8],%o5
+	addccc	%o5,%o4,%o5
+	stuw	%o5,[%o0+8]
 
-	ld	[%o1-4],%o4
+	lduw	[%o1-4],%o4
 	inc	16,%o0
-	ld	[%o2-4],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0-4]
-	addx	%g0,0,%g1
-	andcc	%o3,-4,%g0
-	bnz,a	.L_bn_add_words_loop
-	addcc	%g1,-1,%g0
-
-	tst	%o3
 	nop
-	bnz,a	.L_bn_add_words_tail
-	ld	[%o1],%o4
+	lduw	[%o2-4],%o5
+	addccc	%o5,%o4,%o5
+	stuw	%o5,[%o0-4]
+	and	%o3,-4,%g1
+	brnz,a,pt	%g1,.L_bn_add_words_loop
+	lduw	[%o1],%o4
+
+	brnz,a,pn	%o3,.L_bn_add_words_tail
+	lduw	[%o1],%o4
 .L_bn_add_words_return:
+	clr	%o0
 	retl
-	mov	%g1,%o0
-
-.L_bn_add_words_tail:
-	addcc	%g1,-1,%g0
-	ld	[%o2],%o5
-	addxcc	%o5,%o4,%o5
-	addx	%g0,0,%g1
-	deccc	%o3
-	bz	.L_bn_add_words_return
-	st	%o5,[%o0]
+	movcs	%icc,1,%o0
 	nop
 
-	ld	[%o1+4],%o4
-	addcc	%g1,-1,%g0
-	ld	[%o2+4],%o5
-	addxcc	%o5,%o4,%o5
-	addx	%g0,0,%g1
-	deccc	%o3
-	bz	.L_bn_add_words_return
-	st	%o5,[%o0+4]
+.L_bn_add_words_tail:		! wow! 32 aligned!
+	lduw	[%o2],%o5
+	dec	%o3
+	addccc	%o5,%o4,%o5
+	brz,pt	%o3,.L_bn_add_words_return
+	stuw	%o5,[%o0]
 
-	ld	[%o1+8],%o4
-	addcc	%g1,-1,%g0
-	ld	[%o2+8],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0+8]
+	lduw	[%o1+4],%o4
+	lduw	[%o2+4],%o5
+	addccc	%o5,%o4,%o5
+	dec	%o3
+	brz,pt	%o3,.L_bn_add_words_return
+	stuw	%o5,[%o0+4]
+	nop
+
+	lduw	[%o1+8],%o4
+	lduw	[%o2+8],%o5
+	addccc	%o5,%o4,%o5
+	nop
+	stuw	%o5,[%o0+8]
+	clr	%o0
 	retl
-	addx	%g0,0,%o0
+	movcs	%icc,1,%o0
 
 .type	bn_add_words,#function
 .size	bn_add_words,(.-bn_add_words)
-
-.align	32
 
 .global bn_sub_words
 /*
@@ -459,92 +530,106 @@ bn_add_words:
  * int n;
  */
 bn_sub_words:
-	cmp	%o3,0
-	bg,a	.L_bn_sub_words_proceed
-	ld	[%o1],%o4
+	brgz,a	%o3,.L_bn_sub_words_proceed
+	lduw	[%o1],%o4
 	retl
 	clr	%o0
 
 .L_bn_sub_words_proceed:
 	andcc	%o3,-4,%g0
-	bz	.L_bn_sub_words_tail
-	clr	%g1
-	ld	[%o2],%o5
+	bz,pn	%icc,.L_bn_sub_words_tail
+	addcc	%g0,0,%g0	! clear carry flag
+	nop
+	lduw	[%o2],%o5
 	dec	4,%o3
 	subcc	%o4,%o5,%o5
 	nop
-	st	%o5,[%o0]
+	stuw	%o5,[%o0]
 	ba	.L_bn_sub_words_warm_loop
-	ld	[%o1+4],%o4
+	lduw	[%o1+4],%o4
 	nop
 
-.L_bn_sub_words_loop:
-	ld	[%o1],%o4
+.L_bn_sub_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
-	ld	[%o2],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0]
+	lduw	[%o2],%o5
+	nop
+	subccc	%o4,%o5,%o5
+	stuw	%o5,[%o0]
 
-	ld	[%o1+4],%o4
+	lduw	[%o1+4],%o4
 .L_bn_sub_words_warm_loop:
 	inc	16,%o1
-	ld	[%o2+4],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0+4]
+	nop
+	lduw	[%o2+4],%o5
+	subccc	%o4,%o5,%o5
+	stuw	%o5,[%o0+4]
+	nop
 	
-	ld	[%o1-8],%o4
+	lduw	[%o1-8],%o4
 	inc	16,%o2
-	ld	[%o2-8],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0+8]
+	lduw	[%o2-8],%o5
+	subccc	%o4,%o5,%o5
+	stuw	%o5,[%o0+8]
 
-	ld	[%o1-4],%o4
+	lduw	[%o1-4],%o4
 	inc	16,%o0
-	ld	[%o2-4],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0-4]
-	addx	%g0,0,%g1
-	andcc	%o3,-4,%g0
-	bnz,a	.L_bn_sub_words_loop
-	addcc	%g1,-1,%g0
-
-	tst	%o3
 	nop
-	bnz,a	.L_bn_sub_words_tail
-	ld	[%o1],%o4
+	lduw	[%o2-4],%o5
+	subccc	%o4,%o5,%o5
+	stuw	%o5,[%o0-4]
+	and	%o3,-4,%g1
+	brnz,a,pt	%g1,.L_bn_sub_words_loop
+	lduw	[%o1],%o4
+
+	brnz,a,pn	%o3,.L_bn_sub_words_tail
+	lduw	[%o1],%o4
 .L_bn_sub_words_return:
+	clr	%o0
 	retl
-	mov	%g1,%o0
-
-.L_bn_sub_words_tail:
-	addcc	%g1,-1,%g0
-	ld	[%o2],%o5
-	subxcc	%o4,%o5,%o5
-	addx	%g0,0,%g1
-	deccc	%o3
-	bz	.L_bn_sub_words_return
-	st	%o5,[%o0]
+	movcs	%icc,1,%o0
 	nop
 
-	ld	[%o1+4],%o4
-	addcc	%g1,-1,%g0
-	ld	[%o2+4],%o5
-	subxcc	%o4,%o5,%o5
-	addx	%g0,0,%g1
-	deccc	%o3
-	bz	.L_bn_sub_words_return
-	st	%o5,[%o0+4]
+.L_bn_sub_words_tail:		! wow! 32 aligned!
+	lduw	[%o2],%o5
+	dec	%o3
+	subccc	%o4,%o5,%o5
+	brz,pt	%o3,.L_bn_sub_words_return
+	stuw	%o5,[%o0]
 
-	ld	[%o1+8],%o4
-	addcc	%g1,-1,%g0
-	ld	[%o2+8],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0+8]
+	lduw	[%o1+4],%o4
+	lduw	[%o2+4],%o5
+	subccc	%o4,%o5,%o5
+	dec	%o3
+	brz,pt	%o3,.L_bn_sub_words_return
+	stuw	%o5,[%o0+4]
+	nop
+
+	lduw	[%o1+8],%o4
+	lduw	[%o2+8],%o5
+	subccc	%o4,%o5,%o5
+	nop
+	stuw	%o5,[%o0+8]
+	clr	%o0
 	retl
-	addx	%g0,0,%o0
+	movcs	%icc,1,%o0
 
 .type	bn_sub_words,#function
 .size	bn_sub_words,(.-bn_sub_words)
+
+/*
+ * Following code is pure SPARC V8! Trouble is that it's not feasible
+ * to implement the mumbo-jumbo in less "V9" instructions:-( At least not
+ * under 32-bit kernel. The reason is that you'd have to shuffle registers
+ * all the time as only few (well, 10:-) are fully (i.e. all 64 bits)
+ * preserved by kernel during context switch. But even under 64-bit kernel
+ * you won't gain much because in the lack of "add with extended carry"
+ * instruction you'd have to issue 'clr %rx; movcs %xcc,1,%rx;
+ * add %rd,%rx,%rd' sequence in place of 'addxcc %rx,%ry,%rx;
+ * addx %rz,%g0,%rz' pair in 32-bit case. Well, 'bpcs,a %xcc,.+8; inc %rd'
+ * is another alternative...
+ *
+ *							Andy.
+ */
 
 #define FRAME_SIZE	-96
 
