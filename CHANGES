@@ -5,6 +5,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) DES CBC did not update the IV. Weird.
+     [Ben Laurie]
+
   *) When bntest is run from "make test" it drives bc to check its
      calculations, as well as internally checking them. If an internal check
      fails, it needs to cause bc to give a non-zero result or make test carries
