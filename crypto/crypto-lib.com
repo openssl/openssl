@@ -86,7 +86,7 @@ $ ENDIF
 $!
 $! Define The Different Encryption Types.
 $!
-$ ENCRYPT_TYPES = "Basic,MD2,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
+$ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
 		  "BN,RSA,DSA,DH,DSO,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
@@ -176,6 +176,7 @@ $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
 $ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,tmdiff,cpt_err"
 $ LIB_MD2 = "md2_dgst,md2_one"
+$ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
 $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
@@ -263,8 +264,8 @@ $! Setup exceptional compilations
 $!
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,"
-$ COMPILEWITH_CC5 = ",md2_dgst,md5_dgst,mdc2dgst,sha_dgst,sha1dgst," + -
-                    "rmd_dgst,bf_enc,"
+$ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
+                    "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
 $!
 $! Check To See If We Are Going To Use RSAREF.
 $!
