@@ -110,6 +110,9 @@ typedef struct pkcs7_recip_info_st
 	X509				*cert; /* get the pub-key from this */
 	} PKCS7_RECIP_INFO;
 
+DECLARE_STACK_OF(PKCS7_RECIP_INFO)
+DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO)
+
 typedef struct pkcs7_signed_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
@@ -134,7 +137,7 @@ typedef struct pkcs7_enc_content_st
 typedef struct pkcs7_enveloped_st
 	{
 	ASN1_INTEGER			*version;	/* version 0 */
-	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
+	STACK_OF(PKCS7_RECIP_INFO)	*recipientinfo;
 	PKCS7_ENC_CONTENT		*enc_data;
 	} PKCS7_ENVELOPE;
 
@@ -147,7 +150,7 @@ typedef struct pkcs7_signedandenveloped_st
 	STACK_OF(PKCS7_SIGNER_INFO)	*signer_info;
 
 	PKCS7_ENC_CONTENT		*enc_data;
-	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
+	STACK_OF(PKCS7_RECIP_INFO)	*recipientinfo;
 	} PKCS7_SIGN_ENVELOPE;
 
 typedef struct pkcs7_digest_st

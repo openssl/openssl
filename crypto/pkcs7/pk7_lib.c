@@ -371,7 +371,7 @@ err:
 int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 	{
 	int i;
-	STACK *sk;
+	STACK_OF(PKCS7_RECIP_INFO) *sk;
 
 	i=OBJ_obj2nid(p7->type);
 	switch (i)
@@ -387,7 +387,7 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 		return(0);
 		}
 
-	sk_push(sk,(char *)ri);
+	sk_PKCS7_RECIP_INFO_push(sk,ri);
 	return(1);
 	}
 

@@ -74,7 +74,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	const EVP_MD *evp_md;
 	const EVP_CIPHER *evp_cipher=NULL;
 	STACK_OF(X509_ALGOR) *md_sk=NULL;
-	STACK *rsk=NULL;
+	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
 	EVP_PKEY *pkey;
@@ -174,9 +174,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 
 		/* Lets do the pub key stuff :-) */
 		max=0;
-		for (i=0; i<sk_num(rsk); i++)
+		for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 			{
-			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
+			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 			if (ri->cert == NULL)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_MISSING_CERIPEND_INFO);
@@ -192,9 +192,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
-		for (i=0; i<sk_num(rsk); i++)
+		for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 			{
-			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
+			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 			pkey=X509_get_pubkey(ri->cert);
 			jj=EVP_PKEY_encrypt(tmp,key,keylen,pkey);
 			EVP_PKEY_free(pkey);
@@ -267,7 +267,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	EVP_CIPHER_CTX *evp_ctx=NULL;
 	X509_ALGOR *enc_alg=NULL;
 	STACK_OF(X509_ALGOR) *md_sk=NULL;
-	STACK *rsk=NULL;
+	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
 /*	EVP_PKEY *pkey; */
@@ -368,8 +368,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		 * (if any)
 		 */
 
-		for (i=0; i<sk_num(rsk); i++) {
-			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
+		for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++) {
+			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 			if(!X509_NAME_cmp(ri->issuer_and_serial->issuer,
 					pcert->cert_info->issuer) &&
 			     !ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
@@ -767,16 +767,16 @@ err:
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
 	{
-	STACK *rsk;
+	STACK_OF(PKCS7_RECIP_INFO) *rsk;
 	PKCS7_RECIP_INFO *ri;
 	int i;
 
 	i=OBJ_obj2nid(p7->type);
 	if (i != NID_pkcs7_signedAndEnveloped) return(NULL);
 	rsk=p7->d.signed_and_enveloped->recipientinfo;
-	ri=(PKCS7_RECIP_INFO *)sk_value(rsk,0);
-	if (sk_num(rsk) <= idx) return(NULL);
-	ri=(PKCS7_RECIP_INFO *)sk_value(rsk,idx);
+	ri=sk_PKCS7_RECIP_INFO_value(rsk,0);
+	if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx) return(NULL);
+	ri=sk_PKCS7_RECIP_INFO_value(rsk,idx);
 	return(ri->issuer_and_serial);
 	}
 
