@@ -983,7 +983,7 @@ else
 	if ($withargs{"krb5-flavor"} =~ /^force-[Hh]eimdal$/)
 		{
 		warn "Heimdal isn't really supported.  Your build WILL break\n";
-		warn "If you fix the problems, please send a patch to openssl-dev@openssl.org\n";
+		warn "If you fix the problems, please send a patch to openssl-dev\@openssl.org\n";
 		$withargs{"krb5-dir"} = "/usr/heimdal"
 			if $withargs{"krb5-dir"} eq "";
 		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
