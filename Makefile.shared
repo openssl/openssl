@@ -583,7 +583,7 @@ link_o.irix:
 		MINUSWL=""; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
-		NOALLSYMSFLAGS="$${MINUSWL}-notall"; \
+		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
 		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
@@ -599,7 +599,7 @@ link_a.irix:
 		MINUSWL=""; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
-		NOALLSYMSFLAGS="$${MINUSWL}-notall"; \
+		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
 		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
