@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/07 17:31:11 $
+  ______________                           $Date: 1999/04/07 23:37:33 $
 
   DEVELOPMENT STATE
 
@@ -12,8 +12,6 @@
 
     o Compilation warnings: ctype-related int vs. char
     o Compilation error: "unsigned long*" and "int*" under AIX
-    o A Linux alpha user reported: "alpha.s does not have bn_div_word()"
-      (see posting "ALPHA error" in openssl-dev)
     o Undefined BN symbols in assembler stuff on Solaris
       (see posting "openssl-SNAP-19990308-2130 on Solaris-2.6 SC4" in openssl-dev)
     o BN assembler code in r3000.s, mips*.s and pa-risc*.s is broken
