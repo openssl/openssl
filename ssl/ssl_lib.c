@@ -81,6 +81,18 @@ OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
 	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function
 	};
 
+union rsa_fn_to_char_u
+	{
+	char *char_p;
+	RSA *(*fn_p)(SSL *, int, int);
+	};
+
+union dh_fn_to_char_u
+	{
+	char *char_p;
+	DH *(*fn_p)(SSL *, int, int);
+	};
+
 int SSL_clear(SSL *s)
 	{
 	int state;
@@ -1975,13 +1987,23 @@ int SSL_want(SSL *s)
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,
 							  int is_export,
 							  int keylength))
-    { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
+    {
+    union rsa_fn_to_char_u rsa_tmp_cb;
+
+    rsa_tmp_cb.fn_p = cb;
+    SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,rsa_tmp_cb.char_p);
+    }
 #endif
 
 #ifndef NO_RSA
 void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int is_export,
 							  int keylength))
-    { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
+    {
+    union rsa_fn_to_char_u rsa_tmp_cb;
+
+    rsa_tmp_cb.fn_p = cb;
+    SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,0,rsa_tmp_cb.char_p);
+    }
 #endif
 
 #ifdef DOXYGEN
@@ -2008,11 +2030,21 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
 #ifndef NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
-    { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
+    {
+    union dh_fn_to_char_u dh_tmp_cb;
+
+    dh_tmp_cb.fn_p = dh;
+    SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,dh_tmp_cb.char_p);
+    }
 
 void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
-    { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
+    {
+    union dh_fn_to_char_u dh_tmp_cb;
+
+    dh_tmp_cb.fn_p = dh;
+    SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,0,dh_tmp_cb.char_p);
+    }
 #endif
 
 #if defined(_WINDLL) && defined(WIN16)

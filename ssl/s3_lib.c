@@ -462,6 +462,18 @@ static SSL_METHOD SSLv3_data= {
 	&SSLv3_enc_data,
 	};
 
+union rsa_fn_to_char_u
+	{
+	char *char_p;
+	RSA *(*fn_p)(SSL *, int, int);
+	};
+
+union dh_fn_to_char_u
+	{
+	char *char_p;
+	DH *(*fn_p)(SSL *, int, int);
+	};
+
 static long ssl3_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the SSLv3 spec
@@ -638,7 +650,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		}
 		break;
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))parg;
+		{
+		union rsa_fn_to_char_u rsa_tmp_cb;
+
+		rsa_tmp_cb.char_p = parg;
+		s->cert->rsa_tmp_cb = rsa_tmp_cb.fn_p;
+		}
 		break;
 #endif
 #ifndef NO_DH
@@ -665,7 +682,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		}
 		break;
 	case SSL_CTRL_SET_TMP_DH_CB:
-		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))parg;
+		{
+		union dh_fn_to_char_u dh_tmp_cb;
+
+		dh_tmp_cb.char_p = parg;
+		s->cert->dh_tmp_cb = dh_tmp_cb.fn_p;
+		}
 		break;
 #endif
 	default:
@@ -721,7 +743,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		}
 		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		cert->rsa_tmp_cb=(RSA *(*)(SSL *, int, int))parg;
+		{
+		union rsa_fn_to_char_u rsa_tmp_cb;
+
+		rsa_tmp_cb.char_p = parg;
+		cert->rsa_tmp_cb = rsa_tmp_cb.fn_p;
+		}
 		break;
 #endif
 #ifndef NO_DH
@@ -748,7 +775,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		}
 		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
-		cert->dh_tmp_cb=(DH *(*)(SSL *, int, int))parg;
+		{
+		union dh_fn_to_char_u dh_tmp_cb;
+
+		dh_tmp_cb.char_p = parg;
+		cert->dh_tmp_cb = dh_tmp_cb.fn_p;
+		}
 		break;
 #endif
 	/* A Thawte special :-) */

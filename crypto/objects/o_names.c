@@ -5,6 +5,36 @@
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
 
+union cmp_fn_to_char_u
+	{
+	char *char_p;
+	int (*fn_p)(const char *, const char *);
+	};
+
+union hash_fn_to_char_u
+	{
+	char *char_p;
+	unsigned long (*fn_p)(const char *);
+	};
+
+union int_fn_to_char_u
+	{
+	char *char_p;
+	int (*fn_p)();
+	};
+
+union ulong_fn_to_char_u
+	{
+	char *char_p;
+	unsigned long (*fn_p)();
+	};
+
+union void_fn_to_char_u
+	{
+	char *char_p;
+	void (*fn_p)();
+	};
+
 /* I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.
  */
@@ -31,6 +61,17 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 	{
 	int ret;
 	int i;
+	union ulong_fn_to_char_u tmp_hash_func;
+	union int_fn_to_char_u tmp_cmp_func;
+	union void_fn_to_char_u tmp_free_func;
+	union cmp_fn_to_char_u tmp_strcmp;
+	union hash_fn_to_char_u tmp_lh_strhash;
+
+	tmp_hash_func.fn_p = hash_func;
+	tmp_cmp_func.fn_p = cmp_func;
+	tmp_free_func.fn_p = free_func;
+	tmp_strcmp.fn_p = (int (*)(const char *, const char *))strcmp;
+	tmp_lh_strhash.fn_p = lh_strhash;
 
 	if (names_free == NULL)
 		{
@@ -50,32 +91,32 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 	for (i=sk_num(names_free); i<names_type_num; i++)
 		{
 		MemCheck_off();
-		sk_push(names_hash,(char *)strcmp);
-		sk_push(names_cmp,(char *)lh_strhash);
+		sk_push(names_hash,tmp_strcmp.char_p);
+		sk_push(names_cmp,tmp_lh_strhash.char_p);
 		sk_push(names_free,NULL);
 		MemCheck_on();
 		}
 	if (hash_func != NULL)
-		sk_set(names_hash,ret,(char *)hash_func);
+		sk_set(names_hash,ret,tmp_hash_func.char_p);
 	if (cmp_func != NULL)
-		sk_set(names_cmp,ret,(char *)cmp_func);
+		sk_set(names_cmp,ret,tmp_cmp_func.char_p);
 	if (free_func != NULL)
-		sk_set(names_free,ret,(char *)free_func);
+		sk_set(names_free,ret,tmp_free_func.char_p);
 	return(ret);
 	}
 
 static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 	{
 	int ret;
-	int (*cmp)();
+	union int_fn_to_char_u cmp;
 
 	ret=a->type-b->type;
 	if (ret == 0)
 		{
 		if ((names_cmp != NULL) && (sk_num(names_cmp) > a->type))
 			{
-			cmp=(int (*)())sk_value(names_cmp,a->type);
-			ret=cmp(a->name,b->name);
+			cmp.char_p=sk_value(names_cmp,a->type);
+			ret=cmp.fn_p(a->name,b->name);
 			}
 		else
 			ret=strcmp(a->name,b->name);
@@ -86,12 +127,12 @@ static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 static unsigned long obj_name_hash(OBJ_NAME *a)
 	{
 	unsigned long ret;
-	unsigned long (*hash)();
+	union ulong_fn_to_char_u hash;
 
 	if ((names_hash != NULL) && (sk_num(names_hash) > a->type))
 		{
-		hash=(unsigned long (*)())sk_value(names_hash,a->type);
-		ret=hash(a->name);
+		hash.char_p=sk_value(names_hash,a->type);
+		ret=hash.fn_p(a->name);
 		}
 	else
 		{
@@ -133,7 +174,7 @@ const char *OBJ_NAME_get(const char *name, int type)
 
 int OBJ_NAME_add(const char *name, int type, const char *data)
 	{
-	void (*f)();
+	union void_fn_to_char_u f;
 	OBJ_NAME *onp,*ret;
 	int alias;
 
@@ -160,8 +201,8 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 		/* free things */
 		if ((names_free != NULL) && (sk_num(names_free) > ret->type))
 			{
-			f=(void (*)())sk_value(names_free,ret->type);
-			f(ret->name,ret->type,ret->data);
+			f.char_p=sk_value(names_free,ret->type);
+			f.fn_p(ret->name,ret->type,ret->data);
 			}
 		Free((char *)ret);
 		}
@@ -179,7 +220,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 int OBJ_NAME_remove(const char *name, int type)
 	{
 	OBJ_NAME on,*ret;
-	void (*f)();
+	union void_fn_to_char_u f;
 
 	if (names_lh == NULL) return(0);
 
@@ -192,8 +233,8 @@ int OBJ_NAME_remove(const char *name, int type)
 		/* free things */
 		if ((names_free != NULL) && (sk_num(names_free) > type))
 			{
-			f=(void (*)())sk_value(names_free,type);
-			f(ret->name,ret->type,ret->data);
+			f.char_p=sk_value(names_free,type);
+			f.fn_p(ret->name,ret->type,ret->data);
 			}
 		Free((char *)ret);
 		return(1);

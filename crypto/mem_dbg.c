@@ -661,21 +661,31 @@ void CRYPTO_mem_leaks(BIO *b)
 #endif
 	}
 
+union void_fn_to_char_u
+	{
+	char *char_p;
+	void (*fn_p)();
+	};
+
 static void (*mem_cb)()=NULL;
 
 static void cb_leak(MEM *m, char *cb)
 	{
-	void (*mem_callback)()=(void (*)())cb;
-	mem_callback(m->order,m->file,m->line,m->num,m->addr);
+	union void_fn_to_char_u mem_callback;
+
+	mem_callback.char_p=cb;
+	mem_callback.fn_p(m->order,m->file,m->line,m->num,m->addr);
 	}
 
 void CRYPTO_mem_leaks_cb(void (*cb)())
 	{
+	union void_fn_to_char_u mem_cb;
+
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	mem_cb=cb;
-	lh_doall_arg(mh,(void (*)())cb_leak,(char *)mem_cb);
-	mem_cb=NULL;
+	mem_cb.fn_p=cb;
+	lh_doall_arg(mh,(void (*)())cb_leak,mem_cb.char_p);
+	mem_cb.char_p=NULL;
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}
 

@@ -94,6 +94,12 @@ static BIO_METHOD methods_sslp=
 	ssl_free,
 	};
 
+union void_fn_to_char_u
+	{
+	char *char_p;
+	void (*fn_p)();
+	};
+
 BIO_METHOD *BIO_f_ssl(void)
 	{
 	return(&methods_sslp);
@@ -444,7 +450,12 @@ static long ssl_ctrl(BIO *b, int cmd, long num, char *ptr)
 		ret=BIO_ctrl(ssl->rbio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_SET_CALLBACK:
-		SSL_set_info_callback(ssl,(void (*)())ptr);
+		{
+		union void_fn_to_char_u tmp_cb;
+
+		tmp_cb.char_p = ptr;
+		SSL_set_info_callback(ssl,tmp_cb.fn_p);
+		}
 		break;
 	case BIO_CTRL_GET_CALLBACK:
 		{

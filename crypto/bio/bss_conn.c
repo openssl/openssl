@@ -98,6 +98,12 @@ typedef struct bio_connect_st
 	int (*info_callback)();
 	} BIO_CONNECT;
 
+union int_fn_to_char_u
+	{
+	char *char_p;
+	int (*fn_p)();
+	};
+
 static int conn_write(BIO *h,char *buf,int num);
 static int conn_read(BIO *h,char *buf,int size);
 static int conn_puts(BIO *h,char *str);
@@ -564,16 +570,26 @@ static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 	case BIO_CTRL_FLUSH:
 		break;
 	case BIO_CTRL_DUP:
+		{
+		union int_fn_to_char_u tmp_cb;
+		
 		dbio=(BIO *)ptr;
 		if (data->param_port)
 			BIO_set_conn_port(dbio,data->param_port);
 		if (data->param_hostname)
 			BIO_set_conn_hostname(dbio,data->param_hostname);
 		BIO_set_nbio(dbio,data->nbio);
-		(void)BIO_set_info_callback(dbio,data->info_callback);
+		tmp_cb.fn_p=data->info_callback;
+		(void)BIO_set_info_callback(dbio,tmp_cb.char_p);
+		}
 		break;
 	case BIO_CTRL_SET_CALLBACK:
-		data->info_callback=(int (*)())ptr;
+		{
+		union int_fn_to_char_u tmp_cb;
+		
+		tmp_cb.char_p=ptr;
+		data->info_callback=tmp_cb.fn_p;
+		}
 		break;
 	case BIO_CTRL_GET_CALLBACK:
 		{
