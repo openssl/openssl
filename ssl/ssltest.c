@@ -653,6 +653,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			/* "I/O" BETWEEN CLIENT AND SERVER. */
 
+			/* TODO: use non-blocking BIO interface for (say) the client
+			 * to illustrate its use and to test it. */
+
 #define RELAYBUFSIZ 200
 			static char buf[RELAYBUFSIZ];
 

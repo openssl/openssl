@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Non-copying interface to BIO pairs.
+     (still totally untested)
+     [Bodo Moeller]
+
   *) New function ANS1_tag2str() to convert an ASN1 tag to a descriptive
      ASCII string. This was handled independently in various places before.
      [Steve Henson]
