@@ -303,6 +303,7 @@ fi
 # more time that I want to waste at the moment
 case "$GUESSOS" in
   alpha-*-linux2) OUT="alpha-gcc" ;;
+  ppc-*-linux2) OUT="linux-ppc" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
