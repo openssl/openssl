@@ -890,9 +890,12 @@ start:		for (;;)
 			 * multiple instances 
 			 */
 			for(p = v->name; *p ; p++) 
-				if ((*p != ':') || (*p != ',') ||
-							 (*p != '.')) break;
-			if (*p) type=(char *)p;
+				if ((*p == ':') || (*p == ',') ||
+							 (*p == '.')) {
+					p++;
+					if(*p) type = p;
+					break;
+				}
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 			sprintf(buf,"%s_default",v->name);
@@ -1189,9 +1192,6 @@ char *end;
 	slen = strlen(str);
 	if(elen > slen) return 1;
 	tmp = str + slen - elen;
-#ifdef DEBUG
-	fprintf(stderr, "Matching %s, %s %s\n", str, end, tmp);
-#endif
 	return strcmp(tmp, end);
 }
 
