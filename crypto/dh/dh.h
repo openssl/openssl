@@ -63,6 +63,9 @@
 #error DH is disabled.
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 	
@@ -169,7 +172,7 @@ int	i2d_DHparams(DH *a,unsigned char **pp);
 #ifndef NO_FP_API
 int	DHparams_print_fp(FILE *fp, DH *x);
 #endif
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	DHparams_print(BIO *bp, DH *x);
 #else
 int	DHparams_print(char *bp, DH *x);

@@ -60,6 +60,9 @@
 #define HEADER_ASN1_H
 
 #include <time.h>
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/bn.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
@@ -695,7 +698,7 @@ int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 				BIT_STRING_BITNAME *tbl, int indent);
 #endif
@@ -823,7 +826,7 @@ STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(),
 			int ex_tag, int ex_class);
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
@@ -878,7 +881,7 @@ char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);

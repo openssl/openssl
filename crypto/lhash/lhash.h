@@ -67,6 +67,10 @@
 #include <stdio.h>
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -132,7 +136,7 @@ void lh_node_stats(LHASH *lh, FILE *out);
 void lh_node_usage_stats(LHASH *lh, FILE *out);
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 void lh_stats_bio(LHASH *lh, BIO *out);
 void lh_node_stats_bio(LHASH *lh, BIO *out);
 void lh_node_usage_stats_bio(LHASH *lh, BIO *out);

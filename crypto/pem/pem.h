@@ -59,6 +59,12 @@
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
+#ifndef NO_STACK
+#include <openssl/stack.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
@@ -165,7 +171,7 @@ typedef struct pem_ctx_st
 	int num_recipient;
 	PEM_USER **recipient;
 
-#ifdef HEADER_STACK_H
+#ifndef NO_STACK
 	STACK *x509_chain;	/* certificate chain */
 #else
 	char *x509_chain;	/* certificate chain */
@@ -289,7 +295,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 #define DECLARE_PEM_read_bio(name, type) \
 	type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
 
@@ -477,7 +483,7 @@ int	PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int	PEM_do_header (EVP_CIPHER_INFO *cipher, unsigned char *data,long *len,
 	pem_password_cb *callback,void *u);
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,

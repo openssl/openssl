@@ -64,6 +64,13 @@
 #include <stdlib.h>
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
+#ifndef NO_LHASH
+#include <openssl/lhash.h>
+#endif
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -241,7 +248,7 @@ const char *ERR_reason_error_string(unsigned long e);
 #ifndef NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
 #endif
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 void ERR_print_errors(BIO *bp);
 void ERR_add_error_data(int num, ...);
 #endif
@@ -253,7 +260,7 @@ void ERR_free_strings(void);
 void ERR_remove_state(unsigned long pid); /* if zero we look it up */
 ERR_STATE *ERR_get_state(void);
 
-#ifdef HEADER_LHASH_H
+#ifndef NO_LHASH
 LHASH *ERR_get_string_table(void);
 LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
 				       * ERR_get_string_table :-) */

@@ -59,6 +59,9 @@
 #ifndef HEADER_RSA_H
 #define HEADER_RSA_H
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 
@@ -209,7 +212,7 @@ int 	i2d_RSAPrivateKey(RSA *a, unsigned char **pp);
 int	RSA_print_fp(FILE *fp, RSA *r,int offset);
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	RSA_print(BIO *bp, RSA *r,int offset);
 #endif
 

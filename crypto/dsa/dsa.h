@@ -69,6 +69,9 @@
 #error DSA is disabled.
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #ifndef NO_DH
@@ -188,7 +191,7 @@ int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
 int	i2d_DSAparams(DSA *a,unsigned char **pp);
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	DSAparams_print(BIO *bp, DSA *x);
 int	DSA_print(BIO *bp, DSA *x, int off);
 #endif
