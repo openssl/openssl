@@ -2046,10 +2046,10 @@
 #define NID_any_policy		718
 #define OBJ_any_policy		OBJ_certificate_policies,0L
 
-#define SN_policy_mapping		"policyMapping"
-#define LN_policy_mapping		"X509v3 Policy Mapping"
-#define NID_policy_mapping		719
-#define OBJ_policy_mapping		OBJ_id_ce,33L
+#define SN_policy_mappings		"policyMappings"
+#define LN_policy_mappings		"X509v3 Policy Mappings"
+#define NID_policy_mappings		719
+#define OBJ_policy_mappings		OBJ_id_ce,33L
 
 #define SN_authority_key_identifier		"authorityKeyIdentifier"
 #define LN_authority_key_identifier		"X509v3 Authority Key Identifier"
