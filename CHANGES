@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Initial (incomplete) OCSP SSL support.
+     [Steve Henson]
+
   *) Fix CPU detection on Irix 6.x.
      [Kurt Hockenbury <khockenb@stevens-tech.edu> and
       "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]

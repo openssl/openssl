@@ -61,6 +61,7 @@
 #include <openssl/pem.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #include "apps.h"
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
@@ -95,6 +96,7 @@ int MAIN(int argc, char **argv)
 	int req_text = 0, resp_text = 0;
 	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
+	SSL_CTX *ctx = NULL;
 	STACK_OF(X509) *sign_other = NULL, *verify_other = NULL;
 	char *sign_certfile = NULL, *verify_certfile = NULL;
 	unsigned long sign_flags = 0, verify_flags = 0;
@@ -104,7 +106,7 @@ int MAIN(int argc, char **argv)
 	STACK *reqnames = NULL;
 	STACK_OF(OCSP_CERTID) *ids = NULL;
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-	ERR_load_crypto_strings();
+	SSL_load_error_strings();
 	args = argv + 1;
 	reqnames = sk_new_null();
 	ids = sk_OCSP_CERTID_new_null();
@@ -451,13 +453,21 @@ int MAIN(int argc, char **argv)
 			goto end;
 			}
 		if (port) BIO_set_conn_port(cbio, port);
+		if (use_ssl == 1)
+			{
+			BIO *sbio;
+			ctx = SSL_CTX_new(SSLv23_client_method());
+			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+			sbio = BIO_new_ssl(ctx, 1);
+			cbio = BIO_push(sbio, cbio);
+			}
 		if (BIO_do_connect(cbio) <= 0)
 			{
 			BIO_printf(bio_err, "Error connecting BIO\n");
 			goto end;
 			}
 		resp = OCSP_sendreq_bio(cbio, path, req);
-		BIO_free(cbio);
+		BIO_free_all(cbio);
 		cbio = NULL;
 		if (!resp)
 			{
@@ -566,7 +576,7 @@ end:
 	EVP_PKEY_free(key);
 	X509_free(issuer);
 	X509_free(cert);
-	BIO_free(cbio);
+	BIO_free_all(cbio);
 	BIO_free(out);
 	OCSP_REQUEST_free(req);
 	OCSP_RESPONSE_free(resp);
@@ -581,6 +591,7 @@ end:
 		OPENSSL_free(host);
 		OPENSSL_free(port);
 		OPENSSL_free(path);
+		SSL_CTX_free(ctx);
 		}
 
 	EXIT(ret);
