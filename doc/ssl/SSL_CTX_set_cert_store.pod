@@ -14,7 +14,7 @@ SSL_CTX_set_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate ver
 =head1 DESCRIPTION
 
 SSL_CTX_set_cert_store() sets/replaces the certificate verification storage
-of B<ctx> to/with B<store>. If another X505_STORE object is currently
+of B<ctx> to/with B<store>. If another X509_STORE object is currently
 set in B<ctx>, it will be X509_STORE_free()ed.
 
 SSL_CTX_get_cert_store() returns a pointer to the current certificate
