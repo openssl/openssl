@@ -71,7 +71,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_PACK(0,DSA_F_DSAPARAMS_PRINT_FP,0),	"DSAparams_print_fp"},
 {ERR_PACK(0,DSA_F_DSA_DO_SIGN,0),	"DSA_do_sign"},
 {ERR_PACK(0,DSA_F_DSA_DO_VERIFY,0),	"DSA_do_verify"},
-{ERR_PACK(0,DSA_F_DSA_NEW,0),	"DSA_new"},
+{ERR_PACK(0,DSA_F_DSA_NEW_METHOD,0),	"DSA_new_method"},
 {ERR_PACK(0,DSA_F_DSA_PRINT,0),	"DSA_print"},
 {ERR_PACK(0,DSA_F_DSA_PRINT_FP,0),	"DSA_print_fp"},
 {ERR_PACK(0,DSA_F_DSA_SIGN,0),	"DSA_sign"},
