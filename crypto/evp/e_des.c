@@ -100,7 +100,7 @@ static int des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8,
+BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
 			0, des_init_key, NULL,
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,

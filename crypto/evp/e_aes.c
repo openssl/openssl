@@ -66,34 +66,24 @@ typedef struct
 
 #define data(ctx)	EVP_C_DATA(EVP_AES_KEY,ctx)
 
-#define IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(cname, ksched, cprefix, kstruct, \
-			  nid, block_size, key_len, iv_len, flags, \
-			  init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_func_cbc(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, iv_len, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, 0, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl)
-
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_128, ks, AES, EVP_AES_KEY,
-				   NID_aes_128, 16, 16, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_192, ks, AES, EVP_AES_KEY,
-				   NID_aes_192, 16, 24, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_256, ks, AES, EVP_AES_KEY,
-				   NID_aes_256, 16, 32, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
+IMPLEMENT_BLOCK_CIPHER(aes_128, ks, AES, EVP_AES_KEY,
+		       NID_aes_128, 16, 16, 16, 128,
+		       0, aes_init_key, NULL, 
+		       EVP_CIPHER_set_asn1_iv,
+		       EVP_CIPHER_get_asn1_iv,
+		       NULL)
+IMPLEMENT_BLOCK_CIPHER(aes_192, ks, AES, EVP_AES_KEY,
+		       NID_aes_192, 16, 24, 16, 128,
+		       0, aes_init_key, NULL, 
+		       EVP_CIPHER_set_asn1_iv,
+		       EVP_CIPHER_get_asn1_iv,
+		       NULL)
+IMPLEMENT_BLOCK_CIPHER(aes_256, ks, AES, EVP_AES_KEY,
+		       NID_aes_256, 16, 32, 16, 128,
+		       0, aes_init_key, NULL, 
+		       EVP_CIPHER_set_asn1_iv,
+		       EVP_CIPHER_get_asn1_iv,
+		       NULL)
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc) {

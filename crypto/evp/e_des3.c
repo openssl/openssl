@@ -130,7 +130,7 @@ static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8,
+BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 			0, des_ede_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
@@ -141,7 +141,7 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8,
 #define des_ede3_cbc_cipher des_ede_cbc_cipher
 #define des_ede3_ecb_cipher des_ede_ecb_cipher
 
-BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8,
+BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
 			0, des_ede3_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
