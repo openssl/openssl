@@ -252,8 +252,6 @@ typedef struct cert_pkey_st
 
 typedef struct cert_st
 	{
-	int cert_type;
-
 	/* Current active set */
 	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
 					 * Probably it would make more sense to store

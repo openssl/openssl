@@ -139,14 +139,6 @@ CERT *ssl_cert_new(void)
 		return(NULL);
 		}
 	memset(ret,0,sizeof(CERT));
-/*
-	ret->valid=0;
-	ret->mask=0;
-	ret->export_mask=0;
-	ret->cert_type=0;
-	ret->key->x509=NULL;
-	ret->key->publickey=NULL;
-	ret->key->privatekey=NULL; */
 
 	ret->key= &(ret->pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references=1;
@@ -167,8 +159,6 @@ CERT *ssl_cert_dup(CERT *cert)
 		}
 
 	memset(ret, 0, sizeof(CERT));
-
-	ret->cert_type = cert->cert_type;
 
 	ret->key = &ret->pkeys[cert->key - &cert->pkeys[0]];
 	/* or ret->key = ret->pkeys + (cert->key - cert->pkeys),
@@ -246,11 +236,6 @@ CERT *ssl_cert_dup(CERT *cert)
 			}
 		}
 	
-
-	/* ret->cert_chain should not exist: that's pure per-connection data.
-	 * Anyway, we never use this function when it is non-NULL,
-	 * so we just don't look at it. */
-
 	/* ret->extra_certs *should* exist, but currently the own certificate
 	 * chain is held inside SSL_CTX */
 
