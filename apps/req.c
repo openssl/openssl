@@ -552,13 +552,10 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
-		char *randfile;
-
-		if (inrand)
-			randfile = inrand;
-		else
-			randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
 		app_RAND_load_file(randfile, bio_err, 0);
+		if (inrand)
+			app_RAND_load_files(inrand);
 	
 		if (newkey <= 0)
 			{
