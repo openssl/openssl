@@ -580,7 +580,10 @@ finds the new code offensive. To work around the problem, configure with
 no-asm (and sacrifice a great deal of performance) or patch your assembler
 according to <URL: http://www.openssl.org/~appro/gas-1.92.3.OpenBSD.patch>.
 For your convenience a pre-compiled replacement binary is provided at
-<URL: http://www.openssl.org/~appro/gas-1.92.3.OpenBSD.bin>.
+<URL: http://www.openssl.org/~appro/gas-1.92.3.static.aout.bin>.
+Reportedly elder *BSD a.out platforms also suffer from this problem and
+remedy should be same. Provided binary is statically linked and should be
+working across wider range of *BSD branches, not just OpenBSD.
 
 [PROG] ========================================================================
 
