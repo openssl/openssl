@@ -165,22 +165,6 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	if (!BN_sub(r1,rsa->p,BN_value_one())) goto err;	/* p-1 */
 	if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;	/* q-1 */
 	if (!BN_mul(r0,r1,r2,ctx)) goto err;	/* (p-1)(q-1) */
-
-/* should not be needed, since gcd(p-1,e) == 1 and gcd(q-1,e) == 1 */
-/*	for (;;)
-		{
-		if (!BN_gcd(r3,r0,rsa->e,ctx)) goto err;
-		if (BN_is_one(r3)) break;
-
-		if (1)
-			{
-			if (!BN_add_word(rsa->e,2L)) goto err;
-			continue;
-			}
-		RSAerr(RSA_F_RSA_GENERATE_KEY,RSA_R_BAD_E_VALUE);
-		goto err;
-		}
-*/
 	if (!BN_mod_inverse(rsa->d,rsa->e,r0,ctx)) goto err;	/* d */
 
 	/* calculate d mod (p-1) */
