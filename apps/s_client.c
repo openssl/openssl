@@ -558,7 +558,7 @@ re_start:
 	if (c_debug)
 		{
 		con->debug=1;
-		BIO_set_callback(sbio,bio_dump_cb);
+		BIO_set_callback(sbio,bio_dump_callback);
 		BIO_set_callback_arg(sbio,bio_c_out);
 		}
 	if (c_msg)

@@ -229,8 +229,8 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	return(1);
 	}
 
-long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
-	     long argl, long ret)
+long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
+	int argi, long argl, long ret)
 	{
 	BIO *out;
 
