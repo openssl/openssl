@@ -156,7 +156,7 @@ $ LIB_RAND = "fips_rand"
 $ LIB_DES = "fips_des_enc,fips_des_selftest,fips_set_key"
 $ LIB_AES = "fips_aes_core,fips_aes_selftest"
 $ LIB_DSA = "fips_dsa_ossl,fips_dsa_gen,fips_dsa_selftest"
-$ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fipe_rsa_selftest"
+$ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fips_rsa_selftest"
 $!
 $! Setup exceptional compilations
 $!
@@ -884,7 +884,7 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
            "/NOLIST/PREFIX=ALL" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -918,7 +918,7 @@ $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -950,7 +950,7 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
