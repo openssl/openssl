@@ -163,6 +163,10 @@
 #define ENGINE_get_default_BN_mod_exp_crt	ENGINE_get_def_BN_mod_exp_crt
 #undef ENGINE_set_default_BN_mod_exp_crt
 #define ENGINE_set_default_BN_mod_exp_crt	ENGINE_set_def_BN_mod_exp_crt
+#undef ENGINE_set_load_privkey_function
+#define ENGINE_set_load_privkey_function        ENGINE_set_load_privkey_fn
+#undef ENGINE_get_load_privkey_function
+#define ENGINE_get_load_privkey_function        ENGINE_get_load_privkey_fn
 
 /* Hack some long OCSP names */
 #undef OCSP_REQUEST_get_ext_by_critical
@@ -187,14 +191,24 @@
 #define EC_POINT_set_compressed_coordinates_GFp EC_POINT_set_compr_coords_GFp
 #undef ec_GFp_simple_group_set_curve_GFp
 #define ec_GFp_simple_group_set_curve_GFp       ec_GFp_simple_grp_set_curve_GFp
+#undef ec_GFp_simple_group_get_curve_GFp
+#define ec_GFp_simple_group_get_curve_GFp       ec_GFp_simple_grp_get_curve_GFp
 #undef ec_GFp_simple_group_clear_finish
 #define ec_GFp_simple_group_clear_finish        ec_GFp_simple_grp_clear_finish
 #undef ec_GFp_simple_group_set_generator
 #define ec_GFp_simple_group_set_generator       ec_GFp_simple_grp_set_generator
+#undef ec_GFp_simple_group_get0_generator
+#define ec_GFp_simple_group_get0_generator      ec_GFp_simple_grp_gt0_generator
+#undef ec_GFp_simple_group_get_cofactor
+#define ec_GFp_simple_group_get_cofactor        ec_GFp_simple_grp_get_cofactor
 #undef ec_GFp_simple_point_clear_finish
 #define ec_GFp_simple_point_clear_finish        ec_GFp_simple_pt_clear_finish
 #undef ec_GFp_simple_point_set_to_infinity
 #define ec_GFp_simple_point_set_to_infinity     ec_GFp_simple_pt_set_to_inf
+#undef ec_GFp_simple_points_make_affine
+#define ec_GFp_simple_points_make_affine        ec_GFp_simple_pts_make_affine
+#undef ec_GFp_simple_group_get_curve_GFp
+#define ec_GFp_simple_group_get_curve_GFp       ec_GFp_simple_grp_get_curve_GFp
 #undef ec_GFp_simple_set_Jprojective_coordinates_GFp
 #define ec_GFp_simple_set_Jprojective_coordinates_GFp \
                                                 ec_GFp_smp_set_Jproj_coords_GFp
