@@ -425,7 +425,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 
 /* This is an internal function that should not be used in applications.
  * It ensures that 'b' has enough room for a 'words' word number
- * and initialises the unused part of b->d with leading zeros.
+ * and initialises any unused part of b->d with leading zeros.
  * It is mostly used by the various BIGNUM routines. If there is an error,
  * NULL is returned. If not, 'b' is returned. */
 
@@ -450,15 +450,18 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		}
 	
 	/* NB: bn_wexpand() calls this only if the BIGNUM really has to grow */
-	A = &(b->d[b->top]);
-	for (i=(words - b->top)>>3; i>0; i--,A+=8)
+	if ((b != NULL) && (b->top < b->dmax))
 		{
-		A[0]=0; A[1]=0; A[2]=0; A[3]=0;
-		A[4]=0; A[5]=0; A[6]=0; A[7]=0;
+		A = &(b->d[b->top]);
+		for (i=(words - b->top)>>3; i>0; i--,A+=8)
+			{
+			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
+			A[4]=0; A[5]=0; A[6]=0; A[7]=0;
+			}
+		for (i=(words - b->top)&7; i>0; i--,A++)
+			A[0]=0;
 		}
-	for (i=(words - b->top)&7; i>0; i--,A++)
-		A[0]=0;
-	
+		
 	return b;
 	}
 
