@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix a couple of memory leaks in PKCS7_dataDecode()
+     [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
+
   *) Change Configure and Makefiles to provide EXE_EXT, which will contain
      the default extension for executables, if any.  Also, make the perl
      scripts that use symlink() to test if it really exists and use "cp"
