@@ -2,11 +2,19 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6h and 0.9.6i  [xx XXX xxxx]
+ Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
-  *)
+  *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+     via timing by performing a MAC computation even if incorrrect
+     block cipher padding has been found.  This is a countermeasure
+     against active attacks where the attacker has to distinguish
+     between bad padding and a MAC verification error. (CAN-2003-0078)
 
- Changes between 0.9.6g and 0.9.6h  [21 Dec 2002]
+     [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
+     Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
+     Martin Vuagnoux (EPFL, Ilion)]
+
+ Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
 
   *) New function OPENSSL_cleanse(), which is used to cleanse a section of
      memory from it's contents.  This is done with a counter that will
