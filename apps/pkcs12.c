@@ -880,14 +880,14 @@ int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name)
 				break;
 
 				case V_ASN1_OCTET_STRING:
-				hex_prin(out, av->value.bit_string->data,
-					av->value.bit_string->length);
+				hex_prin(out, av->value.octet_string->data,
+					av->value.octet_string->length);
 				BIO_printf(out, "\n");	
 				break;
 
 				case V_ASN1_BIT_STRING:
-				hex_prin(out, av->value.octet_string->data,
-					av->value.octet_string->length);
+				hex_prin(out, av->value.bit_string->data,
+					av->value.bit_string->length);
 				BIO_printf(out, "\n");	
 				break;
 

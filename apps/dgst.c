@@ -74,7 +74,7 @@
 #define PROG	dgst_main
 
 void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
-		EVP_PKEY *key, unsigned char *sigin, unsigned int siglen);
+		EVP_PKEY *key, unsigned char *sigin, int siglen);
 
 int MAIN(int, char **);
 
@@ -96,7 +96,7 @@ int MAIN(int argc, char **argv)
 	char out_bin = -1, want_pub = 0, do_verify = 0;
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
-	unsigned int siglen = 0;
+	int siglen = 0;
 
 	apps_startup();
 
@@ -280,7 +280,7 @@ int MAIN(int argc, char **argv)
 		}
 		siglen = BIO_read(sigbio, sigbuf, siglen);
 		BIO_free(sigbio);
-		if(siglen == 0) {
+		if(siglen <= 0) {
 			BIO_printf(bio_err, "Error reading signature file %s\n",
 								sigfile);
 			ERR_print_errors(bio_err);
@@ -331,7 +331,7 @@ end:
 	}
 
 void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
-			EVP_PKEY *key, unsigned char *sigin, unsigned int siglen)
+			EVP_PKEY *key, unsigned char *sigin, int siglen)
 	{
 	int len;
 	int i;
@@ -345,7 +345,7 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		i = EVP_VerifyFinal(ctx, sigin, siglen, key); 
+		i = EVP_VerifyFinal(ctx, sigin, (unsigned int)siglen, key); 
 		if(i > 0) BIO_printf(out, "Verified OK\n");
 		else if(i == 0) BIO_printf(out, "Verification Failure\n");
 		else
