@@ -81,11 +81,14 @@ typedef int pid_t;
 #include "vendor_defns/aep.h"
 #endif
 
+#define FAIL_TO_SW 0x10101010
 
 static int aep_init();
 static int aep_finish();
+
 static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR hConnection);
 static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection);
+static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection);
 static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use);
 
 /* BIGNUM stuff */
@@ -474,16 +477,26 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		       const BIGNUM *m, BN_CTX *ctx)
 {
   int to_return = 0;
-
+  int 	r_len = 0;
   AEP_CONNECTION_HNDL hConnection;
   AEP_RV rv;
+
+  r_len = BN_num_bits(m);
+
+  /* Perform in software if modulus is too large for hardware. */
+
+  if (r_len > max_key_len)
+    {
+      AEPHKerr(AEPHK_F_AEP_MOD_EXP, AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+      return BN_mod_exp(r, a, p, m, ctx);
+    }
 
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
   if (rv != AEP_R_OK)
     {     
       ENGINEerr(ENGINE_F_AEP_MOD_EXP,ENGINE_R_GET_HANDLE_FAILED);
-      goto err;
+      return BN_mod_exp(r, a, p, m, ctx);
     }
 
   /*To the card with the mod exp*/
@@ -492,8 +505,8 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
   if (rv !=  AEP_R_OK)
     {
       ENGINEerr(ENGINE_F_AEP_MOD_EXP,ENGINE_R_MOD_EXP_FAILED);
-      rv = aep_return_connection(hConnection);
-      goto err;
+      rv = aep_close_connection(hConnection);
+      return BN_mod_exp(r, a, p, m, ctx);
     }
 
   /*Return the connection to the pool*/
@@ -501,7 +514,7 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
   if (rv != AEP_R_OK)
   {
     ENGINEerr(ENGINE_F_AEP_RAND,ENGINE_R_RETURN_CONNECTION_FAILED); 
-	goto err;
+    goto err;
   }
 
   to_return = 1;
@@ -522,18 +535,18 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
   if (rv != AEP_R_OK)
     {
       ENGINEerr(ENGINE_F_AEP_MOD_EXP_CRT,ENGINE_R_GET_HANDLE_FAILED);
-      goto err;
+      goto FAIL_TO_SW;
     }
 
   /*To the card with the mod exp*/
   rv = p_AEP_ModExpCrt(hConnection,(void*)a, (void*)p, (void*)q, (void*)dmp1,(void*)dmq1,
 		       (void*)iqmp,(void*)r,NULL);
   if (rv != AEP_R_OK)
-  {
+    {
       ENGINEerr(ENGINE_F_AEP_MOD_EXP_CRT,ENGINE_R_MOD_EXP_CRT_FAILED);
-      rv = aep_return_connection(hConnection);
-      goto err;
-  }
+      rv = aep_close_connection(hConnection);
+      return FAIL_TO_SW;
+    }
 
   /*Return the connection to the pool*/
   rv = aep_return_connection(hConnection);
@@ -645,8 +658,14 @@ static int aep_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
   if (rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp)
     {
       rv =  aep_mod_exp_crt(r0,I,rsa->p,rsa->q, rsa->dmp1,rsa->dmq1,rsa->iqmp,ctx);
-      if (rv != AEP_R_OK)
-       goto err;
+      if (rv == FAIL_TO_SW)
+	{
+	  const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+	  to_return = (*meth->rsa_mod_exp)(r0, I, rsa);
+	  goto err;
+	}
+      else if (rv != AEP_R_OK)
+	goto err;
     }
   else
     {
@@ -841,6 +860,28 @@ static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
       if (aep_app_conn_table[count].conn_hndl == hConnection)
 	{
 	  aep_app_conn_table[count].conn_state = Connected;
+	  break;
+	}
+    }
+
+  CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+
+  return AEP_R_OK;
+}
+
+static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
+{
+  int count;
+
+  CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+
+  /*Find the connection item that matches this connection handle*/
+  for(count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
+    {
+      if (aep_app_conn_table[count].conn_hndl == hConnection)
+	{
+	  aep_app_conn_table[count].conn_state = NotConnected;
+	  close(aep_app_conn_table[count].conn_hndl);
 	  break;
 	}
     }
