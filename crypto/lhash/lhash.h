@@ -89,6 +89,35 @@ typedef unsigned long (*LHASH_HASH_FN_TYPE)(void *);
 typedef void (*LHASH_DOALL_FN_TYPE)(void *);
 typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
 
+/* Macros for declaring and implementing type-safe wrappers for LHASH callbacks.
+ * This way, callbacks can be provided to LHASH structures without function
+ * pointer casting and the macro-defined callbacks provide per-variable casting
+ * before deferring to the underlying type-specific callbacks. NB: It is
+ * possible to place a "static" in front of both the DECLARE and IMPLEMENT
+ * macros if the functions are strictly internal. To keep text-editors happy,
+ * the macro deliberately doesn't define a trailing semi-colon - so the macro
+ * can be placed just like a regular function declaration, with an optional
+ * "static" prefix and trailing simi-colon. */
+
+/* First: "hash" functions */
+#define DECLARE_LHASH_HASH_FN(f_name,o_type) \
+	unsigned long f_name##_LHASH_HASH(void *)
+#define IMPLEMENT_LHASH_HASH_FN(f_name,o_type) \
+	unsigned long f_name##_LHASH_HASH(void *arg) { \
+		o_type a = (o_type)arg; \
+		return f_name(a); }
+#define LHASH_HASH_FN(f_name) f_name##_LHASH_HASH
+
+/* Second: "compare" functions */
+#define DECLARE_LHASH_COMP_FN(f_name,o_type) \
+	int f_name##_LHASH_COMP(void *, void *)
+#define IMPLEMENT_LHASH_COMP_FN(f_name,o_type) \
+	int f_name##_LHASH_COMP(void *arg1, void *arg2) { \
+		o_type a = (o_type)arg1; \
+		o_type b = (o_type)arg2; \
+		return f_name(a,b); }
+#define LHASH_COMP_FN(f_name) f_name##_LHASH_COMP
+
 typedef struct lhash_st
 	{
 	LHASH_NODE **b;
