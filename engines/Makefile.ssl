@@ -27,12 +27,13 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758_cca aep atalla cswift ncipher nuron sureware ubsec
+LIBNAMES= 4758_cca aep atalla cswift gmp ncipher nuron sureware ubsec
 
 LIBSRC=	e_4758_cca.c \
 	e_aep.c \
 	e_atalla.c \
 	e_cswift.c \
+	e_gmp.c \
 	e_ncipher.c \
 	e_nuron.c \
 	e_sureware.c \
@@ -41,6 +42,7 @@ LIBOBJ= e_4758_cca.o \
 	e_aep.o \
 	e_atalla.o \
 	e_cswift.o \
+	e_gmp.o \
 	e_ncipher.o \
 	e_nuron.o \
 	e_sureware.o \
@@ -53,6 +55,7 @@ HEADER=	e_4758_cca_err.c e_4758_cca_err.h \
 	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
 	e_cswift_err.c e_cswift_err.h \
+	e_gmp_err.c e_gmp_err.h \
 	e_ncipher_err.c e_ncipher_err.h \
 	e_nuron_err.c e_nuron_err.h \
 	e_sureware_err.c e_sureware_err.h \
