@@ -322,9 +322,9 @@ int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void 
 int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t,const char *,int),
                                 void *(*r)(void *,size_t,const char *,int),
-                                void (*f)(void *,const char *,int));
+                                void (*f)(void *));
 int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t,const char *,int),
-                                       void (*free_func)(void *,const char *,int));
+                                       void (*free_func)(void *));
 int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*r)(void *,void *,int,const char *,int,int),
 				   void (*f)(void *,int),
@@ -334,9 +334,9 @@ void CRYPTO_get_mem_functions(void *(**m)(size_t),void *(**r)(void *, size_t), v
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
 void CRYPTO_get_mem_ex_functions(void *(**m)(size_t,const char *,int),
                                  void *(**r)(void *, size_t,const char *,int),
-                                 void (**f)(void *,const char *,int));
+                                 void (**f)(void *));
 void CRYPTO_get_locked_mem_ex_functions(void *(**m)(size_t,const char *,int),
-                                        void (**f)(void *,const char *,int));
+                                        void (**f)(void *));
 void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
 				    void (**r)(void *,void *,int,const char *,int,int),
 				    void (**f)(void *,int),
