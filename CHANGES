@@ -96,8 +96,8 @@
      are otherwise ignored at present.
      [Steve Henson]
 
-  *) Fix a horrible bug in enc_read() in crypto/evp/bio_enc.c: if the first data
-     read consists of only the final block it would not decrypted because
+  *) Fix a horrible bug in enc_read() in crypto/evp/bio_enc.c: if the first
+     dataread consists of only the final block it would not decrypted because
      EVP_CipherUpdate() would correctly report zero bytes had been decrypted.
      A misplaced 'break' also meant the decrypted final block might not be
      copied until the next read.
@@ -203,9 +203,9 @@
      method only got called if p,q,dmp1,dmq1,iqmp components were present,
      otherwise bn_mod_exp was called. In the case of hardware keys for example
      no private key components need be present and it might store extra data
-     in the RSA structure, which cannot be accessed from bn_mod_exp. By setting
-     RSA_FLAG_EXT_PKEY rsa_mod_exp will always be called for private key
-     operations.
+     in the RSA structure, which cannot be accessed from bn_mod_exp.
+     By setting RSA_FLAG_EXT_PKEY rsa_mod_exp will always be called for
+     private key operations.
      [Steve Henson]
 
   *) Added support for SPARC Linux.
@@ -219,7 +219,7 @@
      The PEM[_ASN1]_{read,write}... functions and macros now take an
      additional void * argument, which is just handed through whenever
      the password callback is called.
-     [Damien Miller <dmiller@ilogic.com.au>, with tiny changes by Bodo Moeller]
+     [Damien Miller <dmiller@ilogic.com.au>; tiny changes by Bodo Moeller]
 
      New function SSL_CTX_set_default_passwd_cb_userdata.
 
