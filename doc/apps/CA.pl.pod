@@ -132,6 +132,7 @@ configuration file, not just its directory.
 
 =head1 SEE ALSO
 
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<req(1)|req(1)>, L<pkcs12(1)|pkcs12(1)>, L<config(1)|config(1)>
+L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<req(1)|req(1)>, L<pkcs12(1)|pkcs12(1)>,
+L<config(5)|config(5)>
 
 =cut
