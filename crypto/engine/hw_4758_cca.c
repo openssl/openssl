@@ -953,7 +953,7 @@ static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
 #ifdef ENGINE_DYNAMIC_SUPPORT 
 static int bind_fn(ENGINE *e, const char *id)
 	{
-	if(id && (strcmp(id, engine_cswift_id) != 0))
+	if(id && (strcmp(id, engine_4758_cca_id) != 0))
 		return 0;
 	if(!bind_helper(e))
 		return 0;
