@@ -202,6 +202,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 		if(OBJ_obj2nid(ex->object) == nid) {
 			if(idx) {
 				*idx = i;
+				found_ex = ex;
 				break;
 			} else if(found_ex) {
 				/* Found more than one */
