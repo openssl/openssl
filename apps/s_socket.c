@@ -344,8 +344,8 @@ char *ip;
 	if (s == INVALID_SOCKET) goto err;
 #if defined SOL_SOCKET && defined SO_REUSEADDR
 		{
-		int i = 1;
-		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof i);
+		int j = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &j, sizeof j);
 		}
 #endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
