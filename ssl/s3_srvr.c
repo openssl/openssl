@@ -524,7 +524,9 @@ int ssl3_accept(SSL *s)
 			/* remove buffering on output */
 			ssl_free_wbio_buffer(s);
 
-			s->new_session=0;
+			if (s->new_session == 2)
+				s->new_session=0;
+			/* if s->new_session is still 1, we have only sent a HelloRequest */
 			s->init_num=0;
 
 			ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
@@ -673,7 +675,15 @@ static int ssl3_get_client_hello(SSL *s)
 	j= *(p++);
 
 	s->hit=0;
-	if (j == 0)
+	/* Versions before 0.9.7 always allow session reuse during renegotiation
+	 * (i.e. when s->new_session is true), option
+	 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is new with 0.9.7.
+	 * Maybe this optional behaviour should always have been the default,
+	 * but we cannot safely change the default behaviour (or new applications
+	 * might be written that become totally unsecure when compiled with
+	 * an earlier library version)
+	 */
+	if (j == 0 || (s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)))
 		{
 		if (!ssl_get_new_session(s,1))
 			goto err;
@@ -693,6 +703,11 @@ static int ssl3_get_client_hello(SSL *s)
 				goto err;
 			}
 		}
+
+	if (s->new_session)
+		/* actually not necessarily a 'new' section unless
+		 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
+		s->new_session = 2;
 
 	p+=j;
 	n2s(p,i);

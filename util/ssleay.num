@@ -212,3 +212,4 @@ kssl_ctx_free                           261	EXIST::FUNCTION:KRB5
 kssl_krb5_free_data_contents            262	EXIST::FUNCTION:KRB5
 kssl_ctx_setstring                      263	EXIST::FUNCTION:KRB5
 SSL_CTX_set_generate_session_id         264	EXIST::FUNCTION:
+SSL_renegotiate_pending                 265	EXIST::FUNCTION:

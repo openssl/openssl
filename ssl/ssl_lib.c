@@ -836,6 +836,13 @@ int SSL_renegotiate(SSL *s)
 	return(s->method->ssl_renegotiate(s));
 	}
 
+int SSL_renegotiate_pending(SSL *s)
+	{
+	/* becomes true when negotiation is requested;
+	 * false again once a handshake has finished */
+	return (s->new_session != 0);
+	}
+
 long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 	{
 	long l;

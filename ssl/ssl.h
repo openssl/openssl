@@ -335,7 +335,8 @@ typedef struct ssl_session_st
 
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
-/* Set to also use the tmp_rsa key when doing RSA operations. */
+/* Set to always use the tmp_rsa key when doing RSA operations,
+ * even when this violates protocol specs */
 #define SSL_OP_EPHEMERAL_RSA				0x00200000L
 /* Set on servers to choose the cipher according to the server's
  * preferences */
@@ -345,6 +346,8 @@ typedef struct ssl_session_st
  * (version 3.1) was announced in the client hello. Normally this is
  * forbidden to prevent version rollback attacks. */
 #define SSL_OP_TLS_ROLLBACK_BUG				0x00800000L
+/* As server, disallow session resumption on renegotiation */
+#define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x01000000L
 
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
@@ -640,7 +643,11 @@ struct ssl_st
 
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
-	int new_session;/* 1 if we are to use a new session */
+	int new_session;/* 1 if we are to use a new session,
+	                 * (sometimes 2 after a new session has in fact been assigned).
+	                 * NB: For servers, the 'new' session may actually be a previously
+	                 * cached session or even the previous session unless
+	                 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
 	int quiet_shutdown;/* don't send shutdown packets */
 	int shutdown;	/* we have shut things down, 0x01 sent, 0x02
 			 * for received */
@@ -1157,6 +1164,7 @@ STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s);
 
 int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);
+int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
 SSL_METHOD *SSL_get_ssl_method(SSL *s);
