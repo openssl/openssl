@@ -132,8 +132,6 @@ SSLStateMachine *SSLStateMachine_new(const char *szCertificateFile,
     die_unless(pMachine->pSSL);
 
     pMachine->pbioRead=BIO_new(BIO_s_mem());
-    /* Set EOF to return 0 (-1 is the default) */
-    BIO_ctrl(pMachine->pbioRead,BIO_C_SET_BUF_MEM_EOF_RETURN,0,NULL);
 
     pMachine->pbioWrite=BIO_new(BIO_s_mem());
 
@@ -165,15 +163,36 @@ int SSLStateMachine_read_extract(SSLStateMachine *pMachine,
 	{
 	fprintf(stderr,"Doing SSL_accept\n");
 	n=SSL_accept(pMachine->pSSL);
-	if(n < 0)
-	    SSLStateMachine_print_error(pMachine,"SSL_accept failed");
 	if(n == 0)
 	    fprintf(stderr,"SSL_accept returned zero\n");
-	assert(n >= 0);
+	if(n < 0)
+	    {
+	    int err;
+
+	    if((err=SSL_get_error(pMachine->pSSL,n)) == SSL_ERROR_WANT_READ)
+		{
+		fprintf(stderr,"SSL_accept wants more data\n");
+		return 0;
+		}
+
+	    SSLStateMachine_print_error(pMachine,"SSL_accept error");
+	    exit(7);
+	    }
 	return 0;
 	}
 
     n=SSL_read(pMachine->pSSL,aucBuf,nBuf);
+    if(n < 0)
+	{
+	int err=SSL_get_error(pMachine->pSSL,n);
+
+	if(err == SSL_ERROR_WANT_READ)
+	    {
+	    fprintf(stderr,"SSL_read wants more data\n");
+	    return 0;
+	    }
+	}
+
     fprintf(stderr,"%d bytes of decrypted data read from state machine\n",n);
     return n;
     }
