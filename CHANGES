@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix a horrible bug in enc_read() in crypto/evp/bio_enc.c: if the first data
+     read consists of only the final block it would not decrypted because
+     EVP_CipherUpdate() would correctly report zero bytes had been decrypted.
+     A misplaced 'break' also meant the decrypted final block might not be
+     copied until the next read.
+     [Steve Henson]
+
   *) Initial support for DH_METHOD. Again based on RSA_METHOD. Also added
      a few extra parameters to the DH structure: these will be useful if
      for example we want the value of 'q' or implement X9.42 DH.

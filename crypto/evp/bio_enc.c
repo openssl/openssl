@@ -184,9 +184,11 @@ static int enc_read(BIO *b, char *out, int outl)
 				ctx->ok=i;
 				ctx->buf_off=0;
 				}
-			else
+			else 
+				{
 				ret=(ret == 0)?i:ret;
-			break;
+				break;
+				}
 			}
 		else
 			{
@@ -194,13 +196,19 @@ static int enc_read(BIO *b, char *out, int outl)
 				(unsigned char *)ctx->buf,&ctx->buf_len,
 				(unsigned char *)&(ctx->buf[8]),i);
 			ctx->cont=1;
+			/* Note: it is possible for EVP_CipherUpdate to
+			 * decrypt zero bytes because this is or looks like
+			 * the final block: if this happens we should retry
+			 * and either read more data or decrypt the final
+			 * block
+			 */
+			if(ctx->buf_len == 0) continue;
 			}
 
 		if (ctx->buf_len <= outl)
 			i=ctx->buf_len;
 		else
 			i=outl;
-
 		if (i <= 0) break;
 		memcpy(out,ctx->buf,i);
 		ret+=i;
