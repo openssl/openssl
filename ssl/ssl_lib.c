@@ -392,7 +392,7 @@ int SSL_get_verify_mode(SSL *s)
 	return(s->verify_mode);
 	}
 
-int (*SSL_get_verify_callback(SSL *s))()
+int (*SSL_get_verify_callback(SSL *s))(int ok,X509_STORE_CTX *ctx)
 	{
 	return(s->verify_callback);
 	}
@@ -402,12 +402,13 @@ int SSL_CTX_get_verify_mode(SSL_CTX *ctx)
 	return(ctx->verify_mode);
 	}
 
-int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))()
+int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int ok,X509_STORE_CTX *ctx)
 	{
 	return(ctx->default_verify_callback);
 	}
 
-void SSL_set_verify(SSL *s,int mode,int (*callback)())
+void SSL_set_verify(SSL *s,int mode,
+		    int (*callback)(int ok,X509_STORE_CTX *ctx))
 	{
 	s->verify_mode=mode;
 	if (callback != NULL)

@@ -400,7 +400,7 @@ struct ssl_ctx_st
 /**/	struct cert_st /* CERT */ *default_cert;
 /**/	int read_ahead;
 /**/	int verify_mode;
-/**/	int (*default_verify_callback)();
+/**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
 
 	/* Default password callback. */
 /**/	int (*default_passwd_callback)();
@@ -562,7 +562,7 @@ struct ssl_st
 	/* Used in SSL2 and SSL3 */
 	int verify_mode;	/* 0 don't care about verify failure.
 				 * 1 fail if verify fails */
-	int (*verify_callback)(); /* fail if callback returns 0 */
+	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
 	void (*info_callback)(); /* optional informational callback */
 
 	int error;		/* error bytes to be written */
@@ -841,8 +841,9 @@ BIO *	SSL_get_wbio(SSL *s);
 int	SSL_set_cipher_list(SSL *s, char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(SSL *s);
-int	(*SSL_get_verify_callback(SSL *s))();
-void	SSL_set_verify(SSL *s, int mode, int (*callback) ());
+int	(*SSL_get_verify_callback(SSL *s))(int ok,X509_STORE_CTX *ctx);
+void	SSL_set_verify(SSL *s, int mode,
+		       int (*callback)(int ok,X509_STORE_CTX *ctx));
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
 int	SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
@@ -895,8 +896,9 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 STACK *	SSL_get_peer_cert_chain(SSL *s);
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
-int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))();
-void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*callback)(int, X509_STORE_CTX *));
+int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int ok,X509_STORE_CTX *ctx);
+void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
+			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx, int (*cb)(),char *arg);
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len);
