@@ -1,0 +1,38 @@
+=pod
+
+=head1 NAME
+
+ BIO_ctrl_get_read_request - Find out how much bytes are were requested from the BIO
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ size_t BIO_ctrl_get_read_request(BIO *bio);
+
+=head1 DESCRIPTION
+
+BIO_ctrl_get_read_request() returns the number of bytes that were last
+requested from B<bio> by a BIO_read() operation. This is useful e.g. for
+BIO pairs, so that the application knows how much bytes to supply to B<bio>.
+
+=head1 BUGS
+
+When B<bio> is NULL, the OpenSSL library calls assert().
+
+=head1 RETURN VALUES
+
+The following return values can occur:
+
+=over 4
+
+=item E<gt>=0
+
+The number of bytes requested.
+
+=back
+
+=head1 SEE ALSO
+
+L<bio(3)|bio(3)>, L<BIO_s_mem(3)|BIO_s_mem(3)>,
+L<BIO_new_bio_pair(3)|BIO_new_bio_pair(3)>

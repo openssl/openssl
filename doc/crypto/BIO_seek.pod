@@ -1,0 +1,30 @@
+=pod
+
+=head1 NAME
+
+BIO_seek, BIO_tell - file BIO operations
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ #define BIO_seek(b,ofs)	(int)BIO_ctrl(b,BIO_C_FILE_SEEK,ofs,NULL)
+ #define BIO_tell(b)		(int)BIO_ctrl(b,BIO_C_FILE_TELL,0,NULL)
+
+=head1 DESCRIPTION
+
+BIO_seek() sets the file position pointer to B<ofs> bytes from start of file.
+
+BIO_tell() returns the current file position.
+
+=head1 RETURN VALUES
+
+BIO_seek() returns the same value as the underlying fseek() function:
+0 for success or -1 for failure.
+
+BIO_tell() returns the current file position.
+
+=head1 SEE ALSO
+
+TBA
+
