@@ -285,16 +285,20 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len, ECDSA *
 		reason = ECDSA_R_SIGNATURE_MALLOC_FAILED;
 		goto err;
 	}
-	ret->r = r;
-	ret->s = s;
+	if (BN_copy(ret->r, r) == NULL || BN_copy(ret->s, s) == NULL)
+	{
+		ECDSA_SIG_free(ret);
+		ret = NULL;
+		reason = ERR_R_BN_LIB;
+	}
 	
 err:
 	if (!ret)
 		{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,reason);
-		BN_free(r);
-		BN_free(s);
 		}
+	if (r     != NULL) BN_clear_free(r);
+	if (s     != NULL) BN_clear_free(s);
 	if (ctx   != NULL) BN_CTX_free(ctx);
 	if (m     != NULL) BN_clear_free(m);
 	if (tmp   != NULL) BN_clear_free(tmp);

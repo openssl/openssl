@@ -61,29 +61,10 @@
 
 static point_conversion_form_t POINT_CONVERSION_FORM = POINT_CONVERSION_COMPRESSED;
 
-/* Override the default new methods */
-static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
-{
-	if(operation == ASN1_OP_NEW_PRE) {
-		ECDSA_SIG *sig;
-		sig = OPENSSL_malloc(sizeof(ECDSA_SIG));
-		if (sig == NULL)
-		{
-			ECDSAerr(ECDSA_F_SIG_CB, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		sig->r = NULL;
-		sig->s = NULL;
-		*pval = (ASN1_VALUE *)sig;
-		return 2;
-	}
-	return 1;
-}
-
-ASN1_SEQUENCE_cb(ECDSA_SIG, sig_cb) = {
+ASN1_SEQUENCE(ECDSA_SIG) = {
 	ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
 	ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
-} ASN1_SEQUENCE_END_cb(ECDSA_SIG, ECDSA_SIG)
+} ASN1_SEQUENCE_END(ECDSA_SIG)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
 
@@ -439,9 +420,7 @@ ECDSA         *ECDSA_x9_62parameters2ecdsa(const X9_62_EC_PARAMETERS *params, EC
 		if ((point = EC_POINT_new(ret->group)) == NULL) goto err;
 	}
 	else OPENSSL_ECDSA_ABORT(ECDSA_R_WRONG_FIELD_IDENTIFIER)
-	/* FIXME!!!  It seems like the comparison of data with 0 isn't the
-	   intended thing. */
-	if (params->curve->seed != NULL && params->curve->seed->data != 0)
+	if (params->curve->seed != NULL)
 	{
 		if (ret->seed != NULL)
 			OPENSSL_free(ret->seed);
