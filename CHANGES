@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function EVP_CIPHER_CTX_set_padding() this is used to
+     disable standard block padding (aka PKCS#5 padding) in the EVP
+     API, which was previously mandatory. This means that the data is
+     not padded in any way and so the total length much be a multiple
+     of the block size, otherwise an error occurs.
+     [Steve Henson]
+
   *) Initial (incomplete) OCSP SSL support.
      [Steve Henson]
 

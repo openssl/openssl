@@ -77,6 +77,7 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if (cipher) {
 		ctx->cipher=cipher;
 		ctx->key_len = cipher->key_len;
+		ctx->flags = 0;
 		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
 			if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
 				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
@@ -200,6 +201,16 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		return 1;
 		}
 	bl=ctx->buf_len;
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		{
+		if(bl)
+			{
+			EVPerr(EVP_F_EVP_ENCRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			return 0;
+			}
+		*outl = 0;
+		return 1;
+		}
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
@@ -216,6 +227,9 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	*outl=0;
 	if (inl == 0) return 1;
+
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
 	b=ctx->cipher->block_size;
 	if (b > 1)
@@ -261,6 +275,16 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 	*outl=0;
 	b=ctx->cipher->block_size;
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		{
+		if(ctx->buf_len)
+			{
+			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			return 0;
+			}
+		*outl = 0;
+		return 1;
+		}
 	if (b > 1)
 		{
 		if (ctx->buf_len != b)
@@ -317,6 +341,13 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 		}
 	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,EVP_R_INVALID_KEY_LENGTH);
 	return 0;
+	}
+
+int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
+	{
+	if (pad) ctx->flags &= ~EVP_CIPH_NO_PADDING;
+	else ctx->flags |= EVP_CIPH_NO_PADDING;
+	return 1;
 	}
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)

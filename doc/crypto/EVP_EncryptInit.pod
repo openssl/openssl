@@ -12,7 +12,7 @@ EVP_CIPHER_mode, EVP_CIPHER_type, EVP_CIPHER_CTX_cipher, EVP_CIPHER_CTX_nid,
 EVP_CIPHER_CTX_block_size, EVP_CIPHER_CTX_key_length, EVP_CIPHER_CTX_iv_length,
 EVP_CIPHER_CTX_get_app_data, EVP_CIPHER_CTX_set_app_data, EVP_CIPHER_CTX_type,
 EVP_CIPHER_CTX_flags, EVP_CIPHER_CTX_mode, EVP_CIPHER_param_to_asn1,
-EVP_CIPHER_asn1_to_param - EVP cipher routines
+EVP_CIPHER_asn1_to_param, EVP_CIPHER_CTX_set_padding - EVP cipher routines
 
 =head1 SYNOPSIS
 
@@ -39,6 +39,7 @@ EVP_CIPHER_asn1_to_param - EVP cipher routines
  int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
          int *outl);
 
+ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
  int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
  int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
@@ -89,22 +90,28 @@ multiple times to encrypt successive blocks of data. The amount
 of data written depends on the block alignment of the encrypted data:
 as a result the amount of data written may be anything from zero bytes
 to (inl + cipher_block_size - 1) so B<outl> should contain sufficient
-room.  The actual number of bytes written is placed in B<outl>.
+room. The actual number of bytes written is placed in B<outl>.
 
-EVP_EncryptFinal() encrypts the "final" data, that is any data that
-remains in a partial block. It uses L<standard block padding|/NOTES> (aka PKCS
-padding). The encrypted final data is written to B<out> which should
-have sufficient space for one cipher block. The number of bytes written
-is placed in B<outl>. After this function is called the encryption operation
-is finished and no further calls to EVP_EncryptUpdate() should be made.
+If padding is enabled (the default) then EVP_EncryptFinal() encrypts
+the "final" data, that is any data that remains in a partial block.
+It uses L<standard block padding|/NOTES> (aka PKCS padding). The encrypted
+final data is written to B<out> which should have sufficient space for
+one cipher block. The number of bytes written is placed in B<outl>. After
+this function is called the encryption operation is finished and no further
+calls to EVP_EncryptUpdate() should be made.
+
+If padding is disabled then EVP_EncryptFinal() will not encrypt any more
+data and it will return an error if any data remains in a partial block:
+that is if the total data length is not a multiple of the block size. 
 
 EVP_DecryptInit(), EVP_DecryptUpdate() and EVP_DecryptFinal() are the
 corresponding decryption operations. EVP_DecryptFinal() will return an
-error code if the final block is not correctly formatted. The parameters
-and restrictions are identical to the encryption operations except that
-the decrypted data buffer B<out> passed to EVP_DecryptUpdate() should
-have sufficient room for (B<inl> + cipher_block_size) bytes unless the
-cipher block size is 1 in which case B<inl> bytes is sufficient.
+error code if padding is enabled and the final block is not correctly
+formatted. The parameters and restrictions are identical to the encryption
+operations except that if padding is enabled the decrypted data buffer B<out>
+passed to EVP_DecryptUpdate() should have sufficient room for
+(B<inl> + cipher_block_size) bytes unless the cipher block size is 1 in
+which case B<inl> bytes is sufficient.
 
 EVP_CipherInit(), EVP_CipherUpdate() and EVP_CipherFinal() are functions
 that can be used for decryption or encryption. The operation performed
@@ -124,6 +131,13 @@ EVP_CIPHER_nid() and EVP_CIPHER_CTX_nid() return the NID of a cipher when
 passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX> structure.  The actual NID
 value is an internal value which may not have a corresponding OBJECT
 IDENTIFIER.
+
+EVP_CIPHER_CTX_set_padding() enables or disables padding. By default
+encryption operations are padded using standard block padding and the
+padding is checked and removed when decrypting. If the B<pad> parameter
+is zero then no padding is performed, the total amount of data encrypted
+or decrypted must then be a multiple of the block size or an error will
+occur.
 
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
@@ -206,6 +220,8 @@ size.
 
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length.
+
+EVP_CIPHER_CTX_set_padding() always returns 1.
 
 EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
 length or zero if the cipher does not use an IV.
@@ -301,10 +317,13 @@ encrypted then 5 padding bytes of value 5 will be added.
 
 When decrypting the final block is checked to see if it has the correct form.
 
-Although the decryption operation can produce an error, it is not a strong
-test that the input data or key is correct. A random block has better than
-1 in 256 chance of being of the correct format and problems with the
-input data earlier on will not produce a final decrypt error.
+Although the decryption operation can produce an error if padding is enabled,
+it is not a strong test that the input data or key is correct. A random block
+has better than 1 in 256 chance of being of the correct format and problems with
+the input data earlier on will not produce a final decrypt error.
+
+If padding is disabled then the decryption operation will always succeed if
+the total amount of data decrypted is a multiple of the block size.
 
 The functions EVP_EncryptInit(), EVP_EncryptUpdate(), EVP_EncryptFinal(),
 EVP_DecryptInit(), EVP_DecryptUpdate(), EVP_CipherInit() and EVP_CipherUpdate()
@@ -317,8 +336,6 @@ and attempt to set the key before the cipher is set in EVP_EncryptInit() ).
 
 For RC5 the number of rounds can currently only be set to 8, 12 or 16. This is
 a limitation of the current RC5 code rather than the EVP interface.
-
-It should be possible to disable PKCS padding: currently it isn't.
 
 EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
 default key lengths. If custom ciphers exceed these values the results are
@@ -333,22 +350,22 @@ for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
 Get the number of rounds used in RC5:
 
  int nrounds;
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC5_ROUNDS, 0, &i);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC5_ROUNDS, 0, &nrounds);
 
 Get the RC2 effective key length:
 
  int key_bits;
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC2_KEY_BITS, 0, &i);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC2_KEY_BITS, 0, &key_bits);
 
 Set the number of rounds used in RC5:
 
  int nrounds;
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, i, NULL);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, nrounds, NULL);
 
-Set the number of rounds used in RC2:
+Set the effective key length used in RC2:
 
- int nrounds;
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, i, NULL);
+ int key_bits;
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, key_bits, NULL);
 
 =head1 SEE ALSO
 

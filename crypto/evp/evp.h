@@ -373,6 +373,8 @@ struct evp_cipher_st
 #define 	EVP_CIPH_CTRL_INIT		0x40
 /* Don't use standard key length function */
 #define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
+/* Don't use standard block padding */
+#define 	EVP_CIPH_NO_PADDING		0x100
 
 /* ctrl() values */
 
@@ -402,6 +404,7 @@ struct evp_cipher_ctx_st
 
 	void *app_data;		/* application stuff */
 	int key_len;		/* May change for variable length cipher */
+	unsigned long flags;	/* Various flags */
 	union
 		{
 #ifndef NO_RC4
@@ -620,6 +623,7 @@ void	ERR_load_EVP_strings(void );
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
+int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
 #ifndef NO_BIO
@@ -807,6 +811,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
+#define EVP_F_EVP_ENCRYPTFINAL				 127
 #define EVP_F_EVP_MD_CTX_COPY				 110
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
@@ -838,6 +843,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_CIPHER_PARAMETER_ERROR			 122
 #define EVP_R_CTRL_NOT_IMPLEMENTED			 132
 #define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED		 133
+#define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH		 138
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
 #define EVP_R_ENCODE_ERROR				 115

@@ -111,6 +111,7 @@ int MAIN(int argc, char **argv)
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
 	int ret=1,inl;
+	int nopad = 0;
 	unsigned char key[EVP_MAX_KEY_LENGTH],iv[EVP_MAX_IV_LENGTH];
 	unsigned char salt[PKCS5_SALT_LEN];
 	char *str=NULL, *passarg = NULL, *pass = NULL;
@@ -174,6 +175,8 @@ int MAIN(int argc, char **argv)
 			printkey=1;
 		else if	(strcmp(*argv,"-v") == 0)
 			verbose=1;
+		else if	(strcmp(*argv,"-nopad") == 0)
+			nopad=1;
 		else if	(strcmp(*argv,"-salt") == 0)
 			nosalt=0;
 		else if	(strcmp(*argv,"-nosalt") == 0)
@@ -513,6 +516,12 @@ bad:
 		if ((benc=BIO_new(BIO_f_cipher())) == NULL)
 			goto end;
 		BIO_set_cipher(benc,cipher,key,iv,enc);
+		if (nopad)
+			{
+			EVP_CIPHER_CTX *ctx;
+			BIO_get_cipher_ctx(benc, &ctx);
+			EVP_CIPHER_CTX_set_padding(ctx, 0);
+			}
 		if (debug)
 			{
 			BIO_set_callback(benc,BIO_debug_callback);

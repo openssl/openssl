@@ -21,6 +21,7 @@ B<openssl enc -ciphername>
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
+[B<-nopad>]
 [B<-debug>]
 
 =head1 DESCRIPTION
@@ -116,6 +117,10 @@ or decryption.
 
 set the buffer size for I/O
 
+=item B<-nopad>
+
+disable standard block padding
+
 =item B<-debug>
 
 debug the BIOs used for I/O.
@@ -144,10 +149,13 @@ Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
 a strong block cipher in CBC mode such as bf or des3.
 
-All the block ciphers use PKCS#5 padding also known as standard block
+All the block ciphers normally use PKCS#5 padding also known as standard block
 padding: this allows a rudimentary integrity or password check to be
 performed. However since the chance of random data passing the test is
 better than 1 in 256 it isn't a very good test.
+
+If padding is disabled then the input data must be a muliple of the cipher
+block length.
 
 All RC2 ciphers have the same key and effective key length.
 
@@ -250,8 +258,8 @@ The B<-A> option when used with large files doesn't work properly.
 
 There should be an option to allow an iteration count to be included.
 
-Like the EVP library the B<enc> program only supports a fixed number of
-algorithms with certain parameters. So if, for example, you want to use RC2
-with a 76 bit key or RC4 with an 84 bit key you can't use this program.
+The B<enc> program only supports a fixed number of algorithms with
+certain parameters. So if, for example, you want to use RC2 with a
+76 bit key or RC4 with an 84 bit key you can't use this program.
 
 =cut
