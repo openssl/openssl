@@ -58,7 +58,6 @@ The B<BN_MONT_CTX> structure is defined as follows:
 
  typedef struct bn_mont_ctx_st
         {
-        int use_word;   /* 0 for word form, 1 for bignum form */
         int ri;         /* number of bits in R */
         BIGNUM RR;      /* R^2 (used to convert to Montgomery form) */
         BIGNUM N;       /* The modulus */

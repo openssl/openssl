@@ -260,7 +260,6 @@ typedef struct bn_blinding_st
 /* Used for montgomery multiplication */
 typedef struct bn_mont_ctx_st
 	{
-	int use_word;  /* 0 for word form, 1 for bignum form */
 	int ri;        /* number of bits in R */
 	BIGNUM RR;     /* used to convert to montgomery form */
 	BIGNUM N;      /* The modulus */
