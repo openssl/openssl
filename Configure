@@ -560,7 +560,8 @@ my %table=(
 "vxworks-ppc405","ccppc:-g -msoft-float -mlongcall -DCPU=PPC405 -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
 "vxworks-ppc750","ccppc:-ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I\$(WIND_BASE)/target/h \$(DEBUG_FLAG):::VXWORKS:-r:::::",
 "vxworks-ppc750-debug","ccppc:-ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I\$(WIND_BASE)/target/h -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DDEBUG -g:::VXWORKS:-r:::::",
-"vxworks-ppc860","ccppc:-g -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
+"vxworks-ppc860","ccppc:-nostdinc -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
+"vxworks-mipsle","ccmips:-B\$(WIND_BASE)/host/\$(WIND_HOST_TYPE)/lib/gcc-lib/ -DL_ENDIAN -EL -Wl,-EL -mips2 -mno-branch-likely -G 0 -fno-builtin -msoft-float -DCPU=MIPS32 -DMIPSEL -DNO_STRINGS_H -I\$(WIND_BASE)/target/h:::VXWORKS:-r::::::::::::::::ranlibmips:",
 
 ##### Compaq Non-Stop Kernel (Tandem)
 "tandem-c89","c89:-Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN::(unknown):::THIRTY_TWO_BIT:::",
