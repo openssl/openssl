@@ -132,7 +132,7 @@ commonName			= Common Name (eg, YOUR name)
 commonName_max			= 64
 
 emailAddress			= Email Address
-emailAddress_max		= 40
+emailAddress_max		= 64
 
 # SET-ex3			= SET extension number 3
 
