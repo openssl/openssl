@@ -335,7 +335,9 @@ int MAIN(int argc, char **argv)
 #define DSA_NUM		3
 	long count,rsa_count;
 	int i,j,k;
+#ifndef NO_RSA
 	unsigned rsa_num;
+#endif
 #ifndef NO_MD2
 	unsigned char md2[MD2_DIGEST_LENGTH];
 #endif
