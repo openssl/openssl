@@ -4,6 +4,11 @@
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
 
+  *) In ssl3_get_client_hello() (ssl/s3_srvr.c), tolerate additional
+     extra data after the compression methods not only for TLS 1.0
+     but also for SSL 3.0 (as required by the specification).
+     [Bodo Moeller; problem pointed out by Matthias Loepfe]
+
   *) Change X509_certificate_type() to mark the key as exported/exportable
      when it's 512 *bits* long, not 512 bytes.
      [Richard Levitte]
