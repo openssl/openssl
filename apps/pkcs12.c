@@ -749,7 +749,10 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		print_attribs (out, bag->attrib, "Bag Attributes");
 		if (!(p8 = M_PKCS12_decrypt_skey (bag, pass, passlen)))
 				return 0;
-		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
+		if (!(pkey = EVP_PKCS82PKEY (p8))) {
+			PKCS8_PRIV_KEY_INFO_free(p8);
+			return 0;
+		}
 		print_attribs (out, p8->attributes, "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
 		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, pempass);
