@@ -916,6 +916,7 @@ loop:
 		else if (i == 0)
 			{
 			BIO_printf(bio_err,"verify failure\n");
+			ERR_print_errors(bio_err);
 			}
 		else /* if (i > 0) */
 			BIO_printf(bio_err,"verify OK\n");
