@@ -1021,7 +1021,7 @@ bad:
 			}
 
 		if (verbose)
-			BIO_printf(bio_err, "Succesfully loaded extensions file %s\n", extfile);
+			BIO_printf(bio_err, "Successfully loaded extensions file %s\n", extfile);
 
 		/* We can have sections in the ext file */
 		if (!extensions && !(extensions = NCONF_get_string(extconf, "default", "extensions")))
