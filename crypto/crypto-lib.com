@@ -208,7 +208,7 @@ $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
 $ LIB_ENGINE = "engine_err,engine_lib,engine_list,engine_openssl,"+ -
 	"hw_atalla,hw_cswift,hw_ncipher,hw_aep,hw_sureware,"+ -
-	"hw_ubsec"
+	"hw_ubsec,hw_keyclient"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
