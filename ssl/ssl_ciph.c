@@ -751,7 +751,12 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	if (rule_str == NULL) return(NULL);
 
-	if (init_ciphers) load_ciphers();
+	if (init_ciphers)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
+		if (init_ciphers) load_ciphers();
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+		}
 
 	/*
 	 * To reduce the work to do we only want to process the compiled
