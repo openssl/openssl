@@ -4,6 +4,11 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part combined) and fix various bugs found on the way.
+     [Bodo Moeller]
+
   *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
      instead.  BIO_gethostbyname() does not know what timeouts are
      appropriate, so entries would stay in cache even when they have
@@ -23,11 +28,6 @@
      never resets s->method to s->ctx->method when called from within
      one of the SSL handshake functions.
      [Bodo Moeller; problem pointed out by Niko Baric]
-
-  *) Change ssl/s2_clnt.c and ssl/s3_srvr.c so that received handshake
-     messages are stored in a single piece (fixed-length part and
-     variable-length part combined) and fix various bugs found on the way.
-     [Bodo Moeller]
 
   *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
      (sent using the client's version number) if client_version is
