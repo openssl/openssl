@@ -67,9 +67,15 @@
  * reference and the caller is responsible for freeing that when they
  * are finished with it (with a call to ENGINE_finish() *NOT* just
  * ENGINE_free()!!!!!!). */
+#ifndef OPENSSL_NO_RSA
 static ENGINE *engine_def_rsa = NULL;
+#endif
+#ifndef OPENSSL_NO_DSA
 static ENGINE *engine_def_dsa = NULL;
+#endif
+#ifndef OPENSSL_NO_DH
 static ENGINE *engine_def_dh = NULL;
+#endif
 static ENGINE *engine_def_rand = NULL;
 static ENGINE *engine_def_bn_mod_exp = NULL;
 static ENGINE *engine_def_bn_mod_exp_crt = NULL;
@@ -125,9 +131,15 @@ static void engine_def_check(void)
 			goto skip_set_defaults;
 		/* OK, we got a functional reference, so we get one each
 		 * for the defaults too. */
+#ifndef OPENSSL_NO_RSA
 		engine_def_check_util(&engine_def_rsa, e);
+#endif
+#ifndef OPENSSL_NO_RSA
 		engine_def_check_util(&engine_def_dsa, e);
+#endif
+#ifndef OPENSSL_NO_DH
 		engine_def_check_util(&engine_def_dh, e);
+#endif
 		engine_def_check_util(&engine_def_rand, e);
 		engine_def_check_util(&engine_def_bn_mod_exp, e);
 		engine_def_check_util(&engine_def_bn_mod_exp_crt, e);
@@ -590,12 +602,18 @@ static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	switch(t)
 		{
+#ifndef OPENSSL_NO_RSA
 	case ENGINE_TYPE_RSA:
 		ret = engine_def_rsa; break;
+#endif
+#ifndef OPENSSL_NO_DSA
 	case ENGINE_TYPE_DSA:
 		ret = engine_def_dsa; break;
+#endif
+#ifndef OPENSSL_NO_DH
 	case ENGINE_TYPE_DH:
 		ret = engine_def_dh; break;
+#endif
 	case ENGINE_TYPE_RAND:
 		ret = engine_def_rand; break;
 	case ENGINE_TYPE_BN_MOD_EXP:
@@ -615,20 +633,26 @@ static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 	return ret;
 	}
 
+#ifndef OPENSSL_NO_RSA
 ENGINE *ENGINE_get_default_RSA(void)
 	{
 	return engine_get_default_type(ENGINE_TYPE_RSA);
 	}
+#endif
 
+#ifndef OPENSSL_NO_DSA
 ENGINE *ENGINE_get_default_DSA(void)
 	{
 	return engine_get_default_type(ENGINE_TYPE_DSA);
 	}
+#endif
 
+#ifndef OPENSSL_NO_DH
 ENGINE *ENGINE_get_default_DH(void)
 	{
 	return engine_get_default_type(ENGINE_TYPE_DH);
 	}
+#endif
 
 ENGINE *ENGINE_get_default_RAND(void)
 	{
@@ -671,15 +695,21 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	switch(t)
 		{
+#ifndef OPENSSL_NO_RSA
 	case ENGINE_TYPE_RSA:
 		old = engine_def_rsa;
 		engine_def_rsa = e; break;
+#endif
+#ifndef OPENSSL_NO_DSA
 	case ENGINE_TYPE_DSA:
 		old = engine_def_dsa;
 		engine_def_dsa = e; break;
+#endif
+#ifndef OPENSSL_NO_DH
 	case ENGINE_TYPE_DH:
 		old = engine_def_dh;
 		engine_def_dh = e; break;
+#endif
 	case ENGINE_TYPE_RAND:
 		old = engine_def_rand;
 		engine_def_rand = e; break;
@@ -702,20 +732,26 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	return 1;
 	}
 
+#ifndef OPENSSL_NO_RSA
 int ENGINE_set_default_RSA(ENGINE *e)
 	{
 	return engine_set_default_type(ENGINE_TYPE_RSA, e);
 	}
+#endif
 
+#ifndef OPENSSL_NO_DSA
 int ENGINE_set_default_DSA(ENGINE *e)
 	{
 	return engine_set_default_type(ENGINE_TYPE_DSA, e);
 	}
+#endif
 
+#ifndef OPENSSL_NO_DH
 int ENGINE_set_default_DH(ENGINE *e)
 	{
 	return engine_set_default_type(ENGINE_TYPE_DH, e);
 	}
+#endif
 
 int ENGINE_set_default_RAND(ENGINE *e)
 	{
@@ -734,15 +770,21 @@ int ENGINE_set_default_BN_mod_exp_crt(ENGINE *e)
 
 int ENGINE_set_default(ENGINE *e, unsigned int flags)
 	{
+#ifndef OPENSSL_NO_RSA
 	if((flags & ENGINE_METHOD_RSA) && e->rsa_meth &&
 			!ENGINE_set_default_RSA(e))
 		return 0;
+#endif
+#ifndef OPENSSL_NO_DSA
 	if((flags & ENGINE_METHOD_DSA) && e->dsa_meth &&
 			!ENGINE_set_default_DSA(e))
 		return 0;
+#endif
+#ifndef OPENSSL_NO_DH
 	if((flags & ENGINE_METHOD_DH) && e->dh_meth &&
 			!ENGINE_set_default_DH(e))
 		return 0;
+#endif
 	if((flags & ENGINE_METHOD_RAND) && e->rand_meth &&
 			!ENGINE_set_default_RAND(e))
 		return 0;

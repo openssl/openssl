@@ -164,11 +164,14 @@ static int nuron_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,
 	return pfnModExp(r,a,p,m);
 	}
 
+#ifndef OPENSSL_NO_RSA
 static int nuron_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	return nuron_mod_exp(r0,I,rsa->d,rsa->n,NULL);
 	}
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /* This code was liberated and adapted from the commented-out code in
  * dsa_ossl.c. Because of the unoptimised form of the Atalla acceleration
  * (it doesn't have a CRT form for RSA), this function means that an
@@ -206,6 +209,7 @@ static int nuron_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 	{
 	return nuron_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int nuron_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -214,6 +218,7 @@ static int nuron_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return nuron_mod_exp(r, a, p, m, ctx);
 	}
 
+#ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int nuron_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
@@ -221,7 +226,9 @@ static int nuron_mod_exp_dh(const DH *dh, BIGNUM *r,
 	{
 	return nuron_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
+#ifndef OPENSSL_NO_RSA
 static RSA_METHOD nuron_rsa =
 	{
 	"Nuron RSA method",
@@ -238,7 +245,9 @@ static RSA_METHOD nuron_rsa =
 	NULL,
 	NULL
 	};
+#endif
 
+#ifndef OPENSSL_NO_DSA
 static DSA_METHOD nuron_dsa =
 	{
 	"Nuron DSA method",
@@ -252,7 +261,9 @@ static DSA_METHOD nuron_dsa =
 	0, /* flags */
 	NULL /* app_data */
 	};
+#endif
 
+#ifndef OPENSSL_NO_DH
 static DH_METHOD nuron_dh =
 	{
 	"Nuron DH method",
@@ -264,6 +275,7 @@ static DH_METHOD nuron_dh =
 	0,
 	NULL
 	};
+#endif
 
 /* Constants used when creating the ENGINE */
 static const char *engine_nuron_id = "nuron";
@@ -273,17 +285,29 @@ static const char *engine_nuron_name = "Nuron hardware engine support";
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_nuron()
 	{
+#ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DSA
 	const DSA_METHOD *meth2;
+#endif
+#ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth3;
+#endif
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
 		return NULL;
 	if(!ENGINE_set_id(ret, engine_nuron_id) ||
 			!ENGINE_set_name(ret, engine_nuron_name) ||
+#ifndef OPENSSL_NO_RSA
 			!ENGINE_set_RSA(ret, &nuron_rsa) ||
+#endif
+#ifndef OPENSSL_NO_DSA
 			!ENGINE_set_DSA(ret, &nuron_dsa) ||
+#endif
+#ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(ret, &nuron_dh) ||
+#endif
 			!ENGINE_set_BN_mod_exp(ret, nuron_mod_exp) ||
 			!ENGINE_set_init_function(ret, nuron_init) ||
 			!ENGINE_set_finish_function(ret, nuron_finish) ||
@@ -294,6 +318,7 @@ ENGINE *ENGINE_nuron()
 		return NULL;
 		}
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the nuron-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -306,18 +331,23 @@ ENGINE *ENGINE_nuron()
 	nuron_rsa.rsa_pub_dec=meth1->rsa_pub_dec;
 	nuron_rsa.rsa_priv_enc=meth1->rsa_priv_enc;
 	nuron_rsa.rsa_priv_dec=meth1->rsa_priv_dec;
+#endif
 
+#ifndef OPENSSL_NO_DSA
 	/* Use the DSA_OpenSSL() method and just hook the mod_exp-ish
 	 * bits. */
 	meth2=DSA_OpenSSL();
 	nuron_dsa.dsa_do_sign=meth2->dsa_do_sign;
 	nuron_dsa.dsa_sign_setup=meth2->dsa_sign_setup;
 	nuron_dsa.dsa_do_verify=meth2->dsa_do_verify;
+#endif
 
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth3=DH_OpenSSL();
 	nuron_dh.generate_key=meth3->generate_key;
 	nuron_dh.compute_key=meth3->compute_key;
+#endif
 	return ret;
 	}
 

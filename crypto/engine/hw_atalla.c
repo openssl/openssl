@@ -79,12 +79,15 @@ static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_RSA
 /* RSA stuff */
 static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+#endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+#ifndef OPENSSL_NO_DSA
 /* DSA stuff */
 static int atalla_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
@@ -92,12 +95,15 @@ static int atalla_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 static int atalla_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 		const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
 		BN_MONT_CTX *m_ctx);
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
 static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
 /* The definitions for control commands specific to this engine */
 #define ATALLA_CMD_SO_PATH		ENGINE_CMD_BASE
@@ -109,6 +115,7 @@ static const ENGINE_CMD_DEFN atalla_cmd_defns[] = {
 	{0, NULL, NULL, 0}
 	};
 
+#ifndef OPENSSL_NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD atalla_rsa =
 	{
@@ -126,7 +133,9 @@ static RSA_METHOD atalla_rsa =
 	NULL,
 	NULL
 	};
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /* Our internal DSA_METHOD that we provide pointers to */
 static DSA_METHOD atalla_dsa =
 	{
@@ -141,7 +150,9 @@ static DSA_METHOD atalla_dsa =
 	0, /* flags */
 	NULL /* app_data */
 	};
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD atalla_dh =
 	{
@@ -154,6 +165,7 @@ static DH_METHOD atalla_dh =
 	0,
 	NULL
 	};
+#endif
 
 /* Constants used when creating the ENGINE */
 static const char *engine_atalla_id = "atalla";
@@ -163,17 +175,29 @@ static const char *engine_atalla_name = "Atalla hardware engine support";
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_atalla()
 	{
+#ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DSA
 	const DSA_METHOD *meth2;
+#endif
+#ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth3;
+#endif
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
 		return NULL;
 	if(!ENGINE_set_id(ret, engine_atalla_id) ||
 			!ENGINE_set_name(ret, engine_atalla_name) ||
+#ifndef OPENSSL_NO_RSA
 			!ENGINE_set_RSA(ret, &atalla_rsa) ||
+#endif
+#ifndef OPENSSL_NO_DSA
 			!ENGINE_set_DSA(ret, &atalla_dsa) ||
+#endif
+#ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(ret, &atalla_dh) ||
+#endif
 			!ENGINE_set_BN_mod_exp(ret, atalla_mod_exp) ||
 			!ENGINE_set_init_function(ret, atalla_init) ||
 			!ENGINE_set_finish_function(ret, atalla_finish) ||
@@ -184,6 +208,7 @@ ENGINE *ENGINE_atalla()
 		return NULL;
 		}
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the atalla-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -196,18 +221,23 @@ ENGINE *ENGINE_atalla()
 	atalla_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
 	atalla_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	atalla_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+#endif
 
+#ifndef OPENSSL_NO_DSA
 	/* Use the DSA_OpenSSL() method and just hook the mod_exp-ish
 	 * bits. */
 	meth2 = DSA_OpenSSL();
 	atalla_dsa.dsa_do_sign = meth2->dsa_do_sign;
 	atalla_dsa.dsa_sign_setup = meth2->dsa_sign_setup;
 	atalla_dsa.dsa_do_verify = meth2->dsa_do_verify;
+#endif
 
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth3 = DH_OpenSSL();
 	atalla_dh.generate_key = meth3->generate_key;
 	atalla_dh.compute_key = meth3->compute_key;
+#endif
 	return ret;
 	}
 
@@ -405,6 +435,7 @@ static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		ENGINEerr(ENGINE_F_ATALLA_MOD_EXP,ENGINE_R_REQUEST_FAILED);
 		goto err;
 	}
+
 	/* Convert the response */
 	BN_bin2bn((unsigned char *)result->d, numbytes, r);
 	to_return = 1;
@@ -413,6 +444,7 @@ err:
 	return to_return;
 	}
 
+#ifndef OPENSSL_NO_RSA
 static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BN_CTX *ctx = NULL;
@@ -436,7 +468,9 @@ err:
 		BN_CTX_free(ctx);
 	return to_return;
 	}
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /* This code was liberated and adapted from the commented-out code in
  * dsa_ossl.c. Because of the unoptimised form of the Atalla acceleration
  * (it doesn't have a CRT form for RSA), this function means that an
@@ -464,13 +498,13 @@ end:
 	return to_return;
 	}
 
-
 static int atalla_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 		const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
 		BN_MONT_CTX *m_ctx)
 	{
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -479,6 +513,7 @@ static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
 
+#ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
@@ -486,6 +521,7 @@ static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 	{
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 #endif /* !OPENSSL_NO_HW_ATALLA */
 #endif /* !OPENSSL_NO_HW */

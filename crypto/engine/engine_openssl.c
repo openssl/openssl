@@ -62,11 +62,6 @@
 #include "cryptlib.h"
 #include <openssl/engine.h>
 #include <openssl/dso.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
 
 /* This is the only function we need to implement as OpenSSL
  * doesn't have a native CRT mod_exp. Perhaps this should be
@@ -88,9 +83,15 @@ ENGINE *ENGINE_openssl()
 		return NULL;
 	if(!ENGINE_set_id(ret, engine_openssl_id) ||
 			!ENGINE_set_name(ret, engine_openssl_name) ||
+#ifndef OPENSSL_NO_RSA
 			!ENGINE_set_RSA(ret, RSA_get_default_openssl_method()) ||
+#endif
+#ifndef OPENSSL_NO_DSA
 			!ENGINE_set_DSA(ret, DSA_get_default_openssl_method()) ||
+#endif
+#ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(ret, DH_get_default_openssl_method()) ||
+#endif
 			!ENGINE_set_RAND(ret, RAND_SSLeay()) ||
 			!ENGINE_set_BN_mod_exp(ret, BN_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(ret, openssl_mod_exp_crt))

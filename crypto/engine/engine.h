@@ -60,15 +60,32 @@
 #define HEADER_ENGINE_H
 
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
+#endif
+
+/* Fixups for missing algorithms */
+#ifdef OPENSSL_NO_RSA
+typedef void RSA_METHOD;
+#endif
+#ifdef OPENSSL_NO_DSA
+typedef void DSA_METHOD;
+#endif
+#ifdef OPENSSL_NO_DH
+typedef void DH_METHOD;
 #endif
 
 /* These flags are used to control combinations of algorithm (methods)
@@ -442,6 +459,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_CTRL_CMD_STRING			 171
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
+#define ENGINE_F_ENGINE_GET_DEFAULT_TYPE		 177
 #define ENGINE_F_ENGINE_GET_NEXT			 115
 #define ENGINE_F_ENGINE_GET_PREV			 116
 #define ENGINE_F_ENGINE_INIT				 119
@@ -492,6 +510,8 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_COMMAND_TAKES_NO_INPUT			 136
 #define ENGINE_R_CONFLICTING_ENGINE_ID			 103
 #define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED		 119
+#define ENGINE_R_DH_NOT_IMPLEMENTED			 139
+#define ENGINE_R_DSA_NOT_IMPLEMENTED			 140
 #define ENGINE_R_DSO_FAILURE				 104
 #define ENGINE_R_DSO_FUNCTION_NOT_FOUND			 131
 #define ENGINE_R_DSO_NOT_FOUND				 132
@@ -515,9 +535,11 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_NO_REFERENCE				 130
 #define ENGINE_R_NO_SUCH_ENGINE				 116
 #define ENGINE_R_NO_UNLOAD_FUNCTION			 126
+#define ENGINE_R_PRIVATE_KEY_ALGORITHMS_DISABLED	 142
 #define ENGINE_R_PROVIDE_PARAMETERS			 113
 #define ENGINE_R_REQUEST_FAILED				 114
 #define ENGINE_R_REQUEST_FALLBACK			 118
+#define ENGINE_R_RSA_NOT_IMPLEMENTED			 141
 #define ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 122
 #define ENGINE_R_UNIT_FAILURE				 115
 

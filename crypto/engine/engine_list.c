@@ -402,20 +402,32 @@ int ENGINE_set_name(ENGINE *e, const char *name)
 
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
 	{
+#ifndef OPENSSL_NO_RSA
 	e->rsa_meth = rsa_meth;
 	return 1;
+#else
+        return 0;
+#endif
 	}
 
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
 	{
+#ifndef OPENSSL_NO_DSA
 	e->dsa_meth = dsa_meth;
 	return 1;
+#else
+        return 0;
+#endif
 	}
 
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
 	{
+#ifndef OPENSSL_NO_DH
 	e->dh_meth = dh_meth;
 	return 1;
+#else
+        return 0;
+#endif
 	}
 
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth)
@@ -482,9 +494,15 @@ int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
 	{
 	if(ENGINE_set_id(dest, ENGINE_get_id(src)) &&
 			ENGINE_set_name(dest, ENGINE_get_name(src)) &&
+#ifndef OPENSSL_NO_RSA
 			ENGINE_set_RSA(dest, ENGINE_get_RSA(src)) &&
+#endif
+#ifndef OPENSSL_NO_RSA
 			ENGINE_set_DSA(dest, ENGINE_get_DSA(src)) &&
+#endif
+#ifndef OPENSSL_NO_RSA
 			ENGINE_set_DH(dest, ENGINE_get_DH(src)) &&
+#endif
 			ENGINE_set_RAND(dest, ENGINE_get_RAND(src)) &&
 			ENGINE_set_BN_mod_exp(dest,
 					ENGINE_get_BN_mod_exp(src)) &&

@@ -94,22 +94,28 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_RSA
 /* RSA stuff */
 static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+#endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+#ifndef OPENSSL_NO_DSA
 /* DSA stuff */
 static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 				DSA_SIG *sig, DSA *dsa);
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
 static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
 /* The definitions for control commands specific to this engine */
 #define CSWIFT_CMD_SO_PATH		ENGINE_CMD_BASE
@@ -121,6 +127,7 @@ static const ENGINE_CMD_DEFN cswift_cmd_defns[] = {
 	{0, NULL, NULL, 0}
 	};
 
+#ifndef OPENSSL_NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD cswift_rsa =
 	{
@@ -138,7 +145,9 @@ static RSA_METHOD cswift_rsa =
 	NULL,
 	NULL
 	};
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /* Our internal DSA_METHOD that we provide pointers to */
 static DSA_METHOD cswift_dsa =
 	{
@@ -153,7 +162,9 @@ static DSA_METHOD cswift_dsa =
 	0, /* flags */
 	NULL /* app_data */
 	};
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD cswift_dh =
 	{
@@ -166,6 +177,7 @@ static DH_METHOD cswift_dh =
 	0,
 	NULL
 	};
+#endif
 
 /* Constants used when creating the ENGINE */
 static const char *engine_cswift_id = "cswift";
@@ -175,16 +187,26 @@ static const char *engine_cswift_name = "CryptoSwift hardware engine support";
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_cswift()
 	{
+#ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth2;
+#endif
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
 		return NULL;
 	if(!ENGINE_set_id(ret, engine_cswift_id) ||
 			!ENGINE_set_name(ret, engine_cswift_name) ||
+#ifndef OPENSSL_NO_RSA
 			!ENGINE_set_RSA(ret, &cswift_rsa) ||
+#endif
+#ifndef OPENSSL_NO_DSA
 			!ENGINE_set_DSA(ret, &cswift_dsa) ||
+#endif
+#ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(ret, &cswift_dh) ||
+#endif
 			!ENGINE_set_BN_mod_exp(ret, &cswift_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(ret, &cswift_mod_exp_crt) ||
 			!ENGINE_set_init_function(ret, cswift_init) ||
@@ -196,6 +218,7 @@ ENGINE *ENGINE_cswift()
 		return NULL;
 		}
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -208,11 +231,14 @@ ENGINE *ENGINE_cswift()
 	cswift_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
 	cswift_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	cswift_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+#endif
 
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth2 = DH_OpenSSL();
 	cswift_dh.generate_key = meth2->generate_key;
 	cswift_dh.compute_key = meth2->compute_key;
+#endif
 	return ret;
 	}
 
@@ -572,6 +598,7 @@ err:
 	return to_return;
 	}
  
+#ifndef OPENSSL_NO_RSA
 static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BN_CTX *ctx;
@@ -591,6 +618,7 @@ err:
 		BN_CTX_free(ctx);
 	return to_return;
 	}
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -599,6 +627,7 @@ static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 
+#ifndef OPENSSL_NO_DSA
 static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
 	SW_CONTEXT_HANDLE hac;
@@ -823,7 +852,9 @@ err:
 		}
 	return to_return;
 	}
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
@@ -831,6 +862,7 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 #endif /* !OPENSSL_NO_HW_CSWIFT */
 #endif /* !OPENSSL_NO_HW */
