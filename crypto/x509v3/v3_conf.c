@@ -85,10 +85,16 @@ char *value;	/* Value */
 {
 	int crit;
 	int ext_type;
+	X509_EXTENSION *ret;
 	crit = v3_check_critical(&value);
 	if((ext_type = v3_check_generic(&value))) 
 		return v3_generic_extension(name, value, crit, ext_type);
-	return do_ext_conf(conf, ctx, OBJ_sn2nid(name), crit, value);
+	ret = do_ext_conf(conf, ctx, OBJ_sn2nid(name), crit, value);
+	if(!ret) {
+		X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_ERROR_IN_EXTENSION);
+		ERR_add_error_data(4,"name=", name, ", value=", value);
+	}
+	return ret;
 }
 
 X509_EXTENSION *X509V3_EXT_conf_nid(conf, ctx, ext_nid, value)
@@ -120,9 +126,12 @@ char *value;	/* Value */
 	char *ext_der, *p;
 	int ext_len;
 	ASN1_OCTET_STRING *ext_oct;
-	if(ext_nid == NID_undef) return NULL;
+	if(ext_nid == NID_undef) {
+		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION_NAME);
+		return NULL;
+	}
 	if(!(method = X509V3_EXT_get_nid(ext_nid))) {
-		/* Add generic extension support here */
+		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION);
 		return NULL;
 	}
 	/* Now get internal extension representation based on type */

@@ -65,6 +65,18 @@
 #include <conf.h>
 #include "x509v3.h"
 
+#ifndef NOPROTO
+STACK *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+STACK *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+static int copy_email(X509V3_CTX *ctx, STACK *gens);
+static int copy_issuer(X509V3_CTX *ctx, STACK *gens);
+#else
+STACK *v2i_issuer_alt();
+STACK *v2i_subject_alt();
+static int copy_email();
+static int copy_issuer();
+#endif
+
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
@@ -73,7 +85,7 @@ GENERAL_NAMES_free,
 i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-(X509V3_EXT_V2I)v2i_GENERAL_NAMES,
+(X509V3_EXT_V2I)v2i_subject_alt,
 NULL, NULL},
 { NID_issuer_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
@@ -82,7 +94,7 @@ GENERAL_NAMES_free,
 i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-(X509V3_EXT_V2I)v2i_GENERAL_NAMES,
+(X509V3_EXT_V2I)v2i_issuer_alt,
 NULL, NULL},
 EXT_END
 };
@@ -158,6 +170,157 @@ STACK *ret;
 	return ret;
 }
 
+STACK *v2i_issuer_alt(method, ctx, nval)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+STACK *nval;
+{
+	STACK *gens = NULL;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(gens = sk_new(NULL))) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	for(i = 0; i < sk_num(nval); i++) {
+		cnf = (CONF_VALUE *)sk_value(nval, i);
+		if(!name_cmp(cnf->name, "issuer") && cnf->value &&
+						!strcmp(cnf->value, "copy")) {
+			if(!copy_issuer(ctx, gens)) goto err;
+		} else {
+			GENERAL_NAME *gen;
+			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+								 goto err; 
+			sk_push(gens, (char *)gen);
+		}
+	}
+	return gens;
+	err:
+	sk_pop_free(gens, GENERAL_NAME_free);
+	return NULL;
+}
+
+/* Append subject altname of issuer to issuer alt name of subject */
+
+static int copy_issuer(ctx, gens)
+X509V3_CTX *ctx;
+STACK *gens;
+{
+	STACK *ialt;
+	char *gen;
+	X509_EXTENSION *ext;
+	int i;
+	if(ctx && (ctx->flags == CTX_TEST)) return 1;
+	if(!ctx || !ctx->issuer_cert) {
+		X509V3err(X509V3_F_COPY_ISSUER,X509V3_R_NO_ISSUER_DETAILS);
+		goto err;
+	}
+        i = X509_get_ext_by_NID(ctx->issuer_cert, NID_subject_alt_name, -1);
+	if(i < 0) return 1;
+        if(!(ext = X509_get_ext(ctx->issuer_cert, i)) ||
+                        !(ialt = (STACK *) X509V3_EXT_d2i(ext)) ) {
+		X509V3err(X509V3_F_COPY_ISSUER,X509V3_R_ISSUER_DECODE_ERROR);
+		goto err;
+	}
+
+	for(i = 0; i < sk_num(ialt); i++) {
+		gen = sk_value(ialt, i);
+		if(!sk_push(gens, gen)) {
+			X509V3err(X509V3_F_COPY_ISSUER,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+	}
+	sk_free(ialt);
+
+	return 1;
+		
+	err:
+	return 0;
+	
+}
+
+STACK *v2i_subject_alt(method, ctx, nval)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+STACK *nval;
+{
+	STACK *gens = NULL;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(gens = sk_new(NULL))) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	for(i = 0; i < sk_num(nval); i++) {
+		cnf = (CONF_VALUE *)sk_value(nval, i);
+		if(!name_cmp(cnf->name, "email") && cnf->value &&
+						!strcmp(cnf->value, "copy")) {
+			if(!copy_email(ctx, gens)) goto err;
+		} else {
+			GENERAL_NAME *gen;
+			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+								 goto err; 
+			sk_push(gens, (char *)gen);
+		}
+	}
+	return gens;
+	err:
+	sk_pop_free(gens, GENERAL_NAME_free);
+	return NULL;
+}
+
+/* Copy any email addresses in a certificate or request to 
+ * GENERAL_NAMES
+ */
+
+static int copy_email(ctx, gens)
+X509V3_CTX *ctx;
+STACK *gens;
+{
+	X509_NAME *nm;
+	ASN1_IA5STRING *email = NULL;
+	X509_NAME_ENTRY *ne;
+	GENERAL_NAME *gen = NULL;
+	int i;
+	if(ctx->flags == CTX_TEST) return 1;
+	if(!ctx || (!ctx->subject_cert && !ctx->subject_req)) {
+		X509V3err(X509V3_F_COPY_EMAIL,X509V3_R_NO_SUBJECT_DETAILS);
+		goto err;
+	}
+	/* Find the subject name */
+	if(ctx->subject_cert) nm = X509_get_subject_name(ctx->subject_cert);
+	else nm = X509_REQ_get_subject_name(ctx->subject_req);
+
+	/* Now add any email address(es) to STACK */
+	i = -1;
+	while((i = X509_NAME_get_index_by_NID(nm,
+					 NID_pkcs9_emailAddress, i)) > 0) {
+		ne = X509_NAME_get_entry(nm, i);
+		email = ASN1_IA5STRING_dup(X509_NAME_ENTRY_get_data(ne));
+		if(!email || !(gen = GENERAL_NAME_new())) {
+			X509V3err(X509V3_F_COPY_EMAIL,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		gen->d.ia5 = email;
+		email = NULL;
+		gen->type = GEN_EMAIL;
+		if(!sk_push(gens, (char *)gen)) {
+			X509V3err(X509V3_F_COPY_EMAIL,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		gen = NULL;
+	}
+
+	
+	return 1;
+		
+	err:
+	GENERAL_NAME_free(gen);
+	ASN1_IA5STRING_free(email);
+	return 0;
+	
+}
+
 STACK *v2i_GENERAL_NAMES(method, ctx, nval)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
@@ -195,6 +358,11 @@ char *name, *value;
 
 name = cnf->name;
 value = cnf->value;
+
+if(!value) {
+	X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_MISSING_VALUE);
+	return NULL;
+}
 
 if(!(gen = GENERAL_NAME_new())) {
 	X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);

@@ -132,6 +132,13 @@ nsComment			= "OpenSSL Generated Certificate"
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer:always
 
+# Import the email address.
+
+subjectAltName=email:copy
+
+# Copy subject details
+
+issuerAltName=issuer:copy
 
 #nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
 #nsBaseUrl
@@ -162,6 +169,11 @@ keyUsage = cRLSign, keyCertSign
 
 # Some might want this also
 #nsCertType = sslCA, emailCA
+
+# Include email address in subject alt name: another PKIX recommendation
+subjectAltName=email:copy
+# Copy issuer details
+issuerAltName=issuer:copy
 
 # RAW DER hex encoding of an extension: beware experts only!
 # 1.2.3.5=RAW:02:03

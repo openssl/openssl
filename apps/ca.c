@@ -695,6 +695,7 @@ bad:
 				BIO_printf(bio_err,
 				 "Error Loading extension section %s\n",
 								 extensions);
+				ret = 1;
 				goto err;
 			}
 		}

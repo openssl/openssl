@@ -328,6 +328,8 @@ typedef struct asn1_header_st
 #define ASN1_IA5STRING_new()	(ASN1_IA5STRING *)\
 		ASN1_STRING_type_new(V_ASN1_IA5STRING)
 #define ASN1_IA5STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define ASN1_IA5STRING_dup(a)	\
+			(ASN1_IA5STRING *)ASN1_STRING_dup((ASN1_STRING *)a)
 #define M_i2d_ASN1_IA5STRING(a,pp) \
 		i2d_ASN1_bytes((ASN1_STRING *)a,pp,V_ASN1_IA5STRING,\
 			V_ASN1_UNIVERSAL)
