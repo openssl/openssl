@@ -40,6 +40,9 @@
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Some of the ciphers missed the strength entry (SSL_LOW etc).
+     [Ben Laurie, Lutz Jaenicke]
+
   +) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized 
      after all ctrl commands have been executed on it. If init=1 the 
