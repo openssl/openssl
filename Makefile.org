@@ -505,13 +505,18 @@ do_hpux-shared:
 	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
+	if expr $(PLATFORM) : '.*ia64' > /dev/null; then \
+		shlib=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	else \
+		shlib=lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	fi; \
+	[ -f $$shlib ] && rm -f $$shlib; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
 		+vnocompatwarnings \
 		-b -z +s \
-		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-o $$shlib +h $$shlib \
 		-Fl lib$$i.a -ldld -lc ) || exit 1; \
-	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	chmod a=rx $$shlib; \
 	done
 
 # This assumes that GNU utilities are *not* used
@@ -528,12 +533,17 @@ do_hpux64-shared:
 	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
+	if expr $(PLATFORM) : '.*ia64' > /dev/null; then \
+		shlib=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	else \
+		shlib=lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	fi; \
+	[ -f $$shlib ] && rm -f $$shlib; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
 		-b -z \
-		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-o $$shlib +h $$shlib \
 		+forceload lib$$i.a -ldl -lc ) || exit 1; \
-	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	chmod a=rx $$shlib; \
 	done
 
 # The following method is said to work on all platforms.  Tests will

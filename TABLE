@@ -2346,7 +2346,7 @@ $dso_scheme   = dlfcn
 $shared_target= hpux-shared
 $shared_cflag = +Z
 $shared_ldflag = 
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
@@ -2621,7 +2621,7 @@ $dso_scheme   = dlfcn
 $shared_target= hpux64-shared
 $shared_cflag = +Z
 $shared_ldflag = 
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
