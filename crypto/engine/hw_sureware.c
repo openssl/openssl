@@ -59,8 +59,8 @@
 #include "engine.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_SUREWARE
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_SUREWARE
 
 #ifdef FLAT_INC
 #include "sureware.h"
@@ -962,5 +962,5 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 	return ret;
 }
-#endif /* !NO_HW_SureWare */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_SureWare */
+#endif /* !OPENSSL_NO_HW */

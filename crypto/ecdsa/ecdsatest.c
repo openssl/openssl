@@ -56,13 +56,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/ecdsa.h>
-#include <openssl/engine.h>
-#include <openssl/err.h>
 
 #ifdef CLOCKS_PER_SEC
 	/* "To determine the time in seconds, the value returned
@@ -80,6 +73,14 @@
 #ifdef OPENSSL_NO_ECDSA
 int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); return 0; }
 #else
+
+#include <openssl/crypto.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/ecdsa.h>
+#include <openssl/engine.h>
+#include <openssl/err.h>
 
 static BIO *bio_err=NULL;
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";

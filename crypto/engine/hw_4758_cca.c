@@ -62,8 +62,8 @@
 #include <openssl/objects.h>
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_4758_CCA
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_4758_CCA
 
 #ifdef FLAT_INC
 #include "hw_4758_cca.h"
@@ -946,5 +946,5 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* ENGINE_DYNAMIC_SUPPORT */
 
-#endif /* !NO_HW_4758_CCA */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_4758_CCA */
+#endif /* !OPENSSL_NO_HW */

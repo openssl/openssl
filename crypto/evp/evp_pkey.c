@@ -83,7 +83,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #ifndef OPENSSL_NO_ECDSA
 	ECDSA    *ecdsa = NULL;
 #endif
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_ECDSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	ASN1_INTEGER *privkey;
 	ASN1_TYPE    *t1, *t2, *param = NULL;
 	STACK_OF(ASN1_TYPE) *n_stack = NULL;
@@ -92,9 +92,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #endif
 	X509_ALGOR *a;
 	unsigned char *p;
-#ifndef OPENSSL_NO_RSA
 	const unsigned char *cp;
-#endif
 	int pkeylen;
 	int  nid;
 	char obj_tmp[80];
@@ -126,7 +124,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		EVP_PKEY_assign_RSA (pkey, rsa);
 		break;
 #endif
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_ECDSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 		case NID_ecdsa_with_SHA1:
 		case NID_dsa:
 		/* PKCS#8 DSA/ECDSA is weird: you just get a private key integer
@@ -279,8 +277,12 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 err:
 		if (ctx)   BN_CTX_free(ctx);
 		sk_ASN1_TYPE_pop_free(n_stack, ASN1_TYPE_free);
+#ifndef OPENSSL_NO_DSA
 		if (dsa)   DSA_free(dsa);
+#endif
+#ifndef OPENSSL_NO_ECDSA
 		if (ecdsa) ECDSA_free(ecdsa);
+#endif
 		if (pkey)  EVP_PKEY_free(pkey);
 		return NULL;
 		break;

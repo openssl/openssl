@@ -212,7 +212,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	long j;
 	int type;
 	unsigned char *p;
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	const unsigned char *cp;
 	X509_ALGOR *a;
 #endif
@@ -237,7 +237,9 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 
 	/* the parameters must be extracted before the public key (ECDSA!) */
 	
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	a=key->algor;
+#endif
 
 	if (0)
 		;

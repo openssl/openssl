@@ -92,7 +92,7 @@ typedef void DSA_METHOD;
 #ifdef OPENSSL_NO_DH
 typedef void DH_METHOD;
 #endif
-#ifdef OPENSS_NO_ECDSA
+#ifdef OPENSSL_NO_ECDSA
 typedef void ECDSA_METHOD;
 #endif
 
