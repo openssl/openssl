@@ -124,6 +124,37 @@ ASN1_TYPE *rest;
 } PKCS12_SAFEBAG;
 
 DECLARE_STACK_OF(PKCS12_SAFEBAG)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_PKCS12_SAFEBAG_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_PKCS12_SAFEBAG_new_null() sk_new_null()
+	#define sk_PKCS12_SAFEBAG_free(a) sk_free(a)
+	#define sk_PKCS12_SAFEBAG_num(a) sk_num(a)
+	#define sk_PKCS12_SAFEBAG_value(a,b) ((PKCS12_SAFEBAG *) \
+		sk_value((a),(b)))
+	#define sk_PKCS12_SAFEBAG_set(a,b,c) ((PKCS12_SAFEBAG *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_PKCS12_SAFEBAG_zero(a) sk_zero(a)
+	#define sk_PKCS12_SAFEBAG_push(a,b) sk_push((a),(char *)(b))
+	#define sk_PKCS12_SAFEBAG_unshift(a,b) sk_unshift((a),(b))
+	#define sk_PKCS12_SAFEBAG_find(a,b) sk_find((a), (char *)(b))
+	#define sk_PKCS12_SAFEBAG_delete(a,b) ((PKCS12_SAFEBAG *) \
+		sk_delete((a),(b)))
+	#define sk_PKCS12_SAFEBAG_delete_ptr(a,b) ((PKCS12_SAFEBAG *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_PKCS12_SAFEBAG_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_PKCS12_SAFEBAG_set_cmp_func(a,b) ((int (*) \
+		(const PKCS12_SAFEBAG * const *,const PKCS12_SAFEBAG * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_PKCS12_SAFEBAG_dup(a) sk_dup(a)
+	#define sk_PKCS12_SAFEBAG_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_PKCS12_SAFEBAG_shift(a) ((PKCS12_SAFEBAG *)sk_shift(a))
+	#define sk_PKCS12_SAFEBAG_pop(a) ((PKCS12_SAFEBAG *)sk_pop(a))
+	#define sk_PKCS12_SAFEBAG_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(PKCS12_SAFEBAG)
 DECLARE_PKCS12_STACK_OF(PKCS12_SAFEBAG)
 

@@ -132,6 +132,37 @@ typedef struct v3_ext_method X509V3_EXT_METHOD;
 typedef struct v3_ext_ctx X509V3_CTX;
 
 DECLARE_STACK_OF(X509V3_EXT_METHOD)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_X509V3_EXT_METHOD_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_X509V3_EXT_METHOD_new_null() sk_new_null()
+	#define sk_X509V3_EXT_METHOD_free(a) sk_free(a)
+	#define sk_X509V3_EXT_METHOD_num(a) sk_num(a)
+	#define sk_X509V3_EXT_METHOD_value(a,b) ((X509V3_EXT_METHOD *) \
+		sk_value((a),(b)))
+	#define sk_X509V3_EXT_METHOD_set(a,b,c) ((X509V3_EXT_METHOD *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_X509V3_EXT_METHOD_zero(a) sk_zero(a)
+	#define sk_X509V3_EXT_METHOD_push(a,b) sk_push((a),(char *)(b))
+	#define sk_X509V3_EXT_METHOD_unshift(a,b) sk_unshift((a),(b))
+	#define sk_X509V3_EXT_METHOD_find(a,b) sk_find((a), (char *)(b))
+	#define sk_X509V3_EXT_METHOD_delete(a,b) ((X509V3_EXT_METHOD *) \
+		sk_delete((a),(b)))
+	#define sk_X509V3_EXT_METHOD_delete_ptr(a,b) ((X509V3_EXT_METHOD *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_X509V3_EXT_METHOD_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_X509V3_EXT_METHOD_set_cmp_func(a,b) ((int (*) \
+		(const X509V3_EXT_METHOD * const *,const X509V3_EXT_METHOD * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_X509V3_EXT_METHOD_dup(a) sk_dup(a)
+	#define sk_X509V3_EXT_METHOD_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_X509V3_EXT_METHOD_shift(a) ((X509V3_EXT_METHOD *)sk_shift(a))
+	#define sk_X509V3_EXT_METHOD_pop(a) ((X509V3_EXT_METHOD *)sk_pop(a))
+	#define sk_X509V3_EXT_METHOD_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 /* ext_flags values */
 #define X509V3_EXT_DYNAMIC	0x1
@@ -186,9 +217,71 @@ typedef struct ACCESS_DESCRIPTION_st {
 } ACCESS_DESCRIPTION;
 
 DECLARE_STACK_OF(GENERAL_NAME)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_GENERAL_NAME_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_GENERAL_NAME_new_null() sk_new_null()
+	#define sk_GENERAL_NAME_free(a) sk_free(a)
+	#define sk_GENERAL_NAME_num(a) sk_num(a)
+	#define sk_GENERAL_NAME_value(a,b) ((GENERAL_NAME *) \
+		sk_value((a),(b)))
+	#define sk_GENERAL_NAME_set(a,b,c) ((GENERAL_NAME *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_GENERAL_NAME_zero(a) sk_zero(a)
+	#define sk_GENERAL_NAME_push(a,b) sk_push((a),(char *)(b))
+	#define sk_GENERAL_NAME_unshift(a,b) sk_unshift((a),(b))
+	#define sk_GENERAL_NAME_find(a,b) sk_find((a), (char *)(b))
+	#define sk_GENERAL_NAME_delete(a,b) ((GENERAL_NAME *) \
+		sk_delete((a),(b)))
+	#define sk_GENERAL_NAME_delete_ptr(a,b) ((GENERAL_NAME *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_GENERAL_NAME_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_GENERAL_NAME_set_cmp_func(a,b) ((int (*) \
+		(const GENERAL_NAME * const *,const GENERAL_NAME * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_GENERAL_NAME_dup(a) sk_dup(a)
+	#define sk_GENERAL_NAME_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_GENERAL_NAME_shift(a) ((GENERAL_NAME *)sk_shift(a))
+	#define sk_GENERAL_NAME_pop(a) ((GENERAL_NAME *)sk_pop(a))
+	#define sk_GENERAL_NAME_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(GENERAL_NAME)
 
 DECLARE_STACK_OF(ACCESS_DESCRIPTION)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_ACCESS_DESCRIPTION_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_ACCESS_DESCRIPTION_new_null() sk_new_null()
+	#define sk_ACCESS_DESCRIPTION_free(a) sk_free(a)
+	#define sk_ACCESS_DESCRIPTION_num(a) sk_num(a)
+	#define sk_ACCESS_DESCRIPTION_value(a,b) ((ACCESS_DESCRIPTION *) \
+		sk_value((a),(b)))
+	#define sk_ACCESS_DESCRIPTION_set(a,b,c) ((ACCESS_DESCRIPTION *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_ACCESS_DESCRIPTION_zero(a) sk_zero(a)
+	#define sk_ACCESS_DESCRIPTION_push(a,b) sk_push((a),(char *)(b))
+	#define sk_ACCESS_DESCRIPTION_unshift(a,b) sk_unshift((a),(b))
+	#define sk_ACCESS_DESCRIPTION_find(a,b) sk_find((a), (char *)(b))
+	#define sk_ACCESS_DESCRIPTION_delete(a,b) ((ACCESS_DESCRIPTION *) \
+		sk_delete((a),(b)))
+	#define sk_ACCESS_DESCRIPTION_delete_ptr(a,b) ((ACCESS_DESCRIPTION *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_ACCESS_DESCRIPTION_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_ACCESS_DESCRIPTION_set_cmp_func(a,b) ((int (*) \
+		(const ACCESS_DESCRIPTION * const *,const ACCESS_DESCRIPTION * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_ACCESS_DESCRIPTION_dup(a) sk_dup(a)
+	#define sk_ACCESS_DESCRIPTION_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_ACCESS_DESCRIPTION_shift(a) ((ACCESS_DESCRIPTION *)sk_shift(a))
+	#define sk_ACCESS_DESCRIPTION_pop(a) ((ACCESS_DESCRIPTION *)sk_pop(a))
+	#define sk_ACCESS_DESCRIPTION_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(ACCESS_DESCRIPTION)
 
 typedef struct DIST_POINT_NAME_st {
@@ -204,6 +297,37 @@ STACK_OF(GENERAL_NAME) *CRLissuer;
 } DIST_POINT;
 
 DECLARE_STACK_OF(DIST_POINT)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_DIST_POINT_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_DIST_POINT_new_null() sk_new_null()
+	#define sk_DIST_POINT_free(a) sk_free(a)
+	#define sk_DIST_POINT_num(a) sk_num(a)
+	#define sk_DIST_POINT_value(a,b) ((DIST_POINT *) \
+		sk_value((a),(b)))
+	#define sk_DIST_POINT_set(a,b,c) ((DIST_POINT *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_DIST_POINT_zero(a) sk_zero(a)
+	#define sk_DIST_POINT_push(a,b) sk_push((a),(char *)(b))
+	#define sk_DIST_POINT_unshift(a,b) sk_unshift((a),(b))
+	#define sk_DIST_POINT_find(a,b) sk_find((a), (char *)(b))
+	#define sk_DIST_POINT_delete(a,b) ((DIST_POINT *) \
+		sk_delete((a),(b)))
+	#define sk_DIST_POINT_delete_ptr(a,b) ((DIST_POINT *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_DIST_POINT_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_DIST_POINT_set_cmp_func(a,b) ((int (*) \
+		(const DIST_POINT * const *,const DIST_POINT * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_DIST_POINT_dup(a) sk_dup(a)
+	#define sk_DIST_POINT_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_DIST_POINT_shift(a) ((DIST_POINT *)sk_shift(a))
+	#define sk_DIST_POINT_pop(a) ((DIST_POINT *)sk_pop(a))
+	#define sk_DIST_POINT_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(DIST_POINT)
 
 typedef struct AUTHORITY_KEYID_st {
@@ -220,6 +344,37 @@ typedef struct SXNET_ID_st {
 } SXNETID;
 
 DECLARE_STACK_OF(SXNETID)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_SXNETID_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_SXNETID_new_null() sk_new_null()
+	#define sk_SXNETID_free(a) sk_free(a)
+	#define sk_SXNETID_num(a) sk_num(a)
+	#define sk_SXNETID_value(a,b) ((SXNETID *) \
+		sk_value((a),(b)))
+	#define sk_SXNETID_set(a,b,c) ((SXNETID *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_SXNETID_zero(a) sk_zero(a)
+	#define sk_SXNETID_push(a,b) sk_push((a),(char *)(b))
+	#define sk_SXNETID_unshift(a,b) sk_unshift((a),(b))
+	#define sk_SXNETID_find(a,b) sk_find((a), (char *)(b))
+	#define sk_SXNETID_delete(a,b) ((SXNETID *) \
+		sk_delete((a),(b)))
+	#define sk_SXNETID_delete_ptr(a,b) ((SXNETID *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_SXNETID_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_SXNETID_set_cmp_func(a,b) ((int (*) \
+		(const SXNETID * const *,const SXNETID * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_SXNETID_dup(a) sk_dup(a)
+	#define sk_SXNETID_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_SXNETID_shift(a) ((SXNETID *)sk_shift(a))
+	#define sk_SXNETID_pop(a) ((SXNETID *)sk_pop(a))
+	#define sk_SXNETID_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(SXNETID)
 
 typedef struct SXNET_st {
@@ -247,6 +402,37 @@ typedef struct POLICYQUALINFO_st {
 } POLICYQUALINFO;
 
 DECLARE_STACK_OF(POLICYQUALINFO)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_POLICYQUALINFO_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_POLICYQUALINFO_new_null() sk_new_null()
+	#define sk_POLICYQUALINFO_free(a) sk_free(a)
+	#define sk_POLICYQUALINFO_num(a) sk_num(a)
+	#define sk_POLICYQUALINFO_value(a,b) ((POLICYQUALINFO *) \
+		sk_value((a),(b)))
+	#define sk_POLICYQUALINFO_set(a,b,c) ((POLICYQUALINFO *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_POLICYQUALINFO_zero(a) sk_zero(a)
+	#define sk_POLICYQUALINFO_push(a,b) sk_push((a),(char *)(b))
+	#define sk_POLICYQUALINFO_unshift(a,b) sk_unshift((a),(b))
+	#define sk_POLICYQUALINFO_find(a,b) sk_find((a), (char *)(b))
+	#define sk_POLICYQUALINFO_delete(a,b) ((POLICYQUALINFO *) \
+		sk_delete((a),(b)))
+	#define sk_POLICYQUALINFO_delete_ptr(a,b) ((POLICYQUALINFO *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_POLICYQUALINFO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_POLICYQUALINFO_set_cmp_func(a,b) ((int (*) \
+		(const POLICYQUALINFO * const *,const POLICYQUALINFO * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_POLICYQUALINFO_dup(a) sk_dup(a)
+	#define sk_POLICYQUALINFO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_POLICYQUALINFO_shift(a) ((POLICYQUALINFO *)sk_shift(a))
+	#define sk_POLICYQUALINFO_pop(a) ((POLICYQUALINFO *)sk_pop(a))
+	#define sk_POLICYQUALINFO_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(POLICYQUALINFO)
 
 typedef struct POLICYINFO_st {
@@ -255,6 +441,37 @@ typedef struct POLICYINFO_st {
 } POLICYINFO;
 
 DECLARE_STACK_OF(POLICYINFO)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_POLICYINFO_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_POLICYINFO_new_null() sk_new_null()
+	#define sk_POLICYINFO_free(a) sk_free(a)
+	#define sk_POLICYINFO_num(a) sk_num(a)
+	#define sk_POLICYINFO_value(a,b) ((POLICYINFO *) \
+		sk_value((a),(b)))
+	#define sk_POLICYINFO_set(a,b,c) ((POLICYINFO *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_POLICYINFO_zero(a) sk_zero(a)
+	#define sk_POLICYINFO_push(a,b) sk_push((a),(char *)(b))
+	#define sk_POLICYINFO_unshift(a,b) sk_unshift((a),(b))
+	#define sk_POLICYINFO_find(a,b) sk_find((a), (char *)(b))
+	#define sk_POLICYINFO_delete(a,b) ((POLICYINFO *) \
+		sk_delete((a),(b)))
+	#define sk_POLICYINFO_delete_ptr(a,b) ((POLICYINFO *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_POLICYINFO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_POLICYINFO_set_cmp_func(a,b) ((int (*) \
+		(const POLICYINFO * const *,const POLICYINFO * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_POLICYINFO_dup(a) sk_dup(a)
+	#define sk_POLICYINFO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_POLICYINFO_shift(a) ((POLICYINFO *)sk_shift(a))
+	#define sk_POLICYINFO_pop(a) ((POLICYINFO *)sk_pop(a))
+	#define sk_POLICYINFO_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(POLICYINFO)
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
@@ -353,6 +570,37 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_MAX		7
 
 DECLARE_STACK_OF(X509_PURPOSE)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_X509_PURPOSE_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_X509_PURPOSE_new_null() sk_new_null()
+	#define sk_X509_PURPOSE_free(a) sk_free(a)
+	#define sk_X509_PURPOSE_num(a) sk_num(a)
+	#define sk_X509_PURPOSE_value(a,b) ((X509_PURPOSE *) \
+		sk_value((a),(b)))
+	#define sk_X509_PURPOSE_set(a,b,c) ((X509_PURPOSE *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_X509_PURPOSE_zero(a) sk_zero(a)
+	#define sk_X509_PURPOSE_push(a,b) sk_push((a),(char *)(b))
+	#define sk_X509_PURPOSE_unshift(a,b) sk_unshift((a),(b))
+	#define sk_X509_PURPOSE_find(a,b) sk_find((a), (char *)(b))
+	#define sk_X509_PURPOSE_delete(a,b) ((X509_PURPOSE *) \
+		sk_delete((a),(b)))
+	#define sk_X509_PURPOSE_delete_ptr(a,b) ((X509_PURPOSE *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_X509_PURPOSE_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_X509_PURPOSE_set_cmp_func(a,b) ((int (*) \
+		(const X509_PURPOSE * const *,const X509_PURPOSE * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_X509_PURPOSE_dup(a) sk_dup(a)
+	#define sk_X509_PURPOSE_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_X509_PURPOSE_shift(a) ((X509_PURPOSE *)sk_shift(a))
+	#define sk_X509_PURPOSE_pop(a) ((X509_PURPOSE *)sk_pop(a))
+	#define sk_X509_PURPOSE_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 void ERR_load_X509V3_strings(void);
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp);

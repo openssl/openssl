@@ -104,6 +104,37 @@ typedef struct pkcs7_signer_info_st
 	} PKCS7_SIGNER_INFO;
 
 DECLARE_STACK_OF(PKCS7_SIGNER_INFO)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_PKCS7_SIGNER_INFO_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_PKCS7_SIGNER_INFO_new_null() sk_new_null()
+	#define sk_PKCS7_SIGNER_INFO_free(a) sk_free(a)
+	#define sk_PKCS7_SIGNER_INFO_num(a) sk_num(a)
+	#define sk_PKCS7_SIGNER_INFO_value(a,b) ((PKCS7_SIGNER_INFO *) \
+		sk_value((a),(b)))
+	#define sk_PKCS7_SIGNER_INFO_set(a,b,c) ((PKCS7_SIGNER_INFO *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_PKCS7_SIGNER_INFO_zero(a) sk_zero(a)
+	#define sk_PKCS7_SIGNER_INFO_push(a,b) sk_push((a),(char *)(b))
+	#define sk_PKCS7_SIGNER_INFO_unshift(a,b) sk_unshift((a),(b))
+	#define sk_PKCS7_SIGNER_INFO_find(a,b) sk_find((a), (char *)(b))
+	#define sk_PKCS7_SIGNER_INFO_delete(a,b) ((PKCS7_SIGNER_INFO *) \
+		sk_delete((a),(b)))
+	#define sk_PKCS7_SIGNER_INFO_delete_ptr(a,b) ((PKCS7_SIGNER_INFO *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_PKCS7_SIGNER_INFO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_PKCS7_SIGNER_INFO_set_cmp_func(a,b) ((int (*) \
+		(const PKCS7_SIGNER_INFO * const *,const PKCS7_SIGNER_INFO * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_PKCS7_SIGNER_INFO_dup(a) sk_dup(a)
+	#define sk_PKCS7_SIGNER_INFO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_PKCS7_SIGNER_INFO_shift(a) ((PKCS7_SIGNER_INFO *)sk_shift(a))
+	#define sk_PKCS7_SIGNER_INFO_pop(a) ((PKCS7_SIGNER_INFO *)sk_pop(a))
+	#define sk_PKCS7_SIGNER_INFO_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO)
 
 typedef struct pkcs7_recip_info_st
@@ -116,6 +147,37 @@ typedef struct pkcs7_recip_info_st
 	} PKCS7_RECIP_INFO;
 
 DECLARE_STACK_OF(PKCS7_RECIP_INFO)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_PKCS7_RECIP_INFO_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_PKCS7_RECIP_INFO_new_null() sk_new_null()
+	#define sk_PKCS7_RECIP_INFO_free(a) sk_free(a)
+	#define sk_PKCS7_RECIP_INFO_num(a) sk_num(a)
+	#define sk_PKCS7_RECIP_INFO_value(a,b) ((PKCS7_RECIP_INFO *) \
+		sk_value((a),(b)))
+	#define sk_PKCS7_RECIP_INFO_set(a,b,c) ((PKCS7_RECIP_INFO *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_PKCS7_RECIP_INFO_zero(a) sk_zero(a)
+	#define sk_PKCS7_RECIP_INFO_push(a,b) sk_push((a),(char *)(b))
+	#define sk_PKCS7_RECIP_INFO_unshift(a,b) sk_unshift((a),(b))
+	#define sk_PKCS7_RECIP_INFO_find(a,b) sk_find((a), (char *)(b))
+	#define sk_PKCS7_RECIP_INFO_delete(a,b) ((PKCS7_RECIP_INFO *) \
+		sk_delete((a),(b)))
+	#define sk_PKCS7_RECIP_INFO_delete_ptr(a,b) ((PKCS7_RECIP_INFO *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_PKCS7_RECIP_INFO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_PKCS7_RECIP_INFO_set_cmp_func(a,b) ((int (*) \
+		(const PKCS7_RECIP_INFO * const *,const PKCS7_RECIP_INFO * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_PKCS7_RECIP_INFO_dup(a) sk_dup(a)
+	#define sk_PKCS7_RECIP_INFO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_PKCS7_RECIP_INFO_shift(a) ((PKCS7_RECIP_INFO *)sk_shift(a))
+	#define sk_PKCS7_RECIP_INFO_pop(a) ((PKCS7_RECIP_INFO *)sk_pop(a))
+	#define sk_PKCS7_RECIP_INFO_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO)
 
 typedef struct pkcs7_signed_st
@@ -214,6 +276,37 @@ typedef struct pkcs7_st
 	} PKCS7;
 
 DECLARE_STACK_OF(PKCS7)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_PKCS7_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_PKCS7_new_null() sk_new_null()
+	#define sk_PKCS7_free(a) sk_free(a)
+	#define sk_PKCS7_num(a) sk_num(a)
+	#define sk_PKCS7_value(a,b) ((PKCS7 *) \
+		sk_value((a),(b)))
+	#define sk_PKCS7_set(a,b,c) ((PKCS7 *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_PKCS7_zero(a) sk_zero(a)
+	#define sk_PKCS7_push(a,b) sk_push((a),(char *)(b))
+	#define sk_PKCS7_unshift(a,b) sk_unshift((a),(b))
+	#define sk_PKCS7_find(a,b) sk_find((a), (char *)(b))
+	#define sk_PKCS7_delete(a,b) ((PKCS7 *) \
+		sk_delete((a),(b)))
+	#define sk_PKCS7_delete_ptr(a,b) ((PKCS7 *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_PKCS7_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_PKCS7_set_cmp_func(a,b) ((int (*) \
+		(const PKCS7 * const *,const PKCS7 * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_PKCS7_dup(a) sk_dup(a)
+	#define sk_PKCS7_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_PKCS7_shift(a) ((PKCS7 *)sk_shift(a))
+	#define sk_PKCS7_pop(a) ((PKCS7 *)sk_pop(a))
+	#define sk_PKCS7_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(PKCS7)
 DECLARE_PKCS12_STACK_OF(PKCS7)
 

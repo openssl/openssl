@@ -183,6 +183,37 @@ typedef struct ssl_cipher_st
 	} SSL_CIPHER;
 
 DECLARE_STACK_OF(SSL_CIPHER)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_SSL_CIPHER_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_SSL_CIPHER_new_null() sk_new_null()
+	#define sk_SSL_CIPHER_free(a) sk_free(a)
+	#define sk_SSL_CIPHER_num(a) sk_num(a)
+	#define sk_SSL_CIPHER_value(a,b) ((SSL_CIPHER *) \
+		sk_value((a),(b)))
+	#define sk_SSL_CIPHER_set(a,b,c) ((SSL_CIPHER *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_SSL_CIPHER_zero(a) sk_zero(a)
+	#define sk_SSL_CIPHER_push(a,b) sk_push((a),(char *)(b))
+	#define sk_SSL_CIPHER_unshift(a,b) sk_unshift((a),(b))
+	#define sk_SSL_CIPHER_find(a,b) sk_find((a), (char *)(b))
+	#define sk_SSL_CIPHER_delete(a,b) ((SSL_CIPHER *) \
+		sk_delete((a),(b)))
+	#define sk_SSL_CIPHER_delete_ptr(a,b) ((SSL_CIPHER *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_SSL_CIPHER_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_SSL_CIPHER_set_cmp_func(a,b) ((int (*) \
+		(const SSL_CIPHER * const *,const SSL_CIPHER * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_SSL_CIPHER_dup(a) sk_dup(a)
+	#define sk_SSL_CIPHER_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_SSL_CIPHER_shift(a) ((SSL_CIPHER *)sk_shift(a))
+	#define sk_SSL_CIPHER_pop(a) ((SSL_CIPHER *)sk_pop(a))
+	#define sk_SSL_CIPHER_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 typedef struct ssl_st SSL;
 typedef struct ssl_ctx_st SSL_CTX;
@@ -362,6 +393,37 @@ typedef struct ssl_comp_st
 } SSL_COMP;
 
 DECLARE_STACK_OF(SSL_COMP)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_SSL_COMP_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_SSL_COMP_new_null() sk_new_null()
+	#define sk_SSL_COMP_free(a) sk_free(a)
+	#define sk_SSL_COMP_num(a) sk_num(a)
+	#define sk_SSL_COMP_value(a,b) ((SSL_COMP *) \
+		sk_value((a),(b)))
+	#define sk_SSL_COMP_set(a,b,c) ((SSL_COMP *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_SSL_COMP_zero(a) sk_zero(a)
+	#define sk_SSL_COMP_push(a,b) sk_push((a),(char *)(b))
+	#define sk_SSL_COMP_unshift(a,b) sk_unshift((a),(b))
+	#define sk_SSL_COMP_find(a,b) sk_find((a), (char *)(b))
+	#define sk_SSL_COMP_delete(a,b) ((SSL_COMP *) \
+		sk_delete((a),(b)))
+	#define sk_SSL_COMP_delete_ptr(a,b) ((SSL_COMP *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_SSL_COMP_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_SSL_COMP_set_cmp_func(a,b) ((int (*) \
+		(const SSL_COMP * const *,const SSL_COMP * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_SSL_COMP_dup(a) sk_dup(a)
+	#define sk_SSL_COMP_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_SSL_COMP_shift(a) ((SSL_COMP *)sk_shift(a))
+	#define sk_SSL_COMP_pop(a) ((SSL_COMP *)sk_pop(a))
+	#define sk_SSL_COMP_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 struct ssl_ctx_st
 	{
