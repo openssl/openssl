@@ -115,10 +115,10 @@ STACK_OF(type) \
 	((void (*)(STACK_OF(type) *))sk_sort)(st)
 
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-	((STACK_OF(type) * (*) (STACK_OF(type) **,unsigned char **, long , \
-                                       type *(*)(type **, unsigned char **,long), \
-                                       void (*)(type *), int ,int )) d2i_ASN1_SET) \
-						(st,pp,length, d2i_func, free_func, ex_tag,ex_class)
+((STACK_OF(type) * (*) (STACK_OF(type) **,const unsigned char **, long , \
+                         type *(*)(type **, const unsigned char **,long), \
+                                void (*)(type *), int ,int )) d2i_ASN1_SET) \
+			(st,pp,length, d2i_func, free_func, ex_tag,ex_class)
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
 	((int (*)(STACK_OF(type) *,unsigned char **, \
                            int (*)(type *,unsigned char **), int , int , int)) i2d_ASN1_SET) \
@@ -129,14 +129,15 @@ STACK_OF(type) \
                                     int (*)(type *,unsigned char **), unsigned char **,int *)) ASN1_seq_pack) \
 				(st, i2d_func, buf, len)
 #define	SKM_ASN1_seq_unpack(type, buf, len, d2i_func, free_func) \
-	((STACK_OF(type) * (*)(unsigned char *,int, \
-                                       type *(*)(type **,unsigned char **, long), \
+	((STACK_OF(type) * (*)(const unsigned char *,int, \
+                              type *(*)(type **,const unsigned char **, long), \
                                        void (*)(type *)))ASN1_seq_unpack) \
 					(buf,len,d2i_func, free_func)
 
 #define SKM_PKCS12_decrypt_d2i(type, algor, d2i_func, free_func, pass, passlen, oct, seq) \
 	((STACK_OF(type) * (*)(X509_ALGOR *, \
-                                type *(*)(type **, unsigned char **, long), void (*)(type *), \
+            		type *(*)(type **, const unsigned char **, long), \
+				void (*)(type *), \
                                 const char *, int, \
                                 ASN1_STRING *, int))PKCS12_decrypt_d2i) \
 				(algor,d2i_func,free_func,pass,passlen,oct,seq)
