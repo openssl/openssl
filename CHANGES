@@ -350,7 +350,7 @@ TODO: bug: pad  x  with leading zeros if necessary
          EC_GROUP_get_nid()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
- Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
+ Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
 
   *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
      code (06) was taken as the first octet of the session ID and the last
