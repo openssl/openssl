@@ -82,6 +82,7 @@
 #include "des_locl.h"
 #include "cryptlib.h"
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
 #include <setjmp.h>
 #include <errno.h>
