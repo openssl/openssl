@@ -71,7 +71,7 @@ top_fips_dssvs:
 	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_dssvs sub_target)
 
 fips_dssvs: fips_dssvs.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_dssvs
 
 Q=../testvectors/dsa/req
