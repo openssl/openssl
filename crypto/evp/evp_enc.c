@@ -236,7 +236,7 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *imp
 int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv)
 	{
-	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
+	return EVP_CipherInit(ctx, cipher, key, iv, 0);
 	}
 
 int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
