@@ -376,11 +376,12 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 		BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
 	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
 		eol = 0;
-		while(iscrlf(linebuf[len - 1])) {
+		while(len && iscrlf(linebuf[len - 1])) {
 			len--;
 			eol = 1;
-		}	
-		BIO_write(out, linebuf, len);
+		}
+		if (len)
+			BIO_write(out, linebuf, len);
 		if(eol) BIO_write(out, "\r\n", 2);
 	}
 	return 1;
@@ -423,6 +424,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 {
 	char linebuf[MAX_SMLEN];
 	int len, blen;
+	int eol = 0, next_eol = 0;
 	BIO *bpart = NULL;
 	STACK_OF(BIO) *parts;
 	char state, part, first;
@@ -442,15 +444,21 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 			sk_BIO_push(parts, bpart);
 			return 1;
 		} else if(part) {
+			/* Strip CR+LF from linebuf */
+			next_eol = 0;
+			while(len && iscrlf(linebuf[len - 1])) {
+				next_eol = 1;
+				len--;
+			}
 			if(first) {
 				first = 0;
 				if(bpart) sk_BIO_push(parts, bpart);
 				bpart = BIO_new(BIO_s_mem());
-				
-			} else BIO_write(bpart, "\r\n", 2);
-			/* Strip CR+LF from linebuf */
-			while(iscrlf(linebuf[len - 1])) len--;
-			BIO_write(bpart, linebuf, len);
+			} else if (eol)
+				BIO_write(bpart, "\r\n", 2);
+			eol = next_eol;
+			if (len)
+				BIO_write(bpart, linebuf, len);
 		}
 	}
 	return 0;
