@@ -226,13 +226,18 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 					ASN1err(ASN1_F_ASN1_D2I_BIO,ERR_R_MALLOC_FAILURE);
 					goto err;
 					}
-				i=BIO_read(in,&(b->data[len]),want);
-				if (i <= 0)
+				while (want > 0)
 					{
-					ASN1err(ASN1_F_ASN1_D2I_BIO,ASN1_R_NOT_ENOUGH_DATA);
-					goto err;
+					i=BIO_read(in,&(b->data[len]),want);
+					if (i <= 0)
+						{
+						ASN1err(ASN1_F_ASN1_D2I_BIO,
+						    ASN1_R_NOT_ENOUGH_DATA);
+						goto err;
+						}
+					len+=i;
+					want -= i;
 					}
-				len+=i;
 				}
 			off+=(int)c.slen;
 			if (eos <= 0)
