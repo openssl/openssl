@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_unix.c,v 1.6 2004/06/14 10:08:43 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_unix.c,v 1.8 2004/07/19 16:34:39 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -79,7 +79,8 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       return 0;
     }
 
-  strncpy((*ctx)->entry_name, direntry->d_name, sizeof((*ctx)->entry_name));
+  strncpy((*ctx)->entry_name, direntry->d_name, sizeof((*ctx)->entry_name) - 1);
+  (*ctx)->entry_name[sizeof((*ctx)->entry_name) - 1] = '\0';
   return (*ctx)->entry_name;
 }
 

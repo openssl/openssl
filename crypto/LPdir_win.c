@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_win.c,v 1.1 2004/06/14 10:07:56 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_win.c,v 1.3 2004/07/19 16:34:54 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -53,7 +53,6 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       if (*ctx == NULL)
 	{
 	  errno = ENOMEM;
-	  free(*ctx);
 	  return 0;
 	}
       memset(*ctx, '\0', sizeof(LP_DIR_CTX));
@@ -68,7 +67,6 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	  {
 	    errno = ENOMEM;
 	    free(*ctx);
-	    free(wdir);
 	    return 0;
 	  }
 
