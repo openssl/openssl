@@ -237,8 +237,8 @@ static int b64_read(BIO *b, char *out, int outl)
 							&(ctx->tmp[0]));
 						for (x=0; x < i; x++)
 							ctx->tmp[x]=p[x];
-						EVP_DecodeInit(&ctx->base64);
 						}
+					EVP_DecodeInit(&ctx->base64);
 					ctx->start=0;
 					break;
 					}

@@ -4,6 +4,20 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix for base64 decode bug. When a base64 bio reads only one line of
+     data and it contains EOF it will end up returning an error. This is
+     caused by input 46 bytes long. The cause is due to the way base64
+     BIOs find the start of base64 encoded data. They do this by trying a
+     trial decode on each line until they find one that works. When they
+     do a flag is set and it starts again knowing it can pass all the
+     data directly through the decoder. Unfortunately it doesn't reset
+     the context it uses. This means that if EOF is reached an attempt
+     is made to pass two EOFs through the context and this causes the
+     resulting error. This can also cause other problems as well. As is
+     usual with these problems it takes *ages* to find and the fix is
+     trivial: move one line.
+     [Steve Henson, reported by ian@uns.ns.ac.yu (Ivan Nejgebauer) ]
+
   *) Ugly workaround to get s_client and s_server working under Windows. The
      old code wouldn't work because it needed to select() on sockets and the
      tty (for keypresses and to see if data could be written). Win32 only
