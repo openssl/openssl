@@ -108,6 +108,8 @@ int RAND_poll(void)
 		pitem->buffer = (long *)data_buffer[total_length];
 		pitem->retlen = 0;
 		total_length += pitems_data->length;
+		pitems_data++;
+		pitem++;
 		}
 	pitem->length = pitem->code = 0;
 
