@@ -15,14 +15,13 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERRC=buf_err
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= buffer.c $(ERRC).c
-LIBOBJ= buffer.o $(ERRC).o
+LIBSRC= buffer.c buf_err.c
+LIBOBJ= buffer.o buf_err.o
 
 SRC= $(LIBSRC)
 

@@ -15,15 +15,14 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERRC=pem_err
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c $(ERRC).c
+LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c
 
-LIBOBJ=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o $(ERRC).o
+LIBOBJ=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o pem_err.o
 
 SRC= $(LIBSRC)
 

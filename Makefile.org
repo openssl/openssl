@@ -263,7 +263,7 @@ tags:
 	done;
 
 errors:
-	perl util/mkerr.pl -static -recurse
+	perl util/mkerr.pl -recurse -write
 
 tar:
 	@gtar --no-recursion -cvf - \

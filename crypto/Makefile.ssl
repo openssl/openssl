@@ -29,12 +29,11 @@ SDIRS=	md2 md5 sha mdc2 hmac ripemd \
 	buffer bio stack lhash rand err objects \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp
 
-ERRC=cpt_err
 GENERAL=Makefile README
 
 LIB= $(TOP)/libcrypto.a
-LIBSRC=	cryptlib.c mem.c cversion.c ex_data.c tmdiff.c $(ERRC).c
-LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o tmdiff.o $(ERRC).o
+LIBSRC=	cryptlib.c mem.c cversion.c ex_data.c tmdiff.c cpt_err.c
+LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o tmdiff.o cpt_err.o
 
 SRC= $(LIBSRC)
 

@@ -15,14 +15,13 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERRC=rsar_err
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libRSAglue.a
-LIBSRC=	rsaref.c $(ERRC).c
-LIBOBJ= rsaref.o $(ERRC).o
+LIBSRC=	rsaref.c rsar_err.c
+LIBOBJ= rsaref.o rsar_err.o
 
 SRC= $(LIBSRC)
 

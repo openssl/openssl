@@ -15,7 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERRC=evp_err
 GENERAL=Makefile
 TEST=
 APPS=
@@ -33,7 +32,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c \
 	m_null.c m_md2.c m_md5.c m_sha.c m_sha1.c m_dss.c m_dss1.c m_mdc2.c \
 	m_ripemd.c \
 	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
-	bio_md.c bio_b64.c bio_enc.c $(ERRC).c e_null.c \
+	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c evp_lib.c bio_ok.c evp_pkey.c evp_pbe.c
 
 LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o \
@@ -48,7 +47,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o \
 	m_null.o m_md2.o m_md5.o m_sha.o m_sha1.o m_dss.o m_dss1.o m_mdc2.o \
 	m_ripemd.o \
 	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o p_enc.o p_dec.o \
-	bio_md.o bio_b64.o bio_enc.o $(ERRC).o e_null.o \
+	bio_md.o bio_b64.o bio_enc.o evp_err.o e_null.o \
 	c_all.o evp_lib.o bio_ok.o evp_pkey.o evp_pbe.o
 
 SRC= $(LIBSRC)

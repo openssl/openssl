@@ -3,9 +3,10 @@
 my $config = "crypto/err/openssl.ec";
 my $debug = 0;
 my $rebuild = 0;
-my $static = 0;
+my $static = 1;
 my $recurse = 0;
 my $reindex = 0;
+my $dowrite = 0;
 
 
 while (@ARGV) {
@@ -25,8 +26,11 @@ while (@ARGV) {
 	} elsif($arg eq "-reindex") {
 		$reindex = 1;
 		shift @ARGV;
-	} elsif($arg eq "-static") {
-		$static = 1;
+	} elsif($arg eq "-nostatic") {
+		$static = 0;
+		shift @ARGV;
+	} elsif($arg eq "-write") {
+		$dowrite = 1;
 		shift @ARGV;
 	} else {
 		last;
@@ -210,7 +214,7 @@ foreach $lib (keys %csrc)
 	} else {
 		print STDERR "$lib:\t\t$fnew{$lib} New Functions,";
 		print STDERR " $rnew{$lib} New Reasons.\n";
-
+		next unless $dowrite;
 	}
 
 	# If we get here then we have some new error codes so we
