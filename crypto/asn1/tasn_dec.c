@@ -227,14 +227,24 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 		case ASN1_ITYPE_CHOICE:
 		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
 				goto auxerr;
+
+		/* Allocate structure */
+		if(!*pval) {
+			if(!ASN1_item_ex_new(pval, it)) {
+				errtt = tt;
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+				goto err;
+			}
+		}
 		/* CHOICE type, try each possibility in turn */
 		pchval = NULL;
 		p = *in;
 		for(i = 0, tt=it->templates; i < it->tcount; i++, tt++) {
+			pchptr = asn1_get_field_ptr(pval, tt);
 			/* We mark field as OPTIONAL so its absence
 			 * can be recognised.
 			 */
-			ret = asn1_template_ex_d2i(&pchval, &p, len, tt, 1, ctx);
+			ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1, ctx);
 			/* If field not present, try the next one */
 			if(ret == -1) continue;
 			/* If positive return, read OK, break loop */
@@ -247,20 +257,14 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 		/* Did we fall off the end without reading anything? */
 		if(i == it->tcount) {
 			/* If OPTIONAL, this is OK */
-			if(opt) return -1;
+			if(opt) {
+				/* Free and zero it */
+				ASN1_item_ex_free(pval, it);
+				return -1;
+			}
 			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
 			goto err;
 		}
-		/* Otherwise we got a match, allocate structure and populate it */
-		if(!*pval) {
-			if(!ASN1_item_ex_new(pval, it)) {
-				errtt = tt;
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
-				goto err;
-			}
-		}
-		pchptr = asn1_get_field_ptr(pval, tt);
-		*pchptr = pchval;
 		asn1_set_choice_selector(pval, i, it);
 		*in = p;
 		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
