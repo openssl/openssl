@@ -87,6 +87,17 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+v3_alt.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+v3_alt.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
+v3_alt.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
+v3_alt.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
+v3_alt.o: ../../include/evp.h ../../include/idea.h ../../include/lhash.h
+v3_alt.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+v3_alt.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
+v3_alt.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+v3_alt.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+v3_alt.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+v3_alt.o: ../../include/x509_vfy.h x509v3.h
 v3_bcons.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_bcons.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
 v3_bcons.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
@@ -131,6 +142,17 @@ v3_extku.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 v3_extku.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 v3_extku.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
 v3_extku.o: ../../include/x509_vfy.h x509v3.h
+v3_genn.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+v3_genn.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
+v3_genn.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
+v3_genn.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
+v3_genn.o: ../../include/evp.h ../../include/idea.h ../../include/lhash.h
+v3_genn.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+v3_genn.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
+v3_genn.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+v3_genn.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+v3_genn.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+v3_genn.o: ../../include/x509_vfy.h x509v3.h
 v3_ia5.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_ia5.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
 v3_ia5.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
