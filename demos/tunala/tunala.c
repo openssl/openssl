@@ -521,7 +521,7 @@ main_loop:
 		fprintf(stderr, "selector_select returned a badness error.\n");
 		goto shouldnt_happen;
 	case 0:
-		fprintf(stderr, "Warn, selector_select returned 0 - signal??\n");
+		fprintf(stderr, "Warn, selector_select returned 0 - signal?""?\n");
 		goto main_loop;
 	default:
 		break;

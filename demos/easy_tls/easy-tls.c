@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-file-style: "bsd" -*- */
 /*
  * easy-tls.c -- generic TLS proxy.
- * $Id: easy-tls.c,v 1.1 2001/09/17 19:06:57 bodo Exp $
+ * $Id: easy-tls.c,v 1.2 2001/09/24 07:54:09 bodo Exp $
  */
 /*
  (c) Copyright 1999 Bodo Moeller.  All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 static char const rcsid[] =
-"$Id: easy-tls.c,v 1.1 2001/09/17 19:06:57 bodo Exp $";
+"$Id: easy-tls.c,v 1.2 2001/09/24 07:54:09 bodo Exp $";
 
 #include <assert.h>
 #include <errno.h>
@@ -362,7 +362,7 @@ tls_openssl_errors(const char *app_prefix_1, const char *app_prefix_2, const cha
     assert(app_prefix_2 != NULL);
 
     if (default_text == NULL)
-	default_text = "???";
+	default_text = "?""?""?";
     
     while ((err = ERR_get_error_line_data(&file,&line,&data,&flags)) != 0) {
 	if (reasons_i < sizeof reasons) {
