@@ -116,6 +116,15 @@ static const char rnd_seed[] = "string to make the random number generator think
 ECDSA_SIG*	signatures[ECDSA_NIST_TESTS];
 unsigned char	digest[ECDSA_NIST_TESTS][20];
 
+/* some declarations */
+void clear_ecdsa(EC_KEY *);
+int set_p192_param(EC_KEY *);
+int set_p239_param(EC_KEY *);
+int test_sig_vrf(EC_KEY *, const unsigned char *);
+int test_x962_sig_vrf(EC_KEY *, const unsigned char *,
+                           const char *, const char *, const char *);
+int ecdsa_cmp(const EC_KEY *, const EC_KEY *);
+
 void clear_ecdsa(EC_KEY *ecdsa)
 {
 	if (!ecdsa)

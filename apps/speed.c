@@ -616,7 +616,7 @@ int MAIN(int argc, char **argv)
         EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
         unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
         int secret_size_a, secret_size_b;
-        int ecdh_check = 0;
+        int ecdh_checks = 0;
         int secret_idx = 0;
         long ecdh_c[EC_NUM][2];
 #endif
@@ -2065,19 +2065,20 @@ int MAIN(int argc, char **argv)
 						ecdh_a[j]->pub_key,
 						ecdh_b[j]);
 					if (secret_size_a != secret_size_b) 
-						ecdh_check = 0;
+						ecdh_checks = 0;
 					else
-						ecdh_check = 1;
+						ecdh_checks = 1;
 
 					for (secret_idx = 0; 
-					    (secret_idx < secret_size_a) && (ecdh_check == 1);
+					    (secret_idx < secret_size_a)
+						&& (ecdh_checks == 1);
 					    secret_idx++)
 						{
 						if (secret_a[secret_idx] != secret_b[secret_idx])
-						ecdh_check = 0;
+						ecdh_checks = 0;
 						}
 
-					if (ecdh_check == 0)
+					if (ecdh_checks == 0)
 						{
 						BIO_printf(bio_err,"ECDH computations don't match.\n");
 						ERR_print_errors(bio_err);

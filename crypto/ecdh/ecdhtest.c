@@ -117,6 +117,7 @@ static void MS_CALLBACK cb(int p, int n, void *arg);
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
+int test_ecdh_curve(int , char *, BN_CTX *, BIO *);
 
 int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	{

@@ -640,6 +640,8 @@ int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
+int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
+
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 

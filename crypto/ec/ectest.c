@@ -105,6 +105,9 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 	exit(1); \
 } while (0)
 
+void prime_field_tests(void);
+void char2_field_tests(void);
+
 #if 0
 static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	{
