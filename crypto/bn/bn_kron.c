@@ -53,8 +53,8 @@
  *
  */
 
+#include "cryptlib.h"
 #include "bn_lcl.h"
-
 
 /* least significant word */
 #define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
@@ -73,6 +73,9 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	 * Note that the sign of n does not matter.
 	 */
 	static const int tab[8] = {0, 1, 0, -1, 0, -1, 0, 1};
+
+	bn_check_top(a);
+	bn_check_top(b);
 
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
@@ -172,8 +175,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 		tmp = A; A = B; B = tmp;
 		tmp->neg = 0;
 		}
-	
- end:
+end:
 	BN_CTX_end(ctx);
 	if (err)
 		return -2;
