@@ -131,7 +131,8 @@ sub link_hash_cert {
 
 sub link_hash_crl {
 		my $fname = $_[0];
-		my ($hash, $fprint) = `$openssl crl -hash -fingerprint -noout -in "$fname"`;
+		$fname =~ s/'/'\\''/g;
+		my ($hash, $fprint) = `$openssl crl -hash -fingerprint -noout -in '$fname'`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;
