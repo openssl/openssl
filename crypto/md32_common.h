@@ -486,7 +486,7 @@ void HASH_UPDATE (HASH_CTX *c, const unsigned char *data, unsigned long len)
 #endif
 #if defined(HASH_BLOCK_DATA_ORDER)
 			{
-			HASH_BLOCK_DATA_ORDER(c,(const unsigned char *)data,sw);
+			HASH_BLOCK_DATA_ORDER(c,data,sw);
 			sw*=HASH_CBLOCK;
 			data+=sw;
 			len-=sw;

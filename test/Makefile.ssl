@@ -375,7 +375,8 @@ ssltest.o: ../include/openssl/evp.h ../include/openssl/idea.h
 ssltest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 ssltest.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 ssltest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-ssltest.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+ssltest.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+ssltest.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ssltest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 ssltest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 ssltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h

@@ -191,7 +191,8 @@ ciphers.o: ../include/openssl/evp.h ../include/openssl/idea.h
 ciphers.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 ciphers.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 ciphers.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-ciphers.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+ciphers.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+ciphers.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ciphers.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 ciphers.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 ciphers.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
@@ -330,7 +331,8 @@ errstr.o: ../include/openssl/evp.h ../include/openssl/idea.h
 errstr.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 errstr.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 errstr.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-errstr.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+errstr.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+errstr.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 errstr.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 errstr.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 errstr.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
@@ -493,7 +495,8 @@ s_cb.o: ../include/openssl/evp.h ../include/openssl/idea.h
 s_cb.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 s_cb.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 s_cb.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-s_cb.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+s_cb.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+s_cb.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 s_cb.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 s_cb.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 s_cb.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
@@ -552,6 +555,7 @@ s_socket.o: ../include/openssl/idea.h ../include/openssl/lhash.h
 s_socket.o: ../include/openssl/md2.h ../include/openssl/md5.h
 s_socket.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
 s_socket.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+s_socket.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 s_socket.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 s_socket.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
 s_socket.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
