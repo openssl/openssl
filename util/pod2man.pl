@@ -416,6 +416,8 @@ if ($name ne 'something') {
 			warn "$0: Improper man page - malformed NAME header in paragraph $. of $ARGV[0]\n"
 		    }
 		    else {
+			$n[0] =~ s/\n/ /;
+			$n[1] =~ s/\n/ /;
 			%namedesc = @n;
 		    }
 		}
