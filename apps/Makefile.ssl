@@ -169,9 +169,9 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
-	-(cd ..; 
+	-(cd ..; \
+	  OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 	  if [ -n "$(SHARED_LIBS)" ]; then \
-	    OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 	    LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 	    DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
 	    SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
