@@ -78,7 +78,7 @@ struct ec_method_st {
 	int (*add)(const EC_GROUP *, EC_POINT *r, EC_POINT *a, EC_POINT *b);
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, EC_POINT *a);
 
-	/* used by EC_POINT_add, EC_POINT_dbl: */
+	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
 	size_t (*point2oct)(const EC_GROUP *, EC_POINT *, unsigned char *buf,
 	        size_t len, point_conversion_form_t form);
 	int (*oct2point)(const EC_GROUP *, EC_POINT *, unsigned char *buf, size_t len);
@@ -88,7 +88,7 @@ struct ec_method_st {
 
 	/* 'field_mult' and 'field_sqr' can be used by 'add' and 'dbl' so that
 	 * the same implementations of point operations can be used with different
-	 * implementations of field operations: */
+	 * optimized implementations of expensive field operations: */
 	int (*field_mult)(const EC_GROUP *, BIGNUM *r, BIGNUM *a, BIGNUM *b);
 	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, BIGNUM *a);
 } /* EC_METHOD */;
