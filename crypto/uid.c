@@ -53,7 +53,7 @@
  *
  */
 
-#include "openssl/crypto.h"
+#include <openssl/crypto.h>
 
 #if defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD__ > 2)
 
