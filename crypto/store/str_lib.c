@@ -232,7 +232,8 @@ const STORE_METHOD *STORE_set_method(STORE *store, const STORE_METHOD *meth)
 
 /* API functions */
 
-X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[])
+X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	X509 *x;
@@ -240,7 +241,8 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_CERTIFICATE,
 		get_object,STORE_R_NO_GET_OBJECT_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
+		attributes, parameters);
 	if (!object || !object->data.x509.certificate)
 		{
 		STOREerr(STORE_F_STORE_GET_CERTIFICATE,
@@ -256,7 +258,8 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[])
 	return x;
 	}
 
-int store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[])
+int store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -277,7 +280,8 @@ int store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[])
 #endif
 	object->data.x509.certificate = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
+		object, attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -290,12 +294,14 @@ int store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-int STORE_revoke_certificate(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_revoke_certificate(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_REVOKE_CERTIFICATE,
 		revoke_object,STORE_R_NO_REVOKE_OBJECT_FUNCTION);
 
-	if (!s->meth->revoke_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE, attributes))
+	if (!s->meth->revoke_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
+		    attributes, parameters))
 		{
 		STOREerr(STORE_F_STORE_REVOKE_CERTIFICATE,
 			STORE_R_FAILED_REVOKING_CERTIFICATE);
@@ -304,12 +310,14 @@ int STORE_revoke_certificate(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-int STORE_delete_certificate(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_certificate(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_CERTIFICATE,
 		delete_object,STORE_R_NO_DELETE_OBJECT_FUNCTION);
 
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
+		    attributes, parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_CERTIFICATE,
 			STORE_R_FAILED_DELETING_CERTIFICATE);
@@ -318,14 +326,16 @@ int STORE_delete_certificate(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-void *STORE_list_certificate_start(STORE *s, OPENSSL_ITEM attributes[])
+void *STORE_list_certificate_start(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	void *handle;
 
 	check_store(s,STORE_F_STORE_LIST_CERTIFICATE_START,
 		list_object_start,STORE_R_NO_LIST_OBJECT_START_FUNCTION);
 
-	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_X509_CERTIFICATE, attributes);
+	handle = s->meth->list_object_start(s,
+		STORE_OBJECT_TYPE_X509_CERTIFICATE, attributes, parameters);
 	if (!handle)
 		{
 		STOREerr(STORE_F_STORE_LIST_CERTIFICATE_START,
@@ -387,26 +397,17 @@ int STORE_list_certificate_endp(STORE *s, void *handle)
 	return 1;
 	}
 
-EVP_PKEY *STORE_generate_key(STORE *s,
-	int evp_type, size_t bits, OPENSSL_ITEM attributes[])
+EVP_PKEY *STORE_generate_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	EVP_PKEY *pkey;
-	OPENSSL_ITEM params[3];
-
-	params[0].code = STORE_PARAM_EVP_TYPE;
-	params[0].value = &evp_type;
-	params[0].value_size = sizeof(evp_type);
-	params[1].code = STORE_PARAM_BITS;
-	params[1].value = &bits;
-	params[1].value_size = sizeof(bits);
-	params[2].code = 0;
 
 	check_store(s,STORE_F_STORE_GENERATE_KEY,
 		generate_object,STORE_R_NO_GENERATE_OBJECT_FUNCTION);
 
 	object = s->meth->generate_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
-		params, attributes);
+		attributes, parameters);
 	if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GENERATE_KEY,
@@ -422,7 +423,8 @@ EVP_PKEY *STORE_generate_key(STORE *s,
 	return pkey;
 	}
 
-EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[])
+EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	EVP_PKEY *pkey;
@@ -430,7 +432,8 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_PRIVATE_KEY,
 		get_object,STORE_R_NO_GET_OBJECT_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
+		attributes, parameters);
 	if (!object || !object->data.key || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GET_PRIVATE_KEY,
@@ -446,7 +449,8 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[])
 	return pkey;
 	}
 
-int store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
+int store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -474,7 +478,8 @@ int store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
 #endif
 	object->data.key = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, object,
+		attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -487,14 +492,16 @@ int store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
 	return i;
 	}
 
-int STORE_revoke_private_key(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_revoke_private_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	int i;
 
 	check_store(s,STORE_F_STORE_REVOKE_PRIVATE_KEY,
 		revoke_object,STORE_R_NO_REVOKE_OBJECT_FUNCTION);
 
-	i = s->meth->revoke_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, attributes);
+	i = s->meth->revoke_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
+		attributes, parameters);
 
 	if (!i)
 		{
@@ -505,12 +512,14 @@ int STORE_revoke_private_key(STORE *s, OPENSSL_ITEM attributes[])
 	return i;
 	}
 
-int STORE_delete_private_key(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_private_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_PRIVATE_KEY,
 		delete_object,STORE_R_NO_DELETE_OBJECT_FUNCTION);
 	
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
+		    attributes, parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_PRIVATE_KEY,
 			STORE_R_FAILED_DELETING_KEY);
@@ -519,14 +528,16 @@ int STORE_delete_private_key(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-void *STORE_list_private_key_start(STORE *s, OPENSSL_ITEM attributes[])
+void *STORE_list_private_key_start(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	void *handle;
 
 	check_store(s,STORE_F_STORE_LIST_PRIVATE_KEY_START,
 		list_object_start,STORE_R_NO_LIST_OBJECT_START_FUNCTION);
 
-	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_PRIVATE_KEY, attributes);
+	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
+		attributes, parameters);
 	if (!handle)
 		{
 		STOREerr(STORE_F_STORE_LIST_PRIVATE_KEY_START,
@@ -588,7 +599,8 @@ int STORE_list_private_key_endp(STORE *s, void *handle)
 	return 1;
 	}
 
-EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[])
+EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	EVP_PKEY *pkey;
@@ -596,7 +608,8 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_PUBLIC_KEY,
 		get_object,STORE_R_NO_GET_OBJECT_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
+		attributes, parameters);
 	if (!object || !object->data.key || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GET_PUBLIC_KEY,
@@ -612,7 +625,8 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[])
 	return pkey;
 	}
 
-int store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
+int store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -640,7 +654,8 @@ int store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
 #endif
 	object->data.key = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, object,
+		attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -653,14 +668,16 @@ int store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[])
 	return i;
 	}
 
-int STORE_revoke_public_key(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_revoke_public_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	int i;
 
 	check_store(s,STORE_F_STORE_REVOKE_PUBLIC_KEY,
 		revoke_object,STORE_R_NO_REVOKE_OBJECT_FUNCTION);
 
-	i = s->meth->revoke_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, attributes);
+	i = s->meth->revoke_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
+		attributes, parameters);
 
 	if (!i)
 		{
@@ -671,12 +688,14 @@ int STORE_revoke_public_key(STORE *s, OPENSSL_ITEM attributes[])
 	return i;
 	}
 
-int STORE_delete_public_key(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_public_key(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_PUBLIC_KEY,
 		delete_object,STORE_R_NO_DELETE_OBJECT_FUNCTION);
 	
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
+		    attributes, parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_PUBLIC_KEY,
 			STORE_R_FAILED_DELETING_KEY);
@@ -685,14 +704,16 @@ int STORE_delete_public_key(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-void *STORE_list_public_key_start(STORE *s, OPENSSL_ITEM attributes[])
+void *STORE_list_public_key_start(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	void *handle;
 
 	check_store(s,STORE_F_STORE_LIST_PUBLIC_KEY_START,
 		list_object_start,STORE_R_NO_LIST_OBJECT_START_FUNCTION);
 
-	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_PUBLIC_KEY, attributes);
+	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
+		attributes, parameters);
 	if (!handle)
 		{
 		STOREerr(STORE_F_STORE_LIST_PUBLIC_KEY_START,
@@ -754,7 +775,8 @@ int STORE_list_public_key_endp(STORE *s, void *handle)
 	return 1;
 	}
 
-X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[])
+X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	X509_CRL *crl;
@@ -762,7 +784,8 @@ X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GENERATE_CRL,
 		generate_object,STORE_R_NO_GENERATE_CRL_FUNCTION);
 
-	object = s->meth->generate_object(s, STORE_OBJECT_TYPE_X509_CRL, 0, attributes);
+	object = s->meth->generate_object(s, STORE_OBJECT_TYPE_X509_CRL,
+		attributes, parameters);
 	if (!object || !object->data.crl)
 		{
 		STOREerr(STORE_F_STORE_GENERATE_CRL,
@@ -778,7 +801,8 @@ X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[])
 	return crl;
 	}
 
-X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[])
+X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	X509_CRL *crl;
@@ -786,7 +810,8 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_CRL,
 		get_object,STORE_R_NO_GET_OBJECT_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_X509_CRL, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_X509_CRL,
+		attributes, parameters);
 	if (!object || !object->data.crl)
 		{
 		STOREerr(STORE_F_STORE_GET_CRL,
@@ -802,7 +827,8 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[])
 	return crl;
 	}
 
-int store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[])
+int store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -823,7 +849,8 @@ int store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[])
 #endif
 	object->data.crl = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CRL, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CRL, object,
+		attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -836,12 +863,14 @@ int store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[])
 	return i;
 	}
 
-int STORE_delete_crl(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_crl(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_CRL,
 		delete_object,STORE_R_NO_DELETE_OBJECT_FUNCTION);
 	
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_X509_CRL, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_X509_CRL,
+		    attributes, parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_CRL,
 			STORE_R_FAILED_DELETING_KEY);
@@ -850,14 +879,16 @@ int STORE_delete_crl(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-void *STORE_list_crl_start(STORE *s, OPENSSL_ITEM attributes[])
+void *STORE_list_crl_start(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	void *handle;
 
 	check_store(s,STORE_F_STORE_LIST_CRL_START,
 		list_object_start,STORE_R_NO_LIST_OBJECT_START_FUNCTION);
 
-	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_X509_CRL, attributes);
+	handle = s->meth->list_object_start(s, STORE_OBJECT_TYPE_X509_CRL,
+		attributes, parameters);
 	if (!handle)
 		{
 		STOREerr(STORE_F_STORE_LIST_CRL_START,
@@ -919,7 +950,8 @@ int STORE_list_crl_endp(STORE *s, void *handle)
 	return 1;
 	}
 
-int store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[])
+int store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -936,7 +968,8 @@ int store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[])
 	
 	object->data.number = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_NUMBER, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_NUMBER, object,
+		attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -949,7 +982,8 @@ int store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[])
+BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	BIGNUM *n;
@@ -957,7 +991,8 @@ BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_NUMBER,
 		get_object,STORE_R_NO_GET_OBJECT_NUMBER_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_NUMBER, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_NUMBER, attributes,
+		parameters);
 	if (!object || !object->data.number)
 		{
 		STOREerr(STORE_F_STORE_GET_NUMBER,
@@ -970,12 +1005,14 @@ BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[])
 	return n;
 	}
 
-int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_NUMBER,
 		delete_object,STORE_R_NO_DELETE_NUMBER_FUNCTION);
 
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_NUMBER, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_NUMBER, attributes,
+		    parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_NUMBER,
 			STORE_R_FAILED_DELETING_NUMBER);
@@ -984,7 +1021,8 @@ int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[])
+int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
 	int i;
@@ -1001,7 +1039,8 @@ int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[])
 	
 	object->data.arbitrary = data;
 
-	i = s->meth->store_object(s, STORE_OBJECT_TYPE_ARBITRARY, object, attributes);
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_ARBITRARY, object,
+		attributes, parameters);
 
 	STORE_OBJECT_free(object);
 
@@ -1014,7 +1053,8 @@ int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[])
 	return 1;
 	}
 
-BUF_MEM *STORE_get_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
+BUF_MEM *STORE_get_arbitrary(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object;
 	BUF_MEM *b;
@@ -1022,7 +1062,8 @@ BUF_MEM *STORE_get_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
 	check_store(s,STORE_F_STORE_GET_ARBITRARY,
 		get_object,STORE_R_NO_GET_OBJECT_ARBITRARY_FUNCTION);
 
-	object = s->meth->get_object(s, STORE_OBJECT_TYPE_ARBITRARY, attributes);
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_ARBITRARY,
+		attributes, parameters);
 	if (!object || !object->data.arbitrary)
 		{
 		STOREerr(STORE_F_STORE_GET_ARBITRARY,
@@ -1035,12 +1076,14 @@ BUF_MEM *STORE_get_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
 	return b;
 	}
 
-int STORE_delete_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
+int STORE_delete_arbitrary(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_ARBITRARY,
 		delete_object,STORE_R_NO_DELETE_ARBITRARY_FUNCTION);
 
-	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_ARBITRARY, attributes))
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_ARBITRARY, attributes,
+		    parameters))
 		{
 		STOREerr(STORE_F_STORE_DELETE_ARBITRARY,
 			STORE_R_FAILED_DELETING_ARBITRARY);

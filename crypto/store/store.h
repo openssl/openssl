@@ -226,64 +226,90 @@ void STORE_OBJECT_free(STORE_OBJECT *data);
 
 /* The following functions handle the storage. They return 0, a negative number
    or NULL on error, anything else on success. */
-X509 *STORE_get_certificate(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_store_certificate(STORE *e, X509 *data, OPENSSL_ITEM attributes[]);
+X509 *STORE_get_certificate(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_store_certificate(STORE *e, X509 *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 int STORE_modify_certificate(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-int STORE_revoke_certificate(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_delete_certificate(STORE *e, OPENSSL_ITEM attributes[]);
-void *STORE_list_certificate_start(STORE *e, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+int STORE_revoke_certificate(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_delete_certificate(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+void *STORE_list_certificate_start(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 X509 *STORE_list_certificate_next(STORE *e, void *handle);
 int STORE_list_certificate_end(STORE *e, void *handle);
 int STORE_list_certificate_endp(STORE *e, void *handle);
-EVP_PKEY *STORE_generate_key(STORE *e,
-	int evp_type, size_t bits, OPENSSL_ITEM attributes[]);
-EVP_PKEY *STORE_get_private_key(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_store_private_key(STORE *e, EVP_PKEY *data, OPENSSL_ITEM attributes[]);
+EVP_PKEY *STORE_generate_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+EVP_PKEY *STORE_get_private_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_store_private_key(STORE *e, EVP_PKEY *data,
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 int STORE_modify_private_key(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_sttributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-int STORE_revoke_private_key(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_delete_private_key(STORE *e, OPENSSL_ITEM attributes[]);
-void *STORE_list_private_key_start(STORE *e, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+int STORE_revoke_private_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_delete_private_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+void *STORE_list_private_key_start(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 EVP_PKEY *STORE_list_private_key_next(STORE *e, void *handle);
 int STORE_list_private_key_end(STORE *e, void *handle);
 int STORE_list_private_key_endp(STORE *e, void *handle);
-EVP_PKEY *STORE_get_public_key(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_store_public_key(STORE *e, EVP_PKEY *data, OPENSSL_ITEM attributes[]);
+EVP_PKEY *STORE_get_public_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_store_public_key(STORE *e, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 int STORE_modify_public_key(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_sttributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-int STORE_revoke_public_key(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_delete_public_key(STORE *e, OPENSSL_ITEM attributes[]);
-void *STORE_list_public_key_start(STORE *e, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+int STORE_revoke_public_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_delete_public_key(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+void *STORE_list_public_key_start(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 EVP_PKEY *STORE_list_public_key_next(STORE *e, void *handle);
 int STORE_list_public_key_end(STORE *e, void *handle);
 int STORE_list_public_key_endp(STORE *e, void *handle);
-X509_CRL *STORE_generate_crl(STORE *e, OPENSSL_ITEM attributes[]);
-X509_CRL *STORE_get_crl(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_store_crl(STORE *e, X509_CRL *data, OPENSSL_ITEM attributes[]);
+X509_CRL *STORE_generate_crl(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+X509_CRL *STORE_get_crl(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_store_crl(STORE *e, X509_CRL *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 int STORE_modify_crl(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_sttributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-int STORE_delete_crl(STORE *e, OPENSSL_ITEM attributes[]);
-void *STORE_list_crl_start(STORE *e, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+int STORE_delete_crl(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+void *STORE_list_crl_start(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 X509_CRL *STORE_list_crl_next(STORE *e, void *handle);
 int STORE_list_crl_end(STORE *e, void *handle);
 int STORE_list_crl_endp(STORE *e, void *handle);
-int STORE_store_number(STORE *e, BIGNUM *data, OPENSSL_ITEM attributes[]);
+int STORE_store_number(STORE *e, BIGNUM *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 int STORE_modify_number(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_sttributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-BIGNUM *STORE_get_number(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_delete_number(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_store_arbitrary(STORE *e, BUF_MEM *data, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+BIGNUM *STORE_get_number(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_delete_number(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_store_arbitrary(STORE *e, BUF_MEM *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 int STORE_modify_arbitrary(STORE *e, OPENSSL_ITEM search_attributes[],
 	OPENSSL_ITEM add_sttributes[], OPENSSL_ITEM modify_attributes[],
-	OPENSSL_ITEM delete_attributes[]);
-BUF_MEM *STORE_get_arbitrary(STORE *e, OPENSSL_ITEM attributes[]);
-int STORE_delete_arbitrary(STORE *e, OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+BUF_MEM *STORE_get_arbitrary(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+int STORE_delete_arbitrary(STORE *e, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 
 
 /* Create and manipulate methods */
@@ -293,15 +319,15 @@ void STORE_destroy_method(STORE_METHOD *store_method);
 /* These callback types are use for store handlers */
 typedef int (*STORE_INITIALISE_FUNC_PTR)(STORE *);
 typedef void (*STORE_CLEANUP_FUNC_PTR)(STORE *);
-typedef STORE_OBJECT *(*STORE_GENERATE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM parameters[], OPENSSL_ITEM attributes[]);
-typedef STORE_OBJECT *(*STORE_GET_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[]);
-typedef void *(*STORE_START_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[]);
+typedef STORE_OBJECT *(*STORE_GENERATE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+typedef STORE_OBJECT *(*STORE_GET_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+typedef void *(*STORE_START_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 typedef STORE_OBJECT *(*STORE_NEXT_OBJECT_FUNC_PTR)(STORE *, void *handle);
 typedef int (*STORE_END_OBJECT_FUNC_PTR)(STORE *, void *handle);
-typedef int (*STORE_HANDLE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[]);
-typedef int (*STORE_STORE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, STORE_OBJECT *data, OPENSSL_ITEM attributes[]);
-typedef int (*STORE_MODIFY_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[]);
-typedef int (*STORE_GENERIC_FUNC_PTR)(STORE *, OPENSSL_ITEM attributes[]);
+typedef int (*STORE_HANDLE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+typedef int (*STORE_STORE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, STORE_OBJECT *data, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+typedef int (*STORE_MODIFY_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
+typedef int (*STORE_GENERIC_FUNC_PTR)(STORE *, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 typedef int (*STORE_CTRL_FUNC_PTR)(STORE *, int cmd, long l, void *p, void (*f)());
 
 int STORE_method_set_initialise_function(STORE_METHOD *sm, STORE_INITIALISE_FUNC_PTR gen_f);

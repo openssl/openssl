@@ -105,23 +105,27 @@ struct mem_ctx_st
 static int mem_init(STORE *s);
 static void mem_clean(STORE *s);
 static STORE_OBJECT *mem_generate(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM parameters[], OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static STORE_OBJECT *mem_get(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static int mem_store(STORE *s, STORE_OBJECT_TYPES type,
-	STORE_OBJECT *data, OPENSSL_ITEM attributes[]);
+	STORE_OBJECT *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 static int mem_modify(STORE *s, STORE_OBJECT_TYPES type,
 	OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[],
-	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[]);
+	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
+	OPENSSL_ITEM parameters[]);
 static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[]);
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static STORE_OBJECT *mem_list_next(STORE *s, void *handle);
 static int mem_list_end(STORE *s, void *handle);
 static int mem_list_endp(STORE *s, void *handle);
-static int mem_lock(STORE *s, OPENSSL_ITEM attributes[]);
-static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[]);
+static int mem_lock(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
+static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[]);
 static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)());
 
 static STORE_METHOD store_memory =
@@ -161,15 +165,15 @@ static void mem_clean(STORE *s)
 	}
 
 static STORE_OBJECT *mem_generate(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM parameters[], OPENSSL_ITEM attributes[])
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
 	{
 	STOREerr(STORE_F_MEM_GENERATE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
 	}
 static STORE_OBJECT *mem_get(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[])
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
 	{
-	void *context = mem_list_start(s, type, attributes);
+	void *context = mem_list_start(s, type, attributes, parameters);
 	
 	if (context)
 		{
@@ -181,20 +185,22 @@ static STORE_OBJECT *mem_get(STORE *s, STORE_OBJECT_TYPES type,
 	return NULL;
 	}
 static int mem_store(STORE *s, STORE_OBJECT_TYPES type,
-	STORE_OBJECT *data, OPENSSL_ITEM attributes[])
+	STORE_OBJECT *data, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STOREerr(STORE_F_MEM_STORE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
 	}
 static int mem_modify(STORE *s, STORE_OBJECT_TYPES type,
 	OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[],
-	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[])
+	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	STOREerr(STORE_F_MEM_STORE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
 	}
 static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[])
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
 	{
 	STOREerr(STORE_F_MEM_DELETE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
@@ -208,7 +214,7 @@ static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
    of attribute bits above the starting point may match the searched
    for bit pattern...). */
 static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[])
+	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
 	{
 	struct mem_ctx_st *context =
 		(struct mem_ctx_st *)OPENSSL_malloc(sizeof(struct mem_ctx_st));
@@ -333,11 +339,13 @@ static int mem_list_endp(STORE *s, void *handle)
 		return 1;
 	return 0;
 	}
-static int mem_lock(STORE *s, OPENSSL_ITEM attributes[])
+static int mem_lock(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	return 1;
 	}
-static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[])
+static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
+	OPENSSL_ITEM parameters[])
 	{
 	return 1;
 	}
