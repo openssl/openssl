@@ -394,6 +394,8 @@ struct ssl_ctx_st
 /**/	struct cert_st /* CERT */ *default_cert;
 /**/	int read_ahead;
 /**/	int verify_mode;
+/**/	unsigned int sid_ctx_length;
+/**/	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 /**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
 
 	/* Default password callback. */
@@ -929,6 +931,9 @@ void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx,int (*cb)());
 int SSL_CTX_check_private_key(SSL_CTX *ctx);
 int SSL_check_private_key(SSL *ctx);
 
+int	SSL_CTX_set_session_id_context(SSL_CTX *ctx,const unsigned char *sid_ctx,
+				       unsigned int sid_ctx_len);
+
 SSL *	SSL_new(SSL_CTX *ctx);
 int	SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
 				   unsigned int sid_ctx_len);
@@ -1153,6 +1158,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
 #define SSL_F_SSL_CTX_NEW				 169
+#define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172

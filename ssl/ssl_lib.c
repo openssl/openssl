@@ -186,6 +186,8 @@ SSL *SSL_new(SSL_CTX *ctx)
 		}
 	else
 		s->cert=NULL;
+	s->sid_ctx_length=ctx->sid_ctx_length;
+	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_mode=ctx->verify_mode;
 	s->verify_callback=ctx->default_verify_callback;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
@@ -215,6 +217,20 @@ err:
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
 	}
+
+int SSL_CTX_set_session_id_context(SSL_CTX *ctx,const unsigned char *sid_ctx,
+				   unsigned int sid_ctx_len)
+    {
+    if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
+	{
+	SSLerr(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+	return 0;
+	}
+    ctx->sid_ctx_length=sid_ctx_len;
+    memcpy(ctx->sid_ctx,sid_ctx,sid_ctx_len);
+
+    return 1;
+    }
 
 int SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
 			       unsigned int sid_ctx_len)
