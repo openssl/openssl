@@ -291,22 +291,40 @@ do_irix-shared:
 	done
 
 # This assumes that GNU utilities are *not* used
+# HP-UX includes the full pathname of libs we depend on, so we would get
+# ./libcrypto (with ./ as path information) compiled into libssl, hence
+# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
+# anyway.
+# The object modules are loaded from lib$i.a using the undocumented -Fl
+# option.
+#
+# WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
+#          by temporarily specifying "+s"!
+#
 do_hpux-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	for i in ${SHLIBDIRS}; do \
 	( set -x; /usr/ccs/bin/ld +vnocompatwarnings \
-		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-b -z +s \
+		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+		-Fl lib$$i.a -ldld -lc ) || exit 1; \
 	done
 
 # This assumes that GNU utilities are *not* used
+# HP-UX includes the full pathname of libs we depend on, so we would get
+# ./libcrypto (with ./ as path information) compiled into libssl, hence
+# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
+# anyway.
+#
+# HP-UX in 64bit mode has "+s" enabled by default; it will search for
+# shared libraries along LD_LIBRARY_PATH _and_ SHLIB_PATH.
+#
 do_hpux64-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	for i in ${SHLIBDIRS}; do \
+	( set -x; /usr/ccs/bin/ld -b -z \
+		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+		+forceload lib$$i.a -ldl -lc ) || exit 1; \
 	done
 
 Makefile.ssl: Makefile.org
