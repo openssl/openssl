@@ -65,7 +65,6 @@
 
 /* Simple ASN1 OID module: add all objects in a given section */
 
-/* NOTE: doesn't do anything other than print debug messages yet... */
 static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 	{
 	int i;
