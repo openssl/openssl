@@ -62,11 +62,10 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char tmp[16];
 
 	assert(in && out && key && ivec);
-	assert(length % AES_BLOCK_SIZE == 0);
 	assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
 
-	if (AES_ENCRYPT == enc)
-		while (len > 0) {
+	if (AES_ENCRYPT == enc) {
+		while (len >= AES_BLOCK_SIZE) {
 			for(n=0; n < 16; ++n)
 				tmp[n] = in[n] ^ ivec[n];
 			AES_encrypt(tmp, out, key);
@@ -75,8 +74,17 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			in += 16;
 			out += 16;
 		}
-	else
-		while (len > 0) {
+		if (len) {
+			for(n=0; n < len; ++n)
+				tmp[n] = in[n] ^ ivec[n];
+			for(n=len; n < AES_BLOCK_SIZE; ++n)
+				tmp[n] = ivec[n];
+			AES_encrypt(tmp, tmp, key);
+			memcpy(out, tmp, len);
+			memcpy(ivec, tmp, 16);
+		}			
+	} else {
+		while (len >= AES_BLOCK_SIZE) {
 			memcpy(tmp, in, 16);
 			AES_decrypt(in, out, key);
 			for(n=0; n < 16; ++n)
@@ -86,4 +94,12 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			in += 16;
 			out += 16;
 		}
+		if (len) {
+			memcpy(tmp, in, 16);
+			AES_decrypt(tmp, tmp, key);
+			for(n=0; n < len; ++n)
+				out[n] ^= ivec[n];
+			memcpy(ivec, tmp, 16);
+		}			
+	}
 }
