@@ -67,11 +67,11 @@ extern "C" {
 
 /* Pentium pro 16,16,16,32,64 */
 /* Alpha       16,16,16,16.64 */
-#define BN_MULL_SIZE_NORMAL			(16) // 32
-#define BN_MUL_RECURSIVE_SIZE_NORMAL		(16) // 32 /* less than */
-#define BN_SQR_RECURSIVE_SIZE_NORMAL		(16) // 32
-#define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL	(32) // 32
-#define BN_MONT_CTX_SET_SIZE_WORD		(64) // 32
+#define BN_MULL_SIZE_NORMAL			(16) /* 32 */
+#define BN_MUL_RECURSIVE_SIZE_NORMAL		(16) /* 32 less than */
+#define BN_SQR_RECURSIVE_SIZE_NORMAL		(16) /* 32 */
+#define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL	(32) /* 32 */
+#define BN_MONT_CTX_SET_SIZE_WORD		(64) /* 32 */
 
 #ifndef BN_MUL_COMBA
 #define bn_mul_comba8(r,a,b)	bn_mul_normal(r,a,8,b,8)
