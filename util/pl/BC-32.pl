@@ -4,7 +4,6 @@
 
 $ssl=	"ssleay32";
 $crypto="libeay32";
-$RSAref="RSAref32";
 
 $o='\\';
 $cp='copy';

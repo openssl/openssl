@@ -63,7 +63,6 @@ my $do_crypto = 0;
 my $do_ssl = 0;
 my $do_ctest = 0;
 my $do_ctestall = 0;
-my $rsaref = 0;
 
 my $VMS=0;
 my $W32=0;
@@ -111,7 +110,6 @@ foreach (@ARGV, split(/ /, $options))
 		$NT = 1;
 	}
 	$VMS=1 if $_ eq "VMS";
-	#$rsaref=1 if $_ eq "rsaref";
 
 	$do_ssl=1 if $_ eq "ssleay";
 	$do_ssl=1 if $_ eq "ssl";
@@ -604,9 +602,6 @@ sub do_defs
 
 	# Info we know about
 
-	$platform{"RSA_PKCS1_RSAref"} = "RSAREF";
-	$algorithm{"RSA_PKCS1_RSAref"} = "RSA";
-
 	push @ret, map { $_."\\".&info_string($_,"EXIST",
 					      $platform{$_},
 					      $kind{$_},
@@ -780,7 +775,6 @@ EOF
 			# @p_purged must contain hardware platforms only
 			my @p_purged = ();
 			foreach $ptmp (@p) {
-				next if $ptmp =~ /^!?RSAREF$/;
 				push @p_purged, $ptmp;
 			}
 			my $negatives = !!grep(/^!/,@p);
@@ -794,11 +788,6 @@ EOF
 			     || ($W16 && (!@p_purged
 					  || (!$negatives && grep(/^WIN16$/,@p))
 					  || ($negatives && !grep(/^!WIN16$/,@p)))))
-			    && (!@p
-				|| (!$negatives
-				    && ($rsaref || !grep(/^RSAREF$/,@p)))
-				|| ($negatives
-				    && (!$rsaref || !grep(/^!RSAREF$/,@p))))
 			    && (!@a || (!$no_rc2 || !grep(/^RC2$/,@a)))
 			    && (!@a || (!$no_rc4 || !grep(/^RC4$/,@a)))
 			    && (!@a || (!$no_rc5 || !grep(/^RC5$/,@a)))
