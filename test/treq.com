@@ -4,7 +4,7 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
-$	cmd := mcr 'exe_dir'openssl req
+$	cmd := mcr 'exe_dir'openssl req -config [-.apps]openssl-vms.cnf
 $
 $	t := testreq.pem
 $	if p1 .nes. "" then t = p1

@@ -806,7 +806,8 @@ $     WRITE SYS$OUTPUT "Using GNU 'C' Compiler."
 $!
 $!    Use GNU C...
 $!
-$     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     IF F$TYPE(GCC) .EQS. "" THEN GCC := GCC
+$     CC = GCC+"/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
 	   "/INCLUDE=(SYS$DISK:[-.CRYPTO],SYS$DISK:[.SOURCE])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.

@@ -965,6 +965,10 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 
 STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s);
 
+#ifdef VMS
+#define SSL_CTX_set_default_passwd_cb_userdata SSL_CTX_set_def_passwd_cb_ud
+#endif
+
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
 int SSL_CTX_get_verify_depth(SSL_CTX *ctx);
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);

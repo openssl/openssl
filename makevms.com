@@ -17,7 +17,7 @@ $!
 $! Specify one of the following build options for P1.
 $!
 $!      ALL       Just build "everything".
-$!      DATE      Just build the "[.INCLUDE.OPENSSL]DATE.H" file.
+$!      BUILDINF  Just build the "[.CRYPTO]BUILDINF.H" file.
 $!      SOFTLINKS Just fix the Unix soft links.
 $!      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
@@ -96,9 +96,9 @@ $!  First, Fix The Unix Softlinks.
 $!
 $   GOSUB SOFTLINKS
 $!
-$!  Create The "DATE.H" Include File.
+$!  Create The "BUILDINF.H" Include File.
 $!
-$   GOSUB DATE
+$   GOSUB BUILDINF
 $!
 $!  Check To See If We Are Going To Be Building The 
 $!  [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
@@ -147,27 +147,29 @@ $! Time To EXIT.
 $!
 $ EXIT   
 $!
-$! Rebuild The "[.INCLUDE.OPENSSL]DATE.H" file.
+$! Rebuild The "[.CRYPTO]BUILDINF.H" file.
 $!
-$ DATE:
+$ BUILDINF:
 $!
-$! Tell The User We Are Creating The [.CRYPTO]DATE.H File.
+$! Tell The User We Are Creating The [.CRYPTO]BUILDINF.H File.
 $!
-$ WRITE SYS$OUTPUT "Creating [.CRYPTO]DATE.H Include File."
+$ WRITE SYS$OUTPUT "Creating [.CRYPTO]BUILDINF.H Include File."
 $!
-$! Create The [.CRYPTO]DATE.H File.
+$! Create The [.CRYPTO]BUILDINF.H File.
 $!
-$ OPEN/WRITE H_FILE SYS$DISK:[.CRYPTO]DATE.H
+$ OPEN/WRITE H_FILE SYS$DISK:[.CRYPTO]BUILDINF.H
 $!
 $! Get The Current Date & Time.
 $!
 $ TIME = F$TIME()
 $!
-$! Write The [.CRYPTO]DATE.H File.
+$! Write The [.CRYPTO]BUILDINF.H File.
 $!
+$ WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
+$ WRITE H_FILE "#define PLATFORM ""VMS"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
 $!
-$! Close The [.CRYPTO]DATE.H File.
+$! Close The [.CRYPTO]BUILDINF.H File.
 $!
 $ CLOSE H_FILE
 $!
@@ -232,7 +234,7 @@ $ SDIRS := ,MD2,MD5,SHA,MDC2,HMAC,RIPEMD,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
    EVP,ASN1,PEM,X509,X509V3,-
    CONF,TXT_DB,PKCS7,PKCS12,COMP
-$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h
+$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD5 := md5.h
 $ EXHEADER_SHA := sha.h
@@ -292,6 +294,11 @@ $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
+$!
+$! Copy All The ".H" Files From The [.VMS] Directory.
+$!
+$ EXHEADER := vms_idhacks.h
+$ COPY SYS$DISK:[.VMS]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
 $!
@@ -470,7 +477,7 @@ $ ELSE
 $!
 $!  Else, Check To See If P1 Has A Valid Arguement.
 $!
-$   IF (P1.EQS."DATE").OR.(P1.EQS."SOFTLINKS").OR.(P1.EQS."CRYPTO") -
+$   IF (P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS").OR.(P1.EQS."CRYPTO") -
        .OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF").OR.(P1.EQS."SSL_TASK") -
        .OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
 $   THEN
@@ -489,7 +496,7 @@ $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
-$     WRITE SYS$OUTPUT "    DATE     :  Just build the [.INCLUDE.OPENSSL]DATE.H file."
+$     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."

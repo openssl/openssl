@@ -56,6 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef NO_STDIO
+#define APPS_WIN16
+#endif
+
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
@@ -65,14 +74,6 @@
 typedef unsigned int u_int;
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef NO_STDIO
-#define APPS_WIN16
-#endif
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #define USE_SOCKETS

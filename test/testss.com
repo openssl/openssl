@@ -8,6 +8,7 @@ $	digest="-mdc2"
 $	reqcmd := mcr 'exe_dir'openssl req
 $	x509cmd := mcr 'exe_dir'openssl x509 'digest'
 $	verifycmd := mcr 'exe_dir'openssl verify
+$	dummycnf := sys$disk:[-.apps]openssl-vms.cnf
 $
 $	CAkey="""keyCA.ss"""
 $	CAcert="""certCA.ss"""
@@ -48,14 +49,14 @@ $		write sys$output "error using 'x509' convert a certificate to a certificate r
 $		exit 3
 $	endif
 $
-$	'reqcmd' -verify -in 'CAreq' -noout
+$	'reqcmd' -config 'dummycnf' -verify -in 'CAreq' -noout
 $	if $severity .ne. 1
 $	then
 $		write sys$output "first generated request is invalid"
 $		exit 3
 $	endif
 $
-$	'reqcmd' -verify -in 'CAreq2' -noout
+$	'reqcmd' -config 'dummycnf' -verify -in 'CAreq2' -noout
 $	if $severity .ne. 1
 $	then
 $		write sys$output "second generated request is invalid"
@@ -101,4 +102,4 @@ $
 $	write sys$output "The generated user certificate is ",Ucert
 $	write sys$output "The generated user private key is ",Ukey
 $
-$	delete err.ss;*
+$	if f$search("err.ss;*") .nes. "" then delete err.ss;*

@@ -522,6 +522,10 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
 #ifndef SSLEAY_MACROS
 
+#ifdef VMS
+#include <openssl/vms_idhacks.h>
+#endif
+
 DECLARE_PEM_rw(X509, X509)
 
 DECLARE_PEM_rw(X509_REQ, X509_REQ)
@@ -559,16 +563,6 @@ DECLARE_PEM_rw(DHparams, DH)
 #endif
 
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
-
-#ifdef VMS
-/* Too long names need to be abbreviated to at most 31 characters */
-#undef PEM_write_NETSCAPE_CERT_SEQUENCE
-#define PEM_write_NETSCAPE_CERT_SEQUENCE PEM_write_NETSCAPE_CERT_SEQ
-#undef PEM_read_bio_NETSCAPE_CERT_SEQUENCE
-#define PEM_read_bio_NETSCAPE_CERT_SEQUENCE PEM_read_bio_NETSCAPE_CERT_SEQ
-#undef PEM_write_bio_NETSCAPE_CERT_SEQUENCE
-#define PEM_write_bio_NETSCAPE_CERT_SEQUENCE PEM_write_bio_NETSCAPE_CERT_SEQ
-#endif
 
 int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 			      char *kstr,int klen, pem_password_cb *cd, void *u);

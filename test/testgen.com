@@ -9,7 +9,9 @@ $	KEY = 512
 $	CA := [-.certs]testca.pem
 $
 $	set noon
-$	delete 'T'.1;*,'T'.2;*,'T'.key;*
+$	if f$search(T+".1;*") .nes. "" then delete 'T'.1;*
+$	if f$search(T+".2;*") .nes. "" then delete 'T'.2;*
+$	if f$search(T+".key;*") .nes. "" then delete 'T'.key;*
 $	set on
 $
 $	write sys$output "generating certificate request"

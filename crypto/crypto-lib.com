@@ -177,7 +177,7 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_mul,"+ -
 	"bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+",bn_recp,bn_mont,"+ -
 	"bn_mpi,bn_exp2"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
-	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep"
+	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err"
 $ LIB_DH = "dh_gen,dh_key,dh_lib,dh_check,dh_err"
 $ LIB_BUFFER = "buffer,buf_err"
@@ -185,7 +185,7 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
 	"bf_null,bf_buff,b_print,b_dump,"+ -
-	"b_sock,bss_acpt,bf_nbio,bss_rtcp" ! + ",bss_log" for syslog
+	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio" ! + ",bss_log" for syslog
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib"
@@ -204,7 +204,7 @@ $ LIB_EVP_2 = "e_ecb_c,e_cbc_c,e_cfb_c,e_ofb_c,"+ -
 	"m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
-	"c_all,evp_lib,bio_ok,evp_pkey,evp_pbe"
+	"c_all,evp_lib,bio_ok,evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
 	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,"+ -

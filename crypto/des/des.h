@@ -67,6 +67,10 @@ extern "C" {
 #error DES is disabled.
 #endif
 
+#ifdef _KERBEROS_DES_H
+#error kerberos/des.h and openssl/des.h
+#endif
+
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
@@ -116,11 +120,11 @@ typedef struct des_ks_struct
 #define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-#define Key_schedule des_key_schedule
 #ifdef KERBEROS
 #define ENCRYPT DES_ENCRYPT
 #define DECRYPT DES_DECRYPT
 #endif
+
 #define KEY_SZ DES_KEY_SZ
 #define string_to_key des_string_to_key
 #define read_pw_string des_read_pw_string
