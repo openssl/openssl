@@ -420,7 +420,11 @@ int no_name;
 
 	/* Work out size of content octets */
 	i=a2d_ASN1_OBJECT(NULL,0,s,-1);
-	if (i <= 0) return NULL;
+	if (i <= 0) {
+		/* Clear the error */
+		ERR_get_error();
+		return NULL;
+	}
 	/* Work out total size */
 	j = ASN1_object_size(0,i,V_ASN1_OBJECT);
 

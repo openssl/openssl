@@ -55,7 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* config file utilities */
+/* extension creation utilities */
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -65,20 +65,52 @@
 #include <err.h>
 #include "x509v3.h"
 
+#ifndef NOPROTO
+static int v3_check_critical(char **value);
+static int v3_check_generic(char **value);
+static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value);
+static X509_EXTENSION *v3_generic_extension(char *ext, char *value, int crit, int type);
+#else
+static int v3_check_critical();
+static int v3_check_generic();
+static X509_EXTENSION *do_ext_conf();
+static X509V3_EXTENSION *v3_generic_extension();
+#endif
+
 X509_EXTENSION *X509V3_EXT_conf(conf, ctx, name, value)
 LHASH *conf;	/* Config file */
 X509V3_CTX *ctx;
 char *name;	/* Name */
 char *value;	/* Value */
 {
-	return X509V3_EXT_conf_nid(conf, ctx, OBJ_sn2nid(name), value);
+	int crit;
+	int ext_type;
+	crit = v3_check_critical(&value);
+	if((ext_type = v3_check_generic(&value))) 
+		return v3_generic_extension(name, value, crit, ext_type);
+	return do_ext_conf(conf, ctx, OBJ_sn2nid(name), crit, value);
 }
-
 
 X509_EXTENSION *X509V3_EXT_conf_nid(conf, ctx, ext_nid, value)
 LHASH *conf;	/* Config file */
 X509V3_CTX *ctx;
 int ext_nid;
+char *value;	/* Value */
+{
+	int crit;
+	int ext_type;
+	crit = v3_check_critical(&value);
+	if((ext_type = v3_check_generic(&value))) 
+		return v3_generic_extension(OBJ_nid2sn(ext_nid),
+							 value, crit, ext_type);
+	return do_ext_conf(conf, ctx, ext_nid, crit, value);
+}
+
+static X509_EXTENSION *do_ext_conf(conf, ctx, ext_nid, crit, value)
+LHASH *conf;	/* Config file */
+X509V3_CTX *ctx;
+int ext_nid;
+int crit;
 char *value;	/* Value */
 {
 	X509_EXTENSION *ext = NULL;
@@ -87,20 +119,12 @@ char *value;	/* Value */
 	char *ext_struc;
 	char *ext_der, *p;
 	int ext_len;
-	int crit = 0;
 	ASN1_OCTET_STRING *ext_oct;
 	if(ext_nid == NID_undef) return NULL;
 	if(!(method = X509V3_EXT_get_nid(ext_nid))) {
 		/* Add generic extension support here */
 		return NULL;
 	}
-	/* Check for critical */
-	if((strlen(value) >= 9) && !strncmp(value, "critical,", 9)) {
-		crit = 1;
-		value+=9;
-	}
-	/* Skip over spaces */
-	while(isspace(*value)) value++;
 	/* Now get internal extension representation based on type */
 	if(method->v2i) {
 		if(*value == '@') nval = CONF_get_section(conf, value + 1);
@@ -137,6 +161,73 @@ char *value;	/* Value */
 	return ext;
 
 }
+
+/* Check the extension string for critical flag */
+static int v3_check_critical(value)
+char **value;
+{
+	char *p = *value;
+	if((strlen(p) < 9) || strncmp(p, "critical,", 9)) return 0;
+	p+=9;
+	while(isspace(*p)) p++;
+	*value = p;
+	return 1;
+}
+
+/* Check extension string for generic extension and return the type */
+static int v3_check_generic(value)
+char **value;
+{
+	char *p = *value;
+	if((strlen(p) < 4) || strncmp(p, "RAW:,", 4)) return 0;
+	p+=4;
+	while(isspace(*p)) p++;
+	*value = p;
+	return 1;
+}
+
+/* Create a generic extension: for now just handle RAW type */
+static X509_EXTENSION *v3_generic_extension(ext, value, crit, type)
+char *ext;
+char *value;
+int crit;
+int type;
+{
+unsigned char *ext_der=NULL;
+long ext_len;
+ASN1_OBJECT *obj=NULL;
+ASN1_OCTET_STRING *oct=NULL;
+X509_EXTENSION *extension=NULL;
+if(!(obj = OBJ_txt2obj(ext, 0))) {
+	X509V3err(X509V3_F_V3_GENERIC_EXTENSION,X509V3_R_EXTENSION_NAME_ERROR);
+	ERR_add_error_data(2, "name=", ext);
+	goto err;
+}
+
+if(!(ext_der = string_to_hex(value, &ext_len))) {
+	X509V3err(X509V3_F_V3_GENERIC_EXTENSION,X509V3_R_EXTENSION_VALUE_ERROR);
+	ERR_add_error_data(2, "value=", value);
+	goto err;
+}
+
+if(!(oct = ASN1_OCTET_STRING_new())) {
+	X509V3err(X509V3_F_V3_GENERIC_EXTENSION,ERR_R_MALLOC_FAILURE);
+	goto err;
+}
+
+oct->data = ext_der;
+oct->length = ext_len;
+ext_der = NULL;
+
+extension = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
+
+err:
+ASN1_OBJECT_free(obj);
+ASN1_OCTET_STRING_free(oct);
+if(ext_der) Free(ext_der);
+return extension;
+}
+
 
 /* This is the main function: add a bunch of extensions based on a config file
  * section

@@ -156,3 +156,8 @@ keyUsage = cRLSign, keyCertSign
 
 # Some might want this also
 #nsCertType = sslCA, emailCA
+
+# RAW DER hex encoding of an extension: beware experts only!
+# 1.2.3.5=RAW:02:03
+# You can even override a supported extension:
+# basicConstraints= critical, RAW:30:03:01:01:FF
