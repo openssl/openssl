@@ -92,6 +92,12 @@ typedef struct DES_ks
     } DES_key_schedule;
 
 #ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
+# ifndef OPENSSL_ENABLE_OLD_DES_SUPPORT
+#  define OPENSSL_ENABLE_OLD_DES_SUPPORT
+# endif
+#endif
+
+#ifdef OPENSSL_ENABLE_OLD_DES_SUPPORT
 # include <openssl/des_old.h>
 #endif
 
