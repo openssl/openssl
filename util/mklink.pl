@@ -52,6 +52,7 @@ $symlink_exists=eval {symlink("",""); 1};
 foreach $file (@files) {
     my $err = "";
     if ($symlink_exists) {
+	unlink "$from/$file";
 	symlink("$to/$file", "$from/$file") or $err = " [$!]";
     } else {
 	unlink "$from/$file"; 
