@@ -211,6 +211,12 @@ const char *RAND_file_name(char *buf, size_t size)
 		{
 		if (OPENSSL_issetugid() == 0)
 			s=getenv("HOME");
+#ifdef DEFAULT_HOME
+		if (s == NULL)
+			{
+			s = DEFAULT_HOME;
+			}
+#endif
 		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
 			{
 			strcpy(buf,s);
@@ -220,7 +226,7 @@ const char *RAND_file_name(char *buf, size_t size)
 			strcat(buf,RFILE);
 			ret=buf;
 			}
-		  else
+		else
 		  	buf[0] = '\0'; /* no file name */
 		}
 	return(ret);
