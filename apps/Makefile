@@ -83,7 +83,7 @@ top:
 
 all:	exe
 
-exe:	$(PROGRAM)
+exe:	$(EXE)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -141,18 +141,18 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-$(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
-	$(RM) $(PROGRAM)
+$(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
+	$(RM) $(EXE)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  $(CC) -o $(EXE) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
-	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
+	  $(CC) -o $(EXE) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(PROGRAM); \
+		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
 	fi
-	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
+	-(cd ..; OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
 		SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \

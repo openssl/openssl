@@ -23,6 +23,7 @@
 PREFIX=""
 SUFFIX=""
 TEST="false"
+EXE=""
 
 # pick up any command line args to config
 for i
@@ -287,6 +288,14 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
     UNIX_System_V:4.*:*)
 	echo "${MACHINE}-whatever-sysv4"; exit 0
 	;;
+
+    VOS:*:*:i786)
+     echo "i386-stratus-vos"; exit 0
+     ;;
+
+    VOS:*:*:*)
+     echo "hppa1.1-stratus-vos"; exit 0
+     ;;
 
     *:4*:R4*:m88k)
 	echo "${MACHINE}-whatever-sysv4"; exit 0
@@ -679,6 +688,10 @@ EOF
   *-*-UnixWare21*) OUT="unixware-2.1" ;;
   *-*-Unixware20*) OUT="unixware-2.0" ;;
   *-*-Unixware21*) OUT="unixware-2.1" ;;
+  *-*-vos)
+	options="$options no-threads no-shared no-asm no-dso"
+	EXE=".pm"
+	OUT="vos-$CC" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
@@ -806,8 +819,8 @@ fi
 
 if [ ".$PERL" = . ] ; then
 	for i in . `echo $PATH | sed 's/:/ /g'`; do
-		if [ -f "$i/perl5" ] ; then
-			PERL="$i/perl5"
+		if [ -f "$i/perl5$EXE" ] ; then
+			PERL="$i/perl5$EXE"
 			break;
 		fi;
 	done
@@ -815,9 +828,9 @@ fi
 
 if [ ".$PERL" = . ] ; then
 	for i in . `echo $PATH | sed 's/:/ /g'`; do
-		if [ -f "$i/perl" ] ; then
-			if "$i/perl" -e 'exit($]<5.0)'; then
-				PERL="$i/perl"
+		if [ -f "$i/perl$EXE" ] ; then
+			if "$i/perl$EXE" -e 'exit($]<5.0)'; then
+				PERL="$i/perl$EXE"
 				break;
 			fi;
 		fi;
