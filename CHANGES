@@ -529,7 +529,7 @@ TODO: bug: pad  x  with leading zeros if necessary
 	# is assumed to contain the absolute OpenSSL source directory.
 	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
 	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f -o -type l) | while read F; do
+	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
 		mkdir -p `dirname $F`
 		ln -s $OPENSSL_SOURCE/$F $F
 	done
