@@ -100,9 +100,8 @@ typedef struct cipher_order_st
 	} CIPHER_ORDER;
 
 static const SSL_CIPHER cipher_aliases[]={
-	/* Don't include eNULL unless specifically enabled.
-	 * Similarly, don't include AES in ALL because these ciphers are not yet official. */
-	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL & ~SSL_AES, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL}, /* must be first */
+	/* Don't include eNULL unless specifically enabled. */
+	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL}, /* must be first */
         {0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},  /* VRS Kerberos5 */
 	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0},
@@ -999,10 +998,10 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_AES:
 		switch(cipher->strength_bits)
 			{
-		case 128: enc="AESdraft(128)"; break;
-		case 192: enc="AESdraft(192)"; break;
-		case 256: enc="AESdraft(256)"; break;
-		default: enc="AESdraft(?""?""?)"; break;
+		case 128: enc="AES(128)"; break;
+		case 192: enc="AES(192)"; break;
+		case 256: enc="AES(256)"; break;
+		default: enc="AES(?""?""?)"; break;
 			}
 		break;
 	default:

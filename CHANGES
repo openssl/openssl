@@ -1055,14 +1055,15 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      handle the new API. Currently only ECB, CBC modes supported. Add new
      AES OIDs.
 
-     Add TLS AES ciphersuites as described in the "AES Ciphersuites
-     for TLS" draft-ietf-tls-ciphersuite-06.txt. As these are not yet
-     official, they are not enabled by default and are not even part
-     of the "ALL" ciphersuite alias; for now, they must be explicitly
-     requested by specifying the new "AESdraft" ciphersuite alias. If
-     you want the default ciphersuite list plus the new ciphersuites,
-     use "DEFAULT:AESdraft:@STRENGTH".
-     [Ben Laurie, Steve Henson, Bodo Moeller]
+     Add TLS AES ciphersuites as described in RFC3268, "Advanced
+     Encryption Standard (AES) Ciphersuites for Transport Layer
+     Security (TLS)".  (In beta versions of OpenSSL 0.9.7, these were
+     not enabled by default and were not part of the "ALL" ciphersuite
+     alias because they were not yet official; they could be
+     explicitly requested by specifying the "AESdraft" ciphersuite
+     group alias.  In the final release of OpenSSL 0.9.7, the group
+     alias is called "AES" and is part of "ALL".)
+     [Ben Laurie, Steve  Henson, Bodo Moeller]
 
   *) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.
