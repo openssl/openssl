@@ -68,6 +68,7 @@ char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 #  else
      void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,int num);
 #  endif
+
 void RIPEMD160_Init(RIPEMD160_CTX *c)
 	{
 	c->A=RIPEMD160_A;
@@ -80,180 +81,21 @@ void RIPEMD160_Init(RIPEMD160_CTX *c)
 	c->num=0;
 	}
 
-void RIPEMD160_Update(RIPEMD160_CTX *c, register unsigned char *data,
-	     unsigned long len)
+#ifndef ripemd160_block_host_order
+#ifdef X
+#undef X
+#endif
+#define X(i)	X[(i)]
+void ripemd160_block_host_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
-	register ULONG *p;
-	int sw,sc;
-	ULONG l;
+	const RIPEMD160_LONG *X=p;
+	register unsigned long A,B,C,D,E;
+	register unsigned long a,b,c,d,e;
 
-	if (len == 0) return;
-
-	l=(c->Nl+(len<<3))&0xffffffffL;
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(len>>29);
-	c->Nl=l;
-
-	if (c->num != 0)
+	for (;num--;X+=HASH_LBLOCK)
 		{
-		p=c->data;
-		sw=c->num>>2;
-		sc=c->num&0x03;
 
-		if ((c->num+len) >= RIPEMD160_CBLOCK)
-			{
-			l= p[sw];
-			p_c2l(data,l,sc);
-			p[sw++]=l;
-			for (; sw<RIPEMD160_LBLOCK; sw++)
-				{
-				c2l(data,l);
-				p[sw]=l;
-				}
-			len-=(RIPEMD160_CBLOCK-c->num);
-
-			ripemd160_block(c,p,64);
-			c->num=0;
-			/* drop through and do the rest */
-			}
-		else
-			{
-			int ew,ec;
-
-			c->num+=(int)len;
-			if ((sc+len) < 4) /* ugly, add char's to a word */
-				{
-				l= p[sw];
-				p_c2l_p(data,l,sc,len);
-				p[sw]=l;
-				}
-			else
-				{
-				ew=(c->num>>2);
-				ec=(c->num&0x03);
-				l= p[sw];
-				p_c2l(data,l,sc);
-				p[sw++]=l;
-				for (; sw < ew; sw++)
-					{ c2l(data,l); p[sw]=l; }
-				if (ec)
-					{
-					c2l_p(data,l,ec);
-					p[sw]=l;
-					}
-				}
-			return;
-			}
-		}
-	/* we now can process the input data in blocks of RIPEMD160_CBLOCK
-	 * chars and save the leftovers to c->data. */
-#ifdef L_ENDIAN
-	if ((((unsigned long)data)%sizeof(ULONG)) == 0)
-		{
-		sw=(int)len/RIPEMD160_CBLOCK;
-		if (sw > 0)
-			{
-			sw*=RIPEMD160_CBLOCK;
-			ripemd160_block(c,(ULONG *)data,sw);
-			data+=sw;
-			len-=sw;
-			}
-		}
-#endif
-	p=c->data;
-	while (len >= RIPEMD160_CBLOCK)
-		{
-#if defined(L_ENDIAN) || defined(B_ENDIAN)
-		if (p != (unsigned long *)data)
-			memcpy(p,data,RIPEMD160_CBLOCK);
-		data+=RIPEMD160_CBLOCK;
-#ifdef B_ENDIAN
-		for (sw=(RIPEMD160_LBLOCK/4); sw; sw--)
-			{
-			Endian_Reverse32(p[0]);
-			Endian_Reverse32(p[1]);
-			Endian_Reverse32(p[2]);
-			Endian_Reverse32(p[3]);
-			p+=4;
-			}
-#endif
-#else
-		for (sw=(RIPEMD160_LBLOCK/4); sw; sw--)
-			{
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l; 
-			} 
-#endif
-		p=c->data;
-		ripemd160_block(c,p,64);
-		len-=RIPEMD160_CBLOCK;
-		}
-	sc=(int)len;
-	c->num=sc;
-	if (sc)
-		{
-		sw=sc>>2;	/* words to copy */
-#ifdef L_ENDIAN
-		p[sw]=0;
-		memcpy(p,data,sc);
-#else
-		sc&=0x03;
-		for ( ; sw; sw--)
-			{ c2l(data,l); *(p++)=l; }
-		c2l_p(data,l,sc);
-		*p=l;
-#endif
-		}
-	}
-
-void RIPEMD160_Transform(RIPEMD160_CTX *c, unsigned char *b)
-	{
-	ULONG p[16];
-#if !defined(L_ENDIAN)
-	ULONG *q;
-	int i;
-#endif
-
-#if defined(B_ENDIAN) || defined(L_ENDIAN)
-	memcpy(p,b,64);
-#ifdef B_ENDIAN
-	q=p;
-	for (i=(RIPEMD160_LBLOCK/4); i; i--)
-		{
-		Endian_Reverse32(q[0]);
-		Endian_Reverse32(q[1]);
-		Endian_Reverse32(q[2]);
-		Endian_Reverse32(q[3]);
-		q+=4;
-		}
-#endif
-#else
-	q=p;
-	for (i=(RIPEMD160_LBLOCK/4); i; i--)
-		{
-		ULONG l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l; 
-		} 
-#endif
-	ripemd160_block(c,p,64);
-	}
-
-#ifndef RMD160_ASM
-
-void ripemd160_block(RIPEMD160_CTX *ctx, register ULONG *X, int num)
-	{
-	register ULONG A,B,C,D,E;
-	ULONG a,b,c,d,e;
-
-	for (;;)
-		{
-		A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
+	A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
 
 	RIP1(A,B,C,D,E,WL00,SL00);
 	RIP1(E,A,B,C,D,WL01,SL01);
@@ -436,80 +278,217 @@ void ripemd160_block(RIPEMD160_CTX *ctx, register ULONG *X, int num)
 	ctx->E=ctx->A+b+C;
 	ctx->A=D;
 
-	X+=16;
-	num-=64;
-	if (num <= 0) break;
 		}
 	}
 #endif
 
-void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
-	{
-	register int i,j;
-	register ULONG l;
-	register ULONG *p;
-	static unsigned char end[4]={0x80,0x00,0x00,0x00};
-	unsigned char *cp=end;
-
-	/* c->num should definitly have room for at least one more byte. */
-	p=c->data;
-	j=c->num;
-	i=j>>2;
-
-	/* purify often complains about the following line as an
-	 * Uninitialized Memory Read.  While this can be true, the
-	 * following p_c2l macro will reset l when that case is true.
-	 * This is because j&0x03 contains the number of 'valid' bytes
-	 * already in p[i].  If and only if j&0x03 == 0, the UMR will
-	 * occur but this is also the only time p_c2l will do
-	 * l= *(cp++) instead of l|= *(cp++)
-	 * Many thanks to Alex Tang <altitude@cic.net> for pickup this
-	 * 'potential bug' */
-#ifdef PURIFY
-	if ((j&0x03) == 0) p[i]=0;
+#ifndef ripemd160_block_data_order
+#ifdef X
+#undef X
 #endif
-	l=p[i];
-	p_c2l(cp,l,j&0x03);
-	p[i]=l;
-	i++;
-	/* i is the next 'undefined word' */
-	if (c->num >= RIPEMD160_LAST_BLOCK)
-		{
-		for (; i<RIPEMD160_LBLOCK; i++)
-			p[i]=0;
-		ripemd160_block(c,p,64);
-		i=0;
-		}
-	for (; i<(RIPEMD160_LBLOCK-2); i++)
-		p[i]=0;
-	p[RIPEMD160_LBLOCK-2]=c->Nl;
-	p[RIPEMD160_LBLOCK-1]=c->Nh;
-	ripemd160_block(c,p,64);
-	cp=md;
-	l=c->A; l2c(l,cp);
-	l=c->B; l2c(l,cp);
-	l=c->C; l2c(l,cp);
-	l=c->D; l2c(l,cp);
-	l=c->E; l2c(l,cp);
-
-	/* clear stuff, ripemd160_block may be leaving some stuff on the stack
-	 * but I'm not worried :-) */
-	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
-	}
-
-#ifdef undef
-int printit(unsigned long *l)
+#define X(i)	X##i
+void ripemd160_block_data_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
-	int i,ii;
+	const unsigned char *data=p;
+	register unsigned long A,B,C,D,E;
+	unsigned long a,b,c,d,e,l;
+	RIPEMD160_LONG	 X0, X1, X2, X3, X4, X5, X6, X7,
+			 X8, X9,X10,X11,X12,X13,X14,X15;
+	/*
+	 * Originally the above was declared as RIPEMD160_LONG X[16];
+	 * The idea was to make RISC compilers to accomodate at
+	 * least part of X in the register bank. Unfortunately not
+	 * all compilers get this idea:-(
+	 *					<appro@fy.chalmers.se>
+	 */
 
-	for (i=0; i<2; i++)
+	for (;num--;)
 		{
-		for (ii=0; ii<8; ii++)
-			{
-			fprintf(stderr,"%08lx ",l[i*8+ii]);
-			}
-		fprintf(stderr,"\n");
+
+	A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
+
+	HOST_c2l(data,l); X( 0)=l;	HOST_c2l(data,l); X( 1)=l;
+	RIP1(A,B,C,D,E,WL00,SL00);	HOST_c2l(data,l); X( 2)=l;
+	RIP1(E,A,B,C,D,WL01,SL01);	HOST_c2l(data,l); X( 3)=l;
+	RIP1(D,E,A,B,C,WL02,SL02);	HOST_c2l(data,l); X( 4)=l;
+	RIP1(C,D,E,A,B,WL03,SL03);	HOST_c2l(data,l); X( 5)=l;
+	RIP1(B,C,D,E,A,WL04,SL04);	HOST_c2l(data,l); X( 6)=l;
+	RIP1(A,B,C,D,E,WL05,SL05);	HOST_c2l(data,l); X( 7)=l;
+	RIP1(E,A,B,C,D,WL06,SL06);	HOST_c2l(data,l); X( 8)=l;
+	RIP1(D,E,A,B,C,WL07,SL07);	HOST_c2l(data,l); X( 9)=l;
+	RIP1(C,D,E,A,B,WL08,SL08);	HOST_c2l(data,l); X(10)=l;
+	RIP1(B,C,D,E,A,WL09,SL09);	HOST_c2l(data,l); X(11)=l;
+	RIP1(A,B,C,D,E,WL10,SL10);	HOST_c2l(data,l); X(12)=l;
+	RIP1(E,A,B,C,D,WL11,SL11);	HOST_c2l(data,l); X(13)=l;
+	RIP1(D,E,A,B,C,WL12,SL12);	HOST_c2l(data,l); X(14)=l;
+	RIP1(C,D,E,A,B,WL13,SL13);	HOST_c2l(data,l); X(15)=l;
+	RIP1(B,C,D,E,A,WL14,SL14);
+	RIP1(A,B,C,D,E,WL15,SL15);
+
+	RIP2(E,A,B,C,D,WL16,SL16,KL1);
+	RIP2(D,E,A,B,C,WL17,SL17,KL1);
+	RIP2(C,D,E,A,B,WL18,SL18,KL1);
+	RIP2(B,C,D,E,A,WL19,SL19,KL1);
+	RIP2(A,B,C,D,E,WL20,SL20,KL1);
+	RIP2(E,A,B,C,D,WL21,SL21,KL1);
+	RIP2(D,E,A,B,C,WL22,SL22,KL1);
+	RIP2(C,D,E,A,B,WL23,SL23,KL1);
+	RIP2(B,C,D,E,A,WL24,SL24,KL1);
+	RIP2(A,B,C,D,E,WL25,SL25,KL1);
+	RIP2(E,A,B,C,D,WL26,SL26,KL1);
+	RIP2(D,E,A,B,C,WL27,SL27,KL1);
+	RIP2(C,D,E,A,B,WL28,SL28,KL1);
+	RIP2(B,C,D,E,A,WL29,SL29,KL1);
+	RIP2(A,B,C,D,E,WL30,SL30,KL1);
+	RIP2(E,A,B,C,D,WL31,SL31,KL1);
+
+	RIP3(D,E,A,B,C,WL32,SL32,KL2);
+	RIP3(C,D,E,A,B,WL33,SL33,KL2);
+	RIP3(B,C,D,E,A,WL34,SL34,KL2);
+	RIP3(A,B,C,D,E,WL35,SL35,KL2);
+	RIP3(E,A,B,C,D,WL36,SL36,KL2);
+	RIP3(D,E,A,B,C,WL37,SL37,KL2);
+	RIP3(C,D,E,A,B,WL38,SL38,KL2);
+	RIP3(B,C,D,E,A,WL39,SL39,KL2);
+	RIP3(A,B,C,D,E,WL40,SL40,KL2);
+	RIP3(E,A,B,C,D,WL41,SL41,KL2);
+	RIP3(D,E,A,B,C,WL42,SL42,KL2);
+	RIP3(C,D,E,A,B,WL43,SL43,KL2);
+	RIP3(B,C,D,E,A,WL44,SL44,KL2);
+	RIP3(A,B,C,D,E,WL45,SL45,KL2);
+	RIP3(E,A,B,C,D,WL46,SL46,KL2);
+	RIP3(D,E,A,B,C,WL47,SL47,KL2);
+
+	RIP4(C,D,E,A,B,WL48,SL48,KL3);
+	RIP4(B,C,D,E,A,WL49,SL49,KL3);
+	RIP4(A,B,C,D,E,WL50,SL50,KL3);
+	RIP4(E,A,B,C,D,WL51,SL51,KL3);
+	RIP4(D,E,A,B,C,WL52,SL52,KL3);
+	RIP4(C,D,E,A,B,WL53,SL53,KL3);
+	RIP4(B,C,D,E,A,WL54,SL54,KL3);
+	RIP4(A,B,C,D,E,WL55,SL55,KL3);
+	RIP4(E,A,B,C,D,WL56,SL56,KL3);
+	RIP4(D,E,A,B,C,WL57,SL57,KL3);
+	RIP4(C,D,E,A,B,WL58,SL58,KL3);
+	RIP4(B,C,D,E,A,WL59,SL59,KL3);
+	RIP4(A,B,C,D,E,WL60,SL60,KL3);
+	RIP4(E,A,B,C,D,WL61,SL61,KL3);
+	RIP4(D,E,A,B,C,WL62,SL62,KL3);
+	RIP4(C,D,E,A,B,WL63,SL63,KL3);
+
+	RIP5(B,C,D,E,A,WL64,SL64,KL4);
+	RIP5(A,B,C,D,E,WL65,SL65,KL4);
+	RIP5(E,A,B,C,D,WL66,SL66,KL4);
+	RIP5(D,E,A,B,C,WL67,SL67,KL4);
+	RIP5(C,D,E,A,B,WL68,SL68,KL4);
+	RIP5(B,C,D,E,A,WL69,SL69,KL4);
+	RIP5(A,B,C,D,E,WL70,SL70,KL4);
+	RIP5(E,A,B,C,D,WL71,SL71,KL4);
+	RIP5(D,E,A,B,C,WL72,SL72,KL4);
+	RIP5(C,D,E,A,B,WL73,SL73,KL4);
+	RIP5(B,C,D,E,A,WL74,SL74,KL4);
+	RIP5(A,B,C,D,E,WL75,SL75,KL4);
+	RIP5(E,A,B,C,D,WL76,SL76,KL4);
+	RIP5(D,E,A,B,C,WL77,SL77,KL4);
+	RIP5(C,D,E,A,B,WL78,SL78,KL4);
+	RIP5(B,C,D,E,A,WL79,SL79,KL4);
+
+	a=A; b=B; c=C; d=D; e=E;
+	/* Do other half */
+	A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
+
+	RIP5(A,B,C,D,E,WR00,SR00,KR0);
+	RIP5(E,A,B,C,D,WR01,SR01,KR0);
+	RIP5(D,E,A,B,C,WR02,SR02,KR0);
+	RIP5(C,D,E,A,B,WR03,SR03,KR0);
+	RIP5(B,C,D,E,A,WR04,SR04,KR0);
+	RIP5(A,B,C,D,E,WR05,SR05,KR0);
+	RIP5(E,A,B,C,D,WR06,SR06,KR0);
+	RIP5(D,E,A,B,C,WR07,SR07,KR0);
+	RIP5(C,D,E,A,B,WR08,SR08,KR0);
+	RIP5(B,C,D,E,A,WR09,SR09,KR0);
+	RIP5(A,B,C,D,E,WR10,SR10,KR0);
+	RIP5(E,A,B,C,D,WR11,SR11,KR0);
+	RIP5(D,E,A,B,C,WR12,SR12,KR0);
+	RIP5(C,D,E,A,B,WR13,SR13,KR0);
+	RIP5(B,C,D,E,A,WR14,SR14,KR0);
+	RIP5(A,B,C,D,E,WR15,SR15,KR0);
+
+	RIP4(E,A,B,C,D,WR16,SR16,KR1);
+	RIP4(D,E,A,B,C,WR17,SR17,KR1);
+	RIP4(C,D,E,A,B,WR18,SR18,KR1);
+	RIP4(B,C,D,E,A,WR19,SR19,KR1);
+	RIP4(A,B,C,D,E,WR20,SR20,KR1);
+	RIP4(E,A,B,C,D,WR21,SR21,KR1);
+	RIP4(D,E,A,B,C,WR22,SR22,KR1);
+	RIP4(C,D,E,A,B,WR23,SR23,KR1);
+	RIP4(B,C,D,E,A,WR24,SR24,KR1);
+	RIP4(A,B,C,D,E,WR25,SR25,KR1);
+	RIP4(E,A,B,C,D,WR26,SR26,KR1);
+	RIP4(D,E,A,B,C,WR27,SR27,KR1);
+	RIP4(C,D,E,A,B,WR28,SR28,KR1);
+	RIP4(B,C,D,E,A,WR29,SR29,KR1);
+	RIP4(A,B,C,D,E,WR30,SR30,KR1);
+	RIP4(E,A,B,C,D,WR31,SR31,KR1);
+
+	RIP3(D,E,A,B,C,WR32,SR32,KR2);
+	RIP3(C,D,E,A,B,WR33,SR33,KR2);
+	RIP3(B,C,D,E,A,WR34,SR34,KR2);
+	RIP3(A,B,C,D,E,WR35,SR35,KR2);
+	RIP3(E,A,B,C,D,WR36,SR36,KR2);
+	RIP3(D,E,A,B,C,WR37,SR37,KR2);
+	RIP3(C,D,E,A,B,WR38,SR38,KR2);
+	RIP3(B,C,D,E,A,WR39,SR39,KR2);
+	RIP3(A,B,C,D,E,WR40,SR40,KR2);
+	RIP3(E,A,B,C,D,WR41,SR41,KR2);
+	RIP3(D,E,A,B,C,WR42,SR42,KR2);
+	RIP3(C,D,E,A,B,WR43,SR43,KR2);
+	RIP3(B,C,D,E,A,WR44,SR44,KR2);
+	RIP3(A,B,C,D,E,WR45,SR45,KR2);
+	RIP3(E,A,B,C,D,WR46,SR46,KR2);
+	RIP3(D,E,A,B,C,WR47,SR47,KR2);
+
+	RIP2(C,D,E,A,B,WR48,SR48,KR3);
+	RIP2(B,C,D,E,A,WR49,SR49,KR3);
+	RIP2(A,B,C,D,E,WR50,SR50,KR3);
+	RIP2(E,A,B,C,D,WR51,SR51,KR3);
+	RIP2(D,E,A,B,C,WR52,SR52,KR3);
+	RIP2(C,D,E,A,B,WR53,SR53,KR3);
+	RIP2(B,C,D,E,A,WR54,SR54,KR3);
+	RIP2(A,B,C,D,E,WR55,SR55,KR3);
+	RIP2(E,A,B,C,D,WR56,SR56,KR3);
+	RIP2(D,E,A,B,C,WR57,SR57,KR3);
+	RIP2(C,D,E,A,B,WR58,SR58,KR3);
+	RIP2(B,C,D,E,A,WR59,SR59,KR3);
+	RIP2(A,B,C,D,E,WR60,SR60,KR3);
+	RIP2(E,A,B,C,D,WR61,SR61,KR3);
+	RIP2(D,E,A,B,C,WR62,SR62,KR3);
+	RIP2(C,D,E,A,B,WR63,SR63,KR3);
+
+	RIP1(B,C,D,E,A,WR64,SR64);
+	RIP1(A,B,C,D,E,WR65,SR65);
+	RIP1(E,A,B,C,D,WR66,SR66);
+	RIP1(D,E,A,B,C,WR67,SR67);
+	RIP1(C,D,E,A,B,WR68,SR68);
+	RIP1(B,C,D,E,A,WR69,SR69);
+	RIP1(A,B,C,D,E,WR70,SR70);
+	RIP1(E,A,B,C,D,WR71,SR71);
+	RIP1(D,E,A,B,C,WR72,SR72);
+	RIP1(C,D,E,A,B,WR73,SR73);
+	RIP1(B,C,D,E,A,WR74,SR74);
+	RIP1(A,B,C,D,E,WR75,SR75);
+	RIP1(E,A,B,C,D,WR76,SR76);
+	RIP1(D,E,A,B,C,WR77,SR77);
+	RIP1(C,D,E,A,B,WR78,SR78);
+	RIP1(B,C,D,E,A,WR79,SR79);
+
+	D     =ctx->B+c+D;
+	ctx->B=ctx->C+d+E;
+	ctx->C=ctx->D+e+A;
+	ctx->D=ctx->E+a+B;
+	ctx->E=ctx->A+b+C;
+	ctx->A=D;
+
 		}
 	}
 #endif

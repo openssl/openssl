@@ -67,26 +67,32 @@ extern "C" {
 #error RIPEMD is disabled.
 #endif
 
+#if defined(WIN16) || defined(__LP32__)
+#define RIPEMD160_LONG unsigned long
+#elif defined(_CRAY) || defined(__ILP64__)
+#define RIPEMD160_LONG unsigned long
+#define RIPEMD160_LONG_LOG2 3
+#else
+#define RIPEMD160_LONG unsigned int
+#endif
+
 #define RIPEMD160_CBLOCK	64
-#define RIPEMD160_LBLOCK	16
-#define RIPEMD160_BLOCK		16
-#define RIPEMD160_LAST_BLOCK	56
-#define RIPEMD160_LENGTH_BLOCK	8
+#define RIPEMD160_LBLOCK	(RIPEMD160_CBLOCK/4)
 #define RIPEMD160_DIGEST_LENGTH	20
 
 typedef struct RIPEMD160state_st
 	{
-	unsigned long A,B,C,D,E;
-	unsigned long Nl,Nh;
-	unsigned long data[RIPEMD160_LBLOCK];
+	RIPEMD160_LONG A,B,C,D,E;
+	RIPEMD160_LONG Nl,Nh;
+	RIPEMD160_LONG data[RIPEMD160_LBLOCK];
 	int num;
 	} RIPEMD160_CTX;
 
 void RIPEMD160_Init(RIPEMD160_CTX *c);
-void RIPEMD160_Update(RIPEMD160_CTX *c, unsigned char *data, unsigned long len);
+void RIPEMD160_Update(RIPEMD160_CTX *c, const unsigned char *data, unsigned long len);
 void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 unsigned char *RIPEMD160(unsigned char *d, unsigned long n, unsigned char *md);
-void RIPEMD160_Transform(RIPEMD160_CTX *c, unsigned char *b);
+void RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }
 #endif
