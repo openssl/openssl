@@ -372,7 +372,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 error:
 	fprintf(stderr,"\n");
-#ifdef DEBUG
+#if 0
 	perror("fgets(tty)");
 #endif
 	/* What can we do if there is an error? */
