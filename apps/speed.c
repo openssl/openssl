@@ -82,16 +82,22 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
-#define TIMES
+#if defined(__FreeBSD__)
+# define USE_TOD
+#elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+# define TIMES
 #endif
 
 #ifndef _IRIX
-#include <time.h>
+# include <time.h>
 #endif
 #ifdef TIMES
-#include <sys/types.h>
-#include <sys/times.h>
+# include <sys/types.h>
+# include <sys/times.h>
+#endif
+#ifdef USE_TOD
+# include <sys/time.h>
+# include <sys/resource.h>
 #endif
 
 /* Depending on the VMS version, the tms structure is perhaps defined.
@@ -203,7 +209,49 @@ static SIGRETTYPE sig_done(int sig)
 static double Time_F(int s, int usertime)
 	{
 	double ret;
-#ifdef TIMES
+
+#ifdef USE_TOD
+	if(usertime)
+	    {
+		static struct rusage tstart,tend;
+
+		if (s == START)
+			{
+			getrusage(RUSAGE_SELF,&tstart);
+			return(0);
+			}
+		else
+			{
+			long i;
+
+			getrusage(RUSAGE_SELF,&tend);
+			i=(long)tend.ru_utime.tv_usec-(long)tstart.ru_utime.tv_usec;
+			ret=((double)(tend.ru_utime.tv_sec-tstart.ru_utime.tv_sec))
+			  +((double)i)/1000000.0;
+			return((ret < 0.001)?0.001:ret);
+			}
+		}
+	else
+		{
+		static struct timeval tstart,tend;
+		long i;
+
+		if (s == START)
+			{
+			gettimeofday(&tstart,NULL);
+			return(0);
+			}
+		else
+			{
+			gettimeofday(&tend,NULL);
+			i=(long)tend.tv_usec-(long)tstart.tv_usec;
+			ret=((double)(tend.tv_sec-tstart.tv_sec))+((double)i)/1000000.0;
+			return((ret < 0.001)?0.001:ret);
+			}
+		}
+#else  /* ndef USE_TOD */
+		
+# ifdef TIMES
 	if (usertime)
 		{
 		static struct tms tstart,tend;
@@ -221,7 +269,7 @@ static double Time_F(int s, int usertime)
 			}
 		}
 	else
-#endif /* times() */
+# endif /* times() */
 		{
 		static struct timeb tstart,tend;
 		long i;
@@ -239,6 +287,7 @@ static double Time_F(int s, int usertime)
 			return((ret < 0.001)?0.001:ret);
 			}
 		}
+#endif
 	}
 
 int MAIN(int, char **);
