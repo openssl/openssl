@@ -114,7 +114,7 @@ fips_test: top top_fips_test_suite
 	cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
 	@for i in dsa sha1 aes des ; \
 	do \
-		(cd $$i && echo "making fips_test in fips/$$i..." && make fips_test) \
+		(cd $$i && echo "making fips_test in fips/$$i..." && $(MAKE) fips_test) \
 	done;
 
 install:
