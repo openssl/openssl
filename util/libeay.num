@@ -457,7 +457,7 @@ RAND_bytes                              464	EXIST::FUNCTION:
 RAND_cleanup                            465	EXIST::FUNCTION:
 RAND_file_name                          466	EXIST::FUNCTION:
 RAND_load_file                          467	EXIST::FUNCTION:
-RAND_screen                             468	EXIST::FUNCTION:
+RAND_screen                             468	EXIST:WIN32:FUNCTION:
 RAND_seed                               469	EXIST::FUNCTION:
 RAND_write_file                         470	EXIST::FUNCTION:
 RC2_cbc_encrypt                         471	EXIST::FUNCTION:RC2
@@ -1762,7 +1762,7 @@ RAND_status                             2254	EXIST::FUNCTION:
 bn_dump1                                2255	NOEXIST::FUNCTION:
 des_check_key_parity                    2256	EXIST::FUNCTION:DES
 lh_num_items                            2257	EXIST::FUNCTION:
-RAND_event                              2258	EXIST::FUNCTION:
+RAND_event                              2258	EXIST:WIN32:FUNCTION:
 DSO_new                                 2259	EXIST::FUNCTION:
 DSO_new_method                          2260	EXIST::FUNCTION:
 DSO_free                                2261	EXIST::FUNCTION:
@@ -2033,7 +2033,8 @@ i2d_OCSP_REVOKEDINFO                    2613	EXIST::FUNCTION:
 d2i_OCSP_RESPBYTES                      2614	EXIST::FUNCTION:
 i2d_OCSP_CERTID                         2615	EXIST::FUNCTION:
 d2i_OCSP_SINGLERESP                     2616	EXIST::FUNCTION:
-OCSP_crlID_new                          2617	EXIST::FUNCTION:
+OCSP_crlID_new                          2617	EXIST:!WIN16,!VMS:FUNCTION:
+OCSP_crlID2_new                         2617	EXIST:WIN16,VMS:FUNCTION:
 OCSP_BASICRESP_new                      2618	EXIST::FUNCTION:
 d2i_OCSP_SERVICELOC                     2619	EXIST::FUNCTION:
 OCSP_response_new                       2620	NOEXIST::FUNCTION:
@@ -2104,9 +2105,11 @@ ENGINE_load_ubsec                       2684	EXIST::FUNCTION:
 PKEY_USAGE_PERIOD_it                    2685	EXIST::VARIABLE:
 NETSCAPE_SPKAC_it                       2686	EXIST::VARIABLE:
 X509_REVOKED_it                         2687	EXIST::VARIABLE:
-OCSP_BASICRESP_get_ext_by_critical      2688	EXIST::FUNCTION:
+OCSP_BASICRESP_get_ext_by_critical      2688	EXIST:!VMS:FUNCTION:
+OCSP_BASICRESP_get_ext_by_crit          2688	EXIST:VMS:FUNCTION:
 PKCS12_it                               2689	EXIST::VARIABLE:
-OCSP_SINGLERESP_get_ext_by_critical     2690	EXIST::FUNCTION:
+OCSP_SINGLERESP_get_ext_by_critical     2690	EXIST:!VMS:FUNCTION:
+OCSP_SINGLERESP_get_ext_by_crit         2690	EXIST:VMS:FUNCTION:
 ASN1_item_i2d                           2691	EXIST::FUNCTION:
 asn1_ex_i2c                             2692	EXIST::FUNCTION:
 X509_EXTENSION_it                       2693	EXIST::VARIABLE:
@@ -2232,7 +2235,8 @@ ASN1_item_ex_free                       2812	EXIST::FUNCTION:
 OCSP_ONEREQ_add1_ext_i2d                2813	EXIST::FUNCTION:
 ASN1_NULL_it                            2814	EXIST::VARIABLE:
 PKCS7_it                                2815	EXIST::VARIABLE:
-OCSP_REQUEST_get_ext_by_critical        2816	EXIST::FUNCTION:
+OCSP_REQUEST_get_ext_by_critical        2816	EXIST:!VMS:FUNCTION:
+OCSP_REQUEST_get_ext_by_crit            2816	EXIST:VMS:FUNCTION:
 OCSP_ONEREQ_delete_ext                  2817	EXIST::FUNCTION:
 ASN1_item_new                           2818	EXIST::FUNCTION:
 i2d_ASN1_T61STRING                      2819	EXIST::FUNCTION:
@@ -2271,7 +2275,8 @@ PKCS12_item_i2d_encrypt                 2851	EXIST::FUNCTION:
 OCSP_basic_verify                       2852	EXIST::FUNCTION:
 ZLONG_it                                2853	EXIST::VARIABLE:
 EVP_aes_128_ecb                         2854	EXIST::FUNCTION:AES
-CRYPTO_set_locked_mem_ex_functions      2855	EXIST::FUNCTION:
+CRYPTO_set_locked_mem_ex_functions      2855	EXIST:!VMS:FUNCTION:
+CRYPTO_set_locked_mem_ex_funcs          2855	EXIST:VMS:FUNCTION:
 PKCS12_certbag2x509crl                  2856	EXIST::FUNCTION:
 DIRECTORYSTRING_it                      2857	EXIST::VARIABLE:
 PKCS12_decrypt_skey                     2858	EXIST::FUNCTION:
@@ -2321,7 +2326,8 @@ LONG_it                                 2901	EXIST::VARIABLE:
 PKCS12_certbag2x509                     2902	EXIST::FUNCTION:
 OCSP_response_create                    2903	EXIST::FUNCTION:
 OCSP_resp_get0                          2904	EXIST::FUNCTION:
-CRYPTO_get_locked_mem_ex_functions      2905	EXIST::FUNCTION:
+CRYPTO_get_locked_mem_ex_functions      2905	EXIST:!VMS:FUNCTION:
+CRYPTO_get_locked_mem_ex_funcs          2905	EXIST:VMS:FUNCTION:
 EVP_aes_192_ecb                         2906	EXIST::FUNCTION:AES
 OCSP_response_get1_basic                2907	EXIST::FUNCTION:
 PKCS12_item_pack_safebag                2908	EXIST::FUNCTION:
