@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
+
+  *) 
+
  Changes between 0.9.6i and 0.9.6j  [10 Apr 2003]
 
   *) Countermeasure against the Klima-Pokorny-Rosa extension of
