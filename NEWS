@@ -5,6 +5,23 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
+
+      o Security fix: PRNG improvements.
+      o Security fix: RSA OAEP check.
+      o Security fix: Reinsert and fix countermeasure to Bleichbacher's
+        attack.
+      o MIPS bug fix in BIGNUM.
+      o Bug fix in "openssl enc".
+      o Bug fix in X.509 printing routine.
+      o Bug fix in DSA verification routine and DSA S/MIME verification.
+      o Bug fix to make PRNG thread-safe.
+      o Bug fix in RAND_file_name().
+      o Bug fix in compatibility mode trust settings.
+      o Bug fix in blowfish EVP.
+      o Increase default size for BIO buffering filter.
+      o Compatibility fixes in some scripts.
+
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.6a:
 
       o Security fix: change behavior of OpenSSL to avoid using

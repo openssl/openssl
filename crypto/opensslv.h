@@ -2,7 +2,7 @@
 #define HEADER_OPENSSLV_H
 
 /* Numeric release version identifier:
- * MMNNFFPPS: major minor fix patch status
+ * MNNFFPPS: major minor fix patch status
  * The status nibble has one of the values 0 for development, 1 to e for betas
  * 1 to 14, and f for release.  The patch level is exactly that.
  * For example:
@@ -25,8 +25,8 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x00906020L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6b-dev [engine] XX xxx XXXX"
+#define OPENSSL_VERSION_NUMBER	0x0090602fL
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6b [engine] 9 Jul 2001"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 

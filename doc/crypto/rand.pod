@@ -127,13 +127,12 @@ function and xor).
 When bytes are extracted from the RNG, the following process is used.
 For each group of 10 bytes (or less), we do the following:
 
-Input into the hash function the top 10 bytes from the local 'md'
-(which is initialized from the global 'md' before any bytes are
-generated), the bytes that are to be overwritten by the random bytes,
-and bytes from the 'state' (incrementing looping index). From this
-digest output (which is kept in 'md'), the top (up to) 10 bytes are
-returned to the caller and the bottom (up to) 10 bytes are xored into
-the 'state'.
+Input into the hash function the local 'md' (which is initialized from
+the global 'md' before any bytes are generated), the bytes that are to
+be overwritten by the random bytes, and bytes from the 'state'
+(incrementing looping index). From this digest output (which is kept
+in 'md'), the top (up to) 10 bytes are returned to the caller and the
+bottom 10 bytes are xored into the 'state'.
 
 Finally, after we have finished 'num' random bytes for the caller,
 'count' (which is incremented) and the local and global 'md' are fed
