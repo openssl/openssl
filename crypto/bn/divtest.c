@@ -1,13 +1,14 @@
 #include <openssl/bn.h>
+#include <openssl/rand.h>
 
-int rand(n)
+static int rand(n)
 {
     unsigned char x[2];
-    RAND_pseudo_bytes(&x,2);
+    RAND_pseudo_bytes(x,2);
     return (x[0] + 2*x[1]);
 }
 
-void bug(char *m, BIGNUM *a, BIGNUM *b)
+static void bug(char *m, BIGNUM *a, BIGNUM *b)
 {
     printf("%s!\na=",m);
     BN_print_fp(stdout, a);
