@@ -12,6 +12,21 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  -) [In 0.9.6c-engine release:]
+     Add support for Broadcom crypto accelerator cards, backported
+     from 0.9.7.
+     [Broadcom, Nalin Dahyabhai <nalin@redhat.com>, Mark Cox]
+
+  -) [In 0.9.6c-engine release:]
+     Add support for SureWare crypto accelerator cards from 
+     Baltimore Technologies.  (Use engine 'sureware')
+     [Baltimore Technologies and Mark Cox]
+
+  -) [In 0.9.6c-engine release:]
+     Add support for crypto accelerator cards from Accelerated
+     Encryption Processing, www.aep.ie.  (Use engine 'aep')
+     [AEP Inc. and Mark Cox]
+
   *) Add a configuration entry for gcc on UnixWare.
      [Gary Benson <gbenson@redhat.com>]
 
