@@ -428,7 +428,7 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		key = load_key(bio_err, keyfile, keyform, passin, e,
+		key = load_key(bio_err, keyfile, keyform, 0, passin, e,
 			       "signing key file");
 		if (!key) {
 			goto end;

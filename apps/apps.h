@@ -233,9 +233,9 @@ int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, CONF *conf);
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
-EVP_PKEY *load_key(BIO *err, const char *file, int format,
+EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip);
-EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
+EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip);
 STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);

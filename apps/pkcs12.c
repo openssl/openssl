@@ -427,7 +427,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("process -export_cert");
 	CRYPTO_push_info("reading private key");
 #endif
-	key = load_key(bio_err, keyname ? keyname : infile, FORMAT_PEM,
+	key = load_key(bio_err, keyname ? keyname : infile, FORMAT_PEM, 1,
 		passin, e, "private key");
 	if (!key) {
 		goto export_end;

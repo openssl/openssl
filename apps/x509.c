@@ -861,8 +861,8 @@ bad:
 				if (Upkey == NULL)
 					{
 					Upkey=load_key(bio_err,
-						keyfile,keyformat, passin, e,
-						"Private key");
+						keyfile, keyformat, 0,
+						passin, e, "Private key");
 					if (Upkey == NULL) goto end;
 					}
 #ifndef OPENSSL_NO_DSA
@@ -880,8 +880,9 @@ bad:
 				if (CAkeyfile != NULL)
 					{
 					CApkey=load_key(bio_err,
-						CAkeyfile,CAkeyformat, passin,
-						e, "CA Private Key");
+						CAkeyfile, CAkeyformat,
+						0, passin, e,
+						"CA Private Key");
 					if (CApkey == NULL) goto end;
 					}
 #ifndef OPENSSL_NO_DSA
@@ -908,8 +909,8 @@ bad:
 				else
 					{
 					pk=load_key(bio_err,
-						keyfile,FORMAT_PEM, passin, e,
-						"request key");
+						keyfile, FORMAT_PEM, 0,
+						passin, e, "request key");
 					if (pk == NULL) goto end;
 					}
 

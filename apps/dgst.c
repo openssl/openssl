@@ -277,10 +277,10 @@ int MAIN(int argc, char **argv)
 	if(keyfile)
 		{
 		if (want_pub)
-			sigkey = load_pubkey(bio_err, keyfile, keyform, NULL,
+			sigkey = load_pubkey(bio_err, keyfile, keyform, 0, NULL,
 				e, "key file");
 		else
-			sigkey = load_key(bio_err, keyfile, keyform, NULL,
+			sigkey = load_key(bio_err, keyfile, keyform, 0, NULL,
 				e, "key file");
 		if (!sigkey)
 			{

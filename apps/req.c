@@ -622,7 +622,7 @@ bad:
 
 	if (keyfile != NULL)
 		{
-		pkey = load_key(bio_err, keyfile, keyform, passin, e,
+		pkey = load_key(bio_err, keyfile, keyform, 0, passin, e,
 			"Private Key");
 		if (!pkey)
 			{
