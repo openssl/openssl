@@ -65,6 +65,9 @@
 #include <jpidef.h>
 #include <ssdef.h>
 #include <starlet.h>
+#ifdef __DECC
+# pragma message disable DOLLARID
+#endif
 
 static struct items_data_st
 	{
