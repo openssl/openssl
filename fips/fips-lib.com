@@ -647,8 +647,8 @@ $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
-$     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.SSL]LIBCRYPTO.OLB Library."
-$     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.SSL]*.EXE Programs."
+$     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
+$     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.CRYPTO]*.EXE Programs."
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
@@ -1152,7 +1152,7 @@ $! Save directory information
 $!
 $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A.;"
 $ __HERE = F$EDIT(__HERE,"UPCASE")
-$ __TOP = __HERE - "CRYPTO]"
+$ __TOP = __HERE - "FIPS]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory
