@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -113,6 +113,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {RSA_R_DMP1_NOT_CONGRUENT_TO_D           ,"dmp1 not congruent to d"},
 {RSA_R_DMQ1_NOT_CONGRUENT_TO_D           ,"dmq1 not congruent to d"},
 {RSA_R_D_E_NOT_CONGRUENT_TO_1            ,"d e not congruent to 1"},
+{RSA_R_INTERNAL_ERROR                    ,"internal error"},
 {RSA_R_INVALID_MESSAGE_LENGTH            ,"invalid message length"},
 {RSA_R_IQMP_NOT_INVERSE_OF_Q             ,"iqmp not inverse of q"},
 {RSA_R_KEY_SIZE_TOO_SMALL                ,"key size too small"},
