@@ -71,7 +71,7 @@ static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
 #define ENC_BLOCK_SIZE	(1024*4)
-#define BUF_OFFSET	8 /* XXX: why? */
+#define BUF_OFFSET	EVP_MAX_BLOCK_LENGTH
 
 typedef struct enc_struct
 	{
@@ -81,7 +81,10 @@ typedef struct enc_struct
 	int finished;
 	int ok;			/* bad decrypt */
 	EVP_CIPHER_CTX cipher;
-	char buf[ENC_BLOCK_SIZE+BUF_OFFSET+2/*why?*/];
+	/* buf is larger than ENC_BLOCK_SIZE because EVP_DecryptUpdate
+	 * can return up to a block more data than is presented to it
+	 */
+	char buf[ENC_BLOCK_SIZE+BUF_OFFSET+2];
 	} BIO_ENC_CTX;
 
 static BIO_METHOD methods_enc=
@@ -171,7 +174,7 @@ static int enc_read(BIO *b, char *out, int outl)
 		{
 		if (ctx->cont <= 0) break;
 
-		/* read in at offset 8, read the EVP_Cipher
+		/* read in at IV offset, read the EVP_Cipher
 		 * documentation about why */
 		i=BIO_read(b->next_bio,&(ctx->buf[BUF_OFFSET]),ENC_BLOCK_SIZE);
 
