@@ -55,6 +55,8 @@
 #ifndef HEADER_ECDSA_H
 #define HEADER_ECDSA_H
 
+#include <openssl/opensslconf.h>
+
 #ifdef OPENSSL_NO_ECDSA
 #error ECDSA is disabled.
 #endif
