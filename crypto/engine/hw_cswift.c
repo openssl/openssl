@@ -289,6 +289,10 @@ static int cswift_init()
 err:
 	if(cswift_dso)
 		DSO_free(cswift_dso);
+	p_CSwift_AcquireAccContext = NULL;
+	p_CSwift_AttachKeyParam = NULL;
+	p_CSwift_SimpleRequest = NULL;
+	p_CSwift_ReleaseAccContext = NULL;
 	return 0;
 	}
 
