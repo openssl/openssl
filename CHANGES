@@ -4,6 +4,12 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
+     This function was broken, as the check for a new client hello message
+     to handle SGC did not allow these large messages.
+     (Tracked down by "Douglas E. Engert" <deengert@anl.gov>.)
+     [Lutz Jaenicke]
+
   *) Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
      [Lutz Jaenicke]
 
