@@ -124,13 +124,13 @@ static LHASH *error_hash=NULL;
 static LHASH *thread_hash=NULL;
 
 /* static unsigned long err_hash(ERR_STRING_DATA *a); */
-static unsigned long err_hash(void *a_void);
+static unsigned long err_hash(const void *a_void);
 /* static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b); */
-static int err_cmp(void *a_void, void *b_void);
+static int err_cmp(const void *a_void, const void *b_void);
 /* static unsigned long pid_hash(ERR_STATE *pid); */
-static unsigned long pid_hash(void *pid_void);
+static unsigned long pid_hash(const void *pid_void);
 /* static int pid_cmp(ERR_STATE *a,ERR_STATE *pid); */
-static int pid_cmp(void *a_void,void *pid_void);
+static int pid_cmp(const void *a_void,const void *pid_void);
 static unsigned long get_error_values(int inc,const char **file,int *line,
 				      const char **data,int *flags);
 
@@ -626,7 +626,7 @@ const char *ERR_reason_error_string(unsigned long e)
 	}
 
 /* static unsigned long err_hash(ERR_STRING_DATA *a) */
-static unsigned long err_hash(void *a_void)
+static unsigned long err_hash(const void *a_void)
 	{
 	unsigned long ret,l;
 
@@ -636,20 +636,20 @@ static unsigned long err_hash(void *a_void)
 	}
 
 /* static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b) */
-static int err_cmp(void *a_void, void *b_void)
+static int err_cmp(const void *a_void, const void *b_void)
 	{
 	return((int)(((ERR_STRING_DATA *)a_void)->error -
 			((ERR_STRING_DATA *)b_void)->error));
 	}
 
 /* static unsigned long pid_hash(ERR_STATE *a) */
-static unsigned long pid_hash(void *a_void)
+static unsigned long pid_hash(const void *a_void)
 	{
 	return(((ERR_STATE *)a_void)->pid*13);
 	}
 
 /* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
-static int pid_cmp(void *a_void, void *b_void)
+static int pid_cmp(const void *a_void, const void *b_void)
 	{
 	return((int)((long)((ERR_STATE *)a_void)->pid -
 			(long)((ERR_STATE *)b_void)->pid));

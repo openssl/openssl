@@ -220,34 +220,36 @@ long CRYPTO_dbg_get_options(void)
 	}
 
 /* static int mem_cmp(MEM *a, MEM *b) */
-static int mem_cmp(void *a_void, void *b_void)
+static int mem_cmp(const void *a_void, const void *b_void)
 	{
-	return((char *)((MEM *)a_void)->addr - (char *)((MEM *)b_void)->addr);
+	return((const char *)((MEM *)a_void)->addr
+		- (const char *)((MEM *)b_void)->addr);
 	}
 
 /* static unsigned long mem_hash(MEM *a) */
-static unsigned long mem_hash(void *a_void)
+static unsigned long mem_hash(const void *a_void)
 	{
 	unsigned long ret;
 
-	ret=(unsigned long)((MEM *)a_void)->addr;
+	ret=(unsigned long)((const MEM *)a_void)->addr;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
 
 /* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
-static int app_info_cmp(void *a_void, void *b_void)
+static int app_info_cmp(const void *a_void, const void *b_void)
 	{
-	return(((APP_INFO *)a_void)->thread != ((APP_INFO *)b_void)->thread);
+	return(((const APP_INFO *)a_void)->thread
+		!= ((const APP_INFO *)b_void)->thread);
 	}
 
 /* static unsigned long app_info_hash(APP_INFO *a) */
-static unsigned long app_info_hash(void *a_void)
+static unsigned long app_info_hash(const void *a_void)
 	{
 	unsigned long ret;
 
-	ret=(unsigned long)((APP_INFO *)a_void)->thread;
+	ret=(unsigned long)((const APP_INFO *)a_void)->thread;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);

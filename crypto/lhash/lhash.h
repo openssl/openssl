@@ -77,17 +77,17 @@ extern "C" {
 
 typedef struct lhash_node_st
 	{
-	void *data;
+	const void *data;
 	struct lhash_node_st *next;
 #ifndef NO_HASH_COMP
 	unsigned long hash;
 #endif
 	} LHASH_NODE;
 
-typedef int (*LHASH_COMP_FN_TYPE)(void *, void *);
-typedef unsigned long (*LHASH_HASH_FN_TYPE)(void *);
-typedef void (*LHASH_DOALL_FN_TYPE)(void *);
-typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
+typedef int (*LHASH_COMP_FN_TYPE)(const void *, const void *);
+typedef unsigned long (*LHASH_HASH_FN_TYPE)(const void *);
+typedef void (*LHASH_DOALL_FN_TYPE)(const void *);
+typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
 
 /* Macros for declaring and implementing type-safe wrappers for LHASH callbacks.
  * This way, callbacks can be provided to LHASH structures without function
@@ -98,18 +98,18 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
 
 /* First: "hash" functions */
 #define DECLARE_LHASH_HASH_FN(f_name,o_type) \
-	unsigned long f_name##_LHASH_HASH(void *);
+	unsigned long f_name##_LHASH_HASH(const void *);
 #define IMPLEMENT_LHASH_HASH_FN(f_name,o_type) \
-	unsigned long f_name##_LHASH_HASH(void *arg) { \
+	unsigned long f_name##_LHASH_HASH(const void *arg) { \
 		o_type a = (o_type)arg; \
 		return f_name(a); }
 #define LHASH_HASH_FN(f_name) f_name##_LHASH_HASH
 
 /* Second: "compare" functions */
 #define DECLARE_LHASH_COMP_FN(f_name,o_type) \
-	int f_name##_LHASH_COMP(void *, void *);
+	int f_name##_LHASH_COMP(const void *, const void *);
 #define IMPLEMENT_LHASH_COMP_FN(f_name,o_type) \
-	int f_name##_LHASH_COMP(void *arg1, void *arg2) { \
+	int f_name##_LHASH_COMP(const void *arg1, const void *arg2) { \
 		o_type a = (o_type)arg1; \
 		o_type b = (o_type)arg2; \
 		return f_name(a,b); }
@@ -153,11 +153,11 @@ typedef struct lhash_st
 
 LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
 void lh_free(LHASH *lh);
-void *lh_insert(LHASH *lh, void *data);
-void *lh_delete(LHASH *lh, void *data);
-void *lh_retrieve(LHASH *lh, void *data);
+void *lh_insert(LHASH *lh, const void *data);
+void *lh_delete(LHASH *lh, const void *data);
+void *lh_retrieve(LHASH *lh, const void *data);
 void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func);
-void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const LHASH *lh);
 

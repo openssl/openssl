@@ -79,9 +79,9 @@
  * functions. */
 
 /* static unsigned long MS_CALLBACK hash(FUNCTION *a); */
-static unsigned long MS_CALLBACK hash(void *a_void);
+static unsigned long MS_CALLBACK hash(const void *a_void);
 /* static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b); */
-static int MS_CALLBACK cmp(void *a_void,void *b_void);
+static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 LHASH *config=NULL;
@@ -367,14 +367,14 @@ static LHASH *prog_init(void)
 	}
 
 /* static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b) */
-static int MS_CALLBACK cmp(void *a_void, void *b_void)
+static int MS_CALLBACK cmp(const void *a_void, const void *b_void)
 	{
 	return(strncmp(((FUNCTION *)a_void)->name,
 			((FUNCTION *)b_void)->name,8));
 	}
 
 /* static unsigned long MS_CALLBACK hash(FUNCTION *a) */
-static unsigned long MS_CALLBACK hash(void *a_void)
+static unsigned long MS_CALLBACK hash(const void *a_void)
 	{
 	return(lh_strhash(((FUNCTION *)a_void)->name));
 	}

@@ -109,7 +109,7 @@ const char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 
 static void expand(LHASH *lh);
 static void contract(LHASH *lh);
-static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash);
+static LHASH_NODE **getrn(LHASH *lh, const void *data, unsigned long *rhash);
 
 LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 	{
@@ -176,11 +176,11 @@ void lh_free(LHASH *lh)
 	OPENSSL_free(lh);
 	}
 
-void *lh_insert(LHASH *lh, void *data)
+void *lh_insert(LHASH *lh, const void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	void *ret;
+	const void *ret;
 
 	lh->error=0;
 	if (lh->up_load <= (lh->num_items*LH_LOAD_MULT/lh->num_nodes))
@@ -211,14 +211,14 @@ void *lh_insert(LHASH *lh, void *data)
 		(*rn)->data=data;
 		lh->num_replace++;
 		}
-	return(ret);
+	return((void *)ret);
 	}
 
-void *lh_delete(LHASH *lh, void *data)
+void *lh_delete(LHASH *lh, const void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	void *ret;
+	const void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -242,14 +242,14 @@ void *lh_delete(LHASH *lh, void *data)
 		(lh->down_load >= (lh->num_items*LH_LOAD_MULT/lh->num_nodes)))
 		contract(lh);
 
-	return(ret);
+	return((void *)ret);
 	}
 
-void *lh_retrieve(LHASH *lh, void *data)
+void *lh_retrieve(LHASH *lh, const void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE **rn;
-	void *ret;
+	const void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -264,7 +264,7 @@ void *lh_retrieve(LHASH *lh, void *data)
 		ret= (*rn)->data;
 		lh->num_retrieve++;
 		}
-	return(ret);
+	return((void *)ret);
 	}
 
 void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
@@ -279,7 +279,7 @@ void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
 	lh_doall_arg(lh, (LHASH_DOALL_ARG_FN_TYPE)func, NULL);
 	}
 
-void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -395,7 +395,7 @@ static void contract(LHASH *lh)
 		}
 	}
 
-static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash)
+static LHASH_NODE **getrn(LHASH *lh, const void *data, unsigned long *rhash)
 	{
 	LHASH_NODE **ret,*n1;
 	unsigned long hash,nn;

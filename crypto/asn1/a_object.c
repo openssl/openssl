@@ -302,7 +302,7 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	}
 
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
-	     char *sn, char *ln)
+	     const char *sn, const char *ln)
 	{
 	ASN1_OBJECT o;
 

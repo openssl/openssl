@@ -109,9 +109,9 @@ static int ln_cmp(const void *a, const void *b)
 	}
 
 /* static unsigned long add_hash(ADDED_OBJ *ca) */
-static unsigned long add_hash(void *ca_void)
+static unsigned long add_hash(const void *ca_void)
 	{
-	ASN1_OBJECT *a;
+	const ASN1_OBJECT *a;
 	int i;
 	unsigned long ret=0;
 	unsigned char *p;
@@ -145,7 +145,7 @@ static unsigned long add_hash(void *ca_void)
 	}
 
 /* static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb) */
-static int add_cmp(void *ca_void, void *cb_void)
+static int add_cmp(const void *ca_void, const void *cb_void)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
@@ -224,7 +224,7 @@ int OBJ_new_nid(int num)
 	return(i);
 	}
 
-int OBJ_add_object(ASN1_OBJECT *obj)
+int OBJ_add_object(const ASN1_OBJECT *obj)
 	{
 	ASN1_OBJECT *o;
 	ADDED_OBJ *ao[4]={NULL,NULL,NULL,NULL},*aop;
@@ -360,7 +360,7 @@ const char *OBJ_nid2ln(int n)
 		}
 	}
 
-int OBJ_obj2nid(ASN1_OBJECT *a)
+int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{
 	ASN1_OBJECT **op;
 	ADDED_OBJ ad,*adp;
@@ -373,7 +373,7 @@ int OBJ_obj2nid(ASN1_OBJECT *a)
 	if (added != NULL)
 		{
 		ad.type=ADDED_DATA;
-		ad.obj=a;
+		ad.obj=(ASN1_OBJECT *)a; /* XXX: ugly but harmless */
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
@@ -427,7 +427,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	return op;
 	}
 
-int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
+int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 {
 	int i,idx=0,n=0,len,nid;
 	unsigned long l;
@@ -493,7 +493,7 @@ int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
 	return(n);
 }
 
-int OBJ_txt2nid(char *s)
+int OBJ_txt2nid(const char *s)
 {
 	ASN1_OBJECT *obj;
 	int nid;
@@ -552,10 +552,11 @@ static int obj_cmp(const void *ap, const void *bp)
 	return(memcmp(a->data,b->data,a->length));
         }
 
-char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)(const void *, const void *))
+const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
+	int (*cmp)(const void *, const void *))
 	{
 	int l,h,i,c;
-	char *p;
+	const char *p;
 
 	if (num == 0) return(NULL);
 	l=0;
@@ -634,7 +635,7 @@ int OBJ_create_objects(BIO *in)
 	/* return(num); */
 	}
 
-int OBJ_create(char *oid, char *sn, char *ln)
+int OBJ_create(const char *oid, const char *sn, const char *ln)
 	{
 	int ok=0;
 	ASN1_OBJECT *op=NULL;

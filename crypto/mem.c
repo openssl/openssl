@@ -181,8 +181,8 @@ void *CRYPTO_malloc_locked(int num, const char *file, int line)
 		malloc_debug_func(NULL, num, file, line, 0);
 		}
 	ret = malloc_locked_func(num);
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
 #endif
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
@@ -194,8 +194,8 @@ void CRYPTO_free_locked(void *str)
 	{
 	if (free_debug_func != NULL)
 		free_debug_func(str, 0);
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG:         < 0x%p\n", str);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
 	free_locked_func(str);
 	if (free_debug_func != NULL)
@@ -213,8 +213,8 @@ void *CRYPTO_malloc(int num, const char *file, int line)
 		malloc_debug_func(NULL, num, file, line, 0);
 		}
 	ret = malloc_func(num);
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
 #endif
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
@@ -229,8 +229,8 @@ void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);
 	ret = realloc_func(str,num);
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
 #endif
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, ret, num, file, line, 1);
@@ -242,8 +242,8 @@ void CRYPTO_free(void *str)
 	{
 	if (free_debug_func != NULL)
 		free_debug_func(str, 0);
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG:         < 0x%p\n", str);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
 	free_func(str);
 	if (free_debug_func != NULL)

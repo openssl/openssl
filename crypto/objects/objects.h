@@ -997,24 +997,25 @@ void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),
 void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 			    void *arg);
 
-ASN1_OBJECT *	OBJ_dup(ASN1_OBJECT *o);
+ASN1_OBJECT *	OBJ_dup(const ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_nid2obj(int n);
 const char *	OBJ_nid2ln(int n);
 const char *	OBJ_nid2sn(int n);
-int		OBJ_obj2nid(ASN1_OBJECT *o);
+int		OBJ_obj2nid(const ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_txt2obj(const char *s, int no_name);
-int	OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name);
-int		OBJ_txt2nid(char *s);
+int	OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
+int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
-int		OBJ_cmp(ASN1_OBJECT *a,ASN1_OBJECT *b);
-char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)(const void *, const void *));
+int		OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
+const char *	OBJ_bsearch(const char *key,const char *base,int num,int size,
+	int (*cmp)(const void *, const void *));
 
 void		ERR_load_OBJ_strings(void );
 
 int		OBJ_new_nid(int num);
-int		OBJ_add_object(ASN1_OBJECT *obj);
-int		OBJ_create(char *oid,char *sn,char *ln);
+int		OBJ_add_object(const ASN1_OBJECT *obj);
+int		OBJ_create(const char *oid,const char *sn,const char *ln);
 void		OBJ_cleanup(void );
 int		OBJ_create_objects(BIO *in);
 

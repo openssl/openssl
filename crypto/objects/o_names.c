@@ -29,9 +29,9 @@ static STACK_OF(NAME_FUNCS) *name_funcs_stack;
  * need for macro-generated wrapper functions. */
 
 /* static unsigned long obj_name_hash(OBJ_NAME *a); */
-static unsigned long obj_name_hash(void *a_void);
+static unsigned long obj_name_hash(const void *a_void);
 /* static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b); */
-static int obj_name_cmp(void *a_void,void *b_void);
+static int obj_name_cmp(const void *a_void,const void *b_void);
 
 int OBJ_NAME_init(void)
 	{
@@ -88,7 +88,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 	}
 
 /* static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b) */
-static int obj_name_cmp(void *a_void, void *b_void)
+static int obj_name_cmp(const void *a_void, const void *b_void)
 	{
 	int ret;
 	OBJ_NAME *a = (OBJ_NAME *)a_void;
@@ -110,7 +110,7 @@ static int obj_name_cmp(void *a_void, void *b_void)
 	}
 
 /* static unsigned long obj_name_hash(OBJ_NAME *a) */
-static unsigned long obj_name_hash(void *a_void)
+static unsigned long obj_name_hash(const void *a_void)
 	{
 	unsigned long ret;
 	OBJ_NAME *a = (OBJ_NAME *)a_void;

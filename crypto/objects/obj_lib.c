@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 
-ASN1_OBJECT *OBJ_dup(ASN1_OBJECT *o)
+ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	{
 	ASN1_OBJECT *r;
 	int i;
@@ -70,7 +70,8 @@ ASN1_OBJECT *OBJ_dup(ASN1_OBJECT *o)
 
 	if (o == NULL) return(NULL);
 	if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-		return(o);
+		return((ASN1_OBJECT *)o); /* XXX: ugh! Why? What kind of
+					     duplication is this??? */
 
 	r=ASN1_OBJECT_new();
 	if (r == NULL)
@@ -116,7 +117,7 @@ err:
 	return(NULL);
 	}
 
-int OBJ_cmp(ASN1_OBJECT *a, ASN1_OBJECT *b)
+int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 	{
 	int ret;
 
