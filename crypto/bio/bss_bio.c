@@ -8,6 +8,7 @@
  * See ssl/ssltest.c for some hints on how this can be used. */
 
 #ifndef BIO_PAIR_DEBUG
+# undef NDEBUG /* avoid conflicting definitions */
 # define NDEBUG
 #endif
 
