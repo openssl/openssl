@@ -268,6 +268,8 @@ typedef struct asn1_string_st ASN1_VISIBLESTRING;
 typedef struct asn1_string_st ASN1_UTF8STRING;
 #endif
 
+typedef int ASN1_NULL;
+
 typedef struct asn1_type_st
 	{
 	int type;
@@ -599,6 +601,11 @@ int		i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a,unsigned char **pp);
 ASN1_UTF8STRING *d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a,
 			unsigned char **pp,long length);
 
+ASN1_NULL *	ASN1_NULL_new(void);
+void		ASN1_NULL_free(ASN1_NULL *a);
+int		i2d_ASN1_NULL(ASN1_NULL *a,unsigned char **pp);
+ASN1_NULL *d2i_ASN1_NULL(ASN1_NULL **a, unsigned char **pp,long length);
+
 ASN1_BMPSTRING *	ASN1_BMPSTRING_new(void);
 void		ASN1_BMPSTRING_free(ASN1_BMPSTRING *a);
 int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp);
@@ -832,6 +839,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_F_D2I_ASN1_GENERALIZEDTIME			 223
 #define ASN1_F_D2I_ASN1_HEADER				 127
 #define ASN1_F_D2I_ASN1_INTEGER				 128
+#define ASN1_F_D2I_ASN1_NULL				 292
 #define ASN1_F_D2I_ASN1_OBJECT				 129
 #define ASN1_F_D2I_ASN1_OCTET_STRING			 130
 #define ASN1_F_D2I_ASN1_PRINT_TYPE			 131
@@ -1002,6 +1010,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_R_EXPECTING_A_BIT_STRING			 116
 #define ASN1_R_EXPECTING_A_BOOLEAN			 117
 #define ASN1_R_EXPECTING_A_GENERALIZEDTIME		 151
+#define ASN1_R_EXPECTING_A_NULL				 164
 #define ASN1_R_EXPECTING_A_TIME				 152
 #define ASN1_R_EXPECTING_A_UTCTIME			 118
 #define ASN1_R_FIRST_NUM_TOO_LARGE			 119
@@ -1019,6 +1028,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_R_MISSING_SECOND_NUMBER			 126
 #define ASN1_R_NON_HEX_CHARACTERS			 127
 #define ASN1_R_NOT_ENOUGH_DATA				 128
+#define ASN1_R_NULL_IS_WRONG_LENGTH			 165
 #define ASN1_R_ODD_NUMBER_OF_CHARS			 129
 #define ASN1_R_PARSING					 130
 #define ASN1_R_PRIVATE_KEY_HEADER_MISSING		 131

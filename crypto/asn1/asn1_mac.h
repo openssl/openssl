@@ -111,7 +111,7 @@ err:\
 	c.slen = length;
 
 /* End reading ASN1 with no check on length */
-#define M_ASN1_D2I_Finish_nolen() \
+#define M_ASN1_D2I_Finish_nolen(a, func, e) \
 	*pp=c.p; \
 	if (a != NULL) (*a)=ret; \
 	return(ret); \

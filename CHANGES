@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Support for ASN1 "NULL" type. This could be handled before by using
+     ASN1_TYPE but there wasn't any function that would try to read a NULL
+     and produce an error if it couldn't. For compatability we also have
+     ASN1_NULL_new() and ASN1_NULL_free() functions but these are faked and
+     don't allocate anything because they don't need to.
+     [Steve Henson]
+
   *) Initial support for MacOS is now provided. Examine INSTALL.MacOS
      for details.
      [Andy Polyakov, Roy Woods <roy@centicsystems.ca>]
