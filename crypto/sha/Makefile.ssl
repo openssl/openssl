@@ -47,22 +47,21 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# elf
+# ELF
 asm/sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > sx86-elf.s)
+	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
 asm/s512sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > s512sse2-elf.s)
-
+	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
+# COFF
+asm/sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha1-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
+asm/s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-sse2.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
 # a.out
-asm/sx86-out.o: asm/sx86unix.cpp
-	$(CPP) -DOUT asm/sx86unix.cpp | as -o asm/sx86-out.o
-
-# bsdi
-asm/sx86bsdi.o: asm/sx86unix.cpp
-	$(CPP) -DBSDI asm/sx86unix.cpp | sed 's/ :/:/' | as -o asm/sx86bsdi.o
-
-asm/sx86unix.cpp: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl cpp $(PROCESSOR) >sx86unix.cpp)
+asm/sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha1-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+asm/s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
 asm/sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl $@ $(CFLAGS))

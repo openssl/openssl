@@ -69,12 +69,22 @@ des: des.o cbc3_enc.o lib
 asm/des_enc-sparc.S:	asm/des_enc.m4
 	m4 -B 8192 asm/des_enc.m4 > asm/des_enc-sparc.S
 
-# elf
+# ELF
 asm/dx86-elf.s:	asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) des-586.pl elf $(CFLAGS) > dx86-elf.s)
-
+	(cd asm; $(PERL) des-586.pl elf $(CFLAGS) > ../$@)
 asm/yx86-elf.s:	asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) crypt586.pl elf $(CFLAGS) > yx86-elf.s)
+	(cd asm; $(PERL) crypt586.pl elf $(CFLAGS) > ../$@)
+# COFF
+asm/dx86-cof.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) des-586.pl coff $(CFLAGS) > ../$@)
+asm/yx86-cof.s: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) crypt586.pl coff $(CFLAGS) > ../$@)
+# a.out
+asm/dx86-out.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) des-586.pl a.out $(CFLAGS) > ../$@)
+asm/yx86-out.s: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) crypt586.pl a.out $(CFLAGS) > ../$@)
+
 
 # a.out
 asm/dx86-out.o: asm/dx86unix.cpp
@@ -130,7 +140,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/dx86unix.cpp asm/yx86unix.cpp asm/*-elf.* *.o asm/*.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/dx86unix.cpp asm/yx86unix.cpp asm/*-[elf|cof|out].* *.o asm/*.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

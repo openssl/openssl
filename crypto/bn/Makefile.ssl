@@ -67,32 +67,21 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# elf
+# ELF
 asm/bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > bn86-elf.s)
-
+	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > ../$@)
 asm/co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > co86-elf.s)
-
+	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > ../$@)
+# COFF
+asm/bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) bn-586.pl coff $(CFLAGS) > ../$@)
+asm/co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) co-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/bn86-out.o: asm/bn86unix.cpp
-	$(CPP) -DOUT asm/bn86unix.cpp | as -o asm/bn86-out.o
-
-asm/co86-out.o: asm/co86unix.cpp
-	$(CPP) -DOUT asm/co86unix.cpp | as -o asm/co86-out.o
-
-# bsdi
-asm/bn86bsdi.o: asm/bn86unix.cpp
-	$(CPP) -DBSDI asm/bn86unix.cpp | sed 's/ :/:/' | as -o asm/bn86bsdi.o
-
-asm/co86bsdi.o: asm/co86unix.cpp
-	$(CPP) -DBSDI asm/co86unix.cpp | sed 's/ :/:/' | as -o asm/co86bsdi.o
-
-asm/bn86unix.cpp: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl cpp >bn86unix.cpp )
-
-asm/co86unix.cpp: asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl cpp >co86unix.cpp )
+asm/bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) bn-586.pl a.out $(CFLAGS) > ../$@)
+asm/co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
 
 asm/sparcv8.o: asm/sparcv8.S
 
@@ -157,7 +146,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* asm/ia64.[so] *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
+	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-[elf|cof|out].* asm/ia64.[so] *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -52,20 +52,15 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# elf
+# ELF
 asm/rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl elf $(CFLAGS) > rx86-elf.s)
-
+	(cd asm; $(PERL) rc4-586.pl elf $(CFLAGS) > ../$@)
+# COFF
+asm/rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rc4-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/rx86-out.o: asm/rx86unix.cpp
-	$(CPP) -DOUT asm/rx86unix.cpp | as -o asm/rx86-out.o
-
-# bsdi
-asm/rx86bsdi.o: asm/rx86unix.cpp
-	$(CPP) -DBSDI asm/rx86unix.cpp | sed 's/ :/:/' | as -o asm/rx86bsdi.o
-
-asm/rx86unix.cpp: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl cpp >rx86unix.cpp)
+asm/rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
 
 asm/rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) $< $@
 
@@ -101,7 +96,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/rx86unix.cpp asm/*-elf.* *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f asm/rx86unix.cpp asm/*-[elf|cof|out].* *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
