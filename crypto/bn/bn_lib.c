@@ -306,7 +306,7 @@ BIGNUM *BN_new(void)
 
 /* This is used both by bn_expand2() and bn_dup_expand() */
 /* The caller MUST check that words > b->dmax before calling this */
-static BN_ULONG *internal_bn_expand(const BIGNUM *b, int words)
+static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 	{
 	BN_ULONG *A,*a = NULL;
 	const BN_ULONG *B;
@@ -315,13 +315,13 @@ static BN_ULONG *internal_bn_expand(const BIGNUM *b, int words)
 	bn_check_top(b);	
 	if (BN_get_flags(b,BN_FLG_STATIC_DATA))
 		{
-		BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return(NULL);
 		}
 	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*(words+1));
 	if (A == NULL)
 		{
-		BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
+		BNerr(BN_F_BN_EXPAND_INTERNAL,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
 #if 1
@@ -329,70 +329,6 @@ static BN_ULONG *internal_bn_expand(const BIGNUM *b, int words)
 	/* Check if the previous number needs to be copied */
 	if (B != NULL)
 		{
-#if 0
-		/* This lot is an unrolled loop to copy b->top 
-		 * BN_ULONGs from B to A
-		 */
-/*
- * I have nothing against unrolling but it's usually done for
- * several reasons, namely:
- * - minimize percentage of decision making code, i.e. branches;
- * - avoid cache trashing;
- * - make it possible to schedule loads earlier;
- * Now let's examine the code below. The cornerstone of C is
- * "programmer is always right" and that's what we love it for:-)
- * For this very reason C compilers have to be paranoid when it
- * comes to data aliasing and assume the worst. Yeah, but what
- * does it mean in real life? This means that loop body below will
- * be compiled to sequence of loads immediately followed by stores
- * as compiler assumes the worst, something in A==B+1 style. As a
- * result CPU pipeline is going to starve for incoming data. Secondly
- * if A and B happen to share same cache line such code is going to
- * cause severe cache trashing. Both factors have severe impact on
- * performance of modern CPUs and this is the reason why this
- * particular piece of code is #ifdefed away and replaced by more
- * "friendly" version found in #else section below. This comment
- * also applies to BN_copy function.
- *
- *					<appro@fy.chalmers.se>
- */
-		for (i=b->top&(~7); i>0; i-=8)
-			{
-			A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
-			A[4]=B[4]; A[5]=B[5]; A[6]=B[6]; A[7]=B[7];
-			A+=8;
-			B+=8;
-			}
-		switch (b->top&7)
-			{
-		case 7:
-			A[6]=B[6];
-		case 6:
-			A[5]=B[5];
-		case 5:
-			A[4]=B[4];
-		case 4:
-			A[3]=B[3];
-		case 3:
-			A[2]=B[2];
-		case 2:
-			A[1]=B[1];
-		case 1:
-			A[0]=B[0];
-		case 0:
-			/* I need the 'case 0' entry for utrix cc.
-			 * If the optimizer is turned on, it does the
-			 * switch table by doing
-			 * a=top&7
-			 * a--;
-			 * goto jump_table[a];
-			 * If top is 0, this makes us jump to 0xffffffc 
-			 * which is rather bad :-(.
-			 * eric 23-Apr-1998
-			 */
-			;
-			}
-#else
 		for (i=b->top>>2; i>0; i--,A+=4,B+=4)
 			{
 			/*
@@ -413,9 +349,11 @@ static BN_ULONG *internal_bn_expand(const BIGNUM *b, int words)
 		case 3:	A[2]=B[2];
 		case 2:	A[1]=B[1];
 		case 1:	A[0]=B[0];
-		case 0:	; /* ultrix cc workaround, see above */
+		case 0: /* workaround for ultrix cc: without 'case 0', the optimizer does
+		         * the switch table by doing a=top&3; a--; goto jump_table[a];
+		         * which fails for top== 0 */
+			;
 			}
-#endif
 		}
 
 	/* Now need to zero any data between b->top and b->max */
@@ -453,7 +391,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 
 	if (words > b->dmax)
 		{
-		BN_ULONG *a = internal_bn_expand(b, words);
+		BN_ULONG *a = bn_expand_internal(b, words);
 
 		if (a)
 			{
@@ -472,7 +410,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 				}
 			}
 		/* If a == NULL, there was an error in allocation in
-		   internal_bn_expand(), and NULL should be returned */
+		   bn_expand_internal(), and NULL should be returned */
 		}
 	else
 		{
@@ -491,11 +429,12 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
 	if (words > b->dmax)
 		{
-		BN_ULONG *a = internal_bn_expand(b, words);
+		BN_ULONG *a = bn_expand_internal(b, words);
 
 		if (a)
 			{
-			OPENSSL_free(b->d);
+			if (b->d)
+				OPENSSL_free(b->d);
 			b->d=a;
 			b->dmax=words;
 			}
@@ -547,7 +486,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 		case 3: A[2]=B[2];
 		case 2: A[1]=B[1];
 		case 1: A[0]=B[0];
-		case 0: ; /* ultrix cc workaround, see comments in bn_expand2 */
+		case 0: ; /* ultrix cc workaround, see comments in bn_expand_internal */
 		}
 #else
 	memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
@@ -666,7 +605,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 		return(NULL);
 	i=((n-1)/BN_BYTES)+1;
 	m=((n-1)%(BN_BYTES));
-	ret->top=i;
+	ret->top=i-1;
 	while (n-- > 0)
 		{
 		l=(l<<8L)| *(s++);

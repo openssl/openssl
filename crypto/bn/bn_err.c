@@ -76,6 +76,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_CTX_NEW,0),	"BN_CTX_new"},
 {ERR_PACK(0,BN_F_BN_DIV,0),	"BN_div"},
 {ERR_PACK(0,BN_F_BN_EXPAND2,0),	"bn_expand2"},
+{ERR_PACK(0,BN_F_BN_EXPAND_INTERNAL,0),	"BN_EXPAND_INTERNAL"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP2_MONT,0),	"BN_mod_exp2_mont"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP_MONT,0),	"BN_mod_exp_mont"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP_MONT_WORD,0),	"BN_mod_exp_mont_word"},

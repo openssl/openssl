@@ -67,6 +67,7 @@
 /* determine timings for modexp, gcd, or modular inverse */
 #define TEST_EXP
 #undef TEST_GCD
+#undef TEST_KRON
 #undef TEST_INV
 
 
@@ -220,7 +221,7 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	double tm;
 	long num;
 
-#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_INV) != 1
+#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_KRON) + defined(TEST_INV) != 1
 #  error "choose one test"
 #endif
 
@@ -253,7 +254,11 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 #elif defined(TEST_GCD)
 			if (!BN_gcd(r,a,b,ctx)) goto err;
 			if (!BN_gcd(r,b,c,ctx)) goto err;
-			if (!BN_gcd(r,b,c,ctx)) goto err;
+			if (!BN_gcd(r,c,a,ctx)) goto err;
+#elif defined(TEST_KRON)
+			if (-2 == BN_kronecker(a,b,ctx)) goto err;
+			if (-2 == BN_kronecker(b,c,ctx)) goto err;
+			if (-2 == BN_kronecker(c,a,ctx)) goto err;
 #else /* TEST_INV */
 			if (!BN_mod_inverse(r,a,c,ctx)) goto err;
 			if (!BN_mod_inverse(r,b,c,ctx)) goto err;
@@ -265,6 +270,8 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 			"modexp %4d ^ %4d %% %4d"
 #elif defined(TEST_GCD)
 			"3*gcd %4d %4d %4d"
+#elif defined(TEST_KRON)
+			"3*kronecker %4d %4d %4d"
 #else /* TEST_INV */
 			"2*inv %4d %4d mod %4d"
 #endif
