@@ -49,6 +49,7 @@ information.
 L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
 L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>,
 L<SSL_write(3)|SSL_write(3)>, L<SSL_read(3)|SSL_read(3)>,
+L<SSL_do_handshake(3)|SSL_do_handshake(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>
 
 =cut
