@@ -193,7 +193,8 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
 	char *p;
 	struct tm *ts;
-#if defined(THREADS) && !defined(WIN32)
+#if defined(THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
+
 	struct tm data;
 #endif
 
@@ -202,7 +203,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	if (s == NULL)
 		return(NULL);
 
-#if defined(THREADS) && !defined(WIN32)
+#if defined(THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
 	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 	ts=&data;
 #else
@@ -285,7 +286,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 
 	t -= offset*60; /* FIXME: may overflow in extreme cases */
 
-#if defined(THREADS) && !defined(WIN32)
+#if defined(THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
 	{ struct tm data; gmtime_r(&t, &data); tm = &data; }
 #else
 	tm = gmtime(&t);

@@ -161,7 +161,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#ifdef MSDOS
+#if defined(MSDOS) && !defined(__CYGWIN32__)
 #include <conio.h>
 #define fgets(a,b,c) noecho_fgets(a,b,c)
 #endif
