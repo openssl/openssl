@@ -67,28 +67,24 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#include <openssl/safestack.h>
 #include <openssl/ocsp.h>
 
-static STACK_OF(X509_EXTENSION) *ext_dup(STACK_OF(X509_EXTENSION) *fr)
-	{
-	int i;
-	STACK_OF(X509_EXTENSION) *to = NULL;
+/* Convert a certificate and its issuer to an OCSP_CERTID */
 
-	if (!(to = sk_X509_EXTENSION_dup(fr)))
-	        goto err;
-	for (i = 0; i < sk_X509_EXTENSION_num(fr); i++)
-		{
-	        sk_X509_EXTENSION_set(to, i,
-	              X509_EXTENSION_dup(sk_X509_EXTENSION_value(fr, i)));
-		if (! sk_X509_EXTENSION_value(to, i))
-		        goto err;
-		}
-	return to;
-err:
-	if (to) sk_X509_EXTENSION_pop_free(to, X509_EXTENSION_free);
-	return NULL;
-	}
+OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
+{
+	X509_NAME *iname;
+	ASN1_INTEGER *serial;
+	ASN1_BIT_STRING *ikey;
+#ifndef NO_SHA1
+	if(!dgst) dgst = EVP_sha1();
+#endif
+	iname = X509_get_issuer_name(subject);
+	serial = X509_get_serialNumber(subject);
+	ikey = issuer->cert_info->key->public_key;
+	return OCSP_cert_id_new(dgst, iname, ikey, serial);
+}
+
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst, 
 			      X509_NAME *issuerName, 
@@ -166,8 +162,7 @@ err:
 	return NULL;
 	}
 
-OCSP_REQUEST *OCSP_request_new(X509_NAME* name,
-			       STACK_OF(X509_EXTENSION) *extensions)
+OCSP_REQUEST *OCSP_request_new(X509_NAME* name)
         {
 	OCSP_REQUEST *req = NULL;
 
@@ -180,26 +175,19 @@ OCSP_REQUEST *OCSP_request_new(X509_NAME* name,
 		req->tbsRequest->requestorName->d.dirn = X509_NAME_dup(name);
 		}
 	if (!(req->tbsRequest->requestList = sk_OCSP_ONEREQ_new(NULL))) goto err;
-	if (extensions && 
-	    (!(req->tbsRequest->requestExtensions = ext_dup(extensions))))
-	        goto err;
 	return req;
 err:
 	if (req) OCSP_REQUEST_free(req);
 	return NULL;
 	}
 
-int OCSP_request_add(OCSP_REQUEST             *req,
-		     OCSP_CERTID              *cid,
-		     STACK_OF(X509_EXTENSION) *extensions)
+int OCSP_request_add(OCSP_REQUEST *req, OCSP_CERTID *cid)
         {
 	OCSP_ONEREQ *one = NULL;
 
 	if (!(one = OCSP_ONEREQ_new())) goto err;
 	if (one->reqCert) OCSP_CERTID_free(one->reqCert);
 	if (!(one->reqCert = OCSP_CERTID_dup(cid))) goto err;
-	if (extensions&&(!(one->singleRequestExtensions=ext_dup(extensions))))
-	        goto err;
 	if (!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one)) goto err;
 	return 1;
 err:
@@ -238,9 +226,7 @@ err:
 	return 0;
 	}
 
-OCSP_BASICRESP *OCSP_basic_response_new(int type,
-					X509* cert,
-					STACK_OF(X509_EXTENSION) *extensions)
+OCSP_BASICRESP *OCSP_basic_response_new(int type, X509* cert)
         {
 	time_t t;
 	OCSP_RESPID *rid;
@@ -281,9 +267,6 @@ OCSP_BASICRESP *OCSP_basic_response_new(int type,
 	if (!(ASN1_GENERALIZEDTIME_set(rsp->tbsResponseData->producedAt, t)))
 		goto err;
 	if (!(rsp->tbsResponseData->responses = sk_OCSP_SINGLERESP_new(NULL))) goto err;
-	if (extensions && (!(rsp->tbsResponseData->responseExtensions = 
-			                      ext_dup(extensions))))
-		goto err;
 	return rsp;
 err:
 	if (rsp) OCSP_BASICRESP_free(rsp);
@@ -294,8 +277,7 @@ int OCSP_basic_response_add(OCSP_BASICRESP           *rsp,
 			    OCSP_CERTID              *cid,
 			    OCSP_CERTSTATUS          *cst,
 			    char                     *this,
-			    char                     *next,
-			    STACK_OF(X509_EXTENSION) *extensions)
+			    char                     *next)
         {
 	OCSP_SINGLERESP *single = NULL;
 
@@ -312,8 +294,6 @@ int OCSP_basic_response_add(OCSP_BASICRESP           *rsp,
 		if (!ASN1_GENERALIZEDTIME_set_string(single->nextUpdate,next))
 	                goto err;
 		}
-	if (extensions && (!(single->singleExtensions = ext_dup(extensions))))
-	        goto err;
 	if (!sk_OCSP_SINGLERESP_push(rsp->tbsResponseData->responses,single)) goto err;
 	return 1;
 err:

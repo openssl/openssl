@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Update OCSP API. Remove obsolete extensions argument from
+     various functions. Extensions are now handled using the new
+     OCSP extension code. New simple OCSP HTTP function which 
+     can be used to send requests and parse the response.
+     [Steve Henson]
+
   *) Fix the PKCS#7 (S/MIME) code to work with new ASN1. Two new
      ASN1_ITEM structures help with sign and verify. PKCS7_ATTR_SIGN
      uses the special reorder version of SET OF to sort the attributes

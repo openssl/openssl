@@ -384,6 +384,10 @@ typedef struct ocsp_service_locator_st
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
 		(char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
+OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
+
+OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
+
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst, 
 			      X509_NAME *issuerName, 
 			      ASN1_BIT_STRING* issuerKey, 
@@ -391,12 +395,10 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
 OCSP_CERTSTATUS *OCSP_cert_status_new(int status, int reason, char *tim);
 
-OCSP_REQUEST *OCSP_request_new(X509_NAME* name,
-			       STACK_OF(X509_EXTENSION) *extensions);
+OCSP_REQUEST *OCSP_request_new(X509_NAME* name);
 
 int OCSP_request_add(OCSP_REQUEST             *req,
-		     OCSP_CERTID              *cid,
-		     STACK_OF(X509_EXTENSION) *extensions);
+		     OCSP_CERTID              *cid);
 
 int OCSP_request_sign(OCSP_REQUEST   *req,
 		      EVP_PKEY       *key,
@@ -406,15 +408,13 @@ int OCSP_request_sign(OCSP_REQUEST   *req,
 int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
 
 OCSP_BASICRESP *OCSP_basic_response_new(int tag,
-					X509* cert,
-					STACK_OF(X509_EXTENSION) *extensions);
+					X509* cert);
 
 int OCSP_basic_response_add(OCSP_BASICRESP           *rsp,
 			    OCSP_CERTID              *cid,
 			    OCSP_CERTSTATUS          *cst,
 			    char                     *thisUpdate,
-			    char                     *nextUpdate,
-			    STACK_OF(X509_EXTENSION) *extensions);
+			    char                     *nextUpdate);
 
 int OCSP_basic_response_sign(OCSP_BASICRESP *brsp, 
 			     EVP_PKEY       *key,
@@ -523,6 +523,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_CERT_ID_NEW				 102
 #define OCSP_F_CERT_STATUS_NEW				 103
 #define OCSP_F_D2I_OCSP_NONCE				 109
+#define OCSP_F_OCSP_SENDREQ_BIO				 110
 #define OCSP_F_REQUEST_VERIFY				 104
 #define OCSP_F_RESPONSE_VERIFY				 105
 #define OCSP_F_S2I_OCSP_NONCE				 107
@@ -537,10 +538,15 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_FAILED_TO_STAT				 111
 #define OCSP_R_MISSING_VALUE				 112
 #define OCSP_R_NO_CERTIFICATE				 102
+#define OCSP_R_NO_CONTENT				 115
 #define OCSP_R_NO_PUBLIC_KEY				 103
 #define OCSP_R_NO_RESPONSE_DATA				 104
 #define OCSP_R_NO_SIGNATURE				 105
 #define OCSP_R_REVOKED_NO_TIME				 106
+#define OCSP_R_SERVER_READ_ERROR			 116
+#define OCSP_R_SERVER_RESPONSE_ERROR			 117
+#define OCSP_R_SERVER_RESPONSE_PARSE_ERROR		 118
+#define OCSP_R_SERVER_WRITE_ERROR			 119
 #define OCSP_R_UNKNOWN_NID				 107
 #define OCSP_R_UNSUPPORTED_OPTION			 113
 #define OCSP_R_VALUE_ALREADY				 114

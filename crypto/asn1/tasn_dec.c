@@ -606,7 +606,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 		cont = *in;
 		/* If indefinite length constructed find the real end */
 		if(inf) {
-			asn1_collect(NULL, &p, plen, inf, -1, -1);
+			if(!asn1_collect(NULL, &p, plen, inf, -1, -1)) goto err;
 			len = p - cont;
 		} else {
 			len = p - cont + plen;
@@ -623,9 +623,15 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 		 * internally irrespective of the type. So instead just check
 		 * for UNIVERSAL class and ignore the tag.
 		 */
-		asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL);
-		cont = (unsigned char *)buf.data;
+		if(!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL)) goto err;
 		len = buf.length;
+		/* Append a final null to string */
+		if(!BUF_MEM_grow(&buf, len + 1)) {
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+		buf.data[len] = 0;
+		cont = (unsigned char *)buf.data;
 		free_cont = 1;
 	} else {
 		cont = p;
