@@ -271,6 +271,7 @@ void des_encrypt2();
 void des_encrypt3();
 void des_decrypt3();
 void des_ede3_cbc_encrypt();
+void des_ede3_cbcm_encrypt();
 int des_enc_read();
 int des_enc_write();
 char *des_fcrypt();

@@ -204,7 +204,7 @@ int num;
 		MD_Final(md,&m);
 		md_count[1]++;
 
-		buf+=j;
+		buf=(char *)buf + j;
 
 		for (k=0; k<j; k++)
 			{

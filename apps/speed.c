@@ -633,8 +633,7 @@ char **argv;
 		count*=2;
 		Time_F(START);
 		for (i=count; i; i--)
-			des_ecb_encrypt((C_Block *)buf,(C_Block *)buf,
-				&(sch[0]),DES_ENCRYPT);
+			des_ecb_encrypt(buf,buf, &(sch[0]),DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
 	c[D_MD2][0]=count/10;

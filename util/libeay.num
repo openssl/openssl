@@ -1196,3 +1196,4 @@ s2i_ASN1_OCTET_STRING                   1221
 X509V3_EXT_check_conf                   1222
 hex_to_string                           1223
 string_to_hex                           1224
+des_ede3_cbcm_encrypt                   1225
