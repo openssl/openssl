@@ -141,7 +141,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_PKCS7_LIB			,"PKCS7 lib"},
 {ERR_R_PKCS12_LIB			,"PKCS12 lib"},
 {ERR_R_MALLOC_FAILURE			,"Malloc failure"},
-{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a fuction you should not call"},
+{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a function you should not call"},
 {ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
 {ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
 {ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
