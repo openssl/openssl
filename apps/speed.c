@@ -123,9 +123,11 @@
 #endif
 #ifndef NO_MD5
 #include <openssl/md5.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
 #endif
+#ifndef NO_HMAC
+#include <openssl/hmac.h>
+#endif
+#include <openssl/evp.h>
 #ifndef NO_SHA
 #include <openssl/sha.h>
 #endif
@@ -756,7 +758,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#ifndef NO_MD5
+#if !defined(NO_MD5) && !defined(NO_HMAC)
 	if (doit[D_HMAC])
 		{
 		HMAC_CTX hctx;

@@ -605,12 +605,12 @@ int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 #ifndef NO_DSA
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+#endif
 X509_SIG *d2i_PKCS8_bio(BIO *bp,X509_SIG **p8);
 int i2d_PKCS8_bio(BIO *bp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 						PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,PKCS8_PRIV_KEY_INFO *p8inf);
-#endif
 #endif
 
 X509 *X509_dup(X509 *x509);

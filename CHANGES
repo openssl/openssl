@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix problems with no-hmac etc.
+     [Ulf Möller, pointed out by Brian Wellington <bwelling@tislabs.com>]
+
   *) New functions RSA_get_default_method(), RSA_set_method() and
      RSA_get_method(). These allows replacement of RSA_METHODs without having
      to mess around with the internals of an RSA structure.
