@@ -4,6 +4,13 @@
 
  Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
 
+  *) When creating an OCSP nonce use an OCTET STRING inside the extnValue.
+     A clarification of RFC2560 will require the use of OCTET STRINGs and 
+     some implementations cannot handle the current raw format. Since OpenSSL
+     copies and compares OCSP nonces as opaque blobs without any attempt at
+     parsing them this should not create any compatibility issues.
+     [Steve Henson]
+
   *) New md flag EVP_MD_CTX_FLAG_REUSE this allows md_data to be reused when
      calling EVP_MD_CTX_copy_ex() to avoid calling OPENSSL_malloc(). Without
      this HMAC (and other) operations are several times slower than OpenSSL
