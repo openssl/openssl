@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Bugfix: Return -1 from ssl3_get_server_done (ssl3/s3_clnt.c)
+     if the SSL_R_LENGTH_MISMATCH error is detected.
+     [Geoff Thorpe, Bodo Moeller]
+
   +) New experimental application configuration code.
      [Steve Henson]
 

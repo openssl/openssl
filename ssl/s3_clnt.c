@@ -1338,6 +1338,7 @@ static int ssl3_get_server_done(SSL *s)
 		/* should contain no data */
 		ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
 		SSLerr(SSL_F_SSL3_GET_SERVER_DONE,SSL_R_LENGTH_MISMATCH);
+		return -1;
 		}
 	ret=1;
 	return(ret);
