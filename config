@@ -393,6 +393,9 @@ exit 0
 GCCVER=`(gcc -dumpversion) 2>/dev/null`
 if [ "$GCCVER" != "" ]; then
   CC=gcc
+  # then strip off whatever prefix egcs prepends the number with...
+  # Hopefully, this will work for any future prefixes as well.
+  GCCVER=`echo $GCCVER | sed 's/^[a-zA-Z]*\-//'`
   # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
   # does give us what we want though, so we use that.  We just just the
   # major and minor version numbers.
