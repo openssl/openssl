@@ -132,12 +132,6 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	int i;
 	unsigned int mac_size=0;
 
-	if (peek)
-		{
-		SSLerr(SSL_F_SSL2_READ_INTERNAL, SSL_R_FIXME); /* proper implementation not yet completed */
-		return -1;
-		}
-
  ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
 		{

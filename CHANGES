@@ -146,6 +146,7 @@
 
   *) Fix ssl3_pending: If the record in s->s3->rrec is not of type
      SSL3_RT_APPLICATION_DATA, return 0.
+     Similarly, change ssl2_pending to return 0 if SSL_in_init(s) is true.
      [Bodo Moeller]
 
   *) Fix SSL_peek:
