@@ -113,7 +113,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN32_CYGWIN)
 #include <windows.h>
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
@@ -680,7 +680,7 @@ static void readtimer(void)
 
 static void readscreen(void)
 {
-#ifndef OPENSSL_SYS_WINCE
+#if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_SYS_WIN32_CYGWIN)
   HDC		hScrDC;		/* screen DC */
   HDC		hMemDC;		/* memory DC */
   HBITMAP	hBitmap;	/* handle for our bitmap */

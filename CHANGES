@@ -763,6 +763,9 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Use Windows randomness collection on Cygwin.
+     [Ulf Möller]
+
   *) Fix hang in EGD/PRNGD query when communication socket is closed
      prematurely by EGD/PRNGD.
      [Darren Tucker <dtucker@zip.com.au> via Lutz Jänicke, resolves #1014]
