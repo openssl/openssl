@@ -177,10 +177,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		{
 		if (BIO_printf(bp,"        Issuer:%c",mlch) <= 0) goto err;
 		if (!X509_NAME_print_ex(bp,X509_get_issuer_name(x),nmindent, nmflags)) goto err;
+		if (BIO_write(bp,"\n",1) <= 0) goto err;
 		}
 	if(!(cflag & X509_FLAG_NO_VALIDITY))
 		{
-		if (BIO_write(bp,"\n        Validity\n",18) <= 0) goto err;
+		if (BIO_write(bp,"        Validity\n",17) <= 0) goto err;
 		if (BIO_write(bp,"            Not Before: ",24) <= 0) goto err;
 		if (!ASN1_TIME_print(bp,X509_get_notBefore(x))) goto err;
 		if (BIO_write(bp,"\n            Not After : ",25) <= 0) goto err;
@@ -191,10 +192,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		{
 		if (BIO_printf(bp,"        Subject:%c",mlch) <= 0) goto err;
 		if (!X509_NAME_print_ex(bp,X509_get_subject_name(x),nmindent, nmflags)) goto err;
+		if (BIO_write(bp,"\n",1) <= 0) goto err;
 		}
 	if(!(cflag & X509_FLAG_NO_PUBKEY))
 		{
-		if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)
+		if (BIO_write(bp,"        Subject Public Key Info:\n",33) <= 0)
 			goto err;
 		if (BIO_printf(bp,"%12sPublic Key Algorithm: ","") <= 0)
 			goto err;

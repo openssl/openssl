@@ -113,6 +113,12 @@ prints out the certificate in text form. Full details are output including the
 public key, signature algorithms, issuer and subject names, serial number
 any extensions present and any trust settings.
 
+=item B<-certopt option>
+
+customise the output format used with B<-text>. This option may be used more
+than once to set multiple options. See the B<OUTPUT OPTIONS> section for
+more information.
+
 =item B<-noout>
 
 this option prevents output of the encoded version of the request.
@@ -142,7 +148,7 @@ outputs the issuer name.
 
 =item B<-nameopt option>
 
-option which determine how the subject or issuer names are displayed. This
+option which determines how the subject or issuer names are displayed. This
 option may be used more than once to set multiple options. See the B<NAME
 OPTIONS> section for more information.
 
@@ -483,6 +489,80 @@ diagnostic purpose.
 
 places spaces round the B<=> character which follows the field
 name.
+
+=back
+
+=head1 OUTPUT OPTIONS
+
+As well as customising the name output format, it is also possible to
+customise the actual fields printed using the B<certopt> options when
+the B<text> option is present. The default behaviour is to print all fields.
+
+=item B<compatible>
+
+use the old format. This is equivalent to specifying no output options at all.
+
+=item B<no_header>
+
+don't print header information: that is the lines saying "Certificate" and "Data".
+
+=item B<no_version>
+
+don't print out the version number.
+
+=item B<no_serial>
+
+don't print out the serial number.
+
+=item B<no_signame>
+
+don't print out the signature algorithm used.
+
+=item B<no_validity>
+
+don't print the validity, that is the B<notBefore> and B<notAfter> fields.
+
+=item B<no_subject>
+
+don't print out the subject name.
+
+=item B<no_issuer>
+
+don't print out the issuer name.
+
+=item B<no_pubkey>
+
+don't print out the public key.
+
+=item B<no_sigdump>
+
+don't give a hexadecimal dump of the certificate signature.
+
+=item B<no_aux>
+
+don't print out certificate trust information.
+
+=item B<no_extensions>
+
+don't print out any X509V3 extensions.
+
+=item B<ext_default>
+
+retain default extension behaviour: attempt to print out unsupported certificate extensions.
+
+=item B<ext_error>
+
+print an error message for unsupported certificate extensions.
+
+=item B<ext_parse>
+
+ASN1 parse unsupported extensions.
+
+=item B<ext_dump>
+
+hex dump unsupported extensions.
+
+=over 4
 
 =back
 
