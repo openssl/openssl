@@ -1,6 +1,6 @@
 /* apps/ecparam.c */
 /*
- * Originally written by Nils Larsch for the OpenSSL project.
+ * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
@@ -92,9 +92,6 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
@@ -123,80 +120,11 @@
  *                                            explicit
  * -no_seed               - if 'explicit' parameters are choosen do not
  *                          use the seed
- * -genkey                - generates a ecdsa private key
+ * -genkey                - generates a ec private key
  * -rand file
  * -engine e              - use engine e, possible a hardware device
  */
 
-static const char *curve_list[67] = {
-	"prime192v1   - 192 bit prime curve from the X9.62 draft",
-	"prime192v2   - 192 bit prime curve from the X9.62 draft",
-	"prime192v3   - 192 bit prime curve from the X9.62 draft",
-	"prime239v1   - 239 bit prime curve from the X9.62 draft",
-	"prime239v2   - 239 bit prime curve from the X9.62 draft",
-	"prime239v3   - 239 bit prime curve from the X9.62 draft", 
-	"prime256v1   - 256 bit prime curve from the X9.62 draft", 
-	"secp112r1    - SECG recommended curve over a 112 bit prime field", 
-	"secp112r2    - SECG recommended curve over a 112 bit prime field", 
-	"secp128r1    - SECG recommended curve over a 128 bit prime field",
-	"secp128r2    - SECG recommended curve over a 128 bit prime field", 
-	"secp160k1    - SECG recommended curve over a 160 bit prime field", 
-	"secp160r1    - SECG recommended curve over a 160 bit prime field", 
-	"secp160r2    - SECG recommended curve over a 160 bit prime field", 
-	"secp192k1    - SECG recommended curve over a 192 bit prime field",
-	"prime192v1   - SECG recommended curve over a 192 bit prime field (aka secp192r1)",
-	"secp224k1    - SECG recommended curve over a 224 bit prime field", 
-	"secp224r1    - SECG/NIST recommended curve over a 224 bit prime field", 
-	"secp256k1    - SECG recommended curve over a 256 bit prime field",
-	"prime256v1   - SECG recommended curve over a 256 bit prime field (aka secp256r1)",
-	"secp384r1    - SECG/NIST recommended curve over a 384 bit prime field", 
-	"secp521r1    - SECG/NIST recommended curve over a 521 bit prime field",
-	"wap-wsg-idm-ecid-wtls6  - 112 bit prime curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls8  - 112 bit prime curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls7  - 160 bit prime curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls9  - 160 bit prime curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls12 - 224 bit prime curve from the WTLS standard",
-	"c2pnb163v1   - 163 bit binary curve from the X9.62 draft",
-	"c2pnb163v2   - 163 bit binary curve from the X9.62 draft",
-	"c2pnb163v3   - 163 bit binary curve from the X9.62 draft",
-	"c2pnb176v1   - 176 bit binary curve from the X9.62 draft",
-	"c2tnb191v1   - 191 bit binary curve from the X9.62 draft",
-	"c2tnb191v2   - 191 bit binary curve from the X9.62 draft",
-	"c2tnb191v3   - 191 bit binary curve from the X9.62 draft",
-	"c2pnb208w1   - 208 bit binary curve from the X9.62 draft",
-	"c2tnb239v1   - 239 bit binary curve from the X9.62 draft",
-	"c2tnb239v2   - 239 bit binary curve from the X9.62 draft",
-	"c2tnb239v3   - 239 bit binary curve from the X9.62 draft",
-	"c2pnb272w1   - 272 bit binary curve from the X9.62 draft",
-	"c2pnb304w1   - 304 bit binary curve from the X9.62 draft",
-	"c2tnb359v1   - 359 bit binary curve from the X9.62 draft",
-	"c2pnb368w1   - 368 bit binary curve from the X9.62 draft",
-	"c2tnb431r1   - 431 bit binary curve from the X9.62 draft",
-	"sect113r1    - SECG recommended curve over a 113 bit binary field",
-	"sect113r2    - SECG recommended curve over a 113 bit binary field",
-	"sect131r1    - SECG recommended curve over a 131 bit binary field",
-	"sect131r2    - SECG recommended curve over a 131 bit binary field",
-	"sect163k1    - SECG/NIST recommended curve over a 163 bit binary field",
-	"sect163r1    - SECG recommended curve over a 163 bit binary field",
-	"sect163r2    - SECG/NIST recommended curve over a 163 bit binary field",
-	"sect193r1    - SECG recommended curve over a 193 bit binary field",
-	"sect193r2    - SECG recommended curve over a 193 bit binary field",
-	"sect233k1    - SECG/NIST recommended curve over a 233 bit binary field",
-	"sect233r1    - SECG/NIST recommended curve over a 233 bit binary field",
-	"sect239k1    - SECG recommended curve over a 239 bit binary field",
-	"sect283k1    - SECG/NIST recommended curve over a 283 bit binary field",
-	"sect283r1    - SECG/NIST recommended curve over a 283 bit binary field",
-	"sect409k1    - SECG/NIST recommended curve over a 409 bit binary field",
-	"sect409r1    - SECG/NIST recommended curve over a 409 bit binary field",
-	"sect571k1    - SECG/NIST recommended curve over a 571 bit binary field",
-	"sect571r1    - SECG/NIST recommended curve over a 571 bit binary field",
-	"wap-wsg-idm-ecid-wtls1  - 113 bit binary curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls4  - 113 bit binary curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls3  - 163 bit binary curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls5  - 163 bit binary curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls10 - 233 bit binary curve from the WTLS standard",
-	"wap-wsg-idm-ecid-wtls11 - 233 bit binary curve from the WTLS standard"
-};
 
 static int ecparam_print_var(BIO *,BIGNUM *,const char *,int,unsigned char *);
 
@@ -376,7 +304,7 @@ bad:
 		BIO_printf(bio_err, " -no_seed                if 'explicit'"
 				" parameters are choosen do not\n");
 		BIO_printf(bio_err, "                         use the seed\n");
-		BIO_printf(bio_err, " -genkey                 generate ecdsa"
+		BIO_printf(bio_err, " -genkey                 generate ec"
 				" key\n");
 		BIO_printf(bio_err, " -rand file              files to use for"
 				" random number input\n");
@@ -430,10 +358,27 @@ bad:
 		{
 		int counter=0;
 
-		for (; counter < sizeof(curve_list)/sizeof(char *); counter++)
-			if (BIO_printf(bio_err, " %s\n", curve_list[counter]) 
-				<= 0) 
-				goto end;
+		for (;;)
+			{
+			const char *comment;
+			const char *sname;
+			int len, nid = ec_group_index2nid(counter++);
+			if (!nid)
+				break;
+			comment = EC_GROUP_get0_comment(nid);
+			sname   = OBJ_nid2sn(nid);
+			if (comment == NULL)
+				comment = "";
+			if (sname == NULL)
+				sname == "";
+
+			len = BIO_printf(out, "  %-10s: ", sname);
+			if (len + strlen(comment) > 80)
+				BIO_printf(out, "\n%80s\n", comment);
+			else
+				BIO_printf(out, "%s\n", comment);
+			} 
+
 		ret = 0;
 		goto end;
 		}

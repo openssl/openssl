@@ -156,7 +156,7 @@ int set_p192_param(EC_KEY *ecdsa)
 	if ((ctx = BN_CTX_new()) == NULL) goto err;
 	clear_ecdsa(ecdsa);
 	
-	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_X9_62_PRIME_192V1)) == NULL)
+	if ((ecdsa->group = EC_GROUP_new_by_nid(NID_X9_62_prime192v1)) == NULL)
 	{
 		BIO_printf(bio_err,"ECDSA_SET_GROUP_P_192_V1() failed \n");
 		goto err;
@@ -189,7 +189,7 @@ int set_p239_param(EC_KEY *ecdsa)
 	if ((ctx = BN_CTX_new()) == NULL) goto err;
 	clear_ecdsa(ecdsa);
 	
-	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_X9_62_PRIME_239V1)) == NULL)
+	if ((ecdsa->group = EC_GROUP_new_by_nid(NID_X9_62_prime239v1)) == NULL)
 	{
 		BIO_printf(bio_err,"ECDSA_SET_GROUP_P_239_V1() failed \n");
 		goto err;
@@ -566,7 +566,7 @@ int main(void)
  	BIO_printf(bio_err, "Testing sign & verify with %s : \n", text); \
 	EC_KEY_free(ecdsa); \
 	if ((ecdsa = EC_KEY_new()) == NULL) goto err; \
-	if ((ecdsa->group = EC_GROUP_new_by_name(curve)) == NULL) goto err; \
+	if ((ecdsa->group = EC_GROUP_new_by_nid(curve)) == NULL) goto err; \
 	if (!EC_KEY_generate_key(ecdsa)) goto err; \
         tim = clock(); \
         for (i=0; i<ECDSA_NIST_TESTS; i++) \
@@ -589,22 +589,22 @@ int main(void)
 	}
 	
 	/* NIST PRIME CURVES TESTS */
-	ECDSA_GROUP_TEST("NIST Prime-Curve P-192", EC_GROUP_NIST_PRIME_192);
-	ECDSA_GROUP_TEST("NIST Prime-Curve P-224", EC_GROUP_NIST_PRIME_224);
-	ECDSA_GROUP_TEST("NIST Prime-Curve P-256", EC_GROUP_NIST_PRIME_256);
-	ECDSA_GROUP_TEST("NIST Prime-Curve P-384", EC_GROUP_NIST_PRIME_384);
-	ECDSA_GROUP_TEST("NIST Prime-Curve P-521", EC_GROUP_NIST_PRIME_521);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-192", NID_X9_62_prime192v1);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-224", NID_secp224r1);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-256", NID_X9_62_prime256v1);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-384", NID_secp384r1);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-521", NID_secp521r1);
 	/* NIST BINARY CURVES TESTS */
-	ECDSA_GROUP_TEST("NIST Binary-Curve K-163", EC_GROUP_NIST_CHAR2_K163);
-	ECDSA_GROUP_TEST("NIST Binary-Curve B-163", EC_GROUP_NIST_CHAR2_B163);
-	ECDSA_GROUP_TEST("NIST Binary-Curve K-233", EC_GROUP_NIST_CHAR2_K233);
-	ECDSA_GROUP_TEST("NIST Binary-Curve B-233", EC_GROUP_NIST_CHAR2_B233);
-	ECDSA_GROUP_TEST("NIST Binary-Curve K-283", EC_GROUP_NIST_CHAR2_K283);
-	ECDSA_GROUP_TEST("NIST Binary-Curve B-283", EC_GROUP_NIST_CHAR2_B283);
-	ECDSA_GROUP_TEST("NIST Binary-Curve K-409", EC_GROUP_NIST_CHAR2_K409);
-	ECDSA_GROUP_TEST("NIST Binary-Curve B-409", EC_GROUP_NIST_CHAR2_B409);
-	ECDSA_GROUP_TEST("NIST Binary-Curve K-571", EC_GROUP_NIST_CHAR2_K571);
-	ECDSA_GROUP_TEST("NIST Binary-Curve B-571", EC_GROUP_NIST_CHAR2_B571);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-163", NID_sect163k1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-163", NID_sect163r2);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-233", NID_sect233k1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-233", NID_sect233r1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-283", NID_sect283k1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-283", NID_sect283r1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-409", NID_sect409k1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-409", NID_sect409r1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-571", NID_sect571k1);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-571", NID_sect571r1);
 #undef ECDSA_GROUP_TEST
 
 	EC_KEY_free(ecdsa);

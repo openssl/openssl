@@ -129,7 +129,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	int i,alen,blen,aout,bout,ret=0;
 
 	if ((a=EC_KEY_new()) == NULL) goto err;
-	if ((a->group=EC_GROUP_new_by_name(nid)) == NULL) goto err;
+	if ((a->group=EC_GROUP_new_by_nid(nid)) == NULL) goto err;
 
 	if ((b=EC_KEY_new()) == NULL) goto err;
 	b->group = a->group;
@@ -242,22 +242,22 @@ int main(int argc, char *argv[])
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
 	/* NIST PRIME CURVES TESTS */
-	if (!test_ecdh_curve(EC_GROUP_NIST_PRIME_192, "NIST Prime-Curve P-192", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_PRIME_224, "NIST Prime-Curve P-224", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_PRIME_256, "NIST Prime-Curve P-256", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_PRIME_384, "NIST Prime-Curve P-384", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_PRIME_521, "NIST Prime-Curve P-521", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_X9_62_prime192v1, "NIST Prime-Curve P-192", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_secp224r1, "NIST Prime-Curve P-224", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_X9_62_prime256v1, "NIST Prime-Curve P-256", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_secp384r1, "NIST Prime-Curve P-384", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_secp521r1, "NIST Prime-Curve P-521", ctx, out)) goto err;
 	/* NIST BINARY CURVES TESTS */
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_K163, "NIST Binary-Curve K-163", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_B163, "NIST Binary-Curve B-163", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_K233, "NIST Binary-Curve K-233", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_B233, "NIST Binary-Curve B-233", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_K283, "NIST Binary-Curve K-283", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_B283, "NIST Binary-Curve B-283", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_K409, "NIST Binary-Curve K-409", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_B409, "NIST Binary-Curve B-409", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_K571, "NIST Binary-Curve K-571", ctx, out)) goto err;
-	if (!test_ecdh_curve(EC_GROUP_NIST_CHAR2_B571, "NIST Binary-Curve B-571", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect163k1, "NIST Binary-Curve K-163", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect163r2, "NIST Binary-Curve B-163", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect233k1, "NIST Binary-Curve K-233", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect233r1, "NIST Binary-Curve B-233", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect283k1, "NIST Binary-Curve K-283", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect283r1, "NIST Binary-Curve B-283", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect409k1, "NIST Binary-Curve K-409", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect409r1, "NIST Binary-Curve B-409", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect571k1, "NIST Binary-Curve K-571", ctx, out)) goto err;
+	if (!test_ecdh_curve(NID_sect571r1, "NIST Binary-Curve B-571", ctx, out)) goto err;
 
 	ret = 0;
 

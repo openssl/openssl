@@ -2785,7 +2785,7 @@ NCONF_default                           3227	EXIST::FUNCTION:
 OPENSSL_no_config                       3228	EXIST::FUNCTION:
 NCONF_WIN32                             3229	EXIST::FUNCTION:
 ECDSA_set_conversion_form               3230	NOEXIST::FUNCTION:
-EC_GROUP_new_by_name                    3231	EXIST::FUNCTION:EC
+EC_GROUP_new_by_name                    3231	NOEXIST::FUNCTION:
 d2i_ECDSA_PUBKEY                        3232	NOEXIST::FUNCTION:
 PEM_read_bio_ECDSAPrivateKey            3233	NOEXIST::FUNCTION:
 EC_GROUP_get_asn1_flag                  3234	EXIST::FUNCTION:EC
@@ -2911,7 +2911,8 @@ ECDSA_get_enc_flag                      3347	NOEXIST::FUNCTION:
 ECDSA_set_enc_flag                      3348	NOEXIST::FUNCTION:
 i2d_EC_PRIVATEKEY                       3349	NOEXIST::FUNCTION:
 EC_PRIVATEKEY_free                      3350	NOEXIST::FUNCTION:
-EC_POINT_get_affine_coordinates_GF2m    3351	EXIST::FUNCTION:EC
+EC_POINT_get_affine_coordinates_GF2m    3351	EXIST:!VMS:FUNCTION:EC
+EC_POINT_get_affine_coords_GF2m         3351	EXIST:VMS:FUNCTION:EC
 BN_GF2m_mod_sqr_arr                     3352	EXIST::FUNCTION:
 EC_GROUP_new_curve_GF2m                 3353	EXIST::FUNCTION:EC
 EC_GF2m_simple_method                   3354	EXIST::FUNCTION:EC
@@ -2919,7 +2920,8 @@ EC_GROUP_set_curve_GF2m                 3355	EXIST::FUNCTION:EC
 EC_GROUP_dup                            3356	EXIST::FUNCTION:EC
 BN_GF2m_mod_solve_quad                  3357	EXIST::FUNCTION:
 BN_GF2m_mod_div                         3358	EXIST::FUNCTION:
-EC_POINT_set_compressed_coordinates_GF2m 3359	EXIST::FUNCTION:EC
+EC_POINT_set_compressed_coordinates_GF2m 3359	EXIST:!VMS:FUNCTION:EC
+EC_POINT_set_compr_coords_GF2m          3359	EXIST:VMS:FUNCTION:EC
 BN_GF2m_mod_sqr                         3360	EXIST::FUNCTION:
 BN_GF2m_add                             3361	EXIST::FUNCTION:
 BN_GF2m_mod_solve_quad_arr              3362	EXIST::FUNCTION:
@@ -2939,7 +2941,8 @@ BN_GF2m_mod_inv_arr                     3375	EXIST::FUNCTION:
 BN_GF2m_mod_exp_arr                     3376	EXIST::FUNCTION:
 BN_GF2m_poly2arr                        3377	EXIST::FUNCTION:
 EC_POINT_dup                            3378	EXIST::FUNCTION:EC
-EC_POINT_set_affine_coordinates_GF2m    3379	EXIST::FUNCTION:EC
+EC_POINT_set_affine_coordinates_GF2m    3379	EXIST:!VMS:FUNCTION:EC
+EC_POINT_set_affine_coords_GF2m         3379	EXIST:VMS:FUNCTION:EC
 i2d_EC_PUBKEY                           3380	EXIST::FUNCTION:EC
 i2d_ECPrivateKey                        3381	EXIST::FUNCTION:EC
 EC_KEY_free                             3382	EXIST::FUNCTION:EC
@@ -3000,3 +3003,5 @@ ENGINE_register_all_ECDH                3436	EXIST::FUNCTION:
 ECDH_DATA_new_method                    3437	EXIST::FUNCTION:ECDH
 ENGINE_set_default_ECDH                 3438	EXIST::FUNCTION:
 ENGINE_register_ECDH                    3439	EXIST::FUNCTION:
+EC_GROUP_get0_comment                   3440	EXIST::FUNCTION:EC
+ec_group_index2nid                      3441	EXIST::FUNCTION:EC

@@ -559,22 +559,22 @@ int MAIN(int argc, char **argv)
 	static unsigned int test_curves[EC_NUM] = 
 	{	
 	/* Prime Curves */
-	EC_GROUP_SECG_PRIME_160R1,
-	EC_GROUP_NIST_PRIME_224,
-	EC_GROUP_NIST_PRIME_256,
-	EC_GROUP_NIST_PRIME_384,
-	EC_GROUP_NIST_PRIME_521,
+	NID_secp160r1,
+	NID_secp224r1,
+	NID_X9_62_prime256v1,
+	NID_secp384r1,
+	NID_secp521r1,
 	/* Binary Curves */
-	EC_GROUP_NIST_CHAR2_K163,
-	EC_GROUP_NIST_CHAR2_K233,
-	EC_GROUP_NIST_CHAR2_K283,
-	EC_GROUP_NIST_CHAR2_K409,
-	EC_GROUP_NIST_CHAR2_K571,
-	EC_GROUP_NIST_CHAR2_B163,
-	EC_GROUP_NIST_CHAR2_B233,
-	EC_GROUP_NIST_CHAR2_B283,
-	EC_GROUP_NIST_CHAR2_B409,
-	EC_GROUP_NIST_CHAR2_B571
+	NID_sect163k1,
+	NID_sect233k1,
+	NID_sect283k1,
+	NID_sect409k1,
+	NID_sect571k1,
+	NID_sect163r2,
+	NID_sect233r1,
+	NID_sect283r1,
+	NID_sect409r1,
+	NID_sect571r1
 	}; 
 	static char * test_curves_names[EC_NUM] = 
 	{
