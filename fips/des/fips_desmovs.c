@@ -245,12 +245,12 @@ void shiftin(unsigned char *dst,unsigned char *src,int nbits)
     int n;
 
     /* move the bytes... */
-    memmove(dst,dst+nbits/8,8-nbits/8);
+    memmove(dst,dst+nbits/8,3*8-nbits/8);
     /* append new data */
-    memcpy(dst+8-nbits/8,src,(nbits+7)/8);
+    memcpy(dst+3*8-nbits/8,src,(nbits+7)/8);
     /* left shift the bits */
     if(nbits%8)
-	for(n=0 ; n < 8 ; ++n)
+	for(n=0 ; n < 3*8 ; ++n)
 	    dst[n]=(dst[n] << (nbits%8))|(dst[n+1] >> (8-nbits%8));
     }	
 
@@ -258,16 +258,16 @@ void shiftin(unsigned char *dst,unsigned char *src,int nbits)
 char *t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
 char *t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
 enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB64};
-int Sizes[6]={64,0,64,1,8,64};
-enum XCrypt {XDECRYPT, XENCRYPT};
+int Sizes[6]={64,64,64,1,8,64};
 
 void do_mct(char *amode, 
-	    int akeysz, unsigned char *akey,unsigned char *ivec,
+	    int akeysz, int numkeys, unsigned char *akey,unsigned char *ivec,
 	    int dir, unsigned char *text, int len,
 	    FILE *rfp)
     {
     int i,imode;
-    unsigned char nk[16]; /* double size to make the bitshift easier */
+    unsigned char nk[4*8]; /* longest key+8 */
+    unsigned char text0[8];
 
     for (imode=0 ; imode < 6 ; ++imode)
 	if(!strcmp(amode,t_mode[imode]))
@@ -278,15 +278,26 @@ void do_mct(char *amode,
 	exit(1);
 	}
 
+    memcpy(text0,text,8);
+
     for(i=0 ; i < 400 ; ++i)
 	{
 	int j;
 	int n;
 	EVP_CIPHER_CTX ctx;
+	int kp=akeysz/64;
 	unsigned char old_iv[8];
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
-	OutputValue("KEY",akey,akeysz/8,rfp,0);
+	if(kp == 1)
+	    OutputValue("KEY",akey,8,rfp,0);
+	else
+	    for(n=0 ; n < kp ; ++n)
+		{
+		fprintf(rfp,"KEY%d",n+1);
+		OutputValue("",akey+n*8,8,rfp,0);
+		}
+
 	if(imode != ECB)
 	    OutputValue("IV",ivec,8,rfp,0);
 	OutputValue(t_tag[dir^1],text,len,rfp,imode == CFB1);
@@ -297,6 +308,9 @@ void do_mct(char *amode,
 
 	for(j=0 ; j < 10000 ; ++j)
 	    {
+	    unsigned char old_text[8];
+
+	    memcpy(old_text,text,8);
 	    if(j == 0)
 		{
 		memcpy(old_iv,ivec,8);
@@ -315,13 +329,37 @@ void do_mct(char *amode,
 	    /*	    DebugValue("iv",ctx.iv,8); */
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
-	    /*	    DebugValue("nk",nk,8); */
-	    if(imode == CFB1 || imode == CFB8 || imode == CBC)
+	    /*	    DebugValue("nk",nk,24);*/
+	    if((dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
+			|| imode == CBC)) || imode == OFB)
 		memcpy(text,old_iv,8);
+
+	    if(!dir && (imode == CFB1 || imode == CFB8 || imode == CFB64))
+		{
+		/* the test specifies using the output of the raw DES operation
+		   which we don't have, so reconstruct it... */
+		for(n=0 ; n < 8 ; ++n)
+		    text[n]^=old_text[n];
+		}
 	    }
 	for(n=0 ; n < 8 ; ++n)
-	    akey[n]^=nk[n];
+	    akey[n]^=nk[16+n];
+	for(n=0 ; n < 8 ; ++n)
+	    akey[8+n]^=nk[8+n];
+	for(n=0 ; n < 8 ; ++n)
+	    akey[16+n]^=nk[n];
+	if(numkeys < 3)
+	    memcpy(&akey[2*8],akey,8);
+	if(numkeys < 2)
+	    memcpy(&akey[8],akey,8);
 	memcpy(ivec,ctx.iv,8);
+
+	/* pointless exercise - the final text doesn't depend on the
+	   initial text in OFB mode, so who cares what it is? (Who
+	   designed these tests?) */
+	if(imode == OFB)
+	    for(n=0 ; n < 8 ; ++n)
+		text[n]=text0[n]^old_iv[n];
 	}
     }
     
@@ -340,6 +378,7 @@ int proc_file(char *rqfile)
     unsigned char ciphertext[2048];
     char *rp;
     EVP_CIPHER_CTX ctx;
+    int numkeys=1;
 
     if (!rqfile || !(*rqfile))
 	{
@@ -473,7 +512,10 @@ int proc_file(char *rqfile)
 	    if(!strncasecmp(ibuf,"COUNT=",6))
 		break;
 	    if(!strncasecmp(ibuf,"NumKeys = ",10))
+		{
+		numkeys=atoi(ibuf+10);
 		break;
+		}
 	  
 	    if(!strncasecmp(ibuf,"KEY = ",6))
 		{
@@ -576,7 +618,7 @@ int proc_file(char *rqfile)
 		PrintValue("PLAINTEXT", (unsigned char*)plaintext, len);
 		if (strcmp(atest, "Monte") == 0)  /* Monte Carlo Test */
 		    {
-		    do_mct(amode,akeysz,aKey,iVec,dir,plaintext,len,rfp);
+		    do_mct(amode,akeysz,numkeys,aKey,iVec,dir,plaintext,len,rfp);
 		    }
 		else
 		    {
@@ -614,7 +656,7 @@ int proc_file(char *rqfile)
 		PrintValue("CIPHERTEXT", ciphertext, len);
 		if (strcmp(atest, "Monte") == 0)  /* Monte Carlo Test */
 		    {
-		    do_mct(amode, akeysz, aKey, iVec, 
+		    do_mct(amode, akeysz, numkeys, aKey, iVec, 
 			   dir, ciphertext, len, rfp);
 		    }
 		else
