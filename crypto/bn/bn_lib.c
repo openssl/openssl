@@ -278,9 +278,15 @@ void BN_free(BIGNUM *a)
 	if (a == NULL) return;
 	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
 		OPENSSL_free(a->d);
-	a->flags|=BN_FLG_FREE; /* REMOVE? */
 	if (a->flags & BN_FLG_MALLOCED)
 		OPENSSL_free(a);
+	else
+		{
+#ifndef OPENSSL_NO_DEPRECATED
+		a->flags|=BN_FLG_FREE;
+#endif
+		a->d = NULL;
+		}
 	}
 
 void BN_init(BIGNUM *a)

@@ -254,7 +254,9 @@ extern "C" {
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02
+#ifndef OPENSSL_NO_DEPRECATED
 #define BN_FLG_FREE		0x8000	/* used for debuging */
+#endif
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
 
