@@ -546,6 +546,26 @@ char *parg;
 	{
 	int ret=0;
 
+#if !defined(NO_DSA) || !defined(NO_RSA)
+	if (
+#ifndef NO_RSA
+	    cmd == SSL_CTRL_SET_TMP_RSA ||
+	    cmd == SSL_CTRL_SET_TMP_RSA_CB ||
+#endif
+#ifndef NO_DSA
+	    cmd == SSL_CTRL_SET_TMP_DH ||
+	    cmd == SSL_CTRL_SET_TMP_DH_CB ||
+#endif
+		0)
+		{
+		if (!ssl_cert_instantiate(&s->cert, s->ctx->default_cert)) 
+		    	{
+			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
+		}
+#endif
+
 	switch (cmd)
 		{
 	case SSL_CTRL_GET_SESSION_REUSED:
@@ -566,6 +586,69 @@ char *parg;
 	case SSL_CTRL_GET_FLAGS:
 		ret=(int)(s->s3->flags);
 		break;
+#ifndef NO_RSA
+	case SSL_CTRL_NEED_TMP_RSA:
+		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
+		    ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
+		     (EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) > (512/8))))
+			ret = 1;
+		break;
+	case SSL_CTRL_SET_TMP_RSA:
+		{
+			RSA *rsa = (RSA *)parg;
+			if (rsa == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+				return(ret);
+			}
+			if ((rsa = RSAPrivateKey_dup(rsa)) == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_RSA_LIB);
+				return(ret);
+			}
+			if (s->cert->rsa_tmp != NULL)
+				RSA_free(s->cert->rsa_tmp);
+			s->cert->rsa_tmp = rsa;
+			ret = 1;
+		}
+		break;
+	case SSL_CTRL_SET_TMP_RSA_CB:
+#ifndef NOPROTO
+		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))parg;
+#else
+		s->cert->rsa_tmp_cb = (RSA *(*)())parg;
+#endif
+		break;
+#endif
+#ifndef NO_DH
+	case SSL_CTRL_SET_TMP_DH:
+		{
+			DH *dh = (DH *)parg;
+			if (dh == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+				return(ret);
+			}
+			if ((dh = DHparams_dup(dh)) == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
+				return(ret);
+			}
+			if (!DH_generate_key(dh)) {
+				DH_free(dh);
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
+				return(ret);
+			}
+			if (s->cert->dh_tmp != NULL)
+				DH_free(s->cert->dh_tmp);
+			s->cert->dh_tmp = dh;
+			ret = 1;
+		}
+		break;
+	case SSL_CTRL_SET_TMP_DH_CB:
+#ifndef NOPROTO
+		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))parg;
+#else
+		s->cert->dh_tmp_cb = (DH *(*)())parg;
+#endif
+		break;
+#endif
 	default:
 		break;
 		}

@@ -784,6 +784,13 @@ struct ssl_st
 #define SSL_CTX_set_tmp_dh(ctx,dh) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 
+#define SSL_need_tmp_RSA(ssl) \
+	SSL_ctrl(ssl,SSL_CTRL_NEED_TMP_RSA,0,NULL)
+#define SSL_set_tmp_rsa(ssl,rsa) \
+	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA,0,(char *)rsa)
+#define SSL_set_tmp_dh(ssl,dh) \
+	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
+
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
@@ -1029,6 +1036,12 @@ void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
 				 DH *(*dh)(SSL *ssl,int export,int keylength));
 
+void SSL_set_tmp_rsa_callback(SSL *ssl,
+				  RSA *(*cb)(SSL *ssl,int export,
+					     int keylength));
+void SSL_set_tmp_dh_callback(SSL *ssl,
+				 DH *(*dh)(SSL *ssl,int export,int keylength));
+
 #ifdef HEADER_COMP_H
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
@@ -1258,6 +1271,9 @@ int SSL_COMP_add_compression_method();
 void SSL_CTX_set_tmp_rsa_callback();
 void SSL_CTX_set_tmp_dh_callback();
 
+void SSL_set_tmp_rsa_callback();
+void SSL_set_tmp_dh_callback();
+
 /* #endif */
 
 #endif
@@ -1378,6 +1394,8 @@ void SSL_CTX_set_tmp_dh_callback();
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
+#define SSL_F_SSL3_CTRL					 213
+#define SSL_F_SSL_CERT_INSTANTIATE			 214
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100

@@ -76,27 +76,17 @@ int SSL_use_certificate(ssl, x)
 SSL *ssl;
 X509 *x;
 	{
-	CERT *c;
-
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if ((ssl->cert == NULL) || (ssl->cert == ssl->ctx->default_cert))
+	if (!ssl_cert_instantiate(&ssl->cert, ssl->ctx->default_cert)) 
 		{
-		c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-		if (ssl->cert != NULL) ssl_cert_free(ssl->cert);
-		ssl->cert=c;
+		SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ssl->cert;
-
-	return(ssl_set_cert(c,x));
+	return(ssl_set_cert(ssl->cert,x));
 	}
 
 #ifndef NO_STDIO
@@ -177,7 +167,6 @@ int SSL_use_RSAPrivateKey(ssl, rsa)
 SSL *ssl;
 RSA *rsa;
 	{
-	CERT *c;
 	EVP_PKEY *pkey;
 	int ret;
 
@@ -186,19 +175,11 @@ RSA *rsa;
 		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-
-        if ((ssl->cert == NULL) || (ssl->cert == ssl->ctx->default_cert))
-                {
-                c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-                if (ssl->cert != NULL) ssl_cert_free(ssl->cert);
-		ssl->cert=c;
+	if (!ssl_cert_instantiate(&ssl->cert, ssl->ctx->default_cert)) 
+		{
+		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ssl->cert;
 	if ((pkey=EVP_PKEY_new()) == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY,ERR_R_EVP_LIB);
@@ -208,7 +189,7 @@ RSA *rsa;
 	CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
-	ret=ssl_set_pkey(c,pkey);
+	ret=ssl_set_pkey(ssl->cert,pkey);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
@@ -366,7 +347,6 @@ int SSL_use_PrivateKey(ssl, pkey)
 SSL *ssl;
 EVP_PKEY *pkey;
 	{
-	CERT *c;
 	int ret;
 
 	if (pkey == NULL)
@@ -374,21 +354,12 @@ EVP_PKEY *pkey;
 		SSLerr(SSL_F_SSL_USE_PRIVATEKEY,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-
-        if ((ssl->cert == NULL) || (ssl->cert == ssl->ctx->default_cert))
-                {
-                c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-                if (ssl->cert != NULL) ssl_cert_free(ssl->cert);
-		ssl->cert=c;
+	if (!ssl_cert_instantiate(&ssl->cert, ssl->ctx->default_cert)) 
+		{
+		SSLerr(SSL_F_SSL_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ssl->cert;
-
-	ret=ssl_set_pkey(c,pkey);
+	ret=ssl_set_pkey(ssl->cert,pkey);
 	return(ret);
 	}
 
@@ -464,27 +435,17 @@ int SSL_CTX_use_certificate(ctx, x)
 SSL_CTX *ctx;
 X509 *x;
 	{
-	CERT *c;
-
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-
-	if (ctx->default_cert == NULL)
+	if (!ssl_cert_instantiate(&ctx->default_cert, NULL))
 		{
-		c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-		ctx->default_cert=c;
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ctx->default_cert;
-
-	return(ssl_set_cert(c,x));
+	return(ssl_set_cert(ctx->default_cert,x));
 	}
 
 static int ssl_set_cert(c,x)
@@ -648,7 +609,6 @@ SSL_CTX *ctx;
 RSA *rsa;
 	{
 	int ret;
-	CERT *c;
 	EVP_PKEY *pkey;
 
 	if (rsa == NULL)
@@ -656,18 +616,11 @@ RSA *rsa;
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if (ctx->default_cert == NULL)
+	if (!ssl_cert_instantiate(&ctx->default_cert, NULL))
 		{
-		c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-		ctx->default_cert=c;
+		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ctx->default_cert;
-
 	if ((pkey=EVP_PKEY_new()) == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY,ERR_R_EVP_LIB);
@@ -677,7 +630,7 @@ RSA *rsa;
 	CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
-	ret=ssl_set_pkey(c,pkey);
+	ret=ssl_set_pkey(ctx->default_cert,pkey);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
@@ -759,27 +712,17 @@ int SSL_CTX_use_PrivateKey(ctx, pkey)
 SSL_CTX *ctx;
 EVP_PKEY *pkey;
 	{
-	CERT *c;
-
 	if (pkey == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-		
-	if (ctx->default_cert == NULL)
+	if (!ssl_cert_instantiate(&ctx->default_cert, NULL))
 		{
-		c=ssl_cert_new();
-		if (c == NULL)
-			{
-			SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-		ctx->default_cert=c;
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
+		return(0);
 		}
-	c=ctx->default_cert;
-
-	return(ssl_set_pkey(c,pkey));
+	return(ssl_set_pkey(ctx->default_cert,pkey));
 	}
 
 #ifndef NO_STDIO

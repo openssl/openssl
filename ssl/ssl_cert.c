@@ -144,6 +144,27 @@ CERT *c;
 	Free(c);
 	}
 
+int ssl_cert_instantiate(CERT **o, CERT *d)
+	{
+	CERT *n;
+	if (o == NULL) 
+		{
+		SSLerr(SSL_F_SSL_CERT_INSTANTIATE, ERR_R_PASSED_NULL_PARAMETER);
+		return(0);
+		}
+	if (*o != NULL && d != NULL && *o != d)
+	    return(1);
+	if ((n = ssl_cert_new()) == NULL) 
+		{
+		SSLerr(SSL_F_SSL_CERT_INSTANTIATE, ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
+	if (*o != NULL) 
+		ssl_cert_free(*o);
+	*o = n;
+	return(1);
+	}
+
 int ssl_set_cert_type(c, type)
 CERT *c;
 int type;

@@ -1899,6 +1899,14 @@ void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export,
 							int keylength))
     { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
 
+void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int export,
+							  int keylength))
+    { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
+
+void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int export,
+							int keylength))
+    { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
+
 #if defined(_WINDLL) && defined(WIN16)
 #include "../crypto/bio/bss_file.c"
 #endif

@@ -113,6 +113,8 @@
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
+#define SSL_F_SSL3_CTRL					 213
+#define SSL_F_SSL_CERT_INSTANTIATE			 214
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
