@@ -169,7 +169,7 @@
      [Ben Laurie]
 
   *) Convert various additional casted stacks to type-safe STACK_OF() variants.
-     [Ben Laurie, Ralf S. Engelschall]
+     [Ben Laurie, Ralf S. Engelschall, Steve Henson, Bodo Moeller]
 
   *) Introduce type-safe STACKs. This will almost certainly break lots of code
      that links with OpenSSL (well at least cause lots of warnings), but fear
