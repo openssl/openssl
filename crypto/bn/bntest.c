@@ -261,6 +261,14 @@ int main(int argc, char *argv[])
 	if (!test_exp(out,ctx)) goto err;
 	BIO_flush(out);
 
+	message(out,"BN_kronecker");
+	if (!test_kron(out,ctx)) goto err;
+	BIO_flush(out);
+
+	message(out,"BN_mod_sqrt");
+	if (!test_sqrt(out,ctx)) goto err;
+	BIO_flush(out);
+
 	message(out,"BN_GF2m_add");
 	if (!test_gf2m_add(out)) goto err;
 	BIO_flush(out);
@@ -295,14 +303,6 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_GF2m_mod_solve_quad");
 	if (!test_gf2m_mod_solve_quad(out,ctx)) goto err;
-	BIO_flush(out);
-
-	message(out,"BN_kronecker");
-	if (!test_kron(out,ctx)) goto err;
-	BIO_flush(out);
-
-	message(out,"BN_mod_sqrt");
-	if (!test_sqrt(out,ctx)) goto err;
 	BIO_flush(out);
 
 	BN_CTX_free(ctx);
