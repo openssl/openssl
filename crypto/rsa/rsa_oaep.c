@@ -2,7 +2,22 @@
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
-/* EME_OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
+/* EME-OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
+
+/* See Victor Shoup, "OAEP reconsidered," Nov. 2000,
+ * <URL: http://www.shoup.net/papers/oaep.ps.Z>
+ * for problems with the security proof for the
+ * original OAEP scheme, which EME-OAEP is based on.
+ *
+ * Note that for RSA OAEP a security proof in the
+ * random oracle model *does* exist if 160 < log_2(N/e);
+ * cf. section 7.2 ("But RSA-OAEP with exponent 3 is
+ * provably secure") of Shoup's paper.  (The slight
+ * differences between the OAEP definition used by Shoup
+ * and OAEP as defined in RFC 2437 should not affect
+ * this result.)
+ */
+
 
 #if !defined(NO_SHA) && !defined(NO_SHA1)
 #include <stdio.h>
