@@ -805,13 +805,18 @@ int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
  */
 int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 	{
-	BN_CTX *new_ctx = NULL;
-	BIGNUM *rh, *lh, *tmp1;
 	int ret = -1;
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *lh, *y2;
+	int (*field_mul)(const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
+	int (*field_sqr)(const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
 
 	if (EC_POINT_is_at_infinity(group, point))
 		return 1;
-	
+
+	field_mul = group->meth->field_mul;
+	field_sqr = group->meth->field_sqr;	
+
 	/* only support affine coordinates */
 	if (!point->Z_is_one) goto err;
 
@@ -823,37 +828,23 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_
 		}
 
 	BN_CTX_start(ctx);
-	rh = BN_CTX_get(ctx);
+	y2 = BN_CTX_get(ctx);
 	lh = BN_CTX_get(ctx);
-	tmp1 = BN_CTX_get(ctx);
-	if (tmp1 == NULL) goto err;
+	if (lh == NULL) goto err;
 
 	/* We have a curve defined by a Weierstrass equation
 	 *      y^2 + x*y = x^3 + a*x^2 + b.
-	 * To test this, we add up the right-hand side in 'rh'
-	 * and the left-hand side in 'lh'.
+	 *  <=> x^3 + a*x^2 + x*y + b + y^2 = 0
+	 *  <=> ((x + a) * x + y ) * x + b + y^2 = 0
 	 */
-
-	/* rh := X^3 */
-	if (!group->meth->field_sqr(group, tmp1, &point->X, ctx)) goto err;
-	if (!group->meth->field_mul(group, rh, tmp1, &point->X, ctx)) goto err;
-
-	/* rh := rh + a*X^2 */
-	if (!group->meth->field_mul(group, tmp1, tmp1, &group->a, ctx)) goto err;
-	if (!BN_GF2m_add(rh, rh, tmp1)) goto err;
-
-	/* rh := rh + b */
-	if (!BN_GF2m_add(rh, rh, &group->b)) goto err;
-
-	/* lh := Y^2 */
-	if (!group->meth->field_sqr(group, lh, &point->Y, ctx)) goto err;
-
-	/* lh := lh + x*y */
-	if (!group->meth->field_mul(group, tmp1, &point->X, &point->Y, ctx)) goto err;
-	if (!BN_GF2m_add(lh, lh, tmp1)) goto err;
-
-	ret = (0 == BN_GF2m_cmp(lh, rh));
-
+	if (!BN_GF2m_add(lh, &point->X, &group->a)) goto err;
+	if (!field_mul(group, lh, lh, &point->X, ctx)) goto err;
+	if (!BN_GF2m_add(lh, lh, &point->Y)) goto err;
+	if (!field_mul(group, lh, lh, &point->X, ctx)) goto err;
+	if (!BN_GF2m_add(lh, lh, &group->b)) goto err;
+	if (!field_sqr(group, y2, &point->Y, ctx)) goto err;
+	if (!BN_GF2m_add(lh, lh, y2)) goto err;
+	ret = BN_is_zero(lh);
  err:
 	if (ctx) BN_CTX_end(ctx);
 	if (new_ctx) BN_CTX_free(new_ctx);
