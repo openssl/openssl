@@ -168,8 +168,8 @@ BIGNUM *BN_mod_inverse(BIGNUM *in, BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 		R=in;
 	if (R == NULL) goto err;
 
-	BN_zero(X);
-	BN_one(Y);
+	if (!BN_zero(X)) goto err;
+	if (!BN_one(Y)) goto err;
 	if (BN_copy(A,a) == NULL) goto err;
 	if (BN_copy(B,n) == NULL) goto err;
 	sign=1;
