@@ -5,12 +5,12 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
+  Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
 
       o Various SSL/TLS library bugfixes.
       o Fix DH parameter generation for 'non-standard' generators.
 
-  Changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
+  Major changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
 
       o Various SSL/TLS library bugfixes.
       o BIGNUM library fixes.
@@ -23,7 +23,7 @@
         Broadcom and Cryptographic Appliance's keyserver
         [in 0.9.6c-engine release].
 
-  Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
+  Major changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
       o Security fix: PRNG improvements.
       o Security fix: RSA OAEP check.
