@@ -688,9 +688,13 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
 	if (full)
 		{
+		int got_a_chain = 0;
+
 		sk=SSL_get_peer_cert_chain(s);
 		if (sk != NULL)
 			{
+			got_a_chain = 1; /* we don't have it for SSL2 (yet) */
+
 			BIO_printf(bio,"---\nCertificate chain\n");
 			for (i=0; i<sk_X509_num(sk); i++)
 				{
@@ -710,7 +714,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		if (peer != NULL)
 			{
 			BIO_printf(bio,"Server certificate\n");
-			if (!c_showcerts) /* Redundant if we showed the whole chain */
+			if (!(c_showcerts && got_a_chain)) /* Redundant if we showed the whole chain */
 				PEM_write_bio_X509(bio,peer);
 			X509_NAME_oneline(X509_get_subject_name(peer),
 				buf,BUFSIZ);
