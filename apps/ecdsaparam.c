@@ -170,6 +170,7 @@ int MAIN(int argc, char **argv)
 		*tmp_6 = NULL, *tmp_7 = NULL;
 	BN_CTX	*ctx = NULL;
 	EC_POINT *point = NULL;
+	unsigned char *data = NULL;
 
 	apps_startup();
 
@@ -376,7 +377,6 @@ bad:
 	if (C)
 	{	// TODO : characteristic two
 		int 	l, len, bits_p, bits_a, bits_b, bits_x, bits_y, bits_o, bits_c;
-		unsigned char *data;
 		if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
 		    (tmp_3 = BN_new()) == NULL || (tmp_4 = BN_new()) == NULL ||
 		    (tmp_5 = BN_new()) == NULL || (tmp_6 = BN_new()) == NULL ||
@@ -554,6 +554,7 @@ end:
 	if (tmp_3)		BN_free(tmp_6);
 	if (tmp_3)		BN_free(tmp_7);
 	if (ctx)		BN_CTX_free(ctx);
+	if (data)		OPENSSL_free(data);
 	apps_shutdown();
 	EXIT(ret);
 }
