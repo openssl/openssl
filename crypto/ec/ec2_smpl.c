@@ -234,16 +234,14 @@ int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, 
 		if (!BN_copy(p, &group->field)) return 0;
 		}
 
-	if (a != NULL || b != NULL)
+	if (a != NULL)
 		{
-		if (a != NULL)
-			{
-			if (!BN_copy(a, &group->a)) goto err;
-			}
-		if (b != NULL)
-			{
-			if (!BN_copy(b, &group->b)) goto err;
-			}
+		if (!BN_copy(a, &group->a)) goto err;
+		}
+
+	if (b != NULL)
+		{
+		if (!BN_copy(b, &group->b)) goto err;
 		}
 	
 	ret = 1;
