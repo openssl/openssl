@@ -67,6 +67,10 @@ echo dsatest
 dsatest
 if errorlevel 1 goto done
 
+echo ectest
+ectest
+if errorlevel 1 goto done
+
 echo testenc
 call %test%\testenc openssl
 if errorlevel 1 goto done

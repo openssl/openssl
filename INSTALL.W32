@@ -16,7 +16,7 @@
 
   * Visual C++
   * Borland C
-  * GNU C (Mingw32 or Cygwin)
+  * GNU C (MinGW or Cygwin)
 
  If you want to compile in the assembly language routines with Visual C++ then
  you will need an assembler. This is worth doing because it will result in
@@ -120,18 +120,14 @@
  * Run make:
    > make -f bcb.mak
 
- GNU C (Mingw32)
- ---------------
-
- To build OpenSSL, you need the Mingw32 package and GNU make.
+ GNU C (MinGW)
+ -------------
 
  * Compiler installation:
 
-   Mingw32 is available from <ftp://ftp.xraylith.wisc.edu/pub/khan/
-   gnu-win32/mingw32/gcc-2.95.2/gcc-2.95.2-msvcrt.exe>. Extract it
-   to a directory such as C:\gcc-2.95.2 and add c:\gcc-2.95.2\bin to
-   the PATH environment variable in "System Properties"; or edit and
-   run C:\gcc-2.95.2\mingw32.bat to set the PATH.
+   MinGW is available from http://www.mingw.org. Run the installer and
+   set the MinGW \bin directory to the PATH in "System Properties" or
+   autoexec.bat.
 
  * Compile OpenSSL:
 
@@ -161,7 +157,7 @@
  Consequently, a make of OpenSSL with Cygwin is closer to a GNU
  bash environment such as Linux than to other W32 makes which are
  based on a single makefile approach. Cygwin implements Posix/Unix
- calls through cygwin1.dll, and is contrasted to Mingw32 which links
+ calls through cygwin1.dll, and is contrasted to MingW which links
  dynamically to msvcrt.dll or crtdll.dll.
 
  To build OpenSSL using Cygwin:
