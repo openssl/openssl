@@ -71,7 +71,7 @@ asm/mx86unix.cpp: asm/md5-586.pl
 # that GNU as has never heard of)
 asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
 	$(CPP) -DULTRASPARC -DMD5_BLOCK_DATA_ORDER asm/md5-sparcv9.S | \
-	PATH=/usr/ccs/bin:$(PATH) as -xarch=v8plus /dev/fd/0 -o asm/md5-sparcv8plus.o
+	PATH=/usr/ccs/bin:$(PATH) as -xarch=v8plus - -o asm/md5-sparcv8plus.o
 
 asm/md5-sparcv9.o: asm/md5-sparcv9.S
 	PATH=/usr/ccs/bin:$(PATH) $(CC) -xarch=v9 -DULTRASPARC -DMD5_BLOCK_DATA_ORDER -c asm/md5-sparcv9.S -o asm/md5-sparcv9.o
