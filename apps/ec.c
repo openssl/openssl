@@ -230,9 +230,9 @@ bad:
 				"curve parameters\n");
 		BIO_printf(bio_err, " -conv_form arg  specifies the "
 				"point conversion form \n");
-		BIO_printf(bio_err, "                 possible values :"
+		BIO_printf(bio_err, "                 possible values:"
 				" compressed\n");
-		BIO_printf(bio_err, "                                  "
+		BIO_printf(bio_err, "                                 "
 				" uncompressed (default)\n");
 		BIO_printf(bio_err, "                                  "
 				" hybrid\n");
@@ -240,9 +240,9 @@ bad:
 				" the ec parameters are encoded\n");
 		BIO_printf(bio_err, "                 in the asn1 der "
 				"encoding\n");
-		BIO_printf(bio_err, "                 possilbe values :"
+		BIO_printf(bio_err, "                 possilbe values:"
 				" named_curve (default)\n");
-		BIO_printf(bio_err,"                                   "
+		BIO_printf(bio_err,"                                  "
 				"explicit\n");
 		goto end;
 		}

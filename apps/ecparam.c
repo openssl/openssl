@@ -111,13 +111,13 @@
  * -list_curves           - prints a list of all currently available curve
  *                          'short names' and exits
  * -conv_form                  - specifies the point conversion form 
- *                          possible values : compressed
- *                                            uncompressed (default)
- *                                            hybrid
+ *                          possible values: compressed
+ *                                           uncompressed (default)
+ *                                           hybrid
  * -param_enc             - specifies the way the ec parameters are encoded
  *                          in the asn1 der encoding
- *                          possilbe values : named_curve (default)
- *                                            explicit
+ *                          possilbe values: named_curve (default)
+ *                                           explicit
  * -no_seed               - if 'explicit' parameters are choosen do not
  *                          use the seed
  * -genkey                - generates a ec private key
@@ -287,20 +287,20 @@ bad:
 		BIO_printf(bio_err, "                         'short names'\n");
 		BIO_printf(bio_err, " -conv_form arg          specifies the "
 				"point conversion form \n");
-		BIO_printf(bio_err, "                         possible values :"
+		BIO_printf(bio_err, "                         possible values:"
 				" compressed\n");
-		BIO_printf(bio_err, "                                          "
+		BIO_printf(bio_err, "                                         "
 				" uncompressed (default)\n");
-		BIO_printf(bio_err, "                                          "
+		BIO_printf(bio_err, "                                         "
 				" hybrid\n");
 		BIO_printf(bio_err, " -param_enc arg          specifies the way"
 				" the ec parameters are encoded\n");
 		BIO_printf(bio_err, "                         in the asn1 der "
 				"encoding\n");
-		BIO_printf(bio_err, "                         possilbe values :"
+		BIO_printf(bio_err, "                         possilbe values:"
 				" named_curve (default)\n");
 		BIO_printf(bio_err,"                                      "
-				"     explicit\n");
+				"    explicit\n");
 		BIO_printf(bio_err, " -no_seed                if 'explicit'"
 				" parameters are choosen do not\n");
 		BIO_printf(bio_err, "                         use the seed\n");
