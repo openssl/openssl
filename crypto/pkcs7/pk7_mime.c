@@ -403,6 +403,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 				first = 0;
 				if(bpart) sk_BIO_push(parts, bpart);
 				bpart = BIO_new(BIO_s_mem());
+				BIO_set_mem_eof_return(bpart, 0);
 			} else if (eol)
 				BIO_write(bpart, "\r\n", 2);
 			eol = next_eol;
