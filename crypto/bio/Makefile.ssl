@@ -35,7 +35,7 @@ LIBOBJ= bio_lib.o bio_cb.o $(ERRC).o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= bio.h bss_file.c
+EXHEADER= bio.h
 HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -61,7 +61,7 @@ links:
 	$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
-	@for i in $(EXHEADER) bss_file.c ; \
+	@for i in $(EXHEADER); \
 	do  \
 	(cp $$i $(INSTALLTOP)/include/$$i; \
 	chmod 644 $(INSTALLTOP)/include/$$i ); \
