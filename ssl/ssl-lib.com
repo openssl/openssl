@@ -1197,6 +1197,7 @@ $!
 $! Save directory information
 $!
 $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A.;"
+$ __HERE = F$EDIT(__HERE,"UPCASE")
 $ __TOP = __HERE - "SSL]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
