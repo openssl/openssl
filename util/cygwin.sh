@@ -96,6 +96,8 @@ fi
 
 get_openssl_version
 
+make depend || exit 1
+
 make || exit 1
 
 base_install
