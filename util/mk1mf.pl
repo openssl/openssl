@@ -8,6 +8,7 @@
 $INSTALLTOP="/usr/local/ssl";
 $OPTIONS="";
 $ssl_version="";
+$banner="\t\@echo Building OpenSSL";
 
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
 while(<IN>) {
