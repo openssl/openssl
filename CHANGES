@@ -15,7 +15,7 @@
           x509 (when signing).
      Except on systems with /dev/urandom, it is crucial to have a random
      seed file at least for key creation, DSA signing, and for DH exchanges;
-     for RSA signatures it might not hurt _that_ much not to have one.
+     for RSA signatures we could do without one.
 
      gendh and gendsa (unlike genrsa) used to read only the first byte
      of each file listed in the `-rand' option.  The function as previously
