@@ -210,16 +210,20 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 	switch (cmd)
 		{
 	case BIO_CTRL_RESET:
-		if (bm->data != NULL) {
+		if (bm->data != NULL)
+			{
 			/* For read only case reset to the start again */
 			if(b->flags & BIO_FLAGS_MEM_RDONLY) 
-					bm->data -= bm->max - bm->length;
-					bm->length = bm->max;
-			else {
+				{
+				bm->data -= bm->max - bm->length;
+				bm->length = bm->max;
+				}
+			else
+				{
 				memset(bm->data,0,bm->max);
 				bm->length=0;
+				}
 			}
-		}
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)(bm->length == 0);
