@@ -4,6 +4,9 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Support for policyMappings certificate extension.
+     [Steve Henson]
+
   *) Fixed a typo bug that would cause ENGINE_set_default() to set an
      ENGINE as defaults for all supported algorithms irrespective of
      the 'flags' parameter. 'flags' is now honoured, so applications
