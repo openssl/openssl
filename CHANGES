@@ -30,11 +30,13 @@
 
   *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
      should end in 'break', not 'goto end' which circuments various
-     cleanups.
+     cleanups done in state SSL_ST_OK.   But session related stuff
+     must be disabled for SSL_ST_OK in the case that we just sent a
+     HelloRequest.
 
      Also avoid some overhead by not calling ssl_init_wbio_buffer()
      before just sending a HelloRequest.
-     [Bodo Moeller]
+     [Bodo Moeller, Eric Rescorla <ekr@rtfm.com>]
 
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC

@@ -170,6 +170,7 @@ int ssl3_accept(SSL *s)
 	long num1;
 	int ret= -1;
 	int new_state,state,skip=0;
+	int got_new_session=0;
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -282,6 +283,7 @@ int ssl3_accept(SSL *s)
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
+			got_new_session=1;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
 			break;
@@ -522,20 +524,24 @@ int ssl3_accept(SSL *s)
 			/* remove buffering on output */
 			ssl_free_wbio_buffer(s);
 
-			if (s->new_session == 2)
-				s->new_session=0;
-			/* if s->new_session is still 1, we have only sent a HelloRequest */
 			s->init_num=0;
 
-			ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
+			if (got_new_session) /* skipped if we just sent a HelloRequest */
+				{
+				/* actually not necessarily a 'new' session unless
+				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
+				
+				s->new_session=0;
+				
+				ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
+				
+				s->ctx->stats.sess_accept_good++;
+				/* s->server=1; */
+				s->handshake_func=ssl3_accept;
 
-			s->ctx->stats.sess_accept_good++;
-			/* s->server=1; */
-			s->handshake_func=ssl3_accept;
-			ret=1;
-
-			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
-
+				if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
+				}
+			
 			goto end;
 			/* break; */
 
@@ -701,11 +707,6 @@ static int ssl3_get_client_hello(SSL *s)
 				goto err;
 			}
 		}
-
-	if (s->new_session)
-		/* actually not necessarily a 'new' section unless
-		 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
-		s->new_session = 2;
 
 	p+=j;
 	n2s(p,i);

@@ -643,8 +643,7 @@ struct ssl_st
 
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
-	int new_session;/* 1 if we are to use a new session,
-	                 * (sometimes 2 after a new session has in fact been assigned).
+	int new_session;/* 1 if we are to use a new session.
 	                 * NB: For servers, the 'new' session may actually be a previously
 	                 * cached session or even the previous session unless
 	                 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
