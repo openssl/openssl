@@ -246,6 +246,17 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BN_init(&u2);
 	BN_init(&t1);
 
+	if (BN_is_zero(sig->r) || sig->r->neg || BN_ucmp(sig->r, dsa->q) >= 0)
+		{
+		ret = 0;
+		goto err;
+		}
+	if (BN_is_zero(sig->s) || sig->s->neg || BN_ucmp(sig->s, dsa->q) >= 0)
+		{
+		ret = 0;
+		goto err;
+		}
+
 	/* Calculate W = inv(S) mod Q
 	 * save W in u2 */
 	if ((BN_mod_inverse(&u2,sig->s,dsa->q,ctx)) == NULL) goto err;
