@@ -789,7 +789,8 @@ smime.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 smime.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 smime.o: ../include/openssl/sha.h ../include/openssl/stack.h
 smime.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
-smime.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h smime.c
+smime.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+smime.o: ../include/openssl/x509v3.h apps.h smime.c
 speed.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 speed.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 speed.o: ../include/openssl/bn.h ../include/openssl/buffer.h
