@@ -178,6 +178,8 @@ int str2fmt(char *s)
 		|| (strcmp(s,"PKCS12") == 0) || (strcmp(s,"pkcs12") == 0)
 		|| (strcmp(s,"P12") == 0) || (strcmp(s,"p12") == 0))
 		return(FORMAT_PKCS12);
+	else if ((*s == 'E') || (*s == 'e'))
+		return(FORMAT_ENGINE);
 	else
 		return(FORMAT_UNDEF);
 	}

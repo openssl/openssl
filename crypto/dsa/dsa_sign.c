@@ -64,10 +64,11 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
+#include <openssl/engine.h>
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
-	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
+	return ENGINE_get_DSA(dsa->engine)->dsa_do_sign(dgst, dlen, dsa);
 	}
 
 int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
@@ -87,6 +88,6 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
-	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
+	return ENGINE_get_DSA(dsa->engine)->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 	}
 

@@ -69,6 +69,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define DEFBITS	512
 #undef PROG
@@ -80,6 +81,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,num=DEFBITS;
@@ -88,6 +90,7 @@ int MAIN(int argc, char **argv)
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
 	char *passargout = NULL, *passout = NULL;
+	char *engine=NULL;
 	char *inrand=NULL;
 	BIO *out=NULL;
 
@@ -116,6 +119,11 @@ int MAIN(int argc, char **argv)
 			f4=3;
 		else if (strcmp(*argv,"-F4") == 0 || strcmp(*argv,"-f4") == 0)
 			f4=RSA_F4;
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -154,6 +162,7 @@ bad:
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -f4             use F4 (0x10001) for the E value\n");
 		BIO_printf(bio_err," -3              use 3 for the E value\n");
+		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"                 load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                 the random number generator\n");
@@ -166,6 +175,24 @@ bad:
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto err;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto err;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if (outfile == NULL)
 		{
@@ -186,7 +213,8 @@ bad:
 			}
 		}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+		&& !RAND_status())
 		{
 		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 		}

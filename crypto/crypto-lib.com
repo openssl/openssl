@@ -88,7 +88,7 @@ $! Define The Different Encryption Types.
 $!
 $ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
-		  "BN,RSA,DSA,DH,DSO,"+ -
+		  "BN,RSA,DSA,DH,DSO,ENGINE,RIJNDAEL,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP"
@@ -206,6 +206,9 @@ $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
 $ LIB_DH = "dh_gen,dh_key,dh_lib,dh_check,dh_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
+$ LIB_ENGINE = "engine_err,engine_lib,engine_list,engine_openssl,"+ -
+	"hw_atalla,hw_cswift,hw_ncipher"
+$ LIB_RIJNDAEL = "rijndael-alg-fst"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -1194,7 +1197,9 @@ $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL/INCLUDE=SYS$DISK:[]" + CCEXTRAFLAGS
+           "/NOLIST/PREFIX=ALL" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -1226,7 +1231,8 @@ $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST/INCLUDE=SYS$DISK:[]" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1258,7 +1264,8 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=SYS$DISK:[]" + CCEXTRAFLAGS
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!

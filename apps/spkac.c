@@ -69,6 +69,7 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	spkac_main
@@ -81,6 +82,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int i,badops=0, ret = 1;
 	BIO *in = NULL,*out = NULL, *key = NULL;
 	int verify=0,noout=0,pubkey=0;
@@ -91,6 +93,7 @@ int MAIN(int argc, char **argv)
 	LHASH *conf = NULL;
 	NETSCAPE_SPKI *spki = NULL;
 	EVP_PKEY *pkey = NULL;
+	char *engine=NULL;
 
 	apps_startup();
 
@@ -136,6 +139,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			spksect= *(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-pubkey") == 0)
@@ -161,6 +169,7 @@ bad:
 		BIO_printf(bio_err," -noout         don't print SPKAC\n");
 		BIO_printf(bio_err," -pubkey        output public key\n");
 		BIO_printf(bio_err," -verify        verify SPKAC signature\n");
+		BIO_printf(bio_err," -engine e      use engine e, possibly a hardware device.\n");
 		goto end;
 		}
 
@@ -169,6 +178,24 @@ bad:
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(keyfile) {
 		if(strcmp(keyfile, "-")) key = BIO_new_file(keyfile, "r");

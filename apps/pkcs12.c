@@ -66,6 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/engine.h>
 
 #define PROG pkcs12_main
 
@@ -92,6 +93,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	
     char *certfile=NULL;
     BIO *in=NULL, *out = NULL, *inkey = NULL, *certsin = NULL;
@@ -118,6 +120,7 @@ int MAIN(int argc, char **argv)
     char *passin = NULL, *passout = NULL;
     char *inrand = NULL;
     char *CApath = NULL, *CAfile = NULL;
+    char *engine=NULL;
 
     apps_startup();
 
@@ -236,6 +239,11 @@ int MAIN(int argc, char **argv)
 			args++;	
 			CAfile = *args;
 		    } else badarg = 1;
+		} else if (!strcmp(*args,"-engine")) {
+		    if (args[1]) {
+			args++;	
+			engine = *args;
+		    } else badarg = 1;
 		} else badarg = 1;
 
 	} else badarg = 1;
@@ -279,10 +287,25 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-password p   set import/export password source\n");
 	BIO_printf (bio_err, "-passin p     input file pass phrase source\n");
 	BIO_printf (bio_err, "-passout p    output file pass phrase source\n");
+	BIO_printf (bio_err, "-engine e     use engine e, possibly a hardware device.\n");
 	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;
+    }
+
+    if (engine != NULL) {
+	if((e = ENGINE_by_id(engine)) == NULL) {
+	    BIO_printf(bio_err,"invalid engine \"%s\"\n", engine);
+	    goto end;
+	}
+	if(!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+	    BIO_printf(bio_err,"can't use that engine\n");
+	    goto end;
+	}
+	BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+	/* Free our "structural" reference. */
+	ENGINE_free(e);
     }
 
     if(passarg) {

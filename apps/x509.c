@@ -73,6 +73,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG x509_main
@@ -129,6 +130,7 @@ static char *x509_usage[]={
 " -extensions     - section from config file with X509V3 extensions to add\n",
 " -clrext         - delete extensions before signing and input certificate\n",
 " -nameopt arg    - various certificate name options\n",
+" -engine e       - use engine e, possibly a hardware device.\n",
 " -certopt arg    - various certificate text options\n",
 NULL
 };
@@ -146,6 +148,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int ret=1;
 	X509_REQ *req=NULL;
 	X509 *x=NULL,*xca=NULL;
@@ -176,6 +179,7 @@ int MAIN(int argc, char **argv)
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
 	unsigned long nmflag = 0, certflag = 0;
+	char *engine=NULL;
 
 	reqfile=0;
 
@@ -343,6 +347,11 @@ int MAIN(int argc, char **argv)
 			alias= *(++argv);
 			trustout = 1;
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-C") == 0)
 			C= ++num;
 		else if (strcmp(*argv,"-email") == 0)
@@ -424,6 +433,24 @@ bad:
 		for (pp=x509_usage; (*pp != NULL); pp++)
 			BIO_printf(bio_err,*pp);
 		goto end;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	if (need_rand)

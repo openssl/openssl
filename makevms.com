@@ -365,7 +365,7 @@ $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,RC2,RC4,RC5,IDEA,BF,CAST,-
-   BN,RSA,DSA,DH,DSO,-
+   BN,RSA,DSA,DH,DSO,ENGINE,RIJNDAEL,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h
@@ -388,6 +388,8 @@ $ EXHEADER_RSA := rsa.h
 $ EXHEADER_DSA := dsa.h
 $ EXHEADER_DH := dh.h
 $ EXHEADER_DSO := dso.h
+$ EXHEADER_ENGINE := engine.h
+$ EXHEADER_RIJNDAEL := rijndael-alg-fst.h,rijndael.h
 $ EXHEADER_BUFFER := buffer.h
 $ EXHEADER_BIO := bio.h
 $ EXHEADER_STACK := stack.h,safestack.h

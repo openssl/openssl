@@ -74,6 +74,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #ifndef W_OK
 #  ifdef VMS
@@ -167,6 +168,7 @@ static char *ca_usage[]={
 " -revoke file    - Revoke a certificate (given in file)\n",
 " -extensions ..  - Extension section (override value in config file)\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
+" -engine e       - use engine e, possibly a hardware device.\n",
 NULL
 };
 
@@ -216,6 +218,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	char *key=NULL,*passargin=NULL;
 	int total=0;
 	int total_done=0;
@@ -268,6 +271,7 @@ int MAIN(int argc, char **argv)
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
 	char *randfile=NULL;
+	char *engine = NULL;
 
 #ifdef EFENCE
 EF_PROTECT_FREE=1;
@@ -419,6 +423,11 @@ EF_ALIGNMENT=0;
 			if (--argc < 1) goto bad;
 			crl_ext= *(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else
 			{
 bad:
@@ -438,6 +447,24 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto err;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto err;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	/*****************************************************************/
 	if (configfile == NULL) configfile = getenv("OPENSSL_CONF");

@@ -61,6 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <openssl/engine.h>
 
 #ifndef RSA_NULL
 
@@ -97,11 +98,13 @@ RSA_METHOD *RSA_PKCS1_SSLeay(void)
 static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
@@ -143,7 +146,7 @@ static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 			    goto err;
 		}
 
-	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
+	if (!meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
 	/* put in leading 0 bytes if the number is less than the
@@ -169,11 +172,13 @@ err:
 static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 
@@ -213,10 +218,10 @@ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
 		(rsa->iqmp != NULL)) )
-		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
+		{ if (!meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL)) goto err;
+		if (!meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL)) goto err;
 		}
 
 	if (rsa->flags & RSA_FLAG_BLINDING)
@@ -245,12 +250,14 @@ err:
 static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM f,ret;
 	int j,num=0,r= -1;
 	unsigned char *p;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	ctx=BN_CTX_new();
@@ -287,10 +294,10 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
 		(rsa->iqmp != NULL)) )
-		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
+		{ if (!meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL))
+		if (!meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL))
 			goto err;
 		}
 
@@ -338,12 +345,14 @@ err:
 static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM f,ret;
 	int i,num=0,r= -1;
 	unsigned char *p;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	ctx=BN_CTX_new();
@@ -374,7 +383,7 @@ static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 			    goto err;
 		}
 
-	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
+	if (!meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
 	p=buf;
@@ -409,10 +418,12 @@ err:
 
 static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM r1,m1;
 	int ret=0;
 	BN_CTX *ctx;
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&m1);
 	BN_init(&r1);
@@ -436,11 +447,11 @@ static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 		}
 
 	if (!BN_mod(&r1,I,rsa->q,ctx)) goto err;
-	if (!rsa->meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
+	if (!meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
 		rsa->_method_mod_q)) goto err;
 
 	if (!BN_mod(&r1,I,rsa->p,ctx)) goto err;
-	if (!rsa->meth->bn_mod_exp(r0,&r1,rsa->dmp1,rsa->p,ctx,
+	if (!meth->bn_mod_exp(r0,&r1,rsa->dmp1,rsa->p,ctx,
 		rsa->_method_mod_p)) goto err;
 
 	if (!BN_sub(r0,r0,&m1)) goto err;

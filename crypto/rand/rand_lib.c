@@ -59,59 +59,78 @@
 #include <stdio.h>
 #include <time.h>
 #include <openssl/rand.h>
+#include <openssl/engine.h>
 
-#ifdef NO_RAND
-static RAND_METHOD *rand_meth=NULL;
-#else
-extern RAND_METHOD rand_ssleay_meth;
-static RAND_METHOD *rand_meth= &rand_ssleay_meth;
-#endif
+static ENGINE *rand_engine=NULL;
 
+#if 0
 void RAND_set_rand_method(RAND_METHOD *meth)
 	{
 	rand_meth=meth;
 	}
+#else
+int RAND_set_rand_method(ENGINE *engine)
+	{
+	ENGINE *mtmp;
+	mtmp = rand_engine;
+	if (!ENGINE_init(engine))
+		return 0;
+	rand_engine = engine;
+	/* SHOULD ERROR CHECK THIS!!! */
+	ENGINE_finish(mtmp);
+	return 1;
+	}
+#endif
 
 RAND_METHOD *RAND_get_rand_method(void)
 	{
-	return(rand_meth);
+	if (rand_engine == NULL
+		&& (rand_engine = ENGINE_get_default_RAND()) == NULL)
+		return NULL;
+	return ENGINE_get_RAND(rand_engine);
 	}
 
 void RAND_cleanup(void)
 	{
-	if (rand_meth != NULL)
-		rand_meth->cleanup();
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->cleanup)
+		meth->cleanup();
 	}
 
 void RAND_seed(const void *buf, int num)
 	{
-	if (rand_meth != NULL)
-		rand_meth->seed(buf,num);
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->seed)
+		meth->seed(buf,num);
 	}
 
 void RAND_add(const void *buf, int num, double entropy)
 	{
-	if (rand_meth != NULL)
-		rand_meth->add(buf,num,entropy);
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->add)
+		meth->add(buf,num,entropy);
 	}
 
 int RAND_bytes(unsigned char *buf, int num)
 	{
-	if (rand_meth != NULL)
-		return rand_meth->bytes(buf,num);
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->bytes)
+		return meth->bytes(buf,num);
 	return(-1);
 	}
 
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 	{
-	if (rand_meth != NULL)
-		return rand_meth->pseudorand(buf,num);
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->pseudorand)
+		return meth->pseudorand(buf,num);
 	return(-1);
 	}
 
 int RAND_status(void)
 	{
-	if (rand_meth != NULL)
-		return rand_meth->status();
+	RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->status)
+		return meth->status();
 	return 0;
 	}

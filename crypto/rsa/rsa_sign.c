@@ -62,6 +62,7 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/engine.h>
 
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH	36
@@ -76,7 +77,8 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
-	      return rsa->meth->rsa_sign(type, m, m_len, sigret, siglen, rsa);
+	      return ENGINE_get_RSA(rsa->engine)->rsa_sign(type,
+			m, m_len, sigret, siglen, rsa);
 	/* Special case: SSL signature, just check the length */
 	if(type == NID_md5_sha1) {
 		if(m_len != SSL_SIG_LENGTH) {
@@ -151,7 +153,8 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 		}
 
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
-	    return rsa->meth->rsa_verify(dtype, m, m_len, sigbuf, siglen, rsa);
+	    return ENGINE_get_RSA(rsa->engine)->rsa_verify(dtype,
+			m, m_len, sigbuf, siglen, rsa);
 
 	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)

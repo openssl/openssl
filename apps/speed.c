@@ -81,6 +81,7 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 #if defined(__FreeBSD__)
 # define USE_TOD
@@ -310,6 +311,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 #define ALGOR_NUM	15
@@ -470,6 +472,37 @@ int MAIN(int argc, char **argv)
 		{
 		if	((argc > 0) && (strcmp(*argv,"-elapsed") == 0))
 			usertime = 0;
+		else
+		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
+			{
+			argc--;
+			argv++;
+			if(argc == 0)
+				{
+				BIO_printf(bio_err,"no engine given\n");
+				goto end;
+				}
+			if((e = ENGINE_by_id(*argv)) == NULL)
+				{
+				BIO_printf(bio_err,"invalid engine \"%s\"\n",
+					*argv);
+				goto end;
+				}
+			if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+				{
+				BIO_printf(bio_err,"can't use that engine\n");
+				goto end;
+				}
+			BIO_printf(bio_err,"engine \"%s\" set.\n", *argv);
+			/* Free our "structural" reference. */
+			ENGINE_free(e);
+			/* It will be increased again further down.  We just
+			   don't want speed to confuse an engine with an
+			   algorithm, especially when none is given (which
+			   means all of them should be run) */
+			j--;
+			}
+		else
 #ifndef NO_MD2
 		if	(strcmp(*argv,"md2") == 0) doit[D_MD2]=1;
 		else
@@ -517,7 +550,7 @@ int MAIN(int argc, char **argv)
 #ifdef RSAref
 			if (strcmp(*argv,"rsaref") == 0) 
 			{
-			RSA_set_default_method(RSA_PKCS1_RSAref());
+			RSA_set_default_openssl_method(RSA_PKCS1_RSAref());
 			j--;
 			}
 		else
@@ -525,7 +558,7 @@ int MAIN(int argc, char **argv)
 #ifndef RSA_NULL
 			if (strcmp(*argv,"openssl") == 0) 
 			{
-			RSA_set_default_method(RSA_PKCS1_SSLeay());
+			RSA_set_default_openssl_method(RSA_PKCS1_SSLeay());
 			j--;
 			}
 		else
@@ -670,11 +703,12 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"\n");
 #endif
 
-#ifdef TIMES
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available options:\n");
+#ifdef TIMES
 			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
 #endif
+			BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
 			goto end;
 			}
 		argc--;
@@ -1379,6 +1413,7 @@ int MAIN(int argc, char **argv)
 #endif
 	mret=0;
 end:
+	ERR_print_errors(bio_err);
 	if (buf != NULL) OPENSSL_free(buf);
 	if (buf2 != NULL) OPENSSL_free(buf2);
 #ifndef NO_RSA

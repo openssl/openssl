@@ -63,6 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
+#include <openssl/engine.h>
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
@@ -70,12 +71,26 @@ static DSA_METHOD *default_DSA_method;
 static int dsa_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dsa_meth = NULL;
 
-void DSA_set_default_method(DSA_METHOD *meth)
+void DSA_set_default_openssl_method(DSA_METHOD *meth)
 {
-	default_DSA_method = meth;
+	ENGINE *e;
+	/* We'll need to notify the "openssl" ENGINE of this
+	 * change too. We won't bother locking things down at
+	 * our end as there was never any locking in these
+	 * functions! */
+	if(default_DSA_method != meth)
+		{
+		default_DSA_method = meth;
+		e = ENGINE_by_id("openssl");
+		if(e)
+			{
+			ENGINE_set_DSA(e, meth);
+			ENGINE_free(e);
+			}
+		}
 }
 
-DSA_METHOD *DSA_get_default_method(void)
+DSA_METHOD *DSA_get_default_openssl_method(void)
 {
 	if(!default_DSA_method) default_DSA_method = DSA_OpenSSL();
 	return default_DSA_method;
@@ -86,6 +101,7 @@ DSA *DSA_new(void)
 	return DSA_new_method(NULL);
 }
 
+#if 0
 DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth)
 {
         DSA_METHOD *mtmp;
@@ -95,10 +111,33 @@ DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth)
         if (meth->init) meth->init(dsa);
         return mtmp;
 }
-
-
-DSA *DSA_new_method(DSA_METHOD *meth)
+#else
+int DSA_set_method(DSA *dsa, ENGINE *engine)
 	{
+	ENGINE *mtmp;
+	DSA_METHOD *meth;
+	mtmp = dsa->engine;
+	meth = ENGINE_get_DSA(mtmp);
+	if (!ENGINE_init(engine))
+		return 0;
+	if (meth->finish) meth->finish(dsa);
+	dsa->engine = engine;
+	meth = ENGINE_get_DSA(engine);
+	if (meth->init) meth->init(dsa);
+	/* SHOULD ERROR CHECK THIS!!! */
+	ENGINE_finish(mtmp);
+	return 1;
+	}
+#endif
+
+
+#if 0
+DSA *DSA_new_method(DSA_METHOD *meth)
+#else
+DSA *DSA_new_method(ENGINE *engine)
+#endif
+	{
+	DSA_METHOD *meth;
 	DSA *ret;
 
 	ret=(DSA *)OPENSSL_malloc(sizeof(DSA));
@@ -107,8 +146,17 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(meth) ret->meth = meth;
-	else ret->meth = DSA_get_default_method();
+	if(engine)
+		ret->engine = engine;
+	else
+		{
+		if((ret->engine=ENGINE_get_default_DSA()) == NULL)
+			{
+			OPENSSL_free(ret);
+			return NULL;
+			}
+		}
+	meth = ENGINE_get_DSA(ret->engine);
 	ret->pad=0;
 	ret->version=0;
 	ret->write_params=1;
@@ -124,8 +172,8 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 	ret->method_mont_p=NULL;
 
 	ret->references=1;
-	ret->flags=ret->meth->flags;
-	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
+	ret->flags=meth->flags;
+	if ((meth->init != NULL) && !meth->init(ret))
 		{
 		OPENSSL_free(ret);
 		ret=NULL;
@@ -138,6 +186,7 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 
 void DSA_free(DSA *r)
 	{
+	DSA_METHOD *meth;
 	int i;
 
 	if (r == NULL) return;
@@ -157,7 +206,9 @@ void DSA_free(DSA *r)
 
 	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
 
-	if(r->meth->finish) r->meth->finish(r);
+	meth = ENGINE_get_DSA(r->engine);
+	if(meth->finish) meth->finish(r);
+	ENGINE_finish(r->engine);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->q != NULL) BN_clear_free(r->q);

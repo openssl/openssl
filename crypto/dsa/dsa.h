@@ -133,7 +133,11 @@ struct dsa_st
 	char *method_mont_p;
 	int references;
 	CRYPTO_EX_DATA ex_data;
+#if 0
 	DSA_METHOD *meth;
+#else
+	struct engine_st *engine;
+#endif
 	};
 
 #define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \
@@ -159,12 +163,20 @@ int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
 
 DSA_METHOD *DSA_OpenSSL(void);
 
-void        DSA_set_default_method(DSA_METHOD *);
-DSA_METHOD *DSA_get_default_method(void);
+void        DSA_set_default_openssl_method(DSA_METHOD *);
+DSA_METHOD *DSA_get_default_openssl_method(void);
+#if 0
 DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
+#else
+int DSA_set_method(DSA *dsa, struct engine_st *engine);
+#endif
 
 DSA *	DSA_new(void);
+#if 0
 DSA *	DSA_new_method(DSA_METHOD *meth);
+#else
+DSA *	DSA_new_method(struct engine_st *engine);
+#endif
 int	DSA_size(DSA *);
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);

@@ -114,7 +114,11 @@ struct rsa_st
 	 * this is passed instead of aEVP_PKEY, it is set to 0 */
 	int pad;
 	int version;
+#if 0
 	RSA_METHOD *meth;
+#else
+	struct engine_st *engine;
+#endif
 	BIGNUM *n;
 	BIGNUM *e;
 	BIGNUM *d;
@@ -168,7 +172,11 @@ struct rsa_st
 #define RSA_get_app_data(s)             RSA_get_ex_data(s,0)
 
 RSA *	RSA_new(void);
+#if 0
 RSA *	RSA_new_method(RSA_METHOD *method);
+#else
+RSA *	RSA_new_method(struct engine_st *engine);
+#endif
 int	RSA_size(RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
@@ -186,10 +194,14 @@ void	RSA_free (RSA *r);
 
 int	RSA_flags(RSA *r);
 
-void RSA_set_default_method(RSA_METHOD *meth);
-RSA_METHOD *RSA_get_default_method(void);
+void RSA_set_default_openssl_method(RSA_METHOD *meth);
+RSA_METHOD *RSA_get_default_openssl_method(void);
 RSA_METHOD *RSA_get_method(RSA *rsa);
+#if 0
 RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
+#else
+int RSA_set_method(RSA *rsa, struct engine_st *engine);
+#endif
 
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);

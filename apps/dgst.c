@@ -66,6 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8
@@ -80,6 +81,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	unsigned char *buf=NULL;
 	int i,err=0;
 	const EVP_MD *md=NULL,*m;
@@ -97,6 +99,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
 	int siglen = 0;
+	char *engine=NULL;
 
 	apps_startup();
 
@@ -154,6 +157,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) break;
 			sigfile=*(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) break;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-hex") == 0)
 			out_bin = 0;
 		else if (strcmp(*argv,"-binary") == 0)
@@ -190,6 +198,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-binary         output in binary form\n");
+		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
 
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm (default)\n",
 			LN_md5,LN_md5);
@@ -207,6 +216,24 @@ int MAIN(int argc, char **argv)
 			LN_ripemd160,LN_ripemd160);
 		err=1;
 		goto end;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	in=BIO_new(BIO_s_file());

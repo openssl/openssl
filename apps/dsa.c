@@ -68,6 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dsa_main
@@ -87,6 +88,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int ret=1;
 	DSA *dsa=NULL;
 	int i,badops=0;
@@ -94,7 +96,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,noout=0;
 	int pubin = 0, pubout = 0;
-	char *infile,*outfile,*prog;
+	char *infile,*outfile,*prog,*engine;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
@@ -105,6 +107,7 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	engine=NULL;
 	infile=NULL;
 	outfile=NULL;
 	informat=FORMAT_PEM;
@@ -145,6 +148,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -176,6 +184,7 @@ bad:
 		BIO_printf(bio_err," -passin arg     input file pass phrase source\n");
 		BIO_printf(bio_err," -out arg        output file\n");
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
+		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef NO_IDEA
@@ -188,6 +197,24 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");

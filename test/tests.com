@@ -24,7 +24,7 @@ $	    tests := -
 	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_ssl
+	test_ss,test_ca,test_engine,test_ssl,test_rd
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -51,6 +51,7 @@ $	DSATEST :=	dsatest
 $	METHTEST :=	methtest
 $	SSLTEST :=	ssltest
 $	RSATEST :=	rsa_test
+$	ENGINETEST :=	enginetest
 $
 $	tests_i = 0
 $ loop_tests:
@@ -200,6 +201,10 @@ $	return
 $ test_ss:
 $	write sys$output "Generate and certify a test certificate"
 $	@testss.com
+$	return
+$ test_engine: 
+$	write sys$output "Manipulate the ENGINE structures"
+$	mcr 'texe_dir''enginetest'
 $	return
 $ test_ssl:
 $	write sys$output "test SSL protocol"

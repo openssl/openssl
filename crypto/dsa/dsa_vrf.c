@@ -65,11 +65,12 @@
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
+#include <openssl/engine.h>
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)
 	{
-	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
+	return ENGINE_get_DSA(dsa->engine)->dsa_do_verify(dgst, dgst_len, sig, dsa);
 	}
 
 /* data has already been hashed (probably with SHA or SHA-1). */

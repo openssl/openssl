@@ -121,6 +121,7 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #ifndef NO_DSA
 #include <openssl/dsa.h>
@@ -148,6 +149,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 #ifndef NO_DSA
@@ -156,7 +158,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
-	char *inrand=NULL;
+	char *inrand=NULL,*engine=NULL;
 	int num = 0, g = 0;
 
 	apps_startup();
@@ -194,6 +196,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if (strcmp(*argv,"-check") == 0)
 			check=1;
@@ -240,6 +247,7 @@ bad:
 		BIO_printf(bio_err," -2            generate parameters using  2 as the generator value\n");
 		BIO_printf(bio_err," -5            generate parameters using  5 as the generator value\n");
 		BIO_printf(bio_err," numbits       number of bits in to generate (default 512)\n");
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"               - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"               the random number generator\n");
@@ -248,6 +256,24 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if (g && !num)
 		num = DEFBITS;

@@ -65,6 +65,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	verify_main
@@ -78,6 +79,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int i,ret=1;
 	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
@@ -85,6 +87,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
+	char *engine=NULL;
 
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
@@ -137,6 +140,11 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				trustfile= *(++argv);
 				}
+			else if (strcmp(*argv,"-engine") == 0)
+				{
+				if (--argc < 1) goto end;
+				engine= *(++argv);
+				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
 			else if (strcmp(*argv,"-issuer_checks") == 0)
@@ -152,6 +160,24 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			break;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
@@ -201,7 +227,7 @@ int MAIN(int argc, char **argv)
 	ret=0;
 end:
 	if (ret == 1) {
-		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] cert1 cert2 ...\n");
+		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-engine e] cert1 cert2 ...\n");
 		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;

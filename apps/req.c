@@ -73,6 +73,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define SECTION		"req"
 
@@ -140,6 +141,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 #ifndef NO_DSA
 	DSA *dsa_params=NULL;
 #endif
@@ -153,6 +155,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0,newhdr=0,subject=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
+	char *engine=NULL;
 	char *extensions = NULL;
 	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
@@ -195,6 +198,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outformat=str2fmt(*(++argv));
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if (strcmp(*argv,"-key") == 0)
 			{
@@ -383,6 +391,7 @@ bad:
 		BIO_printf(bio_err," -verify        verify signature on REQ\n");
 		BIO_printf(bio_err," -modulus       RSA modulus\n");
 		BIO_printf(bio_err," -nodes         don't encrypt the output key\n");
+		BIO_printf(bio_err," -engine e      use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -key file	use the private key contained in file\n");
 		BIO_printf(bio_err," -keyform arg   key file format\n");
 		BIO_printf(bio_err," -keyout arg    file to send the key to\n");
@@ -530,24 +539,55 @@ bad:
 	if ((in == NULL) || (out == NULL))
 		goto end;
 
-	if (keyfile != NULL)
+	if (engine != NULL)
 		{
-		if (BIO_read_filename(in,keyfile) <= 0)
+		if((e = ENGINE_by_id(engine)) == NULL)
 			{
-			perror(keyfile);
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
 			goto end;
 			}
-
-		if (keyform == FORMAT_ASN1)
-			pkey=d2i_PrivateKey_bio(in,NULL);
-		else if (keyform == FORMAT_PEM)
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
 			{
-			pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,passin);
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+
+	if (keyfile != NULL)
+		{
+		if (keyform == FORMAT_ENGINE)
+			{
+			if (!e)
+				{
+				BIO_printf(bio_err,"no engine specified\n");
+				goto end;
+				}
+			pkey = ENGINE_load_private_key(e, keyfile, NULL);
 			}
 		else
 			{
-			BIO_printf(bio_err,"bad input format specified for X509 request\n");
-			goto end;
+			if (BIO_read_filename(in,keyfile) <= 0)
+				{
+				perror(keyfile);
+				goto end;
+				}
+
+			if (keyform == FORMAT_ASN1)
+				pkey=d2i_PrivateKey_bio(in,NULL);
+			else if (keyform == FORMAT_PEM)
+				{
+				pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,
+					passin);
+				}
+			else
+				{
+				BIO_printf(bio_err,"bad input format specified for X509 request\n");
+				goto end;
+				}
 			}
 
 		if (pkey == NULL)

@@ -23,6 +23,7 @@ L RSAREF	rsaref/rsaref.h			rsaref/rsar_err.c
 L SSL		ssl/ssl.h			ssl/ssl_err.c
 L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
 L RAND		crypto/rand/rand.h		crypto/rand/rand_err.c
+L ENGINE	crypto/engine/engine.h		crypto/engine/engine_err.c
 
 
 F RSAREF_F_RSA_BN2BIN

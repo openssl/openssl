@@ -69,6 +69,7 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dsaparam_main
@@ -90,6 +91,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
@@ -97,6 +99,7 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog,*inrand=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
+	char *engine=NULL;
 
 	apps_startup();
 
@@ -133,6 +136,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
+			}
+		else if(strcmp(*argv, "-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine = *(++argv);
 			}
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
@@ -180,6 +188,7 @@ bad:
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
 		BIO_printf(bio_err," -rand         files to use for random number input\n");
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," number        number of bits to use for generating private key\n");
 		goto end;
 		}
@@ -221,6 +230,24 @@ bad:
 			perror(outfile);
 			goto end;
 			}
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	if (need_rand)

@@ -68,6 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	rsa_main
@@ -90,6 +91,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,badops=0, sgckey=0;
@@ -100,6 +102,7 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
+	char *engine=NULL;
 	int modulus=0;
 
 	apps_startup();
@@ -148,6 +151,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-sgckey") == 0)
 			sgckey=1;
 		else if (strcmp(*argv,"-pubin") == 0)
@@ -195,10 +203,29 @@ bad:
 		BIO_printf(bio_err," -check          verify key consistency\n");
 		BIO_printf(bio_err," -pubin          expect a public key in input file\n");
 		BIO_printf(bio_err," -pubout         output a public key\n");
+		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
@@ -319,14 +346,14 @@ bad:
 			BIO_printf(out,"RSA key ok\n");
 		else if (r == 0)
 			{
-			long e;
+			long err;
 
-			while ((e = ERR_peek_error()) != 0 &&
-				ERR_GET_LIB(e) == ERR_LIB_RSA &&
-				ERR_GET_FUNC(e) == RSA_F_RSA_CHECK_KEY &&
-				ERR_GET_REASON(e) != ERR_R_MALLOC_FAILURE)
+			while ((err = ERR_peek_error()) != 0 &&
+				ERR_GET_LIB(err) == ERR_LIB_RSA &&
+				ERR_GET_FUNC(err) == RSA_F_RSA_CHECK_KEY &&
+				ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE)
 				{
-				BIO_printf(out, "RSA key error: %s\n", ERR_reason_error_string(e));
+				BIO_printf(out, "RSA key error: %s\n", ERR_reason_error_string(err));
 				ERR_get_error(); /* remove e from error stack */
 				}
 			}

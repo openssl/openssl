@@ -83,6 +83,7 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
+#include <openssl/engine.h>
 #include "s_apps.h"
 
 #ifdef WINDOWS
@@ -176,6 +177,7 @@ static int s_debug=0;
 static int s_quiet=0;
 
 static int hack=0;
+static char *engine_id=NULL;
 
 #ifdef MONOLITH
 static void s_server_init(void)
@@ -198,6 +200,7 @@ static void s_server_init(void)
 	s_debug=0;
 	s_quiet=0;
 	hack=0;
+	engine_id=NULL;
 	}
 #endif
 
@@ -242,6 +245,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 	}
 
 static int local_argc=0;
@@ -411,6 +415,7 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+	ENGINE *e=NULL;
 #ifndef NO_DH
 	DH *dh=NULL;
 #endif
@@ -565,6 +570,11 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine_id= *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -608,6 +618,29 @@ bad:
 
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
+
+	if (engine_id != NULL)
+		{
+		if((e = ENGINE_by_id(engine_id)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if (s_debug)
+			{
+			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
+				0, bio_err, 0);
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
+		ENGINE_free(e);
+		}
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)

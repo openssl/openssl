@@ -113,13 +113,6 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#ifdef ATALLA
-# include <alloca.h>
-# include <atasi.h>
-# include <assert.h>
-# include <dlfcn.h>
-#endif
-
 
 #define TABLE_SIZE	32
 
@@ -183,174 +176,6 @@ err:
 	}
 
 
-#ifdef ATALLA
-
-/*
- * This routine will dynamically check for the existance of an Atalla AXL-200
- * SSL accelerator module.  If one is found, the variable
- * asi_accelerator_present is set to 1 and the function pointers
- * ptr_ASI_xxxxxx above will be initialized to corresponding ASI API calls.
- */
-typedef int tfnASI_GetPerformanceStatistics(int reset_flag,
-					    unsigned int *ret_buf);
-typedef int tfnASI_GetHardwareConfig(long card_num, unsigned int *ret_buf);
-typedef int tfnASI_RSAPrivateKeyOpFn(RSAPrivateKey * rsaKey,
-				     unsigned char *output,
-				     unsigned char *input,
-				     unsigned int modulus_len);
-
-static tfnASI_GetHardwareConfig *ptr_ASI_GetHardwareConfig;
-static tfnASI_RSAPrivateKeyOpFn *ptr_ASI_RSAPrivateKeyOpFn;
-static tfnASI_GetPerformanceStatistics *ptr_ASI_GetPerformanceStatistics;
-static int asi_accelerator_present;
-static int tried_atalla;
-
-void atalla_initialize_accelerator_handle(void)
-	{
-	void *dl_handle;
-	int status;
-	unsigned int config_buf[1024]; 
-	static int tested;
-
-	if(tested)
-		return;
-
-	tested=1;
-
-	bzero((void *)config_buf, 1024);
-
-	/*
-	 * Check to see if the library is present on the system
-	 */
-	dl_handle = dlopen("atasi.so", RTLD_NOW);
-	if (dl_handle == (void *) NULL)
-		{
-/*		printf("atasi.so library is not present on the system\n");
-		printf("No HW acceleration available\n");*/
-		return;
-	        }
-
-	/*
-	 * The library is present.  Now we'll check to insure that the
-	 * LDM is up and running. First we'll get the address of the
-	 * function in the atasi library that we need to see if the
-	 * LDM is operating.
-	 */
-
-	ptr_ASI_GetHardwareConfig =
-	  (tfnASI_GetHardwareConfig *)dlsym(dl_handle,"ASI_GetHardwareConfig");
-
-	if (ptr_ASI_GetHardwareConfig)
-		{
-		/*
-		 * We found the call, now we'll get our config
-		 * status.  If we get a non 0 result, the LDM is not
-		 * running and we cannot use the Atalla ASI *
-		 * library.
-		 */
-		status = (*ptr_ASI_GetHardwareConfig)(0L, config_buf);
-		if (status != 0)
-			{
-			printf("atasi.so library is present but not initialized\n");
-			printf("No HW acceleration available\n");
-			return;
-			}    
-	        }
-	else
-		{
-/*		printf("We found the library, but not the function. Very Strange!\n");*/
-		return ;
-	      	}
-
-	/* 
-	 * It looks like we have acceleration capabilities.  Load up the
-	 * pointers to our ASI API calls.
-	 */
-	ptr_ASI_RSAPrivateKeyOpFn=
-	  (tfnASI_RSAPrivateKeyOpFn *)dlsym(dl_handle, "ASI_RSAPrivateKeyOpFn");
-	if (ptr_ASI_RSAPrivateKeyOpFn == NULL)
-		{
-/*		printf("We found the library, but no RSA function. Very Strange!\n");*/
-		return;
-	        }
-
-	ptr_ASI_GetPerformanceStatistics =
-	  (tfnASI_GetPerformanceStatistics *)dlsym(dl_handle, "ASI_GetPerformanceStatistics");
-	if (ptr_ASI_GetPerformanceStatistics == NULL)
-		{
-/*		printf("We found the library, but no stat function. Very Strange!\n");*/
-		return;
-	      }
-
-	/*
-	 * Indicate that acceleration is available
-	 */
-	asi_accelerator_present = 1;
-
-/*	printf("This system has acceleration!\n");*/
-
-	return;
-	}
-
-/* make sure this only gets called once when bn_mod_exp calls bn_mod_exp_mont */
-int BN_mod_exp_atalla(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m)
-	{
-	unsigned char *abin;
-	unsigned char *pbin;
-	unsigned char *mbin;
-	unsigned char *rbin;
-	int an,pn,mn,ret;
-	RSAPrivateKey keydata;
-
-	atalla_initialize_accelerator_handle();
-	if(!asi_accelerator_present)
-		return 0;
-
-
-/* We should be able to run without size testing */
-# define ASIZE	128
-	an=BN_num_bytes(a);
-	pn=BN_num_bytes(p);
-	mn=BN_num_bytes(m);
-
-	if(an <= ASIZE && pn <= ASIZE && mn <= ASIZE)
-	    {
-	    int size=mn;
-
-	    assert(an <= mn);
-	    abin=alloca(size);
-	    memset(abin,'\0',mn);
-	    BN_bn2bin(a,abin+size-an);
-
-	    pbin=alloca(pn);
-	    BN_bn2bin(p,pbin);
-
-	    mbin=alloca(size);
-	    memset(mbin,'\0',mn);
-	    BN_bn2bin(m,mbin+size-mn);
-
-	    rbin=alloca(size);
-
-	    memset(&keydata,'\0',sizeof keydata);
-	    keydata.privateExponent.data=pbin;
-	    keydata.privateExponent.len=pn;
-	    keydata.modulus.data=mbin;
-	    keydata.modulus.len=size;
-
-	    ret=(*ptr_ASI_RSAPrivateKeyOpFn)(&keydata,rbin,abin,keydata.modulus.len);
-/*fprintf(stderr,"!%s\n",BN_bn2hex(a));*/
-	    if(!ret)
-	        {
-		BN_bin2bn(rbin,keydata.modulus.len,r);
-/*fprintf(stderr,"?%s\n",BN_bn2hex(r));*/
-		return 1;
-	        }
-	    }
-	return 0;
-        }
-#endif /* def ATALLA */
-
-
 int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	       BN_CTX *ctx)
 	{
@@ -359,13 +184,6 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(a);
 	bn_check_top(p);
 	bn_check_top(m);
-
-#ifdef ATALLA
-	if(BN_mod_exp_atalla(r,a,p,m))
-	    return 1;
-/* If it fails, try the other methods (but don't try atalla again) */
-	tried_atalla=1;
-#endif
 
 #ifdef MONT_MUL_MOD
 	/* I have finally been able to take out this pre-condition of
@@ -390,10 +208,6 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		{ ret=BN_mod_exp_recp(r,a,p,m,ctx); }
 #else
 		{ ret=BN_mod_exp_simple(r,a,p,m,ctx); }
-#endif
-
-#ifdef ATALLA
-	tried_atalla=0;
 #endif
 
 	return(ret);
@@ -524,12 +338,6 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	bn_check_top(a);
 	bn_check_top(p);
 	bn_check_top(m);
-
-#ifdef ATALLA
-	if(!tried_atalla && BN_mod_exp_atalla(rr,a,p,m))
-	    return 1;
-/* If it fails, try the other methods */
-#endif
 
 	if (!(m->d[0] & 1))
 		{
@@ -692,19 +500,6 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	r = BN_CTX_get(ctx);
 	t = BN_CTX_get(ctx);
 	if (d == NULL || r == NULL || t == NULL) goto err;
-
-#ifdef ATALLA
-	if (!tried_atalla)
-		{
-		BN_set_word(t, a);
-		if (BN_mod_exp_atalla(rr, t, p, m))
-			{
-			BN_CTX_end(ctx);
-			return 1;
-			}
-		}
-/* If it fails, try the other methods */
-#endif
 
 	if (in_mont != NULL)
 		mont=in_mont;
