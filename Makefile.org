@@ -1,7 +1,7 @@
 #
 # Makefile for all the SSL related library routines and utilities
 VERSION = 0.9.1c
-PLATFORM=dist
+PLATFORM=FreeBSD
 #
 # make install will install:
 #   libraries into $INSTALLTOP/lib
@@ -62,9 +62,9 @@ PLATFORM=dist
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-CC= cc
+CC= gcc
 #CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
-CFLAG= -O -DNOPROTO
+CFLAG= -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 PEX_LIBS= -L. -L.. -L../.. -L../../..
 EX_LIBS= 
 AR=ar r
@@ -86,7 +86,7 @@ BN_ASM= bn_asm.o
 
 # Set DES_ENC to des_enc.o if you want to use the C version
 #There are 4 x86 assember options.
-DES_ENC= des_enc.o fcrypt_b.o
+DES_ENC= asm/dx86-out.o asm/yx86-out.o
 #DES_ENC= des_enc.o fcrypt_b.o          # C
 #DES_ENC= asm/dx86-elf.o asm/yx86-elf.o # elf
 #DES_ENC= asm/dx86-sol.o asm/yx86-sol.o # solaris
@@ -95,7 +95,7 @@ DES_ENC= des_enc.o fcrypt_b.o
 
 # Set BF_ENC to bf_enc.o if you want to use the C version
 #There are 4 x86 assember options.
-BF_ENC= bf_enc.o
+BF_ENC= asm/bx86-out.o
 #BF_ENC= bf_enc.o
 #BF_ENC= asm/bx86-elf.o # elf
 #BF_ENC= asm/bx86-sol.o # solaris
@@ -104,7 +104,7 @@ BF_ENC= bf_enc.o
 
 # Set CAST_ENC to c_enc.o if you want to use the C version
 #There are 4 x86 assember options.
-CAST_ENC= c_enc.o
+CAST_ENC= asm/cx86-out.o
 #CAST_ENC= c_enc.o
 #CAST_ENC= asm/cx86-elf.o # elf
 #CAST_ENC= asm/cx86-sol.o # solaris
@@ -113,7 +113,7 @@ CAST_ENC= c_enc.o
 
 # Set RC4_ENC to rc4_enc.o if you want to use the C version
 #There are 4 x86 assember options.
-RC4_ENC= rc4_enc.o
+RC4_ENC= asm/rx86-out.o
 #RC4_ENC= rc4_enc.o
 #RC4_ENC= asm/rx86-elf.o # elf
 #RC4_ENC= asm/rx86-sol.o # solaris
@@ -122,7 +122,7 @@ RC4_ENC= rc4_enc.o
 
 # Set RC5_ENC to rc5_enc.o if you want to use the C version
 #There are 4 x86 assember options.
-RC5_ENC= rc5_enc.o
+RC5_ENC= asm/r586-out.o
 #RC5_ENC= rc5_enc.o
 #RC5_ENC= asm/r586-elf.o # elf
 #RC5_ENC= asm/r586-sol.o # solaris
@@ -130,21 +130,21 @@ RC5_ENC= rc5_enc.o
 #RC5_ENC= asm/r586bsdi.o # bsdi
 
 # Also need MD5_ASM defined
-MD5_ASM_OBJ= 
+MD5_ASM_OBJ= asm/mx86-out.o
 #MD5_ASM_OBJ= asm/mx86-elf.o        # elf
 #MD5_ASM_OBJ= asm/mx86-sol.o        # solaris
 #MD5_ASM_OBJ= asm/mx86-out.o        # a.out, FreeBSD
 #MD5_ASM_OBJ= asm/mx86bsdi.o        # bsdi
 
 # Also need SHA1_ASM defined
-SHA1_ASM_OBJ= 
+SHA1_ASM_OBJ= asm/sx86-out.o
 #SHA1_ASM_OBJ= asm/sx86-elf.o       # elf
 #SHA1_ASM_OBJ= asm/sx86-sol.o       # solaris
 #SHA1_ASM_OBJ= asm/sx86-out.o       # a.out, FreeBSD
 #SHA1_ASM_OBJ= asm/sx86bsdi.o       # bsdi
 
 # Also need RMD160_ASM defined
-RMD160_ASM_OBJ= 
+RMD160_ASM_OBJ= asm/rm86-out.o
 #RMD160_ASM_OBJ= asm/rm86-elf.o       # elf
 #RMD160_ASM_OBJ= asm/rm86-sol.o       # solaris
 #RMD160_ASM_OBJ= asm/rm86-out.o       # a.out, FreeBSD

@@ -16,6 +16,13 @@
      sco5-cc.
      [Ben Laurie]
 
+  *) Eliminate generated files from CVS. Reorder tests to regenerate files
+     before they are needed.
+     [Ben Laurie]
+
+  *) Generate Makefile.ssl from Makefile.org (to keep CVS happy).
+     [Ben Laurie]
+
  Changes between 0.9.1b and 0.9.1c
 
   *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and 

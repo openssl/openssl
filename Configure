@@ -327,7 +327,7 @@ if ($rmd160_obj =~ /\.o$/)
 	}
 
 my $n=&file_new($Makefile);
-open(IN,"<".$Makefile) || die "unable to read $Makefile:$!\n";
+open(IN,'<Makefile.org') || die "unable to read $Makefile:$!\n";
 open(OUT,">".$n) || die "unable to read $n:$!\n";
 while (<IN>)
 	{
