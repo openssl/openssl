@@ -376,3 +376,17 @@ id_pkix_OCSP_trustRoot		375
 algorithm		376
 rsaSignature		377
 X500algorithms		378
+org		379
+dod		380
+iana		381
+Directory		382
+Management		383
+Experimental		384
+Private		385
+Security		386
+SNMPv2		387
+Mail		388
+Enterprises		389
+dcObject		390
+domainComponent		391
+Domain		392

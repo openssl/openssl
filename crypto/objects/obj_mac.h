@@ -1714,6 +1714,78 @@
 #define NID_ns_sgc		139
 #define OBJ_ns_sgc		OBJ_netscape,4L,1L
 
+#define SN_org		"ORG"
+#define LN_org		"org"
+#define NID_org		379
+#define OBJ_org		OBJ_iso,3L
+
+#define SN_dod		"DOD"
+#define LN_dod		"dod"
+#define NID_dod		380
+#define OBJ_dod		OBJ_org,6L
+
+#define SN_iana		"IANA"
+#define LN_iana		"iana"
+#define NID_iana		381
+#define OBJ_iana		OBJ_dod,1L
+
+#define OBJ_internet		OBJ_iana
+
+#define SN_Directory		"directory"
+#define LN_Directory		"Directory"
+#define NID_Directory		382
+#define OBJ_Directory		OBJ_internet,1L
+
+#define SN_Management		"mgmt"
+#define LN_Management		"Management"
+#define NID_Management		383
+#define OBJ_Management		OBJ_internet,2L
+
+#define SN_Experimental		"experimental"
+#define LN_Experimental		"Experimental"
+#define NID_Experimental		384
+#define OBJ_Experimental		OBJ_internet,3L
+
+#define SN_Private		"private"
+#define LN_Private		"Private"
+#define NID_Private		385
+#define OBJ_Private		OBJ_internet,4L
+
+#define SN_Security		"security"
+#define LN_Security		"Security"
+#define NID_Security		386
+#define OBJ_Security		OBJ_internet,5L
+
+#define SN_SNMPv2		"snmpv2"
+#define LN_SNMPv2		"SNMPv2"
+#define NID_SNMPv2		387
+#define OBJ_SNMPv2		OBJ_internet,6L
+
+#define SN_Mail		"mail"
+#define LN_Mail		"Mail"
+#define NID_Mail		388
+#define OBJ_Mail		OBJ_internet,7L
+
+#define SN_Enterprises		"enterprises"
+#define LN_Enterprises		"Enterprises"
+#define NID_Enterprises		389
+#define OBJ_Enterprises		OBJ_private,1L
+
+#define SN_dcObject		"dcobject"
+#define LN_dcObject		"dcObject"
+#define NID_dcObject		390
+#define OBJ_dcObject		OBJ_enterprises,1466L,344L
+
+#define SN_domainComponent		"DC"
+#define LN_domainComponent		"domainComponent"
+#define NID_domainComponent		391
+#define OBJ_domainComponent		0L,9L,2342L,19200300L,100L,1L,25L
+
+#define SN_Domain		"domain"
+#define LN_Domain		"Domain"
+#define NID_Domain		392
+#define OBJ_Domain		0L,9L,2342L,19200300L,100L,4L,13L
+
 #define SN_rle_compression		"RLE"
 #define LN_rle_compression		"run length compression"
 #define NID_rle_compression		124
