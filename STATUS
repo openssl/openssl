@@ -1,11 +1,16 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/24 17:17:29 $
+  ______________                           $Date: 2000/02/24 22:24:51 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.5:  Under development...
                        0.9.5-beta1 is available.
+                         Debian GNU/Linux 2.1 - test passed
+                         Mingw32 egcs 1.1.2   - test passed
+                         FreeBSD 3.2-RELEASE  - test passed
+                         solaris-sparcv9-cc   - test passed
+                         solaris-sparcv9-gcc  - test passed
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
