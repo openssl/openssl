@@ -611,6 +611,7 @@ sub maybe_add_info {
 	(my $name, *nums, my @symbols) = @_;
 	my $sym;
 	my $new_info = 0;
+	my %syms=();
 
 	print STDERR "Updating $name info\n";
 	foreach $sym (@symbols) {
@@ -623,6 +624,16 @@ sub maybe_add_info {
 				$new_info++;
 				#print STDERR "DEBUG: maybe_add_info for $s: \"$dummy\" => \"$i\"\n";
 			}
+		}
+		$syms{sym} = 1;
+	}
+
+	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
+	foreach $sym (@s) {
+		(my $n, my $i) = split /\\/, $nums{$sym};
+		if (!defined($syms{sym})) {
+			$new_info++;
+			#print STDERR "DEBUG: maybe_add_info for $sym: -> undefined\n";
 		}
 	}
 	if ($new_info) {
@@ -852,12 +863,19 @@ sub rewrite_numbers
 		$rsyms{$s} = 1;
 	}
 
+	my %syms = ();
+	foreach $_ (@symbols) {
+		(my $n, my $i) = split /\\/;
+		$syms{$n} = 1;
+	}
+
 	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
 	foreach $sym (@s) {
 		(my $n, my $i) = split /\\/, $nums{$sym};
 		next if defined($i) && $i =~ /^.*?:.*?:\w+\(\w+\)/;
 		next if defined($rsyms{$sym});
-		$i="NOEXIST::FUNCTION:" if !defined($i) || $i eq "";
+		$i="NOEXIST::FUNCTION:"
+			if !defined($i) || $i eq "" || !defined($syms{$sym});
 		printf OUT "%s%-40s%d\t%s\n","",$sym,$n,$i;
 		if (exists $r{$sym}) {
 			(my $s, $i) = split /\\/,$r{$sym};
