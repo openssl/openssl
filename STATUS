@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/02/25 14:44:55 $
+  ______________                           $Date: 1999/02/28 20:51:38 $
 
   DEVELOPMENT STATE
 
@@ -48,8 +48,10 @@
            source tree which are not really needed.
 
     o Ben is currently working on:
-      Integration of the "send a correct CA list for SSLCACertificatePath"
-      from Apache-SSL/mod_ssl.
+	1. Function Prototype Thought Police issues.
+	2. Integrated documentation.
+	3. New TLS Ciphersuites.
+	4. Anything else that takes his fancy.
 
   NEEDS PATCH
 
