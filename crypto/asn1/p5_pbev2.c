@@ -175,15 +175,22 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	PBKDF2PARAM *kdf = NULL;
 	PBE2PARAM *pbe2 = NULL;
 	ASN1_OCTET_STRING *osalt = NULL;
+	ASN1_OBJECT *obj;
+
+	alg_nid = EVP_CIPHER_type(cipher);
+	obj = OBJ_nid2obj(alg_nid);
+	if(!obj || !obj->data) {
+		ASN1err(ASN1_F_PKCS5_PBE2_SET,
+				ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+		goto err;
+	}
 
 	if(!(pbe2 = PBE2PARAM_new())) goto merr;
 
 	/* Setup the AlgorithmIdentifier for the encryption scheme */
 	scheme = pbe2->encryption;
 
-	alg_nid = EVP_CIPHER_type(cipher);
-
-	scheme->algorithm = OBJ_nid2obj(alg_nid);
+	scheme->algorithm = obj;
 	if(!(scheme->parameter = ASN1_TYPE_new())) goto merr;
 
 	/* Create random IV */

@@ -232,6 +232,7 @@ extern "C" {
 #define SN_idea_cbc			"IDEA-CBC"
 #define LN_idea_cbc			"idea-cbc"
 #define NID_idea_cbc			34
+#define OBJ_idea_cbc			1L,3L,6L,1L,4L,1L,188L,7L,1L,1L,2L
 
 #define SN_idea_cfb64			"IDEA-CFB"
 #define LN_idea_cfb64			"idea-cfb"
@@ -502,6 +503,7 @@ extern "C" {
 #define SN_bf_cbc			"BF-CBC"
 #define LN_bf_cbc			"bf-cbc"
 #define NID_bf_cbc			91
+#define OBJ_bf_cbc			1L,3L,6L,1L,4L,1L,3029L,1L,2L
 
 #define SN_bf_ecb			"BF-ECB"
 #define LN_bf_ecb			"bf-ecb"

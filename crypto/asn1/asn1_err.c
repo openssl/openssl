@@ -275,6 +275,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_BN_LIB                           ,"bn lib"},
 {ASN1_R_BOOLEAN_IS_WRONG_LENGTH          ,"boolean is wrong length"},
 {ASN1_R_BUFFER_TOO_SMALL                 ,"buffer too small"},
+{ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER  ,"cipher has no object identifier"},
 {ASN1_R_DATA_IS_WRONG                    ,"data is wrong"},
 {ASN1_R_DECODE_ERROR                     ,"decode error"},
 {ASN1_R_DECODING_ERROR                   ,"decoding error"},

@@ -95,6 +95,7 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 static ERR_STRING_DATA PKCS7_str_reasons[]=
 	{
 {PKCS7_R_CERTIFICATE_VERIFY_ERROR        ,"certificate verify error"},
+{PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER ,"cipher has no object identifier"},
 {PKCS7_R_CIPHER_NOT_INITIALIZED          ,"cipher not initialized"},
 {PKCS7_R_CONTENT_AND_DATA_PRESENT        ,"content and data present"},
 {PKCS7_R_DECODE_ERROR                    ,"decode error"},

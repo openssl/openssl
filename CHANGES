@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add OIDs for idea and blowfish in CBC mode. This will allow both
+     to be used in PKCS#5 v2.0 and S/MIME.  Also add checking to
+     some routines that use cipher OIDs: some ciphers do not have OIDs
+     defined and so they cannot be used for S/MIME and PKCS#5 v2.0 for
+     example.
+     [Steve Henson]
+
   *) Simplify the trust setting structure and code. Now we just have
      two sequences of OIDs for trusted and rejected settings. These will
      typically have values the same as the extended key usage extension

@@ -64,9 +64,9 @@
 #define NUM_NID 181
 #define NUM_SN 140
 #define NUM_LN 175
-#define NUM_OBJ 152
+#define NUM_OBJ 154
 
-static unsigned char lvalues[1065]={
+static unsigned char lvalues[1085]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -100,125 +100,127 @@ static unsigned char lvalues[1065]={
 0x2B,0x0E,0x03,0x02,0x09,                    /* [192] OBJ_des_cfb64 */
 0x2B,0x0E,0x03,0x02,0x07,                    /* [197] OBJ_des_cbc */
 0x2B,0x0E,0x03,0x02,0x11,                    /* [202] OBJ_des_ede */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x02,     /* [207] OBJ_rc2_cbc */
-0x2B,0x0E,0x03,0x02,0x12,                    /* [215] OBJ_sha */
-0x2B,0x0E,0x03,0x02,0x0F,                    /* [220] OBJ_shaWithRSAEncryption */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x07,     /* [225] OBJ_des_ede3_cbc */
-0x2B,0x0E,0x03,0x02,0x08,                    /* [233] OBJ_des_ofb64 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,     /* [238] OBJ_pkcs9 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x01,/* [246] OBJ_pkcs9_emailAddress */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x02,/* [255] OBJ_pkcs9_unstructuredName */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x03,/* [264] OBJ_pkcs9_contentType */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x04,/* [273] OBJ_pkcs9_messageDigest */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x05,/* [282] OBJ_pkcs9_signingTime */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x06,/* [291] OBJ_pkcs9_countersignature */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x07,/* [300] OBJ_pkcs9_challengePassword */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x08,/* [309] OBJ_pkcs9_unstructuredAddress */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x09,/* [318] OBJ_pkcs9_extCertAttributes */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,          /* [327] OBJ_netscape */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,     /* [334] OBJ_netscape_cert_extension */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x02,     /* [342] OBJ_netscape_data_type */
-0x2B,0x0E,0x03,0x02,0x1A,                    /* [350] OBJ_sha1 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x05,/* [355] OBJ_sha1WithRSAEncryption */
-0x2B,0x0E,0x03,0x02,0x0D,                    /* [364] OBJ_dsaWithSHA */
-0x2B,0x0E,0x03,0x02,0x0C,                    /* [369] OBJ_dsa_2 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0B,/* [374] OBJ_pbeWithSHA1AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0C,/* [383] OBJ_id_pbkdf2 */
-0x2B,0x0E,0x03,0x02,0x1B,                    /* [392] OBJ_dsaWithSHA1_2 */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x01,/* [397] OBJ_netscape_cert_type */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x02,/* [406] OBJ_netscape_base_url */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x03,/* [415] OBJ_netscape_revocation_url */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x04,/* [424] OBJ_netscape_ca_revocation_url */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x07,/* [433] OBJ_netscape_renewal_url */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x08,/* [442] OBJ_netscape_ca_policy_url */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x0C,/* [451] OBJ_netscape_ssl_server_name */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x0D,/* [460] OBJ_netscape_comment */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x02,0x05,/* [469] OBJ_netscape_cert_sequence */
-0x55,0x1D,                                   /* [478] OBJ_ld_ce */
-0x55,0x1D,0x0E,                              /* [480] OBJ_subject_key_identifier */
-0x55,0x1D,0x0F,                              /* [483] OBJ_key_usage */
-0x55,0x1D,0x10,                              /* [486] OBJ_private_key_usage_period */
-0x55,0x1D,0x11,                              /* [489] OBJ_subject_alt_name */
-0x55,0x1D,0x12,                              /* [492] OBJ_issuer_alt_name */
-0x55,0x1D,0x13,                              /* [495] OBJ_basic_constraints */
-0x55,0x1D,0x14,                              /* [498] OBJ_crl_number */
-0x55,0x1D,0x20,                              /* [501] OBJ_certificate_policies */
-0x55,0x1D,0x23,                              /* [504] OBJ_authority_key_identifier */
-0x55,0x08,0x03,0x65,                         /* [507] OBJ_mdc2 */
-0x55,0x08,0x03,0x64,                         /* [511] OBJ_mdc2WithRSA */
-0x55,0x04,0x2A,                              /* [515] OBJ_givenName */
-0x55,0x04,0x04,                              /* [518] OBJ_surname */
-0x55,0x04,0x2B,                              /* [521] OBJ_initials */
-0x55,0x04,0x2D,                              /* [524] OBJ_uniqueIdentifier */
-0x55,0x1D,0x1F,                              /* [527] OBJ_crl_distribution_points */
-0x2B,0x0E,0x03,0x02,0x03,                    /* [530] OBJ_md5WithRSA */
-0x55,0x04,0x05,                              /* [535] OBJ_serialNumber */
-0x55,0x04,0x0C,                              /* [538] OBJ_title */
-0x55,0x04,0x0D,                              /* [541] OBJ_description */
-0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0A,/* [544] OBJ_cast5_cbc */
-0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0C,/* [553] OBJ_pbeWithMD5AndCast5_CBC */
-0x2A,0x86,0x48,0xCE,0x38,0x04,0x03,          /* [562] OBJ_dsaWithSHA1 */
-0x2B,0x0E,0x03,0x02,0x1D,                    /* [569] OBJ_sha1WithRSA */
-0x2A,0x86,0x48,0xCE,0x38,0x04,0x01,          /* [574] OBJ_dsa */
-0x2B,0x24,0x03,0x02,0x01,                    /* [581] OBJ_ripemd160 */
-0x2B,0x24,0x03,0x03,0x01,0x02,               /* [586] OBJ_ripemd160WithRSA */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x08,     /* [592] OBJ_rc5_cbc */
-0x29,0x01,0x01,0x85,0x1A,0x01,               /* [600] OBJ_rle_compression */
-0x29,0x01,0x01,0x85,0x1A,0x02,               /* [606] OBJ_zlib_compression */
-0x55,0x1D,0x25,                              /* [612] OBJ_ext_key_usage */
-0x2B,0x06,0x01,0x05,0x05,0x07,               /* [615] OBJ_id_pkix */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,          /* [621] OBJ_id_kp */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x01,     /* [628] OBJ_server_auth */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x02,     /* [636] OBJ_client_auth */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x03,     /* [644] OBJ_code_sign */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x04,     /* [652] OBJ_email_protect */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x08,     /* [660] OBJ_time_stamp */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x15,/* [668] OBJ_ms_code_ind */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x16,/* [678] OBJ_ms_code_com */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x01,/* [688] OBJ_ms_ctl_sign */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x03,/* [698] OBJ_ms_sgc */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x04,/* [708] OBJ_ms_efs */
-0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x04,0x01,/* [718] OBJ_ns_sgc */
-0x55,0x1D,0x1B,                              /* [727] OBJ_delta_crl */
-0x55,0x1D,0x15,                              /* [730] OBJ_crl_reason */
-0x55,0x1D,0x18,                              /* [733] OBJ_invalidity_date */
-0x2B,0x65,0x01,0x04,0x01,                    /* [736] OBJ_sxnet */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x01,/* [741] OBJ_pbe_WithSHA1And128BitRC4 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x02,/* [751] OBJ_pbe_WithSHA1And40BitRC4 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x03,/* [761] OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x04,/* [771] OBJ_pbe_WithSHA1And2_Key_TripleDES_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x05,/* [781] OBJ_pbe_WithSHA1And128BitRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x06,/* [791] OBJ_pbe_WithSHA1And40BitRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x01,/* [801] OBJ_keyBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x02,/* [812] OBJ_pkcs8ShroudedKeyBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x03,/* [823] OBJ_certBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x04,/* [834] OBJ_crlBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x05,/* [845] OBJ_secretBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x06,/* [856] OBJ_safeContentsBag */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x14,/* [867] OBJ_friendlyName */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x15,/* [876] OBJ_localKeyID */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x01,/* [885] OBJ_x509Certificate */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x02,/* [895] OBJ_sdsiCertificate */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x17,0x01,/* [905] OBJ_x509Crl */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0D,/* [915] OBJ_pbes2 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0E,/* [924] OBJ_pbmac1 */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [933] OBJ_hmacWithSHA1 */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [941] OBJ_id_qt_cps */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [949] OBJ_id_qt_unotice */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0F,/* [957] OBJ_SMIMECapabilities */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x04,/* [966] OBJ_pbeWithMD2AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x06,/* [975] OBJ_pbeWithMD5AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [984] OBJ_pbeWithSHA1AndDES_CBC */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x0E,/* [993] OBJ_ms_ext_req */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [1003] OBJ_ext_req */
-0x55,0x04,0x29,                              /* [1012] OBJ_name */
-0x55,0x04,0x2E,                              /* [1015] OBJ_dnQualifier */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,          /* [1018] OBJ_id_pe */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,          /* [1025] OBJ_id_ad */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1032] OBJ_info_access */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1040] OBJ_ad_OCSP */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1048] OBJ_ad_ca_issuers */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x09,     /* [1056] OBJ_OCSP_sign */
+0x2B,0x06,0x01,0x04,0x01,0x81,0x3C,0x07,0x01,0x01,0x02,/* [207] OBJ_idea_cbc */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x02,     /* [218] OBJ_rc2_cbc */
+0x2B,0x0E,0x03,0x02,0x12,                    /* [226] OBJ_sha */
+0x2B,0x0E,0x03,0x02,0x0F,                    /* [231] OBJ_shaWithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x07,     /* [236] OBJ_des_ede3_cbc */
+0x2B,0x0E,0x03,0x02,0x08,                    /* [244] OBJ_des_ofb64 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,     /* [249] OBJ_pkcs9 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x01,/* [257] OBJ_pkcs9_emailAddress */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x02,/* [266] OBJ_pkcs9_unstructuredName */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x03,/* [275] OBJ_pkcs9_contentType */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x04,/* [284] OBJ_pkcs9_messageDigest */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x05,/* [293] OBJ_pkcs9_signingTime */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x06,/* [302] OBJ_pkcs9_countersignature */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x07,/* [311] OBJ_pkcs9_challengePassword */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x08,/* [320] OBJ_pkcs9_unstructuredAddress */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x09,/* [329] OBJ_pkcs9_extCertAttributes */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,          /* [338] OBJ_netscape */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,     /* [345] OBJ_netscape_cert_extension */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x02,     /* [353] OBJ_netscape_data_type */
+0x2B,0x0E,0x03,0x02,0x1A,                    /* [361] OBJ_sha1 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x05,/* [366] OBJ_sha1WithRSAEncryption */
+0x2B,0x0E,0x03,0x02,0x0D,                    /* [375] OBJ_dsaWithSHA */
+0x2B,0x0E,0x03,0x02,0x0C,                    /* [380] OBJ_dsa_2 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0B,/* [385] OBJ_pbeWithSHA1AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0C,/* [394] OBJ_id_pbkdf2 */
+0x2B,0x0E,0x03,0x02,0x1B,                    /* [403] OBJ_dsaWithSHA1_2 */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x01,/* [408] OBJ_netscape_cert_type */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x02,/* [417] OBJ_netscape_base_url */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x03,/* [426] OBJ_netscape_revocation_url */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x04,/* [435] OBJ_netscape_ca_revocation_url */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x07,/* [444] OBJ_netscape_renewal_url */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x08,/* [453] OBJ_netscape_ca_policy_url */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x0C,/* [462] OBJ_netscape_ssl_server_name */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x0D,/* [471] OBJ_netscape_comment */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x02,0x05,/* [480] OBJ_netscape_cert_sequence */
+0x55,0x1D,                                   /* [489] OBJ_ld_ce */
+0x55,0x1D,0x0E,                              /* [491] OBJ_subject_key_identifier */
+0x55,0x1D,0x0F,                              /* [494] OBJ_key_usage */
+0x55,0x1D,0x10,                              /* [497] OBJ_private_key_usage_period */
+0x55,0x1D,0x11,                              /* [500] OBJ_subject_alt_name */
+0x55,0x1D,0x12,                              /* [503] OBJ_issuer_alt_name */
+0x55,0x1D,0x13,                              /* [506] OBJ_basic_constraints */
+0x55,0x1D,0x14,                              /* [509] OBJ_crl_number */
+0x55,0x1D,0x20,                              /* [512] OBJ_certificate_policies */
+0x55,0x1D,0x23,                              /* [515] OBJ_authority_key_identifier */
+0x2B,0x06,0x01,0x04,0x01,0x97,0x55,0x01,0x02,/* [518] OBJ_bf_cbc */
+0x55,0x08,0x03,0x65,                         /* [527] OBJ_mdc2 */
+0x55,0x08,0x03,0x64,                         /* [531] OBJ_mdc2WithRSA */
+0x55,0x04,0x2A,                              /* [535] OBJ_givenName */
+0x55,0x04,0x04,                              /* [538] OBJ_surname */
+0x55,0x04,0x2B,                              /* [541] OBJ_initials */
+0x55,0x04,0x2D,                              /* [544] OBJ_uniqueIdentifier */
+0x55,0x1D,0x1F,                              /* [547] OBJ_crl_distribution_points */
+0x2B,0x0E,0x03,0x02,0x03,                    /* [550] OBJ_md5WithRSA */
+0x55,0x04,0x05,                              /* [555] OBJ_serialNumber */
+0x55,0x04,0x0C,                              /* [558] OBJ_title */
+0x55,0x04,0x0D,                              /* [561] OBJ_description */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0A,/* [564] OBJ_cast5_cbc */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0C,/* [573] OBJ_pbeWithMD5AndCast5_CBC */
+0x2A,0x86,0x48,0xCE,0x38,0x04,0x03,          /* [582] OBJ_dsaWithSHA1 */
+0x2B,0x0E,0x03,0x02,0x1D,                    /* [589] OBJ_sha1WithRSA */
+0x2A,0x86,0x48,0xCE,0x38,0x04,0x01,          /* [594] OBJ_dsa */
+0x2B,0x24,0x03,0x02,0x01,                    /* [601] OBJ_ripemd160 */
+0x2B,0x24,0x03,0x03,0x01,0x02,               /* [606] OBJ_ripemd160WithRSA */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x08,     /* [612] OBJ_rc5_cbc */
+0x29,0x01,0x01,0x85,0x1A,0x01,               /* [620] OBJ_rle_compression */
+0x29,0x01,0x01,0x85,0x1A,0x02,               /* [626] OBJ_zlib_compression */
+0x55,0x1D,0x25,                              /* [632] OBJ_ext_key_usage */
+0x2B,0x06,0x01,0x05,0x05,0x07,               /* [635] OBJ_id_pkix */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,          /* [641] OBJ_id_kp */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x01,     /* [648] OBJ_server_auth */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x02,     /* [656] OBJ_client_auth */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x03,     /* [664] OBJ_code_sign */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x04,     /* [672] OBJ_email_protect */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x08,     /* [680] OBJ_time_stamp */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x15,/* [688] OBJ_ms_code_ind */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x16,/* [698] OBJ_ms_code_com */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x01,/* [708] OBJ_ms_ctl_sign */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x03,/* [718] OBJ_ms_sgc */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x04,/* [728] OBJ_ms_efs */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x04,0x01,/* [738] OBJ_ns_sgc */
+0x55,0x1D,0x1B,                              /* [747] OBJ_delta_crl */
+0x55,0x1D,0x15,                              /* [750] OBJ_crl_reason */
+0x55,0x1D,0x18,                              /* [753] OBJ_invalidity_date */
+0x2B,0x65,0x01,0x04,0x01,                    /* [756] OBJ_sxnet */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x01,/* [761] OBJ_pbe_WithSHA1And128BitRC4 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x02,/* [771] OBJ_pbe_WithSHA1And40BitRC4 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x03,/* [781] OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x04,/* [791] OBJ_pbe_WithSHA1And2_Key_TripleDES_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x05,/* [801] OBJ_pbe_WithSHA1And128BitRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x01,0x06,/* [811] OBJ_pbe_WithSHA1And40BitRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x01,/* [821] OBJ_keyBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x02,/* [832] OBJ_pkcs8ShroudedKeyBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x03,/* [843] OBJ_certBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x04,/* [854] OBJ_crlBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x05,/* [865] OBJ_secretBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x0C,0x0A,0x01,0x06,/* [876] OBJ_safeContentsBag */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x14,/* [887] OBJ_friendlyName */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x15,/* [896] OBJ_localKeyID */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x01,/* [905] OBJ_x509Certificate */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x02,/* [915] OBJ_sdsiCertificate */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x17,0x01,/* [925] OBJ_x509Crl */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0D,/* [935] OBJ_pbes2 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0E,/* [944] OBJ_pbmac1 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [953] OBJ_hmacWithSHA1 */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [961] OBJ_id_qt_cps */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [969] OBJ_id_qt_unotice */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0F,/* [977] OBJ_SMIMECapabilities */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x04,/* [986] OBJ_pbeWithMD2AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x06,/* [995] OBJ_pbeWithMD5AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [1004] OBJ_pbeWithSHA1AndDES_CBC */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x0E,/* [1013] OBJ_ms_ext_req */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [1023] OBJ_ext_req */
+0x55,0x04,0x29,                              /* [1032] OBJ_name */
+0x55,0x04,0x2E,                              /* [1035] OBJ_dnQualifier */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,          /* [1038] OBJ_id_pe */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,          /* [1045] OBJ_id_ad */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1052] OBJ_info_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1060] OBJ_ad_OCSP */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1068] OBJ_ad_ca_issuers */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x09,     /* [1076] OBJ_OCSP_sign */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -267,210 +269,210 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CBC","des-cbc",NID_des_cbc,5,&(lvalues[197]),0},
 {"DES-EDE","des-ede",NID_des_ede,5,&(lvalues[202]),0},
 {"DES-EDE3","des-ede3",NID_des_ede3,0,NULL},
-{"IDEA-CBC","idea-cbc",NID_idea_cbc,0,NULL},
+{"IDEA-CBC","idea-cbc",NID_idea_cbc,11,&(lvalues[207]),0},
 {"IDEA-CFB","idea-cfb",NID_idea_cfb64,0,NULL},
 {"IDEA-ECB","idea-ecb",NID_idea_ecb,0,NULL},
-{"RC2-CBC","rc2-cbc",NID_rc2_cbc,8,&(lvalues[207]),0},
+{"RC2-CBC","rc2-cbc",NID_rc2_cbc,8,&(lvalues[218]),0},
 {"RC2-ECB","rc2-ecb",NID_rc2_ecb,0,NULL},
 {"RC2-CFB","rc2-cfb",NID_rc2_cfb64,0,NULL},
 {"RC2-OFB","rc2-ofb",NID_rc2_ofb64,0,NULL},
-{"SHA","sha",NID_sha,5,&(lvalues[215]),0},
+{"SHA","sha",NID_sha,5,&(lvalues[226]),0},
 {"RSA-SHA","shaWithRSAEncryption",NID_shaWithRSAEncryption,5,
-	&(lvalues[220]),0},
+	&(lvalues[231]),0},
 {"DES-EDE-CBC","des-ede-cbc",NID_des_ede_cbc,0,NULL},
-{"DES-EDE3-CBC","des-ede3-cbc",NID_des_ede3_cbc,8,&(lvalues[225]),0},
-{"DES-OFB","des-ofb",NID_des_ofb64,5,&(lvalues[233]),0},
+{"DES-EDE3-CBC","des-ede3-cbc",NID_des_ede3_cbc,8,&(lvalues[236]),0},
+{"DES-OFB","des-ofb",NID_des_ofb64,5,&(lvalues[244]),0},
 {"IDEA-OFB","idea-ofb",NID_idea_ofb64,0,NULL},
-{"pkcs9","pkcs9",NID_pkcs9,8,&(lvalues[238]),0},
-{"Email","emailAddress",NID_pkcs9_emailAddress,9,&(lvalues[246]),0},
+{"pkcs9","pkcs9",NID_pkcs9,8,&(lvalues[249]),0},
+{"Email","emailAddress",NID_pkcs9_emailAddress,9,&(lvalues[257]),0},
 {"unstructuredName","unstructuredName",NID_pkcs9_unstructuredName,9,
-	&(lvalues[255]),0},
-{"contentType","contentType",NID_pkcs9_contentType,9,&(lvalues[264]),0},
+	&(lvalues[266]),0},
+{"contentType","contentType",NID_pkcs9_contentType,9,&(lvalues[275]),0},
 {"messageDigest","messageDigest",NID_pkcs9_messageDigest,9,
-	&(lvalues[273]),0},
-{"signingTime","signingTime",NID_pkcs9_signingTime,9,&(lvalues[282]),0},
+	&(lvalues[284]),0},
+{"signingTime","signingTime",NID_pkcs9_signingTime,9,&(lvalues[293]),0},
 {"countersignature","countersignature",NID_pkcs9_countersignature,9,
-	&(lvalues[291]),0},
+	&(lvalues[302]),0},
 {"challengePassword","challengePassword",NID_pkcs9_challengePassword,
-	9,&(lvalues[300]),0},
+	9,&(lvalues[311]),0},
 {"unstructuredAddress","unstructuredAddress",
-	NID_pkcs9_unstructuredAddress,9,&(lvalues[309]),0},
+	NID_pkcs9_unstructuredAddress,9,&(lvalues[320]),0},
 {"extendedCertificateAttributes","extendedCertificateAttributes",
-	NID_pkcs9_extCertAttributes,9,&(lvalues[318]),0},
+	NID_pkcs9_extCertAttributes,9,&(lvalues[329]),0},
 {"Netscape","Netscape Communications Corp.",NID_netscape,7,
-	&(lvalues[327]),0},
+	&(lvalues[338]),0},
 {"nsCertExt","Netscape Certificate Extension",
-	NID_netscape_cert_extension,8,&(lvalues[334]),0},
+	NID_netscape_cert_extension,8,&(lvalues[345]),0},
 {"nsDataType","Netscape Data Type",NID_netscape_data_type,8,
-	&(lvalues[342]),0},
+	&(lvalues[353]),0},
 {"DES-EDE-CFB","des-ede-cfb",NID_des_ede_cfb64,0,NULL},
 {"DES-EDE3-CFB","des-ede3-cfb",NID_des_ede3_cfb64,0,NULL},
 {"DES-EDE-OFB","des-ede-ofb",NID_des_ede_ofb64,0,NULL},
 {"DES-EDE3-OFB","des-ede3-ofb",NID_des_ede3_ofb64,0,NULL},
-{"SHA1","sha1",NID_sha1,5,&(lvalues[350]),0},
+{"SHA1","sha1",NID_sha1,5,&(lvalues[361]),0},
 {"RSA-SHA1","sha1WithRSAEncryption",NID_sha1WithRSAEncryption,9,
-	&(lvalues[355]),0},
-{"DSA-SHA","dsaWithSHA",NID_dsaWithSHA,5,&(lvalues[364]),0},
-{"DSA-old","dsaEncryption-old",NID_dsa_2,5,&(lvalues[369]),0},
+	&(lvalues[366]),0},
+{"DSA-SHA","dsaWithSHA",NID_dsaWithSHA,5,&(lvalues[375]),0},
+{"DSA-old","dsaEncryption-old",NID_dsa_2,5,&(lvalues[380]),0},
 {"PBE-SHA1-RC2-64","pbeWithSHA1AndRC2-CBC",NID_pbeWithSHA1AndRC2_CBC,
-	9,&(lvalues[374]),0},
-{"PBKDF2","PBKDF2",NID_id_pbkdf2,9,&(lvalues[383]),0},
-{"DSA-SHA1-old","dsaWithSHA1-old",NID_dsaWithSHA1_2,5,&(lvalues[392]),0},
+	9,&(lvalues[385]),0},
+{"PBKDF2","PBKDF2",NID_id_pbkdf2,9,&(lvalues[394]),0},
+{"DSA-SHA1-old","dsaWithSHA1-old",NID_dsaWithSHA1_2,5,&(lvalues[403]),0},
 {"nsCertType","Netscape Cert Type",NID_netscape_cert_type,9,
-	&(lvalues[397]),0},
+	&(lvalues[408]),0},
 {"nsBaseUrl","Netscape Base Url",NID_netscape_base_url,9,
-	&(lvalues[406]),0},
+	&(lvalues[417]),0},
 {"nsRevocationUrl","Netscape Revocation Url",
-	NID_netscape_revocation_url,9,&(lvalues[415]),0},
+	NID_netscape_revocation_url,9,&(lvalues[426]),0},
 {"nsCaRevocationUrl","Netscape CA Revocation Url",
-	NID_netscape_ca_revocation_url,9,&(lvalues[424]),0},
+	NID_netscape_ca_revocation_url,9,&(lvalues[435]),0},
 {"nsRenewalUrl","Netscape Renewal Url",NID_netscape_renewal_url,9,
-	&(lvalues[433]),0},
+	&(lvalues[444]),0},
 {"nsCaPolicyUrl","Netscape CA Policy Url",NID_netscape_ca_policy_url,
-	9,&(lvalues[442]),0},
+	9,&(lvalues[453]),0},
 {"nsSslServerName","Netscape SSL Server Name",
-	NID_netscape_ssl_server_name,9,&(lvalues[451]),0},
-{"nsComment","Netscape Comment",NID_netscape_comment,9,&(lvalues[460]),0},
+	NID_netscape_ssl_server_name,9,&(lvalues[462]),0},
+{"nsComment","Netscape Comment",NID_netscape_comment,9,&(lvalues[471]),0},
 {"nsCertSequence","Netscape Certificate Sequence",
-	NID_netscape_cert_sequence,9,&(lvalues[469]),0},
+	NID_netscape_cert_sequence,9,&(lvalues[480]),0},
 {"DESX-CBC","desx-cbc",NID_desx_cbc,0,NULL},
-{"ld-ce","ld-ce",NID_ld_ce,2,&(lvalues[478]),0},
+{"ld-ce","ld-ce",NID_ld_ce,2,&(lvalues[489]),0},
 {"subjectKeyIdentifier","X509v3 Subject Key Identifier",
-	NID_subject_key_identifier,3,&(lvalues[480]),0},
-{"keyUsage","X509v3 Key Usage",NID_key_usage,3,&(lvalues[483]),0},
+	NID_subject_key_identifier,3,&(lvalues[491]),0},
+{"keyUsage","X509v3 Key Usage",NID_key_usage,3,&(lvalues[494]),0},
 {"privateKeyUsagePeriod","X509v3 Private Key Usage Period",
-	NID_private_key_usage_period,3,&(lvalues[486]),0},
+	NID_private_key_usage_period,3,&(lvalues[497]),0},
 {"subjectAltName","X509v3 Subject Alternative Name",
-	NID_subject_alt_name,3,&(lvalues[489]),0},
+	NID_subject_alt_name,3,&(lvalues[500]),0},
 {"issuerAltName","X509v3 Issuer Alternative Name",NID_issuer_alt_name,
-	3,&(lvalues[492]),0},
+	3,&(lvalues[503]),0},
 {"basicConstraints","X509v3 Basic Constraints",NID_basic_constraints,
-	3,&(lvalues[495]),0},
-{"crlNumber","X509v3 CRL Number",NID_crl_number,3,&(lvalues[498]),0},
+	3,&(lvalues[506]),0},
+{"crlNumber","X509v3 CRL Number",NID_crl_number,3,&(lvalues[509]),0},
 {"certificatePolicies","X509v3 Certificate Policies",
-	NID_certificate_policies,3,&(lvalues[501]),0},
+	NID_certificate_policies,3,&(lvalues[512]),0},
 {"authorityKeyIdentifier","X509v3 Authority Key Identifier",
-	NID_authority_key_identifier,3,&(lvalues[504]),0},
-{"BF-CBC","bf-cbc",NID_bf_cbc,0,NULL},
+	NID_authority_key_identifier,3,&(lvalues[515]),0},
+{"BF-CBC","bf-cbc",NID_bf_cbc,9,&(lvalues[518]),0},
 {"BF-ECB","bf-ecb",NID_bf_ecb,0,NULL},
 {"BF-CFB","bf-cfb",NID_bf_cfb64,0,NULL},
 {"BF-OFB","bf-ofb",NID_bf_ofb64,0,NULL},
-{"MDC2","mdc2",NID_mdc2,4,&(lvalues[507]),0},
-{"RSA-MDC2","mdc2withRSA",NID_mdc2WithRSA,4,&(lvalues[511]),0},
+{"MDC2","mdc2",NID_mdc2,4,&(lvalues[527]),0},
+{"RSA-MDC2","mdc2withRSA",NID_mdc2WithRSA,4,&(lvalues[531]),0},
 {"RC4-40","rc4-40",NID_rc4_40,0,NULL},
 {"RC2-40-CBC","rc2-40-cbc",NID_rc2_40_cbc,0,NULL},
-{"G","givenName",NID_givenName,3,&(lvalues[515]),0},
-{"S","surname",NID_surname,3,&(lvalues[518]),0},
-{"I","initials",NID_initials,3,&(lvalues[521]),0},
-{"UID","uniqueIdentifier",NID_uniqueIdentifier,3,&(lvalues[524]),0},
+{"G","givenName",NID_givenName,3,&(lvalues[535]),0},
+{"S","surname",NID_surname,3,&(lvalues[538]),0},
+{"I","initials",NID_initials,3,&(lvalues[541]),0},
+{"UID","uniqueIdentifier",NID_uniqueIdentifier,3,&(lvalues[544]),0},
 {"crlDistributionPoints","X509v3 CRL Distribution Points",
-	NID_crl_distribution_points,3,&(lvalues[527]),0},
-{"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[530]),0},
-{"SN","serialNumber",NID_serialNumber,3,&(lvalues[535]),0},
-{"T","title",NID_title,3,&(lvalues[538]),0},
-{"D","description",NID_description,3,&(lvalues[541]),0},
-{"CAST5-CBC","cast5-cbc",NID_cast5_cbc,9,&(lvalues[544]),0},
+	NID_crl_distribution_points,3,&(lvalues[547]),0},
+{"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[550]),0},
+{"SN","serialNumber",NID_serialNumber,3,&(lvalues[555]),0},
+{"T","title",NID_title,3,&(lvalues[558]),0},
+{"D","description",NID_description,3,&(lvalues[561]),0},
+{"CAST5-CBC","cast5-cbc",NID_cast5_cbc,9,&(lvalues[564]),0},
 {"CAST5-ECB","cast5-ecb",NID_cast5_ecb,0,NULL},
 {"CAST5-CFB","cast5-cfb",NID_cast5_cfb64,0,NULL},
 {"CAST5-OFB","cast5-ofb",NID_cast5_ofb64,0,NULL},
 {"pbeWithMD5AndCast5CBC","pbeWithMD5AndCast5CBC",
-	NID_pbeWithMD5AndCast5_CBC,9,&(lvalues[553]),0},
-{"DSA-SHA1","dsaWithSHA1",NID_dsaWithSHA1,7,&(lvalues[562]),0},
+	NID_pbeWithMD5AndCast5_CBC,9,&(lvalues[573]),0},
+{"DSA-SHA1","dsaWithSHA1",NID_dsaWithSHA1,7,&(lvalues[582]),0},
 {"MD5-SHA1","md5-sha1",NID_md5_sha1,0,NULL},
-{"RSA-SHA1-2","sha1WithRSA",NID_sha1WithRSA,5,&(lvalues[569]),0},
-{"DSA","dsaEncryption",NID_dsa,7,&(lvalues[574]),0},
-{"RIPEMD160","ripemd160",NID_ripemd160,5,&(lvalues[581]),0},
+{"RSA-SHA1-2","sha1WithRSA",NID_sha1WithRSA,5,&(lvalues[589]),0},
+{"DSA","dsaEncryption",NID_dsa,7,&(lvalues[594]),0},
+{"RIPEMD160","ripemd160",NID_ripemd160,5,&(lvalues[601]),0},
 {NULL,NULL,NID_undef,0,NULL},
 {"RSA-RIPEMD160","ripemd160WithRSA",NID_ripemd160WithRSA,6,
-	&(lvalues[586]),0},
-{"RC5-CBC","rc5-cbc",NID_rc5_cbc,8,&(lvalues[592]),0},
+	&(lvalues[606]),0},
+{"RC5-CBC","rc5-cbc",NID_rc5_cbc,8,&(lvalues[612]),0},
 {"RC5-ECB","rc5-ecb",NID_rc5_ecb,0,NULL},
 {"RC5-CFB","rc5-cfb",NID_rc5_cfb64,0,NULL},
 {"RC5-OFB","rc5-ofb",NID_rc5_ofb64,0,NULL},
-{"RLE","run length compression",NID_rle_compression,6,&(lvalues[600]),0},
-{"ZLIB","zlib compression",NID_zlib_compression,6,&(lvalues[606]),0},
+{"RLE","run length compression",NID_rle_compression,6,&(lvalues[620]),0},
+{"ZLIB","zlib compression",NID_zlib_compression,6,&(lvalues[626]),0},
 {"extendedKeyUsage","X509v3 Extended Key Usage",NID_ext_key_usage,3,
-	&(lvalues[612]),0},
-{"PKIX","PKIX",NID_id_pkix,6,&(lvalues[615]),0},
-{"id-kp","id-kp",NID_id_kp,7,&(lvalues[621]),0},
+	&(lvalues[632]),0},
+{"PKIX","PKIX",NID_id_pkix,6,&(lvalues[635]),0},
+{"id-kp","id-kp",NID_id_kp,7,&(lvalues[641]),0},
 {"serverAuth","TLS Web Server Authentication",NID_server_auth,8,
-	&(lvalues[628]),0},
+	&(lvalues[648]),0},
 {"clientAuth","TLS Web Client Authentication",NID_client_auth,8,
-	&(lvalues[636]),0},
-{"codeSigning","Code Signing",NID_code_sign,8,&(lvalues[644]),0},
+	&(lvalues[656]),0},
+{"codeSigning","Code Signing",NID_code_sign,8,&(lvalues[664]),0},
 {"emailProtection","E-mail Protection",NID_email_protect,8,
-	&(lvalues[652]),0},
-{"timeStamping","Time Stamping",NID_time_stamp,8,&(lvalues[660]),0},
+	&(lvalues[672]),0},
+{"timeStamping","Time Stamping",NID_time_stamp,8,&(lvalues[680]),0},
 {"msCodeInd","Microsoft Individual Code Signing",NID_ms_code_ind,10,
-	&(lvalues[668]),0},
-{"msCodeCom","Microsoft Commercial Code Signing",NID_ms_code_com,10,
-	&(lvalues[678]),0},
-{"msCTLSign","Microsoft Trust List Signing",NID_ms_ctl_sign,10,
 	&(lvalues[688]),0},
-{"msSGC","Microsoft Server Gated Crypto",NID_ms_sgc,10,&(lvalues[698]),0},
-{"msEFS","Microsoft Encrypted File System",NID_ms_efs,10,
+{"msCodeCom","Microsoft Commercial Code Signing",NID_ms_code_com,10,
+	&(lvalues[698]),0},
+{"msCTLSign","Microsoft Trust List Signing",NID_ms_ctl_sign,10,
 	&(lvalues[708]),0},
-{"nsSGC","Netscape Server Gated Crypto",NID_ns_sgc,9,&(lvalues[718]),0},
+{"msSGC","Microsoft Server Gated Crypto",NID_ms_sgc,10,&(lvalues[718]),0},
+{"msEFS","Microsoft Encrypted File System",NID_ms_efs,10,
+	&(lvalues[728]),0},
+{"nsSGC","Netscape Server Gated Crypto",NID_ns_sgc,9,&(lvalues[738]),0},
 {"deltaCRL","X509v3 Delta CRL Indicator",NID_delta_crl,3,
-	&(lvalues[727]),0},
-{"CRLReason","CRL Reason Code",NID_crl_reason,3,&(lvalues[730]),0},
+	&(lvalues[747]),0},
+{"CRLReason","CRL Reason Code",NID_crl_reason,3,&(lvalues[750]),0},
 {"invalidityDate","Invalidity Date",NID_invalidity_date,3,
-	&(lvalues[733]),0},
-{"SXNetID","Strong Extranet ID",NID_sxnet,5,&(lvalues[736]),0},
+	&(lvalues[753]),0},
+{"SXNetID","Strong Extranet ID",NID_sxnet,5,&(lvalues[756]),0},
 {"PBE-SHA1-RC4-128","pbeWithSHA1And128BitRC4",
-	NID_pbe_WithSHA1And128BitRC4,10,&(lvalues[741]),0},
+	NID_pbe_WithSHA1And128BitRC4,10,&(lvalues[761]),0},
 {"PBE-SHA1-RC4-40","pbeWithSHA1And40BitRC4",
-	NID_pbe_WithSHA1And40BitRC4,10,&(lvalues[751]),0},
+	NID_pbe_WithSHA1And40BitRC4,10,&(lvalues[771]),0},
 {"PBE-SHA1-3DES","pbeWithSHA1And3-KeyTripleDES-CBC",
-	NID_pbe_WithSHA1And3_Key_TripleDES_CBC,10,&(lvalues[761]),0},
+	NID_pbe_WithSHA1And3_Key_TripleDES_CBC,10,&(lvalues[781]),0},
 {"PBE-SHA1-2DES","pbeWithSHA1And2-KeyTripleDES-CBC",
-	NID_pbe_WithSHA1And2_Key_TripleDES_CBC,10,&(lvalues[771]),0},
+	NID_pbe_WithSHA1And2_Key_TripleDES_CBC,10,&(lvalues[791]),0},
 {"PBE-SHA1-RC2-128","pbeWithSHA1And128BitRC2-CBC",
-	NID_pbe_WithSHA1And128BitRC2_CBC,10,&(lvalues[781]),0},
+	NID_pbe_WithSHA1And128BitRC2_CBC,10,&(lvalues[801]),0},
 {"PBE-SHA1-RC2-40","pbeWithSHA1And40BitRC2-CBC",
-	NID_pbe_WithSHA1And40BitRC2_CBC,10,&(lvalues[791]),0},
-{"keyBag","keyBag",NID_keyBag,11,&(lvalues[801]),0},
+	NID_pbe_WithSHA1And40BitRC2_CBC,10,&(lvalues[811]),0},
+{"keyBag","keyBag",NID_keyBag,11,&(lvalues[821]),0},
 {"pkcs8ShroudedKeyBag","pkcs8ShroudedKeyBag",NID_pkcs8ShroudedKeyBag,
-	11,&(lvalues[812]),0},
-{"certBag","certBag",NID_certBag,11,&(lvalues[823]),0},
-{"crlBag","crlBag",NID_crlBag,11,&(lvalues[834]),0},
-{"secretBag","secretBag",NID_secretBag,11,&(lvalues[845]),0},
+	11,&(lvalues[832]),0},
+{"certBag","certBag",NID_certBag,11,&(lvalues[843]),0},
+{"crlBag","crlBag",NID_crlBag,11,&(lvalues[854]),0},
+{"secretBag","secretBag",NID_secretBag,11,&(lvalues[865]),0},
 {"safeContentsBag","safeContentsBag",NID_safeContentsBag,11,
-	&(lvalues[856]),0},
-{"friendlyName","friendlyName",NID_friendlyName,9,&(lvalues[867]),0},
-{"localKeyID","localKeyID",NID_localKeyID,9,&(lvalues[876]),0},
+	&(lvalues[876]),0},
+{"friendlyName","friendlyName",NID_friendlyName,9,&(lvalues[887]),0},
+{"localKeyID","localKeyID",NID_localKeyID,9,&(lvalues[896]),0},
 {"x509Certificate","x509Certificate",NID_x509Certificate,10,
-	&(lvalues[885]),0},
+	&(lvalues[905]),0},
 {"sdsiCertificate","sdsiCertificate",NID_sdsiCertificate,10,
-	&(lvalues[895]),0},
-{"x509Crl","x509Crl",NID_x509Crl,10,&(lvalues[905]),0},
-{"PBES2","PBES2",NID_pbes2,9,&(lvalues[915]),0},
-{"PBMAC1","PBMAC1",NID_pbmac1,9,&(lvalues[924]),0},
-{"hmacWithSHA1","hmacWithSHA1",NID_hmacWithSHA1,8,&(lvalues[933]),0},
-{"id-qt-cps","Policy Qualifier CPS",NID_id_qt_cps,8,&(lvalues[941]),0},
+	&(lvalues[915]),0},
+{"x509Crl","x509Crl",NID_x509Crl,10,&(lvalues[925]),0},
+{"PBES2","PBES2",NID_pbes2,9,&(lvalues[935]),0},
+{"PBMAC1","PBMAC1",NID_pbmac1,9,&(lvalues[944]),0},
+{"hmacWithSHA1","hmacWithSHA1",NID_hmacWithSHA1,8,&(lvalues[953]),0},
+{"id-qt-cps","Policy Qualifier CPS",NID_id_qt_cps,8,&(lvalues[961]),0},
 {"id-qt-unotice","Policy Qualifier User Notice",NID_id_qt_unotice,8,
-	&(lvalues[949]),0},
+	&(lvalues[969]),0},
 {"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
 {"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,9,
-	&(lvalues[957]),0},
+	&(lvalues[977]),0},
 {"PBE-MD2-RC2-64","pbeWithMD2AndRC2-CBC",NID_pbeWithMD2AndRC2_CBC,9,
-	&(lvalues[966]),0},
+	&(lvalues[986]),0},
 {"PBE-MD5-RC2-64","pbeWithMD5AndRC2-CBC",NID_pbeWithMD5AndRC2_CBC,9,
-	&(lvalues[975]),0},
+	&(lvalues[995]),0},
 {"PBE-SHA1-DES","pbeWithSHA1AndDES-CBC",NID_pbeWithSHA1AndDES_CBC,9,
-	&(lvalues[984]),0},
+	&(lvalues[1004]),0},
 {"msExtReq","Microsoft Extension Request",NID_ms_ext_req,10,
-	&(lvalues[993]),0},
-{"extReq","Extension Request",NID_ext_req,9,&(lvalues[1003]),0},
-{"name","name",NID_name,3,&(lvalues[1012]),0},
-{"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1015]),0},
-{"id-pe","id-pe",NID_id_pe,7,&(lvalues[1018]),0},
-{"id-ad","id-ad",NID_id_ad,7,&(lvalues[1025]),0},
+	&(lvalues[1013]),0},
+{"extReq","Extension Request",NID_ext_req,9,&(lvalues[1023]),0},
+{"name","name",NID_name,3,&(lvalues[1032]),0},
+{"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1035]),0},
+{"id-pe","id-pe",NID_id_pe,7,&(lvalues[1038]),0},
+{"id-ad","id-ad",NID_id_ad,7,&(lvalues[1045]),0},
 {"authorityInfoAccess","Authority Information Access",NID_info_access,
-	8,&(lvalues[1032]),0},
-{"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1040]),0},
-{"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1048]),0},
-{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1056]),0},
+	8,&(lvalues[1052]),0},
+{"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1060]),0},
+{"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1068]),0},
+{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1076]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -916,6 +918,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[167]),/* OBJ_SMIMECapabilities            1 2 840 113549 1 9 15 */
 &(nid_objs[156]),/* OBJ_friendlyName                 1 2 840 113549 1 9  20 */
 &(nid_objs[157]),/* OBJ_localKeyID                   1 2 840 113549 1 9  21 */
+&(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
 &(nid_objs[72]),/* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
 &(nid_objs[73]),/* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */
@@ -947,5 +950,6 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[153]),/* OBJ_crlBag                       1 2 840 113549 1 12  10  1  4 */
 &(nid_objs[154]),/* OBJ_secretBag                    1 2 840 113549 1 12  10  1  5 */
 &(nid_objs[155]),/* OBJ_safeContentsBag              1 2 840 113549 1 12  10  1  6 */
+&(nid_objs[34]),/* OBJ_idea_cbc                     1 3 6 1 4 1 188 7 1 1 2 */
 };
 

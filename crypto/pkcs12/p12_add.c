@@ -189,14 +189,14 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 
 	if (!(p8 = X509_SIG_new())) {
 		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 
 	if(pbe_nid == -1) pbe = PKCS5_pbe2_set(cipher, iter, salt, saltlen);
 	else pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
 	if(!pbe) {
-		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
-		return NULL;
+		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_ASN1_LIB);
+		goto err;
 	}
 	X509_ALGOR_free(p8->algor);
 	p8->algor = pbe;
@@ -205,8 +205,12 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 	PKCS12_i2d_encrypt (pbe, i2d_PKCS8_PRIV_KEY_INFO, pass, passlen,
 						 (char *)p8inf, 0))) {
 		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
-		return NULL;
+		goto err;
 	}
 
 	return p8;
+
+	err:
+	X509_SIG_free(p8);
+	return NULL;
 }
