@@ -614,6 +614,7 @@ X509 43			: 			: initials
 X509 44			: 			: generationQualifier
 X509 45			: 			: x500UniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
+X509 65			:			: pseudonym
 X509 72			: role			: role
 
 X500 8			: X500algorithms	: directory services - algorithms

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 575
-#define NUM_SN 570
-#define NUM_LN 570
-#define NUM_OBJ 544
+#define NUM_NID 576
+#define NUM_SN 571
+#define NUM_LN 571
+#define NUM_OBJ 545
 
-static unsigned char lvalues[4260]={
+static unsigned char lvalues[4263]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -612,6 +612,7 @@ static unsigned char lvalues[4260]={
 0x2B,0x06,0x01,0x07,0x01,0x01,0x01,          /* [4242] OBJ_id_hex_partial_message */
 0x2B,0x06,0x01,0x07,0x01,0x01,0x02,          /* [4249] OBJ_id_hex_multipart_message */
 0x55,0x04,0x2C,                              /* [4256] OBJ_generationQualifier */
+0x55,0x04,0x41,                              /* [4259] OBJ_pseudonym */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1468,6 +1469,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_id_hex_multipart_message,7,&(lvalues[4249]),0},
 {"generationQualifier","generationQualifier",NID_generationQualifier,
 	3,&(lvalues[4256]),0},
+{"pseudonym","pseudonym",NID_pseudonym,3,&(lvalues[4259]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1957,6 +1959,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[415]),/* "prime256v1" */
 &(nid_objs[385]),/* "private" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
+&(nid_objs[575]),/* "pseudonym" */
 &(nid_objs[435]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[457]),/* "qualityLabelledData" */
@@ -2515,6 +2518,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[413]),/* "prime239v2" */
 &(nid_objs[414]),/* "prime239v3" */
 &(nid_objs[415]),/* "prime256v1" */
+&(nid_objs[575]),/* "pseudonym" */
 &(nid_objs[435]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[457]),/* "qualityLabelledData" */
@@ -2652,6 +2656,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[574]),/* OBJ_generationQualifier          2 5 4 44 */
 &(nid_objs[568]),/* OBJ_x500UniqueIdentifier         2 5 4 45 */
 &(nid_objs[174]),/* OBJ_dnQualifier                  2 5 4 46 */
+&(nid_objs[575]),/* OBJ_pseudonym                    2 5 4 65 */
 &(nid_objs[400]),/* OBJ_role                         2 5 4 72 */
 &(nid_objs[82]),/* OBJ_subject_key_identifier       2 5 29 14 */
 &(nid_objs[83]),/* OBJ_key_usage                    2 5 29 15 */
