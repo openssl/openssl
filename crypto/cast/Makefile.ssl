@@ -66,7 +66,7 @@ asm/cx86-out.o: asm/cx86unix.cpp
 asm/cx86bsdi.o: asm/cx86unix.cpp
 	$(CPP) -DBSDI asm/cx86unix.cpp | sed 's/ :/:/' | as -o asm/cx86bsdi.o
 
-asm/cx86unix.cpp:
+asm/cx86unix.cpp: asm/cast-586.pl
 	(cd asm; perl cast-586.pl cpp >cx86unix.cpp)
 
 files:

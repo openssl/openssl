@@ -81,10 +81,13 @@ CAST_KEY *key;
 	E_CAST( 9,k,r,l,+,^,-);
 	E_CAST(10,k,l,r,^,-,+);
 	E_CAST(11,k,r,l,-,+,^);
-	E_CAST(12,k,l,r,+,^,-);
-	E_CAST(13,k,r,l,^,-,+);
-	E_CAST(14,k,l,r,-,+,^);
-	E_CAST(15,k,r,l,+,^,-);
+	if(!k->short_key)
+	    {
+	    E_CAST(12,k,l,r,+,^,-);
+	    E_CAST(13,k,r,l,^,-,+);
+	    E_CAST(14,k,l,r,-,+,^);
+	    E_CAST(15,k,r,l,+,^,-);
+	    }
 
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
@@ -100,10 +103,13 @@ CAST_KEY *key;
 	l=data[0];
 	r=data[1];
 
-	E_CAST(15,k,l,r,+,^,-);
-	E_CAST(14,k,r,l,-,+,^);
-	E_CAST(13,k,l,r,^,-,+);
-	E_CAST(12,k,r,l,+,^,-);
+	if(!k->short_key)
+	    {
+	    E_CAST(15,k,l,r,+,^,-);
+	    E_CAST(14,k,r,l,-,+,^);
+	    E_CAST(13,k,l,r,^,-,+);
+	    E_CAST(12,k,r,l,+,^,-);
+	    }
 	E_CAST(11,k,l,r,-,+,^);
 	E_CAST(10,k,r,l,^,-,+);
 	E_CAST( 9,k,l,r,+,^,-);

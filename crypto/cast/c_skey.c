@@ -88,6 +88,10 @@ unsigned char *data;
 	if (len > 16) len=16;
 	for (i=0; i<len; i++)
 		x[i]=data[i];
+	if(len <= 10)
+	    key->short_key=1;
+	else
+	    key->short_key=0;
 
 	K= &k[0];
 	X[0]=((x[ 0]<<24)|(x[ 1]<<16)|(x[ 2]<<8)|x[ 3])&0xffffffffL;

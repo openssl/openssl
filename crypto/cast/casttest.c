@@ -61,7 +61,7 @@
 #include <stdlib.h>
 #include "cast.h"
 
-/* #define FULL_TEST */
+#define FULL_TEST
 
 unsigned char k[16]={
 	0x01,0x23,0x45,0x67,0x12,0x34,0x56,0x78,
@@ -70,7 +70,7 @@ unsigned char k[16]={
 
 unsigned char in[8]={ 0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF};
 
-int k_len[3]={16,10};
+int k_len[3]={16,10,5};
 unsigned char c[3][8]={
 	{0x23,0x8B,0x4F,0xE5,0x84,0x7E,0x44,0xB2},
 	{0xEB,0x6A,0x71,0x1A,0x2C,0x02,0x27,0x1B},
@@ -123,101 +123,102 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE]={
 int main(argc,argv)
 int argc;
 char *argv[];
-	{
+    {
 #ifdef FULL_TEST
-	long l;
-	CAST_KEY key_b;
+    long l;
+    CAST_KEY key_b;
 #endif
-	int i,z,err=0;
-	CAST_KEY key;
+    int i,z,err=0;
+    CAST_KEY key;
 
-	for (z=0; z<1; z++)
-		{
+    for (z=0; z<3; z++)
+	{
 	CAST_set_key(&key,k_len[z],k);
 
 	CAST_ecb_encrypt(in,out,&key,CAST_ENCRYPT);
 	if (memcmp(out,&(c[z][0]),8) != 0)
-		{
-		printf("ecb cast error encrypting\n");
-		printf("got     :");
-		for (i=0; i<8; i++)
-			printf("%02X ",out[i]);
-		printf("\n");
-		printf("expected:");
-		for (i=0; i<8; i++)
-			printf("%02X ",c[z][i]);
-		err=20;
-		printf("\n");
-		}
+	    {
+	    printf("ecb cast error encrypting for keysize %d\n",k_len[z]*8);
+	    printf("got     :");
+	    for (i=0; i<8; i++)
+		printf("%02X ",out[i]);
+	    printf("\n");
+	    printf("expected:");
+	    for (i=0; i<8; i++)
+		printf("%02X ",c[z][i]);
+	    err=20;
+	    printf("\n");
+	    }
 
 	CAST_ecb_encrypt(out,out,&key,CAST_DECRYPT);
 	if (memcmp(out,in,8) != 0)
-		{
-		printf("ecb cast error decrypting\n");
-		printf("got     :");
-		for (i=0; i<8; i++)
-			printf("%02X ",out[i]);
-		printf("\n");
-		printf("expected:");
-		for (i=0; i<8; i++)
-			printf("%02X ",in[i]);
-		printf("\n");
-		err=3;
-		}
+	    {
+	    printf("ecb cast error decrypting for keysize %d\n",k_len[z]*8);
+	    printf("got     :");
+	    for (i=0; i<8; i++)
+		printf("%02X ",out[i]);
+	    printf("\n");
+	    printf("expected:");
+	    for (i=0; i<8; i++)
+		printf("%02X ",in[i]);
+	    printf("\n");
+	    err=3;
+	    }
 	}
-	if (err == 0) printf("ecb cast5 ok\n");
+    if (err == 0)
+	printf("ecb cast5 ok\n");
 
 #ifdef FULL_TEST
-	{
-	unsigned char out_a[16],out_b[16];
-	static char *hex="0123456789ABCDEF";
+      {
+      unsigned char out_a[16],out_b[16];
+      static char *hex="0123456789ABCDEF";
+      
+      printf("This test will take some time....");
+      fflush(stdout);
+      memcpy(out_a,in_a,sizeof(in_a));
+      memcpy(out_b,in_b,sizeof(in_b));
+      i=1;
 
-	printf("This test will take some time....");
-	fflush(stdout);
-	memcpy(out_a,in_a,sizeof(in_a));
-	memcpy(out_b,in_b,sizeof(in_b));
-	i=1;
+      for (l=0; l<1000000L; l++)
+	  {
+	  CAST_set_key(&key_b,16,out_b);
+	  CAST_ecb_encrypt(&(out_a[0]),&(out_a[0]),&key_b,CAST_ENCRYPT);
+	  CAST_ecb_encrypt(&(out_a[8]),&(out_a[8]),&key_b,CAST_ENCRYPT);
+	  CAST_set_key(&key,16,out_a);
+	  CAST_ecb_encrypt(&(out_b[0]),&(out_b[0]),&key,CAST_ENCRYPT);
+	  CAST_ecb_encrypt(&(out_b[8]),&(out_b[8]),&key,CAST_ENCRYPT);
+	  if ((l & 0xffff) == 0xffff)
+	      {
+	      printf("%c",hex[i&0x0f]);
+	      fflush(stdout);
+	      i++;
+	      }
+	  }
 
-	for (l=0; l<1000000L; l++)
-		{
-		CAST_set_key(&key_b,16,out_b);
-		CAST_ecb_encrypt(&(out_a[0]),&(out_a[0]),&key_b,CAST_ENCRYPT);
-		CAST_ecb_encrypt(&(out_a[8]),&(out_a[8]),&key_b,CAST_ENCRYPT);
-		CAST_set_key(&key,16,out_a);
-		CAST_ecb_encrypt(&(out_b[0]),&(out_b[0]),&key,CAST_ENCRYPT);
-		CAST_ecb_encrypt(&(out_b[8]),&(out_b[8]),&key,CAST_ENCRYPT);
-		if ((l & 0xffff) == 0xffff)
-			{
-			printf("%c",hex[i&0x0f]);
-			fflush(stdout);
-			i++;
-			}
-		}
-
-	if (	(memcmp(out_a,c_a,sizeof(c_a)) != 0) ||
+      if (	(memcmp(out_a,c_a,sizeof(c_a)) != 0) ||
 		(memcmp(out_b,c_b,sizeof(c_b)) != 0))
-		{
-		printf("\n");
-		printf("Error\n");
+	  {
+	  printf("\n");
+	  printf("Error\n");
 
-		printf("A out =");
-		for (i=0; i<16; i++) printf("%02X ",out_a[i]);
-		printf("\nactual=");
-		for (i=0; i<16; i++) printf("%02X ",c_a[i]);
-		printf("\n");
+	  printf("A out =");
+	  for (i=0; i<16; i++) printf("%02X ",out_a[i]);
+	  printf("\nactual=");
+	  for (i=0; i<16; i++) printf("%02X ",c_a[i]);
+	  printf("\n");
 
-		printf("B out =");
-		for (i=0; i<16; i++) printf("%02X ",out_b[i]);
-		printf("\nactual=");
-		for (i=0; i<16; i++) printf("%02X ",c_b[i]);
-		printf("\n");
-		}
-	else
-		printf(" ok\n");
-	}
+	  printf("B out =");
+	  for (i=0; i<16; i++) printf("%02X ",out_b[i]);
+	  printf("\nactual=");
+	  for (i=0; i<16; i++) printf("%02X ",c_b[i]);
+	  printf("\n");
+	  }
+      else
+	  printf(" ok\n");
+      }
 #endif
 
-	exit(err);
-	return(err);
-	}
+    exit(err);
+    return(err);
+    }
 
