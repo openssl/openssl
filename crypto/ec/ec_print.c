@@ -139,7 +139,7 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
 	{
 	char          *ret, *p;
 	size_t        buf_len=0,i;
-	unsigned char *buf;
+	unsigned char *buf, *pbuf;
 
 	buf_len = EC_POINT_point2oct(group, point, form,
                                      NULL, 0, ctx);
@@ -162,13 +162,16 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
 		return NULL;
 		}
 	p = ret;
+	pbuf = buf;
 	for (i=buf_len; i > 0; i--)
 		{
-			int v = (int) *(buf++);
+			int v = (int) *(pbuf++);
 			*(p++)=HEX_DIGITS[v>>4];
 			*(p++)=HEX_DIGITS[v&0x0F];
 		}
 	*p='\0';
+
+	OPENSSL_free(buf);
 
 	return ret;
 	}
