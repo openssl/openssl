@@ -72,13 +72,18 @@ sub do_shlib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
+	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n";
+	if (defined $sha1file)
+		{
+		$ret.="\t$openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		}
+	$ret.="\n";
 	return($ret);
 	}
 

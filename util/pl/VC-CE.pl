@@ -97,14 +97,19 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n\n";
+	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
+	if (defined $sha1file)
+		{
+		$ret.="  $openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		}
+	$ret.="\n";
 	return($ret);
 	}
 
