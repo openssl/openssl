@@ -24,6 +24,11 @@
      one of the SSL handshake functions.
      [Bodo Moeller; problem pointed out by Niko Baric]
 
+  *) Change ssl/s2_clnt.c and ssl/s3_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part) and fix various bugs found on the way.
+     [Bodo Moeller]
+
   *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
      (sent using the client's version number) if client_version is
      smaller than the protocol version in use.  Also change
