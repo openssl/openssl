@@ -320,7 +320,7 @@ typedef struct bn_recp_ctx_st
 /*#define BN_ascii2bn(a)	BN_hex2bn(a) */
 /*#define BN_bn2ascii(a)	BN_bn2hex(a) */
 
-BIGNUM *BN_value_one(void);
+const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 void	BN_CTX_init(BN_CTX *c);

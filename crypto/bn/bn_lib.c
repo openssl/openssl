@@ -128,7 +128,7 @@ int BN_get_params(int which)
 	else return(0);
 	}
 
-BIGNUM *BN_value_one(void)
+const BIGNUM *BN_value_one(void)
 	{
 	static BN_ULONG data_one=1L;
 	static BIGNUM const_one={&data_one,1,1,0};

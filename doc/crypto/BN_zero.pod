@@ -12,7 +12,7 @@ operations
  int BN_zero(BIGNUM *a);
  int BN_one(BIGNUM *a);
 
- BIGNUM *BN_value_one(void);
+ const BIGNUM *BN_value_one(void);
 
  int BN_set_word(BIGNUM *a, unsigned long w);
  unsigned long BN_get_word(BIGNUM *a);
