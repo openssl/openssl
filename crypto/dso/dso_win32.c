@@ -61,7 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
-#if !defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#if !defined(DSO_WIN32)
 DSO_METHOD *DSO_METHOD_win32(void)
 	{
 	return NULL;
