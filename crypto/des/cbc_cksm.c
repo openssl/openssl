@@ -93,5 +93,14 @@ DES_LONG DES_cbc_cksum(const unsigned char *in, DES_cblock *output,
 		l2c(tout1,out);
 		}
 	tout0=tin0=tin1=tin[0]=tin[1]=0;
+	/*
+	  Transform the data in tout1 so that it will
+	  match the return value that the MIT Kerberos
+	  mit_des_cbc_cksum API returns.
+	*/
+	tout1 = ((tout1 >> 24L) & 0x000000FF)
+	      | ((tout1 >> 8L)  & 0x0000FF00)
+	      | ((tout1 << 8L)  & 0x00FF0000)
+	      | ((tout1 << 24L) & 0xFF000000);
 	return(tout1);
 	}
