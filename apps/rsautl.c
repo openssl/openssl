@@ -55,6 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#ifndef NO_RSA
+
 #include "apps.h"
 #include <string.h>
 #include <openssl/err.h>
@@ -288,3 +291,4 @@ static void usage()
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
 }
 
+#endif
