@@ -65,22 +65,40 @@ struct ui_method_st
 	{
 	const char *name;
 
-	/* All the functions return 1 for success and 0 for failure */
-	int (*ui_open_session)(UI *ui);	/* Open whatever channel for this,
-					   be it the console, an X window
-					   or whatever.
-					   This function should use the
-					   ex_data structure to save
-					   intermediate data. */
-	int (*ui_read_string)(UI *ui, UI_STRING *uis);
+	/* All the functions return 1 or non-NULL for success and 0 or NULL
+	   for failure */
+
+	/* Open whatever channel for this, be it the console, an X window
+	   or whatever.
+	   This function should use the ex_data structure to save
+	   intermediate data. */
+	int (*ui_open_session)(UI *ui);
+
 	int (*ui_write_string)(UI *ui, UI_STRING *uis);
+
+	/* Flush the output.  If a GUI dialog box is used, this function can
+	   be used to actually display it. */
+	int (*ui_flush)(UI *ui);
+
+	int (*ui_read_string)(UI *ui, UI_STRING *uis);
+
 	int (*ui_close_session)(UI *ui);
+
+	/* Construct a prompt in a user-defined manner.  object_desc is a
+	   textual short description of the object, for example "pass phrase",
+	   and object_name is the name of the object (might be a card name or
+	   a file name.
+	   The returned string shall always be allocated on the heap with
+	   OPENSSL_malloc(), and need to be free'd with OPENSSL_free(). */
+	char *(*ui_construct_prompt)(UI *ui, const char *object_desc,
+		const char *object_name);
 	};
 
 struct ui_string_st
 	{
 	const char *out_string;	/* Input */
 	enum UI_string_types type; /* Input */
+	int input_flags;	/* Flags from the user */
 
 	/* The following parameters are completely irrelevant for UI_INFO,
 	   and can therefore be set to 0 ro NULL */
@@ -95,7 +113,7 @@ struct ui_string_st
 	const char *test_buf;	/* Input: test string to verify against */
 
 #define OUT_STRING_FREEABLE 0x01
-	int flags;
+	int flags;		/* flags for internal use */
 	};
 
 struct ui_st

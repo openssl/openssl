@@ -80,9 +80,10 @@ typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
 
 
-/* All the following functions return -1 or NULL on error.  When everything is
-   fine, they return 0, a positive value or a non-NULL pointer, all depending
-   on their purpose. */
+/* All the following functions return -1 or NULL on error and in some cases
+   (UI_process()) -2 if interrupted or in some other way cancelled.
+   When everything is fine, they return 0, a positive value or a non-NULL
+   pointer, all depending on their purpose. */
 
 /* Creators and destructor.   */
 UI *UI_new(void);
@@ -108,7 +109,7 @@ void UI_free(UI *ui);
    moment.
 
    All of the functions in this group take a UI and a string.  The input and
-   verify addition functions also take an echo flag, a buffer for the result
+   verify addition functions also take a flag argument, a buffer for the result
    to end up with, a minimum input size and a maximum input size (the result
    buffer MUST be large enough to be able to contain the maximum number of
    characters).  Additionally, the verify addition functions takes another
@@ -116,18 +117,61 @@ void UI_free(UI *ui);
 
    On success, the all return an index of the added information.  That index
    is usefull when retrieving results with UI_get0_result(). */
-int UI_add_input_string(UI *ui, const char *prompt, int echo_p,
+int UI_add_input_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize);
-int UI_dup_input_string(UI *ui, const char *prompt, int echo_p,
+int UI_dup_input_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize);
-int UI_add_verify_string(UI *ui, const char *prompt, int echo_p,
+int UI_add_verify_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize, const char *test_buf);
-int UI_dup_verify_string(UI *ui, const char *prompt, int echo_p,
+int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize, const char *test_buf);
 int UI_add_info_string(UI *ui, const char *text);
 int UI_dup_info_string(UI *ui, const char *text);
 int UI_add_error_string(UI *ui, const char *text);
 int UI_dup_error_string(UI *ui, const char *text);
+
+/* These are the possible flags.  They can be or'ed together. */
+/* Use to have echoing of input */
+#define UI_INPUT_FLAG_ECHO	0x01
+/* Use a default answer.  Where that answer is found is completely up
+   to the application, it might for example be in the user data set
+   with UI_add_user_data().  It is not recommended to have more than
+   one input in each UI being marked with this flag, or the application
+   might get confused. */
+#define UI_INPUT_FLAG_DEFAULT	0x02
+
+/* The user of these routines may want to define flags of their own.  The core
+   UI won't look at those, but will pass them on to the method routines.  They
+   must use higher bits so they don't get confused with the UI bits above.
+   UI_INPUT_FLAG_USER_BASE tells which is the lowest bit to use.  A good
+   example of use is this:
+
+	#define MY_UI_FLAG1	(0x01 << UI_INPUT_FLAG_USER_BASE)
+
+*/
+#define UI_INPUT_FLAG_USER_BASE	16
+
+
+/* The following function helps construct a prompt.  object_desc is a
+   textual short description of the object, for example "pass phrase",
+   and object_name is the name of the object (might be a card name or
+   a file name.
+   The returned string shall always be allocated on the heap with
+   OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
+
+   If the ui_method doesn't contain a pointer to a user-defined prompt
+   constructor, a default string is built, looking like this:
+
+	"Enter {object_desc} for {object_name}:"
+
+   So, if object_desc has the value "pass phrase" and object_name has
+   the value "foo.key", the resulting string is:
+
+	"Enter pass phrase for foo.key:"
+*/
+char *UI_construct_prompt(UI *ui_method,
+	const char *object_desc, const char *object_name);
+
 
 /* The following function is used to store a pointer to user-specific data.
    Any previous such pointer will be returned and replaced.
@@ -175,6 +219,9 @@ UI_METHOD *UI_OpenSSL(void);
 	a writer	This function is called to write a given string,
 			maybe to the tty, maybe as a field label in a
 			window.
+	a flusher	This function is called to flush everything that
+			has been output so far.  It can be used to actually
+			display a dialog box after it has been built.
 	a reader	This function is called to read a given prompt,
 			maybe from the tty, maybe from a field in a
 			window.  Note that it's called wth all string
@@ -183,13 +230,27 @@ UI_METHOD *UI_OpenSSL(void);
 	a closer	This function closes the session, maybe by closing
 			the channel to the tty, or closing the window.
 
+   All these functions are expected to return:
+
+	0	on error.
+	1	on success.
+	-1	on out-of-band events, for example if some prompting has
+		been canceled (by pressing Ctrl-C, for example).  This is
+		only checked when returned by the flusher or the reader.
+
    The way this is used, the opener is first called, then the writer for all
-   strings, then the reader for all strings and finally the closer.  Note that
-   if you want to prompt from a terminal or other command line interface, the
-   best is to have the reader also write the prompts instead of having the
-   writer do it.
+   strings, then the flusher, then the reader for all strings and finally the
+   closer.  Note that if you want to prompt from a terminal or other command
+   line interface, the best is to have the reader also write the prompts
+   instead of having the writer do it.  If you want to prompt from a dialog
+   box, the writer can be used to build up the contents of the box, and the
+   flusher to actually display the box and run the event loop until all data
+   has been given, after which the reader only grabs the given data and puts
+   them back into the UI strings.
+
    All method functions take a UI as argument.  Additionally, the writer and
-   the reader take a UI_STRING. */
+   the reader take a UI_STRING.
+*/
 
 /* The UI_STRING type is the data structure that contains all the needed info
    about a string or a prompt, including test data for a verification prompt.
@@ -201,31 +262,33 @@ typedef struct ui_string_st UI_STRING;
    This is only needed by method authors. */
 enum UI_string_types
 	{
-	UI_NONE=0,
-	UI_STRING_ECHO,		/* Prompt for a string */
-	UI_STRING_NOECHO,	/* Prompt for a hidden string */
-	UI_VERIFY_ECHO,		/* Prompt for a string and verify */
-	UI_VERIFY_NOECHO,	/* Prompt for a hidden string and verify */
-	UI_INFO,		/* Send info to the user */
-	UI_ERROR		/* Send an error message to the user */
+	UIT_NONE=0,
+	UIT_PROMPT,		/* Prompt for a string */
+	UIT_VERIFY,		/* Prompt for a string and verify */
+	UIT_INFO,		/* Send info to the user */
+	UIT_ERROR		/* Send an error message to the user */
 	};
 
 /* Create and manipulate methods */
-UI_METHOD *UI_create_method(void);
+UI_METHOD *UI_create_method(char *name);
 int UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui));
 int UI_method_set_writer(UI_METHOD *method, int (*writer)(UI *ui, UI_STRING *uis));
+int UI_method_set_flusher(UI_METHOD *method, int (*flusher)(UI *ui));
 int UI_method_set_reader(UI_METHOD *method, int (*reader)(UI *ui, UI_STRING *uis));
 int UI_method_set_closer(UI_METHOD *method, int (*closer)(UI *ui));
 int (*UI_method_get_opener(UI_METHOD *method))(UI*);
 int (*UI_method_get_writer(UI_METHOD *method))(UI*,UI_STRING*);
+int (*UI_method_get_flusher(UI_METHOD *method))(UI*);
 int (*UI_method_get_reader(UI_METHOD *method))(UI*,UI_STRING*);
 int (*UI_method_get_closer(UI_METHOD *method))(UI*);
 
 /* The following functions are helpers for method writers to access relevant
    data from a UI_STRING. */
 
-/* Return type type of the UI_STRING */
+/* Return type of the UI_STRING */
 enum UI_string_types UI_get_string_type(UI_STRING *uis);
+/* Return input flags of the UI_STRING */
+int UI_get_input_flags(UI_STRING *uis);
 /* Return the actual string to output (the prompt, info or error) */
 const char *UI_get0_output_string(UI_STRING *uis);
 /* Return the result of a prompt */
@@ -237,7 +300,7 @@ int UI_get_result_minsize(UI_STRING *uis);
 /* Return the required maximum size of the result */
 int UI_get_result_maxsize(UI_STRING *uis);
 /* Set the result of a UI_STRING. */
-int UI_set_result(UI_STRING *uis, char *result);
+int UI_set_result(UI_STRING *uis, const char *result);
 
 
 /* BEGIN ERROR CODES */

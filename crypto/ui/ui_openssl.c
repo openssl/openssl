@@ -283,6 +283,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty);
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo);
 
 static int read_string(UI *ui, UI_STRING *uis);
+static int write_string(UI *ui, UI_STRING *uis);
 
 static int open_console(UI *ui);
 static int echo_console(UI *ui);
@@ -293,9 +294,11 @@ static UI_METHOD ui_openssl =
 	{
 	"OpenSSL default user interface",
 	open_console,
+	write_string,
+	NULL,			/* No flusher is needed for command lines */
 	read_string,
-	NULL,			/* The reader function writes as well */
 	close_console,
+	NULL
 	};
 
 /* The method with all the built-in thingies */
@@ -304,49 +307,50 @@ UI_METHOD *UI_OpenSSL(void)
 	return &ui_openssl;
 	}
 
-static int read_string(UI *ui, UI_STRING *uis)
+/* The following function makes sure that info and error strings are printed
+   before any prompt. */
+static int write_string(UI *ui, UI_STRING *uis)
 	{
 	switch (UI_get_string_type(uis))
 		{
-	case UI_VERIFY_NOECHO:
-		fprintf(tty_out,"Verifying - %s",
-			UI_get0_output_string(uis));
-		fflush(tty_out);
-		if (read_string_inner(ui, uis, 0) == 0)
-			return 0;
-		if (strcmp(UI_get0_result_string(uis),
-			UI_get0_test_string(uis)) != 0)
-			{
-			fprintf(tty_out,"Verify failure\n");
-			fflush(tty_out);
-			return 0;
-			}
+	case UIT_VERIFY:
+	case UIT_PROMPT:
 		break;
-	case UI_VERIFY_ECHO:
-		fprintf(tty_out,"Verifying - %s",
-			UI_get0_output_string(uis));
-		fflush(tty_out);
-		if (read_string_inner(ui, uis, 1) == 0)
-			return 0;
-		if (strcmp(UI_get0_result_string(uis),
-			UI_get0_test_string(uis)) != 0)
-			{
-			fprintf(tty_out,"Verify failure\n");
-			fflush(tty_out);
-			return 0;
-			}
-		break;
-	case UI_STRING_NOECHO:
-		fputs(UI_get0_output_string(uis), tty_out);
-		fflush(tty_out);
-		return read_string_inner(ui, uis, 0);
-	case UI_STRING_ECHO:
-		fputs(UI_get0_output_string(uis), tty_out);
-		fflush(tty_out);
-		return read_string_inner(ui, uis, 1);
 	default:
 		fputs(UI_get0_output_string(uis), tty_out);
 		fflush(tty_out);
+		break;
+		}
+	return 1;
+	}
+
+static int read_string(UI *ui, UI_STRING *uis)
+	{
+	int ok = 0;
+
+	switch (UI_get_string_type(uis))
+		{
+	case UIT_PROMPT:
+		fputs(UI_get0_output_string(uis), tty_out);
+		fflush(tty_out);
+		return read_string_inner(ui, uis,
+			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO);
+	case UIT_VERIFY:
+		fprintf(tty_out,"Verifying - %s",
+			UI_get0_output_string(uis));
+		fflush(tty_out);
+		if ((ok = read_string_inner(ui, uis,
+			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO)) <= 0)
+			return ok;
+		if (strcmp(UI_get0_result_string(uis),
+			UI_get0_test_string(uis)) != 0)
+			{
+			fprintf(tty_out,"Verify failure\n");
+			fflush(tty_out);
+			return 0;
+			}
+		break;
+	default:
 		break;
 		}
 	return 1;
@@ -372,9 +376,9 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo)
 	int maxsize = BUFSIZ-1;
 
 #ifndef OPENSSL_SYS_WIN16
-	if (setjmp(save))
+	if ((ok = setjmp(save)))
 		{
-		ok=0;
+		if (ok == 1) ok=0;
 		goto error;
 		}
 	ok=0;
@@ -594,10 +598,15 @@ static void popsig(void)
 
 static void recsig(int i)
 	{
+	switch(i)
+		{
+	case SIGINT:
+		longjmp(save,-1);
+		break;
+	default:
+		break;
+		}
 	longjmp(save,1);
-#ifdef LINT
-	i=i;
-#endif
 	}
 
 
