@@ -324,7 +324,8 @@ void do_mct(char *amode,
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
 	    /*	    DebugValue("nk",nk,8); */
-	    if(dir && (imode == CFB1 || imode == CFB8 || imode == CBC))
+	    if(dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
+		       || imode == CBC))
 		memcpy(text,old_iv,8);
 	    }
 	for(n=0 ; n < 8 ; ++n)
