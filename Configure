@@ -33,7 +33,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # 386           generate 80386 code
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through 
-# 
+#
+# DEBUG_SAFESTACK use type-safe stacks to enforce type-safety on stack items
+#		provided to stack calls. Generates unique stack functions for
+#		each possible stack type.
 # DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h
 # DES_RISC1	use different DES_ENCRYPT macro that helps reduce register
 #		dependancies but needs to more registers, good for RISC CPU's

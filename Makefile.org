@@ -299,6 +299,9 @@ tags:
 errors:
 	perl util/mkerr.pl -recurse -write
 
+stacks:
+	perl util/mkstack.pl -recurse
+
 util/libeay.num::
 	perl util/mkdef.pl crypto update
 
@@ -312,7 +315,7 @@ TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	perl Configure TABLE) > TABLE
 
-update: depend errors util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
+update: depend errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
 
 tar:
 	@$(TAR) $(TARFLAGS) -cvf - \

@@ -57,6 +57,8 @@
 
 #include <openssl/stack.h>
 
+#ifdef DEBUG_SAFESTACK
+
 #define STACK_OF(type) struct stack_st_##type
 #define PREDECLARE_STACK_OF(type) STACK_OF(type);
 
@@ -132,5 +134,14 @@ type *sk_##type##_pop(STACK_OF(type) *sk) \
     { return (type *)sk_pop((STACK *)sk); } \
 void sk_##type##_sort(STACK_OF(type) *sk) \
     { sk_sort((STACK *)sk); }
+
+#else
+
+#define STACK_OF(type) STACK
+#define PREDECLARE_STACK_OF(type) /* nada */
+#define DECLARE_STACK_OF(type)    /* nada */
+#define IMPLEMENT_STACK_OF(type)  /* nada */
+
+#endif
 
 #endif /* ndef HEADER_SAFESTACK_H */

@@ -4,6 +4,14 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) The type-safe stack code has been rejigged. It is now only compiled
+     in when OpenSSL is configured with the DEBUG_SAFESTACK option and
+     by default all type-specific stack functions are "#define"d back to
+     standard stack functions. This results in more streamlined output
+     but retains the type-safety checking possibilities of the original
+     approach.
+     [Geoff Thorpe]
+
   *) The STACK code has been cleaned up, and certain type declarations
      that didn't make a lot of sense have been brought in line. This has
      also involved a cleanup of sorts in safestack.h to more correctly

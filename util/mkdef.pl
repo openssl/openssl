@@ -18,7 +18,7 @@ my $rsaref = 0;
 my $W32=1;
 my $NT=0;
 # Set this to make typesafe STACK definitions appear in DEF
-my $safe_stack_def = 1;
+my $safe_stack_def = 0;
 
 my $options="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
@@ -49,6 +49,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_update=1 if $_ eq "update";
 	$do_ctest=1 if $_ eq "ctest";
 	$rsaref=1 if $_ eq "rsaref";
+	$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
 	if    (/^no-rc2$/)      { $no_rc2=1; }
 	elsif (/^no-rc4$/)      { $no_rc4=1; }
@@ -363,6 +364,7 @@ sub do_defs
 		foreach (split /;/, $def) {
 			s/^[\n\s]*//g;
 			s/[\n\s]*$//g;
+			next if(/#define/);
 			next if(/typedef\W/);
 			next if(/EVP_bf/ and $no_bf);
 			next if(/EVP_cast/ and $no_cast);
