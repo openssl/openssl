@@ -1,4 +1,4 @@
-/* crypto/des/des_comp.h -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/des/des_old.h -*- mode:C; c-file-style: "eay" -*- */
 
 /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  *
@@ -80,7 +80,7 @@
 #endif
 
 #ifdef _KERBEROS_DES_H
-#error <openssl/des_compat.h> replaces <kerberos/des.h>.
+#error <openssl/des_old.h> replaces <kerberos/des.h>.
 #endif
 
 #include <openssl/opensslconf.h> /* DES_LONG */
