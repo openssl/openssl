@@ -9,19 +9,23 @@ lh_doall_arg, lh_error - dynamic hash table
 
  #include <openssl/lhash.h>
 
- LHASH *lh_new(unsigned long (*hash)(/*void *a*/),
-          int (*compare)(/*void *a,void *b*/));
+ LHASH *lh_new(LHASH_HASH_FN_TYPE hash, LHASH_COMP_FN_TYPE compare);
  void lh_free(LHASH *table);
 
  void *lh_insert(LHASH *table, void *data);
  void *lh_delete(LHASH *table, void *data);
  void *lh_retrieve(LHASH *table, void *data);
 
- void lh_doall(LHASH *table, void (*func)(/*void *b*/));
- void lh_doall_arg(LHASH *table, void (*func)(/*void *a,void *b*/),
+ void lh_doall(LHASH *table, LHASH_DOALL_FN_TYPE func);
+ void lh_doall_arg(LHASH *table, LHASH_DOALL_ARG_FN_TYPE func,
           void *arg);
 
  int lh_error(LHASH *table);
+
+ typedef int (*LHASH_COMP_FN_TYPE)(void *, void *);
+ typedef unsigned long (*LHASH_HASH_FN_TYPE)(void *);
+ typedef void (*LHASH_DOALL_FN_TYPE)(void *);
+ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
 
 =head1 DESCRIPTION
 
@@ -34,7 +38,44 @@ the structure and returns an unsigned long hash value of its key
 field. The hash value is normally truncated to a power of 2, so make
 sure that your hash function returns well mixed low order
 bits. B<compare> takes two arguments, and returns 0 if their keys are
-equal, non-zero otherwise.
+equal, non-zero otherwise. If your hash table will contain items of
+some uniform type, and similarly the B<hash> and B<compare> callbacks
+hash or compare the same type, then the B<DECLARE_LHASH_HASH_FN> and
+B<IMPLEMENT_LHASH_COMP_FN> macros can be used to create callback
+wrappers of the prototypes required in lh_new(). These provide
+per-variable casts before calling the type-specific callbacks written
+by the application author. These macros are defined as;
+
+ #define DECLARE_LHASH_HASH_FN(f_name,o_type) \
+         unsigned long f_name##_LHASH_HASH(void *)
+ #define IMPLEMENT_LHASH_HASH_FN(f_name,o_type) \
+         unsigned long f_name##_LHASH_HASH(void *arg) { \
+                 o_type a = (o_type)arg; \
+                 return f_name(a); }
+ #define LHASH_HASH_FN(f_name) f_name##_LHASH_HASH
+
+ #define DECLARE_LHASH_COMP_FN(f_name,o_type) \
+         int f_name##_LHASH_COMP(void *, void *)
+ #define IMPLEMENT_LHASH_COMP_FN(f_name,o_type) \
+         int f_name##_LHASH_COMP(void *arg1, void *arg2) { \
+                 o_type a = (o_type)arg1; \
+                 o_type b = (o_type)arg2; \
+                 return f_name(a,b); }
+ #define LHASH_COMP_FN(f_name) f_name##_LHASH_COMP
+
+An example of a hash table storing (pointers to) a structure type 'foo'
+could be defined as follows;
+
+ unsigned long   foo_hash(foo *tohash);
+ int             foo_compare(foo *arg1, foo *arg2);
+ static IMPLEMENT_LHASH_HASH_FN(foo_hash, foo *)
+ static IMPLEMENT_LHASH_COMP_FN(foo_compare, foo *);
+ /* ... */
+ int main(int argc, char *argv[]) {
+         LHASH *hashtable = lh_new(LHASH_HASH_FN(foo_hash),
+                                   LHASH_COMP_FN(foo_compare));
+	 /* ... */
+ }
 
 lh_free() frees the B<LHASH> structure B<table>. Allocated hash table
 entries will not be freed; consider using lh_doall() to deallocate any
@@ -56,7 +97,7 @@ the data item as parameters.
 This function can be quite useful when used as follows:
  void cleanup(STUFF *a)
   { STUFF_free(a); }
- lh_doall(hash,cleanup);
+ lh_doall(hash,(LHASH_DOALL_FN_TYPE)cleanup);
  lh_free(hash);
 This can be used to free all the entries. lh_free() then cleans up the
 'buckets' that point to nothing. When doing this, be careful if you
@@ -67,7 +108,9 @@ solution to this problem is to set hash-E<gt>down_load=0 before you
 start.  This will stop the hash table ever being decreased in size.
 
 lh_doall_arg() is the same as lh_doall() except that B<func> will
-be called with B<arg> as the second argument.
+be called with B<arg> as the second argument and B<func> should be
+of type B<LHASH_DOALL_ARG_FN_TYPE> (a callback prototype that is
+passed an extra argument).
 
 lh_error() can be used to determine if an error occurred in the last
 operation. lh_error() is a macro.
