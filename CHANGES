@@ -6,6 +6,7 @@
  Changes between 0.9.2b and 0.9.3
 
   *) New Configure options --prefix=DIR and --openssldir=DIR.
+     [Ulf Möller]
 
   *) Complete rewrite of the error code script(s). It is all now handled
      by one script at the top level which handles error code gathering,
