@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/26 20:56:18 $
+  ______________                           $Date: 1999/04/27 00:36:14 $
 
   DEVELOPMENT STATE
 
@@ -43,7 +43,6 @@
         PKCS#12 code cleanup and enhancement.
 	PKCS #8 and PKCS#5 v2.0 support.
 	Private key, certificate and CRL API and implementation.
-	Redo error code and DEF file generation scripts.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were

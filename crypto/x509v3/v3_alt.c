@@ -96,6 +96,7 @@ STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 		gen = sk_GENERAL_NAME_value(gens, i);
 		ret = i2v_GENERAL_NAME(method, gen, ret);
 	}
+	if(!ret) return sk_GENERAL_NAME_new_null();
 	return ret;
 }
 

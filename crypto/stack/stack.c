@@ -135,6 +135,7 @@ int sk_insert(STACK *st, char *data, int loc)
 	{
 	char **s;
 
+	if(st == NULL) return 0;
 	if (st->num_alloc <= st->num+1)
 		{
 		s=(char **)Realloc((char *)st->data,
@@ -183,7 +184,8 @@ char *sk_delete(STACK *st, int loc)
 	char *ret;
 	int i,j;
 
-	if ((st->num == 0) || (loc < 0) || (loc >= st->num)) return(NULL);
+	if ((st == NULL) || (st->num == 0) || (loc < 0)
+					 || (loc >= st->num)) return(NULL);
 
 	ret=st->data[loc];
 	if (loc != st->num-1)
@@ -206,6 +208,7 @@ int sk_find(STACK *st, char *data)
 	char **r;
 	int i;
 	int (*comp_func)();
+	if(st == NULL) return -1;
 
 	if (st->comp == NULL)
 		{

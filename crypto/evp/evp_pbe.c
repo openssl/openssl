@@ -83,8 +83,7 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	int i;
 	pbelu.pbe_nid = OBJ_obj2nid(pbe_obj);
-	if ((pbelu.pbe_nid != NID_undef) && pbe_algs) 
-			i = sk_find (pbe_algs, (char *)&pbelu);
+	if (pbelu.pbe_nid != NID_undef) i = sk_find(pbe_algs, (char *)&pbelu);
 	else i = -1;
 
 	if (i == -1) {
@@ -167,4 +166,5 @@ int EVP_PBE_alg_add (int nid, EVP_CIPHER *cipher, EVP_MD *md,
 void EVP_PBE_cleanup(void)
 {
 	sk_pop_free(pbe_algs, FreeFunc);
+	pbe_algs = NULL;
 }

@@ -71,13 +71,16 @@ void X509V3_EXT_val_prn(BIO *out, STACK *val, int indent, int ml)
 	int i;
 	CONF_VALUE *nval;
 	if(!val) return;
-	if(!ml) BIO_printf(out, "%*s", indent, "");
+	if(!ml || !sk_num(val)) {
+		BIO_printf(out, "%*s", indent, "");
+		if(!sk_num(val)) BIO_puts(out, "<EMPTY>\n");
+	}
 	for(i = 0; i < sk_num(val); i++) {
 		if(ml) BIO_printf(out, "%*s", indent, "");
 		else if(i > 0) BIO_printf(out, ", ");
 		nval = (CONF_VALUE *)sk_value(val, i);
-		if(!nval->name) BIO_printf(out, "%s", nval->value);
-		else if(!nval->value) BIO_printf(out, "%s", nval->name);
+		if(!nval->name) BIO_puts(out, nval->value);
+		else if(!nval->value) BIO_puts(out, nval->name);
 		else BIO_printf(out, "%s:%s", nval->name, nval->value);
 		if(ml) BIO_puts(out, "\n");
 	}

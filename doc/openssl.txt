@@ -5,21 +5,17 @@ This is some preliminary documentation for OpenSSL.
                             BUFFER Library
 ==============================================================================
 
-[Note: I wrote this when I saw a Malloc version of strdup() in there which
- I'd written myself anyway. I was so annoyed at not noticing this I decided to
- document it :-) Steve.]
-
 The buffer library handles simple character arrays. Buffers are used for various
 purposes in the library, most notably memory BIOs.
 
 The library uses the BUF_MEM structure defined in buffer.h:
 
 typedef struct buf_mem_st
-        {
+{
         int length;     /* current number of bytes */
         char *data;
         int max;        /* size of buffer */
-        } BUF_MEM;
+} BUF_MEM;
 
 'length' is the current size of the buffer in bytes, 'max' is the amount of
 memory allocated to the buffer. There are three functions which handle these
@@ -186,8 +182,7 @@ Literal String extensions.
 
 In each case the 'value' of the extension is placed directly in the extension.
 Currently supported extensions in this category are: nsBaseUrl, nsRevocationUrl
-nsCaRevocationUrl, nsRenewalUrl, nsCaPolicyUrl, nsSslServerName and
-nsComment.
+nsCaRevocationUrl, nsRenewalUrl, nsCaPolicyUrl, nsSslServerName and nsComment.
 
 For example:
 
@@ -227,7 +222,7 @@ basicConstraints=critical,CA:TRUE, pathlen:10
 
 NOTE: for a CA to be considered valid it must have the CA option set to
 TRUE. An end user certificate MUST NOT have the CA value set to true.
-According to PKIX recommendations it should exclude the extension entirely
+According to PKIX recommendations it should exclude the extension entirely,
 however some software may require CA set to FALSE for end entity certificates.
 
 Subject Key Identifier.
@@ -354,4 +349,343 @@ Display only extensions.
 Some extensions are only partially supported and currently are only displayed
 but cannot be set. These include private key usage period, CRL number, and
 CRL reason.
+
+==============================================================================
+                            PKCS#12 Library
+==============================================================================
+
+This section describes the internal PKCS#12 support. There are very few
+differences between the old external library and the new internal code at
+present. This may well change because the external library will not be updated
+much in future.
+
+This version now includes a couple of high level PKCS#12 functions which
+generally "do the right thing" and should make it much easier to handle PKCS#12
+structures.
+
+HIGH LEVEL FUNCTIONS.
+
+For most applications you only need concern yourself with the high level
+functions. They can parse and generate simple PKCS#12 files as produced by
+Netscape and MSIE or indeed any compliant PKCS#12 file containing a single
+private key and certificate pair.
+
+1. Initialisation and cleanup.
+
+No special initialisation is needed for the internal PKCS#12 library: the 
+standard SSLeay_add_all_algorithms() is sufficient. If you do not wish to
+add all algorithms then you can manually initialise the PKCS#12 library with:
+
+PKSC12_PBE_add();
+
+The memory allocated by the PKCS#12 libray is freed up when EVP_cleanup() is
+called or it can be directly freed with:
+
+EVP_PBE_cleanup();
+
+after this call (or EVP_cleanup() ) no more PKCS#12 library functions should
+be called.
+
+2. I/O functions.
+
+i2d_PKCS12_bio(bp, p12)
+
+This writes out a PKCS12 structure to a BIO.
+
+i2d_PKCS12_fp(fp, p12)
+
+This is the same but for a FILE pointer.
+
+d2i_PKCS12_bio(bp, p12)
+
+This reads in a PKCS12 structure from a BIO.
+
+d2i_PKCS12_fp(fp, p12)
+
+This is the same but for a FILE pointer.
+
+3. Parsing and creation functions.
+
+3.1 Parsing with PKCS12_parse().
+
+int PKCS12_parse(PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert,
+								 STACK **ca);
+
+This function takes a PKCS12 structure and a password (ASCII, null terminated)
+and returns the private key, the corresponding certificate and any CA
+certificates. If any of these is not required it can be passed as a NULL.
+The 'ca' parameter should be either NULL, a pointer to NULL or a valid STACK
+structure. Typically to read in a PKCS#12 file you might do:
+
+p12 = d2i_PKCS12_fp(fp, NULL);
+PKCS12_parse(p12, password, &pkey, &cert, NULL); 	/* CAs not wanted */
+PKCS12_free(p12);
+
+3.2 PKCS#12 creation with PKCS12_create().
+
+PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
+			STACK *ca, int nid_key, int nid_cert, int iter,
+						 int mac_iter, int keytype);
+
+This function will create a PKCS12 structure from a given password, name,
+private key, certificate and optional STACK of CA certificates. The remaining
+5 parameters can be set to 0 and sensible defaults will be used.
+
+The parameters nid_key and nid_cert are the key and certificate encryption
+algorithms, iter is the encryption iteration count, mac_iter is the MAC
+iteration count and keytype is the type of private key. If you really want
+to know what these last 5 parameters do then read the low level section.
+
+Typically to create a PKCS#12 file the following could be used:
+
+p12 = PKCS12_create(pass, "My Certificate", pkey, cert, NULL, 0,0,0,0,0);
+i2d_PKCS12_fp(fp, p12);
+PKCS12_free(p12);
+
+LOW LEVEL FUNCTIONS.
+
+In some cases the high level functions do not provide the necessary
+functionality. For example if you want to generate or parse more complex PKCS#12
+files. The sample pkcs12 application uses the low level functions to display
+details about the internal structure of a PKCS#12 file.
+
+Introduction.
+
+This is a brief description of how a PKCS#12 file is represented internally:
+some knowledge of PKCS#12 is assumed.
+
+A PKCS#12 object contains several levels.
+
+At the lowest level is a PKCS12_SAFEBAG. This can contain a certificate, a
+CRL, a private key, encrypted or unencrypted, a set of safebags (so the
+structure can be nested) or other secrets (not documented at present). 
+A safebag can optionally have attributes, currently these are: a unicode
+friendlyName (a Unicode string) or a localKeyID (a string of bytes).
+
+At the next level is an authSafe which is a set of safebags collected into
+a PKCS#7 ContentInfo. This can be just plain data, or encrypted itself.
+
+At the top level is the PKCS12 structure itself which contains a set of
+authSafes in an embedded PKCS#7 Contentinfo of type data. In addition it
+contains a MAC which is a kind of password protected digest to preserve
+integrity (so any unencrypted stuff below can't be tampered with).
+
+The reason for these levels is so various objects can be encrypted in various
+ways. For example you might want to encrypt a set of private keys with
+triple-DES and then include the related certificates either unencrypted or with
+lower encryption. Yes it's the dreaded crypto laws at work again which
+allow strong encryption on private keys and only weak encryption on other stuff.
+
+To build one of these things you turn all certificates and keys into safebags
+(with optional attributes). You collect the safebags into (one or more) STACKS
+and convert these into authsafes (encrypted or unencrypted).  The authsafes are
+collected into a STACK and added to a PKCS12 structure.  Finally a MAC inserted.
+
+Pulling one apart is basically the reverse process. The MAC is verified against
+the given password. The authsafes are extracted and each authsafe split into
+a set of safebags (possibly involving decryption). Finally the safebags are
+decomposed into the original keys and certificates and the attributes used to
+match up private key and certificate pairs.
+
+Anyway here are the functions that do the dirty work.
+
+1. Construction functions.
+
+1.1 Safebag functions.
+
+M_PKCS12_x5092certbag(x509)
+
+This macro takes an X509 structure and returns a certificate bag. The
+X509 structure can be freed up after calling this function.
+
+M_PKCS12_x509crl2certbag(crl)
+
+As above but for a CRL.
+
+PKCS8_PRIV_KEY_INFO *PKEY2PKCS8(EVP_PKEY *pkey)
+
+Take a private key and convert it into a PKCS#8 PrivateKeyInfo structure.
+Works for both RSA and DSA private keys. NB since the PKCS#8 PrivateKeyInfo
+structure contains a private key data in plain text form it should be free'd up
+as soon as it has been encrypted for security reasons (freeing up the structure
+zeros out the sensitive data). This can be done with PKCS8_PRIV_KEY_INFO_free().
+
+PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage)
+
+This sets the key type when a key is imported into MSIE or Outlook 98. Two
+values are currently supported: KEY_EX and KEY_SIG. KEY_EX is an exchange type
+key that can also be used for signing but its size is limited in the export
+versions of MS software to 512 bits, it is also the default. KEY_SIG is a
+signing only key but the keysize is unlimited (well 16K is supposed to work).
+If you are using the domestic version of MSIE then you can ignore this because
+KEY_EX is not limited and can be used for both.
+
+PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
+
+Convert a PKCS8 private key structure into a keybag. This routine embeds the p8
+structure in the keybag so p8 should not be freed up or used after it is called.
+The p8 structure will be freed up when the safebag is freed.
+
+PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8)
+
+Convert a PKCS#8 structure into a shrouded key bag (encrypted). p8 is not
+embedded and can be freed up after use.
+
+int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen)
+int PKCS12_add_friendlyname(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen)
+
+Add a local key id or a friendlyname to a safebag.
+
+1.2 Authsafe functions.
+
+PKCS7 *PKCS12_pack_p7data(STACK *sk)
+Take a stack of safebags and convert them into an unencrypted authsafe. The
+stack of safebags can be freed up after calling this function.
+
+PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, STACK *bags);
+
+As above but encrypted.
+
+1.3 PKCS12 functions.
+
+PKCS12 *PKCS12_init(int mode)
+
+Initialise a PKCS12 structure (currently mode should be NID_pkcs7_data).
+
+M_PKCS12_pack_authsafes(p12, safes)
+
+This macro takes a STACK of authsafes and adds them to a PKCS#12 structure.
+
+int PKCS12_set_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_MD *md_type);
+
+Add a MAC to a PKCS12 structure. If EVP_MD is NULL use SHA-1, the spec suggests
+that SHA-1 should be used.
+
+2. Extraction Functions.
+
+2.1 Safebags.
+
+M_PKCS12_bag_type(bag)
+
+Return the type of "bag". Returns one of the following
+
+NID_keyBag
+NID_pkcs8ShroudedKeyBag			7
+NID_certBag				8
+NID_crlBag				9
+NID_secretBag				10
+NID_safeContentsBag			11
+
+M_PKCS12_cert_bag_type(bag)
+
+Returns type of certificate bag, following are understood.
+
+NID_x509Certificate			14
+NID_sdsiCertificate			15
+
+M_PKCS12_crl_bag_type(bag)
+
+Returns crl bag type, currently only NID_crlBag is recognised.
+
+M_PKCS12_certbag2x509(bag)
+
+This macro extracts an X509 certificate from a certificate bag.
+
+M_PKCS12_certbag2x509crl(bag)
+
+As above but for a CRL.
+
+EVP_PKEY * PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
+
+Extract a private key from a PKCS8 private key info structure.
+
+M_PKCS12_decrypt_skey(bag, pass, passlen) 
+
+Decrypt a shrouded key bag and return a PKCS8 private key info structure.
+Works with both RSA and DSA keys
+
+char *PKCS12_get_friendlyname(bag)
+
+Returns the friendlyName of a bag if present or NULL if none. The returned
+string is a null terminated ASCII string allocated with Malloc(). It should 
+thus be freed up with Free() after use.
+
+2.2 AuthSafe functions.
+
+M_PKCS12_unpack_p7data(p7)
+
+Extract a STACK of safe bags from a PKCS#7 data ContentInfo.
+
+#define M_PKCS12_unpack_p7encdata(p7, pass, passlen)
+
+As above but for an encrypted content info.
+
+2.3 PKCS12 functions.
+
+M_PKCS12_unpack_authsafes(p12)
+
+Extract a STACK of authsafes from a PKCS12 structure.
+
+M_PKCS12_mac_present(p12)
+
+Check to see if a MAC is present.
+
+int PKCS12_verify_mac(PKCS12 *p12, unsigned char *pass, int passlen)
+
+Verify a MAC on a PKCS12 structure. Returns an error if MAC not present.
+
+
+Notes.
+
+1. All the function return 0 or NULL on error.
+2. Encryption based functions take a common set of parameters. These are
+described below.
+
+pass, passlen
+ASCII password and length. The password on the MAC is called the "integrity
+password" the encryption password is called the "privacy password" in the
+PKCS#12 documentation. The passwords do not have to be the same. If -1 is
+passed for the length it is worked out by the function itself (currently
+this is sometimes done whatever is passed as the length but that may change).
+
+salt, saltlen
+A 'salt' if salt is NULL a random salt is used. If saltlen is also zero a
+default length is used.
+
+iter
+Iteration count. This is a measure of how many times an internal function is
+called to encrypt the data. The larger this value is the longer it takes, it
+makes dictionary attacks on passwords harder. NOTE: Some implementations do
+not support an iteration count on the MAC. If the password for the MAC and
+encryption is the same then there is no point in having a high iteration
+count for encryption if the MAC has no count. The MAC could be attacked
+and the password used for the main decryption.
+
+pbe_nid
+This is the NID of the password based encryption method used. The following are
+supported.
+NID_pbe_WithSHA1And128BitRC4
+NID_pbe_WithSHA1And40BitRC4
+NID_pbe_WithSHA1And3_Key_TripleDES_CBC
+NID_pbe_WithSHA1And2_Key_TripleDES_CBC
+NID_pbe_WithSHA1And128BitRC2_CBC
+NID_pbe_WithSHA1And40BitRC2_CBC
+
+Which you use depends on the implementation you are exporting to. "Export grade"(i.e. cryptograhically challenged) products cannot support all algorithms.
+Typically you may be able to use any encryption on shrouded key bags but they
+must then be placed in an unencrypted authsafe. Other authsafes may only support
+40bit encryption. Of course if you are using SSLeay throughout you can strongly
+encrypt everything and have high iteration counts on everything.
+
+3. For decryption routines only the password and length are needed.
+
+4. Unlike the external version the nid's of objects are the values of the
+constants: that is NID_certBag is the real nid, therefore there is no 
+PKCS12_obj_offset() function.  Note the object constants are not the same as
+those of the external version. If you use these constants then you will need
+to recompile your code.
+
+5. With the exception of PKCS12_MAKE_KEYBAG(), after calling any function or 
+macro of the form PKCS12_MAKE_SOMETHING(other) the "other" structure can be
+reused or freed up safely.
 
