@@ -15,10 +15,7 @@ Quick Start
 
 If you want to just get on with it, do:
 
-  ./Configure                           Find a match for your system
-                                        in this output and use it on
-                                        the next line
-  ./Configure <system>
+  sh config                      [if this fails, go to step 1b below]
   make -f Makefile.ssl links
   make
   make rehash
@@ -38,7 +35,19 @@ section on porting to a new system.
 Installation in Detail
 ----------------------
 
-  1. Configure OpenSSL for your operating system
+ 1a. Configure OpenSSL for your operation system automatically
+
+     Run
+
+       sh config
+
+     This guesses at your operating system (and compiler, if
+     necessary) and configures OpenSSL based on this guess. Check the
+     first line of output to see if it guessed correctly. If it did
+     not get it correct or you want to use a different compiler then
+     go to step 1b. Otherwise go to step 2.
+
+ 1b. Configure OpenSSL for your operating system manually
 
      OpenSSL knows about a range of different operating system, hardware
      and compiler combinations. To see the ones it knows about, run
@@ -96,7 +105,7 @@ Installation in Detail
        make
 
      This will build the OpenSSL libraries (libcrypto.a and libssl.a)
-     and the OpenSSL binary ("ssleay"). The libraries will be built
+     and the OpenSSL binary ("openssl"). The libraries will be built
      in the top-level directory, and the binary will be in the "apps"
      directory.
 
@@ -116,17 +125,17 @@ Installation in Detail
      This will create the installation directory (if it does not
      exist) and then create the following subdirectories:
 
-       bin            Contains the ssleay binary and a few other utility
+       bin            Contains the openssl binary and a few other utility
                       programs. It also contains symbolic links so
-                      that ssleay commands can be accessed directly
+                      that openssl commands can be accessed directly
                       (e.g. so that "s_client" can be used instead of
-                      "ssleay s_client").
+                      "openssl s_client").
        certs          Initially empty, this is the default location
                       for certificate files.
        include        Contains the header files needed if you want to
                       compile programs with libcrypto or libssl.
        lib            Contains the library files themselves and the
-                      OpenSSL configuration file "ssleay.cnf".
+                      OpenSSL configuration file "openssl.cnf".
        private        Initially empty, this is the default location
                       for private key files.
 
