@@ -145,7 +145,7 @@ alltests: \
 # fips_test_aes
 
 fips_test_aes:
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  mkdir -p fips_aes_data/rsp; \
 	  $(SET_SO_PATHS); ./$(FIPS_AESTEST) -d fips_aes_data/list; \
 	fi
@@ -162,7 +162,7 @@ test_idea:
 test_sha:
 	$(SET_SO_PATHS); ./$(SHATEST)
 	$(SET_SO_PATHS); ./$(SHA1TEST)
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(SET_SO_PATHS); ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
 	fi
 
@@ -201,7 +201,7 @@ test_rc5:
 
 test_rand:
 	$(SET_SO_PATHS); ./$(RANDTEST)
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(SET_SO_PATHS); ./$(FIPS_RANDTEST); \
 	fi
 
@@ -260,7 +260,7 @@ test_dsa:
 	@echo "Generate a set of DSA parameters"
 	$(SET_SO_PATHS); ./$(DSATEST)
 	$(SET_SO_PATHS); ./$(DSATEST) -app2_1
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(SET_SO_PATHS); ./$(FIPS_DSATEST); \
 	  $(SET_SO_PATHS); ./$(FIPS_DSATEST) -app2_1; \
 	fi
@@ -279,7 +279,9 @@ test_engine:
 
 test_ssl: keyU.ss certU.ss certCA.ss
 	@echo "test SSL protocol"
-	@$(SET_SO_PATHS); sh ./testfipsssl keyU.ss certU.ss certCA.ss
+	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	  $(SET_SO_PATHS); sh ./testfipsssl keyU.ss certU.ss certCA.ss; \
+	fi
 	@$(SET_SO_PATHS); sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
@@ -319,7 +321,7 @@ $(FIPS_AESTEST): $(FIPS_AESTEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_AESTEST) $(CFLAGS) $(FIPS_AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
 	fi
 
@@ -393,7 +395,7 @@ $(FIPS_SHA1TEST): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST); \
 	fi
 
@@ -492,7 +494,7 @@ $(FIPS_DESTEST): $(FIPS_DESTEST).o $(DLIBCRYPTO)
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(FIPS_DESTEST) $(CFLAGS) $(FIPS_DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
 	fi
 
@@ -510,7 +512,7 @@ $(FIPS_RANDTEST): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
 	fi
 
@@ -536,7 +538,7 @@ $(FIPS_DSATEST): $(FIPS_DSATEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
 	fi
 
