@@ -62,7 +62,7 @@
  */
 
 #define NUM_NID 181
-#define NUM_SN 128
+#define NUM_SN 140
 #define NUM_LN 175
 #define NUM_OBJ 152
 
@@ -233,10 +233,10 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[47]),0},
 {"RSA-MD5","md5WithRSAEncryption",NID_md5WithRSAEncryption,9,
 	&(lvalues[56]),0},
-{"pbeWithMD2AndDES-CBC","pbeWithMD2AndDES-CBC",
-	NID_pbeWithMD2AndDES_CBC,9,&(lvalues[65]),0},
-{"pbeWithMD5AndDES-CBC","pbeWithMD5AndDES-CBC",
-	NID_pbeWithMD5AndDES_CBC,9,&(lvalues[74]),0},
+{"PBE-MD2-DES","pbeWithMD2AndDES-CBC",NID_pbeWithMD2AndDES_CBC,9,
+	&(lvalues[65]),0},
+{"PBE-MD5-DES","pbeWithMD5AndDES-CBC",NID_pbeWithMD5AndDES_CBC,9,
+	&(lvalues[74]),0},
 {"X500","X500",NID_X500,1,&(lvalues[83]),0},
 {"X509","X509",NID_X509,2,&(lvalues[84]),0},
 {"CN","commonName",NID_commonName,3,&(lvalues[86]),0},
@@ -312,8 +312,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[355]),0},
 {"DSA-SHA","dsaWithSHA",NID_dsaWithSHA,5,&(lvalues[364]),0},
 {"DSA-old","dsaEncryption-old",NID_dsa_2,5,&(lvalues[369]),0},
-{"pbeWithSHA1AndRC2-CBC","pbeWithSHA1AndRC2-CBC",
-	NID_pbeWithSHA1AndRC2_CBC,9,&(lvalues[374]),0},
+{"PBE-SHA1-RC2-64","pbeWithSHA1AndRC2-CBC",NID_pbeWithSHA1AndRC2_CBC,
+	9,&(lvalues[374]),0},
 {"PBKDF2","PBKDF2",NID_id_pbkdf2,9,&(lvalues[383]),0},
 {"DSA-SHA1-old","dsaWithSHA1-old",NID_dsaWithSHA1_2,5,&(lvalues[392]),0},
 {"nsCertType","Netscape Cert Type",NID_netscape_cert_type,9,
@@ -417,19 +417,17 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"invalidityDate","Invalidity Date",NID_invalidity_date,3,
 	&(lvalues[733]),0},
 {"SXNetID","Strong Extranet ID",NID_sxnet,5,&(lvalues[736]),0},
-{"pbeWithSHA1And128BitRC4","pbeWithSHA1And128BitRC4",
+{"PBE-SHA1-RC4-128","pbeWithSHA1And128BitRC4",
 	NID_pbe_WithSHA1And128BitRC4,10,&(lvalues[741]),0},
-{"pbeWithSHA1And40BitRC4","pbeWithSHA1And40BitRC4",
+{"PBE-SHA1-RC4-40","pbeWithSHA1And40BitRC4",
 	NID_pbe_WithSHA1And40BitRC4,10,&(lvalues[751]),0},
-{"pbeWithSHA1And3-KeyTripleDES-CBC",
-	"pbeWithSHA1And3-KeyTripleDES-CBC",
+{"PBE-SHA1-3DES","pbeWithSHA1And3-KeyTripleDES-CBC",
 	NID_pbe_WithSHA1And3_Key_TripleDES_CBC,10,&(lvalues[761]),0},
-{"pbeWithSHA1And2-KeyTripleDES-CBC",
-	"pbeWithSHA1And2-KeyTripleDES-CBC",
+{"PBE-SHA1-2DES","pbeWithSHA1And2-KeyTripleDES-CBC",
 	NID_pbe_WithSHA1And2_Key_TripleDES_CBC,10,&(lvalues[771]),0},
-{"pbeWithSHA1And128BitRC2-CBC","pbeWithSHA1And128BitRC2-CBC",
+{"PBE-SHA1-RC2-128","pbeWithSHA1And128BitRC2-CBC",
 	NID_pbe_WithSHA1And128BitRC2_CBC,10,&(lvalues[781]),0},
-{"pbeWithSHA1And40BitRC2-CBC","pbeWithSHA1And40BitRC2-CBC",
+{"PBE-SHA1-RC2-40","pbeWithSHA1And40BitRC2-CBC",
 	NID_pbe_WithSHA1And40BitRC2_CBC,10,&(lvalues[791]),0},
 {"keyBag","keyBag",NID_keyBag,11,&(lvalues[801]),0},
 {"pkcs8ShroudedKeyBag","pkcs8ShroudedKeyBag",NID_pkcs8ShroudedKeyBag,
@@ -455,12 +453,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
 {"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,9,
 	&(lvalues[957]),0},
-{"pbeWithMD2AndRC2-CBC","pbeWithMD2AndRC2-CBC",
-	NID_pbeWithMD2AndRC2_CBC,9,&(lvalues[966]),0},
-{"pbeWithMD5AndRC2-CBC","pbeWithMD5AndRC2-CBC",
-	NID_pbeWithMD5AndRC2_CBC,9,&(lvalues[975]),0},
-{"pbeWithSHA1AndDES-CBC","pbeWithSHA1AndDES-CBC",
-	NID_pbeWithSHA1AndDES_CBC,9,&(lvalues[984]),0},
+{"PBE-MD2-RC2-64","pbeWithMD2AndRC2-CBC",NID_pbeWithMD2AndRC2_CBC,9,
+	&(lvalues[966]),0},
+{"PBE-MD5-RC2-64","pbeWithMD5AndRC2-CBC",NID_pbeWithMD5AndRC2_CBC,9,
+	&(lvalues[975]),0},
+{"PBE-SHA1-DES","pbeWithSHA1AndDES-CBC",NID_pbeWithSHA1AndDES_CBC,9,
+	&(lvalues[984]),0},
 {"msExtReq","Microsoft Extension Request",NID_ms_ext_req,10,
 	&(lvalues[993]),0},
 {"extReq","Extension Request",NID_ext_req,9,&(lvalues[1003]),0},
@@ -522,6 +520,18 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[17]),/* "O" */
 &(nid_objs[178]),/* "OCSP" */
 &(nid_objs[18]),/* "OU" */
+&(nid_objs[ 9]),/* "PBE-MD2-DES" */
+&(nid_objs[168]),/* "PBE-MD2-RC2-64" */
+&(nid_objs[10]),/* "PBE-MD5-DES" */
+&(nid_objs[169]),/* "PBE-MD5-RC2-64" */
+&(nid_objs[147]),/* "PBE-SHA1-2DES" */
+&(nid_objs[146]),/* "PBE-SHA1-3DES" */
+&(nid_objs[170]),/* "PBE-SHA1-DES" */
+&(nid_objs[148]),/* "PBE-SHA1-RC2-128" */
+&(nid_objs[149]),/* "PBE-SHA1-RC2-40" */
+&(nid_objs[68]),/* "PBE-SHA1-RC2-64" */
+&(nid_objs[144]),/* "PBE-SHA1-RC4-128" */
+&(nid_objs[145]),/* "PBE-SHA1-RC4-40" */
 &(nid_objs[127]),/* "PKIX" */
 &(nid_objs[98]),/* "RC2-40-CBC" */
 &(nid_objs[166]),/* "RC2-64-CBC" */

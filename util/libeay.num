@@ -2137,3 +2137,15 @@ CRYPTO_set_mem_debug_functions          2161
 CRYPTO_pop_info                         2162
 CRYPTO_push_info_                       2163
 CRYPTO_set_mem_debug_options            2164
+PEM_write_PKCS8PrivateKey_nid           2165
+PEM_write_bio_PKCS8PrivateKey_nid       2166
+d2i_PKCS8PrivateKey_bio                 2167
+ASN1_NULL_free                          2168
+d2i_ASN1_NULL                           2169
+ASN1_NULL_new                           2170
+i2d_PKCS8PrivateKey_bio                 2171
+i2d_PKCS8PrivateKey_fp                  2172
+i2d_ASN1_NULL                           2173
+i2d_PKCS8PrivateKey_nid_fp              2174
+d2i_PKCS8PrivateKey_fp                  2175
+i2d_PKCS8PrivateKey_nid_bio             2176

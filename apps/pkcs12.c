@@ -104,6 +104,7 @@ int MAIN(int argc, char **argv)
     int twopass = 0;
     int keytype = 0;
     int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
+    int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
     int ret = 1;
     int macver = 1;
     int noprompt = 0;
@@ -143,7 +144,27 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-maciter"))
 					 maciter = PKCS12_DEFAULT_ITER;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
-		else if (!strcmp (*args, "-inkey")) {
+		else if (!strcmp (*args, "-certpbe")) {
+			if (args[1]) {
+				args++;
+				cert_pbe=OBJ_txt2nid(*args);
+				if(cert_pbe == NID_undef) {
+					BIO_printf(bio_err,
+						 "Unknown PBE algorithm %s\n", *args);
+					badarg = 1;
+				}
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-keypbe")) {
+			if (args[1]) {
+				args++;
+				key_pbe=OBJ_txt2nid(*args);
+				if(key_pbe == NID_undef) {
+					BIO_printf(bio_err,
+						 "Unknown PBE algorithm %s\n", *args);
+					badarg = 1;
+				}
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-inkey")) {
 		    if (args[1]) {
 			args++;	
 			keyname = *args;
@@ -224,6 +245,8 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-maciter      use MAC iteration\n");
 	BIO_printf (bio_err, "-twopass      separate MAC, encryption passwords\n");
 	BIO_printf (bio_err, "-descert      encrypt PKCS#12 certificates with triple DES (default RC2-40)\n");
+	BIO_printf (bio_err, "-certpbe alg  specify certificate PBE algorithm (default RC2-40)\n");
+	BIO_printf (bio_err, "-keypbe alg   specify private key PBE algorithm (default 3DES)\n");
 	BIO_printf (bio_err, "-keyex        set MS key exchange type\n");
 	BIO_printf (bio_err, "-keysig       set MS key signature type\n");
 	BIO_printf (bio_err, "-password p   set import/export password (NOT RECOMMENDED)\n");
@@ -391,8 +414,7 @@ int MAIN(int argc, char **argv)
 	p8 = EVP_PKEY2PKCS8 (key);
 	EVP_PKEY_free(key);
 	if(keytype) PKCS8_add_keyusage(p8, keytype);
-	bag = PKCS12_MAKE_SHKEYBAG(NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
-			cpass, -1, NULL, 0, iter, p8);
+	bag = PKCS12_MAKE_SHKEYBAG(key_pbe, cpass, -1, NULL, 0, iter, p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a bunch of DER and PEM functions to handle PKCS#8 format private
+     keys. Add some short names for PKCS#8 PBE algorithms and allow them
+     to be specified on the command line for the pkcs8 and pkcs12 utilities.
+     Update documentation.
+     [Steve Henson]
+
   *) Support for ASN1 "NULL" type. This could be handled before by using
      ASN1_TYPE but there wasn't any function that would try to read a NULL
      and produce an error if it couldn't. For compatibility we also have

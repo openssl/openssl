@@ -574,10 +574,34 @@ DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
 
+int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
 int PEM_write_bio_PKCS8PrivateKey(BIO *, EVP_PKEY *, const EVP_CIPHER *,
                                   char *, int, pem_password_cb *, void *);
+int i2d_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
+int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, EVP_PKEY *x, int nid,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
+EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
+
+int i2d_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
+int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, EVP_PKEY *x, int nid,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
+int PEM_write_PKCS8PrivateKey_nid(FILE *fp, EVP_PKEY *x, int nid,
+				  char *kstr, int klen,
+				  pem_password_cb *cb, void *u);
+
+EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u);
+
 int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 			      char *kstr,int klen, pem_password_cb *cd, void *u);
+
 #endif /* SSLEAY_MACROS */
 
 
@@ -589,6 +613,8 @@ int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 /* Error codes for the PEM functions. */
 
 /* Function codes. */
+#define PEM_F_D2I_PKCS8PRIVATEKEY_BIO			 120
+#define PEM_F_D2I_PKCS8PRIVATEKEY_FP			 121
 #define PEM_F_DEF_CALLBACK				 100
 #define PEM_F_LOAD_IV					 101
 #define PEM_F_PEM_ASN1_READ				 102
@@ -596,6 +622,7 @@ int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 #define PEM_F_PEM_ASN1_WRITE				 104
 #define PEM_F_PEM_ASN1_WRITE_BIO			 105
 #define PEM_F_PEM_DO_HEADER				 106
+#define PEM_F_PEM_F_DO_PK8KEY_FP			 122
 #define PEM_F_PEM_F_PEM_WRITE_PKCS8PRIVATEKEY		 118
 #define PEM_F_PEM_GET_EVP_CIPHER_INFO			 107
 #define PEM_F_PEM_READ					 108

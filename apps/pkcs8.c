@@ -99,6 +99,16 @@ int MAIN(int argc, char **argv)
 					badarg = 1;
 				}
 			} else badarg = 1;
+		} else if (!strcmp(*args,"-v1")) {
+			if (args[1]) {
+				args++;
+				pbe_nid=OBJ_txt2nid(*args);
+				if(pbe_nid == NID_undef) {
+					BIO_printf(bio_err,
+						 "Unknown PBE algorithm %s\n", *args);
+					badarg = 1;
+				}
+			} else badarg = 1;
 		} else if (!strcmp(*args,"-inform")) {
 			if (args[1]) {
 				args++;
@@ -139,6 +149,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-noiter    use 1 as iteration count\n");
 		BIO_printf (bio_err, "-nocrypt   use or expect unencrypted private key\n");
 		BIO_printf (bio_err, "-v2 alg    use PKCS#5 v2.0 and cipher \"alg\"\n");
+		BIO_printf (bio_err, "-v1 obj    use PKCS#5 v1.5 and cipher \"alg\"\n");
 		return (1);
 	}
 

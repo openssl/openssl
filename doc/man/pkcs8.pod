@@ -16,6 +16,7 @@ B<openssl> B<pkcs8>
 [B<-nocrypt>]
 [B<-nooct>]
 [B<-v2 alg>]
+[B<-v1 alg>]
 
 =head1 DESCRIPTION
 
@@ -89,6 +90,11 @@ private keys with OpenSSL then this doesn't matter.
 The B<alg> argument is the encryption algorithm to use, valid values include
 B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
 
+=item B<-v1 alg>
+
+This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use. A complete
+list of possible algorithms is included below.
+
 =back
 
 =head1 NOTES
@@ -120,6 +126,33 @@ It is possible to write out DER encoded encrypted private keys in
 PKCS#8 format because the encryption details are included at an ASN1
 level whereas the traditional format includes them at a PEM level.
 
+=head1 PKCS#5 v1.5 and PKCS#12 algorithms.
+
+Various algorithms can be used with the B<-v1> command line option,
+including PKCS#5 v1.5 and PKCS#12. These are described in more detail
+below.
+
+=over 4
+
+=item B<PBE-MD2-DES PBE-MD5-DES>
+
+These algorithms were included in the original PKCS#5 v1.5 specification.
+They only offer 56 bits of protection since they both use DES.
+
+=item B<PBE-SHA1-RC2-64 PBE-MD2-RC2-64 PBE-MD5-RC2-64 PBE-SHA1-DES>
+
+These algorithms are not mentioned in the original PKCS#5 v1.5 specification
+but they use the same key derivation algorithm and are supported by some
+software. They are mentioned in PKCS#5 v1.5. They use either 64 bit RC2 or
+56 bit DES.
+
+=item B<PBE-SHA1-RC4-128 PBE-SHA1-RC4-40 PBE-SHA1-3DES PBE-SHA1-2DES PBE-SHA1-RC2-128 PBE-SHA1-RC2-40>
+
+These algorithms use the PKCS#12 password based encryption algorithm and
+allow strong encryption algorithms like triple DES or 128 bit RC2 to be used.
+
+=back
+
 =head1 EXAMPLES
 
 Convert a private from traditional to PKCS#5 v2.0 format using triple
@@ -131,6 +164,11 @@ Convert a private key to PKCS#8 using a PKCS#5 1.5 compatible algorithm
 (DES):
 
  openssl pkcs8 -in key.pem -topk8 -out enckey.pem
+
+Convert a private key to PKCS#8 using a PKCS#12 compatible algorithm
+(3DES):
+
+ openssl pkcs8 -in key.pem -topk8 -out enckey.pem -v1 PBE-SHA1-3DES
 
 Read a DER unencrypted PKCS#8 format private key:
 
@@ -149,9 +187,6 @@ Therefore it can be assumed that the PKCS#5 v2.0 implementation is
 reasonably accurate at least as far as these algorithms are concerned.
 
 =head1 BUGS
-
-It isn't possible to produce keys encrypted using PKCS#5 v1.5 algorithms
-other than B<pbeWithMD5AndDES-CBC> using this utility.
 
 There should be an option that prints out the encryption algorithm
 in use and other details such as the iteration count.

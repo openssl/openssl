@@ -450,7 +450,7 @@ void ERR_load_${lib}_strings(void)
 #ifdef ${lib}_LIB_NAME
 		${lib}_lib_name->error = ERR_PACK(${lib}_lib_error_code,0,0);
 		ERR_load_strings(0,${lib}_lib_name);
-#endif;
+#endif
 		}
 	}
 

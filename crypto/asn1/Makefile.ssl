@@ -223,6 +223,13 @@ a_meth.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 a_meth.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 a_meth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 a_meth.o: ../cryptlib.h
+a_null.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+a_null.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+a_null.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+a_null.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+a_null.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+a_null.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+a_null.o: ../cryptlib.h
 a_object.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 a_object.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 a_object.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h

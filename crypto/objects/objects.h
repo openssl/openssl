@@ -110,10 +110,12 @@ extern "C" {
 #define NID_md5WithRSAEncryption	8
 #define OBJ_md5WithRSAEncryption	OBJ_pkcs,1L,4L
 
+#define SN_pbeWithMD2AndDES_CBC		"PBE-MD2-DES"
 #define LN_pbeWithMD2AndDES_CBC		"pbeWithMD2AndDES-CBC"
 #define NID_pbeWithMD2AndDES_CBC	9
 #define OBJ_pbeWithMD2AndDES_CBC	OBJ_pkcs,5L,1L
 
+#define SN_pbeWithMD5AndDES_CBC		"PBE-MD5-DES"
 #define LN_pbeWithMD5AndDES_CBC		"pbeWithMD5AndDES-CBC"
 #define NID_pbeWithMD5AndDES_CBC	10
 #define OBJ_pbeWithMD5AndDES_CBC	OBJ_pkcs,5L,3L
@@ -380,6 +382,7 @@ extern "C" {
 #define OBJ_dsa_2			OBJ_algorithm,12L
 
 /* proposed by microsoft to RSA */
+#define SN_pbeWithSHA1AndRC2_CBC	"PBE-SHA1-RC2-64"
 #define LN_pbeWithSHA1AndRC2_CBC	"pbeWithSHA1AndRC2-CBC"
 #define NID_pbeWithSHA1AndRC2_CBC	68
 #define OBJ_pbeWithSHA1AndRC2_CBC	OBJ_pkcs,5L,11L 
@@ -767,26 +770,32 @@ extern "C" {
 #define OBJ_pkcs12			OBJ_pkcs,12L
 #define OBJ_pkcs12_pbeids		OBJ_pkcs12, 1
 
+#define SN_pbe_WithSHA1And128BitRC4	"PBE-SHA1-RC4-128"
 #define LN_pbe_WithSHA1And128BitRC4	"pbeWithSHA1And128BitRC4"
 #define NID_pbe_WithSHA1And128BitRC4	144
 #define OBJ_pbe_WithSHA1And128BitRC4	OBJ_pkcs12_pbeids, 1L
 
+#define SN_pbe_WithSHA1And40BitRC4	"PBE-SHA1-RC4-40"
 #define LN_pbe_WithSHA1And40BitRC4	"pbeWithSHA1And40BitRC4"
 #define NID_pbe_WithSHA1And40BitRC4	145
 #define OBJ_pbe_WithSHA1And40BitRC4	OBJ_pkcs12_pbeids, 2L
 
+#define SN_pbe_WithSHA1And3_Key_TripleDES_CBC	"PBE-SHA1-3DES"
 #define LN_pbe_WithSHA1And3_Key_TripleDES_CBC	"pbeWithSHA1And3-KeyTripleDES-CBC"
 #define NID_pbe_WithSHA1And3_Key_TripleDES_CBC	146
 #define OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC	OBJ_pkcs12_pbeids, 3L
 
+#define SN_pbe_WithSHA1And2_Key_TripleDES_CBC	"PBE-SHA1-2DES"
 #define LN_pbe_WithSHA1And2_Key_TripleDES_CBC	"pbeWithSHA1And2-KeyTripleDES-CBC"
 #define NID_pbe_WithSHA1And2_Key_TripleDES_CBC	147
 #define OBJ_pbe_WithSHA1And2_Key_TripleDES_CBC	OBJ_pkcs12_pbeids, 4L
 
+#define SN_pbe_WithSHA1And128BitRC2_CBC		"PBE-SHA1-RC2-128"
 #define LN_pbe_WithSHA1And128BitRC2_CBC		"pbeWithSHA1And128BitRC2-CBC"
 #define NID_pbe_WithSHA1And128BitRC2_CBC	148
 #define OBJ_pbe_WithSHA1And128BitRC2_CBC	OBJ_pkcs12_pbeids, 5L
 
+#define SN_pbe_WithSHA1And40BitRC2_CBC	"PBE-SHA1-RC2-40"
 #define LN_pbe_WithSHA1And40BitRC2_CBC	"pbeWithSHA1And40BitRC2-CBC"
 #define NID_pbe_WithSHA1And40BitRC2_CBC	149
 #define OBJ_pbe_WithSHA1And40BitRC2_CBC	OBJ_pkcs12_pbeids, 6L
@@ -878,14 +887,17 @@ extern "C" {
 #define NID_SMIMECapabilities		167
 #define OBJ_SMIMECapabilities		OBJ_pkcs9,15L
 
+#define SN_pbeWithMD2AndRC2_CBC		"PBE-MD2-RC2-64"
 #define LN_pbeWithMD2AndRC2_CBC		"pbeWithMD2AndRC2-CBC"
 #define NID_pbeWithMD2AndRC2_CBC	168
 #define OBJ_pbeWithMD2AndRC2_CBC	OBJ_pkcs,5L,4L
 
+#define SN_pbeWithMD5AndRC2_CBC		"PBE-MD5-RC2-64"
 #define LN_pbeWithMD5AndRC2_CBC		"pbeWithMD5AndRC2-CBC"
 #define NID_pbeWithMD5AndRC2_CBC	169
 #define OBJ_pbeWithMD5AndRC2_CBC	OBJ_pkcs,5L,6L
 
+#define SN_pbeWithSHA1AndDES_CBC	"PBE-SHA1-DES"
 #define LN_pbeWithSHA1AndDES_CBC	"pbeWithSHA1AndDES-CBC"
 #define NID_pbeWithSHA1AndDES_CBC	170
 #define OBJ_pbeWithSHA1AndDES_CBC	OBJ_pkcs,5L,10L
