@@ -1030,9 +1030,10 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 	{
 	char *buf = NULL, *p;
 	MS_STATIC char buf2[1024];
-	ASN1_INTEGER *bs = NULL, bs2;
+	ASN1_INTEGER *bs = NULL, *bs2 = NULL;
 	BIO *io = NULL;
 	BIGNUM *serial = NULL;
+
 	buf=OPENSSL_malloc( ((serialfile == NULL)
 			?(strlen(CAfile)+strlen(POSTFIX)+1)
 			:(strlen(serialfile)))+1);
@@ -1099,22 +1100,26 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 
 	if (!BN_add_word(serial,1))
 		{ BIO_printf(bio_err,"add_word failure\n"); goto end; }
-	bs2.data=(unsigned char *)buf2;
-	bs2.length=BN_bn2bin(serial,bs2.data);
-
+	if (!(bs2 = BN_to_ASN1_INTEGER(serial, NULL)))
+		{ BIO_printf(bio_err,"error converting bn 2 asn1_integer\n"); goto end; }
 	if (BIO_write_filename(io,buf) <= 0)
 		{
 		BIO_printf(bio_err,"error attempting to write serial number file\n");
 		perror(buf);
 		goto end;
 		}
-	i2a_ASN1_INTEGER(io,&bs2);
+	i2a_ASN1_INTEGER(io,bs2);
 	BIO_puts(io,"\n");
+
 	BIO_free(io);
+	if (buf) OPENSSL_free(buf);
+	ASN1_INTEGER_free(bs2);
+	BN_free(serial);
 	io=NULL;
 	return bs;
 
 	end:
+	if (buf) OPENSSL_free(buf);
 	BIO_free(io);
 	ASN1_INTEGER_free(bs);
 	BN_free(serial);
@@ -1277,6 +1282,3 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 		}
 	return 1;
 }
-
-
-
