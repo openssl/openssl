@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix 'openssl passwd -1'.
+     [Bodo Moeller]
+
   *) Add summary printout to ocsp utility. The various functions which
      convert status values to strings have been renamed to:
      OCSP_response_status_str(), OCSP_cert_status_str() and
