@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/31 14:03:09 $
+  ______________                           $Date: 2001/04/01 15:18:35 $
 
   DEVELOPMENT STATE
 
@@ -67,6 +67,8 @@
 	FreeBSD 4.1 (FreeBSD-elf)		- PASSED [engine]
 	Solaris 2.7 (solaris-sparcv9-cc)	- PASSED [engine]
 	BSDi 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
+	HP-UX 10.20, w/ ANSI-C and w/ gcc	- PASSED [normal+engine]
+	Irix					- PASSED [presumed normal]
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
