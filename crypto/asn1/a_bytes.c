@@ -201,7 +201,10 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 		c.pp=pp;
 		c.p=p;
 		c.inf=inf;
-		c.slen=len;
+		if (inf & 1)
+			c.slen = length - (p - *pp);
+		else
+			c.slen=len;
 		c.tag=Ptag;
 		c.xclass=Pclass;
 		c.max=(length == 0)?0:(p+length);
@@ -279,8 +282,7 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_CTX *c)
 		{
 		if (c->inf & 1)
 			{
-			c->eos=ASN1_check_infinite_end(&c->p,
-				(long)(c->max-c->p));
+			c->eos=ASN1_check_infinite_end(&c->p, c->slen);
 			if (c->eos) break;
 			}
 		else
@@ -289,7 +291,7 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_CTX *c)
 			}
 
 		c->q=c->p;
-		if (d2i_ASN1_bytes(&os,&c->p,c->max-c->p,c->tag,c->xclass)
+		if (d2i_ASN1_bytes(&os,&c->p,c->slen,c->tag,c->xclass)
 			== NULL)
 			{
 			c->error=ERR_R_ASN1_LIB;
@@ -302,8 +304,7 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_CTX *c)
 			goto err;
 			}
 		memcpy(&(b.data[num]),os->data,os->length);
-		if (!(c->inf & 1))
-			c->slen-=(c->p-c->q);
+		c->slen-=(c->p-c->q);
 		num+=os->length;
 		}
 
