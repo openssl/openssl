@@ -2448,7 +2448,7 @@ err:
 
 static int get_certificate_status(const char *serial, TXT_DB *db)
 	{
-	unsigned char *row[DB_NUMBER],**rrow;
+	char *row[DB_NUMBER],**rrow;
 	int ok=-1,i;
 
 	/* Free Resources */
@@ -2481,7 +2481,7 @@ static int get_certificate_status(const char *serial, TXT_DB *db)
 			
 	/* Make it Upper Case */
 	for (i=0; row[DB_serial][i] != '\0'; i++)
-		row[DB_serial][i] = toupper(row[DB_serial][i]);
+		row[DB_serial][i] = toupper((unsigned char)row[DB_serial][i]);
 
 	ok=1;
 
