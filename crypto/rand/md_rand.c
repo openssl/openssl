@@ -327,6 +327,7 @@ static void ssleay_rand_initialize(void)
 		unsigned char tmpbuf[ENTROPY_NEEDED];
 		int n;
 		
+		setvbuf(fh, NULL, _IONBF, 0);
 		n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
 		fclose(fh);
 		RAND_add(tmpbuf,sizeof tmpbuf,n);
