@@ -184,6 +184,8 @@ SDIRS=  objects \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5
 
+FDIRS=	rand sha1 des aes dsa
+
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
 TESTS = alltests
