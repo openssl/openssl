@@ -533,7 +533,7 @@ static int get_context(HWCryptoHook_ContextHandle *hac,
 	HWCryptoHook_ErrMsgBuf rmsg;
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
         *hac = p_hwcrhk_Init(&hwcrhk_globals, sizeof(hwcrhk_globals), &rmsg,
 		cac);
@@ -802,9 +802,15 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	HWCryptoHook_RSAKeyHandle *hptr;
 #endif
 #if !defined(OPENSSL_NO_RSA)
+	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
 #endif
 	HWCryptoHook_PassphraseContext ppctx;
+
+#if !defined(OPENSSL_NO_RSA)
+	rmsg.buf = tempbuf;
+	rmsg.size = sizeof(tempbuf);
+#endif
 
 	if(!hwcrhk_context)
 		{
@@ -912,9 +918,12 @@ static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
 			res->pkey.rsa = RSA_new();
 			res->pkey.rsa->n = rsa->n;
 			res->pkey.rsa->e = rsa->e;
+			rsa->n = NULL;
+			rsa->e = NULL;
 			CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
 			RSA_free(rsa);
 			}
+			break;
 #endif
 		default:
 			HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
@@ -943,7 +952,7 @@ static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  
 	to_return = 0; /* expect failure */
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
 	if(!hwcrhk_context)
 		{
@@ -994,6 +1003,9 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 	HWCryptoHook_RSAKeyHandle *hptr;
 	int to_return = 0, ret;
 
+	rmsg.buf = tempbuf;
+	rmsg.size = sizeof(tempbuf);
+
 	if(!hwcrhk_context)
 		{
 		HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_NOT_INITIALISED);
@@ -1014,9 +1026,6 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 				HWCRHK_R_MISSING_KEY_COMPONENTS);
 			goto err;
 			}
-
-		rmsg.buf = tempbuf;
-		rmsg.size = 1024;
 
 		/* Prepare the params */
 		bn_expand2(r, rsa->n->top); /* Check for error !! */
@@ -1059,9 +1068,6 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 				HWCRHK_R_MISSING_KEY_COMPONENTS);
 			goto err;
 			}
-
-		rmsg.buf = tempbuf;
-		rmsg.size = 1024;
 
 		/* Prepare the params */
 		bn_expand2(r, rsa->n->top); /* Check for error !! */
@@ -1131,7 +1137,7 @@ static int hwcrhk_rand_bytes(unsigned char *buf, int num)
 	int ret;
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
 	if(!hwcrhk_context)
 		{
@@ -1183,7 +1189,7 @@ static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 #endif
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
 #ifndef OPENSSL_NO_RSA
 	hptr = (HWCryptoHook_RSAKeyHandle *) item;
