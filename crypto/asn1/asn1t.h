@@ -86,7 +86,7 @@ extern "C" {
 	OPENSSL_GLOBAL const ASN1_ITEM itname##_it = {
 
 #define ASN1_ITEM_end(itname) \
-		}
+		};
 
 #else
 
@@ -104,8 +104,7 @@ extern "C" {
 #define ASN1_ITEM_end(itname) \
 		}; \
 	return &local_it; \
-	}\
-	void dummy_function(void)
+	}
 
 #endif
 
@@ -134,7 +133,7 @@ extern "C" {
  *
  * 	ASN1_SEQUENCE(stname) = {
  * 		... SEQUENCE components ...
- * 	} ASN1_SEQUENCE_END(stname);
+ * 	} ASN1_SEQUENCE_END(stname)
  *
  * 	This will produce an ASN1_ITEM called stname_it
  *	for a structure called stname.
@@ -144,7 +143,7 @@ extern "C" {
  *
  * 	ASN1_SEQUENCE(itname) = {
  * 		... SEQUENCE components ...
- * 	} ASN1_SEQUENCE_END_name(stname, itname);
+ * 	} ASN1_SEQUENCE_END_name(stname, itname)
  *
  *	This will create an item called itname_it using
  *	a structure called stname.
@@ -206,7 +205,7 @@ extern "C" {
  *
  * 	ASN1_CHOICE(chname) = {
  * 		... CHOICE options ...
- * 	ASN1_CHOICE_END(chname);
+ * 	ASN1_CHOICE_END(chname)
  *
  * 	This will produce an ASN1_ITEM called chname_it
  *	for a structure called chname. The structure
@@ -695,13 +694,13 @@ typedef struct ASN1_AUX_st {
 #define IMPLEMENT_ASN1_TYPE_ex(itname, vname, ex) \
 				ASN1_ITEM_start(itname) \
 					ASN1_ITYPE_PRIMITIVE, V_##vname, NULL, 0, NULL, ex, #itname \
-				ASN1_ITEM_end(itname);
+				ASN1_ITEM_end(itname)
 
 /* Macro to implement a multi string type */
 #define IMPLEMENT_ASN1_MSTRING(itname, mask) \
 				ASN1_ITEM_start(itname) \
 					ASN1_ITYPE_MSTRING, mask, NULL, 0, NULL, sizeof(ASN1_STRING), #itname \
-				ASN1_ITEM_end(itname);
+				ASN1_ITEM_end(itname)
 
 /* Macro to implement an ASN1_ITEM in terms of old style funcs */
 
@@ -722,7 +721,7 @@ typedef struct ASN1_AUX_st {
 		&sname##_ff, \
 		0, \
 		#sname \
-	ASN1_ITEM_end(sname);
+	ASN1_ITEM_end(sname)
 
 #define IMPLEMENT_EXTERN_ASN1(sname, tag, fptrs) \
 	ASN1_ITEM_start(sname) \
@@ -733,7 +732,7 @@ typedef struct ASN1_AUX_st {
 		&fptrs, \
 		0, \
 		#sname \
-	ASN1_ITEM_end(sname);
+	ASN1_ITEM_end(sname)
 
 /* Macro to implement standard functions in terms of ASN1_ITEM structures */
 
