@@ -78,8 +78,8 @@ static int RSA_eay_finish(RSA *rsa);
 static RSA_METHOD rsa_pkcs1_eay_meth={
 	"Eric Young's PKCS#1 RSA",
 	RSA_eay_public_encrypt,
-	RSA_eay_public_decrypt,
-	RSA_eay_private_encrypt,
+	RSA_eay_public_decrypt, /* signature verification */
+	RSA_eay_private_encrypt, /* signing */
 	RSA_eay_private_decrypt,
 	RSA_eay_mod_exp,
 	BN_mod_exp_mont,
@@ -136,6 +136,13 @@ static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 
 	if (BN_bin2bn(buf,num,&f) == NULL) goto err;
 	
+	if (BN_ucmp(&f, rsa->n) >= 0)
+		{	
+		/* usually the padding functions would catch this */
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT,RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+		goto err;
+		}
+
 	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
 		BN_MONT_CTX* bn_mont_ctx;
@@ -183,6 +190,7 @@ err:
 	return(r);
 	}
 
+/* signing */
 static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
@@ -218,6 +226,13 @@ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	if (i <= 0) goto err;
 
 	if (BN_bin2bn(buf,num,&f) == NULL) goto err;
+	
+	if (BN_ucmp(&f, rsa->n) >= 0)
+		{	
+		/* usually the padding functions would catch this */
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT,RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+		goto err;
+		}
 
 	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
 		RSA_blinding_on(rsa,ctx);
@@ -292,6 +307,12 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 	/* make data into a big number */
 	if (BN_bin2bn(from,(int)flen,&f) == NULL) goto err;
 
+	if (BN_ucmp(&f, rsa->n) >= 0)
+		{
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT,RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+		goto err;
+		}
+
 	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
 		RSA_blinding_on(rsa,ctx);
 	if (rsa->flags & RSA_FLAG_BLINDING)
@@ -352,6 +373,7 @@ err:
 	return(r);
 	}
 
+/* signature verification */
 static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
@@ -383,6 +405,13 @@ static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 		}
 
 	if (BN_bin2bn(from,flen,&f) == NULL) goto err;
+
+	if (BN_ucmp(&f, rsa->n) >= 0)
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT,RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+		goto err;
+		}
+
 	/* do the decrypt */
 	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
