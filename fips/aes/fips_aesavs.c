@@ -271,8 +271,8 @@ enum XCrypt {XDECRYPT, XENCRYPT};
 /*  Monte Carlo Tests          */
 /*-----------------------------*/
 
-//#define gb(a,b) (((a)[(b)/8] >> ((b)%8))&1)
-//#define sb(a,b,v) ((a)[(b)/8]=((a)[(b)/8]&~(1 << ((b)%8)))|(!!(v) << ((b)%8)))
+/*#define gb(a,b) (((a)[(b)/8] >> ((b)%8))&1)*/
+/*#define sb(a,b,v) ((a)[(b)/8]=((a)[(b)/8]&~(1 << ((b)%8)))|(!!(v) << ((b)%8)))*/
 
 #define gb(a,b) (((a)[(b)/8] >> (7-(b)%8))&1)
 #define sb(a,b,v) ((a)[(b)/8]=((a)[(b)/8]&~(1 << (7-(b)%8)))|(!!(v) << (7-(b)%8)))
@@ -628,7 +628,7 @@ int proc_file(char *rqfile)
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
 	ilen = strlen(ibuf);
-	//      printf("step=%d ibuf=%s",step,ibuf);
+	/*      printf("step=%d ibuf=%s",step,ibuf); */
 	switch (step)
 	    {
 	case 0:  /* read preamble */
