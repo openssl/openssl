@@ -692,10 +692,13 @@ int RAND_poll(void)
 {
 	unsigned long l;
 	pid_t curr_pid = getpid();
+#ifndef NO_FP_API
 #ifdef DEVRANDOM
 	FILE *fh;
 #endif
+#endif
 
+#ifndef NO_FP_API
 #ifdef DEVRANDOM
 	/* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
 	 * have this. Use /dev/urandom if you can as /dev/random may block
@@ -713,6 +716,7 @@ int RAND_poll(void)
 		memset(tmpbuf,0,n);
 		}
 #endif
+#endif
 
 	/* put in some default random data, we need more than just this */
 	l=curr_pid;
@@ -723,8 +727,10 @@ int RAND_poll(void)
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0);
 
+#ifndef NO_FP_API
 #ifdef DEVRANDOM
 	return 1;
+#endif
 #endif
 	return 0;
 }
