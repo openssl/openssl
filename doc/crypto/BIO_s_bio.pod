@@ -33,15 +33,16 @@ BIO_ctrl_reset_read_request - BIO pair BIO
 
 BIO_s_bio() returns the method for a BIO pair. A BIO pair is a pair of source/sink
 BIOs where data written to either half of the pair is buffered and can be read from
-the other half.
+the other half. Both halves must usually by handled by the same application thread
+since no locking is done on the internal data structures.
 
 Since BIO chains typically end in a source/sink BIO it is possible to make this
 one half of a BIO pair and have all the data processed by the chain under application
 control.
 
-One typical use of BIO pairs is to place SSL I/O under application control, this
-can be used when the application wishes to use a non standard trasport for
-SSL or the normal socket routines are inappropriate.
+One typical use of BIO pairs is to place TLS/SSL I/O under application control, this
+can be used when the application wishes to use a non standard transport for
+TLS/SSL or the normal socket routines are inappropriate.
 
 Calls to BIO_read() will read data from the buffer or request a retry if no
 data is available.
@@ -57,7 +58,7 @@ BIO_reset() clears any data in the write buffer.
 BIO_make_bio_pair() joins two separate BIOs into a connected pair.
 
 BIO_destroy_pair() destroys the association between two connected BIOs. Freeing
-up both halves of the pair will automatically destroy the association.
+up any half of the pair will automatically destroy the association.
 
 BIO_set_write_buf_size() sets the write buffer size of BIO B<b> to B<size>.
 If the size is not initialised a default value is used. This is currently
@@ -79,7 +80,7 @@ whereas BIO_get_write_guarantee() is a macro.
 BIO_get_read_request() and BIO_ctrl_get_read_request() return the amount of data
 requested (or the buffer size if it is less) if the last read failed due to an
 empty buffer. This can be used to determine how much data should be written to the
-other half of the pair so the next read will succeed: this is most useful in SSL
+other half of the pair so the next read will succeed: this is most useful in TLS/SSL
 applications where the amount of data read is usually meaningful rather than just
 a buffer size. After a successful read this call will return zero.
 
@@ -91,7 +92,7 @@ BIO_get_read_request() to zero.
 Both halves of a BIO pair should be freed. That is even if one half is implicity
 freed due to a BIO_free_all() or SSL_free() call the other half needs to be freed.
 
-When used in bidirectional applications (such as SSL) care should be taken to
+When used in bidirectional applications (such as TLS/SSL) care should be taken to
 flush any data in the write buffer. This can be done by calling BIO_pending()
 on the other half of the pair and, if any data is pending, reading it and sending
 it to the underlying transport. This must be done before any normal processing
@@ -99,7 +100,7 @@ it to the underlying transport. This must be done before any normal processing
 
 To see why this is important consider a case where a request is sent using
 BIO_write() and a response read with BIO_read(), this can occur during an
-SSL handshake for example. BIO_write() will succeed and place data in the write
+TLS/SSL handshake for example. BIO_write() will succeed and place data in the write
 buffer. BIO_read() will initially fail and BIO_should_read() will be true. If
 the application then waits for data to be available on the underlying transport
 before flusing the write buffer it will never succeed because the request was
