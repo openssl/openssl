@@ -149,10 +149,16 @@ void OpenSSL_add_all_ciphers(void)
 #ifndef OPENSSL_NO_AES
 	EVP_add_cipher(EVP_aes_128_ecb());
 	EVP_add_cipher(EVP_aes_128_cbc());
+	EVP_add_cipher_alias(SN_aes_128_cbc,"AES128");
+	EVP_add_cipher_alias(SN_aes_128_cbc,"aes128");
 	EVP_add_cipher(EVP_aes_192_ecb());
 	EVP_add_cipher(EVP_aes_192_cbc());
+	EVP_add_cipher_alias(SN_aes_192_cbc,"AES192");
+	EVP_add_cipher_alias(SN_aes_192_cbc,"aes192");
 	EVP_add_cipher(EVP_aes_256_ecb());
 	EVP_add_cipher(EVP_aes_256_cbc());
+	EVP_add_cipher_alias(SN_aes_256_cbc,"AES256");
+	EVP_add_cipher_alias(SN_aes_256_cbc,"aes256");
 #endif
 	PKCS12_PBE_add();
 	PKCS5_PBE_add();
