@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
-	COMP_METHOD *cm;
+	COMP_METHOD *cm = NULL;
 
 	verbose = 0;
 	debug = 0;
