@@ -188,6 +188,10 @@ EVP_PKEY *pkey;
 	p=s;
 	i2d_PublicKey(pkey,&p);
 	if (!ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
+	/* Set number of unused bits to zero */
+	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;
+
 	Free(s);
 
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
