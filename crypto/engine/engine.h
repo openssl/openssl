@@ -504,18 +504,37 @@ const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name);
  * and memory management function pointers to the loaded library. These should
  * be used/set in the loaded library code so that the loading application's
  * 'state' will be used/changed in all operations. */
-typedef void *(*dynamic_MEM_malloc_cb)(size_t);
-typedef void *(*dynamic_MEM_realloc_cb)(void *, size_t);
-typedef void (*dynamic_MEM_free_cb)(void *);
+typedef void *(*dyn_MEM_malloc_cb)(size_t);
+typedef void *(*dyn_MEM_realloc_cb)(void *, size_t);
+typedef void (*dyn_MEM_free_cb)(void *);
 typedef struct st_dynamic_MEM_fns {
-	dynamic_MEM_malloc_cb			malloc_cb;
-	dynamic_MEM_realloc_cb			realloc_cb;
-	dynamic_MEM_free_cb			free_cb;
+	dyn_MEM_malloc_cb			malloc_cb;
+	dyn_MEM_realloc_cb			realloc_cb;
+	dyn_MEM_free_cb				free_cb;
 	} dynamic_MEM_fns;
+/* FIXME: Perhaps the memory and locking code (crypto.h) should declare and use
+ * these types so we (and any other dependant code) can simplify a bit?? */
+typedef void (*dyn_lock_locking_cb)(int,int,const char *,int);
+typedef int (*dyn_lock_add_lock_cb)(int*,int,int,const char *,int);
+typedef struct CRYPTO_dynlock_value *(*dyn_dynlock_create_cb)(
+						const char *,int);
+typedef void (*dyn_dynlock_lock_cb)(int,struct CRYPTO_dynlock_value *,
+						const char *,int);
+typedef void (*dyn_dynlock_destroy_cb)(struct CRYPTO_dynlock_value *,
+						const char *,int);
+typedef struct st_dynamic_LOCK_fns {
+	dyn_lock_locking_cb			lock_locking_cb;
+	dyn_lock_add_lock_cb			lock_add_lock_cb;
+	dyn_dynlock_create_cb			dynlock_create_cb;
+	dyn_dynlock_lock_cb			dynlock_lock_cb;
+	dyn_dynlock_destroy_cb			dynlock_destroy_cb;
+	} dynamic_LOCK_fns;
+/* The top-level structure */
 typedef struct st_dynamic_fns {
 	const ERR_FNS				*err_fns;
 	const CRYPTO_EX_DATA_IMPL		*ex_data_fns;
 	dynamic_MEM_fns				mem_fns;
+	dynamic_LOCK_fns			lock_fns;
 	} dynamic_fns;
 
 /* The version checking function should be of this prototype. NB: The
@@ -555,6 +574,11 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
 		if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb, \
 			fns->mem_fns.realloc_cb, fns->mem_fns.free_cb)) \
 			return 0; \
+		CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
+		CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
+		CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
+		CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb); \
+		CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb); \
 		if(!CRYPTO_set_ex_data_implementation(fns->ex_data_fns)) \
 			return 0; \
 		if(!ERR_set_implementation(fns->err_fns)) return 0; \

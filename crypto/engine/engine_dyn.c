@@ -375,13 +375,21 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 	/* First binary copy the ENGINE structure so that we can roll back if
 	 * the hand-over fails */
 	memcpy(&cpy, e, sizeof(ENGINE));
-	/* Provide the ERR, "ex_data", and memory callbacks so the loaded
-	 * library uses our own state (and locking) rather than its own. */
+	/* Provide the ERR, "ex_data", memory, and locking callbacks so the
+	 * loaded library uses our state rather than its own. FIXME: As noted in
+	 * engine.h, much of this would be simplified if each area of code
+	 * provided its own "summary" structure of all related callbacks. It
+	 * would also increase opaqueness. */
 	fns.err_fns = ERR_get_implementation();
 	fns.ex_data_fns = CRYPTO_get_ex_data_implementation();
 	CRYPTO_get_mem_functions(&fns.mem_fns.malloc_cb,
 				&fns.mem_fns.realloc_cb,
 				&fns.mem_fns.free_cb);
+	fns.lock_fns.lock_locking_cb = CRYPTO_get_locking_callback();
+	fns.lock_fns.lock_add_lock_cb = CRYPTO_get_add_lock_callback();
+	fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();
+	fns.lock_fns.dynlock_lock_cb = CRYPTO_get_dynlock_lock_callback();
+	fns.lock_fns.dynlock_destroy_cb = CRYPTO_get_dynlock_destroy_callback();
 	/* Try to bind the ENGINE onto our own ENGINE structure */
 	if(!ctx->bind_engine(e, ctx->engine_id, &fns))
 		{
