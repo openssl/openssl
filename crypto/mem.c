@@ -244,7 +244,7 @@ static APP_INFO *remove_info()
 #ifdef LEVITTE_DEBUG
 			if (ret->thread != tmp.thread)
 				{
-				fprintf(stderr, "remove_info(): deleted info has other thread ID (%d) than the current thread (%d)!!!!\n",
+				fprintf(stderr, "remove_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
 					ret->thread, tmp.thread);
 				abort();
 				}
@@ -295,7 +295,7 @@ int CRYPTO_add_info(const char *file, int line, const char *info)
 #ifdef LEVITTE_DEBUG
 			if (ami->thread != amim->thread)
 				{
-				fprintf(stderr, "CRYPTO_add_info(): previous info has other thread ID (%d) than the current thread (%d)!!!!\n",
+				fprintf(stderr, "CRYPTO_add_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
 					amim->thread, ami->thread);
 				abort();
 				}
@@ -581,7 +581,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
 		sprintf(buf + ami_cnt,
-			"thread=%d, file=%s, line=%d, info=\"",
+			"thread=%lu, file=%s, line=%d, info=\"",
 			amip->thread, amip->file, amip->line);
 		buf_len=strlen(buf);
 		info_len=strlen(amip->info);
