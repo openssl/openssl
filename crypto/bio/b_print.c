@@ -61,7 +61,6 @@
  */
 
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
@@ -812,14 +811,24 @@ int BIO_printf (BIO *bio, const char *format, ...)
 	{
 	va_list args;
 	int ret;
+
+	va_start(args, format);
+
+	ret = BIO_vprintf(bio, format, args);
+
+	va_end(args);
+	return(ret);
+	}
+
+int BIO_vprintf (BIO *bio, const char *format, va_list args)
+	{
+	int ret;
 	size_t retlen;
 #ifdef USE_ALLOCATING_PRINT
 	char *hugebuf;
 #else
 	MS_STATIC char hugebuf[1024*2]; /* 10k in one chunk is the limit */
 #endif
-
-	va_start(args, format);
 
 #ifndef USE_ALLOCATING_PRINT
 	hugebuf[0]='\0';
@@ -838,7 +847,6 @@ int BIO_printf (BIO *bio, const char *format, ...)
 		}
 	CRYPTO_pop_info();
 #endif
-	va_end(args);
 	return(ret);
 	}
 
@@ -849,10 +857,21 @@ int BIO_printf (BIO *bio, const char *format, ...)
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 	{
 	va_list args;
+	int ret;
+
+	va_start(args, format);
+
+	ret = BIO_vsnprintf(buf, n, format, args);
+
+	va_end(args);
+	return(ret);
+	}
+
+int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
+	{
 	size_t retlen;
 	int truncated;
 
-	va_start(args, format);
 	_dopr(dopr_outch, dopr_isbig, dopr_copy,
 		&buf, &n, &retlen, &truncated, format, args);
 	if (truncated)

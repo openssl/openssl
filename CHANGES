@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Added BIO_vprintf() and BIO_vsnprintf().
+     [Richard Levitte]
+
   *) Added more prefixes to parse for in the the strings written
      through a logging bio, to cover all the levels that are available
      through syslog.  The prefixes are now:
