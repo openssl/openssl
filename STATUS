@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/21 17:23:04 $
+  ______________                           $Date: 2002/02/28 12:42:00 $
 
   DEVELOPMENT STATE
 
@@ -62,9 +62,6 @@
        http://www.openssl.org/~bodo/tls-cbc.txt
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
-
-    o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
-       or an error is reported
 
     o  "OpenSSL STATUS" is never up-to-date.
 

@@ -1597,10 +1597,12 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
 	else
                 {
 		strncpy(*princ, entity->data, entity->length);
+		(*princ)[entity->length]='\0';
 		if (realm)
                         {
 			strcat (*princ, "@");
 			(void) strncat(*princ, realm->data, realm->length);
+			(*princ)[entity->length+1+realm->length]='\0';
 			}
 		}
 

@@ -153,12 +153,14 @@ int main(int argc, char **argv)
 				case 'c':
 					cflag=1;
 					strncpy(cksumname,p,200);
+					cksumname[sizeof(cksumname)-1]='\0';
 					p+=strlen(cksumname);
 					break;
 				case 'C':
 					cflag=1;
 					longk=1;
 					strncpy(cksumname,p,200);
+					cksumname[sizeof(cksumname)-1]='\0';
 					p+=strlen(cksumname);
 					break;
 				case 'e':
@@ -190,6 +192,7 @@ int main(int argc, char **argv)
 				case 'u':
 					uflag=1;
 					strncpy(uuname,p,200);
+					uuname[sizeof(uuname)-1]='\0';
 					p+=strlen(uuname);
 					break;
 				case 'h':
