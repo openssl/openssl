@@ -18,11 +18,11 @@ if [ "$MAKEDEPEND" = "gcc" ]; then
     sed -e '/^# DO NOT DELETE.*/,$d' < Makefile.ssl > Makefile.tmp
     echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
     gcc -D OPENSSL_DOING_MAKEDEPEND -M $@ >> Makefile.tmp
-    perl $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
+    ${PERL} $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
     rm -f Makefile.tmp
 else
     ${MAKEDEPEND} -D OPENSSL_DOING_MAKEDEPEND -f Makefile.ssl $@
-    perl $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+    ${PERL} $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
 fi
 mv Makefile.new Makefile.ssl
 # unfake the presence of Kerberos
