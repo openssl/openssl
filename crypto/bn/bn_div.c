@@ -207,7 +207,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 #if !defined(NO_ASM) && !defined(PEDANTIC)
 # if defined(__GNUC__) && __GNUC__>=2
-#  if defined(__i386) && !defined(__sun)
+#  if defined(__i386)
    /*
     * There were two reasons for implementing this template:
     * - GNU C generates a call to a function (__udivdi3 to be exact)

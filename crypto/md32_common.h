@@ -191,7 +191,7 @@
    *
    * 					<appro@fy.chalmers.se>
    */
-#  if defined(__i386) && !defined(__sun)
+#  if defined(__i386)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm volatile (		\
 				"roll %1,%0"		\
