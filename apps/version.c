@@ -181,7 +181,7 @@ int MAIN(int argc, char **argv)
 		else
 			{
 			printf("%s (Library: %s)\n",
-				SSLEAY_VERSION_TEXT,
+				OPENSSL_VERSION_TEXT,
 				SSLeay_version(SSLEAY_VERSION));
 			}
 		}
