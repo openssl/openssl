@@ -309,6 +309,7 @@ bad:
 		for (i=0; i<sk_num(osk); i++)
 			{
 			ASN1_TYPE *atmp;
+			int typ;
 			j=atoi(sk_value(osk,i));
 			if (j == 0)
 				{
@@ -324,6 +325,15 @@ bad:
 			if(!at)
 				{
 				BIO_printf(bio_err,"Error parsing structure\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			typ = ASN1_TYPE_get(at);
+			if ((typ == V_ASN1_OBJECT)
+				|| (typ == V_ASN1_NULL))
+				{
+				BIO_printf(bio_err, "Can't parse %s type\n",
+					typ == V_ASN1_NULL ? "NULL" : "OBJECT");
 				ERR_print_errors(bio_err);
 				goto end;
 				}
