@@ -340,10 +340,6 @@ typedef struct Netscape_certificate_sequence
 	STACK_OF(X509) *certs;
 	} NETSCAPE_CERT_SEQUENCE;
 
-#ifndef HEADER_BN_H
-#define BIGNUM 		char
-#endif
-
 typedef struct CBCParameter_st
 	{
 	unsigned char iv[8];
@@ -546,10 +542,11 @@ typedef struct pkcs8_priv_key_info_st
 #define 	X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
 
 
+const char *X509_verify_cert_error_string(long n);
+
 #ifndef SSLEAY_MACROS
 #ifdef HEADER_ENVELOPE_H
 int X509_verify(X509 *a, EVP_PKEY *r);
-const char *X509_verify_cert_error_string(long n);
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
