@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,6 +118,8 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
 static void ERR_STATE_free(ERR_STATE *s);
 #ifndef OPENSSL_NO_ERR
@@ -275,8 +277,10 @@ static int int_err_library_number=ERR_LIB_USER;
  * the defaults. */
 static void err_fns_check(void)
 	{
+	if (err_fns) return;
+	
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if(!err_fns)
+	if (!err_fns)
 		err_fns = &err_defaults;
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	}
@@ -482,6 +486,9 @@ static void build_SYS_str_reasons()
 	/* OPENSSL_malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
 	int i;
+	static int init = 1;
+
+	if (!init) return;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
 
@@ -508,6 +515,8 @@ static void build_SYS_str_reasons()
 	/* Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
 	 * as required by ERR_load_strings. */
 
+	init = 0;
+	
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
 	}
 #endif
@@ -537,37 +546,30 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 void ERR_load_ERR_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
-		/* We put the first-time check code here to reduce the number of
-		 * times it is called (then it doesn't get called from
-		 * ERR_load_strings() loads of times). */
-		err_fns_check();
+	err_fns_check();
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(0,ERR_str_libraries);
-		ERR_load_strings(0,ERR_str_reasons);
-		ERR_load_strings(ERR_LIB_SYS,ERR_str_functs);
-		build_SYS_str_reasons();
-		ERR_load_strings(ERR_LIB_SYS,SYS_str_reasons);
+	err_load_strings(0,ERR_str_libraries);
+	err_load_strings(0,ERR_str_reasons);
+	err_load_strings(ERR_LIB_SYS,ERR_str_functs);
+	build_SYS_str_reasons();
+	err_load_strings(ERR_LIB_SYS,SYS_str_reasons);
 #endif
-		}
 	}
 
-void ERR_load_strings(int lib, ERR_STRING_DATA *str)
+static void err_load_strings(int lib, ERR_STRING_DATA *str)
 	{
-	/* Do this if it hasn't been done already (NB: The order of the "init=0"
-	 * statement and the recursive calls back to this function prevent a
-	 * loop). */
-	ERR_load_ERR_strings();
 	while (str->error)
 		{
 		str->error|=ERR_PACK(lib,0,0);
 		ERRFN(err_set_item)(str);
 		str++;
 		}
+	}
+
+void ERR_load_strings(int lib, ERR_STRING_DATA *str)
+	{
+	err_load_ERR_strings();
+	err_load_strings(lib, str);
 	}
 
 void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
