@@ -30,9 +30,9 @@
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);
-static int bio_write(BIO *bio, char *buf, int num);
+static int bio_write(BIO *bio, const char *buf, int num);
 static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr);
-static int bio_puts(BIO *bio, char *str);
+static int bio_puts(BIO *bio, const char *str);
 
 static int bio_make_pair(BIO *bio1, BIO *bio2);
 static void bio_destroy_pair(BIO *bio);
@@ -283,7 +283,7 @@ static ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 	}
 
 
-static int bio_write(BIO *bio, char *buf, int num_)
+static int bio_write(BIO *bio, const char *buf, int num_)
 	{
 	size_t num = num_;
 	size_t rest;
@@ -628,7 +628,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	return ret;
 	}
 
-static int bio_puts(BIO *bio, char *str)
+static int bio_puts(BIO *bio, const char *str)
 	{
 	return bio_write(bio, str, strlen(str));
 	}

@@ -73,11 +73,11 @@
 
 #if !defined(NO_STDIO)
 
-static int MS_CALLBACK file_write(BIO *h,char *buf,int num);
-static int MS_CALLBACK file_read(BIO *h,char *buf,int size);
-static int MS_CALLBACK file_puts(BIO *h,char *str);
-static int MS_CALLBACK file_gets(BIO *h,char *str,int size);
-static long MS_CALLBACK file_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int MS_CALLBACK file_write(BIO *h, const char *buf, int num);
+static int MS_CALLBACK file_read(BIO *h, char *buf, int size);
+static int MS_CALLBACK file_puts(BIO *h, const char *str);
+static int MS_CALLBACK file_gets(BIO *h, char *str, int size);
+static long MS_CALLBACK file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int MS_CALLBACK file_new(BIO *h);
 static int MS_CALLBACK file_free(BIO *data);
 static BIO_METHOD methods_filep=
@@ -163,7 +163,7 @@ static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int MS_CALLBACK file_write(BIO *b, char *in, int inl)
+static int MS_CALLBACK file_write(BIO *b, const char *in, int inl)
 	{
 	int ret=0;
 
@@ -179,7 +179,7 @@ static int MS_CALLBACK file_write(BIO *b, char *in, int inl)
 	return(ret);
 	}
 
-static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret=1;
 	FILE *fp=(FILE *)b->ptr;
@@ -294,7 +294,7 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 	return(ret);
 	}
 
-static int MS_CALLBACK file_puts(BIO *bp, char *str)
+static int MS_CALLBACK file_puts(BIO *bp, const char *str)
 	{
 	int n,ret;
 

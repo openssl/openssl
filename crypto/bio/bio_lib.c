@@ -317,7 +317,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 	return(ret);
 	}
 
-long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)())
+long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long))
 	{
 	long ret;
 	long (*cb)();

@@ -127,7 +127,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 40);
 #endif
 		PKCS7_add_attrib_smimecap (si, smcap);
-		sk_pop_free(smcap, X509_ALGOR_free);
+		sk_pop_free(smcap, (void(*)(void *)) X509_ALGOR_free);
 	}
 
 	if(flags & PKCS7_DETACHED)PKCS7_set_detached(p7, 1);

@@ -71,7 +71,7 @@ static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
-	if(!ext_list && !(ext_list = sk_new(ext_cmp))) {
+	if(!ext_list && !(ext_list = sk_new((int (*)(const void *, const void *))ext_cmp))) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -95,7 +95,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 	tmp.ext_nid = nid;
 	ret = (X509V3_EXT_METHOD **) OBJ_bsearch((char *)&t,
 			(char *)standard_exts, STANDARD_EXTENSION_COUNT,
-			sizeof(X509V3_EXT_METHOD *), (int (*)())ext_cmp);
+			sizeof(X509V3_EXT_METHOD *), (int (*)(const void *, const void *))ext_cmp);
 	if(ret) return *ret;
 	if(!ext_list) return NULL;
 	idx = sk_find(ext_list, (char *)&tmp);
@@ -137,7 +137,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 
 void X509V3_EXT_cleanup(void)
 {
-	sk_pop_free(ext_list, ext_list_free);
+	sk_pop_free(ext_list, (void(*)(void *)) ext_list_free);
 	ext_list = NULL;
 }
 

@@ -161,18 +161,18 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
 		} else continue;
 		if (!bags) {
-			sk_pop_free (asafes, PKCS7_free);
+			sk_pop_free (asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
 	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
 							 &keyid, &keymatch)) {
-			sk_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_pop_free(asafes, PKCS7_free);
+			sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
-		sk_pop_free(bags, PKCS12_SAFEBAG_free);
+		sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
 	}
-	sk_pop_free(asafes, PKCS7_free);
+	sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 	if (keyid) M_ASN1_OCTET_STRING_free(keyid);
 	return 1;
 }

@@ -65,19 +65,19 @@
 #include <openssl/bio.h>
 
 #ifndef BIO_FD
-static int sock_write(BIO *h,char *buf,int num);
-static int sock_read(BIO *h,char *buf,int size);
-static int sock_puts(BIO *h,char *str);
-static long sock_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int sock_write(BIO *h, const char *buf, int num);
+static int sock_read(BIO *h, char *buf, int size);
+static int sock_puts(BIO *h, const char *str);
+static long sock_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 #else
 
-static int fd_write(BIO *h,char *buf,int num);
-static int fd_read(BIO *h,char *buf,int size);
-static int fd_puts(BIO *h,char *str);
-static long fd_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int fd_write(BIO *h, const char *buf, int num);
+static int fd_read(BIO *h, char *buf, int size);
+static int fd_puts(BIO *h, const char *str);
+static long fd_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
@@ -209,9 +209,9 @@ static int fd_read(BIO *b, char *out,int outl)
 	}
 
 #ifndef BIO_FD
-static int sock_write(BIO *b, char *in, int inl)
+static int sock_write(BIO *b, const char *in, int inl)
 #else
-static int fd_write(BIO *b, char *in, int inl)
+static int fd_write(BIO *b, const char *in, int inl)
 #endif
 	{
 	int ret;
@@ -237,9 +237,9 @@ static int fd_write(BIO *b, char *in, int inl)
 	}
 
 #ifndef BIO_FD
-static long sock_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 #else
-static long fd_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 	{
 	long ret=1;
@@ -313,9 +313,9 @@ static int sock_gets(BIO *bp, char *buf,int size)
 #endif
 
 #ifndef BIO_FD
-static int sock_puts(BIO *bp, char *str)
+static int sock_puts(BIO *bp, const char *str)
 #else
-static int fd_puts(BIO *bp, char *str)
+static int fd_puts(BIO *bp, const char *str)
 #endif
 	{
 	int n,ret;

@@ -193,12 +193,12 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 
 		EVP_PKEY_assign_DSA(pkey, dsa);
 		BN_CTX_free (ctx);
-		if(ndsa) sk_pop_free(ndsa, ASN1_TYPE_free);
+		if(ndsa) sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 		else ASN1_INTEGER_free(privkey);
 		break;
 		dsaerr:
 		BN_CTX_free (ctx);
-		sk_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 		DSA_free(dsa);
 		EVP_PKEY_free(pkey);
 		return NULL;
@@ -367,11 +367,11 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_pop_free(ndsa, ASN1_TYPE_free);
+			sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 			M_ASN1_INTEGER_free(prkey);
 			return 0;
 		}
-		sk_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 		break;
 
 		case PKCS8_EMBEDDED_PARAM:
@@ -395,11 +395,11 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_pop_free(ndsa, ASN1_TYPE_free);
+			sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 			M_ASN1_INTEGER_free (prkey);
 			return 0;
 		}
-		sk_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, (void(*)(void *)) ASN1_TYPE_free);
 		break;
 	}
 	return 1;

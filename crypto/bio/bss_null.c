@@ -61,11 +61,11 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-static int null_write(BIO *h,char *buf,int num);
-static int null_read(BIO *h,char *buf,int size);
-static int null_puts(BIO *h,char *str);
-static int null_gets(BIO *h,char *str,int size);
-static long null_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int null_write(BIO *h, const char *buf, int num);
+static int null_read(BIO *h, char *buf, int size);
+static int null_puts(BIO *h, const char *str);
+static int null_gets(BIO *h, char *str, int size);
+static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int null_new(BIO *h);
 static int null_free(BIO *data);
 static BIO_METHOD null_method=
@@ -106,12 +106,12 @@ static int null_read(BIO *b, char *out, int outl)
 	return(0);
 	}
 
-static int null_write(BIO *b, char *in, int inl)
+static int null_write(BIO *b, const char *in, int inl)
 	{
 	return(inl);
 	}
 
-static long null_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret=1;
 
@@ -142,7 +142,7 @@ static int null_gets(BIO *bp, char *buf, int size)
 	return(0);
 	}
 
-static int null_puts(BIO *bp, char *str)
+static int null_puts(BIO *bp, const char *str)
 	{
 	if (str == NULL) return(0);
 	return(strlen(str));

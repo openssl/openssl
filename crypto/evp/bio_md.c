@@ -65,11 +65,11 @@
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-static int md_write(BIO *h,char *buf,int num);
-static int md_read(BIO *h,char *buf,int size);
-/*static int md_puts(BIO *h,char *str); */
-static int md_gets(BIO *h,char *str,int size);
-static long md_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int md_write(BIO *h, char const *buf, int num);
+static int md_read(BIO *h, char *buf, int size);
+/*static int md_puts(BIO *h, const char *str); */
+static int md_gets(BIO *h, char *str, int size);
+static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
 static long md_callback_ctrl(BIO *h,int cmd,void (*fp)());
@@ -139,7 +139,7 @@ static int md_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int md_write(BIO *b, char *in, int inl)
+static int md_write(BIO *b, const char *in, int inl)
 	{
 	int ret=0;
 	EVP_MD_CTX *ctx;
@@ -162,7 +162,7 @@ static int md_write(BIO *b, char *in, int inl)
 	return(ret);
 	}
 
-static long md_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	EVP_MD_CTX *ctx,*dctx,**pctx;
 	const EVP_MD **ppmd;

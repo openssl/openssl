@@ -62,14 +62,14 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-static int buffer_write(BIO *h,char *buf,int num);
-static int buffer_read(BIO *h,char *buf,int size);
-static int buffer_puts(BIO *h,char *str);
-static int buffer_gets(BIO *h,char *str,int size);
-static long buffer_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int buffer_write(BIO *h, const char *buf,int num);
+static int buffer_read(BIO *h, char *buf, int size);
+static int buffer_puts(BIO *h, const char *str);
+static int buffer_gets(BIO *h, char *str, int size);
+static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-static long buffer_callback_ctrl(BIO *h,int cmd, void (*fp)());
+static long buffer_callback_ctrl(BIO *h, int cmd, void (*fp)());
 #define DEFAULT_BUFFER_SIZE	1024
 
 static BIO_METHOD methods_buffer=
@@ -195,7 +195,7 @@ start:
 	goto start;
 	}
 
-static int buffer_write(BIO *b, char *in, int inl)
+static int buffer_write(BIO *b, const char *in, int inl)
 	{
 	int i,num=0;
 	BIO_F_BUFFER_CTX *ctx;
@@ -268,7 +268,7 @@ start:
 	goto start;
 	}
 
-static long buffer_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	BIO *dbio;
 	BIO_F_BUFFER_CTX *ctx;
@@ -504,7 +504,7 @@ static int buffer_gets(BIO *b, char *buf, int size)
 		}
 	}
 
-static int buffer_puts(BIO *b, char *str)
+static int buffer_puts(BIO *b, const char *str)
 	{
 	return(BIO_write(b,str,strlen(str)));
 	}

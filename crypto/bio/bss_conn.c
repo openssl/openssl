@@ -98,13 +98,13 @@ typedef struct bio_connect_st
 	int (*info_callback)();
 	} BIO_CONNECT;
 
-static int conn_write(BIO *h,char *buf,int num);
-static int conn_read(BIO *h,char *buf,int size);
-static int conn_puts(BIO *h,char *str);
-static long conn_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int conn_write(BIO *h, const char *buf, int num);
+static int conn_read(BIO *h, char *buf, int size);
+static int conn_puts(BIO *h, const char *str);
+static long conn_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
-static long conn_callback_ctrl(BIO *h,int cmd,void *(*fp)());
+static long conn_callback_ctrl(BIO *h, int cmd, void (*fp)());
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
@@ -426,7 +426,7 @@ static int conn_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int conn_write(BIO *b, char *in, int inl)
+static int conn_write(BIO *b, const char *in, int inl)
 	{
 	int ret;
 	BIO_CONNECT *data;
@@ -449,7 +449,7 @@ static int conn_write(BIO *b, char *in, int inl)
 	return(ret);
 	}
 
-static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	BIO *dbio;
 	int *ip;
@@ -519,9 +519,10 @@ static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 			else if (num == 2)
 				{
 				char buf[16];
+				char *p = ptr;
 
 				sprintf(buf,"%d.%d.%d.%d",
-					ptr[0],ptr[1],ptr[2],ptr[3]);
+					p[0],p[1],p[2],p[3]);
 				if (data->param_hostname != NULL)
 					Free(data->param_hostname);
 				data->param_hostname=BUF_strdup(buf);
@@ -601,7 +602,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 	return(ret);
 	}
 
-static long conn_callback_ctrl(BIO *b, int cmd, void *(*fp)())
+static long conn_callback_ctrl(BIO *b, int cmd, void (*fp)())
 	{
 	long ret=1;
 	BIO_CONNECT *data;
@@ -622,7 +623,7 @@ static long conn_callback_ctrl(BIO *b, int cmd, void *(*fp)())
 	return(ret);
 	}
 
-static int conn_puts(BIO *bp, char *str)
+static int conn_puts(BIO *bp, const char *str)
 	{
 	int n,ret;
 

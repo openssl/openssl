@@ -123,26 +123,26 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 				&pbe_nid, &pbe_iter, &pbe_saltlen);
 		} else continue;
 		if (!bags) {
-			sk_pop_free(asafes, PKCS7_free);
+			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
 	    	if (!newpass_bags(bags, oldpass, newpass)) {
-			sk_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_pop_free(asafes, PKCS7_free);
+			sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
 		/* Repack bag in same form with new password */
 		if (bagnid == NID_pkcs7_data) p7new = PKCS12_pack_p7data(bags);
 		else p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
 						 pbe_saltlen, pbe_iter, bags);
-		sk_pop_free(bags, PKCS12_SAFEBAG_free);
+		sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
 		if(!p7new) {
-			sk_pop_free(asafes, PKCS7_free);
+			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
 		sk_push(newsafes, (char *)p7new);
 	}
-	sk_pop_free(asafes, PKCS7_free);
+	sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 
 	/* Repack safe: save old safe in case of error */
 

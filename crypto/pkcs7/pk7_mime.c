@@ -211,7 +211,7 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 	}
 
 	if(!(hdr = mime_hdr_find(headers, "content-type")) || !hdr->value) {
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_CONTENT_TYPE);
 		return NULL;
 	}
@@ -222,15 +222,15 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 		/* Split into two parts */
 		prm = mime_param_find(hdr, "boundary");
 		if(!prm || !prm->param_value) {
-			sk_pop_free(headers, mime_hdr_free);
+			sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_MULTIPART_BOUNDARY);
 			return NULL;
 		}
 		ret = multi_split(bio, prm->param_value, &parts);
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		if(!ret || (sk_num(parts) != 2) ) {
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_MULTIPART_BODY_FAILURE);
-			sk_pop_free(parts, (stkfree)BIO_free);
+			sk_pop_free(parts, (void(*)(void *)) BIO_free);
 			return NULL;
 		}
 
@@ -239,7 +239,7 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 
 		if (!(headers = mime_parse_hdr(p7in))) {
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_MIME_SIG_PARSE_ERROR);
-			sk_pop_free(parts, (stkfree)BIO_free);
+			sk_pop_free(parts, (void(*)(void *)) BIO_free);
 			return NULL;
 		}
 
@@ -247,24 +247,24 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 
 		if(!(hdr = mime_hdr_find(headers, "content-type")) ||
 								 !hdr->value) {
-			sk_pop_free(headers, mime_hdr_free);
+			sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_SIG_CONTENT_TYPE);
 			return NULL;
 		}
 
 		if(strcmp(hdr->value, "application/x-pkcs7-signature") &&
 			strcmp(hdr->value, "application/pkcs7-signature")) {
-			sk_pop_free(headers, mime_hdr_free);
+			sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_SIG_INVALID_MIME_TYPE);
 			ERR_add_error_data(2, "type: ", hdr->value);
-			sk_pop_free(parts, (stkfree)BIO_free);
+			sk_pop_free(parts, (void(*)(void *))BIO_free);
 			return NULL;
 		}
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		/* Read in PKCS#7 */
 		if(!(p7 = B64_read_PKCS7(p7in))) {
 			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_PKCS7_SIG_PARSE_ERROR);
-			sk_pop_free(parts, (stkfree)BIO_free);
+			sk_pop_free(parts, (void(*)(void *))BIO_free);
 			return NULL;
 		}
 
@@ -282,11 +282,11 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 	    strcmp (hdr->value, "application/pkcs7-mime")) {
 		PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_INVALID_MIME_TYPE);
 		ERR_add_error_data(2, "type: ", hdr->value);
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		return NULL;
 	}
 
-	sk_pop_free(headers, mime_hdr_free);
+	sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 	
 	if(!(p7 = B64_read_PKCS7(bio))) {
 		PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_PKCS7_PARSE_ERROR);
@@ -333,16 +333,16 @@ int SMIME_text(BIO *in, BIO *out)
 	}
 	if(!(hdr = mime_hdr_find(headers, "content-type")) || !hdr->value) {
 		PKCS7err(PKCS7_F_SMIME_TEXT,PKCS7_R_MIME_NO_CONTENT_TYPE);
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		return 0;
 	}
 	if (strcmp (hdr->value, "text/plain")) {
 		PKCS7err(PKCS7_F_SMIME_TEXT,PKCS7_R_INVALID_MIME_TYPE);
 		ERR_add_error_data(2, "type: ", hdr->value);
-		sk_pop_free(headers, mime_hdr_free);
+		sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 		return 0;
 	}
-	sk_pop_free(headers, mime_hdr_free);
+	sk_pop_free(headers, (void(*)(void *)) mime_hdr_free);
 	while ((len = BIO_read(in, iobuf, sizeof(iobuf))) > 0)
 						BIO_write(out, iobuf, len);
 	return 1;
@@ -413,7 +413,7 @@ static STACK *mime_parse_hdr(BIO *bio)
 	MIME_HEADER *mhdr = NULL;
 	STACK *headers;
 	int len, state, save_state = 0;
-	headers = sk_new(mime_hdr_cmp);
+	headers = sk_new((int (*)(const void *, const void *))mime_hdr_cmp);
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 	/* If whitespace at line start then continuation line */
 	if(mhdr && isspace((unsigned char)linebuf[0])) state = MIME_NAME;
@@ -573,7 +573,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 	if(!mhdr) return NULL;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
-	if(!(mhdr->params = sk_new(mime_param_cmp))) return NULL;
+	if(!(mhdr->params = sk_new((int (*)(const void *, const void *)) mime_param_cmp))) return NULL;
 	return mhdr;
 }
 		
@@ -642,7 +642,7 @@ static void mime_hdr_free(MIME_HEADER *hdr)
 {
 	if(hdr->name) Free(hdr->name);
 	if(hdr->value) Free(hdr->value);
-	if(hdr->params) sk_pop_free(hdr->params, mime_param_free);
+	if(hdr->params) sk_pop_free(hdr->params, (void(*)(void *)) mime_param_free);
 	Free(hdr);
 }
 

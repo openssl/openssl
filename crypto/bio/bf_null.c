@@ -65,14 +65,14 @@
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-static int nullf_write(BIO *h,char *buf,int num);
-static int nullf_read(BIO *h,char *buf,int size);
-static int nullf_puts(BIO *h,char *str);
-static int nullf_gets(BIO *h,char *str,int size);
-static long nullf_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int nullf_write(BIO *h, const char *buf, int num);
+static int nullf_read(BIO *h, char *buf, int size);
+static int nullf_puts(BIO *h, const char *str);
+static int nullf_gets(BIO *h, char *str, int size);
+static long nullf_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int nullf_new(BIO *h);
 static int nullf_free(BIO *data);
-static long nullf_callback_ctrl(BIO *h,int cmd,void (*fp)());
+static long nullf_callback_ctrl(BIO *h, int cmd, void (*fp)());
 static BIO_METHOD methods_nullf=
 	{
 	BIO_TYPE_NULL_FILTER,
@@ -121,7 +121,7 @@ static int nullf_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int nullf_write(BIO *b, char *in, int inl)
+static int nullf_write(BIO *b, const char *in, int inl)
 	{
 	int ret=0;
 
@@ -133,7 +133,7 @@ static int nullf_write(BIO *b, char *in, int inl)
 	return(ret);
 	}
 
-static long nullf_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret;
 
@@ -175,7 +175,7 @@ static int nullf_gets(BIO *bp, char *buf, int size)
 	}
 
 
-static int nullf_puts(BIO *bp, char *str)
+static int nullf_puts(BIO *bp, const char *str)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_puts(bp->next_bio,str));

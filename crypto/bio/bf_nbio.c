@@ -66,11 +66,11 @@
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-static int nbiof_write(BIO *h,char *buf,int num);
+static int nbiof_write(BIO *h,const char *buf,int num);
 static int nbiof_read(BIO *h,char *buf,int size);
-static int nbiof_puts(BIO *h,char *str);
+static int nbiof_puts(BIO *h,const char *str);
 static int nbiof_gets(BIO *h,char *str,int size);
-static long nbiof_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static long nbiof_ctrl(BIO *h,int cmd,long arg1,void *arg2);
 static int nbiof_new(BIO *h);
 static int nbiof_free(BIO *data);
 static long nbiof_callback_ctrl(BIO *h,int cmd,void (*fp)());
@@ -159,7 +159,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int nbiof_write(BIO *b, char *in, int inl)
+static int nbiof_write(BIO *b, const char *in, int inl)
 	{
 	NBIO_TEST *nt;
 	int ret=0;
@@ -204,7 +204,7 @@ static int nbiof_write(BIO *b, char *in, int inl)
 	return(ret);
 	}
 
-static long nbiof_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long nbiof_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret;
 
@@ -247,7 +247,7 @@ static int nbiof_gets(BIO *bp, char *buf, int size)
 	}
 
 
-static int nbiof_puts(BIO *bp, char *str)
+static int nbiof_puts(BIO *bp, const char *str)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_puts(bp->next_bio,str));

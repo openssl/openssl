@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Eliminate non-ANSI declarations in crypto.h and stack.h.
+	 [Ulf Möller]
+
   *) Fix for SSL server purpose checking. Server checking was
      rejecting certificates which had extended key usage present
      but no ssl client purpose.

@@ -303,7 +303,7 @@ static STACK *nref_nos(STACK_OF(CONF_VALUE) *nos)
 	X509V3err(X509V3_F_NOTICE_SECTION,ERR_R_MALLOC_FAILURE);
 
 	err:
-	sk_pop_free(nnums, ASN1_STRING_free);
+	sk_pop_free(nnums, (void(*)(void *))ASN1_STRING_free);
 	return NULL;
 }
 
@@ -647,7 +647,7 @@ void NOTICEREF_free(NOTICEREF *a)
 {
 	if (a == NULL) return;
 	M_DISPLAYTEXT_free(a->organization);
-	sk_pop_free(a->noticenos, ASN1_STRING_free);
+	sk_pop_free(a->noticenos, (void(*)(void *)) ASN1_STRING_free);
 	Free (a);
 }
 

@@ -116,7 +116,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	/* Turn certbags into encrypted authsafe */
 	authsafe = PKCS12_pack_p7encdata (nid_cert, pass, -1, NULL, 0,
 					  iter, bags);
-	sk_pop_free(bags, PKCS12_SAFEBAG_free);
+	sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
 
 	if (!authsafe) return NULL;
 
@@ -139,7 +139,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	}
 	/* Turn it into unencrypted safe bag */
 	if(!(authsafe = PKCS12_pack_p7data (bags))) return NULL;
-	sk_pop_free(bags, PKCS12_SAFEBAG_free);
+	sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
 	if(!sk_push(safes, (char *)authsafe)) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -149,7 +149,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if(!M_PKCS12_pack_authsafes (p12, safes)) return NULL;
 
-	sk_pop_free(safes, PKCS7_free);
+	sk_pop_free(safes, (void(*)(void *)) PKCS7_free);
 
 	if(!PKCS12_set_mac (p12, pass, -1, NULL, 0, mac_iter, NULL))
 	    return NULL;
