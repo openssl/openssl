@@ -248,6 +248,22 @@ void RSA_free(RSA *r)
 	OPENSSL_free(r);
 	}
 
+int RSA_up(RSA *r)
+	{
+	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_RSA);
+#ifdef REF_PRINT
+	REF_PRINT("RSA",r);
+#endif
+#ifdef REF_CHECK
+	if (i < 2)
+		{
+		fprintf(stderr, "RSA_up, bad reference count\n");
+		abort();
+		}
+#endif
+	return ((i > 1) ? 1 : 0);
+	}
+
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {

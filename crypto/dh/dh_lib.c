@@ -219,6 +219,22 @@ void DH_free(DH *r)
 	OPENSSL_free(r);
 	}
 
+int DH_up(DH *r)
+	{
+	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
+#ifdef REF_PRINT
+	REF_PRINT("DH",r);
+#endif
+#ifdef REF_CHECK
+	if (i < 2)
+		{
+		fprintf(stderr, "DH_up, bad reference count\n");
+		abort();
+		}
+#endif
+	return ((i > 1) ? 1 : 0);
+	}
+
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {

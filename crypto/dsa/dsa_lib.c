@@ -228,6 +228,22 @@ void DSA_free(DSA *r)
 	OPENSSL_free(r);
 	}
 
+int DSA_up(DSA *r)
+	{
+	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
+#ifdef REF_PRINT
+	REF_PRINT("DSA",r);
+#endif
+#ifdef REF_CHECK
+	if (i < 2)
+		{
+		fprintf(stderr, "DSA_up, bad reference count\n");
+		abort();
+		}
+#endif
+	return ((i > 1) ? 1 : 0);
+	}
+
 int DSA_size(const DSA *r)
 	{
 	int ret,i;

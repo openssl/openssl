@@ -177,6 +177,9 @@ DSA *	DSA_new_method(DSA_METHOD *meth);
 #else
 DSA *	DSA_new_method(struct engine_st *engine);
 #endif
+void	DSA_free (DSA *r);
+/* "up" the DSA object's reference count */
+int	DSA_up(DSA *r);
 int	DSA_size(const DSA *);
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
@@ -184,7 +187,6 @@ int	DSA_sign(int type,const unsigned char *dgst,int dlen,
 		unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int	DSA_verify(int type,const unsigned char *dgst,int dgst_len,
 		const unsigned char *sigbuf, int siglen, DSA *dsa);
-void	DSA_free (DSA *r);
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
