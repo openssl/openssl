@@ -77,8 +77,8 @@ static EVP_CIPHER d_cbc_ede_cipher2=
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
-	EVP_CIPHER_get_asn1_iv,
 	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 static EVP_CIPHER d_cbc_ede_cipher3=

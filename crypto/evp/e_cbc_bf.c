@@ -75,8 +75,8 @@ static EVP_CIPHER bfish_cbc_cipher=
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.bf_ks)),
-	EVP_CIPHER_get_asn1_iv,
 	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_bf_cbc(void)
