@@ -902,6 +902,16 @@ extern "C" {
 #define NID_ext_req			172
 #define OBJ_ext_req			OBJ_pkcs9,14L
 
+#define SN_name				"name"
+#define LN_name				"name"
+#define NID_name			173
+#define OBJ_name			OBJ_X509,41L
+
+#define SN_dnQualifier			"dnQualifier"
+#define LN_dnQualifier			"dnQualifier"
+#define NID_dnQualifier			174
+#define OBJ_dnQualifier			OBJ_X509,46L
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

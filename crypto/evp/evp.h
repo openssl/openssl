@@ -612,6 +612,9 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
+RSA *		EVP_PKEY_get_RSA(EVP_PKEY *pkey);
+DSA *		EVP_PKEY_get_DSA(EVP_PKEY *pkey);
+DH *		EVP_PKEY_get_DH(EVP_PKEY *pkey);
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
 EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, unsigned char **pp,
@@ -676,6 +679,9 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
 #define EVP_F_EVP_PKEY_DECRYPT				 104
 #define EVP_F_EVP_PKEY_ENCRYPT				 105
+#define EVP_F_EVP_PKEY_GET_DH				 119
+#define EVP_F_EVP_PKEY_GET_DSA				 120
+#define EVP_F_EVP_PKEY_GET_RSA				 121
 #define EVP_F_EVP_PKEY_NEW				 106
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
@@ -692,6 +698,9 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
 #define EVP_R_ENCODE_ERROR				 115
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
+#define EVP_R_EXPECTING_AN_RSA_KEY			 127
+#define EVP_R_EXPECTING_A_DH_KEY			 128
+#define EVP_R_EXPECTING_A_DSA_KEY			 129
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120

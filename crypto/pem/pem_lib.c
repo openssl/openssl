@@ -179,7 +179,12 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 
 	for (;;)
 		{
-		if (!PEM_read_bio(bp,&nm,&header,&data,&len)) return(NULL);
+		if (!PEM_read_bio(bp,&nm,&header,&data,&len)) {
+			if(ERR_GET_REASON(ERR_peek_error()) ==
+				PEM_R_NO_START_LINE)
+				ERR_add_error_data(2, "Expecting: ", name);
+			return(NULL);
+		}
 		if (	(strcmp(nm,name) == 0) ||
 			((strcmp(nm,PEM_STRING_RSA) == 0) &&
 			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||

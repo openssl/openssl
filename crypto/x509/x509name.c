@@ -267,7 +267,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 		goto err;
 	if (!X509_NAME_ENTRY_set_data(ret,type,bytes,len))
 		goto err;
-	
+
 	if ((ne != NULL) && (*ne == NULL)) *ne=ret;
 	return(ret);
 err:
@@ -294,6 +294,10 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 	int i;
 
 	if ((ne == NULL) || ((bytes == NULL) && (len != 0))) return(0);
+	if(type & MBSTRING_FLAG) 
+		return ASN1_STRING_set_by_NID(&ne->value, bytes,
+						len, type,
+					OBJ_obj2nid(ne->object)) ? 1 : 0;
 	if (len < 0) len=strlen((char *)bytes);
 	i=ASN1_STRING_set(ne->value,bytes,len);
 	if (!i) return(0);

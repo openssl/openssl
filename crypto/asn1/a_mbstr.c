@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
@@ -71,15 +72,42 @@ static int cpy_univ(unsigned long value, void *arg);
 static int cpy_utf8(unsigned long value, void *arg);
 static int is_printable(unsigned long value);
 
-/* This function takes a string in UTF8, ASCII or multibyte form and
+/* This is the default mask for the mbstring functions: it is designed
+ * to be a "safe" DirectoryString. Netscape messenger crashes when it
+ * receives a certificate containing a BMPString so by default we don't
+ * use them unless we have to.
+ */
+
+static long dirstring_mask = B_ASN1_PRINTABLESTRING
+				| B_ASN1_T61STRING | B_ASN1_BMPSTRING;
+
+void ASN1_STRING_set_default_mask(unsigned long mask)
+{
+	dirstring_mask = mask;
+}
+
+unsigned long ASN1_STRING_get_default_mask(void)
+{
+	return dirstring_mask;
+}
+
+/* These functions take a string in UTF8, ASCII or multibyte form and
  * a mask of permissible ASN1 string types. It then works out the minimal
  * type (using the order Printable < IA5 < T61 < BMP < Universal < UTF8)
  * and creates a string of the correct type with the supplied data.
  * Yes this is horrible: it has to be :-(
+ * The 'ncopy' form checks minimum and maximum size limits too.
  */
 
 int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
-		       int inform, unsigned long mask)
+					int inform, unsigned long mask)
+{
+	return ASN1_mbstring_ncopy(out, in, len, inform, mask, 0, 0);
+}
+
+int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
+					int inform, unsigned long mask, 
+					long minsize, long maxsize)
 {
 	int str_type;
 	int ret;
@@ -87,8 +115,10 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 	ASN1_STRING *dest;
 	unsigned char *p;
 	int nchar;
-	int (*cpyfunc)(unsigned long value, void *in_) = NULL;
+	unsigned char strbuf[32];
+	int (*cpyfunc)(unsigned long,void *) = NULL;
 	if(len == -1) len = strlen((const char *)in);
+	if(!mask) mask = dirstring_mask;
 
 	/* First do a string check and work out the number of characters */
 	switch(inform) {
@@ -113,6 +143,7 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 
 		case MBSTRING_UTF8:
 		nchar = 0;
+		/* This counts the characters and does utf8 syntax checking */
 		ret = traverse_string(in, len, MBSTRING_UTF8, in_utf8, &nchar);
 		if(ret < 0) {
 			ASN1err(ASN1_F_ASN1_MBSTRING_COPY,
@@ -130,11 +161,26 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 		return -1;
 	}
 
+	if(minsize && (nchar < minsize)) {
+		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ASN1_R_STRING_TOO_SHORT);
+		sprintf(strbuf, "%ld", minsize);
+		ERR_add_error_data(2, "minsize=", strbuf);
+		return -1;
+	}
+
+	if(maxsize && (nchar > maxsize)) {
+		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ASN1_R_STRING_TOO_LONG);
+		sprintf(strbuf, "%ld", maxsize);
+		ERR_add_error_data(2, "maxsize=", strbuf);
+		return -1;
+	}
+
 	/* Now work out minimal type (if any) */
 	if(traverse_string(in, len, inform, type_str, &mask) < 0) {
 		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ASN1_R_ILLEGAL_CHARACTERS);
 		return -1;
 	}
+
 
 	/* Now work out output format and string type */
 	outform = MBSTRING_ASC;
@@ -152,15 +198,26 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 		outform = MBSTRING_UTF8;
 	}
 	if(!out) return str_type;
-	if(!(dest = ASN1_STRING_type_new(str_type))) {
-		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ERR_R_MALLOC_FAILURE);
-		return -1;
+	if(*out) {
+		dest = *out;
+		if(dest->data) {
+			dest->length = 0;
+			Free(dest->data);
+			dest->data = NULL;
+		}
+		dest->type = str_type;
+	} else {
+		dest = ASN1_STRING_type_new(str_type);
+		if(!dest) {
+			ASN1err(ASN1_F_ASN1_MBSTRING_COPY,
+							ERR_R_MALLOC_FAILURE);
+			return -1;
+		}
+		*out = dest;
 	}
-	*out = dest;
 	/* If both the same type just copy across */
 	if(inform == outform) {
 		if(!ASN1_STRING_set(dest, in, len)) {
-			ASN1_STRING_free(dest);
 			ASN1err(ASN1_F_ASN1_MBSTRING_COPY,ERR_R_MALLOC_FAILURE);
 			return -1;
 		}

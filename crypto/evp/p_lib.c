@@ -205,6 +205,42 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	return(1);
 	}
 
+#ifndef NO_RSA
+RSA *EVP_PKEY_get_RSA(EVP_PKEY *pkey)
+	{
+	if(pkey->type != EVP_PKEY_RSA) {
+		EVPerr(EVP_F_EVP_PKEY_GET_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
+		return NULL;
+	}
+	CRYPTO_add(&pkey->pkey.rsa->references, 1, CRYPTO_LOCK_RSA);
+	return pkey->pkey.rsa;
+}
+#endif
+
+#ifndef NO_DSA
+DSA *EVP_PKEY_get_DSA(EVP_PKEY *pkey)
+	{
+	if(pkey->type != EVP_PKEY_DSA) {
+		EVPerr(EVP_F_EVP_PKEY_GET_DSA, EVP_R_EXPECTING_A_DSA_KEY);
+		return NULL;
+	}
+	CRYPTO_add(&pkey->pkey.rsa->references, 1, CRYPTO_LOCK_DSA);
+	return pkey->pkey.dsa;
+}
+#endif
+
+#ifndef NO_DH
+DH *EVP_PKEY_get_DH(EVP_PKEY *pkey)
+	{
+	if(pkey->type != EVP_PKEY_DH) {
+		EVPerr(EVP_F_EVP_PKEY_GET_DH, EVP_R_EXPECTING_A_DH_KEY);
+		return NULL;
+	}
+	CRYPTO_add(&pkey->pkey.dh->references, 1, CRYPTO_LOCK_DH);
+	return pkey->pkey.dh;
+}
+#endif
+
 int EVP_PKEY_type(int type)
 	{
 	switch (type)

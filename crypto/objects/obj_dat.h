@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 173
-#define NUM_SN 121
-#define NUM_LN 169
-#define NUM_OBJ 144
+#define NUM_NID 175
+#define NUM_SN 123
+#define NUM_LN 171
+#define NUM_OBJ 146
 
-static unsigned char lvalues[1005]={
+static unsigned char lvalues[1011]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -211,6 +211,8 @@ static unsigned char lvalues[1005]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [976] OBJ_pbeWithSHA1AndDES_CBC */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x0E,/* [985] OBJ_ms_ext_req */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [995] OBJ_ext_req */
+0x55,0x04,0x29,                              /* [1004] OBJ_name */
+0x55,0x04,0x2E,                              /* [1007] OBJ_dnQualifier */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -456,6 +458,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"msExtReq","Microsoft Extension Request",NID_ms_ext_req,10,
 	&(lvalues[985]),0},
 {"extReq","Extension Request",NID_ext_req,9,&(lvalues[995]),0},
+{"name","name",NID_name,3,&(lvalues[1004]),0},
+{"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1007]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -547,6 +551,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
 &(nid_objs[140]),/* "deltaCRL" */
+&(nid_objs[174]),/* "dnQualifier" */
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[172]),/* "extReq" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
@@ -563,6 +568,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[138]),/* "msEFS" */
 &(nid_objs[171]),/* "msExtReq" */
 &(nid_objs[137]),/* "msSGC" */
+&(nid_objs[173]),/* "name" */
 &(nid_objs[72]),/* "nsBaseUrl" */
 &(nid_objs[76]),/* "nsCaPolicyUrl" */
 &(nid_objs[74]),/* "nsCaRevocationUrl" */
@@ -661,6 +667,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[107]),/* "description" */
 &(nid_objs[80]),/* "desx-cbc" */
 &(nid_objs[28]),/* "dhKeyAgreement" */
+&(nid_objs[174]),/* "dnQualifier" */
 &(nid_objs[116]),/* "dsaEncryption" */
 &(nid_objs[67]),/* "dsaEncryption-old" */
 &(nid_objs[66]),/* "dsaWithSHA" */
@@ -688,6 +695,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[95]),/* "mdc2" */
 &(nid_objs[96]),/* "mdc2withRSA" */
 &(nid_objs[51]),/* "messageDigest" */
+&(nid_objs[173]),/* "name" */
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[ 9]),/* "pbeWithMD2AndDES-CBC" */
@@ -770,9 +778,11 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[18]),/* OBJ_organizationalUnitName       2 5 4 11 */
 &(nid_objs[106]),/* OBJ_title                        2 5 4 12 */
 &(nid_objs[107]),/* OBJ_description                  2 5 4 13 */
+&(nid_objs[173]),/* OBJ_name                         2 5 4 41 */
 &(nid_objs[99]),/* OBJ_givenName                    2 5 4 42 */
 &(nid_objs[101]),/* OBJ_initials                     2 5 4 43 */
 &(nid_objs[102]),/* OBJ_uniqueIdentifier             2 5 4 45 */
+&(nid_objs[174]),/* OBJ_dnQualifier                  2 5 4 46 */
 &(nid_objs[82]),/* OBJ_subject_key_identifier       2 5 29 14 */
 &(nid_objs[83]),/* OBJ_key_usage                    2 5 29 15 */
 &(nid_objs[84]),/* OBJ_private_key_usage_period     2 5 29 16 */
