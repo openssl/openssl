@@ -312,7 +312,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		/* CHOICE type, try each possibility in turn */
 		pchval = NULL;
 		p = *in;
-		for(i = 0, tt=it->templates; i < it->tcount; i++, tt++)
+		for (i = 0, tt=it->templates; i < it->tcount; i++, tt++)
 			{
 			pchptr = asn1_get_field_ptr(pval, tt);
 			/* We mark field as OPTIONAL so its absence

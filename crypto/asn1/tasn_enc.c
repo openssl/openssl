@@ -218,7 +218,7 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
 		if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it))
 				return 0;
 		/* First work out sequence content length */
-		for(i = 0, tt = it->templates; i < it->tcount; tt++, i++)
+		for (i = 0, tt = it->templates; i < it->tcount; tt++, i++)
 			{
 			const ASN1_TEMPLATE *seqtt;
 			ASN1_VALUE **pseqval;
@@ -236,7 +236,7 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
 			return seqlen;
 		/* Output SEQUENCE header */
 		ASN1_put_object(out, ndef, seqcontlen, tag, aclass);
-		for(i = 0, tt = it->templates; i < it->tcount; tt++, i++)
+		for (i = 0, tt = it->templates; i < it->tcount; tt++, i++)
 			{
 			const ASN1_TEMPLATE *seqtt;
 			ASN1_VALUE **pseqval;
@@ -351,7 +351,7 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
 
 		/* Determine total length of items */
 		skcontlen = 0;
-		for(i = 0; i < sk_ASN1_VALUE_num(sk); i++)
+		for (i = 0; i < sk_ASN1_VALUE_num(sk); i++)
 			{
 			skitem = sk_ASN1_VALUE_value(sk, i);
 			skcontlen += ASN1_item_ex_i2d(&skitem, NULL,
@@ -460,7 +460,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 	/* If not sorting just output each item */
 	if (!do_sort)
 		{
-		for(i = 0; i < sk_ASN1_VALUE_num(sk); i++)
+		for (i = 0; i < sk_ASN1_VALUE_num(sk); i++)
 			{
 			skitem = sk_ASN1_VALUE_value(sk, i);
 			ASN1_item_ex_i2d(&skitem, out, item, -1, iclass);
@@ -470,7 +470,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 	p = tmpdat;
 
 	/* Doing sort: build up a list of each member's DER encoding */
-	for(i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk); i++, tder++)
+	for (i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk); i++, tder++)
 		{
 		skitem = sk_ASN1_VALUE_value(sk, i);
 		tder->data = p;
@@ -482,7 +482,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 	qsort(derlst, sk_ASN1_VALUE_num(sk), sizeof(*derlst), der_cmp);
 	/* Output sorted DER encoding */	
 	p = *out;
-	for(i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk); i++, tder++)
+	for (i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk); i++, tder++)
 		{
 		memcpy(p, tder->data, tder->length);
 		p += tder->length;
@@ -491,7 +491,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 	/* If do_sort is 2 then reorder the STACK */
 	if (do_sort == 2)
 		{
-		for(i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk);
+		for (i = 0, tder = derlst; i < sk_ASN1_VALUE_num(sk);
 							i++, tder++)
 			sk_ASN1_VALUE_set(sk, i, tder->field);
 		}
