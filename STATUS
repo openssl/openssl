@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/21 17:44:32 $
+  ______________                           $Date: 1999/04/23 22:20:21 $
 
   DEVELOPMENT STATE
 
@@ -153,10 +153,6 @@
       > machine, kernel 2.0.36 and 2.2.1, redhat 5.2 latest, gcc and egcs , no
       > go.  I also noticed the even with -DNO_IDEA, _DNO_RC2, etc. the make
       > still goes into those subdirectories and 'makes'.
-
-    o The "exported" header files should not use #include "foo.h", but
-      #include <foo.h> or even better #include <ssl/foo.h> or
-      #include <openssl/foo.h> in order to avoid filename clashes.
 
     o ERR_error_string(..., buf) does not know how large buf is,
       there should be ERR_error_string_n(..., buf, bufsize)
