@@ -378,7 +378,7 @@ struct bignum_ctx
 	lt=(bl)*(lt); \
 	m1=(bl)*(ht); \
 	ht =(bh)*(ht); \
-	m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS(1L); \
+	m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS((BN_ULONG)1); \
 	ht+=HBITS(m); \
 	m1=L2HBITS(m); \
 	lt=(lt+m1)&BN_MASK2; if (lt < m1) ht++; \
