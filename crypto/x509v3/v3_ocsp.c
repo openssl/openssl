@@ -74,12 +74,12 @@ static int i2r_object(X509V3_EXT_METHOD *method, void *obj, BIO *out, int indent
 
 static void *ocsp_nonce_new(void);
 static int i2d_ocsp_nonce(void *a, unsigned char **pp);
-static void *d2i_ocsp_nonce(void *a, unsigned char **pp, long length);
+static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length);
 static void ocsp_nonce_free(void *a);
 static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
 
 static int i2r_ocsp_nocheck(X509V3_EXT_METHOD *method, void *nocheck, BIO *out, int indent);
-static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
+static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str);
 static int i2r_ocsp_serviceloc(X509V3_EXT_METHOD *method, void *in, BIO *bp, int ind);
 
 X509V3_EXT_METHOD v3_ocsp_crlid = {
@@ -208,7 +208,7 @@ static int i2d_ocsp_nonce(void *a, unsigned char **pp)
 	return os->length;
 }
 
-static void *d2i_ocsp_nonce(void *a, unsigned char **pp, long length)
+static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
 {
 	ASN1_OCTET_STRING *os, **pos;
 	pos = a;
@@ -246,7 +246,7 @@ static int i2r_ocsp_nocheck(X509V3_EXT_METHOD *method, void *nocheck, BIO *out, 
 	return 1;
 }
 
-static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
+static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
 {
 	return ASN1_NULL_new();
 }

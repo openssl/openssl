@@ -77,7 +77,7 @@
  */
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-			   unsigned char *salt, int saltlen, int iter,
+			   const unsigned char *salt, int saltlen, int iter,
 			   int keylen, unsigned char *out)
 {
 	unsigned char digtmp[SHA_DIGEST_LENGTH], *p, itmp[4];
@@ -148,7 +148,8 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                          ASN1_TYPE *param, const EVP_CIPHER *c, const EVP_MD *md,
                          int en_de)
 {
-	unsigned char *pbuf, *salt, key[EVP_MAX_KEY_LENGTH];
+	unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
+	const unsigned char *pbuf;
 	int saltlen, iter, plen;
 	unsigned int keylen;
 	PBE2PARAM *pbe2 = NULL;

@@ -758,7 +758,7 @@ X509 *load_cert(BIO *err, const char *file, int format,
 		x=d2i_X509_bio(cert,NULL);
 	else if (format == FORMAT_NETSCAPE)
 		{
-		unsigned char *p,*op;
+		const unsigned char *p,*op;
 		int size=0,i;
 
 		/* We sort of have to do it this way because it is sort of nice

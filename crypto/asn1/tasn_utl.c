@@ -154,7 +154,7 @@ void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	}
 }
 
-int asn1_enc_save(ASN1_VALUE **pval, unsigned char *in, int inlen, const ASN1_ITEM *it)
+int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen, const ASN1_ITEM *it)
 {
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);

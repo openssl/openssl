@@ -162,7 +162,8 @@ int X509V3_add_standard_extensions(void)
 void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 {
 	X509V3_EXT_METHOD *method;
-	unsigned char *p;
+	const unsigned char *p;
+
 	if(!(method = X509V3_EXT_get(ext))) return NULL;
 	p = ext->value->data;
 	if(method->it) return ASN1_item_d2i(NULL, &p, ext->value->length, ASN1_ITEM_ptr(method->it));

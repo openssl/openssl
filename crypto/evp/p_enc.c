@@ -66,7 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_PKEY_encrypt(unsigned char *ek, unsigned char *key, int key_len,
+int EVP_PKEY_encrypt(unsigned char *ek, const unsigned char *key, int key_len,
 	     EVP_PKEY *pubk)
 	{
 	int ret=0;

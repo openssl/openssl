@@ -544,7 +544,7 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
 int ssl2_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
 int ssl2_part_read(SSL *s, unsigned long f, int i);
 int ssl2_do_write(SSL *s);
-int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data);
+int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data);
 void ssl2_return_error(SSL *s,int reason);
 void ssl2_write_error(SSL *s);
 int ssl2_num_ciphers(void);

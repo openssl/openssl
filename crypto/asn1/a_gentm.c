@@ -181,7 +181,7 @@ err:
 	return(0);
 	}
 
-int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, char *str)
+int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
 	{
 	ASN1_GENERALIZEDTIME t;
 

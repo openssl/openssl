@@ -811,7 +811,7 @@ err:
 int alg_print (BIO *x, X509_ALGOR *alg)
 {
 	PBEPARAM *pbe;
-	unsigned char *p;
+	const unsigned char *p;
 	p = alg->parameter->value.sequence->data;
 	pbe = d2i_PBEPARAM (NULL, &p, alg->parameter->value.sequence->length);
 	BIO_printf (bio_err, "%s, Iteration %ld\n", 

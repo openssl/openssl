@@ -405,8 +405,8 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, unsigned char *k,
-	     unsigned char *i, int e)
+void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
+	     const unsigned char *i, int e)
 	{
 	BIO_ENC_CTX *ctx;
 

@@ -77,7 +77,8 @@ EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
 
 NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(const char *str, int len)
 {
-	unsigned char *spki_der, *p;
+	unsigned char *spki_der;
+	const unsigned char *p;
 	int spki_len;
 	NETSCAPE_SPKI *spki;
 	if(len <= 0) len = strlen(str);

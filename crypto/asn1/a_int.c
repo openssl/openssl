@@ -155,11 +155,12 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 
 /* Convert just ASN1 INTEGER content octets to ASN1_INTEGER structure */
 
-ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
+ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	     long len)
 	{
 	ASN1_INTEGER *ret=NULL;
-	unsigned char *p,*to,*s, *pend;
+	const unsigned char *p, *pend;
+	unsigned char *to,*s;
 	int i;
 
 	if ((a == NULL) || ((*a) == NULL))
@@ -247,11 +248,12 @@ err:
  * with its MSB set as negative (it doesn't add a padding zero).
  */
 
-ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
+ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	     long length)
 	{
 	ASN1_INTEGER *ret=NULL;
-	unsigned char *p,*to,*s;
+	const unsigned char *p;
+	unsigned char *to,*s;
 	long len;
 	int inf,tag,xclass;
 	int i;

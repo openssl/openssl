@@ -160,6 +160,10 @@ struct X509_algor_st;
 #define DECLARE_ASN1_SET_OF(type) /* filled in by mkstack.pl */
 #define IMPLEMENT_ASN1_SET_OF(type) /* nothing, no longer needed */
 
+/* We MUST make sure that, except for constness, asn1_ctx_st and
+   asn1_const_ctx are exactly the same.  Fortunately, as soon as
+   the old ASN1 parsing macros are gone, we can throw this away
+   as well... */
 typedef struct asn1_ctx_st
 	{
 	unsigned char *p;/* work char pointer */
@@ -174,6 +178,21 @@ typedef struct asn1_ctx_st
 	unsigned char **pp;/* variable */
 	int line;	/* used in error processing */
 	} ASN1_CTX;
+
+typedef struct asn1_const_ctx_st
+	{
+	const unsigned char *p;/* work char pointer */
+	int eos;	/* end of sequence read for indefinite encoding */
+	int error;	/* error code to use when returning an error */
+	int inf;	/* constructed if 0x20, indefinite is 0x21 */
+	int tag;	/* tag from last 'get object' */
+	int xclass;	/* class from last 'get object' */
+	long slen;	/* length of last 'get object' */
+	const unsigned char *max; /* largest value of p allowed */
+	const unsigned char *q;/* temporary variable */
+	const unsigned char **pp;/* variable */
+	int line;	/* used in error processing */
+	} ASN1_const_CTX;
 
 /* These are used internally in the ASN1_OBJECT to keep track of
  * whether the names and data need to be free()ed */
@@ -276,7 +295,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
-	type *d2i_##name(type **a, unsigned char **in, long len); \
+	type *d2i_##name(type **a, const unsigned char **in, long len); \
 	int i2d_##name(type *a, unsigned char **out); \
 	DECLARE_ASN1_ITEM(itname)
 
@@ -712,9 +731,9 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
 ASN1_OBJECT *	ASN1_OBJECT_new(void );
 void		ASN1_OBJECT_free(ASN1_OBJECT *a);
 int		i2d_ASN1_OBJECT(ASN1_OBJECT *a,unsigned char **pp);
-ASN1_OBJECT *	c2i_ASN1_OBJECT(ASN1_OBJECT **a,unsigned char **pp,
+ASN1_OBJECT *	c2i_ASN1_OBJECT(ASN1_OBJECT **a,const unsigned char **pp,
 			long length);
-ASN1_OBJECT *	d2i_ASN1_OBJECT(ASN1_OBJECT **a,unsigned char **pp,
+ASN1_OBJECT *	d2i_ASN1_OBJECT(ASN1_OBJECT **a,const unsigned char **pp,
 			long length);
 
 DECLARE_ASN1_ITEM(ASN1_OBJECT)
@@ -737,7 +756,7 @@ unsigned char * ASN1_STRING_data(ASN1_STRING *x);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_BIT_STRING)
 int		i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a,unsigned char **pp);
-ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,unsigned char **pp,
+ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,const unsigned char **pp,
 			long length);
 int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 			int length );
@@ -753,13 +772,13 @@ int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
 				BIT_STRING_BITNAME *tbl);
 
 int		i2d_ASN1_BOOLEAN(int a,unsigned char **pp);
-int 		d2i_ASN1_BOOLEAN(int *a,unsigned char **pp,long length);
+int 		d2i_ASN1_BOOLEAN(int *a,const unsigned char **pp,long length);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
 int		i2c_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp);
-ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
+ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a,const unsigned char **pp,
 			long length);
-ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a,unsigned char **pp,
+ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a,const unsigned char **pp,
 			long length);
 ASN1_INTEGER *	ASN1_INTEGER_dup(ASN1_INTEGER *x);
 int ASN1_INTEGER_cmp(ASN1_INTEGER *x, ASN1_INTEGER *y);
@@ -768,7 +787,7 @@ DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
 
 int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
-int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
+int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str);
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
 #if 0
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
@@ -776,12 +795,12 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 
 int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
-int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, char *str); 
+int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
 ASN1_OCTET_STRING *	ASN1_OCTET_STRING_dup(ASN1_OCTET_STRING *a);
 int 	ASN1_OCTET_STRING_cmp(ASN1_OCTET_STRING *a, ASN1_OCTET_STRING *b);
-int 	ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, unsigned char *data, int len);
+int 	ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data, int len);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UNIVERSALSTRING)
@@ -812,7 +831,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
 			int (*func)(), int ex_tag, int ex_class, int is_set);
-STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
+STACK *		d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(void *),
 			int ex_tag, int ex_class);
 
@@ -846,20 +865,22 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai,BIGNUM *bn);
 int ASN1_PRINTABLE_type(unsigned char *s, int max);
 
 int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass);
-ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp,
+ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 	long length, int Ptag, int Pclass);
 unsigned long ASN1_tag2bit(int tag);
 /* type is one or more of the B_ASN1_ values. */
-ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a,unsigned char **pp,
+ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a,const unsigned char **pp,
 		long length,int type);
 
 /* PARSING */
 int asn1_Finish(ASN1_CTX *c);
+int asn1_const_Finish(ASN1_const_CTX *c);
 
 /* SPECIALS */
-int ASN1_get_object(unsigned char **pp, long *plength, int *ptag,
+int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	int *pclass, long omax);
 int ASN1_check_infinite_end(unsigned char **p,long len);
+int ASN1_const_check_infinite_end(const unsigned char **p,long len);
 void ASN1_put_object(unsigned char **pp, int constructed, int length,
 	int tag, int xclass);
 int ASN1_put_eoc(unsigned char **pp);
@@ -890,14 +911,14 @@ int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
-int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
-int ASN1_parse_dump(BIO *bp,unsigned char *pp,long len,int indent,int dump);
+int ASN1_parse(BIO *bp,const unsigned char *pp,long len,int indent);
+int ASN1_parse_dump(BIO *bp,const unsigned char *pp,long len,int indent,int dump);
 #endif
 const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert/key */
 int i2d_ASN1_HEADER(ASN1_HEADER *a,unsigned char **pp);
-ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a,unsigned char **pp, long length);
+ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a,const unsigned char **pp, long length);
 ASN1_HEADER *ASN1_HEADER_new(void );
 void ASN1_HEADER_free(ASN1_HEADER *a);
 
@@ -918,8 +939,8 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
 int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 	unsigned char *data, int max_len);
 
-STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
-						 void (*free_func)(void *) ); 
+STACK *ASN1_seq_unpack(const unsigned char *buf, int len, char *(*d2i)(),
+						 void (*free_func)(void *) );
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 			     int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
@@ -947,7 +968,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 /* Old API compatible functions */
 ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it);
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
-ASN1_VALUE * ASN1_item_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_ITEM *it);
+ASN1_VALUE * ASN1_item_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_ITEM *it);
 int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 

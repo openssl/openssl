@@ -936,6 +936,7 @@ static int server_finish(SSL *s)
 /* send the request and check the response */
 static int request_certificate(SSL *s)
 	{
+	const unsigned char *cp;
 	unsigned char *p,*p2,*buf2;
 	unsigned char *ccd;
 	int i,j,ctype,ret= -1;
@@ -1052,7 +1053,8 @@ static int request_certificate(SSL *s)
 		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-CERTIFICATE */
 	p += 6;
 
-	x509=(X509 *)d2i_X509(NULL,&p,(long)s->s2->tmp.clen);
+	cp = p;
+	x509=(X509 *)d2i_X509(NULL,&cp,(long)s->s2->tmp.clen);
 	if (x509 == NULL)
 		{
 		SSLerr(SSL_F_REQUEST_CERTIFICATE,ERR_R_X509_LIB);
@@ -1092,7 +1094,7 @@ static int request_certificate(SSL *s)
 
 		pkey=X509_get_pubkey(x509);
 		if (pkey == NULL) goto end;
-		i=EVP_VerifyFinal(&ctx,p,s->s2->tmp.rlen,pkey);
+		i=EVP_VerifyFinal(&ctx,cp,s->s2->tmp.rlen,pkey);
 		EVP_PKEY_free(pkey);
 		EVP_MD_CTX_cleanup(&ctx);
 

@@ -188,7 +188,8 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 	STACK_OF(X509_ATTRIBUTE) *sk;
 	ASN1_TYPE *ext = NULL;
 	int i;
-	unsigned char *p;
+	const unsigned char *p;
+
 	if ((req == NULL) || (req->req_info == NULL))
 		return(NULL);
 	sk=req->req_info->attributes;

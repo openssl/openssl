@@ -65,14 +65,14 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
-static int asn1_check_eoc(unsigned char **in, long len);
-static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, int tag, int aclass);
-static int collect_data(BUF_MEM *buf, unsigned char **p, long plen);
+static int asn1_check_eoc(const unsigned char **in, long len);
+static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf, int tag, int aclass);
+static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen);
 static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf, char *cst,
-			unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx);
-static int asn1_template_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
-static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
-static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long len,
+			const unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx);
+static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
+static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
+static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long len,
 					const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx);
 
 /* Table to convert tags to bit values, used for MSTRING type */
@@ -106,7 +106,7 @@ unsigned long ASN1_tag2bit(int tag)
  * case.
  */
 
-ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1_ITEM *it)
+ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it)
 {
 	ASN1_TLC c;
 	ASN1_VALUE *ptmpval = NULL;
@@ -117,7 +117,7 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const
 	return NULL;
 }
 
-int ASN1_template_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1_TEMPLATE *tt)
+int ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_TEMPLATE *tt)
 {
 	ASN1_TLC c;
 	asn1_tlc_clear(&c);
@@ -129,7 +129,7 @@ int ASN1_template_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
  */
 
-int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1_ITEM *it,
+int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it,
 				int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
 	const ASN1_TEMPLATE *tt, *errtt = NULL;
@@ -137,7 +137,9 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb;
-	unsigned char *p, *q, imphack = 0, oclass;
+	const unsigned char *p, *q;
+	unsigned char *wp=NULL;	/* BIG FAT WARNING!  BREAKS CONST WHERE USED */
+	unsigned char imphack = 0, oclass;
 	char seq_eoc, seq_nolen, cst, isopt;
 	long tmplen;
 	int i;
@@ -229,14 +231,14 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 		 */
 
 		if(tag != -1) {
-			p = *in;
-			imphack = *p;
-			*p = (unsigned char)((*p & V_ASN1_CONSTRUCTED) | it->utype);
+			wp = *(unsigned char **)in;
+			imphack = *wp;
+			*wp = (unsigned char)((*p & V_ASN1_CONSTRUCTED) | it->utype);
 		}
 
 		ptmpval = cf->asn1_d2i(pval, in, len);
 
-		if(tag != -1) *p = imphack;
+		if(tag != -1) *wp = imphack;
 
 		if(ptmpval) return 1;
 		ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
@@ -416,12 +418,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
  * rest.
  */
 
-static int asn1_template_ex_d2i(ASN1_VALUE **val, unsigned char **in, long inlen, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
+static int asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
 {
 	int flags, aclass;
 	int ret;
 	long len;
-	unsigned char *p, *q;
+	const unsigned char *p, *q;
 	char exp_eoc;
 	if(!val) return 0;
 	flags = tt->flags;
@@ -478,11 +480,11 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val, unsigned char **in, long inlen
 	return 0;
 }
 
-static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
+static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
 {
 	int flags, aclass;
 	int ret;
-	unsigned char *p, *q;
+	const unsigned char *p, *q;
 	if(!val) return 0;
 	flags = tt->flags;
 	aclass = flags & ASN1_TFLG_TAG_CLASS;
@@ -578,16 +580,16 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long le
 	return 0;
 }
 
-static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inlen, 
+static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen, 
 						const ASN1_ITEM *it,
 						int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
 	int ret = 0, utype;
 	long plen;
 	char cst, inf, free_cont = 0;
-	unsigned char *p;
+	const unsigned char *p;
 	BUF_MEM buf;
-	unsigned char *cont = NULL;
+	const unsigned char *cont = NULL;
 	long len; 
 	if(!pval) {
 		ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_ILLEGAL_NULL);
@@ -670,7 +672,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 			return 0;
 		}
 		buf.data[len] = 0;
-		cont = (unsigned char *)buf.data;
+		cont = (const unsigned char *)buf.data;
 		free_cont = 1;
 	} else {
 		cont = p;
@@ -690,7 +692,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 
 /* Translate ASN1 content octets into a structure */
 
-int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it)
+int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it)
 {
 	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
@@ -781,7 +783,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 		/* If we've already allocated a buffer use it */
 		if(*free_cont) {
 			if(stmp->data) OPENSSL_free(stmp->data);
-			stmp->data = cont;
+			stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
 			stmp->length = len;
 			*free_cont = 0;
 		} else {
@@ -816,9 +818,9 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
  * length constructed stuff.
  */
 
-static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, int tag, int aclass)
+static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf, int tag, int aclass)
 {
-	unsigned char *p, *q;
+	const unsigned char *p, *q;
 	long plen;
 	char cst, ininf;
 	p = *in;
@@ -860,7 +862,7 @@ static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, in
 	return 1;
 }
 
-static int collect_data(BUF_MEM *buf, unsigned char **p, long plen)
+static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
 {
 		int len;
 		if(buf) {
@@ -877,9 +879,9 @@ static int collect_data(BUF_MEM *buf, unsigned char **p, long plen)
 
 /* Check for ASN1 EOC and swallow it if found */
 
-static int asn1_check_eoc(unsigned char **in, long len)
+static int asn1_check_eoc(const unsigned char **in, long len)
 {
-	unsigned char *p;
+	const unsigned char *p;
 	if(len < 2) return 0;
 	p = *in;
 	if(!p[0] && !p[1]) {
@@ -897,12 +899,12 @@ static int asn1_check_eoc(unsigned char **in, long len)
  */
 
 static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf, char *cst,
-		unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx)
+		const unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx)
 {
 	int i;
 	int ptag, pclass;
 	long plen;
-	unsigned char *p, *q;
+	const unsigned char *p, *q;
 	p = *in;
 	q = p;
 

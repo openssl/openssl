@@ -64,7 +64,7 @@
 
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,
 	int indent);
-static int asn1_parse2(BIO *bp, unsigned char **pp, long length,
+static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
 	int offset, int depth, int indent, int dump);
 static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 	     int indent)
@@ -103,20 +103,20 @@ err:
 	return(0);
 	}
 
-int ASN1_parse(BIO *bp, unsigned char *pp, long len, int indent)
+int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent)
 	{
 	return(asn1_parse2(bp,&pp,len,0,0,indent,0));
 	}
 
-int ASN1_parse_dump(BIO *bp, unsigned char *pp, long len, int indent, int dump)
+int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int dump)
 	{
 	return(asn1_parse2(bp,&pp,len,0,0,indent,dump));
 	}
 
-static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
+static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 	     int depth, int indent, int dump)
 	{
-	unsigned char *p,*ep,*tot,*op,*opp;
+	const unsigned char *p,*ep,*tot,*op,*opp;
 	long len;
 	int tag,xclass,ret=0;
 	int nl,hl,j,r;

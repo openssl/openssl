@@ -489,7 +489,7 @@ int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
 int	EVP_DigestFinal_ex(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
-int	EVP_Digest(void *data, unsigned int count,
+int	EVP_Digest(const void *data, unsigned int count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
 
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
@@ -497,7 +497,7 @@ int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 int	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 
 int	EVP_read_pw_string(char *buf,int length,const char *prompt,int verify);
-void	EVP_set_pw_prompt(char *prompt);
+void	EVP_set_pw_prompt(const char *prompt);
 char *	EVP_get_pw_prompt(void);
 
 int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
@@ -536,26 +536,28 @@ int	EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 int	EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s,
 		EVP_PKEY *pkey);
 
-int	EVP_VerifyFinal(EVP_MD_CTX *ctx,unsigned char *sigbuf,
+int	EVP_VerifyFinal(EVP_MD_CTX *ctx,const unsigned char *sigbuf,
 		unsigned int siglen,EVP_PKEY *pkey);
 
-int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,unsigned char *ek,
-		int ekl,unsigned char *iv,EVP_PKEY *priv);
+int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
+		const unsigned char *ek, int ekl, const unsigned char *iv,
+		EVP_PKEY *priv);
 int	EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
-int	EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
-		int *ekl, unsigned char *iv,EVP_PKEY **pubk, int npubk);
+int	EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+		 unsigned char **ek, int *ekl, unsigned char *iv,
+		EVP_PKEY **pubk, int npubk);
 int	EVP_SealFinal(EVP_CIPHER_CTX *ctx,unsigned char *out,int *outl);
 
 void	EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
-void	EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,
-		int *outl,unsigned char *in,int inl);
+void	EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl,
+		const unsigned char *in,int inl);
 void	EVP_EncodeFinal(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl);
 int	EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int n);
 
 void	EVP_DecodeInit(EVP_ENCODE_CTX *ctx);
 int	EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl,
-		unsigned char *in, int inl);
+		const unsigned char *in, int inl);
 int	EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
 		char *out, int *outl);
 int	EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
@@ -571,8 +573,8 @@ BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
 BIO_METHOD *BIO_f_reliable(void);
-void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,unsigned char *k,
-	unsigned char *i, int enc);
+void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,const unsigned char *k,
+		const unsigned char *i, int enc);
 #endif
 
 const EVP_MD *EVP_md_null(void);
@@ -734,10 +736,12 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
 void EVP_cleanup(void);
 
-int		EVP_PKEY_decrypt(unsigned char *dec_key,unsigned char *enc_key,
-			int enc_key_len,EVP_PKEY *private_key);
+int		EVP_PKEY_decrypt(unsigned char *dec_key,
+			const unsigned char *enc_key,int enc_key_len,
+			EVP_PKEY *private_key);
 int		EVP_PKEY_encrypt(unsigned char *enc_key,
-			unsigned char *key,int key_len,EVP_PKEY *pub_key);
+			const unsigned char *key,int key_len,
+			EVP_PKEY *pub_key);
 int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
@@ -766,13 +770,13 @@ struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
-EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, const unsigned char **pp,
 			long length);
 int		i2d_PublicKey(EVP_PKEY *a, unsigned char **pp);
 
-EVP_PKEY *	d2i_PrivateKey(int type,EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *	d2i_PrivateKey(int type,EVP_PKEY **a, const unsigned char **pp,
 			long length);
-EVP_PKEY *	d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *	d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
 			long length);
 int		i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 
@@ -798,7 +802,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			 ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md,
 			 int en_de);
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-			   unsigned char *salt, int saltlen, int iter,
+			   const unsigned char *salt, int saltlen, int iter,
 			   int keylen, unsigned char *out);
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			 ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md,

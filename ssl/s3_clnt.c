@@ -780,7 +780,8 @@ static int ssl3_get_server_certificate(SSL *s)
 	int al,i,ok,ret= -1;
 	unsigned long n,nc,llen,l;
 	X509 *x=NULL;
-	unsigned char *p,*d,*q;
+	const unsigned char *q,*p;
+	unsigned char *d;
 	STACK_OF(X509) *sk=NULL;
 	SESS_CERT *sc;
 	EVP_PKEY *pkey=NULL;
@@ -807,7 +808,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_BAD_MESSAGE_TYPE);
 		goto f_err;
 		}
-	d=p=(unsigned char *)s->init_msg;
+	p=d=(unsigned char *)s->init_msg;
 
 	if ((sk=sk_X509_new_null()) == NULL)
 		{
@@ -1408,7 +1409,8 @@ static int ssl3_get_certificate_request(SSL *s)
 	unsigned long n,nc,l;
 	unsigned int llen,ctype_num,i;
 	X509_NAME *xn=NULL;
-	unsigned char *p,*d,*q;
+	const unsigned char *p,*q;
+	unsigned char *d;
 	STACK_OF(X509_NAME) *ca_sk=NULL;
 
 	n=ssl3_get_message(s,
@@ -1447,7 +1449,7 @@ static int ssl3_get_certificate_request(SSL *s)
 			}
 		}
 
-	d=p=(unsigned char *)s->init_msg;
+	p=d=(unsigned char *)s->init_msg;
 
 	if ((ca_sk=sk_X509_NAME_new(ca_dn_cmp)) == NULL)
 		{

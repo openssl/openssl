@@ -72,7 +72,7 @@
 #include <openssl/ec.h>
 #endif
 
-EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 	     long length)
 	{
 	EVP_PKEY *ret;

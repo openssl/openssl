@@ -113,11 +113,12 @@ int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	return(ret);
 	}
 
-ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
-	     long len)
+ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
+	const unsigned char **pp, long len)
 	{
 	ASN1_BIT_STRING *ret=NULL;
-	unsigned char *p,*s;
+	const unsigned char *p;
+	unsigned char *s;
 	int i;
 
 	if (len < 1)

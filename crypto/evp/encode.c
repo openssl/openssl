@@ -129,7 +129,7 @@ void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 	}
 
 void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-	     unsigned char *in, int inl)
+	     const unsigned char *in, int inl)
 	{
 	int i,j;
 	unsigned int total=0;
@@ -233,7 +233,7 @@ void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
  *  1 for full line
  */
 int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-	     unsigned char *in, int inl)
+	     const unsigned char *in, int inl)
 	{
 	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,n,ln,tmp2,exp_nl;
 	unsigned char *d;

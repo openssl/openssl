@@ -153,10 +153,10 @@ SetBlob
         return(r);
         }
 
-STACK *d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
+STACK *d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
 	     char *(*func)(), void (*free_func)(void *), int ex_tag, int ex_class)
 	{
-	ASN1_CTX c;
+	ASN1_const_CTX c;
 	STACK *ret=NULL;
 
 	if ((a == NULL) || ((*a) == NULL))

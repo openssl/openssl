@@ -2294,7 +2294,8 @@ static int ssl3_get_client_certificate(SSL *s)
 	int i,ok,al,ret= -1;
 	X509 *x=NULL;
 	unsigned long l,nc,llen,n;
-	unsigned char *p,*d,*q;
+	const unsigned char *p,*q;
+	unsigned char *d;
 	STACK_OF(X509) *sk=NULL;
 
 	n=ssl3_get_message(s,
@@ -2332,7 +2333,7 @@ static int ssl3_get_client_certificate(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_WRONG_MESSAGE_TYPE);
 		goto f_err;
 		}
-	d=p=(unsigned char *)s->init_msg;
+	p=d=(unsigned char *)s->init_msg;
 
 	if ((sk=sk_X509_new_null()) == NULL)
 		{

@@ -4,6 +4,9 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Constify all or almost all d2i, c2i, s2i and r2i functions, along with
+     associated ASN1, EVP and SSL functions and old ASN1 macros.
+
   *) BN_zero() only needs to set 'top' and 'neg' to zero for correct results,
      and this should never fail. So the return value from the use of
      BN_set_word() (which can fail due to needless expansion) is now deprecated;

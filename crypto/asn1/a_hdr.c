@@ -76,7 +76,7 @@ int i2d_ASN1_HEADER(ASN1_HEADER *a, unsigned char **pp)
 	M_ASN1_I2D_finish();
 	}
 
-ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a, unsigned char **pp,
+ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a, const unsigned char **pp,
 	     long length)
 	{
 	M_ASN1_D2I_vars(a,ASN1_HEADER *,ASN1_HEADER_new);

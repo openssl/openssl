@@ -61,7 +61,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-static int x509_name_ex_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_ITEM *it,
+static int x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_ITEM *it,
 					int tag, int aclass, char opt, ASN1_TLC *ctx);
 
 static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out, const ASN1_ITEM *it, int tag, int aclass);
@@ -156,10 +156,10 @@ static void sk_internal_free(void *a)
 	sk_free(a);
 }
 
-static int x509_name_ex_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_ITEM *it,
+static int x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_ITEM *it,
 					int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
-	unsigned char *p = *in, *q;
+	const unsigned char *p = *in, *q;
 	STACK *intname = NULL;
 	int i, j, ret;
 	X509_NAME *nm = NULL;

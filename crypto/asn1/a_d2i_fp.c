@@ -107,14 +107,14 @@ err:
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
 	{
 	BUF_MEM *b = NULL;
-	unsigned char *p;
+	const unsigned char *p;
 	void *ret=NULL;
 	int len;
 
 	len = asn1_d2i_read_bio(in, &b);
 	if(len < 0) goto err;
 
-	p=(unsigned char *)b->data;
+	p=(const unsigned char *)b->data;
 	ret=ASN1_item_d2i(x,&p,len, it);
 err:
 	if (b != NULL) BUF_MEM_free(b);
@@ -146,7 +146,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 	unsigned char *p;
 	int i;
 	int ret=-1;
-	ASN1_CTX c;
+	ASN1_const_CTX c;
 	int want=HEADER_SIZE;
 	int eos=0;
 #if defined(__GNUC__) && defined(__ia64)

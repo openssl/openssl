@@ -141,7 +141,9 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	int i, len;
 
 	unsigned char *orig_der = NULL, *new_der = NULL;
-	unsigned char *cpy_start, *p;
+	const unsigned char *cpy_start;
+	unsigned char *p;
+	const unsigned char *cp;
 	int cpy_len;
 	long hdr_len;
 	int hdr_constructed = 0, hdr_tag, hdr_class;
@@ -249,10 +251,10 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	/* Copy across original encoding */
 	memcpy(p, cpy_start, cpy_len);
 
-	p = new_der;
+	cp = new_der;
 
 	/* Obtain new ASN1_TYPE structure */
-	ret = d2i_ASN1_TYPE(NULL, &p, len);
+	ret = d2i_ASN1_TYPE(NULL, &cp, len);
 
 	err:
 	if (orig_der)

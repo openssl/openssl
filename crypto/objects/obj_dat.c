@@ -397,7 +397,9 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	{
 	int nid = NID_undef;
 	ASN1_OBJECT *op=NULL;
-	unsigned char *buf,*p;
+	unsigned char *buf;
+	unsigned char *p;
+	const unsigned char *cp;
 	int i, j;
 
 	if(!no_name) {
@@ -423,9 +425,9 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	ASN1_put_object(&p,0,i,V_ASN1_OBJECT,V_ASN1_UNIVERSAL);
 	/* Write out contents */
 	a2d_ASN1_OBJECT(p,i,s,-1);
-	
-	p=buf;
-	op=d2i_ASN1_OBJECT(NULL,&p,j);
+
+	cp=buf;
+	op=d2i_ASN1_OBJECT(NULL,&cp,j);
 	OPENSSL_free(buf);
 	return op;
 	}

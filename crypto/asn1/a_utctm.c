@@ -162,7 +162,7 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str)
+int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 	{
 	ASN1_UTCTIME t;
 

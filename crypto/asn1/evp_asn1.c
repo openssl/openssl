@@ -137,9 +137,9 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 	int ret= -1,n;
 	ASN1_INTEGER *ai=NULL;
 	ASN1_OCTET_STRING *os=NULL;
-	unsigned char *p;
+	const unsigned char *p;
 	long length;
-	ASN1_CTX c;
+	ASN1_const_CTX c;
 
 	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL))
 		{

@@ -189,10 +189,10 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	return(i);
 	}
 
-ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	     long length)
 {
-	unsigned char *p;
+	const unsigned char *p;
 	long len;
 	int tag,xclass;
 	int inf,i;
@@ -219,11 +219,11 @@ err:
 		ASN1_OBJECT_free(ret);
 	return(NULL);
 }
-ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	     long len)
 	{
 	ASN1_OBJECT *ret=NULL;
-	unsigned char *p;
+	const unsigned char *p;
 	int i;
 
 	/* only the ASN1_OBJECTs from the 'table' will have values

@@ -110,7 +110,8 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	int i;
 	PBEPARAM *pbe;
 	int saltlen, iter;
-	unsigned char *salt, *pbuf;
+	unsigned char *salt;
+	const unsigned char *pbuf;
 
 	/* Extract useful info from parameter */
 	pbuf = param->value.sequence->data;

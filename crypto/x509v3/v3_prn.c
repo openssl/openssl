@@ -109,10 +109,11 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 {
 	void *ext_str = NULL;
 	char *value = NULL;
-	unsigned char *p;
+	const unsigned char *p;
 	X509V3_EXT_METHOD *method;	
 	STACK_OF(CONF_VALUE) *nval = NULL;
 	int ok = 1;
+
 	if(!(method = X509V3_EXT_get(ext)))
 		return unknown_ext_print(out, ext, flag, indent, 0);
 	p = ext->value->data;

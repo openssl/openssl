@@ -225,7 +225,7 @@ DECLARE_STACK_OF(KRB5_AUTHENTBODY)
 **	void name##_free(type *a);
 **	DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name) =
 **	 DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) =
-**	  type *d2i_##name(type **a, unsigned char **in, long len);
+**	  type *d2i_##name(type **a, const unsigned char **in, long len);
 **	  int i2d_##name(type *a, unsigned char **out);
 **	  DECLARE_ASN1_ITEM(itname) = OPENSSL_EXTERN const ASN1_ITEM itname##_it
 */

@@ -69,7 +69,7 @@ static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it);
-static int long_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it);
+static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it);
 
 static ASN1_PRIMITIVE_FUNCS long_pf = {
 	NULL, 0,
@@ -136,7 +136,8 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const A
 	return clen + pad;
 }
 
-static int long_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it)
+static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+		    int utype, char *free_cont, const ASN1_ITEM *it)
 {
 	int neg, i;
 	long ltmp;

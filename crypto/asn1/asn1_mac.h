@@ -73,11 +73,11 @@ extern "C" {
 	ERR_PUT_error(ASN1_MAC_ERR_LIB,(f),(r),__FILE__,(line))
 
 #define M_ASN1_D2I_vars(a,type,func) \
-	ASN1_CTX c; \
+	ASN1_const_CTX c; \
 	type ret=NULL; \
 	\
-	c.pp=(unsigned char **)pp; \
-	c.q= *(unsigned char **)pp; \
+	c.pp=(const unsigned char **)pp; \
+	c.q= *(const unsigned char **)pp; \
 	c.error=ERR_R_NESTED_ASN1_ERROR; \
 	if ((a == NULL) || ((*a) == NULL)) \
 		{ if ((ret=(type)func()) == NULL) \
@@ -85,13 +85,13 @@ extern "C" {
 	else	ret=(*a);
 
 #define M_ASN1_D2I_Init() \
-	c.p= *(unsigned char **)pp; \
+	c.p= *(const unsigned char **)pp; \
 	c.max=(length == 0)?0:(c.p+length);
 
 #define M_ASN1_D2I_Finish_2(a) \
-	if (!asn1_Finish(&c)) \
+	if (!asn1_const_Finish(&c)) \
 		{ c.line=__LINE__; goto err; } \
-	*(unsigned char **)pp=c.p; \
+	*(const unsigned char **)pp=c.p; \
 	if (a != NULL) (*a)=ret; \
 	return(ret);
 
@@ -99,7 +99,7 @@ extern "C" {
 	M_ASN1_D2I_Finish_2(a); \
 err:\
 	ASN1_MAC_H_err((e),c.error,c.line); \
-	asn1_add_error(*(unsigned char **)pp,(int)(c.q- *pp)); \
+	asn1_add_error(*(const unsigned char **)pp,(int)(c.q- *pp)); \
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) func(ret); \
 	return(NULL)
 
@@ -123,7 +123,7 @@ err:\
 
 #define M_ASN1_D2I_end_sequence() \
 	(((c.inf&1) == 0)?(c.slen <= 0): \
-		(c.eos=ASN1_check_infinite_end(&c.p,c.slen)))
+		(c.eos=ASN1_const_check_infinite_end(&c.p,c.slen)))
 
 /* Don't use this with d2i_ASN1_BOOLEAN() */
 #define M_ASN1_D2I_get(b,func) \
@@ -278,7 +278,7 @@ err:\
 			{ c.line=__LINE__; goto err; } \
 		if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
 			Tlen = c.slen - (c.p - c.q); \
-			if(!ASN1_check_infinite_end(&c.p, Tlen)) \
+			if(!ASN1_const_check_infinite_end(&c.p, Tlen)) \
 				{ c.error=ERR_R_MISSING_ASN1_EOS; \
 				c.line=__LINE__; goto err; } \
 		}\
@@ -353,8 +353,12 @@ err:\
 		return(NULL)
 
 
-#define M_ASN1_next		(*c.p)
-#define M_ASN1_next_prev	(*c.q)
+/* BIG UGLY WARNING!  This is so damn ugly I wanna puke.  Unfortunately,
+   some macros that use ASN1_const_CTX still insist on writing in the input
+   stream.  ARGH!  ARGH!  ARGH!  Let's get rid of this macro package.
+   Please?						-- Richard Levitte */
+#define M_ASN1_next		(*((unsigned char *)(c.p)))
+#define M_ASN1_next_prev	(*((unsigned char *)(c.q)))
 
 /*************************************************/
 
@@ -551,8 +555,8 @@ err:\
 #define M_ASN1_I2D_finish()	*pp=p; \
 				return(r);
 
-int asn1_GetSequence(ASN1_CTX *c, long *length);
-void asn1_add_error(unsigned char *address,int offset);
+int asn1_GetSequence(ASN1_const_CTX *c, long *length);
+void asn1_add_error(const unsigned char *address,int offset);
 #ifdef  __cplusplus
 }
 #endif

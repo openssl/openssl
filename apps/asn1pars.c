@@ -94,6 +94,7 @@ int MAIN(int argc, char **argv)
 	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
 	char *genstr=NULL, *genconf=NULL;
 	unsigned char *tmpbuf;
+	const unsigned char *ctmpbuf;
 	BUF_MEM *buf=NULL;
 	STACK *osk=NULL;
 	ASN1_TYPE *at=NULL;
@@ -317,7 +318,8 @@ bad:
 			tmpbuf+=j;
 			tmplen-=j;
 			atmp = at;
-			at = d2i_ASN1_TYPE(NULL,&tmpbuf,tmplen);
+			ctmpbuf = tmpbuf;
+			at = d2i_ASN1_TYPE(NULL,&ctmpbuf,tmplen);
 			ASN1_TYPE_free(atmp);
 			if(!at)
 				{

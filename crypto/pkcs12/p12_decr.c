@@ -113,7 +113,8 @@ unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
 	     const char *pass, int passlen, ASN1_OCTET_STRING *oct, int zbuf)
 {
-	unsigned char *out, *p;
+	unsigned char *out;
+	const unsigned char *p;
 	void *ret;
 	int outlen;
 

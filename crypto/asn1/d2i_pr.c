@@ -72,7 +72,7 @@
 #include <openssl/ec.h>
 #endif
 
-EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 	     long length)
 	{
 	EVP_PKEY *ret;
@@ -135,11 +135,11 @@ err:
 
 /* This works like d2i_PrivateKey() except it automatically works out the type */
 
-EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
+EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
 	     long length)
 {
 	STACK_OF(ASN1_TYPE) *inkey;
-	unsigned char *p;
+	const unsigned char *p;
 	int keytype;
 	p = *pp;
 	/* Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE):

@@ -70,7 +70,8 @@
 EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	{
 	char *nm=NULL;
-	unsigned char *p=NULL,*data=NULL;
+	const unsigned char *p=NULL;
+	unsigned char *data=NULL;
 	long len;
 	EVP_PKEY *ret=NULL;
 

@@ -131,7 +131,7 @@ end:
 	}
 #endif
 
-int SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len)
+int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 	{
 	X509 *x;
 	int ret;
@@ -382,10 +382,10 @@ end:
 	}
 #endif
 
-int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, unsigned char *d, long len)
+int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d, long len)
 	{
 	int ret;
-	unsigned char *p;
+	const unsigned char *p;
 	EVP_PKEY *pkey;
 
 	p=d;
@@ -545,7 +545,7 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, unsigned char *d)
+int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 	{
 	X509 *x;
 	int ret;
@@ -640,7 +640,7 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len)
+int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d, long len)
 	{
 	int ret;
 	const unsigned char *p;
@@ -717,11 +717,11 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, unsigned char *d,
+int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
 	     long len)
 	{
 	int ret;
-	unsigned char *p;
+	const unsigned char *p;
 	EVP_PKEY *pkey;
 
 	p=d;

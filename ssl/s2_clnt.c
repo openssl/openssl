@@ -1034,7 +1034,7 @@ static int get_server_finished(SSL *s)
 	}
 
 /* loads in the certificate from the server */
-int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
+int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data)
 	{
 	STACK_OF(X509) *sk=NULL;
 	EVP_PKEY *pkey=NULL;

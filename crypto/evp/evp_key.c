@@ -66,7 +66,7 @@
 /* should be init to zeros. */
 static char prompt_string[80];
 
-void EVP_set_pw_prompt(char *prompt)
+void EVP_set_pw_prompt(const char *prompt)
 	{
 	if (prompt == NULL)
 		prompt_string[0]='\0';

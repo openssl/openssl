@@ -285,7 +285,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	return 1;
 	}
 
-int EVP_Digest(void *data, unsigned int count,
+int EVP_Digest(const void *data, unsigned int count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl)
 	{
 	EVP_MD_CTX ctx;
