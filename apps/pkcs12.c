@@ -551,7 +551,7 @@ int MAIN(int argc, char **argv)
 	    	BIO_printf (bio_err, "Can't read Password\n");
 	    	goto export_end;
         	}
-	if (!twopass) strcpy(macpass, pass);
+	if (!twopass) BUF_strlcpy(macpass, pass, sizeof macpass);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
@@ -613,7 +613,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_pop_info();
 #endif
 
-    if (!twopass) strcpy(macpass, pass);
+    if (!twopass) BUF_strlcpy(macpass, pass, sizeof macpass);
 
     if (options & INFO) BIO_printf (bio_err, "MAC Iteration %ld\n", p12->mac->iter ? ASN1_INTEGER_get (p12->mac->iter) : 1);
     if(macver) {

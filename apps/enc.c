@@ -373,9 +373,9 @@ bad:
 			{
 			char buf[200];
 
-			sprintf(buf,"enter %s %s password:",
-				OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
-				(enc)?"encryption":"decryption");
+			BIO_snprintf(buf,sizeof buf,"enter %s %s password:",
+				     OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+				     (enc)?"encryption":"decryption");
 			strbuf[0]='\0';
 			i=EVP_read_pw_string((char *)strbuf,SIZE,buf,enc);
 			if (i == 0)

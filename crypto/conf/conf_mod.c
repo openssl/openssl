@@ -232,7 +232,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 			{
 			char rcode[DECIMAL_SIZE(ret)+1];
 			CONFerr(CONF_F_CONF_MODULES_LOAD, CONF_R_MODULE_INITIALIZATION_ERROR);
-			sprintf(rcode, "%-8d", ret);
+			BIO_snprintf(rcode, sizeof rcode, "%-8d", ret);
 			ERR_add_error_data(6, "module=", name, ", value=", value, ", retcode=", rcode);
 			}
 		}
@@ -561,11 +561,11 @@ char *CONF_get1_default_config_file(void)
 
 	if (!file)
 		return NULL;
-	strcpy(file,X509_get_default_cert_area());
+	BUF_strlcpy(file,X509_get_default_cert_area(),len + 1);
 #ifndef OPENSSL_SYS_VMS
-	strcat(file,"/");
+	BUF_strlcat(file,"/",len + 1);
 #endif
-	strcat(file,OPENSSL_CONF);
+	BUF_strlcat(file,OPENSSL_CONF,len + 1);
 
 	return file;
 	}

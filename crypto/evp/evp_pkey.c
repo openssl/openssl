@@ -313,7 +313,7 @@ ecerr:
 #endif
 		default:
 		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-		if (!a->algorithm) strcpy (obj_tmp, "NULL");
+		if (!a->algorithm) BUF_strlcpy (obj_tmp, "NULL", sizeof obj_tmp);
 		else i2t_ASN1_OBJECT(obj_tmp, 80, a->algorithm);
 		ERR_add_error_data(2, "TYPE=", obj_tmp);
 		EVP_PKEY_free (pkey);

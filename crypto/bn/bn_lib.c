@@ -145,11 +145,11 @@ char *BN_options(void)
 		{
 		init++;
 #ifdef BN_LLONG
-		sprintf(data,"bn(%d,%d)",(int)sizeof(BN_ULLONG)*8,
-			(int)sizeof(BN_ULONG)*8);
+		BIO_snprintf(data,sizeof data,"bn(%d,%d)",
+			     (int)sizeof(BN_ULLONG)*8,(int)sizeof(BN_ULONG)*8);
 #else
-		sprintf(data,"bn(%d,%d)",(int)sizeof(BN_ULONG)*8,
-			(int)sizeof(BN_ULONG)*8);
+		BIO_snprintf(data,sizeof data,"bn(%d,%d)",
+			     (int)sizeof(BN_ULONG)*8,(int)sizeof(BN_ULONG)*8);
 #endif
 		}
 	return(data);

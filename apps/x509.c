@@ -1048,24 +1048,26 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create
 	char *buf = NULL, *p;
 	ASN1_INTEGER *bs = NULL;
 	BIGNUM *serial = NULL;
+	size_t len;
 
-	buf=OPENSSL_malloc( ((serialfile == NULL)
-			?(strlen(CAfile)+strlen(POSTFIX)+1)
-			:(strlen(serialfile)))+1);
+	len = ((serialfile == NULL)
+		?(strlen(CAfile)+strlen(POSTFIX)+1)
+		:(strlen(serialfile)))+1;
+	buf=OPENSSL_malloc(len);
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
 	if (serialfile == NULL)
 		{
-		strcpy(buf,CAfile);
+		BUF_strlcpy(buf,CAfile,len);
 		for (p=buf; *p; p++)
 			if (*p == '.')
 				{
 				*p='\0';
 				break;
 				}
-		strcat(buf,POSTFIX);
+		BUF_strlcat(buf,POSTFIX,len);
 		}
 	else
-		strcpy(buf,serialfile);
+		BUF_strlcpy(buf,serialfile,len);
 
 	serial = load_serial(buf, create, NULL);
 	if (serial == NULL) goto end;

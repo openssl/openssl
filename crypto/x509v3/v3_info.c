@@ -105,7 +105,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method
 						STACK_OF(CONF_VALUE) *ret)
 {
 	ACCESS_DESCRIPTION *desc;
-	int i;
+	int i,nlen;
 	char objtmp[80], *ntmp;
 	CONF_VALUE *vtmp;
 	for(i = 0; i < sk_ACCESS_DESCRIPTION_num(ainfo); i++) {
@@ -114,15 +114,16 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method
 		if(!ret) break;
 		vtmp = sk_CONF_VALUE_value(ret, i);
 		i2t_ASN1_OBJECT(objtmp, sizeof objtmp, desc->method);
-		ntmp = OPENSSL_malloc(strlen(objtmp) + strlen(vtmp->name) + 5);
+		nlen = strlen(objtmp) + strlen(vtmp->name) + 5;
+		ntmp = OPENSSL_malloc(nlen);
 		if(!ntmp) {
 			X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS,
 					ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-		strcpy(ntmp, objtmp);
-		strcat(ntmp, " - ");
-		strcat(ntmp, vtmp->name);
+		BUF_strlcpy(ntmp, objtmp, nlen);
+		BUF_strlcat(ntmp, " - ", nlen);
+		BUF_strlcat(ntmp, vtmp->name, nlen);
 		OPENSSL_free(vtmp->name);
 		vtmp->name = ntmp;
 		
