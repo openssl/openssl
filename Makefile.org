@@ -368,21 +368,21 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man7
 	@echo installing man 1 and man 5
 	@for i in doc/apps/*.pod; do \
-		(cd `dirname $$i`; \
 		fn=`basename $$i .pod`; \
 		sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; \
+		(cd `dirname $$i`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
-			 --release=$(VERSION) `basename $$i` \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
+			 --release=$(VERSION) `basename $$i`) \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 	@echo installing man 3 and man 7
 	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
-		(cd `dirname $$i`; \
 		fn=`basename $$i .pod`; \
 		sec=`[ "$$fn" = "des_modes" ] && echo 7 || echo 3`; \
+		(cd `dirname $$i`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
-			--release=$(VERSION) `basename $$i` \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
+			--release=$(VERSION) `basename $$i`) \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 
 shlib: all
