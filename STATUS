@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/05/09 23:53:35 $
+  ______________                           $Date: 2002/05/16 09:31:27 $
 
   DEVELOPMENT STATE
 
@@ -18,23 +18,12 @@
     o  OpenSSL 0.9.2b: Released on March     22th, 1999
     o  OpenSSL 0.9.1c: Released on December  23th, 1998
 
+  [See also https://www.aet.tu-cottbus.de/rt2/]
+
   RELEASE SHOWSTOPPERS
 
-    o BIGNUM library failures on 64-bit platforms (0.9.7-dev):
-      - BN_mod_mul verificiation (bc) fails for solaris64-sparcv9-cc
-        and other 64-bit platforms
-
-	Checked on			Result
-	alpha-cc (Tru64 version 4.0)	works
-	linux-alpha+bwx-gcc		doesn't work. Reported by
-					Sean O'Riordain <seanpor@acm.org>
-	OpenBSD-sparc64			doesn't work.  BN_mod_mul breaks.
-
-	Needs checked on
-	[add platforms here]
-
-      - BN_mod_mul verification fails for mips3-sgi-irix
-        unless configured with no-asm
+    o BN_mod_mul verification fails for mips3-sgi-irix
+      unless configured with no-asm
 
   AVAILABLE PATCHES
 
