@@ -177,6 +177,7 @@ int MAIN(int argc, char **argv)
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	MS_STATIC char config_name[256];
+	long errline;
 #endif
 
 	req_conf = NULL;
@@ -472,7 +473,7 @@ bad:
 		}
 	default_config_file=p;
 	config=NCONF_new(NULL);
-	i=NCONF_load(config, p);
+	i=NCONF_load(config, p, &errline);
 #endif
 
 	if (template != NULL)
