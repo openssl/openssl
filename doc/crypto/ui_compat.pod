@@ -45,7 +45,7 @@ is also available under the name EVP_read_pw_string().
 
 =head1 SEE ALSO
 
-L<ui_create(3)|ui_create(3)>, L<ui_compat(3)|ui_compat(3)>
+L<ui(3)|ui(3)>, L<ui_create(3)|ui_create(3)>
 
 =head1 AUTHOR
 
