@@ -167,6 +167,7 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 
 # KRB5 stuff
 KRB5_INCLUDES=
+LIBKRB5=
 
 # When we're prepared to use shared libraries in the programs we link here
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
@@ -277,13 +278,16 @@ do_bsd-gcc-shared: do_gnu-shared
 do_linux-shared: do_gnu-shared
 do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
 		-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
+	libs="-l$$i $$libs"; \
 	done
 
 DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
@@ -291,22 +295,28 @@ DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 # For Darwin AKA Mac OS/X (dyld)
 do_darwin-shared: 
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x ; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
+	( set -x; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
 		lib$$i.a $$libs -all_load -current_version ${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-compatibility_version ${SHLIB_MAJOR}.`echo ${SHLIB_MINOR} | cut -d. -f1` \
 		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
-	libs="$$libs -l`basename $$i${SHLIB_EXT} .dylib`"; \
+	libs="-l`basename $$i${SHLIB_EXT} .dylib` $$libs"; \
 	echo "" ; \
 	done
 
 do_cygwin-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	( set -x; ${CC}  -shared -o cyg$$i-$(SHLIB_VERSION_NUMBER).dll \
 		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--out-implib,lib$$i.dll.a \
 		-Wl,--no-whole-archive $$libs ) || exit 1; \
-	libs="$$libs -l$$i"; \
+	libs="-l$$i $$libs"; \
 	done
 
 # This assumes that GNU utilities are *not* used
@@ -315,11 +325,14 @@ do_alpha-osf1-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -331,11 +344,14 @@ do_tru64-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -msym -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -347,12 +363,15 @@ do_tru64-shared-rpath:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -msym -o lib$$i.so \
 			-rpath  ${INSTALLTOP}/lib \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -363,6 +382,9 @@ do_solaris-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
 		  MINUSZ='-z '; \
 		  (${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
@@ -371,7 +393,7 @@ do_solaris-shared:
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${MINUSZ}allextract lib$$i.a $${MINUSZ}defaultextract \
 			$$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -381,6 +403,9 @@ do_svr3-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
@@ -390,7 +415,7 @@ do_svr3-shared:
 		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -400,6 +425,9 @@ do_svr5-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
@@ -410,7 +438,7 @@ do_svr5-shared:
 			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -420,11 +448,14 @@ do_irix-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
@@ -441,6 +472,9 @@ do_irix-shared:
 #
 do_hpux-shared:
 	for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
  		+vnocompatwarnings \
 		-b -z +s \
@@ -461,6 +495,9 @@ do_hpux-shared:
 #
 do_hpux64-shared:
 	for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
  		-b -z \
 		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -503,6 +540,9 @@ SHAREDFLAGS=${SHARED_LDFLAGS} -G -bE:lib$$i.exp -bM:SRE
 SHAREDCMD=$(CC)
 do_aix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	( set -x; \
 	  ld -r -o lib$$i.o $(ALLSYMSFLAG) lib$$i.a && \
 	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
@@ -510,11 +550,14 @@ do_aix-shared:
 		-o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib$$i.o \
 		$$libs ${EX_LIBS} ) ) \
 	|| exit 1; \
-	libs="$$libs -l$$i"; \
+	libs="-l$$i $$libs"; \
 	done
 
 do_reliantunix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		libs="$(LIBKRB5) $$libs"; \
+	fi; \
 	tmpdir=/tmp/openssl.$$$$ ; rm -rf $$tmpdir ; \
 	( set -x; \
 	  ( Opwd=`pwd` ; mkdir $$tmpdir || exit 1; \
@@ -524,7 +567,7 @@ do_reliantunix-shared:
 	  cp $$tmpdir/lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} . ; \
 	) || exit 1; \
 	rm -rf $$tmpdir ; \
-	libs="$$libs -l$$i"; \
+	libs="-l$$i $$libs"; \
 	done
 
 openssl.pc: Makefile.ssl
@@ -537,7 +580,7 @@ openssl.pc: Makefile.ssl
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(LIBKRB5) $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
 Makefile.ssl: Makefile.org
