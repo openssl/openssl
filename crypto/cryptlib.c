@@ -84,12 +84,16 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ssl_ctx",
 	"ssl_cert",
 	"ssl_session",
+	"ssl_sess_cert",
 	"ssl",
 	"rand",
 	"debug_malloc",
 	"BIO",
 	"bio_gethostbyname",
 	"RSA_blinding",
+#if CRYPTO_NUM_LOCKS != 22
+# error "Inconsistency between crypto.h and cryptlic.c"
+#endif
 	};
 
 static STACK *app_locks=NULL;
