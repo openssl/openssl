@@ -362,7 +362,7 @@ link_a.tru64-rpath:
 	fi
 
 link_o.solaris:
-	@ if ${DETECT_GNU_LD}; then \
+	if ${DETECT_GNU_LD}; then \
 		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
@@ -381,7 +381,7 @@ link_o.solaris:
 		$(LINK_SO_O); \
 	fi
 link_a.solaris:
-	@ if ${DETECT_GNU_LD}; then \
+	if ${DETECT_GNU_LD}; then \
 		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
