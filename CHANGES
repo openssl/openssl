@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
+ Changes between 0.9.6 and 0.9.6a  [5 Apr 2001]
 
   *) Fix a couple of memory leaks in PKCS7_dataDecode()
      [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
