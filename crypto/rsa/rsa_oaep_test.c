@@ -5,6 +5,7 @@
 
 #include "openssl/e_os.h"
 
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #ifdef NO_RSA
 int main(int argc, char *argv[])
@@ -215,6 +216,8 @@ int main()
     int clen = 0;
     int num;
 
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+	
     plen = sizeof(ptext_ex) - 1;
 
     for (v = 0; v < 3; v++)
@@ -296,6 +299,11 @@ int main()
     next:
 	RSA_free(key);
 	}
+
+    ERR_remove_state(0);
+
+    CRYPTO_mem_leaks_fp(stdout);
+
     return err;
     }
 #endif
