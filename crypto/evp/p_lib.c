@@ -237,6 +237,52 @@ int EVP_PKEY_cmp_parameters(EVP_PKEY *a, EVP_PKEY *b)
 	return(-1);
 	}
 
+int EVP_PKEY_cmp(EVP_PKEY *a, EVP_PKEY *b)
+	{
+	if (a->type != b->type)
+		return -1;
+
+	switch (a->type)
+		{
+#ifndef OPENSSL_NO_RSA
+	case EVP_PKEY_RSA:
+		if (BN_cmp(b->pkey.rsa->n,a->pkey.rsa->n) != 0
+			|| BN_cmp(b->pkey.rsa->e,a->pkey.rsa->e) != 0)
+			return 0;
+		break;
+#endif
+#ifndef OPENSSL_NO_DSA
+	case EVP_PKEY_DSA:
+		if (BN_cmp(b->pkey.dsa->pub_key,a->pkey.dsa->pub_key) != 0)
+			return 0;
+		break;
+#endif
+#ifndef OPENSSL_NO_EC
+	case EVP_PKEY_EC:
+		{
+		int  r = EC_POINT_cmp(b->pkey.eckey->group, 
+			b->pkey.eckey->pub_key,a->pkey.eckey->pub_key,NULL);
+		if (r != 0)
+			{
+			if (r == 1)
+				return 0;
+			else
+				return -2;
+			}
+		}
+ 		break;
+#endif
+#ifndef OPENSSL_NO_DH
+	case EVP_PKEY_DH:
+		return -2;
+#endif
+	default:
+		return -2;
+		}
+
+	return 1;
+	}
+
 EVP_PKEY *EVP_PKEY_new(void)
 	{
 	EVP_PKEY *ret;

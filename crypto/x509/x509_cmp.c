@@ -374,62 +374,36 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 	int ok=0;
 
 	xk=X509_get_pubkey(x);
-	if (xk->type != k->type)
-	    {
-	    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
-	    goto err;
-	    }
-	switch (k->type)
+	switch (EVP_PKEY_cmp(xk, k))
 		{
-#ifndef OPENSSL_NO_RSA
-	case EVP_PKEY_RSA:
-		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0
-		    || BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0)
-		    {
-		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
-		    goto err;
-		    }
+	case 1:
+		ok=1;
 		break;
-#endif
-#ifndef OPENSSL_NO_DSA
-	case EVP_PKEY_DSA:
-		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
-		    {
-		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
-		    goto err;
-		    }
+	case 0:
+		X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
 		break;
-#endif
+	case -1:
+		X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
+		break;
+	case -2:
 #ifndef OPENSSL_NO_EC
-	case EVP_PKEY_EC:
-		{
-		int  r = EC_POINT_cmp(xk->pkey.eckey->group, 
-			xk->pkey.eckey->pub_key,k->pkey.eckey->pub_key,NULL);
-		if (r != 0)
+		if (k->type == EVP_PKEY_EC)
 			{
-			if (r == 1)
-				X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_VALUES_MISMATCH);
-			else
-				X509err(X509_F_X509_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
-			
-			goto err;
+			X509err(X509_F_X509_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
+			break;
 			}
-		}
- 		break;
 #endif
 #ifndef OPENSSL_NO_DH
-	case EVP_PKEY_DH:
-		/* No idea */
-	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
-		goto err;
+		if (k->type == EVP_PKEY_DH)
+			{
+			/* No idea */
+			X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
+			break;
+			}
 #endif
-	default:
 	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_UNKNOWN_KEY_TYPE);
-		goto err;
 		}
 
-	ok=1;
-err:
 	EVP_PKEY_free(xk);
 	return(ok);
 	}

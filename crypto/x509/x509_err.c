@@ -1,6 +1,6 @@
 /* crypto/x509/x509_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,6 +95,7 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_PACK(0,X509_F_X509_PRINT_FP,0),	"X509_print_fp"},
 {ERR_PACK(0,X509_F_X509_PUBKEY_GET,0),	"X509_PUBKEY_get"},
 {ERR_PACK(0,X509_F_X509_PUBKEY_SET,0),	"X509_PUBKEY_set"},
+{ERR_PACK(0,X509_F_X509_REQ_CHECK_PRIVATE_KEY,0),	"X509_REQ_check_private_key"},
 {ERR_PACK(0,X509_F_X509_REQ_PRINT,0),	"X509_REQ_print"},
 {ERR_PACK(0,X509_F_X509_REQ_PRINT_FP,0),	"X509_REQ_print_fp"},
 {ERR_PACK(0,X509_F_X509_REQ_TO_X509,0),	"X509_REQ_to_X509"},

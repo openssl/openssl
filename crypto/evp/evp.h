@@ -754,6 +754,8 @@ int EVP_PKEY_missing_parameters(EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey,int mode);
 int EVP_PKEY_cmp_parameters(EVP_PKEY *a,EVP_PKEY *b);
 
+int EVP_PKEY_cmp(EVP_PKEY *a,EVP_PKEY *b);
+
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* calls methods */

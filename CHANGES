@@ -4,6 +4,11 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add functionality to check the public key of a certificate request
+     against a given private.  This is useful to check that a certificate
+     request can be signed by that key (self-signing).
+     [Richard Levitte]
+
   *) Make it possible to have multiple active certificates with the same
      subject in the CA index file.  This is done only if the keyword
      'unique_subject' is set to 'no' in the main CA section (default

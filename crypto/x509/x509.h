@@ -1038,6 +1038,8 @@ int X509_CRL_sort(X509_CRL *crl);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
 
+int		X509_REQ_check_private_key(X509_REQ *x509,EVP_PKEY *pkey);
+
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
 
 int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
@@ -1271,6 +1273,7 @@ void ERR_load_X509_strings(void);
 #define X509_F_X509_PRINT_FP				 118
 #define X509_F_X509_PUBKEY_GET				 119
 #define X509_F_X509_PUBKEY_SET				 120
+#define X509_F_X509_REQ_CHECK_PRIVATE_KEY		 144
 #define X509_F_X509_REQ_PRINT				 121
 #define X509_F_X509_REQ_PRINT_FP			 122
 #define X509_F_X509_REQ_TO_X509				 123
