@@ -258,7 +258,7 @@ void shiftin(unsigned char *dst,unsigned char *src,int nbits)
 char *t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
 char *t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
 enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB64};
-int Sizes[6]={64,0,64,1,8,64};
+int Sizes[6]={64,64,64,1,8,64};
 
 void do_mct(char *amode, 
 	    int akeysz, int numkeys, unsigned char *akey,unsigned char *ivec,
