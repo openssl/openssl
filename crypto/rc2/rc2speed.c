@@ -107,7 +107,6 @@ extern int exit();
 #else /* CLK_TCK */
 #define HZ ((double)CLK_TCK)
 #endif
-#endif
 
 #define BUFSIZE	((long)1024)
 long run=0;
