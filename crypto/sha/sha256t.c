@@ -27,6 +27,24 @@ unsigned char app_b3[SHA256_DIGEST_LENGTH] = {
 	0xf1,0x80,0x9a,0x48,0xa4,0x97,0x20,0x0e,
 	0x04,0x6d,0x39,0xcc,0xc7,0x11,0x2c,0xd0	};
 
+unsigned char addenum_1[SHA224_DIGEST_LENGTH] = {
+	0x23,0x09,0x7d,0x22,0x34,0x05,0xd8,0x22,
+	0x86,0x42,0xa4,0x77,0xbd,0xa2,0x55,0xb3,
+	0x2a,0xad,0xbc,0xe4,0xbd,0xa0,0xb3,0xf7,
+	0xe3,0x6c,0x9d,0xa7 };
+
+unsigned char addenum_2[SHA224_DIGEST_LENGTH] = {
+	0x75,0x38,0x8b,0x16,0x51,0x27,0x76,0xcc,
+	0x5d,0xba,0x5d,0xa1,0xfd,0x89,0x01,0x50,
+	0xb0,0xc6,0x45,0x5c,0xb4,0xf5,0x8b,0x19,
+	0x52,0x52,0x25,0x25 };
+
+unsigned char addenum_3[SHA224_DIGEST_LENGTH] = {
+	0x20,0x79,0x46,0x55,0x98,0x0c,0x91,0xd8,
+	0xbb,0xb4,0xc1,0xea,0x97,0x61,0x8a,0x4b,
+	0xf0,0x3f,0x42,0x58,0x19,0x48,0xb2,0xee,
+	0x4e,0xe7,0xad,0x67 };
+
 int main ()
 { unsigned char md[SHA256_DIGEST_LENGTH];
   int		i;
@@ -61,6 +79,44 @@ int main ()
     SHA256_Final(md,&ctx);
 
     if (memcmp(md,app_b3,sizeof(app_b3)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 3 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    fprintf(stdout," passed.\n"); fflush(stdout);
+
+    fprintf(stdout,"Testing SHA-224 ");
+
+    SHA224("abc",3,md);
+    if (memcmp(md,addenum_1,sizeof(addenum_1)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    SHA224("abcdbcde""cdefdefg""efghfghi""ghijhijk"
+	   "ijkljklm""klmnlmno""mnopnopq",56,md);
+    if (memcmp(md,addenum_2,sizeof(addenum_2)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 2 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    SHA224_Init(&ctx);
+    for (i=0;i<1000000;i+=64)
+	SHA256_Update(&ctx, "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
+			    (1000000-i)<64?1000000-i:64);
+    SHA256_Final(md,&ctx);
+
+    if (memcmp(md,addenum_3,sizeof(addenum_3)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 3 of 3 failed.\n");
 	return 1;
