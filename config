@@ -209,6 +209,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-siemens-sysv4"; exit 0
 	;;
 
+    POSIX-BC*)
+	echo "${MACHINE}-siemens-sysv4"; exit 0   # Here, $MACHINE == "BS2000"
+	;;
+
     machten:*)
        echo "${MACHINE}-tenon-${SYSTEM}"; exit 0;
        ;;
@@ -328,6 +332,7 @@ case "$GUESSOS" in
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alpha-cc" ;;
   *-*-unixware*) OUT="unixware-2.0" ;;
+  BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
   # these are all covered by the catchall below
@@ -352,6 +357,14 @@ fi
 case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
+
+for i in bf cast des dh dsa hmac md2 md5 mdc2 rc2 rc4 rc5 rsa sha
+do
+  if [ ! -d crypto/$i ]
+  then
+    options="$options no-$i"
+  fi
+done
 
 if [ -z "$OUT" ]; then
   OUT="$CC"
