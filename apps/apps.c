@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #define NON_MAIN
@@ -70,6 +69,12 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/safestack.h>
+
+#ifdef OPENSSL_SYS_WINDOWS
+#define strcasecmp _stricmp
+#else
+#include <strings.h>
+#endif
 
 #ifdef OPENSSL_SYS_WINDOWS
 #  include "bss_file.c"

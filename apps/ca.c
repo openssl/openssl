@@ -61,7 +61,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -78,6 +77,12 @@
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/engine.h>
+
+#ifdef OPENSSL_SYS_WINDOWS
+#define strcasecmp _stricmp
+#else
+#include <strings.h>
+#endif
 
 #ifndef W_OK
 #  ifdef OPENSSL_SYS_VMS
