@@ -467,6 +467,13 @@ bad:
 		}
 		printf("\n\t};\n\n");
 
+		/* FIXME:
+		 * the generated code does not make much sense
+		 *
+		 * TODO:
+		 * use EC_GROUP_new_curve_GFp instead of using EC_GFp_mont_method directly
+		 */
+		
 		printf("ECDSA *get_ecdsa%d()\n\t{\n",bits_p);
 		printf("\tint      ok=1;\n");
 		printf("\tECDSA    *ecdsa=NULL;\n");
