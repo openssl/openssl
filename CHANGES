@@ -14,10 +14,9 @@
   *) DES CBC did not update the IV. Weird.
      [Ben Laurie]
 #else
-     Look at des.c, cbc3_enc.c etc.: Those rely on that bevaviour of
-     des_cbc_encrypt and copy IVs themselves when they have to.
-     Either all those have to be changed too, or things must stay as they
-     are.
+     des_cbc_encrypt does not update the IV, but des_ncbc_encrypt does.
+     Changing the behaviour of the former might break existing programs --
+     where IV updating is needed, des_ncbc_encrypt can be used.
 #endif
 
   *) When bntest is run from "make test" it drives bc to check its

@@ -151,6 +151,7 @@ void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,
 DES_LONG des_cbc_cksum(const unsigned char *input,des_cblock *output,
 		       long length,des_key_schedule schedule,
 		       const_des_cblock *ivec);
+/* des_cbc_encrypt does not update the IV!  Use des_ncbc_encrypt instead. */
 void des_cbc_encrypt(const unsigned char *input,unsigned char *output,
 		     long length,des_key_schedule schedule,des_cblock *ivec,
 		     int enc);
