@@ -69,6 +69,8 @@
 #define HASH    EVP_sha1()
 #endif 
 
+static void *dummy=&dummy;
+
 #ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
@@ -80,6 +82,7 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#ifndef OPENSSL_NO_DEPRECATED
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret,
@@ -99,4 +102,5 @@ DSA *DSA_generate_parameters(int bits,
 	DSA_free(ret);
 	return NULL;
 	}
+#endif
 #endif
