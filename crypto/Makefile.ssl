@@ -69,7 +69,7 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(TOP)/util/mklink.sh ../include $(HEADER)
+	@$(TOP)/util/mklink.sh ../include $(EXHEADER)
 	@$(TOP)/util/mklink.sh ../test $(TEST)
 	@$(TOP)/util/mklink.sh ../apps $(APPS)
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
