@@ -643,7 +643,7 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 		start=0;
 		if (wstart < 0) break;
 		}
-	BN_from_montgomery(rr,r,mont,ctx);
+	if (!BN_from_montgomery(rr,r,mont,ctx)) goto err;
 	ret=1;
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
@@ -658,14 +658,20 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	{
 	BN_MONT_CTX *mont = NULL;
 	int b, bits, ret=0;
+	int r_is_one;
 	BN_ULONG w, next_w;
 	BIGNUM *d, *r, *t;
 	BIGNUM *swap_tmp;
 #define BN_MOD_MUL_WORD(r, w, m) \
 		(BN_mul_word(r, (w)) && \
-		(BN_ucmp(r, (m)) >= 0 ? \
-			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1)) : \
-			1))
+		(BN_ucmp(r, (m)) < 0 ? 1 : \
+			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
+		/* BN_MOD_MUL_WORD is only used with 'w' large,
+		  * so the BN_ucmp test is probably more overhead
+		  * than always using BN_mod (which uses BN_copy if
+		  * a similar test returns true). */
+#define BN_TO_MONTGOMERY_WORD(r, w, mont) \
+		(BN_set_word(r, (w)) && BN_to_montgomery(r, r, (mont), ctx))
 
 	bn_check_top(p);
 	bn_check_top(m);
@@ -708,7 +714,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		if (!BN_MONT_CTX_set(mont, m, ctx)) goto err;
 		}
 
-	if (!BN_to_montgomery(r, BN_value_one(), mont, ctx)) goto err;
+	r_is_one = 1; /* except for Montgomery factor */
 
 	/* bits-1 >= 0 */
 
@@ -720,13 +726,22 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		next_w = w*w;
 		if ((next_w/w) != w) /* overflow */
 			{
-			if (!BN_MOD_MUL_WORD(r, w, m))
-				goto err;
+			if (r_is_one)
+				{
+				if (!BN_TO_MONTGOMERY_WORD(r, w, mont)) goto err;
+				r_is_one = 0;
+				}
+			else
+				{
+				if (!BN_MOD_MUL_WORD(r, w, m)) goto err;
+				}
 			next_w = 1;
 			}
 		w = next_w;
-		if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
-			goto err;
+		if (!r_is_one)
+			{
+			if (!BN_mod_mul_montgomery(r, r, r, mont, ctx)) goto err;
+			}
 
 		/* Second, multiply r*w by 'a' if exponent bit is set. */
 		if (BN_is_bit_set(p, b))
@@ -734,21 +749,43 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 			next_w = w*a;
 			if ((next_w/a) != w) /* overflow */
 				{
-				if (!BN_MOD_MUL_WORD(r, w, m))
-					goto err;
+				if (r_is_one)
+					{
+					if (!BN_TO_MONTGOMERY_WORD(r, w, mont)) goto err;
+					r_is_one = 0;
+					}
+				else
+					{
+					if (!BN_MOD_MUL_WORD(r, w, m)) goto err;
+					}
 				next_w = a;
 				}
 			w = next_w;
 			}
 		}
+
 	/* Finally, set r:=r*w. */
 	if (w != 1)
 		{
-		if (!BN_MOD_MUL_WORD(r, w, m))
-			goto err;
+		if (r_is_one)
+			{
+			if (!BN_TO_MONTGOMERY_WORD(r, w, mont)) goto err;
+			r_is_one = 0;
+			}
+		else
+			{
+			if (!BN_MOD_MUL_WORD(r, w, m)) goto err;
+			}
 		}
 
-	BN_from_montgomery(rr, r, mont, ctx);
+	if (r_is_one) /* can happen only if a == 1*/
+		{
+		if (!BN_one(rr)) goto err;
+		}
+	else
+		{
+		if (!BN_from_montgomery(rr, r, mont, ctx)) goto err;
+		}
 	ret = 1;
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
