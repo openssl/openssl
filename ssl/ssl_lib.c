@@ -1212,8 +1212,10 @@ err2:
 	return(NULL);
 	}
 
+#if 0
 static void SSL_COMP_free(SSL_COMP *comp)
     { OPENSSL_free(comp); }
+#endif
 
 void SSL_CTX_free(SSL_CTX *a)
 	{
