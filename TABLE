@@ -699,7 +699,7 @@ $rc5_obj      = asm/r586-elf.o
 
 *** debug-solaris-sparc-gcc
 $cc           = gcc
-$cflags       = -O -g -mv8 -Wall -DB_ENDIAN
+$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG -O -g -mv8 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -716,7 +716,7 @@ $rc5_obj      =
 
 *** debug-solaris-usparc-gcc
 $cc           = gcc
-$cflags       = -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
