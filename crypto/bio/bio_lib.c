@@ -201,15 +201,7 @@ int BIO_write(BIO *b, const void *in, int inl)
 
 	if (i > 0) b->num_write+=(unsigned long)i;
 
-	/* This is evil and not thread safe.  If the BIO has been freed,
-	 * we must not call the callback.  The only way to be able to
-	 * determine this is the reference count which is now invalid since
-	 * the memory has been free()ed.
-	 */
-#ifdef REF_CHECK
-	if (b->references <= 0) abort();
-#endif
-	if (cb != NULL) /* && (b->references >= 1)) */
+	if (cb != NULL)
 		i=(int)cb(b,BIO_CB_WRITE|BIO_CB_RETURN,in,inl,
 			0L,(long)i);
 	return(i);
@@ -239,6 +231,8 @@ int BIO_puts(BIO *b, const char *in)
 		}
 
 	i=b->method->bputs(b,in);
+
+	if (i > 0) b->num_write+=(unsigned long)i;
 
 	if (cb != NULL)
 		i=(int)cb(b,BIO_CB_PUTS|BIO_CB_RETURN,in,0,
