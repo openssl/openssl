@@ -146,7 +146,7 @@ X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
 		if (!(cid->crlNum = ASN1_INTEGER_new())) goto err;
 		if (!(ASN1_INTEGER_set(cid->crlNum, *n))) goto err;
 		}
-	if (time)
+	if (tim)
 	        {
 		if (!(cid->crlTime = ASN1_GENERALIZEDTIME_new())) goto err;
 		if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim))) 
