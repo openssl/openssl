@@ -89,8 +89,6 @@ int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	if (a == NULL) return(0);
 
 	len=a->length;
-	ret=1+len;
-	if (pp == NULL) return(ret);
 
 	if (len > 0)
 		{
@@ -118,6 +116,10 @@ int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 		}
 	else
 		bits=0;
+
+	ret=1+len;
+	if (pp == NULL) return(ret);
+
 	p= *pp;
 
 	*(p++)=(unsigned char)bits;
