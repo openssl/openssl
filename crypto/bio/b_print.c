@@ -151,7 +151,7 @@ static void _dopr(char **sbuffer, char **buffer,
 
 /* some handy macros */
 #define char_to_int(p) (p - '0')
-#define MAX(p,q) ((p >= q) ? p : q)
+#define OSSL_MAX(p,q) ((p >= q) ? p : q)
 
 static void
 _dopr(
@@ -502,13 +502,13 @@ fmtint(
     convert[place] = 0;
 
     zpadlen = max - place;
-    spadlen = min - MAX(max, place) - (signvalue ? 1 : 0);
+    spadlen = min - OSSL_MAX(max, place) - (signvalue ? 1 : 0);
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)
         spadlen = 0;
     if (flags & DP_F_ZERO) {
-        zpadlen = MAX(zpadlen, spadlen);
+        zpadlen = OSSL_MAX(zpadlen, spadlen);
         spadlen = 0;
     }
     if (flags & DP_F_MINUS)
