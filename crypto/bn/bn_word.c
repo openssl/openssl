@@ -123,7 +123,10 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
 	i=0;
 	for (;;)
 		{
-		l=(a->d[i]+(BN_ULONG)w)&BN_MASK2;
+		if (i >= a->top)
+			l=w;
+		else
+			l=(a->d[i]+(BN_ULONG)w)&BN_MASK2;
 		a->d[i]=l;
 		if (w > l)
 			w=1;
