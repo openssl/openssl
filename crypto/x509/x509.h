@@ -913,6 +913,16 @@ int ASN1_digest(int (*i2d)(),const EVP_MD *type,char *data,
 int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	ASN1_BIT_STRING *signature,
 	char *data,EVP_PKEY *pkey, const EVP_MD *type);
+
+int ASN1_item_digest(const ASN1_ITEM *it,const EVP_MD *type,void *data,
+	unsigned char *md,unsigned int *len);
+
+int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *algor1,
+	ASN1_BIT_STRING *signature,void *data,EVP_PKEY *pkey);
+
+int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
+	ASN1_BIT_STRING *signature,
+	void *data, EVP_PKEY *pkey, const EVP_MD *type);
 #endif
 
 int 		X509_set_version(X509 *x,long version);

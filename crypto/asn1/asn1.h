@@ -852,7 +852,9 @@ STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 			     int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
+void *ASN1_unpack_item(ASN1_STRING *oct, const ASN1_ITEM *it);
 ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
+ASN1_STRING *ASN1_pack_item(void *obj, const ASN1_ITEM *it, ASN1_OCTET_STRING **oct);
 
 void ASN1_STRING_set_default_mask(unsigned long mask);
 int ASN1_STRING_set_default_mask_asc(char *p);
