@@ -61,7 +61,7 @@ int MAIN(int argc, char **argv)
     int hex=0;
     int checks=20;
     BIGNUM *bn=NULL;
-    BIO *bio_out=NULL;
+    BIO *bio_out;
 
     apps_startup();
 
@@ -95,17 +95,16 @@ int MAIN(int argc, char **argv)
 	goto bad;
 	}
 
-    if (bio_out == NULL)
-	if ((bio_out=BIO_new(BIO_s_file())) != NULL)
-	    {
-	    BIO_set_fp(bio_out,stdout,BIO_NOCLOSE);
+   if ((bio_out=BIO_new(BIO_s_file())) != NULL)
+	{
+	BIO_set_fp(bio_out,stdout,BIO_NOCLOSE);
 #ifdef OPENSSL_SYS_VMS
 	    {
 	    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 	    bio_out = BIO_push(tmpbio, bio_out);
 	    }
 #endif
-	    }
+	}
 
     if(hex)
 	BN_hex2bn(&bn,argv[0]);
@@ -117,7 +116,7 @@ int MAIN(int argc, char **argv)
 	       BN_is_prime(bn,checks,NULL,NULL,NULL) ? "" : "not ");
 
     BN_free(bn);
-    BIO_free(bio_out);
+    BIO_free_all(bio_out);
 
     return 0;
 
@@ -125,5 +124,5 @@ int MAIN(int argc, char **argv)
     BIO_printf(bio_err,"options are\n");
     BIO_printf(bio_err,"%-14s hex\n","-hex");
     BIO_printf(bio_err,"%-14s number of checks\n","-checks <n>");
-    exit(1);
+    return 1;
     }
