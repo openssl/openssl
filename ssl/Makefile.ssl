@@ -65,7 +65,7 @@ lib:	$(LIBOBJ)
 
 shared:
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; make $(SHARED_LIB)); \
+		(cd ..; $(MAKE) $(SHARED_LIB)); \
 	fi
 
 files:
