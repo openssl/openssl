@@ -260,6 +260,9 @@ SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 
 int ssl2_pending(SSL *s)
 	{
+	/* Unlike ssl2_pending, this one probably works (if read-ahead
+	 * is disabled), but it should be examined
+	 * XXX */
 	return(s->s2->ract_data_length);
 	}
 

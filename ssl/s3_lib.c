@@ -638,10 +638,10 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 		return(NULL);
 	}
 
-/* The problem is that it may not be the correct record type */
 int ssl3_pending(SSL *s)
 	{
-	return(s->s3->rrec.length);
+	/* The problem is that it may not be the correct record type */
+	return(s->s3->rrec.length); /* FIXME */
 	}
 
 int ssl3_new(SSL *s)
