@@ -226,6 +226,8 @@ support can be found at
   http://sunsolve.sun.com/pub-cgi/retrieve.pl?doc=fsrdb/27606&zone_32=SUNWski
 However, be warned that /dev/random is usually a blocking device, which
 may have some effects on OpenSSL.
+A third party /dev/random solution for Solaris is available at
+  http://www.cosy.sbg.ac.at/~andi/
 
 
 * Why do I get an "unable to write 'random state'" error message?
