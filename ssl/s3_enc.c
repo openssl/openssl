@@ -78,12 +78,8 @@ static unsigned char ssl3_pad_2[48]={
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c };
 
-#ifndef NO_PROTO
 static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	unsigned char *sender, int len, unsigned char *p);
-#else
-static int ssl3_handshake_mac();
-#endif
 
 static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
