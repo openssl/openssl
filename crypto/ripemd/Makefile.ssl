@@ -101,3 +101,6 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rmd_dgst.o: ripemd.h rmd_locl.h rmdconst.h
+rmd_one.o: ripemd.h rmd_locl.h rmdconst.h

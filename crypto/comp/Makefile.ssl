@@ -92,3 +92,13 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+c_rle.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
+c_rle.o: ../../include/crypto.h ../../include/objects.h ../../include/stack.h
+c_rle.o: comp.h
+c_zlib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
+c_zlib.o: ../../include/crypto.h ../../include/objects.h ../../include/stack.h
+c_zlib.o: comp.h
+comp_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
+comp_lib.o: ../../include/crypto.h ../../include/objects.h
+comp_lib.o: ../../include/stack.h comp.h

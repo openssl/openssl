@@ -77,3 +77,9 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rc2_cbc.o: rc2.h rc2_locl.h
+rc2_ecb.o: rc2.h rc2_locl.h
+rc2_skey.o: rc2.h rc2_locl.h
+rc2cfb64.o: rc2.h rc2_locl.h
+rc2ofb64.o: rc2.h rc2_locl.h

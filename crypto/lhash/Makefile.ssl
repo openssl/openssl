@@ -77,3 +77,8 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+lh_stats.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+lh_stats.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+lh_stats.o: lhash.h
+lhash.o: ../../include/stack.h ../crypto.h lhash.h

@@ -83,3 +83,30 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+dsa_err.o: ../../include/bn.h ../../include/err.h dsa.h
+dsa_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+dsa_gen.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+dsa_gen.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+dsa_gen.o: dsa.h
+dsa_key.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+dsa_key.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+dsa_key.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+dsa_key.o: dsa.h
+dsa_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
+dsa_lib.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+dsa_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h dsa.h
+dsa_sign.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
+dsa_sign.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+dsa_sign.o: ../../include/rand.h ../../include/stack.h ../cryptlib.h
+dsa_sign.o: ../crypto.h dsa.h
+dsa_vrf.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+dsa_vrf.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+dsa_vrf.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+dsa_vrf.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+dsa_vrf.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+dsa_vrf.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+dsa_vrf.o: ../../include/rand.h ../../include/rc2.h ../../include/rc4.h
+dsa_vrf.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+dsa_vrf.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+dsa_vrf.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h dsa.h

@@ -101,3 +101,6 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+md5_dgst.o: md5.h md5_locl.h
+md5_one.o: md5.h md5_locl.h

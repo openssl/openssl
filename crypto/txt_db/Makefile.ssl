@@ -77,3 +77,7 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+txt_db.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+txt_db.o: ../../include/err.h ../../include/lhash.h ../../include/stack.h
+txt_db.o: ../cryptlib.h ../crypto.h txt_db.h

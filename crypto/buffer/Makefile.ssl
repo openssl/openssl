@@ -83,3 +83,7 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+buf_err.o: ../../include/err.h buffer.h
+buffer.o: ../../include/bio.h ../../include/e_os.h ../../include/err.h
+buffer.o: ../../include/stack.h ../cryptlib.h ../crypto.h buffer.h

@@ -77,3 +77,20 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+err.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+err.o: ../../include/lhash.h ../../include/stack.h ../cryptlib.h ../crypto.h
+err.o: err.h
+err_all.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+err_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+err_all.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
+err_all.o: ../../include/dsa.h ../../include/evp.h ../../include/idea.h
+err_all.o: ../../include/lhash.h ../../include/md2.h ../../include/md5.h
+err_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem2.h
+err_all.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+err_all.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+err_all.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+err_all.o: ../../include/x509_vfy.h ../../include/x509v3.h ../crypto.h err.h
+err_prn.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+err_prn.o: ../../include/lhash.h ../../include/stack.h ../cryptlib.h
+err_prn.o: ../crypto.h err.h

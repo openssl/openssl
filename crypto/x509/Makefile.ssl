@@ -95,3 +95,209 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+by_dir.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+by_dir.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+by_dir.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+by_dir.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+by_dir.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+by_dir.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+by_dir.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+by_dir.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+by_dir.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+by_dir.o: x509.h x509_vfy.h
+by_file.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+by_file.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+by_file.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+by_file.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+by_file.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+by_file.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+by_file.o: ../../include/pem.h ../../include/pem2.h ../../include/pkcs7.h
+by_file.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+by_file.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+by_file.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+v3_net.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+v3_net.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+v3_net.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+v3_net.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+v3_net.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+v3_net.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+v3_net.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+v3_net.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+v3_net.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+v3_x509.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+v3_x509.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+v3_x509.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+v3_x509.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+v3_x509.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+v3_x509.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+v3_x509.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+v3_x509.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+v3_x509.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_cmp.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_cmp.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_cmp.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_cmp.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_cmp.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_cmp.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_cmp.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_cmp.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_cmp.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_d2.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_d2.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_d2.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_d2.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_d2.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_d2.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_d2.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_d2.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_d2.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_def.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_def.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_def.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_def.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_def.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_def.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_def.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_def.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_def.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_err.o: ../../include/bn.h ../../include/cast.h ../../include/des.h
+x509_err.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
+x509_err.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
+x509_err.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+x509_err.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+x509_err.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+x509_err.o: ../../include/sha.h ../../include/stack.h ../crypto.h x509.h
+x509_err.o: x509_vfy.h
+x509_ext.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_ext.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_ext.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_ext.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_ext.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_ext.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_ext.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_ext.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_ext.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_lu.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_lu.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_lu.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_lu.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_lu.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+x509_lu.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+x509_lu.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+x509_lu.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+x509_lu.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+x509_lu.o: x509.h x509_vfy.h
+x509_obj.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_obj.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_obj.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_obj.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_obj.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+x509_obj.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+x509_obj.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+x509_obj.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+x509_obj.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+x509_obj.o: x509.h x509_vfy.h
+x509_r2x.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_r2x.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_r2x.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_r2x.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_r2x.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_r2x.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_r2x.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_r2x.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_r2x.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_req.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_req.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_req.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_req.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_req.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_req.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem.h
+x509_req.o: ../../include/pem2.h ../../include/pkcs7.h ../../include/rc2.h
+x509_req.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+x509_req.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+x509_req.o: ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_set.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_set.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_set.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_set.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_set.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_set.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_set.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_set.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_set.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_txt.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_txt.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_txt.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_txt.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_txt.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+x509_txt.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+x509_txt.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+x509_txt.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+x509_txt.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+x509_txt.o: x509.h x509_vfy.h
+x509_v3.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_v3.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_v3.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_v3.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_v3.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509_v3.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509_v3.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509_v3.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509_v3.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509_vfy.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509_vfy.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509_vfy.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509_vfy.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509_vfy.o: ../../include/idea.h ../../include/lhash.h ../../include/md2.h
+x509_vfy.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+x509_vfy.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+x509_vfy.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+x509_vfy.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+x509_vfy.o: x509.h x509_vfy.h
+x509name.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509name.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509name.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509name.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509name.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509name.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509name.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509name.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509name.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509pack.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509pack.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509pack.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509pack.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509pack.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509pack.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509pack.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509pack.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509pack.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509rset.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509rset.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509rset.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509rset.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509rset.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509rset.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509rset.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509rset.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509rset.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x509type.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x509type.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x509type.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x509type.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x509type.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x509type.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x509type.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x509type.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x509type.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
+x_all.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+x_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+x_all.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+x_all.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+x_all.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+x_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+x_all.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+x_all.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+x_all.o: ../../include/stack.h ../cryptlib.h ../crypto.h x509.h x509_vfy.h
