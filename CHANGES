@@ -20,10 +20,10 @@
      functions prevents this.
      [Steve Henson]
 
-  *) Initialize static variable in crypto/dsa/dsa_lib.c explicitely to
-     NULL, as at least on Solaris 8 this seems not to be done automatically
-     (in contradiction to the requirements of the C standard).
-     This made problems when used from OpenSSH.
+  *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
+     explicitely to NULL, as at least on Solaris 8 this seems not always to be
+     done automatically (in contradiction to the requirements of the C
+     standard). This made problems when used from OpenSSH.
      [Lutz Jaenicke]
 
   *) In OpenSSL 0.9.6a and 0.9.6b, crypto/dh/dh_key.c ignored
