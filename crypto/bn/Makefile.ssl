@@ -22,6 +22,7 @@ BN_ASM=		bn_asm.o
 #BN_ASM=	bn86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
 TEST=bntest.c exptest.c
