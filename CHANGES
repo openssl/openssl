@@ -4,6 +4,10 @@
 
  Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
 
+  *) New -ignore_err option in ocsp application to stop the server
+     exiting on the first error in a request.
+     [Steve Henson]
+
   *) In ssl3_get_client_hello() (ssl/s3_srvr.c), tolerate additional
      extra data after the compression methods not only for TLS 1.0
      but also for SSL 3.0 (as required by the specification).
