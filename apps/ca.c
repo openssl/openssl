@@ -980,7 +980,11 @@ bad:
 				goto err;
 				}
 
+#ifndef OPENSSL_SYS_VMS
 			j = BIO_snprintf(buf[0], sizeof buf[0], "%s.new", dbfile);
+#else
+			j = BIO_snprintf(buf[0], sizeof buf[0], "%s-new", dbfile);
+#endif
 			if (j < 0 || j >= sizeof buf[0])
 				{
 				BIO_printf(bio_err, "file name too long\n");
@@ -998,7 +1002,11 @@ bad:
 			
 			BIO_free(out);
 			out = NULL;
+#ifndef OPENSSL_SYS_VMS
 			j = BIO_snprintf(buf[1], sizeof buf[1], "%s.old", dbfile);
+#else
+			j = BIO_snprintf(buf[1], sizeof buf[1], "%s-old", dbfile);
+#endif
 			if (j < 0 || j >= sizeof buf[1])
 				{
 				BIO_printf(bio_err, "file name too long\n");
@@ -1586,7 +1594,11 @@ bad:
 			X509_free(revcert);
 
 			strncpy(buf[0],dbfile,BSIZE-4);
+#ifndef OPENSSL_SYS_VMS
 			strcat(buf[0],".new");
+#else
+			strcat(buf[0],"-new");
+#endif
 			if (BIO_write_filename(out,buf[0]) <= 0)
 				{
 				perror(dbfile);
@@ -1596,7 +1608,11 @@ bad:
 			j=TXT_DB_write(out,db);
 			if (j <= 0) goto err;
 			strncpy(buf[1],dbfile,BSIZE-4);
+#ifndef OPENSSL_SYS_VMS
 			strcat(buf[1],".old");
+#else
+			strcat(buf[1],"-old");
+#endif
 			if (rename(dbfile,buf[1]) < 0)
 				{
 				BIO_printf(bio_err,"unable to rename %s to %s\n", dbfile, buf[1]);
