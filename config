@@ -381,19 +381,29 @@ done
 
 # figure out if gcc is available and if so we use it otherwise
 # we fallback to whatever cc does on the system
-GCCVER=`(gcc --version) 2>/dev/null | head -1`
+GCCVER=`(gcc -dumpversion) 2>/dev/null`
 if [ "$GCCVER" != "" ]; then
   CC=gcc
-  # then strip off whatever prefix Cygnus as well as GCC 3.1 prepends
-  # the number with...  Hopefully, this will work for any future prefixes
-  # as well.
-  GCCVER=`echo $GCCVER | sed 's/^[a-zA-Z ()]*\-//'`
+  # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
+  # does give us what we want though, so we use that.  We just just the
+  # major and minor version numbers.
   # peak single digit before and after first dot, e.g. 2.95.1 gives 29
   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
   CC=cc
 fi
-
+if [ "$SYSTEM" = "HP-UX" ];then
+  # By default gcc is a ILP32 compiler (with long long == 64).
+  GCC_BITS="32"
+  if [ $GCCVER -ge 30 ]; then
+    # PA64 support only came in with gcc 3.0.x.
+    # We look for the preprocessor symbol __LP64__ indicating
+    # 64bit bit long and pointer.  sizeof(int) == 32 on HPUX64.
+    if gcc -v -E -x c /dev/null 2>&1 | grep __LP64__ > /dev/null; then
+      GCC_BITS="64"
+    fi
+  fi
+fi
 if [ "$SYSTEM" = "SunOS" ]; then
   # check for WorkShop C, expected output is "cc: blah-blah C x.x"
   CCVER=`(cc -V 2>&1) 2>/dev/null | \
@@ -595,8 +605,18 @@ EOF
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
-  *-hpux1*)	OUT="hpux-parisc-$CC"
-		options="$options -D_REENTRANT" ;;
+  *-hpux1*)
+	if [ $CC = "gcc" ];
+	then
+	  if [ $GCC_BITS = "64" ]; then
+	    OUT="hpux64-parisc-gcc"
+	  else
+	    OUT="hpux-parisc-gcc"
+	  fi
+	else
+	  OUT="hpux-parisc-$CC"
+	fi
+	options="$options -D_REENTRANT" ;;
   *-hpux)	OUT="hpux-parisc-$CC" ;;
   # these are all covered by the catchall below
   # *-aix) OUT="aix-$CC" ;;

@@ -420,6 +420,7 @@ do_hpux-shared:
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} ; \
 	libs="$$libs -L. -l$$i"; \
 	done
 
@@ -430,6 +431,7 @@ do_hpux64-shared:
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} ; \
 	libs="$$libs -L. -l$$i"; \
 	done
 
@@ -688,7 +690,7 @@ install_docs:
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "`cd ../../util; ./pod2mantest ignore` \
+		sh -c "$(PERL) `cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
@@ -698,7 +700,7 @@ install_docs:
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "`cd ../../util; ./pod2mantest ignore` \
+		sh -c "$(PERL) `cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \

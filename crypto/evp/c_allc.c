@@ -64,6 +64,10 @@
 
 void OpenSSL_add_all_ciphers(void)
 	{
+	static int done=0;
+
+	if (done) return;
+	done=1;
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cfb());
 	EVP_add_cipher(EVP_des_ede_cfb());

@@ -80,12 +80,12 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 mdc2_one.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-mdc2_one.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-mdc2_one.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-mdc2_one.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-mdc2_one.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
+mdc2_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+mdc2_one.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+mdc2_one.o: ../../include/openssl/lhash.h ../../include/openssl/mdc2.h
+mdc2_one.o: ../../include/openssl/opensslconf.h
 mdc2_one.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 mdc2_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 mdc2_one.o: ../cryptlib.h
-mdc2dgst.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-mdc2dgst.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
+mdc2dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/mdc2.h
+mdc2dgst.o: ../../include/openssl/opensslconf.h

@@ -239,6 +239,7 @@ my %table=(
 "hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-parisc-gcc","gcc:-DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:-fpic::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # More attempts at unified 10.X and 11.X targets for HP C compiler.
 #
@@ -480,6 +481,9 @@ my %table=(
 # (Note: the real CFLAGS for Windows builds are defined by util/mk1mf.pl
 # and its library files in util/pl/*)
 "Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+
+# UWIN 
+"UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 
 # Cygwin
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",

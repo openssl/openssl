@@ -112,14 +112,22 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
+=item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+
+Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
+vulnerability affecting CBC ciphers, which cannot be handled by some
+broken SSL implementations.  This option has no effect for connections
+using other ciphers.
+
 =item SSL_OP_ALL
 
 All of the above bug workarounds.
 
 =back
 
-It is save and recommended to use SSL_OP_ALL to enable the bug workaround
-options.
+It is usually safe to use B<SSL_OP_ALL> to enable the bug workaround
+options if compatibility with somewhat broken implementations is
+desired.
 
 The following B<modifying> options are available:
 
@@ -198,5 +206,10 @@ L<dhparam(1)|dhparam(1)>
 =head1 HISTORY
 
 SSL_OP_TLS_ROLLBACK_BUG has been added in OpenSSL 0.9.6.
+
+B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS> has been added in OpenSSL 0.9.6e.
+Versions up to OpenSSL 0.9.6c do not include the countermeasure that
+can be disabled with this option (in OpenSSL 0.9.6d, it was always
+enabled).
 
 =cut

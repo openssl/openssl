@@ -189,7 +189,7 @@ int des_enc_write(int fd,const void *buf,int len,des_key_schedule sched,
 		  des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
 char *des_crypt(const char *buf,const char *salt);
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
+#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(_UWIN)
 char *crypt(const char *buf,const char *salt);
 #endif
 void des_ofb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
