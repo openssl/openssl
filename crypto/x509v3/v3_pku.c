@@ -67,8 +67,9 @@
 
 #ifndef NOPROTO
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out);
+/*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
-
+*/
 #else
 
 static int i2r_PKEY_USAGE_PERIOD();
@@ -162,6 +163,7 @@ BIO *out;
 	return 1;
 }
 
+/*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(method, ctx, values)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
@@ -169,4 +171,4 @@ STACK *values;
 {
 return NULL;
 }
-
+*/
