@@ -5,8 +5,8 @@
 
  Changes between 0.9.01b and 0.9.1c
 
-  *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and as a first
-     step changed SSLeay to SSLeay/OpenSSL in version strings.
+  *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and 
+     changed SSLeay to OpenSSL in version strings.
      [Ralf S. Engelschall]
   
   *) Some fixups to the top-level documents.
