@@ -267,7 +267,6 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_new(void);
 PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp,
 								 long length);
 void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
-void ERR_load_PKCS12_strings(void);
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 		 STACK_OF(X509) **ca);

@@ -989,7 +989,6 @@ int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
 #endif
 
-void	ERR_load_SSL_strings(void );
 void	SSL_load_error_strings(void );
 char * 	SSL_state_string(SSL *s);
 char * 	SSL_rstate_string(SSL *s);

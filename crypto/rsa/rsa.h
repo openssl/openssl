@@ -202,8 +202,6 @@ RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
 RSA_METHOD *RSA_null_method(void);
 
-void	ERR_load_RSA_strings(void );
-
 RSA *	d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length);
 int	i2d_RSAPublicKey(RSA *a, unsigned char **pp);
 RSA *	d2i_RSAPrivateKey(RSA **a, unsigned char **pp, long length);

@@ -353,8 +353,6 @@ int 			i2d_PKCS7(PKCS7 *a,
 PKCS7			*d2i_PKCS7(PKCS7 **a,
 				unsigned char **pp,long length);
 
-void ERR_load_PKCS7_strings(void);
-
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 

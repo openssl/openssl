@@ -1005,8 +1005,6 @@ int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(ASN1_OBJECT *a,ASN1_OBJECT *b);
 char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)(const void *, const void *));
 
-void		ERR_load_OBJ_strings(void );
-
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(ASN1_OBJECT *obj);
 int		OBJ_create(char *oid,char *sn,char *ln);
