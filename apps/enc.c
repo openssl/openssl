@@ -305,7 +305,7 @@ bad:
         e = setup_engine(bio_err, engine, 0);
 #endif
 
-	if (md && dgst=EVP_get_digestbyname(md)) == NULL)
+	if (md && (dgst=EVP_get_digestbyname(md)) == NULL)
 		{
 		BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
 		goto end;
