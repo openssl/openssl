@@ -25,6 +25,8 @@ if ($gaswin and !$no_asm)
 	{
         $bn_asm_obj='$(OBJ_D)/bn-win32.o';
         $bn_asm_src='crypto/bn/asm/bn-win32.s';
+        $bnco_asm_obj='$(OBJ_D)/co-win32.o';
+        $bnco_asm_src='crypto/bn/asm/co-win32.s';
         $des_enc_obj='$(OBJ_D)/d-win32.o $(OBJ_D)/y-win32.o';
         $des_enc_src='crypto/des/asm/d-win32.s crypto/des/asm/y-win32.s';
         $bf_enc_obj='$(OBJ_D)/b-win32.o';
