@@ -77,7 +77,6 @@
 static void MS_CALLBACK dh_cb(int p, int n, void *arg);
 int MAIN(int argc, char **argv)
 	{
-	char buffer[200];
 	DH *dh=NULL;
 	int ret=1,num=DEFBITS;
 	int g=2;
