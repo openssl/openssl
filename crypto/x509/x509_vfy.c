@@ -429,6 +429,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	int i,ok=0,n;
 	X509 *xs,*xi;
 	EVP_PKEY *pkey=NULL;
+	time_t *ptime;
 	int (*cb)();
 
 	cb=ctx->verify_cb;
@@ -438,8 +439,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	ctx->error_depth=n-1;
 	n--;
 	xi=sk_X509_value(ctx->chain,n);
-	if (X509_NAME_cmp(X509_get_subject_name(xi),
-		X509_get_issuer_name(xi)) == 0)
+	if(ctx->flags & X509_V_FLAG_USE_CHECK_TIME) ptime = &ctx->check_time;
+	else ptime = NULL;
+	if (ctx->check_issued(ctx, xi, xi))
 		xs=xi;
 	else
 		{
@@ -485,7 +487,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			EVP_PKEY_free(pkey);
 			pkey=NULL;
 
-			i=X509_cmp_current_time(X509_get_notBefore(xs));
+			i=X509_cmp_time(X509_get_notBefore(xs), ptime);
 			if (i == 0)
 				{
 				ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
@@ -503,7 +505,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			xs->valid=1;
 			}
 
-		i=X509_cmp_current_time(X509_get_notAfter(xs));
+		i=X509_cmp_time(X509_get_notAfter(xs), ptime);
 		if (i == 0)
 			{
 			ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
@@ -540,6 +542,11 @@ end:
 	}
 
 int X509_cmp_current_time(ASN1_TIME *ctm)
+{
+	return X509_cmp_time(ctm, NULL);
+}
+
+int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	{
 	char *str;
 	ASN1_TIME atm;
@@ -594,7 +601,7 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	X509_gmtime_adj(&atm,-offset*60);
+	X509_time_adj(&atm,-offset*60, cmp_time);
 
 	if(ctm->type == V_ASN1_UTCTIME)
 		{
@@ -614,10 +621,17 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 	}
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
+{
+	return X509_time_adj(s, adj, NULL);
+}
+
+ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *in_tm)
 	{
 	time_t t;
 
-	time(&t);
+	if(in_tm) t = *in_tm;
+	else time(&t);
+
 	t+=adj;
 	if(!s) return ASN1_TIME_set(s, t);
 	if(s->type == V_ASN1_UTCTIME) return(ASN1_UTCTIME_set(s,t));
@@ -853,6 +867,17 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 		}
 	CRYPTO_free_ex_data(x509_store_ctx_method,ctx,&(ctx->ex_data));
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
+	}
+
+void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags)
+	{
+		ctx->flags |= flags;
+	}
+
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t)
+	{
+		ctx->check_time = t;
+		ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
 	}
 
 IMPLEMENT_STACK_OF(X509)

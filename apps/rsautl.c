@@ -141,7 +141,7 @@ int MAIN(int argc, char **argv)
 		argv++;
 	}
 
-	if(need_priv && (key_type == KEY_PRIVKEY)) {
+	if(need_priv && (key_type != KEY_PRIVKEY)) {
 		BIO_printf(bio_err, "A private key is needed for this operation\n");
 		goto end;
 	}

@@ -800,7 +800,9 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 
 #endif /* !SSLEAY_MACROS */
 
+int		X509_cmp_time(ASN1_TIME *s, time_t *t);
 int		X509_cmp_current_time(ASN1_TIME *s);
+ASN1_TIME *	X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
 ASN1_TIME *	X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *	X509_get_default_cert_area(void );

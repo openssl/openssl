@@ -3,57 +3,61 @@
  _______________
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
-  
-   *) Phase 2 verify code reorganisation. The certificate
-      verify code now looks up an issuer certificate by a
-      number of criteria: subject name, authority key id
-      and key usage. It also verifies self signed certificates
-      by the same criteria. The main comparison function is
-      X509_check_issued() which performs these checks.
- 
-      Lot of changes were necessary in order to support this
-      without completely rewriting the lookup code.
- 
-      Authority and subject key identifier are now cached.
- 
-      The LHASH 'certs' is X509_STORE has now been replaced
-      by a STACK_OF(X509_OBJECT). This is mainly because an
-      LHASH can't store or retrieve multiple objects with
-      the same hash value.
 
-      As a result various functions (which were all internal
-      use only) have changed to handle the new X509_STORE
-      structure. This will break anything that messed round
-      with X509_STORE internally.
+  *) Allow the verify time to be set by an application,
+     rather than always using the current time.
+     [Steve Henson]
+  
+  *) Phase 2 verify code reorganisation. The certificate
+     verify code now looks up an issuer certificate by a
+     number of criteria: subject name, authority key id
+     and key usage. It also verifies self signed certificates
+     by the same criteria. The main comparison function is
+     X509_check_issued() which performs these checks.
  
-      The functions X509_STORE_add_cert() now checks for an
-      exact match, rather than just subject name.
+     Lot of changes were necessary in order to support this
+     without completely rewriting the lookup code.
  
-      The X509_STORE API doesn't directly support the retrieval
-      of multiple certificates matching a given criteria, however
-      this can be worked round by performing a lookup first
-      (which will fill the cache with candidate certificates)
-      and then examining the cache for matches. This is probably
-      the best we can do without throwing out X509_LOOKUP
-      entirely (maybe later...).
+     Authority and subject key identifier are now cached.
  
-      The X509_VERIFY_CTX structure has been enhanced considerably.
+     The LHASH 'certs' is X509_STORE has now been replaced
+     by a STACK_OF(X509_OBJECT). This is mainly because an
+     LHASH can't store or retrieve multiple objects with
+     the same hash value.
+
+     As a result various functions (which were all internal
+     use only) have changed to handle the new X509_STORE
+     structure. This will break anything that messed round
+     with X509_STORE internally.
  
-      All certificate lookup operations now go via a get_issuer()
-      callback. Although this currently uses an X509_STORE it
-      can be replaced by custom lookups. This is a simple way
-      to bypass the X509_STORE hackery necessary to make this
-      work and makes it possible to use more efficient techniques
-      in future. A very simple version which uses a simple
-      STACK for its trusted certificate store is also provided
-      using X509_STORE_CTX_trusted_stack().
+     The functions X509_STORE_add_cert() now checks for an
+     exact match, rather than just subject name.
  
-      The verify_cb() and verify() callbacks now have equivalents
-      in the X509_STORE_CTX structure.
+     The X509_STORE API doesn't directly support the retrieval
+     of multiple certificates matching a given criteria, however
+     this can be worked round by performing a lookup first
+     (which will fill the cache with candidate certificates)
+     and then examining the cache for matches. This is probably
+     the best we can do without throwing out X509_LOOKUP
+     entirely (maybe later...).
  
-      X509_STORE_CTX also has a 'flags' field which can be used
-      to customise the verify behaviour.
-      [Steve Henson]
+     The X509_VERIFY_CTX structure has been enhanced considerably.
+ 
+     All certificate lookup operations now go via a get_issuer()
+     callback. Although this currently uses an X509_STORE it
+     can be replaced by custom lookups. This is a simple way
+     to bypass the X509_STORE hackery necessary to make this
+     work and makes it possible to use more efficient techniques
+     in future. A very simple version which uses a simple
+     STACK for its trusted certificate store is also provided
+     using X509_STORE_CTX_trusted_stack().
+ 
+     The verify_cb() and verify() callbacks now have equivalents
+     in the X509_STORE_CTX structure.
+ 
+     X509_STORE_CTX also has a 'flags' field which can be used
+     to customise the verify behaviour.
+     [Steve Henson]
  
   *) Add new PKCS#7 signing option PKCS7_NOSMIMECAP which 
      excludes S/MIME capabilities.

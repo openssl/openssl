@@ -380,6 +380,8 @@ int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 				int purpose, int trust);
+void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags);
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t);
 
 #ifdef  __cplusplus
 }
