@@ -25,8 +25,8 @@ BIO_new_bio_pair() does not check whether B<bio1> or B<bio2> do point to
 some other BIO, the values are overwritten, BIO_free() is not called.
 
 The two BIOs, even though forming a BIO pair and must be BIO_free()'ed
-seperately. This can be of importance, as some SSL-functions like SSL_set_bio()
-or SSL_free() call BIO_free() implicitely, so that the peer-BIO is left
+separately. This can be of importance, as some SSL-functions like SSL_set_bio()
+or SSL_free() call BIO_free() implicitly, so that the peer-BIO is left
 untouched and must also be BIO_free()'ed.
 
 =head1 EXAMPLE
@@ -53,7 +53,7 @@ without having to go through the SSL-interface.
   socket     |
 
   ...
-  SSL_free(ssl);		/* implicitely frees internal_bio */
+  SSL_free(ssl);		/* implicitly frees internal_bio */
   BIO_free(network_bio);
   ...
 

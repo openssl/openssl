@@ -61,7 +61,7 @@ BIO_destroy_pair() destroys the association between two connected BIOs. Freeing
 up any half of the pair will automatically destroy the association.
 
 BIO_set_write_buf_size() sets the write buffer size of BIO B<b> to B<size>.
-If the size is not initialised a default value is used. This is currently
+If the size is not initialized a default value is used. This is currently
 17K, sufficient for a maximum size TLS record.
 
 BIO_get_write_buf_size() returns the size of the write buffer.
@@ -71,7 +71,7 @@ BIO_set_write_buf_size() to create a connected pair of BIOs B<bio1>, B<bio2>
 with write buffer sizes B<writebuf1> and B<writebuf2>. If either size is
 zero then the default size is used.
 
-BIO_get_write_guarantee() and BIO_ctrl_get_write_guarentee() return the maximum
+BIO_get_write_guarantee() and BIO_ctrl_get_write_guarantee() return the maximum
 length of data that can be currently written to the BIO. Writes larger than this
 value will return a value from BIO_write() less than the amount requested or if the
 buffer is full request a retry. BIO_ctrl_get_write_guarantee() is a function
@@ -89,7 +89,7 @@ BIO_get_read_request() to zero.
 
 =head1 NOTES
 
-Both halves of a BIO pair should be freed. That is even if one half is implicity
+Both halves of a BIO pair should be freed. That is even if one half is implicit
 freed due to a BIO_free_all() or SSL_free() call the other half needs to be freed.
 
 When used in bidirectional applications (such as TLS/SSL) care should be taken to
@@ -103,7 +103,7 @@ BIO_write() and a response read with BIO_read(), this can occur during an
 TLS/SSL handshake for example. BIO_write() will succeed and place data in the write
 buffer. BIO_read() will initially fail and BIO_should_read() will be true. If
 the application then waits for data to be available on the underlying transport
-before flusing the write buffer it will never succeed because the request was
+before flushing the write buffer it will never succeed because the request was
 never sent!
 
 =head1 EXAMPLE

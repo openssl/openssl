@@ -33,7 +33,7 @@ BIO_ssl_shutdown - SSL BIO
 =head1 DESCRIPTION
 
 BIO_f_ssl() returns the SSL BIO method. This is a filter BIO which
-is a wrapper round the OpenSSL SSL routines adding a BIO "flavour" to
+is a wrapper round the OpenSSL SSL routines adding a BIO "flavor" to
 SSL I/O. 
 
 I/O performed on an SSL BIO communicates using the SSL protocol with
@@ -65,7 +65,7 @@ the SSL session is automatically renegotiated. B<num> must be at
 least 512 bytes.
 
 BIO_set_ssl_renegotiate_timeout() sets the renegotiate timeout to
-B<seconds>. When the renegotiate timeout elapses the sesssion is
+B<seconds>. When the renegotiate timeout elapses the session is
 automatically renegotiated.
 
 BIO_get_num_renegotiates() returns the total number of session
@@ -100,7 +100,7 @@ renegotiation takes place during a BIO_read() operation, one
 case where this happens is when SGC or step up occurs.
 
 In OpenSSL 0.9.6 and later the SSL flag SSL_AUTO_RETRY can be
-set to disable this behaviour. That is when this flag is set
+set to disable this behavior. That is when this flag is set
 an SSL BIO using a blocking transport will never request a
 retry.
 

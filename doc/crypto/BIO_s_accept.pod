@@ -100,7 +100,7 @@ BIO is not at then end of a chain it passes I/O calls to the next
 BIO in the chain.
 
 When a connection is established a new socket BIO is created for
-the conection and appended to the chain. That is the chain is now
+the connection and appended to the chain. That is the chain is now
 accept->socket. This effectively means that attempting I/O on
 an initial accept socket will await an incoming connection then
 perform I/O on it.

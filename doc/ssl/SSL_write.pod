@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_read - Write bytes to a TLS connection.
+SSL_read - write bytes to a TLS/SSL connection.
 
 =head1 SYNOPSIS
 
@@ -13,20 +13,20 @@ SSL_read - Write bytes to a TLS connection.
 =head1 DESCRIPTION
 
 SSL_write() writes B<num> bytes from the buffer B<buf> into the specified
-B<ssl>. If necessary, SSL_write() will negotiate a TLS session, if
-not already explicitely performed by SSL_connect() or SSL_accept(). If the
+B<ssl>. If necessary, SSL_write() will negotiate a TLS/SSL session, if
+not already explicitly performed by SSL_connect() or SSL_accept(). If the
 peer requests a re-negotiation, it will be performed transparently during
-the SSL_write() operation. The behaviour of SSL_write() depends on the
+the SSL_write() operation. The behavior of SSL_write() depends on the
 underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_write() will only return, once the
-write operation has been finished or an error occured.
+write operation has been finished or an error occurred.
 
 If the underlying BIO is B<non-blocking>, SSL_write() will also return,
 when the underlying BIO could not satisfy the needs of SSL_write()
 to continue the operation. In this case a call to SSL_get_error() with the
-return value of SSL_write() will yield SSL_ERROR_WANT_READ or
-SSL_ERROR_WANT_WRITE. As at any time a re-negotiation is possible, a
+return value of SSL_write() will yield B<SSL_ERROR_WANT_READ> or
+B<SSL_ERROR_WANT_WRITE>. As at any time a re-negotiation is possible, a
 call to SSL_write() can also cause write operations! The calling process
 then must repeat the call after taking appropriate action to satisfy the
 needs of SSL_write(). The action depends on the underlying BIO. When using a
@@ -42,17 +42,17 @@ The following return values can occur:
 
 =item E<gt>0
 
-The write operation was successfull, the return value is the number of
-bytes actually written to the TLS connection.
+The write operation was successful, the return value is the number of
+bytes actually written to the TLS/SSL connection.
 
 =item 0
 
-The write operation was not successfull. Call SSL_get_error() with the return
-value B<ret> to find out, whether an error occured.
+The write operation was not successful. Call SSL_get_error() with the return
+value B<ret> to find out, whether an error occurred.
 
 =item -1
 
-The read operation was not successfull, because either an error occured
+The read operation was not successful, because either an error occurred
 or action must be taken by the calling process. Call SSL_get_error() with the
 return value B<ret> to find out the reason.
 

@@ -38,7 +38,7 @@ is a BIO_ctrl() macro which can be called to determine whether the
 decryption operation was successful.
 
 BIO_get_cipher_ctx() is a BIO_ctrl() macro which retrieves the internal
-BIO cipher context. The retrieved context can be used in conjustion
+BIO cipher context. The retrieved context can be used in conjunction
 with the standard cipher routines to set it up. This is useful when
 BIO_set_cipher() is not flexible enough for the applications needs.
 

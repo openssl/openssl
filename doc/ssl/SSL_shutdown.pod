@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_shutdown - Shut down a TLS connection
+SSL_shutdown - shut down a TLS/SSL connection
 
 =head1 SYNOPSIS
 
@@ -12,18 +12,18 @@ SSL_shutdown - Shut down a TLS connection
 
 =head1 DESCRIPTION
 
-SSL_shutdown() shuts down an active TLS connection. It sends the shutdown
-alert to the peer. The behaviour of SSL_shutdown() depends on the underlying
+SSL_shutdown() shuts down an active TLS/SSL connection. It sends the shutdown
+alert to the peer. The behavior of SSL_shutdown() depends on the underlying
 BIO. 
 
-If the underlying BIO is B<blocking>, SSL_shutdown() will only return, once the
-handshake has been finished or an error occured.
+If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
+handshake has been finished or an error occurred.
 
-If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return,
+If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return
 when the underlying BIO could not satisfy the needs of SSL_shutdown()
 to continue the handshake. In this case a call to SSL_get_error() with the
-return value of SSL_shutdown() will yield SSL_ERROR_WANT_READ or
-SSL_ERROR_WANT_WRITE. The calling process then must repeat the call after
+return value of SSL_shutdown() will yield B<SSL_ERROR_WANT_READ> or
+B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
 taking appropriate action to satisfy the needs of SSL_shutdown().
 The action depends on the underlying BIO. When using a non-blocking socket,
 nothing is to be done, but select() can be used to check for the required
@@ -42,13 +42,13 @@ The shutdown was successfully completed.
 
 =item 0
 
-The shutdown was not successfull. Call SSL_get_error() with the return
+The shutdown was not successful. Call SSL_get_error() with the return
 value B<ret> to find out the reason.
 
 =item -1
 
-The shutdown was not successfull, because a fatal error occured either
-at the protocol level or a connection failure occured. It can also occure of
+The shutdown was not successful because a fatal error occurred either
+at the protocol level or a connection failure occurred. It can also occur of
 action is need to continue the operation for non-blocking BIOs.
 Call SSL_get_error() with the return value B<ret> to find out the reason.
 

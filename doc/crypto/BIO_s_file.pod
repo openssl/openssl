@@ -66,7 +66,7 @@ When wrapping stdout, stdin or stderr the underlying stream should not
 normally be closed so the BIO_NOCLOSE flag should be set.
 
 Because the file BIO calls the underlying stdio functions any quirks
-in stdio behaviour will be mirrored by the corresponding BIO.
+in stdio behavior will be mirrored by the corresponding BIO.
 
 =head1 EXAMPLES
 

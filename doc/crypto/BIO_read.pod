@@ -43,8 +43,8 @@ it may merely be an indication that no data is currently available and that
 the application should retry the operation later.
 
 One technique sometimes used with blocking sockets is to use a system call
-(such as select(), poll() or eqivalent) to determine when data is available
-and then call read() to read the data. The eqivalent with BIOs (that is call
+(such as select(), poll() or equivalent) to determine when data is available
+and then call read() to read the data. The equivalent with BIOs (that is call
 select() on the underlying I/O structure and then call BIO_read() to
 read the data) should B<not> be used because a single call to BIO_read()
 can cause several reads (and writes in the case of SSL BIOs) on the underlying

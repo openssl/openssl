@@ -58,14 +58,14 @@ be closed when the BIO is freed.
 BIO_get_close() returns the BIOs close flag.
 
 BIO_pending(), BIO_ctrl_pending(), BIO_wpending() and BIO_ctrl_wpending()
-return the number of pending characterers in the BIOs read and write buffers.
+return the number of pending characters in the BIOs read and write buffers.
 Not all BIOs support these calls. BIO_ctrl_pending() and BIO_ctrl_wpending()
 return a size_t type and are functions, BIO_pending() and BIO_wpending() are
 macros which call BIO_ctrl().
 
 =head1 RETURN VALUES
 
-BIO_reset() returns 1 fo success and 0 for failure.
+BIO_reset() returns 1 for success and 0 for failure.
 
 BIO_flush() returns 1 for success and 0 or -1 for failure.
 
@@ -97,7 +97,7 @@ This often means there is no need to locate the required BIO for
 a particular operation, it can be called on a chain and it will
 be automatically passed to the relevant BIO.
 
-Source/sink BIOs will return an error if the do not recognise the
+Source/sink BIOs will return an error if the do not recognize the
 BIO_ctrl() operation.
 
 =head1 SEE ALSO

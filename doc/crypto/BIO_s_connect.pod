@@ -66,13 +66,13 @@ fails a standard table of port names will be used. Currently the
 list is http, telnet, socks, https, ssl, ftp, gopher and wais.
 
 BIO_set_conn_ip() sets the IP address to B<ip> using binary form,
-that is four bytes specifying the IP address in big endian form.
+that is four bytes specifying the IP address in big-endian form.
 
 BIO_set_conn_int_port() sets the port using B<port>. B<port> should
 be of type (int *).
 
 BIO_get_conn_hostname() returns the hostname of the connect BIO or
-NULL if the BIO is initialised but no hostname is set.
+NULL if the BIO is initialized but no hostname is set.
 This return value is an internal pointer which should not be modified.
 
 BIO_get_conn_port() returns the port as a string.
@@ -120,7 +120,7 @@ It addition to BIO_should_read() and BIO_should_write() it is also
 possible for BIO_should_io_special() to be true during the initial
 connection process with the reason BIO_RR_CONNECT. If this is returned
 then this is an indication that a connection attempt would block,
-the application should then take appropiate action to wait until
+the application should then take appropriate action to wait until
 the underlying socket has connected and retry the call.
 
 =head1 RETURN VALUES
@@ -128,7 +128,7 @@ the underlying socket has connected and retry the call.
 BIO_s_connect() returns the connect BIO method.
 
 BIO_get_fd() returns the socket or -1 if the BIO has not
-been initialised.
+been initialized.
 
 BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip() and
 BIO_set_conn_int_port() always return 1.

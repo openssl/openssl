@@ -51,7 +51,7 @@ BIO_s_socket() returns the socket BIO method.
 BIO_set_fd() always returns 1.
 
 BIO_get_fd() returns the socket or -1 if the BIO has not been
-initialised.
+initialized.
 
 BIO_new_socket() returns the newly allocated BIO or NULL is an error
 occurred.

@@ -36,11 +36,11 @@ BIO_get_fd() places the file descriptor in B<c> if it is not NULL, it also
 returns the file descriptor. If B<c> is not NULL it should be of type
 (int *).
 
-BIO_new_fd() returns a file desciptor BIO using B<fd> and B<close_flag>.
+BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 
 =head1 NOTES
 
-The behaviour of BIO_read() and BIO_write() depends on the behaviour of the
+The behavior of BIO_read() and BIO_write() depends on the behavior of the
 platforms read() and write() calls on the descriptor. If the underlying 
 file descriptor is in a non blocking mode then the BIO will behave in the
 manner described in the L<BIO_read(3)|BIO_read(3)> and L<BIO_should_retry(3)|BIO_should_retry(3)>
@@ -56,12 +56,12 @@ BIO_s_fd() returns the file descriptor BIO method.
 BIO_reset() returns zero for success and -1 if an error occurred.
 BIO_seek() and BIO_tell() return the current file position or -1
 is an error occurred. These values reflect the underlying lseek()
-behaviour.
+behavior.
 
 BIO_set_fd() always returns 1.
 
 BIO_get_fd() returns the file descriptor or -1 if the BIO has not
-been initialised.
+been initialized.
 
 BIO_new_fd() returns the newly allocated BIO or NULL is an error
 occurred.

@@ -43,7 +43,7 @@ BIO_eof() is true if no data is in the BIO.
 
 BIO_ctrl_pending() returns the number of bytes currently stored.
 
-BIO_set_mem_eof_return() sets the behaviour of memory BIO B<b> when it is
+BIO_set_mem_eof_return() sets the behavior of memory BIO B<b> when it is
 empty. If the B<v> is zero then an empty memory BIO will return EOF (that is
 it will return zero and BIO_should_retry(b) will be false. If B<v> is non
 zero then it will return B<v> when it is empty and it will set the read retry
@@ -87,9 +87,7 @@ There should be a way to "rewind" a read write BIO without destroying
 its contents.
 
 The copying operation should not occur after every small read of a large BIO
-to improve efficieny.
-
-There shoy
+to improve efficiency.
 
 =head1 EXAMPLE
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_free - Free up an allocated SSL structure
+SSL_free - free an allocated SSL structure
 
 =head1 SYNOPSIS
 
@@ -12,13 +12,13 @@ SSL_free - Free up an allocated SSL structure
 
 =head1 DESCRIPTION
 
-SSL_free() decrements the reference count of B<ssl> and removes the SSL
-structure pointed to by B<ssl> and frees up the allocated memory, if the
+SSL_free() decrements the reference count of B<ssl>, and removes the SSL
+structure pointed to by B<ssl> and frees up the allocated memory if the
 the reference count has reached 0.
 
 It also calls the free()ing procedures for indirectly affected items, if
 applicable: the buffering BIO, the read and write BIOs,
-cipher lists especially created for this B<ssl>, the SSL_SESSION.
+cipher lists specially created for this B<ssl>, the B<SSL_SESSION>.
 Do not explicitly free these indirectly freed up items before or after
 calling SSL_free(), as trying to free things twice may lead to program
 failure.
