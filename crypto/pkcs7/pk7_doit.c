@@ -159,12 +159,11 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
 		RAND_bytes(key,keylen);
-		EVP_CipherInit(ctx, evp_cipher, key, iv, 1);
-		memset(key, 0, keylen);
 		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
+		if (ivlen > 0) RAND_bytes(iv,ivlen);
+		EVP_CipherInit(ctx, evp_cipher, key, iv, 1);
 
 		if (ivlen > 0) {
-			RAND_bytes(iv,ivlen);
 			if (xalg->parameter == NULL) 
 						xalg->parameter=ASN1_TYPE_new();
 			if(EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
@@ -206,6 +205,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
 		Free(tmp);
+		memset(key, 0, keylen);
 
 		if (out == NULL)
 			out=btmp;

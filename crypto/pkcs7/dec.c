@@ -56,48 +56,39 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include <openssl/asn1.h>
+#include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/asn1.h>
 
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 
 BIO *bio_err=NULL;
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
+	char *keyfile;
 	BIO *in;
-	X509 *x509,*x;
 	EVP_PKEY *pkey;
+	X509 *x509;
 	PKCS7 *p7;
-	PKCS7_SIGNED *s;
 	PKCS7_SIGNER_INFO *si;
-	PKCS7_ISSUER_AND_SERIAL *ias;
 	X509_STORE_CTX cert_ctx;
 	X509_STORE *cert_store=NULL;
-	X509_LOOKUP *lookup=NULL;
 	BIO *data,*detached=NULL,*p7bio=NULL;
 	char buf[1024*4];
-	unsigned char *p,*pp;
-	int i,j,printit=0;
+	unsigned char *pp;
+	int i,printit=0;
 	STACK *sk;
 
 	SSLeay_add_all_algorithms();
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
-	EVP_add_digest(EVP_sha1());
-	EVP_add_cipher(EVP_des_ede3_cbc());
-
-        if ((in=BIO_new_file("server.pem","r")) == NULL) goto err;
-        if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
-        BIO_reset(in);
-        if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
-        BIO_free(in);
 
 	data=BIO_new(BIO_s_file());
-again:
 	pp=NULL;
 	while (argc > 1)
 		{
@@ -107,21 +98,33 @@ again:
 			{
 			printit=1;
 			}
-		else if ((strcmp(argv[0],"-d") == 0) && (argc >= 2))
+		else if ((strcmp(argv[0],"-k") == 0) && (argc >= 2)) {
+			keyfile = argv[1];
+			argc-=1;
+			argv+=1;
+		} else if ((strcmp(argv[0],"-d") == 0) && (argc >= 2))
 			{
 			detached=BIO_new(BIO_s_file());
 			if (!BIO_read_filename(detached,argv[1]))
 				goto err;
-			argc--;
-			argv++;
+			argc-=1;
+			argv+=1;
 			}
-		else
-			{
-			pp=argv[0];
-			if (!BIO_read_filename(data,argv[0]))
-				goto err;
-			}
+		else break;
 		}
+
+	 if (!BIO_read_filename(data,argv[0])) goto err; 
+
+	if(!keyfile) {
+		fprintf(stderr, "No private key file specified\n");
+		goto err;
+	}
+
+        if ((in=BIO_new_file(keyfile,"r")) == NULL) goto err;
+        if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+        BIO_reset(in);
+        if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
+        BIO_free(in);
 
 	if (pp == NULL)
 		BIO_set_fp(data,stdin,BIO_NOCLOSE);
@@ -158,14 +161,14 @@ again:
 		i=BIO_read(p7bio,buf,sizeof(buf));
 		/* print it? */
 		if (i <= 0) break;
-		write(fileno(stdout),buf,i);
+		fwrite(buf,1, i, stdout);
 		}
 
 	/* We can now verify signatures */
 	sk=PKCS7_get_signer_info(p7);
 	if (sk == NULL)
 		{
-		printf("there are no signatures on this data\n");
+		fprintf(stderr, "there are no signatures on this data\n");
 		}
 	else
 		{

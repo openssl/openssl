@@ -91,7 +91,7 @@ static EVP_CIPHER r2_cbc_cipher=
 
 static EVP_CIPHER r2_64_cbc_cipher=
 	{
-	NID_rc2_40_cbc,
+	NID_rc2_64_cbc,
 	8,8 /* 64 bit */,8,
 	rc2_cbc_init_key,
 	rc2_cbc_cipher,

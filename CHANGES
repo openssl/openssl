@@ -10,6 +10,10 @@
                                    [23-Dec-1998] down below; but in later
                                    versions, these hyphens are gone.]
 
+  *) Fix most of the other PKCS#7 bugs. The "experimental" code can now
+     correctly handle encrypted S/MIME data.
+     [Steve Henson]
+
   *) Change type of various DES function arguments from des_cblock
      (which means, in function argument declarations, pointer to char)
      to des_cblock * (meaning pointer to array with 8 char elements),

@@ -371,8 +371,6 @@ if (export_cert) {
 
 	if (canames) sk_free(canames);
 
-	/* if (!pmatch) ...?  What should happen here?  XXX */
-
 	if(!noprompt &&
 		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1)) {
 	    BIO_printf (bio_err, "Can't read Password\n");
@@ -400,7 +398,7 @@ if (export_cert) {
 			cpass, -1, NULL, 0, iter, p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
-	PKCS12_add_localkeyid (bag, keyid, keyidlen);
+	if(!pmatch) PKCS12_add_localkeyid (bag, keyid, keyidlen);
 	bags = sk_new(NULL);
 	sk_push (bags, (char *)bag);
 	/* Turn it into unencrypted safe bag */

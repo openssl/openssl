@@ -59,57 +59,69 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/err.h>
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
 	X509 *x509;
-	EVP_PKEY *pkey;
 	PKCS7 *p7;
-	PKCS7 *p7_data;
-	PKCS7_SIGNER_INFO *si;
 	BIO *in;
 	BIO *data,*p7bio;
 	char buf[1024*4];
-	int i,j;
+	int i;
 	int nodetach=1;
+	char *keyfile = NULL;
+	const EVP_CIPHER *cipher;
 
-	EVP_add_digest(EVP_sha1());
-	EVP_add_cipher(EVP_des_ede3_cbc());
+	SSLeay_add_all_algorithms();
 
 	data=BIO_new(BIO_s_file());
-again:
-	if (argc > 1)
+	while(argc > 1)
 		{
 		if (strcmp(argv[1],"-nd") == 0)
 			{
 			nodetach=1;
 			argv++; argc--;
-			goto again;
 			}
-		if (!BIO_read_filename(data,argv[1]))
-			goto err;
-		}
-	else
-		BIO_set_fp(data,stdin,BIO_NOCLOSE);
+		else if ((strcmp(argv[1],"-c") == 0) && (argc >= 2)) {
+			if(!(cipher = EVP_get_cipherbyname(argv[2]))) {
+				fprintf(stderr, "Unknown cipher %s\n", argv[2]);
+				goto err;
+			}
+			argc-=2;
+			argv+=2;
+		} else if ((strcmp(argv[1],"-k") == 0) && (argc >= 2)) {
+			keyfile = argv[2];
+			argc-=2;
+			argv+=2;
+		} else break;
+	}
 
-	if ((in=BIO_new_file("server.pem","r")) == NULL) goto err;
+	if (!BIO_read_filename(data,argv[1])) goto err;
+
+	if ((in=BIO_new_file(keyfile,"r")) == NULL) goto err;
 	if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+
+	p7=PKCS7_new();
+#if 0
 	BIO_reset(in);
 	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
 	BIO_free(in);
-
-	p7=PKCS7_new();
 	PKCS7_set_type(p7,NID_pkcs7_signedAndEnveloped);
 	 
 	if (PKCS7_add_signature(p7,x509,pkey,EVP_sha1()) == NULL) goto err;
-
-	if (!PKCS7_set_cipher(p7,EVP_des_ede3_cbc())) goto err;
-	if (PKCS7_add_recipient(p7,x509) == NULL) goto err;
-
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);
+#else
+	PKCS7_set_type(p7,NID_pkcs7_enveloped);
+#endif
+	if(!cipher) cipher = EVP_des_ede3_cbc();
+
+	if (!PKCS7_set_cipher(p7,cipher)) goto err;
+	if (PKCS7_add_recipient(p7,x509) == NULL) goto err;
+
 
 
 	/* Set the content of the signed to 'data' */
