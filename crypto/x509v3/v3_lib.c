@@ -131,6 +131,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 void X509V3_EXT_cleanup(void)
 {
 	sk_pop_free(ext_list, ext_list_free);
+	ext_list = NULL;
 }
 
 static void ext_list_free(X509V3_EXT_METHOD *ext)
