@@ -68,14 +68,12 @@
 
 #if defined(WIN32)
 #  include <process.h>
-#elif defined (MSDOS)
-#  define NO_SYSLOG
 #elif defined(VMS) || defined(__VMS)
 #  include <opcdef.h>
 #  include <descrip.h>
 #elif defined(__ultrix)
 #  include <sys/syslog.h>
-#else
+#elif !defined(MSDOS) /* Unix */
 #  include <syslog.h>
 #endif
 
