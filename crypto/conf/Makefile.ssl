@@ -80,9 +80,9 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-conf_api.o: ../../e_os.h ../../include/openssl/bio.h
-conf_api.o: ../../include/openssl/conf.h ../../include/openssl/conf_api.h
-conf_api.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+conf_api.o: ../../include/openssl/bio.h ../../include/openssl/conf.h
+conf_api.o: ../../include/openssl/conf_api.h ../../include/openssl/crypto.h
+conf_api.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 conf_api.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 conf_api.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 conf_api.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
