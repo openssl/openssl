@@ -104,8 +104,7 @@ rand_lib.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
 rand_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 rand_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rand_lib.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-rand_lib.o: ../../include/openssl/rc5.h
-rand_lib.o: ../../include/openssl/rijndael-alg-fst.h
+rand_lib.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 rand_lib.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 rand_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rand_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h

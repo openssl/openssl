@@ -28,12 +28,12 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=rijndael-alg-fst.c
-LIBOBJ=rijndael-alg-fst.o
+LIBSRC=rd_fst.c
+LIBOBJ=rd_fst.o
 
 SRC= $(LIBSRC)
 
-EXHEADER=rijndael-alg-fst.h rijndael.h
+EXHEADER=rd_fst.h rijndael.h
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
@@ -83,4 +83,4 @@ clean:
 
 # DO NOT DELETE THIS LINE
 
-rijndael-alg-fst.o: boxes-fst-corrected.dat rijndael-alg-fst.h
+rd_fst.o: boxes-fst-corrected.dat rd_fst.h

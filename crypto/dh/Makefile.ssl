@@ -115,7 +115,7 @@ dh_key.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
 dh_key.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 dh_key.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 dh_key.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-dh_key.o: ../../include/openssl/rc5.h ../../include/openssl/rijndael-alg-fst.h
+dh_key.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 dh_key.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 dh_key.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 dh_key.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
@@ -134,7 +134,7 @@ dh_lib.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
 dh_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 dh_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 dh_lib.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-dh_lib.o: ../../include/openssl/rc5.h ../../include/openssl/rijndael-alg-fst.h
+dh_lib.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 dh_lib.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 dh_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 dh_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h

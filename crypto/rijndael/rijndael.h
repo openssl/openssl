@@ -1,4 +1,4 @@
-#include "rijndael-alg-fst.h"
+#include "openssl/rd_fst.h"
 
 #define RIJNDAEL_MAX_IV		16
 

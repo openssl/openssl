@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "rijndael-alg-fst.h"
+#include "rd_fst.h"
 
 #include "boxes-fst-corrected.dat"
 

@@ -91,8 +91,7 @@ hmac.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
 hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
 hmac.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-hmac.o: ../../include/openssl/rijndael-alg-fst.h
-hmac.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
-hmac.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-hmac.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h
+hmac.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
+hmac.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+hmac.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+hmac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
