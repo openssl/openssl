@@ -229,7 +229,7 @@ int PEM_write_##name(FILE *fp, type *x) \
 { \
 return(PEM_ASN1_write((int (*)())i2d_##asn1,str,fp, (char *)x, \
 							 NULL,NULL,0,NULL,NULL)); \
-} 
+}
 
 #define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) \
 int PEM_write_##name(FILE *fp, type *x, const EVP_CIPHER *enc, \
