@@ -74,7 +74,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 		if (nid == NID_pkcs7_signed)
 			{
 			ret=p7->detached=(int)larg;
-			if (PKCS7_type_is_data(p7->d.sign->contents))
+			if (ret && PKCS7_type_is_data(p7->d.sign->contents))
 					{
 					ASN1_OCTET_STRING *os;
 					os=p7->d.sign->contents->d.data;
