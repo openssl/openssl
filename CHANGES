@@ -36,8 +36,8 @@
      between the implementations for prime fields and binary fields;
      the above ..._GF2m functions (except for EX_GROUP_new_curve_GF2m)
      are essentially identical to their ..._GFp counterparts.
-     (For simplicity, '..._GFp' prefix has been dropped from various
-     internal method names.)
+     (For simplicity, the '..._GFp' prefix has been dropped from
+     various internal method names.)
 
      An internal 'field_div' method (similar to 'field_mul' and
      'field_sqr') has been added; this is used only for binary fields.
@@ -45,7 +45,7 @@
      [Sheueling Chang Shantz and Douglas Stebila
      (Sun Microsystems Laboratories)]
 
-  *) Optionally dispatch EC_PONT_mul(), EC_POINT_precompute_mult()
+  *) Optionally dispatch EC_POINT_mul(), EC_POINT_precompute_mult()
      through methods ('mul', 'precompute_mult').
 
      The generic implementations (now internally called 'ec_wNAF_mul'
