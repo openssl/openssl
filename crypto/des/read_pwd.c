@@ -133,6 +133,12 @@
 #define SGTTY
 #endif
 
+#if defined(OPENSSL_SYS_VSWORKS)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
+#endif
+
 #ifdef TERMIOS
 #include <termios.h>
 #define TTY_STRUCT		struct termios
@@ -268,7 +274,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #ifdef OPENSSL_SYS_MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X)
+#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VSWORKS)
 	tty=stdin;
 #else
 #ifndef OPENSSL_SYS_MPE

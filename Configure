@@ -533,6 +533,9 @@ my %table=(
 ##### OS/2 EMX
 "OS2-EMX", "gcc::::::::",
 
+##### VxWorks for various targets
+"vxworks-ppc405","ccppc:-g -msoft-float -mlongcall -DCPU=PPC405 -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
+
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
