@@ -478,7 +478,7 @@ open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.
 open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
 while (<IN>)
 	{
-	if	(/^#defined\s+OPENSSLDIR/)
+	if	(/^#define\s+OPENSSLDIR/)
 		{ print OUT "#define OPENSSLDIR $openssldir\n"; }
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
 		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
