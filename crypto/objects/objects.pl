@@ -203,11 +203,22 @@ sub process_oid
 
 	@a = split(/\s+/,$myoid);
 	$pref_oid = "";
+	$pref_sep = "";
 	if (!($a[0] =~ /^[0-9]+$/))
 		{
 		$a[0] =~ s/-/_/g;
-		$pref_oid = "OBJ_" . $a[0] . ',';
+		$pref_oid = "OBJ_" . $a[0];
+		$pref_sep = ",";
 		shift @a;
 		}
-	return($pref_oid . join('L,',@a) . 'L');
+	$oids = join('L,',@a) . "L";
+	if ($oids ne "L")
+		{
+		$oids = $pref_oid . $pref_sep . $oids;
+		}
+	else
+		{
+		$oids = $pref_oid;
+		}
+	return($oids);
 	}
