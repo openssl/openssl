@@ -106,8 +106,8 @@ void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	while (l--) {
 		if (n == 0) {
-			AES_ctr128_inc(counter);
 			AES_encrypt(counter, tmp, key);
+			AES_ctr128_inc(counter);
 		}
 		*(out++) = *(in++) ^ tmp[n];
 		n = (n+1) % AES_BLOCK_SIZE;
