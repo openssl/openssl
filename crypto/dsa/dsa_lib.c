@@ -152,6 +152,7 @@ DSA *DSA_new_method(ENGINE *engine)
 		{
 		if((ret->engine=ENGINE_get_default_DSA()) == NULL)
 			{
+			DSAerr(DSA_F_DSA_NEW,ERR_LIB_ENGINE);
 			OPENSSL_free(ret);
 			return NULL;
 			}

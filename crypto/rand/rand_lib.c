@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include "cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 
@@ -86,7 +87,10 @@ const RAND_METHOD *RAND_get_rand_method(void)
 	{
 	if (rand_engine == NULL
 		&& (rand_engine = ENGINE_get_default_RAND()) == NULL)
+		{
+		RANDerr(RAND_F_RAND_GET_RAND_METHOD,ERR_LIB_ENGINE);
 		return NULL;
+		}
 	return ENGINE_get_RAND(rand_engine);
 	}
 

@@ -166,6 +166,7 @@ RSA *RSA_new_method(ENGINE *engine)
 		{
 		if((ret->engine=ENGINE_get_default_RSA()) == NULL)
 			{
+			RSAerr(RSA_F_RSA_NEW_METHOD,ERR_LIB_ENGINE);
 			OPENSSL_free(ret);
 			return NULL;
 			}

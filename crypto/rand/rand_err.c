@@ -66,6 +66,7 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA RAND_str_functs[]=
 	{
+{ERR_PACK(0,RAND_F_RAND_GET_RAND_METHOD,0),	"RAND_get_rand_method"},
 {ERR_PACK(0,RAND_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
 	};
