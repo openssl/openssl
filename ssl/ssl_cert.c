@@ -328,8 +328,12 @@ int ssl_cert_inst(CERT **o)
 	 * (which cannot really happen, as it is initially created in
 	 * SSL_CTX_new; but the earlier code usually allows for that one
 	 * being non-existant, so we follow that behaviour, as it might
-	 * turn out that there actually is a reason for it.). */
-	 
+	 * turn out that there actually is a reason for it -- but I'm
+	 * not sure that *all* of the existing code could cope with
+	 * s->cert being NULL, otherwise we could do without the
+	 * initialization in SSL_CTX_new).
+	 */
+	
 	if (o == NULL) 
 		{
 		SSLerr(SSL_F_SSL_CERT_INST, ERR_R_PASSED_NULL_PARAMETER);
