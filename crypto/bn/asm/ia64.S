@@ -1,6 +1,6 @@
 .explicit
 .text
-.ident	"ia64.S, Version 1.2"
+.ident	"ia64.S, Version 2.0"
 .ident	"IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 //
@@ -13,6 +13,35 @@
 // disclaimed.
 // ====================================================================
 //
+// Version 2.x is Itanium2 re-tune. Few words about how Itanum2 is
+// different from Itanium to this module viewpoint. Most notably, is it
+// "wider" than Itanium? Can you experience loop scalability as
+// discussed in commentary sections? Not really:-( Itanium2 has 6
+// integer ALU ports, i.e. it's 2 ports wider, but it's not enough to
+// spin twice as fast, as I need 8 IALU ports. Amount of floating point
+// ports is the same, i.e. 2, while I need 4. In other words, to this
+// module Itanium2 remains effectively as "wide" as Itanium. Yet it's
+// essentially different in respect to this module, and a re-tune was
+// required. Well, because some intruction latencies has changed. Most
+// noticeably those intensively used:
+//
+//			Itanium	Itanium2
+//	ldf8		9	6		L2 hit
+//	ld8		2	1		L1 hit
+//	getf		2	5
+//	xma[->getf]	7[+1]	4[+0]
+//	add[->st8]	1[+1]	1[+0]
+//
+// What does it mean? You might ratiocinate that the original code
+// should run just faster... Because sum of latencies is smaller...
+// Wrong! Note that getf latency increased. This means that if a loop is
+// scheduled for lower latency (and they are), then it will suffer from
+// stall condition and the code will therefore turn anti-scalable, e.g.
+// original bn_mul_words spun at 5*n or 2.5 times slower than expected
+// on Itanium2! What to do? Reschedule loops for Itanium2? But then
+// Itanium would exhibit anti-scalability. So I've chosen to reschedule
+// for worst latency for every instruction aiming for best *all-round*
+// performance.  
 
 // Q.	How much faster does it get?
 // A.	Here is the output from 'openssl speed rsa dsa' for vanilla
@@ -283,7 +312,7 @@ bn_mul_words:
 #ifdef XMA_TEMPTATION
 { .mfi;	alloc		r2=ar.pfs,4,0,0,0	};;
 #else
-{ .mfi;	alloc		r2=ar.pfs,4,4,0,8	};;
+{ .mfi;	alloc		r2=ar.pfs,4,12,0,16	};;
 #endif
 { .mib;	mov		r8=r0			// return value
 	cmp4.le		p6,p0=r34,r0
@@ -296,8 +325,8 @@ bn_mul_words:
 
 	.body
 { .mib;	setf.sig	f8=r35	// w
-	mov		pr.rot=0x400001<<16
-			// ------^----- serves as (p48) at first (p26)
+	mov		pr.rot=0x800001<<16
+			// ------^----- serves as (p50) at first (p27)
 	brp.loop.imp	.L_bn_mul_words_ctop,.L_bn_mul_words_cend-16
 					}
 
@@ -312,14 +341,14 @@ bn_mul_words:
 	mov		r15=r33		// ap
 #endif
 	mov		ar.lc=r10	}
-{ .mii;	mov		r39=0	// serves as r33 at first (p26)
-	mov		ar.ec=12	};;
+{ .mii;	mov		r40=0	// serves as r35 at first (p27)
+	mov		ar.ec=13	};;
 
-// This loop spins in 2*(n+11) ticks. It's scheduled for data in L2
-// cache (i.e. 9 ticks away) as floating point load/store instructions
+// This loop spins in 2*(n+12) ticks. It's scheduled for data in Itanium
+// L2 cache (i.e. 9 ticks away) as floating point load/store instructions
 // bypass L1 cache and L2 latency is actually best-case scenario for
-// ldf8. The loop is not scalable and shall run in 2*(n+11) even on
-// "wider" IA-64 implementations. It's a trade-off here. n+22 loop
+// ldf8. The loop is not scalable and shall run in 2*(n+12) even on
+// "wider" IA-64 implementations. It's a trade-off here. n+24 loop
 // would give us ~5% in *overall* performance improvement on "wider"
 // IA-64, but would hurt Itanium for about same because of longer
 // epilogue. As it's a matter of few percents in either case I've
@@ -327,25 +356,25 @@ bn_mul_words:
 // this very instruction sequence in bn_mul_add_words loop which in
 // turn is scalable).
 .L_bn_mul_words_ctop:
-{ .mfi;	(p25)	getf.sig	r36=f49			// low
-	(p21)	xmpy.lu		f45=f37,f8
-	(p27)	cmp.ltu		p52,p48=r39,r38	}
+{ .mfi;	(p25)	getf.sig	r36=f52			// low
+	(p21)	xmpy.lu		f48=f37,f8
+	(p28)	cmp.ltu		p54,p50=r41,r39	}
 { .mfi;	(p16)	ldf8		f32=[r15],8
-	(p21)	xmpy.hu		f38=f37,f8
+	(p21)	xmpy.hu		f40=f37,f8
 	(p0)	nop.i		0x0		};;
-{ .mii;	(p26)	getf.sig	r32=f43			// high
-	.pred.rel	"mutex",p48,p52
-	(p48)	add		r38=r37,r33		// (p26)
-	(p52)	add		r38=r37,r33,1	}	// (p26)
-{ .mfb;	(p27)	st8		[r14]=r39,8
+{ .mii;	(p25)	getf.sig	r32=f44			// high
+	.pred.rel	"mutex",p50,p54
+	(p50)	add		r40=r38,r35		// (p27)
+	(p54)	add		r40=r38,r35,1	}	// (p27)
+{ .mfb;	(p28)	st8		[r14]=r41,8
 	(p0)	nop.f		0x0
 	br.ctop.sptk	.L_bn_mul_words_ctop	};;
 .L_bn_mul_words_cend:
 
 { .mii;	nop.m		0x0
-.pred.rel	"mutex",p49,p53
-(p49)	add		r8=r34,r0
-(p53)	add		r8=r34,r0,1	}
+.pred.rel	"mutex",p51,p55
+(p51)	add		r8=r36,r0
+(p55)	add		r8=r36,r0,1	}
 { .mfb;	nop.m	0x0
 	nop.f	0x0
 	nop.b	0x0			}
@@ -412,8 +441,8 @@ bn_mul_add_words:
 
 	.body
 { .mib;	setf.sig	f8=r35	// w
-	mov		pr.rot=0x400001<<16
-			// ------^----- serves as (p48) at first (p26)
+	mov		pr.rot=0x800001<<16
+			// ------^----- serves as (p50) at first (p27)
 	brp.loop.imp	.L_bn_mul_add_words_ctop,.L_bn_mul_add_words_cend-16
 					}
 { .mii;
@@ -425,55 +454,55 @@ bn_mul_add_words:
 	mov		r15=r33		// ap
 #endif
 	mov		ar.lc=r10	}
-{ .mii;	mov		r39=0	// serves as r33 at first (p26)
+{ .mii;	mov		r40=0	// serves as r35 at first (p27)
 #if defined(_HPUX_SOURCE) && defined(_ILP32)
 	addp4		r18=0,r32	// rp copy
 #else
 	mov		r18=r32		// rp copy
 #endif
-	mov		ar.ec=14	};;
+	mov		ar.ec=15	};;
 
-// This loop spins in 3*(n+13) ticks on Itanium and should spin in
-// 2*(n+13) on "wider" IA-64 implementations (to be verified with new
+// This loop spins in 3*(n+14) ticks on Itanium and should spin in
+// 2*(n+14) on "wider" IA-64 implementations (to be verified with new
 // µ-architecture manuals as they become available). As usual it's
 // possible to compress the epilogue, down to 10 in this case, at the
 // cost of scalability. Compressed (and therefore non-scalable) loop
-// running at 3*(n+10) would buy you ~10% on Itanium but take ~35%
+// running at 3*(n+11) would buy you ~10% on Itanium but take ~35%
 // from "wider" IA-64 so let it be scalable! Special attention was
 // paid for having the loop body split at 64-byte boundary. ld8 is
 // scheduled for L1 cache as the data is more than likely there.
 // Indeed, bn_mul_words has put it there a moment ago:-)
 .L_bn_mul_add_words_ctop:
-{ .mfi;	(p25)	getf.sig	r36=f49			// low
-	(p21)	xmpy.lu		f45=f37,f8
-	(p27)	cmp.ltu		p52,p48=r39,r38	}
+{ .mfi;	(p25)	getf.sig	r36=f52			// low
+	(p21)	xmpy.lu		f48=f37,f8
+	(p28)	cmp.ltu		p54,p50=r41,r39	}
 { .mfi;	(p16)	ldf8		f32=[r15],8
-	(p21)	xmpy.hu		f38=f37,f8
-	(p27)	add		r43=r43,r39	};;
-{ .mii;	(p26)	getf.sig	r32=f43			// high
-	.pred.rel	"mutex",p48,p52
-	(p48)	add		r38=r37,r33		// (p26)
-	(p52)	add		r38=r37,r33,1	}	// (p26)
-{ .mfb;	(p27)	cmp.ltu.unc	p56,p0=r43,r39
+	(p21)	xmpy.hu		f40=f37,f8
+	(p28)	add		r45=r45,r41	};;
+{ .mii;	(p25)	getf.sig	r32=f44			// high
+	.pred.rel	"mutex",p50,p54
+	(p50)	add		r40=r38,r35		// (p27)
+	(p54)	add		r40=r38,r35,1	}	// (p27)
+{ .mfb;	(p28)	cmp.ltu.unc	p60,p0=r45,r41
 	(p0)	nop.f		0x0
 	(p0)	nop.b		0x0		}
-{ .mii;	(p26)	ld8		r42=[r18],8
-	(p58)	cmp.eq.or	p57,p0=-1,r44
-	(p58)	add		r44=1,r44	}
-{ .mfb;	(p29)	st8		[r14]=r45,8
+{ .mii;	(p27)	ld8		r44=[r18],8
+	(p62)	cmp.eq.or	p61,p0=-1,r46
+	(p62)	add		r46=1,r46	}
+{ .mfb;	(p30)	st8		[r14]=r47,8
 	(p0)	nop.f		0x0
 	br.ctop.sptk	.L_bn_mul_add_words_ctop};;
 .L_bn_mul_add_words_cend:
 
 { .mii;	nop.m		0x0
-.pred.rel	"mutex",p51,p55
-(p51)	add		r8=r36,r0
-(p55)	add		r8=r36,r0,1	}
+.pred.rel	"mutex",p53,p57
+(p53)	add		r8=r38,r0
+(p57)	add		r8=r38,r0,1	}
 { .mfb;	nop.m	0x0
 	nop.f	0x0
 	nop.b	0x0			};;
 { .mii;
-(p59)	add		r8=1,r8
+(p63)	add		r8=1,r8
 	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mfb;	rum		1<<5		// clear um.mfh
