@@ -235,7 +235,7 @@ void ERR_print_errors_fp(FILE *fp);
 #endif
 #ifdef HEADER_BIO_H
 void ERR_print_errors(BIO *bp);
-void ERR_add_error_data( VAR_PLIST( int, num ) );
+void ERR_add_error_data(int num, ...);
 #endif
 void ERR_load_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void );

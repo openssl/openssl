@@ -61,32 +61,27 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-int BIO_printf ( VAR_PLIST( BIO *, bio ) )
-VAR_ALIST
+int BIO_printf (BIO *bio, ...)
 	{
-	VAR_BDEFN(args, BIO *, bio);
+	va_list args;
 	char *format;
 	int ret;
 	MS_STATIC char hugebuf[1024*2]; /* 10k in one chunk is the limit */
 
-	VAR_INIT(args, BIO *, bio);
-	VAR_ARG(args, char *, format);
+	va_start(args, bio);
+	format=va_arg(args, char *);
 
 	hugebuf[0]='\0';
 
-/* no-one uses _doprnt anymore and it appears to be broken under SunOS 4.1.4 */
-#if 0 && defined(sun) && !defined(VAR_ANSI) /**/
-	_doprnt(hugebuf,format,args);
-#else /* !sun */
 	vsprintf(hugebuf,format,args);
-#endif /* sun */
 
 	ret=BIO_write(bio,hugebuf,strlen(hugebuf));
 
-	VAR_END( args );
+	va_end(args);
 	return(ret);
 	}
 

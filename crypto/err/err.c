@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
@@ -580,10 +581,9 @@ void ERR_set_error_data(char *data, int flags)
 	es->err_data_flags[es->top]=flags;
 	}
 
-void ERR_add_error_data( VAR_PLIST(int , num))
-VAR_ALIST
+void ERR_add_error_data(int num, ...)
         {
-        VAR_BDEFN(args, int, num);
+	va_list args;
 	int i,n,s;
 	char *str,*p,*a;
 
@@ -592,11 +592,11 @@ VAR_ALIST
 	if (str == NULL) return;
 	str[0]='\0';
 
-	VAR_INIT(args,int,num);
+	va_start(args, num);
 	n=0;
 	for (i=0; i<num; i++)
 		{
-		VAR_ARG(args,char *,a);
+		a=va_arg(args, char*);
 		/* ignore NULLs, thanks to Bob Beck <beck@obtuse.com> */
 		if (a != NULL)
 			{
@@ -618,6 +618,6 @@ VAR_ALIST
 		}
 	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);
 
-	VAR_END( args );
+	va_end(args);
 	}
 
