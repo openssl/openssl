@@ -1,33 +1,32 @@
 
- OpenSSL 0.9.2 31-Dec-1998
+ OpenSSL 0.9.2 06-Mar-1999
 
- Copyright (c) 1998 The OpenSSL Project
+ Copyright (c) 1998-1999 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
 
- ....
-
  The OpenSSL Project is a collaborative effort to develop a robust,
  commercial-grade, fully featured, and Open Source toolkit implementing the
- Transport Layer Security (TLS v1) and Secure Sockets Layer (SSL v2/v3)
+ Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1)
  protocols with full-strength cryptography world-wide. The project is managed
  by a worldwide community of volunteers that use the Internet to communicate,
  plan, and develop the OpenSSL tookit and its related documentation. 
 
  OpenSSL is based on the excellent SSLeay library developed from Eric A. Young
- and Tim J. Hudson.  The OpenSSL toolkit is licensed under a BSD-style licence,
- which basically means that you are free to get and use it for commercial and
- non-commercial purposes. 
+ and Tim J. Hudson.  The OpenSSL toolkit is licensed under a dual-license (the
+ OpenSSL license plus the SSLeay license) situation, which basically means
+ that you are free to get and use it for commercial and non-commercial
+ purposes as long as you fullfill the conditions of both licenses. 
 
- The package includes:
+ The OpenSSL toolkit includes:
 
  libssl.a:
      Implementation of SSLv2, SSLv3, TLSv1 and the required code to support
-     both SSLv2, SSLv3 and TLSv1 in the one server.
+     both SSLv2, SSLv3 and TLSv1 in the one server and client.
 
  libcrypto.a:
-     General encryption and X.509 stuff needed by TLS/SSL but not actually
-     logically part of it. It includes routines for the following:
+     General encryption and X.509 v1/v3 stuff needed by SSL/TLS but not
+     actually logically part of it. It includes routines for the following:
 
      Ciphers
         libdes - EAY's libdes DES encryption package which has been floating
@@ -74,7 +73,8 @@
         A simple stack.
         A Configuration loader that uses a format similar to MS .ini files.
 
- Programs in this package include:
+ openssl: 
+     A command line tool which provides the following functions:
 
      enc     - a general encryption program that can encrypt/decrypt using
                one of 17 different cipher/mode combinations.  The
@@ -109,14 +109,14 @@
      errstr  - Convert from OpenSSL hex error codes to a readable form.
      nseq    - Netscape certificate sequence utility
         
-To install this package, read the INSTALL file.
-For the Microsoft world, read INSTALL.W32 file.
+ To install this package under a Unix derivative, read the INSTALL file.  For
+ a Win32 platform, read the INSTALL.W32 file.
 
-For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
-public key library, RSAref. Read doc/ssleay.txt under 'rsaref.doc' on how to
-build with RSAref.
+ For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
+ public key library, RSAref. Read doc/ssleay.txt under 'rsaref.doc' on how to
+ build with RSAref.
 
-Read the documentation in the doc directory.  It is quite rough, but it lists
-the functions, you will probably have to look at the code to work out how to
-used them. Look at the example programs.
+ Read the documentation in the doc/ directory.  It is quite rough, but it
+ lists the functions, you will probably have to look at the code to work out
+ how to used them. Look at the example programs.
 
