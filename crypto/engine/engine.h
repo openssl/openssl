@@ -73,6 +73,7 @@
 #include <openssl/rand.h>
 #include <openssl/ui.h>
 #include <openssl/symhacks.h>
+#include <openssl/err.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -487,6 +488,78 @@ void ENGINE_load_engine_ciphers(ENGINE *e);
  * doesn't have it */
 const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name);
 
+/**************************/
+/* DYNAMIC ENGINE SUPPORT */
+/**************************/
+
+/* Binary/behaviour compatibility levels */
+#define OSSL_DYNAMIC_VERSION		(unsigned long)0x00010100
+/* Binary versions older than this are too old for us (whether we're a loader or
+ * a loadee) */
+#define OSSL_DYNAMIC_OLDEST		(unsigned long)0x00010100
+
+/* When compiling an ENGINE entirely as an external shared library, loadable by
+ * the "dynamic" ENGINE, these types are needed. The 'dynamic_fns' structure
+ * type provides the calling application's (or library's) error functionality
+ * and memory management function pointers to the loaded library. These should
+ * be used/set in the loaded library code so that the loading application's
+ * 'state' will be used/changed in all operations. */
+typedef void *(*dynamic_MEM_malloc_cb)(size_t);
+typedef void *(*dynamic_MEM_realloc_cb)(void *, size_t);
+typedef void (*dynamic_MEM_free_cb)(void *);
+typedef struct st_dynamic_MEM_fns {
+	dynamic_MEM_malloc_cb			malloc_cb;
+	dynamic_MEM_realloc_cb			realloc_cb;
+	dynamic_MEM_free_cb			free_cb;
+	} dynamic_MEM_fns;
+typedef struct st_dynamic_fns {
+	const ERR_FNS				*err_fns;
+	const CRYPTO_EX_DATA_IMPL		*ex_data_fns;
+	dynamic_MEM_fns				mem_fns;
+	} dynamic_fns;
+
+/* The version checking function should be of this prototype. NB: The
+ * ossl_version value passed in is the OSSL_DYNAMIC_VERSION of the loading code.
+ * If this function returns zero, it indicates a (potential) version
+ * incompatibility and the loaded library doesn't believe it can proceed.
+ * Otherwise, the returned value is the (latest) version supported by the
+ * loading library. The loader may still decide that the loaded code's version
+ * is unsatisfactory and could veto the load. The function is expected to
+ * be implemented with the symbol name "v_check", and a default implementation
+ * can be fully instantiated with IMPLEMENT_DYNAMIC_CHECK_FN(). */
+typedef unsigned long (*dynamic_v_check_fn)(unsigned long ossl_version);
+#define IMPLEMENT_DYNAMIC_CHECK_FN() \
+	unsigned long v_check(unsigned long v) { \
+		if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
+		return 0; }
+
+/* This function is passed the ENGINE structure to initialise with its own
+ * function and command settings. It should not adjust the structural or
+ * functional reference counts. If this function returns zero, (a) the load will
+ * be aborted, (b) the previous ENGINE state will be memcpy'd back onto the
+ * structure, and (c) the shared library will be unloaded. So implementations
+ * should do their own internal cleanup in failure circumstances otherwise they
+ * could leak. The 'id' parameter, if non-NULL, represents the ENGINE id that
+ * the loader is looking for. If this is NULL, the shared library can choose to
+ * return failure or to initialise a 'default' ENGINE. If non-NULL, the shared
+ * library must initialise only an ENGINE matching the passed 'id'. The function
+ * is expected to be implemented with the symbol name "bind_engine". A standard
+ * implementation can be instantiated with IMPLEMENT_DYNAMIC_BIND_FN(fn) where
+ * the parameter 'fn' is a callback function that populates the ENGINE structure
+ * and returns an int value (zero for failure). 'fn' should have prototype;
+ *    [static] int fn(ENGINE *e, const char *id); */
+typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
+				const dynamic_fns *fns);
+#define IMPLEMENT_DYNAMIC_BIND_FN(fn) \
+	int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
+		if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb, \
+			fns->mem_fns.realloc_cb, fns->mem_fns.free_cb)) \
+			return 0; \
+		if(!CRYPTO_set_ex_data_implementation(fns->ex_data_fns)) \
+			return 0; \
+		if(!ERR_set_implementation(fns->err_fns)) return 0; \
+		if(!fn(e,id)) return 0; \
+		return 1; }
 
 /* Obligatory error function. */
 void ERR_load_ENGINE_strings(void);
@@ -513,6 +586,9 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_CSWIFT_MOD_EXP				 102
 #define ENGINE_F_CSWIFT_MOD_EXP_CRT			 103
 #define ENGINE_F_CSWIFT_RSA_MOD_EXP			 104
+#define ENGINE_F_DYNAMIC_CTRL				 180
+#define ENGINE_F_DYNAMIC_GET_DATA_CTX			 181
+#define ENGINE_F_DYNAMIC_LOAD				 182
 #define ENGINE_F_ENGINE_ADD				 105
 #define ENGINE_F_ENGINE_BY_ID				 106
 #define ENGINE_F_ENGINE_CMD_IS_EXECUTABLE		 170
@@ -552,6 +628,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_NURON_FINISH				 157
 #define ENGINE_F_NURON_INIT				 156
 #define ENGINE_F_NURON_MOD_EXP				 158
+#define ENGINE_F_SET_DATA_CTX				 183
 #define ENGINE_F_UBSEC_CTRL				 176
 #define ENGINE_F_UBSEC_DSA_SIGN				 163
 #define ENGINE_F_UBSEC_DSA_VERIFY			 164
@@ -586,6 +663,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_ID_OR_NAME_MISSING			 108
 #define ENGINE_R_INIT_FAILED				 109
 #define ENGINE_R_INTERNAL_LIST_ERROR			 110
+#define ENGINE_R_INVALID_ARGUMENT			 143
 #define ENGINE_R_INVALID_CMD_NAME			 137
 #define ENGINE_R_INVALID_CMD_NUMBER			 138
 #define ENGINE_R_MISSING_KEY_COMPONENTS			 111
@@ -593,6 +671,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_NOT_LOADED				 112
 #define ENGINE_R_NO_CALLBACK				 127
 #define ENGINE_R_NO_CONTROL_FUNCTION			 120
+#define ENGINE_R_NO_INDEX				 144
 #define ENGINE_R_NO_KEY					 124
 #define ENGINE_R_NO_LOAD_FUNCTION			 125
 #define ENGINE_R_NO_REFERENCE				 130
@@ -605,6 +684,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_RSA_NOT_IMPLEMENTED			 141
 #define ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 122
 #define ENGINE_R_UNIT_FAILURE				 115
+#define ENGINE_R_VERSION_INCOMPATIBILITY		 145
 
 #ifdef  __cplusplus
 }

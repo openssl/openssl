@@ -79,6 +79,9 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_CSWIFT_MOD_EXP,0),	"CSWIFT_MOD_EXP"},
 {ERR_PACK(0,ENGINE_F_CSWIFT_MOD_EXP_CRT,0),	"CSWIFT_MOD_EXP_CRT"},
 {ERR_PACK(0,ENGINE_F_CSWIFT_RSA_MOD_EXP,0),	"CSWIFT_RSA_MOD_EXP"},
+{ERR_PACK(0,ENGINE_F_DYNAMIC_CTRL,0),	"DYNAMIC_CTRL"},
+{ERR_PACK(0,ENGINE_F_DYNAMIC_GET_DATA_CTX,0),	"DYNAMIC_GET_DATA_CTX"},
+{ERR_PACK(0,ENGINE_F_DYNAMIC_LOAD,0),	"DYNAMIC_LOAD"},
 {ERR_PACK(0,ENGINE_F_ENGINE_ADD,0),	"ENGINE_add"},
 {ERR_PACK(0,ENGINE_F_ENGINE_BY_ID,0),	"ENGINE_by_id"},
 {ERR_PACK(0,ENGINE_F_ENGINE_CMD_IS_EXECUTABLE,0),	"ENGINE_cmd_is_executable"},
@@ -118,6 +121,7 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_NURON_FINISH,0),	"NURON_FINISH"},
 {ERR_PACK(0,ENGINE_F_NURON_INIT,0),	"NURON_INIT"},
 {ERR_PACK(0,ENGINE_F_NURON_MOD_EXP,0),	"NURON_MOD_EXP"},
+{ERR_PACK(0,ENGINE_F_SET_DATA_CTX,0),	"SET_DATA_CTX"},
 {ERR_PACK(0,ENGINE_F_UBSEC_CTRL,0),	"UBSEC_CTRL"},
 {ERR_PACK(0,ENGINE_F_UBSEC_DSA_SIGN,0),	"UBSEC_DSA_SIGN"},
 {ERR_PACK(0,ENGINE_F_UBSEC_DSA_VERIFY,0),	"UBSEC_DSA_VERIFY"},
@@ -155,6 +159,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
 {ENGINE_R_INIT_FAILED                    ,"init failed"},
 {ENGINE_R_INTERNAL_LIST_ERROR            ,"internal list error"},
+{ENGINE_R_INVALID_ARGUMENT               ,"invalid argument"},
 {ENGINE_R_INVALID_CMD_NAME               ,"invalid cmd name"},
 {ENGINE_R_INVALID_CMD_NUMBER             ,"invalid cmd number"},
 {ENGINE_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
@@ -162,6 +167,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_NOT_LOADED                     ,"not loaded"},
 {ENGINE_R_NO_CALLBACK                    ,"no callback"},
 {ENGINE_R_NO_CONTROL_FUNCTION            ,"no control function"},
+{ENGINE_R_NO_INDEX                       ,"no index"},
 {ENGINE_R_NO_KEY                         ,"no key"},
 {ENGINE_R_NO_LOAD_FUNCTION               ,"no load function"},
 {ENGINE_R_NO_REFERENCE                   ,"no reference"},
@@ -174,6 +180,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_RSA_NOT_IMPLEMENTED            ,"rsa not implemented"},
 {ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL    ,"size too large or too small"},
 {ENGINE_R_UNIT_FAILURE                   ,"unit failure"},
+{ENGINE_R_VERSION_INCOMPATIBILITY        ,"version incompatibility"},
 {0,NULL}
 	};
 

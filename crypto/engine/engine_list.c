@@ -181,17 +181,20 @@ static int engine_list_remove(ENGINE *e)
 static int engine_internal_check(void)
 	{
 	int toret = 1;
-	ENGINE *def_engine;
+	ENGINE *def_engine1, *def_engine2;
 	if(engine_list_flag)
 		return 1;
 	/* This is our first time up, we need to populate the list
 	 * with our statically compiled-in engines. */
-	def_engine = ENGINE_openssl();
-	if(!engine_list_add(def_engine))
+	def_engine1 = ENGINE_openssl();
+	def_engine2 = ENGINE_dynamic();
+	if(!engine_list_add(def_engine1) ||
+			!engine_list_add(def_engine2))
 		toret = 0;
 	else
 		engine_list_flag = 1;
-	ENGINE_free_util(def_engine, 0);
+	ENGINE_free_util(def_engine1, 0);
+	ENGINE_free_util(def_engine2, 0);
 	return 1;
 	}
 

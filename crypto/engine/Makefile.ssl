@@ -24,11 +24,11 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= engine_err.c engine_lib.c engine_list.c engine_all.c engine_openssl.c \
-	engine_evp.c \
+	engine_dyn.c engine_evp.c \
 	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c \
 	hw_openbsd_dev_crypto.c
 LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_all.o engine_openssl.o \
-	engine_evp.o \
+	engine_dyn.o engine_evp.o \
 	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o \
 	hw_openbsd_dev_crypto.o
 
@@ -96,6 +96,18 @@ engine_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 engine_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_all.o: ../../include/openssl/types.h ../../include/openssl/ui.h
 engine_all.o: engine_all.c engine_int.h
+engine_dyn.o: ../../e_os.h ../../include/openssl/asn1.h
+engine_dyn.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+engine_dyn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+engine_dyn.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+engine_dyn.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+engine_dyn.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+engine_dyn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+engine_dyn.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+engine_dyn.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+engine_dyn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+engine_dyn.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+engine_dyn.o: ../cryptlib.h engine_dyn.c engine_int.h
 engine_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 engine_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 engine_err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h

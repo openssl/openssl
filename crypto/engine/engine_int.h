@@ -143,6 +143,10 @@ struct engine_st
 /* Returns a structure of software only methods (the default). */
 ENGINE *ENGINE_openssl();
 
+/* Returns the "dynamic" ENGINE for loading entire ENGINE implementations from
+ * shared libraries. */
+ENGINE *ENGINE_dynamic();
+
 #ifndef OPENSSL_NO_HW
 
 #ifndef OPENSSL_NO_HW_CSWIFT
