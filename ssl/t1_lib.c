@@ -62,11 +62,7 @@
 
 char *tls1_version_str="TLSv1" OPENSSL_VERSION_PTEXT;
 
-#ifndef NO_PROTO
 static long tls1_default_timeout(void);
-#else
-static long tls1_default_timeout();
-#endif
 
 static SSL3_ENC_METHOD TLSv1_enc_data={
 	tls1_enc,

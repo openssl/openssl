@@ -1092,7 +1092,7 @@ int ssl3_renegotiate_check(SSL *s)
 			{
 /*
 if we are the server, and we have sent a 'RENEGOTIATE' message, we
-need to go to SSL_ST_ACCEPT.
+need to go to SSL_ST_ACCEPT.
 */
 			/* SSL_ST_ACCEPT */
 			s->state=SSL_ST_RENEGOTIATE;
