@@ -18,11 +18,6 @@ MAKEFILE=	Makefile.ssl
 AR=		ar r
 
 RC4_ENC=rc4_enc.o
-# or use
-#RC4_ENC=asm/rx86-elf.o
-#RC4_ENC=asm/rx86-out.o
-#RC4_ENC=asm/rx86-sol.o
-#RC4_ENC=asm/rx86bdsi.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
@@ -54,18 +49,18 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # ELF
-asm/rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl elf $(CFLAGS) > ../$@)
 # COFF
-asm/rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl coff $(CFLAGS) > ../$@)
 # a.out
 rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
 
-asm/rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) $< $@
+rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) $< $@
 
-asm/rc4-ia64.s: asm/rc4-ia64.S
+rc4-ia64.s: asm/rc4-ia64.S
 	$(CC) $(CFLAGS) -E asm/rc4-ia64.S > $@
 
 files:
@@ -100,7 +95,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/rx86unix.cpp asm/*.s asm/*.o *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

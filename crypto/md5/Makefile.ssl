@@ -49,18 +49,18 @@ lib:    $(LIBOBJ)
 	@touch lib
 
 # ELF
-asm/mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
+mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl elf $(CFLAGS) > ../$@)
 # COFF
-asm/mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
+mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl coff $(CFLAGS) > ../$@)
 # a.out
 mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
 
-asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
+md5-sparcv8plus.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o asm/md5-sparcv8plus.o asm/md5-sparcv9.S
+		-o md5-sparcv8plus.o asm/md5-sparcv9.S
 
 # Old GNU assembler doesn't understand V9 instructions, so we
 # hire /usr/ccs/bin/as to do the job. Note that option is called
@@ -68,13 +68,13 @@ asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
 # if they didn't bother to upgrade GNU assembler. Such users should
 # not choose this option, but be adviced to *remove* GNU assembler
 # or upgrade it.
-asm/md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
+md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -E asm/md5-sparcv9.S | \
-		/usr/ccs/bin/as -xarch=v8plus - -o asm/md5-sparcv8plus-gcc27.o
+		/usr/ccs/bin/as -xarch=v8plus - -o md5-sparcv8plus-gcc27.o
 
-asm/md5-sparcv9.o: asm/md5-sparcv9.S
+md5-sparcv9.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o asm/md5-sparcv9.o asm/md5-sparcv9.S
+		-o md5-sparcv9.o asm/md5-sparcv9.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -108,7 +108,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/mx86unix.cpp asm/*.s asm/*.o *.s *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

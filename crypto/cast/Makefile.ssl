@@ -18,11 +18,6 @@ MAKEFILE=	Makefile.ssl
 AR=		ar r
 
 CAST_ENC=c_enc.o
-# or use
-#CAST_ENC=asm/cx86-elf.o
-#CAST_ENC=asm/cx86-out.o
-#CAST_ENC=asm/cx86-sol.o
-#CAST_ENC=asm/cx86bdsi.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
@@ -54,10 +49,10 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # ELF
-asm/cx86-elf.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+cx86-elf.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) cast-586.pl elf $(CLAGS) $(PROCESSOR) > ../$@)
 # COFF
-asm/cx86-cof.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+cx86-cof.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) cast-586.pl coff $(CLAGS) $(PROCESSOR) > ../$@)
 # a.out
 cx86-out.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
@@ -95,7 +90,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/cx86unix.cpp asm/*.s asm/*.o *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

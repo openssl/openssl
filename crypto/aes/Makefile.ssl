@@ -51,12 +51,12 @@ lib:	$(LIBOBJ)
 
 $(LIBOBJ): $(LIBSRC)
 
-asm/aes-ia64.s: asm/aes-ia64.S
+aes-ia64.s: asm/aes-ia64.S
 	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
 
-asm/ax86-elf.s: asm/aes-586.pl ../perlasm/x86asm.pl
+ax86-elf.s: asm/aes-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) aes-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-asm/ax86-cof.s: asm/aes-586.pl ../perlasm/x86asm.pl
+ax86-cof.s: asm/aes-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) aes-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
 ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) aes-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
@@ -95,7 +95,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/*.[so] *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -69,14 +69,14 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # ELF
-asm/bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
+bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > ../$@)
-asm/co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
+co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > ../$@)
 # COFF
-asm/bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
+bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl coff $(CFLAGS) > ../$@)
-asm/co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
+co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl coff $(CFLAGS) > ../$@)
 # a.out
 bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
@@ -84,28 +84,28 @@ bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
 co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
 
-asm/sparcv8.o: asm/sparcv8.S
+sparcv8.o:	asm/sparcv8.S
+sparcv8plus.o:	asm/sparcv8plus.S
+mips3.o:	asm/mips3.s
 
-asm/sparcv8plus.o: asm/sparcv8plus.S
+x86_64-gcc.o:	asm/x86_64-gcc.c
 
-asm/ia64.s:	asm/ia64.S
+bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
-
-asm/x86_64-gcc.o: asm/x86_64-gcc.c
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
-asm/pa-risc2W.o: asm/pa-risc2W.s
-	/usr/ccs/bin/as -o asm/pa-risc2W.o asm/pa-risc2W.s
-asm/pa-risc2.o: asm/pa-risc2.s
-	/usr/ccs/bin/as -o asm/pa-risc2.o asm/pa-risc2.s
+pa-risc2W.o: asm/pa-risc2W.s
+	/usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
+pa-risc2.o: asm/pa-risc2.s
+	/usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
 
 # ppc - AIX, Linux, MacOS X...
-asm/linux_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
-asm/linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
-asm/aix_ppc32.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
-asm/aix_ppc64.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
-asm/osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+linux_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
+aix_ppc32.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
+aix_ppc64.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
+osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -147,7 +147,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* asm/*-cof.* asm/*-out.* asm/ia64.s *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -57,9 +57,8 @@ OPENSSLDIR=/usr/local/ssl
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-CC= gcc
-#CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
-CFLAG= -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
+CC= cc
+CFLAG= -O
 DEPFLAG= 
 PEX_LIBS= 
 EX_LIBS= 
@@ -86,89 +85,16 @@ PROCESSOR=
 
 # CPUID module collects small commonly used assembler snippets
 CPUID_OBJ= 
-
-# Set BN_ASM to bn_asm.o if you want to use the C version
 BN_ASM= bn_asm.o
-#BN_ASM= bn_asm.o
-#BN_ASM= asm/bn86-elf.o	# elf, linux-elf
-#BN_ASM= asm/bn86-sol.o # solaris
-#BN_ASM= asm/bn86-out.o # a.out, FreeBSD
-#BN_ASM= asm/bn86bsdi.o # bsdi
-#BN_ASM= asm/alpha.o    # DEC Alpha
-#BN_ASM= asm/pa-risc2.o # HP-UX PA-RISC
-#BN_ASM= asm/r3000.o    # SGI MIPS cpu
-#BN_ASM= asm/sparc.o    # Sun solaris/SunOS
-#BN_ASM= asm/bn-win32.o # Windows 95/NT
-#BN_ASM= asm/x86w16.o   # 16 bit code for Windows 3.1/DOS
-#BN_ASM= asm/x86w32.o   # 32 bit code for Windows 3.1
-
-# Set DES_ENC to des_enc.o if you want to use the C version
-#There are 4 x86 assember options.
-DES_ENC= asm/dx86-out.o asm/yx86-out.o
-#DES_ENC= des_enc.o fcrypt_b.o          # C
-#DES_ENC= asm/dx86-elf.o asm/yx86-elf.o # elf
-#DES_ENC= asm/dx86-sol.o asm/yx86-sol.o # solaris
-#DES_ENC= asm/dx86-out.o asm/yx86-out.o # a.out, FreeBSD
-#DES_ENC= asm/dx86bsdi.o asm/yx86bsdi.o # bsdi
-
+DES_ENC= des_enc.o fcrypt_b.o
 AES_ASM_OBJ=aes_core.o aes_cbc.o
-
-# Set BF_ENC to bf_enc.o if you want to use the C version
-#There are 4 x86 assember options.
-BF_ENC= asm/bx86-out.o
-#BF_ENC= bf_enc.o
-#BF_ENC= asm/bx86-elf.o # elf
-#BF_ENC= asm/bx86-sol.o # solaris
-#BF_ENC= asm/bx86-out.o # a.out, FreeBSD
-#BF_ENC= asm/bx86bsdi.o # bsdi
-
-# Set CAST_ENC to c_enc.o if you want to use the C version
-#There are 4 x86 assember options.
-CAST_ENC= asm/cx86-out.o
-#CAST_ENC= c_enc.o
-#CAST_ENC= asm/cx86-elf.o # elf
-#CAST_ENC= asm/cx86-sol.o # solaris
-#CAST_ENC= asm/cx86-out.o # a.out, FreeBSD
-#CAST_ENC= asm/cx86bsdi.o # bsdi
-
-# Set RC4_ENC to rc4_enc.o if you want to use the C version
-#There are 4 x86 assember options.
-RC4_ENC= asm/rx86-out.o
-#RC4_ENC= rc4_enc.o
-#RC4_ENC= asm/rx86-elf.o # elf
-#RC4_ENC= asm/rx86-sol.o # solaris
-#RC4_ENC= asm/rx86-out.o # a.out, FreeBSD
-#RC4_ENC= asm/rx86bsdi.o # bsdi
-
-# Set RC5_ENC to rc5_enc.o if you want to use the C version
-#There are 4 x86 assember options.
-RC5_ENC= asm/r586-out.o
-#RC5_ENC= rc5_enc.o
-#RC5_ENC= asm/r586-elf.o # elf
-#RC5_ENC= asm/r586-sol.o # solaris
-#RC5_ENC= asm/r586-out.o # a.out, FreeBSD
-#RC5_ENC= asm/r586bsdi.o # bsdi
-
-# Also need MD5_ASM defined
-MD5_ASM_OBJ= asm/mx86-out.o
-#MD5_ASM_OBJ= asm/mx86-elf.o        # elf
-#MD5_ASM_OBJ= asm/mx86-sol.o        # solaris
-#MD5_ASM_OBJ= asm/mx86-out.o        # a.out, FreeBSD
-#MD5_ASM_OBJ= asm/mx86bsdi.o        # bsdi
-
-# Also need SHA1_ASM defined
-SHA1_ASM_OBJ= asm/sx86-out.o
-#SHA1_ASM_OBJ= asm/sx86-elf.o       # elf
-#SHA1_ASM_OBJ= asm/sx86-sol.o       # solaris
-#SHA1_ASM_OBJ= asm/sx86-out.o       # a.out, FreeBSD
-#SHA1_ASM_OBJ= asm/sx86bsdi.o       # bsdi
-
-# Also need RMD160_ASM defined
-RMD160_ASM_OBJ= asm/rm86-out.o
-#RMD160_ASM_OBJ= asm/rm86-elf.o       # elf
-#RMD160_ASM_OBJ= asm/rm86-sol.o       # solaris
-#RMD160_ASM_OBJ= asm/rm86-out.o       # a.out, FreeBSD
-#RMD160_ASM_OBJ= asm/rm86bsdi.o       # bsdi
+BF_ENC= bf_enc.o
+CAST_ENC= c_enc.o
+RC4_ENC= rc4_enc.o
+RC5_ENC= rc5_enc.o
+MD5_ASM_OBJ= 
+SHA1_ASM_OBJ= 
+RMD160_ASM_OBJ= 
 
 # KRB5 stuff
 KRB5_INCLUDES=
@@ -181,8 +107,8 @@ SHLIBDIRS= crypto ssl
 SDIRS=  \
 	objects \
 	md2 md4 md5 sha mdc2 hmac ripemd \
-	des rc2 rc4 rc5 idea bf cast \
-	bn ec rsa dsa ecdsa dh ecdh dso engine aes \
+	des aes rc2 rc4 rc5 idea bf cast \
+	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
 	store

@@ -49,14 +49,14 @@ lib:    $(LIBOBJ)
 	@touch lib
 
 # ELF
-asm/sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
+sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-asm/s512sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
+s512sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
 # COFF
-asm/sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
+sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
-asm/s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
+s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-sse2.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
 # a.out
 sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
@@ -64,11 +64,11 @@ sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
-asm/sha1-ia64.s:   asm/sha1-ia64.pl
+sha1-ia64.s:   asm/sha1-ia64.pl
 	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
-asm/sha256-ia64.s: asm/sha512-ia64.pl
+sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
-asm/sha512-ia64.s: asm/sha512-ia64.pl
+sha512-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 
 files:
@@ -103,7 +103,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/sx86unix.cpp asm/*.s asm/*.o *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
