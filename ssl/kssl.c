@@ -1983,6 +1983,7 @@ krb5_error_code  kssl_check_authent(
 	struct tm		tm_time, *tm_l, *tm_g;
 	time_t			now, tl, tg, tr, tz_offset;
 
+	EVP_CIPHER_CTX_init(&ciph_ctx);
 	*atimep = 0;
 	kssl_err_set(kssl_err, 0, "");
 
