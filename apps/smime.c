@@ -70,6 +70,7 @@ static X509 *load_cert(char *file);
 static EVP_PKEY *load_key(char *file);
 static STACK_OF(X509) *load_certs(char *file);
 static X509_STORE *setup_verify(char *CAfile, char *CApath);
+static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 
 #define SMIME_OP	0x10
 #define SMIME_ENCRYPT	(1 | SMIME_OP)
@@ -261,7 +262,7 @@ int MAIN(int argc, char **argv)
 		}
 	}
 
-	if(signerfile) {
+	if(signerfile && (operation == SMIME_SIGN)) {
 		if(!(signer = load_cert(signerfile))) {
 			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
 			goto end;
@@ -276,7 +277,7 @@ int MAIN(int argc, char **argv)
 		}
 	}
 
-	if(recipfile) {
+	if(recipfile && (operation == SMIME_DECRYPT)) {
 		if(!(recip = load_cert(recipfile))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
 			ERR_print_errors(bio_err);
@@ -341,6 +342,8 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "Error decrypting PKCS#7 structure\n");
 		else ret = 0;
 	} else if(operation == SMIME_VERIFY) {
+		STACK_OF(X509) *signers;
+		signers = PKCS7_iget_signers(p7, other, flags);
 		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
 			BIO_printf(bio_err, "Verification Successful\n");
 			ret = 0;
@@ -348,6 +351,12 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "Verification Failure\n");
 			ret = 5;
 		}
+		if(!save_certs(signerfile, signers)) {
+			BIO_printf(bio_err, "Error writing signers to %s\n",
+								signerfile);
+			ret = 2;
+		}
+		sk_X509_free(signers);
 	} else if(operation == SMIME_PK7OUT) {
 		PEM_write_bio_PKCS7(out, p7);
 	} else {
@@ -444,3 +453,17 @@ static X509_STORE *setup_verify(char *CAfile, char *CApath)
 	X509_STORE_free(store);
 	return NULL;
 }
+
+int save_certs(char *signerfile, STACK_OF(X509) *signers)
+{
+	int i;
+	BIO *tmp;
+	if(!signerfile) return 1;
+	tmp = BIO_new_file(signerfile, "w");
+	if(!tmp) return 0;
+	for(i = 0; i < sk_X509_num(signers); i++)
+		PEM_write_bio_X509(tmp, sk_X509_value(signers, i));
+	BIO_free(tmp);
+	return 1;
+}
+	

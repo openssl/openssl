@@ -144,14 +144,13 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	X509 *signer;
 	STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
 	PKCS7_SIGNER_INFO *si;
-	PKCS7_ISSUER_AND_SERIAL *ias;
 	X509_STORE_CTX cert_ctx;
 	char buf[4096];
 	int i, j=0;
 	BIO *p7bio;
 	BIO *tmpout;
 
-	if(OBJ_obj2nid(p7->type) != NID_pkcs7_signed) {
+	if(!PKCS7_type_is_signed(p7)) {
 				PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_WRONG_CONTENT_TYPE);
 		return 0;
 	}
@@ -176,34 +175,9 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	}
 
 
-	if(!(signers = sk_X509_new(NULL))) {
-		PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
+	signers = PKCS7_iget_signers(p7, certs, flags);
 
-	/* Collect all the signers together */
-
-	for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++)
-	{
-	    si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
-	    ias = si->issuer_and_serial;
-	    signer = NULL;
-		/* If any certificates passed they take priority */
-	    if (certs) signer = X509_find_by_issuer_and_serial (certs,
-					 	ias->issuer, ias->serial);
-	    if (!signer && !(flags & PKCS7_NOINTERN)
-			&& p7->d.sign->cert) signer =
-		              X509_find_by_issuer_and_serial (p7->d.sign->cert,
-					      	ias->issuer, ias->serial);
-	    if (!signer) {
-			PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
-			sk_X509_free(signers);
-			return 0;
-	    }
-
-	    sk_X509_push(signers, signer);
-	}
-
+	if(!signers) return 0;
 
 	/* Now verify the certificates */
 
@@ -280,6 +254,57 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
 	return 0;
 }
+
+STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
+{
+	STACK_OF(X509) *signers;
+	STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
+	PKCS7_SIGNER_INFO *si;
+	PKCS7_ISSUER_AND_SERIAL *ias;
+	X509 *signer;
+	int i;
+
+	if(!PKCS7_type_is_signed(p7)) {
+		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
+		return NULL;
+	}
+	if(!(signers = sk_X509_new(NULL))) {
+		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
+	/* Collect all the signers together */
+
+	sinfos = PKCS7_get_signer_info(p7);
+
+	if(sk_PKCS7_SIGNER_INFO_num(sinfos) <= 0) {
+		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_NO_SIGNERS);
+		return 0;
+	}
+
+	for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++)
+	{
+	    si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
+	    ias = si->issuer_and_serial;
+	    signer = NULL;
+		/* If any certificates passed they take priority */
+	    if (certs) signer = X509_find_by_issuer_and_serial (certs,
+					 	ias->issuer, ias->serial);
+	    if (!signer && !(flags & PKCS7_NOINTERN)
+			&& p7->d.sign->cert) signer =
+		              X509_find_by_issuer_and_serial (p7->d.sign->cert,
+					      	ias->issuer, ias->serial);
+	    if (!signer) {
+			PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
+			sk_X509_free(signers);
+			return 0;
+	    }
+
+	    sk_X509_push(signers, signer);
+	}
+	return signers;
+}
+
 
 /* Build a complete PKCS#7 enveloped data */
 
