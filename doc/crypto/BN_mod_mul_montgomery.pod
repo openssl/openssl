@@ -44,7 +44,7 @@ BN_MONT_CTX_copy() copies the B<N_MONT_CTX> B<from> to B<to>.
 BN_MONT_CTX_free() frees the components of the B<BN_MONT_CTX>, and, if
 it was created by BN_MONT_CTX_new(), also the structure itself.
 
-BN_mod_mul_mont() computes Mont(B<a>,B<b>):=B<a>*B<b>*R^-1 and places
+BN_mod_mul_montgomery() computes Mont(B<a>,B<b>):=B<a>*B<b>*R^-1 and places
 the result in B<r>.
 
 BN_from_montgomery() performs the Montgomery reduction B<r> = B<a>*R^-1.
