@@ -15,7 +15,6 @@
 
 /* -out file         - write to file
  * -rand file:file   - PRNG seed files
- * -egd file         - PRNG seed from EGD named socket
  * -base64           - encode output
  * num               - write 'num' bytes
  */
@@ -27,7 +26,7 @@ int MAIN(int argc, char **argv)
 	int i, r, ret = 1;
 	int badopt;
 	char *outfile = NULL;
-	char *inrand = NULL,*inegd=NULL;
+	char *inrand = NULL;
 	int base64 = 0;
 	BIO *out = NULL;
 	int num = -1;
@@ -53,13 +52,6 @@ int MAIN(int argc, char **argv)
 			{
 			if ((argv[i+1] != NULL) && (inrand == NULL))
 				inrand = argv[++i];
-			else
-				badopt = 1;
-			}
-		else if (strcmp(argv[i], "-egd") == 0)
-			{
-			if ((argv[i+1] != NULL) && (inegd == NULL))
-				inegd = argv[++i];
 			else
 				badopt = 1;
 			}
@@ -94,18 +86,14 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-out file            - write to file\n");
 		BIO_printf(bio_err, "-rand file%cfile%c...  - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-		BIO_printf(bio_err, "-egd file            - seed PRNG from EGD named socket\n");
 		BIO_printf(bio_err, "-base64              - encode output\n");
 		goto err;
 		}
 
-	app_RAND_load_file(NULL, bio_err, (inrand != NULL || inegd != NULL));
+	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
 	if (inrand != NULL)
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
-	if (inegd != NULL)
-		BIO_printf(bio_err,"%ld egd bytes loaded\n",
-			RAND_egd(inegd));
 
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)

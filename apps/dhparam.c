@@ -121,7 +121,6 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 
 #ifndef NO_DSA
 #include <openssl/dsa.h>
@@ -157,7 +156,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
-	char *inrand=NULL, *inegd=NULL;
+	char *inrand=NULL;
 	int num = 0, g = 0;
 
 	apps_startup();
@@ -217,11 +216,6 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
 			}
-		else if (strcmp(*argv,"-egd") == 0)
-			{
-			if (--argc < 1) goto bad;
-			inegd= *(++argv);
-			}
 		else if (((sscanf(*argv,"%d",&num) == 0) || (num <= 0)))
 			goto bad;
 		argv++;
@@ -247,9 +241,8 @@ bad:
 		BIO_printf(bio_err," -5            generate parameters using  5 as the generator value\n");
 		BIO_printf(bio_err," numbits       number of bits in to generate (default 512)\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-		BIO_printf(bio_err,"               load the file (or the files in the directory) into\n");
+		BIO_printf(bio_err,"               - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"               the random number generator\n");
-		BIO_printf(bio_err," -egd file     load random seed from EGD socket\n");
 		BIO_printf(bio_err," -noout        no output\n");
 		goto end;
 		}
@@ -278,17 +271,13 @@ bad:
 
 	if(num) {
 
-		if (!app_RAND_load_file(NULL, bio_err, 1)
-			&& inrand == NULL && inegd == NULL)
+		if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
 			{
 			BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 			}
 		if (inrand != NULL)
 			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 				app_RAND_load_files(inrand));
-		if (inegd != NULL)
-			BIO_printf(bio_err,"%ld egd bytes loaded\n",
-				RAND_egd(inegd));
 
 #ifndef NO_DSA
 		if (dsaparam)

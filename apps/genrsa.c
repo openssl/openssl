@@ -69,7 +69,6 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 
 #define DEFBITS	512
 #undef PROG
@@ -89,7 +88,7 @@ int MAIN(int argc, char **argv)
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
 	char *passargout = NULL, *passout = NULL;
-	char *inrand=NULL,*inegd=NULL;
+	char *inrand=NULL;
 	BIO *out=NULL;
 
 	apps_startup();
@@ -121,11 +120,6 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
-			}
-		else if (strcmp(*argv,"-egd") == 0)
-			{
-			if (--argc < 1) goto bad;
-			inegd= *(++argv);
 			}
 #ifndef NO_DES
 		else if (strcmp(*argv,"-des") == 0)
@@ -163,7 +157,6 @@ bad:
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"                 load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                 the random number generator\n");
-		BIO_printf(bio_err," -egd file       load random seed from EGD socket\n");
 		goto err;
 		}
 		
@@ -185,16 +178,13 @@ bad:
 			}
 		}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL && inegd == NULL)
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
 		{
 		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 		}
 	if (inrand != NULL)
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
-	if (inegd != NULL)
-		BIO_printf(bio_err,"%ld egd bytes loaded\n",
-			RAND_egd(inegd));
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);

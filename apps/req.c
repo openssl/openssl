@@ -103,7 +103,6 @@
  * -key file	- make a request using key in file (or use it for verification).
  * -keyform	- key file format.
  * -rand file(s) - load the file(s) into the PRNG.
- * -egd file	- load PRNG seed from EGD named socket.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
  * -x509	- output a self signed X509 structure instead.
@@ -157,7 +156,7 @@ int MAIN(int argc, char **argv)
 	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
-	char *inrand=NULL,*inegd=NULL;
+	char *inrand=NULL;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	char *p;
@@ -245,11 +244,6 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
-			}
-		else if (strcmp(*argv,"-egd") == 0)
-			{
-			if (--argc < 1) goto bad;
-			inegd= *(++argv);
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
@@ -387,7 +381,6 @@ bad:
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"                load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                the random number generator\n");
-		BIO_printf(bio_err," -egd file      load random seed from EGD socket\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err," -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
 
@@ -562,9 +555,7 @@ bad:
 		app_RAND_load_file(randfile, bio_err, 0);
 		if (inrand)
 			app_RAND_load_files(inrand);
-		if (inegd)
-			RAND_egd(inegd);
-
+	
 		if (newkey <= 0)
 			{
 			newkey=(int)CONF_get_number(req_conf,SECTION,BITS);

@@ -4,15 +4,6 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) Add the possibility, through the -egd parameter, to tell the openssl
-     applications that EGD should be used as seeding source, and where
-     the EGD named socket is.
-     [Richard Levitte]
-
-  *) Add the possibility to tell RAND_egd() and RAND_egd_bytes() where
-     the EGD named socket is through the environment variable RANDEGD.
-     [Richard Levitte]
-
   *) Add BSD-style MD5-based passwords to 'openssl passwd' (option '-1').
      [Bodo Moeller]
 
