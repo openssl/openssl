@@ -578,9 +578,11 @@ EOF
 	sun4d)	OUT="linux-sparcv8" ;;
 	*)	OUT="linux-sparcv7" ;;
 	esac ;;
-  parisc-*-linux2)
-        CPUARCH=`awk '/cpu family/{print substr($5,1,3)}' /proc/cpuinfo`
-	CPUSCHEDULE=`awk '/^cpu.[ 	]: PA/{print substr($3,3)}' /proc/cpuinfo`
+  parisc*-*-linux2)
+	# 64-bit builds under parisc64 linux are not supported and
+	# compiler is expected to generate 32-bit objects...
+	CPUARCH=`awk '/cpu family/{print substr($5,1,3); exit(0);}' /proc/cpuinfo`
+	CPUSCHEDULE=`awk '/^cpu.[ 	]*: PA/{print substr($3,3); exit(0);}' /proc/cpuinfo`
 
 	# ??TODO ??  Model transformations
 	# 0. CPU Architecture for the 1.1 processor has letter suffixes. We strip that off
@@ -593,7 +595,7 @@ EOF
 	#         PA8500   -> 8000   (2.0)
 	#         PA8600   -> 8000   (2.0)
 
-	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8?00/8000/'`
+	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8.00/8000/'`
 	# Finish Model transformations
 
 	options="$options -mschedule=$CPUSCHEDULE -march=$CPUARCH"
