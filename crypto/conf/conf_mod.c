@@ -520,3 +520,32 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 	pmod->usr_data = usr_data;
 	}
 
+/* Return default config file name */
+
+char *CONF_get1_default_config_file(void)
+	{
+	char *file;
+	int len;
+
+	file = getenv("OPENSSL_CONF");
+	if (file) 
+		return BUF_strdup(file);
+
+	len = strlen(X509_get_default_cert_area());
+#ifndef OPENSSL_SYS_VMS
+	len++;
+#endif
+	len += strlen(OPENSSL_CONF);
+
+	file = OPENSSL_malloc(len + 1);
+
+	if (!file)
+		return NULL;
+	strcpy(file,X509_get_default_cert_area());
+#ifndef OPENSSL_SYS_VMS
+	strcat(file,"/");
+#endif
+	strcat(file,OPENSSL_CONF);
+
+	return file;
+	}

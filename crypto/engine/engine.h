@@ -517,6 +517,8 @@ int ENGINE_set_default_digests(ENGINE *e);
  * selective functions. */
 int ENGINE_set_default(ENGINE *e, unsigned int flags);
 
+void ENGINE_add_conf_module(void);
+
 /* Deprecated functions ... */
 /* int ENGINE_clear_defaults(void); */
 
@@ -622,7 +624,6 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_ENGINE_strings(void);
-
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
@@ -647,6 +648,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_LIST_REMOVE			 121
 #define ENGINE_F_ENGINE_LOAD_PRIVATE_KEY		 150
 #define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY			 151
+#define ENGINE_F_ENGINE_MODULE_INIT			 187
 #define ENGINE_F_ENGINE_NEW				 122
 #define ENGINE_F_ENGINE_REMOVE				 123
 #define ENGINE_F_ENGINE_SET_DEFAULT_TYPE		 126
@@ -655,6 +657,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_TABLE_REGISTER			 184
 #define ENGINE_F_ENGINE_UNLOAD_KEY			 152
 #define ENGINE_F_INT_CTRL_HELPER			 172
+#define ENGINE_F_INT_ENGINE_CONFIGURE			 188
 #define ENGINE_F_LOG_MESSAGE				 141
 #define ENGINE_F_SET_DATA_CTX				 183
 
@@ -675,7 +678,9 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_DSO_FAILURE				 104
 #define ENGINE_R_DSO_FUNCTION_NOT_FOUND			 131
 #define ENGINE_R_DSO_NOT_FOUND				 132
+#define ENGINE_R_ENGINES_SECTION_ERROR			 148
 #define ENGINE_R_ENGINE_IS_NOT_IN_LIST			 105
+#define ENGINE_R_ENGINE_SECTION_ERROR			 149
 #define ENGINE_R_FAILED_LOADING_PRIVATE_KEY		 128
 #define ENGINE_R_FAILED_LOADING_PUBLIC_KEY		 129
 #define ENGINE_R_FINISH_FAILED				 106

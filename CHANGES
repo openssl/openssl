@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Prelminary ENGINE config module.
+     [Steve Henson]
+
   *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
      ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag
      variable as an indication that a ClientHello message has been

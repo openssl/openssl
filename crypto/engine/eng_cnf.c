@@ -1,4 +1,4 @@
-/* conf_mall.c */
+/* eng_cnf.c */
 /* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
  * project 2001.
  */
@@ -60,58 +60,128 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
-#include <openssl/dso.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
 #include <openssl/engine.h>
 
-void OPENSSL_load_builtin_modules(void)
+/* #define ENGINE_CONF_DEBUG */
+
+/* ENGINE config module */
+
+static char *skip_dot(char *name)
 	{
-	/* Add builtin modules here */
-	ASN1_add_oid_module();
-	ENGINE_add_conf_module();
+	char *p;
+	p = strchr(name, '.');
+	if (p)
+		return p + 1;
+	return name;
 	}
 
-/* This is the automatic configuration loader: it is called automatically by
- * OpenSSL when any of a number of standard initialisation functions are called,
- * unless this is overridden by calling OPENSSL_no_config()
- */
-
-static int openssl_configured = 0;
-
-void OPENSSL_config(void)
+int int_engine_configure(char *name, char *value, const CONF *cnf)
 	{
-	int ret;
-	char *file;
-	if (openssl_configured)
-		return;
+	int i;
+	int ret = 0;
+	STACK_OF(CONF_VALUE) *ecmds;
+	CONF_VALUE *ecmd;
+	char *ctrlname, *ctrlvalue;
+	ENGINE *e = NULL;
+	name = skip_dot(name);
+#ifdef ENGINE_CONF_DEBUG
+	fprintf(stderr, "Configuring engine %s\n", name);
+#endif
+	/* Value is a section containing ENGINE commands */
+	ecmds = NCONF_get_section(cnf, value);
 
-	OPENSSL_load_builtin_modules();
-
-	file = CONF_get1_default_config_file();
-	if (!file)
-		return;
-
-	ret = CONF_modules_load_file(file, "openssl_config", 0);
-	OPENSSL_free(file);
-	if (ret <= 0)
+	if (!ecmds)
 		{
-		BIO *bio_err;
-		ERR_load_crypto_strings();
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			{
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-			BIO_printf(bio_err,"Auto configuration failed\n");
-			ERR_print_errors(bio_err);
-			}
-		exit(1);
+		ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE, ENGINE_R_ENGINE_SECTION_ERROR);
+		return 0;
 		}
 
-	return;
+	for (i = 0; i < sk_CONF_VALUE_num(ecmds); i++)
+		{
+		ecmd = sk_CONF_VALUE_value(ecmds, i);
+		ctrlname = skip_dot(ecmd->name);
+		ctrlvalue = ecmd->value;
+#ifdef ENGINE_CONF_DEBUG
+	fprintf(stderr, "ENGINE conf: doing ctrl(%s,%s)\n", ctrlname, ctrlvalue);
+#endif
 
+		/* First handle some special pseudo ctrls */
+
+		/* Override engine name to use */
+		if (!strcmp(ctrlname, "engine_id"))
+			name = ctrlvalue;
+		/* Load a dynamic ENGINE */
+		else if (!strcmp(ctrlname, "dynamic_path"))
+			{
+			e = ENGINE_by_id("dynamic");
+			if (!e)
+				goto err;
+			if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", ctrlvalue, 0))
+				goto err;
+			if (!ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0))
+				goto err;
+			}
+		/* ... add other pseudos here ... */
+		else
+			{
+			/* At this point we need an ENGINE structural reference
+			 * if we don't already have one.
+			 */
+			if (!e)
+				{
+				e = ENGINE_by_id(name);
+				if (!e)
+					return 0;
+				}
+			/* Allow "EMPTY" to mean no value: this allows a valid
+			 * "value" to be passed to ctrls of type NO_INPUT
+		 	 */
+			if (!strcmp(ctrlvalue, "EMPTY"))
+				ctrlvalue = NULL;
+			if (!ENGINE_ctrl_cmd_string(e,
+					ctrlname, ctrlvalue, 0))
+				return 0;
+			}
+
+
+		}
+	ret = 1;
+	err:
+	if (e)
+		ENGINE_free(e);
+	return ret;
+	}
+	
+
+static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
+	{
+	STACK_OF(CONF_VALUE) *elist;
+	CONF_VALUE *cval;
+	int i;
+#ifdef ENGINE_CONF_DEBUG
+	fprintf(stderr, "Called engine module: name %s, value %s\n",
+			CONF_imodule_get_name(md), CONF_imodule_get_value(md));
+#endif
+	/* Value is a section containing ENGINEs to configure */
+	elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
+
+	if (!elist)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_MODULE_INIT, ENGINE_R_ENGINES_SECTION_ERROR);
+		return 0;
+		}
+
+	for (i = 0; i < sk_CONF_VALUE_num(elist); i++)
+		{
+		cval = sk_CONF_VALUE_value(elist, i);
+		if (!int_engine_configure(cval->name, cval->value, cnf))
+			return 0;
+		}
+
+	return 1;
 	}
 
-void OPENSSL_no_config()
+void ENGINE_add_conf_module(void)
 	{
-	openssl_configured = 1;
+	CONF_module_add("engines", int_engine_module_init, 0);
 	}
