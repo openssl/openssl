@@ -976,6 +976,7 @@ int MAIN(int argc, char **argv)
 			{
 			dsa_doit[R_DSA_512]=1;
 			dsa_doit[R_DSA_1024]=1;
+			dsa_doit[R_DSA_2048]=1;
 			}
 		else
 #endif
