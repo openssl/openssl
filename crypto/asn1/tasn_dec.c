@@ -913,10 +913,10 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *i
 			ctx->ptag = ptag;
 			ctx->hdrlen = p - q;
 			ctx->valid = 1;
-			/* If definite length, length + header can't exceed total
-			 * amount of data available.
+			/* If definite length, and no error, length +
+			 * header can't exceed total amount of data available. 
 			 */
-			if(!(i & 1) && ((plen + ctx->hdrlen) > len)) {
+			if(!(i & 0x81) && ((plen + ctx->hdrlen) > len)) {
 				ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_TOO_LONG);
 				asn1_tlc_clear(ctx);
 				return 0;

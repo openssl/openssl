@@ -120,6 +120,12 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
 	unsigned char *p,*s;
 	int i;
 
+	if (len < 1)
+		{
+		i=ASN1_R_STRING_TOO_SHORT;
+		goto err;
+		}
+
 	if ((a == NULL) || ((*a) == NULL))
 		{
 		if ((ret=M_ASN1_BIT_STRING_new()) == NULL) return(NULL);
