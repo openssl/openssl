@@ -354,7 +354,19 @@ struct evp_cipher_st
 #define 	EVP_CIPH_CUSTOM_IV		0x10
 /* Set if the cipher's init() function should be called if key is NULL */
 #define 	EVP_CIPH_ALWAYS_CALL_INIT	0x20
+/* Call ctrl() to init cipher parameters */
+#define 	EVP_CIPH_CTRL_INIT		0x40
+/* Don't use standard key length function */
+#define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 
+/* ctrl() values */
+
+#define		EVP_CTRL_INIT			0x0
+#define 	EVP_CTRL_SET_KEY_LENGTH		0x1
+#define 	EVP_CTRL_GET_RC2_KEY_BITS	0x2
+#define 	EVP_CTRL_SET_RC2_KEY_BITS	0x3
+#define 	EVP_CTRL_GET_RC5_ROUNDS		0x4
+#define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
 
 typedef struct evp_cipher_info_st
 	{
@@ -402,10 +414,16 @@ struct evp_cipher_ctx_st
 		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
 #endif
 #ifndef NO_RC2
-		RC2_KEY rc2_ks;/* key schedule */
+		struct {
+			int key_bits;	/* effective key bits */
+			RC2_KEY ks;/* key schedule */
+		} rc2;
 #endif
 #ifndef NO_RC5
-		RC5_32_KEY rc5_ks;/* key schedule */
+		struct {
+			int rounds;	/* number of rounds */
+			RC5_32_KEY ks;/* key schedule */
+		} rc5;
 #endif
 #ifndef NO_BF
 		BF_KEY bf_ks;/* key schedule */

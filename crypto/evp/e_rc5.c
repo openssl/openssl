@@ -1,4 +1,4 @@
-/* crypto/evp/e_ofb_d.c */
+/* crypto/evp/e_rc5.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,49 +56,63 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DES
+#ifndef NO_RC5
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
-static int des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+
+IMPLEMENT_BLOCK_CIPHER(rc5_32_12_16, rc5.ks, RC5_32, rc5, NID_rc5,
+			8, EVP_RC5_32_12_16_KEY_SIZE, 8, 
+			0, r_32_12_16_init_key, NULL,
+			NULL, NULL, NULL)
+
+#if 0
+static int r_32_12_16_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-static EVP_CIPHER d_ofb_cipher=
+static EVP_CIPHER rc5_32_12_16_cbc_cipher=
 	{
-	NID_des_ofb64,
-	1,8,8,
-	EVP_CIPH_OFB_MODE,
-	des_ofb_init_key,
-	des_ofb_cipher,
+	NID_rc5_cbc,
+	8,EVP_RC5_32_12_16_KEY_SIZE,8,
+	EVP_CIPH_CBC_MODE,
+	r_32_12_16_cbc_init_key,
+	r_32_12_16_cbc_cipher,
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
-	EVP_CIPHER_set_asn1_iv,
-	EVP_CIPHER_get_asn1_iv,
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc5)),
+	NULL,
+	NULL,
 	NULL
 	};
 
-EVP_CIPHER *EVP_des_ofb(void)
+EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)
 	{
-	return(&d_ofb_cipher);
+	return(&rc5_32_12_16_cbc_cipher);
 	}
+#endif
 	
-static int des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	des_cblock *deskey = (des_cblock *)key;
-	des_set_key_unchecked(deskey,ctx->c.des_ks);
+	RC5_32_set_key(&(ctx->c.rc5.ks),EVP_RC5_32_12_16_KEY_SIZE,
+			key,RC5_12_ROUNDS);
 	return 1;
 	}
-
-static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+#if 0
+static int r_32_12_16_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
-	des_ofb64_encrypt(in,out,inl,ctx->c.des_ks,
-		(des_cblock *)&(ctx->iv[0]),&ctx->num);
+	RC5_32_cbc_encrypt(
+		in,out,(long)inl,
+		&(ctx->c.rc5.ks),&(ctx->iv[0]),
+		ctx->encrypt);
 	return 1;
 	}
+#endif
+
 #endif

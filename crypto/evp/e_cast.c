@@ -1,4 +1,4 @@
-/* crypto/evp/e_ecb_c.c */
+/* crypto/evp/e_cast.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,51 +62,20 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
-static int cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int cast_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER cast5_ecb_cipher=
-	{
-	NID_cast5_ecb,
-	8,EVP_CAST5_KEY_SIZE,0,
-	EVP_CIPH_ECB_MODE | EVP_CIPH_VARIABLE_LENGTH,
-	cast_ecb_init_key,
-	cast_ecb_cipher,
-	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.cast_ks)),
-	NULL,
-	NULL,
-	NULL
-	};
 
-EVP_CIPHER *EVP_cast5_ecb(void)
-	{
-	return(&cast5_ecb_cipher);
-	}
-	
-static int cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+IMPLEMENT_BLOCK_CIPHER(cast5, cast_ks, CAST, cast_ks, 
+			NID_cast5, 8, EVP_CAST5_KEY_SIZE, 8,
+			EVP_CIPH_VARIABLE_LENGTH, cast_init_key, NULL,
+			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
+			
+static int cast_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
-	return 1;
-	}
-
-static int cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
-	{
-	unsigned int i;
-
-	if (inl < 8) return 1;
-	inl-=8;
-	for (i=0; i<=inl; i+=8)
-		{
-		CAST_ecb_encrypt(
-			&(in[i]),&(out[i]),
-			&(ctx->c.cast_ks),ctx->encrypt);
-		}
 	return 1;
 	}
 

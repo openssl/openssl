@@ -1,4 +1,4 @@
-/* crypto/evp/e_ofb_3d.c */
+/* crypto/evp/e_rc2.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,90 +56,143 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DES
+#ifndef NO_RC2
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
-static int des_ede_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int des_ede3_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	unsigned char *iv,int enc);
-static int des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER d_ede_ofb_cipher2=
+static int rc2_meth_to_magic(const EVP_CIPHER *e);
+static EVP_CIPHER *rc2_magic_to_meth(int i);
+static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+
+IMPLEMENT_BLOCK_CIPHER(rc2, rc2.ks, RC2, rc2, NID_rc2,
+			8,
+			EVP_RC2_KEY_SIZE, 8,
+			EVP_CIPH_VARIABLE_LENGTH, rc2_init_key, NULL,
+			rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv, NULL)
+
+#define RC2_40_MAGIC	0xa0
+#define RC2_64_MAGIC	0x78
+#define RC2_128_MAGIC	0x3a
+
+static EVP_CIPHER r2_64_cbc_cipher=
 	{
-	NID_des_ede_ofb64,
-	1,16,8,
-	EVP_CIPH_OFB_MODE,
-	des_ede_ofb_init_key,
-	des_ede_ofb_cipher,
+	NID_rc2_64_cbc,
+	8,8 /* 64 bit */,8,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
+	rc2_init_key,
+	rc2_cbc_cipher,
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
-	EVP_CIPHER_set_asn1_iv,
-	EVP_CIPHER_get_asn1_iv,
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
+	rc2_set_asn1_type_and_iv,
+	rc2_get_asn1_type_and_iv,
+	NULL,
 	NULL
 	};
 
-static EVP_CIPHER d_ede3_ofb_cipher3=
+static EVP_CIPHER r2_40_cbc_cipher=
 	{
-	NID_des_ede3_ofb64,
-	1,24,8,
-	EVP_CIPH_OFB_MODE,
-	des_ede3_ofb_init_key,
-	des_ede_ofb_cipher,
+	NID_rc2_40_cbc,
+	8,5 /* 40 bit */,8,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
+	rc2_init_key,
+	rc2_cbc_cipher,
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
-	EVP_CIPHER_set_asn1_iv,
-        EVP_CIPHER_get_asn1_iv,
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
+	rc2_set_asn1_type_and_iv,
+	rc2_get_asn1_type_and_iv,
+	NULL,
 	NULL
 	};
 
-EVP_CIPHER *EVP_des_ede_ofb(void)
+EVP_CIPHER *EVP_rc2_64_cbc(void)
 	{
-	return(&d_ede_ofb_cipher2);
+	return(&r2_64_cbc_cipher);
 	}
 
-EVP_CIPHER *EVP_des_ede3_ofb(void)
+EVP_CIPHER *EVP_rc2_40_cbc(void)
 	{
-	return(&d_ede3_ofb_cipher3);
+	return(&r2_40_cbc_cipher);
 	}
 	
-static int des_ede_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	des_cblock *deskey = (des_cblock *)key;
-
-	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
-	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
-	memcpy( (char *)ctx->c.des_ede.ks3,
-			(char *)ctx->c.des_ede.ks1,
-			sizeof(ctx->c.des_ede.ks1));
-
+	RC2_set_key(&(ctx->c.rc2.ks),EVP_CIPHER_CTX_key_length(ctx),
+			key,EVP_CIPHER_key_length(ctx->cipher)*8);
 	return 1;
 	}
 
-static int des_ede3_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	     unsigned char *iv, int enc)
+static int rc2_meth_to_magic(const EVP_CIPHER *e)
 	{
-	des_cblock *deskey = (des_cblock *)key;
+	int i;
 
-	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
-	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
-	des_set_key_unchecked(&deskey[2],ctx->c.des_ede.ks3);
-
-	return 1;
+	i=EVP_CIPHER_key_length(e);
+	if 	(i == 16) return(RC2_128_MAGIC);
+	else if (i == 8)  return(RC2_64_MAGIC);
+	else if (i == 5)  return(RC2_40_MAGIC);
+	else return(0);
 	}
 
-static int des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
+static EVP_CIPHER *rc2_magic_to_meth(int i)
 	{
-	des_ede3_ofb64_encrypt(in,out,inl,ctx->c.des_ede.ks1,
-			       ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
-			       (des_cblock *)&(ctx->iv[0]),&ctx->num);
-	return 1;
+	if      (i == RC2_128_MAGIC) return(EVP_rc2_cbc());
+	else if (i == RC2_64_MAGIC)  return(EVP_rc2_64_cbc());
+	else if (i == RC2_40_MAGIC)  return(EVP_rc2_40_cbc());
+	else
+		{
+		EVPerr(EVP_F_RC2_MAGIC_TO_METH,EVP_R_UNSUPPORTED_KEY_SIZE);
+		return(NULL);
+		}
 	}
+
+static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+	{
+	long num=0;
+	int i=0,l;
+	EVP_CIPHER *e;
+
+	if (type != NULL)
+		{
+		l=EVP_CIPHER_CTX_iv_length(c);
+		i=ASN1_TYPE_get_int_octetstring(type,&num,c->oiv,l);
+		if (i != l)
+			return(-1);
+		else if (i > 0)
+			memcpy(c->iv,c->oiv,l);
+		e=rc2_magic_to_meth((int)num);
+		if (e == NULL)
+			return(-1);
+		if (e != EVP_CIPHER_CTX_cipher(c))
+			{
+			EVP_CIPHER_CTX_cipher(c)=e;
+			EVP_CIPHER_CTX_set_key_length(c, EVP_CIPHER_key_length(c));
+			rc2_init_key(c,NULL,NULL,1);
+			}
+		}
+	return(i);
+	}
+
+static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+	{
+	long num;
+	int i=0,j;
+
+	if (type != NULL)
+		{
+		num=rc2_meth_to_magic(EVP_CIPHER_CTX_cipher(c));
+		j=EVP_CIPHER_CTX_iv_length(c);
+		i=ASN1_TYPE_set_int_octetstring(type,num,c->oiv,j);
+		}
+	return(i);
+	}
+
 #endif

@@ -1,4 +1,4 @@
-/* crypto/evp/e_ecb_r5.c */
+/* crypto/evp/e_bf.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,58 +56,24 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RC5
-
+#ifndef NO_BF
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include "evp_locl.h"
 #include <openssl/objects.h>
 
-static int rc5_32_12_16_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int rc5_32_12_16_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER rc5_ecb_cipher=
-	{
-	NID_rc5_ecb,
-	8,EVP_RC5_32_12_16_KEY_SIZE,0,
-	EVP_CIPH_ECB_MODE,
-	rc5_32_12_16_ecb_init_key,
-	rc5_32_12_16_ecb_cipher,
-	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc5_ks)),
-	NULL,
-	NULL,
-	NULL
-	};
 
-EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)
-	{
-	return(&rc5_ecb_cipher);
-	}
+IMPLEMENT_BLOCK_CIPHER(bf, bf_ks, BF, bf_ks, NID_bf, 8, 16, 8,
+			0, bf_init_key, NULL, 
+			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 	
-static int rc5_32_12_16_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,key,
-			RC5_12_ROUNDS);
-	return 1;
-	}
-
-static int rc5_32_12_16_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
-	{
-	unsigned int i;
-
-	if (inl < 8) return 1;
-	inl-=8;
-	for (i=0; i<=inl; i+=8)
-		{
-		RC5_32_ecb_encrypt(
-			&(in[i]),&(out[i]),
-			&(ctx->c.rc5_ks),ctx->encrypt);
-		}
+	BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;
 	}
 

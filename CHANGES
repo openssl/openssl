@@ -9,6 +9,9 @@
      cipher mode. They also all do nothing if the 'key' parameter is NULL and
      for CFB and OFB modes they zero ctx->num.
 
+     Most of the routines have the same form and so can be declared in terms
+     of macros.
+
      By shifting this to the top level EVP_CipherInit() it can be removed from
      all individual ciphers. If the cipher wants to handle IVs or keys
      differently it can set the EVP_CIPH_CUSTOM_IV or EVP_CIPH_ALWAYS_CALL_INIT

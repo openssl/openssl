@@ -1,4 +1,4 @@
-/* crypto/evp/e_ofb_c.c */
+/* crypto/evp/e_des3.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,53 +56,106 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_CAST
-
+#ifndef NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
-static int cast_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ede_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int cast_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER cast5_ofb_cipher=
-	{
-	NID_cast5_ofb64,
-	1,EVP_CAST5_KEY_SIZE,8,
-	EVP_CIPH_OFB_MODE | EVP_CIPH_VARIABLE_LENGTH,
-	cast_ofb_init_key,
-	cast_ofb_cipher,
-	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.cast_ks)),
-	EVP_CIPHER_set_asn1_iv,
-	EVP_CIPHER_get_asn1_iv,
-	NULL
-	};
 
-EVP_CIPHER *EVP_cast5_ofb(void)
-	{
-	return(&cast5_ofb_cipher);
-	}
-	
-static int cast_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	unsigned char *iv,int enc);
+
+/* Because of various casts and different args can't use IMPLEMENT_BLOCK_CIPHER */
+
+static int des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, unsigned char *in, unsigned int inl)
+{
+	BLOCK_CIPHER_ecb_loop()
+		des_ecb3_encrypt((des_cblock *)(in + i), (des_cblock *)(out + i), 
+			ctx->c.des_ede.ks1, ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
+			 ctx->encrypt);
+	return 1;
+}
+
+static int des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, unsigned char *in, unsigned int inl)
+{
+	des_ede3_ofb64_encrypt(in, out, (long)inl,
+			ctx->c.des_ede.ks1, ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
+								(des_cblock *)ctx->iv, &ctx->num);
+	return 1;
+}
+
+static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, unsigned char *in, unsigned int inl)
+{
+	des_ede3_cbc_encrypt(in, out, (long)inl,
+			ctx->c.des_ede.ks1, ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
+ 								(des_cblock *)ctx->iv, ctx->encrypt);
+	return 1;
+}
+
+static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, unsigned char *in, unsigned int inl)
+{
+	des_ede3_cfb64_encrypt(in, out, (long)inl, 
+			ctx->c.des_ede.ks1, ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
+					(des_cblock *)ctx->iv, &ctx->num, ctx->encrypt);
+	return 1;
+}
+
+#define NID_des_ede_ecb NID_des_ede
+
+BLOCK_CIPHER_defs(des_ede, des_ede, NID_des_ede, 8, 16, 8,
+			0, des_ede_init_key, NULL, 
+			EVP_CIPHER_set_asn1_iv,
+			EVP_CIPHER_get_asn1_iv,
+			NULL)
+
+#define NID_des_ede3_ecb NID_des_ede3
+#define des_ede3_cfb_cipher des_ede_cfb_cipher
+#define des_ede3_ofb_cipher des_ede_ofb_cipher
+#define des_ede3_cbc_cipher des_ede_cbc_cipher
+#define des_ede3_ecb_cipher des_ede_ecb_cipher
+
+BLOCK_CIPHER_defs(des_ede3, des_ede, NID_des_ede3, 8, 24, 8,
+			0, des_ede3_init_key, NULL, 
+			EVP_CIPHER_set_asn1_iv,
+			EVP_CIPHER_get_asn1_iv,
+			NULL)
+
+static int des_ede_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	des_cblock *deskey = (des_cblock *)key;
+
+	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
+	memcpy( (char *)ctx->c.des_ede.ks3,
+			(char *)ctx->c.des_ede.ks1,
+			sizeof(ctx->c.des_ede.ks1));
 	return 1;
 	}
 
-static int cast_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
+static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
-	CAST_ofb64_encrypt(
-		in,out,
-		(long)inl, &(ctx->c.cast_ks),
-		&(ctx->iv[0]),
-		&ctx->num);
+	des_cblock *deskey = (des_cblock *)key;
+
+	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
+	des_set_key_unchecked(&deskey[2],ctx->c.des_ede.ks3);
+
 	return 1;
 	}
 
+EVP_CIPHER *EVP_des_ede(void)
+{
+	return &des_ede_ecb;
+}
+
+EVP_CIPHER *EVP_des_ede3(void)
+{
+	return &des_ede3_ecb;
+}
 #endif

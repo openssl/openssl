@@ -1,4 +1,4 @@
-/* crypto/evp/e_cbc_d.c */
+/* crypto/evp/e_idea.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,51 +56,56 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DES
+#ifndef NO_IDEA
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
-static int des_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER d_cbc_cipher=
-	{
-	NID_des_cbc,
-	8,8,8,
-	EVP_CIPH_CBC_MODE,
-	des_cbc_init_key,
-	des_cbc_cipher,
-	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
-	EVP_CIPHER_set_asn1_iv,
-	EVP_CIPHER_get_asn1_iv,
-	NULL
-	};
 
-EVP_CIPHER *EVP_des_cbc(void)
-	{
-	return(&d_cbc_cipher);
-	}
-	
-static int des_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+/* NB idea_ecb_encrypt doesn't take an 'encrypt' argument so we treat it as a special
+ * case 
+ */
+
+static int idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, unsigned char *in, unsigned int inl)
+{
+	BLOCK_CIPHER_ecb_loop()
+		idea_ecb_encrypt(in + i, out + i, &ctx->c.idea_ks);
+	return 1;
+}
+
+/* Can't use IMPLEMENT_BLOCK_CIPHER because idea_ecb_encrypt is different */
+
+BLOCK_CIPHER_func_cbc(idea, idea, idea_ks)
+BLOCK_CIPHER_func_ofb(idea, idea, idea_ks)
+BLOCK_CIPHER_func_cfb(idea, idea, idea_ks)
+
+BLOCK_CIPHER_defs(idea, idea_ks, NID_idea, 8, 16, 8,
+			0, idea_init_key, NULL, 
+			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
+
+static int idea_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	des_cblock *deskey = (des_cblock *)key;
+	if(!enc) {
+		if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE) enc = 1;
+		else if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB_MODE) enc = 1;
+	}
+	if (enc) idea_set_encrypt_key(key,&(ctx->c.idea_ks));
+	else
+		{
+		IDEA_KEY_SCHEDULE tmp;
 
-	des_set_key_unchecked(deskey,ctx->c.des_ks);
+		idea_set_encrypt_key(key,&tmp);
+		idea_set_decrypt_key(&tmp,&(ctx->c.idea_ks));
+		memset((unsigned char *)&tmp,0,
+				sizeof(IDEA_KEY_SCHEDULE));
+		}
 	return 1;
 	}
 
-static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
-	{
-	des_ncbc_encrypt(in,out,inl,ctx->c.des_ks,
-		(des_cblock *)&(ctx->iv[0]),
-		ctx->encrypt);
-	return 1;
-	}
 #endif

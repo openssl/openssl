@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include "evp_locl.h"
 
 const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
 
@@ -309,4 +310,3 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,EVP_R_INVALID_KEY_LENGTH);
 	return 0;
 	}
-
