@@ -90,11 +90,7 @@ EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)
 static int r_32_12_16_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (iv != NULL)
-		memcpy(&(ctx->oiv[0]),iv,8);
-	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
-		RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,
+	RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,
 			key,RC5_12_ROUNDS);
 	return 1;
 	}

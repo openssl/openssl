@@ -139,11 +139,7 @@ EVP_CIPHER *EVP_rc2_40_cbc(void)
 static int rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (iv != NULL)
-		memcpy(&(ctx->oiv[0]),iv,8);
-	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
+	RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
 			key,EVP_CIPHER_key_length(ctx->cipher)*8);
 	return 1;
 	}

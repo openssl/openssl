@@ -91,8 +91,7 @@ static int des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	{
 	des_cblock *deskey = (des_cblock *)key;
 
-	if (deskey != NULL)
-		des_set_key_unchecked(deskey,ctx->c.des_ks);
+	des_set_key_unchecked(deskey,ctx->c.des_ks);
 	return 1;
 	}
 

@@ -69,11 +69,47 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 	/* ctx->cipher=NULL; */
 	}
 
-int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *data,
+int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv, int enc)
 	{
-	if (enc) return EVP_EncryptInit(ctx,data,key,iv);
-	else return EVP_DecryptInit(ctx,data,key,iv);
+	if(enc) enc = 1;
+	if (cipher) {
+		ctx->cipher=cipher;
+		ctx->key_len = cipher->key_len;
+	} else if(!ctx->cipher) {
+		EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_NO_CIPHER_SET);
+		return 0;
+	}
+	if(!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
+		switch(EVP_CIPHER_CTX_mode(ctx)) {
+
+			case EVP_CIPH_STREAM_CIPHER:
+			case EVP_CIPH_ECB_MODE:
+			break;
+
+			case EVP_CIPH_CFB_MODE:
+			case EVP_CIPH_OFB_MODE:
+
+			ctx->num = 0;
+
+			case EVP_CIPH_CBC_MODE:
+
+			if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
+			break;
+
+			default:
+			return 0;
+			break;
+		}
+	}
+
+	if(key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
+		if(!ctx->cipher->init(ctx,key,iv,enc)) return 0;
+	}
+	ctx->encrypt=enc;
+	ctx->buf_len=0;
+	return 1;
 	}
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -94,29 +130,13 @@ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
-	if (cipher != NULL)
-		{
-		ctx->cipher=cipher;
-		ctx->key_len = cipher->key_len;
-		}
-	if(!ctx->cipher->init(ctx,key,iv,1)) return 0;
-	ctx->encrypt=1;
-	ctx->buf_len=0;
-	return 1;
+	return EVP_CipherInit(ctx, cipher, key, iv, 1);
 	}
 
 int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
-	if (cipher != NULL)
-		{
-		ctx->cipher=cipher;
-		ctx->key_len = cipher->key_len;
-		}
-	if(!ctx->cipher->init(ctx,key,iv,0)) return 0;
-	ctx->encrypt=0;
-	ctx->buf_len=0;
-	return 1;
+	return EVP_CipherInit(ctx, cipher, key, iv, 0);
 	}
 
 

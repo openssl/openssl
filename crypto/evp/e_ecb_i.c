@@ -90,19 +90,16 @@ EVP_CIPHER *EVP_idea_ecb(void)
 static int idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (key != NULL)
-		{
-		if (enc)
+	if (enc)
 			idea_set_encrypt_key(key,&(ctx->c.idea_ks));
-		else
-			{
-			IDEA_KEY_SCHEDULE tmp;
+	else
+		{
+		IDEA_KEY_SCHEDULE tmp;
 
-			idea_set_encrypt_key(key,&tmp);
-			idea_set_decrypt_key(&tmp, &(ctx->c.idea_ks));
-			memset((unsigned char *)&tmp,0,
+		idea_set_encrypt_key(key,&tmp);
+		idea_set_decrypt_key(&tmp, &(ctx->c.idea_ks));
+		memset((unsigned char *)&tmp,0,
 				sizeof(IDEA_KEY_SCHEDULE));
-			}
 		}
 	return 1;
 	}

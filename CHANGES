@@ -4,6 +4,17 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Remove lots of duplicated code from the EVP library. For example *every*
+     cipher init() function handles the 'iv' in the same way according to the
+     cipher mode. They also all do nothing if the 'key' parameter is NULL and
+     for CFB and OFB modes they zero ctx->num.
+
+     By shifting this to the top level EVP_CipherInit() it can be removed from
+     all individual ciphers. If the cipher wants to handle IVs or keys
+     differently it can set the EVP_CIPH_CUSTOM_IV or EVP_CIPH_ALWAYS_CALL_INIT
+     flags.
+     [Steve Henson]
+
   *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
      the handshake is continued after ssl_verify_cert_chain();
      otherwise, if SSL_VERIFY_NONE is set, remaining error codes
@@ -23,7 +34,6 @@
      Change lots of functions like EVP_EncryptUpdate() to now return a
      value: although software versions of the algorithms cannot fail
      any installed hardware versions can.
-
      [Steve Henson]
 
   *) Implement SSL_OP_TLS_ROLLBACK_BUG: In ssl3_get_client_key_exchange, if

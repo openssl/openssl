@@ -89,13 +89,7 @@ EVP_CIPHER *EVP_bf_cfb(void)
 static int bf_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	ctx->num=0;
-
-	if (iv != NULL)
-		memcpy(&(ctx->oiv[0]),iv,8);
-	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
-		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;
 	}
 

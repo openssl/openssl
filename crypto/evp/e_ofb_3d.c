@@ -113,19 +113,12 @@ static int des_ede_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	{
 	des_cblock *deskey = (des_cblock *)key;
 
-	ctx->num=0;
-
-	if (iv != NULL)
-		memcpy(&(ctx->oiv[0]),iv,8);
-	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (deskey != NULL)
-		{
-		des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
-		des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
-		memcpy( (char *)ctx->c.des_ede.ks3,
+	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
+	memcpy( (char *)ctx->c.des_ede.ks3,
 			(char *)ctx->c.des_ede.ks1,
 			sizeof(ctx->c.des_ede.ks1));
-		}
+
 	return 1;
 	}
 
@@ -134,17 +127,10 @@ static int des_ede3_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	{
 	des_cblock *deskey = (des_cblock *)key;
 
-	ctx->num=0;
+	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
+	des_set_key_unchecked(&deskey[2],ctx->c.des_ede.ks3);
 
-	if (iv != NULL)
-		memcpy(&(ctx->oiv[0]),iv,8);
-	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (deskey != NULL)
-		{
-		des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
-		des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
-		des_set_key_unchecked(&deskey[2],ctx->c.des_ede.ks3);
-		}
 	return 1;
 	}
 

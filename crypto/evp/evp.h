@@ -335,19 +335,25 @@ struct evp_cipher_st
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
 	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
 	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
+	void *app_data;		/* Application data */
 	};
 
 /* Values for cipher flags */
 
-/* Modes for block ciphers */
+/* Modes for ciphers */
 
+#define		EVP_CIPH_STREAM_CIPHER		0x0
 #define		EVP_CIPH_ECB_MODE		0x1
 #define		EVP_CIPH_CBC_MODE		0x2
 #define		EVP_CIPH_CFB_MODE		0x3
 #define		EVP_CIPH_OFB_MODE		0x4
-#define 	EVP_CIPH_BLOCK_MODES		0x7
+#define 	EVP_CIPH_MODE			0x7
 /* Set if variable length cipher */
 #define 	EVP_CIPH_VARIABLE_LENGTH	0x8
+/* Set if the iv handling should be done by the cipher itself */
+#define 	EVP_CIPH_CUSTOM_IV		0x10
+/* Set if the cipher's init() function should be called if key is NULL */
+#define 	EVP_CIPH_ALWAYS_CALL_INIT	0x20
 
 
 typedef struct evp_cipher_info_st
@@ -455,6 +461,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_CIPHER_block_size(e)	((e)->block_size)
 #define EVP_CIPHER_key_length(e)	((e)->key_len)
 #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
+#define EVP_CIPHER_flags(e)		((e)->flags)
+#define EVP_CIPHER_mode(e)		((e)->flags) & EVP_CIPH_MODE)
 
 #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
 #define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
@@ -464,6 +472,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
 #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+#define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
+#define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
 #define EVP_DECODE_LENGTH(l)	((l+3)/4*3+80)
@@ -709,6 +719,7 @@ void EVP_PBE_cleanup(void);
 
 /* Function codes. */
 #define EVP_F_D2I_PKEY					 100
+#define EVP_F_EVP_CIPHERINIT				 123
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_MD_CTX_COPY				 110
@@ -748,6 +759,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120
 #define EVP_R_MISSING_PARAMETERS			 103
+#define EVP_R_NO_CIPHER_SET				 131
 #define EVP_R_NO_DSA_PARAMETERS				 116
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105

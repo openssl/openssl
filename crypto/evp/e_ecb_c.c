@@ -90,8 +90,7 @@ EVP_CIPHER *EVP_cast5_ecb(void)
 static int cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (key != NULL)
-		CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;
 	}
 

@@ -90,8 +90,7 @@ EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)
 static int rc5_32_12_16_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (key != NULL)
-		RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,key,
+	RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,key,
 			RC5_12_ROUNDS);
 	return 1;
 	}

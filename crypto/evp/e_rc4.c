@@ -110,8 +110,7 @@ EVP_CIPHER *EVP_rc4_40(void)
 static int rc4_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (key != NULL)
-		memcpy(&(ctx->c.rc4.key[0]),key,EVP_CIPHER_CTX_key_length(ctx));
+	memcpy(&(ctx->c.rc4.key[0]),key,EVP_CIPHER_CTX_key_length(ctx));
 	RC4_set_key(&(ctx->c.rc4.ks),EVP_CIPHER_CTX_key_length(ctx),
 		ctx->c.rc4.key);
 	return 1;

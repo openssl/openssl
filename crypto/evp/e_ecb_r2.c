@@ -90,9 +90,8 @@ EVP_CIPHER *EVP_rc2_ecb(void)
 static int rc2_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
-			key,EVP_CIPHER_key_length(ctx->cipher)*8);
+	RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
+		key,EVP_CIPHER_key_length(ctx->cipher)*8);
 	return 1;
 	}
 
