@@ -292,8 +292,6 @@ TEST="false"
 for i
 do
 case "$i" in 
-# shared library support (behnke@trustcenter.de)
--shared) SHARED=true;;
 -d*) PREFIX="debug-";;
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
@@ -480,16 +478,6 @@ if [ -f /usr/include/atasi.h ]
 then
   options="$options -DATALLA"
 fi
-
-#get some basic shared lib support (behnke@trustcenter.de)
-case "$OUT" in
-   solaris-*-gcc)
-	if  [ "$SHARED" = "true" ] 
-	 then
-	  options="$options -DPIC -fPIC"
-        fi
-     ;;
-esac
 
 # gcc < 2.8 does not support -mcpu=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
