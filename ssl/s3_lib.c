@@ -1423,6 +1423,13 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif    /* KSSL_DEBUG */
 
 		alg=c->algorithms&(SSL_MKEY_MASK|SSL_AUTH_MASK);
+#ifndef OPENSSL_NO_KRB5
+                if (alg & SSL_KRB5) 
+                        {
+                        if ( !kssl_keytab_is_available(s->kssl_ctx) )
+                            continue;
+                        }
+#endif /* OPENSSL_NO_KRB5 */
 		if (SSL_C_IS_EXPORT(c))
 			{
 			ok=((alg & emask) == alg)?1:0;

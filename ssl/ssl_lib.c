@@ -1058,6 +1058,9 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
 	int i,j=0;
 	SSL_CIPHER *c;
 	unsigned char *q;
+#ifndef OPENSSL_NO_KRB5
+        int nokrb5 = !kssl_tgt_is_available(s->kssl_ctx);
+#endif /* OPENSSL_NO_KRB5 */
 
 	if (sk == NULL) return(0);
 	q=p;
@@ -1065,6 +1068,10 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		c=sk_SSL_CIPHER_value(sk,i);
+#ifndef OPENSSL_NO_KRB5
+                if ((c->algorithms & SSL_KRB5) && nokrb5)
+                    continue;
+#endif /* OPENSSL_NO_KRB5 */                    
 		j=ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}

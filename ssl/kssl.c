@@ -71,7 +71,6 @@
 #define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
 #include <time.h>
 #include <string.h>
-#include <ctype.h>
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -127,6 +126,9 @@
 #define valid_cksumtype      kssl_valid_cksumtype
 #define krb5_checksum_size   kssl_krb5_checksum_size
 #define krb5_kt_free_entry   kssl_krb5_kt_free_entry
+#define krb5_auth_con_setrcache  kssl_krb5_auth_con_setrcache
+#define krb5_auth_con_getrcache  kssl_krb5_auth_con_getrcache
+#define krb5_get_server_rcache   kssl_krb5_get_server_rcache
 
 /* Prototypes for built in stubs */
 void kssl_krb5_free_data_contents(krb5_context, krb5_data *);
@@ -172,6 +174,15 @@ krb5_error_code kssl_krb5_auth_con_free(krb5_context,krb5_auth_context);
 size_t kssl_krb5_checksum_size(krb5_context context,krb5_cksumtype ctype);
 krb5_boolean kssl_valid_cksumtype(krb5_cksumtype ctype);
 krb5_error_code krb5_kt_free_entry(krb5_context,krb5_keytab_entry FAR * );
+krb5_error_code kssl_krb5_auth_con_setrcache(krb5_context, 
+                                             krb5_auth_context, 
+                                             krb5_rcache);
+krb5_error_code kssl_krb5_get_server_rcache(krb5_context, 
+                                            krb5_const krb5_data *,
+                                            krb5_rcache *);
+krb5_error_code kssl_krb5_auth_con_getrcache(krb5_context, 
+                                             krb5_auth_context,
+                                             krb5_rcache *);
 
 /* Function pointers (almost all Kerberos functions are _stdcall) */
 static void (_stdcall *p_krb5_free_data_contents)(krb5_context, krb5_data *)
@@ -232,6 +243,15 @@ static size_t (_stdcall *p_krb5_checksum_size)(krb5_context context,krb5_cksumty
 static krb5_boolean (_stdcall *p_valid_cksumtype)(krb5_cksumtype ctype)=NULL;
 static krb5_error_code (_stdcall *p_krb5_kt_free_entry)
                         (krb5_context,krb5_keytab_entry * )=NULL;
+static krb5_error_code (_stdcall * p_krb5_auth_con_setrcache)(krb5_context, 
+                                                               krb5_auth_context, 
+                                                               krb5_rcache)=NULL;
+static krb5_error_code (_stdcall * p_krb5_get_server_rcache)(krb5_context, 
+                                                              krb5_const krb5_data *, 
+                                                              krb5_rcache *)=NULL;
+static krb5_error_code (* p_krb5_auth_con_getrcache)(krb5_context, 
+                                                      krb5_auth_context,
+                                                      krb5_rcache *)=NULL;
 static int krb5_loaded = 0;     /* only attempt to initialize func ptrs once */
 
 /* Function to Load the Kerberos 5 DLL and initialize function pointers */
@@ -295,6 +315,12 @@ load_krb5_dll(void)
                 GetProcAddress( hKRB5_32, "krb5_checksum_size" );
         (FARPROC) p_krb5_kt_free_entry =
                 GetProcAddress( hKRB5_32, "krb5_kt_free_entry" );
+        (FARPROC) p_krb5_auth_con_setrcache =
+                GetProcAddress( hKRB5_32, "krb5_auth_con_setrcache" );
+        (FARPROC) p_krb5_get_server_rcache =
+                GetProcAddress( hKRB5_32, "krb5_get_server_rcache" );
+        (FARPROC) p_krb5_auth_con_getrcache =
+                GetProcAddress( hKRB5_32, "krb5_auth_con_getrcache" );
 	}
 
 /* Stubs for each function to be dynamicly loaded */
@@ -666,7 +692,36 @@ kssl_krb5_cc_get_principal
 		return(krb5_x
 			((cache)->ops->get_princ,(context, cache, principal)));
 	}
-#else
+
+krb5_error_code
+kssl_krb5_auth_con_setrcache(krb5_context con, krb5_auth_context acon,
+                             krb5_rcache rcache)
+        {
+        if ( p_krb5_auth_con_setrcache )
+                 return(p_krb5_auth_con_setrcache(con,acon,rcache));
+        else
+                 return KRB5KRB_ERR_GENERIC;
+        }
+
+krb5_error_code
+kssl_krb5_get_server_rcache(krb5_context con, krb5_const krb5_data * data,
+                            krb5_rcache * rcache) 
+        {
+                 if ( p_krb5_get_server_rcache )
+                         return(p_krb5_get_server_rcache(con,data,rcache));
+                 else
+                         return KRB5KRB_ERR_GENERIC;
+        }
+
+krb5_error_code
+kssl_krb5_auth_con_getrcache(krb5_context con, krb5_auth_context acon,
+                             krb5_rcache * prcache)
+        {
+                 if ( p_krb5_auth_con_getrcache )
+                         return(p_krb5_auth_con_getrcache(con,acon, prcache));
+                 else
+                         return KRB5KRB_ERR_GENERIC;
+        }
 #endif  /* OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32 */
 
 char
@@ -1064,7 +1119,7 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 
 		if (ap_req)  KRB5_APREQ_free((KRB5_APREQ *) ap_req);
 		if (krb5_app_req.length)  
-                        krb5_free_data_contents(krb5context,&krb5_app_req);
+                        kssl_krb5_free_data_contents(krb5context,&krb5_app_req);
 		}
 #ifdef KRB5_HEIMDAL
 	if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->session))
@@ -1204,13 +1259,14 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 	krb5_keytab 			krb5keytab = NULL;
 	krb5_keytab_entry		kt_entry;
 	krb5_principal			krb5server;
+        krb5_rcache                     rcache = NULL;
 
 	kssl_err_set(kssl_err, 0, "");
 
 	if (!kssl_ctx)
                 {
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-					"No kssl_ctx defined.\n");
+			"No kssl_ctx defined.\n");
 		goto err;
 		}
 
@@ -1240,6 +1296,15 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 		goto err;
 		}
 
+ 
+	if ((krb5rc = krb5_auth_con_getrcache(krb5context, krb5auth_context,
+		&rcache)))
+		{
+ 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"krb5_auth_con_getrcache() fails.\n");
+ 		goto err;
+		}
+ 
 	if ((krb5rc = krb5_sname_to_principal(krb5context, NULL,
                 (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC,
                 KRB5_NT_SRV_HST, &krb5server)) != 0)
@@ -1248,6 +1313,26 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
                         "krb5_sname_to_principal() fails.\n");
 		goto err;
 		}
+
+	if (rcache == NULL) 
+                {
+                if ((krb5rc = krb5_get_server_rcache(krb5context,
+			krb5_princ_component(krb5context, krb5server, 0),
+			&rcache)))
+                        {
+		        kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                                "krb5_get_server_rcache() fails.\n");
+                  	goto err;
+                        }
+                }
+
+        if ((krb5rc = krb5_auth_con_setrcache(krb5context, krb5auth_context, rcache)))
+                {
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"krb5_auth_con_setrcache() fails.\n");
+                goto err;
+                }
+
 
 	/*	kssl_ctx->keytab_file == NULL ==> use Kerberos default
 	*/
@@ -1569,7 +1654,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 void
 kssl_ctx_show(KSSL_CTX *kssl_ctx)
         {
-	unsigned int 	i;
+	int 	i;
 
 	printf("kssl_ctx: ");
 	if (kssl_ctx == NULL)
@@ -1599,12 +1684,118 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
 	return;
         }
 
+    int 
+    kssl_keytab_is_available(KSSL_CTX *kssl_ctx)
+{
+    krb5_context		krb5context = NULL;
+    krb5_keytab 		krb5keytab = NULL;
+    krb5_keytab_entry           entry;
+    krb5_principal              princ = NULL;
+    krb5_error_code  		krb5rc = KRB5KRB_ERR_GENERIC;
+    int rc = 0;
+
+    if ((krb5rc = krb5_init_context(&krb5context)))
+        return(0);
+
+    /*	kssl_ctx->keytab_file == NULL ==> use Kerberos default
+    */
+    if (kssl_ctx->keytab_file)
+    {
+        krb5rc = krb5_kt_resolve(krb5context, kssl_ctx->keytab_file,
+                                  &krb5keytab);
+        if (krb5rc)
+            goto exit;
+    }
+    else
+    {
+        krb5rc = krb5_kt_default(krb5context,&krb5keytab);
+        if (krb5rc)
+            goto exit;
+    }
+
+    /* the host key we are looking for */
+    krb5rc = krb5_sname_to_principal(krb5context, NULL, 
+                                     kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,
+                                     KRB5_NT_SRV_HST, &princ);
+
+    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, 
+                                princ,
+                                0 /* IGNORE_VNO */,
+                                0 /* IGNORE_ENCTYPE */,
+                                &entry);
+    if ( krb5rc == KRB5_KT_NOTFOUND ) {
+        rc = 1;
+        goto exit;
+    } else if ( krb5rc )
+        goto exit;
+    
+    krb5_kt_free_entry(krb5context, &entry);
+    rc = 1;
+
+  exit:
+    if (krb5keytab)     krb5_kt_close(krb5context, krb5keytab);
+    if (princ)          krb5_free_principal(krb5context, princ);
+    if (krb5context)	krb5_free_context(krb5context);
+    return(rc);
+}
+
+int 
+kssl_tgt_is_available(KSSL_CTX *kssl_ctx)
+        {
+        krb5_error_code		krb5rc = KRB5KRB_ERR_GENERIC;
+        krb5_context		krb5context = NULL;
+        krb5_ccache 		krb5ccdef = NULL;
+        krb5_creds		krb5creds, *krb5credsp = NULL;
+        int                     rc = 0;
+
+        memset((char *)&krb5creds, 0, sizeof(krb5creds));
+
+        if (!kssl_ctx)
+            return(0);
+
+        if (!kssl_ctx->service_host)
+            return(0);
+
+        if ((krb5rc = krb5_init_context(&krb5context)) != 0)
+            goto err;
+
+        if ((krb5rc = krb5_sname_to_principal(krb5context,
+                                              kssl_ctx->service_host,
+                                              (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC,
+                                              KRB5_NT_SRV_HST, &krb5creds.server)) != 0)
+            goto err;
+
+        if ((krb5rc = krb5_cc_default(krb5context, &krb5ccdef)) != 0)
+            goto err;
+
+        if ((krb5rc = krb5_cc_get_principal(krb5context, krb5ccdef,
+                                             &krb5creds.client)) != 0)
+            goto err;
+
+        if ((krb5rc = krb5_get_credentials(krb5context, 0, krb5ccdef,
+                                            &krb5creds, &krb5credsp)) != 0)
+            goto err;
+
+        rc = 1;
+
+      err:
+#ifdef KSSL_DEBUG
+	kssl_ctx_show(kssl_ctx);
+#endif	/* KSSL_DEBUG */
+
+	if (krb5creds.client)	krb5_free_principal(krb5context, krb5creds.client);
+	if (krb5creds.server)	krb5_free_principal(krb5context, krb5creds.server);
+	if (krb5context)	krb5_free_context(krb5context);
+        return(rc);
+	}
+
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_WIN32)
 void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 	{
 #ifdef KRB5_HEIMDAL
 	data->length = 0;
-	free(data->if (data->data) data);
+        if (data->data)
+            free(data->data);
 #elif defined(KRB5_MIT_OLD11)
 	if (data->data)  {
 		krb5_xfree(data->data);

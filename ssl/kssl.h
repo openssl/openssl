@@ -152,6 +152,8 @@ char *knumber(int len, krb5_octet *contents);
 
 EVP_CIPHER *kssl_map_enc(krb5_enctype enctype);
 
+int kssl_keytab_is_available(KSSL_CTX *kssl_ctx);
+int kssl_tgt_is_available(KSSL_CTX *kssl_ctx);
 
 /* Public (for use by applications that use OpenSSL with Kerberos 5 support */
 krb5_error_code kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text);
