@@ -449,7 +449,7 @@ ASN1_UTCTIME *ctm;
 	X509_gmtime_adj(&atm,-offset);
 
 	i=(buff1[0]-'0')*10+(buff1[1]-'0');
-	if (i < 50) i+=100;
+	if (i < 50) i+=100; /* cf. RFC 2459 */
 	j=(buff2[0]-'0')*10+(buff2[1]-'0');
 	if (j < 50) j+=100;
 

@@ -213,7 +213,7 @@ SSL *s;
 		if (!ssl3_setup_buffers(s)) goto err;
 
 		n=ssl23_read_bytes(s,7);
-		if (n != 7) return(n);
+		if (n != 7) return(n); /* n == -1 || n == 0 */
 
 		p=s->packet;
 
