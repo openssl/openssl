@@ -23,7 +23,7 @@ extern "C" {
    declared explicitely with globaldef and globalref.  On other OS:es,
    these macros are defined with something sensible. */
 
-#if defined(VMS) && !defined(__DECC)
+#if defined(VMS) && !defined(__DECC) && !defined(__DECCXX)
 # define OPENSSL_EXTERN globalref
 # define OPENSSL_GLOBAL globaldef
 #else
