@@ -269,7 +269,9 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL)) goto err;
+		MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PUBLIC, goto err);
+		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,
+				rsa->_method_mod_n)) goto err;
 		}
 
 	if (rsa->flags & RSA_FLAG_BLINDING)
@@ -349,7 +351,9 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{
-		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL))
+		MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PUBLIC, goto err);
+		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,
+				rsa->_method_mod_n))
 			goto err;
 		}
 
@@ -481,7 +485,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	MONT_HELPER(rsa, ctx, p, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
 	MONT_HELPER(rsa, ctx, q, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
-	MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
+	MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PUBLIC, goto err);
 
 	if (!BN_mod(&r1,I,rsa->q,ctx)) goto err;
 	if (!rsa->meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
@@ -526,7 +530,8 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 			/* 'I' and 'vrfy' aren't congruent mod n. Don't leak
 			 * miscalculated CRT output, just do a raw (slower)
 			 * mod_exp and return that instead. */
-			if (!rsa->meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
+			if (!rsa->meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,
+					rsa->_method_mod_n)) goto err;
 		}
 	ret=1;
 err:
