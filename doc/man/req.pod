@@ -203,8 +203,8 @@ by white space and finally the long name.
 =item B<oid_section>
 
 This specifies a section in the configuration file containing extra
-object identifiers. Each line should consist of the numerical form
-of the object identifier followed by B<=> and its name. The short
+object identifiers. Each line should consist of the short name of the
+object identifier followed by B<=> and the numerical form. The short
 and long names are the same when this option is used.
 
 =item B<RANDFILE>
@@ -305,20 +305,69 @@ will be treated as though they were a DirectoryString.
 
 Examine and verify certificate request:
 
-openssl req -in req.pem -text -verify -noout
+ openssl req -in req.pem -text -verify -noout
 
 Create a private key and then generate a certificate request from it:
 
-openssl genrsa -out key.pem 1024
-openssl req -new -key key.pem -out req.pem
+ openssl genrsa -out key.pem 1024
+ openssl req -new -key key.pem -out req.pem
 
 The same but just using req:
 
-openssl req -newkey rsa:1024 -keyout key.pem -out req.pem
+ openssl req -newkey rsa:1024 -keyout key.pem -out req.pem
 
 Generate a self signed root certificate:
 
-openssl req -x509 -newkey rsa:1024 -keyout key.pem -out req.pem
+ openssl req -x509 -newkey rsa:1024 -keyout key.pem -out req.pem
+
+Example of a file pointed to by the B<oid_file> option:
+
+ 1.2.3.4	shortName	A longer Name
+ 1.2.3.6	otherName	Other longer Name
+
+Example of a section pointed to by B<oid_section> making use of variable
+expansion:
+
+ testoid1=1.2.3.5
+ testoid2=${testoid1}.6
+
+Sample configuration file:
+
+ [ req ]
+ default_bits		= 1024
+ default_keyfile 	= privkey.pem
+ distinguished_name	= req_distinguished_name
+ attributes		= req_attributes
+ x509_extensions	= v3_ca
+
+ dirstring_type = nobmp
+
+ [ req_distinguished_name ]
+ countryName			= Country Name (2 letter code)
+ countryName_default		= AU
+ countryName_min			= 2
+ countryName_max			= 2
+
+ localityName			= Locality Name (eg, city)
+
+ organizationalUnitName		= Organizational Unit Name (eg, section)
+
+ commonName			= Common Name (eg, YOUR name)
+ commonName_max			= 64
+
+ emailAddress			= Email Address
+ emailAddress_max		= 40
+
+ [ req_attributes ]
+ challengePassword		= A challenge password
+ challengePassword_min		= 4
+ challengePassword_max		= 20
+
+ [ v3_ca ]
+
+ subjectKeyIdentifier=hash
+ authorityKeyIdentifier=keyid:always,issuer:always
+ basicConstraints = CA:true
 
 =head1 NOTES
 

@@ -202,6 +202,20 @@ any) used.
 
 =over 4
 
+=item B<oid_file>
+
+This specifies a file containing additional B<OBJECT IDENTIFIERS>.
+Each line of the file should consist of the numerical form of the
+object identifier followed by white space then the short name followed
+by white space and finally the long name. 
+
+=item B<oid_section>
+
+This specifies a section in the configuration file containing extra
+object identifiers. Each line should consist of the short name of the
+object identifier followed by B<=> and the numerical form. The short
+and long names are the same when this option is used.
+
 =item B<new_certs_dir>
 
 the same as the B<-outdir> command line option. It specifies
