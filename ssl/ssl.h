@@ -360,15 +360,15 @@ typedef struct ssl_session_st
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
 typedef struct ssl_comp_st
-{
-    int id;
-    char *name;
+	{
+	int id;
+	char *name;
 #ifndef NO_COMP
-    COMP_METHOD *method;
+	COMP_METHOD *method;
 #else
-    char *method;
+	char *method;
 #endif
-} SSL_COMP;
+	} SSL_COMP;
 
 DECLARE_STACK_OF(SSL_COMP)
 
