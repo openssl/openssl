@@ -143,7 +143,7 @@ void buffer_from_BIO(buffer_t *buf, BIO *bio);
 void buffer_to_BIO(buffer_t *buf, BIO *bio);
 
 /* Callbacks */
-void cb_ssl_info(SSL *s, int where, int ret);
+void cb_ssl_info(const SSL *s, int where, int ret);
 void cb_ssl_info_set_output(FILE *fp); /* Called if output should be sent too */
 int cb_ssl_verify(int ok, X509_STORE_CTX *ctx);
 void cb_ssl_verify_set_output(FILE *fp);

@@ -17,7 +17,7 @@ static int int_verify_depth = 10;
 
 /* This function is largely borrowed from the one used in OpenSSL's "s_client"
  * and "s_server" utilities. */
-void cb_ssl_info(SSL *s, int where, int ret)
+void cb_ssl_info(const SSL *s, int where, int ret)
 {
 	const char *str1, *str2;
 	int w;
