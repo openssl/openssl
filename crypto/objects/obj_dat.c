@@ -115,7 +115,7 @@ static unsigned long add_hash(const void *ca_void)
 	int i;
 	unsigned long ret=0;
 	unsigned char *p;
-	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
+	const ADDED_OBJ *ca = (const ADDED_OBJ *)ca_void;
 
 	a=ca->obj;
 	switch (ca->type)
@@ -149,8 +149,8 @@ static int add_cmp(const void *ca_void, const void *cb_void)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
-	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
-	ADDED_OBJ *cb = (ADDED_OBJ *)cb_void;
+	const ADDED_OBJ *ca = (const ADDED_OBJ *)ca_void;
+	const ADDED_OBJ *cb = (const ADDED_OBJ *)cb_void;
 
 	i=ca->type-cb->type;
 	if (i) return(i);
@@ -161,7 +161,7 @@ static int add_cmp(const void *ca_void, const void *cb_void)
 	case ADDED_DATA:
 		i=(a->length - b->length);
 		if (i) return(i);
-		return(memcmp(a->data,b->data,a->length));
+		return(memcmp(a->data,b->data,(size_t)a->length));
 	case ADDED_SNAME:
 		if (a->sn == NULL) return(-1);
 		else if (b->sn == NULL) return(1);
@@ -382,8 +382,8 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&a,(char *)obj_objs,NUM_OBJ,
-		sizeof(ASN1_OBJECT *),obj_cmp);
+	op=(ASN1_OBJECT **)OBJ_bsearch((const char *)&a,(const char *)obj_objs,
+		NUM_OBJ, sizeof(ASN1_OBJECT *),obj_cmp);
 	if (op == NULL)
 		return(NID_undef);
 	return((*op)->nid);
@@ -521,7 +521,7 @@ int OBJ_ln2nid(const char *s)
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)ln_objs,NUM_LN,
+	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)ln_objs, NUM_LN,
 		sizeof(ASN1_OBJECT *),ln_cmp);
 	if (op == NULL) return(NID_undef);
 	return((*op)->nid);
@@ -549,8 +549,8 @@ int OBJ_sn2nid(const char *s)
 static int obj_cmp(const void *ap, const void *bp)
 	{
 	int j;
-	ASN1_OBJECT *a= *(ASN1_OBJECT **)ap;
-	ASN1_OBJECT *b= *(ASN1_OBJECT **)bp;
+	const ASN1_OBJECT *a= *(ASN1_OBJECT * const *)ap;
+	const ASN1_OBJECT *b= *(ASN1_OBJECT * const *)bp;
 
 	j=(a->length - b->length);
         if (j) return(j);

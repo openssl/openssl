@@ -111,8 +111,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 static int obj_name_cmp(const void *a_void, const void *b_void)
 	{
 	int ret;
-	OBJ_NAME *a = (OBJ_NAME *)a_void;
-	OBJ_NAME *b = (OBJ_NAME *)b_void;
+	const OBJ_NAME *a = (const OBJ_NAME *)a_void;
+	const OBJ_NAME *b = (const OBJ_NAME *)b_void;
 
 	ret=a->type-b->type;
 	if (ret == 0)
@@ -133,7 +133,7 @@ static int obj_name_cmp(const void *a_void, const void *b_void)
 static unsigned long obj_name_hash(const void *a_void)
 	{
 	unsigned long ret;
-	OBJ_NAME *a = (OBJ_NAME *)a_void;
+	const OBJ_NAME *a = (const OBJ_NAME *)a_void;
 
 	if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 		{

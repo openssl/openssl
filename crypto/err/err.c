@@ -943,7 +943,7 @@ static unsigned long err_hash(const void *a_void)
 	{
 	unsigned long ret,l;
 
-	l=((ERR_STRING_DATA *)a_void)->error;
+	l=((const ERR_STRING_DATA *)a_void)->error;
 	ret=l^ERR_GET_LIB(l)^ERR_GET_FUNC(l);
 	return(ret^ret%19*13);
 	}
@@ -951,21 +951,21 @@ static unsigned long err_hash(const void *a_void)
 /* static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b) */
 static int err_cmp(const void *a_void, const void *b_void)
 	{
-	return((int)(((ERR_STRING_DATA *)a_void)->error -
-			((ERR_STRING_DATA *)b_void)->error));
+	return((int)(((const ERR_STRING_DATA *)a_void)->error -
+			((const ERR_STRING_DATA *)b_void)->error));
 	}
 
 /* static unsigned long pid_hash(ERR_STATE *a) */
 static unsigned long pid_hash(const void *a_void)
 	{
-	return(((ERR_STATE *)a_void)->pid*13);
+	return(((const ERR_STATE *)a_void)->pid*13);
 	}
 
 /* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
 static int pid_cmp(const void *a_void, const void *b_void)
 	{
-	return((int)((long)((ERR_STATE *)a_void)->pid -
-			(long)((ERR_STATE *)b_void)->pid));
+	return((int)((long)((const ERR_STATE *)a_void)->pid -
+			(long)((const ERR_STATE *)b_void)->pid));
 	}
 
 void ERR_remove_state(unsigned long pid)
@@ -1075,7 +1075,7 @@ void ERR_add_error_data(int num, ...)
 				else
 					str=p;
 				}
-			BUF_strlcat(str,a,s+1);
+			BUF_strlcat(str,a,(size_t)s+1);
 			}
 		}
 	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);

@@ -215,7 +215,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 				{
 				if (BIO_write(bp,":",1) <= 0) goto end;
 				if ((len > 0) &&
-					BIO_write(bp,(char *)p,(int)len)
+					BIO_write(bp,(const char *)p,(int)len)
 					!= (int)len)
 					goto end;
 				}
@@ -278,7 +278,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 						{
 						if (BIO_write(bp,":",1) <= 0)
 							goto end;
-						if (BIO_write(bp,(char *)opp,
+						if (BIO_write(bp,(const char *)opp,
 							os->length) <= 0)
 							goto end;
 						}
@@ -303,7 +303,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 							if (BIO_write(bp,"\n",1) <= 0)
 								goto end;
 							}
-						if (BIO_dump_indent(bp,(char *)opp,
+						if (BIO_dump_indent(bp,
+							(const char *)opp,
 							((dump == -1 || dump > 
 							os->length)?os->length:dump),
 							dump_indent) <= 0)
@@ -388,7 +389,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 					if (BIO_write(bp,"\n",1) <= 0)
 						goto end;
 					}
-				if (BIO_dump_indent(bp,(char *)p,
+				if (BIO_dump_indent(bp,(const char *)p,
 					((dump == -1 || dump > len)?len:dump),
 					dump_indent) <= 0)
 					goto end;

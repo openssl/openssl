@@ -180,7 +180,7 @@ void *lh_insert(LHASH *lh, void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	const void *ret;
+	void *ret;
 
 	lh->error=0;
 	if (lh->up_load <= (lh->num_items*LH_LOAD_MULT/lh->num_nodes))
@@ -211,14 +211,14 @@ void *lh_insert(LHASH *lh, void *data)
 		(*rn)->data=data;
 		lh->num_replace++;
 		}
-	return((void *)ret);
+	return(ret);
 	}
 
 void *lh_delete(LHASH *lh, const void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	const void *ret;
+	void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -242,14 +242,14 @@ void *lh_delete(LHASH *lh, const void *data)
 		(lh->down_load >= (lh->num_items*LH_LOAD_MULT/lh->num_nodes)))
 		contract(lh);
 
-	return((void *)ret);
+	return(ret);
 	}
 
 void *lh_retrieve(LHASH *lh, const void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE **rn;
-	const void *ret;
+	void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -264,7 +264,7 @@ void *lh_retrieve(LHASH *lh, const void *data)
 		ret= (*rn)->data;
 		lh->num_retrieve++;
 		}
-	return((void *)ret);
+	return(ret);
 	}
 
 static void doall_util_fn(LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
@@ -339,7 +339,7 @@ static void expand(LHASH *lh)
 		{
 		j=(int)lh->num_alloc_nodes*2;
 		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
-			(unsigned int)sizeof(LHASH_NODE *)*j);
+			(int)(sizeof(LHASH_NODE *)*j));
 		if (n == NULL)
 			{
 /*			fputs("realloc error in lhash",stderr); */

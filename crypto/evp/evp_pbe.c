@@ -106,7 +106,8 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
 static int pbe_cmp(const char * const *a, const char * const *b)
 {
-	EVP_PBE_CTL **pbe1 = (EVP_PBE_CTL **) a,  **pbe2 = (EVP_PBE_CTL **)b;
+	const EVP_PBE_CTL * const *pbe1 = (const EVP_PBE_CTL * const *) a,
+			* const *pbe2 = (const EVP_PBE_CTL * const *)b;
 	return ((*pbe1)->pbe_nid - (*pbe2)->pbe_nid);
 }
 

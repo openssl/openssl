@@ -482,7 +482,7 @@ fmtint(
     int flags)
 {
     int signvalue = 0;
-    char *prefix = "";
+    const char *prefix = "";
     unsigned LLONG uvalue;
     char convert[DECIMAL_SIZE(value)+3];
     int place = 0;

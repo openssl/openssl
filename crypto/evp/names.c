@@ -66,9 +66,9 @@ int EVP_add_cipher(const EVP_CIPHER *c)
 	{
 	int r;
 
-	r=OBJ_NAME_add(OBJ_nid2sn(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+	r=OBJ_NAME_add(OBJ_nid2sn(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(const char *)c);
 	if (r == 0) return(0);
-	r=OBJ_NAME_add(OBJ_nid2ln(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+	r=OBJ_NAME_add(OBJ_nid2ln(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(const char *)c);
 	return(r);
 	}
 
@@ -78,9 +78,9 @@ int EVP_add_digest(const EVP_MD *md)
 	const char *name;
 
 	name=OBJ_nid2sn(md->type);
-	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(char *)md);
+	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(const char *)md);
 	if (r == 0) return(0);
-	r=OBJ_NAME_add(OBJ_nid2ln(md->type),OBJ_NAME_TYPE_MD_METH,(char *)md);
+	r=OBJ_NAME_add(OBJ_nid2ln(md->type),OBJ_NAME_TYPE_MD_METH,(const char *)md);
 	if (r == 0) return(0);
 
 	if (md->type != md->pkey_type)
