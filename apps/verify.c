@@ -72,7 +72,7 @@
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose);
 static STACK_OF(X509) *load_untrusted(char *file);
-static int v_verbose=0;
+static int v_verbose=0, issuer_checks = 0;
 
 int MAIN(int, char **);
 
@@ -139,6 +139,8 @@ int MAIN(int argc, char **argv)
 				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
+			else if (strcmp(*argv,"-issuer_checks") == 0)
+				issuer_checks=1;
 			else if (strcmp(*argv,"-verbose") == 0)
 				v_verbose=1;
 			else if (argv[0][0] == '-')
@@ -258,6 +260,8 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
 	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
+	if(issuer_checks)
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CB_ISSUER_CHECK);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 
