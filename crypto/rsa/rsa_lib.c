@@ -116,9 +116,9 @@ RSA_METHOD *meth;
 	ret->dmq1=NULL;
 	ret->iqmp=NULL;
 	ret->references=1;
-	ret->method_mod_n=NULL;
-	ret->method_mod_p=NULL;
-	ret->method_mod_q=NULL;
+	ret->_method_mod_n=NULL;
+	ret->_method_mod_p=NULL;
+	ret->_method_mod_q=NULL;
 	ret->blinding=NULL;
 	ret->bignum_data=NULL;
 	ret->flags=ret->meth->flags;
@@ -283,8 +283,8 @@ BN_CTX *p_ctx;
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
-	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,
-		(char *)rsa->method_mod_n)) goto err;
+	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
+	    goto err;
 	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
 	ctx->tos--;
 	rsa->flags|=RSA_FLAG_BLINDING;

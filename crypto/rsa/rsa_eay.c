@@ -144,15 +144,15 @@ int padding;
 
 	if (BN_bin2bn(buf,num,&f) == NULL) goto err;
 	
-	if ((rsa->method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
+	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
-		if ((rsa->method_mod_n=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)rsa->method_mod_n,
-				rsa->n,ctx)) goto err;
+		if ((rsa->_method_mod_n=BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set(rsa->_method_mod_n,rsa->n,ctx))
+			    goto err;
 		}
 
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
-		rsa->method_mod_n)) goto err;
+		rsa->_method_mod_n)) goto err;
 
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
@@ -380,15 +380,15 @@ int padding;
 
 	if (BN_bin2bn(from,flen,&f) == NULL) goto err;
 	/* do the decrypt */
-	if ((rsa->method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
+	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
-		if ((rsa->method_mod_n=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)rsa->method_mod_n,
-				rsa->n,ctx)) goto err;
+		if ((rsa->_method_mod_n=BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set(rsa->_method_mod_n,rsa->n,ctx))
+			    goto err;
 		}
 
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
-		rsa->method_mod_n)) goto err;
+		rsa->_method_mod_n)) goto err;
 
 	p=buf;
 	i=BN_bn2bin(&ret,p);
@@ -435,31 +435,29 @@ RSA *rsa;
 
 	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
 		{
-		if (rsa->method_mod_p == NULL)
+		if (rsa->_method_mod_p == NULL)
 			{
-			if ((rsa->method_mod_p=(char *)
-				BN_MONT_CTX_new()) != NULL)
-				if (!BN_MONT_CTX_set((BN_MONT_CTX *)
-					rsa->method_mod_p,rsa->p,ctx))
+			if ((rsa->_method_mod_p=BN_MONT_CTX_new()) != NULL)
+				if (!BN_MONT_CTX_set(rsa->_method_mod_p,rsa->p,
+						     ctx))
 					goto err;
 			}
-		if (rsa->method_mod_q == NULL)
+		if (rsa->_method_mod_q == NULL)
 			{
-			if ((rsa->method_mod_q=(char *)
-				BN_MONT_CTX_new()) != NULL)
-				if (!BN_MONT_CTX_set((BN_MONT_CTX *)
-					rsa->method_mod_q,rsa->q,ctx))
+			if ((rsa->_method_mod_q=BN_MONT_CTX_new()) != NULL)
+				if (!BN_MONT_CTX_set(rsa->_method_mod_q,rsa->q,
+						     ctx))
 					goto err;
 			}
 		}
 
 	if (!BN_mod(&r1,I,rsa->q,ctx)) goto err;
 	if (!rsa->meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
-		rsa->method_mod_q)) goto err;
+		rsa->_method_mod_q)) goto err;
 
 	if (!BN_mod(&r1,I,rsa->p,ctx)) goto err;
 	if (!rsa->meth->bn_mod_exp(r0,&r1,rsa->dmp1,rsa->p,ctx,
-		rsa->method_mod_p)) goto err;
+		rsa->_method_mod_p)) goto err;
 
 	if (!BN_sub(r0,r0,&m1)) goto err;
 	/* This will help stop the size of r0 increasing, which does
@@ -490,12 +488,12 @@ RSA *rsa;
 static int RSA_eay_finish(rsa)
 RSA *rsa;
 	{
-	if (rsa->method_mod_n != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_n);
-	if (rsa->method_mod_p != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_p);
-	if (rsa->method_mod_q != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_q);
+	if (rsa->_method_mod_n != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_n);
+	if (rsa->_method_mod_p != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_p);
+	if (rsa->_method_mod_q != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_q);
 	return(1);
 	}
 

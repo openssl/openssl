@@ -66,9 +66,26 @@ extern "C" {
 #include "bn.h"
 #include "crypto.h"
 
+typedef struct rsa_st RSA;
+
 typedef struct rsa_meth_st
 	{
 	char *name;
+#ifndef NOPROTO
+	int (*rsa_pub_enc)(int flen,unsigned char *from,unsigned char *to,
+			   RSA *rsa,int padding);
+	int (*rsa_pub_dec)(int flen,unsigned char *from,unsigned char *to,
+			   RSA *rsa,int padding);
+	int (*rsa_priv_enc)(int flen,unsigned char *from,unsigned char *to,
+			    RSA *rsa,int padding);
+	int (*rsa_priv_dec)(int flen,unsigned char *from,unsigned char *to,
+			    RSA *rsa,int padding);
+	int (*rsa_mod_exp)(BIGNUM *r0,BIGNUM *I,RSA *rsa); /* Can be null */
+	int (*bn_mod_exp)(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
+			  BN_CTX *ctx,BN_MONT_CTX *m_ctx); /* Can be null */
+	int (*init)(RSA *rsa);		/* called at new */
+	int (*finish)(RSA *rsa);	/* called at free */
+#else
 	int (*rsa_pub_enc)();
 	int (*rsa_pub_dec)();
 	int (*rsa_priv_enc)();
@@ -77,12 +94,12 @@ typedef struct rsa_meth_st
 	int (*bn_mod_exp)();		/* Can be null */
 	int (*init)(/* RSA * */);	/* called at new */
 	int (*finish)(/* RSA * */);	/* called at free */
-
+#endif
 	int flags;			/* RSA_METHOD_FLAG_* things */
 	char *app_data;			/* may be needed! */
 	} RSA_METHOD;
 
-typedef struct rsa_st
+struct rsa_st
 	{
 	/* The first parameter is used to pickup errors where
 	 * this is passed instead of aEVP_PKEY, it is set to 0 */
@@ -102,16 +119,16 @@ typedef struct rsa_st
 	int references;
 	int flags;
 
-	/* Normally used to cache montgomery values */
-	char *method_mod_n;
-	char *method_mod_p;
-	char *method_mod_q;
+	/* Used to cache montgomery values */
+	BN_MONT_CTX *_method_mod_n;
+	BN_MONT_CTX *_method_mod_p;
+	BN_MONT_CTX *_method_mod_q;
 
 	/* all BIGNUM values are actually in the following data, if it is not
 	 * NULL */
 	char *bignum_data;
 	BN_BLINDING *blinding;
-	} RSA;
+	};
 
 #define RSA_3	0x3L
 #define RSA_F4	0x10001L

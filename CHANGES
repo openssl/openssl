@@ -5,6 +5,10 @@
 
  Changes between 0.9.1c and 0.9.1d
 
+  *) Fix the RSA header declarations that hid a bug I fixed in 0.9.0b but
+     was already fixed by Eric for 0.9.1 it seems.
+     [Ben Laurie - pointed out by Ulf MÅˆller <ulf@fitug.de>]
+
   *) Autodetect FreeBSD3.
      [Ben Laurie]
 
@@ -79,7 +83,7 @@
 
   *) The Genesis of the OpenSSL rpject:
      We start with the latest (unreleased) SSLeay version 0.9.1b which Eric A.
-     Joung and Tim J. Hudson created while they were working for C2Net until
+     Young and Tim J. Hudson created while they were working for C2Net until
      summer 1998.
      [The OpenSSL Project]
  
