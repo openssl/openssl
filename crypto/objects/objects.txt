@@ -1,3 +1,5 @@
+0			: CCITT			: ccitt
+
 1			: ISO			: iso
 
 iso 2			: member-body		: ISO Member Body
@@ -580,11 +582,6 @@ private 1		: enterprises		: Enterprises
 # RFC 2247
 enterprises 1466 344	: dcobject		: dcObject
 
-# Stray OIDs we don't know the full name of each step for
-# RFC 2247
-0 9 2342 19200300 100 1 25 : DC			: domainComponent
-0 9 2342 19200300 100 4 13 : domain		: Domain
-
 # What the hell are these OIDs, really?
 !Cname rle-compression
 1 1 1 1 666 1		: RLE			: run length compression
@@ -622,3 +619,79 @@ holdInstruction 1	: holdInstructionNone	: Hold Instruction None
 holdInstruction 2	: holdInstructionCallIssuer : Hold Instruction Call Issuer
 !Cname hold-instruction-reject
 holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
+
+# OID's from CCITT.  Most of this is defined in RFC 1274.  A couple of
+# them are also mentioned in RFC 2247
+ccitt 9			: data
+data 2342		: pss
+pss 19200300		: ucl
+ucl 100			: pilot
+pilot 1			:			: pilotAttributeType
+pilot 3			:			: pilotAttributeSyntax
+pilot 4			:			: pilotObjectClass
+pilot 10		:			: pilotGroups
+pilotAttributeSyntax 4	:			: iA5StringSyntax
+pilotAttributeSyntax 5	:			: caseIgnoreIA5StringSyntax
+pilotObjectClass 3	:			: pilotObject
+pilotObjectClass 4	:			: pilotPerson
+pilotObjectClass 5	: account
+pilotObjectClass 6	: document
+pilotObjectClass 7	: room
+pilotObjectClass 9	:			: documentSeries
+pilotObjectClass 13	: domain		: Domain
+pilotObjectClass 14	:			: rFC822localPart
+pilotObjectClass 15	:			: dNSDomain
+pilotObjectClass 17	:			: domainRelatedObject
+pilotObjectClass 18	:			: friendlyCountry
+pilotObjectClass 19	:			: simpleSecurityObject
+pilotObjectClass 20	:			: pilotOrganization
+pilotObjectClass 21	:			: pilotDSA
+pilotObjectClass 22	:			: qualityLabelledData
+pilotAttributeType 1	: userid
+pilotAttributeType 2	:			: textEncodedORAddress
+pilotAttributeType 3	:			: rfc822Mailbox
+pilotAttributeType 4	: info
+pilotAttributeType 5	:			: favouriteDrink
+pilotAttributeType 6	:			: roomNumber
+pilotAttributeType 7	: photo
+pilotAttributeType 8	:			: userClass
+pilotAttributeType 9	: host
+pilotAttributeType 10	: manager
+pilotAttributeType 11	:			: documentIdentifier
+pilotAttributeType 12	:			: documentTitle
+pilotAttributeType 13	:			: documentVersion
+pilotAttributeType 14	:			: documentAuthor
+pilotAttributeType 15	:			: documentLocation
+pilotAttributeType 20	:			: homeTelephoneNumber
+pilotAttributeType 21	: secretary
+pilotAttributeType 22	:			: otherMailbox
+pilotAttributeType 23	:			: lastModifiedTime
+pilotAttributeType 24	:			: lastModifiedBy
+pilotAttributeType 25	: DC			: domainComponent
+pilotAttributeType 26	:			: aRecord
+pilotAttributeType 27	:			: 
+pilotAttributeType 28	:			: mXRecord
+pilotAttributeType 29	:			: nSRecord
+pilotAttributeType 30	:			: sOARecord
+pilotAttributeType 31	:			: cNAMERecord
+pilotAttributeType 37	:			: associatedDomain
+pilotAttributeType 38	:			: associatedName
+pilotAttributeType 39	:			: homePostalAddress
+pilotAttributeType 40	:			: personalTitle
+pilotAttributeType 41	:			: mobileTelephoneNumber
+pilotAttributeType 42	:			: pagerTelephoneNumber
+pilotAttributeType 43	:			: friendlyCountryName
+# The following clashes with 2.5.4.45, so commented away
+#pilotAttributeType 44	: uid			: uniqueIdentifier
+pilotAttributeType 45	:			: organizationalStatus
+pilotAttributeType 46	:			: janetMailbox
+pilotAttributeType 47	:			: mailPreferenceOption
+pilotAttributeType 48	:			: buildingName
+pilotAttributeType 49	:			: dSAQuality
+pilotAttributeType 50	:			: singleLevelQuality
+pilotAttributeType 51	:			: subtreeMinimumQuality
+pilotAttributeType 52	:			: subtreeMaximumQuality
+pilotAttributeType 53	:			: personalSignature
+pilotAttributeType 54	:			: dITRedirect
+pilotAttributeType 55	: audio
+pilotAttributeType 56	:			: documentPublisher
