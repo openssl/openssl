@@ -6,15 +6,15 @@
  of this is tested on Win32 but it may also work in Win 3.1 with some
  modification.
 
- You need Perl for Win32.  Unless you will build on CygWin32, you will need
+ You need Perl for Win32.  Unless you will build on Cygwin, you will need
  ActiveState Perl, available from http://www.activestate.com/ActivePerl.
- For CygWin32 users, there's more info in the CygWin32 section.
+ For Cygwin users, there's more info in the Cygwin section.
 
  and one of the following C compilers:
 
   * Visual C++
   * Borland C
-  * GNU C (Mingw32 or Cygwin32)
+  * GNU C (Mingw32 or Cygwin)
 
  If you want to compile in the assembly language routines with Visual C++ then
  you will need an assembler. This is worth doing because it will result in
@@ -137,30 +137,30 @@
    > cd out
    > ..\ms\test
 
- GNU C (CygWin32)
- ---------------
+ GNU C (Cygwin)
+ --------------
 
- CygWin32 provides a bash shell and GNU tools environment running on
+ Cygwin provides a bash shell and GNU tools environment running on
  NT 4.0, Windows 9x and Windows 2000. Consequently, a make of OpenSSL
- with CygWin is closer to a GNU bash environment such as Linux rather
+ with Cygwin is closer to a GNU bash environment such as Linux rather
  than other W32 makes that are based on a single makefile approach.
- CygWin32 implements Posix/Unix calls through cygwin1.dll, and is
+ Cygwin implements Posix/Unix calls through cygwin1.dll, and is
  contrasted to Mingw32 which links dynamically to msvcrt.dll or
  crtdll.dll.
 
- To build OpenSSL using CygWin32:
+ To build OpenSSL using Cygwin:
 
- * Install CygWin32 (see http://sourceware.cygnus.com/cygwin)
+ * Install Cygwin (see http://sourceware.cygnus.com/cygwin)
 
  * Install Perl and ensure it is in the path (recent Cygwin perl 
    (version 5.6.1-2 of the latter has been reported to work) or
    ActivePerl)
 
- * Run the CygWin bash shell
+ * Run the Cygwin bash shell
 
  * $ tar zxvf openssl-x.x.x.tar.gz
    $ cd openssl-x.x.x
-   $ ./Configure no-threads Cygwin
+   $ ./Configure Cygwin
    [...]
    $ make
    [...]
@@ -169,26 +169,26 @@
 
  This will create a default install in /usr/local/ssl.
 
- CygWin32 Notes:
+ Cygwin Notes:
 
  "make test" and normal file operations may fail in directories
- mounted as text (i.e. mount -t c:\somewhere /home) due to CygWin
+ mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin
  stripping of carriage returns. To avoid this ensure that a binary
  mount is used, e.g. mount -b c:\somewhere /home.
 
- As of version 1.1.1 CygWin32 is relatively unstable in its handling
+ As of version 1.1.1 Cygwin is relatively unstable in its handling
  of cr/lf issues. These make procedures succeeded with versions 1.1 and
  the snapshot 20000524 (Slow!).
 
- "bc" is not provided in the CygWin32 distribution.  This causes a
+ "bc" is not provided in the Cygwin distribution.  This causes a
  non-fatal error in "make test" but is otherwise harmless.  If
- desired, GNU bc can be built with CygWin32 without change.
+ desired, GNU bc can be built with Cygwin without change.
 
 
  Installation
  ------------
 
- If you used the CygWin procedure above, you have already installed and
+ If you used the Cygwin procedure above, you have already installed and
  can skip this section.  For all other procedures, there's currently no real
  installation procedure for Win32.  There are, however, some suggestions:
 
