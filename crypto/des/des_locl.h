@@ -93,6 +93,11 @@
 #include <string.h>
 #endif
 
+#ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# undef OPENSSL_EXTERN
+# define OPENSSL_EXTERN OPENSSL_EXPORT
+#endif
+
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
 

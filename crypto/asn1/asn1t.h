@@ -59,7 +59,13 @@
 #define HEADER_ASN1T_H
 
 #include <stddef.h>
+#include <openssl/e_os2.h>
 #include <openssl/asn1.h>
+
+#ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# undef OPENSSL_EXTERN
+# define OPENSSL_EXTERN OPENSSL_EXPORT
+#endif
 
 /* ASN1 template defines, structures and functions */
 
@@ -74,7 +80,7 @@ extern "C" {
 
 #define ASN1_ITEM_TEMPLATE_END(tname) \
 	;\
-	const ASN1_ITEM tname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM tname##_it = { \
 		ASN1_ITYPE_PRIMITIVE,\
 		-1,\
 		&tname##_item_tt,\
@@ -114,7 +120,7 @@ extern "C" {
 
 #define ASN1_SEQUENCE_END_name(stname, tname) \
 	;\
-	const ASN1_ITEM tname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM tname##_it = { \
 		ASN1_ITYPE_SEQUENCE,\
 		V_ASN1_SEQUENCE,\
 		tname##_seq_tt,\
@@ -148,7 +154,7 @@ extern "C" {
 
 #define ASN1_SEQUENCE_END_ref(stname, tname) \
 	;\
-	const ASN1_ITEM tname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM tname##_it = { \
 		ASN1_ITYPE_SEQUENCE,\
 		V_ASN1_SEQUENCE,\
 		tname##_seq_tt,\
@@ -194,7 +200,7 @@ extern "C" {
 
 #define ASN1_CHOICE_END_selector(stname, tname, selname) \
 	;\
-	const ASN1_ITEM tname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM tname##_it = { \
 		ASN1_ITYPE_CHOICE,\
 		offsetof(stname,selname) ,\
 		tname##_ch_tt,\
@@ -206,7 +212,7 @@ extern "C" {
 
 #define ASN1_CHOICE_END_cb(stname, tname, selname) \
 	;\
-	const ASN1_ITEM tname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM tname##_it = { \
 		ASN1_ITYPE_CHOICE,\
 		offsetof(stname,selname) ,\
 		tname##_ch_tt,\
@@ -635,7 +641,7 @@ typedef struct ASN1_AUX_st {
 		(ASN1_d2i_func *)d2i_##sname, \
 		(ASN1_i2d_func *)i2d_##sname, \
 	}; \
-	ASN1_ITEM const sname##_it = { \
+	OPENSSL_GLOBAL ASN1_ITEM const sname##_it = { \
 		ASN1_ITYPE_COMPAT, \
 		tag, \
 		NULL, \
@@ -646,7 +652,7 @@ typedef struct ASN1_AUX_st {
 	}
 
 #define IMPLEMENT_EXTERN_ASN1(sname, tag, fptrs) \
-	const ASN1_ITEM sname##_it = { \
+	OPENSSL_GLOBAL const ASN1_ITEM sname##_it = { \
 		ASN1_ITYPE_EXTERN, \
 		tag, \
 		NULL, \
@@ -711,16 +717,16 @@ typedef struct ASN1_AUX_st {
 
 /* external definitions for primitive types */
 
-extern const ASN1_ITEM ASN1_BOOLEAN_it;
-extern const ASN1_ITEM ASN1_TBOOLEAN_it;
-extern const ASN1_ITEM ASN1_FBOOLEAN_it;
-extern const ASN1_ITEM ASN1_OBJECT_it;
-extern const ASN1_ITEM ASN1_ANY_it;
-extern const ASN1_ITEM ASN1_SEQUENCE_it;
-extern const ASN1_ITEM CBIGNUM_it;
-extern const ASN1_ITEM BIGNUM_it;
-extern const ASN1_ITEM LONG_it;
-extern const ASN1_ITEM ZLONG_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_BOOLEAN_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_TBOOLEAN_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_FBOOLEAN_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_OBJECT_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_ANY_it;
+OPENSSL_EXTERN const ASN1_ITEM ASN1_SEQUENCE_it;
+OPENSSL_EXTERN const ASN1_ITEM CBIGNUM_it;
+OPENSSL_EXTERN const ASN1_ITEM BIGNUM_it;
+OPENSSL_EXTERN const ASN1_ITEM LONG_it;
+OPENSSL_EXTERN const ASN1_ITEM ZLONG_it;
 
 DECLARE_STACK_OF(ASN1_VALUE)
 

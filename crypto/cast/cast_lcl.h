@@ -63,6 +63,11 @@
 
 #include "openssl/e_os.h" /* OPENSSL_EXTERN */
 
+#ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# undef OPENSSL_EXTERN
+# define OPENSSL_EXTERN OPENSSL_EXPORT
+#endif
+
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
 			 l|=((unsigned long)(*((c)++)))<< 8L, \

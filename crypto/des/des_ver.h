@@ -57,5 +57,11 @@
  */
 
 #include <openssl/e_os2.h>
+
+#ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# undef OPENSSL_EXTERN
+# define OPENSSL_EXTERN OPENSSL_EXPORT
+#endif
+
 OPENSSL_EXTERN char *DES_version;	/* SSLeay version string */
 OPENSSL_EXTERN char *libdes_version;	/* old libdes version string */

@@ -69,6 +69,11 @@
 
 #include <openssl/symhacks.h>
 
+#ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# undef OPENSSL_EXTERN
+# define OPENSSL_EXTERN OPENSSL_EXPORT
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -302,12 +307,12 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
 	type *d2i_##name(type **a, unsigned char **in, long len); \
 	int i2d_##name(type *a, unsigned char **out); \
-	extern const ASN1_ITEM itname##_it;
+	OPENSSL_EXTERN const ASN1_ITEM itname##_it;
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
 	type *d2i_##name(type **a, const unsigned char **in, long len); \
 	int i2d_##name(const type *a, unsigned char **out); \
-	extern const ASN1_ITEM name##_it;
+	OPENSSL_EXTERN const ASN1_ITEM name##_it;
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
 	name *name##_new(void); \
