@@ -321,7 +321,8 @@
 	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
 	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
 		mkdir -p `dirname $F`
-		ln -s $OPENSSL_SOURCE/$F $F
+		rm -f $F; ln -s $OPENSSL_SOURCE/$F $F
+		echo $F '->' $OPENSSL_SOURCE/$F
 	done
 	make -f Makefile.org clean
 
