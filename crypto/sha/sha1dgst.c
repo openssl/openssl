@@ -216,7 +216,7 @@ void SHA1_Update(SHA_CTX *c, const register unsigned char *data,
 		data+=SHA_CBLOCK;
 		sha1_block(c,p=c->data,1);
 		len-=SHA_CBLOCK;
-#else	/* little-endian */
+#elif defined(L_ENDIAN)
 #define BE_COPY(dst,src,i)	{				\
 				l = ((SHA_LONG *)src)[i];	\
 				Endian_Reverse32(l);		\
@@ -280,7 +280,7 @@ void SHA1_Transform(SHA_CTX *c, unsigned char *b)
 	memcpy(p,b,SHA_CBLOCK);
 	sha1_block(c,p,1);
 	return;
-#else
+#elif defined(L_ENDIAN)
 	if (((unsigned long)b%sizeof(SHA_LONG)) == 0)
 		{
 		SHA_LONG *q;

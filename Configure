@@ -135,8 +135,8 @@ my %table=(
 "irix-mips3-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN:(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
 "irix-mips3-cc", "cc:-n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
 "debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:(unknown):::::",
-# This is the n64 mode build. (Untested!)
-"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:::",
+# This is the n64 mode build.
+"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:::",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or gcc.
