@@ -72,22 +72,19 @@ static ERR_STRING_DATA PKCS12_str_functs[]=
 {ERR_PACK(0,PKCS12_F_PKCS12_ADD_LOCALKEYID,0),	"PKCS12_add_localkeyid"},
 {ERR_PACK(0,PKCS12_F_PKCS12_CREATE,0),	"PKCS12_create"},
 {ERR_PACK(0,PKCS12_F_PKCS12_DECRYPT_D2I,0),	"PKCS12_decrypt_d2i"},
-{ERR_PACK(0,PKCS12_F_PKCS12_FRIENDLYNAME_ASC,0),	"PKCS12_FRIENDLYNAME_ASC"},
 {ERR_PACK(0,PKCS12_F_PKCS12_GEN_MAC,0),	"PKCS12_gen_mac"},
 {ERR_PACK(0,PKCS12_F_PKCS12_I2D_ENCRYPT,0),	"PKCS12_i2d_encrypt"},
 {ERR_PACK(0,PKCS12_F_PKCS12_INIT,0),	"PKCS12_init"},
 {ERR_PACK(0,PKCS12_F_PKCS12_KEY_GEN_ASC,0),	"PKCS12_key_gen_asc"},
 {ERR_PACK(0,PKCS12_F_PKCS12_KEY_GEN_UNI,0),	"PKCS12_key_gen_uni"},
-{ERR_PACK(0,PKCS12_F_PKCS12_MAKE_SAFEBAG,0),	"PKCS12_MAKE_SAFEBAG"},
+{ERR_PACK(0,PKCS12_F_PKCS12_MAKE_KEYBAG,0),	"PKCS12_MAKE_KEYBAG"},
 {ERR_PACK(0,PKCS12_F_PKCS12_MAKE_SHKEYBAG,0),	"PKCS12_MAKE_SHKEYBAG"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PACK_P7DATA,0),	"PKCS12_pack_p7data"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PACK_P7ENCDATA,0),	"PKCS12_pack_p7encdata"},
-{ERR_PACK(0,PKCS12_F_PKCS12_PACK_P7_DATA,0),	"PKCS12_PACK_P7_DATA"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PACK_SAFEBAG,0),	"PKCS12_pack_safebag"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PARSE,0),	"PKCS12_parse"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PBE_CRYPT,0),	"PKCS12_pbe_crypt"},
 {ERR_PACK(0,PKCS12_F_PKCS12_PBE_KEYIVGEN,0),	"PKCS12_PBE_keyivgen"},
-{ERR_PACK(0,PKCS12_F_PKCS12_PKCS12_SET_MAC,0),	"PKCS12_PKCS12_SET_MAC"},
 {ERR_PACK(0,PKCS12_F_PKCS12_SETUP_MAC,0),	"PKCS12_setup_mac"},
 {ERR_PACK(0,PKCS12_F_PKCS12_SET_MAC,0),	"PKCS12_set_mac"},
 {ERR_PACK(0,PKCS12_F_PKCS8_ADD_KEYUSAGE,0),	"PKCS8_add_keyusage"},
@@ -123,46 +120,17 @@ static ERR_STRING_DATA PKCS12_str_reasons[]=
 
 #endif
 
-#ifdef PKCS12_LIB_NAME
-static ERR_STRING_DATA PKCS12_lib_name[]=
-        {
-{0	,PKCS12_LIB_NAME},
-{0,NULL}
-	};
-#endif
-
-
-int PKCS12_lib_error_code=0;
-
-void ERR_load_PKCS12_strings()
+void ERR_load_PKCS12_strings(void)
 	{
 	static int init=1;
-
-	if (PKCS12_lib_error_code == 0)
-		PKCS12_lib_error_code=ERR_get_next_error_library();
 
 	if (init)
 		{
 		init=0;
 #ifndef NO_ERR
-		ERR_load_strings(PKCS12_lib_error_code,PKCS12_str_functs);
-		ERR_load_strings(PKCS12_lib_error_code,PKCS12_str_reasons);
+		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_functs);
+		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_reasons);
 #endif
 
-#ifdef PKCS12_LIB_NAME
-		PKCS12_lib_name->error = ERR_PACK(PKCS12_lib_error_code,0,0);
-		ERR_load_strings(0,PKCS12_lib_name);
-#endif;
 		}
-	}
-
-void ERR_PKCS12_error(function,reason,file,line)
-int function;
-int reason;
-char *file;
-int line;
-	{
-	if (PKCS12_lib_error_code == 0)
-		PKCS12_lib_error_code=ERR_get_next_error_library();
-	ERR_PUT_error(PKCS12_lib_error_code,function,reason,file,line);
 	}
