@@ -64,6 +64,58 @@ extern "C" {
 #endif
 
 
+typedef enum {
+	POINT_CONVERSION_COMPRESSED = 2,
+	POINT_CONVERSION_UNCOMPRESSED = 4,
+	POINT_CONVERSION_HYBRID = 6
+} point_conversion_form_t;
+
+
+typedef struct ec_method_st EC_METHOD;
+
+typedef struct ec_group_st
+	/*
+	 EC_METHOD *meth;
+	 -- field definition
+	 -- curve coefficients
+	 -- optional generator with associated information (order, cofactor)
+	 -- optional Lim/Lee precomputation table
+	*/
+	EC_GROUP;
+
+typedef struct ec_point_st EC_POINT;
+
+
+/* EC_METHODs for curves over GF(p).
+ * EC_GFp_simple_method provides the basis for the optimized methods.
+ */
+ 
+const EC_METHOD *EC_GFp_simple_method(void);
+const EC_METHOD *EC_GFp_mont_method(void);
+const EC_METHOD *EC_GFp_recp_method(void);
+const EC_METHOD *EC_GFp_nist_method(void);
+
+
+EC_GROUP *EC_GROUP_new(const EC_METHOD *);
+/* We don't have types for field specifications and field elements in general.
+ * Otherwise we would declare
+ *     int EC_GROUP_set(EC_GROUP *, .....);
+ */
+int EC_GROUP_set_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b);
+void EC_GROUP_free(EC_GROUP *);
+
+EC_POINT *EC_POINT_new(const EC_GROUP *);
+void EC_POINT_free(EC_POINT *);
+ 
+int EC_POINT_add(const EC_GROUP *, EC_POINT *r, EC_POINT *a, EC_POINT *b);
+int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, EC_POINT *a);
+
+size_t EC_POINT_point2oct(const EC_GROUP *, EC_POINT *, unsigned char *buf,
+        size_t len, point_conversion_form_t form);
+int EC_POINT_oct2point(const EC_GROUP *, EC_POINT *, unsigned char *buf, size_t len);
+
+
+/* TODO: scalar multiplication */
 
 
 

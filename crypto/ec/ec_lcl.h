@@ -54,4 +54,68 @@
  *
  */
 
+
+#include <stdlib.h>
+
 #include <openssl/ec.h>
+
+
+/* Structure details are not part of the exported interface,
+ * so all this may change in future versions. */
+
+struct ec_method_st {
+	/* used by EC_GROUP_new, EC_GROUP_set_GFp, EC_GROUP_free: */
+	int (*group_init)(EC_GROUP *);
+	/* int (*group_set)(EC_GROUP *, .....); */
+	int (*group_set_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b);
+	void (*group_finish)(EC_GROUP *);
+
+	/* used by EC_POINT_new, EC_POINT_free: */
+	int (*point_init)(EC_POINT *);
+	void (*point_finish)(EC_POINT *);
+
+	/* used by EC_POINT_add, EC_POINT_dbl: */
+	int (*add)(const EC_GROUP *, EC_POINT *r, EC_POINT *a, EC_POINT *b);
+	int (*dbl)(const EC_GROUP *, EC_POINT *r, EC_POINT *a);
+
+	/* used by EC_POINT_add, EC_POINT_dbl: */
+	size_t (*point2oct)(const EC_GROUP *, EC_POINT *, unsigned char *buf,
+	        size_t len, point_conversion_form_t form);
+	int (*oct2point)(const EC_GROUP *, EC_POINT *, unsigned char *buf, size_t len);
+
+
+	/* internal functions */
+
+	/* 'field_mult' and 'field_sqr' can be used by 'add' and 'dbl' so that
+	 * the same implementations of point operations can be used with different
+	 * implementations of field operations: */
+	int (*field_mult)(const EC_GROUP *, BIGNUM *r, BIGNUM *a, BIGNUM *b);
+	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, BIGNUM *a);
+} /* EC_METHOD */;
+
+
+struct ec_group_st {
+	EC_METHOD *meth;
+
+	BIGNUM field; /* Field specification.
+	               * For curves over GF(p), this is the modulus. */
+	void *field_data; /* method-specific (e.g., Montgomery structure) */
+
+	BIGNUM a, b; /* Curve coefficients.
+	              * (Here the assumption is that BIGNUMs can be used
+	              * or abused for all kinds of fields, not just GF(p).) */
+	int a_is_minus3; /* enable optimized point arithmetics for special case */
+
+	/* TODO: optional generator with associated information (order, cofactor) */
+	/*       optional Lim/Lee precomputation table */
+} /* EC_GROUP */;
+
+
+struct ec_point_st {
+	EC_METHOD *meth;
+
+	BIGNUM x;
+	BIGNUM y;
+	BIGNUM z; /* Jacobian projective coordinates */
+	int z_is_one; /* enable optimized point arithmetics for special case */
+} /* EC_POINT */;
