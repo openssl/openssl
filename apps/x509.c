@@ -402,7 +402,9 @@ bad:
 		ci->key=req->req_info->pubkey;
 	        req->req_info->pubkey=NULL;
 #else
-		X509_set_pubkey(x,X509_REQ_get_pubkey(req));
+		pkey = X509_REQ_get_pubkey(req);
+		X509_set_pubkey(x,pkey);
+		EVP_PKEY_free(pkey);
 #endif
 		}
 	else
@@ -715,7 +717,9 @@ int days;
 	X509_STORE_CTX xsc;
 	EVP_PKEY *upkey;
 
-	EVP_PKEY_copy_parameters(X509_get_pubkey(xca),pkey);
+	upkey = X509_get_pubkey(xca);
+	EVP_PKEY_copy_parameters(upkey,pkey);
+	EVP_PKEY_free(upkey);
 
 	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
 	buf=(char *)Malloc(EVP_PKEY_size(pkey)*2+
@@ -833,6 +837,7 @@ int days;
 		/* Force a re-write */
 		X509_set_pubkey(x,upkey);
 		}
+	EVP_PKEY_free(upkey);
 
 	if (!X509_sign(x,pkey,digest)) goto end;
 	ret=1;
@@ -1033,8 +1038,12 @@ int days;
 EVP_MD *digest;
 	{
 
-	EVP_PKEY_copy_parameters(X509_get_pubkey(x),pkey);
-	EVP_PKEY_save_parameters(X509_get_pubkey(x),1);
+	EVP_PKEY *pktmp;
+
+	pktmp = X509_get_pubkey(x);
+	EVP_PKEY_copy_parameters(pktmp,pkey);
+	EVP_PKEY_save_parameters(pktmp,1);
+	EVP_PKEY_free(pktmp);
 
 	if (!X509_set_issuer_name(x,X509_get_subject_name(x))) goto err;
 	if (X509_gmtime_adj(X509_get_notBefore(x),0) == NULL) goto err;

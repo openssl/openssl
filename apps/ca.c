@@ -1228,6 +1228,7 @@ int verbose;
 		goto err;
 		}
 	i=X509_REQ_verify(req,pktmp);
+	EVP_PKEY_free(pktmp);
 	if (i < 0)
 		{
 		ok=0;
@@ -1297,6 +1298,7 @@ int verbose;
 		goto err;
 		}
 	i=X509_verify(req,pktmp);
+	EVP_PKEY_free(pktmp);
 	if (i < 0)
 		{
 		ok=0;
@@ -1651,7 +1653,9 @@ again2:
 	if (!X509_set_subject_name(ret,subject)) goto err;
 
 	pktmp=X509_REQ_get_pubkey(req);
-	if (!X509_set_pubkey(ret,pktmp)) goto err;
+	i = X509_set_pubkey(ret,pktmp);
+	EVP_PKEY_free(pktmp);
+	if (!i) goto err;
 
 	/* Lets add the extensions, if there are any */
 	if ((extensions != NULL) && (sk_num(extensions) > 0))
@@ -1701,6 +1705,7 @@ again2:
         if (EVP_PKEY_missing_parameters(pktmp) &&
 		!EVP_PKEY_missing_parameters(pkey))
 		EVP_PKEY_copy_parameters(pktmp,pkey);
+	EVP_PKEY_free(pktmp);
 #endif
 
 	if (!X509_sign(ret,pkey,dgst))
@@ -1953,6 +1958,7 @@ int verbose;
 	BIO_printf(bio_err,"Signature ok\n");
 
 	X509_REQ_set_pubkey(req,pktmp);
+	EVP_PKEY_free(pktmp);
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
 		days,1,verbose,req,extensions);
 err:

@@ -74,6 +74,7 @@ EVP_MD *md;
 	X509_REQ *ret;
 	X509_REQ_INFO *ri;
 	int i;
+	EVP_PKEY *pktmp;
 
 	ret=X509_REQ_new();
 	if (ret == NULL)
@@ -92,7 +93,9 @@ EVP_MD *md;
 	if (!X509_REQ_set_subject_name(ret,X509_get_subject_name(x)))
 		goto err;
 
-	i=X509_REQ_set_pubkey(ret,X509_get_pubkey(x));
+	pktmp = X509_get_pubkey(x);
+	i=X509_REQ_set_pubkey(ret,pktmp);
+	EVP_PKEY_free(pktmp);
 	if (!i) goto err;
 
 	if (pkey != NULL)

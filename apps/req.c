@@ -624,6 +624,7 @@ loop:
 			}
 		if (x509)
 			{
+			EVP_PKEY *tmppkey;
 			if ((x509ss=X509_new()) == NULL) goto end;
 
 			/* don't set the version number, for starters
@@ -639,7 +640,9 @@ loop:
 				(long)60*60*24*days);
 			X509_set_subject_name(x509ss,
 				X509_REQ_get_subject_name(req));
-			X509_set_pubkey(x509ss,X509_REQ_get_pubkey(req));
+			tmppkey = X509_REQ_get_pubkey(req);
+			X509_set_pubkey(x509ss,tmppkey);
+			EVP_PKEY_free(tmppkey);
 
 			if (!(i=X509_sign(x509ss,pkey,digest)))
 				goto end;

@@ -297,5 +297,6 @@ EVP_PKEY *k;
 
 	ok=1;
 err:
+	EVP_PKEY_free(xk);
 	return(ok);
 	}
