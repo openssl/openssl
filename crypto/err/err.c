@@ -548,13 +548,24 @@ static void build_SYS_str_reasons()
 #endif
 
 #define err_clear_data(p,i) \
+	do { \
 	if (((p)->err_data[i] != NULL) && \
 		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
 		{  \
 		OPENSSL_free((p)->err_data[i]); \
 		(p)->err_data[i]=NULL; \
 		} \
-	(p)->err_data_flags[i]=0;
+	(p)->err_data_flags[i]=0; \
+	} while(0)
+
+#define err_clear(p,i) \
+	do { \
+	es->err_flags[i]=0; \
+	es->err_buffer[i]=0; \
+	err_clear_data(p,i); \
+	es->err_file[i]=NULL; \
+	es->err_line[i]= -1; \
+	} while(0)
 
 static void ERR_STATE_free(ERR_STATE *s)
 	{
@@ -645,6 +656,7 @@ void ERR_put_error(int lib, int func, int reason, const char *file,
 	es->top=(es->top+1)%ERR_NUM_ERRORS;
 	if (es->top == es->bottom)
 		es->bottom=(es->bottom+1)%ERR_NUM_ERRORS;
+	es->err_flags[es->top]=0;
 	es->err_buffer[es->top]=ERR_PACK(lib,func,reason);
 	es->err_file[es->top]=file;
 	es->err_line[es->top]=line;
@@ -660,10 +672,7 @@ void ERR_clear_error(void)
 
 	for (i=0; i<ERR_NUM_ERRORS; i++)
 		{
-		es->err_buffer[i]=0;
-		err_clear_data(es,i);
-		es->err_file[i]=NULL;
-		es->err_line[i]= -1;
+		err_clear(es,i);
 		}
 	es->top=es->bottom=0;
 	}
@@ -1033,4 +1042,36 @@ void ERR_add_error_data(int num, ...)
 
 err:
 	va_end(args);
+	}
+
+int ERR_set_mark(void)
+	{
+	int i=0;
+	ERR_STATE *es;
+
+	es=ERR_get_state();
+
+	if (es->bottom == es->top) return 0;
+	es->err_flags[es->top]|=ERR_FLAG_MARK;
+	return 1;
+	}
+
+int ERR_pop_to_mark(void)
+	{
+	int i=0;
+	ERR_STATE *es;
+
+	es=ERR_get_state();
+
+	while(es->bottom != es->top
+		&& (es->err_flags[es->top] & ERR_FLAG_MARK) == 0)
+		{
+		err_clear(es,es->top);
+		es->top-=1;
+		if (es->top == -1) es->top=ERR_NUM_ERRORS;
+		}
+		
+	if (es->bottom == es->top) return 0;
+	es->err_flags[es->top]&=~ERR_FLAG_MARK;
+	return 1;
 	}

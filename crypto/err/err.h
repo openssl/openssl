@@ -88,10 +88,13 @@ extern "C" {
 #define ERR_TXT_MALLOCED	0x01
 #define ERR_TXT_STRING		0x02
 
+#define ERR_FLAG_MARK		0x01
+
 #define ERR_NUM_ERRORS	16
 typedef struct err_state_st
 	{
 	unsigned long pid;
+	int err_flags[ERR_NUM_ERRORS];
 	unsigned long err_buffer[ERR_NUM_ERRORS];
 	char *err_data[ERR_NUM_ERRORS];
 	int err_data_flags[ERR_NUM_ERRORS];
@@ -293,6 +296,9 @@ LHASH *ERR_get_err_state_table(void);
 #endif
 
 int ERR_get_next_error_library(void);
+
+int ERR_set_mark(void);
+int ERR_pop_to_mark(void);
 
 /* This opaque type encapsulates the low-level error-state functions */
 typedef struct st_ERR_FNS ERR_FNS;

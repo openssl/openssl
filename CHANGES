@@ -4,6 +4,10 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add the functions ERR_set_mark() and ERR_pop_to_mark() for better
+     control of the error stack.
+     [Richard Levitte]
+
   *) Add support for STORE in ENGINE.
      [Richard Levitte]
 
@@ -662,7 +666,7 @@ yet to be integrated into this CVS branch:
      the config script, much like the NetBSD support.
      [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
 
- Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
+ Changes between 0.9.6j and 0.9.7  [31 Dec 2002]
 
   *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
      code (06) was taken as the first octet of the session ID and the last
