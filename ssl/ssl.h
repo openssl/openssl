@@ -165,30 +165,33 @@ typedef struct ssl_cipher_st
 	unsigned long mask;		/* used for matching */
 	} SSL_CIPHER;
 
+typedef struct ssl_st SSL;
+typedef struct ssl_ctx_st SSL_CTX;
+
 /* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
 typedef struct ssl_method_st
 	{
 	int version;
-	int (*ssl_new)();
-	void (*ssl_clear)();
-	void (*ssl_free)();
-	int (*ssl_accept)();
-	int (*ssl_connect)();
-	int (*ssl_read)();
-	int (*ssl_peek)();
-	int (*ssl_write)();
-	int (*ssl_shutdown)();
-	int (*ssl_renegotiate)();
-	int (*ssl_renegotiate_check)();
-	long (*ssl_ctrl)();
-	long (*ssl_ctx_ctrl)();
-	SSL_CIPHER *(*get_cipher_by_char)();
-	int (*put_cipher_by_char)();
-	int (*ssl_pending)();
-	int (*num_ciphers)();
-	SSL_CIPHER *(*get_cipher)();
-	struct ssl_method_st *(*get_ssl_method)();
-	long (*get_timeout)();
+	int (*ssl_new)(SSL *s);
+	void (*ssl_clear)(SSL *s);
+	void (*ssl_free)(SSL *s);
+	int (*ssl_accept)(SSL *s);
+	int (*ssl_connect)(SSL *s);
+	int (*ssl_read)(SSL *s,char *buf,int len);
+	int (*ssl_peek)(SSL *s,char *buf,int len);
+	int (*ssl_write)(SSL *s,const char *buf,int len);
+	int (*ssl_shutdown)(SSL *s);
+	int (*ssl_renegotiate)(SSL *s);
+	int (*ssl_renegotiate_check)(SSL *s);
+	long (*ssl_ctrl)(SSL *s,int cmd,long larg,char *parg);
+	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,char *parg);
+	SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
+	int (*put_cipher_by_char)(const SSL_CIPHER *cipher,unsigned char *ptr);
+	int (*ssl_pending)(SSL *s);
+	int (*num_ciphers)(void);
+	SSL_CIPHER *(*get_cipher)(unsigned ncipher);
+	struct ssl_method_st *(*get_ssl_method)(int version);
+	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	} SSL_METHOD;
 
@@ -295,7 +298,7 @@ typedef struct ssl_session_st
 
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
-typedef struct ssl_ctx_st
+struct ssl_ctx_st
 	{
 	SSL_METHOD *method;
 	unsigned long options;
@@ -392,7 +395,7 @@ typedef struct ssl_ctx_st
 	EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
 
 	STACK *extra_certs;
-	} SSL_CTX;
+	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
 #define SSL_SESS_CACHE_CLIENT			0x0001
@@ -452,7 +455,7 @@ typedef struct ssl_ctx_st
 #define SSL_want_write(s)	((s)->rwstate == SSL_WRITING)
 #define SSL_want_x509_lookup(s)	((s)->rwstate == SSL_X509_LOOKUP)
 
-typedef struct ssl_st
+struct ssl_st
 	{
 	/* procol version
 	 * 2 for SSLv2
@@ -566,7 +569,7 @@ typedef struct ssl_st
 	int references;
 	unsigned long options;
 	int first_packet;
-	} SSL;
+	};
 
 #include "ssl2.h"
 #include "ssl3.h"
@@ -871,7 +874,7 @@ int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
 int 	SSL_read(SSL *ssl,char *buf,int num);
 int 	SSL_peek(SSL *ssl,char *buf,int num);
-int 	SSL_write(SSL *ssl,char *buf,int num);
+int 	SSL_write(SSL *ssl,const char *buf,int num);
 long	SSL_ctrl(SSL *ssl,int cmd, long larg, char *parg);
 long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, char *parg);
 
