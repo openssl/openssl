@@ -64,8 +64,10 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/types.h>
 #include "cryptlib.h"
+#ifndef NO_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 #include <openssl/bio.h>
 
 #ifdef BN_LLONG
