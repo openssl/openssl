@@ -37,6 +37,9 @@ The following mode changes are available:
 Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
 when just a single record has been written). When not set (the default),
 SSL_write() will only report success once the complete chunk was written.
+Once SSL_write() returns with r, r bytes have been successfully written
+and the next call to SSL_write() must only send the n-r bytes left,
+imitating the behaviour of write().
 
 =item SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
 
