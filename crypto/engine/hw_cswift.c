@@ -618,14 +618,99 @@ err:
 static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 				DSA_SIG *sig, DSA *dsa)
 	{
-	DSA_METHOD *meth, *tmp_meth;
-	int ret;
-	meth = DSA_OpenSSL();
-	tmp_meth = ENGINE_get_DSA(dsa->handle);
-	ENGINE_set_DSA(dsa->handle, meth);
-	ret = DSA_do_verify(dgst, dgst_len, sig, dsa);
-	ENGINE_set_DSA(dsa->handle, tmp_meth);
-	return ret;
+	SW_CONTEXT_HANDLE hac;
+	SW_PARAM sw_param;
+	SW_STATUS sw_status;
+	SW_LARGENUMBER arg[2], res;
+	unsigned long sig_result;
+	BN_CTX *ctx;
+	BIGNUM *dsa_p = NULL;
+	BIGNUM *dsa_q = NULL;
+	BIGNUM *dsa_g = NULL;
+	BIGNUM *dsa_key = NULL;
+	BIGNUM *argument = NULL;
+	int to_return = -1;
+	int acquired = 0;
+
+	if((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	if(!get_context(&hac))
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_GET_HANDLE_FAILED);
+		goto err;
+		}
+	acquired = 1;
+	/* Prepare the params */
+	dsa_p = BN_CTX_get(ctx);
+	dsa_q = BN_CTX_get(ctx);
+	dsa_g = BN_CTX_get(ctx);
+	dsa_key = BN_CTX_get(ctx);
+	argument = BN_CTX_get(ctx);
+	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !argument)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_CTX_FULL);
+		goto err;
+		}
+	if(!bn_wexpand(dsa_p, dsa->p->top) ||
+			!bn_wexpand(dsa_q, dsa->q->top) ||
+			!bn_wexpand(dsa_g, dsa->g->top) ||
+			!bn_wexpand(dsa_key, dsa->pub_key->top) ||
+			!bn_wexpand(argument, 40))
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_EXPAND_FAIL);
+		goto err;
+		}
+	sw_param.type = SW_ALG_DSA;
+	sw_param.up.dsa.p.nbytes = BN_bn2bin(dsa->p,
+				(unsigned char *)dsa_p->d);
+	sw_param.up.dsa.p.value = (unsigned char *)dsa_p->d;
+	sw_param.up.dsa.q.nbytes = BN_bn2bin(dsa->q,
+				(unsigned char *)dsa_q->d);
+	sw_param.up.dsa.q.value = (unsigned char *)dsa_q->d;
+	sw_param.up.dsa.g.nbytes = BN_bn2bin(dsa->g,
+				(unsigned char *)dsa_g->d);
+	sw_param.up.dsa.g.value = (unsigned char *)dsa_g->d;
+	sw_param.up.dsa.key.nbytes = BN_bn2bin(dsa->pub_key,
+				(unsigned char *)dsa_key->d);
+	sw_param.up.dsa.key.value = (unsigned char *)dsa_key->d;
+	/* Attach the key params */
+	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_PROVIDE_PARAMETERS);
+		goto err;
+		}
+	/* Prepare the argument and response */
+	arg[0].nbytes = dgst_len;
+	arg[0].value = (unsigned char *)dgst;
+	arg[1].nbytes = 40;
+	arg[1].value = (unsigned char *)argument->d;
+	memset(arg[1].value, 0, 40);
+	BN_bn2bin(sig->r, arg[1].value + 20 - BN_num_bytes(sig->r));
+	BN_bn2bin(sig->s, arg[1].value + 40 - BN_num_bytes(sig->s));
+	res.nbytes = 4; /* unsigned long */
+	res.value = (unsigned char *)(&sig_result);
+	/* Perform the operation */
+	sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_DSS_VERIFY, arg, 2,
+			&res, 1);
+	if(sw_status != SW_OK)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		goto err;
+		}
+	/* Convert the response */
+	to_return = ((sig_result == 0) ? 0 : 1);
+
+err:
+	if(acquired)
+		release_context(hac);
+	if(dsa_p) ctx->tos--;
+	if(dsa_q) ctx->tos--;
+	if(dsa_g) ctx->tos--;
+	if(dsa_key) ctx->tos--;
+	if(argument) ctx->tos--;
+	if(ctx)
+		BN_CTX_free(ctx);
+	return to_return;
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
