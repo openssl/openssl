@@ -786,6 +786,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, 
 		const unsigned char *in, int inlen, int inform, int nid);
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid);
+int ASN1_STRING_TABLE_add(int, long, long, unsigned long, unsigned long);
 void ASN1_STRING_TABLE_cleanup(void);
 
 /* BEGIN ERROR CODES */

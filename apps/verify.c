@@ -74,6 +74,8 @@ static int check(X509_STORE *ctx,char *file, STACK_OF(X509)*other, int purpose);
 static STACK_OF(X509) *load_untrusted(char *file);
 static int v_verbose=0;
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int i,ret=1;

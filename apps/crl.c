@@ -93,6 +93,8 @@ NULL
 static X509_CRL *load_crl(char *file, int format);
 static BIO *bio_out=NULL;
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	X509_CRL *x=NULL;

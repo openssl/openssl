@@ -80,6 +80,8 @@ static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 #define SMIME_VERIFY	4
 #define SMIME_PK7OUT	5
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 {
 	int operation = 0;

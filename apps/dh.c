@@ -82,6 +82,8 @@
  * -C
  */
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	DH *dh=NULL;

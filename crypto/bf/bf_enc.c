@@ -72,7 +72,8 @@ to modify the code.
 void BF_encrypt(BF_LONG *data, const BF_KEY *key)
 	{
 #ifndef BF_PTR2
-	register BF_LONG l,r,*p,*s;
+	register BF_LONG l,r;
+    const register BF_LONG *p,*s;
 
 	p=key->P;
 	s= &(key->S[0]);
@@ -148,7 +149,8 @@ void BF_encrypt(BF_LONG *data, const BF_KEY *key)
 void BF_decrypt(BF_LONG *data, const BF_KEY *key)
 	{
 #ifndef BF_PTR2
-	register BF_LONG l,r,*p,*s;
+	register BF_LONG l,r;
+    const register BF_LONG *p,*s;
 
 	p=key->P;
 	s= &(key->S[0]);

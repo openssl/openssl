@@ -141,6 +141,8 @@ static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int ret=1;

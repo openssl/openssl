@@ -78,6 +78,8 @@
  * -print_certs
  */
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	PKCS7 *p7=NULL;

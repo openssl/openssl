@@ -253,7 +253,7 @@ void CRYPTO_set_mem_debug_options(long bits)
 		set_debug_options_func(bits);
 	}
 
-long CRYPTO_get_mem_debug_options()
+long CRYPTO_get_mem_debug_options(void)
 	{
 	if (get_debug_options_func != NULL)
 		return get_debug_options_func();

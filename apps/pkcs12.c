@@ -86,6 +86,9 @@ int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
+
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 {
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	

@@ -80,6 +80,8 @@ int set_hex(char *in,unsigned char *out,int size);
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	static const char magic[]="Salted__";

@@ -388,6 +388,8 @@ static double tm_Time_F(int s)
  * MAIN - main processing area for client
  *			real name depends on MONOLITH
  */
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	double totalTime = 0.0;

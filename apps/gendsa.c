@@ -73,6 +73,8 @@
 #undef PROG
 #define PROG gendsa_main
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;

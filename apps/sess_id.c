@@ -84,6 +84,9 @@ NULL
 };
 
 static SSL_SESSION *load_sess_id(char *file, int format);
+
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	SSL_SESSION *x=NULL;

@@ -82,6 +82,8 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
  * -out arg	- output file - default stdout
  */
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int i,badops=0;

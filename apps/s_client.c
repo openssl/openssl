@@ -153,6 +153,8 @@ static void sc_usage(void)
 
 	}
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int off=0;

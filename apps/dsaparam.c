@@ -85,6 +85,9 @@
  */
 
 static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
+
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;

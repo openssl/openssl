@@ -74,6 +74,9 @@
 #define PROG	dgst_main
 
 void do_fp(unsigned char *buf,BIO *f,int sep);
+
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL;

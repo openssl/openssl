@@ -136,6 +136,8 @@ static LHASH *req_conf=NULL;
 #define TYPE_DSA	2
 #define TYPE_DH		3
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 #ifndef NO_DSA

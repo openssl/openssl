@@ -68,6 +68,8 @@
 #undef PROG
 #define PROG	errstr_main
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int i,ret=0;

@@ -75,6 +75,8 @@
  * -out arg	- output file - default stdout
  */
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int i,badops=0, ret = 1;

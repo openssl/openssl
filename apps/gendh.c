@@ -75,6 +75,9 @@
 #define PROG gendh_main
 
 static void MS_CALLBACK dh_cb(int p, int n, void *arg);
+
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	DH *dh=NULL;

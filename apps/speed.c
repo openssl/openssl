@@ -238,6 +238,8 @@ static double Time_F(int s)
 #endif
 	}
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;

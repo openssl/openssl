@@ -397,6 +397,8 @@ static int ebcdic_puts(BIO *bp, char *str)
 }
 #endif
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char *argv[])
 	{
 	short port=PORT;

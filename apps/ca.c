@@ -213,6 +213,8 @@ static char *section=NULL;
 static int preserve=0;
 static int msie_hack=0;
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	char *key=NULL;

@@ -214,7 +214,7 @@ void CRYPTO_dbg_set_options(long bits)
 	options = bits;
 	}
 
-long CRYPTO_dbg_get_options()
+long CRYPTO_dbg_get_options(void)
 	{
 	return options;
 	}

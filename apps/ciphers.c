@@ -77,6 +77,8 @@ static char *ciphers_usage[]={
 NULL
 };
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int ret=1,i;
