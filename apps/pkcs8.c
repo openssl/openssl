@@ -278,11 +278,16 @@ int MAIN(int argc, char **argv)
 		pkey = load_key(bio_err, infile, informat, 1,
 			passin, e, "key");
 		if (!pkey)
+			{
+			BIO_free_all(out);
 			return 1;
+			}
 		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken)))
 			{
 			BIO_printf(bio_err, "Error converting key\n");
 			ERR_print_errors(bio_err);
+			EVP_PKEY_free(pkey);
+			BIO_free_all(out);
 			return 1;
 			}
 		if (nocrypt)
@@ -294,6 +299,9 @@ int MAIN(int argc, char **argv)
 			else
 				{
 				BIO_printf(bio_err, "Bad format specified for key\n");
+				PKCS8_PRIV_KEY_INFO_free(p8inf);
+				EVP_PKEY_free(pkey);
+				BIO_free_all(out);
 				return (1);
 				}
 			}
@@ -305,7 +313,12 @@ int MAIN(int argc, char **argv)
 				{
 				p8pass = pass;
 				if (EVP_read_pw_string(pass, sizeof pass, "Enter Encryption Password:", 1))
+					{
+					PKCS8_PRIV_KEY_INFO_free(p8inf);
+					EVP_PKEY_free(pkey);
+					BIO_free_all(out);
 					return (1);
+					}
 				}
 			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
@@ -314,6 +327,9 @@ int MAIN(int argc, char **argv)
 				{
 				BIO_printf(bio_err, "Error encrypting key\n");
 				ERR_print_errors(bio_err);
+				PKCS8_PRIV_KEY_INFO_free(p8inf);
+				EVP_PKEY_free(pkey);
+				BIO_free_all(out);
 				return (1);
 				}
 			app_RAND_write_file(NULL, bio_err);
@@ -324,6 +340,9 @@ int MAIN(int argc, char **argv)
 			else
 				{
 				BIO_printf(bio_err, "Bad format specified for key\n");
+				PKCS8_PRIV_KEY_INFO_free(p8inf);
+				EVP_PKEY_free(pkey);
+				BIO_free_all(out);
 				return (1);
 				}
 			X509_SIG_free(p8);
