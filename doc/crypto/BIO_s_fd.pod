@@ -20,15 +20,6 @@ BIO_s_fd, BIO_set_fd, BIO_get_fd, BIO_new_fd - file descriptor BIO
 BIO_s_fd() returns the file descriptor BIO method. This is a wrapper
 round the platforms file descriptor routines such as read() and write().
 
-BIO_read() and BIO_write() read or write the underlying descriptor.
-BIO_puts() is supported but BIO_gets() is not.
-
-If the close flag is set then then close() is called on the underlying
-file descriptor when the BIO is freed.
-
-BIO_reset() attempts to change the file pointer to the start of file
-using lseek(fd, 0, 0).
-
 BIO_set_fd() sets the file descriptor of BIO B<b> to B<fd> and the close
 flag to B<c>.
 
@@ -39,6 +30,15 @@ returns the file descriptor. If B<c> is not NULL it should be of type
 BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 
 =head1 NOTES
+
+If the close flag is set then then close() is called on the underlying
+file descriptor when the BIO is freed.
+
+BIO_reset() attempts to change the file pointer to the start of file
+using lseek(fd, 0, 0).
+
+BIO_read() and BIO_write() read or write the underlying descriptor.
+BIO_puts() is supported but BIO_gets() is not.
 
 The behaviour of BIO_read() and BIO_write() depends on the behavior of the
 platforms read() and write() calls on the descriptor. If the underlying 
@@ -52,11 +52,6 @@ instead.
 =head1 RETURN VALUES
 
 BIO_s_fd() returns the file descriptor BIO method.
-
-BIO_reset() returns zero for success and -1 if an error occurred.
-BIO_seek() and BIO_tell() return the current file position or -1
-is an error occurred. These values reflect the underlying lseek()
-behaviour.
 
 BIO_set_fd() always returns 1.
 
@@ -77,4 +72,8 @@ This is a file descriptor BIO version of "Hello World":
 
 =head1 SEE ALSO
 
-L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>, TBA
+L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>,
+L<BIO_reset(3)|BIO_reset(3)>, L<BIO_read(3)|BIO_read(3)>,
+L<BIO_write(3)|BIO_write(3)>, L<BIO_puts(3)|BIO_puts(3)>,
+L<BIO_gets(3)|BIO_gets(3)>, L<BIO_printf(3)|BIO_printf(3)>,
+L<BIO_set_close(3)|BIO_set_close(3)>, L<BIO_get_close(3)|BIO_get_close(3)>
