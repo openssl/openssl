@@ -1144,120 +1144,18 @@ err:
  */
 static int build_subject(X509_REQ *req, char *subject, unsigned long chtype)
 	{
-	size_t buflen = strlen (subject)+1; /* to copy the types and values into. due to escaping, the copy can only become shorter */
-	char *buf = malloc (buflen);
-	size_t max_ne = buflen / 2 + 1; /* maximum number of name elements */
-	char **ne_types = malloc (max_ne * sizeof (char *));
-	char **ne_values = malloc (max_ne * sizeof (char *));
+	X509_NAME *n;
 
-	char *sp = subject, *bp = buf;
-	int i, ne_num = 0;
-
-	X509_NAME *n = NULL;
-	int nid;
-
-	if (!buf || !ne_types || !ne_values)
-	{
-		BIO_printf(bio_err, "malloc error\n");
-		goto error0;
-	}
-
-	if (*subject != '/')
-	{
-		BIO_printf(bio_err, "Subject does not start with '/'.\n");
-		goto error0;
-	}
-	sp++; /* skip leading / */
-
-	while (*sp)
-	{
-		/* collect type */
-		ne_types[ne_num] = bp;
-		while (*sp)
-		{
-			if (*sp == '\\') /* is there anything to escape in the type...? */
-				if (*++sp)
-					*bp++ = *sp++;
-				else
-				{
-					BIO_printf(bio_err, "escape character at end of string\n");
-					goto error0;
-				}
-			else if (*sp == '=')
-			{
-				sp++;
-				*bp++ = '\0';
-				break;
-			}
-			else
-				*bp++ = *sp++;
-		}
-		if (!*sp)
-		{
-			BIO_printf(bio_err, "end of string encountered while processing type of subject name element #%d\n", ne_num);
-			goto error0;
-		}
-		ne_values[ne_num] = bp;
-		while (*sp)
-		{
-			if (*sp == '\\')
-				if (*++sp)
-					*bp++ = *sp++;
-				else
-				{
-					BIO_printf(bio_err, "escape character at end of string\n");
-					goto error0;
-				}
-			else if (*sp == '/')
-			{
-				sp++;
-				*bp++ = '\0';
-				break;
-			}
-			else
-				*bp++ = *sp++;
-		}
-		*bp++ = '\0';
-		ne_num++;
-	}
-
-	if (!(n = X509_NAME_new()))
-		goto error0;
-
-	for(i = 0; i < ne_num; i++)
-		{
-		if ((nid=OBJ_txt2nid(ne_types[i])) == NID_undef)
-			{
-			BIO_printf(bio_err, "Subject Attribute %s has no known NID, skipped\n", ne_types[i]);
-			continue;
-			}
-
-		if (!*ne_values[i])
-			{
-			BIO_printf(bio_err, "No value provided for Subject Attribute %s, skipped\n", ne_types[i]);
-			continue;
-			}
-
-		if (!X509_NAME_add_entry_by_NID(n, nid, chtype, (unsigned char*)ne_values[i], -1,-1,0))
-			goto error1;
-
-		}
+	if (!(n = do_subject(subject, chtype)))
+		return 0;
 
 	if (!X509_REQ_set_subject_name(req, n))
-		goto error1;
+		{
+		X509_NAME_free(n);
+		return 0;
+		}
 	X509_NAME_free(n);
-	free (ne_values);
-	free (ne_types);
-	free (buf);
 	return 1;
-
-error1:
-	X509_NAME_free(n);
-error0:
-	free (ne_values);
-	free (ne_types);
-	free (buf);
-	return 0;
 }
 
 

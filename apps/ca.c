@@ -238,7 +238,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
        	int verbose, X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
 	int ext_copy);
-static X509_NAME *do_subject(char *subject);
 static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
@@ -1874,7 +1873,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if (subj)
 		{
-		X509_NAME *n = do_subject(subj);
+		X509_NAME *n = do_subject(subj, MBSTRING_ASC);
 
 		if (!n)
 			{
@@ -3012,13 +3011,13 @@ int make_revoked(X509_REVOKED *rev, char *str)
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static X509_NAME *do_subject(char *subject)
+X509_NAME *do_subject(char *subject, long chtype)
 	{
-	size_t buflen = strlen (subject)+1; /* to copy the types and values into. due to escaping, the copy can only become shorter */
-	char *buf = malloc (buflen);
+	size_t buflen = strlen(subject)+1; /* to copy the types and values into. due to escaping, the copy can only become shorter */
+	char *buf = OPENSSL_malloc(buflen);
 	size_t max_ne = buflen / 2 + 1; /* maximum number of name elements */
-	char **ne_types = malloc (max_ne * sizeof (char *));
-	char **ne_values = malloc (max_ne * sizeof (char *));
+	char **ne_types = OPENSSL_malloc(max_ne * sizeof (char *));
+	char **ne_values = OPENSSL_malloc(max_ne * sizeof (char *));
 
 	char *sp = subject, *bp = buf;
 	int i, ne_num = 0;
@@ -3029,13 +3028,13 @@ static X509_NAME *do_subject(char *subject)
 	if (!buf || !ne_types || !ne_values)
 	{
 		BIO_printf(bio_err, "malloc error\n");
-		goto error0;
+		goto error;
 	}
 
 	if (*subject != '/')
 	{
 		BIO_printf(bio_err, "Subject does not start with '/'.\n");
-		goto error0;
+		goto error;
 	}
 	sp++; /* skip leading / */
 
@@ -3051,7 +3050,7 @@ static X509_NAME *do_subject(char *subject)
 				else
 				{
 					BIO_printf(bio_err, "escape character at end of string\n");
-					goto error0;
+					goto error;
 				}
 			else if (*sp == '=')
 			{
@@ -3065,7 +3064,7 @@ static X509_NAME *do_subject(char *subject)
 		if (!*sp)
 		{
 			BIO_printf(bio_err, "end of string encountered while processing type of subject name element #%d\n", ne_num);
-			goto error0;
+			goto error;
 		}
 		ne_values[ne_num] = bp;
 		while (*sp)
@@ -3076,12 +3075,11 @@ static X509_NAME *do_subject(char *subject)
 				else
 				{
 					BIO_printf(bio_err, "escape character at end of string\n");
-					goto error0;
+					goto error;
 				}
 			else if (*sp == '/')
 			{
 				sp++;
-				*bp++ = '\0';
 				break;
 			}
 			else
@@ -3092,7 +3090,7 @@ static X509_NAME *do_subject(char *subject)
 	}
 
 	if (!(n = X509_NAME_new()))
-		goto error0;
+		goto error;
 
 	for (i = 0; i < ne_num; i++)
 		{
@@ -3108,24 +3106,25 @@ static X509_NAME *do_subject(char *subject)
 			continue;
 			}
 
-		if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC, (unsigned char*)ne_values[i], -1,-1,0))
-			goto error1;
+		if (!X509_NAME_add_entry_by_NID(n, nid, chtype, (unsigned char*)ne_values[i], -1,-1,0))
+			goto error;
 		}
 
-	free (ne_values);
-	free (ne_types);
-	free (buf);
+	OPENSSL_free(ne_values);
+	OPENSSL_free(ne_types);
+	OPENSSL_free(buf);
 	return n;
 
-error1:
+error:
 	X509_NAME_free(n);
-error0:
-	free (ne_values);
-	free (ne_types);
-	free (buf);
+	if (ne_values)
+		OPENSSL_free(ne_values);
+	if (ne_types)
+		OPENSSL_free(ne_types);
+	if (buf)
+		OPENSSL_free(buf);
 	return NULL;
 }
-
 
 int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
 	{

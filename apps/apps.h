@@ -253,6 +253,8 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 			ASN1_GENERALIZEDTIME **pinvtm, char *str);
 int make_serial_index(TXT_DB *db);
 
+X509_NAME *do_subject(char *str, long chtype);
+
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2
