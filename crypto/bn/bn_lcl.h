@@ -433,19 +433,18 @@ void bn_sqr_comba4(BN_ULONG *r,const BN_ULONG *a);
 int bn_cmp_words(const BN_ULONG *a,const BN_ULONG *b,int n);
 int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
 	int cl, int dl);
-#if 0
-/* bn_mul.c rollback <appro> */
-void bn_mul_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
-	int dna,int dnb,BN_ULONG *t);
-void bn_mul_part_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,
-	int n,int tna,int tnb,BN_ULONG *t);
-#endif
-void bn_sqr_recursive(BN_ULONG *r,const BN_ULONG *a, int n2, BN_ULONG *t);
-void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
+#ifdef BN_RECURSION
+void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	BN_ULONG *t);
+void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
+	int n, BN_ULONG *t);
 void bn_mul_low_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
 	BN_ULONG *t);
 void bn_mul_high(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,BN_ULONG *l,int n2,
 	BN_ULONG *t);
+void bn_sqr_recursive(BN_ULONG *r,const BN_ULONG *a, int n2, BN_ULONG *t);
+#endif
+void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
 
 #ifdef  __cplusplus
 }
