@@ -10,6 +10,8 @@ while(<STDIN>) {
 	if (/ - /) {
 	    s/ - .*//;
 	    s/,[ \t]+/,/g;
+	    s/^[ \t]+//g;
+	    s/[ \t]+$//g;
 	    push @words, split ',';
 	}
     }

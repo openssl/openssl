@@ -691,6 +691,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 
 int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it)
 {
+	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
 	ASN1_TYPE *typ = NULL;
 	int ret = 0;
@@ -705,6 +706,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 			*pval = (ASN1_VALUE *)typ;
 		} else typ = (ASN1_TYPE *)*pval;
 		if(utype != typ->type) ASN1_TYPE_set(typ, utype, NULL);
+		opval = pval;
 		pval = (ASN1_VALUE **)&typ->value.ptr;
 	}
 	switch(utype) {
@@ -796,7 +798,12 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 
 	ret = 1;
 	err:
-	if(!ret) ASN1_TYPE_free(typ);
+	if(!ret)
+		{
+		ASN1_TYPE_free(typ);
+		if (opval)
+			*opval = NULL;
+		}
 	return ret;
 }
 
