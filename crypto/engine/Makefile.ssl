@@ -110,6 +110,29 @@ eng_cnf.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 eng_cnf.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 eng_cnf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 eng_cnf.o: ../../include/openssl/ui.h ../cryptlib.h eng_cnf.c
+eng_cryptodev.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+eng_cryptodev.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+eng_cryptodev.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+eng_cryptodev.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+eng_cryptodev.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+eng_cryptodev.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+eng_cryptodev.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+eng_cryptodev.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+eng_cryptodev.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+eng_cryptodev.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+eng_cryptodev.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+eng_cryptodev.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+eng_cryptodev.o: ../../include/openssl/obj_mac.h
+eng_cryptodev.o: ../../include/openssl/objects.h
+eng_cryptodev.o: ../../include/openssl/opensslconf.h
+eng_cryptodev.o: ../../include/openssl/opensslv.h
+eng_cryptodev.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+eng_cryptodev.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+eng_cryptodev.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+eng_cryptodev.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_cryptodev.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+eng_cryptodev.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+eng_cryptodev.o: ../../include/openssl/ui_compat.h eng_cryptodev.c
 eng_ctrl.o: ../../e_os.h ../../include/openssl/asn1.h
 eng_ctrl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 eng_ctrl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

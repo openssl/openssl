@@ -3020,3 +3020,4 @@ PKCS12_add_key                          3452	EXIST::FUNCTION:
 PKCS12_add_cert                         3453	EXIST::FUNCTION:
 ASN1_item_ndef_i2d                      3454	EXIST::FUNCTION:
 i2d_PKCS7_NDEF                          3455	EXIST::FUNCTION:
+ENGINE_up_ref                           3456	EXIST::FUNCTION:
