@@ -328,7 +328,7 @@ int main(int argc,char **argv)
 	if(line[0] == '#' || line[0] == '\n')
 	    continue;
 	p=line;
-	cipher=strsep(&p,":");	
+	cipher=(char*)ustrsep(&p,":");	
 	key=ustrsep(&p,":");
 	iv=ustrsep(&p,":");
 	plaintext=ustrsep(&p,":");
