@@ -251,7 +251,7 @@ struct ec_point_st {
 
 
 /* method functions in ec_mult.c
- * (ec_lib.c uses these as defaults if group->method->mul is 0 */
+ * (ec_lib.c uses these as defaults if group->method->mul is 0) */
 int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *);

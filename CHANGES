@@ -5,9 +5,9 @@
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
   *) In crypto/ec/ec_mult.c, implement fast point multiplication with
-     precomputation, based one wNAF splitting: EC_GROUP_precompute_mult()
+     precomputation, based on wNAF splitting: EC_GROUP_precompute_mult()
      will now compute a table of multiples of the generator that
-     makes subsequent invocations of EC_POINTs_mul() or EC_POINT_mul
+     makes subsequent invocations of EC_POINTs_mul() or EC_POINT_mul()
      faster (notably in the case of a single point multiplication,
      scalar * generator).
      [Nils Larsch, Bodo Moeller]
