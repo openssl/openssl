@@ -102,7 +102,7 @@
  * -nodes	- no des encryption
  * -config file	- Load configuration file.
  * -key file	- make a request using key in file (or use it for verification).
- * -keyform	- key file format.
+ * -keyform arg	- key file format.
  * -rand file(s) - load the file(s) into the PRNG.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
