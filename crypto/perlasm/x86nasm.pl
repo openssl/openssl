@@ -344,4 +344,10 @@ sub out1p
 	push(@out,"\t$name\t ".&conv($p1)."\n");
 	}
 
+sub main'picmeup
+	{
+	local($dst,$sym)=@_;
+	&main'lea($dst,&main'DWP($sym));
+	}
+
 sub main'blindpop { &out1("pop",@_); }
