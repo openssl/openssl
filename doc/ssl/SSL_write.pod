@@ -65,6 +65,9 @@ When an SSL_write() operation has to be repeated because of
 B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
 with the same arguments.
 
+When calling SSL_write() with num=0 bytes to be sent the behaviour is
+undefined.
+
 =head1 RETURN VALUES
 
 The following return values can occur:
