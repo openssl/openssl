@@ -288,20 +288,21 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	{
-	int ctrl_exists;
+	int ctrl_exists, ref_exists;
 	if(e == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-	if(e->struct_ref == 0)
+	ref_exists = ((e->struct_ref > 0) ? 1 : 0);
+	ctrl_exists = (e->ctrl ? 1 : 0);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	if(!ref_exists)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_REFERENCE);
 		return 0;
 		}
-	ctrl_exists = (e->ctrl ? 1 : 0);
-	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!ctrl_exists)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_CONTROL_FUNCTION);
