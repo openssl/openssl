@@ -2071,7 +2071,7 @@ PKCS7_ATTR_SIGN_it                      2632	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 UI_add_error_string                     2633	EXIST::FUNCTION:
 KRB5_CHECKSUM_free                      2634	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext                    2635	EXIST::FUNCTION:
-ENGINE_load_ubsec                       2636	EXIST::FUNCTION:
+ENGINE_load_ubsec                       2636	EXIST::FUNCTION:STATIC_ENGINE
 ENGINE_register_all_digests             2637	EXIST::FUNCTION:
 PKEY_USAGE_PERIOD_it                    2638	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKEY_USAGE_PERIOD_it                    2638	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2545,7 +2545,7 @@ OCSP_RESPONSE_new                       3023	EXIST::FUNCTION:
 AES_set_encrypt_key                     3024	EXIST::FUNCTION:AES
 OCSP_resp_count                         3025	EXIST::FUNCTION:
 KRB5_CHECKSUM_new                       3026	EXIST::FUNCTION:
-ENGINE_load_cswift                      3027	EXIST::FUNCTION:
+ENGINE_load_cswift                      3027	EXIST::FUNCTION:STATIC_ENGINE
 OCSP_onereq_get0_id                     3028	EXIST::FUNCTION:
 ENGINE_set_default_ciphers              3029	EXIST::FUNCTION:
 NOTICEREF_it                            3030	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2576,7 +2576,7 @@ ASN1_primitive_free                     3051	EXIST::FUNCTION:
 i2d_EXTENDED_KEY_USAGE                  3052	EXIST::FUNCTION:
 i2d_OCSP_SIGNATURE                      3053	EXIST::FUNCTION:
 asn1_enc_save                           3054	EXIST::FUNCTION:
-ENGINE_load_nuron                       3055	EXIST::FUNCTION:
+ENGINE_load_nuron                       3055	EXIST::FUNCTION:STATIC_ENGINE
 _ossl_old_des_pcbc_encrypt              3056	EXIST::FUNCTION:DES
 PKCS12_MAC_DATA_it                      3057	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS12_MAC_DATA_it                      3057	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2600,7 +2600,7 @@ asn1_get_choice_selector                3071	EXIST::FUNCTION:
 i2d_KRB5_CHECKSUM                       3072	EXIST::FUNCTION:
 ENGINE_set_table_flags                  3073	EXIST::FUNCTION:
 AES_options                             3074	EXIST::FUNCTION:AES
-ENGINE_load_chil                        3075	EXIST::FUNCTION:
+ENGINE_load_chil                        3075	EXIST::FUNCTION:STATIC_ENGINE
 OCSP_id_cmp                             3076	EXIST::FUNCTION:
 OCSP_BASICRESP_new                      3077	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext_by_NID             3078	EXIST::FUNCTION:
@@ -2667,7 +2667,7 @@ OCSP_CRLID_it                           3127	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 OCSP_CRLID_it                           3127	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 i2d_KRB5_AUTHENTBODY                    3128	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext_count              3129	EXIST::FUNCTION:
-ENGINE_load_atalla                      3130	EXIST::FUNCTION:
+ENGINE_load_atalla                      3130	EXIST::FUNCTION:STATIC_ENGINE
 X509_NAME_it                            3131	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_NAME_it                            3131	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 USERNOTICE_it                           3132	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2762,8 +2762,8 @@ DES_read_2passwords                     3206	EXIST::FUNCTION:DES
 DES_read_password                       3207	EXIST::FUNCTION:DES
 UI_UTIL_read_pw                         3208	EXIST::FUNCTION:
 UI_UTIL_read_pw_string                  3209	EXIST::FUNCTION:
-ENGINE_load_aep                         3210	EXIST::FUNCTION:
-ENGINE_load_sureware                    3211	EXIST::FUNCTION:
+ENGINE_load_aep                         3210	EXIST::FUNCTION:STATIC_ENGINE
+ENGINE_load_sureware                    3211	EXIST::FUNCTION:STATIC_ENGINE
 OPENSSL_add_all_algorithms_noconf       3212	EXIST:!VMS:FUNCTION:
 OPENSSL_add_all_algo_noconf             3212	EXIST:VMS:FUNCTION:
 OPENSSL_add_all_algorithms_conf         3213	EXIST:!VMS:FUNCTION:
@@ -2772,7 +2772,7 @@ OPENSSL_load_builtin_modules            3214	EXIST::FUNCTION:
 AES_ofb128_encrypt                      3215	EXIST::FUNCTION:AES
 AES_ctr128_encrypt                      3216	EXIST::FUNCTION:AES
 AES_cfb128_encrypt                      3217	EXIST::FUNCTION:AES
-ENGINE_load_4758cca                     3218	EXIST::FUNCTION:
+ENGINE_load_4758cca                     3218	EXIST::FUNCTION:STATIC_ENGINE
 _ossl_096_des_random_seed               3219	EXIST::FUNCTION:DES
 EVP_aes_256_ofb                         3220	EXIST::FUNCTION:AES
 EVP_aes_192_ofb                         3221	EXIST::FUNCTION:AES
@@ -3021,3 +3021,4 @@ PKCS12_add_cert                         3453	EXIST::FUNCTION:
 ASN1_item_ndef_i2d                      3454	EXIST::FUNCTION:
 i2d_PKCS7_NDEF                          3455	EXIST::FUNCTION:
 ENGINE_up_ref                           3456	EXIST::FUNCTION:
+ENGINE_get_static_state                 3457	EXIST::FUNCTION:
