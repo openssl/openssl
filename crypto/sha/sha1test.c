@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		EVP_Digest(*P,(unsigned long)strlen((char *)*P),md,NULL,EVP_sha1(), NULL);
+		EVP_Digest(*P,strlen((char *)*P),md,NULL,EVP_sha1(), NULL);
 		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{

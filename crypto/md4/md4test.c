@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		EVP_Digest(&(P[0][0]),(unsigned long)strlen((char *)*P),md,NULL,EVP_md4(), NULL);
+		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_md4(), NULL);
 		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
