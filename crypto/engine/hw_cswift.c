@@ -225,6 +225,7 @@ static int bind_helper(ENGINE *e)
 			!ENGINE_set_DH(e, &cswift_dh) ||
 #endif
 			!ENGINE_set_RAND(e, &cswift_random) ||
+			!ENGINE_set_destroy_function(e, cswift_destroy) ||
 			!ENGINE_set_init_function(e, cswift_init) ||
 			!ENGINE_set_finish_function(e, cswift_finish) ||
 			!ENGINE_set_ctrl_function(e, cswift_ctrl) ||
