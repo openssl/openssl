@@ -145,8 +145,12 @@ int MAIN(int argc, char **argv)
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL) goto err;
-	if (ciphers != NULL)
-		SSL_CTX_set_cipher_list(ctx,ciphers);
+	if (ciphers != NULL) {
+		if(!SSL_CTX_set_cipher_list(ctx,ciphers)) {
+			BIO_printf(bio_err, "Error in cipher list\n");
+			goto err;
+		}
+	}
 	ssl=SSL_new(ctx);
 	if (ssl == NULL) goto err;
 

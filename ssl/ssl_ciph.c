@@ -83,24 +83,11 @@ static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
 	NULL,NULL,
 	};
 
-typedef struct cipher_sort_st
-	{
-	SSL_CIPHER *cipher;
-	int pref;
-	} CIPHER_SORT;
-
 #define CIPHER_ADD	1
 #define CIPHER_KILL	2
 #define CIPHER_DEL	3
 #define CIPHER_ORD	4
-
-typedef struct cipher_choice_st
-	{
-	int type;
-	unsigned long algorithms;
-	unsigned long mask;
-	long top;
-	} CIPHER_CHOICE;
+#define CIPHER_SPECIAL	5
 
 typedef struct cipher_order_st
 	{
@@ -110,59 +97,55 @@ typedef struct cipher_order_st
 	struct cipher_order_st *next,*prev;
 	} CIPHER_ORDER;
 
-static SSL_CIPHER cipher_aliases[]={
+static const SSL_CIPHER cipher_aliases[]={
 	/* Don't include eNULL unless specifically enabled */
-	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, 0,SSL_ALL}, /* must be first */
-	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,SSL_MKEY_MASK},
-	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,SSL_MKEY_MASK},
-	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,SSL_MKEY_MASK},
-	{0,SSL_TXT_kEDH,0,SSL_kEDH,  0,SSL_MKEY_MASK},
-	{0,SSL_TXT_kFZA,0,SSL_kFZA,  0,SSL_MKEY_MASK},
-	{0,SSL_TXT_DH,	0,SSL_DH,    0,SSL_MKEY_MASK},
-	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,SSL_MKEY_MASK|SSL_AUTH_MASK},
+	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL}, /* must be first */
+	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kEDH,0,SSL_kEDH,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kFZA,0,SSL_kFZA,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_DH,	0,SSL_DH,    0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
 
-	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,SSL_AUTH_MASK},
-	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,SSL_AUTH_MASK},
-	{0,SSL_TXT_aFZA,0,SSL_aFZA,  0,SSL_AUTH_MASK},
-	{0,SSL_TXT_aNULL,0,SSL_aNULL,0,SSL_AUTH_MASK},
-	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,SSL_AUTH_MASK},
-	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,SSL_AUTH_MASK},
+	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aFZA,0,SSL_aFZA,  0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aNULL,0,SSL_aNULL,0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,0,0,0,SSL_AUTH_MASK,0},
 
-	{0,SSL_TXT_DES,	0,SSL_DES,   0,SSL_ENC_MASK},
-	{0,SSL_TXT_3DES,0,SSL_3DES,  0,SSL_ENC_MASK},
-	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,SSL_ENC_MASK},
-	{0,SSL_TXT_RC2,	0,SSL_RC2,   0,SSL_ENC_MASK},
-	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,SSL_ENC_MASK},
-	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,SSL_ENC_MASK},
-	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,SSL_ENC_MASK},
+	{0,SSL_TXT_DES,	0,SSL_DES,   0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_3DES,0,SSL_3DES,  0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_RC2,	0,SSL_RC2,   0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 
-	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,SSL_MAC_MASK},
-	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,SSL_MAC_MASK},
-	{0,SSL_TXT_SHA,	0,SSL_SHA,   0,SSL_MAC_MASK},
+	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
+	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
+	{0,SSL_TXT_SHA,	0,SSL_SHA,   0,0,0,0,SSL_MAC_MASK,0},
 
-	{0,SSL_TXT_NULL,0,SSL_NULL,  0,SSL_ENC_MASK},
-	{0,SSL_TXT_RSA,	0,SSL_RSA,   0,SSL_AUTH_MASK|SSL_MKEY_MASK},
-	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,SSL_AUTH_MASK|SSL_MKEY_MASK},
-	{0,SSL_TXT_FZA,	0,SSL_FZA,   0,SSL_AUTH_MASK|SSL_MKEY_MASK|SSL_ENC_MASK},
+	{0,SSL_TXT_NULL,0,SSL_NULL,  0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_RSA,	0,SSL_RSA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
+	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
+	{0,SSL_TXT_FZA,	0,SSL_FZA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK|SSL_ENC_MASK,0},
 
-	{0,SSL_TXT_EXP40, 0,SSL_EXP40, 0,SSL_EXP_MASK},
-	{0,SSL_TXT_EXPORT,0,SSL_EXP40, 0,SSL_EXP_MASK},
-	{0,SSL_TXT_EXP56, 0,SSL_EXP56, 0,SSL_EXP_MASK},
-	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,SSL_SSL_MASK},
-	{0,SSL_TXT_SSLV3, 0,SSL_SSLV3, 0,SSL_SSL_MASK},
-	{0,SSL_TXT_TLSV1, 0,SSL_TLSV1, 0,SSL_SSL_MASK},
-	{0,SSL_TXT_LOW,   0,SSL_LOW,   0,SSL_STRONG_MASK},
-	{0,SSL_TXT_MEDIUM,0,SSL_MEDIUM,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_HIGH,  0,SSL_HIGH,  0,SSL_STRONG_MASK},
+	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,0,0,0,SSL_SSL_MASK,0},
+	{0,SSL_TXT_SSLV3, 0,SSL_SSLV3, 0,0,0,0,SSL_SSL_MASK,0},
+	{0,SSL_TXT_TLSV1, 0,SSL_TLSV1, 0,0,0,0,SSL_SSL_MASK,0},
+
+	{0,SSL_TXT_EXP   ,0, 0,SSL_EXPORT, 0,0,0,0,SSL_EXP_MASK},
+	{0,SSL_TXT_EXPORT,0, 0,SSL_EXPORT, 0,0,0,0,SSL_EXP_MASK},
+	{0,SSL_TXT_EXP40, 0, 0, SSL_EXP40, 0,0,0,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_EXP56, 0, 0, SSL_EXP56, 0,0,0,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_LOW,   0, 0,   SSL_LOW, 0,0,0,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_MEDIUM,0, 0,SSL_MEDIUM, 0,0,0,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_HIGH,  0, 0,  SSL_HIGH, 0,0,0,0,SSL_STRONG_MASK},
 	};
 
 static int init_ciphers=1;
-static void load_ciphers();
-
-static int cmp_by_name(SSL_CIPHER **a, SSL_CIPHER **b)
-	{
-	return(strcmp((*a)->name,(*b)->name));
-	}
 
 static void load_ciphers(void)
 	{
@@ -294,170 +277,328 @@ static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 	*tail=curr;
 	}
 
-STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *ssl_method,
-		STACK_OF(SSL_CIPHER) **cipher_list,
-		STACK_OF(SSL_CIPHER) **cipher_list_by_id,
-		char *str)
+static unsigned long ssl_cipher_get_disabled(void)
 	{
-	SSL_CIPHER *c;
-	char *l;
-	STACK_OF(SSL_CIPHER) *ret=NULL,*ok=NULL;
-#define CL_BUF	40
-	char buf[CL_BUF];
-	char *tmp_str=NULL;
-	unsigned long mask,algorithms,ma;
-	char *start;
-	int i,j,k,num=0,ch,multi;
-	unsigned long al;
-	STACK *ca_list=NULL;
-	int current_x,num_x;
-	CIPHER_CHOICE *ops=NULL;
-	CIPHER_ORDER *list=NULL,*head=NULL,*tail=NULL,*curr,*tail2,*curr2;
-	int list_num;
-	int type;
-	SSL_CIPHER c_tmp,*cp;
+	unsigned long mask;
 
-	if (str == NULL) return(NULL);
-
-	if (strncmp(str,"DEFAULT",7) == 0)
-		{
-		i=strlen(str)+2+strlen(SSL_DEFAULT_CIPHER_LIST);
-		if ((tmp_str=Malloc(i)) == NULL)
-			{
-			SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
-		strcpy(tmp_str,SSL_DEFAULT_CIPHER_LIST);
-		strcat(tmp_str,":");
-		strcat(tmp_str,&(str[7]));
-		str=tmp_str;
-		}
-	if (init_ciphers) load_ciphers();
-
-	num=ssl_method->num_ciphers();
-
-	if ((ret=sk_SSL_CIPHER_new(NULL)) == NULL) goto err;
-	if ((ca_list=(STACK *)sk_new(cmp_by_name)) == NULL) goto err;
-
-	mask =SSL_kFZA;
+	mask = SSL_kFZA;
 #ifdef NO_RSA
-	mask|=SSL_aRSA|SSL_kRSA;
+	mask |= SSL_aRSA|SSL_kRSA;
 #endif
 #ifdef NO_DSA
-	mask|=SSL_aDSS;
+	mask |= SSL_aDSS;
 #endif
 #ifdef NO_DH
-	mask|=SSL_kDHr|SSL_kDHd|SSL_kEDH|SSL_aDH;
+	mask |= SSL_kDHr|SSL_kDHd|SSL_kEDH|SSL_aDH;
 #endif
 
 #ifdef SSL_FORBID_ENULL
-	mask|=SSL_eNULL;
+	mask |= SSL_eNULL;
 #endif
 
-	mask|=(ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL)?SSL_DES :0;
-	mask|=(ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL)?SSL_3DES:0;
-	mask|=(ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL)?SSL_RC4 :0;
-	mask|=(ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL)?SSL_RC2 :0;
-	mask|=(ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL)?SSL_IDEA:0;
-	mask|=(ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL)?SSL_eFZA:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES :0;
+	mask |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 :0;
+	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
+	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
 
-	mask|=(ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL)?SSL_MD5 :0;
-	mask|=(ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL)?SSL_SHA1:0;
+	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
+	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
 
-	if ((list=(CIPHER_ORDER *)Malloc(sizeof(CIPHER_ORDER)*num)) == NULL)
-		goto err;
+	return(mask);
+	}
+
+static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
+		int num_of_ciphers, unsigned long mask, CIPHER_ORDER *list,
+		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+	{
+	unsigned int i, list_num;
+	SSL_CIPHER *c;
+
+	/*
+	 * We have num_of_ciphers descriptions compiled in, depending on the
+	 * method selected (SSLv2 and/or SSLv3, TLSv1 etc).
+	 * These will later be sorted in a linked list with at most num
+	 * entries.
+	 */
 
 	/* Get the initial list of ciphers */
-	list_num=0;
-	for (i=0; i<num; i++)
+	list_num = 0;	/* actual count of ciphers */
+	for (i = 0; i < num_of_ciphers; i++)
 		{
-		c=ssl_method->get_cipher((unsigned int)i);
+		c = ssl_method->get_cipher(i);
 		/* drop those that use any of that is not available */
 		if ((c != NULL) && c->valid && !(c->algorithms & mask))
 			{
-			list[list_num].cipher=c;
-			list[list_num].next=NULL;
-			list[list_num].prev=NULL;
-			list[list_num].active=0;
+			list[list_num].cipher = c;
+			list[list_num].next = NULL;
+			list[list_num].prev = NULL;
+			list[list_num].active = 0;
 			list_num++;
+			/*
 			if (!sk_push(ca_list,(char *)c)) goto err;
+			*/
 			}
 		}
-	
-	for (i=1; i<list_num-1; i++)
+
+	/*
+	 * Prepare linked list from list entries
+	 */	
+	for (i = 1; i < list_num - 1; i++)
 		{
-		list[i].prev= &(list[i-1]);
-		list[i].next= &(list[i+1]);
+		list[i].prev = &(list[i-1]);
+		list[i].next = &(list[i+1]);
 		}
 	if (list_num > 0)
 		{
-		head= &(list[0]);
-		head->prev=NULL;
-		head->next= &(list[1]);
-		tail= &(list[list_num-1]);
-		tail->prev= &(list[list_num-2]);
-		tail->next=NULL;
+		(*head_p) = &(list[0]);
+		(*head_p)->prev = NULL;
+		(*head_p)->next = &(list[1]);
+		(*tail_p) = &(list[list_num - 1]);
+		(*tail_p)->prev = &(list[list_num - 2]);
+		(*tail_p)->next = NULL;
 		}
+	}
 
-	/* special case */
-	cipher_aliases[0].algorithms &= ~mask;
+static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
+			int num_of_group_aliases, unsigned long mask,
+			CIPHER_ORDER *head)
+	{
+	CIPHER_ORDER *ciph_curr;
+	SSL_CIPHER **ca_curr;
+	int i;
 
-	/* get the aliases */
-	k=sizeof(cipher_aliases)/sizeof(SSL_CIPHER);
-	for (j=0; j<k; j++)
+	/*
+	 * First, add the real ciphers as already collected
+	 */
+	ciph_curr = head;
+	ca_curr = ca_list;
+	while (ciph_curr != NULL)
 		{
-		al=cipher_aliases[j].algorithms;
-		/* Drop those that are not relevent */
-		if ((al & mask) == al) continue;
-		if (!sk_push(ca_list,(char *)&(cipher_aliases[j]))) goto err;
+		*ca_curr = ciph_curr->cipher;
+		ca_curr++;
+		ciph_curr = ciph_curr->next;
 		}
 
-	/* ca_list now holds a 'stack' of SSL_CIPHERS, some real, some
-	 * 'aliases' */
+	/*
+	 * Now we add the available ones from the cipher_aliases[] table.
+	 * They represent either an algorithm, that must be fully
+	 * supported (not match any bit in mask) or represent a cipher
+	 * strength value (will be added in any case because algorithms=0).
+	 */
+	for (i = 0; i < num_of_group_aliases; i++)
+		{
+		if ((i == 0) ||		/* always fetch "ALL" */
+		    !(cipher_aliases[i].algorithms & mask))
+			{
+			*ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
+			ca_curr++;
+			}
+		}
 
-	/* how many parameters are there? */
-	num=1;
-	for (l=str; *l; l++)
-		if (ITEM_SEP(*l))
-			num++;
-	ops=(CIPHER_CHOICE *)Malloc(sizeof(CIPHER_CHOICE)*num);
-	if (ops == NULL) goto err;
-	memset(ops,0,sizeof(CIPHER_CHOICE)*num);
+	*ca_curr = NULL;	/* end of list */
+	}
 
-	/* we now parse the input string and create our operations */
-	l=str;
-	i=0;
-	current_x=0;
+static void ssl_cipher_apply_rule(unsigned long algorithms, unsigned long mask,
+		unsigned long algo_strength, unsigned long mask_strength,
+		int rule, int strength_bits, CIPHER_ORDER *list,
+		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+	{
+	CIPHER_ORDER *head, *tail, *curr, *curr2, *tail2;
+	SSL_CIPHER *cp;
+	unsigned long ma, ma_s;
 
+#ifdef CIPHER_DEBUG
+	printf("Applying rule %d with %08lx %08lx %08lx %08lx (%d)\n",
+		rule, algorithms, mask, algo_strength, mask_strength,
+		strength_bits);
+#endif
+
+	curr = head = *head_p;
+	curr2 = head;
+	tail2 = tail = *tail_p;
 	for (;;)
 		{
-		ch= *l;
+		if ((curr == NULL) || (curr == tail2)) break;
+		curr = curr2;
+		curr2 = curr->next;
 
-		if (ch == '\0') break;
+		cp = curr->cipher;
 
+		/*
+		 * Selection criteria is either the number of strength_bits
+		 * or the algorithm used.
+		 */
+		if (strength_bits == -1)
+			{
+			ma = mask & cp->algorithms;
+			ma_s = mask_strength & cp->algo_strength;
+
+#ifdef CIPHER_DEBUG
+			printf("\nName: %s:\nAlgo = %08lx Algo_strength = %08lx\nMask = %08lx Mask_strength %08lx\n", cp->name, cp->algorithms, cp->algo_strength, mask, mask_strength);
+			printf("ma = %08lx ma_s %08lx, ma&algo=%08lx, ma_s&algos=%08lx\n", ma, ma_s, ma&algorithms, ma_s&algo_strength);
+#endif
+			/*
+			 * Select: if none of the mask bit was met from the
+			 * cipher or not all of the bits were met, the
+			 * selection does not apply.
+			 */
+			if (((ma == 0) && (ma_s == 0)) ||
+			    ((ma & algorithms) != ma) ||
+			    ((ma_s & algo_strength) != ma_s))
+				continue; /* does not apply */
+			}
+		else if (strength_bits != cp->strength_bits)
+			continue;	/* does not apply */
+
+#ifdef CIPHER_DEBUG
+		printf("Action = %d\n", rule);
+#endif
+
+		/* add the cipher if it has not been added yet. */
+		if (rule == CIPHER_ADD)
+			{
+			if (!curr->active)
+				{
+				ll_append_tail(&head, curr, &tail);
+				curr->active = 1;
+				}
+			}
+		/* Move the added cipher to this location */
+		else if (rule == CIPHER_ORD)
+			{
+			if (curr->active)
+				{
+				ll_append_tail(&head, curr, &tail);
+				}
+			}
+		else if	(rule == CIPHER_DEL)
+			curr->active = 0;
+		else if (rule == CIPHER_KILL)
+			{
+			if (head == curr)
+				head = curr->next;
+			else
+				curr->prev->next = curr->next;
+			if (tail == curr)
+				tail = curr->prev;
+			curr->active = 0;
+			if (curr->next != NULL)
+				curr->next->prev = curr->prev;
+			if (curr->prev != NULL)
+				curr->prev->next = curr->next;
+			curr->next = NULL;
+			curr->prev = NULL;
+			}
+		}
+
+	*head_p = head;
+	*tail_p = tail;
+	}
+
+static int ssl_cipher_strength_sort(CIPHER_ORDER *list, CIPHER_ORDER **head_p,
+				     CIPHER_ORDER **tail_p)
+	{
+	int max_strength_bits, i, *number_uses;
+	CIPHER_ORDER *curr;
+
+	/*
+	 * This routine sorts the ciphers with descending strength. The sorting
+	 * must keep the pre-sorted sequence, so we apply the normal sorting
+	 * routine as '+' movement to the end of the list.
+	 */
+	max_strength_bits = 0;
+	curr = *head_p;
+	while (curr != NULL)
+		{
+		if (curr->active &&
+		    (curr->cipher->strength_bits > max_strength_bits))
+		    max_strength_bits = curr->cipher->strength_bits;
+		curr = curr->next;
+		}
+
+	number_uses = Malloc((max_strength_bits + 1) * sizeof(int));
+	if (!number_uses)
+	{
+		SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT,ERR_R_MALLOC_FAILURE);
+		return(0);
+	}
+	memset(number_uses, 0, (max_strength_bits + 1) * sizeof(int));
+
+	/*
+	 * Now find the strength_bits values actually used
+	 */
+	curr = *head_p;
+	while (curr != NULL)
+		{
+		if (curr->active)
+			number_uses[curr->cipher->strength_bits]++;
+		curr = curr->next;
+		}
+#if 0
+	/*
+	 * Go through the list of used strength_bits values in descending
+	 * order, omit strength_bits "0".
+	 */
+	for (i = max_strength_bits; i > 0; i--)
+	/* Do we really want this? If so "ALL:eNULL:@STRENGTH" puts eNULL
+         * ciphers first???
+         */
+
+#else
+	for (i = max_strength_bits; i >= 0; i--)
+#endif
+		if (number_uses[i] > 0)
+			ssl_cipher_apply_rule(0, 0, 0, 0, CIPHER_ORD, i,
+					list, head_p, tail_p);
+
+	Free(number_uses);
+	return(1);
+	}
+
+static int ssl_cipher_process_rulestr(const char *rule_str,
+		CIPHER_ORDER *list, CIPHER_ORDER **head_p,
+		CIPHER_ORDER **tail_p, SSL_CIPHER **ca_list)
+	{
+	unsigned long algorithms, mask, algo_strength, mask_strength;
+	const char *l, *start, *buf;
+	int j, multi, found, rule, retval, ok, buflen;
+	char ch;
+
+	retval = 1;
+	l = rule_str;
+	for (;;)
+		{
+		ch = *l;
+
+		if (ch == '\0')
+			break;		/* done */
 		if (ch == '-')
-			{ j=CIPHER_DEL; l++; }
+			{ rule = CIPHER_DEL; l++; }
 		else if (ch == '+')
-			{ j=CIPHER_ORD; l++; }
+			{ rule = CIPHER_ORD; l++; }
 		else if (ch == '!')
-			{ j=CIPHER_KILL; l++; }
-		else	
-			{ j=CIPHER_ADD; }
+			{ rule = CIPHER_KILL; l++; }
+		else if (ch == '@')
+			{ rule = CIPHER_SPECIAL; l++; }
+		else
+			{ rule = CIPHER_ADD; }
 
 		if (ITEM_SEP(ch))
 			{
 			l++;
 			continue;
 			}
-		ops[current_x].type=j;
-		ops[current_x].algorithms=0;
-		ops[current_x].mask=0;
+
+		algorithms = mask = algo_strength = mask_strength = 0;
 
 		start=l;
 		for (;;)
 			{
-			ch= *l;
-			i=0;
+			ch = *l;
+			buf = l;
+			buflen = 0;
 #ifndef CHARSET_EBCDIC
 			while (	((ch >= 'A') && (ch <= 'Z')) ||
 				((ch >= '0') && (ch <= '9')) ||
@@ -467,12 +608,28 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *ssl_method,
 			while (	isalnum(ch) || (ch == '-'))
 #endif
 				 {
-				 buf[i]=ch;
-				 ch= *(++l);
-				 i++;
-				 if (i >= (CL_BUF-2)) break;
+				 ch = *(++l);
+				 buflen++;
 				 }
-			buf[i]='\0';
+
+			if (buflen == 0)
+				{
+				/*
+				 * We hit something, we cannot deal with,
+				 * it is no command or seperator nor
+				 * alphanumeric, so we call this an error.
+				 */
+				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
+				       SSL_R_INVALID_COMMAND);
+				retval = found = 0;
+				l++;
+				break;
+				}
+
+			if (rule == CIPHER_SPECIAL)
+				{
+				break;	/* special treatment */
+				}
 
 			/* check for multi-part specification */
 			if (ch == '+')
@@ -483,133 +640,236 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *ssl_method,
 			else
 				multi=0;
 
-			c_tmp.name=buf;
-			j=sk_find(ca_list,(char *)&c_tmp);
-			if (j < 0)
-				goto end_loop;
+			/*
+			 * Now search for the name in the ca_list. Be carefule
+			 * with the strncmp, because the "buflen" limitation
+			 * will make the rule "ADH:SOME" and the cipher
+			 * "ADH-MY-CIPHER" look like a match for buflen=3.
+			 * So additionally check, whether the cipher name found
+			 * has the correct length. We can save a strlen() call,
+			 * just checking for the '\0' at the right place is
+			 * sufficient, we have to strncmp() anyway.
+			 */
+			 j = found = 0;
+			 while (ca_list[j])
+				{
+				if ((ca_list[j]->name[buflen] == '\0') &&
+				    !strncmp(buf, ca_list[j]->name, buflen))
+					{
+					found = 1;
+					break;
+					}
+				else
+					j++;
+				}
+			if (!found)
+				break;	/* ignore this entry */
 
-			cp=(SSL_CIPHER *)sk_value(ca_list,j);
-			ops[current_x].algorithms|=cp->algorithms;
-			/* We add the SSL_SSL_MASK so we can match the
-			 * SSLv2 and SSLv3 versions of RC4-MD5 */
-			ops[current_x].mask|=cp->mask;
+			algorithms |= ca_list[j]->algorithms;
+			mask |= ca_list[j]->mask;
+			algo_strength |= ca_list[j]->algo_strength;
+			mask_strength |= ca_list[j]->mask_strength;
+
 			if (!multi) break;
 			}
-		current_x++;
-		if (ch == '\0') break;
-end_loop:
-		/* Make sure we scan until the next valid start point */
-		while ((*l != '\0') && ITEM_SEP(*l))
-			l++;
-		}
 
-	num_x=current_x;
-	current_x=0;
-
-	/* We will now process the list of ciphers, once for each category, to
-	 * decide what we should do with it. */
-	for (j=0; j<num_x; j++)
-		{
-		algorithms=ops[j].algorithms;
-		type=ops[j].type;
-		mask=ops[j].mask;
-
-		curr=head;
-		curr2=head;
-		tail2=tail;
-		for (;;)
-			{
-			if ((curr == NULL) || (curr == tail2)) break;
-			curr=curr2;
-			curr2=curr->next;
-
-			cp=curr->cipher;
-			ma=mask & cp->algorithms;
-			if ((ma == 0) || ((ma & algorithms) != ma))
-				{
-				/* does not apply */
-				continue;
-				}
-
-			/* add the cipher if it has not been added yet. */
-			if (type == CIPHER_ADD)
-				{
-				if (!curr->active)
-					{
-					ll_append_tail(&head,curr,&tail);
-					curr->active=1;
-					}
-				}
-			/* Move the added cipher to this location */
-			else if (type == CIPHER_ORD)
-				{
-				if (curr->active)
-					{
-					ll_append_tail(&head,curr,&tail);
-					}
-				}
-			else if	(type == CIPHER_DEL)
-				curr->active=0;
-			if (type == CIPHER_KILL)
-				{
-				if (head == curr)
-					head=curr->next;
+			/*
+			 * Ok, we have the rule, now apply it
+			 */
+			if (rule == CIPHER_SPECIAL)
+				{	/* special command */
+				ok = 0;
+				if (!strncmp(buf, "STRENGTH", buflen))
+					ok = ssl_cipher_strength_sort(list,
+							head_p, tail_p);
 				else
-					curr->prev->next=curr->next;
-				if (tail == curr)
-					tail=curr->prev;
-				curr->active=0;
-				if (curr->next != NULL)
-					curr->next->prev=curr->prev;
-				if (curr->prev != NULL)
-					curr->prev->next=curr->next;
-				curr->next=NULL;
-				curr->prev=NULL;
+					SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
+						SSL_R_INVALID_COMMAND);
+				if (ok == 0)
+					retval = 0;
+				/*
+				 * We do not support any "multi" options
+				 * together with "@", so through away the
+				 * rest of the command, if any left, until
+				 * end or ':' is found.
+				 */
+				while ((*l != '\0') && ITEM_SEP(*l))
+					l++;
 				}
-			}
+			else if (found)
+				{
+				ssl_cipher_apply_rule(algorithms, mask,
+					algo_strength, mask_strength, rule, -1,
+					list, head_p, tail_p);
+				}
+			else
+				{
+				while ((*l != '\0') && ITEM_SEP(*l))
+					l++;
+				}
+			if (*l == '\0') break; /* done */
 		}
 
-	for (curr=head; curr != NULL; curr=curr->next)
+	return(retval);
+	}
+
+STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+		STACK_OF(SSL_CIPHER) **cipher_list,
+		STACK_OF(SSL_CIPHER) **cipher_list_by_id,
+		const char *rule_str)
+	{
+	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
+	unsigned long disabled_mask;
+	STACK_OF(SSL_CIPHER) *cipherstack;
+	const char *rule_p;
+	CIPHER_ORDER *list = NULL, *head = NULL, *tail = NULL, *curr;
+	SSL_CIPHER **ca_list = NULL;
+
+	/*
+	 * Return with error if nothing to do.
+	 */
+	if (rule_str == NULL) return(NULL);
+
+	if (init_ciphers) load_ciphers();
+
+	/*
+	 * To reduce the work to do we only want to process the compiled
+	 * in algorithms, so we first get the mask of disabled ciphers.
+	 */
+	disabled_mask = ssl_cipher_get_disabled();
+
+	/*
+	 * Now we have to collect the available ciphers from the compiled
+	 * in ciphers. We cannot get more than the number compiled in, so
+	 * it is used for allocation.
+	 */
+	num_of_ciphers = ssl_method->num_ciphers();
+	list = (CIPHER_ORDER *)Malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
+	if (list == NULL)
+		{
+		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
+		return(NULL);	/* Failure */
+		}
+
+	ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers, disabled_mask,
+				   list, &head, &tail);
+
+	/*
+	 * We also need cipher aliases for selecting based on the rule_str.
+	 * There might be two types of entries in the rule_str: 1) names
+	 * of ciphers themselves 2) aliases for groups of ciphers.
+	 * For 1) we need the available ciphers and for 2) the cipher
+	 * groups of cipher_aliases added togehter in one list (otherwise
+	 * we would be happy with just the cipher_aliases table).
+	 */
+	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
+	num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
+	ca_list =
+		(SSL_CIPHER **)Malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
+	if (ca_list == NULL)
+		{
+		Free(list);
+		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
+		return(NULL);	/* Failure */
+		}
+	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases, disabled_mask,
+				   head);
+
+	/*
+	 * If the rule_string begins with DEFAULT, apply the default rule
+	 * before using the (possibly available) additional rules.
+	 */
+	ok = 1;
+	rule_p = rule_str;
+	if (strncmp(rule_str,"DEFAULT",7) == 0)
+		{
+		ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
+			list, &head, &tail, ca_list);
+		rule_p += 7;
+		if (*rule_p == ':')
+			rule_p++;
+		}
+
+	if (ok && (strlen(rule_p) > 0))
+		ok = ssl_cipher_process_rulestr(rule_p, list, &head, &tail,
+						ca_list);
+
+	Free(ca_list);	/* Not needed anymore */
+
+	if (!ok)
+		{	/* Rule processing failure */
+		Free(list);
+		return(NULL);
+		}
+	/*
+	 * Allocate new "cipherstack" for the result, return with error
+	 * if we cannot get one.
+	 */
+	if ((cipherstack = sk_SSL_CIPHER_new(NULL)) == NULL)
+		{
+		Free(list);
+		return(NULL);
+		}
+
+	/*
+	 * The cipher selection for the list is done. The ciphers are added
+	 * to the resulting precedence to the STACK_OF(SSL_CIPHER).
+	 */
+	for (curr = head; curr != NULL; curr = curr->next)
 		{
 		if (curr->active)
 			{
-			sk_SSL_CIPHER_push(ret,curr->cipher);
+			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
 #ifdef CIPHER_DEBUG
 			printf("<%s>\n",curr->cipher->name);
 #endif
 			}
 		}
+	Free(list);	/* Not needed any longer */
 
+	/*
+	 * The following passage is a little bit odd. If pointer variables
+	 * were supplied to hold STACK_OF(SSL_CIPHER) return information,
+	 * the old memory pointed to is free()ed. Then, however, the
+	 * cipher_list entry will be assigned just a copy of the returned
+	 * cipher stack. For cipher_list_by_id a copy of the cipher stack
+	 * will be created. See next comment...
+	 */
 	if (cipher_list != NULL)
 		{
 		if (*cipher_list != NULL)
 			sk_SSL_CIPHER_free(*cipher_list);
-		*cipher_list=ret;
+		*cipher_list = cipherstack;
 		}
 
 	if (cipher_list_by_id != NULL)
 		{
 		if (*cipher_list_by_id != NULL)
 			sk_SSL_CIPHER_free(*cipher_list_by_id);
-		*cipher_list_by_id=sk_SSL_CIPHER_dup(ret);
+		*cipher_list_by_id = sk_SSL_CIPHER_dup(cipherstack);
 		}
 
+	/*
+	 * Now it is getting really strange. If something failed during
+	 * the previous pointer assignement or if one of the pointers was
+	 * not requested, the error condition is met. That might be
+	 * discussable. The strange thing is however that in this case
+	 * the memory "ret" pointed to is "free()ed" and hence the pointer
+	 * cipher_list becomes wild. The memory reserved for
+	 * cipher_list_by_id however is not "free()ed" and stays intact.
+	 */
 	if (	(cipher_list_by_id == NULL) ||
 		(*cipher_list_by_id == NULL) ||
 		(cipher_list == NULL) ||
 		(*cipher_list == NULL))
-		goto err;
+		{
+		sk_SSL_CIPHER_free(cipherstack);
+		return(NULL);
+		}
+
 	sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,ssl_cipher_ptr_id_cmp);
 
-	ok=ret;
-	ret=NULL;
-err:
-	if (tmp_str) Free(tmp_str);
-	if (ops != NULL) Free(ops);
-	if (ret != NULL) sk_SSL_CIPHER_free(ret);
-	if (ca_list != NULL) sk_free(ca_list);
-	if (list != NULL) Free(list);
-	return(ok);
+	return(cipherstack);
 	}
 
 char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
@@ -617,15 +877,16 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	int is_export,pkl,kl;
 	char *ver,*exp;
 	char *kx,*au,*enc,*mac;
-	unsigned long alg,alg2;
+	unsigned long alg,alg2,alg_s;
 	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 	
 	alg=cipher->algorithms;
+	alg_s=cipher->algo_strength;
 	alg2=cipher->algorithm2;
 
-	is_export=SSL_IS_EXPORT(alg);
-	pkl=SSL_EXPORT_PKEYLENGTH(alg);
-	kl=SSL_EXPORT_KEYLENGTH(alg);
+	is_export=SSL_C_IS_EXPORT(cipher);
+	pkl=SSL_C_EXPORT_PKEYLENGTH(cipher);
+	kl=SSL_C_EXPORT_KEYLENGTH(cipher);
 	exp=is_export?" export":"";
 
 	if (alg & SSL_SSLV2)
@@ -755,34 +1016,13 @@ const char *SSL_CIPHER_get_name(SSL_CIPHER *c)
 /* number of bits for symetric cipher */
 int SSL_CIPHER_get_bits(SSL_CIPHER *c, int *alg_bits)
 	{
-	int ret=0,a=0;
-	const EVP_CIPHER *enc;
-	const EVP_MD *md;
-	SSL_SESSION ss;
+	int ret=0;
 
 	if (c != NULL)
 		{
-		ss.cipher=c;
-		if (!ssl_cipher_get_evp(&ss,&enc,&md,NULL))
-			return(0);
-
-		a=EVP_CIPHER_key_length(enc)*8;
-
-		if (SSL_C_IS_EXPORT(c))
-			{
-			ret=SSL_C_EXPORT_KEYLENGTH(c)*8;
-			}
-		else
-			{
-			if (c->algorithm2 & SSL2_CF_8_BYTE_ENC)
-				ret=64;
-			else
-				ret=a;
-			}
+		if (alg_bits != NULL) *alg_bits = c->alg_bits;
+		ret = c->strength_bits;
 		}
-
-	if (alg_bits != NULL) *alg_bits=a;
-	
 	return(ret);
 	}
 

@@ -4,6 +4,15 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Apply Lutz Behnke's 56bit cipher patch. This should fix the problems with cipher
+     ordering and the new EXPORT1024 ciphers. Only two minor changes have been
+     made, the error reason codes have been altered and the @STRENGTH sorting
+     behaviour changed so eNULL ciphers are also sorted (if present).
+
+     One other addition: the "ciphers" program didn't check the return code
+     of SSL_CTX_set_cipher_list().
+     [Lutz Behnke <behnke@trustcenter.de>, minor changes by Steve Henson]
+
   *) Minor change to 'x509' utility. The -CAcreateserial option now uses 1
      for the first serial number and places 2 in the serial number file. This
      avoids problems when the root CA is created with serial number zero and

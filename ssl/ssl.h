@@ -123,8 +123,9 @@ extern "C" {
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA"
-#define SSL_TXT_EXP40		"EXP"
+#define SSL_TXT_EXP		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
+#define SSL_TXT_EXP40		"EXPORT40"
 #define SSL_TXT_EXP56		"EXPORT56"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
@@ -134,10 +135,10 @@ extern "C" {
 /* 'DEFAULT' at the start of the cipher list insert the following string
  * in addition to this being the default cipher string */
 #ifndef NO_RSA
-#define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP"
+#define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH"
 #else
 #define SSL_ALLOW_ADH
-#define SSL_DEFAULT_CIPHER_LIST	"HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP"
+#define SSL_DEFAULT_CIPHER_LIST	"ALL:ADH+3DES:ADH+RC4:ADH+DES:@STRENGTH"
 #endif
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
@@ -170,8 +171,12 @@ typedef struct ssl_cipher_st
 	const char *name;		/* text name */
 	unsigned long id;		/* id, 4 bytes, first is version */
 	unsigned long algorithms;	/* what ciphers are used */
+	unsigned long algo_strength;	/* strength and export flags */
 	unsigned long algorithm2;	/* Extra flags */
+	int strength_bits;		/* Number of bits really used */
+	int alg_bits;			/* Number of bits for algorithm */
 	unsigned long mask;		/* used for matching */
+	unsigned long mask_strength;	/* also used for matching */
 	} SSL_CIPHER;
 
 DECLARE_STACK_OF(SSL_CIPHER)
@@ -890,7 +895,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 #endif
 
-int	SSL_CTX_set_cipher_list(SSL_CTX *,char *str);
+int	SSL_CTX_set_cipher_list(SSL_CTX *,const char *str);
 SSL_CTX *SSL_CTX_new(SSL_METHOD *meth);
 void	SSL_CTX_free(SSL_CTX *);
 long SSL_CTX_set_timeout(SSL_CTX *ctx,long t);
@@ -922,7 +927,7 @@ void	SSL_set_bio(SSL *s, BIO *rbio,BIO *wbio);
 BIO *	SSL_get_rbio(SSL *s);
 BIO *	SSL_get_wbio(SSL *s);
 #endif
-int	SSL_set_cipher_list(SSL *s, char *str);
+int	SSL_set_cipher_list(SSL *s, const char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(SSL *s);
 int	SSL_get_verify_depth(SSL *s);
@@ -1248,6 +1253,8 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_CERT_INSTANTIATE			 214
 #define SSL_F_SSL_CERT_NEW				 162
 #define SSL_F_SSL_CHECK_PRIVATE_KEY			 163
+#define SSL_F_SSL_CIPHER_PROCESS_RULESTR		 230
+#define SSL_F_SSL_CIPHER_STRENGTH_SORT			 231
 #define SSL_F_SSL_CLEAR					 164
 #define SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD		 165
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
@@ -1370,6 +1377,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_INTERNAL_ERROR				 157
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
+#define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_PURPOSE				 278
 #define SSL_R_INVALID_TRUST				 279
 #define SSL_R_LENGTH_MISMATCH				 159

@@ -923,7 +923,7 @@ const char *SSL_get_cipher_list(SSL *s,int n)
 	}
 
 /** specify the ciphers to be used by default by the SSL_CTX */
-int SSL_CTX_set_cipher_list(SSL_CTX *ctx,char *str)
+int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
 	
@@ -934,7 +934,7 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx,char *str)
 	}
 
 /** specify the ciphers to be used by the SSL */
-int SSL_set_cipher_list(SSL *s,char *str)
+int SSL_set_cipher_list(SSL *s,const char *str)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
 	
@@ -1362,7 +1362,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	c=s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 	alg=s->s3->tmp.new_cipher->algorithms;
-	is_export=SSL_IS_EXPORT(alg);
+	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	mask=is_export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 

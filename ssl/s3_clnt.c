@@ -1688,13 +1688,13 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 #endif
 #endif
 
-	if (SSL_IS_EXPORT(algs) && !has_bits(i,EVP_PKT_EXP))
+	if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && !has_bits(i,EVP_PKT_EXP))
 		{
 #ifndef NO_RSA
 		if (algs & SSL_kRSA)
 			{
 			if (rsa == NULL
-			    || RSA_size(rsa) > SSL_EXPORT_PKEYLENGTH(algs))
+			    || RSA_size(rsa) > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))
 				{
 				SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
 				goto f_err;
@@ -1706,7 +1706,7 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 			if (algs & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			    {
 			    if (dh == NULL
-				|| DH_size(dh) > SSL_EXPORT_PKEYLENGTH(algs))
+				|| DH_size(dh) > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))
 				{
 				SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_EXPORT_TMP_DH_KEY);
 				goto f_err;
