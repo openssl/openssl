@@ -547,12 +547,13 @@ EOF
   ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
   i386-apple-darwin*) OUT="darwin-i386-cc" ;;
   sparc64-*-linux2)
-	#Before we can uncomment following lines we have to wait at least
-	#till 64-bit glibc for SPARC is operational:-(
-	#echo "WARNING! If you wish to build 64-bit library, then you have to"
-	#echo "         invoke './Configure linux64-sparcv9' *manually*."
-	#echo "         Type return if you want to continue, Ctrl-C to abort."
-	#read waste < /dev/tty
+	echo "WARNING! If *know* that your GNU C supports 64-bit/V9 ABI"
+	echo "         and wish to build 64-bit library, then you have to"
+	echo "         invoke './Configure linux64-sparcv9' *manually*."
+	if [ "$TEST" = "false" ]; then
+	  echo "          You have about 5 seconds to press Ctrl-C to abort."
+	  (stty -icanon min 0 time 50; read waste) < /dev/tty
+	fi
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
 	KARCH=`awk '/^type/{print$3}' /proc/cpuinfo`
