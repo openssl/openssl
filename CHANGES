@@ -4,6 +4,9 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Fix OAEP check.
+     [Ulf Möller, Bodo Möller]
+
   *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
      RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
      when fixing the server behaviour for backwards-compatible 'client
