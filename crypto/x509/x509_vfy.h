@@ -65,12 +65,12 @@
 #ifndef HEADER_X509_VFY_H
 #define HEADER_X509_VFY_H
 
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
 
 /* Outer object */
 typedef struct x509_hash_dir_st

@@ -59,15 +59,15 @@
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_RC4
 #error RC4 is disabled.
 #endif
 
 #include <openssl/opensslconf.h> /* RC4_INT */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct rc4_key_st
 	{

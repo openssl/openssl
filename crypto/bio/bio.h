@@ -59,13 +59,13 @@
 #ifndef HEADER_BIO_H
 #define HEADER_BIO_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/crypto.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 /* These are the 'types' of BIOs */
 #define BIO_TYPE_NONE		0

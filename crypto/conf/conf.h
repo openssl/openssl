@@ -59,15 +59,15 @@
 #ifndef  HEADER_CONF_H
 #define HEADER_CONF_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
 #include <openssl/e_os.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 	{

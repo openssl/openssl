@@ -59,13 +59,13 @@
 #ifndef HEADER_RSAREF_H
 #define HEADER_RSAREF_H
 
+#ifndef NO_RSA
+#include <openssl/rsa.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
  
-#ifndef NO_RSA
-#include <openssl/rsa.h>
-
 /* RSAeuro */
 /*#define  RSAref_MAX_BITS		2048*/
 
@@ -133,6 +133,10 @@ int R_RandomFinal(RSARandomState *rnd);
 
 void ERR_load_RSAREF_strings(void );
 RSA_METHOD *RSA_PKCS1_RSAref(void );
+
+#ifdef  __cplusplus
+}
+#endif
 #endif
 
 /* BEGIN ERROR CODES */
@@ -173,8 +177,4 @@ RSA_METHOD *RSA_PKCS1_RSAref(void );
 #define RSAREF_R_SIGNATURE				 0x040b
 #define RSAREF_R_SIGNATURE_ENCODING			 0x040c
 
-#ifdef  __cplusplus
-}
 #endif
-#endif
-

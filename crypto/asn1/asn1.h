@@ -59,10 +59,6 @@
 #ifndef HEADER_ASN1_H
 #define HEADER_ASN1_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <time.h>
 #include <openssl/bn.h>
 #include <openssl/stack.h>
@@ -70,6 +66,10 @@ extern "C" {
 
 #ifdef VMS
 #include <openssl/vms_idhacks.h>
+#endif
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 #define V_ASN1_UNIVERSAL		0x00

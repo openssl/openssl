@@ -59,15 +59,15 @@
 #ifndef HEADER_RSA_H
 #define HEADER_RSA_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 
 #ifdef NO_RSA
 #error RSA is disabled.
+#endif
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 typedef struct rsa_st RSA;

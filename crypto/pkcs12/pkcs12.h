@@ -59,12 +59,12 @@
 #ifndef HEADER_PKCS12_H
 #define HEADER_PKCS12_H
 
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/bio.h>
-#include <openssl/x509.h>
 
 #define PKCS12_KEY_ID	1
 #define PKCS12_IV_ID	2

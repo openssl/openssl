@@ -59,10 +59,6 @@
 #ifndef HEADER_OBJECTS_H
 #define HEADER_OBJECTS_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
@@ -966,6 +962,10 @@ extern "C" {
 
 #define	OBJ_NAME_ALIAS		0x8000
 
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct obj_name_st
 	{

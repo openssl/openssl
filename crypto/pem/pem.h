@@ -59,13 +59,13 @@
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #define PEM_BUFSIZE		1024
 

@@ -59,11 +59,11 @@
 #ifndef HEADER_MDC2_H
 #define HEADER_MDC2_H
 
+#include <openssl/des.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/des.h>
 
 #ifdef NO_MDC2
 #error MDC2 is disabled.

@@ -2,11 +2,11 @@
 #ifndef HEADER_COMP_H
 #define HEADER_COMP_H
 
+#include <openssl/crypto.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/crypto.h>
 
 typedef struct comp_method_st
 	{

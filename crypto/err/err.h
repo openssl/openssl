@@ -59,12 +59,12 @@
 #ifndef HEADER_ERR_H
 #define HEADER_ERR_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
 #ifndef NO_FP_API
 #include <stdio.h>
+#endif
+
+#ifdef	__cplusplus
+extern "C" {
 #endif
 
 /* The following is a bit of a trick to help the object files only contain

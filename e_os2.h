@@ -3,11 +3,11 @@
 #ifndef HEADER_E_OS2_H
 #define HEADER_E_OS2_H
 
+#include <openssl/opensslconf.h> /* OPENSSL_UNISTD */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/opensslconf.h> /* OPENSSL_UNISTD */
 
 #ifdef MSDOS
 # define OPENSSL_UNISTD_IO <io.h>

@@ -59,10 +59,6 @@
 #ifndef HEADER_IDEA_H
 #define HEADER_IDEA_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_IDEA
 #error IDEA is disabled.
 #endif
@@ -73,6 +69,10 @@ extern "C" {
 #include <openssl/opensslconf.h> /* IDEA_INT */
 #define IDEA_BLOCK	8
 #define IDEA_KEY_LENGTH	16
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct idea_key_st
 	{

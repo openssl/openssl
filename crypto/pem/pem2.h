@@ -57,4 +57,12 @@
  * Ben 30 Jan 1999.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ERR_load_PEM_strings(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -59,11 +59,11 @@
 #ifndef HEADER_ASN1_MAC_H
 #define HEADER_ASN1_MAC_H
 
+#include <openssl/asn1.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/asn1.h>
 
 #ifndef ASN1_MAC_ERR_LIB
 #define ASN1_MAC_ERR_LIB	ERR_LIB_ASN1

@@ -59,10 +59,6 @@
 #ifndef HEADER_TXT_DB_H
 #define HEADER_TXT_DB_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
 
@@ -72,6 +68,10 @@ extern "C" {
 #define DB_ERROR_INDEX_OUT_OF_RANGE	3
 #define DB_ERROR_NO_INDEX		4
 #define DB_ERROR_INSERT_INDEX_CLASH    	5
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct txt_db_st
 	{

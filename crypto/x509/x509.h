@@ -59,10 +59,6 @@
 #ifndef HEADER_X509_H
 #define HEADER_X509_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef VMS
 #undef X509_REVOKED_get_ext_by_critical
 #define X509_REVOKED_get_ext_by_critical X509_REVOKED_get_ext_by_critic
@@ -86,6 +82,10 @@ extern "C" {
 
 #include <openssl/evp.h>
 
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #ifdef WIN32
 /* Under Win32 this is defined in wincrypt.h */
@@ -445,8 +445,16 @@ typedef struct pkcs8_priv_key_info_st
         STACK_OF(X509_ATTRIBUTE) *attributes;
         } PKCS8_PRIV_KEY_INFO;
 
+#ifdef  __cplusplus
+}
+#endif
+
 #include <openssl/x509_vfy.h>
 #include <openssl/pkcs7.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #ifdef SSLEAY_MACROS
 #define X509_verify(a,r) ASN1_verify((int (*)())i2d_X509_CINF,a->sig_alg,\

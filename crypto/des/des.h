@@ -59,10 +59,6 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_DES
 #error DES is disabled.
 #endif
@@ -74,6 +70,10 @@ extern "C" {
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];

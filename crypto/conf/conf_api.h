@@ -59,12 +59,12 @@
 #ifndef  HEADER_CONF_API_H
 #define HEADER_CONF_API_H
 
+#include <openssl/lhash.h>
+#include <openssl/conf.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/lhash.h>
-#include <openssl/conf.h>
 
 /* Up until OpenSSL 0.9.5a, this was new_section */
 CONF_VALUE *_CONF_new_section(CONF *conf, char *section);

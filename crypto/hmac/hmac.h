@@ -58,10 +58,6 @@
 #ifndef HEADER_HMAC_H
 #define HEADER_HMAC_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_HMAC
 #error HMAC is disabled.
 #endif
@@ -69,6 +65,10 @@ extern "C" {
 #include <openssl/evp.h>
 
 #define HMAC_MAX_MD_CBLOCK	64
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct hmac_ctx_st
 	{

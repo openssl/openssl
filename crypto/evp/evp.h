@@ -59,10 +59,6 @@
 #ifndef HEADER_ENVELOPE_H
 #define HEADER_ENVELOPE_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
 #ifndef NO_MD2
 #include <openssl/md2.h>
 #endif
@@ -146,6 +142,10 @@ extern "C" {
 #define EVP_PKEY_DSA3	NID_dsaWithSHA1
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do

@@ -65,10 +65,6 @@
 #ifndef HEADER_DSA_H
 #define HEADER_DSA_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_DSA
 #error DSA is disabled.
 #endif
@@ -80,6 +76,10 @@ extern "C" {
 #endif
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct dsa_st DSA;
 

@@ -59,10 +59,6 @@
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_RC2
 #error RC2 is disabled.
 #endif
@@ -73,6 +69,10 @@ extern "C" {
 #include <openssl/opensslconf.h> /* RC2_INT */
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct rc2_key_st
 	{

@@ -59,15 +59,15 @@
 #ifndef HEADER_PKCS7_H
 #define HEADER_PKCS7_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
 #ifdef VMS
 #include <openssl/vms_idhacks.h>
+#endif
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 #ifdef WIN32

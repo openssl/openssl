@@ -63,12 +63,12 @@
 #ifndef HEADER_LHASH_H
 #define HEADER_LHASH_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifndef NO_FP_API
 #include <stdio.h>
+#endif
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 typedef struct lhash_node_st
