@@ -716,12 +716,13 @@ doapr_outch(
     if (buffer) {
 	while (*currlen >= *maxlen) {
 	    if (*buffer == NULL) {
-		assert(*sbuffer != NULL);
 		if (*maxlen == 0)
 		    *maxlen = 1024;
 		*buffer = OPENSSL_malloc(*maxlen);
-		if (*currlen > 0)
+		if (*currlen > 0) {
+		    assert(*sbuffer != NULL);
 		    memcpy(*buffer, *sbuffer, *currlen);
+		}
 		*sbuffer = NULL;
 	    } else {
 		*maxlen += 1024;
