@@ -243,7 +243,7 @@ fi
 # Now NeXT
 ISNEXT=`hostinfo 2>/dev/null`
 case "$ISNEXT" in
-    *NeXT Mach 3.3*)
+    *'NeXT Mach 3.3'*)
 	echo "whatever-next-nextstep3.3"; exit 0
 	;;
     *NeXT*)
