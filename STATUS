@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/24 16:10:33 $
+  ______________                           $Date: 2000/03/24 16:55:32 $
 
   DEVELOPMENT STATE
 
@@ -16,6 +16,7 @@
 			solaris-sparcv9-cc		- passed
                        0.9.5a-beta2 is available.
                         linux-elf                       - passed
+                        linux-ppc (egcs 2.91.66)        - passed
                         OpenBSD-elf                     - passed
                         FreeBSD-elf (i586-pc-freebsd3.2)- passed
                         solaris-sparcv9-cc              - passed
