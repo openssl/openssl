@@ -31,9 +31,8 @@ then from the VC++ environment at a prompt do:
 
 nmake -f ms\ntdll.mak
 
-you may get a warning about too many rules but if all is well it should all
-compile and you will have some DLLs and executables in out32dll. If you want
-to try the tests then cd to out32dll and run ..\ms\test
+If all is well it should compile and you will have some DLLs and executables
+in out32dll. If you want to try the tests then cd to out32dll and run ..\ms\test
 
 Troubleshooting.
 

@@ -333,6 +333,9 @@ RSAGLUE=$RSAglue
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
 # LIB_D  - library output directory
+# Note: if you change these point to different directories then uncomment out
+# the lines around the 'NB' comment below.
+# 
 BIN_D=\$(OUT_D)
 TEST_D=\$(OUT_D)
 LIB_D=\$(OUT_D)
@@ -374,12 +377,12 @@ $banner
 
 \$(TMP_D):
 	\$(MKDIR) \$(TMP_D)
-
-\$(BIN_D):
-	\$(MKDIR) \$(BIN_D)
-
-\$(TEST_D):
-	\$(MKDIR) \$(TEST_D)
+# NB: uncomment out these lines if BIN_D, TEST_D and LIB_D are different
+#\$(BIN_D):
+#	\$(MKDIR) \$(BIN_D)
+#
+#\$(TEST_D):
+#	\$(MKDIR) \$(TEST_D)
 
 \$(LIB_D):
 	\$(MKDIR) \$(LIB_D)
