@@ -180,7 +180,7 @@ cversion.o: ../include/openssl/err.h ../include/openssl/lhash.h
 cversion.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 cversion.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 cversion.o: ../include/openssl/symhacks.h buildinf.h cryptlib.h cversion.c
-ebcdic.o: ../include/openssl/opensslconf.h ebcdic.c
+ebcdic.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h ebcdic.c
 ex_data.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 ex_data.o: ../include/openssl/err.h ../include/openssl/lhash.h
