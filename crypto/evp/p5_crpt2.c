@@ -58,10 +58,10 @@
 #if !defined(OPENSSL_NO_HMAC) && !defined(OPENSSL_NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
+#include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "cryptlib.h"
 
 /* set this to print out info about the keygen algorithm */
 /* #define DEBUG_PKCS5V2 */

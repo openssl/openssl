@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/evp.h>
-#include "cryptlib.h"
 
 /* PKCS#5 v1.5 compatible PBE functions: see PKCS#5 v2.0 for more info.
  */

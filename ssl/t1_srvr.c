@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
+#include "ssl_locl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "ssl_locl.h"
 
 static SSL_METHOD *tls1_get_server_method(int ver);
 static SSL_METHOD *tls1_get_server_method(int ver)
