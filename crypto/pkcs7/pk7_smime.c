@@ -153,7 +153,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	PKCS7_SIGNER_INFO *si;
 	X509_STORE_CTX cert_ctx;
 	char buf[4096];
-	int i, j=0;
+	int i, j=0, k;
 	BIO *p7bio;
 	BIO *tmpout;
 
@@ -193,8 +193,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
 	/* Now verify the certificates */
 
-	if (!(flags & PKCS7_NOVERIFY)) for (i = 0; i < sk_X509_num(signers); i++) {
-		signer = sk_X509_value (signers, i);
+	if (!(flags & PKCS7_NOVERIFY)) for (k = 0; k < sk_X509_num(signers); k++) {
+		signer = sk_X509_value (signers, k);
 		if (!(flags & PKCS7_NOCHAIN)) {
 			X509_STORE_CTX_init(&cert_ctx, store, signer,
 							p7->d.sign->cert);

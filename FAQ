@@ -10,6 +10,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
 * I've compiled a program under Windows and it crashes: why?
+* I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
 * I've called <some function> and it fails, why?
 * I just get a load of numbers for the error output, what do they mean?
 * Why do I get errors about unknown algorithms?
@@ -179,6 +180,17 @@ This is usually because you've missed the comment in INSTALL.W32. You
 must link with the multithreaded DLL version of the VC++ runtime library
 otherwise the conflict will cause a program to crash: typically on the
 first BIO related read or write operation.
+
+
+* I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
+
+This usually happens when you try compiling something using the PKCS#12
+macros with a C++ compiler. There is hardly ever any need to use the
+PKCS#12 macros in a program, it is much easier to parse and create
+PKCS#12 files using the PKCS12_parse() and PKCS12_create() functions
+documented in doc/openssl.txt and with examples in demos/pkcs12. The
+'pkcs12' application has to use the macros because it prints out 
+debugging information.
 
 
 * I've called <some function> and it fails, why?

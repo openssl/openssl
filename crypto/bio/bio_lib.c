@@ -418,6 +418,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 	{
 	int mt,mask;
 
+	if(!bio) return NULL;
 	mask=type&0xff;
 	do	{
 		if (bio->method != NULL)
@@ -434,6 +435,12 @@ BIO *BIO_find_type(BIO *bio, int type)
 		bio=bio->next_bio;
 		} while (bio != NULL);
 	return(NULL);
+	}
+
+BIO *BIO_next(BIO *b)
+	{
+	if(!b) return NULL;
+	return b->next_bio;
 	}
 
 void BIO_free_all(BIO *bio)

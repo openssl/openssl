@@ -12,6 +12,7 @@ B<openssl> B<verify>
 [B<-purpose purpose>]
 [B<-untrusted file>]
 [B<-help>]
+[B<-issuer_checks>]
 [B<-verbose>]
 [B<->]
 [certificates]
@@ -57,6 +58,14 @@ prints out a usage message.
 
 print extra information about the operations being performed.
 
+=item B<-issuer_checks>
+
+print out diagnostics relating to searches for the issuer certificate
+of the current certificate. This shows why each candidate issuer
+certificate was rejected. However the presence of rejection messages
+does not itself imply that anything is wrong: during the normal
+verify process several rejections may take place.
+
 =item B<->
 
 marks the last option. All arguments following this are assumed to be
@@ -88,9 +97,21 @@ The verify operation consists of a number of separate steps.
 
 Firstly a certificate chain is built up starting from the supplied certificate
 and ending in the root CA. It is an error if the whole chain cannot be built
-up. The chain is built up by looking up a certificate whose subject name
-matches the issuer name of the current certificate. If a certificate is found
-whose subject and issuer names are identical it is assumed to be the root CA.
+up. The chain is built up by looking up the issuers certificate of the current
+certificate. If a certificate is found which is its own issuer it is assumed 
+to be the root CA.
+
+The process of 'looking up the issuers certificate' itself involves a number
+of steps. In versions of OpenSSL before 0.9.5a the first certificate whose
+subject name matched the issuer of the current certificate was assumed to be
+the issuers certificate. In OpenSSL 0.9.6 and later all certificates
+whose subject name matches the issuer name of the current certificate are 
+subject to further tests. The relevant authority key identifier components
+of the current certificate (if present) must match the subject key identifier
+(if present) and issuer and serial number of the candidate issuer, in addition
+the keyUsage extension of the candidate issuer (if present) must permit
+certificate signing.
+
 The lookup first looks in the list of untrusted certificates and if no match
 is found the remaining lookups are from the trusted certificates. The root CA
 is always looked up in the trusted certificate list: if the certificate to
@@ -260,11 +281,45 @@ the root CA is not marked as trusted for the specified purpose.
 
 the root CA is marked to reject the specified purpose.
 
+=item B<29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch>
+
+the current candidate issuer certificate was rejected because its subject name
+did not match the issuer name of the current certificate. Only displayed when
+the B<-issuer_checks> option is set.
+
+=item B<30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
+
+the current candidate issuer certificate was rejected because its subject key
+identifier was present and did not match the authority key identifier current
+certificate. Only displayed when the B<-issuer_checks> option is set.
+
+=item B<31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch>
+
+the current candidate issuer certificate was rejected because its issuer name
+and serial number was present and did not match the authority key identifier
+of the current certificate. Only displayed when the B<-issuer_checks> option is set.
+
+=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing>
+
+the current candidate issuer certificate was rejected because its keyUsage extension
+does not permit certificate signing.
+
 =item B<50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure>
 
 an application specific error. Unused.
 
 =back
+
+=head1 BUGS
+
+Although the issuer checks are a considerably improvement over the old technique they still
+suffer from limitations in the underlying X509_LOOKUP API. One consequence of this is that
+trusted certificates with matching subject name must either appear in a file (as specified by the
+B<-CAfile> option) or a directory (as specified by B<-CApath>. If they occur in both then only
+the certificates in the file will be recognised.
+
+Previous versions of OpenSSL assume certificates with matching subject name are identical and
+mishandled them.
 
 =head1 SEE ALSO
 

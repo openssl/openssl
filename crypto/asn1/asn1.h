@@ -67,9 +67,7 @@
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
 
-#ifdef VMS
-#include <openssl/vms_idhacks.h>
-#endif
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {

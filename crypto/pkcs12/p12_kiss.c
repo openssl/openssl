@@ -86,21 +86,18 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 	/* Check for NULL PKCS12 structure */
 
-	if(!p12)
-		{
+	if(!p12) {
 		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_INVALID_NULL_PKCS12_POINTER);
 		return 0;
-		}
+	}
 
 	/* Allocate stack for ca certificates if needed */
-	if ((ca != NULL) && (*ca == NULL))
-		{
-		if (!(*ca = sk_X509_new(NULL)))
-			{
+	if ((ca != NULL) && (*ca == NULL)) {
+		if (!(*ca = sk_X509_new(NULL))) {
 			PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
 			return 0;
-			}
 		}
+	}
 
 	if(pkey) *pkey = NULL;
 	if(cert) *cert = NULL;
@@ -206,12 +203,17 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	X509 *x509;
-	ASN1_OCTET_STRING *lkey = NULL;
+	ASN1_OCTET_STRING *lkey = NULL, *ckid = NULL;
 	ASN1_TYPE *attrib;
+	ASN1_BMPSTRING *fname = NULL;
 
+	if ((attrib = PKCS12_get_attr (bag, NID_friendlyName)))
+		fname = attrib->value.bmpstring;
 
-	if ((attrib = PKCS12_get_attr (bag, NID_localKeyID)))
-		    			    lkey = attrib->value.octet_string;
+	if ((attrib = PKCS12_get_attr (bag, NID_localKeyID))) {
+		lkey = attrib->value.octet_string;
+		ckid = lkey;
+	}
 
 	/* Check for any local key id matching (if needed) */
 	if (lkey && ((*keymatch & MATCH_ALL) != MATCH_ALL)) {
@@ -247,6 +249,18 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 		if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate )
 								 return 1;
 		if (!(x509 = M_PKCS12_certbag2x509(bag))) return 0;
+		if(ckid) X509_keyid_set1(x509, ckid->data, ckid->length);
+		if(fname) {
+			int len;
+			unsigned char *data;
+			len = ASN1_STRING_to_UTF8(&data, fname);
+			if(len > 0) {
+				X509_alias_set1(x509, data, len);
+				OPENSSL_free(data);
+			}
+		}
+
+
 		if (lkey) {
 			*keymatch |= MATCH_CERT;
 			if (cert) *cert = x509;

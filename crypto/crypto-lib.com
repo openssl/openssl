@@ -204,7 +204,7 @@ $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
 $ LIB_DH = "dh_gen,dh_key,dh_lib,dh_check,dh_err"
-$ LIB_DSO = "dso_err,dso_lib,dso_null,dso_openssl,dso_vms"
+$ LIB_DSO = "dso_err,dso_lib,dso_null,dso_openssl" ! + ",dso_vms"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -220,15 +220,15 @@ $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
 	"e_rc4,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5,"
-$ LIB_EVP_2 = "m_null,m_md2,m_md5,m_sha,m_sha1,m_dss,m_dss1,m_mdc2,"+ -
-	"m_ripemd,"+ -
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
+	"m_dss,m_dss1,m_mdc2,m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_null,a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
-	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,"+ -
+	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,"+ -
 	"x_name,x_cinf,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
 	"d2i_r_pr,i2d_r_pr,d2i_r_pu,i2d_r_pu,"+ -

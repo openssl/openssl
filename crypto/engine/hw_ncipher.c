@@ -216,7 +216,7 @@ struct HWCryptoHook_CallerContextValue
 #define BN2MPI(mp, bn) \
     {mp.size = bn->top * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
 #define MPI2BN(bn, mp) \
-    {mp.size = bn->max * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
+    {mp.size = bn->dmax * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
 
 #if 0 /* Card and password management is not yet supported */
 /* HWCryptoHook callbacks.  insert_card() and get_pass() are not yet

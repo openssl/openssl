@@ -19,7 +19,8 @@ $	then
 $	    tests = p1
 $	else
 $	    tests := -
-	test_des,test_idea,test_sha,test_md5,test_hmac,test_md2,test_mdc2,-
+	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
+	test_md2,test_mdc2,-
 	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
@@ -35,6 +36,7 @@ $	SHA1TEST :=	sha1test
 $	MDC2TEST :=	mdc2test
 $	RMDTEST :=	rmdtest
 $	MD2TEST :=	md2test
+$	MD4TEST :=	md4test
 $	MD5TEST :=	md5test
 $	HMACTEST :=	hmactest
 $	RC2TEST :=	rc2test
@@ -73,6 +75,9 @@ $	mcr 'texe_dir''mdc2test'
 $	return
 $ test_md5:
 $	mcr 'texe_dir''md5test'
+$	return
+$ test_md4:
+$	mcr 'texe_dir''md4test'
 $	return
 $ test_hmac:
 $	mcr 'texe_dir''hmactest'

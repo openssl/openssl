@@ -23,6 +23,7 @@ B<openssl> B<smime>
 [B<-recip  file>]
 [B<-in file>]
 [B<-inform SMIME|PEM|DER>]
+[B<-passin arg>]
 [B<-inkey file>]
 [B<-out file>]
 [B<-outform SMIME|PEM|DER>]
@@ -202,6 +203,11 @@ the private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
 the B<-recip> or B<-signer> file.
+
+=item B<-passin arg>
+
+the private key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-rand file(s)>
 

@@ -524,6 +524,7 @@ BIO *	BIO_push(BIO *b,BIO *append);
 BIO *	BIO_pop(BIO *b);
 void	BIO_free_all(BIO *a);
 BIO *	BIO_find_type(BIO *b,int bio_type);
+BIO *	BIO_next(BIO *b);
 BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
 int	BIO_get_retry_reason(BIO *bio);
 BIO *	BIO_dup_chain(BIO *in);
