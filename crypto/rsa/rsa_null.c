@@ -94,6 +94,9 @@ static RSA_METHOD rsa_null_meth={
 	RSA_null_finish,
 	0,
 	NULL,
+	NULL,
+	NULL,
+	NULL
 	};
 
 const RSA_METHOD *RSA_null_method(void)

@@ -89,7 +89,8 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	0, /* flags */
 	NULL,
 	0, /* rsa_sign */
-	0  /* rsa_verify */
+	0, /* rsa_verify */
+	NULL /* rsa_keygen */
 	};
 
 const RSA_METHOD *RSA_PKCS1_SSLeay(void)

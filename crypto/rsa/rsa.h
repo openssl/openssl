@@ -114,7 +114,11 @@ typedef struct rsa_meth_st
 	int (*rsa_verify)(int dtype,
 		const unsigned char *m, unsigned int m_length,
 		unsigned char *sigbuf, unsigned int siglen, const RSA *rsa);
-
+/* If this callback is NULL, the builtin software RSA key-gen will be used. This
+ * is for behavioural compatibility whilst the code gets rewired, but one day
+ * it would be nice to assume there are no such things as "builtin software"
+ * implementations. */
+	int (*rsa_keygen)(RSA *rsa, int bits, unsigned long e, BN_GENCB *cb);
 	} RSA_METHOD;
 
 struct rsa_st
