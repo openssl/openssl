@@ -195,7 +195,7 @@ $ LIB_IDEA = "i_cbc,i_cfb64,i_ofb64,i_ecb,i_skey"
 $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
-$ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
+$ IF F$TRNLNM("OPENSSL_NO_ASM") THEN LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
@@ -237,12 +237,10 @@ $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,x_bignum,"+ -
-	"x_name,x_cinf,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
-	"d2i_r_pr,i2d_r_pr,d2i_r_pu,i2d_r_pu,"+ -
-	"d2i_s_pr,i2d_s_pr,d2i_s_pu,i2d_s_pu,"+ -
+	"x_long,x_name,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
 	"d2i_pu,d2i_pr,i2d_pu,i2d_pr"
 $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
-	"tasn_new,tasn_free,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
+	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
 	"f_int,f_string,n_pkey,"+ -
 	"f_enum,a_hdr,x_pkey,a_bool,x_exten,"+ -
 	"asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
@@ -1147,31 +1145,7 @@ $ ENDIF
 $!
 $! Set Up Initial CC Definitions, Possibly With User Ones
 $!
-$ CCDEFS = "VMS=1,TCPIP_TYPE_''P5',DSO_VMS"
-$ IF F$TRNLNM("OPENSSL_NO_ASM") THEN CCDEFS = CCDEFS + ",NO_ASM"
-$ IF F$TRNLNM("OPENSSL_NO_RSA") THEN CCDEFS = CCDEFS + ",NO_RSA"
-$ IF F$TRNLNM("OPENSSL_NO_DSA") THEN CCDEFS = CCDEFS + ",NO_DSA"
-$ IF F$TRNLNM("OPENSSL_NO_DH") THEN CCDEFS = CCDEFS + ",NO_DH"
-$ IF F$TRNLNM("OPENSSL_NO_MD2") THEN CCDEFS = CCDEFS + ",NO_MD2"
-$ IF F$TRNLNM("OPENSSL_NO_MD5") THEN CCDEFS = CCDEFS + ",NO_MD5"
-$ IF F$TRNLNM("OPENSSL_NO_RIPEMD") THEN CCDEFS = CCDEFS + ",NO_RIPEMD"
-$ IF F$TRNLNM("OPENSSL_NO_SHA") THEN CCDEFS = CCDEFS + ",NO_SHA"
-$ IF F$TRNLNM("OPENSSL_NO_SHA0") THEN CCDEFS = CCDEFS + ",NO_SHA0"
-$ IF F$TRNLNM("OPENSSL_NO_SHA1") THEN CCDEFS = CCDEFS + ",NO_SHA1"
-$ IF F$TRNLNM("OPENSSL_NO_DES")
-$ THEN
-$   CCDEFS = CCDEFS + ",NO_DES,NO_MDC2"
-$ ELSE
-$   IF F$TRNLNM("OPENSSL_NO_MDC2") THEN CCDEFS = CCDEFS + ",NO_MDC2"
-$ ENDIF
-$ IF F$TRNLNM("OPENSSL_NO_RC2") THEN CCDEFS = CCDEFS + ",NO_RC2"
-$ IF F$TRNLNM("OPENSSL_NO_RC4") THEN CCDEFS = CCDEFS + ",NO_RC4"
-$ IF F$TRNLNM("OPENSSL_NO_RC5") THEN CCDEFS = CCDEFS + ",NO_RC5"
-$ IF F$TRNLNM("OPENSSL_NO_IDEA") THEN CCDEFS = CCDEFS + ",NO_IDEA"
-$ IF F$TRNLNM("OPENSSL_NO_BF") THEN CCDEFS = CCDEFS + ",NO_BF"
-$ IF F$TRNLNM("OPENSSL_NO_CAST") THEN CCDEFS = CCDEFS + ",NO_CAST"
-$ IF F$TRNLNM("OPENSSL_NO_HMAC") THEN CCDEFS = CCDEFS + ",NO_HMAC"
-$ IF F$TRNLNM("OPENSSL_NO_SSL2") THEN CCDEFS = CCDEFS + ",NO_SSL2"
+$ CCDEFS = "TCPIP_TYPE_''P5',DSO_VMS"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
