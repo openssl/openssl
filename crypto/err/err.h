@@ -158,6 +158,7 @@ typedef struct err_state_st
 #define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,(f),(r),__FILE__,__LINE__)
 #define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,(f),(r),__FILE__,__LINE__)
 #define UIerr(f,r) ERR_PUT_error(ERR_LIB_UI,(f),(r),__FILE__,__LINE__)
+#define COMPerr(f,r) ERR_PUT_error(ERR_LIB_COMP,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -208,6 +209,7 @@ typedef struct err_state_st
 #define ERR_R_ENGINE_LIB ERR_LIB_ENGINE  /* 38 */
 #define ERR_R_OCSP_LIB  ERR_LIB_OCSP     /* 39 */
 #define ERR_R_UI_LIB    ERR_LIB_UI       /* 40 */
+#define ERR_R_COMP_LIB	ERR_LIB_COMP     /* 41 */
 
 #define ERR_R_NESTED_ASN1_ERROR			58
 #define ERR_R_BAD_ASN1_OBJECT_HEADER		59
