@@ -9,19 +9,6 @@
  * The ECC Code is licensed pursuant to the OpenSSL open source
  * license provided below.
  *
- * In addition, Sun covenants to all licensees who provide a reciprocal
- * covenant with respect to their own patents if any, not to sue under
- * current and future patent claims necessarily infringed by the making,
- * using, practicing, selling, offering for sale and/or otherwise
- * disposing of the ECC Code as delivered hereunder (or portions thereof),
- * provided that such covenant shall not apply:
- *  1) for code that a licensee deletes from the ECC Code;
- *  2) separates from the ECC Code; or
- *  3) for infringements caused by:
- *       i) the modification of the ECC Code or
- *      ii) the combination of the ECC Code with other software or
- *          devices where such combination causes the infringement.
- *
  * The ECDH software is originally written by Douglas Stebila of
  * Sun Microsystems Laboratories.
  *
