@@ -12,6 +12,14 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Initial reduction of linker bloat: the use of some functions, such as
+     PEM causes large amounts of unused functions to be linked in due to
+     poor organisation. For example pem_all.c contains every PEM function
+     which has a knock on effect of linking in large amounts of (unused)
+     ASN1 code. Grouping together similar functions and splitting unrelated
+     functions prevents this.
+     [Steve Henson]
+
   *) Initialize static variable in crypto/dsa/dsa_lib.c explicitely to
      NULL, as at least on Solaris 8 this seems not to be done automatically
      (in contradiction to the requirements of the C standard).
