@@ -60,8 +60,8 @@
 #include <string.h>
 #include <openssl/hmac.h>
 
-void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
-	       const EVP_MD *md)
+void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
+		  const EVP_MD *md)
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];
@@ -108,6 +108,14 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 		EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md));
 		}
 	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx);
+	}
+
+void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
+	       const EVP_MD *md)
+	{
+	if(key && md)
+	    HMAC_CTX_init(ctx);
+	HMAC_Init_ex(ctx,key,len,md);
 	}
 
 void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
