@@ -81,8 +81,6 @@ typedef int pid_t;
 #include "vendor_defns/aep.h"
 #endif
 
-#define FAIL_TO_SW 0x10101010
-
 static int aep_init(void);
 static int aep_finish(void);
 
@@ -126,7 +124,7 @@ static int aep_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 #endif
 	
-#ifdef AEPRAND
+#ifdef AEP_RAND
 /* rand stuff   */
 static int aep_rand(unsigned char *buf, int num);
 static int aep_rand_status(void);
@@ -192,7 +190,7 @@ static DH_METHOD aep_dh =
 };
 #endif
 
-#ifdef AEPRAND
+#ifdef AEP_RAND
 /* our internal RAND_method that we provide pointers to  */
 static RAND_METHOD aep_random =
 {
@@ -214,7 +212,7 @@ static ENGINE engine_aep =
   &aep_rsa,
   &aep_dsa,
   &aep_dh,
-#ifdef AEPRAND
+#ifdef AEP_RAND
   &aep_random,
 #else
   NULL,
@@ -237,10 +235,12 @@ static AEP_CONNECTION_ENTRY aep_app_conn_table[MAX_PROCESS_CONNECTIONS];
 /*Used to determine if this is a new process*/
 static pid_t    recorded_pid = 0;
 
-#ifdef AEPRAND
+#ifdef AEP_RAND
 static AEP_U8   rand_block[RAND_BLK_SIZE];
 static AEP_U32  rand_block_bytes = 0;
 #endif
+
+static int max_key_len = 2176;
 
 
 /* As this is only ever called once, there's no need for locking
@@ -368,7 +368,7 @@ static int aep_init(void)
 
   if(!(p1 = (t_AEP_ModExp *)         DSO_bind_func( aep_dso,AEP_F1))  ||
      !(p2 = (t_AEP_ModExpCrt*)       DSO_bind_func( aep_dso,AEP_F2))  ||
-#ifdef AEPRAND
+#ifdef AEP_RAND
      !(p3 = (t_AEP_GenRandom*)       DSO_bind_func( aep_dso,AEP_F3))  ||
 #endif
      !(p4 = (t_AEP_Finalize*)        DSO_bind_func( aep_dso,AEP_F4))  ||
@@ -477,7 +477,7 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		       const BIGNUM *m, BN_CTX *ctx)
 {
   int to_return = 0;
-  int 	r_len = 0;
+  int r_len = 0;
   AEP_CONNECTION_HNDL hConnection;
   AEP_RV rv;
 
@@ -487,16 +487,22 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 
   if (r_len > max_key_len)
     {
-      AEPHKerr(AEPHK_F_AEP_MOD_EXP, AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
-      return BN_mod_exp(r, a, p, m, ctx);
+      ENGINE *e;
+      e = ENGINE_openssl();
+      to_return = e->bn_mod_exp(r, a, p, m, ctx);
+      goto err;
     }
 
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
   if (rv != AEP_R_OK)
-    {     
+    {
+      ENGINE *e;
       ENGINEerr(ENGINE_F_AEP_MOD_EXP,ENGINE_R_GET_HANDLE_FAILED);
-      return BN_mod_exp(r, a, p, m, ctx);
+
+      e = ENGINE_openssl();
+      to_return = e->bn_mod_exp(r, a, p, m, ctx);
+      goto err;
     }
 
   /*To the card with the mod exp*/
@@ -504,9 +510,16 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
                             
   if (rv !=  AEP_R_OK)
     {
+      ENGINE *e;
+
+      aep_close_connection(hConnection);
+
       ENGINEerr(ENGINE_F_AEP_MOD_EXP,ENGINE_R_MOD_EXP_FAILED);
-      rv = aep_close_connection(hConnection);
-      return BN_mod_exp(r, a, p, m, ctx);
+
+      e = ENGINE_openssl();
+      to_return = e->bn_mod_exp(r, a, p, m, ctx);
+
+      goto err;
     }
 
   /*Return the connection to the pool*/
@@ -530,12 +543,31 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
   AEP_RV rv = AEP_R_OK;
   AEP_CONNECTION_HNDL hConnection;
 
+  /* Perform in software if modulus is too large for hardware. */
+ 
+  if (BN_num_bits(p) > max_key_len || BN_num_bits(q) > max_key_len){
+    ENGINE *e;
+    e = ENGINE_openssl();
+    rv = e->bn_mod_exp_crt(r, a, p, q, dmp1, dmq1, iqmp, ctx);
+    goto err;
+  }
+
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
   if (rv != AEP_R_OK)
     {
+      ENGINE *e;
+ 
       ENGINEerr(ENGINE_F_AEP_MOD_EXP_CRT,ENGINE_R_GET_HANDLE_FAILED);
-      goto FAIL_TO_SW;
+ 	  
+      e = ENGINE_openssl();
+ 
+      if (e->bn_mod_exp_crt(r, a, p, q, dmp1, dmq1, iqmp, ctx) > 0)
+	rv = AEP_R_OK;
+      else
+	rv = AEP_R_GENERAL_ERROR;
+  
+      goto err;
     }
 
   /*To the card with the mod exp*/
@@ -543,9 +575,20 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
 		       (void*)iqmp,(void*)r,NULL);
   if (rv != AEP_R_OK)
     {
+      ENGINE *e;
+ 
+      aep_close_connection(hConnection);
+ 	  
       ENGINEerr(ENGINE_F_AEP_MOD_EXP_CRT,ENGINE_R_MOD_EXP_CRT_FAILED);
-      rv = aep_close_connection(hConnection);
-      return FAIL_TO_SW;
+ 
+      e = ENGINE_openssl();
+ 
+      if (e->bn_mod_exp_crt(r, a, p, q, dmp1, dmq1, iqmp, ctx) > 0)
+	rv = AEP_R_OK;
+      else
+	rv = AEP_R_GENERAL_ERROR;
+ 
+      goto err;
     }
 
   /*Return the connection to the pool*/
@@ -559,9 +602,9 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
  err:
   return rv;
 }
-	
+#endif
 
-#ifdef AEPRAND
+#ifdef AEP_RAND
 static int aep_rand(unsigned char *buf,int len )
 {
   AEP_RV rv = AEP_R_OK;
@@ -782,7 +825,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 	  goto end;
 	}
 
-#ifdef AEPRAND
+#ifdef AEP_RAND
       /*Reset the rand byte count*/
       rand_block_bytes = 0;
 #endif
@@ -856,7 +899,6 @@ static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
   /*Find the connection item that matches this connection handle*/
   for(count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
     {
-     
       if (aep_app_conn_table[count].conn_hndl == hConnection)
 	{
 	  aep_app_conn_table[count].conn_state = Connected;
@@ -872,6 +914,7 @@ static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
 static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
 {
   int count;
+  AEP_RV rv = AEP_R_OK;
 
   CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 
@@ -880,21 +923,24 @@ static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
     {
       if (aep_app_conn_table[count].conn_hndl == hConnection)
 	{
+	  rv = p_AEP_CloseConnection(aep_app_conn_table[count].conn_hndl);
+	  if (rv != AEP_R_OK)
+	    goto end;
 	  aep_app_conn_table[count].conn_state = NotConnected;
-	  close(aep_app_conn_table[count].conn_hndl);
+	  aep_app_conn_table[count].conn_hndl  = 0;
 	  break;
 	}
     }
 
+ end:
   CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-
   return AEP_R_OK;
 }
 
 static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 {
   int count;
-  AEP_RV rv;
+  AEP_RV rv = AEP_R_OK;
 
   *in_use = 0;
   if (use_engine_lock) CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
@@ -905,7 +951,7 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 	case Connected:
 	  rv = p_AEP_CloseConnection(aep_app_conn_table[count].conn_hndl);
 	  if (rv != AEP_R_OK)
-	    return rv;
+	    goto end;
 	  aep_app_conn_table[count].conn_state = NotConnected;
 	  aep_app_conn_table[count].conn_hndl  = 0;
 	  break;
@@ -916,12 +962,13 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 	  break;
 	}
     }
+ end:
   if (use_engine_lock) CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
   return AEP_R_OK;
 }
 
 /*BigNum call back functions, used to convert OpenSSL bignums into AEP bignums.
-Note only 32bit Openssl build support*/
+  Note only 32bit Openssl build support*/
 
 static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize)
 {
@@ -933,7 +980,8 @@ static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize)
 #ifdef SIXTY_FOUR_BIT_LONG
   *BigNumSize = bn->top << 3;
 #else
-  /*Size of the bignum in bytes is equal to the bn->top (no of 32 bit words) multiplies by 4*/
+  /*Size of the bignum in bytes is equal to the bn->top (no of 32 bit
+    words) multiplies by 4*/
   *BigNumSize = bn->top << 2;
 #endif
 
@@ -962,7 +1010,8 @@ static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
     {
       buf = (unsigned char*)&bn->d[i];
 
-      *((AEP_U32*)AEP_BigNum) = (AEP_U32) ((unsigned) buf[1] << 8 | buf[0]) |
+      *((AEP_U32*)AEP_BigNum) = (AEP_U32)
+	((unsigned) buf[1] << 8 | buf[0]) |
 	((unsigned) buf[3] << 8 | buf[2])  << 16;
 
       AEP_BigNum += 4;
@@ -1000,7 +1049,8 @@ static AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
  
   for(i=0;i<bn->top;i++)
     {
-      bn->d[i] = (AEP_U32) ((unsigned) AEP_BigNum[3] << 8 | AEP_BigNum[2]) << 16 |
+      bn->d[i] = (AEP_U32)
+	((unsigned) AEP_BigNum[3] << 8 | AEP_BigNum[2]) << 16 |
 	((unsigned) AEP_BigNum[1] << 8 | AEP_BigNum[0]);
       AEP_BigNum += 4;
     }
