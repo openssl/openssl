@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_session_cache_mode - enable/disable session caching
+SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable session caching
 
 =head1 SYNOPSIS
 
@@ -68,9 +68,11 @@ Enable both SSL_SESS_CACHE_CLIENT and SSL_SESS_CACHE_SERVER at the same time.
 =item SSL_SESS_CACHE_NO_AUTO_CLEAR
 
 Normally the session cache is checked for expired sessions every
-255 connections using the SSL_CTX_flush_sessions() function. Since
+255 connections using the
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)> function. Since
 this may lead to a delay which cannot be controlled, the automatic
-flushing may be disabled and SSL_CTX_flush_sessions() can be called
+flushing may be disabled and
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)> can be called
 explicitly by the application.
 
 =item SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
@@ -95,7 +97,10 @@ SSL_CTX_get_session_cache_mode() returns the currently set cache mode.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_set_session(3)|SSL_set_session(3)>,
+L<SSL_CTX_sess_set_cache_size(3)|SSL_CTX_sess_set_cache_size(3)>,
 L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
-L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>
+L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
+L<SSL_CTX_set_timeout.pod(3)|SSL_CTX_set_timeout.pod(3)>,
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>
 
 =cut
