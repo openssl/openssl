@@ -1574,7 +1574,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		enc_pms.data = (char *)p;
 		p+=enc_pms.length;
 
-		if ((unsigned long)n != enc_ticket.length + authenticator.length +
+		if (n != enc_ticket.length + authenticator.length +
 						enc_pms.length + 6)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
