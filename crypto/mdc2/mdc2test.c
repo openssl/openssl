@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NO_DES
+#if defined(NO_DES) && !defined(NO_MDC2)
 #define NO_MDC2
 #endif
 

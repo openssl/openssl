@@ -247,6 +247,7 @@ int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
 	return xp->trust;
 }
 
+#ifndef NO_SHA
 static void x509v3_cache_extensions(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
@@ -321,6 +322,7 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->ex_flags |= EXFLAG_SET;
 }
+#endif
 
 /* CA checks common to all purposes
  * return codes:

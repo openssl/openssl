@@ -260,7 +260,9 @@ typedef struct x509_st
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
+#ifndef NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+#endif
 	X509_CERT_AUX *aux;
 	} X509;
 

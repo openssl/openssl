@@ -151,7 +151,7 @@ extern "C" {
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#if defined(NO_RSA) && !defined(NO_SSL2)
+#if (defined(NO_RSA) || defined(NO_MD5)) && !defined(NO_SSL2)
 #define NO_SSL2
 #endif
 
