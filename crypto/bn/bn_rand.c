@@ -168,3 +168,14 @@ int     BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	return bnrand(2, rnd, bits, top, bottom);
 	}
 #endif
+
+/* random number r: min <= r < max */
+int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *max)
+	{
+	int n = BN_num_bits(max);
+	do
+		{
+		if (!BN_rand(r, n, 0, 0)) return 0;
+		} while ((min && BN_cmp(r, min) < 0) || BN_cmp(r, max) >= 0);
+	return 1;
+	}

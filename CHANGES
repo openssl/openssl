@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
+     Bleichenbacher's DSA attack.
+     [Ulf Moeller]
+
   *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
      handle the new API. Currently only ECB, CBC modes supported. Add new
      AES OIDs. Add TLS AES ciphersuites as described in the "AES Ciphersuites

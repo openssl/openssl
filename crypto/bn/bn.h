@@ -329,6 +329,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void	BN_CTX_end(BN_CTX *ctx);
 int     BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
+int	BN_rand_range(BIGNUM *rnd, BIGNUM *min, BIGNUM *max);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG);
 BIGNUM *BN_new(void);
