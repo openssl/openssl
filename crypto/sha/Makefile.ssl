@@ -46,7 +46,7 @@ lib:    $(LIBOBJ)
 
 # elf
 asm/sx86-elf.o: asm/sx86unix.cpp
-	$(CPP) -DELF asm/sx86unix.cpp | as -o asm/sx86-elf.o
+	$(CPP) -DELF -x c asm/sx86unix.cpp | as -o asm/sx86-elf.o
 
 # solaris
 asm/sx86-sol.o: asm/sx86unix.cpp

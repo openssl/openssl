@@ -72,10 +72,10 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/bn86-elf.o: asm/bn86unix.cpp
-	$(CPP) -DELF asm/bn86unix.cpp | as -o asm/bn86-elf.o
+	$(CPP) -DELF -x c asm/bn86unix.cpp | as -o asm/bn86-elf.o
 
 asm/co86-elf.o: asm/co86unix.cpp
-	$(CPP) -DELF asm/co86unix.cpp | as -o asm/co86-elf.o
+	$(CPP) -DELF -x c asm/co86unix.cpp | as -o asm/co86-elf.o
 
 # solaris
 asm/bn86-sol.o: asm/bn86unix.cpp

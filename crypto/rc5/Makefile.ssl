@@ -49,7 +49,7 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/r586-elf.o: asm/r586unix.cpp
-	$(CPP) -DELF asm/r586unix.cpp | as -o asm/r586-elf.o
+	$(CPP) -DELF -x c asm/r586unix.cpp | as -o asm/r586-elf.o
 
 # solaris
 asm/r586-sol.o: asm/r586unix.cpp
