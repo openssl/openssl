@@ -348,7 +348,8 @@ crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
 
 In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
 clashes with older versions of libdes.  Compatibility des_ functions
-are provided for a short while, as well as crypt().  des_random_seed()
+are provided for a short while, as well as crypt().
+Declarations for these are in <openssl/des_old.h>.  des_random_seed()
 is were not kept as DES_ variants.  This will happen to other functions
 as well if they are deemed redundant (des_random_seed() just calls
 RAND_seed() and is present for backward compatibility only), buggy or
