@@ -72,12 +72,13 @@ static int ssl_meth_num=0;
 static int ssl_ctx_meth_num=0;
 
 OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
+	/* evil casts, but these functions are only called if there's a libraryr bug */
+	(int (*)(SSL *,int))ssl_undefined_function,
+	(int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
 	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl_undefined_function,
+	(int (*)(SSL *, unsigned char *, unsigned char *, int))ssl_undefined_function,
+	(int (*)(SSL*, int))ssl_undefined_function,
+	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function
 	};
 
 int SSL_clear(SSL *s)

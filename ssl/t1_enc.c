@@ -494,7 +494,7 @@ int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in_ctx, unsigned char *out)
 	}
 
 int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
-	     unsigned char *str, int slen, unsigned char *out)
+	     const char *str, int slen, unsigned char *out)
 	{
 	unsigned int i;
 	EVP_MD_CTX ctx;

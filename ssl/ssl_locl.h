@@ -322,19 +322,19 @@ typedef struct sess_cert_st
  * an opaque strucute :-) */
 typedef struct ssl3_enc_method
 	{
-	int (*enc)();
-	int (*mac)();
-	int (*setup_key_block)();
-	int (*generate_master_secret)();
-	int (*change_cipher_state)();
-	int (*final_finish_mac)();
+	int (*enc)(SSL *, int);
+	int (*mac)(SSL *, unsigned char *, int);
+	int (*setup_key_block)(SSL *);
+	int (*generate_master_secret)(SSL *, unsigned char *, unsigned char *, int);
+	int (*change_cipher_state)(SSL *, int);
+	int (*final_finish_mac)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char *, int, unsigned char *);
 	int finish_mac_length;
-	int (*cert_verify_mac)();
+	int (*cert_verify_mac)(SSL *, EVP_MD_CTX *, unsigned char *);
 	const char *client_finished_label;
 	int client_finished_label_len;
 	const char *server_finished_label;
 	int server_finished_label_len;
-	int (*alert_value)();
+	int (*alert_value)(int);
 	} SSL3_ENC_METHOD;
 
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
@@ -443,7 +443,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len);
 int ssl3_part_read(SSL *s, int i);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1,EVP_MD_CTX *ctx2,
-	unsigned char *sender, int slen,unsigned char *p);
+	const char *sender, int slen,unsigned char *p);
 int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
@@ -483,7 +483,7 @@ int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
 int tls1_enc(SSL *s, int snd);
 int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
-	unsigned char *str, int slen, unsigned char *p);
+	const char *str, int slen, unsigned char *p);
 int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
 int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,

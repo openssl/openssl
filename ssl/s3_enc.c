@@ -412,7 +412,7 @@ int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *ctx, unsigned char *p)
 	}
 
 int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
-	     unsigned char *sender, int len, unsigned char *p)
+	     const char *sender, int len, unsigned char *p)
 	{
 	int ret;
 
