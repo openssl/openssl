@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
+     OBJ_ld_ce should be OBJ_id_ce.
+     Also some ip-pda OIDs in crypto/objects/objects.txt were
+     incorrect (cf. RFC 3039).
+     [Matt Cooper, Frederic Giudicelli, Bodo Moeller]
+
   +) Add option to output public keys in req command.
      [Massimiliano Pala madwolf@openca.org]
 
