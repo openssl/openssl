@@ -143,9 +143,9 @@ static int bio_read(BIO *bio, char *buf, int size_)
 			if (size <= peer_b->size)
 				peer_b->request = size;
 			else
-				peer_b->request = peer_b->size; /* don't ask for more than
-				                                 * the peer can deliver
-				                                 * in one write */
+				/* don't ask for more than the peer can
+				 * deliver in one write */
+				peer_b->request = peer_b->size;
 			return -1;
 			}
 		}
@@ -578,11 +578,11 @@ int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
 	 }
 
 size_t BIO_ctrl_get_write_guarantee(BIO *bio)
-    {
+	{
 	return BIO_ctrl(bio, BIO_C_GET_WRITE_GUARANTEE, 0, NULL);
 	}
 
 size_t BIO_ctrl_get_read_request(BIO *bio)
-    {
+	{
 	return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
 	}
