@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add -keyform to rsautl, and document -engine.
+     [Richard Levitte, inspired by Toomas Kiisk <vix@cyber.ee>]
+
   +) Change BIO_new_file (crypto/bio/bss_file.c) to use new
      BIO_R_NO_SUCH_FILE error code rather than the generic
      ERR_R_SYS_LIB error code if fopen() fails with ENOENT.
