@@ -193,3 +193,5 @@ SSL_get1_session                        242	EXIST::FUNCTION:
 SSL_CTX_callback_ctrl                   243	EXIST::FUNCTION:
 SSL_callback_ctrl                       244	EXIST::FUNCTION:
 SSL_CTX_sessions                        245	EXIST::FUNCTION:
+SSL_get_rfd                             246	EXIST::FUNCTION:
+SSL_get_wfd                             247	EXIST::FUNCTION:

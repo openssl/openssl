@@ -1873,3 +1873,5 @@ BIO_f_linebuffer                        2463	EXIST:VMS:FUNCTION:
 BN_bntest_rand                          2464	EXIST::FUNCTION:
 OPENSSL_issetugid                       2465	EXIST::FUNCTION:
 BN_rand_range                           2466	EXIST::FUNCTION:
+BN_pseudo_rand_range                    2467	EXIST::FUNCTION:
+X509_STORE_CTX_set_verify_cb            2468	EXIST::FUNCTION:
