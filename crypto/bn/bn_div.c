@@ -200,10 +200,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	/* First we normalise the numbers */
 	norm_shift=BN_BITS2-((BN_num_bits(divisor))%BN_BITS2);
-	BN_lshift(sdiv,divisor,norm_shift);
+	if (!(BN_lshift(sdiv,divisor,norm_shift))) goto err;
 	sdiv->neg=0;
 	norm_shift+=BN_BITS2;
-	BN_lshift(snum,num,norm_shift);
+	if (!(BN_lshift(snum,num,norm_shift))) goto err;
 	snum->neg=0;
 	div_n=sdiv->top;
 	num_n=snum->top;
@@ -327,7 +327,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		tmp->top=j;
 
 		j=wnum.top;
-		BN_sub(&wnum,&wnum,tmp);
+		if (!BN_sub(&wnum,&wnum,tmp)) goto err;
 
 		snum->top=snum->top+wnum.top-j;
 
@@ -335,7 +335,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			{
 			q--;
 			j=wnum.top;
-			BN_add(&wnum,&wnum,sdiv);
+			if (!BN_add(&wnum,&wnum,sdiv)) goto err;
 			snum->top+=wnum.top-j;
 			}
 		*(resp--)=q;
