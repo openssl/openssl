@@ -327,6 +327,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_READ_WRONG_PACKET_TYPE            ,"read wrong packet type"},
 {SSL_R_RECORD_LENGTH_MISMATCH            ,"record length mismatch"},
 {SSL_R_RECORD_TOO_LARGE                  ,"record too large"},
+{SSL_R_RECORD_TOO_SMALL                  ,"record too small"},
 {SSL_R_REQUIRED_CIPHER_MISSING           ,"required cipher missing"},
 {SSL_R_REUSE_CERT_LENGTH_NOT_ZERO        ,"reuse cert length not zero"},
 {SSL_R_REUSE_CERT_TYPE_NOT_ZERO          ,"reuse cert type not zero"},

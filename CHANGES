@@ -4,6 +4,16 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) In ssl23_get_client_hello, generate an error message when faced
+     with an initial SSL 3.0/TLS record that is too small to contain the
+     first two bytes of the ClientHello message, i.e. client_version.
+     (Note that this is a pathologic case that probably has never happened
+     in real life.)  The previous approach was to use the version number
+     from the record header as a subsitute; but our protocol choice
+     should not depend on that one because it is not authenticated
+     by the Finished messages.
+     [Bodo Moeller]
+
   *) For compatibility reasons if the flag X509_V_FLAG_ISSUER_CHECK is
      not set then we don't setup the error code for issuer check errors
      to avoid possibly overwriting other errors which the callback does
