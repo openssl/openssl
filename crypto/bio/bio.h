@@ -261,6 +261,8 @@ struct bio_st
 	CRYPTO_EX_DATA ex_data;
 	};
 
+DECLARE_STACK_OF(BIO)
+
 typedef struct bio_f_buffer_ctx_struct
 	{
 	/* BIO *bio; */ /* this is now in the BIO struct */
@@ -507,6 +509,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);
+void	BIO_vfree(BIO *a);
 int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, const void *data, int len);

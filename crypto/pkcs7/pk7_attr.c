@@ -14,20 +14,21 @@
 #include <openssl/pkcs7.h>
 #include <openssl/err.h>
 
-int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK *cap)
+int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 {
 	ASN1_STRING *seq;
 	unsigned char *p, *pp;
 	int len;
-	len=i2d_ASN1_SET(cap,NULL,i2d_X509_ALGOR, V_ASN1_SEQUENCE,
-						V_ASN1_UNIVERSAL, IS_SEQUENCE);
+	len=i2d_ASN1_SET_OF_X509_ALGOR(cap,NULL,i2d_X509_ALGOR,
+				       V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL,
+				       IS_SEQUENCE);
 	if(!(pp=(unsigned char *)Malloc(len))) {
 		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	p=pp;
-	i2d_ASN1_SET(cap,&p,i2d_X509_ALGOR, V_ASN1_SEQUENCE,
-						V_ASN1_UNIVERSAL, IS_SEQUENCE);
+	i2d_ASN1_SET_OF_X509_ALGOR(cap,&p,i2d_X509_ALGOR, V_ASN1_SEQUENCE,
+				   V_ASN1_UNIVERSAL, IS_SEQUENCE);
 	if(!(seq = ASN1_STRING_new())) {
 		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -54,9 +55,10 @@ STACK *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 }
 
 /* Basic smime-capabilities OID and optional integer arg */
-int PKCS7_simple_smimecap(STACK *sk, int nid, int arg)
+int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 {
 	X509_ALGOR *alg;
+
 	if(!(alg = X509_ALGOR_new())) {
 		PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -80,6 +82,6 @@ int PKCS7_simple_smimecap(STACK *sk, int nid, int arg)
 		alg->parameter->value.integer = nbit;
 		alg->parameter->type = V_ASN1_INTEGER;
 	}
-	sk_push (sk, (char *)alg);
+	sk_X509_ALGOR_push (sk, alg);
 	return 1;
 }

@@ -406,9 +406,10 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 								int flags);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
 
-int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK *cap);
+int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
+			      STACK_OF(X509_ALGOR) *cap);
 STACK *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
-int PKCS7_simple_smimecap(STACK *sk, int nid, int arg);
+int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg);
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);

@@ -137,6 +137,9 @@ int BIO_free(BIO *a)
 	return(1);
 	}
 
+void BIO_vfree(BIO *a)
+    { BIO_free(a); }
+
 int BIO_read(BIO *b, void *out, int outl)
 	{
 	int i;
@@ -532,3 +535,5 @@ unsigned long BIO_number_written(BIO *bio)
 	if(bio) return bio->num_write;
 	return 0;
 }
+
+IMPLEMENT_STACK_OF(BIO)

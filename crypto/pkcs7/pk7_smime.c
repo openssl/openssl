@@ -64,12 +64,12 @@
 #include <openssl/x509v3.h>
 
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
-							BIO *data, int flags)
+		  BIO *data, int flags)
 {
 	PKCS7 *p7;
 	PKCS7_SIGNER_INFO *si;
 	BIO *p7bio;
-	STACK *smcap;
+	STACK_OF(X509_ALGOR) *smcap;
 	int i;
 
 	if(!X509_check_private_key(signcert, pkey)) {
@@ -109,7 +109,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
 				V_ASN1_OBJECT, OBJ_nid2obj(NID_pkcs7_data));
 		/* Add SMIMECapabilities */
-		if(!(smcap = sk_new(NULL))) {
+		if(!(smcap = sk_X509_ALGOR_new(NULL))) {
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
@@ -127,7 +127,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 40);
 #endif
 		PKCS7_add_attrib_smimecap (si, smcap);
-		sk_pop_free(smcap, (void(*)(void *)) X509_ALGOR_free);
+		sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
 	}
 
 	if(flags & PKCS7_DETACHED)PKCS7_set_detached(p7, 1);
