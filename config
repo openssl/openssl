@@ -126,6 +126,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-linux1"; exit 0
 	;;
 
+    GNU*)
+	echo "hurd-x86"; exit 0;
+	;;
+
     LynxOS:*)
 	echo "${MACHINE}-lynx-lynxos"; exit 0
 	;;

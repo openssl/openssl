@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New configuration for the GNU Hurd.
+     [Jonathan Bartlett <johnnyb@wolfram.com> via Richard Levitte]
+
   *) Initial code to implement OCSP basic response verify. This
      is currently incomplete. Currently just finds the signer's
      certificate and verifies the signature on the response.

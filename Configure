@@ -426,6 +426,9 @@ my %table=(
 ##### Sony NEWS-OS 4.x
 "newsos4-gcc","gcc:-O -DB_ENDIAN -DNEWS4::(unknown):-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
 
+##### GNU Hurd
+"hurd-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC",
+
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
