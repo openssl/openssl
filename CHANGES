@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) More PKCS#12 integration. Add new pkcs12 directory with Makefile.ssl and
+     modify error routines to work internally. Add error codes and PBE init
+     to library startup routines.
+     [Steve Henson]
+
   *) Further PKCS#12 integration. Added password based encryption, PKCS#8 and
      packing functions to asn1 and evp. Changed function names and error
      codes along the way.

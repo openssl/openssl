@@ -79,6 +79,7 @@
 #include "x509.h"
 #include "x509v3.h"
 #include "conf.h"
+#include "pkcs12.h"
 #include "err.h"
 
 void ERR_load_crypto_strings()
@@ -114,5 +115,6 @@ void ERR_load_crypto_strings()
 	ERR_load_X509V3_strings();
 	ERR_load_CRYPTO_strings();
 	ERR_load_PKCS7_strings();
+	ERR_load_PKCS12_strings();
 #endif
 	}

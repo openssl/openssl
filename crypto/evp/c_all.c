@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include "evp.h"
+#include "pkcs12.h"
 #include "objects.h"
 
 void SSLeay_add_all_algorithms()
@@ -187,4 +188,5 @@ void SSLeay_add_all_digests()
 	EVP_add_digest_alias(SN_ripemd160,"ripemd");
 	EVP_add_digest_alias(SN_ripemd160,"rmd160");
 #endif
+	PKCS12_PBE_add();
 	}

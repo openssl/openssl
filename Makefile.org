@@ -133,7 +133,7 @@ SDIRS=  \
 	des rc2 rc4 rc5 idea bf cast \
 	bn rsa dsa dh \
 	buffer bio stack lhash rand err objects \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 comp
+	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp
 
 # Do not edit this manually. Use util/ssldir.pl do change this!
 INSTALLTOP=/usr/local/ssl

@@ -1,4 +1,4 @@
-/* p5_pbe.c */
+/* p12_lib.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -57,128 +57,67 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include "asn1_mac.h"
-#include "rand.h"
-
-/* PKCS#5 password based encryption structure */
-
-#define PKCS5_SALT_LEN	8
+#include <stdlib.h>
+#include <asn1_mac.h>
+#include <err.h>
+#include "pkcs12.h"
 
 /*
- *ASN1err(ASN1_F_PBEPARAM_NEW,ASN1_R_DEOCDE_ERROR)
- *ASN1err(ASN1_F_D2I_PBEPARAM,ASN1_R_DEOCDE_ERROR)
+ *ASN1err(ASN1_F_PKCS12_NEW,ASN1_R_DECODE_ERROR)
+ *ASN1err(ASN1_F_D2I_PKCS12,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PBEPARAM(a, pp)
-PBEPARAM *a;
+int i2d_PKCS12(a,pp)
+PKCS12 *a;
 unsigned char **pp;
 {
 	M_ASN1_I2D_vars(a);
-	M_ASN1_I2D_len (a->salt, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len (a->iter, i2d_ASN1_INTEGER);
 
-	M_ASN1_I2D_seq_total ();
+	M_ASN1_I2D_len (a->version, i2d_ASN1_INTEGER);
+	M_ASN1_I2D_len (a->authsafes, i2d_PKCS7);
+	M_ASN1_I2D_len (a->mac, i2d_PKCS12_MAC_DATA);
 
-	M_ASN1_I2D_put (a->salt, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put (a->iter, i2d_ASN1_INTEGER);
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put (a->version, i2d_ASN1_INTEGER);
+	M_ASN1_I2D_put (a->authsafes, i2d_PKCS7);
+	M_ASN1_I2D_put (a->mac, i2d_PKCS12_MAC_DATA);
+
 	M_ASN1_I2D_finish();
 }
 
-PBEPARAM *PBEPARAM_new()
-{
-	PBEPARAM *ret=NULL;
-	ASN1_CTX c;
-	M_ASN1_New_Malloc(ret, PBEPARAM);
-	M_ASN1_New(ret->iter,ASN1_INTEGER_new);
-	M_ASN1_New(ret->salt,ASN1_OCTET_STRING_new);
-	return (ret);
-	M_ASN1_New_Error(ASN1_F_PBEPARAM_NEW);
-}
-
-PBEPARAM *d2i_PBEPARAM(a,pp,length)
-PBEPARAM **a;
+PKCS12 *d2i_PKCS12(a,pp,length)
+PKCS12 **a;
 unsigned char **pp;
 long length;
 {
-	M_ASN1_D2I_vars(a,PBEPARAM *,PBEPARAM_new);
+	M_ASN1_D2I_vars(a,PKCS12 *,PKCS12_new);
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get (ret->salt, d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get (ret->iter, d2i_ASN1_INTEGER);
-	M_ASN1_D2I_Finish(a, PBEPARAM_free, ASN1_F_D2I_PBEPARAM);
+	M_ASN1_D2I_get (ret->version, d2i_ASN1_INTEGER);
+	M_ASN1_D2I_get (ret->authsafes, d2i_PKCS7);
+	M_ASN1_D2I_get_opt (ret->mac, d2i_PKCS12_MAC_DATA, V_ASN1_SEQUENCE);
+	M_ASN1_D2I_Finish(a, PKCS12_free, ASN1_F_D2I_PKCS12);
 }
 
-void PBEPARAM_free (a)
-PBEPARAM *a;
+PKCS12 *PKCS12_new()
 {
-	if(a==NULL) return;
-	ASN1_OCTET_STRING_free(a->salt);
-	ASN1_INTEGER_free (a->iter);
+	PKCS12 *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, PKCS12);
+	ret->version=NULL;
+	ret->mac=NULL;
+	ret->authsafes=NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_PKCS12_NEW);
+}
+
+void PKCS12_free (a)
+PKCS12 *a;
+{
+	if (a == NULL) return;
+	ASN1_INTEGER_free (a->version);
+	PKCS12_MAC_DATA_free (a->mac);
+	PKCS7_free (a->authsafes);
 	Free ((char *)a);
-}
-
-/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
-
-X509_ALGOR *PKCS5_pbe_set(alg, iter, salt, saltlen)
-int alg;
-int iter;
-unsigned char *salt;
-int saltlen;
-{
-	unsigned char *pdata, *ptmp;
-	int plen;
-	PBEPARAM *pbe;
-	ASN1_OBJECT *al;
-	X509_ALGOR *algor;
-	ASN1_TYPE *astype;
-
-	if (!(pbe = PBEPARAM_new ())) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ASN1_INTEGER_set (pbe->iter, iter);
-	if (!saltlen) saltlen = PKCS5_SALT_LEN;
-	if (!(pbe->salt->data = Malloc (saltlen))) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	pbe->salt->length = saltlen;
-	if (salt) memcpy (pbe->salt->data, salt, saltlen);
-	else RAND_bytes (pbe->salt->data, saltlen);
-	if (!(plen = i2d_PBEPARAM (pbe, NULL))) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ASN1_R_ENCODE_ERROR);
-		return NULL;
-	}
-	if (!(pdata = Malloc (plen))) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ptmp = pdata;
-	i2d_PBEPARAM (pbe, &ptmp);
-	PBEPARAM_free (pbe);
-
-	if (!(astype = ASN1_TYPE_new())) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-
-	astype->type = V_ASN1_SEQUENCE;
-	if (!(astype->value.sequence=ASN1_STRING_new())) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ASN1_STRING_set (astype->value.sequence, pdata, plen);
-	Free (pdata);
-	
-	al = OBJ_nid2obj(alg); /* never need to free al */
-	if (!(algor = X509_ALGOR_new())) {
-		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ASN1_OBJECT_free(algor->algorithm);
-	algor->algorithm = al;
-	algor->parameter = astype;
-
-	return (algor);
 }

@@ -16,6 +16,7 @@ L ASN1		asn1/asn1.err
 L CONF		conf/conf.err
 L PROXY		proxy/proxy.err
 L PKCS7		pkcs7/pkcs7.err
+L PKCS12	pkcs12/pkcs12.err
 L RSAREF	../rsaref/rsaref.err
 L SSL		../ssl/ssl.err
 L SSL2		../ssl/ssl2.err

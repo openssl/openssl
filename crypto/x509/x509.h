@@ -863,6 +863,7 @@ int i2d_PBEPARAM(PBEPARAM *a, unsigned char **pp);
 PBEPARAM *PBEPARAM_new(void);
 PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length);
 void PBEPARAM_free(PBEPARAM *a);
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
 
 /* PKCS#8 utilities */
 
@@ -1198,6 +1199,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken();
 
 int EVP_PBE_ALGOR_CipherInit();
 int EVP_PBE_alg_add();
+X509_ALGOR *PKCS5_pbe_set();
 
 #endif
 
