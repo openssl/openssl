@@ -26,7 +26,7 @@
  *  major minor fix final patch/beta)
  */
 #define OPENSSL_VERSION_NUMBER	0x00905812L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.5a-beta2-dev 20 Mar 2000"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.5a-beta2 23 Mar 2000"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 #endif /* HEADER_OPENSSLV_H */
