@@ -49,6 +49,7 @@ my @dirs = (
 "crypto/comp",
 "crypto/engine",
 "crypto/ocsp",
+"crypto/ui",
 "ssl",
 "apps",
 "test",
