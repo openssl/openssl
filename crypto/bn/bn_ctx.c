@@ -54,6 +54,11 @@
  *
  */
 
+#ifndef BN_CTX_DEBUG
+# undef NDEBUG /* avoid conflicting definitions */
+# define NDEBUG
+#endif
+
 #include <stdio.h>
 #include <assert.h>
 #include "cryptlib.h"
@@ -101,14 +106,21 @@ void BN_CTX_free(BN_CTX *ctx)
 
 void BN_CTX_start(BN_CTX *ctx)
 	{
-	ctx->pos[ctx->depth++] = ctx->tos;
+	if (ctx->depth < BN_CTX_NUM_POS)
+		ctx->pos[ctx->depth] = ctx->tos;
+	ctx->depth++;
 	}
 
 BIGNUM *BN_CTX_get(BN_CTX *ctx)
 	{
-	if (ctx->tos >= BN_CTX_NUM)
+	if (ctx->depth > BN_CTX_NUM_POS || ctx->tos >= BN_CTX_NUM)
 		{
-		BNerr(BN_F_BN_CTX_GET,BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+		if (!ctx->too_many)
+			{
+			BNerr(BN_F_BN_CTX_GET,BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+			/* disable error code until SSL_CTX_end is called: */
+			ctx->too_many = 1;
+			}
 		return NULL;
 		}
 	return (&(ctx->bn[ctx->tos++]));
@@ -118,6 +130,14 @@ void BN_CTX_end(BN_CTX *ctx)
 	{
 	if (ctx == NULL) return;
 	assert(ctx->depth > 0);
+	if (ctx->depth == 0)
+		/* should never happen, but we can tolerate it if not in
+		 * debug mode (could be a 'goto err' in the calling function
+		 * before BN_CTX_start was reached) */
+		BN_CTX_start(ctx);
+
+	ctx->too_many = 0;
 	ctx->depth--;
-	ctx->tos = ctx->pos[ctx->depth];
+	if (ctx->depth < BN_CTX_NUM_POS)
+		ctx->tos = ctx->pos[ctx->depth];
 	}

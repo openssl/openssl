@@ -189,7 +189,7 @@ pcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h
 qud_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h
 rand_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-rand_key.o: ../../include/openssl/opensslconf.h des_locl.h
+rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
 read2pwd.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 read2pwd.o: ../../include/openssl/opensslconf.h des_locl.h
 read_pwd.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h

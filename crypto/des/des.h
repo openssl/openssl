@@ -186,7 +186,7 @@ void des_pcbc_encrypt(const unsigned char *input,unsigned char *output,
 DES_LONG des_quad_cksum(const unsigned char *input,des_cblock output[],
 			long length,int out_count,des_cblock *seed);
 void des_random_seed(des_cblock *key);
-void des_random_key(des_cblock *ret);
+int des_random_key(des_cblock *ret);
 int des_read_password(des_cblock *key,const char *prompt,int verify);
 int des_read_2passwords(des_cblock *key1,des_cblock *key2,
 			const char *prompt,int verify);

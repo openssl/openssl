@@ -2213,3 +2213,6 @@ sk_CRYPTO_EX_DATA_FUNCS_insert          2237
 sk_CRYPTO_EX_DATA_FUNCS_zero            2238
 BN_pseudo_rand                          2239
 BN_is_prime_fasttest                    2240
+BN_CTX_end                              2241
+BN_CTX_start                            2242
+BN_CTX_get                              2243

@@ -36,7 +36,7 @@ $rc5_obj      =
 
 *** BS2000-OSD
 $cc           = c89
-$cflags       = -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC
+$cflags       = -O -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = -lsocket -lnsl
@@ -580,7 +580,7 @@ $rc5_obj      =
 
 *** debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
+$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = -lefence
@@ -597,7 +597,7 @@ $rc5_obj      =
 
 *** debug-ben
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DPEDANTIC -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -614,7 +614,7 @@ $rc5_obj      =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -631,7 +631,7 @@ $rc5_obj      =
 
 *** debug-ben-strict
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -648,7 +648,7 @@ $rc5_obj      =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall
+$cflags       = -DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -665,7 +665,7 @@ $rc5_obj      = asm/r586-elf.o
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DRL_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
+$cflags       = -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -682,7 +682,7 @@ $rc5_obj      =
 
 *** debug-linux-elf
 $cc           = gcc
-$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lefence
@@ -716,7 +716,7 @@ $rc5_obj      = asm/r586-elf.o
 
 *** debug-solaris-sparcv8-cc
 $cc           = cc
-$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -733,7 +733,7 @@ $rc5_obj      =
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -750,7 +750,7 @@ $rc5_obj      =
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
-$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -767,7 +767,7 @@ $rc5_obj      =
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -784,7 +784,7 @@ $rc5_obj      =
 
 *** debug-steve
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -801,7 +801,7 @@ $rc5_obj      = asm/r586-elf.o
 
 *** debug-ulf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 

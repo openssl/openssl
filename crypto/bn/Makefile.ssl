@@ -185,6 +185,12 @@ bn_blind.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 bn_blind.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 bn_blind.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 bn_blind.o: ../../include/openssl/stack.h ../cryptlib.h bn_lcl.h
+bn_ctx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_ctx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+bn_ctx.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+bn_ctx.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+bn_ctx.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+bn_ctx.o: ../../include/openssl/stack.h ../cryptlib.h
 bn_div.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_div.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_div.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
