@@ -115,10 +115,16 @@
 #define krb5_rd_req              kssl_krb5_rd_req               
 #define krb5_kt_default          kssl_krb5_kt_default           
 #define krb5_kt_resolve          kssl_krb5_kt_resolve           
+/* macros in mit 1.2.2 and earlier; functions in mit 1.2.3 and greater */
+#ifndef krb5_kt_close
+#define krb5_kt_close            kssl_krb5_kt_close
+#endif /* krb5_kt_close */
+#ifndef krb5_kt_get_entry
+#define krb5_kt_get_entry        kssl_krb5_kt_get_entry
+#endif /* krb5_kt_get_entry */
 #define krb5_auth_con_init       kssl_krb5_auth_con_init        
 
 #define krb5_principal_compare   kssl_krb5_principal_compare
-/* macro  #define krb5_kt_get_entry        kssl_krb5_kt_get_entry  */
 #define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
 #define krb5_timeofday           kssl_krb5_timeofday
 #define krb5_rc_default           kssl_krb5_rc_default
@@ -254,6 +260,12 @@ static krb5_error_code (_stdcall * p_krb5_get_server_rcache)(krb5_context,
 static krb5_error_code (* p_krb5_auth_con_getrcache)(krb5_context, 
                                                       krb5_auth_context,
                                                       krb5_rcache *)=NULL;
+static krb5_error_code (_stdcall * p_krb5_kt_close)(krb5_context context, 
+                                                    krb5_keytab keytab)=NULL;
+static krb5_error_code (_stdcall * p_krb5_kt_get_entry)(krb5_context context, 
+                                                        krb5_keytab keytab,
+                       krb5_const_principal principal, krb5_kvno vno,
+                       krb5_enctype enctype, krb5_keytab_entry *entry)=NULL;
 static int krb5_loaded = 0;     /* only attempt to initialize func ptrs once */
 
 /* Function to Load the Kerberos 5 DLL and initialize function pointers */
@@ -323,6 +335,10 @@ load_krb5_dll(void)
                 GetProcAddress( hKRB5_32, "krb5_get_server_rcache" );
         (FARPROC) p_krb5_auth_con_getrcache =
                 GetProcAddress( hKRB5_32, "krb5_auth_con_getrcache" );
+        (FARPROC) p_krb5_kt_close =
+                GetProcAddress( hKRB5_32, "krb5_kt_close" );
+        (FARPROC) p_krb5_kt_get_entry =
+                GetProcAddress( hKRB5_32, "krb5_kt_get_entry" );
 	}
 
 /* Stubs for each function to be dynamicly loaded */
@@ -709,20 +725,40 @@ krb5_error_code
 kssl_krb5_get_server_rcache(krb5_context con, krb5_const krb5_data * data,
                             krb5_rcache * rcache) 
         {
-                 if ( p_krb5_get_server_rcache )
-                         return(p_krb5_get_server_rcache(con,data,rcache));
-                 else
-                         return KRB5KRB_ERR_GENERIC;
+	if ( p_krb5_get_server_rcache )
+		return(p_krb5_get_server_rcache(con,data,rcache));
+	else
+		return KRB5KRB_ERR_GENERIC;
         }
 
 krb5_error_code
 kssl_krb5_auth_con_getrcache(krb5_context con, krb5_auth_context acon,
                              krb5_rcache * prcache)
         {
-                 if ( p_krb5_auth_con_getrcache )
-                         return(p_krb5_auth_con_getrcache(con,acon, prcache));
-                 else
-                         return KRB5KRB_ERR_GENERIC;
+	if ( p_krb5_auth_con_getrcache )
+		return(p_krb5_auth_con_getrcache(con,acon, prcache));
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+ 
+krb5_error_code
+kssl_krb5_kt_close(krb5_context context, krb5_keytab keytab)
+	{
+	if ( p_krb5_kt_close )
+		return(p_krb5_kt_close(context,keytab));
+	else 
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+kssl_krb5_kt_get_entry(krb5_context context, krb5_keytab keytab,
+                       krb5_const_principal principal, krb5_kvno vno,
+                       krb5_enctype enctype, krb5_keytab_entry *entry)
+	{
+	if ( p_krb5_kt_get_entry )
+		return(p_krb5_kt_get_entry(context,keytab,principal,vno,enctype,entry));
+	else
+		return KRB5KRB_ERR_GENERIC;
         }
 #endif  /* OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32 */
 
