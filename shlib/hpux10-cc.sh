@@ -60,9 +60,9 @@ mkdir /usr/local
 mkdir /usr/local/ssl
 mkdir /usr/local/ssl/lib
 chmod 444 lib*_pic.a
-chmod 555 lib*.sl.0.9.6d
-cp -p lib*_pic.a lib*.sl.0.9.6d /usr/local/ssl/lib
-(cd /usr/local/ssl/lib ; ln -sf libcrypto.sl.0.9.6d libcrypto.sl ; ln -sf libssl.sl.0.9.6d libssl.sl)
+chmod 555 lib*.sl.0.9.6e
+cp -p lib*_pic.a lib*.sl.0.9.6e /usr/local/ssl/lib
+(cd /usr/local/ssl/lib ; ln -sf libcrypto.sl.0.9.6e libcrypto.sl ; ln -sf libssl.sl.0.9.6e libssl.sl)
 
 # Reconfigure without pic to compile the executables. Unfortunately, while
 # performing this task we have to recompile the library components, even

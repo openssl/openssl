@@ -1,6 +1,6 @@
 # Makefile.hpux-cc
 
-major=0.9.6d
+major=0.9.6e
 
 slib=libssl
 sh_slib=$(slib).sl.$(major)
