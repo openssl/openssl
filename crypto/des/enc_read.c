@@ -103,17 +103,17 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=(unsigned char *)Malloc(BSIZE);
+		tmpbuf=Malloc(BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
 		{
-		net=(unsigned char *)Malloc(BSIZE);
+		net=Malloc(BSIZE);
 		if (net == NULL) return(-1);
 		}
 	if (unnet == NULL)
 		{
-		unnet=(unsigned char *)Malloc(BSIZE);
+		unnet=Malloc(BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */
@@ -147,7 +147,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 	/* first - get the length */
 	while (net_num < HDRSIZE) 
 		{
-		i=read(fd,&(net[net_num]),(unsigned int)HDRSIZE-net_num);
+		i=read(fd,&(net[net_num]),HDRSIZE-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif
@@ -169,7 +169,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 	net_num=0;
 	while (net_num < rnum)
 		{
-		i=read(fd,&(net[net_num]),(unsigned int)rnum-net_num);
+		i=read(fd,&(net[net_num]),rnum-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif
@@ -216,11 +216,11 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 		else
 			{
 			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt(net,(unsigned char*)buf,num,
-						 sched,iv,DES_DECRYPT);
+				des_pcbc_encrypt(net,buf,num,sched,iv,
+						 DES_DECRYPT);
 			else
-				des_cbc_encrypt(net,(unsigned char*)buf,num,
-						sched,iv,DES_DECRYPT);
+				des_cbc_encrypt(net,buf,num,sched,iv,
+						DES_DECRYPT);
 			}
 		}
 	return((int)num);

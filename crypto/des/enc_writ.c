@@ -96,7 +96,7 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 
 	if (outbuf == NULL)
 		{
-		outbuf=(unsigned char *)Malloc(BSIZE+HDRSIZE);
+		outbuf=Malloc(BSIZE+HDRSIZE);
 		if (outbuf == NULL) return(-1);
 		}
 	/* If we are sending less than 8 bytes, the same char will look
@@ -104,7 +104,7 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 	if (start)
 		{
 		start=0;
-		srandom((unsigned int)time(NULL));
+		srandom(time(NULL));
 		}
 
 	/* lets recurse if we want to send the data in small chunks */
@@ -131,7 +131,7 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 	if (len < 8)
 		{
 		cp=shortbuf;
-		memcpy(shortbuf,buf,(unsigned int)len);
+		memcpy(shortbuf,buf,len);
 		for (i=len; i<8; i++)
 			shortbuf[i]=random();
 		rnum=8;
@@ -150,13 +150,13 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 				DES_ENCRYPT); 
 
 	/* output */
-	outnum=(int)rnum+HDRSIZE;
+	outnum=rnum+HDRSIZE;
 
 	for (j=0; j<outnum; j+=i)
 		{
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got upto. */
-		i=write(fd,&(outbuf[j]),(unsigned int)(outnum-j));
+		i=write(fd,&(outbuf[j]),outnum-j);
 		if (i == -1)
 			{
 			if (errno == EINTR)
