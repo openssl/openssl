@@ -333,7 +333,7 @@ void program_name(char *in, char *out, int size)
 #ifdef OPENSSL_SYS_WIN32
 int WIN32_rename(char *from, char *to)
 	{
-	/* Windows rename gives and error if 'to' exists, so delete it
+	/* Windows rename gives an error if 'to' exists, so delete it
 	 * first and ignore file not found errror
 	 */
 	if((remove(to) != 0) && (errno != ENOENT))
