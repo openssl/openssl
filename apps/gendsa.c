@@ -118,7 +118,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
-		else if (dsaparams == NULL)
+		else if (**argv != '-' && dsaparams == NULL)
 			{
 			dsaparams = *argv;
 			}
