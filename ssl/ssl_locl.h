@@ -273,15 +273,18 @@ typedef struct cert_st
 	int valid;
 	unsigned long mask;
 	unsigned long export_mask;
-
+#ifndef NO_RSA
 	RSA *rsa_tmp;
+	RSA *(*rsa_tmp_cb)(SSL *ssl,int export,int keysize);
+#endif
+#ifndef NO_DH
 	DH *dh_tmp;
 	/* FIXME: Although rsa_tmp and dh_tmp are properties of the cert,
 	   callbacks probably aren't, and besides only the context default
 	   cert's callbacks are actually used. Too close to a release to fix
 	   this now - Ben 6 Mar 1999 */
-	RSA *(*rsa_tmp_cb)(SSL *ssl,int export,int keysize);
 	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
+#endif
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
 	STACK_OF(X509) *cert_chain;

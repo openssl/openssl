@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -296,4 +297,4 @@ err:
 	memset(&rnd,0,sizeof(rnd));
 	return(outlen);
 	}
-
+#endif

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
@@ -85,4 +86,4 @@ SSL_METHOD *SSLv2_method(void)
 		}
 	return(&SSLv2_data);
 	}
-
+#endif

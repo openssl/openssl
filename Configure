@@ -20,7 +20,7 @@ my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no
 # rsaref        use RSAref
 # no-asm        do not use assembler
 # 386           generate 80386 code
-# no-CIPHER     build without specified algorithm
+# no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -D, -L, -l, -f, -K: compiler options are passed through 
 # 
 # DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h

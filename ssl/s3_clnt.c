@@ -828,7 +828,9 @@ static int ssl3_get_key_exchange(SSL *s)
 	int al,i,j,param_len,ok;
 	long n,alg;
 	EVP_PKEY *pkey=NULL;
+#ifndef NO_RSA
 	RSA *rsa=NULL;
+#endif
 #ifndef NO_DH
 	DH *dh=NULL;
 #endif
@@ -1287,10 +1289,13 @@ static int ssl3_get_server_done(SSL *s)
 
 static int ssl3_send_client_key_exchange(SSL *s)
 	{
-	unsigned char *p,*q,*d;
+	unsigned char *p,*d;
 	int n;
 	unsigned long l;
+#ifndef NO_RSA
+	unsigned char *q;
 	EVP_PKEY *pkey=NULL;
+#endif
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A)
 		{
@@ -1440,7 +1445,9 @@ static int ssl3_send_client_verify(SSL *s)
 	unsigned char *p,*d;
 	unsigned char data[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
 	EVP_PKEY *pkey;
+#ifndef NO_RSA
 	int i=0;
+#endif
 	unsigned long n;
 #ifndef NO_DSA
 	int j;
@@ -1590,8 +1597,12 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	long algs;
 	EVP_PKEY *pkey=NULL;
 	CERT *c;
+#ifndef NO_RSA
 	RSA *rsa;
+#endif
+#ifndef NO_DH
 	DH *dh;
+#endif
 
 	c=s->session->cert;
 
@@ -1607,8 +1618,12 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	if (algs & (SSL_aDH|SSL_aNULL))
 		return(1);
 
+#ifndef NO_RSA
 	rsa=s->session->cert->rsa_tmp;
+#endif
+#ifndef NO_DH
 	dh=s->session->cert->dh_tmp;
+#endif
 
 	/* This is the passed certificate */
 
@@ -1631,15 +1646,16 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 		goto f_err;
 		}
 #endif
-
+#ifndef NO_RSA
 	if ((algs & SSL_kRSA) &&
 		!(has_bits(i,EVP_PK_RSA|EVP_PKT_ENC) || (rsa != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_RSA_ENCRYPTING_CERT);
 		goto f_err;
 		}
+#endif
 #ifndef NO_DH
-	else if ((algs & SSL_kEDH) &&
+	if ((algs & SSL_kEDH) &&
 		!(has_bits(i,EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);

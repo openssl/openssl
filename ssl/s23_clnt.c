@@ -68,9 +68,11 @@ static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
 static SSL_METHOD *ssl23_get_client_method(int ver)
 	{
+#ifndef NO_RSA
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
-	else if (ver == SSL3_VERSION)
+#endif
+	if (ver == SSL3_VERSION)
 		return(SSLv3_client_method());
 	else if (ver == TLS1_VERSION)
 		return(TLSv1_client_method());
@@ -320,6 +322,9 @@ static int ssl23_get_server_hello(SSL *s)
 	if ((p[0] & 0x80) && (p[2] == SSL2_MT_SERVER_HELLO) &&
 		(p[5] == 0x00) && (p[6] == 0x02))
 		{
+#ifdef NO_RSA
+		goto err;
+#else
 		/* we are talking sslv2 */
 		/* we need to clean up the SSLv3 setup and put in the
 		 * sslv2 stuff. */
@@ -375,6 +380,7 @@ static int ssl23_get_server_hello(SSL *s)
 
 		s->method=SSLv2_client_method();
 		s->handshake_func=s->method->ssl_connect;
+#endif
 		}
 	else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 		 (p[1] == SSL3_VERSION_MAJOR) &&

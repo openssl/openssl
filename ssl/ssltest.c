@@ -70,12 +70,18 @@
 #include "../crypto/bio/bss_file.c"
 #endif
 
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
+
 #define TEST_SERVER_CERT "../apps/server.pem"
 #define TEST_CLIENT_CERT "../apps/client.pem"
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+#ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
-#ifndef NO_DSA
+#endif
+#ifndef NO_DH
 static DH *get_dh512(void);
 #endif
 BIO *bio_err=NULL;
@@ -710,6 +716,7 @@ static DH *get_dh512(void)
 	}
 #endif
 
+#ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
@@ -718,13 +725,10 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 		{
 		BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 		BIO_flush(bio_err);
-#ifndef NO_RSA
 		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
-#endif
 		BIO_printf(bio_err,"\n");
 		BIO_flush(bio_err);
 		}
 	return(rsa_tmp);
 	}
-
-
+#endif

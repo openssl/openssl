@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
@@ -963,4 +964,4 @@ end:
 	EVP_PKEY_free(pkey);
 	return(i);
 	}
-
+#endif

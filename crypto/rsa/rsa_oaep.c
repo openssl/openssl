@@ -4,6 +4,7 @@
 
 /* EME_OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -156,3 +157,4 @@ int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen)
 	}
     return (0);
     }
+#endif

@@ -1183,8 +1183,10 @@ static int ssl3_get_client_key_exchange(SSL *s)
 	long n;
 	unsigned long l;
 	unsigned char *p;
+#ifndef NO_RSA
 	RSA *rsa=NULL;
 	EVP_PKEY *pkey=NULL;
+#endif
 #ifndef NO_DH
 	BIGNUM *pub=NULL;
 	DH *dh_srvr;
