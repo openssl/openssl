@@ -534,22 +534,30 @@ install_docs:
 	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
-		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
+		echo "installing man$$sec/$$fn.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$$sec; \
+		$(PERL) util/extract-names.pl < $$i | grep -v "^$$fn" | \
+			while read n; do \
+				util/point.sh $$fn.$$sec $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$n.$$sec; \
+			done; \
 	done; \
 	for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
-		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
+		echo "installing man$$sec/$$fn.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$$sec; \
+		$(PERL) util/extract-names.pl < $$i | grep -v "^$$fn" | \
+			while read n; do \
+				util/point.sh $$fn.$$sec $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$n.$$sec; \
+			done; \
 	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
