@@ -79,13 +79,11 @@
 static int hwcrhk_init();
 static int hwcrhk_finish();
 
-#if 0 /* Not yet supported */
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex*);
-#endif
 
 /* BIGNUM stuff */
 static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
@@ -367,19 +365,19 @@ static int hwcrhk_init()
 		goto err;
 		}
 	if(!(p1 = (HWCryptoHook_Init_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_Init)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_Init)) ||
 		!(p2 = (HWCryptoHook_Finish_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_Finish)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_Finish)) ||
 		!(p3 = (HWCryptoHook_ModExp_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_ModExp)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExp)) ||
 		!(p4 = (HWCryptoHook_RSA_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_RSA)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSA)) ||
 		!(p5 = (HWCryptoHook_RSAUnloadKey_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_RSAUnloadKey)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAUnloadKey)) ||
 		!(p6 = (HWCryptoHook_RandomBytes_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_RandomBytes)) ||
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RandomBytes)) ||
 		!(p7 = (HWCryptoHook_ModExpCRT_t *)
-			DSO_bind(hwcrhk_dso, n_hwcrhk_ModExpCRT)))
+			DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExpCRT)))
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_DSO_FAILURE);
 		goto err;
@@ -392,6 +390,19 @@ static int hwcrhk_init()
 	p_hwcrhk_RSAUnloadKey = p5;
 	p_hwcrhk_RandomBytes = p6;
 	p_hwcrhk_ModExpCRT = p7;
+
+	/* Check if the application decided to support dynamic locks,
+	   and if it does, use them. */
+	if (CRYPTO_get_dynlock_create_callback() != NULL &&
+		CRYPTO_get_dynlock_lock_callback() != NULL &&
+		CRYPTO_get_dynlock_destroy_callback() != NULL)
+		{
+		hwcrhk_globals.mutex_init = hwcrhk_mutex_init;
+		hwcrhk_globals.mutex_acquire = hwcrhk_mutex_lock;
+		hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
+		hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
+		}
+
 	/* Try and get a context - if not, we may have a DSO but no
 	 * accelerator! */
 	if(!get_context(&hwcrhk_context))
@@ -684,33 +695,30 @@ static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
  * these just wrap the POSIX functions and add some logging.
  */
 
-static int hwcrhk_mutex_init(HWCryptoHook_Mutex* mt, HWCryptoHook_CallerContext *cactx)
-{
-    int ret;
-    ret = CRYPTO_init_lock(mt->lockid, NULL);
-    return ret;
-}
+static int hwcrhk_mutex_init(HWCryptoHook_Mutex* mt,
+	HWCryptoHook_CallerContext *cactx)
+	{
+	mt->lockid = CRYPTO_get_new_dynlockid();
+	if (mt->lockid == 0)
+		return 0;
+	return 1;
+	}
 
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex *mt)
-{
-    int ret;
-    ret = CRYPTO_w_lock(mt->lockid);
-    return ret;
-}
+	{
+	CRYPTO_w_lock(mt->lockid);
+	return 1;
+	}
 
 void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
-{
-    int ret;
-    ret = CRYPTO_w_unlock(mt->lockid);
-}
-
+	{
+	CRYPTO_w_unlock(mt->lockid);
+	}
 
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex *mt)
-{
-    int ret;
-    ret = CRYPTO_destroy_lock(mt->lockid);
-}
-#endif
+	{
+	CRYPTO_destroy_dynlockid(mt->lockid);
+	}
 
 static void log_message(void *logstream, const char *message)
 	{
