@@ -3,7 +3,7 @@
  * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -165,21 +165,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 		goto err;
 		}
 
-	/* group->field */
-	if (!BN_copy(&group->field, p)) goto err;
-	BN_set_sign(&group->field, 0);
-
-	/* group->a */
-	if (!group->field_mod_func(&group->a, a, p, ctx)) goto err;
-
-	/* group->b */
-	if (!group->field_mod_func(&group->b, b, p, ctx)) goto err;
-
-	/* group->a_is_minus3 */
-	if (!BN_add_word(tmp_bn, 3)) goto err;
-	group->a_is_minus3 = (0 == BN_cmp(tmp_bn, &group->field));
-
-	ret = 1;
+	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
  err:
 	BN_CTX_end(ctx);
