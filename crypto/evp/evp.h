@@ -601,6 +601,8 @@ const EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 const EVP_CIPHER *EVP_des_ecb(void);
 const EVP_CIPHER *EVP_des_ede(void);
 const EVP_CIPHER *EVP_des_ede3(void);
+const EVP_CIPHER *EVP_des_ede_ecb(void);
+const EVP_CIPHER *EVP_des_ede3_ecb(void);
 const EVP_CIPHER *EVP_des_cfb(void);
 const EVP_CIPHER *EVP_des_ede_cfb(void);
 const EVP_CIPHER *EVP_des_ede3_cfb(void);
