@@ -37,25 +37,6 @@ and public exponent elements populated. It performs integrity checks on all
 the RSA key material, so the RSA key structure must contain all the private
 key data too.
 
-Unlike most other RSA functions, this function does B<not> work
-transparently with any underlying ENGINE implementation because it uses the
-key data in the RSA structure directly. An ENGINE implementation can
-override the way key data is stored and handled, and can even provide
-support for HSM keys - in which case the RSA structure may contain B<no>
-key data at all! If the ENGINE in question is only being used for
-acceleration or analysis purposes, then in all likelihood the RSA key data
-is complete and untouched, but this can't be assumed in the general case.
-
-=head1 BUGS
-
-A method of verifying the RSA key using opaque RSA API functions might need
-to be considered. Right now RSA_check_key() simply uses the RSA structure
-elements directly, bypassing the RSA_METHOD table altogether (and
-completely violating encapsulation and object-orientation in the process).
-The best fix will probably be to introduce a "check_key()" handler to the
-RSA_METHOD function table so that alternative implementations can also
-provide their own verifiers.
-
 =head1 SEE ALSO
 
 L<rsa(3)|rsa(3)>, L<err(3)|err(3)>

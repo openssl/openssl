@@ -372,8 +372,6 @@ typedef struct ssl_session_st
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless */
 #define SSL_OP_ALL					0x000FFFFFL
 
-/* As server, disallow session resumption on renegotiation */
-#define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to also use the tmp_rsa key when doing RSA operations. */
