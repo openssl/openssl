@@ -149,7 +149,12 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 	ASN1_CTX c;
 	int want=HEADER_SIZE;
 	int eos=0;
+#if defined(__GNUC__) && defined(__ia64)
+	/* pathetic compiler bug in all known versions as of Nov. 2002 */
+	long off=0;
+#else
 	int off=0;
+#endif
 	int len=0;
 
 	b=BUF_MEM_new();
