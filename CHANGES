@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Fix for asn1_GetSequence() for indefinite length constructed data.
+     If SEQUENCE is length is indefinite just set c->slen to the total
+     amount of data available.
+     [Steve Henson, reported by shige@FreeBSD.org]
+     [This change does not apply to 0.9.7.]
+
   *) Change bctest to avoid here-documents inside command substitution
      (workaround for FreeBSD /bin/sh bug).
      [Bodo Moeller]
