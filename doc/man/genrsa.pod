@@ -1,0 +1,70 @@
+=pod
+
+=head1 NAME
+
+genrsa - generate an RSA private key
+
+
+=head1 SYNOPSIS
+
+B<openssl> B<genrsa>
+[B<-out filename>]
+[B<-des>]
+[B<-des3>]
+[B<-idea>]
+[B<-f4>]
+[B<-3>]
+[B<-rand file:file>]
+[B<numbits>]
+
+=head1 DESCRIPTION
+
+The B<genrsa> command generates an RSA private key.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-des|-des3|-idea>
+
+These options encrypt the private key with the DES, triple DES, or the 
+IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
+If none of these options is specified no encryption is used.
+
+=item B<-F4|-3>
+
+the public exponent to use, either 65537 or 3. The default is 65537.
+
+=item B<-rand file:file>
+
+a file or files containing random data used to seed the random number
+generator. Multiple files can be specified separated by B<:>.
+
+=item B<numbits>
+
+the size of the private key to generate in bits. This must be the last option
+specified. The default is 512.
+
+=back
+
+=head1 NOTES
+
+RSA private key generation essentially involves the generation of two prime
+numbers. When generating a private key various symbols will be output to
+indicate the progress of the generation. A B<.> represents each number tested.
+A B<+> means a number has passed a single primality test. A newline means that
+the number has passed all the prime tests (currently set to 5 single tests).
+
+Because key generation is a random process the time taken to generate a key
+may vary somewhat.
+
+=head1 BUGS
+
+A quirk of the prime generation algorithm is that it cannot generate small
+primes. Therefore the number of bits should not be less that 64. For typical
+private keys this will not matter because for security reasons they will
+be much larger (typically 1024 bits).
+
+=head1 SEE ALSO
+
+gendsa(1)

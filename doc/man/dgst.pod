@@ -1,0 +1,48 @@
+=pod
+=head1 NAME
+
+dgst, md5, md2, sha1, sha, mdc2, ripemd160 - message digests
+
+=head1 SYNOPSIS
+
+[B<dgst>]
+[B<-md5|-md2|-sha1|-sha|mdc2|-ripemd160>]
+[B<-c>]
+[B<-d>]
+[B<file...>]
+
+[B<md5|md2|sha1|sha|mdc2|ripemd160>]
+[B<-c>]
+[B<-d>]
+[B<file...>]
+
+=head1 DESCRIPTION
+
+The digest functions print out the message digest of a supplied file or files
+in hexadecimal form.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-c>
+
+print out the digest in two digit groups separated by colons.
+
+=item B<-d>
+
+print out BIO debugging information.
+
+=item B<file...>
+
+file or files to digest. If no files are specified then standard input is
+used.
+
+=back
+
+=head1 NOTES
+
+The digest of choice for all new applications is SHA1. Other digests are
+however still widely used.
+
+=cut

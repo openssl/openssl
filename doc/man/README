@@ -1,0 +1,11 @@
+This is *very* preliminiary documentation for some
+of the main commands in the openssl utility. The
+information reflects the way the commands may work
+when OpenSSL 0.9.5 is released. They are subject
+to change though.
+
+The stuff is in POD format and has just been tested
+with pod2man where is looks passable. It may well
+look odd in html or other formats. Feel free to tidy
+up, reformat or convert to a completely different
+format if so desired...

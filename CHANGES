@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a few manpages for some of the openssl commands.
+     [Steve Henson]
+
   *) Fix the -revoke option in ca. It was freeing up memory twice,
      leaking and not finding already revoked certificates.
      [Steve Henson]
