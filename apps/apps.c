@@ -476,7 +476,10 @@ X509 *load_cert(BIO *err, char *file, int format)
 		}
 
 	if (file == NULL)
+		{
+		setvbuf(stdin, NULL, _IONBF, 0);
 		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
+		}
 	else
 		{
 		if (BIO_read_filename(cert,file) <= 0)

@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
+     skipped when using openssl x509 multiple times on a single input file,
+     e.g. "(openssl x509 -out cert1; openssl x509 -out cert2) <certs".
+     [Bodo Moeller]
+
   *) Make ASN1_UTCTIME_set_string() and ASN1_GENERALIZEDTIME_set_string()
      set string type: to handle setting ASN1_TIME structures. Fix ca
      utility to correctly initialize revocation date of CRLs.
