@@ -3333,8 +3333,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
-&(nid_objs[527]),/* OBJ_identified_organization      1 3 */
 &(nid_objs[379]),/* OBJ_org                          1 3 */
+&(nid_objs[527]),/* OBJ_identified_organization      1 3 */
 &(nid_objs[393]),/* OBJ_joint_iso_ccitt              2 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[380]),/* OBJ_dod                          1 3 6 */

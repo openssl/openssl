@@ -3093,7 +3093,7 @@ ENGINE_register_all_STORE               3522	EXIST::FUNCTION:ENGINE
 STORE_ATTR_INFO_modify_cstr             3523	EXIST::FUNCTION:
 STORE_generate_crl                      3524	EXIST::FUNCTION:
 STORE_store_public_key                  3525	EXIST::FUNCTION:
-STORE_Directory                         3526	EXIST::FUNCTION:
+STORE_Directory                         3526	NOEXIST::FUNCTION:
 STORE_revoke_private_key                3527	EXIST::FUNCTION:
 STORE_ATTR_INFO_modify_dn               3528	EXIST::FUNCTION:
 STORE_method_get_initialise_function    3529	EXIST::FUNCTION:
@@ -3117,7 +3117,7 @@ STORE_OBJECT_free                       3546	EXIST::FUNCTION:
 STORE_ATTR_INFO_get0_sha1str            3547	EXIST::FUNCTION:
 STORE_ATTR_INFO_get0_cstr               3548	EXIST::FUNCTION:
 STORE_get_ex_new_index                  3549	EXIST::FUNCTION:
-STORE_File                              3550	EXIST::FUNCTION:
+STORE_File                              3550	NOEXIST::FUNCTION:
 ENGINE_get_STORE                        3551	EXIST::FUNCTION:ENGINE
 STORE_get_certificate                   3552	EXIST::FUNCTION:
 STORE_delete_certificate                3553	EXIST::FUNCTION:
