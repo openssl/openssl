@@ -75,9 +75,9 @@ if [ "x$XREL" != "x" ]; then
 		;;
 	    4.2MP)
 		case "x${VERSION}" in
-		    x2.0*) echo "${MACHINE}-whatever-unixware20"; exit 0 ;;
-		    x2.1*) echo "${MACHINE}-whatever-unixware21"; exit 0 ;;
-		    x2*)   echo "${MACHINE}-whatever-unixware2";  exit 0 ;;
+		    x2.0*) echo "whatever-whatever-unixware20"; exit 0 ;;
+		    x2.1*) echo "whatever-whatever-unixware21"; exit 0 ;;
+		    x2*)   echo "whatever-whatever-unixware2";  exit 0 ;;
 		esac
 		;;
 	    4.2)
