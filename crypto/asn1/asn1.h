@@ -175,6 +175,7 @@ typedef struct asn1_string_st
 #define ASN1_IA5STRING		ASN1_STRING
 #define ASN1_UTCTIME		ASN1_STRING
 #define ASN1_GENERALIZEDTIME	ASN1_STRING
+#define ASN1_TIME		ASN1_STRING
 #define ASN1_GENERALSTRING	ASN1_STRING
 #define ASN1_UNIVERSALSTRING	ASN1_STRING
 #define ASN1_BMPSTRING		ASN1_STRING
@@ -189,6 +190,7 @@ typedef struct asn1_string_st ASN1_GENERALSTRING;
 typedef struct asn1_string_st ASN1_UNIVERSALSTRING;
 typedef struct asn1_string_st ASN1_BMPSTRING;
 typedef struct asn1_string_st ASN1_UTCTIME;
+typedef struct asn1_string_st ASN1_TIME;
 typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
 #endif
 
@@ -330,12 +332,22 @@ typedef struct asn1_header_st
 #define ASN1_GENERALIZEDTIME_new()	(ASN1_GENERALIZEDTIME *)\
 		ASN1_STRING_type_new(V_ASN1_GENERALIZEDTIME)
 #define ASN1_GENERALIZEDTIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
-#define ASN1_GENERALIZEDTIME_dup(a) (ASN1_UTCTIME *)ASN1_STRING_dup(\
+#define ASN1_GENERALIZEDTIME_dup(a) (ASN1_GENERALIZEDTIME *)ASN1_STRING_dup(\
 	(ASN1_STRING *)a)
-/* DOES NOT EXIST YET i2d_ASN1_GENERALIZEDTIME() is a function */
-/* DOES NOT EXIST YET d2i_ASN1_GENERALIZEDTIME() is a function */
-/* DOES NOT EXIST YET ASN1_GENERALIZEDTIME_set() is a function */
-/* DOES NOT EXIST YET ASN1_GENERALIZEDTIME_check() is a function */
+/* i2d_ASN1_GENERALIZEDTIME() is a function */
+/* d2i_ASN1_GENERALIZEDTIME() is a function */
+/* ASN1_GENERALIZEDTIME_set() is a function */
+/* ASN1_GENERALIZEDTIME_check() is a function */
+
+#define ASN1_TIME_new()	(ASN1_TIME *)\
+		ASN1_STRING_type_new(V_ASN1_UTCTIME)
+#define ASN1_TIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define ASN1_TIME_dup(a) (ASN1_TIME *)ASN1_STRING_dup((ASN1_STRING *)a)
+
+/* i2d_ASN1_TIME() is a function */
+/* d2i_ASN1_TIME() is a function */
+/* ASN1_TIME_set() is a function */
+/* ASN1_TIME_check() is a function */
 
 #define ASN1_GENERALSTRING_new()	(ASN1_GENERALSTRING *)\
 		ASN1_STRING_type_new(V_ASN1_GENERALSTRING)
@@ -406,6 +418,10 @@ int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
 
+int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
+ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
+int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, char *str); 
+
 int		i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a,unsigned char **pp);
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a,
 			unsigned char **pp,long length);
@@ -429,6 +445,13 @@ ASN1_IA5STRING *d2i_ASN1_IA5STRING(ASN1_IA5STRING **a,
 int		i2d_ASN1_UTCTIME(ASN1_UTCTIME *a,unsigned char **pp);
 ASN1_UTCTIME *	d2i_ASN1_UTCTIME(ASN1_UTCTIME **a,unsigned char **pp,
 			long length);
+
+int		i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a,unsigned char **pp);
+ASN1_GENERALIZEDTIME *	d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a,unsigned char **pp,
+			long length);
+
+int		i2d_ASN1_TIME(ASN1_TIME *a,unsigned char **pp);
+ASN1_TIME *	d2i_ASN1_TIME(ASN1_TIME **a,unsigned char **pp, long length);
 
   /* for the is_set parameter to i2d_ASN1_SET */
 #define IS_SEQUENCE	0
@@ -491,6 +514,8 @@ int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
+int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
+int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
 int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
 #endif
@@ -550,6 +575,9 @@ ASN1_INTEGER *d2i_ASN1_INTEGER();
 int ASN1_UTCTIME_check();
 ASN1_UTCTIME *ASN1_UTCTIME_set();
 int ASN1_UTCTIME_set_string();
+int ASN1_GENERALIZEDTIME_check();
+ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set();
+int ASN1_GENERALIZEDTIME_set_string();
 int		i2d_ASN1_OCTET_STRING();
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING();
 int i2d_ASN1_PRINTABLE();
@@ -560,6 +588,10 @@ int i2d_ASN1_IA5STRING();
 ASN1_IA5STRING *d2i_ASN1_IA5STRING();
 int		i2d_ASN1_UTCTIME();
 ASN1_UTCTIME *	d2i_ASN1_UTCTIME();
+int		i2d_ASN1_GENERALIZEDTIME();
+ASN1_GENERALIZEDTIME *	d2i_ASN1_GENERALIZEDTIME();
+int		i2d_ASN1_TIME();
+ASN1_TIME *	d2i_ASN1_TIME();
 int		i2d_ASN1_SET();
 STACK *		d2i_ASN1_SET();
 int a2d_ASN1_OBJECT();
@@ -586,6 +618,8 @@ int ASN1_i2d_fp();
 char *ASN1_d2i_bio();
 int ASN1_i2d_bio();
 int ASN1_UTCTIME_print();
+int ASN1_GENERALIZEDTIME_print();
+int ASN1_TIME_print();
 int ASN1_STRING_print();
 int ASN1_parse();
 int i2a_ASN1_INTEGER();

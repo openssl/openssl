@@ -119,6 +119,9 @@ unsigned char **pp;
 	case V_ASN1_UTCTIME:
 		r=i2d_ASN1_UTCTIME(a->value.utctime,pp);
 		break;
+	case V_ASN1_GENERALIZEDTIME:
+		r=i2d_ASN1_GENERALIZEDTIME(a->value.generalizedtime,pp);
+		break;
 	case V_ASN1_SET:
 	case V_ASN1_SEQUENCE:
 		if (a->value.set == NULL)
@@ -222,6 +225,11 @@ long length;
 	case V_ASN1_UTCTIME:
 		if ((ret->value.utctime=
 			d2i_ASN1_UTCTIME(NULL,&p,max-p)) == NULL)
+			goto err;
+		break;
+	case V_ASN1_GENERALIZEDTIME:
+		if ((ret->value.generalizedtime=
+			d2i_ASN1_GENERALIZEDTIME(NULL,&p,max-p)) == NULL)
 			goto err;
 		break;
 	case V_ASN1_SET:
