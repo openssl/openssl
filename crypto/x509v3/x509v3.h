@@ -227,7 +227,7 @@ typedef struct SXNET_st {
 
 typedef struct NOTICEREF_st {
 	ASN1_STRING *organization;
-	STACK *noticenos;
+	STACK_OF(ASN1_INTEGER) *noticenos;
 } NOTICEREF;
 
 typedef struct USERNOTICE_st {

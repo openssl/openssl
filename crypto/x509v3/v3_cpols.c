@@ -73,7 +73,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 				 STACK_OF(CONF_VALUE) *polstrs, int ia5org);
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 					STACK_OF(CONF_VALUE) *unot, int ia5org);
-static STACK *nref_nos(STACK_OF(CONF_VALUE) *nos);
+static STACK_OF(ASN1_INTEGER) *nref_nos(STACK_OF(CONF_VALUE) *nos);
 
 X509V3_EXT_METHOD v3_cpols = {
 NID_certificate_policies, 0,
@@ -282,20 +282,22 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 	return NULL;
 }
 
-static STACK *nref_nos(STACK_OF(CONF_VALUE) *nos)
+static STACK_OF(ASN1_INTEGER) *nref_nos(STACK_OF(CONF_VALUE) *nos)
 {
-	STACK *nnums;
+	STACK_OF(ASN1_INTEGER) *nnums;
 	CONF_VALUE *cnf;
 	ASN1_INTEGER *aint;
+
 	int i;
-	if(!(nnums = sk_new_null())) goto merr;
+
+	if(!(nnums = sk_ASN1_INTEGER_new_null())) goto merr;
 	for(i = 0; i < sk_CONF_VALUE_num(nos); i++) {
 		cnf = sk_CONF_VALUE_value(nos, i);
 		if(!(aint = s2i_ASN1_INTEGER(NULL, cnf->name))) {
 			X509V3err(X509V3_F_NREF_NOS,X509V3_R_INVALID_NUMBER);
 			goto err;
 		}
-		if(!sk_push(nnums, (char *)aint)) goto merr;
+		if(!sk_ASN1_INTEGER_push(nnums, aint)) goto merr;
 	}
 	return nnums;
 
@@ -303,7 +305,7 @@ static STACK *nref_nos(STACK_OF(CONF_VALUE) *nos)
 	X509V3err(X509V3_F_NOTICE_SECTION,ERR_R_MALLOC_FAILURE);
 
 	err:
-	sk_pop_free(nnums, (void(*)(void *))ASN1_STRING_free);
+	sk_ASN1_INTEGER_pop_free(nnums, ASN1_STRING_free);
 	return NULL;
 }
 
@@ -441,11 +443,11 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
 		BIO_printf(out, "%*sOrganization: %s\n", indent, "",
 						 ref->organization->data);
 		BIO_printf(out, "%*sNumber%s: ", indent, "",
-				 (sk_num(ref->noticenos) > 1) ? "s" : "");
-		for(i = 0; i < sk_num(ref->noticenos); i++) {
+			   sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
+		for(i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
 			ASN1_INTEGER *num;
 			char *tmp;
-			num = (ASN1_INTEGER *)sk_value(ref->noticenos, i);
+			num = sk_ASN1_INTEGER_value(ref->noticenos, i);
 			if(i) BIO_puts(out, ", ");
 			tmp = i2s_ASN1_INTEGER(NULL, num);
 			BIO_puts(out, tmp);
@@ -605,12 +607,14 @@ int i2d_NOTICEREF(NOTICEREF *a, unsigned char **pp)
 	M_ASN1_I2D_vars(a);
 
 	M_ASN1_I2D_len (a->organization, i2d_DISPLAYTEXT);
-	M_ASN1_I2D_len_SEQUENCE(a->noticenos, i2d_ASN1_INTEGER);
+	M_ASN1_I2D_len_SEQUENCE_type(ASN1_INTEGER, a->noticenos,
+				     i2d_ASN1_INTEGER);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put (a->organization, i2d_DISPLAYTEXT);
-	M_ASN1_I2D_put_SEQUENCE(a->noticenos, i2d_ASN1_INTEGER);
+	M_ASN1_I2D_put_SEQUENCE_type(ASN1_INTEGER, a->noticenos,
+				     i2d_ASN1_INTEGER);
 
 	M_ASN1_I2D_finish();
 }
@@ -639,7 +643,8 @@ NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, unsigned char **pp,long length)
 	if(!ret->organization) {
 		 M_ASN1_D2I_get(ret->organization, d2i_DISPLAYTEXT);
 	}
-	M_ASN1_D2I_get_seq(ret->noticenos, d2i_ASN1_INTEGER, ASN1_STRING_free);
+	M_ASN1_D2I_get_seq_type(ASN1_INTEGER, ret->noticenos, d2i_ASN1_INTEGER,
+				ASN1_STRING_free);
 	M_ASN1_D2I_Finish(a, NOTICEREF_free, ASN1_F_D2I_NOTICEREF);
 }
 
@@ -647,7 +652,7 @@ void NOTICEREF_free(NOTICEREF *a)
 {
 	if (a == NULL) return;
 	M_DISPLAYTEXT_free(a->organization);
-	sk_pop_free(a->noticenos, (void(*)(void *)) ASN1_STRING_free);
+	sk_ASN1_INTEGER_pop_free(a->noticenos, ASN1_STRING_free);
 	Free (a);
 }
 

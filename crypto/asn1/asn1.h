@@ -293,6 +293,9 @@ typedef struct asn1_string_st ASN1_UTF8STRING;
 
 typedef int ASN1_NULL;
 
+DECLARE_STACK_OF(ASN1_INTEGER)
+DECLARE_ASN1_SET_OF(ASN1_INTEGER)
+
 typedef struct asn1_type_st
 	{
 	int type;
