@@ -370,7 +370,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (ri == NULL) {
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 				 PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
-			return(NULL);
+			goto err;
 		}
 
 		jj=EVP_PKEY_size(pkey);
@@ -393,7 +393,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		BIO_get_cipher_ctx(etmp,&evp_ctx);
 		EVP_CipherInit(evp_ctx,evp_cipher,NULL,NULL,0);
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
-			return(NULL);
+			goto err;
 
 		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
 			/* Some S/MIME clients don't use the same key

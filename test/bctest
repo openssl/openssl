@@ -11,9 +11,16 @@
 # running) bc.
 
 
-# Test for SunOS 5.[78] bc bug
-SunOStest() {
-${1} >tmp.bctest <<\EOF
+IFS=:
+for dir in $PATH; do
+    bc="$dir/bc"
+
+    if [ -x "$bc" -a ! -d "$bc" ]; then
+        failure=none
+
+
+        # Test for SunOS 5.[78] bc bug
+        "$bc" >tmp.bctest <<\EOF
 obase=16
 ibase=16
 a=AD88C418F31B3FC712D0425001D522B3AE9134FF3A98C13C1FCC1682211195406C1A6C66C6A\
@@ -28,17 +35,14 @@ b=DCE91E7D120B983EA9A104B5A96D634DD644C37657B1C7860B45E6838999B3DCE5A555583C6\
 3ED0E2017D60A68775B75481449
 (a/b)*b + (a%b) - a
 EOF
-if [ 0 != "`cat tmp.bctest`" ]
-then
-  # failure
-  return 1
-fi
-}
+        if [ 0 != "`cat tmp.bctest`" ]; then
+            failure=SunOStest
+        fi
 
 
-# Test for SCO bc bug.
-SCOtest() {
-${1} >tmp.bctest <<\EOF
+        if [ "$failure" = none ]; then
+            # Test for SCO bc bug.
+            "$bc" >tmp.bctest <<\EOF
 obase=16
 ibase=16
 -FFDD63BA1A4648F0D804F8A1C66C53F0D2110590E8A3907EC73B4AEC6F15AC177F176F2274D2\
@@ -65,21 +69,14 @@ F617E3145BBFBE9AFD0D6E437EA4FF6F04BC67C4F1458B4F0F47B64 - 1C2BBBB19B74E86FD32\
 D97935A7E1A14AD209D6CF811F55C6DB83AA9E6DFECFCD6669DED7171EE22A40C6181615CAF3F\
 5296964
 EOF
-if [ "0
-0" != "`cat tmp.bctest`" ]
-then
-  # failure
-  return 1
-fi
-}
+            if [ "0
+0" != "`cat tmp.bctest`" ]; then
+                failure=SCOtest
+            fi
+        fi
 
 
-IFS=:
-for dir in $PATH; do
-    bc="$dir/bc"
-
-    if [ -x "$bc" -a ! -d "$bc" ]; then
-        if SunOStest "$bc" && SCOtest "$bc"; then
+        if [ "$failure" = none ]; then
             # bc works; now check if it knows the 'print' command.
             if [ "OK" = "`echo 'print \"OK\"' | $bc 2>/dev/null`" ]
             then
@@ -90,7 +87,7 @@ for dir in $PATH; do
             exit 0
         fi
 
-        echo "$bc does not work properly.  Looking for another bc ..." >&2
+        echo "$bc does not work properly ('$failure' failed).  Looking for another bc ..." >&2
     fi
 done
 

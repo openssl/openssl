@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Fix a couple of memory leaks in PKCS7_dataDecode()
+     [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
+
   *) Change Configure and Makefiles to provide EXE_EXT, which will contain
      the default extension for executables, if any.  Also, make the perl
      scripts that use symlink() to test if it really exists and use "cp"
@@ -19,6 +22,8 @@
 
   *) Change bctest to avoid here-documents inside command substitution
      (workaround for FreeBSD /bin/sh bug).
+     For compatibility with Ultrix, avoid shell functions (introduced
+     in the bctest version that searches along $PATH).
      [Bodo Moeller]
 
   *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
