@@ -217,7 +217,7 @@ void DH_free(DH *r)
 	OPENSSL_free(r);
 	}
 
-int DH_up(DH *r)
+int DH_up_ref(DH *r)
 	{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
 #ifdef REF_PRINT

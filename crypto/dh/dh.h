@@ -166,7 +166,7 @@ DH *DH_new_method(struct engine_st *engine);
 
 DH *	DH_new(void);
 void	DH_free(DH *dh);
-int	DH_up(DH *dh);
+int	DH_up_ref(DH *dh);
 int	DH_size(const DH *dh);
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);

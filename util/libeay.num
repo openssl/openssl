@@ -2650,13 +2650,12 @@ EVP_dev_crypto_rc4                      3098	EXIST::FUNCTION:DES
 ENGINE_load_ciphers                     3099	EXIST::FUNCTION:
 ENGINE_get_cipher_by_name               3100	EXIST::FUNCTION:
 ENGINE_cipher_num                       3101	EXIST::FUNCTION:
-DH_up_ref                               3102	NOEXIST::FUNCTION:
+DH_up_ref                               3102	EXIST::FUNCTION:DH
 RSA_up_ref                              3103	EXIST::FUNCTION:RSA
 EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
 CRYPTO_cleanup_all_ex_data              3105	EXIST::FUNCTION:
 CRYPTO_set_ex_data_implementation       3106	EXIST::FUNCTION:
 CRYPTO_ex_data_new_class                3107	EXIST::FUNCTION:
 CRYPTO_get_ex_data_implementation       3108	EXIST::FUNCTION:
-DH_up                                   3109	EXIST::FUNCTION:DH
-BN_pseudo_rand_range                    3110	EXIST::FUNCTION:
-ERR_unload_strings                      3111	EXIST::FUNCTION:
+BN_pseudo_rand_range                    3109	EXIST::FUNCTION:
+ERR_unload_strings                      3110	EXIST::FUNCTION:
