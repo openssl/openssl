@@ -82,7 +82,7 @@
 #include "wintext.h"
 #endif
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC)) || defined (_DARWIN)
+#if !defined(MSDOS) && !defined(VXWORKS) && (!defined(VMS) || defined(__DECC)) || defined (_DARWIN)
 #define TIMES
 #endif
 
@@ -102,7 +102,7 @@
 #undef TIMES
 #endif
 
-#ifndef TIMES
+#if !defined(TIMES) && !defined(VXWORKS)
 #include <sys/timeb.h>
 #endif
 
@@ -139,6 +139,8 @@
 #undef BUFSIZZ
 #define BUFSIZZ 1024*10
 
+#undef min
+#undef max
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -368,6 +370,22 @@ static double tm_Time_F(int s)
 		ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
 		return((ret == 0.0)?1e-6:ret);
 	}
+#elif defined(VXWORKS)
+        {
+	static unsigned long tick_start, tick_end;
+
+	if( s == START )
+		{
+		tick_start = tickGet();
+		return 0;
+		}
+	else
+		{
+		tick_end = tickGet();
+		ret = (double)(tick_end - tick_start) / (double)sysClkRateGet();
+		return((ret == 0.0)?1e-6:ret);
+		}
+        }
 #else /* !times() */
 	static struct timeb tstart,tend;
 	long i;

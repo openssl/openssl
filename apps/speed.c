@@ -84,10 +84,10 @@
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(_DARWIN)
 # define USE_TOD
-#elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#elif !defined(MSDOS) && !defined(VXWORKS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(MPE) && !defined(__NetBSD__) && !defined(_DARWIN)
+#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(MPE) && !defined(__NetBSD__) && !defined(_DARWIN) && !defined(VXWORKS)
 # define TIMEB
 #endif
 
@@ -115,7 +115,7 @@
 #include <sys/timeb.h>
 #endif
 
-#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD)
+#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD) && !defined(VXWORKS)
 #error "It seems neither struct tms nor struct timeb is supported in this platform!"
 #endif
 
@@ -224,7 +224,7 @@ static double Time_F(int s, int usertime)
 
 #ifdef USE_TOD
 	if(usertime)
-	    {
+		{
 		static struct rusage tstart,tend;
 
 		if (s == START)
@@ -284,7 +284,23 @@ static double Time_F(int s, int usertime)
 # if defined(TIMES) && defined(TIMEB)
 	else
 # endif
-# ifdef TIMEB
+# ifdef VXWORKS
+		{
+		static unsigned long tick_start, tick_end;
+
+		if( s == START )
+			{
+			tick_start = tickGet();
+			return 0;
+			}
+		else
+			{
+			tick_end = tickGet();
+			ret = (double)(tick_end - tick_start) / (double)sysClkRateGet();
+			return((ret < 0.001)?0.001:ret);
+			}
+                }
+# elif defined(TIMEB)
 		{
 		static struct timeb tstart,tend;
 		long i;
@@ -303,6 +319,7 @@ static double Time_F(int s, int usertime)
 			}
 		}
 # endif
+
 #endif
 	}
 

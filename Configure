@@ -490,6 +490,9 @@ my %table=(
 ##### Sony NEWS-OS 4.x
 "newsos4-gcc","gcc:-O -DB_ENDIAN -DNEWS4::(unknown):-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
 
+##### VxWorks for various targets
+"vxworks-ppc405","ccppc:-g -msoft-float -mlongcall -DVXWORKS -DCPU=PPC405 -I\$(WIND_BASE)/target/h:::-r:::::",
+
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
