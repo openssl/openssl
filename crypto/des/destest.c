@@ -709,7 +709,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 
 	printf("Doing quad_cksum\n");
 	cs=quad_cksum(cbc_data,(des_cblock *)lqret,
-		(long)strlen(cbc_data),2,(des_cblock *)cbc_iv);
+		(long)strlen((char *)cbc_data),2,(des_cblock *)cbc_iv);
 	if (cs != 0x70d7a63aL)
 		{
 		printf("quad_cksum error, ret %08lx should be 70d7a63a\n",

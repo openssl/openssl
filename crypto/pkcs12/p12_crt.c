@@ -61,7 +61,7 @@
 #include <openssl/pkcs12.h>
 
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
-	     STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter,
+	     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter, int mac_iter,
 	     int keytype)
 {
 	PKCS12 *p12;
@@ -103,8 +103,8 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	
 	/* Add all other certificates */
 	if(ca) {
-		for(i = 0; i < sk_num(ca); i++) {
-			tcert = (X509 *)sk_value(ca, i);
+		for(i = 0; i < sk_X509_num(ca); i++) {
+			tcert = sk_X509_value(ca, i);
 			if(!(bag = M_PKCS12_x5092certbag(tcert))) return NULL;
 			if(!sk_push(bags, (char *)bag)) {
 				PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);

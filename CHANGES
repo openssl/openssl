@@ -4,6 +4,13 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Modernise PKCS12_parse() so it uses STACK_OF(X509) for its ca argument
+     fix a leak when the ca argument was passed as NULL. Stop X509_PUBKEY_set()
+     using the passed key: if the passed key was a private key the result
+     of X509_print(), for example, would be to print out all the private key
+     components.
+     [Steve Henson]
+
   *) des_quad_cksum() byte order bug fix.
      [Ulf Möller, using the problem description in krb4-0.9.7, where
       the solution is attributed to Derrick J Brashear <shadow@DEMENTIA.ORG>]

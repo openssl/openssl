@@ -183,8 +183,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
 	Free(s);
 
+#if 0
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
 	pk->pkey=pkey;
+#endif
 
 	if (*x != NULL)
 		X509_PUBKEY_free(*x);
