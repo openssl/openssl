@@ -1021,7 +1021,7 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 
 		/* Perform the operation */
 		ret = p_hwcrhk_ModExpCRT(hwcrhk_context, m_a, m_p, m_q,
-			m_dmp1, m_dmq1, m_iqmp, &m_r, NULL);
+			m_dmp1, m_dmq1, m_iqmp, &m_r, &rmsg);
 
 		/* Convert the response */
 		r->top = m_r.size / sizeof(BN_ULONG);
@@ -1319,7 +1319,7 @@ static void hwcrhk_log_message(void *logstr, const char *message)
 		lstream=*(BIO **)logstr;
 	if (lstream)
 		{
-		BIO_write(lstream, message, strlen(message));
+		BIO_printf(lstream, "%s\n", message);
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}
