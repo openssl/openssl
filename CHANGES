@@ -12,6 +12,28 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Major restructuring to the underlying ENGINE code. This includes
+     reduction of linker bloat, separation of pure "ENGINE" manipulation
+     (initialisation, etc) from functionality dealing with implementations
+     of specific crypto iterfaces. This change also introduces integrated
+     support for symmetric ciphers and digest implementations - so ENGINEs
+     can now accelerate these by providing EVP_CIPHER and EVP_MD
+     implementations of their own. This is detailed in crypto/engine/README
+     as it couldn't be adequately described here. However, there are a few
+     API changes worth noting - some RSA, DSA, DH, and RAND functions that
+     were changed in the original introduction of ENGINE code have now
+     reverted back - the hooking from this code to ENGINE is now a good
+     deal more passive and at run-time, operations deal directly with
+     RSA_METHODs, DSA_METHODs (etc) as they did before, rather than
+     dereferencing through an ENGINE pointer any more. Also, the ENGINE
+     functions dealing with BN_MOD_EXP[_CRT] handlers have been removed -
+     they were not being used by the framework as there is no concept of a
+     BIGNUM_METHOD and they could not be generalised to the new
+     'ENGINE_TABLE' mechanism that underlies the new code. Similarly,
+     ENGINE_cpy() has been removed as it cannot be consistently defined in
+     the new code.
+     [Geoff Thorpe]
+
   +) Change ASN1_GENERALIZEDTIME_check() to allow fractional seconds.
      [Steve Henson]
 
