@@ -506,3 +506,4 @@ mime_mhs_headings		505
 mime_mhs_bodies		506
 id_hex_partial_message		507
 id_hex_multipart_message		508
+generationQualifier		509

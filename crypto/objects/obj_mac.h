@@ -1641,6 +1641,10 @@
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
 
+#define LN_generationQualifier		"generationQualifier"
+#define NID_generationQualifier		509
+#define OBJ_generationQualifier		OBJ_X509,44L
+
 #define LN_x500UniqueIdentifier		"x500UniqueIdentifier"
 #define NID_x500UniqueIdentifier		503
 #define OBJ_x500UniqueIdentifier		OBJ_X509,45L
