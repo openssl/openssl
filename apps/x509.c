@@ -126,7 +126,7 @@ static char *x509_usage[]={
 " -md2/-md5/-sha1/-mdc2 - digest to use\n",
 " -extfile        - configuration file with X509V3 extensions to add\n",
 " -extensions     - section from config file with X509V3 extensions to add\n",
-" -crlext         - delete extensions before signing and input certificate\n",
+" -clrext         - delete extensions before signing and input certificate\n",
 NULL
 };
 
@@ -365,8 +365,15 @@ int MAIN(int argc, char **argv)
 			aliasout= ++num;
 		else if (strcmp(*argv,"-CAcreateserial") == 0)
 			CA_createserial= ++num;
-		else if (strcmp(*argv,"-crlext") == 0)
+		else if (strcmp(*argv,"-clrext") == 0)
 			clrext = 1;
+#if 1 /* stay backwards-compatible with 0.9.5; this should go away soon */
+		else if (strcmp(*argv,"-crlext") == 0)
+			{
+			BIO_printf(bio_err,"use -clrext instead of -crlext\n");
+			clrext = 1;
+			}
+#endif
 		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */

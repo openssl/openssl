@@ -4,6 +4,11 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Rename openssl x509 option '-crlext', which was added in 0.9.5,
+     to '-clrext' (= clear extensions), as intended and documented.
+     [Bodo Moeller; inconsistency pointed out by Michael Attili
+     <attili@amaxo.com>]
+
   *) Fix for HMAC. It wasn't zeroing the rest of the block if the key length
      was larger than the MD block size.      
      [Steve Henson, pointed out by Yost William <YostW@tce.com>]
