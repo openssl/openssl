@@ -4,6 +4,11 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
+     never resets s->method to s->ctx->method when called from within
+     one of the SSL handshake functions.
+     [Bodo Moeller; problem pointed out by Niko Baric]
+
   *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
      (sent using the client's version number) if client_version is
      smaller than the protocol version in use.  Also change

@@ -113,8 +113,8 @@ int ssl23_connect(SSL *s)
 	else if (s->ctx->info_callback != NULL)
 		cb=s->ctx->info_callback;
 	
-	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 	s->in_handshake++;
+	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 
 	for (;;)
 		{
