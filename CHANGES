@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add a large number of documentation files for many SSL routines.
+     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>]
+
   *) Add a configuration entry for Sony News 4.
      [NAKAJI Hiroyuki <nakaji@tutrp.tut.ac.jp>]
 
