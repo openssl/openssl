@@ -839,7 +839,7 @@ int MAIN(int argc, char **argv)
 		Time_F(START,usertime);
 		for (i=count; i; i--)
 			des_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
-				&(sch[0]),DES_ENCRYPT);
+				&sch,DES_ENCRYPT);
 		d=Time_F(STOP,usertime);
 		} while (d <3);
 	save_count=count;
