@@ -1922,15 +1922,15 @@
 #define NID_aes_128_cbc		419
 #define OBJ_aes_128_cbc		OBJ_aes,2L
 
-#define SN_aes_128_ofb		"AES-128-OFB"
-#define LN_aes_128_ofb		"aes-128-ofb"
-#define NID_aes_128_ofb		420
-#define OBJ_aes_128_ofb		OBJ_aes,3L
+#define SN_aes_128_ofb128		"AES-128-OFB"
+#define LN_aes_128_ofb128		"aes-128-ofb"
+#define NID_aes_128_ofb128		420
+#define OBJ_aes_128_ofb128		OBJ_aes,3L
 
-#define SN_aes_128_cfb		"AES-128-CFB"
-#define LN_aes_128_cfb		"aes-128-cfb"
-#define NID_aes_128_cfb		421
-#define OBJ_aes_128_cfb		OBJ_aes,4L
+#define SN_aes_128_cfb128		"AES-128-CFB"
+#define LN_aes_128_cfb128		"aes-128-cfb"
+#define NID_aes_128_cfb128		421
+#define OBJ_aes_128_cfb128		OBJ_aes,4L
 
 #define SN_aes_192_ecb		"AES-192-ECB"
 #define LN_aes_192_ecb		"aes-192-ecb"
@@ -1942,15 +1942,15 @@
 #define NID_aes_192_cbc		423
 #define OBJ_aes_192_cbc		OBJ_aes,22L
 
-#define SN_aes_192_ofb		"AES-192-OFB"
-#define LN_aes_192_ofb		"aes-192-ofb"
-#define NID_aes_192_ofb		424
-#define OBJ_aes_192_ofb		OBJ_aes,23L
+#define SN_aes_192_ofb128		"AES-192-OFB"
+#define LN_aes_192_ofb128		"aes-192-ofb"
+#define NID_aes_192_ofb128		424
+#define OBJ_aes_192_ofb128		OBJ_aes,23L
 
-#define SN_aes_192_cfb		"AES-192-CFB"
-#define LN_aes_192_cfb		"aes-192-cfb"
-#define NID_aes_192_cfb		425
-#define OBJ_aes_192_cfb		OBJ_aes,24L
+#define SN_aes_192_cfb128		"AES-192-CFB"
+#define LN_aes_192_cfb128		"aes-192-cfb"
+#define NID_aes_192_cfb128		425
+#define OBJ_aes_192_cfb128		OBJ_aes,24L
 
 #define SN_aes_256_ecb		"AES-256-ECB"
 #define LN_aes_256_ecb		"aes-256-ecb"
@@ -1962,15 +1962,15 @@
 #define NID_aes_256_cbc		427
 #define OBJ_aes_256_cbc		OBJ_aes,42L
 
-#define SN_aes_256_ofb		"AES-256-OFB"
-#define LN_aes_256_ofb		"aes-256-ofb"
-#define NID_aes_256_ofb		428
-#define OBJ_aes_256_ofb		OBJ_aes,43L
+#define SN_aes_256_ofb128		"AES-256-OFB"
+#define LN_aes_256_ofb128		"aes-256-ofb"
+#define NID_aes_256_ofb128		428
+#define OBJ_aes_256_ofb128		OBJ_aes,43L
 
-#define SN_aes_256_cfb		"AES-256-CFB"
-#define LN_aes_256_cfb		"aes-256-cfb"
-#define NID_aes_256_cfb		429
-#define OBJ_aes_256_cfb		OBJ_aes,44L
+#define SN_aes_256_cfb128		"AES-256-CFB"
+#define LN_aes_256_cfb128		"aes-256-cfb"
+#define NID_aes_256_cfb128		429
+#define OBJ_aes_256_cfb128		OBJ_aes,44L
 
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"

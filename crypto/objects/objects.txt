@@ -644,17 +644,23 @@ enterprises 1466 344	: dcobject		: dcObject
 
 aes 1			: AES-128-ECB		: aes-128-ecb
 aes 2			: AES-128-CBC		: aes-128-cbc
+!Cname aes-128-ofb128
 aes 3			: AES-128-OFB		: aes-128-ofb
+!Cname aes-128-cfb128
 aes 4			: AES-128-CFB		: aes-128-cfb
 
 aes 21			: AES-192-ECB		: aes-192-ecb
 aes 22			: AES-192-CBC		: aes-192-cbc
+!Cname aes-192-ofb128
 aes 23			: AES-192-OFB		: aes-192-ofb
+!Cname aes-192-cfb128
 aes 24			: AES-192-CFB		: aes-192-cfb
 
 aes 41			: AES-256-ECB		: aes-256-ecb
 aes 42			: AES-256-CBC		: aes-256-cbc
+!Cname aes-256-ofb128
 aes 43			: AES-256-OFB		: aes-256-ofb
+!Cname aes-256-cfb128
 aes 44			: AES-256-CFB		: aes-256-cfb
 
 # Hold instruction CRL entry extension
