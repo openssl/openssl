@@ -290,6 +290,9 @@ my %table=(
 # NCR MP-RAS UNIX ver 02.03.01
 "ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
 
+# Linux on ARM
+"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::dlfcn",
+
 # UnixWare 2.0
 "unixware-2.0","cc:-O -DFILIO_H::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
 "unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread::(unknown):-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
