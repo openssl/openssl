@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/30 21:43:06 $
+  ______________                           $Date: 2001/03/31 14:03:09 $
 
   DEVELOPMENT STATE
 
@@ -62,6 +62,11 @@
 
                        Beta 3 released on March 30th, 2001
 	RedHat 6.2/Linux 2.2.14 (linux-elf)	- PASSED [normal+engine]
+	HP-UX 11.0 32-bit (hpux-parisc-gcc)	- PASSED [engine]
+	AIX 4.3 (aix43-gcc)			- PASSED [engine]
+	FreeBSD 4.1 (FreeBSD-elf)		- PASSED [engine]
+	Solaris 2.7 (solaris-sparcv9-cc)	- PASSED [engine]
+	BSDi 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
