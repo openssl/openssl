@@ -184,7 +184,7 @@ WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os.h
 HEADER=         e_os.h
 
-all:
+all: Makefile.ssl
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making $$i..." && \
@@ -197,6 +197,11 @@ sub_all:
 	(cd $$i && echo "making $$i..." && \
 	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ) || exit 1; \
 	done;
+
+Makefile.ssl: Makefile.org
+	@echo "Makefile.ssl is older than Makefile.org. Rerun Configuration"
+	@echo "and do a make links and a make errors."
+	@false
 
 libclean:
 	/bin/rm *.a */lib */*/lib
