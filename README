@@ -122,6 +122,13 @@
  lists the functions; you will probably have to look at the code to work out
  how to use them. Look at the example programs.
 
+ PROBLEMS
+ --------
+
+ For some platforms, there are some known problems that may affect the user
+ or application author.  We try to collect those in doc/PROBLEMS, with current
+ thoughts on how they should be solved in a future of OpenSSL.
+
  SUPPORT 
  -------
 
