@@ -102,14 +102,19 @@ err:
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 	{
-	int i=0,num;
+	int i=0,num, ok = 0;
 	char *buf=NULL;
 	char *p;
 	BIGNUM *t=NULL;
 	BN_ULONG *bn_data=NULL,*lp;
 
+	/* get an upper bound for the length of the decimal integer
+	 * num <= (BN_num_bits(a) + 1) * log(2)
+	 *     <= 3 * BN_num_bits(a) * 0.1001 + log(2) + 1     (rounding error)
+	 *     <= BN_num_bits(a)/10 + BN_num_bits/1000 + 1 + 1 
+	 */
 	i=BN_num_bits(a)*3;
-	num=(i/10+i/1000+3)+1;
+	num=(i/10+i/1000+1)+1;
 	bn_data=(BN_ULONG *)OPENSSL_malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
 	buf=(char *)OPENSSL_malloc(num+3);
 	if ((buf == NULL) || (bn_data == NULL))
@@ -122,7 +127,6 @@ char *BN_bn2dec(const BIGNUM *a)
 #define BUF_REMAIN (num+3 - (size_t)(p - buf))
 	p=buf;
 	lp=bn_data;
-	if (t->neg) *(p++)='-';
 	if (BN_is_zero(t))
 		{
 		*(p++)='0';
@@ -130,6 +134,9 @@ char *BN_bn2dec(const BIGNUM *a)
 		}
 	else
 		{
+		if (BN_get_sign(t))
+			*p++ = '-';
+
 		i=0;
 		while (!BN_is_zero(t))
 			{
@@ -149,9 +156,16 @@ char *BN_bn2dec(const BIGNUM *a)
 			while (*p) p++;
 			}
 		}
+	ok = 1;
 err:
 	if (bn_data != NULL) OPENSSL_free(bn_data);
 	if (t != NULL) BN_free(t);
+	if (!ok && buf)
+		{
+		OPENSSL_free(buf);
+		buf = NULL;
+		}
+
 	return(buf);
 	}
 

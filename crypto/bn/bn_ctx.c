@@ -70,10 +70,7 @@
  *
  * 1. Check a bunch of "(words+1)" type hacks in various bignum functions and
  * check they can be safely removed.
- *  - BN_bin2bn() looks pretty nasty with the miscellaneous +1 and +2 adjustments.
- *    Needs a full rubber-gloving, me thinks.
  *  - Check +1 and other ugliness in BN_from_montgomery()
- *  - Aspects of BN_bn2dec() also look a bit arbitrary
  *
  * 2. Consider allowing a BN_new_ex() that, at least, lets you specify an
  * appropriate 'block' size that will be honoured by bn_expand_internal() to
