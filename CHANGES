@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) RIPEMD160 is operational on all platforms and is back in 'make test'.
+     [Andy Polyakov]
+
   *) Allow the config file extension section to be overwritten on the
      command line. Based on an original idea from Massimiliano Pala
      <madwolf@comune.modena.it>. The new option is called -extensions
