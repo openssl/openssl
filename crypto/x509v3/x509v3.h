@@ -158,7 +158,6 @@ ASN1_INTEGER *pathlen;
 
 #ifndef NOPROTO
 void ERR_load_X509V3_strings(void);
-void ERR_X509V3_error(int function, int reason, char *file, int line);
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp);
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, unsigned char **pp, long length);
 BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new(void);
@@ -196,7 +195,6 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag);
 #else
 
 void ERR_load_X509V3_strings();
-void ERR_X509V3_error();
 int i2d_BASIC_CONSTRAINTS();
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS();
 BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new();
