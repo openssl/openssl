@@ -57,45 +57,26 @@
 #include <openssl/lhash.h>
 #include "eng_int.h"
 
-/* This is the type of item in the 'implementation' table. Each 'nid' hashes to
- * a (potentially NULL) ENGINE_PILE structure which contains a stack of ENGINE*
- * pointers. These pointers aren't references, because they're inserted and
- * removed during ENGINE creation and ENGINE destruction. They point to ENGINEs
- * that *exist* (ie. have a structural reference count greater than zero) rather
- * than ENGINEs that are *functional*. Each pointer in those stacks are to
- * ENGINEs that implements the algorithm corresponding to each 'nid'. */
-
 /* The type of the items in the table */
 typedef struct st_engine_pile
 	{
-	/* The 'nid' of the algorithm/mode this ENGINE_PILE structure represents
-	 * */
+	/* The 'nid' of this algorithm/mode */
 	int nid;
-	/* A stack of ENGINE pointers for ENGINEs that support this
-	 * algorithm/mode. In the event that 'funct' is NULL, the first entry in
-	 * this stack that initialises will be set as 'funct' and assumed as the
-	 * default for operations of this type. */
+	/* ENGINEs that implement this algorithm/mode. */
 	STACK_OF(ENGINE) *sk;
 	/* The default ENGINE to perform this algorithm/mode. */
 	ENGINE *funct;
-	/* This value optimises engine_table_select(). If it is called it sets
-	 * this value to 1. Any changes to this ENGINE_PILE resets it to zero.
-	 * As such, no ENGINE_init() thrashing is done unless ENGINEs
-	 * continually register (and/or unregister). */
+	/* Zero if 'sk' is newer than the cached 'funct', non-zero otherwise */
 	int uptodate;
 	} ENGINE_PILE;
 
-/* The type of the hash table of ENGINE_PILE structures such that each are
- * unique and keyed by the 'nid' value. */
+/* The type exposed in eng_int.h */
 struct st_engine_table
 	{
 	LHASH piles;
 	}; /* ENGINE_TABLE */
 
-/* This value stores global options controlling behaviour of (mostly) the
- * engine_table_select() function. It's a bitmask of flag values of the form
- * ENGINE_TABLE_FLAG_*** (as defined in engine.h) and is controlled by the
- * ENGINE_[get|set]_table_flags() function. */
+/* Global flags (ENGINE_TABLE_FLAG_***). */
 static unsigned int table_flags = 0;
 
 /* API function manipulating 'table_flags' */
@@ -122,10 +103,8 @@ static IMPLEMENT_LHASH_COMP_FN(engine_pile_cmp, const ENGINE_PILE *)
 static int int_table_check(ENGINE_TABLE **t, int create)
 	{
 	LHASH *lh;
-	if(*t)
-		return 1;
-	if(!create)
-		return 0;
+	if(*t) return 1;
+	if(!create) return 0;
 	if((lh = lh_new(LHASH_HASH_FN(engine_pile_hash),
 			LHASH_COMP_FN(engine_pile_cmp))) == NULL)
 		return 0;
@@ -155,9 +134,8 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		if(!fnd)
 			{
 			fnd = OPENSSL_malloc(sizeof(ENGINE_PILE));
-			if(!fnd)
-				goto end;
-			fnd->uptodate = 1;
+			if(!fnd) goto end;
+			fnd->uptodate = 0;
 			fnd->nid = *nids;
 			fnd->sk = sk_ENGINE_new_null();
 			if(!fnd->sk)
@@ -165,7 +143,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 				OPENSSL_free(fnd);
 				goto end;
 				}
-			fnd->funct= NULL;
+			fnd->funct = NULL;
 			lh_insert(&(*table)->piles, fnd);
 			}
 		/* A registration shouldn't add duplciate entries */
@@ -174,7 +152,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		if(!sk_ENGINE_push(fnd->sk, e))
 			goto end;
 		/* "touch" this ENGINE_PILE */
-		fnd->uptodate = 0;
+		fnd->uptodate = 1;
 		if(setdefault)
 			{
 			if(!engine_unlocked_init(e))
@@ -202,7 +180,7 @@ static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
 		{
 		sk_ENGINE_delete(pile->sk, n);
 		/* "touch" this ENGINE_CIPHER */
-		pile->uptodate = 0;
+		pile->uptodate = 1;
 		}
 	if(pile->funct == e)
 		{
@@ -240,9 +218,7 @@ void engine_table_cleanup(ENGINE_TABLE **table)
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	}
 
-/* Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
- * references) for a given cipher 'nid' */
+/* return a functional reference for a given 'nid' */
 #ifndef ENGINE_TABLE_DEBUG
 ENGINE *engine_table_select(ENGINE_TABLE **table, int nid)
 #else
@@ -253,25 +229,21 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f, in
 	ENGINE_PILE tmplate, *fnd=NULL;
 	int initres, loop = 0;
 
-	/* If 'engine_ciphers' is NULL, then it's absolutely *sure* that no
-	 * ENGINEs have registered any implementations! */
 	if(!(*table))
 		{
 #ifdef ENGINE_TABLE_DEBUG
-		fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, no "
-			"registered for anything!\n", f, l, nid);
+		fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, nothing "
+			"registered!\n", f, l, nid);
 #endif
 		return NULL;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	/* Check again inside the lock otherwise we could race against cleanup
 	 * operations. But don't worry about a fprintf(stderr). */
-	if(!int_table_check(table, 0))
-		goto end;
+	if(!int_table_check(table, 0)) goto end;
 	tmplate.nid = nid;
 	fnd = lh_retrieve(&(*table)->piles, &tmplate);
-	if(!fnd)
-		goto end;
+	if(!fnd) goto end;
 	if(fnd->funct && engine_unlocked_init(fnd->funct))
 		{
 #ifdef ENGINE_TABLE_DEBUG
@@ -297,34 +269,19 @@ trynext:
 #endif
 		goto end;
 		}
-#if 0
-	/* Don't need to get a reference if we hold the lock. If the locking has
-	 * to change in future, that would be different ... */
-	ret->struct_ref++; engine_ref_debug(ret, 0, 1)
-#endif
-	/* Try and initialise the ENGINE if it's already functional *or* if the
-	 * ENGINE_TABLE_FLAG_NOINIT flag is not set. */
+	/* Try to initialise the ENGINE? */
 	if((ret->funct_ref > 0) || !(table_flags & ENGINE_TABLE_FLAG_NOINIT))
 		initres = engine_unlocked_init(ret);
 	else
 		initres = 0;
-#if 0
-	/* Release the structural reference */
-	ret->struct_ref--; engine_ref_debug(ret, 0, -1);
-#endif
 	if(initres)
 		{
-		/* If we didn't have a default (functional reference) for this
-		 * 'nid' (or we had one but for whatever reason we're now
-		 * initialising a different one), use this opportunity to set
-		 * 'funct'. */
+		/* Update 'funct' */
 		if((fnd->funct != ret) && engine_unlocked_init(ret))
 			{
 			/* If there was a previous default we release it. */
 			if(fnd->funct)
 				engine_unlocked_finish(fnd->funct, 0);
-			/* We got an extra functional reference for the
-			 * per-'nid' default */
 			fnd->funct = ret;
 #ifdef ENGINE_TABLE_DEBUG
 			fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, "
@@ -339,13 +296,9 @@ trynext:
 		}
 	goto trynext;
 end:
-	/* Whatever happened - we should "untouch" our uptodate file seeing as
-	 * we have tried our best to find a functional reference for 'nid'. If
-	 * it failed, it is unlikely to succeed again until some future
-	 * registrations (or unregistrations) have taken place that affect that
-	 * 'nid'. */
-	if(fnd)
-		fnd->uptodate = 1;
+	/* If it failed, it is unlikely to succeed again until some future
+	 * registrations have taken place. In all cases, we cache. */
+	if(fnd) fnd->uptodate = 1;
 #ifdef ENGINE_TABLE_DEBUG
 	if(ret)
 		fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, caching "
