@@ -52,8 +52,17 @@
 #ifndef HEADER_AES_LOCL_H
 #define HEADER_AES_LOCL_H
 
+#include <openssl/e_os2.h>
+
 #ifdef OPENSSL_NO_AES
 #error AES is disabled.
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
+#include <string.h>
 #endif
 
 typedef unsigned long u32;
