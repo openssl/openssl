@@ -447,7 +447,7 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
 	ASN1_OBJECT *o = NULL;
         X509_EXTENSION *x = NULL;
 
-	if (!(sk = sk_ASN1_OBJECT_new(NULL))) goto err;
+	if (!(sk = sk_ASN1_OBJECT_new_null())) goto err;
 	while (oids && *oids)
 	        {
 		if ((nid=OBJ_txt2nid(*oids))!=NID_undef&&(o=OBJ_nid2obj(nid))) 
@@ -500,7 +500,7 @@ X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 	
 	if (!(sloc = OCSP_SERVICELOC_new())) goto err;
 	if (!(sloc->issuer = X509_NAME_dup(issuer))) goto err;
-	if (urls && *urls && !(sloc->locator = sk_ACCESS_DESCRIPTION_new(NULL))) goto err;
+	if (urls && *urls && !(sloc->locator = sk_ACCESS_DESCRIPTION_new_null())) goto err;
 	while (urls && *urls)
 	        {
 		if (!(ad = ACCESS_DESCRIPTION_new())) goto err;
