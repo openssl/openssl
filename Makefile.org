@@ -733,8 +733,9 @@ install_docs:
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `dirname $$i`; \
-		pod2man --section=$$sec --center=OpenSSL \
-			--release=$(VERSION) `basename $$i`) \
+		sh -c "`cd ../../util; ./pod2mantest ignore` \
+			--section=$$sec --center=OpenSSL \
+			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
@@ -742,8 +743,9 @@ install_docs:
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `dirname $$i`; \
-		pod2man --section=$$sec --center=OpenSSL \
-			--release=$(VERSION) `basename $$i`) \
+		sh -c "`cd ../../util; ./pod2mantest ignore` \
+			--section=$$sec --center=OpenSSL \
+			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 
