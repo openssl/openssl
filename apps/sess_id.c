@@ -77,7 +77,7 @@ static char *sess_id_usage[]={
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -text           - print ssl session id details\n",
-" -cert           - output certificaet \n",
+" -cert           - output certificate \n",
 " -noout          - no CRL output\n",
 NULL
 };

@@ -224,8 +224,8 @@ static void s_time_usage()
 -time arg     - max number of seconds to collect data, default %d\n\
 -verify arg   - turn on peer certificate verification, arg == depth\n\
 -cert arg     - certificate file to use, PEM format assumed\n\
--key arg      - RSA file to use, PEM format assumed, in cert file if\n\
-                not specified but cert fill is.\n\
+-key arg      - RSA file to use, PEM format assumed, key is in cert file\n\
+                file if not specified by this option\n\
 -CApath arg   - PEM format directory of CA's\n\
 -CAfile arg   - PEM format file of CA's\n\
 -cipher       - prefered cipher to use, play with 'openssl ciphers'\n\n";
