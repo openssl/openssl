@@ -122,6 +122,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 		return ok;
 }
 
+#ifndef NO_FP_API
 int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 {
 	BIO *bio_tmp;
@@ -131,3 +132,4 @@ int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 	BIO_free(bio_tmp);
 	return ret;
 }
+#endif

@@ -96,19 +96,23 @@ int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
 	return ASN1_i2d_bio((int(*)())i2d_PKCS12, bp, (unsigned char *)p12);
 }
 
+#ifndef NO_FP_API
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
 {
 	return ASN1_i2d_fp((int(*)())i2d_PKCS12, fp, (unsigned char *)p12);
 }
+#endif
 
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
 	return (PKCS12 *)ASN1_d2i_bio((char *(*)())PKCS12_new,
          (char *(*)())d2i_PKCS12, bp, (unsigned char **)p12);
 }
+#ifndef NO_FP_API
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
         return (PKCS12 *)ASN1_d2i_fp((char *(*)())PKCS12_new, 
          (char *(*)())d2i_PKCS12, fp, (unsigned char **)(p12));
 }
+#endif
 

@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Aug 1999]
 
+  *) A few more ``#ifndef NO_FP_API / #endif'' pairs for consistency.
+     [Andrija Antonijevic <TheAntony2@bigfoot.com>]
+
   *) Fix -startdate and -enddate (which was missing) arguments to 'ca'
      program.
      [Steve Henson]
