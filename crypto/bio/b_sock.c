@@ -95,8 +95,10 @@ static struct ghbn_cache_st
 	} ghbn_cache[GHBN_NUM];
 
 static int get_ip(const char *str,unsigned char *ip);
+#if 0
 static void ghbn_free(struct hostent *a);
 static struct hostent *ghbn_dup(struct hostent *a);
+#endif
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;
@@ -266,6 +268,7 @@ long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 	return(1);
 	}
 
+#if 0
 static struct hostent *ghbn_dup(struct hostent *a)
 	{
 	struct hostent *ret;
@@ -342,6 +345,8 @@ static void ghbn_free(struct hostent *a)
 	if (a->h_name != NULL) OPENSSL_free(a->h_name);
 	OPENSSL_free(a);
 	}
+
+#endif
 
 struct hostent *BIO_gethostbyname(const char *name)
 	{
