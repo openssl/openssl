@@ -248,7 +248,7 @@ extern "C" {
 #define OPENSSL_EXTERN OPENSSL_IMPORT
 
 /* Macros to allow global variables to be reached through function calls when
-   required (if a shared library version requvres it, for example.
+   required (if a shared library version requires it, for example.
    The way it's done allows definitions like this:
 
 	// in foobar.c
@@ -259,7 +259,7 @@ extern "C" {
 */
 #ifdef OPENSSL_EXPORT_VAR_AS_FUNCTION
 # define OPENSSL_IMPLEMENT_GLOBAL(type,name)			     \
-	extern static type _hide_##name;			     \
+	extern type _hide_##name;				     \
 	type *_shadow_##name(void) { return &_hide_##name; }	     \
 	static type _hide_##name
 # define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
