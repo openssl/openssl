@@ -202,11 +202,10 @@ int main(int argc, char *argv[])
 	if (!test_mod_mul(out,ctx)) goto err;
 	fflush(stdout);
 
-/*
 	fprintf(stderr,"test BN_mont\n");
 	if (!test_mont(out,ctx)) goto err;
 	fflush(stdout);
-*/
+
 	fprintf(stderr,"test BN_mod_exp\n");
 	if (!test_mod_exp(out,ctx)) goto err;
 	fflush(stdout);
@@ -570,7 +569,11 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 	BN_rand(&b,100,0,0); /**/
 	for (i=0; i<10; i++)
 		{
-		BN_rand(&n,(100%BN_BITS2+1)*BN_BITS2*i*BN_BITS2,0,1); /**/
+		int bits = (100%BN_BITS2+1)*BN_BITS2*i*BN_BITS2;
+
+		if (bits == 0)
+			continue;
+		BN_rand(&n,bits,0,1);
 		BN_MONT_CTX_set(mont,&n,ctx);
 
 		BN_to_montgomery(&A,&a,mont,ctx);
