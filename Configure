@@ -195,7 +195,6 @@ my %table=(
 "NetBSD-x86",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 #"FreeBSD",   "gcc:-DTERMIOS -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
-"FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::(unknown)::RSA_LLONG $x86_gcc_des $x86_gcc_opts:$x86_bsdi_asm",
 "bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "nextstep",	"cc:-O -Wall:<libc.h>:(unknown)::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",

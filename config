@@ -133,10 +133,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-bsdi"; exit 0
 	;;
 
-    FreeBSD:3*:*:*)
-	echo "${MACHINE}-whatever-freebsd3"; exit 0
-	;;
-
     FreeBSD:*:*:*386*)
         case `sysctl -n hw.model` in
 	    Pentium*)
@@ -331,8 +327,7 @@ case "$GUESSOS" in
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
-  alpha*-*-freebsd3) OUT="FreeBSD-alpha" ;;
-  *-freebsd3) OUT="FreeBSD-elf" ;;
+  alpha*-*-freebsd) OUT="FreeBSD-alpha" ;;
   *-freebsd) OUT="FreeBSD" ;;
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
   sun3*-*-netbsd) OUT="NetBSD-m68" ;;
