@@ -552,6 +552,13 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
+NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(char *str, int len);
+char * NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *x);
+EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x);
+int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
+
+int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
@@ -947,6 +954,8 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 #define X509_F_BY_FILE_CTRL				 101
 #define X509_F_DIR_CTRL					 102
 #define X509_F_GET_CERT_BY_SUBJECT			 103
+#define X509_F_NETSCAPE_SPKI_B64_DECODE			 129
+#define X509_F_NETSCAPE_SPKI_B64_ENCODE			 130
 #define X509_F_X509V3_ADD_EXT				 104
 #define X509_F_X509_CHECK_PRIVATE_KEY			 128
 #define X509_F_X509_EXTENSION_CREATE_BY_NID		 108
@@ -972,6 +981,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 /* Reason codes. */
 #define X509_R_BAD_X509_FILETYPE			 100
+#define X509_R_BASE64_DECODE_ERROR			 118
 #define X509_R_CANT_CHECK_DH_KEY			 114
 #define X509_R_CERT_ALREADY_IN_HASH_TABLE		 101
 #define X509_R_ERR_ASN1_LIB				 102

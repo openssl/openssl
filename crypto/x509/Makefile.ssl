@@ -23,13 +23,13 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
-	x509_obj.c x509_req.c x509_vfy.c \
+	x509_obj.c x509_req.c x509spki.c x509_vfy.c \
 	x509_set.c x509rset.c x509_err.c \
 	x509name.c x509_v3.c x509_ext.c \
 	x509type.c x509_lu.c x_all.c x509_txt.c \
 	by_file.c by_dir.c 
 LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
-	x509_obj.o x509_req.o x509_vfy.o \
+	x509_obj.o x509_req.o x509spki.o x509_vfy.o \
 	x509_set.o x509rset.o x509_err.o \
 	x509name.o x509_v3.o x509_ext.o \
 	x509type.o x509_lu.o x_all.o x509_txt.o \
@@ -380,6 +380,24 @@ x509rset.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509rset.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509rset.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 x509rset.o: ../cryptlib.h
+x509spki.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
+x509spki.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+x509spki.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+x509spki.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+x509spki.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+x509spki.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+x509spki.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+x509spki.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+x509spki.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+x509spki.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+x509spki.o: ../../include/openssl/opensslconf.h
+x509spki.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+x509spki.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+x509spki.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+x509spki.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+x509spki.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+x509spki.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x509spki.o: ../cryptlib.h
 x509type.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509type.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509type.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

@@ -28,6 +28,7 @@ extern int ciphers_main(int argc,char *argv[]);
 extern int nseq_main(int argc,char *argv[]);
 extern int pkcs12_main(int argc,char *argv[]);
 extern int pkcs8_main(int argc,char *argv[]);
+extern int spkac_main(int argc,char *argv[]);
 
 #ifdef SSLEAY_SRC  /* Defined only in openssl.c. */
 
@@ -94,6 +95,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"pkcs12",pkcs12_main},
 #endif
 	{FUNC_TYPE_GENERAL,"pkcs8",pkcs8_main},
+	{FUNC_TYPE_GENERAL,"spkac",spkac_main},
 	{FUNC_TYPE_MD,"md2",dgst_main},
 	{FUNC_TYPE_MD,"md5",dgst_main},
 	{FUNC_TYPE_MD,"sha",dgst_main},

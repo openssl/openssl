@@ -1868,3 +1868,9 @@ DH_get_default_method                   1892
 DSA_set_ex_data                         1893
 DH_set_default_method                   1894
 DSA_get_ex_data                         1895
+X509V3_EXT_REQ_add_conf                 1896
+NETSCAPE_SPKI_print                     1897
+NETSCAPE_SPKI_set_pubkey                1898
+NETSCAPE_SPKI_b64_encode                1899
+NETSCAPE_SPKI_get_pubkey                1900
+NETSCAPE_SPKI_b64_decode                1901

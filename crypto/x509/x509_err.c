@@ -69,6 +69,8 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_PACK(0,X509_F_BY_FILE_CTRL,0),	"BY_FILE_CTRL"},
 {ERR_PACK(0,X509_F_DIR_CTRL,0),	"DIR_CTRL"},
 {ERR_PACK(0,X509_F_GET_CERT_BY_SUBJECT,0),	"GET_CERT_BY_SUBJECT"},
+{ERR_PACK(0,X509_F_NETSCAPE_SPKI_B64_DECODE,0),	"NETSCAPE_SPKI_b64_decode"},
+{ERR_PACK(0,X509_F_NETSCAPE_SPKI_B64_ENCODE,0),	"NETSCAPE_SPKI_b64_encode"},
 {ERR_PACK(0,X509_F_X509V3_ADD_EXT,0),	"X509v3_add_ext"},
 {ERR_PACK(0,X509_F_X509_CHECK_PRIVATE_KEY,0),	"X509_check_private_key"},
 {ERR_PACK(0,X509_F_X509_EXTENSION_CREATE_BY_NID,0),	"X509_EXTENSION_create_by_NID"},
@@ -97,6 +99,7 @@ static ERR_STRING_DATA X509_str_functs[]=
 static ERR_STRING_DATA X509_str_reasons[]=
 	{
 {X509_R_BAD_X509_FILETYPE                ,"bad x509 filetype"},
+{X509_R_BASE64_DECODE_ERROR              ,"base64 decode error"},
 {X509_R_CANT_CHECK_DH_KEY                ,"cant check dh key"},
 {X509_R_CERT_ALREADY_IN_HASH_TABLE       ,"cert already in hash table"},
 {X509_R_ERR_ASN1_LIB                     ,"err asn1 lib"},

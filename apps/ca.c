@@ -1941,7 +1941,6 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	X509_REQ *req=NULL;
 	CONF_VALUE *cv=NULL;
 	NETSCAPE_SPKI *spki = NULL;
-	unsigned char *spki_der = NULL,*p;
 	X509_REQ_INFO *ri;
 	char *type,*buf;
 	EVP_PKEY *pktmp=NULL;
@@ -2013,25 +2012,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 			{
 			if (strcmp(type, "SPKAC") == 0)
 				{
-				spki_der=(unsigned char *)Malloc(
-					strlen(cv->value)+1);
-				if (spki_der == NULL)
-					{
-					BIO_printf(bio_err,"Malloc failure\n");
-					goto err;
-					}
-				j = EVP_DecodeBlock(spki_der, (unsigned char *)cv->value,
-					strlen(cv->value));
-				if (j <= 0)
-					{
-					BIO_printf(bio_err, "Can't b64 decode SPKAC structure\n");
-					goto err;
-					}
-
-				p=spki_der;
-				spki = d2i_NETSCAPE_SPKI(&spki, &p, j);
-				Free(spki_der);
-				spki_der = NULL;
+				spki = NETSCAPE_SPKI_b64_decode(cv->value, -1);
 				if (spki == NULL)
 					{
 					BIO_printf(bio_err,"unable to load Netscape SPKAC structure\n");
@@ -2071,7 +2052,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	BIO_printf(bio_err,"Check that the SPKAC request matches the signature\n");
 
-	if ((pktmp=X509_PUBKEY_get(spki->spkac->pubkey)) == NULL)
+	if ((pktmp=NETSCAPE_SPKI_get_pubkey(spki)) == NULL)
 		{
 		BIO_printf(bio_err,"error unpacking SPKAC public key\n");
 		goto err;
@@ -2092,7 +2073,6 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 err:
 	if (req != NULL) X509_REQ_free(req);
 	if (parms != NULL) CONF_free(parms);
-	if (spki_der != NULL) Free(spki_der);
 	if (spki != NULL) NETSCAPE_SPKI_free(spki);
 	if (ne != NULL) X509_NAME_ENTRY_free(ne);
 

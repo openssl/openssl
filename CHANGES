@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add various utility functions to handle SPKACs, these were previously
+     handled by poking round in the structure internals. Added new function
+     NETSCAPE_SPKI_print() to print out SPKAC and a new utility 'spkac' to
+     print, verify and generate SPKACs. Based on an original idea from
+     Massimiliano Pala <madwolf@comune.modena.it> but extensively modified.
+     [Steve Henson]
+
   *) RIPEMD160 is operational on all platforms and is back in 'make test'.
      [Andy Polyakov]
 
