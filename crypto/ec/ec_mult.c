@@ -795,6 +795,13 @@ CRYPTO_push_info("ec_wNAF_precompute_mult");
 		}
 
 	bits = BN_num_bits(order);
+	/* The following parameters mean we precompute (approximately)
+	 * one point per bit.
+	 *
+	 * TBD: The combination  8, 4  is perfect for 160 bits; for other
+	 * bit lengths, other parameter combinations might provide better
+	 * efficiency.
+	 */
 	blocksize = 8;
 	w = 4;
 	if (EC_window_bits_for_scalar_size(bits) > w)
