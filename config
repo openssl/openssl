@@ -310,6 +310,7 @@ case "$GUESSOS" in
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
+  alpha*-*-freebsd3) OUT="FreeBSD-alpha" ;;
   *-freebsd3) OUT="FreeBSD-elf" ;;
   *-freebsd) OUT="FreeBSD" ;;
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
