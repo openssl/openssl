@@ -48,6 +48,7 @@
  *
  */
 
+#ifndef OPENSSL_NO_AES
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <string.h>
@@ -150,4 +151,4 @@ static int aes_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	assert(inl == 0);
 	return 1;
 	}
-
+#endif

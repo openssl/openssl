@@ -54,8 +54,8 @@ foreach (@ARGV)
 and [options] can be one of
 	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
 	no-ripemd
-	no-rc2 no-rc4 no-idea no-des no-bf no-cast - Skip this symetric cipher
-	no-rc5
+	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
+	no-bf no-cast no-aes
 	no-rsa no-dsa no-dh			- Skip this public key cipher
 	no-ssl2 no-ssl3				- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
@@ -197,6 +197,7 @@ $inc_dir=(defined($VARS{'INC'}))?$VARS{'INC'}:$inc_def;
 $bin_dir=$bin_dir.$o unless ((substr($bin_dir,-1,1) eq $o) || ($bin_dir eq ''));
 
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
+$cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
 $cflags.=" -DOPENSSL_NO_RC2"  if $no_rc2;
 $cflags.=" -DOPENSSL_NO_RC4"  if $no_rc4;
 $cflags.=" -DOPENSSL_NO_RC5"  if $no_rc5;
@@ -624,6 +625,7 @@ sub var_add
 	local(@a,$_,$ret);
 
 	return("") if $no_idea && $dir =~ /\/idea/;
+	return("") if $no_aes  && $dir =~ /\/aes/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
 	return("") if $no_rc4  && $dir =~ /\/rc4/;
 	return("") if $no_rc5  && $dir =~ /\/rc5/;
@@ -649,7 +651,8 @@ sub var_add
 
 	@a=grep(!/^e_.*_3d$/,@a) if $no_des;
 	@a=grep(!/^e_.*_d$/,@a) if $no_des;
-	@a=grep(!/^e_.*_i$/,@a) if $no_idea;
+	@a=grep(!/^e_.*_ae$/,@a) if $no_idea;
+	@a=grep(!/^e_.*_i$/,@a) if $no_aes;
 	@a=grep(!/^e_.*_r2$/,@a) if $no_rc2;
 	@a=grep(!/^e_.*_r5$/,@a) if $no_rc5;
 	@a=grep(!/^e_.*_bf$/,@a) if $no_bf;
@@ -848,6 +851,7 @@ sub read_options
 	elsif (/^no-rc4$/)	{ $no_rc4=1; }
 	elsif (/^no-rc5$/)	{ $no_rc5=1; }
 	elsif (/^no-idea$/)	{ $no_idea=1; }
+	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-des$/)	{ $no_des=1; }
 	elsif (/^no-bf$/)	{ $no_bf=1; }
 	elsif (/^no-cast$/)	{ $no_cast=1; }
@@ -875,7 +879,8 @@ sub read_options
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1; }
+				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1;
+				  $no_aes=1; }
 
 	elsif (/^rsaref$/)	{ }
 	elsif (/^gcc$/)		{ $gcc=1; }
