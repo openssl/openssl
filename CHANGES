@@ -4,6 +4,10 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Bugfix: Return -1 from ssl3_get_server_done (ssl3/s3_clnt.c)
+     if the SSL_R_LENGTH_MISMATCH error is detected.
+     [Geoff Thorpe, Bodo Moeller]
+
   *) New 'shared_ldflag' column in Configure platform table.
      [Richard Levitte]
 
