@@ -105,12 +105,12 @@ extern "C" {
 /* mod_exp operation, calculates; r = a ^ p mod m
  * NB: ctx can be NULL, but if supplied, the implementation may use
  * it if it wishes. */
-typedef int (*BN_MOD_EXP)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+typedef int (*BN_MOD_EXP)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 
 /* private key operation for RSA, provided seperately in case other
  * RSA implementations wish to use it. */
-typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
@@ -178,7 +178,7 @@ ENGINE *ENGINE_new(void);
 int ENGINE_free(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
-int ENGINE_set_RSA(ENGINE *e, RSA_METHOD *rsa_meth);
+int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, DSA_METHOD *dsa_meth);
 int ENGINE_set_DH(ENGINE *e, DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, RAND_METHOD *rand_meth);
@@ -195,7 +195,7 @@ int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
  * reference may be problematic! */
 const char *ENGINE_get_id(ENGINE *e);
 const char *ENGINE_get_name(ENGINE *e);
-RSA_METHOD *ENGINE_get_RSA(ENGINE *e);
+const RSA_METHOD *ENGINE_get_RSA(ENGINE *e);
 DSA_METHOD *ENGINE_get_DSA(ENGINE *e);
 DH_METHOD *ENGINE_get_DH(ENGINE *e);
 RAND_METHOD *ENGINE_get_RAND(ENGINE *e);

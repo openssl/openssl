@@ -82,7 +82,7 @@ struct engine_st
 	{
 	const char *id;
 	const char *name;
-	RSA_METHOD *rsa_meth;
+	const RSA_METHOD *rsa_meth;
 	DSA_METHOD *dsa_meth;
 	DH_METHOD *dh_meth;
 	RAND_METHOD *rand_meth;

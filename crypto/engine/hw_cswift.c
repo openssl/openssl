@@ -88,16 +88,16 @@ static int cswift_init(void);
 static int cswift_finish(void);
 
 /* BIGNUM stuff */
-static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
-static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
 /* RSA stuff */
-static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* DSA stuff */
@@ -328,7 +328,7 @@ static int cswift_finish()
 	}
 
 /* Un petit mod_exp */
-static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)
 	{
 	/* I need somewhere to store temporary serialised values for
@@ -428,7 +428,7 @@ err:
 	}
 
 /* Un petit mod_exp chinois */
-static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
 			const BIGNUM *dmq1, const BIGNUM *iqmp, BN_CTX *ctx)
 	{
@@ -541,7 +541,7 @@ err:
 	return to_return;
 	}
  
-static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BN_CTX *ctx;
 	int to_return = 0;
@@ -562,7 +562,7 @@ err:
 	}
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);

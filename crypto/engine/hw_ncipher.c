@@ -93,13 +93,13 @@ static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex*);
 
 /* BIGNUM stuff */
-static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 
 /* RSA stuff */
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa);
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa);
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int hwcrhk_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* DH stuff */
@@ -681,7 +681,7 @@ static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id, const char *passphrase)
 	}
 
 /* A little mod_exp */
-static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)
 	{
 	char tempbuf[1024];
@@ -737,7 +737,7 @@ err:
 	return to_return;
 	}
  
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
@@ -853,7 +853,7 @@ err:
 	}
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int hwcrhk_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);

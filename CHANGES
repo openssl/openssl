@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Constify the ENGINE code as a result of BIGNUM constification.
+     [Richard Levitte]
+
   *) Make it so the openssl application has all engines loaded by default.
      [Richard Levitte]
 

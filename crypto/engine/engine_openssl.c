@@ -72,7 +72,7 @@
 /* This is the only function we need to implement as OpenSSL
  * doesn't have a native CRT mod_exp. Perhaps this should be
  * BN_mod_exp_crt and moved into crypto/bn/ ?? ... dunno. */
-static int openssl_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
@@ -112,7 +112,7 @@ ENGINE *ENGINE_openssl()
 	}
 
 /* Chinese Remainder Theorem, taken and adapted from rsa_eay.c */
-static int openssl_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
 			const BIGNUM *dmq1, const BIGNUM *iqmp, BN_CTX *ctx)
 	{

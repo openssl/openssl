@@ -430,7 +430,7 @@ int ENGINE_set_name(ENGINE *e, const char *name)
 	return 1;
 	}
 
-int ENGINE_set_RSA(ENGINE *e, RSA_METHOD *rsa_meth)
+int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
 	{
 	if((e == NULL) || (rsa_meth == NULL))
 		{
@@ -560,7 +560,7 @@ const char *ENGINE_get_name(ENGINE *e)
 	return e->name;
 	}
 
-RSA_METHOD *ENGINE_get_RSA(ENGINE *e)
+const RSA_METHOD *ENGINE_get_RSA(ENGINE *e)
 	{
 	if(e == NULL)
 		{

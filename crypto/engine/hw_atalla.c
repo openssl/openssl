@@ -76,13 +76,13 @@ static int atalla_init(void);
 static int atalla_finish(void);
 
 /* BIGNUM stuff */
-static int atalla_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 
 /* RSA stuff */
-static int atalla_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int atalla_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* DSA stuff */
@@ -293,7 +293,7 @@ static int atalla_finish()
 	return 1;
 	}
 
-static int atalla_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)
 	{
 	/* I need somewhere to store temporary serialised values for
@@ -366,7 +366,7 @@ err:
 	return to_return;
 	}
 
-static int atalla_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BN_CTX *ctx = NULL;
 	int to_return = 0;
@@ -426,7 +426,7 @@ static int atalla_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 	}
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int atalla_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return atalla_mod_exp(r, a, p, m, ctx);

@@ -67,7 +67,7 @@
 #ifndef NO_HW
 #ifndef NO_HW_NURON
 
-typedef int tfnModExp(BIGNUM *r,BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
+typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
 
 static DSO *pvDSOHandle = NULL;
@@ -115,7 +115,7 @@ static int nuron_finish()
 	return 1;
 	}
 
-static int nuron_mod_exp(BIGNUM *r,BIGNUM *a,const BIGNUM *p,
+static int nuron_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,
 			 const BIGNUM *m,BN_CTX *ctx)
 	{
 	if(!pvDSOHandle)
@@ -126,7 +126,7 @@ static int nuron_mod_exp(BIGNUM *r,BIGNUM *a,const BIGNUM *p,
 	return pfnModExp(r,a,p,m);
 	}
 
-static int nuron_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+static int nuron_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	return nuron_mod_exp(r0,I,rsa->d,rsa->n,NULL);
 	}
@@ -170,7 +170,7 @@ static int nuron_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 	}
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int nuron_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int nuron_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			      const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return nuron_mod_exp(r, a, p, m, ctx);
