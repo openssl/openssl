@@ -109,16 +109,6 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		return ret;
 		}
 
-#if 0 /* if BN_mod_sqrt is used with correct input, this just wastes time */
-	r = BN_kronecker(a, p, ctx);
-	if (r < -1) return NULL;
-	if (r == -1)
-		{
-		BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
-		return(NULL);
-		}
-#endif
-
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
 	b = BN_CTX_get(ctx);
