@@ -20,6 +20,20 @@ BIO_s_fd, BIO_set_fd, BIO_get_fd, BIO_new_fd - file descriptor BIO
 BIO_s_fd() returns the file descriptor BIO method. This is a wrapper
 round the platforms file descriptor routines such as read() and write().
 
+BIO_read() and BIO_write() read or write the underlying descriptor.
+BIO_puts() is supported but BIO_gets() is not.
+
+If the close flag is set then then close() is called on the underlying
+file descriptor when the BIO is freed.
+
+BIO_reset() attempts to change the file pointer to the start of file
+using lseek(fd, 0, 0).
+
+BIO_seek() sets the file pointer to position B<ofs> from start of file
+using lseek(fd, ofs, 0).
+
+BIO_tell() returns the current file position by calling lseek(fd, 0, 1).
+
 BIO_set_fd() sets the file descriptor of BIO B<b> to B<fd> and the close
 flag to B<c>.
 
@@ -30,15 +44,6 @@ returns the file descriptor. If B<c> is not NULL it should be of type
 BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 
 =head1 NOTES
-
-If the close flag is set then then close() is called on the underlying
-file descriptor when the BIO is freed.
-
-BIO_reset() attempts to change the file pointer to the start of file
-using lseek(fd, 0, 0).
-
-BIO_read() and BIO_write() read or write the underlying descriptor.
-BIO_puts() is supported but BIO_gets() is not.
 
 The behaviour of BIO_read() and BIO_write() depends on the behavior of the
 platforms read() and write() calls on the descriptor. If the underlying 
@@ -52,6 +57,11 @@ instead.
 =head1 RETURN VALUES
 
 BIO_s_fd() returns the file descriptor BIO method.
+
+BIO_reset() returns zero for success and -1 if an error occurred.
+BIO_seek() and BIO_tell() return the current file position or -1
+is an error occurred. These values reflect the underlying lseek()
+behaviour.
 
 BIO_set_fd() always returns 1.
 
