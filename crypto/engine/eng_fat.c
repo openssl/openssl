@@ -84,7 +84,7 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 
 /* Set default algorithms using a string */
 
-int int_def_cb(char *alg, int len, void *arg)
+int int_def_cb(const char *alg, int len, void *arg)
 	{
 	unsigned int *pflags = arg;
 	if (!strncmp(alg, "ALL", len))
@@ -107,7 +107,7 @@ int int_def_cb(char *alg, int len, void *arg)
 	}
 
 
-int ENGINE_set_default_string(ENGINE *e, char *list)
+int ENGINE_set_default_string(ENGINE *e, const char *list)
 	{
 	unsigned int flags = 0;
 	if (!CONF_parse_list(list, ',', 1, int_def_cb, &flags))
