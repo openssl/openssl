@@ -148,6 +148,7 @@ char *default_config_file=NULL;
 #ifdef MONOLITH
 CONF *config=NULL;
 BIO *bio_err=NULL;
+int in_FIPS_mode=0;
 #endif
 
 
@@ -228,9 +229,11 @@ int main(int Argc, char *Argv[])
 	char **argv,*p;
 	LHASH *prog=NULL;
 	long errline;
- 
+
 	arg.data=NULL;
 	arg.count=0;
+
+	in_FIPS_mode = 0;
 
 #ifdef OPENSSL_FIPS
 	if(getenv("OPENSSL_FIPS")) {
@@ -242,10 +245,11 @@ int main(int Argc, char *Argv[])
 		p = Argv[0];
 #endif
 		if (!FIPS_mode_set(1,p)) {
-		ERR_load_crypto_strings();
-		ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-		exit(1);
-			}
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			exit(1);
+		}
+		in_FIPS_mode = 1;
 		if (getenv("OPENSSL_FIPS_MD5"))
 			FIPS_allow_md5(1);
 		}
