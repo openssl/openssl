@@ -560,6 +560,9 @@
      be changed again when we can guarantee backward binary compatibility.
      [Richard Levitte]
 
+  *) Add the possibility to create shared libraries on HP-UX
+     [Richard Levitte]
+
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
 
