@@ -76,7 +76,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 static int probable_prime_dh_strong(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int strong, BIGNUM *add,
-	     BIGNUM *rem, void (*callback)(P_I_I_P), char *cb_arg)
+	     BIGNUM *rem, void (*callback)(int,int,char *), char *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
@@ -151,7 +151,7 @@ err:
 	return(ret);
 	}
 
-int BN_is_prime(BIGNUM *a, int checks, void (*callback)(P_I_I_P),
+int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,char *),
 	     BN_CTX *ctx_passed, char *cb_arg)
 	{
 	int i,j,c2=0,ret= -1;

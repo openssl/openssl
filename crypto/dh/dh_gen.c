@@ -84,7 +84,7 @@
  */
 
 DH *DH_generate_parameters(int prime_len, int generator,
-	     void (*callback)(P_I_I_P), char *cb_arg)
+	     void (*callback)(int,int,char *), char *cb_arg)
 	{
 	BIGNUM *p=NULL,*t1,*t2;
 	DH *ret=NULL;

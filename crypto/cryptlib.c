@@ -151,12 +151,12 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 	add_lock_callback=func;
 	}
 
-unsigned long (*CRYPTO_get_id_callback(P_V))(P_V)
+unsigned long (*CRYPTO_get_id_callback(void))(void)
 	{
 	return(id_callback);
 	}
 
-void CRYPTO_set_id_callback(func) unsigned long (*func)(P_V);
+void CRYPTO_set_id_callback(unsigned long (*func)(void))
 	{
 	id_callback=func;
 	}

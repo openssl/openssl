@@ -102,7 +102,7 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 
 	if (sk_num(a->revoked) != 0)
 		qsort((char *)a->revoked->data,sk_num(a->revoked),
-			sizeof(X509_REVOKED *),(int (*)(P_CC_CC))X509_REVOKED_seq_cmp);
+			sizeof(X509_REVOKED *),(int (*)(const void *,const void *))X509_REVOKED_seq_cmp);
 	if ((a->version != NULL) && ((l=ASN1_INTEGER_get(a->version)) != 0))
 		{
 		M_ASN1_I2D_len(a->version,i2d_ASN1_INTEGER);

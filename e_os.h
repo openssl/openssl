@@ -276,16 +276,6 @@ extern HINSTANCE _hInstance;
 
 /***********************************************/
 
-#define P_CC_CC	const void *,const void *
-#define P_I_I		int,int 
-#define P_I_I_P		int,int,char *
-#define P_I_I_P_I	int,int,char *,int
-#define P_IP_I_I_P_I	int *,int,int,char *,int
-#define P_V		void 
-/* not used yet */
-#define	CS_BEGIN
-#define CS_END
-
 /* do we need to do this for getenv.
  * Just define getenv for use under windows */
 
