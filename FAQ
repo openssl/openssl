@@ -109,6 +109,10 @@ Most components of the openssl command line tool try to use the
 file $HOME/.rnd (or $RANDFILE, if this environment variable is set)
 for seeding the PRNG.  If this file does not exist or is too short,
 the "PRNG not seeded" error message may occur.
+Note that the command "openssl rsa" in OpenSSL 0.9.5 does not do this
+and will fail on systems without /dev/urandom when trying to
+password-encrypt an RSA key!  This is a bug in the library;
+try a later snaphost instead.
 
 
 * Why does the linker complain about undefined symbols?
