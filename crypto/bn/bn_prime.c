@@ -121,8 +121,8 @@
  */
 #include "bn_prime.h"
 
-static int witness(BIGNUM *w, BIGNUM *a, BIGNUM *a1, BIGNUM *a1_odd, int k,
-	BN_CTX *ctx, BN_MONT_CTX *mont);
+static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
+	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
@@ -223,7 +223,7 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	BN_CTX *ctx = NULL;
 	BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
 	BN_MONT_CTX *mont = NULL;
-	BIGNUM *A;
+	const BIGNUM *A;
 
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
@@ -247,9 +247,10 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	/* A := abs(a) */
 	if (a->neg)
 		{
-		A = &(ctx->bn[ctx->tos++]);
-		BN_copy(A, a);
-		A->neg = 0;
+		BIGNUM *t = &(ctx->bn[ctx->tos++]);
+		BN_copy(t, a);
+		t->neg = 0;
+		A = t;
 		}
 	else
 		A = a;
@@ -318,8 +319,8 @@ err:
 	return(ret);
 	}
 
-static int witness(BIGNUM *w, BIGNUM *a, BIGNUM *a1, BIGNUM *a1_odd, int k,
-	BN_CTX *ctx, BN_MONT_CTX *mont)
+static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
+	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont)
 	{
 	if (!BN_mod_exp_mont(w, w, a1_odd, a, ctx, mont)) /* w := w^a1_odd mod a */
 		return -1;

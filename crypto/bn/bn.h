@@ -356,7 +356,7 @@ int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	       BN_CTX *ctx);
 int	BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, BIGNUM *a,BN_CTX *ctx);
-BN_ULONG BN_mod_word(BIGNUM *a, BN_ULONG w);
+BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w);
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w);
 int	BN_mul_word(BIGNUM *a, BN_ULONG w);
 int	BN_add_word(BIGNUM *a, BN_ULONG w);

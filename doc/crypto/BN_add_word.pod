@@ -17,7 +17,7 @@ functions on BIGNUMs with integers
 
  BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w);
 
- BN_ULONG BN_mod_word(BIGNUM *a, BN_ULONG w);
+ BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w);
 
 =head1 DESCRIPTION
 
