@@ -123,7 +123,8 @@ bf_nbio.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bf_nbio.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bf_nbio.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 bf_nbio.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bf_nbio.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_nbio.c
+bf_nbio.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+bf_nbio.o: ../cryptlib.h bf_nbio.c
 bf_null.o: ../../e_os.h ../../include/openssl/bio.h
 bf_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bf_null.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

@@ -92,13 +92,15 @@ md_rand.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 md_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 md_rand.o: ../../include/openssl/types.h md_rand.c rand_lcl.h
 rand_egd.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-rand_egd.o: ../../include/openssl/rand.h rand_egd.c
+rand_egd.o: ../../include/openssl/rand.h ../../include/openssl/types.h
+rand_egd.o: rand_egd.c
 rand_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 rand_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rand_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rand_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rand_err.o: ../../include/openssl/symhacks.h rand_err.c
+rand_err.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rand_err.o: rand_err.c
 rand_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 rand_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rand_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -148,4 +150,5 @@ randfile.o: ../../e_os.h ../../include/openssl/crypto.h
 randfile.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 randfile.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 randfile.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-randfile.o: ../../include/openssl/symhacks.h randfile.c
+randfile.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+randfile.o: randfile.c
