@@ -1,4 +1,4 @@
-/* apps/s_socket.c */
+/* apps/s_socket.c -  socket-related functions used by s_client and s_server */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,16 +79,15 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include <openssl/ssl.h>
 
-#ifdef VMS
-#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
-			      and that isn't in VMS < 7.0 */
-#undef FIONBIO
-#endif
-#include <processes.h> /* for vfork() */
-#endif
-
 static struct hostent *GetHostByName(char *name);
-int sock_init(void );
+static void sock_cleanup(void);
+static int sock_init(void);
+static int init_client_ip(int *sock,unsigned char ip[4], int port);
+static int init_server(int *sock, int port);
+static int init_server_long(int *sock, int port,char *ip);
+static int do_accept(int acc_sock, int *sock, char **host);
+static int host_ip(char *str, unsigned char ip[4]);
+
 #ifdef WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
 #else
@@ -131,7 +130,7 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 #endif /* WIN32 */
 #endif /* WINDOWS */
 
-void sock_cleanup(void)
+static void sock_cleanup(void)
 	{
 #ifdef WINDOWS
 	if (wsa_init_done)
@@ -143,7 +142,7 @@ void sock_cleanup(void)
 #endif
 	}
 
-int sock_init(void)
+static int sock_init(void)
 	{
 #ifdef WINDOWS
 	if (!wsa_init_done)
@@ -187,7 +186,7 @@ int init_client(int *sock, char *host, int port)
 	return(init_client_ip(sock,ip,port));
 	}
 
-int init_client_ip(int *sock, unsigned char ip[4], int port)
+static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
@@ -216,75 +215,6 @@ int init_client_ip(int *sock, unsigned char ip[4], int port)
 		{ close(s); perror("connect"); return(0); }
 	*sock=s;
 	return(1);
-	}
-
-int nbio_sock_error(int sock)
-	{
-	int j,i;
-	int size;
-
-	size=sizeof(int);
-	/* Note: under VMS with SOCKETSHR the third parameter is currently
-	 * of type (int *) whereas under other systems it is (void *) if
-	 * you don't have a cast it will choke the compiler: if you do
-	 * have a cast then you can either go for (int *) or (void *).
-	 */
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,(void *)&size);
-	if (i < 0)
-		return(1);
-	else
-		return(j);
-	}
-
-int nbio_init_client_ip(int *sock, unsigned char ip[4], int port)
-	{
-	unsigned long addr;
-	struct sockaddr_in them;
-	int s,i;
-
-	if (!sock_init()) return(0);
-
-	memset((char *)&them,0,sizeof(them));
-	them.sin_family=AF_INET;
-	them.sin_port=htons((unsigned short)port);
-	addr=	(unsigned long)
-		((unsigned long)ip[0]<<24L)|
-		((unsigned long)ip[1]<<16L)|
-		((unsigned long)ip[2]<< 8L)|
-		((unsigned long)ip[3]);
-	them.sin_addr.s_addr=htonl(addr);
-
-	if (*sock <= 0)
-		{
-#ifdef FIONBIO
-		unsigned long l=1;
-#endif
-
-		s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-		if (s == INVALID_SOCKET) { perror("socket"); return(0); }
-
-		i=0;
-		i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-		if (i < 0) { perror("keepalive"); return(0); }
-		*sock=s;
-
-#ifdef FIONBIO
-		BIO_socket_ioctl(s,FIONBIO,&l);
-#endif
-		}
-	else
-		s= *sock;
-
-	i=connect(s,(struct sockaddr *)&them,sizeof(them));
-	if (i == INVALID_SOCKET)
-		{
-		if (BIO_sock_should_retry(i))
-			return(-1);
-		else
-			return(0);
-		}
-	else
-		return(1);
 	}
 
 int do_server(int port, int *ret, int (*cb)(), char *context)
@@ -319,7 +249,7 @@ int do_server(int port, int *ret, int (*cb)(), char *context)
 		}
 	}
 
-int init_server_long(int *sock, int port, char *ip)
+static int init_server_long(int *sock, int port, char *ip)
 	{
 	int ret=0;
 	struct sockaddr_in server;
@@ -369,12 +299,12 @@ err:
 	return(ret);
 	}
 
-int init_server(int *sock, int port)
+static int init_server(int *sock, int port)
 	{
 	return(init_server_long(sock, port, NULL));
 	}
 
-int do_accept(int acc_sock, int *sock, char **host)
+static int do_accept(int acc_sock, int *sock, char **host)
 	{
 	int ret,i;
 	struct hostent *h1,*h2;
@@ -490,7 +420,7 @@ err:
 	return(0);
 	}
 
-int host_ip(char *str, unsigned char ip[4])
+static int host_ip(char *str, unsigned char ip[4])
 	{
 	unsigned int in[4]; 
 	int i;
@@ -606,69 +536,3 @@ static struct hostent *GetHostByName(char *name)
 		return(ret);
 		}
 	}
-
-#ifndef MSDOS
-int spawn(int argc, char **argv, int *in, int *out)
-	{
-	int pid;
-#define CHILD_READ	p1[0]
-#define CHILD_WRITE	p2[1]
-#define PARENT_READ	p2[0]
-#define PARENT_WRITE	p1[1]
-	int p1[2],p2[2];
-
-	if ((pipe(p1) < 0) || (pipe(p2) < 0)) return(-1);
-
-#ifdef VMS
-	if ((pid=vfork()) == 0)
-#else
-	if ((pid=fork()) == 0)
-#endif
-		{ /* child */
-		if (dup2(CHILD_WRITE,fileno(stdout)) < 0)
-			perror("dup2");
-		if (dup2(CHILD_WRITE,fileno(stderr)) < 0)
-			perror("dup2");
-		if (dup2(CHILD_READ,fileno(stdin)) < 0)
-			perror("dup2");
-		close(CHILD_READ); 
-		close(CHILD_WRITE);
-
-		close(PARENT_READ);
-		close(PARENT_WRITE);
-		execvp(argv[0],argv);
-		perror("child");
-		exit(1);
-		}
-
-	/* parent */
-	*in= PARENT_READ;
-	*out=PARENT_WRITE;
-	close(CHILD_READ);
-	close(CHILD_WRITE);
-	return(pid);
-	}
-#endif /* MSDOS */
-
-
-#ifdef undef
-	/* Turn on synchronous sockets so that we can do a WaitForMultipleObjects
-	 * on sockets */
-	{
-	SOCKET s;
-	int optionValue = SO_SYNCHRONOUS_NONALERT;
-	int err;
-
-	err = setsockopt( 
-	    INVALID_SOCKET, 
-	    SOL_SOCKET, 
-	    SO_OPENTYPE, 
-	    (char *)&optionValue, 
-	    sizeof(optionValue));
-	if (err != NO_ERROR) {
-	/* failed for some reason... */
-		BIO_printf(bio_err, "failed to setsockopt(SO_OPENTYPE, SO_SYNCHRONOUS_ALERT) - %d\n",
-			WSAGetLastError());
-		}
-	}
-#endif

@@ -84,7 +84,6 @@ typedef fd_mask fd_set;
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
-int do_accept(int acc_sock, int *sock, char **host);
 int do_server(int port, int *ret, int (*cb) (), char *context);
 #ifdef HEADER_X509_H
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
@@ -97,17 +96,9 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
 int set_cert_stuff(char *ctx, char *cert_file, char *key_file);
 #endif
 int init_client(int *sock, char *server, int port);
-int init_client_ip(int *sock,unsigned char ip[4], int port);
-int nbio_init_client_ip(int *sock,unsigned char ip[4], int port);
-int nbio_sock_error(int sock);
-int spawn(int argc, char **argv, int *in, int *out);
-int init_server(int *sock, int port);
-int init_server_long(int *sock, int port,char *ip);
 int should_retry(int i);
-void sock_cleanup(void );
 int extract_port(char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,short *p);
-int host_ip(char *str, unsigned char ip[4]);
 
 long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp,
 	int argi, long argl, long ret);

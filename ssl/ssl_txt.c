@@ -164,7 +164,7 @@ int SSL_SESSION_print(BIO *bp, SSL_SESSION *x)
 		}
 	if (BIO_puts(bp,"\n") <= 0) goto err;
 
-	if (BIO_puts(bp, "    Verify return code ") <= 0) goto err;
+	if (BIO_puts(bp, "    Verify return code: ") <= 0) goto err;
 	sprintf(str, "%ld (%s)\n", x->verify_result, 
 			X509_verify_cert_error_string(x->verify_result));
 	if (BIO_puts(bp,str) <= 0) goto err;

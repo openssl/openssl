@@ -937,12 +937,11 @@ sub dofile
 		{
 		grep(/$k/ && ($_=sprintf($m{$k}."\n",$p)),@a);
 		}
-	($ff=$f) =~ s/\..*$//;
-	open(OUT,">$ff.new") || die "unable to open $f:$!\n";
+	open(OUT,">$f.new") || die "unable to open $f.new:$!\n";
 	print OUT @a;
 	close(OUT);
-	rename($f,"$ff.bak") || die "unable to rename $f\n" if -e $f;
-	rename("$ff.new",$f) || die "unable to rename $ff.new\n";
+	rename($f,"$f.bak") || die "unable to rename $f\n" if -e $f;
+	rename("$f.new",$f) || die "unable to rename $f.new\n";
 	}
 
 sub print_table_entry

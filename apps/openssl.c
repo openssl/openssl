@@ -56,10 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef DEBUG
-#undef DEBUG
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -77,27 +73,12 @@
 #include "s_apps.h"
 #include <openssl/err.h>
 
-/*
-#ifdef WINDOWS
-#include "bss_file.c"
-#endif
-*/
-
 static unsigned long MS_CALLBACK hash(FUNCTION *a);
 static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 LHASH *config=NULL;
 char *default_config_file=NULL;
-
-#ifdef DEBUG
-static void sig_stop(int i)
-	{
-	char *a=NULL;
-
-	*a='\0';
-	}
-#endif
 
 /* Make sure there is only one when MONOLITH is defined */
 #ifdef MONOLITH
@@ -119,15 +100,6 @@ int main(int Argc, char *Argv[])
  
 	arg.data=NULL;
 	arg.count=0;
-
-#if defined(DEBUG) && !defined(WINDOWS) && !defined(MSDOS)
-#ifdef SIGBUS
-	signal(SIGBUS,sig_stop);
-#endif
-#ifdef SIGSEGV
-	signal(SIGSEGV,sig_stop);
-#endif
-#endif
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
@@ -234,12 +206,6 @@ end:
 
 	EVP_cleanup();
 	ERR_free_strings();
-
-#ifdef LEVITTE_DEBUG
-	CRYPTO_push_info("Just to make sure I get a memory leak I can see :-)");
-	(void)Malloc(1024);
-	CRYPTO_pop_info();
-#endif
 
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)
