@@ -57,12 +57,16 @@
 #include <openssl/err.h>
 #include <openssl/fips_rand.h>
 #include "e_os.h"
+#ifndef OPENSSL_SYS_WIN32
 #include <sys/time.h>
+#endif
 #include <assert.h>
-#ifdef OPENSSL_UNISTD
-# include OPENSSL_UNISTD
-#else
-# include <unistd.h>
+#ifndef OPENSSL_SYS_WIN32
+# ifdef OPENSSL_UNISTD
+#  include OPENSSL_UNISTD
+# else
+#  include <unistd.h>
+# endif
 #endif
 #include <string.h>
 
@@ -117,7 +121,11 @@ int FIPS_rand_seeded()
 
 static void fips_gettime(unsigned char buf[8])
     {
+#ifdef OPENSSL_SYS_WIN32
+    FILETIME ft;
+#else
     struct timeval tv;
+#endif
 
     if(test_mode)
 	{
@@ -125,10 +133,27 @@ static void fips_gettime(unsigned char buf[8])
 	memcpy(buf,test_faketime,sizeof test_faketime);
 	return;
 	}
+#ifdef OPENSSL_SYS_WIN32
+    GetSystemTimeAsFileTime(&ft);
+    buf[0] = (unsigned char) (ft.dwHighDateTime & 0xff);
+    buf[1] = (unsigned char) ((ft.dwHighDateTime >> 8) & 0xff);
+    buf[2] = (unsigned char) ((ft.dwHighDateTime >> 16) & 0xff);
+    buf[3] = (unsigned char) ((ft.dwHighDateTime >> 24) & 0xff);
+    buf[4] = (unsigned char) (ft.dwLowDateTime & 0xff);
+    buf[5] = (unsigned char) ((ft.dwLowDateTime >> 8) & 0xff);
+    buf[6] = (unsigned char) ((ft.dwLowDateTime >> 16) & 0xff);
+    buf[7] = (unsigned char) ((ft.dwLowDateTime >> 24) & 0xff);
+#else
     gettimeofday(&tv,NULL);
-    assert(sizeof(long) == 4);
-    memcpy (&buf[0],&tv.tv_sec,4);
-    memcpy (&buf[4],&tv.tv_usec,4);
+    buf[0] = (unsigned char) (tv.tv_sec & 0xff);
+    buf[1] = (unsigned char) ((tv.tv_sec >> 8) & 0xff);
+    buf[2] = (unsigned char) ((tv.tv_sec >> 16) & 0xff);
+    buf[3] = (unsigned char) ((tv.tv_sec >> 24) & 0xff);
+    buf[4] = (unsigned char) (tv.tv_usec & 0xff);
+    buf[5] = (unsigned char) ((tv.tv_usec >> 8) & 0xff);
+    buf[6] = (unsigned char) ((tv.tv_usec >> 16) & 0xff);
+    buf[7] = (unsigned char) ((tv.tv_usec >> 24) & 0xff);
+#endif
 
 #if 0  /* This eminently sensible strategy is not acceptable to NIST. Sigh. */
 #ifndef GETPID_IS_MEANINGLESS
