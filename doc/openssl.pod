@@ -23,7 +23,7 @@ cryptography functions of OpenSSL's B<crypto> library from the shell.
 It can be used for 
 
  o  Creation of RSA, DH and DSA key parameters
- o  Creattion of X.509 certificates, CSRs and CRLs 
+ o  Creation of X.509 certificates, CSRs and CRLs 
  o  Calculation of Message Digests
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
@@ -34,7 +34,77 @@ The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
+=head2 STANDARD COMMANDS
+
 =over 10
+
+=item B<asn1parse> 
+
+Parse an ASN.1 sequence.
+
+=item B<ca>
+
+Certificate Authority (CA) Management.  
+
+=item B<ciphers>
+
+Cipher Suite Description Determination.
+
+=item B<crl>
+
+Certificate Revokation List (CRL) Management.
+
+=item B<crl2pkcs7>      
+
+CRL2 to PKCS#7 Conversion.
+
+=item B<dgst>
+
+Message Digest Calculation.
+
+=item B<dh>
+
+Diffie-Hellman Data Management.
+
+=item B<dsa>
+
+DSA Data Management.
+
+=item B<dsaparam>
+
+DSA Parameter Generation.
+
+=item B<enc>            
+
+Encoding with Ciphers.
+
+=item B<errstr>
+
+Error Number to Error String Conversion.
+
+=item B<gendh>
+
+Generation of Diffie-Hellman Parameters.
+
+=item B<gendsa>
+
+Generation of DSA Parameters.
+
+=item B<genrsa>
+
+Generation of RSA Parameters.
+
+=item B<pkcs7>
+
+PKCS#7 Data Management.
+
+=item B<req>
+
+X.509 Certificate Signing Request (CSR) Management.
+
+=item B<rsa>
+
+RSA Data Management.
 
 =item B<s_client>
 
@@ -51,6 +121,106 @@ only rudimentary interface functionality but internally uses mostly all
 functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
+
+=item B<s_time>        
+
+SSL Connection Timer.
+
+=item B<sess_id>
+
+SSL Session Data Management.
+
+=item B<speed>
+
+Algorithm Speed Measurement.
+
+=item B<verify>
+
+X.509 Certificate Verification.
+
+=item B<version>
+
+OpenSSL Version Information.
+
+=item B<x509>           
+
+X.509 Certificate Data Management.
+
+=back
+
+=head2 MESSAGE DIGEST COMMANDS
+
+=over 10
+
+=item B<md2>
+
+MD2 Digest
+
+=item B<md5>
+
+MD5 Digest
+
+=item B<mdc2>
+
+MDC2 Digest
+
+=item B<rmd160>
+
+RMD-160 Digest
+
+=item B<sha>            
+
+SHA Digest
+
+=item B<sha1>           
+
+SHA-1 Digest
+
+=back
+
+=head2 ENCODING AND CIPHER COMMANDS
+
+=over 10
+
+=item B<base64>
+
+Base64 Encoding
+
+=item B<bf bf-cbc bf-cfb bf-ecb bf-ofb>
+
+Blowfish Cipher
+
+=item B<cast cast-cbc>
+
+CAST Cipher
+
+=item B<cast5-cbc cast5-cfb cast5-ecb cast5-ofb>
+
+CAST5 Cipher
+
+=item B<des des-cbc des-cfb des-ecb des-ede des-ede-cbc des-ede-cfb des-ede-ofb des-ofb>
+
+DES Cipher
+
+=item B<des3 desx des-ede3 des-ede3-cbc des-ede3-cfb des-ede3-ofb>
+
+Triple-DES Cipher
+
+=item B<idea idea-cbc idea-cfb idea-ecb idea-ofb>
+
+IDEA Cipher
+
+=item B<rc2 rc2-cbc rc2-cfb rc2-ecb rc2-ofb>
+
+RC2 Cipher
+
+=item B<rc4>
+
+RC4 Cipher
+
+=item B<rc5 rc5-cbc rc5-cfb rc5-ecb rc5-ofb>
+
+RC5 Cipher
 
 =back
 
