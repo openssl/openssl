@@ -291,7 +291,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 		/* If we are at the end of input and it looks like a
 		 * line, process it. */
-		if (((i+1) == inl) && (eof))
+		if (((i+1) == inl) && (((n&3) == 0) || eof))
 			v=B64_EOF;
 
 		if ((v == B64_EOF) || (n >= 64))
