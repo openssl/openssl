@@ -13,6 +13,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Do not store session data into the internal session cache, if it
+     is never intended to be looked up (SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
+     flag is set). Proposed by Aslam <aslam@funk.com>.
+     [Lutz Jaenicke]
+
   +) Support for crypto accelerator cards from Accelerated Encryption
      Processing, www.aep.ie.  (Use engine 'aep')
      The support was copied from 0.9.6c [engine] and adapted/corrected
