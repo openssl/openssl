@@ -58,13 +58,13 @@
 #ifndef HEADER_X509V3_H
 #define HEADER_X509V3_H
 
-#include <openssl/bio.h>
-#include <openssl/x509.h>
-#include <openssl/conf.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/conf.h>
 
 /* Forward reference */
 struct v3_ext_method;
@@ -131,8 +131,6 @@ void *db;
 typedef struct v3_ext_method X509V3_EXT_METHOD;
 typedef struct v3_ext_ctx X509V3_CTX;
 
-DECLARE_STACK_OF(X509V3_EXT_METHOD)
-
 /* ext_flags values */
 #define X509V3_EXT_DYNAMIC	0x1
 #define X509V3_EXT_CTX_DEP	0x2
@@ -181,8 +179,8 @@ union {
 } GENERAL_NAME;
 
 typedef struct ACCESS_DESCRIPTION_st {
-	ASN1_OBJECT *method;
-	GENERAL_NAME *location;
+ASN1_OBJECT *method;
+GENERAL_NAME *location;
 } ACCESS_DESCRIPTION;
 
 DECLARE_STACK_OF(GENERAL_NAME)
@@ -229,7 +227,7 @@ typedef struct SXNET_st {
 
 typedef struct NOTICEREF_st {
 	ASN1_STRING *organization;
-	STACK_OF(ASN1_INTEGER) *noticenos;
+	STACK *noticenos;
 } NOTICEREF;
 
 typedef struct USERNOTICE_st {
@@ -346,10 +344,9 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_SMIME_SIGN		4
 #define X509_PURPOSE_SMIME_ENCRYPT	5
 #define X509_PURPOSE_CRL_SIGN		6
-#define X509_PURPOSE_ANY		7
 
 #define X509_PURPOSE_MIN		1
-#define X509_PURPOSE_MAX		7
+#define X509_PURPOSE_MAX		6
 
 DECLARE_STACK_OF(X509_PURPOSE)
 

@@ -16,7 +16,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** BC-32
 $cc           = bcc32
@@ -34,7 +33,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** BS2000-OSD
 $cc           = c89
@@ -52,7 +50,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** CygWin32
 $cc           = gcc
@@ -70,7 +67,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** FreeBSD
 $cc           = gcc
@@ -88,7 +84,6 @@ $cast_obj     = asm/cx86-out.o
 $rc4_obj      = asm/rx86-out.o
 $rmd160_obj   = asm/rm86-out.o
 $rc5_obj      = asm/r586-out.o
-$dso_scheme   = 
 
 *** FreeBSD-alpha
 $cc           = gcc
@@ -106,7 +101,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** FreeBSD-elf
 $cc           = gcc
@@ -124,7 +118,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** Mingw32
 $cc           = gcc
@@ -142,7 +135,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** NetBSD-m68
 $cc           = gcc
@@ -160,7 +152,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** NetBSD-sparc
 $cc           = gcc
@@ -178,7 +169,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** NetBSD-x86
 $cc           = gcc
@@ -196,7 +186,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** OpenBSD
 $cc           = gcc
@@ -214,7 +203,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** OpenBSD-alpha
 $cc           = gcc
@@ -232,7 +220,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** OpenBSD-mips
 $cc           = gcc
@@ -250,7 +237,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** OpenBSD-x86
 $cc           = gcc
@@ -268,7 +254,6 @@ $cast_obj     = asm/cx86-out.o
 $rc4_obj      = asm/rx86-out.o
 $rmd160_obj   = asm/rm86-out.o
 $rc5_obj      = asm/r586-out.o
-$dso_scheme   = 
 
 *** ReliantUNIX
 $cc           = cc
@@ -286,7 +271,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** SINIX
 $cc           = cc
@@ -304,7 +288,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** SINIX-N
 $cc           = /usr/ucb/cc
@@ -322,7 +305,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-MSDOS
 $cc           = cl
@@ -340,7 +322,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-NT
 $cc           = cl
@@ -358,7 +339,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-W31-16
 $cc           = cl
@@ -376,7 +356,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-W31-32
 $cc           = cl
@@ -394,7 +373,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-WIN16
 $cc           = cl
@@ -412,7 +390,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** VC-WIN32
 $cc           = cl
@@ -430,7 +407,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** aix-cc
 $cc           = cc
@@ -448,7 +424,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** aix-gcc
 $cc           = gcc
@@ -466,7 +441,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** alpha-cc
 $cc           = cc
@@ -484,7 +458,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** alpha-gcc
 $cc           = gcc
@@ -502,7 +475,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** alpha164-cc
 $cc           = cc
@@ -520,7 +492,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** bsdi-elf-gcc
 $cc           = gcc
@@ -538,7 +509,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** bsdi-gcc
 $cc           = gcc
@@ -556,7 +526,6 @@ $cast_obj     = asm/cx86bsdi.o
 $rc4_obj      = asm/rx86bsdi.o
 $rmd160_obj   = asm/rm86bsdi.o
 $rc5_obj      = asm/r586bsdi.o
-$dso_scheme   = 
 
 *** cc
 $cc           = cc
@@ -574,7 +543,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** cray-t3e
 $cc           = cc
@@ -592,7 +560,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** cray-t90-cc
 $cc           = cc
@@ -610,7 +577,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** debug
 $cc           = gcc
@@ -628,7 +594,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** debug-ben
 $cc           = gcc
@@ -646,7 +611,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** debug-ben-debug
 $cc           = gcc
@@ -664,7 +628,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** debug-ben-strict
 $cc           = gcc
@@ -682,7 +645,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** debug-bodo
 $cc           = gcc
@@ -700,14 +662,13 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
+$cflags       = -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldl
+$lflags       = 
 $bn_ops       = 
 $bn_obj       = 
 $des_obj      = 
@@ -718,7 +679,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** debug-linux-elf
 $cc           = gcc
@@ -736,25 +696,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = dlfcn
-
-*** debug-linux-elf-noefence
-$cc           = gcc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = 
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
-$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
-$bf_obj       = asm/bx86-elf.o
-$md5_obj      = asm/mx86-elf.o
-$sha1_obj     = asm/sx86-elf.o
-$cast_obj     = asm/cx86-elf.o
-$rc4_obj      = asm/rx86-elf.o
-$rmd160_obj   = asm/rm86-elf.o
-$rc5_obj      = asm/r586-elf.o
-$dso_scheme   = dlfcn
 
 *** debug-rse
 $cc           = cc
@@ -772,14 +713,13 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** debug-solaris-sparcv8-cc
 $cc           = cc
 $cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8.o
 $des_obj      = 
@@ -790,14 +730,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
 $cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8.o
 $des_obj      = 
@@ -808,14 +747,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
 $cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
@@ -826,14 +764,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
 $cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
@@ -844,7 +781,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** debug-steve
 $cc           = gcc
@@ -862,7 +798,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** debug-ulf
 $cc           = gcc
@@ -880,7 +815,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** dgux-R3-gcc
 $cc           = gcc
@@ -898,7 +832,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** dgux-R4-gcc
 $cc           = gcc
@@ -916,7 +849,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** dgux-R4-x86-gcc
 $cc           = gcc
@@ -934,7 +866,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
 
 *** dist
 $cc           = cc
@@ -952,7 +883,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** gcc
 $cc           = gcc
@@ -970,14 +900,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** hpux-brokencc
 $cc           = cc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -988,14 +917,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux-brokengcc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1006,14 +934,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux-cc
 $cc           = cc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1024,14 +951,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux-gcc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1042,14 +968,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux-parisc-cc
 $cc           = cc
 $cflags       = -Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = 
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1060,32 +985,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
-
-*** hpux-parisc-cc-o4
-$cc           = cc
-$cflags       = -Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
-$unistd       = 
-$thread_cflag = 
-$lflags       = -ldld
-$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux-parisc-gcc
 $cc           = gcc
 $cflags       = -O3 -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = 
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1096,14 +1002,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux10-brokencc
 $cc           = cc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1114,14 +1019,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux10-brokengcc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1132,14 +1036,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux10-cc
 $cc           = cc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1150,14 +1053,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux10-gcc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
@@ -1168,14 +1070,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** hpux64-parisc-cc
 $cc           = cc
 $cflags       = -Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldld
+$lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
 $bn_obj       = 
 $des_obj      = 
@@ -1186,7 +1087,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dl
 
 *** irix-cc
 $cc           = cc
@@ -1204,7 +1104,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** irix-gcc
 $cc           = gcc
@@ -1222,7 +1121,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** irix-mips3-cc
 $cc           = cc
@@ -1240,7 +1138,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** irix-mips3-gcc
 $cc           = gcc
@@ -1258,7 +1155,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** irix64-mips4-cc
 $cc           = cc
@@ -1276,7 +1172,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** irix64-mips4-gcc
 $cc           = gcc
@@ -1294,7 +1189,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
@@ -1312,7 +1206,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-alpha+bwx-gcc
 $cc           = gcc
@@ -1330,7 +1223,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-alpha-ccc
 $cc           = ccc
@@ -1348,7 +1240,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-alpha-gcc
 $cc           = gcc
@@ -1366,7 +1257,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-aout
 $cc           = gcc
@@ -1384,14 +1274,13 @@ $cast_obj     = asm/cx86-out.o
 $rc4_obj      = asm/rx86-out.o
 $rmd160_obj   = asm/rm86-out.o
 $rc5_obj      = asm/r586-out.o
-$dso_scheme   = 
 
 *** linux-elf
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldl
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = asm/bn86-elf.o asm/co86-elf.o
 $des_obj      = asm/dx86-elf.o asm/yx86-elf.o
@@ -1402,43 +1291,6 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = dlfcn
-
-*** linux-ia64
-$cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
-$unistd       = 
-$thread_cflag = (unknown)
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-
-*** linux-m68k
-$cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = 
-$bn_ops       = BN_LLONG
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-mips
 $cc           = gcc
@@ -1456,7 +1308,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-ppc
 $cc           = gcc
@@ -1474,7 +1325,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-sparcv7
 $cc           = gcc
@@ -1492,7 +1342,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-sparcv8
 $cc           = gcc
@@ -1510,7 +1359,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** linux-sparcv9
 $cc           = gcc
@@ -1528,7 +1376,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** ncr-scde
 $cc           = cc
@@ -1546,7 +1393,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** nextstep
 $cc           = cc
@@ -1564,7 +1410,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** nextstep3.3
 $cc           = cc
@@ -1582,7 +1427,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** purify
 $cc           = purify gcc
@@ -1600,7 +1444,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** rhapsody-ppc-cc
 $cc           = cc
@@ -1618,7 +1461,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** sco5-cc
 $cc           = cc
@@ -1636,7 +1478,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** sco5-gcc
 $cc           = gcc
@@ -1654,14 +1495,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** solaris-sparc-sc3
 $cc           = cc
 $cflags       = -fast -O -Xa -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
@@ -1672,14 +1512,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv7-cc
 $cc           = cc
 $cflags       = -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
@@ -1690,14 +1529,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
 $cflags       = -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
@@ -1708,14 +1546,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv8-cc
 $cc           = cc
 $cflags       = -xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8.o
 $des_obj      = 
@@ -1726,14 +1563,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
 $cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8.o
 $des_obj      = 
@@ -1744,14 +1580,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv9-cc
 $cc           = cc
 $cflags       = -xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
@@ -1762,14 +1597,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
 $cflags       = -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
@@ -1780,14 +1614,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
 $cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus-gcc27.o
 $des_obj      = 
@@ -1798,14 +1631,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** solaris-x86-gcc
 $cc           = gcc
 $cflags       = -O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DNO_INLINE_ASM
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = asm/bn86-sol.o asm/co86-sol.o
 $des_obj      = asm/dx86-sol.o asm/yx86-sol.o
@@ -1816,14 +1648,13 @@ $cast_obj     = asm/cx86-sol.o
 $rc4_obj      = asm/rx86-sol.o
 $rmd160_obj   = asm/rm86-sol.o
 $rc5_obj      = asm/r586-sol.o
-$dso_scheme   = dlfcn
 
 *** solaris64-sparcv9-cc
 $cc           = cc
 $cflags       = -xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl -ldl
+$lflags       = -lsocket -lnsl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
@@ -1834,11 +1665,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
 
 *** sunos-gcc
 $cc           = gcc
-$cflags       = -O3 -mv8 -Dssize_t=int
+$cflags       = -O3 -mv8
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1852,7 +1682,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** ultrix-cc
 $cc           = cc
@@ -1870,7 +1699,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** ultrix-gcc
 $cc           = gcc
@@ -1888,7 +1716,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** unixware-2.0
 $cc           = cc
@@ -1906,7 +1733,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** unixware-2.0-pentium
 $cc           = cc
@@ -1924,7 +1750,6 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
 
 *** unixware-7
 $cc           = cc
@@ -1942,4 +1767,3 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 

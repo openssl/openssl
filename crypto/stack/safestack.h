@@ -57,14 +57,13 @@
 
 #include <openssl/stack.h>
 
-#define STACK_OF(type) struct stack_st_##type
-#define PREDECLARE_STACK_OF(type) STACK_OF(type);
+#define STACK_OF(type)	STACK_##type
 
 #define DECLARE_STACK_OF(type) \
-STACK_OF(type) \
+typedef struct stack_st_##type	\
     { \
     STACK stack; \
-    }; \
+    } STACK_OF(type); \
 STACK_OF(type) *sk_##type##_new(int (*cmp)(type **,type **)); \
 STACK_OF(type) *sk_##type##_new_null(void); \
 void sk_##type##_free(STACK_OF(type) *sk); \
@@ -88,7 +87,7 @@ void sk_##type##_sort(STACK_OF(type) *sk);
 
 #define IMPLEMENT_STACK_OF(type) \
 STACK_OF(type) *sk_##type##_new(int (*cmp)(type **,type **)) \
-    { return (STACK_OF(type) *)sk_new((int (*)())cmp); } \
+    { return (STACK_OF(type) *)sk_new(cmp); } \
 STACK_OF(type) *sk_##type##_new_null() \
     { return (STACK_OF(type) *)sk_new_null(); } \
 void sk_##type##_free(STACK_OF(type) *sk) \
@@ -115,11 +114,11 @@ int sk_##type##_insert(STACK_OF(type) *sk,type *v,int n) \
     { return sk_insert((STACK *)sk,(char *)v,n); } \
 int (*sk_##type##_set_cmp_func(STACK_OF(type) *sk, \
 			       int (*cmp)(type **,type **)))(type **,type **) \
-    { return (int (*)(type **,type **))sk_set_cmp_func((STACK *)sk,(int(*)(const void *, const void *))cmp); } \
+    { return (int (*)(type **,type **))sk_set_cmp_func((STACK *)sk,cmp); } \
 STACK_OF(type) *sk_##type##_dup(STACK_OF(type) *sk) \
     { return (STACK_OF(type) *)sk_dup((STACK *)sk); } \
 void sk_##type##_pop_free(STACK_OF(type) *sk,void (*func)(type *)) \
-    { sk_pop_free((STACK *)sk,(void (*)(void *))func); } \
+    { sk_pop_free((STACK *)sk,func); } \
 type *sk_##type##_shift(STACK_OF(type) *sk) \
     { return (type *)sk_shift((STACK *)sk); } \
 type *sk_##type##_pop(STACK_OF(type) *sk) \

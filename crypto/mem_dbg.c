@@ -108,7 +108,7 @@ static LHASH *amih=NULL; /* hash-table with those app_mem_info_st's
 typedef struct mem_st
 /* memory-block description */
 	{
-	void *addr;
+	char *addr;
 	int num;
 	const char *file;
 	int line;
@@ -221,7 +221,7 @@ long CRYPTO_dbg_get_options(void)
 
 static int mem_cmp(MEM *a, MEM *b)
 	{
-	return((char *)a->addr - (char *)b->addr);
+	return(a->addr - b->addr);
 	}
 
 static unsigned long mem_hash(MEM *a)
@@ -640,60 +640,51 @@ void CRYPTO_mem_leaks(BIO *b)
 	MEM_LEAK ml;
 	char buf[80];
 
-	if (mh == NULL && amih == NULL)
-		return;
+	if (mh == NULL) return;
 	ml.bio=b;
 	ml.bytes=0;
 	ml.chunks=0;
-	MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
-	if (mh != NULL)
-		lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
+	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
+	lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
+	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	if (ml.chunks != 0)
 		{
 		sprintf(buf,"%ld bytes leaked in %d chunks\n",
 			ml.bytes,ml.chunks);
 		BIO_puts(b,buf);
 		}
-	else
-		{
-		/* Make sure that, if we found no leaks, memory-leak debugging itself
-		 * does not introduce memory leaks (which might irritate
-		 * external debugging tools).
-		 * (When someone enables leak checking, but does not call
-		 * this function, we declare it to be their fault.)
-		 *
-		 * XXX    This should be in CRYPTO_mem_leaks_cb,
-		 * and CRYPTO_mem_leaks should be implemented by
-		 * using CRYPTO_mem_leaks_cb.
-		 * (Also their should be a variant of lh_doall_arg
-		 * that takes a function pointer instead of a void *;
-		 * this would obviate the ugly and illegal
-		 * void_fn_to_char kludge in CRYPTO_mem_leaks_cb.
-		 * Otherwise the code police will come and get us.)
-		 */
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		if (mh != NULL)
-			{
-			lh_free(mh);
-			mh = NULL;
-			}
-		if (amih != NULL)
-			{
-			if (lh_num_items(amih) == 0) 
-				{
-				lh_free(amih);
-				amih = NULL;
-				}
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		}
-	MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 
 #if 0
 	lh_stats_bio(mh,b);
 	lh_node_stats_bio(mh,b);
 	lh_node_usage_stats_bio(mh,b);
 #endif
+	}
+
+union void_fn_to_char_u
+	{
+	char *char_p;
+	void (*fn_p)();
+	};
+
+static void cb_leak(MEM *m, char *cb)
+	{
+	union void_fn_to_char_u mem_callback;
+
+	mem_callback.char_p=cb;
+	mem_callback.fn_p(m->order,m->file,m->line,m->num,m->addr);
+	}
+
+void CRYPTO_mem_leaks_cb(void (*cb)())
+	{
+	union void_fn_to_char_u mem_cb;
+
+	if (mh == NULL) return;
+	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
+	mem_cb.fn_p=cb;
+	lh_doall_arg(mh,(void (*)())cb_leak,mem_cb.char_p);
+	mem_cb.char_p=NULL;
+	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}
 
 #ifndef NO_FP_API
@@ -710,21 +701,3 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 	}
 #endif
 
-
-
-/* FIXME: We really don't allow much to the callback.  For example, it has
-   no chance of reaching the info stack for the item it processes.  Should
-   it really be this way?  -- Richard Levitte */
-static void cb_leak(MEM *m,
-		    void (**cb)(unsigned long, const char *, int, int, void *))
-	{
-	(**cb)(m->order,m->file,m->line,m->num,m->addr);
-	}
-
-void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *))
-	{
-	if (mh == NULL) return;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_doall_arg(mh,(void (*)())cb_leak,(void *)&cb);
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
-	}

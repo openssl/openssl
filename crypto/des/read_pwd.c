@@ -265,15 +265,13 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	is_a_tty=1;
 	tty=NULL;
 
-#ifdef MSDOS
-	if ((tty=fopen("con","r")) == NULL)
-		tty=stdin;
-#elif defined(MAC_OS_pre_X)
-	tty=stdin;
-#else
+#ifndef MSDOS
 	if ((tty=fopen("/dev/tty","r")) == NULL)
 		tty=stdin;
-#endif
+#else /* MSDOS */
+	if ((tty=fopen("con","r")) == NULL)
+		tty=stdin;
+#endif /* MSDOS */
 
 #if defined(TTY_get) && !defined(VMS)
 	if (TTY_get(fileno(tty),&tty_orig) == -1)

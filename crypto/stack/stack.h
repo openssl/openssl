@@ -70,7 +70,7 @@ typedef struct stack_st
 	int sorted;
 
 	int num_alloc;
-	int (*comp)(const void *, const void *);
+	int (*comp)();
 	} STACK;
 
 
@@ -84,9 +84,9 @@ char *sk_value(STACK *, int);
 
 char *sk_set(STACK *, int, char *);
 
-STACK *sk_new(int (*cmp)(const void *, const void *));
+STACK *sk_new(int (*cmp)());
 void sk_free(STACK *);
-void sk_pop_free(STACK *st, void (*func)(void *));
+void sk_pop_free(STACK *st, void (*func)());
 int sk_insert(STACK *sk,char *data,int where);
 char *sk_delete(STACK *st,int loc);
 char *sk_delete_ptr(STACK *st, char *p);
@@ -96,7 +96,7 @@ int sk_unshift(STACK *st,char *data);
 char *sk_shift(STACK *st);
 char *sk_pop(STACK *st);
 void sk_zero(STACK *st);
-int (*sk_set_cmp_func(STACK *sk, int (*c)(const void *,const void *)))(const void *, const void *);
+int (*sk_set_cmp_func(STACK *sk, int (*c)()))();
 STACK *sk_dup(STACK *st);
 void sk_sort(STACK *st);
 

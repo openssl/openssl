@@ -59,11 +59,11 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
-#include <openssl/safestack.h>
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#include <openssl/safestack.h>
 
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
@@ -140,20 +140,12 @@ extern "C" {
 #define SSL_SENT_SHUTDOWN	1
 #define SSL_RECEIVED_SHUTDOWN	2
 
-#ifdef __cplusplus
-}
-#endif
-
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #if (defined(NO_RSA) || defined(NO_MD5)) && !defined(NO_SSL2)
 #define NO_SSL2
@@ -399,8 +391,9 @@ struct ssl_ctx_st
 	 * SSL_SESSION_free() when it has finished using it.  Otherwise,
 	 * on 0, it means the callback has finished with it.
 	 * If remove_session_cb is not null, it will be called when
-	 * a session-id is removed from the cache.  After the call,
-	 * OpenSSL will SSL_SESSION_free() it. */
+	 * a session-id is removed from the cache.  Again, a return
+	 * of 0 mens that SSLeay should not SSL_SESSION_free() since
+	 * the application is doing something with it. */
 	int (*new_session_cb)(struct ssl_st *ssl,SSL_SESSION *sess);
 	void (*remove_session_cb)(struct ssl_ctx_st *ctx,SSL_SESSION *sess);
 	SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
@@ -663,18 +656,10 @@ struct ssl_st
 				 * SSLv3/TLS rollback check */
 	};
 
-#ifdef __cplusplus
-}
-#endif
-
 #include <openssl/ssl2.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h> /* This is mostly sslv3 with a few tweaks */
 #include <openssl/ssl23.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /* compatibility */
 #define SSL_set_app_data(s,arg)		(SSL_set_ex_data(s,0,(char *)arg))
@@ -1230,7 +1215,6 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL2_SET_CERTIFICATE			 126
 #define SSL_F_SSL2_WRITE				 127
 #define SSL_F_SSL3_ACCEPT				 128
-#define SSL_F_SSL3_CALLBACK_CTRL			 233
 #define SSL_F_SSL3_CHANGE_CIPHER_STATE			 129
 #define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM		 130
 #define SSL_F_SSL3_CLIENT_HELLO				 131

@@ -11,19 +11,13 @@ export PATH
 
 echo "generating certificate request"
 
-echo "string to make the random number generator think it has entropy" >> ./.rnd
-
-if ../apps/openssl no-rsa; then
-  req_new='-newkey dsa:../apps/dsa512.pem'
-else
-  req_new='-new'
-  echo "There should be a 2 sequences of .'s and some +'s."
-  echo "There should not be more that at most 80 per line"
-fi
-
+echo "There should be a 2 sequences of .'s and some +'s."
+echo "There should not be more that at most 80 per line"
 echo "This could take some time."
 
-../apps/openssl req -config test.cnf $req_new -out testreq.pem
+echo "string to make the random number generator think it has entropy" >> ./.rnd
+
+../apps/openssl req -config test.cnf -new -out testreq.pem
 if [ $? != 0 ]; then
 echo problems creating request
 exit 1

@@ -137,9 +137,6 @@ int BIO_free(BIO *a)
 	return(1);
 	}
 
-void BIO_vfree(BIO *a)
-    { BIO_free(a); }
-
 int BIO_read(BIO *b, void *out, int outl)
 	{
 	int i;
@@ -172,7 +169,7 @@ int BIO_read(BIO *b, void *out, int outl)
 	return(i);
 	}
 
-int BIO_write(BIO *b, const void *in, int inl)
+int BIO_write(BIO *b, const char *in, int inl)
 	{
 	int i;
 	long (*cb)();
@@ -320,7 +317,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 	return(ret);
 	}
 
-long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long))
+long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)())
 	{
 	long ret;
 	long (*cb)();
@@ -535,5 +532,3 @@ unsigned long BIO_number_written(BIO *bio)
 	if(bio) return bio->num_write;
 	return 0;
 }
-
-IMPLEMENT_STACK_OF(BIO)

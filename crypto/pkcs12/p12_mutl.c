@@ -106,7 +106,10 @@ int PKCS12_verify_mac (PKCS12 *p12, const char *pass, int passlen)
 		return 0;
 	}
 	if ((maclen != (unsigned int)p12->mac->dinfo->digest->length)
-	|| memcmp (mac, p12->mac->dinfo->digest->data, maclen)) return 0;
+	|| memcmp (mac, p12->mac->dinfo->digest->data, maclen)) {
+		PKCS12err(PKCS12_F_VERIFY_MAC,PKCS12_R_MAC_VERIFY_ERROR);
+		return 0;
+	}
 	return 1;
 }
 
@@ -154,7 +157,7 @@ int PKCS12_setup_mac (PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 		return 0;
 	}
 	if (!salt) {
-		if (RAND_pseudo_bytes (p12->mac->salt->data, saltlen) < 0)
+		if (RAND_bytes (p12->mac->salt->data, saltlen) <= 0)
 			return 0;
 	}
 	else memcpy (p12->mac->salt->data, salt, saltlen);

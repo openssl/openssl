@@ -2,8 +2,8 @@
  INSTALLATION ON THE UNIX PLATFORM
  ---------------------------------
 
- [Installation on Windows, OpenVMS and MacOS (before MacOS X) is described
-  in INSTALL.W32, INSTALL.VMS and INSTALL.MacOS.]
+ [See INSTALL.W32 for instructions for compiling OpenSSL on Windows systems,
+  and INSTALL.VMS for installing on OpenVMS systems.]
 
  To install OpenSSL, you will need:
 
@@ -33,8 +33,7 @@
  Configuration Options
  ---------------------
 
- There are several options to ./config (or ./Configure) to customize
- the build:
+ There are several options to ./config to customize the build:
 
   --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include/openssl.
 	        Configuration files used by OpenSSL will be in DIR/ssl

@@ -66,8 +66,7 @@
 /* PKCS#12 password change routine */
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass);
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
-			char *newpass);
+static int newpass_bags(STACK *bags, char *oldpass,  char *newpass);
 static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass);
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 
@@ -105,18 +104,16 @@ return 1;
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 {
-	STACK_OF(PKCS7) *asafes, *newsafes;
-	STACK_OF(PKCS12_SAFEBAG) *bags;
+	STACK *asafes, *newsafes, *bags;
 	int i, bagnid, pbe_nid, pbe_iter, pbe_saltlen;
 	PKCS7 *p7, *p7new;
 	ASN1_OCTET_STRING *p12_data_tmp = NULL, *macnew = NULL;
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
-
 	if (!(asafes = M_PKCS12_unpack_authsafes(p12))) return 0;
-	if(!(newsafes = sk_PKCS7_new(NULL))) return 0;
-	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
-		p7 = sk_PKCS7_value(asafes, i);
+	if(!(newsafes = sk_new(NULL))) return 0;
+	for (i = 0; i < sk_num (asafes); i++) {
+		p7 = (PKCS7 *) sk_value(asafes, i);
 		bagnid = OBJ_obj2nid(p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data(p7);
@@ -126,26 +123,26 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 				&pbe_nid, &pbe_iter, &pbe_saltlen);
 		} else continue;
 		if (!bags) {
-			sk_PKCS7_pop_free(asafes, PKCS7_free);
+			sk_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 	    	if (!newpass_bags(bags, oldpass, newpass)) {
-			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_PKCS7_pop_free(asafes, PKCS7_free);
+			sk_pop_free(bags, PKCS12_SAFEBAG_free);
+			sk_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 		/* Repack bag in same form with new password */
 		if (bagnid == NID_pkcs7_data) p7new = PKCS12_pack_p7data(bags);
 		else p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
 						 pbe_saltlen, pbe_iter, bags);
-		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+		sk_pop_free(bags, PKCS12_SAFEBAG_free);
 		if(!p7new) {
-			sk_PKCS7_pop_free(asafes, PKCS7_free);
+			sk_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
-		sk_PKCS7_push(newsafes, p7new);
+		sk_push(newsafes, (char *)p7new);
 	}
-	sk_PKCS7_pop_free(asafes, PKCS7_free);
+	sk_pop_free(asafes, PKCS7_free);
 
 	/* Repack safe: save old safe in case of error */
 
@@ -172,14 +169,12 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 }
 
 
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
-			char *newpass)
+static int newpass_bags(STACK *bags, char *oldpass,  char *newpass)
 {
 	int i;
-	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
-		if (!newpass_bag(sk_PKCS12_SAFEBAG_value(bags, i),
-				 oldpass, newpass))
-		    return 0;
+	for (i = 0; i < sk_num(bags); i++) {
+		if (!newpass_bag((PKCS12_SAFEBAG *)sk_value(bags, i),
+						 oldpass, newpass)) return 0;
 	}
 	return 1;
 }

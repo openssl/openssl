@@ -5,7 +5,6 @@
 DIR=	bn
 TOP=	../..
 CC=	cc
-CPP=    $(CC) -E
 INCLUDES= -I.. -I../../include
 CFLAG=-g
 INSTALL_PREFIX=
@@ -73,10 +72,10 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/bn86-elf.o: asm/bn86unix.cpp
-	$(CPP) -DELF -x c asm/bn86unix.cpp | as -o asm/bn86-elf.o
+	$(CPP) -DELF asm/bn86unix.cpp | as -o asm/bn86-elf.o
 
 asm/co86-elf.o: asm/co86unix.cpp
-	$(CPP) -DELF -x c asm/co86unix.cpp | as -o asm/co86-elf.o
+	$(CPP) -DELF asm/co86unix.cpp | as -o asm/co86-elf.o
 
 # solaris
 asm/bn86-sol.o: asm/bn86unix.cpp
@@ -103,10 +102,10 @@ asm/bn86bsdi.o: asm/bn86unix.cpp
 asm/co86bsdi.o: asm/co86unix.cpp
 	$(CPP) -DBSDI asm/co86unix.cpp | sed 's/ :/:/' | as -o asm/co86bsdi.o
 
-asm/bn86unix.cpp: asm/bn-586.pl ../perlasm/x86asm.pl
+asm/bn86unix.cpp: asm/bn-586.pl
 	(cd asm; $(PERL) bn-586.pl cpp >bn86unix.cpp )
 
-asm/co86unix.cpp: asm/co-586.pl ../perlasm/x86asm.pl
+asm/co86unix.cpp: asm/co-586.pl
 	(cd asm; $(PERL) co-586.pl cpp >co86unix.cpp )
 
 asm/sparcv8.o: asm/sparcv8.S

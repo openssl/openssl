@@ -61,9 +61,6 @@
 #include "bn_lcl.h"
 
 #ifdef BN_RECURSION
-/* Karatsuba recursive multiplication algorithm
- * (cf. Knuth, The Art of Computer Programming, Vol. 2) */
-
 /* r is 2*n2 words in size,
  * a and b are both n2 words in size.
  * n2 must be a power of 2.

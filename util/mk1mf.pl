@@ -8,7 +8,6 @@
 $INSTALLTOP="/usr/local/ssl";
 $OPTIONS="";
 $ssl_version="";
-$banner="\t\@echo Building OpenSSL";
 
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
 while(<IN>) {
@@ -60,7 +59,6 @@ and [options] can be one of
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	nasm 					- Use NASM for x86 asm
-	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
 	dll/shlib				- Build shared libraries (MS)
@@ -273,8 +271,6 @@ LFLAGS=$lflags
 
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
-BNCO_ASM_OBJ=$bnco_asm_obj
-BNCO_ASM_SRC=$bnco_asm_src
 DES_ENC_OBJ=$des_enc_obj
 DES_ENC_SRC=$des_enc_src
 BF_ENC_OBJ=$bf_enc_obj
@@ -362,10 +358,6 @@ all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
 banner:
 $banner
 
-# Generate perlasm output files
-%.cpp:
-	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
-
 \$(TMP_D):
 	\$(MKDIR) \$(TMP_D)
 # NB: uncomment out these lines if BIN_D, TEST_D and LIB_D are different
@@ -385,7 +377,6 @@ $banner
 	\$(MKDIR) \$(INC_D)
 
 headers: \$(HEADER) \$(EXHEADER)
-	@
 
 lib: \$(LIBS_DEP)
 
@@ -545,11 +536,6 @@ foreach (values %lib_nam)
 		{
 		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
 		$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
-		}
-	if (($bnco_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj .= "\$(BNCO_ASM_OBJ)";
-		$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
 		}
 	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
@@ -729,7 +715,6 @@ sub do_defs
 			{ $pf=".c"; }
 		else	{ $pf=$postfix; }
 		if ($_ =~ /BN_ASM/)	{ $t="$_ "; }
-		elsif ($_ =~ /BNCO_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /DES_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /BF_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
@@ -865,7 +850,6 @@ sub read_options
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-asm$/)	{ $no_asm=1; }
 	elsif (/^nasm$/)	{ $nasm=1; }
-	elsif (/^gaswin$/)	{ $gaswin=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
 	elsif (/^no-err$/)	{ $no_err=1; }

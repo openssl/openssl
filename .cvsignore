@@ -7,7 +7,5 @@ outinc
 rehash.time
 testlog
 make.log
-maketest.log
 cctest
 cctest.c
-cctest.a

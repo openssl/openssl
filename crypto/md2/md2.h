@@ -59,6 +59,10 @@
 #ifndef HEADER_MD2_H
 #define HEADER_MD2_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef NO_MD2
 #error MD2 is disabled.
 #endif
@@ -66,10 +70,6 @@
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
 #include <openssl/opensslconf.h> /* MD2_INT */
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef struct MD2state_st
 	{

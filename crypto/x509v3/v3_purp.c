@@ -64,7 +64,6 @@
 static void x509v3_cache_extensions(X509 *x);
 
 static int ca_check(X509 *x);
-static int check_ssl_ca(X509 *x);
 static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_ns_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
@@ -72,7 +71,6 @@ static int purpose_smime(X509 *x, int ca);
 static int check_purpose_smime_sign(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca);
-static int no_check(X509_PURPOSE *xp, X509 *x, int ca);
 
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b);
 static void xptable_free(X509_PURPOSE *p);
@@ -83,8 +81,7 @@ static X509_PURPOSE xstandard[] = {
 	{X509_PURPOSE_NS_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ns_ssl_server, "Netscape SSL server", "nssslserver", NULL},
 	{X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign, "S/MIME signing", "smimesign", NULL},
 	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
-	{X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
-	{X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any", NULL},
+	{X509_PURPOSE_CRL_SIGN, X509_TRUST_ANY, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
 };
 
 #define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
@@ -357,26 +354,22 @@ static int ca_check(X509 *x)
 	}
 }
 
-/* Check SSL CA: common checks for SSL client and server */
-static int check_ssl_ca(X509 *x)
-{
-	int ca_ret;
-	ca_ret = ca_check(x);
-	if(!ca_ret) return 0;
-	/* check nsCertType if present */
-	if(x->ex_flags & EXFLAG_NSCERT) {
-		if(x->ex_nscert & NS_SSL_CA) return ca_ret;
-		return 0;
-	}
-	if(ca_ret != 2) return ca_ret;
-	else return 0;
-}
-	
 
 static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_CLIENT)) return 0;
-	if(ca) return check_ssl_ca(x);
+	if(ca) {
+		int ca_ret;
+		ca_ret = ca_check(x);
+		if(!ca_ret) return 0;
+		/* check nsCertType if present */
+		if(x->ex_flags & EXFLAG_NSCERT) {
+			if(x->ex_nscert & NS_SSL_CA) return ca_ret;
+			return 0;
+		}
+		if(ca_ret != 2) return ca_ret;
+		else return 0;
+	}
 	/* We need to do digital signatures with it */
 	if(ku_reject(x,KU_DIGITAL_SIGNATURE)) return 0;
 	/* nsCertType if present should allow SSL client use */	
@@ -387,7 +380,8 @@ static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
 static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_SERVER|XKU_SGC)) return 0;
-	if(ca) return check_ssl_ca(x);
+	/* Otherwise same as SSL client for a CA */
+	if(ca) return check_purpose_ssl_client(xp, x, 1);
 
 	if(ns_reject(x, NS_SSL_SERVER)) return 0;
 	/* Now as for keyUsage: we'll at least need to sign OR encipher */
@@ -458,10 +452,5 @@ static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca)
 		else return 0;
 	}
 	if(ku_reject(x, KU_CRL_SIGN)) return 0;
-	return 1;
-}
-
-static int no_check(X509_PURPOSE *xp, X509 *x, int ca)
-{
 	return 1;
 }

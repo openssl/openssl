@@ -62,13 +62,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "openssl/e_os.h"
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -88,12 +86,12 @@
 static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
-static void free_tmp_rsa(void);
 #endif
 #ifndef NO_DH
 static DH *get_dh512(void);
-static DH *get_dh1024(void);
-static DH *get_dh1024dsa(void);
+#endif
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
 #endif
 
 static BIO *bio_err=NULL;
@@ -111,7 +109,7 @@ static int s_nbio=0;
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
-int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes,clock_t *s_time,clock_t *c_time);
+int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
 static void sv_usage(void)
 	{
@@ -124,9 +122,10 @@ static void sv_usage(void)
 	fprintf(stderr," -reuse        - use session-id reuse\n");
 	fprintf(stderr," -num <val>    - number of connections to perform\n");
 	fprintf(stderr," -bytes <val>  - number of bytes to swap between client/server\n");
-#ifndef NO_DH
-	fprintf(stderr," -dhe1024      - use 1024 bit key (safe prime) for DHE\n");
-	fprintf(stderr," -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
+#if !defined NO_DH && !defined NO_DSA
+	fprintf(stderr," -dhe1024      - generate 1024 bit key for DHE\n");
+#endif
+#if !defined NO_DH
 	fprintf(stderr," -no_dhe       - disable DHE\n");
 #endif
 #ifndef NO_SSL2
@@ -140,58 +139,12 @@ static void sv_usage(void)
 #endif
 	fprintf(stderr," -CApath arg   - PEM format directory of CA's\n");
 	fprintf(stderr," -CAfile arg   - PEM format file of CA's\n");
-	fprintf(stderr," -cert arg     - Server certificate file\n");
-	fprintf(stderr," -key arg      - Server key file (default: same as -cert)\n");
-	fprintf(stderr," -c_cert arg   - Client certificate file\n");
-	fprintf(stderr," -c_key arg    - Client key file (default: same as -c_cert)\n");
+	fprintf(stderr," -cert arg     - Certificate file\n");
+	fprintf(stderr," -s_cert arg   - Just the server certificate file\n");
+	fprintf(stderr," -c_cert arg   - Just the client certificate file\n");
 	fprintf(stderr," -cipher arg   - The cipher list\n");
 	fprintf(stderr," -bio_pair     - Use BIO pairs\n");
 	fprintf(stderr," -f            - Test even cases that can't work\n");
-	fprintf(stderr," -time         - measure processor time used by client and server\n");
-	}
-
-static void print_details(SSL *c_ssl, const char *prefix)
-	{
-	SSL_CIPHER *ciph;
-	X509 *cert;
-		
-	ciph=SSL_get_current_cipher(c_ssl);
-	BIO_printf(bio_stdout,"%s%s, cipher %s %s",
-		prefix,
-		SSL_get_version(c_ssl),
-		SSL_CIPHER_get_version(ciph),
-		SSL_CIPHER_get_name(ciph));
-	cert=SSL_get_peer_certificate(c_ssl);
-	if (cert != NULL)
-		{
-		EVP_PKEY *pkey = X509_get_pubkey(cert);
-		if (pkey != NULL)
-			{
-			if (0) 
-				;
-#ifndef NO_RSA
-			else if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
-				&& pkey->pkey.rsa->n != NULL)
-				{
-				BIO_printf(bio_stdout, ", %d bit RSA",
-					BN_num_bits(pkey->pkey.rsa->n));
-				}
-#endif
-#ifndef NO_DSA
-			else if (pkey->type == EVP_PKEY_DSA && pkey->pkey.dsa != NULL
-				&& pkey->pkey.dsa->p != NULL)
-				{
-				BIO_printf(bio_stdout, ", %d bit DSA",
-					BN_num_bits(pkey->pkey.dsa->p));
-				}
-#endif
-			EVP_PKEY_free(pkey);
-			}
-		X509_free(cert);
-		}
-	/* The SSL API does not allow us to look at temporary RSA/DH keys,
-	 * otherwise we should print their lengths too */
-	BIO_printf(bio_stdout,"\n");
 	}
 
 int main(int argc, char *argv[])
@@ -204,23 +157,18 @@ int main(int argc, char *argv[])
 	int client_auth=0;
 	int server_auth=0,i;
 	char *server_cert=TEST_SERVER_CERT;
-	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
-	char *client_key=NULL;
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;
 	SSL *c_ssl,*s_ssl;
 	int number=1,reuse=0;
 	long bytes=1L;
+	SSL_CIPHER *ciph;
+	int dhe1024 = 0, no_dhe = 0;
 #ifndef NO_DH
 	DH *dh;
-	int dhe1024 = 0, dhe1024dsa = 0;
 #endif
-	int no_dhe = 0;
-	int print_time = 0;
-	clock_t s_time = 0, c_time = 0;
-
 	verbose = 0;
 	debug = 0;
 	cipher = 0;
@@ -247,12 +195,8 @@ int main(int argc, char *argv[])
 			debug=1;
 		else if	(strcmp(*argv,"-reuse") == 0)
 			reuse=1;
-#ifndef NO_DH
 		else if	(strcmp(*argv,"-dhe1024") == 0)
 			dhe1024=1;
-		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
-			dhe1024dsa=1;
-#endif
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			no_dhe=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
@@ -286,25 +230,10 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			server_cert= *(++argv);
 			}
-		else if	(strcmp(*argv,"-key") == 0)
-			{
-			if (--argc < 1) goto bad;
-			server_key= *(++argv);
-			}
-		else if	(strcmp(*argv,"-s_key") == 0)
-			{
-			if (--argc < 1) goto bad;
-			server_key= *(++argv);
-			}
 		else if	(strcmp(*argv,"-c_cert") == 0)
 			{
 			if (--argc < 1) goto bad;
 			client_cert= *(++argv);
-			}
-		else if	(strcmp(*argv,"-c_key") == 0)
-			{
-			if (--argc < 1) goto bad;
-			client_key= *(++argv);
 			}
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
@@ -329,10 +258,6 @@ int main(int argc, char *argv[])
 			{
 			force = 1;
 			}
-		else if	(strcmp(*argv,"-time") == 0)
-			{
-			print_time = 1;
-			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -351,22 +276,13 @@ bad:
 
 	if (!ssl2 && !ssl3 && !tls1 && number > 1 && !reuse && !force)
 		{
-		fprintf(stderr, "This case cannot work.  Use -f to perform "
-			"the test anyway (and\n-d to see what happens), "
-			"or add one of -ssl2, -ssl3, -tls1, -reuse\n"
-			"to avoid protocol mismatch.\n");
+		fprintf(stderr, "This case cannot work.  Use -f switch to perform "
+			"the test anyway\n"
+			"(and -d to see what happens, "
+			"and -bio_pair to really make it happen :-)\n"
+			"or add one of -ssl2, -ssl3, -tls1, -reuse to "
+			"avoid protocol mismatch.\n");
 		exit(1);
-		}
-
-	if (print_time)
-		{
-		if (!bio_pair)
-			{
-			fprintf(stderr, "Using BIO pair (-bio_pair)\n");
-			bio_pair = 1;
-			}
-		if (number < 50 && !force)
-			fprintf(stderr, "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
 		}
 
 /*	if (cipher == NULL) cipher=getenv("SSL_CIPHER"); */
@@ -410,21 +326,34 @@ bad:
 #ifndef NO_DH
 	if (!no_dhe)
 		{
-		if (dhe1024dsa)
+# ifndef NO_DSA
+		if (dhe1024) 
 			{
-			/* use SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
+			DSA *dsa;
+			unsigned char seed[20];
+			
+			if (verbose)
+				{
+				BIO_printf(bio_err, "Creating 1024 bit DHE parameters\n");
+				BIO_flush(bio_err);
+				}
+			
+			memcpy(seed, "Random String no. 12", 20);
+			dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, dsa_cb, bio_err);
+			dh = DSA_dup_DH(dsa);	
+			DSA_free(dsa);
+			/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
 			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
-			dh=get_dh1024dsa();
+			
+			if (verbose)
+				fprintf(stdout, " done\n");
 			}
-		else if (dhe1024)
-			dh=get_dh1024();
 		else
+# endif
 			dh=get_dh512();
 		SSL_CTX_set_tmp_dh(s_ctx,dh);
 		DH_free(dh);
 		}
-#else
-	(void)no_dhe;
 #endif
 
 #ifndef NO_RSA
@@ -435,8 +364,8 @@ bad:
 		{
 		ERR_print_errors(bio_err);
 		}
-	else if (!SSL_CTX_use_PrivateKey_file(s_ctx,
-		(server_key?server_key:server_cert), SSL_FILETYPE_PEM))
+	else if (!SSL_CTX_use_PrivateKey_file(s_ctx,server_cert,
+		SSL_FILETYPE_PEM))
 		{
 		ERR_print_errors(bio_err);
 		goto end;
@@ -446,8 +375,7 @@ bad:
 		{
 		SSL_CTX_use_certificate_file(c_ctx,client_cert,
 			SSL_FILETYPE_PEM);
-		SSL_CTX_use_PrivateKey_file(c_ctx,
-			(client_key?client_key:client_cert),
+		SSL_CTX_use_PrivateKey_file(c_ctx,client_cert,
 			SSL_FILETYPE_PEM);
 		}
 
@@ -487,38 +415,21 @@ bad:
 		{
 		if (!reuse) SSL_set_session(c_ssl,NULL);
 		if (bio_pair)
-			ret=doit_biopair(s_ssl,c_ssl,bytes,&s_time,&c_time);
+			ret=doit_biopair(s_ssl,c_ssl,bytes);
 		else
 			ret=doit(s_ssl,c_ssl,bytes);
 		}
 
 	if (!verbose)
 		{
-		print_details(c_ssl, "");
+		ciph=SSL_get_current_cipher(c_ssl);
+		BIO_printf(bio_stdout,"Protocol %s, cipher %s, %s\n",
+			SSL_get_version(c_ssl),
+			SSL_CIPHER_get_version(ciph),
+			SSL_CIPHER_get_name(ciph));
 		}
 	if ((number > 1) || (bytes > 1L))
 		BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n",number,bytes);
-	if (print_time)
-		{
-#ifdef CLOCKS_PER_SEC
-		/* "To determine the time in seconds, the value returned
-		 * by the clock function should be divided by the value
-		 * of the macro CLOCKS_PER_SEC."
-		 *                                       -- ISO/IEC 9899 */
-		BIO_printf(bio_stdout, "Approximate total server time: %6.2f s\n"
-			"Approximate total client time: %6.2f s\n",
-			(double)s_time/CLOCKS_PER_SEC,
-			(double)c_time/CLOCKS_PER_SEC);
-#else
-		/* "`CLOCKS_PER_SEC' undeclared (first use this function)"
-		 *                            -- cc on NeXTstep/OpenStep */
-		BIO_printf(bio_stdout,
-			"Approximate total server time: %6.2f units\n"
-			"Approximate total client time: %6.2f units\n",
-			(double)s_time,
-			(double)c_time);
-#endif
-		}
 
 	SSL_free(s_ssl);
 	SSL_free(c_ssl);
@@ -529,9 +440,6 @@ end:
 
 	if (bio_stdout != NULL) BIO_free(bio_stdout);
 
-#ifndef NO_RSA
-	free_tmp_rsa();
-#endif
 	ERR_free_strings();
 	ERR_remove_state(0);
 	EVP_cleanup();
@@ -540,12 +448,12 @@ end:
 	EXIT(ret);
 	}
 
-int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
-	clock_t *s_time, clock_t *c_time)
+int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 	{
 	long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
 	BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
 	BIO *server = NULL, *server_io = NULL, *client = NULL, *client_io = NULL;
+	SSL_CIPHER *ciph;
 	int ret = 1;
 	
 	size_t bufsiz = 256; /* small buffer for testing */
@@ -618,7 +526,6 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 		
 			MS_STATIC char cbuf[1024*8];
 			int i, r;
-			clock_t c_clock = clock();
 
 			if (debug)
 				if (SSL_in_init(c_ssl))
@@ -685,16 +592,6 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 					cr_num -= r;
 					}
 				}
-
-			/* c_time and s_time increments will typically be very small
-			 * (depending on machine speed and clock tick intervals),
-			 * but sampling over a large number of connections should
-			 * result in fairly accurate figures.  We cannot guarantee
-			 * a lot, however -- if each connection lasts for exactly
-			 * one clock tick, it will be counted only for the client
-			 * or only for the server or even not at all.
-			 */
-			*c_time += (clock() - c_clock);
 			}
 
 			{
@@ -702,7 +599,6 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 		
 			MS_STATIC char sbuf[1024*8];
 			int i, r;
-			clock_t s_clock = clock();
 
 			if (debug)
 				if (SSL_in_init(s_ssl))
@@ -766,8 +662,6 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 					sr_num -= r;
 					}
 				}
-
-			*s_time += (clock() - s_clock);
 			}
 			
 			{
@@ -893,9 +787,13 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 		}
 	while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
+	ciph = SSL_get_current_cipher(c_ssl);
 	if (verbose)
-		print_details(c_ssl, "DONE via BIO pair: ");
-end:
+		fprintf(stdout,"DONE via BIO pair, protocol %s, cipher %s, %s\n",
+			SSL_get_version(c_ssl),
+			SSL_CIPHER_get_version(ciph),
+			SSL_CIPHER_get_name(ciph));
+ end:
 	ret = 0;
 
  err:
@@ -939,6 +837,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	int done=0;
 	int c_write,s_write;
 	int do_server=0,do_client=0;
+	SSL_CIPHER *ciph;
 
 	c_to_s=BIO_new(BIO_s_mem());
 	s_to_c=BIO_new(BIO_s_mem());
@@ -1188,8 +1087,12 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 		if ((done & S_DONE) && (done & C_DONE)) break;
 		}
 
+	ciph=SSL_get_current_cipher(c_ssl);
 	if (verbose)
-		print_details(c_ssl, "DONE: ");
+		fprintf(stdout,"DONE, protocol %s, cipher %s, %s\n",
+			SSL_get_version(c_ssl),
+			SSL_CIPHER_get_version(ciph),
+			SSL_CIPHER_get_name(ciph));
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be
@@ -1245,11 +1148,37 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	return(ok);
 	}
 
-#ifndef NO_RSA
-static RSA *rsa_tmp=NULL;
+#ifndef NO_DH
+static unsigned char dh512_p[]={
+	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
+	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
+	0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
+	0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
+	0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
+	0x47,0x74,0xE8,0x33,
+	};
+static unsigned char dh512_g[]={
+	0x02,
+	};
 
+static DH *get_dh512(void)
+	{
+	DH *dh=NULL;
+
+	if ((dh=DH_new()) == NULL) return(NULL);
+	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
+	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
+	if ((dh->p == NULL) || (dh->g == NULL))
+		return(NULL);
+	return(dh);
+	}
+#endif
+
+#ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
+	static RSA *rsa_tmp=NULL;
+
 	if (rsa_tmp == NULL)
 		{
 		BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
@@ -1260,111 +1189,25 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 		}
 	return(rsa_tmp);
 	}
-
-static void free_tmp_rsa(void)
-	{
-	if (rsa_tmp != NULL)
-		{
-		RSA_free(rsa_tmp);
-		rsa_tmp = NULL;
-		}
-	}
 #endif
 
-#ifndef NO_DH
-/* These DH parameters have been generated as follows:
- *    $ openssl dhparam -C -noout 512
- *    $ openssl dhparam -C -noout 1024
- *    $ openssl dhparam -C -noout -dsaparam 1024
- * (The third function has been renamed to avoid name conflicts.)
- */
-DH *get_dh512()
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	{
-	static unsigned char dh512_p[]={
-		0xCB,0xC8,0xE1,0x86,0xD0,0x1F,0x94,0x17,0xA6,0x99,0xF0,0xC6,
-		0x1F,0x0D,0xAC,0xB6,0x25,0x3E,0x06,0x39,0xCA,0x72,0x04,0xB0,
-		0x6E,0xDA,0xC0,0x61,0xE6,0x7A,0x77,0x25,0xE8,0x3B,0xB9,0x5F,
-		0x9A,0xB6,0xB5,0xFE,0x99,0x0B,0xA1,0x93,0x4E,0x35,0x33,0xB8,
-		0xE1,0xF1,0x13,0x4F,0x59,0x1A,0xD2,0x57,0xC0,0x26,0x21,0x33,
-		0x02,0xC5,0xAE,0x23,
-		};
-	static unsigned char dh512_g[]={
-		0x02,
-		};
-	DH *dh;
+	char c='*';
+	static int ok=0,num=0;
 
-	if ((dh=DH_new()) == NULL) return(NULL);
-	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
-	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
-	if ((dh->p == NULL) || (dh->g == NULL))
-		{ DH_free(dh); return(NULL); }
-	return(dh);
-	}
+	if (p == 0) { c='.'; num++; };
+	if (p == 1) c='+';
+	if (p == 2) { c='*'; ok++; }
+	if (p == 3) c='\n';
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
 
-DH *get_dh1024()
-	{
-	static unsigned char dh1024_p[]={
-		0xF8,0x81,0x89,0x7D,0x14,0x24,0xC5,0xD1,0xE6,0xF7,0xBF,0x3A,
-		0xE4,0x90,0xF4,0xFC,0x73,0xFB,0x34,0xB5,0xFA,0x4C,0x56,0xA2,
-		0xEA,0xA7,0xE9,0xC0,0xC0,0xCE,0x89,0xE1,0xFA,0x63,0x3F,0xB0,
-		0x6B,0x32,0x66,0xF1,0xD1,0x7B,0xB0,0x00,0x8F,0xCA,0x87,0xC2,
-		0xAE,0x98,0x89,0x26,0x17,0xC2,0x05,0xD2,0xEC,0x08,0xD0,0x8C,
-		0xFF,0x17,0x52,0x8C,0xC5,0x07,0x93,0x03,0xB1,0xF6,0x2F,0xB8,
-		0x1C,0x52,0x47,0x27,0x1B,0xDB,0xD1,0x8D,0x9D,0x69,0x1D,0x52,
-		0x4B,0x32,0x81,0xAA,0x7F,0x00,0xC8,0xDC,0xE6,0xD9,0xCC,0xC1,
-		0x11,0x2D,0x37,0x34,0x6C,0xEA,0x02,0x97,0x4B,0x0E,0xBB,0xB1,
-		0x71,0x33,0x09,0x15,0xFD,0xDD,0x23,0x87,0x07,0x5E,0x89,0xAB,
-		0x6B,0x7C,0x5F,0xEC,0xA6,0x24,0xDC,0x53,
-		};
-	static unsigned char dh1024_g[]={
-		0x02,
-		};
-	DH *dh;
-
-	if ((dh=DH_new()) == NULL) return(NULL);
-	dh->p=BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
-	dh->g=BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
-	if ((dh->p == NULL) || (dh->g == NULL))
-		{ DH_free(dh); return(NULL); }
-	return(dh);
-	}
-
-DH *get_dh1024dsa()
-	{
-	static unsigned char dh1024_p[]={
-		0xC8,0x00,0xF7,0x08,0x07,0x89,0x4D,0x90,0x53,0xF3,0xD5,0x00,
-		0x21,0x1B,0xF7,0x31,0xA6,0xA2,0xDA,0x23,0x9A,0xC7,0x87,0x19,
-		0x3B,0x47,0xB6,0x8C,0x04,0x6F,0xFF,0xC6,0x9B,0xB8,0x65,0xD2,
-		0xC2,0x5F,0x31,0x83,0x4A,0xA7,0x5F,0x2F,0x88,0x38,0xB6,0x55,
-		0xCF,0xD9,0x87,0x6D,0x6F,0x9F,0xDA,0xAC,0xA6,0x48,0xAF,0xFC,
-		0x33,0x84,0x37,0x5B,0x82,0x4A,0x31,0x5D,0xE7,0xBD,0x52,0x97,
-		0xA1,0x77,0xBF,0x10,0x9E,0x37,0xEA,0x64,0xFA,0xCA,0x28,0x8D,
-		0x9D,0x3B,0xD2,0x6E,0x09,0x5C,0x68,0xC7,0x45,0x90,0xFD,0xBB,
-		0x70,0xC9,0x3A,0xBB,0xDF,0xD4,0x21,0x0F,0xC4,0x6A,0x3C,0xF6,
-		0x61,0xCF,0x3F,0xD6,0x13,0xF1,0x5F,0xBC,0xCF,0xBC,0x26,0x9E,
-		0xBC,0x0B,0xBD,0xAB,0x5D,0xC9,0x54,0x39,
-		};
-	static unsigned char dh1024_g[]={
-		0x3B,0x40,0x86,0xE7,0xF3,0x6C,0xDE,0x67,0x1C,0xCC,0x80,0x05,
-		0x5A,0xDF,0xFE,0xBD,0x20,0x27,0x74,0x6C,0x24,0xC9,0x03,0xF3,
-		0xE1,0x8D,0xC3,0x7D,0x98,0x27,0x40,0x08,0xB8,0x8C,0x6A,0xE9,
-		0xBB,0x1A,0x3A,0xD6,0x86,0x83,0x5E,0x72,0x41,0xCE,0x85,0x3C,
-		0xD2,0xB3,0xFC,0x13,0xCE,0x37,0x81,0x9E,0x4C,0x1C,0x7B,0x65,
-		0xD3,0xE6,0xA6,0x00,0xF5,0x5A,0x95,0x43,0x5E,0x81,0xCF,0x60,
-		0xA2,0x23,0xFC,0x36,0xA7,0x5D,0x7A,0x4C,0x06,0x91,0x6E,0xF6,
-		0x57,0xEE,0x36,0xCB,0x06,0xEA,0xF5,0x3D,0x95,0x49,0xCB,0xA7,
-		0xDD,0x81,0xDF,0x80,0x09,0x4A,0x97,0x4D,0xA8,0x22,0x72,0xA1,
-		0x7F,0xC4,0x70,0x56,0x70,0xE8,0x20,0x10,0x18,0x8F,0x2E,0x60,
-		0x07,0xE7,0x68,0x1A,0x82,0x5D,0x32,0xA2,
-		};
-	DH *dh;
-
-	if ((dh=DH_new()) == NULL) return(NULL);
-	dh->p=BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
-	dh->g=BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
-	if ((dh->p == NULL) || (dh->g == NULL))
-		{ DH_free(dh); return(NULL); }
-	dh->length = 160;
-	return(dh);
+	if (!ok && (p == 0) && (num > 1))
+		{
+		BIO_printf((BIO *)arg,"error in dsatest\n");
+		exit(1);
+		}
 	}
 #endif

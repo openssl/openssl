@@ -52,7 +52,7 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/cx86-elf.o: asm/cx86unix.cpp
-	$(CPP) -DELF -x c asm/cx86unix.cpp | as -o asm/cx86-elf.o
+	$(CPP) -DELF asm/cx86unix.cpp | as -o asm/cx86-elf.o
 
 # solaris
 asm/cx86-sol.o: asm/cx86unix.cpp
@@ -68,7 +68,7 @@ asm/cx86-out.o: asm/cx86unix.cpp
 asm/cx86bsdi.o: asm/cx86unix.cpp
 	$(CPP) -DBSDI asm/cx86unix.cpp | sed 's/ :/:/' | as -o asm/cx86bsdi.o
 
-asm/cx86unix.cpp: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+asm/cx86unix.cpp: asm/cast-586.pl
 	(cd asm; $(PERL) cast-586.pl cpp $(PROCESSOR) >cx86unix.cpp)
 
 files:

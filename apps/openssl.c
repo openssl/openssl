@@ -56,10 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef DEBUG
+#undef DEBUG
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#define OPENSSL_C /* tells apps.h to use complete apps_startup() */
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
@@ -68,10 +71,17 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
+#define OPENSSL_C /* tells apps.h to use complete apps_startup() */
 #include "apps.h"
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
+
+/*
+#ifdef WINDOWS
+#include "bss_file.c"
+#endif
+*/
 
 static unsigned long MS_CALLBACK hash(FUNCTION *a);
 static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
@@ -79,6 +89,15 @@ static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 LHASH *config=NULL;
 char *default_config_file=NULL;
+
+#ifdef DEBUG
+static void sig_stop(int i)
+	{
+	char *a=NULL;
+
+	*a='\0';
+	}
+#endif
 
 /* Make sure there is only one when MONOLITH is defined */
 #ifdef MONOLITH
@@ -100,6 +119,15 @@ int main(int Argc, char *Argv[])
  
 	arg.data=NULL;
 	arg.count=0;
+
+#if defined(DEBUG) && !defined(WINDOWS) && !defined(MSDOS)
+#ifdef SIGBUS
+	signal(SIGBUS,sig_stop);
+#endif
+#ifdef SIGSEGV
+	signal(SIGSEGV,sig_stop);
+#endif
+#endif
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
@@ -206,7 +234,13 @@ end:
 
 	EVP_cleanup();
 	ERR_free_strings();
-	
+
+#ifdef LEVITTE_DEBUG
+	CRYPTO_push_info("Just to make sure I get a memory leak I can see :-)");
+	(void)Malloc(1024);
+	CRYPTO_pop_info();
+#endif
+
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)
 		{
@@ -232,18 +266,6 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	if (fp != NULL)
 		{
 		ret=fp->func(argc,argv);
-		}
-	else if ((strncmp(argv[0],"no-",3)) == 0)
-		{
-		BIO *bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
-		f.name=argv[0]+3;
-		ret = (lh_retrieve(prog,&f) != NULL);
-		if (!ret)
-			BIO_printf(bio_stdout, "%s\n", argv[0]);
-		else
-			BIO_printf(bio_stdout, "%s\n", argv[0]+3);
-		BIO_free(bio_stdout);
-		goto end;
 		}
 	else if ((strcmp(argv[0],"quit") == 0) ||
 		(strcmp(argv[0],"q") == 0) ||

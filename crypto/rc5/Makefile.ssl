@@ -49,7 +49,7 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/r586-elf.o: asm/r586unix.cpp
-	$(CPP) -DELF -x c asm/r586unix.cpp | as -o asm/r586-elf.o
+	$(CPP) -DELF asm/r586unix.cpp | as -o asm/r586-elf.o
 
 # solaris
 asm/r586-sol.o: asm/r586unix.cpp
@@ -65,7 +65,7 @@ asm/r586-out.o: asm/r586unix.cpp
 asm/r586bsdi.o: asm/r586unix.cpp
 	$(CPP) -DBSDI asm/r586unix.cpp | sed 's/ :/:/' | as -o asm/r586bsdi.o
 
-asm/r586unix.cpp: asm/rc5-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+asm/r586unix.cpp:
 	(cd asm; $(PERL) rc5-586.pl cpp >r586unix.cpp)
 
 files:

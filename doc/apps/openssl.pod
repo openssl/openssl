@@ -12,10 +12,6 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> ]
-
-B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
-
 =head1 DESCRIPTION
 
 OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL
@@ -38,22 +34,6 @@ It can be used for
 The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
-
-The pseudo-commands B<list-standard-commands>, B<list-message-digest-commands>,
-and B<list-cipher-commands> output a list (one entry per line) of the names
-of all standard commands, message digest commands, or cipher commands,
-respectively, that are available in the present B<openssl> utility.
-
-The pseudo-command B<no->I<XXX> tests whether a command of the
-specified name is available.  If no command named I<XXX> exists, it
-returns 0 (success) and prints B<no->I<XXX>; otherwise it returns 1
-and prints I<XXX>.  In both cases, the output goes to B<stdout> and
-nothing is printed to B<stderr>.  Additional command line arguments
-are always ignored.  Since for each cipher there is a command of the
-same name, this provides an easy way for shell scripts to test for the
-availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
-not able to detect pseudo-commands such as B<quit>,
-B<list->I<...>B<-commands>, or B<no->I<XXX> itself.)
 
 =head2 STANDARD COMMANDS
 
@@ -122,10 +102,6 @@ Generation of hashed passwords.
 =item L<B<pkcs7>|pkcs7(1)>
 
 PKCS#7 Data Management.
-
-=item L<B<rand>|rand(1)>
-
-Generate pseudo-random bytes.
 
 =item L<B<req>|req(1)>
 
@@ -309,17 +285,14 @@ L<enc(1)|enc(1)>, L<gendsa(1)|gendsa(1)>,
 L<genrsa(1)|genrsa(1)>, L<nseq(1)|nseq(1)>, L<openssl(1)|openssl(1)>,
 L<passwd(1)|passwd(1)>,
 L<pkcs12(1)|pkcs12(1)>, L<pkcs7(1)|pkcs7(1)>, L<pkcs8(1)|pkcs8(1)>,
-L<rand(1)|rand(1)>, L<req(1)|req(1)>, L<rsa(1)|rsa(1)>, L<s_client(1)|s_client(1)>,
+L<req(1)|req(1)>, L<rsa(1)|rsa(1)>, L<s_client(1)|s_client(1)>,
 L<s_server(1)|s_server(1)>, L<smime(1)|smime(1)>, L<spkac(1)|spkac(1)>,
 L<verify(1)|verify(1)>, L<version(1)|version(1)>, L<x509(1)|x509(1)>,
 L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)> 
 
 =head1 HISTORY
 
-The openssl(1) document appeared in OpenSSL 0.9.2.
-The B<list->I<XXX>B<-commands> pseudo-commands were added in OpenSSL 0.9.3;
-the B<no->I<XXX> pseudo-commands were added in OpenSSL 0.9.5a.
-For notes on the availability of other commands, see their individual
-manual pages.
+The openssl(1) document appeared in OpenSSL 0.9.2
 
 =cut
+

@@ -59,6 +59,10 @@
 #ifndef HEADER_CRYPTO_H
 #define HEADER_CRYPTO_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 #ifndef NO_FP_API
@@ -77,10 +81,6 @@
 #include "vms_idhacks.h"
 #endif
 
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used
@@ -121,8 +121,7 @@ extern "C" {
 #define	CRYPTO_LOCK_RSA_BLINDING	23
 #define	CRYPTO_LOCK_DH			24
 #define	CRYPTO_LOCK_MALLOC2		25
-#define	CRYPTO_LOCK_DSO			26
-#define	CRYPTO_NUM_LOCKS		27
+#define	CRYPTO_NUM_LOCKS		26
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -303,18 +302,10 @@ int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void (*f)(void *));
 int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
-int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
-				   void (*r)(void *,void *,int,const char *,int,int),
-				   void (*f)(void *,int),
-				   void (*so)(long),
-				   long (*go)(void));
+int CRYPTO_set_mem_debug_functions(void (*m)(),void (*r)(),void (*f)(),void (*so)(),long (*go)());
 void CRYPTO_get_mem_functions(void *(**m)(size_t),void *(**r)(void *, size_t), void (**f)(void *));
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
-void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
-				    void (**r)(void *,void *,int,const char *,int,int),
-				    void (**f)(void *,int),
-				    void (**so)(long),
-				    long (**go)(void));
+void CRYPTO_get_mem_debug_functions(void (**m)(),void (**r)(),void (**f)(),void (**so)(),long (**go)());
 
 void *CRYPTO_malloc_locked(int num, const char *file, int line);
 void CRYPTO_free_locked(void *);
@@ -357,7 +348,7 @@ void CRYPTO_mem_leaks_fp(FILE *);
 #endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
 /* unsigned long order, char *file, int line, int num_bytes, char *addr */
-void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *));
+void CRYPTO_mem_leaks_cb(void (*cb)());
 
 void ERR_load_CRYPTO_strings(void);
 

@@ -4,17 +4,6 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
-$	set noon
-$	define/user sys$output nla0:
-$	mcr 'exe_dir'openssl no-rsa
-$	save_severity=$SEVERITY
-$	set on
-$	if save_severity
-$	then
-$	    write sys$output "skipping RSA conversion test"
-$	    exit
-$	endif
-$
 $	cmd := mcr 'exe_dir'openssl rsa
 $
 $	t := testrsa.pem

@@ -1,5 +1,4 @@
 /* NOCW */
-/* used by apps/speed.c */
 DSA *get_dsa512(void );
 DSA *get_dsa1024(void );
 DSA *get_dsa2048(void );
@@ -147,5 +146,3 @@ DSA *get_dsa2048()
 	return(dsa);
 	}
 
-static const char rnd_seed[] = "string to make the random number generator think it has entropy";
-static int rnd_fake = 0;

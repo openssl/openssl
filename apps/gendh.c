@@ -1,5 +1,4 @@
 /* apps/gendh.c */
-/* obsoleted by dhparam.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +127,7 @@ bad:
 		BIO_printf(bio_err," -2    use 2 as the generator value\n");
 	/*	BIO_printf(bio_err," -3    use 3 as the generator value\n"); */
 		BIO_printf(bio_err," -5    use 5 as the generator value\n");
-		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err," -rand file:file:...\n");
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
 		goto end;
@@ -160,7 +159,7 @@ bad:
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
 
-	BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
+	BIO_printf(bio_err,"Generating DH parameters, %d bit long strong prime, generator of %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");
 	dh=DH_generate_parameters(num,g,dh_cb,bio_err);
 		

@@ -607,7 +607,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (buflen == 0)
 				{
 				/*
-				 * We hit something we cannot deal with,
+				 * We hit something, we cannot deal with,
 				 * it is no command or separator nor
 				 * alphanumeric, so we call this an error.
 				 */
@@ -620,7 +620,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 
 			if (rule == CIPHER_SPECIAL)
 				{
-				found = 0; /* unused -- avoid compiler warning */
 				break;	/* special treatment */
 				}
 
@@ -634,12 +633,12 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 				multi=0;
 
 			/*
-			 * Now search for the cipher alias in the ca_list. Be careful
+			 * Now search for the name in the ca_list. Be careful
 			 * with the strncmp, because the "buflen" limitation
 			 * will make the rule "ADH:SOME" and the cipher
 			 * "ADH-MY-CIPHER" look like a match for buflen=3.
-			 * So additionally check whether the cipher name found
-			 * has the correct length. We can save a strlen() call:
+			 * So additionally check, whether the cipher name found
+			 * has the correct length. We can save a strlen() call,
 			 * just checking for the '\0' at the right place is
 			 * sufficient, we have to strncmp() anyway.
 			 */
@@ -666,42 +665,42 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (!multi) break;
 			}
 
-		/*
-		 * Ok, we have the rule, now apply it
-		 */
-		if (rule == CIPHER_SPECIAL)
-			{	/* special command */
-			ok = 0;
-			if ((buflen == 8) &&
-				!strncmp(buf, "STRENGTH", 8))
-				ok = ssl_cipher_strength_sort(list,
-					head_p, tail_p);
-			else
-				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
-					SSL_R_INVALID_COMMAND);
-			if (ok == 0)
-				retval = 0;
 			/*
-			 * We do not support any "multi" options
-			 * together with "@", so throw away the
-			 * rest of the command, if any left, until
-			 * end or ':' is found.
+			 * Ok, we have the rule, now apply it
 			 */
-			while ((*l != '\0') && ITEM_SEP(*l))
-				l++;
-			}
-		else if (found)
-			{
-			ssl_cipher_apply_rule(algorithms, mask,
-				algo_strength, mask_strength, rule, -1,
-				list, head_p, tail_p);
-			}
-		else
-			{
-			while ((*l != '\0') && ITEM_SEP(*l))
-				l++;
-			}
-		if (*l == '\0') break; /* done */
+			if (rule == CIPHER_SPECIAL)
+				{	/* special command */
+				ok = 0;
+				if ((buflen == 8) &&
+					!strncmp(buf, "STRENGTH", 8))
+					ok = ssl_cipher_strength_sort(list,
+							head_p, tail_p);
+				else
+					SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
+						SSL_R_INVALID_COMMAND);
+				if (ok == 0)
+					retval = 0;
+				/*
+				 * We do not support any "multi" options
+				 * together with "@", so throw away the
+				 * rest of the command, if any left, until
+				 * end or ':' is found.
+				 */
+				while ((*l != '\0') && ITEM_SEP(*l))
+					l++;
+				}
+			else if (found)
+				{
+				ssl_cipher_apply_rule(algorithms, mask,
+					algo_strength, mask_strength, rule, -1,
+					list, head_p, tail_p);
+				}
+			else
+				{
+				while ((*l != '\0') && ITEM_SEP(*l))
+					l++;
+				}
+			if (*l == '\0') break; /* done */
 		}
 
 	return(retval);
@@ -975,14 +974,13 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 
 	if (buf == NULL)
 		{
-		len=128;
-		buf=Malloc(len);
+		buf=Malloc(128);
 		if (buf == NULL) return("Malloc Error");
 		}
 	else if (len < 128)
 		return("Buffer too small");
 
-	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp);
+	sprintf(buf,format,cipher->name,ver,kx,au,enc,mac,exp);
 	return(buf);
 	}
 

@@ -81,9 +81,8 @@ int i2d_PKCS12_SAFEBAG(PKCS12_SAFEBAG *a, unsigned char **pp)
 		break;
 
 		case NID_safeContentsBag:
-			M_ASN1_I2D_len_EXP_SEQUENCE_opt_type
-			  (PKCS12_SAFEBAG, a->value.safes, i2d_PKCS12_SAFEBAG,
-			   0, V_ASN1_SEQUENCE, v);
+			M_ASN1_I2D_len_EXP_SEQUENCE_opt (a->value.safes,
+				 i2d_PKCS12_SAFEBAG, 0, V_ASN1_SEQUENCE, v);
 		break;
 
 		case NID_certBag:
@@ -118,9 +117,8 @@ int i2d_PKCS12_SAFEBAG(PKCS12_SAFEBAG *a, unsigned char **pp)
 		break;
 
 		case NID_safeContentsBag:
-			M_ASN1_I2D_put_EXP_SEQUENCE_opt_type
-			  (PKCS12_SAFEBAG, a->value.safes, i2d_PKCS12_SAFEBAG,
-			   0, V_ASN1_SEQUENCE, v);
+			M_ASN1_I2D_put_EXP_SEQUENCE_opt (a->value.safes,
+				 i2d_PKCS12_SAFEBAG, 0, V_ASN1_SEQUENCE, v);
 		break;
 
 		case NID_certBag:
@@ -177,10 +175,9 @@ PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp,
 		break;
 
 		case NID_safeContentsBag:
-			M_ASN1_D2I_get_EXP_set_opt_type
-			  (PKCS12_SAFEBAG, ret->value.safes,
-			   d2i_PKCS12_SAFEBAG, PKCS12_SAFEBAG_free, 0,
-			   V_ASN1_SEQUENCE);
+			M_ASN1_D2I_get_EXP_set_opt(ret->value.safes,
+				d2i_PKCS12_SAFEBAG, PKCS12_SAFEBAG_free,
+							 0, V_ASN1_SEQUENCE);
 		break;
 
 		case NID_certBag:
@@ -228,7 +225,3 @@ void PKCS12_SAFEBAG_free (PKCS12_SAFEBAG *a)
 	sk_X509_ATTRIBUTE_pop_free (a->attrib, X509_ATTRIBUTE_free);
 	Free (a);
 }
-
-IMPLEMENT_STACK_OF(PKCS12_SAFEBAG)
-IMPLEMENT_ASN1_SET_OF(PKCS12_SAFEBAG)
-IMPLEMENT_PKCS12_STACK_OF(PKCS12_SAFEBAG)

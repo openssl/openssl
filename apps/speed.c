@@ -1030,11 +1030,6 @@ int MAIN(int argc, char **argv)
 
 	RAND_pseudo_bytes(buf,20);
 #ifndef NO_DSA
-	if (RAND_status() != 1)
-		{
-		RAND_seed(rnd_seed, sizeof rnd_seed);
-		rnd_fake = 1;
-		}
 	for (j=0; j<DSA_NUM; j++)
 		{
 		unsigned int kk;
@@ -1094,7 +1089,6 @@ int MAIN(int argc, char **argv)
 				dsa_doit[j]=0;
 			}
 		}
-	if (rnd_fake) RAND_cleanup();
 #endif
 
 	fprintf(stdout,"%s\n",SSLeay_version(SSLEAY_VERSION));

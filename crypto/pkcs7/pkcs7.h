@@ -59,15 +59,15 @@
 #ifndef HEADER_PKCS7_H
 #define HEADER_PKCS7_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
 #ifdef VMS
 #include <openssl/vms_idhacks.h>
-#endif
-
-#ifdef  __cplusplus
-extern "C" {
 #endif
 
 #ifdef WIN32
@@ -212,10 +212,6 @@ typedef struct pkcs7_st
 		PKCS7_ENCRYPT *encrypted;
 		} d;
 	} PKCS7;
-
-DECLARE_STACK_OF(PKCS7)
-DECLARE_ASN1_SET_OF(PKCS7)
-DECLARE_PKCS12_STACK_OF(PKCS7)
 
 #define PKCS7_OP_SET_DETACHED_SIGNATURE	1
 #define PKCS7_OP_GET_DETACHED_SIGNATURE	2
@@ -406,10 +402,9 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 								int flags);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
 
-int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
-			      STACK_OF(X509_ALGOR) *cap);
-STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
-int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg);
+int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK *cap);
+STACK *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
+int PKCS7_simple_smimecap(STACK *sk, int nid, int arg);
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);

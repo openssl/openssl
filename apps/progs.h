@@ -33,7 +33,6 @@ extern int pkcs12_main(int argc,char *argv[]);
 extern int pkcs8_main(int argc,char *argv[]);
 extern int spkac_main(int argc,char *argv[]);
 extern int smime_main(int argc,char *argv[]);
-extern int rand_main(int argc,char *argv[]);
 
 #define FUNC_TYPE_GENERAL	1
 #define FUNC_TYPE_MD		2
@@ -104,7 +103,6 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"pkcs8",pkcs8_main},
 	{FUNC_TYPE_GENERAL,"spkac",spkac_main},
 	{FUNC_TYPE_GENERAL,"smime",smime_main},
-	{FUNC_TYPE_GENERAL,"rand",rand_main},
 	{FUNC_TYPE_MD,"md2",dgst_main},
 	{FUNC_TYPE_MD,"md5",dgst_main},
 	{FUNC_TYPE_MD,"sha",dgst_main},

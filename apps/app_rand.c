@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-1999 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -109,9 +109,7 @@
  *
  */
 
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 
@@ -164,7 +162,7 @@ long app_RAND_load_files(char *name)
 	char *p,*n;
 	int last;
 	long tot=0;
-	int egd;
+    int egd;
 	
 	for (;;)
 		{
@@ -176,9 +174,9 @@ long app_RAND_load_files(char *name)
 		name=p+1;
 		if (*n == '\0') break;
 
-		egd=RAND_egd(n);
+        egd=RAND_egd(n);
 		if (egd > 0) tot+=egd;
-		tot+=RAND_load_file(n,-1);
+		tot+=RAND_load_file(n,1024L*1024L);
 		if (last) break;
 		}
 	if (tot > 512)

@@ -89,8 +89,7 @@ err_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
 err_all.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 err_all.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-err_all.o: ../../include/openssl/dsa.h ../../include/openssl/dso.h
-err_all.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+err_all.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 err_all.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 err_all.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
 err_all.o: ../../include/openssl/md2.h ../../include/openssl/md5.h

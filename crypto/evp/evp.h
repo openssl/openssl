@@ -59,12 +59,8 @@
 #ifndef HEADER_ENVELOPE_H
 #define HEADER_ENVELOPE_H
 
-#ifdef OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-#else
-# define OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-# undef OPENSSL_ALGORITHM_DEFINES
+#ifdef	__cplusplus
+extern "C" {
 #endif
 
 #ifndef NO_MD2
@@ -151,10 +147,6 @@
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do
  * arbitrary encryption.... */
@@ -176,7 +168,7 @@ typedef struct evp_pkey_st
 #endif
 		} pkey;
 	int save_parameters;
-	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+	STACK /*X509_ATTRIBUTE*/ *attributes; /* [ 0 ] */
 	} EVP_PKEY;
 
 #define EVP_PKEY_MO_SIGN	0x0001

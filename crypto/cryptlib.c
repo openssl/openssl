@@ -94,8 +94,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"RSA_blinding",
 	"dh",
 	"debug_malloc2",
-	"dso",
-#if CRYPTO_NUM_LOCKS != 27
+#if CRYPTO_NUM_LOCKS != 26
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

@@ -4,7 +4,7 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
-$	digest="-md5"
+$	digest="-mdc2"
 $	reqcmd := mcr 'exe_dir'openssl req
 $	x509cmd := mcr 'exe_dir'openssl x509 'digest'
 $	verifycmd := mcr 'exe_dir'openssl verify
@@ -23,20 +23,7 @@ $	Ucert="""certU.ss"""
 $
 $	write sys$output ""
 $	write sys$output "make a certificate request using 'req'"
-$
-$	set noon
-$	define/user sys$output nla0:
-$	mcr 'exe_dir'openssl no-rsa
-$	save_severity=$SEVERITY
-$	set on
-$	if save_severity
-$	then
-$	    req_new="-newkey dsa:[-.apps]dsa512.pem"
-$	else
-$	    req_new="-new"
-$	endif
-$
-$	'reqcmd' -config 'CAconf' -out 'CAreq' -keyout 'CAkey' 'req_new' ! -out err.ss
+$	'reqcmd' -config 'CAconf' -out 'CAreq' -keyout 'CAkey' -new ! -out err.ss
 $	if $severity .ne. 1
 $	then
 $		write sys$output "error using 'req' to generate a certificate request"
@@ -86,7 +73,7 @@ $
 $	write sys$output ""
 $	write sys$output "make another certificate request using 'req'"
 $	define /user sys$output err.ss
-$	'reqcmd' -config 'Uconf' -out 'Ureq' -keyout 'Ukey' 'req_new'
+$	'reqcmd' -config 'Uconf' -out 'Ureq' -keyout 'Ukey' -new
 $	if $severity .ne. 1
 $	then
 $		write sys$output "error using 'req' to generate a certificate request"

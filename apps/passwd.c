@@ -63,7 +63,6 @@ int MAIN(int argc, char **argv)
 	int in_stdin = 0;
 	char *salt = NULL, *passwd = NULL, **passwds = NULL;
 	char *salt_malloc = NULL, *passwd_malloc = NULL;
-	size_t passwd_malloc_size = 0;
 	int pw_source_defined = 0;
 	BIO *in = NULL, *out = NULL;
 	int i, badopt, opt_done;
@@ -197,10 +196,7 @@ int MAIN(int argc, char **argv)
 	if (passwds == NULL)
 		{
 		/* no passwords on the command line */
-
-		passwd_malloc_size = pw_maxlen + 2;
-		/* longer than necessary so that we can warn about truncation */
-		passwd = passwd_malloc = Malloc(passwd_malloc_size);
+		passwd = passwd_malloc = Malloc(pw_maxlen + 1);
 		if (passwd_malloc == NULL)
 			goto err;
 		}
@@ -212,7 +208,7 @@ int MAIN(int argc, char **argv)
 		
 		passwds = passwds_static;
 		if (in == NULL)
-			if (EVP_read_pw_string(passwd_malloc, passwd_malloc_size, "Password: ", 0) != 0)
+			if (EVP_read_pw_string(passwd_malloc, pw_maxlen + 1, "Password: ", 0) != 0)
 				goto err;
 		passwds[0] = passwd_malloc;
 		}

@@ -1,0 +1,84 @@
+Modes of DES
+Quite a bit of the following information has been taken from
+	AS 2805.5.2
+	Australian Standard
+	Electronic funds transfer - Requirements for interfaces,
+	Part 5.2: Modes of operation for an n-bit block cipher algorithm
+	Appendix A
+
+There are several different modes in which DES can be used, they are
+as follows.
+
+Electronic Codebook Mode (ECB) (des_ecb_encrypt())
+- 64 bits are enciphered at a time.
+- The order of the blocks can be rearranged without detection.
+- The same plaintext block always produces the same ciphertext block
+  (for the same key) making it vulnerable to a 'dictionary attack'.
+- An error will only affect one ciphertext block.
+
+Cipher Block Chaining Mode (CBC) (des_cbc_encrypt())
+- a multiple of 64 bits are enciphered at a time.
+- The CBC mode produces the same ciphertext whenever the same
+  plaintext is encrypted using the same key and starting variable.
+- The chaining operation makes the ciphertext blocks dependent on the
+  current and all preceding plaintext blocks and therefore blocks can not
+  be rearranged.
+- The use of different starting variables prevents the same plaintext
+  enciphering to the same ciphertext.
+- An error will affect the current and the following ciphertext blocks.
+
+Cipher Feedback Mode (CFB) (des_cfb_encrypt())
+- a number of bits (j) <= 64 are enciphered at a time.
+- The CFB mode produces the same ciphertext whenever the same
+  plaintext is encrypted using the same key and starting variable.
+- The chaining operation makes the ciphertext variables dependent on the
+  current and all preceding variables and therefore j-bit variables are
+  chained together and con not be rearranged.
+- The use of different starting variables prevents the same plaintext
+  enciphering to the same ciphertext.
+- The strength of the CFB mode depends on the size of k (maximal if
+  j == k).  In my implementation this is always the case.
+- Selection of a small value for j will require more cycles through
+  the encipherment algorithm per unit of plaintext and thus cause
+  greater processing overheads.
+- Only multiples of j bits can be enciphered.
+- An error will affect the current and the following ciphertext variables.
+
+Output Feedback Mode (OFB) (des_ofb_encrypt())
+- a number of bits (j) <= 64 are enciphered at a time.
+- The OFB mode produces the same ciphertext whenever the same
+  plaintext enciphered using the same key and starting variable.  More
+  over, in the OFB mode the same key stream is produced when the same
+  key and start variable are used.  Consequently, for security reasons
+  a specific start variable should be used only once for a given key.
+- The absence of chaining makes the OFB more vulnerable to specific attacks.
+- The use of different start variables values prevents the same
+  plaintext enciphering to the same ciphertext, by producing different
+  key streams.
+- Selection of a small value for j will require more cycles through
+  the encipherment algorithm per unit of plaintext and thus cause
+  greater processing overheads.
+- Only multiples of j bits can be enciphered.
+- OFB mode of operation does not extend ciphertext errors in the
+  resultant plaintext output.  Every bit error in the ciphertext causes
+  only one bit to be in error in the deciphered plaintext.
+- OFB mode is not self-synchronising.  If the two operation of
+  encipherment and decipherment get out of synchronism, the system needs
+  to be re-initialised.
+- Each re-initialisation should use a value of the start variable
+different from the start variable values used before with the same
+key.  The reason for this is that an identical bit stream would be
+produced each time from the same parameters.  This would be
+susceptible to a 'known plaintext' attack.
+
+Triple ECB Mode (des_ecb3_encrypt())
+- Encrypt with key1, decrypt with key2 and encrypt with key1 again.
+- As for ECB encryption but increases the effective key length to 112 bits.
+- If both keys are the same it is equivalent to encrypting once with
+  just one key.
+
+Triple CBC Mode (des_3cbc_encrypt())
+- Encrypt with key1, decrypt with key2 and encrypt with key1 again.
+- As for CBC encryption but increases the effective key length to 112 bits.
+- If both keys are the same it is equivalent to encrypting once with
+  just one key.

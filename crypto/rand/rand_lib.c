@@ -108,10 +108,3 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 		return rand_meth->pseudorand(buf,num);
 	return(-1);
 	}
-
-int RAND_status(void)
-	{
-	if (rand_meth != NULL)
-		return rand_meth->status();
-	return 0;
-	}

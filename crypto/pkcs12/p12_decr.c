@@ -183,5 +183,3 @@ ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
 	Free (in);
 	return oct;
 }
-
-IMPLEMENT_PKCS12_STACK_OF(PKCS7)

@@ -1,11 +1,9 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/04/14 23:35:50 $
+  ______________                           $Date: 2000/02/28 11:59:02 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.6:  Under development...
-    o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
@@ -17,6 +15,7 @@
 
   AVAILABLE PATCHES
 
+    o shared libraries <behnke@trustcenter.de>
     o CA.pl patch (Damien Miller)
 
   IN PROGRESS
@@ -88,6 +87,10 @@
       don't work unless the key length matches the fixed value (some vendors
       use a key length decided by the size of the RSA encrypted key and expect
       RC2 to adapt).
+
+    o ERR_error_string(..., buf) does not know how large buf is,
+      there should be ERR_error_string_n(..., buf, bufsize)
+      or similar.
 
   WISHES
 

@@ -59,6 +59,10 @@
 #ifndef HEADER_DH_H
 #define HEADER_DH_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef NO_DH
 #error DH is disabled.
 #endif
@@ -67,10 +71,6 @@
 #include <openssl/crypto.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef struct dh_st DH;
 

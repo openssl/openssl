@@ -62,18 +62,9 @@
 
 /* Simplified PKCS#12 routines */
 
-static int parse_pk12( PKCS12 *p12, const char *pass, int passlen,
-		EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca);
-
-static int parse_bags( STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-		       int passlen, EVP_PKEY **pkey, X509 **cert,
-		       STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
-		       char *keymatch);
-
-static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-			EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
-			ASN1_OCTET_STRING **keyid, char *keymatch);
-
+static int parse_pk12( PKCS12 *p12, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca);
+static int parse_bags( STACK *bags, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
+static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
 /* Parse and decrypt a PKCS#12 structure returning user key, user cert
  * and other (CA) certs. Note either ca should be NULL, *ca should be NULL,
  * or it should point to a valid STACK structure. pkey and cert can be
@@ -81,82 +72,63 @@ static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen,
  */
 
 int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
-	     STACK_OF(X509) **ca)
+	     STACK **ca)
 {
 
-	/* Check for NULL PKCS12 structure */
+/* Check for NULL PKCS12 structure */
 
-	if(!p12)
-		{
-		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_INVALID_NULL_PKCS12_POINTER);
-		return 0;
-		}
-
-	/* Allocate stack for ca certificates if needed */
-	if ((ca != NULL) && (*ca == NULL))
-		{
-		if (!(*ca = sk_X509_new(NULL)))
-			{
-			PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
-			return 0;
-			}
-		}
-
-	if(pkey) *pkey = NULL;
-	if(cert) *cert = NULL;
-
-	/* Check the mac */
-
-	/* If password is zero length or NULL then try verifying both cases
-	 * to determine which password is correct. The reason for this is that
-	 * under PKCS#12 password based encryption no password and a zero length
-	 * password are two different things...
-	 */
-
-	if(!pass || !*pass) {
-		if(PKCS12_verify_mac(p12, NULL, 0)) pass = NULL;
-		else if(PKCS12_verify_mac(p12, "", 0)) pass = "";
-		else {
-			PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
-			goto err;
-		}
-	} else if (!PKCS12_verify_mac(p12, pass, -1)) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
-		goto err;
-	}
-
-	if (!parse_pk12 (p12, pass, -1, pkey, cert, ca))
-		{
-		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_PARSE_ERROR);
-		goto err;
-		}
-
-	return 1;
-
- err:
-
-	if (pkey && *pkey) EVP_PKEY_free (*pkey);
-	if (cert && *cert) X509_free (*cert);
-	if (ca) sk_X509_pop_free (*ca, X509_free);
+if(!p12) {
+	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_INVALID_NULL_PKCS12_POINTER);
 	return 0;
+}
+
+/* Allocate stack for ca certificates if needed */
+if ((ca != NULL) && (*ca == NULL)) {
+	if (!(*ca = sk_new(NULL))) {
+		PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+}
+
+if(pkey) *pkey = NULL;
+if(cert) *cert = NULL;
+
+/* Check the mac */
+
+if (!PKCS12_verify_mac (p12, pass, -1)) {
+	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
+	goto err;
+}
+
+if (!parse_pk12 (p12, pass, -1, pkey, cert, ca)) {
+	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_PARSE_ERROR);
+	goto err;
+}
+
+return 1;
+
+err:
+
+if (pkey && *pkey) EVP_PKEY_free (*pkey);
+if (cert && *cert) X509_free (*cert);
+if (ca) sk_pop_free (*ca, X509_free);
+return 0;
 
 }
 
 /* Parse the outer PKCS#12 structure */
 
 static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
-	     EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
+	     EVP_PKEY **pkey, X509 **cert, STACK **ca)
 {
-	STACK_OF(PKCS7) *asafes;
-	STACK_OF(PKCS12_SAFEBAG) *bags;
+	STACK *asafes, *bags;
 	int i, bagnid;
 	PKCS7 *p7;
 	ASN1_OCTET_STRING *keyid = NULL;
-
 	char keymatch = 0;
 	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
-	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
-		p7 = sk_PKCS7_value (asafes, i);
+	for (i = 0; i < sk_num (asafes); i++) {
+		p7 = (PKCS7 *) sk_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data (p7);
@@ -164,31 +136,30 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
 		} else continue;
 		if (!bags) {
-			sk_PKCS7_pop_free (asafes, PKCS7_free);
+			sk_pop_free (asafes, PKCS7_free);
 			return 0;
 		}
 	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
 							 &keyid, &keymatch)) {
-			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_PKCS7_pop_free(asafes, PKCS7_free);
+			sk_pop_free(bags, PKCS12_SAFEBAG_free);
+			sk_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
-		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+		sk_pop_free(bags, PKCS12_SAFEBAG_free);
 	}
-	sk_PKCS7_pop_free(asafes, PKCS7_free);
+	sk_pop_free(asafes, PKCS7_free);
 	if (keyid) M_ASN1_OCTET_STRING_free(keyid);
 	return 1;
 }
 
 
-static int parse_bags (STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-		       int passlen, EVP_PKEY **pkey, X509 **cert,
-		       STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
-		       char *keymatch)
+static int parse_bags (STACK *bags, const char *pass, int passlen,
+		       EVP_PKEY **pkey, X509 **cert, STACK **ca,
+		       ASN1_OCTET_STRING **keyid, char *keymatch)
 {
 	int i;
-	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
-		if (!parse_bag(sk_PKCS12_SAFEBAG_value (bags, i),
+	for (i = 0; i < sk_num(bags); i++) {
+		if (!parse_bag((PKCS12_SAFEBAG *)sk_value (bags, i),
 			 pass, passlen, pkey, cert, ca, keyid,
 							 keymatch)) return 0;
 	}
@@ -200,7 +171,7 @@ static int parse_bags (STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
 #define MATCH_ALL  0x3
 
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-		      EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
+		      EVP_PKEY **pkey, X509 **cert, STACK **ca,
 		      ASN1_OCTET_STRING **keyid,
 	     char *keymatch)
 {
@@ -250,10 +221,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 		if (lkey) {
 			*keymatch |= MATCH_CERT;
 			if (cert) *cert = x509;
-		} else {
-			if(ca) sk_X509_push (*ca, x509);
-			else X509_free(x509);
-		}
+		} else if (ca) sk_push (*ca, (char *)x509);
 	break;
 
 	case NID_safeContentsBag:

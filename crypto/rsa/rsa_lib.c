@@ -81,19 +81,6 @@ void RSA_set_default_method(RSA_METHOD *meth)
 
 RSA_METHOD *RSA_get_default_method(void)
 {
-	if (default_RSA_meth == NULL)
-		{
-#ifdef RSA_NULL
-		default_RSA_meth=RSA_null_method();
-#else
-#ifdef RSAref
-		default_RSA_meth=RSA_PKCS1_RSAref();
-#else
-		default_RSA_meth=RSA_PKCS1_SSLeay();
-#endif
-#endif
-		}
-
 	return default_RSA_meth;
 }
 
@@ -116,6 +103,18 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 	{
 	RSA *ret;
 
+	if (default_RSA_meth == NULL)
+		{
+#ifdef RSA_NULL
+		default_RSA_meth=RSA_null_method();
+#else
+#ifdef RSAref
+		default_RSA_meth=RSA_PKCS1_RSAref();
+#else
+		default_RSA_meth=RSA_PKCS1_SSLeay();
+#endif
+#endif
+		}
 	ret=(RSA *)Malloc(sizeof(RSA));
 	if (ret == NULL)
 		{
@@ -124,7 +123,7 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 		}
 
 	if (meth == NULL)
-		ret->meth=RSA_get_default_method();
+		ret->meth=default_RSA_meth;
 	else
 		ret->meth=meth;
 

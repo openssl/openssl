@@ -25,7 +25,7 @@ open(OUT,">$report") or die;
 print OUT "OpenSSL self-test report:\n\n";
 
 $uname=`uname -a`;
-$uname="??\n" if $uname eq "";
+$uname="??" if $uname eq "";
 
 $c=`sh config -t`;
 foreach $_ (split("\n",$c)) {
@@ -83,11 +83,6 @@ if (open(TEST,">cctest.c")) {
 	print OUT "Compiler doesn't work.\n";
 	goto err;
     }
-    system("ar r cctest.a /dev/null");
-    if (not -f "cctest.a") {
-	print OUT "Check your archive tool (ar).\n";
-	goto err;
-    }
 } else {
     print OUT "Can't create cctest.c\n";
 }
@@ -134,14 +129,14 @@ if (/no-/)
 }
 
 print "Running make test...\n";
-if (system("make test 2>&1 | tee maketest.log") > 255)
+if (system("make test 2>&1 | tee make.log") > 255)
  {
     print OUT "make test failed!\n";
 } else {
     $ok=1;
 }
 
-if ($ok and open(IN,"<maketest.log")) {
+if ($ok and open(IN,"<make.log")) {
     while (<IN>) {
 	$ok=2 if /^platform: $platform/;
     }
@@ -159,15 +154,6 @@ if ($ok != 2) {
 	print OUT $sep;
     } else {
 	print OUT "make.log not found!\n";
-    }
-    if (open(IN,"<maketest.log")) {
-	while (<IN>) {
-	    print OUT;
-	}
-	close(IN);
-	print OUT $sep;
-    } else {
-	print OUT "maketest.log not found!\n";
     }
 } else {
     print OUT "Test passed.\n";

@@ -80,14 +80,10 @@ DES_LONG des_quad_cksum(const unsigned char *input, des_cblock output[],
 	int i;
 	long l;
 	const unsigned char *cp;
-#ifdef _CRAY
-	short *lp;
-#else
-	DES_LONG *lp;
-#endif
+	unsigned char *lp;
 
 	if (out_count < 1) out_count=1;
-	lp = (DES_LONG *) &(output[0])[0];
+	lp = &(output[0])[0];
 
 	z0=Q_B0((*seed)[0])|Q_B1((*seed)[1])|Q_B2((*seed)[2])|Q_B3((*seed)[3]);
 	z1=Q_B0((*seed)[4])|Q_B1((*seed)[5])|Q_B2((*seed)[6])|Q_B3((*seed)[7]);
@@ -118,10 +114,25 @@ DES_LONG des_quad_cksum(const unsigned char *input, des_cblock output[],
 			}
 		if (lp != NULL)
 			{
-			/* The MIT library assumes that the checksum is
-			 * composed of 2*out_count 32 bit ints */
-			*lp++ = z0;
-			*lp++ = z1;
+			/* I believe I finally have things worked out.
+			 * The MIT library assumes that the checksum
+			 * is one huge number and it is returned in a
+			 * host dependant byte order.
+			 */
+			static DES_LONG ltmp=1;
+			static unsigned char *c=(unsigned char *)&ltmp;
+
+			if (c[0])
+				{
+				l2c(z0,lp);
+				l2c(z1,lp);
+				}
+			else
+				{
+				lp = &(output[out_count-i-1])[0];
+				l2n(z1,lp);
+				l2n(z0,lp);
+				}
 			}
 		}
 	return(z0);

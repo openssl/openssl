@@ -191,32 +191,15 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef NO_DH
 	if (cert->dh_tmp != NULL)
 		{
-		/* DH parameters don't have a reference count */
+		/* DH parameters don't have a reference count (and cannot
+		 * reasonably be shared anyway, as the secret exponent may
+		 * be created just when it is needed -- earlier library
+		 * versions did not pay attention to this) */
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL)
 			{
-			SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_DH_LIB);
+			SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_DH_LIB);
 			goto err;
-			}
-		if (cert->dh_tmp->priv_key)
-			{
-			BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
-			if (!b)
-				{
-				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-				goto err;
-				}
-			ret->dh_tmp->priv_key = b;
-			}
-		if (cert->dh_tmp->pub_key)
-			{
-			BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
-			if (!b)
-				{
-				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-				goto err;
-				}
-			ret->dh_tmp->pub_key = b;
 			}
 		}
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
@@ -644,53 +627,53 @@ err:
 
 int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 					const char *file)
+    {
+    BIO *in;
+    X509 *x=NULL;
+    X509_NAME *xn=NULL;
+    int ret=1;
+    int (*oldcmp)(X509_NAME **a, X509_NAME **b);
+
+    oldcmp=sk_X509_NAME_set_cmp_func(stack,xname_cmp);
+
+    in=BIO_new(BIO_s_file_internal());
+
+    if (in == NULL)
 	{
-	BIO *in;
-	X509 *x=NULL;
-	X509_NAME *xn=NULL;
-	int ret=1;
-	int (*oldcmp)(X509_NAME **a, X509_NAME **b);
-	
-	oldcmp=sk_X509_NAME_set_cmp_func(stack,xname_cmp);
-	
-	in=BIO_new(BIO_s_file_internal());
-	
-	if (in == NULL)
-		{
-		SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	
-	if (!BIO_read_filename(in,file))
-		goto err;
-	
-	for (;;)
-		{
-		if (PEM_read_bio_X509(in,&x,NULL,NULL) == NULL)
-			break;
-		if ((xn=X509_get_subject_name(x)) == NULL) goto err;
-		xn=X509_NAME_dup(xn);
-		if (xn == NULL) goto err;
-		if (sk_X509_NAME_find(stack,xn) >= 0)
-			X509_NAME_free(xn);
-		else
-			sk_X509_NAME_push(stack,xn);
-		}
-
-	if (0)
-		{
-err:
-		ret=0;
-		}
-	if(in != NULL)
-		BIO_free(in);
-	if(x != NULL)
-		X509_free(x);
-	
-	sk_X509_NAME_set_cmp_func(stack,oldcmp);
-
-	return ret;
+	SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
+	goto err;
 	}
+	
+    if (!BIO_read_filename(in,file))
+	goto err;
+
+    for (;;)
+	{
+	if (PEM_read_bio_X509(in,&x,NULL,NULL) == NULL)
+	    break;
+	if ((xn=X509_get_subject_name(x)) == NULL) goto err;
+	xn=X509_NAME_dup(xn);
+	if (xn == NULL) goto err;
+	if (sk_X509_NAME_find(stack,xn) >= 0)
+	    X509_NAME_free(xn);
+	else
+	    sk_X509_NAME_push(stack,xn);
+	}
+
+    if (0)
+	{
+err:
+	ret=0;
+	}
+    if(in != NULL)
+	BIO_free(in);
+    if(x != NULL)
+	X509_free(x);
+
+    sk_X509_NAME_set_cmp_func(stack,oldcmp);
+
+    return ret;
+    }
 
 /*!
  * Add a directory of certs to a stack.
@@ -709,46 +692,43 @@ err:
 
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
+    {
+    DIR *d;
+    struct dirent *dstruct;
+    int ret = 0;
+
+    CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
+    d = opendir(dir);
+
+    /* Note that a side effect is that the CAs will be sorted by name */
+    if(!d)
 	{
-	DIR *d;
-	struct dirent *dstruct;
-	int ret = 0;
+	SYSerr(SYS_F_OPENDIR, get_last_sys_error());
+	ERR_add_error_data(3, "opendir('", dir, "')");
+	SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
+	goto err;
+	}
 
-	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-	d = opendir(dir);
+    while((dstruct=readdir(d)))
+	{
+	char buf[1024];
 
-	/* Note that a side effect is that the CAs will be sorted by name */
-	if(!d)
-		{
-		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-		ERR_add_error_data(3, "opendir('", dir, "')");
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err;
-		}
+	if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
+	    {
+	    SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
+	    goto err;
+	    }
 	
-	while((dstruct=readdir(d)))
-		{
-		char buf[1024];
-		int r;
-		
-		if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
-			{
-			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
-			goto err;
-			}
-		
-		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,dstruct->d_name);
-		if (r <= 0 || r >= sizeof buf)
-			goto err;
-		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
-			goto err;
-		}
-	ret = 1;
+	sprintf(buf,"%s/%s",dir,dstruct->d_name);
+	if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
+	    goto err;
+	}
+    ret = 1;
 
 err:	
-	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
-	return ret;
-	}
+    CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
+    return ret;
+    }
 
 #endif
 #endif

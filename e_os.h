@@ -87,7 +87,6 @@ extern "C" {
 #  ifndef MAC_OS_GUSI_SOURCE
 #    define MAC_OS_pre_X
 #    define NO_SYS_TYPES_H
-     typedef long ssize_t;
 #  endif
 #  define NO_SYS_PARAM_H
 #  define NO_CHMOD
@@ -172,18 +171,19 @@ extern "C" {
 
 #if defined(WINDOWS) || defined(MSDOS)
 
-#  ifndef S_IFDIR
-#    define S_IFDIR	_S_IFDIR
-#  endif
+#ifndef S_IFDIR
+#define S_IFDIR	_S_IFDIR
+#endif
 
-#  ifndef S_IFMT
-#    define S_IFMT	_S_IFMT
-#  endif
+#ifndef S_IFMT
+#define S_IFMT	_S_IFMT
 
-#  if !defined(WINNT)
-#    define NO_SYSLOG
-#  endif
-#  define NO_DIRENT
+#if !defined(WINNT)
+#define NO_SYSLOG
+#endif
+#define NO_DIRENT
+
+#endif
 
 #  ifdef WINDOWS
 #    include <windows.h>
@@ -195,31 +195,29 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
-#  define ssize_t long
+#if defined (__BORLANDC__)
+#define _setmode setmode
+#define _O_TEXT O_TEXT
+#define _O_BINARY O_BINARY
+#define _int64 __int64
+#define _kbhit kbhit
+#endif
 
-#  if defined (__BORLANDC__)
-#    define _setmode setmode
-#    define _O_TEXT O_TEXT
-#    define _O_BINARY O_BINARY
-#    define _int64 __int64
-#    define _kbhit kbhit
-#  endif
-
-#  if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
-#  else
-#    define EXIT(n)		return(n);
-#  endif
+#if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
+#  define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
+#else
+#  define EXIT(n)		return(n);
+#endif
 #  define LIST_SEPARATOR_CHAR ';'
-#  ifndef X_OK
-#    define X_OK	0
-#  endif
-#  ifndef W_OK
-#    define W_OK	2
-#  endif
-#  ifndef R_OK
-#    define R_OK	4
-#  endif
+#ifndef X_OK
+#  define X_OK	0
+#endif
+#ifndef W_OK
+#  define W_OK	2
+#endif
+#ifndef R_OK
+#  define R_OK	4
+#endif
 #  define OPENSSL_CONF	"openssl.cnf"
 #  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
@@ -245,32 +243,18 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ','
 #    define NUL_DEV		"NLA0:"
-  /* We need to do this since VMS has the following coding on status codes:
-
-     Bits 0-2: status type: 0 = warning, 1 = success, 2 = error, 3 = info ...
-               The important thing to know is that odd numbers are considered
-	       good, while even ones are considered errors.
-     Bits 3-15: actual status number
-     Bits 16-27: facility number.  0 is considered "unknown"
-     Bits 28-31: control bits.  If bit 28 is set, the shell won't try to
-                 output the message (which, for random codes, just looks ugly)
-
-     So, what we do here is to change 0 to 1 to get the default success status,
-     and everything else is shifted up to fit into the status number field, and
-     the status is tagged as an error, which I believe is what is wanted here.
-     -- Richard Levitte
-  */
-#    if !defined(MONOLITH) || defined(OPENSSL_C)
+  /* We need to do this, because DEC C converts exit code 0 to 1, but not 1
+     to 0.  We will convert 1 to 3!  Also, add the inhibit message bit... */
+#    ifndef MONOLITH
 #      define EXIT(n)		do { int __VMS_EXIT = n; \
-                                     if (__VMS_EXIT == 0) \
-				       __VMS_EXIT = 1; \
-				     else \
-				       __VMS_EXIT = (n << 3) | 2; \
+                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
                                      __VMS_EXIT |= 0x10000000; \
-				     exit(__VMS_EXIT); \
-				     return(__VMS_EXIT); } while(0)
+				     exit(n); return(n); } while(0)
 #    else
-#      define EXIT(n)		return(n)
+#      define EXIT(n)		do { int __VMS_EXIT = n; \
+                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
+                                     __VMS_EXIT |= 0x10000000; \
+				     return(n); } while(0)
 #    endif
 #    define NO_SYS_PARAM_H
 #  else
@@ -282,12 +266,6 @@ extern "C" {
 #    endif
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
-#    endif
-#    ifdef NeXT
-#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
-                         * (unless when compiling with -D_POSIX_SOURCE,
-                         * which doesn't work for us) */
-#      define ssize_t int /* ditto */
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
@@ -391,21 +369,10 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
-#if defined(__ultrix)
-#  ifndef ssize_t
-#    define ssize_t int 
-#  endif
-#endif
-
 #if defined(THREADS) || defined(sun)
 #ifndef _REENTRANT
 #define _REENTRANT
 #endif
-#endif
-
-#if defined(sun) && !defined(__svr4__)
-#define memmove(s1,s2,b) bcopy((s2),(s1),(n))
-#define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
 #endif
 
 /***********************************************/

@@ -55,69 +55,15 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-/* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
 
 
 static LHASH *error_hash=NULL;
@@ -137,7 +83,6 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_SYS,0,0)		,"system library"},
 {ERR_PACK(ERR_LIB_BN,0,0)		,"bignum routines"},
 {ERR_PACK(ERR_LIB_RSA,0,0)		,"rsa routines"},
-{ERR_PACK(ERR_LIB_DSA,0,0)		,"dsa routines"},
 {ERR_PACK(ERR_LIB_DH,0,0)		,"Diffie-Hellman routines"},
 {ERR_PACK(ERR_LIB_EVP,0,0)		,"digital envelope routines"},
 {ERR_PACK(ERR_LIB_BUF,0,0)		,"memory buffer routines"},
@@ -156,7 +101,6 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
 {ERR_PACK(ERR_LIB_PKCS12,0,0)		,"PKCS12 routines"},
 {ERR_PACK(ERR_LIB_RAND,0,0)		,"random number generator"},
-{ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
 {0,NULL},
 	};
 
@@ -207,58 +151,9 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_EXPECTING_AN_ASN1_SEQUENCE	,"expecting an asn1 sequence"},
 {ERR_R_ASN1_LENGTH_MISMATCH		,"asn1 length mismatch"},
 {ERR_R_MISSING_ASN1_EOS			,"missing asn1 eos"},
-{ERR_R_DSO_LIB				,"DSO lib"},
 
 {0,NULL},
 	};
-
-
-#define NUM_SYS_STR_REASONS 127
-#define LEN_SYS_STR_REASON 32
-
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
-/* SYS_str_reasons is filled with copies of strerror() results at
- * initialization.
- * 'errno' values up to 127 should cover all usual errors,
- * others will be displayed numerically by ERR_error_string.
- * It is crucial that we have something for each reason code
- * that occurs in ERR_str_reasons, or bogus reason strings
- * will be returned for SYSerr(), which always gets an errno
- * value and never one of those 'standard' reason codes. */
-
-static void build_SYS_str_reasons()
-	{
-	/* Malloc cannot be used here, use static storage instead */
-	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
-	int i;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
-
-	for (i = 1; i <= NUM_SYS_STR_REASONS; i++)
-		{
-		ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
-
-		str->error = (unsigned long)i;
-		if (str->string == NULL)
-			{
-			char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-			char *src = strerror(i);
-			if (src != NULL)
-				{
-				strncpy(*dest, src, sizeof *dest);
-				(*dest)[sizeof *dest - 1] = '\0';
-				str->string = *dest;
-				}
-			}
-		if (str->string == NULL)
-			str->string = "unknown";
-		}
-
-	/* Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
-	 * as required by ERR_load_strings. */
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
-	}
 #endif
 
 #define err_clear_data(p,i) \
@@ -296,16 +191,14 @@ void ERR_load_ERR_strings(void)
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 			return;
 			}
+		init=0;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 #ifndef NO_ERR
 		ERR_load_strings(0,ERR_str_libraries);
 		ERR_load_strings(0,ERR_str_reasons);
 		ERR_load_strings(ERR_LIB_SYS,ERR_str_functs);
-		build_SYS_str_reasons();
-		ERR_load_strings(ERR_LIB_SYS,SYS_str_reasons);
 #endif
-		init=0;
 		}
 	}
 
@@ -478,11 +371,13 @@ static unsigned long get_error_values(int inc, const char **file, int *line,
 	return(ret);
 	}
 
-void ERR_error_string_n(unsigned long e, char *buf, size_t len)
+/* BAD for multi-threaded, uses a local buffer if ret == NULL */
+char *ERR_error_string(unsigned long e, char *ret)
 	{
-	char lsbuf[64], fsbuf[64], rsbuf[64];
+	static char buf[256];
 	const char *ls,*fs,*rs;
 	unsigned long l,f,r;
+	int i;
 
 	l=ERR_GET_LIB(e);
 	f=ERR_GET_FUNC(e);
@@ -492,50 +387,21 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 	fs=ERR_func_error_string(e);
 	rs=ERR_reason_error_string(e);
 
-	if (ls == NULL) 
-		BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
-	if (fs == NULL)
-		BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-	if (rs == NULL)
-		BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
-
-	BIO_snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
-		fs?fs:fsbuf, rs?rs:rsbuf);
-	if (strlen(buf) == len-1)
-		{
-		/* output may be truncated; make sure we always have 5 
-		 * colon-separated fields, i.e. 4 colons ... */
-#define NUM_COLONS 4
-		if (len > NUM_COLONS) /* ... if possible */
-			{
-			int i;
-			char *s = buf;
-			
-			for (i = 0; i < NUM_COLONS; i++)
-				{
-				char *colon = strchr(s, ':');
-				if (colon == NULL || colon > &buf[len-1] - NUM_COLONS + i)
-					{
-					/* set colon no. i at last possible position
-					 * (buf[len-1] is the terminating 0)*/
-					colon = &buf[len-1] - NUM_COLONS + i;
-					*colon = ':';
-					}
-				s = colon + 1;
-				}
-			}
-		}
-	}
-
-/* BAD for multi-threading: uses a local buffer if ret == NULL */
-/* ERR_error_string_n should be used instead for ret != NULL
- * as ERR_error_string cannot know how large the buffer is */
-char *ERR_error_string(unsigned long e, char *ret)
-	{
-	static char buf[256];
-
 	if (ret == NULL) ret=buf;
-	ERR_error_string_n(e, buf, 256);
+
+	sprintf(&(ret[0]),"error:%08lX:",e);
+	i=strlen(ret);
+	if (ls == NULL)
+		sprintf(&(ret[i]),":lib(%lu) ",l);
+	else	sprintf(&(ret[i]),"%s",ls);
+	i=strlen(ret);
+	if (fs == NULL)
+		sprintf(&(ret[i]),":func(%lu) ",f);
+	else	sprintf(&(ret[i]),":%s",fs);
+	i=strlen(ret);
+	if (rs == NULL)
+		sprintf(&(ret[i]),":reason(%lu)",r);
+	else	sprintf(&(ret[i]),":%s",rs);
 
 	return(ret);
 	}
@@ -545,7 +411,6 @@ LHASH *ERR_get_string_table(void)
 	return(error_hash);
 	}
 
-/* not thread-safe */
 LHASH *ERR_get_err_state_table(void)
 	{
 	return(thread_hash);
@@ -653,12 +518,6 @@ void ERR_remove_state(unsigned long pid)
 	tmp.pid=pid;
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
-	if (lh_num_items(thread_hash) == 0)
-		{
-		/* make sure we don't leak memory */
-		lh_free(thread_hash);
-		thread_hash = NULL;
-		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 	if (p != NULL) ERR_STATE_free(p);
@@ -667,20 +526,34 @@ void ERR_remove_state(unsigned long pid)
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
-	ERR_STATE *ret=NULL,tmp,*tmpp=NULL;
-	int thread_state_exists;
+	ERR_STATE *ret=NULL,tmp,*tmpp;
 	int i;
 	unsigned long pid;
 
 	pid=(unsigned long)CRYPTO_thread_id();
 
 	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
-	if (thread_hash != NULL)
+	if (thread_hash == NULL)
+		{
+		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+		if (thread_hash == NULL)
+			{
+			MemCheck_off();
+			thread_hash=lh_new(pid_hash,pid_cmp);
+			MemCheck_on();
+			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+			if (thread_hash == NULL) return(&fallback);
+			}
+		else
+			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+		}
+	else
 		{
 		tmp.pid=pid;
 		ret=(ERR_STATE *)lh_retrieve(thread_hash,&tmp);
+		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)
@@ -695,29 +568,9 @@ ERR_STATE *ERR_get_state(void)
 			ret->err_data[i]=NULL;
 			ret->err_data_flags[i]=0;
 			}
-
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-
-		/* no entry yet in thread_hash for current thread -
-		 * thus, it may have changed since we last looked at it */
-		if (thread_hash == NULL)
-			thread_hash = lh_new(pid_hash, pid_cmp);
-		if (thread_hash == NULL)
-			thread_state_exists = 0; /* allocation error */
-		else
-			{
-			tmpp=(ERR_STATE *)lh_insert(thread_hash,ret);
-			thread_state_exists = 1;
-			}
-
+		tmpp=(ERR_STATE *)lh_insert(thread_hash,ret);
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-
-		if (!thread_state_exists)
-			{
-			ERR_STATE_free(ret); /* could not insert it */
-			return(&fallback);
-			}
-		
 		if (tmpp != NULL) /* old entry - should not happen */
 			{
 			ERR_STATE_free(tmpp);

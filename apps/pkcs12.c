@@ -80,8 +80,7 @@ EVP_CIPHER *enc;
 
 int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options, char *pempass);
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
-			  int passlen, int options, char *pempass);
+int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options, char *pempass);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options, char *pempass);
 int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
@@ -266,7 +265,7 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-password p   set import/export password source\n");
 	BIO_printf (bio_err, "-passin p     input file pass phrase source\n");
 	BIO_printf (bio_err, "-passout p    output file pass phrase source\n");
-	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err,  "-rand file:file:...\n");
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;
@@ -361,8 +360,7 @@ int MAIN(int argc, char **argv)
 
     if (export_cert) {
 	EVP_PKEY *key;
-	STACK_OF(PKCS12_SAFEBAG) *bags;
-	STACK_OF(PKCS7) *safes;
+	STACK *bags, *safes;
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
@@ -407,7 +405,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 	
-	bags = sk_PKCS12_SAFEBAG_new (NULL);
+	bags = sk_new (NULL);
 
 	/* Add any more certificates asked for */
 	if (certsin) {
@@ -447,7 +445,7 @@ int MAIN(int argc, char **argv)
 			PKCS12_add_localkeyid(bag, keyid, keyidlen);
 		} else if((catmp = sk_shift(canames))) 
 				PKCS12_add_friendlyname(bag, catmp, -1);
-		sk_PKCS12_SAFEBAG_push(bags, bag);
+		sk_push(bags, (char *)bag);
 	}
 	sk_X509_pop_free(certs, X509_free);
 	if (canames) sk_free(canames);
@@ -461,15 +459,15 @@ int MAIN(int argc, char **argv)
 	/* Turn certbags into encrypted authsafe */
 	authsafe = PKCS12_pack_p7encdata(cert_pbe, cpass, -1, NULL, 0,
 								 iter, bags);
-	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+	sk_pop_free(bags, PKCS12_SAFEBAG_free);
 
 	if (!authsafe) {
 		ERR_print_errors (bio_err);
 		goto end;
 	}
 
-	safes = sk_PKCS7_new (NULL);
-	sk_PKCS7_push (safes, authsafe);
+	safes = sk_new (NULL);
+	sk_push (safes, (char *)authsafe);
 
 	/* Make a shrouded key bag */
 	p8 = EVP_PKEY2PKCS8 (key);
@@ -479,18 +477,18 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
-	bags = sk_PKCS12_SAFEBAG_new(NULL);
-	sk_PKCS12_SAFEBAG_push (bags, bag);
+	bags = sk_new(NULL);
+	sk_push (bags, (char *)bag);
 	/* Turn it into unencrypted safe bag */
 	authsafe = PKCS12_pack_p7data (bags);
-	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	sk_PKCS7_push (safes, authsafe);
+	sk_pop_free(bags, PKCS12_SAFEBAG_free);
+	sk_push (safes, (char *)authsafe);
 
 	p12 = PKCS12_init (NID_pkcs7_data);
 
 	M_PKCS12_pack_authsafes (p12, safes);
 
-	sk_PKCS7_pop_free(safes, PKCS7_free);
+	sk_pop_free(safes, PKCS7_free);
 
 	PKCS12_set_mac (p12, mpass, -1, NULL, 0, maciter, NULL);
 
@@ -530,16 +528,11 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("verify MAC");
 #endif
-	/* If we enter empty password try no password first */
-	if(!macpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
-		/* If mac and crypto pass the same set it to NULL too */
-		if(!twopass) cpass = NULL;
-	} else if (!PKCS12_verify_mac(p12, mpass, -1)) {
+	if (!PKCS12_verify_mac (p12, mpass, -1)) {
 	    BIO_printf (bio_err, "Mac verify error: invalid password?\n");
 	    ERR_print_errors (bio_err);
 	    goto end;
-	}
-	BIO_printf (bio_err, "MAC verified OK\n");
+	} else BIO_printf (bio_err, "MAC verified OK\n");
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
 #endif
@@ -556,9 +549,9 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
 #endif
+    PKCS12_free(p12);
     ret = 0;
     end:
-    PKCS12_free(p12);
     if(export_cert || inrand) app_RAND_write_file(NULL, bio_err);
 #ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
@@ -573,14 +566,12 @@ int MAIN(int argc, char **argv)
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	     int passlen, int options, char *pempass)
 {
-	STACK_OF(PKCS7) *asafes;
-	STACK_OF(PKCS12_SAFEBAG) *bags;
+	STACK *asafes, *bags;
 	int i, bagnid;
 	PKCS7 *p7;
-
 	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
-	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
-		p7 = sk_PKCS7_value (asafes, i);
+	for (i = 0; i < sk_num (asafes); i++) {
+		p7 = (PKCS7 *) sk_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data (p7);
@@ -596,25 +587,23 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 		if (!bags) return 0;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
 						 options, pempass)) {
-			sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
+			sk_pop_free (bags, PKCS12_SAFEBAG_free);
 			return 0;
 		}
-		sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
+		sk_pop_free (bags, PKCS12_SAFEBAG_free);
 	}
-	sk_PKCS7_pop_free (asafes, PKCS7_free);
+	sk_pop_free (asafes, PKCS7_free);
 	return 1;
 }
 
-int dump_certs_pkeys_bags (BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
-			   char *pass, int passlen, int options, char *pempass)
+int dump_certs_pkeys_bags (BIO *out, STACK *bags, char *pass,
+	     int passlen, int options, char *pempass)
 {
 	int i;
-	for (i = 0; i < sk_PKCS12_SAFEBAG_num (bags); i++) {
+	for (i = 0; i < sk_num (bags); i++) {
 		if (!dump_certs_pkeys_bag (out,
-					   sk_PKCS12_SAFEBAG_value (bags, i),
-					   pass, passlen,
-					   options, pempass))
-		    return 0;
+			 (PKCS12_SAFEBAG *)sk_value (bags, i), pass, passlen,
+					 	options, pempass)) return 0;
 	}
 	return 1;
 }

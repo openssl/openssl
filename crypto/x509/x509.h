@@ -59,6 +59,10 @@
 #ifndef HEADER_X509_H
 #define HEADER_X509_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #ifdef VMS
 #undef X509_REVOKED_get_ext_by_critical
 #define X509_REVOKED_get_ext_by_critical X509_REVOKED_get_ext_by_critic
@@ -83,36 +87,10 @@
 #include <openssl/evp.h>
 
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef WIN32
 /* Under Win32 this is defined in wincrypt.h */
 #undef X509_NAME
 #endif
-
-  /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
-#define DECLARE_PKCS12_STACK_OF(type) \
-STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
-				          type *(*d2i)(type **, \
-						       unsigned char **, \
-						       long), \
-					  void (*free_func)(type *), \
-					  const char *pass, int passlen, \
-					  ASN1_STRING *oct, int seq);
-
-#define IMPLEMENT_PKCS12_STACK_OF(type) \
-STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
-				          type *(*d2i)(type **, \
-						       unsigned char **, \
-						       long), \
-					  void (*free_func)(type *), \
-					  const char *pass, int passlen, \
-					  ASN1_STRING *oct, int seq) \
-    { return (STACK_OF(type) *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i, \
-						  (void(*)(void *))free_func, \
-						  pass,passlen,oct,seq); }
 
 #define X509_FILETYPE_PEM	1
 #define X509_FILETYPE_ASN1	2
@@ -306,9 +284,7 @@ DECLARE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
-#define X509_TRUST_DEFAULT	-1	/* Only valid in purpose settings */
-
-#define X509_TRUST_COMPAT	1
+#define X509_TRUST_ANY		1
 #define X509_TRUST_SSL_CLIENT	2
 #define X509_TRUST_SSL_SERVER	3
 #define X509_TRUST_EMAIL	4
@@ -467,16 +443,8 @@ typedef struct pkcs8_priv_key_info_st
         STACK_OF(X509_ATTRIBUTE) *attributes;
         } PKCS8_PRIV_KEY_INFO;
 
-#ifdef  __cplusplus
-}
-#endif
-
 #include <openssl/x509_vfy.h>
 #include <openssl/pkcs7.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #ifdef SSLEAY_MACROS
 #define X509_verify(a,r) ASN1_verify((int (*)())i2d_X509_CINF,a->sig_alg,\
@@ -660,8 +628,6 @@ int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_digest(X509 *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
-int X509_CRL_digest(X509_CRL *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
-int X509_REQ_digest(X509_REQ *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
 int X509_NAME_digest(X509_NAME *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
 #endif

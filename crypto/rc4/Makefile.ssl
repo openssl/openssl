@@ -5,7 +5,6 @@
 DIR=	rc4
 TOP=	../..
 CC=	cc
-CPP=    $(CC) -E
 INCLUDES=
 CFLAG=-g
 INSTALL_PREFIX=
@@ -52,7 +51,7 @@ lib:	$(LIBOBJ)
 
 # elf
 asm/rx86-elf.o: asm/rx86unix.cpp
-	$(CPP) -DELF -x c asm/rx86unix.cpp | as -o asm/rx86-elf.o
+	$(CPP) -DELF asm/rx86unix.cpp | as -o asm/rx86-elf.o
 
 # solaris
 asm/rx86-sol.o: asm/rx86unix.cpp
@@ -68,7 +67,7 @@ asm/rx86-out.o: asm/rx86unix.cpp
 asm/rx86bsdi.o: asm/rx86unix.cpp
 	$(CPP) -DBSDI asm/rx86unix.cpp | sed 's/ :/:/' | as -o asm/rx86bsdi.o
 
-asm/rx86unix.cpp: asm/rc4-586.pl ../perlasm/x86asm.pl
+asm/rx86unix.cpp: asm/rc4-586.pl
 	(cd asm; $(PERL) rc4-586.pl cpp >rx86unix.cpp)
 
 files:

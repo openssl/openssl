@@ -76,7 +76,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 	DSA *dsa = NULL;
 	ASN1_INTEGER *privkey;
 	ASN1_TYPE *t1, *t2, *param = NULL;
-	STACK_OF(ASN1_TYPE) *ndsa = NULL;
+	STACK *ndsa = NULL;
 	BN_CTX *ctx = NULL;
 	int plen;
 #endif
@@ -119,13 +119,13 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 	
 		/* Check for broken DSA PKCS#8, UGH! */
 		if(*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED)) {
-		    if(!(ndsa = ASN1_seq_unpack_ASN1_TYPE(p, pkeylen, 
-							  d2i_ASN1_TYPE,
-							  ASN1_TYPE_free))) {
+		    if(!(ndsa = ASN1_seq_unpack(p, pkeylen, 
+					(char *(*)())d2i_ASN1_TYPE,
+							 ASN1_TYPE_free))) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		    }
-		    if(sk_ASN1_TYPE_num(ndsa) != 2 ) {
+		    if(sk_num(ndsa) != 2 ) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		    }
@@ -133,9 +133,9 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		     * SEQUENCE {parameters, priv_key}
 		     * SEQUENCE {pub_key, priv_key}
 		     */
-
-		    t1 = sk_ASN1_TYPE_value(ndsa, 0);
-		    t2 = sk_ASN1_TYPE_value(ndsa, 1);
+                     
+		    t1 = (ASN1_TYPE *)sk_value(ndsa, 0);
+		    t2 = (ASN1_TYPE *)sk_value(ndsa, 1);
 		    if(t1->type == V_ASN1_SEQUENCE) {
 			p8->broken = PKCS8_EMBEDDED_PARAM;
 			param = t1;
@@ -152,14 +152,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 			goto dsaerr;
 		    }
 		    privkey = t2->value.integer;
-		} else {
-			if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) {
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto dsaerr;
-			}
-			param = p8->pkeyalg->parameter;
-		}
-		if (!param || (param->type != V_ASN1_SEQUENCE)) {
+		} else if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		}
@@ -193,12 +186,11 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 
 		EVP_PKEY_assign_DSA(pkey, dsa);
 		BN_CTX_free (ctx);
-		if(ndsa) sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
-		else ASN1_INTEGER_free(privkey);
+		sk_pop_free(ndsa, ASN1_TYPE_free);
 		break;
 		dsaerr:
 		BN_CTX_free (ctx);
-		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, ASN1_TYPE_free);
 		DSA_free(dsa);
 		EVP_PKEY_free(pkey);
 		return NULL;
@@ -302,10 +294,9 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	ASN1_STRING *params;
 	ASN1_INTEGER *prkey;
 	ASN1_TYPE *ttmp;
-	STACK_OF(ASN1_TYPE) *ndsa;
+	STACK *ndsa;
 	unsigned char *p, *q;
 	int len;
-
 	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 	len = i2d_DSAparams (pkey->pkey.dsa, NULL);
 	if (!(p = Malloc(len))) {
@@ -346,7 +337,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 		p8->pkeyalg->parameter->value.sequence = params;
 		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
-		ndsa = sk_ASN1_TYPE_new_null();
+		ndsa = sk_new_null();
 		ttmp = ASN1_TYPE_new();
 		if (!(ttmp->value.integer = BN_to_ASN1_INTEGER (pkey->pkey.dsa->pub_key, NULL))) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
@@ -354,53 +345,53 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 			return 0;
 		}
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		sk_push(ndsa, (char *)ttmp);
 
 		ttmp = ASN1_TYPE_new();
 		ttmp->value.integer = prkey;
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		sk_push(ndsa, (char *)ttmp);
 
 		p8->pkey->value.octet_string = ASN1_OCTET_STRING_new();
 
-		if (!ASN1_seq_pack_ASN1_TYPE(ndsa, i2d_ASN1_TYPE,
+		if (!ASN1_seq_pack(ndsa, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+			sk_pop_free(ndsa, ASN1_TYPE_free);
 			M_ASN1_INTEGER_free(prkey);
 			return 0;
 		}
-		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, ASN1_TYPE_free);
 		break;
 
 		case PKCS8_EMBEDDED_PARAM:
 
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
-		ndsa = sk_ASN1_TYPE_new_null();
+		ndsa = sk_new_null();
 		ttmp = ASN1_TYPE_new();
 		ttmp->value.sequence = params;
 		ttmp->type = V_ASN1_SEQUENCE;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		sk_push(ndsa, (char *)ttmp);
 
 		ttmp = ASN1_TYPE_new();
 		ttmp->value.integer = prkey;
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		sk_push(ndsa, (char *)ttmp);
 
 		p8->pkey->value.octet_string = ASN1_OCTET_STRING_new();
 
-		if (!ASN1_seq_pack_ASN1_TYPE(ndsa, i2d_ASN1_TYPE,
+		if (!ASN1_seq_pack(ndsa, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+			sk_pop_free(ndsa, ASN1_TYPE_free);
 			M_ASN1_INTEGER_free (prkey);
 			return 0;
 		}
-		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+		sk_pop_free(ndsa, ASN1_TYPE_free);
 		break;
 	}
 	return 1;

@@ -59,6 +59,10 @@
 #ifndef HEADER_ASN1_H
 #define HEADER_ASN1_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #include <time.h>
 #include <openssl/bn.h>
 #include <openssl/stack.h>
@@ -66,10 +70,6 @@
 
 #ifdef VMS
 #include <openssl/vms_idhacks.h>
-#endif
-
-#ifdef  __cplusplus
-extern "C" {
 #endif
 
 #define V_ASN1_UNIVERSAL		0x00
@@ -140,8 +140,6 @@ extern "C" {
 #define MBSTRING_UNIV		(MBSTRING_FLAG|3)
 #define MBSTRING_UTF8		(MBSTRING_FLAG|4)
 
-struct X509_algor_st;
-
 #define DECLARE_ASN1_SET_OF(type) \
 int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
 			   int (*func)(type *,unsigned char **), int ex_tag, \
@@ -151,14 +149,7 @@ STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
 				       type *(*func)(type **, \
 						     unsigned char **,long), \
 				       void (*free_func)(type *), \
-				       int ex_tag,int ex_class); \
-unsigned char *ASN1_seq_pack_##type(STACK_OF(type) *st, \
-				    int (*i2d)(type *,unsigned char **), \
-				    unsigned char **buf,int *len); \
-STACK_OF(type) *ASN1_seq_unpack_##type(unsigned char *buf,int len, \
-				       type *(*d2i)(type **,unsigned char **, \
-						    long), \
-				       void (*free_func)(type *));
+				       int ex_tag,int ex_class);
 
 #define IMPLEMENT_ASN1_SET_OF(type) \
 int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
@@ -174,17 +165,7 @@ STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
     { return (STACK_OF(type) *)d2i_ASN1_SET((STACK **)a,pp,length, \
 					    (char *(*)())func, \
 					    (void (*)())free_func, \
-					    ex_tag,ex_class); } \
-unsigned char *ASN1_seq_pack_##type(STACK_OF(type) *st, \
-				    int (*i2d)(type *,unsigned char **), \
-				    unsigned char **buf,int *len) \
-    { return ASN1_seq_pack((STACK *)st,i2d,buf,len); } \
-STACK_OF(type) *ASN1_seq_unpack_##type(unsigned char *buf,int len, \
-				       type *(*d2i)(type **,unsigned char **, \
-						    long), \
-				       void (*free_func)(type *)) \
-    { return (STACK_OF(type) *)ASN1_seq_unpack(buf,len,(char *(*)())d2i, \
-					       (void(*)(void *))free_func); }
+					    ex_tag,ex_class); }
 
 typedef struct asn1_ctx_st
 	{
@@ -292,9 +273,6 @@ typedef struct asn1_string_st ASN1_UTF8STRING;
 #endif
 
 typedef int ASN1_NULL;
-
-DECLARE_STACK_OF(ASN1_INTEGER)
-DECLARE_ASN1_SET_OF(ASN1_INTEGER)
 
 typedef struct asn1_type_st
 	{
@@ -601,7 +579,6 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a,unsigned char **pp,
 int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
-time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 
 int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
@@ -793,7 +770,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
 						 void (*free_func)() ); 
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
-			     int *len );
+								 int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
 ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
 

@@ -59,6 +59,10 @@
 #ifndef HEADER_OBJECTS_H
 #define HEADER_OBJECTS_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
@@ -945,7 +949,7 @@
 #define NID_ad_ca_issuers		179
 #define OBJ_ad_ca_issuers		OBJ_id_ad,2L
 
-#define SN_OCSP_sign			"OCSPSigning"
+#define SN_OSCP_sign			"OCSPSigning"
 #define LN_OCSP_sign			"OCSP Signing"
 #define NID_OCSP_sign			180
 #define OBJ_OCSP_sign			OBJ_id_kp,9L
@@ -962,10 +966,6 @@
 
 #define	OBJ_NAME_ALIAS		0x8000
 
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef struct obj_name_st
 	{

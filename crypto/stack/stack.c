@@ -74,11 +74,12 @@
 
 const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
 
+#define	FP_ICC	(int (*)(const void *,const void *))
 #include <errno.h>
 
-int (*sk_set_cmp_func(STACK *sk, int (*c)(const void *,const void *)))(const void *, const void *)
+int (*sk_set_cmp_func(STACK *sk, int (*c)()))(void)
 	{
-	int (*old)(const void *,const void *)=sk->comp;
+	int (*old)()=sk->comp;
 
 	if (sk->comp != c)
 		sk->sorted=0;
@@ -108,7 +109,7 @@ err:
 	return(NULL);
 	}
 
-STACK *sk_new(int (*c)(const void *, const void *))
+STACK *sk_new(int (*c)())
 	{
 	STACK *ret;
 	int i;
@@ -206,7 +207,7 @@ int sk_find(STACK *st, char *data)
 	{
 	char **r;
 	int i;
-	int (*comp_func)(const void *,const void *);
+	int (*comp_func)();
 	if(st == NULL) return -1;
 
 	if (st->comp == NULL)
@@ -218,9 +219,9 @@ int sk_find(STACK *st, char *data)
 		}
 	sk_sort(st);
 	if (data == NULL) return(-1);
-	comp_func=st->comp;
+	comp_func=(int (*)())st->comp;
 	r=(char **)bsearch(&data,(char *)st->data,
-		st->num,sizeof(char *), comp_func);
+		st->num,sizeof(char *),FP_ICC comp_func);
 	if (r == NULL) return(-1);
 	i=(int)(r-st->data);
 	for ( ; i>0; i--)
@@ -261,7 +262,7 @@ void sk_zero(STACK *st)
 	st->num=0;
 	}
 
-void sk_pop_free(STACK *st, void (*func)(void *))
+void sk_pop_free(STACK *st, void (*func)())
 	{
 	int i;
 
@@ -301,10 +302,10 @@ void sk_sort(STACK *st)
     {
     if (!st->sorted)
 	{
-	int (*comp_func)(const void *,const void *);
+	int (*comp_func)();
 
-	comp_func=st->comp;
-	qsort(st->data,st->num,sizeof(char *), comp_func);
+	comp_func=(int (*)())st->comp;
+	qsort(st->data,st->num,sizeof(char *),FP_ICC comp_func);
 	st->sorted=1;
 	}
     }

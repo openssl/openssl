@@ -1,4 +1,4 @@
-/* apps/s_cb.c - callback functions used by s_client, s_server, and s_time */
+/* apps/s_cb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

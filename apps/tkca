@@ -1,0 +1,66 @@
+#!/usr/local/bin/perl5
+#
+# This is only something I'm playing with, it does not work :-)
+#
+
+use Tk;
+
+my $main=MainWindow->new();
+my $f=$main->Frame(-relief => "ridge", -borderwidth => 2);
+$f->pack(-fill => 'x');
+
+my $ff=$f->Frame;
+$ff->pack(-fill => 'x');
+my $l=$ff->Label(-text => "TkCA - SSLeay",
+	-relief => "ridge", -borderwidth => 2);
+$l->pack(-fill => 'x', -ipady => 5);
+
+my $l=$ff->Button(-text => "Certify");
+$l->pack(-fill => 'x', -ipady => 5);
+
+my $l=$ff->Button(-text => "Review");
+$l->pack(-fill => 'x', -ipady => 5);
+
+my $l=$ff->Button(-text => "Revoke");
+$l->pack(-fill => 'x', -ipady => 5);
+
+my $l=$ff->Button(-text => "Generate CRL");
+$l->pack(-fill => 'x', -ipady => 5);
+
+my($db)=&load_db("demoCA/index.txt");
+
+MainLoop;
+
+sub load_db
+	{
+	my(%ret);
+	my($file)=@_;
+	my(*IN);
+	my(%db_serial,%db_name,@f,@db_s);
+
+	$ret{'serial'}=\%db_serial;
+	$ret{'name'}=\%db_name;
+
+	open(IN,"<$file") || die "unable to open $file:$!\n";
+	while (<IN>)
+		{
+		chop;
+		s/([^\\])\t/\1\t\t/g;
+		my(@f)=split(/\t\t/);
+		die "wrong number of fields in $file, line $.\n"
+			if ($#f != 5);
+
+		my(%f);
+		$f{'type'}=$f[0];
+		$f{'exp'}=$f[1];
+		$f{'rev'}=$f[2];
+		$f{'serial'}=$f[3];
+		$f{'file'}=$f[4];
+		$f{'name'}=$f[5];
+		die "serial number $f{'serial'} appears twice (line $.)\n"
+			if (defined($db{$f{'serial'}}))
+		$db_serial{$f{'serial'}}=\%f;
+		$db_name{$f{'name'}}.=$f{'serial'}." ";
+		}
+	return \%ret;
+	}
