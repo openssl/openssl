@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) The PKCS7_ENC_CONTENT_new() function was setting the content type as
+     NID_pkcs7_encrypted by default: this was wrong since this should almost
+     always be NID_pkcs7_data. Also modified the PKCS7_set_type() to handle
+     the encrypted data type: this is a more sensible place to put it and it
+     allows the PKCS#12 code to be tidied up that duplicated this
+     functionality.
+     [Steve Henson]
+
   *) Changed obj_dat.pl script so it takes its input and output files on
      the command line. This should avoid shell escape redirection problems
      under Win32.

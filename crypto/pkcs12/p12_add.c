@@ -157,13 +157,11 @@ PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, const char *pass, int passlen,
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	p7->type = OBJ_nid2obj(NID_pkcs7_encrypted);
-	if (!(p7->d.encrypted = PKCS7_ENCRYPT_new ())) {
-		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
+	if(!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
+		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA,
+				PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
 		return NULL;
 	}
-	ASN1_INTEGER_set (p7->d.encrypted->version, 0);
-	p7->d.encrypted->enc_data->content_type = OBJ_nid2obj(NID_pkcs7_data);
 	if (!(pbe = PKCS5_pbe_set (pbe_nid, iter, salt, saltlen))) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
 		return NULL;

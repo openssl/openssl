@@ -165,9 +165,6 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		if ((p7->d.signed_and_enveloped=PKCS7_SIGN_ENVELOPE_new())
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1);
-/*		p7->d.signed_and_enveloped->enc_data->content_type=
-			OBJ_nid2obj(NID_pkcs7_encrypted);*/
-			
 		break;
 	case NID_pkcs7_enveloped:
 		p7->type=obj;
@@ -175,8 +172,14 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.enveloped->version,0);
 		break;
-	case NID_pkcs7_digest:
 	case NID_pkcs7_encrypted:
+		p7->type=obj;
+		if ((p7->d.encrypted=PKCS7_ENCRYPT_new())
+			== NULL) goto err;
+		ASN1_INTEGER_set(p7->d.encrypted->version,0);
+		break;
+
+	case NID_pkcs7_digest:
 	default:
 		PKCS7err(PKCS7_F_PKCS7_SET_TYPE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 		goto err;

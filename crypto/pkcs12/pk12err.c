@@ -99,6 +99,7 @@ static ERR_STRING_DATA PKCS12_str_reasons[]=
 {PKCS12_R_DECODE_ERROR                   ,"decode error"},
 {PKCS12_R_ENCODE_ERROR                   ,"encode error"},
 {PKCS12_R_ENCRYPT_ERROR                  ,"encrypt error"},
+{PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE,"error setting encrypted data type"},
 {PKCS12_R_INVALID_NULL_ARGUMENT          ,"invalid null argument"},
 {PKCS12_R_INVALID_NULL_PKCS12_POINTER    ,"invalid null pkcs12 pointer"},
 {PKCS12_R_IV_GEN_ERROR                   ,"iv gen error"},

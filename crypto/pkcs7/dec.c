@@ -149,7 +149,7 @@ char *argv[];
 	/* We need to process the data */
 	/* We cannot support detached encryption */
 	p7bio=PKCS7_dataDecode(p7,pkey,detached,x509);
-	
+
 	if (p7bio == NULL)
 		{
 		printf("problems decoding\n");
