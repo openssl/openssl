@@ -41,6 +41,10 @@
 # define FindNextFile FindNextFileW
 #endif
 
+#ifndef NAME_MAX
+#define NAME_MAX 255
+#endif
+
 struct LP_dir_context_st
 {
   WIN32_FIND_DATA ctx;
@@ -73,7 +77,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	{
 	  TCHAR *wdir = NULL;
 	  /* len_0 denotes string length *with* trailing 0 */ 
-	  size_t index = 0,len_0 = strlen(direcory) + 1;
+	  size_t index = 0,len_0 = strlen(directory) + 1;
 
 	  wdir = (TCHAR *)malloc(len_0 * sizeof(TCHAR));
 	  if (wdir == NULL)
@@ -85,7 +89,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	    }
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-	  if (!MultiByteToWideChar(CP_ACP, 0, directory, len_0, wdir, len_0))
+	  if (!MultiByteToWideChar(CP_ACP, 0, directory, len_0, (WCHAR *)wdir, len_0))
 #endif
 	    for (index = 0; index < len_0; index++)
 	      wdir[index] = (TCHAR)directory[index];
@@ -95,7 +99,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	  free(wdir);
 	}
       else
-	(*ctx)->handle = FindFirstFile(directory, &(*ctx)->ctx);
+	(*ctx)->handle = FindFirstFile((TCHAR *)directory, &(*ctx)->ctx);
 
       if ((*ctx)->handle == INVALID_HANDLE_VALUE)
 	{
@@ -107,7 +111,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
     }
   else
     {
-      if (FindNextFile((*ctx)->handle, (*ctx)->ctx) == FALSE)
+      if (FindNextFile((*ctx)->handle, &(*ctx)->ctx) == FALSE)
 	{
 	  return 0;
 	}
@@ -118,18 +122,18 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       TCHAR *wdir = (*ctx)->ctx.cFileName;
       size_t index, len_0 = 0;
 
-      while (wdir[len] && len < (sizeof((*ctx)->entry_name) - 1)) len_0++;
+      while (wdir[len_0] && len_0 < (sizeof((*ctx)->entry_name) - 1)) len_0++;
       len_0++;
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-      if (!WideCharToMultiByte(CP_ACP, 0, wdir, len_0, (*ctx)->entry_name,
+      if (!WideCharToMultiByte(CP_ACP, 0, (WCHAR *)wdir, len_0, (*ctx)->entry_name,
 			       sizeof((*ctx)->entry_name), NULL, 0))
 #endif
 	for (index = 0; index < len_0; index++)
 	  (*ctx)->entry_name[index] = (char)wdir[index];
     }
   else
-    strncpy((*ctx)->entry_name, (*ctx)->ctx.cFileName,
+    strncpy((*ctx)->entry_name, (const char *)(*ctx)->ctx.cFileName,
 	    sizeof((*ctx)->entry_name)-1);
 
   (*ctx)->entry_name[sizeof((*ctx)->entry_name)-1] = '\0';
