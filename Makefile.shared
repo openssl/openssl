@@ -595,7 +595,7 @@ link_o.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
-	expr $(PLATFORM) : 'ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
@@ -609,6 +609,7 @@ link_a.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
+	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
@@ -695,6 +696,7 @@ symlink.darwin:
 symlink.hpux:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
+	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
 # The following lines means those specific architectures do no symlinks
 symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
