@@ -70,50 +70,6 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#if 0
-#ifndef OPENSSL_NO_MD2
-#include <openssl/md2.h>
-#endif
-#ifndef OPENSSL_NO_MD4
-#include <openssl/md4.h>
-#endif
-#ifndef OPENSSL_NO_MD5
-#include <openssl/md5.h>
-#endif
-#ifndef OPENSSL_NO_SHA
-#include <openssl/sha.h>
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-#include <openssl/ripemd.h>
-#endif
-#ifndef OPENSSL_NO_DES
-#include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_RC4
-#include <openssl/rc4.h>
-#endif
-#ifndef OPENSSL_NO_RC2
-#include <openssl/rc2.h>
-#endif
-#ifndef OPENSSL_NO_RC5
-#include <openssl/rc5.h>
-#endif
-#ifndef OPENSSL_NO_BF
-#include <openssl/blowfish.h>
-#endif
-#ifndef OPENSSL_NO_CAST
-#include <openssl/cast.h>
-#endif
-#ifndef OPENSSL_NO_IDEA
-#include <openssl/idea.h>
-#endif
-#ifndef OPENSSL_NO_MDC2
-#include <openssl/mdc2.h>
-#endif
-#ifndef OPENSSL_NO_AES
-#include <openssl/rijndael.h>
-#endif
-#endif /* 0 */
 
 /*
 #define EVP_RC2_KEY_SIZE		16
@@ -130,20 +86,6 @@
 #define PKCS5_SALT_LEN			8
 /* Default PKCS#5 iteration count */
 #define PKCS5_DEFAULT_ITER		2048
-
-#if 0
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
-#endif
-#endif /* 0 */
 
 #include <openssl/objects.h>
 
@@ -313,29 +255,6 @@ typedef struct env_md_st
 typedef struct env_md_ctx_st
 	{
 	const EVP_MD *digest;
-#if 0
-	union	{
-		unsigned char base[4];
-#ifndef OPENSSL_NO_MD2
-		MD2_CTX md2;
-#endif
-#ifndef OPENSSL_NO_MD5
-		MD5_CTX md5;
-#endif
-#ifndef OPENSSL_NO_MD4
-		MD4_CTX md4;
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-		RIPEMD160_CTX ripemd160;
-#endif
-#ifndef OPENSSL_NO_SHA
-		SHA_CTX sha;
-#endif
-#ifndef OPENSSL_NO_MDC2
-		MDC2_CTX mdc2;
-#endif
-		} md;
-#endif
 	void *md_data;
 	} EVP_MD_CTX;
 
@@ -413,62 +332,6 @@ struct evp_cipher_ctx_st
 	void *app_data;		/* application stuff */
 	int key_len;		/* May change for variable length cipher */
 	unsigned long flags;	/* Various flags */
-#if 0
-	union
-		{
-#ifndef OPENSSL_NO_RC4
-		struct
-			{
-			unsigned char key[EVP_RC4_KEY_SIZE];
-			RC4_KEY ks;	/* working key */
-			} rc4;
-#endif
-#ifndef OPENSSL_NO_DES
-		des_key_schedule des_ks;/* key schedule */
-		struct
-			{
-			des_key_schedule ks;/* key schedule */
-			des_cblock inw;
-			des_cblock outw;
-			} desx_cbc;
-		struct
-			{
-			des_key_schedule ks1;/* key schedule */
-			des_key_schedule ks2;/* key schedule (for ede) */
-			des_key_schedule ks3;/* key schedule (for ede3) */
-			} des_ede;
-#endif
-#ifndef OPENSSL_NO_IDEA
-		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
-#endif
-#ifndef OPENSSL_NO_RC2
-		struct
-			{
-			int key_bits;	/* effective key bits */
-			RC2_KEY ks;/* key schedule */
-			} rc2;
-#endif
-#ifndef OPENSSL_NO_RC5
-		struct
-			{
-			int rounds;	/* number of rounds */
-			RC5_32_KEY ks;/* key schedule */
-			} rc5;
-#endif
-#ifndef OPENSSL_NO_BF
-		BF_KEY bf_ks;/* key schedule */
-#endif
-#ifndef OPENSSL_NO_CAST
-		CAST_KEY cast_ks;/* key schedule */
-#endif
-#ifndef OPENSSL_NO_AES
-		RIJNDAEL_KEY rijndael;
-#endif
-#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-		struct session_op *dev_crypto;
-#endif
-		} c;
-#endif /* 0 */
 	void *cipher_data; /* per EVP data */
 	int final_used;
 	int block_mask;
