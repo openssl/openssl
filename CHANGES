@@ -3,6 +3,15 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) In the NCONF_...-based implementations for CONF_... queries
+     (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
+     a temporary CONF structure with the data component set to NULL
+     (which gives segmentation faults in lh_retrieve).
+     Instead, use NULL for the CONF pointer in CONF_get_string and
+     CONF_get_number (which may use environment variables) and directly
+     return NULL from CONF_get_section.
+     [Bodo Moeller]
+
   *) Fix potential buffer overrun for EBCDIC.
      [Ulf Moeller]
 
