@@ -98,6 +98,7 @@ char *sk_pop(STACK *st);
 void sk_zero(STACK *st);
 int (*sk_set_cmp_func(STACK *sk, int (*c)()))();
 STACK *sk_dup(STACK *st);
+void sk_sort(STACK *st);
 
 #ifdef  __cplusplus
 }

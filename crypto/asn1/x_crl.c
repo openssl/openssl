@@ -100,11 +100,13 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	{
 	int v1=0;
 	long l=0;
+	int (*old_cmp)(X509_REVOKED **,X509_REVOKED **);
 	M_ASN1_I2D_vars(a);
+	
+	old_cmp=sk_X509_REVOKED_set_cmp_func(a->revoked,X509_REVOKED_seq_cmp);
+	sk_X509_REVOKED_sort(a->revoked);
+	sk_X509_REVOKED_set_cmp_func(a->revoked,old_cmp);
 
-	if (sk_num(a->revoked) != 0)
-		qsort((char *)a->revoked->data,sk_num(a->revoked),
-			sizeof(X509_REVOKED *),(int (*)(const void *,const void *))X509_REVOKED_seq_cmp);
 	if ((a->version != NULL) && ((l=ASN1_INTEGER_get(a->version)) != 0))
 		{
 		M_ASN1_I2D_len(a->version,i2d_ASN1_INTEGER);
@@ -114,7 +116,8 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_TIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_TIME); }
-	M_ASN1_I2D_len_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
+	M_ASN1_I2D_len_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
+					 i2d_X509_REVOKED);
 	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
 					     V_ASN1_SEQUENCE,v1);
@@ -130,7 +133,8 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_UTCTIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME); }
-	M_ASN1_I2D_put_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
+	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
+					 i2d_X509_REVOKED);
 	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
 					     V_ASN1_SEQUENCE,v1);
@@ -172,16 +176,17 @@ X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
 							V_ASN1_GENERALIZEDTIME);
 	if (ret->revoked != NULL)
 		{
-		while (sk_num(ret->revoked))
-			X509_REVOKED_free((X509_REVOKED *)sk_pop(ret->revoked));
+		while (sk_X509_REVOKED_num(ret->revoked))
+			X509_REVOKED_free(sk_X509_REVOKED_pop(ret->revoked));
 		}
-	M_ASN1_D2I_get_seq_opt(ret->revoked,d2i_X509_REVOKED,X509_REVOKED_free);
+	M_ASN1_D2I_get_seq_opt_type(X509_REVOKED,ret->revoked,d2i_X509_REVOKED,
+				    X509_REVOKED_free);
 
 	if (ret->revoked != NULL)
 		{
-		for (i=0; i<sk_num(ret->revoked); i++)
+		for (i=0; i<sk_X509_REVOKED_num(ret->revoked); i++)
 			{
-			((X509_REVOKED *)sk_value(ret->revoked,i))->sequence=i;
+			sk_X509_REVOKED_value(ret->revoked,i)->sequence=i;
 			}
 		}
 
@@ -258,9 +263,9 @@ X509_CRL_INFO *X509_CRL_INFO_new(void)
 	M_ASN1_New(ret->issuer,X509_NAME_new);
 	M_ASN1_New(ret->lastUpdate,ASN1_UTCTIME_new);
 	ret->nextUpdate=NULL;
-	M_ASN1_New(ret->revoked,sk_new_null);
+	M_ASN1_New(ret->revoked,sk_X509_REVOKED_new_null);
 	M_ASN1_New(ret->extensions,sk_X509_EXTENSION_new_null);
-	ret->revoked->comp=(int (*)())X509_REVOKED_cmp;
+	sk_X509_REVOKED_set_cmp_func(ret->revoked,X509_REVOKED_cmp);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_CRL_INFO_NEW);
 	}
@@ -297,7 +302,7 @@ void X509_CRL_INFO_free(X509_CRL_INFO *a)
 	ASN1_UTCTIME_free(a->lastUpdate);
 	if (a->nextUpdate)
 		ASN1_UTCTIME_free(a->nextUpdate);
-	sk_pop_free(a->revoked,X509_REVOKED_free);
+	sk_X509_REVOKED_pop_free(a->revoked,X509_REVOKED_free);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
 	Free(a);
 	}
@@ -338,3 +343,6 @@ static int X509_REVOKED_seq_cmp(X509_REVOKED **a, X509_REVOKED **b)
 	{
 	return((*a)->sequence-(*b)->sequence);
 	}
+
+IMPLEMENT_STACK_OF(X509_REVOKED)
+IMPLEMENT_ASN1_SET_OF(X509_REVOKED)

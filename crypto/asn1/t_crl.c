@@ -87,7 +87,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 {
 	char buf[256];
 	unsigned char *s;
-	STACK *rev;
+	STACK_OF(X509_REVOKED) *rev;
 	X509_REVOKED *r;
 	long l;
 	int i, j, n;
@@ -117,11 +117,12 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 
 	rev = X509_CRL_get_REVOKED(x);
 
-	if(sk_num(rev)) BIO_printf(out, "Revoked Certificates:\n");
+	if(sk_X509_REVOKED_num(rev))
+	    BIO_printf(out, "Revoked Certificates:\n");
 	else BIO_printf(out, "No Revoked Certificates.\n");
 
-	for(i = 0; i < sk_num(rev); i++) {
-		r = (X509_REVOKED *) sk_value(rev, i);
+	for(i = 0; i < sk_X509_REVOKED_num(rev); i++) {
+		r = sk_X509_REVOKED_value(rev, i);
 		BIO_printf(out,"    Serial Number: ");
 		i2a_ASN1_INTEGER(out,r->serialNumber);
 		BIO_printf(out,"\n        Revocation Date: ","");

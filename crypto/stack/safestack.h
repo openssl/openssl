@@ -82,7 +82,8 @@ int (*sk_##type##_set_cmp_func(STACK_OF(type) *sk, \
 STACK_OF(type) *sk_##type##_dup(STACK_OF(type) *sk); \
 void sk_##type##_pop_free(STACK_OF(type) *sk,void (*func)(type *)); \
 type *sk_##type##_shift(STACK_OF(type) *sk); \
-type *sk_##type##_pop(STACK_OF(type) *sk);
+type *sk_##type##_pop(STACK_OF(type) *sk); \
+void sk_##type##_sort(STACK_OF(type) *sk);
 
 #define IMPLEMENT_STACK_OF(type) \
 STACK_OF(type) *sk_##type##_new(int (*cmp)(type **,type **)) \
@@ -121,6 +122,8 @@ void sk_##type##_pop_free(STACK_OF(type) *sk,void (*func)(type *)) \
 type *sk_##type##_shift(STACK_OF(type) *sk) \
     { return (type *)sk_shift((STACK *)sk); } \
 type *sk_##type##_pop(STACK_OF(type) *sk) \
-    { return (type *)sk_pop((STACK *)sk); }
+    { return (type *)sk_pop((STACK *)sk); } \
+void sk_##type##_sort(STACK_OF(type) *sk) \
+    { sk_sort((STACK *)sk); }
 
 #endif /* ndef HEADER_SAFESTACK_H */

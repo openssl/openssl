@@ -249,6 +249,9 @@ typedef struct X509_revoked_st
 	int sequence; /* load sequence */
 	} X509_REVOKED;
 
+DECLARE_STACK_OF(X509_REVOKED)
+DECLARE_ASN1_SET_OF(X509_REVOKED)
+
 typedef struct X509_crl_info_st
 	{
 	ASN1_INTEGER *version;
@@ -256,7 +259,7 @@ typedef struct X509_crl_info_st
 	X509_NAME *issuer;
 	ASN1_UTCTIME *lastUpdate;
 	ASN1_UTCTIME *nextUpdate;
-	STACK /* X509_REVOKED */ *revoked;
+	STACK_OF(X509_REVOKED) *revoked;
 	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
 	} X509_CRL_INFO;
 

@@ -217,13 +217,9 @@ int sk_find(STACK *st, char *data)
 				return(i);
 		return(-1);
 		}
-	comp_func=(int (*)())st->comp;
-	if (!st->sorted)
-		{
-		qsort((char *)st->data,st->num,sizeof(char *),FP_ICC comp_func);
-		st->sorted=1;
-		}
+	sk_sort(st);
 	if (data == NULL) return(-1);
+	comp_func=(int (*)())st->comp;
 	r=(char **)bsearch(&data,(char *)st->data,
 		st->num,sizeof(char *),FP_ICC comp_func);
 	if (r == NULL) return(-1);
@@ -301,3 +297,15 @@ char *sk_set(STACK *st, int i, char *value)
 	if(st == NULL) return NULL;
 	return (st->data[i] = value);
 }
+
+void sk_sort(STACK *st)
+    {
+    if (!st->sorted)
+	{
+	int (*comp_func)();
+
+	comp_func=(int (*)())st->comp;
+	qsort(st->data,st->num,sizeof(char *),FP_ICC comp_func);
+	st->sorted=1;
+	}
+    }

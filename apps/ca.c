@@ -1073,15 +1073,15 @@ bad:
 				if (!a2i_ASN1_INTEGER(hex,r->serialNumber,
 					buf[0],BSIZE)) goto err;
 
-				sk_push(ci->revoked,(char *)r);
+				sk_X509_REVOKED_push(ci->revoked,r);
 				}
 			}
 		/* sort the data so it will be written in serial
 		 * number order */
-		sk_find(ci->revoked,NULL);
-		for (i=0; i<sk_num(ci->revoked); i++)
+		sk_X509_REVOKED_sort(ci->revoked);
+		for (i=0; i<sk_X509_REVOKED_num(ci->revoked); i++)
 			{
-			r=(X509_REVOKED *)sk_value(ci->revoked,i);
+			r=sk_X509_REVOKED_value(ci->revoked,i);
 			r->sequence=i;
 			}
 
