@@ -765,7 +765,7 @@ install: all install_docs
 			set $(MAKE); \
 			$$1 -f $$here/Makefile link-shared ); \
 	fi
-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkginfo
+	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
