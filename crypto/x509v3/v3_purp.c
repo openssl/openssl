@@ -615,7 +615,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 					break;
 				}
 			}
-			if(nm && X509_NAME_cmp(nm, X509_get_subject_name(issuer)))
+			if(nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
 				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
 		}
 	}
