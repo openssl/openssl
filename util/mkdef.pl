@@ -208,8 +208,7 @@ $crypto.=" crypto/md5/md5.h" ; # unless $no_md5;
 $crypto.=" crypto/mdc2/mdc2.h" ; # unless $no_mdc2;
 $crypto.=" crypto/sha/sha.h" ; # unless $no_sha;
 $crypto.=" crypto/ripemd/ripemd.h" ; # unless $no_ripemd;
-$crypto.=" crypto/rijndael/rijndael.h" ; # unless $no_aes;
-$crypto.=" crypto/rijndael/rd_fst.h" ; # unless $no_aes;
+$crypto.=" crypto/aes/aes.h" ; # unless $no_aes;
 
 $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h" ; # unless $no_rsa;

@@ -1,5 +1,6 @@
+/* crypto/aes/aes_ecb.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,62 +49,19 @@
  *
  */
 
-#ifndef OPENSSL_NO_AES
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
-#include "evp_locl.h"
+#include "aes_locl.h"
 
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-					const unsigned char *iv, int enc);
+void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+		     const AES_KEY *key, const int enc) {
 
-typedef struct
-	{
-	AES_KEY ks;
-	} EVP_AES_KEY;
+        assert(in && out && key);
+	assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
 
-#define data(ctx)	EVP_C_DATA(EVP_AES_KEY,ctx)
-
-#define IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(cname, ksched, cprefix, kstruct, \
-			  nid, block_size, key_len, iv_len, flags, \
-			  init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_func_cbc(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, iv_len, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, 0, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl)
-
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_128, ks, AES, EVP_AES_KEY,
-				   NID_aes_128, 16, 16, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_192, ks, AES, EVP_AES_KEY,
-				   NID_aes_192, 16, 24, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_256, ks, AES, EVP_AES_KEY,
-				   NID_aes_256, 16, 32, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-		   const unsigned char *iv, int enc) {
-
-	if (enc) 
-		AES_set_encrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
+	if (AES_ENCRYPT == enc)
+		AES_encrypt(in, out, key);
 	else
-		AES_set_decrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
-
-	return 1;
+		AES_decrypt(in, out, key);
 }
 
-#endif

@@ -12,6 +12,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Change the AES code to follow the same name structure as all other
+     symmetric ciphers, and behave the same way.  Move everything to
+     the directory crypto/aes, thereby obsoleting crypto/rijndael.
+     [Stephen Sprunk <stephen@sprunk.org> and Richard Levitte]
+
   *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
      type, we must throw them away by setting rr->length to 0.
      [D P Chang <dpc@qualys.com>]

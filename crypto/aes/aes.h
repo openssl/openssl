@@ -1,5 +1,6 @@
+/* crypto/aes/aes.h -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,62 +49,45 @@
  *
  */
 
-#ifndef OPENSSL_NO_AES
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
-#include <openssl/aes.h>
-#include "evp_locl.h"
+#ifndef HEADER_AES_H
+#define HEADER_AES_H
 
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-					const unsigned char *iv, int enc);
-
-typedef struct
-	{
-	AES_KEY ks;
-	} EVP_AES_KEY;
-
-#define data(ctx)	EVP_C_DATA(EVP_AES_KEY,ctx)
-
-#define IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(cname, ksched, cprefix, kstruct, \
-			  nid, block_size, key_len, iv_len, flags, \
-			  init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_func_cbc(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
-BLOCK_CIPHER_def_cbc(cname, kstruct, nid, block_size, key_len, iv_len, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, 0, flags, \
-		     init_key, cleanup, set_asn1, get_asn1, ctrl)
-
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_128, ks, AES, EVP_AES_KEY,
-				   NID_aes_128, 16, 16, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_192, ks, AES, EVP_AES_KEY,
-				   NID_aes_192, 16, 24, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-IMPLEMENT_BLOCK_CIPHER_def_ecb_cbc(aes_256, ks, AES, EVP_AES_KEY,
-				   NID_aes_256, 16, 32, 16,
-				   0, aes_init_key, NULL, 
-				   EVP_CIPHER_set_asn1_iv,
-				   EVP_CIPHER_get_asn1_iv,
-				   NULL)
-
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-		   const unsigned char *iv, int enc) {
-
-	if (enc) 
-		AES_set_encrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
-	else
-		AES_set_decrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
-
-	return 1;
-}
-
+#ifdef OPENSSL_NO_AES
+#error AES is disabled.
 #endif
+
+static const int AES_DECRYPT = 0;
+static const int AES_ENCRYPT = 1;
+#define AES_MAXNR 14 /* array size can't be a const in C */
+static const int AES_BLOCK_SIZE = 16; /* bytes */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+/* This should be a hidden type, but EVP requires that the size be known */
+struct aes_key_st {
+    unsigned long rd_key[4 *(AES_MAXNR + 1)];
+    int rounds;
+};
+typedef struct aes_key_st AES_KEY;
+
+const char *AES_options(void);
+
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
+int AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
+
+void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
+void AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
+
+void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+	       	     const AES_KEY *key, const int enc);
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+	       	     const unsigned long length, const AES_KEY *key,
+		     unsigned char *ivec, const int enc);
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif /* !HEADER_AES_H */
