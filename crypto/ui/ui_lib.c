@@ -92,9 +92,8 @@ UI *UI_new_method(const UI_METHOD *method)
 	return ret;
 	}
 
-static void free_string(void *data)
+static void free_string(UI_STRING *uis)
 	{
-	UI_STRING *uis = (UI_STRING *)data;
 	if (uis->flags & OUT_STRING_FREEABLE)
 		OPENSSL_free((char *)uis->out_string);
 	OPENSSL_free(uis);
