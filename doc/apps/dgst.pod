@@ -14,6 +14,7 @@ B<openssl> B<dgst>
 [B<-binary>]
 [B<-out filename>]
 [B<-sign filename>]
+[B<-passin arg>]
 [B<-verify filename>]
 [B<-prverify filename>]
 [B<-signature filename>]
@@ -58,6 +59,11 @@ filename to output to, or standard output by default.
 =item B<-sign filename>
 
 digitally sign the digest using the private key in "filename".
+
+=item B<-passin arg>
+
+the private key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-verify filename>
 

@@ -4,6 +4,9 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Add new -passin argument to dgst.
+     [Steve Henson]
+
   *) Perform some character comparisons of different types in X509_NAME_cmp:
      this is needed for some certificates that reencode DNs into UTF8Strings
      (in violation of RFC3280) and can't or wont issue name rollover
