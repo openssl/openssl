@@ -1909,10 +1909,13 @@ krb5_error_code  kssl_check_authent(
 	if (authentp == NULL  ||  authentp->length == 0)  return 0;
 
 #ifdef KSSL_DEBUG
+        {
+        unsigned int ui;
 	printf("kssl_check_authent: authenticator[%d]:\n",authentp->length);
 	p = authentp->data; 
-	for (padl=0; padl < authentp->length; padl++)  printf("%02x ",p[padl]);
+	for (ui=0; ui < authentp->length; ui++)  printf("%02x ",p[ui]);
 	printf("\n");
+        }
 #endif	/* KSSL_DEBUG */
 
 	unencbufsize = 2 * authentp->length;

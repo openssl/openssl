@@ -311,7 +311,9 @@ int ssl3_accept(SSL *s)
 				((s->s3->tmp.new_cipher->algorithms & SSL_aNULL) &&
 				 /* ... except when the application insists on verification
 				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
-				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)))
+				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
+                                 /* never request cert in Kerberos ciphersuites */
+                                (s->s3->tmp.new_cipher->algorithms & SSL_aKRB5))
 				{
 				/* no cert request */
 				skip=1;

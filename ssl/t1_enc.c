@@ -493,7 +493,7 @@ int tls1_enc(SSL *s, int send)
 
 #ifdef KSSL_DEBUG
 		{
-                unsigned long i;
+                unsigned long ui;
 		printf("EVP_Cipher(ds=%p,rec->data=%p,rec->input=%p,l=%ld) ==>\n",
                         ds,rec->data,rec->input,l);
 		printf("\tEVP_CIPHER_CTX: %d buf_len, %d key_len [%d %d], %d iv_len\n",
@@ -504,7 +504,7 @@ int tls1_enc(SSL *s, int send)
 		for (i=0; i<ds->cipher->iv_len; i++) printf("%02X", ds->iv[i]);
 		printf("\n");
 		printf("\trec->input=");
-		for (i=0; i<l; i++) printf(" %02x", rec->input[i]);
+		for (ui=0; ui<l; ui++) printf(" %02x", rec->input[ui]);
 		printf("\n");
 		}
 #endif	/* KSSL_DEBUG */
