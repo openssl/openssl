@@ -94,7 +94,7 @@ X509_SIG *X509_SIG_new(void)
 
 	M_ASN1_New_Malloc(ret,X509_SIG);
 	M_ASN1_New(ret->algor,X509_ALGOR_new);
-	M_ASN1_New(ret->digest,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->digest,M_ASN1_OCTET_STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_SIG_NEW);
 	}
@@ -103,7 +103,7 @@ void X509_SIG_free(X509_SIG *a)
 	{
 	if (a == NULL) return;
 	X509_ALGOR_free(a->algor);
-	ASN1_OCTET_STRING_free(a->digest);
+	M_ASN1_OCTET_STRING_free(a->digest);
 	Free((char *)a);
 	}
 

@@ -60,6 +60,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_UTF8STRING *ASN1_UTF8STRING_new(void)
+{ return M_ASN1_UTF8STRING_new();}
+
+void ASN1_UTF8STRING_free(ASN1_UTF8STRING *x)
+{ return M_ASN1_UTF8STRING_free(x);}
+
 int i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,

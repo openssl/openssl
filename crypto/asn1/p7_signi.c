@@ -119,12 +119,12 @@ PKCS7_SIGNER_INFO *PKCS7_SIGNER_INFO_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_SIGNER_INFO);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->issuer_and_serial,PKCS7_ISSUER_AND_SERIAL_new);
 	M_ASN1_New(ret->digest_alg,X509_ALGOR_new);
 	ret->auth_attr=NULL;
 	M_ASN1_New(ret->digest_enc_alg,X509_ALGOR_new);
-	M_ASN1_New(ret->enc_digest,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->enc_digest,M_ASN1_OCTET_STRING_new);
 	ret->unauth_attr=NULL;
 	ret->pkey=NULL;
 	return(ret);
@@ -134,12 +134,12 @@ PKCS7_SIGNER_INFO *PKCS7_SIGNER_INFO_new(void)
 void PKCS7_SIGNER_INFO_free(PKCS7_SIGNER_INFO *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	PKCS7_ISSUER_AND_SERIAL_free(a->issuer_and_serial);
 	X509_ALGOR_free(a->digest_alg);
 	sk_X509_ATTRIBUTE_pop_free(a->auth_attr,X509_ATTRIBUTE_free);
 	X509_ALGOR_free(a->digest_enc_alg);
-	ASN1_OCTET_STRING_free(a->enc_digest);
+	M_ASN1_OCTET_STRING_free(a->enc_digest);
 	sk_X509_ATTRIBUTE_pop_free(a->unauth_attr,X509_ATTRIBUTE_free);
 	if (a->pkey != NULL)
 		EVP_PKEY_free(a->pkey);

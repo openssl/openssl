@@ -102,7 +102,7 @@ ASN1_HEADER *ASN1_HEADER_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,ASN1_HEADER);
-	M_ASN1_New(ret->header,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->header,M_ASN1_OCTET_STRING_new);
 	ret->meth=NULL;
 	ret->data=NULL;
 	return(ret);
@@ -112,7 +112,7 @@ ASN1_HEADER *ASN1_HEADER_new(void)
 void ASN1_HEADER_free(ASN1_HEADER *a)
 	{
 	if (a == NULL) return;
-	ASN1_OCTET_STRING_free(a->header);
+	M_ASN1_OCTET_STRING_free(a->header);
 	if (a->meth != NULL)
 		a->meth->destroy(a->data);
 	Free((char *)a);

@@ -60,6 +60,15 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_BIT_STRING *ASN1_BIT_STRING_new(void)
+{ return M_ASN1_BIT_STRING_new(); }
+
+void ASN1_BIT_STRING_free(ASN1_BIT_STRING *x)
+{ return M_ASN1_BIT_STRING_free(x); }
+
+int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
+{ return M_ASN1_BIT_STRING_set(x, d, len); }
+
 int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
 	int ret,j,r,bits,len;
@@ -121,7 +130,7 @@ ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
 
 	if ((a == NULL) || ((*a) == NULL))
 		{
-		if ((ret=ASN1_BIT_STRING_new()) == NULL) return(NULL);
+		if ((ret=M_ASN1_BIT_STRING_new()) == NULL) return(NULL);
 		}
 	else
 		ret=(*a);
@@ -173,7 +182,7 @@ ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
 err:
 	ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		ASN1_BIT_STRING_free(ret);
+		M_ASN1_BIT_STRING_free(ret);
 	return(NULL);
 	}
 

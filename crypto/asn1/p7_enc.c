@@ -95,7 +95,7 @@ PKCS7_ENCRYPT *PKCS7_ENCRYPT_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_ENCRYPT);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->enc_data,PKCS7_ENC_CONTENT_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS7_ENCRYPT_NEW);
@@ -104,7 +104,7 @@ PKCS7_ENCRYPT *PKCS7_ENCRYPT_new(void)
 void PKCS7_ENCRYPT_free(PKCS7_ENCRYPT *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	PKCS7_ENC_CONTENT_free(a->enc_data);
 	Free((char *)a);
 	}

@@ -111,7 +111,7 @@ SXNET *SXNET_new(void)
 	SXNET *ret=NULL;
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, SXNET);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->ids,sk_SXNETID_new_null);
 	return (ret);
 	M_ASN1_New_Error(ASN1_F_SXNET_NEW);
@@ -130,7 +130,7 @@ SXNET *d2i_SXNET(SXNET **a, unsigned char **pp, long length)
 void SXNET_free(SXNET *a)
 {
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	sk_SXNETID_pop_free(a->ids, SXNETID_free);
 	Free (a);
 }
@@ -156,7 +156,7 @@ SXNETID *SXNETID_new(void)
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, SXNETID);
 	ret->zone = NULL;
-	M_ASN1_New(ret->user,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->user,M_ASN1_OCTET_STRING_new);
 	return (ret);
 	M_ASN1_New_Error(ASN1_F_SXNETID_NEW);
 }
@@ -174,8 +174,8 @@ SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length)
 void SXNETID_free(SXNETID *a)
 {
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->zone);
-	ASN1_OCTET_STRING_free(a->user);
+	M_ASN1_INTEGER_free(a->zone);
+	M_ASN1_OCTET_STRING_free(a->user);
 	Free (a);
 }
 
@@ -193,7 +193,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 		tmp = i2s_ASN1_INTEGER(NULL, id->zone);
 		BIO_printf(out, "\n%*sZone: %s, User: ", indent, "", tmp);
 		Free(tmp);
-		ASN1_OCTET_STRING_print(out, id->user);
+		M_ASN1_OCTET_STRING_print(out, id->user);
 	}
 	return 1;
 }
@@ -244,9 +244,9 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user,
 	     int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
-	if(!(izone = ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
+	if(!(izone = M_ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
 		X509V3err(X509V3_F_SXNET_ADD_ID_ULONG,ERR_R_MALLOC_FAILURE);
-		ASN1_INTEGER_free(izone);
+		M_ASN1_INTEGER_free(izone);
 		return 0;
 	}
 	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
@@ -285,7 +285,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user,
 	if(!(id = SXNETID_new())) goto err;
 	if(userlen == -1) userlen = strlen(user);
 		
-	if(!ASN1_OCTET_STRING_set(id->user, user, userlen)) goto err;
+	if(!M_ASN1_OCTET_STRING_set(id->user, user, userlen)) goto err;
 	if(!sk_SXNETID_push(sx->ids, id)) goto err;
 	id->zone = zone;
 	return 1;
@@ -307,7 +307,7 @@ ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone)
 		return NULL;
 	}
 	oct = SXNET_get_id_INTEGER(sx, izone);
-	ASN1_INTEGER_free(izone);
+	M_ASN1_INTEGER_free(izone);
 	return oct;
 }
 
@@ -315,13 +315,13 @@ ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 {
 	ASN1_INTEGER *izone = NULL;
 	ASN1_OCTET_STRING *oct;
-	if(!(izone = ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
+	if(!(izone = M_ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
 		X509V3err(X509V3_F_SXNET_GET_ID_ULONG,ERR_R_MALLOC_FAILURE);
-		ASN1_INTEGER_free(izone);
+		M_ASN1_INTEGER_free(izone);
 		return NULL;
 	}
 	oct = SXNET_get_id_INTEGER(sx, izone);
-	ASN1_INTEGER_free(izone);
+	M_ASN1_INTEGER_free(izone);
 	return oct;
 }
 
@@ -331,7 +331,7 @@ ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 	int i;
 	for(i = 0; i < sk_SXNETID_num(sx->ids); i++) {
 		id = sk_SXNETID_value(sx->ids, i);
-		if(!ASN1_INTEGER_cmp(id->zone, zone)) return id->user;
+		if(!M_ASN1_INTEGER_cmp(id->zone, zone)) return id->user;
 	}
 	return NULL;
 }

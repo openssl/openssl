@@ -61,7 +61,6 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static ASN1_BIT_STRING *asn1_bit_string_new(void);
 static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
@@ -97,11 +96,6 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
 X509V3_EXT_METHOD v3_nscert = EXT_BITSTRING(NID_netscape_cert_type, ns_cert_type_table);
 X509V3_EXT_METHOD v3_key_usage = EXT_BITSTRING(NID_key_usage, key_usage_type_table);
 
-static ASN1_BIT_STRING *asn1_bit_string_new(void)
-{
-	return ASN1_BIT_STRING_new();
-}
-
 static STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 	     ASN1_BIT_STRING *bits, STACK_OF(CONF_VALUE) *ret)
 {
@@ -120,7 +114,7 @@ static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 	ASN1_BIT_STRING *bs;
 	int i;
 	BIT_STRING_BITNAME *bnam;
-	if(!(bs = ASN1_BIT_STRING_new())) {
+	if(!(bs = M_ASN1_BIT_STRING_new())) {
 		X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -137,7 +131,7 @@ static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 			X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
 					X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
 			X509V3_conf_err(val);
-			ASN1_BIT_STRING_free(bs);
+			M_ASN1_BIT_STRING_free(bs);
 			return NULL;
 		}
 	}

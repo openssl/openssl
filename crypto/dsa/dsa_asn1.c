@@ -83,7 +83,7 @@ DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, unsigned char **pp, long length)
 	M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
 	if ((ret->s=BN_bin2bn(bs->data,bs->length,ret->s)) == NULL)
 		goto err_bn;
-	ASN1_BIT_STRING_free(bs);
+	M_ASN1_BIT_STRING_free(bs);
 	M_ASN1_D2I_Finish_2(a);
 
 err_bn:
@@ -91,6 +91,6 @@ err_bn:
 err:
 	DSAerr(DSA_F_D2I_DSA_SIG,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) DSA_SIG_free(ret);
-	if (bs != NULL) ASN1_BIT_STRING_free(bs);
+	if (bs != NULL) M_ASN1_BIT_STRING_free(bs);
 	return(NULL);
 }

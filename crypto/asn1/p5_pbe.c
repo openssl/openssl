@@ -82,8 +82,8 @@ PBEPARAM *PBEPARAM_new(void)
 	PBEPARAM *ret=NULL;
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, PBEPARAM);
-	M_ASN1_New(ret->iter,ASN1_INTEGER_new);
-	M_ASN1_New(ret->salt,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->iter,M_ASN1_INTEGER_new);
+	M_ASN1_New(ret->salt,M_ASN1_OCTET_STRING_new);
 	return (ret);
 	M_ASN1_New_Error(ASN1_F_PBEPARAM_NEW);
 }
@@ -101,8 +101,8 @@ PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length)
 void PBEPARAM_free (PBEPARAM *a)
 {
 	if(a==NULL) return;
-	ASN1_OCTET_STRING_free(a->salt);
-	ASN1_INTEGER_free (a->iter);
+	M_ASN1_OCTET_STRING_free(a->salt);
+	M_ASN1_INTEGER_free (a->iter);
 	Free ((char *)a);
 }
 

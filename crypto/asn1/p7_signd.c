@@ -112,7 +112,7 @@ PKCS7_SIGNED *PKCS7_SIGNED_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_SIGNED);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->md_algs,sk_X509_ALGOR_new_null);
 	M_ASN1_New(ret->contents,PKCS7_new);
 	ret->cert=NULL;
@@ -125,7 +125,7 @@ PKCS7_SIGNED *PKCS7_SIGNED_new(void)
 void PKCS7_SIGNED_free(PKCS7_SIGNED *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	sk_X509_ALGOR_pop_free(a->md_algs,X509_ALGOR_free);
 	PKCS7_free(a->contents);
 	sk_X509_pop_free(a->cert,X509_free);

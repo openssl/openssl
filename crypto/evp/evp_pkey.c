@@ -254,11 +254,11 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 		if (!ASN1_pack_string((char *)dpkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			ASN1_INTEGER_free (dpkey);
+			M_ASN1_INTEGER_free (dpkey);
 			PKCS8_PRIV_KEY_INFO_free (p8);
 			return NULL;
 		}
-		ASN1_INTEGER_free (dpkey);
+		M_ASN1_INTEGER_free (dpkey);
 		break;
 #endif
 		default:

@@ -69,7 +69,7 @@ int X509_issuer_and_serial_cmp(X509 *a, X509 *b)
 
 	ai=a->cert_info;
 	bi=b->cert_info;
-	i=ASN1_INTEGER_cmp(ai->serialNumber,bi->serialNumber);
+	i=M_ASN1_INTEGER_cmp(ai->serialNumber,bi->serialNumber);
 	if (i) return(i);
 	return(X509_NAME_cmp(ai->issuer,bi->issuer));
 	}

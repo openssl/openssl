@@ -160,7 +160,7 @@ static void ext_print(BIO *out, X509_EXTENSION *ex)
 	BIO_printf(out, ": %s\n", j ? "critical":"","");
 	if(!X509V3_EXT_print(out, ex, 0, 16)) {
 		BIO_printf(out, "%16s", "");
-		ASN1_OCTET_STRING_print(out,ex->value);
+		M_ASN1_OCTET_STRING_print(out,ex->value);
 	}
 	BIO_write(out,"\n",1);
 }

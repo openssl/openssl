@@ -82,9 +82,9 @@ PKCS12_MAC_DATA *PKCS12_MAC_DATA_new(void)
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, PKCS12_MAC_DATA);
 	ret->dinfo = X509_SIG_new();
-	ret->salt = ASN1_OCTET_STRING_new();
+	ret->salt = M_ASN1_OCTET_STRING_new();
 	ret->iter = NULL;
-	return (ret);
+	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS12_MAC_DATA_NEW);
 }
 
@@ -94,9 +94,9 @@ PKCS12_MAC_DATA *d2i_PKCS12_MAC_DATA(PKCS12_MAC_DATA **a, unsigned char **pp,
 	M_ASN1_D2I_vars(a,PKCS12_MAC_DATA *,PKCS12_MAC_DATA_new);
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get (ret->dinfo, d2i_X509_SIG);
-	M_ASN1_D2I_get (ret->salt, d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get_opt (ret->iter, d2i_ASN1_INTEGER, V_ASN1_INTEGER);
+	M_ASN1_D2I_get(ret->dinfo, d2i_X509_SIG);
+	M_ASN1_D2I_get(ret->salt, d2i_ASN1_OCTET_STRING);
+	M_ASN1_D2I_get_opt(ret->iter, d2i_ASN1_INTEGER, V_ASN1_INTEGER);
 	M_ASN1_D2I_Finish(a, PKCS12_MAC_DATA_free, ASN1_F_D2I_PKCS12_MAC_DATA);
 }
 
@@ -104,7 +104,7 @@ void PKCS12_MAC_DATA_free (PKCS12_MAC_DATA *a)
 {
 	if (a == NULL) return;
 	X509_SIG_free (a->dinfo);
-	ASN1_OCTET_STRING_free (a->salt);
-	ASN1_INTEGER_free (a->iter);
+	M_ASN1_OCTET_STRING_free(a->salt);
+	M_ASN1_INTEGER_free(a->iter);
 	Free ((char *)a);
 }

@@ -63,6 +63,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_new(void)
+{ return M_ASN1_GENERALIZEDTIME_new(); }
+
+void ASN1_GENERALIZEDTIME_free(ASN1_GENERALIZEDTIME *x)
+{ return M_ASN1_GENERALIZEDTIME_free(x); }
+
 int i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a, unsigned char **pp)
 	{
 #ifdef CHARSET_EBCDIC
@@ -106,7 +112,7 @@ ASN1_GENERALIZEDTIME *d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a,
 	return(ret);
 err:
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		ASN1_GENERALIZEDTIME_free(ret);
+		M_ASN1_GENERALIZEDTIME_free(ret);
 	return(NULL);
 	}
 
@@ -193,7 +199,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 #endif
 
 	if (s == NULL)
-		s=ASN1_GENERALIZEDTIME_new();
+		s=M_ASN1_GENERALIZEDTIME_new();
 	if (s == NULL)
 		return(NULL);
 

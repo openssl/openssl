@@ -120,7 +120,7 @@ X509 *X509_new(void)
 	ret->name=NULL;
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
-	M_ASN1_New(ret->signature,ASN1_BIT_STRING_new);
+	M_ASN1_New(ret->signature,M_ASN1_BIT_STRING_new);
 	CRYPTO_new_ex_data(x509_meth, (char *)ret, &ret->ex_data);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_NEW);
@@ -148,7 +148,7 @@ void X509_free(X509 *a)
 	CRYPTO_free_ex_data(x509_meth,(char *)a,&a->ex_data);
 	X509_CINF_free(a->cert_info);
 	X509_ALGOR_free(a->sig_alg);
-	ASN1_BIT_STRING_free(a->signature);
+	M_ASN1_BIT_STRING_free(a->signature);
 
 	if (a->name != NULL) Free(a->name);
 	Free((char *)a);

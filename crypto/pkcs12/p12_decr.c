@@ -155,7 +155,7 @@ ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
 	ASN1_OCTET_STRING *oct;
 	unsigned char *in, *p;
 	int inlen;
-	if (!(oct = ASN1_OCTET_STRING_new ())) {
+	if (!(oct = M_ASN1_OCTET_STRING_new ())) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

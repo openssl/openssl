@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add function equivalents to the various macros in asn1.h. The old
+     macros are retained with an M_ prefix. Code inside the library can
+     use the M_ macros. External code (including the openssl utility)
+     should *NOT* in order to be "shared library friendly".
+     [Steve Henson]
+
   *) Add various functions that can check a certificate's extensions
      to see if it usable for various purposes such as SSL client,
      server or S/MIME and CAs of these types. This is currently 

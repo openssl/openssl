@@ -122,7 +122,7 @@ BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a,
 void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a)
 {
 	if (a == NULL) return;
-	ASN1_INTEGER_free (a->pathlen);
+	M_ASN1_INTEGER_free (a->pathlen);
 	Free ((char *)a);
 }
 

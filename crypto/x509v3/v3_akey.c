@@ -129,9 +129,9 @@ AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp,
 void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 {
 	if (a == NULL) return;
-	ASN1_OCTET_STRING_free(a->keyid);
+	M_ASN1_OCTET_STRING_free(a->keyid);
 	sk_GENERAL_NAME_pop_free(a->issuer, GENERAL_NAME_free);
-	ASN1_INTEGER_free (a->serial);
+	M_ASN1_INTEGER_free (a->serial);
 	Free ((char *)a);
 }
 
@@ -214,7 +214,7 @@ if(keyid) {
 
 if((issuer && !ikeyid) || (issuer == 2)) {
 	isname = X509_NAME_dup(X509_get_issuer_name(cert));
-	serial = ASN1_INTEGER_dup(X509_get_serialNumber(cert));
+	serial = M_ASN1_INTEGER_dup(X509_get_serialNumber(cert));
 	if(!isname || !serial) {
 		X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
 		goto err;
@@ -241,8 +241,8 @@ return akeyid;
 
 err:
 X509_NAME_free(isname);
-ASN1_INTEGER_free(serial);
-ASN1_OCTET_STRING_free(ikeyid);
+M_ASN1_INTEGER_free(serial);
+M_ASN1_OCTET_STRING_free(ikeyid);
 return NULL;
 
 }

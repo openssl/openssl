@@ -115,7 +115,7 @@ X509_CINF *d2i_X509_CINF(X509_CINF **a, unsigned char **pp, long length)
 		{
 		if (ret->version != NULL)
 			{
-			ASN1_INTEGER_free(ret->version);
+			M_ASN1_INTEGER_free(ret->version);
 			ret->version=NULL;
 			}
 		}
@@ -129,12 +129,12 @@ X509_CINF *d2i_X509_CINF(X509_CINF **a, unsigned char **pp, long length)
 		{
 		if (ret->issuerUID != NULL)
 			{
-			ASN1_BIT_STRING_free(ret->issuerUID);
+			M_ASN1_BIT_STRING_free(ret->issuerUID);
 			ret->issuerUID=NULL;
 			}
 		if (ret->subjectUID != NULL)
 			{
-			ASN1_BIT_STRING_free(ret->subjectUID);
+			M_ASN1_BIT_STRING_free(ret->subjectUID);
 			ret->subjectUID=NULL;
 			}
 		M_ASN1_D2I_get_IMP_opt(ret->issuerUID,d2i_ASN1_BIT_STRING,  1,
@@ -170,7 +170,7 @@ X509_CINF *X509_CINF_new(void)
 
 	M_ASN1_New_Malloc(ret,X509_CINF);
 	ret->version=NULL;
-	M_ASN1_New(ret->serialNumber,ASN1_INTEGER_new);
+	M_ASN1_New(ret->serialNumber,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->signature,X509_ALGOR_new);
 	M_ASN1_New(ret->issuer,X509_NAME_new);
 	M_ASN1_New(ret->validity,X509_VAL_new);
@@ -186,15 +186,15 @@ X509_CINF *X509_CINF_new(void)
 void X509_CINF_free(X509_CINF *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
-	ASN1_INTEGER_free(a->serialNumber);
+	M_ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->serialNumber);
 	X509_ALGOR_free(a->signature);
 	X509_NAME_free(a->issuer);
 	X509_VAL_free(a->validity);
 	X509_NAME_free(a->subject);
 	X509_PUBKEY_free(a->key);
-	ASN1_BIT_STRING_free(a->issuerUID);
-	ASN1_BIT_STRING_free(a->subjectUID);
+	M_ASN1_BIT_STRING_free(a->issuerUID);
+	M_ASN1_BIT_STRING_free(a->subjectUID);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
 	Free(a);
 	}

@@ -65,6 +65,12 @@
  * for comments on encoding see a_int.c
  */
 
+ASN1_ENUMERATED *ASN1_ENUMERATED_new(void)
+{ return M_ASN1_ENUMERATED_new(); }
+
+void ASN1_ENUMERATED_free(ASN1_ENUMERATED *x)
+{ return M_ASN1_ENUMERATED_free(x); }
+
 int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	{
 	int pad=0,ret,r,i,t;
@@ -142,7 +148,7 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 
 	if ((a == NULL) || ((*a) == NULL))
 		{
-		if ((ret=ASN1_ENUMERATED_new()) == NULL) return(NULL);
+		if ((ret=M_ASN1_ENUMERATED_new()) == NULL) return(NULL);
 		ret->type=V_ASN1_ENUMERATED;
 		}
 	else
@@ -217,7 +223,7 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 err:
 	ASN1err(ASN1_F_D2I_ASN1_ENUMERATED,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		ASN1_ENUMERATED_free(ret);
+		M_ASN1_ENUMERATED_free(ret);
 	return(NULL);
 	}
 
@@ -295,7 +301,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 	int len,j;
 
 	if (ai == NULL)
-		ret=ASN1_ENUMERATED_new();
+		ret=M_ASN1_ENUMERATED_new();
 	else
 		ret=ai;
 	if (ret == NULL)
@@ -311,7 +317,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 	ret->length=BN_bn2bin(bn,ret->data);
 	return(ret);
 err:
-	if (ret != ai) ASN1_ENUMERATED_free(ret);
+	if (ret != ai) M_ASN1_ENUMERATED_free(ret);
 	return(NULL);
 	}
 

@@ -99,7 +99,7 @@ NETSCAPE_SPKAC *NETSCAPE_SPKAC_new(void)
 
 	M_ASN1_New_Malloc(ret,NETSCAPE_SPKAC);
 	M_ASN1_New(ret->pubkey,X509_PUBKEY_new);
-	M_ASN1_New(ret->challenge,ASN1_IA5STRING_new);
+	M_ASN1_New(ret->challenge,M_ASN1_IA5STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_NETSCAPE_SPKAC_NEW);
 	}
@@ -108,7 +108,7 @@ void NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a)
 	{
 	if (a == NULL) return;
 	X509_PUBKEY_free(a->pubkey);
-	ASN1_IA5STRING_free(a->challenge);
+	M_ASN1_IA5STRING_free(a->challenge);
 	Free((char *)a);
 	}
 
@@ -150,7 +150,7 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_new(void)
 	M_ASN1_New_Malloc(ret,NETSCAPE_SPKI);
 	M_ASN1_New(ret->spkac,NETSCAPE_SPKAC_new);
 	M_ASN1_New(ret->sig_algor,X509_ALGOR_new);
-	M_ASN1_New(ret->signature,ASN1_BIT_STRING_new);
+	M_ASN1_New(ret->signature,M_ASN1_BIT_STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_NETSCAPE_SPKI_NEW);
 	}
@@ -160,7 +160,7 @@ void NETSCAPE_SPKI_free(NETSCAPE_SPKI *a)
 	if (a == NULL) return;
 	NETSCAPE_SPKAC_free(a->spkac);
 	X509_ALGOR_free(a->sig_algor);
-	ASN1_BIT_STRING_free(a->signature);
+	M_ASN1_BIT_STRING_free(a->signature);
 	Free((char *)a);
 	}
 

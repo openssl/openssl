@@ -101,10 +101,10 @@ PKCS7_DIGEST *PKCS7_DIGEST_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_DIGEST);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->md,X509_ALGOR_new);
 	M_ASN1_New(ret->contents,PKCS7_new);
-	M_ASN1_New(ret->digest,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->digest,M_ASN1_OCTET_STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS7_DIGEST_NEW);
 	}
@@ -112,10 +112,10 @@ PKCS7_DIGEST *PKCS7_DIGEST_new(void)
 void PKCS7_DIGEST_free(PKCS7_DIGEST *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	X509_ALGOR_free(a->md);
 	PKCS7_free(a->contents);
-	ASN1_OCTET_STRING_free(a->digest);
+	M_ASN1_OCTET_STRING_free(a->digest);
 	Free((char *)a);
 	}
 

@@ -66,6 +66,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_UTCTIME *ASN1_UTCTIME_new(void)
+{ return M_ASN1_UTCTIME_new(); }
+
+void ASN1_UTCTIME_free(ASN1_UTCTIME *x)
+{ return M_ASN1_UTCTIME_free(x); }
+
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{
 #ifndef CHARSET_EBCDIC
@@ -109,7 +115,7 @@ ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
 	return(ret);
 err:
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		ASN1_UTCTIME_free(ret);
+		M_ASN1_UTCTIME_free(ret);
 	return(NULL);
 	}
 
@@ -192,7 +198,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 #endif
 
 	if (s == NULL)
-		s=ASN1_UTCTIME_new();
+		s=M_ASN1_UTCTIME_new();
 	if (s == NULL)
 		return(NULL);
 

@@ -114,7 +114,7 @@ void PKCS7_ENC_CONTENT_free(PKCS7_ENC_CONTENT *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->content_type);
 	X509_ALGOR_free(a->algorithm);
-	ASN1_OCTET_STRING_free(a->enc_data);
+	M_ASN1_OCTET_STRING_free(a->enc_data);
 	Free((char *)a);
 	}
 

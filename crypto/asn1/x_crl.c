@@ -157,7 +157,7 @@ X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
 	
 	if ((ver == 0) && (ret->version != NULL))
 		{
-		ASN1_INTEGER_free(ret->version);
+		M_ASN1_INTEGER_free(ret->version);
 		ret->version=NULL;
 		}
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
@@ -242,8 +242,8 @@ X509_REVOKED *X509_REVOKED_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_REVOKED);
-	M_ASN1_New(ret->serialNumber,ASN1_INTEGER_new);
-	M_ASN1_New(ret->revocationDate,ASN1_UTCTIME_new);
+	M_ASN1_New(ret->serialNumber,M_ASN1_INTEGER_new);
+	M_ASN1_New(ret->revocationDate,M_ASN1_UTCTIME_new);
 	ret->extensions=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_REVOKED_NEW);
@@ -258,7 +258,7 @@ X509_CRL_INFO *X509_CRL_INFO_new(void)
 	ret->version=NULL;
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
 	M_ASN1_New(ret->issuer,X509_NAME_new);
-	M_ASN1_New(ret->lastUpdate,ASN1_UTCTIME_new);
+	M_ASN1_New(ret->lastUpdate,M_ASN1_UTCTIME_new);
 	ret->nextUpdate=NULL;
 	M_ASN1_New(ret->revoked,sk_X509_REVOKED_new_null);
 	M_ASN1_New(ret->extensions,sk_X509_EXTENSION_new_null);
@@ -276,7 +276,7 @@ X509_CRL *X509_CRL_new(void)
 	ret->references=1;
 	M_ASN1_New(ret->crl,X509_CRL_INFO_new);
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
-	M_ASN1_New(ret->signature,ASN1_BIT_STRING_new);
+	M_ASN1_New(ret->signature,M_ASN1_BIT_STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_CRL_NEW);
 	}
@@ -284,8 +284,8 @@ X509_CRL *X509_CRL_new(void)
 void X509_REVOKED_free(X509_REVOKED *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->serialNumber);
-	ASN1_UTCTIME_free(a->revocationDate);
+	M_ASN1_INTEGER_free(a->serialNumber);
+	M_ASN1_UTCTIME_free(a->revocationDate);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
 	Free(a);
 	}
@@ -293,12 +293,12 @@ void X509_REVOKED_free(X509_REVOKED *a)
 void X509_CRL_INFO_free(X509_CRL_INFO *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	X509_ALGOR_free(a->sig_alg);
 	X509_NAME_free(a->issuer);
-	ASN1_UTCTIME_free(a->lastUpdate);
+	M_ASN1_UTCTIME_free(a->lastUpdate);
 	if (a->nextUpdate)
-		ASN1_UTCTIME_free(a->nextUpdate);
+		M_ASN1_UTCTIME_free(a->nextUpdate);
 	sk_X509_REVOKED_pop_free(a->revoked,X509_REVOKED_free);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
 	Free(a);
@@ -325,7 +325,7 @@ void X509_CRL_free(X509_CRL *a)
 
 	X509_CRL_INFO_free(a->crl);
 	X509_ALGOR_free(a->sig_alg);
-	ASN1_BIT_STRING_free(a->signature);
+	M_ASN1_BIT_STRING_free(a->signature);
 	Free(a);
 	}
 

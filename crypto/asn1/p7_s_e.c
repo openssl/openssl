@@ -119,7 +119,7 @@ PKCS7_SIGN_ENVELOPE *PKCS7_SIGN_ENVELOPE_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_SIGN_ENVELOPE);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->recipientinfo,sk_PKCS7_RECIP_INFO_new_null);
 	M_ASN1_New(ret->md_algs,sk_X509_ALGOR_new_null);
 	M_ASN1_New(ret->enc_data,PKCS7_ENC_CONTENT_new);
@@ -133,7 +133,7 @@ PKCS7_SIGN_ENVELOPE *PKCS7_SIGN_ENVELOPE_new(void)
 void PKCS7_SIGN_ENVELOPE_free(PKCS7_SIGN_ENVELOPE *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	sk_PKCS7_RECIP_INFO_pop_free(a->recipientinfo,PKCS7_RECIP_INFO_free);
 	sk_X509_ALGOR_pop_free(a->md_algs,X509_ALGOR_free);
 	PKCS7_ENC_CONTENT_free(a->enc_data);

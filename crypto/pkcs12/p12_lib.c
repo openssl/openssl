@@ -104,7 +104,7 @@ PKCS12 *PKCS12_new(void)
 void PKCS12_free (PKCS12 *a)
 {
 	if (a == NULL) return;
-	ASN1_INTEGER_free (a->version);
+	M_ASN1_INTEGER_free(a->version);
 	PKCS12_MAC_DATA_free (a->mac);
 	PKCS7_free (a->authsafes);
 	Free ((char *)a);

@@ -60,6 +60,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_BMPSTRING *ASN1_BMPSTRING_new(void)
+{ return M_ASN1_BMPSTRING_new(); }
+
+void ASN1_BMPSTRING_free(ASN1_BMPSTRING *x)
+{ return M_ASN1_BMPSTRING_free(x); }
+
 int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,

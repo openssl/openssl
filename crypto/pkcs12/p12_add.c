@@ -133,7 +133,7 @@ PKCS7 *PKCS12_pack_p7data (STACK *sk)
 		return NULL;
 	}
 	p7->type = OBJ_nid2obj(NID_pkcs7_data);
-	if (!(p7->d.data = ASN1_OCTET_STRING_new())) {
+	if (!(p7->d.data = M_ASN1_OCTET_STRING_new())) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -168,7 +168,7 @@ PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, const char *pass, int passlen,
 	}
 	X509_ALGOR_free(p7->d.encrypted->enc_data->algorithm);
 	p7->d.encrypted->enc_data->algorithm = pbe;
-	ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
+	M_ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
 	if (!(p7->d.encrypted->enc_data->enc_data =
 	PKCS12_i2d_encrypt (pbe, i2d_PKCS12_SAFEBAG, pass, passlen,
 				 (char *)bags, 1))) {
@@ -200,7 +200,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 	}
 	X509_ALGOR_free(p8->algor);
 	p8->algor = pbe;
-	ASN1_OCTET_STRING_free(p8->digest);
+	M_ASN1_OCTET_STRING_free(p8->digest);
 	if (!(p8->digest = 
 	PKCS12_i2d_encrypt (pbe, i2d_PKCS8_PRIV_KEY_INFO, pass, passlen,
 						 (char *)p8inf, 0))) {

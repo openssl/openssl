@@ -268,7 +268,7 @@ void PKCS7_content_free(PKCS7 *a)
 		switch (OBJ_obj2nid(a->type))
 			{
 		case NID_pkcs7_data:
-			ASN1_OCTET_STRING_free(a->d.data);
+			M_ASN1_OCTET_STRING_free(a->d.data);
 			break;
 		case NID_pkcs7_signed:
 			PKCS7_SIGNED_free(a->d.sign);

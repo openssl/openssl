@@ -60,8 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/x509v3.h>
 
-static ASN1_ENUMERATED *asn1_enumerated_new(void);
-
 static ENUMERATED_NAMES crl_reasons[] = {
 {0, "Unspecified", "unspecified"},
 {1, "Key Compromise", "keyCompromise"},
@@ -76,19 +74,14 @@ static ENUMERATED_NAMES crl_reasons[] = {
 
 X509V3_EXT_METHOD v3_crl_reason = { 
 NID_crl_reason, 0,
-(X509V3_EXT_NEW)asn1_enumerated_new,
-(X509V3_EXT_FREE)ASN1_STRING_free,
+(X509V3_EXT_NEW)ASN1_ENUMERATED_new,
+(X509V3_EXT_FREE)ASN1_ENUMERATED_free,
 (X509V3_EXT_D2I)d2i_ASN1_ENUMERATED,
 (X509V3_EXT_I2D)i2d_ASN1_ENUMERATED,
 (X509V3_EXT_I2S)i2s_ASN1_ENUMERATED_TABLE,
 (X509V3_EXT_S2I)NULL,
 NULL, NULL, NULL, NULL, crl_reasons};
 
-
-static ASN1_ENUMERATED *asn1_enumerated_new(void)
-{
-	return ASN1_ENUMERATED_new();
-}
 
 char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method,
 	     ASN1_ENUMERATED *e)

@@ -73,11 +73,11 @@ int PKCS12_add_localkeyid (PKCS12_SAFEBAG *bag, unsigned char *name,
 		return 0;
 	}
 	keyid->type = V_ASN1_OCTET_STRING;
-	if (!(oct = ASN1_OCTET_STRING_new())) {
+	if (!(oct = M_ASN1_OCTET_STRING_new())) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!ASN1_OCTET_STRING_set(oct, name, namelen)) {
+	if (!M_ASN1_OCTET_STRING_set(oct, name, namelen)) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -115,11 +115,11 @@ int PKCS8_add_keyusage (PKCS8_PRIV_KEY_INFO *p8, int usage)
 		return 0;
 	}
 	keyid->type = V_ASN1_BIT_STRING;
-	if (!(bstr = ASN1_BIT_STRING_new())) {
+	if (!(bstr = M_ASN1_BIT_STRING_new())) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!ASN1_BIT_STRING_set(bstr, &us_val, 1)) {
+	if (!M_ASN1_BIT_STRING_set(bstr, &us_val, 1)) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -176,7 +176,7 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 		return 0;
 	}
 	fname->type = V_ASN1_BMPSTRING;
-	if (!(bmp = ASN1_BMPSTRING_new())) {
+	if (!(bmp = M_ASN1_BMPSTRING_new())) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
 							ERR_R_MALLOC_FAILURE);
 		return 0;

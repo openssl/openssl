@@ -157,7 +157,7 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		break;
 	case NID_pkcs7_data:
 		p7->type=obj;
-		if ((p7->d.data=ASN1_OCTET_STRING_new()) == NULL)
+		if ((p7->d.data=M_ASN1_OCTET_STRING_new()) == NULL)
 			goto err;
 		break;
 	case NID_pkcs7_signedAndEnveloped:
@@ -299,9 +299,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 
 	/* because ASN1_INTEGER_set is used to set a 'long' we will do
 	 * things the ugly way. */
-	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
+	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	p7i->issuer_and_serial->serial=
-		ASN1_INTEGER_dup(X509_get_serialNumber(x509));
+		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
 
 	/* lets keep the pkey around for a while */
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
@@ -400,9 +400,9 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 	X509_NAME_set(&p7i->issuer_and_serial->issuer,
 		X509_get_issuer_name(x509));
 
-	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
+	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	p7i->issuer_and_serial->serial=
-		ASN1_INTEGER_dup(X509_get_serialNumber(x509));
+		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
 
 	X509_ALGOR_free(p7i->key_enc_algor);
 	p7i->key_enc_algor=(X509_ALGOR *)ASN1_dup(i2d_X509_ALGOR,

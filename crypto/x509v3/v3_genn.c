@@ -186,7 +186,7 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 		case GEN_DNS:
 		case GEN_URI:
 
-		ASN1_IA5STRING_free(a->d.ia5);
+		M_ASN1_IA5STRING_free(a->d.ia5);
 		break;
 
 		case GEN_DIRNAME:
@@ -194,7 +194,7 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 		break;
 
 		case GEN_IPADD:
-		ASN1_OCTET_STRING_free(a->d.ip);
+		M_ASN1_OCTET_STRING_free(a->d.ip);
 		break;
 	
 		case GEN_RID:

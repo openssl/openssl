@@ -170,13 +170,13 @@ static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 	if(!(ext_der = Malloc(ext_len))) goto merr;
 	p = ext_der;
 	method->i2d(ext_struc, &p);
-	if(!(ext_oct = ASN1_OCTET_STRING_new())) goto merr;
+	if(!(ext_oct = M_ASN1_OCTET_STRING_new())) goto merr;
 	ext_oct->data = ext_der;
 	ext_oct->length = ext_len;
 	
 	ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
 	if(!ext) goto merr;
-	ASN1_OCTET_STRING_free(ext_oct);
+	M_ASN1_OCTET_STRING_free(ext_oct);
 
 	return ext;
 
@@ -241,7 +241,7 @@ if(!(ext_der = string_to_hex(value, &ext_len))) {
 	goto err;
 }
 
-if(!(oct = ASN1_OCTET_STRING_new())) {
+if(!(oct = M_ASN1_OCTET_STRING_new())) {
 	X509V3err(X509V3_F_V3_GENERIC_EXTENSION,ERR_R_MALLOC_FAILURE);
 	goto err;
 }
@@ -254,7 +254,7 @@ extension = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
 
 err:
 ASN1_OBJECT_free(obj);
-ASN1_OCTET_STRING_free(oct);
+M_ASN1_OCTET_STRING_free(oct);
 if(ext_der) Free(ext_der);
 return extension;
 }

@@ -93,8 +93,8 @@ X509_VAL *X509_VAL_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_VAL);
-	M_ASN1_New(ret->notBefore,ASN1_TIME_new);
-	M_ASN1_New(ret->notAfter,ASN1_TIME_new);
+	M_ASN1_New(ret->notBefore,M_ASN1_TIME_new);
+	M_ASN1_New(ret->notAfter,M_ASN1_TIME_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_VAL_NEW);
 	}
@@ -102,8 +102,8 @@ X509_VAL *X509_VAL_new(void)
 void X509_VAL_free(X509_VAL *a)
 	{
 	if (a == NULL) return;
-	ASN1_TIME_free(a->notBefore);
-	ASN1_TIME_free(a->notAfter);
+	M_ASN1_TIME_free(a->notBefore);
+	M_ASN1_TIME_free(a->notAfter);
 	Free((char *)a);
 	}
 

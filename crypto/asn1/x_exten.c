@@ -122,7 +122,7 @@ X509_EXTENSION *X509_EXTENSION_new(void)
 
 	M_ASN1_New_Malloc(ret,X509_EXTENSION);
 	ret->object=OBJ_nid2obj(NID_undef);
-	M_ASN1_New(ret->value,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->value,M_ASN1_OCTET_STRING_new);
 	ret->critical=0;
 	ret->netscape_hack=0;
 	return(ret);
@@ -133,7 +133,7 @@ void X509_EXTENSION_free(X509_EXTENSION *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
-	ASN1_OCTET_STRING_free(a->value);
+	M_ASN1_OCTET_STRING_free(a->value);
 	Free((char *)a);
 	}
 

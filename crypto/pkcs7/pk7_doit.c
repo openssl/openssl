@@ -204,7 +204,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 				Free(tmp);
 				goto err;
 				}
-			ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
+			M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
 		Free(tmp);
 		memset(key, 0, keylen);
@@ -364,7 +364,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 			if(!X509_NAME_cmp(ri->issuer_and_serial->issuer,
 					pcert->cert_info->issuer) &&
-			     !ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
+			     !M_ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
 					ri->issuer_and_serial->serial)) break;
 			ri=NULL;
 		}
@@ -383,8 +383,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			}
 
 		jj=EVP_PKEY_decrypt((unsigned char *)tmp,
-			ASN1_STRING_data(ri->enc_key),
-			ASN1_STRING_length(ri->enc_key),
+			M_ASN1_STRING_data(ri->enc_key),
+			M_ASN1_STRING_length(ri->enc_key),
 			pkey);
 		if (jj <= 0)
 			{
@@ -480,12 +480,12 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	case NID_pkcs7_signedAndEnveloped:
 		/* XXXXXXXXXXXXXXXX */
 		si_sk=p7->d.signed_and_enveloped->signer_info;
-		os=ASN1_OCTET_STRING_new();
+		os=M_ASN1_OCTET_STRING_new();
 		p7->d.signed_and_enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_enveloped:
 		/* XXXXXXXXXXXXXXXX */
-		os=ASN1_OCTET_STRING_new();
+		os=M_ASN1_OCTET_STRING_new();
 		p7->d.enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_signed:
@@ -493,7 +493,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		os=p7->d.sign->contents->d.data;
 		/* If detached data then the content is excluded */
 		if(p7->detached) {
-			ASN1_OCTET_STRING_free(os);
+			M_ASN1_OCTET_STRING_free(os);
 			p7->d.sign->contents->d.data = NULL;
 		}
 		break;
@@ -564,8 +564,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				/* Add digest */
 				md_tmp=EVP_MD_CTX_type(&ctx_tmp);
 				EVP_DigestFinal(&ctx_tmp,md_data,&md_len);
-				digest=ASN1_OCTET_STRING_new();
-				ASN1_OCTET_STRING_set(digest,md_data,md_len);
+				digest=M_ASN1_OCTET_STRING_new();
+				M_ASN1_OCTET_STRING_set(digest,md_data,md_len);
 				PKCS7_add_signed_attribute(si,
 					NID_pkcs9_messageDigest,
 					V_ASN1_OCTET_STRING,digest);
@@ -620,7 +620,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		os->data = (unsigned char *)buf_mem->data;
 		os->length = buf_mem->length;
 #if 0
-		ASN1_OCTET_STRING_set(os,
+		M_ASN1_OCTET_STRING_set(os,
 			(unsigned char *)buf_mem->data,buf_mem->length);
 #endif
 		}

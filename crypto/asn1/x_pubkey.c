@@ -100,7 +100,7 @@ X509_PUBKEY *X509_PUBKEY_new(void)
 
 	M_ASN1_New_Malloc(ret,X509_PUBKEY);
 	M_ASN1_New(ret->algor,X509_ALGOR_new);
-	M_ASN1_New(ret->public_key,ASN1_BIT_STRING_new);
+	M_ASN1_New(ret->public_key,M_ASN1_BIT_STRING_new);
 	ret->pkey=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_PUBKEY_NEW);
@@ -110,7 +110,7 @@ void X509_PUBKEY_free(X509_PUBKEY *a)
 	{
 	if (a == NULL) return;
 	X509_ALGOR_free(a->algor);
-	ASN1_BIT_STRING_free(a->public_key);
+	M_ASN1_BIT_STRING_free(a->public_key);
 	if (a->pkey != NULL) EVP_PKEY_free(a->pkey);
 	Free((char *)a);
 	}
@@ -176,7 +176,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	if ((s=(unsigned char *)Malloc(i+1)) == NULL) goto err;
 	p=s;
 	i2d_PublicKey(pkey,&p);
-	if (!ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
+	if (!M_ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
 	/* Set number of unused bits to zero */
 	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;

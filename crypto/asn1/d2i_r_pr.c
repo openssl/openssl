@@ -107,7 +107,7 @@ RSA *d2i_RSAPrivateKey(RSA **a, unsigned char **pp, long length)
 	if ((ret->iqmp=BN_bin2bn(bs->data,bs->length,ret->iqmp)) == NULL)
 		goto err_bn;
 
-	ASN1_INTEGER_free(bs);
+	M_ASN1_INTEGER_free(bs);
 
 	M_ASN1_D2I_Finish_2(a);
 err_bn:
@@ -115,7 +115,8 @@ err_bn:
 err:
 	ASN1err(ASN1_F_D2I_RSAPRIVATEKEY,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) RSA_free(ret);
-	if (bs != NULL) ASN1_INTEGER_free(bs);
+	if (bs != NULL) M_ASN1_INTEGER_free(bs);
+
 	return(NULL);
 	}
 #endif

@@ -66,6 +66,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_TIME *ASN1_TIME_new(void)
+{ return M_ASN1_TIME_new(); }
+
+void ASN1_TIME_free(ASN1_TIME *x)
+{ return M_ASN1_TIME_free(x); }
+
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 	{
 #ifdef CHARSET_EBCDIC

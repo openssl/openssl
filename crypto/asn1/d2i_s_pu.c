@@ -107,7 +107,7 @@ DSA *d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length)
 		ret->write_params=1;
 		}
 
-	ASN1_INTEGER_free(bs);
+	M_ASN1_INTEGER_free(bs);
 	bs=NULL;
 	M_ASN1_D2I_Finish_2(a);
 err_bn:
@@ -115,7 +115,7 @@ err_bn:
 err:
 	ASN1err(ASN1_F_D2I_DSAPUBLICKEY,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) DSA_free(ret);
-	if (bs != NULL) ASN1_INTEGER_free(bs);
+	if (bs != NULL) M_ASN1_INTEGER_free(bs);
 	return(NULL);
 	}
 #endif

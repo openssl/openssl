@@ -211,7 +211,7 @@ void DIST_POINT_free(DIST_POINT *a)
 {
 	if (a == NULL) return;
 	DIST_POINT_NAME_free(a->distpoint);
-	ASN1_BIT_STRING_free(a->reasons);
+	M_ASN1_BIT_STRING_free(a->reasons);
 	sk_GENERAL_NAME_pop_free(a->CRLissuer, GENERAL_NAME_free);
 	Free ((char *)a);
 }

@@ -139,16 +139,16 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 			sk_pop_free (asafes, PKCS7_free);
 			return 0;
 		}
-	    	if (!parse_bags (bags, pass, passlen, pkey, cert, ca,
+	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
 							 &keyid, &keymatch)) {
-			sk_pop_free (bags, PKCS12_SAFEBAG_free);
-			sk_pop_free (asafes, PKCS7_free);
+			sk_pop_free(bags, PKCS12_SAFEBAG_free);
+			sk_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
-		sk_pop_free (bags, PKCS12_SAFEBAG_free);
+		sk_pop_free(bags, PKCS12_SAFEBAG_free);
 	}
-	sk_pop_free (asafes, PKCS7_free);
-	if (keyid) ASN1_OCTET_STRING_free (keyid);
+	sk_pop_free(asafes, PKCS7_free);
+	if (keyid) M_ASN1_OCTET_STRING_free(keyid);
 	return 1;
 }
 
@@ -158,8 +158,8 @@ static int parse_bags (STACK *bags, const char *pass, int passlen,
 		       ASN1_OCTET_STRING **keyid, char *keymatch)
 {
 	int i;
-	for (i = 0; i < sk_num (bags); i++) {
-		if (!parse_bag ((PKCS12_SAFEBAG *)sk_value (bags, i),
+	for (i = 0; i < sk_num(bags); i++) {
+		if (!parse_bag((PKCS12_SAFEBAG *)sk_value (bags, i),
 			 pass, passlen, pkey, cert, ca, keyid,
 							 keymatch)) return 0;
 	}
@@ -170,7 +170,7 @@ static int parse_bags (STACK *bags, const char *pass, int passlen,
 #define MATCH_CERT 0x2
 #define MATCH_ALL  0x3
 
-static int parse_bag (PKCS12_SAFEBAG *bag, const char *pass, int passlen,
+static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 		      EVP_PKEY **pkey, X509 **cert, STACK **ca,
 		      ASN1_OCTET_STRING **keyid,
 	     char *keymatch)
@@ -187,9 +187,9 @@ static int parse_bag (PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 	/* Check for any local key id matching (if needed) */
 	if (lkey && ((*keymatch & MATCH_ALL) != MATCH_ALL)) {
 		if (*keyid) {
-			if (ASN1_OCTET_STRING_cmp (*keyid, lkey)) lkey = NULL;
+			if (M_ASN1_OCTET_STRING_cmp(*keyid, lkey)) lkey = NULL;
 		} else {
-			if (!(*keyid = ASN1_OCTET_STRING_dup (lkey))) {
+			if (!(*keyid = M_ASN1_OCTET_STRING_dup(lkey))) {
 				PKCS12err(PKCS12_F_PARSE_BAGS,ERR_R_MALLOC_FAILURE);
 				return 0;
 		    }
@@ -200,16 +200,16 @@ static int parse_bag (PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 	{
 	case NID_keyBag:
 		if (!lkey || !pkey) return 1;	
-		if (!(*pkey = EVP_PKCS82PKEY (bag->value.keybag))) return 0;
+		if (!(*pkey = EVP_PKCS82PKEY(bag->value.keybag))) return 0;
 		*keymatch |= MATCH_KEY;
 	break;
 
 	case NID_pkcs8ShroudedKeyBag:
 		if (!lkey || !pkey) return 1;	
-		if (!(p8 = M_PKCS12_decrypt_skey (bag, pass, passlen)))
+		if (!(p8 = M_PKCS12_decrypt_skey(bag, pass, passlen)))
 				return 0;
-		*pkey = EVP_PKCS82PKEY (p8);
-		PKCS8_PRIV_KEY_INFO_free (p8);
+		*pkey = EVP_PKCS82PKEY(p8);
+		PKCS8_PRIV_KEY_INFO_free(p8);
 		if (!(*pkey)) return 0;
 		*keymatch |= MATCH_KEY;
 	break;

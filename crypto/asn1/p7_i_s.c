@@ -96,7 +96,7 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new(void)
 
 	M_ASN1_New_Malloc(ret,PKCS7_ISSUER_AND_SERIAL);
 	M_ASN1_New(ret->issuer,X509_NAME_new);
-	M_ASN1_New(ret->serial,ASN1_INTEGER_new);
+	M_ASN1_New(ret->serial,M_ASN1_INTEGER_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS7_ISSUER_AND_SERIAL_NEW);
 	}
@@ -105,7 +105,7 @@ void PKCS7_ISSUER_AND_SERIAL_free(PKCS7_ISSUER_AND_SERIAL *a)
 	{
 	if (a == NULL) return;
 	X509_NAME_free(a->issuer);
-	ASN1_INTEGER_free(a->serial);
+	M_ASN1_INTEGER_free(a->serial);
 	Free((char *)a);
 	}
 

@@ -171,15 +171,15 @@ void PKCS12_BAGS_free (PKCS12_BAGS *a)
 	switch (OBJ_obj2nid(a->type)) {
 
 		case NID_x509Certificate:
-			ASN1_OCTET_STRING_free (a->value.x509cert);
+			M_ASN1_OCTET_STRING_free (a->value.x509cert);
 		break;
 
 		case NID_x509Crl:
-			ASN1_OCTET_STRING_free (a->value.x509crl);
+			M_ASN1_OCTET_STRING_free (a->value.x509crl);
 		break;
 
 		case NID_sdsiCertificate:
-			ASN1_IA5STRING_free (a->value.sdsicert);
+			M_ASN1_IA5STRING_free (a->value.sdsicert);
 		break;
 
 		default:

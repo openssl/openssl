@@ -205,10 +205,10 @@ RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
 		(char *)os->data,os->length) != 0))
 		{
 		ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_PRIVATE_KEY_HEADER_MISSING);
-		ASN1_BIT_STRING_free(os);
+		M_ASN1_BIT_STRING_free(os);
 		goto err;
 		}
-	ASN1_BIT_STRING_free(os);
+	M_ASN1_BIT_STRING_free(os);
 	c.q=c.p;
 	if ((ret=d2i_Netscape_RSA_2(a,&c.p,c.slen,cb)) == NULL) goto err;
 	c.slen-=(c.p-c.q);
@@ -279,7 +279,7 @@ RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
 	*pp=c.p;
 err:
 	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
-	if (os != NULL) ASN1_BIT_STRING_free(os);
+	if (os != NULL) M_ASN1_BIT_STRING_free(os);
 	if (alg != NULL) X509_ALGOR_free(alg);
 	return(ret);
 	}
@@ -321,9 +321,9 @@ static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,NETSCAPE_PKEY);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
 	M_ASN1_New(ret->algor,X509_ALGOR_new);
-	M_ASN1_New(ret->private_key,ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->private_key,M_ASN1_OCTET_STRING_new);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_NETSCAPE_PKEY_NEW);
 	}
@@ -331,9 +331,9 @@ static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void)
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	{
 	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
+	M_ASN1_INTEGER_free(a->version);
 	X509_ALGOR_free(a->algor);
-	ASN1_OCTET_STRING_free(a->private_key);
+	M_ASN1_OCTET_STRING_free(a->private_key);
 	Free((char *)a);
 	}
 

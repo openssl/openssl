@@ -253,7 +253,7 @@ void X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
-	ASN1_BIT_STRING_free(a->value);
+	M_ASN1_BIT_STRING_free(a->value);
 	Free(a);
 	}
 

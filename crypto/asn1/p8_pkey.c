@@ -88,7 +88,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new(void)
 	PKCS8_PRIV_KEY_INFO *ret=NULL;
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, PKCS8_PRIV_KEY_INFO);
-	M_ASN1_New (ret->version, ASN1_INTEGER_new);
+	M_ASN1_New (ret->version, M_ASN1_INTEGER_new);
 	M_ASN1_New (ret->pkeyalg, X509_ALGOR_new);
 	M_ASN1_New (ret->pkey, ASN1_TYPE_new);
 	ret->attributes = NULL;
@@ -117,7 +117,7 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a,
 void PKCS8_PRIV_KEY_INFO_free (PKCS8_PRIV_KEY_INFO *a)
 {
 	if (a == NULL) return;
-	ASN1_INTEGER_free (a->version);
+	M_ASN1_INTEGER_free (a->version);
 	X509_ALGOR_free(a->pkeyalg);
 	/* Clear sensitive data */
 	if (a->pkey->value.octet_string)

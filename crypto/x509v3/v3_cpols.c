@@ -169,7 +169,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 			if(!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
 								 goto merr;
 			qual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
-			qual->d.cpsuri = ASN1_IA5STRING_new();
+			qual->d.cpsuri = M_ASN1_IA5STRING_new();
 			if(!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
 						 strlen(cnf->value))) goto merr;
 		} else if(!name_cmp(cnf->name, "userNotice")) {
@@ -229,7 +229,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 	for(i = 0; i < sk_CONF_VALUE_num(unot); i++) {
 		cnf = sk_CONF_VALUE_value(unot, i);
 		if(!strcmp(cnf->name, "explicitText")) {
-			not->exptext = ASN1_VISIBLESTRING_new();
+			not->exptext = M_ASN1_VISIBLESTRING_new();
 			if(!ASN1_STRING_set(not->exptext, cnf->value,
 						 strlen(cnf->value))) goto merr;
 		} else if(!strcmp(cnf->name, "organization")) {
@@ -238,8 +238,8 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 				if(!(nref = NOTICEREF_new())) goto merr;
 				not->noticeref = nref;
 			} else nref = not->noticeref;
-			if(ia5org) nref->organization = ASN1_IA5STRING_new();
-			else nref->organization = ASN1_VISIBLESTRING_new();
+			if(ia5org) nref->organization = M_ASN1_IA5STRING_new();
+			else nref->organization = M_ASN1_VISIBLESTRING_new();
 			if(!ASN1_STRING_set(nref->organization, cnf->value,
 						 strlen(cnf->value))) goto merr;
 		} else if(!strcmp(cnf->name, "noticeNumbers")) {
@@ -538,7 +538,7 @@ void POLICYQUALINFO_free(POLICYQUALINFO *a)
 	if (a == NULL) return;
 	switch(OBJ_obj2nid(a->pqualid)) {
 		case NID_id_qt_cps:
-		ASN1_IA5STRING_free(a->d.cpsuri);
+		M_ASN1_IA5STRING_free(a->d.cpsuri);
 		break;
 
 		case NID_id_qt_unotice:
@@ -596,7 +596,7 @@ void USERNOTICE_free(USERNOTICE *a)
 {
 	if (a == NULL) return;
 	NOTICEREF_free(a->noticeref);
-	DISPLAYTEXT_free(a->exptext);
+	M_DISPLAYTEXT_free(a->exptext);
 	Free (a);
 }
 
@@ -646,7 +646,7 @@ NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, unsigned char **pp,long length)
 void NOTICEREF_free(NOTICEREF *a)
 {
 	if (a == NULL) return;
-	DISPLAYTEXT_free(a->organization);
+	M_DISPLAYTEXT_free(a->organization);
 	sk_pop_free(a->noticenos, ASN1_STRING_free);
 	Free (a);
 }

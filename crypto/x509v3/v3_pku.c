@@ -119,8 +119,8 @@ PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a,
 void PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a)
 {
 	if (a == NULL) return;
-	ASN1_GENERALIZEDTIME_free(a->notBefore);
-	ASN1_GENERALIZEDTIME_free(a->notAfter);
+	M_ASN1_GENERALIZEDTIME_free(a->notBefore);
+	M_ASN1_GENERALIZEDTIME_free(a->notAfter);
 	Free ((char *)a);
 }
 

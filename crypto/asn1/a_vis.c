@@ -60,6 +60,12 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+ASN1_VISIBLESTRING *ASN1_VISIBLESTRING_new(void)
+{ return M_ASN1_VISIBLESTRING_new(); }
+
+void ASN1_VISIBLESTRING_free(ASN1_VISIBLESTRING *x)
+{ return M_ASN1_VISIBLESTRING_free(x); }
+
 int i2d_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
