@@ -4,6 +4,38 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) CONF library reworked to become more general.  A new CONF
+     configuration file reader "class" is implemented as well as a
+     new functions (NCONF_*, for "New CONF") to handle it.  The now
+     old CONF_* functions are still there, but are reimplemented to
+     work in terms of the new functions.  Also, a set of functions
+     to handle the internal storage of the configuration data is
+     provided to make it easier to write new configuration file
+     reader "classes" (I can definitely see something reading a
+     configuration file in XML format, for example), called _CONF_*,
+     or "the configuration storage API"...
+
+     The new configuration file reading functions are:
+
+	NCONF_new, NCONF_free, NCONF_load, NCONF_load_fp, NCONF_load_bio,
+	NCONF_get_section, NCONF_get_string, NCONF_get_numbre
+
+	NCONF_default, NCONF_WIN32
+
+	NCONF_dump_fp, NCONF_dump_bio
+
+     NCONF_default and NCONF_WIN32 are method (or "class") choosers,
+     NCONF_new creates a new CONF object.  This works in the same way
+     as other interfaces in OpenSSL, like the BIO interface.
+     NCONF_dump_* dump the internal storage of the configuration file,
+     which is useful for debugging.  All other functions take the same
+     arguments as the old CONF_* functions wth the exception of the
+     first that must be a `CONF *' instead of a `LHASH *'.
+
+     To make it easer to use the new classes with the old CONF_* functions,
+     the function CONF_set_default_method is provided.
+     [Richard Levitte]
+
   *) Add '-tls1' option to 'openssl ciphers', which was already
      mentioned in the documentation but had not been implemented.
      (This option is not yet really useful because even the additional
