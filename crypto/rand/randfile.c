@@ -133,41 +133,20 @@ int RAND_write_file(const char *file)
 	int i,ret=0,err=0;
 	FILE *out = NULL;
 	int n;
+	
+#if defined(O_CREAT) && defined(O_EXCL) && !defined(WIN32)
+	/* For some reason Win32 can't write to files created this way */
 
-#ifdef VMS
-	/* Under VMS, fopen(file, "wb") will create a new version of the
-	   same file.  This is not good, so let's try updating an existing
-	   one, and create file only if it doesn't already exist. */
-	/* At the same time, if we just update a file, we also need to
-	   truncate it, and unfortunately, ftruncate() and truncate() do
-	   not exist everywhere.  All that remains is to delete old versions
-	   of the random data file (done at the end). */
-#if 0
-	out=fopen(file,"rb+");
-	if (out == NULL && errno != ENOENT)
-		goto err;
+        /* chmod(..., 0600) is too late to protect the file,
+         * permissions should be restrictive from the start */
+        int fd = open(file, O_CREAT | O_EXCL, 0600);
+        if (fd != -1)
+                out = fdopen(fd, "wb");
 #endif
-#endif
+        if (out == NULL)
+                out = fopen(file,"wb");
+        if (out == NULL) goto err;
 
-	if (out == NULL)
-		{
-#if defined O_CREAT && defined O_EXCL
-		/* chmod(..., 0600) is too late to protect the file,
-		 * permissions should be restrictive from the start */
-		int fd = open(file, O_CREAT | O_EXCL, 0600);
-		if (fd != -1)
-			out = fdopen(fd, "wb");
-		else /* the open(...) reportedly fails on Win98 w/ VisualC */
-			out = fopen(file,"wb");
-#else
-		out = fopen(file,"wb");
-#endif
-		}
-	if (out == NULL)
-		{
-		err=1;
-		goto err;
-		}
 #ifndef NO_CHMOD
 	chmod(file,0600);
 #endif
@@ -186,14 +165,8 @@ int RAND_write_file(const char *file)
 			}
 		ret+=i;
 		if (n <= 0) break;
-		}
+                }
 #ifdef VMS
-	/* We may have updated an existing file using mode "rb+",
-	 * now remove any old extra bytes */
-#if 0
-	if (ret > 0)
-		ftruncate(fileno(out), ret);
-#else
 	/* Try to delete older versions of the file, until there aren't
 	   any */
 	{
@@ -211,8 +184,7 @@ int RAND_write_file(const char *file)
 				      some point... */
 		}
 	}
-#endif
-#endif
+#endif /* VMS */
 
 	fclose(out);
 	memset(buf,0,BUFSIZE);
