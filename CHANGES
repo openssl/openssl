@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initial support for MacOS is now provided. Examine INSTALL.MacOS
+     for details.
+     [Andy Polyakov, Roy Woods <roy@centicsystems.ca>]
+
   *) Rebuild of the memory allocation routines used by OpenSSL code and
      possibly others as well.  The purpose is to make an interface that
      provide hooks so anyone can build a separate set of allocation and

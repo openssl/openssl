@@ -1,0 +1,56 @@
+OpenSSL - Port To The Macintosh
+===============================
+
+Thanks to Roy Wood <roy@centricsystems.ca> initial support for MacOS (pre
+X) is now provided. "Initial" means that unlike other platforms where you
+get an SDK and a "swiss army" openssl application, on Macintosh you only
+get one sample application which fetches a page over HTTPS(*) and dumps it
+in a window. We don't even build the test applications so that we can't
+guarantee that all algorithms are operational.
+
+Required software:
+
+- StuffIt Expander	(or any program capable to "unbinhex");
+- DropStuff w/EE	(or MacGzip and SUNtar);
+- CodeWarrior Pro 5;
+
+Installation procedure:
+
+- fetch the source at ftp://ftp.openssl.org/ (well, you probably already
+  did, huh?)
+- unpack the .tar.gz file:
+	- if you have DropStuff w/EE installed then just drag it over
+	  StuffIt Expander;
+	- otherwise process it first with MacGzip and then with SUNtar;
+- locate MacOS folder in OpenSSL source tree and open it;
+- unbinhex mklinks.as.hqx and OpenSSL.mcp.hqx in place;
+- double-click on mklinks.as;
+- open OpenSSL.mcp and compile 'GetHTTPS PPC' target;
+- that's it;
+
+(*)	URL is hardcoded into GetHTTPS Sources/GetHTTPS.cpp
+
+Finally some essential comments from our generous contributor:-)
+
+"I've gotten OpenSSL working on the Macintosh. It's probably a bit of a
+hack, but it works for what I'm doing. If you don't like the way I've done
+it, then feel free to change what I've done. I freely admit that I've done
+some less-than-ideal things in my port, and if you don't like the way I've
+done something, then feel free to change it-- I won't be offended!
+
+... I've tweaked "bss_sock.c" a little to call routines in a "MacSocket"
+library I wrote. My MacSocket library is a wrapper around OpenTransport,
+handling stuff like endpoint creation, reading, writing, etc. It is not
+designed as a high-performance package such as you'd use in a webserver,
+but is fine for lots of other applications. MacSocket also uses some other
+code libraries I've written to deal with string manipulations and error
+handling. Feel free to use these things in your own code, but give me
+credit and/or send me free stuff in appreciation! :-)
+
+...
+
+If you have any questions, feel free to email me as the following:
+
+roy@centricsystems.ca
+
+-Roy Wood"

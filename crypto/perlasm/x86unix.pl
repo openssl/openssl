@@ -368,10 +368,10 @@ sub main'function_end_B
 
 	$func=$under.$func;
 
-	push(@out,".${func}_end:\n");
+	push(@out,".L_${func}_end:\n");
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
-	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
+		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
+	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"desasm.pl\"\n");
 	$stack=0;
 	%label=();
