@@ -440,6 +440,9 @@ void OpenSSLDie(const char *file,int line,const char *assertion);
 int FIPS_mode(void);
 void *FIPS_rand_check(void);
 
+#define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
+		alg " previous FIPS forbidden algorithm error ignored");
+
 #define FIPS_BAD_ABORT(alg) OpenSSLDie(__FILE__, __LINE__, \
 		#alg " Algorithm forbidden in FIPS mode");
 

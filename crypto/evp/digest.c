@@ -137,6 +137,39 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	return EVP_DigestInit_ex(ctx, type, NULL);
 	}
 
+#ifdef OPENSSL_FIPS
+
+/* The purpose of these is to trap programs that attempt to use non FIPS
+ * algorithms in FIPS mode and ignore the errors.
+ */
+
+static int bad_init(EVP_MD_CTX *ctx)
+	{ FIPS_ERROR_IGNORED("Digest init"); return 0;}
+
+static int bad_update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{ FIPS_ERROR_IGNORED("Digest update"); return 0;}
+
+static int bad_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ FIPS_ERROR_IGNORED("Digest Final"); return 0;}
+
+static const EVP_MD bad_md =
+	{
+	0,
+	0,
+	0,
+	0,
+	bad_init,
+	bad_update,
+	bad_final,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	{0,0,0,0},
+	};
+
+#endif
+
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
 	EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
@@ -202,6 +235,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			 && !(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
 				{
 				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
+				ctx->digest = &bad_md;
 				return 0;
 				}
 			}
