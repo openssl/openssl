@@ -57,12 +57,16 @@ Additionally, OpenSSL supports dynamic locks, and sometimes, some parts
 of OpenSSL need it for better performance.  To enable this, the following
 is required:
 
+=over 4
+
 =item *
 Three additional callback function, dyn_create_function, dyn_lock_function
 and dyn_destroy_function.
 
 =item *
 A structure defined with the data that each lock needs to handle.
+
+=back
 
 struct CRYPTO_dynlock_value has to be defined to contain whatever structure
 is needed to handle locks.
