@@ -62,9 +62,6 @@
 
 #include "../e_os.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
-#include "../bio/bss_file.c" 
-#endif
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
@@ -87,10 +84,6 @@ int main(int argc, char *argv[])
 #endif
 
 static void MS_CALLBACK cb(int p, int n, void *arg);
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#include "bss_file.c"
-#endif
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 

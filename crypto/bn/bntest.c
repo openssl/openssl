@@ -68,10 +68,6 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
-#ifdef OPENSSL_SYS_WINDOWS
-#include "../bio/bss_file.c"
-#endif
-
 const int num0 = 100; /* number of tests */
 const int num1 = 50;  /* additional tests for some functions */
 const int num2 = 5;   /* number of tests for slow functions */
@@ -95,11 +91,6 @@ int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
-
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#include "bss_file.c"
-#endif
 
 static unsigned char lst[]="\xC6\x4F\x43\x04\x2A\xEA\xCA\x6E\x58\x36\x80\x5B\xE8\xC9"
 "\x9B\x04\x5D\x48\x36\xC2\xFD\x16\xC9\x64\xF0";

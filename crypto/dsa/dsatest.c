@@ -71,9 +71,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#ifdef OPENSSL_SYS_WINDOWS
-#include "../bio/bss_file.c"
-#endif
 
 #ifdef OPENSSL_NO_DSA
 int main(int argc, char *argv[])

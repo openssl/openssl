@@ -142,7 +142,6 @@
 
 #ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>
-#include "../crypto/bio/bss_file.c"
 #else
 #include OPENSSL_UNISTD
 #endif

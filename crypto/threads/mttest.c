@@ -86,11 +86,6 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#ifdef OPENSSL_NO_FP_API
-#define APPS_WIN16
-#include "../buffer/bss_file.c"
-#endif
-
 #define TEST_SERVER_CERT "../../apps/server.pem"
 #define TEST_CLIENT_CERT "../../apps/client.pem"
 

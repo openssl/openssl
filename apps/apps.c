@@ -140,10 +140,6 @@
 #include "apps.h"
 #undef NON_MAIN
 
-#ifdef OPENSSL_SYS_WINDOWS
-#  include "bss_file.c"
-#endif
-
 typedef struct {
 	char *name;
 	unsigned long flag;
