@@ -752,8 +752,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
-&(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
+&(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */

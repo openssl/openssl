@@ -200,9 +200,9 @@ typedef struct crypto_ex_data_func_st
 #define Remalloc(addr,num) \
 	CRYPTO_dbg_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
 #define FreeFunc	CRYPTO_dbg_free
-#define Free(addr)	CRYPTO_dbg_free((char *)(addr))
+#define Free(addr)	CRYPTO_dbg_free(addr)
 #define Malloc_locked(num) CRYPTO_malloc_locked((int)num)
-#define Free_locked(addr) CRYPTO_free_locked((char *)(addr))
+#define Free_locked(addr) CRYPTO_free_locked(addr)
 #else
 #define MemCheck_start()
 #define MemCheck_stop()
@@ -211,18 +211,18 @@ typedef struct crypto_ex_data_func_st
 #define Remalloc	CRYPTO_remalloc
 #if defined(WIN32) || defined(MFUNC)
 #define Malloc		CRYPTO_malloc
-#define Realloc(a,n)	CRYPTO_realloc((char *)(a),(n))
+#define Realloc(a,n)	CRYPTO_realloc(a,(n))
 #define FreeFunc	CRYPTO_free
-#define Free(addr)	CRYPTO_free((char *)(addr))
+#define Free(addr)	CRYPTO_free(addr)
 #define Malloc_locked	CRYPTO_malloc_locked
-#define Free_locked(addr) CRYPTO_free_locked((char *)(addr))
+#define Free_locked(addr) CRYPTO_free_locked(addr)
 #else
 #define Malloc		malloc
 #define Realloc		realloc
 #define FreeFunc	free
-#define Free(addr)	free((char *)(addr))
+#define Free(addr)	free(addr)
 #define Malloc_locked	malloc
-#define Free_locked(addr) free((char *)(addr))
+#define Free_locked(addr) free(addr)
 #endif /* WIN32 || MFUNC */
 #endif /* MDEBUG */
 
@@ -266,17 +266,17 @@ void CRYPTO_get_mem_functions(char *(**m)(),char *(**r)(), void (**f)());
 void CRYPTO_set_locked_mem_functions(char *(*m)(), void (*free_func)());
 void CRYPTO_get_locked_mem_functions(char *(**m)(), void (**f)());
 
-char *CRYPTO_malloc_locked(int num);
-void CRYPTO_free_locked(char *);
-char *CRYPTO_malloc(int num);
-void CRYPTO_free(char *);
-char *CRYPTO_realloc(char *addr,int num);
-char *CRYPTO_remalloc(char *addr,int num);
+void *CRYPTO_malloc_locked(int num);
+void CRYPTO_free_locked(void *);
+void *CRYPTO_malloc(int num);
+void CRYPTO_free(void *);
+void *CRYPTO_realloc(void *addr,int num);
+void *CRYPTO_remalloc(void *addr,int num);
 
-char *CRYPTO_dbg_malloc(int num,char *file,int line);
-char *CRYPTO_dbg_realloc(char *addr,int num,char *file,int line);
-void CRYPTO_dbg_free(char *);
-char *CRYPTO_dbg_remalloc(char *addr,int num,char *file,int line);
+void *CRYPTO_dbg_malloc(int num,char *file,int line);
+void *CRYPTO_dbg_realloc(void *addr,int num,char *file,int line);
+void CRYPTO_dbg_free(void *);
+void *CRYPTO_dbg_remalloc(void *addr,int num,char *file,int line);
 #ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
@@ -313,13 +313,13 @@ int CRYPTO_add_lock();
 
 void CRYPTO_set_mem_functions();
 void CRYPTO_get_mem_functions();
-char *CRYPTO_malloc();
-char *CRYPTO_realloc();
+void *CRYPTO_malloc();
+void *CRYPTO_realloc();
 void CRYPTO_free();
-char *CRYPTO_remalloc();
-char *CRYPTO_dbg_remalloc();
-char *CRYPTO_dbg_malloc();
-char *CRYPTO_dbg_realloc();
+void *CRYPTO_remalloc();
+void *CRYPTO_dbg_remalloc();
+void *CRYPTO_dbg_malloc();
+void *CRYPTO_dbg_realloc();
 void CRYPTO_dbg_free();
 #ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp();

@@ -172,39 +172,39 @@ void (**f)();
 	if (f != NULL) *f=free_locked_func;
 	}
 
-char *CRYPTO_malloc_locked(num)
+void *CRYPTO_malloc_locked(num)
 int num;
 	{
 	return(malloc_locked_func(num));
 	}
 
 void CRYPTO_free_locked(str)
-char *str;
+void *str;
 	{
 	free_locked_func(str);
 	}
 
-char *CRYPTO_malloc(num)
+void *CRYPTO_malloc(num)
 int num;
 	{
 	return(malloc_func(num));
 	}
 
-char *CRYPTO_realloc(str,num)
-char *str;
+void *CRYPTO_realloc(str,num)
+void *str;
 int num;
 	{
 	return(realloc_func(str,num));
 	}
 
 void CRYPTO_free(str)
-char *str;
+void *str;
 	{
 	free_func(str);
 	}
 
 static unsigned long break_order_num=0;
-char *CRYPTO_dbg_malloc(num,file,line)
+void *CRYPTO_dbg_malloc(num,file,line)
 int num;
 char *file;
 int line;
@@ -259,7 +259,7 @@ err:
 	}
 
 void CRYPTO_dbg_free(addr)
-char *addr;
+void *addr;
 	{
 	MEM m,*mp;
 
@@ -277,8 +277,8 @@ char *addr;
 	free_func(addr);
 	}
 
-char *CRYPTO_dbg_realloc(addr,num,file,line)
-char *addr;
+void *CRYPTO_dbg_realloc(addr,num,file,line)
+void *addr;
 int num;
 char *file;
 int line;
@@ -307,8 +307,8 @@ int line;
 	return(ret);
 	}
 
-char *CRYPTO_remalloc(a,n)
-char *a;
+void *CRYPTO_remalloc(a,n)
+void *a;
 int n;
 	{
 	if (a != NULL) Free(a);
@@ -316,8 +316,8 @@ int n;
 	return(a);
 	}
 
-char *CRYPTO_dbg_remalloc(a,n,file,line)
-char *a;
+void *CRYPTO_dbg_remalloc(a,n,file,line)
+void *a;
 int n;
 char *file;
 int line;
