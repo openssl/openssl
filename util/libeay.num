@@ -1870,3 +1870,6 @@ X509_keyid_set1                         2460	EXIST::FUNCTION:
 BIO_next                                2461	EXIST::FUNCTION:
 DSO_METHOD_vms                          2462	EXIST::FUNCTION:
 BIO_f_linebuffer                        2463	EXIST:VMS:FUNCTION:
+BN_bntest_rand                          2464	EXIST::FUNCTION:
+OPENSSL_issetugid                       2465	EXIST::FUNCTION:
+BN_rand_range                           2466	EXIST::FUNCTION:
