@@ -19,7 +19,7 @@ DES_ENC=	des_enc.o fcrypt_b.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile des.org des_locl.org
+GENERAL=Makefile
 TEST=destest.c
 APPS=
 

@@ -1,4 +1,4 @@
-/* crypto/rc4/rc4.org */
+/* crypto/rc4/rc4.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

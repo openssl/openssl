@@ -80,7 +80,6 @@ clean:
 errors: $(ERRC).c
 
 $(ERRC).c: $(ERR).err
-	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).org # SPECIAL CASE .org
 	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
 	$(PERL) ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
