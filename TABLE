@@ -818,7 +818,7 @@ $rc5_obj      =
 
 *** hpux-brokencc
 $cc           = cc
-$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
