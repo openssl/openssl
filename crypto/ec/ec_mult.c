@@ -309,7 +309,7 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar, con
 	}
 
 
-int EC_GROUP_precompute(EC_GROUP *group, BN_CTX *ctx)
+int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	{
 	const EC_POINT *generator;
 	BN_CTX *new_ctx = NULL;
@@ -319,7 +319,7 @@ int EC_GROUP_precompute(EC_GROUP *group, BN_CTX *ctx)
 	generator = EC_GROUP_get0_generator(group);
 	if (generator == NULL)
 		{
-		ECerr(EC_F_EC_GROUP_PRECOMPUTE, EC_R_UNDEFINED_GENERATOR);
+		ECerr(EC_F_EC_GROUP_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
 		return 0;
 		}
 
@@ -337,7 +337,7 @@ int EC_GROUP_precompute(EC_GROUP *group, BN_CTX *ctx)
 	if (!EC_GROUP_get_order(group, order, ctx)) return 0;
 	if (BN_is_zero(order))
 		{
-		ECerr(EC_F_EC_GROUP_PRECOMPUTE, EC_R_UNKNOWN_ORDER);
+		ECerr(EC_F_EC_GROUP_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
 		goto err;
 		}
 

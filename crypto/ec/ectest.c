@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -509,7 +509,7 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
-	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
