@@ -207,6 +207,8 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
 	X509_CINF cinf;
 	X509 x,*x509=NULL;
 
+	if(!sk) return NULL;
+
 	x.cert_info= &cinf;
 	cinf.serialNumber=serial;
 	cinf.issuer=name;

@@ -219,7 +219,7 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 			if ((ret->length < len) || (ret->data == NULL))
 				{
 				if (ret->data != NULL) Free((char *)ret->data);
-				s=(unsigned char *)Malloc((int)len);
+				s=(unsigned char *)Malloc((int)len + 1);
 				if (s == NULL)
 					{
 					i=ERR_R_MALLOC_FAILURE;
@@ -229,6 +229,7 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 			else
 				s=ret->data;
 			memcpy(s,p,(int)len);
+			s[len] = '\0';
 			p+=len;
 			}
 		else

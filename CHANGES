@@ -4,6 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix so PKCS7_dataVerify() doesn't crash if no certificates are contained
+     in the message. This was handled by allowing
+     X509_find_by_issuer_and_serial() to tolerate a NULL passed to it.
+     [Steve Henson, reported by Sampo Kellomaki <sampo@mail.neuronio.pt>]
+
+  *) Fix for bug in d2i_ASN1_bytes(): other ASN1 functions add an extra null
+     to the end of the strings whereas this didn't. This would cause problems
+     if strings read with d2i_ASN1_bytes() were later modified.
+     [Steve Henson, reported by Arne Ansper <arne@ats.cyber.ee>]
+
   *) Fix for base64 decode bug. When a base64 bio reads only one line of
      data and it contains EOF it will end up returning an error. This is
      caused by input 46 bytes long. The cause is due to the way base64
