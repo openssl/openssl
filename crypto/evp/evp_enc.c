@@ -62,6 +62,8 @@
 #include <openssl/err.h>
 #include "evp_locl.h"
 
+#include <assert.h>
+
 const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
@@ -88,6 +90,12 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 		EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
+
+	/* we assume block size is a power of 2 in *cryptUpdate */
+	assert(ctx->cipher->block_size == 1
+	       || ctx->cipher->block_size == 8
+	       || ctx->cipher->block_size == 16);
+
 	if(!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
 		switch(EVP_CIPHER_CTX_mode(ctx)) {
 
@@ -147,7 +155,6 @@ int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	return EVP_CipherInit(ctx, cipher, key, iv, 0);
 	}
 
-
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     unsigned char *in, int inl)
 	{
@@ -176,7 +183,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			*outl+=bl;
 			}
 		}
-	i=inl%bl; /* how much is left */
+	//	i=inl%bl; /* how much is left */
+	i=inl&(bl-1);
 	inl-=i;
 	if (inl > 0)
 		{

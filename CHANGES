@@ -11,6 +11,24 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Speed up EVP routines.
+     Before:
+encrypt
+type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes
+des-cbc           4408.85k     5560.51k     5778.46k     5862.20k     5825.16k
+des-cbc           4389.55k     5571.17k     5792.23k     5846.91k     5832.11k
+des-cbc           4394.32k     5575.92k     5807.44k     5848.37k     5841.30k
+decrypt
+des-cbc           3482.66k     5069.49k     5496.39k     5614.16k     5639.28k
+des-cbc           3480.74k     5068.76k     5510.34k     5609.87k     5635.52k
+des-cbc           3483.72k     5067.62k     5504.60k     5708.01k     5724.80k
+     After:
+encrypt
+des-cbc           4581.64k     5666.39k     5811.23k     5871.60k     5833.23k
+decrypt
+des-cbc           3615.18k     5102.53k     5501.58k     5631.13k     5635.52k
+     [Ben Laurie]
+
   *) Fix crypto/bn/asm/mips3.s.
      [Andy Polyakov]
 
