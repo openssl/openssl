@@ -4,6 +4,9 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Support for nameConstraints certificate extension.
+     [Steve Henson]
+
   *) Support for policyConstraints certificate extension.
      [Steve Henson]
 

@@ -158,8 +158,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *metho
 		objlen = ptmp - cnf->name;
 		ctmp.name = ptmp + 1;
 		ctmp.value = cnf->value;
-		GENERAL_NAME_free(acc->location);
-		if(!(acc->location = v2i_GENERAL_NAME(method, ctx, &ctmp)))
+		if(!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
 								 goto err; 
 		if(!(objtmp = OPENSSL_malloc(objlen + 1))) {
 			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,ERR_R_MALLOC_FAILURE);

@@ -70,6 +70,7 @@ static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens);
 static void str_free(void *str);
 static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
 
+static int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
@@ -552,18 +553,10 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
 
 	/* If string contains a ':' assume IPv6 */
 
-	if (strchr(ipasc, ':'))
-		{
-		if (!ipv6_from_asc(ipout, ipasc))
-			return NULL;
-		iplen = 16;
-		}
-	else
-		{
-		if (!ipv4_from_asc(ipout, ipasc))
-			return NULL;
-		iplen = 4;
-		}
+	iplen = a2i_ipadd(ipout, ipasc);
+
+	if (!iplen)
+		return NULL;
 
 	ret = ASN1_OCTET_STRING_new();
 	if (!ret)
@@ -574,6 +567,69 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
 		return NULL;
 		}
 	return ret;
+	}
+
+ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
+	{
+	ASN1_OCTET_STRING *ret = NULL;
+	unsigned char ipout[32];
+	char *iptmp = NULL, *p;
+	int iplen1, iplen2;
+	p = strchr(ipasc,'/');
+	if (!p)
+		return NULL;
+	iptmp = BUF_strdup(ipasc);
+	if (!iptmp)
+		return NULL;
+	p = iptmp + (p - ipasc);
+	*p++ = 0;
+
+	iplen1 = a2i_ipadd(ipout, iptmp);
+
+	if (!iplen1)
+		goto err;
+
+	iplen2 = a2i_ipadd(ipout + iplen1, p);
+
+	OPENSSL_free(iptmp);
+	iptmp = NULL;
+
+	if (!iplen2 || (iplen1 != iplen2))
+		goto err;
+
+	ret = ASN1_OCTET_STRING_new();
+	if (!ret)
+		goto err;
+	if (!ASN1_OCTET_STRING_set(ret, ipout, iplen1 + iplen2))
+		goto err;
+
+	return ret;
+
+	err:
+	if (iptmp)
+		OPENSSL_free(iptmp);
+	if (ret)
+		ASN1_OCTET_STRING_free(ret);
+	return NULL;
+	}
+	
+
+static int a2i_ipadd(unsigned char *ipout, const char *ipasc)
+	{
+	/* If string contains a ':' assume IPv6 */
+
+	if (strchr(ipasc, ':'))
+		{
+		if (!ipv6_from_asc(ipout, ipasc))
+			return 0;
+		return 16;
+		}
+	else
+		{
+		if (!ipv4_from_asc(ipout, ipasc))
+			return 0;
+		return 4;
+		}
 	}
 
 static int ipv4_from_asc(unsigned char *v4, const char *in)

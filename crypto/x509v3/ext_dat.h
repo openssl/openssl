@@ -65,6 +65,7 @@ extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
 extern X509V3_EXT_METHOD v3_crl_hold;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
+extern X509V3_EXT_METHOD v3_name_constraints;
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -109,7 +110,8 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #ifndef OPENSSL_NO_OCSP
 &v3_crl_hold,
 #endif
-&v3_policy_mappings
+&v3_policy_mappings,
+&v3_name_constraints
 };
 
 /* Number of standard extensions */
