@@ -112,7 +112,8 @@ sub do_lib_rule
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
-		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs\n<<\n";
+		$ex =' advapi32.lib';
+		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
 		{

@@ -24,7 +24,7 @@ for SSL_library_init().
 
 SSL_library_init() must be called before any other action takes place.
 
-=head1 IMPORTANT
+=head1 WARNING
 
 SSL_library_init() only registers ciphers. Another important initialization
 is the seeding of the PRNG (Pseudo Random Number Generator), which has to
