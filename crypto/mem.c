@@ -77,6 +77,20 @@ static void *(*malloc_func)(size_t)         = malloc;
 static void *(*realloc_func)(void *, size_t)= realloc;
 static void (*free_func)(void *)            = free;
 
+static void *crypto_i_malloc_ex(size_t, const char *file, int line);
+static void *crypto_i_realloc_ex(void *, size_t, const char *file, int line);
+static void crypto_i_free_ex(void *);
+static void *(*malloc_locked_ex_func)(size_t, const char *file, int line)
+        = crypto_i_malloc_ex;
+static void (*free_locked_ex_func)(void *)
+        = crypto_i_free_ex;
+static void *(*malloc_ex_func)(size_t, const char *file, int line)
+        = crypto_i_malloc_ex;
+static void *(*realloc_ex_func)(void *, size_t, const char *file, int line)
+        = crypto_i_realloc_ex;
+static void (*free_ex_func)(void *)
+        = crypto_i_free_ex;
+
 /* may be changed as long as `allow_customize_debug' is set */
 /* XXX use correct function pointer types */
 #ifdef CRYPTO_MDEBUG
@@ -115,6 +129,24 @@ int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	return 1;
 	}
 
+int CRYPTO_set_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void *(*r)(void *, size_t,const char *,int),
+	void (*f)(void *))
+	{
+	if (!allow_customize)
+		return 0;
+        if (m == NULL) m = crypto_i_malloc_ex;
+        if (r == NULL) r = crypto_i_realloc_ex;
+        if (f == NULL) f = crypto_i_free_ex;
+	malloc_ex_func=m;
+	realloc_ex_func=r;
+	free_ex_func=f;
+	malloc_locked_ex_func=m;
+	free_locked_ex_func=f;
+	return 1;
+	}
+
 int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 	{
 	if (!allow_customize)
@@ -123,6 +155,19 @@ int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 		return 0;
 	malloc_locked_func=m;
 	free_locked_func=f;
+	return 1;
+	}
+
+int CRYPTO_set_locked_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void (*f)(void *))
+	{
+	if (!allow_customize)
+		return 0;
+        if (m == NULL) m = crypto_i_malloc_ex;
+        if (f == NULL) f = crypto_i_free_ex;
+	malloc_locked_ex_func=m;
+	free_locked_ex_func=f;
 	return 1;
 	}
 
@@ -150,10 +195,28 @@ void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
 	if (f != NULL) *f=free_func;
 	}
 
+void CRYPTO_get_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void *(**r)(void *, size_t,const char *,int),
+	void (**f)(void *))
+	{
+	if (m != NULL) *m=malloc_ex_func;
+	if (r != NULL) *r=realloc_ex_func;
+	if (f != NULL) *f=free_ex_func;
+	}
+
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
 	{
 	if (m != NULL) *m=malloc_locked_func;
 	if (f != NULL) *f=free_locked_func;
+	}
+
+void CRYPTO_get_locked_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void (**f)(void *))
+	{
+	if (m != NULL) *m=malloc_locked_ex_func;
+	if (f != NULL) *f=free_locked_ex_func;
 	}
 
 void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
@@ -180,7 +243,7 @@ void *CRYPTO_malloc_locked(int num, const char *file, int line)
 		allow_customize_debug = 0;
 		malloc_debug_func(NULL, num, file, line, 0);
 		}
-	ret = malloc_locked_func(num);
+	ret = malloc_locked_ex_func(num,file,line);
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
 #endif
@@ -197,7 +260,7 @@ void CRYPTO_free_locked(void *str)
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
-	free_locked_func(str);
+	free_locked_ex_func(str);
 	if (free_debug_func != NULL)
 		free_debug_func(NULL, 1);
 	}
@@ -212,7 +275,7 @@ void *CRYPTO_malloc(int num, const char *file, int line)
 		allow_customize_debug = 0;
 		malloc_debug_func(NULL, num, file, line, 0);
 		}
-	ret = malloc_func(num);
+	ret = malloc_ex_func(num,file,line);
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
 #endif
@@ -228,7 +291,7 @@ void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);
-	ret = realloc_func(str,num);
+	ret = realloc_ex_func(str,num,file,line);
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
 #endif
@@ -245,7 +308,7 @@ void CRYPTO_free(void *str)
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
-	free_func(str);
+	free_ex_func(str);
 	if (free_debug_func != NULL)
 		free_debug_func(NULL, 1);
 	}
@@ -270,3 +333,19 @@ long CRYPTO_get_mem_debug_options(void)
 		return get_debug_options_func();
 	return 0;
 	}
+
+static void *crypto_i_malloc_ex(size_t num, const char *file, int line)
+        {
+        return malloc_func(num);
+        }
+
+static void *crypto_i_realloc_ex(void *str, size_t num,
+        const char *file, int line)
+        {
+        return realloc_func(str,num);
+        }
+
+static void crypto_i_free_ex(void *str)
+        {
+        free_func(str);
+        }
