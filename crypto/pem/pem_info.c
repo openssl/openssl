@@ -346,7 +346,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 		}
 
 	/* if we have a certificate then write it out now */
-	if ((xi->x509 != NULL) || (PEM_write_bio_X509(bp,xi->x509) <= 0))
+	if ((xi->x509 != NULL) && (PEM_write_bio_X509(bp,xi->x509) <= 0))
 		goto err;
 
 	/* we are ignoring anything else that is loaded into the X509_INFO

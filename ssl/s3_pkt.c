@@ -236,7 +236,8 @@ static int ssl3_get_record(SSL *s)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	short version;
 	unsigned int mac_size;
-	int clear=0,extra;
+	int clear=0;
+	size_t extra;
 
 	rr= &(s->s3->rrec);
 	sess=s->session;
@@ -245,7 +246,7 @@ static int ssl3_get_record(SSL *s)
 		extra=SSL3_RT_MAX_EXTRA;
 	else
 		extra=0;
-	if (extra != (s->s3->rbuf_len - SSL3_RT_MAX_PACKET_SIZE))
+	if (extra != s->s3->rbuf_len - SSL3_RT_MAX_PACKET_SIZE)
 		{
 		/* actually likely an application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER
 		 * set after ssl3_setup_buffers() was done */
@@ -295,8 +296,7 @@ again:
 			goto err;
 			}
 
-		if (rr->length > 
-			(unsigned int)SSL3_RT_MAX_ENCRYPTED_LENGTH+extra)
+		if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH+extra)
 			{
 			al=SSL_AD_RECORD_OVERFLOW;
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PACKET_LENGTH_TOO_LONG);
@@ -308,7 +308,7 @@ again:
 
 	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
 
-	if (rr->length > (s->packet_length-SSL3_RT_HEADER_LENGTH))
+	if (rr->length > s->packet_length-SSL3_RT_HEADER_LENGTH)
 		{
 		/* now s->packet_length == SSL3_RT_HEADER_LENGTH */
 		i=rr->length;
@@ -336,7 +336,7 @@ again:
 	 * rr->length bytes of encrypted compressed stuff. */
 
 	/* check is not needed I believe */
-	if (rr->length > (unsigned int)SSL3_RT_MAX_ENCRYPTED_LENGTH+extra)
+	if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH+extra)
 		{
 		al=SSL_AD_RECORD_OVERFLOW;
 		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
@@ -405,8 +405,7 @@ printf("\n");
 	/* r->length is now just compressed */
 	if (s->expand != NULL)
 		{
-		if (rr->length > 
-			(unsigned int)SSL3_RT_MAX_COMPRESSED_LENGTH+extra)
+		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra)
 			{
 			al=SSL_AD_RECORD_OVERFLOW;
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_COMPRESSED_LENGTH_TOO_LONG);
@@ -420,7 +419,7 @@ printf("\n");
 			}
 		}
 
-	if (rr->length > (unsigned int)SSL3_RT_MAX_PLAIN_LENGTH+extra)
+	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH+extra)
 		{
 		al=SSL_AD_RECORD_OVERFLOW;
 		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DATA_LENGTH_TOO_LONG);
@@ -605,7 +604,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			if (prefix_len <= 0)
 				goto err;
 
-			if (s->s3->wbuf_len < prefix_len + SSL3_RT_MAX_PACKET_SIZE)
+			if (s->s3->wbuf_len < (size_t)prefix_len + SSL3_RT_MAX_PACKET_SIZE)
 				{
 				/* insufficient space */
 				SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_INTERNAL_ERROR);
