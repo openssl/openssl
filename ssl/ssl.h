@@ -583,7 +583,9 @@ struct ssl_st
 
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
-	int new_session;/* 1 if we are to use a new session */
+	int new_session;/* 1 if we are to use a new session.
+	                 * NB: For servers, the 'new' session may actually be a previously
+	                 * cached session or even the previous session */
 	int quiet_shutdown;/* don't send shutdown packets */
 	int shutdown;	/* we have shut things down, 0x01 sent, 0x02
 			 * for received */
