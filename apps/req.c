@@ -150,7 +150,7 @@ int MAIN(int argc, char **argv)
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
 	EVP_PKEY *pkey=NULL;
-	int i,badops=0,newreq=0,newkey= -1,pkey_type=0;
+	int i,badops=0,newreq=0,newkey= -1,pkey_type=TYPE_RSA;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0,newhdr=0,subject=0;
@@ -211,7 +211,6 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-new") == 0)
 			{
-			pkey_type=TYPE_RSA;
 			newreq=1;
 			}
 		else if (strcmp(*argv,"-config") == 0)
