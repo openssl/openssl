@@ -1037,7 +1037,9 @@ int 	SSL_read(SSL *ssl,char *buf,int num);
 int 	SSL_peek(SSL *ssl,char *buf,int num);
 int 	SSL_write(SSL *ssl,const char *buf,int num);
 long	SSL_ctrl(SSL *ssl,int cmd, long larg, char *parg);
+long	SSL_callback_ctrl(SSL *, int, void (*)());
 long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, char *parg);
+long	SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)());
 
 int	SSL_get_error(SSL *s,int ret_code);
 const char *SSL_get_version(SSL *s);
