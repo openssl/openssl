@@ -125,31 +125,23 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-e_4758_cca.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_4758_cca.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+e_4758_cca.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_4758_cca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_4758_cca.o: ../include/openssl/cast.h ../include/openssl/crypto.h
-e_4758_cca.o: ../include/openssl/des.h ../include/openssl/des_old.h
-e_4758_cca.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_4758_cca.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_4758_cca.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_4758_cca.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_4758_cca.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_4758_cca.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-e_4758_cca.o: ../include/openssl/md2.h ../include/openssl/md4.h
-e_4758_cca.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+e_4758_cca.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_4758_cca.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_4758_cca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_4758_cca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_4758_cca.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_4758_cca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 e_4758_cca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 e_4758_cca.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_4758_cca.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_4758_cca.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-e_4758_cca.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-e_4758_cca.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+e_4758_cca.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_4758_cca.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 e_4758_cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_4758_cca.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-e_4758_cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_4758_cca.o: e_4758_cca.c e_4758_cca_err.c e_4758_cca_err.h
-e_4758_cca.o: vendor_defns/hw_4758_cca.h
+e_4758_cca.o: ../include/openssl/ui.h ../include/openssl/x509.h
+e_4758_cca.o: ../include/openssl/x509_vfy.h e_4758_cca.c e_4758_cca_err.c
+e_4758_cca.o: e_4758_cca_err.h vendor_defns/hw_4758_cca.h
 e_aep.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_aep.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_aep.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -189,32 +181,24 @@ e_cswift.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_cswift.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_cswift.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_cswift.c
 e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
-e_ncipher.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_ncipher.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+e_ncipher.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_ncipher.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_ncipher.o: ../include/openssl/cast.h ../include/openssl/crypto.h
-e_ncipher.o: ../include/openssl/des.h ../include/openssl/des_old.h
-e_ncipher.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_ncipher.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_ncipher.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_ncipher.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_ncipher.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_ncipher.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-e_ncipher.o: ../include/openssl/md2.h ../include/openssl/md4.h
-e_ncipher.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+e_ncipher.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_ncipher.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_ncipher.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_ncipher.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_ncipher.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_ncipher.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 e_ncipher.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 e_ncipher.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_ncipher.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 e_ncipher.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-e_ncipher.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-e_ncipher.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-e_ncipher.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+e_ncipher.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_ncipher.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 e_ncipher.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_ncipher.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-e_ncipher.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_ncipher.o: e_ncipher.c e_ncipher_err.c e_ncipher_err.h
-e_ncipher.o: vendor_defns/hwcryptohook.h
+e_ncipher.o: ../include/openssl/ui.h ../include/openssl/x509.h
+e_ncipher.o: ../include/openssl/x509_vfy.h e_ncipher.c e_ncipher_err.c
+e_ncipher.o: e_ncipher_err.h vendor_defns/hwcryptohook.h
 e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -228,32 +212,24 @@ e_nuron.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_nuron.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_nuron.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_nuron.c
 e_nuron.o: e_nuron_err.c e_nuron_err.h
-e_sureware.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_sureware.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+e_sureware.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_sureware.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_sureware.o: ../include/openssl/cast.h ../include/openssl/crypto.h
-e_sureware.o: ../include/openssl/des.h ../include/openssl/des_old.h
-e_sureware.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_sureware.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_sureware.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_sureware.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_sureware.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_sureware.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-e_sureware.o: ../include/openssl/md2.h ../include/openssl/md4.h
-e_sureware.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+e_sureware.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_sureware.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_sureware.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_sureware.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_sureware.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_sureware.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 e_sureware.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 e_sureware.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_sureware.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 e_sureware.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-e_sureware.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-e_sureware.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-e_sureware.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+e_sureware.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_sureware.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 e_sureware.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_sureware.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-e_sureware.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_sureware.o: e_sureware.c e_sureware_err.c e_sureware_err.h
-e_sureware.o: vendor_defns/sureware.h
+e_sureware.o: ../include/openssl/ui.h ../include/openssl/x509.h
+e_sureware.o: ../include/openssl/x509_vfy.h e_sureware.c e_sureware_err.c
+e_sureware.o: e_sureware_err.h vendor_defns/sureware.h
 e_ubsec.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_ubsec.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_ubsec.o: ../include/openssl/crypto.h ../include/openssl/dh.h
