@@ -173,11 +173,11 @@ $	write sys$output "There are definitly a few expired certificates"
 $	@tverify.com
 $	goto loop_tests
 $ test_dh:
-$	write sys$output "Generate as set of DH parameters"
+$	write sys$output "Generate a set of DH parameters"
 $	mcr 'texe_dir''dhtest'
 $	goto loop_tests
 $ test_dsa:
-$	write sys$output "Generate as set of DSA parameters"
+$	write sys$output "Generate a set of DSA parameters"
 $	mcr 'texe_dir''dsatest'
 $	goto loop_tests
 $ test_gen:
