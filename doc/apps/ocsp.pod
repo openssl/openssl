@@ -20,11 +20,22 @@ B<openssl> B<ocsp>
 [B<-respin file>]
 [B<-nonce>]
 [B<-no_nonce>]
+[B<-url responder_url>]
 [B<-host host:n>]
 [B<-path>]
 [B<-CApath file>]
 [B<-CAfile file>]
+[B<-VAfile file>]
+[B<-verify_certs file>]
 [B<-noverify>]
+[B<-trust_other>]
+[B<-no_intern>]
+[B<-no_sig_verify>]
+[B<-no_cert_verify>]
+[B<-no_chain>]
+[B<-no_cert_checks>]
+[B<-validity_period nsec>]
+[B<-status_age nsec>]
 
 =head1 DESCRIPTION
 
@@ -94,6 +105,10 @@ read OCSP request or response file from B<file>. These option are ignored
 if OCSP request or response creation is implied by other options (for example
 with B<serial>, B<cert> and B<host> options).
 
+=item B<-url responder_url>
+
+specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
+
 =item B<-host hostname:port>, B<-path pathname>
 
 if the B<host> option is present then the OCSP request is sent to the host
@@ -105,9 +120,74 @@ or "/" by default.
 file or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
 
+=item B<-verify_certs file>
+
+file containing additional certificates to search when attempting to locate
+the OCSP response signing certificate. Some responders omit the actual signer's
+certificate from the reponse: this option can be used to supply the neccesary
+certificate in such cases.
+
+=item B<-trust_other>
+
+the certificates specified by the B<-verify_certs> option should be explicitly
+trusted and no additional checks will be performed on them. This is useful
+when the complete reponder certificate chain is not available or trusting a
+root CA is not appropriate.
+
+=item B<-VAfile file>
+
+file containing explicitly trusted responder certificates. Equivalent to the
+B<-verify_certs> and B<-trust_other> options.
+
 =item B<-noverify>
 
-don't attempt to verify the OCSP response signature or the nonce values.
+don't attempt to verify the OCSP response signature or the nonce values. This
+option will normally only be used for debugging since it disables all verification
+of the responders certificate.
+
+=item B<-no_intern>
+
+ignore certificates contained in the OCSP response when searching for the
+signers certificate. With this option the signers certificate must be specified
+with either the B<-verify_certs> or B<-VAfile> options.
+
+=item B<-no_sig_verify>
+
+don't check the signature on the OCSP response. Since this option tolerates invalid
+signatures on OCSP respondes it will normally only be used for testing purposes.
+
+=item B<-no_cert_verify>
+
+don't verify the OCSP reponse signers certificate at all. Since this option allows
+the OCSP response to be signed by any certificate it should only be used for
+testing purposes.
+
+=item B<-no_chain>
+
+do not use certificates in the response as additional untrusted CA
+certificates.
+
+=item B<-no_cert_checks>
+
+don't perform any additional checks on the OCSP response signers certificate.
+That is do not make any checks to see if the signers certificate is authorised
+to provide the neccessary status information: as a result this option should
+only be used for testing purposes.
+
+=item B<-validity_period nsec>, B<-status_age age>
+
+these options specify the range of times, in seconds, which will be tolerated
+in an OCSP response. Each certificate status response includes a B<notBefore> time and
+an optional B<notAfter> time. The current time should fall between these two values, but
+the interval between the two times may be only a few seconds. In practice the OCSP
+responder and clients clocks may not be precisely synchronised and so such a check
+may fail. To avoid this the B<-validity_period> option can be used to specify an
+acceptable error range in seconds, the default value is 5 minutes.
+
+If the B<notAfter> time is omitted from a response then this means that new status
+information is immediately available. In this case the age of the B<notBefore> field
+is checked to see it is not older than B<age> seconds old. By default this additional
+check is not performed.
 
 =back
 
@@ -146,20 +226,18 @@ authorised directly by the CA it is issuing revocation information about
 
 If the OCSP responder is a "global responder" which can give details about
 multiple CAs and has its own separate certificate chain then its root
-CA must be trusted for OCSP signing. For example:
+CA can be trusted for OCSP signing. For example:
 
  openssl x509 -in ocspCA.pem -addtrust OCSPSigning -out trustedCA.pem
 
+Alternatively the responder certificate itself can be explicitly trusted
+with the B<-VAfile> option.
+
 =head1 NOTES
 
-The B<-host> and B<-path> options specify the relevant parts of the OCSP
-URI. For example the OCSP responder URL:
-
-http://ocsp.myhost.com/ocsp/request
-
-corresponds to the the options:
-
- -host ocsp.myhost.com:80 -path /ocsp/request
+As noted, most of the verify options are for testing or debugging purposes.
+Normally only the B<-CApath>, B<-CAfile> and (if the responder is a 'global
+VA') B<-VAfile> options need to be used.
 
 =head1 EXAMPLES
 
@@ -171,18 +249,9 @@ Send a query an OCSP responder with URL http://ocsp.myhost.com/ save the
 response to a file and print it out in text form
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
-     -host ocsp.myhost.com:80 -resp_text -respout resp.der
+     -url http://ocsp.myhost.com/ -resp_text -respout resp.der
 
 Read in an OCSP response and print out text form:
 
  openssl ocsp -respin resp.der -text
 
-=head1 BUGS
-
-This utility is incomplete. It currently does not completely check the OCSP
-response's: it does not check the validity dates for example.
-
-The B<host> and B<path> options may well go away and be replaced by a B<url>
-option or an option to determine the URI based on certificate extensions.
-
-SSL OCSP responders using https URLs cannot currently be queried.

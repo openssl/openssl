@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-req - PKCS#10 certificate and certificate generating utility.
+req - PKCS#10 certificate request and certificate generating utility.
 
 =head1 SYNOPSIS
 
@@ -31,6 +31,7 @@ B<openssl> B<req>
 [B<-subj arg>]
 [B<-x509>]
 [B<-days n>]
+[B<-set_serial n>]
 [B<-asn1-kludge>]
 [B<-newhdr>]
 [B<-extensions section>]
@@ -167,12 +168,20 @@ when processing a request.
 this option outputs a self signed certificate instead of a certificate
 request. This is typically used to generate a test certificate or
 a self signed root CA. The extensions added to the certificate
-(if any) are specified in the configuration file.
+(if any) are specified in the configuration file. Unless specified
+using the B<set_serial> option B<0> will be used for the serial
+number.
 
 =item B<-days n>
 
 when the B<-x509> option is being used this specifies the number of
 days to certify the certificate for. The default is 30 days.
+
+=item B<-set_serial n>
+
+serial number to use when outputting a self signed certifcate. This
+may be specified as a decimal value or a hex value if preceded by B<0x>.
+It is possible to use negative serial numbers but this is not recommended.
 
 =item B<-extensions section>
 

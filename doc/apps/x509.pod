@@ -36,6 +36,7 @@ B<openssl> B<x509>
 [B<-addreject arg>]
 [B<-setalias arg>]
 [B<-days arg>]
+[B<-set_serial n>]
 [B<-signkey filename>]
 [B<-x509toreq>]
 [B<-req>]
@@ -292,6 +293,16 @@ is used to pass the required private key.
 
 by default a certificate is expected on input. With this option a
 certificate request is expected instead.
+
+=item B<-set_serial n>
+
+specifies the serial number to use. This option can be used with either
+the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
+option the serial number file (as specified by the B<-CAserial> or
+B<-CAcreateserial> options) is not used.
+
+The serial number can be decimal or hex (if preceded by B<0x>). Negative
+serial numbers can also be specified but their use is not recommended.
 
 =item B<-CA filename>
 
