@@ -21,7 +21,7 @@ B<ret>.
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
 current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
 used in the same thread that performed the SSL I/O operation, and no
-other OpenSSL function calls should appear inbetween.  The current
+other OpenSSL function calls should appear in between.  The current
 thread's error queue must be empty before the SSL I/O operation is
 attempted, or SSL_get_error() will not work reliably.
 
@@ -34,13 +34,13 @@ The following return values can currently occur:
 =item SSL_ERROR_NONE
 
 The SSL I/O operation completed.  This result code is returned
-if and only if B<ret > 0>.
+if and only if B<ret E<gt> 0>.
 
 =item SSL_ERROR_ZERO_RETURN
 
 The SSL connection has been closed.  If the protocol version is SSL 3.0
 or TLS 1.0, this result code is returned only if a closure
-alerts has occured in the protocol, i.e. if the connection has been
+alerts has occurred in the protocol, i.e. if the connection has been
 closed cleanly.
 
 =item SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
@@ -75,7 +75,7 @@ I/O error (for socket I/O on Unix systems, consult B<errno> for details).
 
 =item SSL_ERROR_SSL
 
-A failure in the SSL library occured, usually a protocol error.  The
+A failure in the SSL library occurred, usually a protocol error.  The
 OpenSSL error queue contains more information on the error.
 
 =back

@@ -69,7 +69,7 @@ start.  This will stop the hash table ever being decreased in size.
 lh_doall_arg() is the same as lh_doall() except that B<func> will
 be called with B<arg> as the second argument.
 
-lh_error() can be used to determine if an error occured in the last
+lh_error() can be used to determine if an error occurred in the last
 operation. lh_error() is a macro.
 
 =head1 RETURN VALUES
