@@ -336,11 +336,11 @@ my %table=(
 #
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
 #
-"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:${alpha_asm}:dlfcn:alpha-osf1-shared:::.so",
-"alphaold-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:alpha-osf1-shared:::.so",
-"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared:::.so",
-"alpha-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared:::.so",
-"alpha-cc-rpath", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared-rpath:::.so",
+"alpha-gcc","gcc:-O3::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:${alpha_asm}:dlfcn:alpha-osf1-shared:::.so",
+"alphaold-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:alpha-osf1-shared:::.so",
+"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared:::.so",
+"alpha-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared:::.so",
+"alpha-cc-rpath", "cc:-std1 -tune host -fast -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared-rpath:::.so",
 #
 # This probably belongs in a different section.
 #
@@ -430,8 +430,8 @@ my %table=(
 # IBM's AIX.
 "aix-cc",   "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
 "aix-gcc",  "gcc:-O3 -DB_ENDIAN::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
-"aix43-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
+"aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
+"aix43-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
 
 #
 # Cray T90 (SDSC)
@@ -1563,5 +1563,6 @@ sub test_sanity
 			print STDERR "              valid values are 'dl', 'dlfcn', 'win32' and 'vms'\n";
 			}
 		}
+	print STDERR "No sanity errors detected!\n" if $errorcnt == 0;
 	return $errorcnt;
 	}
