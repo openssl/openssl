@@ -11,7 +11,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=	/usr/local/ssl
 MAKEFILE=	Makefile.ssl
-MAKE=		make -f $(MAKEFILE)
+NEWMAKE=	make
+MAKE=		$(NEWMAKE) -f $(MAKEFILE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
@@ -298,199 +299,367 @@ $(DLIBCRYPTO):
 
 $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RSATEST) $(CFLAGS) $(RSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RSATEST) $(CFLAGS) $(RSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RSATEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RSATEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(BNTEST) $(CFLAGS) $(BNTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(BNTEST) $(CFLAGS) $(BNTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(BNTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(BNTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(ECTEST): $(ECTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(ECTEST) $(CFLAGS) $(ECTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(ECTEST) $(CFLAGS) $(ECTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(ECTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(ECTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(EXPTEST): $(EXPTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(EXPTEST) $(CFLAGS) $(EXPTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(EXPTEST) $(CFLAGS) $(EXPTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(EXPTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(EXPTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(IDEATEST): $(IDEATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(IDEATEST) $(CFLAGS) $(IDEATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(IDEATEST) $(CFLAGS) $(IDEATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(IDEATEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(IDEATEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(MD2TEST): $(MD2TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(MD2TEST) $(CFLAGS) $(MD2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(MD2TEST) $(CFLAGS) $(MD2TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(MD2TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(MD2TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(SHATEST): $(SHATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(SHATEST) $(CFLAGS) $(SHATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(SHATEST) $(CFLAGS) $(SHATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(SHATEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(SHATEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(SHA1TEST) $(CFLAGS) $(SHA1TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(SHA1TEST) $(CFLAGS) $(SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(SHA1TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(SHA1TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RMDTEST) $(CFLAGS) $(RMDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RMDTEST) $(CFLAGS) $(RMDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RMDTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RMDTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(MDC2TEST): $(MDC2TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(MDC2TEST) $(CFLAGS) $(MDC2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(MDC2TEST) $(CFLAGS) $(MDC2TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(MDC2TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(MDC2TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(MD4TEST): $(MD4TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(MD4TEST) $(CFLAGS) $(MD4TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(MD4TEST) $(CFLAGS) $(MD4TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(MD4TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(MD4TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(MD5TEST): $(MD5TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(MD5TEST) $(CFLAGS) $(MD5TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(MD5TEST) $(CFLAGS) $(MD5TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(MD5TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(MD5TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(HMACTEST): $(HMACTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(HMACTEST) $(CFLAGS) $(HMACTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(HMACTEST) $(CFLAGS) $(HMACTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(HMACTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(HMACTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(RC2TEST): $(RC2TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RC2TEST) $(CFLAGS) $(RC2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RC2TEST) $(CFLAGS) $(RC2TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RC2TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RC2TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(BFTEST): $(BFTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(BFTEST) $(CFLAGS) $(BFTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(BFTEST) $(CFLAGS) $(BFTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(BFTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(BFTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(CASTTEST): $(CASTTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(CASTTEST) $(CFLAGS) $(CASTTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(CASTTEST) $(CFLAGS) $(CASTTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(CASTTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(CASTTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(RC4TEST): $(RC4TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RC4TEST) $(CFLAGS) $(RC4TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RC4TEST) $(CFLAGS) $(RC4TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RC4TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RC4TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(RC5TEST): $(RC5TEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RC5TEST) $(CFLAGS) $(RC5TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RC5TEST) $(CFLAGS) $(RC5TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RC5TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RC5TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(DESTEST): $(DESTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(DESTEST) $(CFLAGS) $(DESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(DESTEST) $(CFLAGS) $(DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(DESTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(DESTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(RANDTEST) $(CFLAGS) $(RANDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(RANDTEST) $(CFLAGS) $(RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(RANDTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(RANDTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(DHTEST) $(CFLAGS) $(DHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(DHTEST) $(CFLAGS) $(DHTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(DHTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(DHTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(DSATEST) $(CFLAGS) $(DSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(DSATEST) $(CFLAGS) $(DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(DSATEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(DSATEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(METHTEST) $(CFLAGS) $(METHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(METHTEST) $(CFLAGS) $(METHTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(METHTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(METHTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(SSLTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(SSLTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(ENGINETEST) $(CFLAGS) $(ENGINETEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(ENGINETEST) $(CFLAGS) $(ENGINETEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(ENGINETEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(ENGINETEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(EVPTEST) $(CFLAGS) $(EVPTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(EVPTEST) $(CFLAGS) $(EVPTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(EVPTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(EVPTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(ECDSATEST): $(ECDSATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(ECDSATEST) $(CFLAGS) $(ECDSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(ECDSATEST) $(CFLAGS) $(ECDSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(ECDSATEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(ECDSATEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(ECDHTEST) $(CFLAGS) $(ECDHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o $(ECDHTEST) $(CFLAGS) $(ECDHTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(ECDHTEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(ECDHTEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
@@ -504,10 +673,16 @@ $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 
 dummytest: dummytest.o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o dummytest $(CFLAGS) dummytest.o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
 	else \
-	  $(CC) -o dummytest $(CFLAGS) dummytest.o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=dummytest LDFLAGS="$(CFLAGS)" \
+		OBJECTS="dummytest.o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

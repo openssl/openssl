@@ -10,7 +10,8 @@ CFLAG=		-g -static
 INSTALL_PREFIX=
 INSTALLTOP=	/usr/local/ssl
 OPENSSLDIR=	/usr/local/ssl
-MAKE=		make -f Makefile.ssl
+NEWMAKE=	make
+MAKE=		$(NEWMAKE) -f Makefile.ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
@@ -86,7 +87,12 @@ all:	exe
 exe:	$(PROGRAM)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
-	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(RAND_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=req LDFLAGS="$(CFLAG)" \
+		OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
+		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
@@ -144,10 +150,16 @@ $(DLIBCRYPTO):
 $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(PROGRAM)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	  LIBRARIES="$(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO)" ; \
 	else \
-	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(PROGRAM) LDFLAGS="$(CFLAG)" \
+		OBJECTS="$(PROGRAM).o $(E_OBJ)" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$(SHLIB_TARGET)
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
 		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
 		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \

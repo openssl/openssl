@@ -4,6 +4,11 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add full support for -rpath/-R, both in shared libraries and
+     applications, at least on the platforms where it's known how
+     to do it.
+     [Richard Levitte]
+
   *) In crypto/ec/ec_mult.c, implement fast point multiplication with
      precomputation, based on wNAF splitting: EC_GROUP_precompute_mult()
      will now compute a table of multiples of the generator that

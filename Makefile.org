@@ -286,6 +286,7 @@ do_$(SHLIB_TARGET):
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
+			LIBRPATH="$(INSTALLTOP)/lib" \
 			link_a.$(SHLIB_TARGET); \
 		libs="$$libs -l$$i"; \
 	done
