@@ -420,9 +420,9 @@ id-ad 1			: OCSP			: OCSP
 !Cname ad-ca-issuers
 id-ad 2			: caIssuers		: CA Issuers
 !Cname ad-timeStamping
-id-ad 3			: timestamping		: Time Stamping
+id-ad 3			: ad_timestamping	: AD Time Stamping
 !Cname ad-dvcs
-id-ad 4			: DVCS			: dvcs
+id-ad 4			: AD_DVCS		: ad dvcs
 
 
 !Alias id-pkix-OCSP ad-OCSP
