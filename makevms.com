@@ -29,6 +29,7 @@ $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
 $!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
+$!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
 $!
 $!
 $! Specify RSAREF as P2 to compile using the RSAREF Library.
@@ -161,6 +162,10 @@ $!  Build The [.xxx.EXE.APPS] OpenSSL Application Utilities.
 $!
 $   GOSUB APPS
 $!
+$!  Build The [.xxx.EXE.ENGINES] OpenSSL Shareable Engines.
+$!
+$   GOSUB ENGINES
+$!
 $! Else...
 $!
 $ ELSE
@@ -237,6 +242,9 @@ $     ENDIF
 $   ENDIF
 $   GOTO CONFIG_LOG_LOOP
 $ CONFIG_LOG_LOOP_END:
+$ WRITE H_FILE "#ifndef OPENSSL_NO_STATIC_ENGINE"
+$ WRITE H_FILE "# define OPENSSL_NO_STATIC_ENGINE"
+$ WRITE H_FILE "#endif"
 $ WRITE H_FILE "#ifndef OPENSSL_THREADS"
 $ WRITE H_FILE "# define OPENSSL_THREADS"
 $ WRITE H_FILE "#endif"
@@ -537,7 +545,7 @@ $ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEV
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB APPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -666,6 +674,31 @@ $!
 $! Build The Application Programs.
 $!
 $ @MAKEAPPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$!
+$! Go Back To The Main Directory.
+$!
+$ SET DEFAULT [-]
+$!
+$! That's All, Time To RETURN.
+$!
+$ RETURN
+$!
+$! Build The OpenSSL Application Programs.
+$!
+$ ENGINES:
+$!
+$! Tell The User What We Are Doing.
+$!
+$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "Building OpenSSL [.",ARCH,".EXE.ENGINES] Engines."
+$!
+$! Go To The [.ENGINES] Directory.
+$!
+$ SET DEFAULT SYS$DISK:[.ENGINES]
+$!
+$! Build The Application Programs.
+$!
+$ @MAKEENGINES ENGINES 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
 $!
 $! Go Back To The Main Directory.
 $!
