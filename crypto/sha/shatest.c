@@ -62,10 +62,10 @@
 
 #include "../e_os.h"
 
-#ifdef OPENSSL_NO_SHA
+#if defined(OPENSSL_NO_SHA) || defined(OPENSSL_NO_SHA0)
 int main(int argc, char *argv[])
 {
-    printf("No SHA support\n");
+    printf("No SHA0 support\n");
     return(0);
 }
 #else
