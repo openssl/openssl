@@ -90,7 +90,7 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 	if (!EC_GROUP_get_curve_GFp(group, s, NULL, NULL, ctx)) ABORT;
 	fprintf(stdout, "Timings for %d bit prime, ", (int)BN_num_bits(s));
 	if (!EC_GROUP_get_order(group, s, ctx)) ABORT;
-	fprintf(stdout, "%d bit exponents ", (int)BN_num_bits(s));
+	fprintf(stdout, "%d bit scalars ", (int)BN_num_bits(s));
 	fflush(stdout);
 
 	P = EC_POINT_new(group);
@@ -529,6 +529,14 @@ int main(int argc, char *argv[])
 #if 0
 	timings(P_192, 0, ctx);
 	timings(P_192, 1, ctx);
+	timings(P_224, 0, ctx);
+	timings(P_224, 1, ctx);
+	timings(P_256, 0, ctx);
+	timings(P_256, 1, ctx);
+	timings(P_384, 0, ctx);
+	timings(P_384, 1, ctx);
+	timings(P_521, 0, ctx);
+	timings(P_521, 1, ctx);
 #endif
 
 
