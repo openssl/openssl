@@ -12,6 +12,7 @@ OpenSSL  -  Frequently Asked Questions
 [LEGAL] Legal questions
 
 * Do I need patent licenses to use OpenSSL?
+* Can I use OpenSSL with GPL software? 
 
 [USER] Questions on using the OpenSSL applications
 
@@ -137,6 +138,24 @@ offer legal advice.
 
 You can configure OpenSSL so as not to use RC5 and IDEA by using
  ./config no-rc5 no-idea
+
+
+* Can I use OpenSSL with GPL software?
+
+On many systems including the major Linux and BSD distributions, yes (the
+GPL does not place restrictions on using libraries that are part of the
+normal operating system distribution).
+
+On other systems, the situation is less clear. Some GPL software copyright
+holders claim that you infringe on their rights if you use OpenSSL with
+their software on operating systems that don't normally include OpenSSL.
+
+If you develop open source software that uses OpenSSL, you may find it
+useful to choose an other license than the GPL, or state explicitely that
+"This program is released under the GPL with the additional exemption that
+compiling, linking, and/or using OpenSSL is allowed."  If you are using
+GPL software developed by others, you may want to ask the copyright holder
+for permission to use their software with OpenSSL.
 
 
 [USER] ========================================================================
