@@ -1,13 +1,24 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/12 19:40:55 $
+  ______________                           $Date: 2002/12/18 10:24:02 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.8:  Under development...
+    o  OpenSSL 0.9.7-beta6: Released on December 17th, 2002
+       Solaris on Sun Ultra (Workshop 6 update 1)	- PASSED with warnings
+							  (warnings fixed)
+       Redhat 8 on i386 (gcc 3.2)			- PASSED
+       Debian GNU/Linux on i386 (kernel 2.4.19, gxx 2.95.4) - PASSED
+       Windows CE on HPC Pro 2.11			- PASSED
+       Windows CE on HPC 2000				- PASSED
+       Windows CE on PocketPC 2000			- PASSED
+       Windows CE on PocketPC 2002			- PASSED
+       VMS (on any platform, DEC C)			- ERROR
+       Windows XP, with Kerberos 5			- ERROR
+       Windows 2000 (Cygwin)				- ERROR (PR: 404)
     o  OpenSSL 0.9.7-beta5: Released on December  5th, 2002
     o  OpenSSL 0.9.7-beta4: Released on November 19th, 2002
-       Debian GNU/Linux (kernel version 2.4.19, gcc 2.95.4)	- PASSED
     o  OpenSSL 0.9.7-beta3: Released on July     30th, 2002
     o  OpenSSL 0.9.7-beta2: Released on June     16th, 2002
     o  OpenSSL 0.9.7-beta1: Released on June      1st, 2002
