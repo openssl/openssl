@@ -45,19 +45,19 @@ void main(int argc,char *argv[])
 		{
 		for (i=0; i<1000; i++) /**/
 			{
-			des_encrypt(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
 			GetTSC(s1);
-			des_encrypt(&data[0],key,1);
-			des_encrypt(&data[0],key,1);
-			des_encrypt(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
 			GetTSC(e1);
 			GetTSC(s2);
-			des_encrypt(&data[0],key,1);
-			des_encrypt(&data[0],key,1);
-			des_encrypt(&data[0],key,1);
-			des_encrypt(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
 			GetTSC(e2);
-			des_encrypt(&data[0],key,1);
+			des_encrypt1(&data[0],key,1);
 			}
 
 		printf("des %d %d (%d)\n",
