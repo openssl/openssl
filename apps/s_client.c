@@ -595,6 +595,8 @@ re_start:
 	if (starttls_proto == 1)
 		{
 		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO_printf(sbio,"EHLO some.host.name\r\n");
+		BIO_read(sbio,mbuf,BUFSIZZ);
 		BIO_printf(sbio,"STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}

@@ -4,6 +4,10 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Fix hang in EGD/PRNGD query when communication socket is closed
+     prematurely by EGD/PRNGD.
+     [Darren Tucker <dtucker@zip.com.au> via Lutz Jänicke, resolves #1014]
+
   *) Prompt for pass phrases when appropriate for PKCS12 input format.
      [Steve Henson]
 
