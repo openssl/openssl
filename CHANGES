@@ -5,6 +5,19 @@
 
  Changes between 0.9.1c and 0.9.1d
 
+  *) Enhanced the err-ins.pl script so it makes the error library number 
+     global and can add a library name. This is needed for external ASN1 and
+     other error libraries.
+     [Steve Henson]
+
+  *) Fixed sk_insert which never worked properly.
+     [Steve Henson]
+
+  *) Fix ASN1 macros so they can handle indefinite length construted 
+     EXPLICIT tags. Some non standard certificates use these: they can now
+     be read in.
+     [Steve Henson]
+
   *) Merged the various old/obsolete SSLeay documentation files (doc/xxx.doc)
      into a single doc/ssleay.txt bundle. This way the information is still
      preserved but no longer messes up this directory. Now it's new room for
