@@ -1,6 +1,6 @@
 /* crypto/rand/rand_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,6 +76,7 @@ static ERR_STRING_DATA RAND_str_reasons[]=
 	{
 {RAND_R_NON_FIPS_METHOD                  ,"non fips method"},
 {RAND_R_PRNG_NOT_SEEDED                  ,"PRNG not seeded"},
+{RAND_R_PRNG_STUCK                       ,"prng stuck"},
 {0,NULL}
 	};
 

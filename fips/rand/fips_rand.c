@@ -93,11 +93,14 @@ RAND_METHOD rand_fips_meth=
     fips_rand_status
     };
 
+static int second;
+
 void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8])
     {
     memcpy(&key1,k1,sizeof key1);
     memcpy(&key2,k2,sizeof key2);
     key_set=1;
+    second=0;
     }
 
 void FIPS_test_mode(int test,const unsigned char faketime[8])
@@ -115,9 +118,6 @@ int FIPS_rand_seeded()
 static void fips_gettime(unsigned char buf[8])
     {
     struct timeval tv;
-#ifndef GETPID_IS_MEANINGLESS
-    long pid;
-#endif
 
     if(test_mode)
 	{
@@ -130,6 +130,7 @@ static void fips_gettime(unsigned char buf[8])
     memcpy (&buf[0],&tv.tv_sec,4);
     memcpy (&buf[4],&tv.tv_usec,4);
 
+#if 0  /* This eminently sensible strategy is not acceptable to NIST. Sigh. */
 #ifndef GETPID_IS_MEANINGLESS
     /* we mix in the PID to ensure that after a fork the children don't give
      * the same results as each other
@@ -139,6 +140,7 @@ static void fips_gettime(unsigned char buf[8])
     if((pid&0xffff0000) == 0)
 	pid<<=16;
     *(long *)&buf[0]^=pid;
+#endif
 #endif
     }
 
@@ -204,6 +206,7 @@ static int fips_rand_bytes(unsigned char *buf,int num)
     unsigned char timeseed[8];
     unsigned char intermediate[SEED_SIZE];
     unsigned char output[SEED_SIZE];
+    static unsigned char previous[SEED_SIZE];
 
     if(n_seed < sizeof seed)
 	{
@@ -228,6 +231,14 @@ static int fips_rand_bytes(unsigned char *buf,int num)
 	for(l=0 ; l < sizeof t ; ++l)
 	    t[l]=output[l]^seed[l];
 	fips_rand_encrypt(seed,t);
+
+	if(second && !memcmp(output,previous,sizeof previous))
+	    {
+	    RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_STUCK);
+	    return 0;
+	    }
+	memcpy(previous,output,sizeof previous);
+	second=1;
 
 	l=SEED_SIZE < num-n ? SEED_SIZE : num-n;
 	memcpy(buf+n,output,l);

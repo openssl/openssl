@@ -74,6 +74,7 @@ int FIPS_selftest_aes()
     {
     int n;
 
+    /* Encrypt and check against known ciphertext */
     for(n=0 ; n < 1 ; ++n)
 	{
 	AES_KEY key;
@@ -82,6 +83,20 @@ int FIPS_selftest_aes()
 	AES_set_encrypt_key(tests[n].key,128,&key);
 	AES_encrypt(tests[n].plaintext,buf,&key);
 	if(memcmp(buf,tests[n].ciphertext,sizeof buf))
+	    {
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
+	    return 0;
+	    }
+	}
+    /* Decrypt and check against known plaintext */
+    for(n=0 ; n < 1 ; ++n)
+	{
+	AES_KEY key;
+	unsigned char buf[16];
+
+	AES_set_decrypt_key(tests[n].key,128,&key);
+	AES_decrypt(tests[n].ciphertext,buf,&key);
+	if(memcmp(buf,tests[n].plaintext,sizeof buf))
 	    {
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
 	    return 0;

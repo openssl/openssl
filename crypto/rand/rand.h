@@ -128,6 +128,7 @@ void ERR_load_RAND_strings(void);
 /* Reason codes. */
 #define RAND_R_NON_FIPS_METHOD				 101
 #define RAND_R_PRNG_NOT_SEEDED				 100
+#define RAND_R_PRNG_STUCK				 102
 
 #ifdef  __cplusplus
 }

@@ -156,8 +156,13 @@ int FIPS_selftest_rsa()
 	"\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde";
     int n;
 
+    /* Perform pairwise consistency test by: ... */
+
     key=RSA_new();
     clen=setrsakey(key,expected_ctext);
+    /* ...1) apply public key to plaintext, resulting ciphertext must be
+     * different
+    */
     n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,
 			 RSA_NO_PADDING);
     if(n < 0)
@@ -170,6 +175,14 @@ int FIPS_selftest_rsa()
   	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
  	return 0;
  	}
+    if(!memcmp(ctext,original_ptext,n))
+  	{
+  	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
+ 	return 0;
+ 	}
+    /* ...2) apply private key to ciphertext and compare result to
+     *       original plaintext; results must be equal
+    */
     n=RSA_private_decrypt(n,ctext,ptext,key,RSA_NO_PADDING);
     if(n < 0)
 	{
