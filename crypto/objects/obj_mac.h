@@ -1654,6 +1654,10 @@
 #define NID_dnQualifier		174
 #define OBJ_dnQualifier		OBJ_X509,46L
 
+#define LN_pseudonym		"pseudonym"
+#define NID_pseudonym		510
+#define OBJ_pseudonym		OBJ_X509,65L
+
 #define SN_role		"role"
 #define LN_role		"role"
 #define NID_role		400
