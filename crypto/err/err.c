@@ -334,6 +334,7 @@ static LHASH *int_err_get(void)
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	return(toret);
 	}
+
 static void int_err_del(void)
 	{
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
@@ -345,6 +346,7 @@ static void int_err_del(void)
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	}
+
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 	{
 	ERR_STRING_DATA *p;
@@ -358,6 +360,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
+
 static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *d)
 	{
 	ERR_STRING_DATA *p;
@@ -366,11 +369,12 @@ static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *d)
 	hash = ERRFN(err_get)();
 	if(!hash)
 		return NULL;
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p = (ERR_STRING_DATA *)lh_insert(hash, d);
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
+
 static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 	{
 	ERR_STRING_DATA *p;
@@ -379,11 +383,12 @@ static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 	hash = ERRFN(err_get)();
 	if(!hash)
 		return NULL;
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p = (ERR_STRING_DATA *)lh_delete(hash, d);
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
+
 static LHASH *int_thread_get(void)
 	{
 	LHASH *toret = NULL;
@@ -398,6 +403,7 @@ static LHASH *int_thread_get(void)
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	return(toret);
 	}
+
 static ERR_STATE *int_thread_get_item(const ERR_STATE *d)
 	{
 	ERR_STATE *p;
@@ -411,6 +417,7 @@ static ERR_STATE *int_thread_get_item(const ERR_STATE *d)
 	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
+
 static ERR_STATE *int_thread_set_item(ERR_STATE *d)
 	{
 	ERR_STATE *p;
@@ -419,11 +426,12 @@ static ERR_STATE *int_thread_set_item(ERR_STATE *d)
 	hash = ERRFN(thread_get)();
 	if(!hash)
 		return NULL;
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p = (ERR_STATE *)lh_insert(hash, d);
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
+
 static void int_thread_del_item(const ERR_STATE *d)
 	{
 	ERR_STATE *p;
@@ -445,6 +453,7 @@ static void int_thread_del_item(const ERR_STATE *d)
 	if(p)
 		ERR_STATE_free(p);
 	}
+
 static int int_err_get_next_lib(void)
 	{
 	int toret;
@@ -971,4 +980,3 @@ void ERR_add_error_data(int num, ...)
 
 	va_end(args);
 	}
-
