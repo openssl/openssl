@@ -685,7 +685,6 @@ bad:
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx,off);
-	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NON_EXPORT_FIRST);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 
