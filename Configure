@@ -588,6 +588,8 @@ while (<IN>)
 	else
 		{ print OUT $_; }
 	}
+close(IN);
+close(OUT);
 
 # Fix the date
 
