@@ -2,9 +2,13 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6k and 0.9.6l  [xx XXX XXXX]
+ Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
 
-  *)
+  *) Fix additional bug revealed by the NISCC test suite:
+
+     Stop bug triggering large recursion when presented with
+     certain ASN.1 tags (CAN-2003-0851)
+     [Steve Henson]
 
  Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
 
