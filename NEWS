@@ -17,6 +17,7 @@
       o Support for ASN.1 UTF8String and VisibleString
       o Full integration of PKCS#12 code
       o Sparc assembler bignum implementation, optimized hash functions
+      o Option to disable selected ciphers
 
   Major changes between OpenSSL 0.9.1c and OpenSSL 0.9.2b:
       o Fixed a security hole related to session resumption
