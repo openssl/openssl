@@ -515,8 +515,8 @@ evp_key.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
 evp_key.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 evp_key.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 evp_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-evp_key.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-evp_key.o: ../cryptlib.h evp_key.c
+evp_key.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
+evp_key.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_key.c
 evp_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_lib.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 evp_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

@@ -2691,6 +2691,29 @@ $shared_cflag = -fPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** solaris-x86-cc
+$cc           = cc
+$cflags       = -fast -O -Xa
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -lsocket -lnsl -ldl
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** solaris-x86-gcc
 $cc           = gcc
 $cflags       = -O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DOPENSSL_NO_INLINE_ASM

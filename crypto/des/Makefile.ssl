@@ -31,8 +31,8 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
 	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
-	qud_cksm.c rand_key.c read_pwd.c rpc_enc.c  set_key.c  \
-	des_enc.c fcrypt_b.c read2pwd.c \
+	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
+	des_enc.c fcrypt_b.c \
 	xcbc_enc.c \
 	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c
 
@@ -194,19 +194,6 @@ qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h qud_cksm.c
 rand_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
 rand_key.o: rand_key.c
-read2pwd.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-read2pwd.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-read2pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-read2pwd.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-read2pwd.o: ../../include/openssl/ui.h des_locl.h read2pwd.c
-read_pwd.o: ../../e_os.h ../../include/openssl/bio.h
-read_pwd.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-read_pwd.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-read_pwd.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-read_pwd.o: ../../include/openssl/opensslconf.h
-read_pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-read_pwd.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-read_pwd.o: ../cryptlib.h des_locl.h read_pwd.c
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
 rpc_enc.o: rpc_enc.c
