@@ -69,7 +69,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifndef OPENSSL_SYS_MSDOS
 #if !defined(OPENSSL_SYS_VMS) || defined(__DECC)
@@ -88,6 +87,10 @@
 #include <errno.h>
 #include <time.h>
 #include <io.h>
+#endif
+
+#if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
+#include <string.h>
 #endif
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
@@ -159,7 +162,7 @@
 
 #if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define	ROTATE(a,n)	(_lrotr(a,n))
-#elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
+#elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
 # if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #  define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm ("rorl %1,%0"	\
