@@ -425,7 +425,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	a2d_ASN1_OBJECT(p,i,s,-1);
 	
 	p=buf;
-	op=d2i_ASN1_OBJECT(NULL,&p,i);
+	op=d2i_ASN1_OBJECT(NULL,&p,j);
 	OPENSSL_free(buf);
 	return op;
 	}
