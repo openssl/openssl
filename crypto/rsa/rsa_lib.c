@@ -316,7 +316,7 @@ void RSA_blinding_off(RSA *rsa)
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	{
-	BIGNUM *A,*Ai;
+	BIGNUM *A,*Ai = NULL;
 	BN_CTX *ctx;
 	int ret=0;
 
@@ -327,8 +327,12 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	else
 		ctx=p_ctx;
 
+	/* XXXXX: Shouldn't this be RSA_blinding_off(rsa)? */
 	if (rsa->blinding != NULL)
+		{
 		BN_BLINDING_free(rsa->blinding);
+		rsa->blinding = NULL;
+		}
 
 	/* NB: similar code appears in setup_blinding (rsa_eay.c);
 	 * this should be placed in a new function of its own, but for reasons
@@ -356,9 +360,9 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	rsa->blinding->thread_id = CRYPTO_thread_id();
 	rsa->flags |= RSA_FLAG_BLINDING;
 	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
-	BN_free(Ai);
 	ret=1;
 err:
+	if (Ai != NULL) BN_free(Ai);
 	BN_CTX_end(ctx);
 	if (ctx != p_ctx) BN_CTX_free(ctx);
 	return(ret);
