@@ -170,7 +170,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "micalg=sha1 ; boundary=\"----%s\"\n\n", bound);
 		BIO_printf(bio, "This is an S/MIME signed message\n\n");
 		/* Now write out the first part */
-		BIO_printf(bio, "------%s\r\n", bound);
+		BIO_printf(bio, "------%s\n", bound);
 		if(flags & PKCS7_TEXT) BIO_printf(bio, "Content-Type: text/plain\n\n");
 		while((i = BIO_read(data, linebuf, MAX_SMLEN)) > 0) 
 						BIO_write(bio, linebuf, i);

@@ -62,6 +62,8 @@
 #include <openssl/pkcs7.h>
 #include <openssl/objects.h>
 
+#ifdef PKCS7_INDEFINITE_ENCODING
+
 int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
@@ -143,6 +145,96 @@ int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 	M_ASN1_I2D_INF_seq_end();
 	M_ASN1_I2D_finish();
 	}
+
+#else
+
+int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
+	{
+	int explen = 0;
+	M_ASN1_I2D_vars(a);
+
+	if (a->asn1 != NULL)
+		{
+		if (pp == NULL)
+			return((int)a->length);
+		memcpy(*pp,a->asn1,(int)a->length);
+		*pp+=a->length;
+		return((int)a->length);
+		}
+
+	M_ASN1_I2D_len(a->type,i2d_ASN1_OBJECT);
+	if (a->d.ptr != NULL)
+		{
+		/* Save current length */
+		r = ret;
+		switch (OBJ_obj2nid(a->type))
+			{
+		case NID_pkcs7_data:
+			M_ASN1_I2D_len(a->d.data,i2d_ASN1_OCTET_STRING);
+			break;
+		case NID_pkcs7_signed:
+			M_ASN1_I2D_len(a->d.sign,i2d_PKCS7_SIGNED);
+			break;
+		case NID_pkcs7_enveloped:
+			M_ASN1_I2D_len(a->d.enveloped,i2d_PKCS7_ENVELOPE);
+			break;
+		case NID_pkcs7_signedAndEnveloped:
+			M_ASN1_I2D_len(a->d.signed_and_enveloped,
+				i2d_PKCS7_SIGN_ENVELOPE);
+			break;
+		case NID_pkcs7_digest:
+			M_ASN1_I2D_len(a->d.digest,i2d_PKCS7_DIGEST);
+			break;
+		case NID_pkcs7_encrypted:
+			M_ASN1_I2D_len(a->d.encrypted,i2d_PKCS7_ENCRYPT);
+			break;
+		default:
+			break;
+			}
+		/* Work out explicit tag content size */
+		explen = ret - r;
+		/* Work out explicit tag size: Note: ASN1_object_size
+		 * includes the content length.
+		 */
+		ret =  r + ASN1_object_size(1, explen, 0);
+		}
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put(a->type,i2d_ASN1_OBJECT);
+
+	if (a->d.ptr != NULL)
+		{
+		ASN1_put_object(&p, 1, explen, 0, V_ASN1_CONTEXT_SPECIFIC);
+		switch (OBJ_obj2nid(a->type))
+			{
+		case NID_pkcs7_data:
+			M_ASN1_I2D_put(a->d.data,i2d_ASN1_OCTET_STRING);
+			break;
+		case NID_pkcs7_signed:
+			M_ASN1_I2D_put(a->d.sign,i2d_PKCS7_SIGNED);
+			break;
+		case NID_pkcs7_enveloped:
+			M_ASN1_I2D_put(a->d.enveloped,i2d_PKCS7_ENVELOPE);
+			break;
+		case NID_pkcs7_signedAndEnveloped:
+			M_ASN1_I2D_put(a->d.signed_and_enveloped,
+				i2d_PKCS7_SIGN_ENVELOPE);
+			break;
+		case NID_pkcs7_digest:
+			M_ASN1_I2D_put(a->d.digest,i2d_PKCS7_DIGEST);
+			break;
+		case NID_pkcs7_encrypted:
+			M_ASN1_I2D_put(a->d.encrypted,i2d_PKCS7_ENCRYPT);
+			break;
+		default:
+			break;
+			}
+		}
+	M_ASN1_I2D_finish();
+	}
+
+#endif
 
 PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 	{

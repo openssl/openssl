@@ -4,6 +4,13 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Modification to PKCS#7 encoding routines to output definite
+     length encoding. Since currently the whole structures are in
+     memory there's not real point in using indefinite length 
+     constructed encoding. However if OpenSSL is compiled with
+     the flag PKCS7_INDEFINITE_ENCODING the old form is used.
+     [Steve Henson]
+
   *) Added BIO_vprintf() and BIO_vsnprintf().
      [Richard Levitte]
 

@@ -502,6 +502,8 @@ int MAIN(int argc, char **argv)
 	}
 	sk_X509_pop_free(certs, X509_free);
 	certs = NULL;
+	/* ucert is part of certs so it is already freed */
+	ucert = NULL;
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();

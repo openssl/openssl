@@ -582,6 +582,7 @@ ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
 
 	time(&t);
 	t+=adj;
+	if(!s) return ASN1_TIME_set(s, t);
 	if(s->type == V_ASN1_UTCTIME) return(ASN1_UTCTIME_set(s,t));
 	return ASN1_GENERALIZEDTIME_set(s, t);
 	}

@@ -117,6 +117,7 @@ X509 *X509_new(void)
 	ret->references=1;
 	ret->valid=0;
 	ret->ex_flags = 0;
+	ret->ex_pathlen = -1;
 	ret->name=NULL;
 	ret->aux=NULL;
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
