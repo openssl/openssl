@@ -4,6 +4,11 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) New function "CRYPTO_num_locks" that returns CRYPTO_NUM_LOCKS.
+     Whoever hopes to achieve shared-library compatibility across versions
+     must use this, not the compile-time macro.
+     [Bodo Moeller]
+
   *) Add missing case to s3_clnt.c state machine -- one of the new SSL tests
      through a BIO pair triggered the default case, i.e.
      SSLerr(...,SSL_R_UNKNOWN_STATE).

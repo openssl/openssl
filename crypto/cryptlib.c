@@ -133,6 +133,11 @@ int CRYPTO_get_new_lockid(char *name)
 	return(i);
 	}
 
+int CRYPTO_num_locks(void)
+	{
+	return CRYPTO_NUM_LOCKS;
+	}
+
 void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
 		int line)
 	{

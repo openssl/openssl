@@ -256,6 +256,8 @@ void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad);
 
 int CRYPTO_mem_ctrl(int mode);
 int CRYPTO_get_new_lockid(char *name);
+
+int CRYPTO_num_locks(void); /* return CRYPTO_NUM_LOCKS (shared libs!) */
 void CRYPTO_lock(int mode, int type,const char *file,int line);
 void CRYPTO_set_locking_callback(void (*func)(int mode,int type,
 					      const char *file,int line));
