@@ -58,13 +58,13 @@
 
 #include <stdio.h>
 #include <time.h>
+#include "cryptlib.h"
+#include <openssl/asn1.h>
 #ifdef OPENSSL_SYS_VMS
 #include <descrip.h>
 #include <lnmdef.h>
 #include <starlet.h>
 #endif
-#include "cryptlib.h"
-#include <openssl/asn1.h>
 
 #if 0
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)

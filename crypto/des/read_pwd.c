@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WIN32)
 #include <openssl/opensslconf.h>
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WIN32)
 #ifdef OPENSSL_UNISTD
 # include OPENSSL_UNISTD
 #else
