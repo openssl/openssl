@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New -noout option to asn1parse. This causes no output to be produced
+     its main use is when combined with -strparse and -out to extract data
+     from a file (which may not be in ASN.1 format).
+     [Steve Henson]
+
   *) Fix for pkcs12 program. It was hashing an invalid certificate pointer
      when producing the local key id.
      [Richard Levitte <levitte@stacken.kth.se>]
