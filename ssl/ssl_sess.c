@@ -127,6 +127,13 @@ SSL_SESSION *SSL_SESSION_new(void)
 	return(ss);
 	}
 
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
+	{
+	if(len)
+		*len = s->session_id_length;
+	return s->session_id;
+	}
+
 /* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1
  * has 32 bytes (256 bits). As such, filling the ID with random gunk repeatedly
  * until we have no conflict is going to complete in one iteration pretty much

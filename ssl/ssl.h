@@ -1266,6 +1266,7 @@ void	SSL_copy_session_id(SSL *to,SSL *from);
 SSL_SESSION *SSL_SESSION_new(void);
 unsigned long SSL_SESSION_hash(SSL_SESSION *a);
 int	SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b);
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len);
 #ifndef OPENSSL_NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,SSL_SESSION *ses);
 #endif
