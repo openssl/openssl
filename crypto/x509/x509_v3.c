@@ -116,7 +116,7 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
 		{
 		ex=sk_X509_EXTENSION_value(sk,lastpos);
 		if (	((ex->critical > 0) && crit) ||
-			(!(ex->critical <= 0) && !crit))
+			((ex->critical <= 0) && !crit))
 			return(lastpos);
 		}
 	return(-1);
