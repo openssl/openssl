@@ -10,6 +10,28 @@
       o New library section OCSP.
       o Complete haul-over of the ASN.1 library section.
 
+  Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.6a:
+
+      o Security fix: change behavior of OpenSSL to avoid using
+        environment variables when running as root.
+      o Security fix: check the result of RSA-CRT to reduce the
+        possibility of deducing the private key from an incorrectly
+        calculated signature.
+      o Security fix: prevent Bleichenbacher's DSA attack.
+      o Security fix: Zero the premaster secret after deriving the
+        master secret in DH ciphersuites.
+      o Bug fixes for Win32, HP/UX and Irix.
+      o Bug fixes in BIGNUM, SSL, PKCS#7, PKCS#12, X.509, CONF and
+        memory checking routines.
+      o Bug fixes for RSA operations in threaded enviroments.
+      o Bug fixes in misc. openssl applications.
+      o Remove a few potential memory leaks.
+      o Add tighter checks of BIGNUM routines.
+      o Shared library support has been reworked for generality.
+      o More documentation.
+      o New function BN_rand_range()
+      o Add "-rand" option to openssl s_client and s_server.
+
   Major changes between OpenSSL 0.9.5a and OpenSSL 0.9.6:
 
       o Some documentation for BIO and SSL libraries.
