@@ -75,15 +75,16 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     {
     int i, dblen, mlen = -1;
     unsigned char *maskeddb;
+    int lzero;
     unsigned char *db, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
 
-    if (flen < 2 * SHA_DIGEST_LENGTH + 1)
+    if (--num < 2 * SHA_DIGEST_LENGTH + 1)
 	{
 	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
 	return (-1);
 	}
 
-    dblen = flen - SHA_DIGEST_LENGTH;
+    dblen = num - SHA_DIGEST_LENGTH;
     db = Malloc(dblen);
     if (db == NULL)
 	{
@@ -91,11 +92,12 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	return (-1);
 	}
 
-    maskeddb = from + SHA_DIGEST_LENGTH;
+    lzero = num - flen;
+    maskeddb = from - lzero + SHA_DIGEST_LENGTH;
     
     MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen);
-    for (i = 0; i < SHA_DIGEST_LENGTH; i++)
-	seed[i] ^= from[i];
+    for (i = lzero; i < SHA_DIGEST_LENGTH; i++)
+	seed[i] ^= from[i - lzero];
   
     MGF1(db, dblen, seed, SHA_DIGEST_LENGTH);
     for (i = 0; i < dblen; i++)
