@@ -1398,9 +1398,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				break;
 				}
 
+#if 0
 			/* append if a directory lookup */
 			if (e[-1] == '/')
 				strcat(p,"index.html");
+#endif
 
 			/* if a directory, do the index thang */
 			if (stat(p,&st_buf) < 0)
@@ -1412,7 +1414,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				}
 			if (S_ISDIR(st_buf.st_mode))
 				{
+#if 0 /* must check buffer size */
 				strcat(p,"/index.html");
+#else
+				BIO_puts(io,text);
+				BIO_printf(io,"'%s' is a directory\r\n",p);
+				break;
+#endif
 				}
 
 			if ((file=BIO_new_file(p,"r")) == NULL)
