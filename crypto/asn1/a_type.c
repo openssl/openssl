@@ -117,6 +117,12 @@ unsigned char **pp;
 	case V_ASN1_UNIVERSALSTRING:
 		r=M_i2d_ASN1_UNIVERSALSTRING(a->value.universalstring,pp);
 		break;
+	case V_ASN1_UTF8STRING:
+		r=M_i2d_ASN1_UTF8STRING(a->value.utf8string,pp);
+		break;
+	case V_ASN1_VISIBLESTRING:
+		r=M_i2d_ASN1_VISIBLESTRING(a->value.visiblestring,pp);
+		break;
 	case V_ASN1_BMPSTRING:
 		r=M_i2d_ASN1_BMPSTRING(a->value.bmpstring,pp);
 		break;
@@ -194,6 +200,16 @@ long length;
 	case V_ASN1_OCTET_STRING:
 		if ((ret->value.octet_string=
 			d2i_ASN1_OCTET_STRING(NULL,&p,max-p)) == NULL)
+			goto err;
+		break;
+	case V_ASN1_VISIBLESTRING:
+		if ((ret->value.visiblestring=
+			d2i_ASN1_VISIBLESTRING(NULL,&p,max-p)) == NULL)
+			goto err;
+		break;
+	case V_ASN1_UTF8STRING:
+		if ((ret->value.utf8string=
+			d2i_ASN1_UTF8STRING(NULL,&p,max-p)) == NULL)
 			goto err;
 		break;
 	case V_ASN1_OBJECT:
@@ -336,6 +352,7 @@ ASN1_TYPE *a;
 		case V_ASN1_GENERALSTRING:
 		case V_ASN1_UNIVERSALSTRING:
 		case V_ASN1_BMPSTRING:
+		case V_ASN1_UTF8STRING:
 			ASN1_STRING_free((ASN1_STRING *)a->value.ptr);
 			break;
 		default:

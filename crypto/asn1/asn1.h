@@ -91,6 +91,7 @@ extern "C" {
 #define V_ASN1_REAL			9
 #define V_ASN1_ENUMERATED		10
 #define V_ASN1_NEG_ENUMERATED		(10+0x100)
+#define V_ASN1_UTF8STRING		12
 #define V_ASN1_SEQUENCE			16
 #define V_ASN1_SET			17
 #define V_ASN1_NUMERICSTRING		18	/**/
@@ -112,16 +113,19 @@ extern "C" {
 #define B_ASN1_NUMERICSTRING	0x0001
 #define B_ASN1_PRINTABLESTRING	0x0002
 #define B_ASN1_T61STRING	0x0004
+#define B_ASN1_TELETEXSTRING	0x0008
 #define B_ASN1_VIDEOTEXSTRING	0x0008
 #define B_ASN1_IA5STRING	0x0010
 #define B_ASN1_GRAPHICSTRING	0x0020
 #define B_ASN1_ISO64STRING	0x0040
+#define B_ASN1_VISIBLESTRING	0x0040
 #define B_ASN1_GENERALSTRING	0x0080
 #define B_ASN1_UNIVERSALSTRING	0x0100
 #define B_ASN1_OCTET_STRING	0x0200
 #define B_ASN1_BIT_STRING	0x0400
 #define B_ASN1_BMPSTRING	0x0800
 #define B_ASN1_UNKNOWN		0x1000
+#define B_ASN1_UTF8STRING	0x2000
 
 typedef struct asn1_ctx_st
 	{
@@ -181,6 +185,8 @@ typedef struct asn1_string_st
 #define ASN1_GENERALSTRING	ASN1_STRING
 #define ASN1_UNIVERSALSTRING	ASN1_STRING
 #define ASN1_BMPSTRING		ASN1_STRING
+#define ASN1_VISIBLESTRING	ASN1_STRING
+#define ASN1_UTF8STRING		ASN1_STRING
 #else
 typedef struct asn1_string_st ASN1_INTEGER;
 typedef struct asn1_string_st ASN1_ENUMERATED;
@@ -195,6 +201,8 @@ typedef struct asn1_string_st ASN1_BMPSTRING;
 typedef struct asn1_string_st ASN1_UTCTIME;
 typedef struct asn1_string_st ASN1_TIME;
 typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
+typedef struct asn1_string_st ASN1_VISIBLESTRING;
+typedef struct asn1_string_st ASN1_UTF8STRING;
 #endif
 
 typedef struct asn1_type_st
@@ -216,6 +224,8 @@ typedef struct asn1_type_st
 		ASN1_UNIVERSALSTRING *	universalstring;
 		ASN1_UTCTIME *		utctime;
 		ASN1_GENERALIZEDTIME *	generalizedtime;
+		ASN1_VISIBLESTRING *	visiblestring;
+		ASN1_UTF8STRING *	utf8string;
 		/* set and sequence are left complete and still
 		 * contain the set or sequence bytes */
 		ASN1_STRING *		set;
@@ -396,6 +406,26 @@ typedef struct asn1_header_st
 		(ASN1_BMPSTRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_BMPSTRING)
 
+#define ASN1_VISIBLESTRING_new()	(ASN1_VISIBLESTRING *)\
+		ASN1_STRING_type_new(V_ASN1_VISIBLESTRING)
+#define ASN1_VISIBLESTRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define M_i2d_ASN1_VISIBLESTRING(a,pp) \
+		i2d_ASN1_bytes((ASN1_STRING *)a,pp,V_ASN1_VISIBLESTRING,\
+			V_ASN1_UNIVERSAL)
+#define M_d2i_ASN1_VISIBLESTRING(a,pp,l) \
+		(ASN1_VISIBLESTRING *)d2i_ASN1_type_bytes\
+		((ASN1_STRING **)a,pp,l,B_ASN1_VISIBLESTRING)
+
+#define ASN1_UTF8STRING_new()	(ASN1_UTF8STRING *)\
+		ASN1_STRING_type_new(V_ASN1_UTF8STRING)
+#define ASN1_UTF8STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define M_i2d_ASN1_UTF8STRING(a,pp) \
+		i2d_ASN1_bytes((ASN1_STRING *)a,pp,V_ASN1_UTF8STRING,\
+			V_ASN1_UNIVERSAL)
+#define M_d2i_ASN1_UTF8STRING(a,pp,l) \
+		(ASN1_UTF8STRING *)d2i_ASN1_type_bytes\
+		((ASN1_STRING **)a,pp,l,B_ASN1_UTF8STRING)
+
   /* for the is_set parameter to i2d_ASN1_SET */
 #define IS_SEQUENCE	0
 #define IS_SET		1
@@ -449,6 +479,14 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, char *str);
 
 int		i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a,unsigned char **pp);
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a,
+			unsigned char **pp,long length);
+
+int	i2d_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING *a,unsigned char **pp);
+ASN1_VISIBLESTRING *d2i_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING **a,
+			unsigned char **pp,long length);
+
+int		i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a,unsigned char **pp);
+ASN1_UTF8STRING *d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a,
 			unsigned char **pp,long length);
 
 int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp);
@@ -646,6 +684,10 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set();
 int ASN1_GENERALIZEDTIME_set_string();
 int		i2d_ASN1_OCTET_STRING();
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING();
+int	i2d_ASN1_VISIBLESTRING();
+ASN1_VISIBLESTRING *d2i_ASN1_VISIBLESTRING();
+int		i2d_ASN1_UTF8STRING();
+ASN1_UTF8STRING *d2i_ASN1_UTF8STRING();
 int i2d_ASN1_PRINTABLE();
 ASN1_STRING *d2i_ASN1_PRINTABLE();
 ASN1_PRINTABLESTRING *d2i_ASN1_PRINTABLESTRING();
@@ -784,6 +826,8 @@ ASN1_STRING *ASN1_pack_string();
 #define ASN1_F_D2I_ASN1_TYPE				 133
 #define ASN1_F_D2I_ASN1_TYPE_BYTES			 134
 #define ASN1_F_D2I_ASN1_UTCTIME				 135
+#define ASN1_F_D2I_ASN1_UTF8STRING			 266
+#define ASN1_F_D2I_ASN1_VISIBLESTRING			 267
 #define ASN1_F_D2I_AUTHORITY_KEYID			 238
 #define ASN1_F_D2I_BASIC_CONSTRAINTS			 227
 #define ASN1_F_D2I_DHPARAMS				 136

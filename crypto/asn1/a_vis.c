@@ -1,4 +1,4 @@
-/* crypto/asn1/a_bmp.c */
+/* crypto/asn1/a_vis.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,29 +60,29 @@
 #include "cryptlib.h"
 #include "asn1.h"
 
-/* ASN1err(ASN1_F_D2I_ASN1_BMPSTRING,ASN1_R_EXPECTING_AN_INTEGER);
+/* ASN1err(ASN1_F_D2I_ASN1_VISIBLESTRING,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_ASN1_BMPSTRING(a, pp)
-ASN1_BMPSTRING *a;
+int i2d_ASN1_VISIBLESTRING(a, pp)
+ASN1_VISIBLESTRING *a;
 unsigned char **pp;
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
-		V_ASN1_BMPSTRING,V_ASN1_UNIVERSAL));
+		V_ASN1_VISIBLESTRING,V_ASN1_UNIVERSAL));
 	}
 
-ASN1_BMPSTRING *d2i_ASN1_BMPSTRING(a, pp, length)
-ASN1_BMPSTRING **a;
+ASN1_VISIBLESTRING *d2i_ASN1_VISIBLESTRING(a, pp, length)
+ASN1_VISIBLESTRING **a;
 unsigned char **pp;
 long length;
 	{
-	ASN1_BMPSTRING *ret=NULL;
+	ASN1_VISIBLESTRING *ret=NULL;
 
-	ret=(ASN1_BMPSTRING *)d2i_ASN1_bytes((ASN1_STRING **)a,
-		pp,length,V_ASN1_BMPSTRING,V_ASN1_UNIVERSAL);
+	ret=(ASN1_VISIBLESTRING *)d2i_ASN1_bytes((ASN1_STRING **)a,
+		pp,length,V_ASN1_VISIBLESTRING,V_ASN1_UNIVERSAL);
 	if (ret == NULL)
 		{
-		ASN1err(ASN1_F_D2I_ASN1_BMPSTRING,ERR_R_NESTED_ASN1_ERROR);
+		ASN1err(ASN1_F_D2I_ASN1_VISIBLESTRING,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 		}
 	return(ret);

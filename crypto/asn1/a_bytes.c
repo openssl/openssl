@@ -68,7 +68,7 @@ static unsigned long tag2bit[32]={
 0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
-B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags 12-15 */
+B_ASN1_UTF8STRING,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,/* tags 12-15 */
 0,	0,	B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING,
 B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,0,
 0,B_ASN1_GRAPHICSTRING,B_ASN1_ISO64STRING,B_ASN1_GENERALSTRING,
@@ -81,7 +81,7 @@ static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c);
 static int asn1_collate_primative();
 #endif
 
-/* type is a 'bitmap' of acceptable string types to be accepted.
+/* type is a 'bitmap' of acceptable string types.
  */
 ASN1_STRING *d2i_ASN1_type_bytes(a, pp, length, type)
 ASN1_STRING **a;

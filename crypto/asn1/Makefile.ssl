@@ -24,7 +24,7 @@ APPS=
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c a_bmp.c \
-	a_enum.c a_sign.c a_digest.c a_verify.c \
+	a_enum.c a_vis.c a_utf8.c a_sign.c a_digest.c a_verify.c \
 	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c \
 	x_name.c x_cinf.c x_x509.c x_crl.c x_info.c x_spki.c nsseq.c \
 	d2i_r_pr.c i2d_r_pr.c d2i_r_pu.c i2d_r_pu.c \
@@ -39,7 +39,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o a_bmp.o \
-	a_enum.o a_sign.o a_digest.o a_verify.o \
+	a_enum.o a_vis.o a_utf8.o a_sign.o a_digest.o a_verify.o \
 	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_attrib.o \
 	x_name.o x_cinf.o x_x509.o x_crl.o x_info.o x_spki.o nsseq.o \
 	d2i_r_pr.o i2d_r_pr.o d2i_r_pu.o i2d_r_pu.o \
