@@ -23,12 +23,17 @@ Installation procedure:
 	  StuffIt Expander;
 	- otherwise process it first with MacGzip and then with SUNtar;
 - locate MacOS folder in OpenSSL source tree and open it;
-- unbinhex mklinks.as.hqx and OpenSSL.mcp.hqx in place;
+- if present (**) unbinhex mklinks.as.hqx and OpenSSL.mcp.hqx, do it
+  "in-place", i.e. unpacked files should end-up in the same folder;
 - double-click on mklinks.as;
-- open OpenSSL.mcp and compile 'GetHTTPS PPC' target;
+- open OpenSSL.mcp and build 'GetHTTPS PPC' target (the only one working
+  for the moment);
 - that's it;
 
-(*)	URL is hardcoded into GetHTTPS Sources/GetHTTPS.cpp
+(*)	URL is hardcoded into ./MacOS/GetHTTPS.src/GetHTTPS.cpp, lines 40
+        to 42, change appropriately.
+(**)	If you use SUNtar, then it might have already unbinhexed the files
+	in question.
 
 Finally some essential comments from our generous contributor:-)
 
@@ -54,3 +59,4 @@ If you have any questions, feel free to email me as the following:
 roy@centricsystems.ca
 
 -Roy Wood"
+
