@@ -19,6 +19,7 @@
  *				are installed!  Use the AppleScript applet in the "openssl-0.9.4" folder to do this!
  */
 /* modified to seed the PRNG */
+/* modified to use CRandomizer for seeding */
 
 
 //	Include some funky libs I've developed over time
@@ -26,14 +27,13 @@
 #include "CPStringUtils.hpp"
 #include "ErrorHandling.hpp"
 #include "MacSocket.h"
-
+#include "Randomizer.h"
 
 //	We use the OpenSSL implementation of SSL....
 //	This was a lot of work to finally get going, though you wouldn't know it by the results!
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 #include <timer.h>
 
@@ -48,10 +48,6 @@
 
 OSErr MyMacSocket_IdleWaitCallback(void *inUserRefPtr);
 
-
-
-
-
 //	My idle-wait callback.  Doesn't do much, does it?  Silly cooperative multitasking.
 
 OSErr MyMacSocket_IdleWaitCallback(void *inUserRefPtr)
@@ -59,31 +55,33 @@ OSErr MyMacSocket_IdleWaitCallback(void *inUserRefPtr)
 #pragma unused(inUserRefPtr)
 
 EventRecord		theEvent;
-
 	::EventAvail(everyEvent,&theEvent);
+	
+	CRandomizer *randomizer = (CRandomizer*)inUserRefPtr;
+	if (randomizer)
+		randomizer->PeriodicAction();
 
 	return(noErr);
 }
-
 
 
 //	Finally!
 
 void main(void)
 {
-OSErr				errCode;
-int					theSocket = -1;
-int					theTimeout = 30;
+	OSErr				errCode;
+	int					theSocket = -1;
+	int					theTimeout = 30;
 
-SSL_CTX				*ssl_ctx = nil;
-SSL					*ssl = nil;
+	SSL_CTX				*ssl_ctx = nil;
+	SSL					*ssl = nil;
 
-char				tempString[256];
-UnsignedWide		microTickCount;
+	char				tempString[256];
+	UnsignedWide		microTickCount;
+
+
+	CRandomizer randomizer;
 	
-#warning   -- USE A TRUE RANDOM SEED, AND ADD ENTROPY WHENEVER POSSIBLE. --
-const char seed[] = "uyq9,7-b(VHGT^%$&^F/,876;,;./lkJHGFUY{PO*";	// Just gobbledygook
-
 	printf("OpenSSL Demo by Roy Wood, roy@centricsystems.ca\n\n");
 	
 	BailIfError(errCode = MacSocket_Startup());
@@ -92,7 +90,7 @@ const char seed[] = "uyq9,7-b(VHGT^%$&^F/,876;,;./lkJHGFUY{PO*";	// Just gobbled
 
 	//	Create a socket-like object
 	
-	BailIfError(errCode = MacSocket_socket(&theSocket,false,theTimeout * 60,MyMacSocket_IdleWaitCallback,nil));
+	BailIfError(errCode = MacSocket_socket(&theSocket,false,theTimeout * 60,MyMacSocket_IdleWaitCallback,&randomizer));
 
 	
 	//	Set up the connect string and try to connect
@@ -117,10 +115,6 @@ const char seed[] = "uyq9,7-b(VHGT^%$&^F/,876;,;./lkJHGFUY{PO*";	// Just gobbled
 	ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 //	ssl_ctx = SSL_CTX_new(SSLv3_client_method());
 			
-
-	RAND_seed (seed, sizeof (seed));
-	Microseconds (&microTickCount);
-	RAND_add (&microTickCount, sizeof (microTickCount), 0);		// Entropy is actually > 0, needs an estimate
 
 	//	Create an SSL thingey and try to negotiate the connection
 	
