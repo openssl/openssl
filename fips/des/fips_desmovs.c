@@ -274,8 +274,6 @@ void do_mct(char *amode,
 	exit(1);
 	}
 
-    memcpy(text0,text,8);
-
     for(i=0 ; i < 400 ; ++i)
 	{
 	int j;
@@ -301,6 +299,8 @@ void do_mct(char *amode,
 	/* compensate for endianness */
 	if(imode == CFB1)
 	    text[0]<<=7;
+
+	memcpy(text0,text,8);
 
 	for(j=0 ; j < 10000 ; ++j)
 	    {
