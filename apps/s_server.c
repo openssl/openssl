@@ -320,10 +320,10 @@ static char **local_argv;
 static int ebcdic_new(BIO *bi);
 static int ebcdic_free(BIO *a);
 static int ebcdic_read(BIO *b, char *out, int outl);
-static int ebcdic_write(BIO *b, char *in, int inl);
-static long ebcdic_ctrl(BIO *b, int cmd, long num, char *ptr);
+static int ebcdic_write(BIO *b, const char *in, int inl);
+static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr);
 static int ebcdic_gets(BIO *bp, char *buf, int size);
-static int ebcdic_puts(BIO *bp, char *str);
+static int ebcdic_puts(BIO *bp, const char *str);
 
 #define BIO_TYPE_EBCDIC_FILTER	(18|0x0200)
 static BIO_METHOD methods_ebcdic=
@@ -388,7 +388,7 @@ static int ebcdic_read(BIO *b, char *out, int outl)
 	return(ret);
 }
 
-static int ebcdic_write(BIO *b, char *in, int inl)
+static int ebcdic_write(BIO *b, const char *in, int inl)
 {
 	EBCDIC_OUTBUFF *wbuf;
 	int ret=0;
@@ -421,7 +421,7 @@ static int ebcdic_write(BIO *b, char *in, int inl)
 	return(ret);
 }
 
-static long ebcdic_ctrl(BIO *b, int cmd, long num, char *ptr)
+static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
 	long ret;
 
@@ -440,7 +440,7 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, char *ptr)
 
 static int ebcdic_gets(BIO *bp, char *buf, int size)
 {
-	int i, ret;
+	int i, ret=0;
 	if (bp->next_bio == NULL) return(0);
 /*	return(BIO_gets(bp->next_bio,buf,size));*/
 	for (i=0; i<size-1; ++i)
@@ -459,7 +459,7 @@ static int ebcdic_gets(BIO *bp, char *buf, int size)
 	return (ret < 0 && i == 0) ? ret : i;
 }
 
-static int ebcdic_puts(BIO *bp, char *str)
+static int ebcdic_puts(BIO *bp, const char *str)
 {
 	if (bp->next_bio == NULL) return(0);
 	return ebcdic_write(bp, str, strlen(str));
