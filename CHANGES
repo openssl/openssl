@@ -14,6 +14,9 @@
      by the Finished messages.
      [Bodo Moeller]
 
+  *) More robust randomness gathering functions for Windows.
+     [Jeffrey Altman <jaltman@columbia.edu>]
+
   *) For compatibility reasons if the flag X509_V_FLAG_ISSUER_CHECK is
      not set then we don't setup the error code for issuer check errors
      to avoid possibly overwriting other errors which the callback does
@@ -63,6 +66,7 @@
 
   *) New BIO_shutdown_wr macro, which invokes the BIO_C_SHUTDOWN_WR
      BIO_ctrl (for BIO pairs).
+     [Bodo Möller]
 
   *) Add DSO method for VMS.
      [Richard Levitte]
@@ -296,7 +300,7 @@
      [Steve Henson]
 
   *) Changes needed for Tandem NSK.
-     [Scott Uroff scott@xypro.com]
+     [Scott Uroff <scott@xypro.com>]
 
   *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
      RSA_padding_check_SSLv23(), special padding was never detected
