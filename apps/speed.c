@@ -85,7 +85,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(OPENSSL_SYS_MACOSX)
 # define USE_TOD
 #elif !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 # define TIMES
