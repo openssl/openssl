@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [28 Feb 2000]
 
+  *) PKCS7_encrypt() was adding text MIME headers twice because they
+     were added manually and by SMIME_crlf_copy().
+     [Steve Henson]
+
   *) In bntest.c don't call BN_rand with zero bits argument.
      [Steve Henson, pointed out by Andrew W. Gray <agray@iconsinc.com>]
 

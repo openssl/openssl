@@ -329,7 +329,6 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 	BIO *p7bio = NULL;
 	int i;
 	X509 *x509;
-	static char txthdr[] = "Content-type: text/plain\r\n\r\n";
 	if(!(p7 = PKCS7_new())) {
 		PKCS7err(PKCS7_F_PKCS7_ENCRYPT,ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -353,12 +352,6 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 	if(!(p7bio = PKCS7_dataInit(p7, NULL))) {
 		PKCS7err(PKCS7_F_PKCS7_ENCRYPT,ERR_R_MALLOC_FAILURE);
 		goto err;
-	}
-
-	if(flags & PKCS7_TEXT) {
-		if(BIO_write(p7bio, txthdr, sizeof(txthdr) - 1) < 0) {
-			goto err;
-		}
 	}
 
 	SMIME_crlf_copy(in, p7bio, flags);
