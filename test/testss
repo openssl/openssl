@@ -1,6 +1,6 @@
 #!/bin/sh
 
-digest='-md5'
+digest='-sha1'
 reqcmd="../apps/openssl req"
 x509cmd="../apps/openssl x509 $digest"
 verifycmd="../apps/openssl verify"
