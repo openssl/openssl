@@ -4,6 +4,19 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Reorganisation of the stack code. The macros are now all 
+     collected in safestack.h . Each macro is defined in terms of
+     a "stack macro" of the form SKM_<name>(type, a, b). The 
+     DEBUG_SAFESTACK is now handled in terms of function casts,
+     this has the advantage of retaining type safety without the
+     use of additional functions. If DEBUG_SAFESTACK is not defined
+     then the non typesafe macros are used instead. Also modified the
+     mkstack.pl script to handle the new form. Needs testing to see
+     if which (if any) compilers it chokes and maybe make DEBUG_SAFESTACK
+     the default if no major problems. Also need analagous stuff for
+     ASN1_SET_OF etc.
+     [Steve Henson]
+
   *) When some versions of IIS use the 'NET' form of private key the
      key derivation algorithm is different. Normally MD5(password) is
      used as a 128 bit RC4 key. In the modified case

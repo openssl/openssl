@@ -42,71 +42,65 @@ foreach $file (@source) {
 
 	# Open the .c/.h file for reading
 	open(IN, "< $file") || die "Can't open $file for reading: $!";
-	open(OUT, "> $file.tmp") || die "Can't open $file.tmp for writing: $!";
-
-	select(OUT);
-	process_the_file();
-
-	close(OUT);
-	close(IN);
-
-	unlink($file);
-	rename("$file.tmp", $file);
-}
-
-sub process_the_file {
-
-	my $inside_block = 0;
-	my $output_defines = 0;
 
 	while(<IN>) {
 		if (/^DECLARE_STACK_OF\(([^)]+)\)/) {
-			$type_thing = $1;
-			$output_defines = 1;
+			push @stacklst, $1;
 		}
+	}
+	close(IN);
+	write_defines("crypto/stack/safestack");
+	unlink("crypto/stack/safestack.h");
+	rename("crypto/stack/safestack.tmp","crypto/stack/safestack.h");
+}
+
+sub write_defines {
+
+	my $stackfile = $_[0];
+	my $inside_block = 0;
+	open IN, "< $stackfile.h" || die "Can't open input file";
+	open OUT, "> $stackfile.tmp" || die "Can't open output file";
+	while(<IN>) {
 		if (m|^/\* This block of defines is updated by a perl script, please do not touch! \*/|) {
 			$inside_block = 1;
 		}
 		if (m|^/\* End of perl script block, you may now edit :-\) \*/|) {
 			$inside_block = 0;
 		} elsif ($inside_block == 0) {
-			print;
+			print OUT;
 		}
-		if($output_defines == 1) {
-			print <<EOF;
+		next if($inside_block != 1);
+		print OUT <<EOF;
 /* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_${type_thing}_new(a) sk_new((int (*) \\
-		(const char * const *, const char * const *))(a))
-	#define sk_${type_thing}_new_null() sk_new_null()
-	#define sk_${type_thing}_free(a) sk_free(a)
-	#define sk_${type_thing}_num(a) sk_num(a)
-	#define sk_${type_thing}_value(a,b) ((${type_thing} *) \\
-		sk_value((a),(b)))
-	#define sk_${type_thing}_set(a,b,c) ((${type_thing} *) \\
-		sk_set((a),(b),(char *)(c)))
-	#define sk_${type_thing}_zero(a) sk_zero(a)
-	#define sk_${type_thing}_push(a,b) sk_push((a),(char *)(b))
-	#define sk_${type_thing}_unshift(a,b) sk_unshift((a),(b))
-	#define sk_${type_thing}_find(a,b) sk_find((a), (char *)(b))
-	#define sk_${type_thing}_delete(a,b) ((${type_thing} *) \\
-		sk_delete((a),(b)))
-	#define sk_${type_thing}_delete_ptr(a,b) ((${type_thing} *) \\
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_${type_thing}_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_${type_thing}_set_cmp_func(a,b) ((int (*) \\
-		(const ${type_thing} * const *,const ${type_thing} * const *)) \\
-		sk_set_cmp_func((a),(int (*) \\
-		(const char * const *, const char * const *))(b)))
-	#define sk_${type_thing}_dup(a) sk_dup(a)
-	#define sk_${type_thing}_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_${type_thing}_shift(a) ((${type_thing} *)sk_shift(a))
-	#define sk_${type_thing}_pop(a) ((${type_thing} *)sk_pop(a))
-	#define sk_${type_thing}_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
+EOF
+	foreach $type_thing (@stacklst) {
+print OUT <<EOF;
+	#define sk_${type_thing}_new(a) SKM_sk_new($type_thing, (a))
+	#define sk_${type_thing}_new_null() SKM_sk_new_null($type_thing)
+	#define sk_${type_thing}_free(a) SKM_sk_free($type_thing, (a))
+	#define sk_${type_thing}_num(a) SKM_sk_num($type_thing, (a))
+	#define sk_${type_thing}_value(a,b) SKM_sk_value($type_thing, (a), (b))
+	#define sk_${type_thing}_set(a,b,c) SKM_sk_set($type_thing, (a), (b), (c))
+	#define sk_${type_thing}_zero(a) SKM_sk_zero($type_thing, (a))
+	#define sk_${type_thing}_push(a,b) SKM_sk_push($type_thing, (a),(b))
+	#define sk_${type_thing}_unshift(a,b) SKM_sk_unshift($type_thing, (a),(b))
+	#define sk_${type_thing}_find(a,b) SKM_sk_find($type_thing, (a), (b))
+	#define sk_${type_thing}_delete(a,b) SKM_sk_delete($type_thing, (a),(b))
+	#define sk_${type_thing}_delete_ptr(a,b) SKM_sk_delete_ptr($type_thing, (a),(b))
+	#define sk_${type_thing}_insert(a,b,c) SKM_sk_insert($type_thing, (a),(b),(c))
+	#define sk_${type_thing}_set_cmp_func(a,b) SKM_sk_set_cmp_func($type_thing, (a),(b))
+	#define sk_${type_thing}_dup(a) SKM_sk_dup($type_thing, a)
+	#define sk_${type_thing}_pop_free(a,b) SKM_sk_pop_free($type_thing, (a),(b))
+	#define sk_${type_thing}_shift(a) SKM_sk_shift($type_thing, (a))
+	#define sk_${type_thing}_pop(a) SKM_sk_pop($type_thing, (a))
+	#define sk_${type_thing}_sort(a) SKM_sk_sort($type_thing, (a))
+
+EOF
+	}
+print OUT <<EOF;
 /* End of perl script block, you may now edit :-) */
 EOF
-			$output_defines = 0;
-		}
+	$inside_block = 2;
 	}
+	close OUT;
 }

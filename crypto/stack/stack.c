@@ -109,6 +109,11 @@ err:
 	return(NULL);
 	}
 
+STACK *sk_new_null(void)
+	{
+	return sk_new((int (*)(const char * const *, const char * const *))NULL);
+	}
+
 STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	{
 	STACK *ret;

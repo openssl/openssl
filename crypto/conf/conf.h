@@ -77,37 +77,6 @@ typedef struct
 	} CONF_VALUE;
 
 DECLARE_STACK_OF(CONF_VALUE)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_CONF_VALUE_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_CONF_VALUE_new_null() sk_new_null()
-	#define sk_CONF_VALUE_free(a) sk_free(a)
-	#define sk_CONF_VALUE_num(a) sk_num(a)
-	#define sk_CONF_VALUE_value(a,b) ((CONF_VALUE *) \
-		sk_value((a),(b)))
-	#define sk_CONF_VALUE_set(a,b,c) ((CONF_VALUE *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_CONF_VALUE_zero(a) sk_zero(a)
-	#define sk_CONF_VALUE_push(a,b) sk_push((a),(char *)(b))
-	#define sk_CONF_VALUE_unshift(a,b) sk_unshift((a),(b))
-	#define sk_CONF_VALUE_find(a,b) sk_find((a), (char *)(b))
-	#define sk_CONF_VALUE_delete(a,b) ((CONF_VALUE *) \
-		sk_delete((a),(b)))
-	#define sk_CONF_VALUE_delete_ptr(a,b) ((CONF_VALUE *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_CONF_VALUE_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_CONF_VALUE_set_cmp_func(a,b) ((int (*) \
-		(const CONF_VALUE * const *,const CONF_VALUE * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_CONF_VALUE_dup(a) sk_dup(a)
-	#define sk_CONF_VALUE_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_CONF_VALUE_shift(a) ((CONF_VALUE *)sk_shift(a))
-	#define sk_CONF_VALUE_pop(a) ((CONF_VALUE *)sk_pop(a))
-	#define sk_CONF_VALUE_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 
 struct conf_st;
 typedef struct conf_st CONF;

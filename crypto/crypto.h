@@ -201,37 +201,6 @@ typedef struct crypto_ex_data_func_st
 	} CRYPTO_EX_DATA_FUNCS;
 
 DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_CRYPTO_EX_DATA_FUNCS_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_new_null() sk_new_null()
-	#define sk_CRYPTO_EX_DATA_FUNCS_free(a) sk_free(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_num(a) sk_num(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_value(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_value((a),(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_set(a,b,c) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_zero(a) sk_zero(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_push(a,b) sk_push((a),(char *)(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_unshift(a,b) sk_unshift((a),(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_find(a,b) sk_find((a), (char *)(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_delete(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_delete((a),(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_delete_ptr(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_CRYPTO_EX_DATA_FUNCS_set_cmp_func(a,b) ((int (*) \
-		(const CRYPTO_EX_DATA_FUNCS * const *,const CRYPTO_EX_DATA_FUNCS * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_dup(a) sk_dup(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_shift(a) ((CRYPTO_EX_DATA_FUNCS *)sk_shift(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_pop(a) ((CRYPTO_EX_DATA_FUNCS *)sk_pop(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
