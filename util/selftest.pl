@@ -17,6 +17,7 @@ my $options="??";
 my $last="??";
 my $ok=0;
 my $cc="cc";
+my $cversion="??";
 my $sep="-----------------------------------------------------------------------------\n";
 
 open(OUT,">$report") or die;
@@ -38,12 +39,18 @@ if (open(IN,"<Makefile.ssl")) {
 	$version=$1 if (/^VERSION=(.*)$/);
 	$platform=$1 if (/^PLATFORM=(.*)$/);
 	$options=$1 if (/^OPTIONS=(.*)$/);
-	$cc=$1 if (/^CC=(.*)$/);
+	$cc=$1 if (/^CC= *(.*)$/);
     }
     close(IN);
 } else {
-    print OUT "Error running config: no Makefile.ssl!\n";
+    print OUT "Error running config!\n";
 }
+
+$cversion=`$cc -v 2>&1`;
+$cversion=`$cc -V 2>&1` if $cversion =~ "usage";
+$cversion =~ s/Reading specs.*\n//;
+$cversion =~ s/usage.*\n//;
+chomp $cversion;
 
 if (open(IN,"<CHANGES")) {
     while(<IN>) {
@@ -61,7 +68,10 @@ print OUT "OS (uname):       $uname";
 print OUT "OS (config):      $os\n";
 print OUT "Target (default): $platform0\n";
 print OUT "Target:           $platform\n";
+print OUT "Compiler:         $cversion\n";
 print OUT "\n";
+
+goto err;
 
 print "Checking compiler...\n";
 if (open(TEST,">test.c")) {
@@ -149,3 +159,4 @@ while (<IN>) {
     print;
 }
 print "Test report in file $report\n";
+
