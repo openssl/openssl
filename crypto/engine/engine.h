@@ -64,6 +64,7 @@
 #ifndef HEADER_ENGINE_H
 #define HEADER_ENGINE_H
 
+#include <openssl/opensslconf.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA

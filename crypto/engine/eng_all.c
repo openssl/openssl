@@ -70,7 +70,7 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_openssl();
 #endif
 	ENGINE_load_dynamic();
-#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_CSWIFT
 	ENGINE_load_cswift();
