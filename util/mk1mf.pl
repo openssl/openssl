@@ -401,6 +401,41 @@ vclean:
 	\$(RM) \$(OUT_D)$o*.*
 
 EOF
+    
+my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
+$platform_cpp_symbol =~ s/-/_/;
+if (open(IN,"crypto/mk1mfinf.h"))
+	{
+	# Remove entry for this platform in existing file mk1mfinf.h.
+
+	my $old_mk1mfinf_h = "";
+	while (<IN>)
+		{
+		if (/^\#ifdef $platform_cpp_symbol$/)
+			{
+			while (<IN>) { last if (/^\#endif/); }
+			}
+		else
+			{
+			$old_mk1mfinf_h .= $_;
+			}
+		}
+
+	open(OUT,">crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
+	print OUT $old_mk1mfinf_h;
+	}
+
+open (OUT,">>crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
+printf OUT <<EOF;
+#ifdef $platform_cpp_symbol
+  /* auto-generated and updated by util/mk1mf.pl for crypto/cversion.c */
+  /* (used in place of crypto/buildinf.h by mk1mf builds) */
+  #define CFLAGS "$cc $cflags"
+  #define PLATFORM "$platform"
+EOF
+printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
+printf OUT "#endif\n";
+close(OUT);
 
 #############################################
 # We parse in input file and 'store' info for later printing.
@@ -730,6 +765,7 @@ sub cc_compile_target
 	local($target,$source,$ex_flags)=@_;
 	local($ret);
 	
+	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";
