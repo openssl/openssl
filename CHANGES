@@ -4,6 +4,16 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix BN_mul_word for the case where the word is 0. (We have to use
+     BN_zero, we may not return a BIGNUM with an array consisting of
+     words set to zero.)
+     [Bodo Moeller]
+
+  *) Avoid calling abort() from within the library when problems are
+     detected, except if preprocessor symbols have been defined
+     (such as REF_CHECK, BN_DEBUG etc.).
+     [Bodo Moeller]
+
   *) New openssl application 'rsautl'. This utility can be
      used for low level RSA operations. DER public key
      BIO/fp routines also added.

@@ -1839,3 +1839,10 @@ MD4_Final                               2435
 MD4_Update                              2436
 MD4_Init                                2437
 EVP_md4                                 2438
+i2d_PUBKEY_bio                          2439
+i2d_PUBKEY_fp                           2440
+d2i_PUBKEY_bio                          2441
+ASN1_STRING_to_UTF8                     2442
+BIO_vprintf                             2443
+BIO_vsnprintf                           2444
+d2i_PUBKEY_fp                           2445

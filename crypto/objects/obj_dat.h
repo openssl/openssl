@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 379
-#define NUM_SN 378
-#define NUM_LN 378
-#define NUM_OBJ 352
+#define NUM_NID 393
+#define NUM_SN 392
+#define NUM_LN 392
+#define NUM_OBJ 366
 
-static unsigned char lvalues[2838]={
+static unsigned char lvalues[2896]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -419,6 +419,20 @@ static unsigned char lvalues[2838]={
 0x2B,0x0E,0x03,0x02,                         /* [2826] OBJ_algorithm */
 0x2B,0x0E,0x03,0x02,0x0B,                    /* [2830] OBJ_rsaSignature */
 0x55,0x08,                                   /* [2835] OBJ_X500algorithms */
+0x2B,                                        /* [2837] OBJ_org */
+0x2B,0x06,                                   /* [2838] OBJ_dod */
+0x2B,0x06,0x01,                              /* [2840] OBJ_iana */
+0x2B,0x06,0x01,0x01,                         /* [2843] OBJ_Directory */
+0x2B,0x06,0x01,0x02,                         /* [2847] OBJ_Management */
+0x2B,0x06,0x01,0x03,                         /* [2851] OBJ_Experimental */
+0x2B,0x06,0x01,0x04,                         /* [2855] OBJ_Private */
+0x2B,0x06,0x01,0x05,                         /* [2859] OBJ_Security */
+0x2B,0x06,0x01,0x06,                         /* [2863] OBJ_SNMPv2 */
+0x2B,0x06,0x01,0x07,                         /* [2867] OBJ_Mail */
+0x01,                                        /* [2871] OBJ_Enterprises */
+0xBA,0x82,0x58,                              /* [2872] OBJ_dcObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2875] OBJ_domainComponent */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2885] OBJ_Domain */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1017,6 +1031,20 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"rsaSignature","rsaSignature",NID_rsaSignature,5,&(lvalues[2830]),0},
 {"X500algorithms","directory services - algorithms",
 	NID_X500algorithms,2,&(lvalues[2835]),0},
+{"ORG","org",NID_org,1,&(lvalues[2837]),0},
+{"DOD","dod",NID_dod,2,&(lvalues[2838]),0},
+{"IANA","iana",NID_iana,3,&(lvalues[2840]),0},
+{"directory","Directory",NID_Directory,4,&(lvalues[2843]),0},
+{"mgmt","Management",NID_Management,4,&(lvalues[2847]),0},
+{"experimental","Experimental",NID_Experimental,4,&(lvalues[2851]),0},
+{"private","Private",NID_Private,4,&(lvalues[2855]),0},
+{"security","Security",NID_Security,4,&(lvalues[2859]),0},
+{"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2863]),0},
+{"mail","Mail",NID_Mail,4,&(lvalues[2867]),0},
+{"enterprises","Enterprises",NID_Enterprises,1,&(lvalues[2871]),0},
+{"dcobject","dcObject",NID_dcObject,3,&(lvalues[2872]),0},
+{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2875]),0},
+{"domain","Domain",NID_Domain,10,&(lvalues[2885]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1034,6 +1062,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[141]),/* "CRLReason" */
 &(nid_objs[367]),/* "CrlID" */
 &(nid_objs[107]),/* "D" */
+&(nid_objs[391]),/* "DC" */
 &(nid_objs[31]),/* "DES-CBC" */
 &(nid_objs[30]),/* "DES-CFB" */
 &(nid_objs[29]),/* "DES-ECB" */
@@ -1047,6 +1076,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[63]),/* "DES-EDE3-OFB" */
 &(nid_objs[45]),/* "DES-OFB" */
 &(nid_objs[80]),/* "DESX-CBC" */
+&(nid_objs[380]),/* "DOD" */
 &(nid_objs[116]),/* "DSA" */
 &(nid_objs[66]),/* "DSA-SHA" */
 &(nid_objs[113]),/* "DSA-SHA1" */
@@ -1056,6 +1086,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[48]),/* "Email" */
 &(nid_objs[99]),/* "G" */
 &(nid_objs[101]),/* "I" */
+&(nid_objs[381]),/* "IANA" */
 &(nid_objs[34]),/* "IDEA-CBC" */
 &(nid_objs[35]),/* "IDEA-CFB" */
 &(nid_objs[36]),/* "IDEA-ECB" */
@@ -1073,6 +1104,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[17]),/* "O" */
 &(nid_objs[178]),/* "OCSP" */
 &(nid_objs[180]),/* "OCSPSigning" */
+&(nid_objs[379]),/* "ORG" */
 &(nid_objs[18]),/* "OU" */
 &(nid_objs[ 9]),/* "PBE-MD2-DES" */
 &(nid_objs[168]),/* "PBE-MD2-RC2-64" */
@@ -1153,10 +1185,15 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[153]),/* "crlBag" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[390]),/* "dcobject" */
 &(nid_objs[140]),/* "deltaCRL" */
 &(nid_objs[28]),/* "dhKeyAgreement" */
+&(nid_objs[382]),/* "directory" */
 &(nid_objs[174]),/* "dnQualifier" */
+&(nid_objs[392]),/* "domain" */
 &(nid_objs[132]),/* "emailProtection" */
+&(nid_objs[389]),/* "enterprises" */
+&(nid_objs[384]),/* "experimental" */
 &(nid_objs[172]),/* "extReq" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
@@ -1337,8 +1374,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[150]),/* "keyBag" */
 &(nid_objs[83]),/* "keyUsage" */
 &(nid_objs[157]),/* "localKeyID" */
+&(nid_objs[388]),/* "mail" */
 &(nid_objs[182]),/* "member-body" */
 &(nid_objs[51]),/* "messageDigest" */
+&(nid_objs[383]),/* "mgmt" */
 &(nid_objs[136]),/* "msCTLSign" */
 &(nid_objs[135]),/* "msCodeCom" */
 &(nid_objs[134]),/* "msCodeInd" */
@@ -1374,6 +1413,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[385]),/* "private" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[ 6]),/* "rsaEncryption" */
@@ -1385,9 +1425,11 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[292]),/* "sbqp-routerIdentifier" */
 &(nid_objs[159]),/* "sdsiCertificate" */
 &(nid_objs[154]),/* "secretBag" */
+&(nid_objs[386]),/* "security" */
 &(nid_objs[129]),/* "serverAuth" */
 &(nid_objs[371]),/* "serviceLocator" */
 &(nid_objs[52]),/* "signingTime" */
+&(nid_objs[387]),/* "snmpv2" */
 &(nid_objs[85]),/* "subjectAltName" */
 &(nid_objs[82]),/* "subjectKeyIdentifier" */
 &(nid_objs[293]),/* "textNotice" */
@@ -1408,7 +1450,11 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[285]),/* "Biometric Info" */
 &(nid_objs[179]),/* "CA Issuers" */
 &(nid_objs[131]),/* "Code Signing" */
+&(nid_objs[382]),/* "Directory" */
+&(nid_objs[392]),/* "Domain" */
 &(nid_objs[132]),/* "E-mail Protection" */
+&(nid_objs[389]),/* "Enterprises" */
+&(nid_objs[384]),/* "Experimental" */
 &(nid_objs[372]),/* "Extended OCSP Status" */
 &(nid_objs[172]),/* "Extension Request" */
 &(nid_objs[294]),/* "IPSec End System" */
@@ -1417,6 +1463,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[182]),/* "ISO Member Body" */
 &(nid_objs[183]),/* "ISO US Member Body" */
 &(nid_objs[142]),/* "Invalidity Date" */
+&(nid_objs[388]),/* "Mail" */
+&(nid_objs[383]),/* "Management" */
 &(nid_objs[135]),/* "Microsoft Commercial Code Signing" */
 &(nid_objs[138]),/* "Microsoft Encrypted File System" */
 &(nid_objs[171]),/* "Microsoft Extension Request" */
@@ -1448,10 +1496,13 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[127]),/* "PKIX" */
 &(nid_objs[164]),/* "Policy Qualifier CPS" */
 &(nid_objs[165]),/* "Policy Qualifier User Notice" */
+&(nid_objs[385]),/* "Private" */
 &(nid_objs[ 1]),/* "RSA Data Security, Inc." */
 &(nid_objs[ 2]),/* "RSA Data Security, Inc. PKCS" */
 &(nid_objs[188]),/* "S/MIME" */
 &(nid_objs[167]),/* "S/MIME Capabilities" */
+&(nid_objs[387]),/* "SNMPv2" */
+&(nid_objs[386]),/* "Security" */
 &(nid_objs[143]),/* "Strong Extranet ID" */
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
@@ -1493,6 +1544,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[53]),/* "countersignature" */
 &(nid_objs[14]),/* "countryName" */
 &(nid_objs[153]),/* "crlBag" */
+&(nid_objs[390]),/* "dcObject" */
 &(nid_objs[31]),/* "des-cbc" */
 &(nid_objs[30]),/* "des-cfb" */
 &(nid_objs[29]),/* "des-ecb" */
@@ -1511,6 +1563,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[11]),/* "directory services (X.500)" */
 &(nid_objs[378]),/* "directory services - algorithms" */
 &(nid_objs[174]),/* "dnQualifier" */
+&(nid_objs[380]),/* "dod" */
+&(nid_objs[391]),/* "domainComponent" */
 &(nid_objs[116]),/* "dsaEncryption" */
 &(nid_objs[67]),/* "dsaEncryption-old" */
 &(nid_objs[66]),/* "dsaWithSHA" */
@@ -1522,6 +1576,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[156]),/* "friendlyName" */
 &(nid_objs[99]),/* "givenName" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
+&(nid_objs[381]),/* "iana" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
 &(nid_objs[354]),/* "id-aca-authenticationInfo" */
@@ -1707,6 +1762,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[51]),/* "messageDigest" */
 &(nid_objs[173]),/* "name" */
 &(nid_objs[369]),/* "noCheck" */
+&(nid_objs[379]),/* "org" */
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[374]),/* "path" */
@@ -1783,13 +1839,17 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
+&(nid_objs[389]),/* OBJ_Enterprises                   1 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
+&(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
+&(nid_objs[380]),/* OBJ_dod                          1 3 6 */
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[378]),/* OBJ_X500algorithms               2 5 8 */
 &(nid_objs[81]),/* OBJ_id_ce                        2 5 29 */
 &(nid_objs[183]),/* OBJ_ISO_US                       1 2 840 */
+&(nid_objs[381]),/* OBJ_iana                         1 3 6 1 */
 &(nid_objs[13]),/* OBJ_commonName                   2 5 4 3 */
 &(nid_objs[100]),/* OBJ_surname                      2 5 4 4 */
 &(nid_objs[105]),/* OBJ_serialNumber                 2 5 4 5 */
@@ -1819,6 +1879,14 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
 &(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
+&(nid_objs[390]),/* OBJ_dcObject                      1466 344 */
+&(nid_objs[382]),/* OBJ_Directory                    1 3 6 1 1 */
+&(nid_objs[383]),/* OBJ_Management                   1 3 6 1 2 */
+&(nid_objs[384]),/* OBJ_Experimental                 1 3 6 1 3 */
+&(nid_objs[385]),/* OBJ_Private                      1 3 6 1 4 */
+&(nid_objs[386]),/* OBJ_Security                     1 3 6 1 5 */
+&(nid_objs[387]),/* OBJ_SNMPv2                       1 3 6 1 6 */
+&(nid_objs[388]),/* OBJ_Mail                         1 3 6 1 7 */
 &(nid_objs[376]),/* OBJ_algorithm                    1 3 14 3 2 */
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
@@ -2044,6 +2112,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[78]),/* OBJ_netscape_comment             2 16 840 1 113730 1 13 */
 &(nid_objs[79]),/* OBJ_netscape_cert_sequence       2 16 840 1 113730 2 5 */
 &(nid_objs[139]),/* OBJ_ns_sgc                       2 16 840 1 113730 4 1 */
+&(nid_objs[391]),/* OBJ_domainComponent              0 9 2342 19200300 100 1 25 */
+&(nid_objs[392]),/* OBJ_Domain                       0 9 2342 19200300 100 4 13 */
 &(nid_objs[189]),/* OBJ_id_smime_mod                 1 2 840 113549 1 9 16 0 */
 &(nid_objs[190]),/* OBJ_id_smime_ct                  1 2 840 113549 1 9 16 1 */
 &(nid_objs[191]),/* OBJ_id_smime_aa                  1 2 840 113549 1 9 16 2 */

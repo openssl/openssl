@@ -168,7 +168,8 @@ static unsigned long x509_object_hash(X509_OBJECT *a)
 		h=X509_NAME_hash(a->data.crl->crl->issuer);
 		break;
 	default:
-		abort();
+		/* abort(); */
+		return 0;
 		}
 	return(h);
 	}
@@ -188,7 +189,8 @@ static int x509_object_cmp(X509_OBJECT *a, X509_OBJECT *b)
 		ret=X509_CRL_cmp(a->data.crl,b->data.crl);
 		break;
 	default:
-		abort();
+		/* abort(); */
+		return 0;
 		}
 	return(ret);
 	}
@@ -221,7 +223,9 @@ static void cleanup(X509_OBJECT *a)
 		X509_CRL_free(a->data.crl);
 		}
 	else
-		abort();
+		{
+		/* abort(); */
+		}
 
 	OPENSSL_free(a);
 	}
@@ -374,7 +378,8 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
 		crl_info_s.issuer=name;
 		break;
 	default:
-		abort();
+		/* abort(); */
+		return NULL;
 		}
 
 	tmp=(X509_OBJECT *)lh_retrieve(h,&stmp);

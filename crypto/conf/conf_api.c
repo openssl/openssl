@@ -58,6 +58,12 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
+#ifndef CONF_DEBUG
+# undef NDEBUG /* avoid conflicting definitions */
+# define NDEBUG
+#endif
+
+#include <assert.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 
@@ -267,13 +273,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, char *section)
 	v->value=(char *)sk;
 	
 	vv=(CONF_VALUE *)lh_insert(conf->data,v);
-	if (vv != NULL)
-		{
-#if !defined(NO_STDIO) && !defined(WIN16)
-		fprintf(stderr,"internal fault\n");
-#endif
-		abort();
-		}
+	assert(vv == NULL);
 	ok=1;
 err:
 	if (!ok)

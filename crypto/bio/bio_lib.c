@@ -206,7 +206,9 @@ int BIO_write(BIO *b, const void *in, int inl)
 	 * determine this is the reference count which is now invalid since
 	 * the memory has been free()ed.
 	 */
+#ifdef REF_CHECK
 	if (b->references <= 0) abort();
+#endif
 	if (cb != NULL) /* && (b->references >= 1)) */
 		i=(int)cb(b,BIO_CB_WRITE|BIO_CB_RETURN,in,inl,
 			0L,(long)i);

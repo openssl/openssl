@@ -56,6 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef BN_DEBUG
+# undef NDEBUG /* avoid conflicting definitions */
+# define NDEBUG
+#endif
+
+#include <assert.h>
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
@@ -244,14 +250,8 @@ int BN_num_bits(const BIGNUM *a)
 
 	if (a->top == 0) return(0);
 	l=a->d[a->top-1];
+	assert(l != 0);
 	i=(a->top-1)*BN_BITS2;
-	if (l == 0)
-		{
-#if !defined(NO_STDIO) && !defined(WIN16)
-		fprintf(stderr,"BAD TOP VALUE\n");
-#endif
-		abort();
-		}
 	return(i+BN_num_bits_word(l));
 	}
 

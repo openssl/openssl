@@ -105,7 +105,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_BAD_HOSTNAME_LOOKUP               ,"bad hostname lookup"},
 {BIO_R_BROKEN_PIPE                       ,"broken pipe"},
 {BIO_R_CONNECT_ERROR                     ,"connect error"},
-{BIO_R_EOF_ON_MEMORY_BIO                 ,"eof on memory bio"},
+{BIO_R_EOF_ON_MEMORY_BIO                 ,"EOF on memory BIO"},
 {BIO_R_ERROR_SETTING_NBIO                ,"error setting nbio"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
@@ -126,8 +126,8 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
 {BIO_R_UNINITIALIZED                     ,"uninitialized"},
 {BIO_R_UNSUPPORTED_METHOD                ,"unsupported method"},
-{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only bio"},
-{BIO_R_WSASTARTUP                        ,"wsastartup"},
+{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only BIO"},
+{BIO_R_WSASTARTUP                        ,"WSAStartup"},
 {0,NULL}
 	};
 

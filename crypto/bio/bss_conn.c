@@ -188,7 +188,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 		case BIO_CONN_S_GET_PORT:
 			if (c->param_port == NULL)
 				{
-				abort();
+				/* abort(); */
 				goto exit_loop;
 				}
 			else if (BIO_get_port(c->param_port,&c->port) <= 0)
@@ -299,7 +299,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 			ret=1;
 			goto exit_loop;
 		default:
-			abort();
+			/* abort(); */
 			goto exit_loop;
 			}
 

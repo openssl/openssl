@@ -153,7 +153,10 @@ int ssl3_accept(SSL *s)
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			if ((s->version>>8) != 3)
-				abort();
+				{
+				SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_INTERNAL_ERROR);
+				return -1;
+				}
 			s->type=SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL)

@@ -142,7 +142,12 @@ int ssl3_connect(SSL *s)
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			if ((s->version & 0xff00 ) != 0x0300)
-				abort();
+				{
+				SSLerr(SSL_F_SSL3_CONNECT, SSL_R_INTERNAL_ERROR);
+				ret = -1;
+				goto end;
+				}
+				
 			/* s->version=SSL3_VERSION; */
 			s->type=SSL_ST_CONNECT;
 
