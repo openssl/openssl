@@ -22,7 +22,7 @@
 
   *) Fix the RSA header declarations that hid a bug I fixed in 0.9.0b but
      was already fixed by Eric for 0.9.1 it seems.
-     [Ben Laurie - pointed out by Ulf Möller <ulf@fitug.de>]
+     [Ben Laurie - pointed out by Ulf Möller <ulf@fitug.de>]
 
   *) Autodetect FreeBSD3.
      [Ben Laurie]
