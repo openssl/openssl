@@ -7,6 +7,8 @@
   *) For consistency with other BIO_puts implementations, call
      buffer_write(b, ...) directly in buffer_puts instead of calling
      BIO_write(b, ...).
+
+     In BIO_puts, increment b->num_write as in BIO_write.
      [Peter.Sylvester@EdelWeb.fr]
 
   *) Fix BN_mul_word for the case where the word is 0. (We have to use
