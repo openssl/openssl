@@ -76,7 +76,8 @@ my @known_platforms = ( "__FreeBSD__", "VMS", "WIN16", "WIN32",
 			"WINNT", "PERL5", "NeXT" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "RIPEMD",
-			 "MDC2", "RSA", "DSA", "DH", "HMAC", "FP_API" );
+			 "MDC2", "RSA", "DSA", "DH", "HMAC", "FP_API",
+			 "RIJNDAEL" );
 
 my $options="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
@@ -91,7 +92,7 @@ close(IN);
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_rijndael;
 my $no_fp_api;
 
 foreach (@ARGV, split(/ /, $options))
@@ -132,6 +133,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dsa$/)      { $no_dsa=1; }
 	elsif (/^no-dh$/)       { $no_dh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
+	elsif (/^no-rijndael$/)	{ $no_rijndael=1; }
 	}
 
 
@@ -172,6 +174,7 @@ $crypto.=" crypto/md5/md5.h" unless $no_md5;
 $crypto.=" crypto/mdc2/mdc2.h" unless $no_mdc2;
 $crypto.=" crypto/sha/sha.h" unless $no_sha;
 $crypto.=" crypto/ripemd/ripemd.h" unless $no_ripemd;
+$crypto.=" crypto/rijndael/rijndael.h" unless $no_rijndael;
 
 $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h" unless $no_rsa;
@@ -747,6 +750,7 @@ EOF
 			    && (!@a || (!$no_dsa || !grep(/^DSA$/,@a)))
 			    && (!@a || (!$no_dh || !grep(/^DH$/,@a)))
 			    && (!@a || (!$no_hmac || !grep(/^HMAC$/,@a)))
+			    && (!@a || (!$no_rijndael || !grep(/^RIJNDAEL$/,@a)))
 			    && (!@a || (!$no_fp_api || !grep(/^FP_API$/,@a)))
 			    ) {
 				printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;

@@ -872,6 +872,7 @@ sub read_options
 	elsif (/^no-dsa$/)	{ $no_dsa=1; }
 	elsif (/^no-dh$/)	{ $no_dh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
+	elsif (/^no-rijndael$/)	{ $no_rijndael=1; }
 	elsif (/^no-asm$/)	{ $no_asm=1; }
 	elsif (/^nasm$/)	{ $nasm=1; }
 	elsif (/^gaswin$/)	{ $gaswin=1; }
