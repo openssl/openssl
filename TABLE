@@ -1740,6 +1740,26 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 
+*** newsos4-gcc
+$cc           = gcc
+$cflags       = -O -DB_ENDIAN -DNEWS4
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lmld -liberty
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+
 *** nextstep
 $cc           = cc
 $cflags       = -O -Wall
