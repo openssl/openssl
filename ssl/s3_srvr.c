@@ -1618,7 +1618,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
 
-		if (!EVP_DecryptInit_ex(&ciph_ctx,enc,kssl_ctx->key,iv,NULL))
+		if (!EVP_DecryptInit_ex(&ciph_ctx,enc,NULL,kssl_ctx->key,iv))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				SSL_R_DECRYPTION_FAILED);
