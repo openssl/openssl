@@ -164,11 +164,7 @@ typedef struct evp_pkey_st
 		struct dh_st *dh;	/* DH */
 		} pkey;
 	int save_parameters;
-#ifdef HEADER_STACK_H
-	STACK /* X509_ATTRIBUTE */ *attributes; /* [ 0 ] */
-#else
-	char /* X509_ATTRIBUTE */ *attributes; /* [ 0 ] */
-#endif
+	STACK /*X509_ATTRIBUTE*/ *attributes; /* [ 0 ] */
 	} EVP_PKEY;
 
 #define EVP_PKEY_MO_SIGN	0x0001

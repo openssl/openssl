@@ -184,15 +184,18 @@ union {
 
 /* Strong extranet structures */
 
-typedef struct SXNET_st {
-	ASN1_INTEGER *version;
-	STACK /* SXNETID */ *ids;
-} SXNET;
-
 typedef struct SXNET_ID_st {
 	ASN1_INTEGER *zone;
 	ASN1_OCTET_STRING *user;
 } SXNETID;
+
+DECLARE_STACK_OF(SXNETID)
+DECLARE_ASN1_SET_OF(SXNETID)
+
+typedef struct SXNET_st {
+	ASN1_INTEGER *version;
+	STACK_OF(SXNETID) *ids;
+} SXNET;
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);

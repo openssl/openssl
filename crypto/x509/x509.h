@@ -126,7 +126,7 @@ typedef struct X509_pubkey_st
 	{
 	X509_ALGOR *algor;
 	ASN1_BIT_STRING *public_key;
-	struct evp_pkey_st /* EVP_PKEY*/ *pkey;
+	EVP_PKEY *pkey;
 	} X509_PUBKEY;
 
 typedef struct X509_sig_st
@@ -255,6 +255,8 @@ typedef struct x509_attributes_st
 /* 0 */		ASN1_TYPE	*single;
 		} value;
 	} X509_ATTRIBUTE;
+
+DECLARE_STACK_OF(X509_ATTRIBUTE);
 
 typedef struct private_key_st
 	{

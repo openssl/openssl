@@ -193,6 +193,10 @@ err:\
 		M_ASN1_D2I_get_imp_set(r,func,free_func,\
 			V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
 
+#define M_ASN1_D2I_get_seq_type(type,r,func,free_func) \
+		M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,\
+					    V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL)
+
 #define M_ASN1_D2I_get_seq_opt(r,func,free_func) \
 	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
 		V_ASN1_CONSTRUCTED|V_ASN1_SEQUENCE)))\
@@ -211,8 +215,8 @@ err:\
 
 #define M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,a,b) \
 	c.q=c.p; \
-	if (d2i_ASN1_SET_OF_##type(&(r),&c.p,c.slen,func,free_func,a,b) \
-	    == NULL) \
+	if (d2i_ASN1_SET_OF_##type(&(r),&c.p,c.slen,func,\
+				   free_func,a,b) == NULL) \
 		{ c.line=__LINE__; goto err; } \
 	c.slen-=(c.p-c.q);
 
@@ -309,6 +313,10 @@ err:\
 		ret+=i2d_ASN1_SET(a,NULL,f,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL, \
 				  IS_SEQUENCE);
 
+#define M_ASN1_I2D_len_SEQUENCE_type(type,a,f) \
+		ret+=i2d_ASN1_SET_OF_##type(a,NULL,f,V_ASN1_SEQUENCE, \
+					    V_ASN1_UNIVERSAL,IS_SEQUENCE)
+
 #define M_ASN1_I2D_len_SEQUENCE_opt(a,f) \
 		if ((a != NULL) && (sk_num(a) != 0)) \
 			M_ASN1_I2D_len_SEQUENCE(a,f);
@@ -378,6 +386,10 @@ err:\
 
 #define M_ASN1_I2D_put_SEQUENCE(a,f) i2d_ASN1_SET(a,&p,f,V_ASN1_SEQUENCE,\
 					     V_ASN1_UNIVERSAL,IS_SEQUENCE)
+
+#define M_ASN1_I2D_put_SEQUENCE_type(type,a,f) \
+     i2d_ASN1_SET_OF_##type(a,&p,f,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL, \
+			    IS_SEQUENCE)
 
 #define M_ASN1_I2D_put_SEQUENCE_opt(a,f) \
 		if ((a != NULL) && (sk_num(a) != 0)) \

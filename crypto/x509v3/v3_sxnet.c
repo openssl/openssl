@@ -109,12 +109,12 @@ unsigned char **pp;
 	M_ASN1_I2D_vars(a);
 
 	M_ASN1_I2D_len (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len_SEQUENCE (a->ids, i2d_SXNETID);
+	M_ASN1_I2D_len_SEQUENCE_type (SXNETID, a->ids, i2d_SXNETID);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put_SEQUENCE (a->ids, i2d_SXNETID);
+	M_ASN1_I2D_put_SEQUENCE_type (SXNETID, a->ids, i2d_SXNETID);
 
 	M_ASN1_I2D_finish();
 }
@@ -125,7 +125,7 @@ SXNET *SXNET_new()
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, SXNET);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);
-	M_ASN1_New(ret->ids,sk_new_null);
+	M_ASN1_New(ret->ids,sk_SXNETID_new_null);
 	return (ret);
 	M_ASN1_New_Error(ASN1_F_SXNET_NEW);
 }
@@ -139,7 +139,7 @@ long length;
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get (ret->version, d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get_seq (ret->ids, d2i_SXNETID, SXNETID_free);
+	M_ASN1_D2I_get_seq_type (SXNETID, ret->ids, d2i_SXNETID, SXNETID_free);
 	M_ASN1_D2I_Finish(a, SXNET_free, ASN1_F_D2I_SXNET);
 }
 
@@ -148,8 +148,8 @@ SXNET *a;
 {
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);
-	sk_pop_free(a->ids, SXNETID_free);
-	Free ((char *)a);
+	sk_SXNETID_pop_free(a->ids, SXNETID_free);
+	Free (a);
 }
 
 int i2d_SXNETID(a,pp)
@@ -199,7 +199,7 @@ SXNETID *a;
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->zone);
 	ASN1_OCTET_STRING_free(a->user);
-	Free ((char *)a);
+	Free (a);
 }
 
 static int sxnet_i2r(method, sx, out, indent)
@@ -214,8 +214,8 @@ int indent;
 	int i;
 	v = ASN1_INTEGER_get(sx->version);
 	BIO_printf(out, "%*sVersion: %d (0x%X)", indent, "", v + 1, v);
-	for(i = 0; i < sk_num(sx->ids); i++) {
-		id = (SXNETID *)sk_value(sx->ids, i);
+	for(i = 0; i < sk_SXNETID_num(sx->ids); i++) {
+		id = sk_SXNETID_value(sx->ids, i);
 		tmp = i2s_ASN1_INTEGER(NULL, id->zone);
 		BIO_printf(out, "\n%*sZone: %s, User: ", indent, "", tmp);
 		Free(tmp);
@@ -323,7 +323,7 @@ int userlen;
 	if(userlen == -1) userlen = strlen(user);
 		
 	if(!ASN1_OCTET_STRING_set(id->user, user, userlen)) goto err;
-	if(!sk_push(sx->ids, (char *)id)) goto err;
+	if(!sk_SXNETID_push(sx->ids, id)) goto err;
 	id->zone = zone;
 	return 1;
 	
@@ -372,9 +372,12 @@ ASN1_INTEGER *zone;
 {
 	SXNETID *id;
 	int i;
-	for(i = 0; i < sk_num(sx->ids); i++) {
-		id = (SXNETID *)sk_value(sx->ids, i);
+	for(i = 0; i < sk_SXNETID_num(sx->ids); i++) {
+		id = sk_SXNETID_value(sx->ids, i);
 		if(!ASN1_INTEGER_cmp(id->zone, zone)) return id->user;
 	}
 	return NULL;
 }
+
+IMPLEMENT_STACK_OF(SXNETID)
+IMPLEMENT_ASN1_SET_OF(SXNETID)
