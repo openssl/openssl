@@ -900,6 +900,10 @@ if ($rmd160_obj =~ /\.o$/)
 	$cflags.=" -DRMD160_ASM";
 	}
 
+# "Stringify" the C flags string.  This permits it to be made part of a string
+# and works as well on command lines.
+$cflags =~ s/([\\\"])/\\\1/g;
+
 my $version = "unknown";
 my $major = "unknown";
 my $minor = "unknown";
