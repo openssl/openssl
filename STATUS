@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/13 11:35:54 $
+  ______________                           $Date: 2000/09/13 12:14:39 $
 
   DEVELOPMENT STATE
 
@@ -11,6 +11,7 @@
 				ftime not supported [FIXED]
 			hpux-parisc-cc 10.20		- passed
 			hpux-parisc-gcc 10.20		- passed
+			hpux-parisc-gcc 11.00		- passed
 			hpux-gcc			- passed
 			hpux-brokengcc			- failed
 				BN_sqr fails in test
