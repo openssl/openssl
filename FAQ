@@ -21,6 +21,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why can't I make an SSL connection using a DSA certificate?
 * How can I remove the passphrase on a private key?
 * Why can't the OpenSSH configure script detect OpenSSL?
+* Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
 
 
@@ -306,6 +307,12 @@ applied to the OpenSSH distribution:
  	fi
  	LIBS="$LIBS -lcrypto"
 ----- snip:end -----
+
+
+* Why does the OpenSSL test fail with "bc: command not found"?
+
+You didn't install "bc", the Unix calculator.  If you want to run the
+tests, get GNU bc from ftp://ftp.gnu.org or from your OS distributor.
 
 
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
