@@ -142,7 +142,7 @@ static void sc_usage(void)
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif
-#ifdef APPS_CRLF
+#ifdef APPS_CRLF /* won't be #ifdef'd in next release */
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 #endif
 	BIO_printf(bio_err," -quiet        - no s_client output\n");

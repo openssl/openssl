@@ -1142,6 +1142,11 @@ void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx,void *u)
 
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,int (*cb)(),char *arg)
 	{
+	/* now
+	 *     int (*cb)(X509_STORE_CTX *),
+	 * but should be
+	 *     int (*cb)(X509_STORE_CTX *, void *arg)
+	 */
 	ctx->app_verify_callback=cb;
 	ctx->app_verify_arg=arg; /* never used */
 	}

@@ -426,7 +426,7 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		(char *)s);
 
 	if (s->ctx->app_verify_callback != NULL)
-		i=s->ctx->app_verify_callback(&ctx);
+		i=s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
 	else
 		{
 #ifndef NO_X509_VERIFY

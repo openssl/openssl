@@ -413,7 +413,7 @@ struct ssl_ctx_st
 
 	/* if defined, these override the X509_verify_cert() calls */
 /**/	int (*app_verify_callback)();
-/**/	char *app_verify_arg; /* never used */
+/**/	char *app_verify_arg; /* never used; should be void * */
 
 	/* default values to use in SSL structures */
 /**/	struct cert_st /* CERT */ *cert;

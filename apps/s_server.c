@@ -169,8 +169,8 @@ static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 static int s_nbio=0;
 #endif
 static int s_nbio_test=0;
-#ifdef APPS_CRLF
-	int s_crlf=0;
+#ifdef APPS_CRLF /* won't be #ifdef'd in next release */
+int s_crlf=0;
 #endif
 static SSL_CTX *ctx=NULL;
 static int www=0;
