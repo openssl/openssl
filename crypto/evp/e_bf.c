@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_BF
 #include <stdio.h>
 #include "cryptlib.h"
+#ifndef OPENSSL_NO_BF
 #include <openssl/evp.h>
 #include "evp_locl.h"
 #include <openssl/objects.h>
