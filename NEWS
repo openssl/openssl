@@ -1,0 +1,37 @@
+
+  NEWS
+  ====
+
+  This file gives a brief overview of the major changes between each OpenSSL
+  release. For more details please read the CHANGES file.
+
+  Major changes between SSLeay 0.9.1c and OpenSSL 0.9.2:
+      o Support for Triple-DES CBCM cipher
+      o Support of Optimal Asymmetric Encryption Padding (OAEP) for RSA
+      o First support for new TLSv1 ciphers
+      o Added a few new BIOs (syslog BIO, reliable BIO)
+      o Extended support for DSA certificate/keys.
+      o Extended support for Certificate Signing Requests (CRL)
+      o Initial support for X.509v3 extensions
+      o Extended support for compression inside the SSL record layer
+      o Overhauled Win32 builds
+      o Cleanups and fixes to the Big Number (BN) library
+      o Support for ASN.1 GeneralizedTime
+      o Splitted ASN.1 SETs from SEQUENCEs
+      o ASN1 and PEM support for Netscape Certificate Sequences
+      o Overhauled Perl interface
+      o Lots of source tree cleanups.
+      o Lots of memory leak fixes.
+      o Lots of bug fixes.
+
+  Major changes between SSLeay 0.9.0b and OpenSSL 0.9.1c:
+      o Integration of the popular NO_RSA/NO_DSA patches
+      o Initial support for compression inside the SSL record layer
+      o Added BIO proxy and filtering functionality
+      o Extended Big Number (BN) library
+      o Added RIPE MD160 message digest
+      o Addeed support for RC2/64bit cipher
+      o Extended ASN.1 parser routines
+      o Adjustations of the source tree for CVS
+      o Support for various new platforms
+
