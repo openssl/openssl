@@ -111,12 +111,12 @@ typedef struct des_ks_struct
    clashes with libdes */
 #define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
 	_ossl_old_des_ecb3_encrypt((i),(o),(k1),(k2),(k3),(e))
-#define des_ecb3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
-	_ossl_old_des_ecb3_cbc_encrypt((i),(o),(k1),(k2),(k3),(e))
-#define des_ecb3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
-	_ossl_old_des_ecb3_cfb64_encrypt((i),(o),(k1),(k2),(k3),(e))
-#define des_ecb3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
-	_ossl_old_des_ecb3_ofb64_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
+	_ossl_old_des_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+#define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
+	_ossl_old_des_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+#define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
+	_ossl_old_des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n))
 #define des_options()\
 	_ossl_old_des_options()
 #define des_cbc_cksum(i,o,l,k,iv)\
@@ -139,8 +139,8 @@ typedef struct des_ks_struct
 	_ossl_old_des_encrypt3((d),(k1),(k2),(k3))
 #define des_decrypt3(d,k1,k2,k3)\
 	_ossl_old_des_decrypt3((d),(k1),(k2),(k3))
-#define des_des_xwhite_in2out(k,i,o)\
-	_ossl_old_des_des_xwhite_in2out((k),(i),(o))
+#define des_xwhite_in2out(k,i,o)\
+	_ossl_old_des_xwhite_in2out((k),(i),(o))
 #define des_enc_read(f,b,l,k,iv)\
 	_ossl_old_des_enc_read((f),(b),(l),(k),(iv))
 #define des_enc_write(f,b,l,k,iv)\
@@ -157,14 +157,14 @@ typedef struct des_ks_struct
 	_ossl_old_des_pcbc_encrypt((i),(o),(l),(k),(iv),(e))
 #define des_quad_cksum(i,o,l,c,s)\
 	_ossl_old_des_quad_cksum((i),(o),(l),(c),(s))
-#define des_random_seed(k);\
-	_ossl_old_des_random_seed((k));
-#define des_random_key(r);\
-	_ossl_old_des_random_key((r));
-#define des_set_odd_parity(k);\
-	_ossl_old_des_set_odd_parity((k));
-#define des_is_weak_key(k);\
-	_ossl_old_des_is_weak_key((k));
+#define des_random_seed(k)\
+	_ossl_old_des_random_seed((k))
+#define des_random_key(r)\
+	_ossl_old_des_random_key((r))
+#define des_set_odd_parity(k)\
+	_ossl_old_des_set_odd_parity((k))
+#define des_is_weak_key(k)\
+	_ossl_old_des_is_weak_key((k))
 #define des_set_key(k,ks)\
 	_ossl_old_des_set_key((k),(ks))
 #define des_key_sched(k,ks)\

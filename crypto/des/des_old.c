@@ -193,12 +193,10 @@ char *_ossl_old_des_crypt(const char *buf,const char *salt)
 	{
 	return DES_crypt(buf, salt);
 	}
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(_DARWIN)
 char *_ossl_old_crypt(const char *buf,const char *salt)
 	{
 	return DES_crypt(buf, salt);
 	}
-#endif
 void _ossl_old_des_ofb_encrypt(unsigned char *in,unsigned char *out,
 	int numbits,long length,des_key_schedule schedule,des_cblock *ivec)
 	{
