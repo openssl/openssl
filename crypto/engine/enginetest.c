@@ -58,6 +58,9 @@
 
 #include <openssl/e_os2.h>
 #include <stdio.h>
+#ifdef OPENSSL_SYS_WINCE
+#include <stdlib_extras.h>
+#endif
 #include <string.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h>

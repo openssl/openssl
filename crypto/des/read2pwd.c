@@ -112,6 +112,9 @@
 #include <string.h>
 #include <openssl/des.h>
 #include <openssl/ui.h>
+#ifdef OPENSSL_SYS_WINCE
+#include <stdio_extras.h>	/* BUFSIZ */
+#endif
 
 int DES_read_password(DES_cblock *key, const char *prompt, int verify)
 	{

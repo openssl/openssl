@@ -4,6 +4,10 @@
 
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Add the VC-CE target, introduce the WINCE sysname, and add
+     INSTALL.WCE and appropriate conditionals to make it build.
+     [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
+
   *) Change the DLL names for Cygwin to cygcrypto-x.y.z.dll and
      cygssl-x.y.z.dll, where x, y and z are the major, minor and
      edit numbers of the version.

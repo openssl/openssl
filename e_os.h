@@ -229,6 +229,13 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
+#  ifdef OPENSSL_SYS_WINCE
+#    include <stdio_extras.h>
+#    include <stdlib_extras.h>
+#    include <string_extras.h>
+#    include <winsock_extras.h>
+#  endif
+
 #  define ssize_t long
 
 #  if defined (__BORLANDC__)
@@ -258,7 +265,11 @@ extern "C" {
 #  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
 #  define RFILE		".rnd"
-#  define DEFAULT_HOME  "C:"
+#  ifdef OPENSSL_SYS_WINCE
+#    define DEFAULT_HOME  ""
+#  else
+#    define DEFAULT_HOME  "C:"
+#  endif
 
 #else /* The non-microsoft world world */
 

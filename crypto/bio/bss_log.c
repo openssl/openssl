@@ -68,7 +68,8 @@
 
 #include "cryptlib.h"
 
-#if defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WINCE)
+#elif defined(OPENSSL_SYS_WIN32)
 #  include <process.h>
 #elif defined(OPENSSL_SYS_VMS)
 #  include <opcdef.h>

@@ -2,6 +2,8 @@
  INSTALLATION ON THE WIN32 PLATFORM
  ----------------------------------
 
+ [Instructions for building for Windows CE can be found in INSTALL.WCE]
+
  Heres a few comments about building OpenSSL in Windows environments.  Most
  of this is tested on Win32 but it may also work in Win 3.1 with some
  modification.
