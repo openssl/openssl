@@ -64,7 +64,7 @@ Prepare the directory /some/where/certs containing several CA certificates
 for use as B<CApath>:
 
  cd /some/where/certs
- c_rehash
+ c_rehash .
 
 =head1 RETURN VALUES
 
