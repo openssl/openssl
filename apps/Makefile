@@ -343,21 +343,22 @@ dgst.o: ../include/openssl/crypto.h ../include/openssl/des.h
 dgst.o: ../include/openssl/des_old.h ../include/openssl/dh.h
 dgst.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 dgst.o: ../include/openssl/engine.h ../include/openssl/err.h
-dgst.o: ../include/openssl/evp.h ../include/openssl/idea.h
-dgst.o: ../include/openssl/lhash.h ../include/openssl/md2.h
-dgst.o: ../include/openssl/md4.h ../include/openssl/md5.h
-dgst.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
-dgst.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-dgst.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-dgst.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-dgst.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-dgst.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-dgst.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-dgst.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-dgst.o: ../include/openssl/sha.h ../include/openssl/stack.h
-dgst.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
-dgst.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-dgst.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h dgst.c
+dgst.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+dgst.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+dgst.o: ../include/openssl/md2.h ../include/openssl/md4.h
+dgst.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+dgst.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+dgst.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dgst.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+dgst.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+dgst.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+dgst.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+dgst.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+dgst.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+dgst.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+dgst.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
+dgst.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+dgst.o: ../include/openssl/x509_vfy.h apps.h dgst.c
 dh.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 dh.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 dh.o: ../include/openssl/bn.h ../include/openssl/buffer.h

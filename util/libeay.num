@@ -472,9 +472,9 @@ RC4_set_key                             479	EXIST::FUNCTION:RC4
 RSAPrivateKey_asn1_meth                 480	EXIST::FUNCTION:RSA
 RSAPrivateKey_dup                       481	EXIST::FUNCTION:RSA
 RSAPublicKey_dup                        482	EXIST::FUNCTION:RSA
-RSA_PKCS1_SSLeay                        483	EXIST::FUNCTION:RSA
+RSA_PKCS1_SSLeay                        483	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 RSA_free                                484	EXIST::FUNCTION:RSA
-RSA_generate_key                        485	EXIST::FUNCTION:RSA
+RSA_generate_key                        485	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 RSA_new                                 486	EXIST::FUNCTION:RSA
 RSA_new_method                          487	EXIST::FUNCTION:RSA
 RSA_print                               488	EXIST::FUNCTION:BIO,RSA

@@ -122,6 +122,35 @@ fips_sha1test.o: ../../include/openssl/opensslv.h
 fips_sha1test.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 fips_sha1test.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_sha1test.o: fips_sha1test.c
+fips_standalone_sha1.o: ../../include/openssl/aes.h
+fips_standalone_sha1.o: ../../include/openssl/asn1.h
+fips_standalone_sha1.o: ../../include/openssl/bio.h
+fips_standalone_sha1.o: ../../include/openssl/blowfish.h
+fips_standalone_sha1.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+fips_standalone_sha1.o: ../../include/openssl/crypto.h
+fips_standalone_sha1.o: ../../include/openssl/des.h
+fips_standalone_sha1.o: ../../include/openssl/des_old.h
+fips_standalone_sha1.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 fips_standalone_sha1.o: ../../include/openssl/e_os2.h
+fips_standalone_sha1.o: ../../include/openssl/evp.h
+fips_standalone_sha1.o: ../../include/openssl/hmac.h
+fips_standalone_sha1.o: ../../include/openssl/idea.h
+fips_standalone_sha1.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+fips_standalone_sha1.o: ../../include/openssl/md5.h
+fips_standalone_sha1.o: ../../include/openssl/mdc2.h
+fips_standalone_sha1.o: ../../include/openssl/obj_mac.h
+fips_standalone_sha1.o: ../../include/openssl/objects.h
 fips_standalone_sha1.o: ../../include/openssl/opensslconf.h
-fips_standalone_sha1.o: ../../include/openssl/sha.h fips_standalone_sha1.c
+fips_standalone_sha1.o: ../../include/openssl/opensslv.h
+fips_standalone_sha1.o: ../../include/openssl/ossl_typ.h
+fips_standalone_sha1.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+fips_standalone_sha1.o: ../../include/openssl/rc5.h
+fips_standalone_sha1.o: ../../include/openssl/ripemd.h
+fips_standalone_sha1.o: ../../include/openssl/rsa.h
+fips_standalone_sha1.o: ../../include/openssl/safestack.h
+fips_standalone_sha1.o: ../../include/openssl/sha.h
+fips_standalone_sha1.o: ../../include/openssl/stack.h
+fips_standalone_sha1.o: ../../include/openssl/symhacks.h
+fips_standalone_sha1.o: ../../include/openssl/ui.h
+fips_standalone_sha1.o: ../../include/openssl/ui_compat.h
+fips_standalone_sha1.o: fips_standalone_sha1.c

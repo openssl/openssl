@@ -180,16 +180,17 @@ fips.o: ../include/openssl/des_old.h ../include/openssl/dh.h
 fips.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 fips.o: ../include/openssl/err.h ../include/openssl/evp.h
 fips.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
-fips.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-fips.o: ../include/openssl/md2.h ../include/openssl/md4.h
-fips.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
-fips.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-fips.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-fips.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips.o: ../include/openssl/sha.h ../include/openssl/stack.h
-fips.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips.o: ../include/openssl/ui_compat.h fips.c fips_locl.h
+fips.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+fips.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h fips.c
+fips.o: fips_locl.h
 fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c
