@@ -4,6 +4,23 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Various fixes to use ASN1_TIME instead of ASN1_UTCTIME.
+     Also change the functions X509_cmp_current_time() and
+     X509_gmtime_adj() work with an ASN1_TIME structure,
+     this will enable certificates using GeneralizedTime in validity
+     dates to be checked.
+     [Steve Henson]
+
+  *) Make the NEG_PUBKEY_BUG code (which tolerates invalid
+     negative public key encodings) on by default,
+     NO_NEG_PUBKEY_BUG can be set to disable it.
+     [Steve Henson]
+
+  *) New function c2i_ASN1_OBJECT() which acts on ASN1_OBJECT
+     content octets. An i2c_ASN1_OBJECT is unnecessary because
+     the encoding can be trivially obtained from the structure.
+     [Steve Henson]
+
   *) crypto/err.c locking bugfix: Use write locks (CRYPTO_w_[un]lock),
      not read locks (CRYPTO_r_[un]lock).
      [Bodo Moeller]

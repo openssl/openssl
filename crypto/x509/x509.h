@@ -138,8 +138,8 @@ DECLARE_ASN1_SET_OF(X509_ALGOR)
 
 typedef struct X509_val_st
 	{
-	ASN1_UTCTIME *notBefore;
-	ASN1_UTCTIME *notAfter;
+	ASN1_TIME *notBefore;
+	ASN1_TIME *notAfter;
 	} X509_VAL;
 
 typedef struct X509_pubkey_st
@@ -323,7 +323,7 @@ DECLARE_STACK_OF(X509_TRUST)
 typedef struct X509_revoked_st
 	{
 	ASN1_INTEGER *serialNumber;
-	ASN1_UTCTIME *revocationDate;
+	ASN1_TIME *revocationDate;
 	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
 	int sequence; /* load sequence */
 	} X509_REVOKED;
@@ -336,8 +336,8 @@ typedef struct X509_crl_info_st
 	ASN1_INTEGER *version;
 	X509_ALGOR *sig_alg;
 	X509_NAME *issuer;
-	ASN1_UTCTIME *lastUpdate;
-	ASN1_UTCTIME *nextUpdate;
+	ASN1_TIME *lastUpdate;
+	ASN1_TIME *nextUpdate;
 	STACK_OF(X509_REVOKED) *revoked;
 	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
 	} X509_CRL_INFO;
@@ -737,8 +737,8 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 
 #endif /* !SSLEAY_MACROS */
 
-int		X509_cmp_current_time(ASN1_UTCTIME *s);
-ASN1_UTCTIME *	X509_gmtime_adj(ASN1_UTCTIME *s, long adj);
+int		X509_cmp_current_time(ASN1_TIME *s);
+ASN1_TIME *	X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *	X509_get_default_cert_area(void );
 const char *	X509_get_default_cert_dir(void );
@@ -920,8 +920,8 @@ int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_issuer_name(X509 *a);
 int 		X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_subject_name(X509 *a);
-int 		X509_set_notBefore(X509 *x, ASN1_UTCTIME *tm);
-int 		X509_set_notAfter(X509 *x, ASN1_UTCTIME *tm);
+int 		X509_set_notBefore(X509 *x, ASN1_TIME *tm);
+int 		X509_set_notAfter(X509 *x, ASN1_TIME *tm);
 int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
 int		X509_certificate_type(X509 *x,EVP_PKEY *pubkey /* optional */);

@@ -237,6 +237,7 @@ DECLARE_STACK_OF(ASN1_STRING_TABLE)
 #define ASN1_BMPSTRING		ASN1_STRING
 #define ASN1_VISIBLESTRING	ASN1_STRING
 #define ASN1_UTF8STRING		ASN1_STRING
+#define ASN1_BOOLEAN		int
 #else
 typedef struct asn1_string_st ASN1_INTEGER;
 typedef struct asn1_string_st ASN1_ENUMERATED;
@@ -253,6 +254,7 @@ typedef struct asn1_string_st ASN1_TIME;
 typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
 typedef struct asn1_string_st ASN1_VISIBLESTRING;
 typedef struct asn1_string_st ASN1_UTF8STRING;
+typedef int ASN1_BOOLEAN;
 #endif
 
 typedef int ASN1_NULL;
@@ -265,6 +267,7 @@ typedef struct asn1_type_st
 	int type;
 	union	{
 		char *ptr;
+		ASN1_BOOLEAN		boolean;
 		ASN1_STRING *		asn1_string;
 		ASN1_OBJECT *		object;
 		ASN1_INTEGER *		integer;
@@ -506,6 +509,8 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
 ASN1_OBJECT *	ASN1_OBJECT_new(void );
 void		ASN1_OBJECT_free(ASN1_OBJECT *a);
 int		i2d_ASN1_OBJECT(ASN1_OBJECT *a,unsigned char **pp);
+ASN1_OBJECT *	c2i_ASN1_OBJECT(ASN1_OBJECT **a,unsigned char **pp,
+			long length);
 ASN1_OBJECT *	d2i_ASN1_OBJECT(ASN1_OBJECT **a,unsigned char **pp,
 			long length);
 

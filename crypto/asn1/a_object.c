@@ -190,24 +190,13 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
 	     long length)
-	{
-	ASN1_OBJECT *ret=NULL;
+{
 	unsigned char *p;
 	long len;
 	int tag,xclass;
 	int inf,i;
-
-	/* only the ASN1_OBJECTs from the 'table' will have values
-	 * for ->sn or ->ln */
-	if ((a == NULL) || ((*a) == NULL) ||
-		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-		{
-		if ((ret=ASN1_OBJECT_new()) == NULL) return(NULL);
-		}
-	else	ret=(*a);
-
+	ASN1_OBJECT *ret = NULL;
 	p= *pp;
-
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
 	if (inf & 0x80)
 		{
@@ -220,6 +209,32 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
 		i=ASN1_R_EXPECTING_AN_OBJECT;
 		goto err;
 		}
+	ret = c2i_ASN1_OBJECT(a, &p, len);
+	if(ret) *pp = p;
+	return ret;
+err:
+	ASN1err(ASN1_F_D2I_ASN1_OBJECT,i);
+	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+		ASN1_OBJECT_free(ret);
+	return(NULL);
+}
+ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+	     long len)
+	{
+	ASN1_OBJECT *ret=NULL;
+	unsigned char *p;
+	int i;
+
+	/* only the ASN1_OBJECTs from the 'table' will have values
+	 * for ->sn or ->ln */
+	if ((a == NULL) || ((*a) == NULL) ||
+		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC))
+		{
+		if ((ret=ASN1_OBJECT_new()) == NULL) return(NULL);
+		}
+	else	ret=(*a);
+
+	p= *pp;
 	if ((ret->data == NULL) || (ret->length < len))
 		{
 		if (ret->data != NULL) OPENSSL_free(ret->data);
