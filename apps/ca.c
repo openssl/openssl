@@ -922,7 +922,6 @@ bad:
 	/* Read extentions config file                                   */
 	if (extfile)
 		{
-		long errorline;
 		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
 			{
 			if (errorline <= 0)
