@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
