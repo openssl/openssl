@@ -409,18 +409,17 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 #endif
 	if (type < 0)
 		{
-		int i = -type - 1;
-		struct CRYPTO_dynlock_value *pointer
-			= CRYPTO_get_dynlock_value(i);
-
-		assert(pointer != NULL);
-
-		if (dynlock_lock_callback)
+		if (dynlock_lock_callback != NULL)
 			{
-			dynlock_lock_callback(mode, pointer, file, line);
-			}
+			struct CRYPTO_dynlock_value *pointer
+				= CRYPTO_get_dynlock_value(type);
 
-		CRYPTO_destroy_dynlockid(i);
+			assert(pointer != NULL);
+
+			dynlock_lock_callback(mode, pointer, file, line);
+
+			CRYPTO_destroy_dynlockid(type);
+			}
 		}
 	else
 		if (locking_callback != NULL)
