@@ -57,6 +57,8 @@
  */
 
 #define REUSE_CIPHER_BUG
+#define NETSCAPE_HANG_BUG
+
 
 #include <stdio.h>
 #include <openssl/buffer.h>
@@ -313,7 +315,12 @@ int ssl3_accept(SSL *s)
 				s->s3->tmp.cert_request=1;
 				ret=ssl3_send_certificate_request(s);
 				if (ret <= 0) goto end;
+#ifndef NETSCAPE_HANG_BUG
 				s->state=SSL3_ST_SW_SRVR_DONE_A;
+#else
+				s->state=SSL3_ST_SW_FLUSH;
+				s->s3->tmp.next_state=SSL3_ST_SR_CERT_A;
+#endif
 				s->init_num=0;
 				}
 			break;
@@ -1194,6 +1201,17 @@ static int ssl3_send_certificate_request(SSL *s)
 
 		s->init_num=n+4;
 		s->init_off=0;
+#ifdef NETSCAPE_HANG_BUG
+		p=(unsigned char *)s->init_buf->data + s->init_num;
+
+		/* do the header */
+		*(p++)=SSL3_MT_SERVER_DONE;
+		*(p++)=0;
+		*(p++)=0;
+		*(p++)=0;
+		s->init_num += 4;
+#endif
+
 		}
 
 	/* SSL3_ST_SW_CERT_REQ_B */

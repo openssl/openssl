@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Work around for Netscape hang bug. This sends certificate request
+     and server done in one record. Since this is perfectly legal in the
+     SSL/TLS protocol it isn't a "bug" option and is on by default. See
+     the bugs/SSLv3 entry for more info.
+     [Steve Henson]
+
   *) HP-UX tune-up: new unified configs, HP C compiler bug workaround.
      [Andy Polyakov]
 
