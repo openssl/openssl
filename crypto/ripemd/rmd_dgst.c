@@ -58,8 +58,9 @@
 
 #include <stdio.h>
 #include "rmd_locl.h"
+#include "opensslv.h"
 
-char *RMD160_version="RIPE-MD160 part of OpenSSL 0.9.2 31-Dec-1998";
+char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 
 #ifndef NOPROTO
 #  ifdef RMD160_ASM

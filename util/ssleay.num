@@ -168,3 +168,4 @@ SSL_add_file_cert_subjects_to_stack     185
 SSL_set_tmp_rsa_callback                186
 SSL_set_tmp_dh_callback                 187
 SSL_add_dir_cert_subjects_to_stack      188
+SSL_set_session_id_context              189

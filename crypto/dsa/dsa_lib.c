@@ -64,7 +64,7 @@
 #include "dsa.h"
 #include "asn1.h"
 
-char *DSA_version="DSA part of OpenSSL 0.9.2 31-Dec-1998";
+char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
 DSA *DSA_new()
 	{

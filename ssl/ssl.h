@@ -82,6 +82,7 @@ extern "C" {
 #define SSL_TXT_DES_192_EDE3_CBC_WITH_SHA SSL2_TXT_DES_192_EDE3_CBC_WITH_SHA	
 
 #define SSL_MAX_SSL_SESSION_ID_LENGTH		32
+#define SSL_MAX_SID_CTX_LENGTH			32
 
 #define SSL_MIN_RSA_MODULUS_LENGTH_IN_BYTES	(512/8)
 #define SSL_MAX_KEY_ARG_LENGTH			8
@@ -208,7 +209,8 @@ typedef struct ssl_method_st
  *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
- *	Compression [4] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
+ *	Session_ID_context [ 4 ] EXPLICIT OCTET_STRING,   -- the Session ID context
+ *	Compression [5] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -226,6 +228,11 @@ typedef struct ssl_session_st
 	/* session_id - valid? */
 	unsigned int session_id_length;
 	unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+	/* this is used to determine whether the session is being reused in
+	 * the appropriate context. It is up to the application to set this,
+	 * via SSL_new */
+	unsigned int sid_ctx_length;
+	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	int not_resumable;
 
@@ -554,6 +561,11 @@ struct ssl_st
 	/* client cert? */
 	/* This is used to hold the server certificate used */
 	struct cert_st /* CERT */ *cert;
+
+	/* the session_id_context is used to ensure sessions are only reused
+	 * in the appropriate context */
+	unsigned int sid_ctx_length;
+	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	/* This can also be in the session once a session is established */
 	SSL_SESSION *session;
@@ -917,6 +929,8 @@ int SSL_CTX_check_private_key(SSL_CTX *ctx);
 int SSL_check_private_key(SSL *ctx);
 
 SSL *	SSL_new(SSL_CTX *ctx);
+int	SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
+				   unsigned int sid_ctx_len);
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
@@ -1169,6 +1183,7 @@ int SSL_CTX_check_private_key();
 int SSL_check_private_key();
 
 SSL *	SSL_new();
+int	SSL_set_session_id_context();
 void    SSL_clear();
 void	SSL_free();
 int 	SSL_accept();
@@ -1374,6 +1389,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE		 179
 #define SSL_F_SSL_DO_HANDSHAKE				 180
 #define SSL_F_SSL_GET_NEW_SESSION			 181
+#define SSL_F_SSL_GET_PREV_SESSION			 217
 #define SSL_F_SSL_GET_SERVER_SEND_CERT			 182
 #define SSL_F_SSL_GET_SIGN_PKEY				 183
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
@@ -1388,6 +1404,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_SSL_SET_PKEY				 193
 #define SSL_F_SSL_SET_RFD				 194
 #define SSL_F_SSL_SET_SESSION				 195
+#define SSL_F_SSL_SET_SESSION_ID_CONTEXT		 218
 #define SSL_F_SSL_SET_WFD				 196
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_USE_CERTIFICATE			 198
@@ -1408,6 +1425,7 @@ void SSL_set_tmp_dh_callback();
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
+#define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
 #define SSL_R_BAD_ALERT_RECORD				 101
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
@@ -1420,6 +1438,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_R_BAD_DH_P_LENGTH				 110
 #define SSL_R_BAD_DIGEST_LENGTH				 111
 #define SSL_R_BAD_DSA_SIGNATURE				 112
+#define SSL_R_BAD_LENGTH				 271
 #define SSL_R_BAD_MAC_DECODE				 113
 #define SSL_R_BAD_MESSAGE_TYPE				 114
 #define SSL_R_BAD_PACKET_LENGTH				 115
@@ -1550,6 +1569,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION	 228
 #define SSL_R_SSL_HANDSHAKE_FAILURE			 229
 #define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS		 230
+#define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG		 273
 #define SSL_R_SSL_SESSION_ID_IS_DIFFERENT		 231
 #define SSL_R_TLSV1_ALERT_ACCESS_DENIED			 1049
 #define SSL_R_TLSV1_ALERT_DECODE_ERROR			 1050

@@ -101,68 +101,71 @@ ctx_size.o: ../../include/bn.h ../../include/cast.h ../../include/crypto.h
 ctx_size.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
 ctx_size.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 ctx_size.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-ctx_size.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-ctx_size.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
-ctx_size.o: ../../include/stack.h
+ctx_size.o: ../../include/opensslv.h ../../include/rc2.h ../../include/rc4.h
+ctx_size.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+ctx_size.o: ../../include/sha.h ../../include/stack.h
 pem_all.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 pem_all.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
 pem_all.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
 pem_all.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 pem_all.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pem_all.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-pem_all.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-pem_all.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-pem_all.o: ../../include/x509_vfy.h ../cryptlib.h pem.h pem2.h
+pem_all.o: ../../include/opensslv.h ../../include/pkcs7.h ../../include/rc2.h
+pem_all.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+pem_all.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+pem_all.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h pem.h
+pem_all.o: pem2.h
 pem_err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_err.o: ../../include/bn.h ../../include/cast.h ../../include/crypto.h
 pem_err.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
 pem_err.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
 pem_err.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
-pem_err.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
-pem_err.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pem_err.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-pem_err.o: ../../include/x509.h ../../include/x509_vfy.h pem.h pem2.h
+pem_err.o: ../../include/objects.h ../../include/opensslv.h
+pem_err.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+pem_err.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+pem_err.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+pem_err.o: ../../include/x509_vfy.h pem.h pem2.h
 pem_info.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_info.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 pem_info.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
 pem_info.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
 pem_info.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 pem_info.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pem_info.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-pem_info.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-pem_info.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-pem_info.o: ../../include/x509_vfy.h ../cryptlib.h pem.h pem2.h
+pem_info.o: ../../include/opensslv.h ../../include/pkcs7.h ../../include/rc2.h
+pem_info.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+pem_info.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+pem_info.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h pem.h
+pem_info.o: pem2.h
 pem_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_lib.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 pem_lib.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
 pem_lib.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
 pem_lib.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 pem_lib.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pem_lib.o: ../../include/pkcs7.h ../../include/rand.h ../../include/rc2.h
-pem_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pem_lib.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-pem_lib.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h pem.h
-pem_lib.o: pem2.h
+pem_lib.o: ../../include/opensslv.h ../../include/pkcs7.h ../../include/rand.h
+pem_lib.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+pem_lib.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+pem_lib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+pem_lib.o: ../cryptlib.h pem.h pem2.h
 pem_seal.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_seal.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 pem_seal.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
 pem_seal.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
 pem_seal.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 pem_seal.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pem_seal.o: ../../include/pkcs7.h ../../include/rand.h ../../include/rc2.h
-pem_seal.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pem_seal.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-pem_seal.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h pem.h
-pem_seal.o: pem2.h
+pem_seal.o: ../../include/opensslv.h ../../include/pkcs7.h ../../include/rand.h
+pem_seal.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+pem_seal.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+pem_seal.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+pem_seal.o: ../cryptlib.h pem.h pem2.h
 pem_sign.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pem_sign.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 pem_sign.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
 pem_sign.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
 pem_sign.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 pem_sign.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pem_sign.o: ../../include/pkcs7.h ../../include/rand.h ../../include/rc2.h
-pem_sign.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pem_sign.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-pem_sign.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h pem.h
-pem_sign.o: pem2.h
+pem_sign.o: ../../include/opensslv.h ../../include/pkcs7.h ../../include/rand.h
+pem_sign.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+pem_sign.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+pem_sign.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+pem_sign.o: ../cryptlib.h pem.h pem2.h

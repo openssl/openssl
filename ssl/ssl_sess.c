@@ -190,6 +190,8 @@ int session;
 		ss->session_id_length=0;
 		}
 
+	memcpy(ss->sid_ctx,s->sid_ctx,s->sid_ctx_length);
+	ss->sid_ctx_length=s->sid_ctx_length;
 	s->session=ss;
 	ss->ssl_version=s->version;
 
@@ -202,13 +204,14 @@ unsigned char *session_id;
 int len;
 	{
 	SSL_SESSION *ret=NULL,data;
+	int copy=1;
 
 	/* conn_init();*/
 	data.ssl_version=s->version;
 	data.session_id_length=len;
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		return(0);
-	memcpy(data.session_id,session_id,len);;
+	memcpy(data.session_id,session_id,len);
 
 	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		{
@@ -219,25 +222,32 @@ int len;
 
 	if (ret == NULL)
 		{
-		int copy=1;
-
 		s->ctx->stats.sess_miss++;
 		ret=NULL;
-		if ((s->ctx->get_session_cb != NULL) &&
-			((ret=s->ctx->get_session_cb(s,session_id,len,&copy))
-				!= NULL))
+		if (s->ctx->get_session_cb != NULL
+		    && (ret=s->ctx->get_session_cb(s,session_id,len,&copy))
+		       != NULL)
 			{
 			s->ctx->stats.sess_cb_hit++;
 
 			/* The following should not return 1, otherwise,
 			 * things are very strange */
 			SSL_CTX_add_session(s->ctx,ret);
-			/* auto free it */
-			if (!copy)
-				SSL_SESSION_free(ret);
 			}
 		if (ret == NULL) return(0);
 		}
+
+	if((s->verify_mode&SSL_VERIFY_PEER)
+	   && (!s->sid_ctx_length || ret->sid_ctx_length != s->sid_ctx_length
+	       || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length)))
+	    {
+	    SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+	    return 0;
+	    }
+
+	/* auto free it */
+	if (!copy)
+	    SSL_SESSION_free(ret);
 
 	if (ret->cipher == NULL)
 		{

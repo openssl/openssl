@@ -76,8 +76,8 @@
 
 #ifndef NOPROTO
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
-static int sv_body(char *hostname, int s);
-static int www_body(char *hostname, int s);
+static int sv_body(char *hostname, int s, char *context);
+static int www_body(char *hostname, int s, char *context);
 static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -190,6 +190,7 @@ static void sv_usage()
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
@@ -231,6 +232,7 @@ char *argv[];
 	{
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
+	char *context = NULL;
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
@@ -291,6 +293,11 @@ char *argv[];
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
 			BIO_printf(bio_err,"verify depth is %d, must return a certificate\n",verify_depth);
+			}
+		else if	(strcmp(*argv,"-context") == 0)
+			{
+			if (--argc < 1) goto bad;
+			context= *(++argv);
 			}
 		else if	(strcmp(*argv,"-cert") == 0)
 			{
@@ -511,9 +518,9 @@ bad:
 
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	if (www)
-		do_server(port,&accept_socket,www_body);
+		do_server(port,&accept_socket,www_body, context);
 	else
-		do_server(port,&accept_socket,sv_body);
+		do_server(port,&accept_socket,sv_body, context);
 	print_stats(bio_s_out,ctx);
 	ret=0;
 end:
@@ -553,9 +560,10 @@ SSL_CTX *ssl_ctx;
 		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
 
-static int sv_body(hostname, s)
+static int sv_body(hostname, s, context)
 char *hostname;
 int s;
+char *context;
 	{
 	char *buf=NULL;
 	fd_set readfds;
@@ -582,8 +590,11 @@ int s;
 		}
 #endif
 
-	if (con == NULL)
+	if (con == NULL) {
 		con=(SSL *)SSL_new(ctx);
+		if(context)
+		      SSL_set_session_id_context(con, context, strlen(context));
+	}
 	SSL_clear(con);
 
 	sbio=BIO_new_socket(s,BIO_NOCLOSE);
@@ -870,9 +881,10 @@ char *file;
 	}
 #endif
 
-static int www_body(hostname, s)
+static int www_body(hostname, s, context)
 char *hostname;
 int s;
+char *context;
 	{
 	char *buf=NULL;
 	int ret=1;
@@ -905,6 +917,7 @@ int s;
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=(SSL *)SSL_new(ctx)) == NULL) goto err;
+	if(context) SSL_set_session_id_context(con, context, strlen(context));
 
 	sbio=BIO_new_socket(s,BIO_NOCLOSE);
 	if (s_nbio_test)

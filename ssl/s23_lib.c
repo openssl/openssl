@@ -78,7 +78,7 @@ static int ssl23_put_cipher_by_char();
 static SSL_CIPHER *ssl23_get_cipher_by_char();
 #endif
 
-char *SSL23_version_str="SSLv2/3 compatibility part of OpenSSL 0.9.2 31-Dec-1998";
+char *SSL23_version_str="SSLv2/3 compatibility" OPENSSL_VERSION_PTEXT;
 
 static SSL_METHOD SSLv23_data= {
 	TLS1_VERSION,

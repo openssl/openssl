@@ -87,6 +87,6 @@ $(ERRC).c: $(ERR).err
 
 conf.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 conf.o: ../../include/err.h ../../include/lhash.h ../../include/stack.h
-conf.o: ../cryptlib.h ../crypto.h conf.h conf_lcl.h
+conf.o: ../cryptlib.h ../crypto.h ../opensslv.h conf.h conf_lcl.h
 conf_err.o: ../../include/err.h ../../include/lhash.h ../../include/stack.h
 conf_err.o: conf.h

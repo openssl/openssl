@@ -79,7 +79,8 @@ static int null_callback();
 static int internal_verify();
 #endif
 
-char *X509_version="X.509 part of OpenSSL 0.9.2 31-Dec-1998";
+char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
+
 static STACK *x509_store_ctx_method=NULL;
 static int x509_store_ctx_num=0;
 #if 0

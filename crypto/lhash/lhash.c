@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-char *lh_version="lhash part of OpenSSL 0.9.2 31-Dec-1998";
-
 /* Code for dynamic hash table routines
  * Author - Eric Young v 2.0
  *
@@ -101,6 +99,8 @@ char *lh_version="lhash part of OpenSSL 0.9.2 31-Dec-1998";
 #include <stdlib.h>
 #include "crypto.h"
 #include "lhash.h"
+
+char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 
 #undef MIN_NODES 
 #define MIN_NODES	16

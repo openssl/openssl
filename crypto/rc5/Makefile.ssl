@@ -104,7 +104,7 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rc5_ecb.o: rc5.h rc5_locl.h
+rc5_ecb.o: ../opensslv.h rc5.h rc5_locl.h
 rc5_enc.o: rc5.h rc5_locl.h
 rc5_skey.o: rc5.h rc5_locl.h
 rc5cfb64.o: rc5.h rc5_locl.h

@@ -58,8 +58,9 @@
 
 #include "cast.h"
 #include "cast_lcl.h"
+#include "opensslv.h"
 
-char *CAST_version="CAST part of OpenSSL 0.9.2 31-Dec-1998";
+char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
 
 void CAST_ecb_encrypt(in, out, ks, encrypt)
 unsigned char *in;

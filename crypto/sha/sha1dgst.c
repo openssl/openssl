@@ -62,8 +62,9 @@
 #define SHA_1
 #include "sha.h"
 #include "sha_locl.h"
+#include "opensslv.h"
 
-char *SHA1_version="SHA1 part of OpenSSL 0.9.2 31-Dec-1998";
+char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from SHA-1 document - The Secure Hash Algorithm
  */

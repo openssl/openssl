@@ -78,7 +78,7 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md2_dgst.o: md2.h
+md2_dgst.o: ../opensslv.h md2.h
 md2_one.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 md2_one.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-md2_one.o: md2.h
+md2_one.o: ../opensslv.h md2.h

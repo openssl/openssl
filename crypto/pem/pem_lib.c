@@ -68,7 +68,7 @@
 #include "des.h"
 #endif
 
-char *PEM_version="PEM part of OpenSSL 0.9.2 31-Dec-1998";
+char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
 

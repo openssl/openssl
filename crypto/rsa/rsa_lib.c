@@ -63,7 +63,7 @@
 #include "bn.h"
 #include "rsa.h"
 
-char *RSA_version="RSA part of OpenSSL 0.9.2 31-Dec-1998";
+char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
 static RSA_METHOD *default_RSA_meth=NULL;
 static int rsa_meth_num=0;

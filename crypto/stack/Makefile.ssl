@@ -79,4 +79,4 @@ errors:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 stack.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
-stack.o: ../../include/err.h ../cryptlib.h ../crypto.h stack.h
+stack.o: ../../include/err.h ../cryptlib.h ../crypto.h ../opensslv.h stack.h

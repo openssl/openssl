@@ -61,7 +61,7 @@
 #include "bn.h"
 #include "dh.h"
 
-char *DH_version="Diffie-Hellman part of OpenSSL 0.9.2 31-Dec-1998";
+char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 DH *DH_new()
 	{

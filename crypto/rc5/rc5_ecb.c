@@ -58,8 +58,9 @@
 
 #include "rc5.h"
 #include "rc5_locl.h"
+#include "opensslv.h"
 
-char *RC5_version="RC5 part of OpenSSL 0.9.2 31-Dec-1998";
+char *RC5_version="RC5" OPENSSL_VERSION_PTEXT;
 
 void RC5_32_ecb_encrypt(in, out, ks, encrypt)
 unsigned char *in;

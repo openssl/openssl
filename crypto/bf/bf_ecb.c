@@ -58,13 +58,14 @@
 
 #include "blowfish.h"
 #include "bf_locl.h"
+#include "opensslv.h"
 
 /* Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
  * (From LECTURE NOTES IN COIMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-char *BF_version="BlowFish part of OpenSSL 0.9.2 31-Dec-1998";
+char *BF_version="BlowFish" OPENSSL_VERSION_PTEXT;
 
 char *BF_options()
 	{

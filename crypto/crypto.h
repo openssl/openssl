@@ -64,8 +64,7 @@ extern "C" {
 #endif
 
 #include "stack.h"
-
-#define OPENSSL_VERSION_NUMBER	0x0920	/* Version 0.9.1c is 0913 */
+#include "opensslv.h"
 
 /* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used

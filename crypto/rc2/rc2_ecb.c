@@ -58,8 +58,9 @@
 
 #include "rc2.h"
 #include "rc2_locl.h"
+#include "opensslv.h"
 
-char *RC2_version="RC2 part of OpenSSL 0.9.2 31-Dec-1998";
+char *RC2_version="RC2" OPENSSL_VERSION_PTEXT;
 
 /* RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt

@@ -58,8 +58,9 @@
 
 #include "idea.h"
 #include "idea_lcl.h"
+#include "opensslv.h"
 
-char *IDEA_version="IDEA part of OpenSSL 0.9.2 31-Dec-1998";
+char *IDEA_version="IDEA" OPENSSL_VERSION_PTEXT;
 
 char *idea_options()
 	{

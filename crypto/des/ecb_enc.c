@@ -58,9 +58,10 @@
 
 #include "des_locl.h"
 #include "spr.h"
+#include "opensslv.h"
 
 char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-char *DES_version="DES part of OpenSSL 0.9.2 31-Dec-1998";
+char *DES_version="DES" OPENSSL_VERSION_PTEXT;
 
 char *des_options()
 	{

@@ -605,9 +605,18 @@ SSL *s;
 			goto f_err;
 			}
 		}
-	if ((j != 0) && (j == s->session->session_id_length) &&
-		(memcmp(p,s->session->session_id,j) == 0))
-		s->hit=1;
+	if (j != 0 && j == s->session->session_id_length
+	    && memcmp(p,s->session->session_id,j) == 0)
+	    {
+	    if(s->sid_ctx_length != s->session->sid_ctx_length
+	       || memcmp(s->session->sid_ctx,s->sid_ctx,s->sid_ctx_length))
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+		goto f_err;
+		}
+	    s->hit=1;
+	    }
 	else	/* a miss or crap from the other end */
 		{
 		/* If we were trying for session-id reuse, make a new

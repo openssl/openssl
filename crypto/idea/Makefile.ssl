@@ -80,6 +80,6 @@ errors:
 
 i_cbc.o: idea.h idea_lcl.h
 i_cfb64.o: idea.h idea_lcl.h
-i_ecb.o: idea.h idea_lcl.h
+i_ecb.o: ../opensslv.h idea.h idea_lcl.h
 i_ofb64.o: idea.h idea_lcl.h
 i_skey.o: idea.h idea_lcl.h

@@ -1683,6 +1683,8 @@ SSL *s;
 	if (s->session->peer != NULL)
 		X509_free(s->session->peer);
 	s->session->peer=(X509 *)sk_shift(sk);
+	s->session->cert->cert_chain=sk;
+	sk=NULL;
 
 	ret=1;
 	if (0)

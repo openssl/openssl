@@ -62,7 +62,7 @@
 
 #ifndef NOPROTO
 int do_accept(int acc_sock, int *sock, char **host);
-int do_server(int port, int *ret, int (*cb) ());
+int do_server(int port, int *ret, int (*cb) (), char *context);
 #ifdef HEADER_X509_H
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #else

@@ -107,4 +107,4 @@ errors:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rc4_enc.o: rc4.h rc4_locl.h
-rc4_skey.o: rc4.h rc4_locl.h
+rc4_skey.o: ../opensslv.h rc4.h rc4_locl.h

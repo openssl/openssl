@@ -67,7 +67,7 @@ static long ssl2_default_timeout(void );
 static long ssl2_default_timeout();
 #endif
 
-char *ssl2_version_str="SSLv2 part of OpenSSL 0.9.2 31-Dec-1998";
+char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 

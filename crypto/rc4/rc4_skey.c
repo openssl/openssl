@@ -58,8 +58,9 @@
 
 #include "rc4.h"
 #include "rc4_locl.h"
+#include "opensslv.h"
 
-char *RC4_version="RC4 part of OpenSSL 0.9.2 31-Dec-1998";
+char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
 
 char *RC4_options()
 	{

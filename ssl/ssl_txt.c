@@ -84,7 +84,7 @@ int SSL_SESSION_print(bp,x)
 BIO *bp;
 SSL_SESSION *x;
 	{
-	int i;
+	unsigned int i;
 	char str[128],*s;
 
 	if (x == NULL) goto err;
@@ -111,13 +111,19 @@ SSL_SESSION *x;
 		sprintf(str,"    Cipher    : %s\n",(x->cipher == NULL)?"unknown":x->cipher->name);
 	if (BIO_puts(bp,str) <= 0) goto err;
 	if (BIO_puts(bp,"    Session-ID: ") <= 0) goto err;
-	for (i=0; i<(int)x->session_id_length; i++)
+	for (i=0; i<x->session_id_length; i++)
 		{
 		sprintf(str,"%02X",x->session_id[i]);
 		if (BIO_puts(bp,str) <= 0) goto err;
 		}
+	if (BIO_puts(bp,"\nSession-ID-ctx: ") <= 0) goto err;
+	for (i=0; i<x->sid_ctx_length; i++)
+		{
+		sprintf(str,"%02X",x->sid_ctx[i]);
+		if (BIO_puts(bp,str) <= 0) goto err;
+		}
 	if (BIO_puts(bp,"\n    Master-Key: ") <= 0) goto err;
-	for (i=0; i<(int)x->master_key_length; i++)
+	for (i=0; i<(unsigned int)x->master_key_length; i++)
 		{
 		sprintf(str,"%02X",x->master_key[i]);
 		if (BIO_puts(bp,str) <= 0) goto err;
@@ -128,7 +134,7 @@ SSL_SESSION *x;
 		if (BIO_puts(bp,"None") <= 0) goto err;
 		}
 	else
-		for (i=0; i<(int)x->key_arg_length; i++)
+		for (i=0; i<x->key_arg_length; i++)
 			{
 			sprintf(str,"%02X",x->key_arg[i]);
 			if (BIO_puts(bp,str) <= 0) goto err;

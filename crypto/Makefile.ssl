@@ -39,7 +39,7 @@ LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o tmdiff.o $(ERRC).o
 
 SRC= $(LIBSRC)
 
-EXHEADER= crypto.h cryptall.h tmdiff.h
+EXHEADER= crypto.h cryptall.h tmdiff.h opensslv.h
 HEADER=	cryptlib.h date.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -158,15 +158,18 @@ errgen:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cpt_err.o: ../include/err.h ../include/stack.h crypto.h
+cpt_err.o: ../include/err.h ../include/stack.h crypto.h opensslv.h
 cryptlib.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
 cryptlib.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
+cryptlib.o: opensslv.h
 cversion.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
 cversion.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
+cversion.o: opensslv.h
 ex_data.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
 ex_data.o: ../include/err.h ../include/lhash.h ../include/stack.h cryptlib.h
-ex_data.o: crypto.h
+ex_data.o: crypto.h opensslv.h
 mem.o: ../include/bio.h ../include/buffer.h ../include/e_os.h ../include/err.h
-mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
+mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h opensslv.h
 tmdiff.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-tmdiff.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h tmdiff.h
+tmdiff.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h opensslv.h
+tmdiff.o: tmdiff.h

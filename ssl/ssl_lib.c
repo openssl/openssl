@@ -63,7 +63,7 @@
 #include "lhash.h"
 #include "ssl_locl.h"
 
-char *SSL_version_str="OpenSSL 0.9.2 31-Dec-1998";
+char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
 static STACK *ssl_meth=NULL;
 static STACK *ssl_ctx_meth=NULL;
@@ -215,6 +215,20 @@ err:
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
 	}
+
+int SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
+			       unsigned int sid_ctx_len)
+    {
+    if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
+	{
+	SSLerr(SSL_F_SSL_SET_SESSION_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+	return 0;
+	}
+    ssl->sid_ctx_length=sid_ctx_len;
+    memcpy(ssl->sid_ctx,sid_ctx,sid_ctx_len);
+
+    return 1;
+    }
 
 void SSL_free(SSL *s)
 	{
@@ -485,6 +499,7 @@ void SSL_copy_session_id(SSL *t,SSL *f)
 	else
 		t->cert=NULL;
 	if (tmp != NULL) ssl_cert_free(tmp);
+	SSL_set_session_id_context(t,f->sid_ctx,f->sid_ctx_length);
 	}
 
 /* Fix this so it checks all the valid key/cert options */
@@ -1417,7 +1432,8 @@ SSL *SSL_dup(SSL *s)
         SSL *ret;
 	int i;
 		 
-	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL) return(NULL);
+	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL)
+	    return(NULL);
 			  
 	/* This copies version, session-id, SSL_METHOD and 'cert' */
 	SSL_copy_session_id(ret,s);

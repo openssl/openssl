@@ -79,6 +79,7 @@ static char *sess_id_usage[]={
 " -text           - print ssl session id details\n",
 " -cert           - output certificate \n",
 " -noout          - no CRL output\n",
+" -context arg    - set the session ID context\n",
 NULL
 };
 
@@ -96,7 +97,7 @@ char **argv;
 	int ret=1,i,num,badops=0;
 	BIO *out=NULL;
 	int informat,outformat;
-	char *infile=NULL,*outfile=NULL;
+	char *infile=NULL,*outfile=NULL,*context=NULL;
 	int cert=0,noout=0,text=0;
 	char **pp;
 
@@ -140,6 +141,11 @@ char **argv;
 			cert= ++num;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
+		else if (strcmp(*argv,"-context") == 0)
+		    {
+		    if(--argc < 1) goto bad;
+		    context=*++argv;
+		    }
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -161,6 +167,17 @@ bad:
 	ERR_load_crypto_strings();
 	x=load_sess_id(infile,informat);
 	if (x == NULL) { goto end; }
+
+	if(context)
+	    {
+	    x->sid_ctx_length=strlen(context);
+	    if(x->sid_ctx_length > SSL_MAX_SID_CTX_LENGTH)
+		{
+		BIO_printf(bio_err,"Context too long\n");
+		goto end;
+		}
+	    memcpy(x->sid_ctx,context,x->sid_ctx_length);
+	    }
 
 #ifdef undef
 	/* just testing for memory leaks :-) */

@@ -280,10 +280,11 @@ int port;
 		return(1);
 	}
 
-int do_server(port, ret, cb)
+int do_server(port, ret, cb, context)
 int port;
 int *ret;
 int (*cb)();
+char *context;
 	{
 	int sock;
 	char *name;
@@ -304,7 +305,7 @@ int (*cb)();
 			SHUTDOWN(accept_socket);
 			return(0);
 			}
-		i=(*cb)(name,sock);
+		i=(*cb)(name,sock, context);
 		if (name != NULL) Free(name);
 		SHUTDOWN2(sock);
 		if (i < 0)

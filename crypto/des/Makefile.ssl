@@ -143,10 +143,14 @@ cfb64enc.o: des.h des_locl.h
 cfb_enc.o: des.h des_locl.h
 des_enc.o: des.h des_locl.h
 ecb3_enc.o: des.h des_locl.h
-ecb_enc.o: des.h des_locl.h spr.h
+ecb_enc.o: ../opensslv.h des.h des_locl.h spr.h
 ede_cbcm_enc.o: des.h des_locl.h
-enc_read.o: des.h des_locl.h
-enc_writ.o: des.h des_locl.h
+enc_read.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+enc_read.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+enc_read.o: ../opensslv.h des.h des_locl.h
+enc_writ.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+enc_writ.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+enc_writ.o: ../opensslv.h des.h des_locl.h
 fcrypt.o: des.h des.h des_locl.h des_locl.h
 fcrypt_b.o: des.h des_locl.h
 ofb64ede.o: des.h des_locl.h
@@ -158,7 +162,7 @@ rand_key.o: des.h des_locl.h
 read2pwd.o: des.h des_locl.h
 read_pwd.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 read_pwd.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-read_pwd.o: des.h des_locl.h
+read_pwd.o: ../opensslv.h des.h des_locl.h
 rpc_enc.o: des.h des_locl.h des_ver.h rpc_des.h
 set_key.o: des.h des_locl.h podd.h sk.h
 str2key.o: des.h des_locl.h

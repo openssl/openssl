@@ -60,8 +60,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "md2.h"
+#include "opensslv.h"
 
-char *MD2_version="MD2 part of OpenSSL 0.9.2 31-Dec-1998";
+char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1319 The MD2 Message-Digest Algorithm
  */
