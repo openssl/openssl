@@ -8,9 +8,41 @@
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.7:
 
       o New library section OCSP.
-      o Complete haul-over of the ASN.1 library section.
+      o Complete rewrite of ASN1 code.
+      o CRL checking in verify code and openssl utility.
+      o Extension copying in 'ca' utility.
+      o Flexible display options in 'ca' utility.
+      o Provisional support for international characters with UTF8.
       o Support for external crypto devices ('engine') is no longer
         a separate distribution.
+      o New elliptic curve library section.
+      o New AES (Rijndael) library section.
+      o Change DES API to clean up the namespace (some applications link also
+        against libdes providing similar functions having the same name).
+        Provide macros for backward compatibility (will be removed in the
+        future).
+      o Unifiy handling of cryptographic algorithms (software and
+        engine) to be available via EVP routines for asymmetric and
+        symmetric ciphers.
+      o NCONF: new configuration handling routines.
+      o Change API to use more 'const' modifiers to improve error checking
+        and help optimizers.
+      o Finally remove references to RSAref.
+      o Reworked parts of the BIGNUM code.
+      o Support for new engines: Broadcom ubsec, Accelerated Encryption
+        Processing, IBM 4758.
+      o PRNG: query at more locations for a random device, automatic query for
+        EGD style random sources at several locations.
+      o SSL/TLS: allow optional cipher choice according to server's preference.
+      o SSL/TLS: allow server to explicitly set new session ids.
+      o SSL/TLS: support Kerberos cipher suites (RFC2712).
+      o SSL/TLS: allow more precise control of renegotiations and sessions.
+      o SSL/TLS: add callback to retrieve SSL/TLS messages.
+
+  Changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
+
+      o Various SSL/TLS library bugfixes.
+      o Fix DH parameter generation for 'non-standard' generators.
 
   Changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
 
