@@ -164,7 +164,7 @@ SSL_METHOD *SSLv3_client_method(void)
 
 int ssl3_connect(SSL *s)
 	{
-	BUF_MEM *buf;
+	BUF_MEM *buf=NULL;
 	unsigned long Time=time(NULL),l;
 	long num1;
 	void (*cb)()=NULL;
@@ -225,6 +225,7 @@ int ssl3_connect(SSL *s)
 					goto end;
 					}
 				s->init_buf=buf;
+				buf=NULL;
 				}
 
 			if (!ssl3_setup_buffers(s)) { ret= -1; goto end; }
@@ -503,6 +504,8 @@ int ssl3_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL)
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);

@@ -86,6 +86,7 @@
 #endif
 #include <sys/stat.h>
 #endif
+#include <openssl/crypto.h>
 #include <openssl/des.h>
 #include <openssl/rand.h>
 
