@@ -551,13 +551,13 @@ int fips_set_owning_thread(void)
 
 	if (fips_is_started())
 		{
-		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
+		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
 		if (fips_thread == 0)
 			{
 			fips_thread = CRYPTO_thread_id();
 			ret = 1;
 			}
-		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
+		CRYPTO_w_unlock(CRYPTO_LOCK_FIPS2);
 		}
 	return ret;
 	}
@@ -568,13 +568,13 @@ int fips_clear_owning_thread(void)
 
 	if (fips_is_started())
 		{
-		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
+		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
 		if (fips_thread == CRYPTO_thread_id())
 			{
 			fips_thread = 0;
 			ret = 1;
 			}
-		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
+		CRYPTO_w_unlock(CRYPTO_LOCK_FIPS2);
 		}
 	return ret;
 	}
