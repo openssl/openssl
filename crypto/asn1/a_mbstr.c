@@ -258,8 +258,8 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 			value |= *p++;
 			len -= 2;
 		} else if(inform == MBSTRING_UNIV) {
-			value = *p++ << 24;
-			value |= *p++ << 16;
+			value = ((unsigned long)*p++) << 24;
+			value |= ((unsigned long)*p++) << 16;
 			value |= *p++ << 8;
 			value |= *p++;
 			len -= 4;

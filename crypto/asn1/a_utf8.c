@@ -133,7 +133,7 @@ int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
 		if( ((p[1] & 0xc0) != 0x80)
 		   || ((p[2] & 0xc0) != 0x80) 
 		   || ((p[3] & 0xc0) != 0x80) ) return -3;
-		value = (*p++ & 0x7) << 18;
+		value = ((unsigned long)(*p++ & 0x7)) << 18;
 		value |= (*p++ & 0x3f) << 12;
 		value |= (*p++ & 0x3f) << 6;
 		value |= *p++ & 0x3f;
@@ -145,9 +145,9 @@ int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
 		   || ((p[2] & 0xc0) != 0x80) 
 		   || ((p[3] & 0xc0) != 0x80) 
 		   || ((p[4] & 0xc0) != 0x80) ) return -3;
-		value = (*p++ & 0x3) << 24;
-		value |= (*p++ & 0x3f) << 18;
-		value |= (*p++ & 0x3f) << 12;
+		value = ((unsigned long)(*p++ & 0x3)) << 24;
+		value |= ((unsigned long)(*p++ & 0x3f)) << 18;
+		value |= ((unsigned long)(*p++ & 0x3f)) << 12;
 		value |= (*p++ & 0x3f) << 6;
 		value |= *p++ & 0x3f;
 		if(value < 0x200000) return -4;
@@ -159,10 +159,10 @@ int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
 		   || ((p[3] & 0xc0) != 0x80) 
 		   || ((p[4] & 0xc0) != 0x80) 
 		   || ((p[5] & 0xc0) != 0x80) ) return -3;
-		value = (*p++ & 0x1) << 30;
-		value |= (*p++ & 0x3f) << 24;
-		value |= (*p++ & 0x3f) << 18;
-		value |= (*p++ & 0x3f) << 12;
+		value = ((unsigned long)(*p++ & 0x1)) << 30;
+		value |= ((unsigned long)(*p++ & 0x3f)) << 24;
+		value |= ((unsigned long)(*p++ & 0x3f)) << 18;
+		value |= ((unsigned long)(*p++ & 0x3f)) << 12;
 		value |= (*p++ & 0x3f) << 6;
 		value |= *p++ & 0x3f;
 		if(value < 0x4000000) return -4;
