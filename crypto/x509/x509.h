@@ -747,12 +747,16 @@ int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
 EVP_PKEY *	d2i_PUBKEY(EVP_PKEY **a,unsigned char **pp,
 			long length);
+#ifndef NO_RSA
 int		i2d_RSA_PUBKEY(RSA *a,unsigned char **pp);
 RSA *		d2i_RSA_PUBKEY(RSA **a,unsigned char **pp,
 			long length);
+#endif
+#ifndef NO_DSA
 int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
 DSA *		d2i_DSA_PUBKEY(DSA **a,unsigned char **pp,
 			long length);
+#endif
 
 X509_SIG *	X509_SIG_new(void );
 void		X509_SIG_free(X509_SIG *a);

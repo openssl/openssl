@@ -612,12 +612,18 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
+#ifndef NO_RSA
 int 		EVP_PKEY_rset_RSA(EVP_PKEY *pkey,RSA *key);
-int 		EVP_PKEY_rset_DSA(EVP_PKEY *pkey,DSA *key);
-int 		EVP_PKEY_rset_DH(EVP_PKEY *pkey,DH *key);
 RSA *		EVP_PKEY_rget_RSA(EVP_PKEY *pkey);
+#endif
+#ifndef NO_DSA
+int 		EVP_PKEY_rset_DSA(EVP_PKEY *pkey,DSA *key);
 DSA *		EVP_PKEY_rget_DSA(EVP_PKEY *pkey);
+#endif
+#ifndef NO_DH
+int 		EVP_PKEY_rset_DH(EVP_PKEY *pkey,DH *key);
 DH *		EVP_PKEY_rget_DH(EVP_PKEY *pkey);
+#endif
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
 EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, unsigned char **pp,

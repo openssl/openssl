@@ -39,6 +39,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_crypto=1 if $_ eq "libeay";
 	$do_crypto=1 if $_ eq "crypto";
 	$do_update=1 if $_ eq "update";
+	$do_ctest=1 if $_ eq "ctest";
 	$rsaref=1 if $_ eq "rsaref";
 
 	if    (/^no-rc2$/)      { $no_rc2=1; }
@@ -58,6 +59,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dh$/)       { $no_dh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	}
+
 
 if (!$do_ssl && !$do_crypto)
 	{
@@ -131,7 +133,26 @@ if($do_crypto == 1) {
 	open(OUT, ">>$crypto_num");
 	&update_numbers(*OUT,"LIBEAY",*crypto_list,$max_crypto, @crypto_func);
 	close OUT;
-}
+} 
+
+} elsif ($do_ctest) {
+
+	print <<"EOF";
+
+/* Test file to check all DEF file symbols are present by trying
+ * to link to all of them. This is *not* intended to be run!
+ */
+
+int main()
+{
+EOF
+	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
+		if $do_ssl == 1;
+
+	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
+		if $do_crypto == 1;
+
+	print "}\n";
 
 } else {
 
@@ -338,6 +359,26 @@ sub do_defs
 	push @ret, keys %funcs;
 
 	return(@ret);
+}
+
+sub print_test_file
+{
+	(*OUT,my $name,*nums,@functions)=@_;
+	my $n =1;
+
+	(@e)=grep(/^SSLeay/,@functions);
+	(@r)=grep(!/^SSLeay/,@functions);
+	@functions=((sort @e),(sort @r));
+
+	foreach $func (@functions) {
+		if (!defined($nums{$func})) {
+			printf STDERR "$func does not have a number assigned\n"
+					if(!$do_update);
+		} else {
+			$n=$nums{$func};
+			print OUT "\t$func();\n";
+		}
+	}
 }
 
 sub print_def_file

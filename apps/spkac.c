@@ -64,7 +64,6 @@
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>

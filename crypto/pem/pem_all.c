@@ -65,8 +65,12 @@
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
+#ifndef NO_RSA
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);
+#endif
+#ifndef NO_DSA
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa);
+#endif
 
 IMPLEMENT_PEM_rw(X509, X509, PEM_STRING_X509, X509)
 
