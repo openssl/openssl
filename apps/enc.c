@@ -567,6 +567,7 @@ bad:
 		BIO_printf(bio_err,"bytes written:%8ld\n",BIO_number_written(out));
 		}
 end:
+	ERR_print_errors(bio_err);
 	if (strbuf != NULL) Free(strbuf);
 	if (buff != NULL) Free(buff);
 	if (in != NULL) BIO_free(in);
