@@ -100,7 +100,7 @@ void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char *ivec, int *num);
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
-	unsigned char counter[AES_BLOCK_SIZE],
+	unsigned char ivec[AES_BLOCK_SIZE],
 	unsigned char ecount_buf[AES_BLOCK_SIZE],
 	unsigned int *num);
 
