@@ -145,7 +145,8 @@ static DH_METHOD surewarehk_dh =
 	NULL, /* init*/
 	NULL, /* finish*/
 	0,    /* flags*/
-	NULL 
+	NULL,
+	NULL
 	};
 #endif
 
@@ -194,6 +195,8 @@ static DSA_METHOD surewarehk_dsa =
 	NULL,/*finish*/
 	0,
 	NULL,
+	NULL,
+	NULL
 	};
 #endif
 

@@ -90,6 +90,7 @@ dh_bn_mod_exp,
 dh_init,
 dh_finish,
 0,
+NULL,
 NULL
 };
 

@@ -110,6 +110,13 @@ typedef struct dsa_method {
 	int (*finish)(DSA *dsa);
 	int flags;
 	char *app_data;
+	/* If this is non-NULL, it is used to generate DSA parameters */
+	int (*dsa_paramgen)(DSA *dsa, int bits,
+			unsigned char *seed, int seed_len,
+			int *counter_ret, unsigned long *h_ret,
+			BN_GENCB *cb);
+	/* If this is non-NULL, it is used to generate DSA keys */
+	int (*dsa_keygen)(DSA *dsa);
 } DSA_METHOD;
 
 struct dsa_st

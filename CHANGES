@@ -4,6 +4,12 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
+  *) Key-generation can now be implemented in RSA_METHOD, DSA_METHOD
+     and DH_METHOD (eg. by ENGINE implementations) to override the normal
+     software implementations. For DSA and DH, parameter generation can
+     also be overriden by providing the appropriate method callbacks.
+     [Geoff Thorpe]
+
   *) Change the "progress" mechanism used in key-generation and
      primality testing to functions that take a new BN_GENCB pointer in
      place of callback/argument pairs. The new API functions have "_ex"

@@ -89,6 +89,8 @@ dsa_bn_mod_exp,
 dsa_init,
 dsa_finish,
 0,
+NULL,
+NULL,
 NULL
 };
 

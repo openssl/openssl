@@ -66,6 +66,15 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb);
+
+int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
+	{
+	if(ret->meth->generate_params)
+		return ret->meth->generate_params(ret, prime_len, generator, cb);
+	return dh_builtin_genparams(ret, prime_len, generator, cb);
+	}
+
 /* We generate DH parameters as follows
  * find a prime q which is prime_len/2 bits long.
  * p=(2*q)+1 or (p-1)/2 = q
@@ -91,7 +100,7 @@
  * It's just as OK (and in some sense better) to use a generator of the
  * order-q subgroup.
  */
-int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
+static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 	{
 	BIGNUM *t1,*t2;
 	int g,ok= -1;

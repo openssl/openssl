@@ -80,7 +80,22 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+static int dsa_builtin_paramgen(DSA *ret, int bits,
+		unsigned char *seed_in, int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
 int DSA_generate_parameters_ex(DSA *ret, int bits,
+		unsigned char *seed_in, int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
+	{
+	if(ret->meth->dsa_paramgen)
+		return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
+				counter_ret, h_ret, cb);
+	return dsa_builtin_paramgen(ret, bits, seed_in, seed_len,
+			counter_ret, h_ret, cb);
+	}
+
+static int dsa_builtin_paramgen(DSA *ret, int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{

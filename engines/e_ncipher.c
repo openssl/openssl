@@ -201,6 +201,7 @@ static DH_METHOD hwcrhk_dh =
 	NULL,
 	NULL,
 	0,
+	NULL,
 	NULL
 	};
 #endif

@@ -190,7 +190,9 @@ static DSA_METHOD aep_dsa =
 	NULL,                /* init */
 	NULL,                /* finish */
 	0,                   /* flags */
-	NULL                 /* app_data */
+	NULL,                /* app_data */
+	NULL,                /* dsa_paramgen */
+	NULL                 /* dsa_keygen */
 	};
 #endif
 
@@ -205,6 +207,7 @@ static DH_METHOD aep_dh =
 	NULL,
 	NULL,
 	0,
+	NULL,
 	NULL
 	};
 #endif

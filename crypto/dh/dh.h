@@ -91,6 +91,8 @@ typedef struct dh_method {
 	int (*finish)(DH *dh);
 	int flags;
 	char *app_data;
+	/* If this is non-NULL, it will be used to generate parameters */
+	int (*generate_params)(DH *dh, int prime_len, int generator, BN_GENCB *cb);
 } DH_METHOD;
 
 struct dh_st
