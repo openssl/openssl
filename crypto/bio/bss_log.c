@@ -71,6 +71,8 @@
 #elif defined(VMS) || defined(__VMS)
 #  include <opcdef.h>
 #  include <descrip.h>
+#  include <lib$routines.h>
+#  include <starlet.h>
 #elif defined(__ultrix)
 #  include <sys/syslog.h>
 #elif !defined(MSDOS) /* Unix */
@@ -264,14 +266,19 @@ static void xopenlog(BIO* bp, const char* name, int level)
 
 static void xsyslog(BIO *bp, int priority, const char *string)
 {
-	struct descriptor_s opc_dsc;
+	struct dsc$descriptor_s opc_dsc;
 	struct opcdef *opcdef_p;
 	char buf[10240];
 	unsigned int len;
-	$DESCRIPTOR(buf_dsc, buf);
+        struct dsc$descriptor_s buf_dsc;
 	$DESCRIPTOR(fao_cmd, "!AZ");
 
-	lib$sys_fao(&fao_cmd, &len, &buf_dsc, s);
+	buf_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
+	buf_dsc.dsc$b_class = DSC$K_CLASS_S;
+	buf_dsc.dsc$a_pointer = buf;
+	buf_dsc.dsc$w_length = sizeof(buf) - 1;
+
+	lib$sys_fao(&fao_cmd, &len, &buf_dsc, string);
 
 	/* we knoe there's an 8 byte header.  That's documented */
 	opcdef_p = (struct opcdef *) Malloc(8 + strlen(s));
