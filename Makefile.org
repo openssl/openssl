@@ -262,6 +262,7 @@ do_gnu-shared:
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
 		-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
@@ -288,6 +289,7 @@ do_darwin-shared:
 do_cygwin-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o cyg$$i.dll \
+		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--out-implib,lib$$i.dll.a \
 		-Wl,--no-whole-archive $$libs ) || exit 1; \
