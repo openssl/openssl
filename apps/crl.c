@@ -377,7 +377,7 @@ end:
 		X509_STORE_free(store);
 	}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static X509_CRL *load_crl(char *infile, int format)

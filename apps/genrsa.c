@@ -258,7 +258,7 @@ err:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)

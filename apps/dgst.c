@@ -365,7 +365,7 @@ end:
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
 	apps_shutdown();
-	EXIT(err);
+	OPENSSL_EXIT(err);
 	}
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,

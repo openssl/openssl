@@ -243,10 +243,11 @@ extern "C" {
 #    define _kbhit kbhit
 #  endif
 
-#  if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) do { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); } while(0)
+#  if defined(WIN16) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
+#    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
+#    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
 #  else
-#    define EXIT(n)		return(n)
+#    define EXIT(n) return(n)
 #  endif
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
@@ -302,18 +303,13 @@ extern "C" {
      the status is tagged as an error, which I believe is what is wanted here.
      -- Richard Levitte
   */
-#    if !defined(MONOLITH) || defined(OPENSSL_C)
-#      define EXIT(n)		do { int __VMS_EXIT = n; \
+#    define EXIT(n)		do { int __VMS_EXIT = n; \
                                      if (__VMS_EXIT == 0) \
 				       __VMS_EXIT = 1; \
 				     else \
 				       __VMS_EXIT = (n << 3) | 2; \
                                      __VMS_EXIT |= 0x10000000; \
-				     exit(__VMS_EXIT); \
-				     return(__VMS_EXIT); } while(0)
-#    else
-#      define EXIT(n)		return(n)
-#    endif
+				     exit(__VMS_EXIT); } while(0)
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
@@ -344,11 +340,7 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ':'
 #    define NUL_DEV		"/dev/null"
-#    ifndef MONOLITH
-#      define EXIT(n)		do { exit(n); return(n); } while(0)
-#    else
-#      define EXIT(n)		return(n)
-#    endif
+#    define EXIT(n)		exit(n)
 #  endif
 
 #  define SSLeay_getpid()	getpid()
@@ -473,6 +465,14 @@ extern HINSTANCE _hInstance;
 extern char *sys_errlist[]; extern int sys_nerr;
 # define strerror(errnum) \
 	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
+#endif
+
+#ifndef OPENSSL_EXIT
+# if defined(MONOLITH) && !defined(OPENSSL_C)
+#  define OPENSSL_EXIT(n) return(n)
+# else
+#  define OPENSSL_EXIT(n) do { EXIT(n); return(n); } while(0)
+# endif
 #endif
 
 /***********************************************/

@@ -1652,7 +1652,7 @@ err:
 	NCONF_free(conf);
 	OBJ_cleanup();
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void lookup_fail(char *name, char *tag)

@@ -358,7 +358,7 @@ end:
 		BIO_free(bio_err);
 		bio_err=NULL;
 		}
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 #define LIST_STANDARD_COMMANDS "list-standard-commands"

@@ -2316,7 +2316,7 @@ end:
 #endif
 
 	apps_shutdown();
-	EXIT(mret);
+	OPENSSL_EXIT(mret);
 	}
 
 static void print_message(const char *s, long num, int length)

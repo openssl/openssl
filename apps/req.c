@@ -1150,7 +1150,7 @@ end:
 	if (ec_params != NULL) EC_KEY_free(ec_params);
 #endif
 	apps_shutdown();
-	EXIT(ex);
+	OPENSSL_EXIT(ex);
 	}
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,

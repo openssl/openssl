@@ -122,5 +122,5 @@ int MAIN(int argc, char **argv)
 			}
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

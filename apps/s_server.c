@@ -946,7 +946,7 @@ end:
 		bio_s_out=NULL;
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)

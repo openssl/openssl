@@ -280,7 +280,7 @@ end:
 	if (crl != NULL) X509_CRL_free(crl);
 
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 /*
