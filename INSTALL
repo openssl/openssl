@@ -77,6 +77,20 @@
   386           Use the 80386 instruction set only (the default x86 code is
                 more efficient, but requires at least a 486).
 
+  no-sse2	Exclude SSE2 code pathes. Normally SSE2 extention is
+		detected at run-time, but the decision whether or not the
+		machine code will be executed is taken solely on CPU
+		capability vector. This means that if you happen to run OS
+		kernel which does not support SSE2 extension on Intel P4
+		processor, then your application might be exposed to
+		"illegal instruction" exception. There might be a way
+		to enable support in kernel, e.g. FreeBSD kernel can be
+		compiled with CPU_ENABLE_SSE, and there is a way to
+		disengage SSE2 code pathes upon application start-up,
+		but if you aim for wider "audience" running such kernel,
+		consider no-sse2. Both 386 and no-asm options above imply
+		no-sse2.
+
   no-<cipher>   Build without the specified cipher (bf, cast, des, dh, dsa,
                 hmac, md2, md5, mdc2, rc2, rc4, rc5, rsa, sha).
                 The crypto/<cipher> directory can be removed after running
