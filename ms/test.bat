@@ -1,8 +1,9 @@
 @echo=off
 
-set test=p:\work\ssleay\ms
+set test=..\ms
 set opath=%PATH%
-PATH=%1;%PATH%
+PATH=..\ms;%PATH%
+set OPENSSL_CONF=..\apps\openssl.cnf
 
 rem run this from inside the bin directory
 
@@ -63,19 +64,19 @@ dsatest
 if errorlevel 1 goto done
 
 echo testenc
-call %test%\testenc ssleay
+call %test%\testenc openssl
 if errorlevel 1 goto done
 
 echo testpem
-call %test%\testpem ssleay
+call %test%\testpem openssl
 if errorlevel 1 goto done
 
 echo verify
 copy ..\certs\*.pem cert.tmp >nul
-ssleay verify -CAfile cert.tmp ..\certs\*.pem
+openssl verify -CAfile cert.tmp ..\certs\*.pem
 
 echo testss
-call %test%\testss ssleay
+call %test%\testss openssl
 if errorlevel 1 goto done
 
 echo test sslv2

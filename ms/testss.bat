@@ -1,4 +1,4 @@
-echo=off
+echo=on
 
 rem set ssleay=..\out\ssleay
 set ssleay=%1

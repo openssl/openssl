@@ -463,10 +463,11 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 #  endif /* FP_API */
 #else
 
-int BIO_get_ex_num();
+/* These two aren't currently implemented */
+/*int BIO_get_ex_num();*/
+/*void BIO_set_ex_free_func();*/
 int BIO_set_ex_data();
 char *BIO_get_ex_data();
-void BIO_set_ex_free_func();
 int BIO_get_ex_new_index();
 
 #  if defined(WIN16) && defined(_WINDLL)

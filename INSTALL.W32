@@ -32,7 +32,8 @@ then from the VC++ environment at a prompt do:
 nmake -f ms\ntdll.mak
 
 you may get a warning about too many rules but if all is well it should all
-compile and you will have some DLLs and executables in out32dll.
+compile and you will have some DLLs and executables in out32dll. If you want
+to try the tests then cd to out32dll and run ..\ms\test
 
 Troubleshooting.
 
@@ -68,14 +69,20 @@ environments this can happen. The best fix is to edit the file with the warning
 in and fix it. Alternatively you can turn off the halt on warnings by editing
 the CFLAG line in the Makefile and deleting the /WX option.
 
-Finally you might get compilation errors. Again you will have to fix these or
+You might get compilation errors. Again you will have to fix these or
 report them.
+
+One final comment about compiling applications linked to the OpenSSL library.
+If you don't use the multithreaded DLL runtime library (/MD option) your
+program will almost certainly crash: see the original SSLeay description below
+for more details.
 
 Tweaks.
 
 There are various changes you can make to the Win32 compile environment. If you
 have the MASM assembler 'ml' then you can try the assembly language code. To
-do this remove the 'no-asm' part from do_ms.bat.
+do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug' here
+to make a debugging version of the library.
 
 If you want to enable the NT specific features of OpenSSL (currently only
 the logging BIO) follow the instructions above but call the batch file

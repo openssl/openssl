@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/08 21:56:46 $
+  ______________                           $Date: 1999/03/09 03:01:42 $
 
   DEVELOPMENT STATE
 
@@ -11,6 +11,7 @@
 	 o  FreeBSD 2.2.7  Ben Laurie            OK
          o  FreeBSD 3.1    Ralf S. Engelschall   all silent
          o  Solaris 2.6    Ralf S. Engelschall   ctype-related warnings, test fails
+	 o  Linux RH 5.1   Steve Henson		 OK
 
        Proposed release time: Monday, March 15th 1999
 
