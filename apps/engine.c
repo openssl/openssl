@@ -432,7 +432,8 @@ skip_arg_loop:
 				char *cap_buf = NULL;
 				int k,n;
 				const int *nids;
-				ENGINE_CIPHERS_PTR fn;
+				ENGINE_CIPHERS_PTR fn_c;
+				ENGINE_DIGESTS_PTR fn_d;
 
 				if (ENGINE_get_RSA(e) != NULL
 					&& !append_buf(&cap_buf, "RSA",
@@ -451,9 +452,9 @@ skip_arg_loop:
 						&cap_size, 256))
 					goto end;
 
-				fn = ENGINE_get_ciphers(e);
-				if(!fn) goto skip_ciphers;
-				n = fn(e, NULL, &nids, 0);
+				fn_c = ENGINE_get_ciphers(e);
+				if(!fn_c) goto skip_ciphers;
+				n = fn_c(e, NULL, &nids, 0);
 				for(k=0 ; k < n ; ++k)
 					if(!append_buf(&cap_buf,
 						       OBJ_nid2sn(nids[k]),
@@ -461,6 +462,16 @@ skip_arg_loop:
 						goto end;
 
 skip_ciphers:
+				fn_d = ENGINE_get_digests(e);
+				if(!fn_d) goto skip_digests;
+				n = fn_d(e, NULL, &nids, 0);
+				for(k=0 ; k < n ; ++k)
+					if(!append_buf(&cap_buf,
+						       OBJ_nid2sn(nids[k]),
+						       &cap_size, 256))
+						goto end;
+
+skip_digests:
 				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]", cap_buf);
 
