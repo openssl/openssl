@@ -486,3 +486,45 @@ DSA *x;
 	}
 #endif
 
+/* The Netscape Certificate sequence functions */
+
+#ifndef NO_FP_API
+NETSCAPE_CERT_SEQUENCE *PEM_read_NETSCAPE_CERT_SEQUENCE(fp,x,cb)
+FILE *fp;
+NETSCAPE_CERT_SEQUENCE **x;
+int (*cb)();
+	{
+	return((NETSCAPE_CERT_SEQUENCE *)
+		PEM_ASN1_read((char *(*)())d2i_NETSCAPE_CERT_SEQUENCE,
+		PEM_STRING_X509,fp,(char **)x,cb));
+	}
+#endif
+
+NETSCAPE_CERT_SEQUENCE *PEM_read_bio_NETSCAPE_CERT_SEQUENCE(bp,x,cb)
+BIO *bp;
+NETSCAPE_CERT_SEQUENCE **x;
+int (*cb)();
+	{
+	return((NETSCAPE_CERT_SEQUENCE *)
+		PEM_ASN1_read_bio((char *(*)())d2i_NETSCAPE_CERT_SEQUENCE,
+		PEM_STRING_X509,bp,(char **)x,cb));
+	}
+
+#ifndef NO_FP_API
+int PEM_write_NETSCAPE_CERT_SEQUENCE(fp,x)
+FILE *fp;
+NETSCAPE_CERT_SEQUENCE *x;
+	{
+	return(PEM_ASN1_write((int (*)())i2d_NETSCAPE_CERT_SEQUENCE,
+		PEM_STRING_X509,fp, (char *)x, NULL,NULL,0,NULL));
+	}
+#endif
+
+int PEM_write_bio_NETSCAPE_CERT_SEQUENCE(bp,x)
+BIO *bp;
+NETSCAPE_CERT_SEQUENCE *x;
+	{
+	return(PEM_ASN1_write_bio((int (*)())i2d_NETSCAPE_CERT_SEQUENCE,
+		PEM_STRING_X509,bp, (char *)x, NULL,NULL,0,NULL));
+	}
+

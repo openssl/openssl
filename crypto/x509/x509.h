@@ -320,6 +320,13 @@ typedef struct Netscape_spki_st
 	ASN1_BIT_STRING *signature;
 	} NETSCAPE_SPKI;
 
+/* Netscape certificate sequence structure */
+typedef struct Netscape_certificate_sequence
+	{
+	ASN1_OBJECT *type;
+	STACK /* X509 */ *certs;
+	} NETSCAPE_CERT_SEQUENCE;
+
 #ifndef HEADER_BN_H
 #define BIGNUM 		char
 #endif
@@ -670,6 +677,12 @@ int		i2d_NETSCAPE_SPKAC(NETSCAPE_SPKAC *a,unsigned char **pp);
 NETSCAPE_SPKAC *d2i_NETSCAPE_SPKAC(NETSCAPE_SPKAC **a,unsigned char **pp,
 		long length);
 
+
+int i2d_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE *a, unsigned char **pp);
+NETSCAPE_CERT_SEQUENCE *NETSCAPE_CERT_SEQUENCE_new(void);
+NETSCAPE_CERT_SEQUENCE *d2i_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE **a, unsigned char **pp, long length);
+void NETSCAPE_CERT_SEQUENCE_free(NETSCAPE_CERT_SEQUENCE *a);
+
 #ifdef HEADER_ENVELOPE_H
 X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
@@ -984,6 +997,11 @@ NETSCAPE_SPKAC *NETSCAPE_SPKAC_new();
 void		NETSCAPE_SPKAC_free();
 int		i2d_NETSCAPE_SPKAC();
 NETSCAPE_SPKAC *d2i_NETSCAPE_SPKAC();
+
+int i2d_NETSCAPE_CERT_SEQUENCE();
+NETSCAPE_CERT_SEQUENCE *NETSCAPE_CERT_SEQUENCE_new();
+NETSCAPE_CERT_SEQUENCE *d2i_NETSCAPE_CERT_SEQUENCE();
+void NETSCAPE_CERT_SEQUENCE_free();
 
 #ifdef HEADER_ENVELOPE_H
 X509_INFO *	X509_INFO_new();

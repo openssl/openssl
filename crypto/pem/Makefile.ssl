@@ -40,7 +40,7 @@ top:
 
 all:	pem.h lib
 
-pem.h: $(CTX_SIZE)
+pem.h: $(CTX_SIZE) pem.org
 	./$(CTX_SIZE) <pem.org >pem.new
 	if [ -f pem.h ]; then mv -f pem.h pem.old; fi
 	mv -f pem.new pem.h
