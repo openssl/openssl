@@ -20,6 +20,11 @@
      Fix mutex callback return values in crypto/engine/hw_ncipher.c.
      [Andy Schneider <andy.schneider@bjss.co.uk>]
 
+  -) [In 0.9.6c-engine release:]
+     Add support for Cryptographic Appliance's keyserver technology.
+     (Use engine 'keyclient')
+     [Cryptographic Appliances and Geoff Thorpe]
+
   *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
      is called via tools/c89.sh because arguments have to be
      rearranged (all '-L' options must appear before the first object
