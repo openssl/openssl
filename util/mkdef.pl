@@ -83,7 +83,7 @@ my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
-			 "RIPEMD",
+			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA", "HMAC", "AES",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
@@ -511,7 +511,7 @@ sub do_defs
 				}
 			} elsif (/^\#\s*endif/) {
 				my $tag_i = $#tag;
-				while($tag[$tag_i] ne "-") {
+				while($tag_i > 0 && $tag[$tag_i] ne "-") {
 					my $t=$tag[$tag_i];
 					print STDERR "DEBUG: \$t=\"$t\"\n" if $debug;
 					if ($tag{$t}==2) {
