@@ -2,7 +2,7 @@
 #define HEADER_OPENSSLV_H
 
 /* Numeric release version identifier:
- * MMNNFFPPS: major minor fix patch status
+ * MNNFFPPS: major minor fix patch status
  * The status nibble has one of the values 0 for development, 1 to e for betas
  * 1 to 14, and f for release.  The patch level is exactly that.
  * For example:
