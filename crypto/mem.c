@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/crypto.h>
 #ifdef CRYPTO_MDEBUG_TIME
 # include <time.h>	
 #endif

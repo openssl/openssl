@@ -54,7 +54,8 @@
      this bug.
      [Steve Henson, reported by Doug Erickson <Doug.Erickson@Part.NET>]
 
-  *) Memory leak checking had some problems.  The interface is as follows:
+  *) Memory leak checking (-DCRYPTO_MDEBUG) had some problems.
+     The interface is as follows:
      Applications can use
          CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON) aka MemCheck_start(),
          CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF) aka MemCheck_stop();
@@ -66,6 +67,10 @@
 
      Some inconsistent states that previously were possible (and were
      even the default) are now avoided.
+
+     -DCRYPTO_MDEBUG_TIME is new and additionally stores the current time
+     with each memory chunk allocated; this is occasionally more helpful
+     than just having a counter.
      [Bodo Moeller]
 
   *) Introduce "mode" for SSL structures (with defaults in SSL_CTX),

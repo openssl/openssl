@@ -200,6 +200,12 @@ typedef struct crypto_ex_data_func_st
 	(char *(*)())realloc,\
 	(void (*)())free)
 
+#ifdef CRYPTO_MDEBUG_TIME
+# ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
+#  define CRYPTO_MDEBUG
+# endif
+#endif
+
 #ifdef CRYPTO_MDEBUG
 #define MemCheck_start() CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)
 #define MemCheck_stop()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF)
