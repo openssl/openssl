@@ -77,8 +77,9 @@
 
      This guesses at your operating system (and compiler, if necessary) and
      configures OpenSSL based on this guess. Run ./config -t to see
-     if it guessed correctly. If it did not get it correct or you want to
-     use a different compiler then go to step 1b. Otherwise go to step 2.
+     if it guessed correctly. If you want to use a different compiler, you
+     are cross-compiling for another platform, or the ./config guess was
+     wrong for other reasons, go to step 1b. Otherwise go to step 2.
 
      On some systems, you can include debugging information as follows:
 
@@ -101,7 +102,8 @@
 
      If your system is not available, you will have to edit the Configure
      program and add the correct configuration for your system. The
-     generic configurations "cc" or "gcc" should usually work.
+     generic configurations "cc" or "gcc" should usually work on 32 bit
+     systems.
 
      Configure creates the file Makefile.ssl from Makefile.org and
      defines various macros in crypto/opensslconf.h (generated from
