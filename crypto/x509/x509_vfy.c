@@ -436,11 +436,14 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				}
 			if (X509_verify(xs,pkey) <= 0)
 				{
-				EVP_PKEY_free(pkey);
 				ctx->error=X509_V_ERR_CERT_SIGNATURE_FAILURE;
 				ctx->current_cert=xs;
 				ok=(*cb)(0,ctx);
-				if (!ok) goto end;
+				if (!ok)
+					{
+					EVP_PKEY_free(pkey);
+					goto end;
+					}
 				}
 			EVP_PKEY_free(pkey);
 			pkey=NULL;
