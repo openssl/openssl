@@ -362,11 +362,8 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 		}
 	}
 
-	for (;;) {
-		i = BIO_read(in, inbuf, sizeof(inbuf));
-		if (i <= 0) break;
-		BIO_write(p7bio, inbuf, i);
-	}
+	SMIME_crlf_copy(in, p7bio, flags);
+
 	BIO_flush(p7bio);
 
         if (!PKCS7_dataFinal(p7,p7bio)) {

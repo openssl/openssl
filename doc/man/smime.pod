@@ -12,6 +12,7 @@ B<openssl> B<smime>
 [B<-sign>]
 [B<-verify>]
 [B<-pk7out>]
+[B<-des>]
 [B<-des3>]
 [B<-rc2-40>]
 [B<-rc2-64>]
@@ -95,7 +96,7 @@ B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
 
-=item B<-des3 -rc2-40 -rc2-64 -rc2-128>
+=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128>
 
 the encryption algorithm to use. DES (56 bits), triple DES (168 bits)
 or 40, 64 or 128 bit RC2 respectively if not specified 40 bit RC2 is
@@ -137,9 +138,9 @@ option they are not included.
 =item B<-binary>
 
 normally the input message is converted to "canonical" format which is
-effectively using CR and LF as end of line. When this option is present
-no translation occurs. This is useful when handling binary data which may
-not be in MIME format.
+effectively using CR and LF as end of line: as required by the S/MIME
+specification. When this option is present no translation occurs. This
+is useful when handling binary data which may not be in MIME format.
 
 =item B<-nodetach>
 
@@ -193,14 +194,23 @@ headers and the output. Some mail programs will automatically add
 a blank line. Piping the mail directly to sendmail is one way to
 achieve the correct format.
 
+The supplied message to be signed or encrypted must include the
+necessary MIME headers: or many S/MIME clients wont display it
+properly (if at all). You can use the B<-text> option to automatically
+add plain text headers.
+
 A "signed and encrypted" message is one where a signed message is
 then encrypted. This can be produced by encrypting an already signed
-message.
+message: see the examples section.
 
 This version of the program only allows one signer per message but it
 will verify multiple signers on received messages. Some S/MIME clients
 choke if a message contains mutiple signers. It is possible to sign
 messages "in parallel" by signing an already signed message.
+
+The options B<-encrypt> and B<-decrypt> reflect common usage in S/MIME
+clients. Strictly speaking these process PKCS#7 enveloped data: PKCS#7
+encrypted data is used for other purposes.
 
 =head1 EXIT CODES
 
@@ -208,7 +218,7 @@ messages "in parallel" by signing an already signed message.
 
 =item 0
 
-the operation was completely successful
+the operation was completely successfully.
 
 =item 1 
 
@@ -236,6 +246,68 @@ the signers certificates.
 
 =head1 EXAMPLES
 
-to be added.
+Create a cleartext signed message:
+
+ openssl smime -sign -in message.txt -text -out mail.msg
+           -signer mycert.pem
+
+Create and opaque signed message
+
+ openssl smime -sign -in message.txt -text -out mail.msg -nodetach
+           -signer mycert.pem
+
+Create a signed message, include some additional certificates and
+read the private key from another file:
+
+ openssl smime -sign -in in.txt -text -out mail.msg
+           -signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
+
+Send a signed message under Unix directly to sendmail, including headers:
+
+ openssl smime -sign -in in.txt -text -signer mycert.pem -from steve@openssl.org
+  -to someone@somewhere -subject "Signed message" | sendmail someone@somewhere
+
+Verify a message and extract the signer's certificate if successful:
+
+ openssl smime -verify -in mail.msg -signer user.pem -out signedtext.txt
+
+Send encrypted mail using triple DES:
+
+ openssl smime -encrypt -in in.txt -from steve@openssl.org -to someone@somewhere
+   -subject "Encrypted message" -des3 user.pem -out mail.msg
+
+Sign and encrypt mail:
+
+ openssl smime -sign -in ml.txt -signer my.pem -text | openssl -encrypt -out mail.msg 
+  -from steve@openssl.org -to someone@somewhere -subject "Signed and Encrypted message"
+  -des3 user.pem
+
+Note: the encryption command does not include the B<-text> option because the message
+being encrypted already has MIME headers.
+
+Decrypt mail:
+
+ openssl smime -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
+
+=head1 BUGS
+
+The MIME parser isn't very clever: it seems to handle most messages that I've thrown
+at it but it may choke on others.
+
+The code currently will only write out the signer's certificate to a file: if the
+signer has a separate encryption certificate this must be manually extracted. There
+should be some heuristic that determines the correct encryption certificate.
+
+Ideally a database should be maintained of a certificates for each email address.
+
+The code doesn't currently take note of the permitted symmetric encryption
+algorithms as supplied in the SMIMECapabilities signed attribute. this means the
+user has to manually include the correct encryption algorithm. It should store
+the list of permitted ciphers in a database and only use those.
+
+No revocation checking is done on the signer's certificate.
+
+The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
+structures may cause parsing errors.
 
 =cut
