@@ -1707,6 +1707,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      be reduced modulo  m.
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
+#if 0
+     The following entry accidentily appeared in the CHANGES file
+     distributed with OpenSSL 0.9.7.  The modifications described in
+     it do *not* apply to OpenSSL 0.9.7.
+
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()
      required a small change in bn_mul_part_recursive() and the addition
@@ -1715,6 +1720,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+#endif
 
   *) In 'openssl passwd', verify passwords read from the terminal
      unless the '-salt' option is used (which usually means that
