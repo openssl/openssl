@@ -263,7 +263,7 @@ static void x509v3_cache_extensions(X509 *x)
 	/* V1 should mean no extensions ... */
 	if(!X509_get_version(x)) x->ex_flags |= EXFLAG_V1;
 	/* Handle basic constraints */
-	if((bs=X509V3_X509_get_d2i(x, NID_basic_constraints, NULL, NULL))) {
+	if((bs=X509_get_ext_d2i(x, NID_basic_constraints, NULL, NULL))) {
 		if(bs->ca) x->ex_flags |= EXFLAG_CA;
 		if(bs->pathlen) {
 			if((bs->pathlen->type == V_ASN1_NEG_INTEGER)
@@ -276,7 +276,7 @@ static void x509v3_cache_extensions(X509 *x)
 		x->ex_flags |= EXFLAG_BCONS;
 	}
 	/* Handle key usage */
-	if((usage=X509V3_X509_get_d2i(x, NID_key_usage, NULL, NULL))) {
+	if((usage=X509_get_ext_d2i(x, NID_key_usage, NULL, NULL))) {
 		if(usage->length > 0) {
 			x->ex_kusage = usage->data[0];
 			if(usage->length > 1) 
@@ -286,7 +286,7 @@ static void x509v3_cache_extensions(X509 *x)
 		ASN1_BIT_STRING_free(usage);
 	}
 	x->ex_xkusage = 0;
-	if((extusage=X509V3_X509_get_d2i(x, NID_ext_key_usage, NULL, NULL))) {
+	if((extusage=X509_get_ext_d2i(x, NID_ext_key_usage, NULL, NULL))) {
 		x->ex_flags |= EXFLAG_XKUSAGE;
 		for(i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
 			switch(OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage,i))) {
@@ -314,7 +314,7 @@ static void x509v3_cache_extensions(X509 *x)
 		sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
 	}
 
-	if((ns=X509V3_X509_get_d2i(x, NID_netscape_cert_type, NULL, NULL))) {
+	if((ns=X509_get_ext_d2i(x, NID_netscape_cert_type, NULL, NULL))) {
 		if(ns->length > 0) x->ex_nscert = ns->data[0];
 		else x->ex_nscert = 0;
 		x->ex_flags |= EXFLAG_NSCERT;

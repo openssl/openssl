@@ -1881,7 +1881,7 @@ ASN1_tag2str                            1905
 BIO_ctrl_reset_read_request             1906
 DISPLAYTEXT_new                         1907
 ASN1_GENERALIZEDTIME_free               1908
-X509V3_REVOKED_get_d2i                  1909
+X509_REVOKED_get_ext_d2i                1909
 X509_set_ex_data                        1910
 X509_reject_set_bit_asc                 1911
 X509_NAME_add_entry_by_txt              1912
@@ -1930,7 +1930,7 @@ ASN1_TIME_free                          1954
 ASN1_OCTET_STRING_cmp                   1955
 sk_ACCESS_DESCRIPTION_value             1956
 ASN1_BIT_STRING_new                     1957
-X509V3_X509_get_d2i                     1958
+X509_get_ext_d2i                        1958
 PEM_read_bio_X509_AUX                   1959
 ASN1_STRING_set_default_mask_asc        1960
 PEM_write_bio_RSA_PUBKEY                1961
@@ -1981,7 +1981,7 @@ sk_X509_TRUST_shift                     2005
 sk_ACCESS_DESCRIPTION_zero              2006
 X509_TRUST_cleanup                      2007
 X509_NAME_add_entry_by_OBJ              2008
-X509V3_CRL_get_d2i                      2009
+X509_CRL_get_ext_d2i                    2009
 sk_X509_TRUST_set                       2010
 X509_PURPOSE_iget_name                  2011
 PEM_read_PUBKEY                         2012

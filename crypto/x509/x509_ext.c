@@ -63,6 +63,8 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 
 int X509_CRL_get_ext_count(X509_CRL *x)
 	{
@@ -93,6 +95,11 @@ X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc)
 	{
 	return(X509v3_delete_ext(x->crl->extensions,loc));
 	}
+
+void *X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->crl->extensions, nid, crit, idx);
+}
 
 int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc)
 	{
@@ -134,6 +141,11 @@ int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc)
 	return(X509v3_add_ext(&(x->cert_info->extensions),ex,loc) != NULL);
 	}
 
+void *X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
+}
+
 int X509_REVOKED_get_ext_count(X509_REVOKED *x)
 	{
 	return(X509v3_get_ext_count(x->extensions));
@@ -169,6 +181,11 @@ int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc)
 	{
 	return(X509v3_add_ext(&(x->extensions),ex,loc) != NULL);
 	}
+
+void *X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->extensions, nid, crit, idx);
+}
 
 IMPLEMENT_STACK_OF(X509_EXTENSION)
 IMPLEMENT_ASN1_SET_OF(X509_EXTENSION)

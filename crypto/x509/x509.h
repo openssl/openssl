@@ -1011,6 +1011,7 @@ int		X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
 X509_EXTENSION *X509_get_ext(X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int		X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
+void	*	X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
 
 int		X509_CRL_get_ext_count(X509_CRL *x);
 int		X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos);
@@ -1019,6 +1020,7 @@ int		X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
 X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int		X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
+void	*	X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx);
 
 int		X509_REVOKED_get_ext_count(X509_REVOKED *x);
 int		X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
@@ -1027,6 +1029,7 @@ int		X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
 X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
+void	*	X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx);
 
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex,
 			int nid, int crit, ASN1_OCTET_STRING *data);

@@ -219,20 +219,3 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	if(crit) *crit = -1;
 	return NULL;
 }
-
-/* As above but for a passed certificate */
-
-void *X509V3_X509_get_d2i(X509 *x, int nid, int *crit, int *idx)
-{
-	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
-}
-
-void *X509V3_CRL_get_d2i(X509_CRL *x, int nid, int *crit, int *idx)
-{
-	return X509V3_get_d2i(x->crl->extensions, nid, crit, idx);
-}
-
-void *X509V3_REVOKED_get_d2i(X509_REVOKED *x, int nid, int *crit, int *idx)
-{
-	return X509V3_get_d2i(x->extensions, nid, crit, idx);
-}
