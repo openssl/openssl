@@ -111,9 +111,16 @@ secg-ellipticCurve 39		: sect571r1
 # WAP/TLS curve OIDs (http://www.wapforum.org/)
 !Alias wap-wsg-idm-ecid wap-wsg 4
 wap-wsg-idm-ecid 1	: wap-wsg-idm-ecid-wtls1
+wap-wsg-idm-ecid 3	: wap-wsg-idm-ecid-wtls3
+wap-wsg-idm-ecid 4	: wap-wsg-idm-ecid-wtls4
+wap-wsg-idm-ecid 5	: wap-wsg-idm-ecid-wtls5
 wap-wsg-idm-ecid 6	: wap-wsg-idm-ecid-wtls6
+wap-wsg-idm-ecid 7	: wap-wsg-idm-ecid-wtls7
 wap-wsg-idm-ecid 8	: wap-wsg-idm-ecid-wtls8
 wap-wsg-idm-ecid 9	: wap-wsg-idm-ecid-wtls9
+wap-wsg-idm-ecid 10	: wap-wsg-idm-ecid-wtls10
+wap-wsg-idm-ecid 11	: wap-wsg-idm-ecid-wtls11
+wap-wsg-idm-ecid 12	: wap-wsg-idm-ecid-wtls12
 
 
 ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc

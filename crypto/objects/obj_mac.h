@@ -426,9 +426,25 @@
 #define NID_wap_wsg_idm_ecid_wtls1		564
 #define OBJ_wap_wsg_idm_ecid_wtls1		OBJ_wap_wsg_idm_ecid,1L
 
+#define SN_wap_wsg_idm_ecid_wtls3		"wap-wsg-idm-ecid-wtls3"
+#define NID_wap_wsg_idm_ecid_wtls3		709
+#define OBJ_wap_wsg_idm_ecid_wtls3		OBJ_wap_wsg_idm_ecid,3L
+
+#define SN_wap_wsg_idm_ecid_wtls4		"wap-wsg-idm-ecid-wtls4"
+#define NID_wap_wsg_idm_ecid_wtls4		710
+#define OBJ_wap_wsg_idm_ecid_wtls4		OBJ_wap_wsg_idm_ecid,4L
+
+#define SN_wap_wsg_idm_ecid_wtls5		"wap-wsg-idm-ecid-wtls5"
+#define NID_wap_wsg_idm_ecid_wtls5		711
+#define OBJ_wap_wsg_idm_ecid_wtls5		OBJ_wap_wsg_idm_ecid,5L
+
 #define SN_wap_wsg_idm_ecid_wtls6		"wap-wsg-idm-ecid-wtls6"
 #define NID_wap_wsg_idm_ecid_wtls6		565
 #define OBJ_wap_wsg_idm_ecid_wtls6		OBJ_wap_wsg_idm_ecid,6L
+
+#define SN_wap_wsg_idm_ecid_wtls7		"wap-wsg-idm-ecid-wtls7"
+#define NID_wap_wsg_idm_ecid_wtls7		712
+#define OBJ_wap_wsg_idm_ecid_wtls7		OBJ_wap_wsg_idm_ecid,7L
 
 #define SN_wap_wsg_idm_ecid_wtls8		"wap-wsg-idm-ecid-wtls8"
 #define NID_wap_wsg_idm_ecid_wtls8		566
@@ -437,6 +453,18 @@
 #define SN_wap_wsg_idm_ecid_wtls9		"wap-wsg-idm-ecid-wtls9"
 #define NID_wap_wsg_idm_ecid_wtls9		567
 #define OBJ_wap_wsg_idm_ecid_wtls9		OBJ_wap_wsg_idm_ecid,9L
+
+#define SN_wap_wsg_idm_ecid_wtls10		"wap-wsg-idm-ecid-wtls10"
+#define NID_wap_wsg_idm_ecid_wtls10		713
+#define OBJ_wap_wsg_idm_ecid_wtls10		OBJ_wap_wsg_idm_ecid,10L
+
+#define SN_wap_wsg_idm_ecid_wtls11		"wap-wsg-idm-ecid-wtls11"
+#define NID_wap_wsg_idm_ecid_wtls11		714
+#define OBJ_wap_wsg_idm_ecid_wtls11		OBJ_wap_wsg_idm_ecid,11L
+
+#define SN_wap_wsg_idm_ecid_wtls12		"wap-wsg-idm-ecid-wtls12"
+#define NID_wap_wsg_idm_ecid_wtls12		715
+#define OBJ_wap_wsg_idm_ecid_wtls12		OBJ_wap_wsg_idm_ecid,12L
 
 #define SN_cast5_cbc		"CAST5-CBC"
 #define LN_cast5_cbc		"cast5-cbc"

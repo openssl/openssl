@@ -706,3 +706,10 @@ set_brand_MasterCard		705
 set_brand_Novus		706
 des_cdmf		707
 rsaOAEPEncryptionSET		708
+wap_wsg_idm_ecid_wtls3		709
+wap_wsg_idm_ecid_wtls4		710
+wap_wsg_idm_ecid_wtls5		711
+wap_wsg_idm_ecid_wtls7		712
+wap_wsg_idm_ecid_wtls10		713
+wap_wsg_idm_ecid_wtls11		714
+wap_wsg_idm_ecid_wtls12		715

@@ -4,6 +4,13 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add more WAP/WTLS elliptic curve OIDs.
+     [Douglas Stebila <douglas.stebila@sun.com>]
+
+  *) Add new error code 'ERR_R_DISABLED' that can be used when some
+     functionality is disabled at compile-time.
+     [Douglas Stebila <douglas.stebila@sun.com>]
+
   *) Change default behaviour of 'openssl asn1parse' so that more
      information is visible when viewing, e.g., a certificate:
 

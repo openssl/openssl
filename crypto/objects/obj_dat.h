@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 709
-#define NUM_SN 704
-#define NUM_LN 704
-#define NUM_OBJ 678
+#define NUM_NID 716
+#define NUM_SN 711
+#define NUM_LN 711
+#define NUM_OBJ 685
 
-static unsigned char lvalues[4814]={
+static unsigned char lvalues[4849]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -746,6 +746,13 @@ static unsigned char lvalues[4814]={
 0x67,0x2A,0x08,0xAE,0x7B,                    /* [4791] OBJ_set_brand_Novus */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x0A,     /* [4796] OBJ_des_cdmf */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x06,/* [4804] OBJ_rsaOAEPEncryptionSET */
+0x67,0x2B,0x0D,0x04,0x03,                    /* [4813] OBJ_wap_wsg_idm_ecid_wtls3 */
+0x67,0x2B,0x0D,0x04,0x04,                    /* [4818] OBJ_wap_wsg_idm_ecid_wtls4 */
+0x67,0x2B,0x0D,0x04,0x05,                    /* [4823] OBJ_wap_wsg_idm_ecid_wtls5 */
+0x67,0x2B,0x0D,0x04,0x07,                    /* [4828] OBJ_wap_wsg_idm_ecid_wtls7 */
+0x67,0x2B,0x0D,0x04,0x0A,                    /* [4833] OBJ_wap_wsg_idm_ecid_wtls10 */
+0x67,0x2B,0x0D,0x04,0x0B,                    /* [4838] OBJ_wap_wsg_idm_ecid_wtls11 */
+0x67,0x2B,0x0D,0x04,0x0C,                    /* [4843] OBJ_wap_wsg_idm_ecid_wtls12 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1852,6 +1859,20 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CDMF","des-cdmf",NID_des_cdmf,8,&(lvalues[4796]),0},
 {"rsaOAEPEncryptionSET","rsaOAEPEncryptionSET",
 	NID_rsaOAEPEncryptionSET,9,&(lvalues[4804]),0},
+{"wap-wsg-idm-ecid-wtls3","wap-wsg-idm-ecid-wtls3",
+	NID_wap_wsg_idm_ecid_wtls3,5,&(lvalues[4813]),0},
+{"wap-wsg-idm-ecid-wtls4","wap-wsg-idm-ecid-wtls4",
+	NID_wap_wsg_idm_ecid_wtls4,5,&(lvalues[4818]),0},
+{"wap-wsg-idm-ecid-wtls5","wap-wsg-idm-ecid-wtls5",
+	NID_wap_wsg_idm_ecid_wtls5,5,&(lvalues[4823]),0},
+{"wap-wsg-idm-ecid-wtls7","wap-wsg-idm-ecid-wtls7",
+	NID_wap_wsg_idm_ecid_wtls7,5,&(lvalues[4828]),0},
+{"wap-wsg-idm-ecid-wtls10","wap-wsg-idm-ecid-wtls10",
+	NID_wap_wsg_idm_ecid_wtls10,5,&(lvalues[4833]),0},
+{"wap-wsg-idm-ecid-wtls11","wap-wsg-idm-ecid-wtls11",
+	NID_wap_wsg_idm_ecid_wtls11,5,&(lvalues[4838]),0},
+{"wap-wsg-idm-ecid-wtls12","wap-wsg-idm-ecid-wtls12",
+	NID_wap_wsg_idm_ecid_wtls12,5,&(lvalues[4843]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2553,7 +2574,14 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[562]),/* "wap" */
 &(nid_objs[563]),/* "wap-wsg" */
 &(nid_objs[564]),/* "wap-wsg-idm-ecid-wtls1" */
+&(nid_objs[713]),/* "wap-wsg-idm-ecid-wtls10" */
+&(nid_objs[714]),/* "wap-wsg-idm-ecid-wtls11" */
+&(nid_objs[715]),/* "wap-wsg-idm-ecid-wtls12" */
+&(nid_objs[709]),/* "wap-wsg-idm-ecid-wtls3" */
+&(nid_objs[710]),/* "wap-wsg-idm-ecid-wtls4" */
+&(nid_objs[711]),/* "wap-wsg-idm-ecid-wtls5" */
 &(nid_objs[565]),/* "wap-wsg-idm-ecid-wtls6" */
+&(nid_objs[712]),/* "wap-wsg-idm-ecid-wtls7" */
 &(nid_objs[566]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[567]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[568]),/* "x500UniqueIdentifier" */
@@ -3259,7 +3287,14 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[562]),/* "wap" */
 &(nid_objs[563]),/* "wap-wsg" */
 &(nid_objs[564]),/* "wap-wsg-idm-ecid-wtls1" */
+&(nid_objs[713]),/* "wap-wsg-idm-ecid-wtls10" */
+&(nid_objs[714]),/* "wap-wsg-idm-ecid-wtls11" */
+&(nid_objs[715]),/* "wap-wsg-idm-ecid-wtls12" */
+&(nid_objs[709]),/* "wap-wsg-idm-ecid-wtls3" */
+&(nid_objs[710]),/* "wap-wsg-idm-ecid-wtls4" */
+&(nid_objs[711]),/* "wap-wsg-idm-ecid-wtls5" */
 &(nid_objs[565]),/* "wap-wsg-idm-ecid-wtls6" */
+&(nid_objs[712]),/* "wap-wsg-idm-ecid-wtls7" */
 &(nid_objs[566]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[567]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[568]),/* "x500UniqueIdentifier" */
@@ -3274,8 +3309,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
-&(nid_objs[527]),/* OBJ_identified_organization      1 3 */
 &(nid_objs[379]),/* OBJ_org                          1 3 */
+&(nid_objs[527]),/* OBJ_identified_organization      1 3 */
 &(nid_objs[393]),/* OBJ_joint_iso_ccitt              2 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[380]),/* OBJ_dod                          1 3 6 */
@@ -3515,9 +3550,16 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[694]),/* OBJ_setAttr_IssCap_Sig           2 23 42 3 3 5 */
 &(nid_objs[706]),/* OBJ_set_brand_Novus              2 23 42 8 6011 */
 &(nid_objs[564]),/* OBJ_wap_wsg_idm_ecid_wtls1       2 23 43 13 4 1 */
+&(nid_objs[709]),/* OBJ_wap_wsg_idm_ecid_wtls3       2 23 43 13 4 3 */
+&(nid_objs[710]),/* OBJ_wap_wsg_idm_ecid_wtls4       2 23 43 13 4 4 */
+&(nid_objs[711]),/* OBJ_wap_wsg_idm_ecid_wtls5       2 23 43 13 4 5 */
 &(nid_objs[565]),/* OBJ_wap_wsg_idm_ecid_wtls6       2 23 43 13 4 6 */
+&(nid_objs[712]),/* OBJ_wap_wsg_idm_ecid_wtls7       2 23 43 13 4 7 */
 &(nid_objs[566]),/* OBJ_wap_wsg_idm_ecid_wtls8       2 23 43 13 4 8 */
 &(nid_objs[567]),/* OBJ_wap_wsg_idm_ecid_wtls9       2 23 43 13 4 9 */
+&(nid_objs[713]),/* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 13 4 10 */
+&(nid_objs[714]),/* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 13 4 11 */
+&(nid_objs[715]),/* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 13 4 12 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
