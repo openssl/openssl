@@ -122,7 +122,7 @@
 # include <openssl/rc4.h>
 #endif
 #ifndef OPENSSL_NO_DES
-# include <openssl/des_old.h>
+# include <openssl/des.h>
 #endif
 #ifndef OPENSSL_NO_IDEA
 # include <openssl/idea.h>
@@ -186,7 +186,7 @@ int MAIN(int argc, char **argv)
 		printf("%s ",RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-		printf("%s ",des_options());
+		printf("%s ",DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
 		printf("%s ",idea_options());

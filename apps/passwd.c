@@ -16,7 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #ifndef OPENSSL_NO_DES
-# include <openssl/des_old.h>
+# include <openssl/des.h>
 #endif
 #ifndef NO_MD5CRYPT_1
 # include <openssl/evp.h>
@@ -482,7 +482,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	/* now compute password hash */
 #ifndef OPENSSL_NO_DES
 	if (usecrypt)
-		hash = des_crypt(passwd, *salt_p);
+		hash = DES_crypt(passwd, *salt_p);
 #endif
 #ifndef NO_MD5CRYPT_1
 	if (use1 || useapr1)

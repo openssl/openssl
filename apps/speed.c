@@ -131,7 +131,7 @@
 #endif
 
 #ifndef OPENSSL_NO_DES
-#include <openssl/des_old.h>
+#include <openssl/des.h>
 #endif
 #ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
@@ -439,9 +439,9 @@ int MAIN(int argc, char **argv)
 	unsigned char iv[MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
 	DES_cblock *buf_as_des_cblock = NULL;
-	static des_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
-	static des_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
-	static des_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
+	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
+	static DES_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
+	static DES_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
 	DES_key_schedule sch;
 	DES_key_schedule sch2;
 	DES_key_schedule sch3;
@@ -532,7 +532,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 #ifndef OPENSSL_NO_DES
-	buf_as_des_cblock = (des_cblock *)buf;
+	buf_as_des_cblock = (DES_cblock *)buf;
 #endif
 	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
 		{
@@ -1603,7 +1603,7 @@ show_res:
 		printf("%s ",RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-		printf("%s ",des_options());
+		printf("%s ",DES_options());
 #endif
 #ifndef OPENSSL_NO_AES
 		printf("%s ",AES_options());
