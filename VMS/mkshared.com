@@ -266,6 +266,14 @@ $             falsesum = falsesum + 1
 $         endif
 $         if plat_entry .eqs. "VMS" then truesum = truesum + 1
 $         if plat_entry .eqs. "!VMS" then falsesum = falsesum + 1
+$         if f$trnlnm("OPENSSL_FIPS") .nes. ""
+$         then
+$           if plat_entry .eqs. "OPENSSL_FIPS" then truesum = truesum + 1
+$           if plat_entry .eqs. "!OPENSSL_FIPS" then falsesum = falsesum + 1
+$         else
+$           if plat_entry .eqs. "OPENSSL_FIPS" then falsesum = falsesum + 1
+$           if plat_entry .eqs. "!OPENSSL_FIPS" then truesum = truesum + 1
+$         endif
 $	  goto loop1
 $       endif
 $     endloop1:
