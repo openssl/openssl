@@ -530,6 +530,7 @@ void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
+BIO_METHOD *BIO_f_reliable(void);
 void BIO_set_cipher(BIO *b,EVP_CIPHER *c,unsigned char *k,
 	unsigned char *i, int enc);
 #endif
@@ -681,6 +682,7 @@ void EVP_CIPHER_CTX_cleanup();
 BIO_METHOD *BIO_f_md();
 BIO_METHOD *BIO_f_base64();
 BIO_METHOD *BIO_f_cipher();
+BIO_METHOD *BIO_f_reliable();
 void BIO_set_cipher();
 #endif
 
