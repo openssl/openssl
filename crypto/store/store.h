@@ -59,6 +59,7 @@
 #ifndef HEADER_STORE_H
 #define HEADER_STORE_H
 
+#include <openssl/ossl_typ.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -67,15 +68,9 @@
 extern "C" {
 #endif
 
-/* The STORE type is a per-store context that holds all the necessary data
-   to perform all the supported storage operations. */
-typedef struct store_st STORE;
-
-/* All instances of STORE have a reference to a method structure, which is a
-   ordered vector of functions that implement the lower level things to do.
-   There is an instruction on the implementation further down, in the section
-   for method implementors. */
-typedef struct store_method_st STORE_METHOD;
+/* Already defined in ossl_typ.h */
+/* typedef struct store_st STORE; */
+/* typedef struct store_method_st STORE_METHOD; */
 
 
 /* All the following functions return 0, a negative number or NULL on error.

@@ -66,6 +66,7 @@
 #include <stdlib.h>
 #endif
 
+#include <openssl/ossl_typ.h>
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
@@ -301,8 +302,8 @@ int ERR_get_next_error_library(void);
 int ERR_set_mark(void);
 int ERR_pop_to_mark(void);
 
-/* This opaque type encapsulates the low-level error-state functions */
-typedef struct st_ERR_FNS ERR_FNS;
+/* Already defined in ossl_typ.h */
+/* typedef struct st_ERR_FNS ERR_FNS; */
 /* An application can use this function and provide the return value to loaded
  * modules that should use the application's ERR state/functionality */
 const ERR_FNS *ERR_get_implementation(void);

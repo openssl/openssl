@@ -1,6 +1,3 @@
-/* crypto/engine/hw_aep.c */
-/*
- */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -72,6 +69,8 @@ typedef int pid_t;
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/buffer.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_AEP

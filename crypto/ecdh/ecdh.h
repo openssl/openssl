@@ -83,8 +83,11 @@
 extern "C" {
 #endif
 
-typedef struct ecdh_method 
-{
+/* Already defined in ossl_typ.h */
+/* typedef struct ecdh_method ECDH_METHOD; */
+
+struct ecdh_method 
+	{
 	const char *name;
 	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
 	                   void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
@@ -94,7 +97,7 @@ typedef struct ecdh_method
 #endif
 	int flags;
 	char *app_data;
-} ECDH_METHOD;
+	};
 
 typedef struct ecdh_data_st {
 	/* EC_KEY_METH_DATA part */

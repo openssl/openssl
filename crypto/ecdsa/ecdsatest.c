@@ -95,6 +95,7 @@ int main(int argc, char * argv[])
 #include <openssl/ecdsa.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 static const char rnd_seed[] = "string to make the random number generator "
 	"think it has entropy";

@@ -52,8 +52,9 @@
  *
  */
 
+#include "cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/engine.h>
+#include <openssl/lhash.h>
 #include "eng_int.h"
 
 /* This is the type of item in the 'implementation' table. Each 'nid' hashes to

@@ -61,23 +61,15 @@
 
 #include <openssl/crypto.h>
 #include <openssl/safestack.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/* The UI type is a holder for a specific user interface session.  It can
-   contain an illimited number of informational or error strings as well
-   as things to prompt for, both passwords (noecho mode) and others (echo
-   mode), and verification of the same.  All of these are called strings,
-   and are further described below. */
-typedef struct ui_st UI;
-
-/* All instances of UI have a reference to a method structure, which is a
-   ordered vector of functions that implement the lower level things to do.
-   There is an instruction on the implementation further down, in the section
-   for method implementors. */
-typedef struct ui_method_st UI_METHOD;
+/* Declared already in ossl_typ.h */
+/* typedef struct ui_st UI; */
+/* typedef struct ui_method_st UI_METHOD; */
 
 
 /* All the following functions return -1 or NULL on error and in some cases

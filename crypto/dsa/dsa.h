@@ -87,7 +87,9 @@
 extern "C" {
 #endif
 
-typedef struct dsa_st DSA;
+/* Already defined in ossl_typ.h */
+/* typedef struct dsa_st DSA; */
+/* typedef struct dsa_method DSA_METHOD; */
 
 typedef struct DSA_SIG_st
 	{
@@ -95,7 +97,8 @@ typedef struct DSA_SIG_st
 	BIGNUM *s;
 	} DSA_SIG;
 
-typedef struct dsa_method {
+struct dsa_method
+	{
 	const char *name;
 	DSA_SIG * (*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
 	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
@@ -119,7 +122,7 @@ typedef struct dsa_method {
 			BN_GENCB *cb);
 	/* If this is non-NULL, it is used to generate DSA keys */
 	int (*dsa_keygen)(DSA *dsa);
-} DSA_METHOD;
+	};
 
 struct dsa_st
 	{

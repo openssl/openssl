@@ -64,6 +64,7 @@
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/ui.h>
+#include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_NCIPHER

@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

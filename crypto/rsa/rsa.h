@@ -76,9 +76,11 @@
 extern "C" {
 #endif
 
-typedef struct rsa_st RSA;
+/* Declared already in ossl_typ.h */
+/* typedef struct rsa_st RSA; */
+/* typedef struct rsa_meth_st RSA_METHOD; */
 
-typedef struct rsa_meth_st
+struct rsa_meth_st
 	{
 	const char *name;
 	int (*rsa_pub_enc)(int flen,const unsigned char *from,
@@ -119,7 +121,7 @@ typedef struct rsa_meth_st
  * it would be nice to assume there are no such things as "builtin software"
  * implementations. */
 	int (*rsa_keygen)(RSA *rsa, int bits, unsigned long e, BN_GENCB *cb);
-	} RSA_METHOD;
+	};
 
 struct rsa_st
 	{

@@ -73,14 +73,17 @@
 extern "C" {
 #endif
 
+/* Already defined in ossl_typ.h */
+/* typedef struct ecdsa_method ECDSA_METHOD; */
+
 typedef struct ECDSA_SIG_st
-{
+	{
 	BIGNUM *r;
 	BIGNUM *s;
-} ECDSA_SIG;
+	} ECDSA_SIG;
 
-typedef struct ecdsa_method 
-{
+struct ecdsa_method 
+	{
 	const char *name;
 	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len, 
 			EC_KEY *eckey);
@@ -94,7 +97,7 @@ typedef struct ecdsa_method
 #endif
 	int flags;
 	char *app_data;
-} ECDSA_METHOD;
+	};
 
 typedef struct ecdsa_data_st {
 	/* EC_KEY_METH_DATA part */

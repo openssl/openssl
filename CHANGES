@@ -4,6 +4,15 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Reduced header interdepencies by declaring more opaque objects in
+     ossl_typ.h. As a consequence, including some headers (eg. engine.h) will
+     give fewer recursive includes, which could break lazy source code - so
+     this change is covered by the OPENSSL_NO_DEPRECATED symbol. As always,
+     developers should define this symbol when building and using openssl to
+     ensure they track the recommended behaviour, interfaces, [etc], but
+     backwards-compatible behaviour prevails when this isn't defined.
+     [Geoff Thorpe]
+
   *) New function X509_POLICY_NODE_print() which prints out policy nodes.
      [Steve Henson]
 

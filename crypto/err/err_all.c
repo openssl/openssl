@@ -91,6 +91,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 
