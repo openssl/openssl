@@ -336,7 +336,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, FIPS_SHA_SIZE_T num)
 	c->h3=(c->h3+B)&0xffffffffL;
 	c->h4=(c->h4+C)&0xffffffffL;
 
-	if ((int)(--num) <= 0) break;
+	if (--num == 0) break;
 
 	A=c->h0;
 	B=c->h1;
@@ -466,7 +466,7 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, FIPS_SHA_SIZE_T num)
 	c->h3=(c->h3+B)&0xffffffffL;
 	c->h4=(c->h4+C)&0xffffffffL;
 
-	if ((int)(--num) <= 0) break;
+	if (--num == 0) break;
 
 	A=c->h0;
 	B=c->h1;
