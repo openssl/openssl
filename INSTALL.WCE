@@ -8,6 +8,9 @@
   * wcecompat compatibility library (www.essemer.com.au)
   * Optionally ceutils for running automated tests (www.essemer.com.au)
 
+ You also need Perl for Win32.  You will need ActiveState Perl, available
+ from http://www.activestate.com/ActivePerl.
+
  The C Runtime Library implementation for Windows CE that is included with
  Microsoft eMbedded Visual C++ 3.0 is incomplete and in some places
  incorrect.  wcecompat plugs the holes and tries to bring the Windows CE
@@ -19,9 +22,6 @@
 
  Building
  --------
-
- You need Perl for Win32.  Unless you will build on Cygwin, you will need
- ActiveState Perl, available from http://www.activestate.com/ActivePerl.
 
  Setup the eMbedded Visual C++ environment.  There are batch files for doing
  this installed with eVC++.  For an ARM processor, for example, execute:
