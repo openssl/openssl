@@ -12,18 +12,13 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
-  *) Add a "destroy" handler to ENGINEs that allows structural cleanup to
+  +) Add a "destroy" handler to ENGINEs that allows structural cleanup to
      be done prior to destruction. Use this to unload error strings from
      ENGINEs that load their own error strings. NB: This adds two new API
      functions to "get" and "set" this destroy handler in an ENGINE.
      [Geoff]
 
-  *) Change the various "***_up()" functions, that increment reference
-     counts on the various structure types, to "***_up_ref()". The naming
-     is more consistent with existing code and generally a better choice.
-     [Bodo Moeller]
-
-  *) Alter all existing ENGINE implementations (except "openssl" and
+  +) Alter all existing ENGINE implementations (except "openssl" and
      "openbsd") to dynamically instantiate their own error strings. This
      makes them more flexible to be built both as statically-linked ENGINEs
      and self-contained shared-libraries loadable via the "dynamic" ENGINE.
@@ -31,7 +26,7 @@
      shared-libraries easier (see README.ENGINE).
      [Geoff Thorpe]
 
-  *) Add a "dynamic" ENGINE that provides a mechanism for binding ENGINE
+  +) Add a "dynamic" ENGINE that provides a mechanism for binding ENGINE
      implementations into applications that are completely implemented in
      self-contained shared-libraries. The "dynamic" ENGINE exposes control
      commands that can be used to configure what shared-library to load and
@@ -104,7 +99,7 @@
      application and not in its own statically linked copy of OpenSSL code.
      [Geoff Thorpe]
 
-  +) Give DH, DSA, and RSA types their own "**_up()" function to increment
+  +) Give DH, DSA, and RSA types their own "**_up_ref()" function to increment
      reference counts. This performs normal REF_PRINT/REF_CHECK macros on
      the operation, and provides a more encapsulated way for external code
      (crypto/evp/ and ssl/) to do this. Also changed the evp and ssl code
