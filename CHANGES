@@ -4,6 +4,17 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Because of the callback-based approach for implementing LHASH as a
+     template type, lh_insert() adds opaque objects to hash-tables and
+     lh_doall() or lh_doall_arg() are typically used with a destructor callback
+     to clean up those corresponding objects before destroying the hash table
+     (and losing the object pointers). So some over-zealous constifications in
+     LHASH have been relaxed so that lh_insert() does not take (nor store) the
+     objects as "const" and the lh_doall[_arg] callback wrappers are not
+     prototyped to have "const" restrictions on the object pointers they are
+     given (and so aren't required to cast them away any more).
+     [Geoff Thorpe]
+
   *) The tmdiff.h API was so ugly and minimal that our own timing utility
      (speed) prefers to use its own implementation. The two implementations
      haven't been consolidated as yet (volunteers?) but the tmdiff API has had

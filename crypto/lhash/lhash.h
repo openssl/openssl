@@ -78,7 +78,7 @@ extern "C" {
 
 typedef struct lhash_node_st
 	{
-	const void *data;
+	void *data;
 	struct lhash_node_st *next;
 #ifndef OPENSSL_NO_HASH_COMP
 	unsigned long hash;
@@ -87,8 +87,8 @@ typedef struct lhash_node_st
 
 typedef int (*LHASH_COMP_FN_TYPE)(const void *, const void *);
 typedef unsigned long (*LHASH_HASH_FN_TYPE)(const void *);
-typedef void (*LHASH_DOALL_FN_TYPE)(const void *);
-typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, void *);
+typedef void (*LHASH_DOALL_FN_TYPE)(void *);
+typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
 
 /* Macros for declaring and implementing type-safe wrappers for LHASH callbacks.
  * This way, callbacks can be provided to LHASH structures without function
@@ -118,18 +118,18 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, void *);
 
 /* Third: "doall" functions */
 #define DECLARE_LHASH_DOALL_FN(f_name,o_type) \
-	void f_name##_LHASH_DOALL(const void *);
+	void f_name##_LHASH_DOALL(void *);
 #define IMPLEMENT_LHASH_DOALL_FN(f_name,o_type) \
-	void f_name##_LHASH_DOALL(const void *arg) { \
+	void f_name##_LHASH_DOALL(void *arg) { \
 		o_type a = (o_type)arg; \
 		f_name(a); }
 #define LHASH_DOALL_FN(f_name) f_name##_LHASH_DOALL
 
 /* Fourth: "doall_arg" functions */
 #define DECLARE_LHASH_DOALL_ARG_FN(f_name,o_type,a_type) \
-	void f_name##_LHASH_DOALL_ARG(const void *, void *);
+	void f_name##_LHASH_DOALL_ARG(void *, void *);
 #define IMPLEMENT_LHASH_DOALL_ARG_FN(f_name,o_type,a_type) \
-	void f_name##_LHASH_DOALL_ARG(const void *arg1, void *arg2) { \
+	void f_name##_LHASH_DOALL_ARG(void *arg1, void *arg2) { \
 		o_type a = (o_type)arg1; \
 		a_type b = (a_type)arg2; \
 		f_name(a,b); }
@@ -173,7 +173,7 @@ typedef struct lhash_st
 
 LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
 void lh_free(LHASH *lh);
-void *lh_insert(LHASH *lh, const void *data);
+void *lh_insert(LHASH *lh, void *data);
 void *lh_delete(LHASH *lh, const void *data);
 void *lh_retrieve(LHASH *lh, const void *data);
 void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func);

@@ -176,7 +176,7 @@ void lh_free(LHASH *lh)
 	OPENSSL_free(lh);
 	}
 
-void *lh_insert(LHASH *lh, const void *data)
+void *lh_insert(LHASH *lh, void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
