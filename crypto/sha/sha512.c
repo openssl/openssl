@@ -48,6 +48,8 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
+#include "cryptlib.h"
+
 const char *SHA512_version="SHA-512" OPENSSL_VERSION_PTEXT;
 
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386) || defined(__x86_64)
@@ -347,9 +349,8 @@ static const SHA_LONG64 K512[80] = {
 
 #if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define	GO_FOR_SSE2(ctx,in,num)		do {		\
-	extern int	OPENSSL_ia32cap;		\
-	void		sha512_block_sse2(void *,const void *,size_t);	\
-	if (!(OPENSSL_ia32cap & (1<<26))) break;	\
+	void	sha512_block_sse2(void *,const void *,size_t);	\
+	if (!(OPENSSL_ia32cap_P & (1<<26))) break;	\
 	sha512_block_sse2(ctx->h,in,num); return;	\
 					} while (0)
 #endif

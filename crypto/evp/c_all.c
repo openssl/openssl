@@ -79,7 +79,6 @@ void OPENSSL_add_all_algorithms_noconf(void)
 	 * only on IA-32, but we reserve the option for all
 	 * platforms...
 	 */
-	void OPENSSL_cpuid_setup();
 	OPENSSL_cpuid_setup();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();

@@ -541,6 +541,9 @@ void ERR_load_CRYPTO_strings(void);
 /* Reason codes. */
 #define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
 
+unsigned long *OPENSSL_ia32cap_loc(void);
+#define OPENSSL_ia32cap (*(OPENSSL_ia32cap_loc()))
+
 #ifdef  __cplusplus
 }
 #endif

@@ -25,12 +25,12 @@ require "x86asm.pl";
 	&mov	("edx","ecx");
 &function_end("OPENSSL_ia32_cpuid");
 
-&external_label("OPENSSL_ia32cap");
+&external_label("OPENSSL_ia32cap_P");
 
-&function_begin_B("OPENSSL_rdtsc");
+&function_begin_B("OPENSSL_rdtsc","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
 	&xor	("eax","eax");
 	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap");
+	&picmeup("ecx","OPENSSL_ia32cap_P");
 	&bt	(&DWP(0,"ecx"),4);
 	&jnc	(&label("notsc"));
 	&rdtsc	();
@@ -38,6 +38,6 @@ require "x86asm.pl";
 	&ret	();
 &function_end_B("OPENSSL_rdtsc");
 
-&initseg("OPENSSL_cpuid_setup") if ($main'elf);
+&initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();

@@ -8,6 +8,8 @@ require "x86asm.pl";
 $sse2=0;
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
+&external_label("OPENSSL_ia32cap_P") if ($sse2);
+
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");
 &bn_sqr_words("bn_sqr_words");
@@ -22,7 +24,7 @@ sub bn_mul_add_words
 	{
 	local($name)=@_;
 
-	&function_begin($name,"");
+	&function_begin($name,$sse2?"EXTRN\t_OPENSSL_ia32cap_P:DWORD":"");
 
 	&comment("");
 	$Low="eax";
@@ -46,7 +48,7 @@ sub bn_mul_add_words
 	&jz(&label("maw_finish"));
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap");
+		&picmeup("eax","OPENSSL_ia32cap_P");
 		&bt(&DWP(0,"eax"),26);
 		&jnc(&label("maw_loop"));
 

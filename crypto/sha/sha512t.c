@@ -9,6 +9,7 @@
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/crypto.h>
 
 unsigned char app_c1[SHA512_DIGEST_LENGTH] = {
 	0xdd,0xaf,0x35,0xa1,0x93,0x61,0x7a,0xba,
@@ -70,11 +71,12 @@ int main ()
   EVP_MD_CTX	evp;
 
 #ifdef OPENSSL_IA32_SSE2
-    { extern int OPENSSL_ia32cap;
-      char      *env;
+    /* Alternative to this is to call OpenSSL_add_all_algorithms...
+     * The below code is retained exclusively for debugging purposes. */
+    { char      *env;
 
 	if ((env=getenv("OPENSSL_ia32cap")))
-	    OPENSSL_ia32cap = strtol (env,NULL,0);
+	    OPENSSL_ia32cap = strtoul (env,NULL,0);
     }
 #endif
 
