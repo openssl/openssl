@@ -249,7 +249,7 @@ static unsigned long app_info_hash(APP_INFO *a)
 	return(ret);
 	}
 
-static APP_INFO *pop_info()
+static APP_INFO *pop_info(void)
 	{
 	APP_INFO tmp;
 	APP_INFO *ret = NULL;
