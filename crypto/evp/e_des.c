@@ -63,9 +63,11 @@
 #include <openssl/objects.h>
 #include "evp_locl.h"
 #include <openssl/des.h>
+#include <openssl/rand.h>
 
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv, int enc);
+static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
 /* Because of various casts and different names can't use IMPLEMENT_BLOCK_CIPHER */
 
@@ -127,26 +129,48 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
-			0, des_init_key, NULL,
+			EVP_CIPH_RAND_KEY, des_init_key, NULL,
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
-			NULL)
+			des_ctrl)
 
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,1,0,des_init_key,NULL,
+BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,1,
+		     EVP_CIPH_RAND_KEY, des_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,NULL)
+		     EVP_CIPHER_get_asn1_iv,des_ctrl)
 
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,8,0,des_init_key,NULL,
+BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,8,
+		     EVP_CIPH_RAND_KEY,des_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,NULL)
+		     EVP_CIPHER_get_asn1_iv,des_ctrl)
 
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv, int enc)
 	{
 	DES_cblock *deskey = (DES_cblock *)key;
-
+#ifdef EVP_CHECK_DES_KEY
+	if(DES_set_key_checked(deskey,ctx->cipher_data) != 0)
+		return 0;
+#else
 	DES_set_key_unchecked(deskey,ctx->cipher_data);
+#endif
 	return 1;
+	}
+
+static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+	{
+	
+	switch(type)
+		{
+	case EVP_CTRL_RAND_KEY:
+		if (RAND_bytes(ptr, 8) <= 0)
+			return 0;
+		DES_set_odd_parity((DES_cblock *)ptr);
+		return 1;
+
+	default:
+		return -1;
+		}
 	}
 
 #endif

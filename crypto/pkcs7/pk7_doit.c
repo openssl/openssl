@@ -215,11 +215,14 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		BIO_get_cipher_ctx(btmp, &ctx);
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
-		if (RAND_bytes(key,keylen) <= 0)
-			goto err;
 		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
 		if (ivlen > 0) RAND_pseudo_bytes(iv,ivlen);
-		EVP_CipherInit_ex(ctx, evp_cipher, NULL, key, iv, 1);
+		if (EVP_CipherInit_ex(ctx, evp_cipher, NULL, NULL, NULL, 1)<=0)
+			goto err;
+		if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
+			goto err;
+		if (EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, 1) <= 0)
+			goto err;
 
 		if (ivlen > 0) {
 			if (xalg->parameter == NULL) 
@@ -440,7 +443,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
 		evp_ctx=NULL;
 		BIO_get_cipher_ctx(etmp,&evp_ctx);
-		EVP_CipherInit_ex(evp_ctx,evp_cipher,NULL,NULL,NULL,0);
+		if (EVP_CipherInit_ex(evp_ctx,evp_cipher,NULL,NULL,NULL,0) <= 0)
+			goto err;
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
 			goto err;
 
@@ -456,7 +460,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 				goto err;
 				}
 		} 
-		EVP_CipherInit_ex(evp_ctx,NULL,NULL,tmp,NULL,0);
+		if (EVP_CipherInit_ex(evp_ctx,NULL,NULL,tmp,NULL,0) <= 0)
+			goto err;
 
 		OPENSSL_cleanse(tmp,jj);
 

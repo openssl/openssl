@@ -332,6 +332,8 @@ struct evp_cipher_st
 #define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 /* Don't use standard block padding */
 #define 	EVP_CIPH_NO_PADDING		0x100
+/* cipher handles random key generation */
+#define 	EVP_CIPH_RAND_KEY		0x200
 
 /* ctrl() values */
 
@@ -341,6 +343,7 @@ struct evp_cipher_st
 #define 	EVP_CTRL_SET_RC2_KEY_BITS	0x3
 #define 	EVP_CTRL_GET_RC5_ROUNDS		0x4
 #define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
+#define 	EVP_CTRL_RAND_KEY		0x6
 
 typedef struct evp_cipher_info_st
 	{
@@ -567,6 +570,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
+int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_md(void);

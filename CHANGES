@@ -4,6 +4,16 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add new EVP function EVP_CIPHER_CTX_rand_key and associated functionality.
+     This will generate a random key of the appropriate length based on the 
+     cipher context. The EVP_CIPHER can provide its own random key generation
+     routine to support keys of a specific form. This is used in the des and 
+     3des routines to generate a key of the correct parity. Update S/MIME
+     code to use new functions and hence generate correct parity DES keys.
+     Add EVP_CHECK_DES_KEY #define to return an error if the key is not 
+     valid (weak or incorrect parity).
+     [Steve Henson]
+
   *) Add a local set of CRLs that can be used by X509_verify_cert() as well
      as looking them up. This is useful when the verified structure may contain
      CRLs, for example PKCS#7 signedData. Modify PKCS7_verify() to use any CRLs
