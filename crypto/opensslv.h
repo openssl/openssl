@@ -79,7 +79,7 @@
  * should only keep the versions that are binary compatible with the current.
  */
 #define SHLIB_VERSION_HISTORY ""
-#define SHLIB_VERSION_NUMBER "0.9.7"
+#define SHLIB_VERSION_NUMBER "0.9.8"
 
 
 #endif /* HEADER_OPENSSLV_H */
