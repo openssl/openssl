@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) In copy_email() check for >= 0 as a return value for
+     X509_NAME_get_index_by_NID() since 0 is a valid index.
+     [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
+
   *) Use better test patterns in bntest.
      [Ulf Möller]
 
