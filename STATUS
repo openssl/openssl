@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/09 03:01:42 $
+  ______________                           $Date: 1999/03/09 15:36:53 $
 
   DEVELOPMENT STATE
 
@@ -8,16 +8,20 @@
        - No more feature commits, please. 
        - Commit bugfixes and cleanups only, please.
        - Already successfully tested platform:
-	 o  FreeBSD 2.2.7  Ben Laurie            OK
-         o  FreeBSD 3.1    Ralf S. Engelschall   all silent
-         o  Solaris 2.6    Ralf S. Engelschall   ctype-related warnings, test fails
-	 o  Linux RH 5.1   Steve Henson		 OK
+         o  FreeBSD 2.2.7  Ben Laurie            OK
+         o  FreeBSD 3.1    Ralf S. Engelschall   OK
+         o  Solaris 2.6    Ralf S. Engelschall   ctype warns, test fails in test_ssl
+         o  Linux RH 5.1   Steve Henson          OK
 
        Proposed release time: Monday, March 15th 1999
 
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
   RELEASE SHOWSTOPPERS
+
+    o `make test' still fails under Solaris 2.6 in the test_ssl target
+    o Compilation warnings: ctype-related int vs. char
+    o Compilation error: "unsigned long*" and "int*" under AIX
 
   AVAILABLE PATCHES
 
