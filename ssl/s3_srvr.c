@@ -531,10 +531,9 @@ static int ssl3_get_client_hello(SSL *s)
 	if (!ok) return((int)n);
 	d=p=(unsigned char *)s->init_buf->data;
 
-	/* The version number has already been checked in ssl3_get_message.
-	 * I a native TLSv1/SSLv3 method, the match must be correct except
-	 * perhaps for the first message */
-/*	s->client_version=(((int)p[0])<<8)|(int)p[1]; */
+	/* use version from inside client hello, not from record header
+	 * (may differ: see RFC 2246, Appendix E, second paragraph) */
+	s->client_version=(((int)p[0])<<8)|(int)p[1];
 	p+=2;
 
 	/* load the client random */
@@ -1239,7 +1238,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 		i=RSA_private_decrypt((int)n,p,p,rsa,RSA_PKCS1_PADDING);
 
-#if 1
+#if 0
 		/* If a bad decrypt, use a random master key */
 		if ((i != SSL_MAX_MASTER_KEY_LENGTH) ||
 			((p[0] != (s->client_version>>8)) ||

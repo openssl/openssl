@@ -89,7 +89,7 @@ int ssl23_write_bytes(SSL *s)
 		}
 	}
 
-/* only return when we have read 'n' bytes */
+/* return regularly only when we have read (at least) 'n' bytes */
 int ssl23_read_bytes(SSL *s, int n)
 	{
 	unsigned char *p;

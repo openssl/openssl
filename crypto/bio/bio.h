@@ -517,10 +517,12 @@ BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
 int	BIO_get_retry_reason(BIO *bio);
 BIO *	BIO_dup_chain(BIO *in);
 
+#if 0 /* not yet */
 int BIO_nread0(BIO *bio, char **buf);
 int BIO_nread(BIO *bio, char **buf, int num);
 int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
+#endif
 
 #ifndef WIN16
 long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
