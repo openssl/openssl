@@ -536,19 +536,11 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *list, CIPHER_ORDER **head_p,
 			number_uses[curr->cipher->strength_bits]++;
 		curr = curr->next;
 		}
-#if 0
 	/*
 	 * Go through the list of used strength_bits values in descending
-	 * order, omit strength_bits "0".
+	 * order.
 	 */
-	for (i = max_strength_bits; i > 0; i--)
-	/* Do we really want this? If so "ALL:eNULL:@STRENGTH" puts eNULL
-         * ciphers first???
-         */
-
-#else
 	for (i = max_strength_bits; i >= 0; i--)
-#endif
 		if (number_uses[i] > 0)
 			ssl_cipher_apply_rule(0, 0, 0, 0, CIPHER_ORD, i,
 					list, head_p, tail_p);
@@ -679,7 +671,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (rule == CIPHER_SPECIAL)
 				{	/* special command */
 				ok = 0;
-				if (!strncmp(buf, "STRENGTH", buflen))
+				if ((buflen == 8) &&
+					!strncmp(buf, "STRENGTH", 8))
 					ok = ssl_cipher_strength_sort(list,
 							head_p, tail_p);
 				else
@@ -689,7 +682,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 					retval = 0;
 				/*
 				 * We do not support any "multi" options
-				 * together with "@", so through away the
+				 * together with "@", so throw away the
 				 * rest of the command, if any left, until
 				 * end or ':' is found.
 				 */
