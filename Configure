@@ -285,7 +285,7 @@ my $ranlib;
 my $perl;
 
 $ranlib=&which("ranlib") or $ranlib="true";
-$perl=&which("perl5") or $perl=&which("perl");
+$perl=&which("perl5") or $perl=&which("perl") or $perl="perl";
 
 &usage if ($#ARGV < 0);
 
@@ -629,10 +629,7 @@ if($IsWindows) {
 	printf OUT "#define DATE \"%s\"\n", scalar gmtime();
 	close(OUT);
 } else {
-	if ( $perl =~ /./ ) {
-		(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
-	} else {
-		(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
 	}
 	(system 'make depend') == 0 or exit $? if $depflags ne "";
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
