@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/12/21 03:23:15 $
+  ______________                           $Date: 2002/02/09 01:49:53 $
 
   DEVELOPMENT STATE
 
@@ -108,6 +108,10 @@
                Paul +1
 
   WISHES
+
+    o  Add variants of DH_generate_parameters() and BN_generate_prime() [etc?]
+       where the callback function can request that the function be aborted.
+       [Gregory Stark <ghstark@pobox.com>, <rayyang2000@yahoo.com>]
 
     o  SRP in TLS.
        [wished by:
