@@ -62,13 +62,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#define USE_SOCKETS
-#define NON_MAIN
-#include "apps.h"
-#undef USE_SOCKETS
-#undef NON_MAIN
-#include "s_apps.h"
-#include <openssl/ssl.h>
 #include <openssl/e_os2.h>
 
 /* With IPv6, it looks like Digital has mixed up the proper order of
@@ -79,6 +72,14 @@
 #define __U_INT
 typedef unsigned int u_int;
 #endif
+
+#define USE_SOCKETS
+#define NON_MAIN
+#include "apps.h"
+#undef USE_SOCKETS
+#undef NON_MAIN
+#include "s_apps.h"
+#include <openssl/ssl.h>
 
 static struct hostent *GetHostByName(char *name);
 #ifdef OPENSSL_SYS_WINDOWS
