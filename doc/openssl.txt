@@ -60,7 +60,16 @@ INTRODUCTION.
 For OpenSSL 0.9.2 the extension code has be considerably enhanced. It is now
 possible to add and print out common X509 V3 certificate and CRL extensions.
 
-For more information about the meaning of extensions see:
+BEGINNERS NOTE
+
+For most simple applications you don't need to know too much about extensions:
+the default openssl.cnf values will usually do sensible things.
+
+If you want to know more you can initially quickly look through the sections
+describing how the standard OpenSSL utilities display and add extensions and
+then the list of supported extensions.
+
+For more technical information about the meaning of extensions see:
 
 http://www.imc.org/ietf-pkix/
 http://home.netscape.com/eng/security/certs.html
@@ -73,7 +82,6 @@ openssl x509 -in cert.pem -text
 openssl crl -in crl.pem -text
 
 will give information in the extension printout, for example:
-
 
         X509v3 extensions:
             X509v3 Basic Constraints: 
@@ -118,7 +126,7 @@ CRL extensions NOT CRL *entry* extensions which cannot currently be generated.
 CRL entry extensions can be displayed.
 
 NB. At this time Netscape Communicator rejects V2 CRLs: to get an old V1 CRL
-you should comment out the crl_extensions line in the configuration file.
+you should not include a crl_extensions line in the configuration file.
 
 As with all configuration files you can use the inbuilt environment expansion
 to allow the values to be passed in the environment. Therefore if you have
@@ -204,6 +212,14 @@ invalid extensions unless care is taken.
 
 CURRENTLY SUPPORTED EXTENSIONS.
 
+If you aren't sure about extensions then they can be largely ignored: its only
+when you want to do things like restrict certificate usage when you need to
+worry about them. 
+
+The only extension that a beginner might want to look at is Basic Constraints.
+If in addition you want to try Netscape object signing the you should also
+look at Netscape Certificate Type.
+
 Literal String extensions.
 
 In each case the 'value' of the extension is placed directly in the
@@ -232,20 +248,67 @@ For example:
 
 nsCertType=server
 
-keyUsage=critical, digitalSignature, nonRepudiation
+keyUsage=digitalSignature, nonRepudiation
 
+Hints on Netscape Certificate Type.
+
+Other than Basic Constraints this is the only extension a beginner might
+want to use, if you want to try Netscape object signing, otherwise it can
+be ignored.
+
+If you want a certificate that can be used just for object signing then:
+
+nsCertType=objsign
+
+will do the job. If you want to use it as a normal end user and server
+certificate as well then
+
+nsCertType=objsign,email,server
+
+is more appropriate. You cannot use a self signed certificate for object
+signing (well Netscape signtool can but it cheats!) so you need to create
+a CA certificate and sign an end user certificate with it.
+
+Side note: If you want to conform to the Netscape specifications then you
+should really also set:
+
+nsCertType=objCA
+
+in the *CA* certificate for just an object signing CA and
+
+nsCertType=objCA,emailCA,sslCA
+
+for everything. Current Netscape software doesn't enforce this so it can
+be omitted.
 
 Basic Constraints.
+
+This is generally the only extension you need to worry about for simple
+applications. If you want your certificate to be usable as a CA certificate
+(in addition to an end user certificate) then you set this to:
+
+basicConstraints=CA:TRUE
+
+if you want to be certain the certificate cannot be used as a CA then do:
+
+basicConstraints=CA:FALSE
+
+The rest of this section describes more advanced usage.
 
 Basic constraints is a multi-valued extension that supports a CA and an
 optional pathlen option. The CA option takes the values true and false and
 pathlen takes an integer. Note if the CA option is false the pathlen option
-should be omitted.
+should be omitted. 
+
+The pathlen parameter indicates the maximum number of CAs that can appear
+below this one in a chain. So if you have a CA with a pathlen of zero it can
+only be used to sign end user certificates and not further CAs. This all
+assumes that the software correctly interprets this extension of course.
 
 Examples:
 
 basicConstraints=CA:TRUE
-basicConstraints=critical,CA:TRUE, pathlen:10
+basicConstraints=critical,CA:TRUE, pathlen:0
 
 NOTE: for a CA to be considered valid it must have the CA option set to
 TRUE. An end user certificate MUST NOT have the CA value set to true.

@@ -42,7 +42,11 @@ private_key	= $dir/private/cakey.pem# The private key
 RANDFILE	= $dir/private/.rand	# private random number file
 
 x509_extensions	= usr_cert		# The extentions to add to the cert
-crl_extensions	= crl_ext		# Extensions to add to CRL
+
+# Extensions to add to a CRL. Note: Netscape communicator chokes on V2 CRLs
+# so this is commented out by default to leave a V1 CRL.
+# crl_extensions	= crl_ext
+
 default_days	= 365			# how long to certify for
 default_crl_days= 30			# how long before next CRL
 default_md	= md5			# which md to use.
@@ -131,31 +135,33 @@ basicConstraints=CA:FALSE
 # the certificate can be used for anything *except* object signing.
 
 # This is OK for an SSL server.
-#nsCertType			= server
+# nsCertType			= server
 
 # For an object signing certificate this would be used.
-#nsCertType = objsign
+# nsCertType = objsign
 
 # For normal client use this is typical
-#nsCertType = client, email
+# nsCertType = client, email
 
-# This is typical also
+# and for everything including object signing:
+# nsCertType = client, email, objsign
 
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+# This is typical in keyUsage for a client certificate.
+# keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 
+# This will be displayed in Netscape's comment listbox.
 nsComment			= "OpenSSL Generated Certificate"
 
-# PKIX recommendations
+# PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer:always
 
+# This stuff is for subjectAltName and issuerAltname.
 # Import the email address.
-
-subjectAltName=email:copy
+# subjectAltName=email:copy
 
 # Copy subject details
-
-issuerAltName=issuer:copy
+# issuerAltName=issuer:copy
 
 #nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
 #nsBaseUrl
@@ -168,8 +174,6 @@ issuerAltName=issuer:copy
 
 # Extensions for a typical CA
 
-# It's a CA certificate
-basicConstraints = CA:true
 
 # PKIX recommendation.
 
@@ -180,17 +184,21 @@ authorityKeyIdentifier=keyid:always,issuer:always
 # This is what PKIX recommends but some broken software chokes on critical
 # extensions.
 #basicConstraints = critical,CA:true
+# So we do this instead.
+basicConstraints = CA:true
 
-# Key usage: again this should really be critical.
-keyUsage = cRLSign, keyCertSign
+# Key usage: this is typical for a CA certificate. However since it will
+# prevent it being used as an test self-signed certificate it is best
+# left out by default.
+# keyUsage = cRLSign, keyCertSign
 
 # Some might want this also
-#nsCertType = sslCA, emailCA
+# nsCertType = sslCA, emailCA
 
 # Include email address in subject alt name: another PKIX recommendation
-subjectAltName=email:copy
+# subjectAltName=email:copy
 # Copy issuer details
-issuerAltName=issuer:copy
+# issuerAltName=issuer:copy
 
 # RAW DER hex encoding of an extension: beware experts only!
 # 1.2.3.5=RAW:02:03
@@ -202,5 +210,5 @@ issuerAltName=issuer:copy
 # CRL extensions.
 # Only issuerAltName and authorityKeyIdentifier make any sense in a CRL.
 
-issuerAltName=issuer:copy
+# issuerAltName=issuer:copy
 authorityKeyIdentifier=keyid:always,issuer:always
