@@ -77,7 +77,7 @@ asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
 # if they didn't bother to upgrade GNU assembler. Such users should
 # not choose this option, but be adviced to *remove* GNU assembler
 # or upgrade it.
-sm/md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
+asm/md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -E asm/md5-sparcv9.S | \
 		/usr/ccs/bin/as -xarch=v8plus - -o asm/md5-sparcv8plus-gcc27.o
 
