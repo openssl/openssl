@@ -1,6 +1,6 @@
-/* hw_ncipher_err.c */
+/* e_ncipher_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,7 @@ static ERR_STRING_DATA HWCRHK_str_reasons[]=
 {HWCRHK_R_CHIL_ERROR                     ,"chil error"},
 {HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
 {HWCRHK_R_DSO_FAILURE                    ,"dso failure"},
+{HWCRHK_R_LOCKING_MISSING                ,"locking missing"},
 {HWCRHK_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
 {HWCRHK_R_NOT_INITIALISED                ,"not initialised"},
 {HWCRHK_R_NOT_LOADED                     ,"not loaded"},
