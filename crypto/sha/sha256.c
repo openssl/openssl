@@ -20,9 +20,9 @@ int SHA224_Init (SHA256_CTX *c)
 	c->h[2]=0x3070dd17UL;	c->h[3]=0xf70e5939UL;
 	c->h[4]=0xffc00b31UL;	c->h[5]=0x68581511UL;
 	c->h[6]=0x64f98fa7UL;	c->h[7]=0xbefa4fa4UL;
-        c->Nl=0;        c->Nh=0;
-        c->num=0;
-        return 1;
+	c->Nl=0;	c->Nh=0;
+	c->num=0;	c->md_len=SHA224_DIGEST_LENGTH;
+	return 1;
 	}
 
 int SHA256_Init (SHA256_CTX *c)
@@ -31,23 +31,20 @@ int SHA256_Init (SHA256_CTX *c)
 	c->h[2]=0x3c6ef372UL;	c->h[3]=0xa54ff53aUL;
 	c->h[4]=0x510e527fUL;	c->h[5]=0x9b05688cUL;
 	c->h[6]=0x1f83d9abUL;	c->h[7]=0x5be0cd19UL;
-        c->Nl=0;        c->Nh=0;
-        c->num=0;
-        return 1;
+	c->Nl=0;	c->Nh=0;
+	c->num=0;	c->md_len=SHA256_DIGEST_LENGTH;
+	return 1;
 	}
 
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
 	{
 	SHA256_CTX c;
-	static unsigned char m[SHA256_DIGEST_LENGTH];
+	static unsigned char m[SHA224_DIGEST_LENGTH];
 
+	if (md == NULL) md=m;
 	SHA224_Init(&c);
 	SHA256_Update(&c,d,n);
-	SHA256_Final(m,&c);
-	if (md != NULL) memcpy (md,m,SHA224_DIGEST_LENGTH),
-			memset (m,0,sizeof(m));
-	else		md=m,
-			memset (m+SHA224_DIGEST_LENGTH,0,sizeof(m)-SHA256_DIGEST_LENGTH);
+	SHA256_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));
 	return(md);
 	}
@@ -65,6 +62,11 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
 	return(md);
 	}
 
+int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
+{   return SHA256_Update (c,data,len);   }
+int SHA224_Final (unsigned char *md, SHA256_CTX *c)
+{   return SHA256_Final (md,c);   }
+
 #ifndef	SHA_LONG_LOG2
 #define	SHA_LONG_LOG2	2	/* default to 32 bits */
 #endif
@@ -76,12 +78,33 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
 #define	HASH_CTX		SHA256_CTX
 #define	HASH_CBLOCK		SHA_CBLOCK
 #define	HASH_LBLOCK		SHA_LBLOCK
+/*
+ * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
+ * default: case below covers for it. It's not clear however if it's
+ * permitted to truncate at amount of bits not divisable by 4. I bet not,
+ * but if it is, then default: case shall be extended. For reference.
+ * Idea behind separate cases for pre-defined lenghts is to let the
+ * compiler decide if it's appropriate to unroll small loops.
+ */
 #define	HASH_MAKE_STRING(c,s)	do {	\
 	unsigned long ll;		\
-	ll=(c)->h[0]; HOST_l2c(ll,(s));	ll=(c)->h[1]; HOST_l2c(ll,(s));	\
-	ll=(c)->h[2]; HOST_l2c(ll,(s));	ll=(c)->h[3]; HOST_l2c(ll,(s));	\
-	ll=(c)->h[4]; HOST_l2c(ll,(s));	ll=(c)->h[5]; HOST_l2c(ll,(s));	\
-	ll=(c)->h[6]; HOST_l2c(ll,(s));	ll=(c)->h[7]; HOST_l2c(ll,(s));	\
+	unsigned int  n;		\
+	switch ((c)->md_len)		\
+	{   case SHA224_DIGEST_LENGTH:	\
+		for (n=0;n<SHA224_DIGEST_LENGTH/4;n++)	\
+		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		break;			\
+	    case SHA256_DIGEST_LENGTH:	\
+		for (n=0;n<SHA256_DIGEST_LENGTH/4;n++)	\
+		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		break;			\
+	    default:			\
+		if ((c)->md_len > SHA256_DIGEST_LENGTH)	\
+		    return 0;				\
+		for (n=0;n<(c)->md_len/4;n++)		\
+		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		break;			\
+	}				\
 	} while (0)
 
 #define	HASH_UPDATE		SHA256_Update

@@ -130,18 +130,13 @@ typedef struct SHA256state_st
 	SHA_LONG h[8];
 	SHA_LONG Nl,Nh;
 	SHA_LONG data[SHA_LBLOCK];
-	int num;
+	unsigned int num,md_len;
 	} SHA256_CTX;
 
 #ifndef OPENSSL_NO_SHA256
 int SHA224_Init(SHA256_CTX *c);
-#if 0
 int SHA224_Update(SHA256_CTX *c, const void *data, size_t len);
 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
-#else
-#define SHA224_Update(c,data,len)	SHA256_Update((c),(data),(len))
-#define SHA224_Final(md,c)	SHA256_Final((md),(c))
-#endif
 unsigned char *SHA224(const unsigned char *d, size_t n,unsigned char *md);
 int SHA256_Init(SHA256_CTX *c);
 int SHA256_Update(SHA256_CTX *c, const void *data, size_t len);
@@ -177,7 +172,7 @@ typedef struct SHA512state_st
 		SHA_LONG64	d[SHA_LBLOCK];
 		unsigned char	p[SHA512_CBLOCK];
 	} u;
-	int num;
+	unsigned int num,md_len;
 	} SHA512_CTX;
 
 #ifndef OPENSSL_NO_SHA512

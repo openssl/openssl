@@ -64,7 +64,7 @@ int SHA384_Init (SHA512_CTX *c)
 	c->h[6]=U64(0xdb0c2e0d64f98fa7);
 	c->h[7]=U64(0x47b5481dbefa4fa4);
         c->Nl=0;        c->Nh=0;
-        c->num=0;
+        c->num=0;       c->md_len=SHA384_DIGEST_LENGTH;
         return 1;
 	}
 
@@ -79,18 +79,18 @@ int SHA512_Init (SHA512_CTX *c)
 	c->h[6]=U64(0x1f83d9abfb41bd6b);
 	c->h[7]=U64(0x5be0cd19137e2179);
         c->Nl=0;        c->Nh=0;
-        c->num=0;
+        c->num=0;       c->md_len=SHA512_DIGEST_LENGTH;
         return 1;
 	}
 
 static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num);
 
-static int sha512_final (unsigned char *md, SHA512_CTX *c, size_t msz)
+int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	{
 	unsigned char *p=(unsigned char *)c->u.p;
 	size_t n=c->num;
 
-	p[n]=0x80;
+	p[n]=0x80;	/* There always is a room for one */
 	n++;
 	if (n > (sizeof(c->u)-16))
 		memset (p+n,0,sizeof(c->u)-n), n=0,
@@ -123,23 +123,40 @@ static int sha512_final (unsigned char *md, SHA512_CTX *c, size_t msz)
 
 	if (md==0) return 0;
 
-	for (n=0;msz>0;n++,msz-=8)
+	switch (c->md_len)
 		{
-		SHA_LONG64 t = c->h[n];
+		/* Let compiler decide if it's appropriate to unroll... */
+		case SHA384_DIGEST_LENGTH:
+			for (n=0;n<SHA384_DIGEST_LENGTH/8;n++)
+				{
+				SHA_LONG64 t = c->h[n];
 
-		*(md++)	= (t>>56)&0xFF;	*(md++)	= (t>>48)&0xFF;
-		*(md++)	= (t>>40)&0xFF;	*(md++)	= (t>>32)&0xFF;
-		*(md++)	= (t>>24)&0xFF;	*(md++)	= (t>>16)&0xFF;
-		*(md++)	= (t>>8)&0xFF;	*(md++)	= (t)&0xFF;
+				*(md++)	= (t>>56)&0xFF;	*(md++)	= (t>>48)&0xFF;
+				*(md++)	= (t>>40)&0xFF;	*(md++)	= (t>>32)&0xFF;
+				*(md++)	= (t>>24)&0xFF;	*(md++)	= (t>>16)&0xFF;
+				*(md++)	= (t>>8)&0xFF;	*(md++)	= (t)&0xFF;
+				}
+			break;
+		case SHA512_DIGEST_LENGTH:
+			for (n=0;n<SHA512_DIGEST_LENGTH/8;n++)
+				{
+				SHA_LONG64 t = c->h[n];
+
+				*(md++)	= (t>>56)&0xFF;	*(md++)	= (t>>48)&0xFF;
+				*(md++)	= (t>>40)&0xFF;	*(md++)	= (t>>32)&0xFF;
+				*(md++)	= (t>>24)&0xFF;	*(md++)	= (t>>16)&0xFF;
+				*(md++)	= (t>>8)&0xFF;	*(md++)	= (t)&0xFF;
+				}
+			break;
+		/* ... as well as make sure md_len is not abused. */
+		default:	return 0;
 		}
 
 	return 1;
 	}
 
 int SHA384_Final (unsigned char *md,SHA512_CTX *c)
-{   return sha512_final (md,c,SHA384_DIGEST_LENGTH);   }
-int SHA512_Final (unsigned char *md,SHA512_CTX *c)
-{   return sha512_final (md,c,SHA512_DIGEST_LENGTH);   }
+{   return SHA512_Final (md,c);   }
 
 int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 	{
@@ -206,7 +223,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 	if (md == NULL) md=m;
 	SHA384_Init(&c);
 	SHA512_Update(&c,d,n);
-	sha512_final(md,&c,sizeof(m));
+	SHA512_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));
 	return(md);
 	}
@@ -219,7 +236,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	if (md == NULL) md=m;
 	SHA512_Init(&c);
 	SHA512_Update(&c,d,n);
-	sha512_final(md,&c,sizeof(m));
+	SHA512_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));
 	return(md);
 	}
