@@ -71,6 +71,7 @@
 #define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -1568,7 +1569,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 void
 kssl_ctx_show(KSSL_CTX *kssl_ctx)
         {
-	int 	i;
+	unsigned int 	i;
 
 	printf("kssl_ctx: ");
 	if (kssl_ctx == NULL)
@@ -1697,9 +1698,6 @@ krb5_error_code  kssl_check_authent(
 	unsigned char		iv[EVP_MAX_IV_LENGTH];
 	unsigned char		*p, *unenc_authent, *tbuf = NULL;
 	int 			padl, outl, unencbufsize;
-	struct tm		tm_time, *tm_l, *tm_g;
-	time_t			now, tl, tg, tz_offset;
-        char * strptime();
 
 	*atimep = 0;
 	kssl_err_set(kssl_err, 0, "");
@@ -1797,16 +1795,49 @@ krb5_error_code  kssl_check_authent(
 		}
 	else	strncpy(tbuf, auth->ctime->data, auth->ctime->length);
 	
-	if ((char *)strptime(tbuf, "%Y%m%d%H%M%S", &tm_time) != NULL)
+	if ( auth->ctime->length >= 9 && auth->ctime->length <= 14  )  
+		/* tbuf == "%Y%m%d%H%M%S" */
 		{
+		struct tm		tm_time, *tm_l, *tm_g;
+		time_t			now, tl, tg, tr, tz_offset;
+		int                     i;
+		char                    *p = tbuf;
+ 
+		memset(&tm_time,0,sizeof(struct tm));
+		for ( i=0; 
+		      i<4 && isdigit(*p);
+		      i++, p++ )
+			tm_time.tm_year = tm_time.tm_year*10 + (*p-'0');
+		for ( i=0; 
+		      i<2 && isdigit(*p) && tm_time.tm_mon <= 1; 
+		      i++, p++ )
+			tm_time.tm_mon = tm_time.tm_mon*10 + (*p-'0');
+		for ( i=0; 
+		      i<2 && isdigit(*p) && tm_time.tm_mday <= 3;
+		      i++, p++ )
+			tm_time.tm_mday = tm_time.tm_mday*10 + (*p-'0');
+		for ( i=0; 
+		      i<2 && isdigit(*p) && tm_time.tm_hour <= 2;
+		      i++, p++ )
+			tm_time.tm_hour = tm_time.tm_hour*10 + (*p-'0');
+		for ( i=0;
+		      i<2 && isdigit(*p) && tm_time.tm_min <= 6;
+		      i++, p++ )
+			tm_time.tm_min = tm_time.tm_min*10 + (*p-'0');
+		for ( i=0; 
+		      i<2 && isdigit(*p) && tm_time.tm_sec <= 6;
+		      i++, p++ )
+			tm_time.tm_sec = tm_time.tm_sec*10 + (*p-'0');
+
 		now  = time(&now);
 		tm_l = localtime(&now); 	tl = mktime(tm_l);
 		tm_g = gmtime(&now);		tg = mktime(tm_g);
 		tz_offset = tg - tl;
+		tr = mktime(&tm_time);
 
-		*atimep = mktime(&tm_time) - tz_offset;
+		if (tr != (time_t)(-1))
+			*atimep = mktime(&tm_time) - tz_offset;
 		}
-
 #ifdef KSSL_DEBUG
 	printf("kssl_check_authent: client time %s = %d\n", tbuf, *atimep);
 #endif	/* KSSL_DEBUG */
