@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/ripemd.h>
+#include <openssl/crypto.h>
 
 unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
 	     unsigned char *md)
