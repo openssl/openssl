@@ -62,7 +62,7 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
-		else if (isdigit(argv[i][0]))
+		else if (isdigit((unsigned char)argv[i][0]))
 			{
 			if (num < 0)
 				{
