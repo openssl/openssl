@@ -4,6 +4,9 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add a configuration entry for gcc on UnixWare 
+     [Gary Benson <gbenson@redhat.com>]
+
   *) Add assembler implementation for IA-64
      [Andy Polyakov]
 
