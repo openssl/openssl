@@ -65,10 +65,10 @@ print OUT "\n";
 
 print "Checking compiler...\n";
 if (open(TEST,">test.c")) {
-    print TEST "#include <stdio.h>\nmain(){printf(\"Hello world\n\");}\n";
+    print TEST "#include <stdio.h>\nmain(){printf(\"Hello world\\n\");}\n";
     close(TEST);
     system("$cc -o cctest test.c");
-    if (! `./cctest` =~ /Hello world/) {
+    if (`./cctest` !~ /Hello world/) {
 	print OUT "Compiler doesn't work.\n";
 	goto err;
     }
