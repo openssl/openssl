@@ -1973,6 +1973,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
 
+  *) In ssl3_accept() (ssl/s3_srvr.c) only accept a client certificate
+     if the server requested one: as stated in TLS 1.0 and SSL 3.0
+     specifications.
+     [Steve Henson]
+
   *) In ssl3_get_client_hello() (ssl/s3_srvr.c), tolerate additional
      extra data after the compression methods not only for TLS 1.0
      but also for SSL 3.0 (as required by the specification).

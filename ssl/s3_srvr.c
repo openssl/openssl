@@ -431,10 +431,11 @@ int ssl3_accept(SSL *s)
 			if (ret == 2)
 				s->state = SSL3_ST_SR_CLNT_HELLO_C;
 			else {
-				/* could be sent for a DH cert, even if we
-				 * have not asked for it :-) */
-				ret=ssl3_get_client_certificate(s);
-				if (ret <= 0) goto end;
+				if (s->s3->tmp.cert_request)
+					{
+					ret=ssl3_get_client_certificate(s);
+					if (ret <= 0) goto end;
+					}
 				s->init_num=0;
 				s->state=SSL3_ST_SR_KEY_EXCH_A;
 			}
