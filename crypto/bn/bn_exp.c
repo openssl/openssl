@@ -266,7 +266,8 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
 	if (BN_is_zero(&(val[0])))
 		{
-		ret = BN_zero(r);
+		BN_zero(r);
+		ret = 1;
 		goto err;
 		}
 
@@ -409,7 +410,8 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		aa=a;
 	if (BN_is_zero(aa))
 		{
-		ret = BN_zero(rr);
+		BN_zero(rr);
+		ret = 1;
 		goto err;
 		}
 	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
@@ -541,7 +543,8 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		}
 	if (a == 0)
 		{
-		ret = BN_zero(rr);
+		BN_zero(rr);
+		ret = 1;
 		return ret;
 		}
 
@@ -666,7 +669,8 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
 	if (BN_is_zero(&(val[0])))
 		{
-		ret = BN_zero(r);
+		BN_zero(r);
+		ret = 1;
 		goto err;
 		}
 

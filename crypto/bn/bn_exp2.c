@@ -179,7 +179,8 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		a_mod_m = a1;
 	if (BN_is_zero(a_mod_m))
 		{
-		ret = BN_zero(rr);
+		BN_zero(rr);
+		ret = 1;
 		goto err;
 		}
 
@@ -214,7 +215,8 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		a_mod_m = a2;
 	if (BN_is_zero(a_mod_m))
 		{
-		ret = BN_zero(rr);
+		BN_zero(rr);
+		ret = 1;
 		goto err;
 		}
 	if (!BN_to_montgomery(&(val2[0]),a_mod_m,mont,ctx)) goto err;

@@ -964,7 +964,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
 	if ((al == 0) || (bl == 0))
 		{
-		if (!BN_zero(r)) goto err;
+		BN_zero(r);
 		return(1);
 		}
 	top=al+bl;
@@ -1094,8 +1094,8 @@ end:
 	if (r != rr) BN_copy(r,rr);
 	ret=1;
 err:
-	BN_CTX_end(ctx);
 	bn_check_top(r);
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 

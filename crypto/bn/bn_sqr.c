@@ -77,15 +77,15 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	if (al <= 0)
 		{
 		r->top=0;
-		return(1);
+		return 1;
 		}
 
 	BN_CTX_start(ctx);
 	rr=(a != r) ? r : BN_CTX_get(ctx);
 	tmp=BN_CTX_get(ctx);
-	if (tmp == NULL) goto err;
+	if (!rr || !tmp) goto err;
 
-	max=(al+al);
+	max = 2 * al; /* Non-zero (from above) */
 	if (bn_wexpand(rr,max+1) == NULL) goto err;
 
 	if (al == 4)
@@ -138,14 +138,19 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 #endif
 		}
 
-	rr->top=max;
 	rr->neg=0;
-	if ((max > 0) && (rr->d[max-1] == 0)) rr->top--;
+	/* If the most-significant half of the top word of 'a' is zero, then
+	 * the square of 'a' will max-1 words. */
+	if(a->d[al - 1] == (a->d[al - 1] & BN_MASK2l))
+		rr->top = max - 1;
+	else
+		rr->top = max;
 	if (rr != r) BN_copy(r,rr);
 	ret = 1;
  err:
+	if(rr) bn_check_top(rr);
+	if(tmp) bn_check_top(tmp);
 	BN_CTX_end(ctx);
-	bn_check_top(r);
 	return(ret);
 	}
 

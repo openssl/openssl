@@ -4,6 +4,12 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) BN_zero() only needs to set 'top' and 'neg' to zero for correct results,
+     and this should never fail. So the return value from the use of
+     BN_set_word() (which can fail due to needless expansion) is now deprecated;
+     if OPENSSL_NO_DEPRECATED is defined, BN_zero() is a void macro.
+     [Geoff Thorpe]
+
   *) BN_CTX_get() should return zero-valued bignums, providing the same
      initialised value as BN_new().
      [Geoff Thorpe, suggested by Ulf Möller]

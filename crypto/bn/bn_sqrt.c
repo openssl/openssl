@@ -288,7 +288,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (BN_is_zero(t))
 			{
 			/* special case: a == 0  (mod p) */
-			if (!BN_zero(ret)) goto end;
+			BN_zero(ret);
 			err = 0;
 			goto end;
 			}
@@ -301,7 +301,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (BN_is_zero(x))
 			{
 			/* special case: a == 0  (mod p) */
-			if (!BN_zero(ret)) goto end;
+			BN_zero(ret);
 			err = 0;
 			goto end;
 			}

@@ -319,7 +319,10 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	top = BN_ucmp(field, a);
 	if (top == 0)
-		return BN_zero(r);
+		{
+		BN_zero(r);
+		return 1;
+		}
 	else if (top > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
@@ -394,7 +397,10 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	tmp_int = BN_ucmp(field, a);
 	if (tmp_int == 0)
-		return BN_zero(r);
+		{
+		BN_zero(r);
+		return 1;
+		}
 	else if (tmp_int > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
@@ -514,7 +520,10 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	
 	tmp_int = BN_ucmp(field, a);
 	if (tmp_int == 0)
-		return BN_zero(r);
+		{
+		BN_zero(r);
+		return 1;
+		}
 	else if (tmp_int > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
@@ -672,7 +681,10 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	tmp_int = BN_ucmp(field, a);
 	if (tmp_int == 0)
-		return BN_zero(r);
+		{
+		BN_zero(r);
+		return 1;
+		}
 	else if (tmp_int > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 

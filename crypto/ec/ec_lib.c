@@ -299,12 +299,12 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 	if (order != NULL)
 		{ if (!BN_copy(&group->order, order)) return 0; }	
 	else
-		{ if (!BN_zero(&group->order)) return 0; }	
+		BN_zero(&group->order);
 
 	if (cofactor != NULL)
 		{ if (!BN_copy(&group->cofactor, cofactor)) return 0; }	
 	else
-		{ if (!BN_zero(&group->cofactor)) return 0; }	
+		BN_zero(&group->cofactor);
 
 	return 1;
 	}

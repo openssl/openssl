@@ -284,7 +284,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		BN_ULONG buf[2];
 
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
-		if (!(BN_zero(R))) goto err;
+		BN_zero(R);
 		if (!(BN_set_bit(R,BN_BITS2))) goto err;	/* R */
 
 		buf[0]=mod->d[0]; /* tmod = N mod word size */
@@ -314,7 +314,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 #else /* !MONT_WORD */
 		{ /* bignum version */
 		mont->ri=BN_num_bits(&mont->N);
-		if (!BN_zero(R)) goto err;
+		BN_zero(R);
 		if (!BN_set_bit(R,mont->ri)) goto err;  /* R = 2^ri */
 		                                        /* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,&mont->N,ctx)) == NULL)
@@ -328,7 +328,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 #endif
 
 	/* setup RR for conversions */
-	if (!BN_zero(&(mont->RR))) goto err;
+	BN_zero(&(mont->RR));
 	if (!BN_set_bit(&(mont->RR),mont->ri*2)) goto err;
 	if (!BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx)) goto err;
 

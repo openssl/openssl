@@ -155,8 +155,8 @@ static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIG
 	
 	if (BN_is_zero(z1))
 		{
-		if (!BN_zero(x2)) return 0;
-		if (!BN_zero(z2)) return 0;
+		BN_zero(x2);
+		BN_zero(z2);
 		return 1;
 		}
 	

@@ -94,7 +94,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	{
 	if (!BN_copy(&(recp->N),d)) return 0;
-	if (!BN_zero(&(recp->Nr))) return 0;
+	BN_zero(&(recp->Nr));
 	recp->num_bits=BN_num_bits(d);
 	recp->shift=0;
 	return(1);
@@ -148,7 +148,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 
 	if (BN_ucmp(m,&(recp->N)) < 0)
 		{
-		if (!BN_zero(d)) return 0;
+		BN_zero(d);
 		if (!BN_copy(r,m)) return 0;
 		BN_CTX_end(ctx);
 		return(1);
@@ -221,7 +221,6 @@ int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 
 	BN_init(&t);
 
-	if (!BN_zero(&t)) goto err;
 	if (!BN_set_bit(&t,len)) goto err;
 
 	if (!BN_div(r,NULL,&t,m,ctx)) goto err;

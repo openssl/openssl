@@ -329,8 +329,11 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 	bn_check_top(a);
 
 	if (!p[0])
+		{
 		/* reduction mod 1 => return 0 */
-		return BN_zero(r);
+		BN_zero(r);
+		return 1;
+		}
 
 	/* Since the algorithm does reduction in the r value, if a != r, copy
 	 * the contents of a into r so we can do reduction in r. 
@@ -590,7 +593,6 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	if (v == NULL) goto err;
 
 	if (!BN_one(b)) goto err;
-	if (!BN_zero(c)) goto err;
 	if (!BN_GF2m_mod(u, a, p)) goto err;
 	if (!BN_copy(v, p)) goto err;
 
@@ -709,7 +711,6 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	if (!BN_GF2m_mod(u, y, p)) goto err;
 	if (!BN_GF2m_mod(a, x, p)) goto err;
 	if (!BN_copy(b, p)) goto err;
-	if (!BN_zero(v)) goto err;
 	
 	while (!BN_is_odd(a))
 		{
@@ -865,13 +866,15 @@ int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_
 	bn_check_top(a);
 
 	if (!p[0])
+		{
 		/* reduction mod 1 => return 0 */
-		return BN_zero(r);
+		BN_zero(r);
+		return 1;
+		}
 
 	BN_CTX_start(ctx);
 	if ((u = BN_CTX_get(ctx)) == NULL) goto err;
 	
-	if (!BN_zero(u)) goto err;
 	if (!BN_set_bit(u, p[0] - 1)) goto err;
 	ret = BN_GF2m_mod_exp_arr(r, a, u, p, ctx);
 	bn_check_top(r);
@@ -921,8 +924,11 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 	bn_check_top(a_);
 
 	if (!p[0])
+		{
 		/* reduction mod 1 => return 0 */
-		return BN_zero(r);
+		BN_zero(r);
+		return 1;
+		}
 
 	BN_CTX_start(ctx);
 	a = BN_CTX_get(ctx);
@@ -934,7 +940,8 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 	
 	if (BN_is_zero(a))
 		{
-		ret = BN_zero(r);
+		BN_zero(r);
+		ret = 1;
 		goto err;
 		}
 
@@ -960,7 +967,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 			{
 			if (!BN_rand(rho, p[0], 0, 0)) goto err;
 			if (!BN_GF2m_mod_arr(rho, rho, p)) goto err;
-			if (!BN_zero(z)) goto err;
+			BN_zero(z);
 			if (!BN_copy(w, rho)) goto err;
 			for (j = 1; j <= p[0] - 1; j++)
 				{

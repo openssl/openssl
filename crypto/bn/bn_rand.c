@@ -244,9 +244,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 	/* BN_is_bit_set(range, n - 1) always holds */
 
 	if (n == 1)
-		{
-		if (!BN_zero(r)) return 0;
-		}
+		BN_zero(r);
 	else if (!BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3))
 		{
 		/* range = 100..._2,

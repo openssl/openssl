@@ -335,7 +335,8 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 	{
 	point->Z_is_one = 0;
-	return (BN_zero(&point->Z));
+	BN_zero(&point->Z);
+	return 1;
 	}
 
 

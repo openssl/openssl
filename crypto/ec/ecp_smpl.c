@@ -385,7 +385,8 @@ int ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 	{
 	point->Z_is_one = 0;
-	return (BN_zero(&point->Z));
+	BN_zero(&point->Z);
+	return 1;
 	}
 
 
@@ -1093,7 +1094,7 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, con
 		else
 			{
 			/* a is the inverse of b */
-			if (!BN_zero(&r->Z)) goto end;
+			BN_zero(&r->Z);
 			r->Z_is_one = 0;
 			ret = 1;
 			goto end;
@@ -1169,7 +1170,7 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_
 	
 	if (EC_POINT_is_at_infinity(group, a))
 		{
-		if (!BN_zero(&r->Z)) return 0;
+		BN_zero(&r->Z);
 		r->Z_is_one = 0;
 		return 1;
 		}
