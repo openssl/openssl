@@ -116,7 +116,7 @@ const char *file;
 	FILE *out;
 	int n;
 
-	out=fopen(file,"w");
+	out=fopen(file,"wb");
 	if (out == NULL) goto err;
 	chmod(file,0600);
 	n=RAND_DATA;
