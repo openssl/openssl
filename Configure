@@ -966,6 +966,8 @@ my $shared_extension = $fields[$idx_shared_extension];
 my $ranlib = $fields[$idx_ranlib];
 my $arflags = $fields[$idx_arflags];
 
+my $no_shared_warn=0;
+
 $cflags="$flags$cflags" if ($flags ne "");
 
 # Kerberos settings.  The flavor must be provided from outside, either through
@@ -1117,6 +1119,7 @@ if ($zlib)
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
+	$no_shared_warn = 1 if !$no_shared;
 	$no_shared = 1;
 	}
 if (!$no_shared)
@@ -1598,6 +1601,15 @@ print <<\EOF if (!$no_threads && !$threads);
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
 See file INSTALL for details if you need multi-threading.
+EOF
+
+print <<\EOF if ($no_shared_warn);
+
+You gave the option 'shared'.  Normally, that would give you shared libraries.
+Unfortunately, the OpenSSL configuration doesn't include shared library support
+for this platform yet, so it will pretend you gave the option 'no-shared'.  If
+you can inform the developpers (openssl-dev\@openssl.org) how to support shared
+libraries on this platform, they will at least look at it and try their best.
 EOF
 
 exit(0);
