@@ -4,6 +4,12 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Perform some character comparisons of different types in X509_NAME_cmp:
+     this is needed for some certificates that reencode DNs into UTF8Strings
+     (in violation of RFC3280) and can't or wont issue name rollover
+     certificates.
+     [Steve Henson]
+
   *) Make an explicit check during certificate validation to see that
      the CA setting in each certificate on the chain is correct.  As a
      side effect always do the following basic checks on extensions,

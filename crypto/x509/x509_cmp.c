@@ -254,33 +254,49 @@ static int nocase_spacenorm_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 	return 0;
 }
 
+static int asn1_string_memcmp(ASN1_STRING *a, ASN1_STRING *b)
+	{
+	int j;
+	j = a->length - b->length;
+	if (j)
+		return j;
+	return memcmp(a->data, b->data, a->length);
+	}
+
+#define STR_TYPE_CMP (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_UTF8STRING)
+
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 	{
 	int i,j;
 	X509_NAME_ENTRY *na,*nb;
 
-	if (sk_X509_NAME_ENTRY_num(a->entries)
-	    != sk_X509_NAME_ENTRY_num(b->entries))
-		return sk_X509_NAME_ENTRY_num(a->entries)
-		  -sk_X509_NAME_ENTRY_num(b->entries);
+	unsigned long nabit, nbbit;
+
+	j = sk_X509_NAME_ENTRY_num(a->entries)
+		  - sk_X509_NAME_ENTRY_num(b->entries);
+	if (j)
+		return j;
 	for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
 		{
 		na=sk_X509_NAME_ENTRY_value(a->entries,i);
 		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
 		j=na->value->type-nb->value->type;
-		if (j) return(j);
-		if (na->value->type == V_ASN1_PRINTABLESTRING)
+		if (j)
+			{
+			nabit = ASN1_tag2bit(na->value->type);
+			nbbit = ASN1_tag2bit(nb->value->type);
+			if (!(nabit & STR_TYPE_CMP) ||
+				!(nbbit & STR_TYPE_CMP))
+				return j;
+			j = asn1_string_memcmp(na->value, nb->value);
+			}
+		else if (na->value->type == V_ASN1_PRINTABLESTRING)
 			j=nocase_spacenorm_cmp(na->value, nb->value);
 		else if (na->value->type == V_ASN1_IA5STRING
 			&& OBJ_obj2nid(na->object) == NID_pkcs9_emailAddress)
 			j=nocase_cmp(na->value, nb->value);
 		else
-			{
-			j=na->value->length-nb->value->length;
-			if (j) return(j);
-			j=memcmp(na->value->data,nb->value->data,
-				na->value->length);
-			}
+			j = asn1_string_memcmp(na->value, nb->value);
 		if (j) return(j);
 		j=na->set-nb->set;
 		if (j) return(j);
