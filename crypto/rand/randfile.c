@@ -121,27 +121,23 @@ int RAND_write_file(const char *file)
 	FILE *out = NULL;
 	int n;
 
+#ifdef VMS
 	/* Under VMS, fopen(file, "wb") will create a new version of the
 	   same file.  This is not good, so let's try updating an existing
-	   one, and create file only if it doesn't already exist.  This
-	   should be completely harmless on system that have no file
-	   versions.					-- Richard Levitte */
+	   one, and create file only if it doesn't already exist. */
 	out=fopen(file,"rb+");
-	if (out == NULL
-#ifdef ENOENT
-	    && errno == ENOENT
+	if (out == NULL && errno != ENOENT)
+		goto err;
 #endif
-	   )
+
+	if (out == NULL)
 		{
-		errno = 0;
 #if defined O_CREAT && defined O_EXCL
 		/* chmod(..., 0600) is too late to protect the file,
 		 * permissions should be restrictive from the start */
-		{
-		    int fd = open(file, O_CREAT | O_EXCL, 0600);
-		    if (fd != -1)
+		int fd = open(file, O_CREAT | O_EXCL, 0600);
+		if (fd != -1)
 			out = fdopen(fd, "wb");
-		}
 #else		
 		out=fopen(file,"wb");
 #endif
@@ -166,8 +162,6 @@ int RAND_write_file(const char *file)
 		ret+=i;
 		if (n <= 0) break;
 		}
-	if (ret > 0)
-		ftruncate(fileno(out), ret);
 	fclose(out);
 	memset(buf,0,BUFSIZE);
 err:
