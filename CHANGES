@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) New Configure options "threads" and "no-threads".  For systems
+     where the proper compiler options are known (currently Solaris
+     and Linux), "threads" is the default.
+     [Bodo Moeller]
+
   *) New script util/mklink.pl as a faster substitute for util/mklink.sh.
      [Bodo Moeller]
 
