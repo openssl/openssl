@@ -340,8 +340,8 @@ detached signature format. You can use this program to verify the
 signature by line wrapping the base64 encoded structure and surrounding
 it with:
 
- -----BEGIN PKCS7----
- -----END PKCS7----
+ -----BEGIN PKCS7-----
+ -----END PKCS7-----
 
 and using the command, 
 
