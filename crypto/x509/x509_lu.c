@@ -201,7 +201,7 @@ X509_STORE *X509_STORE_new(void)
 		return(NULL);
 	ret->certs=lh_new(x509_object_hash,x509_object_cmp);
 	ret->cache=1;
-	ret->get_cert_methods=sk_new_null();
+	ret->get_cert_methods=sk_X509_LOOKUP_new_null();
 	ret->verify=NULL;
 	ret->verify_cb=NULL;
 	memset(&ret->ex_data,0,sizeof(CRYPTO_EX_DATA));
@@ -229,20 +229,20 @@ static void cleanup(X509_OBJECT *a)
 void X509_STORE_free(X509_STORE *vfy)
 	{
 	int i;
-	STACK *sk;
+	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
 
 	if(vfy == NULL)
 	    return;
 
 	sk=vfy->get_cert_methods;
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_LOOKUP_num(sk); i++)
 		{
-		lu=(X509_LOOKUP *)sk_value(sk,i);
+		lu=sk_X509_LOOKUP_value(sk,i);
 		X509_LOOKUP_shutdown(lu);
 		X509_LOOKUP_free(lu);
 		}
-	sk_free(sk);
+	sk_X509_LOOKUP_free(sk);
 
 	CRYPTO_free_ex_data(x509_store_meth,(char *)vfy,&vfy->ex_data);
 	lh_doall(vfy->certs,cleanup);
@@ -253,13 +253,13 @@ void X509_STORE_free(X509_STORE *vfy)
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
 	{
 	int i;
-	STACK *sk;
+	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
 
 	sk=v->get_cert_methods;
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_LOOKUP_num(sk); i++)
 		{
-		lu=(X509_LOOKUP *)sk_value(sk,i);
+		lu=sk_X509_LOOKUP_value(sk,i);
 		if (m == lu->method)
 			{
 			return(lu);
@@ -272,7 +272,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
 	else
 		{
 		lu->store_ctx=v;
-		if (sk_push(v->get_cert_methods,(char *)lu))
+		if (sk_X509_LOOKUP_push(v->get_cert_methods,lu))
 			return(lu);
 		else
 			{
@@ -294,9 +294,9 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
 
 	if (tmp == NULL)
 		{
-		for (i=vs->current_method; i<sk_num(ctx->get_cert_methods); i++)
+		for (i=vs->current_method; i<sk_X509_LOOKUP_num(ctx->get_cert_methods); i++)
 			{
-			lu=(X509_LOOKUP *)sk_value(ctx->get_cert_methods,i);
+			lu=sk_X509_LOOKUP_value(ctx->get_cert_methods,i);
 			j=X509_LOOKUP_by_subject(lu,type,name,&stmp);
 			if (j < 0)
 				{
@@ -408,3 +408,4 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	}
 
+IMPLEMENT_STACK_OF(X509_LOOKUP)

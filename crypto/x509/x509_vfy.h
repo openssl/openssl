@@ -127,6 +127,8 @@ typedef struct x509_object_st
 
 typedef struct x509_lookup_st X509_LOOKUP;
 
+DECLARE_STACK_OF(X509_LOOKUP)
+
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st
 	{
@@ -164,7 +166,7 @@ typedef struct x509_store_st
 #endif
 
 	/* These are external lookup methods */
-	STACK *get_cert_methods;/* X509_LOOKUP */
+	STACK_OF(X509_LOOKUP) *get_cert_methods;
 	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
 
