@@ -84,9 +84,7 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/des.h>
 
-#if defined(PERL5) || defined(__FreeBSD__) || defined(NeXT)
 #define crypt(c,s) (des_crypt((c),(s)))
-#endif
 
 /* tisk tisk - the test keys don't all have odd parity :-( */
 /* test data */
