@@ -63,5 +63,9 @@
 # define OPENSSL_EXTERN OPENSSL_EXPORT
 #endif
 
-OPENSSL_EXTERN char *DES_version;	/* SSLeay version string */
-OPENSSL_EXTERN char *libdes_version;	/* old libdes version string */
+/* The following macros make sure the names are different from libdes names */
+#define DES_version OSSL_DES_version
+#define libdes_version OSSL_libdes_version
+
+OPENSSL_EXTERN const char *OSSL_DES_version;	/* SSLeay version string */
+OPENSSL_EXTERN const char *OSSL_libdes_version;	/* old libdes version string */
