@@ -253,7 +253,7 @@ extern "C" {
 #define SSL_TXT_RC4		"RC4"
 #define SSL_TXT_RC2		"RC2"
 #define SSL_TXT_IDEA		"IDEA"
-#define SSL_TXT_AES		"AESdraft" /* AES ciphersuites are not yet official (thus excluded from 'ALL') */
+#define SSL_TXT_AES		"AES"
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA"

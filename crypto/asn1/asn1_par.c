@@ -261,9 +261,11 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 
 				opp=op;
 				os=d2i_ASN1_OCTET_STRING(NULL,&opp,len+hl);
-				if (os != NULL)
+				if (os != NULL && os->length > 0)
 					{
-					opp=os->data;
+					opp = os->data;
+					/* testing whether the octet string is
+					 * printable */
 					for (i=0; i<os->length; i++)
 						{
 						if ((	(opp[i] < ' ') &&
@@ -276,7 +278,8 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 							break;
 							}
 						}
-					if (printable && (os->length > 0))
+					if (printable)
+					/* printable string */
 						{
 						if (BIO_write(bp,":",1) <= 0)
 							goto end;
@@ -284,8 +287,21 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 							os->length) <= 0)
 							goto end;
 						}
-					if (!printable && (os->length > 0)
-						&& dump)
+					else if (!dump)
+					/* not printable => print octet string
+					 * as hex dump */
+						{
+						if (BIO_write(bp,"[HEX DUMP]:",11) <= 0)
+							goto end;
+						for (i=0; i<os->length; i++)
+							{
+							if (BIO_printf(bp,"%02X"
+								, opp[i]) <= 0)
+								goto end;
+							}
+						}
+					else
+					/* print the normal dump */
 						{
 						if (!nl) 
 							{
@@ -293,11 +309,15 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 								goto end;
 							}
 						if (BIO_dump_indent(bp,(char *)opp,
-							((dump == -1 || dump > os->length)?os->length:dump),
+							((dump == -1 || dump > 
+							os->length)?os->length:dump),
 							dump_indent) <= 0)
 							goto end;
 						nl=1;
 						}
+					}
+				if (os != NULL)
+					{
 					M_ASN1_OCTET_STRING_free(os);
 					os=NULL;
 					}
