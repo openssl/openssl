@@ -2083,7 +2083,7 @@ int MAIN(int argc, char **argv)
 					 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
 					 */
 					int field_size, outlen;
-					void *(*kdf)(void *in, size_t inlen, void *out, size_t outlen);
+					void *(*kdf)(void *in, size_t inlen, void *out, size_t xoutlen);
 					field_size = EC_GROUP_get_degree(ecdh_a[j]->group);
 					if (field_size <= 24 * 8)
 						{

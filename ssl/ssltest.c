@@ -616,13 +616,13 @@ bad:
 	ssl_comp_methods = SSL_COMP_get_compression_methods();
 	fprintf(stderr, "Available compression methods:\n");
 	{
-	int i, n = sk_SSL_COMP_num(ssl_comp_methods);
+	int j, n = sk_SSL_COMP_num(ssl_comp_methods);
 	if (n == 0)
 		fprintf(stderr, "  NONE\n");
 	else
-		for (i = 0; i < n; i++)
+		for (j = 0; j < n; j++)
 			{
-			SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, i);
+			SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
 			fprintf(stderr, "  %d: %s\n", c->id, c->name);
 			}
 	}
