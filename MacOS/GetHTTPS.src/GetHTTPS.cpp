@@ -18,6 +18,7 @@
  *				Also-- before attempting to compile this, make sure the aliases in "OpenSSL-0.9.4:include:openssl" 
  *				are installed!  Use the AppleScript applet in the "openssl-0.9.4" folder to do this!
  */
+/* modified to seed the PRNG */
 
 
 //	Include some funky libs I've developed over time
@@ -32,8 +33,9 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
-
+#include <timer.h>
 
 //	Let's try grabbing some data from here:
 
@@ -77,8 +79,11 @@ SSL_CTX				*ssl_ctx = nil;
 SSL					*ssl = nil;
 
 char				tempString[256];
-
+UnsignedWide		microTickCount;
 	
+#warning   -- USE A TRUE RANDOM SEED, AND ADD ENTROPY WHENEVER POSSIBLE. --
+const char seed[] = "uyq9,7-b(VHGT^%$&^F/,876;,;./lkJHGFUY{PO*";	// Just gobbledygook
+
 	printf("OpenSSL Demo by Roy Wood, roy@centricsystems.ca\n\n");
 	
 	BailIfError(errCode = MacSocket_Startup());
@@ -112,6 +117,10 @@ char				tempString[256];
 	ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 //	ssl_ctx = SSL_CTX_new(SSLv3_client_method());
 			
+
+	RAND_seed (seed, sizeof (seed));
+	Microseconds (&microTickCount);
+	RAND_add (&microTickCount, sizeof (microTickCount), 0);		// Entropy is actually > 0, needs an estimate
 
 	//	Create an SSL thingey and try to negotiate the connection
 	

@@ -231,7 +231,9 @@
      has a return value which indicates the quality of the random data
      (1 = ok, 0 = not seeded).  Also an error is recorded on the thread's
      error queue. New function RAND_pseudo_bytes() generates output that is
-     guaranteed to be unique but not unpredictable.
+     guaranteed to be unique but not unpredictable. RAND_add is like
+     RAND_seed, but takes an extra argument for an entropy estimate
+     (RAND_seed always assumes full entropy).
      [Ulf Möller]
 
   *) Do more iterations of Rabin-Miller probable prime test (specifically,

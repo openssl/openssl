@@ -89,7 +89,7 @@ void RAND_seed(const void *buf, int num)
 		rand_meth->seed(buf,num);
 	}
 
-void RAND_add(const void *buf, int num, int entropy)
+void RAND_add(const void *buf, int num, double entropy)
 	{
 	if (rand_meth != NULL)
 		rand_meth->add(buf,num,entropy);

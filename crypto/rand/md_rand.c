@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#define ENTROPY_NEEDED 16  /* require 128 bits of randomness */
+#define ENTROPY_NEEDED 16  /* require 128 bits = 16 bytes of randomness */
 
 #ifndef MD_RAND_DEBUG
 # ifndef NDEBUG
@@ -138,13 +138,13 @@ static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
-static unsigned entropy=0;
+static double entropy=0;
 
 const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
-static void ssleay_rand_add(const void *buf, int num, int add_entropy);
+static void ssleay_rand_add(const void *buf, int num, double add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 
@@ -172,7 +172,7 @@ static void ssleay_rand_cleanup(void)
 	entropy=0;
 	}
 
-static void ssleay_rand_add(const void *buf, int num, int add)
+static void ssleay_rand_add(const void *buf, int num, double add)
 	{
 	int i,j,k,st_idx;
 	long md_c[2];
@@ -286,7 +286,7 @@ static void ssleay_rand_add(const void *buf, int num, int add)
 #ifndef THREADS	
 	assert(md_c[1] == md_count[1]);
 #endif
-	if (entropy < ENTROPY_NEEDED)
+	if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
 	    entropy += add;
 	}
 
