@@ -162,37 +162,20 @@ err:
 	return NULL;
 	}
 
-OCSP_REQUEST *OCSP_request_new(X509_NAME* name)
-        {
-	OCSP_REQUEST *req = NULL;
-
-	if ((req = OCSP_REQUEST_new()) == NULL) goto err;
-	if (name) /* optional */
-	        {
-		if (!(req->tbsRequest->requestorName=GENERAL_NAME_new()))
-		        goto err;
-		req->tbsRequest->requestorName->type = GEN_DIRNAME;
-		req->tbsRequest->requestorName->d.dirn = X509_NAME_dup(name);
-		}
-	if (!(req->tbsRequest->requestList = sk_OCSP_ONEREQ_new(NULL))) goto err;
-	return req;
-err:
-	if (req) OCSP_REQUEST_free(req);
-	return NULL;
-	}
-
-int OCSP_request_add(OCSP_REQUEST *req, OCSP_CERTID *cid)
+OCSP_ONEREQ *OCSP_request_add0(OCSP_REQUEST *req, OCSP_CERTID *cid)
         {
 	OCSP_ONEREQ *one = NULL;
 
 	if (!(one = OCSP_ONEREQ_new())) goto err;
 	if (one->reqCert) OCSP_CERTID_free(one->reqCert);
-	if (!(one->reqCert = OCSP_CERTID_dup(cid))) goto err;
-	if (!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one)) goto err;
-	return 1;
+	one->reqCert = cid;
+	if (req &&
+		!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
+				goto err;
+	return one;
 err:
 	if (one) OCSP_ONEREQ_free(one);
-	return 0;
+	return NULL;
         }
 
 int OCSP_request_sign(OCSP_REQUEST   *req,

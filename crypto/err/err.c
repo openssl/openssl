@@ -163,6 +163,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_RAND,0,0)		,"random number generator"},
 {ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
 {ERR_PACK(ERR_LIB_ENGINE,0,0)		,"engine routines"},
+{ERR_PACK(ERR_LIB_OCSP,0,0)		,"OCSP routines"},
 {0,NULL},
 	};
 

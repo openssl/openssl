@@ -395,10 +395,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
 OCSP_CERTSTATUS *OCSP_cert_status_new(int status, int reason, char *tim);
 
-OCSP_REQUEST *OCSP_request_new(X509_NAME* name);
-
-int OCSP_request_add(OCSP_REQUEST             *req,
-		     OCSP_CERTID              *cid);
+OCSP_ONEREQ *OCSP_request_add0(OCSP_REQUEST *req, OCSP_CERTID *cid);
 
 int OCSP_request_sign(OCSP_REQUEST   *req,
 		      EVP_PKEY       *key,

@@ -3,6 +3,17 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change function OCSP_request_add() to OCSP_request_add0().
+     This doesn't copy the supplied OCSP_CERTID and avoids the
+     need to free up the newly created id. Change return type
+     to OCSP_ONEREQ to return the internal OCSP_ONEREQ structure.
+     This can then be used to add extensions to the request.
+     Deleted OCSP_request_new(), since most of its functionality
+     is now in OCSP_REQUEST_new() (and the case insensitive name
+     clash) apart from the ability to set the request name which
+     will be added elsewhere.
+     [Steve Henson]
+
   *) Update OCSP API. Remove obsolete extensions argument from
      various functions. Extensions are now handled using the new
      OCSP extension code. New simple OCSP HTTP function which 
