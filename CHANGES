@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) PKCS12 integration: and so it begins... First of several patches to
+     slowly integrate PKCS#12 functionality into OpenSSL. Add PKCS#12
+     objects to object.h
+     [Steve Henson]
+
   *) Add a new 'indent' option to some X509V3 extension code. Initial ASN1
      and display support for Thawte strong extranet extension.
      [Steve Henson]

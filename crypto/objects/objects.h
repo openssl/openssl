@@ -759,6 +759,89 @@ extern "C" {
 #define NID_sxnet			143
 #define OBJ_sxnet			1L,3L,101L,1L,4L,1L
 
+/* PKCS12 and related OBJECT IDENTIFIERS */
+
+#define OBJ_pkcs12			OBJ_pkcs,12L
+#define OBJ_pkcs12_pbeids		OBJ_pkcs12, 1
+
+#define LN_pbe_WithSHA1And128BitRC4	"pbeWithSHA1And128BitRC4"
+#define NID_pbe_WithSHA1And128BitRC4	144
+#define OBJ_pbe_WithSHA1And128BitRC4	OBJ_pkcs12_pbeids, 1L
+
+#define LN_pbe_WithSHA1And40BitRC4	"pbeWithSHA1And40BitRC4"
+#define NID_pbe_WithSHA1And40BitRC4	145
+#define OBJ_pbe_WithSHA1And40BitRC4	OBJ_pkcs12_pbeids, 2L
+
+#define LN_pbe_WithSHA1And3_Key_TripleDES_CBC	"pbeWithSHA1And3-KeyTripleDES-CBC"
+#define NID_pbe_WithSHA1And3_Key_TripleDES_CBC	146
+#define OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC	OBJ_pkcs12_pbeids, 3L
+
+#define LN_pbe_WithSHA1And2_Key_TripleDES_CBC	"pbeWithSHA1And2-KeyTripleDES-CBC"
+#define NID_pbe_WithSHA1And2_Key_TripleDES_CBC	147
+#define OBJ_pbe_WithSHA1And2_Key_TripleDES_CBC	OBJ_pkcs12_pbeids, 4L
+
+#define LN_pbe_WithSHA1And128BitRC2_CBC		"pbeWithSHA1And128BitRC2-CBC"
+#define NID_pbe_WithSHA1And128BitRC2_CBC	148
+#define OBJ_pbe_WithSHA1And128BitRC2_CBC	OBJ_pkcs12_pbeids, 5L
+
+#define LN_pbe_WithSHA1And40BitRC2_CBC	"pbeWithSHA1And40BitRC2-CBC"
+#define NID_pbe_WithSHA1And40BitRC2_CBC	149
+#define OBJ_pbe_WithSHA1And40BitRC2_CBC	OBJ_pkcs12_pbeids, 6L
+
+#define OBJ_pkcs12_Version1	OBJ_pkcs12, 10L
+
+#define OBJ_pkcs12_BagIds	OBJ_pkcs12_Version1, 1L
+
+#define LN_keyBag		"keyBag"
+#define NID_keyBag		150
+#define OBJ_keyBag		OBJ_pkcs12_BagIds, 1L
+
+#define LN_pkcs8ShroudedKeyBag	"pkcs8ShroudedKeyBag"
+#define NID_pkcs8ShroudedKeyBag	151
+#define OBJ_pkcs8ShroudedKeyBag	OBJ_pkcs12_BagIds, 2L
+
+#define LN_certBag		"certBag"
+#define NID_certBag		152
+#define OBJ_certBag		OBJ_pkcs12_BagIds, 3L
+
+#define LN_crlBag		"crlBag"
+#define NID_crlBag		153
+#define OBJ_crlBag		OBJ_pkcs12_BagIds, 4L
+
+#define LN_secretBag		"secretBag"
+#define NID_secretBag		154
+#define OBJ_secretBag		OBJ_pkcs12_BagIds, 5L
+
+#define LN_safeContentsBag	"safeContentsBag"
+#define NID_safeContentsBag	155
+#define OBJ_safeContentsBag	OBJ_pkcs12_BagIds, 6L
+
+#define LN_friendlyName		"friendlyName"
+#define	NID_friendlyName	156
+#define OBJ_friendlyName	OBJ_pkcs9, 20L
+
+#define LN_localKeyID		"localKeyID"
+#define	NID_localKeyID		157
+#define OBJ_localKeyID		OBJ_pkcs9, 21L
+
+#define OBJ_certTypes		OBJ_pkcs9, 22L
+
+#define LN_x509Certificate	"x509Certificate"
+#define	NID_x509Certificate	158
+#define OBJ_x509Certificate	OBJ_certTypes, 1L
+
+#define LN_sdsiCertificate	"sdsiCertificate"
+#define	NID_sdsiCertificate	159
+#define OBJ_sdsiCertificate	OBJ_certTypes, 2L
+
+#define OBJ_crlTypes		OBJ_pkcs9, 23L
+
+#define LN_x509Crl		"x509Crl"
+#define	NID_x509Crl		160
+#define OBJ_x509Crl		OBJ_crlTypes, 1L
+
+
+
 #include "bio.h"
 #include "asn1.h"
 
