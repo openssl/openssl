@@ -169,7 +169,7 @@ $   type sys$input:/out=mar:
 ;
 ; Place entries in own program section.
 ;
-$   write mar "	.PSECT $$",libvec,"QUAD,PIC,USR,CON,REL,LCL,SHR,EXE,RD,NOWRT"
+$   write mar "	.PSECT $$",libvec,",QUAD,PIC,USR,CON,REL,LCL,SHR,EXE,RD,NOWRT"
 $   write mar libvec,"_xfer:"
 $   libwrch   := mar
 $   libwriter := write_vax_ftransfer_entry
