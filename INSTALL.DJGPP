@@ -3,9 +3,10 @@
  INSTALLATION ON THE DOS PLATFORM WITH DJGPP
  -------------------------------------------
 
- Openssl has been ported to DOS, but only with long filename support. If
- you wish to compile on native DOS with 8+3 filenames, you will have to
- tweak the installation yourself, including renaming files with illegal
+ OpenSSL has been ported to DJGPP, a 32-bit run-time environment for
+ 16-bit DOS, but only with long filename support. If you wish to
+ compile on native DOS with 8+3 filenames, you will have to tweak the
+ installation yourself, including renaming files with illegal
  or duplicate names.
 
  You should have a full DJGPP environment installed, including the
@@ -32,3 +33,16 @@
 
  Building openssl under DJGPP has been tested with DJGPP 2.03,
  GCC 2.952, GCC 2.953, perl 5.005_02 and perl 5.006_01.
+
+ RUN-TIME CAVEAT LECTOR
+ --------------
+
+ Quoting FAQ:
+
+  "Cryptographic software needs a source of unpredictable data to work
+   correctly.  Many open source operating systems provide a "randomness
+   device" (/dev/urandom or /dev/random) that serves this purpose."
+
+ As of version 0.9.7f OpenSSL checks upon /dev/urandom$ for a 3rd party DOS
+ driver. One such driver implemented by Robert Rothenberg "Walking-Owl"
+ can be obtained from "http://www.funet.fi/pub/crypt/random/noise063.zip."
