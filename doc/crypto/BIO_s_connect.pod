@@ -79,18 +79,19 @@ BIO_get_conn_port() returns the port as a string.
 
 BIO_get_conn_ip() returns the IP address in binary form.
 
-BIO_get_conn_int_port() returns the host name as an int.
+BIO_get_conn_int_port() returns the port as an int.
 
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
-is set.
+is set. Blocking I/O is the default. The call to BIO_set_nbio()
+should be made before the connection is established because 
+non blocking I/O is set during the connect process.
 
 BIO_do_connect() attempts to connect the supplied BIO. It returns 1
 if the connection was established successfully. A zero or negative
 value is returned if the connection could not be established, the
 call BIO_should_retry() should be used for non blocking connect BIOs
 to determine if the call should be retried.
-
 
 =head1 NOTES
 
@@ -99,15 +100,19 @@ I/O call is caused by an error condition, although a zero return
 will normally mean that the connection was closed.
 
 If the port name is supplied as part of the host name then this will
-override any value set with BIO_set_conn_port().
+override any value set with BIO_set_conn_port(). This may be undesirable
+if the application does not wish to allow connection to arbitrary
+ports. This can be avoided by checking for the presence of the ':'
+character in the passed hostname and either indicating an error or
+truncating the string at that point.
 
 The values returned by BIO_get_conn_hostname(), BIO_get_conn_port(),
 BIO_get_conn_ip() and BIO_get_conn_int_port() are updated when a
 connection attempt is made. Before any connection attempt the values
 returned are those set by the application itself.
 
-Applications do not have to call BIO_do_connect() but can do so to
-separate the connection process from other I/O processing.
+Applications do not have to call BIO_do_connect() but may wish to do
+so to separate the connection process from other I/O processing.
 
 If non blocking I/O is set then retries will be requested as appropriate.
 
@@ -125,9 +130,52 @@ BIO_s_connect() returns the connect BIO method.
 BIO_get_fd() returns the socket or -1 if the BIO has not
 been initialised.
 
-=head1 EXAMPLES
+BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip() and
+BIO_set_conn_int_port() always return 1.
 
-TBA
+BIO_get_conn_hostname() returns the connected hostname or NULL is
+none was set.
+
+BIO_get_conn_port() returns a string representing the connected
+port or NULL if not set.
+
+BIO_get_conn_ip() returns a pointer to the connected IP address in
+binary form or all zeros if not set.
+
+BIO_get_conn_int_port() returns the connected port or 0 if none was
+set.
+
+BIO_set_nbio() always returns 1.
+
+BIO_do_connect() returns 1 if the connection was successfully
+established and 0 or -1 if the connection failed.
+
+=head1 EXAMPLE
+
+This is example connects to a webserver on the local host and attempts
+to retrieve a page and copy the result to standard output.
+
+
+ BIO *cbio, *out;
+ int len;
+ char tmpbuf[1024];
+ ERR_load_crypto_strings();
+ cbio = BIO_new_connect("localhost:http");
+ out = BIO_new_fp(stdout, BIO_NOCLOSE);
+ if(BIO_do_connect(cbio) <= 0) {
+	fprintf(stderr, "Error connecting to server\n");
+	ERR_print_errors_fp(stderr);
+	/* whatever ... */
+	}
+ BIO_puts(cbio, "GET / HTTP/1.0\n\n");
+ for(;;) {	
+	len = BIO_read(cbio, tmpbuf, 1024);
+	if(len <= 0) break;
+	BIO_write(out, tmpbuf, len);
+ }
+ BIO_free(cbio);
+ BIO_free(out);
+
 
 =head1 SEE ALSO
 
