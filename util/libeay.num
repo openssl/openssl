@@ -2526,3 +2526,14 @@ X509_STORE_set_trust                    2986	EXIST::FUNCTION:
 UI_get0_user_data                       2987	EXIST::FUNCTION:
 UI_add_user_data                        2988	EXIST::FUNCTION:
 PKCS12_add_CSPName_asc                  2989	EXIST::FUNCTION:
+UI_get_input_flags                      2990	EXIST::FUNCTION:
+ENGINE_ctrl_cmd                         2991	EXIST::FUNCTION:
+UI_method_set_flusher                   2992	EXIST::FUNCTION:
+UI_method_get_flusher                   2993	EXIST::FUNCTION:
+UI_construct_prompt                     2994	EXIST::FUNCTION:
+UI_dup_input_boolean                    2995	EXIST::FUNCTION:
+UI_add_input_boolean                    2996	EXIST::FUNCTION:
+ERR_print_errors_cb                     2997	EXIST::FUNCTION:
+UI_get0_action_string                   2998	EXIST::FUNCTION:
+UI_destroy_method                       2999	EXIST::FUNCTION:
+UI_ctrl                                 3000	EXIST::FUNCTION:

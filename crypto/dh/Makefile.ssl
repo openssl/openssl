@@ -130,8 +130,9 @@ dh_key.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 dh_key.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 dh_key.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 dh_key.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-dh_key.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_key.o: ../../include/openssl/x509_vfy.h ../cryptlib.h dh_key.c
+dh_key.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+dh_key.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+dh_key.o: ../cryptlib.h dh_key.c
 dh_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 dh_lib.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -151,5 +152,6 @@ dh_lib.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 dh_lib.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 dh_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 dh_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-dh_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h dh_lib.c
+dh_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+dh_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+dh_lib.o: ../cryptlib.h dh_lib.c
