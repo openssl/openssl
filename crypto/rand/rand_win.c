@@ -162,6 +162,7 @@ typedef BOOL (WINAPI *GETCURSORINFO)(PCURSORINFO);
 typedef DWORD (WINAPI *GETQUEUESTATUS)(UINT);
 
 typedef HANDLE (WINAPI *CREATETOOLHELP32SNAPSHOT)(DWORD, DWORD);
+typedef BOOL (WINAPI *CLOSETOOLHELP32SNAPSHOT)(HANDLE);
 typedef BOOL (WINAPI *HEAP32FIRST)(LPHEAPENTRY32, DWORD, DWORD);
 typedef BOOL (WINAPI *HEAP32NEXT)(LPHEAPENTRY32);
 typedef BOOL (WINAPI *HEAP32LIST)(HANDLE, LPHEAPLIST32);
@@ -414,7 +415,7 @@ int RAND_poll(void)
 	 * This seeding method was proposed in Peter Gutmann, Software
 	 * Generation of Practically Strong Random Numbers,
 	 * http://www.usenix.org/publications/library/proceedings/sec98/gutmann.html
-     * revised version at http://www.cryptoengines.com/~peter/06_random.pdf
+	 * revised version at http://www.cryptoengines.com/~peter/06_random.pdf
 	 * (The assignment of entropy estimates below is arbitrary, but based
 	 * on Peter's analysis the full poll appears to be safe. Additional
 	 * interactive seeding is encouraged.)
@@ -423,6 +424,7 @@ int RAND_poll(void)
 	if (kernel)
 		{
 		CREATETOOLHELP32SNAPSHOT snap;
+		CLOSETOOLHELP32SNAPSHOT close_snap;
 		HANDLE handle;
 
 		HEAP32FIRST heap_first;
@@ -440,6 +442,8 @@ int RAND_poll(void)
 
 		snap = (CREATETOOLHELP32SNAPSHOT)
 			GetProcAddress(kernel, "CreateToolhelp32Snapshot");
+		close_snap = (CLOSETOOLHELP32SNAPSHOT)
+			GetProcAddress(kernel, "CloseToolhelp32Snapshot");
 		heap_first = (HEAP32FIRST) GetProcAddress(kernel, "Heap32First");
 		heap_next = (HEAP32NEXT) GetProcAddress(kernel, "Heap32Next");
 		heaplist_first = (HEAP32LIST) GetProcAddress(kernel, "Heap32ListFirst");
@@ -455,7 +459,7 @@ int RAND_poll(void)
 			heaplist_next && process_first && process_next &&
 			thread_first && thread_next && module_first &&
 			module_next && (handle = snap(TH32CS_SNAPALL,0))
-			!= NULL)
+			!= INVALID_HANDLE_VALUE)
 			{
 			/* heap list and heap walking */
                         /* HEAPLIST32 contains 3 fields that will change with
@@ -517,8 +521,10 @@ int RAND_poll(void)
 				do
 					RAND_add(&m, m.dwSize, 9);
 				while (module_next(handle, &m));
-
-			CloseHandle(handle);
+			if (close_snap)
+				close_snap(handle);
+			else
+				CloseHandle(handle);
 			}
 
 		FreeLibrary(kernel);
