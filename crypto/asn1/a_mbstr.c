@@ -296,7 +296,7 @@ static int in_utf8(unsigned long value, void *arg)
 
 static int out_utf8(unsigned long value, void *arg)
 {
-	long *outlen;
+	int *outlen;
 	outlen = arg;
 	*outlen += UTF8_putc(NULL, -1, value);
 	return 1;
