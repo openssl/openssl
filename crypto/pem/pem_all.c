@@ -274,8 +274,10 @@ ECDSA *PEM_read_ECDSAPrivateKey(FILE *fp, ECDSA **ecdsa, pem_password_cb *cb,
 
 #endif
 
-IMPLEMENT_PEM_rw(ECDSAParameters, ECDSA, PEM_STRING_ECDSAPARAMS, ECDSAParameters)
+#endif
 
+#ifndef OPENSSL_NO_EC
+IMPLEMENT_PEM_rw(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS, ECPKParameters)
 #endif
 
 #ifndef OPENSSL_NO_DH

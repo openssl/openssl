@@ -93,7 +93,7 @@ extern "C" {
 #define PEM_OBJ_PRIV_RSA_PUBLIC	19
 #define PEM_OBJ_PRIV_ECDSA	20
 #define PEM_OBJ_PUB_ECDSA	21
-#define PEM_OBJ_ECDSAPARAMS	22
+#define PEM_OBJ_ECPARAMETERS	22
 
 #define PEM_ERROR		30
 #define PEM_DEK_DES_CBC         40
@@ -131,7 +131,7 @@ extern "C" {
 #define PEM_STRING_DSAPARAMS	"DSA PARAMETERS"
 #define PEM_STRING_ECDSA	"ECDSA PRIVATE KEY"
 #define PEM_STRING_ECDSA_PUBLIC "ECDSA PUBLIC KEY"
-#define PEM_STRING_ECDSAPARAMS	"ECDSA PARAMETERS"
+#define PEM_STRING_ECPARAMETERS "EC PARAMETERS"
 
   /* Note that this structure is initialised by PEM_SealInit and cleaned up
      by PEM_SealFinal (at least for now) */
@@ -581,7 +581,10 @@ DECLARE_PEM_rw(DSAparams, DSA)
 #ifndef OPENSSL_NO_ECDSA
 DECLARE_PEM_rw_cb(ECDSAPrivateKey, ECDSA)
 DECLARE_PEM_rw(ECDSA_PUBKEY, ECDSA)
-DECLARE_PEM_rw(ECDSAParameters, ECDSA)
+#endif
+
+#ifndef OPENSSL_NO_EC
+DECLARE_PEM_rw(ECPKParameters, EC_GROUP)
 #endif
 
 #ifndef OPENSSL_NO_DH

@@ -700,6 +700,11 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
 		goto err;
 		}
+
+	/* set the point conversion form */
+	EC_GROUP_set_point_conversion_form(ret, (point_conversion_form_t)
+				(params->base->data[0] & ~0x01));
+
 	if (!EC_GROUP_set_generator(ret, point, a, b))
 		{
 		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);

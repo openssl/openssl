@@ -259,6 +259,14 @@ int i2d_ECParameters(const EC_GROUP *, unsigned char **out);
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
+#define d2i_ECPKParameters_bio(bp,x) (EC_GROUP *)ASN1_d2i_bio(NULL, \
+                (char *(*)())d2i_ECPKParameters,(bp),(unsigned char **)(x))
+#define i2d_ECPKParameters_bio(bp,x) ASN1_i2d_bio(i2d_ECPKParameters,(bp), \
+		(unsigned char *)(x))
+#define d2i_ECPKParameters_fp(fp,x) (EC_GROUP *)ASN1_d2i_fp(NULL, \
+                (char *(*)())d2i_ECPKParameters,(fp),(unsigned char **)(x))
+#define i2d_ECPKParameters_fp(fp,x) ASN1_i2d_fp(i2d_ECPKParameters,(fp), \
+		(unsigned char *)(x))
 
 #ifndef OPENSSL_NO_BIO
 int     ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);

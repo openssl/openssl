@@ -340,8 +340,12 @@ int MAIN(int argc, char **argv)
 					perror(p);
 					goto end;
 					}
-				if ((ecdsa_params = PEM_read_bio_ECDSAParameters(in, NULL, NULL, NULL)) == NULL)
+				if ((ecdsa_params = ECDSA_new()) == NULL)
+					goto end;
+				if ((ecdsa_params->group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL)) == NULL)
 					{
+					if (ecdsa_params)
+						ECDSA_free(ecdsa_params);
 					ERR_clear_error();
 					(void)BIO_reset(in);
 					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)

@@ -18,7 +18,7 @@ extern int rsautl_main(int argc,char *argv[]);
 extern int dsa_main(int argc,char *argv[]);
 extern int dsaparam_main(int argc,char *argv[]);
 extern int ecdsa_main(int argc,char *argv[]);
-extern int ecdsaparam_main(int argc,char *argv[]);
+extern int ecparam_main(int argc,char *argv[]);
 extern int x509_main(int argc,char *argv[]);
 extern int genrsa_main(int argc,char *argv[]);
 extern int gendsa_main(int argc,char *argv[]);
@@ -85,7 +85,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"ecdsa",ecdsa_main},
 #endif
 #ifndef OPENSSL_NO_ECDSA
-	{FUNC_TYPE_GENERAL,"ecdsaparam",ecdsaparam_main},
+	{FUNC_TYPE_GENERAL,"ecparam",ecparam_main},
 #endif
 	{FUNC_TYPE_GENERAL,"x509",x509_main},
 #ifndef OPENSSL_NO_RSA

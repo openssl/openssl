@@ -75,8 +75,8 @@
 
   *) Add ECDSA in new directory crypto/ecdsa/.
 
-     Add applications 'openssl ecdsaparam' and 'openssl ecdsa'
-     (these are variants of 'openssl dsaparam' and 'openssl dsa').
+     Add applications 'openssl ecparam' and 'openssl ecdsa'
+     (these are based on 'openssl dsaparam' and 'openssl dsa').
 
      ECDSA support is also included in various other files across the
      library.  Most notably,
