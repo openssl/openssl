@@ -153,7 +153,7 @@ static DH *get_dh512(void)
 
 #undef BUFSIZZ
 #define BUFSIZZ	16*1024
-static int bufsize=32;
+static int bufsize=BUFSIZZ;
 static int accept_socket= -1;
 
 #define TEST_CERT	"server.pem"
