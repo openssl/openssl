@@ -18,7 +18,6 @@
   *) Support BS2000/OSD-POSIX.
      [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>]
 
->>>>>>> 1.252
   *) Make callbacks for key generation use void * instead of char *.
      [Ben Laurie]
 
