@@ -505,8 +505,8 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
-	BIGNUM *X, *Y, *Z, *Z_1, *Z_2, *Z_3;
-	const BIGNUM *X_, *Y_, *Z_;
+	BIGNUM *Z, *Z_1, *Z_2, *Z_3;
+	const BIGNUM *Z_;
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point))
@@ -523,8 +523,6 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 		}
 
 	BN_CTX_start(ctx);
-	X = BN_CTX_get(ctx);
-	Y = BN_CTX_get(ctx);
 	Z = BN_CTX_get(ctx);
 	Z_1 = BN_CTX_get(ctx);
 	Z_2 = BN_CTX_get(ctx);
@@ -535,27 +533,37 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 	
 	if (group->meth->field_decode)
 		{
-		if (!group->meth->field_decode(group, X, &point->X, ctx)) goto err;
-		if (!group->meth->field_decode(group, Y, &point->Y, ctx)) goto err;
 		if (!group->meth->field_decode(group, Z, &point->Z, ctx)) goto err;
-		X_ = X; Y_ = Y;	Z_ = Z;
+		Z_ = Z;
 		}
 	else
 		{
-		X_ = &point->X;
-		Y_ = &point->Y;
 		Z_ = &point->Z;
 		}
 	
 	if (BN_is_one(Z_))
 		{
-		if (x != NULL)
+		if (group->meth->field_decode)
 			{
-			if (!BN_copy(x, X_)) goto err;
+			if (x != NULL)
+				{
+				if (!group->meth->field_decode(group, x, &point->X, ctx)) goto err;
+				}
+			if (y != NULL)
+				{
+				if (!group->meth->field_decode(group, y, &point->Y, ctx)) goto err;
+				}
 			}
-		if (y != NULL)
+		else
 			{
-			if (!BN_copy(y, Y_)) goto err;
+			if (x != NULL)
+				{
+				if (!BN_copy(x, &point->X)) goto err;
+				}
+			if (y != NULL)
+				{
+				if (!BN_copy(y, &point->Y)) goto err;
+				}
 			}
 		}
 	else
@@ -578,15 +586,8 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 	
 		if (x != NULL)
 			{
-			if (group->meth->field_encode == 0)
-				{
-				/* field_mul works on standard representation */
-				if (!group->meth->field_mul(group, x, X_, Z_2, ctx)) goto err;
-				}
-			else
-				{
-				if (!BN_mod_mul(x, X_, Z_2, &group->field, ctx)) goto err;
-				}
+			/* in the Montgomery case, field_mul will cancel out Montgomery factor in X: */
+			if (!group->meth->field_mul(group, x, &point->X, Z_2, ctx)) goto err;
 			}
 
 		if (y != NULL)
@@ -595,14 +596,14 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 				{
 				/* field_mul works on standard representation */
 				if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx)) goto err;
-				if (!group->meth->field_mul(group, y, Y_, Z_3, ctx)) goto err;
-				
 				}
 			else
 				{
 				if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx)) goto err;
-				if (!BN_mod_mul(y, Y_, Z_3, &group->field, ctx)) goto err;
 				}
+
+			/* in the Montgomery case, field_mul will cancel out Montgomery factor in Y: */
+			if (!group->meth->field_mul(group, y, &point->Y, Z_3, ctx)) goto err;
 			}
 		}
 
