@@ -300,7 +300,7 @@ errors:
 	perl util/mkerr.pl -recurse -write
 
 stacks:
-	perl util/mkstack.pl -recurse
+	perl util/mkstack.pl -write
 
 util/libeay.num::
 	perl util/mkdef.pl crypto update
