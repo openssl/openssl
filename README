@@ -1,5 +1,5 @@
 
- OpenSSL 0.9.2b 22 Mar 1999
+ OpenSSL 0.9.2b 22-Mar-1999
 
  Copyright (c) 1998-1999 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
@@ -119,10 +119,10 @@
  -------
 
  Various companies hold various patents for various algorithms in various
- locations around the world. YOU are responsible for ensuring that your use of
- any algorithms is legel by checking if there are any patents in your country.
- The file contains some of the patents that we know about or are rumoured to
- exist. This is not a definitive list.
+ locations around the world. _YOU_ are responsible for ensuring that your use
+ of any algorithms is legel by checking if there are any patents in your
+ country.  The file contains some of the patents that we know about or are
+ rumoured to exist. This is not a definitive list.
 
  RSA Data Security holds software patents on the RSA and RC5 algorithms.  If
  their ciphers are used used inside the USA (and Japan?), you must contact RSA
