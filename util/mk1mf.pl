@@ -290,6 +290,8 @@ $defs= <<"EOF";
 
 EOF
 
+$defs .= $preamble if defined $preamble;
+
 if ($platform eq "VC-CE")
 	{
 	$defs.= <<"EOF";
