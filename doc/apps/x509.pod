@@ -505,6 +505,8 @@ As well as customising the name output format, it is also possible to
 customise the actual fields printed using the B<certopt> options when
 the B<text> option is present. The default behaviour is to print all fields.
 
+=over 4
+
 =item B<compatible>
 
 use the old format. This is equivalent to specifying no output options at all.
@@ -573,10 +575,6 @@ hex dump unsupported extensions.
 
 the value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>, B<no_header>,
 B<no_version>, B<no_sigdump> and B<no_signame>.
-
-
-
-=over 4
 
 =back
 
