@@ -9,8 +9,28 @@
 
       o Various SSL/TLS library bugfixes.
       o BIGNUM library fixes.
+      o PKCS7 library fixes.
+      o BIO library fixes.
+      o DSA and DH library fixes.
+      o RSA library fixes.
+      o RAND library fixes.
+      o Object identifiers corrected and added.
+      o Mutex fixes.
+      o Add the functions BN_pseudo_rand_range, SSL_get_rfd, SSL_get_wfd
+        and X509_STORE_CTX_set_verify_cb.
+      o Add the possibility to use md4WithRSAEncryption through EVP.
+      o Add assembler BN routines for IA64.
+      o Add configuration entries for OS/390 Unix, UnixWare with gcc,
+        OpenUNIX 8 and big- as well as little-endian MIPS with Linux,
+      o Add threading support for the configuration entry BC-16.
+      o Add shared library support for Irix, HP-UX.
+      o Add detection of GNU ld when building shared libraries.
+      o Add a BIG WARNING TEXT in doc/ssleay.txt about the trust one can
+        put in it.
+      o Add a bunch of documentation.
       o Add crypto accelerator support for AEP, Baltimore SureWare,
-        Broadcom [in 0.9.6c-engine release].
+        Broadcom and Cryptographic Appliance's keyserver
+        [in 0.9.6c-engine release].
 
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
