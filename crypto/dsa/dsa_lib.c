@@ -112,17 +112,17 @@ DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth)
         return mtmp;
 }
 #else
-int DSA_set_method(DSA *dsa, ENGINE *h)
+int DSA_set_method(DSA *dsa, ENGINE *engine)
 	{
 	ENGINE *mtmp;
 	DSA_METHOD *meth;
-	mtmp = dsa->handle;
+	mtmp = dsa->engine;
 	meth = ENGINE_get_DSA(mtmp);
-	if (!ENGINE_init(h))
+	if (!ENGINE_init(engine))
 		return 0;
 	if (meth->finish) meth->finish(dsa);
-	dsa->handle = h;
-	meth = ENGINE_get_DSA(h);
+	dsa->engine = engine;
+	meth = ENGINE_get_DSA(engine);
 	if (meth->init) meth->init(dsa);
 	/* SHOULD ERROR CHECK THIS!!! */
 	ENGINE_finish(mtmp);
@@ -134,7 +134,7 @@ int DSA_set_method(DSA *dsa, ENGINE *h)
 #if 0
 DSA *DSA_new_method(DSA_METHOD *meth)
 #else
-DSA *DSA_new_method(ENGINE *handle)
+DSA *DSA_new_method(ENGINE *engine)
 #endif
 	{
 	DSA_METHOD *meth;
@@ -146,17 +146,17 @@ DSA *DSA_new_method(ENGINE *handle)
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(handle)
-		ret->handle = handle;
+	if(engine)
+		ret->engine = engine;
 	else
 		{
-		if((ret->handle=ENGINE_get_default_DSA()) == NULL)
+		if((ret->engine=ENGINE_get_default_DSA()) == NULL)
 			{
 			Free(ret);
 			return NULL;
 			}
 		}
-	meth = ENGINE_get_DSA(ret->handle);
+	meth = ENGINE_get_DSA(ret->engine);
 	ret->pad=0;
 	ret->version=0;
 	ret->write_params=1;
@@ -206,9 +206,9 @@ void DSA_free(DSA *r)
 
 	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
 
-	meth = ENGINE_get_DSA(r->handle);
+	meth = ENGINE_get_DSA(r->engine);
 	if(meth->finish) meth->finish(r);
-	ENGINE_finish(r->handle);
+	ENGINE_finish(r->engine);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->q != NULL) BN_clear_free(r->q);

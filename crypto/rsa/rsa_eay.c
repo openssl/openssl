@@ -104,7 +104,7 @@ static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
-	meth = ENGINE_get_RSA(rsa->handle);
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
@@ -178,7 +178,7 @@ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
-	meth = ENGINE_get_RSA(rsa->handle);
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 
@@ -257,7 +257,7 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
-	meth = ENGINE_get_RSA(rsa->handle);
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	ctx=BN_CTX_new();
@@ -352,7 +352,7 @@ static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
-	meth = ENGINE_get_RSA(rsa->handle);
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_init(&f);
 	BN_init(&ret);
 	ctx=BN_CTX_new();
@@ -423,7 +423,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	int ret=0;
 	BN_CTX *ctx;
 
-	meth = ENGINE_get_RSA(rsa->handle);
+	meth = ENGINE_get_RSA(rsa->engine);
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&m1);
 	BN_init(&r1);

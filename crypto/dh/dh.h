@@ -115,7 +115,7 @@ struct dh_st
 #if 0
 	DH_METHOD *meth;
 #else
-	struct engine_st *handle;
+	struct engine_st *engine;
 #endif
 	};
 
@@ -157,8 +157,8 @@ DH_METHOD *DH_get_default_openssl_method(void);
 DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth);
 DH *DH_new_method(DH_METHOD *meth);
 #else
-int DH_set_method(DH *dh, struct engine_st *h);
-DH *DH_new_method(struct engine_st *handle);
+int DH_set_method(DH *dh, struct engine_st *engine);
+DH *DH_new_method(struct engine_st *engine);
 #endif
 
 DH *	DH_new(void);

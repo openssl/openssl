@@ -114,7 +114,7 @@ RSA_METHOD *RSA_get_default_openssl_method(void)
 
 RSA_METHOD *RSA_get_method(RSA *rsa)
 {
-	return ENGINE_get_RSA(rsa->handle);
+	return ENGINE_get_RSA(rsa->engine);
 }
 
 #if 0
@@ -128,17 +128,17 @@ RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
 	return mtmp;
 }
 #else
-int RSA_set_method(RSA *rsa, ENGINE *h)
+int RSA_set_method(RSA *rsa, ENGINE *engine)
 {
 	ENGINE *mtmp;
 	RSA_METHOD *meth;
-	mtmp = rsa->handle;
+	mtmp = rsa->engine;
 	meth = ENGINE_get_RSA(mtmp);
-	if (!ENGINE_init(h))
+	if (!ENGINE_init(engine))
 		return 0;
 	if (meth->finish) meth->finish(rsa);
-	rsa->handle = h;
-	meth = ENGINE_get_RSA(h);
+	rsa->engine = engine;
+	meth = ENGINE_get_RSA(engine);
 	if (meth->init) meth->init(rsa);
 	/* SHOULD ERROR CHECK THIS!!! */
 	ENGINE_finish(mtmp);
@@ -149,7 +149,7 @@ int RSA_set_method(RSA *rsa, ENGINE *h)
 #if 0
 RSA *RSA_new_method(RSA_METHOD *meth)
 #else
-RSA *RSA_new_method(ENGINE *handle)
+RSA *RSA_new_method(ENGINE *engine)
 #endif
 	{
 	RSA_METHOD *meth;
@@ -162,17 +162,17 @@ RSA *RSA_new_method(ENGINE *handle)
 		return(NULL);
 		}
 
-	if (handle == NULL)
+	if (engine == NULL)
 		{
-		if((ret->handle=ENGINE_get_default_RSA()) == NULL)
+		if((ret->engine=ENGINE_get_default_RSA()) == NULL)
 			{
 			Free(ret);
 			return NULL;
 			}
 		}
 	else
-		ret->handle=handle;
-	meth = ENGINE_get_RSA(ret->handle);
+		ret->engine=engine;
+	meth = ENGINE_get_RSA(ret->engine);
 
 	ret->pad=0;
 	ret->version=0;
@@ -223,10 +223,10 @@ void RSA_free(RSA *r)
 
 	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
 
-	meth = ENGINE_get_RSA(r->handle);
+	meth = ENGINE_get_RSA(r->engine);
 	if (meth->finish != NULL)
 		meth->finish(r);
-	ENGINE_finish(r->handle);
+	ENGINE_finish(r->engine);
 
 	if (r->n != NULL) BN_clear_free(r->n);
 	if (r->e != NULL) BN_clear_free(r->e);
@@ -267,34 +267,34 @@ int RSA_size(RSA *r)
 int RSA_public_encrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(ENGINE_get_RSA(rsa->handle)->rsa_pub_enc(flen,
+	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_enc(flen,
 		from, to, rsa, padding));
 	}
 
 int RSA_private_encrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(ENGINE_get_RSA(rsa->handle)->rsa_priv_enc(flen,
+	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_enc(flen,
 		from, to, rsa, padding));
 	}
 
 int RSA_private_decrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(ENGINE_get_RSA(rsa->handle)->rsa_priv_dec(flen,
+	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_dec(flen,
 		from, to, rsa, padding));
 	}
 
 int RSA_public_decrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(ENGINE_get_RSA(rsa->handle)->rsa_pub_dec(flen,
+	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_dec(flen,
 		from, to, rsa, padding));
 	}
 
 int RSA_flags(RSA *r)
 	{
-	return((r == NULL)?0:ENGINE_get_RSA(r->handle)->flags);
+	return((r == NULL)?0:ENGINE_get_RSA(r->engine)->flags);
 	}
 
 void RSA_blinding_off(RSA *rsa)
@@ -328,7 +328,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
-	if (!ENGINE_get_RSA(rsa->handle)->bn_mod_exp(A,A,
+	if (!ENGINE_get_RSA(rsa->engine)->bn_mod_exp(A,A,
 		rsa->e,rsa->n,ctx,rsa->_method_mod_n))
 	    goto err;
 	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);

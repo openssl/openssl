@@ -73,12 +73,12 @@ static int dh_finish(DH *dh);
 
 int DH_generate_key(DH *dh)
 	{
-	return ENGINE_get_DH(dh->handle)->generate_key(dh);
+	return ENGINE_get_DH(dh->engine)->generate_key(dh);
 	}
 
 int DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 	{
-	return ENGINE_get_DH(dh->handle)->compute_key(key, pub_key, dh);
+	return ENGINE_get_DH(dh->engine)->compute_key(key, pub_key, dh);
 	}
 
 static DH_METHOD dh_ossl = {
@@ -138,7 +138,7 @@ static int generate_key(DH *dh)
 		}
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
 
-	if (!ENGINE_get_DH(dh->handle)->bn_mod_exp(dh, pub_key, dh->g,
+	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
 				priv_key,dh->p,&ctx,mont))
 		goto err;
 		
@@ -179,7 +179,7 @@ static int compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 		}
 
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
-	if (!ENGINE_get_DH(dh->handle)->bn_mod_exp(dh, tmp, pub_key,
+	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, tmp, pub_key,
 				dh->priv_key,dh->p,&ctx,mont))
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);

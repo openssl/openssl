@@ -104,17 +104,17 @@ DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth)
         return mtmp;
 }
 #else
-int DH_set_method(DH *dh, ENGINE *h)
+int DH_set_method(DH *dh, ENGINE *engine)
 {
 	ENGINE *mtmp;
 	DH_METHOD *meth;
-	mtmp = dh->handle;
+	mtmp = dh->engine;
 	meth = ENGINE_get_DH(mtmp);
-	if (!ENGINE_init(h))
+	if (!ENGINE_init(engine))
 		return 0;
 	if (meth->finish) meth->finish(dh);
-	dh->handle = h;
-	meth = ENGINE_get_DH(h);
+	dh->engine= engine;
+	meth = ENGINE_get_DH(engine);
 	if (meth->init) meth->init(dh);
 	/* SHOULD ERROR CHECK THIS!!! */
 	ENGINE_finish(mtmp);
@@ -130,7 +130,7 @@ DH *DH_new(void)
 #if 0
 DH *DH_new_method(DH_METHOD *meth)
 #else
-DH *DH_new_method(ENGINE *handle)
+DH *DH_new_method(ENGINE *engine)
 #endif
 	{
 	DH_METHOD *meth;
@@ -142,17 +142,17 @@ DH *DH_new_method(ENGINE *handle)
 		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(handle)
-		ret->handle = handle;
+	if(engine)
+		ret->engine = engine;
 	else
 		{
-		if((ret->handle=ENGINE_get_default_DH()) == NULL)
+		if((ret->engine=ENGINE_get_default_DH()) == NULL)
 			{
 			Free(ret);
 			return NULL;
 			}
 		}
-	meth = ENGINE_get_DH(ret->handle);
+	meth = ENGINE_get_DH(ret->engine);
 	ret->pad=0;
 	ret->version=0;
 	ret->p=NULL;
@@ -198,9 +198,9 @@ void DH_free(DH *r)
 
 	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
 
-	meth = ENGINE_get_DH(r->handle);
+	meth = ENGINE_get_DH(r->engine);
 	if(meth->finish) meth->finish(r);
-	ENGINE_finish(r->handle);
+	ENGINE_finish(r->engine);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);

@@ -114,7 +114,7 @@ struct rsa_st
 #if 0
 	RSA_METHOD *meth;
 #else
-	struct engine_st *handle;
+	struct engine_st *engine;
 #endif
 	BIGNUM *n;
 	BIGNUM *e;
@@ -172,7 +172,7 @@ RSA *	RSA_new(void);
 #if 0
 RSA *	RSA_new_method(RSA_METHOD *method);
 #else
-RSA *	RSA_new_method(struct engine_st *handle);
+RSA *	RSA_new_method(struct engine_st *engine);
 #endif
 int	RSA_size(RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
@@ -197,7 +197,7 @@ RSA_METHOD *RSA_get_method(RSA *rsa);
 #if 0
 RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
 #else
-int RSA_set_method(RSA *rsa, struct engine_st *h);
+int RSA_set_method(RSA *rsa, struct engine_st *engine);
 #endif
 
 /* This function needs the memory locking malloc callbacks to be installed */

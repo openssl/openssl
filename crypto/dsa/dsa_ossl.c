@@ -196,7 +196,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	if (!ENGINE_get_DSA(dsa->handle)->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
+	if (!ENGINE_get_DSA(dsa->engine)->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
 		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
@@ -274,7 +274,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err;
 #else
 	{
-	if (!ENGINE_get_DSA(dsa->handle)->dsa_mod_exp(dsa, &t1,dsa->g,&u1,dsa->pub_key,&u2,
+	if (!ENGINE_get_DSA(dsa->engine)->dsa_mod_exp(dsa, &t1,dsa->g,&u1,dsa->pub_key,&u2,
 						dsa->p,ctx,mont)) goto err;
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */

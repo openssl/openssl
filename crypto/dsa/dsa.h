@@ -133,7 +133,7 @@ struct dsa_st
 #if 0
 	DSA_METHOD *meth;
 #else
-	struct engine_st *handle;
+	struct engine_st *engine;
 #endif
 	};
 
@@ -165,14 +165,14 @@ DSA_METHOD *DSA_get_default_openssl_method(void);
 #if 0
 DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
 #else
-int DSA_set_method(DSA *dsa, struct engine_st *);
+int DSA_set_method(DSA *dsa, struct engine_st *engine);
 #endif
 
 DSA *	DSA_new(void);
 #if 0
 DSA *	DSA_new_method(DSA_METHOD *meth);
 #else
-DSA *	DSA_new_method(struct engine_st *handle);
+DSA *	DSA_new_method(struct engine_st *engine);
 #endif
 int	DSA_size(DSA *);
 	/* next 4 return -1 on error */

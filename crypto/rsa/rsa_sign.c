@@ -77,7 +77,7 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
-	      return ENGINE_get_RSA(rsa->handle)->rsa_sign(type,
+	      return ENGINE_get_RSA(rsa->engine)->rsa_sign(type,
 			m, m_len, sigret, siglen, rsa);
 	/* Special case: SSL signature, just check the length */
 	if(type == NID_md5_sha1) {
@@ -153,7 +153,7 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 		}
 
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
-	    return ENGINE_get_RSA(rsa->handle)->rsa_verify(dtype,
+	    return ENGINE_get_RSA(rsa->engine)->rsa_verify(dtype,
 			m, m_len, sigbuf, siglen, rsa);
 
 	s=(unsigned char *)Malloc((unsigned int)siglen);
