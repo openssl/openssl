@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-static int traverse_string(unsigned char *p, int len, int inform,
+static int traverse_string(const unsigned char *p, int len, int inform,
 		 int (*rfunc)(unsigned long value, void *in), void *arg);
 static int in_utf8(unsigned long value, void *arg);
 static int out_utf8(unsigned long value, void *arg);
@@ -78,8 +78,8 @@ static int is_printable(unsigned long value);
  * Yes this is horrible: it has to be :-(
  */
 
-int ASN1_mbstring_copy(ASN1_STRING **out, unsigned char *in, int len,
-					int inform, unsigned long mask)
+int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
+		       int inform, unsigned long mask)
 {
 	int str_type;
 	int ret;
@@ -206,7 +206,7 @@ int ASN1_mbstring_copy(ASN1_STRING **out, unsigned char *in, int len,
  * to an optional function along with a void * argument.
  */
 
-static int traverse_string(unsigned char *p, int len, int inform,
+static int traverse_string(const unsigned char *p, int len, int inform,
 		 int (*rfunc)(unsigned long value, void *in), void *arg)
 {
 	unsigned long value;

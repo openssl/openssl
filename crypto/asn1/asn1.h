@@ -563,7 +563,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, unsigned char **pp,
 	long length);
 
 
-int UTF8_getc(unsigned char *str, int len, unsigned long *val);
+int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
 int UTF8_putc(unsigned char *str, int len, unsigned long value);
 
 int i2d_ASN1_PRINTABLE(ASN1_STRING *a,unsigned char **pp);
@@ -718,7 +718,7 @@ unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 								 int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
 ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
-int ASN1_mbstring_copy(ASN1_STRING **out, unsigned char *in, int len,
+int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 					int inform, unsigned long mask);
 
 /* BEGIN ERROR CODES */

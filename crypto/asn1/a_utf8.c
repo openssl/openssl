@@ -100,9 +100,9 @@ ASN1_UTF8STRING *d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, unsigned char **pp,
  * -4 = character encoded incorrectly (not minimal length).
  */
 
-int UTF8_getc(unsigned char *str, int len, unsigned long *val)
+int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
 {
-	unsigned char *p;
+	const unsigned char *p;
 	unsigned long value;
 	int ret;
 	if(len <= 0) return 0;
