@@ -118,7 +118,6 @@ int ec_GFp_nist_group_init(EC_GROUP *group)
 	int ok;
 
 	ok = ec_GFp_simple_group_init(group);
-	group->field_data1 = NULL;
 	return ok;
 	}
 
@@ -227,8 +226,6 @@ int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	dest->curve_name  = src->curve_name;
 
 	dest->a_is_minus3 = src->a_is_minus3;
-
-	dest->field_data1 = src->field_data1;
 
 	return 1;
 	}
