@@ -59,6 +59,10 @@ choice when compatibility is a concern.
 
 =back
 
+If a generic method is used, it is necessary to explicitly set client or
+server mode with L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
+or SSL_set_accept_state().
+
 The list of protocols available can later be limited using the SSL_OP_NO_SSLv2,
 SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1 options of the B<SSL_CTX_set_options()> or
 B<SSL_set_options()> functions. Using these options it is possible to choose
@@ -89,6 +93,6 @@ The return value points to an allocated SSL_CTX object.
 =head1 SEE ALSO
 
 L<SSL_CTX_free(3)|SSL_CTX_free(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<ssl(3)|ssl(3)>
+L<ssl(3)|ssl(3)>,  L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
 
 =cut
