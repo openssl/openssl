@@ -87,13 +87,13 @@ static STACK *x509_store_method=NULL;
 
 static int null_callback(int ok, X509_STORE_CTX *e)
 	{
-	return (ok);
+	return ok;
 	}
 
 #if 0
 static int x509_subject_cmp(X509 **a, X509 **b)
 	{
-	return (X509_subject_name_cmp(*a,*b));
+	return X509_subject_name_cmp(*a,*b);
 	}
 #endif
 
@@ -109,7 +109,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	if (ctx->cert == NULL)
 		{
 		X509err(X509_F_X509_VERIFY_CERT,X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
-		return (-1);
+		return -1;
 		}
 
 	cb=ctx->verify_cb;
@@ -250,7 +250,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 			{
 			X509_free(xtmp);
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
-			return (0);
+			return 0;
 			}
 		num++;
 		}
@@ -311,7 +311,7 @@ end:
 		}
 	if (sktmp != NULL) sk_X509_free(sktmp);
 	if (chain_ss != NULL) X509_free(chain_ss);
-	return (ok);
+	return ok;
 	}
 
 
@@ -409,7 +409,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 		}
 	ok = 1;
  end:
-	return (ok);
+	return ok;
 #endif
 }
 
@@ -436,7 +436,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 	else
 		ctx->error = X509_V_ERR_CERT_UNTRUSTED;
 	ok = cb(0, ctx);
-	return (ok);
+	return ok;
 #endif
 }
 
@@ -556,7 +556,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		}
 	ok=1;
 end:
-	return (ok);
+	return ok;
 	}
 
 int X509_cmp_current_time(ASN1_TIME *ctm)
@@ -577,7 +577,7 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	str=(char *)ctm->data;
 	if (ctm->type == V_ASN1_UTCTIME)
 		{
-		if ((i < 11) || (i > 17)) return (0);
+		if ((i < 11) || (i > 17)) return 0;
 		memcpy(p,str,10);
 		p+=10;
 		str+=10;
@@ -612,7 +612,7 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	else
 		{
 		if ((*str != '+') && (str[5] != '-'))
-			return (0);
+			return 0;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
 		if (*str == '-')
@@ -631,14 +631,14 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 		j=(buff2[0]-'0')*10+(buff2[1]-'0');
 		if (j < 50) j+=100;
 
-		if (i < j) return (-1);
-		if (i > j) return (1);
+		if (i < j) return -1;
+		if (i > j) return 1;
 		}
 	i=strcmp(buff1,buff2);
 	if (i == 0) /* wait a second then return younger :-) */
-		return (-1);
+		return -1;
 	else
-		return (i);
+		return i;
 	}
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
@@ -655,7 +655,7 @@ ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *in_tm)
 
 	t+=adj;
 	if (!s) return ASN1_TIME_set(s, t);
-	if (s->type == V_ASN1_UTCTIME) return (ASN1_UTCTIME_set(s,t));
+	if (s->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_set(s,t);
 	return ASN1_GENERALIZEDTIME_set(s, t);
 	}
 
@@ -664,7 +664,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	EVP_PKEY *ktmp=NULL,*ktmp2;
 	int i,j;
 
-	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return (1);
+	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return 1;
 
 	for (i=0; i<sk_X509_num(chain); i++)
 		{
@@ -672,7 +672,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 		if (ktmp == NULL)
 			{
 			X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
-			return (0);
+			return 0;
 			}
 		if (!EVP_PKEY_missing_parameters(ktmp))
 			break;
@@ -685,7 +685,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	if (ktmp == NULL)
 		{
 		X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
-		return (0);
+		return 0;
 		}
 
 	/* first, populate the other certs */
@@ -698,31 +698,31 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	
 	if (pkey != NULL) EVP_PKEY_copy_parameters(pkey,ktmp);
 	EVP_PKEY_free(ktmp);
-	return (1);
+	return 1;
 	}
 
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
         x509_store_ctx_num++;
-        return (CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
+        return CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
 		&x509_store_ctx_method,
-                argl,argp,new_func,dup_func,free_func));
+                argl,argp,new_func,dup_func,free_func);
         }
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
 	{
-	return (CRYPTO_set_ex_data(&ctx->ex_data,idx,data));
+	return CRYPTO_set_ex_data(&ctx->ex_data,idx,data);
 	}
 
 void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx)
 	{
-	return (CRYPTO_get_ex_data(&ctx->ex_data,idx));
+	return CRYPTO_get_ex_data(&ctx->ex_data,idx);
 	}
 
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
 	{
-	return (ctx->error);
+	return ctx->error;
 	}
 
 void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
@@ -732,17 +732,17 @@ void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
 
 int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
 	{
-	return (ctx->error_depth);
+	return ctx->error_depth;
 	}
 
 X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	{
-	return (ctx->current_cert);
+	return ctx->current_cert;
 	}
 
 STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 	{
-	return (ctx->chain);
+	return ctx->chain;
 	}
 
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
@@ -756,7 +756,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 		x = sk_X509_value(chain, i);
 		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 		}
-	return (chain);
+	return chain;
 	}
 
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
@@ -903,13 +903,13 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags)
 	{
-		ctx->flags |= flags;
+	ctx->flags |= flags;
 	}
 
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t)
 	{
-		ctx->check_time = t;
-		ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
+	ctx->check_time = t;
+	ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
 	}
 
 IMPLEMENT_STACK_OF(X509)
