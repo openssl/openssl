@@ -18,7 +18,7 @@ RSA_public_encrypt, RSA_private_decrypt - RSA public key cryptography
 
 RSA_public_encrypt() encrypts the B<flen> bytes at B<from> (usually a
 session key) using the public key B<rsa> and stores the ciphertext in
-B<to>. B<to> must point to B<RSA_size(rsa)> bytes of memory.
+B<to>. B<to> must point to RSA_size(B<rsa>) bytes of memory.
 
 B<padding> denotes one of the following modes:
 
@@ -46,21 +46,21 @@ Encrypting user data directly with RSA is insecure.
 
 =back
 
-B<flen> must be less than RSA_size(rsa) - 11 for the PKCS #1 v1.5
-based padding modes, and less than RSA_size(rsa) - 21 for
+B<flen> must be less than RSA_size(B<rsa>) - 11 for the PKCS #1 v1.5
+based padding modes, and less than RSA_size(B<rsa>) - 21 for
 RSA_PKCS1_OAEP_PADDING. The random number generator must be seeded
 prior to calling RSA_public_encrypt().
 
 RSA_private_decrypt() decrypts the B<flen> bytes at B<from> using the
 private key B<rsa> and stores the plaintext in B<to>. B<to> must point
 to a memory section large enough to hold the decrypted data (which is
-smaller than B<RSA_size(rsa)>). B<padding> is the padding mode that
+smaller than RSA_size(B<rsa>)). B<padding> is the padding mode that
 was used to encrypt the data.
 
 =head1 RETURN VALUES
 
 RSA_public_encrypt() returns the size of the encrypted data (i.e.,
-RSA_size(rsa)). RSA_private_decrypt() returns the size of the
+RSA_size(B<rsa>)). RSA_private_decrypt() returns the size of the
 recovered plaintext.
 
 On error, -1 is returned; the error codes can be
