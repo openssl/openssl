@@ -1,13 +1,17 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/08 09:43:53 $
+  ______________                           $Date: 1999/03/08 12:13:35 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.2:  Freezed:
-                       - No more feature commits, please. 
-                       - Commit bugfixes and cleanups only, please.
-                       Proposed release time: Monday, March 15th 1999
+    o  OpenSSL 0.9.2: Freezed!
+       - No more feature commits, please. 
+       - Commit bugfixes and cleanups only, please.
+       - Already successfully tested platform:
+         o  FreeBSD 3.1           Ralf S. Engelschall
+
+       Proposed release time: Monday, March 15th 1999
+
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
   RELEASE SHOWSTOPPERS
