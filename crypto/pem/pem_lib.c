@@ -306,7 +306,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		goto err;
 		}
 	/* dzise + 8 bytes are needed */
-	// actually it needs the cipher block size extra...
+	/* actually it needs the cipher block size extra... */
 	data=(unsigned char *)OPENSSL_malloc((unsigned int)dsize+20);
 	if (data == NULL)
 		{
