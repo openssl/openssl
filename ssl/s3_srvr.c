@@ -955,6 +955,12 @@ static int ssl3_send_server_key_exchange(SSL *s)
 				rsa=s->cert->rsa_tmp_cb(s,
 				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
 				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
+				if(rsa == NULL)
+				{
+					al=SSL_AD_HANDSHAKE_FAILURE;
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_ERROR_GENERATING_TMP_RSA_KEY);
+					goto f_err;
+				}
 				CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 				cert->rsa_tmp=rsa;
 				}

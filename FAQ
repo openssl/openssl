@@ -44,6 +44,9 @@ might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
 predecessor, at <URL: http://www.columbia.edu/~ariel/ssleay/>.  Much
 of this still applies to OpenSSL.
 
+There is some documentation about certificate extensions and PKCS#12
+in doc/openssl.txt
+
 The original SSLeay documentation is included in OpenSSL as
 doc/ssleay.txt.  It may be useful when none of the other ressources
 help, but please note that it reflects the obsolete version SSLeay

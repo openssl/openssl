@@ -255,6 +255,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG   ,"dh public value length is wrong"},
 {SSL_R_DIGEST_CHECK_FAILED               ,"digest check failed"},
 {SSL_R_ENCRYPTED_LENGTH_TOO_LONG         ,"encrypted length too long"},
+{SSL_R_ERROR_GENERATING_TMP_RSA_KEY      ,"error generating tmp rsa key"},
 {SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST     ,"error in received cipher list"},
 {SSL_R_EXCESSIVE_MESSAGE_SIZE            ,"excessive message size"},
 {SSL_R_EXTRA_DATA_IN_MESSAGE             ,"extra data in message"},

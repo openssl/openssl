@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Allow for the possibility of temp RSA key generation failure:
+     the code used to assume it always worked and crashed on failure.
+     [Steve Henson]
+
   *) Fix potential buffer overrun problem in BIO_printf().
      [Ulf Möller, using public domain code by Patrick Powell; problem
       pointed out by David Sacerdote <das33@cornell.edu>]
