@@ -4,6 +4,10 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix a bug in i2d_DSAPublicKey() which meant it returned the wrong value
+     for the encoded length.
+     [Jeon KyoungHo <khjeon@sds.samsung.co.kr>]
+
   *) Add initial documentation of the X509V3 functions.
      [Steve Henson]
 

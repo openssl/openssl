@@ -123,6 +123,7 @@ int i2d_DSAPublicKey(DSA *a, unsigned char **pp)
 		}
 	Free((char *)bs.data);
 	*pp=p;
-	return(t);
+	if(all) return(t);
+	else return(tot);
 	}
 #endif
