@@ -243,16 +243,16 @@ clean-shared:
 	done
 
 link-shared:
-	@for i in $(SHLIBDIRS); do \
-		prev=lib$$i$(SHLIB_EXT); \
-		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
-			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
+	if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
+		tmp="$(SHARED_LIBS_LINK_EXTS)"; \
+		@for i in $(SHLIBDIRS); do \
+			prev=lib$$i$(SHLIB_EXT); \
 			for j in $${tmp:-x}; do \
 				( set -x; ln -f -s $$prev lib$$i$$j ); \
 				prev=lib$$i$$j; \
 			done; \
-		fi; \
-	done
+		done; \
+	fi
 
 build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
 
