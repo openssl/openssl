@@ -13,8 +13,8 @@
      then the non typesafe macros are used instead. Also modified the
      mkstack.pl script to handle the new form. Needs testing to see
      if which (if any) compilers it chokes and maybe make DEBUG_SAFESTACK
-     the default if no major problems. Also need analagous stuff for
-     ASN1_SET_OF etc.
+     the default if no major problems. Similar behaviour for ASN1_SET_OF
+     and PKCS12_STACK_OF.
      [Steve Henson]
 
   *) When some versions of IIS use the 'NET' form of private key the

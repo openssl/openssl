@@ -31,10 +31,15 @@ foreach $file (@source) {
 	while(<IN>) {
 		if (/^DECLARE_STACK_OF\(([^)]+)\)/) {
 			push @stacklst, $1;
+		} if (/^DECLARE_ASN1_SET_OF\(([^)]+)\)/) {
+			push @asn1setlst, $1;
+		} if (/^DECLARE_PKCS12_STACK_OF\(([^)]+)\)/) {
+			push @p12stklst, $1;
 		}
 	}
 	close(IN);
 }
+
 
 
 my $old_stackfile = "";
@@ -79,6 +84,26 @@ while(<IN>) {
 #define sk_${type_thing}_shift(st) SKM_sk_shift($type_thing, (st))
 #define sk_${type_thing}_pop(st) SKM_sk_pop($type_thing, (st))
 #define sk_${type_thing}_sort(st) SKM_sk_sort($type_thing, (st))
+EOF
+	}
+	foreach $type_thing (@asn1setlst) {
+		$new_stackfile .= <<EOF;
+
+#define d2i_ASN1_SET_OF_${type_thing}(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \\
+	SKM_ASN1_SET_OF_d2i($type_thing, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_${type_thing}(st, pp, i2d_func, ex_tag, ex_class, is_set) \\
+	SKM_ASN1_SET_OF_i2d($type_thing, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_${type_thing}(st, i2d_func, buf, len) \\
+	SKM_ASN1_seq_pack($type_thing, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_${type_thing}(buf, len, d2i_func, free_func) \\
+	SKM_ASN1_seq_unpack($type_thing, (buf), (len), (d2i_func), (free_func))
+EOF
+	}
+	foreach $type_thing (@p12stklst) {
+		$new_stackfile .= <<EOF;
+
+#define PKCS12_decrypt_d2i_${type_thing}(algor, d2i_func, free_func, pass, passlen, oct, seq) \\
+	SKM_PKCS12_decrypt_d2i($type_thing, (algor), (d2i_func), (free_func), (pass), (passlen), (oct), (seq))
 EOF
 	}
 	$new_stackfile .= "/* End of util/mkstack.pl block, you may now edit :-) */\n";

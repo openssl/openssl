@@ -66,8 +66,8 @@
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
-DECLARE_STACK_OF(CRYPTO_dynlock);
-IMPLEMENT_STACK_OF(CRYPTO_dynlock);
+DECLARE_STACK_OF(CRYPTO_dynlock)
+IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
 static const char* lock_names[CRYPTO_NUM_LOCKS] =
@@ -175,7 +175,7 @@ int CRYPTO_get_new_dynlockid(void)
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
 	if ((dyn_locks == NULL)
-		&& ((dyn_locks=sk_new_null()) == NULL))
+		&& ((dyn_locks=sk_CRYPTO_dynlock_new_null()) == NULL))
 		{
 		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,ERR_R_MALLOC_FAILURE);

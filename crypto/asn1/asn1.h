@@ -145,49 +145,8 @@ extern "C" {
 
 struct X509_algor_st;
 
-#define DECLARE_ASN1_SET_OF(type) \
-int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
-			   int (*func)(type *,unsigned char **), int ex_tag, \
-			   int ex_class, int is_set); \
-STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
-				       long length, \
-				       type *(*func)(type **, \
-						     unsigned char **,long), \
-				       void (*free_func)(type *), \
-				       int ex_tag,int ex_class); \
-unsigned char *ASN1_seq_pack_##type(STACK_OF(type) *st, \
-				    int (*i2d)(type *,unsigned char **), \
-				    unsigned char **buf,int *len); \
-STACK_OF(type) *ASN1_seq_unpack_##type(unsigned char *buf,int len, \
-				       type *(*d2i)(type **,unsigned char **, \
-						    long), \
-				       void (*free_func)(type *));
-
-#define IMPLEMENT_ASN1_SET_OF(type) \
-int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
-			   int (*func)(type *,unsigned char **), int ex_tag, \
-			   int ex_class, int is_set) \
-    { return i2d_ASN1_SET((STACK *)a,pp,func,ex_tag,ex_class,is_set); } \
-STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
-				       long length, \
-				       type *(*func)(type **, \
-						     unsigned char **,long), \
-				       void (*free_func)(type *), \
-				       int ex_tag,int ex_class) \
-    { return (STACK_OF(type) *)d2i_ASN1_SET((STACK **)a,pp,length, \
-					    (char *(*)())func, \
-					    (void (*)())free_func, \
-					    ex_tag,ex_class); } \
-unsigned char *ASN1_seq_pack_##type(STACK_OF(type) *st, \
-				    int (*i2d)(type *,unsigned char **), \
-				    unsigned char **buf,int *len) \
-    { return ASN1_seq_pack((STACK *)st,i2d,buf,len); } \
-STACK_OF(type) *ASN1_seq_unpack_##type(unsigned char *buf,int len, \
-				       type *(*d2i)(type **,unsigned char **, \
-						    long), \
-				       void (*free_func)(type *)) \
-    { return (STACK_OF(type) *)ASN1_seq_unpack(buf,len,(char *(*)())d2i, \
-					       (void(*)(void *))free_func); }
+#define DECLARE_ASN1_SET_OF(type) /* filled in by mkstack.pl */
+#define IMPLEMENT_ASN1_SET_OF(type) /* nothing, no longer needed */
 
 typedef struct asn1_ctx_st
 	{

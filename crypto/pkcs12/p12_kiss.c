@@ -135,9 +135,9 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
  err:
 
-	if (pkey && *pkey) EVP_PKEY_free (*pkey);
-	if (cert && *cert) X509_free (*cert);
-	if (ca) sk_X509_pop_free (*ca, X509_free);
+	if (pkey && *pkey) EVP_PKEY_free(*pkey);
+	if (cert && *cert) X509_free(*cert);
+	if (ca) sk_X509_pop_free(*ca, X509_free);
 	return 0;
 
 }
@@ -159,12 +159,12 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 		p7 = sk_PKCS7_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
-			bags = M_PKCS12_unpack_p7data (p7);
+			bags = M_PKCS12_unpack_p7data(p7);
 		} else if (bagnid == NID_pkcs7_encrypted) {
-			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
+			bags = M_PKCS12_unpack_p7encdata(p7, pass, passlen);
 		} else continue;
 		if (!bags) {
-			sk_PKCS7_pop_free (asafes, PKCS7_free);
+			sk_PKCS7_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
