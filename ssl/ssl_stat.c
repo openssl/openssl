@@ -66,15 +66,15 @@ SSL *s;
 
 	switch (s->state)
 		{
-case SSL_ST_BEFORE: str="before SSL initalisation"; break;
-case SSL_ST_ACCEPT: str="before accept initalisation"; break;
-case SSL_ST_CONNECT: str="before connect initalisation"; break;
+case SSL_ST_BEFORE: str="before SSL initialization"; break;
+case SSL_ST_ACCEPT: str="before accept initialization"; break;
+case SSL_ST_CONNECT: str="before connect initialization"; break;
 case SSL_ST_OK: str="SSL negotiation finished successfully"; break;
 case SSL_ST_RENEGOTIATE:	str="SSL renegotiate ciphers"; break;
-case SSL_ST_BEFORE|SSL_ST_CONNECT: str="before/connect initalisation"; break;
-case SSL_ST_OK|SSL_ST_CONNECT: str="ok/connect SSL initalisation"; break;
-case SSL_ST_BEFORE|SSL_ST_ACCEPT: str="before/accept initalisation"; break;
-case SSL_ST_OK|SSL_ST_ACCEPT: str="ok/accept SSL initalisation"; break;
+case SSL_ST_BEFORE|SSL_ST_CONNECT: str="before/connect initialization"; break;
+case SSL_ST_OK|SSL_ST_CONNECT: str="ok/connect SSL initialization"; break;
+case SSL_ST_BEFORE|SSL_ST_ACCEPT: str="before/accept initialization"; break;
+case SSL_ST_OK|SSL_ST_ACCEPT: str="ok/accept SSL initialization"; break;
 #ifndef NO_SSL2
 case SSL2_ST_CLIENT_START_ENCRYPTION: str="SSLv2 client start encryption"; break;
 case SSL2_ST_SERVER_START_ENCRYPTION: str="SSLv2 server start encryption"; break;

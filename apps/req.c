@@ -718,9 +718,11 @@ loop:
 			goto end; 
 			}
 		fprintf(stdout,"Modulus=");
+#ifndef NO_RSA
 		if (pubkey->type == EVP_PKEY_RSA)
 			BN_print(out,pubkey->pkey.rsa->n);
 		else
+#endif
 			fprintf(stdout,"Wrong Algorithm type");
 		fprintf(stdout,"\n");
 		}

@@ -332,7 +332,12 @@ char *ip;
 	if (ip == NULL)
 		server.sin_addr.s_addr=INADDR_ANY;
 	else
+/* Added for T3E, address-of fails on bit field (beckman@acl.lanl.gov) */
+#ifndef BIT_FIELD_LIMITS
 		memcpy(&server.sin_addr.s_addr,ip,4);
+#else
+		memcpy(&server.sin_addr,ip,4);
+#endif
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 
 	if (s == INVALID_SOCKET) goto err;

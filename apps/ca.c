@@ -1012,7 +1012,7 @@ bad:
 			r->sequence=i;
 			}
 
-		/* we how have a CRL */
+		/* we now have a CRL */
 		if (verbose) BIO_printf(bio_err,"signing CRL\n");
 		if (md != NULL)
 			{
@@ -1024,6 +1024,10 @@ bad:
 			}
 		else
 			dgst=EVP_md5();
+#ifndef NO_DSA
+		if (pkey->type == EVP_PKEY_DSA) 
+		    dgst = EVP_dss1() ;
+#endif
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
 
 		PEM_write_bio_X509_CRL(Sout,crl);

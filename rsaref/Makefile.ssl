@@ -27,8 +27,8 @@ LIBOBJ= rsaref.o $(ERRC).o
 
 SRC= $(LIBSRC)
 
-EXHEADER=
-HEADER=	$(EXHEADER) rsaref.h
+EXHEADER=	rsaref.h
+HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

@@ -5,6 +5,21 @@
 
  Changes between 0.9.01b and 0.9.1c
 
+  *) Fixed the nasty bug where rsaref.h was not found under compile-time
+     because the symlink to include/ was missing.
+     [Ralf S. Engelschall]
+
+  *) Incorporated the popular no-RSA/DSA-only patches 
+     which allow to compile a RSA-free SSLeay.
+     [Interrader Ldt., Ralf S. Engelschall]
+
+  *) Fixed nasty rehash problem under `make -f Makefile.ssl links'
+     when "ssleay" is still not found.
+     [Ralf S. Engelschall]
+
+  *) Added more platforms to Configure: Cray T3E, HPUX 11, 
+     [Ralf S. Engelschall, Beckmann <beckman@acl.lanl.gov>]
+
   *) Updated the README file.
      [Ralf S. Engelschall]
 
@@ -32,7 +47,7 @@
      util/f.mak util/pl/f util/pl/f.mak crypto/bf/bf_locl.old apps/f
      [Ralf S. Engelschall]
 
-  *) Added various platform portability fixed.
+  *) Added various platform portability fixes.
      [Marc J. Cox]
 
   *) The Genesis of the OpenTLS rpject:

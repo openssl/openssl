@@ -65,9 +65,7 @@ typedef struct {
 FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"verify",verify_main},
 	{FUNC_TYPE_GENERAL,"asn1parse",asn1parse_main},
-#ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"req",req_main},
-#endif
 	{FUNC_TYPE_GENERAL,"dgst",dgst_main},
 #ifndef NO_DH
 	{FUNC_TYPE_GENERAL,"dh",dh_main},
@@ -77,9 +75,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"gendh",gendh_main},
 #endif
 	{FUNC_TYPE_GENERAL,"errstr",errstr_main},
-#ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"ca",ca_main},
-#endif
 	{FUNC_TYPE_GENERAL,"crl",crl_main},
 #ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"rsa",rsa_main},
@@ -90,9 +86,7 @@ FUNCTION functions[] = {
 #ifndef NO_DSA
 	{FUNC_TYPE_GENERAL,"dsaparam",dsaparam_main},
 #endif
-#ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"x509",x509_main},
-#endif
 #ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"genrsa",genrsa_main},
 #endif

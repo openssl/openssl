@@ -70,7 +70,15 @@ extern "C" {
  * the Alpha, otherwise they will not.  Strangly using the '8 byte'
  * BF_LONG and the default 'non-pointer' inner loop is the best configuration
  * for the Alpha */
-#define BF_LONG unsigned long
+#if defined(__sgi)
+#  if (_MIPS_SZLONG==64)
+#    define BF_LONG unsigned int
+#  else
+#    define BF_LONG unsigned long
+#  endif
+#else
+#  define BF_LONG unsigned long
+#endif
 
 #define BF_ROUNDS	16
 #define BF_BLOCK	8

@@ -73,6 +73,7 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 # A few of my development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall:-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:-lefence::::",
+"debug-rse","gcc:-DTERMIOS -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG -g -ggdb3 -Wall:::::",
 "dist",		"cc:-O -DNOPROTO::::",
 
 # Basic configs that should work on any box
@@ -122,6 +123,9 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 "hpux-cc",	"cc:-DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit +O4 -Wl,-a,archive::DES_PTR DES_UNROLL DES_RISC1:asm/pa-risc2.o::",
 "hpux-kr-cc",	"cc:-DB_ENDIAN -DNOCONST -DNOPROTO -D_HPUX_SOURCE::DES_PTR DES_UNROLL:asm/pa-risc2.o::",
 "hpux-gcc",	"gcc:-DB_ENDIAN -O3::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# HPUX from www.globus.org
+"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
 
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
@@ -138,7 +142,9 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-x86",	"gcc:-DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
-"FreeBSD",   "gcc:-DTERMIOS -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+#"FreeBSD",   "gcc:-DTERMIOS -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 #"bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::RSA_LLONG $x86_gc_des $x86_gcc_opts:$x86_bsdi_asm",
 "nextstep",	"cc:-O3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:::",
 # NCR MP-RAS UNIX ver 02.03.01
@@ -164,6 +170,16 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 #'An expression with bit field exists as the operand of "sizeof" '
 # (written by Wayne Schroeder <schroede@SDSC.EDU>)
 "cray-t90-cc", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::SIXTY_FOUR_BIT_LONG DES_INT:::",
+
+#
+# Cray T3E (Research Center Juelich, beckman@acl.lanl.gov)
+#
+# The BIT_FIELD_LIMITS define was written for the C90 (it seems).  I added
+# another use.  Basically, the problem is that the T3E uses some bit fields
+# for some st_addr stuff, and then sizeof and address-of fails
+# I could not use the ams/alpha.o option because the Cray assembler, 'cam'
+# did not like it.
+"cray-t3e", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::SIXTY_FOUR_BIT_LONG DES_INT:::",
 
 # DGUX, 88100.
 "dgux-R3-gcc",	"gcc:-O3 -fomit-frame-pointer::RC4_INDEX DES_UNROLL:::",

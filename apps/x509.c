@@ -110,7 +110,7 @@ static char *x509_usage[]={
 "                   missing, it is asssumed to be in the CA file.\n",
 " -CAcreateserial - create serial number file if it does not exist\n",
 " -CAserial       - serial file\n",
-" -text           - print the certitificate in text form\n",
+" -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
 " -md2/-md5/-sha1/-mdc2 - digest to do an RSA sign with\n",
 NULL

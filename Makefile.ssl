@@ -229,16 +229,15 @@ files:  MINFO
 	done;
 
 links:
-	/bin/rm -f Makefile;
-	./util/point.sh Makefile.ssl Makefile;
-	$(TOP)/util/mklink.sh include $(EXHEADER) ;
+	/bin/rm -f Makefile
+	./util/point.sh Makefile.ssl Makefile
+	$(TOP)/util/mklink.sh include $(EXHEADER)
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "making links in $$i..."; \
 	$(MAKE) SDIRS='${SDIRS}' links ); \
 	done;
-	# @(cd apps; sh ./mklinks)
-	@( SSLEAY="`pwd`/apps/ssleay"; export SSLEAY; sh tools/c_rehash certs )
+	@(SSLEAY="`pwd`/apps/ssleay"; export SSLEAY; sh tools/c_rehash certs)
 
 dclean:
 	/bin/rm -f *.bak

@@ -638,7 +638,7 @@ sub var_add
 	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
-	@a=grep(!/(^rsa$)|(^genrsa$)|(^req$)|(^ca$)/,@a) if $no_rsa;
+	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
 	@a=grep(!/^gendsa$/,@a) if $no_sha1;
 	@a=grep(!/(^dh$)|(^gendh$)/,@a) if $no_dh;

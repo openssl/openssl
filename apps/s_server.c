@@ -189,7 +189,7 @@ static void sv_usage()
 	{
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
-	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d\n",PORT);
+	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");

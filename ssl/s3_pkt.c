@@ -696,7 +696,7 @@ int len;
 	void (*cb)()=NULL;
 	BIO *bio;
 
-	if (s->s3->rbuf.buf == NULL) /* Not initalised yet */
+	if (s->s3->rbuf.buf == NULL) /* Not initialize yet */
 		if (!ssl3_setup_buffers(s))
 			return(-1);
 
