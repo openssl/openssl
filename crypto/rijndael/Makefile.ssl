@@ -20,7 +20,8 @@ RD_ENC=		rd_enc.o
 # or use
 #DES_ENC=	bx86-elf.o
 
-CFLAGS= -mpentiumpro $(INCLUDES) $(CFLAG) -O3 -fexpensive-optimizations -funroll-loops -fforce-addr
+# CFLAGS= -mpentiumpro $(INCLUDES) $(CFLAG) -O3 -fexpensive-optimizations -funroll-loops -fforce-addr
+CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST=
