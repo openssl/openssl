@@ -523,7 +523,7 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
-					if(!i && (!_kbhit() || !read_tty) ) continue;
+					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
@@ -689,7 +689,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 
 #ifdef WINDOWS
-		else if (_kbhit())
+		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif
