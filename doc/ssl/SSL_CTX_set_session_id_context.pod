@@ -46,7 +46,8 @@ B<SSL_MAX_SSL_SESSION_ID_LENGTH>.
 
 =head1 WARNINGS
 
-If the session id context is not set on an SSL/TLS server, stored sessions
+If the session id context is not set on an SSL/TLS server and client
+certificates are used, stored sessions
 will not be reused but a fatal error will be flagged and the handshake
 will fail.
 
