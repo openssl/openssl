@@ -1769,6 +1769,7 @@ static int ssl3_send_client_verify(SSL *s)
 		*(d++)=SSL3_MT_CERTIFICATE_VERIFY;
 		l2n3(n,d);
 
+		s->state=SSL3_ST_CW_CERT_VRFY_B;
 		s->init_num=(int)n+4;
 		s->init_off=0;
 		}
