@@ -210,7 +210,7 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 				goto err;
 
 			/* step 7 */
-			if (!BN_zero(W)) goto err;
+			BN_zero(W);
 			/* now 'buf' contains "SEED + offset - 1" */
 			for (k=0; k<=n; k++)
 				{
