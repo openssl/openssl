@@ -12,12 +12,14 @@
  latest versions of DJGPP, GCC, BINUTILS, BASH, etc. This package
  requires that PERL and BC also be installed.
 
- All of these can be obtained from the usual DJGPP mirror sites, such as
- "ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp". You also need to have
- the WATT-32 networking package installed before you try to compile
- openssl. This can be obtained from "http://www.bgnett.no/~giva/". The
- Makefile assumes that the WATT-32 code is in directory "watt32" under
- /dev/env/DJDIR.
+ All of these can be obtained from the usual DJGPP mirror sites, such
+ as "ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp". You also need to
+ have the WATT-32 networking package installed before you try to compile
+ openssl. This can be obtained from "http://www.bgnett.no/~giva/".
+ The Makefile assumes that the WATT-32 code is in the directory
+ specified by the environment variable WATT_ROOT. If you have watt-32
+ in directory "watt32" under your main DJGPP directory, specify
+ WATT_ROOT="/dev/env/DJDIR/watt32".
 
  To compile openssl, start your BASH shell. Then configure for DOS by
  running "./Configure" with appropriate arguments. The basic syntax for

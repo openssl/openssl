@@ -201,6 +201,9 @@ extern "C" {
 #  ifdef __DJGPP__
 #    include <unistd.h>
 #    include <sys/stat.h>
+#    include <sys/socket.h>
+#    include <tcp.h>
+#    include <netdb.h>
 #    define _setmode setmode
 #    define _O_TEXT O_TEXT
 #    define _O_BINARY O_BINARY
