@@ -203,8 +203,8 @@ mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem.o: mem.c
 mem_clr.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem_clr.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-mem_clr.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-mem_clr.o: ../include/openssl/symhacks.h mem_clr.c
+mem_clr.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+mem_clr.o: ../include/openssl/stack.h ../include/openssl/symhacks.h mem_clr.c
 mem_dbg.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem_dbg.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem_dbg.o: ../include/openssl/err.h ../include/openssl/lhash.h
@@ -225,5 +225,5 @@ tmdiff.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 tmdiff.o: ../include/openssl/tmdiff.h cryptlib.h tmdiff.c
 uid.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 uid.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-uid.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-uid.o: ../include/openssl/symhacks.h uid.c
+uid.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+uid.o: ../include/openssl/stack.h ../include/openssl/symhacks.h uid.c

@@ -83,10 +83,10 @@ clean:
 
 dsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-dsa_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-dsa_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-dsa_asn1.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-dsa_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+dsa_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_asn1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_asn1.o: ../../include/openssl/opensslconf.h
 dsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dsa_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_asn1.c
@@ -101,13 +101,13 @@ dsa_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_depr.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 dsa_depr.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_depr.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_depr.c
-dsa_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-dsa_err.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-dsa_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-dsa_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-dsa_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-dsa_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dsa_err.o: ../../include/openssl/symhacks.h dsa_err.c
+dsa_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+dsa_err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dsa_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+dsa_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dsa_err.o: dsa_err.c
 dsa_gen.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
