@@ -1,0 +1,1431 @@
+Output of `Configure TABLE:'
+
+
+*** BC-16
+$cc           = bcc
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** BC-32
+$cc           = bcc32
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR RC4_INDEX
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** BS2000-OSD
+$cc           = c89
+$cflags       = -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl
+$bn_ops       = THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** CygWin32
+$cc           = gcc
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** FreeBSD
+$cc           = gcc
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-out.o asm/co86-out.o
+$des_obj      = asm/dx86-out.o asm/yx86-out.o
+$bf_obj       = asm/bx86-out.o
+$md5_obj      = asm/mx86-out.o
+$sha1_obj     = asm/sx86-out.o
+$cast_obj     = asm/cx86-out.o
+$rc4_obj      = asm/rx86-out.o
+$rmd160_obj   = asm/rm86-out.o
+$rc5_obj      = asm/r586-out.o
+
+*** FreeBSD-alpha
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** FreeBSD-elf
+$cc           = gcc
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** Mingw32
+$cc           = gcc
+$cflags       = -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** NetBSD-m68
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** NetBSD-sparc
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** NetBSD-x86
+$cc           = gcc
+$cflags       = -DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** OpenBSD
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** OpenBSD-alpha
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** OpenBSD-mips
+$cc           = gcc
+$cflags       = -O2 -DL_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** OpenBSD-x86
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-out.o asm/co86-out.o
+$des_obj      = asm/dx86-out.o asm/yx86-out.o
+$bf_obj       = asm/bx86-out.o
+$md5_obj      = asm/mx86-out.o
+$sha1_obj     = asm/sx86-out.o
+$cast_obj     = asm/cx86-out.o
+$rc4_obj      = asm/rx86-out.o
+$rmd160_obj   = asm/rm86-out.o
+$rc5_obj      = asm/r586-out.o
+
+*** ReliantUNIX
+$cc           = cc
+$cflags       = -KPIC -g -DSNI -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl -lc -L/usr/ucblib -lucb
+$bn_ops       = BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** SINIX
+$cc           = cc
+$cflags       = -O -DSNI
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl -lc -L/usr/ucblib -lucb
+$bn_ops       = RC4_INDEX RC4_CHAR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** SINIX-N
+$cc           = /usr/ucb/cc
+$cflags       = -O2 -misaligned
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lucb
+$bn_ops       = RC4_INDEX RC4_CHAR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-MSDOS
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-NT
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_INDEX RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-W31-16
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-W31-32
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-WIN16
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** VC-WIN32
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_INDEX RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** aix-cc
+$cc           = cc
+$cflags       = -O -DAIX -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** aix-gcc
+$cc           = gcc
+$cflags       = -O3 -DAIX -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** alpha-cc
+$cc           = cc
+$cflags       = -std1 -tune host -O4 -readonly_strings
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** alpha-gcc
+$cc           = gcc
+$cflags       = -O3
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** alpha164-cc
+$cc           = cc
+$cflags       = -std1 -tune host -fast -readonly_strings
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** bsdi-elf-gcc
+$cc           = gcc
+$cflags       = -DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** bsdi-gcc
+$cc           = gcc
+$cflags       = -O3 -ffast-math -DL_ENDIAN -DPERL5 -m486
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = RSA_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86bsdi.o asm/co86bsdi.o
+$des_obj      = asm/dx86bsdi.o asm/yx86bsdi.o
+$bf_obj       = asm/bx86bsdi.o
+$md5_obj      = asm/mx86bsdi.o
+$sha1_obj     = asm/sx86bsdi.o
+$cast_obj     = asm/cx86bsdi.o
+$rc4_obj      = asm/rx86bsdi.o
+$rmd160_obj   = asm/rm86bsdi.o
+$rc5_obj      = asm/r586bsdi.o
+
+*** cc
+$cc           = cc
+$cflags       = -O
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** cray-t3e
+$cc           = cc
+$cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** cray-t90-cc
+$cc           = cc
+$cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lefence
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-ben
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DPEDANTIC -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-ben-debug
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-ben-strict
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-bodo
+$cc           = gcc
+$cflags       = -DL_ENDIAN -O3 -g -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** debug-irix-cc
+$cc           = cc
+$cflags       = -w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-linux-elf
+$cc           = gcc
+$cflags       = -DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lefence
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** debug-rse
+$cc           = cc
+$cflags       = -DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** debug-solaris-sparc-gcc
+$cc           = gcc
+$cflags       = -O3 -g -mv8 -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** debug-solaris-usparc-gcc
+$cc           = gcc
+$cflags       = -O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8plus-gcc.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** dgux-R3-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = RC4_INDEX DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** dgux-R4-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lnsl -lsocket
+$bn_ops       = RC4_INDEX
+$bn_obj       = RC4_INDEX DES_UNROLL
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** dgux-R4-x86-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -DL_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lnsl -lsocket
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** dist
+$cc           = cc
+$cflags       = -O
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** gcc
+$cc           = gcc
+$cflags       = -O3
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux-cc
+$cc           = cc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux-gcc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -O3
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux10-cc
+$cc           = cc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux10-gcc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -O3
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux11-32bit-cc
+$cc           = cc
+$cflags       = +DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux11-64bit-cc
+$cc           = cc
+$cflags       = +DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix-cc
+$cc           = cc
+$cflags       = -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix-gcc
+$cc           = gcc
+$cflags       = -O2 -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix-mips3-cc
+$cc           = cc
+$cflags       = -n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix-mips3-gcc
+$cc           = gcc
+$cflags       = -mips3 -O2 -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix64-mips4-cc
+$cc           = cc
+$cflags       = -64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-aout
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-out.o asm/co86-out.o
+$des_obj      = asm/dx86-out.o asm/yx86-out.o
+$bf_obj       = asm/bx86-out.o
+$md5_obj      = asm/mx86-out.o
+$sha1_obj     = asm/sx86-out.o
+$cast_obj     = asm/cx86-out.o
+$rc4_obj      = asm/rx86-out.o
+$rmd160_obj   = asm/rm86-out.o
+$rc5_obj      = asm/r586-out.o
+
+*** linux-elf
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
+*** linux-mips
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-ppc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-sparc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-sparc64
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mv8 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** ncr-scde
+$cc           = cc
+$cflags       = -O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** nextstep
+$cc           = cc
+$cflags       = -O -Wall
+$unistd       = <libc.h>
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** purify
+$cc           = purify gcc
+$cflags       = -g -DPURIFY -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** sco5-cc
+$cc           = cc
+$cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** sco5-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparc-cc
+$cc           = cc
+$cflags       = -xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparc-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparc-sc3
+$cc           = cc
+$cflags       = -fast -O -Xa -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-usparc-cc
+$cc           = cc
+$cflags       = -xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8plus.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv8plus.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-usparc-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8plus-gcc.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv8plus.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-usparc-oldgcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN -DULTRASPARC
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8plus-gcc.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv8plus.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-x86-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-sol.o asm/co86-sol.o
+$des_obj      = asm/dx86-sol.o asm/yx86-sol.o
+$bf_obj       = asm/bx86-sol.o
+$md5_obj      = asm/mx86-sol.o
+$sha1_obj     = asm/sx86-sol.o
+$cast_obj     = asm/cx86-sol.o
+$rc4_obj      = asm/rx86-sol.o
+$rmd160_obj   = asm/rm86-sol.o
+$rc5_obj      = asm/r586-sol.o
+
+*** solaris64-usparc-cc
+$cc           = cc
+$cflags       = -xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv9.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** sunos-gcc
+$cc           = gcc
+$cflags       = -O3 -mv8
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** ultrix-cc
+$cc           = cc
+$cflags       = -std1 -O -Olimit 1000 -DL_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** ultrix-gcc
+$cc           = gcc
+$cflags       = -O3 -DL_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** unixware-2.0
+$cc           = cc
+$cflags       = -O -DFILIO_H
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** unixware-2.0-pentium
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kpentium -Kthread
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket -lnsl
+$bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+

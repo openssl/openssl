@@ -271,7 +271,7 @@ tests: rehash
 depend:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making dependancies $$i..." && \
+	(cd $$i && echo "making dependencies $$i..." && \
 	$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
 	done;
 
@@ -292,9 +292,21 @@ tags:
 errors:
 	perl util/mkerr.pl -recurse -write
 
+util/libeay.num::
+	perl util/mkdef.pl crypto update
+
+util/ssleay.num::
+	perl util/mkdef.pl ssl update
+
+TABLE:
+	(echo 'Output of `Configure TABLE:'"'"; \
+	perl Configure TABLE) > TABLE
+
+update: depend errors util/libeay.num util/ssleay.num TABLE
+
 tar:
 	@tar --norecurse -cvf - \
-		`find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS | sort` |\
+		`find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE | sort` |\
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
 	      --prefix=openssl-$(VERSION) - |\

@@ -79,9 +79,9 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 md_rand.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-md_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslv.h
-md_rand.o: ../../include/openssl/rand.h ../../include/openssl/sha.h
-md_rand.o: ../../include/openssl/stack.h
+md_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+md_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+md_rand.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 rand_lib.o: ../../include/openssl/rand.h
 randfile.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-randfile.o: ../../include/openssl/rand.h
+randfile.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h

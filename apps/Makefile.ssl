@@ -146,8 +146,8 @@ progs.h:
 
 apps.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 apps.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
-apps.o: ../include/openssl/e_os2.h ../include/openssl/opensslv.h
-apps.o: ../include/openssl/stack.h apps.h progs.h
+apps.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+apps.o: ../include/openssl/opensslv.h ../include/openssl/stack.h apps.h progs.h
 asn1pars.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 asn1pars.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 asn1pars.o: ../include/openssl/buffer.h ../include/openssl/cast.h

@@ -1767,3 +1767,5 @@ i2d_PKCS8_PRIV_KEY_INFO_fp              1791
 i2d_PKCS8_PRIV_KEY_INFO_bio             1792
 BIO_s_bio                               1793
 PKCS5_pbe2_set                          1794
+PKCS5_PBKDF2_HMAC_SHA1                  1795
+PKCS5_v2_PBE_keyivgen                   1796
