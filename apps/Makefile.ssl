@@ -160,6 +160,7 @@ app_rand.o: ../include/openssl/md2.h ../include/openssl/md4.h
 app_rand.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 app_rand.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 app_rand.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+app_rand.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 app_rand.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 app_rand.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 app_rand.o: ../include/openssl/rc5.h ../include/openssl/rd_fst.h
@@ -607,7 +608,8 @@ passwd.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 passwd.o: ../include/openssl/md4.h ../include/openssl/md5.h
 passwd.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
 passwd.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-passwd.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+passwd.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+passwd.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 passwd.o: ../include/openssl/rand.h ../include/openssl/rc2.h
 passwd.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
 passwd.o: ../include/openssl/rd_fst.h ../include/openssl/rijndael.h
@@ -693,7 +695,8 @@ rand.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 rand.o: ../include/openssl/md4.h ../include/openssl/md5.h
 rand.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
 rand.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-rand.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
+rand.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+rand.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 rand.o: ../include/openssl/rand.h ../include/openssl/rc2.h
 rand.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
 rand.o: ../include/openssl/rd_fst.h ../include/openssl/rijndael.h
@@ -949,6 +952,7 @@ speed.o: ../include/openssl/md2.h ../include/openssl/md4.h
 speed.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 speed.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 speed.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+speed.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 speed.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 speed.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 speed.o: ../include/openssl/rc5.h ../include/openssl/rd_fst.h
@@ -1012,6 +1016,7 @@ version.o: ../include/openssl/md2.h ../include/openssl/md4.h
 version.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 version.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 version.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+version.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 version.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 version.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 version.o: ../include/openssl/rc5.h ../include/openssl/rd_fst.h

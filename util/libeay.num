@@ -2465,7 +2465,8 @@ OCSP_crlID_new                          2928	EXIST:!VMS,!WIN16:FUNCTION:
 OCSP_crlID2_new                         2928	EXIST:VMS,WIN16:FUNCTION:
 ENGINE_ctrl_cmd_string                  2929	EXIST::FUNCTION:
 ENGINE_get_cmd_defns                    2930	EXIST::FUNCTION:
-ENGINE_set_load_privkey_function        2931	EXIST::FUNCTION:
+ENGINE_set_load_privkey_function        2931	EXIST:!VMS:FUNCTION:
+ENGINE_set_load_privkey_fn              2931	EXIST:VMS:FUNCTION:
 ENGINE_cmd_is_executable                2932	EXIST::FUNCTION:
 ENGINE_set_load_pubkey_function         2933	EXIST::FUNCTION:
 ENGINE_get_load_pubkey_function         2934	EXIST::FUNCTION:
@@ -2473,7 +2474,8 @@ ENGINE_set_cmd_defns                    2935	EXIST::FUNCTION:
 ENGINE_get_flags                        2936	EXIST::FUNCTION:
 ENGINE_cpy                              2937	EXIST::FUNCTION:
 ENGINE_set_flags                        2938	EXIST::FUNCTION:
-ENGINE_get_load_privkey_function        2939	EXIST::FUNCTION:
+ENGINE_get_load_privkey_function        2939	EXIST:!VMS:FUNCTION:
+ENGINE_get_load_privkey_fn              2939	EXIST:VMS:FUNCTION:
 ENGINE_cleanup                          2940	EXIST::FUNCTION:
 ENGINE_get_ex_new_index                 2941	EXIST::FUNCTION:
 ENGINE_get_ex_data                      2942	EXIST::FUNCTION:
@@ -2521,3 +2523,5 @@ X509_PURPOSE_set                        2983	EXIST::FUNCTION:
 X509_TRUST_set                          2984	EXIST::FUNCTION:
 X509_STORE_set_purpose                  2985	EXIST::FUNCTION:
 X509_STORE_set_trust                    2986	EXIST::FUNCTION:
+UI_get0_user_data                       2987	EXIST::FUNCTION:
+UI_add_user_data                        2988	EXIST::FUNCTION:
