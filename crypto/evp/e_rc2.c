@@ -83,7 +83,7 @@ typedef struct
 
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
 			8,
-			RC2_KEY_LENGTH, 8,
+			RC2_KEY_LENGTH, 8, 64,
 			EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
 			rc2_init_key, NULL,
 			rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv, 
