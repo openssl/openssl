@@ -283,7 +283,7 @@ DES_cbc_encrypt is used.
 =head1 NOTES
 
 Single-key DES is insecure due to its short key size.  ECB mode is
-not suitable for most applications; see L<DES_modes(7)|DES_modes(7)>.
+not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
 
 The L<evp(3)|evp(3)> library provides higher-level encryption functions.
 
