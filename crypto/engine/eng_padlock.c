@@ -97,7 +97,8 @@
    compiler choice is limited to GCC and Microsoft C. */
 #undef COMPILE_HW_PADLOCK
 #if !defined(I386_ONLY) && !defined(OPENSSL_NO_INLINE_ASM)
-# if defined(__i386__) || defined(__i386) || defined(_M_IX86)
+# if (defined(__GNUC__) && (defined(__i386__) || defined(__i386))) || \
+     (defined(_MSC_VER) && defined(_M_IX86))
 #  define COMPILE_HW_PADLOCK
 static ENGINE *ENGINE_padlock (void);
 # endif
