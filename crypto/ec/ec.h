@@ -104,6 +104,11 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *);
 int EC_GROUP_set_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b);
 void EC_GROUP_free(EC_GROUP *);
 
+/* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
+ * after choosing an appropriate EC_METHOD */
+EC_GROUP *EC_GROUP_new_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b);
+
+
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
  
