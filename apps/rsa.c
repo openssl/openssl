@@ -238,12 +238,12 @@ bad:
 		if (pubin)
 			pkey = load_pubkey(bio_err, infile,
 				(informat == FORMAT_NETSCAPE && sgckey ?
-					FORMAT_IISSGC : informat),
+					FORMAT_IISSGC : informat), 1,
 				passin, e, "Public Key");
 		else
 			pkey = load_key(bio_err, infile,
 				(informat == FORMAT_NETSCAPE && sgckey ?
-					FORMAT_IISSGC : informat),
+					FORMAT_IISSGC : informat), 1,
 				passin, e, "Private Key");
 
 		if (pkey != NULL)

@@ -699,7 +699,7 @@ bad:
 			goto err;
 			}
 		}
-	pkey = load_key(bio_err, keyfile, keyform, key, e, 
+	pkey = load_key(bio_err, keyfile, keyform, 0, key, e, 
 		"CA private key");
 	if (key) memset(key,0,strlen(key));
 	if (pkey == NULL)

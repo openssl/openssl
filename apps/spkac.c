@@ -186,7 +186,7 @@ bad:
 	if(keyfile) {
 		pkey = load_key(bio_err,
 				strcmp(keyfile, "-") ? keyfile : NULL,
-				FORMAT_PEM, passin, e, "private key");
+				FORMAT_PEM, 1, passin, e, "private key");
 		if(!pkey) {
 			goto end;
 		}

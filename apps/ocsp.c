@@ -617,7 +617,7 @@ int MAIN(int argc, char **argv)
 				NULL, e, "responder other certificates");
 			if (!rother) goto end;
 			}
-		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, NULL, NULL,
+		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, 0, NULL, NULL,
 			"responder private key");
 		if (!rkey)
 			goto end;
@@ -663,7 +663,7 @@ int MAIN(int argc, char **argv)
 				NULL, e, "signer certificates");
 			if (!sign_other) goto end;
 			}
-		key = load_key(bio_err, keyfile, FORMAT_PEM, NULL, NULL,
+		key = load_key(bio_err, keyfile, FORMAT_PEM, 0, NULL, NULL,
 			"signer private key");
 		if (!key)
 			goto end;

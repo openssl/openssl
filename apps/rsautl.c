@@ -169,12 +169,12 @@ int MAIN(int argc, char **argv)
 	
 	switch(key_type) {
 		case KEY_PRIVKEY:
-		pkey = load_key(bio_err, keyfile, keyform,
+		pkey = load_key(bio_err, keyfile, keyform, 0,
 			NULL, e, "Private Key");
 		break;
 
 		case KEY_PUBKEY:
-		pkey = load_pubkey(bio_err, keyfile, keyform,
+		pkey = load_pubkey(bio_err, keyfile, keyform, 0,
 			NULL, e, "Public Key");
 		break;
 
