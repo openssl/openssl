@@ -205,7 +205,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		q=bn_div_3_words(wnump,d0,d1);
 #else
 
-#if !defined(NO_ASM)
+#if !defined(NO_ASM) && !defined(PEDANTIC)
 # if defined(__GNUC__) && __GNUC__>=2
 #  if defined(__i386)
    /*
