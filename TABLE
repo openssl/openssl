@@ -140,6 +140,26 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 
+*** MPE/iX-gcc
+$cc           = gcc
+$cflags       = -D_ENDIAN -DBN_DIV2W -O3 -DMPE -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -L/SYSLOG/PUB -lsyslog -lsocket -lcurses
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+
 *** Mingw32
 $cc           = gcc
 $cflags       = -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
