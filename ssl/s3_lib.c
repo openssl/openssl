@@ -1283,6 +1283,7 @@ int ssl3_peek(SSL *s, char *buf, int len)
 	SSL3_RECORD *rr;
 	int n;
 
+/* FIXME */
 	rr= &(s->s3->rrec);
 	if ((rr->length == 0) || (rr->type != SSL3_RT_APPLICATION_DATA))
 		{

@@ -70,6 +70,7 @@ int ssl2_peek(SSL *s, char *buf, int len)
 	{
 	int ret;
 
+/* FIXME */
 	ret=ssl2_read(s,buf,len);
 	if (ret > 0)
 	        {
