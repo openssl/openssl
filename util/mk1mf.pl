@@ -7,7 +7,7 @@
 
 $INSTALLTOP="/usr/local/ssl";
 
-$ssl_version="0.9.2";
+$ssl_version="0.9.2b";
 
 $infile="MINFO";
 
