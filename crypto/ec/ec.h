@@ -86,6 +86,7 @@ typedef struct ec_group_st
 	 -- curve coefficients
 	 -- optional generator with associated information (order, cofactor)
 	 -- optional extra data (TODO: precomputed table for fast computation of multiples of generator)
+	 -- ASN1 stuff
 	*/
 	EC_GROUP;
 
@@ -116,9 +117,18 @@ EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
 int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
-void EC_GROUP_set_nid(EC_GROUP *, int);
+void EC_GROUP_set_nid(EC_GROUP *, int); /* curve name */
 int EC_GROUP_get_nid(const EC_GROUP *);
 
+void EC_GROUP_set_asn1_flag(EC_GROUP *, int flag);
+int EC_GROUP_get_asn1_flag(const EC_GROUP *);
+
+void EC_GROUP_set_point_conversion_form(EC_GROUP *, point_conversion_form_t);
+point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP *);
+
+unsigned char *EC_GROUP_get0_seed(const EC_GROUP *);
+size_t EC_GROUP_get_seed_len(const EC_GROUP *);
+size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
 /* We don't have types for field specifications and field elements in general.
  * Otherwise we could declare
@@ -242,11 +252,6 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
 EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *); 
 ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *, ECPKPARAMETERS *);
 
-void EC_GROUP_set_asn1_flag(EC_GROUP *, int flag);
-int EC_GROUP_get_asn1_flag(const EC_GROUP *);
-
-void EC_GROUP_set_point_conversion_form(EC_GROUP *, point_conversion_form_t);
-point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP *);
 
 EC_GROUP *d2i_ECParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECParameters(const EC_GROUP *, unsigned char **out);
@@ -254,6 +259,13 @@ int i2d_ECParameters(const EC_GROUP *, unsigned char **out);
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
+
+#ifndef OPENSSL_NO_BIO
+int     ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
+#endif
+#ifndef OPENSSL_NO_FP_API
+int     ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
+#endif
 
 
 /* BEGIN ERROR CODES */
@@ -269,6 +281,8 @@ void ERR_load_EC_strings(void);
 #define EC_F_D2I_ECDSAPARAMETERS			 154
 #define EC_F_D2I_ECPARAMETERS				 155
 #define EC_F_D2I_ECPKPARAMETERS				 161
+#define EC_F_ECPKPARAMETERS_PRINT			 166
+#define EC_F_ECPKPARAMETERS_PRINT_FP			 167
 #define EC_F_EC_ASN1_GROUP2CURVE			 159
 #define EC_F_EC_ASN1_GROUP2FIELDID			 156
 #define EC_F_EC_ASN1_GROUP2PARAMETERS			 160

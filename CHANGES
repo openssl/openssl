@@ -13,11 +13,18 @@
      These control ASN1 encoding details:
      - Curves (i.e., groups) are encoded explicitly unless asn1_flag
        has been set to OPENSSL_EC_NAMED_CURVE.
-     - Points are encoded in compressed form by default; options for
+     - Points are encoded in uncompressed form by default; options for
        asn1_for are as for point2oct, namely
           POINT_CONVERSION_COMPRESSED
           POINT_CONVERSION_UNCOMPRESSED
           POINT_CONVERSION_HYBRID
+
+     Also add 'seed' and 'seed_len' members to EC_GROUP with access
+     functions
+          EC_GROUP_set_seed()
+          EC_GROUP_get0_seed()
+          EC_GROUP_get_seed_len()
+     This is used only for ASN1 purposes (so far).
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Add 'field_type' member to EC_METHOD, which holds the NID

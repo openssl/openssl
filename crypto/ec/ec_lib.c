@@ -100,7 +100,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 	ret->curve_name = 0;	
 	ret->asn1_flag  = 0;
-	ret->asn1_form  = POINT_CONVERSION_COMPRESSED;
+	ret->asn1_form  = POINT_CONVERSION_UNCOMPRESSED;
 
 	ret->seed = NULL;
 	ret->seed_len = 0;
@@ -342,6 +342,39 @@ void EC_GROUP_set_point_conversion_form(EC_GROUP *group,
 point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP *group)
 	{
 	return group->asn1_form;
+	}
+
+
+size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
+	{
+	if (group->seed)
+		{
+		OPENSSL_free(group->seed);
+		group->seed = NULL;
+		group->seed_len = 0;
+		}
+
+	if (!len || !p)
+		return 1;
+
+	if ((group->seed = OPENSSL_malloc(len)) == NULL)
+		return 0;
+	memcpy(group->seed, p, len);
+	group->seed_len = len;
+
+	return len;
+	}
+
+
+unsigned char *EC_GROUP_get0_seed(const EC_GROUP *group)
+	{
+	return group->seed;
+	}
+
+
+size_t EC_GROUP_get_seed_len(const EC_GROUP *group)
+	{
+	return group->seed_len;
 	}
 
 

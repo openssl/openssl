@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA
@@ -212,6 +213,205 @@ err:
 	}
 #endif /* !OPENSSL_NO_DSA */
 
+#ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_FP_API
+int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
+	{
+	BIO *b;
+	int ret;
+
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		ECerr(EC_F_ECPKPARAMETERS_PRINT_FP,ERR_R_BUF_LIB);
+		return(0);
+		}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECPKParameters_print(b, x, off);
+	BIO_free(b);
+	return(ret);
+	}
+#endif
+
+int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
+	{
+	char str[128];
+	unsigned char *buffer=NULL;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BN_CTX  *ctx=NULL;
+	EC_POINT *point=NULL;
+	BIGNUM	*p=NULL, *a=NULL, *b=NULL, *gen=NULL,
+		*order=NULL, *cofactor=NULL, *seed=NULL;
+	
+	static const char *gen_compressed = "Generator (compressed):";
+	static const char *gen_uncompressed = "Generator (uncompressed):";
+	static const char *gen_hybrid = "Generator (hybrid):";
+ 
+	if (!x)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	if (EC_GROUP_get_asn1_flag(x))
+		{
+		/* the curve parameter are given by an asn1 OID */
+		int nid;
+
+		if (off)
+			{
+			if (off > 128)
+				off=128;
+			memset(str, ' ', off);
+			if (BIO_write(bp, str, off) <= 0)
+				goto err;
+			}
+
+		nid = EC_GROUP_get_nid(x);
+		if (nid == 0)
+			goto err;
+
+		if (BIO_printf(bp, "ASN1 OID: %s", OBJ_nid2sn(nid)) <= 0)
+			goto err;
+		if (BIO_printf(bp, "\n") <= 0)
+			goto err;
+		}
+	else
+		{
+		/* explicit parameters */
+		/* TODO */
+		point_conversion_form_t form;
+
+		if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
+			(b = BN_new()) == NULL || (order = BN_new()) == NULL ||
+			(cofactor = BN_new()) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+
+		if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx))
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+
+		if ((point = EC_GROUP_get0_generator(x)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		if (!EC_GROUP_get_order(x, order, NULL) || 
+            		!EC_GROUP_get_cofactor(x, cofactor, NULL))
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		
+		form = EC_GROUP_get_point_conversion_form(x);
+
+		if ((gen = EC_POINT_point2bn(x, point, 
+				form, NULL, ctx)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+
+		buf_len = (size_t)BN_num_bytes(p);
+		if (buf_len < (i = (size_t)BN_num_bytes(a)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(b)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(gen)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(order)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(cofactor))) 
+			buf_len = i;
+
+		if (EC_GROUP_get0_seed(x))
+			{
+			seed = BN_bin2bn(EC_GROUP_get0_seed(x),
+				EC_GROUP_get_seed_len(x), NULL);
+			if (seed == NULL)
+				{
+				reason = ERR_R_BN_LIB;
+				goto err;
+				}
+			if (buf_len < (i = (size_t)BN_num_bytes(seed))) 
+				buf_len = i;
+			}
+
+		buf_len += 10;
+		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+		if (off)
+			{
+			if (off > 128) off=128;
+			memset(str,' ',off);
+			}
+  
+		if ((p != NULL) && !print(bp, "P:   ", p, buffer, off)) 
+			goto err;
+		if ((a != NULL) && !print(bp, "A:   ", a, buffer, off)) 
+			goto err;
+		if ((b != NULL) && !print(bp, "B:   ", b, buffer, off))
+			goto err;
+		if (form == POINT_CONVERSION_COMPRESSED)
+			{
+			if ((gen != NULL) && !print(bp, gen_compressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else if (form == POINT_CONVERSION_UNCOMPRESSED)
+			{
+			if ((gen != NULL) && !print(bp, gen_uncompressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else /* form == POINT_CONVERSION_HYBRID */
+			{
+			if ((gen != NULL) && !print(bp, gen_hybrid, gen,
+				buffer, off))
+				goto err;
+			}
+		if ((order != NULL) && !print(bp, "Order: ", order, 
+			buffer, off)) goto err;
+		if ((cofactor != NULL) && !print(bp, "Cofactor: ", cofactor, 
+			buffer, off)) goto err;
+		if ((seed != NULL) && !print(bp, "Seed:", seed, 
+			buffer, off)) goto err;
+		}
+	ret=1;
+err:
+	if (!ret)
+ 		ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
+	if (p) 
+		BN_free(p);
+	if (a) 
+		BN_free(a);
+	if (b)
+		BN_free(b);
+	if (gen)
+		BN_free(gen);
+	if (order)
+		BN_free(order);
+	if (cofactor)
+		BN_free(cofactor);
+	if (seed) 
+		BN_free(seed);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL) 
+		OPENSSL_free(buffer);
+	return(ret);	
+	}
+#endif /* OPENSSL_NO_EC */
+
+
 #ifndef OPENSSL_NO_ECDSA
 #ifndef OPENSSL_NO_FP_API
 int ECDSA_print_fp(FILE *fp, const ECDSA *x, int off)
@@ -235,63 +435,31 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 	{
 	char str[128];
 	unsigned char *buffer=NULL;
-	int     i, buf_len=0, ret=0, reason=ERR_R_BIO_LIB;
-	BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL,
-		*tmp_4=NULL, *tmp_5=NULL, *tmp_6=NULL,
-		*tmp_7=NULL;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BIGNUM  *pub_key=NULL;
 	BN_CTX  *ctx=NULL;
-	EC_POINT *point=NULL;
  
-	/* TODO: fields other than prime fields */
-       
 	if (!x || !x->group)
 		{
-		reason = ECDSA_R_MISSING_PARAMETERS;
+		reason = ERR_R_PASSED_NULL_PARAMETER;
 		goto err;
 		}
-	if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
-		(tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL ||
-		(tmp_6 = BN_new()) == NULL || (tmp_7 = BN_new()) == NULL)
-		{
-		reason = ERR_R_MALLOC_FAILURE;
-		goto err;
-		}
-	if (!EC_GROUP_get_curve_GFp(x->group, tmp_1, tmp_2, tmp_3, ctx))
-		{
-		reason = ERR_R_EC_LIB;
-		goto err;
-		}
-	if ((point = EC_GROUP_get0_generator(x->group)) == NULL)
-		{
-		reason = ERR_R_EC_LIB;
-		goto err;
-		}
-	if (!EC_GROUP_get_order(x->group, tmp_6, NULL) || 
-            !EC_GROUP_get_cofactor(x->group, tmp_7, NULL))
-		{
-		reason = ERR_R_EC_LIB;
-		goto err;
-		}
-	if ((tmp_4 = EC_POINT_point2bn(x->group, point, 
-		ECDSA_get_conversion_form(x), tmp_4, ctx)) == NULL)
-		{
-		reason = ERR_R_EC_LIB;
-		goto err;
-		}
-	if ((tmp_5 = EC_POINT_point2bn(x->group, x->pub_key,
-		ECDSA_get_conversion_form(x), tmp_5, ctx)) == NULL)
+
+	if ((pub_key = EC_POINT_point2bn(x->group, x->pub_key,
+		ECDSA_get_conversion_form(x), NULL, ctx)) == NULL)
 		{
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
 
-	buf_len = BN_num_bytes(tmp_1);
-	if (buf_len < (i = BN_num_bytes(tmp_2))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_3))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_4))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_5))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_6))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_7))) buf_len = i;
+	buf_len = (size_t)BN_num_bytes(pub_key);
+	if (x->priv_key)
+		{
+		if ((i = (size_t)BN_num_bytes(x->priv_key)) > buf_len)
+			buf_len = i;
+		}
+
 	buf_len += 10;
 	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
 		{
@@ -306,30 +474,28 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 	if (x->priv_key != NULL)
 		{
 		if (off && (BIO_write(bp, str, off) <= 0)) goto err;
-		if (BIO_printf(bp, "Private-Key: (%d bit)\n", BN_num_bits(tmp_1)) <= 0) goto err;
+		if (BIO_printf(bp, "Private-Key: (%d bit)\n", 
+			BN_num_bits(x->priv_key)) <= 0) goto err;
 		}
   
-	if ((x->priv_key != NULL) && !print(bp, "priv:", x->priv_key, buffer, off)) goto err;
-	if ((tmp_5 != NULL) && !print(bp, "pub: ", tmp_5, buffer, off)) goto err;
-	if ((tmp_1 != NULL) && !print(bp, "P:   ", tmp_1, buffer, off)) goto err;
-	if ((tmp_2 != NULL) && !print(bp, "A:   ", tmp_2, buffer, off)) goto err;
-	if ((tmp_3 != NULL) && !print(bp, "B:   ", tmp_3, buffer, off)) goto err;
-	if ((tmp_4 != NULL) && !print(bp, "Gen: ", tmp_4, buffer, off)) goto err;
-	if ((tmp_6 != NULL) && !print(bp, "Order: ", tmp_6, buffer, off)) goto err;
-	if ((tmp_7 != NULL) && !print(bp, "Cofactor: ", tmp_7, buffer, off)) goto err;
+	if ((x->priv_key != NULL) && !print(bp, "priv:", x->priv_key, 
+		buffer, off))
+		goto err;
+	if ((pub_key != NULL) && !print(bp, "pub: ", pub_key,
+		buffer, off))
+		goto err;
+	if (!ECPKParameters_print(bp, x->group, off))
+		goto err;
 	ret=1;
 err:
 	if (!ret)
  		ECDSAerr(ECDSA_F_ECDSA_PRINT, reason);
-	if (tmp_1) BN_free(tmp_1);
-	if (tmp_2) BN_free(tmp_2);
-	if (tmp_3) BN_free(tmp_3);
-	if (tmp_4) BN_free(tmp_4);
-	if (tmp_5) BN_free(tmp_5);
-	if (tmp_6) BN_free(tmp_6);
-	if (tmp_7) BN_free(tmp_7);
-	if (ctx)   BN_CTX_free(ctx);
-	if (buffer != NULL) OPENSSL_free(buffer);
+	if (pub_key) 
+		BN_free(pub_key);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL)
+		OPENSSL_free(buffer);
 	return(ret);
 	}
 #endif
@@ -504,70 +670,37 @@ int ECDSAParameters_print_fp(FILE *fp, const ECDSA *x)
 #endif
 
 int ECDSAParameters_print(BIO *bp, const ECDSA *x)
-       {
-       unsigned char *buffer=NULL;
-       int     buf_len;
-       int     reason=ERR_R_EC_LIB, i, ret=0;
-       BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL, *tmp_4=NULL,
-               *tmp_5=NULL, *tmp_6=NULL;
-       BN_CTX  *ctx=NULL;
-       EC_POINT *point=NULL;
+	{
+	int     reason=ERR_R_EC_LIB, ret=0;
+	BIGNUM	*order=NULL;
  
-       /* TODO: fields other than prime fields */
-       if (!x || !x->group)
-       {
-		reason = ECDSA_R_MISSING_PARAMETERS;
+	if (!x || !x->group)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;;
 		goto err;
-       }
-       if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
-	   (tmp_3 = BN_new()) == NULL || (tmp_5 = BN_new()) == NULL ||
-           (tmp_6 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
-       {
+		}
+
+	if ((order = BN_new()) == NULL)
+		{
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
-	}
-	if (!EC_GROUP_get_curve_GFp(x->group, tmp_1, tmp_2, tmp_3, ctx)) goto err;
-	if ((point = EC_GROUP_get0_generator(x->group)) == NULL) goto err;
-	if (!EC_GROUP_get_order(x->group, tmp_5, ctx)) goto err;
-	if (!EC_GROUP_get_cofactor(x->group, tmp_6, ctx)) goto err;	
+		}
 
-	if ((tmp_4 = EC_POINT_point2bn(x->group, point, 
-		ECDSA_get_conversion_form(x), NULL, ctx)) == NULL)
+	if (!EC_GROUP_get_order(x->group, order, NULL))
 		{
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
-
-  	buf_len = BN_num_bytes(tmp_1);
-	if (buf_len < (i = BN_num_bytes(tmp_2))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_3))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_4))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_5))) buf_len = i;
-	if (buf_len < (i = BN_num_bytes(tmp_6))) buf_len = i;
-	buf_len += 10;
-	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
-	{
-		reason=ERR_R_MALLOC_FAILURE;
-		goto err;
-	}
  
-	if (BIO_printf(bp, "ECDSA-Parameters: (%d bit)\n", BN_num_bits(tmp_1)) <= 0) goto err;
-	if (!print(bp, "Prime p:", tmp_1, buffer, 4)) goto err;
-	if (!print(bp, "Curve a:", tmp_2, buffer, 4)) goto err;
-	if (!print(bp, "Curve b:", tmp_3, buffer, 4)) goto err;
-	if (!print(bp, "Generator (compressed):", tmp_4, buffer, 4)) goto err; 
-	if (!print(bp, "Order:", tmp_5, buffer, 4)) goto err;
-	if (!print(bp, "Cofactor:", tmp_6, buffer, 4)) goto err;
+	if (BIO_printf(bp, "ECDSA-Parameters: (%d bit)\n", 
+		BN_num_bits(order)) <= 0)
+		goto err;
+	if (!ECPKParameters_print(bp, x->group, 4))
+		goto err;
 	ret=1;
 err:
-	if (tmp_1)  BN_free(tmp_1);
-	if (tmp_2)  BN_free(tmp_2);
-	if (tmp_3)  BN_free(tmp_3);
-	if (tmp_4)  BN_free(tmp_4);
-	if (tmp_5)  BN_free(tmp_5);
-	if (tmp_6)  BN_free(tmp_6);
-	if (ctx)    BN_CTX_free(ctx);
-	if (buffer) OPENSSL_free(buffer);
+	if (order)
+		BN_free(order);
 	ECDSAerr(ECDSA_F_ECDSAPARAMETERS_PRINT, reason);
 	return(ret);
 	}

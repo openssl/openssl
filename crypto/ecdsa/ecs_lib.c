@@ -305,7 +305,7 @@ point_conversion_form_t ECDSA_get_conversion_form(const ECDSA *ecdsa)
 	return ecdsa ? ecdsa->conversion_form : 0;
 }
 
-static point_conversion_form_t default_conversion_form = POINT_CONVERSION_COMPRESSED;
+static point_conversion_form_t default_conversion_form = POINT_CONVERSION_UNCOMPRESSED;
 
 void	ECDSA_set_default_conversion_form(const point_conversion_form_t form)
 {

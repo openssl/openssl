@@ -148,13 +148,13 @@ struct ec_group_st {
 	int asn1_flag; /* flag to control the asn1 encoding */
 	point_conversion_form_t asn1_form;
 
+	unsigned char *seed; /* optional seed for parameters (appears in ASN1) */
+	size_t seed_len;
+
 	void *extra_data;
 	void *(*extra_data_dup_func)(void *);
 	void (*extra_data_free_func)(void *);
 	void (*extra_data_clear_free_func)(void *);
-
-	unsigned char *seed; /* XXX */
-	size_t seed_len;     /* XXX */
 
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */
