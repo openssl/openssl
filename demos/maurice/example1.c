@@ -130,7 +130,7 @@ void main_decrypt(void)
 	char ebuf[512];
 	unsigned int buflen;
         EVP_CIPHER_CTX ectx;
-        unsigned char iv[8];
+        unsigned char iv[EVP_MAX_IV_LENGTH];
 	unsigned char *encryptKey; 
 	unsigned int ekeylen; 
 	EVP_PKEY *privateKey;
