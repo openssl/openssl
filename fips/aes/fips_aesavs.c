@@ -49,6 +49,8 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	kt = 4000;
     else if(!strcasecmp(amode,"CFB1"))
 	kt=5000;
+    else if(!strcasecmp(amode,"CFB8"))
+	kt=6000;
     else
 	{
 	printf("Unknown mode: %s\n", amode);
@@ -110,6 +112,15 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 		break;
 	    case 5256:
 		cipher=EVP_aes_256_cfb1();
+		break;
+	    case 6128:
+		cipher=EVP_aes_128_cfb8();
+		break;
+	    case 6192:
+		cipher=EVP_aes_192_cfb8();
+		break;
+	    case 6256:
+		cipher=EVP_aes_256_cfb8();
 		break;
 	    default:
 		printf("Didn't handle mode %d\n",kt);

@@ -2024,6 +2024,21 @@
 #define NID_aes_256_cfb1		652
 #define OBJ_aes_256_cfb1		1L,1L,1L,1L,666L,5L
 
+#define SN_aes_128_cfb8		"AES-128-CFB8"
+#define LN_aes_128_cfb8		"aes-128-cfb8"
+#define NID_aes_128_cfb8		653
+#define OBJ_aes_128_cfb8		1L,1L,1L,1L,666L,6L
+
+#define SN_aes_192_cfb8		"AES-192-CFB8"
+#define LN_aes_192_cfb8		"aes-192-cfb8"
+#define NID_aes_192_cfb8		654
+#define OBJ_aes_192_cfb8		1L,1L,1L,1L,666L,7L
+
+#define SN_aes_256_cfb8		"AES-256-CFB8"
+#define LN_aes_256_cfb8		"aes-256-cfb8"
+#define NID_aes_256_cfb8		655
+#define OBJ_aes_256_cfb8		1L,1L,1L,1L,666L,8L
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430

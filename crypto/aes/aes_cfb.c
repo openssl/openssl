@@ -222,6 +222,7 @@ void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
     {
     unsigned int n;
     unsigned char c[1],d[1];
+
     assert(in && out && key && ivec && num);
     assert(*num == 0);
 
@@ -232,5 +233,18 @@ void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 	AES_cfbr_encrypt_block(c,d,1,key,ivec,enc);
 	out[n/8]=(out[n/8]&~(1 << (7-n%8)))|((d[0]&0x80) >> (n%8));
 	}
+    }
+
+void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
+		      const unsigned long length, const AES_KEY *key,
+		      unsigned char *ivec, int *num, const int enc)
+    {
+    unsigned int n;
+
+    assert(in && out && key && ivec && num);
+    assert(*num == 0);
+
+    for(n=0 ; n < length ; ++n)
+	AES_cfbr_encrypt_block(&in[n],&out[n],8,key,ivec,enc);
     }
 
