@@ -584,7 +584,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        missing functions (including a catch-all ENGINE_cpy that duplicates
        all ENGINE values onto a new ENGINE except reference counts/state).
      - Removed NULL parameter checks in get/set functions. Setting a method
-       or function to NULL is a way of canceling out a previously set
+       or function to NULL is a way of cancelling out a previously set
        value.  Passing a NULL ENGINE parameter is just plain stupid anyway
        and doesn't justify the extra error symbols and code.
      - Deprecate the ENGINE_FLAGS_MALLOCED define and move the area for
