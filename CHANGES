@@ -4,7 +4,9 @@
 
  Changes between 0.9.6f and 0.9.6g  [xx XXX xxxx]
 
-  *) 
+  *) [In 0.9.6g-engine release:]
+     Fix crypto/engine/vendor_defns/cswift.h for WIN32 (use '_stdcall').
+     [Lynn Gazis <lgazis@rainbow.com>]
 
  Changes between 0.9.6e and 0.9.6f  [8 Aug 2002]
 
