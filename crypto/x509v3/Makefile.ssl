@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	v3_bcons.c v3_bitst.c v3_conf.c v3_extku.c v3_ia5.c \
-v3_lib.c v3_prn.c v3_utl.c v3err.c 
+v3_lib.c v3_prn.c v3_utl.c v3err.c v3_genn.c v3_alt.c
 LIBOBJ= v3_bcons.o v3_bitst.o v3_conf.o v3_extku.o v3_ia5.o v3_lib.o \
-v3_prn.o v3_utl.o v3err.o
+v3_prn.o v3_utl.o v3err.o v3_genn.o v3_alt.o
 
 SRC= $(LIBSRC)
 

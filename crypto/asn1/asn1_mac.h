@@ -134,15 +134,20 @@ err:\
 		M_ASN1_D2I_get(b,func); \
 		}
 
+#define M_ASN1_D2I_get_imp(b,func, type) \
+	M_ASN1_next=(_tmp& ~V_ASN1_PRIMATIVE_TAG)|type; \
+	c.q=c.p; \
+	if (func(&(b),&c.p,c.slen) == NULL) \
+		{c.line=__LINE__; M_ASN1_next_prev = _tmp; goto err; } \
+	c.slen-=(c.p-c.q);\
+	M_ASN1_next_prev=_tmp;
+
 #define M_ASN1_D2I_get_IMP_opt(b,func,tag,type) \
 	if ((c.slen != 0) && ((M_ASN1_next & (~V_ASN1_CONSTRUCTED)) == \
 		(V_ASN1_CONTEXT_SPECIFIC|(tag)))) \
 		{ \
-		unsigned char tmp; \
-		tmp=M_ASN1_next; \
-		M_ASN1_next=(tmp& ~V_ASN1_PRIMATIVE_TAG)|type; \
-		M_ASN1_D2I_get(b,func); \
-		M_ASN1_next_prev=tmp; \
+		unsigned char _tmp = M_ASN1_next; \
+		M_ASN1_D2I_get_imp(b,func, type);\
 		}
 
 #define M_ASN1_D2I_get_set(r,func,free_func) \

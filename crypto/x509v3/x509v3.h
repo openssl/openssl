@@ -130,6 +130,32 @@ int ca;
 ASN1_INTEGER *pathlen;
 } BASIC_CONSTRAINTS;
 
+typedef struct {
+
+#define GEN_OTHERNAME	(0|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_EMAIL	(1|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_DNS		(2|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_X400	(3|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_DIRNAME	(4|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_EDIPARTY	(5|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_URI		(6|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_IPADD	(7|V_ASN1_CONTEXT_SPECIFIC)
+#define GEN_RID		(8|V_ASN1_CONTEXT_SPECIFIC)
+
+int type;
+union {
+	char *ptr;
+	ASN1_IA5STRING *ia5;/* rfc822Name, dNSName, uniformResourceIdentifier */
+	ASN1_OCTET_STRING *ip; /* iPAddress */
+	X509_NAME *dirn;		/* dirn */
+	ASN1_OBJECT *rid; /* registeredID */
+	ASN1_TYPE *other; /* otherName, ediPartyName, x400Address */
+} d;
+} GENERAL_NAME;
+
+
+
+
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
 
@@ -162,6 +188,18 @@ int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp);
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, unsigned char **pp, long length);
 BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new(void);
 void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a);
+
+int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp);
+GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp, long length);
+GENERAL_NAME *GENERAL_NAME_new(void);
+void GENERAL_NAME_free(GENERAL_NAME *a);
+
+STACK *GENERAL_NAMES_new(void);
+void GENERAL_NAMES_free(STACK *a);
+STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length);
+int i2d_GENERAL_NAMES(STACK *a, unsigned char **pp);
+
+
 
 int i2d_ext_ku(STACK *a, unsigned char **pp);
 STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
@@ -199,6 +237,16 @@ int i2d_BASIC_CONSTRAINTS();
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS();
 BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new();
 void BASIC_CONSTRAINTS_free();
+
+int i2d_GENERAL_NAME();
+GENERAL_NAME *d2i_GENERAL_NAME();
+GENERAL_NAME *GENERAL_NAME_new();
+void GENERAL_NAME_free();
+
+STACK *GENERAL_NAMES_new():
+void GENERAL_NAMES_free():
+STACK *d2i_GENERAL_NAMES();
+int i2d_GENERAL_NAMES();
 
 int i2d_ext_ku();
 STACK *d2i_ext_ku();
