@@ -115,7 +115,7 @@ static int MS_CALLBACK slg_puts(BIO *h, const char *str);
 static long MS_CALLBACK slg_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int MS_CALLBACK slg_new(BIO *h);
 static int MS_CALLBACK slg_free(BIO *data);
-static void xopenlog(BIO* bp, const char* name, int level);
+static void xopenlog(BIO* bp, char* name, int level);
 static void xsyslog(BIO* bp, int priority, const char* string);
 static void xcloselog(BIO* bp);
 #ifdef WIN32
@@ -223,7 +223,7 @@ static int MS_CALLBACK slg_puts(BIO *bp, const char *str)
 
 #if defined(WIN32)
 
-static void xopenlog(BIO* bp, const char* name, int level)
+static void xopenlog(BIO* bp, char* name, int level)
 {
 	if ( !register_event_source )
 		{
@@ -291,7 +291,7 @@ static void xcloselog(BIO* bp)
 
 static int VMS_OPC_target = LOG_DAEMON;
 
-static void xopenlog(BIO* bp, const char* name, int level)
+static void xopenlog(BIO* bp, char* name, int level)
 {
 	VMS_OPC_target = level; 
 }
@@ -348,9 +348,9 @@ static void xcloselog(BIO* bp)
 
 #else /* Unix */
 
-static void xopenlog(BIO* bp, const char* name, int level)
+static void xopenlog(BIO* bp, char* name, int level)
 {
-	openlog((char *)name, LOG_PID|LOG_CONS, level);
+	openlog(name, LOG_PID|LOG_CONS, level);
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)
