@@ -4,6 +4,11 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Various fixes to base64 BIO and non blocking I/O. On write 
+     flushes were not handled properly if the BIO retried. On read
+     data was not being buffered properly and had various logic bugs.
+     [Steve Henson]
+
   *) Support for single pass processing for S/MIME signing. This now
      means that S/MIME signing can be done from a pipe, in addition
      cleartext signing (multipart/signed type) is effectively streaming
