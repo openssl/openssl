@@ -287,13 +287,13 @@ err:
 		DSO_free(dso);
 	dso = NULL;
 
-	keyRecordRead = (F_KEYRECORDREAD)NULL;
-	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)NULL;
-	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)NULL;
-	digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)NULL;
-	publicKeyExtract = (F_PUBLICKEYEXTRACT)NULL;
-	pkaEncrypt = (F_PKAENCRYPT)NULL;
-	pkaDecrypt = (F_PKADECRYPT)NULL;
+	keyRecordRead = (F_KEYRECORDREAD)0;
+	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
+	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)0;
+	digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)0;
+	publicKeyExtract = (F_PUBLICKEYEXTRACT)0;
+	pkaEncrypt = (F_PKAENCRYPT)0;
+	pkaDecrypt = (F_PKADECRYPT)0;
 	return 0;
 	}
 
@@ -312,13 +312,13 @@ static int ibm_4758_cca_finish(ENGINE *e)
 		return 0;
 		}
 	dso = NULL;
-	keyRecordRead = (F_KEYRECORDREAD)NULL;
-	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)NULL;
-	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)NULL;
-	digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)NULL;
-	publicKeyExtract = (F_PUBLICKEYEXTRACT)NULL;
-	pkaEncrypt = (F_PKAENCRYPT)NULL;
-	pkaDecrypt = (F_PKADECRYPT)NULL;
+	keyRecordRead = (F_KEYRECORDREAD)0;
+	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
+	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)0;
+	digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)0;
+	publicKeyExtract = (F_PUBLICKEYEXTRACT)0;
+	pkaEncrypt = (F_PKAENCRYPT)0;
+	pkaDecrypt = (F_PKADECRYPT)0;
 	return 1;
 	}
 

@@ -95,10 +95,10 @@ static EVP_PKEY *surewarehk_load_privkey(ENGINE *e, const char *key_id,
 static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data);
 static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index_,long argl, void *argp);
+	int idx,long argl, void *argp);
 #if 0
 static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index_,long argl, void *argp);
+	int idx,long argl, void *argp);
 #endif
 
 #ifndef OPENSSL_NO_RSA
@@ -816,7 +816,7 @@ static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
 /* This cleans up an RSA/DSA KM key(do not destroy the key into the hardware)
 , called when ex_data is freed */
 static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index_,long argl, void *argp)
+	int idx,long argl, void *argp)
 {
 	if(!p_surewarehk_Free)
 	{
@@ -831,7 +831,7 @@ static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 /* This cleans up an DH KM key (destroys the key into hardware), 
 called when ex_data is freed */
 static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index_,long argl, void *argp)
+	int idx,long argl, void *argp)
 {
 	if(!p_surewarehk_Free)
 	{

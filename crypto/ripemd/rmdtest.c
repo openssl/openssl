@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <openssl/ripemd.h>
 
 #ifdef OPENSSL_NO_RIPEMD
 int main(int argc, char *argv[])
@@ -67,7 +68,6 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/ripemd.h>
 #include <openssl/evp.h>
 
 #ifdef CHARSET_EBCDIC
