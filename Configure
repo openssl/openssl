@@ -1037,7 +1037,7 @@ else
 			}
 		}
 	$withargs{"krb5-lib"} .= " -lresolv"
-		if ("$lresolv");
+		if ("$lresolv" ne "");
 	$withargs{"krb5-include"} = "-I".$withargs{"krb5-dir"}."/include"
 		if $withargs{"krb5-include"} eq "" &&
 		   $withargs{"krb5-dir"} ne "";
@@ -1096,7 +1096,7 @@ else
 #		}
 	}	
 
-$lflags="$libs$lflags"if ($libs ne "");
+$lflags="$libs$lflags" if ($libs ne "");
 
 if ($no_asm)
 	{
