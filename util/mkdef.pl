@@ -267,7 +267,7 @@ $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
-$crypto.=" fips/fips.h fips/fips_locl.h";
+$crypto.=" fips/fips.h fips/fips_locl.h fips/rand/fips_rand.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -797,7 +797,7 @@ sub do_defs
 		}
 		close(IN);
 
-		my $algs;
+		my $algs = '';
 		my $plays;
 
 		print STDERR "DEBUG: postprocessing ----------\n" if $debug;
@@ -867,6 +867,7 @@ sub do_defs
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
+			$algorithm{$s} = '' if !defined $algorithm{$s};
 			$algorithm{$s} .= ','.$a;
 
 			if (defined($variant{$s})) {
