@@ -174,8 +174,8 @@
 
  Note: For legal reasons, contributions from the US can be accepted only
  if a TSA notification and a copy of the patch is sent to crypt@bis.doc.gov;
- http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
- and EAR Section 740.13(e), http://w3.access.gpo.gov/bis/ear/pdf/740.pdf.
+ see http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
+ and http://w3.access.gpo.gov/bis/ear/pdf/740.pdf (EAR Section 740.13(e)).
 
  The preferred format for changes is "diff -u" output. You might
  generate it like this:
