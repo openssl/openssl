@@ -541,6 +541,9 @@ static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 		{
 		bs=EVP_CIPHER_CTX_block_size(s->enc_read_ctx);
 		j=len+mac_size;
+		/* Two-byte headers allow for a larger record length than
+		 * three-byte headers, but we can't use them if we need
+		 * padding or if we have to set the escape bit. */
 		if ((j > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER) &&
 			(!s->s2->escape))
 			{
@@ -556,25 +559,39 @@ static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 			}
 		else if ((bs <= 1) && (!s->s2->escape))
 			{
-			/* len=len; */
+			/* j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER, thus
+			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER */
 			s->s2->three_byte_header=0;
 			p=0;
 			}
-		else /* 3 byte header */
+		else /* we may have to use a 3 byte header */
 			{
-			/*len=len; */
+			/* If s->s2->escape is not set, then
+			 * j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER, and thus
+			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER. */
 			p=(j%bs);
 			p=(p == 0)?0:(bs-p);
 			if (s->s2->escape)
+				{
 				s->s2->three_byte_header=1;
+				if (j > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+					j=SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER;
+				}
 			else
 				s->s2->three_byte_header=(p == 0)?0:1;
 			}
 		}
+
+	/* Now
+	 *      j <= SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER
+	 * holds, and if s->s2->three_byte_header is set, then even
+	 *      j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER.
+	 */
+
 	/* mac_size is the number of MAC bytes
 	 * len is the number of data bytes we are going to send
 	 * p is the number of padding bytes
-	 * if p == 0, it is a 2 byte header */
+	 * (if it is a two-byte header, then p == 0) */
 
 	s->s2->wlength=len;
 	s->s2->padding=p;
