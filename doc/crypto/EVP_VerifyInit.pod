@@ -1,0 +1,71 @@
+=pod
+
+=head1 NAME
+
+EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal - EVP signature verification functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ void EVP_VerifyInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+ void EVP_VerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
+ int EVP_VerifyFinal(EVP_MD_CTX *ctx,unsigned char *sigbuf, unsigned int siglen,EVP_PKEY *pkey);
+
+=head1 DESCRIPTION
+
+The EVP signature verification routines are a high level interface to digital
+signatures.
+
+EVP_VerifyInit() initialises a verification context B<ctx> to using digest
+B<type>: this will typically be supplied by a function such as EVP_sha1().
+
+EVP_VerifyUpdate() hashes B<cnt> bytes of data at B<d> into the
+verification context B<ctx>. This funtion can be called several times on the
+same B<ctx> to include additional data.
+
+EVP_VerifyFinal() verifies the data in B<ctx> using the public key B<pkey>
+and against the B<siglen> bytes at B<sigbuf>. After calling EVP_VerifyFinal()
+no additional calls to EVP_VerifyUpdate() can be made, but EVP_VerifyInit()
+can be called to initialiase a new verification operation.
+
+=head1 RETURN VALUES
+
+EVP_VerifyInit() and EVP_VerifyUpdate() do not return values.
+
+EVP_VerifyFinal() returns 1 for a correct signature, 0 for failure and -1 if some
+other error occurred.
+
+The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+
+=head1 NOTES
+
+The B<EVP> interface to digital signatures should almost always be used in
+preference to the low level interfaces. This is because the code then becomes
+transparent to the algorithm used and much more flexible.
+
+Due to the link between message digests and public key algorithms the correct
+digest algorithm must be used with the correct public key type. A list of
+algorithms and associated public key algorithms appears in 
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
+
+=head1 BUGS
+
+Several of the functions do not return values: maybe they should. Although the
+internal digest operations will never fail some future hardware based operations
+might.
+
+=head1 SEE ALSO
+
+L<EVP_SignInit(3)|EVP_SignInit(3)>,
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>, L<err(3)|err(3)>,
+L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
+L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
+L<sha(3)|sha(3)>, L<digest(1)|digest(1)>
+
+=head1 HISTORY
+
+EVP_VerifyInit(), EVP_VerifyUpdate() and EVP_VerifyFinal() are
+available in all versions of SSLeay and OpenSSL.
+
+=cut

@@ -1,0 +1,85 @@
+=pod
+
+=head1 NAME
+
+EVP_SignInit, EVP_SignUpdate, EVP_SignFinal - EVP signing functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ void EVP_SignInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+ void EVP_SignUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
+ int EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *sig,unsigned int *s, EVP_PKEY *pkey);
+
+ int EVP_PKEY_size(EVP_PKEY *pkey);
+
+=head1 DESCRIPTION
+
+The EVP signature routines are a high level interface to digital
+signatures.
+
+EVP_SignInit() initialises a signing context B<ctx> to using digest
+B<type>: this will typically be supplied by a function such as
+EVP_sha1().
+
+EVP_SignUpdate() hashes B<cnt> bytes of data at B<d> into the
+signature context B<ctx>. This funtion can be called several times on the
+same B<ctx> to include additional data.
+
+EVP_SignFinal() signs the data in B<ctx> using the private key B<pkey>
+and places the signature in B<sig>. If the B<s> parameter is not NULL
+then the number of bytes of data written (i.e. the length of the signature)
+will be written to the integer at B<s>, at most EVP_PKEY_size(pkey) bytes
+will be written.  After calling EVP_SignFinal() no additional calls to
+EVP_SignUpdate() can be made, but EVP_SignInit() can be called to initialiase
+a new signature operation.
+
+EVP_PKEY_size() returns the maximum size of a signature in bytes. The actual
+signature returned by EVP_SignFinal() may be smaller.
+
+=head1 RETURN VALUES
+
+EVP_SignInit() and EVP_SignUpdate() do not return values.
+
+EVP_SignFinal() returns 1 for success and 0 for failure.
+
+EVP_PKEY_size() returns the maximum size of a signature in bytes.
+
+The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+
+=head1 NOTES
+
+The B<EVP> interface to digital signatures should almost always be used in
+preference to the low level interfaces. This is because the code then becomes
+transparent to the algorithm used and much more flexible.
+
+Due to the link between message digests and public key algorithms the correct
+digest algorithm must be used with the correct public key type. A list of
+algorithms and associated public key algorithms appears in 
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
+
+When signing with DSA private keys the random number generator must be seeded
+or the operation will fail. The random number generator does not need to be
+seeded for RSA signatures.
+
+=head1 BUGS
+
+Several of the functions do not return values: maybe they should. Although the
+internal digest operations will never fail some future hardware based operations
+might.
+
+=head1 SEE ALSO
+
+L<EVP_VerifyInit(3)|EVP_VerifyInit(3)>,
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>, L<err(3)|err(3)>,
+L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
+L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
+L<sha(3)|sha(3)>, L<digest(1)|digest(1)>
+
+=head1 HISTORY
+
+EVP_SignInit(), EVP_SignUpdate() and EVP_SignFinal() are
+available in all versions of SSLeay and OpenSSL.
+
+=cut
