@@ -4,6 +4,15 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Rabin-Miller test analyses assume uniformly distributed witnesses,
+     so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
+     followed by modular reduction.
+     [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
+
+  *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
+     requivalent based on BN_pseudo_rand() instead of BN_rand().
+     [Bodo Moeller]
+
   *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
      This function was broken, as the check for a new client hello message
      to handle SGC did not allow these large messages.
