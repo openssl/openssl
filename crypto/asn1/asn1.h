@@ -737,6 +737,7 @@ int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
 int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
+int ASN1_parse_dump(BIO *bp,unsigned char *pp,long len,int indent,int dump);
 #endif
 const char *ASN1_tag2str(int tag);
 

@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Make it possible to get hexdumps of unprintable data with 'openssl
+     asn1parse'.  By implication, the functions ASN1_parse_dump() and
+     BIO_dump_indent() are added.
+     [Richard Levitte]
+
   *) Various fixes to use ASN1_TIME instead of ASN1_UTCTIME.
      Also change the functions X509_cmp_current_time() and
      X509_gmtime_adj() work with an ASN1_TIME structure,

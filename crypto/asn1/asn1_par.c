@@ -65,7 +65,7 @@
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,
 	int indent);
 static int asn1_parse2(BIO *bp, unsigned char **pp, long length,
-	int offset, int depth, int indent);
+	int offset, int depth, int indent, int dump);
 static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 	     int indent)
 	{
@@ -110,11 +110,16 @@ err:
 
 int ASN1_parse(BIO *bp, unsigned char *pp, long len, int indent)
 	{
-	return(asn1_parse2(bp,&pp,len,0,0,indent));
+	return(asn1_parse2(bp,&pp,len,0,0,indent,0));
+	}
+
+int ASN1_parse_dump(BIO *bp, unsigned char *pp, long len, int indent, int dump)
+	{
+	return(asn1_parse2(bp,&pp,len,0,0,indent,dump));
 	}
 
 static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
-	     int depth, int indent)
+	     int depth, int indent, int dump)
 	{
 	unsigned char *p,*ep,*tot,*op,*opp;
 	long len;
@@ -123,7 +128,13 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 	ASN1_OBJECT *o=NULL;
 	ASN1_OCTET_STRING *os=NULL;
 	/* ASN1_BMPSTRING *bmp=NULL;*/
+	int dump_indent;
 
+#if 0
+	dump_indent = indent;
+#else
+	dump_indent = 6;	/* Because we know BIO_dump_indent() */
+#endif
 	p= *pp;
 	tot=p+length;
 	op=p-1;
@@ -178,7 +189,7 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 					{
 					r=asn1_parse2(bp,&p,(long)(tot-p),
 						offset+(p - *pp),depth+1,
-						indent);
+						indent,dump);
 					if (r == 0) { ret=0; goto end; }
 					if ((r == 2) || (p >= tot)) break;
 					}
@@ -188,7 +199,7 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 					{
 					r=asn1_parse2(bp,&p,(long)len,
 						offset+(p - *pp),depth+1,
-						indent);
+						indent,dump);
 					if (r == 0) { ret=0; goto end; }
 					}
 			}
@@ -273,6 +284,20 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 							os->length) <= 0)
 							goto end;
 						}
+					if (!printable && (os->length > 0)
+						&& dump)
+						{
+						if (!nl) 
+							{
+							if (BIO_write(bp,"\n",1) <= 0)
+								goto end;
+							}
+						if (BIO_dump_indent(bp,opp,
+							((dump == -1 || dump > os->length)?os->length:dump),
+							dump_indent) <= 0)
+							goto end;
+						nl=1;
+						}
 					M_ASN1_OCTET_STRING_free(os);
 					os=NULL;
 					}
@@ -340,6 +365,19 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 						goto end;
 					}
 				M_ASN1_ENUMERATED_free(bs);
+				}
+			else if (len > 0 && dump)
+				{
+				if (!nl) 
+					{
+					if (BIO_write(bp,"\n",1) <= 0)
+						goto end;
+					}
+				if (BIO_dump_indent(bp,p,
+					((dump == -1 || dump > len)?len:dump),
+					dump_indent) <= 0)
+					goto end;
+				nl=1;
 				}
 
 			if (!nl) 

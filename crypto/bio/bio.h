@@ -559,6 +559,7 @@ int BIO_sock_non_fatal_error(int error);
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
 int BIO_dump(BIO *b,const char *bytes,int len);
+int BIO_dump_indent(BIO *b,const char *bytes,int len,int indent);
 
 struct hostent *BIO_gethostbyname(const char *name);
 /* We might want a thread-safe interface too:
