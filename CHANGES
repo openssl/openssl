@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix potential buffer overrun for EBCDIC.
+     [Ulf Moeller]
+
   *) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.
      [Steve Henson]
