@@ -84,6 +84,23 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+ec2_mult.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ec2_mult.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+ec2_mult.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ec2_mult.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+ec2_mult.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
+ec2_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ec2_mult.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ec2_mult.o: ../../include/openssl/symhacks.h ec2_mult.c ec_lcl.h
+ec2_smpl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ec2_smpl.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+ec2_smpl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ec2_smpl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+ec2_smpl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
+ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ec2_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec2_smpt.c ec_lcl.h
+ec2_smpt.o: ec2_smpt.c
 ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -178,17 +195,3 @@ ecp_smpl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ecp_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecp_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecp_smpl.o: ../../include/openssl/symhacks.h ec_lcl.h ecp_smpl.c
-ec2_smpl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-ec2_smpl.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ec2_smpl.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-ec2_smpl.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-ec2_smpl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ec2_smpl.o: ec_lcl.h ec2_smpl.c ec2_smpt.c
-ec2_mult.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-ec2_mult.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ec2_mult.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-ec2_mult.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ec2_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-ec2_mult.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ec2_mult.o: ec_lcl.h ec2_mult.c

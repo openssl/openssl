@@ -68,8 +68,8 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_nist_group_finish,
 		ec_GFp_nist_group_clear_finish,
 		ec_GFp_nist_group_copy,
-		ec_GFp_nist_group_set_curve_GFp,
-		ec_GFp_simple_group_get_curve_GFp,
+		ec_GFp_nist_group_set_curve,
+		ec_GFp_simple_group_get_curve,
 		ec_GFp_simple_group_get_degree,
 		ec_GFp_simple_group_set_generator,
 		ec_GFp_simple_group_get0_generator,
@@ -83,9 +83,9 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_point_set_to_infinity,
 		ec_GFp_simple_set_Jprojective_coordinates_GFp,
 		ec_GFp_simple_get_Jprojective_coordinates_GFp,
-		ec_GFp_simple_point_set_affine_coordinates_GFp,
-		ec_GFp_simple_point_get_affine_coordinates_GFp,
-		ec_GFp_simple_set_compressed_coordinates_GFp,
+		ec_GFp_simple_point_set_affine_coordinates,
+		ec_GFp_simple_point_get_affine_coordinates,
+		ec_GFp_simple_set_compressed_coordinates,
 		ec_GFp_simple_point2oct,
 		ec_GFp_simple_oct2point,
 		ec_GFp_simple_add,
@@ -120,7 +120,7 @@ int ec_GFp_nist_group_init(EC_GROUP *group)
 	}
 
 
-int ec_GFp_nist_group_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 /* TODO */
 
 

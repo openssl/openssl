@@ -93,8 +93,8 @@ const EC_METHOD *EC_GF2m_simple_method(void)
 		ec_GF2m_simple_group_finish,
 		ec_GF2m_simple_group_clear_finish,
 		ec_GF2m_simple_group_copy,
-		ec_GF2m_simple_group_set_curve_GF2m,
-		ec_GF2m_simple_group_get_curve_GF2m,
+		ec_GF2m_simple_group_set_curve,
+		ec_GF2m_simple_group_get_curve,
 		ec_GF2m_simple_group_get_degree,
 		ec_GF2m_simple_group_check_discriminant,
 		ec_GF2m_simple_point_init,
@@ -102,11 +102,11 @@ const EC_METHOD *EC_GF2m_simple_method(void)
 		ec_GF2m_simple_point_clear_finish,
 		ec_GF2m_simple_point_copy,
 		ec_GF2m_simple_point_set_to_infinity,
-		0 /* set_Jprojective_coordinates_GF2m */,
-		0 /* get_Jprojective_coordinates_GF2m */,
-		ec_GF2m_simple_point_set_affine_coordinates_GF2m,
-		ec_GF2m_simple_point_get_affine_coordinates_GF2m,
-		ec_GF2m_simple_set_compressed_coordinates_GF2m,
+		0 /* set_Jprojective_coordinates_GFp */,
+		0 /* get_Jprojective_coordinates_GFp */,
+		ec_GF2m_simple_point_set_affine_coordinates,
+		ec_GF2m_simple_point_get_affine_coordinates,
+		ec_GF2m_simple_set_compressed_coordinates,
 		ec_GF2m_simple_point2oct,
 		ec_GF2m_simple_oct2point,
 		ec_GF2m_simple_add,
@@ -192,7 +192,7 @@ int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 
 
 /* Set the curve parameters of an EC_GROUP structure. */
-int ec_GF2m_simple_group_set_curve_GF2m(EC_GROUP *group,
+int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
 	int ret = 0, i;
@@ -221,7 +221,7 @@ int ec_GF2m_simple_group_set_curve_GF2m(EC_GROUP *group,
 /* Get the curve parameters of an EC_GROUP structure.
  * If p, a, or b are NULL then there values will not be set but the method will return with success.
  */
-int ec_GF2m_simple_group_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int ret = 0;
 	
@@ -349,13 +349,13 @@ int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 /* Set the coordinates of an EC_POINT using affine coordinates. 
  * Note that the simple implementation only uses affine coordinates.
  */
-int ec_GF2m_simple_point_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
+int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
 	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 	{
 	int ret = 0;	
 	if (x == NULL || y == NULL)
 		{
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES_GF2M, ERR_R_PASSED_NULL_PARAMETER);
+		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
 
@@ -373,20 +373,20 @@ int ec_GF2m_simple_point_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_P
 /* Gets the affine coordinates of an EC_POINT. 
  * Note that the simple implementation only uses affine coordinates.
  */
-int ec_GF2m_simple_point_get_affine_coordinates_GF2m(const EC_GROUP *group, const EC_POINT *point,
+int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 	{
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point))
 		{
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES_GF2M, EC_R_POINT_AT_INFINITY);
+		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
 		return 0;
 		}
 
 	if (BN_cmp(&point->Z, BN_value_one())) 
 		{
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES_GF2M, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 		}
 	if (x != NULL)

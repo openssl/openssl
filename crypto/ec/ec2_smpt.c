@@ -65,11 +65,11 @@
  * This function is disabled by default and can be enabled by defining the 
  * preprocessor macro OPENSSL_EC_BIN_PT_COMP at Configure-time.
  */
-int ec_GF2m_simple_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
+int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 	const BIGNUM *x_, int y_bit, BN_CTX *ctx)
 	{
 #ifndef OPENSSL_EC_BIN_PT_COMP	
-	ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES_GF2M, ERR_R_DISABLED);
+	ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES, ERR_R_DISABLED);
 	return 0;
 #else
 	BN_CTX *new_ctx = NULL;
