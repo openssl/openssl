@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
+ Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
   *) Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not
      encoded as NULL) with id-dsa-with-sha1.
