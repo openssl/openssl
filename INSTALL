@@ -115,7 +115,8 @@
      OpenSSL binary ("openssl"). The libraries will be built in the top-level
      directory, and the binary will be in the "apps" directory.
 
-     If "make" fails, please report the problem to <openssl-bugs@openssl.org>.
+     If "make" fails, please report the problem to <openssl-bugs@openssl.org>
+     (note that your message will be forwarded to a public mailing list).
      Include the output of "./config -t" and the OpenSSL version
      number in your message.
 
