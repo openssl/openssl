@@ -49,7 +49,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_update=1 if $_ eq "update";
 	$do_ctest=1 if $_ eq "ctest";
 	$rsaref=1 if $_ eq "rsaref";
-	$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
+	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
 	if    (/^no-rc2$/)      { $no_rc2=1; }
 	elsif (/^no-rc4$/)      { $no_rc4=1; }
@@ -270,7 +270,10 @@ sub do_defs
 			} elsif (/^\#/) {
 				next;
 			}
-			if ($safe_stack_def &&
+			if (!$safe_stack_def &&
+				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				next;
+			} elsif ($safe_stack_def &&
 				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				$funcs{"sk_${1}_new"} = 1;
 				$funcs{"sk_${1}_new_null"} = 1;
@@ -291,6 +294,9 @@ sub do_defs
 				$funcs{"sk_${1}_shift"} = 1;
 				$funcs{"sk_${1}_pop"} = 1;
 				$funcs{"sk_${1}_sort"} = 1;
+			} if (!$safe_stack_def &&
+				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
+				next;
 			} elsif ($safe_stack_def &&
 				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 				$funcs{"d2i_ASN1_SET_OF_${1}"} = 1;
