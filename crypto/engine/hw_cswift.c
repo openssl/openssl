@@ -264,13 +264,13 @@ static int cswift_init()
 		goto err;
 		}
 	if(!(p1 = (t_swAcquireAccContext *)
-				DSO_bind(cswift_dso, CSWIFT_F1)) ||
+				DSO_bind_func(cswift_dso, CSWIFT_F1)) ||
 			!(p2 = (t_swAttachKeyParam *)
-				DSO_bind(cswift_dso, CSWIFT_F2)) ||
+				DSO_bind_func(cswift_dso, CSWIFT_F2)) ||
 			!(p3 = (t_swSimpleRequest *)
-				DSO_bind(cswift_dso, CSWIFT_F3)) ||
+				DSO_bind_func(cswift_dso, CSWIFT_F3)) ||
 			!(p4 = (t_swReleaseAccContext *)
-				DSO_bind(cswift_dso, CSWIFT_F4)))
+				DSO_bind_func(cswift_dso, CSWIFT_F4)))
 		{
 		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_DSO_FAILURE);
 		goto err;

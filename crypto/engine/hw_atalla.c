@@ -235,11 +235,11 @@ static int atalla_init()
 		ENGINEerr(ENGINE_F_ATALLA_INIT,ENGINE_R_DSO_FAILURE);
 		goto err;
 		}
-	if(!(p1 = (tfnASI_GetHardwareConfig *)DSO_bind(
+	if(!(p1 = (tfnASI_GetHardwareConfig *)DSO_bind_func(
 				atalla_dso, ATALLA_F1)) ||
-			!(p2 = (tfnASI_RSAPrivateKeyOpFn *)DSO_bind(
+			!(p2 = (tfnASI_RSAPrivateKeyOpFn *)DSO_bind_func(
 				atalla_dso, ATALLA_F2)) ||
-			!(p3 = (tfnASI_GetPerformanceStatistics *)DSO_bind(
+			!(p3 = (tfnASI_GetPerformanceStatistics *)DSO_bind_func(
 				atalla_dso, ATALLA_F3)))
 		{
 		ENGINEerr(ENGINE_F_ATALLA_INIT,ENGINE_R_DSO_FAILURE);
