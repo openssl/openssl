@@ -348,6 +348,9 @@ void do_mct(char *amode,
 	    memcpy(&akey[2*8],akey,8);
 	if(numkeys < 2)
 	    memcpy(&akey[8],akey,8);
+	DES_set_odd_parity((DES_cblock *)akey);
+	DES_set_odd_parity((DES_cblock *)(akey+8));
+	DES_set_odd_parity((DES_cblock *)(akey+16));
 	memcpy(ivec,ctx.iv,8);
 
 	/* pointless exercise - the final text doesn't depend on the
