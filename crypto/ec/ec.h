@@ -1,6 +1,6 @@
 /* crypto/ec/ec.h */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -125,6 +125,8 @@ EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
 int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
+/* EC_GROUP_check() returns 1 if 'group' defines a valid group, 0 otherwise */
+int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
  * after choosing an appropriate EC_METHOD */
@@ -163,6 +165,11 @@ EC_GROUP *EC_GROUP_new_by_name(int name);
 #define EC_GROUP_SECG_PRIME_256R1	NID_secp256r1
 #define EC_GROUP_SECG_PRIME_384R1	NID_secp384r1
 #define EC_GROUP_SECG_PRIME_521R1	NID_secp521r1
+#define EC_GROUP_WTLS_6			NID_wap_wsg_idm_ecid_wtls6
+#define EC_GROUP_WTLS_7			NID_secp160r1
+#define EC_GROUP_WTLS_8			NID_wap_wsg_idm_ecid_wtls8
+#define EC_GROUP_WTLS_9			NID_wap_wsg_idm_ecid_wtls9
+#define EC_GROUP_WTLS_12		NID_secp224r1
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
@@ -220,6 +227,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
 #define EC_F_EC_GFP_MONT_FIELD_MUL			 131
 #define EC_F_EC_GFP_MONT_FIELD_SQR			 132
+#define EC_F_EC_GFP_SIMPLE_GROUP_CHECK			 151
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP		 100
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 101
 #define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 102
@@ -229,6 +237,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP 105
 #define EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP 128
 #define EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP 129
+#define EC_F_EC_GROUP_CHECK				 150
 #define EC_F_EC_GROUP_COPY				 106
 #define EC_F_EC_GROUP_GET0_GENERATOR			 139
 #define EC_F_EC_GROUP_GET_COFACTOR			 140
@@ -266,6 +275,7 @@ void ERR_load_EC_strings(void);
 
 /* Reason codes. */
 #define EC_R_BUFFER_TOO_SMALL				 100
+#define EC_R_DISCRIMINANT_IS_ZERO			 118
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
 #define EC_R_INVALID_ARGUMENT				 112
 #define EC_R_INVALID_COMPRESSED_POINT			 110
@@ -273,13 +283,14 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
-#define EC_R_MISSING_PARAMETERS				 115
+#define EC_R_INVALID_GROUP_ORDER			 119
 #define EC_R_NOT_INITIALIZED				 111
 #define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SLOT_FULL					 108
 #define EC_R_UNDEFINED_GENERATOR			 113
+#define EC_R_UNDEFINED_ORDER				 122
 #define EC_R_UNKNOWN_GROUP				 116
 #define EC_R_UNKNOWN_NID				 117
 #define EC_R_UNKNOWN_ORDER				 114

@@ -133,15 +133,16 @@
  * -out arg		- output file - default stdout
  * -noout
  * -text
+ * -check               - validate the ec parameters
  * -C
  * -noout
  * -genkey		- generate a private public keypair based on the supplied curve
  * -named_curve		- use the curve oid instead of the parameters
- * -NIST_192		- use the NIST recommeded curve parameters over a 192 bit prime field
- * -NIST_224		- use the NIST recommeded curve parameters over a 224 bit prime field
- * -NIST_256		- use the NIST recommeded curve parameters over a 256 bit prime field
- * -NIST_384		- use the NIST recommeded curve parameters over a 384 bit prime field
- * -NIST_521		- use the NIST recommeded curve parameters over a 521 bit prime field
+ * -NIST_192		- use the NIST recommended curve parameters over a 192 bit prime field
+ * -NIST_224		- use the NIST recommended curve parameters over a 224 bit prime field
+ * -NIST_256		- use the NIST recommended curve parameters over a 256 bit prime field
+ * -NIST_384		- use the NIST recommended curve parameters over a 384 bit prime field
+ * -NIST_521		- use the NIST recommended curve parameters over a 521 bit prime field
  * -X9_62_192v1		- use the X9_62 192v1 example curve over a 192 bit prime field
  * -X9_62_192v2		- use the X9_62 192v2 example curve over a 192 bit prime field
  * -X9_62_192v3		- use the X9_62 192v3 example curve over a 192 bit prime field
@@ -149,21 +150,24 @@
  * -X9_62_239v2		- use the X9_62 239v2 example curve over a 239 bit prime field
  * -X9_62_239v3		- use the X9_62 239v3 example curve over a 239 bit prime field
  * -X9_62_256v1		- use the X9_62 239v1 example curve over a 256 bit prime field
- * -SECG_PRIME_112R1    - use the SECG 112r1 recommeded curve over a 112 bit prime field
- * -SECG_PRIME_112R2    - use the SECG 112r2 recommeded curve over a 112 bit prime field
- * -SECG_PRIME_128R1    - use the SECG 128r1 recommeded curve over a 128 bit prime field
- * -SECG_PRIME_128R2    - use the SECG 128r2 recommeded curve over a 128 bit prime field
- * -SECG_PRIME_160K1    - use the SECG 160k1 recommeded curve over a 160 bit prime field
- * -SECG_PRIME_160R1    - use the SECG 160r1 recommeded curve over a 160 bit prime field
- * -SECG_PRIME_160R2    - use the SECG 160r2 recommeded curve over a 160 bit prime field
- * -SECG_PRIME_192K1    - use the SECG 192k1 recommeded curve over a 192 bit prime field
- * -SECG_PRIME_192R1    - use the SECG 192r1 recommeded curve over a 192 bit prime field
- * -SECG_PRIME_224K1    - use the SECG 224k1 recommeded curve over a 224 bit prime field
- * -SECG_PRIME_224R1    - use the SECG 224r1 recommeded curve over a 224 bit prime field
- * -SECG_PRIME_256K1    - use the SECG 256k1 recommeded curve over a 256 bit prime field
- * -SECG_PRIME_256R1    - use the SECG 256r1 recommeded curve over a 256 bit prime field
- * -SECG_PRIME_384R1    - use the SECG 384r1 recommeded curve over a 384 bit prime field
- * -SECG_PRIME_521R1    - use the SECG 521r1 recommeded curve over a 521 bit prime field
+ * -SECG_PRIME_112R1    - use the SECG 112r1 recommended curve over a 112 bit prime field
+ * -SECG_PRIME_112R2    - use the SECG 112r2 recommended curve over a 112 bit prime field
+ * -SECG_PRIME_128R1    - use the SECG 128r1 recommended curve over a 128 bit prime field
+ * -SECG_PRIME_128R2    - use the SECG 128r2 recommended curve over a 128 bit prime field
+ * -SECG_PRIME_160K1    - use the SECG 160k1 recommended curve over a 160 bit prime field
+ * -SECG_PRIME_160R1    - use the SECG 160r1 recommended curve over a 160 bit prime field
+ * -SECG_PRIME_160R2    - use the SECG 160r2 recommended curve over a 160 bit prime field
+ * -SECG_PRIME_192K1    - use the SECG 192k1 recommended curve over a 192 bit prime field
+ * -SECG_PRIME_192R1    - use the SECG 192r1 recommended curve over a 192 bit prime field
+ * -SECG_PRIME_224K1    - use the SECG 224k1 recommended curve over a 224 bit prime field
+ * -SECG_PRIME_224R1    - use the SECG 224r1 recommended curve over a 224 bit prime field
+ * -SECG_PRIME_256K1    - use the SECG 256k1 recommended curve over a 256 bit prime field
+ * -SECG_PRIME_256R1    - use the SECG 256r1 recommended curve over a 256 bit prime field
+ * -SECG_PRIME_384R1    - use the SECG 384r1 recommended curve over a 384 bit prime field
+ * -SECG_PRIME_521R1    - use the SECG 521r1 recommended curve over a 521 bit prime field
+ * -WTLS_6              - use the WAP/WTLS recommended curve number 6 over a 112 bit field
+ * -WTLS_8              - use the WAP/WTLS recommended curve number 8 over a 112 bit field
+ * -WTLS_9              - use the WAP/WTLS recommended curve number 9 over a 160 bit field
  */
 
 int MAIN(int, char **);
@@ -177,6 +181,7 @@ int MAIN(int argc, char **argv)
 	int 	informat, outformat, noout = 0, C = 0, ret = 1;
 	char 	*infile, *outfile, *prog, *inrand = NULL;
 	int 	genkey = 0;
+	int	check = 0;
 	int 	need_rand = 0;
 	char 	*engine=NULL;
 	int	curve_type = EC_GROUP_NO_CURVE;
@@ -235,6 +240,8 @@ int MAIN(int argc, char **argv)
 			text = 1;
 		else if (strcmp(*argv,"-C") == 0)
 			C = 1;
+		else if (strcmp(*argv,"-check") == 0)
+			check = 1;
 		else if (strcmp(*argv,"-genkey") == 0)
 		{
 			genkey = 1;
@@ -302,6 +309,12 @@ int MAIN(int argc, char **argv)
 			curve_type = EC_GROUP_SECG_PRIME_384R1;
 		else if (strcmp(*argv, "-SECG_PRIME_521R1") == 0)
 			curve_type = EC_GROUP_SECG_PRIME_521R1;
+		else if (strcmp(*argv, "-WTLS_6") == 0)
+			curve_type = EC_GROUP_WTLS_6;
+		else if (strcmp(*argv, "-WTLS_8") == 0)
+			curve_type = EC_GROUP_WTLS_8;
+		else if (strcmp(*argv, "-WTLS_9") == 0)
+			curve_type = EC_GROUP_WTLS_9;
 		else if (strcmp(*argv, "-noout") == 0)
 			noout=1;
 		else
@@ -325,15 +338,16 @@ bad:
 		BIO_printf(bio_err," -out arg           output file\n");
 		BIO_printf(bio_err," -text              print the key in text\n");
 		BIO_printf(bio_err," -C                 Output C code\n");
+		BIO_printf(bio_err," -check             validate the ec parameters\n");
 		BIO_printf(bio_err," -noout             no output\n");
 		BIO_printf(bio_err," -rand              files to use for random number input\n");
 		BIO_printf(bio_err," -engine e          use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -named_curve       use the curve oid instead of the parameters\n");
-		BIO_printf(bio_err," -NIST_192          use the NIST recommeded curve parameters over a 192 bit prime field\n");
-		BIO_printf(bio_err," -NIST_224          use the NIST recommeded curve parameters over a 224 bit prime field\n");
-		BIO_printf(bio_err," -NIST_256          use the NIST recommeded curve parameters over a 256 bit prime field\n");
-		BIO_printf(bio_err," -NIST_384          use the NIST recommeded curve parameters over a 384 bit prime field\n");
-		BIO_printf(bio_err," -NIST_521          use the NIST recommeded curve parameters over a 521 bit prime field\n");
+		BIO_printf(bio_err," -NIST_192          use the NIST recommended curve parameters over a 192 bit prime field\n");
+		BIO_printf(bio_err," -NIST_224          use the NIST recommended curve parameters over a 224 bit prime field\n");
+		BIO_printf(bio_err," -NIST_256          use the NIST recommended curve parameters over a 256 bit prime field\n");
+		BIO_printf(bio_err," -NIST_384          use the NIST recommended curve parameters over a 384 bit prime field\n");
+		BIO_printf(bio_err," -NIST_521          use the NIST recommended curve parameters over a 521 bit prime field\n");
 		BIO_printf(bio_err," -X9_62_192v1       use the X9_62 192v1 example curve over a 192 bit prime field\n");
 		BIO_printf(bio_err," -X9_62_192v2       use the X9_62 192v2 example curve over a 192 bit prime field\n");
 		BIO_printf(bio_err," -X9_62_192v3       use the X9_62 192v3 example curve over a 192 bit prime field\n");
@@ -341,21 +355,24 @@ bad:
 		BIO_printf(bio_err," -X9_62_239v2       use the X9_62 239v2 example curve over a 239 bit prime field\n");
 		BIO_printf(bio_err," -X9_62_239v3       use the X9_62 239v3 example curve over a 239 bit prime field\n");
 		BIO_printf(bio_err," -X9_62_256v1       use the X9_62 239v1 example curve over a 256 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_112R1  use the SECG 112r1 recommeded curve over a 112 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_112R2  use the SECG 112r2 recommeded curve over a 112 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_128R1  use the SECG 128r1 recommeded curve over a 128 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_128R2  use the SECG 128r2 recommeded curve over a 128 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_160K1  use the SECG 160k1 recommeded curve over a 160 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_160R1  use the SECG 160r1 recommeded curve over a 160 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_160R2  use the SECG 160r2 recommeded curve over a 160 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_192K1  use the SECG 192k1 recommeded curve over a 192 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_192R1  use the SECG 192r1 recommeded curve over a 192 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_224K1  use the SECG 224k1 recommeded curve over a 224 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_224R1  use the SECG 224r1 recommeded curve over a 224 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_256K1  use the SECG 256k1 recommeded curve over a 256 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_256R1  use the SECG 256r1 recommeded curve over a 256 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_384R1  use the SECG 384r1 recommeded curve over a 384 bit prime field\n");
-		BIO_printf(bio_err," -SECG_PRIME_521R1  use the SECG 521r1 recommeded curve over a 521 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_112R1  use the SECG 112r1 recommended curve over a 112 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_112R2  use the SECG 112r2 recommended curve over a 112 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_128R1  use the SECG 128r1 recommended curve over a 128 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_128R2  use the SECG 128r2 recommended curve over a 128 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160K1  use the SECG 160k1 recommended curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160R1  use the SECG 160r1 recommended curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160R2  use the SECG 160r2 recommended curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_192K1  use the SECG 192k1 recommended curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_192R1  use the SECG 192r1 recommended curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_224K1  use the SECG 224k1 recommended curve over a 224 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_224R1  use the SECG 224r1 recommended curve over a 224 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_256K1  use the SECG 256k1 recommended curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_256R1  use the SECG 256r1 recommended curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_384R1  use the SECG 384r1 recommended curve over a 384 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_521R1  use the SECG 521r1 recommended curve over a 521 bit prime field\n");
+		BIO_printf(bio_err," -WTLS_6            use the WAP/WTLS recommended curve number 6 over a 112 bit field\n");
+		BIO_printf(bio_err," -WTLS_8            use the WAP/WTLS recommended curve number 8 over a 112 bit field\n");
+		BIO_printf(bio_err," -WTLS_9            use the WAP/WTLS recommended curve number 9 over a 112 bit field\n");
 		goto end;
 	}
 
@@ -436,9 +453,24 @@ bad:
 	{
 		ECDSAParameters_print(out, ecdsa);
 	}
+
+	if (check)
+	{
+		if (ecdsa == NULL)
+			BIO_printf(bio_err, "no elliptic curve parameters\n");
+		BIO_printf(bio_err, "checking elliptic curve parameters: ");
+		if (!EC_GROUP_check(ecdsa->group, NULL))
+		{
+			BIO_printf(bio_err, "failed\n");
+			ERR_print_errors(bio_err);
+		}
+		else
+			BIO_printf(bio_err, "ok\n");
+			
+	}
 	
 	if (C)
-	{	/* TODO : characteristic two */
+	{	/* TODO: characteristic two */
 		int 	l, len, bits_p;
 		if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
 		    (tmp_3 = BN_new()) == NULL || (tmp_4 = BN_new()) == NULL ||

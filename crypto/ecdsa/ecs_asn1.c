@@ -170,6 +170,7 @@ X9_62_CURVE   *ECDSA_get_X9_62_CURVE(const ECDSA *ecdsa, X9_62_CURVE *curve)
 	X9_62_CURVE *ret=NULL;
 	BIGNUM      *tmp1=NULL, *tmp2=NULL;
 	unsigned char *buffer=NULL;
+	unsigned char char_buf = 0;
 
 	if (!ecdsa || !ecdsa->group)
 		OPENSSL_ECDSA_ABORT(ECDSA_R_MISSING_PARAMETERS)
@@ -189,29 +190,38 @@ X9_62_CURVE   *ECDSA_get_X9_62_CURVE(const ECDSA *ecdsa, X9_62_CURVE *curve)
 	if (!EC_GROUP_get_curve_GFp(ecdsa->group, NULL, tmp1, tmp2, NULL))
 		OPENSSL_ECDSA_ABORT(ERR_R_EC_LIB)
 
-	if ((len1 = BN_num_bytes(tmp1)) == 0)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_UNEXPECTED_PARAMETER_LENGTH)
-	if ((buffer = OPENSSL_malloc(len1)) == NULL)
-		OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
-	if ((len1 = BN_bn2bin(tmp1, buffer)) == 0) goto err;
-	if ((ret->a = M_ASN1_OCTET_STRING_new()) == NULL)
-		OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
-	if (!M_ASN1_OCTET_STRING_set(ret->a, buffer, len1))
+	if ((ret->a = M_ASN1_OCTET_STRING_new()) == NULL || 
+	    (ret->b = M_ASN1_OCTET_STRING_new()) == NULL )
 		OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
 
-	if ((len2 = BN_num_bytes(tmp2)) == 0)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_UNEXPECTED_PARAMETER_LENGTH)
-	if (len1 < len2)
+	len1 = BN_num_bytes(tmp1);
+	len2 = BN_num_bytes(tmp2);
+
+	if ((buffer = OPENSSL_malloc(len1 > len2 ? len1 : len2)) == NULL)
+		OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
+
+	if (len1 == 0) /* => a == 0 */
 	{
-		OPENSSL_free(buffer);
-		if ((buffer = OPENSSL_malloc(len2)) == NULL)
-			OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
+		if (!M_ASN1_OCTET_STRING_set(ret->a, char_buf, 1))
+			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
 	}
-	if ((len2 = BN_bn2bin(tmp2, buffer)) == 0) goto err;
-	if ((ret->b = M_ASN1_OCTET_STRING_new()) == NULL)
-		OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
-	if (!M_ASN1_OCTET_STRING_set(ret->b, buffer, len2))
-		OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
+	else
+	{
+		if ((len1 = BN_bn2bin(tmp1, buffer)) == 0) goto err;
+		if (!M_ASN1_OCTET_STRING_set(ret->a, buffer, len1))
+			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
+	}
+	if (len2 == 0) /* => b == 0 */
+	{
+		if (!M_ASN1_OCTET_STRING_set(ret->a, char_buf, 1))
+			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
+	}
+	else
+	{
+		if ((len2 = BN_bn2bin(tmp2, buffer)) == 0) goto err;
+		if (!M_ASN1_OCTET_STRING_set(ret->b, buffer, len2))
+			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
+	}
 
 	if (ecdsa->seed)
 	{	

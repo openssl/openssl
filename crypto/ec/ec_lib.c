@@ -237,6 +237,29 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 	}
 
 
+int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
+	{
+	if (group->meth->group_check == 0)
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_check(group, ctx);
+	}
+
+
+void EC_GROUP_set_nid(EC_GROUP *group, int nid)
+	{
+	group->nid = nid;
+	}
+
+
+int EC_GROUP_get_nid(const EC_GROUP *group)
+	{
+	return group->nid;
+	}
+
+
 /* this has 'package' visibility */
 int EC_GROUP_set_extra_data(EC_GROUP *group, void *extra_data, void *(*extra_data_dup_func)(void *),
 	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *))
@@ -298,17 +321,6 @@ void EC_GROUP_clear_free_extra_data(EC_GROUP *group)
 	group->extra_data_free_func = 0;
 	group->extra_data_clear_free_func = 0;
 	}
-
-void EC_GROUP_set_nid(EC_GROUP *group, int nid)
-	{
-	group->nid = nid;
-	}
-
-int EC_GROUP_get_nid(const EC_GROUP *group)
-	{
-	return group->nid;
-	}
-
 
 
 /* functions for EC_POINT objects */

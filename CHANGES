@@ -19,8 +19,9 @@
        extracted before the specific public key.
      [Nils Larsch <nla@trustcenter.de>]
 
-  *) Include some named elliptic curves, and add OIDs from X9.62 and SECG.
-     The curves can be obtained from the new functions
+  *) Include some named elliptic curves, and add OIDs from X9.62,
+     SECG, and WAP/WTLS.  The curves can be obtained from the new
+     functions
           EC_GROUP_new_by_nid()
           EC_GROUP_new_by_name()
      Also add a 'nid' field to EC_GROUP objects, which can be accessed

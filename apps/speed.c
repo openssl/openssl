@@ -372,8 +372,11 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
-	long count=0,save_count=0, rsa_count;
+	long count=0,save_count=0;
 	int i,j,k;
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
+	long rsa_count;
+#endif
 #ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
 #endif

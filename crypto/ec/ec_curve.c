@@ -60,7 +60,7 @@
 #include <openssl/asn1t.h>
 
 /* #define _EC_GROUP_EXAMPLE_PRIME_CURVE	\
- *		"the prime number p", "a", "b", "the compressed base point", "y-bit", "order", "cofacor"
+ *		"the prime number p", "a", "b", "the compressed base point", "y-bit", "order", "cofactor"
  */
 /* the nist prime curves */
 #define _EC_GROUP_NIST_PRIME_192	\
@@ -190,6 +190,25 @@
 		"7",\
 		"79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798",0,\
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",1
+/* some wap/wtls curves */
+#define _EC_GROUP_WTLS_6	\
+		"DB7C2ABF62E35E668076BEAD208B",\
+		"DB7C2ABF62E35E668076BEAD2088",\
+		"659EF8BA043916EEDE8911702B22",\
+		"09487239995A5EE76B55F9C2F098",0,\
+		"DB7C2ABF62E35E7628DFAC6561C5",1
+#define _EC_GROUP_WTLS_8	\
+		"FFFFFFFFFFFFFFFFFFFFFFFFFDE7",\
+		"0",\
+		"3",\
+		"1",0,\
+		"0100000000000001ECEA551AD837E9",1
+#define _EC_GROUP_WTLS_9	\
+		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC808F",\
+		"0",\
+		"3",\
+		"1",0,\
+		"0100000000000000000001CDC98AE0E2DE574ABF33",1
 
 static EC_GROUP *ec_group_new_GFp_from_hex(const char *prime_in,
 	    const char *a_in, const char *b_in,
@@ -316,6 +335,16 @@ EC_GROUP *EC_GROUP_new_by_name(int name)
 		break;
 	case EC_GROUP_SECG_PRIME_256K1:
 		ret = ec_group_new_GFp_from_hex(_EC_GROUP_SECG_PRIME_256K1);
+		break;
+	/* some wap/wtls curves */
+	case EC_GROUP_WTLS_6:
+		ret = ec_group_new_GFp_from_hex(_EC_GROUP_WTLS_6);
+		break;
+	case EC_GROUP_WTLS_8:
+		ret = ec_group_new_GFp_from_hex(_EC_GROUP_WTLS_8);
+		break;
+	case EC_GROUP_WTLS_9:
+		ret = ec_group_new_GFp_from_hex(_EC_GROUP_WTLS_9);
 		break;
 
 		}

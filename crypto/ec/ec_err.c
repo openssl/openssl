@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,6 +71,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_ENCODE,0),	"ec_GFp_mont_field_encode"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_MUL,0),	"ec_GFp_mont_field_mul"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_SQR,0),	"ec_GFp_mont_field_sqr"},
+{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_CHECK,0),	"ec_GFp_simple_group_check"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP,0),	"ec_GFp_simple_group_set_curve_GFp"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"ec_GFp_simple_group_set_generator"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_MAKE_AFFINE,0),	"ec_GFp_simple_make_affine"},
@@ -80,6 +81,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP,0),	"ec_GFp_simple_point_get_affine_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP,0),	"ec_GFp_simple_point_set_affine_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP,0),	"ec_GFp_simple_set_compressed_coordinates_GFp"},
+{ERR_PACK(0,EC_F_EC_GROUP_CHECK,0),	"EC_GROUP_check"},
 {ERR_PACK(0,EC_F_EC_GROUP_COPY,0),	"EC_GROUP_copy"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET0_GENERATOR,0),	"EC_GROUP_get0_generator"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_COFACTOR,0),	"EC_GROUP_get_cofactor"},
@@ -120,6 +122,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 static ERR_STRING_DATA EC_str_reasons[]=
 	{
 {EC_R_BUFFER_TOO_SMALL                   ,"buffer too small"},
+{EC_R_DISCRIMINANT_IS_ZERO               ,"discriminant is zero"},
 {EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
 {EC_R_INVALID_ARGUMENT                   ,"invalid argument"},
 {EC_R_INVALID_COMPRESSED_POINT           ,"invalid compressed point"},
@@ -127,13 +130,14 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_INVALID_ENCODING                   ,"invalid encoding"},
 {EC_R_INVALID_FIELD                      ,"invalid field"},
 {EC_R_INVALID_FORM                       ,"invalid form"},
-{EC_R_MISSING_PARAMETERS                 ,"missing parameters"},
+{EC_R_INVALID_GROUP_ORDER                ,"invalid group order"},
 {EC_R_NOT_INITIALIZED                    ,"not initialized"},
 {EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
 {EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
 {EC_R_SLOT_FULL                          ,"slot full"},
 {EC_R_UNDEFINED_GENERATOR                ,"undefined generator"},
+{EC_R_UNDEFINED_ORDER                    ,"undefined order"},
 {EC_R_UNKNOWN_GROUP                      ,"unknown group"},
 {EC_R_UNKNOWN_NID                        ,"unknown nid"},
 {EC_R_UNKNOWN_ORDER                      ,"unknown order"},
