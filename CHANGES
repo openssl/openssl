@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+   *) Replace rdtsc with _emit statements for VC++ version 5.
+      [Jeremy Cooper <jeremy@baymoo.org>]
+
   *) Hide BN_CTX structure details in bn_lcl.h instead of publishing them
      in <openssl/bn.h>.  Also further increase BN_CTX_NUM to 24.
      [Bodo Moeller]
