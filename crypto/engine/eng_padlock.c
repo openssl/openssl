@@ -118,9 +118,11 @@ void ENGINE_load_padlock (void)
 #ifdef COMPILE_HW_PADLOCK
 /* We do these includes here to avoid header problems on platforms that
    do not have the VIA padlock anyway... */
-#include <malloc.h>
 #ifdef _MSC_VER
+# include <malloc.h>
 # define alloca _alloca
+#else
+# include <stdlib.h>
 #endif
 
 /* Function for ENGINE detection and control */
@@ -357,7 +359,7 @@ static inline void
 padlock_bswapl(AES_KEY *ks)
 {
 	size_t i = sizeof(ks->rd_key)/sizeof(ks->rd_key[0]);
-	unsigned long *key = ks->rd_key;
+	unsigned int *key = ks->rd_key;
 
 	while (i--) {
 		asm volatile ("bswapl %0" : "+r"(*key));
