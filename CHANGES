@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Zero the premaster secret after deriving the master secret in
+     DH ciphersuites.
+     [Steve Henson]
+
   *) In PKCS7_set_type() initialise content_type in PKCS7_ENC_CONTENT
      to data. This was previously part of the PKCS7 ASN1 code. This
      was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
