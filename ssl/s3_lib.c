@@ -112,6 +112,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
+#include "kssl_lcl.h"
 
 const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 

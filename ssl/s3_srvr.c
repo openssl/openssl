@@ -70,7 +70,7 @@
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_KRB5
-#include "kssl.h"
+#include "kssl_lcl.h"
 #endif /* OPENSSL_NO_KRB5 */
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
