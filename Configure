@@ -199,9 +199,8 @@ my %table=(
 
 # Windows NT, Microsoft Visual C++ 4.0
 
-# hmm... bug in perl under NT, I need to concatinate :-(
-"VC-NT","cl:::BN_LLONG RC4_INDEX ".$x86_gcc_opts.":::",
-"VC-WIN32","cl:::BN_LLONG RC4_INDEX ".$x86_gcc_opts.":::",
+"VC-NT","cl:::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
+"VC-WIN32","cl:::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
 "VC-WIN16","cl:::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
 "VC-W31-16","cl:::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 "VC-W31-32","cl:::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
