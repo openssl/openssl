@@ -642,8 +642,7 @@ install: all install_docs
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
