@@ -91,7 +91,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	ENGINE *e = NULL;
+	ENGINE *eng = NULL;
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,badops=0, sgckey=0;
@@ -211,20 +211,20 @@ bad:
 
 	if (engine != NULL)
 		{
-		if((e = ENGINE_by_id(engine)) == NULL)
+		if((eng = ENGINE_by_id(engine)) == NULL)
 			{
 			BIO_printf(bio_err,"invalid engine \"%s\"\n",
 				engine);
 			goto end;
 			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+		if(!ENGINE_set_default(eng, ENGINE_METHOD_ALL))
 			{
 			BIO_printf(bio_err,"can't use that engine\n");
 			goto end;
 			}
 		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
 		/* Free our "structural" reference. */
-		ENGINE_free(e);
+		ENGINE_free(eng);
 		}
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
