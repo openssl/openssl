@@ -4,13 +4,18 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
 
-     OpenSSL 0.9.6a/0.9.6b (bugfix releases, 5 Apr 2001 and 9 July 2001)
-     and OpenSSL 0.9.7 were developed in parallel, based on OpenSSL 0.9.6.  
+     OpenSSL 0.9.6a/0.9.6b/0.9.6c (bugfix releases, 5 Apr 2001, 9 July 2001
+     and 21 Dec 2001) and OpenSSL 0.9.7 were developed in parallel, based
+     on OpenSSL 0.9.6.  
 
      Change log entries are tagged as follows:
          -) applies to 0.9.6a/0.9.6b/0.9.6c only
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
+
+  *) Have ASN1_BIT_STRING_set_bit() really clear a bit when the requested
+     value is 0.
+     [Richard Levitte]
 
   +) Have the CHIL engine fork-safe (as defined by nCipher) and actually
      make the newer ENGINE framework commands for the CHIL engine work.
