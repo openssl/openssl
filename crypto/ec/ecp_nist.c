@@ -128,12 +128,30 @@ void ec_GFp_nist_group_finish(EC_GROUP *group)
 	BN_free(&group->b);
 	}
 
-
 void ec_GFp_nist_group_clear_finish(EC_GROUP *group)
 	{
 	BN_clear_free(&group->field);
 	BN_clear_free(&group->a);
 	BN_clear_free(&group->b);
+	}
+
+int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+	{
+	if (dest == NULL || src == NULL)
+		return 0;
+
+	if (!BN_copy(&dest->field, &src->field))
+		return 0;
+	if (!BN_copy(&dest->a, &src->a))
+		return 0;
+	if (!BN_copy(&dest->b, &src->b))
+		return 0;
+
+	dest->curve_name  = src->curve_name;
+
+	dest->a_is_minus3 = src->a_is_minus3;
+
+	return 1;
 	}
 
 
@@ -209,25 +227,6 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
 	return ret;
-	}
-
-int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
-	{
-	if (dest == NULL || src == NULL)
-		return 0;
-
-	if (!BN_copy(&dest->field, &src->field))
-		return 0;
-	if (!BN_copy(&dest->a, &src->a))
-		return 0;
-	if (!BN_copy(&dest->b, &src->b))
-		return 0;
-
-	dest->curve_name  = src->curve_name;
-
-	dest->a_is_minus3 = src->a_is_minus3;
-
-	return 1;
 	}
 
 int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
