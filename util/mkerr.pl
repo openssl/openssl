@@ -128,7 +128,7 @@ while (($hdr, $lib) = each %libinc)
 	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
 	    next if(/typedef\W/);
-	    if (/\(\*(\w*)\([^\)]+\)(\s*__attribute__\(.*\)\s*)?$/) {
+	    if (/\(\*(\w*)\([^\)]+/) {
 		my $name = $1;
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;
