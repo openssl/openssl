@@ -2072,10 +2072,10 @@ $ranlib       =
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
-$thread_cflag = (unknown)
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG
-$bn_obj       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR
+$bn_obj       = asm/ia64.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -2084,10 +2084,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-m68k
@@ -2924,6 +2924,28 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 $shared_extension = 
+$ranlib       = 
+
+*** unixware-7-gcc
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= gnu-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** unixware-7-pentium
