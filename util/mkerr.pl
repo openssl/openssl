@@ -82,38 +82,40 @@ while (($hdr, $lib) = each %libinc)
 {
 	next if($hdr eq "NONE");
 	print STDERR "Scanning header file $hdr\n" if $debug; 
-	open(IN, "<$hdr") || die "Can't open Header file $hdr\n";
-	my $line = "", $def= "", $linenr = 0;
-	while(<IN>) {
-	    $linenr++;
-	    print STDERR "line: $linenr\r" if $debug;
+	my $line = "", $def= "", $linenr = 0, $gotfile = 0;
+	if (open(IN, "<$hdr")) {
+	    $gotfile = 1;
+	    while(<IN>) {
+		$linenr++;
+		print STDERR "line: $linenr\r" if $debug;
 
-	    last if(/BEGIN\s+ERROR\s+CODES/);
-	    if ($line ne '') {
-		$_ = $line . $_;
-		$line = '';
-	    }
+		last if(/BEGIN\s+ERROR\s+CODES/);
+		if ($line ne '') {
+		    $_ = $line . $_;
+		    $line = '';
+		}
 
-	    if (/\\$/) {
-		$line = $_;
-		next;
-	    }
+		if (/\\$/) {
+		    $line = $_;
+		    next;
+		}
 
-	    $cpp = 1 if /^#.*ifdef.*cplusplus/;  # skip "C" declaration
-	    if ($cpp) {
-		$cpp = 0 if /^#.*endif/;
-		next;
-	    }
+		$cpp = 1 if /^#.*ifdef.*cplusplus/;  # skip "C" declaration
+		if ($cpp) {
+		    $cpp = 0 if /^#.*endif/;
+		    next;
+		}
 
-	    next if (/^#/);                      # skip preprocessor directives
+		next if (/^\#/);                      # skip preprocessor directives
 
-	    s/\/\*.*?\*\///gs;                   # ignore comments
-	    s/{[^{}]*}//gs;                      # ignore {} blocks
+		s/\/\*.*?\*\///gs;                   # ignore comments
+		s/{[^{}]*}//gs;                      # ignore {} blocks
 
-	    if (/{|\/\*/) { # Add a } so editor works...
-		$line = $_;
-	    } else {
-		$def .= $_;
+		if (/\{|\/\*/) { # Add a } so editor works...
+		    $line = $_;
+		} else {
+		    $def .= $_;
+		}
 	    }
 	}
 
@@ -155,8 +157,9 @@ while (($hdr, $lib) = each %libinc)
 	# Scan function and reason codes and store them: keep a note of the
 	# maximum code used.
 
-	while(<IN>) {
-		if(/^#define\s+(\S+)\s+(\S+)/) {
+	if ($gotfile) {
+	    while(<IN>) {
+		if(/^\#define\s+(\S+)\s+(\S+)/) {
 			$name = $1;
 			$code = $2;
 			next if $name =~ /^${lib}err/;
@@ -177,6 +180,7 @@ while (($hdr, $lib) = each %libinc)
 				$fcodes{$name} = $code;
 			}
 		}
+	    }
 	}
 	close IN;
 }
@@ -248,15 +252,74 @@ foreach $lib (keys %csrc)
 
 	# Rewrite the header file
 
-	open(IN, "<$hfile") || die "Can't Open Header File $hfile\n";
-
-	# Copy across the old file
-	while(<IN>) {
+	if (open(IN, "<$hfile")) {
+	    # Copy across the old file
+	    while(<IN>) {
 		push @out, $_;
 		last if (/BEGIN ERROR CODES/);
+	    }
+	    close IN;
+	} else {
+	    push @out,
+"/* ====================================================================\n",
+" * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.\n",
+" *\n",
+" * Redistribution and use in source and binary forms, with or without\n",
+" * modification, are permitted provided that the following conditions\n",
+" * are met:\n",
+" *\n",
+" * 1. Redistributions of source code must retain the above copyright\n",
+" *    notice, this list of conditions and the following disclaimer. \n",
+" *\n",
+" * 2. Redistributions in binary form must reproduce the above copyright\n",
+" *    notice, this list of conditions and the following disclaimer in\n",
+" *    the documentation and/or other materials provided with the\n",
+" *    distribution.\n",
+" *\n",
+" * 3. All advertising materials mentioning features or use of this\n",
+" *    software must display the following acknowledgment:\n",
+" *    \"This product includes software developed by the OpenSSL Project\n",
+" *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)\"\n",
+" *\n",
+" * 4. The names \"OpenSSL Toolkit\" and \"OpenSSL Project\" must not be used to\n",
+" *    endorse or promote products derived from this software without\n",
+" *    prior written permission. For written permission, please contact\n",
+" *    openssl-core\@openssl.org.\n",
+" *\n",
+" * 5. Products derived from this software may not be called \"OpenSSL\"\n",
+" *    nor may \"OpenSSL\" appear in their names without prior written\n",
+" *    permission of the OpenSSL Project.\n",
+" *\n",
+" * 6. Redistributions of any form whatsoever must retain the following\n",
+" *    acknowledgment:\n",
+" *    \"This product includes software developed by the OpenSSL Project\n",
+" *    for use in the OpenSSL Toolkit (http://www.openssl.org/)\"\n",
+" *\n",
+" * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY\n",
+" * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n",
+" * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n",
+" * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR\n",
+" * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n",
+" * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT\n",
+" * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n",
+" * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n",
+" * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,\n",
+" * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\n",
+" * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED\n",
+" * OF THE POSSIBILITY OF SUCH DAMAGE.\n",
+" * ====================================================================\n",
+" *\n",
+" * This product includes cryptographic software written by Eric Young\n",
+" * (eay\@cryptsoft.com).  This product includes software written by Tim\n",
+" * Hudson (tjh\@cryptsoft.com).\n",
+" *\n",
+" */\n",
+"\n",
+"#ifndef HEADER_${lib}_ERR_H\n",
+"#define HEADER_${lib}_ERR_H\n",
+"\n",
+"/* BEGIN ERROR CODES */\n";
 	}
-	close IN;
-
 	open (OUT, ">$hfile") || die "Can't Open File $hfile for writing\n";
 
 	print OUT @out;
