@@ -53,6 +53,7 @@ while(<IN>)
 {
 	if(/^L\s+(\S+)\s+(\S+)\s+(\S+)/) {
 		$hinc{$1} = $2;
+		$libinc{$2} = $1;
 		$cskip{$3} = $1;
 		if($3 ne "NONE") {
 			$csrc{$1} = $3;
@@ -74,7 +75,7 @@ close IN;
 # Scan each header file in turn and make a list of error codes
 # and function names
 
-while (($lib, $hdr) = each %hinc)
+while (($hdr, $lib) = each %libinc)
 {
 	next if($hdr eq "NONE");
 	print STDERR "Scanning header file $hdr\n" if $debug; 
