@@ -147,8 +147,8 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
-		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
-		export LD_LIBRARY_PATH SHLIB_PATH LIBPATH; \
+		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
+		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH; \
 		$(PERL) tools/c_rehash certs)
 
 progs.h: progs.pl
