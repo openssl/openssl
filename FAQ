@@ -124,7 +124,7 @@ option "no-asm", as described in INSTALL:
  des_ede3_cbc_encrypt, des_encrypt, des_encrypt2, des_encrypt3,
  des_ncbc_encrypt, md5_block_asm_host_order, sha1_block_asm_data_order
 
-If that doesn't help, you may want to try using the current snapshot.
+If none of these helps, you may want to try using the current snapshot.
 If the problem persists, please submit a bug report.
 
 
