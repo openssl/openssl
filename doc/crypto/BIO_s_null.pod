@@ -13,7 +13,7 @@
 =head1 DESCRIPTION
 
 BIO_s_null() returns the null sink BIO method. Data written to
-the null sink is discraded, reads return EOF.
+the null sink is discarded, reads return EOF.
 
 =head1 NOTES
 
@@ -24,9 +24,9 @@ A null bio can be placed on the end of a chain to discard any data
 passed through it.
 
 A null sink is useful if, for example, an application wishes to digest some
-data but not write the result anywhere. Since a BIO chain must normally
-include a source/sink BIO this can be achieved by adding a null sink BIO
-to the end of the chain
+data by writing through a digest bio but not send the digested data anywhere.
+Since a BIO chain must normally include a source/sink BIO this can be achieved
+by adding a null sink BIO to the end of the chain
 
 =head1 RETURN VALUES
 

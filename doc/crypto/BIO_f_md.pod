@@ -39,8 +39,6 @@ in B<mdp>, it is a BIO_ctrl() macro.
 
 BIO_get_md_ctx() returns the digest BIOs context into B<mdcp>.
 
-
-
 =head1 NOTES
 
 The context returned by BIO_get_md_ctx() can be used in calls
