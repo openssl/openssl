@@ -167,6 +167,8 @@ int RAND_write_file(const char *file)
 		ret+=i;
 		if (n <= 0) break;
 		}
+	if (ret > 0)
+		ftruncate(fileno(out), ret);
 	fclose(out);
 	memset(buf,0,BUFSIZE);
 err:
