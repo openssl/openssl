@@ -4,6 +4,18 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Hack to fix PKCS#7 decryption when used with some unorthodox RC2 
+     handling. Most clients have the effective key size in bits equal to
+     the key length in bits: so a 40 bit RC2 key uses a 40 bit (5 byte) key.
+     A few however don't do this and instead use the size of the decrypted key
+     to determine the RC2 key length and the AlgorithmIdentifier to determine
+     the effective key length. In this case the effective key lenth can still
+     be 40 bits but the key length can be 168 bits for example. This is fixed
+     by manually forcing an RC2 key into the EVP_PKEY structure because the
+     EVP code can't currently handle unusual RC2 key sizes: it always assumes
+     the key length and effective key length are equal.
+     [Steve Henson]
+
   *) Add a bunch of functions that should simplify the creation of 
      X509_NAME structures. Now you should be able to do:
      X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC, "Steve", -1, -1, 0);

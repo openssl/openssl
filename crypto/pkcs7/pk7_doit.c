@@ -251,7 +251,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	{
 	int i,j;
 	BIO *out=NULL,*btmp=NULL,*etmp=NULL,*bio=NULL;
-	char *tmp=NULL;
+	unsigned char *tmp=NULL;
 	X509_ALGOR *xa;
 	ASN1_OCTET_STRING *data_body=NULL;
 	const EVP_MD *evp_md;
@@ -262,6 +262,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
+	char is_rc2 = 0;
 /*	EVP_PKEY *pkey; */
 #if 0
 	X509_STORE_CTX s_ctx;
@@ -305,6 +306,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
 		}
+
+	if(EVP_CIPHER_nid(evp_cipher) == NID_rc2_cbc) is_rc2 = 1; 
 
 	/* We will be checking the signature */
 	if (md_sk != NULL)
@@ -375,17 +378,15 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 
 		jj=EVP_PKEY_size(pkey);
-		tmp=Malloc(jj+10);
+		tmp=(unsigned char *)Malloc(jj+10);
 		if (tmp == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 
-		jj=EVP_PKEY_decrypt((unsigned char *)tmp,
-			M_ASN1_STRING_data(ri->enc_key),
-			M_ASN1_STRING_length(ri->enc_key),
-			pkey);
+		jj=EVP_PKEY_decrypt(tmp, M_ASN1_STRING_data(ri->enc_key),
+			M_ASN1_STRING_length(ri->enc_key), pkey);
 		if (jj <= 0)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_EVP_LIB);
@@ -398,13 +399,23 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
 			return(NULL);
 
-		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx))
-			{
-			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
+			/* HACK: some S/MIME clients don't use the same key
+			 * and effective key length. The key length is
+			 * determined by the size of the decrypted RSA key.
+			 * So we hack things to manually set the RC2 key
+			 * because we currently can't do this with the EVP
+			 * interface.
+			 */
+			if(is_rc2) RC2_set_key(&(evp_ctx->c.rc2_ks),jj, tmp,
+					EVP_CIPHER_CTX_key_length(evp_ctx)*8);
+			else {
+
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
-			goto err;
+				goto err;
 			}
-		EVP_CipherInit(evp_ctx,NULL,(unsigned char *)tmp,NULL,0);
+		} else EVP_CipherInit(evp_ctx,NULL,tmp,NULL,0);
 
 		memset(tmp,0,jj);
 
