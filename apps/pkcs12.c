@@ -66,7 +66,6 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include <openssl/engine.h>
 
 #define PROG pkcs12_main
 

@@ -62,7 +62,6 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #define RSA_SIGN 	1
 #define RSA_VERIFY 	2

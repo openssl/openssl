@@ -81,7 +81,6 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 

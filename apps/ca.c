@@ -76,7 +76,6 @@
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp

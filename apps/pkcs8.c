@@ -62,7 +62,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
-#include <openssl/engine.h>
 
 #include "apps.h"
 #define PROG pkcs8_main

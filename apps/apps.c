@@ -71,6 +71,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/ui.h>
 #include <openssl/safestack.h>
+#include <openssl/engine.h>
 
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp

@@ -67,7 +67,6 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	pkcs7_main

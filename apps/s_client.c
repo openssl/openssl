@@ -80,7 +80,7 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
+#include <openssl/rand.h>
 #include "s_apps.h"
 
 #ifdef OPENSSL_SYS_WINDOWS

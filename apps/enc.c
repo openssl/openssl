@@ -67,7 +67,6 @@
 #include <openssl/x509.h>
 #include <openssl/rand.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 #include <ctype.h>
 
 int set_hex(char *in,unsigned char *out,int size);

@@ -64,7 +64,6 @@
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG smime_main

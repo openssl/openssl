@@ -68,7 +68,6 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #define DEFBITS	512
 #undef PROG

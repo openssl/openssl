@@ -69,7 +69,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
+#include <openssl/rand.h>
 
 #define DEFBITS	512
 #undef PROG

@@ -69,7 +69,6 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	spkac_main

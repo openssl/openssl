@@ -9,7 +9,6 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG rand_main

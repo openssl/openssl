@@ -121,7 +121,6 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>

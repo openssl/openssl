@@ -66,7 +66,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8
