@@ -391,8 +391,12 @@ int ssl2_write(SSL *s, const void *_buf, int len)
 			s->s2->wnum=tot;
 			return(i);
 			}
-		if (i == (int)n) return(tot+i);
-
+		if ((i == (int)n) ||
+			(s->mode | SSL_MODE_ENABLE_PARTIAL_WRITE))
+			{
+			return(tot+i);
+			}
+		
 		n-=i;
 		tot+=i;
 		}
@@ -406,7 +410,9 @@ static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 
 	/* check that they have given us the same buffer to
 	 * write */
-	if ((s->s2->wpend_tot > (int)len) || (s->s2->wpend_buf != buf))
+	if ((s->s2->wpend_tot > (int)len) ||
+		((s->s2->wpend_buf != buf) &&
+		 (!s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)))
 		{
 		SSLerr(SSL_F_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);
 		return(-1);

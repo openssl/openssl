@@ -4,6 +4,22 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Introduce "mode" for SSL structures (with defaults in SSL_CTX),
+     which largely parallels "options", but is for changing API behaviour,
+     whereas "options" are about protocol behaviour.
+     Initial "mode" flags (still experimental) are:
+
+     SSL_MODE_ENABLE_PARTIAL_WRITE   Allow SSL_write to report success when
+                                     a single record has been written.
+     SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER  Don't insist that SSL_write
+                                     retries use the same buffer location.
+                                     (But all of the contents must be
+                                     copied!)
+     [Bodo Moeller]
+
+  *) Bugfix: SSL_set_mode ignored its parameter, only SSL_CTX_set_mode
+     worked.
+
   *) Fix problems with no-hmac etc.
      [Ulf Möller, pointed out by Brian Wellington <bwelling@tislabs.com>]
 

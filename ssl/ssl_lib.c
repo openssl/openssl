@@ -215,6 +215,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->references=1;
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
+	s->mode=ctx->mode;
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(ssl_meth,(char *)s,&s->ex_data);
@@ -695,6 +696,8 @@ long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 		return(l);
 	case SSL_CTRL_OPTIONS:
 		return(s->options|=larg);
+	case SSL_CTRL_MODE:
+		return(s->mode|=larg);
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
@@ -752,6 +755,8 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 		return(ctx->stats.sess_cache_full);
 	case SSL_CTRL_OPTIONS:
 		return(ctx->options|=larg);
+	case SSL_CTRL_MODE:
+		return(ctx->mode|=larg);
 	default:
 		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
 		}

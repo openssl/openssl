@@ -295,18 +295,39 @@ typedef struct ssl_session_st
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x80000000L
 #define SSL_OP_ALL					0x000FFFFFL
 
+#define SSL_OP_NO_SSLv2					0x01000000L
+#define SSL_OP_NO_SSLv3					0x02000000L
+#define SSL_OP_NO_TLSv1					0x04000000L
+
+/* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
+ * when just a single record has been written): */
+#define SSL_MODE_ENABLE_PARTIAL_WRITE       0x00000001L
+/* Make it possible to retry SSL_write() with changed buffer location
+ * (buffer contents must stay the same!); this is not the default to avoid
+ * the misconception that non-blocking SSL_write() behaves like
+ * non-blocking write(): */
+#define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002L
+
+/* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
+ * they cannot be used to clear bits. */
+
 #define SSL_CTX_set_options(ctx,op) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,op,NULL)
 #define SSL_CTX_get_options(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_set_options(ssl,op) \
-	SSL_ctrl(ssl,SSL_CTRL_OPTIONS,0,NULL)
+	SSL_ctrl(ssl,SSL_CTRL_OPTIONS,op,NULL)
 #define SSL_get_options(ssl) \
         SSL_ctrl(ssl,SSL_CTRL_OPTIONS,0,NULL)
 
-#define SSL_OP_NO_SSLv2					0x01000000L
-#define SSL_OP_NO_SSLv3					0x02000000L
-#define SSL_OP_NO_TLSv1					0x04000000L
+#define SSL_CTX_set_mode(ctx,op) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_MODE,op,NULL)
+#define SSL_CTX_get_mode(ctx) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_MODE,0,NULL)
+#define SSL_set_mode(ssl,op) \
+	SSL_ctrl(ssl,SSL_CTRL_MODE,op,NULL)
+#define SSL_get_mode(ssl) \
+        SSL_ctrl(ssl,SSL_CTRL_MODE,0,NULL)
 
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
@@ -327,6 +348,7 @@ struct ssl_ctx_st
 	{
 	SSL_METHOD *method;
 	unsigned long options;
+	unsigned long mode;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
@@ -605,7 +627,8 @@ struct ssl_st
 	STACK_OF(X509_NAME) *client_CA;
 
 	int references;
-	unsigned long options;
+	unsigned long options; /* protocol behaviour */
+	unsigned long mode; /* API behaviour */
 	int first_packet;
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rolback check */
@@ -780,6 +803,7 @@ struct ssl_st
 #define SSL_CTRL_SESS_TIMEOUTS			30
 #define SSL_CTRL_SESS_CACHE_FULL		31
 #define SSL_CTRL_OPTIONS			32
+#define SSL_CTRL_MODE			33
 
 #define SSL_CTRL_GET_READ_AHEAD			40
 #define SSL_CTRL_SET_READ_AHEAD			41
