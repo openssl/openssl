@@ -103,12 +103,12 @@ int DESTest(EVP_CIPHER_CTX *ctx,
     else
 	{
 	printf("Unknown mode: %s\n", amode);
-	exit(1);
+	EXIT(1);
 	}
     if (akeysz != 64 && akeysz != 192)
 	{
 	printf("Invalid key size: %d\n", akeysz);
-	exit(1);
+	EXIT(1);
 	}
     else
 	{
@@ -153,12 +153,12 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	    break;
 	default:
 	    printf("Didn't handle mode %d\n",kt);
-	    exit(1);
+	    EXIT(1);
 	    }
 	if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
 	    {
 	    ERR_print_errors_fp(stderr);
-	    exit(1);
+	    EXIT(1);
 	    }
 	EVP_Cipher(ctx, out, in, len);
 	}
@@ -319,7 +319,7 @@ void do_mct(char *amode,
     if (imode == 6)
 	{ 
 	printf("Unrecognized mode: %s\n", amode);
-	exit(1);
+	EXIT(1);
 	}
 
     for(i=0 ; i < 400 ; ++i)
@@ -770,7 +770,7 @@ int main(int argc, char **argv)
 	{
 	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-	exit(1);
+	EXIT(1);
 	}
 #endif
     ERR_load_crypto_strings();
@@ -815,7 +815,7 @@ int main(int argc, char **argv)
 	    if (proc_file(rfn))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
-		exit(1);
+		EXIT(1);
 		}
 	    }
 	fclose(fp);
@@ -828,5 +828,6 @@ int main(int argc, char **argv)
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
 	}
+    EXIT(0);
     return 0;
     }

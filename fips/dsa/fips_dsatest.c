@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 	if(!FIPS_mode_set(1,argv[0]))
 	    {
 	    ERR_print_errors(bio_err);
-	    exit(1);
+	    EXIT(1);
 	    }
 #endif
 	CRYPTO_malloc_debug_init();
@@ -227,7 +227,7 @@ end:
 		bio_err = NULL;
 		}
 	EXIT(!ret);
-	return(0);
+	return(!ret);
 	}
 
 static int cb_exit(int ec)

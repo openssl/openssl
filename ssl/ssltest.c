@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
 			fips_mode=1;
 #else
 			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
-			exit(0);
+			EXIT(0);
 #endif
 			}
 		else if	(strcmp(*argv,"-server_auth") == 0)
@@ -568,7 +568,7 @@ bad:
 			{
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-			exit(1);
+			EXIT(1);
 			}
 		else
 			fprintf(stderr,"*** IN FIPS MODE ***\n");

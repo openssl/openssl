@@ -6,6 +6,11 @@
 #include <openssl/sha.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
+#ifdef FLAT_INC
+#include "e_os.h"
+#else
+#include "../e_os.h"
+#endif
 
 #ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
@@ -67,20 +72,20 @@ int main(int argc,char **argv)
     if(argc != 2)
 	{
 	fprintf(stderr,"%s <test vector file>\n",argv[0]);
-	exit(1);
+	EXIT(1);
 	}
 
     if(!FIPS_mode_set(1,argv[0]))
 	{
 	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-	exit(1);
+	EXIT(1);
 	}
     fp=fopen(argv[1],"r");
     if(!fp)
 	{
 	perror(argv[1]);
-	exit(2);
+	EXIT(2);
 	}
 
     for(phase=0 ; ; )
@@ -140,6 +145,7 @@ int main(int argc,char **argv)
 	else
 	    montecarlo(buf,bit/8);
 	}
-    return 0;
+    EXIT(0);
+    return(0);
     }
 #endif

@@ -103,7 +103,7 @@ int AESTest(EVP_CIPHER_CTX *ctx,
     else
 	{
 	printf("Unknown mode: %s\n", amode);
-	exit(1);
+	EXIT(1);
 	}
     if (ret)
 	{
@@ -173,14 +173,14 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 		break;
 	    default:
 		printf("Didn't handle mode %d\n",kt);
-		exit(1);
+		EXIT(1);
 		}
 	    if (dir)
 		{ /* encrypt */
 		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_ENCRYPT))
 		    {
 		    ERR_print_errors_fp(stderr);
-		    exit(1);
+		    EXIT(1);
 		    }
 		  
 		EVP_Cipher(ctx, ciphertext, (unsigned char*)plaintext, len);
@@ -190,7 +190,7 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_DECRYPT))
 		    {
 		    ERR_print_errors_fp(stderr);
-		    exit(1);
+		    EXIT(1);
 		    }
 		EVP_Cipher(ctx, (unsigned char*)plaintext, ciphertext, len);
 		}
@@ -849,7 +849,7 @@ int proc_file(char *rqfile)
 		    if(do_mct(amode, akeysz, aKey, iVec, 
 			      dir, (unsigned char*)plaintext, len, 
 			      rfp) < 0)
-			exit(1);
+			EXIT(1);
 		    }
 		else
 		    {
@@ -942,7 +942,7 @@ int main(int argc, char **argv)
     if(!FIPS_mode_set(1,argv[0]))
 	{
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-	exit(1);
+	EXIT(1);
 	}
 #endif
     ERR_load_crypto_strings();
@@ -987,7 +987,7 @@ int main(int argc, char **argv)
 	    if (proc_file(rfn))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
-		exit(1);
+		EXIT(1);
 		}
 	    }
 	fclose(fp);
@@ -1000,5 +1000,6 @@ int main(int argc, char **argv)
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
 	}
+    EXIT(0);
     return 0;
     }

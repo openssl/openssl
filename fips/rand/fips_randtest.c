@@ -178,7 +178,7 @@ static void compare(const unsigned char *result,const unsigned char *expected,
 	    puts("\n               expected:");
 	    dump(expected,8);
 	    putchar('\n');
-	    exit(1);
+	    EXIT(1);
 	    }
     }
 
@@ -194,14 +194,14 @@ static void run_test(const PRNGtest *t)
     if(RAND_bytes(buf,8) <= 0)
 	{
 	ERR_print_errors_fp(stderr);
-	exit(2);
+	EXIT(2);
 	}
     compare(buf,t->block1,8);
     for(n=0 ; n < 99 ; ++n)
 	if(RAND_bytes(buf,8) <= 0)
 	    {
 	    ERR_print_errors_fp(stderr);
-	    exit(2);
+	    EXIT(2);
 	    }
     compare(buf,t->block100,8);
     FIPS_test_mode(0,NULL);
