@@ -382,6 +382,8 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 				int purpose, int trust);
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t);
+void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *));
 
 #ifdef  __cplusplus
 }

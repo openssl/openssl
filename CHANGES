@@ -4,6 +4,14 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Modified SSL library such that the verify_callback that has been set
+     specificly for an SSL object with SSL_set_verify() is actually being
+     used. Before the change, a verify_callback set with this function was
+     ignored and the verify_callback() set in the SSL_CTX at the time of
+     the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
+     to allow the necessary settings.
+     [Lutz Jaenicke]
+
   *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
      explicitely to NULL, as at least on Solaris 8 this seems not always to be
      done automatically (in contradiction to the requirements of the C
