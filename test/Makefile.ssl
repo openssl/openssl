@@ -684,7 +684,7 @@ exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 exptest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 exptest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/symhacks.h exptest.c
-fips_aesavs.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_aesavs.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 fips_aesavs.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 fips_aesavs.o: ../include/openssl/bn.h ../include/openssl/cast.h
 fips_aesavs.o: ../include/openssl/crypto.h ../include/openssl/des.h
@@ -703,7 +703,7 @@ fips_aesavs.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips_aesavs.o: ../include/openssl/sha.h ../include/openssl/stack.h
 fips_aesavs.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_aesavs.o: ../include/openssl/ui_compat.h fips_aesavs.c
-fips_desmovs.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_desmovs.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 fips_desmovs.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 fips_desmovs.o: ../include/openssl/bn.h ../include/openssl/cast.h
 fips_desmovs.o: ../include/openssl/crypto.h ../include/openssl/des.h
