@@ -231,9 +231,10 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
-	int start=1,ts=0;
+	int start=1;
 	BIGNUM *aa;
-	BIGNUM val[TABLE_SIZE];
+	/* Table of variables obtained from 'ctx' */
+	BIGNUM *val[TABLE_SIZE];
 	BN_RECP_CTX recp;
 
 	bits=BN_num_bits(p);
@@ -245,7 +246,9 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		}
 
 	BN_CTX_start(ctx);
-	if ((aa = BN_CTX_get(ctx)) == NULL) goto err;
+	aa = BN_CTX_get(ctx);
+	val[0] = BN_CTX_get(ctx);
+	if(!aa || !val[0]) goto err;
 
 	BN_RECP_CTX_init(&recp);
 	if (m->neg)
@@ -260,11 +263,8 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
 		}
 
-	BN_init(&(val[0]));
-	ts=1;
-
-	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (BN_is_zero(&(val[0])))
+	if (!BN_nnmod(val[0],a,m,ctx)) goto err;		/* 1 */
+	if (BN_is_zero(val[0]))
 		{
 		BN_zero(r);
 		ret = 1;
@@ -274,16 +274,16 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)
 		{
-		if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
+		if (!BN_mod_mul_reciprocal(aa,val[0],val[0],&recp,ctx))
 			goto err;				/* 2 */
 		j=1<<(window-1);
 		for (i=1; i<j; i++)
 			{
-			BN_init(&val[i]);
-			if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
+			if(((val[i] = BN_CTX_get(ctx)) == NULL) ||
+					!BN_mod_mul_reciprocal(val[i],val[i-1],
+						aa,&recp,ctx))
 				goto err;
 			}
-		ts=i;
 		}
 		
 	start=1;	/* This is used to avoid multiplication etc
@@ -335,7 +335,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul_reciprocal(r,r,&(val[wvalue>>1]),&recp,ctx))
+		if (!BN_mod_mul_reciprocal(r,r,val[wvalue>>1],&recp,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -347,8 +347,6 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	ret=1;
 err:
 	BN_CTX_end(ctx);
-	for (i=0; i<ts; i++)
-		BN_clear_free(&(val[i]));
 	BN_RECP_CTX_free(&recp);
 	bn_check_top(r);
 	return(ret);
@@ -359,11 +357,11 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
-	int start=1,ts=0;
+	int start=1;
 	BIGNUM *d,*r;
 	const BIGNUM *aa;
-	/* TODO: BN_CTX??? */
-	BIGNUM val[TABLE_SIZE];
+	/* Table of variables obtained from 'ctx' */
+	BIGNUM *val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
 	bn_check_top(a);
@@ -385,7 +383,8 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	BN_CTX_start(ctx);
 	d = BN_CTX_get(ctx);
 	r = BN_CTX_get(ctx);
-	if (d == NULL || r == NULL) goto err;
+	val[0] = BN_CTX_get(ctx);
+	if (!d || !r || !val[0]) goto err;
 
 	/* If this is not done, things will break in the montgomery
 	 * part */
@@ -398,13 +397,11 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
 		}
 
-	BN_init(&val[0]);
-	ts=1;
 	if (a->neg || BN_ucmp(a,m) >= 0)
 		{
-		if (!BN_nnmod(&(val[0]),a,m,ctx))
+		if (!BN_nnmod(val[0],a,m,ctx))
 			goto err;
-		aa= &(val[0]);
+		aa= val[0];
 		}
 	else
 		aa=a;
@@ -414,20 +411,20 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		ret = 1;
 		goto err;
 		}
-	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
+	if (!BN_to_montgomery(val[0],aa,mont,ctx)) goto err; /* 1 */
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)
 		{
-		if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
+		if (!BN_mod_mul_montgomery(d,val[0],val[0],mont,ctx)) goto err; /* 2 */
 		j=1<<(window-1);
 		for (i=1; i<j; i++)
 			{
-			BN_init(&(val[i]));
-			if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
+			if(((val[i] = BN_CTX_get(ctx)) == NULL) ||
+					!BN_mod_mul_montgomery(val[i],val[i-1],
+						d,mont,ctx))
 				goto err;
 			}
-		ts=i;
 		}
 
 	start=1;	/* This is used to avoid multiplication etc
@@ -480,7 +477,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul_montgomery(r,r,&(val[wvalue>>1]),mont,ctx))
+		if (!BN_mod_mul_montgomery(r,r,val[wvalue>>1],mont,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -494,8 +491,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	for (i=0; i<ts; i++)
-		BN_clear_free(&(val[i]));
 	bn_check_top(rr);
 	return(ret);
 	}
@@ -647,11 +642,11 @@ err:
 int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx)
 	{
-	int i,j,bits,ret=0,wstart,wend,window,wvalue,ts=0;
+	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1;
 	BIGNUM *d;
-	/* TODO: BN_CTX?? */
-	BIGNUM val[TABLE_SIZE];
+	/* Table of variables obtained from 'ctx' */
+	BIGNUM *val[TABLE_SIZE];
 
 	bits=BN_num_bits(p);
 
@@ -662,12 +657,12 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		}
 
 	BN_CTX_start(ctx);
-	if ((d = BN_CTX_get(ctx)) == NULL) goto err;
+	d = BN_CTX_get(ctx);
+	val[0] = BN_CTX_get(ctx);
+	if(!d || !val[0]) goto err;
 
-	BN_init(&(val[0]));
-	ts=1;
-	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (BN_is_zero(&(val[0])))
+	if (!BN_nnmod(val[0],a,m,ctx)) goto err;		/* 1 */
+	if (BN_is_zero(val[0]))
 		{
 		BN_zero(r);
 		ret = 1;
@@ -677,16 +672,15 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)
 		{
-		if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
+		if (!BN_mod_mul(d,val[0],val[0],m,ctx))
 			goto err;				/* 2 */
 		j=1<<(window-1);
 		for (i=1; i<j; i++)
 			{
-			BN_init(&(val[i]));
-			if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
+			if(((val[i] = BN_CTX_get(ctx)) == NULL) ||
+					!BN_mod_mul(val[i],val[i-1],d,m,ctx))
 				goto err;
 			}
-		ts=i;
 		}
 
 	start=1;	/* This is used to avoid multiplication etc
@@ -738,7 +732,7 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul(r,r,&(val[wvalue>>1]),m,ctx))
+		if (!BN_mod_mul(r,r,val[wvalue>>1],m,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -750,8 +744,6 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	ret=1;
 err:
 	BN_CTX_end(ctx);
-	for (i=0; i<ts; i++)
-		BN_clear_free(&(val[i]));
 	bn_check_top(r);
 	return(ret);
 	}

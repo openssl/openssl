@@ -217,17 +217,18 @@ err:
 int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	{
 	int ret= -1;
-	BIGNUM t;
+	BIGNUM *t;
 
-	BN_init(&t);
+	BN_CTX_start(ctx);
+	if((t = BN_CTX_get(ctx)) == NULL) goto err;
 
-	if (!BN_set_bit(&t,len)) goto err;
+	if (!BN_set_bit(t,len)) goto err;
 
-	if (!BN_div(r,NULL,&t,m,ctx)) goto err;
+	if (!BN_div(r,NULL,t,m,ctx)) goto err;
 
 	ret=len;
 err:
-	BN_free(&t);
 	bn_check_top(r);
+	BN_CTX_end(ctx);
 	return(ret);
 	}

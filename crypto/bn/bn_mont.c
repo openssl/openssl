@@ -271,9 +271,11 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	{
-	BIGNUM Ri,*R;
+	int ret = 0;
+	BIGNUM *Ri,*R;
 
-	BN_init(&Ri);
+	BN_CTX_start(ctx);
+	if((Ri = BN_CTX_get(ctx)) == NULL) goto err;
 	R= &(mont->RR);					/* grab RR as a temp */
 	BN_copy(&(mont->N),mod);			/* Set N */
 	mont->N.neg = 0;
@@ -294,22 +296,21 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		tmod.dmax=2;
 		tmod.neg=0;
 							/* Ri = R^-1 mod N*/
-		if ((BN_mod_inverse(&Ri,R,&tmod,ctx)) == NULL)
+		if ((BN_mod_inverse(Ri,R,&tmod,ctx)) == NULL)
 			goto err;
-		if (!BN_lshift(&Ri,&Ri,BN_BITS2)) goto err; /* R*Ri */
-		if (!BN_is_zero(&Ri))
+		if (!BN_lshift(Ri,Ri,BN_BITS2)) goto err; /* R*Ri */
+		if (!BN_is_zero(Ri))
 			{
-			if (!BN_sub_word(&Ri,1)) goto err;
+			if (!BN_sub_word(Ri,1)) goto err;
 			}
 		else /* if N mod word size == 1 */
 			{
-			if (!BN_set_word(&Ri,BN_MASK2)) goto err;  /* Ri-- (mod word size) */
+			if (!BN_set_word(Ri,BN_MASK2)) goto err;  /* Ri-- (mod word size) */
 			}
-		if (!BN_div(&Ri,NULL,&Ri,&tmod,ctx)) goto err;
+		if (!BN_div(Ri,NULL,Ri,&tmod,ctx)) goto err;
 		/* Ni = (R*Ri-1)/N,
 		 * keep only least significant word: */
-		mont->n0 = (Ri.top > 0) ? Ri.d[0] : 0;
-		BN_free(&Ri);
+		mont->n0 = (Ri->top > 0) ? Ri->d[0] : 0;
 		}
 #else /* !MONT_WORD */
 		{ /* bignum version */
@@ -317,13 +318,12 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		BN_zero(R);
 		if (!BN_set_bit(R,mont->ri)) goto err;  /* R = 2^ri */
 		                                        /* Ri = R^-1 mod N*/
-		if ((BN_mod_inverse(&Ri,R,&mont->N,ctx)) == NULL)
+		if ((BN_mod_inverse(Ri,R,&mont->N,ctx)) == NULL)
 			goto err;
-		if (!BN_lshift(&Ri,&Ri,mont->ri)) goto err; /* R*Ri */
-		if (!BN_sub_word(&Ri,1)) goto err;
+		if (!BN_lshift(Ri,Ri,mont->ri)) goto err; /* R*Ri */
+		if (!BN_sub_word(Ri,1)) goto err;
 							/* Ni = (R*Ri-1) / N */
-		if (!BN_div(&(mont->Ni),NULL,&Ri,&mont->N,ctx)) goto err;
-		BN_free(&Ri);
+		if (!BN_div(&(mont->Ni),NULL,Ri,&mont->N,ctx)) goto err;
 		}
 #endif
 
@@ -332,9 +332,10 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	if (!BN_set_bit(&(mont->RR),mont->ri*2)) goto err;
 	if (!BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx)) goto err;
 
-	return(1);
+	ret = 1;
 err:
-	return(0);
+	BN_CTX_end(ctx);
+	return ret;
 	}
 
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)

@@ -159,15 +159,17 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 	const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb)
 	{
-	BIGNUM t;
+	BIGNUM *t;
 	int found=0;
 	int i,j,c1=0;
 	BN_CTX *ctx;
 	int checks = BN_prime_checks_for_size(bits);
 
-	BN_init(&t);
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
+	BN_CTX_start(ctx);
+	t = BN_CTX_get(ctx);
+	if(!t) goto err;
 loop: 
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
@@ -204,7 +206,7 @@ loop:
 		 * check that (p-1)/2 is prime.
 		 * Since a prime is odd, We just
 		 * need to divide by 2 */
-		if (!BN_rshift1(&t,ret)) goto err;
+		if (!BN_rshift1(t,ret)) goto err;
 
 		for (i=0; i<checks; i++)
 			{
@@ -212,7 +214,7 @@ loop:
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
-			j=BN_is_prime_fasttest_ex(&t,1,ctx,0,cb);
+			j=BN_is_prime_fasttest_ex(t,1,ctx,0,cb);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
@@ -224,8 +226,11 @@ loop:
 	/* we have a prime :-) */
 	found = 1;
 err:
-	BN_free(&t);
-	if (ctx != NULL) BN_CTX_free(ctx);
+	if (ctx != NULL)
+		{
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+		}
 	bn_check_top(ret);
 	return found;
 	}
