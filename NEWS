@@ -5,12 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 0.9.6 and OpenSSL x.x.x:
+  Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.7:
 
       o New library section OCSP.
-      o Complete haul-over of the ASN.1 library section [1].
-
-    [1] The haul-over is currently a separate line of development.
+      o Complete haul-over of the ASN.1 library section.
 
   Major changes between OpenSSL 0.9.5a and OpenSSL 0.9.6:
 
@@ -21,11 +19,8 @@
       o New 'rsautl' application, low level RSA utility.
       o MD4 now included.
       o Bugfix for SSL rollback padding check.
-      o Support for external crypto devices [1].
+      o Support for external crypto devices.
       o Enhanced EVP interface.
-
-    [1] The support for external crypto devices is currently a separate
-        distribution.  See the file README.ENGINE.
 
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a:
 
