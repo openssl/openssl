@@ -63,7 +63,7 @@
 /* This is a separate file so that #defines in cryptlib.h can
  * map my MD functions to different names */
 
-unsigned char *MD2(unsigned char *d, unsigned long n, unsigned char *md)
+unsigned char *MD2(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	MD2_CTX c;
 	static unsigned char m[MD2_DIGEST_LENGTH];

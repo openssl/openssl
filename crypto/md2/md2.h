@@ -81,9 +81,9 @@ typedef struct MD2state_st
 
 const char *MD2_options(void);
 void MD2_Init(MD2_CTX *c);
-void MD2_Update(MD2_CTX *c, register unsigned char *data, unsigned long len);
+void MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len);
 void MD2_Final(unsigned char *md, MD2_CTX *c);
-unsigned char *MD2(unsigned char *d, unsigned long n,unsigned char *md);
+unsigned char *MD2(const unsigned char *d, unsigned long n,unsigned char *md);
 #ifdef  __cplusplus
 }
 #endif

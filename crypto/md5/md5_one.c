@@ -64,7 +64,7 @@
 #include <openssl/ebcdic.h>
 #endif
 
-unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md)
+unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	MD5_CTX c;
 	static unsigned char m[MD5_DIGEST_LENGTH];

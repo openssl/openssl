@@ -123,7 +123,7 @@ void MD2_Init(MD2_CTX *c)
 	memset(c->data,0,MD2_BLOCK);
 	}
 
-void MD2_Update(MD2_CTX *c, register unsigned char *data, unsigned long len)
+void MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len)
 	{
 	register UCHAR *p;
 

@@ -91,7 +91,7 @@ for an appropriate function name, if none is found it just uses
 the capitalized form such as "SSL23_READ" in the above example.
 
 The trailing section of a reason code (after the "_R_") is translated
-into lower case and and underscores changed to spaces.
+into lower case and underscores changed to spaces.
 
 When you are using new function or reason codes, run B<make errors>.
 The necessary B<#define>s will then automatically be added to the

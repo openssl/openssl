@@ -91,7 +91,8 @@ typedef struct RIPEMD160state_st
 void RIPEMD160_Init(RIPEMD160_CTX *c);
 void RIPEMD160_Update(RIPEMD160_CTX *c, const unsigned char *data, unsigned long len);
 void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
-unsigned char *RIPEMD160(unsigned char *d, unsigned long n, unsigned char *md);
+unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
+	unsigned char *md);
 void RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

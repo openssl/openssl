@@ -56,7 +56,7 @@ ANSI X9.30
 
 =head1 SEE ALSO
 
-L<ripemd(3)|ripemd(3)>
+L<ripemd(3)|ripemd(3)>, L<hmac(3)|hmac(3)>
 
 =head1 HISTORY
 

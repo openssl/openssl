@@ -85,11 +85,11 @@ typedef struct hmac_ctx_st
 
 void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	       const EVP_MD *md);
-void HMAC_Update(HMAC_CTX *ctx,unsigned char *key, int len);
+void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 void HMAC_cleanup(HMAC_CTX *ctx);
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-		    unsigned char *d, int n, unsigned char *md,
+		    const unsigned char *d, int n, unsigned char *md,
 		    unsigned int *md_len);
 
 

@@ -60,7 +60,7 @@
 #include <string.h>
 #include <openssl/ripemd.h>
 
-unsigned char *RIPEMD160(unsigned char *d, unsigned long n,
+unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
 	     unsigned char *md)
 	{
 	RIPEMD160_CTX c;
