@@ -731,4 +731,3 @@ to recompile your code.
 macro of the form PKCS12_MAKE_SOMETHING(other) the "other" structure can be
 reused or freed up safely.
 
- LocalWords:  PKIX keyUsage
