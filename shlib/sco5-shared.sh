@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 major="0"
 minor="9.7b"
@@ -9,7 +9,7 @@ sh_slib=$slib.so.$major.$minor
 clib=libcrypto
 sh_clib=$clib.so.$major.$minor
 
-FLAGS="-O -DFILIO_H -Kalloca -Kthread"
+FLAGS="-O -DFILIO_H -Kalloca"
 SHFLAGS="-Kpic -DPIC"
 
 touch $sh_clib

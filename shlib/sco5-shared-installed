@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 major="0"
 minor="9.7b"
@@ -25,3 +25,4 @@ rm -f $INSTALLTOP/$slib.so
 ln -s $INSTALLTOP/$sh_slib $slib.so
 
 cd $PWD
+
