@@ -144,10 +144,10 @@ static void block_in(BIO* b);
 
 typedef struct ok_struct
 	{
-	int buf_len;
-	int buf_off;
-	int buf_len_save;
-	int buf_off_save;
+	size_t buf_len;
+	size_t buf_off;
+	size_t buf_len_save;
+	size_t buf_off_save;
 	int cont;		/* <= 0 when finished */
 	int finished;
 	EVP_MD_CTX md;
