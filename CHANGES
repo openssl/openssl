@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Addition of the command line parameter '-rand file' to 'openssl req'.
+     The given file takes precedence over the RANDFILE option in the
+     configuration file.
+     [Richard Levitte]
+
   *) mkstack.pl now sorts each macro group into lexical order.
      Previously the output order depended on the order the files
      appeared in the directory, resulting in needless rewriting
