@@ -18,21 +18,27 @@ EVP_SealInit, EVP_SealUpdate, EVP_SealFinal - EVP envelope encryption
 =head1 DESCRIPTION
 
 The EVP envelope routines are a high level interface to envelope
-encryption. They generate a random key and then "envelope" it by
-using public key encryption. Data can then be encrypted using this
-key.
+encryption. They generate a random key and IV (if required) then
+"envelope" it by using public key encryption. Data can then be
+encrypted using this key.
 
 EVP_SealInit() initializes a cipher context B<ctx> for encryption
-with cipher B<type> using a random secret key and IV supplied in
-the B<iv> parameter. B<type> is normally supplied by a function such
-as EVP_des_cbc(). The secret key is encrypted using one or more public
-keys, this allows the same encrypted data to be decrypted using any
-of the corresponding private keys. B<ek> is an array of buffers where
-the public key encrypted secret key will be written, each buffer must
-contain enough room for the corresponding encrypted key: that is
+with cipher B<type> using a random secret key and IV. B<type> is normally
+supplied by a function such as EVP_des_cbc(). The secret key is encrypted
+using one or more public keys, this allows the same encrypted data to be
+decrypted using any of the corresponding private keys. B<ek> is an array of
+buffers where the public key encrypted secret key will be written, each buffer
+must contain enough room for the corresponding encrypted key: that is
 B<ek[i]> must have room for B<EVP_PKEY_size(pubk[i])> bytes. The actual
 size of each encrypted secret key is written to the array B<ekl>. B<pubk> is
 an array of B<npubk> public keys.
+
+The B<iv> parameter is a buffer where the generated IV is written to. It must
+contain enough room for the corresponding cipher's IV, as determined by (for
+example) EVP_CIPHER_iv_length(type).
+
+If the cipher does not require an IV then the B<iv> parameter is ignored
+and can be B<NULL>.
 
 EVP_SealUpdate() and EVP_SealFinal() have exactly the same properties
 as the EVP_EncryptUpdate() and EVP_EncryptFinal() routines, as 
