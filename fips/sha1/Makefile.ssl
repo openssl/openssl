@@ -80,6 +80,7 @@ top_fips_sha1test:
 
 fips_sha1test: fips_sha1test.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_sha1test fips_sha1test.o ../../libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_sha1test
 
 fips_test: top_fips_sha1test
 	-rm -rf ../testvectors/sha1/rsp

@@ -143,12 +143,16 @@ int main(int argc, char **argv)
 	unsigned char sig[256];
 	unsigned int siglen;
 
-#ifdef FIPS
-	FIPS_mode_set(1);
-#endif
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
+#ifdef FIPS
+	if(!FIPS_mode_set(1,argv[0]))
+	    {
+	    ERR_print_errors(bio_err);
+	    exit(1);
+	    }
+#endif
 	CRYPTO_malloc_debug_init();
 	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);

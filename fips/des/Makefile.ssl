@@ -72,6 +72,7 @@ top_fips_desmovs:
 
 fips_desmovs: fips_desmovs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_desmovs fips_desmovs.o ../../libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_desmovs
 
 fips_test: top_fips_desmovs
 	find ../testvectors/des/req -name '*.req' > testlist

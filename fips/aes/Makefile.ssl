@@ -67,10 +67,14 @@ tags:
 
 tests:
 
+top_fips_aesavs:
+	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_aesavs sub_target)
+
 fips_aesavs: fips_aesavs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_aesavs fips_aesavs.o ../../libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_aesavs
 
-fips_test: top fips_aesavs
+fips_test: top top_fips_aesavs
 	find ../testvectors/aes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/aes/rsp
 	mkdir ../testvectors/aes/rsp

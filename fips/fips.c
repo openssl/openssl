@@ -51,6 +51,9 @@
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
 #include <openssl/err.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <limits.h>
 
 #ifdef FIPS
 
@@ -61,7 +64,53 @@ int FIPS_selftest()
 	&& FIPS_selftest_des();
     }
 
-int FIPS_mode_set(int onoff)
+static int FIPS_check_exe(const char *path)
+    {
+    BIO *bio, *md;
+    char buf[1024];
+    char p2[PATH_MAX];
+    int n;
+    char mdbuf[EVP_MAX_MD_SIZE];
+
+    bio=BIO_new_file(path,"rb");
+    if(!bio)
+	{
+	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
+	return 0;
+	}
+    md=BIO_new(BIO_f_md());
+    BIO_set_md(md,EVP_sha1());
+    bio=BIO_push(md,bio);
+    do
+	{
+	n=BIO_read(bio,buf,sizeof buf);
+	if(n < 0)
+	    {
+	    BIO_free_all(bio);
+	    FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
+	    return 0;
+	    }
+	} while(n > 0);
+    BIO_gets(md,mdbuf,EVP_MAX_MD_SIZE);
+    BIO_free_all(bio);
+    snprintf(p2,sizeof p2,"%s.sha1",path);
+    bio=BIO_new_file(p2,"rb");
+    if(!bio || BIO_read(bio,buf,20) != 20)
+	{
+	BIO_free(bio);
+	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE_DIGEST);
+	return 0;
+	}
+    BIO_free(bio);
+    if(memcmp(buf,mdbuf,20))
+	{
+	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_EXE_DIGEST_DOES_NOT_MATCH);
+	return 0;
+	}
+    return 1;
+    }
+
+int FIPS_mode_set(int onoff,const char *path)
     {
     if(onoff)
 	{
@@ -71,6 +120,9 @@ int FIPS_mode_set(int onoff)
 	   seeding */
 	if(FIPS_mode)
 	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
+
+	if(!FIPS_check_exe(path))
+	    return 0;
 
 	/* automagically seed PRNG if not already seeded */
 	if(!FIPS_rand_seeded())

@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/sha.h>
+#include <openssl/err.h>
+#include <openssl/fips.h>
 
 #define MAX_TEST_BITS 103432
 
@@ -60,6 +62,12 @@ int main(int argc,char **argv)
 	exit(1);
 	}
 
+    if(!FIPS_mode_set(1,argv[0]))
+	{
+	ERR_load_crypto_strings();
+	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	exit(1);
+	}
     fp=fopen(argv[1],"r");
     if(!fp)
 	{

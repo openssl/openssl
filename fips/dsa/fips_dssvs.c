@@ -1,5 +1,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
+#include <openssl/fips.h>
+#include <openssl/err.h>
 #include <string.h>
 
 int hex2bin(const char *in, unsigned char *out)
@@ -125,6 +127,12 @@ int main(int argc,char **argv)
     if(argc != 2)
 	{
 	fprintf(stderr,"%s [primes|pqg]\n",argv[0]);
+	exit(1);
+	}
+    if(!FIPS_mode_set(1,argv[0]))
+	{
+	ERR_load_crypto_strings();
+	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 	exit(1);
 	}
     if(!strcmp(argv[1],"primes"))

@@ -39,6 +39,7 @@ SRC= $(LIBSRC)
 
 EXHEADER=fips.h
 HEADER=$(EXHEADER) fips_err.c
+EXE=openssl_fips_fingerprint
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -104,17 +105,30 @@ tests:
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
 	done;
 
+fips_test:
+	@for i in dsa sha1 aes des ; \
+	do \
+		(cd $$i && echo "making fips_test in fips/$$i..." && make fips_test) \
+	done;
+
 install:
 	@for i in $(EXHEADER) ;\
 	do \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+		(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@for i in $(FDIRS) ;\
 	do \
-	(cd $$i && echo "making install in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}'  INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
+		(cd $$i && echo "making install in fips/$$i..." && \
+		$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}'  INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
 	done;
+	@for i in $(EXE) ; \
+	do \
+		echo "installing $$i"; \
+		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	done
 
 lint:
 	@for i in $(FDIRS) ;\

@@ -889,7 +889,11 @@ int main(int argc, char **argv)
     int f_opt = 0, d_opt = 1;
 
 #ifdef FIPS
-    FIPS_mode_set(1);
+    if(!FIPS_mode_set(1,argv[0]))
+	{
+	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	exit(1);
+	}
 #endif
     ERR_load_crypto_strings();
     if (argc > 1)

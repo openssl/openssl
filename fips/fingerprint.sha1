@@ -1,4 +1,4 @@
-SHA1(fips.c)= 98c97fbf0e3b2a7c81572804ecc65fc8a8c9cc72
+SHA1(fips.c)= c33135b6ae585a1a953332e261984d38121727d5
 SHA1(fips_err_wrapper.c)= 0cbe881739f6e7d91308e2e74b92032e69007528
-SHA1(fips.h)= b4e3fb8a1f3aa03a63094552bedaa2c58a35cb19
-SHA1(fips_err.c)= bd28a95630f6b2e7ac17bfae872c045216611b11
+SHA1(fips.h)= 58386539af75f8f622b041a43bf1880fee8642f7
+SHA1(fips_err.c)= 8d9fd3ab3e6ca5297c5714e7f6cd9834e22b4cba

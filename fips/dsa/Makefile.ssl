@@ -72,6 +72,7 @@ top_fips_dssvs:
 
 fips_dssvs: fips_dssvs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o ../../libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_dssvs
 
 Q=../testvectors/dsa/req
 A=../testvectors/dsa/rsp
