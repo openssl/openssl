@@ -354,7 +354,6 @@ typedef struct x509_purpose_st {
 
 DECLARE_STACK_OF(X509_PURPOSE)
 
-void ERR_load_X509V3_strings(void);
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp);
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, unsigned char **pp, long length);
 BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new(void);
