@@ -212,9 +212,10 @@ clears all the prohibited or rejected uses of the certificate.
 
 =item B<-addtrust arg>
 
-adds a trusted certificate use. Currently acceptable values
-are B<all> (any purpose), B<sslclient> (SSL client use), B<sslserver>
-(SSL server use) B<email> (S/MIME email) and B<objsign> (Object signing).
+adds a trusted certificate use. Any object name can be used here
+but currently only B<clientAuth> (SSL client use), B<serverAuth>
+(SSL server use) and B<emailProtection> (S/MIME email) are used.
+Other OpenSSL applications may define additional uses.
 
 =item B<-addreject arg>
 
