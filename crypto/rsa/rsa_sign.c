@@ -113,7 +113,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		i=i2d_X509_SIG(&sig,NULL);
 	}
 	j=RSA_size(rsa);
-	if ((i-RSA_PKCS1_PADDING) > j)
+	if (i > (j-RSA_PKCS1_PADDING_SIZE))
 		{
 		RSAerr(RSA_F_RSA_SIGN,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
 		return(0);
