@@ -48,8 +48,7 @@
  */
 
 /*
- * This is a FIPS approved PRNG, ANSI X9.17, as specified in HAC,
- * Menezes et al., p.173
+ * This is a FIPS approved PRNG, ANSI X9.31 A.2.4.
  */
 
 #include <openssl/des.h>
@@ -287,9 +286,6 @@ static int fips_rand_bytes(unsigned char *buf,FIPS_RAND_SIZE_T num)
 	}
 #endif
 
-    fips_gettime(timeseed);
-    fips_rand_encrypt(intermediate,timeseed);
-
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
     for(n=0 ; n < num ; )
@@ -297,12 +293,29 @@ static int fips_rand_bytes(unsigned char *buf,FIPS_RAND_SIZE_T num)
 	unsigned char t[SEED_SIZE];
 	FIPS_RAND_SIZE_T l;
 	
-	/* now generate a full 64 bits of "randomness" */
+	/* ANS X9.31 A.2.4:	I = ede*K(DT)
+	       timeseed == DT
+	       intermediate == I
+	*/
+	fips_gettime(timeseed);
+	fips_rand_encrypt(intermediate,timeseed);
+
+	/* ANS X9.31 A.2.4:     R = ede*K(I^V)
+	       intermediate == I
+	       seed == V
+	       output == R
+	*/
 	for(l=0 ; l < sizeof t ; ++l)
 	    t[l]=intermediate[l]^seed[l];
 	fips_rand_encrypt(output,t);
+
+	/* ANS X9.31 A.2.4:     V = ede*K(R^I)
+	       output == R
+	       intermediate == I
+	       seed == V
+	*/
 	for(l=0 ; l < sizeof t ; ++l)
-	    t[l]=output[l]^seed[l];
+	    t[l]=output[l]^intermediate[l];
 	fips_rand_encrypt(seed,t);
 
 	if(second && !memcmp(output,previous,sizeof previous))
@@ -314,6 +327,8 @@ static int fips_rand_bytes(unsigned char *buf,FIPS_RAND_SIZE_T num)
 	memcpy(previous,output,sizeof previous);
 	second=1;
 
+	/* Successive values of R may be concatenated to produce a
+	   pseudo random number of the desired length */ 
 	l=SEED_SIZE < num-n ? SEED_SIZE : num-n;
 	memcpy(buf+n,output,l);
 	n+=l;
