@@ -74,34 +74,27 @@ if [ "x$XREL" != "x" ]; then
 		echo "whatever-whatever-sco5"; exit 0
 		;;
 	    4.2MP)
-		if [ "x$VERSION" = "x2.01" ]; then
-		    echo "${MACHINE}-whatever-unixware201"; exit 0
-		elif [ "x$VERSION" = "x2.02" ]; then
-		    echo "${MACHINE}-whatever-unixware202"; exit 0
-		elif [ "x$VERSION" = "x2.03" ]; then
-		    echo "${MACHINE}-whatever-unixware203"; exit 0
-		elif [ "x$VERSION" = "x2.1.1" ]; then
-		    echo "${MACHINE}-whatever-unixware211"; exit 0
-		elif [ "x$VERSION" = "x2.1.2" ]; then
-		    echo "${MACHINE}-whatever-unixware212"; exit 0
-		elif [ "x$VERSION" = "x2.1.3" ]; then
-		    echo "${MACHINE}-whatever-unixware213"; exit 0
-		else
-		    echo "${MACHINE}-whatever-unixware2"; exit 0
-		fi
+		case "x${VERSION}" in
+		    x2.0*) echo "${MACHINE}-whatever-unixware20"; exit 0 ;;
+		    x2.1*) echo "${MACHINE}-whatever-unixware21"; exit 0 ;;
+		    x2*)   echo "${MACHINE}-whatever-unixware2";  exit 0 ;;
+		esac
 		;;
 	    4.2)
-		echo "whatever-whatever-unixware1"; exit 0
-		;;
-	    OpenUNIX)
-		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x8" ]; then
-		    echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
-		fi
+		echo "i386-whatever-unixware1"; exit 0
 		;;
 	    5)
-		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x7" ]; then
-		    echo "${MACHINE}-sco-unixware7"; exit 0
-		fi
+		case "x${VERSION}" in
+		    # We hardcode i586 in place of ${MACHINE} for the
+		    # following reason. The catch is that even though Pentium
+		    # is minimum requirement for platforms in question,
+		    # ${MACHINE} gets always assigned to i386. Now, problem
+		    # with i386 is that it makes ./config pass 386 to
+		    # ./Configure, which in turn makes make generate
+		    # inefficient SHA-1 (for this moment) code.
+		    x7*)  echo "i586-sco-unixware7";          exit 0 ;;
+		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}; exit 0 ;;
+		esac
 		;;
 	esac
     fi
