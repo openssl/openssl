@@ -4,6 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Rebuild of the memory allocation routines used by OpenSSL code and
+     possibly others as well.  The purpose is to make an interface that
+     provide hooks so anyone can build a separate set of allocation and
+     deallocation routines to be used by OpenSSL, for example if memory
+     pool implementations, or something else.  The same is provided for
+     memory debugging code.  OpenSSL already comes with code that finds
+     memory leaks, but this gives people a chance to debug other memory
+     problems.
+     [Richard Levitte]
+
   *) Some S/MIME fixes. The OID for SMIMECapabilities was wrong, the
      ordering of SMIMECapabilities wasn't in "strength order" and there
      was a missing NULL in the AlgorithmIdentifier for the SHA1 signature

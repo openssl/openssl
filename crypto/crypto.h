@@ -196,11 +196,13 @@ typedef struct crypto_ex_data_func_st
 #define CRYPTO_EX_INDEX_X509_STORE	4
 #define CRYPTO_EX_INDEX_X509_STORE_CTX	5
 
-/* Use this for win32 DLL's */
+/* This is the default callbacks, but we can have others as well */
 #define CRYPTO_malloc_init()	CRYPTO_set_mem_functions(\
 	(char *(*)())malloc,\
 	(char *(*)())realloc,\
 	(void (*)())free)
+
+
 
 #ifdef CRYPTO_MDEBUG_ALL
 # ifndef CRYPTO_MDEBUG_TIME
@@ -211,6 +213,28 @@ typedef struct crypto_ex_data_func_st
 # endif
 #endif
 
+/* Magic to make sure we get correct values */
+#ifdef CRYPTO_MDEBUG_TIME
+#define V_CRYPTO_MDEBUG_TIME 1
+#else
+#define V_CRYPTO_MDEBUG_TIME 0
+#endif
+#ifdef CRYPTO_MDEBUG_THREAD
+#define V_CRYPTO_MDEBUG_THREAD 2
+#else
+#define V_CRYPTO_MDEBUG_THREAD 0
+#endif
+
+#define CRYPTO_malloc_debug_init()	do {\
+	CRYPTO_set_mem_debug_functions(\
+		(void (*)())CRYPTO_dbg_malloc,\
+		(void (*)())CRYPTO_dbg_realloc,\
+		(void (*)())CRYPTO_dbg_free,\
+		(void (*)())CRYPTO_dbg_set_options,\
+		(void (*)())CRYPTO_dbg_get_options);\
+	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_TIME|V_CRYPTO_MDEBUG_THREAD);\
+	} while(0);
+
 #if defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
 #  define CRYPTO_MDEBUG
@@ -220,39 +244,25 @@ typedef struct crypto_ex_data_func_st
 #ifdef CRYPTO_MDEBUG
 #define MemCheck_start() CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)
 #define MemCheck_stop()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF)
-#define MemCheck_on()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE)
-#define MemCheck_off()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
-#define Malloc(num)	CRYPTO_dbg_malloc((int)num,__FILE__,__LINE__)
-#define Realloc(addr,num) \
-	CRYPTO_dbg_realloc((char *)addr,(int)num,__FILE__,__LINE__)
-#define Remalloc(addr,num) \
-	CRYPTO_dbg_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
-#define FreeFunc	CRYPTO_dbg_free
-#define Free(addr)	CRYPTO_dbg_free(addr)
-#define Malloc_locked(num) CRYPTO_malloc_locked((int)num)
-#define Free_locked(addr) CRYPTO_free_locked(addr)
 #else
 #define MemCheck_start()
 #define MemCheck_stop()
-#define MemCheck_on()
-#define MemCheck_off()
-#define Remalloc	CRYPTO_remalloc
-#if defined(WIN32) || defined(MFUNC)
-#define Malloc		CRYPTO_malloc
-#define Realloc(a,n)	CRYPTO_realloc(a,(n))
+#endif
+#define MemCheck_on()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE)
+#define MemCheck_off()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
+#define is_MemCheck_on() CRYPTO_mem_check_on()
+
+#define Malloc(num)	CRYPTO_malloc((int)num,__FILE__,__LINE__)
+#define Realloc(addr,num) \
+	CRYPTO_realloc((char *)addr,(int)num,__FILE__,__LINE__)
+#define Remalloc(addr,num) \
+	CRYPTO_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
 #define FreeFunc	CRYPTO_free
 #define Free(addr)	CRYPTO_free(addr)
-#define Malloc_locked	CRYPTO_malloc_locked
+
+#define Malloc_locked(num) CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define Free_locked(addr) CRYPTO_free_locked(addr)
-#else
-#define Malloc		malloc
-#define Realloc		realloc
-#define FreeFunc	free
-#define Free(addr)	free(addr)
-#define Malloc_locked	malloc
-#define Free_locked(addr) free(addr)
-#endif /* WIN32 || MFUNC */
-#endif /* MDEBUG */
+
 
 /* Case insensiteve linking causes problems.... */
 #if defined(WIN16) || defined(VMS)
@@ -272,6 +282,7 @@ void CRYPTO_free_ex_data(STACK *meth,char *obj,CRYPTO_EX_DATA *ad);
 void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad);
 
 int CRYPTO_mem_ctrl(int mode);
+int CRYPTO_mem_check_on(void);
 int CRYPTO_get_new_lockid(char *name);
 
 int CRYPTO_num_locks(void); /* return CRYPTO_NUM_LOCKS (shared libs!) */
@@ -291,25 +302,46 @@ const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
 
-void CRYPTO_set_mem_functions(char *(*m)(),char *(*r)(), void (*free_func)());
+void CRYPTO_set_mem_functions(char *(*m)(),char *(*r)(), void (*f)());
+void CRYPTO_set_mem_debug_functions(void (*m)(),void (*r)(),void (*f)(),void (*so)(),int (*go)());
+void CRYPTO_set_mem_debug_options(int bits);
 void CRYPTO_get_mem_functions(char *(**m)(),char *(**r)(), void (**f)());
+void CRYPTO_get_mem_debug_functions(void (**m)(),void (**r)(),void (**f)(),void (**so)(),int (**go)());
+int CRYPTO_get_mem_debug_options();
 void CRYPTO_set_locked_mem_functions(char *(*m)(), void (*free_func)());
 void CRYPTO_get_locked_mem_functions(char *(**m)(), void (**f)());
 
-void *CRYPTO_malloc_locked(int num);
+void *CRYPTO_malloc_locked(int num, char *file, int line);
 void CRYPTO_free_locked(void *);
-void *CRYPTO_malloc(int num);
+void *CRYPTO_malloc(int num, char *file, int line);
 void CRYPTO_free(void *);
-void *CRYPTO_realloc(void *addr,int num);
-void *CRYPTO_remalloc(void *addr,int num);
+void *CRYPTO_realloc(void *addr,int num, char *file, int line);
+void *CRYPTO_remalloc(void *addr,int num, char *file, int line);
 
 int CRYPTO_add_info(const char *file, int line, const char *info);
-int CRYPTO_remove_info();
+int CRYPTO_remove_info(void);
+int CRYPTO_remove_all_info(void);
 
-void *CRYPTO_dbg_malloc(int num,const char *file,int line);
-void *CRYPTO_dbg_realloc(void *addr,int num,const char *file,int line);
-void CRYPTO_dbg_free(void *);
-void *CRYPTO_dbg_remalloc(void *addr,int num,const char *file,int line);
+/* The last argument has the following significance:
+ *
+ * 0:	called before the actual memory allocation has taken place
+ * 1:	called after the actual memory allocation has taken place
+ */
+void CRYPTO_dbg_malloc(void *addr,int num,const char *file,int line,int before_p);
+void CRYPTO_dbg_realloc(void *addr1,void *addr2,int num,const char *file,int line,int before_p);
+void CRYPTO_dbg_free(void *,int before_p);
+
+/* Tell the debugging code about options.  By default, the following values
+ * apply:
+ *
+ * 0:	Clear all options.
+ * 1:	Set the "Show Time" option.
+ * 2:	Set the "Show Thread Number" option.
+ * 3:	1 + 2
+ */
+void CRYPTO_dbg_set_options(int num);
+int CRYPTO_dbg_get_options();
+
 #ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
