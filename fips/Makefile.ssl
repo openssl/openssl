@@ -113,6 +113,7 @@ fips_test_suite: fips_test_suite.o $(TOP)/libcrypto.a
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_test_suite || { rm fips_test_suite; false; }
 
 fips_test: top top_fips_test_suite
+	cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
 	@for i in dsa sha1 aes des ; \
 	do \
 		(cd $$i && echo "making fips_test in fips/$$i..." && make fips_test) \
