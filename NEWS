@@ -21,9 +21,8 @@
         against libdes providing similar functions having the same name).
         Provide macros for backward compatibility (will be removed in the
         future).
-      o Unifiy handling of cryptographic algorithms (software and
-        engine) to be available via EVP routines for asymmetric and
-        symmetric ciphers.
+      o Unify handling of cryptographic algorithms (software and engine)
+        to be available via EVP routines for asymmetric and symmetric ciphers.
       o NCONF: new configuration handling routines.
       o Change API to use more 'const' modifiers to improve error checking
         and help optimizers.
