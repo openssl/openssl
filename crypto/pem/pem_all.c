@@ -281,7 +281,7 @@ int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                                unsigned char *kstr, int klen,
                                                pem_password_cb *cb, void *u)
 	{
-		if (FIPS_mode)
+		if (FIPS_mode())
 			return PEM_write_bio_PKCS8PrivateKey(bp, x, enc,
 						(char *)kstr, klen, cb, u);
 		else
@@ -295,7 +295,7 @@ int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                                unsigned char *kstr, int klen,
                                                pem_password_cb *cb, void *u)
 	{
-		if (FIPS_mode)
+		if (FIPS_mode())
 			return PEM_write_PKCS8PrivateKey(fp, x, enc,
 						(char *)kstr, klen, cb, u);
 		else

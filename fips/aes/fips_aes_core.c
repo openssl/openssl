@@ -738,7 +738,7 @@ int AES_set_encrypt_key(const unsigned char *userKey,
 		return -1;
 	if (bits != 128 && bits != 192 && bits != 256)
 		return -2;
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 		return -3;
 
 	rk = key->rd_key;

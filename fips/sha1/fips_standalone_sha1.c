@@ -54,7 +54,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int FIPS_selftest_fail;
+int FIPS_selftest_failed() { return 0; }
 
 #ifdef OPENSSL_FIPS
 

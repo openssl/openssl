@@ -112,7 +112,7 @@ RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
 	int bitsp,bitsq,ok= -1,n=0,i;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return NULL;

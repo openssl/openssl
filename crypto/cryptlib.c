@@ -66,11 +66,6 @@
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
-#ifdef OPENSSL_FIPS
-int FIPS_mode;
-void *FIPS_rand_check;
-#endif /* def OPENSSL_FIPS */
-
 DECLARE_STACK_OF(CRYPTO_dynlock)
 IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 
@@ -110,7 +105,9 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"engine",
 	"ui",
 	"hwcrhk",		/* This is a HACK which will disappear in 0.9.8 */
-#if CRYPTO_NUM_LOCKS != 33
+	"fips",
+	"fips2",
+#if CRYPTO_NUM_LOCKS != 35
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
@@ -517,3 +514,122 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 		file,line,assertion);
 	abort();
 	}
+
+#ifdef OPENSSL_FIPS
+static int fips_started = 0;
+static int fips_mode = 0;
+static void *fips_rand_check = 0;
+static unsigned long fips_thread = 0;
+
+void fips_set_started(void)
+	{
+	fips_started = 1;
+	}
+
+int fips_is_started(void)
+	{
+	return fips_started;
+	}
+
+int fips_is_owning_thread(void)
+	{
+	int ret = 0;
+
+	if (fips_is_started())
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
+		if (fips_thread != 0 && fips_thread == CRYPTO_thread_id())
+			ret = 1;
+		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
+		}
+	return ret;
+	}
+
+int fips_set_owning_thread(void)
+	{
+	int ret = 0;
+
+	if (fips_is_started())
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
+		if (fips_thread == 0)
+			{
+			fips_thread = CRYPTO_thread_id();
+			ret = 1;
+			}
+		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
+		}
+	return ret;
+	}
+
+int fips_clear_owning_thread(void)
+	{
+	int ret = 0;
+
+	if (fips_is_started())
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
+		if (fips_thread == CRYPTO_thread_id())
+			{
+			fips_thread = 0;
+			ret = 1;
+			}
+		CRYPTO_r_unlock(CRYPTO_LOCK_FIPS2);
+		}
+	return ret;
+	}
+
+void fips_set_mode(int onoff)
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+		fips_mode = onoff;
+		if (!owning_thread) CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+		}
+	}
+
+void fips_set_rand_check(void *rand_check)
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+		fips_rand_check = rand_check;
+		if (!owning_thread) CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+		}
+	}
+
+int FIPS_mode(void)
+	{
+	int ret = 0;
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+		ret = fips_mode;
+		if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+		}
+	return ret;
+	}
+
+void *FIPS_rand_check(void)
+	{
+	void *ret = 0;
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+		ret = fips_rand_check;
+		if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+		}
+	return ret;
+	}
+
+#endif /* OPENSSL_FIPS */
+

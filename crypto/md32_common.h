@@ -128,9 +128,9 @@
  *					<appro@fy.chalmers.se>
  */
 
+#include <openssl/crypto.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
-#include "../fips/fips_locl.h"
 
 #if !defined(DATA_ORDER_IS_BIG_ENDIAN) && !defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 #error "DATA_ORDER must be defined!"
@@ -560,7 +560,7 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	const unsigned char *cp=end;
 
 #ifdef OPENSSL_FIPS
-	if(FIPS_mode && !FIPS_md5_allowed)
+	if(FIPS_mode() && !FIPS_md5_allowed())
 	    {
 	    FIPSerr(FIPS_F_HASH_FINAL,FIPS_R_NON_FIPS_METHOD);
 	    return 0;

@@ -125,7 +125,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	int i,reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    FIPSerr(FIPS_F_DSA_DO_SIGN,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return NULL;
@@ -271,7 +271,7 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 		return -1;
 		}
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    FIPSerr(FIPS_F_DSA_DO_VERIFY,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return -1;

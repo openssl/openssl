@@ -72,7 +72,7 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 #endif
 	register DES_LONG *s;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    data[0]=data[1]=0;
 	    return;
@@ -176,7 +176,7 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 #endif
 	register DES_LONG *s;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    data[0]=data[1]=0;
 	    return;

@@ -108,7 +108,7 @@ static int RSA_eay_public_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *fro
 	BN_init(&f);
 	BN_init(&ret);
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 		{
 		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;

@@ -53,8 +53,13 @@
 extern "C" {
 #endif
 
-/* FIPS 140 allows MD5 to be used during certain parts of TLS */
-extern int FIPS_md5_allowed;
+/* These are really defined in crypto/cryptlib.c */
+void fips_set_started(void);
+int fips_is_started(void);
+int fips_is_owning_thread(void);
+int fips_set_owning_thread(void);
+int fips_clear_owning_thread(void);
+void fips_set_rand_check(void *rand_check);
 
 #ifdef  __cplusplus
 }

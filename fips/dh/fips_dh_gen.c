@@ -102,7 +102,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	int g,ok= -1;
 	BN_CTX *ctx=NULL;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 		{
 		FIPSerr(FIPS_F_DH_GENERATE_PARAMETERS,FIPS_R_FIPS_SELFTEST_FAILED);
 		return NULL;

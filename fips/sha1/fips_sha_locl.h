@@ -233,7 +233,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, FIPS_SHA_SIZE_T num)
 	SHA_LONG	XX[16];
 #endif
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    return;
 
 	A=c->h0;
@@ -361,7 +361,7 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, FIPS_SHA_SIZE_T num)
 	SHA_LONG	XX[16];
 #endif
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    return;
 
 	A=c->h0;

@@ -58,13 +58,12 @@ extern "C" {
 /* Note that these are defined in crypto/cryptlib.c so they're
  * available even without -lfips.
  */
-extern int FIPS_mode;
-extern int FIPS_selftest_fail;
-extern void *FIPS_rand_check;
 struct dsa_st;
 
 int FIPS_mode_set(int onoff,const char *path);
 void FIPS_allow_md5(int onoff);
+int FIPS_md5_allowed(void);
+int FIPS_selftest_failed(void);
 int FIPS_dsa_check(struct dsa_st *dsa);
 void FIPS_corrupt_sha1(void);
 int FIPS_selftest_sha1(void);

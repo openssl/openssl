@@ -75,7 +75,7 @@
 /*#include "cryptlib.h"*/
 #include <openssl/evp.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_SHA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 #ifndef OPENSSL_NO_RAND
@@ -83,9 +83,11 @@
 #endif
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
+#endif
 #include <openssl/fips.h>
 #include <openssl/err.h>
 
+#ifndef OPENSSL_NO_DSA
 #ifdef OPENSSL_FIPS
 
 static int fips_check_dsa(DSA *dsa)
@@ -124,7 +126,7 @@ DSA *DSA_generate_parameters(FIPS_DSA_SIZE_T bits,
 	DSA *ret=NULL;
 	unsigned char *seed_out=seed_in;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 	    {
 	    FIPSerr(FIPS_F_DSA_GENERATE_PARAMETERS,
 		    FIPS_R_FIPS_SELFTEST_FAILED);
@@ -369,5 +371,4 @@ err:
 	return(ok);
 	}
 #endif
-
 #endif

@@ -64,7 +64,7 @@
  * 1.0 First working version
  */
 #include "fips_des_locl.h"
-#include "../fips.h"
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -312,7 +312,7 @@ static const DES_LONG des_skb[8][64]={
 
 int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 	{
-	if (FIPS_selftest_fail)
+	if (FIPS_selftest_failed())
 		return -3;
 	if (DES_check_key)
 		{
@@ -335,7 +335,7 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 		return(-1);
 	if (DES_is_weak_key(key))
 		return(-2);
-	if (FIPS_selftest_fail)
+	if (FIPS_selftest_failed())
 		return -3;
 
 	DES_set_key_unchecked(key, schedule);

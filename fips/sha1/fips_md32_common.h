@@ -417,7 +417,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, FIPS_SHA_SIZE_T len)
 	register HASH_LONG l;
 	int sw,sc,ew,ec;
 
-	if(FIPS_selftest_fail)
+	if(FIPS_selftest_failed())
 		return 0;
 
 	if (len==0) return 1;

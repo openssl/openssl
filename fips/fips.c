@@ -63,8 +63,48 @@
 #define PATH_MAX 1024
 #endif
 
-int FIPS_md5_allowed;
-int FIPS_selftest_fail;
+static int fips_md5_allowed = 0;
+static int fips_selftest_fail = 0;
+
+void FIPS_allow_md5(int onoff)
+    {
+    if (fips_is_started())
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (!owning_thread) CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+	fips_md5_allowed = onoff;
+	if (!owning_thread) CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+	}
+    }
+
+int FIPS_md5_allowed(void)
+    {
+    int ret = 1;
+    if (fips_is_started())
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+	ret = fips_md5_allowed;
+	if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+	}
+    return ret;
+    }
+
+int FIPS_selftest_failed(void)
+    {
+    int ret = 0;
+    if (fips_is_started())
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+	ret = fips_selftest_fail;
+	if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+	}
+    return ret;
+    }
 
 int FIPS_selftest()
     {
@@ -126,25 +166,36 @@ static int FIPS_check_exe(const char *path)
 
 int FIPS_mode_set(int onoff,const char *path)
     {
+    void fips_set_mode(int onoff);
+    int fips_set_owning_thread();
+    int fips_clear_owning_thread();
+    int ret = 0;
+
+    CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+    fips_set_started();
+    fips_set_owning_thread();
+
     if(onoff)
 	{
 	unsigned char buf[24];
 
-	FIPS_selftest_fail=0;
+	fips_selftest_fail = 0;
 
 	/* Don't go into FIPS mode twice, just so we can do automagic
 	   seeding */
-	if(FIPS_mode)
+	if(FIPS_mode())
 	    {
 	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
-	    FIPS_selftest_fail=1;
-	    return 0;
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
 	    }
 
 	if(!FIPS_check_exe(path))
 	    {
-	    FIPS_selftest_fail=1;
-	    return 0;
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
 	    }
 
 	/* automagically seed PRNG if not already seeded */
@@ -152,33 +203,35 @@ int FIPS_mode_set(int onoff,const char *path)
 	    {
 	    if(RAND_bytes(buf,sizeof buf) <= 0)
 		{
-		FIPS_selftest_fail=1;
-		return 0;
+		fips_selftest_fail = 1;
+		ret = 0;
+		goto end;
 		}
 	    FIPS_set_prng_key(buf,buf+8);
 	    FIPS_rand_seed(buf+16,8);
 	    }
 
 	/* now switch into FIPS mode */
-	FIPS_rand_check=FIPS_rand_method();
+	fips_set_rand_check(FIPS_rand_method());
 	RAND_set_rand_method(FIPS_rand_method());
 	if(FIPS_selftest())
-	    FIPS_mode=1;
+	    fips_set_mode(1);
 	else
 	    {
-	    FIPS_selftest_fail=1;
-	    return 0;
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
 	    }
-	return 1;
+	ret = 1;
+	goto end;
 	}
-    FIPS_mode=0;
-    FIPS_selftest_fail=0;
-    return 1;
-    }
-
-void FIPS_allow_md5(int onoff)
-    {
-    FIPS_md5_allowed=onoff;
+    fips_set_mode(0);
+    fips_selftest_fail = 0;
+    ret = 1;
+end:
+    fips_clear_owning_thread();
+    CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+    return ret;
     }
 
 #if 0
