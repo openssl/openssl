@@ -51,7 +51,7 @@ static COMP_METHOD zlib_method={
 #if defined(WINDOWS) || defined(WIN32)
 # include <windows.h>
 
-# define Z_CALLCONV _stcall
+# define Z_CALLCONV _stdcall
 # define ZLIB_SHARED
 #else
 # define Z_CALLCONV
@@ -69,11 +69,11 @@ static int stub_inflateInit_(z_streamp strm, const char * version,
 	int stream_size);
 
 /* Function pointers */
-typedef int Z_CALLCONV (*compress_ft)(Bytef *dest,uLongf *destLen,
+typedef int (Z_CALLCONV *compress_ft)(Bytef *dest,uLongf *destLen,
 	const Bytef *source, uLong sourceLen);
-typedef int Z_CALLCONV (*inflateEnd_ft)(z_streamp strm);
-typedef int Z_CALLCONV (*inflate_ft)(z_streamp strm, int flush);
-typedef int Z_CALLCONV (*inflateInit__ft)(z_streamp strm,
+typedef int (Z_CALLCONV *inflateEnd_ft)(z_streamp strm);
+typedef int (Z_CALLCONV *inflate_ft)(z_streamp strm, int flush);
+typedef int (Z_CALLCONV *inflateInit__ft)(z_streamp strm,
 	const char * version, int stream_size);
 static compress_ft	p_compress=NULL;
 static inflateEnd_ft	p_inflateEnd=NULL;
