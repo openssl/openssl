@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/20 13:45:41 $
+  ______________                           $Date: 2000/09/20 16:40:09 $
 
   DEVELOPMENT STATE
 
@@ -65,16 +65,25 @@
 				All hpux 10.20 targets succeeded provided -ldl
 					has been changed to -ldld.
 			solaris-sparcv9-gcc (2.6/ultra5)	- success
-			solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed
-				Complaints about a number of -x parameters to
-					the compiler and failed to compile an
-					assembler file.  Maybe a too old
-					compiler?
+			[ solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed      ]
+			[	Complaints about a number of -x parameters to ]
+			[		the compiler and failed to compile an ]
+			[		assembler file.  Maybe a too old      ]
+			[		compiler? (Yes, apparently:)          ]
+			solaris-sparcv9-cc (SunOS 5.6 SC4.2)	- success
 			FreeBSD (2.2.5-RELEASE)			- success
 			alpha-cc [engine] (OSF1 5.0A)		- success
 			irix-mips3-cc [engine] (Irix 6.2)	- success
 				One has to do the same as for OpenBSD in
 					speed.c [FIXED]
+			aix-cc (3.2.5, cc 1.3.0.44)		- success
+			aix-gcc (3.2.5, gcc 2.8.1)		- success
+				Both first failed to compiled due to ftime().
+					[FIXED]
+			alpha-cc (V4.0E)			- success
+			alpha-gcc (V4.0E, gcc 2.8.1)		- success
+			ultrix-cc (V4.5)			- success
+			ultrix-gcc (V4.5, gcc 2.8.1)		- success
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
