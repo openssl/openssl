@@ -1,6 +1,5 @@
 Output of `Configure TABLE:'
 
-
 *** BC-16
 $cc           = bcc
 $cflags       = 
@@ -1428,4 +1427,3 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-

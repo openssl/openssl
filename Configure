@@ -380,7 +380,6 @@ if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
 		print_table_entry($target);
 	}
-	print "\n";
 	exit 0;
 }
 
