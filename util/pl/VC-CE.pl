@@ -13,7 +13,7 @@ $rm='del';
 # C compiler stuff
 $cc='$(CC)';
 $cflags=' /W3 /WX /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -D$(TARGETCPU) -D_$(TARGETCPU)_ -DUNDER_CE=300 -D_WIN32_CE=300 -DWIN32_PLATFORM_PSPC -DUNICODE -D_UNICODE -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
-$lflags="/nologo /subsystem:windowsce,3.00 /machine:$(TARGETCPU) /opt:ref";
+$lflags='/nologo /subsystem:windowsce,3.00 /machine:$(TARGETCPU) /opt:ref';
 $mlflags='';
 
 $out_def="out32";
