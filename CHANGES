@@ -4,13 +4,17 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New options added to the 'dgst' utility for signature
+     generation and verification.
+     [Steve Henson]
+
   *) Unrecognized PKCS#7 content types are now handled via a
      catch all ASN1_TYPE structure. This allows unsupported
      types to be stored as a "blob" and an application can
      encode and decode it manually.
      [Steve Henson]
 
-  *) Fix various signed/unsigned issues to make a_strex,c
+  *) Fix various signed/unsigned issues to make a_strex.c
      compile under VC++.
      [Oscar Jacobsson <oscar.jacobsson@celocom.com>]
 

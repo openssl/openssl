@@ -214,6 +214,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 			/* For read only case reset to the start again */
 			if(b->flags & BIO_FLAGS_MEM_RDONLY) 
 					bm->data -= bm->max - bm->length;
+					bm->length = bm->max;
 			else {
 				memset(bm->data,0,bm->max);
 				bm->length=0;
