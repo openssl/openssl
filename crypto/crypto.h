@@ -122,7 +122,8 @@ extern "C" {
 #define	CRYPTO_LOCK_DH			24
 #define	CRYPTO_LOCK_MALLOC2		25
 #define	CRYPTO_LOCK_DSO			26
-#define	CRYPTO_NUM_LOCKS		27
+#define	CRYPTO_LOCK_DYNLOCK		27
+#define	CRYPTO_NUM_LOCKS		28
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -153,7 +154,12 @@ extern "C" {
 /* Some applications as well as some parts of OpenSSL need to allocate
    and deallocate locks in a dynamic fashion.  The following typedef
    makes this possible in a type-safe manner.  */
-typedef struct CRYPTO_dynlock_value CRYPTO_dynlock;
+/* struct CRYPTO_dynlock_value has to be defined by the application. */
+typedef struct
+	{
+	int references;
+	struct CRYPTO_dynlock_value *data;
+	} CRYPTO_dynlock;
 
 
 /* The following can be used to detect memory leaks in the SSLeay library.
@@ -305,16 +311,17 @@ unsigned long CRYPTO_thread_id(void);
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
-void CRYPTO_set_dynlock_create_callback(CRYPTO_dynlock *(*dyn_create_function)
+void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(*dyn_create_function)
 	(char *file, int line));
 void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
-	(int mode, CRYPTO_dynlock *l, const char *file, int line));
+	(int mode, struct CRYPTO_dynlock_value *l,
+		const char *file, int line));
 void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
-	(CRYPTO_dynlock *l, const char *file, int line));
+	(struct CRYPTO_dynlock_value *l, const char *file, int line));
 void CRYPTO_set_dynlock_size(int dynlock_size);
 int CRYPTO_get_new_dynlockid(void);
 void CRYPTO_destroy_dynlockid(int i);
-CRYPTO_dynlock *CRYPTO_get_dynlock_value(int i);
+struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
 
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
