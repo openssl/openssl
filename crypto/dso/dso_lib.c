@@ -108,7 +108,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		}
 	memset(ret, 0, sizeof(DSO));
 	ret->meth_data = sk_new_null();
-	if((ret->meth_data = sk_new_null()) == NULL)
+	if(ret->meth_data == NULL)
 		{
 		/* sk_new doesn't generate any errors so we do */
 		DSOerr(DSO_F_DSO_NEW_METHOD,ERR_R_MALLOC_FAILURE);
