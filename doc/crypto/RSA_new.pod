@@ -14,7 +14,8 @@ RSA_new, RSA_free - allocate and free RSA objects
 
 =head1 DESCRIPTION
 
-RSA_new() allocates and initializes an B<RSA> structure.
+RSA_new() allocates and initializes an B<RSA> structure. It is equivalent to
+calling RSA_new_method(NULL).
 
 RSA_free() frees the B<RSA> structure and its components. The key is
 erased before the memory is returned to the system.
@@ -29,7 +30,8 @@ RSA_free() returns no value.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<rsa(3)|rsa(3)>, L<RSA_generate_key(3)|RSA_generate_key(3)>
+L<err(3)|err(3)>, L<rsa(3)|rsa(3)>, L<RSA_generate_key(3)|RSA_generate_key(3)>,
+L<RSA_new_method(3)|RSA_new_method(3)>
 
 =head1 HISTORY
 

@@ -11,52 +11,64 @@ RSA_null_method, RSA_flags, RSA_new_method - select RSA method
  #include <openssl/rsa.h>
  #include <openssl/engine.h>
 
- void RSA_set_default_openssl_method(RSA_METHOD *meth);
+ void RSA_set_default_method(const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_default_openssl_method(void);
+ RSA_METHOD *RSA_get_default_method(void);
 
- int RSA_set_method(RSA *rsa, ENGINE *engine);
+ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
- RSA_METHOD *RSA_get_method(RSA *rsa);
+ RSA_METHOD *RSA_get_method(const RSA *rsa);
 
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
  RSA_METHOD *RSA_null_method(void);
 
- int RSA_flags(RSA *rsa);
+ int RSA_flags(const RSA *rsa);
 
  RSA *RSA_new_method(ENGINE *engine);
 
 =head1 DESCRIPTION
 
 An B<RSA_METHOD> specifies the functions that OpenSSL uses for RSA
-operations. By modifying the method, alternative implementations
-such as hardware accelerators may be used.
+operations. By modifying the method, alternative implementations such as
+hardware accelerators may be used. IMPORTANT: See the NOTES section for
+important information about how these RSA API functions are affected by the
+use of B<ENGINE> API calls.
 
-Initially, the default is to use the OpenSSL internal implementation.
-RSA_PKCS1_SSLeay() returns a pointer to that method.
+Initially, the default RSA_METHOD is the OpenSSL internal implementation,
+as returned by RSA_PKCS1_SSLeay().
 
-RSA_set_default_openssl_method() makes B<meth> the default method for all B<RSA>
-structures created later. B<NB:> This is true only whilst the default engine
-for RSA operations remains as "openssl". ENGINEs provide an
-encapsulation for implementations of one or more algorithms at a time, and all
-the RSA functions mentioned here operate within the scope of the default
-"openssl" engine.
+RSA_set_default_method() makes B<meth> the default method for all <RSA>
+structures created later. B<NB>: This is true only whilst no ENGINE has
+been set as a default for RSA, so this function is no longer recommended.
 
-RSA_get_default_openssl_method() returns a pointer to the current default
-method for the "openssl" engine.
+RSA_get_default_method() returns a pointer to the current default
+RSA_METHOD. However, the meaningfulness of this result is dependant on
+whether the ENGINE API is being used, so this function is no longer 
+recommended.
 
-RSA_set_method() selects B<engine> for all operations using the key
-B<rsa>.
+RSA_set_method() selects B<meth> to perform all operations using the key
+B<rsa>. This will replace the RSA_METHOD used by the RSA key and if the
+previous method was supplied by an ENGINE, the handle to that ENGINE will
+be released during the change. It is possible to have RSA keys that only
+work with certain RSA_METHOD implementations (eg. from an ENGINE module
+that supports embedded hardware-protected keys), and in such cases
+attempting to change the RSA_METHOD for the key can have unexpected
+results.
 
-RSA_get_method() returns a pointer to the RSA_METHOD from the currently
-selected ENGINE for B<rsa>.
+RSA_get_method() returns a pointer to the RSA_METHOD being used by B<rsa>.
+This method may or may not be supplied by an ENGINE implementation, but if
+it is, the return value can only be guaranteed to be valid as long as the
+RSA key itself is valid and does not have its implementation changed by
+RSA_set_method().
 
-RSA_flags() returns the B<flags> that are set for B<rsa>'s current method.
+RSA_flags() returns the B<flags> that are set for B<rsa>'s current
+RSA_METHOD. See the BUGS section.
 
 RSA_new_method() allocates and initializes an RSA structure so that
-B<engine> will be used for the RSA operations. If B<engine> is NULL,
-the default engine for RSA operations is used.
+B<engine> will be used for the RSA operations. If B<engine> is NULL, the
+default ENGINE for RSA operations is used, and if no default ENGINE is set,
+the RSA_METHOD controlled by RSA_set_default_method() is used.
 
 =head1 THE RSA_METHOD STRUCTURE
 
@@ -121,21 +133,44 @@ the default engine for RSA operations is used.
 
 =head1 RETURN VALUES
 
-RSA_PKCS1_SSLeay(), RSA_PKCS1_null_method(), RSA_get_default_openssl_method()
+RSA_PKCS1_SSLeay(), RSA_PKCS1_null_method(), RSA_get_default_method()
 and RSA_get_method() return pointers to the respective RSA_METHODs.
 
-RSA_set_default_openssl_method() returns no value.
+RSA_set_default_method() returns no value.
 
-RSA_set_method() selects B<engine> as the engine that will be responsible for
-all operations using the structure B<rsa>. If this function completes successfully,
-then the B<rsa> structure will have its own functional reference of B<engine>, so
-the caller should remember to free their own reference to B<engine> when they are
-finished with it. NB: An ENGINE's RSA_METHOD can be retrieved (or set) by
-ENGINE_get_RSA() or ENGINE_set_RSA().
+RSA_set_method() returns a pointer to the old RSA_METHOD implementation
+that was replaced. However, this return value should probably be ignored
+because if it was supplied by an ENGINE, the pointer could be invalidated
+at any time if the ENGINE is unloaded (in fact it could be unloaded as a
+result of the RSA_set_method() function releasing its handle to the
+ENGINE). For this reason, the return type may be replaced with a B<void>
+declaration in a future release.
 
-RSA_new_method() returns NULL and sets an error code that can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails. Otherwise
+RSA_new_method() returns NULL and sets an error code that can be obtained
+by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails. Otherwise
 it returns a pointer to the newly allocated structure.
+
+=head1 NOTES
+
+As of version 0.9.7, RSA_METHOD implementations are grouped together with
+other algorithmic APIs (eg. DSA_METHOD, EVP_CIPHER, etc) into B<ENGINE>
+modules. If a default ENGINE is specified for RSA functionality using an
+ENGINE API function, that will override any RSA defaults set using the RSA
+API (ie.  RSA_set_default_method()). For this reason, the ENGINE API is the
+recommended way to control default implementations for use in RSA and other
+cryptographic algorithms.
+
+=head1 BUGS
+
+The behaviour of RSA_flags() is a mis-feature that is left as-is for now
+to avoid creating compatibility problems. RSA functionality, such as the
+encryption functions, are controlled by the B<flags> value in the RSA key
+itself, not by the B<flags> value in the RSA_METHOD attached to the RSA key
+(which is what this function returns). If the flags element of an RSA key
+is changed, the changes will be honoured by RSA functionality but will not
+be reflected in the return value of the RSA_flags() function - in effect
+RSA_flags() behaves more like an RSA_default_flags() function (which does
+not currently exist).
 
 =head1 SEE ALSO
 
@@ -149,8 +184,14 @@ well as the rsa_sign and rsa_verify components of RSA_METHOD were
 added in OpenSSL 0.9.4.
 
 RSA_set_default_openssl_method() and RSA_get_default_openssl_method()
-replaced RSA_set_default_method() and RSA_get_default_method() respectively,
-and RSA_set_method() and RSA_new_method() were altered to use B<ENGINE>s
-rather than B<RSA_METHOD>s during development of OpenSSL 0.9.6.
+replaced RSA_set_default_method() and RSA_get_default_method()
+respectively, and RSA_set_method() and RSA_new_method() were altered to use
+B<ENGINE>s rather than B<RSA_METHOD>s during development of the engine
+version of OpenSSL 0.9.6. For 0.9.7, the handling of defaults in the ENGINE
+API was restructured so that this change was reversed, and behaviour of the
+other functions resembled more closely the previous behaviour. The
+behaviour of defaults in the ENGINE API now transparently overrides the
+behaviour of defaults in the RSA API without requiring changing these
+function prototypes.
 
 =cut
