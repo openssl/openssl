@@ -222,3 +222,4 @@ SSL_COMP_get_compression_method         271	EXIST::FUNCTION:COMP
 SSL_COMP_get_name                       272	EXIST::FUNCTION:
 SSL_get_current_expansion               273	EXIST::FUNCTION:
 SSL_get_current_compression             274	EXIST::FUNCTION:
+SSL_COMP_get_compression_methods        275	EXIST::FUNCTION:

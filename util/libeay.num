@@ -3146,3 +3146,5 @@ DSO_merge                               3574	EXIST::FUNCTION:
 EC_POINT_hex2point                      3575	EXIST::FUNCTION:EC
 BN_GF2m_mod_inv_arr                     3576	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3577	EXIST::FUNCTION:ENGINE
+PKCS7_set_digest                        3578	EXIST::FUNCTION:
+PKCS7_set0_type_other                   3579	EXIST::FUNCTION:
