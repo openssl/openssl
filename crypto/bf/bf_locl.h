@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef _HEADER_BF_LOCL_H
-#define _HEADER_BF_LOCL_H
+#ifndef HEADER_BF_LOCL_H
+#define HEADER_BF_LOCL_H
 #include <openssl/opensslconf.h> /* BF_PTR, BF_PTR2 */
 
 #undef c2l
