@@ -191,7 +191,7 @@ test_bn:
 	@./$(BNTEST) >tmp.bntest
 	@echo quit >>tmp.bntest
 	@echo "running bc"
-	@bc tmp.bntest 2>&1 | $(PERL) -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} print STDERR "."; $$i++;} print STDERR "\n$$i tests passed\n"'
+	@<tmp.bntest sh -c "`sh ./bctest`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
 	@echo 'test a^b%c implementations'
 	./$(EXPTEST)
 
