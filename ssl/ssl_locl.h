@@ -264,11 +264,11 @@ typedef struct cert_st
 	unsigned long export_mask;
 #ifndef NO_RSA
 	RSA *rsa_tmp;
-	RSA *(*rsa_tmp_cb)(SSL *ssl,int export,int keysize);
+	RSA *(*rsa_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
 #ifndef NO_DH
 	DH *dh_tmp;
-	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
+	DH *(*dh_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];

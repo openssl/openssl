@@ -86,7 +86,7 @@
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 #endif
 #ifndef NO_DH
 static DH *get_dh512(void);
@@ -724,7 +724,7 @@ static DH *get_dh512(void)
 #endif
 
 #ifndef NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
 

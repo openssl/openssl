@@ -93,7 +93,7 @@ typedef unsigned int u_int;
 #endif
 
 #ifndef NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
@@ -1394,7 +1394,7 @@ err:
 	}
 
 #ifndef NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
 

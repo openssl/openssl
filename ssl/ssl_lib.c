@@ -1250,13 +1250,13 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	{
 	unsigned long alg,mask,kalg;
 	CERT *c;
-	int i,export;
+	int i,is_export;
 
 	c=s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 	alg=s->s3->tmp.new_cipher->algorithms;
-	export=SSL_IS_EXPORT(alg);
-	mask=export?c->export_mask:c->mask;
+	is_export=SSL_IS_EXPORT(alg);
+	mask=is_export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 
 	if 	(kalg & SSL_kDHr)
@@ -1877,13 +1877,14 @@ int SSL_want(SSL *s)
  */
 
 #ifndef NO_RSA
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,int export,
+void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,
+							  int is_export,
 							  int keylength))
     { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
 #endif
 
 #ifndef NO_RSA
-void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int export,
+void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int is_export,
 							  int keylength))
     { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
 #endif
@@ -1892,14 +1893,14 @@ void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int export,
 /*!
  * \brief The RSA temporary key callback function.
  * \param ssl the SSL session.
- * \param export \c TRUE if the temp RSA key is for an export ciphersuite.
- * \param keylength if \c export is \c TRUE, then \c keylength is the size of
- * the required key in bits.
+ * \param is_export \c TRUE if the temp RSA key is for an export ciphersuite.
+ * \param keylength if \c is_export is \c TRUE, then \c keylength is the size
+ * of the required key in bits.
  * \return the temporary RSA key.
  * \sa SSL_CTX_set_tmp_rsa_callback, SSL_set_tmp_rsa_callback
  */
 
-RSA *cb(SSL *ssl,int export,int keylength)
+RSA *cb(SSL *ssl,int is_export,int keylength)
     {}
 #endif
 
@@ -1910,11 +1911,11 @@ RSA *cb(SSL *ssl,int export,int keylength)
  */
 
 #ifndef NO_DH
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export,
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
     { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
 
-void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int export,
+void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
     { SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
 #endif

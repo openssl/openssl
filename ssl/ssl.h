@@ -1084,21 +1084,23 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 #define SSL_CTX_set_read_ahead(ctx,m) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,0,NULL)
 
-     /* NB: the keylength is only applicable when export is true */
+     /* NB: the keylength is only applicable when is_export is true */
 #ifndef NO_RSA
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
-				  RSA *(*cb)(SSL *ssl,int export,
+				  RSA *(*cb)(SSL *ssl,int is_export,
 					     int keylength));
 
 void SSL_set_tmp_rsa_callback(SSL *ssl,
-				  RSA *(*cb)(SSL *ssl,int export,
+				  RSA *(*cb)(SSL *ssl,int is_export,
 					     int keylength));
 #endif
 #ifndef NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-				 DH *(*dh)(SSL *ssl,int export,int keylength));
+				 DH *(*dh)(SSL *ssl,int is_export,
+					   int keylength));
 void SSL_set_tmp_dh_callback(SSL *ssl,
-				 DH *(*dh)(SSL *ssl,int export,int keylength));
+				 DH *(*dh)(SSL *ssl,int is_export,
+					   int keylength));
 #endif
 
 #ifdef HEADER_COMP_H

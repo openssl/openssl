@@ -321,7 +321,7 @@ end:
 
 static int get_client_master_key(SSL *s)
 	{
-	int export,i,n,keya,ek;
+	int is_export,i,n,keya,ek;
 	unsigned char *p;
 	SSL_CIPHER *cp;
 	const EVP_CIPHER *c;
@@ -385,7 +385,7 @@ static int get_client_master_key(SSL *s)
 		&(p[s->s2->tmp.clear]),&(p[s->s2->tmp.clear]),
 		(s->s2->ssl2_rollback)?RSA_SSLV23_PADDING:RSA_PKCS1_PADDING);
 
-	export=SSL_C_IS_EXPORT(s->session->cipher);
+	is_export=SSL_C_IS_EXPORT(s->session->cipher);
 	
 	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 		{
@@ -396,7 +396,7 @@ static int get_client_master_key(SSL *s)
 
 	if (s->session->cipher->algorithm2 & SSL2_CF_8_BYTE_ENC)
 		{
-		export=1;
+		is_export=1;
 		ek=8;
 		}
 	else
@@ -407,11 +407,11 @@ static int get_client_master_key(SSL *s)
 	/* If a bad decrypt, continue with protocol but with a
 	 * dud master secret */
 	if ((i < 0) ||
-		((!export && (i != EVP_CIPHER_key_length(c)))
-		|| ( export && ((i != ek) || (s->s2->tmp.clear+i !=
+		((!is_export && (i != EVP_CIPHER_key_length(c)))
+		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c))))))
 		{
-		if (export)
+		if (is_export)
 			i=ek;
 		else
 			i=EVP_CIPHER_key_length(c);
@@ -424,8 +424,8 @@ static int get_client_master_key(SSL *s)
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_BAD_RSA_DECRYPT);
 		}
 	/* incorrect number of key bytes for non export cipher */
-	else if ((!export && (i != EVP_CIPHER_key_length(c)))
-		|| ( export && ((i != ek) || (s->s2->tmp.clear+i !=
+	else if ((!is_export && (i != EVP_CIPHER_key_length(c)))
+		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c)))))
 		{
 		error=1;
@@ -438,7 +438,7 @@ static int get_client_master_key(SSL *s)
 		}
 #endif
 
-	if (export) i+=s->s2->tmp.clear;
+	if (is_export) i+=s->s2->tmp.clear;
 	s->session->master_key_length=i;
 	memcpy(s->session->master_key,p,(unsigned int)i);
 	return(1);
