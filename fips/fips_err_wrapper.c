@@ -1,5 +1,5 @@
 #ifdef FIPS
-# include "fips_err.c"
+# include "fips_err.h"
 #else
 static void *dummy=&dummy;
 #endif
