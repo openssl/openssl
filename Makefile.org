@@ -400,7 +400,7 @@ do_irix-shared:
 
 # This assumes that GNU utilities are *not* used
 do_hpux-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
 		+vnocompatwarnings \
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -411,7 +411,7 @@ do_hpux-shared:
 
 # This assumes that GNU utilities are *not* used
 do_hpux64-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
