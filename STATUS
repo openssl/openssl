@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/07/02 21:11:11 $
+  ______________                           $Date: 2000/09/07 08:14:46 $
 
   DEVELOPMENT STATE
 
@@ -34,6 +34,7 @@
 	UTIL (a new set of library functions to support some higher level
 	      functionality that is currently missing).
 	Dynamic thread-lock support.
+	Shared library support for VMS.
 
   NEEDS PATCH
 
