@@ -138,7 +138,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 			c2l(in,tin1);
 			tin0^=tout0^inW0; tin[0]=tin0;
 			tin1^=tout1^inW1; tin[1]=tin1;
-			des_encrypt(tin,schedule,DES_ENCRYPT);
+			des_encrypt1(tin,schedule,DES_ENCRYPT);
 			tout0=tin[0]^outW0; l2c(tout0,out);
 			tout1=tin[1]^outW1; l2c(tout1,out);
 			}
@@ -147,7 +147,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 			c2ln(in,tin0,tin1,l+8);
 			tin0^=tout0^inW0; tin[0]=tin0;
 			tin1^=tout1^inW1; tin[1]=tin1;
-			des_encrypt(tin,schedule,DES_ENCRYPT);
+			des_encrypt1(tin,schedule,DES_ENCRYPT);
 			tout0=tin[0]^outW0; l2c(tout0,out);
 			tout1=tin[1]^outW1; l2c(tout1,out);
 			}
@@ -163,7 +163,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 			{
 			c2l(in,tin0); tin[0]=tin0^outW0;
 			c2l(in,tin1); tin[1]=tin1^outW1;
-			des_encrypt(tin,schedule,DES_DECRYPT);
+			des_encrypt1(tin,schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0^inW0;
 			tout1=tin[1]^xor1^inW1;
 			l2c(tout0,out);
@@ -175,7 +175,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 			{
 			c2l(in,tin0); tin[0]=tin0^outW0;
 			c2l(in,tin1); tin[1]=tin1^outW1;
-			des_encrypt(tin,schedule,DES_DECRYPT);
+			des_encrypt1(tin,schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0^inW0;
 			tout1=tin[1]^xor1^inW1;
 			l2cn(tout0,tout1,out,l+8);

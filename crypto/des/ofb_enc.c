@@ -101,7 +101,7 @@ void des_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		{
 		ti[0]=v0;
 		ti[1]=v1;
-		des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
+		des_encrypt1((DES_LONG *)ti,schedule,DES_ENCRYPT);
 		vv0=ti[0];
 		vv1=ti[1];
 		c2ln(in,d0,d1,n);

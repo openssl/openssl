@@ -87,7 +87,7 @@ void des_ofb64_encrypt(register const unsigned char *in,
 		{
 		if (n == 0)
 			{
-			des_encrypt(ti,schedule,DES_ENCRYPT);
+			des_encrypt1(ti,schedule,DES_ENCRYPT);
 			dp=d;
 			t=ti[0]; l2c(t,dp);
 			t=ti[1]; l2c(t,dp);

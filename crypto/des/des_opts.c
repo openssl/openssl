@@ -453,7 +453,7 @@ int main(int argc, char **argv)
 		count*=2;
 		Time_F(START);
 		for (i=count; i; i--)
-			des_encrypt(data,&(sch[0]),DES_ENCRYPT);
+			des_encrypt1(data,&(sch[0]),DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d < 3.0);
 	ca=count;

@@ -114,7 +114,7 @@ void des_ecb_encrypt(const_des_cblock *input, des_cblock *output,
 
 	c2l(in,l); ll[0]=l;
 	c2l(in,l); ll[1]=l;
-	des_encrypt(ll,ks,enc);
+	des_encrypt1(ll,ks,enc);
 	l=ll[0]; l2c(l,out);
 	l=ll[1]; l2c(l,out);
 	l=ll[0]=ll[1]=0;

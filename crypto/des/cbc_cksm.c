@@ -82,7 +82,7 @@ DES_LONG des_cbc_cksum(const unsigned char *in, des_cblock *output,
 			
 		tin0^=tout0; tin[0]=tin0;
 		tin1^=tout1; tin[1]=tin1;
-		des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
+		des_encrypt1((DES_LONG *)tin,schedule,DES_ENCRYPT);
 		/* fix 15/10/91 eay - thanks to keithr@sco.COM */
 		tout0=tin[0];
 		tout1=tin[1];
