@@ -160,7 +160,7 @@
 
  * $ tar zxvf openssl-x.x.x.tar.gz
    $ cd openssl-x.x.x
-   $ ./Configure Cygwin
+   $ ./config
    [...]
    $ make
    [...]
