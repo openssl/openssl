@@ -114,11 +114,11 @@ extern "C" {
 #  define MS_STATIC
 #endif
 
-#if defined(_WIN32) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(_WIN32) && !defined(WIN32) && !defined(__CYGWIN32__) && !defined(_UWIN)
 #  define WIN32
 #endif
 
-#if (defined(WIN32) || defined(WIN16)) && !defined(__CYGWIN32__)
+#if (defined(WIN32) || defined(WIN16)) && !defined(__CYGWIN32__) && !defined(_UWIN)
 #  ifndef WINDOWS
 #    define WINDOWS
 #  endif
@@ -142,7 +142,8 @@ extern "C" {
 #define clear_sys_error()	errno=0
 #endif
 
-#if defined(WINDOWS) && !defined(__CYGWIN32__)
+#if defined(WINDOWS) && !defined(__CYGWIN32__)  && !defined(_UWIN)
+
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
@@ -183,7 +184,7 @@ extern "C" {
 #  define NO_FP_API
 #endif
 
-#if (defined(WINDOWS) || defined(MSDOS)) && !defined(__CYGWIN32__)
+#if (defined(WINDOWS) || defined(MSDOS)) && !defined(__CYGWIN32__) && !defined(_UWIN)
 
 #  ifndef S_IFDIR
 #    define S_IFDIR	_S_IFDIR

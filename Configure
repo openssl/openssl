@@ -471,6 +471,9 @@ my %table=(
 # and its library files in util/pl/*)
 "Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 
+# UWIN 
+"UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+
 # Cygwin
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 "Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32:cygwin-shared:::.dll",
