@@ -308,7 +308,7 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out, int s
 {
 	int i;
 	ASN1_VALUE *skitem;
-	unsigned char *tmpdat, *p;
+	unsigned char *tmpdat = NULL, *p = NULL;
 	DER_ENC *derlst, *tder;
 	if(do_sort) {
 		/* Don't need to sort less than 2 items */
