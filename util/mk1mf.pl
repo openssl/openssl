@@ -67,6 +67,7 @@ and [options] can be one of
 	no-ecdsa				- No ECDSA
 	no-ecdh					- No ECDH
 	no-engine				- No engine
+	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
@@ -238,6 +239,7 @@ $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 $cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
 $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
+$cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -668,6 +670,7 @@ sub var_add
 	local(@a,$_,$ret);
 
 	return("") if $no_engine && $dir =~ /\/engine/;
+	return("") if $no_hw   && $dir =~ /\/hw/;
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_aes  && $dir =~ /\/aes/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
@@ -729,6 +732,7 @@ sub var_add
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
 	@a=grep(!/^engine$/,@a) if $no_engine;
+	@a=grep(!/^hw$/,@a) if $no_hw;
 	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
 	@a=grep(!/^gendsa$/,@a) if $no_sha1;
@@ -933,6 +937,7 @@ sub read_options
 	elsif (/^no-ecdsa$/)	{ $no_ecdsa=1; }
 	elsif (/^no-ecdh$/)	{ $no_ecdh=1; }
 	elsif (/^no-engine$/)	{ $no_engine=1; }
+	elsif (/^no-hw$/)	{ $no_hw=1; }
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
