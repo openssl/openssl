@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7c and OpenSSL 0.9.7d:
+
+      o Security: Fix Kerberos ciphersuite SSL/TLS handshaking bug
+      o Security: Fix null-pointer assignment in do_change_cipher_spec()
+      o Allow multiple active certificates with same subject in CA index
+      o Multiple X590 verification fixes
+      o Speed up HMAC and other operations
+
   Major changes between OpenSSL 0.9.7b and OpenSSL 0.9.7c:
 
       o Security: fix various ASN1 parsing bugs.
