@@ -103,7 +103,7 @@ int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path,int bytes);
 int RAND_poll(void);
 
-#if defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
