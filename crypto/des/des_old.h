@@ -88,8 +88,8 @@
  *
  */
 
-#ifndef HEADER_DES_OLD_H
-#define HEADER_DES_OLD_H
+#ifndef HEADER_DES_H
+#define HEADER_DES_H
 
 #ifdef OPENSSL_NO_DES
 #error DES is disabled.
