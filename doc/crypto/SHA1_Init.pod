@@ -23,7 +23,7 @@ be hashed (B<len> bytes at B<data>).
 SHA1_Final() places the message digest in B<md>, which must have space
 for SHA_DIGEST_LENGTH == 20 bytes of output, and erases the B<SHA_CTX>.
 
-When the entire message is available at one time, L<SHA1(3)|SHA(3)>
+When the entire message is available at one time, L<SHA1(3)|SHA1(3)>
 can be used.
 
 =head1 RETURN VALUES
