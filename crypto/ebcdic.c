@@ -1,5 +1,7 @@
 /* crypto/ebcdic.c */
 
+static void *dummy=&dummy;
+
 #ifdef CHARSET_EBCDIC
 #include "ebcdic.h"
 /*      Initial Port for  Apache-1.3     by <Martin.Kraemer@Mch.SNI.De>
