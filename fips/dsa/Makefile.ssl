@@ -87,7 +87,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
@@ -128,3 +128,29 @@ fips_dsa_ossl.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 fips_dsa_ossl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 fips_dsa_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_dsa_ossl.o: ../../include/openssl/ui.h fips_dsa_ossl.c
+fips_dsa_selftest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_dsa_selftest.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+fips_dsa_selftest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsa_selftest.o: ../../include/openssl/err.h ../../include/openssl/fips.h
+fips_dsa_selftest.o: ../../include/openssl/lhash.h
+fips_dsa_selftest.o: ../../include/openssl/opensslconf.h
+fips_dsa_selftest.o: ../../include/openssl/opensslv.h
+fips_dsa_selftest.o: ../../include/openssl/ossl_typ.h
+fips_dsa_selftest.o: ../../include/openssl/safestack.h
+fips_dsa_selftest.o: ../../include/openssl/stack.h
+fips_dsa_selftest.o: ../../include/openssl/symhacks.h fips_dsa_selftest.c
+fips_dsatest.o: ../../e_os.h ../../include/openssl/asn1.h
+fips_dsatest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_dsatest.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_dsatest.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+fips_dsatest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsatest.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+fips_dsatest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_dsatest.o: ../../include/openssl/lhash.h
+fips_dsatest.o: ../../include/openssl/opensslconf.h
+fips_dsatest.o: ../../include/openssl/opensslv.h
+fips_dsatest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+fips_dsatest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+fips_dsatest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_dsatest.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_dsatest.o: fips_dsatest.c

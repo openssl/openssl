@@ -71,7 +71,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
@@ -100,3 +100,14 @@ fips_rsa_gen.o: ../../include/openssl/opensslv.h
 fips_rsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
 fips_rsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_rsa_gen.o: ../../include/openssl/symhacks.h fips_rsa_gen.c
+fips_rsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_rsa_selftest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_rsa_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rsa_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_rsa_selftest.o: ../../include/openssl/opensslconf.h
+fips_rsa_selftest.o: ../../include/openssl/opensslv.h
+fips_rsa_selftest.o: ../../include/openssl/ossl_typ.h
+fips_rsa_selftest.o: ../../include/openssl/rsa.h
+fips_rsa_selftest.o: ../../include/openssl/safestack.h
+fips_rsa_selftest.o: ../../include/openssl/stack.h
+fips_rsa_selftest.o: ../../include/openssl/symhacks.h fips_rsa_selftest.c

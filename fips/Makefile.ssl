@@ -139,7 +139,7 @@ lint:
 
 depend:
 	if [ ! -f buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(SRC)
 	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
 	@for i in $(FDIRS) ;\
 	do \
@@ -185,11 +185,5 @@ fips.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips.o: ../include/openssl/sha.h ../include/openssl/stack.h
 fips.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips.o: ../include/openssl/ui_compat.h fips.c
-fips_err_wrapper.o: ../include/openssl/bio.h ../include/openssl/crypto.h
-fips_err_wrapper.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_err_wrapper.o: ../include/openssl/fips.h ../include/openssl/lhash.h
-fips_err_wrapper.o: ../include/openssl/opensslconf.h
-fips_err_wrapper.o: ../include/openssl/opensslv.h
-fips_err_wrapper.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_err_wrapper.o: ../include/openssl/symhacks.h fips_err.h fips_err_wrapper.c
+fips.o: ../include/openssl/ui_compat.h fips.c fips_locl.h
+fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c
