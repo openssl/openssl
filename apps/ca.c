@@ -658,15 +658,8 @@ bad:
 		db=TXT_DB_read(in,DB_NUMBER);
 		if (db == NULL) goto err;
 
-		if (!TXT_DB_create_index(db, DB_serial, NULL,
-					LHASH_HASH_FN(index_serial_hash),
-					LHASH_COMP_FN(index_serial_cmp)))
-			{
-			BIO_printf(bio_err,
-			  "error creating serial number index:(%ld,%ld,%ld)\n",
-			  			db->error,db->arg1,db->arg2);
+		if (!make_serial_index(db))
 			goto err;
-			}
 
 		if (get_certificate_status(ser_status,db) != 1)
 			BIO_printf(bio_err,"Error verifying serial %s!\n",
@@ -891,13 +884,8 @@ bad:
 		BIO_printf(bio_err,"generating index\n");
 		}
 	
-	if (!TXT_DB_create_index(db, DB_serial, NULL,
-			LHASH_HASH_FN(index_serial_hash),
-			LHASH_COMP_FN(index_serial_cmp)))
-		{
-		BIO_printf(bio_err,"error creating serial number index:(%ld,%ld,%ld)\n",db->error,db->arg1,db->arg2);
+	if (!make_serial_index(db))
 		goto err;
-		}
 
 	if (!TXT_DB_create_index(db, DB_name, index_name_qual,
 			LHASH_HASH_FN(index_name_hash),
@@ -2889,92 +2877,21 @@ char *make_revocation_str(int rev_type, char *rev_arg)
  * 2 OK and some extensions added (i.e. V2 CRL)
  */
 
+
 int make_revoked(X509_REVOKED *rev, char *str)
 	{
 	char *tmp = NULL;
-	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
 	int reason_code = -1;
 	int i, ret = 0;
 	ASN1_OBJECT *hold = NULL;
 	ASN1_GENERALIZEDTIME *comp_time = NULL;
 	ASN1_ENUMERATED *rtmp = NULL;
-	tmp = BUF_strdup(str);
 
-	p = strchr(tmp, ',');
 
-	rtime_str = tmp;
+	i = unpack_revinfo(&rev->revocationDate, &reason_code, &hold, &comp_time, str);
 
-	if (p)
-		{
-		*p = '\0';
-		p++;
-		reason_str = p;
-		p = strchr(p, ',');
-		if (p)
-			{
-			*p = '\0';
-			arg_str = p + 1;
-			}
-		}
-
-	if (rev && !ASN1_UTCTIME_set_string(rev->revocationDate, rtime_str))
-		{
-		BIO_printf(bio_err, "invalid revocation date %s\n", rtime_str);
+	if (i == 0)
 		goto err;
-		}
-	if (reason_str)
-		{
-		for (i = 0; i < NUM_REASONS; i++)
-			{
-			if(!strcasecmp(reason_str, crl_reasons[i]))
-				{
-				reason_code = i;
-				break;
-				}
-			}
-		if (reason_code == OCSP_REVOKED_STATUS_NOSTATUS)
-			{
-			BIO_printf(bio_err, "invalid reason code %s\n", reason_str);
-			goto err;
-			}
-
-		if (reason_code == 7)
-			reason_code = OCSP_REVOKED_STATUS_REMOVEFROMCRL;
-		else if (reason_code == 8)		/* Hold instruction */
-			{
-			if (!arg_str)
-				{	
-				BIO_printf(bio_err, "missing hold instruction\n");
-				goto err;
-				}
-			reason_code = OCSP_REVOKED_STATUS_CERTIFICATEHOLD;
-			hold = OBJ_txt2obj(arg_str, 0);
-
-			if (!hold)
-				{
-				BIO_printf(bio_err, "invalid object identifier %s\n", arg_str);
-				goto err;
-				}
-			}
-		else if ((reason_code == 9) || (reason_code == 10))
-			{
-			if (!arg_str)
-				{	
-				BIO_printf(bio_err, "missing compromised time\n");
-				goto err;
-				}
-			comp_time = ASN1_GENERALIZEDTIME_new();
-			if (!ASN1_GENERALIZEDTIME_set_string(comp_time, arg_str))
-				{	
-				BIO_printf(bio_err, "invalid compromised time %s\n", arg_str);
-				goto err;
-				}
-			if (reason_code == 9)
-				reason_code = OCSP_REVOKED_STATUS_KEYCOMPROMISE;
-			else
-				reason_code = OCSP_REVOKED_STATUS_CACOMPROMISE;
-			}
-		}
 
 	if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS))
 		{
@@ -3106,5 +3023,123 @@ int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
 		p++;
 		}
 	BIO_printf(bp,"'\n");
+	return 1;
+	}
+
+int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_GENERALIZEDTIME **pinvtm, char *str)
+	{
+	char *tmp = NULL;
+	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
+	int reason_code = -1;
+	int i, ret = 0;
+	ASN1_OBJECT *hold = NULL;
+	ASN1_GENERALIZEDTIME *comp_time = NULL;
+	tmp = BUF_strdup(str);
+
+	p = strchr(tmp, ',');
+
+	rtime_str = tmp;
+
+	if (p)
+		{
+		*p = '\0';
+		p++;
+		reason_str = p;
+		p = strchr(p, ',');
+		if (p)
+			{
+			*p = '\0';
+			arg_str = p + 1;
+			}
+		}
+
+	if (prevtm)
+		{
+		*prevtm = ASN1_UTCTIME_new();
+		if (!ASN1_UTCTIME_set_string(*prevtm, rtime_str))
+			{
+			BIO_printf(bio_err, "invalid revocation date %s\n", rtime_str);
+			goto err;
+			}
+		}
+	if (reason_str)
+		{
+		for (i = 0; i < NUM_REASONS; i++)
+			{
+			if(!strcasecmp(reason_str, crl_reasons[i]))
+				{
+				reason_code = i;
+				break;
+				}
+			}
+		if (reason_code == OCSP_REVOKED_STATUS_NOSTATUS)
+			{
+			BIO_printf(bio_err, "invalid reason code %s\n", reason_str);
+			goto err;
+			}
+
+		if (reason_code == 7)
+			reason_code = OCSP_REVOKED_STATUS_REMOVEFROMCRL;
+		else if (reason_code == 8)		/* Hold instruction */
+			{
+			if (!arg_str)
+				{	
+				BIO_printf(bio_err, "missing hold instruction\n");
+				goto err;
+				}
+			reason_code = OCSP_REVOKED_STATUS_CERTIFICATEHOLD;
+			hold = OBJ_txt2obj(arg_str, 0);
+
+			if (!hold)
+				{
+				BIO_printf(bio_err, "invalid object identifier %s\n", arg_str);
+				goto err;
+				}
+			if (phold) *phold = hold;
+			}
+		else if ((reason_code == 9) || (reason_code == 10))
+			{
+			if (!arg_str)
+				{	
+				BIO_printf(bio_err, "missing compromised time\n");
+				goto err;
+				}
+			comp_time = ASN1_GENERALIZEDTIME_new();
+			if (!ASN1_GENERALIZEDTIME_set_string(comp_time, arg_str))
+				{	
+				BIO_printf(bio_err, "invalid compromised time %s\n", arg_str);
+				goto err;
+				}
+			if (reason_code == 9)
+				reason_code = OCSP_REVOKED_STATUS_KEYCOMPROMISE;
+			else
+				reason_code = OCSP_REVOKED_STATUS_CACOMPROMISE;
+			}
+		}
+
+	if (preason) *preason = reason_code;
+	if (pinvtm) *pinvtm = comp_time;
+	else ASN1_GENERALIZEDTIME_free(comp_time);
+
+	err:
+
+	if (tmp) OPENSSL_free(tmp);
+	if (!phold) ASN1_OBJECT_free(hold);
+	if (!pinvtm) ASN1_GENERALIZEDTIME_free(comp_time);
+
+	return ret;
+	}
+
+int make_serial_index(TXT_DB *db)
+	{
+	if (!TXT_DB_create_index(db, DB_serial, NULL,
+				LHASH_HASH_FN(index_serial_hash),
+				LHASH_COMP_FN(index_serial_cmp)))
+		{
+		BIO_printf(bio_err,
+		  "error creating serial number index:(%ld,%ld,%ld)\n",
+		  			db->error,db->arg1,db->arg2);
+			return 0;
+		}
 	return 1;
 	}

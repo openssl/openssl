@@ -68,6 +68,7 @@
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/engine.h>
+#include <openssl/txt_db.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);
@@ -186,6 +187,11 @@ STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 ENGINE *setup_engine(BIO *err, const char *engine, int debug);
+
+/* Functions defined in ca.c and also used in ocsp.c */
+int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
+			ASN1_GENERALIZEDTIME **pinvtm, char *str);
+int make_serial_index(TXT_DB *db);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
