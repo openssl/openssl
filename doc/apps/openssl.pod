@@ -125,6 +125,10 @@ Generation of RSA Parameters.
 
 Generation of hashed passwords.
 
+=item L<B<pkcs12>|pkcs12(1)>
+
+PKCS#12 Data Management.
+
 =item L<B<pkcs7>|pkcs7(1)>
 
 PKCS#7 Data Management.
