@@ -61,6 +61,8 @@
 #include "bn_lcl.h"
 
 #ifdef BN_RECURSION
+/* Karatsuba-Ofman recursive multiplication algorithm */
+
 /* r is 2*n2 words in size,
  * a and b are both n2 words in size.
  * n2 must be a power of 2.
