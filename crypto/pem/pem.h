@@ -59,6 +59,7 @@
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 
+#include <openssl/e_os2.h>
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
@@ -68,7 +69,6 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
-#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
