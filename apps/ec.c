@@ -1,4 +1,7 @@
-/* apps/ecdsa.c */
+/* apps/ec.c */
+/*
+ * Written by Nils Larsch for the OpenSSL project.
+ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +56,7 @@
  *
  */
 
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,12 +64,10 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/ecdsa.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
 
 #undef PROG
-#define PROG	ecdsa_main
+#define PROG	ec_main
 
 /* -inform arg    - input format - default PEM (one of DER, NET or PEM)
  * -outform arg   - output format - default PEM
@@ -275,7 +276,7 @@ bad:
 			}
 		}
 
-	BIO_printf(bio_err, "read ECDSA key\n");
+	BIO_printf(bio_err, "read EC key\n");
 	if (informat == FORMAT_ASN1) 
 		{
 		if (pubin) 

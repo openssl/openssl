@@ -42,7 +42,7 @@ SCRIPTS=CA.sh CA.pl der_chop
 EXE= $(PROGRAM)$(EXE_EXT)
 
 E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
-	ca crl rsa rsautl dsa dsaparam ecdsa ecparam \
+	ca crl rsa rsautl dsa dsaparam ec ecparam \
 	x509 genrsa gendsa s_server s_client speed \
 	s_time version pkcs7 crl2pkcs7 sess_id ciphers nseq pkcs12 \
 	pkcs8 spkac smime rand engine ocsp
@@ -58,14 +58,14 @@ RAND_SRC=app_rand.c
 
 E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
 	ca.o pkcs7.o crl2p7.o crl.o \
-	rsa.o rsautl.o dsa.o dsaparam.o ecdsa.o ecparam.o \
+	rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
 	x509.o genrsa.o gendsa.o s_server.o s_client.o speed.o \
 	s_time.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) version.o sess_id.o \
 	ciphers.o nseq.o pkcs12.o pkcs8.o spkac.o smime.o rand.o engine.o ocsp.o
 
 E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
 	pkcs7.c crl2p7.c crl.c \
-	rsa.c rsautl.c dsa.c dsaparam.c ecdsa.c ecparam.c \
+	rsa.c rsautl.c dsa.c dsaparam.c ec.c ecparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
 	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
 	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c engine.c ocsp.c
@@ -437,31 +437,31 @@ dsaparam.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 dsaparam.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
 dsaparam.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 dsaparam.o: ../include/openssl/x509_vfy.h apps.h dsaparam.c
-ecdsa.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
-ecdsa.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
-ecdsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-ecdsa.o: ../include/openssl/cast.h ../include/openssl/conf.h
-ecdsa.o: ../include/openssl/crypto.h ../include/openssl/des.h
-ecdsa.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-ecdsa.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-ecdsa.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-ecdsa.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-ecdsa.o: ../include/openssl/err.h ../include/openssl/evp.h
-ecdsa.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-ecdsa.o: ../include/openssl/md2.h ../include/openssl/md4.h
-ecdsa.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
-ecdsa.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-ecdsa.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-ecdsa.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-ecdsa.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-ecdsa.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-ecdsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-ecdsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-ecdsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-ecdsa.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-ecdsa.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-ecdsa.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
-ecdsa.o: ../include/openssl/x509_vfy.h apps.h ecdsa.c
+ec.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+ec.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+ec.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+ec.o: ../include/openssl/cast.h ../include/openssl/conf.h
+ec.o: ../include/openssl/crypto.h ../include/openssl/des.h
+ec.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+ec.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+ec.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+ec.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+ec.o: ../include/openssl/err.h ../include/openssl/evp.h
+ec.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+ec.o: ../include/openssl/md2.h ../include/openssl/md4.h
+ec.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+ec.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ec.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ec.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ec.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ec.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+ec.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+ec.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+ec.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ec.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ec.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
+ec.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+ec.o: ../include/openssl/x509_vfy.h apps.h ec.c
 ecparam.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 ecparam.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 ecparam.o: ../include/openssl/bn.h ../include/openssl/buffer.h
