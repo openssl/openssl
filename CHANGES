@@ -1906,14 +1906,14 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      identity, and test if they are actually available.
      [Richard Levitte]
 
-  +) Add support for shared libraries under Irix.
+  *) Add support for shared libraries under Irix.
      [Albert Chin-A-Young <china@thewrittenword.com>]
 
   +) Improve RPM specification file by forcing symbolic linking and making
      sure the installed documentation is also owned by root.root.
      [Damien Miller <djm@mindrot.org>]
 
-  +) Add configuration option to build on Linux on both big-endian and
+  *) Add configuration option to build on Linux on both big-endian and
      little-endian MIPS.
      [Ralf Baechle <ralf@uni-koblenz.de>]
 
@@ -1943,7 +1943,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   +) Support threads on FreeBSD-elf in Configure.
      [Richard Levitte]
 
-  +) Add the possibility to create shared libraries on HP-UX
+  *) Add the possibility to create shared libraries on HP-UX
      [Richard Levitte]
 
   +) Fix for SHA1 assembly problem with MASM: it produces
