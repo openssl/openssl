@@ -145,7 +145,8 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
 		{
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,ERR_R_PASSED_NULL_PARAMETER);
 		}
-	else if (result_buf == NULL)
+	else if ((type == UIT_PROMPT || type == UIT_VERIFY
+			 || type == UIT_BOOLEAN) && result_buf == NULL)
 		{
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,UI_R_NO_RESULT_BUFFER);
 		}
