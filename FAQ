@@ -29,6 +29,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why can't I use OpenSSL certificates with SSL client authentication?
 * Why does my browser give a warning about a mismatched hostname?
 * How do I install a CA certificate into a browser?
+* Why is OpenSSL x509 DN output not conformant to RFC2253?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -343,6 +344,13 @@ DO NOT DO THIS! This command will give away your CAs private key and
 reduces its security to zero: allowing anyone to forge certificates in
 whatever name they choose.
 
+* Why is OpenSSL x509 DN output not conformant to RFC2253?
+
+The ways to print out the oneline format of the DN (Distinguished Name) have
+been extended in version 0.9.7 of OpenSSL. Using the new X509_NAME_print_ex()
+interface, the "-nameopt" option could be introduded. See the manual
+page of the "openssl x509" commandline tool for details. The old behaviour
+has however been left as default for the sake of compatibility.
 
 [BUILD] =======================================================================
 
