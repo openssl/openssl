@@ -221,8 +221,6 @@ bad:
 			}
 		}
 
-	if (noout) goto end;
-
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
 		{
@@ -242,6 +240,9 @@ bad:
 		}
 
 	if (text) X509_CRL_print(out, x);
+
+	if (noout) goto end;
+
 	if 	(outformat == FORMAT_ASN1)
 		i=(int)i2d_X509_CRL_bio(out,x);
 	else if (outformat == FORMAT_PEM)

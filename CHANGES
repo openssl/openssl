@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Fix `openssl crl -noout -text' combination where `-noout' killed the
+     `-text' option at all and this way the `-noout -text' combination was
+     inconsistent in `openssl crl' with the friends in `openssl x509|rsa|dsa'.
+     [Ralf S. Engelschall]
+
   *) Make sure a corresponding plain text error message exists for the
      X509_V_ERR_CERT_REVOKED/23 error number which can occur when a
      verify callback function determined that a certificate was revoked.
