@@ -4,6 +4,10 @@
 
  Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
 
+  *) Fix client_certificate (ssl/s2_clnt.c): The permissible total
+     length of the REQUEST-CERTIFICATE message is 18 .. 34, not 17 .. 33.
+     [Zeev Lieber <zeev-l@yahoo.com>]
+
   *) Change the default configuration reader to deal with last line not
      being properly terminated.
      [Richard Levitte]
