@@ -219,7 +219,7 @@ libclean:
 	rm -f *.a */lib */*/lib
 
 clean:
-	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time
+	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making clean in $$i..." && \
