@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add two demo programs for PKCS12_parse() and PKCS12_create().
+     Update PKCS12_parse() so it copies the friendlyName and the
+     keyid to the certificates aux info.
+     [Steve Henson]
+
   *) Fix bug in PKCS7_verify() which caused an infinite loop
      if there was more than one signature.
      [Sven Uszpelkat <su@celocom.de>]

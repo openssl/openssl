@@ -153,6 +153,14 @@ int X509_alias_set1(X509 *x, unsigned char *name, int len)
 	return ASN1_STRING_set(aux->alias, name, len);
 }
 
+int X509_keyid_set1(X509 *x, unsigned char *id, int len)
+{
+	X509_CERT_AUX *aux;
+	if(!(aux = aux_get(x))) return 0;
+	if(!aux->keyid && !(aux->keyid = ASN1_OCTET_STRING_new())) return 0;
+	return ASN1_STRING_set(aux->keyid, id, len);
+}
+
 unsigned char *X509_alias_get0(X509 *x, int *len)
 {
 	if(!x->aux || !x->aux->alias) return NULL;
