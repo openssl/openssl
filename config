@@ -517,6 +517,10 @@ EOF
 	${CC} -o dummy dummy.c && OUT=`./dummy ${MACHINE}`
 	rm dummy dummy.c
 	;;
+  ppc64-*-linux2)
+	#Use the standard target for PPC architecture until we create a
+	#special one for the 64bit architecture.
+	OUT="linux-ppc" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   m68k-*-linux*) OUT="linux-m68k" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
