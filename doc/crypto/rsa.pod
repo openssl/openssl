@@ -7,6 +7,7 @@ rsa - RSA public key cryptosystem
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
+ #include <openssl/engine.h>
 
  RSA * RSA_new(void);
  void RSA_free(RSA *rsa);
@@ -31,15 +32,15 @@ rsa - RSA public key cryptosystem
  int RSA_blinding_on(RSA *rsa, BN_CTX *ctx);
  void RSA_blinding_off(RSA *rsa);
 
- void RSA_set_default_method(RSA_METHOD *meth);
- RSA_METHOD *RSA_get_default_method(void);
- RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
+ void RSA_set_default_openssl_method(RSA_METHOD *meth);
+ RSA_METHOD *RSA_get_default_openssl_method(void);
+ int RSA_set_method(RSA *rsa, ENGINE *engine);
  RSA_METHOD *RSA_get_method(RSA *rsa);
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
  RSA_METHOD *RSA_PKCS1_RSAref(void);
  RSA_METHOD *RSA_null_method(void);
  int RSA_flags(RSA *rsa);
- RSA *RSA_new_method(RSA_METHOD *method);
+ RSA *RSA_new_method(ENGINE *engine);
 
  int RSA_print(BIO *bp, RSA *x, int offset);
  int RSA_print_fp(FILE *fp, RSA *x, int offset);

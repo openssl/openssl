@@ -7,6 +7,7 @@ dsa - Digital Signature Algorithm
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
+ #include <openssl/engine.h>
 
  DSA *	DSA_new(void);
  void	DSA_free(DSA *dsa);
@@ -28,10 +29,10 @@ dsa - Digital Signature Algorithm
  int	DSA_verify(int dummy, const unsigned char *dgst, int len,
 		unsigned char *sigbuf, int siglen, DSA *dsa);
 
- void DSA_set_default_method(DSA_METHOD *meth);
- DSA_METHOD *DSA_get_default_method(void);
- DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth);
- DSA *DSA_new_method(DSA_METHOD *meth);
+ void DSA_set_default_openssl_method(DSA_METHOD *meth);
+ DSA_METHOD *DSA_get_default_openssl_method(void);
+ int DSA_set_method(DSA *dsa, ENGINE *engine);
+ DSA *DSA_new_method(ENGINE *engine);
  DSA_METHOD *DSA_OpenSSL(void);
 
  int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),

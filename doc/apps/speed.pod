@@ -7,6 +7,7 @@ speed - test library performance
 =head1 SYNOPSIS
 
 B<openssl speed>
+[B<-engine id>]
 [B<md2>]
 [B<mdc2>]
 [B<md5>]
@@ -38,6 +39,17 @@ B<openssl speed>
 This command is used to test the performance of cryptographic algorithms.
 
 =head1 OPTIONS
+
+=over 4
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<speed>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
+=item B<[zero or more test algorithms]>
 
 If any options are given, B<speed> tests those algorithms, otherwise all of
 the above are tested.

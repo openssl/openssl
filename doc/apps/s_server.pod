@@ -39,6 +39,7 @@ B<openssl> B<s_client>
 [B<-hack>]
 [B<-www>]
 [B<-WWW>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -185,6 +186,13 @@ web browser.
 emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded.
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<s_server>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

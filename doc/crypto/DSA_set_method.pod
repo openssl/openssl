@@ -2,20 +2,21 @@
 
 =head1 NAME
 
-DSA_set_default_method, DSA_get_default_method, DSA_set_method,
-DSA_new_method, DSA_OpenSSL - select DSA method
+DSA_set_default_openssl_method, DSA_get_default_openssl_method,
+DSA_set_method, DSA_new_method, DSA_OpenSSL - select DSA method
 
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
+ #include <openssl/engine.h>
 
- void DSA_set_default_method(DSA_METHOD *meth);
+ void DSA_set_default_openssl_method(DSA_METHOD *meth);
 
- DSA_METHOD *DSA_get_default_method(void);
+ DSA_METHOD *DSA_get_default_openssl_method(void);
 
- DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth);
+ int DSA_set_method(DSA *dsa, ENGINE *engine);
 
- DSA *DSA_new_method(DSA_METHOD *meth);
+ DSA *DSA_new_method(ENGINE *engine);
 
  DSA_METHOD *DSA_OpenSSL(void);
 
@@ -28,17 +29,21 @@ such as hardware accelerators may be used.
 Initially, the default is to use the OpenSSL internal implementation.
 DSA_OpenSSL() returns a pointer to that method.
 
-DSA_set_default_method() makes B<meth> the default method for all B<DSA>
-structures created later.
+DSA_set_default_openssl_method() makes B<meth> the default method for
+all DSA structures created later. B<NB:> This is true only whilst the
+default engine for DSA operations remains as "openssl". ENGINEs
+provide an encapsulation for implementations of one or more algorithms at a
+time, and all the DSA functions mentioned here operate within the scope
+of the default "openssl" engine.
 
-DSA_get_default_method() returns a pointer to the current default
-method.
+DSA_get_default_openssl_method() returns a pointer to the current default
+method for the "openssl" engine.
 
-DSA_set_method() selects B<meth> for all operations using the structure B<dsa>.
+DSA_set_method() selects B<engine> for all operations using the structure B<dsa>.
 
-DSA_new_method() allocates and initializes a B<DSA> structure so that
-B<method> will be used for the DSA operations. If B<method> is B<NULL>,
-the default method is used.
+DSA_new_method() allocates and initializes a DSA structure so that
+B<engine> will be used for the DSA operations. If B<engine> is NULL,
+the default engine for DSA operations is used.
 
 =head1 THE DSA_METHOD STRUCTURE
 
@@ -84,18 +89,17 @@ struct
 
 =head1 RETURN VALUES
 
-DSA_OpenSSL() and DSA_get_default_method() return pointers to the
-respective B<DSA_METHOD>s.
+DSA_OpenSSL() and DSA_get_default_openssl_method() return pointers to the
+respective DSA_METHODs.
 
-DSA_set_default_method() returns no value.
+DSA_set_default_openssl_method() returns no value.
 
-DSA_set_method() returns a pointer to the B<DSA_METHOD> previously
-associated with B<dsa>.
+DSA_set_method() returns non-zero if the ENGINE associated with B<dsa>
+was successfully changed to B<engine>.
 
-DSA_new_method() returns B<NULL> and sets an error code that can be
+DSA_new_method() returns NULL and sets an error code that can be
 obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation
-fails. Otherwise it returns a pointer to the newly allocated
-structure.
+fails. Otherwise it returns a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
@@ -105,5 +109,10 @@ L<dsa(3)|dsa(3)>, L<DSA_new(3)|DSA_new(3)>
 
 DSA_set_default_method(), DSA_get_default_method(), DSA_set_method(),
 DSA_new_method() and DSA_OpenSSL() were added in OpenSSL 0.9.4.
+
+DSA_set_default_openssl_method() and DSA_get_default_openssl_method()
+replaced DSA_set_default_method() and DSA_get_default_method() respectively,
+and DSA_set_method() and DSA_new_method() were altered to use B<ENGINE>s
+rather than B<DSA_METHOD>s during development of OpenSSL 0.9.6.
 
 =cut
