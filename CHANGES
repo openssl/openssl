@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
+     type, we must throw them away by setting rr->length to 0.
+     [D P Chang <dpc@qualys.com>]
+
   -) OpenSSL 0.9.6c released [21 dec 2001]
 
   +) SECURITY: remove unsafe setjmp/signal interaction from ui_openssl.c.
