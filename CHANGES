@@ -13,6 +13,13 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix object definitions for Private and Enterprise: they were not
+     recognized in their shortname (=lowercase) representation. Extend
+     obj_dat.pl to issue an error when using undefined keywords instead
+     of silently ignoring the problem (Svenning Sorensen
+     <sss@sss.dnsalias.net>).
+     [Lutz Jaenicke]
+
   +) Make object definitions compliant to LDAP (RFC2256): SN is the short
      form for "surname", serialNumber has no short form (Michael Bell
      <michael.bell@rz.hu-berlin.de>).
