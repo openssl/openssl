@@ -33,31 +33,28 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 
-#ifndef __OpenBSD__
-
-void
-ENGINE_load_cryptodev(void)
-{
-	/* This is a NOP unless __OpenBSD__ is defined */
-	return;
-}
-
-#else /* __OpenBSD__ */
-
-#include <sys/types.h>
+#if (defined(__unix__) || defined(unix)) && !defined(USG)
 #include <sys/param.h>
+# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 50000) || __FreeBSD_version >= 50041)
+#  define HAVE_CRYPTODEV
+# endif
+# if (OpenBSD >= 200110)
+#  define HAVE_SYSLOG_R
+# endif
+#endif
 
-#if OpenBSD < 200112
+#ifndef HAVE_CRYPTODEV
 
 void
 ENGINE_load_cryptodev(void)
 {
-	/* This is a NOP unless we have release 3.0 (released december 2001) */
+	/* This is a NOP on platforms without /dev/crypto */
 	return;
 }
 
-#else /* OpenBSD 3.0 or above */
-
+#else 
+ 
+#include <sys/types.h>
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -1032,12 +1029,18 @@ static DH_METHOD cryptodev_dh = {
 static int
 cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 {
+#ifdef HAVE_SYSLOG_R
 	struct syslog_data sd = SYSLOG_DATA_INIT;
+#endif
 
 	switch (cmd) {
 	default:
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sd,
 		    "cryptodev_ctrl: unknown command %d", cmd);
+#else
+		syslog(LOG_ERR, "cryptodev_ctrl: unknown command %d", cmd);
+#endif
 		break;
 	}
 	return (1);
@@ -1064,7 +1067,7 @@ ENGINE_load_cryptodev(void)
 	close(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
-	    !ENGINE_set_name(engine, "OpenBSD cryptodev engine") ||
+	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||
 	    !ENGINE_set_ciphers(engine, cryptodev_engine_ciphers) ||
 	    !ENGINE_set_digests(engine, cryptodev_engine_digests) ||
 	    !ENGINE_set_ctrl_function(engine, cryptodev_ctrl) ||
@@ -1126,5 +1129,4 @@ ENGINE_load_cryptodev(void)
 	ERR_clear_error();
 }
 
-#endif /* OpenBSD 3.0 or above */
-#endif /* __OpenBSD__ */
+#endif /* HAVE_CRYPTODEV */
