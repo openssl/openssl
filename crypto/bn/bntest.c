@@ -703,7 +703,7 @@ int test_mod(BIO *bp, BN_CTX *ctx)
 int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
-	int i;
+	int i,j;
 
 	a=BN_new();
 	b=BN_new();
@@ -711,6 +711,7 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	d=BN_new();
 	e=BN_new();
 
+	for (j=0; j<3; j++) {
 	BN_bntest_rand(c,1024,0,0); /**/
 	for (i=0; i<num0; i++)
 		{
@@ -761,6 +762,7 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 		    return 0;
 		    }
 		}
+	}
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
