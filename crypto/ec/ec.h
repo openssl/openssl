@@ -132,7 +132,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 /* EC_GROUP_new_by_nid() and EC_GROUP_new_by_name() also set
  * generator and order */
-EC_GROUP *EC_GROUP_new_by_nid(const int nid);
+EC_GROUP *EC_GROUP_new_by_nid(int nid);
 EC_GROUP *EC_GROUP_new_by_name(int name);
 /* Currently valid arguments to EC_GROUP_new_by_name() */
 #define EC_GROUP_NO_CURVE		0

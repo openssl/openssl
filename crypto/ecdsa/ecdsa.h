@@ -126,8 +126,8 @@ void	  ECDSA_SIG_free(ECDSA_SIG *a);
 int	  i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **pp);
 ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **v, const unsigned char **pp, long length);
 
-ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, const int dgst_len, ECDSA *ecdsa);
-int	  ECDSA_do_verify(const unsigned char *dgst, const int dgst_len, ECDSA_SIG *sig, ECDSA* ecdsa);
+ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dgst_len, ECDSA *ecdsa);
+int	  ECDSA_do_verify(const unsigned char *dgst, int dgst_len, ECDSA_SIG *sig, ECDSA* ecdsa);
 int 	  ECDSA_generate_key(ECDSA *ecdsa);
 int	  ECDSA_check_key(ECDSA *ecdsa);
 
