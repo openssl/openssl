@@ -4,6 +4,12 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) New s_client option -ign_eof: EOF at stdin is ignored, and
+     'Q' and 'R' lose their special meanings (quit/renegotiate).
+     This is part of what -quiet does; unlike -quiet, -ign_eof
+     does not suppress any output.
+     [Richard Levitte]
+
   *) Add compatibility options to the purpose and trust code. The
      purpose X509_PURPOSE_ANY is "any purpose" which automatically
      accepts a certificate or CA, this was the previous behaviour,
