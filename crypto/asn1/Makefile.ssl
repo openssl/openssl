@@ -1267,9 +1267,10 @@ x_val.o: ../cryptlib.h
 x_x509.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 x_x509.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 x_x509.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-x_x509.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-x_x509.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-x_x509.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+x_x509.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+x_x509.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+x_x509.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+x_x509.o: ../../include/openssl/e_os.h ../../include/openssl/e_os.h
 x_x509.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 x_x509.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 x_x509.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
@@ -1282,7 +1283,7 @@ x_x509.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x_x509.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x_x509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_x509.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x_x509.o: ../cryptlib.h
+x_x509.o: ../../include/openssl/x509v3.h ../cryptlib.h
 x_x509a.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 x_x509a.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 x_x509a.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

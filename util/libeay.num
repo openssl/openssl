@@ -1846,3 +1846,12 @@ ASN1_STRING_to_UTF8                     2442
 BIO_vprintf                             2443
 BIO_vsnprintf                           2444
 d2i_PUBKEY_fp                           2445
+X509_cmp_time                           2446
+X509_STORE_CTX_set_time                 2447
+X509_STORE_CTX_get1_issuer              2448
+X509_OBJECT_retrieve_match              2449
+X509_OBJECT_idx_by_subject              2450
+X509_STORE_CTX_set_flags                2451
+X509_STORE_CTX_trusted_stack            2452
+X509_time_adj                           2453
+X509_check_issued                       2454
