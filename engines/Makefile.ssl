@@ -70,7 +70,6 @@ libs:	$(LIBOBJ)
 		set -e; \
 		for l in $(LIBNAMES); do \
 			$(NEWMAKE) -f ../Makefile.shared \
-				SHARED_MAKEFILE=../Makefile.shared \
 				CC="$(CC)" LIBNAME=$$l LIBEXTRAS=e_$$l.o \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
