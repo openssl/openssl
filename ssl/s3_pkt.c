@@ -1077,6 +1077,7 @@ start:
 		/* TLS just ignores unknown message types */
 		if (s->version == TLS1_VERSION)
 			{
+			rr->length = 0;
 			goto start;
 			}
 #endif
