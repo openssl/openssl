@@ -4,6 +4,12 @@
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Adjust DES_cbc_cksum() so it returns the same value as the MIT
+     Kerberos function mit_des_cbc_cksum().  Before this change,
+     the value returned by DES_cbc_cksum() was like the one from
+     mit_des_cbc_cksum(), except the bytes were swapped.
+     [Kevin Greaney <Kevin.Greaney@hp.com> and Richard Levitte]
+
   *) Allow an application to disable the automatic SSL chain building.
      Before this a rather primitive chain build was always performed in
      ssl3_output_cert_chain(): an application had no way to send the 
