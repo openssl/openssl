@@ -13,6 +13,10 @@ B<openssl> B<ca>
 [B<-name section>]
 [B<-gencrl>]
 [B<-revoke file>]
+[B<-crl_reason reason>]
+[B<-crl_hold instruction>]
+[B<-crl_compromise time>]
+[B<-crl_CA_compromise time>]
 [B<-subj arg>]
 [B<-crldays days>]
 [B<-crlhours hours>]
@@ -74,7 +78,7 @@ a single self signed certificate to be signed by the CA.
 =item B<-spkac filename>
 
 a file containing a single Netscape signed public key and challenge
-and additional field values to be signed by the CA. See the B<NOTES>
+and additional field values to be signed by the CA. See the B<SPKAC FORMAT>
 section for information on the required format.
 
 =item B<-infiles>
@@ -213,6 +217,33 @@ the number of hours before the next CRL is due.
 =item B<-revoke filename>
 
 a filename containing a certificate to revoke.
+
+=item B<-crl_reason reason>
+
+revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
+B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
+B<certificateHold> or B<removeFromCRL>. The matching of B<reason> is case
+insensitive. Setting any revocation reason will make the CRL v2.
+
+In practive B<removeFromCRL> is not particularly useful because it is only used
+in delta CRLs which are not currently implemented.
+
+=item B<-crl_hold instruction>
+
+This sets the CRL revocation reason code to B<certificateHold> and the hold
+instruction to B<instruction> which must be an OID. Although any OID can be
+used only B<holdInstructionNone> (the use of which is discouraged by RFC2459)
+B<holdInstructionCallIssuer> or B<holdInstructionReject> will normally be used.
+
+=item B<-crl_compromise time>
+
+This sets the revocation reason to B<keyCompromise> and the compromise time to
+B<time>. B<time> should be in GeneralizedTime format that is B<YYYYMMDDHHMMSSZ>.
+
+=item B<-crl_CA_compromise time>
+
+This is the same as B<crl_compromise> except the revocation reason is set to
+B<CACompromise>.
 
 =item B<-subj arg>
 
@@ -526,9 +557,6 @@ The text database index file is a critical part of the process and
 if corrupted it can be difficult to fix. It is theoretically possible
 to rebuild the index file from all the issued certificates and a current
 CRL: however there is no option to do this.
-
-CRL entry extensions cannot currently be created: only CRL extensions
-can be added.
 
 V2 CRL features like delta CRL support and CRL numbers are not currently
 supported.
