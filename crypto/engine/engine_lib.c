@@ -232,7 +232,7 @@ int ENGINE_finish(ENGINE *e)
 	}
 
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-	pem_password_cb *callback, void *callback_data)
+	UI_METHOD *ui_method, void *callback_data)
 	{
 	EVP_PKEY *pkey;
 
@@ -257,7 +257,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_privkey(e, key_id, callback, callback_data);
+	pkey = e->load_privkey(e, key_id, ui_method, callback_data);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
@@ -268,7 +268,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 	}
 
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-	pem_password_cb *callback, void *callback_data)
+	UI_METHOD *ui_method, void *callback_data)
 	{
 	EVP_PKEY *pkey;
 
@@ -293,7 +293,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_pubkey(e, key_id, callback, callback_data);
+	pkey = e->load_pubkey(e, key_id, ui_method, callback_data);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
@@ -486,6 +486,43 @@ int ENGINE_cmd_is_executable(ENGINE *e, int cmd)
 		return 0;
 	return 1;
 	}
+
+int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
+        long i, void *p, void (*f)(), int cmd_optional)
+        {
+	int num;
+
+	if((e == NULL) || (cmd_name == NULL))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	if((e->ctrl == NULL) || ((num = ENGINE_ctrl(e,
+					ENGINE_CTRL_GET_CMD_FROM_NAME,
+					0, (void *)cmd_name, NULL)) <= 0))
+		{
+		/* If the command didn't *have* to be supported, we fake
+		 * success. This allows certain settings to be specified for
+		 * multiple ENGINEs and only require a change of ENGINE id
+		 * (without having to selectively apply settings). Eg. changing
+		 * from a hardware device back to the regular software ENGINE
+		 * without editing the config file, etc. */
+		if(cmd_optional)
+			{
+			ERR_clear_error();
+			return 1;
+			}
+		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD,
+			ENGINE_R_INVALID_CMD_NAME);
+		return 0;
+		}
+	/* Force the result of the control command to 0 or 1, for the reasons
+	 * mentioned before. */
+        if (ENGINE_ctrl(e, num, i, p, f))
+                return 1;
+        return 0;
+        }
 
 int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
 				int cmd_optional)

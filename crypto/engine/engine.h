@@ -72,6 +72,7 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/ui.h>
 #include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
@@ -136,6 +137,10 @@ typedef void DH_METHOD;
 /* Indicates that the control command takes *no* input. Ie. the control command
  * is unparameterised. */
 #define ENGINE_CMD_FLAG_NO_INPUT	(unsigned int)0x0004
+/* Indicates that the control command is internal. This control command won't
+ * be shown in any output, and is only usable through the ENGINE_ctrl_cmd()
+ * function. */
+#define ENGINE_CMD_FLAG_INTERNAL	(unsigned int)0x0008
 
 /* NB: These 3 control commands are deprecated and should not be used. ENGINEs
  * relying on these commands should compile conditional support for
@@ -154,6 +159,11 @@ typedef void DH_METHOD;
 #define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
 #define ENGINE_CTRL_HUP				3 /* Close and reinitialise any
 						     handles/connections etc. */
+#define ENGINE_CTRL_SET_USER_INTERFACE          4 /* Alternative to callback */
+#define ENGINE_CTRL_SET_CALLBACK_DATA           5 /* User-specific data, used
+                                                     when calling the password
+                                                     callback and the user
+                                                     interface */
 
 /* These control commands allow an application to deal with an arbitrary engine
  * in a dynamic way. Warn: Negative return values indicate errors FOR THESE
@@ -264,7 +274,7 @@ typedef int (*ENGINE_GEN_INT_FUNC_PTR)(ENGINE *);
 typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
 /* Generic load_key function pointer */
 typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
-	pem_password_cb *callback, void *callback_data);
+	UI_METHOD *ui_method, void *callback_data);
 
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
@@ -311,6 +321,13 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
  * ENGINE_ctrl_cmd_string(). If this returns zero, it is not available to
  * ENGINE_ctrl_cmd_string(), only ENGINE_ctrl(). */
 int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
+
+/* This function works like ENGINE_ctrl() with the exception of taking a
+ * command name instead of a command number, and can handle optional commands.
+ * See the comment on ENGINE_ctrl_cmd_string() for an explanation on how to
+ * use the cmd_name and cmd_optional. */
+int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
+        long i, void *p, void (*f)(), int cmd_optional);
 
 /* This function passes a command-name and argument to an ENGINE. The cmd_name
  * is converted to a command number and the control command is called using
@@ -419,9 +436,9 @@ int ENGINE_finish(ENGINE *e);
  * location, handled by the engine.  The storage may be on a card or
  * whatever. */
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-	pem_password_cb *callback, void *callback_data);
+	UI_METHOD *ui_method, void *callback_data);
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-	pem_password_cb *callback, void *callback_data);
+	UI_METHOD *ui_method, void *callback_data);
 
 /* This returns a pointer for the current ENGINE structure that
  * is (by default) performing any RSA operations. The value returned
@@ -486,6 +503,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_BY_ID				 106
 #define ENGINE_F_ENGINE_CMD_IS_EXECUTABLE		 170
 #define ENGINE_F_ENGINE_CTRL				 142
+#define ENGINE_F_ENGINE_CTRL_CMD			 178
 #define ENGINE_F_ENGINE_CTRL_CMD_STRING			 171
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
@@ -507,6 +525,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_HWCRHK_FINISH				 135
 #define ENGINE_F_HWCRHK_GET_PASS			 155
 #define ENGINE_F_HWCRHK_INIT				 136
+#define ENGINE_F_HWCRHK_INSERT_CARD			 179
 #define ENGINE_F_HWCRHK_LOAD_PRIVKEY			 153
 #define ENGINE_F_HWCRHK_LOAD_PUBKEY			 154
 #define ENGINE_F_HWCRHK_MOD_EXP				 137

@@ -64,6 +64,7 @@
 #include "cryptlib.h"
 #include <openssl/dso.h>
 #include <openssl/engine.h>
+#include <openssl/ui.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_NCIPHER
@@ -116,13 +117,17 @@ static int hwcrhk_rand_status(void);
 
 /* KM stuff */
 static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
-	pem_password_cb *callback, void *callback_data);
+	UI_METHOD *ui_method, void *callback_data);
 static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
-	pem_password_cb *callback, void *callback_data);
+	UI_METHOD *ui_method, void *callback_data);
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int ind,long argl, void *argp);
 
 /* Interaction stuff */
+static int hwcrhk_insert_card(const char *prompt_info,
+	const char *wrong_info,
+	HWCryptoHook_PassphraseContext *ppctx,
+	HWCryptoHook_CallerContext *cactx);
 static int hwcrhk_get_pass(const char *prompt_info,
 	int *len_io, char *buf,
 	HWCryptoHook_PassphraseContext *ppctx,
@@ -133,6 +138,8 @@ static void hwcrhk_log_message(void *logstr, const char *message);
 #define HWCRHK_CMD_SO_PATH		ENGINE_CMD_BASE
 #define HWCRHK_CMD_FORK_CHECK		(ENGINE_CMD_BASE + 1)
 #define HWCRHK_CMD_THREAD_LOCKING	(ENGINE_CMD_BASE + 2)
+#define HWCRHK_CMD_SET_USER_INTERFACE   (ENGINE_CMD_BASE + 3)
+#define HWCRHK_CMD_SET_CALLBACK_DATA    (ENGINE_CMD_BASE + 4)
 static const ENGINE_CMD_DEFN hwcrhk_cmd_defns[] = {
 	{HWCRHK_CMD_SO_PATH,
 		"SO_PATH",
@@ -146,6 +153,14 @@ static const ENGINE_CMD_DEFN hwcrhk_cmd_defns[] = {
 		"THREAD_LOCKING",
 		"Turns thread-safe locking on or off (boolean)",
 		ENGINE_CMD_FLAG_NUMERIC},
+	{HWCRHK_CMD_SET_USER_INTERFACE,
+		"SET_USER_INTERFACE",
+		"Set the global user interface (internal)",
+		ENGINE_CMD_FLAG_INTERNAL},
+	{HWCRHK_CMD_SET_CALLBACK_DATA,
+		"SET_CALLBACK_DATA",
+		"Set the global user interface extra data (internal)",
+		ENGINE_CMD_FLAG_INTERNAL},
 	{0, NULL, NULL, 0}
 	};
 
@@ -214,7 +229,7 @@ struct HWCryptoHook_MutexValue
    into HWCryptoHook_PassphraseContext */
 struct HWCryptoHook_PassphraseContextValue
 	{
-	pem_password_cb *password_callback; /* If != NULL, will be called */
+        UI_METHOD *ui_method;
 	void *callback_data;
 	};
 
@@ -223,7 +238,10 @@ struct HWCryptoHook_PassphraseContextValue
    into HWCryptoHook_CallerContext */
 struct HWCryptoHook_CallerContextValue
 	{
-	void *any;
+	pem_password_cb *password_callback; /* Deprecated!  Only present for
+                                               backward compatibility! */
+        UI_METHOD *ui_method;
+	void *callback_data;
 	};
 
 /* The MPI structure in HWCryptoHook is pretty compatible with OpenSSL
@@ -233,27 +251,23 @@ struct HWCryptoHook_CallerContextValue
 #define MPI2BN(bn, mp) \
     {mp.size = bn->dmax * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
 
-#if 0 /* Card and password management is not yet supported */
-/* HWCryptoHook callbacks.  insert_card() and get_pass() are not yet
-   defined, because we haven't quite decided on the proper form yet.
-   log_message() just adds an entry in the error stack.  I don't know
-   if that's good or bad...  */
-static int insert_card(const char *prompt_info,
-	const char *wrong_info,
-	HWCryptoHook_PassphraseContext *ppctx,
-	HWCryptoHook_CallerContext *cactx);
-static int get_pass(const char *prompt_info,
-	int *len_io, char *buf,
-	HWCryptoHook_PassphraseContext *ppctx,
-	HWCryptoHook_CallerContext *cactx);
-#endif
-
 static BIO *logstream = NULL;
-static pem_password_cb *password_callback = NULL;
-#if 0
-static void *password_callback_userdata = NULL;
-#endif
 static int disable_mutex_callbacks = 0;
+
+/* One might wonder why these are needed, since one can pass down at least
+   a UI_METHOD and a pointer to callback data to the key-loading functions.
+   The thing is that the ModExp and RSAImmed functions can load keys as well,
+   if the data they get is in a special, nCipher-defined format (hint: if you
+   look at the private exponent of the RSA data as a string, you'll see this
+   string: "nCipher KM tool key id", followed by some bytes, followed a key
+   identity string, followed by more bytes.  This happens when you use "embed"
+   keys instead of "hwcrhk" keys).  Unfortunately, those functions do not take
+   any passphrase or caller context, and our functions can't really take any
+   callback data either.  Still, the "insert_card" and "get_passphrase"
+   callbacks may be called down the line, and will need to know what user
+   interface callbacks to call, and having callback data from the application
+   may be a nice thing as well, so we need to keep track of that globally. */
+static HWCryptoHook_CallerContext password_context = { NULL, NULL, NULL };
 
 /* Stuff to pass to the HWCryptoHook library */
 static HWCryptoHook_InitInfo hwcrhk_globals = {
@@ -291,7 +305,7 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 	0, /* hwcrhk_cv_destroy, */
 
 	hwcrhk_get_pass,	/* pass phrase */
-	0, /* insert_card, */	/* insert a card */
+	hwcrhk_insert_card,	/* insert a card */
 	hwcrhk_log_message	/* Log message */
 };
 
@@ -406,7 +420,8 @@ static const char *n_hwcrhk_ModExpCRT = "HWCryptoHook_ModExpCRT";
  * called, the checking and error handling is probably down there. */
 
 /* utility function to obtain a context */
-static int get_context(HWCryptoHook_ContextHandle *hac)
+static int get_context(HWCryptoHook_ContextHandle *hac,
+        HWCryptoHook_CallerContext *cac)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
@@ -415,7 +430,7 @@ static int get_context(HWCryptoHook_ContextHandle *hac)
 	rmsg.size = 1024;
 
         *hac = p_hwcrhk_Init(&hwcrhk_globals, sizeof(hwcrhk_globals), &rmsg,
-		NULL);
+		cac);
 	if (!*hac)
                 return 0;
         return 1;
@@ -506,7 +521,7 @@ static int hwcrhk_init(ENGINE *e)
 
 	/* Try and get a context - if not, we may have a DSO but no
 	 * accelerator! */
-	if(!get_context(&hwcrhk_context))
+	if(!get_context(&hwcrhk_context, &password_context))
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_UNIT_FAILURE);
 		goto err;
@@ -609,7 +624,17 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		break;
 	case ENGINE_CTRL_SET_PASSWORD_CALLBACK:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-		password_callback = (pem_password_cb *)f;
+		password_context.password_callback = (pem_password_cb *)f;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	case ENGINE_CTRL_SET_USER_INTERFACE:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		password_context.ui_method = (UI_METHOD *)p;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	case ENGINE_CTRL_SET_CALLBACK_DATA:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		password_context.callback_data = p;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 	/* this enables or disables the "SimpleForkCheck" flag used in the
@@ -653,7 +678,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	}
 
 static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
-	pem_password_cb *callback, void *callback_data)
+	UI_METHOD *ui_method, void *callback_data)
 	{
 #ifndef OPENSSL_NO_RSA
 	RSA *rtmp = NULL;
@@ -682,7 +707,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 			ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	ppctx.password_callback = callback;
+        ppctx.ui_method = ui_method;
 	ppctx.callback_data = callback_data;
 	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, hptr,
 		&rmsg, &ppctx))
@@ -752,12 +777,13 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	}
 
 static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
-	pem_password_cb *callback, void *callback_data)
+	UI_METHOD *ui_method, void *callback_data)
 	{
 	EVP_PKEY *res = NULL;
 
 #ifndef OPENSSL_NO_RSA
-        res = hwcrhk_load_privkey(eng, key_id, callback, callback_data);
+        res = hwcrhk_load_privkey(eng, key_id,
+                ui_method, callback_data);
 #endif
 
 	if (res)
@@ -1084,27 +1110,125 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx)
 	{
-	pem_password_cb *callback = password_callback;
+	pem_password_cb *callback = NULL;
 	void *callback_data = NULL;
+        UI_METHOD *ui_method = NULL;
 
+        if (cactx)
+                {
+                if (cactx->ui_method)
+                        ui_method = cactx->ui_method;
+		if (cactx->password_callback)
+			callback = cactx->password_callback;
+		if (cactx->callback_data)
+			callback_data = cactx->callback_data;
+                }
 	if (ppctx)
 		{
-		if (ppctx->password_callback)
-			callback = ppctx->password_callback;
+                if (ppctx->ui_method)
+                        {
+                        ui_method = ppctx->ui_method;
+                        callback = NULL;
+                        }
 		if (ppctx->callback_data)
 			callback_data = ppctx->callback_data;
 		}
-	if (callback == NULL)
+	if (callback == NULL && ui_method == NULL)
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_GET_PASS,ENGINE_R_NO_CALLBACK);
 		return -1;
 		}
 
-	*len_io = callback(buf, *len_io, 0, callback_data);
+        if (ui_method)
+                {
+                UI *ui = UI_new_method(ui_method);
+                if (ui)
+                        {
+                        int ok;
+                        char *prompt = UI_construct_prompt(ui,
+                                "pass phrase", prompt_info);
+
+                        ok = UI_add_input_string(ui,prompt,
+                                UI_INPUT_FLAG_DEFAULT_PWD,
+				buf,0,(*len_io) - 1);
+                        UI_add_user_data(ui, callback_data);
+                        if (ok >= 0)
+                                ok=UI_process(ui);
+                        if (ok >= 0)
+                                *len_io = strlen(buf);
+
+                        OPENSSL_free(prompt);
+                        UI_free(ui);
+                        }
+                }
+        else
+                {
+                *len_io = callback(buf, *len_io, 0, callback_data);
+                }
 	if(!*len_io)
 		return -1;
 	return 0;
 	}
+
+static int hwcrhk_insert_card(const char *prompt_info,
+		      const char *wrong_info,
+		      HWCryptoHook_PassphraseContext *ppctx,
+		      HWCryptoHook_CallerContext *cactx)
+        {
+        int ok = 1;
+        UI *ui;
+	void *callback_data = NULL;
+        UI_METHOD *ui_method = NULL;
+
+        if (cactx)
+                {
+                if (cactx->ui_method)
+                        ui_method = cactx->ui_method;
+		if (cactx->callback_data)
+			callback_data = cactx->callback_data;
+                }
+	if (ppctx)
+		{
+                if (ppctx->ui_method)
+                        ui_method = ppctx->ui_method;
+		if (ppctx->callback_data)
+			callback_data = ppctx->callback_data;
+		}
+	if (ui_method == NULL)
+		{
+		ENGINEerr(ENGINE_F_HWCRHK_INSERT_CARD,ENGINE_R_NO_CALLBACK);
+		return -1;
+		}
+
+        ui = UI_new_method(ui_method);
+
+        if (ui)
+                {
+                char answer[10];
+                char buf[BUFSIZ];
+
+                if (wrong_info)
+                        BIO_snprintf(buf, sizeof(buf)-1,
+                                "Current card: \"%s\"\n", wrong_info);
+                ok = UI_dup_info_string(ui, buf);
+                if (ok == 0 && prompt_info)
+                        {
+                        BIO_snprintf(buf, sizeof(buf)-1,
+                                "Insert card \"%s\"\n then hit <enter> or C<enter> to cancel\n", prompt_info);
+                        ok = UI_dup_input_string(ui, buf, 1,
+                                answer, 0, sizeof(answer)-1);
+                        }
+                UI_add_user_data(ui, callback_data);
+                if (ok == 0)
+                        ok = UI_process(ui);
+                UI_free(ui);
+                if (strchr("Cc",answer[0]) == 0)
+                        ok = 1;
+                }
+        if (ok == 0)
+                return 0;
+        return -1;
+        }
 
 static void hwcrhk_log_message(void *logstr, const char *message)
 	{
