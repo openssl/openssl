@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Fix for bug in CRL encoding. The validity dates weren't being handled
+     as ASN1_TIME.
+     [Steve Henson]
+
   *) New -pkcs12 option to CA.pl script to write out a PKCS#12 file.
      [Steve Henson]
 

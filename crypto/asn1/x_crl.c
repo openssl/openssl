@@ -130,9 +130,9 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 		}
 	M_ASN1_I2D_put(a->sig_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_put(a->issuer,i2d_X509_NAME);
-	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_UTCTIME);
+	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_TIME);
 	if (a->nextUpdate != NULL)
-		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME); }
+		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_TIME); }
 	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
 					 i2d_X509_REVOKED);
 	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
@@ -164,13 +164,9 @@ X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
 	M_ASN1_D2I_get(ret->issuer,d2i_X509_NAME);
 	M_ASN1_D2I_get(ret->lastUpdate,d2i_ASN1_TIME);
 	/* Manually handle the OPTIONAL ASN1_TIME stuff */
-	if(c.slen != 0
-	   && ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
-		    (V_ASN1_UNIVERSAL|V_ASN1_UTCTIME)
-		|| (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
-		    (V_ASN1_UNIVERSAL|V_ASN1_GENERALIZEDTIME) ) ) {
-		M_ASN1_D2I_get(ret->nextUpdate,d2i_ASN1_TIME);
-	}
+	/* First try UTCTime */
+	M_ASN1_D2I_get_opt(ret->nextUpdate,d2i_ASN1_UTCTIME, V_ASN1_UTCTIME);
+	/* If that doesn't work try GeneralizedTime */
 	if(!ret->nextUpdate) 
 		M_ASN1_D2I_get_opt(ret->nextUpdate,d2i_ASN1_GENERALIZEDTIME,
 							V_ASN1_GENERALIZEDTIME);
