@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
+#ifndef NO_DES
 static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -104,3 +105,4 @@ static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		&(ctx->iv[0]),
 		&ctx->num,ctx->encrypt);
 	}
+#endif

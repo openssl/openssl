@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_MD2
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
@@ -79,4 +80,4 @@ EVP_MD *EVP_md2(void)
 	{
 	return(&md2_md);
 	}
-
+#endif

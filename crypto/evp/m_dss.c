@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+#ifndef NO_SHA
 static EVP_MD dsa_md=
 	{
 	NID_dsaWithSHA,
@@ -79,4 +80,4 @@ EVP_MD *EVP_dss(void)
 	{
 	return(&dsa_md);
 	}
-
+#endif

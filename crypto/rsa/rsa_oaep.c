@@ -4,7 +4,7 @@
 
 /* EME_OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
 
-#ifndef NO_SHA
+#if !defined(NO_SHA) && !defined(NO_SHA1)
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>

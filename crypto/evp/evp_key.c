@@ -82,7 +82,7 @@ char *EVP_get_pw_prompt(void)
 	}
 
 #ifdef NO_DES
-int des_read_pw_string(char *buf,int len,char *prompt,int verify);
+int des_read_pw_string(char *buf,int len,const char *prompt,int verify);
 #endif
 
 int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)

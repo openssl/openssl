@@ -64,6 +64,7 @@
 #define HASH    SHA1
 #endif 
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
@@ -328,4 +329,4 @@ err:
 	
 	return(ok);
 	}
-
+#endif

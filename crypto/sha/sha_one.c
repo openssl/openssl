@@ -61,7 +61,7 @@
 #include <openssl/sha.h>
 
 #ifndef NO_SHA0
-unsigned char *SHA(unsigned char *d, unsigned long n, unsigned char *md)
+unsigned char *SHA(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	SHA_CTX c;
 	static unsigned char m[SHA_DIGEST_LENGTH];

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
@@ -143,3 +144,4 @@ static void des_cbc_ede_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		&(ctx->iv[0]),
 		ctx->encrypt);
 	}
+#endif

@@ -58,6 +58,8 @@
 
 #include <stdio.h>
 #include <openssl/comp.h>
+#include <openssl/md5.h>
+#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include "ssl_locl.h"

@@ -60,6 +60,7 @@
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
+#include <openssl/md5.h>
 #include "ssl_locl.h"
 
 static long ssl2_default_timeout(void );

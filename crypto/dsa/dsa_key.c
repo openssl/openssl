@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
@@ -108,4 +109,4 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	return(ok);
 	}
-
+#endif

@@ -64,16 +64,16 @@
 #include <openssl/crypto.h>
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
-#ifndef NO_MD5
-#define USE_MD5_RAND
-#elif !defined(NO_SHA1)
+#if !defined(NO_SHA) && !defined(NO_SHA1)
 #define USE_SHA1_RAND
-#elif !defined(NO_MDC2)
+#elif !defined(NO_MD5)
+#define USE_MD5_RAND
+#elif !defined(NO_MDC2) && !defined(NO_DES)
 #define USE_MDC2_RAND
 #elif !defined(NO_MD2)
 #define USE_MD2_RAND
 #else
-We need a message digest of some type 
+#error No message digest algorithm available
 #endif
 #endif
 

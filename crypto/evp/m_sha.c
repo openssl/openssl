@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
@@ -79,4 +80,4 @@ EVP_MD *EVP_sha(void)
 	{
 	return(&sha_md);
 	}
-
+#endif
