@@ -228,7 +228,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
  * 'value' arguments (if relevant) are the extensions internal structure.
  */
 
-int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value,
+int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 					int crit, unsigned long flags)
 {
 	int extidx = -1;
@@ -240,7 +240,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value,
 	 * look for existing extension.
 	 */
 	if(ext_op != X509V3_ADD_APPEND)
-		extidx = X509v3_get_ext_by_NID(x, nid, -1);
+		extidx = X509v3_get_ext_by_NID(*x, nid, -1);
 
 	/* See if extension exists */
 	if(extidx >= 0) {
@@ -254,7 +254,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value,
 		}
 		/* If delete, just delete it */
 		if(ext_op == X509V3_ADD_DELETE) {
-			if(!sk_X509_EXTENSION_delete(x, extidx)) return -1;
+			if(!sk_X509_EXTENSION_delete(*x, extidx)) return -1;
 			return 1;
 		}
 	} else {
@@ -281,13 +281,14 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value,
 
 	/* If extension exists replace it.. */
 	if(extidx >= 0) {
-		extmp = sk_X509_EXTENSION_value(x, extidx);
+		extmp = sk_X509_EXTENSION_value(*x, extidx);
 		X509_EXTENSION_free(extmp);
-		if(!sk_X509_EXTENSION_set(x, extidx, ext)) return -1;
+		if(!sk_X509_EXTENSION_set(*x, extidx, ext)) return -1;
 		return 1;
 	}
 
-	if(!sk_X509_EXTENSION_push(x, ext)) return -1;
+	if(!*x && !(*x = sk_X509_EXTENSION_new_null())) return -1;
+	if(!sk_X509_EXTENSION_push(*x, ext)) return -1;
 
 	return 1;
 
