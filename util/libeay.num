@@ -984,8 +984,8 @@ BIO_ghbn_ctrl                           1003	EXIST::FUNCTION:
 CRYPTO_free_ex_data                     1004	EXIST::FUNCTION:
 CRYPTO_get_ex_data                      1005	EXIST::FUNCTION:
 CRYPTO_set_ex_data                      1007	EXIST::FUNCTION:
-ERR_load_CRYPTOlib_strings              1009	NOEXIST::FUNCTION:
 ERR_load_CRYPTO_strings                 1009	NOEXIST::FUNCTION:
+ERR_load_CRYPTOlib_strings              1009	NOEXIST::FUNCTION:
 EVP_PKEY_bits                           1010	EXIST::FUNCTION:
 MD5_Transform                           1011	EXIST::FUNCTION:MD5
 SHA1_Transform                          1012	EXIST::FUNCTION:SHA,SHA1
@@ -2652,7 +2652,7 @@ ENGINE_get_cipher_by_name               3100	EXIST::FUNCTION:
 ENGINE_cipher_num                       3101	EXIST::FUNCTION:
 DH_up_ref                               3102	EXIST::FUNCTION:DH
 RSA_up_ref                              3103	EXIST::FUNCTION:RSA
-EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
+EVP_DigestInit_dbg                      3104	NOEXIST::FUNCTION:
 CRYPTO_cleanup_all_ex_data              3105	EXIST::FUNCTION:
 CRYPTO_set_ex_data_implementation       3106	EXIST::FUNCTION:
 CRYPTO_ex_data_new_class                3107	EXIST::FUNCTION:

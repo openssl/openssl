@@ -88,9 +88,9 @@ md_rand.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 md_rand.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 md_rand.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 md_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-md_rand.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-md_rand.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
-md_rand.o: md_rand.c rand_lcl.h
+md_rand.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+md_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+md_rand.o: ../../include/openssl/types.h md_rand.c rand_lcl.h
 rand_egd.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 rand_egd.o: ../../include/openssl/rand.h rand_egd.c
 rand_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
@@ -119,9 +119,9 @@ rand_os2.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rand_os2.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rand_os2.o: ../../include/openssl/opensslconf.h
 rand_os2.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-rand_os2.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rand_os2.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
-rand_os2.o: ../cryptlib.h rand_lcl.h rand_os2.c
+rand_os2.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+rand_os2.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rand_os2.o: ../../include/openssl/types.h ../cryptlib.h rand_lcl.h rand_os2.c
 rand_unix.o: ../../e_os.h ../../include/openssl/asn1.h
 rand_unix.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rand_unix.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -130,9 +130,9 @@ rand_unix.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rand_unix.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rand_unix.o: ../../include/openssl/opensslconf.h
 rand_unix.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-rand_unix.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rand_unix.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
-rand_unix.o: ../cryptlib.h rand_lcl.h rand_unix.c
+rand_unix.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+rand_unix.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rand_unix.o: ../../include/openssl/types.h ../cryptlib.h rand_lcl.h rand_unix.c
 rand_win.o: ../../e_os.h ../../include/openssl/asn1.h
 rand_win.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rand_win.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -141,9 +141,9 @@ rand_win.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rand_win.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rand_win.o: ../../include/openssl/opensslconf.h
 rand_win.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-rand_win.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rand_win.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
-rand_win.o: ../cryptlib.h rand_lcl.h rand_win.c
+rand_win.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+rand_win.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rand_win.o: ../../include/openssl/types.h ../cryptlib.h rand_lcl.h rand_win.c
 randfile.o: ../../e_os.h ../../include/openssl/crypto.h
 randfile.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 randfile.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
