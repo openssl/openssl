@@ -5,6 +5,8 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
+$sse2=0;	# SSE2 is temporarily disabled...
+
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");
 &bn_sqr_words("bn_sqr_words");
@@ -41,6 +43,83 @@ sub bn_mul_add_words
 	&push("ecx");		# Up the stack for a tmp variable
 
 	&jz(&label("maw_finish"));
+
+	if ($sse2) {
+		&picmeup("eax","OPENSSL_ia32cap");
+		&bt(&DWP(0,"eax"),26);
+		&jnc(&label("maw_loop"));
+
+		&movd("mm0",$w);		# mm0 = w
+		&pxor("mm1","mm1");		# mm1 = carry_in
+
+		&set_label("maw_sse2_loop",0);
+		&movd("mm3",&DWP(0,$r,"",0));	# mm3 = r[0]
+		&paddq("mm1","mm3");		# mm1 = carry_in + r[0]
+		&movd("mm2",&DWP(0,$a,"",0));	# mm2 = a[0]
+		&pmuludq("mm2","mm0");		# mm2 = w*a[0]
+		&movd("mm4",&DWP(4,$a,"",0));	# mm4 = a[1]
+		&pmuludq("mm4","mm0");		# mm4 = w*a[1]
+		&movd("mm6",&DWP(8,$a,"",0));	# mm6 = a[2]
+		&pmuludq("mm6","mm0");		# mm6 = w*a[2]
+		&movd("mm7",&DWP(12,$a,"",0));	# mm7 = a[3]
+		&pmuludq("mm7","mm0");		# mm7 = w*a[3]
+		&paddq("mm1","mm2");		# mm1 = carry_in + r[0] + w*a[0]
+		&movd("mm3",&DWP(4,$r,"",0));	# mm3 = r[1]
+		&paddq("mm3","mm4");		# mm3 = r[1] + w*a[1]
+		&movd("mm5",&DWP(8,$r,"",0));	# mm5 = r[2]
+		&paddq("mm5","mm6");		# mm5 = r[2] + w*a[2]
+		&movd("mm4",&DWP(12,$r,"",0));	# mm4 = r[3]
+		&paddq("mm7","mm4");		# mm7 = r[3] + w*a[3]
+		&movd(&DWP(0,$r,"",0),"mm1");
+		&movd("mm2",&DWP(16,$a,"",0));	# mm2 = a[4]
+		&pmuludq("mm2","mm0");		# mm2 = w*a[4]
+		&psrlq("mm1",32);		# mm1 = carry0
+		&movd("mm4",&DWP(20,$a,"",0));	# mm4 = a[5]
+		&pmuludq("mm4","mm0");		# mm4 = w*a[5]
+		&paddq("mm1","mm3");		# mm1 = carry0 + r[1] + w*a[1]
+		&movd("mm6",&DWP(24,$a,"",0));	# mm6 = a[6]
+		&pmuludq("mm6","mm0");		# mm6 = w*a[6]
+		&movd(&DWP(4,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry1
+		&movd("mm3",&DWP(28,$a,"",0));	# mm3 = a[7]
+		&add($a,32);
+		&pmuludq("mm3","mm0");		# mm3 = w*a[7]
+		&paddq("mm1","mm5");		# mm1 = carry1 + r[2] + w*a[2]
+		&movd("mm5",&DWP(16,$r,"",0));	# mm5 = r[4]
+		&paddq("mm2","mm5");		# mm2 = r[4] + w*a[4]
+		&movd(&DWP(8,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry2
+		&paddq("mm1","mm7");		# mm1 = carry2 + r[3] + w*a[3]
+		&movd("mm5",&DWP(20,$r,"",0));	# mm5 = r[5]
+		&paddq("mm4","mm5");		# mm4 = r[5] + w*a[5]
+		&movd(&DWP(12,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry3
+		&paddq("mm1","mm2");		# mm1 = carry3 + r[4] + w*a[4]
+		&movd("mm5",&DWP(24,$r,"",0));	# mm5 = r[6]
+		&paddq("mm6","mm5");		# mm6 = r[6] + w*a[6]
+		&movd(&DWP(16,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry4
+		&paddq("mm1","mm4");		# mm1 = carry4 + r[5] + w*a[5]
+		&movd("mm5",&DWP(28,$r,"",0));	# mm5 = r[7]
+		&paddq("mm3","mm5");		# mm3 = r[7] + w*a[7]
+		&movd(&DWP(20,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry5
+		&paddq("mm1","mm6");		# mm1 = carry5 + r[6] + w*a[6]
+		&movd(&DWP(24,$r,"",0),"mm1");
+		&psrlq("mm1",32);		# mm1 = carry6
+		&paddq("mm1","mm3");		# mm1 = carry6 + r[7] + w*a[7]
+		&movd(&DWP(28,$r,"",0),"mm1");
+		&add($r,32);
+		&psrlq("mm1",32);		# mm1 = carry_out
+
+		&sub("ecx",8);
+		&jnz(&label("maw_sse2_loop"));
+
+		&movd($c,"mm1");		# c = carry_out
+		&emms();
+
+		&jmp(&label("maw_finish"));
+	}
 
 	&set_label("maw_loop",0);
 
