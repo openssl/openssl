@@ -168,7 +168,13 @@ int RAND_poll(void)
 
 	for (randomfile = randomfiles; *randomfile && n < ENTROPY_NEEDED; randomfile++)
 		{
-		if ((fd = open(*randomfile, O_RDONLY|O_NONBLOCK
+		if ((fd = open(*randomfile, O_RDONLY
+#ifdef O_NONBLOCK
+			|O_NONBLOCK
+#endif
+#ifdef O_BINARY
+			|O_BINARY
+#endif
 #ifdef O_NOCTTY /* If it happens to be a TTY (god forbid), do not make it
 		   our controlling tty */
 			|O_NOCTTY
