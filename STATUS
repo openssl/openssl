@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/11/11 13:58:22 $
+  ______________                           $Date: 1999/12/05 00:40:53 $
 
   DEVELOPMENT STATE
 
@@ -18,7 +18,6 @@
     o shared libraries <behnke@trustcenter.de>
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
-    o OCSP patch, Massimiliano Pala (madwolf@openca.org)
     o CA.pl patch (Damien Miller)
     o FreeBSD 3.0 changes (Richard Levitte)
 
@@ -27,7 +26,7 @@
     o Steve is currently working on (in no particular order):
         Proper (or at least usable) certificate chain verification.
 	Private key, certificate and CRL API and implementation.
-	Checking and bugfixing PKCS#7 (S/MIME code).
+	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
 	Documentation for the openssl utility.
 

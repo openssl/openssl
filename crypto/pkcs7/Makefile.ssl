@@ -25,8 +25,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	pk7_lib.c pkcs7err.c pk7_doit.c
-LIBOBJ= pk7_lib.o pkcs7err.o pk7_doit.o
+LIBSRC=	pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c pk7_mime.c
+LIBOBJ= pk7_lib.o pkcs7err.o pk7_doit.o pk7_smime.o pk7_attr.o pk7_mime.o
 
 SRC= $(LIBSRC)
 

@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Merge in my S/MIME library for OpenSSL. This provides a simple
+     S/MIME API on top of the PKCS#7 code, a MIME parser (with enough
+     functionality to handle multipart/signed properly) and a utility
+     called 'smime' to call all this stuff. This is based on code I
+     originally wrote for Celo who have kindly allowed it to be
+     included in OpenSSL.
+     [Steve Henson]
+
   *) Add variants des_set_key_checked and des_set_key_unchecked of
      des_set_key (aka des_key_sched).  Global variable des_check_key
      decides which of these is called by des_set_key; this way

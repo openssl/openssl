@@ -1,0 +1,446 @@
+/* smime.c */
+/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+ * project 1999.
+ */
+/* ====================================================================
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
+/* S/MIME utility function */
+
+#include <stdio.h>
+#include <string.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include "apps.h"
+
+#undef PROG
+#define PROG smime_main
+static X509 *load_cert(char *file);
+static EVP_PKEY *load_key(char *file);
+static STACK_OF(X509) *load_certs(char *file);
+static X509_STORE *setup_verify(char *CAfile, char *CApath);
+
+#define SMIME_OP	0x10
+#define SMIME_ENCRYPT	(1 | SMIME_OP)
+#define SMIME_DECRYPT	2
+#define SMIME_SIGN	(3 | SMIME_OP)
+#define SMIME_VERIFY	4
+#define SMIME_PK7OUT	5
+
+int MAIN(int argc, char **argv)
+{
+	int operation = 0;
+	int ret = 0;
+	char **args;
+	char *inmode = "r", *outmode = "w";
+	char *infile = NULL, *outfile = NULL;
+	char *signerfile = NULL, *recipfile = NULL;
+	char *certfile = NULL, *keyfile = NULL;
+	EVP_CIPHER *cipher = NULL;
+	PKCS7 *p7 = NULL;
+	X509_STORE *store = NULL;
+	X509 *cert = NULL, *recip = NULL, *signer = NULL;
+	EVP_PKEY *key = NULL;
+	STACK_OF(X509) *encerts = NULL, *other = NULL;
+	BIO *in = NULL, *out = NULL, *indata = NULL;
+	int badarg = 0;
+	int flags = PKCS7_DETACHED;
+	char *to = NULL, *from = NULL, *subject = NULL;
+	char *CAfile = NULL, *CApath = NULL;
+
+	args = argv + 1;
+
+	ret = 1;
+
+	while (!badarg && *args && *args[0] == '-') {
+		if (!strcmp (*args, "-encrypt")) operation = SMIME_ENCRYPT;
+		else if (!strcmp (*args, "-decrypt")) operation = SMIME_DECRYPT;
+		else if (!strcmp (*args, "-sign")) operation = SMIME_SIGN;
+		else if (!strcmp (*args, "-verify")) operation = SMIME_VERIFY;
+		else if (!strcmp (*args, "-pk7out")) operation = SMIME_PK7OUT;
+		else if (!strcmp (*args, "-des3")) 
+				cipher = EVP_des_ede3_cbc();
+		else if (!strcmp (*args, "-des")) 
+				cipher = EVP_des_cbc();
+		else if (!strcmp (*args, "-rc2-40")) 
+				cipher = EVP_rc2_40_cbc();
+		else if (!strcmp (*args, "-rc2-128")) 
+				cipher = EVP_rc2_cbc();
+		else if (!strcmp (*args, "-rc2-64")) 
+				cipher = EVP_rc2_64_cbc();
+		else if (!strcmp (*args, "-text")) 
+				flags |= PKCS7_TEXT;
+		else if (!strcmp (*args, "-nointern")) 
+				flags |= PKCS7_NOINTERN;
+		else if (!strcmp (*args, "-noverify")) 
+				flags |= PKCS7_NOVERIFY;
+		else if (!strcmp (*args, "-nochain")) 
+				flags |= PKCS7_NOCHAIN;
+		else if (!strcmp (*args, "-nocerts")) 
+				flags |= PKCS7_NOCERTS;
+		else if (!strcmp (*args, "-noattr")) 
+				flags |= PKCS7_NOATTR;
+		else if (!strcmp (*args, "-nodetach")) 
+				flags &= ~PKCS7_DETACHED;
+		else if (!strcmp (*args, "-binary"))
+				flags |= PKCS7_BINARY;
+		else if (!strcmp (*args, "-to")) {
+			if (args[1]) {
+				args++;
+				to = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-from")) {
+			if (args[1]) {
+				args++;
+				from = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-subject")) {
+			if (args[1]) {
+				args++;
+				subject = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-signer")) {
+			if (args[1]) {
+				args++;
+				signerfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-recip")) {
+			if (args[1]) {
+				args++;
+				recipfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-inkey")) {
+			if (args[1]) {
+				args++;
+				keyfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-certfile")) {
+			if (args[1]) {
+				args++;
+				certfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-CAfile")) {
+			if (args[1]) {
+				args++;
+				CAfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-CApath")) {
+			if (args[1]) {
+				args++;
+				CApath = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-in")) {
+			if (args[1]) {
+				args++;
+				infile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-out")) {
+			if (args[1]) {
+				args++;
+				outfile = *args;
+			} else badarg = 1;
+		} else badarg = 1;
+		args++;
+	}
+
+	if(operation == SMIME_SIGN) {
+		if(!signerfile) {
+			BIO_printf(bio_err, "No signer certificate specified\n");
+			badarg = 1;
+		}
+	} else if(operation == SMIME_DECRYPT) {
+		if(!recipfile) {
+			BIO_printf(bio_err, "No recipient certificate and key specified\n");
+			badarg = 1;
+		}
+	} else if(operation == SMIME_ENCRYPT) {
+		if(!*args) {
+			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
+			badarg = 1;
+		}
+	} else if(!operation) badarg = 1;
+
+	if (badarg) {
+		BIO_printf (bio_err, "Usage smime [options] cert.pem ...\n");
+		BIO_printf (bio_err, "where options are\n");
+		BIO_printf (bio_err, "-encrypt       encrypt message\n");
+		BIO_printf (bio_err, "-decrypt       decrypt encrypted message\n");
+		BIO_printf (bio_err, "-sign          sign message\n");
+		BIO_printf (bio_err, "-verify        verify signed message\n");
+		BIO_printf (bio_err, "-pk7out        output PKCS#7 structure\n");
+		BIO_printf (bio_err, "-des3          encrypt with triple DES\n");
+		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40\n");
+		BIO_printf (bio_err, "-rc2-64        encrypt with RC2-64\n");
+		BIO_printf (bio_err, "-rc2-128       encrypt with RC2-128\n");
+		BIO_printf (bio_err, "-in file       input file\n");
+		BIO_printf (bio_err, "-certfile file other certificates file\n");
+		BIO_printf (bio_err, "-signer file   signer certificate file\n");
+		BIO_printf (bio_err, "-recip  file   recipient certificate file\n");
+		BIO_printf (bio_err, "-in file       input file\n");
+		BIO_printf (bio_err, "-inkey file    input private key (if not signer or recipient)\n");
+		BIO_printf (bio_err, "-out file      output file\n");
+		BIO_printf (bio_err, "-to addr       to address\n");
+		BIO_printf (bio_err, "-from ad       from address\n");
+		BIO_printf (bio_err, "-subject s     subject\n");
+		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
+		BIO_printf (bio_err, "cert.pem       recipient certificate(s)\n");
+		goto end;
+	}
+
+	ret = 2;
+
+	if(operation != SMIME_SIGN) flags &= ~PKCS7_DETACHED;
+
+	if(flags & PKCS7_BINARY) {
+		if(operation & SMIME_OP) inmode = "rb";
+		else outmode = "rb";
+	}
+
+	if(operation == SMIME_ENCRYPT) {
+		if (!cipher) cipher = EVP_rc2_40_cbc();
+		while (*args) {
+			encerts = sk_X509_new_null();
+			if(!(cert = load_cert(*args))) {
+				BIO_printf(bio_err, "Can't read recipent certificate file %s\n", *args);
+				goto end;
+			}
+			sk_X509_push (encerts, cert);
+			cert = NULL;
+			args++;
+		}
+	}
+
+	if(signerfile) {
+		if(!(signer = load_cert(signerfile))) {
+			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
+			goto end;
+		}
+	}
+
+	if(certfile) {
+		if(!(other = load_certs(certfile))) {
+			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if(recipfile) {
+		if(!(recip = load_cert(recipfile))) {
+			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if(operation == SMIME_DECRYPT) {
+		if(!keyfile) keyfile = recipfile;
+	} else if(operation == SMIME_SIGN) {
+		if(!keyfile) keyfile = signerfile;
+	} else keyfile = NULL;
+
+	if(keyfile) {
+		if(!(key = load_key(keyfile))) {
+			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if (infile) {
+		if (!(in = BIO_new_file(infile, inmode))) {
+			BIO_printf (bio_err,
+				 "Can't open input file %s\n", infile);
+			goto end;
+		}
+	} else in = BIO_new_fp(stdin, BIO_NOCLOSE);
+
+	if (outfile) {
+		if (!(out = BIO_new_file(outfile, outmode))) {
+			BIO_printf (bio_err,
+				 "Can't open output file %s\n", outfile);
+			goto end;
+		}
+	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
+
+	if(operation == SMIME_VERIFY)
+		if(!(store = setup_verify(CAfile, CApath))) goto end;
+
+	ret = 3;
+	if(operation == SMIME_ENCRYPT) {
+		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
+	} else if(operation == SMIME_SIGN) {
+		p7 = PKCS7_sign(signer, key, other, in, flags);
+		BIO_reset(in);
+	} else {
+		if(!(p7 = SMIME_read_PKCS7(in, &indata))) {
+			BIO_printf(bio_err, "Error reading S/MIME message\n");
+			ret = 4;
+			goto end;
+		}
+	}
+			
+	if(!p7) {
+		BIO_printf(bio_err, "Error creating PKCS#7 structure\n");
+		goto end;
+	}
+
+	if(operation == SMIME_DECRYPT) {
+		if(!PKCS7_decrypt(p7, key, recip, out, flags))
+			BIO_printf(bio_err, "Error decrypting PKCS#7 structure\n");
+		else ret = 0;
+	} else if(operation == SMIME_VERIFY) {
+		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
+			BIO_printf(bio_err, "Verification Successful\n");
+			ret = 0;
+		} else {
+			BIO_printf(bio_err, "Verification Failure\n");
+			ret = 5;
+		}
+	} else if(operation == SMIME_PK7OUT) {
+		PEM_write_bio_PKCS7(out, p7);
+	} else {
+		if(to) BIO_printf(out, "To: %s\n", to);
+		if(from) BIO_printf(out, "From: %s\n", from);
+		if(subject) BIO_printf(out, "Subject: %s\n", subject);
+		SMIME_write_PKCS7(out, p7, in, flags);
+	}
+end:
+	if(ret) ERR_print_errors(bio_err);
+	sk_X509_pop_free(encerts, X509_free);
+	sk_X509_pop_free(other, X509_free);
+	X509_STORE_free(store);
+	X509_free(cert);
+	X509_free(recip);
+	X509_free(signer);
+	EVP_PKEY_free(key);
+	PKCS7_free(p7);
+	BIO_free(in);
+	BIO_free(indata);
+	BIO_free(out);
+	return (ret);
+}
+
+static X509 *load_cert(char *file)
+{
+	BIO *in;
+	X509 *cert;
+	if(!(in = BIO_new_file(file, "r"))) return NULL;
+	cert = PEM_read_bio_X509(in, NULL, NULL,NULL);
+	BIO_free(in);
+	return cert;
+}
+
+static EVP_PKEY *load_key(char *file)
+{
+	BIO *in;
+	EVP_PKEY *key;
+	if(!(in = BIO_new_file(file, "r"))) return NULL;
+	key = PEM_read_bio_PrivateKey(in, NULL, NULL,NULL);
+	BIO_free(in);
+	return key;
+}
+
+static STACK_OF(X509) *load_certs(char *file)
+{
+	BIO *in;
+	int i;
+	STACK_OF(X509) *othercerts;
+	STACK_OF(X509_INFO) *allcerts;
+	X509_INFO *xi;
+	if(!(in = BIO_new_file(file, "r"))) return NULL;
+	othercerts = sk_X509_new(NULL);
+	if(!othercerts) return NULL;
+	allcerts = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL);
+	for(i = 0; i < sk_X509_INFO_num(allcerts); i++) {
+		xi = sk_X509_INFO_value (allcerts, i);
+		if (xi->x509) {
+			sk_X509_push(othercerts, xi->x509);
+			xi->x509 = NULL;
+		}
+	}
+	sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
+	BIO_free(in);
+	return othercerts;
+}
+
+static X509_STORE *setup_verify(char *CAfile, char *CApath)
+{
+	X509_STORE *store;
+	X509_LOOKUP *lookup;
+	if(!(store = X509_STORE_new())) goto end;
+	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_file());
+	if (lookup == NULL) goto end;
+	if (CAfile) {
+		if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM)) {
+			BIO_printf(bio_err, "Error loading file %s\n", CAfile);
+			goto end;
+		}
+	} else X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+		
+	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_hash_dir());
+	if (lookup == NULL) goto end;
+	if (CApath) {
+		if(!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM)) {
+			BIO_printf(bio_err, "Error loading directory %s\n", CApath);
+			goto end;
+		}
+	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+
+	ERR_clear_error();
+	return store;
+	end:
+	X509_STORE_free(store);
+	return NULL;
+}

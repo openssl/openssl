@@ -61,6 +61,7 @@
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 			 void *value);
@@ -680,6 +681,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 
 	/* Lets verify */
 	X509_STORE_CTX_init(ctx,cert_store,x509,cert);
+	X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN);
 	i=X509_verify_cert(ctx);
 	if (i <= 0) 
 		{
