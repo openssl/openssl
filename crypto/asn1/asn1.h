@@ -1012,6 +1012,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_I2D_PUBLICKEY				 164
 #define ASN1_F_I2D_RSA_PUBKEY				 165
 #define ASN1_F_LONG_C2I					 166
+#define ASN1_F_OID_MODULE_INIT				 175
 #define ASN1_F_PKCS5_PBE2_SET				 167
 #define ASN1_F_X509_CINF_NEW				 168
 #define ASN1_F_X509_CRL_ADD0_REVOKED			 169
@@ -1021,6 +1022,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_X509_PKEY_NEW				 173
 
 /* Reason codes. */
+#define ASN1_R_ADDING_OBJECT				 171
 #define ASN1_R_AUX_ERROR				 100
 #define ASN1_R_BAD_CLASS				 101
 #define ASN1_R_BAD_OBJECT_HEADER			 102
@@ -1034,6 +1036,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_DECODE_ERROR				 110
 #define ASN1_R_DECODING_ERROR				 111
 #define ASN1_R_ENCODE_ERROR				 112
+#define ASN1_R_ERROR_LOADING_SECTION			 172
 #define ASN1_R_ERROR_PARSING_SET_ELEMENT		 113
 #define ASN1_R_ERROR_SETTING_CIPHER_PARAMS		 114
 #define ASN1_R_EXPECTING_AN_INTEGER			 115

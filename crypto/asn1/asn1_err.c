@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,6 +134,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_PACK(0,ASN1_F_I2D_PUBLICKEY,0),	"i2d_PublicKey"},
 {ERR_PACK(0,ASN1_F_I2D_RSA_PUBKEY,0),	"i2d_RSA_PUBKEY"},
 {ERR_PACK(0,ASN1_F_LONG_C2I,0),	"LONG_C2I"},
+{ERR_PACK(0,ASN1_F_OID_MODULE_INIT,0),	"OID_MODULE_INIT"},
 {ERR_PACK(0,ASN1_F_PKCS5_PBE2_SET,0),	"PKCS5_pbe2_set"},
 {ERR_PACK(0,ASN1_F_X509_CINF_NEW,0),	"X509_CINF_NEW"},
 {ERR_PACK(0,ASN1_F_X509_CRL_ADD0_REVOKED,0),	"X509_CRL_add0_revoked"},
@@ -146,6 +147,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 
 static ERR_STRING_DATA ASN1_str_reasons[]=
 	{
+{ASN1_R_ADDING_OBJECT                    ,"adding object"},
 {ASN1_R_AUX_ERROR                        ,"aux error"},
 {ASN1_R_BAD_CLASS                        ,"bad class"},
 {ASN1_R_BAD_OBJECT_HEADER                ,"bad object header"},
@@ -159,6 +161,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_DECODE_ERROR                     ,"decode error"},
 {ASN1_R_DECODING_ERROR                   ,"decoding error"},
 {ASN1_R_ENCODE_ERROR                     ,"encode error"},
+{ASN1_R_ERROR_LOADING_SECTION            ,"error loading section"},
 {ASN1_R_ERROR_PARSING_SET_ELEMENT        ,"error parsing set element"},
 {ASN1_R_ERROR_SETTING_CIPHER_PARAMS      ,"error setting cipher params"},
 {ASN1_R_EXPECTING_AN_INTEGER             ,"expecting an integer"},
