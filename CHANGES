@@ -10,6 +10,17 @@
      of two sections.
      [Bernd Matthes <mainbug@celocom.de>, Steve Henson]
 
+  *) NCONF changes.
+     NCONF_get_number() has no error checking at all.  As a replacement,
+     NCONF_get_number_e() is defined (_e for "error checking") and is
+     promoted strongly.  The old NCONF_get_number is kept around for
+     binary backward compatibility.
+     Make it possible for methods to load from something other than a BIO,
+     by providing a function pointer that is given a name instead of a BIO.
+     For example, this could be used to load configuration data from an
+     LDAP server.
+     [Richard Levitte]
+
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
 
