@@ -1034,12 +1034,11 @@ end:
 	OPENSSL_EXIT(ret);
 	}
 
-static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
+static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create)
 	{
 	char *buf = NULL, *p;
 	MS_STATIC char buf2[1024];
-	ASN1_INTEGER *bs = NULL, *bs2 = NULL;
-	BIO *io = NULL;
+	ASN1_INTEGER *bs = NULL;
 	BIGNUM *serial = NULL;
 
 	buf=OPENSSL_malloc( ((serialfile == NULL)
@@ -1059,80 +1058,19 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 		}
 	else
 		strcpy(buf,serialfile);
-	serial=BN_new();
-	bs=ASN1_INTEGER_new();
-	if ((serial == NULL) || (bs == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
 
-	io=BIO_new(BIO_s_file());
-	if (io == NULL)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-	
-	if (BIO_read_filename(io,buf) <= 0)
-		{
-		if (!create)
-			{
-			perror(buf);
-			goto end;
-			}
-		else
-			{
-			ASN1_INTEGER_set(bs,1);
-			BN_one(serial);
-			}
-		}
-	else 
-		{
-		if (!a2i_ASN1_INTEGER(io,bs,buf2,sizeof buf2))
-			{
-			BIO_printf(bio_err,"unable to load serial number from %s\n",buf);
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		else
-			{
-			serial=BN_bin2bn(bs->data,bs->length,serial);
-			if (serial == NULL)
-				{
-				BIO_printf(bio_err,"error converting bin 2 bn");
-				goto end;
-				}
-			}
-		}
+	serial = load_serial(buf, create, NULL);
+	if (serial == NULL) goto end;
 
 	if (!BN_add_word(serial,1))
 		{ BIO_printf(bio_err,"add_word failure\n"); goto end; }
-	if (!(bs2 = BN_to_ASN1_INTEGER(serial, NULL)))
-		{ BIO_printf(bio_err,"error converting bn 2 asn1_integer\n"); goto end; }
-	if (BIO_write_filename(io,buf) <= 0)
-		{
-		BIO_printf(bio_err,"error attempting to write serial number file\n");
-		perror(buf);
-		goto end;
-		}
-	i2a_ASN1_INTEGER(io,bs2);
-	BIO_puts(io,"\n");
 
-	BIO_free(io);
+	if (!save_serial(buf, serial, &bs)) goto end;
+
+ end:
 	if (buf) OPENSSL_free(buf);
-	ASN1_INTEGER_free(bs2);
 	BN_free(serial);
-	io=NULL;
 	return bs;
-
-	end:
-	if (buf) OPENSSL_free(buf);
-	BIO_free(io);
-	ASN1_INTEGER_free(bs);
-	BN_free(serial);
-	return NULL;
-
 	}
 
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
@@ -1154,7 +1092,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 		goto end;
 		}
 	if (sno) bs = sno;
-	else if (!(bs = load_serial(CAfile, serialfile, create)))
+	else if (!(bs = x509_load_serial(CAfile, serialfile, create)))
 		goto end;
 
 	if (!X509_STORE_add_cert(ctx,x)) goto end;

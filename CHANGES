@@ -4,6 +4,14 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Make it possible to have multiple active certificates with the same
+     subject in the CA index file.  This is done only if the keyword
+     'unique_subject' is set to 'no' in the main CA section (default
+     if 'CA_default') of the configuration file.  The value is saved
+     with the database itself in a separate index attribute file,
+     named like the index file with '.attr' appended to the name.
+     [Richard Levitte]
+
   *) Generate muti valued AVAs using '+' notation in config files for
      req and dirName.
      [Steve Henson]
