@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
+ Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
   *) In ssl23_get_client_hello, generate an error message when faced
      with an initial SSL 3.0/TLS record that is too small to contain the
