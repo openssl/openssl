@@ -210,7 +210,7 @@ char *sk_delete(STACK *st, int loc)
 	return(ret);
 	}
 
-int sk_find(STACK *st, char *data)
+static int internal_find(STACK *st, char *data, int ret_val_options)
 	{
 	char **r;
 	int i;
@@ -233,19 +233,19 @@ int sk_find(STACK *st, char *data)
 	 * not (type *) pointers, but the *pointers* to (type *) pointers,
 	 * so we get our extra level of pointer dereferencing that way. */
 	comp_func=(int (*)(const void *,const void *))(st->comp);
-	r=(char **)bsearch(&data,(char *)st->data,
-		st->num,sizeof(char *), comp_func);
+	r=(char **)OBJ_bsearch(&data,(char *)st->data,
+		st->num,sizeof(char *),comp_func,ret_val_options);
 	if (r == NULL) return(-1);
-	i=(int)(r-st->data);
-	for ( ; i>0; i--)
-		/* This needs a cast because the type being pointed to from
-		 * the "&" expressions are (char *) rather than (const char *).
-		 * For an explanation, read:
-		 * http://www.eskimo.com/~scs/C-faq/q11.10.html :-) */
-		if ((*st->comp)((const char * const *)&(st->data[i-1]),
-				(const char * const *)&data) < 0)
-			break;
-	return(i);
+	return((int)(r-st->data));
+	}
+
+int sk_find(STACK *st, char *data)
+	{
+	return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
+	}
+int sk_find_ex(STACK *st, char *data)
+	{
+	return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
 	}
 
 int sk_push(STACK *st, char *data)

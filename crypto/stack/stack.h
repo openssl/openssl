@@ -89,6 +89,7 @@ int sk_insert(STACK *sk,char *data,int where);
 char *sk_delete(STACK *st,int loc);
 char *sk_delete_ptr(STACK *st, char *p);
 int sk_find(STACK *st,char *data);
+int sk_find_ex(STACK *st,char *data);
 int sk_push(STACK *st,char *data);
 int sk_unshift(STACK *st,char *data);
 char *sk_shift(STACK *st);
