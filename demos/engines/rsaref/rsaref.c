@@ -3,11 +3,14 @@
    be found a little here and there. */
 
 #include <stdio.h>
+#include <string.h>
 #include "./source/global.h"
 #include "./source/rsaref.h"
 #include "./source/rsa.h"
 #include "./source/des.h"
 #include <openssl/err.h>
+#define OPENSSL_NO_MD2
+#define OPENSSL_NO_MD5
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/engine.h>
@@ -400,7 +403,7 @@ static int rsaref_private_decrypt(int len, const unsigned char *from, unsigned c
 
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPrivateDecrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPrivateDecrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_DECRYPT,i);
 		outlen= -1;
@@ -423,7 +426,7 @@ static int rsaref_private_encrypt(int len, const unsigned char *from, unsigned c
 	}
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPrivateEncrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPrivateEncrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_ENCRYPT,i);
 		outlen= -1;
@@ -441,7 +444,7 @@ static int rsaref_public_decrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicDecrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPublicDecrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_DECRYPT,i);
 		outlen= -1;
@@ -478,7 +481,7 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicEncrypt(to,&outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
+	if ((i=RSAPublicEncrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT,i);
 		outlen= -1;
