@@ -1,10 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/13 02:32:38 $
+  ______________                           $Date: 1999/04/14 09:32:51 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.3:  Under development...
+                       Proposed freeze  date: Mon May  8th, 1999
+                       Proposed release date: Mon May 17th, 1999
     o  OpenSSL 0.9.2b: Released on March    22th, 1999
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
