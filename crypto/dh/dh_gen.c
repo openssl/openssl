@@ -149,6 +149,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	if (callback != NULL) callback(3,0,cb_arg);
 	ret->p=p;
 	ret->g=BN_new();
+	if (ret->g == NULL) goto err;
 	if (!BN_set_word(ret->g,g)) goto err;
 	ok=1;
 err:
