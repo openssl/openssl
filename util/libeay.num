@@ -2832,3 +2832,6 @@ ECDSA_generate_key                      3278	EXIST::FUNCTION:ECDSA
 PEM_write_ECDSAParameters               3279	EXIST:!WIN16:FUNCTION:ECDSA
 i2d_ECDSAPrivateKey_fp                  3280	EXIST::FUNCTION:ECDSA,FP_API
 PEM_read_ECDSAPrivateKey                3281	EXIST:!WIN16:FUNCTION:ECDSA
+AES_ofb128_encrypt                      3282	EXIST::FUNCTION:AES
+AES_ctr128_encrypt                      3283	EXIST::FUNCTION:AES
+AES_cfb128_encrypt                      3284	EXIST::FUNCTION:AES

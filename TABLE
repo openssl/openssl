@@ -2825,10 +2825,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $shared_extension = 
 $ranlib       = 
 
@@ -3694,4 +3694,28 @@ $shared_target= svr5-shared
 $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** vxworks-ppc405
+$cc           = ccppc
+$cflags       = -g -msoft-float -mlongcall -DCPU=PPC405 -I$(WIND_BASE)/target/h
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
 $ranlib       = 
