@@ -981,6 +981,31 @@ static const EC_CURVE_DATA _EC_WTLS_1 = {
 	"113 bit binary curve from the WTLS standard"
 	};
 
+/* IPSec curves */
+static const EC_CURVE_DATA _EC_IPSEC_155_ID3 = {
+	NID_X9_62_characteristic_two_field,
+	"0800000000000000000000004000000000000001",
+	"0",
+	"07338f",
+	"7b",
+	"1c8",
+	"2AAAAAAAAAAAAAAAAAAC7F3C7881BD0868FA86C",3,
+	NULL, 0,
+	"IPSec/IKE/Oakley curve #3 over a 155 bit binary field"
+	};
+
+static const EC_CURVE_DATA _EC_IPSEC_185_ID4 = {
+	NID_X9_62_characteristic_two_field,
+	"020000000000000000000000000000200000000000000001",
+	"0",
+	"1ee9",
+	"18",
+	"0d",
+	"FFFFFFFFFFFFFFFFFFFFFFEDF97C44DB9F2420BAFCA75E",2,
+	NULL, 0,
+	"IPSec/IKE/Oakley curve #4 over a 185 bit binary field"
+	};
+
 typedef struct _ec_list_element_st {
 	int	nid;
 	const EC_CURVE_DATA *data;
@@ -1061,6 +1086,9 @@ static const ec_list_element curve_list[] = {
 	{ NID_wap_wsg_idm_ecid_wtls10, &_EC_SECG_CHAR2_233K1},
 	{ NID_wap_wsg_idm_ecid_wtls11, &_EC_SECG_CHAR2_233R1},
 	{ NID_wap_wsg_idm_ecid_wtls12, &_EC_WTLS_12},
+	/* IPSec curves */
+	{ NID_ipsec3, &_EC_IPSEC_155_ID3},
+	{ NID_ipsec4, &_EC_IPSEC_185_ID4},
 };
 
 static size_t curve_list_length = sizeof(curve_list)/sizeof(ec_list_element);

@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 724
-#define NUM_SN 719
-#define NUM_LN 719
+#define NUM_NID 726
+#define NUM_SN 721
+#define NUM_LN 721
 #define NUM_OBJ 693
 
 static unsigned char lvalues[4882]={
@@ -1894,6 +1894,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[4879]),0},
 {"international-organizations","International Organizations",
 	NID_international_organizations,1,&(lvalues[4880]),0},
+{"Oakley-EC2N-3","ipsec3",NID_ipsec3,0,NULL},
+{"Oakley-EC2N-4","ipsec4",NID_ipsec4,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1971,6 +1973,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[180]),/* "OCSPSigning" */
 &(nid_objs[379]),/* "ORG" */
 &(nid_objs[18]),/* "OU" */
+&(nid_objs[724]),/* "Oakley-EC2N-3" */
+&(nid_objs[725]),/* "Oakley-EC2N-4" */
 &(nid_objs[ 9]),/* "PBE-MD2-DES" */
 &(nid_objs[168]),/* "PBE-MD2-RC2-64" */
 &(nid_objs[10]),/* "PBE-MD5-DES" */
@@ -3025,6 +3029,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[527]),/* "identified-organization" */
 &(nid_objs[461]),/* "info" */
 &(nid_objs[101]),/* "initials" */
+&(nid_objs[724]),/* "ipsec3" */
+&(nid_objs[725]),/* "ipsec4" */
 &(nid_objs[181]),/* "iso" */
 &(nid_objs[687]),/* "issuer capabilities" */
 &(nid_objs[721]),/* "itu-t" */
@@ -3342,9 +3348,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[721]),/* OBJ_itu_t                        0 */
 &(nid_objs[393]),/* OBJ_joint_iso_ccitt              OBJ_joint_iso_itu_t */
 &(nid_objs[404]),/* OBJ_ccitt                        OBJ_itu_t */
+&(nid_objs[721]),/* OBJ_itu_t                        0 */
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */

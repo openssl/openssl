@@ -3176,3 +3176,11 @@
 #define NID_rsaOAEPEncryptionSET		708
 #define OBJ_rsaOAEPEncryptionSET		OBJ_rsadsi,1L,1L,6L
 
+#define SN_ipsec3		"Oakley-EC2N-3"
+#define LN_ipsec3		"ipsec3"
+#define NID_ipsec3		724
+
+#define SN_ipsec4		"Oakley-EC2N-4"
+#define LN_ipsec4		"ipsec4"
+#define NID_ipsec4		725
+

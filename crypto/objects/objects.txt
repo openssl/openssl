@@ -1008,3 +1008,6 @@ set-brand 6011		: set-brand-Novus
 
 rsadsi 3 10		: DES-CDMF		: des-cdmf
 rsadsi 1 1 6		: rsaOAEPEncryptionSET
+
+			: Oakley-EC2N-3		: ipsec3
+			: Oakley-EC2N-4		: ipsec4
