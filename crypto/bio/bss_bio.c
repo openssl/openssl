@@ -493,6 +493,15 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		ret = (long) b->request;
 		break;
 
+	case BIO_C_RESET_READ_REQUEST:
+		/* Reset request.  (Can be useful after read attempts
+		 * at the other side that are meant to be non-blocking,
+		 * e.g. when probing SSL_read to see if any data is
+		 * available.) */
+		b->request = 0;
+		ret = 1;
+		break;
+
 	case BIO_C_SHUTDOWN_WR:
 		/* similar to shutdown(..., SHUT_WR) */
 		b->closed = 1;
@@ -748,6 +757,11 @@ size_t BIO_ctrl_get_write_guarantee(BIO *bio)
 size_t BIO_ctrl_get_read_request(BIO *bio)
 	{
 	return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
+	}
+
+int BIO_ctrl_reset_read_request(BIO *bio)
+	{
+	return (BIO_ctrl(bio, BIO_C_RESET_READ_REQUEST, 0, NULL) != 0);
 	}
 
 

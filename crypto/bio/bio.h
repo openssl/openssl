@@ -334,6 +334,7 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_NREAD				144
 #define BIO_C_NWRITE0				145
 #define BIO_C_NWRITE				146
+#define BIO_C_RESET_READ_REQUEST		147
 
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
@@ -470,6 +471,7 @@ size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_get_read_request(b)    (int)BIO_ctrl(b,BIO_C_GET_READ_REQUEST,0,NULL)
 size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
+int BIO_ctrl_reset_read_request(BIO *b);
 
 #ifdef NO_STDIO
 #define NO_FP_API
