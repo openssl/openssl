@@ -49,7 +49,7 @@ with a leading '-' for negative numbers, to the B<BIO> or B<FILE>
 B<fp>.
 
 BN_bn2mpi() and BN_mpi2bn() convert B<BIGNUM>s from and to a format
-that consists of the number's length in bytes represented as a 3-byte
+that consists of the number's length in bytes represented as a 4-byte
 big-endian number, and the number itself in big-endian format, where
 the most significant bit signals a negative number (the representation
 of numbers with the MSB set is prefixed with null byte).
