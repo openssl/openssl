@@ -20,11 +20,15 @@
      generation becomes much faster.
 
      This implies a change for the callback functions in DSA_is_prime
-     and DSA_generate_parameters: They are now called once for each
-     positive witness in the Rabin-Miller test, not just occasionally
-     in the inner loop; and the parameters to the callback function now
-     provide an iteration count for the outer loop rather than for the
-     current invocation of the inner loop.
+     and DSA_generate_parameters: The callback function is called once
+     for each positive witness in the Rabin-Miller test, not just
+     occasionally in the inner loop; and the parameters to the
+     callback function now provide an iteration count for the outer
+     loop rather than for the current invocation of the inner loop.
+     DSA_generate_parameters additionally can call the callback
+     function with an 'iteration count' of -1, meaning that a
+     candidate has passed the trial division test (when q is generated 
+     from an application-provided seed, trial division is skipped).
      [Bodo Moeller]
 
   *) New function BN_is_prime_fasttest that optionally does trial
