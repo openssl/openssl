@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function OCSP_parse_url(). This splits up a URL into its host,
+     port and path components: primarily to parse OCSP URLs. New -url
+     option to ocsp utility.
+     [Steve Henson]
+
   *) New nonce behavior. The return value of OCSP_check_nonce() now 
      reflects the various checks performed. Applications can decide
      whether to tolerate certain situations such as an absent nonce

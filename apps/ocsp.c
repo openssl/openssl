@@ -78,12 +78,12 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	char **args;
-	char *host = NULL, *path = "/";
+	char *host = NULL, *port = NULL, *path = "/";
 	char *reqin = NULL, *respin = NULL;
 	char *reqout = NULL, *respout = NULL;
 	char *signfile = NULL, *keyfile = NULL;
 	char *outfile = NULL;
-	int add_nonce = 1, noverify = 0;
+	int add_nonce = 1, noverify = 0, use_ssl = -1;
 	OCSP_REQUEST *req = NULL;
 	OCSP_RESPONSE *resp = NULL;
 	OCSP_BASICRESP *bs = NULL;
@@ -116,6 +116,19 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				outfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args, "-url"))
+			{
+			if (args[1])
+				{
+				args++;
+				if (!OCSP_parse_url(*args, &host, &port, &path, &use_ssl))
+					{
+					BIO_printf(bio_err, "Error parsing URL\n");
+					badarg = 1;
+					}
 				}
 			else badarg = 1;
 			}
@@ -335,6 +348,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-respin file       read DER encoded OCSP reponse from \"file\"\n");
 		BIO_printf (bio_err, "-nonce             add OCSP nonce to request\n");
 		BIO_printf (bio_err, "-no_nonce          don't add OCSP nonce to request\n");
+		BIO_printf (bio_err, "-url URL           OCSP responder URL\n");
 		BIO_printf (bio_err, "-host host:n       send OCSP request to host on port n\n");
 		BIO_printf (bio_err, "-path              path to use in OCSP request\n");
 		BIO_printf (bio_err, "-CApath dir        trusted certificates directory\n");
@@ -436,6 +450,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "Error creating connect BIO\n");
 			goto end;
 			}
+		if (port) BIO_set_conn_port(cbio, port);
 		if (BIO_do_connect(cbio) <= 0)
 			{
 			BIO_printf(bio_err, "Error connecting BIO\n");
@@ -560,6 +575,13 @@ end:
 	sk_OCSP_CERTID_free(ids);
 	sk_X509_pop_free(sign_other, X509_free);
 	sk_X509_pop_free(verify_other, X509_free);
+
+	if (use_ssl != -1)
+		{
+		OPENSSL_free(host);
+		OPENSSL_free(port);
+		OPENSSL_free(path);
+		}
 
 	EXIT(ret);
 }

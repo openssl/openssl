@@ -447,6 +447,8 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 
 int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
 
+int OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl);
+
 int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 
@@ -568,6 +570,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_OCSP_CHECK_IDS				 107
 #define OCSP_F_OCSP_CHECK_ISSUER			 108
 #define OCSP_F_OCSP_MATCH_ISSUERID			 109
+#define OCSP_F_OCSP_PARSE_URL				 114
 #define OCSP_F_OCSP_REQUEST_SIGN			 110
 #define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 112
@@ -577,6 +580,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_BAD_DATA					 100
 #define OCSP_R_CERTIFICATE_VERIFY_ERROR			 101
 #define OCSP_R_DIGEST_ERR				 102
+#define OCSP_R_ERROR_PARSING_URL			 121
 #define OCSP_R_MISSING_OCSPSIGNING_USAGE		 103
 #define OCSP_R_NOT_BASIC_RESPONSE			 104
 #define OCSP_R_NO_CERTIFICATES_IN_CHAIN			 105

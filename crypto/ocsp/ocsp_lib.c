@@ -164,3 +164,105 @@ int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey)
 		}
 	return OCSP_REQUEST_verify(req, pkey);
         }
+
+
+/* Parse a URL and split it up into host, port and path components and whether
+ * it is SSL.
+ */
+
+int OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
+	{
+	char *p, *buf;
+
+	char *host, *port;
+
+	/* dup the buffer since we are going to mess with it */
+	buf = BUF_strdup(url);
+	if (!buf) goto mem_err;
+
+	*phost = NULL;
+	*pport = NULL;
+	*ppath = NULL;
+
+	/* Check for initial colon */
+	p = strchr(buf, ':');
+
+	if (!p) goto parse_err;
+
+	*(p++) = '\0';
+
+	if (!strcmp(buf, "http"))
+		{
+		*pssl = 0;
+		port = "80";
+		}
+	else if (!strcmp(buf, "https"))
+		{
+		*pssl = 1;
+		port = "443";
+		}
+	else
+		goto parse_err;
+
+	/* Check for double slash */
+	if ((p[0] != '/') || (p[1] != '/'))
+		goto parse_err;
+
+	p += 2;
+
+	host = p;
+
+	/* Check for trailing part of path */
+
+	p = strchr(p, '/');
+
+	if (!p) 
+		*ppath = BUF_strdup("/");
+	else
+		{
+		*ppath = BUF_strdup(p);
+		/* Set start of path to 0 so hostname is valid */
+		*p = '\0';
+		}
+
+	if (!*ppath) goto mem_err;
+
+	/* Look for optional ':' for port number */
+	if ((p = strchr(host, ':')))
+		{
+		*p = 0;
+		port = p + 1;
+		}
+	else
+		{
+		/* Not found: set default port */
+		if (*pssl) port = "443";
+		else port = "80";
+		}
+
+	*pport = BUF_strdup(port);
+	if (!*pport) goto mem_err;
+
+	*phost = BUF_strdup(host);
+
+	if (!*phost) goto mem_err;
+
+	OPENSSL_free(buf);
+
+	return 1;
+
+	mem_err:
+	OCSPerr(OCSP_F_OCSP_PARSE_URL, ERR_R_MALLOC_FAILURE);
+	goto err;
+
+	parse_err:
+	OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
+
+
+	err:
+	if (*ppath) OPENSSL_free(*ppath);
+	if (*pport) OPENSSL_free(*pport);
+	if (*phost) OPENSSL_free(*phost);
+	return 0;
+
+	}
