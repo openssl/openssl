@@ -3053,55 +3053,59 @@ X509_NAME *do_subject(char *subject, long chtype)
 	sp++; /* skip leading / */
 
 	while (*sp)
-	{
+		{
 		/* collect type */
 		ne_types[ne_num] = bp;
 		while (*sp)
-		{
+			{
 			if (*sp == '\\') /* is there anything to escape in the type...? */
+				{
 				if (*++sp)
 					*bp++ = *sp++;
 				else
-				{
+					{
 					BIO_printf(bio_err, "escape character at end of string\n");
 					goto error;
+					}
 				}
 			else if (*sp == '=')
-			{
+				{
 				sp++;
 				*bp++ = '\0';
 				break;
-			}
+				}
 			else
 				*bp++ = *sp++;
-		}
+			}
 		if (!*sp)
-		{
+			{
 			BIO_printf(bio_err, "end of string encountered while processing type of subject name element #%d\n", ne_num);
 			goto error;
-		}
+			}
 		ne_values[ne_num] = bp;
 		while (*sp)
-		{
+			{
 			if (*sp == '\\')
+				{
 				if (*++sp)
 					*bp++ = *sp++;
 				else
-				{
+					{
 					BIO_printf(bio_err, "escape character at end of string\n");
 					goto error;
+					}
 				}
 			else if (*sp == '/')
-			{
+				{
 				sp++;
 				break;
-			}
+				}
 			else
 				*bp++ = *sp++;
-		}
+			}
 		*bp++ = '\0';
 		ne_num++;
-	}
+		}
 
 	if (!(n = X509_NAME_new()))
 		goto error;
