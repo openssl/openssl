@@ -101,7 +101,7 @@ struct dh_st
 	int version;
 	BIGNUM *p;
 	BIGNUM *g;
-	int length; /* optional */
+	long length; /* optional */
 	BIGNUM *pub_key;	/* g^x */
 	BIGNUM *priv_key;	/* x */
 
