@@ -1261,6 +1261,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL2_ENC_INIT				 124
 #define SSL_F_SSL2_PEEK					 234
 #define SSL_F_SSL2_READ					 125
+#define SSL_F_SSL2_READ_INTERNAL			 236
 #define SSL_F_SSL2_SET_CERTIFICATE			 126
 #define SSL_F_SSL2_WRITE				 127
 #define SSL_F_SSL3_ACCEPT				 128

@@ -704,12 +704,18 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  *     Application data protocol
  *             none of our business
  */
-int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
+int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	{
 	int al,i,j,ret;
 	unsigned int n;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
+
+	if (peek)
+		{
+		SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_FIXME); /* proper implementation not yet completed */
+		return -1;
+		}
 
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))

@@ -88,8 +88,9 @@
 
   *) Disable ssl2_peek and ssl3_peek (i.e., both implementations
      of SSL_peek) because they both are completely broken.
-     They will be fixed RSN by adding an additional 'peek' parameter
-     to the internal read functions.
+     For fixing this, the internal read functions now have an additional
+     'peek' parameter, but the actual peek functionality has not
+     yet been implemented.
      [Bodo Moeller]
 
   *) New function BN_kronecker.

@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include "ssl_locl.h"
 #ifndef NO_SSL2
@@ -66,34 +119,24 @@ static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
 static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len);
 static int write_pending(SSL *s, const unsigned char *buf, unsigned int len);
 static int ssl_mt_error(int n);
-int ssl2_peek(SSL *s, char *buf, int len)
-	{
-#if 1
-	SSLerr(SSL_F_SSL2_PEEK, SSL_R_FIXME); /* function is totally broken */
-	return -1;
-#else
-	int ret;
 
-	ret=ssl2_read(s,buf,len);
-	if (ret > 0)
-	        {
-		s->s2->ract_data_length+=ret;
-		s->s2->ract_data-=ret;
-		}
-	return(ret);
-#endif
-	}
 
-/* SSL_read -
+/* SSL 2.0 imlementation for SSL_read/SSL_peek -
  * This routine will return 0 to len bytes, decrypted etc if required.
  */
-int ssl2_read(SSL *s, void *buf, int len)
+static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	{
 	int n;
 	unsigned char mac[MAX_MAC_SIZE];
 	unsigned char *p;
 	int i;
 	unsigned int mac_size=0;
+
+	if (peek)
+		{
+		SSLerr(SSL_F_SSL2_READ_INTERNAL, SSL_R_FIXME); /* proper implementation not yet completed */
+		return -1;
+		}
 
 ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
@@ -102,7 +145,7 @@ ssl2_read_again:
 		if (n < 0) return(n);
 		if (n == 0)
 			{
-			SSLerr(SSL_F_SSL2_READ,SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_SSL_HANDSHAKE_FAILURE);
 			return(-1);
 			}
 		}
@@ -138,7 +181,7 @@ ssl2_read_again:
 				(p[2] == SSL2_MT_CLIENT_HELLO) ||
 				(p[2] == SSL2_MT_SERVER_HELLO))))
 				{
-				SSLerr(SSL_F_SSL2_READ,SSL_R_NON_SSLV2_INITIAL_PACKET);
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_NON_SSLV2_INITIAL_PACKET);
 				return(-1);
 				}
 			}
@@ -216,7 +259,7 @@ ssl2_read_again:
 				(unsigned int)mac_size) != 0) ||
 				(s->s2->rlength%EVP_CIPHER_CTX_block_size(s->enc_read_ctx) != 0))
 				{
-				SSLerr(SSL_F_SSL2_READ,SSL_R_BAD_MAC_DECODE);
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_BAD_MAC_DECODE);
 				return(-1);
 				}
 			}
@@ -253,9 +296,19 @@ ssl2_read_again:
 		}
 	else
 		{
-		SSLerr(SSL_F_SSL2_READ,SSL_R_BAD_STATE);
+		SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_BAD_STATE);
 			return(-1);
 		}
+	}
+
+int ssl2_read(SSL *s, void *buf, int len)
+	{
+	return ssl2_read_internal(s, buf, len, 0);
+	}
+
+int ssl2_peek(SSL *s, char *buf, int len)
+	{
+	return ssl2_read_internal(s, buf, len, 1);
 	}
 
 static int read_n(SSL *s, unsigned int n, unsigned int max,

@@ -365,7 +365,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			while (s->init_num < 4)
 				{
 				i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],
-					4 - s->init_num);
+					4 - s->init_num, 0);
 				if (i <= 0)
 					{
 					s->rwstate=SSL_READING;
@@ -434,7 +434,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	n=s->s3->tmp.message_size;
 	while (n > 0)
 		{
-		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],n);
+		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],n,0);
 		if (i <= 0)
 			{
 			s->rwstate=SSL_READING;
