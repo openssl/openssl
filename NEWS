@@ -5,6 +5,20 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6g and OpenSSL 0.9.6h:
+
+      o New configuration targets for Tandem OSS and A/UX.
+      o New OIDs for Microsoft attributes.
+      o Better handling of SSL session caching.
+      o Better comparison of distinguished names.
+      o Better handling of shared libraries in a mixed GNU/non-GNU environment.
+      o Support assembler code with Borland C.
+      o Fixes for length problems.
+      o Fixes for uninitialised variables.
+      o Fixes for memory leaks, some unusual crashes and some race conditions.
+      o Fixes for smaller building problems.
+      o Updates of manuals, FAQ and other instructive documents.
+
   Major changes between OpenSSL 0.9.6f and OpenSSL 0.9.6g:
 
       o Important building fixes on Unix.

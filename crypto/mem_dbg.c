@@ -102,6 +102,8 @@ typedef struct app_mem_info_st
 	int references;
 	} APP_INFO;
 
+static void app_info_free(APP_INFO *);
+
 static LHASH *amih=NULL; /* hash-table with those app_mem_info_st's
                           * that are at the top of their thread's stack
                           * (with `thread' as key);
@@ -139,6 +141,18 @@ static unsigned long disabling_thread = 0; /* Valid iff num_disable > 0.
                                             * exactly in this case (by the
                                             * thread named in disabling_thread).
                                             */
+
+static void app_info_free(APP_INFO *inf)
+	{
+	if (--(inf->references) <= 0)
+		{
+		if (inf->next != NULL)
+			{
+			app_info_free(inf->next);
+			}
+		OPENSSL_free(inf);
+		}
+	}
 
 int CRYPTO_mem_ctrl(int mode)
 	{
@@ -496,9 +510,7 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 				mp->order, mp->addr, mp->num);
 #endif
 				if (mp->app_info != NULL)
-					{
-					mp->app_info->references--;
-					}
+					app_info_free(mp->app_info);
 				OPENSSL_free(mp);
 				}
 
