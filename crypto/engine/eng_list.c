@@ -191,14 +191,14 @@ ENGINE *ENGINE_get_first(void)
 	{
 	ENGINE *ret;
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = engine_list_head;
 	if(ret)
 		{
 		ret->struct_ref++;
 		engine_ref_debug(ret, 0, 1)
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 
@@ -206,14 +206,14 @@ ENGINE *ENGINE_get_last(void)
 	{
 	ENGINE *ret;
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
-		ret = engine_list_tail;
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	ret = engine_list_tail;
 	if(ret)
 		{
 		ret->struct_ref++;
 		engine_ref_debug(ret, 0, 1)
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 
@@ -227,7 +227,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->next;
 	if(ret)
 		{
@@ -235,7 +235,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 		ret->struct_ref++;
 		engine_ref_debug(ret, 0, 1)
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	/* Release the structural reference to the previous ENGINE */
 	ENGINE_free(e);
 	return ret;
@@ -250,7 +250,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->prev;
 	if(ret)
 		{
@@ -258,7 +258,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 		ret->struct_ref++;
 		engine_ref_debug(ret, 0, 1)
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	/* Release the structural reference to the previous ENGINE */
 	ENGINE_free(e);
 	return ret;
@@ -346,7 +346,7 @@ ENGINE *ENGINE_by_id(const char *id)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	iterator = engine_list_head;
 	while(iterator && (strcmp(id, iterator->id) != 0))
 		iterator = iterator->next;
@@ -372,7 +372,7 @@ ENGINE *ENGINE_by_id(const char *id)
 			engine_ref_debug(iterator, 0, 1)
 			}
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if(iterator == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -380,4 +380,15 @@ ENGINE *ENGINE_by_id(const char *id)
 		ERR_add_error_data(2, "id=", id);
 		}
 	return iterator;
+	}
+
+int ENGINE_up_ref(ENGINE *e)
+	{
+	if (e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_UP_REF,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_add(&e->struct_ref,1,CRYPTO_LOCK_ENGINE);
+	return 1;
 	}

@@ -406,6 +406,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
  * compatibility! */
 ENGINE *ENGINE_new(void);
 int ENGINE_free(ENGINE *e);
+int ENGINE_up_ref(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
@@ -662,6 +663,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_SET_NAME			 130
 #define ENGINE_F_ENGINE_TABLE_REGISTER			 184
 #define ENGINE_F_ENGINE_UNLOAD_KEY			 152
+#define ENGINE_F_ENGINE_UP_REF				 190
 #define ENGINE_F_INT_CTRL_HELPER			 172
 #define ENGINE_F_INT_ENGINE_CONFIGURE			 188
 #define ENGINE_F_LOG_MESSAGE				 141
