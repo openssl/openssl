@@ -469,7 +469,7 @@ my %table=(
 
 # Sinix/ReliantUNIX RM400
 # NOTE: The CDS++ Compiler up to V2.0Bsomething has the IRIX_CC_BUG optimizer problem. Better use -g  */
-"ReliantUNIX","cc:-KPIC -g -DTERMIOS -DB_ENDIAN::-Kthread:SNI:-lsocket -lnsl -lc -L/usr/ucblib -lucb:BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
+"ReliantUNIX","cc:-KPIC -g -DTERMIOS -DB_ENDIAN::-Kthread:SNI:-lsocket -lnsl -lc -L/usr/ucblib -lucb:BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR::::::::::dlfcn:reliantunix-shared::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "SINIX","cc:-O::(unknown):SNI:-lsocket -lnsl -lc -L/usr/ucblib -lucb:RC4_INDEX RC4_CHAR:::",
 "SINIX-N","/usr/ucb/cc:-O2 -misaligned::(unknown)::-lucb:RC4_INDEX RC4_CHAR:::",
 

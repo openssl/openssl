@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Make it possible to produce shared libraries on ReliantUNIX.
+     [Robert Dahlem <Robert.Dahlem@ffm2.siemens.de> via Richard Levitte]
+
   *) Add the configuration target linux-s390x.
      [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
 

@@ -464,6 +464,20 @@ do_aix-shared:
 	libs="$$libs -l$$i"; \
 	done
 
+do_reliantunix-shared:
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	tmpdir=/tmp/openssl.$$$$ ; rm -rf $$tmpdir ; \
+	( set -x; \
+	  ( Opwd=`pwd` ; mkdir $$tmpdir || exit 1; \
+	    cd $$tmpdir || exit 1 ; ar x $$Opwd/lib$$i.a ; \
+	    ${CC} -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} *.o \
+	  ) || exit 1; \
+	  cp $$tmpdir/lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} . ; \
+	) || exit 1; \
+	rm -rf $$tmpdir ; \
+	libs="$$libs -l$$i"; \
+	done
+
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
