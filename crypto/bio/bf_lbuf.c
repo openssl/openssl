@@ -200,7 +200,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
 					}
 				}
 
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, "<*<", 3);
 #endif
 			i=BIO_write(b->next_bio,
@@ -210,13 +210,13 @@ BIO_write(b->next_bio, "<*<", 3);
 				ctx->obuf_len = orig_olen;
 				BIO_copy_next_retry(b);
 
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, ">*>", 3);
 #endif
 				if (i < 0) return((num > 0)?num:i);
 				if (i == 0) return(num);
 				}
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, ">*>", 3);
 #endif
 			if (i < ctx->obuf_len)
@@ -229,20 +229,20 @@ BIO_write(b->next_bio, ">*>", 3);
 		   buffer if a NL was found and there is anything to write. */
 		if ((foundnl || p - in > ctx->obuf_size) && p - in > 0)
 			{
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, "<*<", 3);
 #endif
 			i=BIO_write(b->next_bio,in,p - in);
 			if (i <= 0)
 				{
 				BIO_copy_next_retry(b);
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, ">*>", 3);
 #endif
 				if (i < 0) return((num > 0)?num:i);
 				if (i == 0) return(num);
 				}
-#ifdef DEBUG
+#if 0
 BIO_write(b->next_bio, ">*>", 3);
 #endif
 			num+=i;

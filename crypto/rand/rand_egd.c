@@ -75,7 +75,11 @@ int RAND_egd_bytes(const char *path,int bytes)
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifndef NO_SYS_UN_H
-#include <sys/un.h>
+# ifdef VXWORKS
+#   include <streams/un.h>
+# else
+#   include <sys/un.h>
+# endif
 #else
 struct	sockaddr_un {
 	short	sun_family;		/* AF_UNIX */

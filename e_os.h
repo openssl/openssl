@@ -82,6 +82,12 @@ extern "C" {
 #define DEVRANDOM "/dev/urandom"
 #endif
 
+#if defined(VXWORKS)
+#  define NO_SYS_PARAM_H
+#  define NO_CHMOD
+#  define NO_SYSLOG
+#endif
+  
 #if defined(__MWERKS__) && defined(macintosh)
 # if macintosh==1
 #  ifndef MAC_OS_GUSI_SOURCE
@@ -348,7 +354,9 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    ifndef MPE
+#    ifdef VXWORKS
+#      include <time.h> 
+#    elif !defined(MPE)
 #      include <sys/time.h> /* Needed under linux for FD_XXX */
 #    endif
 

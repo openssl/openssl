@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32)
+#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32) && !defined(VXWORKS)
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_UNISTD
 # include OPENSSL_UNISTD
@@ -131,6 +131,12 @@
 #undef  TERMIOS
 #undef  TERMIO
 #define SGTTY
+#endif
+
+#if defined(VXWORKS)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
 #endif
 
 #ifdef TERMIOS
@@ -240,7 +246,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	long status;
 	unsigned short channel = 0;
 #else
-#ifndef MSDOS
+#if !defined(MSDOS) && !defined(VXWORKS)
 	TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif
@@ -268,7 +274,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #ifdef MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X)
+#elif defined(MAC_OS_pre_X) || defined(VXWORKS)
 	tty=stdin;
 #else
 #ifndef MPE
@@ -366,7 +372,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 error:
 	fprintf(stderr,"\n");
-#ifdef DEBUG
+#if 0
 	perror("fgets(tty)");
 #endif
 	/* What can we do if there is an error? */

@@ -23,8 +23,13 @@
 #include <openssl/crypto.h>
 
 #include "openssl/e_os.h"
-#ifndef SSIZE_MAX
+
+/* VxWorks defines SSiZE_MAX with an empty value causing compile errors */
+#if defined(VXWORKS)
+# undef SSIZE_MAX
 # define SSIZE_MAX INT_MAX
+#elif !defined(SSIZE_MAX)
+# define SSIZE_MAX _INT_MAX
 #endif
 
 static int bio_new(BIO *bio);

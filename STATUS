@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/12/21 03:23:29 $
+  ______________                           $Date: 2002/02/26 13:41:15 $
 
   DEVELOPMENT STATE
 
@@ -47,10 +47,6 @@
   NEEDS PATCH
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
-
-    o  OpenSSL_0_9_6-stable:
-       #include <openssl/e_os.h> in exported header files is illegal since
-       e_os.h is suitable only for library-internal use.
 
     o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
        or an error is reported

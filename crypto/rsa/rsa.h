@@ -101,9 +101,14 @@ typedef struct rsa_meth_st
  * compatibility this functionality is only enabled if the RSA_FLAG_SIGN_VER
  * option is set in 'flags'.
  */
-	int (*rsa_sign)(int type, unsigned char *m, unsigned int m_len,
+
+/* changed m_len to m_length to avoid a conflict with a #define in
+   vxworks for m_len for the mbuf code.  This only shows up in apps
+   that have USE_SOCKETS defined */
+
+	int (*rsa_sign)(int type, unsigned char *m, unsigned int m_length,
              unsigned char *sigret, unsigned int *siglen, RSA *rsa);
-	int (*rsa_verify)(int dtype, unsigned char *m, unsigned int m_len,
+	int (*rsa_verify)(int dtype, unsigned char *m, unsigned int m_length,
              unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 	} RSA_METHOD;
@@ -238,16 +243,16 @@ RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length, int (*cb)());
 
 /* The following 2 functions sign and verify a X509_SIG ASN1 object
  * inside PKCS#1 padded RSA encryption */
-int RSA_sign(int type, unsigned char *m, unsigned int m_len,
+int RSA_sign(int type, unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
-int RSA_verify(int type, unsigned char *m, unsigned int m_len,
+int RSA_verify(int type, unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 /* The following 2 function sign and verify a ASN1_OCTET_STRING
  * object inside PKCS#1 padded RSA encryption */
-int RSA_sign_ASN1_OCTET_STRING(int type, unsigned char *m, unsigned int m_len,
+int RSA_sign_ASN1_OCTET_STRING(int type, unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
-int RSA_verify_ASN1_OCTET_STRING(int type, unsigned char *m, unsigned int m_len,
+int RSA_verify_ASN1_OCTET_STRING(int type, unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *ctx);

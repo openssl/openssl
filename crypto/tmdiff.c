@@ -67,9 +67,11 @@
 
 #ifndef MSDOS
 #  ifndef WIN32
+#   ifndef VXWORKS
 #    if !defined(VMS) || defined(__DECC)
 #      define TIMES
 #    endif
+#   endif
 #  endif
 #endif
 
@@ -95,7 +97,7 @@
 #include <sys/param.h>
 #endif
 
-#ifndef TIMES
+#if !defined(TIMES) && !defined(VXWORKS)
 #include <sys/timeb.h>
 #endif
 
@@ -125,7 +127,11 @@ typedef struct ms_tm
 	HANDLE thread_id;
 	FILETIME ms_win32;
 #  else
+#    ifdef VXWORKS
+          unsigned long ticks;
+#    else
 	struct timeb ms_timeb;
+#    endif
 #  endif
 #endif
 	} MS_TM;
@@ -163,7 +169,11 @@ void ms_time_get(char *a)
 #  ifdef WIN32
 	GetThreadTimes(tm->thread_id,&tmpa,&tmpb,&tmpc,&(tm->ms_win32));
 #  else
+#    ifdef VXWORKS
+        tm->ticks = tickGet();
+#    else
 	ftime(&tm->ms_timeb);
+#    endif
 #  endif
 #endif
 	}
@@ -193,10 +203,14 @@ double ms_time_diff(char *ap, char *bp)
 	ret=((double)(lb-la))/1e7;
 	}
 # else
+#  ifdef VXWORKS
+        ret = (double)(b->ticks - a->ticks) / (double)sysClkRateGet();
+#  else
 	ret=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+
 		(((double)b->ms_timeb.millitm)-
 		((double)a->ms_timeb.millitm))/1000.0;
 #  endif
+# endif
 #endif
 	return((ret < 0.0000001)?0.0000001:ret);
 	}
@@ -214,6 +228,9 @@ int ms_time_cmp(char *ap, char *bp)
 	d =(b->ms_win32.dwHighDateTime&0x000fffff)*10+b->ms_win32.dwLowDateTime/1e7;
 	d-=(a->ms_win32.dwHighDateTime&0x000fffff)*10+a->ms_win32.dwLowDateTime/1e7;
 # else
+#  ifdef VXWORKS
+        d = (b->ticks - a->ticks);
+#  else
 	d=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+
 		(((double)b->ms_timeb.millitm)-(double)a->ms_timeb.millitm)/1000.0;
 #  endif
