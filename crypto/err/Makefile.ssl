@@ -79,13 +79,12 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-err.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-err.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-err.o: ../cryptlib.h
+err.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/buffer.h
+err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+err.o: ../../include/openssl/symhacks.h ../cryptlib.h
 err_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 err_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -107,8 +106,8 @@ err_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 err_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 err_all.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 err_all.o: ../../include/openssl/x509v3.h
-err_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-err_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+err_prn.o: ../../e_os.h ../../include/openssl/bio.h
+err_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 err_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 err_prn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 err_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h

@@ -92,9 +92,9 @@ rsar_err.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 rsar_err.o: ../include/openssl/opensslv.h ../include/openssl/rsa.h
 rsar_err.o: ../include/openssl/rsaref.h ../include/openssl/safestack.h
 rsar_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-rsaref.o: ../crypto/cryptlib.h ../include/openssl/bio.h ../include/openssl/bn.h
-rsaref.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-rsaref.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+rsaref.o: ../crypto/cryptlib.h ../e_os.h ../include/openssl/bio.h
+rsaref.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+rsaref.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 rsaref.o: ../include/openssl/err.h ../include/openssl/lhash.h
 rsaref.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 rsaref.o: ../include/openssl/rand.h ../include/openssl/rsa.h

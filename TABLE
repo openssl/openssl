@@ -1267,11 +1267,11 @@ $ranlib       =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wstrict-prototypes -Wmissing-prototypes -pipe
+$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-declarations -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -ldl
-$bn_ops       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -2458,7 +2458,7 @@ $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
 $shared_ldflag = 
-$shared_extension = .so.$(SHLIB_MAJOR),$(SHLIB_MINOR)
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-s390x
