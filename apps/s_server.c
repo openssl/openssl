@@ -218,7 +218,7 @@ static void sv_usage()
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatability\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
-	BIO_printf(bio_err," -WWW          - Returns requested page from to a 'GET <path> HTTP/1.0'\n");
+	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	}
 
 static int local_argc=0;
