@@ -163,18 +163,40 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 int CONF_modules_load_file(const char *filename, const char *appname,
 			   unsigned long flags)
 	{
+	char *file;
 	CONF *conf = NULL;
 	int ret = 0;
 	conf = NCONF_new(NULL);
 	if (!conf)
 		goto err;
 
-	if (NCONF_load(conf, filename, NULL) <= 0)
+	if (filename == NULL)
+		{
+		file = CONF_get1_default_config_file();
+		if (!file)
+			goto err;
+		}
+	else
+		file = (char *)filename;
+	if (appname == NULL)
+		appname = "openssl_conf";
+
+	if (NCONF_load(conf, file, NULL) <= 0)
+		{
+		if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
+		  (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE))
+			{
+			ERR_clear_error();
+			ret = 1;
+			}
 		goto err;
+		}
 
 	ret = CONF_modules_load(conf, appname, flags);
 
 	err:
+	if (filename == NULL)
+		OPENSSL_free(file);
 	NCONF_free(conf);
 
 	return ret;
@@ -189,7 +211,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 	md = module_find(name);
 
 	/* Module not found: try to load DSO */
-	if (!md)
+	if (!md && !(flags & CONF_MFLAGS_NO_DSO))
 		md = module_load_dso(cnf, name, value, flags);
 
 	if (!md)
@@ -248,11 +270,6 @@ static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
 		goto err;
 		}
         ffunc = (conf_finish_func *)DSO_bind_func(dso, DSO_mod_finish_name);
-	if (!ffunc)
-		{
-		errcode = CONF_R_MISSING_FINISH_FUNCTION;
-		goto err;
-		}
 	/* All OK, add module */
 	md = module_add(dso, name, ifunc, ffunc);
 
@@ -450,7 +467,8 @@ void CONF_modules_finish(void)
 
 static void module_finish(CONF_IMODULE *imod)
 	{
-	imod->pmod->finish(imod);
+	if (imod->pmod->finish)
+		imod->pmod->finish(imod);
 	imod->pmod->links--;
 	OPENSSL_free(imod->name);
 	OPENSSL_free(imod->value);

@@ -81,30 +81,16 @@ void OPENSSL_load_builtin_modules(void)
 
 static int openssl_configured = 0;
 
-void OPENSSL_config(void)
+void OPENSSL_config(const char *config_name)
 	{
-	int err_exit = 0;
-	char *file;
 	if (openssl_configured)
 		return;
 
 	OPENSSL_load_builtin_modules();
 
-	file = CONF_get1_default_config_file();
-	if (!file)
-		return;
-
 	ERR_clear_error();
-	if (CONF_modules_load_file(file, "openssl_config", 0) <= 0)
-		{
-		if (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE)
-			ERR_clear_error();
-		else
-			err_exit = 1;
-		}
-
-	OPENSSL_free(file);
-	if (err_exit)
+	if (CONF_modules_load_file(NULL, NULL,
+					CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
 		{
 		BIO *bio_err;
 		ERR_load_crypto_strings();
@@ -113,6 +99,7 @@ void OPENSSL_config(void)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 			BIO_printf(bio_err,"Auto configuration failed\n");
 			ERR_print_errors(bio_err);
+			BIO_free(bio_err);
 			}
 		exit(1);
 		}
