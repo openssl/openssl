@@ -60,7 +60,7 @@
 
   zlib-dynamic  Like "zlib", but has OpenSSL load the zlib library dynamically
                 when needed.  This is only supported on systems where loading
-                of shared libraries is supported.
+                of shared libraries is supported.  This is the default choice.
 
   no-shared     Don't try to create shared libraries.
 
