@@ -73,7 +73,7 @@
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose);
 static STACK_OF(X509) *load_untrusted(char *file);
-static int v_verbose=0, issuer_checks = 0;
+static int v_verbose=0, vflags = 0;
 
 int MAIN(int, char **);
 
@@ -148,7 +148,11 @@ int MAIN(int argc, char **argv)
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
 			else if (strcmp(*argv,"-issuer_checks") == 0)
-				issuer_checks=1;
+				vflags |= X509_V_FLAG_CB_ISSUER_CHECK;
+			else if (strcmp(*argv,"-crl_check") == 0)
+				vflags |= X509_V_FLAG_CRL_CHECK;
+			else if (strcmp(*argv,"-crl_check_all") == 0)
+				vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 			else if (strcmp(*argv,"-verbose") == 0)
 				v_verbose=1;
 			else if (argv[0][0] == '-')
@@ -227,7 +231,7 @@ int MAIN(int argc, char **argv)
 	ret=0;
 end:
 	if (ret == 1) {
-		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-engine e] cert1 cert2 ...\n");
+		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check] [-engine e] cert1 cert2 ...\n");
 		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;
@@ -286,8 +290,7 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
 	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
-	if(issuer_checks)
-		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CB_ISSUER_CHECK);
+	X509_STORE_CTX_set_flags(csc, vflags);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 
@@ -375,6 +378,8 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		if (ctx->error == X509_V_ERR_PATH_LENGTH_EXCEEDED) ok=1;
 		if (ctx->error == X509_V_ERR_INVALID_PURPOSE) ok=1;
 		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
+		if (ctx->error == X509_V_ERR_CRL_HAS_EXPIRED) ok=1;
+		if (ctx->error == X509_V_ERR_CRL_NOT_YET_VALID) ok=1;
 		}
 	if (!v_verbose)
 		ERR_clear_error();

@@ -214,6 +214,10 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);		/* error callback */
 	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
 	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
+	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
 	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	/* The following is built up */
@@ -227,6 +231,7 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	int error;
 	X509 *current_cert;
 	X509 *current_issuer;	/* cert currently being tested as valid issuer */
+	X509_CRL *current_crl;	/* current CRL */
 
 	CRYPTO_EX_DATA ex_data;
 	};
@@ -283,6 +288,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH		31
 #define		X509_V_ERR_KEYUSAGE_NO_CERTSIGN			32
 
+#define		X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER		33
+
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
@@ -290,6 +297,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 
 #define	X509_V_FLAG_CB_ISSUER_CHECK		0x1	/* Send issuer+subject checks to verify_cb */
 #define	X509_V_FLAG_USE_CHECK_TIME		0x2	/* Use check time instead of current time */
+#define	X509_V_FLAG_CRL_CHECK			0x4	/* Lookup CRLs */
+#define	X509_V_FLAG_CRL_CHECK_ALL		0x8	/* Lookup CRLs for whole chain */
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);

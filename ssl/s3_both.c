@@ -512,6 +512,7 @@ int ssl_verify_alarm_type(long type)
 		{
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 	case X509_V_ERR_UNABLE_TO_GET_CRL:
+	case X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER:
 		al=SSL_AD_UNKNOWN_CA;
 		break;
 	case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:

@@ -75,6 +75,8 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
 static int check_chain_purpose(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
+static int check_revocation(X509_STORE_CTX *ctx);
+static int check_cert(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
@@ -296,6 +298,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	/* We may as well copy down any DSA parameters that are required */
 	X509_get_pubkey_parameters(NULL,ctx->chain);
 
+	/* Check revocation status: we do this after copying parameters
+	 * because they may be needed for CRL signature verification.
+	 */
+
+	ok = ctx->check_revocation(ctx);
+	if(!ok) goto end;
+
 	/* At this point, we have a chain and just need to verify it */
 	if (ctx->verify != NULL)
 		ok=ctx->verify(ctx);
@@ -425,7 +434,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 	ok = X509_check_trust(x, ctx->trust, 0);
 	if (ok == X509_TRUST_TRUSTED)
 		return 1;
-	ctx->error_depth = sk_X509_num(ctx->chain) - 1;
+	ctx->error_depth = i;
 	ctx->current_cert = x;
 	if (ok == X509_TRUST_REJECTED)
 		ctx->error = X509_V_ERR_CERT_REJECTED;
@@ -435,6 +444,196 @@ static int check_trust(X509_STORE_CTX *ctx)
 	return ok;
 #endif
 }
+
+static int check_revocation(X509_STORE_CTX *ctx)
+	{
+	int i, last, ok;
+	if (!(ctx->flags & X509_V_FLAG_CRL_CHECK))
+		return 1;
+	if (ctx->flags & X509_V_FLAG_CRL_CHECK_ALL)
+		last = 0;
+	else
+		last = sk_X509_num(ctx->chain) - 1;
+	for(i = 0; i <= last; i++)
+		{
+		ctx->error_depth = i;
+		ok = check_cert(ctx);
+		if (!ok) return ok;
+		}
+	return 1;
+	}
+
+static int check_cert(X509_STORE_CTX *ctx)
+	{
+	X509_CRL *crl = NULL;
+	X509 *x;
+	int ok, cnum;
+	cnum = ctx->error_depth;
+	x = sk_X509_value(ctx->chain, cnum);
+	ctx->current_cert = x;
+	/* Try to retrieve relevant CRL */
+	ok = ctx->get_crl(ctx, &crl, x);
+	/* If error looking up CRL, nothing we can do except
+	 * notify callback
+	 */
+	if(!ok)
+		{
+		ctx->error = X509_V_ERR_UNABLE_TO_GET_CRL;
+		if (ctx->verify_cb)
+			ok = ctx->verify_cb(0, ctx);
+		goto err;
+		}
+	ctx->current_crl = crl;
+	ok = ctx->check_crl(ctx, crl);
+	if (!ok) goto err;
+	ok = ctx->cert_crl(ctx, crl, x);
+	err:
+	ctx->current_crl = NULL;
+	X509_CRL_free(crl);
+	return ok;
+
+	}
+
+/* Retrieve CRL corresponding to certificate: currently just a
+ * subject lookup: maybe use AKID later...
+ * Also might look up any included CRLs too (e.g PKCS#7 signedData).
+ */
+static int get_crl(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+	{
+	int ok;
+	X509_OBJECT xobj;
+	ok = X509_STORE_get_by_subject(ctx, X509_LU_CRL, X509_get_issuer_name(x), &xobj);
+	if (!ok) return 0;
+	*crl = xobj.data.crl;
+	return 1;
+	}
+
+/* Check CRL validity */
+static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
+	{
+	X509 *issuer = NULL;
+	EVP_PKEY *ikey = NULL;
+	int ok = 0, chnum, cnum, i;
+	time_t *ptime;
+	cnum = ctx->error_depth;
+	chnum = sk_X509_num(ctx->chain) - 1;
+	/* Find CRL issuer: if not last certificate then issuer
+	 * is next certificate in chain.
+	 */
+	if(cnum < chnum)
+		issuer = sk_X509_value(ctx->chain, cnum + 1);
+	else
+		{
+		issuer = sk_X509_value(ctx->chain, chnum);
+		/* If not self signed, can't check signature */
+		if(!ctx->check_issued(ctx, issuer, issuer))
+			{
+			ctx->error = X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER;
+			if(ctx->verify_cb)
+				ok = ctx->verify_cb(0, ctx);
+			if(!ok) goto err;
+			}
+		}
+
+	if(issuer)
+		{
+
+		/* Attempt to get issuer certificate public key */
+		ikey = X509_get_pubkey(issuer);
+
+		if(!ikey)
+			{
+			ctx->error=X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+			if(ctx->verify_cb)
+				ok = ctx->verify_cb(0, ctx);
+			if (!ok) goto err;
+			}
+		else
+			{
+			/* Verify CRL signature */
+			if(X509_CRL_verify(crl, ikey) <= 0)
+				{
+				ctx->error=X509_V_ERR_CRL_SIGNATURE_FAILURE;
+				if(ctx->verify_cb)
+					ok = ctx->verify_cb(0, ctx);
+				if (!ok) goto err;
+				}
+			}
+		}
+
+	/* OK, CRL signature valid check times */
+	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->check_time;
+	else
+		ptime = NULL;
+
+	i=X509_cmp_time(X509_CRL_get_lastUpdate(crl), ptime);
+	if (i == 0)
+		{
+		ctx->error=X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
+		ok= 0;
+		if(ctx->verify_cb)
+			ok = ctx->verify_cb(0, ctx);
+		if (!ok) goto err;
+		}
+
+	if (i > 0)
+		{
+		ctx->error=X509_V_ERR_CRL_NOT_YET_VALID;
+		ok= 0;
+		if(ctx->verify_cb)
+			ok = ctx->verify_cb(0, ctx);
+		if (!ok) goto err;
+		}
+
+	if(X509_CRL_get_nextUpdate(crl))
+		{
+		i=X509_cmp_time(X509_CRL_get_nextUpdate(crl), ptime);
+
+		if (i == 0)
+			{
+			ctx->error=X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD;
+			ok= 0;
+			if(ctx->verify_cb)
+				ok = ctx->verify_cb(0, ctx);
+			if (!ok) goto err;
+			}
+
+		if (i < 0)
+			{
+			ctx->error=X509_V_ERR_CRL_HAS_EXPIRED;
+			ok= 0;
+			if(ctx->verify_cb)
+				ok = ctx->verify_cb(0, ctx);
+			if (!ok) goto err;
+			}
+		}
+
+	ok = 1;
+
+	err:
+	EVP_PKEY_free(ikey);
+	return ok;
+	}
+
+/* Check certificate against CRL */
+static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
+	{
+	int idx, ok;
+	X509_REVOKED rtmp;
+	/* Look for serial number of certificate in CRL */
+	rtmp.serialNumber = X509_get_serialNumber(x);
+	idx = sk_X509_REVOKED_find(crl->crl->revoked, &rtmp);
+	/* Not found: OK */
+	if(idx == -1) return 1;
+	/* Otherwise revoked: want something cleverer than
+	 * this to handle entry extensions in V2 CRLs.
+	 */
+	ctx->error = X509_V_ERR_CERT_REVOKED;
+	if (ctx->verify_cb)
+		ok = ctx->verify_cb(0, ctx);
+	return ok;
+	}
 
 static int internal_verify(X509_STORE_CTX *ctx)
 	{
@@ -885,6 +1084,10 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
 	ctx->verify_cb = store->verify_cb;
 	ctx->verify = store->verify;
+	ctx->check_revocation = check_revocation;
+	ctx->get_crl = get_crl;
+	ctx->check_crl = check_crl;
+	ctx->cert_crl = cert_crl;
 	ctx->cleanup = 0;
 	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));
 	}

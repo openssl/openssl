@@ -83,7 +83,7 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
 		return("unable to decrypt certificate's signature");
 	case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
-		return("unable to decrypt CRL's's signature");
+		return("unable to decrypt CRL's signature");
 	case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
 		return("unable to decode issuer public key");
 	case X509_V_ERR_CERT_SIGNATURE_FAILURE:
@@ -140,6 +140,9 @@ const char *X509_verify_cert_error_string(long n)
 		return("authority and issuer serial number mismatch");
 	case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
 		return("key usage does not include certificate signing");
+
+	case X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER:
+		return("unable to get CRL issuer certificate");
 
 	default:
 		sprintf(buf,"error number %ld",n);
