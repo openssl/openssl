@@ -1821,3 +1821,8 @@ CRYPTO_get_dynlock_lock_callback        2417
 CRYPTO_get_dynlock_destroy_callback     2418
 CRYPTO_get_dynlock_value                2419
 CRYPTO_get_dynlock_create_callback      2420
+c2i_ASN1_BIT_STRING                     2421
+i2c_ASN1_BIT_STRING                     2422
+RAND_poll                               2423
+c2i_ASN1_INTEGER                        2424
+i2c_ASN1_INTEGER                        2425
