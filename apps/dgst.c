@@ -236,7 +236,15 @@ int MAIN(int argc, char **argv)
 		if(out_bin)
 			out = BIO_new_file(outfile, "wb");
 		else    out = BIO_new_file(outfile, "w");
-	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	} else {
+		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+	}
 
 	if(!out) {
 		BIO_printf(bio_err, "Error opening output file %s\n", 
@@ -323,7 +331,7 @@ end:
 		OPENSSL_free(buf);
 		}
 	if (in != NULL) BIO_free(in);
-	BIO_free(out);
+	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);

@@ -198,7 +198,15 @@ int MAIN(int argc, char **argv)
 			ERR_print_errors(bio_err);	
 			goto end;
 		}
-	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	} else {
+		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+#ifdef VMS
+		{
+		    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		    out = BIO_push(tmpbio, out);
+		}
+#endif
+	}
 
 	keysize = RSA_size(rsa);
 
@@ -255,7 +263,7 @@ int MAIN(int argc, char **argv)
 	end:
 	RSA_free(rsa);
 	BIO_free(in);
-	BIO_free(out);
+	BIO_free_all(out);
 	if(rsa_in) OPENSSL_free(rsa_in);
 	if(rsa_out) OPENSSL_free(rsa_out);
 	return ret;

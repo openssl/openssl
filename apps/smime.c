@@ -393,7 +393,15 @@ int MAIN(int argc, char **argv)
 				 "Can't open output file %s\n", outfile);
 			goto end;
 		}
-	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	} else {
+		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+#ifdef VMS
+		{
+		    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		    out = BIO_push(tmpbio, out);
+		}
+#endif
+	}
 
 	if(operation == SMIME_VERIFY) {
 		if(!(store = setup_verify(CAfile, CApath))) goto end;
@@ -490,7 +498,7 @@ end:
 	PKCS7_free(p7);
 	BIO_free(in);
 	BIO_free(indata);
-	BIO_free(out);
+	BIO_free_all(out);
 	if(passin) OPENSSL_free(passin);
 	return (ret);
 }

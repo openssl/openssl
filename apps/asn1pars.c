@@ -206,6 +206,12 @@ bad:
 		goto end;
 		}
 	BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
+#ifdef VMS
+	{
+	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+	out = BIO_push(tmpbio, out);
+	}
+#endif
 
 	if (oidfile != NULL)
 		{
@@ -315,7 +321,7 @@ bad:
 end:
 	BIO_free(derout);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (b64 != NULL) BIO_free(b64);
 	if (ret != 0)
 		ERR_print_errors(bio_err);

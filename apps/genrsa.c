@@ -168,7 +168,15 @@ bad:
 	}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -212,7 +220,7 @@ bad:
 	ret=0;
 err:
 	if (rsa != NULL) RSA_free(rsa);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if(passout) OPENSSL_free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);

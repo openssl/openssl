@@ -416,7 +416,15 @@ bad:
 
 
 	if (outf == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outf) <= 0)
@@ -584,7 +592,7 @@ end:
 	if (strbuf != NULL) OPENSSL_free(strbuf);
 	if (buff != NULL) OPENSSL_free(buff);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (benc != NULL) BIO_free(benc);
 	if (b64 != NULL) BIO_free(b64);
 	if(pass) OPENSSL_free(pass);

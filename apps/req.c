@@ -609,6 +609,12 @@ bad:
 			{
 			BIO_printf(bio_err,"writing new private key to stdout\n");
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			out = BIO_push(tmpbio, out);
+			}
+#endif
 			}
 		else
 			{
@@ -804,7 +810,15 @@ loop:
 		}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if ((keyout != NULL) && (strcmp(outfile,keyout) == 0))
@@ -890,7 +904,7 @@ end:
 		}
 	if ((req_conf != NULL) && (req_conf != config)) CONF_free(req_conf);
 	BIO_free(in);
-	BIO_free(out);
+	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
 	X509_REQ_free(req);
 	X509_free(x509ss);

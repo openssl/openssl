@@ -690,6 +690,12 @@ bad:
 	if (verbose)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT); /* cannot fail */
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
 		TXT_DB_write(out,db);
 		BIO_printf(bio_err,"%d entries loaded from the database\n",
 			db->data->num);
@@ -724,7 +730,15 @@ bad:
 				}
 			}
 		else
+			{
 			BIO_set_fp(Sout,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
+#ifdef VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			Sout = BIO_push(tmpbio, Sout);
+			}
+#endif
+			}
 		}
 
 	if (req)
@@ -1020,7 +1034,7 @@ bad:
 #endif
 
 			BIO_free(in);
-			BIO_free(out);
+			BIO_free_all(out);
 			in=NULL;
 			out=NULL;
 			if (rename(serialfile,buf[2]) < 0)
@@ -1237,9 +1251,9 @@ bad:
 	ret=0;
 err:
 	BIO_free(hex);
-	BIO_free(Cout);
-	BIO_free(Sout);
-	BIO_free(out);
+	BIO_free_all(Cout);
+	BIO_free_all(Sout);
+	BIO_free_all(out);
 	BIO_free(in);
 
 	sk_X509_pop_free(cert_sk,X509_free);
@@ -1354,7 +1368,7 @@ static int save_serial(char *serialfile, BIGNUM *serial)
 	BIO_puts(out,"\n");
 	ret=1;
 err:
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (ai != NULL) ASN1_INTEGER_free(ai);
 	return(ret);
 	}

@@ -194,8 +194,15 @@ int MAIN(int argc, char **argv)
 				 "Can't open output file %s\n", outfile);
 			return (1);
 		}
-	} else out = BIO_new_fp (stdout, BIO_NOCLOSE);
-
+	} else {
+		out = BIO_new_fp (stdout, BIO_NOCLOSE);
+#ifdef VMS
+		{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			out = BIO_push(tmpbio, out);
+		}
+#endif
+	}
 	if (topk8) {
 		if(informat == FORMAT_PEM)
 			pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, passin);
@@ -253,7 +260,7 @@ int MAIN(int argc, char **argv)
 		}
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
 		EVP_PKEY_free(pkey);
-		BIO_free(out);
+		BIO_free_all(out);
 		if(passin) OPENSSL_free(passin);
 		if(passout) OPENSSL_free(passout);
 		return (0);
@@ -336,7 +343,7 @@ int MAIN(int argc, char **argv)
 	}
 
 	EVP_PKEY_free(pkey);
-	BIO_free(out);
+	BIO_free_all(out);
 	BIO_free(in);
 	if(passin) OPENSSL_free(passin);
 	if(passout) OPENSSL_free(passout);
