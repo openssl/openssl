@@ -1,5 +1,5 @@
 /* dso_dl.c */
-/* Written by Richard Levitte (levitte@openssl.org) for the OpenSSL
+/* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
 /* ====================================================================
