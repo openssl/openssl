@@ -4,6 +4,9 @@
 
 
  Changes between 0.9.01b and 0.9.1c
+  
+  *) Some fixups to the top-level documents.
+     [Paul Sutton]
 
   *) Fixed the nasty bug where rsaref.h was not found under compile-time
      because the symlink to include/ was missing.
@@ -48,7 +51,7 @@
      [Ralf S. Engelschall]
 
   *) Added various platform portability fixes.
-     [Marc J. Cox]
+     [Mark J. Cox]
 
   *) The Genesis of the OpenSSL rpject:
      We start with the latest (unreleased) SSLeay version 0.9.1b which Eric A.

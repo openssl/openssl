@@ -30,7 +30,7 @@ in any bug report:
 
 For example:
 
-    SSLeay-0.5.1a
+    OpenSSL-0.9.1c
     SunOS 5.3, SPARC, SunC 3.0
     SSLtelnet-0.7
 
@@ -38,13 +38,7 @@ For example:
     the following stack trackback 
 	...
 
+Report the bug to the OpenSSL project at:
 
-Report the bug to either
-    ssleay@mincom.oz.au (Eric and Tim)
-or
-    ssl-bugs@mincom.oz.au (mailing list of active developers)
-
-
-Tim Hudson
-tjh@mincom.oz.au
+    openssl-bugs@openssl.org
 
