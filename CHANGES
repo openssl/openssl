@@ -230,7 +230,7 @@
      vectors if you have them.
      [Ben Laurie]
 
-  *) Correct caclulation of key length for export ciphers (too much space was
+  *) Correct calculation of key length for export ciphers (too much space was
      allocated for null ciphers). This has not been tested!
      [Ben Laurie]
 
