@@ -56,6 +56,7 @@
 #include <string.h>
 #include "ecdsa.h"
 #include <openssl/engine.h>
+#include <openssl/err.h>
 
 const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
 

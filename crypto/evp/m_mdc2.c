@@ -65,6 +65,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/mdc2.h>
+#include <openssl/rsa.h>
 
 static int init(EVP_MD_CTX *ctx)
 	{ return MDC2_Init(ctx->md_data); }

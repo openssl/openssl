@@ -53,10 +53,7 @@
  *
  */
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/engine.h>
 
 /* Initialise a engine type for use (or up its functional reference count
  * if it's already in use). This version is only used internally. */

@@ -53,10 +53,7 @@
  *
  */
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/engine.h>
 
 /* Basic get/set stuff */
 

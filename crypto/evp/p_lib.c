@@ -64,6 +64,9 @@
 #include <openssl/evp.h>
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 

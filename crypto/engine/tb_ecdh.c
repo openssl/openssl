@@ -67,8 +67,6 @@
  *
  */
 
-#include <openssl/evp.h>
-#include <openssl/engine.h>
 #include "eng_int.h"
 
 /* If this symbol is defined then ENGINE_get_default_ECDH(), the function that is

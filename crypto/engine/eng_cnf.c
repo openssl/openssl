@@ -56,11 +56,8 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "eng_int.h"
 #include <openssl/conf.h>
-#include <openssl/engine.h>
 
 /* #define ENGINE_CONF_DEBUG */
 

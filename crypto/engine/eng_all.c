@@ -56,8 +56,7 @@
  *
  */
 
-#include <openssl/err.h>
-#include <openssl/engine.h>
+#include "cryptlib.h"
 #include "eng_int.h"
 
 void ENGINE_load_builtin_engines(void)

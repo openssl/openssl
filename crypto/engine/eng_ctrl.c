@@ -53,10 +53,7 @@
  *
  */
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/engine.h>
 
 /* When querying a ENGINE-specific control command's 'description', this string
  * is used if the ENGINE_CMD_DEFN has cmd_desc set to NULL. */

@@ -79,14 +79,6 @@
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>
 
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-
 #ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
 #endif
@@ -99,9 +91,18 @@
 #include <openssl/ecdh.h>
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+#endif
+
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif

@@ -58,10 +58,7 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/engine.h>
 #include <openssl/conf.h>
 
 int ENGINE_set_default(ENGINE *e, unsigned int flags)

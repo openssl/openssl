@@ -70,6 +70,7 @@
 #include "ecdh.h"
 #include <string.h>
 #include <openssl/engine.h>
+#include <openssl/err.h>
 
 const char *ECDH_version="ECDH" OPENSSL_VERSION_PTEXT;
 

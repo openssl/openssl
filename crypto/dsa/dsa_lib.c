@@ -66,6 +66,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/dh.h>
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 

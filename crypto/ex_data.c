@@ -138,12 +138,8 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
-#include <openssl/lhash.h>
 #include "cryptlib.h"
+#include <openssl/lhash.h>
 
 /* What an "implementation of ex_data functionality" looks like */
 struct st_CRYPTO_EX_DATA_IMPL

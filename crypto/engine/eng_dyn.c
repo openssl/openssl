@@ -57,11 +57,7 @@
  */
 
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/engine.h>
 #include <openssl/dso.h>
 
 /* Shared libraries implementing ENGINEs for use by the "dynamic" ENGINE loader

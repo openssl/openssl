@@ -77,8 +77,11 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
+
+#ifndef OPENSSL_NO_DEPRECATED
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
+#endif
 #endif
 
 #define DSA_FLAG_CACHE_MONT_P	0x01

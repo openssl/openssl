@@ -64,6 +64,8 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 	{

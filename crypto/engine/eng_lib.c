@@ -56,11 +56,8 @@
  *
  */
 
-#include <openssl/crypto.h>
-#include "cryptlib.h"
 #include "eng_int.h"
-#include <openssl/rand.h> /* FIXME: This shouldn't be needed */
-#include <openssl/engine.h>
+#include <openssl/rand.h>
 
 /* The "new"/"free" stuff first */
 
