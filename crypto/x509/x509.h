@@ -301,10 +301,11 @@ DECLARE_STACK_OF(X509_TRUST)
 #define X509_TRUST_EMAIL	4
 #define X509_TRUST_OBJECT_SIGN	5
 #define X509_TRUST_OCSP_SIGN	6
+#define X509_TRUST_OCSP_REQUEST	7
 
 /* Keep these up to date! */
 #define X509_TRUST_MIN		1
-#define X509_TRUST_MAX		6
+#define X509_TRUST_MAX		7
 
 
 /* trust_flags values */

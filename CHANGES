@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Function OCSP_request_verify(). This checks the signature on an
+     OCSP request and verifies the signer certificate. The signer
+     certificate is just checked for a generic purpose and OCSP request
+     trust settings.
+     [Steve Henson]
+
   *) Add OCSP_check_validity() function to check the validity of OCSP
      responses. OCSP responses are prepared in real time and may only
      be a few seconds old. Simply checking that the current time lies

@@ -158,24 +158,6 @@ int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 	return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
 	}
 
-/* XXX assumes certs in signature are sorted root to leaf XXX */
-int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey)
-        {
-	STACK_OF(X509) *sk;
-
-	if (!req->optionalSignature) return 0;
-	if (pkey == NULL)
-	        {
-	        if (!(sk = req->optionalSignature->certs)) return 0;
-		if (!(pkey=X509_get_pubkey(sk_X509_value(sk, sk_X509_num(sk)-1))))
-		        {
-		        OCSPerr(OCSP_F_REQUEST_VERIFY,OCSP_R_NO_PUBLIC_KEY);
-			return 0;
-		        }
-		}
-	return OCSP_REQUEST_verify(req, pkey);
-        }
-
 
 /* Parse a URL and split it up into host, port and path components and whether
  * it is SSL.

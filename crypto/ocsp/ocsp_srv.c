@@ -96,6 +96,12 @@ int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
 	return 1;
 	}
 
+int OCSP_request_is_signed(OCSP_REQUEST *req)
+	{
+	if(req->optionalSignature) return 1;
+	return 0;
+	}
+
 /* Create an OCSP response and encode an optional basic response */
 OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs)
         {

@@ -79,6 +79,7 @@ static ERR_STRING_DATA OCSP_str_functs[]=
 {ERR_PACK(0,OCSP_F_OCSP_MATCH_ISSUERID,0),	"OCSP_MATCH_ISSUERID"},
 {ERR_PACK(0,OCSP_F_OCSP_PARSE_URL,0),	"OCSP_parse_url"},
 {ERR_PACK(0,OCSP_F_OCSP_REQUEST_SIGN,0),	"OCSP_request_sign"},
+{ERR_PACK(0,OCSP_F_OCSP_REQUEST_VERIFY,0),	"OCSP_request_verify"},
 {ERR_PACK(0,OCSP_F_OCSP_RESPONSE_GET1_BASIC,0),	"OCSP_response_get1_basic"},
 {ERR_PACK(0,OCSP_F_OCSP_SENDREQ_BIO,0),	"OCSP_sendreq_bio"},
 {ERR_PACK(0,OCSP_F_REQUEST_VERIFY,0),	"REQUEST_VERIFY"},
@@ -102,6 +103,7 @@ static ERR_STRING_DATA OCSP_str_reasons[]=
 {OCSP_R_NO_RESPONSE_DATA                 ,"no response data"},
 {OCSP_R_NO_REVOKED_TIME                  ,"no revoked time"},
 {OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE,"private key does not match certificate"},
+{OCSP_R_REQUEST_NOT_SIGNED               ,"request not signed"},
 {OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA,"response contains no revocation data"},
 {OCSP_R_ROOT_CA_NOT_TRUSTED              ,"root ca not trusted"},
 {OCSP_R_SERVER_READ_ERROR                ,"server read error"},
@@ -115,6 +117,7 @@ static ERR_STRING_DATA OCSP_str_reasons[]=
 {OCSP_R_STATUS_TOO_OLD                   ,"status too old"},
 {OCSP_R_UNKNOWN_MESSAGE_DIGEST           ,"unknown message digest"},
 {OCSP_R_UNKNOWN_NID                      ,"unknown nid"},
+{OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE   ,"unsupported requestorname type"},
 {0,NULL}
 	};
 

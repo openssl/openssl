@@ -448,7 +448,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 			ASN1_GENERALIZEDTIME *nextupd,
 			long sec, long maxsec);
 
-int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
+int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store, unsigned long flags);
 
 int OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl);
 
@@ -461,6 +461,7 @@ OCSP_CERTID *OCSP_onereq_get0_id(OCSP_ONEREQ *one);
 int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
 			ASN1_OCTET_STRING **pikeyHash,
 			ASN1_INTEGER **pserial, OCSP_CERTID *cid);
+int OCSP_request_is_signed(OCSP_REQUEST *req);
 OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 						OCSP_CERTID *cid,
@@ -576,6 +577,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_OCSP_MATCH_ISSUERID			 109
 #define OCSP_F_OCSP_PARSE_URL				 114
 #define OCSP_F_OCSP_REQUEST_SIGN			 110
+#define OCSP_F_OCSP_REQUEST_VERIFY			 116
 #define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 112
 #define OCSP_F_REQUEST_VERIFY				 113
@@ -596,6 +598,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_NO_RESPONSE_DATA				 108
 #define OCSP_R_NO_REVOKED_TIME				 109
 #define OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE	 110
+#define OCSP_R_REQUEST_NOT_SIGNED			 128
 #define OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA	 111
 #define OCSP_R_ROOT_CA_NOT_TRUSTED			 112
 #define OCSP_R_SERVER_READ_ERROR			 113
@@ -609,6 +612,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_STATUS_TOO_OLD				 127
 #define OCSP_R_UNKNOWN_MESSAGE_DIGEST			 119
 #define OCSP_R_UNKNOWN_NID				 120
+#define OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE		 129
 
 #ifdef  __cplusplus
 }

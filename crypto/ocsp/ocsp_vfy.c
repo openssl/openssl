@@ -67,6 +67,8 @@ static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain, unsigned
 static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret);
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid, STACK_OF(OCSP_SINGLERESP) *sresp);
 static int ocsp_check_delegated(X509 *x, int flags);
+static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req, X509_NAME *nm, STACK_OF(X509) *certs,
+				X509_STORE *st, unsigned long flags);
 
 /* Verify a basic response message */
 
@@ -338,5 +340,92 @@ static int ocsp_check_delegated(X509 *x, int flags)
 	    (x->ex_xkusage & XKU_OCSP_SIGN))
 		return 1;
 	OCSPerr(OCSP_F_OCSP_CHECK_DELEGATED, OCSP_R_MISSING_OCSPSIGNING_USAGE);
+	return 0;
+	}
+
+/* Verify an OCSP request. This is fortunately much easier than OCSP
+ * request verify. Just find the signers certificate and verify it
+ * against a given trust value.
+ */
+
+int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store, unsigned long flags)
+        {
+	X509 *signer;
+	X509_NAME *nm;
+	GENERAL_NAME *gen;
+	int ret;
+	X509_STORE_CTX ctx;
+	if (!req->optionalSignature) 
+		{
+		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_REQUEST_NOT_SIGNED);
+		return 0;
+		}
+	gen = req->tbsRequest->requestorName;
+	if (gen->type != GEN_DIRNAME)
+		{
+		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
+		return 0;
+		}
+	nm = gen->d.directoryName;
+	ret = ocsp_req_find_signer(&signer, req, nm, certs, store, flags);
+	if (ret <= 0)
+		{
+		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
+		return 0;
+		}
+	if ((ret == 2) && (flags & OCSP_TRUSTOTHER))
+		flags |= OCSP_NOVERIFY;
+	if (!(flags & OCSP_NOSIGS))
+		{
+		EVP_PKEY *skey;
+		skey = X509_get_pubkey(signer);
+		ret = OCSP_REQUEST_verify(req, skey);
+		EVP_PKEY_free(skey);
+		if(ret <= 0)
+			{
+			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_SIGNATURE_FAILURE);
+			return 0;
+			}
+		}
+	if (!(flags & OCSP_NOVERIFY))
+		{
+		if(flags & OCSP_NOCHAIN)
+			X509_STORE_CTX_init(&ctx, store, signer, NULL);
+		else
+			X509_STORE_CTX_init(&ctx, store, signer, req->optionalSignature->certs);
+
+		X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
+		X509_STORE_CTX_set_trust(&ctx, X509_TRUST_OCSP_REQUEST);
+		ret = X509_verify_cert(&ctx);
+		X509_STORE_CTX_cleanup(&ctx);
+                if (ret <= 0)
+			{
+			ret = X509_STORE_CTX_get_error(&ctx);	
+			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,OCSP_R_CERTIFICATE_VERIFY_ERROR);
+			ERR_add_error_data(2, "Verify error:",
+					X509_verify_cert_error_string(ret));
+                        return 0;
+                	}
+		}
+	return 1;
+        }
+
+static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req, X509_NAME *nm, STACK_OF(X509) *certs,
+				X509_STORE *st, unsigned long flags)
+	{
+	X509 *signer;
+	if(!(flags & OCSP_NOINTERN))
+		{
+		signer = X509_find_by_subject(req->optionalSignature->certs, nm);
+		*psigner = signer;
+		return 1;
+		}
+
+	signer = X509_find_by_subject(certs, nm);
+	if (signer)
+		{
+		*psigner = signer;
+		return 2;
+		}
 	return 0;
 	}
