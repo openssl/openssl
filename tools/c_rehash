@@ -20,7 +20,7 @@ if [ ! -f "$OPENSSL" ]; then
         fi
     done
     if [ $found = 0 ]; then
-        echo "c_rehash: rehashing skipped ('openssl' program still not available)" 1>&2
+        echo "c_rehash: rehashing skipped ('openssl' program not available)" 1>&2
         exit 0
     fi
 fi
