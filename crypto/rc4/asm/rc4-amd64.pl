@@ -13,10 +13,17 @@
 # Presumably it has everything to do with AMD cache architecture and
 # RAW or whatever penalties. Once again! The module *requires* config
 # line *without* RC4_CHAR! As for coding "secret," I bet on partial
-# register arithmetics. For example instead 'inc %r8; and $255,%r8'
+# register arithmetics. For example instead of 'inc %r8; and $255,%r8'
 # I simply 'inc %r8b'. Even though optimization manual discourages
 # to operate on partial registers, it turned out to be the best bet.
 # At least for AMD... How IA32E would perform remains to be seen...
+
+# As was shown by Marc Bevand reordering of couple of load operations
+# results in even higher performance gain of 3.3x:-) At least on
+# Opteron... For reference, 1x in this case is RC4_CHAR C-code
+# compiled with gcc 3.3.2, which performs at ~54MBps per 1GHz clock.
+# Latter means that if you want to *estimate* what to expect from
+# *your* CPU, then multiply 54 by 3.3 and clock frequency in GHz.
 
 $output=shift;
 
@@ -65,10 +72,10 @@ RC4:	or	$len,$len
 .Lentry:
 ___
 $code=<<___ if (defined($win64a));
-TEXT	SEGMENT
+_TEXT	SEGMENT
 PUBLIC	RC4
 ALIGN	16
-RC4	PROC NEAR
+RC4	PROC
 	or	$len,$len
 	jne	.Lentry
 	repret
@@ -87,47 +94,44 @@ $code.=<<___;
 	jz	.Lloop1
 .align	16
 .Lloop8:
-	movq	`&PTR("QWORD:[$inp]")`,%rax
-
 	inc	$XX#b
 	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
 	add	$TX#b,$YY#b
 	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
 	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
 	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
-	add	$TY#b,$TX#b
+	add	$TX#b,$TY#b
 	inc	$XX#b
-	movl	`&PTR("DWORD:[$dat+$TX*4]")`,$TY#d
-	xor	$TY,%rax
+	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
+	movb	`&PTR("BYTE:[$dat+$TY*4]")`,%al
 ___
 for ($i=1;$i<=6;$i++) {
 $code.=<<___;
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
 	add	$TX#b,$YY#b
+	ror	\$8,%rax
 	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
 	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
 	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
-	add	$TY#b,$TX#b
-	movl	`&PTR("DWORD:[$dat+$TX*4]")`,$TY#d
-	shl	\$`8*$i`,$TY
+	add	$TX#b,$TY#b
 	inc	$XX#b
-	xor	$TY,%rax
+	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
+	movb	`&PTR("BYTE:[$dat+$TY*4]")`,%al
 ___
 }
 $code.=<<___;
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
 	add	$TX#b,$YY#b
+	ror	\$8,%rax
 	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
 	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
 	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
 	sub	\$8,$len
 	add	$TY#b,$TX#b
-	add	\$8,$out
-	movl	`&PTR("DWORD:[$dat+$TX*4]")`,$TY#d
-	shl	\$56,$TY
+	movb	`&PTR("BYTE:[$dat+$TX*4]")`,%al
+	ror	\$8,%rax
 	add	\$8,$inp
-	xor	$TY,%rax
+	add	\$8,$out
 
+	xor	`&PTR("QWORD:-8[$inp]")`,%rax
 	mov	%rax,`&PTR("QWORD:-8[$out]")`
 
 	test	\$-8,$len
@@ -166,7 +170,7 @@ $code.=<<___;
 ___
 $code.=<<___ if (defined($win64a));
 RC4	ENDP
-TEXT	ENDS
+_TEXT	ENDS
 END
 ___
 $code.=<<___ if (!defined($win64a));
