@@ -63,13 +63,84 @@
 /* TODO: optional Lim-Lee precomputation for the generator */
 
 
-/* this is just BN_window_bits_for_exponent_size from bn_lcl.h for now;
- * the table should be updated for EC */ /* TODO */
 #define EC_window_bits_for_scalar_size(b) \
-		((b) > 671 ? 6 : \
-		 (b) > 239 ? 5 : \
-		 (b) >  79 ? 4 : \
-	 	 (b) >  23 ? 3 : 1)
+		((b) >= 1500 ? 6 : \
+		 (b) >=  550 ? 5 : \
+		 (b) >=  200 ? 4 : \
+		 (b) >=   55 ? 3 : \
+		 (b) >=   20 ? 2 : \
+		  1)
+/* For window size 'w' (w >= 2), we compute the odd multiples
+ *      1*P .. (2^w-1)*P.
+ * This accounts for  2^(w-1)  point additions (neglecting constants),
+ * each of which requires 16 field multiplications (4 squarings
+ * and 12 general multiplications) in the case of curves defined
+ * over GF(p), which are the only curves we have so far.
+ *
+ * Converting these precomputed points into affine form takes
+ * three field multiplications for inverting Z and one squaring
+ * and three multiplications for adjusting X and Y, i.e.
+ * 7 multiplications in total (1 squaring and 6 general multiplications),
+ * again except for constants.
+ *
+ * The average number of windows for a 'b' bit scalar is roughly
+ *          b/(w+1).
+ * Each of these windows (except possibly for the first one, but
+ * we are ignoring constants anyway) requires one point addition.
+ * As the precomputed table stores points in affine form, these
+ * additions take only 11 field multiplications each (3 squarings
+ * and 8 general multiplications).
+ *
+ * So the total workload, except for constants, is
+ *
+ *        2^(w-1)*[5 squarings + 18 multiplications]
+ *      + (b/(w+1))*[3 squarings + 8 multiplications]
+ *
+ * If we assume that 10 squarings are as costly as 9 multiplications,
+ * our task is to find the 'w' that, given 'b', minimizes
+ *
+ *        2^(w-1)*(5*9 + 18*10) + (b/(w+1))*(3*9 + 8*10)
+ *      = 2^(w-1)*225 +           (b/(w+1))*107.
+ *
+ * Thus optimal window sizes should be roughly as follows:
+ *
+ *    w >= 6  if         b >= 1414
+ *     w = 5  if 1413 >= b >=  505
+ *     w = 4  if  504 >= b >=  169
+ *     w = 3  if  168 >= b >=   51
+ *     w = 2  if   50 >= b >=   13
+ *     w = 1  if   12 >= b
+ *
+ * If we assume instead that squarings are exactly as costly as
+ * multiplications, we have to minimize
+ *      2^(w-1)*23 + (b/(w+1))*11.
+ *
+ * This gives us the following (nearly unchanged) table of optimal
+ * windows sizes:
+ *
+ *    w >= 6  if         b >= 1406
+ *     w = 5  if 1405 >= b >=  502
+ *     w = 4  if  501 >= b >=  168
+ *     w = 3  if  167 >= b >=   51
+ *     w = 2  if   50 >= b >=   13
+ *     w = 1  if   12 >= b
+ *
+ * Note that neither table tries to take into account memory usage
+ * (code locality etc.).  Actual timings with NIST curve P-192 and
+ * 192-bit scalars show that  w = 3  (instead of 4) is preferrable;
+ * and timings with NIST curve P-521 and 521-bit scalars show that
+ * w = 4  (instead of 5) is preferrable.  So we round up all the
+ * boundaries and use the following table:
+ *
+ *    w >= 6  if         b >= 1500
+ *     w = 5  if 1499 >= b >=  550
+ *     w = 4  if  549 >= b >=  200
+ *     w = 3  if  199 >= b >=   55
+ *     w = 2  if   54 >= b >=   20
+ *     w = 1  if   19 >= b
+ */
+
+
 
 /* Compute
  *      \sum scalars[i]*points[i]
