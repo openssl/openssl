@@ -1014,7 +1014,7 @@ static int get_server_finished(SSL *s)
 		 * or bad things can happen */
 		/* ZZZZZZZZZZZZZ */
 		s->session->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
-		memcpy(s->session->session_id,p,SSL2_SSL_SESSION_ID_LENGTH);
+		memcpy(s->session->session_id,p+1,SSL2_SSL_SESSION_ID_LENGTH);
 		}
 	else
 		{

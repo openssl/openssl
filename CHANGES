@@ -352,6 +352,15 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
+     code (06) was taken as the first octet of the session ID and the last
+     octet was ignored consequently. As a result SSLv2 client side session
+     caching could not have worked due to the session ID mismatch between
+     client and server.
+     Behaviour observed by Crispin Flowerday <crispin@flowerday.cx> as
+     PR #377.
+     [Lutz Jaenicke]
+
   *) Change the declaration of needed Kerberos libraries to use EX_LIBS
      instead of the special (and badly supported) LIBKRB5.  LIBKRB5 is
      removed entirely.
