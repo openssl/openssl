@@ -108,15 +108,6 @@ typedef struct des_ks_struct
 		} ks;
 	} des_key_schedule[16];
 
-#define DES_KEY_SZ 	(sizeof(DES_cblock))
-#define DES_SCHEDULE_SZ (sizeof(DES_key_schedule))
-
-#define DES_ENCRYPT	1
-#define DES_DECRYPT	0
-
-#define DES_CBC_MODE	0
-#define DES_PCBC_MODE	1
-
 #define des_ecb2_encrypt(i,o,k1,k2,e) \
 	des_ecb3_encrypt((i),(o),(k1),(k2),(k1),(e))
 
