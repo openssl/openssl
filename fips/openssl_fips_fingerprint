@@ -11,7 +11,7 @@ exe=$2
 # case shared libraries are built.
 if [ "X$TOP" != "X" ]
 then
-    PATH=$TOP/apps:$PATH
+    PATH="$TOP/apps:$TOP:$PATH"
     LD_LIBRARY_PATH=$TOP; export LD_LIBRARY_PATH
 else
     LD_LIBRARY_PATH=.; export LD_LIBRARY_PATH
@@ -20,5 +20,7 @@ fi
 echo "Checking library fingerprint for $lib"
 openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/(.*\//(/" | diff $lib.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
 
+[ -x $exe.exe ] && exe=$exe.exe
+
 echo "Making fingerprint for $exe"
-openssl sha1 -hmac etaonrishdlcupfm -binary $exe > $exe.sha1
+openssl sha1 -hmac etaonrishdlcupfm -binary $exe > $exe.sha1 || rm $exe.sha1

@@ -126,8 +126,20 @@ static int FIPS_check_exe(const char *path)
     FILE *f;
     static char key[]="etaonrishdlcupfm";
     HMAC_CTX hmac;
+    const char *sha1_fmt="%s.sha1";
 
     f=fopen(path,"rb");
+#ifdef __CYGWIN32__
+    /* cygwin scrupulously strips .exe extentions:-( as of now it's
+       actually no point to attempt above fopen, but we keep the call
+       just in case the behavior changes in the future... */
+    if (!f)
+	{
+	sha1_fmt="%s.exe.sha1";
+	BIO_snprintf(p2,sizeof p2,"%s.exe",path);
+	f=fopen(p2,"rb");
+	}
+#endif
     if(!f)
 	{
 	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
@@ -148,7 +160,7 @@ static int FIPS_check_exe(const char *path)
 	}
     fclose(f);
     HMAC_Final(&hmac,mdbuf,&n);
-    BIO_snprintf(p2,sizeof p2,"%s.sha1",path);
+    BIO_snprintf(p2,sizeof p2,sha1_fmt,path);
     f=fopen(p2,"rb");
     if(!f || fread(buf,1,20,f) != 20)
 	{
