@@ -466,21 +466,49 @@ sub main'data_word
 
 sub main'puts
 	{
-	    $constl++;
-	    &main'push('$Lstring' . $constl);
-	    &main'call('puts');
-	    &main'add("esp",4);
+	&main'push('$Lstring' . ++$constl);
+	&main'call('puts');
+	$stack-=4;
+	&main'add("esp",4);
 
-	    $const .= "Lstring$constl:\n\t.string \"@_[0]\"\n";
+	$const .= "Lstring$constl:\n\t.string \"@_[0]\"\n";
 	}
 
 sub main'putx
 	{
-	    $constl++;
-	    &main'push($_[0]);
-	    &main'push('$Lstring' . $constl);
-	    &main'call('printf');
-	    &main'add("esp",8);
+	&main'push($_[0]);
+	&main'push('$Lstring' . ++$constl);
+	&main'call('printf');
+	$stack-=8;
+	&main'add("esp",8);
 
-	    $const .= "Lstring$constl:\n\t.string \"\%X\"\n";
+	$const .= "Lstring$constl:\n\t.string \"\%X\"\n";
+	}
+
+sub main'printf
+	{
+	$ostack = $stack;
+	for ($i = @_ - 1; $i >= 0; $i--)
+		{
+		$constl++;
+		if ($i == 0) # change this to support %s format strings
+			{
+			&main'push('$Lstring' . $constl);
+			$const .= "Lstring$constl:\n\t.string \"@_[$i]\"\n";
+			}
+		else
+			{
+			if ($_[$i] =~ /([0-9]*)\(%esp\)/)
+				{
+				&main'push(($1 + $stack - $ostack) . '(%esp)');
+				}
+			else
+				{
+				&main'push($_[$i]);
+				}
+			}
+		}
+	&main'call('printf');
+	$stack=$ostack;
+	&main'add("esp",4*@_);
 	}
