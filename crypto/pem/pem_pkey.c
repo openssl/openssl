@@ -104,6 +104,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 		if (klen <= 0) {
 			PEMerr(PEM_F_PEM_ASN1_READ_BIO,
 					PEM_R_BAD_PASSWORD_READ);
+			X509_SIG_free(p8);
 			goto err;
 		}
 		p8inf = PKCS8_decrypt(p8, psbuf, klen);
