@@ -20,7 +20,9 @@
 # WARNING: At high optimization levels, HP's ANSI-C compiler can chew up
 #          large amounts of memory and CPU time. Make sure to have at least
 #          128MB of RAM available and that your kernel is configured to allow
-#          at least 128MB data size (maxdsiz parameter).
+#          at least 128MB data size (maxdsiz parameter which can be obtained
+#          by multiplying 'echo maxdsiz/D | adb -k /stand/vmunix /dev/kmem'
+#          by 'getconf PAGE_SIZE').
 #          The installation process can take several hours, even on fast
 #          machines. +O4 optimization of the libcrypto.sl shared library may
 #          take 1 hour on a C200 (200MHz PA8200 CPU), +O3 compilation of
