@@ -298,6 +298,10 @@ foreach (@ARGV)
 			die "unknown options, only -Dxxx, -Lxxx, -lxxx, -fxxx and -Kxxx are supported\n";
 			}
 		}
+	elsif ($_ =~ /^([^:]+):(.+)$/) {
+		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
+		$target=$1;
+	}
 	else
 		{
 		die "target already defined - $target\n" if ($target ne "");
