@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 	BIO *out=NULL;
 	int i,ret;
 	unsigned char c;
-	BIGNUM *r_mont,*r_recp,*a,*b,*m;
+	BIGNUM *r_mont,*r_recp,*r_simple,*a,*b,*m;
 
 	ERR_load_BN_strings();
 
@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 	if (ctx == NULL) exit(1);
 	r_mont=BN_new();
 	r_recp=BN_new();
+	r_simple=BN_new();
 	a=BN_new();
 	b=BN_new();
 	m=BN_new();
@@ -127,22 +128,36 @@ int main(int argc, char *argv[])
 			ERR_print_errors(out);
 			exit(1);
 			}
-		
-		if (BN_cmp(r_mont,r_recp) != 0)
+
+		ret=BN_mod_exp_simple(r_simple,a,b,m,ctx);
+		if (ret <= 0)
 			{
-			printf("\nmont and recp results differ\n");
+			printf("BN_mod_exp_simple() problems\n");
+			ERR_print_errors(out);
+			exit(1);
+			}
+
+		if (BN_cmp(r_simple, r_mont) == 0
+		    && BN_cmp(r_simple,r_recp) == 0)
+			{
+			printf(".");
+			fflush(stdout);
+			}
+		else
+		  	{
+			if (BN_cmp(r_simple,r_mont) != 0)
+				printf("\nsimple and mont results differ\n");
+			if (BN_cmp(r_simple,r_recp) != 0)
+				printf("\nsimple and recp results differ\n");
+
 			printf("a (%3d) = ",BN_num_bits(a));   BN_print(out,a);
 			printf("\nb (%3d) = ",BN_num_bits(b)); BN_print(out,b);
 			printf("\nm (%3d) = ",BN_num_bits(m)); BN_print(out,m);
+			printf("\nsimple   =");	BN_print(out,r_simple);
 			printf("\nrecp     =");	BN_print(out,r_recp);
 			printf("\nmont     ="); BN_print(out,r_mont);
 			printf("\n");
 			exit(1);
-			}
-		else
-			{
-			printf(".");
-			fflush(stdout);
 			}
 		}
 	CRYPTO_mem_leaks(out);
