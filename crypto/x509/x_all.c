@@ -381,3 +381,57 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data, EVP_MD *type,
 		(char *)data,md,len));
 	}
 
+
+#ifndef NO_FP_API
+X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
+	{
+	return((X509_SIG *)ASN1_d2i_fp((char *(*)())X509_SIG_new,
+		(char *(*)())d2i_X509_SIG, (fp),(unsigned char **)(p8)));
+	}
+
+int i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
+	{
+	return(ASN1_i2d_fp(i2d_X509_SIG,fp,(unsigned char *)p8));
+	}
+#endif
+
+X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
+	{
+	return((X509_SIG *)ASN1_d2i_bio((char *(*)())X509_SIG_new,
+		(char *(*)())d2i_X509_SIG, (bp),(unsigned char **)(p8)));
+	}
+
+int i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
+	{
+	return(ASN1_i2d_bio(i2d_X509_SIG,bp,(unsigned char *)p8));
+	}
+
+#ifndef NO_FP_API
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
+						 PKCS8_PRIV_KEY_INFO **p8inf)
+	{
+	return((PKCS8_PRIV_KEY_INFO *)ASN1_d2i_fp(
+		(char *(*)())PKCS8_PRIV_KEY_INFO_new,
+		(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (fp),
+				(unsigned char **)(p8inf)));
+	}
+
+int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
+	{
+	return(ASN1_i2d_fp(i2d_PKCS8_PRIV_KEY_INFO,fp,(unsigned char *)p8inf));
+	}
+#endif
+
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
+						 PKCS8_PRIV_KEY_INFO **p8inf)
+	{
+	return((PKCS8_PRIV_KEY_INFO *)ASN1_d2i_bio(
+		(char *(*)())PKCS8_PRIV_KEY_INFO_new,
+		(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (bp),
+				(unsigned char **)(p8inf)));
+	}
+
+int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
+	{
+	return(ASN1_i2d_bio(i2d_PKCS8_PRIV_KEY_INFO,bp,(unsigned char *)p8inf));
+	}

@@ -72,6 +72,7 @@ int MAIN(int argc, char **argv)
 	int topk8 = 0;
 	int pbe_nid = -1;
 	int iter = PKCS12_DEFAULT_ITER;
+	int informat, outformat;
 	int p8_broken = PKCS8_OK;
 	X509_SIG *p8;
 	PKCS8_PRIV_KEY_INFO *p8inf;
@@ -79,11 +80,23 @@ int MAIN(int argc, char **argv)
 	char pass[50];
 	int badarg = 0;
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
+	informat=FORMAT_PEM;
+	outformat=FORMAT_PEM;
 	ERR_load_crypto_strings();
 	SSLeay_add_all_algorithms();
 	args = argv + 1;
 	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp (*args, "-topk8")) topk8 = 1;
+		if (!strcmp(*args,"-inform")) {
+			if (args[1]) {
+				args++;
+				informat=str2fmt(*args);
+			} else badarg = 1;
+		} else if (!strcmp(*args,"-outform")) {
+			if (args[1]) {
+				args++;
+				outformat=str2fmt(*args);
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-topk8")) topk8 = 1;
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-nooct")) p8_broken = PKCS8_NO_OCTET;
 		else if (!strcmp (*args, "-in")) {
@@ -114,7 +127,7 @@ int MAIN(int argc, char **argv)
 	if (pbe_nid == -1) pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
 	if (infile) {
-		if (!(in = BIO_new_file (infile, "r"))) {
+		if (!(in = BIO_new_file (infile, "rb"))) {
 			BIO_printf (bio_err,
 				 "Can't open input file %s\n", infile);
 			return (1);
@@ -122,7 +135,7 @@ int MAIN(int argc, char **argv)
 	} else in = BIO_new_fp (stdin, BIO_NOCLOSE);
 
 	if (outfile) {
-		if (!(out = BIO_new_file (outfile, "w"))) {
+		if (!(out = BIO_new_file (outfile, "wb"))) {
 			BIO_printf (bio_err,
 				 "Can't open output file %s\n", outfile);
 			return (1);
@@ -154,7 +167,16 @@ int MAIN(int argc, char **argv)
 		return (0);
 	}
 
-	if (!(p8 = PEM_read_bio_PKCS8 (in, NULL, NULL))) {
+	if(informat == FORMAT_PEM) 
+		p8 = PEM_read_bio_PKCS8(in, NULL, NULL);
+	else if(informat == FORMAT_ASN1)
+		p8 = d2i_PKCS8_bio(in, NULL);
+	else {
+		BIO_printf(bio_err, "Bad input format specified for key\n");
+		return (1);
+	}
+
+	if (!p8) {
 		BIO_printf (bio_err, "Error reading key\n", outfile);
 		ERR_print_errors(bio_err);
 		return (1);

@@ -581,6 +581,11 @@ int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 #ifndef NO_DSA
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
+int i2d_PKCS8_fp(FILE *fp,X509_SIG *p8);
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
+						PKCS8_PRIV_KEY_INFO **p8inf);
+int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,PKCS8_PRIV_KEY_INFO *p8inf);
 #endif
 #endif
 
@@ -600,6 +605,11 @@ int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 #ifndef NO_DSA
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+X509_SIG *d2i_PKCS8_bio(BIO *bp,X509_SIG **p8);
+int i2d_PKCS8_bio(BIO *bp,X509_SIG *p8);
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
+						PKCS8_PRIV_KEY_INFO **p8inf);
+int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,PKCS8_PRIV_KEY_INFO *p8inf);
 #endif
 #endif
 
