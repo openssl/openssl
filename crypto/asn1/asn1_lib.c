@@ -315,6 +315,7 @@ ASN1_STRING *ASN1_STRING_dup(ASN1_STRING *str)
 		ASN1_STRING_free(ret);
 		return(NULL);
 		}
+	ret->flags = str->flags;
 	return(ret);
 	}
 

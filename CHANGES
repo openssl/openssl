@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Copy the flags in ASN1_STRING_dup().
+     [Roman E. Pavlov <pre@mo.msk.ru>]
+
   *) The x509 application mishandled signing requests containing DSA
      keys when the signing key was also DSA and the parameters didn't match.
 
