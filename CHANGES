@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix so PRNG is seeded in req if using an already existing
+     DSA key.
+     [Steve Henson]
+
   *) New options to smime application. -inform and -outform
      allow alternative formats for the S/MIME message including
      PEM and DER. The -content option allows the content to be

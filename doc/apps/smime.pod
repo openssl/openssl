@@ -22,8 +22,11 @@ B<openssl> B<smime>
 [B<-signer file>]
 [B<-recip  file>]
 [B<-in file>]
+[B<-inform SMIME|PEM|DER>]
 [B<-inkey file>]
 [B<-out file>]
+[B<-outform SMIME|PEM|DER>]
+[B<-content file>]
 [B<-to addr>]
 [B<-from ad>]
 [B<-subject s>]
@@ -74,10 +77,36 @@ takes an input message and writes out a PEM encoded PKCS#7 structure.
 the input message to be encrypted or signed or the MIME message to
 be decrypted or verified.
 
+=item B<-inform SMIME|PEM|DER>
+
+this specifies the input format for the PKCS#7 structure. The default
+is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
+format change this to expect PEM and DER format PKCS#7 structures
+instead. This currently only affects the input format of the PKCS#7
+structure, if no PKCS#7 structure is being input (for example with
+B<-encrypt> or B<-sign>) this option has no effect.
+
 =item B<-out filename>
 
 the message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
+
+=item B<-outform SMIME|PEM|DER>
+
+this specifies the output format for the PKCS#7 structure. The default
+is B<SMIME> which write an S/MIME format message. B<PEM> and B<DER>
+format change this to write PEM and DER format PKCS#7 structures
+instead. This currently only affects the output format of the PKCS#7
+structure, if no PKCS#7 structure is being output (for example with
+B<-verify> or B<-decrypt>) this option has no effect.
+
+=item B<-content filename>
+
+This specifies a file containing the detached content, this is only
+useful with the B<-verify> command. This is only usable if the PKCS#7
+structure is using the detached signature form where the content is
+not included. This option will override any content if the input format
+is S/MIME and it uses the multipart/signed MIME content type.
 
 =item B<-text>
 
@@ -204,7 +233,7 @@ a blank line. Piping the mail directly to sendmail is one way to
 achieve the correct format.
 
 The supplied message to be signed or encrypted must include the
-necessary MIME headers: or many S/MIME clients wont display it
+necessary MIME headers or many S/MIME clients wont display it
 properly (if at all). You can use the B<-text> option to automatically
 add plain text headers.
 
@@ -300,6 +329,22 @@ being encrypted already has MIME headers.
 Decrypt mail:
 
  openssl smime -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
+
+The output from Netscape form signing is a PKCS#7 structure with the
+detached signature format. You can use this program to verify the
+signature by line wrapping the base64 encoded structure and surrounding
+it with:
+
+ -----BEGIN PKCS7----
+ -----END PKCS7----
+
+and using the command, 
+
+ openssl smime -verify -inform PEM -in signature.pem -content content.txt
+
+alternatively you can base64 decode the signature and use
+
+ openssl smime -verify -inform DER -in signature.der -content content.txt
 
 =head1 BUGS
 

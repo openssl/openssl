@@ -547,6 +547,11 @@ bad:
 			BIO_printf(bio_err,"unable to load Private key\n");
 			goto end;
 			}
+                if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)
+			{
+			char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+			app_RAND_load_file(randfile, bio_err, 0);
+                	}
 		}
 
 	if (newreq && (pkey == NULL))
