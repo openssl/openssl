@@ -4,7 +4,8 @@
 
  Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
 
-  *)
+  *) Use the correct content when signing type "other".
+     [Steve Henson]
 
  Changes between 0.9.7b and 0.9.7c  [30 Sep 2003]
 
