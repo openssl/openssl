@@ -9,7 +9,7 @@ $!
 $! Changes by Richard Levitte <richard@levitte.org>
 $!
 $! This procedure creates the SSL libraries of "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB"
-$! "[.xxx.EXE.SSL]LIBSSL.OLB" and if specified "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB".
+$! "[.xxx.EXE.SSL]LIBSSL.OLB"
 $! The "xxx" denotes the machine architecture of AXP or VAX.
 $!
 $! This procedures accepts two command line options listed below.
@@ -21,7 +21,6 @@ $!      CONFIG    Just build the "[.CRYPTO]OPENSSLCONF.H" file.
 $!      BUILDINF  Just build the "[.CRYPTO]BUILDINF.H" file.
 $!      SOFTLINKS Just fix the Unix soft links.
 $!      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
-$!      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      CRYPTO/x  Just build the x part of the
 $!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
@@ -31,16 +30,8 @@ $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 $!
 $!
-$! Specify RSAREF as P2 to compile using the RSAREF Library.
-$! If you specify NORSAREF, it will compile without using RSAREF.
-$! (If in the United States, You Must Compile Using RSAREF).
-$!
-$! Note: The RSAREF libraries are NOT INCLUDED and you have to
-$!       download it from "ftp://ftp.rsa.com/rsaref".  You have to
-$!       get the ".tar-Z" file as the ".zip" file dosen't have the
-$!       directory structure stored.  You have to extract the file
-$!       into the [.RSAREF] directory as that is where the scripts
-$!       will look for the files.
+$! P2 is ignored (it was used to denote if RSAref should be used or not,
+$! and is simply kept so surrounding scripts don't get confused)
 $!
 $! Speficy DEBUG or NODEBUG as P3 to compile with or without debugging
 $! information.
@@ -126,20 +117,6 @@ $ ENDIF
 $!
 $ IF (BUILDCOMMAND.EQS."ALL".OR.BUILDCOMMAND.EQS."BUILDALL")
 $ THEN
-$!
-$!  Check To See If We Are Going To Be Building The 
-$!  [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$   IF (RSAREF.EQS."RSAREF")
-$   THEN
-$!
-$!    Build The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$     GOSUB RSAREF
-$!
-$!  End The RSAREF Check.
-$!
-$   ENDIF
 $!
 $!  Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!
@@ -498,11 +475,6 @@ $ ENDIF
 $ GOTO LOOP_SDIRS
 $ LOOP_SDIRS_END:
 $!
-$! Copy All The ".H" Files From The [.RSAREF] Directory.
-$!
-$! EXHEADER := rsaref.h
-$! COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
-$!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
@@ -531,45 +503,17 @@ $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
-$ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
 $ SET DEFAULT [-]
 $!
 $! Time To RETURN.
-$!
-$ RETURN
-$!
-$! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE Library.
-$!
-$ RSAREF:
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "RSAref glue library not built, since it's no longer needed"
-$ RETURN
-$!
-$! Tell The User What We Are Doing.
-$!
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.RSAREF]LIBRSAGLUE.OLB Library."
-$!
-$! Go To The [.RSAREF] Directory.
-$!
-$ SET DEFAULT SYS$DISK:[.RSAREF]
-$!
-$! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
-$!
-$ @RSAREF-LIB LIBRARY 'DEBUGGER' "''COMPILER'" 'ISSEVEN'
-$!
-$! Go Back To The Main Directory.
-$!
-$ SET DEFAULT [-]
-$!
-$! Time To Return.
 $!
 $ RETURN
 $!
@@ -588,7 +532,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]LIBSSL.OLB Library.
 $!
-$ @SSL-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -613,7 +557,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]SSL_TASK.EXE
 $!
-$ @SSL-LIB SSL_TASK 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -638,7 +582,7 @@ $ SET DEFAULT SYS$DISK:[.TEST]
 $!
 $! Build The Test Programs.
 $!
-$ @MAKETESTS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKETESTS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -663,7 +607,7 @@ $ SET DEFAULT SYS$DISK:[.APPS]
 $!
 $! Build The Application Programs.
 $!
-$ @MAKEAPPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKEAPPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -704,7 +648,7 @@ $!  Else, Check To See If P1 Has A Valid Arguement.
 $!
 $   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
        .OR.(P1.EQS."BUILDALL") -
-       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF") -
+       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL") -
        .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
 $   THEN
 $!
@@ -749,54 +693,6 @@ $!
 $   ENDIF
 $!
 $! End The P1 Check.
-$!
-$ ENDIF
-$!
-$! Check To See If P2 Is Blank.
-$!
-$ P2 = "NORSAREF"
-$ IF (P2.EQS."NORSAREF")
-$ THEN
-$!
-$!   P2 Is NORSAREF, So Compile Without RSAREF.
-$!
-$    RSAREF = "NORSAREF"
-$!
-$! Else...
-$!
-$ ELSE
-$!
-$!  Check To See If We Are To Compile Using The RSAREF Library.
-$!
-$   IF (P2.EQS."RSAREF")
-$   THEN
-$!
-$!    Compile With RSAREF Library.
-$!
-$     RSAREF = "RSAREF"
-$!
-$!  Else...
-$!
-$   ELSE
-$!
-$!    Tell The User Entered An Invalid Option..
-$!
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The Option ",P2," Is Invalid.  The Valid Options Are:"
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "    RSAREF   :  To Compile With The RSAREF Library."
-$     WRITE SYS$OUTPUT "    NORSAREF :  To Compile With The Regular RSA Library."
-$     WRITE SYS$OUTPUT ""
-$!
-$!    Time To EXIT.
-$!
-$     EXIT
-$!
-$!  End The Valid Arguemnt Check.
-$!
-$   ENDIF
-$!
-$! End The P2 Check.
 $!
 $ ENDIF
 $!
