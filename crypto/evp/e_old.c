@@ -88,7 +88,7 @@ const EVP_CIPHER *EVP_idea_cfb(void) { return EVP_idea_cfb64(); }
 const EVP_CIPHER *EVP_rc2_cfb(void) { return EVP_rc2_cfb64(); }
 #endif
 
-#ifndef OPENSSL_NO_CAST5
+#ifndef OPENSSL_NO_CAST
 #undef EVP_cast5_cfb
 const EVP_CIPHER *EVP_cast5_cfb(void) { return EVP_cast5_cfb64(); }
 #endif
