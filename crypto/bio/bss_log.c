@@ -67,7 +67,11 @@
 #include <errno.h>
 
 #ifndef WIN32
+#ifdef __ultrix
+#include <sys/sylog.h>
+#else
 #include <syslog.h>
+#endif
 #endif
 
 #include "cryptlib.h"

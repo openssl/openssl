@@ -179,7 +179,7 @@ my %table=(
 
 # IBM's AIX.
 "aix-cc",   "cc:-O -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O2 -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
+"aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
 
 #
 # Cray T90 (SDSC)
@@ -234,6 +234,7 @@ my %table=(
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::::::",
+"ultrix-gcc","cc:-O3 -DL_ENDIAN::::::",
 # K&R C is no longer supported; you need gcc on old Ultrix installations
 ##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::::::",
 
