@@ -107,8 +107,11 @@ void EC_GROUP_free(EC_GROUP *);
 void EC_GROUP_clear_free(EC_GROUP *);
 int EC_GROUP_copy(EC_GROUP *, const EC_GROUP *);
 
+void EC_GROUP_set_nid(EC_GROUP *, int);
+int EC_GROUP_get_nid(const EC_GROUP *);
+
 const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
-	
+
 
 /* We don't have types for field specifications and field elements in general.
  * Otherwise we could declare
@@ -117,14 +120,35 @@ const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
 int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
-/* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
- * after choosing an appropriate EC_METHOD */
-EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-
 int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
 EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
 int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
+
+
+/* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
+ * after choosing an appropriate EC_METHOD */
+EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+
+EC_GROUP *EC_GROUP_get_group_by_name(int name);
+/* Valid arguments to EC_GROUP_get_group_by_name(): */
+#define EC_GROUP_NO_CURVE		0
+#define EC_GROUP_NIST_PRIME_192		1
+#define EC_GROUP_NIST_PRIME_224		2
+#define EC_GROUP_NIST_PRIME_256		3
+#define EC_GROUP_NIST_PRIME_384		4
+#define EC_GROUP_NIST_PRIME_521		5
+#define EC_GROUP_X9_62_PRIME_192V1	NID_X9_62_prime192v1
+#define EC_GROUP_X9_62_PRIME_192V2	NID_X9_62_prime192v2
+#define EC_GROUP_X9_62_PRIME_192V3	NID_X9_62_prime192v3
+#define EC_GROUP_X9_62_PRIME_239V1	NID_X9_62_prime239v1
+#define EC_GROUP_X9_62_PRIME_239V2	NID_X9_62_prime239v2
+#define EC_GROUP_X9_62_PRIME_239V3	NID_X9_62_prime239v3
+#define EC_GROUP_X9_62_PRIME_256V1	NID_X9_62_prime256v1
+
+EC_GROUP *EC_GROUP_nid2group(const int nid);
+int EC_GROUP_group2nid(const EC_GROUP *group);
+
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
@@ -196,12 +220,16 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_COFACTOR			 140
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
+#define EC_F_EC_GROUP_GET_GROUP_BY_NAME			 144
 #define EC_F_EC_GROUP_GET_ORDER				 141
+#define EC_F_EC_GROUP_GROUP2NID				 145
 #define EC_F_EC_GROUP_NEW				 108
+#define EC_F_EC_GROUP_NID2GROUP				 146
 #define EC_F_EC_GROUP_PRECOMPUTE_MULT			 142
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 110
 #define EC_F_EC_GROUP_SET_GENERATOR			 111
+#define EC_F_EC_GROUP_SET_PRIME_GROUP			 147
 #define EC_F_EC_POINTS_MAKE_AFFINE			 136
 #define EC_F_EC_POINTS_MUL				 138
 #define EC_F_EC_POINT_ADD				 112
@@ -231,12 +259,15 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
+#define EC_R_MISSING_PARAMETERS				 115
 #define EC_R_NOT_INITIALIZED				 111
 #define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SLOT_FULL					 108
 #define EC_R_UNDEFINED_GENERATOR			 113
+#define EC_R_UNKNOWN_GROUP				 116
+#define EC_R_UNKNOWN_NID				 117
 #define EC_R_UNKNOWN_ORDER				 114
 
 #ifdef  __cplusplus
