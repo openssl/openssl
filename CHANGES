@@ -8,7 +8,9 @@
   *) Fix Makefile.org so CC,CFLAG etc are passed to 'make links' add
      advapi32.lib to Win32 build and change the pem test comparision
      to fc.exe (thanks to Ulrich Kroener <kroneru@yahoo.com> for the
-     suggestion).
+     suggestion). Fix misplaced ASNI prototypes and declarations in evp.h
+     and crypto/des/ede_cbcm_enc.c.
+     [Steve Henson]
 
   *) DES quad checksum was broken on big-endian architectures. Fixed.
      [Ben Laurie]
