@@ -187,6 +187,73 @@ $!
 $ WRITE H_FILE "/* This file was automatically built using makevms.com */"
 $ WRITE H_FILE "/* and [.CRYPTO]OPENSSLCONF.H_IN */"
 $
+$!
+$! Write a few macros that indicate how this system was built.
+$!
+$ WRITE H_FILE ""
+$ WRITE H_FILE "#ifdef OPENSSL_ALGORITHM_DEFINES"
+$ CONFIG_LOGICALS := NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
+	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
+	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
+$ CONFIG_LOG_I = 0
+$ CONFIG_LOG_LOOP:
+$   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
+$   CONFIG_LOG_I = CONFIG_LOG_I + 1
+$   IF CONFIG_LOG_E1 .EQS. "" THEN GOTO CONFIG_LOG_LOOP
+$   IF CONFIG_LOG_E1 .EQS. "," THEN GOTO CONFIG_LOG_LOOP_END
+$   CONFIG_LOG_E2 = F$EDIT(CONFIG_LOG_E1,"TRIM")
+$   CONFIG_LOG_E1 = F$ELEMENT(0,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E2 = F$ELEMENT(1,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E0 = F$ELEMENT(0,"/",CONFIG_LOG_E1)
+$   CONFIG_LOG_E1 = F$ELEMENT(1,"/",CONFIG_LOG_E1)
+$   IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E0)
+$   THEN
+$     WRITE H_FILE "# ifndef ",CONFIG_LOG_E0
+$     WRITE H_FILE "#  define ",CONFIG_LOG_E0
+$     WRITE H_FILE "# endif"
+$     IF CONFIG_LOG_E1 .NES. "/"
+$     THEN
+$       WRITE H_FILE "# ifndef ",CONFIG_LOG_E1
+$       WRITE H_FILE "#  define ",CONFIG_LOG_E1
+$       WRITE H_FILE "# endif"
+$     ENDIF
+$   ELSE
+$     IF CONFIG_LOG_E2 .NES. ";"
+$     THEN
+$       IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E2)
+$       THEN
+$         WRITE H_FILE "# ifndef ",CONFIG_LOG_E2
+$         WRITE H_FILE "#  define ",CONFIG_LOG_E2
+$         WRITE H_FILE "# endif"
+$       ENDIF
+$     ENDIF
+$   ENDIF
+$   GOTO CONFIG_LOG_LOOP
+$ CONFIG_LOG_LOOP_END:
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE "#ifdef OPENSSL_THREAD_DEFINES"
+$ WRITE H_FILE "# ifndef THREADS"
+$ WRITE H_FILE "#  define THREADS"
+$ WRITE H_FILE "# endif"
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE "#ifdef OPENSSL_OTHER_DEFINES"
+$ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP"
+$ THEN
+$   WRITE H_FILE "# ifndef NO_ASM"
+$   WRITE H_FILE "#  define NO_ASM"
+$   WRITE H_FILE "# endif"
+$ ENDIF
+$ IF RSAREF.EQS."RSAREF"
+$ THEN
+$   WRITE H_FILE "# ifndef RSAref"
+$   WRITE H_FILE "#  define RSAref"
+$   WRITE H_FILE "# endif"
+$ ENDIF
+$ WRITE H_FILE "# ifndef DSO_VMS"
+$ WRITE H_FILE "#  define DSO_VMS"
+$ WRITE H_FILE "# endif"
+$ WRITE H_FILE "#endif"
+$!
 $! Different tar version may have named the file differently
 $ IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H_IN") .NES. ""
 $ THEN
