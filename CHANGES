@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Add a "destroy" handler to ENGINEs that allows structural cleanup to
+     be done prior to destruction. Use this to unload error strings from
+     ENGINEs that load their own error strings. NB: This adds two new API
+     functions to "get" and "set" this destroy handler in an ENGINE.
+     [Geoff]
+
   *) Change the various "***_up()" functions, that increment reference
      counts on the various structure types, to "***_up_ref()". The naming
      is more consistent with existing code and generally a better choice.
