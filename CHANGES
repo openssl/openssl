@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initial support for DH_METHOD. Again based on RSA_METHOD. Also added
+     a few extra parameters to the DH structure: these will be useful if
+     for example we want the value of 'q' or implement X9.42 DH.
+     [Steve Henson]
+
   *) Initial support for DSA_METHOD. This is based on the RSA_METHOD and
      provides hooks that allow the default DSA functions or functions on a
      "per key" basis to be replaced. This allows hardware acceleration and

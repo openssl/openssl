@@ -295,12 +295,14 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 
 static int dsa_init(DSA *dsa)
 {
-	dsa->flags=DSA_FLAG_CACHE_MONT_P;
+	dsa->flags|=DSA_FLAG_CACHE_MONT_P;
 	return(1);
 }
 
 static int dsa_finish(DSA *dsa)
 {
+	if(dsa->method_mont_p)
+		BN_MONT_CTX_free((BN_MONT_CTX *)dsa->method_mont_p);
 	return(1);
 }
 

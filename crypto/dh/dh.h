@@ -68,10 +68,28 @@ extern "C" {
 #endif
 
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
 
-typedef struct dh_st
+typedef struct dh_st DH;
+
+typedef struct dh_method {
+	const char *name;
+	/* Methods here */
+	int (*generate_key)(DH *dh);
+	int (*compute_key)(unsigned char *key,BIGNUM *pub_key,DH *dh);
+	int (*bn_mod_exp)(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+				const BIGNUM *m, BN_CTX *ctx,
+				BN_MONT_CTX *m_ctx); /* Can be null */
+
+	int (*init)(DH *dh);
+	int (*finish)(DH *dh);
+	int flags;
+	char *app_data;
+} DH_METHOD;
+
+struct dh_st
 	{
 	/* This first argument is used to pick up errors when
 	 * a DH is passed instead of a EVP_PKEY */
@@ -85,7 +103,17 @@ typedef struct dh_st
 
 	int flags;
 	char *method_mont_p;
-	} DH;
+	/* Place holders if we want to do X9.42 DH */
+	BIGNUM *q;
+	BIGNUM *j;
+	unsigned *seed;
+	int seedlen;
+	BIGNUM *counter;
+
+	int references;
+	CRYPTO_EX_DATA ex_data;
+	DH_METHOD *meth;
+	};
 
 #define DH_GENERATOR_2		2
 /* #define DH_GENERATOR_3	3 */
@@ -113,9 +141,20 @@ typedef struct dh_st
 		(unsigned char *)(x))
 #endif
 
+DH_METHOD *DH_OpenSSL(void);
+
+void DH_set_default_method(DH_METHOD *meth);
+DH_METHOD *DH_get_default_method(void);
+DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth);
+DH *DH_new_method(DH_METHOD *meth);
+
 DH *	DH_new(void);
 void	DH_free(DH *dh);
 int	DH_size(DH *dh);
+int DH_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)());
+int DH_set_ex_data(DH *d, int idx, char *arg);
+char *DH_get_ex_data(DH *d, int idx);
 DH *	DH_generate_parameters(int prime_len,int generator,
 		void (*callback)(int,int,void *),void *cb_arg);
 int	DH_check(DH *dh,int *codes);
