@@ -190,7 +190,7 @@ again:
 			BIO_printf(bio_out,"String 1 is %s\n",str1);
 			BIO_printf(bio_out,"String 2 is %s\n",str2);
 			}
-			
+
 		}
 
 	X509_STORE_free(cert_store);

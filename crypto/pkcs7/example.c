@@ -135,7 +135,7 @@ char **str2;
 			OBJ_create("1.9.9999","OID_example","Our example OID");
 	/* To retrieve */
 	so=PKCS7_get_signed_attribute(si,signed_seq2string_nid);
-	if (so->type == V_ASN1_SEQUENCE)
+	if (so && (so->type == V_ASN1_SEQUENCE))
 		{
 		ASN1_CTX c;
 		ASN1_STRING *s;
