@@ -68,6 +68,12 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	int ret=0,bit,bytes,mask;
 	time_t tim;
 
+	if (bits == 0)
+		{
+		BN_zero(rnd);
+		return 1;
+		}
+
 	bytes=(bits+7)/8;
 	bit=(bits-1)%8;
 	mask=0xff<<bit;
