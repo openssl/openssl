@@ -115,7 +115,7 @@ do not verify the signers certificate of a signed message.
 
 =item B<-nochain>
 
-do not do chain verification of signers certfificates: that is don't
+do not do chain verification of signers certificates: that is don't
 use the certificates in the signed message as untrusted CAs.
 
 =item B<-nosigs>
@@ -205,7 +205,7 @@ message: see the examples section.
 
 This version of the program only allows one signer per message but it
 will verify multiple signers on received messages. Some S/MIME clients
-choke if a message contains mutiple signers. It is possible to sign
+choke if a message contains multiple signers. It is possible to sign
 messages "in parallel" by signing an already signed message.
 
 The options B<-encrypt> and B<-decrypt> reflect common usage in S/MIME
@@ -239,7 +239,7 @@ an error occurred decrypting or verifying the message.
 
 =item 5
 
-the message was verified correctly but an error occured writing out
+the message was verified correctly but an error occurred writing out
 the signers certificates.
 
 =back

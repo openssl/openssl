@@ -1,4 +1,5 @@
 =pod
+
 =head1 NAME
 
 enc - symmetric cipher routines
@@ -23,7 +24,7 @@ B<openssl enc -ciphername>
 
 =head1 DESCRIPTION
 
-The symmetric cipher commands allow data to be encrytped or decrypted
+The symmetric cipher commands allow data to be encrypted or decrypted
 using various block and stream ciphers using keys based on passwords
 or explicitly provided. Base64 encoding or decoding can also be performed
 either by itself or in addition to the encryption or decryption.
@@ -43,14 +44,14 @@ the output filename, standard output by default.
 =item B<-salt>
 
 use a salt in the key derivation routines. This option should B<ALWAYS>
-be used unless compatability with previous versions of OpenSSL or SSLeay
+be used unless compatibility with previous versions of OpenSSL or SSLeay
 is required. This option is only present on OpenSSL versions 0.9.5 or
 above.
 
 =item B<-nosalt>
 
 don't use a salt in the key derivation routines. This is the default for
-compatability with previous versions of OpenSSL and SSLeay.
+compatibility with previous versions of OpenSSL and SSLeay.
 
 =item B<-e>
 
@@ -120,7 +121,7 @@ B<openssl enc -ciphername>.
 A password will be prompted for to derive the key and IV if necessary.
 
 The B<-salt> option should B<ALWAYS> be used if the key is being derived
-from a password unless you want compatability with previous versions of
+from a password unless you want compatibility with previous versions of
 OpenSSL and SSLeay.
 
 Without the B<-salt> option it is possible to perform efficient dictionary
@@ -149,7 +150,7 @@ Blowfish and RC5 algorithms use a 128 bit key.
 
  bf-cbc             Blowfish in CBC mode
  bf                 Alias for bf-cbc
- bf-cfb             Blowish in CFB mode
+ bf-cfb             Blowfish in CFB mode
  bf-ecb             Blowfish in ECB mode
  bf-ofb             Blowfish in OFB mode
 

@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-config - OpenSSL CONF library configuaration files
+config - OpenSSL CONF library configuration files
 
 =head1 DESCRIPTION
 
-The OpenSSL CONF library can be used to read confiuration files.
+The OpenSSL CONF library can be used to read configuration files.
 It is used for the OpenSSL master configuration file B<openssl.cnf>
 and in a few other places like B<SPKAC> files and certificate extension
 files for the B<x509> utility.
@@ -40,7 +40,7 @@ The value string undergoes variable expansion. This can be done by
 including the form B<$var> or B<${var}>: this will substitute the value
 of the named variable in the current section. It is also possible to
 substitute a value from another section using the syntax B<$section::name>
-or B<${section::name}>. By using the form B<$ENV::name> environement
+or B<${section::name}>. By using the form B<$ENV::name> environment
 variables can be substituted. It is also possible to assign values to
 environment variables by using the name B<ENV::name>, this will work
 if the program looks up environment variables using the B<CONF> library
@@ -53,7 +53,7 @@ the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognised.
 
 =head1 NOTES
 
-If a configuration file attempts to expand a varible that doesn't exist
+If a configuration file attempts to expand a variable that doesn't exist
 then an error is flagged and the file will not load. This can happen
 if an attempt is made to expand an environment variable that doesn't
 exist. For example the default OpenSSL master configuration file used

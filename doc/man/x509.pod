@@ -100,7 +100,7 @@ this option has no effect: SHA1 is always used with DSA keys.
 =head1 DISPLAY OPTIONS
 
 Note: the B<-alias> and B<-purpose> options are also display options
-but are desribed in the B<TRUST OPTIONS> section.
+but are described in the B<TRUST OPTIONS> section.
 
 =over 4
 
@@ -196,7 +196,7 @@ certificate is automatically output if any trust settings are modified.
 =item B<-setalias arg>
 
 sets the alias of the certificate. This will allow the certificate
-to be reffered to using a nickname for example "Steve's Certificate".
+to be referred to using a nickname for example "Steve's Certificate".
 
 =item B<-alias>
 
@@ -363,7 +363,7 @@ extensions for a CA:
 	openssl x509 -req -in careq.pem -config openssl.cnf -extensions v3_ca \
 		-signkey key.pem -out cacert.pem
 
-Sign a certificate request using the CA certifcate above and add user
+Sign a certificate request using the CA certificate above and add user
 certificate extensions:
 
 	openssl x509 -req -in req.pem -config openssl.cnf -extensions v3_usr \

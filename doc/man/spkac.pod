@@ -74,11 +74,11 @@ verifies the digital signature on the supplied SPKAC.
 
 Print out the contents of an SPKAC:
 
- openssl spkac -in skpac.cnf
+ openssl spkac -in spkac.cnf
 
 Verify the signature of an SPKAC:
 
- openssl spkac -in skpac.cnf -noout -verify
+ openssl spkac -in spkac.cnf -noout -verify
 
 Create an SPKAC using the challenge string "hello":
 

@@ -94,7 +94,7 @@ the private key to sign requests with.
 
 =item B<-key password>
 
-the password used to encrrypt the private key. Since on some
+the password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
 the 'ps' utility) this option should be used with caution.
 
@@ -140,7 +140,7 @@ need this option.
 
 Normally the DN order of a certificate is the same as the order of the
 fields in the relevant policy section. When this option is set the order 
-is the same as the request. This is largely for compatability with the
+is the same as the request. This is largely for compatibility with the
 older IE enrollment control which would only accept certificates if their
 DNs match the order of the request. This is not needed for Xenroll.
 
@@ -401,7 +401,7 @@ on the same database can have unpredictable results.
 =head1 FILES
 
 Note: the location of all files can change either by compile time options,
-configration file entries, environment variables or command line options.
+configuration file entries, environment variables or command line options.
 The values below reflect the default values.
 
  /usr/local/ssl/lib/openssl.cnf - master configuration file

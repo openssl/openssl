@@ -194,7 +194,7 @@ It should be noted that very few CAs still require the use of this option.
 
 =head1 CONFIGURATION FILE FORMAT
 
-The configuation options are specified in the B<req> section of
+The configuration options are specified in the B<req> section of
 the configuration file. As with all configuration files if no
 value is specified in the specific section (i.e. B<req>) then
 the initial unnamed or B<default> section is searched too.
@@ -214,13 +214,13 @@ B<envpassout> override the configuration file values.
 
 This specifies the default key size in bits. If not specified then
 512 is used. It is used if the B<-new> option is used. It can be
-overriden by using the B<-newkey> option.
+overridden by using the B<-newkey> option.
 
 =item B<default_keyfile>
 
 This is the default filename to write a private key to. If not
 specified the key is written to standard output. This can be
-overriden by the B<-keyout> option.
+overridden by the B<-keyout> option.
 
 =item B<oid_file>
 
@@ -245,7 +245,7 @@ placed and read from. It is used for private key generation.
 
 If this is set to B<no> then if a private key is generated it is
 B<not> encrypted. This is equivalent to the B<-nodes> command line
-option. For compatability B<encrypt_rsai_key> is an equivalent option.
+option. For compatibility B<encrypt_rsai_key> is an equivalent option.
 
 =item B<default_md>
 
@@ -284,12 +284,12 @@ is used. It can be overridden by the B<-extensions> command line switch.
 this specifies the section containing any request attributes: its format
 is the same as B<distinguished_name> described below. Typically these
 may contain the challengePassword or unstructuredName types. They are
-currently ignored by OpenSSLs request signing utilities but some CAs
+currently ignored by OpenSSL's request signing utilities but some CAs
 might want them.
 
 =item B<distinguished_name>
 
-This specifies the section containing the distiguished name fields to
+This specifies the section containing the distinguished name fields to
 prompt for when generating a certificate or certificate request. This
 consists of lines of the form:
 
@@ -299,7 +299,7 @@ consists of lines of the form:
 	fieldName_max= 4
 
 "fieldName" is the field name being used, for example commonName (or CN).
-The "prompt" string is used to ask the user to enter the relvant
+The "prompt" string is used to ask the user to enter the relevant
 details. If the user enters nothing then the default value is used if no
 default value is present then the field is omitted. A field can
 still be omitted if a default value is present if the user just
@@ -432,7 +432,7 @@ This is followed some time later by...
 The first error message is the clue: it can't find the configuration
 file! Certain operations (like examining a certificate request) don't
 need a configuration file so its use isn't enforced. Generation of
-certficates or requests however does need a configuration file. This
+certificates or requests however does need a configuration file. This
 could be regarded as a bug.
 
 Another puzzling message is this:
@@ -454,13 +454,13 @@ for more information.
 
 The variable B<OPENSSL_CONF> if defined allows an alternative configuration
 file location to be specified, it will be overridden by the B<-config> command
-line switch if it is present. For compatability reasons the B<SSLEAY_CONF>
+line switch if it is present. For compatibility reasons the B<SSLEAY_CONF>
 environment variable serves the same purpose but its use is discouraged.
 
 =head1 BUGS
 
-OpenSSLs handling of T61Strings (aka TeletexStrings) is broken: it effectively
-treats them as ISO-8859-1 (latin 1), Netscape and MSIE have similar behaviour.
+OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively
+treats them as ISO-8859-1 (Latin 1), Netscape and MSIE have similar behaviour.
 This can cause problems if you need characters that aren't available in
 PrintableStrings and you don't want to or can't use BMPStrings.
 

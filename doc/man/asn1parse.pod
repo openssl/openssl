@@ -43,7 +43,7 @@ combined with the B<-strparse> option.
 
 =item B<-noout>
 
-don't ouput the parsed version of the input file.
+don't output the parsed version of the input file.
 
 =item B<-offset number>
 
