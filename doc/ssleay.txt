@@ -5743,7 +5743,7 @@ strucutre but also the private key and certificate associated with
 
 EXAMPLES.
 
-So lets play at being a wierd SSL server.
+So lets play at being a weird SSL server.
 
 /* setup a context */
 ctx=SSL_CTX_new();
