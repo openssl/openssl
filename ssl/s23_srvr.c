@@ -341,7 +341,10 @@ int ssl23_get_client_hello(SSL *s)
 					}
 				}
 			else if (!(s->options & SSL_OP_NO_SSLv3))
+				{
+				s->version=SSL3_VERSION;
 				type=3;
+				}
 			}
 		else if ((strncmp("GET ", (char *)p,4) == 0) ||
 			 (strncmp("POST ",(char *)p,5) == 0) ||
