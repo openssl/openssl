@@ -43,6 +43,8 @@ EXPTEST=	exptest
 IDEATEST=	ideatest
 SHATEST=	shatest
 SHA1TEST=	sha1test
+SHA256TEST=	sha256t
+SHA512TEST=	sha512t
 MDC2TEST=	mdc2test
 RMDTEST=	rmdtest
 MD2TEST=	md2test
@@ -69,7 +71,8 @@ TESTS=		alltests
 EXE=	$(BNTEST) $(ECTEST)  $(ECDSATEST) $(ECDHTEST) $(IDEATEST) \
 	$(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
-	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
+	$(DESTEST) $(SHATEST) $(SHA1TEST) $(SHA256TEST) $(SHA512TEST) \
+	$(MDC2TEST) $(RMDTEST) \
 	$(RANDTEST) $(DHTEST) $(ENGINETEST) \
 	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST) \
 	$(EVPTEST)
@@ -80,7 +83,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
-	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
+	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(SHA256TEST).o $(SHA512TEST).o \
+	$(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o
@@ -156,6 +160,8 @@ test_idea:
 test_sha:
 	$(SET_SO_PATHS); ./$(SHATEST)
 	$(SET_SO_PATHS); ./$(SHA1TEST)
+	$(SET_SO_PATHS); ./$(SHA256TEST)
+	$(SET_SO_PATHS); ./$(SHA512TEST)
 
 test_mdc2:
 	$(SET_SO_PATHS); ./$(MDC2TEST)
@@ -428,6 +434,38 @@ $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
 		APPNAME=$(SHA1TEST) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SHA1TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$${shlib_target}
+
+$(SHA256TEST): $(SHA256TEST).o $(DLIBCRYPTO)
+	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
+	if [ "$${shlib_target}" = "hpux-shared" -o "$${shlib_target}" = "darwin-shared" ] ; then \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
+	else \
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(SHA256TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(SHA256TEST).o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBRPATH=$(INSTALLTOP)/lib \
+		link_app.$${shlib_target}
+
+$(SHA512TEST): $(SHA512TEST).o $(DLIBCRYPTO)
+	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
+	if [ "$${shlib_target}" = "hpux-shared" -o "$${shlib_target}" = "darwin-shared" ] ; then \
+	  LIBRARIES="$(DLIBCRYPTO)"; \
+	else \
+	  LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+		APPNAME=$(SHA512TEST) LDFLAGS="$(CFLAGS)" \
+		OBJECTS="$(SHA512TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
