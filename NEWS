@@ -9,6 +9,25 @@
 
       o New library section OCSP.
       o Complete haul-over of the ASN.1 library section.
+      o Support for external crypto devices ('engine') is no longer
+        a separate distribution.
+
+  Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
+
+      o Security fix: PRNG improvements.
+      o Security fix: RSA OAEP check.
+      o Security fix: Reinsert and fix countermeasure to Bleichbacher's
+        attack.
+      o MIPS bug fix in BIGNUM.
+      o Bug fix in "openssl enc".
+      o Bug fix in X.509 printing routine.
+      o Bug fix in DSA verification routine and DSA S/MIME verification.
+      o Bug fix to make PRNG thread-safe.
+      o Bug fix in RAND_file_name().
+      o Bug fix in compatibility mode trust settings.
+      o Bug fix in blowfish EVP.
+      o Increase default size for BIO buffering filter.
+      o Compatibility fixes in some scripts.
 
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.6a:
 
@@ -44,8 +63,11 @@
       o New 'rsautl' application, low level RSA utility.
       o MD4 now included.
       o Bugfix for SSL rollback padding check.
-      o Support for external crypto devices.
+      o Support for external crypto devices [1].
       o Enhanced EVP interface.
+
+    [1] The support for external crypto devices is currently a separate
+        distribution.  See the file README.ENGINE.
 
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a:
 
