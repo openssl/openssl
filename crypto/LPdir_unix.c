@@ -27,12 +27,19 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 #ifndef LPDIR_H
 #include "LPdir.h"
+#endif
+
+#if defined(NAME_MAX) && NAME_MAX<255
+/* HP-UX offers 14 for NAME_MAX, which is far from enough */
+# undef NAME_MAX
+# define NAME_MAX 255
 #endif
 
 struct LP_dir_context_st
