@@ -242,7 +242,7 @@ typedef struct x509_cert_aux_st
 	STACK_OF(ASN1_OBJECT) *reject;		/* rejected uses */
 	ASN1_UTF8STRING *alias;			/* "friendly name" */
 	ASN1_OCTET_STRING *keyid;		/* key id of private key */
-	ASN1_TYPE *other;			/* other unspecified info */
+	STACK_OF(X509_ALGOR) *other;		/* other unspecified info */
 	} X509_CERT_AUX;
 
 typedef struct x509_st

@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Change the 'other' type in certificate aux info to a STACK_OF
+     X509_ALGOR. Although not an AlgorithmIdentifier as such it has
+     the required ASN1 format: arbitrary types determined by an OID.
+     [Steve Henson]
+
   *) Add some PEM_write_X509_REQ_NEW() functions and a command line
      argument to 'req'. This is not because the function is newer or
      better than others it just uses the work 'NEW' in the certificate

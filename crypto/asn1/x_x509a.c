@@ -84,7 +84,8 @@ X509_CERT_AUX *d2i_X509_CERT_AUX(X509_CERT_AUX **a, unsigned char **pp, long len
 					d2i_ASN1_OBJECT, ASN1_OBJECT_free, 0);
 	M_ASN1_D2I_get_opt(ret->alias, d2i_ASN1_UTF8STRING, V_ASN1_UTF8STRING);
 	M_ASN1_D2I_get_opt(ret->keyid, d2i_ASN1_OCTET_STRING, V_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get_opt(ret->other, d2i_ASN1_TYPE, V_ASN1_SEQUENCE);
+	M_ASN1_D2I_get_IMP_set_opt_type(X509_ALGOR, ret->other,
+					d2i_X509_ALGOR, X509_ALGOR_free, 1);
 
 	M_ASN1_D2I_Finish(a, X509_CERT_AUX_free, ASN1_F_D2I_X509_CERT_AUX);
 }
@@ -110,7 +111,7 @@ void X509_CERT_AUX_free(X509_CERT_AUX *a)
 	sk_ASN1_OBJECT_pop_free(a->reject, ASN1_OBJECT_free);
 	ASN1_UTF8STRING_free(a->alias);
 	ASN1_OCTET_STRING_free(a->keyid);
-	ASN1_TYPE_free(a->other);
+	sk_X509_ALGOR_pop_free(a->other, X509_ALGOR_free);
 	Free(a);
 }
 
@@ -123,7 +124,7 @@ int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **pp)
 
 	M_ASN1_I2D_len(a->alias, i2d_ASN1_UTF8STRING);
 	M_ASN1_I2D_len(a->keyid, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(a->other, i2d_ASN1_TYPE);
+	M_ASN1_I2D_len_IMP_SEQUENCE_opt_type(X509_ALGOR, a->other, i2d_X509_ALGOR, 1);
 
 	M_ASN1_I2D_seq_total();
 
@@ -132,7 +133,7 @@ int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **pp)
 
 	M_ASN1_I2D_put(a->alias, i2d_ASN1_UTF8STRING);
 	M_ASN1_I2D_put(a->keyid, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(a->other, i2d_ASN1_TYPE);
+	M_ASN1_I2D_put_IMP_SEQUENCE_opt_type(X509_ALGOR, a->other, i2d_X509_ALGOR, 1);
 
 	M_ASN1_I2D_finish();
 }
