@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make DSO load along a path given through an environment variable
+     (SHLIB_PATH) with shl_load().
+     [Richard Levitte]
+
   *) Constify the ENGINE code as a result of BIGNUM constification.
      Also constify the RSA code and most things related to it.  In a
      few places, most notable in the depth of the ASN.1 code, ugly
