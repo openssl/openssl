@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix CPU detection on Irix 6.x.
+     [Kurt Hockenbury <khockenb@stevens-tech.edu> and
+      "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
   *) New function OCSP_parse_url(). This splits up a URL into its host,
      port and path components: primarily to parse OCSP URLs. New -url
      option to ocsp utility.
