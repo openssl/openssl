@@ -58,9 +58,6 @@ static unsigned const char cov_2char[64]={
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
-void fcrypt_body(DES_LONG *out,DES_key_schedule *ks,
-		 DES_LONG Eswap0, DES_LONG Eswap1);
-
 char *DES_crypt(const char *buf, const char *salt)
 	{
 	static char buff[14];
