@@ -102,10 +102,10 @@ $crypto.=" crypto/dsa/dsa.h" unless $no_dsa;
 $crypto.=" crypto/dh/dh.h" unless $no_dh;
 $crypto.=" crypto/hmac/hmac.h" unless $no_hmac;
 
-$crypto.=" crypto/dso/dso.h";
 $crypto.=" crypto/stack/stack.h";
 $crypto.=" crypto/buffer/buffer.h";
 $crypto.=" crypto/bio/bio.h";
+$crypto.=" crypto/dso/dso.h";
 $crypto.=" crypto/lhash/lhash.h";
 $crypto.=" crypto/conf/conf.h";
 $crypto.=" crypto/txt_db/txt_db.h";
@@ -296,18 +296,26 @@ sub do_defs
 				$funcs{"i2d_ASN1_SET_OF_${1}"} = 1;
 			} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
-				if($W32) {
-					$funcs{"PEM_read_${1}"} = 1;
-					$funcs{"PEM_write_${1}"} = 1;
+				if (!($no_rsa && ($1 eq "RSAPrivateKey" ||
+						  $1 eq "RSAPublicKey" ||
+						  $1 eq "RSA_PUBKEY"))) {
+					if($W32) {
+						$funcs{"PEM_read_${1}"} = 1;
+						$funcs{"PEM_write_${1}"} = 1;
+					}
+					$funcs{"PEM_read_bio_${1}"} = 1;
+					$funcs{"PEM_write_bio_${1}"} = 1;
 				}
-				$funcs{"PEM_read_bio_${1}"} = 1;
-				$funcs{"PEM_write_bio_${1}"} = 1;
 			} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
-				if($W32) {
-					$funcs{"PEM_write_${1}"} = 1;
+				if (!($no_rsa && ($1 eq "RSAPrivateKey" ||
+						  $1 eq "RSAPublicKey" ||
+						  $1 eq "RSA_PUBKEY"))) {
+					if($W32) {
+						$funcs{"PEM_write_${1}"} = 1;
+					}
+					$funcs{"PEM_write_bio_${1}"} = 1;
 				}
-				$funcs{"PEM_write_bio_${1}"} = 1;
 			} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
 				if($W32) {
@@ -368,6 +376,11 @@ sub do_defs
 			next if(/EVP_rc5/ and $no_rc5);
 			next if(/EVP_ripemd/ and $no_ripemd);
 			next if(/EVP_sha/ and $no_sha);
+			next if(/EVP_(Open|Seal)(Final|Init)/ and $no_rsa);
+			next if(/PEM_Seal(Final|Init|Update)/ and $no_rsa);
+			next if(/RSAPrivateKey/ and $no_rsa);
+			next if(/SSLv23?_((client|server)_)?method/ and $no_rsa);
+
 			if (/\(\*(\w*)\([^\)]+/) {
 				$funcs{$1} = 1;
 			} elsif (/\w+\W+(\w+)\W*\(\s*\)$/s) {
