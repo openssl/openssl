@@ -991,7 +991,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 			do
 				{
 				size_t num;
-				int r;
+				size_t r;
 
 				r1 = BIO_ctrl_pending(io1);
 				r2 = BIO_ctrl_get_write_guarantee(io2);
