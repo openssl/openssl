@@ -158,7 +158,7 @@ on the word arrays B<a> and B<b> of length B<n2>+B<dna> and B<n2>+B<dnb>
 word arrays B<r> and B<t>.  B<n2> must be a power of 2.  It computes
 B<a>*B<b> and places the result in B<r>.
 
-bn_mul_part_recursive(B<r>, B<a>, B<b>, B<n>, B<tna>, B<tnb, B<tmp>)
+bn_mul_part_recursive(B<r>, B<a>, B<b>, B<n>, B<tna>, B<tnb>, B<tmp>)
 operates on the word arrays B<a> and B<b> of length B<n>+B<tna> and
 B<n>+B<tnb> and the 4*B<n> word arrays B<r> and B<tmp>.
 
