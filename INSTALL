@@ -2,8 +2,10 @@
  INSTALLATION ON THE UNIX PLATFORM
  ---------------------------------
 
- [Installation on Windows, OpenVMS and MacOS (before MacOS X) is described
-  in INSTALL.W32, INSTALL.VMS and INSTALL.MacOS.]
+ [Installation on DOS (with djgpp), Windows, OpenVMS and MacOS (before MacOS X)
+  is described in INSTALL.DJGPP, INSTALL.W32, INSTALL.VMS and INSTALL.MacOS.
+  This document describes installation on operating systems in the Unix
+  family.]
 
  To install OpenSSL, you will need:
 
