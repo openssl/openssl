@@ -197,6 +197,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
 	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
+#ifdef WATT32
+	BIO_printf(bio_err," -wdebug       - WATT-32 tcp debugging\n");
+#endif
 	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
@@ -348,6 +351,10 @@ int MAIN(int argc, char **argv)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+#ifdef WATT32
+		else if	(strcmp(*argv,"-wdebug") == 0)
+			dbug_init();
+#endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			c_msg=1;
 		else if	(strcmp(*argv,"-showcerts") == 0)

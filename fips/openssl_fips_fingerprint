@@ -11,7 +11,11 @@ exe=$2
 # case shared libraries are built.
 if [ "X$TOP" != "X" ]
 then
-    PATH="$TOP/apps:$TOP:$PATH"
+    if test "$OSTYPE" = msdosdjgpp; then
+	PATH="$TOP/apps;$TOP;$PATH"
+    else
+    	PATH="$TOP/apps:$TOP:$PATH"
+    fi
     LD_LIBRARY_PATH=$TOP; export LD_LIBRARY_PATH
 else
     LD_LIBRARY_PATH=.; export LD_LIBRARY_PATH
