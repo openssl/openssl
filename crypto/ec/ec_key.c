@@ -199,7 +199,7 @@ EC_KEY *EC_KEY_dup(const EC_KEY *eckey)
 	/* copy the private key */
 	if (eckey->priv_key)
 		{
-		ret->priv_key = BN_dup(ret->priv_key);
+		ret->priv_key = BN_dup(eckey->priv_key);
 		if (ret->priv_key == NULL)
 			ok = 0;
 		}
