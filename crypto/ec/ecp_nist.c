@@ -60,7 +60,7 @@
 const EC_METHOD *EC_GFp_nist_method(void)
 	{
 	static const EC_METHOD ret = {
-		ec_GFp_simple_group_init,
+		ec_GFp_nist_group_init,
 		ec_GFp_nist_group_set_curve_GFp,
 		ec_GFp_nist_group_finish,
 		ec_GFp_nist_group_clear_finish,
