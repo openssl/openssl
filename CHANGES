@@ -12,6 +12,23 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) As with "ERR", make it possible to replace the underlying "ex_data"
+     functions. This change also alters the storage and management of global
+     ex_data state - it's now all inside ex_data.c and all "class" code (eg.
+     RSA, BIO, SSL_CTX, etc) no longer stores its own STACKS and per-class
+     index counters. The API functions that use this state have been changed
+     to take a "class_index" rather than pointers to the class's local STACK
+     and counter, and there is now an API function to dynamically create new
+     classes. This centralisation allows us to (a) plug a lot of the
+     thread-safety problems that existed, and (b) makes it possible to clean
+     up all allocated state using "CRYPTO_cleanup_all_ex_data()". W.r.t. (b)
+     such data would previously have always leaked in application code and
+     workarounds were in place to make the memory debugging turn a blind eye
+     to it. Application code that doesn't use this new function will still
+     leak as before, but their memory debugging output will announce it now
+     rather than letting it slide.
+     [Geoff Thorpe]
+
   +) Make it possible to replace the underlying "ERR" functions such that the
      global state (2 LHASH tables and 2 locks) is only used by the "default"
      implementation. This change also adds two functions to "get" and "set"
