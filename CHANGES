@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Initialize static variable in crypto/dsa/dsa_lib.c explicitely to
+     NULL, as at least on Solaris 8 this seems not to be done automatically
+     (in contradiction to the requirements of the C standard).
+     This made problems when used from OpenSSH.
+     [Lutz Jaenicke]
+
   *) In crypto/dh/dh_key.c, change generate_key() (the default
      implementation of DH_generate_key()) so that a new key is
      generated each time DH_generate_key() is used on a DH object.
