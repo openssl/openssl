@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/15 20:53:03 $
+  ______________                           $Date: 2001/03/15 22:11:54 $
 
   DEVELOPMENT STATE
 
@@ -35,6 +35,7 @@
 	BSDI 4.0.1 (bsdi-elf-gcc)		- FAILED [engine]
 		Needs -DDSO_DLFCN, -DHAVE_DLFCN_H and -ldl to work.
 		[CORRECTED]
+	mingw32 w/ gcc 2.95.2			- PASSED [presumed normal]
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
