@@ -172,6 +172,45 @@
 #undef OCSP_SINGLERESP_get_ext_by_critical
 #define OCSP_SINGLERESP_get_ext_by_critical     OCSP_SINGLERESP_get_ext_by_crit
 
+/* Hack some long EC names */
+#undef EC_POINT_set_Jprojective_coordinates_GFp
+#define EC_POINT_set_Jprojective_coordinates_GFp \
+                                                EC_POINT_set_Jproj_coords_GFp
+#undef EC_POINT_get_Jprojective_coordinates_GFp
+#define EC_POINT_get_Jprojective_coordinates_GFp \
+                                                EC_POINT_get_Jproj_coords_GFp
+#undef EC_POINT_set_affine_coordinates_GFp
+#define EC_POINT_set_affine_coordinates_GFp     EC_POINT_set_affine_coords_GFp
+#undef EC_POINT_get_affine_coordinates_GFp
+#define EC_POINT_get_affine_coordinates_GFp     EC_POINT_get_affine_coords_GFp
+#undef EC_POINT_set_compressed_coordinates_GFp
+#define EC_POINT_set_compressed_coordinates_GFp EC_POINT_set_compr_coords_GFp
+#undef ec_GFp_simple_group_set_curve_GFp
+#define ec_GFp_simple_group_set_curve_GFp       ec_GFp_simple_grp_set_curve_GFp
+#undef ec_GFp_simple_group_clear_finish
+#define ec_GFp_simple_group_clear_finish        ec_GFp_simple_grp_clear_finish
+#undef ec_GFp_simple_group_set_generator
+#define ec_GFp_simple_group_set_generator       ec_GFp_simple_grp_set_generator
+#undef ec_GFp_simple_point_clear_finish
+#define ec_GFp_simple_point_clear_finish        ec_GFp_simple_pt_clear_finish
+#undef ec_GFp_simple_point_set_to_infinity
+#define ec_GFp_simple_point_set_to_infinity     ec_GFp_simple_pt_set_to_inf
+#undef ec_GFp_simple_set_Jprojective_coordinates_GFp
+#define ec_GFp_simple_set_Jprojective_coordinates_GFp \
+                                                ec_GFp_smp_set_Jproj_coords_GFp
+#undef ec_GFp_simple_get_Jprojective_coordinates_GFp
+#define ec_GFp_simple_get_Jprojective_coordinates_GFp \
+                                                ec_GFp_smp_get_Jproj_coords_GFp
+#undef ec_GFp_simple_point_set_affine_coordinates_GFp
+#define ec_GFp_simple_point_set_affine_coordinates_GFp \
+                                                ec_GFp_smp_pt_set_af_coords_GFp
+#undef ec_GFp_simple_point_get_affine_coordinates_GFp
+#define ec_GFp_simple_point_get_affine_coordinates_GFp \
+                                                ec_GFp_smp_pt_get_af_coords_GFp
+#undef ec_GFp_simple_set_compressed_coordinates_GFp
+#define ec_GFp_simple_set_compressed_coordinates_GFp \
+                                                ec_GFp_smp_set_compr_coords_GFp
+
 #endif /* defined OPENSSL_SYS_VMS */
 
 

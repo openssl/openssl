@@ -57,6 +57,7 @@
 #define HEADER_EC_H
 
 #include <openssl/bn.h>
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
