@@ -83,6 +83,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include OPENSSL_UNISTD
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(OPENSSL_SYS_MACOSX)
 # define USE_TOD
@@ -181,17 +182,16 @@
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
-# ifndef CLK_TCK
-#  ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#   define HZ	100.0
-#  else /* _BSD_CLK_TCK_ */
-#   define HZ ((double)_BSD_CLK_TCK_)
-#  endif
-# else /* CLK_TCK */
-#  ifdef OPENSSL_SYS_LINUX	/* Because it seems like some Linuxen
-				   have weird values here... */
-#   define HZ   100.0
-#  else
+# ifdef _SC_CLK_TCK
+#  define HZ ((double)sysconf(_SC_CLK_TCK))
+# else
+#  ifndef CLK_TCK
+#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
+#    define HZ	100.0
+#   else /* _BSD_CLK_TCK_ */
+#    define HZ ((double)_BSD_CLK_TCK_)
+#   endif
+#  else /* CLK_TCK */
 #   define HZ ((double)CLK_TCK)
 #  endif
 # endif
@@ -1446,7 +1446,10 @@ int MAIN(int argc, char **argv)
 #endif
 #ifdef HZ
 #define as_string(s) (#s)
-	printf("HZ=%g", (double)HZ);
+	printf("HZ=%g", HZ);
+# ifdef _SC_CLK_TCK
+	printf(" [sysconf value]");
+# endif
 #endif
 	printf("\n");
 	printf("timing function used: %s%s%s%s%s%s%s\n",

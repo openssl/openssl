@@ -67,20 +67,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define USE_SOCKETS
+#include "apps.h"
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
-#define USE_SOCKETS
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
-#include "apps.h"
 #include "s_apps.h"
 #include <openssl/err.h>
 #ifdef WIN32_STUFF
 #include "winmain.h"
 #include "wintext.h"
 #endif
+#include OPENSSL_UNISTD
 
 #if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX)
 #define TIMES
@@ -119,11 +120,19 @@
 /* The following if from times(3) man page.  It may need to be changed
 */
 #ifndef HZ
-#ifndef CLK_TCK
-#define HZ      100.0
-#else /* CLK_TCK */
-#define HZ ((double)CLK_TCK)
-#endif
+# ifdef _SC_CLK_TCK
+#  define HZ ((double)sysconf(_SC_CLK_TCK))
+# else
+#  ifndef CLK_TCK
+#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
+#    define HZ	100.0
+#   else /* _BSD_CLK_TCK_ */
+#    define HZ ((double)_BSD_CLK_TCK_)
+#   endif
+#  else /* CLK_TCK */
+#   define HZ ((double)CLK_TCK)
+#  endif
+# endif
 #endif
 
 #undef PROG
