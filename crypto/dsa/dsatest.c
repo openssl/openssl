@@ -125,6 +125,8 @@ char **argv;
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
 	unsigned long h;
+	unsigned char sig[256];
+	int siglen;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -178,8 +180,10 @@ char **argv;
 		BIO_printf(bio_err,"g value is wrong\n");
 		goto end;
 		}
-
-	ret=1;
+	DSA_generate_key(dsa);
+	DSA_sign(0, "12345678901234567890", 20, sig, &siglen, dsa);
+	if (DSA_verify(0, "12345678901234567890", 20, sig, siglen, dsa) == 1)
+		ret=1;
 end:
 	if (!ret)
 		ERR_print_errors(bio_err);

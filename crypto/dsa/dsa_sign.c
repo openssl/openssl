@@ -65,30 +65,22 @@
 #include "rand.h"
 #include "asn1.h"
 
-/* data has already been hashed (probably with SHA or SHA-1). */
-/*	DSAerr(DSA_F_DSA_SIGN,DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE); */
-
-int DSA_sign(type,dgst,dlen,sig,siglen,dsa)
-int type;
+DSA_SIG * DSA_do_sign(dgst,dlen,dsa)
 unsigned char *dgst;
 int dlen;
-unsigned char *sig;	/* out */
-unsigned int *siglen;	/* out */
 DSA *dsa;
 	{
-	BIGNUM *kinv=NULL,*r=NULL;
+	BIGNUM *kinv=NULL,*r=NULL,*s=NULL;
 	BIGNUM m;
-	BIGNUM xr,s;
+	BIGNUM xr;
 	BN_CTX *ctx=NULL;
-	unsigned char *p;
-	int i,len=0,ret=0,reason=ERR_R_BN_LIB;
-        ASN1_INTEGER rbs,sbs;
-	MS_STATIC unsigned char rbuf[50]; /* assuming r is 20 bytes +extra */
-	MS_STATIC unsigned char sbuf[50]; /* assuming s is 20 bytes +extra */
+	int i,reason=ERR_R_BN_LIB;
+	DSA_SIG *ret=NULL;
 
 	BN_init(&m);
 	BN_init(&xr);
-	BN_init(&s);
+	s=BN_new();
+	if (s == NULL) goto err;
 
 	i=BN_num_bytes(dsa->q); /* should be 20 */
 	if ((dlen > i) || (dlen > 50))
@@ -116,42 +108,49 @@ DSA *dsa;
 
 	/* Compute  s = inv(k) (m + xr) mod q */
 	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
-	if (!BN_add(&s, &xr, &m)) goto err;		/* s = m + xr */
-	if (BN_cmp(&s,dsa->q) > 0)
-		BN_sub(&s,&s,dsa->q);
-	if (!BN_mod_mul(&s,&s,kinv,dsa->q,ctx)) goto err;
+	if (!BN_add(s, &xr, &m)) goto err;		/* s = m + xr */
+	if (BN_cmp(s,dsa->q) > 0)
+		BN_sub(s,s,dsa->q);
+	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
 
-	/*
-	 * Now create a ASN.1 sequence of the integers R and S.
-	 */
-	rbs.data=rbuf;
-	sbs.data=sbuf;
-	rbs.type = V_ASN1_INTEGER;
-	sbs.type = V_ASN1_INTEGER;
-	rbs.length=BN_bn2bin(r,rbs.data);
-	sbs.length=BN_bn2bin(&s,sbs.data);
-
-	len =i2d_ASN1_INTEGER(&rbs,NULL);
-	len+=i2d_ASN1_INTEGER(&sbs,NULL);
-
-	p=sig;
-	ASN1_put_object(&p,1,len,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-	i2d_ASN1_INTEGER(&rbs,&p);
-	i2d_ASN1_INTEGER(&sbs,&p);
-	*siglen=(p-sig);
-	ret=1;
+	ret=DSA_SIG_new();
+	if (ret == NULL) goto err;
+	ret->r = r;
+	ret->s = s;
+	
 err:
-	if (!ret) DSAerr(DSA_F_DSA_SIGN,reason);
-		
-#if 1 /* do the right thing :-) */
-	if (kinv != NULL) BN_clear_free(kinv);
-	if (r != NULL) BN_clear_free(r);
-#endif
+	if (!ret)
+		{
+		DSAerr(DSA_F_DSA_DO_SIGN,reason);
+		BN_free(r);
+		BN_free(s);
+		}
 	if (ctx != NULL) BN_CTX_free(ctx);
 	BN_clear_free(&m);
 	BN_clear_free(&xr);
-	BN_clear_free(&s);
 	return(ret);
+	}
+
+/* data has already been hashed (probably with SHA or SHA-1). */
+
+int DSA_sign(type,dgst,dlen,sig,siglen,dsa)
+int type;
+unsigned char *dgst;
+int dlen;
+unsigned char *sig;    /* out */
+unsigned int *siglen;  /* out */
+DSA *dsa;
+	{
+	DSA_SIG *s;
+	s=DSA_do_sign(dgst,dlen,dsa);
+	if (s == NULL)
+		{
+		*siglen=0;
+		return(0);
+		}
+	*siglen=i2d_DSA_SIG(s,&sig);
+	DSA_SIG_free(s);
+	return(1);
 	}
 
 int DSA_sign_setup(dsa,ctx_in,kinvp,rp)

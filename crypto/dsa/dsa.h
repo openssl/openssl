@@ -97,6 +97,12 @@ typedef struct dsa_st
 	int references;
 	} DSA;
 
+typedef struct DSA_SIG_st
+	{
+	BIGNUM *r;
+	BIGNUM *s;
+	} DSA_SIG;
+
 #define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \
 		(char *(*)())d2i_DSAparams,(char *)(x))
 #define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
@@ -109,6 +115,15 @@ typedef struct dsa_st
 		(unsigned char *)(x))
 
 #ifndef NOPROTO
+
+DSA_SIG * DSA_SIG_new(void);
+void	DSA_SIG_free(DSA_SIG *a);
+int	i2d_DSA_SIG(DSA_SIG *a, unsigned char **pp);
+DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, unsigned char **pp, long length);
+
+DSA_SIG * DSA_do_sign(unsigned char *dgst,int dlen,DSA *dsa);
+int	DSA_do_verify(unsigned char *dgst,int dgst_len,
+		DSA_SIG *sig,DSA *dsa);
 
 DSA *	DSA_new(void);
 int	DSA_size(DSA *);
@@ -145,6 +160,14 @@ int	DSA_print_fp(FILE *bp, DSA *x, int off);
 int DSA_is_prime(BIGNUM *q,void (*callback)(),char *cb_arg);
 
 #else
+
+DSA_SIG * DSA_SIG_new();
+void	DSA_SIG_free();
+int	i2d_DSA_SIG();
+DSA_SIG * d2i_DSA_SIG();
+
+DSA_SIG * DSA_do_sign();
+int	DSA_do_verify();
 
 DSA *	DSA_new();
 int	DSA_size();
@@ -189,6 +212,11 @@ int	DSA_print_fp();
 #define DSA_F_DSA_SIGN					 106
 #define DSA_F_DSA_SIGN_SETUP				 107
 #define DSA_F_DSA_VERIFY				 108
+#define DSA_F_DSA_SIG_NEW				 109
+#define DSA_F_D2I_DSA_SIG				 110
+#define DSA_F_I2D_DSA_SIG				 111
+#define DSA_F_DSA_DO_SIGN				 112
+#define DSA_F_DSA_DO_VERIFY				 113
 
 /* Reason codes. */
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100

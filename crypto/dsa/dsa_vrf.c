@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* Origional version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
+/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -66,57 +66,34 @@
 #include "asn1.h"
 #include "asn1_mac.h"
 
-/* data has already been hashed (probably with SHA or SHA-1). */
-/* returns
- *	 1: correct signature
- *	 0: incorrect signature
- *	-1: error
- */
-int DSA_verify(type,dgst,dgst_len,sigbuf,siglen, dsa)
-int type;
+int DSA_do_verify(dgst,dgst_len,sig,dsa)
 unsigned char *dgst;
 int dgst_len;
-unsigned char *sigbuf;
-int siglen;
+DSA_SIG *sig;
 DSA *dsa;
 	{
-	/* The next 3 are used by the M_ASN1 macros */
-	long length=siglen;
-	ASN1_CTX c;
-	unsigned char **pp= &sigbuf;
 	BN_CTX *ctx;
-	BIGNUM r,u1,u2,t1;
-	ASN1_INTEGER *bs=NULL;
+	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
 	int ret = -1;
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
-
 	BN_init(&u1);
 	BN_init(&u2);
-	BN_init(&r);
 	BN_init(&t1);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-        M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-        if ((BN_bin2bn(bs->data,bs->length,&r)) == NULL) goto err_bn;
-        M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-        if ((BN_bin2bn(bs->data,bs->length,&u1)) == NULL) goto err_bn;
-	if (!asn1_Finish(&c)) goto err;
 
 	/* Calculate W = inv(S) mod Q
 	 * save W in u2 */
-	if ((BN_mod_inverse(&u2,&u1,dsa->q,ctx)) == NULL) goto err_bn;
+	if ((BN_mod_inverse(&u2,sig->s,dsa->q,ctx)) == NULL) goto err;
 
 	/* save M in u1 */
-	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err_bn;
+	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err;
 
 	/* u1 = M * w mod q */
-	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err;
 
 	/* u2 = r * w mod q */
-	if (!BN_mod_mul(&u2,&r,&u2,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod_mul(&u2,sig->r,&u2,dsa->q,ctx)) goto err;
 
 	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
 		{
@@ -133,42 +110,59 @@ DSA *dsa;
 	BN_init(&t2);
 	/* v = ( g^u1 * y^u2 mod p ) mod q */
 	/* let t1 = g ^ u1 mod p */
-	if (!BN_mod_exp_mont(&t1,dsa->g,&u1,dsa->p,ctx,mont)) goto err_bn;
+	if (!BN_mod_exp_mont(&t1,dsa->g,&u1,dsa->p,ctx,mont)) goto err;
 	/* let t2 = y ^ u2 mod p */
-	if (!BN_mod_exp_mont(&t2,dsa->pub_key,&u2,dsa->p,ctx,mont)) goto err_bn;
+	if (!BN_mod_exp_mont(&t2,dsa->pub_key,&u2,dsa->p,ctx,mont)) goto err;
 	/* let u1 = t1 * t2 mod p */
 	if (!BN_mod_mul(&u1,&t1,&t2,dsa->p,ctx)) goto err_bn;
 	BN_free(&t2);
 	}
 	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err;
 #else
 	{
 	if (!BN_mod_exp2_mont(&t1,dsa->g,&u1,dsa->pub_key,&u2,dsa->p,ctx,mont))
-		goto err_bn;
+		goto err;
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1,&t1,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod(&u1,&t1,dsa->q,ctx)) goto err;
 	}
 #endif
 	/* V is now in u1.  If the signature is correct, it will be
 	 * equal to R. */
-	ret=(BN_ucmp(&u1, &r) == 0);
-	if (0)
-		{
-err: /* ASN1 error */
-		DSAerr(DSA_F_DSA_VERIFY,c.error);
-		}
-	if (0)
-		{
-err_bn: /* BN error */
-		DSAerr(DSA_F_DSA_VERIFY,ERR_R_BN_LIB);
-		}
+	ret=(BN_ucmp(&u1, sig->r) == 0);
+
+	err:
+	if (ret != 1) DSAerr(DSA_F_DSA_DO_VERIFY,ERR_R_BN_LIB);
 	if (ctx != NULL) BN_CTX_free(ctx);
-	BN_free(&r);
 	BN_free(&u1);
 	BN_free(&u2);
 	BN_free(&t1);
-	if (bs != NULL) ASN1_BIT_STRING_free(bs);
+	return(ret);
+	}
+
+/* data has already been hashed (probably with SHA or SHA-1). */
+/* returns
+ *      1: correct signature
+ *      0: incorrect signature
+ *     -1: error
+ */
+int DSA_verify(type,dgst,dgst_len,sigbuf,siglen,dsa)
+int type;
+unsigned char *dgst;
+int dgst_len;
+unsigned char *sigbuf;
+int siglen;
+DSA *dsa;
+	{
+	DSA_SIG *s;
+	int ret=-1;
+
+	s = DSA_SIG_new();
+	if (s == NULL) return(ret);
+	if (d2i_DSA_SIG(&s,&sigbuf,siglen) == NULL) goto err;
+	ret=DSA_do_verify(dgst,dgst_len,s,dsa);
+err:
+	DSA_SIG_free(s);
 	return(ret);
 	}
