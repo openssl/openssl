@@ -48,7 +48,7 @@ $(LIB):		$(OBJ)
 
 LINK_SO=	\
   ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) install/librsaref.a && \
-  (nm -Pg $(LIBNAME).o | grep ' [BD] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
+  (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
    $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
 
 $(SHLIB).gnu:	$(LIB) install/librsaref.a
