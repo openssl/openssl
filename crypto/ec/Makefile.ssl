@@ -82,16 +82,15 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-ec_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
-ec_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-ec_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ec_asn1.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 ec_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ec_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 ec_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h ec_asn1.c ec_lcl.h
+ec_asn1.o: ../../include/openssl/symhacks.h ec_asn1.c ec_lcl.h
 ec_check.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_check.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_check.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

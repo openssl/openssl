@@ -457,7 +457,7 @@ RAND_bytes                              464	EXIST::FUNCTION:
 RAND_cleanup                            465	EXIST::FUNCTION:
 RAND_file_name                          466	EXIST::FUNCTION:
 RAND_load_file                          467	EXIST::FUNCTION:
-RAND_screen                             468	EXIST::FUNCTION:
+RAND_screen                             468	EXIST:WIN32:FUNCTION:
 RAND_seed                               469	EXIST::FUNCTION:
 RAND_write_file                         470	EXIST::FUNCTION:
 RC2_cbc_encrypt                         471	EXIST::FUNCTION:RC2
@@ -1762,7 +1762,7 @@ RAND_status                             2254	EXIST::FUNCTION:
 bn_dump1                                2255	NOEXIST::FUNCTION:
 DES_check_key_parity                    2256	EXIST::FUNCTION:DES
 lh_num_items                            2257	EXIST::FUNCTION:
-RAND_event                              2258	EXIST::FUNCTION:
+RAND_event                              2258	EXIST:WIN32:FUNCTION:
 DSO_new                                 2259	EXIST::FUNCTION:
 DSO_new_method                          2260	EXIST::FUNCTION:
 DSO_free                                2261	EXIST::FUNCTION:
@@ -2843,7 +2843,8 @@ EVP_PKEY_set1_ECDSA                     3284	EXIST::FUNCTION:ECDSA
 EC_GROUP_get_nid                        3285	EXIST::FUNCTION:EC
 d2i_ECDSA_PUBKEY_fp                     3286	EXIST::FUNCTION:ECDSA,FP_API
 EC_METHOD_get_field_type                3287	EXIST::FUNCTION:EC
-EC_GROUP_get_point_conversion_form      3288	EXIST::FUNCTION:EC
+EC_GROUP_get_point_conversion_form      3288	EXIST:!VMS:FUNCTION:EC
+EC_GROUP_get_point_conv_form            3288	EXIST:VMS:FUNCTION:EC
 ECDSA_OpenSSL                           3289	EXIST::FUNCTION:ECDSA
 i2d_ECPKPARAMETERS                      3290	EXIST::FUNCTION:EC
 PEM_read_ECDSAParameters                3291	NOEXIST::FUNCTION:
@@ -2863,7 +2864,8 @@ ECPARAMETERS_it                         3303	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 ECDSA_set_default_method                3304	EXIST::FUNCTION:ECDSA
 ENGINE_set_ECDSA                        3305	EXIST::FUNCTION:
 ECDSA_get_ex_new_index                  3306	EXIST::FUNCTION:ECDSA
-EC_GROUP_set_point_conversion_form      3307	EXIST::FUNCTION:EC
+EC_GROUP_set_point_conversion_form      3307	EXIST:!VMS:FUNCTION:EC
+EC_GROUP_set_point_conv_form            3307	EXIST:VMS:FUNCTION:EC
 PEM_write_ECDSA_PUBKEY                  3308	EXIST:!WIN16:FUNCTION:ECDSA
 EC_GROUP_check_discriminant             3309	EXIST::FUNCTION:EC
 ECDSA_set_default_conversion_form       3310	EXIST::FUNCTION:ECDSA
@@ -2900,3 +2902,12 @@ EVP_des_ede_ecb                         3339	EXIST::FUNCTION:DES
 d2i_ASN1_UNIVERSALSTRING                3340	EXIST::FUNCTION:
 PEM_read_bio_ECPKParameters             3341	EXIST::FUNCTION:EC
 ASN1_UNIVERSALSTRING_new                3342	EXIST::FUNCTION:
+EC_PRIVATEKEY_new                       3343	EXIST::FUNCTION:EC
+EC_PRIVATEKEY_it                        3344	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:EC
+EC_PRIVATEKEY_it                        3344	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:EC
+DSO_merge                               3345	EXIST::FUNCTION:
+d2i_EC_PRIVATEKEY                       3346	EXIST::FUNCTION:EC
+ECDSA_get_enc_flag                      3347	EXIST::FUNCTION:ECDSA
+ECDSA_set_enc_flag                      3348	EXIST::FUNCTION:ECDSA
+i2d_EC_PRIVATEKEY                       3349	EXIST::FUNCTION:EC
+EC_PRIVATEKEY_free                      3350	EXIST::FUNCTION:EC
