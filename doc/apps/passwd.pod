@@ -75,7 +75,7 @@ to each password hash.
 
 B<openssl passwd -crypt -salt xx password> prints B<xxj31ZMTZzkVA>.
 
-B<openssl passwd -1 -salt xxxxxxxx password> prints B<$1$xxxxxxxx$8XJIcl6ZXqBMCK0qFevqT1>.
+B<openssl passwd -1 -salt xxxxxxxx password> prints B<$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.>.
 
 B<openssl passwd -apr1 -salt xxxxxxxx password> prints B<$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0>.
 
