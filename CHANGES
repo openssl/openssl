@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) In BN_div() keep a copy of the sign of 'num' before writing the
+     result to 'rm' because if rm==num the value will be overwritten
+     and produce the wrong result if 'num' is negative: this caused
+     problems with BN_mod() and BN_nnmod().
+     [Steve Henson]
+
   *) Function OCSP_request_verify(). This checks the signature on an
      OCSP request and verifies the signer certificate. The signer
      certificate is just checked for a generic purpose and OCSP request

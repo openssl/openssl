@@ -342,9 +342,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		}
 	if (rm != NULL)
 		{
+		/* Keep a copy of the neg flag in num because if rm==num
+		 * BN_rshift() will overwrite it.
+		 */
+		int neg = num->neg;
 		BN_rshift(rm,snum,norm_shift);
 		if (!BN_is_zero(rm))
-			rm->neg = num->neg;
+			rm->neg = neg;
 		}
 	BN_CTX_end(ctx);
 	return(1);
