@@ -247,9 +247,9 @@ extern "C" {
 #  endif
 
 #  if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
+#    define EXIT(n) do { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); } while(0)
 #  else
-#    define EXIT(n)		return(n);
+#    define EXIT(n)		return(n)
 #  endif
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
@@ -348,7 +348,7 @@ extern "C" {
 #    define LIST_SEPARATOR_CHAR ':'
 #    define NUL_DEV		"/dev/null"
 #    ifndef MONOLITH
-#      define EXIT(n)		exit(n); return(n)
+#      define EXIT(n)		do { exit(n); return(n); } while(0)
 #    else
 #      define EXIT(n)		return(n)
 #    endif
