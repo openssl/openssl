@@ -59,8 +59,10 @@
 #ifndef HEADER_BIO_H
 #define HEADER_BIO_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef NO_FP_API
+# include <stdio.h>
+#endif
+
 #include <openssl/crypto.h>
 
 #ifdef  __cplusplus
@@ -507,11 +509,6 @@ size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
 int BIO_ctrl_reset_read_request(BIO *b);
 
-#ifdef NO_STDIO
-#define NO_FP_API
-#endif
-
-
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
@@ -522,6 +519,7 @@ int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
+# ifndef NO_FP_API
 #  if defined(WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal(void);
 BIO *BIO_new_file_internal(char *filename, char *mode);
@@ -537,6 +535,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 #    define BIO_new_file_internal	BIO_new_file
 #    define BIO_new_fp_internal		BIO_s_file
 #  endif /* FP_API */
+# endif
 BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);
