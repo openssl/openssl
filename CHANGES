@@ -13,6 +13,9 @@
      return NULL from CONF_get_section.
      [Bodo Moeller]
 
+  *) Fix potential buffer overrun for EBCDIC.
+     [Ulf Moeller]
+
   *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
      keyUsage if basicConstraints absent for a CA.
      [Steve Henson]
