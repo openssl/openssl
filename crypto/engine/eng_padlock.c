@@ -103,10 +103,9 @@
 #if !defined(I386_ONLY) && !defined(OPENSSL_NO_INLINE_ASM)
 # if defined(__i386__) || defined(__i386) || defined(_M_IX86)
 #  define COMPILE_HW_PADLOCK
+static ENGINE *ENGINE_padlock (void);
 # endif
 #endif
-
-static ENGINE *ENGINE_padlock (void);
 
 void ENGINE_load_padlock (void)
 {
@@ -439,6 +438,29 @@ padlock_xstore(void *addr, unsigned int edx_in)
 	return eax_out;
 }
 
+/* Why not inline 'rep movsd'? I failed to find information on what
+ * value in Direction Flag one can expect and consequently have to
+ * apply "better-safe-than-sorry" approach and assume "undefined."
+ * I could explicitly clear it and restore the original value upon
+ * return from padlock_aes_cipher, but it's presumably too much
+ * trouble for too little gain...
+ *
+ * In case you wonder 'rep xcrypt*' instructions above are *not*
+ * affected by the Direction Flag and pointers advance toward
+ * larger addresses unconditionally.
+ */ 
+static inline unsigned char *
+padlock_memcpy(void *dst,const void *src,size_t n)
+{
+	long       *d=dst;
+	const long *s=src;
+
+	n /= sizeof(*d);
+	do { *d++ = *s++; } while (--n);
+
+	return dst;
+}
+
 #elif defined(_MSC_VER)
 /*
  * Unlike GCC these are real functions. In order to minimize impact
@@ -563,6 +585,11 @@ padlock_bswapl(void *key)
 		popfd
 		}
 }
+
+/* MS actually specifies status of Direction Flag and compiler even
+ * manages to compile following as 'rep movsd' all by itself...
+ */
+#define padlock_memcpy(o,i,n) ((unsigned char *)memcpy((o),(i),(n)&~3U))
 #endif
 
 /* ===== AES encryption/decryption ===== */
@@ -600,13 +627,17 @@ static int padlock_cipher_nids[] = {
 
 	NID_aes_192_ecb,
 	NID_aes_192_cbc,
-//	NID_aes_192_cfb,	/* FIXME: AES192/256 CFB/OFB don't work. */
-//	NID_aes_192_ofb,
+#if 0
+	NID_aes_192_cfb,	/* FIXME: AES192/256 CFB/OFB don't work. */
+	NID_aes_192_ofb,
+#endif
 
 	NID_aes_256_ecb,
 	NID_aes_256_cbc,
-//	NID_aes_256_cfb,
-//	NID_aes_256_ofb,
+#if 0
+	NID_aes_256_cfb,
+	NID_aes_256_ofb,
+#endif
 };
 static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids)/
 				      sizeof(padlock_cipher_nids[0]));
@@ -887,7 +918,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	case EVP_CIPH_ECB_MODE:
 		do	{
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk&~3);
+				inp = padlock_memcpy(out, in_arg, chunk);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -895,7 +926,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ecb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
+				out_arg = padlock_memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -913,7 +944,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			chunk = PADLOCK_CHUNK;
 		cbc_shortcut: /* optimize for small input */
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk&~3);
+				inp = padlock_memcpy(out, in_arg, chunk);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -921,7 +952,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cbc(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
+				out_arg = padlock_memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -938,7 +969,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			chunk = PADLOCK_CHUNK;
 		cfb_shortcut: /* optimize for small input */
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk&~3);
+				inp = padlock_memcpy(out, in_arg, chunk);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -946,7 +977,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cfb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
+				out_arg = padlock_memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -958,7 +989,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 		memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
 		do	{
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk&~3);
+				inp = padlock_memcpy(out, in_arg, chunk);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -966,7 +997,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ofb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
+				out_arg = padlock_memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
