@@ -587,7 +587,7 @@ typedef int (*GEN_SESSION_CB)(const SSL *ssl, unsigned char *id,
 typedef struct ssl_comp_st
 	{
 	int id;
-	char *name;
+	const char *name;
 #ifndef OPENSSL_NO_COMP
 	COMP_METHOD *method;
 #else
