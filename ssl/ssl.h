@@ -477,10 +477,9 @@ struct ssl_ctx_st
 
 struct ssl_st
 	{
-	/* procol version
-	 * 2 for SSLv2
-	 * 3 for SSLv3
-	 * -3 for SSLv3 but accept SSLv2 */
+	/* protocol version
+	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION)
+	 */
 	int version;
 	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
 

@@ -67,8 +67,8 @@ extern "C" {
 #define SSL2_VERSION		0x0002
 #define SSL2_VERSION_MAJOR	0x00
 #define SSL2_VERSION_MINOR	0x02
-#define SSL2_CLIENT_VERSION	0x0002
-#define SSL2_SERVER_VERSION	0x0002
+/* #define SSL2_CLIENT_VERSION	0x0002 */
+/* #define SSL2_SERVER_VERSION	0x0002 */
 
 /* Protocol Message Codes */
 #define SSL2_MT_ERROR			0

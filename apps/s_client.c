@@ -90,6 +90,7 @@ static int c_nbio=0;
 #endif
 static int c_Pause=0;
 static int c_debug=0;
+static int c_showcerts=0;
 
 #ifndef NOPROTO
 static void sc_usage(void);
@@ -118,6 +119,7 @@ static void sc_usage()
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -reconnect    - Drop and re-make the connection with the same Session-ID\n");
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
+	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
@@ -171,6 +173,7 @@ char **argv;
 	c_Pause=0;
 	c_quiet=0;
 	c_debug=0;
+	c_showcerts=0;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -227,6 +230,8 @@ char **argv;
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+		else if	(strcmp(*argv,"-showcerts") == 0)
+			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
 			nbio_test=1;
 		else if	(strcmp(*argv,"-state") == 0)
@@ -675,6 +680,8 @@ int full;
 				X509_NAME_oneline(X509_get_issuer_name((X509 *)
 					sk_value(sk,i)),buf,BUFSIZ);
 				BIO_printf(bio,"   i:%s\n",buf);
+				if (c_showcerts)
+					PEM_write_bio_X509(bio,(X509 *) sk_value(sk,i));
 				}
 			}
 
@@ -683,7 +690,8 @@ int full;
 		if (peer != NULL)
 			{
 			BIO_printf(bio,"Server certificate\n");
-			PEM_write_bio_X509(bio,peer);
+			if (!c_showcerts) /* Redundant if we showed the whole chain */
+				PEM_write_bio_X509(bio,peer);
 			X509_NAME_oneline(X509_get_subject_name(peer),
 				buf,BUFSIZ);
 			BIO_printf(bio,"subject=%s\n",buf);

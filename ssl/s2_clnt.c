@@ -485,7 +485,7 @@ SSL *s;
 		p=buf;					/* header */
 		d=p+9;					/* data section */
 		*(p++)=SSL2_MT_CLIENT_HELLO;		/* type */
-		s2n(SSL2_CLIENT_VERSION,p);		/* version */
+		s2n(SSL2_VERSION,p);			/* version */
 		n=j=0;
 
 		n=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),d);

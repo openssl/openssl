@@ -5,6 +5,14 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Got rid of old SSL2_CLIENT_VERSION (inconsistently used) and
+     SSL2_SERVER_VERSION (not used at all) macros, which are now the
+     same as SSL2_VERSION anyway.
+     [Bodo Moeller]
+
+  *) New "-showcerts" option for s_client.
+     [Bodo Moeller]
+
   *) Still more PKCS#12 integration. Add pkcs12 application to openssl
      application. Various cleanups and fixes.
      [Steve Henson]

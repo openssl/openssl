@@ -150,7 +150,7 @@ int session;
 
 	if (session)
 		{
-		if (s->version == SSL2_CLIENT_VERSION)
+		if (s->version == SSL2_VERSION)
 			{
 			ss->ssl_version=SSL2_VERSION;
 			ss->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
