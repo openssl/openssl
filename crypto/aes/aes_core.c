@@ -873,6 +873,7 @@ int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 	return 0;
 }
 
+#ifndef AES_ASM
 /*
  * Encrypt a single block
  * in and out can overlap
@@ -1255,3 +1256,4 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 	PUTU32(out + 12, s3);
 }
 
+#endif /* AES_ASM */

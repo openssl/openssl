@@ -117,6 +117,9 @@ void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
 #include "md32_common.h"
 
+#ifdef SHA256_ASM
+void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host);
+#else
 static const SHA_LONG K256[64] = {
 	0x428a2f98UL,0x71374491UL,0xb5c0fbcfUL,0xe9b5dba5UL,
 	0x3956c25bUL,0x59f111f1UL,0x923f82a4UL,0xab1c5ed5UL,
@@ -296,6 +299,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	}
 
 #endif
+#endif /* SHA256_ASM */
 
 /*
  * Idea is to trade couple of cycles for some space. On IA-32 we save

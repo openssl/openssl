@@ -5,7 +5,8 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-$sse2=0;	# SSE2 is temporarily disabled...
+$sse2=0;
+for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");

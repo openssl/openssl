@@ -83,7 +83,10 @@ int SHA512_Init (SHA512_CTX *c)
         return 1;
 	}
 
-static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num);
+#ifndef SHA512_ASM
+static
+#endif
+void sha512_block (SHA512_CTX *ctx, const void *in, size_t num);
 
 int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	{
@@ -241,6 +244,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	return(md);
 	}
 
+#ifndef SHA512_ASM
 static const SHA_LONG64 K512[80] = {
         U64(0x428a2f98d728ae22),U64(0x7137449123ef65cd),
         U64(0xb5c0fbcfec4d3b2f),U64(0xe9b5dba58189dbbc),
@@ -476,3 +480,5 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	}
 
 #endif
+
+#endif /* SHA512_ASM */
