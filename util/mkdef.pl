@@ -119,7 +119,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-rc4$/)      { $no_rc4=1; }
 	elsif (/^no-rc5$/)      { $no_rc5=1; }
 	elsif (/^no-idea$/)     { $no_idea=1; }
-	elsif (/^no-des$/)      { $no_des=1; }
+	elsif (/^no-des$/)      { $no_des=1; $no_mdc2=1; }
 	elsif (/^no-bf$/)       { $no_bf=1; }
 	elsif (/^no-cast$/)     { $no_cast=1; }
 	elsif (/^no-md2$/)      { $no_md2=1; }
@@ -704,7 +704,8 @@ EOF
 		} else {
 			(my $n, my $i) = split /\\/, $nums{$s};
 			my %pf = ();
-			my @p = split(/,/, ($i =~ /^.*?:(.*?):/,$1));
+			my @p = split(/,/, ($i =~ /^[^:]*:([^:]*):/,$1));
+			my @a = split(/,/, ($i =~ /^[^:]*:[^:]*:[^:]*:([^:]*)/,$1));
 			# @p_purged must contain hardware platforms only
 			my @p_purged = ();
 			foreach $ptmp (@p) {
@@ -726,7 +727,26 @@ EOF
 				|| (!$negatives
 				    && ($rsaref || !grep(/^RSAREF$/,@p)))
 				|| ($negatives
-				    && (!$rsaref || !grep(/^!RSAREF$/,@p))))) {
+				    && (!$rsaref || !grep(/^!RSAREF$/,@p))))
+			    && (!@a || (!$no_rc2 || !grep(/^RC2$/,@a)))
+			    && (!@a || (!$no_rc4 || !grep(/^RC4$/,@a)))
+			    && (!@a || (!$no_rc5 || !grep(/^RC5$/,@a)))
+			    && (!@a || (!$no_idea || !grep(/^IDEA$/,@a)))
+			    && (!@a || (!$no_des || !grep(/^DES$/,@a)))
+			    && (!@a || (!$no_bf || !grep(/^BF$/,@a)))
+			    && (!@a || (!$no_cast || !grep(/^CAST$/,@a)))
+			    && (!@a || (!$no_md2 || !grep(/^MD2$/,@a)))
+			    && (!@a || (!$no_md4 || !grep(/^MD4$/,@a)))
+			    && (!@a || (!$no_md5 || !grep(/^MD5$/,@a)))
+			    && (!@a || (!$no_sha || !grep(/^SHA$/,@a)))
+			    && (!@a || (!$no_ripemd || !grep(/^RIPEMD$/,@a)))
+			    && (!@a || (!$no_mdc2 || !grep(/^MDC2$/,@a)))
+			    && (!@a || (!$no_rsa || !grep(/^RSA$/,@a)))
+			    && (!@a || (!$no_dsa || !grep(/^DSA$/,@a)))
+			    && (!@a || (!$no_dh || !grep(/^DH$/,@a)))
+			    && (!@a || (!$no_hmac || !grep(/^HMAC$/,@a)))
+			    && (!@a || (!$no_fp_api || !grep(/^FP_API$/,@a)))
+			    ) {
 				printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
 #			} else {
 #				print STDERR "DEBUG: \"$sym\" (@p):",
