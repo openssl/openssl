@@ -119,13 +119,13 @@ conf_mall.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_mall.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 conf_mall.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 conf_mall.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_mall.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
-conf_mall.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-conf_mall.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-conf_mall.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-conf_mall.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-conf_mall.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-conf_mall.o: ../../include/openssl/objects.h
+conf_mall.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+conf_mall.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+conf_mall.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+conf_mall.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+conf_mall.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+conf_mall.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+conf_mall.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 conf_mall.o: ../../include/openssl/opensslconf.h
 conf_mall.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mall.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
@@ -144,13 +144,13 @@ conf_mod.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_mod.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 conf_mod.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 conf_mod.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_mod.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
-conf_mod.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-conf_mod.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
-conf_mod.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
-conf_mod.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-conf_mod.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-conf_mod.o: ../../include/openssl/opensslconf.h
+conf_mod.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+conf_mod.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+conf_mod.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+conf_mod.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+conf_mod.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+conf_mod.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+conf_mod.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 conf_mod.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mod.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 conf_mod.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
@@ -168,13 +168,14 @@ conf_sap.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_sap.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 conf_sap.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 conf_sap.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_sap.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
-conf_sap.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-conf_sap.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-conf_sap.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-conf_sap.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-conf_sap.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-conf_sap.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+conf_sap.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+conf_sap.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+conf_sap.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+conf_sap.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+conf_sap.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+conf_sap.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+conf_sap.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+conf_sap.o: ../../include/openssl/opensslconf.h
 conf_sap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_sap.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 conf_sap.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h

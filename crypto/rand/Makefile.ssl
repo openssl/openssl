@@ -116,9 +116,9 @@ rand_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rand_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rand_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 rand_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rand_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-rand_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-rand_lib.o: ../../include/openssl/opensslconf.h
+rand_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+rand_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+rand_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rand_lib.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rand_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
