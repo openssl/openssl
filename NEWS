@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a:
+
+      o Shared library support for HPUX and Solaris-gcc
+      o Support of Linux/IA64
+      o Support of Mingw32
+      o New 'rand' application
+      o New way to check for existence of algorithms from scripts
+
   Major changes between OpenSSL 0.9.4 and OpenSSL 0.9.5:
 
       o S/MIME support in new 'smime' command
