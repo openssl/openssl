@@ -183,14 +183,12 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 	{
 	static const int line_wrap = 78;
 	int num;
+	int ret = 0;
 	char *name = NULL;
 	char *desc = NULL;
 	int flags;
 	int xpos = 0;
-	STACK *cmds = sk_new_null();
-
-	if(!cmds)
-		goto err;
+	STACK *cmds = NULL;
 	if(!ENGINE_ctrl(e, ENGINE_CTRL_HAS_CTRL_FUNCTION, 0, NULL, NULL) ||
 			((num = ENGINE_ctrl(e, ENGINE_CTRL_GET_FIRST_CMD_TYPE,
 					0, NULL, NULL)) <= 0))
@@ -200,6 +198,11 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 #endif
 		return 1;
 		}
+
+	cmds = sk_new_null();
+
+	if(!cmds)
+		goto err;
 	do {
 		int len;
 		/* Get the command name */
@@ -264,12 +267,12 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 		} while(num > 0);
 	if(xpos > 0)
 		BIO_printf(bio_out, "\n");
-	return 1;
+	ret = 1;
 err:
 	if(cmds) sk_pop_free(cmds, identity);
 	if(name) OPENSSL_free(name);
 	if(desc) OPENSSL_free(desc);
-	return 0;
+	return ret;
 	}
 
 static void util_do_cmds(ENGINE *e, STACK *cmds, BIO *bio_out, const char *indent)
