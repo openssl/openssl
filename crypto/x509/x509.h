@@ -306,6 +306,11 @@ typedef struct x509_trust_st {
 
 DECLARE_STACK_OF(X509_TRUST)
 
+typedef struct x509_cert_pair_st {
+	X509 *forward;
+	X509 *reverse;
+} X509_CERT_PAIR;
+
 /* standard trust ids */
 
 #define X509_TRUST_DEFAULT	-1	/* Only valid in purpose settings */
@@ -919,6 +924,8 @@ DECLARE_ASN1_FUNCTIONS(X509_CINF)
 
 DECLARE_ASN1_FUNCTIONS(X509)
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
+
+DECLARE_ASN1_FUNCTIONS(X509_CERT_PAIR)
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
