@@ -46,9 +46,9 @@ determine the (revocation) state of an identified certificate (RFC 2560).
 
 The B<ocsp> command performs many common OCSP tasks. It can be used
 to print out requests and responses, create requests and send queries
-to an OCSP responder.
+to an OCSP responder and behave like a mini OCSP server itself.
 
-=head1 OPTIONS
+=head1 OCSP CLIENT OPTIONS
 
 =over 4
 
@@ -191,6 +191,65 @@ check is not performed.
 
 =back
 
+=head1 OCSP SERVER OPTIONS
+
+=over 4
+
+=item B<-index indexfile>
+
+B<indexfile> is a text index file in B<ca> format containing certificate revocation
+information.
+
+If the B<index> option is specified the B<ocsp> utility is in responder mode, otherwise
+it is in client mode. The request(s) the responder processes can be either specified on
+the command line (using B<issuer> and B<serial> options), supplied in a file (using the
+B<respin> option) or via external OCSP clients (if B<port> or B<url> is specified).
+
+If the B<index> option is present then the B<CA> and B<rsigner> options must also be
+present.
+
+=item B<-CA file>
+
+CA certificate corresponding to the revocation information in B<indexfile>.
+
+=item B<-rsigner file>
+
+The certificate to sign OCSP responses with.
+
+=item B<-rother file>
+
+Additional certificates to include in the OCSP response.
+
+=item B<-resp_no_certs>
+
+Don't include any certificates in the OCSP response.
+
+=item B<-resp_key_id>
+
+Identify the signer certificate using the key ID, default is to use the subject name.
+
+=item B<-rkey file>
+
+The private key to sign OCSP responses with: if not present the file specified in the
+B<rsigner> option is used.
+
+=item B<-port portnum>
+
+Port to listen for OCSP requests on. The port may also be specified using the B<url>
+option.
+
+=item B<-nrequest number>
+
+The OCSP server will exit after receiving B<number> requests, default unlimited. 
+
+=item B<-nmin minutes>, B<-ndays days>
+
+Number of minutes or days when fresh revocation information is available: used in the
+B<nextUpdate> field. If neither option is present then the B<nextUpdate> field is 
+omitted meaning fresh revocation information is immediately available.
+
+=back
+
 =head1 OCSP Response verification.
 
 OCSP Response follows the rules specified in RFC2560.
@@ -239,13 +298,24 @@ As noted, most of the verify options are for testing or debugging purposes.
 Normally only the B<-CApath>, B<-CAfile> and (if the responder is a 'global
 VA') B<-VAfile> options need to be used.
 
+The OCSP server is only useful for test and demonstration purposes: it is
+not really usable as a full OCSP responder. It contains only a very
+simple HTTP request handling and can only handle the POST form of OCSP
+queries. It also handles requests serially meaning it cannot respond to
+new requests until it has processed the current one. The text index file
+format of revocation is also inefficient for large quantities of revocation
+data.
+
+It is possible to run the B<ocsp> application in responder mode via a CGI
+script using the B<respin> and B<respout> options.
+
 =head1 EXAMPLES
 
 Create an OCSP request and write it to a file:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout req.der
 
-Send a query an OCSP responder with URL http://ocsp.myhost.com/ save the 
+Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the 
 response to a file and print it out in text form
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
@@ -255,3 +325,24 @@ Read in an OCSP response and print out text form:
 
  openssl ocsp -respin resp.der -text
 
+OCSP server on port 8888 using a standard B<ca> configuration, and a separate
+responder certificate. All requests and responses are printed to a file.
+
+ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem -CA demoCA/cacert.pem
+	-text -out log.txt
+
+As above but exit after processing one request:
+
+ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem -CA demoCA/cacert.pem
+     -nrequest 1
+
+Query status information using internally generated request:
+
+ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA demoCA/cacert.pem
+     -issuer demoCA/cacert.pem -serial 1
+
+Query status information using request read from a file, write response to a
+second file.
+
+ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA demoCA/cacert.pem
+     -reqin req.der -respout resp.der
