@@ -5,7 +5,7 @@
  Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
 
      OpenSSL 0.9.6a/0.9.6b (bugfix releases, 5 Apr 2001 and 9 July 2001)
-     and OpenSSL 0.9.7 were developped in parallel, based on OpenSSL 0.9.6.  
+     and OpenSSL 0.9.7 were developed in parallel, based on OpenSSL 0.9.6.  
 
      Change log entries are tagged as follows:
          -) applies to 0.9.6a/0.9.6b/0.9.6c only
@@ -20,7 +20,7 @@
      'wristwatch attack' using huge encoding parameters (cf.
      James H. Manger's CRYPTO 2001 paper).  Note that the
      RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
-     encoding paramters and hence was not vulnerable.
+     encoding parameters and hence was not vulnerable.
      [Bodo Moeller]
 
   +) Add a "destroy" handler to ENGINEs that allows structural cleanup to
@@ -60,14 +60,14 @@
      [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
 
   *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
-     requivalent based on BN_pseudo_rand() instead of BN_rand().
+     equivalent based on BN_pseudo_rand() instead of BN_rand().
      [Bodo Moeller]
 
   +) Add a copy() function to EVP_MD.
      [Ben Laurie]
 
   +) Make EVP_MD routines take a context pointer instead of just the
-     md_data voud pointer.
+     md_data void pointer.
      [Ben Laurie]
 
   +) Add flags to EVP_MD and EVP_MD_CTX. EVP_MD_FLAG_ONESHOT indicates
@@ -149,7 +149,7 @@
      The configuration part makes use of modern compiler features and
      still retains old compiler behavior for those that run older versions
      of the OS.  The shared library support part includes a variant that
-     uses the RPATH feature, and is available through the speciel
+     uses the RPATH feature, and is available through the special
      configuration target "alpha-cc-rpath", which will never be selected
      automatically.
      [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
@@ -200,7 +200,7 @@
      [Steve Henson]
 
   *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
-     explicitely to NULL, as at least on Solaris 8 this seems not always to be
+     explicitly to NULL, as at least on Solaris 8 this seems not always to be
      done automatically (in contradiction to the requirements of the C
      standard). This made problems when used from OpenSSH.
      [Lutz Jaenicke]
@@ -355,7 +355,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Bodo Moeller]
 
   +) Enhance the general user interface with mechanisms for inner control
-     and with pssibilities to have yes/no kind of prompts.
+     and with possibilities to have yes/no kind of prompts.
      [Richard Levitte]
 
   +) Change all calls to low level digest routines in the library and
@@ -368,14 +368,14 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      Change the key loaders to take a UI_METHOD instead of a callback
      function pointer.  NOTE: this breaks binary compatibility with earlier
      versions of OpenSSL [engine].
-     Addapt the nCipher code for these new conditions and add a card insertion
+     Adapt the nCipher code for these new conditions and add a card insertion
      callback.
      [Richard Levitte]
 
   +) Enhance the general user interface with mechanisms to better support
      dialog box interfaces, application-defined prompts, the possibility
      to use defaults (for example default passwords from somewhere else)
-     and interrupts/cancelations.
+     and interrupts/cancellations.
      [Richard Levitte]
 
   *) Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
@@ -395,7 +395,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Ulf Möller, Bodo Möller]
 
   *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
-     RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
+     RSA encryption was accidentally removed in s3_srvr.c in OpenSSL 0.9.5
      when fixing the server behaviour for backwards-compatible 'client
      hello' messages.  (Note that the attack is impractical against
      SSL 3.0 and TLS 1.0 anyway because length and version checking
@@ -416,7 +416,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Bodo Moeller]
 
   +) Fix a memory leak in 'sk_dup()' in the case reallocation fails. (Also
-     tidy up some unecessarily weird code in 'sk_new()').
+     tidy up some unnecessarily weird code in 'sk_new()').
      [Geoff, reported by Diego Tartara <dtartara@novamens.com>]
 
   +) Change the key loading routines for ENGINEs to use the same kind
@@ -446,7 +446,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
         const ASN1_ITEM *it = &ASN1_INTEGER_it;
 
      wont compile. This is used by the any applications that need to
-     delcare their own ASN1 modules. This was fixed by adding the option
+     declare their own ASN1 modules. This was fixed by adding the option
      EXPORT_VAR_AS_FN to all Win32 platforms, although this isn't strictly
      needed for static libraries under Win32.
      [Steve Henson]
@@ -584,7 +584,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        missing functions (including a catch-all ENGINE_cpy that duplicates
        all ENGINE values onto a new ENGINE except reference counts/state).
      - Removed NULL parameter checks in get/set functions. Setting a method
-       or function to NULL is a way of cancelling out a previously set
+       or function to NULL is a way of canceling out a previously set
        value.  Passing a NULL ENGINE parameter is just plain stupid anyway
        and doesn't justify the extra error symbols and code.
      - Deprecate the ENGINE_FLAGS_MALLOCED define and move the area for
@@ -602,12 +602,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      combination of a flag and a thread ID variable.
      Otherwise while one thread is in ssleay_rand_bytes (which sets the
      flag), *other* threads can enter ssleay_add_bytes without obeying
-     the CRYPTO_LOCK_RAND lock (and may even illegaly release the lock
+     the CRYPTO_LOCK_RAND lock (and may even illegally release the lock
      that they do not hold after the first thread unsets add_do_not_lock).
      [Bodo Moeller]
 
   +) Implement binary inversion algorithm for BN_mod_inverse in addition
-     to the algorithm using long divison.  The binary algorithm can be
+     to the algorithm using long division.  The binary algorithm can be
      used only if the modulus is odd.  On 32-bit systems, it is faster
      only for relatively small moduli (roughly 20-30% for 128-bit moduli,
      roughly 5-15% for 256-bit moduli), so we use it only for moduli
@@ -820,10 +820,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 	#define bar OPENSSL_GLOBAL_REF(bar)
 
      The #defines are very important, and therefore so is including the
-     header file everywere where the defined globals are used.
+     header file everywhere where the defined globals are used.
 
      The macro OPENSSL_EXPORT_VAR_AS_FUNCTION also affects the definition
-     of ASN.1 items, but that structure is a bt different.
+     of ASN.1 items, but that structure is a bit different.
 
      The largest change is in util/mkdef.pl which has been enhanced with
      better and easier to understand logic to choose which symbols should
@@ -852,7 +852,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      responses. OCSP responses are prepared in real time and may only
      be a few seconds old. Simply checking that the current time lies
      between thisUpdate and nextUpdate max reject otherwise valid responses
-     caused by either OCSP responder or client clock innacuracy. Instead
+     caused by either OCSP responder or client clock inaccuracy. Instead
      we allow thisUpdate and nextUpdate to fall within a certain period of
      the current time. The age of the response can also optionally be
      checked. Two new options -validity_period and -status_age added to
@@ -860,7 +860,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   +) If signature or public key algorithm is unrecognized print out its
-     OID rather that just UNKOWN.
+     OID rather that just UNKNOWN.
      [Steve Henson]
 
   *) Avoid coredump with unsupported or invalid public keys by checking if
@@ -895,7 +895,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to use such a feature) has been added to "s_server".
      [Geoff Thorpe, Lutz Jaenicke]
 
-  +) Modify mkdef.pl to recognise and parse prprocessor conditionals
+  +) Modify mkdef.pl to recognise and parse preprocessor conditionals
      of the form '#if defined(...) || defined(...) || ...' and
      '#if !defined(...) && !defined(...) && ...'.  This also avoids
      the growing number of special cases it was previously handling.
@@ -1049,7 +1049,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      extract information from a certificate request. OCSP_response_create()
      creates a response and optionally adds a basic response structure.
      OCSP_basic_add1_status() adds a complete single response to a basic
-     reponse and returns the OCSP_SINGLERESP structure just added (to allow
+     response and returns the OCSP_SINGLERESP structure just added (to allow
      extensions to be included for example). OCSP_basic_add1_cert() adds a
      certificate to a basic response and OCSP_basic_sign() signs a basic
      response with various flags. New helper functions ASN1_TIME_check()
@@ -1059,7 +1059,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   +) Various new functions. EVP_Digest() combines EVP_Digest{Init,Update,Final}()
      in a single operation. X509_get0_pubkey_bitstr() extracts the public_key
-     structure from a certificate. X509_pubkey_digest() digests tha public_key
+     structure from a certificate. X509_pubkey_digest() digests the public_key
      contents: this is used in various key identifiers. 
      [Steve Henson]
 
@@ -1079,7 +1079,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   +) New OCSP verify flag OCSP_TRUSTOTHER. When set the "other" certificates
      passed by the function are trusted implicitly. If any of them signed the
-     reponse then it is assumed to be valid and is not verified.
+     response then it is assumed to be valid and is not verified.
      [Steve Henson]
 
   -) Make the CRL encoding routines work with empty SEQUENCE OF. The

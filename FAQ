@@ -153,7 +153,7 @@ holders claim that you infringe on their rights if you use OpenSSL with
 their software on operating systems that don't normally include OpenSSL.
 
 If you develop open source software that uses OpenSSL, you may find it
-useful to choose an other license than the GPL, or state explicitely that
+useful to choose an other license than the GPL, or state explicitly that
 "This program is released under the GPL with the additional exemption that
 compiling, linking, and/or using OpenSSL is allowed."  If you are using
 GPL software developed by others, you may want to ask the copyright holder
@@ -304,7 +304,7 @@ there is little point presenting a certificate which the server will
 reject.
 
 The solution is to add the relevant CA certificate to your servers "trusted
-CA list". How you do this depends on the server sofware in uses. You can
+CA list". How you do this depends on the server software in uses. You can
 print out the servers list of acceptable CAs using the OpenSSL s_client tool:
 
 openssl s_client -connect www.some.host:443 -prexit
@@ -558,7 +558,7 @@ SSL_write() will try to continue any pending handshake.
 * Why doesn't my server application receive a client certificate?
 
 Due to the TLS protocol definition, a client will only send a certificate,
-if explicitely asked by the server. Use the SSL_VERIFY_PEER flag of the
+if explicitly asked by the server. Use the SSL_VERIFY_PEER flag of the
 SSL_CTX_set_verify() function to enable the use of client certificates.
 
 
