@@ -174,4 +174,4 @@
  # [your changes]
  # ./Configure dist; make clean
  # cd ..
- # diff -urN openssl-orig openssl-work > mydiffs.patch
+ # diff -ur openssl-orig openssl-work > mydiffs.patch
