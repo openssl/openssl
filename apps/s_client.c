@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#ifdef APPS_CRLF
+# include <assert.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,6 +142,9 @@ static void sc_usage(void)
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif
+#ifdef APPS_CRLF
+	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
+#endif
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
@@ -165,6 +171,9 @@ int MAIN(int argc, char **argv)
 	char *cert_file=NULL,*key_file=NULL;
 	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE,bugs=0;
+#ifdef APPS_CRLF
+	int crlf=0;
+#endif
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
@@ -235,6 +244,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+#ifdef APPS_CRLF
+		else if	(strcmp(*argv,"-crlf") == 0)
+			crlf=1;
+#endif
 		else if	(strcmp(*argv,"-quiet") == 0)
 			c_quiet=1;
 		else if	(strcmp(*argv,"-pause") == 0)
@@ -634,7 +647,32 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #ifndef WINDOWS
 		else if (FD_ISSET(fileno(stdin),&readfds))
 			{
-			i=read(fileno(stdin),cbuf,BUFSIZZ);
+#ifdef APPS_CRLF
+			if (crlf)
+				{
+				int j, lf_num;
+
+				i=read(fileno(stdin),cbuf,BUFSIZZ/2);
+				lf_num = 0;
+				/* both loops are skipped when i <= 0 */
+				for (j = 0; j < i; j++)
+					if (cbuf[j] == '\n')
+						lf_num++;
+				for (j = i-1; j >= 0; j--)
+					{
+					cbuf[j+lf_num] = cbuf[j];
+					if (cbuf[j] == '\n')
+						{
+						lf_num--;
+						i++;
+						cbuf[j+lf_num] = '\r';
+						}
+					}
+				assert(lf_num == 0);
+				}
+			else
+#endif
+				i=read(fileno(stdin),cbuf,BUFSIZZ);
 
 			if ((!c_quiet) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{
