@@ -91,6 +91,15 @@ case of a file BIO some data may be available in the FILE structures
 internal buffers but it is not possible to determine this in a
 portably way. For other types of BIO they may not be supported.
 
+Filter BIOs if the do not internally handle a particular BIO_ctrl()
+operation usually pass the operation to the next BIO in the chain.
+This often means there is no need to locate the required BIO for
+a particular operation, it can be called on a chain and it will
+be automatically passed to the relevant BIO.
+
+Source/sink BIOs will return an error if the do not recognise the
+BIO_ctrl() operation.
+
 =head1 SEE ALSO
 
 TBA
