@@ -364,6 +364,12 @@ foreach (@ARGV)
 		$algo =~ tr/[a-z]/[A-Z]/;
 		$flags .= "-DNO_$algo ";
 		$depflags .= "-DNO_$algo ";
+		if ($algo eq "DES")
+			{
+			$options .= " no-mdc2";
+			$flags .= "-DNO_MDC2 ";
+			$depflags .= "-DNO_MDC2 ";
+			}
 		}
 	elsif (/^386$/)
 		{ $processor=386; }
