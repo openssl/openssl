@@ -139,7 +139,7 @@
      the config script, much like the NetBSD support.
      [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
 
- Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
+ Changes between 0.9.6k and 0.9.7  [31 Dec 2002]
 
   *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
      code (06) was taken as the first octet of the session ID and the last
