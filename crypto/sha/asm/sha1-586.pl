@@ -317,7 +317,7 @@ sub BODY_60_79
 
 sub sha1_block_host
 	{
-	local($name)=@_;
+	local($name, $sclabel)=@_;
 
 	&function_begin_B($name,"");
 
@@ -352,7 +352,7 @@ sub sha1_block_host
 		&mov(&swtmp($i+0),$A);
 		 &mov(&swtmp($i+1),$B);
 		}
-	&jmp(&label("shortcut"));
+	&jmp($sclabel);
 	&function_end_B($name);
 	}
 
@@ -529,10 +529,12 @@ sub sha1_block_data
 	&pop("esi");
 	 &ret();
 
-	# it has to reside within sha1_block_asm_host_order body
-	# because it calls &jmp(&label("shortcut"));
-	&sha1_block_host("sha1_block_asm_host_order");
+	# keep a note of shortcut label so it can be used outside
+	# block.
+	my $sclabel = &label("shortcut");
 
 	&function_end_B($name);
+	# Putting this here avoids problems with MASM in debugging mode
+	&sha1_block_host("sha1_block_asm_host_order", $sclabel);
 	}
 
