@@ -366,7 +366,7 @@ static int bind_helper ( ENGINE *e )
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!)
  */
-ENGINE *ENGINE_zencod ( void )
+static ENGINE *ENGINE_zencod ( void )
 {
 
 	ENGINE *eng = ENGINE_new () ;
@@ -383,6 +383,9 @@ ENGINE *ENGINE_zencod ( void )
 }
 
 
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static
+#endif
 void ENGINE_load_zencod ( void )
 {
 	/* Copied from eng_[openssl|dyn].c */
