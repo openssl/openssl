@@ -73,6 +73,7 @@ char *crypt();
 char *des_crypt(const char *buf, const char *salt)
 #else
 char *crypt(const char *buf, const char *salt)
+#endif
 	{
 	static char buff[14];
 
