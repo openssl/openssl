@@ -14,9 +14,8 @@
   *) SPARC v8 assembler BIGNUM implementation.
      [Andy Polyakov <appro@fy.chalmers.se>]
 
-  *) Initial support for Certificate Policies extension: print works but
-     setting doesn't work fully (yet). Also various additions to support
-     the r2i method this extension will use.
+  *) Support for Certificate Policies extension: both print and set.
+     Various additions to support the r2i method this extension will use.
      [Steve Henson]
 
   *) A lot of constification, and fix a bug in X509_NAME_oneline() that could
