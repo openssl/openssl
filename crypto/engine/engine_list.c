@@ -335,6 +335,9 @@ ENGINE *ENGINE_by_id(const char *id)
 	return iterator;
 	}
 
+/* As per the comments in engine.h, it is generally better all round
+ * if the ENGINE structure is allocated within this framework. */
+#if 0
 int ENGINE_get_struct_size(void)
 	{
 	return sizeof(ENGINE);
@@ -362,6 +365,23 @@ ENGINE *ENGINE_new(ENGINE *e)
 	ret->struct_ref = 1;
 	return ret;
 	}
+#else
+ENGINE *ENGINE_new(void)
+	{
+	ENGINE *ret;
+
+	ret = (ENGINE *)Malloc(sizeof(ENGINE));
+	if(ret == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
+	memset(ret, 0, sizeof(ENGINE));
+	ret->flags = ENGINE_FLAGS_MALLOCED;
+	ret->struct_ref = 1;
+	return ret;
+	}
+#endif
 
 int ENGINE_free(ENGINE *e)
 	{

@@ -133,8 +133,17 @@ ENGINE *ENGINE_by_id(const char *id);
  * implementations of things prior to using it directly or adding
  * it to the builtin ENGINE list in OpenSSL. These are also here
  * so that the ENGINE structure doesn't have to be exposed and
- * break binary compatibility! */
+ * break binary compatibility!
+ *
+ * NB: I'm changing ENGINE_new to force the ENGINE structure to
+ * be allocated from within OpenSSL. See the comment for
+ * ENGINE_get_struct_size().
+ */
+#if 0
 ENGINE *ENGINE_new(ENGINE *e);
+#else
+ENGINE *ENGINE_new(void);
+#endif
 int ENGINE_free(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
@@ -164,8 +173,14 @@ BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(ENGINE *e);
  * structure (for good reason). However, if the caller wishes to use
  * its own memory allocation or use a static array, the following call
  * should be used to check the amount of memory the ENGINE structure
- * will occupy. This will make the code more future-proof. */
+ * will occupy. This will make the code more future-proof.
+ *
+ * NB: I'm "#if 0"-ing this out because it's better to force the use of
+ * internally allocated memory. See similar change in ENGINE_new().
+ */
+#if 0
 int ENGINE_get_struct_size(void);
+#endif
 
 /* FUNCTIONAL functions. These functions deal with ENGINE structures
  * that have (or will) be initialised for use. Broadly speaking, the
