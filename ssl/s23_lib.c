@@ -63,6 +63,7 @@
 static int ssl23_num_ciphers(void );
 static SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 static int ssl23_read(SSL *s, void *buf, int len);
+static int ssl23_peek(SSL *s, void *buf, int len);
 static int ssl23_write(SSL *s, const void *buf, int len);
 static long ssl23_default_timeout(void );
 static int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
@@ -77,7 +78,7 @@ static SSL_METHOD SSLv23_data= {
 	ssl_undefined_function,
 	ssl_undefined_function,
 	ssl23_read,
-	(int (*)(struct ssl_st *, char *, int))ssl_undefined_function,
+	ssl23_peek,
 	ssl23_write,
 	ssl_undefined_function,
 	ssl_undefined_function,
@@ -169,13 +170,6 @@ static int ssl23_read(SSL *s, void *buf, int len)
 	{
 	int n;
 
-#if 0
-	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
-		{
-		s->rwstate=SSL_NOTHING;
-		return(0);
-		}
-#endif
 	clear_sys_error();
 	if (SSL_in_init(s) && (!s->in_handshake))
 		{
@@ -195,17 +189,33 @@ static int ssl23_read(SSL *s, void *buf, int len)
 		}
 	}
 
+static int ssl23_peek(SSL *s, void *buf, int len)
+	{
+	int n;
+
+	clear_sys_error();
+	if (SSL_in_init(s) && (!s->in_handshake))
+		{
+		n=s->handshake_func(s);
+		if (n < 0) return(n);
+		if (n == 0)
+			{
+			SSLerr(SSL_F_SSL23_PEEK,SSL_R_SSL_HANDSHAKE_FAILURE);
+			return(-1);
+			}
+		return(SSL_peek(s,buf,len));
+		}
+	else
+		{
+		ssl_undefined_function(s);
+		return(-1);
+		}
+	}
+
 static int ssl23_write(SSL *s, const void *buf, int len)
 	{
 	int n;
 
-#if 0
-	if (s->shutdown & SSL_SENT_SHUTDOWN)
-		{
-		s->rwstate=SSL_NOTHING;
-		return(0);
-		}
-#endif
 	clear_sys_error();
 	if (SSL_in_init(s) && (!s->in_handshake))
 		{

@@ -16,13 +16,29 @@ SSL_get_session - retrieve TLS/SSL session data
 
 SSL_get_session() returns a pointer to the B<SSL_SESSION> actually used in
 B<ssl>. The reference count of the B<SSL_SESSION> is not incremented, so
-that the pointer can become invalid when the B<ssl> is freed and
-SSL_SESSION_free() is implicitly called.
+that the pointer can become invalid by other operations.
 
 SSL_get0_session() is the same as SSL_get_session().
 
 SSL_get1_session() is the same as SSL_get_session(), but the reference
 count of the B<SSL_SESSION> is incremented by one.
+
+=head1 NOTES
+
+The ssl session contains all information required to re-establish the
+connection without a new handshake.
+
+SSL_get0_session() returns a pointer to the actual session. As the
+reference counter is not incremented, the pointer is only valid while
+the connection is in use. If L<SSL_clear(3)|SSL_clear(3)> or
+L<SSL_free(3)|SSL_free(3)> is called, the session may be removed completely
+(if considered bad), and the pointer obtained will become invalid. Even
+if the session is valid, it can be removed at any time due to timeout
+during L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>.
+
+If the data is to be kept, SSL_get1_session() will increment the reference
+count and the session will stay in memory until explicitly freed with
+L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>, regardless of its state.
 
 =head1 RETURN VALUES
 
@@ -43,6 +59,7 @@ The return value points to the data of an SSL session.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_free(3)|SSL_free(3)>,
+L<SSL_clear(3)|SSL_clear(3)>,
 L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
 
 =cut

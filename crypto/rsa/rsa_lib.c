@@ -191,13 +191,13 @@ RSA *RSA_new_method(ENGINE *engine)
 	ret->blinding=NULL;
 	ret->bignum_data=NULL;
 	ret->flags=meth->flags;
+	CRYPTO_new_ex_data(rsa_meth,ret,&ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
+		CRYPTO_free_ex_data(rsa_meth,ret,&ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(rsa_meth,ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -221,12 +221,12 @@ void RSA_free(RSA *r)
 		}
 #endif
 
-	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
-
 	meth = ENGINE_get_RSA(r->engine);
 	if (meth->finish != NULL)
 		meth->finish(r);
 	ENGINE_finish(r->engine);
+
+	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
 
 	if (r->n != NULL) BN_clear_free(r->n);
 	if (r->e != NULL) BN_clear_free(r->e);
@@ -325,7 +325,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
-	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
+	if (!BN_rand_range(A,rsa->n)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!ENGINE_get_RSA(rsa->engine)->bn_mod_exp(A,A,

@@ -8,7 +8,7 @@ SSL_read - read bytes from a TLS/SSL connection.
 
  #include <openssl/ssl.h>
 
- int SSL_read(SSL *ssl, char *buf, int num);
+ int SSL_read(SSL *ssl, void *buf, int num);
 
 =head1 DESCRIPTION
 
@@ -18,17 +18,29 @@ buffer B<buf>.
 =head1 NOTES
 
 If necessary, SSL_read() will negotiate a TLS/SSL session, if
-not already explicitly performed by SSL_connect() or SSL_accept(). If the
+not already explicitly performed by L<SSL_connect(3)|SSL_connect(3)> or
+L<SSL_accept(3)|SSL_accept(3)>. If the
 peer requests a re-negotiation, it will be performed transparently during
 the SSL_read() operation. The behaviour of SSL_read() depends on the
 underlying BIO. 
 
+For the transparent negotiation to succeed, the B<ssl> must have been
+initialized to client or server mode. This is not the case if a generic
+method is being used (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>, so that
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)> or SSL_set_accept_state()
+must be used before the first call to an SSL_read() or
+L<SSL_write(3)|SSL_write(3)> function.
+
 If the underlying BIO is B<blocking>, SSL_read() will only return, once the
-read operation has been finished or an error occurred.
+read operation has been finished or an error occurred, except when a
+renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur. 
+This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)> call.
 
 If the underlying BIO is B<non-blocking>, SSL_read() will also return
 when the underlying BIO could not satisfy the needs of SSL_read()
-to continue the operation. In this case a call to SSL_get_error() with the
+to continue the operation. In this case a call to
+L<SSL_get_error(3)|SSL_get_error(3)> with the
 return value of SSL_read() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. As at any time a re-negotiation is possible, a
 call to SSL_read() can also cause write operations! The calling process
@@ -61,7 +73,7 @@ The read operation was not successful, probably because no data was
 available. Call SSL_get_error() with the return value B<ret> to find out,
 whether an error occurred.
 
-=item -1
+=item E<lt>0
 
 The read operation was not successful, because either an error occurred
 or action must be taken by the calling process. Call SSL_get_error() with the
@@ -72,6 +84,9 @@ return value B<ret> to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_write(3)|SSL_write(3)>,
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
 L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =cut

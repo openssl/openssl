@@ -34,6 +34,11 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
+When using a generic method (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>), it
+is necessary to call L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
+before calling SSL_connect() to explicitly switch the B<ssl> to client
+mode.
+
 =head1 RETURN VALUES
 
 The following return values can occur:
@@ -51,7 +56,7 @@ The TLS/SSL handshake was not successful but was shut down controlled and
 by the specifications of the TLS/SSL protocol. Call SSL_get_error() with the
 return value B<ret> to find out the reason.
 
-=item -1
+=item E<lt>0
 
 The TLS/SSL handshake was not successful, because a fatal error occurred either
 at the protocol level or a connection failure occurred. The shutdown was
@@ -64,6 +69,8 @@ to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)> , L<bio(3)|bio(3)>
+L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>,
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
+L<SSL_CTX_new(3)|SSL_CTX_new(3)>
 
 =cut

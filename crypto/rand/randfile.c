@@ -73,7 +73,7 @@
 # include <sys/stat.h>
 #endif
 
-#include <openssl/e_os.h>
+#include "openssl/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
@@ -82,6 +82,9 @@
 #define RAND_DATA 1024
 
 /* #define RFILE ".rnd" - defined in ../../e_os.h */
+
+/* Note that these functions are intended for seed files only.
+ * Entropy devices and EGD sockets are handled in rand_unix.c */
 
 int RAND_load_file(const char *file, long bytes)
 	{
@@ -117,7 +120,7 @@ int RAND_load_file(const char *file, long bytes)
 		if (bytes > 0)
 			{
 			bytes-=n;
-			if (bytes == 0) break;
+			if (bytes <= 0) break;
 			}
 		}
 	fclose(in);
@@ -193,10 +196,11 @@ err:
 
 const char *RAND_file_name(char *buf, int size)
 	{
-	char *s;
+	char *s=NULL;
 	char *ret=NULL;
 
-	s=getenv("RANDFILE");
+	if (OPENSSL_issetugid() == 0)
+		s=getenv("RANDFILE");
 	if (s != NULL)
 		{
 		strncpy(buf,s,size-1);
@@ -205,16 +209,19 @@ const char *RAND_file_name(char *buf, int size)
 		}
 	else
 		{
-		s=getenv("HOME");
-		if (s == NULL) return(RFILE);
-		if (((int)(strlen(s)+strlen(RFILE)+2)) > size)
-			return(RFILE);
-		strcpy(buf,s);
+		if (OPENSSL_issetugid() == 0)
+			s=getenv("HOME");
+		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
+			{
+			strcpy(buf,s);
 #ifndef VMS
-		strcat(buf,"/");
+			strcat(buf,"/");
 #endif
-		strcat(buf,RFILE);
-		ret=buf;
+			strcat(buf,RFILE);
+			ret=buf;
+			}
+		  else
+		  	buf[0] = '\0'; /* no file name */
 		}
 	return(ret);
 	}

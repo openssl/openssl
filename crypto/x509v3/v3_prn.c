@@ -85,9 +85,16 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 		else BIO_printf(out, "%s:%s", nval->name, nval->value);
 #else
 		else {
-			char tmp[10240]; /* 10k is BIO_printf's limit anyway */
-			ascii2ebcdic(tmp, nval->value, strlen(nval->value)+1);
-			BIO_printf(out, "%s:%s", nval->name, tmp);
+			int len;
+			char *tmp;
+			len = strlen(nval->value)+1;
+			tmp = OPENSSL_malloc(len);
+			if (tmp)
+			{
+				ascii2ebcdic(tmp, nval->value, len);
+				BIO_printf(out, "%s:%s", nval->name, tmp);
+				OPENSSL_free(tmp);
+			}
 		}
 #endif
 		if(ml) BIO_puts(out, "\n");
@@ -115,9 +122,16 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 		BIO_printf(out, "%*s%s", indent, "", value);
 #else
 		{
-			char tmp[10240]; /* 10k is BIO_printf's limit anyway */
-			ascii2ebcdic(tmp, value, strlen(value)+1);
-			BIO_printf(out, "%*s%s", indent, "", tmp);
+			int len;
+			char *tmp;
+			len = strlen(value)+1;
+			tmp = OPENSSL_malloc(len);
+			if (tmp)
+			{
+				ascii2ebcdic(tmp, value, len);
+				BIO_printf(out, "%*s%s", indent, "", tmp);
+				OPENSSL_free(tmp);
+			}
 		}
 #endif
 	} else if(method->i2v) {

@@ -60,6 +60,7 @@ bn - multiprecision integer arithmetics
 
  int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
  int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
+ int BN_rand_range(BIGNUM *rnd, BIGNUM *range);
 
  BIGNUM *BN_generate_prime(BIGNUM *ret, int bits,int safe, BIGNUM *add,
          BIGNUM *rem, void (*callback)(int, int, void *), void *cb_arg);

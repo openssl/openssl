@@ -84,7 +84,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
 	if(!pass) {
 		unipass = NULL;
 		uniplen = 0;
-	} else if (!asc2uni(pass, &unipass, &uniplen)) {
+	} else if (!asc2uni(pass, passlen, &unipass, &uniplen)) {
 		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}

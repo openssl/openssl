@@ -260,7 +260,7 @@ SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 
 int ssl2_pending(SSL *s)
 	{
-	return(s->s2->ract_data_length);
+	return SSL_in_init(s) ? 0 : s->s2->ract_data_length;
 	}
 
 int ssl2_new(SSL *s)
@@ -270,10 +270,16 @@ int ssl2_new(SSL *s)
 	if ((s2=OPENSSL_malloc(sizeof *s2)) == NULL) goto err;
 	memset(s2,0,sizeof *s2);
 
+#if SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER + 3 > SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER + 2
+#  error "assertion failed"
+#endif
+
 	if ((s2->rbuf=OPENSSL_malloc(
 		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
+	/* wbuf needs one byte more because when using two-byte headers,
+	 * we leave the first byte unused in do_ssl_write (s2_pkt.c) */
 	if ((s2->wbuf=OPENSSL_malloc(
-		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
+		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+3)) == NULL) goto err;
 	s->s2=s2;
 
 	ssl2_clear(s);

@@ -247,7 +247,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
 		   EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
 					 int saltlen, EVP_MD *md_type);
-unsigned char *asc2uni(const char *asc, unsigned char **uni, int *unilen);
+unsigned char *asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen);
 char *uni2asc(unsigned char *uni, int unilen);
 int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp);
 PKCS12_BAGS *PKCS12_BAGS_new(void);

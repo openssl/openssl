@@ -921,6 +921,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 		goto err;
 		}
 	ERR_clear_error(); /* but we keep s->verify_result */
+	s->session->verify_result = s->verify_result;
 
 	/* server's cert for this session */
 	sc=ssl_sess_cert_new();

@@ -570,14 +570,15 @@ static void readtimer(void)
 	DWORD w;
 	LARGE_INTEGER l;
 	static int have_perfc = 1;
-#ifndef __GNUC__
+#ifdef _MSC_VER
 	static int have_tsc = 1;
 	DWORD cyclecount;
 
 	if (have_tsc) {
 	  __try {
 	    __asm {
-	      rdtsc
+	      _emit 0x0f
+	      _emit 0x31
 	      mov cyclecount, eax
 	      }
 	    RAND_add(&cyclecount, sizeof(cyclecount), 1);

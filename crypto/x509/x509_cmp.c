@@ -199,19 +199,13 @@ unsigned long X509_NAME_hash(X509_NAME *x)
 	{
 	unsigned long ret=0;
 	unsigned char md[16];
-	unsigned char str[256],*p,*pp;
-	int i;
 
-	i=i2d_X509_NAME(x,NULL);
-	if (i > sizeof(str))
-		p=OPENSSL_malloc(i);
-	else
-		p=str;
-
-	pp=p;
-	i2d_X509_NAME(x,&pp);
-	MD5((unsigned char *)p,i,&(md[0]));
-	if (p != str) OPENSSL_free(p);
+	/* Ensure cached version is up to date */
+	i2d_X509_NAME(x,NULL);
+	/* Use cached encoding directly rather than copying: this should
+	 * keep libsafe happy.
+	 */
+	MD5((unsigned char *)x->bytes->data,x->bytes->length,&(md[0]));
 
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)

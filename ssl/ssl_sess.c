@@ -508,6 +508,7 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 		if (s->session != NULL)
 			SSL_SESSION_free(s->session);
 		s->session=session;
+		s->verify_result = s->session->verify_result;
 		/* CRYPTO_w_unlock(CRYPTO_LOCK_SSL);*/
 		ret=1;
 		}

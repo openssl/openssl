@@ -39,6 +39,7 @@ B<openssl> B<s_client>
 [B<-hack>]
 [B<-www>]
 [B<-WWW>]
+[B<-rand file(s)>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -95,7 +96,7 @@ using a set of DH parameters. If not specified then an attempt is made to
 load the parameters from the server certificate file. If this fails then
 a static set of parameters hard coded into the s_server program will be used.
 
-=item B<-nodhe>
+=item B<-no_dhe>
 
 if this option is set then no DH parameters will be loaded effectively
 disabling the ephemeral DH cipher suites.
@@ -186,6 +187,14 @@ web browser.
 emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded.
+
+=item B<-rand file(s)>
+
+a file or files containing random data used to seed the random number
+generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+Multiple files can be specified separated by a OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
 
 =item B<-engine id>
 

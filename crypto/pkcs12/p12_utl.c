@@ -62,30 +62,34 @@
 
 /* Cheap and nasty Unicode stuff */
 
-unsigned char *asc2uni (const char *asc, unsigned char **uni, int *unilen)
+unsigned char *asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 {
 	int ulen, i;
 	unsigned char *unitmp;
-	ulen = strlen(asc)*2  + 2;
-	if (!(unitmp = OPENSSL_malloc (ulen))) return NULL;
-	for (i = 0; i < ulen; i+=2) {
+	if (asclen == -1) asclen = strlen(asc);
+	ulen = asclen*2  + 2;
+	if (!(unitmp = OPENSSL_malloc(ulen))) return NULL;
+	for (i = 0; i < ulen - 2; i+=2) {
 		unitmp[i] = 0;
 		unitmp[i + 1] = asc[i>>1];
 	}
+	/* Make result double null terminated */
+	unitmp[ulen - 2] = 0;
+	unitmp[ulen - 1] = 0;
 	if (unilen) *unilen = ulen;
 	if (uni) *uni = unitmp;
 	return unitmp;
 }
 
-char *uni2asc (unsigned char *uni, int unilen)
+char *uni2asc(unsigned char *uni, int unilen)
 {
 	int asclen, i;
 	char *asctmp;
 	asclen = unilen / 2;
 	/* If no terminating zero allow for one */
-	if (uni[unilen - 1]) asclen++;
+	if (!unilen || uni[unilen - 1]) asclen++;
 	uni++;
-	if (!(asctmp = OPENSSL_malloc (asclen))) return NULL;
+	if (!(asctmp = OPENSSL_malloc(asclen))) return NULL;
 	for (i = 0; i < unilen; i+=2) asctmp[i>>1] = uni[i];
 	asctmp[asclen - 1] = 0;
 	return asctmp;

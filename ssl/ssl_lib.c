@@ -119,7 +119,9 @@ int SSL_clear(SSL *s)
 	s->client_version=s->version;
 	s->rwstate=SSL_NOTHING;
 	s->rstate=SSL_ST_READ_HEADER;
+#if 0
 	s->read_ahead=s->ctx->read_ahead;
+#endif
 
 	if (s->init_buf != NULL)
 		{
@@ -229,6 +231,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	s->mode=ctx->mode;
+	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
@@ -705,7 +708,7 @@ long SSL_get_default_timeout(SSL *s)
 	return(s->method->get_timeout());
 	}
 
-int SSL_read(SSL *s,char *buf,int num)
+int SSL_read(SSL *s,void *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
@@ -721,8 +724,14 @@ int SSL_read(SSL *s,char *buf,int num)
 	return(s->method->ssl_read(s,buf,num));
 	}
 
-int SSL_peek(SSL *s,char *buf,int num)
+int SSL_peek(SSL *s,void *buf,int num)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
+		return -1;
+		}
+
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
 		{
 		return(0);
@@ -730,7 +739,7 @@ int SSL_peek(SSL *s,char *buf,int num)
 	return(s->method->ssl_peek(s,buf,num));
 	}
 
-int SSL_write(SSL *s,const char *buf,int num)
+int SSL_write(SSL *s,const void *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{

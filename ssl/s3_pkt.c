@@ -704,7 +704,7 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  *     Application data protocol
  *             none of our business
  */
-int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
+int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	{
 	int al,i,j,ret;
 	unsigned int n;
@@ -715,7 +715,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 		if (!ssl3_setup_buffers(s))
 			return(-1);
 
-	if ((type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE) && type)
+	if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE) && type) ||
+	    (peek && (type != SSL3_RT_APPLICATION_DATA)))
 		{
 		SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INTERNAL_ERROR);
 		return -1;
@@ -728,6 +729,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 		unsigned char *dst = buf;
 		unsigned int k;
 
+		/* peek == 0 */
 		n = 0;
 		while ((len > 0) && (s->s3->handshake_fragment_len > 0))
 			{
@@ -763,7 +765,7 @@ start:
 	 * s->s3->rrec.length,  - number of bytes. */
 	rr = &(s->s3->rrec);
 
-	/* get new packet */
+	/* get new packet if necessary */
 	if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY))
 		{
 		ret=ssl3_get_record(s);
@@ -781,7 +783,8 @@ start:
 		goto err;
 		}
 
-	/* If the other end has shutdown, throw anything we read away */
+	/* If the other end has shut down, throw anything we read away
+	 * (even in 'peek' mode) */
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
 		{
 		rr->length=0;
@@ -810,12 +813,15 @@ start:
 			n = (unsigned int)len;
 
 		memcpy(buf,&(rr->data[rr->off]),n);
-		rr->length-=n;
-		rr->off+=n;
-		if (rr->length == 0)
+		if (!peek)
 			{
-			s->rstate=SSL_ST_READ_HEADER;
-			rr->off=0;
+			rr->length-=n;
+			rr->off+=n;
+			if (rr->length == 0)
+				{
+				s->rstate=SSL_ST_READ_HEADER;
+				rr->off=0;
+				}
 			}
 		return(n);
 		}

@@ -463,12 +463,20 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		ASN1_TYPE *param, EVP_CIPHER *cipher,
                 EVP_MD *md, int en_de);
 
+#ifndef NO_RSA
 #define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
 					(char *)(rsa))
+#endif
+
+#ifndef NO_DSA
 #define EVP_PKEY_assign_DSA(pkey,dsa) EVP_PKEY_assign((pkey),EVP_PKEY_DSA,\
 					(char *)(dsa))
+#endif
+
+#ifndef NO_DH
 #define EVP_PKEY_assign_DH(pkey,dh) EVP_PKEY_assign((pkey),EVP_PKEY_DH,\
 					(char *)(dh))
+#endif
 
 /* Add some extra combinations */
 #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
@@ -612,17 +620,29 @@ void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,unsigned char *k,
 #endif
 
 EVP_MD *EVP_md_null(void);
+#ifndef NO_MD2
 EVP_MD *EVP_md2(void);
+#endif
+#ifndef NO_MD4
 EVP_MD *EVP_md4(void);
+#endif
+#ifndef NO_MD5
 EVP_MD *EVP_md5(void);
+#endif
+#ifndef NO_SHA
 EVP_MD *EVP_sha(void);
 EVP_MD *EVP_sha1(void);
 EVP_MD *EVP_dss(void);
 EVP_MD *EVP_dss1(void);
+#endif
+#ifndef NO_MDC2
 EVP_MD *EVP_mdc2(void);
+#endif
+#ifndef NO_RIPEMD
 EVP_MD *EVP_ripemd160(void);
-
+#endif
 EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
+#ifndef NO_DES
 EVP_CIPHER *EVP_des_ecb(void);
 EVP_CIPHER *EVP_des_ede(void);
 EVP_CIPHER *EVP_des_ede3(void);
@@ -636,31 +656,43 @@ EVP_CIPHER *EVP_des_cbc(void);
 EVP_CIPHER *EVP_des_ede_cbc(void);
 EVP_CIPHER *EVP_des_ede3_cbc(void);
 EVP_CIPHER *EVP_desx_cbc(void);
+#endif
+#ifndef NO_RC4
 EVP_CIPHER *EVP_rc4(void);
 EVP_CIPHER *EVP_rc4_40(void);
+#endif
+#ifndef NO_IDEA
 EVP_CIPHER *EVP_idea_ecb(void);
 EVP_CIPHER *EVP_idea_cfb(void);
 EVP_CIPHER *EVP_idea_ofb(void);
 EVP_CIPHER *EVP_idea_cbc(void);
+#endif
+#ifndef NO_RC2
 EVP_CIPHER *EVP_rc2_ecb(void);
 EVP_CIPHER *EVP_rc2_cbc(void);
 EVP_CIPHER *EVP_rc2_40_cbc(void);
 EVP_CIPHER *EVP_rc2_64_cbc(void);
 EVP_CIPHER *EVP_rc2_cfb(void);
 EVP_CIPHER *EVP_rc2_ofb(void);
+#endif
+#ifndef NO_BF
 EVP_CIPHER *EVP_bf_ecb(void);
 EVP_CIPHER *EVP_bf_cbc(void);
 EVP_CIPHER *EVP_bf_cfb(void);
 EVP_CIPHER *EVP_bf_ofb(void);
+#endif
+#ifndef NO_CAST
 EVP_CIPHER *EVP_cast5_ecb(void);
 EVP_CIPHER *EVP_cast5_cbc(void);
 EVP_CIPHER *EVP_cast5_cfb(void);
 EVP_CIPHER *EVP_cast5_ofb(void);
+#endif
+#ifndef NO_RC5
 EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
-
+#endif
 void OpenSSL_add_all_algorithms(void);
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);

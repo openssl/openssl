@@ -12,9 +12,17 @@ SSL_shutdown - shut down a TLS/SSL connection
 
 =head1 DESCRIPTION
 
-SSL_shutdown() shuts down an active TLS/SSL connection. It sends the shutdown
-alert to the peer. The behaviour of SSL_shutdown() depends on the underlying
-BIO. 
+SSL_shutdown() shuts down an active TLS/SSL connection. It sends the 
+"close notify" shutdown alert to the peer.
+
+=head1 NOTES
+
+SSL_shutdown() tries to send the "close notify" shutdown alert to the peer.
+Whether the operation succeeds or not, the SSL_SENT_SHUTDOWN flag is set and
+a currently open session is considered closed and good and will be kept in the
+session cache for further reuse.
+
+The behaviour of SSL_shutdown() depends on the underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
 handshake has been finished or an error occurred.
@@ -57,6 +65,8 @@ Call SSL_get_error() with the return value B<ret> to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_connect(3)|SSL_connect(3)>,
-L<SSL_accept(3)|SSL_accept(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
+L<SSL_accept(3)|SSL_accept(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
+L<SSL_clear(3)|SSL_clear(3), L<SSL_free(3)|SSL_free(3)>,
+L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =cut

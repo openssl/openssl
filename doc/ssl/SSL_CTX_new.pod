@@ -33,9 +33,9 @@ understand SSLv2 client hello messages.
 =item SSLv3_method(void), SSLv3_server_method(void), SSLv3_client_method(void)
 
 A TLS/SSL connection established with these methods will only understand the
-SSLv3 and TLSv1 protocol. A client will send out SSLv3 client hello messages
-and will indicate that it also understands TLSv1. A server will only understand
-SSLv3 and TLSv1 client hello messages. This especially means, that it will
+SSLv3 protocol. A client will send out SSLv3 client hello messages
+and will indicate that it only understands SSLv3. A server will only understand
+SSLv3 client hello messages. This especially means, that it will
 not understand SSLv2 client hello messages which are widely used for
 compatibility reasons, see SSLv23_*_method().
 
@@ -46,7 +46,8 @@ TLSv1 protocol. A client will send out TLSv1 client hello messages
 and will indicate that it only understands TLSv1. A server will only understand
 TLSv1 client hello messages. This especially means, that it will
 not understand SSLv2 client hello messages which are widely used for
-compatibility reasons, see SSLv23_*_method().
+compatibility reasons, see SSLv23_*_method(). It will also not understand
+SSLv3 client hello messages.
 
 =item SSLv23_method(void), SSLv23_server_method(void), SSLv23_client_method(void)
 
@@ -57,6 +58,10 @@ understand SSLv2, SSLv3, and TLSv1 client hello messages. This is the best
 choice when compatibility is a concern.
 
 =back
+
+If a generic method is used, it is necessary to explicitly set client or
+server mode with L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
+or SSL_set_accept_state().
 
 The list of protocols available can later be limited using the SSL_OP_NO_SSLv2,
 SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1 options of the B<SSL_CTX_set_options()> or
@@ -88,6 +93,6 @@ The return value points to an allocated SSL_CTX object.
 =head1 SEE ALSO
 
 L<SSL_CTX_free(3)|SSL_CTX_free(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<ssl(3)|ssl(3)>
+L<ssl(3)|ssl(3)>,  L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
 
 =cut

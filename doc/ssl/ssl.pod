@@ -13,6 +13,69 @@ The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
 documented here.
 
+At first the library must be initialized; see
+L<SSL_library_init(3)|SSL_library_init(3)>.
+
+Then an B<SSL_CTX> object is created as a framework to establish
+TLS/SSL enabled connections (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>).
+Various options regarding certificates, algorithms etc. can be set
+in this object.
+
+When a network connection has been created, it can be assigned to an
+B<SSL> object. After the B<SSL> object has been created using
+L<SSL_new(3)|SSL_new(3)>, L<SSL_set_fd(3)|SSL_set_fd(3)> or
+L<SSL_set_bio(3)|SSL_set_bio(3)> can be used to associate the network
+connection with the object.
+
+Then the TLS/SSL handshake is performed using
+L<SSL_accept(3)|SSL_accept(3)> or L<SSL_connect(3)|SSL_connect(3)>
+respectively.
+L<SSL_read(3)|SSL_read(3)> and L<SSL_write(3)|SSL_write(3)> are used
+to read and write data on the TLS/SSL connection.
+L<SSL_shutdown(3)|SSL_shutdown(3)> can be used to shut down the
+TLS/SSL connection.
+
+=head1 DATA STRUCTURES
+
+Currently the OpenSSL B<ssl> library functions deals with the following data
+structures:
+
+=over 4
+
+=item B<SSL_METHOD> (SSL Method)
+
+That's a dispatch structure describing the internal B<ssl> library
+methods/functions which implement the various protocol versions (SSLv1, SSLv2
+and TLSv1). It's needed to create an B<SSL_CTX>.
+
+=item B<SSL_CIPHER> (SSL Cipher)
+
+This structure holds the algorithm information for a particular cipher which
+are a core part of the SSL/TLS protocol. The available ciphers are configured
+on a B<SSL_CTX> basis and the actually used ones are then part of the
+B<SSL_SESSION>.
+
+=item B<SSL_CTX> (SSL Context)
+
+That's the global context structure which is created by a server or client
+once per program life-time and which holds mainly default values for the
+B<SSL> structures which are later created for the connections.
+
+=item B<SSL_SESSION> (SSL Session)
+
+This is a structure containing the current TLS/SSL session details for a
+connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
+
+=item B<SSL> (SSL Connection)
+
+That's the main SSL/TLS structure which is created by a server or client per
+established connection. This actually is the core structure in the SSL API.
+Under run-time the application usually deals with this structure which has
+links to mostly all other structures.
+
+=back
+
+
 =head1 HEADER FILES
 
 Currently the OpenSSL B<ssl> library provides the following C header files
@@ -52,46 +115,6 @@ it's already included by ssl.h>.
 That's the sub header file dealing with the TLSv1 protocol only.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
-
-=back
-
-=head1 DATA STRUCTURES
-
-Currently the OpenSSL B<ssl> library functions deals with the following data
-structures:
-
-=over 4
-
-=item B<SSL_METHOD> (SSL Method)
-
-That's a dispatch structure describing the internal B<ssl> library
-methods/functions which implement the various protocol versions (SSLv1, SSLv2
-and TLSv1). It's needed to create an B<SSL_CTX>.
-
-=item B<SSL_CIPHER> (SSL Cipher)
-
-This structure holds the algorithm information for a particular cipher which
-are a core part of the SSL/TLS protocol. The available ciphers are configured
-on a B<SSL_CTX> basis and the actually used ones are then part of the
-B<SSL_SESSION>.
-
-=item B<SSL_CTX> (SSL Context)
-
-That's the global context structure which is created by a server or client
-once per program life-time and which holds mainly default values for the
-B<SSL> structures which are later created for the connections.
-
-=item B<SSL_SESSION> (SSL Session)
-
-This is a structure containing the current TLS/SSL session details for a
-connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
-
-=item B<SSL> (SSL Connection)
-
-That's the main SSL/TLS structure which is created by a server or client per
-established connection. This actually is the core structure in the SSL API.
-Under run-time the application usually deals with this structure which has
-links to mostly all other structures.
 
 =back
 
@@ -521,11 +544,11 @@ connection defined in the B<SSL> structure.
 
 =item long B<SSL_num_renegotiations>(SSL *ssl);
 
-=item int B<SSL_peek>(SSL *ssl, char *buf, int num);
+=item int B<SSL_peek>(SSL *ssl, void *buf, int num);
 
 =item int B<SSL_pending>(SSL *ssl);
 
-=item int B<SSL_read>(SSL *ssl, char *buf, int num);
+=item int B<SSL_read>(SSL *ssl, void *buf, int num);
 
 =item int B<SSL_renegotiate>(SSL *ssl);
 
@@ -617,7 +640,7 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_want_x509_lookup>(s);
 
-=item int B<SSL_write>(SSL *ssl, char *buf, int num);
+=item int B<SSL_write>(SSL *ssl, const void *buf, int num);
 
 =back
 
@@ -625,20 +648,53 @@ connection defined in the B<SSL> structure.
 
 L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>,
 L<SSL_accept(3)|SSL_accept(3)>, L<SSL_clear(3)|SSL_clear(3)>,
-L<SSL_connect(3)|SSL_connect(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_connect(3)|SSL_connect(3)>,
+L<SSL_CIPHER_get_name(3)|SSL_CIPHER_get_name(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_add_session(3)|SSL_CTX_add_session(3)>,
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>,
+L<SSL_CTX_get_ex_new_index(3)|SSL_CTX_get_ex_new_index(3)>,
+L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
+L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
+L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
+L<SSL_CTX_sess_set_cache_size(3)|SSL_CTX_sess_set_cache_size(3)>,
+L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
+L<SSL_CTX_sessions(3)|SSL_CTX_sessions(3)>,
+L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
+L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>,
+L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>,
+L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
+L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>,
+L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>,
+L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
 L<SSL_get_ciphers(3)|SSL_get_ciphers(3)>,
-L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_get_fd(3)|SSL_get_fd(3)>,
+L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
+L<SSL_get_error(3)|SSL_get_error(3)>,
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
+L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>,
+L<SSL_get_fd(3)|SSL_get_fd(3)>,
 L<SSL_get_peer_cert_chain(3)|SSL_get_peer_cert_chain(3)>,
 L<SSL_get_rbio(3)|SSL_get_rbio(3)>,
 L<SSL_get_session(3)|SSL_get_session(3)>,
 L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
-L<SSL_library_init(3)|SSL_library_init(3)>, L<SSL_new(3)|SSL_new(3)>,
+L<SSL_get_version(3)|SSL_get_version(3)>,
+L<SSL_library_init(3)|SSL_library_init(3)>,
+L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>,
+L<SSL_new(3)|SSL_new(3)>,
 L<SSL_read(3)|SSL_read(3)>, L<SSL_set_bio(3)|SSL_set_bio(3)>,
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
 L<SSL_set_fd(3)|SSL_set_fd(3)>, L<SSL_pending(3)|SSL_pending(3)>,
 L<SSL_set_session(3)|SSL_set_session(3)>,
+L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_write(3)|SSL_write(3)>,
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
+L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>,
+L<SSL_SESSION_get_ex_new_index(3)|SSL_SESSION_get_ex_new_index(3)>,
+L<SSL_SESSION_get_time(3)|SSL_SESSION_get_time(3)>,
+L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>
 
 =head1 HISTORY
 
