@@ -110,11 +110,12 @@
      handling.
      [Steve Henson]
 
-  +) Add a general user interface API.  This is designed to replace things
-     like des_read_password and friends (backward compatibility functions
-     using this new API are provided).  The purpose is to remove prompting
-     functions from the DES code section as well as provide for prompting
-     through dialog boxes in a window system and the like.
+  +) Add a general user interface API (crypto/ui/).  This is designed
+     to replace things like des_read_password and friends (backward
+     compatibility functions using this new API are provided).
+     The purpose is to remove prompting functions from the DES code
+     section as well as provide for prompting through dialog boxes in
+     a window system and the like.
      [Richard Levitte]
 
   *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
