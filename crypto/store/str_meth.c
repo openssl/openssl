@@ -81,6 +81,18 @@ void STORE_destroy_method(STORE_METHOD *store_method)
 	OPENSSL_free(store_method);
 	}
 
+int STORE_method_set_initialise_function(STORE_METHOD *sm, STORE_INITIALISE_FUNC_PTR init_f)
+	{
+	sm->init = init_f;
+	return 1;
+	}
+
+int STORE_method_set_cleanup_function(STORE_METHOD *sm, STORE_CLEANUP_FUNC_PTR clean_f)
+	{
+	sm->clean = clean_f;
+	return 1;
+	}
+
 int STORE_method_set_generate_function(STORE_METHOD *sm, STORE_GENERATE_OBJECT_FUNC_PTR generate_f)
 	{
 	sm->generate_object = generate_f;
@@ -96,6 +108,12 @@ int STORE_method_set_get_function(STORE_METHOD *sm, STORE_GET_OBJECT_FUNC_PTR ge
 int STORE_method_set_store_function(STORE_METHOD *sm, STORE_STORE_OBJECT_FUNC_PTR store_f)
 	{
 	sm->store_object = store_f;
+	return 1;
+	}
+
+int STORE_method_set_modify_function(STORE_METHOD *sm, STORE_MODIFY_OBJECT_FUNC_PTR modify_f)
+	{
+	sm->modify_object = modify_f;
 	return 1;
 	}
 
@@ -153,6 +171,16 @@ int STORE_method_set_ctrl_function(STORE_METHOD *sm, STORE_CTRL_FUNC_PTR ctrl_f)
 	return 1;
 	}
 
+STORE_INITIALISE_FUNC_PTR STORE_method_get_initialise_function(STORE_METHOD *sm)
+	{
+	return sm->init;
+	}
+
+STORE_CLEANUP_FUNC_PTR STORE_method_get_cleanup_function(STORE_METHOD *sm)
+	{
+	return sm->clean;
+	}
+
 STORE_GENERATE_OBJECT_FUNC_PTR STORE_method_get_generate_function(STORE_METHOD *sm)
 	{
 	return sm->generate_object;
@@ -166,6 +194,11 @@ STORE_GET_OBJECT_FUNC_PTR STORE_method_get_get_function(STORE_METHOD *sm)
 STORE_STORE_OBJECT_FUNC_PTR STORE_method_get_store_function(STORE_METHOD *sm)
 	{
 	return sm->store_object;
+	}
+
+STORE_MODIFY_OBJECT_FUNC_PTR STORE_method_get_modify_function(STORE_METHOD *sm)
+	{
+	return sm->modify_object;
 	}
 
 STORE_HANDLE_OBJECT_FUNC_PTR STORE_method_get_revoke_function(STORE_METHOD *sm)

@@ -184,6 +184,19 @@ void STORE_free(STORE *store)
 	OPENSSL_free(store);
 	}
 
+int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f)(void))
+	{
+	if (store == NULL)
+		{
+		STOREerr(STORE_F_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	if (store->meth->ctrl)
+		return store->meth->ctrl(store, cmd, i, p, f);
+	STOREerr(STORE_F_STORE_CTRL,STORE_R_NO_CONTROL_FUNCTION);
+	return 0;
+	}
+
 
 int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
@@ -292,6 +305,24 @@ int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
 		{
 		STOREerr(STORE_F_STORE_CERTIFICATE,
 			STORE_R_FAILED_STORING_CERTIFICATE);
+		return 0;
+		}
+	return 1;
+	}
+
+int STORE_modify_certificate(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_CERTIFICATE,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_CERTIFICATE,
+			STORE_R_FAILED_MODIFYING_CERTIFICATE);
 		return 0;
 		}
 	return 1;
@@ -496,6 +527,24 @@ int STORE_store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	return i;
 	}
 
+int STORE_modify_private_key(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_PRIVATE_KEY,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_PRIVATE_KEY,
+			STORE_R_FAILED_MODIFYING_PRIVATE_KEY);
+		return 0;
+		}
+	return 1;
+	}
+
 int STORE_revoke_private_key(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
@@ -671,6 +720,24 @@ int STORE_store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	return i;
+	}
+
+int STORE_modify_public_key(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_PUBLIC_KEY,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_PUBLIC_KEY,
+			STORE_R_FAILED_MODIFYING_PUBLIC_KEY);
+		return 0;
+		}
+	return 1;
 	}
 
 int STORE_revoke_public_key(STORE *s, OPENSSL_ITEM attributes[],
@@ -869,6 +936,24 @@ int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
 	return i;
 	}
 
+int STORE_modify_crl(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_CRL,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_X509_CRL,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_CRL,
+			STORE_R_FAILED_MODIFYING_CRL);
+		return 0;
+		}
+	return 1;
+	}
+
 int STORE_delete_crl(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
@@ -989,6 +1074,24 @@ int STORE_store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
 	return 1;
 	}
 
+int STORE_modify_number(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_NUMBER,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_NUMBER,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_NUMBER,
+			STORE_R_FAILED_MODIFYING_NUMBER);
+		return 0;
+		}
+	return 1;
+	}
+
 BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
@@ -1056,6 +1159,24 @@ int STORE_store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
 		{
 		STOREerr(STORE_F_STORE_ARBITRARY,
 			STORE_R_FAILED_STORING_ARBITRARY);
+		return 0;
+		}
+	return 1;
+	}
+
+int STORE_modify_arbitrary(STORE *s, OPENSSL_ITEM search_attributes[],
+	OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+	OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+	{
+	check_store(s,STORE_F_STORE_MODIFY_ARBITRARY,
+		modify_object,STORE_R_NO_MODIFY_OBJECT_FUNCTION);
+
+	if (!s->meth->modify_object(s, STORE_OBJECT_TYPE_ARBITRARY,
+		    search_attributes, add_attributes, modify_attributes,
+		    delete_attributes, parameters))
+		{
+		STOREerr(STORE_F_STORE_MODIFY_ARBITRARY,
+			STORE_R_FAILED_MODIFYING_ARBITRARY);
 		return 0;
 		}
 	return 1;

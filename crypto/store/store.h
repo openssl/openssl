@@ -91,7 +91,7 @@ void STORE_free(STORE *ui);
 /* Give a user interface parametrised control commands.  This can be used to
    send down an integer, a data pointer or a function pointer, as well as
    be used to get information from a STORE. */
-int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f)());
+int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f)(void));
 
 /* A control to set the directory with keys and certificates.  Used by the
    built-in directory level method. */
@@ -123,6 +123,7 @@ const STORE_METHOD *STORE_set_method(STORE *store, const STORE_METHOD *meth);
    and is of course volatile.  It's used by other methods that have an in-memory
    cache. */
 const STORE_METHOD *STORE_Memory(void);
+#if 0 /* Not yet implemented */
 /* This is the directory store.  It does everything except revoking and updating,
    and uses STORE_Memory() to cache things in memory. */
 const STORE_METHOD *STORE_Directory(void);
@@ -130,7 +131,7 @@ const STORE_METHOD *STORE_Directory(void);
    and uses STORE_Memory() to cache things in memory.  Certificates are added
    to it with the store operation, and it will only get cached certificates. */
 const STORE_METHOD *STORE_File(void);
-
+#endif
 
 /* Store functions take a type code for the type of data they should store
    or fetch */
@@ -331,11 +332,11 @@ typedef int (*STORE_HANDLE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OP
 typedef int (*STORE_STORE_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, STORE_OBJECT *data, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 typedef int (*STORE_MODIFY_OBJECT_FUNC_PTR)(STORE *, STORE_OBJECT_TYPES type, OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[]);
 typedef int (*STORE_GENERIC_FUNC_PTR)(STORE *, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
-typedef int (*STORE_CTRL_FUNC_PTR)(STORE *, int cmd, long l, void *p, void (*f)());
+typedef int (*STORE_CTRL_FUNC_PTR)(STORE *, int cmd, long l, void *p, void (*f)(void));
 
-int STORE_method_set_initialise_function(STORE_METHOD *sm, STORE_INITIALISE_FUNC_PTR gen_f);
-int STORE_method_set_cleanup_function(STORE_METHOD *sm, STORE_CLEANUP_FUNC_PTR gen_f);
-int STORE_method_set_generate_function(STORE_METHOD *sm, STORE_GENERATE_OBJECT_FUNC_PTR gen_f);
+int STORE_method_set_initialise_function(STORE_METHOD *sm, STORE_INITIALISE_FUNC_PTR init_f);
+int STORE_method_set_cleanup_function(STORE_METHOD *sm, STORE_CLEANUP_FUNC_PTR clean_f);
+int STORE_method_set_generate_function(STORE_METHOD *sm, STORE_GENERATE_OBJECT_FUNC_PTR generate_f);
 int STORE_method_set_get_function(STORE_METHOD *sm, STORE_GET_OBJECT_FUNC_PTR get_f);
 int STORE_method_set_store_function(STORE_METHOD *sm, STORE_STORE_OBJECT_FUNC_PTR store_f);
 int STORE_method_set_modify_function(STORE_METHOD *sm, STORE_MODIFY_OBJECT_FUNC_PTR store_f);
@@ -429,6 +430,7 @@ void ERR_load_STORE_strings(void);
 /* Error codes for the STORE functions. */
 
 /* Function codes. */
+#define STORE_F_CTRL					 160
 #define STORE_F_MEM_DELETE				 134
 #define STORE_F_MEM_GENERATE				 135
 #define STORE_F_MEM_LIST_NEXT				 136
@@ -449,6 +451,7 @@ void ERR_load_STORE_strings(void);
 #define STORE_F_STORE_ATTR_INFO_SET_SHA1STR		 150
 #define STORE_F_STORE_CERTIFICATE			 100
 #define STORE_F_STORE_CRL				 101
+#define STORE_F_STORE_CTRL				 161
 #define STORE_F_STORE_DELETE_ARBITRARY			 158
 #define STORE_F_STORE_DELETE_CERTIFICATE		 102
 #define STORE_F_STORE_DELETE_CRL			 103
@@ -479,6 +482,12 @@ void ERR_load_STORE_strings(void);
 #define STORE_F_STORE_LIST_PUBLIC_KEY_ENDP		 156
 #define STORE_F_STORE_LIST_PUBLIC_KEY_NEXT		 124
 #define STORE_F_STORE_LIST_PUBLIC_KEY_START		 125
+#define STORE_F_STORE_MODIFY_ARBITRARY			 162
+#define STORE_F_STORE_MODIFY_CERTIFICATE		 163
+#define STORE_F_STORE_MODIFY_CRL			 164
+#define STORE_F_STORE_MODIFY_NUMBER			 165
+#define STORE_F_STORE_MODIFY_PRIVATE_KEY		 166
+#define STORE_F_STORE_MODIFY_PUBLIC_KEY			 167
 #define STORE_F_STORE_NEW_ENGINE			 133
 #define STORE_F_STORE_NEW_METHOD			 132
 #define STORE_F_STORE_NUMBER				 126
@@ -504,6 +513,12 @@ void ERR_load_STORE_strings(void);
 #define STORE_R_FAILED_GETTING_NUMBER			 107
 #define STORE_R_FAILED_LISTING_CERTIFICATES		 108
 #define STORE_R_FAILED_LISTING_KEYS			 109
+#define STORE_R_FAILED_MODIFYING_ARBITRARY		 138
+#define STORE_R_FAILED_MODIFYING_CERTIFICATE		 139
+#define STORE_R_FAILED_MODIFYING_CRL			 140
+#define STORE_R_FAILED_MODIFYING_NUMBER			 141
+#define STORE_R_FAILED_MODIFYING_PRIVATE_KEY		 142
+#define STORE_R_FAILED_MODIFYING_PUBLIC_KEY		 143
 #define STORE_R_FAILED_REVOKING_CERTIFICATE		 110
 #define STORE_R_FAILED_REVOKING_KEY			 111
 #define STORE_R_FAILED_STORING_ARBITRARY		 134
@@ -511,6 +526,7 @@ void ERR_load_STORE_strings(void);
 #define STORE_R_FAILED_STORING_KEY			 113
 #define STORE_R_FAILED_STORING_NUMBER			 114
 #define STORE_R_NOT_IMPLEMENTED				 128
+#define STORE_R_NO_CONTROL_FUNCTION			 144
 #define STORE_R_NO_DELETE_ARBITRARY_FUNCTION		 135
 #define STORE_R_NO_DELETE_NUMBER_FUNCTION		 115
 #define STORE_R_NO_DELETE_OBJECT_FUNCTION		 116
@@ -523,6 +539,7 @@ void ERR_load_STORE_strings(void);
 #define STORE_R_NO_LIST_OBJECT_END_FUNCTION		 121
 #define STORE_R_NO_LIST_OBJECT_NEXT_FUNCTION		 122
 #define STORE_R_NO_LIST_OBJECT_START_FUNCTION		 123
+#define STORE_R_NO_MODIFY_OBJECT_FUNCTION		 145
 #define STORE_R_NO_REVOKE_OBJECT_FUNCTION		 124
 #define STORE_R_NO_STORE				 129
 #define STORE_R_NO_STORE_OBJECT_ARBITRARY_FUNCTION	 137

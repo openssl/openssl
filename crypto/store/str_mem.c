@@ -126,7 +126,7 @@ static int mem_lock(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[]);
 static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[]);
-static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)());
+static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void));
 
 static STORE_METHOD store_memory =
 	{
@@ -351,7 +351,7 @@ static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
 	{
 	return 1;
 	}
-static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)())
+static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void))
 	{
 	return 1;
 	}
