@@ -65,17 +65,22 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
-#ifdef _MSC_VER
-# define alloca   _alloca
-# define snprintf _snprintf
-#endif
 
 #include <openssl/crypto.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+
+#ifdef OPENSSL_SYS_VMS
+# include <builtins.h>
+# define alloca __ALLOCA
+#else
+# include <malloc.h>
+# ifdef _MSC_VER
+#  define alloca _alloca
+# endif
+#endif
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_PADLOCK
