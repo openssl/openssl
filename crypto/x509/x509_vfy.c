@@ -73,7 +73,7 @@
 static int null_callback(int ok,X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
-static int check_chain_purpose(X509_STORE_CTX *ctx);
+static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
@@ -281,7 +281,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 
 	/* We have the chain complete: now we need to check its purpose */
-	if (ctx->purpose > 0) ok = check_chain_purpose(ctx);
+	ok = check_chain_extensions(ctx);
 
 	if (!ok) goto end;
 
@@ -371,15 +371,25 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
  * with the supplied purpose
  */
 
-static int check_chain_purpose(X509_STORE_CTX *ctx)
+static int check_chain_extensions(X509_STORE_CTX *ctx)
 {
 #ifdef OPENSSL_NO_CHAIN_VERIFY
 	return 1;
 #else
-	int i, ok=0;
+	int i, ok=0, must_be_ca;
 	X509 *x;
 	int (*cb)();
 	cb=ctx->verify_cb;
+
+	/* must_be_ca can have 1 of 3 values:
+	   -1: we accept both CA and non-CA certificates, to allow direct
+	       use of self-signed certificates (which are marked as CA).
+	   0:  we only accept non-CA certificates.  This is currently not
+	       used, but the possibility is present for future extensions.
+	   1:  we only accept CA certificates.  This is currently used for
+	       all certificates in the chain except the leaf certificate.
+	*/
+	must_be_ca = -1;
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
@@ -394,19 +404,61 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
-		ret = X509_check_purpose(x, ctx->purpose, i);
-		if ((ret == 0)
-			 || ((ctx->flags & X509_V_FLAG_X509_STRICT)
-				&& (ret != 1)))
+		ret = X509_check_ca(x);
+		switch(must_be_ca)
 			{
-			if (i)
+		case -1:
+			if ((ctx->flags & X509_V_FLAG_X509_STRICT)
+				&& (ret != 1) && (ret != 0))
+				{
+				ret = 0;
 				ctx->error = X509_V_ERR_INVALID_CA;
+				}
 			else
-				ctx->error = X509_V_ERR_INVALID_PURPOSE;
+				ret = 1;
+			break;
+		case 0:
+			if (ret != 0)
+				{
+				ret = 0;
+				ctx->error = X509_V_ERR_INVALID_NON_CA;
+				}
+			else
+				ret = 1;
+			break;
+		default:
+			if ((ret == 0)
+				|| ((ctx->flags & X509_V_FLAG_X509_STRICT)
+					&& (ret != 1)))
+				{
+				ret = 0;
+				ctx->error = X509_V_ERR_INVALID_CA;
+				}
+			else
+				ret = 1;
+			break;
+			}
+		if (ret == 0)
+			{
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok=cb(0,ctx);
 			if (!ok) goto end;
+			}
+		if (ctx->purpose > 0)
+			{
+			ret = X509_check_purpose(x, ctx->purpose,
+				must_be_ca > 0);
+			if ((ret == 0)
+				|| ((ctx->flags & X509_V_FLAG_X509_STRICT)
+					&& (ret != 1)))
+				{
+				ctx->error = X509_V_ERR_INVALID_PURPOSE;
+				ctx->error_depth = i;
+				ctx->current_cert = x;
+				ok=cb(0,ctx);
+				if (!ok) goto end;
+				}
 			}
 		/* Check pathlen */
 		if ((i > 1) && (x->ex_pathlen != -1)
@@ -418,6 +470,8 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
+		/* The next certificate must be a CA */
+		must_be_ca = 1;
 		}
 	ok = 1;
  end:

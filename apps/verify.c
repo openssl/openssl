@@ -354,6 +354,7 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
 		/* Continue after extension errors too */
 		if (ctx->error == X509_V_ERR_INVALID_CA) ok=1;
+		if (ctx->error == X509_V_ERR_INVALID_NON_CA) ok=1;
 		if (ctx->error == X509_V_ERR_PATH_LENGTH_EXCEEDED) ok=1;
 		if (ctx->error == X509_V_ERR_INVALID_PURPOSE) ok=1;
 		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
