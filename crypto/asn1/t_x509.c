@@ -165,9 +165,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 	if(!(cflag & X509_FLAG_NO_SIGNAME))
 		{
-		i=OBJ_obj2nid(ci->signature->algorithm);
-		if (BIO_printf(bp,"%8sSignature Algorithm: %s\n","",
-			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0)
+		if (BIO_printf(bp,"%8sSignature Algorithm: ","") <= 0) 
+			goto err;
+		if (i2a_ASN1_OBJECT(bp, ci->signature->algorithm) <= 0)
+			goto err;
+		if (BIO_puts(bp, "\n") <= 0)
 			goto err;
 		}
 
@@ -194,9 +196,12 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		{
 		if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)
 			goto err;
-		i=OBJ_obj2nid(ci->key->algor->algorithm);
-		if (BIO_printf(bp,"%12sPublic Key Algorithm: %s\n","",
-			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
+		if (BIO_printf(bp,"%12sPublic Key Algorithm: ","") <= 0)
+			goto err;
+		if (i2a_ASN1_OBJECT(bp, ci->key->algor->algorithm) <= 0)
+			goto err;
+		if (BIO_puts(bp, "\n") <= 0)
+			goto err;
 
 		pkey=X509_get_pubkey(x);
 		if (pkey == NULL)

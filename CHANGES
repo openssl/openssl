@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) If signature or public key algorithm is unrecognized print out its
+     OID rather that just UNKOWN.
+     [Steve Henson]
+
   *) Avoid coredump with unsupported or invalid public keys by checking if
      X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
      PKCS7_verify() fails with non detached data.
