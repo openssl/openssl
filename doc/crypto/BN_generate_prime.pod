@@ -70,7 +70,7 @@ If B<do_trial_division == 0>, this test is skipped.
 
 Both BN_is_prime() and BN_is_prime_fasttest() perform a Miller-Rabin
 probabilistic primality test with B<checks> iterations. If
-B<checks == BN_prime_check>, a number of iterations is used that
+B<checks == BN_prime_checks>, a number of iterations is used that
 yields a false positive rate of at most 2^-80 for random input.
 
 If B<callback> is not B<NULL>, B<callback(1, j, cb_arg)> is called
