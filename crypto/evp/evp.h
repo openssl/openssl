@@ -261,6 +261,8 @@ typedef struct env_md_st
 	int ctx_size; /* how big does the ctx need to be */
 	} EVP_MD;
 
+
+
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
 #ifndef NO_DSA
@@ -395,6 +397,11 @@ typedef struct evp_Encode_Ctx_st
 	int line_num;	/* number read on current line */
 	int expect_nl;
 	} EVP_ENCODE_CTX;
+
+/* Password based encryption function */
+typedef int (EVP_PBE_KEYGEN)(unsigned char *pass, int passlen,
+         unsigned char *salt,  int saltlen, int iter, EVP_CIPHER *cipher,
+                EVP_MD *md, unsigned char *key, unsigned char *iv);
 
 #define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
 					(char *)(rsa))
@@ -779,7 +786,14 @@ int EVP_CIPHER_get_asn1_iv();
 /* Function codes. */
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_EVP_DECRYPTFINAL				 101
+#define EVP_F_EVP_MD_CTX_COPY				 110
 #define EVP_F_EVP_OPENINIT				 102
+#define EVP_F_EVP_PBE_ALGOR_CIPHERINIT			 114
+#define EVP_F_EVP_PBE_ALG_ADD				 115
+#define EVP_F_EVP_PBE_CIPHERINIT			 116
+#define EVP_F_EVP_PKCS82PKEY				 111
+#define EVP_F_EVP_PKCS8_SET_BROKEN			 112
+#define EVP_F_EVP_PKEY2PKCS8				 113
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
 #define EVP_F_EVP_PKEY_DECRYPT				 104
 #define EVP_F_EVP_PKEY_ENCRYPT				 105
@@ -787,21 +801,30 @@ int EVP_CIPHER_get_asn1_iv();
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_RC2_MAGIC_TO_METH				 109
-#define EVP_F_EVP_MD_CTX_COPY                            110
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
+#define EVP_R_BN_DECODE_ERROR				 112
+#define EVP_R_BN_PUBKEY_ERROR				 113
+#define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
+#define EVP_R_ENCODE_ERROR				 115
+#define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
+#define EVP_R_INPUT_NOT_INITALISED			 111
 #define EVP_R_IV_TOO_LARGE				 102
+#define EVP_R_KEYGEN_FAILURE				 120
 #define EVP_R_MISSING_PARMATERS				 103
+#define EVP_R_NO_DSA_PARAMETERS				 116
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
+#define EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE			 117
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
+#define EVP_R_UNKNOWN_PBE_ALGORITHM			 121
 #define EVP_R_UNSUPPORTED_CIPHER			 107
 #define EVP_R_UNSUPPORTED_KEY_SIZE			 108
+#define EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM		 118
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
-#define EVP_R_INPUT_NOT_INITALISED                       111
  
 #ifdef  __cplusplus
 }

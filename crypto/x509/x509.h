@@ -337,6 +337,26 @@ typedef struct CBCParameter_st
 	unsigned char iv[8];
 	} CBC_PARAM;
 
+/* Password based encryption structure */
+
+typedef struct PBEPARAM_st {
+ASN1_OCTET_STRING *salt;
+ASN1_INTEGER *iter;
+} PBEPARAM;
+
+/* PKCS#8 private key info structure */
+
+typedef struct pkcs8_priv_key_info_st
+        {
+        int broken;     /* Flag for various broken formats */
+#define PKCS8_OK        0
+#define PKCS8_NO_OCTET  1
+        ASN1_INTEGER *version;
+        X509_ALGOR *pkeyalg;
+        ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
+        STACK *attributes;
+        } PKCS8_PRIV_KEY_INFO;
+
 #include "x509_vfy.h"
 #include "pkcs7.h"
 
@@ -839,6 +859,30 @@ X509 *X509_find_by_issuer_and_serial(STACK *sk,X509_NAME *name,
                 ASN1_INTEGER *serial);
 X509 *X509_find_by_subject(STACK *sk,X509_NAME *name);
 
+int i2d_PBEPARAM(PBEPARAM *a, unsigned char **pp);
+PBEPARAM *PBEPARAM_new(void);
+PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length);
+void PBEPARAM_free(PBEPARAM *a);
+
+/* PKCS#8 utilities */
+
+int i2d_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO *a, unsigned char **pp);
+PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new(void);
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a,
+					 unsigned char **pp, long length);
+void PKCS8_PRIV_KEY_INFO_free(PKCS8_PRIV_KEY_INFO *a);
+
+EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
+PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
+
+/* Password based encryption routines */
+
+int EVP_PBE_ALGOR_CipherInit(X509_ALGOR *algor, unsigned char *pass,
+				 int passlen, EVP_CIPHER_CTX *ctx, int en_de);
+int EVP_PBE_alg_add(int nid, EVP_CIPHER *cipher, EVP_MD *md,
+						 EVP_PBE_KEYGEN *keygen);
+
 #else
 
 #ifndef SSLEAY_MACROS
@@ -1137,6 +1181,23 @@ char *          X509_verify_cert_error_string();
 /* lookup a cert from a X509 STACK */
 X509 *X509_find_by_issuer_and_serial();
 X509 *X509_find_by_subject();
+
+int i2d_PBEPARAM();
+PBEPARAM *PBEPARAM_new();
+PBEPARAM *d2i_PBEPARAM();
+void PBEPARAM_free();
+
+int i2d_PKCS8_PRIV_KEY_INFO();
+PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new();
+PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO();
+void PKCS8_PRIV_KEY_INFO_free();
+
+EVP_PKEY *EVP_PKCS82PKEY();
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8();
+PKCS8_PRIV_KEY_INFO *PKCS8_set_broken();
+
+int EVP_PBE_ALGOR_CipherInit();
+int EVP_PBE_alg_add();
 
 #endif
 

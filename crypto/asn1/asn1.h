@@ -575,6 +575,13 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
 int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 	unsigned char *data, int max_len);
 
+STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
+						 void (*free_func)() ); 
+unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
+								 int *len );
+char *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
+ASN1_STRING *ASN1_pack_string(char *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
+
 #else
 
 ASN1_TYPE *	ASN1_TYPE_new();
@@ -688,6 +695,11 @@ int ASN1_TYPE_get_int_octetstring();
 int i2d_ASN1_BMPSTRING();
 ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 
+STACK *ASN1_seq_unpack();
+unsigned char *ASN1_seq_pack();
+char *ASN1_unpack_string();
+ASN1_STRING *ASN1_pack_string();
+
 #endif
 
 /* BEGIN ERROR CODES */
@@ -712,12 +724,16 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_ASN1_INTEGER_SET				 111
 #define ASN1_F_ASN1_INTEGER_TO_BN			 112
 #define ASN1_F_ASN1_OBJECT_NEW				 113
+#define ASN1_F_ASN1_PACK_STRING				 245
+#define ASN1_F_ASN1_SEQ_PACK				 246
+#define ASN1_F_ASN1_SEQ_UNPACK				 247
 #define ASN1_F_ASN1_SIGN				 114
 #define ASN1_F_ASN1_STRING_NEW				 115
 #define ASN1_F_ASN1_STRING_TYPE_NEW			 116
 #define ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING		 117
 #define ASN1_F_ASN1_TYPE_GET_OCTETSTRING		 118
 #define ASN1_F_ASN1_TYPE_NEW				 119
+#define ASN1_F_ASN1_UNPACK_STRING			 248
 #define ASN1_F_ASN1_UTCTIME_NEW				 120
 #define ASN1_F_ASN1_VERIFY				 121
 #define ASN1_F_AUTHORITY_KEYID_NEW			 237
@@ -753,6 +769,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_D2I_NETSCAPE_RSA_2			 142
 #define ASN1_F_D2I_NETSCAPE_SPKAC			 143
 #define ASN1_F_D2I_NETSCAPE_SPKI			 144
+#define ASN1_F_D2I_PBEPARAM				 249
 #define ASN1_F_D2I_PKCS7				 145
 #define ASN1_F_D2I_PKCS7_DIGEST				 146
 #define ASN1_F_D2I_PKCS7_ENCRYPT			 147
@@ -763,6 +780,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_D2I_PKCS7_SIGNED				 152
 #define ASN1_F_D2I_PKCS7_SIGNER_INFO			 153
 #define ASN1_F_D2I_PKCS7_SIGN_ENVELOPE			 154
+#define ASN1_F_D2I_PKCS8_PRIV_KEY_INFO			 250
 #define ASN1_F_D2I_PKEY_USAGE_PERIOD			 239
 #define ASN1_F_D2I_PRIVATEKEY				 155
 #define ASN1_F_D2I_PUBLICKEY				 156
@@ -806,6 +824,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_NETSCAPE_PKEY_NEW			 189
 #define ASN1_F_NETSCAPE_SPKAC_NEW			 190
 #define ASN1_F_NETSCAPE_SPKI_NEW			 191
+#define ASN1_F_PBEPARAM_NEW				 251
 #define ASN1_F_PKCS7_DIGEST_NEW				 192
 #define ASN1_F_PKCS7_ENCRYPT_NEW			 193
 #define ASN1_F_PKCS7_ENC_CONTENT_NEW			 194
@@ -816,6 +835,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_PKCS7_SIGNED_NEW				 199
 #define ASN1_F_PKCS7_SIGNER_INFO_NEW			 200
 #define ASN1_F_PKCS7_SIGN_ENVELOPE_NEW			 201
+#define ASN1_F_PKCS8_PRIV_KEY_INFO_NEW			 252
 #define ASN1_F_PKEY_USAGE_PERIOD_NEW			 240
 #define ASN1_F_SXNETID_NEW				 244
 #define ASN1_F_SXNET_NEW				 242
@@ -852,7 +872,10 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 108
 #define ASN1_R_BUFFER_TOO_SMALL				 109
 #define ASN1_R_DATA_IS_WRONG				 110
+#define ASN1_R_DECODE_ERROR				 155
 #define ASN1_R_DECODING_ERROR				 111
+#define ASN1_R_DEOCDE_ERROR				 157
+#define ASN1_R_ENCODE_ERROR				 156
 #define ASN1_R_ERROR_PARSING_SET_ELEMENT		 112
 #define ASN1_R_EXPECTING_AN_ENUMERATED			 154
 #define ASN1_R_EXPECTING_AN_INTEGER			 113
