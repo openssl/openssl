@@ -873,8 +873,8 @@ static int get_server_verify(SSL *s)
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_SERVER_VERIFY_A)
 		{
-		i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
-		if (i < (3-s->init_num)) 
+		i=ssl2_read(s,(char *)&(p[s->init_num]),1-s->init_num);
+		if (i < (1-s->init_num)) 
 			return(ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i));
 		s->init_num += i;
 
@@ -888,8 +888,12 @@ static int get_server_verify(SSL *s)
 					SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
-				SSLerr(SSL_F_GET_SERVER_VERIFY,
-					SSL_R_PEER_ERROR);
+				{
+				SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_PEER_ERROR);
+				/* try to read the error message */
+				i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+				return ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i);
+				}
 			return(-1);
 			}
 		}
@@ -923,8 +927,8 @@ static int get_server_finished(SSL *s)
 	p=buf;
 	if (s->state == SSL2_ST_GET_SERVER_FINISHED_A)
 		{
-		i=ssl2_read(s,(char *)&(buf[s->init_num]),3-s->init_num);
-		if (i < (3-s->init_num))
+		i=ssl2_read(s,(char *)&(buf[s->init_num]),1-s->init_num);
+		if (i < (1-s->init_num))
 			return(ssl2_part_read(s,SSL_F_GET_SERVER_FINISHED,i));
 		s->init_num += i;
 
@@ -941,7 +945,12 @@ static int get_server_finished(SSL *s)
 				SSLerr(SSL_F_GET_SERVER_FINISHED,SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
+				{
 				SSLerr(SSL_F_GET_SERVER_FINISHED,SSL_R_PEER_ERROR);
+				/* try to read the error message */
+				i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+				return ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i);
+				}
 			return(-1);
 			}
 		s->state=SSL2_ST_GET_SERVER_FINISHED_B;

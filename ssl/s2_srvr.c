@@ -801,10 +801,10 @@ static int get_client_finished(SSL *s)
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_CLIENT_FINISHED_A)
 		{
-		i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
-		if (i < 3-s->init_num)
+		i=ssl2_read(s,(char *)&(p[s->init_num]),1-s->init_num);
+		if (i < 1-s->init_num)
 			return(ssl2_part_read(s,SSL_F_GET_CLIENT_FINISHED,i));
-		s->init_num = 3;
+		s->init_num += i;
 
 		if (*p != SSL2_MT_CLIENT_FINISHED)
 			{
@@ -814,7 +814,12 @@ static int get_client_finished(SSL *s)
 				SSLerr(SSL_F_GET_CLIENT_FINISHED,SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
+				{
 				SSLerr(SSL_F_GET_CLIENT_FINISHED,SSL_R_PEER_ERROR);
+				/* try to read the error message */
+				i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+				return ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i);
+				}
 			return(-1);
 			}
 		s->state=SSL2_ST_GET_CLIENT_FINISHED_B;
