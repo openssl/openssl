@@ -20,6 +20,15 @@ to:
 It's possible that something similar is needed for shared library support
 as well.  That hasn't been well tested yet.
 
+
+Another solution that many seem to recommend is to move the libraries
+/usr/lib/libcrypto.0.9.dylib, /usr/lib/libssl.0.9.dylib to a different
+directory, build and install OpenSSL and anything that depends on your
+build, then move libcrypto.0.9.dylib and libssl.0.9.dylib back to their
+original places.  Note that the version numbers on those two libraries
+may differ on your machine.
+
+
 As long as Apple doesn't fix the problem with ld, this problem building
 OpenSSL will remain as is.
 
