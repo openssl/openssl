@@ -54,6 +54,9 @@ http://www.aet.tu-cottbus.de/personen/jaenicke/postfix_tls/prngd.html .
 PRNGD does employ an internal PRNG itself and can therefore never run
 out of entropy.
 
+OpenSSL automatically queries EGD on startup if the socket is located at
+/var/run/egd-pool, /dev/egd-pool or /etc/egd-pool.
+
 =head1 RETURN VALUE
 
 RAND_egd() and RAND_egd_bytes() return the number of bytes read from the
