@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
+
+  *)
+
  Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
 
   *) Fix null-pointer assignment in do_change_cipher_spec() revealed           
