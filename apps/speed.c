@@ -977,7 +977,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
-				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,EVP_md5());
+				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,EVP_get_digestbyname("md5"));
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD5],d);
