@@ -45,6 +45,7 @@ SSL_CTX_sess_get_cache_size() returns the currently valid size.
 
 L<ssl(3)|ssl(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
+L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
 L<SSL_CTX_flush_sessions(3)|<SSL_CTX_flush_sessions(3)>
 
 =cut
