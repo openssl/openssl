@@ -60,10 +60,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
 #include <string.h>
-#endif
 
 #ifdef _MSC_VER
 # define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
