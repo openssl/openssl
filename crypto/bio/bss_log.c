@@ -90,7 +90,7 @@ static int MS_CALLBACK slg_new();
 static int MS_CALLBACK slg_free();
 #endif
 
-static int xopenlog(BIO* bp, char* name, int level);
+static int xopenlog(BIO* bp, const char* name, int level);
 static int xcloselog(BIO* bp);
 
 static BIO_METHOD methods_slg=
@@ -221,7 +221,7 @@ char *str;
 	return(ret);
 	}
 
-static int xopenlog(BIO* bp, char* name, int level)
+static int xopenlog(BIO* bp, const char* name, int level)
 {
 #if defined(WIN32)
 	if((bp->ptr= (char *)RegisterEventSource(NULL, name)) == NULL){

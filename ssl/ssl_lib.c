@@ -736,7 +736,7 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
 	}
 
 /** The old interface to get the same thing as SSL_get_ciphers() */
-char *SSL_get_cipher_list(SSL *s,int n)
+const char *SSL_get_cipher_list(SSL *s,int n)
 	{
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *sk;
@@ -775,7 +775,8 @@ int SSL_set_cipher_list(SSL *s,char *str)
 /* works well for SSLv2, not so good for SSLv3 */
 char *SSL_get_shared_ciphers(SSL *s,char *buf,int len)
 	{
-	char *p,*cp;
+	char *p;
+	const char *cp;
 	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
 	int i;

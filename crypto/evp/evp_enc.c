@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "evp.h"
 
-char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
+const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
 
 void EVP_CIPHER_CTX_init(ctx)
 EVP_CIPHER_CTX *ctx;
@@ -71,7 +71,7 @@ EVP_CIPHER_CTX *ctx;
 
 void EVP_CipherInit(ctx,data,key,iv,enc)
 EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *data;
+const EVP_CIPHER *data;
 unsigned char *key;
 unsigned char *iv;
 int enc;
@@ -109,7 +109,7 @@ int *outl;
 
 void EVP_EncryptInit(ctx,cipher,key,iv)
 EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *cipher;
+const EVP_CIPHER *cipher;
 unsigned char *key;
 unsigned char *iv;
 	{
@@ -122,7 +122,7 @@ unsigned char *iv;
 
 void EVP_DecryptInit(ctx,cipher,key,iv)
 EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *cipher;
+const EVP_CIPHER *cipher;
 unsigned char *key;
 unsigned char *iv;
 	{

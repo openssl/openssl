@@ -137,8 +137,8 @@ typedef struct v3_ext_ctx X509V3_CTX;
 
 typedef struct BIT_STRING_BITNAME_st {
 int bitnum;
-char *lname;
-char *sname;
+const char *lname;
+const char *sname;
 } BIT_STRING_BITNAME;
 
 typedef BIT_STRING_BITNAME ENUMERATED_NAMES;
@@ -299,9 +299,9 @@ void X509V3_free_section( X509V3_CTX *ctx, STACK *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 				 X509_REQ *req, X509_CRL *crl, int flags);
 
-int X509V3_add_value(char *name, char *value, STACK **extlist);
-int X509V3_add_value_bool(char *name, int asn1_bool, STACK **extlist);
-int X509V3_add_value_int( char *name, ASN1_INTEGER *aint, STACK **extlist);
+int X509V3_add_value(const char *name, const char *value, STACK **extlist);
+int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist);
+int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint, STACK **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
 ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, char *value);
 char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
@@ -318,7 +318,7 @@ char *X509V3_EXT_d2i(X509_EXTENSION *ext);
 
 char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
-int name_cmp(char *name, char *cmp);
+int name_cmp(const char *name, const char *cmp);
 
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);

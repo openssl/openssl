@@ -62,7 +62,7 @@
 #include "md2.h"
 #include "opensslv.h"
 
-char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
+const char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1319 The MD2 Message-Digest Algorithm
  */
@@ -112,7 +112,7 @@ static MD2_INT S[256]={
 	0xDB, 0x99, 0x8D, 0x33, 0x9F, 0x11, 0x83, 0x14,
 	};
 
-char *MD2_options()
+const char *MD2_options()
 	{
 	if (sizeof(MD2_INT) == 1)
 		return("md2(char)");

@@ -233,7 +233,7 @@ typedef struct crypto_ex_data_func_st
 
 #ifndef NOPROTO
 
-char *SSLeay_version(int type);
+const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
 
 int CRYPTO_get_ex_new_index(int idx,STACK **sk,long argl,char *argp,
@@ -246,20 +246,21 @@ void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad);
 
 int CRYPTO_mem_ctrl(int mode);
 int CRYPTO_get_new_lockid(char *name);
-void CRYPTO_lock(int mode, int type,char *file,int line);
-void CRYPTO_set_locking_callback(void (*func)(int mode,int type,char *file,
-		int line));
-void (*CRYPTO_get_locking_callback(void))(int mode,int type,char *file,
+void CRYPTO_lock(int mode, int type,const char *file,int line);
+void CRYPTO_set_locking_callback(void (*func)(int mode,int type,
+					      const char *file,int line));
+void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
 		int line);
-void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,
-		int type,char *file, int line));
-int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,
-		int type,char *file,int line);
+void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
+					      const char *file, int line));
+int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
+					  const char *file,int line);
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
 unsigned long (*CRYPTO_get_id_callback(void))(void);
 unsigned long CRYPTO_thread_id(void);
-char *CRYPTO_get_lock_name(int type);
-int CRYPTO_add_lock(int *pointer,int amount,int type, char *file,int line);
+const char *CRYPTO_get_lock_name(int type);
+int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
+		    int line);
 
 void CRYPTO_set_mem_functions(char *(*m)(),char *(*r)(), void (*free_func)());
 void CRYPTO_get_mem_functions(char *(**m)(),char *(**r)(), void (**f)());
@@ -273,10 +274,10 @@ void CRYPTO_free(void *);
 void *CRYPTO_realloc(void *addr,int num);
 void *CRYPTO_remalloc(void *addr,int num);
 
-void *CRYPTO_dbg_malloc(int num,char *file,int line);
-void *CRYPTO_dbg_realloc(void *addr,int num,char *file,int line);
+void *CRYPTO_dbg_malloc(int num,const char *file,int line);
+void *CRYPTO_dbg_realloc(void *addr,int num,const char *file,int line);
 void CRYPTO_dbg_free(void *);
-void *CRYPTO_dbg_remalloc(void *addr,int num,char *file,int line);
+void *CRYPTO_dbg_remalloc(void *addr,int num,const char *file,int line);
 #ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
@@ -308,7 +309,7 @@ int (*CRYPTO_get_add_lock_callback())();
 void CRYPTO_set_id_callback();
 unsigned long (*CRYPTO_get_id_callback())();
 unsigned long CRYPTO_thread_id();
-char *CRYPTO_get_lock_name();
+const char *CRYPTO_get_lock_name();
 int CRYPTO_add_lock();
 
 void CRYPTO_set_mem_functions();

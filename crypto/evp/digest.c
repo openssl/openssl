@@ -63,7 +63,7 @@
 
 void EVP_DigestInit(ctx,type)
 EVP_MD_CTX *ctx;
-EVP_MD *type;
+const EVP_MD *type;
 	{
 	ctx->digest=type;
 	type->init(&(ctx->md));
@@ -71,7 +71,7 @@ EVP_MD *type;
 
 void EVP_DigestUpdate(ctx,data,count)
 EVP_MD_CTX *ctx;
-unsigned char *data;
+const unsigned char *data;
 unsigned int count;
 	{
 	ctx->digest->update(&(ctx->md.base[0]),data,(unsigned long)count);

@@ -68,7 +68,7 @@ extern "C" {
 
 typedef struct hmac_ctx_st
 	{
-	EVP_MD *md;
+	const EVP_MD *md;
 	EVP_MD_CTX md_ctx;
 	EVP_MD_CTX i_ctx;
 	EVP_MD_CTX o_ctx;
@@ -81,7 +81,7 @@ typedef struct hmac_ctx_st
 #ifndef NOPROTO
 
 void HMAC_Init(HMAC_CTX *ctx, unsigned char *key, int len,
-	EVP_MD *md);
+	       const EVP_MD *md);
 void HMAC_Update(HMAC_CTX *ctx,unsigned char *key, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 void HMAC_cleanup(HMAC_CTX *ctx);

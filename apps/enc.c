@@ -97,7 +97,7 @@ char **argv;
 	char *hkey=NULL,*hiv=NULL;
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0;
-	EVP_CIPHER *cipher=NULL,*c;
+	const EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  16

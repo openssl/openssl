@@ -106,8 +106,8 @@ OBJ_NAME *a;
 	return(ret);
 	}
 
-char *OBJ_NAME_get(name,type)
-char *name;
+const char *OBJ_NAME_get(name,type)
+const char *name;
 int type;
 	{
 	OBJ_NAME on,*ret;
@@ -139,9 +139,9 @@ int type;
 	}
 
 int OBJ_NAME_add(name,type,data)
-char *name;
+const char *name;
 int type;
-char *data;
+const char *data;
 	{
 	void (*f)();
 	OBJ_NAME *onp,*ret;
@@ -187,7 +187,7 @@ char *data;
 	}
 
 int OBJ_NAME_remove(name,type)
-char *name;
+const char *name;
 int type;
 	{
 	OBJ_NAME on,*ret;

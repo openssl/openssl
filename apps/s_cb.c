@@ -184,7 +184,7 @@ char *key_file;
 long MS_CALLBACK bio_dump_cb(bio,cmd,argp,argi,argl,ret)
 BIO *bio;
 int cmd;
-char *argp;
+const char *argp;
 int argi;
 long argl;
 long ret;

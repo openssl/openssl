@@ -87,7 +87,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: supp.c,v 1.2 1999/02/13 18:52:21 ben Exp $
+ * $Id: supp.c,v 1.3 1999/04/17 21:25:00 ben Exp $
  */
 
 #include <stdio.h>
@@ -98,7 +98,7 @@ void des_cblock_print_file(cb, fp)
 	FILE *fp;
 {
 	int i;
-	unsigned int *p = (unsigned int *)cb;
+	const unsigned int *p = (const unsigned int *)cb;
 
 	fprintf(fp, " 0x { ");
 	for (i = 0; i < 8; i++) {

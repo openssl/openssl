@@ -108,8 +108,8 @@ long length;
 	M_ASN1_D2I_get(ret->cert_info,d2i_X509_CINF);
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->signature,d2i_ASN1_BIT_STRING);
-if (ret->name != NULL) Free(ret->name);
-ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
+	if (ret->name != NULL) Free(ret->name);
+	ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
 
 	M_ASN1_D2I_Finish(a,X509_free,ASN1_F_D2I_X509);
 	}

@@ -64,7 +64,7 @@ void HMAC_Init(ctx,key,len,md)
 HMAC_CTX *ctx;
 unsigned char *key;
 int len;
-EVP_MD *md;
+const EVP_MD *md;
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];

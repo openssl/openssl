@@ -94,8 +94,9 @@
  */
 
 #ifndef NOPROTO
-static int do_ssl3_write(SSL *s, int type, char *buf, unsigned int len);
-static int ssl3_write_pending(SSL *s, int type, char *buf, unsigned int len);
+static int do_ssl3_write(SSL *s, int type, const char *buf, unsigned int len);
+static int ssl3_write_pending(SSL *s, int type, const char *buf,
+			      unsigned int len);
 static int ssl3_get_record(SSL *s);
 static int do_compress(SSL *ssl);
 static int do_uncompress(SSL *ssl);
@@ -477,7 +478,7 @@ SSL *ssl;
 int ssl3_write_bytes(s,type,buf,len)
 SSL *s;
 int type;
-char *buf;
+const char *buf;
 int len;
 	{
 	unsigned int tot,n,nw;
@@ -514,7 +515,7 @@ int len;
 			}
 
 		if (type == SSL3_RT_HANDSHAKE)
-			ssl3_finish_mac(s,(unsigned char *)&(buf[tot]),i);
+			ssl3_finish_mac(s,&(buf[tot]),i);
 
 		if (i == (int)n) return(tot+i);
 
@@ -526,7 +527,7 @@ int len;
 static int do_ssl3_write(s,type,buf,len)
 SSL *s;
 int type;
-char *buf;
+const char *buf;
 unsigned int len;
 	{
 	unsigned char *p,*plen;
@@ -644,7 +645,7 @@ err:
 static int ssl3_write_pending(s,type,buf,len)
 SSL *s;
 int type;
-char *buf;
+const char *buf;
 unsigned int len;
 	{
 	int i;
@@ -975,7 +976,7 @@ start:
 		}
 
 	if (type == SSL3_RT_HANDSHAKE)
-		ssl3_finish_mac(s,(unsigned char *)buf,n);
+		ssl3_finish_mac(s,buf,n);
 	return(n);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);

@@ -68,7 +68,7 @@
 #include "des.h"
 #endif
 
-char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
+const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
 
@@ -96,7 +96,7 @@ int w;
 	return(-1);
 #else
 	int i,j;
-	char *prompt;
+	const char *prompt;
 
 	prompt=EVP_get_pw_prompt();
 	if (prompt == NULL)
@@ -127,7 +127,7 @@ void PEM_proc_type(buf, type)
 char *buf;
 int type;
 	{
-	char *str;
+	const char *str;
 
 	if (type == PEM_TYPE_ENCRYPTED)
 		str="ENCRYPTED";
@@ -145,7 +145,7 @@ int type;
 
 void PEM_dek_info(buf, type, len, str)
 char *buf;
-char *type;
+const char *type;
 int len;
 char *str;
 	{
@@ -169,7 +169,7 @@ char *str;
 #ifndef NO_FP_API
 char *PEM_ASN1_read(d2i,name,fp, x, cb)
 char *(*d2i)();
-char *name;
+const char *name;
 FILE *fp;
 char **x;
 int (*cb)();
@@ -191,7 +191,7 @@ int (*cb)();
 
 char *PEM_ASN1_read_bio(d2i,name,bp, x, cb)
 char *(*d2i)();
-char *name;
+const char *name;
 BIO *bp;
 char **x;
 int (*cb)();
@@ -244,10 +244,10 @@ err:
 #ifndef NO_FP_API
 int PEM_ASN1_write(i2d,name,fp, x, enc, kstr, klen, callback)
 int (*i2d)();
-char *name;
+const char *name;
 FILE *fp;
 char *x;
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 unsigned char *kstr;
 int klen;
 int (*callback)();
@@ -269,10 +269,10 @@ int (*callback)();
 
 int PEM_ASN1_write_bio(i2d,name,bp, x, enc, kstr, klen, callback)
 int (*i2d)();
-char *name;
+const char *name;
 BIO *bp;
 char *x;
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 unsigned char *kstr;
 int klen;
 int (*callback)();
@@ -280,7 +280,7 @@ int (*callback)();
 	EVP_CIPHER_CTX ctx;
 	int dsize=0,i,j,ret=0;
 	unsigned char *p,*data=NULL;
-	char *objstr=NULL;
+	const char *objstr=NULL;
 #define PEM_BUFSIZE	1024
 	char buf[PEM_BUFSIZE];
 	unsigned char key[EVP_MAX_KEY_LENGTH];
@@ -412,7 +412,7 @@ char *header;
 EVP_CIPHER_INFO *cipher;
 	{
 	int o;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	char *p,c;
 
 	cipher->cipher=NULL;
@@ -515,7 +515,7 @@ long len;
 
 int PEM_write_bio(bp, name, header, data,len)
 BIO *bp;
-char *name;
+const char *name;
 char *header;
 unsigned char *data;
 long len;

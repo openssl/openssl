@@ -62,7 +62,7 @@
 #include "buffer.h"
 #include "bn_lcl.h"
 
-static char *Hex="0123456789ABCDEF";
+const static char *Hex="0123456789ABCDEF";
 
 /* Must 'Free' the returned data */
 char *BN_bn2hex(a)

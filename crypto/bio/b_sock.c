@@ -97,7 +97,7 @@ static struct ghbn_cache_st
 	} ghbn_cache[GHBN_NUM];
 
 #ifndef NOPROTO
-static int get_ip(char *str,unsigned char *ip);
+static int get_ip(const char *str,unsigned char *ip);
 static void ghbn_free(struct hostent *a);
 static struct hostent *ghbn_dup(struct hostent *a);
 #else
@@ -107,7 +107,7 @@ static struct hostent *ghbn_dup();
 #endif
 
 int BIO_get_host_ip(str,ip)
-char *str;
+const char *str;
 unsigned char *ip;
 	{
 	int i;
@@ -147,7 +147,7 @@ unsigned char *ip;
 	}
 
 int BIO_get_port(str,port_ptr)
-char *str;
+const char *str;
 unsigned short *port_ptr;
 	{
 	int i;
@@ -330,7 +330,7 @@ struct hostent *a;
 	}
 
 struct hostent *BIO_gethostbyname(name)
-char *name;
+const char *name;
 	{
 	struct hostent *ret;
 	int i,lowi=0,j;
@@ -439,7 +439,7 @@ unsigned long *arg;
 /* The reason I have implemented this instead of using sscanf is because
  * Visual C 1.52c gives an unresolved external when linking a DLL :-( */
 static int get_ip(str,ip)
-char *str;
+const char *str;
 unsigned char ip[4];
 	{
 	unsigned int tmp[4];
@@ -484,7 +484,8 @@ int bind_mode;
 	int s= -1,cs;
 	unsigned char ip[4];
 	unsigned short port;
-	char *str,*h,*p,*e;
+	char *str,*e;
+	const char *h,*p;
 	unsigned long l;
 	int err_num;
 

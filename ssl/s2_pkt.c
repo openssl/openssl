@@ -567,7 +567,7 @@ unsigned int len;
 
 	/* lets try to actually write the data */
 	s->s2->wpend_tot=olen;
-	s->s2->wpend_buf=(char *)buf;
+	s->s2->wpend_buf=buf;
 
 	s->s2->wpend_ret=len;
 

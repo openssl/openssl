@@ -203,7 +203,7 @@ extern "C" {
 typedef struct bio_method_st
 	{
 	int type;
-	char *name;
+	const char *name;
 	int (*bwrite)();
 	int (*bread)();
 	int (*bputs)();
@@ -216,7 +216,7 @@ typedef struct bio_method_st
 typedef struct bio_method_st
 	{
 	int type;
-	char *name;
+	const char *name;
 	int (_far *bwrite)();
 	int (_far *bread)();
 	int (_far *bputs)();
@@ -232,7 +232,7 @@ typedef struct bio_st
 	BIO_METHOD *method;
 #ifndef NOPROTO
 	/* bio, mode, argp, argi, argl, ret */
-	long (*callback)(struct bio_st *,int,char *,int, long,long);
+	long (*callback)(struct bio_st *,int,const char *,int, long,long);
 #else
 	long (*callback)();
 #endif
@@ -378,8 +378,15 @@ typedef struct bio_f_buffer_ctx_struct
 
 /* name is cast to lose const, but might be better to route through a function
    so we can do it safely */
+#ifdef CONST_STRICT
+/* If you are wondering why this isn't defined, its because CONST_STRICT is
+ * purely a compile-time kludge to allow const to be checked.
+ */
+int BIO_read_filename(BIO *b,const char *name);
+#else
 #define BIO_read_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_READ,(char *)name)
+#endif
 #define BIO_write_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_WRITE,name)
 #define BIO_append_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
@@ -493,8 +500,8 @@ int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);
 int	BIO_read(BIO *b, char *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
-int	BIO_write(BIO *b, char *data, int len);
-int	BIO_puts(BIO *bp,char *buf);
+int	BIO_write(BIO *b, const char *data, int len);
+int	BIO_puts(BIO *bp,const char *buf);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);
 char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
 long	BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
@@ -507,10 +514,10 @@ int	BIO_get_retry_reason(BIO *bio);
 BIO *	BIO_dup_chain(BIO *in);
 
 #ifndef WIN16
-long BIO_debug_callback(BIO *bio,int cmd,char *argp,int argi,
+long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 	long argl,long ret);
 #else
-long _far _loadds BIO_debug_callback(BIO *bio,int cmd,char *argp,int argi,
+long _far _loadds BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 	long argl,long ret);
 #endif
 
@@ -530,14 +537,14 @@ int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
-int BIO_dump(BIO *b,char *bytes,int len);
+int BIO_dump(BIO *b,const char *bytes,int len);
 
-struct hostent *BIO_gethostbyname(char *name);
+struct hostent *BIO_gethostbyname(const char *name);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg);
 int BIO_socket_nbio(int fd,int mode);
-int BIO_get_port(char *str, unsigned short *port_ptr);
-int BIO_get_host_ip(char *str, unsigned char *ip);
+int BIO_get_port(const char *str, unsigned short *port_ptr);
+int BIO_get_host_ip(const char *str, unsigned char *ip);
 int BIO_get_accept_socket(char *host_port,int mode);
 int BIO_accept(int sock,char **ip_port);
 int BIO_sock_init(void );

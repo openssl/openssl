@@ -371,7 +371,7 @@ char *ptr;
 	{
 	BIO_OK_CTX *ctx;
 	EVP_MD *md;
-	EVP_MD **ppmd;
+	const EVP_MD **ppmd;
 	long ret=1;
 	int i;
 
@@ -440,7 +440,7 @@ char *ptr;
 	case BIO_C_GET_MD:
 		if (b->init)
 			{
-			ppmd=(EVP_MD **)ptr;
+			ppmd=(const EVP_MD **)ptr;
 			*ppmd=ctx->md.digest;
 			}
 		else

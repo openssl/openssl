@@ -62,7 +62,7 @@
 #include "crypto.h"
 #include "date.h"
 
-char *SSLeay_version(t)
+const char *SSLeay_version(t)
 int t;
 	{
 	if (t == SSLEAY_VERSION)

@@ -102,7 +102,7 @@ void BF_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	BF_KEY *schedule, unsigned char *ivec, int *num, int enc);
 void BF_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	BF_KEY *schedule, unsigned char *ivec, int *num);
-char *BF_options(void);
+const char *BF_options(void);
 
 #else
 
@@ -113,7 +113,7 @@ void BF_decrypt();
 void BF_cbc_encrypt();
 void BF_cfb64_encrypt();
 void BF_ofb64_encrypt();
-char *BF_options();
+const char *BF_options();
 
 #endif
 

@@ -248,7 +248,7 @@ RSA *x;
 int PEM_write_bio_RSAPrivateKey(bp,x,enc,kstr,klen,cb)
 BIO *bp;
 RSA *x;
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 unsigned char *kstr;
 int klen;
 int (*cb)();
@@ -293,7 +293,7 @@ int (*cb)();
 int PEM_write_DSAPrivateKey(fp,x,enc,kstr,klen,cb)
 FILE *fp;
 DSA *x;
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 unsigned char *kstr;
 int klen;
 int (*cb)();
@@ -306,7 +306,7 @@ int (*cb)();
 int PEM_write_bio_DSAPrivateKey(bp,x,enc,kstr,klen,cb)
 BIO *bp;
 DSA *x;
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 unsigned char *kstr;
 int klen;
 int (*cb)();

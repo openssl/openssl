@@ -74,7 +74,7 @@ typedef struct buf_mem_st
 BUF_MEM *BUF_MEM_new(void);
 void	BUF_MEM_free(BUF_MEM *a);
 int	BUF_MEM_grow(BUF_MEM *str, int len);
-char *	BUF_strdup(char *str);
+char *	BUF_strdup(const char *str);
 
 void ERR_load_BUF_strings(void );
 

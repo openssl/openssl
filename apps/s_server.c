@@ -792,7 +792,7 @@ static int init_ssl_connection(con)
 SSL *con;
 	{
 	int i;
-	char *str;
+	const char *str;
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];

@@ -61,7 +61,7 @@
 #include "bn.h"
 #include "dh.h"
 
-char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
+const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 DH *DH_new()
 	{

@@ -83,14 +83,14 @@ typedef struct rc4_key_st
 
 #ifndef NOPROTO
  
-char *RC4_options(void);
+const char *RC4_options(void);
 void RC4_set_key(RC4_KEY *key, int len, unsigned char *data);
 void RC4(RC4_KEY *key, unsigned long len, unsigned char *indata,
 		unsigned char *outdata);
 
 #else
 
-char *RC4_options();
+const char *RC4_options();
 void RC4_set_key();
 void RC4();
 

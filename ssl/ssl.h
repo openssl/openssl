@@ -162,7 +162,7 @@ typedef struct ssl_st *ssl_crock_st;
 typedef struct ssl_cipher_st
 	{
 	int valid;
-	char *name;			/* text name */
+	const char *name;		/* text name */
 	unsigned long id;		/* id, 4 bytes, first is version */
 	unsigned long algorithms;	/* what ciphers are used */
 	unsigned long algorithm2;	/* Extra flags */
@@ -416,9 +416,9 @@ struct ssl_ctx_st
 
 	CRYPTO_EX_DATA ex_data;
 
-	EVP_MD *rsa_md5;/* For SSLv2 - name is 'ssl2-md5' */
-	EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
-	EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
+	const EVP_MD *rsa_md5;/* For SSLv2 - name is 'ssl2-md5' */
+	const EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
+	const EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
 
 	STACK_OF(X509) *extra_certs;
         STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
@@ -546,7 +546,7 @@ struct ssl_st
 	 * the ones to be 'copied' into these ones */
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
-	EVP_MD *read_hash;			/* used for mac generation */
+	const EVP_MD *read_hash;		/* used for mac generation */
 #ifdef HEADER_COMP_H
 	COMP_CTX *expand;			/* uncompress */
 #else
@@ -554,7 +554,7 @@ struct ssl_st
 #endif
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
-	EVP_MD *write_hash;			/* used for mac generation */
+	const EVP_MD *write_hash;		/* used for mac generation */
 #ifdef HEADER_COMP_H
 	COMP_CTX *compress;			/* compression */
 #else
@@ -837,10 +837,10 @@ void	SSL_CTX_flush_sessions(SSL_CTX *ctx,long tm);
 SSL_CIPHER *SSL_get_current_cipher(SSL *s);
 int	SSL_CIPHER_get_bits(SSL_CIPHER *c,int *alg_bits);
 char *	SSL_CIPHER_get_version(SSL_CIPHER *c);
-char *	SSL_CIPHER_get_name(SSL_CIPHER *c);
+const char *	SSL_CIPHER_get_name(SSL_CIPHER *c);
 
 int	SSL_get_fd(SSL *s);
-char  * SSL_get_cipher_list(SSL *s,int n);
+const char  * SSL_get_cipher_list(SSL *s,int n);
 char *	SSL_get_shared_ciphers(SSL *s, char *buf, int len);
 int	SSL_get_read_ahead(SSL * s);
 int	SSL_pending(SSL *s);

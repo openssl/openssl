@@ -71,14 +71,14 @@ int len;
 	X509_NAME_ENTRY *ne;
 	unsigned int i;
 	int n,lold,l,l1,l2,num,j,type;
-	char *s,*p;
+	const char *s;
+	char *p;
 	unsigned char *q;
 	BUF_MEM *b=NULL;
 	static char hex[17]="0123456789ABCDEF";
 	int gs_doit[4];
 	char tmp_buf[80];
 
-	if (a == NULL) return("NO X509_NAME");
 	if (buf == NULL)
 		{
 		if ((b=BUF_MEM_new()) == NULL) goto err;
@@ -86,6 +86,16 @@ int len;
 		b->data[0]='\0';
 		len=200;
 		}
+	if (a == NULL)
+	    {
+	    if(b)
+		{
+		buf=b->data;
+		Free(b);
+		}
+	    strncpy(buf,"NO X509_NAME",len);
+	    return buf;
+	    }
 
 	len--; /* space for '\0' */
 	l=0;
@@ -166,7 +176,7 @@ int len;
 	if (b != NULL)
 		{
 		p=b->data;
-		Free((char *)b);
+		Free(b);
 		}
 	else
 		p=buf;

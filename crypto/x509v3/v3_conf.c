@@ -70,7 +70,7 @@
 static int v3_check_critical(char **value);
 static int v3_check_generic(char **value);
 static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value);
-static X509_EXTENSION *v3_generic_extension(char *ext, char *value, int crit, int type);
+static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type);
 #else
 static int v3_check_critical();
 static int v3_check_generic();
@@ -198,7 +198,7 @@ char **value;
 
 /* Create a generic extension: for now just handle RAW type */
 static X509_EXTENSION *v3_generic_extension(ext, value, crit, type)
-char *ext;
+const char *ext;
 char *value;
 int crit;
 int type;

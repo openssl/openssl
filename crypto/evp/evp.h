@@ -285,7 +285,7 @@ typedef struct env_md_st
 
 typedef struct env_md_ctx_st
 	{
-	EVP_MD *digest;
+	const EVP_MD *digest;
 	union	{
 		unsigned char base[4];
 #ifndef NO_MD2
@@ -324,13 +324,13 @@ typedef struct evp_cipher_st
 
 typedef struct evp_cipher_info_st
 	{
-	EVP_CIPHER *cipher;
+	const EVP_CIPHER *cipher;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 	} EVP_CIPHER_INFO;
 
 typedef struct evp_cipher_ctx_st
 	{
-	EVP_CIPHER *cipher;
+	const EVP_CIPHER *cipher;
 	int encrypt;		/* encrypt or decrypt */
 	int buf_len;		/* number we have left */
 
@@ -444,7 +444,11 @@ typedef int (EVP_PBE_KEYGEN)(unsigned char *pass, int passlen,
 #define EVP_OpenUpdate(a,b,c,d,e)	EVP_DecryptUpdate(a,b,c,d,e)
 #define EVP_SealUpdate(a,b,c,d,e)	EVP_EncryptUpdate(a,b,c,d,e)	
 
-#define BIO_set_md(b,md)		BIO_ctrl(b,BIO_C_SET_MD,0,(char *)md)
+#ifdef CONST_STRICT
+void BIO_set_md(BIO *,const EVP_MD *md);
+#else
+# define BIO_set_md(b,md)		BIO_ctrl(b,BIO_C_SET_MD,0,(char *)md)
+#endif
 #define BIO_get_md(b,mdp)		BIO_ctrl(b,BIO_C_GET_MD,0,(char *)mdp)
 #define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0,(char *)mdcp)
 #define BIO_get_cipher_status(b)	BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
@@ -464,34 +468,33 @@ typedef int (EVP_PBE_KEYGEN)(unsigned char *pass, int passlen,
 #ifndef NOPROTO
 
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);  
-void	EVP_DigestInit(EVP_MD_CTX *ctx, EVP_MD *type);
-void	EVP_DigestUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
+void	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+void	EVP_DigestUpdate(EVP_MD_CTX *ctx,const unsigned char *d,
+			 unsigned int cnt);
 void	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 
-int	EVP_read_pw_string(char *buf,int length,char *prompt,int verify);
+int	EVP_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void	EVP_set_pw_prompt(char *prompt);
 char *	EVP_get_pw_prompt(void);
 
-int	EVP_BytesToKey(EVP_CIPHER *type,EVP_MD *md,unsigned char *salt,
+int	EVP_BytesToKey(const EVP_CIPHER *type,EVP_MD *md,unsigned char *salt,
 		unsigned char *data, int datal, int count,
 		unsigned char *key,unsigned char *iv);
 
-EVP_CIPHER *EVP_get_cipherbyname(char *name);
-
-void	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,EVP_CIPHER *type,
+void	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
 		unsigned char *key, unsigned char *iv);
 void	EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		int *outl, unsigned char *in, int inl);
 void	EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
-void	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,EVP_CIPHER *type,
+void	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
 		unsigned char *key, unsigned char *iv);
 void	EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		int *outl, unsigned char *in, int inl);
 int	EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
-void	EVP_CipherInit(EVP_CIPHER_CTX *ctx,EVP_CIPHER *type, unsigned char *key,
-		unsigned char *iv,int enc);
+void	EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
+		       unsigned char *key,unsigned char *iv,int enc);
 void	EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		int *outl, unsigned char *in, int inl);
 int	EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
@@ -534,7 +537,7 @@ BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
 BIO_METHOD *BIO_f_reliable(void);
-void BIO_set_cipher(BIO *b,EVP_CIPHER *c,unsigned char *k,
+void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,unsigned char *k,
 	unsigned char *i, int enc);
 #endif
 
@@ -594,8 +597,8 @@ void SSLeay_add_all_digests(void);
 int EVP_add_cipher(EVP_CIPHER *cipher);
 int EVP_add_digest(EVP_MD *digest);
 
-EVP_CIPHER *EVP_get_cipherbyname(char *name);
-EVP_MD *EVP_get_digestbyname(char *name);
+const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
+const EVP_MD *EVP_get_digestbyname(const char *name);
 void EVP_cleanup(void);
 
 int		EVP_PKEY_decrypt(unsigned char *dec_key,unsigned char *enc_key,

@@ -75,7 +75,7 @@
  */
 
 #ifndef NOPROTO
-static int print(BIO *fp,char *str,BIGNUM *num,
+static int print(BIO *fp,const char *str,BIGNUM *num,
 		unsigned char *buf,int off);
 #else
 static int print();
@@ -108,7 +108,8 @@ BIO *bp;
 RSA *x;
 int off;
 	{
-	char str[128],*s;
+	char str[128];
+	const char *s;
 	unsigned char *m=NULL;
 	int i,ret=0;
 
@@ -231,13 +232,14 @@ err:
 
 static int print(bp,number,num,buf,off)
 BIO *bp;
-char *number;
+const char *number;
 BIGNUM *num;
 unsigned char *buf;
 int off;
 	{
 	int n,i;
-	char str[128],*neg;
+	char str[128];
+	const char *neg;
 
 	if (num == NULL) return(1);
 	neg=(num->neg)?"-":"";

@@ -140,7 +140,7 @@ char **ret;
 
 int X509_load_cert_file(ctx,file,type)
 X509_LOOKUP *ctx;
-char *file;
+const char *file;
 int type;
 	{
 	int ret=0;
@@ -210,7 +210,7 @@ err:
 
 int X509_load_crl_file(ctx,file,type)
 X509_LOOKUP *ctx;
-char *file;
+const char *file;
 int type;
 	{
 	int ret=0;

@@ -79,7 +79,7 @@ typedef struct lookup_dir_st
 static int dir_ctrl(X509_LOOKUP *ctx,int cmd,char *argp,long argl,char **ret);
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
-static int add_cert_dir(BY_DIR *ctx,char *dir,int type);
+static int add_cert_dir(BY_DIR *ctx,const char *dir,int type);
 static int get_cert_by_subject(X509_LOOKUP *xl,int type,X509_NAME *name,
 	X509_OBJECT *ret);
 #else
@@ -183,12 +183,12 @@ X509_LOOKUP *lu;
 
 static int add_cert_dir(ctx,dir, type)
 BY_DIR *ctx;
-char *dir;
+const char *dir;
 int type;
 	{
 	int j,len;
 	int *ip;
-	char *s,*ss,*p;
+	const char *s,*ss,*p;
 	char **pp;
 
 	if (dir == NULL || !*dir)
@@ -269,7 +269,7 @@ X509_OBJECT *ret;
 	BUF_MEM *b=NULL;
 	struct stat st;
 	X509_OBJECT stmp,*tmp;
-	char *postfix="";
+	const char *postfix="";
 
 	if (name == NULL) return(0);
 

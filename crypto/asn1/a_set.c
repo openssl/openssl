@@ -73,8 +73,8 @@ typedef struct
  */
 static int SetBlobCmp(const void *elem1, const void *elem2 )
     {
-    MYBLOB *b1 = (MYBLOB *)elem1;
-    MYBLOB *b2 = (MYBLOB *)elem2;
+    const MYBLOB *b1 = (const MYBLOB *)elem1;
+    const MYBLOB *b2 = (const MYBLOB *)elem2;
     int r;
 
     r = memcmp(b1->pbData, b2->pbData,

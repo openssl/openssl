@@ -69,8 +69,8 @@ static char *strip_spaces(char *name);
 /* Add a CONF_VALUE name value pair to stack */
 
 int X509V3_add_value(name, value, extlist)
-char *name;
-char *value;
+const char *name;
+const char *value;
 STACK **extlist;
 {
 	CONF_VALUE *vtmp = NULL;
@@ -105,7 +105,7 @@ CONF_VALUE *conf;
 }
 
 int X509V3_add_value_bool(name, asn1_bool, extlist)
-char *name;
+const char *name;
 int asn1_bool;
 STACK **extlist;
 {
@@ -176,7 +176,7 @@ char *value;
 }
 
 int X509V3_add_value_int(name, aint, extlist)
-char *name;
+const char *name;
 ASN1_INTEGER *aint;
 STACK **extlist;
 {
@@ -426,8 +426,8 @@ long *len;
  */
 
 int name_cmp(name, cmp)
-char *name;
-char *cmp;
+const char *name;
+const char *cmp;
 {
 	int len, ret;
 	char c;

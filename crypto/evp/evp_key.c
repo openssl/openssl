@@ -89,7 +89,7 @@ int des_read_pw_string(char *buf,int len,char *prompt,int verify);
 int EVP_read_pw_string(buf,len,prompt,verify)
 char *buf;
 int len;
-char *prompt;
+const char *prompt;
 int verify;
 	{
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
@@ -98,7 +98,7 @@ int verify;
 	}
 
 int EVP_BytesToKey(type,md,salt,data,datal,count,key,iv)
-EVP_CIPHER *type;
+const EVP_CIPHER *type;
 EVP_MD *md;
 unsigned char *salt;
 unsigned char *data;

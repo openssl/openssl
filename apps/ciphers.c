@@ -83,7 +83,8 @@ char **argv;
 	{
 	int ret=1,i;
 	int verbose=0;
-	char **pp,*p;
+	char **pp;
+	const char *p;
 	int badops=0;
 	SSL_CTX *ctx=NULL;
 	SSL *ssl=NULL;

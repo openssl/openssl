@@ -85,10 +85,10 @@ char **argv;
 	{
 	unsigned char *buf=NULL;
 	int i,err=0;
-	EVP_MD *md=NULL,*m;
+	const EVP_MD *md=NULL,*m;
 	BIO *in=NULL,*inp;
 	BIO *bmd=NULL;
-	char *name;
+	const char *name;
 #define PROG_NAME_SIZE  16
         char pname[PROG_NAME_SIZE];
 	int separator=0;

@@ -60,17 +60,17 @@
 #include "spr.h"
 #include "opensslv.h"
 
-char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-char *DES_version="DES" OPENSSL_VERSION_PTEXT;
+const char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
+const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
 
-char *des_options()
+const char *des_options(void)
 	{
 	static int init=1;
 	static char buf[32];
 
 	if (init)
 		{
-		char *ptr,*unroll,*risc,*size;
+		const char *ptr,*unroll,*risc,*size;
 
 		init=0;
 #ifdef DES_PTR

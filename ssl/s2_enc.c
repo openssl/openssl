@@ -65,8 +65,8 @@ int client;
 	{
 	/* Max number of bytes needed */
 	EVP_CIPHER_CTX *rs,*ws;
-	EVP_CIPHER *c;
-	EVP_MD *md;
+	const EVP_CIPHER *c;
+	const EVP_MD *md;
 	int num;
 
 	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))

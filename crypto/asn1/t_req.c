@@ -89,7 +89,8 @@ X509_REQ *x;
 	{
 	unsigned long l;
 	int i,n;
-	char *s,*neg;
+	char *s;
+	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
 	STACK *sk;

@@ -76,7 +76,7 @@ typedef struct mem_st
 	{
 	char *addr;
 	int num;
-	char *file;
+	const char *file;
 	int line;
 	unsigned long order;
 	} MEM;
@@ -206,7 +206,7 @@ void *str;
 static unsigned long break_order_num=0;
 void *CRYPTO_dbg_malloc(num,file,line)
 int num;
-char *file;
+const char *file;
 int line;
 	{
 	char *ret;
@@ -280,7 +280,7 @@ void *addr;
 void *CRYPTO_dbg_realloc(addr,num,file,line)
 void *addr;
 int num;
-char *file;
+const char *file;
 int line;
 	{
 	char *ret;
@@ -319,7 +319,7 @@ int n;
 void *CRYPTO_dbg_remalloc(a,n,file,line)
 void *a;
 int n;
-char *file;
+const char *file;
 int line;
 	{
 	if (a != NULL) CRYPTO_dbg_free(a);

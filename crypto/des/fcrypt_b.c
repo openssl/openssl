@@ -85,7 +85,7 @@ DES_LONG Eswap1;
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
 #endif
 	register DES_LONG *s;
 	register int j;

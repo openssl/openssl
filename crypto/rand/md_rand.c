@@ -128,7 +128,7 @@ static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 
-char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
+const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
@@ -204,7 +204,7 @@ int num;
 		MD_Final(md,&m);
 		md_count[1]++;
 
-		buf=(char *)buf + j;
+		buf=(const char *)buf + j;
 
 		for (k=0; k<j; k++)
 			{

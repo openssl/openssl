@@ -83,7 +83,7 @@ des_cblock seed;
 	DES_LONG z0,z1,t0,t1;
 	int i;
 	long l;
-	unsigned char *cp;
+	const unsigned char *cp;
 	unsigned char *lp;
 
 	if (out_count < 1) out_count=1;
@@ -94,7 +94,7 @@ des_cblock seed;
 
 	for (i=0; ((i<4)&&(i<out_count)); i++)
 		{
-		cp=(unsigned char *)input;
+		cp=input;
 		l=length;
 		while (l > 0)
 			{

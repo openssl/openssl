@@ -178,7 +178,7 @@ int outl;
 
 int BIO_write(b,in,inl)
 BIO *b;
-char *in;
+const char *in;
 int inl;
 	{
 	int i;
@@ -222,7 +222,7 @@ int inl;
 
 int BIO_puts(b,in)
 BIO *b;
-char *in;
+const char *in;
 	{
 	int i;
 	long (*cb)();

@@ -66,7 +66,7 @@ BIO *bp;
 ASN1_INTEGER *a;
 	{
 	int i,n=0;
-	static char *h="0123456789ABCDEF";
+	static const char *h="0123456789ABCDEF";
 	char buf[2];
 
 	if (a == NULL) return(0);

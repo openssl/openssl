@@ -90,11 +90,12 @@ unsigned char **pp;
 int a2d_ASN1_OBJECT(out,olen,buf,num)
 unsigned char *out;
 int olen;
-char *buf;
+const char *buf;
 int num;
 	{
 	int i,first,len=0,c;
-	char tmp[24],*p;
+	char tmp[24];
+	const char *p;
 	unsigned long l;
 
 	if (num == 0)
@@ -188,7 +189,7 @@ ASN1_OBJECT *a;
 	int i,idx=0,n=0,len,nid;
 	unsigned long l;
 	unsigned char *p;
-	char *s;
+	const char *s;
 	char tbuf[32];
 
 	if (buf_len <= 0) return(0);
@@ -246,9 +247,9 @@ ASN1_OBJECT *a;
 		}
 	else
 		{
-		s=(char *)OBJ_nid2ln(nid);
+		s=OBJ_nid2ln(nid);
 		if (s == NULL)
-			s=(char *)OBJ_nid2sn(nid);
+			s=OBJ_nid2sn(nid);
 		strncpy(buf,s,buf_len);
 		n=strlen(s);
 		}
@@ -355,8 +356,10 @@ ASN1_OBJECT *a;
 	if (a == NULL) return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
 		{
-		if (a->sn != NULL) Free(a->sn);
-		if (a->ln != NULL) Free(a->ln);
+#ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause mempory leaks */
+		if (a->sn != NULL) Free((void *)a->sn);
+		if (a->ln != NULL) Free((void *)a->ln);
+#endif
 		a->sn=a->ln=NULL;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
@@ -366,7 +369,7 @@ ASN1_OBJECT *a;
 		a->length=0;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
-		Free((char *)a);
+		Free(a);
 	}
 
 ASN1_OBJECT *ASN1_OBJECT_create(nid,data,len,sn,ln)

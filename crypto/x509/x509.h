@@ -528,16 +528,16 @@ typedef struct pkcs8_priv_key_info_st
 #ifndef SSLEAY_MACROS
 #ifdef HEADER_ENVELOPE_H
 int X509_verify(X509 *a, EVP_PKEY *r);
-char *X509_verify_cert_error_string(long n);
+const char *X509_verify_cert_error_string(long n);
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
-int X509_sign(X509 *x, EVP_PKEY *pkey, EVP_MD *md);
-int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, EVP_MD *md);
-int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, EVP_MD *md);
-int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, EVP_MD *md);
+int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
+int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_digest(X509 *data,EVP_MD *type,unsigned char *md,unsigned int *len);
 int X509_NAME_digest(X509_NAME *data,EVP_MD *type,
@@ -590,12 +590,12 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 int		X509_cmp_current_time(ASN1_UTCTIME *s);
 ASN1_UTCTIME *	X509_gmtime_adj(ASN1_UTCTIME *s, long adj);
 
-char *		X509_get_default_cert_area(void );
-char *		X509_get_default_cert_dir(void );
-char *		X509_get_default_cert_file(void );
-char *		X509_get_default_cert_dir_env(void );
-char *		X509_get_default_cert_file_env(void );
-char *		X509_get_default_private_dir(void );
+const char *	X509_get_default_cert_area(void );
+const char *	X509_get_default_cert_dir(void );
+const char *	X509_get_default_cert_file(void );
+const char *	X509_get_default_cert_dir_env(void );
+const char *	X509_get_default_cert_file_env(void );
+const char *	X509_get_default_private_dir(void );
 
 X509_REQ *	X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, EVP_MD *md);
 X509 *		X509_REQ_to_X509(X509_REQ *r, int days,EVP_PKEY *pkey);
@@ -728,7 +728,7 @@ int ASN1_digest(int (*i2d)(),EVP_MD *type,char *data,
 
 int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	ASN1_BIT_STRING *signature,
-	char *data,EVP_PKEY *pkey, EVP_MD *type);
+	char *data,EVP_PKEY *pkey, const EVP_MD *type);
 #endif
 
 int 		X509_set_version(X509 *x,long version);

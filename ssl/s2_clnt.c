@@ -536,8 +536,8 @@ SSL *s;
 	unsigned char *p,*d;
 	int clear,enc,karg,i;
 	SSL_SESSION *sess;
-	EVP_CIPHER *c;
-	EVP_MD *md;
+	const EVP_CIPHER *c;
+	const EVP_MD *md;
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_SEND_CLIENT_MASTER_KEY_A)

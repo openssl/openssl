@@ -175,9 +175,9 @@ int which;
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	int client_write;
 	EVP_CIPHER_CTX *dd;
-	EVP_CIPHER *c;
-	SSL_COMP *comp;
-	EVP_MD *m;
+	const EVP_CIPHER *c;
+	const SSL_COMP *comp;
+	const EVP_MD *m;
 	int _exp,n,i,j,k,exp_label_len,cl;
 
 	_exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
@@ -346,8 +346,8 @@ int tls1_setup_key_block(s)
 SSL *s;
 	{
 	unsigned char *p1,*p2;
-	EVP_CIPHER *c;
-	EVP_MD *hash;
+	const EVP_CIPHER *c;
+	const EVP_MD *hash;
 	int num;
 	SSL_COMP *comp;
 
@@ -407,7 +407,7 @@ int send;
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
 	int bs,i,ii,j,k,n=0;
-	EVP_CIPHER *enc;
+	const EVP_CIPHER *enc;
 
 	if (send)
 		{
@@ -549,7 +549,7 @@ int send;
 	{
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
-	EVP_MD *hash;
+	const EVP_MD *hash;
 	unsigned int md_size;
 	int i;
 	HMAC_CTX hmac;

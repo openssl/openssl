@@ -206,8 +206,8 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, unsigned char *pass, int pass
 char *PKCS12_decrypt_d2i(X509_ALGOR *algor, char *(*d2i)(), void (*free_func)(), unsigned char *pass, int passlen, ASN1_STRING *oct, int seq);
 ASN1_STRING *PKCS12_i2d_encrypt(X509_ALGOR *algor, int (*i2d)(), unsigned char *pass, int passlen, char *obj, int seq);
 PKCS12 *PKCS12_init(int mode);
-int PKCS12_key_gen_asc(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, EVP_MD *md_type);
-int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, EVP_MD *md_type);
+int PKCS12_key_gen_asc(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type);
+int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type);
 int PKCS12_PBE_keyivgen(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md_type, unsigned char *key, unsigned char *iv);
 int PKCS12_gen_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *mac, unsigned int *maclen);
 int PKCS12_gen_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *mac, unsigned int *maclen);

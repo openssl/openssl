@@ -69,7 +69,7 @@ static int asn1_get_length();
 static void asn1_put_length();
 #endif
 
-char *ASN1_version="ASN.1" OPENSSL_VERSION_PTEXT;
+const char *ASN1_version="ASN.1" OPENSSL_VERSION_PTEXT;
 
 int ASN1_check_infinite_end(p,len)
 unsigned char **p;

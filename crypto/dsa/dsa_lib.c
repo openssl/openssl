@@ -64,7 +64,7 @@
 #include "dsa.h"
 #include "asn1.h"
 
-char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
+const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
 DSA *DSA_new()
 	{

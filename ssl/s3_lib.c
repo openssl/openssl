@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
+const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
@@ -1039,7 +1039,7 @@ int len;
 		if (s->s3->delay_buf_pop_ret == 0)
 			{
 			ret=ssl3_write_bytes(s,SSL3_RT_APPLICATION_DATA,
-				(char *)buf,len);
+					     buf,len);
 			if (ret <= 0) return(ret);
 
 			s->s3->delay_buf_pop_ret=ret;
@@ -1060,7 +1060,7 @@ int len;
 	else
 		{
 		ret=ssl3_write_bytes(s,SSL3_RT_APPLICATION_DATA,
-			(char *)buf,len);
+				     buf,len);
 		if (ret <= 0) return(ret);
 		}
 

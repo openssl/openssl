@@ -79,9 +79,10 @@ int xclass;
 int constructed;
 int indent;
 	{
-	static char *fmt="%-18s";
-	static char *fmt2="%2d %-15s";
-	char *p,str[128],*p2=NULL;
+	static const char fmt[]="%-18s";
+	static const char fmt2[]="%2d %-15s";
+	char str[128];
+	const char *p,*p2=NULL;
 
 	if (constructed & V_ASN1_CONSTRUCTED)
 		p="cons: ";

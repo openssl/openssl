@@ -121,9 +121,10 @@ NULL
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static EVP_PKEY *load_key(char *file, int format);
 static X509 *load_cert(char *file, int format);
-static int sign (X509 *x, EVP_PKEY *pkey,int days,EVP_MD *digest);
-static int x509_certify (X509_STORE *ctx,char *CAfile, EVP_MD *digest,X509 *x,
-	X509 *xca, EVP_PKEY *pkey,char *serial, int create, int days);
+static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest);
+static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
+			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
+			 int create,int days);
 #else
 static int MS_CALLBACK callb();
 static EVP_PKEY *load_key();
@@ -157,7 +158,7 @@ char **argv;
 	X509_REQ *rq=NULL;
 	int fingerprint=0;
 	char buf[256];
-	EVP_MD *md_alg,*digest=EVP_md5();
+	const EVP_MD *md_alg,*digest=EVP_md5();
 
 	reqfile=0;
 
@@ -706,7 +707,7 @@ end:
 static int x509_certify(ctx,CAfile,digest,x,xca,pkey,serialfile,create,days)
 X509_STORE *ctx;
 char *CAfile;
-EVP_MD *digest;
+const EVP_MD *digest;
 X509 *x;
 X509 *xca;
 EVP_PKEY *pkey;
@@ -1041,7 +1042,7 @@ static int sign(x, pkey, days, digest)
 X509 *x;
 EVP_PKEY *pkey;
 int days;
-EVP_MD *digest;
+const EVP_MD *digest;
 	{
 
 	EVP_PKEY *pktmp;

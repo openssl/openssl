@@ -69,7 +69,7 @@
 #include "x509.h"
 #include "objects.h"
 
-char *X509_verify_cert_error_string(n)
+const char *X509_verify_cert_error_string(n)
 long n;
 	{
 	static char buf[100];

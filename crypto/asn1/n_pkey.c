@@ -138,7 +138,9 @@ int (*cb)();
 	l[2]=i2d_X509_ALGOR(alg,NULL);
 	l[3]=ASN1_object_size(1,l[2]+l[1],V_ASN1_SEQUENCE);
 
+#ifndef CONST_STRICT
 	os.data=(unsigned char *)"private-key";
+#endif
 	os.length=11;
 	l[4]=i2d_ASN1_OCTET_STRING(&os,NULL);
 
@@ -195,7 +197,7 @@ int (*cb)();
 	i2d_ASN1_OCTET_STRING(&os2,&p);
 	ret=l[5];
 err:
-	if (os2.data != NULL) Free((char *)os2.data);
+	if (os2.data != NULL) Free(os2.data);
 	if (alg != NULL) X509_ALGOR_free(alg);
 	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
 	r=r;

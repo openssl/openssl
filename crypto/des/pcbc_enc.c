@@ -68,11 +68,12 @@ int enc;
 	{
 	register DES_LONG sin0,sin1,xor0,xor1,tout0,tout1;
 	DES_LONG tin[2];
-	unsigned char *in,*out,*iv;
+	const unsigned char *in;
+	unsigned char *out,*iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	in=input;
+	out=output;
+	iv=ivec;
 
 	if (enc)
 		{

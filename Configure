@@ -83,7 +83,7 @@ my %table=(
 "purify",	"purify gcc:-g -DPURIFY -Wall:-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:-lefence::::",
 "debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -O2 -Wall -Wshadow -Werror -pipe:::::",
-"debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe:::::",
+"debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe:::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "dist",		"cc:-O -DNOPROTO::::",
 

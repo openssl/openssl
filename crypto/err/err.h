@@ -87,7 +87,7 @@ typedef struct err_state_st
 	unsigned long err_buffer[ERR_NUM_ERRORS];
 	char *err_data[ERR_NUM_ERRORS];
 	int err_data_flags[ERR_NUM_ERRORS];
-	char *err_file[ERR_NUM_ERRORS];
+	const char *err_file[ERR_NUM_ERRORS];
 	int err_line[ERR_NUM_ERRORS];
 	int top,bottom;
 	} ERR_STATE;
@@ -207,26 +207,26 @@ typedef struct err_state_st
 typedef struct ERR_string_data_st
 	{
 	unsigned long error;
-	char *string;
+	const char *string;
 	} ERR_STRING_DATA;
 
 #ifndef NOPROTO
-void ERR_put_error(int lib, int func,int reason,char *file,int line);
+void ERR_put_error(int lib, int func,int reason,const char *file,int line);
 void ERR_set_error_data(char *data,int flags);
 
 unsigned long ERR_get_error(void );
-unsigned long ERR_get_error_line(char **file,int *line);
-unsigned long ERR_get_error_line_data(char **file,int *line,
-		char **data, int *flags);
+unsigned long ERR_get_error_line(const char **file,int *line);
+unsigned long ERR_get_error_line_data(const char **file,int *line,
+				      const char **data, int *flags);
 unsigned long ERR_peek_error(void );
-unsigned long ERR_peek_error_line(char **file,int *line);
-unsigned long ERR_peek_error_line_data(char **file,int *line,
-		char **data,int *flags);
+unsigned long ERR_peek_error_line(const char **file,int *line);
+unsigned long ERR_peek_error_line_data(const char **file,int *line,
+				       const char **data,int *flags);
 void ERR_clear_error(void );
 char *ERR_error_string(unsigned long e,char *buf);
-char *ERR_lib_error_string(unsigned long e);
-char *ERR_func_error_string(unsigned long e);
-char *ERR_reason_error_string(unsigned long e);
+const char *ERR_lib_error_string(unsigned long e);
+const char *ERR_func_error_string(unsigned long e);
+const char *ERR_reason_error_string(unsigned long e);
 #ifndef NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
 #endif

@@ -72,7 +72,7 @@
 #undef MIN_NODES
 #define MIN_NODES	4
 
-char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
+const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
 
 #ifndef NOPROTO
 #define	FP_ICC	(int (*)(const void *,const void *))

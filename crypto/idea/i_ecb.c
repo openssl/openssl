@@ -60,9 +60,9 @@
 #include "idea_lcl.h"
 #include "opensslv.h"
 
-char *IDEA_version="IDEA" OPENSSL_VERSION_PTEXT;
+const char *IDEA_version="IDEA" OPENSSL_VERSION_PTEXT;
 
-char *idea_options()
+const char *idea_options()
 	{
 	if (sizeof(short) != sizeof(IDEA_INT))
 		return("idea(int)");

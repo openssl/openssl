@@ -70,7 +70,7 @@ FILE *fp;
 	{
 	unsigned long l;
 	char buf[200];
-	char *file,*data;
+	const char *file,*data;
 	int line,flags;
 	unsigned long es;
 
@@ -89,7 +89,7 @@ BIO *bp;
 	unsigned long l;
 	char buf[256];
 	char buf2[256];
-	char *file,*data;
+	const char *file,*data;
 	int line,flags;
 	unsigned long es;
 

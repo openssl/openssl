@@ -340,8 +340,8 @@ SSL *s;
 	int export,i,n,keya,ek;
 	unsigned char *p;
 	SSL_CIPHER *cp;
-	EVP_CIPHER *c;
-	EVP_MD *md;
+	const EVP_CIPHER *c;
+	const EVP_MD *md;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_CLIENT_MASTER_KEY_A)

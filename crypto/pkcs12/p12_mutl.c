@@ -70,7 +70,7 @@ int passlen;
 unsigned char *mac;
 unsigned int *maclen;
 {
-	EVP_MD *md_type;
+	const EVP_MD *md_type;
 	HMAC_CTX hmac;
 	unsigned char key[PKCS12_MAC_KEY_LENGTH], *salt;
 	int saltlen, iter;

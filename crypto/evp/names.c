@@ -77,7 +77,7 @@ int EVP_add_digest(md)
 EVP_MD *md;
 	{
 	int r;
-	char *name;
+	const char *name;
 
 	name=OBJ_nid2sn(md->type);
 	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(char *)md);
@@ -96,21 +96,21 @@ EVP_MD *md;
 	return(r);
 	}
 
-EVP_CIPHER *EVP_get_cipherbyname(name)
-char *name;
+const EVP_CIPHER *EVP_get_cipherbyname(name)
+const char *name;
 	{
-	EVP_CIPHER *cp;
+	const EVP_CIPHER *cp;
 
-	cp=(EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
+	cp=(const EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
 	return(cp);
 	}
 
-EVP_MD *EVP_get_digestbyname(name)
-char *name;
+const EVP_MD *EVP_get_digestbyname(name)
+const char *name;
 	{
-	EVP_MD *cp;
+	const EVP_MD *cp;
 
-	cp=(EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
+	cp=(const EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
 	return(cp);
 	}
 

@@ -282,7 +282,7 @@ int (*cb)();
 	EVP_CIPHER_CTX ctx;
 	int i,ret=0;
 	unsigned char *data=NULL;
-	char *objstr=NULL;
+	const char *objstr=NULL;
 #define PEM_BUFSIZE	1024
 	char buf[PEM_BUFSIZE];
 	unsigned char *iv=NULL;

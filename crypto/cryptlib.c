@@ -67,7 +67,7 @@ static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
 /* real #defines in crypto.h, keep these upto date */
-static char* lock_names[CRYPTO_NUM_LOCKS] =
+static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	{
 	"<<ERROR>>",
 	"err",
@@ -96,9 +96,9 @@ static STACK *app_locks=NULL;
 
 #ifndef NOPROTO
 static void (MS_FAR *locking_callback)(int mode,int type,
-	char *file,int line)=NULL;
+	const char *file,int line)=NULL;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
-	int type,char *file,int line)=NULL;
+	int type,const char *file,int line)=NULL;
 static unsigned long (MS_FAR *id_callback)(void)=NULL;
 #else
 static void (MS_FAR *locking_callback)()=NULL;
@@ -135,24 +135,26 @@ char *name;
 	return(i);
 	}
 
-void (*CRYPTO_get_locking_callback(P_V))(P_I_I_P_I)
+void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
+		int line)
 	{
 	return(locking_callback);
 	}
 
-int (*CRYPTO_get_add_lock_callback(P_V))(P_IP_I_I_P_I)
+int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
+					  const char *file,int line)
 	{
 	return(add_lock_callback);
 	}
 
-void CRYPTO_set_locking_callback(func)
-void (*func)(P_I_I_P_I);
+void CRYPTO_set_locking_callback(void (*func)(int mode,int type,
+					      const char *file,int line))
 	{
 	locking_callback=func;
 	}
 
-void CRYPTO_set_add_lock_callback(func)
-int (*func)(P_IP_I_I_P_I);
+void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
+					      const char *file,int line))
 	{
 	add_lock_callback=func;
 	}
@@ -192,7 +194,7 @@ unsigned long CRYPTO_thread_id()
 void CRYPTO_lock(mode,type,file,line)
 int mode;
 int type;
-char *file;
+const char *file;
 int line;
 	{
 #ifdef LOCK_DEBUG
@@ -226,7 +228,7 @@ int CRYPTO_add_lock(pointer,amount,type,file,line)
 int *pointer;
 int amount;
 int type;
-char *file;
+const char *file;
 int line;
 	{
 	int ret;
@@ -265,7 +267,7 @@ int line;
 	return(ret);
 	}
 
-char *CRYPTO_get_lock_name(type)
+const char *CRYPTO_get_lock_name(type)
 int type;
 	{
 	if (type < 0)

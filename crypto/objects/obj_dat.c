@@ -306,7 +306,7 @@ int n;
 		}
 	}
 
-char *OBJ_nid2sn(n)
+const char *OBJ_nid2sn(n)
 int n;
 	{
 	ADDED_OBJ ad,*adp;
@@ -339,7 +339,7 @@ int n;
 		}
 	}
 
-char *OBJ_nid2ln(n)
+const char *OBJ_nid2ln(n)
 int n;
 	{
 	ADDED_OBJ ad,*adp;
@@ -404,7 +404,7 @@ ASN1_OBJECT *a;
  */
 
 ASN1_OBJECT *OBJ_txt2obj(s, no_name)
-char *s;
+const char *s;
 int no_name;
 	{
 	int nid = NID_undef;
@@ -454,7 +454,7 @@ char *s;
 }
 
 int OBJ_ln2nid(s)
-char *s;
+const char *s;
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;
@@ -474,7 +474,7 @@ char *s;
 	}
 
 int OBJ_sn2nid(s)
-char *s;
+const char *s;
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;

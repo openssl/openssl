@@ -100,7 +100,7 @@ EVP_PKEY *r;
 int X509_sign(x,pkey,md)
 X509 *x;
 EVP_PKEY *pkey;
-EVP_MD *md;
+const EVP_MD *md;
 	{
 	return(ASN1_sign((int (*)())i2d_X509_CINF, x->cert_info->signature,
 		x->sig_alg, x->signature, (char *)x->cert_info,pkey,md));
@@ -109,7 +109,7 @@ EVP_MD *md;
 int X509_REQ_sign(x,pkey,md)
 X509_REQ *x;
 EVP_PKEY *pkey;
-EVP_MD *md;
+const EVP_MD *md;
 	{
 	return(ASN1_sign((int (*)())i2d_X509_REQ_INFO,x->sig_alg, NULL,
 		x->signature, (char *)x->req_info,pkey,md));
@@ -118,7 +118,7 @@ EVP_MD *md;
 int X509_CRL_sign(x,pkey,md)
 X509_CRL *x;
 EVP_PKEY *pkey;
-EVP_MD *md;
+const EVP_MD *md;
 	{
 	return(ASN1_sign((int (*)())i2d_X509_CRL_INFO,x->crl->sig_alg,
 		x->sig_alg, x->signature, (char *)x->crl,pkey,md));
@@ -127,7 +127,7 @@ EVP_MD *md;
 int NETSCAPE_SPKI_sign(x,pkey,md)
 NETSCAPE_SPKI *x;
 EVP_PKEY *pkey;
-EVP_MD *md;
+const EVP_MD *md;
 	{
 	return(ASN1_sign((int (*)())i2d_NETSCAPE_SPKAC, x->sig_algor,NULL,
 		x->signature, (char *)x->spkac,pkey,md));

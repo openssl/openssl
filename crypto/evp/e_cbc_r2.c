@@ -68,7 +68,7 @@ static void rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-static int rc2_meth_to_magic(EVP_CIPHER *e);
+static int rc2_meth_to_magic(const EVP_CIPHER *e);
 static EVP_CIPHER *rc2_magic_to_meth(int i);
 static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
@@ -168,7 +168,7 @@ unsigned int inl;
 	}
 
 static int rc2_meth_to_magic(e)
-EVP_CIPHER *e;
+const EVP_CIPHER *e;
 	{
 	int i;
 

@@ -168,17 +168,20 @@ static int index_name_cmp(char **a,char **b);
 static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days, int batch, char *ext_sect, LHASH *conf,int verbose);
+		   const EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,
+		   char *startdate,int days,int batch,char *ext_sect,
+		   LHASH *conf,int verbose);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days,int batch,char *ext_sect, LHASH *conf,int verbose);
+			const EVP_MD *dgst,STACK *policy,TXT_DB *db,
+			BIGNUM *serial,char *startdate,int days,int batch,
+			char *ext_sect, LHASH *conf,int verbose);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days,char *ext_sect,LHASH *conf,int verbose);
+			 const EVP_MD *dgst,STACK *policy,TXT_DB *db,
+			 BIGNUM *serial,char *startdate,int days,
+			 char *ext_sect,LHASH *conf,int verbose);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der);
-static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, EVP_MD *dgst,
+static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK *policy, TXT_DB *db, BIGNUM *serial, char *startdate,
 	int days, int batch, int verbose, X509_REQ *req, char *ext_sect,
 	LHASH *conf);
@@ -257,7 +260,7 @@ char **argv;
 	char **pp,*p,*f;
 	int i,j;
 	long l;
-	EVP_MD *dgst=NULL;
+	const EVP_MD *dgst=NULL;
 	STACK *attribs=NULL;
 	STACK *cert_sk=NULL;
 	BIO *hex=NULL;
@@ -1303,7 +1306,7 @@ X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
 X509 *x509;
-EVP_MD *dgst;
+const EVP_MD *dgst;
 STACK *policy;
 TXT_DB *db;
 BIGNUM *serial;
@@ -1374,7 +1377,7 @@ X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
 X509 *x509;
-EVP_MD *dgst;
+const EVP_MD *dgst;
 STACK *policy;
 TXT_DB *db;
 BIGNUM *serial;
@@ -1448,7 +1451,7 @@ static int do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
 X509 **xret;
 EVP_PKEY *pkey;
 X509 *x509;
-EVP_MD *dgst;
+const EVP_MD *dgst;
 STACK *policy;
 TXT_DB *db;
 BIGNUM *serial;
@@ -1921,7 +1924,7 @@ X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
 X509 *x509;
-EVP_MD *dgst;
+const EVP_MD *dgst;
 STACK *policy;
 TXT_DB *db;
 BIGNUM *serial;

@@ -135,9 +135,9 @@ int which;
 	unsigned char exp_iv[EVP_MAX_KEY_LENGTH];
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	EVP_CIPHER_CTX *dd;
-	EVP_CIPHER *c;
+	const EVP_CIPHER *c;
 	COMP_METHOD *comp;
-	EVP_MD *m;
+	const EVP_MD *m;
 	MD5_CTX md;
 	int exp,n,i,j,k,cl;
 
@@ -282,8 +282,8 @@ int ssl3_setup_key_block(s)
 SSL *s;
 	{
 	unsigned char *p;
-	EVP_CIPHER *c;
-	EVP_MD *hash;
+	const EVP_CIPHER *c;
+	const EVP_MD *hash;
 	int num;
 	SSL_COMP *comp;
 
@@ -340,7 +340,7 @@ int send;
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
 	int bs,i;
-	EVP_CIPHER *enc;
+	const EVP_CIPHER *enc;
 
 	if (send)
 		{
@@ -411,7 +411,7 @@ SSL *s;
 
 void ssl3_finish_mac(s,buf,len)
 SSL *s;
-unsigned char *buf;
+const unsigned char *buf;
 int len;
 	{
 	EVP_DigestUpdate(&(s->s3->finish_dgst1),buf,len);
@@ -486,7 +486,7 @@ int send;
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
 	EVP_MD_CTX md_ctx;
-	EVP_MD *hash;
+	const EVP_MD *hash;
 	unsigned char *p,rec_char;
 	unsigned int md_size;
 	int npad,i;
@@ -541,10 +541,10 @@ unsigned char *out;
 unsigned char *p;
 int len;
 	{
-	static unsigned char *salt[3]={
-		(unsigned char *)"A",
-		(unsigned char *)"BB",
-		(unsigned char *)"CCC",
+	static const unsigned char *salt[3]={
+		(const unsigned char *)"A",
+		(const unsigned char *)"BB",
+		(const unsigned char *)"CCC",
 		};
 	unsigned char buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
@@ -554,7 +554,7 @@ int len;
 	for (i=0; i<3; i++)
 		{
 		EVP_DigestInit(&ctx,s->ctx->sha1);
-		EVP_DigestUpdate(&ctx,salt[i],strlen((char *)salt[i]));
+		EVP_DigestUpdate(&ctx,salt[i],strlen((const char *)salt[i]));
 		EVP_DigestUpdate(&ctx,p,len);
 		EVP_DigestUpdate(&ctx,&(s->s3->client_random[0]),
 			SSL3_RANDOM_SIZE);

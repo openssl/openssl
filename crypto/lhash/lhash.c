@@ -100,7 +100,7 @@
 #include "crypto.h"
 #include "lhash.h"
 
-char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
+const char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 
 #undef MIN_NODES 
 #define MIN_NODES	16
@@ -476,7 +476,7 @@ char *str;
  * well, not as good as MD5, but still good.
  */
 unsigned long lh_strhash(c)
-char *c;
+const char *c;
 	{
 	unsigned long ret=0;
 	long n;

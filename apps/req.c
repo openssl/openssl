@@ -157,7 +157,7 @@ char **argv;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
 	char *p;
-	EVP_MD *md_alg=NULL,*digest=EVP_md5();
+	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
 #ifndef MONOLITH
 	MS_STATIC char config_name[256];
 #endif

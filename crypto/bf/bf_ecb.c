@@ -65,9 +65,9 @@
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-char *BF_version="BlowFish" OPENSSL_VERSION_PTEXT;
+const char *BF_version="BlowFish" OPENSSL_VERSION_PTEXT;
 
-char *BF_options()
+const char *BF_options()
 	{
 #ifdef BF_PTR
 	return("blowfish(ptr)");

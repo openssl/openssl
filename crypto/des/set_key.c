@@ -163,7 +163,7 @@ des_key_schedule schedule;
 	{
 	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
-	register unsigned char *in;
+	register const unsigned char *in;
 	register DES_LONG *k;
 	register int i;
 
@@ -177,7 +177,7 @@ des_key_schedule schedule;
 		}
 
 	k=(DES_LONG *)schedule;
-	in=(unsigned char *)key;
+	in=key;
 
 	c2l(in,c);
 	c2l(in,d);

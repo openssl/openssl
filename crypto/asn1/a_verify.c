@@ -76,7 +76,7 @@ char *data;
 EVP_PKEY *pkey;
 	{
 	EVP_MD_CTX ctx;
-	EVP_MD *type;
+	const EVP_MD *type;
 	unsigned char *p,*buf_in=NULL;
 	int ret= -1,i,inl;
 
@@ -89,7 +89,7 @@ EVP_PKEY *pkey;
 		}
 	
 	inl=i2d(data,NULL);
-	buf_in=(unsigned char *)Malloc((unsigned int)inl);
+	buf_in=Malloc((unsigned int)inl);
 	if (buf_in == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_VERIFY,ERR_R_MALLOC_FAILURE);

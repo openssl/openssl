@@ -65,7 +65,7 @@ int enc;
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -166,7 +166,7 @@ int enc;
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -392,14 +392,15 @@ int enc;
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
+	register const unsigned char *in;
+	unsigned char *out;
 	register long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	in=input;
+	out=output;
+	iv=ivec;
 
 	if (enc)
 		{
@@ -436,7 +437,7 @@ int enc;
 			l2c(tout0,out);
 			l2c(tout1,out);
 			}
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2c(tout0,iv);
 		l2c(tout1,iv);
 		}
@@ -488,7 +489,7 @@ int enc;
 			xor1=t1;
 			}
 
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2c(xor0,iv);
 		l2c(xor1,iv);
 		}

@@ -89,7 +89,7 @@ char **argv;
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,badops=0;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,noout=0;
 	char *infile,*outfile,*prog;

@@ -69,7 +69,7 @@
 
 int BIO_dump(bio,s,len)
 BIO *bio;
-char *s;
+const char *s;
 int len;
 {
   int ret=0;

@@ -483,7 +483,7 @@ char *ptr;
 	{
 	BIO *dbio;
 	int *ip;
-	char **pptr;
+	const char **pptr;
 	long ret=1;
 	BIO_CONNECT *data;
 
@@ -507,7 +507,7 @@ char *ptr;
 	case BIO_C_GET_CONNECT:
 		if (ptr != NULL)
 			{
-			pptr=(char **)ptr;
+			pptr=(const char **)ptr;
 			if (num == 0)
 				{
 				*pptr=data->param_hostname;

@@ -405,7 +405,7 @@ EVP_CIPHER_ctx *c;
 
 void BIO_set_cipher(b,c,k,i,e)
 BIO *b;
-EVP_CIPHER *c;
+const EVP_CIPHER *c;
 unsigned char *k;
 unsigned char *i;
 int e;
@@ -415,7 +415,7 @@ int e;
 	if (b == NULL) return;
 
 	if ((b->callback != NULL) &&
-		(b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,0L) <= 0))
+		(b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,0L) <= 0))
 		return;
 
 	b->init=1;
@@ -423,6 +423,6 @@ int e;
 	EVP_CipherInit(&(ctx->cipher),c,k,i,e);
 	
 	if (b->callback != NULL)
-		b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,1L);
+		b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,1L);
 	}
 

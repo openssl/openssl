@@ -120,7 +120,7 @@ char *lh_delete(LHASH *lh, char *data);
 char *lh_retrieve(LHASH *lh, char *data);
 void lh_doall(LHASH *lh, void (*func)(/* char *b */));
 void lh_doall_arg(LHASH *lh, void (*func)(/*char *a,char *b*/),char *arg);
-unsigned long lh_strhash(char *c);
+unsigned long lh_strhash(const char *c);
 
 #ifndef NO_FP_API
 void lh_stats(LHASH *lh, FILE *out);

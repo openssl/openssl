@@ -60,9 +60,9 @@
 #include "rc4_locl.h"
 #include "opensslv.h"
 
-char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
+const char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
 
-char *RC4_options()
+const char *RC4_options()
 	{
 #ifdef RC4_INDEX
 	if (sizeof(RC4_INT) == 1)

@@ -100,7 +100,7 @@ X509 *x;
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
-	char *neg;
+	const char *neg;
 	X509_EXTENSION *ex;
 	ASN1_STRING *str=NULL;
 
@@ -275,6 +275,11 @@ ASN1_TIME *tm;
 	return(0);
 }
 
+static const char *mon[12]=
+    {
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+    };
 
 int ASN1_GENERALIZEDTIME_print(bp,tm)
 BIO *bp;
@@ -282,9 +287,6 @@ ASN1_GENERALIZEDTIME *tm;
 	{
 	char *v;
 	int gmt=0;
-	static char *mon[12]={
-		"Jan","Feb","Mar","Apr","May","Jun",
-		"Jul","Aug","Sep","Oct","Nov","Dec"};
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
 
@@ -321,9 +323,6 @@ ASN1_UTCTIME *tm;
 	{
 	char *v;
 	int gmt=0;
-	static char *mon[12]={
-		"Jan","Feb","Mar","Apr","May","Jun",
-		"Jul","Aug","Sep","Oct","Nov","Dec"};
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
 

@@ -286,7 +286,7 @@ typedef struct ssl3_ctx_st
 	int wpend_tot;		/* number bytes written */
 	int wpend_type;
 	int wpend_ret;		/* number of bytes submitted */
-	char *wpend_buf;
+	const char *wpend_buf;
 
 	/* used during startup, digest all incoming/outgoing packets */
 	EVP_MD_CTX finish_dgst1;
@@ -338,10 +338,10 @@ typedef struct ssl3_ctx_st
 		int key_block_length;
 		unsigned char *key_block;
 
-		EVP_CIPHER *new_sym_enc;
-		EVP_MD *new_hash;
+		const EVP_CIPHER *new_sym_enc;
+		const EVP_MD *new_hash;
 #ifdef HEADER_COMP_H
-		SSL_COMP *new_compression;
+		const SSL_COMP *new_compression;
 #else
 		char *new_compression;
 #endif

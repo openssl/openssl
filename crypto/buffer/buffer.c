@@ -128,7 +128,7 @@ int len;
 	}
 
 char *BUF_strdup(str)
-char *str;
+const char *str;
 	{
 	char *ret;
 	int n;

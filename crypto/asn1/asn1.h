@@ -150,7 +150,7 @@ typedef struct asn1_ctx_st
 #define ASN1_OBJECT_FLAG_DYNAMIC_DATA 	 0x08	/* internal use */
 typedef struct asn1_object_st
 	{
-	char *sn,*ln;
+	const char *sn,*ln;
 	int nid;
 	int length;
 	unsigned char *data;
@@ -561,7 +561,7 @@ int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
 #endif
 int i2t_ASN1_OBJECT(char *buf,int buf_len,ASN1_OBJECT *a);
 
-int a2d_ASN1_OBJECT(unsigned char *out,int olen, char *buf, int num);
+int a2d_ASN1_OBJECT(unsigned char *out,int olen, const char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data,int len,
 	char *sn, char *ln);
 

@@ -871,8 +871,8 @@ typedef struct obj_name_st
 	{
 	int type;
 	int alias;
-	char *name;
-	char *data;
+	const char *name;
+	const char *data;
 	} OBJ_NAME;
 
 #define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
@@ -882,20 +882,20 @@ typedef struct obj_name_st
 int OBJ_NAME_init(void);
 int OBJ_NAME_new_index(unsigned long (*hash_func)(),int (*cmp_func)(),
 	void (*free_func)());
-char *OBJ_NAME_get(char *name,int type);
-int OBJ_NAME_add(char *name,int type,char *data);
-int OBJ_NAME_remove(char *name,int type);
+const char *OBJ_NAME_get(const char *name,int type);
+int OBJ_NAME_add(const char *name,int type,const char *data);
+int OBJ_NAME_remove(const char *name,int type);
 void OBJ_NAME_cleanup(int type); /* -1 for everything */
 
 ASN1_OBJECT *	OBJ_dup(ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_nid2obj(int n);
-char *		OBJ_nid2ln(int n);
-char *		OBJ_nid2sn(int n);
+const char *	OBJ_nid2ln(int n);
+const char *	OBJ_nid2sn(int n);
 int		OBJ_obj2nid(ASN1_OBJECT *o);
-ASN1_OBJECT *	OBJ_txt2obj(char *s, int no_name);
+ASN1_OBJECT *	OBJ_txt2obj(const char *s, int no_name);
 int		OBJ_txt2nid(char *s);
-int		OBJ_ln2nid(char *s);
-int		OBJ_sn2nid(char *s);
+int		OBJ_ln2nid(const char *s);
+int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(ASN1_OBJECT *a,ASN1_OBJECT *b);
 char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)());
 

@@ -302,24 +302,24 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 	u2&=0xfc; \
 	t=ROTATE(t,4); \
 	u>>=16L; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP      +u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x200+u2); \
+	LL^= *(const DES_LONG *)(des_SP      +u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x200+u2); \
 	u3=(int)(u>>8L); \
 	u1=(int)u&0xfc; \
 	u3&=0xfc; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x400+u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x600+u3); \
+	LL^= *(const DES_LONG *)(des_SP+0x400+u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x600+u3); \
 	u2=(int)t>>8L; \
 	u1=(int)t&0xfc; \
 	u2&=0xfc; \
 	t>>=16L; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x100+u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x300+u2); \
+	LL^= *(const DES_LONG *)(des_SP+0x100+u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x300+u2); \
 	u3=(int)t>>8L; \
 	u1=(int)t&0xfc; \
 	u3&=0xfc; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x500+u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x700+u3); }
+	LL^= *(const DES_LONG *)(des_SP+0x500+u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x700+u3); }
 #endif
 #ifdef DES_RISC2
 #define D_ENCRYPT(LL,R,S) { \
@@ -329,39 +329,39 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 	u1=(int)u&0xfc; \
 	u2&=0xfc; \
 	t=ROTATE(t,4); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP      +u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x200+u2); \
+	LL^= *(const DES_LONG *)(des_SP      +u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x200+u2); \
 	s1=(int)(u>>16L); \
 	s2=(int)(u>>24L); \
 	s1&=0xfc; \
 	s2&=0xfc; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x400+s1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x600+s2); \
+	LL^= *(const DES_LONG *)(des_SP+0x400+s1); \
+	LL^= *(const DES_LONG *)(des_SP+0x600+s2); \
 	u2=(int)t>>8L; \
 	u1=(int)t&0xfc; \
 	u2&=0xfc; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x100+u1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x300+u2); \
+	LL^= *(const DES_LONG *)(des_SP+0x100+u1); \
+	LL^= *(const DES_LONG *)(des_SP+0x300+u2); \
 	s1=(int)(t>>16L); \
 	s2=(int)(t>>24L); \
 	s1&=0xfc; \
 	s2&=0xfc; \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x500+s1); \
-	LL^= *(DES_LONG *)((unsigned char *)des_SP+0x700+s2); }
+	LL^= *(const DES_LONG *)(des_SP+0x500+s1); \
+	LL^= *(const DES_LONG *)(des_SP+0x700+s2); }
 #endif
 #else
 #define D_ENCRYPT(LL,R,S) { \
 	LOAD_DATA_tmp(R,S,u,t,E0,E1); \
 	t=ROTATE(t,4); \
 	LL^= \
-	*(DES_LONG *)((unsigned char *)des_SP      +((u     )&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x200+((u>> 8L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x400+((u>>16L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x600+((u>>24L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x100+((t     )&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x300+((t>> 8L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x500+((t>>16L)&0xfc))^ \
-	*(DES_LONG *)((unsigned char *)des_SP+0x700+((t>>24L)&0xfc)); }
+	*(const DES_LONG *)(des_SP      +((u     )&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x200+((u>> 8L)&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x400+((u>>16L)&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x600+((u>>24L)&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x100+((t     )&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x300+((t>> 8L)&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x500+((t>>16L)&0xfc))^ \
+	*(const DES_LONG *)(des_SP+0x700+((t>>24L)&0xfc)); }
 #endif
 
 #else /* original version */

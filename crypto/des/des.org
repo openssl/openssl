@@ -152,7 +152,7 @@ extern int des_set_weak_key_flag; /* set the weak key flag */
 #undef NOPROTO
 #endif
 #ifndef NOPROTO
-char *des_options(void);
+const char *des_options(void);
 void des_ecb3_encrypt(const unsigned char *input,unsigned char *output,
 		      des_key_schedule ks1,des_key_schedule ks2,
 		      des_key_schedule ks3, int enc);

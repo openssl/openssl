@@ -124,7 +124,7 @@ typedef struct x509_lookup_st X509_LOOKUP;
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st
 	{
-	char *name;
+	const char *name;
 	int (*new_item)(X509_LOOKUP *ctx);
 	void (*free)(X509_LOOKUP *ctx);
 	int (*init)(X509_LOOKUP *ctx);
@@ -279,8 +279,8 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs,int type,X509_NAME *name,
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx,int cmd,char *argc,long argl,char **ret);
 
 #ifndef NO_STDIO
-int X509_load_cert_file(X509_LOOKUP *ctx, char *file, int type);
-int X509_load_crl_file(X509_LOOKUP *ctx, char *file, int type);
+int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
+int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 #endif
 
 

@@ -367,8 +367,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *meth,
 					     STACK_OF(SSL_CIPHER) **sorted,
 					     char *str);
 void ssl_update_cache(SSL *s, int mode);
-int ssl_cipher_get_evp(SSL_SESSION *s, EVP_CIPHER **enc, EVP_MD **md,
-	SSL_COMP **comp);
+int ssl_cipher_get_evp(SSL_SESSION *s,const EVP_CIPHER **enc,const EVP_MD **md,
+		       SSL_COMP **comp);
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
@@ -427,11 +427,11 @@ int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, char *buf, int len);
 int ssl3_part_read(SSL *s, int i);
-int ssl3_write_bytes(SSL *s, int type, char *buf, int len);
+int ssl3_write_bytes(SSL *s, int type, const char *buf, int len);
 int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1,EVP_MD_CTX *ctx2,
 	unsigned char *sender, int slen,unsigned char *p);
 int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
-void ssl3_finish_mac(SSL *s, unsigned char *buf, int len);
+void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
 int ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);

@@ -70,7 +70,7 @@
 #define SSL_ENC_NULL_IDX	6
 #define SSL_ENC_NUM_IDX		7
 
-static EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
+static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL,
 	};
 
@@ -79,7 +79,7 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 #define SSL_MD_MD5_IDX	0
 #define SSL_MD_SHA1_IDX	1
 #define SSL_MD_NUM_IDX	2
-static EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
+static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
 	NULL,NULL,
 	};
 
@@ -187,8 +187,8 @@ static void load_ciphers()
 
 int ssl_cipher_get_evp(s,enc,md,comp)
 SSL_SESSION *s;
-EVP_CIPHER **enc;
-EVP_MD **md;
+const EVP_CIPHER **enc;
+const EVP_MD **md;
 SSL_COMP **comp;
 	{
 	int i;
@@ -750,7 +750,7 @@ SSL_CIPHER *c;
 	}
 
 /* return the actual cipher being used */
-char *SSL_CIPHER_get_name(c)
+const char *SSL_CIPHER_get_name(c)
 SSL_CIPHER *c;
 	{
 	if (c != NULL)
@@ -764,8 +764,8 @@ SSL_CIPHER *c;
 int *alg_bits;
 	{
 	int ret=0,a=0;
-	EVP_CIPHER *enc;
-	EVP_MD *md;
+	const EVP_CIPHER *enc;
+	const EVP_MD *md;
 	SSL_SESSION ss;
 
 	if (c != NULL)

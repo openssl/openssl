@@ -77,7 +77,7 @@ void h__dump (unsigned char *p, int len);
 int PKCS12_key_gen_asc (pass, passlen, salt, saltlen, id, iter, n, out, md_type)
 unsigned char *pass, *salt, *out;
 int passlen, saltlen, id, iter, n;
-EVP_MD *md_type;
+const EVP_MD *md_type;
 {
 	int ret;
 	unsigned char *unipass;
@@ -96,7 +96,7 @@ EVP_MD *md_type;
 int PKCS12_key_gen_uni (pass, passlen, salt, saltlen, id, iter, n, out, md_type)
 unsigned char *pass, *salt, *out;
 int passlen, saltlen, id, iter, n;
-EVP_MD *md_type;
+const EVP_MD *md_type;
 {
 	unsigned char *B, *D, *I, *p, *Ai;
 	int Slen, Plen, Ilen;

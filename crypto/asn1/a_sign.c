@@ -75,7 +75,7 @@ X509_ALGOR *algor2;
 ASN1_BIT_STRING *signature;
 char *data;
 EVP_PKEY *pkey;
-EVP_MD *type;
+const EVP_MD *type;
 	{
 	EVP_MD_CTX ctx;
 	unsigned char *p,*buf_in=NULL,*buf_out=NULL;
