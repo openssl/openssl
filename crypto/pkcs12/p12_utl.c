@@ -95,17 +95,6 @@ int unilen;
 	return asctmp;
 }
 
-/* Tag an object type onto an error code */
-
-void PKCS12_add_obj_error (obj)
-ASN1_OBJECT *obj;
-{
-	char obj_tmp[80];
-	if (!obj) strcpy (obj_tmp, "NULL");
-	else i2t_ASN1_OBJECT(obj_tmp, 80, obj);
-	ERR_add_error_data(2, "TYPE=", obj_tmp);
-}
-
 int i2d_PKCS12_bio(bp, p12)
 BIO *bp;
 PKCS12 *p12;

@@ -79,7 +79,7 @@ int mode;
 		PKCS12err(PKCS12_F_PKCS12_INIT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	M_ASN1_OBJECT_set(pkcs12->authsafes->type, mode);
+	pkcs12->authsafes->type = OBJ_nid2obj(mode);
 	switch (mode) {
 		case NID_pkcs7_data:
 			if (!(pkcs12->authsafes->d.data =

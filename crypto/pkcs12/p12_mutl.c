@@ -173,8 +173,7 @@ EVP_MD *md_type;
 	}
 	if (!salt) RAND_bytes (p12->mac->salt->data, saltlen);
 	else memcpy (p12->mac->salt->data, salt, saltlen);
-	M_ASN1_OBJECT_set(p12->mac->dinfo->algor->algorithm,
-							 EVP_MD_type(md_type));
+	p12->mac->dinfo->algor->algorithm = OBJ_nid2obj(EVP_MD_type(md_type));
 	if (!(p12->mac->dinfo->algor->parameter = ASN1_TYPE_new())) {
 		PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
 		return 0;

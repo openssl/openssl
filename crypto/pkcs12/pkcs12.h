@@ -188,11 +188,6 @@ ASN1_seq_unpack((p12)->authsafes->d.data->data, \
 
 #define PKCS12_mac_present(p12) ((p12)->mac ? 1 : 0)
 
-#define M_ASN1_OBJECT_set(obj, nid) \
-{\
-ASN1_OBJECT_free(obj); \
-obj = OBJ_nid2obj((nid));\
-}
 
 #ifndef NOPROTO
 PKCS12_SAFEBAG *PKCS12_pack_safebag(char *obj, int (*i2d)(), int nid1, int nid2);
@@ -221,7 +216,6 @@ int PKCS12_set_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char 
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen, EVP_MD *md_type);
 unsigned char *asc2uni(unsigned char *asc, unsigned char **uni, int *unilen);
 char *uni2asc(unsigned char *uni, int unilen);
-void PKCS12_add_obj_error(ASN1_OBJECT *obj);
 int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp);
 PKCS12_BAGS *PKCS12_BAGS_new(void);
 PKCS12_BAGS *d2i_PKCS12_BAGS(PKCS12_BAGS **a, unsigned char **pp, long length);
@@ -239,8 +233,6 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_new(void);
 PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp, long length);
 void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
 void ERR_load_PKCS12_strings(void);
-void ERR_PKCS12_error(int function, int reason, char *file, int line);
-void PKCS12_add_obj(void);
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert, STACK **ca);
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert, STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
@@ -273,7 +265,6 @@ int PKCS12_set_mac();
 int PKCS12_setup_mac();
 unsigned char *asc2uni();
 char *uni2asc();
-void PKCS12_add_obj_error();
 int i2d_PKCS12_BAGS();
 PKCS12_BAGS *PKCS12_BAGS_new();
 PKCS12_BAGS *d2i_PKCS12_BAGS();
@@ -291,8 +282,6 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_new();
 PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG();
 void PKCS12_SAFEBAG_free();
 void ERR_load_PKCS12_strings();
-void ERR_PKCS12_error ();
-void PKCS12_add_obj();
 void PKCS12_PBE_add();
 int PKCS8_add_keyusage();
 ASN1_TYPE *PKCS12_get_attr_gen();

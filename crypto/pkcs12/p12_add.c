@@ -75,7 +75,7 @@ int nid2;
 		PKCS12err(PKCS12_F_PKCS12_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	M_ASN1_OBJECT_set(bag->type, nid1);
+	bag->type = OBJ_nid2obj(nid1);
 	if (!ASN1_pack_string(obj, i2d, &bag->value.octet)) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -85,7 +85,7 @@ int nid2;
 		return NULL;
 	}
 	safebag->value.bag = bag;
-	M_ASN1_OBJECT_set(safebag->type, nid2);
+	safebag->type = OBJ_nid2obj(nid2);
 	return safebag;
 }
 
@@ -99,7 +99,7 @@ PKCS8_PRIV_KEY_INFO *p8;
 		PKCS12err(PKCS12_F_PKCS12_MAKE_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	M_ASN1_OBJECT_set(bag->type, NID_keyBag);
+	bag->type = OBJ_nid2obj(NID_keyBag);
 	bag->value.keybag = p8;
 	return bag;
 }
@@ -123,7 +123,7 @@ PKCS8_PRIV_KEY_INFO *p8;
 		return NULL;
 	}
 
-	M_ASN1_OBJECT_set(bag->type, NID_pkcs8ShroudedKeyBag);
+	bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
 	if (!(bag->value.shkeybag = 
 	  PKCS8_encrypt(pbe_nid, pass, passlen, salt, saltlen, iter, p8))) {
 		PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
@@ -142,7 +142,7 @@ STACK *sk;
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7_DATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	M_ASN1_OBJECT_set(p7->type, NID_pkcs7_data);
+	p7->type = OBJ_nid2obj(NID_pkcs7_data);
 	if (!(p7->d.data = ASN1_OCTET_STRING_new())) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7_DATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -174,15 +174,13 @@ STACK *bags;
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	/* The next bit may end up in PKCS7_set_type eventually */
-	M_ASN1_OBJECT_set(p7->type, NID_pkcs7_encrypted);
+	p7->type = OBJ_nid2obj(NID_pkcs7_encrypted);
 	if (!(p7->d.encrypted = PKCS7_ENCRYPT_new ())) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	ASN1_INTEGER_set (p7->d.encrypted->version, 0);
-	M_ASN1_OBJECT_set(p7->d.encrypted->enc_data->content_type,
-								NID_pkcs7_data);
+	p7->d.encrypted->enc_data->content_type = OBJ_nid2obj(NID_pkcs7_data);
 	if (!(pbe = PKCS5_pbe_set (pbe_nid, iter, salt, saltlen))) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
 		return NULL;

@@ -88,7 +88,7 @@ int namelen;
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	M_ASN1_OBJECT_set(attrib->object, NID_localKeyID);
+	attrib->object = OBJ_nid2obj(NID_localKeyID);
 	if (!(attrib->value.set = sk_new(NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -132,7 +132,7 @@ int usage;
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	M_ASN1_OBJECT_set(attrib->object, NID_key_usage);
+	attrib->object = OBJ_nid2obj(NID_key_usage);
 	if (!(attrib->value.set = sk_new(NULL))) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -196,7 +196,7 @@ int namelen;
 		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	M_ASN1_OBJECT_set(attrib->object, NID_friendlyName);
+	attrib->object = OBJ_nid2obj(NID_friendlyName);
 	if (!(attrib->value.set = sk_new(NULL))) {
 		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME,ERR_R_MALLOC_FAILURE);
 		return 0;
