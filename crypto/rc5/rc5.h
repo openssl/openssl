@@ -59,6 +59,8 @@
 #ifndef HEADER_RC5_H
 #define HEADER_RC5_H
 
+#include <openssl/opensslconf.h> /* OPENSSL_NO_RC5 */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
