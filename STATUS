@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/18 16:53:05 $
+  ______________                           $Date: 2000/09/18 22:03:37 $
 
   DEVELOPMENT STATE
 
@@ -38,6 +38,7 @@
 			VMS/Alpha			- failed
 				Some things were missing [FIXED]
                        0.9.6-beta2 is available:
+			linux/openbsd (all platforms?)		- mod_exp bug
 			sunos-gcc				- passed
 			aix-gcc					- passed
 			Win32 w/ VC6 or Mingw32			- failed
