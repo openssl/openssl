@@ -561,7 +561,7 @@ takes the NID of the extension rather than its name.
 For example to produce basicConstraints with the CA flag and a path length of
 10:
 
-x = X509V3_EXT_conf_nid(NULL, NULL, NID_basicConstraints, "CA:TRUE,pathlen:10");
+x = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,"CA:TRUE,pathlen:10");
 
 
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);

@@ -4,10 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Changed obj_dat.pl script so it takes its input and output files on
+     the command line. This should avoid shell escape redirection problems
+     under Win32.
+     [Steve Henson]
+
   *) Initial support for certificate extension requests, these are included
-     in things like Xenroll certificate requests. They will later be used to
-     allow PKCS#10 requests to include a list of "requested extensions" which
-     can be added.
+     in things like Xenroll certificate requests. Included functions to allow
+     extensions to be obtained and added.
      [Steve Henson]
 
   *) -crlf option to s_client and s_server for sending newlines as

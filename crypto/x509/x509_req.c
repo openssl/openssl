@@ -169,3 +169,48 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 			d2i_X509_EXTENSION, X509_EXTENSION_free,
 			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 }
+
+/* Add a STACK_OF extensions to a certificate request: allow alternative OIDs
+ * in case we want to create a non standard one.
+ */
+
+int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
+				int nid)
+{
+	unsigned char *p = NULL, *q;
+	long len;
+	ASN1_TYPE *at = NULL;
+	X509_ATTRIBUTE *attr = NULL;
+	if(!(at = ASN1_TYPE_new()) ||
+		!(at->value.sequence = ASN1_STRING_new())) goto err;
+
+	at->type = V_ASN1_SEQUENCE;
+	/* Generate encoding of extensions */
+	len = i2d_ASN1_SET_OF_X509_EXTENSION(exts, NULL, i2d_X509_EXTENSION,
+			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE);
+	if(!(p = Malloc(len))) goto err;
+	q = p;
+	i2d_ASN1_SET_OF_X509_EXTENSION(exts, &q, i2d_X509_EXTENSION,
+			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE);
+	at->value.sequence->data = p;
+	p = NULL;
+	at->value.sequence->length = len;
+	if(!(attr = X509_ATTRIBUTE_new())) goto err;
+	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
+	if(!sk_ASN1_TYPE_push(attr->value.set, at)) goto err;
+	at = NULL;
+	attr->set = 1;
+	attr->object = OBJ_nid2obj(nid);
+	if(!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr)) goto err;
+	return 1;
+	err:
+	if(p) Free(p);
+	X509_ATTRIBUTE_free(attr);
+	ASN1_TYPE_free(at);
+	return 0;
+}
+/* This is the normal usage: use the "official" OID */
+int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts)
+{
+	return X509_REQ_add_extensions_nid(req, exts, NID_ext_req);
+}

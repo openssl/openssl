@@ -38,7 +38,10 @@ sub expand_obj
 	return(%objn);
 	}
 
-while (<>)
+open (IN,"$ARGV[0]") || die "Can't open input file $ARGV[0]";
+open (OUT,">$ARGV[1]") || die "Can't open output file $ARGV[1]";
+
+while (<IN>)
 	{
 	next unless /^\#define\s+(\S+)\s+(.*)$/;
 	$v=$1;
@@ -55,6 +58,7 @@ while (<>)
 		$objd{$v}=$d;
 		}
 	}
+close IN;
 
 %ob=&expand_obj(*objd);
 
@@ -132,7 +136,7 @@ foreach (sort obj_cmp @a)
 	push(@ob,sprintf("&(nid_objs[%2d]),/* %-32s %s */\n",$_,$m,$v));
 	}
 
-print <<'EOF';
+print OUT <<'EOF';
 /* lib/obj/obj_dat.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -193,21 +197,21 @@ print <<'EOF';
 
 /* THIS FILE IS GENERATED FROM Objects.h by obj_dat.pl via the
  * following command:
- * perl obj_dat.pl < objects.h > obj_dat.h
+ * perl obj_dat.pl objects.h obj_dat.h
  */
 
 EOF
 
-printf "#define NUM_NID %d\n",$n;
-printf "#define NUM_SN %d\n",$#sn+1;
-printf "#define NUM_LN %d\n",$#ln+1;
-printf "#define NUM_OBJ %d\n\n",$#ob+1;
+printf OUT "#define NUM_NID %d\n",$n;
+printf OUT "#define NUM_SN %d\n",$#sn+1;
+printf OUT "#define NUM_LN %d\n",$#ln+1;
+printf OUT "#define NUM_OBJ %d\n\n",$#ob+1;
 
-printf "static unsigned char lvalues[%d]={\n",$lvalues+1;
-print @lvalues;
-print "};\n\n";
+printf OUT "static unsigned char lvalues[%d]={\n",$lvalues+1;
+print OUT @lvalues;
+print OUT "};\n\n";
 
-printf "static ASN1_OBJECT nid_objs[NUM_NID]={\n";
+printf OUT "static ASN1_OBJECT nid_objs[NUM_NID]={\n";
 foreach (@out)
 	{
 	if (length($_) > 75)
@@ -218,30 +222,32 @@ foreach (@out)
 			$t=$out.$_.",";
 			if (length($t) > 70)
 				{
-				print "$out\n";
+				print OUT "$out\n";
 				$t="\t$_,";
 				}
 			$out=$t;
 			}
 		chop $out;
-		print "$out";
+		print OUT "$out";
 		}
 	else
-		{ print $_; }
+		{ print OUT $_; }
 	}
-print  "};\n\n";
+print  OUT "};\n\n";
 
-printf "static ASN1_OBJECT *sn_objs[NUM_SN]={\n";
-print  @sn;
-print  "};\n\n";
+printf OUT "static ASN1_OBJECT *sn_objs[NUM_SN]={\n";
+print  OUT @sn;
+print  OUT "};\n\n";
 
-printf "static ASN1_OBJECT *ln_objs[NUM_LN]={\n";
-print  @ln;
-print  "};\n\n";
+printf OUT "static ASN1_OBJECT *ln_objs[NUM_LN]={\n";
+print  OUT @ln;
+print  OUT "};\n\n";
 
-printf "static ASN1_OBJECT *obj_objs[NUM_OBJ]={\n";
-print  @ob;
-print  "};\n\n";
+printf OUT "static ASN1_OBJECT *obj_objs[NUM_OBJ]={\n";
+print  OUT @ob;
+print  OUT "};\n\n";
+
+close OUT;
 
 sub der_it
 	{

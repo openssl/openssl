@@ -791,6 +791,9 @@ int		X509_REQ_extension_nid(int nid);
 int *		X509_REQ_get_extesion_nids(void);
 void		X509_REQ_set_extension_nids(int *nids);
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req);
+int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
+				int nid);
+int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts);
 
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
 
