@@ -7,11 +7,74 @@ SSL - OpenSSL SSL/TLS library
 
 =head1 SYNOPSIS
 
-=head1 DESCRIPTION
+=head1 OVERVIEW
 
 The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
 documented here.
+
+At first the library must be initialized; see
+L<SSL_library_init(3)|SSL_library_init(3)>.
+
+Then an B<SSL_CTX> object is created as a framework to establish
+TLS/SSL enabled connections (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>).
+Various options regarding certificates, algorithms etc. can be set
+in this object.
+
+When a network connection has been created, it can be assigned to an
+B<SSL> object. After the B<SSL> object has been created using
+L<SSL_new(3)|SSL_new(3)>, L<SSL_set_fd(3)|SSL_set_fd(3)> or
+L<SSL_set_bio(3)|SSL_set_bio(3)> can be used to associate the network
+connection with the object.
+
+Then the TLS/SSL handshake is performed using
+L<SSL_accept(3)|SSL_accept(3)> or L<SSL_connect(3)|SSL_connect(3)>
+respectively.
+L<SSL_read(3)|SSL_read(3)> and L<SSL_write(3)|SSL_write(3)> are used
+to read and write data on the TLS/SSL connection.
+L<SSL_shutdown(3)|SSL_shutdown(3)> can be used to shut down the
+TLS/SSL connection.
+
+=head1 DATA STRUCTURES
+
+Currently the OpenSSL B<ssl> library functions deals with the following data
+structures:
+
+=over 4
+
+=item B<SSL_METHOD> (SSL Method)
+
+That's a dispatch structure describing the internal B<ssl> library
+methods/functions which implement the various protocol versions (SSLv1, SSLv2
+and TLSv1). It's needed to create an B<SSL_CTX>.
+
+=item B<SSL_CIPHER> (SSL Cipher)
+
+This structure holds the algorithm information for a particular cipher which
+are a core part of the SSL/TLS protocol. The available ciphers are configured
+on a B<SSL_CTX> basis and the actually used ones are then part of the
+B<SSL_SESSION>.
+
+=item B<SSL_CTX> (SSL Context)
+
+That's the global context structure which is created by a server or client
+once per program life-time and which holds mainly default values for the
+B<SSL> structures which are later created for the connections.
+
+=item B<SSL_SESSION> (SSL Session)
+
+This is a structure containing the current TLS/SSL session details for a
+connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
+
+=item B<SSL> (SSL Connection)
+
+That's the main SSL/TLS structure which is created by a server or client per
+established connection. This actually is the core structure in the SSL API.
+Under run-time the application usually deals with this structure which has
+links to mostly all other structures.
+
+=back
+
 
 =head1 HEADER FILES
 
@@ -52,46 +115,6 @@ it's already included by ssl.h>.
 That's the sub header file dealing with the TLSv1 protocol only.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
-
-=back
-
-=head1 DATA STRUCTURES
-
-Currently the OpenSSL B<ssl> library functions deals with the following data
-structures:
-
-=over 4
-
-=item B<SSL_METHOD> (SSL Method)
-
-That's a dispatch structure describing the internal B<ssl> library
-methods/functions which implement the various protocol versions (SSLv1, SSLv2
-and TLSv1). It's needed to create an B<SSL_CTX>.
-
-=item B<SSL_CIPHER> (SSL Cipher)
-
-This structure holds the algorithm information for a particular cipher which
-are a core part of the SSL/TLS protocol. The available ciphers are configured
-on a B<SSL_CTX> basis and the actually used ones are then part of the
-B<SSL_SESSION>.
-
-=item B<SSL_CTX> (SSL Context)
-
-That's the global context structure which is created by a server or client
-once per program life-time and which holds mainly default values for the
-B<SSL> structures which are later created for the connections.
-
-=item B<SSL_SESSION> (SSL Session)
-
-This is a structure containing the current TLS/SSL session details for a
-connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
-
-=item B<SSL> (SSL Connection)
-
-That's the main SSL/TLS structure which is created by a server or client per
-established connection. This actually is the core structure in the SSL API.
-Under run-time the application usually deals with this structure which has
-links to mostly all other structures.
 
 =back
 
