@@ -97,7 +97,7 @@ extern "C" {
  */
 
 #define	CRYPTO_LOCK_ERR			1
-#define	CRYPTO_LOCK_ERR_HASH		2
+#define	CRYPTO_LOCK_EX_DATA		2
 #define	CRYPTO_LOCK_X509		3
 #define	CRYPTO_LOCK_X509_INFO		4
 #define	CRYPTO_LOCK_X509_PKEY		5
@@ -126,8 +126,7 @@ extern "C" {
 #define	CRYPTO_LOCK_DYNLOCK		28
 #define	CRYPTO_LOCK_ENGINE		29
 #define	CRYPTO_LOCK_UI			30
-#define	CRYPTO_LOCK_EX_DATA		31
-#define	CRYPTO_NUM_LOCKS		32
+#define	CRYPTO_NUM_LOCKS		31
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

@@ -74,7 +74,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	{
 	"<<ERROR>>",
 	"err",
-	"err_hash",
+	"ex_data",
 	"x509",
 	"x509_info",
 	"x509_pkey",
@@ -103,8 +103,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dynlock",
 	"engine",
 	"ui",
-	"ex_data",
-#if CRYPTO_NUM_LOCKS != 32
+#if CRYPTO_NUM_LOCKS != 31
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
