@@ -134,9 +134,11 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	while (!BN_is_bit_set(p, e))
 		e++;
 	if (e > 2)
+		{
 		/* we don't need this  q  if  e = 1 or 2 */
 		if (!BN_rshift(q, p, e)) goto end;
-	q->neg = 0;
+		q->neg = 0;
+		}
 
 	if (e == 1)
 		{
@@ -148,6 +150,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		 * so we can use exponent  (p+1)/4,  i.e.  (p-3)/4 + 1.
 		 */
 		if (!BN_rshift(q, p, 2)) goto end;
+		q->neg = 0;
 		if (!BN_add_word(q, 1)) goto end;
 		if (!BN_mod_exp(ret, a, q, p, ctx)) goto end;
 		err = 0;
@@ -194,6 +197,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 		/* b := (2*a)^((p-5)/8) */
 		if (!BN_rshift(q, p, 3)) goto end;
+		q->neg = 0;
 		if (!BN_mod_exp(b, t, q, p, ctx)) goto end;
 
 		/* y := b^2 */
