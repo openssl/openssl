@@ -288,7 +288,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
 		BN_zero(R);
-		BN_set_bit(R,BN_BITS2);			/* R = 2^ri */
+		BN_set_bit(R,BN_BITS2);			/* R */
 
 		buf[0]=mod->d[0]; /* tmod = N mod word size */
 		buf[1]=0;
