@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#ifdef NO_SHA
+#if defined(NO_SHA) || defined(NO_SHA0) || defined(NO_SHA1)
 #error SHA is disabled.
 #endif
 
@@ -103,14 +103,14 @@ void SHA_Init(SHA_CTX *c);
 void SHA_Update(SHA_CTX *c, const unsigned char *data, unsigned long len);
 void SHA_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA(const unsigned char *d, unsigned long n,unsigned char *md);
-void SHA_Transform(SHA_CTX *c, unsigned char *data);
+void SHA_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
 #ifndef NO_SHA1
 void SHA1_Init(SHA_CTX *c);
 void SHA1_Update(SHA_CTX *c, const unsigned char *data, unsigned long len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(const unsigned char *d, unsigned long n,unsigned char *md);
-void SHA1_Transform(SHA_CTX *c, unsigned char *data);
+void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
 #ifdef  __cplusplus
 }

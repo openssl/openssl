@@ -34,6 +34,7 @@ void GetTSC(unsigned long& tsc)
 #include <stdlib.h>
 #include <openssl/sha.h>
 
+#define sha1_block_x86 sha1_block_asm_data_order
 extern "C" {
 void sha1_block_x86(SHA_CTX *ctx, unsigned char *buffer,int num);
 }
@@ -55,8 +56,10 @@ void main(int argc,char *argv[])
 	if (num == 0) num=16;
 	if (num > 250) num=16;
 	numm=num+2;
+#if 0
 	num*=64;
 	numm*=64;
+#endif
 
 	for (j=0; j<6; j++)
 		{
@@ -72,7 +75,7 @@ void main(int argc,char *argv[])
 			sha1_block_x86(&ctx,buffer,num);
 			}
 
-		printf("sha1 (%d bytes) %d %d (%.2f)\n",num,
+		printf("sha1 (%d bytes) %d %d (%.2f)\n",num*64,
 			e1-s1,e2-s2,(double)((e1-s1)-(e2-s2))/2);
 		}
 	}

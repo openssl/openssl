@@ -60,179 +60,97 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h>
-
-#ifdef undef
-/* one or the other needs to be defined */
-#ifndef SHA_1 /* FIPE 180-1 */
-#define SHA_0 /* FIPS 180   */
-#endif
-#endif
-
-#undef c2nl
-#define c2nl(c,l)	(l =(((unsigned long)(*((c)++)))<<24), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))    ))
-
-#undef p_c2nl
-#define p_c2nl(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 3: l|=((unsigned long)(*((c)++))); \
-				} \
-			}
-
-#undef c2nl_p
-/* NOTE the pointer is not incremented at the end of this */
-#define c2nl_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<< 8; \
-			case 2: l|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l|=((unsigned long)(*(--(c))))<<24; \
-				} \
-			}
-
-#undef p_c2nl_p
-#define p_c2nl_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
-				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
-				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
-				} \
-			}
-
-#undef nl2c
-#define nl2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
-
-#undef c2l
-#define c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<<24))
-
-#undef p_c2l
-#define p_c2l(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++))); \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-			case 3: l|=((unsigned long)(*((c)++)))<<24; \
-				} \
-			}
-
-#undef c2l_p
-/* NOTE the pointer is not incremented at the end of this */
-#define c2l_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<<16; \
-			case 2: l|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l|=((unsigned long)(*(--(c)))); \
-				} \
-			}
-
-#undef p_c2l_p
-#define p_c2l_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((unsigned long)(*((c)++))); \
-				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-				} \
-			}
-
-#undef l2c
-#define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
+#include <openssl/sha.h>
 
 #ifndef SHA_LONG_LOG2
 #define SHA_LONG_LOG2	2	/* default to 32 bits */
 #endif
 
-#undef ROTATE
-#undef Endian_Reverse32
-#if defined(WIN32)
-#define ROTATE(a,n)     _lrotl(a,n)
-#elif defined(__GNUC__) && !defined(PEDANTIC)
-/* some inline assembler templates by <appro@fy.chalmers.se> */
-#if defined(__i386) && !defined(NO_ASM)
-#define ROTATE(a,n)	({ register unsigned int ret;	\
-				asm ("roll %1,%0"	\
-				: "=r"(ret)		\
-				: "I"(n), "0"(a)	\
-				: "cc");		\
-			   ret;				\
-			})
-#ifndef I386_ONLY
-#define Endian_Reverse32(a) \
-			{ register unsigned int ltmp=(a);	\
-				asm ("bswapl %0"	\
-				: "=r"(ltmp) : "0"(ltmp));	\
-			  (a)=ltmp;			\
-			}
-#endif
-#elif defined(__powerpc)
-#define ROTATE(a,n)	({ register unsigned int ret;		\
-				asm ("rlwinm %0,%1,%2,0,31"	\
-				: "=r"(ret)			\
-				: "r"(a), "I"(n));		\
-			   ret;					\
-			})
-/* Endian_Reverse32 is not needed for PowerPC */
-#endif
+#define DATA_ORDER_IS_BIG_ENDIAN
+
+#define HASH_LONG               SHA_LONG
+#define HASH_LONG_LOG2          SHA_LONG_LOG2
+#define HASH_CTX                SHA_CTX
+#define HASH_CBLOCK             SHA_CBLOCK
+#define HASH_LBLOCK             SHA_LBLOCK
+#define HASH_MAKE_STRING(c,s)   do {	\
+	unsigned long l;		\
+	l=(c)->h0; HOST_l2c(l,(s));	\
+	l=(c)->h1; HOST_l2c(l,(s));	\
+	l=(c)->h2; HOST_l2c(l,(s));	\
+	l=(c)->h3; HOST_l2c(l,(s));	\
+	l=(c)->h4; HOST_l2c(l,(s));	\
+	} while (0)
+
+#if defined(SHA_0)
+
+# define HASH_UPDATE             	SHA_Update
+# define HASH_TRANSFORM          	SHA_Transform
+# define HASH_FINAL              	SHA_Final
+# define HASH_INIT			SHA_Init
+# define HASH_BLOCK_HOST_ORDER   	sha_block_host_order
+# define HASH_BLOCK_DATA_ORDER   	sha_block_data_order
+# define Xupdate(a,ix,ia,ib,ic,id)	(ix=(a)=(ia^ib^ic^id))
+
+  void sha_block_host_order (SHA_CTX *c, const void *p,int num);
+  void sha_block_data_order (SHA_CTX *c, const void *p,int num);
+
+#elif defined(SHA_1)
+
+# define HASH_UPDATE             	SHA1_Update
+# define HASH_TRANSFORM          	SHA1_Transform
+# define HASH_FINAL              	SHA1_Final
+# define HASH_INIT			SHA1_Init
+# define HASH_BLOCK_HOST_ORDER   	sha1_block_host_order
+# define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
+# define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
+					  ix=(a)=ROTATE((a),1)	\
+					)
+
+# ifdef SHA1_ASM
+#  if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)
+#   define sha1_block_host_order		sha1_block_asm_host_order
+#   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
+#   define sha1_block_data_order		sha1_block_asm_data_order
+#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
+#   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
+#  endif
+# endif
+  void sha1_block_host_order (SHA_CTX *c, const void *p,int num);
+  void sha1_block_data_order (SHA_CTX *c, const void *p,int num);
+
+#else
+# error "Either SHA_0 or SHA_1 must be defined."
 #endif
 
-/* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
-#ifdef ROTATE
-#ifndef Endian_Reverse32
-/* 5 instructions with rotate instruction, else 9 */
-#define Endian_Reverse32(a) \
-	{ \
-	unsigned long t=(a); \
-	(a)=((ROTATE(t,8)&0x00FF00FF)|(ROTATE((t&0x00FF00FF),24))); \
-	}
-#endif
+#ifndef FLAT_INC
+#include "../md32_common.h"
 #else
-#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
-#ifndef Endian_Reverse32
-/* 6 instructions with rotate instruction, else 8 */
-#define Endian_Reverse32(a) \
-	{ \
-	unsigned long t=(a); \
-	t=(((t>>8)&0x00FF00FF)|((t&0x00FF00FF)<<8)); \
-	(a)=ROTATE(t,16); \
+#include "md32_common.h"
+#endif
+
+#define INIT_DATA_h0 0x67452301UL
+#define INIT_DATA_h1 0xefcdab89UL
+#define INIT_DATA_h2 0x98badcfeUL
+#define INIT_DATA_h3 0x10325476UL
+#define INIT_DATA_h4 0xc3d2e1f0UL
+
+void HASH_INIT (SHA_CTX *c)
+	{
+	c->h0=INIT_DATA_h0;
+	c->h1=INIT_DATA_h1;
+	c->h2=INIT_DATA_h2;
+	c->h3=INIT_DATA_h3;
+	c->h4=INIT_DATA_h4;
+	c->Nl=0;
+	c->Nh=0;
+	c->num=0;
 	}
-#endif
-/*
- * Originally the middle line started with l=(((l&0xFF00FF00)>>8)|...
- * It's rewritten as above for two reasons:
- *	- RISCs aren't good at long constants and have to explicitely
- *	  compose 'em with several (well, usually 2) instructions in a
- *	  register before performing the actual operation and (as you
- *	  already realized:-) having same constant should inspire the
- *	  compiler to permanently allocate the only register for it;
- *	- most modern CPUs have two ALUs, but usually only one has
- *	  circuitry for shifts:-( this minor tweak inspires compiler
- *	  to schedule shift instructions in a better way...
- *
- *				<appro@fy.chalmers.se>
- */
-#endif
+
+#define K_00_19	0x5a827999UL
+#define K_20_39 0x6ed9eba1UL
+#define K_40_59 0x8f1bbcdcUL
+#define K_60_79 0xca62c1d6UL
 
 /* As  pointed out by Wei Dai <weidai@eskimo.com>, F() below can be
  * simplified to the code in F_00_19.  Wei attributes these optimisations
@@ -246,43 +164,286 @@
 #define F_40_59(b,c,d)	(((b) & (c)) | (((b)|(c)) & (d))) 
 #define	F_60_79(b,c,d)	F_20_39(b,c,d)
 
-#undef Xupdate
-#ifdef SHA_0
-#define Xupdate(a,i,ia,ib,ic,id) X[(i)&0x0f]=(a)=\
-	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);
-#endif
-#ifdef SHA_1
-#define Xupdate(a,i,ia,ib,ic,id) (a)=\
-	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);\
-	X[(i)&0x0f]=(a)=ROTATE((a),1);
-#endif
-
-#define BODY_00_15(i,a,b,c,d,e,f,xa) \
-	(f)=xa[i]+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
+#define BODY_00_15(i,a,b,c,d,e,f,xi) \
+	(f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_16_19(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-	Xupdate(f,i,xa,xb,xc,xd); \
+#define BODY_16_19(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
+	Xupdate(f,xi,xa,xb,xc,xd); \
 	(f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_20_31(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-	Xupdate(f,i,xa,xb,xc,xd); \
+#define BODY_20_31(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
+	Xupdate(f,xi,xa,xb,xc,xd); \
 	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_32_39(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
+#define BODY_32_39(i,a,b,c,d,e,f,xa,xb,xc,xd) \
+	Xupdate(f,xa,xa,xb,xc,xd); \
 	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_40_59(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
+#define BODY_40_59(i,a,b,c,d,e,f,xa,xb,xc,xd) \
+	Xupdate(f,xa,xa,xb,xc,xd); \
 	(f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_60_79(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
-	(f)=X[(i)&0x0f]+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
+#define BODY_60_79(i,a,b,c,d,e,f,xa,xb,xc,xd) \
+	Xupdate(f,xa,xa,xb,xc,xd); \
+	(f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
+#ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
+void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
+	{
+	const SHA_LONG *W=d;
+	register unsigned long A,B,C,D,E,T;
+#ifdef SHA_XARRAY
+	SHA_LONG	X[16];
+# define X(i) X[(i)]
+#else
+	unsigned long	 X0, X1, X2, X3, X4, X5, X6, X7,
+			 X8, X9,X10,X11,X12,X13,X14,X15;
+# define X(i) X##i
+#endif
+
+	A=c->h0;
+	B=c->h1;
+	C=c->h2;
+	D=c->h3;
+	E=c->h4;
+
+	for (;;)
+		{
+	BODY_00_15( 0,A,B,C,D,E,T,W[ 0]);
+	BODY_00_15( 1,T,A,B,C,D,E,W[ 1]);
+	BODY_00_15( 2,E,T,A,B,C,D,W[ 2]);
+	BODY_00_15( 3,D,E,T,A,B,C,W[ 3]);
+	BODY_00_15( 4,C,D,E,T,A,B,W[ 4]);
+	BODY_00_15( 5,B,C,D,E,T,A,W[ 5]);
+	BODY_00_15( 6,A,B,C,D,E,T,W[ 6]);
+	BODY_00_15( 7,T,A,B,C,D,E,W[ 7]);
+	BODY_00_15( 8,E,T,A,B,C,D,W[ 8]);
+	BODY_00_15( 9,D,E,T,A,B,C,W[ 9]);
+	BODY_00_15(10,C,D,E,T,A,B,W[10]);
+	BODY_00_15(11,B,C,D,E,T,A,W[11]);
+	BODY_00_15(12,A,B,C,D,E,T,W[12]);
+	BODY_00_15(13,T,A,B,C,D,E,W[13]);
+	BODY_00_15(14,E,T,A,B,C,D,W[14]);
+	BODY_00_15(15,D,E,T,A,B,C,W[15]);
+
+	BODY_16_19(16,C,D,E,T,A,B,X( 0),W[ 0],W[ 2],W[ 8],W[13]);
+	BODY_16_19(17,B,C,D,E,T,A,X( 1),W[ 1],W[ 3],W[ 9],W[14]);
+	BODY_16_19(18,A,B,C,D,E,T,X( 2),W[ 2],W[ 4],W[10],W[15]);
+	BODY_16_19(19,T,A,B,C,D,E,X( 3),W[ 3],W[ 5],W[11],X( 0));
+
+	BODY_20_31(20,E,T,A,B,C,D,X( 4),W[ 4],W[ 6],W[12],X( 1));
+	BODY_20_31(21,D,E,T,A,B,C,X( 5),W[ 5],W[ 7],W[13],X( 2));
+	BODY_20_31(22,C,D,E,T,A,B,X( 6),W[ 6],W[ 8],W[14],X( 3));
+	BODY_20_31(23,B,C,D,E,T,A,X( 7),W[ 7],W[ 9],W[15],X( 4));
+	BODY_20_31(24,A,B,C,D,E,T,X( 8),W[ 8],W[10],X( 0),X( 5));
+	BODY_20_31(25,T,A,B,C,D,E,X( 9),W[ 9],W[11],X( 1),X( 6));
+	BODY_20_31(26,E,T,A,B,C,D,X(10),W[10],W[12],X( 2),X( 7));
+	BODY_20_31(27,D,E,T,A,B,C,X(11),W[11],W[13],X( 3),X( 8));
+	BODY_20_31(28,C,D,E,T,A,B,X(12),W[12],W[14],X( 4),X( 9));
+	BODY_20_31(29,B,C,D,E,T,A,X(13),W[13],W[15],X( 5),X(10));
+	BODY_20_31(30,A,B,C,D,E,T,X(14),W[14],X( 0),X( 6),X(11));
+	BODY_20_31(31,T,A,B,C,D,E,X(15),W[15],X( 1),X( 7),X(12));
+
+	BODY_32_39(32,E,T,A,B,C,D,X( 0),X( 2),X( 8),X(13));
+	BODY_32_39(33,D,E,T,A,B,C,X( 1),X( 3),X( 9),X(14));
+	BODY_32_39(34,C,D,E,T,A,B,X( 2),X( 4),X(10),X(15));
+	BODY_32_39(35,B,C,D,E,T,A,X( 3),X( 5),X(11),X( 0));
+	BODY_32_39(36,A,B,C,D,E,T,X( 4),X( 6),X(12),X( 1));
+	BODY_32_39(37,T,A,B,C,D,E,X( 5),X( 7),X(13),X( 2));
+	BODY_32_39(38,E,T,A,B,C,D,X( 6),X( 8),X(14),X( 3));
+	BODY_32_39(39,D,E,T,A,B,C,X( 7),X( 9),X(15),X( 4));
+
+	BODY_40_59(40,C,D,E,T,A,B,X( 8),X(10),X( 0),X( 5));
+	BODY_40_59(41,B,C,D,E,T,A,X( 9),X(11),X( 1),X( 6));
+	BODY_40_59(42,A,B,C,D,E,T,X(10),X(12),X( 2),X( 7));
+	BODY_40_59(43,T,A,B,C,D,E,X(11),X(13),X( 3),X( 8));
+	BODY_40_59(44,E,T,A,B,C,D,X(12),X(14),X( 4),X( 9));
+	BODY_40_59(45,D,E,T,A,B,C,X(13),X(15),X( 5),X(10));
+	BODY_40_59(46,C,D,E,T,A,B,X(14),X( 0),X( 6),X(11));
+	BODY_40_59(47,B,C,D,E,T,A,X(15),X( 1),X( 7),X(12));
+	BODY_40_59(48,A,B,C,D,E,T,X( 0),X( 2),X( 8),X(13));
+	BODY_40_59(49,T,A,B,C,D,E,X( 1),X( 3),X( 9),X(14));
+	BODY_40_59(50,E,T,A,B,C,D,X( 2),X( 4),X(10),X(15));
+	BODY_40_59(51,D,E,T,A,B,C,X( 3),X( 5),X(11),X( 0));
+	BODY_40_59(52,C,D,E,T,A,B,X( 4),X( 6),X(12),X( 1));
+	BODY_40_59(53,B,C,D,E,T,A,X( 5),X( 7),X(13),X( 2));
+	BODY_40_59(54,A,B,C,D,E,T,X( 6),X( 8),X(14),X( 3));
+	BODY_40_59(55,T,A,B,C,D,E,X( 7),X( 9),X(15),X( 4));
+	BODY_40_59(56,E,T,A,B,C,D,X( 8),X(10),X( 0),X( 5));
+	BODY_40_59(57,D,E,T,A,B,C,X( 9),X(11),X( 1),X( 6));
+	BODY_40_59(58,C,D,E,T,A,B,X(10),X(12),X( 2),X( 7));
+	BODY_40_59(59,B,C,D,E,T,A,X(11),X(13),X( 3),X( 8));
+
+	BODY_60_79(60,A,B,C,D,E,T,X(12),X(14),X( 4),X( 9));
+	BODY_60_79(61,T,A,B,C,D,E,X(13),X(15),X( 5),X(10));
+	BODY_60_79(62,E,T,A,B,C,D,X(14),X( 0),X( 6),X(11));
+	BODY_60_79(63,D,E,T,A,B,C,X(15),X( 1),X( 7),X(12));
+	BODY_60_79(64,C,D,E,T,A,B,X( 0),X( 2),X( 8),X(13));
+	BODY_60_79(65,B,C,D,E,T,A,X( 1),X( 3),X( 9),X(14));
+	BODY_60_79(66,A,B,C,D,E,T,X( 2),X( 4),X(10),X(15));
+	BODY_60_79(67,T,A,B,C,D,E,X( 3),X( 5),X(11),X( 0));
+	BODY_60_79(68,E,T,A,B,C,D,X( 4),X( 6),X(12),X( 1));
+	BODY_60_79(69,D,E,T,A,B,C,X( 5),X( 7),X(13),X( 2));
+	BODY_60_79(70,C,D,E,T,A,B,X( 6),X( 8),X(14),X( 3));
+	BODY_60_79(71,B,C,D,E,T,A,X( 7),X( 9),X(15),X( 4));
+	BODY_60_79(72,A,B,C,D,E,T,X( 8),X(10),X( 0),X( 5));
+	BODY_60_79(73,T,A,B,C,D,E,X( 9),X(11),X( 1),X( 6));
+	BODY_60_79(74,E,T,A,B,C,D,X(10),X(12),X( 2),X( 7));
+	BODY_60_79(75,D,E,T,A,B,C,X(11),X(13),X( 3),X( 8));
+	BODY_60_79(76,C,D,E,T,A,B,X(12),X(14),X( 4),X( 9));
+	BODY_60_79(77,B,C,D,E,T,A,X(13),X(15),X( 5),X(10));
+	BODY_60_79(78,A,B,C,D,E,T,X(14),X( 0),X( 6),X(11));
+	BODY_60_79(79,T,A,B,C,D,E,X(15),X( 1),X( 7),X(12));
+	
+	c->h0=(c->h0+E)&0xffffffffL; 
+	c->h1=(c->h1+T)&0xffffffffL;
+	c->h2=(c->h2+A)&0xffffffffL;
+	c->h3=(c->h3+B)&0xffffffffL;
+	c->h4=(c->h4+C)&0xffffffffL;
+
+	if (--num <= 0) break;
+
+	A=c->h0;
+	B=c->h1;
+	C=c->h2;
+	D=c->h3;
+	E=c->h4;
+
+	W+=SHA_LBLOCK;
+		}
+	}
+#endif
+
+#ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
+void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
+	{
+	const unsigned char *data=p;
+	register unsigned long A,B,C,D,E,T,l;
+#ifdef SHA_XARRAY
+	SHA_LONG	X[16];
+# define X(i) X[(i)]
+#else
+	unsigned long	 X0, X1, X2, X3, X4, X5, X6, X7,
+			 X8, X9,X10,X11,X12,X13,X14,X15;
+# define X(i) X##i
+#endif
+
+	A=c->h0;
+	B=c->h1;
+	C=c->h2;
+	D=c->h3;
+	E=c->h4;
+
+	for (;;)
+		{
+
+	HOST_c2l(data,l); X( 0)=l;		HOST_c2l(data,l); X( 1)=l;
+	BODY_00_15( 0,A,B,C,D,E,T,X( 0));	HOST_c2l(data,l); X( 2)=l;
+	BODY_00_15( 1,T,A,B,C,D,E,X( 1));	HOST_c2l(data,l); X( 3)=l;
+	BODY_00_15( 2,E,T,A,B,C,D,X( 2));	HOST_c2l(data,l); X( 4)=l;
+	BODY_00_15( 3,D,E,T,A,B,C,X( 3));	HOST_c2l(data,l); X( 5)=l;
+	BODY_00_15( 4,C,D,E,T,A,B,X( 4));	HOST_c2l(data,l); X( 6)=l;
+	BODY_00_15( 5,B,C,D,E,T,A,X( 5));	HOST_c2l(data,l); X( 7)=l;
+	BODY_00_15( 6,A,B,C,D,E,T,X( 6));	HOST_c2l(data,l); X( 8)=l;
+	BODY_00_15( 7,T,A,B,C,D,E,X( 7));	HOST_c2l(data,l); X( 9)=l;
+	BODY_00_15( 8,E,T,A,B,C,D,X( 8));	HOST_c2l(data,l); X(10)=l;
+	BODY_00_15( 9,D,E,T,A,B,C,X( 9));	HOST_c2l(data,l); X(11)=l;
+	BODY_00_15(10,C,D,E,T,A,B,X(10));	HOST_c2l(data,l); X(12)=l;
+	BODY_00_15(11,B,C,D,E,T,A,X(11));	HOST_c2l(data,l); X(13)=l;
+	BODY_00_15(12,A,B,C,D,E,T,X(12));	HOST_c2l(data,l); X(14)=l;
+	BODY_00_15(13,T,A,B,C,D,E,X(13));	HOST_c2l(data,l); X(15)=l;
+	BODY_00_15(14,E,T,A,B,C,D,X(14));
+	BODY_00_15(15,D,E,T,A,B,C,X(15));
+
+	BODY_16_19(16,C,D,E,T,A,B,X( 0),X( 0),X( 2),X( 8),X(13));
+	BODY_16_19(17,B,C,D,E,T,A,X( 1),X( 1),X( 3),X( 9),X(14));
+	BODY_16_19(18,A,B,C,D,E,T,X( 2),X( 2),X( 4),X(10),X(15));
+	BODY_16_19(19,T,A,B,C,D,E,X( 3),X( 3),X( 5),X(11),X( 0));
+
+	BODY_20_31(20,E,T,A,B,C,D,X( 4),X( 4),X( 6),X(12),X( 1));
+	BODY_20_31(21,D,E,T,A,B,C,X( 5),X( 5),X( 7),X(13),X( 2));
+	BODY_20_31(22,C,D,E,T,A,B,X( 6),X( 6),X( 8),X(14),X( 3));
+	BODY_20_31(23,B,C,D,E,T,A,X( 7),X( 7),X( 9),X(15),X( 4));
+	BODY_20_31(24,A,B,C,D,E,T,X( 8),X( 8),X(10),X( 0),X( 5));
+	BODY_20_31(25,T,A,B,C,D,E,X( 9),X( 9),X(11),X( 1),X( 6));
+	BODY_20_31(26,E,T,A,B,C,D,X(10),X(10),X(12),X( 2),X( 7));
+	BODY_20_31(27,D,E,T,A,B,C,X(11),X(11),X(13),X( 3),X( 8));
+	BODY_20_31(28,C,D,E,T,A,B,X(12),X(12),X(14),X( 4),X( 9));
+	BODY_20_31(29,B,C,D,E,T,A,X(13),X(13),X(15),X( 5),X(10));
+	BODY_20_31(30,A,B,C,D,E,T,X(14),X(14),X( 0),X( 6),X(11));
+	BODY_20_31(31,T,A,B,C,D,E,X(15),X(15),X( 1),X( 7),X(12));
+
+	BODY_32_39(32,E,T,A,B,C,D,X( 0),X( 2),X( 8),X(13));
+	BODY_32_39(33,D,E,T,A,B,C,X( 1),X( 3),X( 9),X(14));
+	BODY_32_39(34,C,D,E,T,A,B,X( 2),X( 4),X(10),X(15));
+	BODY_32_39(35,B,C,D,E,T,A,X( 3),X( 5),X(11),X( 0));
+	BODY_32_39(36,A,B,C,D,E,T,X( 4),X( 6),X(12),X( 1));
+	BODY_32_39(37,T,A,B,C,D,E,X( 5),X( 7),X(13),X( 2));
+	BODY_32_39(38,E,T,A,B,C,D,X( 6),X( 8),X(14),X( 3));
+	BODY_32_39(39,D,E,T,A,B,C,X( 7),X( 9),X(15),X( 4));
+
+	BODY_40_59(40,C,D,E,T,A,B,X( 8),X(10),X( 0),X( 5));
+	BODY_40_59(41,B,C,D,E,T,A,X( 9),X(11),X( 1),X( 6));
+	BODY_40_59(42,A,B,C,D,E,T,X(10),X(12),X( 2),X( 7));
+	BODY_40_59(43,T,A,B,C,D,E,X(11),X(13),X( 3),X( 8));
+	BODY_40_59(44,E,T,A,B,C,D,X(12),X(14),X( 4),X( 9));
+	BODY_40_59(45,D,E,T,A,B,C,X(13),X(15),X( 5),X(10));
+	BODY_40_59(46,C,D,E,T,A,B,X(14),X( 0),X( 6),X(11));
+	BODY_40_59(47,B,C,D,E,T,A,X(15),X( 1),X( 7),X(12));
+	BODY_40_59(48,A,B,C,D,E,T,X( 0),X( 2),X( 8),X(13));
+	BODY_40_59(49,T,A,B,C,D,E,X( 1),X( 3),X( 9),X(14));
+	BODY_40_59(50,E,T,A,B,C,D,X( 2),X( 4),X(10),X(15));
+	BODY_40_59(51,D,E,T,A,B,C,X( 3),X( 5),X(11),X( 0));
+	BODY_40_59(52,C,D,E,T,A,B,X( 4),X( 6),X(12),X( 1));
+	BODY_40_59(53,B,C,D,E,T,A,X( 5),X( 7),X(13),X( 2));
+	BODY_40_59(54,A,B,C,D,E,T,X( 6),X( 8),X(14),X( 3));
+	BODY_40_59(55,T,A,B,C,D,E,X( 7),X( 9),X(15),X( 4));
+	BODY_40_59(56,E,T,A,B,C,D,X( 8),X(10),X( 0),X( 5));
+	BODY_40_59(57,D,E,T,A,B,C,X( 9),X(11),X( 1),X( 6));
+	BODY_40_59(58,C,D,E,T,A,B,X(10),X(12),X( 2),X( 7));
+	BODY_40_59(59,B,C,D,E,T,A,X(11),X(13),X( 3),X( 8));
+
+	BODY_60_79(60,A,B,C,D,E,T,X(12),X(14),X( 4),X( 9));
+	BODY_60_79(61,T,A,B,C,D,E,X(13),X(15),X( 5),X(10));
+	BODY_60_79(62,E,T,A,B,C,D,X(14),X( 0),X( 6),X(11));
+	BODY_60_79(63,D,E,T,A,B,C,X(15),X( 1),X( 7),X(12));
+	BODY_60_79(64,C,D,E,T,A,B,X( 0),X( 2),X( 8),X(13));
+	BODY_60_79(65,B,C,D,E,T,A,X( 1),X( 3),X( 9),X(14));
+	BODY_60_79(66,A,B,C,D,E,T,X( 2),X( 4),X(10),X(15));
+	BODY_60_79(67,T,A,B,C,D,E,X( 3),X( 5),X(11),X( 0));
+	BODY_60_79(68,E,T,A,B,C,D,X( 4),X( 6),X(12),X( 1));
+	BODY_60_79(69,D,E,T,A,B,C,X( 5),X( 7),X(13),X( 2));
+	BODY_60_79(70,C,D,E,T,A,B,X( 6),X( 8),X(14),X( 3));
+	BODY_60_79(71,B,C,D,E,T,A,X( 7),X( 9),X(15),X( 4));
+	BODY_60_79(72,A,B,C,D,E,T,X( 8),X(10),X( 0),X( 5));
+	BODY_60_79(73,T,A,B,C,D,E,X( 9),X(11),X( 1),X( 6));
+	BODY_60_79(74,E,T,A,B,C,D,X(10),X(12),X( 2),X( 7));
+	BODY_60_79(75,D,E,T,A,B,C,X(11),X(13),X( 3),X( 8));
+	BODY_60_79(76,C,D,E,T,A,B,X(12),X(14),X( 4),X( 9));
+	BODY_60_79(77,B,C,D,E,T,A,X(13),X(15),X( 5),X(10));
+	BODY_60_79(78,A,B,C,D,E,T,X(14),X( 0),X( 6),X(11));
+	BODY_60_79(79,T,A,B,C,D,E,X(15),X( 1),X( 7),X(12));
+	
+	c->h0=(c->h0+E)&0xffffffffL; 
+	c->h1=(c->h1+T)&0xffffffffL;
+	c->h2=(c->h2+A)&0xffffffffL;
+	c->h3=(c->h3+B)&0xffffffffL;
+	c->h4=(c->h4+C)&0xffffffffL;
+
+	if (--num <= 0) break;
+
+	A=c->h0;
+	B=c->h1;
+	C=c->h2;
+	D=c->h3;
+	E=c->h4;
+
+		}
+	}
+#endif
