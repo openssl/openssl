@@ -186,8 +186,9 @@ void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 #endif
 
 #ifndef md5_block_data_order
-void md5_block_data_order (MD5_CTX *c, const void *data, int num)
+void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
 	{
+	const unsigned char *data=data_;
 	register unsigned long A,B,C,D,l;
 	/*
 	 * In case you wonder why A-D are declared as long and not
