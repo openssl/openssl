@@ -109,7 +109,7 @@ sub do_lib_rule
 		{
 		#		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ret.="\techo LIB $<\n";    
-		$ret.="\t\$(MKLIB) $lfile$target  \$(addprefix +, $objs)\n";
+                $ret.="\t&\$(MKLIB) $lfile$target -+\$**\n";
 		}
 	else
 		{
