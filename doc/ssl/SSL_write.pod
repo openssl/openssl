@@ -38,7 +38,7 @@ non-blocking socket, nothing is to be done, but select() can be used to check
 for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
 
-=head1 IMPORTANT
+=head1 WARNING
 
 When an SSL_write() operation has to be repeated because of
 B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
