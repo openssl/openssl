@@ -1,8 +1,8 @@
 * System libcrypto.dylib and libssl.dylib are used by system ld on MacOS X.
 [NOTE: This is currently undergoing tests, and may be removed soon]
 
-This is really a bug in ld, which seems to look for .dylib libraries along
-the whole library path before it bothers looking for .a libraries.  This
+This is really a misfeature in ld, which seems to look for .dylib libraries
+along the whole library path before it bothers looking for .a libraries.  This
 means that -L switches won't matter unless OpenSSL is built with shared
 library support.
 
