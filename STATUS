@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/31 12:13:10 $
+  ______________                           $Date: 1999/05/31 12:43:28 $
 
   DEVELOPMENT STATE
 
@@ -121,9 +121,4 @@
 
   WISHES
 
-    o  Mats Nilsson <mats.nilsson@xware.se>:
-       "Add reference counting to all substructures of X509 etc. For instance,
-       X509_NAME lacks a reference counter, while EVP_PKEY has one.  I'm
-       making COM-wrappers for selected parts of SSLeay for a project of ours,
-       and has found this inconsistency in copy semantics annoying."
-
+    o 
