@@ -132,8 +132,9 @@ extern "C" {
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA"
-#define SSL_TXT_EXP		"EXP"
+#define SSL_TXT_EXP40		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
+#define SSL_TXT_EXP56		"EXP56"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
@@ -988,18 +989,18 @@ int SSL_state(SSL *ssl);
 void SSL_set_verify_result(SSL *ssl,long v);
 long SSL_get_verify_result(SSL *ssl);
 
-int SSL_set_ex_data(SSL *ssl,int idx,char *data);
-char *SSL_get_ex_data(SSL *ssl,int idx);
+int SSL_set_ex_data(SSL *ssl,int idx,void *data);
+void *SSL_get_ex_data(SSL *ssl,int idx);
 int SSL_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
 
-int SSL_SESSION_set_ex_data(SSL_SESSION *ss,int idx,char *data);
-char *SSL_SESSION_get_ex_data(SSL_SESSION *ss,int idx);
+int SSL_SESSION_set_ex_data(SSL_SESSION *ss,int idx,void *data);
+void *SSL_SESSION_get_ex_data(SSL_SESSION *ss,int idx);
 int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
 
-int SSL_CTX_set_ex_data(SSL_CTX *ssl,int idx,char *data);
-char *SSL_CTX_get_ex_data(SSL_CTX *ssl,int idx);
+int SSL_CTX_set_ex_data(SSL_CTX *ssl,int idx,void *data);
+void *SSL_CTX_get_ex_data(SSL_CTX *ssl,int idx);
 int SSL_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
 

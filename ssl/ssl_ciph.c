@@ -144,14 +144,15 @@ static SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,SSL_AUTH_MASK|SSL_MKEY_MASK},
 	{0,SSL_TXT_FZA,	0,SSL_FZA,   0,SSL_AUTH_MASK|SSL_MKEY_MASK|SSL_ENC_MASK},
 
-	{0,SSL_TXT_EXP,	0,SSL_EXP,   0,SSL_EXP_MASK},
-	{0,SSL_TXT_EXPORT,0,SSL_EXPORT,0,SSL_EXP_MASK},
-	{0,SSL_TXT_SSLV2,0,SSL_SSLV2,0,SSL_SSL_MASK},
-	{0,SSL_TXT_SSLV3,0,SSL_SSLV3,0,SSL_SSL_MASK},
-	{0,SSL_TXT_TLSV1,0,SSL_SSLV3,0,SSL_SSL_MASK},
-	{0,SSL_TXT_LOW,  0,SSL_LOW,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_EXP40, 0,SSL_EXP40, 0,_SSL_EXP_MASK},
+	{0,SSL_TXT_EXPORT,0,SSL_EXP40, 0,_SSL_EXP_MASK},
+	{0,SSL_TXT_EXP56, 0,SSL_EXP56, 0,_SSL_EXP_MASK},
+	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,SSL_SSL_MASK},
+	{0,SSL_TXT_SSLV3, 0,SSL_SSLV3, 0,SSL_SSL_MASK},
+	{0,SSL_TXT_TLSV1, 0,SSL_TLSV1, 0,SSL_SSL_MASK},
+	{0,SSL_TXT_LOW,   0,SSL_LOW,   0,SSL_STRONG_MASK},
 	{0,SSL_TXT_MEDIUM,0,SSL_MEDIUM,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_HIGH, 0,SSL_HIGH,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_HIGH,  0,SSL_HIGH,  0,SSL_STRONG_MASK},
 	};
 
 static int init_ciphers=1;
@@ -615,7 +616,7 @@ SSL_CIPHER *cipher;
 char *buf;
 int len;
 	{
-	int export;
+	int _export,pkl,kl;
 	char *ver,*exp;
 	char *kx,*au,*enc,*mac;
 	unsigned long alg,alg2;
@@ -624,8 +625,10 @@ int len;
 	alg=cipher->algorithms;
 	alg2=cipher->algorithm2;
 
-	export=(alg&SSL_EXP)?1:0;
-	exp=(export)?" export":"";
+	_export=SSL_IS_EXPORT(alg);
+	pkl=SSL_EXPORT_PKEYLENGTH(alg);
+	kl=SSL_EXPORT_KEYLENGTH(alg);
+	exp=_export?" export":"";
 
 	if (alg & SSL_SSLV2)
 		ver="SSLv2";
@@ -637,7 +640,7 @@ int len;
 	switch (alg&SSL_MKEY_MASK)
 		{
 	case SSL_kRSA:
-		kx=(export)?"RSA(512)":"RSA";
+		kx=_export?(pkl == 512 ? "RSA(512)" : "RSA(1024)"):"RSA";
 		break;
 	case SSL_kDHr:
 		kx="DH/RSA";
@@ -649,7 +652,7 @@ int len;
 		kx="Fortezza";
 		break;
 	case SSL_kEDH:
-		kx=(export)?"DH(512)":"DH";
+		kx=_export?(pkl == 512 ? "DH(512)" : "DH(1024)"):"DH";
 		break;
 	default:
 		kx="unknown";
@@ -678,16 +681,17 @@ int len;
 	switch (alg&SSL_ENC_MASK)
 		{
 	case SSL_DES:
-		enc=export?"DES(40)":"DES(56)";
+		enc=(_export && kl == 5)?"DES(40)":"DES(56)";
 		break;
 	case SSL_3DES:
 		enc="3DES(168)";
 		break;
 	case SSL_RC4:
-		enc=export?"RC4(40)":((alg2&SSL2_CF_8_BYTE_ENC)?"RC4(64)":"RC4(128)");
+		enc=_export?(kl == 5 ? "RC4(40)" : "RC4(56)")
+		  :((alg2&SSL2_CF_8_BYTE_ENC)?"RC4(64)":"RC4(128)");
 		break;
 	case SSL_RC2:
-		enc=export?"RC2(40)":"RC2(128)";
+		enc=_export?(kl == 5 ? "RC2(40)" : "RC2(56)"):"RC2(128)";
 		break;
 	case SSL_IDEA:
 		enc="IDEA(128)";
@@ -770,9 +774,9 @@ int *alg_bits;
 
 		a=EVP_CIPHER_key_length(enc)*8;
 
-		if (c->algorithms & SSL_EXP)
+		if (SSL_C_IS_EXPORT(c))
 			{
-			ret=40;
+			ret=SSL_C_EXPORT_KEYLENGTH(c)*8;
 			}
 		else
 			{

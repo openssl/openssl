@@ -1236,13 +1236,13 @@ SSL *s;
 	{
 	unsigned long alg,mask,kalg;
 	CERT *c;
-	int i,export;
+	int i,_export;
 
 	c=s->cert;
 	ssl_set_cert_masks(c);
 	alg=s->s3->tmp.new_cipher->algorithms;
-	export=(alg & SSL_EXPORT)?1:0;
-	mask=(export)?c->export_mask:c->mask;
+	_export=SSL_IS_EXPORT(alg);
+	mask=_export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 
 	if 	(kalg & SSL_kDHr)
@@ -1822,12 +1822,12 @@ void (*free_func)();
 int SSL_set_ex_data(s,idx,arg)
 SSL *s;
 int idx;
-char *arg;
+void *arg;
 	{
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-char *SSL_get_ex_data(s,idx)
+void *SSL_get_ex_data(s,idx)
 SSL *s;
 int idx;
 	{
@@ -1849,12 +1849,12 @@ void (*free_func)();
 int SSL_CTX_set_ex_data(s,idx,arg)
 SSL_CTX *s;
 int idx;
-char *arg;
+void *arg;
 	{
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-char *SSL_CTX_get_ex_data(s,idx)
+void *SSL_CTX_get_ex_data(s,idx)
 SSL_CTX *s;
 int idx;
 	{

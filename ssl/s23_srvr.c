@@ -290,7 +290,7 @@ SSL *s;
 						for (j=0; j<sk_num(sk); j++)
 							{
 							c=(SSL_CIPHER *)sk_value(sk,j);
-							if (!(c->algorithms & SSL_EXP))
+							if (!SSL_C_IS_EXPORT(c))
 								{
 								if ((c->id>>24L) == 2L)
 									ne2=1;

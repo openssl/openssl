@@ -401,7 +401,7 @@ SSL *s;
 		&(p[s->s2->tmp.clear]),&(p[s->s2->tmp.clear]),
 		(s->s2->ssl2_rollback)?RSA_SSLV23_PADDING:RSA_PKCS1_PADDING);
 
-	export=(s->session->cipher->algorithms & SSL_EXP)?1:0;
+	export=SSL_C_IS_EXPORT(s->session->cipher);
 	
 	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 		{

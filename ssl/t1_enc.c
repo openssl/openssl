@@ -178,9 +178,9 @@ int which;
 	EVP_CIPHER *c;
 	SSL_COMP *comp;
 	EVP_MD *m;
-	int exp,n,i,j,k,exp_label_len,cl;
+	int _exp,n,i,j,k,exp_label_len,cl;
 
-	exp=(s->s3->tmp.new_cipher->algorithms & SSL_EXPORT)?1:0;
+	_exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
 	comp=s->s3->tmp.new_compression;
@@ -247,7 +247,8 @@ int which;
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
 	cl=EVP_CIPHER_key_length(c);
-	j=exp ? (cl < 5 ? cl : 5) : cl;
+	j=_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
+		  cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	er1= &(s->s3->client_random[0]);
@@ -284,7 +285,7 @@ int which;
 printf("which = %04X\nmac key=",which);
 { int z; for (z=0; z<i; z++) printf("%02X%c",ms[z],((z+1)%16)?' ':'\n'); }
 #endif
-	if (exp)
+	if (_exp)
 		{
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
@@ -297,7 +298,7 @@ printf("which = %04X\nmac key=",which);
 		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
 		p+=SSL3_RANDOM_SIZE;
 		tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(p-buf),key,j,
-			tmp1,tmp2,EVP_CIPHER_key_length(c));
+			 tmp1,tmp2,EVP_CIPHER_key_length(c));
 		key=tmp1;
 
 		if (k > 0)
@@ -347,7 +348,7 @@ SSL *s;
 	unsigned char *p1,*p2;
 	EVP_CIPHER *c;
 	EVP_MD *hash;
-	int num,exp;
+	int num;
 	SSL_COMP *comp;
 
 	if (s->s3->tmp.key_block_length != 0)
@@ -361,8 +362,6 @@ SSL *s;
 
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
-
-	exp=(s->session->cipher->algorithms & SSL_EXPORT)?1:0;
 
 	num=EVP_CIPHER_key_length(c)+EVP_MD_size(hash)+EVP_CIPHER_iv_length(c);
 	num*=2;

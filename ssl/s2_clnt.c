@@ -568,7 +568,7 @@ SSL *s;
 
 		if (sess->cipher->algorithm2 & SSL2_CF_8_BYTE_ENC)
 			enc=8;
-		else if (sess->cipher->algorithms & SSL_EXP)
+		else if (SSL_C_IS_EXPORT(sess->cipher))
 			enc=5;
 		else
 			enc=i;

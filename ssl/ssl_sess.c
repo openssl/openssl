@@ -94,12 +94,12 @@ void (*free_func)();
 int SSL_SESSION_set_ex_data(s,idx,arg)
 SSL_SESSION *s;
 int idx;
-char *arg;
+void *arg;
 	{
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-char *SSL_SESSION_get_ex_data(s,idx)
+void *SSL_SESSION_get_ex_data(s,idx)
 SSL_SESSION *s;
 int idx;
 	{

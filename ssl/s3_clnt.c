@@ -1689,12 +1689,13 @@ SSL *s;
 #endif
 #endif
 
-	if ((algs & SSL_EXP) && !has_bits(i,EVP_PKT_EXP))
+	if (SSL_IS_EXPORT(algs) && !has_bits(i,EVP_PKT_EXP))
 		{
 #ifndef NO_RSA
 		if (algs & SSL_kRSA)
 			{
-			if ((rsa == NULL) || (RSA_size(rsa) > 512))
+			if (rsa == NULL
+			    || RSA_size(rsa) > SSL_EXPORT_PKEYLENGTH(algs))
 				{
 				SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
 				goto f_err;
@@ -1704,8 +1705,9 @@ SSL *s;
 #endif
 #ifndef NO_DH
 			if (algs & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
-			{
-			if ((dh == NULL) || (DH_size(dh) > 512))
+			    {
+			    if (dh == NULL
+				|| DH_size(dh) > SSL_EXPORT_PKEYLENGTH(algs))
 				{
 				SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_EXPORT_TMP_DH_KEY);
 				goto f_err;

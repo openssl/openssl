@@ -309,16 +309,16 @@ SSL *s;
 
 			/* only send if a DH key exchange, fortezza or
 			 * RSA but we have a sign only certificate */
-			if ( s->s3->tmp.use_rsa_tmp ||
-			    (l & (SSL_DH|SSL_kFZA)) ||
-			    ((l & SSL_kRSA) &&
-			     ((ct->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)||
-			      ((l & SSL_EXPORT) &&
-			       (EVP_PKEY_size(ct->pkeys[SSL_PKEY_RSA_ENC].privatekey)*8 > 512)
-			      )
-			     )
+			if (s->s3->tmp.use_rsa_tmp
+			    || (l & (SSL_DH|SSL_kFZA))
+			    || ((l & SSL_kRSA)
+				&& (ct->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
+				    || (SSL_IS_EXPORT(l)
+					&& EVP_PKEY_size(ct->pkeys[SSL_PKEY_RSA_ENC].privatekey)*8 > SSL_EXPORT_PKEYLENGTH(l)
+					)
+				    )
+				)
 			    )
-			   )
 				{
 				ret=ssl3_send_server_key_exchange(s);
 				if (ret <= 0) goto end;
@@ -777,7 +777,7 @@ SSL *s;
 				c=(SSL_CIPHER *)sk_value(sk,i);
 				if (c->algorithms & SSL_eNULL)
 					nc=c;
-				if (c->algorithms & SSL_EXP)
+				if (SSL_C_IS_EXPORT(c))
 					ec=c;
 				}
 			if (nc != NULL)
@@ -945,8 +945,7 @@ SSL *s;
 			if ((rsa == NULL) && (s->ctx->default_cert->rsa_tmp_cb != NULL))
 				{
 				rsa=s->ctx->default_cert->rsa_tmp_cb(s,
-					!(s->s3->tmp.new_cipher->algorithms
-					  &SSL_NOT_EXP));
+					!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher));
 				CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 				cert->rsa_tmp=rsa;
 				}
@@ -968,8 +967,7 @@ SSL *s;
 			dhp=cert->dh_tmp;
 			if ((dhp == NULL) && (cert->dh_tmp_cb != NULL))
 				dhp=cert->dh_tmp_cb(s,
-					!(s->s3->tmp.new_cipher->algorithms
-					  &SSL_NOT_EXP));
+					!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher));
 			if (dhp == NULL)
 				{
 				al=SSL_AD_HANDSHAKE_FAILURE;

@@ -191,14 +191,25 @@
 #define SSL_SHA1		0x00040000L
 #define SSL_SHA			(SSL_SHA1)
 
-#define SSL_EXP_MASK		0x00300000L
-#define SSL_EXP			0x00100000L
-#define SSL_NOT_EXP		0x00200000L
-#define SSL_EXPORT		SSL_EXP
+#define _SSL_EXP_MASK		0x00300000L
+#define SSL_EXP40		0x00100000L
+#define _SSL_NOT_EXP		0x00200000L
+#define SSL_EXP56		0x00300000L
+#define SSL_IS_EXPORT(a)	((a)&SSL_EXP40)
+#define SSL_IS_EXPORT56(a)	(((a)&_SSL_EXP_MASK) == SSL_EXP56)
+#define SSL_IS_EXPORT40(a)	(((a)&_SSL_EXP_MASK) == SSL_EXP40)
+#define SSL_C_IS_EXPORT(c)	SSL_IS_EXPORT((c)->algorithms)
+#define SSL_C_IS_EXPORT56(c)	SSL_IS_EXPORT56((c)->algorithms)
+#define SSL_C_IS_EXPORT40(c)	SSL_IS_EXPORT40((c)->algorithms)
+#define SSL_EXPORT_KEYLENGTH(a)	(SSL_IS_EXPORT40(a) ? 5 : 7)
+#define SSL_EXPORT_PKEYLENGTH(a) (SSL_IS_EXPORT40(a) ? 512 : 1024)
+#define SSL_C_EXPORT_KEYLENGTH(c)	SSL_EXPORT_KEYLENGTH((c)->algorithms)
+#define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algorithms)
 
 #define SSL_SSL_MASK		0x00c00000L
 #define SSL_SSLV2		0x00400000L
 #define SSL_SSLV3		0x00800000L
+#define SSL_TLSV1		SSL_SSLV3	/* for now */
 
 #define SSL_STRONG_MASK		0x07000000L
 #define SSL_LOW			0x01000000L
@@ -208,7 +219,7 @@
 /* we have used 0fffffff - 4 bits left to go */
 #define SSL_ALL			0xffffffffL
 #define SSL_ALL_CIPHERS		(SSL_MKEY_MASK|SSL_AUTH_MASK|SSL_ENC_MASK|\
-				SSL_MAC_MASK|SSL_EXP_MASK)
+				SSL_MAC_MASK|_SSL_EXP_MASK)
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0

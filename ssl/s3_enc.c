@@ -141,7 +141,7 @@ int which;
 	MD5_CTX md;
 	int exp,n,i,j,k,cl;
 
-	exp=(s->s3->tmp.new_cipher->algorithms & SSL_EXPORT)?1:0;
+	exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
 	if (s->s3->tmp.new_compression == NULL)
@@ -213,7 +213,8 @@ int which;
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
 	cl=EVP_CIPHER_key_length(c);
-	j=exp ? (cl < 5 ? cl : 5) : cl;
+	j=exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
+		 cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
@@ -283,7 +284,7 @@ SSL *s;
 	unsigned char *p;
 	EVP_CIPHER *c;
 	EVP_MD *hash;
-	int num,exp;
+	int num;
 	SSL_COMP *comp;
 
 	if (s->s3->tmp.key_block_length != 0)
@@ -298,8 +299,6 @@ SSL *s;
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
 	s->s3->tmp.new_compression=comp;
-
-	exp=(s->session->cipher->algorithms & SSL_EXPORT)?1:0;
 
 	num=EVP_CIPHER_key_length(c)+EVP_MD_size(hash)+EVP_CIPHER_iv_length(c);
 	num*=2;
