@@ -79,7 +79,7 @@ extern "C" {
 #ifndef DEVRANDOM
 /* set this to a comma-separated list of 'random' device files to try out.
  * My default, we will try to read at least one of these files */
-#define DEVRANDOM "/dev/random","/dev/srandom","/dev/urandom"
+#define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
 #endif
 
 #if defined(__MWERKS__) && defined(macintosh)
