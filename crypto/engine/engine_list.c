@@ -202,6 +202,10 @@ static int engine_internal_check(void)
 	if(!engine_list_add(ENGINE_aep()))
 		return 0;
 #endif /* !NO_HW_AEP */
+#ifndef NO_HW_SUREWARE
+       if(!engine_list_add(ENGINE_sureware()))
+                return 0;
+#endif /* !NO_HW_SUREWARE */
 #endif /* !NO_HW */
 	engine_list_flag = 1;
 	return 1;

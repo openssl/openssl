@@ -4,6 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add support for SureWare crypto accelerator cards from 
+     Baltimore Technologies.  (Use engine 'sureware')
+     [Baltimore Technologies and Mark Cox]
+
   *) Add support for crypto accelerator cards from Accelerated
      Encryption Processing, www.aep.ie.  (Use engine 'aep')
      [AEP Inc. and Mark Cox]

@@ -156,6 +156,11 @@ ENGINE *ENGINE_atalla();
 ENGINE *ENGINE_aep();
 #endif /* !NO_HW_AEP */
 
+#ifndef NO_HW_SUREWARE
+/* Returns a structure of atalla methods. */
+ENGINE *ENGINE_sureware();
+#endif /* !NO_HW_SUREWARE */
+
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus
