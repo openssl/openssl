@@ -3020,3 +3020,5 @@ GENERAL_SUBTREE_it                      3450	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 GENERAL_SUBTREE_it                      3450	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 GENERAL_SUBTREE_free                    3451	EXIST::FUNCTION:
 GENERAL_SUBTREE_new                     3452	EXIST::FUNCTION:
+EVP_PKEY_cmp                            3453	EXIST::FUNCTION:
+X509_REQ_check_private_key              3454	EXIST::FUNCTION:
