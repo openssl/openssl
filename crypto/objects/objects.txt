@@ -684,6 +684,8 @@ aes 44			: AES-256-CFB		: aes-256-cfb
 # There are no OIDs for these modes...
 
 1 1 1 1 666 3		: AES-128-CFB1		: aes-128-cfb1
+1 1 1 1 666 4		: AES-192-CFB1		: aes-192-cfb1
+1 1 1 1 666 5		: AES-256-CFB1		: aes-256-cfb1
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code

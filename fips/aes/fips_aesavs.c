@@ -105,6 +105,12 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	    case 5128:
 		cipher=EVP_aes_128_cfb1();
 		break;
+	    case 5192:
+		cipher=EVP_aes_192_cfb1();
+		break;
+	    case 5256:
+		cipher=EVP_aes_256_cfb1();
+		break;
 	    default:
 		printf("Didn't handle mode %d\n",kt);
 		exit(1);
@@ -207,16 +213,22 @@ void PrintValue(char *tag, unsigned char *val, int len)
 #endif
 }
 
-void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp)
-{
-  char obuf[2048];
-  int olen;
-  olen = bin2hex(val, len, obuf);
-  fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
+void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
+    {
+    char obuf[2048];
+    int olen;
+
+    if(bitmode)
+	fprintf(rfp,"%s = %d\n",tag,val[0] ? 1 : 0);
+    else
+	{
+	olen = bin2hex(val, len, obuf);
+	fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
+	}
 #if VERBOSE
-  printf("%s = %.*s\n", tag, olen, obuf);
+    printf("%s = %.*s\n", tag, olen, obuf);
 #endif
-}
+    }
 
 /*-----------------------------------------------*/
 char *t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
@@ -276,11 +288,12 @@ int do_mct(char *amode,
 	/* printf("Iteration %d\n", i); */
 	if (i > 0)
 	    {
-	    OutputValue("KEY", key[i], nkeysz, rfp);
+	    OutputValue("KEY",key[i],nkeysz,rfp,0);
 	    if (imode != ECB)  /* ECB */
-		OutputValue("IV", iv[i], AES_BLOCK_SIZE, rfp);
+		OutputValue("IV",iv[i],AES_BLOCK_SIZE,rfp,0);
 	    /* Output Ciphertext | Plaintext */
-	    OutputValue(t_tag[dir^1], (dir)? ptext[0]: ctext[0], len, rfp);
+	    OutputValue(t_tag[dir^1],dir ? ptext[0] : ctext[0],len,rfp,
+			imode == CFB1);
 	    }
 	for (j = 0; j < 1000; ++j)
 	    {
@@ -373,6 +386,9 @@ int do_mct(char *amode,
 	    case CFB1:
 		if(j == 0)
 		    {
+		    /* compensate for wrong endianness of input file */
+		    if(i == 0)
+			ptext[0][0]<<=7;
 		    ret=AESTest(&ctx,amode,akeysz,key[i],iv[i],dir,
 				(char*)ptext[j], ctext[j], len);
 		    }
@@ -403,10 +419,8 @@ int do_mct(char *amode,
 	    }
 	--j; /* reset to last of range */
 	/* Output Ciphertext | Plaintext */
-	if(imode == CFB1)
-	    fprintf(rfp,"%s = %d\n",t_tag[dir],(dir?ctext[j]:ptext[j])[0]&1);
-	else
-	    OutputValue(t_tag[dir], (dir)?ctext[j]:ptext[j], len, rfp);
+	OutputValue(t_tag[dir],dir ? ctext[j] : ptext[j],len,rfp,
+		    imode == CFB1);
 	fprintf(rfp, "\n");  /* add separator */
 
 	/* Compute next KEY */
@@ -493,7 +507,7 @@ int do_mct(char *amode,
 	    case CFB1:
 		for(n1=0,n2=127 ; n1 < 128 ; ++n1,--n2)
 		    sb(iv[i+1],n1,gb(ctext[j-n2],0));
-		ptext[0][0]=ctext[j-128][0]&1;
+		ptext[0][0]=ctext[j-128][0]&0x80;
 		break;
 		}
 	    }
@@ -518,7 +532,7 @@ int do_mct(char *amode,
 	    case CFB1:
 		for(n1=0,n2=127 ; n1 < 128 ; ++n1,--n2)
 		    sb(iv[i+1],n1,gb(ptext[j-n2],0));
-		ctext[0][0]=ptext[j-128][0]&1;
+		ctext[0][0]=ptext[j-128][0]&0x80;
 		break;
 		}
 	    }
@@ -759,7 +773,7 @@ int proc_file(char *rqfile)
 		  ret = AESTest(&ctx, amode, akeysz, aKey, iVec, 
 				dir,  /* 0 = decrypt, 1 = encrypt */
 				plaintext, ciphertext, len);
-		  OutputValue("CIPHERTEXT", ciphertext, len, rfp);
+		  OutputValue("CIPHERTEXT",ciphertext,len,rfp,0);
 		}
 	      step = 6;
 	    }
@@ -793,7 +807,8 @@ int proc_file(char *rqfile)
 		  ret = AESTest(&ctx, amode, akeysz, aKey, iVec, 
 				dir,  /* 0 = decrypt, 1 = encrypt */
 				plaintext, ciphertext, len);
-		  OutputValue("PLAINTEXT", (unsigned char*)plaintext, len, rfp);
+		  OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
+			      0);
 		}
 	      step = 6;
 	    }

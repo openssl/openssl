@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 651
-#define NUM_SN 644
-#define NUM_LN 644
-#define NUM_OBJ 618
+#define NUM_NID 653
+#define NUM_SN 646
+#define NUM_LN 646
+#define NUM_OBJ 620
 
-static unsigned char lvalues[4461]={
+static unsigned char lvalues[4473]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -686,6 +686,8 @@ static unsigned char lvalues[4461]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x02,/* [4434] OBJ_ms_smartcard_login */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [4444] OBJ_ms_upn */
 0x29,0x01,0x01,0x85,0x1A,0x03,               /* [4454] OBJ_aes_128_cfb1 */
+0x29,0x01,0x01,0x85,0x1A,0x04,               /* [4460] OBJ_aes_192_cfb1 */
+0x29,0x01,0x01,0x85,0x1A,0x05,               /* [4466] OBJ_aes_256_cfb1 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1730,6 +1732,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"msUPN","Microsoft Universal Principal Name",NID_ms_upn,10,
 	&(lvalues[4444]),0},
 {"AES-128-CFB1","aes-128-cfb1",NID_aes_128_cfb1,6,&(lvalues[4454]),0},
+{"AES-192-CFB1","aes-192-cfb1",NID_aes_192_cfb1,6,&(lvalues[4460]),0},
+{"AES-256-CFB1","aes-256-cfb1",NID_aes_256_cfb1,6,&(lvalues[4466]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1741,10 +1745,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[420]),/* "AES-128-OFB" */
 &(nid_objs[423]),/* "AES-192-CBC" */
 &(nid_objs[425]),/* "AES-192-CFB" */
+&(nid_objs[651]),/* "AES-192-CFB1" */
 &(nid_objs[422]),/* "AES-192-ECB" */
 &(nid_objs[424]),/* "AES-192-OFB" */
 &(nid_objs[427]),/* "AES-256-CBC" */
 &(nid_objs[429]),/* "AES-256-CFB" */
+&(nid_objs[652]),/* "AES-256-CFB1" */
 &(nid_objs[426]),/* "AES-256-ECB" */
 &(nid_objs[428]),/* "AES-256-OFB" */
 &(nid_objs[91]),/* "BF-CBC" */
@@ -2493,10 +2499,12 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[420]),/* "aes-128-ofb" */
 &(nid_objs[423]),/* "aes-192-cbc" */
 &(nid_objs[425]),/* "aes-192-cfb" */
+&(nid_objs[651]),/* "aes-192-cfb1" */
 &(nid_objs[422]),/* "aes-192-ecb" */
 &(nid_objs[424]),/* "aes-192-ofb" */
 &(nid_objs[427]),/* "aes-256-cbc" */
 &(nid_objs[429]),/* "aes-256-cfb" */
+&(nid_objs[652]),/* "aes-256-cfb1" */
 &(nid_objs[426]),/* "aes-256-ecb" */
 &(nid_objs[428]),/* "aes-256-ofb" */
 &(nid_objs[376]),/* "algorithm" */
@@ -3240,6 +3248,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
 &(nid_objs[650]),/* OBJ_aes_128_cfb1                 1 1 1 1 666 3 */
+&(nid_objs[651]),/* OBJ_aes_192_cfb1                 1 1 1 1 666 4 */
+&(nid_objs[652]),/* OBJ_aes_256_cfb1                 1 1 1 1 666 5 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[185]),/* OBJ_X9cm                         1 2 840 10040 4 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */

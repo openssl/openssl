@@ -67,7 +67,7 @@ tags:
 
 tests:
 
-fips_aesavs: fips_aesavs.o
+fips_aesavs: fips_aesavs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_aesavs fips_aesavs.o ../../libcrypto.a
 
 fips_test: top
