@@ -27,8 +27,10 @@ L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
 L ENGINE	crypto/engine/engine.h		crypto/engine/eng_err.c
 L OCSP		crypto/ocsp/ocsp.h		crypto/ocsp/ocsp_err.c
 L UI		crypto/ui/ui.h			crypto/ui/ui_err.c
+L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
 L ECDSA		crypto/ecdsa/ecdsa.h		crypto/ecdsa/ecs_err.c
 L ECDH		crypto/ecdh/ecdh.h		crypto/ecdh/ech_err.c
+L STORE		crypto/store/store.h		crypto/store/str_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE

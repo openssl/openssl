@@ -135,6 +135,7 @@ typedef struct err_state_st
 #define ERR_LIB_COMP            41
 #define ERR_LIB_ECDSA		42
 #define ERR_LIB_ECDH		43
+#define ERR_LIB_STORE           44
 
 #define ERR_LIB_USER		128
 
@@ -165,6 +166,7 @@ typedef struct err_state_st
 #define COMPerr(f,r) ERR_PUT_error(ERR_LIB_COMP,(f),(r),__FILE__,__LINE__)
 #define ECDSAerr(f,r)  ERR_PUT_error(ERR_LIB_ECDSA,(f),(r),__FILE__,__LINE__)
 #define ECDHerr(f,r)  ERR_PUT_error(ERR_LIB_ECDH,(f),(r),__FILE__,__LINE__)
+#define STOREerr(f,r) ERR_PUT_error(ERR_LIB_STORE,(f),(r),__FILE__,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -219,6 +221,7 @@ typedef struct err_state_st
 #define ERR_R_COMP_LIB	ERR_LIB_COMP     /* 41 */
 #define ERR_R_ECDSA_LIB ERR_LIB_ECDSA	 /* 42 */
 #define ERR_R_ECDH_LIB  ERR_LIB_ECDH	 /* 43 */
+#define ERR_R_STORE_LIB ERR_LIB_STORE    /* 44 */
 
 #define ERR_R_NESTED_ASN1_ERROR			58
 #define ERR_R_BAD_ASN1_OBJECT_HEADER		59

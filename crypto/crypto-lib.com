@@ -80,7 +80,8 @@ $ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
-		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5"
+		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
+		  "STORE"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -265,6 +266,7 @@ $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
+$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $!
 $! Setup exceptional compilations
 $!

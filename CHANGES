@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add the STORE type.  The intention is to provide a common interface
+     to certificate and key stores, be they simple file-based stores, or
+     HSM-type store, or LDAP stores, or...
+     NOTE: The code is currently UNTESTED and isn't really used anywhere.
+     [Richard Levitte]
+
   *) Add a generic structure called OPENSSL_ITEM.  This can be used to
      pass a list of arguments to any function as well as provide a way
      for a function to pass data back to the caller.
