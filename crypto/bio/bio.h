@@ -591,8 +591,6 @@ int BIO_sock_init(void );
 void BIO_sock_cleanup(void);
 int BIO_set_tcp_ndelay(int sock,int turn_on);
 
-void ERR_load_BIO_strings(void );
-
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(char *host_port);

@@ -1011,8 +1011,6 @@ int		OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
 const char *	OBJ_bsearch(const char *key,const char *base,int num,int size,
 	int (*cmp)(const void *, const void *));
 
-void		ERR_load_OBJ_strings(void );
-
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);
 int		OBJ_create(const char *oid,const char *sn,const char *ln);

@@ -183,8 +183,6 @@ int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
-void	ERR_load_DSA_strings(void );
-
 DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);

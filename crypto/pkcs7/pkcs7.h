@@ -300,8 +300,6 @@ DECLARE_ASN1_FUNCTIONS(PKCS7)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
 
-void ERR_load_PKCS7_strings(void);
-
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 

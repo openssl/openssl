@@ -886,8 +886,6 @@ void ASN1_HEADER_free(ASN1_HEADER *a);
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 
-void ERR_load_ASN1_strings(void);
-
 /* Not used that much at this point, except for the first two */
 ASN1_METHOD *X509_asn1_meth(void);
 ASN1_METHOD *RSAPrivateKey_asn1_meth(void);

@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
 	}
 
 
-#if 0
+#if 1
 	timings(P_192, 0, ctx);
 	timings(P_192, 1, ctx);
 	timings(P_224, 0, ctx);

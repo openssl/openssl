@@ -538,8 +538,6 @@ int	EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
 		char *out, int *outl);
 int	EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
-void	ERR_load_EVP_strings(void );
-
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);

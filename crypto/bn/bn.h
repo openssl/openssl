@@ -420,7 +420,6 @@ int	BN_is_prime(const BIGNUM *p,int nchecks,
 int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
 	void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
 	int do_trial_division);
-void	ERR_load_BN_strings(void );
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);

@@ -528,8 +528,6 @@ void    PEM_SignUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
 int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 		unsigned int *siglen, EVP_PKEY *pkey);
 
-void	ERR_load_PEM_strings(void);
-
 int	PEM_def_callback(char *buf, int num, int w, void *key);
 void	PEM_proc_type(char *buf, int type);
 void	PEM_dek_info(char *buf, const char *type, int len, char *str);

@@ -829,7 +829,6 @@ const char *	X509_get_default_private_dir(void );
 
 X509_REQ *	X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 X509 *		X509_REQ_to_X509(X509_REQ *r, int days,EVP_PKEY *pkey);
-void ERR_load_X509_strings(void );
 
 DECLARE_ASN1_FUNCTIONS(X509_ALGOR)
 DECLARE_ASN1_FUNCTIONS(X509_VAL)

@@ -110,7 +110,6 @@ long CONF_get_number(LHASH *conf,char *group,char *name);
 void CONF_free(LHASH *conf);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
-void ERR_load_CONF_strings(void );
 
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */
