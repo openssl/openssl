@@ -56,7 +56,7 @@ used for the corresponding B<friendlyName> or B<localKeyID> in the
 PKCS12 structure.
 
 Either B<pkey>, B<cert> or both can be B<NULL> to indicate that no key or
-certficate is required. In previous versions both hasves to be present or
+certficate is required. In previous versions both had to be present or
 a fatal error is returned.
 
 B<nid_key> or B<nid_cert> can be set to -1 indicating that no encryption
