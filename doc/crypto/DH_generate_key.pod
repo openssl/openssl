@@ -21,8 +21,9 @@ value to compute the shared key.
 
 DH_generate_key() expects B<dh> to contain the shared parameters
 B<dh-E<gt>p> and B<dh-E<gt>g>. It generates a random private DH value
-B<dh-E<gt>priv_key>, and it computes the corresponding public value
-B<dh-E<gt>pub_key>, which can then be published.
+unless B<dh-E<gt>priv_key> is already set, and computes the
+corresponding public value B<dh-E<gt>pub_key>, which can then be
+published.
 
 DH_compute_key() computes the shared secret from the private DH value
 in B<dh> and the other party's public value in B<pub_key> and stores
@@ -45,7 +46,5 @@ L<dh(3)|dh(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<DH_size(3)|DH_size(3)>
 
 DH_generate_key() and DH_compute_key() are available in all versions
 of SSLeay and OpenSSL.
-Up to version 0.9.6b, DH_generate_key() would not generate a new
-key if B<dh-E<gt>priv_key> was already set.
 
 =cut
