@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Disable optimized squaring variant in BN_mod_mul_montgomery,
+     it can return incorrect results.
+     [Bodo Moeller]
+
   *) Disable the check for content being present when verifying detached
      signatures in pk7_smime.c. Some versions of Netscape (wrongly)
      include zero length content when signing messages.

@@ -85,7 +85,8 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 
 	if (a == b)
 		{
-#if 0 /* buggy -- try squaring  g  in the following parameters
+#if 0 /* buggy -- try squaring  g  (after converting it to Montgomery
+         representation) in the following parameters
          (but note that squaring 2 or 4 works):
 Diffie-Hellman-Parameters: (1024 bit)
     prime:
@@ -109,7 +110,7 @@ Sgh5jjQE3e+VGbPNOkMbMCsKbfJfFDdP4TVtbVHCReSFtXZiXn7G9ExC6aY37WsL
 		bn_wexpand(tmp2,a->top*4);
 		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);
 		tmp->top=a->top*2;
-		if (tmp->top > 0 && tmp->d[tmp->top-1] == 0)
+		while (tmp->top > 0 && tmp->d[tmp->top-1] == 0)
 			tmp->top--;
 #else
 		if (!BN_sqr(tmp,a,ctx)) goto err;
