@@ -164,6 +164,26 @@ STACK_OF(type) \
 #endif
 
 /* This block of defines is updated by util/mkstack.pl, please do not touch! */
+#define sk_CRYPTO_dynlock_new(st) SKM_sk_new(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_new_null() SKM_sk_new_null(CRYPTO_dynlock)
+#define sk_CRYPTO_dynlock_free(st) SKM_sk_free(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_num(st) SKM_sk_num(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_value(st, i) SKM_sk_value(CRYPTO_dynlock, (st), (i))
+#define sk_CRYPTO_dynlock_set(st, i, val) SKM_sk_set(CRYPTO_dynlock, (st), (i), (val))
+#define sk_CRYPTO_dynlock_zero(st) SKM_sk_zero(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_push(st, val) SKM_sk_push(CRYPTO_dynlock, (st), (val))
+#define sk_CRYPTO_dynlock_unshift(st, val) SKM_sk_unshift(CRYPTO_dynlock, (st), (val))
+#define sk_CRYPTO_dynlock_find(st, val) SKM_sk_find(CRYPTO_dynlock, (st), (val))
+#define sk_CRYPTO_dynlock_delete(st, i) SKM_sk_delete(CRYPTO_dynlock, (st), (i))
+#define sk_CRYPTO_dynlock_delete_ptr(st, ptr) SKM_sk_delete_ptr(CRYPTO_dynlock, (st), (ptr))
+#define sk_CRYPTO_dynlock_insert(st, val, i) SKM_sk_insert(CRYPTO_dynlock, (st), (val), (i))
+#define sk_CRYPTO_dynlock_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(CRYPTO_dynlock, (st), (cmp))
+#define sk_CRYPTO_dynlock_dup(st) SKM_sk_dup(CRYPTO_dynlock, st)
+#define sk_CRYPTO_dynlock_pop_free(st, free_func) SKM_sk_pop_free(CRYPTO_dynlock, (st), (free_func))
+#define sk_CRYPTO_dynlock_shift(st) SKM_sk_shift(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_pop(st) SKM_sk_pop(CRYPTO_dynlock, (st))
+#define sk_CRYPTO_dynlock_sort(st) SKM_sk_sort(CRYPTO_dynlock, (st))
+
 #define sk_CRYPTO_EX_DATA_FUNCS_new(st) SKM_sk_new(CRYPTO_EX_DATA_FUNCS, (st))
 #define sk_CRYPTO_EX_DATA_FUNCS_new_null() SKM_sk_new_null(CRYPTO_EX_DATA_FUNCS)
 #define sk_CRYPTO_EX_DATA_FUNCS_free(st) SKM_sk_free(CRYPTO_EX_DATA_FUNCS, (st))

@@ -15,10 +15,27 @@ CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
 
  int CRYPTO_num_locks(void);
 
+
+ /* struct CRYPTO_dynlock_value needs to be defined by the user */
+ typedef struct CRYPTO_dynlock_value CRYPTO_dynlock;
+
+ void CRYPTO_set_dynlock_create_callback(CRYPTO_dynlock *(*dyn_create_function)
+	(char *file, int line));
+ void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
+	(int mode, CRYPTO_dynlock *l, const char *file, int line));
+ void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
+	(CRYPTO_dynlock *l, const char *file, int line));
+
+ int CRYPTO_get_new_dynlockid(void);
+
+ void CRYPTO_destroy_dynlockid(int i);
+
+ void CRYPTO_lock(int mode, int n, const char *file, int line);
+
 =head1 DESCRIPTION
 
 OpenSSL can safely be used in multi-threaded applications provided
-that two callback functions are set.
+that at least two callback functions are set.
 
 locking_function(int mode, int n, const char *file, int line) is
 needed to perform locking on shared data stuctures. Multi-threaded
@@ -35,9 +52,55 @@ id_function(void) is a function that returns a thread ID. It is not
 needed on Windows nor on platforms where getpid() returns a different
 ID for each thread (most notably Linux).
 
+Additionally, OpenSSL supports dynamic locks, and sometimes, some parts
+of OpenSSL need it for better performance.  To enable this, the following
+is required:
+
+=item *
+Three additional callback function, dyn_create_function, dyn_lock_function
+and dyn_destroy_function.
+
+=item *
+A structure defined with the data that each lock needs to handle.
+
+struct CRYPTO_dynlock_value has to be defined to contain whatever structure
+is needed to handle locks.
+
+dyn_create_function(const char *file, int line) is needed to create a
+lock.  Multi-threaded applications might crash at random if it is not set.
+
+dyn_lock_function(int mode, CRYPTO_dynlock *l, const char *file, int line)
+is needed to perform locking off dynamic lock nunmbered n. Multi-threaded
+applications might crash at random if it is not set.
+
+dyn_destroy_function(CRYPTO_dynlock *l, const char *file, int line) is
+needed to destroy the lock l. Multi-threaded applications might crash at
+random if it is not set.
+
+CRYPTO_get_new_dynlockid() is used to create locks.  It will call
+dyn_create_function for the actual creation.
+
+CRYPTO_destroy_dynlockid() is used to destroy locks.  It will call
+dyn_destroy_function for the actual destruction.
+
+CRYPTO_lock() is used to lock and unlock the locks.  mode is a bitfield
+describing what should be done with the lock.  n is the number of the
+lock as returned from CRYPTO_get_new_dynlockid().  mode can be combined
+from the following values.  These values are pairwise exclusive, with
+undefined behavior if misused (for example, CRYPTO_READ and CRYPTO_WRITE
+should not be used together):
+
+	CRYPTO_LOCK	0x01
+	CRYPTO_UNLOCK	0x02
+	CRYPTO_READ	0x04
+	CRYPTO_WRITE	0x08
+
 =head1 RETURN VALUES
 
 CRYPTO_num_locks() returns the required number of locks.
+
+CRYPTO_get_new_dynlockid() returns the index to the newly created lock.
+
 The other functions return no values.
 
 =head1 NOTE
@@ -62,6 +125,7 @@ Solaris, Irix and Win32.
 CRYPTO_set_locking_callback() and CRYPTO_set_id_callback() are
 available in all versions of SSLeay and OpenSSL.
 CRYPTO_num_locks() was added in OpenSSL 0.9.4.
+All functions dealing with dynamic locks were added in OpenSSL 0.9.5b-dev.
 
 =head1 SEE ALSO
 

@@ -1810,3 +1810,10 @@ i2d_RSA_NET                             2406
 d2i_RSA_NET_2                           2407
 d2i_RSA_NET                             2408
 DSO_bind_func                           2409
+CRYPTO_get_new_dynlockid                2410
+sk_new_null                             2411
+CRYPTO_set_dynlock_destroy_callback     2412
+CRYPTO_destroy_dynlockid                2413
+CRYPTO_set_dynlock_size                 2414
+CRYPTO_set_dynlock_create_callback      2415
+CRYPTO_set_dynlock_lock_callback        2416
