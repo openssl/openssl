@@ -83,6 +83,9 @@
 
 /* #define RFILE ".rnd" - defined in ../../e_os.h */
 
+/* Note that these functions are intended for seed files only.
+ * Entropy devices and EGD sockets are handled in rand_unix.c */
+
 int RAND_load_file(const char *file, long bytes)
 	{
 	/* If bytes >= 0, read up to 'bytes' bytes.
@@ -117,7 +120,7 @@ int RAND_load_file(const char *file, long bytes)
 		if (bytes > 0)
 			{
 			bytes-=n;
-			if (bytes == 0) break;
+			if (bytes <= 0) break;
 			}
 		}
 	fclose(in);
