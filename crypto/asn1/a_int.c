@@ -125,13 +125,8 @@ int i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 
 	ASN1_put_object(&p,0,ret,V_ASN1_INTEGER,V_ASN1_UNIVERSAL);
 	if (pad) *(p++)=pb;
-	if (a->length == 0)
-		*(p++)=0;
-	else if (t == V_ASN1_INTEGER)
-		{
-		memcpy(p,a->data,(unsigned int)a->length);
-		p+=a->length;
-		}
+	if (a->length == 0) *(p++)=0;
+	else if (t == V_ASN1_INTEGER) memcpy(p,a->data,(unsigned int)a->length);
 	else {
 		/* Begin at the end of the encoding */
 		n=a->data + a->length - 1;
@@ -148,10 +143,9 @@ int i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 		i--;
 		/* Complement any octets left */
 		for(;i > 0; i--) *(p--) = *(n--) ^ 0xff;
-		p += a->length;
 	}
 
-	*pp=p;
+	*pp+=r;
 	return(r);
 	}
 
@@ -159,7 +153,7 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 	     long length)
 	{
 	ASN1_INTEGER *ret=NULL;
-	unsigned char *p,*to,*s;
+	unsigned char *p,*to,*s, *pend;
 	long len;
 	int inf,tag,xclass;
 	int i;
@@ -174,6 +168,7 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 
 	p= *pp;
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
+	pend = p + len;
 	if (inf & 0x80)
 		{
 		i=ASN1_R_BAD_OBJECT_HEADER;
@@ -220,13 +215,11 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		if(!i) {
 			*s = 1;
 			s[len] = 0;
-			p += len;
 			len++;
 		} else {
 			*(to--) = (*(p--) ^ 0xff) + 1;
 			i--;
 			for(;i > 0; i--) *(to--) = *(p--) ^ 0xff;
-			p += len;
 		}
 	} else {
 		ret->type=V_ASN1_INTEGER;
@@ -236,14 +229,13 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 			len--;
 			}
 		memcpy(s,p,(int)len);
-		p+=len;
 	}
 
 	if (ret->data != NULL) Free((char *)ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
-	*pp=p;
+	*pp=pend;
 	return(ret);
 err:
 	ASN1err(ASN1_F_D2I_ASN1_INTEGER,i);

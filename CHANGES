@@ -4,6 +4,14 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix a bug in d2i_ASN1_INTEGER() and i2d_ASN1_INTEGER() which can mess
+     up the length of negative integers. This has now been simplified to just
+     store the length when it is first determined and use it later, rather
+     than trying to keep track of where data is copied and updating it to
+     point to the end.
+     [Steve Henson, reported by Brien Wheeler
+      <bwheeler@authentica-security.com>]
+
   *) Add a new function PKCS7_signatureVerify. This allows the verification
      of a PKCS#7 signature but with the signing certificate passed to the
      function itself. This contrasts with PKCS7_dataVerify which assumes the
