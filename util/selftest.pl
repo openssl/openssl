@@ -132,6 +132,7 @@ if (system("make 2>&1 | tee make.log") > 255) {
 $_=$options;
 s/no-asm//;
 s/no-shared//;
+s/no-krb5//;
 if (/no-/)
 {
     print OUT "Test skipped.\n";
