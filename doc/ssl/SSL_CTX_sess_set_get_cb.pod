@@ -79,7 +79,7 @@ L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>.
 
 L<ssl(3)|ssl(3)>, L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
-L<SSL_CTX_flush_sessions(3)|<SSL_CTX_flush_sessions(3)>,
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>,
 L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
 
 =cut

@@ -110,7 +110,7 @@ L<RSA_blinding_on(3)|RSA_blinding_on(3)>,
 L<RSA_set_method(3)|RSA_set_method(3)>, L<RSA_print(3)|RSA_print(3)>,
 L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>,
 L<RSA_private_encrypt(3)|RSA_private_encrypt(3)>,
-L<RSA_sign_ASN_OCTET_STRING(3)|RSA_sign_ASN_OCTET_STRING(3)>,
+L<RSA_sign_ASN1_OCTET_STRING(3)|RSA_sign_ASN1_OCTET_STRING(3)>,
 L<RSA_padding_add_PKCS1_type_1(3)|RSA_padding_add_PKCS1_type_1(3)> 
 
 =cut
