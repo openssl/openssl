@@ -4,6 +4,16 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New options to smime application. -inform and -outform
+     allow alternative formats for the S/MIME message including
+     PEM and DER. The -content option allows the content to be
+     specified separately. This should allow things like Netscape
+     form signing output easier to verify.
+     [Steve Henson]
+
+  *) Fix the ASN1 encoding of tags using the 'long form'.
+     [Steve Henson]
+
   *) New ASN1 functions, i2c_* and c2i_* for INTEGER and BIT
      STRING types. These convert content octets to and from the
      underlying type. The actual tag and length octets are

@@ -75,7 +75,7 @@ int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	len = i2c_ASN1_BIT_STRING(a, NULL);	
 	ret=ASN1_object_size(0,len,V_ASN1_BIT_STRING);
 	if(pp) {
-		ASN1_put_object(pp,0,ret,V_ASN1_BIT_STRING,V_ASN1_UNIVERSAL);
+		ASN1_put_object(pp,0,len,V_ASN1_BIT_STRING,V_ASN1_UNIVERSAL);
 		i2c_ASN1_BIT_STRING(a, pp);	
 	}
 	return ret;
