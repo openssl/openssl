@@ -114,7 +114,7 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 	return ASN1_GENERALIZEDTIME_set(s,t);
 	}
 
-int ASN1_TIME_check(ASN1_TIME *t)
+int ASN1_TIME_check(const ASN1_TIME *t)
 	{
 	if (t->type == V_ASN1_GENERALIZEDTIME)
 		return ASN1_GENERALIZEDTIME_check(t);
@@ -124,7 +124,8 @@ int ASN1_TIME_check(ASN1_TIME *t)
 	}
 
 /* Convert an ASN1_TIME structure to GeneralizedTime */
-ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
+ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
+						   ASN1_GENERALIZEDTIME **out)
 	{
 	ASN1_GENERALIZEDTIME *ret;
 	char *str;

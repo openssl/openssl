@@ -754,7 +754,7 @@ int ASN1_INTEGER_cmp(ASN1_INTEGER *x, ASN1_INTEGER *y);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
 
-int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
+int ASN1_UTCTIME_check(const ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
@@ -762,7 +762,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 #endif
 
-int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, char *str); 
 
@@ -793,8 +793,8 @@ DECLARE_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_TIME)
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
-int ASN1_TIME_check(ASN1_TIME *t);
-ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
+int ASN1_TIME_check(const ASN1_TIME *t);
+ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
 
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
 			int (*func)(), int ex_tag, int ex_class, int is_set);

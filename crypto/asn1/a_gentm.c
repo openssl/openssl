@@ -115,7 +115,7 @@ err:
 
 #endif
 
-int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
 	{
 	static int min[9]={ 0, 0, 1, 1, 0, 0, 0, 0, 0};
 	static int max[9]={99, 99,12,31,23,59,59,12,59};
