@@ -105,7 +105,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 				ok = (X509_load_cert_crl_file(ctx,file,
 					      X509_FILETYPE_PEM) != 0);
 
-			if (!ok)
+			else
 				ok = (X509_load_cert_crl_file(ctx,X509_get_default_cert_file(),
 					      X509_FILETYPE_PEM) != 0);
 
