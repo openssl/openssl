@@ -706,6 +706,14 @@ int (*UI_method_get_writer(UI_METHOD *method))(UI*,UI_STRING*)
 		return NULL;
 	}
 
+int (*UI_method_get_flusher(UI_METHOD *method))(UI*)
+	{
+	if (method)
+		return method->ui_flush;
+	else
+		return NULL;
+	}
+
 int (*UI_method_get_reader(UI_METHOD *method))(UI*,UI_STRING*)
 	{
 	if (method)
