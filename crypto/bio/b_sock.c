@@ -483,7 +483,7 @@ int bind_mode;
 	struct sockaddr_in server,client;
 	int s= -1,cs;
 	unsigned char ip[4];
-	short port;
+	unsigned short port;
 	char *str,*h,*p,*e;
 	unsigned long l;
 	int err_num;
@@ -518,7 +518,7 @@ int bind_mode;
 
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
-	server.sin_port=htons((unsigned short)port);
+	server.sin_port=htons(port);
 
 	if (strcmp(h,"*") == 0)
 		server.sin_addr.s_addr=INADDR_ANY;
@@ -610,7 +610,7 @@ char **addr;
 	int ret=INVALID_SOCKET;
 	static struct sockaddr_in from;
 	unsigned long l;
-	short port;
+	unsigned short port;
 	int len;
 	char *p;
 
