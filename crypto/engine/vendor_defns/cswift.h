@@ -46,7 +46,88 @@ typedef unsigned long     SW_U32;                 /* 32 bit integer   */
   } SW_U64;                                         /* 64 bit integer   */
 #endif
 
+/* status codes */
 #define SW_OK                 (0L)
+#define SW_ERR_BASE           (-10000L)
+#define SW_ERR_NO_CARD        (SW_ERR_BASE-1) /* The Card is not present   */
+#define SW_ERR_CARD_NOT_READY (SW_ERR_BASE-2) /* The card has not powered  */
+                                              /*    up yet                 */
+#define SW_ERR_TIME_OUT       (SW_ERR_BASE-3) /* Execution of a command    */
+                                              /*    time out               */
+#define SW_ERR_NO_EXECUTE     (SW_ERR_BASE-4) /* The Card failed to        */
+                                              /*    execute the command    */
+#define SW_ERR_INPUT_NULL_PTR (SW_ERR_BASE-5) /* a required pointer is     */
+                                              /*    NULL                   */
+#define SW_ERR_INPUT_SIZE     (SW_ERR_BASE-6) /* size is invalid, too      */
+                                              /*    small, too large.      */
+#define SW_ERR_INVALID_HANDLE (SW_ERR_BASE-7) /* Invalid SW_ACC_CONTEXT    */
+                                              /*    handle                 */
+#define SW_ERR_PENDING        (SW_ERR_BASE-8) /* A request is already out- */
+                                              /*    standing at this       */
+                                              /*    context handle         */
+#define SW_ERR_AVAILABLE      (SW_ERR_BASE-9) /* A result is available.    */
+#define SW_ERR_NO_PENDING     (SW_ERR_BASE-10)/* No request is pending.    */
+#define SW_ERR_NO_MEMORY      (SW_ERR_BASE-11)/* Not enough memory         */
+#define SW_ERR_BAD_ALGORITHM  (SW_ERR_BASE-12)/* Invalid algorithm type    */
+                                              /*    in SW_PARAM structure  */
+#define SW_ERR_MISSING_KEY    (SW_ERR_BASE-13)/* No key is associated with */
+                                              /*    context.               */
+                                              /*    swAttachKeyParam() is  */
+                                              /*    not called.            */
+#define SW_ERR_KEY_CMD_MISMATCH \
+                              (SW_ERR_BASE-14)/* Cannot perform requested  */
+                                              /*    SW_COMMAND_CODE since  */
+                                              /*    key attached via       */
+                                              /*    swAttachKeyParam()     */
+                                              /*    cannot be used for this*/
+                                              /*    SW_COMMAND_CODE.       */
+#define SW_ERR_NOT_IMPLEMENTED \
+                              (SW_ERR_BASE-15)/* Not implemented           */
+#define SW_ERR_BAD_COMMAND    (SW_ERR_BASE-16)/* Bad command code          */
+#define SW_ERR_BAD_ITEM_SIZE  (SW_ERR_BASE-17)/* too small or too large in */
+                                              /*    the "initems" or       */
+                                              /*    "outitems".            */
+#define SW_ERR_BAD_ACCNUM     (SW_ERR_BASE-18)/* Bad accelerator number    */
+#define SW_ERR_SELFTEST_FAIL  (SW_ERR_BASE-19)/* At least one of the self  */
+                                              /*    test fail, look at the */
+                                              /*    selfTestBitmap in      */
+                                              /*    SW_ACCELERATOR_INFO for*/
+                                              /*    details.               */
+#define SW_ERR_MISALIGN       (SW_ERR_BASE-20)/* Certain alogrithms require*/
+                                              /*    key materials aligned  */
+                                              /*    in certain order, e.g. */
+                                              /*    128 bit for CRT        */
+#define SW_ERR_OUTPUT_NULL_PTR \
+                              (SW_ERR_BASE-21)/* a required pointer is     */
+                                              /*    NULL                   */
+#define SW_ERR_OUTPUT_SIZE \
+                              (SW_ERR_BASE-22)/* size is invalid, too      */
+                                              /*    small, too large.      */
+#define SW_ERR_FIRMWARE_CHECKSUM \
+                              (SW_ERR_BASE-23)/* firmware checksum mismatch*/
+                                              /*    download failed.       */
+#define SW_ERR_UNKNOWN_FIRMWARE \
+                              (SW_ERR_BASE-24)/* unknown firmware error    */
+#define SW_ERR_INTERRUPT      (SW_ERR_BASE-25)/* request is abort when     */
+                                              /*    it's waiting to be     */
+                                              /*    completed.             */
+#define SW_ERR_NVWRITE_FAIL   (SW_ERR_BASE-26)/* error in writing to Non-  */
+                                              /*    volatile memory        */
+#define SW_ERR_NVWRITE_RANGE  (SW_ERR_BASE-27)/* out of range error in     */
+                                              /*    writing to NV memory   */
+#define SW_ERR_RNG_ERROR      (SW_ERR_BASE-28)/* Random Number Generation  */
+                                              /*    failure                */
+#define SW_ERR_DSS_FAILURE    (SW_ERR_BASE-29)/* DSS Sign or Verify failure*/
+#define SW_ERR_MODEXP_FAILURE (SW_ERR_BASE-30)/* Failure in various math   */
+                                              /*    calculations           */
+#define SW_ERR_ONBOARD_MEMORY (SW_ERR_BASE-31)/* Error in accessing on -   */
+                                              /*    board memory           */
+#define SW_ERR_FIRMWARE_VERSION \
+                              (SW_ERR_BASE-32)/* Wrong version in firmware */
+                                              /*    update                 */
+#define SW_ERR_ZERO_WORKING_ACCELERATOR \
+                              (SW_ERR_BASE-44)/* All accelerators are bad  */
+
 
   /* algorithm type */
 #define SW_ALG_CRT          1
