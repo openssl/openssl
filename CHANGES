@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Add a configuration entry for gcc on UnixWare.
+     [Gary Benson <gbenson@redhat.com>]
+
   +) New functions/macros
 
           SSL_CTX_set_msg_callback(ctx, cb)
@@ -236,8 +239,11 @@
      "Douglas E. Engert" <deengert@anl.gov>.
      [Lutz Jaenicke]
 
-  +) Add support for shared libraries for Unixware-7 and support including
+  ?) Add support for shared libraries for Unixware-7 and support including
      shared libraries for OpenUNIX-8 (Boyd Lynn Gerber <gerberb@zenez.com>).
+     [Lutz Jaenicke]
+
+  -) OpenUNIX-8 support (Boyd Lynn Gerber <gerberb@zenez.com>)
      [Lutz Jaenicke]
 
   *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
@@ -404,7 +410,7 @@
      anyway).
      [Ben Laurie]
 
-  +) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
+  *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
      [Andy Polyakov]
 
   *) Modified SSL library such that the verify_callback that has been set

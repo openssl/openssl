@@ -3289,6 +3289,29 @@ $shared_cflag = -Kpic
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** unixware-7-gcc
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= gnu-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** unixware-7-pentium
 $cc           = cc
 $cflags       = -O -DFILIO_H -Kalloca -Kpentium

@@ -404,6 +404,7 @@ my %table=(
 "unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "unixware-7-pentium","cc:-O -DFILIO_H -Kalloca -Kpentium::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "unixware-7-pentium_pro","cc:-O -DFILIO_H -Kalloca -Kpentium_pro::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"unixware-7-gcc","gcc:-DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:gnu-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # OpenUNIX 8
 "OpenUNIX-8","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
