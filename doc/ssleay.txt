@@ -1,6 +1,22 @@
 
 Bundle of old SSLeay documentation files [OBSOLETE!]
 
+*** WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! ***
+
+OBSOLETE means that nothing in this document should be trusted.  This
+document is provided mostly for historical purposes (it wasn't even up
+to date at the time SSLeay 0.8.1 was released) and as inspiration.  If
+you copy some snippet of code from this document, please _check_ that
+it really is correct from all points of view.  For example, you can
+check with the other documents in this directory tree, or by comparing
+with relevant parts of the include files.
+
+People have done the mistake of trusting what's written here.  Please
+don't do that.
+
+*** WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! ***
+
+
 ==== readme ========================================================
 
 This is the old 0.6.6 docuementation.  Most of the cipher stuff is still
