@@ -239,6 +239,7 @@ static double Time_F(int s)
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
+	des_cblock *buf_as_des_cblock = NULL;
 	int ret=1;
 #define ALGOR_NUM	14
 #define SIZE_NUM	5
@@ -360,6 +361,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
+	buf_as_des_cblock = (des_cblock *)buf;
 	if ((buf2=(unsigned char *)Malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -613,7 +615,8 @@ int MAIN(int argc, char **argv)
 		count*=2;
 		Time_F(START);
 		for (i=count; i; i--)
-			des_ecb_encrypt(buf,buf, &(sch[0]),DES_ENCRYPT);
+			des_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
+				&(sch[0]),DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
 	c[D_MD2][0]=count/10;
@@ -868,7 +871,7 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_CBC_IDEA][j]); count++)
 				idea_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&idea_ks,
-					(unsigned char *)&(iv[0]),IDEA_ENCRYPT);
+					iv,IDEA_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_IDEA],d);
@@ -886,7 +889,7 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_CBC_RC2][j]); count++)
 				RC2_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&rc2_ks,
-					(unsigned char *)&(iv[0]),RC2_ENCRYPT);
+					iv,RC2_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_RC2],d);
@@ -904,7 +907,7 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_CBC_RC5][j]); count++)
 				RC5_32_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&rc5_ks,
-					(unsigned char *)&(iv[0]),RC5_ENCRYPT);
+					iv,RC5_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_RC5],d);
@@ -922,7 +925,7 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_CBC_BF][j]); count++)
 				BF_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&bf_ks,
-					(unsigned char *)&(iv[0]),BF_ENCRYPT);
+					iv,BF_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_BF],d);
@@ -940,7 +943,7 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_CBC_CAST][j]); count++)
 				CAST_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&cast_ks,
-					(unsigned char *)&(iv[0]),CAST_ENCRYPT);
+					iv,CAST_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_CAST],d);
