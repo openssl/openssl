@@ -314,7 +314,7 @@ static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c)
 	if (os != NULL) ASN1_STRING_free(os);
 	return(1);
 err:
-	ASN1err(ASN1_F_ASN1_COLLATE_PRIMATIVE,c->error);
+	ASN1err(ASN1_F_ASN1_COLLATE_PRIMITIVE,c->error);
 	if (os != NULL) ASN1_STRING_free(os);
 	if (b.data != NULL) Free(b.data);
 	return(0);

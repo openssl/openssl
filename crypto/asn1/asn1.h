@@ -74,6 +74,7 @@ extern "C" {
 #define V_ASN1_PRIVATE			0xc0
 
 #define V_ASN1_CONSTRUCTED		0x20
+#define V_ASN1_PRIMITIVE_TAG		0x1f
 #define V_ASN1_PRIMATIVE_TAG		0x1f
 
 #define V_ASN1_APP_CHOOSE		-2	/* let the recipent choose */
@@ -695,7 +696,7 @@ ASN1_STRING *ASN1_pack_string(char *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
 #define ASN1_F_A2I_ASN1_ENUMERATED			 236
 #define ASN1_F_A2I_ASN1_INTEGER				 101
 #define ASN1_F_A2I_ASN1_STRING				 102
-#define ASN1_F_ASN1_COLLATE_PRIMATIVE			 103
+#define ASN1_F_ASN1_COLLATE_PRIMITIVE			 103
 #define ASN1_F_ASN1_D2I_BIO				 104
 #define ASN1_F_ASN1_D2I_FP				 105
 #define ASN1_F_ASN1_DUP					 106

@@ -92,8 +92,8 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag, int *pclass,
 	if (!max) goto err;
 	ret=(*p&V_ASN1_CONSTRUCTED);
 	xclass=(*p&V_ASN1_PRIVATE);
-	i= *p&V_ASN1_PRIMATIVE_TAG;
-	if (i == V_ASN1_PRIMATIVE_TAG)
+	i= *p&V_ASN1_PRIMITIVE_TAG;
+	if (i == V_ASN1_PRIMITIVE_TAG)
 		{		/* high-tag */
 		p++;
 		if (--max == 0) goto err;
@@ -186,10 +186,10 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	i=(constructed)?V_ASN1_CONSTRUCTED:0;
 	i|=(xclass&V_ASN1_PRIVATE);
 	if (tag < 31)
-		*(p++)=i|(tag&V_ASN1_PRIMATIVE_TAG);
+		*(p++)=i|(tag&V_ASN1_PRIMITIVE_TAG);
 	else
 		{
-		*(p++)=i|V_ASN1_PRIMATIVE_TAG;
+		*(p++)=i|V_ASN1_PRIMITIVE_TAG;
 		while (tag > 0x7f)
 			{
 			*(p++)=(tag&0x7f)|0x80;
