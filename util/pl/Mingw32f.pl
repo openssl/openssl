@@ -11,9 +11,9 @@ $rm='del';
 
 $cc='gcc';
 if ($debug)
-	{ $cflags="-g2 -ggdb"; }
+	{ $cflags="-g2 -ggdb -DDSO_WIN32"; }
 else
-	{ $cflags="-O3 -fomit-frame-pointer"; }
+	{ $cflags="-O3 -fomit-frame-pointer -DDSO_WIN32"; }
 
 $obj='.o';
 $ofile='-o ';

@@ -17,9 +17,9 @@ $mkdir='gmkdir';
 
 $cc='gcc';
 if ($debug)
-	{ $cflags="-DL_ENDIAN -g2 -ggdb"; }
+	{ $cflags="-DL_ENDIAN -DDSO_WIN32 -g2 -ggdb"; }
 else
-	{ $cflags="-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall"; }
+	{ $cflags="-DL_ENDIAN -DDSO_WIN32 -fomit-frame-pointer -O3 -m486 -Wall"; }
 
 if ($gaswin and !$no_asm)
 	{

@@ -12,7 +12,7 @@ $rm='del';
 
 # C compiler stuff
 $cc='cl';
-$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN';
+$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
@@ -22,7 +22,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG -DDSO_WIN32";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}

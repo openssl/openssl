@@ -52,3 +52,12 @@
   device, or the built-in crypto routines will be used, just as in the
   default OpenSSL distribution.
 
+
+  PROBLEMS
+  ========
+
+  It seems like the ENGINE part doesn't work too well with Cryptoswift on
+  Win32.  A quick test done right before the release showed that trying
+  "openssl speed -engine cswift" generated errors.  If the DSO gets enabled,
+  an attempt is made to write at memory address 0x00000002.
+
