@@ -1,3 +1,4 @@
+#define DEBUG
 /* crypto/rand/rand_win.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -109,51 +110,246 @@
  *
  */
 
+#include "cryptlib.h"
+#include <openssl/rand.h>
+#include "rand_lcl.h"
 
 #if defined(WINDOWS) || defined(WIN32)
-#include "cryptlib.h"
 #include <windows.h>
-#include <openssl/rand.h>
-/* XXX There are probably other includes missing here ... */
-
-
-#if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
-#if !defined(NO_SHA) && !defined(NO_SHA1)
-#define USE_SHA1_RAND
-#elif !defined(NO_MD5)
-#define USE_MD5_RAND
-#elif !defined(NO_MDC2) && !defined(NO_DES)
-#define USE_MDC2_RAND
-#elif !defined(NO_MD2)
-#define USE_MD2_RAND
-#else
-#error No message digest algorithm available
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0400
 #endif
+#include <wincrypt.h>
+#include <tlhelp32.h>
+
+/* Intel hardware RNG CSP -- available from
+ * http://developer.intel.com/design/security/rng/redist_license.htm
+ */
+#define PROV_INTEL_SEC 22
+#define INTEL_DEF_PROV "Intel Hardware Cryptographic Service Provider"
+
+static void readtimer(void);
+static void readscreen(void);
+
+typedef BOOL (WINAPI *CRYPTACQUIRECONTEXT)(HCRYPTPROV *, LPCTSTR, LPCTSTR,
+				    DWORD, DWORD);
+typedef BOOL (WINAPI *CRYPTGENRANDOM)(HCRYPTPROV, DWORD, BYTE *);
+typedef BOOL (WINAPI *CRYPTRELEASECONTEXT)(HCRYPTPROV, DWORD);
+
+typedef HWND (WINAPI *GETFOREGROUNDWINDOW)(VOID);
+typedef BOOL (WINAPI *GETCURSORINFO)(PCURSORINFO);
+typedef DWORD (WINAPI *GETQUEUESTATUS)(UINT);
+
+typedef HANDLE (WINAPI *CREATETOOLHELP32SNAPSHOT)(DWORD, DWORD);
+typedef BOOL (WINAPI *HEAP32FIRST)(LPHEAPENTRY32, DWORD, DWORD);
+typedef BOOL (WINAPI *HEAP32NEXT)(LPHEAPENTRY32);
+typedef BOOL (WINAPI *HEAP32LIST)(HANDLE, LPHEAPLIST32);
+typedef BOOL (WINAPI *PROCESS32)(HANDLE, LPPROCESSENTRY32);
+typedef BOOL (WINAPI *THREAD32)(HANDLE, LPTHREADENTRY32);
+typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
+
+int RAND_poll(void)
+{
+	MEMORYSTATUS m;
+	HCRYPTPROV hProvider = 0;
+	BYTE buf[64];
+	DWORD w;
+	HWND h;
+
+	HMODULE advapi, kernel, user;
+	CRYPTACQUIRECONTEXT acquire;
+	CRYPTGENRANDOM gen;
+	CRYPTRELEASECONTEXT release;
+
+	/* load functions dynamically - not available on all systems */
+	advapi = GetModuleHandle("ADVAPI32.DLL");
+	kernel = GetModuleHandle("KERNEL32.DLL");
+	user = GetModuleHandle("USER32.DLL");
+
+	if (advapi)
+		{
+		acquire = (CRYPTACQUIRECONTEXT) GetProcAddress(advapi,
+			"CryptAcquireContextA");
+		gen = (CRYPTGENRANDOM) GetProcAddress(advapi,
+			"CryptGenRandom");
+		release = (CRYPTRELEASECONTEXT) GetProcAddress(advapi,
+			"CryptReleaseContext");
+		}
+
+	if (acquire && gen && release)
+		{
+		/* poll the CryptoAPI PRNG */
+		if (acquire(&hProvider, 0, 0, PROV_RSA_FULL,
+			CRYPT_VERIFYCONTEXT))
+			{
+			if (gen(hProvider, sizeof(buf), buf) != 0)
+				{
+				RAND_add(buf, sizeof(buf), 0);
+#ifdef DEBUG
+				printf("randomness from PROV_RSA_FULL\n");
+#endif
+				}
+			release(hProvider, 0); 
+			}
+		
+		/* poll the Pentium PRG with CryptoAPI */
+		if (acquire(&hProvider, 0, INTEL_DEF_PROV, PROV_INTEL_SEC, 0))
+			{
+			if (gen(hProvider, sizeof(buf), buf) != 0)
+				{
+				RAND_add(buf, sizeof(buf), 0);
+#ifdef DEBUG
+				printf("randomness from PROV_INTEL_SEC\n");
+#endif
+				}
+			release(hProvider, 0);
+			}
+		}
+
+	/* timer data */
+	readtimer();
+	
+	/* memory usage statistics */
+	GlobalMemoryStatus(&m);
+	RAND_add(&m, sizeof(m), 1);
+
+	/* process ID */
+	w = GetCurrentProcessId();
+	RAND_add(&w, sizeof(w), 0);
+
+	if (user)
+		{
+		GETCURSORINFO cursor;
+		GETFOREGROUNDWINDOW win;
+		GETQUEUESTATUS queue;
+
+		win = (GETFOREGROUNDWINDOW) GetProcAddress(user, "GetForegroundWindow");
+		cursor = (GETCURSORINFO) GetProcAddress(user, "GetCursorInfo");
+		queue = (GETQUEUESTATUS) GetProcAddress(user, "GetQueueStatus");
+
+		if (win)
+		{
+			/* window handle */
+			h = win();
+			RAND_add(&h, sizeof(h), 0);
+		}
+
+		if (cursor)
+			{
+			/* cursor position */
+			cursor(buf);
+			RAND_add(buf, sizeof(buf), 0);
+			}
+
+		if (queue)
+			{
+			/* message queue status */
+			w = queue(QS_ALLEVENTS);
+			RAND_add(&w, sizeof(w), 0);
+			}
+		}
+
+	/* Toolhelp32 snapshot: enumerate processes, threads, modules and heap
+	 * http://msdn.microsoft.com/library/psdk/winbase/toolhelp_5pfd.htm
+	 * (Win 9x only, not available on NT)
+	 *
+	 * This seeding method was proposed in Peter Gutmann, Software
+	 * Generation of Practically Strong Random Numbers,
+	 * http://www.somewhere.nzhttp://www.cs.auckland.ac.nz/~pgut001/pubs/random2.pdf
+	 * (The assignment of entropy estimates below is arbitrary, but based
+	 * on Peter's analysis the full poll appears to be safe. Additional
+	 * interactive seeding is encouraged.)
+	 */
+
+	if (kernel)
+		{
+		CREATETOOLHELP32SNAPSHOT snap;
+		HANDLE handle;
+
+		HEAP32FIRST heap_first;
+		HEAP32NEXT heap_next;
+		HEAP32LIST heaplist_first, heaplist_next;
+		PROCESS32 process_first, process_next;
+		THREAD32 thread_first, thread_next;
+		MODULE32 module_first, module_next;
+
+		HEAPLIST32 hlist;
+		HEAPENTRY32 hentry;
+		PROCESSENTRY32 p;
+		THREADENTRY32 t;
+		MODULEENTRY32 m;
+
+		snap = (CREATETOOLHELP32SNAPSHOT)
+		  GetProcAddress(kernel, "CreateToolhelp32Snapshot");
+		heap_first = (HEAP32FIRST) GetProcAddress(kernel, "Heap32First");
+		heap_next = (HEAP32NEXT) GetProcAddress(kernel, "Heap32Next");
+		heaplist_first = (HEAP32LIST) GetProcAddress(kernel, "Heap32ListFirst");
+		heaplist_next = (HEAP32LIST) GetProcAddress(kernel, "Heap32ListNext");
+		process_first = (PROCESS32) GetProcAddress(kernel, "Process32First");
+		process_next = (PROCESS32) GetProcAddress(kernel, "Process32Next");
+		thread_first = (THREAD32) GetProcAddress(kernel, "Thread32First");
+		thread_next = (THREAD32) GetProcAddress(kernel, "Thread32Next");
+		module_first = (MODULE32) GetProcAddress(kernel, "Module32First");
+		module_next = (MODULE32) GetProcAddress(kernel, "Module32Next");
+
+		if (snap && heap_first && heap_next && heaplist_first &&
+			heaplist_next && process_first && process_next &&
+			thread_first && thread_next && module_first &&
+			module_next && (handle = snap(TH32CS_SNAPALL,0))
+			!= NULL)
+			{
+			/* heap list and heap walking */
+			hlist.dwSize = sizeof(HEAPLIST32);		
+			if (heaplist_first(handle, &hlist))
+				do
+					{
+					RAND_add(&hlist, hlist.dwSize, 0);
+					hentry.dwSize = sizeof(HEAPENTRY32);
+					if (heap_first(&hentry,
+						hlist.th32ProcessID,
+						hlist.th32HeapID))
+						do
+							RAND_add(&hentry,
+								hentry.dwSize, 0);
+						while (heap_next(&hentry));
+					} while (heaplist_next(handle,
+						&hlist));
+
+			/* process walking */
+			p.dwSize = sizeof(PROCESSENTRY32);
+			if (process_first(handle, &p))
+				do
+					RAND_add(&p, p.dwSize, 0);
+				while (process_next(handle, &p));
+			
+			/* thread walking */
+			t.dwSize = sizeof(THREADENTRY32);
+			if (thread_first(handle, &t))
+				do
+					RAND_add(&t, t.dwSize, 0);
+				while (thread_next(handle, &t));
+			
+			/* module walking */
+			m.dwSize = sizeof(MODULEENTRY32);
+			if (module_first(handle, &m))
+				do
+					RAND_add(&m, m.dwSize, 1);
+				while (module_next(handle, &m));
+			
+			CloseHandle(handle);
+			}
+		}
+
+#ifdef DEBUG
+	printf("Exiting RAND_poll\n");
 #endif
 
-#if defined(USE_MD5_RAND)
-#include <openssl/md5.h>
-#define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
-#define	MD(a,b,c)		MD5(a,b,c)
-#elif defined(USE_SHA1_RAND)
-#include <openssl/sha.h>
-#define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
-#define	MD(a,b,c)		SHA1(a,b,c)
-#elif defined(USE_MDC2_RAND)
-#include <openssl/mdc2.h>
-#define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
-#define	MD(a,b,c)		MDC2(a,b,c)
-#elif defined(USE_MD2_RAND)
-#include <openssl/md2.h>
-#define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
-#define	MD(a,b,c)		MD2(a,b,c)
-#endif
-
+	return(1);
+}
 
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
         {
         double add_entropy=0;
-        SYSTEMTIME t;
 
         switch (iMsg)
                 {
@@ -182,19 +378,61 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 		}
 
-        GetSystemTime(&t);
+	readtimer();
         RAND_add(&iMsg, sizeof(iMsg), add_entropy);
 	RAND_add(&wParam, sizeof(wParam), 0);
 	RAND_add(&lParam, sizeof(lParam), 0);
-        RAND_add(&t, sizeof(t), 0);
-
+ 
 	return (RAND_status());
 	}
 
 
+void RAND_screen(void) /* function available for backward compatibility */
+{
+	RAND_poll();
+	readscreen();
+}
+
+
+/* feed timing information to the PRNG */
+static void readtimer(void)
+{
+	DWORD w, cyclecount;
+	LARGE_INTEGER l;
+	static int have_perfc = 1;
+#ifndef __GNUC__
+	static int have_tsc = 1;
+
+	if (have_tsc) {
+	  __try {
+	    __asm {
+	      rdtsc
+	      mov cyclecount, eax
+	      }
+	    RAND_add(&cyclecount, sizeof(cyclecount), 1);
+	  } __except(EXCEPTION_EXECUTE_HANDLER) {
+	    have_tsc = 0;
+	  }
+	}
+#else
+# define have_tsc 0
+#endif
+
+	if (have_perfc) {
+	  if (QueryPerformanceCounter(&l) == 0)
+	    have_perfc = 0;
+	  else
+	    RAND_add(&l, sizeof(l), 0);
+	}
+
+	if (!have_tsc && !have_perfc) {
+	  w = GetTickCount();
+	  RAND_add(&w, sizeof(w), 0);
+	}
+}
+
+/* feed screen contents to PRNG */
 /*****************************************************************************
- * Initialisation function for the SSL random generator.  Takes the contents
- * of the screen as random seed.
  *
  * Created 960901 by Gertjan van Oosten, gertjan@West.NL, West Consulting B.V.
  *
@@ -210,18 +448,8 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
  *   Microsoft has no warranty obligations or liability for any
  *   Sample Application Files which are modified.
  */
-/*
- * I have modified the loading of bytes via RAND_seed() mechanism since
- * the original would have been very very CPU intensive since RAND_seed()
- * does an MD5 per 16 bytes of input.  The cost to digest 16 bytes is the same
- * as that to digest 56 bytes.  So under the old system, a screen of
- * 1024*768*256 would have been CPU cost of approximately 49,000 56 byte MD5
- * digests or digesting 2.7 mbytes.  What I have put in place would
- * be 48 16k MD5 digests, or effectively 48*16+48 MD5 bytes or 816 kbytes
- * or about 3.5 times as much.
- * - eric 
- */
-void RAND_screen(void)
+
+static void readscreen(void)
 {
   HDC		hScrDC;		/* screen DC */
   HDC		hMemDC;		/* memory DC */
@@ -266,11 +494,11 @@ void RAND_screen(void)
 	/* Copy bitmap bits from memory DC to bmbits */
 	GetBitmapBits(hBitmap, size, bmbits);
 
-	/* Get the MD5 of the bitmap */
+	/* Get the hash of the bitmap */
 	MD(bmbits,size,md);
 
-	/* Seed the random generator with the MD5 digest */
-	RAND_seed(md, MD_DIGEST_LENGTH);
+	/* Seed the random generator with the hash value */
+	RAND_add(md, MD_DIGEST_LENGTH, 0);
 	}
 
     OPENSSL_free(bmbits);
@@ -285,10 +513,49 @@ void RAND_screen(void)
   DeleteDC(hScrDC);
 }
 
-#else
+#else /* Unix version */
 
-# if PEDANTIC
-static void *dummy=&dummy;
-# endif
+#include <time.h>
+
+int RAND_poll(void)
+{
+	unsigned long l;
+	pid_t curr_pid = getpid();
+#ifdef DEVRANDOM
+	FILE *fh;
+#endif
+
+#ifdef DEVRANDOM
+	/* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
+	 * have this. Use /dev/urandom if you can as /dev/random may block
+	 * if it runs out of random entries.  */
+
+	if ((fh = fopen(DEVRANDOM, "r")) != NULL)
+		{
+		unsigned char tmpbuf[ENTROPY_NEEDED];
+		int n;
+		
+		setvbuf(fh, NULL, _IONBF, 0);
+		n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
+		fclose(fh);
+		RAND_add(tmpbuf,sizeof tmpbuf,n);
+		memset(tmpbuf,0,n);
+		}
+#endif
+
+	/* put in some default random data, we need more than just this */
+	l=curr_pid;
+	RAND_add(&l,sizeof(l),0);
+	l=getuid();
+	RAND_add(&l,sizeof(l),0);
+
+	l=time(NULL);
+	RAND_add(&l,sizeof(l),0);
+
+#ifdef DEVRANDOM
+	return 1;
+#endif
+	return 0;
+}
 
 #endif

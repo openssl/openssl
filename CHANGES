@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Randomness polling function for Win9x, as described in:
+     Peter Gutmann, Software Generation of Practically Strong
+     Random Numbers.
+     [Ulf Möller]
+
   *) Fix so PRNG is seeded in req if using an already existing
      DSA key.
      [Steve Henson]
