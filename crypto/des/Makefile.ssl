@@ -46,7 +46,7 @@ LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 SRC= $(LIBSRC)
 
 EXHEADER= des.h
-HEADER=	des_locl.h rpc_des.h podd.h sk.h spr.h des_ver.h $(EXHEADER)
+HEADER=	des_locl.h rpc_des.h spr.h des_ver.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifndef MSDOS
 #ifndef VMS
 #include <openssl/opensslconf.h>
@@ -69,7 +70,7 @@
 #include <math.h>
 #endif /* __DECC */
 #endif /* VMS */
-#else
+#else /* MSDOS */
 #include <io.h>
 #endif
 
@@ -87,10 +88,6 @@
 #endif
 #include <openssl/des.h>
 #include <openssl/rand.h>
-
-#if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
-#include <string.h>
-#endif
 
 void usage(void);
 void doencryption(void);
