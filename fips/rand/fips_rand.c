@@ -59,6 +59,7 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
 
 #define SEED_SIZE	8
 

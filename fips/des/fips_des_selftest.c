@@ -47,6 +47,7 @@
  *
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/des.h>
