@@ -496,7 +496,7 @@ bn_sqr_words:
 #endif
 
 #if 1
-// Apparently we win nothing by implementing special bn_mul_comba8.
+// Apparently we win nothing by implementing special bn_sqr_comba8.
 // Yes, it is possible to reduce the number of multiplications by
 // almost factor of two, but then the amount of additions would
 // increase by factor of two (as we would have to perform those
@@ -1388,7 +1388,7 @@ bn_div_words:
 (p6)	sub		H=H,D			}
 
 { .mlx	setf.sig	f14=D
-	movl		AT=0xffffffff		}
+	movl		AT=0xffffffff		};;
 ///////////////////////////////////////////////////////////
 { .mii	setf.sig	f6=H
 	shr.u		HH=H,32;;
@@ -1416,9 +1416,9 @@ bn_div_words:
 	(p8)	add		r31=-1,r31
 (cont)	br.wtop.spnt		2b			};;
 ///////////////////////////////////////////////////////////
+{ .mii	sub		H=H,r35
 	shl		r8=r33,32
-	sub		H=H,r35
-	shl		L=L,32
+	shl		L=L,32			};;
 ///////////////////////////////////////////////////////////
 { .mii	setf.sig	f6=H
 	shr.u		HH=H,32;;
@@ -1456,11 +1456,11 @@ bn_div_words:
 // Unsigned 64 by 32 (well, by 64 for the moment) bit integer division
 // procedure.
 //
-// inputs:	f6 = double(a), f7 = double(b)
-// outputs:	f8 = a/b
+// inputs:	f6 = (double)a, f7 = (double)b
+// output:	f8 = (int)(a/b)
 // clobbered:	f8,f9,f10,f11,PR
 #define	PR	p15
-// In the nutshell this procedure is Intel code and therefore is
+// This procedure is essentially Intel code and therefore is
 // copyrighted to Intel Corporation (I suppose...). It's sligtly
 // modified for specific needs.
 .align	32
