@@ -200,7 +200,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		return(NULL);
 
 	p=(char *)s->data;
-	if ((p == NULL) || (s->length < len))
+	if ((p == NULL) || ((size_t)s->length < len))
 		{
 		p=OPENSSL_malloc(len);
 		if (p == NULL) return(NULL);

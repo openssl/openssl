@@ -110,6 +110,7 @@ int RAND_load_file(const char *file, long bytes)
 
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
+#if defined(S_IFBLK) && defined(S_IFCHR)
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	  /* this file is a device. we don't want read an infinite number
 	   * of bytes from a random device, nor do we want to use buffered
@@ -118,6 +119,7 @@ int RAND_load_file(const char *file, long bytes)
 	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
 	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
 	}
+#endif
 	for (;;)
 		{
 		if (bytes > 0)
@@ -151,6 +153,7 @@ int RAND_write_file(const char *file)
 	
 	i=stat(file,&sb);
 	if (i != -1) { 
+#if defined(S_IFBLK) && defined(S_IFCHR)
 	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	    /* this file is a device. we don't write back to it. 
 	     * we "succeed" on the assumption this is some sort 
@@ -159,6 +162,7 @@ int RAND_write_file(const char *file)
 	     */
 	    return(1); 
 	  }
+#endif
 	}
 
 #if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)

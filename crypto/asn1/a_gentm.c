@@ -220,7 +220,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 		return(NULL);
 
 	p=(char *)s->data;
-	if ((p == NULL) || (s->length < len))
+	if ((p == NULL) || ((size_t)s->length < len))
 		{
 		p=OPENSSL_malloc(len);
 		if (p == NULL) return(NULL);
