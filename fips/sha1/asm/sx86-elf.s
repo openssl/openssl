@@ -32,97 +32,97 @@ sha1_block_asm_data_order:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		(%esp)
 	movl	%ecx,		4(%esp)
 	movl	8(%esi),	%eax
 	movl	12(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		8(%esp)
 	movl	%ecx,		12(%esp)
 	movl	16(%esi),	%eax
 	movl	20(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		16(%esp)
 	movl	%ecx,		20(%esp)
 	movl	24(%esi),	%eax
 	movl	28(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		24(%esp)
 	movl	%ecx,		28(%esp)
 	movl	32(%esi),	%eax
 	movl	36(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		32(%esp)
 	movl	%ecx,		36(%esp)
 	movl	40(%esi),	%eax
 	movl	44(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		40(%esp)
 	movl	%ecx,		44(%esp)
 	movl	48(%esi),	%eax
 	movl	52(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		48(%esp)
 	movl	%ecx,		52(%esp)
 	movl	56(%esi),	%eax
 	movl	60(%esi),	%ecx
 
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 	rorl	$16,		%eax
-	xchg	%al,		%ah
+	xchgb	%al,		%ah
 
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	rorl	$16,		%ecx
-	xchg	%cl,		%ch
+	xchgb	%cl,		%ch
 	movl	%eax,		56(%esp)
 	movl	%ecx,		60(%esp)
 
