@@ -497,7 +497,7 @@ SHA1_Update                             504	EXIST::FUNCTION:SHA,SHA1
 SHA_Final                               505	EXIST::FUNCTION:SHA,SHA0
 SHA_Init                                506	EXIST::FUNCTION:SHA,SHA0
 SHA_Update                              507	EXIST::FUNCTION:SHA,SHA0
-OpenSSL_add_all_algorithms              508	EXIST::FUNCTION:
+OpenSSL_add_all_algorithms              508	NOEXIST::FUNCTION:
 OpenSSL_add_all_ciphers                 509	EXIST::FUNCTION:
 OpenSSL_add_all_digests                 510	EXIST::FUNCTION:
 TXT_DB_create_index                     511	EXIST::FUNCTION:
@@ -2762,3 +2762,9 @@ UI_UTIL_read_pw                         3208	EXIST::FUNCTION:
 UI_UTIL_read_pw_string                  3209	EXIST::FUNCTION:
 ENGINE_load_aep                         3210	EXIST::FUNCTION:
 ENGINE_load_sureware                    3211	EXIST::FUNCTION:
+OPENSSL_add_all_algorithms_noconf       3212	EXIST::FUNCTION:
+OPENSSL_add_all_algorithms_conf         3213	EXIST::FUNCTION:
+OPENSSL_load_builtin_modules            3214	EXIST::FUNCTION:
+AES_ofb128_encrypt                      3215	EXIST::FUNCTION:AES
+AES_ctr128_encrypt                      3216	EXIST::FUNCTION:AES
+AES_cfb128_encrypt                      3217	EXIST::FUNCTION:AES
