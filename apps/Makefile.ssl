@@ -147,10 +147,39 @@ progs.h: progs.pl
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-apps.o: ../include/openssl/bio.h ../include/openssl/buffer.h
-apps.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
-apps.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-apps.o: ../include/openssl/opensslv.h ../include/openssl/stack.h apps.h progs.h
+app_rand.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+app_rand.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+app_rand.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+app_rand.o: ../include/openssl/crypto.h ../include/openssl/des.h
+app_rand.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+app_rand.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+app_rand.o: ../include/openssl/evp.h ../include/openssl/idea.h
+app_rand.o: ../include/openssl/md2.h ../include/openssl/md5.h
+app_rand.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
+app_rand.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+app_rand.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+app_rand.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+app_rand.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+app_rand.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+app_rand.o: ../include/openssl/sha.h ../include/openssl/stack.h
+app_rand.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+app_rand.o: progs.h
+apps.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+apps.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+apps.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+apps.o: ../include/openssl/crypto.h ../include/openssl/des.h
+apps.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+apps.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+apps.o: ../include/openssl/evp.h ../include/openssl/idea.h
+apps.o: ../include/openssl/md2.h ../include/openssl/md5.h
+apps.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
+apps.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+apps.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+apps.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+apps.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+apps.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+apps.o: ../include/openssl/stack.h ../include/openssl/x509.h
+apps.o: ../include/openssl/x509_vfy.h apps.h progs.h
 asn1pars.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 asn1pars.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 asn1pars.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -309,12 +338,12 @@ dsaparam.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 dsaparam.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 dsaparam.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 dsaparam.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-dsaparam.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-dsaparam.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-dsaparam.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-dsaparam.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-dsaparam.o: ../include/openssl/stack.h ../include/openssl/x509.h
-dsaparam.o: ../include/openssl/x509_vfy.h apps.h progs.h
+dsaparam.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+dsaparam.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+dsaparam.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+dsaparam.o: ../include/openssl/sha.h ../include/openssl/stack.h
+dsaparam.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+dsaparam.o: progs.h
 enc.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 enc.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 enc.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -327,11 +356,12 @@ enc.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 enc.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 enc.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 enc.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-enc.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-enc.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-enc.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-enc.o: ../include/openssl/sha.h ../include/openssl/stack.h
-enc.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h progs.h
+enc.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+enc.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+enc.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+enc.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+enc.o: ../include/openssl/stack.h ../include/openssl/x509.h
+enc.o: ../include/openssl/x509_vfy.h apps.h progs.h
 errstr.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 errstr.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 errstr.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -383,12 +413,12 @@ gendsa.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 gendsa.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 gendsa.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 gendsa.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-gendsa.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-gendsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-gendsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-gendsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-gendsa.o: ../include/openssl/stack.h ../include/openssl/x509.h
-gendsa.o: ../include/openssl/x509_vfy.h apps.h progs.h
+gendsa.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+gendsa.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+gendsa.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+gendsa.o: ../include/openssl/sha.h ../include/openssl/stack.h
+gendsa.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+gendsa.o: progs.h
 genrsa.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 genrsa.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 genrsa.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -401,12 +431,12 @@ genrsa.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 genrsa.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 genrsa.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 genrsa.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-genrsa.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-genrsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-genrsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-genrsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-genrsa.o: ../include/openssl/stack.h ../include/openssl/x509.h
-genrsa.o: ../include/openssl/x509_vfy.h apps.h progs.h
+genrsa.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+genrsa.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+genrsa.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+genrsa.o: ../include/openssl/sha.h ../include/openssl/stack.h
+genrsa.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+genrsa.o: progs.h
 nseq.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 nseq.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 nseq.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -511,12 +541,12 @@ req.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 req.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 req.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 req.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-req.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-req.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-req.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-req.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-req.o: ../include/openssl/stack.h ../include/openssl/x509.h
-req.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h progs.h
+req.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+req.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+req.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+req.o: ../include/openssl/sha.h ../include/openssl/stack.h
+req.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+req.o: ../include/openssl/x509v3.h apps.h progs.h
 rsa.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 rsa.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 rsa.o: ../include/openssl/buffer.h ../include/openssl/cast.h
@@ -722,10 +752,12 @@ version.o: ../include/openssl/evp.h ../include/openssl/idea.h
 version.o: ../include/openssl/md2.h ../include/openssl/md5.h
 version.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
 version.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-version.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-version.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-version.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-version.o: ../include/openssl/sha.h ../include/openssl/stack.h apps.h progs.h
+version.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+version.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+version.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+version.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+version.o: ../include/openssl/stack.h ../include/openssl/x509.h
+version.o: ../include/openssl/x509_vfy.h apps.h progs.h
 x509.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 x509.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 x509.o: ../include/openssl/buffer.h ../include/openssl/cast.h
