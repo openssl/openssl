@@ -55,14 +55,14 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	lib shared
+all:	shared
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-shared:
+shared: lib
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		(cd ..; $(MAKE) $(SHARED_LIB)); \
 	fi
