@@ -1,6 +1,9 @@
 /* crypto/ecdsa/ecs_ossl.c */
+/*
+ * Written by Nils Larsch for the OpenSSL project
+ */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,49 +89,43 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 		BIGNUM **rp)
 {
 	BN_CTX   *ctx = NULL;
-	BIGNUM	 k,*kinv=NULL,*r=NULL,*order=NULL,*X=NULL;
+	BIGNUM	 *k = NULL, *r = NULL, *order = NULL, *X = NULL;
 	EC_POINT *tmp_point=NULL;
+	EC_GROUP *group;
 	int 	 ret = 0;
 	if (!eckey  || !eckey->group || !eckey->pub_key || !eckey->priv_key)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-
-	BN_init(&k);
+	group = eckey->group;
 
 	if (ctx_in == NULL) 
 	{
-		if ((ctx=BN_CTX_new()) == NULL)
+		if ((ctx = BN_CTX_new()) == NULL)
 		{
-		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
-		goto err;
+			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,ERR_R_MALLOC_FAILURE);
+			return 0;
 		}
 	}
 	else
-		ctx=ctx_in;
+		ctx = ctx_in;
 
-	if ((r = BN_new()) == NULL)
+	k     = BN_new();	/* this value is later returned in *kinvp */
+	r     = BN_new();	/* this value is later returned in *rp    */
+	order = BN_new();
+	X     = BN_new();
+	if (!k || !r || !order || !X)
 	{
-		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-		goto err;	
+		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
-	if ((order = BN_new()) == NULL)
-	{
-		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-		goto err;	
-	}
-	if ((X = BN_new()) == NULL)
-	{
-		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-		goto err;	
-	}
-	if ((tmp_point = EC_POINT_new(eckey->group)) == NULL)
+	if ((tmp_point = EC_POINT_new(group)) == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_get_order(eckey->group,order,ctx))
+	if (!EC_GROUP_get_order(group, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
 		goto err;
@@ -138,42 +135,39 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	{
 		/* get random k */	
 		do
-			if (!BN_rand_range(&k,order))
+			if (!BN_rand_range(k, order))
 			{
 				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
 				 ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);	
 				goto err;
 			}
-		while (BN_is_zero(&k));
+		while (BN_is_zero(k));
 
 		/* compute r the x-coordinate of generator * k */
-		if (!EC_POINT_mul(eckey->group, tmp_point, &k, NULL, NULL, ctx))
+		if (!EC_POINT_mul(group, tmp_point, k, NULL, NULL, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
 			goto err;
 		}
-		if (EC_METHOD_get_field_type(EC_GROUP_method_of(eckey->group))
-			== NID_X9_62_prime_field)
+		if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field)
 		{
-			if (!EC_POINT_get_affine_coordinates_GFp(eckey->group,
+			if (!EC_POINT_get_affine_coordinates_GFp(group,
 				tmp_point, X, NULL, ctx))
 			{
-				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
-					ERR_R_EC_LIB);
+				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,ERR_R_EC_LIB);
 				goto err;
 			}
 		}
 		else /* NID_X9_62_characteristic_two_field */
 		{
-			if (!EC_POINT_get_affine_coordinates_GF2m(eckey->group,
+			if (!EC_POINT_get_affine_coordinates_GF2m(group,
 				tmp_point, X, NULL, ctx))
 			{
-				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
-					ERR_R_EC_LIB);
+				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,ERR_R_EC_LIB);
 				goto err;
 			}
 		}
-		if (!BN_nnmod(r,X,order,ctx))
+		if (!BN_nnmod(r, X, order, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
 			goto err;
@@ -182,36 +176,34 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	while (BN_is_zero(r));
 
 	/* compute the inverse of k */
-	if ((kinv = BN_mod_inverse(NULL,&k,order,ctx)) == NULL)
+	if (!BN_mod_inverse(k, k, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
 		goto err;	
 	}
-
-	if (*rp == NULL)
+	/* clear old values if necessary */
+	if (*rp != NULL)
 		BN_clear_free(*rp);
-	*rp = r;
-	if (*kinvp == NULL) 
+	if (*kinvp != NULL) 
 		BN_clear_free(*kinvp);
-	*kinvp = kinv;
-	kinv = NULL;
+	/* save the pre-computed values  */
+	*rp    = r;
+	*kinvp = k;
 	ret = 1;
 err:
 	if (!ret)
 	{
-		if (kinv != NULL) BN_clear_free(kinv);
+		if (k != NULL) BN_clear_free(k);
 		if (r != NULL) BN_clear_free(r);
 	}
 	if (ctx_in == NULL) 
 		BN_CTX_free(ctx);
-	if (kinv != NULL)
-		BN_clear_free(kinv);
 	if (order != NULL)
-		BN_clear_free(order);
+		BN_free(order);
 	if (tmp_point != NULL) 
 		EC_POINT_free(tmp_point);
-	if (X)	BN_clear_free(X);
-	BN_clear_free(&k);
+	if (X)
+		BN_clear_free(X);
 	return(ret);
 }
 
@@ -219,32 +211,38 @@ err:
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len, 
 		EC_KEY *eckey)
 {
-	BIGNUM *kinv=NULL,*r=NULL,*s=NULL,*m=NULL,*tmp=NULL,*order=NULL;
-	BIGNUM xr;
-	BN_CTX *ctx=NULL;
-	ECDSA_SIG *ret=NULL;
+	int     ok = 0;
+	BIGNUM *kinv=NULL, *r, *s, *m=NULL,*tmp=NULL,*order=NULL;
+	BN_CTX     *ctx = NULL;
+	EC_GROUP   *group;
+	ECDSA_SIG  *ret;
 	ECDSA_DATA *ecdsa;
-
-	BN_init(&xr);
 
 	ecdsa = ecdsa_check(eckey);
 
-	if (!eckey || !eckey->group || !eckey->pub_key || !eckey->priv_key 
-		|| !ecdsa)
+	if (!eckey->group || !eckey->pub_key || !eckey->priv_key || !ecdsa)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_PASSED_NULL_PARAMETER);
-		goto err;
+		return NULL;
 	}
 
+	group = eckey->group;
+	ret = ECDSA_SIG_new();
+	if (!ret)
+	{
+		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	s = ret->s;
+
 	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
-		(tmp = BN_new()) == NULL || (m = BN_new()) == NULL ||
-		(s = BN_new()) == NULL )
+		(tmp = BN_new()) == NULL || (m = BN_new()) == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EC_GROUP_get_order(eckey->group,order,ctx))
+	if (!EC_GROUP_get_order(group, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_EC_LIB);
 		goto err;
@@ -256,7 +254,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	if (BN_bin2bn(dgst,dgst_len,m) == NULL)
+	if (!BN_bin2bn(dgst, dgst_len, m))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 		goto err;
@@ -265,34 +263,34 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	{
 		if (ecdsa->kinv == NULL || ecdsa->r == NULL)
 		{
-			if (!ECDSA_sign_setup(eckey,ctx,&kinv,&r))
+			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &ret->r))
 			{
-				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,
-					ERR_R_ECDSA_LIB);
+				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,ERR_R_ECDSA_LIB);
 				goto err;
 			}
+			r = ret->r;
 		}
 		else
 		{
-			kinv = ecdsa->kinv;
+			BN_free(ret->r);
+			kinv   = ecdsa->kinv;
+			r      = ecdsa->r;
+			ret->r = r;
 			ecdsa->kinv = NULL;
-			r = ecdsa->r;
-			ecdsa->r = NULL;
+			ecdsa->r    = NULL;
 		}
 
-		if (!BN_mod_mul(tmp,eckey->priv_key,r,order,ctx))
+		if (!BN_mod_mul(tmp, eckey->priv_key, r, order, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_add(s,tmp,m))
+		if (!BN_mod_add_quick(s, tmp, m, order))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
 		}
-		if (BN_cmp(s,order) > 0)
-			BN_sub(s,s,order);
-		if (!BN_mod_mul(s,s,kinv,order,ctx))
+		if (!BN_mod_mul(s, s, kinv, order, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
@@ -300,23 +298,13 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	}
 	while (BN_is_zero(s));
 
-	if ((ret = ECDSA_SIG_new()) == NULL)
-	{
-		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (BN_copy(ret->r, r) == NULL || BN_copy(ret->s, s) == NULL)
+	ok = 1;
+err:
+	if (!ok)
 	{
 		ECDSA_SIG_free(ret);
 		ret = NULL;
-		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 	}
-	
-err:
-	if (r)
-		BN_clear_free(r);
-	if (s)
-		BN_clear_free(s);
 	if (ctx)
 		BN_CTX_free(ctx);
 	if (m)
@@ -324,92 +312,99 @@ err:
 	if (tmp)
 		BN_clear_free(tmp);
 	if (order)
-		BN_clear_free(order);
+		BN_free(order);
 	if (kinv)
 		BN_clear_free(kinv);
-	return(ret);
+	return ret;
 }
 
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		ECDSA_SIG *sig, EC_KEY *eckey)
 {
-	BN_CTX *ctx;
-	BIGNUM *order=NULL,*u1=NULL,*u2=NULL,*m=NULL,*X=NULL;
-	EC_POINT *point=NULL;
 	int ret = -1;
+	BN_CTX   *ctx;
+	BIGNUM   *order, *u1, *u2, *m, *X;
+	EC_POINT *point = NULL;
+	EC_GROUP *group;
+	/* check input values */
 	if (!eckey || !eckey->group || !eckey->pub_key || !sig)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_MISSING_PARAMETERS);
 		return -1;
 	}
 
-	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
-		(u1 = BN_new()) == NULL || (u2 = BN_new()) == NULL ||
-		(m  = BN_new()) == NULL || (X  = BN_new()) == NULL)
+	group = eckey->group;
+
+	ctx = BN_CTX_new();
+	if (!ctx)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_MALLOC_FAILURE);
-		goto err;
+		return -1;
 	}
-	if (!EC_GROUP_get_order(eckey->group, order, ctx))
+	BN_CTX_start(ctx);
+	order = BN_CTX_get(ctx);	
+	u1    = BN_CTX_get(ctx);
+	u2    = BN_CTX_get(ctx);
+	m     = BN_CTX_get(ctx);
+	X     = BN_CTX_get(ctx);
+	if (!X)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
-
-	if (BN_is_zero(sig->r) || BN_get_sign(sig->r) ||
-	    BN_ucmp(sig->r, order) >= 0)
+	
+	if (!EC_GROUP_get_order(group, order, ctx))
 	{
-		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_BAD_SIGNATURE);
-		ret = 0;
-		goto err;
-	}
-	if (BN_is_zero(sig->s) || BN_get_sign(sig->s) ||
-	    BN_ucmp(sig->s, order) >= 0)
-	{
-		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_BAD_SIGNATURE);
-		ret = 0;
+		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
 		goto err;
 	}
 
+	if (BN_is_zero(sig->r)          || BN_get_sign(sig->r) || 
+	    BN_ucmp(sig->r, order) >= 0 || BN_is_zero(sig->s)  ||
+	    BN_get_sign(sig->s)         || BN_ucmp(sig->s, order) >= 0)
+	{
+		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_BAD_SIGNATURE);
+		ret = 0;	/* signature is invalid */
+		goto err;
+	}
 	/* calculate tmp1 = inv(S) mod order */
-	if ((BN_mod_inverse(u2,sig->s,order,ctx)) == NULL)
+	if (!BN_mod_inverse(u2, sig->s, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
 	/* digest -> m */
-	if (BN_bin2bn(dgst,dgst_len,m) == NULL)
+	if (!BN_bin2bn(dgst, dgst_len, m))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
 	/* u1 = m * tmp mod order */
-	if (!BN_mod_mul(u1,m,u2,order,ctx))
+	if (!BN_mod_mul(u1, m, u2, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
 	/* u2 = r * w mod q */
-	if (!BN_mod_mul(u2,sig->r,u2,order,ctx))
+	if (!BN_mod_mul(u2, sig->r, u2, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
 
-	if ((point = EC_POINT_new(eckey->group)) == NULL)
+	if ((point = EC_POINT_new(group)) == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EC_POINT_mul(eckey->group, point, u1, eckey->pub_key, u2, ctx))
+	if (!EC_POINT_mul(group, point, u1, eckey->pub_key, u2, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(eckey->group))
-		== NID_X9_62_prime_field) 
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field)
 	{
-		if (!EC_POINT_get_affine_coordinates_GFp(eckey->group,
+		if (!EC_POINT_get_affine_coordinates_GFp(group,
 			point, X, NULL, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
@@ -418,7 +413,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 	}
 	else /* NID_X9_62_characteristic_two_field */
 	{
-		if (!EC_POINT_get_affine_coordinates_GF2m(eckey->group,
+		if (!EC_POINT_get_affine_coordinates_GF2m(group,
 			point, X, NULL, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
@@ -426,30 +421,17 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		}
 	}
 	
-	if (!BN_nnmod(u1,X,order,ctx))
+	if (!BN_nnmod(u1, X, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_BN_LIB);
 		goto err;
 	}
-
-	/*  is now in u1.  If the signature is correct, it will be
-	 * equal to R. */
-	ret = (BN_ucmp(u1,sig->r) == 0);
-
-	err:
-	if (ctx)
-		BN_CTX_free(ctx);
-	if (u1)
-		BN_clear_free(u1);
-	if (u2)
-		BN_clear_free(u2);
-	if (m)
-		BN_clear_free(m);
-	if (X)
-		BN_clear_free(X);
-	if (order)
-		BN_clear_free(order);
+	/*  if the signature is correct u1 is equal to sig->r */
+	ret = (BN_ucmp(u1, sig->r) == 0);
+err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	if (point)
 		EC_POINT_free(point);
-	return(ret);
+	return ret;
 }
