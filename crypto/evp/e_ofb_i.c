@@ -71,6 +71,7 @@ static EVP_CIPHER i_ofb_cipher=
 	{
 	NID_idea_ofb64,
 	1,IDEA_KEY_LENGTH,IDEA_BLOCK,
+	EVP_CIPH_OFB_MODE,
 	idea_ofb_init_key,
 	idea_ofb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER i_ofb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_idea_ofb(void)

@@ -70,6 +70,7 @@ static EVP_CIPHER d_ecb_cipher=
 	{
 	NID_des_ecb,
 	8,8,0,
+	EVP_CIPH_ECB_MODE,
 	des_ecb_init_key,
 	des_ecb_cipher,
 	NULL,
@@ -77,6 +78,7 @@ static EVP_CIPHER d_ecb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_des_ecb(void)

@@ -318,21 +318,37 @@ typedef struct env_md_ctx_st
 		} md;
 	} EVP_MD_CTX;
 
-typedef struct evp_cipher_st
+typedef struct evp_cipher_st EVP_CIPHER;
+typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
+
+struct evp_cipher_st
 	{
 	int nid;
 	int block_size;
-	int key_len;
+	int key_len;		/* Default value for variable length ciphers */
 	int iv_len;
-	void (*init)();		/* init for encryption */
-	void (*do_cipher)();	/* encrypt data */
-	void (*cleanup)();	/* used by cipher method */ 
+	unsigned long flags;	/* Various flags */
+	void (*init)(EVP_CIPHER_CTX *, unsigned char *, unsigned char *, int);	/* init key */
+	void (*do_cipher)(EVP_CIPHER_CTX *, unsigned char *, unsigned char *, unsigned int);/* encrypt/decrypt data */
+	void (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
 	int ctx_size;		/* how big the ctx needs to be */
-	/* int set_asn1_parameters(EVP_CIPHER_CTX,ASN1_TYPE *); */
-	int (*set_asn1_parameters)(); /* Populate a ASN1_TYPE with parameters */
-	/* int get_asn1_parameters(EVP_CIPHER_CTX,ASN1_TYPE *); */
-	int (*get_asn1_parameters)(); /* Get parameters from a ASN1_TYPE */
-	} EVP_CIPHER;
+	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
+	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
+	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
+	};
+
+/* Values for cipher flags */
+
+/* Modes for block ciphers */
+
+#define		EVP_CIPH_ECB_MODE		0x1
+#define		EVP_CIPH_CBC_MODE		0x2
+#define		EVP_CIPH_CFB_MODE		0x3
+#define		EVP_CIPH_OFB_MODE		0x4
+#define 	EVP_CIPH_BLOCK_MODES		0x7
+/* Set if variable length cipher */
+#define 	EVP_CIPH_VARIABLE_LENGTH	0x8
+
 
 typedef struct evp_cipher_info_st
 	{
@@ -340,7 +356,7 @@ typedef struct evp_cipher_info_st
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 	} EVP_CIPHER_INFO;
 
-typedef struct evp_cipher_ctx_st
+struct evp_cipher_ctx_st
 	{
 	const EVP_CIPHER *cipher;
 	int encrypt;		/* encrypt or decrypt */
@@ -351,7 +367,8 @@ typedef struct evp_cipher_ctx_st
 	unsigned char buf[EVP_MAX_IV_LENGTH];	/* saved partial block */
 	int num;				/* used by cfb/ofb mode */
 
-	char *app_data;		/* application stuff */
+	void *app_data;		/* application stuff */
+	int key_len;		/* May change for variable length cipher */
 	union	{
 #ifndef NO_RC4
 		struct
@@ -391,7 +408,7 @@ typedef struct evp_cipher_ctx_st
 		CAST_KEY cast_ks;/* key schedule */
 #endif
 		} c;
-	} EVP_CIPHER_CTX;
+	};
 
 typedef struct evp_Encode_Ctx_st
 	{
@@ -442,7 +459,7 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
 #define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
 #define EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
-#define EVP_CIPHER_CTX_key_length(e)	((e)->cipher->key_len)
+#define EVP_CIPHER_CTX_key_length(e)	((e)->key_len)
 #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
 #define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
 #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
@@ -543,6 +560,7 @@ void	ERR_load_EVP_strings(void );
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
+int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 
 #ifdef HEADER_BIO_H
 BIO_METHOD *BIO_f_md(void);
@@ -691,6 +709,7 @@ void EVP_PBE_cleanup(void);
 
 /* Function codes. */
 #define EVP_F_D2I_PKEY					 100
+#define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_MD_CTX_COPY				 110
 #define EVP_F_EVP_OPENINIT				 102
@@ -725,6 +744,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_EXPECTING_A_DH_KEY			 128
 #define EVP_R_EXPECTING_A_DSA_KEY			 129
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
+#define EVP_R_INVALID_KEY_LENGTH			 130
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120
 #define EVP_R_MISSING_PARAMETERS			 103

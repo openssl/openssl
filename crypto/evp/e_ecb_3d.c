@@ -72,6 +72,7 @@ static EVP_CIPHER d_ede_cipher2=
 	{
 	NID_des_ede,
 	8,16,0,
+	EVP_CIPH_ECB_MODE,
 	des_ede_init_key,
 	des_ede_cipher,
 	NULL,
@@ -79,18 +80,22 @@ static EVP_CIPHER d_ede_cipher2=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 static EVP_CIPHER d_ede3_cipher3=
 	{
 	NID_des_ede3,
 	8,24,0,
+	EVP_CIPH_ECB_MODE,
 	des_ede3_init_key,
 	des_ede_cipher,
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
 	NULL,
+	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_des_ede(void)

@@ -71,6 +71,7 @@ static EVP_CIPHER r2_cfb_cipher=
 	{
 	NID_rc2_cfb64,
 	1,EVP_RC2_KEY_SIZE,8,
+	EVP_CIPH_CFB_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	rc2_cfb_init_key,
 	rc2_cfb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER r2_cfb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_rc2_cfb(void)
@@ -95,7 +97,7 @@ static void rc2_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
-			key,EVP_CIPHER_CTX_key_length(ctx)*8);
+			key,EVP_CIPHER_key_length(ctx->cipher)*8);
 	}
 
 static void rc2_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

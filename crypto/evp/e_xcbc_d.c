@@ -70,6 +70,7 @@ static EVP_CIPHER d_xcbc_cipher=
 	{
 	NID_desx_cbc,
 	8,24,8,
+	EVP_CIPH_CBC_MODE,
 	desx_cbc_init_key,
 	desx_cbc_cipher,
 	NULL,
@@ -77,6 +78,7 @@ static EVP_CIPHER d_xcbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.desx_cbc)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_desx_cbc(void)

@@ -71,6 +71,7 @@ static EVP_CIPHER cast5_cfb_cipher=
 	{
 	NID_cast5_cfb64,
 	1,EVP_CAST5_KEY_SIZE,8,
+	EVP_CIPH_CFB_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	cast_cfb_init_key,
 	cast_cfb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER cast5_cfb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.cast_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_cast5_cfb(void)
@@ -94,7 +96,7 @@ static void cast_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		CAST_set_key(&(ctx->c.cast_ks),EVP_CAST5_KEY_SIZE,key);
+		CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	}
 
 static void cast_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

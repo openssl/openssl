@@ -71,6 +71,7 @@ static EVP_CIPHER rc5_cfb_cipher=
 	{
 	NID_rc5_cfb64,
 	1,EVP_RC5_32_12_16_KEY_SIZE,8,
+	EVP_CIPH_CFB_MODE,
 	rc5_32_12_16_cfb_init_key,
 	rc5_32_12_16_cfb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER rc5_cfb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc5_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void)

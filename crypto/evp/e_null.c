@@ -69,12 +69,14 @@ static EVP_CIPHER n_cipher=
 	{
 	NID_undef,
 	1,0,0,
+	0,
 	null_init_key,
 	null_cipher,
 	NULL,
 	0,
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_enc_null(void)

@@ -70,6 +70,7 @@ static EVP_CIPHER bfish_ecb_cipher=
 	{
 	NID_bf_ecb,
 	8,EVP_BLOWFISH_KEY_SIZE,0,
+	EVP_CIPH_ECB_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	bf_ecb_init_key,
 	bf_ecb_cipher,
 	NULL,
@@ -77,6 +78,7 @@ static EVP_CIPHER bfish_ecb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.bf_ks)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_bf_ecb(void)
@@ -88,7 +90,7 @@ static void bf_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
-		BF_set_key(&(ctx->c.bf_ks),EVP_BLOWFISH_KEY_SIZE,key);
+		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	}
 
 static void bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

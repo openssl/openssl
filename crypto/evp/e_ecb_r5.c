@@ -71,6 +71,7 @@ static EVP_CIPHER rc5_ecb_cipher=
 	{
 	NID_rc5_ecb,
 	8,EVP_RC5_32_12_16_KEY_SIZE,0,
+	EVP_CIPH_ECB_MODE,
 	rc5_32_12_16_ecb_init_key,
 	rc5_32_12_16_ecb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER rc5_ecb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc5_ks)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)

@@ -71,6 +71,7 @@ static EVP_CIPHER i_cbc_cipher=
 	{
 	NID_idea_cbc,
 	8,16,8,
+	EVP_CIPH_CBC_MODE,
 	idea_cbc_init_key,
 	idea_cbc_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER i_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_idea_cbc(void)

@@ -71,6 +71,7 @@ static EVP_CIPHER i_cfb_cipher=
 	{
 	NID_idea_cfb64,
 	1,IDEA_KEY_LENGTH,IDEA_BLOCK,
+	EVP_CIPH_CFB_MODE,
 	idea_cfb_init_key,
 	idea_cfb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER i_cfb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_idea_cfb(void)

@@ -71,6 +71,7 @@ static EVP_CIPHER i_ecb_cipher=
 	{
 	NID_idea_ecb,
 	8,16,0,
+	EVP_CIPH_ECB_MODE,
 	idea_ecb_init_key,
 	idea_ecb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER i_ecb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_idea_ecb(void)

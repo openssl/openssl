@@ -70,6 +70,7 @@ static EVP_CIPHER bfish_ofb_cipher=
 	{
 	NID_bf_ofb64,
 	1,EVP_BLOWFISH_KEY_SIZE,8,
+	EVP_CIPH_OFB_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	bf_ofb_init_key,
 	bf_ofb_cipher,
 	NULL,
@@ -77,6 +78,7 @@ static EVP_CIPHER bfish_ofb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.bf_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_bf_ofb(void)
@@ -93,7 +95,7 @@ static void bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		BF_set_key(&(ctx->c.bf_ks),EVP_BLOWFISH_KEY_SIZE,key);
+		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	}
 
 static void bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

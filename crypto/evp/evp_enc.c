@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/err.h>
 
 const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
 
@@ -99,7 +100,10 @@ void EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
 	if (cipher != NULL)
+		{
 		ctx->cipher=cipher;
+		ctx->key_len = cipher->key_len;
+		}
 	ctx->cipher->init(ctx,key,iv,1);
 	ctx->encrypt=1;
 	ctx->buf_len=0;
@@ -109,7 +113,10 @@ void EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
 	if (cipher != NULL)
+		{
 		ctx->cipher=cipher;
+		ctx->key_len = cipher->key_len;
+		}
 	ctx->cipher->init(ctx,key,iv,0);
 	ctx->encrypt=0;
 	ctx->buf_len=0;
@@ -266,5 +273,17 @@ void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	if ((c->cipher != NULL) && (c->cipher->cleanup != NULL))
 		c->cipher->cleanup(c);
 	memset(c,0,sizeof(EVP_CIPHER_CTX));
+	}
+
+int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
+	{
+	if(c->key_len == keylen) return 1;
+	if((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH))
+		{
+		c->key_len = keylen;
+		return 1;
+		}
+	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,EVP_R_INVALID_KEY_LENGTH);
+	return 0;
 	}
 

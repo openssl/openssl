@@ -70,6 +70,7 @@ static EVP_CIPHER d_ofb_cipher=
 	{
 	NID_des_ofb64,
 	1,8,8,
+	EVP_CIPH_OFB_MODE,
 	des_ofb_init_key,
 	des_ofb_cipher,
 	NULL,
@@ -77,6 +78,7 @@ static EVP_CIPHER d_ofb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_des_ofb(void)

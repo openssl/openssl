@@ -4,6 +4,16 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) EVP cipher enhancment. Add hooks for extra EVP features. This will allow
+     various cipher parameters to be set in the EVP interface. Initially
+     support added for variable key length ciphers via the
+     EVP_CIPHER_CTX_set_key_length() function. Other cipher specific
+     parameters will be added later via the new catchall 'ctrl' function.
+     New functionality allows removal of S/MIME code RC2 hack. Still needs
+     support in other library functions, also need to add return codes to
+     some EVP functions.
+     [Steve Henson]
+
   *) Implement SSL_OP_TLS_ROLLBACK_BUG: In ssl3_get_client_key_exchange, if
      this option is set, tolerate broken clients that send the negotiated
      protocol version number instead of the requested protocol version

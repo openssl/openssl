@@ -71,6 +71,7 @@ static EVP_CIPHER r4_cipher=
 	{
 	NID_rc4,
 	1,EVP_RC4_KEY_SIZE,0,
+	EVP_CIPH_VARIABLE_LENGTH,
 	rc4_init_key,
 	rc4_cipher,
 	NULL,
@@ -78,14 +79,22 @@ static EVP_CIPHER r4_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc4)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 static EVP_CIPHER r4_40_cipher=
 	{
 	NID_rc4_40,
 	1,5 /* 40 bit */,0,
+	EVP_CIPH_VARIABLE_LENGTH,
 	rc4_init_key,
 	rc4_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc4)),
+	NULL, 
+	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_rc4(void)

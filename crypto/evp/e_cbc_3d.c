@@ -72,6 +72,7 @@ static EVP_CIPHER d_cbc_ede_cipher2=
 	{
 	NID_des_ede_cbc,
 	8,16,8,
+	EVP_CIPH_CBC_MODE,
 	des_cbc_ede_init_key,
 	des_cbc_ede_cipher,
 	NULL,
@@ -79,12 +80,14 @@ static EVP_CIPHER d_cbc_ede_cipher2=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 static EVP_CIPHER d_cbc_ede_cipher3=
 	{
 	NID_des_ede3_cbc,
 	8,24,8,
+	EVP_CIPH_CBC_MODE,
 	des_cbc_ede3_init_key,
 	des_cbc_ede_cipher,
 	NULL,
@@ -92,6 +95,7 @@ static EVP_CIPHER d_cbc_ede_cipher3=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_des_ede_cbc(void)

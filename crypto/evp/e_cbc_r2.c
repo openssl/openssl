@@ -80,6 +80,7 @@ static EVP_CIPHER r2_cbc_cipher=
 	{
 	NID_rc2_cbc,
 	8,EVP_RC2_KEY_SIZE,8,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	rc2_cbc_init_key,
 	rc2_cbc_cipher,
 	NULL,
@@ -87,12 +88,14 @@ static EVP_CIPHER r2_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
+	NULL
 	};
 
 static EVP_CIPHER r2_64_cbc_cipher=
 	{
 	NID_rc2_64_cbc,
 	8,8 /* 64 bit */,8,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	rc2_cbc_init_key,
 	rc2_cbc_cipher,
 	NULL,
@@ -100,12 +103,14 @@ static EVP_CIPHER r2_64_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
+	NULL
 	};
 
 static EVP_CIPHER r2_40_cbc_cipher=
 	{
 	NID_rc2_40_cbc,
 	8,5 /* 40 bit */,8,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	rc2_cbc_init_key,
 	rc2_cbc_cipher,
 	NULL,
@@ -113,6 +118,7 @@ static EVP_CIPHER r2_40_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
+	NULL
 	};
 
 EVP_CIPHER *EVP_rc2_cbc(void)
@@ -138,7 +144,7 @@ static void rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
-			key,EVP_CIPHER_CTX_key_length(ctx)*8);
+			key,EVP_CIPHER_key_length(ctx->cipher)*8);
 	}
 
 static void rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -193,6 +199,7 @@ static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 		if (e != EVP_CIPHER_CTX_cipher(c))
 			{
 			EVP_CIPHER_CTX_cipher(c)=e;
+			EVP_CIPHER_CTX_set_key_length(c, EVP_CIPHER_key_length(c));
 			rc2_cbc_init_key(c,NULL,NULL,1);
 			}
 		}

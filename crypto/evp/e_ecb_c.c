@@ -71,6 +71,7 @@ static EVP_CIPHER cast5_ecb_cipher=
 	{
 	NID_cast5_ecb,
 	8,EVP_CAST5_KEY_SIZE,0,
+	EVP_CIPH_ECB_MODE | EVP_CIPH_VARIABLE_LENGTH,
 	cast_ecb_init_key,
 	cast_ecb_cipher,
 	NULL,
@@ -78,6 +79,7 @@ static EVP_CIPHER cast5_ecb_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.cast_ks)),
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_cast5_ecb(void)
@@ -89,7 +91,7 @@ static void cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
-		CAST_set_key(&(ctx->c.cast_ks),EVP_CAST5_KEY_SIZE,key);
+		CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	}
 
 static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

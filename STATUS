@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/04/14 23:35:50 $
+  ______________                           $Date: 2000/05/26 23:51:09 $
 
   DEVELOPMENT STATE
 
@@ -22,11 +22,11 @@
   IN PROGRESS
 
     o Steve is currently working on (in no particular order):
+        EVP cipher enhancement.
         Proper (or at least usable) certificate chain verification.
 	Private key, certificate and CRL API and implementation.
 	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
-	Documentation for the openssl utility.
 
   NEEDS PATCH
 
@@ -78,16 +78,6 @@
                and look how much effort it is to bring Eric's perl/ stuff up
                to date.
                Paul +1
-
-    o The EVP and ASN1 stuff is a mess. Currently you have one EVP_CIPHER
-      structure for each cipher. This may make sense for things like DES but
-      for variable length ciphers like RC2 and RC4 it is NBG. Need a way to
-      use the EVP interface and set up the cipher parameters. The ASN1 stuff
-      is also foo wrt ciphers whose AlgorithmIdentifier has more than just
-      an IV in it (e.g. RC2, RC5). This also means that EVP_Seal and EVP_Open
-      don't work unless the key length matches the fixed value (some vendors
-      use a key length decided by the size of the RSA encrypted key and expect
-      RC2 to adapt).
 
   WISHES
 
