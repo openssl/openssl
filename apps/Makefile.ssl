@@ -88,12 +88,15 @@ all:	exe
 exe:	$(PROGRAM)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
+	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
 		APPNAME=req LDFLAGS="$(CFLAG)" \
 		OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
-		link_app.$(SHLIB_TARGET)
+		link_app.$${shlib_target}
 
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
@@ -150,7 +153,10 @@ $(DLIBCRYPTO):
 
 $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(PROGRAM)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
+	if [ "$${shlib_target}" = "hpux-shared" -o "$${shlib_target}" = "darwin-shared" ] ; then \
 	  LIBRARIES="$(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO)" ; \
 	else \
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
@@ -160,7 +166,7 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 		OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
-		link_app.$(SHLIB_TARGET)
+		link_app.$${shlib_target}
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
 		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
 		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \

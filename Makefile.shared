@@ -141,6 +141,18 @@ DO_GNU_APP=LDCMD=$(CC);\
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	APPNAME=$(APPNAME)
 
+#This is rather special.  It's a special target with which one can link
+#applications without bothering with any features that have anything to
+#do with shared libraries, for example when linking against static
+#libraries.  It's mostly here to avoid a lot of conditionals everywhere
+#else...
+link_app.:
+	LDCMD=$(CC); \
+	LDFLAGS=""; \
+	LIBDEPS="$(LIBDEPS)"; \
+	APPNAME="$(APPNAME)"; \
+	$(LINK_APP)
+
 link_o.gnu:
 	@ $(DO_GNU_SO); $(LINK_SO_O)
 link_a.gnu:

@@ -4,6 +4,10 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Make it possible to link applications using Makefile.shared.
+     Make that possible even when linking against static libraries!
+     [Richard Levitte]
+
   *) Various fixes to base64 BIO and non blocking I/O. On write 
      flushes were not handled properly if the BIO retried. On read
      data was not being buffered properly and had various logic bugs.
@@ -438,6 +442,10 @@ TODO: bug: pad  x  with leading zeros if necessary
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
+
+  *) 
 
  Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
 
