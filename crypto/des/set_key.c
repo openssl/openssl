@@ -394,9 +394,10 @@ int des_key_sched(const_des_cblock *key, des_key_schedule schedule)
 	{
 	return(des_set_key(key,schedule));
 	}
-
+/*
 #undef des_fixup_key_parity
 void des_fixup_key_parity(des_cblock *key)
 	{
 	des_set_odd_parity(key);
 	}
+*/
