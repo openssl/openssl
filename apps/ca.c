@@ -2016,15 +2016,15 @@ char *str;
 	return(ASN1_UTCTIME_check(&tm));
 	}
 
-static int add_oid_section(conf)
-LHASH *conf;
+static int add_oid_section(hconf)
+LHASH *hconf;
 {	
 	char *p;
 	STACK *sktmp;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
-	if(!(sktmp = CONF_get_section(conf, p))) {
+	if(!(p=CONF_get_string(hconf,NULL,"oid_section"))) return 1;
+	if(!(sktmp = CONF_get_section(hconf, p))) {
 		BIO_printf(bio_err, "problem loading oid section %s\n", p);
 		return 0;
 	}

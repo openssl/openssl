@@ -223,13 +223,26 @@ int verify;
 	TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif
-	int number=5;
-	int ok=0;
-	int ps=0;
-	int is_a_tty=1;
-
-	FILE *tty=NULL;
+	int number;
+	int ok;
+	/* statics are simply to avoid warnings about longjmp clobbering
+	   things */
+	static int ps;
+	int is_a_tty;
+	static FILE *tty;
 	char *p;
+
+	if (setjmp(save))
+		{
+		ok=0;
+		goto error;
+		}
+
+	number=5;
+	ok=0;
+	ps=0;
+	is_a_tty=1;
+	tty=NULL;
 
 #ifndef MSDOS
 	if ((tty=fopen("/dev/tty","r")) == NULL)
@@ -267,11 +280,6 @@ int verify;
 		return(-1);
 #endif
 
-	if (setjmp(save))
-		{
-		ok=0;
-		goto error;
-		}
 	pushsig();
 	ps=1;
 
