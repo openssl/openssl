@@ -112,6 +112,9 @@ STARTTLS documents.
      Certification and Related Services. B. Kaliski. February 1993.
      (Format: TXT=17537 bytes) (Status: PROPOSED STANDARD)
 
+2025 The Simple Public-Key GSS-API Mechanism (SPKM). C. Adams. October
+     1996. (Format: TXT=101692 bytes) (Status: PROPOSED STANDARD)
+
 2510 Internet X.509 Public Key Infrastructure Certificate Management
      Protocols. C. Adams, S. Farrell. March 1999. (Format: TXT=158178
      bytes) (Status: PROPOSED STANDARD)
