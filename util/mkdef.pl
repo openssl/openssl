@@ -24,6 +24,7 @@ open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
 while(<IN>) {
     $options=$1 if (/^OPTIONS=(.*)$/);
 }
+close(IN);
 
 foreach (@ARGV, split(/ /, $options))
 	{

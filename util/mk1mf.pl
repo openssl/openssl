@@ -15,6 +15,7 @@ while(<IN>) {
     $options=$1 if (/^OPTIONS=(.*)$/);
     $INSTALLTOP=$1 if (/^INSTALLTOP=(.*$)/);
 }
+close(IN);
 
 die "Makefile.ssl is not the toplevel Makefile!\n" if $ssl_version eq "";
 
