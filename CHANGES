@@ -4,6 +4,30 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Added more prefixes to parse for in the the strings written
+     through a logging bio, to cover all the levels that are available
+     through syslog.  The prefixes are now:
+
+	PANIC, EMERG, EMR	=>	LOG_EMERG
+	ALERT, ALR		=>	LOG_ALERT
+	CRIT, CRI		=>	LOG_CRIT
+	ERROR, ERR		=>	LOG_ERR
+	WARNING, WARN, WAR	=>	LOG_WARNING
+	NOTICE, NOTE, NOT	=>	LOG_NOTICE
+	INFO, INF		=>	LOG_INFO
+	DEBUG, DBG		=>	LOG_DEBUG
+
+     and as before, if none of those prefixes are present at the
+     beginning of the string, LOG_ERR is chosen.
+
+     On Win32, the LOG_* levels are mapped according to this:
+
+	LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR	=> EVENTLOG_ERROR_TYPE
+	LOG_WARNING				=> EVENTLOG_WARNING_TYPE
+	LOG_NOTICE, LOG_INFO, LOG_DEBUG		=> EVENTLOG_INFORMATION_TYPE
+
+     [Richard Levitte]
+
   *) Made it possible to reconfigure with just the configuration
      argument "reconf" or "reconfigure".  The command line arguments
      are stored in Makefile.ssl in the variable CONFIGURE_ARGS,
