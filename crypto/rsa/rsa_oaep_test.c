@@ -1,7 +1,8 @@
 /* test vectors from p1ovect1.txt */
 
 #include <stdio.h>
-#include <rsa.h>
+#include "e_os.h"
+#include "rsa.h"
 
 #define SetKey \
   key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \

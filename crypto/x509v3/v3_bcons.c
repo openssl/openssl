@@ -56,13 +56,12 @@
  *
  */
 
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <pem.h>
-#include <asn1_mac.h>
-#include <err.h>
-#include <objects.h>
-#include <conf.h>
+#include "cryptlib.h"
+#include "asn1.h"
+#include "asn1_mac.h"
+#include "conf.h"
 #include "x509v3.h"
 
 #ifndef NOPROTO

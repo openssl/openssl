@@ -334,7 +334,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get();
 X509V3_EXT_METHOD *X509V3_EXT_get_nid();
 int X509V3_add_standard_extensions();
 STACK *X509V3_parse_list();
-char *X509V3_EXT_get_d2i();
+char *X509V3_EXT_d2i();
 
 char *hex_to_string();
 unsigned char *string_to_hex();

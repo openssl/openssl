@@ -57,10 +57,9 @@
  */
 /* X509 v3 extension utilities */
 
-#include <stdlib.h>
-#include <pem.h>
-#include <conf.h>
-#include <err.h>
+#include <stdio.h>
+#include "cryptlib.h"
+#include "conf.h"
 #include "x509v3.h"
 
 /* Extension printing routines */

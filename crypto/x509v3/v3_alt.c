@@ -57,22 +57,18 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <pem.h>
-#include <asn1_mac.h>
-#include <err.h>
-#include <objects.h>
-#include <conf.h>
+#include "cryptlib.h"
+#include "conf.h"
 #include "x509v3.h"
 
 #ifndef NOPROTO
-STACK *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-STACK *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+static STACK *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+static STACK *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 static int copy_email(X509V3_CTX *ctx, STACK *gens);
 static int copy_issuer(X509V3_CTX *ctx, STACK *gens);
 #else
-STACK *v2i_issuer_alt();
-STACK *v2i_subject_alt();
+static STACK *v2i_issuer_alt();
+static STACK *v2i_subject_alt();
 static int copy_email();
 static int copy_issuer();
 #endif
@@ -170,7 +166,7 @@ STACK *ret;
 	return ret;
 }
 
-STACK *v2i_issuer_alt(method, ctx, nval)
+static STACK *v2i_issuer_alt(method, ctx, nval)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
 STACK *nval;
@@ -239,7 +235,7 @@ STACK *gens;
 	
 }
 
-STACK *v2i_subject_alt(method, ctx, nval)
+static STACK *v2i_subject_alt(method, ctx, nval)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
 STACK *nval;

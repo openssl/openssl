@@ -623,7 +623,11 @@ char *parg;
 		}
 		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
+#ifndef NOPROTO
+		cert->rsa_tmp_cb=(RSA *(*)(SSL *, int, int))parg;
+#else
 		cert->rsa_tmp_cb=(RSA *(*)())parg;
+#endif
 		break;
 #endif
 #ifndef NO_DH
@@ -650,7 +654,11 @@ char *parg;
 		}
 		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
+#ifndef NOPROTO
+		cert->dh_tmp_cb=(DH *(*)(SSL *, int, int))parg;
+#else
 		cert->dh_tmp_cb=(DH *(*)())parg;
+#endif
 		break;
 #endif
 	/* A Thawte special :-) */

@@ -57,12 +57,13 @@
  */
 /* extension creation utilities */
 
-#include <stdlib.h>
+
+
+#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
-#include <pem.h>
-#include <conf.h>
-#include <err.h>
+#include "cryptlib.h"
+#include "conf.h"
+#include "x509.h"
 #include "x509v3.h"
 
 #ifndef NOPROTO

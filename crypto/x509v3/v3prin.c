@@ -55,10 +55,15 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#include <pem.h>
-#include <objects.h>
-#include <conf.h>
-#include <err.h>
+
+
+
+#include <stdio.h>
+#include "cryptlib.h"
+#include "asn1.h"
+#include "asn1_mac.h"
+#include "conf.h"
+#include "x509.h"
 #include "x509v3.h"
 
 int main(argc, argv)

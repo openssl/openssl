@@ -1209,7 +1209,7 @@ PKEY_USAGE_PERIOD_new                   1234
 PKEY_USAGE_PERIOD_free                  1235
 v2i_GENERAL_NAMES                       1236
 i2s_ASN1_INTEGER                        1237
-X509V3_EXT_get_d2i                      1238
+X509V3_EXT_d2i                          1238
 name_cmp                                1239
 str_dup                                 1240
 i2s_ASN1_ENUMERATED                     1241

@@ -57,9 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <pem.h>
-#include <err.h>
+#include "cryptlib.h"
 #include "x509v3.h"
 
 static ASN1_ENUMERATED *asn1_enumerated_new();
