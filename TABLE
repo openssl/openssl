@@ -2200,9 +2200,53 @@ $shared_cflag =
 $shared_extension = 
 $ranlib       = 
 
+*** sco3-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -Dssize_t=int -DNO_SYS_UN_H
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = -lsocket
+$bn_obj       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** sco5-cc
 $cc           = cc
 $cflags       = 
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** sco5-cc-pentium
+$cc           = cc
+$cflags       = -Kpentium
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = -lsocket
@@ -2532,10 +2576,10 @@ $ranlib       =
 
 *** unixware-2.0
 $cc           = cc
-$cflags       = -O -DFILIO_H
+$cflags       = -DFILIO_H
 $unistd       = 
-$thread_cflag = (unknown)
-$lflags       = -lsocket -lnsl
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl -lx
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
@@ -2554,10 +2598,76 @@ $ranlib       =
 
 *** unixware-2.0-pentium
 $cc           = cc
-$cflags       = -O -DFILIO_H -Kpentium -Kthread
+$cflags       = -DFILIO_H -Kpentium
+$unistd       = -Kthread
+$thread_cflag = -lsocket -lnsl -lx
+$lflags       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** unixware-2.1
+$cc           = cc
+$cflags       = -O -DFILIO_H
 $unistd       = 
-$thread_cflag = (unknown)
-$lflags       = -lsocket -lnsl
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl -lx
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** unixware-2.1-p6
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kp6
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl -lx
+$bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** unixware-2.1-pentium
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kpentium
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl -lx
 $bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
