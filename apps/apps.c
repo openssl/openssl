@@ -340,44 +340,6 @@ void program_name(char *in, char *out, int size)
 #endif
 #endif
 
-#ifdef OPENSSL_SYS_WIN32
-int WIN32_rename(char *from, char *to)
-	{
-#ifndef OPENSSL_SYS_WINCE
-	/* Windows rename gives an error if 'to' exists, so delete it
-	 * first and ignore file not found errror
-	 */
-	if((remove(to) != 0) && (errno != ENOENT))
-		return -1;
-#undef rename
-	return rename(from, to);
-#else
-	/* convert strings to UNICODE */
-	{
-	BOOL result = FALSE;
-	WCHAR* wfrom;
-	WCHAR* wto;
-	int i;
-	wfrom = malloc((strlen(from)+1)*2);
-	wto = malloc((strlen(to)+1)*2);
-	if (wfrom != NULL && wto != NULL)
-		{
-		for (i=0; i<(int)strlen(from)+1; i++)
-			wfrom[i] = (short)from[i];
-		for (i=0; i<(int)strlen(to)+1; i++)
-			wto[i] = (short)to[i];
-		result = MoveFile(wfrom, wto);
-		}
-	if (wfrom != NULL)
-		free(wfrom);
-	if (wto != NULL)
-		free(wto);
-	return result;
-	}
-#endif
-	}
-#endif
-
 #ifdef OPENSSL_SYS_VMS
 int VMS_strcasecmp(const char *str1, const char *str2)
 	{
@@ -1976,3 +1938,42 @@ void free_index(CA_DB *db)
 		OPENSSL_free(db);
 		}
 	}
+
+/* This code MUST COME AFTER anything that uses rename() */
+#ifdef OPENSSL_SYS_WIN32
+int WIN32_rename(char *from, char *to)
+	{
+#ifndef OPENSSL_SYS_WINCE
+	/* Windows rename gives an error if 'to' exists, so delete it
+	 * first and ignore file not found errror
+	 */
+	if((remove(to) != 0) && (errno != ENOENT))
+		return -1;
+#undef rename
+	return rename(from, to);
+#else
+	/* convert strings to UNICODE */
+	{
+	BOOL result = FALSE;
+	WCHAR* wfrom;
+	WCHAR* wto;
+	int i;
+	wfrom = malloc((strlen(from)+1)*2);
+	wto = malloc((strlen(to)+1)*2);
+	if (wfrom != NULL && wto != NULL)
+		{
+		for (i=0; i<(int)strlen(from)+1; i++)
+			wfrom[i] = (short)from[i];
+		for (i=0; i<(int)strlen(to)+1; i++)
+			wto[i] = (short)to[i];
+		result = MoveFile(wfrom, wto);
+		}
+	if (wfrom != NULL)
+		free(wfrom);
+	if (wto != NULL)
+		free(wto);
+	return result;
+	}
+#endif
+	}
+#endif
