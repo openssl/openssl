@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Move openssl.cnf out of lib/.
+     [Ulf Möller]
+
   *) Fix various things to let OpenSSL even pass ``egcc -pipe -O2 -Wall
      -Wshadow -Wpointer-arith -Wcast-align -Wmissing-prototypes
      -Wmissing-declarations -Wnested-externs -Winline'' with EGCS 1.1.2+ 

@@ -101,8 +101,8 @@ install:
 	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
 	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	 done
-	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/lib; \
-	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/lib/openssl.cnf
+	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR); \
+	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
 tags:
 	ctags $(SRC)

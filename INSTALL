@@ -134,7 +134,6 @@
 
        certs           Initially empty, this is the default location
                        for certificate files.
-       lib             Contains the OpenSSL configuration file "openssl.cnf".
        misc            Various scripts.
        private         Initially empty, this is the default location
                        for private key files.

@@ -83,7 +83,7 @@
 #define PROG ca_main
 
 #define BASE_SECTION	"ca"
-#define CONFIG_FILE "lib/openssl.cnf"
+#define CONFIG_FILE "openssl.cnf"
 
 #define ENV_DEFAULT_CA		"default_ca"
 
