@@ -32,6 +32,7 @@ B<openssl> B<s_client>
 [B<-no_tls1>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
+[B<-rand file(s)>]
 
 =head1 DESCRIPTION
 
@@ -155,6 +156,14 @@ this allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
+
+=item B<-rand file(s)>
+
+a file or files containing random data used to seed the random number
+generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+Multiple files can be specified separated by a OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
 
 =back
 

@@ -151,6 +151,9 @@
   *) Added several new manual pages for SSL_* function.
      [Lutz Jaenicke]
 
+  *) Add "-rand" option also to s_client and s_server.
+     [Lutz Jaenicke]
+
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
   *) In ssl23_get_client_hello, generate an error message when faced
