@@ -61,7 +61,10 @@
 static int engine_add(ENGINE *e)
 	{
 	if (!ENGINE_by_id(ENGINE_get_id(e)))
+		{
+		(void)ERR_get_error();
 		return ENGINE_add(e);
+		}
 	return 1;
 	}
 
