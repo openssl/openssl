@@ -36,6 +36,7 @@ B<openssl> B<s_client>
 [B<-no_tls1>]
 [B<-no_dhe>]
 [B<-bugs>]
+[B<-hack>]
 [B<-www>]
 [B<-WWW>]
 
@@ -159,6 +160,11 @@ servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-hack>
+
+this option enables a further workaround for some some early Netscape
+SSL code (?).
+
 =item B<-cipher cipherlist>
 
 this allows the cipher list sent by the client to be modified. See the
@@ -182,10 +188,40 @@ requested the file ./page.html will be loaded.
 =head1 CONNECTED COMMANDS
 
 If a connection request is established with an SSL client and neither the
-B<-www> nor the B<-WWW> option has been used then any data received from
-the server is displayed and any key presses will be sent to the server. If
-the line begins with an B<R> then the session will be renegotiated. If the
-line begins with a B<Q> the connection will be closed down.
+B<-www> nor the B<-WWW> option has been used then normally any data received
+from the client is displayed and any key presses will be sent to the client. 
+
+Certain single letter commands are also recognised which perform special
+operations: these are listed below.
+
+=over 4
+
+=item B<q>
+
+end the current SSL connection but still accept new connections.
+
+=item B<Q>
+
+end the current SSL connection and exit.
+
+=item B<r>
+
+renegotiate the SSL session.
+
+=item B<R>
+
+renegotiate the SSL session and request a client certificate.
+
+=item B<P>
+
+send some plain text down the underlying TCP connection: this should
+cause the client to disconnect due to a protocol violation.
+
+=item B<S>
+
+print out some session cache status information.
+
+=back
 
 =head1 NOTES
 
@@ -201,8 +237,8 @@ suites, so they cannot connect to servers which don't use a certificate
 carrying an RSA key or a version of OpenSSL with RSA disabled.
 
 Although specifying an empty list of CAs when requesting a client certificate
-is strictly speaking a protocol violation, some SSL clients assume any CA is
-acceptable. This is useful for debugging purposes.
+is strictly speaking a protocol violation, some SSL clients interpret this to
+mean any CA is acceptable. This is useful for debugging purposes.
 
 The session parameters can printed out using the B<sess_id> program.
 
@@ -214,7 +250,7 @@ hard to read and not a model of how things should be done. A typical
 SSL server program would be much simpler.
 
 The output of common ciphers is wrong: it just gives the list of ciphers that
-OpenSSL recognises and the client supports.
+OpenSSL recognizes and the client supports.
 
 There should be a way for the B<s_server> program to print out details of any
 unknown cipher suites a client says it supports.
