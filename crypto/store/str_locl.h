@@ -59,6 +59,7 @@
 #ifndef HEADER_STORE_LOCL_H
 #define HEADER_STORE_LOCL_H
 
+#include <openssl/crypto.h>
 #include <openssl/store.h>
 
 #ifdef  __cplusplus

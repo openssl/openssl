@@ -60,6 +60,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/sha.h>
+#include <openssl/x509.h>
 #include "str_locl.h"
 
 const char * const STORE_object_type_string[STORE_OBJECT_TYPE_NUM+1] =
