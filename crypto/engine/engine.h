@@ -88,6 +88,7 @@
 #include <openssl/ecdsa.h>
 #endif
 #include <openssl/rand.h>
+#include <openssl/store.h>
 #include <openssl/ui.h>
 #include <openssl/symhacks.h>
 #include <openssl/err.h>
@@ -123,6 +124,7 @@ typedef void ECDSA_METHOD;
 #define ENGINE_METHOD_ECDSA		(unsigned int)0x0020
 #define ENGINE_METHOD_CIPHERS		(unsigned int)0x0040
 #define ENGINE_METHOD_DIGESTS		(unsigned int)0x0080
+#define ENGINE_METHOD_STORE		(unsigned int)0x0100
 /* Obvious all-or-nothing cases. */
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
@@ -192,9 +194,15 @@ typedef void ECDSA_METHOD;
 						     handles/connections etc. */
 #define ENGINE_CTRL_SET_USER_INTERFACE          4 /* Alternative to callback */
 #define ENGINE_CTRL_SET_CALLBACK_DATA           5 /* User-specific data, used
-                                                     when calling the password
-                                                     callback and the user
-                                                     interface */
+						     when calling the password
+						     callback and the user
+						     interface */
+#define ENGINE_CTRL_LOAD_CONFIGURATION		6 /* Load a configuration, given
+						     a string that represents a
+						     file name or so */
+#define ENGINE_CTRL_LOAD_SECTION		7 /* Load data from a given
+						     section in the already loaded
+						     configuration */
 
 /* These control commands allow an application to deal with an arbitrary engine
  * in a dynamic way. Warn: Negative return values indicate errors FOR THESE
@@ -241,7 +249,7 @@ typedef void ECDSA_METHOD;
 
 /* ENGINE implementations should start the numbering of their own control
  * commands from this value. (ie. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc). */
-#define ENGINE_CMD_BASE		200
+#define ENGINE_CMD_BASE				200
 
 /* NB: These 2 nCipher "chil" control commands are deprecated, and their
  * functionality is now available through ENGINE-specific control commands
@@ -375,6 +383,10 @@ int ENGINE_register_RAND(ENGINE *e);
 void ENGINE_unregister_RAND(ENGINE *e);
 void ENGINE_register_all_RAND(void);
 
+int ENGINE_register_STORE(ENGINE *e);
+void ENGINE_unregister_STORE(ENGINE *e);
+void ENGINE_register_all_STORE(void);
+
 int ENGINE_register_ciphers(ENGINE *e);
 void ENGINE_unregister_ciphers(ENGINE *e);
 void ENGINE_register_all_ciphers(void);
@@ -451,6 +463,7 @@ int ENGINE_set_ECDH(ENGINE *e, const ECDH_METHOD *ecdh_meth);
 int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
+int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
 int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -485,6 +498,7 @@ const ECDH_METHOD *ENGINE_get_ECDH(const ENGINE *e);
 const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
+const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -576,10 +590,10 @@ void ENGINE_add_conf_module(void);
 /**************************/
 
 /* Binary/behaviour compatibility levels */
-#define OSSL_DYNAMIC_VERSION		(unsigned long)0x00010200
+#define OSSL_DYNAMIC_VERSION		(unsigned long)0x00020000
 /* Binary versions older than this are too old for us (whether we're a loader or
  * a loadee) */
-#define OSSL_DYNAMIC_OLDEST		(unsigned long)0x00010200
+#define OSSL_DYNAMIC_OLDEST		(unsigned long)0x00020000
 
 /* When compiling an ENGINE entirely as an external shared library, loadable by
  * the "dynamic" ENGINE, these types are needed. The 'dynamic_fns' structure

@@ -4,6 +4,9 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add support for STORE in ENGINE.
+     [Richard Levitte]
+
   *) Add the STORE type.  The intention is to provide a common interface
      to certificate and key stores, be they simple file-based stores, or
      HSM-type store, or LDAP stores, or...

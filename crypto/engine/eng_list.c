@@ -336,6 +336,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 	dest->ecdsa_meth = src->ecdsa_meth;
 #endif
 	dest->rand_meth = src->rand_meth;
+	dest->store_meth = src->store_meth;
 	dest->ciphers = src->ciphers;
 	dest->digests = src->digests;
 	dest->destroy = src->destroy;

@@ -92,6 +92,7 @@ void engine_set_all_null(ENGINE *e)
 	e->dsa_meth = NULL;
 	e->dh_meth = NULL;
 	e->rand_meth = NULL;
+	e->store_meth = NULL;
 	e->ciphers = NULL;
 	e->digests = NULL;
 	e->destroy = NULL;

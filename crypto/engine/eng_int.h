@@ -154,6 +154,7 @@ struct engine_st
 	const ECDH_METHOD *ecdh_meth;
 	const ECDSA_METHOD *ecdsa_meth;
 	const RAND_METHOD *rand_meth;
+	const STORE_METHOD *store_meth;
 	/* Cipher handling is via this callback */
 	ENGINE_CIPHERS_PTR ciphers;
 	/* Digest handling is via this callback */
