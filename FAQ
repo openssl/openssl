@@ -1,0 +1,90 @@
+OpenSSL  -  Frequently Asked Questions
+--------------------------------------
+
+* Where is the documentation?
+* How can I contact the OpenSSL developers?
+* Do I have to license patents to use OpenSSL?
+* Is OpenSSL thread-safe?
+* Why do I get a "PRNG not seeded" error message?
+
+
+* Where is the documentation?
+
+OpenSSL is a library that provides cryptographic functionality to
+applications such as secure web servers.  Be sure to read the
+documentation of the application you want to use.  The INSTALL file
+explains how to install this library.
+
+OpenSSL includes a command line utility that can be used to perform a
+variety of cryptographic functions.  It is described in the openssl(1)
+manpage.  Documentation for developers is currently being written.  A
+few manual pages already are available; overviews over libcrypto and
+libssl are given in the crypto(3) and ssl(3) manpages.
+
+The OpenSSL manpages are installed in /usr/local/ssl/man/ (or a
+different directory if you specified one as described in INSTALL).
+In addition, you can read the most current versions at
+<URL: http://www.openssl.org/docs/>.
+
+For information on parts of libcrypto that are not yet documented, you
+might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
+predecessor, at <URL: http://www.columbia.edu/~ariel/ssleay/>.  Much
+of this still applies to OpenSSL.
+
+The original SSLeay documentation is included in OpenSSL as
+doc/ssleay.txt.  It may be useful when none of the other ressources
+help, but please note that it reflects the obsolete version SSLeay
+0.6.6.
+
+
+* How can I contact the OpenSSL developers?
+
+The README file describes how to submit bug reports and patches to
+OpenSSL.  Information on the OpenSSL mailing lists is available from
+<URL: http://www.openssl.org>.
+
+
+* Do I have to license patents to use OpenSSL?
+
+The patents section of the README file lists patents that may apply to
+you if you want to use OpenSSL.  For information on intellectual
+property rights, please consult a lawyer.  The OpenSSL team does not
+offer legal advice.
+
+You can configure OpenSSL so as not to use RC5 and IDEA by using
+ ./config no-rc5 no-idea
+
+Until the RSA patent expires, U.S. users may want to use
+ ./config no-rc5 no-idea no-rsa
+
+Please note that you will *not* be able to communicate with most of
+the popular web browsers without RSA support.
+
+
+* Is OpenSSL thread-safe?
+
+Yes.  On Windows and many Unix systems, OpenSSL automatically uses the
+multi-threaded versions of the standard libraries.  If your platform
+is not one of these, consult the INSTALL file.
+
+Multi-threaded applications must provide two callback functions to
+OpenSSL.  This will be described in the threads(3) manpage.  [That
+page has not been written yet.  Please read the "threads.doc" section
+of doc/ssleay.txt instead.]
+
+
+* Why do I get a "PRNG not seeded" error message?
+
+Cryptographic software needs a source of unpredictable data to work
+correctly.  Many open source operating systems provide a "randomness
+device" that serves this purpose.  On other systems, applications have
+to call the RAND_add() or RAND_seed() function with appropriate data
+before generating keys or performing public key encryption.
+
+Some broken applications do not do this.  As of version 0.9.5, the
+OpenSSL functions that need randomness report an error if the random
+number generator has not been seeded with at least 128 bits of
+randomness.  If this error occurs, please contact the author of the
+application you are using.  It is likely that it never worked
+correctly.  OpenSSL 0.9.5 makes the error visible by refusing to
+perform potentially insecure encryption.
