@@ -16,11 +16,16 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/err.h>
 #include <openssl/crypto.h>
+
+#include "openssl/e_os.h"
+#ifndef SSIZE_MAX
+# define SSIZE_MAX INT_MAX
+#endif
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
@@ -209,7 +214,7 @@ static int bio_read(BIO *bio, char *buf, int size_)
 static ssize_t bio_nread0(BIO *bio, char **buf)
 	{
 	struct bio_bio_st *b, *peer_b;
-	size_t num;
+	ssize_t num;
 	
 	BIO_clear_retry_flags(bio);
 
@@ -244,15 +249,20 @@ static ssize_t bio_nread0(BIO *bio, char **buf)
 	return num;
 	}
 
-static ssize_t bio_nread(BIO *bio, char **buf, size_t num)
+static ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 	{
 	struct bio_bio_st *b, *peer_b;
-	size_t available;
+	ssize_t num, available;
+
+	if (num_ > SSIZE_MAX)
+		num = SSIZE_MAX;
+	else
+		num = (ssize_t)num_;
 
 	available = bio_nread0(bio, buf);
 	if (num > available)
 		num = available;
-	if (num == 0)
+	if (num <= 0)
 		return num;
 
 	b = bio->ptr;
@@ -352,7 +362,7 @@ static int bio_write(BIO *bio, char *buf, int num_)
  * (example usage:  bio_nwrite0(), write to buffer, bio_nwrite()
  *  or just         bio_nwrite(), write to buffer)
  */
-static size_t bio_nwrite0(BIO *bio, char **buf)
+static ssize_t bio_nwrite0(BIO *bio, char **buf)
 	{
 	struct bio_bio_st *b;
 	size_t num;
@@ -400,15 +410,20 @@ static size_t bio_nwrite0(BIO *bio, char **buf)
 	return num;
 	}
 
-static size_t bio_nwrite(BIO *bio, char **buf, size_t num)
+static ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
 	{
 	struct bio_bio_st *b;
-	size_t space;
+	ssize_t num, space;
+
+	if (num_ > SSIZE_MAX)
+		num = SSIZE_MAX;
+	else
+		num = (ssize_t)num_;
 
 	space = bio_nwrite0(bio, buf);
 	if (num > space)
 		num = space;
-	if (num == 0)
+	if (num <= 0)
 		return num;
 	b = bio->ptr;
 	assert(b != NULL);
@@ -510,6 +525,11 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		ret = 1;
 		break;
 
+	case BIO_C_NREAD0:
+		/* prepare for non-copying read */
+		ret = (long) bio_nread0(bio, ptr);
+		break;
+		
 	case BIO_C_NREAD:
 		/* non-copying read */
 		ret = (long) bio_nread(bio, ptr, (size_t) num);
