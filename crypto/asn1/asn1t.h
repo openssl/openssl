@@ -780,6 +780,12 @@ typedef struct ASN1_AUX_st {
 		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
 	} 
 
+#define IMPLEMENT_ASN1_DUP_FUNCTION(stname) \
+	stname * stname##_dup(stname *x) \
+        { \
+        return ASN1_item_dup(ASN1_ITEM_rptr(stname), x); \
+        }
+
 #define IMPLEMENT_ASN1_FUNCTIONS_const(name) \
 		IMPLEMENT_ASN1_FUNCTIONS_const_fname(name, name, name)
 

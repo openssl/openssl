@@ -65,7 +65,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 			 unsigned char *salt, int saltlen, int iter,
 						PKCS8_PRIV_KEY_INFO *p8inf)
 {
-	X509_SIG *p8;
+	X509_SIG *p8 = NULL;
 	X509_ALGOR *pbe;
 
 	if (!(p8 = X509_SIG_new())) {

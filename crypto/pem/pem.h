@@ -489,6 +489,8 @@ int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
 		long len);
+int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char *name, BIO *bp,
+	     pem_password_cb *cb, void *u);
 char *	PEM_ASN1_read_bio(char *(*d2i)(),const char *name,BIO *bp,char **x,
 		pem_password_cb *cb, void *u);
 int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
@@ -527,6 +529,7 @@ int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 
 void	ERR_load_PEM_strings(void);
 
+int	PEM_def_callback(char *buf, int num, int w, void *key);
 void	PEM_proc_type(char *buf, int type);
 void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 

@@ -1,4 +1,4 @@
-/* crypto/asn1/x_attrib.c */
+/* crypto/pem/pem_pkey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,61 +58,82 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/objects.h>
-#include <openssl/asn1t.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
+#include <openssl/pkcs12.h>
+#include <openssl/pem.h>
 
-/* X509_ATTRIBUTE: this has the following form:
- *
- * typedef struct x509_attributes_st
- *	{
- *	ASN1_OBJECT *object;
- *	int single;
- *	union	{
- *		char		*ptr;
- * 		STACK_OF(ASN1_TYPE) *set;
- * 		ASN1_TYPE	*single;
- *		} value;
- *	} X509_ATTRIBUTE;
- *
- * this needs some extra thought because the CHOICE type is
- * merged with the main structure and because the value can
- * be anything at all we *must* try the SET OF first because
- * the ASN1_ANY type will swallow anything including the whole
- * SET OF structure.
- */
 
-ASN1_CHOICE(X509_ATTRIBUTE_SET) = {
-	ASN1_SET_OF(X509_ATTRIBUTE, value.set, ASN1_ANY),
-	ASN1_SIMPLE(X509_ATTRIBUTE, value.single, ASN1_ANY)
-} ASN1_CHOICE_END_selector(X509_ATTRIBUTE, X509_ATTRIBUTE_SET, single)
-
-ASN1_SEQUENCE(X509_ATTRIBUTE) = {
-	ASN1_SIMPLE(X509_ATTRIBUTE, object, ASN1_OBJECT),
-	/* CHOICE type merged with parent */
-	ASN1_EX_COMBINE(0, 0, X509_ATTRIBUTE_SET)
-} ASN1_SEQUENCE_END(X509_ATTRIBUTE)
-
-IMPLEMENT_ASN1_FUNCTIONS(X509_ATTRIBUTE)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
-
-X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
+EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	{
-	X509_ATTRIBUTE *ret=NULL;
-	ASN1_TYPE *val=NULL;
+	char *nm=NULL;
+	unsigned char *p=NULL,*data=NULL;
+	long len;
+	EVP_PKEY *ret=NULL;
 
-	if ((ret=X509_ATTRIBUTE_new()) == NULL)
-		return(NULL);
-	ret->object=OBJ_nid2obj(nid);
-	ret->single=0;
-	if ((ret->value.set=sk_ASN1_TYPE_new_null()) == NULL) goto err;
-	if ((val=ASN1_TYPE_new()) == NULL) goto err;
-	if (!sk_ASN1_TYPE_push(ret->value.set,val)) goto err;
+	if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp, cb, u))
+		return NULL;
+	p = data;
 
-	ASN1_TYPE_set(val,atrtype,value);
-	return(ret);
-err:
-	if (ret != NULL) X509_ATTRIBUTE_free(ret);
-	if (val != NULL) ASN1_TYPE_free(val);
-	return(NULL);
+	if (strcmp(nm,PEM_STRING_RSA) == 0)
+		ret=d2i_PrivateKey(EVP_PKEY_RSA,x,&p,len);
+	else if (strcmp(nm,PEM_STRING_DSA) == 0)
+		ret=d2i_PrivateKey(EVP_PKEY_DSA,x,&p,len);
+	else if (strcmp(nm,PEM_STRING_PKCS8INF) == 0) {
+		PKCS8_PRIV_KEY_INFO *p8inf;
+		p8inf=d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+		ret = EVP_PKCS82PKEY(p8inf);
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
+	} else if (strcmp(nm,PEM_STRING_PKCS8) == 0) {
+		PKCS8_PRIV_KEY_INFO *p8inf;
+		X509_SIG *p8;
+		int klen;
+		char psbuf[PEM_BUFSIZE];
+		p8 = d2i_X509_SIG(NULL, &p, len);
+		if(!p8) goto p8err;
+		if (cb) klen=cb(psbuf,PEM_BUFSIZE,0,u);
+		else klen=PEM_def_callback(psbuf,PEM_BUFSIZE,0,u);
+		if (klen <= 0) {
+			PEMerr(PEM_F_PEM_ASN1_READ_BIO,
+					PEM_R_BAD_PASSWORD_READ);
+			goto err;
+		}
+		p8inf = PKCS8_decrypt(p8, psbuf, klen);
+		X509_SIG_free(p8);
+		if(!p8inf) goto p8err;
+		ret = EVP_PKCS82PKEY(p8inf);
+		if(x) {
+			if(*x) EVP_PKEY_free((EVP_PKEY *)*x);
+			*x = ret;
+		}
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
 	}
+p8err:
+	if (ret == NULL)
+		PEMerr(PEM_F_PEM_ASN1_READ_BIO,ERR_R_ASN1_LIB);
+err:
+	OPENSSL_free(nm);
+	OPENSSL_free(data);
+	return(ret);
+	}
+
+#ifndef OPENSSL_NO_FP_API
+EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
+	{
+        BIO *b;
+        EVP_PKEY *ret;
+
+        if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		PEMerr(PEM_F_PEM_ASN1_READ,ERR_R_BUF_LIB);
+                return(0);
+		}
+        BIO_set_fp(b,fp,BIO_NOCLOSE);
+        ret=PEM_read_bio_PrivateKey(b,x,cb,u);
+        BIO_free(b);
+        return(ret);
+	}
+#endif

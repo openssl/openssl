@@ -190,7 +190,6 @@ IMPLEMENT_PEM_rw(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
  * (When reading, parameter PEM_STRING_EVP_PKEY is a wildcard for anything
  * appropriate.)
  */
-IMPLEMENT_PEM_read(PrivateKey, EVP_PKEY, PEM_STRING_EVP_PKEY, PrivateKey)
 IMPLEMENT_PEM_write_cb(PrivateKey, EVP_PKEY, ((x->type == EVP_PKEY_DSA)?PEM_STRING_DSA:PEM_STRING_RSA), PrivateKey)
 
 IMPLEMENT_PEM_rw(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)

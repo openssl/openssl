@@ -113,21 +113,6 @@ int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 		x->signature, x->spkac,pkey,md));
 	}
 
-X509_ATTRIBUTE *X509_ATTRIBUTE_dup(X509_ATTRIBUTE *xa)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_ATTRIBUTE),xa);
-	}
-
-X509 *X509_dup(X509 *x509)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509),x509);
-	}
-
-X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_EXTENSION),ex);
-	}
-
 #ifndef OPENSSL_NO_FP_API
 X509 *d2i_X509_fp(FILE *fp, X509 **x509)
 	{
@@ -148,11 +133,6 @@ X509 *d2i_X509_bio(BIO *bp, X509 **x509)
 int i2d_X509_bio(BIO *bp, X509 *x509)
 	{
 	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509), bp, x509);
-	}
-
-X509_CRL *X509_CRL_dup(X509_CRL *crl)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_CRL), crl);
 	}
 
 #ifndef OPENSSL_NO_FP_API
@@ -177,11 +157,6 @@ int i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl)
 	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 	}
 
-PKCS7 *PKCS7_dup(PKCS7 *p7)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(PKCS7), p7);
-	}
-
 #ifndef OPENSSL_NO_FP_API
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 	{
@@ -202,11 +177,6 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7)
 	{
 	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
-	}
-
-X509_REQ *X509_REQ_dup(X509_REQ *req)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_REQ), req);
 	}
 
 #ifndef OPENSSL_NO_FP_API
@@ -232,15 +202,6 @@ int i2d_X509_REQ_bio(BIO *bp, X509_REQ *req)
 	}
 
 #ifndef OPENSSL_NO_RSA
-RSA *RSAPublicKey_dup(RSA *rsa)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
-	}
-
-RSA *RSAPrivateKey_dup(RSA *rsa)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
-	}
 
 #ifndef OPENSSL_NO_FP_API
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
@@ -363,21 +324,6 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 	}
 
 #endif
-
-X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_ALGOR), xn);
-	}
-
-X509_NAME *X509_NAME_dup(X509_NAME *xn)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME), xn);
-	}
-
-X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(X509_NAME_ENTRY), ne);
-	}
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)

@@ -1,9 +1,9 @@
-/* x_algor.c */
+/* v3_akey_asn1.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 2000.
+ * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,18 +56,17 @@
  *
  */
 
-#include <stddef.h>
-#include <openssl/x509.h>
+#include <stdio.h>
+#include "cryptlib.h"
+#include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/x509v3.h>
 
-ASN1_SEQUENCE(X509_ALGOR) = {
-	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
-	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
-} ASN1_SEQUENCE_END(X509_ALGOR)
+ASN1_SEQUENCE(AUTHORITY_KEYID) = {
+	ASN1_IMP_OPT(AUTHORITY_KEYID, keyid, ASN1_OCTET_STRING, 0),
+	ASN1_IMP_SEQUENCE_OF_OPT(AUTHORITY_KEYID, issuer, GENERAL_NAME, 1),
+	ASN1_IMP_OPT(AUTHORITY_KEYID, serial, ASN1_INTEGER, 2)
+} ASN1_SEQUENCE_END(AUTHORITY_KEYID)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
-
-IMPLEMENT_STACK_OF(X509_ALGOR)
-IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
+IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_KEYID)

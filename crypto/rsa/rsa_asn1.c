@@ -109,3 +109,13 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPublicKey, RSAPublicKey)
+
+RSA *RSAPublicKey_dup(RSA *rsa)
+	{
+	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
+	}
+
+RSA *RSAPrivateKey_dup(RSA *rsa)
+	{
+	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
+	}
