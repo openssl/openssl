@@ -546,6 +546,8 @@ static int ssl3_check_client_hello(SSL *s)
 	int ok;
 	long n;
 
+	/* this function is called when we really expect a Certificate message,
+	 * so permit appropriate message length */
 	n=ssl3_get_message(s,
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
