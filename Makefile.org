@@ -1,34 +1,10 @@
-#
-# Makefile for all the SSL related library routines and utilities
-VERSION = 0.9.2
-PLATFORM=FreeBSD
-#
-# make install will install:
-#   libraries into $INSTALLTOP/lib
-#   headers   into $INSTALLTOP/include
-#   utilities into $INSTALLTOP/bin
-#
-# By default INSTALLTOP is set to /usr/local/ssl
-# If you want things install elsewere, consider running
-# perl util/ssldir.pl /new/path
-#
-# Interesting Mailing Lists:
-#     ssl-bugs@mincom.oz.au
-#     ssl-users@mincom.oz.au
-#
-# To join the Mailing Lists:
-#     ssl-bugs-request@mincom.oz.au
-#     ssl-users-request@mincom.oz.au
-#
-# If you must get hold of people directly (we much prefer the above
-# lists to be used if the question is of general interest!):
-#       Eric Young <eay@cryptsoft.com>
-#       Tim Hudson <tjh@cryptsoft.com>
-#       or both    <ssleay@cryptsoft.com>
-#
-# The primary distribution of SSLeay is from
-# ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL
-#
+##
+## Makefile for OpenSSL
+##
+
+VERSION = 0.9.2b
+PLATFORM=dist
+
 # NOCONST - Define for C compilers that don't like the const key word.
 # NOPROTO - Define in if your compiler does not support prototypes.
 # RSAref  - Define if we are to link with RSAref.
