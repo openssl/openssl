@@ -142,27 +142,27 @@ B<ecparam> can only create EC parameters from known (named) curves.
 
 To create EC parameters with the group 'prime192v1':
 
-  openssl ec -out ec_param.pem -name prime192v1
+  openssl ecparam -out ec_param.pem -name prime192v1
 
 To create EC parameters with explicit parameters:
 
-  openssl ec -out ec_param.pem -name prime192v1 -param_enc explicit
+  openssl ecparam -out ec_param.pem -name prime192v1 -param_enc explicit
 
 To validate given EC parameters:
 
-  openssl ec -in ec_param.pem -check
+  openssl ecparam -in ec_param.pem -check
 
 To create EC parameters and a private key:
 
-  openssl ec -out ec_key.pem -name prime192v1 -genkey
+  openssl ecparam -out ec_key.pem -name prime192v1 -genkey
 
 To change the point encoding to 'compressed':
 
-  openssl ec -in ec_in.pem -out ec_out.pem -conv_form compressed
+  openssl ecparam -in ec_in.pem -out ec_out.pem -conv_form compressed
 
 To print out the EC parameters to standard output:
 
-  openssl ec -in ec_param.pem -noout -text
+  openssl ecparam -in ec_param.pem -noout -text
 
 =head1 SEE ALSO
 
