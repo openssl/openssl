@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Have the zlib compression code load ZLIB.DLL dynamically under
+     Windows.
+     [Richard Levitte]
+
   *) New function BN_mod_sqrt for computing square roots modulo a prime
      (Tonelli-Shanks algorithm).
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]

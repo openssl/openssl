@@ -6,11 +6,9 @@
 
 COMP_METHOD *COMP_zlib(void );
 
-#ifndef ZLIB
-
-static COMP_METHOD zlib_method={
+static COMP_METHOD zlib_method_nozlib={
 	NID_undef,
-	"(null)",
+	"(undef)",
 	NULL,
 	NULL,
 	NULL,
@@ -18,7 +16,7 @@ static COMP_METHOD zlib_method={
 	NULL,
 	};
 
-#else
+#ifdef ZLIB
 
 #include <zlib.h>
 
@@ -39,6 +37,42 @@ static COMP_METHOD zlib_method={
 	zlib_expand_block,
 	NULL,
 	};
+
+/* 
+ * When OpenSSL is built on Windows, we do not want to require that
+ * the ZLIB.DLL be available in order for the OpenSSL DLLs to
+ * work.  Therefore, all ZLIB routines are loaded at run time
+ * and we do not link to a .LIB file.
+ */
+#if defined(WINDOWS) || defined(WIN32)
+#include <windows.h>
+
+/* Prototypes for built in stubs */
+int stub_compress(Bytef *dest,uLongf *destLen,
+	const Bytef *source, uLong sourceLen);
+int stub_inflateEnd(z_streamp strm);
+int stub_inflate(z_streamp strm, int flush);
+int stub_inflateInit_(z_streamp strm, const char * version, int stream_size);
+
+/* Function pointers */
+typedef int (_stdcall *compress_ft)(Bytef *dest,uLongf *destLen,
+	const Bytef *source, uLong sourceLen);
+typedef int (_stdcall *inflateEnd_ft)(z_streamp strm);
+typedef int (_stdcall *inflate_ft)(z_streamp strm, int flush);
+typedef int (_stdcall *inflateInit__ft)(z_streamp strm, const char * version,
+	int stream_size);
+static compress_ft p_compress=NULL;
+static inflateEnd_ft p_inflateEnd=NULL;
+static inflate_ft p_inflate=NULL;
+static inflate_Init__ft p_inflateInit_=NULL;
+
+static int zlib_loaded = 0;     /* only attempt to init func pts once */
+
+#define compress                stub_compress
+#define inflateEnd              stub_inflateEnd
+#define inflate                 stub_inflate
+#define inflateInit_            stub_inflateInit_
+#endif /* WINDOWS || WIN32 */
 
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	     unsigned int olen, unsigned char *in, unsigned int ilen)
@@ -66,7 +100,10 @@ static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 		memcpy(&(out[1]),in,ilen);
 		l=ilen+1;
 		}
-fprintf(stderr,"compress(%4d)->%4d %s\n",ilen,(int)l,(clear)?"clear":"zlib");
+#ifdef DEBUG_ZLIB
+	fprintf(stderr,"compress(%4d)->%4d %s\n",
+		ilen,(int)l,(clear)?"clear":"zlib");
+#endif
 	return((int)l);
 	}
 
@@ -88,7 +125,10 @@ static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
 		memcpy(out,&(in[1]),ilen-1);
 		l=ilen-1;
 		}
-        fprintf(stderr,"expand  (%4d)->%4d %s\n",ilen,(int)l,in[0]?"zlib":"clear");
+#ifdef DEBUG_ZLIB
+        fprintf(stderr,"expand  (%4d)->%4d %s\n",
+		ilen,(int)l,in[0]?"zlib":"clear");
+#endif
 	return((int)l);
 	}
 
@@ -128,6 +168,74 @@ static int zz_uncompress (Bytef *dest, uLongf *destLen, const Bytef *source,
 
 COMP_METHOD *COMP_zlib(void)
 	{
-	return(&zlib_method);
+	COMP_METHOD *meth = &zlib_method_nozlib;
+
+#ifdef ZLIB
+#if defined(WINDOWS) || defined(WIN32)
+	if (!zlib_method)
+		{
+		zlib_dso = DSO_load(NULL, "ZLIB", NULL, 0);
+		if (dso != NULL)
+			{
+			(FARPROC) p_compress
+				= (compress_ft) DSO_bind_func(dso, "compress");
+			(FARPROC) p_inflateEnd
+				= (inflateEnd_ft) DSO_bind_func(dso, "inflateEnd");
+			(FARPROC) p_inflate
+				= (inflate_ft) DSO_bind_func(dso, "inflate");
+			(FARPROC) p_inflateInit_
+				= (inflateInit__ft) DSO_bind_func(dso, "inflateInit_");
+			zlib_loaded++;
+			meth = &zlib_method;
+			}
+		}
+
+#else
+	meth = &zlib_method;
+#endif
+#endif
+
+	return(meth);
 	}
 
+#ifdef ZLIB
+#if defined(WINDOWS) || defined(WIN32)
+/* Stubs for each function to be dynamicly loaded */
+static int 
+stub_compress(Bytef *dest,uLongf *destLen,const Bytef *source, uLong sourceLen)
+	{
+	if (p_compress)
+		return(p_compress(dest,destLen,source,sourceLen));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_inflateEnd(z_streamp strm)
+	{
+	if ( p_inflateEnd )
+		return(p_inflateEnd(strm));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_inflate(z_streamp strm, int flush)
+	{
+	if ( p_inflate )
+		return(p_inflate(strm,flush));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_inflateInit_(z_streamp strm, const char * version, int stream_size)
+	{
+	if ( p_inflateInit_ )
+		return(p_inflateInit_(strm,version,stream_size));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+#endif /* WINDOWS || WIN32 */
+#endif /* ZLIB */
