@@ -182,7 +182,7 @@ int MAIN(int argc, char **argv)
 				}
 			printf("%s(%s)= ",name,argv[i]);
 			do_fp(buf,inp,separator);
-			BIO_reset(bmd);
+			(void)BIO_reset(bmd);
 			}
 		}
 end:

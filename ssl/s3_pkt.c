@@ -1016,7 +1016,7 @@ int ssl3_dispatch_alert(SSL *s)
 		 * does not get sent due to non-blocking IO, we will
 		 * not worry too much. */
 		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
-			BIO_flush(s->wbio);
+			(void)BIO_flush(s->wbio);
 
 		if (s->info_callback != NULL)
 			cb=s->info_callback;

@@ -1695,7 +1695,7 @@ int ssl_init_wbio_buffer(SSL *s,int push)
 		if (s->bbio == s->wbio)
 			s->wbio=BIO_pop(s->wbio);
 		}
-	BIO_reset(bbio);
+	(void)BIO_reset(bbio);
 /*	if (!BIO_set_write_buffer_size(bbio,16*1024)) */
 	if (!BIO_set_read_buffer_size(bbio,1))
 		{

@@ -570,7 +570,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 		if (data->param_hostname)
 			BIO_set_conn_hostname(dbio,data->param_hostname);
 		BIO_set_nbio(dbio,data->nbio);
-		BIO_set_info_callback(dbio,data->info_callback);
+		(void)BIO_set_info_callback(dbio,data->info_callback);
 		break;
 	case BIO_CTRL_SET_CALLBACK:
 		data->info_callback=(int (*)())ptr;

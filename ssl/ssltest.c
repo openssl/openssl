@@ -97,8 +97,11 @@ BIO *bio_stdout=NULL;
 static char *cipher=NULL;
 int verbose=0;
 int debug=0;
+#if 0
+/* Not used yet. */
 #ifdef FIONBIO
 static int s_nbio=0;
+#endif
 #endif
 
 
@@ -731,10 +734,10 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	if (rsa_tmp == NULL)
 		{
 		BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
-		BIO_flush(bio_err);
+		(void)BIO_flush(bio_err);
 		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
 		BIO_printf(bio_err,"\n");
-		BIO_flush(bio_err);
+		(void)BIO_flush(bio_err);
 		}
 	return(rsa_tmp);
 	}

@@ -631,7 +631,7 @@ bad:
 		BIO_printf(bio_s_out,"Using default temp DH parameters\n");
 		dh=get_dh512();
 		}
-	BIO_flush(bio_s_out);
+	(void)BIO_flush(bio_s_out);
 
 	SSL_CTX_set_tmp_dh(ctx,dh);
 	DH_free(dh);
@@ -1403,13 +1403,13 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 		if (!s_quiet)
 			{
 			BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
-			BIO_flush(bio_err);
+			(void)BIO_flush(bio_err);
 			}
 		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
 		if (!s_quiet)
 			{
 			BIO_printf(bio_err,"\n");
-			BIO_flush(bio_err);
+			(void)BIO_flush(bio_err);
 			}
 		}
 	return(rsa_tmp);

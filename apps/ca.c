@@ -866,7 +866,7 @@ bad:
 			if (!batch)
 				{
 				BIO_printf(bio_err,"\n%d out of %d certificate requests certified, commit? [y/n]",total_done,total);
-				BIO_flush(bio_err);
+				(void)BIO_flush(bio_err);
 				buf[0][0]='\0';
 				fgets(buf[0],10,stdin);
 				if ((buf[0][0] != 'y') && (buf[0][0] != 'Y'))
@@ -1067,7 +1067,7 @@ bad:
 					strlen(pp[DB_rev_date]));
 				/* strcpy(r->revocationDate,pp[DB_rev_date]);*/
 
-				BIO_reset(hex);
+				(void)BIO_reset(hex);
 				if (!BIO_puts(hex,pp[DB_serial]))
 					goto err;
 				if (!a2i_ASN1_INTEGER(hex,r->serialNumber,
@@ -1791,7 +1791,7 @@ again2:
 	if (!batch)
 		{
 		BIO_printf(bio_err,"Sign the certificate? [y/n]:");
-		BIO_flush(bio_err);
+		(void)BIO_flush(bio_err);
 		buf[0]='\0';
 		fgets(buf,sizeof(buf)-1,stdin);
 		if (!((buf[0] == 'y') || (buf[0] == 'Y')))

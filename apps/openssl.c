@@ -219,7 +219,7 @@ int main(int Argc, char *Argv[])
 			}
 		if (ret != 0)
 			BIO_printf(bio_err,"error in %s\n",argv[0]);
-		BIO_flush(bio_err);
+		(void)BIO_flush(bio_err);
 		}
 	BIO_printf(bio_err,"bad exit\n");
 	ret=1;

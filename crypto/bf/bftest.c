@@ -308,7 +308,7 @@ static int print_test_data(void)
 		printf("c=");
 		for (j=0; j<8; j++)
 			printf("%02X",key_out[i][j]);
-		printf(" k[%2d]=",i+1);
+		printf(" k[%2u]=",i+1);
 		for (j=0; j<i+1; j++)
 			printf("%02X",key_test[j]);
 		printf("\n");

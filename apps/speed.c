@@ -1130,7 +1130,7 @@ int MAIN(int argc, char **argv)
 			printf("%18ssign    verify    sign/s verify/s\n"," ");
 			j=0;
 			}
-		fprintf(stdout,"rsa %4d bits %8.4fs %8.4fs %8.1f %8.1f",
+		fprintf(stdout,"rsa %4u bits %8.4fs %8.4fs %8.1f %8.1f",
 			rsa_bits[k],rsa_results[k][0],rsa_results[k][1],
 			1.0/rsa_results[k][0],1.0/rsa_results[k][1]);
 		fprintf(stdout,"\n");
@@ -1145,7 +1145,7 @@ int MAIN(int argc, char **argv)
 			printf("%18ssign    verify    sign/s verify/s\n"," ");
 			j=0;
 			}
-		fprintf(stdout,"dsa %4d bits %8.4fs %8.4fs %8.1f %8.1f",
+		fprintf(stdout,"dsa %4u bits %8.4fs %8.4fs %8.1f %8.1f",
 			dsa_bits[k],dsa_results[k][0],dsa_results[k][1],
 			1.0/dsa_results[k][0],1.0/dsa_results[k][1]);
 		fprintf(stdout,"\n");
@@ -1172,11 +1172,11 @@ static void print_message(char *s, long num, int length)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,"Doing %s for %ds on %d size blocks: ",s,SECONDS,length);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 	alarm(SECONDS);
 #else
 	BIO_printf(bio_err,"Doing %s %ld times on %d size blocks: ",s,num,length);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 #endif
 #ifdef LINT
 	num=num;
@@ -1188,11 +1188,11 @@ static void pkey_print_message(char *str, char *str2, long num, int bits,
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,"Doing %d bit %s %s's for %ds: ",bits,str,str2,tm);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 	alarm(RSA_SECONDS);
 #else
 	BIO_printf(bio_err,"Doing %ld %d bit %s %s's: ",num,bits,str,str2);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 #endif
 #ifdef LINT
 	num=num;

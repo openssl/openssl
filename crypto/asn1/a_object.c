@@ -206,7 +206,7 @@ int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
 		if (i > 2) i=2;
 		l-=(long)(i*40);
 
-		sprintf(tbuf,"%d.%ld",i,l);
+		sprintf(tbuf,"%d.%lu",i,l);
 		i=strlen(tbuf);
 		strncpy(buf,tbuf,buf_len);
 		buf_len-=i;
@@ -219,7 +219,7 @@ int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
 			l|=p[idx]&0x7f;
 			if (!(p[idx] & 0x80))
 				{
-				sprintf(tbuf,".%ld",l);
+				sprintf(tbuf,".%lu",l);
 				i=strlen(tbuf);
 				if (buf_len > 0)
 					strncpy(buf,tbuf,buf_len);

@@ -308,8 +308,8 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 
 	if(m->addr == (char *)l->bio)
 	    return;
-	sprintf(buf,"%5ld file=%s, line=%d, number=%d, address=%08lX\n",
-		m->order,m->file,m->line,m->num,(long)m->addr);
+	sprintf(buf,"%5lu file=%s, line=%d, number=%d, address=%08lX\n",
+		m->order,m->file,m->line,m->num,(unsigned long)m->addr);
 	BIO_puts(l->bio,buf);
 	l->chunks++;
 	l->bytes+=m->num;

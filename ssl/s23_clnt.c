@@ -186,7 +186,7 @@ int ssl23_connect(SSL *s)
 			/* break; */
 			}
 
-		if (s->debug) BIO_flush(s->wbio);
+		if (s->debug) { (void)BIO_flush(s->wbio); }
 
 		if ((cb != NULL) && (s->state != state))
 			{

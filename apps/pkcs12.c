@@ -293,7 +293,7 @@ if (export_cert) {
 	unsigned int keyidlen;
 	/* Get private key so we can match it to a certificate */
 	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL);
-	if (!inkey) BIO_reset(in);
+	if (!inkey) (void)BIO_reset(in);
 	if (!key) {
 		BIO_printf (bio_err, "Error loading private key\n");
 		ERR_print_errors(bio_err);

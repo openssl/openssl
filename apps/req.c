@@ -245,7 +245,7 @@ int MAIN(int argc, char **argv)
 				if ((dsa_params=PEM_read_bio_DSAparams(in,NULL,NULL)) == NULL)
 					{
 					ERR_clear_error();
-					BIO_reset(in);
+					(void)BIO_reset(in);
 					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL)) == NULL)
 						{
 						BIO_printf(bio_err,"unable to load DSA parameters from file\n");
@@ -979,7 +979,7 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	MS_STATIC char buf[1024];
 
 	BIO_printf(bio_err,"%s [%s]:",text,def);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 	if (value != NULL)
 		{
 		strcpy(buf,value);
@@ -1040,7 +1040,7 @@ static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
 
 start:
 	BIO_printf(bio_err,"%s [%s]:",text,def);
-	BIO_flush(bio_err);
+	(void)BIO_flush(bio_err);
 	if (value != NULL)
 		{
 		strcpy(buf,value);
@@ -1123,7 +1123,7 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	(void)BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif
