@@ -122,6 +122,7 @@
 #define ENV_NEW_CERTS_DIR	"new_certs_dir"
 #define ENV_CERTIFICATE 	"certificate"
 #define ENV_SERIAL		"serial"
+#define ENV_CRLNUMBER		"crlnumber"
 #define ENV_CRL			"crl"
 #define ENV_PRIVATE_KEY		"private_key"
 #define ENV_RANDFILE		"RANDFILE"
@@ -276,6 +277,7 @@ int MAIN(int argc, char **argv)
 	char *outfile=NULL;
 	char *outdir=NULL;
 	char *serialfile=NULL;
+	char *crlnumberfile=NULL;
 	char *extensions=NULL;
 	char *extfile=NULL;
 	char *subj=NULL;
@@ -284,6 +286,7 @@ int MAIN(int argc, char **argv)
 	int rev_type = REV_NONE;
 	char *rev_arg = NULL;
 	BIGNUM *serial=NULL;
+	BIGNUM *crlnumber=NULL;
 	char *startdate=NULL;
 	char *enddate=NULL;
 	long days=0;
@@ -1335,6 +1338,14 @@ bad:
 				}
 			}
 
+		if ((crlnumberfile=NCONF_get_string(conf,section,ENV_CRLNUMBER))
+			!= NULL)
+			if ((crlnumber=load_serial(crlnumberfile,0,NULL)) == NULL)
+				{
+				BIO_printf(bio_err,"error while loading CRL number\n");
+				goto err;
+				}
+
 		if (!crldays && !crlhours)
 			{
 			if (!NCONF_get_number(conf,section,
@@ -1411,14 +1422,24 @@ bad:
 
 		/* Add any extensions asked for */
 
-		if (crl_ext)
+		if (crl_ext || crlnumberfile != NULL)
 			{
 			X509V3_CTX crlctx;
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
 			X509V3_set_nconf(&crlctx, conf);
 
-			if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx,
-				crl_ext, crl)) goto err;
+			if (crl_ext)
+				if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx,
+					crl_ext, crl)) goto err;
+			if (crlnumberfile != NULL)
+				{
+				tmpser = BN_to_ASN1_INTEGER(crlnumber, NULL);
+				if (!tmpser) goto err;
+				X509_CRL_add1_ext_i2d(crl,NID_crl_number,tmpser,0,0);
+				ASN1_INTEGER_free(tmpser);
+				crl_v2 = 1;
+				if (!BN_add_word(crlnumber,1)) goto err;
+				}
 			}
 		if (crl_ext || crl_v2)
 			{
@@ -1426,9 +1447,17 @@ bad:
 				goto err; /* version 2 CRL */
 			}
 
+		
+		if (crlnumberfile != NULL)	/* we have a CRL number that need updating */
+			if (!save_serial(crlnumberfile,"new",crlnumber,NULL)) goto err;
+
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
 
 		PEM_write_bio_X509_CRL(Sout,crl);
+
+		if (crlnumberfile != NULL)	/* Rename the crlnumber file */
+			if (!rotate_serial(crlnumberfile,"new","old")) goto err;
+
 		}
 	/*****************************************************************/
 	if (dorevoke)
@@ -3049,4 +3078,3 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_G
 
 	return ret;
 	}
-
