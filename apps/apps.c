@@ -1315,21 +1315,19 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
         return e;
         }
 
-int load_config(char *filename, BIO *err)
+int load_config(BIO *err, CONF *cnf)
 	{
-	unsigned long flags;
-	if (filename)
-		flags = 0;
-	else
-		flags = CONF_MFLAGS_IGNORE_MISSING_FILE;
+	if (!cnf)
+		cnf = config;
+	if (!cnf)
+		return 1;
 
-	if (CONF_modules_load_file(filename, NULL, flags) <= 0)
+	OPENSSL_load_builtin_modules();
+
+	if (CONF_modules_load(cnf, NULL, 0) <= 0)
 		{
-		if (err)
-			{
-			BIO_printf(err, "Error loading config file\n");
-			ERR_print_errors(err);
-			}
+		BIO_printf(err, "Error configuring OpenSSL\n");
+		ERR_print_errors(err);
 		return 0;
 		}
 	return 1;
