@@ -100,7 +100,7 @@ $out_def="out";
 $inc_def="outinc";
 $tmp_def="tmp";
 
-$mkdir="mkdir";
+$mkdir="-mkdir";
 
 ($ssl,$crypto)=("ssl","crypto");
 $ranlib="echo ranlib";
