@@ -24,4 +24,4 @@ cd ../des
 $S fips_des_enc.c fips_des_selftest.c fips_des_locl.h > fingerprint.sha1
 
 cd ../rsa
-$S fips_rsa_eay.c fips_rsa_gen.c > fingerprint.sha1
+$S fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c > fingerprint.sha1

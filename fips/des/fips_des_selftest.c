@@ -86,7 +86,7 @@ int FIPS_selftest_des()
 	DES_ecb_encrypt(&tests[n].plaintext,&buf,&key,1);
 	if(memcmp(buf,tests[n].ciphertext,sizeof buf))
 	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
 	    return 0;
 	    }
 	}

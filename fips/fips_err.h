@@ -1,4 +1,4 @@
-/* fips/fips_err.c */
+/* fips/fips_err.h */
 /* ====================================================================
  * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -70,6 +70,8 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_PACK(0,FIPS_F_FIPS_DSA_CHECK,0),	"FIPS_dsa_check"},
 {ERR_PACK(0,FIPS_F_FIPS_MODE_SET,0),	"FIPS_mode_set"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_AES,0),	"FIPS_selftest_aes"},
+{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DES,0),	"FIPS_selftest_des"},
+{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_RSA,0),	"FIPS_SELFTEST_RSA"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_SHA1,0),	"FIPS_selftest_sha1"},
 {ERR_PACK(0,FIPS_F_HASH_FINAL,0),	"HASH_FINAL"},
 {ERR_PACK(0,FIPS_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},

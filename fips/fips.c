@@ -65,7 +65,8 @@ int FIPS_selftest()
     {
     return FIPS_selftest_sha1()
 	&& FIPS_selftest_aes()
-	&& FIPS_selftest_des();
+	&& FIPS_selftest_des()
+	&& FIPS_selftest_rsa();
     }
 
 static int FIPS_check_exe(const char *path)
