@@ -1,4 +1,9 @@
-#!/usr/local/bin/perl -w
+:
+eval 'exec perl $0 -S ${1+"$@"}'
+    if $running_under_some_shell;
+##
+##  Configure -- OpenSSL source tree configuration script
+##
 
 require 5.000;
 use strict;
