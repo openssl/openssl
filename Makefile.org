@@ -358,7 +358,7 @@ dclean:
 
 rehash: rehash.time
 rehash.time: certs
-	@(OPENSSL="`pwd`/apps/openssl"; OPENSSL_DEBUG_MEMORY=on; 
+	@(OPENSSL="`pwd`/apps/openssl"; OPENSSL_DEBUG_MEMORY=on; \
 		export OPENSSL OPENSSL_DEBUG_MEMORY; \
 		LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; LIBPATH="`pwd`"; \
 		if [ "$(PLATFORM)" != "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
@@ -377,7 +377,6 @@ tests: rehash
 		if [ "$(PLATFORM)" != "DJGPP" ]; then PATH="`pwd`\;$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		apps/openssl version -a
-endif
 
 report:
 	@$(PERL) util/selftest.pl
