@@ -362,13 +362,8 @@ lint:
 	done;
 
 tags:
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making tags $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' tags ) || exit 1; \
-	fi; \
-	done;
+	rm -f TAGS
+	find . -name '[^.]*.[ch]' | xargs etags -a
 
 errors:
 	$(PERL) util/mkerr.pl -recurse -write
