@@ -51,7 +51,7 @@
  * ====================================================================
  *
  * This product includes cryptographic software written by Eric Young
- * (null@cryptsoft.com).  This product includes software written by Tim
+ * (eay@cryptsoft.com).  This product includes software written by Tim
  * Hudson (tjh@cryptsoft.com).
  *
  */
