@@ -1,20 +1,22 @@
 OpenSSL  -  Frequently Asked Questions
 --------------------------------------
 
+[MISC] Miscellaneous questions
+
 * Which is the current version of OpenSSL?
 * Where is the documentation?
 * How can I contact the OpenSSL developers?
-* Do I need patent licenses to use OpenSSL?
-* Is OpenSSL thread-safe?
-* Why do I get a "PRNG not seeded" error message?
-* Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
-* I've compiled a program under Windows and it crashes: why?
-* How do I read or write a DER encoded buffer using the ASN1 functions?
-* I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
-* I've called <some function> and it fails, why?
-* I just get a load of numbers for the error output, what do they mean?
-* Why do I get errors about unknown algorithms?
+* Why aren't tools like 'autoconf' and 'libtool' used?
+
+[LEGAL] Legal questions
+
+* Do I need patent licenses to use OpenSSL?
+* Can I use OpenSSL with GPL software? 
+
+[USER] Questions on using the OpenSSL applications
+
+* Why do I get a "PRNG not seeded" error message?
 * How do I create certificates or certificate requests?
 * Why can't I create certificate requests?
 * Why does <SSL program> fail with a certificate verify error?
@@ -22,17 +24,38 @@ OpenSSL  -  Frequently Asked Questions
 * How can I create DSA certificates?
 * Why can't I make an SSL connection using a DSA certificate?
 * How can I remove the passphrase on a private key?
-* Why can't the OpenSSH configure script detect OpenSSL?
+* Why can't I use OpenSSL certificates with SSL client authentication?
+* Why does my browser give a warning about a mismatched hostname?
+
+[BUILD] Questions about building and testing OpenSSL
+
+* Why does the linker complain about undefined symbols?
 * Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
 * Why does the OpenSSL compilation fail on Alpha True64 Unix?
 * Why does the OpenSSL compilation fail with "ar: command not found"?
+* Why does the OpenSSL compilation fail on Win32 with VC++?
 
+[PROG] Questions about programming with OpenSSL
+
+* Is OpenSSL thread-safe?
+* I've compiled a program under Windows and it crashes: why?
+* How do I read or write a DER encoded buffer using the ASN1 functions?
+* I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
+* I've called <some function> and it fails, why?
+* I just get a load of numbers for the error output, what do they mean?
+* Why do I get errors about unknown algorithms?
+* Why can't the OpenSSH configure script detect OpenSSL?
+* Can I use OpenSSL's SSL library with non-blocking I/O?
+
+===============================================================================
+
+[MISC] ========================================================================
 
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.6 was released on September 24th, 2000.
+OpenSSL 0.9.6a was released on April 5th, 2001.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -78,6 +101,27 @@ OpenSSL.  Information on the OpenSSL mailing lists is available from
 <URL: http://www.openssl.org>.
 
 
+* Where can I get a compiled version of OpenSSL?
+
+Some applications that use OpenSSL are distributed in binary form.
+When using such an application, you don't need to install OpenSSL
+yourself; the application will include the required parts (e.g. DLLs).
+
+If you want to install OpenSSL on a Windows system and you don't have
+a C compiler, read the "Mingw32" section of INSTALL.W32 for information
+on how to obtain and install the free GNU C compiler.
+
+A number of Linux and *BSD distributions include OpenSSL.
+
+
+* Why aren't tools like 'autoconf' and 'libtool' used?
+
+autoconf will probably be used in future OpenSSL versions. If it was
+less Unix-centric, it might have been used much earlier.
+
+
+[LEGAL] =======================================================================
+
 * Do I need patent licenses to use OpenSSL?
 
 The patents section of the README file lists patents that may apply to
@@ -89,17 +133,25 @@ You can configure OpenSSL so as not to use RC5 and IDEA by using
  ./config no-rc5 no-idea
 
 
-* Is OpenSSL thread-safe?
+* Can I use OpenSSL with GPL software?
 
-Yes (with limitations: an SSL connection may not concurrently be used
-by multiple threads).  On Windows and many Unix systems, OpenSSL
-automatically uses the multi-threaded versions of the standard
-libraries.  If your platform is not one of these, consult the INSTALL
-file.
+On many systems including the major Linux and BSD distributions, yes (the
+GPL does not place restrictions on using libraries that are part of the
+normal operating system distribution).
 
-Multi-threaded applications must provide two callback functions to
-OpenSSL.  This is described in the threads(3) manpage.
+On other systems, the situation is less clear. Some GPL software copyright
+holders claim that you infringe on their rights if you use OpenSSL with
+their software on operating systems that don't normally include OpenSSL.
 
+If you develop open source software that uses OpenSSL, you may find it
+useful to choose an other license than the GPL, or state explicitely that
+"This program is released under the GPL with the additional exemption that
+compiling, linking, and/or using OpenSSL is allowed."  If you are using
+GPL software developed by others, you may want to ask the copyright holder
+for permission to use their software with OpenSSL.
+
+
+[USER] ========================================================================
 
 * Why do I get a "PRNG not seeded" error message?
 
@@ -138,6 +190,101 @@ versions.  However, be warned that /dev/random is usually a blocking
 device, which may have some effects on OpenSSL.
 
 
+* How do I create certificates or certificate requests?
+
+Check out the CA.pl(1) manual page. This provides a simple wrapper round
+the 'req', 'verify', 'ca' and 'pkcs12' utilities. For finer control check
+out the manual pages for the individual utilities and the certificate
+extensions documentation (currently in doc/openssl.txt).
+
+
+* Why can't I create certificate requests?
+
+You typically get the error:
+
+	unable to find 'distinguished_name' in config
+	problems making Certificate Request
+
+This is because it can't find the configuration file. Check out the
+DIAGNOSTICS section of req(1) for more information.
+
+
+* Why does <SSL program> fail with a certificate verify error?
+
+This problem is usually indicated by log messages saying something like
+"unable to get local issuer certificate" or "self signed certificate".
+When a certificate is verified its root CA must be "trusted" by OpenSSL
+this typically means that the CA certificate must be placed in a directory
+or file and the relevant program configured to read it. The OpenSSL program
+'verify' behaves in a similar way and issues similar error messages: check
+the verify(1) program manual page for more information.
+
+
+* Why can I only use weak ciphers when I connect to a server using OpenSSL?
+
+This is almost certainly because you are using an old "export grade" browser
+which only supports weak encryption. Upgrade your browser to support 128 bit
+ciphers.
+
+
+* How can I create DSA certificates?
+
+Check the CA.pl(1) manual page for a DSA certificate example.
+
+
+* Why can't I make an SSL connection to a server using a DSA certificate?
+
+Typically you'll see a message saying there are no shared ciphers when
+the same setup works fine with an RSA certificate. There are two possible
+causes. The client may not support connections to DSA servers most web
+browsers (including Netscape and MSIE) only support connections to servers
+supporting RSA cipher suites. The other cause is that a set of DH parameters
+has not been supplied to the server. DH parameters can be created with the
+dhparam(1) command and loaded using the SSL_CTX_set_tmp_dh() for example:
+check the source to s_server in apps/s_server.c for an example.
+
+
+* How can I remove the passphrase on a private key?
+
+Firstly you should be really *really* sure you want to do this. Leaving
+a private key unencrypted is a major security risk. If you decide that
+you do have to do this check the EXAMPLES sections of the rsa(1) and
+dsa(1) manual pages.
+
+
+* Why can't I use OpenSSL certificates with SSL client authentication?
+
+What will typically happen is that when a server requests authentication
+it will either not include your certificate or tell you that you have
+no client certificates (Netscape) or present you with an empty list box
+(MSIE). The reason for this is that when a server requests a client
+certificate it includes a list of CAs names which it will accept. Browsers
+will only let you select certificates from the list on the grounds that
+there is little point presenting a certificate which the server will
+reject.
+
+The solution is to add the relevant CA certificate to your servers "trusted
+CA list". How you do this depends on the server sofware in uses. You can
+print out the servers list of acceptable CAs using the OpenSSL s_client tool:
+
+openssl s_client -connect www.some.host:443 -prexit
+
+If your server only requests certificates on certain URLs then you may need
+to manually issue an HTTP GET command to get the list when s_client connects:
+
+GET /some/page/needing/a/certificate.html
+
+If your CA does not appear in the list then this confirms the problem.
+
+
+* Why does my browser give a warning about a mismatched hostname?
+
+Browsers expect the server's hostname to match the value in the commonName
+(CN) field of the certificate. If it does not then you get a warning.
+
+
+[BUILD] =======================================================================
+
 * Why does the linker complain about undefined symbols?
 
 Maybe the compilation was interrupted, and make doesn't notice that
@@ -162,17 +309,99 @@ If none of these helps, you may want to try using the current snapshot.
 If the problem persists, please submit a bug report.
 
 
-* Where can I get a compiled version of OpenSSL?
+* Why does the OpenSSL test fail with "bc: command not found"?
 
-Some applications that use OpenSSL are distributed in binary form.
-When using such an application, you don't need to install OpenSSL
-yourself; the application will include the required parts (e.g. DLLs).
+You didn't install "bc", the Unix calculator.  If you want to run the
+tests, get GNU bc from ftp://ftp.gnu.org or from your OS distributor.
 
-If you want to install OpenSSL on a Windows system and you don't have
-a C compiler, read the "Mingw32" section of INSTALL.W32 for information
-on how to obtain and install the free GNU C compiler.
 
-A number of Linux and *BSD distributions include OpenSSL.
+* Why does the OpenSSL test fail with "bc: 1 no implemented"?
+
+On some SCO installations or versions, bc has a bug that gets triggered
+when you run the test suite (using "make test").  The message returned is
+"bc: 1 not implemented".
+
+The best way to deal with this is to find another implementation of bc
+and compile/install it.  GNU bc (see http://www.gnu.org/software/software.html
+for download instructions) can be safely used, for example.
+
+
+* Why does the OpenSSL compilation fail on Alpha True64 Unix?
+
+On some Alpha installations running True64 Unix and Compaq C, the compilation
+of crypto/sha/sha_dgst.c fails with the message 'Fatal:  Insufficient virtual
+memory to continue compilation.'  As far as the tests have shown, this may be
+a compiler bug.  What happens is that it eats up a lot of resident memory
+to build something, probably a table.  The problem is clearly in the
+optimization code, because if one eliminates optimization completely (-O0),
+the compilation goes through (and the compiler consumes about 2MB of resident
+memory instead of 240MB or whatever one's limit is currently).
+
+There are three options to solve this problem:
+
+1. set your current data segment size soft limit higher.  Experience shows
+that about 241000 kbytes seems to be enough on an AlphaServer DS10.  You do
+this with the command 'ulimit -Sd nnnnnn', where 'nnnnnn' is the number of
+kbytes to set the limit to.
+
+2. If you have a hard limit that is lower than what you need and you can't
+get it changed, you can compile all of OpenSSL with -O0 as optimization
+level.  This is however not a very nice thing to do for those who expect to
+get the best result from OpenSSL.  A bit more complicated solution is the
+following:
+
+----- snip:start -----
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
+       sed -e 's/ -O[0-9] / -O0 /'`"
+  rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
+  make
+----- snip:end -----
+
+This will only compile sha_dgst.c with -O0, the rest with the optimization
+level chosen by the configuration process.  When the above is done, do the
+test and installation and you're set.
+
+
+* Why does the OpenSSL compilation fail with "ar: command not found"?
+
+Getting this message is quite usual on Solaris 2, because Sun has hidden
+away 'ar' and other development commands in directories that aren't in
+$PATH by default.  One of those directories is '/usr/ccs/bin'.  The
+quickest way to fix this is to do the following (it assumes you use sh
+or any sh-compatible shell):
+
+----- snip:start -----
+  PATH=${PATH}:/usr/ccs/bin; export PATH
+----- snip:end -----
+
+and then redo the compilation.  What you should really do is make sure
+'/usr/ccs/bin' is permanently in your $PATH, for example through your
+'.profile' (again, assuming you use a sh-compatible shell).
+
+
+* Why does the OpenSSL compilation fail on Win32 with VC++?
+
+Sometimes, you may get reports from VC++ command line (cl) that it
+can't find standard include files like stdio.h and other weirdnesses.
+One possible cause is that the environment isn't correctly set up.
+To solve that problem, one should run VCVARS32.BAT which is found in
+the 'bin' subdirectory of the VC++ installation directory (somewhere
+under 'Program Files').  This needs to be done prior to running NMAKE,
+and the changes are only valid for the current DOS session.
+
+
+[PROG] ========================================================================
+
+* Is OpenSSL thread-safe?
+
+Yes (with limitations: an SSL connection may not concurrently be used
+by multiple threads).  On Windows and many Unix systems, OpenSSL
+automatically uses the multi-threaded versions of the standard
+libraries.  If your platform is not one of these, consult the INSTALL
+file.
+
+Multi-threaded applications must provide two callback functions to
+OpenSSL.  This is described in the threads(3) manpage.
 
 
 * I've compiled a program under Windows and it crashes: why?
@@ -259,68 +488,6 @@ is forgetting to load OpenSSL's table of algorithms with
 OpenSSL_add_all_algorithms(). See the manual page for more information.
 
 
-* How do I create certificates or certificate requests?
-
-Check out the CA.pl(1) manual page. This provides a simple wrapper round
-the 'req', 'verify', 'ca' and 'pkcs12' utilities. For finer control check
-out the manual pages for the individual utilities and the certificate
-extensions documentation (currently in doc/openssl.txt).
-
-
-* Why can't I create certificate requests?
-
-You typically get the error:
-
-	unable to find 'distinguished_name' in config
-	problems making Certificate Request
-
-This is because it can't find the configuration file. Check out the
-DIAGNOSTICS section of req(1) for more information.
-
-
-* Why does <SSL program> fail with a certificate verify error?
-
-This problem is usually indicated by log messages saying something like
-"unable to get local issuer certificate" or "self signed certificate".
-When a certificate is verified its root CA must be "trusted" by OpenSSL
-this typically means that the CA certificate must be placed in a directory
-or file and the relevant program configured to read it. The OpenSSL program
-'verify' behaves in a similar way and issues similar error messages: check
-the verify(1) program manual page for more information.
-
-
-* Why can I only use weak ciphers when I connect to a server using OpenSSL?
-
-This is almost certainly because you are using an old "export grade" browser
-which only supports weak encryption. Upgrade your browser to support 128 bit
-ciphers.
-
-
-* How can I create DSA certificates?
-
-Check the CA.pl(1) manual page for a DSA certificate example.
-
-
-* Why can't I make an SSL connection to a server using a DSA certificate?
-
-Typically you'll see a message saying there are no shared ciphers when
-the same setup works fine with an RSA certificate. There are two possible
-causes. The client may not support connections to DSA servers most web
-browsers (including Netscape and MSIE) only support connections to servers
-supporting RSA cipher suites. The other cause is that a set of DH parameters
-has not been supplied to the server. DH parameters can be created with the
-dhparam(1) command and loaded using the SSL_CTX_set_tmp_dh() for example:
-check the source to s_server in apps/s_server.c for an example.
-
-
-* How can I remove the passphrase on a private key?
-
-Firstly you should be really *really* sure you want to do this. Leaving
-a private key unencrypted is a major security risk. If you decide that
-you do have to do this check the EXAMPLES sections of the rsa(1) and
-dsa(1) manual pages.
-
-
 * Why can't the OpenSSH configure script detect OpenSSL?
 
 There is a problem with OpenSSH 1.2.2p1, in that the configure script
@@ -362,71 +529,19 @@ applied to the OpenSSH distribution:
 ----- snip:end -----
 
 
-* Why does the OpenSSL test fail with "bc: command not found"?
+* Can I use OpenSSL's SSL library with non-blocking I/O?
 
-You didn't install "bc", the Unix calculator.  If you want to run the
-tests, get GNU bc from ftp://ftp.gnu.org or from your OS distributor.
+Yes; make sure to read the SSL_get_error(3) manual page!
 
-
-* Why does the OpenSSL test fail with "bc: 1 no implemented"?
-
-On some SCO installations or versions, bc has a bug that gets triggered when
-you run the test suite (using "make test").  The message returned is "bc:
-1 not implemented".  The best way to deal with this is to find another
-implementation of bc and compile/install it.  For example, GNU bc (see
-http://www.gnu.org/software/software.html for download instructions) can
-be safely used.
+A pitfall to avoid: Don't assume that SSL_read() will just read from
+the underlying transport or that SSL_write() will just write to it --
+it is also possible that SSL_write() cannot do any useful work until
+there is data to read, or that SSL_read() cannot do anything until it
+is possible to send data.  One reason for this is that the peer may
+request a new TLS/SSL handshake at any time during the protocol,
+requiring a bi-directional message exchange; both SSL_read() and
+SSL_write() will try to continue any pending handshake.
 
 
-* Why does the OpenSSL compilation fail on Alpha True64 Unix?
-
-On some Alpha installations running True64 Unix and Compaq C, the compilation
-of crypto/sha/sha_dgst.c fails with the message 'Fatal:  Insufficient virtual
-memory to continue compilation.'  As far as the tests have shown, this may be
-a compiler bug.  What happens is that it eats up a lot of resident memory
-to build something, probably a table.  The problem is clearly in the
-optimization code, because if one eliminates optimization completely (-O0),
-the compilation goes through (and the compiler consumes about 2MB of resident
-memory instead of 240MB or whatever one's limit is currently).
-
-There are three options to solve this problem:
-
-1. set your current data segment size soft limit higher.  Experience shows
-that about 241000 kbytes seems to be enough on an AlphaServer DS10.  You do
-this with the command 'ulimit -Sd nnnnnn', where 'nnnnnn' is the number of
-kbytes to set the limit to.
-
-2. If you have a hard limit that is lower than what you need and you can't
-get it changed, you can compile all of OpenSSL with -O0 as optimization
-level.  This is however not a very nice thing to do for those who expect to
-get the best result from OpenSSL.  A bit more complicated solution is the
-following:
-
------ snip:start -----
-  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
-       sed -e 's/ -O[0-9] / -O0 /'`"
-  rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
-  make
------ snip:end -----
-
-This will only compile sha_dgst.c with -O0, the rest with the optimization
-level chosen by the configuration process.  When the above is done, do the
-test and installation and you're set.
-
-
-* Why does the OpenSSL compilation fail with "ar: command not found"?
-
-Getting this message is quite usual on Solaris 2, because Sun has hidden
-away 'ar' and other development commands in directories that aren't in
-$PATH by default.  One of those directories is '/usr/ccs/bin'.  The
-quickest way to fix this is to do the following (it assumes you use sh
-or any sh-compatible shell):
-
------ snip:start -----
-  PATH=${PATH}:/usr/ccs/bin; export PATH
------ snip:end -----
-
-and then redo the compilation.  What you should really do is make sure
-'/usr/ccs/bin' is permanently in your $PATH, for example through your
-'.profile' (again, assuming you use a sh-compatible shell).
+===============================================================================
 
