@@ -313,6 +313,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	static volatile int stirred_pool = 0;
 	int i,j,k,st_num,st_idx;
+	int num_ceil;
 	int ok;
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
@@ -333,19 +334,24 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		}
 #endif
 
+	if (num <= 0)
+		return 1;
+	
+	/* round upwards to multiple of MD_DIGEST_LENGTH/2 */
+	num_ceil = (1 + (num-1)/(MD_DIGEST_LENGTH/2)) * (MD_DIGEST_LENGTH/2);
+
 	/*
 	 * (Based on the rand(3) manpage:)
 	 *
 	 * For each group of 10 bytes (or less), we do the following:
 	 *
-	 * Input into the hash function the top 10 bytes from the
-	 * local 'md' (which is initialized from the global 'md'
-	 * before any bytes are generated), the bytes that are
-	 * to be overwritten by the random bytes, and bytes from the
-	 * 'state' (incrementing looping index).  From this digest output
-	 * (which is kept in 'md'), the top (up to) 10 bytes are
-	 * returned to the caller and the bottom (up to) 10 bytes are xored
-	 * into the 'state'.
+	 * Input into the hash function the local 'md' (which is initialized from
+	 * the global 'md' before any bytes are generated), the bytes that are to
+	 * be overwritten by the random bytes, and bytes from the 'state'
+	 * (incrementing looping index). From this digest output (which is kept
+	 * in 'md'), the top (up to) 10 bytes are returned to the caller and the
+	 * bottom 10 bytes are xored into the 'state'.
+	 * 
 	 * Finally, after we have finished 'num' random bytes for the
 	 * caller, 'count' (which is incremented) and the local and global 'md'
 	 * are fed into the hash function and the results are kept in the
@@ -389,11 +395,11 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	if (do_stir_pool)
 		{
-		/* Our output function chains only half of 'md', so we better
-		 * make sure that the required entropy gets 'evenly distributed'
-		 * through 'state', our randomness pool.  The input function
-		 * (ssleay_rand_add) chains all of 'md', which makes it more
-		 * suitable for this purpose.
+		/* In the output function only half of 'md' remains secret,
+		 * so we better make sure that the required entropy gets
+		 * 'evenly distributed' through 'state', our randomness pool.
+		 * The input function (ssleay_rand_add) chains all of 'md',
+		 * which makes it more suitable for this purpose.
 		 */
 
 		int n = STATE_SIZE; /* so that the complete pool gets accessed */
@@ -418,11 +424,11 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	md_c[1] = md_count[1];
 	memcpy(local_md, md, sizeof md);
 
-	state_index+=num;
+	state_index+=num_ceil;
 	if (state_index > state_num)
 		state_index %= state_num;
 
-	/* state[st_idx], ..., state[(st_idx + num - 1) % st_num]
+	/* state[st_idx], ..., state[(st_idx + num_ceil - 1) % st_num]
 	 * are now ours (but other threads may use them too) */
 
 	md_count[0] += 1;
@@ -434,6 +440,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	while (num > 0)
 		{
+		/* num_ceil -= MD_DIGEST_LENGTH/2 */
 		j=(num >= MD_DIGEST_LENGTH/2)?MD_DIGEST_LENGTH/2:num;
 		num-=j;
 		MD_Init(&m);
@@ -444,27 +451,28 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 			curr_pid = 0;
 			}
 #endif
-		MD_Update(&m,&(local_md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
+		MD_Update(&m,local_md,MD_DIGEST_LENGTH);
 		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 #ifndef PURIFY
 		MD_Update(&m,buf,j); /* purify complains */
 #endif
-		k=(st_idx+j)-st_num;
+		k=(st_idx+MD_DIGEST_LENGTH/2)-st_num;
 		if (k > 0)
 			{
-			MD_Update(&m,&(state[st_idx]),j-k);
+			MD_Update(&m,&(state[st_idx]),MD_DIGEST_LENGTH/2-k);
 			MD_Update(&m,&(state[0]),k);
 			}
 		else
-			MD_Update(&m,&(state[st_idx]),j);
+			MD_Update(&m,&(state[st_idx]),MD_DIGEST_LENGTH/2);
 		MD_Final(&m,local_md);
 
-		for (i=0; i<j; i++)
+		for (i=0; i<MD_DIGEST_LENGTH/2; i++)
 			{
 			state[st_idx++]^=local_md[i]; /* may compete with other threads */
-			*(buf++)=local_md[i+MD_DIGEST_LENGTH/2];
 			if (st_idx >= st_num)
 				st_idx=0;
+			if (i < j)
+				*(buf++)=local_md[i+MD_DIGEST_LENGTH/2];
 			}
 		}
 

@@ -4,13 +4,41 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
 
-     Both OpenSSL 0.9.6a (bugfix release, 5 Apr 2001) and OpenSSL 0.9.7
-     are based on OpenSSL 0.9.6.  
+     OpenSSL 0.9.6a/0.9.6b (bugfix releases, 5 Apr 2001 and 9 July 2001)
+     and OpenSSL 0.9.7 were developped in parallel, based on OpenSSL 0.9.6.  
+
      Change log entries are tagged as follows:
-         -) applies to 0.9.6a (/0.9.6b) only
-         *) applies to 0.9.6a (/0.9.6b) and 0.9.7
+         -) applies to 0.9.6a/0.9.6b only
+         *) applies to 0.9.6a/0.9.6b and 0.9.7
          +) applies to 0.9.7 only
 
+  -) OpenSSL 0.9.6b released [9 July 2001]
+
+  *) Change ssleay_rand_bytes (crypto/rand/md_rand.c)
+     to avoid a SSLeay/OpenSSL PRNG weakness pointed out by
+     Markku-Juhani O. Saarinen <markku-juhani.saarinen@nokia.com>:
+     PRNG state recovery was possible based on the output of
+     one PRNG request appropriately sized to gain knowledge on
+     'md' followed by enough consecutive 1-byte PRNG requests
+     to traverse all of 'state'.
+
+     1. When updating 'md_local' (the current thread's copy of 'md')
+        during PRNG output generation, hash all of the previous
+        'md_local' value, not just the half used for PRNG output.
+
+     2. Make the number of bytes from 'state' included into the hash
+        independent from the number of PRNG bytes requested.
+
+     The first measure alone would be sufficient to avoid
+     Markku-Juhani's attack.  (Actually it had never occurred
+     to me that the half of 'md_local' used for chaining was the
+     half from which PRNG output bytes were taken -- I had always
+     assumed that the secret half would be used.)  The second
+     measure makes sure that additional data from 'state' is never
+     mixed into 'md_local' in small portions; this heuristically
+     further strengthens the PRNG.
+     [Bodo Moeller]
+  
   +) Speed up EVP routines.
      Before:
 encrypt
