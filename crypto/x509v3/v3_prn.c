@@ -64,6 +64,8 @@
 
 /* Extension printing routines */
 
+static int unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent, int supported);
+
 /* Print out a name+value stack */
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
@@ -96,16 +98,18 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 
 /* Main routine: print out a general extension */
 
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
+int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent)
 {
 	char *ext_str = NULL, *value = NULL;
 	unsigned char *p;
 	X509V3_EXT_METHOD *method;	
 	STACK_OF(CONF_VALUE) *nval = NULL;
 	int ok = 1;
-	if(!(method = X509V3_EXT_get(ext))) return 0;
+	if(!(method = X509V3_EXT_get(ext)))
+		return unknown_ext_print(out, ext, flag, indent, 0);
 	p = ext->value->data;
-	if(!(ext_str = method->d2i(NULL, &p, ext->value->length))) return 0;
+	if(!(ext_str = method->d2i(NULL, &p, ext->value->length)))
+		return unknown_ext_print(out, ext, flag, indent, 1);
 	if(method->i2s) {
 		if(!(value = method->i2s(method, ext_str))) {
 			ok = 0;
@@ -137,6 +141,32 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 		method->ext_free(ext_str);
 		return ok;
 }
+
+static int unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent, int supported)
+{
+	switch(flag & X509V3_EXT_UNKNOWN_MASK) {
+
+		case X509V3_EXT_DEFAULT:
+		return 0;
+
+		case X509V3_EXT_ERROR_UNKNOWN:
+		if(supported)
+			BIO_printf(out, "%*s<Parse Error>", indent, "");
+		else
+			BIO_printf(out, "%*s<Not Supported>", indent, "");
+		return 1;
+
+		case X509V3_EXT_PARSE_UNKNOWN:
+			return ASN1_parse_dump(out,
+				ext->value->data, ext->value->length, indent, -1);
+		case X509V3_EXT_DUMP_UNKNOWN:
+			return BIO_dump_indent(out, (char *)ext->value->data, ext->value->length, indent);
+
+		default:
+		return 1;
+	}
+}
+	
 
 #ifndef NO_FP_API
 int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)

@@ -103,6 +103,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	long l;
 	int ret=0,i,j,n;
 	char *m=NULL,*s, mlch = ' ';
+	int nmindent = 0;
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
@@ -110,8 +111,13 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	X509_EXTENSION *ex;
 	ASN1_STRING *str=NULL;
 
-	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE)
+	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 			mlch = '\n';
+			nmindent = 16;
+	}
+
+	if(nmflags == X509_FLAG_COMPAT)
+		nmindent = 16;
 
 	ci=x->cert_info;
 	if(!(cflag & X509_FLAG_NO_HEADER))
@@ -169,7 +175,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	if(!(cflag & X509_FLAG_NO_ISSUER))
 		{
 		if (BIO_printf(bp,"        Issuer:%c",mlch) <= 0) goto err;
-		if (!X509_NAME_print_ex(bp,X509_get_issuer_name(x),16, nmflags)) goto err;
+		if (!X509_NAME_print_ex(bp,X509_get_issuer_name(x),nmindent, nmflags)) goto err;
 		}
 	if(!(cflag & X509_FLAG_NO_VALIDITY))
 		{
@@ -183,7 +189,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	if(!(cflag & X509_FLAG_NO_SUBJECT))
 		{
 		if (BIO_printf(bp,"        Subject:%c",mlch) <= 0) goto err;
-		if (!X509_NAME_print(bp,X509_get_subject_name(x),16)) goto err;
+		if (!X509_NAME_print_ex(bp,X509_get_subject_name(x),nmindent, nmflags)) goto err;
 		}
 	if(!(cflag & X509_FLAG_NO_PUBKEY))
 		{
@@ -239,7 +245,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			j=X509_EXTENSION_get_critical(ex);
 			if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
 				goto err;
-			if(!X509V3_EXT_print(bp, ex, 0, 16))
+			if(!X509V3_EXT_print(bp, ex, cflag, 16))
 				{
 				BIO_printf(bp, "%16s", "");
 				M_ASN1_OCTET_STRING_print(bp,ex->value);

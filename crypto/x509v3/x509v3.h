@@ -352,6 +352,18 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_MIN		1
 #define X509_PURPOSE_MAX		7
 
+/* Flags for X509V3_EXT_print() */
+
+#define X509V3_EXT_UNKNOWN_MASK		(0xfL << 16)
+/* Return error for unknown extensions */
+#define X509V3_EXT_DEFAULT		0
+/* Print error for unknown extensions */
+#define X509V3_EXT_ERROR_UNKNOWN	(1L << 16)
+/* ASN1 parse unknown extensions */
+#define X509V3_EXT_PARSE_UNKNOWN	(2L << 16)
+/* BIO_dump unknown extensions */
+#define X509V3_EXT_DUMP_UNKNOWN		(3L << 16)
+
 DECLARE_STACK_OF(X509_PURPOSE)
 
 void ERR_load_X509V3_strings(void);
@@ -528,7 +540,7 @@ int name_cmp(const char *name, const char *cmp);
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 								 int ml);
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
+int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
 int X509_check_purpose(X509 *x, int id, int ca);

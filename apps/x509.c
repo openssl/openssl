@@ -129,6 +129,7 @@ static char *x509_usage[]={
 " -extensions     - section from config file with X509V3 extensions to add\n",
 " -clrext         - delete extensions before signing and input certificate\n",
 " -nameopt arg    - various certificate name options\n",
+" -certopt arg    - various certificate text options\n",
 NULL
 };
 
@@ -174,7 +175,7 @@ int MAIN(int argc, char **argv)
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
-	unsigned long nmflag = 0;
+	unsigned long nmflag = 0, certflag = 0;
 
 	reqfile=0;
 
@@ -325,6 +326,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			alias= *(++argv);
 			trustout = 1;
+			}
+		else if (strcmp(*argv,"-certopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_cert_ex(&certflag, *(++argv))) goto bad;
 			}
 		else if (strcmp(*argv,"-nameopt") == 0)
 			{
@@ -774,7 +780,7 @@ bad:
 				}
 			else if (text == i)
 				{
-				X509_print(out,x);
+				X509_print_ex(out,x,nmflag, certflag);
 				}
 			else if (startdate == i)
 				{

@@ -74,6 +74,14 @@
 #  include "bss_file.c"
 #endif
 
+typedef struct {
+	char *name;
+	unsigned long flag;
+	unsigned long mask;
+} NAME_EX_TBL;
+
+static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
+
 int app_init(long mesgwin);
 #ifdef undef /* never finished - probably never will be :-) */
 int args_from_file(char *file, int *argc, char **argv[])
@@ -694,16 +702,43 @@ end:
 	return(othercerts);
 	}
 
-typedef struct {
-	char *name;
-	unsigned long flag;
-	unsigned long mask;
-} NAME_EX_TBL;
+
+#define X509V3_EXT_UNKNOWN_MASK		(0xfL << 16)
+/* Return error for unknown extensions */
+#define X509V3_EXT_DEFAULT		0
+/* Print error for unknown extensions */
+#define X509V3_EXT_ERROR_UNKNOWN	(1L << 16)
+/* ASN1 parse unknown extensions */
+#define X509V3_EXT_PARSE_UNKNOWN	(2L << 16)
+/* BIO_dump unknown extensions */
+#define X509V3_EXT_DUMP_UNKNOWN		(3L << 16)
+
+int set_cert_ex(unsigned long *flags, const char *arg)
+{
+	static const NAME_EX_TBL cert_tbl[] = {
+		{ "compatible", X509_FLAG_COMPAT, 0xffffffffl},
+		{ "no_header", X509_FLAG_NO_HEADER, 0},
+		{ "no_version", X509_FLAG_NO_VERSION, 0},
+		{ "no_serial", X509_FLAG_NO_SERIAL, 0},
+		{ "no_signame", X509_FLAG_NO_SIGNAME, 0},
+		{ "no_validity", X509_FLAG_NO_VALIDITY, 0},
+		{ "no_subject", X509_FLAG_NO_SUBJECT, 0},
+		{ "no_pubkey", X509_FLAG_NO_PUBKEY, 0},
+		{ "no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
+		{ "no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
+		{ "no_aux", X509_FLAG_NO_AUX, 0},
+		{ "ext_default", X509V3_EXT_DEFAULT, X509V3_EXT_UNKNOWN_MASK},
+		{ "ext_error", X509V3_EXT_ERROR_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+		{ "ext_parse", X509V3_EXT_PARSE_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+		{ "ext_dump", X509V3_EXT_DUMP_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+		{ NULL, 0, 0}
+	};
+	return set_table_opts(flags, arg, cert_tbl);
+}
 
 int set_name_ex(unsigned long *flags, const char *arg)
 {
-	char c;
-	const NAME_EX_TBL *ptbl, ex_tbl[] = {
+	static const NAME_EX_TBL ex_tbl[] = {
 		{ "esc_2253", ASN1_STRFLGS_ESC_2253, 0},
 		{ "esc_ctrl", ASN1_STRFLGS_ESC_CTRL, 0},
 		{ "esc_msb", ASN1_STRFLGS_ESC_MSB, 0},
@@ -731,7 +766,13 @@ int set_name_ex(unsigned long *flags, const char *arg)
 		{ "multiline", XN_FLAG_MULTILINE, 0xffffffffL},
 		{ NULL, 0, 0}
 	};
+	return set_table_opts(flags, arg, ex_tbl);
+}
 
+static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl)
+{
+	char c;
+	const NAME_EX_TBL *ptbl;
 	c = arg[0];
 
 	if(c == '-') {
@@ -742,7 +783,7 @@ int set_name_ex(unsigned long *flags, const char *arg)
 		arg++;
 	} else c = 1;
 
-	for(ptbl = ex_tbl; ptbl->name; ptbl++) {
+	for(ptbl = in_tbl; ptbl->name; ptbl++) {
 		if(!strcmp(arg, ptbl->name)) {
 			*flags &= ~ptbl->mask;
 			if(c) *flags |= ptbl->flag;
