@@ -112,7 +112,11 @@ struct dh_st
 
 	int references;
 	CRYPTO_EX_DATA ex_data;
+#if 0
 	DH_METHOD *meth;
+#else
+	struct engine_st *handle;
+#endif
 	};
 
 #define DH_GENERATOR_2		2
@@ -147,10 +151,15 @@ struct dh_st
 
 DH_METHOD *DH_OpenSSL(void);
 
-void DH_set_default_method(DH_METHOD *meth);
-DH_METHOD *DH_get_default_method(void);
+void DH_set_default_openssl_method(DH_METHOD *meth);
+DH_METHOD *DH_get_default_openssl_method(void);
+#if 0
 DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth);
 DH *DH_new_method(DH_METHOD *meth);
+#else
+int DH_set_method(DH *dh, struct engine_st *h);
+DH *DH_new_method(struct engine_st *handle);
+#endif
 
 DH *	DH_new(void);
 void	DH_free(DH *dh);

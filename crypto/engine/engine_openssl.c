@@ -102,7 +102,7 @@ ENGINE *ENGINE_openssl()
 	 * that we want to steal. */
 	engine_openssl.rsa_meth = RSA_get_default_openssl_method();
 	engine_openssl.dsa_meth = DSA_get_default_method();
-	engine_openssl.dh_meth = DH_get_default_method();
+	engine_openssl.dh_meth = DH_get_default_openssl_method();
 	engine_openssl.rand_meth = RAND_SSLeay();
 	engine_openssl.bn_mod_exp = BN_mod_exp;
 	return &engine_openssl;
