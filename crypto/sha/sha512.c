@@ -144,7 +144,8 @@ int SHA512_Final (unsigned char *md,SHA512_CTX *c)
 int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 	{
 	SHA_LONG64	l;
-	unsigned char  *p=c->u.p,*data=(unsigned char *)_data;
+	unsigned char  *p=c->u.p;
+	const unsigned char *data=(const unsigned char *)_data;
 
 	if (len==0) return  1;
 
@@ -268,7 +269,7 @@ static const SHA_LONG64 K512[80] = {
 #ifndef PEDANTIC
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #  if defined(__x86_64) || defined(__x86_64__)
-#   define PULL64(x) ({ SHA_LONG64 ret=*((SHA_LONG64 *)(&(x)));	\
+#   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
 				asm ("bswapq	%0"		\
 				: "=r"(ret)			\
 				: "0"(ret)); ret;		})
@@ -277,7 +278,7 @@ static const SHA_LONG64 K512[80] = {
 #endif
 
 #ifndef PULL64
-#define B(x,j)    (((SHA_LONG64)(*(((unsigned char *)(&x))+j)))<<((7-j)*8))
+#define B(x,j)    (((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
 #define PULL64(x) (B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
 #endif
 
