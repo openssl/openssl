@@ -750,6 +750,9 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Prompt for pass phrases when appropriate for PKCS12 input format.
+     [Steve Henson]
+
   *) Add lots of checks for memory allocation failure, error codes to indicate
      failure and freeing up memory if a failure occurs.
      [Nauticus Networks SSL Team <openssl@nauticusnet.com>, Steve Henson]

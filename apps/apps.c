@@ -688,6 +688,51 @@ int add_oid_section(BIO *err, CONF *conf)
 	return 1;
 }
 
+static int load_pkcs12(BIO *err, BIO *in, const char *desc,
+		pem_password_cb *pem_cb,  void *cb_data,
+		EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
+	{
+ 	const char *pass;
+	char tpass[PEM_BUFSIZE];
+	int len, ret = 0;
+	PKCS12 *p12;
+	p12 = d2i_PKCS12_bio(in, NULL);
+	if (p12 == NULL)
+		{
+		BIO_printf(err, "Error loading PKCS12 file for %s\n", desc);	
+		goto err;
+		}
+	/* See if an empty password will do */
+	if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0))
+		pass = "";
+	else
+		{
+		if (!pem_cb)
+			pem_cb = (pem_password_cb *)password_callback;
+		len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
+		if (len < 0) 
+			{
+			BIO_printf(err, "Passpharse callback error for %s\n",
+					desc);
+			goto err;
+			}
+		if (len < PEM_BUFSIZE)
+			tpass[len] = 0;
+		if (!PKCS12_verify_mac(p12, tpass, len))
+			{
+			BIO_printf(err,
+	"Mac verify error (wrong password?) in PKCS12 file for %s\n", desc);	
+			goto err;
+			}
+		pass = tpass;
+		}
+	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
+	err:
+	if (p12)
+		PKCS12_free(p12);
+	return ret;
+	}
+
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
@@ -768,11 +813,9 @@ X509 *load_cert(BIO *err, const char *file, int format,
 			(pem_password_cb *)password_callback, NULL);
 	else if (format == FORMAT_PKCS12)
 		{
-		PKCS12 *p12 = d2i_PKCS12_bio(cert, NULL);
-
-		PKCS12_parse(p12, NULL, NULL, &x, NULL);
-		PKCS12_free(p12);
-		p12 = NULL;
+		if (!load_pkcs12(err, cert,cert_descrip, NULL, NULL,
+					NULL, &x, NULL))
+			goto end;
 		}
 	else	{
 		BIO_printf(err,"bad input format specified for %s\n",
@@ -851,11 +894,10 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 #endif
 	else if (format == FORMAT_PKCS12)
 		{
-		PKCS12 *p12 = d2i_PKCS12_bio(key, NULL);
-
-		PKCS12_parse(p12, pass, &pkey, NULL, NULL);
-		PKCS12_free(p12);
-		p12 = NULL;
+		if (!load_pkcs12(err, key, key_descrip,
+				(pem_password_cb *)password_callback, &cb_data,
+				&pkey, NULL, NULL))
+			goto end;
 		}
 	else
 		{
