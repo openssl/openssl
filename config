@@ -440,6 +440,7 @@ case "$GUESSOS" in
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alpha-cc" ;;
   *-*-unixware*) OUT="unixware-2.0" ;;
+  *-*-UnixWare*) OUT="unixware-2.0" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
