@@ -89,12 +89,12 @@ extern "C" {
 #define SHA_LONG unsigned int
 #endif
 
-#define SHA_LBLOCK	16U
+#define SHA_LBLOCK	16
 #define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a
 					 * contiguous array of 32 bit
 					 * wide big-endian values. */
 #define SHA_LAST_BLOCK  (SHA_CBLOCK-8)
-#define SHA_DIGEST_LENGTH 20U
+#define SHA_DIGEST_LENGTH 20
 
 typedef struct SHAstate_st
 	{
