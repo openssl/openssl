@@ -111,7 +111,7 @@ The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<err(3)|err(3)>, L<BN_CTX_new(3)|BN_CTX_new(3)>,
+L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_CTX_new(3)|BN_CTX_new(3)>,
 L<BN_add_word(3)|BN_add_word(3)>, L<BN_set_bit(3)|BN_set_bit(3)>
 
 =head1 HISTORY
