@@ -122,11 +122,16 @@ void EC_POINT_clear_free(EC_POINT *);
 int EC_POINT_copy(EC_POINT *, const EC_POINT *);
  
 int EC_POINT_set_to_infinity(const EC_GROUP *, EC_POINT *);
+int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
+int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
+	BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
 int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
 	BIGNUM *x, BIGNUM *y, BN_CTX *);
-/* TODO: other 'set' and 'get' functions for EC_POINTs */
+int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, int y_bit, BN_CTX *);
 
 size_t EC_POINT_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
         unsigned char *buf, size_t len, BN_CTX *);
@@ -135,9 +140,11 @@ int EC_POINT_oct2point(const EC_GROUP *, EC_POINT *,
 
 int EC_POINT_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
+int EC_POINT_invert(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
 int EC_POINT_is_at_infinity(const EC_GROUP *, const EC_POINT *);
 int EC_POINT_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int EC_POINT_cmp(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 
 int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
@@ -155,6 +162,7 @@ int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP		 127
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 100
 #define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 101
 #define EC_F_EC_GFP_SIMPLE_OCT2POINT			 102
@@ -167,9 +175,11 @@ int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 109
 #define EC_F_EC_GROUP_SET_GENERATOR			 110
 #define EC_F_EC_POINT_ADD				 111
+#define EC_F_EC_POINT_CMP				 123
 #define EC_F_EC_POINT_COPY				 112
 #define EC_F_EC_POINT_DBL				 113
 #define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP	 114
+#define EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP	 124
 #define EC_F_EC_POINT_IS_AT_INFINITY			 115
 #define EC_F_EC_POINT_IS_ON_CURVE			 116
 #define EC_F_EC_POINT_MAKE_AFFINE			 117
@@ -177,12 +187,15 @@ int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 #define EC_F_EC_POINT_OCT2POINT				 119
 #define EC_F_EC_POINT_POINT2OCT				 120
 #define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP	 121
+#define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP	 125
+#define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP	 126
 #define EC_F_EC_POINT_SET_TO_INFINITY			 122
 
 /* Reason codes. */
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
 #define EC_R_INVALID_ENCODING				 102
+#define EC_R_INVALID_FIELD				 108
 #define EC_R_INVALID_FORM				 103
 #define EC_R_NO_SUCH_EXTRA_DATA				 104
 #define EC_R_POINT_AT_INFINITY				 105

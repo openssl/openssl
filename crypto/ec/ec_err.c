@@ -66,6 +66,7 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA EC_str_functs[]=
 	{
+{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP,0),	"EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"EC_GFP_SIMPLE_GROUP_SET_GENERATOR"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_MAKE_AFFINE,0),	"EC_GFP_SIMPLE_MAKE_AFFINE"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_OCT2POINT,0),	"EC_GFP_SIMPLE_OCT2POINT"},
@@ -78,9 +79,11 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GROUP_SET_EXTRA_DATA,0),	"EC_GROUP_SET_EXTRA_DATA"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_GENERATOR,0),	"EC_GROUP_set_generator"},
 {ERR_PACK(0,EC_F_EC_POINT_ADD,0),	"EC_POINT_add"},
+{ERR_PACK(0,EC_F_EC_POINT_CMP,0),	"EC_POINT_cmp"},
 {ERR_PACK(0,EC_F_EC_POINT_COPY,0),	"EC_POINT_copy"},
 {ERR_PACK(0,EC_F_EC_POINT_DBL,0),	"EC_POINT_dbl"},
 {ERR_PACK(0,EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP,0),	"EC_POINT_get_affine_coordinates_GFp"},
+{ERR_PACK(0,EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_get_Jprojective_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_IS_AT_INFINITY,0),	"EC_POINT_is_at_infinity"},
 {ERR_PACK(0,EC_F_EC_POINT_IS_ON_CURVE,0),	"EC_POINT_is_on_curve"},
 {ERR_PACK(0,EC_F_EC_POINT_MAKE_AFFINE,0),	"EC_POINT_make_affine"},
@@ -88,6 +91,8 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_POINT_OCT2POINT,0),	"EC_POINT_oct2point"},
 {ERR_PACK(0,EC_F_EC_POINT_POINT2OCT,0),	"EC_POINT_point2oct"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP,0),	"EC_POINT_set_affine_coordinates_GFp"},
+{ERR_PACK(0,EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,0),	"EC_POINT_set_compressed_coordinates_GFp"},
+{ERR_PACK(0,EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_set_Jprojective_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_TO_INFINITY,0),	"EC_POINT_set_to_infinity"},
 {0,NULL}
 	};
@@ -97,6 +102,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_BUFFER_TOO_SMALL                   ,"buffer too small"},
 {EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
 {EC_R_INVALID_ENCODING                   ,"invalid encoding"},
+{EC_R_INVALID_FIELD                      ,"invalid field"},
 {EC_R_INVALID_FORM                       ,"invalid form"},
 {EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
