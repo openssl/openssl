@@ -1,4 +1,4 @@
-/* v3_bcons.c */
+/* v3_alt.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
