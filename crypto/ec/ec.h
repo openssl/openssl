@@ -130,8 +130,12 @@ int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
  * after choosing an appropriate EC_METHOD */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
-EC_GROUP *EC_GROUP_get_group_by_name(int name);
-/* Valid arguments to EC_GROUP_get_group_by_name(): */
+/* EC_GROUP_new_by_nid() and EC_GROUP_new_by_name() also set
+ * generator and order */
+EC_GROUP *EC_GROUP_new_by_nid(const int nid);
+EC_GROUP *EC_GROUP_new_by_name(int name);
+/* Currently valid arguments to EC_GROUP_new_by_name()
+ * (unfortunately some curves have no OIDs [and no NIDs]): */
 #define EC_GROUP_NO_CURVE		0
 #define EC_GROUP_NIST_PRIME_192		1
 #define EC_GROUP_NIST_PRIME_224		2
@@ -146,8 +150,6 @@ EC_GROUP *EC_GROUP_get_group_by_name(int name);
 #define EC_GROUP_X9_62_PRIME_239V3	NID_X9_62_prime239v3
 #define EC_GROUP_X9_62_PRIME_256V1	NID_X9_62_prime256v1
 
-EC_GROUP *EC_GROUP_nid2group(const int nid);
-int EC_GROUP_group2nid(const EC_GROUP *group);
 
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
@@ -220,16 +222,16 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_COFACTOR			 140
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
-#define EC_F_EC_GROUP_GET_GROUP_BY_NAME			 144
 #define EC_F_EC_GROUP_GET_ORDER				 141
-#define EC_F_EC_GROUP_GROUP2NID				 145
+#define EC_F_EC_GROUP_GROUP2NID				 147
 #define EC_F_EC_GROUP_NEW				 108
-#define EC_F_EC_GROUP_NID2GROUP				 146
+#define EC_F_EC_GROUP_NEW_BY_NAME			 144
+#define EC_F_EC_GROUP_NEW_BY_NID			 146
+#define EC_F_EC_GROUP_NEW_GFP_FROM_HEX			 148
 #define EC_F_EC_GROUP_PRECOMPUTE_MULT			 142
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 110
 #define EC_F_EC_GROUP_SET_GENERATOR			 111
-#define EC_F_EC_GROUP_SET_PRIME_GROUP			 147
 #define EC_F_EC_POINTS_MAKE_AFFINE			 136
 #define EC_F_EC_POINTS_MUL				 138
 #define EC_F_EC_POINT_ADD				 112
