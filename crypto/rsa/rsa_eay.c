@@ -130,6 +130,9 @@ int padding;
 	case RSA_PKCS1_PADDING:
 		i=RSA_padding_add_PKCS1_type_2(buf,num,from,flen);
 		break;
+	case RSA_PKCS1_OAEP_PADDING:
+	        i=RSA_padding_add_PKCS1_OAEP(buf,num,from,flen,NULL,0);
+		break;
 	case RSA_SSLV23_PADDING:
 		i=RSA_padding_add_SSLv23(buf,num,from,flen);
 		break;
@@ -319,7 +322,10 @@ int padding;
 	case RSA_PKCS1_PADDING:
 		r=RSA_padding_check_PKCS1_type_2(to,num,buf,j,num);
 		break;
-	case RSA_SSLV23_PADDING:
+        case RSA_PKCS1_OAEP_PADDING:
+	        r=RSA_padding_check_PKCS1_OAEP(to,num,buf,j,num,NULL,0);
+                break;
+ 	case RSA_SSLV23_PADDING:
 		r=RSA_padding_check_SSLv23(to,num,buf,j,num);
 		break;
 	case RSA_NO_PADDING:

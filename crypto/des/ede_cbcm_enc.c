@@ -61,6 +61,11 @@
 This is an implementation of Triple DES Cipher Block Chaining with Output
 Feedback Masking, by Coppersmith, Johnson and Matyas, (IBM and Certicom).
 
+Note that there is a known attack on this by Biham and Knudsen but it takes
+a lot of work:
+
+http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
+
 */
 
 #include "des_locl.h"

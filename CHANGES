@@ -5,6 +5,15 @@
 
  Changes between 0.9.1c and 0.9.2
 
+  *) Add OAEP encryption for the OpenSSL crypto library. OAEP is the improved
+     padding method for RSA, which is recommended for new applications in PKCS
+     #1 v2.0 (RFC 2437, October 1998).
+     OAEP (Optimal Asymmetric Encryption Padding) has better theoretical
+     foundations than the ad-hoc padding used in PKCS #1 v1.5. It is secure
+     against Bleichbacher's attack on RSA.
+     [Ulf Moeller <ulf@fitug.de>, reformatted, corrected and integrated by
+      Ben Laurie]
+
   *) Updates to the new SSL compression code
      [Eric A. Young, (from changes to C2Net SSLeay, integrated by Mark Cox)]
 

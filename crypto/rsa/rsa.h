@@ -143,6 +143,7 @@ struct rsa_st
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
+#define RSA_PKCS1_OAEP_PADDING	4
 
 #define RSA_set_app_data(s,arg)         RSA_set_ex_data(s,0,(char *)arg)
 #define RSA_get_app_data(s)             RSA_get_ex_data(s,0)
@@ -222,6 +223,12 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_PKCS1_type_2(unsigned char *to,int tlen,
 	unsigned char *f,int fl,int rsa_len);
+int RSA_padding_add_PKCS1_OAEP(unsigned char *to,int tlen,
+			       unsigned char *f,int fl,unsigned char *p,
+			       int pl);
+int RSA_padding_check_PKCS1_OAEP(unsigned char *to,int tlen,
+				 unsigned char *f,int fl,int rsa_len,
+				 unsigned char *p,int pl);
 int RSA_padding_add_SSLv23(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_SSLv23(unsigned char *to,int tlen,
@@ -307,10 +314,12 @@ char *RSA_get_ex_data();
 #define RSA_F_RSA_GENERATE_KEY				 105
 #define RSA_F_RSA_NEW_METHOD				 106
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
+#define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
 #define RSA_F_RSA_PADDING_ADD_SSLV23			 110
 #define RSA_F_RSA_PADDING_CHECK_NONE			 111
+#define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP		 122
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
 #define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
@@ -335,7 +344,9 @@ char *RSA_get_ex_data();
 #define RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 110
 #define RSA_R_DATA_TOO_SMALL				 111
 #define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY		 112
+#define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
+#define RSA_R_OAEP_DECODING_ERROR			 121
 #define RSA_R_PADDING_CHECK_FAILED			 114
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116

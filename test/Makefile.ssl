@@ -45,12 +45,13 @@ DHTEST=		dhtest
 DSATEST=	dsatest
 METHTEST=	methtest
 SSLTEST=	ssltest
+RSATEST=	rsa_oaep_test
 
 EXE=	$(BNTEST) $(IDEATEST) $(MD2TEST)  $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
 	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
 	$(RANDTEST) $(DHTEST) \
-	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST)
+	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST)
 
 # $(METHTEST)
 
@@ -58,12 +59,12 @@ OBJ=	$(BNTEST).o $(IDEATEST).o $(MD2TEST).o  $(MD5TEST).o $(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
 	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(CASTTEST).o \
-	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o
+	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o
 SRC=	$(BNTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD5TEST).c  $(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(CASTTEST).c \
-	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c
+	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -157,6 +158,7 @@ test_x509:
 
 test_rsa:
 	@sh ./trsa 2>/dev/null
+	./$(RSATEST)
 
 test_crl:
 	@sh ./tcrl 2>/dev/null
@@ -227,6 +229,9 @@ $(DLIBSSL):
 
 $(DLIBCRYPTO):
 	(cd ../crypto; $(MAKE))
+
+$(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
+	$(CC) -o $(RSATEST) $(CFLAGS) $(RSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
 $(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
 	$(CC) -o $(BNTEST) $(CFLAGS) $(BNTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
