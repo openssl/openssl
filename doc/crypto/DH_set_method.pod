@@ -36,9 +36,6 @@ method.
 
 DH_set_method() selects B<meth> for all operations using the structure B<dh>.
 
-DH_get_method() returns a pointer to the method currently selected
-for B<dh>.
-
 DH_new_method() allocates and initializes a B<DH> structure so that
 B<method> will be used for the DH operations. If B<method> is B<NULL>,
 the default method is used.
@@ -75,8 +72,8 @@ the default method is used.
 
 =head1 RETURN VALUES
 
-DH_OpenSSL(), DH_get_default_method() and DH_get_method() return
-pointers to the respective B<DH_METHOD>s.
+DH_OpenSSL() and DH_get_default_method() return pointers to the respective
+B<DH_METHOD>s.
 
 DH_set_default_method() returns no value.
 

@@ -3,11 +3,11 @@
 =head1 NAME
 
 DSA_set_default_method, DSA_get_default_method, DSA_set_method,
-DSA_new_method, DSA_OpenSSL - select RSA method
+DSA_new_method, DSA_OpenSSL - select DSA method
 
 =head1 SYNOPSIS
 
- #include <openssl/DSA.h>
+ #include <openssl/dsa.h>
 
  void DSA_set_default_method(DSA_METHOD *meth);
 
@@ -34,10 +34,7 @@ structures created later.
 DSA_get_default_method() returns a pointer to the current default
 method.
 
-DSA_set_method() selects B<meth> for all operations using the structure B<DSA>.
-
-DSA_get_method() returns a pointer to the method currently selected
-for B<DSA>.
+DSA_set_method() selects B<meth> for all operations using the structure B<dsa>.
 
 DSA_new_method() allocates and initializes a B<DSA> structure so that
 B<method> will be used for the DSA operations. If B<method> is B<NULL>,
@@ -87,8 +84,8 @@ struct
 
 =head1 RETURN VALUES
 
-DSA_OpenSSL(), DSA_get_default_method() and DSA_get_method() return
-pointers to the respective B<DSA_METHOD>s.
+DSA_OpenSSL() and DSA_get_default_method() return pointers to the
+respective B<DSA_METHOD>s.
 
 DSA_set_default_method() returns no value.
 
