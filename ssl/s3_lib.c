@@ -1431,7 +1431,7 @@ int ssl3_read(SSL *s, void *buf, int len)
 
 int ssl3_peek(SSL *s, char *buf, int len)
 	{
-	return ssl3_read_internal(s, buf, len, 0);
+	return ssl3_read_internal(s, buf, len, 1);
 	}
 
 int ssl3_renegotiate(SSL *s)
