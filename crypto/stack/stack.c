@@ -306,7 +306,7 @@ int sk_num(const STACK *st)
 
 char *sk_value(const STACK *st, int i)
 {
-	if(st == NULL) return NULL;
+	if(!st || (i < 0) || (i >= st->num)) return NULL;
 	return st->data[i];
 }
 
