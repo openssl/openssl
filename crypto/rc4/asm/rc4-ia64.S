@@ -7,7 +7,7 @@
 // disclaimed.
 // ====================================================================
 
-.ident  "rc4-ia64.S, Version 1.0"
+.ident  "rc4-ia64.S, Version 1.1"
 .ident  "IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 // What's wrong with compiler generated code? Because of the nature of
@@ -15,11 +15,19 @@
 // being memory-bound, RC4 should benefit from reorder [on in-order-
 // execution core such as IA-64]. But what can we reorder? At the very
 // least we can safely reorder references to key schedule in respect
-// to input and output streams. Secondly, less obvious, it's possible
-// to pull up some references to elements of the key schedule itself.
-// Fact is that such prior loads are not safe only for "degenerated"
-// key schedule, when some elements equal to the same value, which is
-// never the case [key schedule setup routine makes sure it's not].
+// to input and output streams. Secondly, from the first [close] glance
+// it appeared that it's possible to pull up some references to
+// elements of the key schedule itself. Original rationale ["prior
+// loads are not safe only for "degenerated" key schedule, when some
+// elements equal to the same value"] was kind of sloppy. I should have
+// formulated as it really was: if we assume that pulling up reference
+// to key[x+1] is not safe, then it would mean that key schedule would
+// "degenerate," which is never the case. The problem is that this
+// holds true in respect to references to key[x], but not to key[y].
+// Legitimate "collisions" do occur within every 256^2 bytes window.
+// Fortunately there're enough free instruction slots to keep prior
+// reference to key[x+1], detect "collision" and compensate for it.
+// All this without sacrificing a single clock cycle:-)
 // Furthermore. In order to compress loop body to the minimum, I chose
 // to deploy deposit instruction, which substitutes for the whole
 // key->data+((x&255)<<log2(sizeof(key->data[0]))). This unfortunately
@@ -97,7 +105,8 @@ RC4:
 						// deposit instruction only,
 						// I don't have to &~255...
 	mov	ar.lc=in1		}
-{ .mmi;	nop.m	0
+{ .mmi;	mov	key_y[1]=r0			// guarantee inequality
+						// in first iteration
 	add	xx=1,xx
 	mov	pr.rot=1<<16		};;
 { .mii;	nop.m	0
@@ -111,23 +120,23 @@ RC4:
 // divided by 3 bytes per seconds, or 500MBps on 1.5GHz CPU. Measured
 // performance however is distinctly lower than 1/4:-( The culplrit
 // seems to be *(out++)=dat, which inadvertently splits the bundle,
-// even though there is M-unit available... Unrolling is due...
+// even though there is M-port available... Unrolling is due...
 // Unrolled loop should collect output with variable shift instruction
-// in order to avoid starvation for integer shifter... Only output
-// pointer has to be aligned... It should be possible to get pretty
-// close to theoretical peak...
+// in order to avoid starvation for integer shifter... It should be
+// possible to get pretty close to theoretical peak...
 { .mmi;	(p16)	LDKEY	tx[0]=[key_x[1]]		// tx=key[xx]
 	(p17)	LDKEY	ty[0]=[key_y[1]]		// ty=key[yy]	
 	(p18)	dep	rnd[1]=rnd[1],ksch,OFF,8}	// &key[(tx+ty)&255]
 { .mmi;	(p19)	st1	[out]=dat[3],1			// *(out++)=dat
 	(p16)	add	xx=1,xx				// x++
-	(p0)	nop.i	0			};;
+	(p16)	cmp.ne.unc p20,p21=key_x[1],key_y[1]	};;
 { .mmi;	(p18)	LDKEY	rnd[1]=[rnd[1]]			// rnd=key[(tx+ty)&255]
 	(p16)	ld1	dat[0]=[inp],1			// dat=*(inp++)
 	(p16)	dep	key_x[0]=xx,ksch,OFF,8	}	// &key[xx&255]
-{ .mmi;	(p0)	nop.m	0
-	(p16)	add	yy=yy,tx[0]			// y+=tx
-	(p0)	nop.i	0			};;
+.pred.rel	"mutex",p20,p21
+{ .mmi;	(p21)	add	yy=yy,tx[1]			// (p16)
+	(p20)	add	yy=yy,tx[0]			// (p16) y+=tx
+	(p21)	mov	tx[0]=tx[1]		};;	// (p16)
 { .mmi;	(p17)	STKEY	[key_y[1]]=tx[1]		// key[yy]=tx
 	(p17)	STKEY	[key_x[2]]=ty[0]		// key[xx]=ty
 	(p16)	dep	key_y[0]=yy,ksch,OFF,8	}	// &key[yy&255]
