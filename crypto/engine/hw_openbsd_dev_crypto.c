@@ -55,7 +55,11 @@
 
 #ifndef OPENSSL_OPENBSD_DEV_CRYPTO
 
-static void *dummy=&dummy;
+void ENGINE_load_openbsd_dev_crypto(void)
+	{
+	/* This is a NOP unless OPENSSL_OPENBSD_DEV_CRYPTO is defined */
+	return;
+	}
 
 #else /* OPENSSL_OPENBSD_DEV_CRYPTO */
 
