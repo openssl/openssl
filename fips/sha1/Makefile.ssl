@@ -73,6 +73,17 @@ tags:
 
 tests:
 
+top_fips_sha1test:
+	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_sha1test sub_target)
+
+fips_sha1test: fips_sha1test.o ../../libcrypto.a
+	$(CC) $(CFLAGS) -o fips_sha1test fips_sha1test.o ../../libcrypto.a
+
+fips_test: top_fips_sha1test
+	-rm -rf ../testvectors/sha1/rsp
+	mkdir ../testvectors/sha1/rsp
+	./fips_sha1test ../testvectors/sha1/req/sha.req  > ../testvectors/sha1/rsp/sha.rsp
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
