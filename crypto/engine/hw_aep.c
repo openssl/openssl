@@ -124,7 +124,7 @@ static int aep_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 #endif
 	
-#ifdef AEP_RAND
+#ifdef AEPRAND
 /* rand stuff   */
 static int aep_rand(unsigned char *buf, int num);
 static int aep_rand_status(void);
@@ -190,7 +190,7 @@ static DH_METHOD aep_dh =
 };
 #endif
 
-#ifdef AEP_RAND
+#ifdef AEPRAND
 /* our internal RAND_method that we provide pointers to  */
 static RAND_METHOD aep_random =
 {
@@ -212,7 +212,7 @@ static ENGINE engine_aep =
   &aep_rsa,
   &aep_dsa,
   &aep_dh,
-#ifdef AEP_RAND
+#ifdef AEPRAND
   &aep_random,
 #else
   NULL,
@@ -235,7 +235,7 @@ static AEP_CONNECTION_ENTRY aep_app_conn_table[MAX_PROCESS_CONNECTIONS];
 /*Used to determine if this is a new process*/
 static pid_t    recorded_pid = 0;
 
-#ifdef AEP_RAND
+#ifdef AEPRAND
 static AEP_U8   rand_block[RAND_BLK_SIZE];
 static AEP_U32  rand_block_bytes = 0;
 #endif
@@ -368,7 +368,7 @@ static int aep_init(void)
 
   if(!(p1 = (t_AEP_ModExp *)         DSO_bind_func( aep_dso,AEP_F1))  ||
      !(p2 = (t_AEP_ModExpCrt*)       DSO_bind_func( aep_dso,AEP_F2))  ||
-#ifdef AEP_RAND
+#ifdef AEPRAND
      !(p3 = (t_AEP_GenRandom*)       DSO_bind_func( aep_dso,AEP_F3))  ||
 #endif
      !(p4 = (t_AEP_Finalize*)        DSO_bind_func( aep_dso,AEP_F4))  ||
@@ -604,7 +604,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
 }
 #endif
 
-#ifdef AEP_RAND
+#ifdef AEPRAND
 static int aep_rand(unsigned char *buf,int len )
 {
   AEP_RV rv = AEP_R_OK;
@@ -825,7 +825,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 	  goto end;
 	}
 
-#ifdef AEP_RAND
+#ifdef AEPRAND
       /*Reset the rand byte count*/
       rand_block_bytes = 0;
 #endif
