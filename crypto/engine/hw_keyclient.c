@@ -253,7 +253,11 @@ static kc_global_ctx kc_global =
 	{
 	0, /* not initialised */
 	NULL, /* no context yet */
+#ifdef WIN32
+	"IP:127.0.0.1:9001" /* win32 uses this by default */
+#else
 	"UNIX:/tmp/kclient" /* default address string */
+#endif
 	};
 
 /* In a no-threading environment where file-descriptor limits won't be a
