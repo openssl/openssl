@@ -6,7 +6,7 @@
 push(@INC,"perlasm","../../perlasm");
 require "alpha.pl";
 
-&asm_init($ARGV[0],"bn-586.pl");
+&asm_init($ARGV[0],$0);
 
 print &bn_sub_words("bn_sub_words");
 

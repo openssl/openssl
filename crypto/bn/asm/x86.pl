@@ -11,7 +11,7 @@ require("x86/add.pl");
 require("x86/sub.pl");
 require("x86/comba.pl");
 
-&asm_init($ARGV[0],"bn-586.pl");
+&asm_init($ARGV[0],$0);
 
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");

@@ -3,7 +3,7 @@
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"bn-586.pl");
+&asm_init($ARGV[0],$0);
 
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");

@@ -16,7 +16,7 @@ require "alpha/sqr_c4.pl";
 require "alpha/sqr_c8.pl";
 require "alpha/div.pl";
 
-&asm_init($ARGV[0],"bn-586.pl");
+&asm_init($ARGV[0],$0);
 
 &bn_mul_words("bn_mul_words");
 &bn_sqr_words("bn_sqr_words");
