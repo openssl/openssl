@@ -96,7 +96,7 @@ extern "C" {
 #define TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA	0x03000065
 #define TLS1_CK_DHE_DSS_WITH_RC4_128_SHA		0x03000066
 
-  /* AES ciphersuites from draft ietf-tls-ciphersuite-03.txt */
+  /* AES ciphersuites from draft-ietf-tls-ciphersuite-06.txt */
 
 #define TLS1_CK_RSA_WITH_AES_128_SHA			0x0300002F
 #define TLS1_CK_DH_DSS_WITH_AES_128_SHA			0x03000030
