@@ -129,15 +129,23 @@
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{
-	static int ssl_x509_store_ctx_idx= -1;
+	static volatile int ssl_x509_store_ctx_idx= -1;
 
-	/* FIXME: should do locking */
 	if (ssl_x509_store_ctx_idx < 0)
 		{
-		ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
-			0,"SSL for verify callback",NULL,NULL,NULL);
+		/* any write lock will do; usually this branch
+		 * will only be taken once anyway */
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		
+		if (ssl_x509_store_ctx_idx < 0)
+			{
+			ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
+				0,"SSL for verify callback",NULL,NULL,NULL);
+			}
+		
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 		}
-	return(ssl_x509_store_ctx_idx);
+	return ssl_x509_store_ctx_idx;
 	}
 
 CERT *ssl_cert_new(void)
@@ -452,13 +460,15 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	if (SSL_get_verify_depth(s) >= 0)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),s);
+
 	/* We need to set the verify purpose. The purpose can be determined by
 	 * the context: if its a server it will verify SSL client certificates
 	 * or vice versa.
-         */
-
-	if(s->server) i = X509_PURPOSE_SSL_CLIENT;
-	else i = X509_PURPOSE_SSL_SERVER;
+	 */
+	if (s->server)
+		i = X509_PURPOSE_SSL_CLIENT;
+	else
+		i = X509_PURPOSE_SSL_SERVER;
 
 	X509_STORE_CTX_purpose_inherit(&ctx, i, s->purpose, s->trust);
 

@@ -1,4 +1,17 @@
 /* crypto/ex_data.c */
+
+/*
+ * This is not thread-safe, nor can it be changed to become thread-safe
+ * without changing various function prototypes and using a lot of locking.
+ * Luckily, it's not really used anywhere except in ssl_verify_cert_chain
+ * via SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c), where
+ * new_func, dup_func, and free_func all are 0.
+ *
+ * Any multi-threaded application crazy enough to use ex_data for its own
+ * purposes had better make sure that SSL_get_ex_data_X509_STORE_CTX_idx
+ * is called once before multiple threads are created.
+ */
+
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

@@ -3,6 +3,23 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add functionality to apps/openssl.c for detecting locking
+     problems: As the program is single-threaded, all we have
+     to do is register a locking callback using an array for
+     storing which locks are currently held by the program.
+
+     Fix a deadlock in CRYPTO_mem_leaks() that was detected in
+     apps/openssl.c.
+     [Bodo Moeller]
+
+  *) Use a lock around the call to CRYPTO_get_ex_new_index() in
+     SSL_get_ex_data_X509_STORE_idx(), which is used in
+     ssl_verify_cert_chain() and thus can be called at any time
+     during TLS/SSL handshakes so that thread-safety is essential.
+     Unfortunately, the ex_data design is not at all suited
+     for multi-threaded use, so it probably should be abolished.
+     [Bodo Moeller]
+
   *) Added Broadcom "ubsec" ENGINE to OpenSSL.
      [Broadcom, tweaked and integrated by Geoff Thorpe]
 

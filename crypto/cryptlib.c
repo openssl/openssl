@@ -133,11 +133,11 @@ int CRYPTO_get_new_lockid(char *name)
 	char *str;
 	int i;
 
+#if defined(WIN32) || defined(WIN16)
 	/* A hack to make Visual C++ 5.0 work correctly when linking as
 	 * a DLL using /MT. Without this, the application cannot use
 	 * and floating point printf's.
 	 * It also seems to be needed for Visual C 1.5 (win16) */
-#if defined(WIN32) || defined(WIN16)
 	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
 #endif
 
