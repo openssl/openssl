@@ -114,7 +114,11 @@ tests:	exe apps $(TESTS)
 apps:
 	@(cd ../apps; $(MAKE)  CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' all)
 
-alltests: \
+alltests:
+	(LIBPATH="`cd ..; pwd`"; LD_LIBRARY_PATH=$$LIBPATH; SHLIB_PATH=$$LIBPATH; \
+		export LD_LIBRARY_PATH SHLIB_PATH LIBPATH; \
+		$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' alltests.chooser)
+alltests.chooser: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
 	test_md2 test_mdc2 \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_rd \

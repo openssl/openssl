@@ -26,6 +26,7 @@ TEST=ssltest.c
 APPS=
 
 LIB=$(TOP)/libssl.a
+SHARED_LIB= libssl$(SHLIB_EXT)
 LIBSRC=	\
 	s2_meth.c   s2_srvr.c s2_clnt.c  s2_lib.c  s2_enc.c s2_pkt.c \
 	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c s3_pkt.c s3_both.c \
@@ -55,12 +56,17 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	lib
+all:	lib shared
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
+
+shared:
+	if [ -n "$(SHARED_LIBS)" ]; then \
+		(cd ..; make $(SHARED_LIB)); \
+	fi
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO

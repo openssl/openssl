@@ -12,6 +12,16 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Change the shared library support so shared libraries are built as
+     soon as the corresponding static library is finished, and thereby get
+     openssl and the test programs linked against the shared library.
+     This still only happens when the keyword "shard" has been given to
+     the configuration scripts.
+
+     NOTE: shared library support is still an experimental thing, and
+     backward binary compatibility is still not guaranteed.
+     ["Maciej W. Rozycki" <macro@ds2.pg.gda.pl> and Richard Levitte]
+
   +) Add support for Subject Information Access extension.
      [Peter Sylvester <Peter.Sylvester@EdelWeb.fr>]
 
