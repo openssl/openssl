@@ -66,6 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/ocsp.h>
+#include <openssl/rand.h>
 #include <openssl/x509v3.h>
 
 /* Standard wrapper functions for extensions */
@@ -298,6 +299,76 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(),
 err:
 	if (b) OPENSSL_free(b);
 	return NULL;
+	}
+
+/* Nonce handling functions */
+
+/* Add a nonce to an OCSP request. A nonce can be specificed or if NULL
+ * a random nonce will be generated.
+ */
+
+int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len)
+	{
+	unsigned char *tmpval;
+	ASN1_OCTET_STRING os;
+	int ret = 0;
+	if (len <= 0) len = OCSP_DEFAULT_NONCE_LENGTH;
+	if (val) tmpval = val;
+	else
+		{
+		if (!(tmpval = OPENSSL_malloc(len))) goto err;
+		RAND_pseudo_bytes(tmpval, len);
+		}
+	os.data = tmpval;
+	os.length = len;
+	if(!OCSP_REQUEST_add1_ext_i2d(req, NID_id_pkix_OCSP_Nonce,
+			&os, 0, X509V3_ADD_REPLACE))
+				goto err;
+	ret = 1;
+	err:
+	if(!val) OPENSSL_free(tmpval);
+	return ret;
+	}
+
+/* Check nonce validity in a request and response: the nonce
+ * must be either absent in both or present and equal in both. 
+ */
+int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
+	{
+	/*
+	 * Since we are only interested in the presence or absence of
+	 * the nonce and comparing its value there is no need to use
+	 * the X509V3 routines: this way we can avoid them allocating an
+	 * ASN1_OCTET_STRING structure for the value which would be
+	 * freed immediately anyway.
+	 */
+
+	int ret = 0, req_idx, resp_idx;
+	X509_EXTENSION *req_ext, *resp_ext;
+	req_idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
+	resp_idx = OCSP_BASICRESP_get_ext_by_NID(bs, NID_id_pkix_OCSP_Nonce, -1);
+	/* If both absent its OK */
+	if((req_idx < 0) && (resp_idx < 0)) return 1;
+	if((req_idx < 0) && (resp_idx >= 0))
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_NONCE_MISSING_IN_RESPONSE);
+		goto err;
+		}
+	if((req_idx < 0) && (resp_idx >= 0))
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_UNEXPECTED_NONCE_IN_RESPONSE);
+		goto err;
+		}
+	req_ext = OCSP_REQUEST_get_ext(req, req_idx);
+	resp_ext = OCSP_BASICRESP_get_ext(bs, resp_idx);
+	if(ASN1_OCTET_STRING_cmp(req_ext->value, resp_ext->value))
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_NONCE_VALUE_MISMATCH);
+		goto err;
+		}
+	ret = 1;
+	err:
+	return ret;
 	}
 
 X509_EXTENSION *OCSP_nonce_new(void *p, unsigned int len)

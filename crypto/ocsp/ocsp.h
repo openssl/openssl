@@ -72,6 +72,12 @@
 extern "C" {
 #endif
 
+/* Various flags and values */
+
+#define OCSP_DEFAULT_NONCE_LENGTH	16
+
+#define OCSP_NOCERTS			0x1
+
 /*   CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
  *       issuerNameHash     OCTET STRING, -- Hash of Issuer's DN
@@ -146,7 +152,7 @@ typedef struct ocsp_request_st
  *       unauthorized          (6)       --Request unauthorized
  *   }
  */
-#define OCSP_RESPONSE_STATUS_SUCCESSFULL          0
+#define OCSP_RESPONSE_STATUS_SUCCESSFUL          0
 #define OCSP_RESPONSE_STATUS_MALFORMEDREQUEST     1
 #define OCSP_RESPONSE_STATUS_INTERNALERROR        2
 #define OCSP_RESPONSE_STATUS_TRYLATER             3
@@ -361,21 +367,21 @@ typedef struct ocsp_service_locator_st
 #define OCSP_REQUEST_sign(o,pkey,md) \
 	ASN1_item_sign(&OCSP_REQINFO_it,\
 		o->optionalSignature->signatureAlgorithm,NULL,\
-	        o->optionalSignature->signature,(char *)o->tbsRequest,pkey,md)
+	        o->optionalSignature->signature,o->tbsRequest,pkey,md)
 
 #define OCSP_BASICRESP_sign(o,pkey,md,d) \
 	ASN1_item_sign(&OCSP_RESPDATA_it,o->signatureAlgorithm,NULL,\
-		o->signature,(char *)o->tbsResponseData,pkey,md)
+		o->signature,o->tbsResponseData,pkey,md)
 
 #define OCSP_REQUEST_verify(a,r) ASN1_item_verify(&OCSP_REQINFO_it,\
         a->optionalSignature->signatureAlgorithm,\
-	a->optionalSignature->signature,(char *)a->tbsRequest,r)
+	a->optionalSignature->signature,a->tbsRequest,r)
 
 #define OCSP_BASICRESP_verify(a,r,d) ASN1_item_verify(&OCSP_RESPDATA_it,\
-	a->signatureAlgorithm,a->signature,(char *)a->tbsResponseData,r)
+	a->signatureAlgorithm,a->signature,a->tbsResponseData,r)
 
 #define ASN1_BIT_STRING_digest(data,type,md,len) \
-	ASN1_item_digest(&ASN1_BIT_STRING_it,type,(char *)data,md,len)
+	ASN1_item_digest(&ASN1_BIT_STRING_it,type,data,md,len)
 
 #define OCSP_CERTID_dup(cid) (OCSP_CERTID*)ASN1_dup((int(*)())i2d_OCSP_CERTID,\
 		(char *(*)())d2i_OCSP_CERTID,(char *)(cid))
@@ -395,14 +401,25 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
 OCSP_CERTSTATUS *OCSP_cert_status_new(int status, int reason, char *tim);
 
-OCSP_ONEREQ *OCSP_request_add0(OCSP_REQUEST *req, OCSP_CERTID *cid);
+OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid);
+int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len);
+int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs);
+int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm);
+int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert);
 
 int OCSP_request_sign(OCSP_REQUEST   *req,
+		      X509           *signer,
 		      EVP_PKEY       *key,
 		      const EVP_MD   *dgst,
-		      STACK_OF(X509) *certs);
+		      STACK_OF(X509) *certs,
+		      unsigned long flags);
+
+int OCSP_response_status(OCSP_RESPONSE *resp);
+OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
 int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
+
+int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 
 OCSP_BASICRESP *OCSP_basic_response_new(int tag,
 					X509* cert);
@@ -430,8 +447,6 @@ OCSP_RESPONSE *OCSP_response_new(int status,
 
 ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(), 
 				char *data, STACK_OF(ASN1_OBJECT) *sk);
-
-X509_EXTENSION *OCSP_nonce_new(void *p, unsigned int len);
 
 X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim);
 
@@ -520,6 +535,8 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_CERT_ID_NEW				 102
 #define OCSP_F_CERT_STATUS_NEW				 103
 #define OCSP_F_D2I_OCSP_NONCE				 109
+#define OCSP_F_OCSP_CHECK_NONCE				 112
+#define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 110
 #define OCSP_F_REQUEST_VERIFY				 104
 #define OCSP_F_RESPONSE_VERIFY				 105
@@ -534,6 +551,9 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_FAILED_TO_READ				 110
 #define OCSP_R_FAILED_TO_STAT				 111
 #define OCSP_R_MISSING_VALUE				 112
+#define OCSP_R_NONCE_MISSING_IN_RESPONSE		 121
+#define OCSP_R_NONCE_VALUE_MISMATCH			 122
+#define OCSP_R_NOT_BASIC_RESPONSE			 120
 #define OCSP_R_NO_CERTIFICATE				 102
 #define OCSP_R_NO_CONTENT				 115
 #define OCSP_R_NO_PUBLIC_KEY				 103
@@ -544,6 +564,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_SERVER_RESPONSE_ERROR			 117
 #define OCSP_R_SERVER_RESPONSE_PARSE_ERROR		 118
 #define OCSP_R_SERVER_WRITE_ERROR			 119
+#define OCSP_R_UNEXPECTED_NONCE_IN_RESPONSE		 123
 #define OCSP_R_UNKNOWN_NID				 107
 #define OCSP_R_UNSUPPORTED_OPTION			 113
 #define OCSP_R_VALUE_ALREADY				 114

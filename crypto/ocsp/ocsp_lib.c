@@ -64,6 +64,7 @@
 #include <stdio.h>
 #include <cryptlib.h>
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -162,51 +163,16 @@ err:
 	return NULL;
 	}
 
-OCSP_ONEREQ *OCSP_request_add0(OCSP_REQUEST *req, OCSP_CERTID *cid)
-        {
-	OCSP_ONEREQ *one = NULL;
-
-	if (!(one = OCSP_ONEREQ_new())) goto err;
-	if (one->reqCert) OCSP_CERTID_free(one->reqCert);
-	one->reqCert = cid;
-	if (req &&
-		!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
-				goto err;
-	return one;
-err:
-	if (one) OCSP_ONEREQ_free(one);
-	return NULL;
-        }
-
-int OCSP_request_sign(OCSP_REQUEST   *req,
-		      EVP_PKEY       *key,
-		      const EVP_MD   *dgst,
-		      STACK_OF(X509) *certs)
-        {
-	int i;
-	OCSP_SIGNATURE *sig;
-
-	if (!(req->optionalSignature = sig = OCSP_SIGNATURE_new())) goto err;
-	if (!OCSP_REQUEST_sign(req, key, dgst)) goto err;
-	if (certs)
-	        {
-	        if (!(sig->certs = sk_X509_dup(certs))) goto err;
-	        for (i = 0; i < sk_X509_num(sig->certs); i++)
-	                {
-			sk_X509_set(sig->certs, i, 
-		               X509_dup(sk_X509_value(certs,i)));
-		        if (! sk_X509_value(sig->certs, i))
-			      goto err;
-		        }
-		}
-	return 1;
-err:
-	if (req->optionalSignature)
-	        {
-		OCSP_SIGNATURE_free(req->optionalSignature);
-		req->optionalSignature = NULL;
-		}
-	return 0;
+int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
+	{
+	int ret;
+	ret = OBJ_cmp(a->hashAlgorithm->algorithm, b->hashAlgorithm->algorithm);
+	if (ret) return ret;
+	ret = ASN1_OCTET_STRING_cmp(a->issuerNameHash, b->issuerNameHash);
+	if (ret) return ret;
+	ret = ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
+	if (ret) return ret;
+	return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
 	}
 
 OCSP_BASICRESP *OCSP_basic_response_new(int type, X509* cert)

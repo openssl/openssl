@@ -3,7 +3,29 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
-  *) Change function OCSP_request_add() to OCSP_request_add0().
+  *) Move OCSP client related routines to ocsp_cl.c. These
+     provide utility functions which an application needing
+     to issue a request to an OCSP responder and analyse the
+     response will typically need: as opposed to those which an
+     OCSP responder itself would need which will be added later.
+
+     OCSP_request_sign() signs an OCSP request with an API similar
+     to PKCS7_sign(). OCSP_response_status() returns status of OCSP
+     response. OCSP_response_get1_basic() extracts basic response
+     from response. OCSP_resp_find_status(): finds and extracts status
+     information from an OCSP_CERTID structure (which will be created
+     when the request structure is built). These are built from lower
+     level functions which work on OCSP_SINGLERESP structures but
+     wont normally be used unless the application wishes to examine
+     extensions in the OCSP response for example.
+
+     Replace nonce routines with a pair of functions.
+     OCSP_request_add1_nonce() adds a nonce value and optionally
+     generates a random value. OCSP_check_nonce() checks the
+     validity of the nonce in an OCSP response.
+     [Steve Henson]
+
+  *) Change function OCSP_request_add() to OCSP_request_add0_id().
      This doesn't copy the supplied OCSP_CERTID and avoids the
      need to free up the newly created id. Change return type
      to OCSP_ONEREQ to return the internal OCSP_ONEREQ structure.

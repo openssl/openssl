@@ -100,7 +100,7 @@ static char *table2string(long s, OCSP_TBLSTR *ts, int len)
 static char* ocspResponseStatus2string(long s)
         {
 	static OCSP_TBLSTR rstat_tbl[] = {
-	        { OCSP_RESPONSE_STATUS_SUCCESSFULL, "successful" },
+	        { OCSP_RESPONSE_STATUS_SUCCESSFUL, "successful" },
 	        { OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, "malformedrequest" },
 	        { OCSP_RESPONSE_STATUS_INTERNALERROR, "internalerror" },
 	        { OCSP_RESPONSE_STATUS_TRYLATER, "trylater" },
@@ -153,7 +153,6 @@ int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
 	if (BIO_write(bp,"\n    Requestor List:\n",21) <= 0) goto err;
 	for (i = 0; i < sk_OCSP_ONEREQ_num(inf->requestList); i++)
 	        {
-		if (!sk_OCSP_ONEREQ_value(inf->requestList, i)) continue;
 		one = sk_OCSP_ONEREQ_value(inf->requestList, i);
 		cid = one->reqCert;
 		ocsp_certid_print(bp, cid, 8);
@@ -207,6 +206,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		BIO_puts(bp," (unknown response type)\n");
 		return 1;
 		}
+
 	p = ASN1_STRING_data(rb->response);
 	i = ASN1_STRING_length(rb->response);
 	if (!(d2i_OCSP_BASICRESP(&br, &p, i))) goto err;
