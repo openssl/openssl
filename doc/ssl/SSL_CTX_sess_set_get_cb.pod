@@ -60,10 +60,11 @@ B<sess>. If the callback returns B<0>, the session will be immediately
 removed again.
 
 The remove_session_cb() is called, whenever the SSL engine removes a session
-from the internal cache. This happens if the session is removed because
-it is expired or when a connection was not shutdown cleanly. The
-remove_session_cb() is passed the B<ctx> and the ssl session B<sess>.
-It does not provide any feedback.
+from the internal cache. This happens when the session is removed because
+it is expired or when a connection was not shutdown cleanly. It also happens
+for all sessions in the internal session cache when
+L<SSL_CTX_free(3)|SSL_CTX_free(3)> is called. The remove_session_cb() is passed
+the B<ctx> and the ssl session B<sess>. It does not provide any feedback.
 
 The get_session_cb() is only called on SSL/TLS servers with the session id
 proposed by the client. The get_session_cb() is always called, also when
@@ -80,6 +81,7 @@ L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>.
 L<ssl(3)|ssl(3)>, L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>,
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
+L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>,
+L<SSL_CTX_free(3)|SSL_CTX_free(3)>
 
 =cut
