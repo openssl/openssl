@@ -56,13 +56,16 @@
 #ifndef HEADER_EC_H
 #define HEADER_EC_H
 
+#ifdef OPENSSL_NO_EC
+#error Elliptic curves are disabled.
+#endif
+
 #include <openssl/bn.h>
 #include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
 
 
 typedef enum {
@@ -81,7 +84,7 @@ typedef struct ec_group_st
 	 -- field definition
 	 -- curve coefficients
 	 -- optional generator with associated information (order, cofactor)
-	 -- optional Lim/Lee precomputation table
+	 -- optional extra data (Lim/Lee precomputation table)
 	*/
 	EC_GROUP;
 
@@ -103,19 +106,20 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *);
  * Otherwise we would declare
  *     int EC_GROUP_set_curve(EC_GROUP *, .....);
  */
-int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void EC_GROUP_free(EC_GROUP *);
 void EC_GROUP_clear_free(EC_GROUP *);
 int EC_GROUP_copy(EC_GROUP *, const EC_GROUP*);
+int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int EC_GROUP_get_curve_GFp(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
  * after choosing an appropriate EC_METHOD */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
 int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
-
-/* TODO: 'set' and 'get' functions for EC_GROUPs */
-
+EC_POINT *EC_group_get0_generator(EC_GROUP *);
+int EC_GROUP_get_order(EC_GROUP *, BIGNUM *order, BN_CTX *);
+int EC_GROUP_get_cofactor(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
@@ -170,7 +174,10 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_SIMPLE_OCT2POINT			 103
 #define EC_F_EC_GFP_SIMPLE_POINT2OCT			 104
 #define EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP 105
+#define EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP 128
+#define EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP 129
 #define EC_F_EC_GROUP_COPY				 106
+#define EC_F_EC_GROUP_GET_CURVE_GFP			 130
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_NEW				 108
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
@@ -196,6 +203,8 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
+#define EC_R_INVALID_COMPRESSED_POINT			 110
+#define EC_R_INVALID_COMPRESSION_BIT			 109
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104

@@ -64,12 +64,15 @@ const EC_METHOD *EC_GFp_simple_method(void)
 	{
 	static const EC_METHOD ret = {
 		ec_GFp_simple_group_init,
-		ec_GFp_simple_group_set_curve_GFp,
 		ec_GFp_simple_group_finish,
 		ec_GFp_simple_group_clear_finish,
 		ec_GFp_simple_group_copy,
+		ec_GFp_simple_group_set_curve_GFp,
+		ec_GFp_simple_group_get_curve_GFp,
 		ec_GFp_simple_group_set_generator,
-		/* TODO: 'set' and 'get' functions for EC_GROUPs */
+		ec_GFp_simple_group_get0_generator,
+		ec_GFp_simple_group_get_order,
+		ec_GFp_simple_group_get_cofactor,
 		ec_GFp_simple_point_init,
 		ec_GFp_simple_point_finish,
 		ec_GFp_simple_point_clear_finish,
@@ -108,61 +111,6 @@ int ec_GFp_simple_group_init(EC_GROUP *group)
 	BN_init(&group->order);
 	BN_init(&group->cofactor);
 	return 1;
-	}
-
-
-int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *group,
-	const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
-	{
-	int ret = 0;
-	BN_CTX *new_ctx = NULL;
-	BIGNUM *tmp_a;
-	
-	/* p must be a prime > 3 */
-	if (BN_num_bits(p) <= 2 || !BN_is_odd(p))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP, EC_R_INVALID_FIELD);
-		return 0;
-		}
-
-	if (ctx == NULL)
-		{
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-		}
-
-	BN_CTX_start(ctx);
-	tmp_a = BN_CTX_get(ctx);
-	if (tmp_a == NULL) goto err;
-
-	/* group->field */
-	if (!BN_copy(&group->field, p)) goto err;
-	group->field.neg = 0;
-
-	/* group->a */
-	if (!BN_nnmod(tmp_a, a, p, ctx)) goto err;
-	if (group->meth->field_encode)
-		{ if (!group->meth->field_encode(group, &group->a, tmp_a, ctx)) goto err; }	
-	else
-		if (!BN_copy(&group->a, tmp_a)) goto err;
-	
-	/* group->b */
-	if (!BN_nnmod(&group->b, b, p, ctx)) goto err;
-	if (group->meth->field_encode)
-		if (!group->meth->field_encode(group, &group->b, &group->b, ctx)) goto err;
-	
-	/* group->a_is_minus3 */
-	if (!BN_add_word(tmp_a, 3)) goto err;
-	group->a_is_minus3 = (0 == BN_cmp(tmp_a, &group->field));
-
-	ret = 1;
-
- err:
-	BN_CTX_end(ctx);
-	if (new_ctx != NULL)
-		BN_CTX_free(new_ctx);
-	return ret;
 	}
 
 
@@ -227,6 +175,113 @@ int ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	}
 
 
+int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *group,
+	const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+	{
+	int ret = 0;
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp_a;
+	
+	/* p must be a prime > 3 */
+	if (BN_num_bits(p) <= 2 || !BN_is_odd(p))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP, EC_R_INVALID_FIELD);
+		return 0;
+		}
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+
+	BN_CTX_start(ctx);
+	tmp_a = BN_CTX_get(ctx);
+	if (tmp_a == NULL) goto err;
+
+	/* group->field */
+	if (!BN_copy(&group->field, p)) goto err;
+	group->field.neg = 0;
+
+	/* group->a */
+	if (!BN_nnmod(tmp_a, a, p, ctx)) goto err;
+	if (group->meth->field_encode)
+		{ if (!group->meth->field_encode(group, &group->a, tmp_a, ctx)) goto err; }	
+	else
+		if (!BN_copy(&group->a, tmp_a)) goto err;
+	
+	/* group->b */
+	if (!BN_nnmod(&group->b, b, p, ctx)) goto err;
+	if (group->meth->field_encode)
+		if (!group->meth->field_encode(group, &group->b, &group->b, ctx)) goto err;
+	
+	/* group->a_is_minus3 */
+	if (!BN_add_word(tmp_a, 3)) goto err;
+	group->a_is_minus3 = (0 == BN_cmp(tmp_a, &group->field));
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+
+int ec_GFp_simple_group_get_curve_GFp(EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+	{
+	int ret = 0;
+	BN_CTX *new_ctx = NULL;
+	
+	if (p != NULL)
+		{
+		if (!BN_copy(p, &group->field)) return 0;
+		}
+
+	if (a != NULL || b != NULL)
+		{
+		if (group->meth->field_decode)
+			{
+			if (ctx == NULL)
+				{
+				ctx = new_ctx = BN_CTX_new();
+				if (ctx == NULL)
+					return 0;
+				}
+			if (a != NULL)
+				{
+				if (!group->meth->field_decode(group, a, &group->a, ctx)) goto err;
+				}
+			if (b != NULL)
+				{
+				if (!group->meth->field_decode(group, b, &group->b, ctx)) goto err;
+				}
+			}
+		else
+			{
+			if (a != NULL)
+				{
+				if (!BN_copy(a, &group->a)) goto err;
+				}
+			if (b != NULL)
+				{
+				if (!BN_copy(b, &group->b)) goto err;
+				}
+			}
+		}
+	
+	ret = 1;
+	
+ err:
+	if (new_ctx)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+
+
 int ec_GFp_simple_group_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	const BIGNUM *order, const BIGNUM *cofactor)
 	{
@@ -257,7 +312,28 @@ int ec_GFp_simple_group_set_generator(EC_GROUP *group, const EC_POINT *generator
 	}
 
 
-/* TODO: 'set' and 'get' functions for EC_GROUPs */
+EC_POINT *ec_GFp_simple_group_get0_generator(EC_GROUP *group)
+	{
+	return group->generator;
+	}
+
+
+int ec_GFp_simple_group_get_order(EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
+	{
+	if (!BN_copy(order, &group->order))
+		return 0;
+
+	return !BN_is_zero(&group->order);
+	}
+
+
+int ec_GFp_simple_group_get_cofactor(EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
+	{
+	if (!BN_copy(cofactor, &group->cofactor))
+		return 0;
+
+	return !BN_is_zero(&group->cofactor);
+	}
 
 
 int ec_GFp_simple_point_init(EC_POINT *point)
@@ -307,26 +383,65 @@ int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 
 
 int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
-/* TODO */
-
-
-int ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
-	BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
-/* TODO */
-
-
-int ec_GFp_simple_point_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
+	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
 	int ret = 0;
+	
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
 
-	if (!BN_copy(&point->X, x)) goto err;
-	if (!BN_copy(&point->Y, y)) goto err;
-	if (!BN_one(&point->Z)) goto err;
+	if (x != NULL)
+		{
+		if (!BN_nnmod(&point->X, x, &group->field, ctx)) goto err;
+		if (group->meth->field_encode)
+			{
+			if (!group->meth->field_encode(group, &point->X, &point->X, ctx)) goto err;
+			}
+		}
+	
+	if (y != NULL)
+		{
+		if (!BN_nnmod(&point->Y, y, &group->field, ctx)) goto err;
+		if (group->meth->field_encode)
+			{
+			if (!group->meth->field_encode(group, &point->Y, &point->Y, ctx)) goto err;
+			}
+		}
+	
+	if (z != NULL)
+		{
+		int Z_is_one;
 
-	if (group->meth->field_encode)
+		if (!BN_nnmod(&point->Z, z, &group->field, ctx)) goto err;
+		Z_is_one = BN_is_one(&point->Z);
+		if (group->meth->field_encode)
+			{
+			if (!group->meth->field_encode(group, &point->Z, &point->Z, ctx)) goto err;
+			}
+		point->Z_is_one = Z_is_one;
+		}
+	
+	ret = 1;
+	
+ err:
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+
+int ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
+	BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx)
+	{
+	BN_CTX *new_ctx = NULL;
+	int ret = 0;
+	
+	if (group->meth->field_decode != 0)
 		{
 		if (ctx == NULL)
 			{
@@ -334,18 +449,56 @@ int ec_GFp_simple_point_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POI
 			if (ctx == NULL)
 				return 0;
 			}
-		
-		if (!group->meth->field_encode(group, &point->X, &point->X, ctx)) goto err;
-		if (!group->meth->field_encode(group, &point->Y, &point->Y, ctx)) goto err;
-		if (!group->meth->field_encode(group, &point->Z, &point->Z, ctx)) goto err;
-		}
 
-	point->Z_is_one = 1;
+		if (x != NULL)
+			{
+			if (!group->meth->field_decode(group, x, &point->X, ctx)) goto err;
+			}
+		if (y != NULL)
+			{
+			if (!group->meth->field_decode(group, y, &point->Y, ctx)) goto err;
+			}
+		if (z != NULL)
+			{
+			if (!group->meth->field_decode(group, z, &point->Z, ctx)) goto err;
+			}
+		}
+	else	
+		{
+		if (x != NULL)
+			{
+			if (!BN_copy(x, &point->X)) goto err;
+			}
+		if (y != NULL)
+			{
+			if (!BN_copy(y, &point->Y)) goto err;
+			}
+		if (z != NULL)
+			{
+			if (!BN_copy(z, &point->Z)) goto err;
+			}
+		}
 	
+	ret = 1;
+
  err:
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
 	return ret;
+	}
+
+
+int ec_GFp_simple_point_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
+	{
+	if (x == NULL || y == NULL)
+		{
+		/* unlike for projective coordinates, we do not tolerate this */
+		ECerr(EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP, ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+
+	return EC_POINT_set_Jprojective_coordinates_GFp(group, point, x, y, BN_value_one(), ctx);
 	}
 
 
@@ -438,8 +591,93 @@ int ec_GFp_simple_point_get_affine_coordinates_GFp(const EC_GROUP *group, const 
 
 
 int ec_GFp_simple_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
-	const BIGNUM *x, int y_bit, BN_CTX *);
-/* TODO */
+	const BIGNUM *x, int y_bit, BN_CTX *ctx)
+	{
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp1, *tmp2, *y;
+	int ret = 0;
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+
+	y_bit = (y_bit != 0);
+
+	BN_CTX_start(ctx);
+	tmp1 = BN_CTX_get(ctx);
+	tmp2 = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	if (y == NULL) goto err;
+
+	/* Recover y.  We have a Weierstrass equation
+	 *     y^2 = x^3 + a*x + b,
+	 * so  y  is one of the square roots of  x^3 + a*x + b.
+	 */
+
+	/* tmp1 := x^3 */
+	if (!BN_mod_sqr(tmp2, x, &group->field, ctx)) goto err;
+	if (!BN_mod_mul(tmp1, tmp2, x, &group->field, ctx)) goto err;
+	
+	/* tmp1 := tmp1 + a*x */
+	if (group->a_is_minus3)
+		{
+		if (!BN_mod_lshift1_quick(tmp2, x, &group->field)) goto err;
+		if (!BN_mod_add_quick(tmp2, tmp2, x, &group->field)) goto err;
+		if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		}
+	else
+		{
+		if (!BN_mod_mul(tmp2, &group->a, x, &group->field, ctx)) goto err;
+		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		}
+	
+	/* tmp1 := tmp1 + b */
+	if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
+	
+	if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP, ERR_R_BN_LIB);
+		goto err;
+		}
+	/* If tmp1 is not a square (i.e. there is no point on the curve with
+	 * our x), then y now is a nonsense value too */
+
+	if (y_bit != BN_is_odd(y))
+		{
+		if (BN_is_zero(y))
+			{
+			int kron;
+
+			kron = BN_kronecker(x, &group->field, ctx);
+			if (kron == -2) goto err;
+
+			if (kron == 1)
+				ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP, EC_R_INVALID_COMPRESSION_BIT);
+			else
+				ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP, EC_R_INVALID_COMPRESSED_POINT);
+			goto err;
+			}
+		if (!BN_usub(y, &group->field, y)) goto err;
+		}
+	if (y_bit != BN_is_odd(y))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP, ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
+
+	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
 
 
 size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
@@ -638,7 +876,11 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 		goto err;
 		}
 
-	if (form != POINT_CONVERSION_COMPRESSED)
+	if (form == POINT_CONVERSION_COMPRESSED)
+		{
+		if (!EC_POINT_set_compressed_coordinates_GFp(group, point, x, y_bit, ctx)) goto err;
+		}
+	else
 		{
 		if (!BN_bin2bn(buf + 1 + field_len, field_len, y)) goto err;
 		if (BN_ucmp(y, &group->field) >= 0)
@@ -654,65 +896,10 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 				goto err;
 				}
 			}
-		}
 
-	if (form == POINT_CONVERSION_COMPRESSED)
-		{
-		/* Recover y.  We have a Weierstrass equation
-		 *     y^2 = x^3 + a*x + b,
-		 * so  y  is one of the square roots of  x^3 + a*x + b.
-		 */
-
-		BIGNUM *tmp1, *tmp2;
-		
-		tmp1 = BN_CTX_get(ctx);
-		tmp2 = BN_CTX_get(ctx);
-		if (tmp2 == NULL) goto err;
-		
-		/* tmp1 := x^3 */
-		if (!BN_mod_sqr(tmp2, x, &group->field, ctx)) goto err;
-		if (!BN_mod_mul(tmp1, tmp2, x, &group->field, ctx)) goto err;
-
-		/* tmp1 := tmp1 + a*x */
-		if (group->a_is_minus3)
-			{
-			if (!BN_mod_lshift1_quick(tmp2, x, &group->field)) goto err;
-			if (!BN_mod_add_quick(tmp2, tmp2, x, &group->field)) goto err;
-			if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
-			}
-		else
-			{
-			if (!BN_mod_mul(tmp2, &group->a, x, &group->field, ctx)) goto err;
-			if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
-			}
-		
-		/* tmp1 := tmp1 + b */
-		if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
-
-		if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
-			{
-			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, ERR_R_BN_LIB);
-			goto err;
-			}
-
-		if (y_bit != BN_is_odd(y))
-			{
-			if (BN_is_zero(y))
-				{
-				ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
-				goto err;
-				}
-			if (!BN_usub(y, &group->field, y)) goto err;
-			}
-		if (y_bit != BN_is_odd(y))
-			{
-			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, ERR_R_INTERNAL_ERROR);
-			goto err;
-			}
+		if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
 		}
 	
-	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
-
 	if (!EC_POINT_is_on_curve(group, point, ctx)) /* test required by X9.62 */
 		{
 		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_POINT_IS_NOT_ON_CURVE);
@@ -1010,8 +1197,14 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_
 	}
 
 
-int ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
-/* TODO */
+int ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
+	{
+	if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(&point->Y))
+		/* point is its own inverse */
+		return 1;
+	
+	return BN_usub(&point->Y, &group->field, &point->Y);
+	}
 
 
 int ec_GFp_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
@@ -1072,7 +1265,7 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 
 		/* rh := rh + a*X*Z^4 */
 		if (!field_mul(group, tmp1, &point->X, Z4, ctx)) goto err;
-		if (&group->a_is_minus3)
+		if (group->a_is_minus3)
 			{
 			if (!BN_mod_lshift1_quick(tmp2, tmp1, p)) goto err;
 			if (!BN_mod_add_quick(tmp2, tmp2, tmp1, p)) goto err;
@@ -1093,7 +1286,7 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 		/* point->Z_is_one */
 
 		/* rh := rh + a*X */
-		if (&group->a_is_minus3)
+		if (group->a_is_minus3)
 			{
 			if (!BN_mod_lshift1_quick(tmp2, &point->X, p)) goto err;
 			if (!BN_mod_add_quick(tmp2, tmp2, &point->X, p)) goto err;
@@ -1122,8 +1315,107 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 	}
 
 
-int ec_GFp_simple_cmp(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
-/* TODO */
+int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+	{
+	/* return values:
+	 *  -1   error
+	 *   0   equal (in affine coordinates)
+	 *   1   not equal
+	 */
+
+	int (*field_mul)(const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
+	int (*field_sqr)(const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp1, *tmp2, *Za23, *Zb23;
+	const BIGNUM *tmp1_, *tmp2_;
+	int ret = -1;
+	
+	if (EC_POINT_is_at_infinity(group, a))
+		{
+		return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
+		}
+	
+	if (a->Z_is_one && b->Z_is_one)
+		{
+		return ((BN_cmp(&a->X, &b->X) == 0) && BN_cmp(&a->Y, &b->Y) == 0) ? 0 : 1;
+		}
+
+	field_mul = group->meth->field_mul;
+	field_sqr = group->meth->field_sqr;
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return -1;
+		}
+
+	BN_CTX_start(ctx);
+	tmp1 = BN_CTX_get(ctx);
+	tmp2 = BN_CTX_get(ctx);
+	Za23 = BN_CTX_get(ctx);
+	Zb23 = BN_CTX_get(ctx);
+	if (Zb23 == NULL) goto end;
+
+	/* We have to decide whether
+	 *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
+	 * or equivalently, whether
+	 *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
+	 */
+
+	if (!b->Z_is_one)
+		{
+		if (!field_sqr(group, Zb23, &b->Z, ctx)) goto end;
+		if (!field_mul(group, tmp1, &a->X, Zb23, ctx)) goto end;
+		tmp1_ = tmp1;
+		}
+	else
+		tmp1_ = &a->X;
+	if (!a->Z_is_one)
+		{
+		if (!field_sqr(group, Za23, &a->Z, ctx)) goto end;
+		if (!field_mul(group, tmp2, &b->X, Za23, ctx)) goto end;
+		tmp2_ = tmp2;
+		}
+	else
+		tmp2_ = &b->X;
+	
+	/* compare  X_a*Z_b^2  with  X_b*Z_a^2 */
+	if (BN_cmp(tmp1_, tmp2_) != 0)
+		{
+		ret = 1; /* points differ */
+		goto end;
+		}
+
+
+	if (!b->Z_is_one)
+		{
+		if (!field_mul(group, Zb23, Zb23, &b->Z, ctx)) goto end;
+		if (!field_mul(group, tmp1, &a->Y, Zb23, ctx)) goto end;
+		}
+	if (!a->Z_is_one)
+		{
+		if (!field_mul(group, Za23, Za23, &a->Z, ctx)) goto end;
+		if (!field_mul(group, tmp2, &b->Y, Za23, ctx)) goto end;
+		}
+	/* tmp1_ and tmp2_ are still ok */
+
+	/* compare  Y_a*Z_b^3  with  Y_b*Z_a^3 */
+	if (BN_cmp(tmp1_, tmp2_) != 0)
+		{
+		ret = 1; /* points differ */
+		goto end;
+		}
+
+	/* points are equal */
+	ret = 0;
+
+ end:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
 
 
 int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)

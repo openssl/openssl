@@ -56,8 +56,11 @@
 #include <string.h>
 
 #include <openssl/err.h>
+#include <openssl/opensslv.h>
 
 #include "ec_lcl.h"
+
+static const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
 
 
 /* functions for EC_GROUP objects */
@@ -98,17 +101,6 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 		}
 	
 	return ret;
-	}
-
-
-int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
-	{
-	if (group->meth->group_set_curve_GFp == 0)
-		{
-		ECerr(EC_F_EC_GROUP_SET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-		}
-	return group->meth->group_set_curve_GFp(group, p, a, b, ctx);
 	}
 
 
@@ -171,6 +163,28 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	}
 
 
+int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+	{
+	if (group->meth->group_set_curve_GFp == 0)
+		{
+		ECerr(EC_F_EC_GROUP_SET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_set_curve_GFp(group, p, a, b, ctx);
+	}
+
+
+int EC_GROUP_get_curve_GFp(EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+	{
+	if (group->meth->group_get_curve_GFp == 0)
+		{
+		ECerr(EC_F_EC_GROUP_GET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_get_curve_GFp(group, p, a, b, ctx);
+	}
+
+
 int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor)
 	{
 	if (group->meth->group_set_generator == 0)
@@ -180,9 +194,6 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 		}
 	return group->meth->group_set_generator(group, generator, order, cofactor);
 	}
-
-
-/* TODO: 'set' and 'get' functions for EC_GROUPs */
 
 
 /* this has 'package' visibility */

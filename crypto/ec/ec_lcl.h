@@ -63,19 +63,24 @@
  * so all this may change in future versions. */
 
 struct ec_method_st {
-	/* used by EC_GROUP_new, EC_GROUP_set_curve_GFp, EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_copy: */
+	/* used by EC_GROUP_new, EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
-	int (*group_set_curve_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	void (*group_finish)(EC_GROUP *);
 	void (*group_clear_finish)(EC_GROUP *);
 	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
-	/* used by EC_GROUP_set_generator: */
+	/* used by EC_GROUP_set_curve_GFp and EC_GROUP_get_curve_GFp: */
+	int (*group_set_curve_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+	int (*group_get_curve_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+
+	/* used by EC_GROUP_set_generator, EC_group_get0_generator,
+	 * EC_GROUP_get_order, EC_GROUP_get_cofactor:
+	 */
 	int (*group_set_generator)(EC_GROUP *, const EC_POINT *generator,
 	        const BIGNUM *order, const BIGNUM *cofactor);
-	
-	/* TODO: 'set' and 'get' functions for EC_GROUPs */
-
+	EC_POINT *(*group_get0_generator)(EC_GROUP *);
+	int (*group_get_order)(EC_GROUP *, BIGNUM *order, BN_CTX *);
+	int (*group_get_cofactor)(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_clear_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
@@ -195,13 +200,16 @@ struct ec_point_st {
 
 /* method functions in ecp_smpl.c */
 int ec_GFp_simple_group_init(EC_GROUP *);
-int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void ec_GFp_simple_group_finish(EC_GROUP *);
 void ec_GFp_simple_group_clear_finish(EC_GROUP *);
 int ec_GFp_simple_group_copy(EC_GROUP *, const EC_GROUP *);
+int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_simple_group_get_curve_GFp(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_group_set_generator(EC_GROUP *, const EC_POINT *generator,
 	const BIGNUM *order, const BIGNUM *cofactor);
-/* TODO: 'set' and 'get' functions for EC_GROUPs */
+EC_POINT *ec_GFp_simple_group_get0_generator(EC_GROUP *);
+int ec_GFp_simple_group_get_order(EC_GROUP *, BIGNUM *order, BN_CTX *);
+int ec_GFp_simple_group_get_cofactor(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 int ec_GFp_simple_point_init(EC_POINT *);
 void ec_GFp_simple_point_finish(EC_POINT *);
 void ec_GFp_simple_point_clear_finish(EC_POINT *);
