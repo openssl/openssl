@@ -163,4 +163,6 @@ int main ()
 	fprintf(stdout,"."); fflush(stdout);
 
     fprintf(stdout," passed.\n"); fflush(stdout);
+
+  return 0;
 }
