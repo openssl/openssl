@@ -338,10 +338,10 @@ DECLARE_STACK_OF(X509_TRUST)
 
 #define XN_FLAG_FN_MASK		(0x3 << 21)
 
-#define XN_FLAG_FN_NONE		0		/* No field names */
-#define XN_FLAG_FN_SN		(1 << 21)	/* Object short name */
-#define XN_FLAG_FN_LN		(2 << 21)	/* Object long name */
-#define XN_FLAG_FN_OID		(3 << 21)	/* Always use OIDs */
+#define XN_FLAG_FN_SN		0		/* Object short name */
+#define XN_FLAG_FN_LN		(1 << 21)	/* Object long name */
+#define XN_FLAG_FN_OID		(2 << 21)	/* Always use OIDs */
+#define XN_FLAG_FN_NONE		(3 << 21)	/* No field names */
 
 #define XN_FLAG_SPC_EQ		(1 << 23)	/* Put spaces round '=' */
 

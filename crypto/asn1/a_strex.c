@@ -311,7 +311,7 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags, ASN1_STR
 	outlen = 0;
 
 
-	if(lflags & ASN1_STRFLGS_SHOW_NAME) {
+	if(lflags & ASN1_STRFLGS_SHOW_TYPE) {
 		const char *tagname;
 		tagname = ASN1_tag2str(type);
 		outlen += strlen(tagname);
@@ -392,8 +392,8 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 		case XN_FLAG_SEP_MULTILINE:
 		sep_dn = "\n";
 		sep_dn_len = 1;
-		sep_mv = "+";
-		sep_mv_len = 1;
+		sep_mv = " + ";
+		sep_mv_len = 3;
 		break;
 
 		case XN_FLAG_SEP_COMMA_PLUS:
@@ -446,9 +446,9 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 			} else {
 				if(!io_ch(arg, sep_dn, sep_dn_len)) return -1;
 				outlen += sep_dn_len;
+				if(!do_indent(io_ch, arg, indent)) return -1;
+				outlen += indent;
 			}
-			if(!do_indent(io_ch, arg, indent)) return -1;
-			outlen += indent;
 		}
 		prev = ent->set;
 		fn = X509_NAME_ENTRY_get_object(ent);

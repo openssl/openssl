@@ -306,7 +306,7 @@ typedef int ASN1_NULL;
 #define ASN1_STRFLGS_IGNORE_TYPE	0x20
 
 /* If this is set we include the string type in the output */
-#define ASN1_STRFLGS_SHOW_NAME		0x40
+#define ASN1_STRFLGS_SHOW_TYPE		0x40
 
 /* This determines which strings to display and which to
  * 'dump' (hex dump of content octets or DER encoding). We can
