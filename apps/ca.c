@@ -76,16 +76,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 
-#ifdef OPENSSL_SYS_WINDOWS
-#define strcasecmp _stricmp
-#else
-#  ifdef NO_STRINGS_H
-    int	strcasecmp();
-#  else
-#    include <strings.h>
-#  endif /* NO_STRINGS_H */
-#endif
-
 #ifndef W_OK
 #  ifdef OPENSSL_SYS_VMS
 #    if defined(__DECC)
