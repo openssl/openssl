@@ -66,7 +66,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#if defined(NO_ASM) || !defined(i386)
+#if defined(NO_ASM)
 /* Here follows specialised variants of bn_add_words() and
    bn_sub_words().  They have the property performing operations on
    arrays of different sizes.  The sizes of those arrays is expressed through
@@ -458,7 +458,8 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		}
 
 # ifdef BN_MUL_COMBA
-	if (n == 4)
+	if (n == 4 && dna == 0 && dnb == 0) /* XXX: bn_mul_comba4 could take
+					       extra args to do this well */
 		{
 		if (!zero)
 			bn_mul_comba4(&(t[n2]),t,&(t[n]));
@@ -468,7 +469,9 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		bn_mul_comba4(r,a,b);
 		bn_mul_comba4(&(r[n2]),&(a[n]),&(b[n]));
 		}
-	else if (n == 8)
+	else if (n == 8 && dna == 0 && dnb == 0) /* XXX: bn_mul_comba8 could
+						    take extra args to do this
+						    well */
 		{
 		if (!zero)
 			bn_mul_comba8(&(t[n2]),t,&(t[n]));
@@ -938,7 +941,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	int i;
 #endif
 #ifdef BN_RECURSION
-	BIGNUM *t;
+	BIGNUM *t=NULL;
 	int j=0,k;
 #endif
 
