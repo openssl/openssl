@@ -122,11 +122,9 @@ each byte is the parity bit.  The key schedule is an expanded form of
 the key; it is used to speed the encryption process.
 
 DES_random_key() generates a random key.  The PRNG must be seeded
-prior to using this function (see L<rand(3)|rand(3)>; for backward
-compatibility the function DES_random_seed() is available as well).
-If the PRNG could not generate a secure key, 0 is returned.  In
-earlier versions of the library, DES_random_key() did not generate
-secure keys.
+prior to using this function (see L<rand(3)|rand(3)>).  If the PRNG
+could not generate a secure key, 0 is returned.  In earlier versions
+of the library, DES_random_key() did not generate secure keys.
 
 Before a DES key can be used, it must be converted into the
 architecture dependent I<DES_key_schedule> via the
@@ -348,9 +346,13 @@ crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
 
 =head1 HISTORY
 
-In OpenSSL 0.9.7, All des_ functions were renamed to DES_ to avoid
+In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
 clashes with older versions of libdes.  Compatibility des_ functions
-are provided for a short while, as well as crypt().
+are provided for a short while, as well as crypt().  des_random_seed()
+is were not kept as DES_ variants.  This will happen to other functions
+as well if they are deemed redundant (des_random_seed() just calls
+RAND_seed() and is present for backward compatibility only), buggy or
+already scheduled for removal.
 
 des_cbc_cksum(), des_cbc_encrypt(), des_ecb_encrypt(),
 des_is_weak_key(), des_key_sched(), des_pcbc_encrypt(),

@@ -217,7 +217,7 @@ DES_LONG des_quad_cksum(des_cblock *input,des_cblock *output,
 	}
 void des_random_seed(des_cblock key)
 	{
-	DES_random_seed((DES_cblock *)key);
+	RAND_seed(key, sizeof(des_cblock));
 	}
 void des_random_key(des_cblock ret)
 	{

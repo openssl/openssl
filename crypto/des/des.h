@@ -198,7 +198,6 @@ void DES_pcbc_encrypt(const unsigned char *input,unsigned char *output,
 		      int enc);
 DES_LONG DES_quad_cksum(const unsigned char *input,DES_cblock output[],
 			long length,int out_count,DES_cblock *seed);
-void DES_random_seed(DES_cblock *key);
 int DES_random_key(DES_cblock *ret);
 void DES_set_odd_parity(DES_cblock *key);
 int DES_check_key_parity(const_DES_cblock *key);
