@@ -94,6 +94,9 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
+
+	BN_init(&k);
+
 	if (ctx_in == NULL) 
 	{
 		if ((ctx=BN_CTX_new()) == NULL)
@@ -134,7 +137,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	do
 	{
 		/* get random k */	
-		BN_init(&k);
 		do
 			if (!BN_rand_range(&k,order))
 			{
@@ -223,6 +225,8 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	ECDSA_SIG *ret=NULL;
 	ECDSA_DATA *ecdsa;
 
+	BN_init(&xr);
+
 	ecdsa = ecdsa_check(eckey);
 
 	if (!eckey || !eckey->group || !eckey->pub_key || !eckey->priv_key 
@@ -231,7 +235,6 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	BN_init(&xr);
 
 	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
 		(tmp = BN_new()) == NULL || (m = BN_new()) == NULL ||

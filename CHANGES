@@ -4,6 +4,12 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
+  *) ECDSA routines: under certain error conditions uninitialized BN objects
+     could be freed. Solution: make sure initialization is performed early
+     enough. (Reported and fix supplied by Nils Larsch <nla@trustcenter.de>
+     via PR#459)
+     [Lutz Jaenicke]
+
   *) Key-generation can now be implemented in RSA_METHOD, DSA_METHOD
      and DH_METHOD (eg. by ENGINE implementations) to override the normal
      software implementations. For DSA and DH, parameter generation can
@@ -374,6 +380,12 @@ TODO: bug: pad  x  with leading zeros if necessary
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
+
+  *) DSA routines: under certain error conditions uninitialized BN objects
+     could be freed. Solution: make sure initialization is performed early
+     enough. (Reported and fix supplied by Ivan D Nestlerode <nestler@MIT.EDU>,
+     Nils Larsch <nla@trustcenter.de> via PR#459)
+     [Lutz Jaenicke]
 
   *) Another fix for SSLv2 session ID handling: the session ID was incorrectly
      checked on reconnect on the client side, therefore session resumption
