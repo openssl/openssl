@@ -67,7 +67,9 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 	}
 #else
 
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 
 static int dlfcn_load(DSO *dso, char *filename);
 static int dlfcn_unload(DSO *dso);

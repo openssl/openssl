@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no-threads] [no-asm] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -28,6 +28,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
 # no-asm        do not use assembler
+# no-dso        do not compile in any native shared-library methods. This
+#               will ensure that all methods just return NULL.
 # 386           generate 80386 code
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through 
@@ -384,6 +386,7 @@ my $install_prefix="";
 my $no_threads=0;
 my $threads=0;
 my $no_asm=0;
+my $no_dso=0;
 my @skip=();
 my $Makefile="Makefile.ssl";
 my $des_locl="crypto/des/des_locl.h";
@@ -431,6 +434,8 @@ foreach (@ARGV)
 		$flags .= "-DNO_ASM ";
 		$openssl_other_defines .= "#define NO_ASM\n";
 		}
+	elsif (/^no-dso$/)
+		{ $no_dso=1; }
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
 	elsif (/^threads$/)
@@ -543,14 +548,28 @@ print "IsWindows=$IsWindows\n";
 	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
 
-# For now the translation from dso_scheme to cflags is trivial. This may well
-# "grow", eg. we could add "dlfcn_no_h" to do what "dlfcn" does and have the
-# latter additionally define HAVE_DLFCN_H (some systems don't have dlfcn.h and
-# it's not needed).
-if ($dso_scheme ne "") {
+# The DSO code currently always implements all functions so that no
+# applications will have to worry about that from a compilation point
+# of view. However, the "method"s may return zero unless that platform
+# has support compiled in for them. Currently each method is enabled
+# by a define "DSO_<name>" ... we translate the "dso_scheme" config
+# string entry into using the following logic;
+if (!$no_dso && $dso_scheme ne "")
+	{
 	$dso_scheme =~ tr/[a-z]/[A-Z]/;
-	$cflags = "-DDSO_$dso_scheme $cflags";
-}
+	if ($dso_scheme eq "DLFCN")
+		{
+		$cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H $cflags";
+		}
+	elsif ($dso_scheme eq "DLFCN_NO_H")
+		{
+		$cflags = "-DDSO_DLFCN $cflags";
+		}
+	else
+		{
+		$cflags = "-DDSO_$dso_scheme $cflags";
+		}
+	}
 
 my $thread_cflags;
 my $thread_defines;
