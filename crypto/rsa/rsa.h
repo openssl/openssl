@@ -213,12 +213,12 @@ int RSA_set_method(RSA *rsa, struct engine_st *engine);
 int RSA_memory_lock(RSA *r);
 
 /* If you have RSAref compiled in. */
-RSA_METHOD *RSA_PKCS1_RSAref(void);
+const RSA_METHOD *RSA_PKCS1_RSAref(void);
 
 /* these are the actual SSLeay RSA functions */
-RSA_METHOD *RSA_PKCS1_SSLeay(void);
+const RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
-RSA_METHOD *RSA_null_method(void);
+const RSA_METHOD *RSA_null_method(void);
 
 void	ERR_load_RSA_strings(void );
 

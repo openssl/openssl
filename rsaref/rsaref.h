@@ -137,7 +137,7 @@ int R_RandomUpdate(RSARandomState *rnd,
 int R_RandomFinal(RSARandomState *rnd);
 
 void ERR_load_RSAREF_strings(void );
-RSA_METHOD *RSA_PKCS1_RSAref(void );
+const RSA_METHOD *RSA_PKCS1_RSAref(void );
 
 #ifdef  __cplusplus
 }

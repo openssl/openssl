@@ -96,7 +96,7 @@ static RSA_METHOD rsa_pkcs1_ref_meth={
 	NULL,
 	};
 
-RSA_METHOD *RSA_PKCS1_RSAref(void)
+const RSA_METHOD *RSA_PKCS1_RSAref(void)
 	{
 	return(&rsa_pkcs1_ref_meth);
 	}

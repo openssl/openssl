@@ -90,7 +90,7 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	NULL,
 	};
 
-RSA_METHOD *RSA_PKCS1_SSLeay(void)
+const RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	{
 	return(&rsa_pkcs1_eay_meth);
 	}
