@@ -66,7 +66,7 @@ main()
 	LHASH *conf;
 	long l;
 
-	conf=CONF_load(NULL,"../../apps/ssleay.cnf",&l);
+	conf=CONF_load(NULL,"../../apps/openssl.cnf",&l);
 	if (conf == NULL)
 		{
 		fprintf(stderr,"error loading config, line %ld\n",l);

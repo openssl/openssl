@@ -66,7 +66,7 @@ main()
 	long eline;
 	char *s,*s2;
 
-	conf=CONF_load(NULL,"ssleay.conf",&eline);
+	conf=CONF_load(NULL,"openssl.conf",&eline);
 	if (conf == NULL)
 		{
 		ERR_load_crypto_strings();
