@@ -250,7 +250,7 @@ static size_t bio_nread(BIO *bio, char **buf, size_t num)
 	available = bio_nread0(bio, buf);
 	if (num > available)
 		num = available;
-	if (num <= 0)
+	if (num == 0)
 		return num;
 
 	b = bio->ptr;
@@ -406,7 +406,7 @@ static size_t bio_nwrite(BIO *bio, char **buf, size_t num)
 	space = bio_nwrite0(bio, buf);
 	if (num > space)
 		num = space;
-	if (num <= 0)
+	if (num == 0)
 		return num;
 	b = bio->ptr;
 	assert(b != NULL);

@@ -1044,7 +1044,7 @@ int MAIN(int argc, char **argv)
 			{
 			rsa_num=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
 				&kk,dsa_key[j]);
-			if (rsa_num <= 0)
+			if (rsa_num == 0)
 				{
 				BIO_printf(bio_err,"DSA sign failure\n");
 				ERR_print_errors(bio_err);
@@ -1067,7 +1067,7 @@ int MAIN(int argc, char **argv)
 			{
 			rsa_num2=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
 				kk,dsa_key[j]);
-			if (rsa_num2 <= 0)
+			if (rsa_num2 == 0)
 				{
 				BIO_printf(bio_err,"DSA verify failure\n");
 				ERR_print_errors(bio_err);

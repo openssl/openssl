@@ -548,7 +548,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		/* if it went, fall through and send more stuff */
 		}
 
-	if (len <= 0) return(len);
+	if (len == 0) return(len);
 	
 	wr= &(s->s3->wrec);
 	wb= &(s->s3->wbuf);
@@ -962,7 +962,7 @@ start:
 	memcpy(buf,&(rr->data[rr->off]),(unsigned int)n);
 	rr->length-=n;
 	rr->off+=n;
-	if (rr->length <= 0)
+	if (rr->length == 0)
 		{
 		s->rstate=SSL_ST_READ_HEADER;
 		rr->off=0;
