@@ -473,7 +473,7 @@ echo Operating system: $GUESSOS
 # more time that I want to waste at the moment
 case "$GUESSOS" in
   mips2-sgi-irix)
-	CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
+	CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
 	CPU=${CPU:-0}
 	if [ $CPU -ge 4000 ]; then
 		options="$options -mips2"
@@ -481,7 +481,7 @@ case "$GUESSOS" in
 	OUT="irix-$CC"
 	;;
   mips3-sgi-irix)
-	CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
+	CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
 	CPU=${CPU:-0}
 	if [ $CPU -ge 5000 ]; then
 		options="$options -mips4"
@@ -497,7 +497,7 @@ case "$GUESSOS" in
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
 	  (stty -icanon min 0 time 50; read waste) < /dev/tty
 	fi
-        CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
+        CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
         CPU=${CPU:-0}
         if [ $CPU -ge 5000 ]; then
                 options="$options -mips4"
