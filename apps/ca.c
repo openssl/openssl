@@ -134,6 +134,7 @@
 #define ENV_MSIE_HACK		"msie_hack"
 #define ENV_NAMEOPT		"name_opt"
 #define ENV_CERTOPT		"cert_opt"
+#define ENV_EXTCOPY		"copy_extensions"
 
 #define ENV_DATABASE		"database"
 
@@ -303,7 +304,7 @@ int MAIN(int argc, char **argv)
 	int notext=0;
 	unsigned long nameopt = 0, certopt = 0;
 	int default_op = 1;
-	int ext_copy = 0;
+	int ext_copy = EXT_COPY_NONE;
 	X509 *x509=NULL;
 	X509 *x=NULL;
 	BIO *in=NULL,*out=NULL,*Sout=NULL,*Cout=NULL;
@@ -798,6 +799,18 @@ bad:
 	else
 		ERR_clear_error();
 
+	f=CONF_get_string(conf,section,ENV_EXTCOPY);
+
+	if (f)
+		{
+		if (!set_ext_copy(&ext_copy, f))
+			{
+			BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", f);
+			goto err;
+			}
+		}
+	else
+		ERR_clear_error();
 
 	/*****************************************************************/
 	/* lookup where to write new certificates */
@@ -1944,40 +1957,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 		if (default_op)
 			old_entry_print(bio_err, obj, str);
-#if 0
-		j=i2a_ASN1_OBJECT(bio_err,obj);
-		pbuf=buf;
-		for (j=22-j; j>0; j--)
-			*(pbuf++)=' ';
-		*(pbuf++)=':';
-		*(pbuf++)='\0';
-		BIO_puts(bio_err,buf);
-
-		if (str->type == V_ASN1_PRINTABLESTRING)
-			BIO_printf(bio_err,"PRINTABLE:'");
-		else if (str->type == V_ASN1_T61STRING)
-			BIO_printf(bio_err,"T61STRING:'");
-		else if (str->type == V_ASN1_IA5STRING)
-			BIO_printf(bio_err,"IA5STRING:'");
-		else if (str->type == V_ASN1_UNIVERSALSTRING)
-			BIO_printf(bio_err,"UNIVERSALSTRING:'");
-		else
-			BIO_printf(bio_err,"ASN.1 %2d:'",str->type);
-			
-		p=(char *)str->data;
-		for (j=str->length; j>0; j--)
-			{
-			if ((*p >= ' ') && (*p <= '~'))
-				BIO_printf(bio_err,"%c",*p);
-			else if (*p & 0x80)
-				BIO_printf(bio_err,"\\0x%02X",*p);
-			else if ((unsigned char)*p == 0xf7)
-				BIO_printf(bio_err,"^?");
-			else	BIO_printf(bio_err,"^%c",*p+'@');
-			p++;
-			}
-		BIO_printf(bio_err,"'\n");
-#endif
 		}
 
 	/* Ok, now we check the 'policy' stuff. */
@@ -2171,7 +2150,6 @@ again2:
 	if (!X509_set_issuer_name(ret,X509_get_subject_name(x509)))
 		goto err;
 
-	BIO_printf(bio_err,"Certificate is to be certified until ");
 	if (strcmp(startdate,"today") == 0)
 		X509_gmtime_adj(X509_get_notBefore(ret),0);
 	else ASN1_UTCTIME_set_string(X509_get_notBefore(ret),startdate);
@@ -2179,10 +2157,6 @@ again2:
 	if (enddate == NULL)
 		X509_gmtime_adj(X509_get_notAfter(ret),(long)60*60*24*days);
 	else ASN1_UTCTIME_set_string(X509_get_notAfter(ret),enddate);
-
-	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
-	if (days) BIO_printf(bio_err," (%d days)",days);
-	BIO_printf(bio_err, "\n");
 
 	if (!X509_set_subject_name(ret,subject)) goto err;
 
@@ -2251,16 +2225,32 @@ again2:
 			}
 		}
 
+	/* Copy extensions from request (if any) */
+
+	if (!copy_extensions(ret, req, ext_copy))
+		{
+		BIO_printf(bio_err, "ERROR: adding extensions from request\n");
+		ERR_print_errors(bio_err);
+		goto err;
+		}
+
+
+	if (!default_op)
+		{
+		BIO_printf(bio_err, "Certificate Details:\n");
+		/* Never print signature details because signature not present */
+		certopt |= X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_SIGNAME;
+		X509_print_ex(bio_err, ret, nameopt, certopt); 
+		}
+
+	BIO_printf(bio_err,"Certificate is to be certified until ");
+	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
+	if (days) BIO_printf(bio_err," (%d days)",days);
+	BIO_printf(bio_err, "\n");
 
 	if (!batch)
 		{
-		if (!default_op)
-			{
-			BIO_printf(bio_err, "Certificate Details:\n");
-			/* Never print signature details because signature not present */
-			certopt |= X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_SIGNAME;
-			X509_print_ex(bio_err, ret, nameopt, certopt); 
-			}
+
 		BIO_printf(bio_err,"Sign the certificate? [y/n]:");
 		(void)BIO_flush(bio_err);
 		buf[0]='\0';

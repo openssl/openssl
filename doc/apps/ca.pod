@@ -334,6 +334,20 @@ OpenSSL is used. Use of the old format is B<strongly> discouraged because
 it only displays fields mentioned in the B<policy> section, mishandles
 multicharacter string types and does not display extensions.
 
+=item B<copy_extensions>
+
+determines how extensions in certificate requests should be handled.
+If set to B<none> or this option is not present then extensions are
+ignored and not copied to the certificate. If set to B<copy> then any
+extensions present in the request that are not already present are copied
+to the certificate. If set to B<copyall> then all extensions in the
+request are copied to the certificate: if the extension is already present
+in the certificate it is deleted first. See the B<WARNINGS> section before
+using this option.
+
+The main use of this option is to allow a certificate request to supply
+values for certain extensions such as subjectAltName.
+
 =back
 
 =head1 POLICY FORMAT
@@ -426,6 +440,7 @@ A sample configuration file with the relevant sections for B<ca>:
 
  nameopt	= default_ca		# Subject name display option
  certopt	= default_ca		# Certificate display option
+ copy_extensions = none			# Don't copy extensions from request
 
  [ policy_any ]
  countryName            = supplied
@@ -491,10 +506,6 @@ The use of an in memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
-Certificate request extensions are ignored: some kind of "policy" should
-be included to use certain static extensions and certain extensions
-from the request.
-
 It is not possible to certify two certificates with the same DN: this
 is a side effect of how the text database is indexed and it cannot easily
 be fixed without introducing other problems. Some S/MIME clients can use
@@ -512,6 +523,30 @@ The behaviour should be more friendly and configurable.
 
 Cancelling some commands by refusing to certify a certificate can
 create an empty file.
+
+=head1 WARNINGS
+
+The B<copy_extensions> option should be used with caution. If care is
+not taken then it can be a security risk. For example if a certificate
+request contains a basicConstraints extension with CA:TRUE and the
+B<copy_extensions> value is set to B<copyall> and the user does not spot
+this when the certificate is displayed then this will hand the requestor
+a valid CA certificate.
+
+This situation can be avoided by setting B<copy_extensions> to B<copy>
+and including basicConstraints with CA:FALSE in the configuration file.
+Then if the request contains a basicConstraints extension it will be
+ignored.
+
+It is advisable to also include values for other extensions such
+as B<keyUsage> to prevent a request supplying its own values.
+
+Additional restrictions can be placed on the CA certificate itself.
+For example if the CA certificate has:
+
+ basicConstraints = CA:TRUE, pathlen:0
+
+then even if a certificate is issued with CA:TRUE it will not be valid.
 
 =head1 SEE ALSO
 

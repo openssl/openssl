@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add a 'copy_extensions' option to the 'ca' utility. This copies
+     extensions from a certificate request to the certificate.
+     [Steve Henson]
+
   *) Allow multiple 'certopt' and 'nameopt' options to be separated
      by commas. Add 'namopt' and 'certopt' options to the 'ca' config
      file: this allows the display of the certificate about to be

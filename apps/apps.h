@@ -153,6 +153,8 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags);
 #endif
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
+int set_ext_copy(int *copy_type, const char *arg);
+int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);
 X509 *load_cert(BIO *err, char *file, int format);
@@ -169,6 +171,10 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 #define FORMAT_PKCS12   5
 #define FORMAT_SMIME    6
 #define FORMAT_ENGINE   7
+
+#define EXT_COPY_NONE	0
+#define EXT_COPY_ADD	1
+#define EXT_COPY_ALL	2
 
 #define NETSCAPE_CERT_HDR	"certificate"
 
