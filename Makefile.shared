@@ -548,8 +548,10 @@ link_o.irix:
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
-		ALLSYMSFLAGS='-all'; \
-		NOALLSYMSFLAGS=''; \
+		MINUSWL=""; \
+		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
+		ALLSYMSFLAGS="$${MINUSWL}-all"; \
+		NOALLSYMSFLAGS="$${MINUSWL}-notall"; \
 		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
@@ -562,8 +564,10 @@ link_a.irix:
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
-		ALLSYMSFLAGS='-all'; \
-		NOALLSYMSFLAGS=''; \
+		MINUSWL=""; \
+		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
+		ALLSYMSFLAGS="$${MINUSWL}-all"; \
+		NOALLSYMSFLAGS="$${MINUSWL}-notall"; \
 		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
