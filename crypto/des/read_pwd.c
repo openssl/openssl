@@ -123,7 +123,7 @@
 #undef  SGTTY
 #endif
 
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(VMS) && !defined(MSDOS)
+#if !defined(TERMIO) && !defined(TERMIOS) && !defined(VMS) && !defined(MSDOS) && !defined(MAC_OS_pre_X)
 #undef  TERMIOS
 #undef  TERMIO
 #define SGTTY
@@ -153,7 +153,7 @@
 #define TTY_set(tty,data)	ioctl(tty,TIOCSETP,data)
 #endif
 
-#if !defined(_LIBC) && !defined(MSDOS) && !defined(VMS)
+#if !defined(_LIBC) && !defined(MSDOS) && !defined(VMS) && !defined(MAC_OS_pre_X)
 #include <sys/ioctl.h>
 #endif
 
@@ -172,6 +172,15 @@ struct IOSB {
 	short iosb$w_count;
 	long  iosb$l_info;
 	};
+#endif
+
+#ifdef MAC_OS_pre_X
+/*
+ * This one needs work. As a matter of fact the code is unoperational
+ * and this is only a trick to get it compiled.
+ *					<appro@fy.chalmers.se>
+ */
+#define TTY_STRUCT int
 #endif
 
 #ifndef NX509_SIG

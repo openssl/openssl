@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/types.h>
 
 #include "cryptlib.h"
 #include <openssl/lhash.h>

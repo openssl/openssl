@@ -147,7 +147,7 @@ int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
 	/* first - get the length */
 	while (net_num < HDRSIZE) 
 		{
-		i=read(fd,&(net[net_num]),HDRSIZE-net_num);
+		i=read(fd,(void *)&(net[net_num]),HDRSIZE-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif
@@ -169,7 +169,7 @@ int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
 	net_num=0;
 	while (net_num < rnum)
 		{
-		i=read(fd,&(net[net_num]),rnum-net_num);
+		i=read(fd,(void *)&(net[net_num]),rnum-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif

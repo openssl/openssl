@@ -105,14 +105,22 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
-#if !defined(WIN32) && !defined(VSM) && !defined(NeXT)
+
+#include "openssl/e_os.h"
+
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#if !defined(WIN32) && !defined(VSM) && !defined(NeXT) && !defined(MAC_OS_pre_X)
 #include <dirent.h>
 #endif
+
 #ifdef NeXT
 #include <sys/dir.h>
 #define dirent direct
 #endif
+
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
@@ -671,6 +679,7 @@ err:
 
 #ifndef WIN32
 #ifndef VMS			/* XXXX This may be fixed in the future */
+#ifndef MAC_OS_pre_X
 
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
@@ -712,5 +721,6 @@ err:
     return ret;
     }
 
+#endif
 #endif
 #endif

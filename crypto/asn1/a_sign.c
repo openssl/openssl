@@ -58,10 +58,13 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "cryptlib.h"
+
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>

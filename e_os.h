@@ -82,6 +82,15 @@ extern "C" {
 #define DEVRANDOM "/dev/urandom"
 #endif
 
+#if defined(__MWERKS__) && defined(macintosh)
+# if macintosh==1
+#  define MAC_OS_pre_X
+#  define NO_SYS_TYPES_H
+#  define NO_CHMOD
+#  define NO_SYSLOG
+# endif
+#endif
+
 /********************************************************************
  The Microsoft section
  ********************************************************************/
@@ -119,6 +128,12 @@ extern "C" {
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
 #define EADDRINUSE		WSAEADDRINUSE
+#elif MAC_OS_pre_X
+#define get_last_socket_error()	errno
+#define clear_socket_error()	errno=0
+#define closesocket(s)		MacSocket_close(s)
+#define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
+#define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -268,6 +283,13 @@ extern HINSTANCE _hInstance;
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
 #    endif
 
+#  elif defined(MAC_OS_pre_X)
+
+#    include "MacSocket.h"
+#    define SSLeay_Write(a,b,c)		MacSocket_send((a),(b),(c))
+#    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
+#    define SHUTDOWN(fd)		MacSocket_close(fd)
+#    define SHUTDOWN2(fd)		MacSocket_close(fd)
 
 #  else
 

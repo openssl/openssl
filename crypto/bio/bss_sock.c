@@ -163,8 +163,7 @@ static int fd_free(BIO *a)
 		if (a->init)
 			{
 #ifndef BIO_FD
-			shutdown(a->num,2);
-			closesocket(a->num);
+			SHUTDOWN2(a->num);
 #else			/* BIO_FD */
 			close(a->num);
 #endif

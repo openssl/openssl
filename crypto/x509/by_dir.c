@@ -59,10 +59,18 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "cryptlib.h"
+
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef MAC_OS_pre_X
+# include <stat.h>
+#else
+# include <sys/stat.h>
+#endif
+
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 

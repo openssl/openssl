@@ -60,11 +60,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include "openssl/e_os.h"
+
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef MAC_OS_pre_X
+# include <stat.h>
+#else
+# include <sys/stat.h>
+#endif
 
 #include <openssl/rand.h>
 
@@ -116,19 +122,25 @@ int RAND_write_file(const char *file)
 	FILE *out;
 	int n;
 
-	/* Under VMS, fopen(file, "wb") will craete a new version of the
+	/* Under VMS, fopen(file, "wb") will create a new version of the
 	   same file.  This is not good, so let's try updating an existing
 	   one, and create file only if it doesn't already exist.  This
 	   should be completely harmless on system that have no file
 	   versions.					-- Richard Levitte */
 	out=fopen(file,"rb+");
-	if (out == NULL && errno == ENOENT)
+	if (out == NULL
+#ifdef ENOENT
+ && errno == ENOENT
+#endif
+	   )
 		{
 		errno = 0;
 		out=fopen(file,"wb");
 		}
 	if (out == NULL) goto err;
+#ifndef NO_CHMOD
 	chmod(file,0600);
+#endif
 	n=RAND_DATA;
 	for (;;)
 		{
