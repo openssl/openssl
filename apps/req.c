@@ -151,7 +151,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa_params=NULL;
 #endif
-	unsigned long nmflag = 0;
+	unsigned long nmflag = 0, reqflag = 0;
 	int ex=1,x509=0,days=30;
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
@@ -356,6 +356,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
 			}
+		else if (strcmp(*argv,"-reqopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_cert_ex(&reqflag, *(++argv))) goto bad;
+			}
 		else if (strcmp(*argv,"-subject") == 0)
 			subject=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -448,7 +453,8 @@ bad:
 		BIO_printf(bio_err," -extensions .. specify certificate extension section (override value in config file)\n");
 		BIO_printf(bio_err," -reqexts ..    specify request extension section (override value in config file)\n");
 		BIO_printf(bio_err," -utf8          input characters are UTF8 (default ASCII)\n");
-		BIO_printf(bio_err," -nameopt arg    - various certificate name options\n");
+		BIO_printf(bio_err," -nameopt arg   - various certificate name options\n");
+		BIO_printf(bio_err," -reqopt arg    - various request text options\n\n");
 		goto end;
 		}
 
@@ -981,9 +987,9 @@ loop:
 	if (text)
 		{
 		if (x509)
-			X509_print(out,x509ss);
+			X509_print_ex(out, x509ss, nmflag, reqflag);
 		else	
-			X509_REQ_print(out,req);
+			X509_REQ_print_ex(out, req, nmflag, reqflag);
 		}
 
 	if(subject) 

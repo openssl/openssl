@@ -4,6 +4,9 @@
 
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Make -nameopt work fully for req and add -reqopt switch.
+     [Michael Bell <michael.bell@rz.hu-berlin.de>, Steve Henson]
+
   *) The "block size" for block ciphers in CFB and OFB mode should be 1.
      [Steve Henson, reported by Yngve Nysaeter Pettersen <yngve@opera.com>]
 

@@ -331,6 +331,7 @@ DECLARE_STACK_OF(X509_TRUST)
 #define	X509_FLAG_NO_EXTENSIONS		(1L << 8)
 #define	X509_FLAG_NO_SIGDUMP		(1L << 9)
 #define	X509_FLAG_NO_AUX		(1L << 10)
+#define	X509_FLAG_NO_ATTRIBUTES		(1L << 11)
 
 /* Flags specific to X509_NAME_print_ex() */	
 
@@ -1015,6 +1016,7 @@ int		X509_print(BIO *bp,X509 *x);
 int		X509_ocspid_print(BIO *bp,X509 *x);
 int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);
+int		X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag, unsigned long cflag);
 int		X509_REQ_print(BIO *bp,X509_REQ *req);
 #endif
 
