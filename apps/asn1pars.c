@@ -82,6 +82,8 @@
 
 int MAIN(int, char **);
 
+static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
+
 int MAIN(int argc, char **argv)
 	{
 	int i,badops=0,offset=0,ret=1,j;
@@ -90,6 +92,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
 	int informat,indent=0, noout = 0, dump = 0;
 	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
+	char *genstr=NULL, *genconf=NULL;
 	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
 	STACK *osk=NULL;
@@ -167,6 +170,16 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			sk_push(osk,*(++argv));
 			}
+		else if (strcmp(*argv,"-genstr") == 0)
+			{
+			if (--argc < 1) goto bad;
+			genstr= *(++argv);
+			}
+		else if (strcmp(*argv,"-genconf") == 0)
+			{
+			if (--argc < 1) goto bad;
+			genconf= *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -195,6 +208,8 @@ bad:
 		BIO_printf(bio_err," -strparse offset\n");
 		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
 		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
+		BIO_printf(bio_err," -genstr str   string to generate ASN1 structure from\n");
+		BIO_printf(bio_err," -genconf file file to generate ASN1 structure from\n");
 		goto end;
 		}
 
@@ -248,25 +263,39 @@ bad:
 	if ((buf=BUF_MEM_new()) == NULL) goto end;
 	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
 
-	if (informat == FORMAT_PEM)
+	if (genstr || genconf)
 		{
-		BIO *tmp;
-
-		if ((b64=BIO_new(BIO_f_base64())) == NULL)
+		num = do_generate(bio_err, genstr, genconf, buf);
+		if (num < 0)
+			{
+			ERR_print_errors(bio_err);
 			goto end;
-		BIO_push(b64,in);
-		tmp=in;
-		in=b64;
-		b64=tmp;
+			}
 		}
 
-	num=0;
-	for (;;)
+	else
 		{
-		if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
-		i=BIO_read(in,&(buf->data[num]),BUFSIZ);
-		if (i <= 0) break;
-		num+=i;
+
+		if (informat == FORMAT_PEM)
+			{
+			BIO *tmp;
+
+			if ((b64=BIO_new(BIO_f_base64())) == NULL)
+				goto end;
+			BIO_push(b64,in);
+			tmp=in;
+			in=b64;
+			b64=tmp;
+			}
+
+		num=0;
+		for (;;)
+			{
+			if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
+			i=BIO_read(in,&(buf->data[num]),BUFSIZ);
+			if (i <= 0) break;
+			num+=i;
+			}
 		}
 	str=buf->data;
 
@@ -335,3 +364,61 @@ end:
 	EXIT(ret);
 	}
 
+static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
+	{
+	CONF *cnf = NULL;
+	int len;
+	long errline;
+	unsigned char *p;
+	ASN1_TYPE *atyp = NULL;
+
+	if (genconf)
+		{
+		cnf = NCONF_new(NULL);
+		if (!NCONF_load(cnf, genconf, &errline))
+			goto conferr;
+		if (!genstr)
+			genstr = NCONF_get_string(cnf, "default", "asn1");
+		if (!genstr)
+			{
+			BIO_printf(bio, "Can't find 'asn1' in '%s'\n", genconf);
+			goto err;
+			}
+		}
+
+	atyp = ASN1_generate_nconf(genstr, cnf);
+	NCONF_free(cnf);
+
+	if (!atyp)
+		return -1;
+
+	len = i2d_ASN1_TYPE(atyp, NULL);
+
+	if (len <= 0)
+		goto err;
+
+	if (!BUF_MEM_grow(buf,len))
+		goto err;
+
+	p=(unsigned char *)buf->data;
+
+	i2d_ASN1_TYPE(atyp, &p);
+
+	ASN1_TYPE_free(atyp);
+	return len;
+
+	conferr:
+
+	if (errline > 0)
+		BIO_printf(bio, "Error on line %ld of config file '%s'\n",
+							errline, genconf);
+	else
+		BIO_printf(bio, "Error loading config file '%s'\n", genconf);
+
+	err:
+	NCONF_free(cnf);
+	ASN1_TYPE_free(atyp);
+
+	return -1;
+
+	}

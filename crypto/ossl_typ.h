@@ -111,6 +111,9 @@ typedef struct X509_name_st X509_NAME;
 typedef struct x509_store_st X509_STORE;
 typedef struct x509_store_ctx_st X509_STORE_CTX;
 
+typedef struct v3_ext_ctx X509V3_CTX;
+typedef struct conf_st CONF;
+
 typedef struct engine_st ENGINE;
 
   /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */

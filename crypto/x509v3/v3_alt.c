@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,8 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx
 static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
+static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
 0,0,0,0,
@@ -432,6 +434,13 @@ if(!name_cmp(name, "email")) {
 			goto err;
 	}
 	type = GEN_IPADD;
+} else if(!name_cmp(name, "otherName")) {
+	if (!do_othername(gen, value, ctx))
+		{
+		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_OTHERNAME_ERROR);
+		goto err;
+		}
+	type = GEN_OTHERNAME;
 } else {
 	X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_UNSUPPORTED_OPTION);
 	ERR_add_error_data(2, "name=", name);
@@ -455,3 +464,28 @@ err:
 GENERAL_NAME_free(gen);
 return NULL;
 }
+
+static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+	{
+	char *objtmp = NULL, *p;
+	int objlen;
+	if (!(p = strchr(value, ';')))
+		return 0;
+	if (!(gen->d.otherName = OTHERNAME_new()))
+		return 0;
+	/* Free this up because we will overwrite it.
+	 * no need to free type_id because it is static
+	 */
+	ASN1_TYPE_free(gen->d.otherName->value);
+	if (!(gen->d.otherName->value = ASN1_generate_v3(p + 1, ctx)))
+		return 0;
+	objlen = p - value;
+	objtmp = OPENSSL_malloc(objlen + 1);
+	strncpy(objtmp, value, objlen);
+	objtmp[objlen] = 0;
+	gen->d.otherName->type_id = OBJ_txt2obj(objtmp, 0);
+	OPENSSL_free(objtmp);	
+	if (!gen->d.otherName->type_id)
+		return 0;
+	return 1;
+	}

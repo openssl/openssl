@@ -65,6 +65,8 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 
+#include <openssl/ossl_typ.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -81,7 +83,6 @@ DECLARE_STACK_OF(CONF_MODULE)
 DECLARE_STACK_OF(CONF_IMODULE)
 
 struct conf_st;
-typedef struct conf_st CONF;
 struct conf_method_st;
 typedef struct conf_method_st CONF_METHOD;
 

@@ -1,6 +1,6 @@
 /* crypto/x509v3/v3err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,6 +152,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_NO_PUBLIC_KEY                  ,"no public key"},
 {X509V3_R_NO_SUBJECT_DETAILS             ,"no subject details"},
 {X509V3_R_ODD_NUMBER_OF_DIGITS           ,"odd number of digits"},
+{X509V3_R_OTHERNAME_ERROR                ,"othername error"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS   ,"unable to get issuer details"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_KEYID     ,"unable to get issuer keyid"},
 {X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT    ,"unknown bit string argument"},

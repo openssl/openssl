@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,11 +69,12 @@
 static int v3_check_critical(char **value);
 static int v3_check_generic(char **value);
 static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value);
-static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type);
+static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type, X509V3_CTX *ctx);
 static char *conf_lhash_get_string(void *db, char *section, char *value);
 static STACK_OF(CONF_VALUE) *conf_lhash_get_section(void *db, char *section);
 static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 						 int crit, void *ext_struc);
+static unsigned char *generic_asn1(char *value, X509V3_CTX *ctx, long *ext_len);
 /* CONF *conf:  Config file    */
 /* char *name:  Name    */
 /* char *value:  Value    */
@@ -85,7 +86,7 @@ X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, char *name,
 	X509_EXTENSION *ret;
 	crit = v3_check_critical(&value);
 	if ((ext_type = v3_check_generic(&value))) 
-		return v3_generic_extension(name, value, crit, ext_type);
+		return v3_generic_extension(name, value, crit, ext_type, ctx);
 	ret = do_ext_nconf(conf, ctx, OBJ_sn2nid(name), crit, value);
 	if (!ret)
 		{
@@ -105,7 +106,7 @@ X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 	crit = v3_check_critical(&value);
 	if ((ext_type = v3_check_generic(&value))) 
 		return v3_generic_extension(OBJ_nid2sn(ext_nid),
-							 value, crit, ext_type);
+						 value, crit, ext_type, ctx);
 	return do_ext_nconf(conf, ctx, ext_nid, crit, value);
 	}
 
@@ -235,17 +236,29 @@ static int v3_check_critical(char **value)
 /* Check extension string for generic extension and return the type */
 static int v3_check_generic(char **value)
 {
+	int gen_type = 0;
 	char *p = *value;
-	if ((strlen(p) < 4) || strncmp(p, "DER:,", 4)) return 0;
-	p+=4;
+	if ((strlen(p) >= 4) && !strncmp(p, "DER:,", 4))
+		{
+		p+=4;
+		gen_type = 1;
+		}
+	if ((strlen(p) >= 5) && !strncmp(p, "ASN1:,", 5))
+		{
+		p+=5;
+		gen_type = 2;
+		}
+	else
+		return 0;
+
 	while (isspace((unsigned char)*p)) p++;
 	*value = p;
-	return 1;
+	return gen_type;
 }
 
 /* Create a generic extension: for now just handle DER type */
 static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
-	     int crit, int type)
+	     int crit, int gen_type, X509V3_CTX *ctx)
 	{
 	unsigned char *ext_der=NULL;
 	long ext_len;
@@ -259,7 +272,12 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
 		goto err;
 		}
 
-	if (!(ext_der = string_to_hex(value, &ext_len)))
+	if (gen_type == 1)
+		ext_der = string_to_hex(value, &ext_len);
+	else if (gen_type == 2)
+		ext_der = generic_asn1(value, ctx, &ext_len);
+
+	if (ext_der == NULL)
 		{
 		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,X509V3_R_EXTENSION_VALUE_ERROR);
 		ERR_add_error_data(2, "value=", value);
@@ -286,6 +304,17 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
 
 	}
 
+static unsigned char *generic_asn1(char *value, X509V3_CTX *ctx, long *ext_len)
+	{
+	ASN1_TYPE *typ;
+	unsigned char *ext_der = NULL;
+	typ = ASN1_generate_v3(value, ctx);
+	if (typ == NULL)
+		return NULL;
+	*ext_len = i2d_ASN1_TYPE(typ, &ext_der);
+	ASN1_TYPE_free(typ);
+	return ext_der;
+	}
 
 /* This is the main function: add a bunch of extensions based on a config file
  * section to an extension STACK.
