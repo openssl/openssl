@@ -51,7 +51,7 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
-		if (strcmp(argv[i], "-engine") == 0)
+		else if (strcmp(argv[i], "-engine") == 0)
 			{
 			if ((argv[i+1] != NULL) && (engine == NULL))
 				engine = argv[++i];
