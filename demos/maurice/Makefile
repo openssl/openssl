@@ -1,6 +1,6 @@
 CC=cc
 CFLAGS= -g -I../../include
-LIBS= -L/usr/local/ssl/lib -L../.. -lcrypto
+LIBS=  -L../.. -lcrypto
 EXAMPLES=example1 example2 example3 example4
 
 all: $(EXAMPLES) 
@@ -17,7 +17,6 @@ example3: example3.o
 example4: example4.o
 	$(CC) -o example4 example4.o $(LIBS)
 
-	
 clean:	
 	rm -f $(EXAMPLES) *.o
 
