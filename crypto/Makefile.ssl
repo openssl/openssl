@@ -141,7 +141,7 @@ depend:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making depend in crypto/$$i..." && \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' DEPFLAG='${DEPFLAG}' PERL='${PERL}' depend ); \
+	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}' KRB5_INCLUDES='${KRB5_INCLUDES}' PERL='${PERL}' depend ); \
 	done;
 
 clean:
