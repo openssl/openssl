@@ -109,7 +109,8 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, E
 	BN_CTX *ctx;
 	EC_POINT *tmp=NULL;
 	BIGNUM *x=NULL, *y=NULL;
-	int ret= -1, buflen, len;
+	int ret= -1;
+	size_t buflen, len;
 	unsigned char *buf=NULL;
 
 	if (outlen > INT_MAX)
