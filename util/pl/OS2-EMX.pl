@@ -3,9 +3,11 @@
 # OS2-EMX.pl - for EMX GCC on OS/2
 #
 
-$o='\\';
-$cp='copy';
+$o='/';
+$cp='cp';
 $rm='rm -f';
+
+$preamble = "SHELL=sh\n";
 
 # C compiler stuff
 
@@ -48,24 +50,24 @@ $bf_enc_src="";
 
 if (!$no_asm)
 	{
-	$bn_asm_obj="crypto\\bn\\asm\\bn-os2$obj crypto\\bn\\asm\\co-os2$obj";
-	$bn_asm_src="crypto\\bn\\asm\\bn-os2.asm crypto\\bn\\asm\\co-os2.asm";
-	$des_enc_obj="crypto\\des\\asm\\d-os2$obj crypto\\des\\asm\\y-os2$obj";
-	$des_enc_src="crypto\\des\\asm\\d-os2.asm crypto\\des\\asm\\y-os2.asm";
-	$bf_enc_obj="crypto\\bf\\asm\\b-os2$obj";
-	$bf_enc_src="crypto\\bf\\asm\\b-os2.asm";
-	$cast_enc_obj="crypto\\cast\\asm\\c-os2$obj";
-	$cast_enc_src="crypto\\cast\\asm\\c-os2.asm";
-	$rc4_enc_obj="crypto\\rc4\\asm\\r4-os2$obj";
-	$rc4_enc_src="crypto\\rc4\\asm\\r4-os2.asm";
-	$rc5_enc_obj="crypto\\rc5\\asm\\r5-os2$obj";
-	$rc5_enc_src="crypto\\rc5\\asm\\r5-os2.asm";
-	$md5_asm_obj="crypto\\md5\\asm\\m5-os2$obj";
-	$md5_asm_src="crypto\\md5\\asm\\m5-os2.asm";
-	$sha1_asm_obj="crypto\\sha\\asm\\s1-os2$obj";
-	$sha1_asm_src="crypto\\sha\\asm\\s1-os2.asm";
-	$rmd160_asm_obj="crypto\\ripemd\\asm\\rm-os2$obj";
-	$rmd160_asm_src="crypto\\ripemd\\asm\\rm-os2.asm";
+	$bn_asm_obj="crypto/bn/asm/bn-os2$obj crypto/bn/asm/co-os2$obj";
+	$bn_asm_src="crypto/bn/asm/bn-os2.asm crypto/bn/asm/co-os2.asm";
+	$des_enc_obj="crypto/des/asm/d-os2$obj crypto/des/asm/y-os2$obj";
+	$des_enc_src="crypto/des/asm/d-os2.asm crypto/des/asm/y-os2.asm";
+	$bf_enc_obj="crypto/bf/asm/b-os2$obj";
+	$bf_enc_src="crypto/bf/asm/b-os2.asm";
+	$cast_enc_obj="crypto/cast/asm/c-os2$obj";
+	$cast_enc_src="crypto/cast/asm/c-os2.asm";
+	$rc4_enc_obj="crypto/rc4/asm/r4-os2$obj";
+	$rc4_enc_src="crypto/rc4/asm/r4-os2.asm";
+	$rc5_enc_obj="crypto/rc5/asm/r5-os2$obj";
+	$rc5_enc_src="crypto/rc5/asm/r5-os2.asm";
+	$md5_asm_obj="crypto/md5/asm/m5-os2$obj";
+	$md5_asm_src="crypto/md5/asm/m5-os2.asm";
+	$sha1_asm_obj="crypto/sha/asm/s1-os2$obj";
+	$sha1_asm_src="crypto/sha/asm/s1-os2.asm";
+	$rmd160_asm_obj="crypto/ripemd/asm/rm-os2$obj";
+	$rmd160_asm_src="crypto/ripemd/asm/rm-os2.asm";
 	}
 
 if ($shlib)

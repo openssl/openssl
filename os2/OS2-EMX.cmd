@@ -64,3 +64,39 @@ echo RC5\32
 cd crypto\rc5\asm
 perl rc5-586.pl a.out > r5-os2.asm
 cd ..\..\..
+
+cd os2
+
+if exist noname\backward_ssl.def goto nomkdir
+mkdir noname
+:nomkdir
+
+perl backwardify.pl		crypto.def	>backward_crypto.def
+perl backwardify.pl		ssl.def		>backward_ssl.def
+perl backwardify.pl -noname	crypto.def	>noname\backward_crypto.def
+perl backwardify.pl -noname	ssl.def		>noname\backward_ssl.def
+
+echo Creating backward compatibility forwarder dlls:
+echo  crypto.dll
+gcc -Zomf -Zdll -Zcrtdll -o crypto.dll backward_crypto.def 2>&1 | grep -v L4085
+echo  ssl.dll
+gcc -Zomf -Zdll -Zcrtdll -o ssl.dll backward_ssl.def 2>&1 | grep -v L4085
+
+echo Creating smaller backward compatibility forwarder dlls:
+echo These DLLs are not good for runtime resolution of symbols.
+echo  noname\crypto.dll
+gcc -Zomf -Zdll -Zcrtdll -o noname/crypto.dll noname/backward_crypto.def 2>&1 | grep -v L4085
+echo  noname\ssl.dll
+gcc -Zomf -Zdll -Zcrtdll -o noname/ssl.dll noname/backward_ssl.def 2>&1 | grep -v L4085
+
+echo Compressing forwarders (it is ok if lxlite is not found):
+lxlite *.dll noname/*.dll
+
+cd ..
+
+echo Now run:
+echo For static build:
+echo  make -f OS2-EMX.mak
+echo For dynamic build:
+echo  make -f OS2-EMX-DLL.mak
+echo then rename crypto.dll to cryptssl.dll, ssl.dll to open_ssl.dll

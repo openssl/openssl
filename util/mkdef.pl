@@ -1116,27 +1116,55 @@ sub print_test_file
 	}
 }
 
+sub get_version {
+   local *MF;
+   my $v = '?';
+   open MF, 'Makefile.ssl' or return $v;
+   while (<MF>) {
+     $v = $1, last if /^VERSION=(.*?)\s*$/;
+   }
+   close MF;
+   return $v;
+}
+
 sub print_def_file
 {
 	(*OUT,my $name,*nums,my @symbols)=@_;
 	my $n = 1; my @e; my @r; my @v; my $prev="";
 	my $liboptions="";
+	my $libname = $name;
+	my $http_vendor = 'www.openssl.org/';
+	my $version = get_version();
+	my $what = "OpenSSL: implementation of Secure Socket Layer";
+	my $description = "$what $version, $name - http://$http_vendor";
 
 	if ($W32)
-		{ $name.="32"; }
+		{ $libname.="32"; }
 	elsif ($W16)
-		{ $name.="16"; }
+		{ $libname.="16"; }
 	elsif ($OS2)
-		{ $liboptions = "INITINSTANCE\nDATA NONSHARED"; }
+		{ # DLL names should not clash on the whole system.
+		  # However, they should not have any particular relationship
+		  # to the name of the static library.  Chose descriptive names
+		  # (must be at most 8 chars).
+		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
+		  $libname = $translate{$name} || $name;
+		  $liboptions = <<EOO;
+INITINSTANCE
+DATA MULTIPLE NONSHARED
+EOO
+		  # Vendor field can't contain colon, drat; so we omit http://
+		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
+		}
 
 	print OUT <<"EOF";
 ;
 ; Definition file for the DLL version of the $name library from OpenSSL
 ;
 
-LIBRARY         $name	$liboptions
+LIBRARY         $libname	$liboptions
 
-DESCRIPTION     'OpenSSL $name - http://www.openssl.org/'
+DESCRIPTION     '$description'
 
 EOF
 
