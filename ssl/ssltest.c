@@ -70,6 +70,7 @@
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #ifdef WINDOWS
 #include "../crypto/bio/bss_file.c"
 #endif
@@ -106,6 +107,7 @@ static int s_nbio=0;
 #endif
 #endif
 
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
@@ -172,6 +174,8 @@ int main(int argc, char *argv[])
 	cipher = 0;
 	
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
