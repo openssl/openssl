@@ -554,7 +554,9 @@ BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);
 BIO_METHOD *BIO_s_fd(void);
+#ifndef OPENSSL_SYS_OS2
 BIO_METHOD *BIO_s_log(void);
+#endif
 BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);

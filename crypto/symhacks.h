@@ -247,7 +247,7 @@
 
 
 /* Case insensiteve linking causes problems.... */
-#if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2)
 #undef ERR_load_CRYPTO_strings
 #define ERR_load_CRYPTO_strings			ERR_load_CRYPTOlib_strings
 #undef OCSP_crlID_new

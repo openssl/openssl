@@ -5,6 +5,11 @@ perl util\mkfiles.pl > MINFO
 
 @rem create make file
 perl util\mk1mf.pl OS2-EMX > OS2-EMX.mak
+perl util\mk1mf.pl dll OS2-EMX > OS2-EMX-DLL.mak
+
+echo Generating export definition files
+perl util\mkdef.pl crypto OS2 > os2\crypto.def
+perl util\mkdef.pl ssl OS2 > os2\ssl.def
 
 echo Generating x86 for GNU assember
 

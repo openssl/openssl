@@ -58,6 +58,7 @@ my $debug=0;
 
 my $crypto_num= "util/libeay.num";
 my $ssl_num=    "util/ssleay.num";
+my $libname;
 
 my $do_update = 0;
 my $do_rewrite = 1;
@@ -73,12 +74,13 @@ my $VMS=0;
 my $W32=0;
 my $W16=0;
 my $NT=0;
+my $OS2=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
 			"EXPORT_VAR_AS_FUNCTION" );
-my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT" );
+my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "RIPEMD",
@@ -126,11 +128,18 @@ foreach (@ARGV, split(/ /, $options))
 		$VMSAlpha=1;
 	}
 	$VMS=1 if $_ eq "VMS";
+	$OS2=1 if $_ eq "OS2";
 
 	$do_ssl=1 if $_ eq "ssleay";
-	$do_ssl=1 if $_ eq "ssl";
+	if ($_ eq "ssl") {
+		$do_ssl=1; 
+		$libname=$_
+	}
 	$do_crypto=1 if $_ eq "libeay";
-	$do_crypto=1 if $_ eq "crypto";
+	if ($_ eq "crypto") {
+		$do_crypto=1;
+		$libname=$_;
+	}
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
@@ -170,8 +179,17 @@ foreach (@ARGV, split(/ /, $options))
 	}
 
 
+if (!$libname) { 
+	if ($do_ssl) {
+		$libname="SSLEAY";
+	}
+	if ($do_crypto) {
+		$libname="LIBEAY";
+	}
+}
+
 # If no platform is given, assume WIN32
-if ($W32 + $W16 + $VMS == 0) {
+if ($W32 + $W16 + $VMS + $OS2 == 0) {
 	$W32 = 1;
 }
 
@@ -182,7 +200,7 @@ if ($W16) {
 
 if (!$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT ]\n";
+	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 ]\n";
 	exit(1);
 	}
 
@@ -305,10 +323,10 @@ EOF
 
 } else {
 
-	&print_def_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_symbols)
+	&print_def_file(*STDOUT,$libname,*ssl_list,@ssl_symbols)
 		if $do_ssl == 1;
 
-	&print_def_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_symbols)
+	&print_def_file(*STDOUT,$libname,*crypto_list,@crypto_symbols)
 		if $do_crypto == 1;
 
 }
@@ -995,6 +1013,7 @@ sub is_valid
 			if ($keyword eq "WIN32" && $W32) { return 1; }
 			if ($keyword eq "WIN16" && $W16) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
+			if ($keyword eq "OS2" && $OS2) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
 			# will be represented as functions.  This currently
@@ -1092,24 +1111,27 @@ sub print_def_file
 {
 	(*OUT,my $name,*nums,my @symbols)=@_;
 	my $n = 1; my @e; my @r; my @v; my $prev="";
+	my $liboptions="";
 
 	if ($W32)
 		{ $name.="32"; }
-	else
+	elsif ($W16)
 		{ $name.="16"; }
+	elsif ($OS2)
+		{ $liboptions = "INITINSTANCE\nDATA NONSHARED"; }
 
 	print OUT <<"EOF";
 ;
 ; Definition file for the DLL version of the $name library from OpenSSL
 ;
 
-LIBRARY         $name
+LIBRARY         $name	$liboptions
 
 DESCRIPTION     'OpenSSL $name - http://www.openssl.org/'
 
 EOF
 
-	if (!$W32) {
+	if ($W16) {
 		print <<"EOF";
 CODE            PRELOAD MOVEABLE
 DATA            PRELOAD MOVEABLE SINGLE
@@ -1148,10 +1170,10 @@ EOF
 					print STDERR "Warning: Symbol '",$s2,"' redefined. old=",($nums{$prev} =~ /^(.*?)\\/,$1),", new=",($nums{$s2} =~ /^(.*?)\\/,$1),"\n";
 				}
 				$prev = $s2;	# To warn about duplicates...
-				if($v) {
+				if($v && !$OS2) {
 					printf OUT "    %s%-39s @%-8d DATA\n",($W32)?"":"_",$s2,$n;
 				} else {
-					printf OUT "    %s%-39s @%d\n",($W32)?"":"_",$s2,$n;
+					printf OUT "    %s%-39s @%d\n",($W32||$OS2)?"":"_",$s2,$n;
 				}
 			}
 		}
