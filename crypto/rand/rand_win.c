@@ -130,6 +130,15 @@
 static void readtimer(void);
 static void readscreen(void);
 
+/* It appears like PCURSORINFO is only defined when WINVER is 0x0500 and up,
+   which currently only happens on Win2000.  Unfortunately, that is a typedef,
+   so it's a little bit difficult to detect properly.  On the other hand, the
+   macro CURSOR_SHOWING is defined within the same conditional, so it can be
+   use to detect the absence of PCURSORINFO. */
+#ifndef CURSOR_SHOWING
+typedef void *PCURSORINFO;
+#endif
+
 typedef BOOL (WINAPI *CRYPTACQUIRECONTEXT)(HCRYPTPROV *, LPCTSTR, LPCTSTR,
 				    DWORD, DWORD);
 typedef BOOL (WINAPI *CRYPTGENRANDOM)(HCRYPTPROV, DWORD, BYTE *);
@@ -254,7 +263,7 @@ int RAND_poll(void)
 	 *
 	 * This seeding method was proposed in Peter Gutmann, Software
 	 * Generation of Practically Strong Random Numbers,
-	 * http://www.cs.auckland.ac.nz/~pgut001/pubs/random2.pdf
+	 * http://www.usenix.org/publications/library/proceedings/sec98/gutmann.html
 	 * (The assignment of entropy estimates below is arbitrary, but based
 	 * on Peter's analysis the full poll appears to be safe. Additional
 	 * interactive seeding is encouraged.)
@@ -307,10 +316,14 @@ int RAND_poll(void)
 					if (heap_first(&hentry,
 						hlist.th32ProcessID,
 						hlist.th32HeapID))
+						{
+						int entrycnt = 50;
 						do
 							RAND_add(&hentry,
 								hentry.dwSize, 0);
-						while (heap_next(&hentry));
+						while (heap_next(&hentry)
+							&& --entrycnt > 0);
+						}
 					} while (heaplist_next(handle,
 						&hlist));
 
