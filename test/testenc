@@ -1,6 +1,6 @@
 #!/bin/sh
 
-testsrc=Makefile.ssl
+testsrc=Makefile
 test=./p
 cmd=../apps/openssl
 

@@ -94,7 +94,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "FP_API", "STDIO", "SOCK", "KRB5", "ENGINE", "HW" );
 
 my $options="";
-open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $options=$1 if (/^OPTIONS=(.*)$/);
 }
@@ -1119,7 +1119,7 @@ sub print_test_file
 sub get_version {
    local *MF;
    my $v = '?';
-   open MF, 'Makefile.ssl' or return $v;
+   open MF, 'Makefile' or return $v;
    while (<MF>) {
      $v = $1, last if /^VERSION=(.*?)\s*$/;
    }

@@ -166,6 +166,7 @@ int RAND_write_file(const char *file)
 	}
 
 #if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
+	{
 	/* For some reason Win32 can't write to files created this way */
 	
 	/* chmod(..., 0600) is too late to protect the file,
@@ -173,6 +174,7 @@ int RAND_write_file(const char *file)
 	int fd = open(file, O_CREAT, 0600);
 	if (fd != -1)
 		out = fdopen(fd, "wb");
+	}
 #endif
 	if (out == NULL)
 		out = fopen(file,"wb");

@@ -74,9 +74,9 @@ make clean
 
 # Hack the Makefiles to pick up the dynamic libraries during linking
 #
-sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib/' Makefile.ssl >xxx; mv xxx Makefile.ssl
-sed 's/-L\.\.//' apps/Makefile.ssl >xxx; mv xxx apps/Makefile.ssl
-sed 's/-L\.\.//' test/Makefile.ssl >xxx; mv xxx test/Makefile.ssl
+sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib/' Makefile >xxx; mv xxx Makefile.ssl
+sed 's/-L\.\.//' apps/Makefile >xxx; mv xxx apps/Makefile
+sed 's/-L\.\.//' test/Makefile >xxx; mv xxx test/Makefile
 # Build the static libs and the executables in one make.
 make
 # Install everything

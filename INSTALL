@@ -123,7 +123,7 @@
      generic configurations "cc" or "gcc" should usually work on 32 bit
      systems.
 
-     Configure creates the file Makefile.ssl from Makefile.org and
+     Configure creates the file Makefile from Makefile.org and
      defines various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
@@ -159,7 +159,7 @@
      the failure that isn't a problem in OpenSSL itself (like a missing
      or malfunctioning bc).  If it is a problem with OpenSSL itself,
      try removing any compiler optimization flags from the CFLAG line
-     in Makefile.ssl and run "make clean; make". Please send a bug
+     in Makefile and run "make clean; make". Please send a bug
      report to <openssl-bugs@openssl.org>, including the output of
      "make report" in order to be added to the request tracker at
      http://www.openssl.org/support/rt2.html.

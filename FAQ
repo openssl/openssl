@@ -460,7 +460,7 @@ get the best result from OpenSSL.  A bit more complicated solution is the
 following:
 
 ----- snip:start -----
-  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile | \
        sed -e 's/ -O[0-9] / -O0 /'`"
   rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
   make

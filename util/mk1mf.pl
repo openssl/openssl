@@ -10,7 +10,7 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
-open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
     $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
@@ -18,7 +18,7 @@ while(<IN>) {
 }
 close(IN);
 
-die "Makefile.ssl is not the toplevel Makefile!\n" if $ssl_version eq "";
+die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 
 $infile="MINFO";
 
@@ -640,7 +640,7 @@ if ($platform eq "linux-elf") {
     print <<"EOF";
 # Generate perlasm output files
 %.cpp:
-	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
+	(cd \$(\@D)/..; PERL=perl make -f Makefile asm/\$(\@F))
 EOF
 }
 print "###################################################################\n";
