@@ -56,7 +56,6 @@
  *
  */
 
-#include <stdio.h>
 #include <openssl/e_os2.h>
 /* The following defines enable the declaration of strdup(), which is an
    extended function according to X/Open. */
@@ -67,6 +66,7 @@
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED	/* For Linux and probably anything GNU */
 #endif
+#include <stdio.h>
 #include <string.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
