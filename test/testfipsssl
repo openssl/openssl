@@ -35,10 +35,10 @@ fi
 
 #############################################################################
 
-echo test ssl3 DOESN\'T work
+echo test ssl3 is forbidden in FIPS mode
 $ssltest -ssl3 $extra && exit 1
 
-echo test ssl2 DOESN\'T work
+echo test ssl2 is forbidden in FIPS mode
 $ssltest -ssl2 $extra && exit 1
 
 echo test tls1
