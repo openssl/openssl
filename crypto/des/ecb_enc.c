@@ -60,8 +60,8 @@
 #include "spr.h"
 #include <openssl/opensslv.h>
 
-GLOBAL const char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
+OPENSSL_GLOBAL const char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
+OPENSSL_GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
 
 const char *des_options(void)
 	{

@@ -431,7 +431,7 @@
 	PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
 	}
 
-EXTERN const DES_LONG des_SPtrans[8][64];
+OPENSSL_EXTERN const DES_LONG des_SPtrans[8][64];
 
 void fcrypt_body(DES_LONG *out,des_key_schedule ks,
 	DES_LONG Eswap0, DES_LONG Eswap1);

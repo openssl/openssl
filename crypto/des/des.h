@@ -69,7 +69,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os2.h>	/* EXTERN */
+#include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
 #ifdef VMS
 #undef des_init_random_number_generator

@@ -21,18 +21,6 @@ extern "C" {
 # define OPENSSL_GLOBAL
 #endif
 
-/* The above definitions should be used throughout the library,
- * but as long as EXTERN and GLOBAL occur there, we keep the following
- * definitions, too: */
-#if defined(VMS) && !defined(__DECC)
-# define EXTERN globalref
-# define GLOBAL globaldef
-#else
-# define EXTERN extern
-# define GLOBAL
-#endif
-
-
 #ifdef  __cplusplus
 }
 #endif

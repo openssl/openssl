@@ -68,7 +68,7 @@
 #include "sk.h"
 
 static int check_parity(const des_cblock key);
-GLOBAL int des_check_key=0;
+OPENSSL_GLOBAL int des_check_key=0;
 
 void des_set_odd_parity(des_cblock key)
 	{
