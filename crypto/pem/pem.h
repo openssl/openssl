@@ -333,12 +333,13 @@ int	PEM_do_header (EVP_CIPHER_INFO *cipher, unsigned char *data,long *len,
 #ifdef HEADER_BIO_H
 int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
-int	PEM_write_bio(BIO *bp,char *name,char *hdr,unsigned char *data,
+int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
 		long len);
-char *	PEM_ASN1_read_bio(char *(*d2i)(),char *name,BIO *bp,char **x,
+char *	PEM_ASN1_read_bio(char *(*d2i)(),const char *name,BIO *bp,char **x,
 		int (*cb)());
-int	PEM_ASN1_write_bio(int (*i2d)(),char *name,BIO *bp,char *x,
-		EVP_CIPHER *enc,unsigned char *kstr,int klen,int (*callback)());
+int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
+			   const EVP_CIPHER *enc,unsigned char *kstr,int klen,
+			   int (*callback)());
 STACK *	PEM_X509_INFO_read_bio(BIO *bp, STACK *sk, int (*cb)());
 int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 		unsigned char *kstr, int klen, int (*cb)());
@@ -348,10 +349,11 @@ int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 int	PEM_read(FILE *fp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write(FILE *fp,char *name,char *hdr,unsigned char *data,long len);
-char *	PEM_ASN1_read(char *(*d2i)(),char *name,FILE *fp,char **x,
+char *	PEM_ASN1_read(char *(*d2i)(),const char *name,FILE *fp,char **x,
 		int (*cb)());
-int	PEM_ASN1_write(int (*i2d)(),char *name,FILE *fp,char *x,
-		EVP_CIPHER *enc,unsigned char *kstr,int klen,int (*callback)());
+int	PEM_ASN1_write(int (*i2d)(),const char *name,FILE *fp,char *x,
+		       const EVP_CIPHER *enc,unsigned char *kstr,int klen,
+		       int (*callback)());
 STACK *	PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)());
 #endif
 
@@ -369,7 +371,7 @@ int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 		unsigned int *siglen, EVP_PKEY *pkey);
 
 void	PEM_proc_type(char *buf, int type);
-void	PEM_dek_info(char *buf, char *type, int len, char *str);
+void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
 #ifndef SSLEAY_MACROS
 
@@ -391,7 +393,8 @@ int PEM_write_X509_CRL(FILE *fp,X509_CRL *x);
 int PEM_write_RSAPrivateKey(FILE *fp,RSA *x,EVP_CIPHER *enc,unsigned char *kstr,
         int klen,int (*cb)());
 int PEM_write_RSAPublicKey(FILE *fp,RSA *x);
-int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,EVP_CIPHER *enc,unsigned char *kstr,
+int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,const EVP_CIPHER *enc,
+			    unsigned char *kstr,
         int klen,int (*cb)());
 int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,EVP_CIPHER *enc,
 	unsigned char *kstr,int klen,int (*cb)());
@@ -416,10 +419,10 @@ DSA *PEM_read_bio_DSAparams(BIO *bp,DSA **x,int (*cb)());
 int PEM_write_bio_X509(BIO *bp,X509 *x);
 int PEM_write_bio_X509_REQ(BIO *bp,X509_REQ *x);
 int PEM_write_bio_X509_CRL(BIO *bp,X509_CRL *x);
-int PEM_write_bio_RSAPrivateKey(BIO *fp,RSA *x,EVP_CIPHER *enc,
+int PEM_write_bio_RSAPrivateKey(BIO *fp,RSA *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
 int PEM_write_bio_RSAPublicKey(BIO *fp,RSA *x);
-int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,EVP_CIPHER *enc,
+int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
 int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
