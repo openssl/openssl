@@ -76,10 +76,18 @@ char *argv[];
 	int i;
 	int nodetach=0;
 
+#ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
+#endif
+#ifndef NO_MD5
 	EVP_add_digest(EVP_md5());
+#endif
+#ifndef NO_SHA1
 	EVP_add_digest(EVP_sha1());
+#endif
+#ifndef NO_MDC2
 	EVP_add_digest(EVP_mdc2());
+#endif
 
 	data=BIO_new(BIO_s_file());
 again:

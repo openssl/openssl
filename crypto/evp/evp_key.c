@@ -81,15 +81,18 @@ char *EVP_get_pw_prompt(void)
 		return(prompt_string);
 	}
 
-#ifdef NO_DES
-int des_read_pw_string(char *buf,int len,const char *prompt,int verify);
-#endif
-
+/* For historical reasons, the standard function for reading passwords is
+ * in the DES library -- if someone ever wants to disable DES,
+ * this function will fail */
 int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 	{
+#ifndef NO_DES
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
 		prompt=prompt_string;
 	return(des_read_pw_string(buf,len,prompt,verify));
+#else
+	return -1;
+#endif
 	}
 
 int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md, unsigned char *salt,

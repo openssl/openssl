@@ -110,16 +110,20 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-sign")) operation = SMIME_SIGN;
 		else if (!strcmp (*args, "-verify")) operation = SMIME_VERIFY;
 		else if (!strcmp (*args, "-pk7out")) operation = SMIME_PK7OUT;
+#ifndef NO_DES
 		else if (!strcmp (*args, "-des3")) 
 				cipher = EVP_des_ede3_cbc();
 		else if (!strcmp (*args, "-des")) 
 				cipher = EVP_des_cbc();
+#endif
+#ifndef NO_RC2
 		else if (!strcmp (*args, "-rc2-40")) 
 				cipher = EVP_rc2_40_cbc();
 		else if (!strcmp (*args, "-rc2-128")) 
 				cipher = EVP_rc2_cbc();
 		else if (!strcmp (*args, "-rc2-64")) 
 				cipher = EVP_rc2_64_cbc();
+#endif
 		else if (!strcmp (*args, "-text")) 
 				flags |= PKCS7_TEXT;
 		else if (!strcmp (*args, "-nointern")) 
@@ -233,10 +237,15 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-sign          sign message\n");
 		BIO_printf (bio_err, "-verify        verify signed message\n");
 		BIO_printf (bio_err, "-pk7out        output PKCS#7 structure\n");
+#ifndef NO_DES
 		BIO_printf (bio_err, "-des3          encrypt with triple DES\n");
-		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40\n");
+		BIO_printf (bio_err, "-des           encrypt with DES\n");
+#endif
+#ifndef NO_RC2
+		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40 (default)\n");
 		BIO_printf (bio_err, "-rc2-64        encrypt with RC2-64\n");
 		BIO_printf (bio_err, "-rc2-128       encrypt with RC2-128\n");
+#endif
 		BIO_printf (bio_err, "-nointern      don't search certificates in message for signer\n");
 		BIO_printf (bio_err, "-nosigs        don't verify message signature\n");
 		BIO_printf (bio_err, "-noverify      don't verify signers certificate\n");
@@ -271,7 +280,14 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(operation == SMIME_ENCRYPT) {
-		if (!cipher) cipher = EVP_rc2_40_cbc();
+		if (!cipher) {
+#ifndef NO_RC2			
+			cipher = EVP_rc2_40_cbc();
+#else
+			BIO_printf(bio_err, "No cipher selected\n");
+			goto end;
+#endif
+		}
 		encerts = sk_X509_new_null();
 		while (*args) {
 			if(!(cert = load_cert(*args))) {

@@ -378,6 +378,7 @@ foreach (@ARGV)
 		$depflags .= "-DNO_$algo ";
 		if ($algo eq "DES")
 			{
+			push @skip, "mdc2";
 			$options .= " no-mdc2";
 			$flags .= "-DNO_MDC2 ";
 			$depflags .= "-DNO_MDC2 ";

@@ -127,7 +127,14 @@ char *argv[];
 #else
 	PKCS7_set_type(p7,NID_pkcs7_enveloped);
 #endif
-	if(!cipher) cipher = EVP_des_ede3_cbc();
+	if(!cipher)	{
+#ifndef NO_DES
+		cipher = EVP_des_ede3_cbc();
+#else
+		fprintf(stderr, "No cipher selected\n");
+		goto err;
+#endif
+	}
 
 	if (!PKCS7_set_cipher(p7,cipher)) goto err;
 	for(i = 0; i < sk_X509_num(recips); i++) {

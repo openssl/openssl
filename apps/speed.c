@@ -616,6 +616,7 @@ int MAIN(int argc, char **argv)
 	memset(rsa_c,0,sizeof(rsa_c));
 #endif
 #ifndef SIGALRM
+#ifndef NO_DES
 	BIO_printf(bio_err,"First we calculate the approximate speed ...\n");
 	count=10;
 	do	{
@@ -707,10 +708,14 @@ int MAIN(int argc, char **argv)
 #define COND(d)	(count < (d))
 #define COUNT(d) (d)
 #else
+/* not worth fixing */
+# error "You cannot disable DES on systems without SIGALRM."
+#endif /* NO_DES */
+#else
 #define COND(c)	(run)
 #define COUNT(d) (count)
 	signal(SIGALRM,sig_done);
-#endif
+#endif /* SIGALRM */
 
 #ifndef NO_MD2
 	if (doit[D_MD2])
