@@ -413,13 +413,13 @@ my %table=(
 "linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # UnixWare 2.0x fails destest with -O
-"unixware-2.0","cc:-DFILIO_H::-Kthread::-lsocket -lnsl -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
-"unixware-2.0-pentium","cc:-DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.0","cc:-DFILIO_H -DNO_STRINGS_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
+"unixware-2.0-pentium","cc:-DFILIO_H -DNO_STRINGS_H -Kpentium::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # UnixWare 2.1
-"unixware-2.1","cc:-O -DFILIO_H::-Kthread::-lsocket -lnsl -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
-"unixware-2.1-pentium","cc:-O -DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
-"unixware-2.1-p6","cc:-O -DFILIO_H -Kp6::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.1","cc:-O -DFILIO_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
+"unixware-2.1-pentium","cc:-O -DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.1-p6","cc:-O -DFILIO_H -Kp6::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # UnixWare 7
 "unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",

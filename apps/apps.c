@@ -129,7 +129,11 @@
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp
 #else
-#include <strings.h>
+#  ifdef NO_STRINGS_H
+    int	strcasecmp();
+#  else
+#    include <strings.h>
+#  endif /* NO_STRINGS_H */
 #endif
 
 #ifdef OPENSSL_SYS_WINDOWS
