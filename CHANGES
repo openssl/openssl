@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6l and 0.9.6m  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
 
   *) Fix additional bug revealed by the NISCC test suite:
