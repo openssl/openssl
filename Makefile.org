@@ -361,8 +361,22 @@ install_docs:
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5 \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man7
 	@echo installing man 1 and man 5
-	@for i in doc/apps/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; ../../util/pod2man.pl --section=$$sec --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
+	@for i in doc/apps/*.pod; do \
+		(cd `dirname $$i`; \
+		fn=`basename $$i .pod`; \
+		sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; \
+		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
+			 --release=$(VERSION) `basename $$i` \
+			>  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); \
+	done
 	@echo installing man 3 and man 7
-	@for i in doc/crypto/*.pod doc/ssl/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "des_modes" ] && echo 7 || echo 3`; ../../util/pod2man.pl --section=$$sec --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
+	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
+		(cd `dirname $$i`; \
+		fn=`basename $$i .pod`; \
+		sec=`[ "$$fn" = "des_modes" ] && echo 7 || echo 3`; \
+		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
+			--release=$(VERSION) `basename $$i` \
+			>  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); \
+	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
