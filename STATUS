@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/12/13 18:21:47 $
+  ______________                           $Date: 2001/01/10 16:25:12 $
 
   DEVELOPMENT STATE
 
@@ -15,6 +15,8 @@
     o  OpenSSL 0.9.1c: Released on December  23th, 1998
 
   RELEASE SHOWSTOPPERS
+
+    o
 
   AVAILABLE PATCHES
 
@@ -42,9 +44,7 @@
 
   NEEDS PATCH
 
-    o  non-blocking socket on AIX
-    o  $(PERL) in */Makefile.ssl
-    o  "Sign the certificate?" - "n" creates empty certificate file
+    o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
   OPEN ISSUES
 
