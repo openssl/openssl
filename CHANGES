@@ -4,6 +4,9 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Fix EVP_CIPHER_mode macro.
+     ["Dan S. Camper" <dan@bti.net>]
+
   *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
      type, we must throw them away by setting rr->length to 0.
      [D P Chang <dpc@qualys.com>]
