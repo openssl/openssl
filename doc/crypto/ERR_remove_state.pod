@@ -16,7 +16,7 @@ ERR_remove_state() frees the error queue associated with thread B<pid>.
 If B<pid> == 0, the current thread will have its error queue removed.
 
 Since error queue data structures are allocated automatically for new
-threads, they must be freed when threads are terminated in oder to
+threads, they must be freed when threads are terminated in order to
 avoid memory leaks.
 
 =head1 RETURN VALUE
