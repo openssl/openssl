@@ -252,7 +252,7 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
 	int ret = EVP_PKEY_assign_DH(pkey, key);
 	if(ret)
-		DH_up(key);
+		DH_up_ref(key);
 	return ret;
 }
 
@@ -262,7 +262,7 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 		EVPerr(EVP_F_EVP_PKEY_GET1_DH, EVP_R_EXPECTING_A_DH_KEY);
 		return NULL;
 	}
-	DH_up(pkey->pkey.dh);
+	DH_up_ref(pkey->pkey.dh);
 	return pkey->pkey.dh;
 }
 #endif
