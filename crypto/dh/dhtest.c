@@ -89,7 +89,8 @@ static void MS_CALLBACK cb(int p, int n, void *arg);
 
 int main(int argc, char *argv[])
 	{
-	DH *a,*b;
+	DH *a;
+	DH *b=NULL;
 	char buf[12];
 	unsigned char *abuf=NULL,*bbuf=NULL;
 	int i,alen,blen,aout,bout,ret=1;

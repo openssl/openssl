@@ -266,7 +266,7 @@ int MAIN(int argc, char **argv)
 #undef BSIZE
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
-	char *randfile;
+	char *randfile=NULL;
 
 #ifdef EFENCE
 EF_PROTECT_FREE=1;
