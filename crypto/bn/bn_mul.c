@@ -82,7 +82,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
-	printf(" bn_mul_recursive %d * %d\n",n2,n2);
+	fprintf(stderr," bn_mul_recursive %d * %d\n",n2,n2);
 # endif
 # ifdef BN_MUL_COMBA
 #  if 0
@@ -228,7 +228,7 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
-	printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
+	fprintf(stderr," bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 # endif
 	if (n < 8)
 		{
@@ -397,7 +397,7 @@ void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 	int n=n2/2;
 
 # ifdef BN_COUNT
-	printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
+	fprintf(stderr," bn_mul_low_recursive %d * %d\n",n2,n2);
 # endif
 
 	bn_mul_recursive(r,a,b,n,&(t[0]));
@@ -431,7 +431,7 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	BN_ULONG ll,lc,*lp,*mp;
 
 # ifdef BN_COUNT
-	printf(" bn_mul_high %d * %d\n",n2,n2);
+	fprintf(stderr," bn_mul_high %d * %d\n",n2,n2);
 # endif
 	n=n2/2;
 
@@ -623,7 +623,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	BIGNUM *free_a = NULL, *free_b = NULL;
 
 #ifdef BN_COUNT
-	printf("BN_mul %d * %d\n",a->top,b->top);
+	fprintf(stderr,"BN_mul %d * %d\n",a->top,b->top);
 #endif
 
 	bn_check_top(a);
@@ -750,7 +750,7 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 	BN_ULONG *rr;
 
 #ifdef BN_COUNT
-	printf(" bn_mul_normal %d * %d\n",na,nb);
+	fprintf(stderr," bn_mul_normal %d * %d\n",na,nb);
 #endif
 
 	if (na < nb)
@@ -784,7 +784,7 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	{
 #ifdef BN_COUNT
-	printf(" bn_mul_low_normal %d * %d\n",n,n);
+	fprintf(stderr," bn_mul_low_normal %d * %d\n",n,n);
 #endif
 	bn_mul_words(r,a,n,b[0]);
 
