@@ -949,21 +949,25 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 #if 0
 	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
 #else
-	BN_set_word(b,65537);
+	if (!BN_set_word(b,65537)) goto err;
 #endif
 	putc('\n', stderr);
 
 	for (i = 0; i < num0; i++)
 		{
+#if 0
 		if (!BN_rand(a, 512, 0, 0)) goto err;
 		a->neg = rand_neg();
+#else
+		if (!BN_bin2bn("\x01\xff\xff\xff\xff", 5, a)) goto err;
+#endif
 
 		/* t := (b-1)/2  (note that b is odd) */
 		if (!BN_copy(t, b)) goto err;
 		if (!BN_sub_word(t, 1)) goto err;
 		if (!BN_rshift1(t, t)) goto err;
 		/* r := a^t mod b */
-#if 1
+#if 0
 		if (!BN_mod_exp(r, a, t, b, ctx)) goto err;
 #elif 0
 		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err;
@@ -973,6 +977,8 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
+		else if (BN_is_zero(r))
+			legendre = 0;
 		else
 			{
 			if (!BN_add_word(r, 1)) goto err;
