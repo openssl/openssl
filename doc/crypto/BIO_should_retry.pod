@@ -91,10 +91,10 @@ done:
  } while((len <= 0) && BIO_should_retry(bio));
 
 While an application may retry a failed non blocking call immediately
-this is likely to be very inefficient because the call is likely to
-fail repeatedly until data can be processed. An application will normally
-wait until the necessary condition is satisfied. How this is done depends
-on the underlying I/O structure.
+this is likely to be very inefficient because the call will fail
+repeatedly until data can be processed or is available. An application
+will normally wait until the necessary condition is satisfied. How
+this is done depends on the underlying I/O structure.
 
 For example if the cause is ultimately a socket and BIO_should_read()
 is true then a call to select() may be made to wait until data is
@@ -114,7 +114,7 @@ able to pass any data to the application until a complete block has
 been read.
 
 It is possible for a BIO to block indefinitely if the underlying I/O
-structure cannot process the data. This depends on the behaviour of
+structure cannot process or return any data. This depends on the behaviour of
 the platforms I/O functions. This is often not desirable: one solution
 is to use non blocking I/O and use a timeout on the select() (or
 equivalent) call.
