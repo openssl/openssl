@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_generate_prime, BN_is_prime, BN_is_prime_fasttest - Generate primes and test for primality
+BN_generate_prime, BN_is_prime, BN_is_prime_fasttest - generate primes and test for primality
 
 =head1 SYNOPSIS
 

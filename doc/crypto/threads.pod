@@ -20,12 +20,12 @@ CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
 OpenSSL can safely be used in multi-threaded applications provided
 that two callback functions are set.
 
-locking_function(int mode, int type, const char *file, int line) is
+locking_function(int mode, int n, const char *file, int line) is
 needed to perform locking on shared data stuctures. Multi-threaded
 applications will crash at random if it is not set.
 
 locking_function() must be able to handle up to CRYPTO_num_locks()
-different mutex locks. It sets the B<n>th lock if B<mode> &
+different mutex locks. It sets the B<n>-th lock if B<mode> &
 B<CRYPTO_LOCK>, and releases it otherwise.
 
 B<file> and B<line> are the file number of the function setting the

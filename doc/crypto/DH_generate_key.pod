@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_generate_key, DH_compute_key - Perform Diffie-Hellman key exchange
+DH_generate_key, DH_compute_key - perform Diffie-Hellman key exchange
 
 =head1 SYNOPSIS
 

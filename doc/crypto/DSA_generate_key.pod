@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DSA_generate_key - Generate DSA key pair
+DSA_generate_key - generate DSA key pair
 
 =head1 SYNOPSIS
 

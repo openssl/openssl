@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_rand, BN_pseudo_rand - Generate pseudo-random number
+BN_rand, BN_pseudo_rand - generate pseudo-random number
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ BN_rand, BN_pseudo_rand - Generate pseudo-random number
 
  int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
- int BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
+ int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
 =head1 DESCRIPTION
 

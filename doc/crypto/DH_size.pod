@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_size - Get Diffie-Hellman prime size
+DH_size - get Diffie-Hellman prime size
 
 =head1 SYNOPSIS
 

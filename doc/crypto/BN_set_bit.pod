@@ -3,7 +3,7 @@
 =head1 NAME
 
 BN_set_bit, BN_clear_bit, BN_is_bit_set, BN_mask_bits, BN_lshift,
-BN_lshift1, BN_rshift, BN_rshift1 - Bit operations on BIGNUMs
+BN_lshift1, BN_rshift, BN_rshift1 - bit operations on BIGNUMs
 
 =head1 SYNOPSIS
 

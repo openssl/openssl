@@ -8,17 +8,26 @@ EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
 
  #include <openssl/evp.h>
 
- void EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key, unsigned char *iv);
- void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
- void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
+ void EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+         unsigned char *key, unsigned char *iv);
+ void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+         int *outl, unsigned char *in, int inl);
+ void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
+         int *outl);
 
- void EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key, unsigned char *iv);
- void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
- int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+ void EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+         unsigned char *key, unsigned char *iv);
+ void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+         int *outl, unsigned char *in, int inl);
+ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
+         int *outl);
 
- void EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key,unsigned char *iv,int enc);
- void EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
- int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+ void EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+         unsigned char *key, unsigned char *iv, int enc);
+ void EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+         int *outl, unsigned char *in, int inl);
+ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
+         int *outl);
 
  void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 

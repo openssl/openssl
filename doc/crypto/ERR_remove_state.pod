@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ERR_remove_state - Free a thread's error queue
+ERR_remove_state - free a thread's error queue
 
 =head1 SYNOPSIS
 

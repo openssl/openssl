@@ -117,8 +117,7 @@
 
      If "make" fails, please report the problem to <openssl-bugs@openssl.org>
      (note that your message will be forwarded to a public mailing list).
-     Include the output of "./config -t" and the OpenSSL version
-     number in your message.
+     Include the output of "make report" in your message.
 
      [If you encounter assembler error messages, try the "no-asm"
      configuration option as an immediate fix.]
@@ -133,7 +132,7 @@
     If a test fails, try removing any compiler optimization flags from
     the CFLAGS line in Makefile.ssl and run "make clean; make". Please
     send a bug report to <openssl-bugs@openssl.org>, including the
-    output of "openssl version -a" and of the failed test.
+    output of "make report".
 
   4. If everything tests ok, install OpenSSL with
 

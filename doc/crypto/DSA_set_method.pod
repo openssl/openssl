@@ -3,7 +3,7 @@
 =head1 NAME
 
 DSA_set_default_method, DSA_get_default_method, DSA_set_method,
-DSA_new_method, DSA_OpenSSL - Select RSA method
+DSA_new_method, DSA_OpenSSL - select RSA method
 
 =head1 SYNOPSIS
 

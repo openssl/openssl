@@ -3,7 +3,7 @@
 =head1 NAME
 
 DH_set_default_method, DH_get_default_method, DH_set_method,
-DH_new_method, DH_OpenSSL - Select RSA method
+DH_new_method, DH_OpenSSL - select DH method
 
 =head1 SYNOPSIS
 

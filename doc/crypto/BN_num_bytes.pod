@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_num_bits, BN_num_bytes, BN_num_bits_word - Get BIGNUM size
+BN_num_bits, BN_num_bytes, BN_num_bits_word - get BIGNUM size
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ERR_get_error, ERR_peek_error - Obtain error code
+ERR_get_error, ERR_peek_error - obtain error code
 
 =head1 SYNOPSIS
 

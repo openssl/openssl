@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_add_word, BN_sub_word, BN_mul_word, BN_div_word, BN_mod_word - Arithmetic
+BN_add_word, BN_sub_word, BN_mul_word, BN_div_word, BN_mod_word - arithmetic
 functions on BIGNUMs with integers
 
 =head1 SYNOPSIS

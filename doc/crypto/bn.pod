@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-bn - Multiprecision integer arithmetics
+bn - multiprecision integer arithmetics
 
 =head1 SYNOPSIS
 
@@ -58,13 +58,13 @@ bn - Multiprecision integer arithmetics
  int BN_set_word(BIGNUM *a, unsigned long w);
  unsigned long BN_get_word(BIGNUM *a);
 
- int BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
- int BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
+ int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
+ int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
- BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
-         BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);
- int BN_is_prime(const BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
-         BN_CTX *ctx,void *cb_arg);
+ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits,int safe, BIGNUM *add,
+         BIGNUM *rem, void (*callback)(int, int, void *), void *cb_arg);
+ int BN_is_prime(const BIGNUM *p, int nchecks,
+         void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg);
 
  int BN_set_bit(BIGNUM *a, int n);
  int BN_clear_bit(BIGNUM *a, int n);

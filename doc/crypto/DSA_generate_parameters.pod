@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DSA_generate_parameters - Generate DSA parameters
+DSA_generate_parameters - generate DSA parameters
 
 =head1 SYNOPSIS
 

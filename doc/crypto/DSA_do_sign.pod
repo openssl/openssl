@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DSA_do_sign, DSA_do_verify - Raw DSA signature operations
+DSA_do_sign, DSA_do_verify - raw DSA signature operations
 
 =head1 SYNOPSIS
 

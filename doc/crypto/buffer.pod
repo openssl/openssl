@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BUF_MEM_new, BUF_MEM_free, BUF_MEM_grow, BUF_strdup - Simple
+BUF_MEM_new, BUF_MEM_free, BUF_MEM_grow, BUF_strdup - simple
 character arrays structure
 
 =head1 SYNOPSIS

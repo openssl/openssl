@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DSA_size - Get DSA signature size
+DSA_size - get DSA signature size
 
 =head1 SYNOPSIS
 

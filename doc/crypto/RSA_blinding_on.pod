@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RSA_blinding_on, RSA_blinding_off - Protect the RSA operation from timing attacks
+RSA_blinding_on, RSA_blinding_off - protect the RSA operation from timing attacks
 
 =head1 SYNOPSIS
 

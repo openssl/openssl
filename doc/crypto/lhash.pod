@@ -3,7 +3,7 @@
 =head1 NAME
 
 lh_new, lh_free, lh_insert, lh_delete, lh_retrieve, lh_doall,
-lh_doall_arg, lh_error - Dynamic hash table
+lh_doall_arg, lh_error - dynamic hash table
 
 =head1 SYNOPSIS
 

@@ -89,11 +89,13 @@ union rsa_fn_to_char_u
 	};
 #endif
 
+#ifndef NO_DH
 union dh_fn_to_char_u
 	{
 	char *char_p;
 	DH *(*fn_p)(SSL *, int, int);
 	};
+#endif
 
 int SSL_clear(SSL *s)
 	{

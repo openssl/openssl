@@ -37,6 +37,9 @@ Since RC4 is a stream cipher (the input is XORed with a pseudo-random
 key stream to produce the output), decryption uses the same function
 calls as encryption.
 
+Applications should use the higher level functions EVP_EncryptInit(3)
+etc. instead of calling the RC4 functions directly.
+
 =head1 RETURN VALUES
 
 RC4_set_key() and RC4() do not return values.

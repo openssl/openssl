@@ -2,17 +2,17 @@
 
 =head1 NAME
 
-RSA_private_encrypt, RSA_public_decrypt - Low level signature operations
+RSA_private_encrypt, RSA_public_decrypt - low level signature operations
 
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
 
  int RSA_private_encrypt(int flen, unsigned char *from,
-    unsigned char *to, RSA *rsa,int padding);
+    unsigned char *to, RSA *rsa, int padding);
 
  int RSA_public_decrypt(int flen, unsigned char *from, 
-    unsigned char *to, RSA *rsa,int padding);
+    unsigned char *to, RSA *rsa, int padding);
 
 =head1 DESCRIPTION
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - Select RAND method
+RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - select RAND method
 
 =head1 SYNOPSIS
 

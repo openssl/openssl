@@ -13,7 +13,7 @@ RIPEMD-160 hash function
                   unsigned char *md);
 
  void RIPEMD160_Init(RIPEMD160_CTX *c);
- void RIPEMD160_Update(RIPEMD_CTX *c, const unsigned char *data,
+ void RIPEMD160_Update(RIPEMD_CTX *c, const void *data,
                   unsigned long len);
  void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 

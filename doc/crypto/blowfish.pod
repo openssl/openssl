@@ -14,14 +14,15 @@ BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
  void BF_encrypt(BF_LONG *data,const BF_KEY *key);
  void BF_decrypt(BF_LONG *data,const BF_KEY *key);
  
- void BF_ecb_encrypt(const unsigned char *in,unsigned char *out,BF_KEY *key,
- 	 int enc);
- void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
- 	 BF_KEY *schedule, unsigned char *ivec, int enc);
- void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
- 	 BF_KEY *schedule, unsigned char *ivec, int *num, int enc);
- void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
- 	 BF_KEY *schedule, unsigned char *ivec, int *num);
+ void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
+         BF_KEY *key, int enc);
+ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out,
+ 	 long length, BF_KEY *schedule, unsigned char *ivec, int enc);
+ void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+ 	 long length, BF_KEY *schedule, unsigned char *ivec, int *num,
+         int enc);
+ void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+ 	 long length, BF_KEY *schedule, unsigned char *ivec, int *num);
  const char *BF_options(void);
 
 =head1 DESCRIPTION
@@ -89,7 +90,7 @@ None of the functions presented here return any value.
 
 =head1 NOTE
 
-Applications should use the higher level functions EVP_DigestInit(3) etc.
+Applications should use the higher level functions EVP_EncryptInit(3) etc.
 instead of calling the blowfish functions directly.
 
 =head1 SEE ALSO

@@ -3,7 +3,7 @@
 =head1 NAME
 
 BN_add, BN_sub, BN_mul, BN_div, BN_sqr, BN_mod, BN_mod_mul, BN_exp,
-BN_mod_exp, BN_gcd - Arithmetic operations on BIGNUMs
+BN_mod_exp, BN_gcd - arithmetic operations on BIGNUMs
 
 =head1 SYNOPSIS
 

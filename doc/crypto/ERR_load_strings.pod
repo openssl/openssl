@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ERR_load_strings, ERR_PACK, ERR_get_next_error_library - Load
+ERR_load_strings, ERR_PACK, ERR_get_next_error_library - load
 arbitrary error strings
 
 =head1 SYNOPSIS

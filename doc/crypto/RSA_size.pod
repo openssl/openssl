@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RSA_size - Get RSA modulus size
+RSA_size - get RSA modulus size
 
 =head1 SYNOPSIS
 

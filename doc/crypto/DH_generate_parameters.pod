@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_generate_parameters, DH_check - Generate and check Diffie-Hellman parameters
+DH_generate_parameters, DH_check - generate and check Diffie-Hellman parameters
 
 =head1 SYNOPSIS
 

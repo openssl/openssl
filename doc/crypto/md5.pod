@@ -51,8 +51,8 @@ for MD2_DIGEST_LENGTH == 16 bytes of output, and erases the B<MD2_CTX>.
 MD5_Init(), MD5_Update() and MD5_Final() are analogous using an
 B<MD5_CTX> structure.
 
-Applications should use the higher level functions EVP_DigestInit(3) etc.
-instead of calling the hash functions directly.
+Applications should use the higher level functions EVP_DigestInit(3)
+etc. instead of calling the hash functions directly.
 
 =head1 NOTE
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_bytes, RAND_pseudo_bytes - Generate random data
+RAND_bytes, RAND_pseudo_bytes - generate random data
 
 =head1 SYNOPSIS
 

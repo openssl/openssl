@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RSA_generate_key - Generate RSA key pair
+RSA_generate_key - generate RSA key pair
 
 =head1 SYNOPSIS
 

@@ -3,7 +3,7 @@
 =head1 NAME
 
 ERR_load_crypto_strings, SSL_load_error_strings, ERR_free_strings -
-Load and free error strings
+load and free error strings
 
 =head1 SYNOPSIS
 

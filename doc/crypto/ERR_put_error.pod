@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ERR_put_error, ERR_add_error_data - Record an error
+ERR_put_error, ERR_add_error_data - record an error
 
 =head1 SYNOPSIS
 

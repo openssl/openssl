@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-err - Error codes
+err - error codes
 
 =head1 SYNOPSIS
 

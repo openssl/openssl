@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-rand - Pseudo-random number generator
+rand - pseudo-random number generator
 
 =head1 SYNOPSIS
 

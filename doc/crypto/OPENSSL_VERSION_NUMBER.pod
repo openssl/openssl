@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, SSLeay - Get OpenSSL version number
+OPENSSL_VERSION_NUMBER, SSLeay - get OpenSSL version number
 
 =head1 SYNOPSIS
 

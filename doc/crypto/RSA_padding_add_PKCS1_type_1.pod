@@ -6,7 +6,7 @@ RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1,
 RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2,
 RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP,
 RSA_padding_add_SSLv23, RSA_padding_check_SSLv23,
-RSA_padding_add_none, RSA_padding_check_none - Asymmetric encryption
+RSA_padding_add_none, RSA_padding_check_none - asymmetric encryption
 padding
 
 =head1 SYNOPSIS

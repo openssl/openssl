@@ -9,8 +9,9 @@ EVP_DigestInit, EVP_DigestUpdate, EVP_DigestFinal - EVP digest routines
  #include <openssl/evp.h>
 
  void EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
- void EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d, unsigned int cnt);
- void EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
+ void EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
+ void EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
+        unsigned int *s);
 
  #define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
 
