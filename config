@@ -730,7 +730,7 @@ EOF
 		echo "         You have ~5 seconds to press Ctrl-C to abort."
 		(stty -icanon min 0 time 50; read waste) < /dev/tty
 	    fi
-	elif [ "$CC" = "gcc ]; then
+	elif [ "$CC" = "gcc" ]; then
 	    OUT="aix-gcc"
 	fi
 	;;
