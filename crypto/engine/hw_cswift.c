@@ -80,8 +80,8 @@
  */
 #include "vendor_defns/cswift.h"
 
-static int cswift_init();
-static int cswift_finish();
+static int cswift_init(void);
+static int cswift_finish(void);
 
 /* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,

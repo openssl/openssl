@@ -78,8 +78,8 @@
  */
 #include "vendor_defns/hwcryptohook.h"
 
-static int hwcrhk_init();
-static int hwcrhk_finish();
+static int hwcrhk_init(void);
+static int hwcrhk_finish(void);
 static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)()); 
 
 /* Functions to handle mutexes */

@@ -68,8 +68,8 @@
 
 #include "vendor_defns/atalla.h"
 
-static int atalla_init();
-static int atalla_finish();
+static int atalla_init(void);
+static int atalla_finish(void);
 
 /* BIGNUM stuff */
 static int atalla_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
