@@ -124,8 +124,24 @@ static F_RANDOMNUMBERGENERATE randomNumberGenerate;
 
 /* static variables */
 /*------------------*/
-static const char def_CCA4758_LIB_NAME[] = CCA_LIB_NAME;
-static const char *CCA4758_LIB_NAME = def_CCA4758_LIB_NAME;
+static const char *CCA4758_LIB_NAME = NULL;
+static const char *get_CCA4758_LIB_NAME(void)
+	{
+	if(CCA4758_LIB_NAME)
+		return CCA4758_LIB_NAME;
+	return CCA_LIB_NAME;
+	}
+static void free_CCA4758_LIB_NAME(void)
+	{
+	if(CCA4758_LIB_NAME)
+		OPENSSL_free((void*)CCA4758_LIB_NAME);
+	CCA4758_LIB_NAME = NULL;
+	}
+static long set_CCA4758_LIB_NAME(const char *name)
+	{
+	free_CCA4758_LIB_NAME();
+	return (((CCA4758_LIB_NAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 #ifndef OPENSSL_NO_RSA
 static const char* n_keyRecordRead = CSNDKRR;
 static const char* n_digitalSignatureGenerate = CSNDDSG;
@@ -232,6 +248,7 @@ void ENGINE_load_4758cca(void)
 static int ibm_4758_cca_destroy(ENGINE *e)
 	{
 	ERR_unload_CCA4758_strings();
+	free_CCA4758_LIB_NAME();
 	return 1;
 	}
 
@@ -243,7 +260,7 @@ static int ibm_4758_cca_init(ENGINE *e)
 		goto err;
 		}
 
-	dso = DSO_load(NULL, CCA4758_LIB_NAME , NULL, 0);
+	dso = DSO_load(NULL, get_CCA4758_LIB_NAME(), NULL, 0);
 	if(!dso)
 		{
 		CCA4758err(CCA4758_F_IBM_4758_CCA_INIT,CCA4758_R_DSO_FAILURE);
@@ -299,7 +316,8 @@ err:
 
 static int ibm_4758_cca_finish(ENGINE *e)
 	{
-	if(dso)
+	free_CCA4758_LIB_NAME();
+	if(!dso)
 		{
 		CCA4758err(CCA4758_F_IBM_4758_CCA_FINISH,
 				CCA4758_R_NOT_LOADED);
@@ -340,8 +358,7 @@ static int ibm_4758_cca_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 					CCA4758_R_ALREADY_LOADED);
 			return 0;
 			}
-		CCA4758_LIB_NAME = (const char *)p;
-		return 1;
+		return set_CCA4758_LIB_NAME((const char *)p);
 	default:
 		break;
 		}

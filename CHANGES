@@ -4,6 +4,12 @@
 
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Make sure any ENGINE control commands make local copies of string
+     pointers passed to them whenever necessary. Otherwise it is possible
+     the caller may have overwritten (or deallocated) the original string
+     data when a later ENGINE operation tries to use the stored values.
+     [Götz Babin-Ebell <babinebell@trustcenter.de>]
+
   *) Improve diagnostics in file reading and command-line digests.
      [Ben Laurie aided and abetted by Solar Designer <solar@openwall.com>]
 

@@ -286,8 +286,24 @@ static tfnASI_GetPerformanceStatistics *p_Atalla_GetPerformanceStatistics = NULL
  * atasi.dll on win32). For the purposes of testing, I have created a symbollic
  * link called "libatasi.so" so that we can use native name-translation - a
  * better solution will be needed. */
-static const char def_ATALLA_LIBNAME[] = "atasi";
-static const char *ATALLA_LIBNAME = def_ATALLA_LIBNAME;
+static const char *ATALLA_LIBNAME = NULL;
+static const char *get_ATALLA_LIBNAME(void)
+	{
+		if(ATALLA_LIBNAME)
+			return ATALLA_LIBNAME;
+		return "atasi";
+	}
+static void free_ATALLA_LIBNAME(void)
+	{
+		if(ATALLA_LIBNAME)
+			OPENSSL_free((void*)ATALLA_LIBNAME);
+		ATALLA_LIBNAME = NULL;
+	}
+static long set_ATALLA_LIBNAME(const char *name)
+	{
+	free_ATALLA_LIBNAME();
+	return (((ATALLA_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 static const char *ATALLA_F1 = "ASI_GetHardwareConfig";
 static const char *ATALLA_F2 = "ASI_RSAPrivateKeyOpFn";
 static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
@@ -295,6 +311,7 @@ static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
 /* Destructor (complements the "ENGINE_atalla()" constructor) */
 static int atalla_destroy(ENGINE *e)
 	{
+	free_ATALLA_LIBNAME();
 	/* Unload the atalla error strings so any error state including our
 	 * functs or reasons won't lead to a segfault (they simply get displayed
 	 * without corresponding string data because none will be found). */
@@ -324,7 +341,7 @@ static int atalla_init(ENGINE *e)
 	 * drivers really use - for now a symbollic link needs to be
 	 * created on the host system from libatasi.so to atasi.so on
 	 * unix variants. */
-	atalla_dso = DSO_load(NULL, ATALLA_LIBNAME, NULL, 0);
+	atalla_dso = DSO_load(NULL, get_ATALLA_LIBNAME(), NULL, 0);
 	if(atalla_dso == NULL)
 		{
 		ATALLAerr(ATALLA_F_ATALLA_INIT,ATALLA_R_NOT_LOADED);
@@ -364,6 +381,7 @@ err:
 
 static int atalla_finish(ENGINE *e)
 	{
+	free_ATALLA_LIBNAME();
 	if(atalla_dso == NULL)
 		{
 		ATALLAerr(ATALLA_F_ATALLA_FINISH,ATALLA_R_NOT_LOADED);
@@ -397,8 +415,7 @@ static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 			ATALLAerr(ATALLA_F_ATALLA_CTRL,ATALLA_R_ALREADY_LOADED);
 			return 0;
 			}
-		ATALLA_LIBNAME = (const char *)p;
-		return 1;
+		return set_ATALLA_LIBNAME((const char *)p);
 	default:
 		break;
 		}

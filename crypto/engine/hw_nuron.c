@@ -69,8 +69,24 @@
 #define NURON_LIB_NAME "nuron engine"
 #include "hw_nuron_err.c"
 
-static const char def_NURON_LIBNAME[] = "nuronssl";
-static const char *NURON_LIBNAME = def_NURON_LIBNAME;
+static const char *NURON_LIBNAME = NULL;
+static const char *get_NURON_LIBNAME(void)
+	{
+	if(NURON_LIBNAME)
+		return NURON_LIBNAME;
+	return "nuronssl";
+	}
+static void free_NURON_LIBNAME(void)
+	{
+	if(NURON_LIBNAME)
+		OPENSSL_free((void*)NURON_LIBNAME);
+	NURON_LIBNAME = NULL;
+	}
+static long set_NURON_LIBNAME(const char *name)
+	{
+	free_NURON_LIBNAME();
+	return (((NURON_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 static const char *NURON_F1 = "nuron_mod_exp";
 
 /* The definitions for control commands specific to this engine */
@@ -90,6 +106,7 @@ static DSO *pvDSOHandle = NULL;
 
 static int nuron_destroy(ENGINE *e)
 	{
+	free_NURON_LIBNAME();
 	ERR_unload_NURON_strings();
 	return 1;
 	}
@@ -102,7 +119,7 @@ static int nuron_init(ENGINE *e)
 		return 0;
 		}
 
-	pvDSOHandle = DSO_load(NULL, NURON_LIBNAME, NULL,
+	pvDSOHandle = DSO_load(NULL, get_NURON_LIBNAME(), NULL,
 		DSO_FLAG_NAME_TRANSLATION_EXT_ONLY);
 	if(!pvDSOHandle)
 		{
@@ -122,6 +139,7 @@ static int nuron_init(ENGINE *e)
 
 static int nuron_finish(ENGINE *e)
 	{
+	free_NURON_LIBNAME();
 	if(pvDSOHandle == NULL)
 		{
 		NURONerr(NURON_F_NURON_FINISH,NURON_R_NOT_LOADED);
@@ -153,8 +171,7 @@ static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 			NURONerr(NURON_F_NURON_CTRL,NURON_R_ALREADY_LOADED);
 			return 0;
 			}
-		NURON_LIBNAME = (const char *)p;
-		return 1;
+		return set_NURON_LIBNAME((const char *)p);
 	default:
 		break;
 		}
