@@ -86,9 +86,13 @@ void DES_string_to_key(const char *str, DES_cblock *key)
 		}
 #endif
 	DES_set_odd_parity(key);
+#ifdef EXPERIMENTAL_STR_TO_STRONG_KEY
 	if(DES_is_weak_key(key))
 	    (*key)[7] ^= 0xF0;
 	DES_set_key(key,&ks);
+#else
+	DES_set_key_unchecked(key,&ks);
+#endif
 	DES_cbc_cksum((const unsigned char*)str,key,length,&ks,key);
 	memset(&ks,0,sizeof(ks));
 	DES_set_odd_parity(key);
@@ -147,13 +151,21 @@ void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 #endif
 	DES_set_odd_parity(key1);
 	DES_set_odd_parity(key2);
+#ifdef EXPERIMENTAL_STR_TO_STRONG_KEY
 	if(DES_is_weak_key(key1))
 	    (*key1)[7] ^= 0xF0;
 	DES_set_key(key1,&ks);
+#else
+	DES_set_key_unchecked(key1,&ks);
+#endif
 	DES_cbc_cksum((const unsigned char*)str,key1,length,&ks,key1);
+#ifdef EXPERIMENTAL_STR_TO_STRONG_KEY
 	if(DES_is_weak_key(key2))
 	    (*key2)[7] ^= 0xF0;
 	DES_set_key(key2,&ks);
+#else
+	DES_set_key_unchecked(key2,&ks);
+#endif
 	DES_cbc_cksum((const unsigned char*)str,key2,length,&ks,key2);
 	memset(&ks,0,sizeof(ks));
 	DES_set_odd_parity(key1);
