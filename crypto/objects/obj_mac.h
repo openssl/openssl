@@ -1833,3 +1833,39 @@
 #define LN_rijndael_ecb_k256_b256		"rijndael-ecb-k256-b256"
 #define NID_rijndael_ecb_k256_b256		404
 
+#define SN_rd128_cbc_b128		"RD128-CBC-B128"
+#define LN_rd128_cbc_b128		"rd128-cbc-b128"
+#define NID_rd128_cbc_b128		408
+
+#define SN_rd192_cbc_b128		"RD192-CBC-B128"
+#define LN_rd192_cbc_b128		"rd192-cbc-b128"
+#define NID_rd192_cbc_b128		409
+
+#define SN_rd256_cbc_b128		"RD256-CBC-B128"
+#define LN_rd256_cbc_b128		"rd256-cbc-b128"
+#define NID_rd256_cbc_b128		410
+
+#define SN_rd128_cbc_b192		"RD128-CBC-B192"
+#define LN_rd128_cbc_b192		"rd128-cbc-b192"
+#define NID_rd128_cbc_b192		411
+
+#define SN_rd192_cbc_b192		"RD192-CBC-B192"
+#define LN_rd192_cbc_b192		"rd192-cbc-b192"
+#define NID_rd192_cbc_b192		412
+
+#define SN_rd256_cbc_b192		"RD256-CBC-B192"
+#define LN_rd256_cbc_b192		"rd256-cbc-b192"
+#define NID_rd256_cbc_b192		413
+
+#define SN_rd128_cbc_b256		"RD128-CBC-B256"
+#define LN_rd128_cbc_b256		"rd128-cbc-b256"
+#define NID_rd128_cbc_b256		414
+
+#define SN_rd192_cbc_b256		"RD192-CBC-B256"
+#define LN_rd192_cbc_b256		"rd192-cbc-b256"
+#define NID_rd192_cbc_b256		415
+
+#define SN_rd256_cbc_b256		"RD256-CBC-B256"
+#define LN_rd256_cbc_b256		"rd256-cbc-b256"
+#define NID_rd256_cbc_b256		416
+

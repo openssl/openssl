@@ -20,7 +20,7 @@ RD_ENC=		rd_enc.o
 # or use
 #DES_ENC=	bx86-elf.o
 
-CFLAGS= $(INCLUDES) $(CFLAG) -DINTERMEDIATE_VALUE_KAT -DBINARY_KEY_MATERIAL
+CFLAGS= -mpentiumpro $(INCLUDES) $(CFLAG) -DINTERMEDIATE_VALUE_KAT -DBINARY_KEY_MATERIAL -O3 -fexpensive-optimizations -funroll-loops -fforce-addr
 
 GENERAL=Makefile
 #TEST=rijndael-test-fst.c table.128 table.192 table.256
@@ -44,6 +44,8 @@ lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB)
 	@touch lib
+
+$(LIBOBJ): $(LIBSRC)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO

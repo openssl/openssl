@@ -56,15 +56,22 @@
 static EVP_CIPHER rd_cipher[3][3];
 
 static int anSizes[]={16,24,32};
-static int anNIDs[3][3]=
+static int anECBNIDs[3][3]=
     {
     { NID_rijndael_ecb_k128_b128,NID_rijndael_ecb_k192_b128,NID_rijndael_ecb_k256_b128 },
     { NID_rijndael_ecb_k128_b192,NID_rijndael_ecb_k192_b192,NID_rijndael_ecb_k256_b192 },
     { NID_rijndael_ecb_k128_b256,NID_rijndael_ecb_k192_b256,NID_rijndael_ecb_k256_b256 }
     };
 
-static int rd_init_ecb(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-		       const unsigned char *iv, int enc)
+static int anCBCNIDs[3][3]=
+    {
+    { NID_rd128_cbc_b128,NID_rd192_cbc_b128,NID_rd256_cbc_b128 },
+    { NID_rd128_cbc_b192,NID_rd192_cbc_b192,NID_rd256_cbc_b192 },
+    { NID_rd128_cbc_b256,NID_rd192_cbc_b256,NID_rd256_cbc_b256 }
+    };
+
+static int rd_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		   const unsigned char *iv, int enc)
     {
     RIJNDAEL_KEY *k=&ctx->c.rijndael;
 
@@ -98,6 +105,39 @@ static int rd_cipher_ecb(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
     }
 
+static int rd_cipher_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			 const unsigned char *in, unsigned int inl)
+    {
+    int n;
+    unsigned char tmp[16];
+
+    while(inl > 0)
+	{
+	if(ctx->c.rijndael.enc)
+	    {
+	    for(n=0 ; n < 16 ; ++n)
+		tmp[n]=in[n]^ctx->c.rijndael.iv[n];
+	    rijndaelEncrypt(tmp,out,ctx->c.rijndael.keySched,
+			    ctx->c.rijndael.rounds);
+	    memcpy(ctx->c.rijndael.iv,out,16);
+	    }
+	else
+	    {
+	    rijndaelDecrypt(in,out,ctx->c.rijndael.keySched,
+			    ctx->c.rijndael.rounds);
+	    for(n=0 ; n < 16 ; ++n)
+		out[n]^=ctx->c.rijndael.iv[n];
+	    memcpy(ctx->c.rijndael.iv,in,16);
+	    }
+	inl-=16;
+	in+=16;
+	out+=16;
+	}
+    assert(inl == 0);
+
+    return 1;
+    }
+
 EVP_CIPHER *EVP_rijndael_ecb(int nBlockLength,int nKeyLength)
     {
     EVP_CIPHER *c;
@@ -117,13 +157,45 @@ EVP_CIPHER *EVP_rijndael_ecb(int nBlockLength,int nKeyLength)
 
     memset(c,'\0',sizeof *c);
 
-    c->nid=anNIDs[nBlockLength][nKeyLength];
+    c->nid=anECBNIDs[nBlockLength][nKeyLength];
     c->block_size=anSizes[nBlockLength];
     c->key_len=anSizes[nKeyLength];
     c->iv_len=16;
     c->flags=EVP_CIPH_ECB_MODE;
-    c->init=rd_init_ecb;
+    c->init=rd_init;
     c->do_cipher=rd_cipher_ecb;
+    c->ctx_size=sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rijndael));
+
+    return c;
+    }
+
+EVP_CIPHER *EVP_rijndael_cbc(int nBlockLength,int nKeyLength)
+    {
+    EVP_CIPHER *c;
+
+    if(nBlockLength < 0 || nBlockLength > 2)
+	{
+	EVPerr(EVP_F_EVP_RIJNDAEL,EVP_R_BAD_BLOCK_LENGTH);
+	return NULL;
+	}
+    if(nKeyLength < 0 || nKeyLength > 2)
+	{
+	EVPerr(EVP_F_EVP_RIJNDAEL,EVP_R_BAD_KEY_LENGTH);
+	return NULL;
+	}
+
+    c=&rd_cipher[nKeyLength][nBlockLength];
+
+    memset(c,'\0',sizeof *c);
+
+    c->nid=anCBCNIDs[nBlockLength][nKeyLength];
+    c->block_size=anSizes[nBlockLength];
+    c->key_len=anSizes[nKeyLength];
+    c->iv_len=16;
+    c->flags=EVP_CIPH_CBC_MODE;
+    c->init=rd_init;
+    c->do_cipher=rd_cipher_cbc;
     c->ctx_size=sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rijndael));
 

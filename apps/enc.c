@@ -442,6 +442,9 @@ bad:
 
 	if (cipher != NULL)
 		{
+		/* Note that str is NULL if a key was passed on the command
+		 * line, so we get no salt in that case. Is this a bug?
+		 */
 		if (str != NULL)
 			{
 			/* Salt handling: if encrypting generate a salt and

@@ -150,7 +150,10 @@ void OpenSSL_add_all_ciphers(void)
 #ifndef NO_RIJNDAEL
 	for(i=0 ; i < 3 ; ++i)
 	    for(j=0 ; j < 3 ; ++j)
+		{
 		EVP_add_cipher(EVP_rijndael_ecb(i,j));
+		EVP_add_cipher(EVP_rijndael_cbc(i,j));
+		}
 #endif
 	PKCS12_PBE_add();
 	PKCS5_PBE_add();

@@ -402,3 +402,15 @@ rijndael_ecb_k256_b192		401
 rijndael_ecb_k128_b256		402
 rijndael_ecb_k192_b256		403
 rijndael_ecb_k256_b256		404
+rd128_cbc		405
+rd192_cbc		406
+rd256_cbc		407
+rd128_cbc_b128		408
+rd192_cbc_b128		409
+rd256_cbc_b128		410
+rd128_cbc_b192		411
+rd192_cbc_b192		412
+rd256_cbc_b192		413
+rd128_cbc_b256		414
+rd192_cbc_b256		415
+rd256_cbc_b256		416

@@ -708,6 +708,19 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	    SSL_ALL_CIPHERS,
 	    SSL_ALL_STRENGTHS
 	    },
+	/* Cipher ?? */
+	    {
+	    1,
+	    TLS1_TXT_RSA_WITH_RD_128_SHA,
+	    TLS1_CK_RSA_WITH_RD_128_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_RD|SSL_SHA |SSL_TLSV1,
+	    SSL_NOT_EXP|SSL_HIGH,
+	    0,
+	    128,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
 #endif
 
 /* end of list */

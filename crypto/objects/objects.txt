@@ -601,3 +601,12 @@ enterprises 1466 344	: dcobject		: dcObject
 			: RIJNDAEL-ECB-K128-B256: rijndael-ecb-k128-b256
 			: RIJNDAEL-ECB-K192-B256: rijndael-ecb-k192-b256
 			: RIJNDAEL-ECB-K256-B256: rijndael-ecb-k256-b256
+			: RD128-CBC-B128	: rd128-cbc-b128
+			: RD192-CBC-B128	: rd192-cbc-b128
+			: RD256-CBC-B128	: rd256-cbc-b128
+			: RD128-CBC-B192	: rd128-cbc-b192
+			: RD192-CBC-B192	: rd192-cbc-b192
+			: RD256-CBC-B192	: rd256-cbc-b192
+			: RD128-CBC-B256	: rd128-cbc-b256
+			: RD192-CBC-B256	: rd192-cbc-b256
+			: RD256-CBC-B256	: rd256-cbc-b256

@@ -63,6 +63,8 @@
 
 int SSL_library_init(void)
 	{
+	int k;
+
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cbc());
 	EVP_add_cipher(EVP_des_ede3_cbc());
@@ -75,7 +77,9 @@ int SSL_library_init(void)
 #endif  
 #ifndef NO_RC2
 	EVP_add_cipher(EVP_rc2_cbc());
-#endif  
+#endif
+	for(k=0 ; k < 2 ; ++k)
+	    EVP_add_cipher(EVP_rijndael_cbc(0,k));
 
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
@@ -96,7 +100,6 @@ int SSL_library_init(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
-
 	/* If you want support for phased out ciphers, add the following */
 #if 0
 	EVP_add_digest(EVP_sha());

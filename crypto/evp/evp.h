@@ -707,6 +707,7 @@ EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
 #ifndef NO_RIJNDAEL
 EVP_CIPHER *EVP_rijndael_ecb(int nBlockLength,int nKeyLength);
+EVP_CIPHER *EVP_rijndael_cbc(int nBlockLength,int nKeyLength);
 #endif
 
 void OpenSSL_add_all_algorithms(void);

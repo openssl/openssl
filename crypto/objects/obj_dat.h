@@ -61,9 +61,9 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 405
-#define NUM_SN 401
-#define NUM_LN 401
+#define NUM_NID 417
+#define NUM_SN 410
+#define NUM_LN 410
 #define NUM_OBJ 366
 
 static unsigned char lvalues[2896]={
@@ -1066,6 +1066,18 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_rijndael_ecb_k192_b256,0,NULL},
 {"RIJNDAEL-ECB-K256-B256","rijndael-ecb-k256-b256",
 	NID_rijndael_ecb_k256_b256,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{"RD128-CBC-B128","rd128-cbc-b128",NID_rd128_cbc_b128,0,NULL},
+{"RD192-CBC-B128","rd192-cbc-b128",NID_rd192_cbc_b128,0,NULL},
+{"RD256-CBC-B128","rd256-cbc-b128",NID_rd256_cbc_b128,0,NULL},
+{"RD128-CBC-B192","rd128-cbc-b192",NID_rd128_cbc_b192,0,NULL},
+{"RD192-CBC-B192","rd192-cbc-b192",NID_rd192_cbc_b192,0,NULL},
+{"RD256-CBC-B192","rd256-cbc-b192",NID_rd256_cbc_b192,0,NULL},
+{"RD128-CBC-B256","rd128-cbc-b256",NID_rd128_cbc_b256,0,NULL},
+{"RD192-CBC-B256","rd192-cbc-b256",NID_rd192_cbc_b256,0,NULL},
+{"RD256-CBC-B256","rd256-cbc-b256",NID_rd256_cbc_b256,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1155,6 +1167,15 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[122]),/* "RC5-CFB" */
 &(nid_objs[121]),/* "RC5-ECB" */
 &(nid_objs[123]),/* "RC5-OFB" */
+&(nid_objs[408]),/* "RD128-CBC-B128" */
+&(nid_objs[411]),/* "RD128-CBC-B192" */
+&(nid_objs[414]),/* "RD128-CBC-B256" */
+&(nid_objs[409]),/* "RD192-CBC-B128" */
+&(nid_objs[412]),/* "RD192-CBC-B192" */
+&(nid_objs[415]),/* "RD192-CBC-B256" */
+&(nid_objs[410]),/* "RD256-CBC-B128" */
+&(nid_objs[413]),/* "RD256-CBC-B192" */
+&(nid_objs[416]),/* "RD256-CBC-B256" */
 &(nid_objs[396]),/* "RIJNDAEL-ECB-K128-B128" */
 &(nid_objs[399]),/* "RIJNDAEL-ECB-K128-B192" */
 &(nid_objs[402]),/* "RIJNDAEL-ECB-K128-B256" */
@@ -1834,6 +1855,15 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[122]),/* "rc5-cfb" */
 &(nid_objs[121]),/* "rc5-ecb" */
 &(nid_objs[123]),/* "rc5-ofb" */
+&(nid_objs[408]),/* "rd128-cbc-b128" */
+&(nid_objs[411]),/* "rd128-cbc-b192" */
+&(nid_objs[414]),/* "rd128-cbc-b256" */
+&(nid_objs[409]),/* "rd192-cbc-b128" */
+&(nid_objs[412]),/* "rd192-cbc-b192" */
+&(nid_objs[415]),/* "rd192-cbc-b256" */
+&(nid_objs[410]),/* "rd256-cbc-b128" */
+&(nid_objs[413]),/* "rd256-cbc-b192" */
+&(nid_objs[416]),/* "rd256-cbc-b256" */
 &(nid_objs[396]),/* "rijndael-ecb-k128-b128" */
 &(nid_objs[399]),/* "rijndael-ecb-k128-b192" */
 &(nid_objs[402]),/* "rijndael-ecb-k128-b256" */
