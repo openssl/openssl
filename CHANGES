@@ -1,3 +1,4 @@
+
  OpenSSL CHANGES
  _______________
 
@@ -424,15 +425,15 @@
      Fix leaks in PKCS12 and PKCS7 routines.
      [Steve Henson]
 
-  *) Fix for Irix with NO_ASM.
-     ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
-
   *) Add some EVP_add_digest_alias registrations (as found in
-     OpenSSL_add_all_digests()), to SSL_library_init()
+     OpenSSL_add_all_digests()) to SSL_library_init()
      aka OpenSSL_add_ssl_algorithms().  This provides improved
      compatibility with peers using X.509 certificates
      with unconventional AlgorithmIdentifier OIDs.
      [Bodo Moeller]
+
+  *) Fix for Irix with NO_ASM.
+     ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
 
   *) ./config script fixes.
      [Ulf Moeller, Richard Levitte]
@@ -798,6 +799,10 @@
      be handled deterministically).
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
+  *) Add a 'bctest' script that checks for some known 'bc' bugs
+     so that 'make test' does not abort just because 'bc' is broken.
+     [Bodo Moeller]
+
   *) Store verify_result within SSL_SESSION also for client side to
      avoid potential security hole. (Re-used sessions on the client side
      always resulted in verify_result==X509_V_OK, not using the original
@@ -1081,6 +1086,9 @@
      Previously, it would create entries for disableed algorithms no
      matter what.
      [Richard Levitte]
+
+  *) Added several new manual pages for SSL_* function.
+     [Lutz Jaenicke]
 
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
