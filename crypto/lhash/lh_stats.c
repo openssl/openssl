@@ -88,7 +88,7 @@ void lh_stats(LHASH *lh, FILE *out)
 	fprintf(out,"num_retrieve          = %lu\n",lh->num_retrieve);
 	fprintf(out,"num_retrieve_miss     = %lu\n",lh->num_retrieve_miss);
 	fprintf(out,"num_hash_comps        = %lu\n",lh->num_hash_comps);
-#ifdef DEBUG
+#if 0
 	fprintf(out,"p                     = %u\n",lh->p);
 	fprintf(out,"pmax                  = %u\n",lh->pmax);
 	fprintf(out,"up_load               = %lu\n",lh->up_load);
@@ -213,7 +213,7 @@ void lh_stats_bio(const LHASH *lh, BIO *out)
 	BIO_puts(out,buf);
 	sprintf(buf,"num_hash_comps        = %lu\n",lh->num_hash_comps);
 	BIO_puts(out,buf);
-#ifdef DEBUG
+#if 0
 	sprintf(buf,"p                     = %u\n",lh->p);
 	BIO_puts(out,buf);
 	sprintf(buf,"pmax                  = %u\n",lh->pmax);
