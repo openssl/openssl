@@ -266,16 +266,16 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 
 		for (;;)
 			{
-			t=(h-q*dh);
+			t=(h-(th=q*dh));
+			tl=BN_MASK2;
 			if ((t&BN_MASK2h) ||
-				((dl*q) <= (
-					(t<<BN_BITS4)+
+				((tl=dl*q) <= (
+					(t<<BN_BITS4)|
 					((l&BN_MASK2h)>>BN_BITS4))))
 				break;
 			q--;
 			}
-		th=q*dh;
-		tl=q*dl;
+		if (tl==BN_MASK2) tl=q*dl;
 		t=(tl>>BN_BITS4);
 		tl=(tl<<BN_BITS4)&BN_MASK2h;
 		th+=t;
