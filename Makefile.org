@@ -117,9 +117,9 @@ SDIRS=  \
 # should be performed.
 TESTS = alltests
 
-MAKEFILE= Makefile.ssl
+MAKEFILE= Makefile
 NEWMAKE=  make
-MAKE=     $(NEWMAKE) -f Makefile.ssl
+MAKE=     $(NEWMAKE)
 
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
@@ -146,7 +146,7 @@ WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os2.h
 HEADER=         e_os.h
 
-all: Makefile.ssl build_all openssl.pc
+all: Makefile build_all openssl.pc
 
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}'	\
@@ -253,7 +253,7 @@ do_$(SHLIB_TARGET):
 		libs="-l$$i $$libs"; \
 	done
 
-openssl.pc: Makefile.ssl
+openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/lib'; \
@@ -266,8 +266,8 @@ openssl.pc: Makefile.ssl
 	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
-Makefile.ssl: Makefile.org
-	@echo "Makefile.ssl is older than Makefile.org."
+Makefile: Makefile.org
+	@echo "Makefile is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
 	@false
 
@@ -297,7 +297,7 @@ makefile.one: files
 	sh util/do_ms.sh
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
 	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
@@ -307,7 +307,6 @@ files:
 	done;
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; target=links; for dir in $(DIRS); do $(BUILD_CMD); done

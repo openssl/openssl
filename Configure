@@ -572,7 +572,7 @@ my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_asm=0;
 my $no_dso=0;
 my @skip=();
-my $Makefile="Makefile.ssl";
+my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
 my $des	="crypto/des/des.h";
 my $bn	="crypto/bn/bn.h";
@@ -1534,7 +1534,7 @@ if($IsMK1MF) {
 EOF
 	close(OUT);
 } else {
-	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_command = "make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
