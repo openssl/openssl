@@ -60,7 +60,7 @@
 #include "rc5_locl.h"
 #include <openssl/opensslv.h>
 
-char *RC5_version="RC5" OPENSSL_VERSION_PTEXT;
+const char RC5_version[]="RC5" OPENSSL_VERSION_PTEXT;
 
 void RC5_32_ecb_encrypt(const unsigned char *in, unsigned char *out,
 			RC5_32_KEY *ks, int encrypt)
