@@ -34,9 +34,9 @@ library internal functions
    int nb);
  void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n);
  void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
-   BN_ULONG *tmp);
+   int dna,int dnb,BN_ULONG *tmp);
  void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b,
-   int tn, int n, BN_ULONG *tmp);
+   int n, int tna,int tnb, BN_ULONG *tmp);
  void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b,
    int n2, BN_ULONG *tmp);
  void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l,
@@ -152,14 +152,15 @@ bn_mul_low_normal(B<r>, B<a>, B<b>, B<n>) operates on the B<n> word
 arrays B<r>, B<a> and B<b>.  It computes the B<n> low words of
 B<a>*B<b> and places the result in B<r>.
 
-bn_mul_recursive(B<r>, B<a>, B<b>, B<n2>, B<t>) operates on the B<n2>
-word arrays B<a> and B<b> and the 2*B<n2> word arrays B<r> and B<t>.
-B<n2> must be a power of 2.  It computes B<a>*B<b> and places the
-result in B<r>.
+bn_mul_recursive(B<r>, B<a>, B<b>, B<n2>, B<dna>, B<dnb>, B<t>) operates
+on the word arrays B<a> and B<b> of length B<n2>+B<dna> and B<n2>+B<dnb>
+(B<dna> and B<dnb> are currently allowed to be 0 or negative) and the 2*B<n2>
+word arrays B<r> and B<t>.  B<n2> must be a power of 2.  It computes
+B<a>*B<b> and places the result in B<r>.
 
-bn_mul_part_recursive(B<r>, B<a>, B<b>, B<tn>, B<n>, B<tmp>) operates
-on the B<n>+B<tn> word arrays B<a> and B<b> and the 4*B<n> word arrays
-B<r> and B<tmp>.
+bn_mul_part_recursive(B<r>, B<a>, B<b>, B<n>, B<tna>, B<tnb, B<tmp>)
+operates on the word arrays B<a> and B<b> of length B<n>+B<tna> and
+B<n>+B<tnb> and the 4*B<n> word arrays B<r> and B<tmp>.
 
 bn_mul_low_recursive(B<r>, B<a>, B<b>, B<n2>, B<tmp>) operates on the
 B<n2> word arrays B<r> and B<tmp> and the B<n2>/2 word arrays B<a>
