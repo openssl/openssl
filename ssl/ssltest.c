@@ -727,7 +727,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 						num = INT_MAX;
 
 					if (num > 1)
-						--num; /* for testing restartability even more thoroughly */
+						--num; /* test restartability even more thoroughly */
 					
 					r = BIO_nwrite(io1, &dataptr, (int)num);
 					assert(r > 0);

@@ -64,7 +64,7 @@ echo test sslv2/sslv3 via BIO pair
 ./ssltest || exit 1
 
 echo test sslv2/sslv3 w/o DHE via BIO pair
-./ssltest -no_dhe || exit 1
+./ssltest -bio_pair -no_dhe || exit 1
 
 echo test sslv2/sslv3 with server authentication
 ./ssltest -bio_pair -server_auth -CApath ../certs || exit 1

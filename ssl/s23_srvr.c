@@ -191,7 +191,7 @@ int ssl23_get_client_hello(SSL *s)
 	unsigned char *p,*d,*dd;
 	unsigned int i;
 	unsigned int csl,sil,cl;
-	int n=0,j,tls1=0;
+	int n=0,j;
 	int type=0,use_sslv2_strong=0;
 	int v[2];
 
@@ -229,12 +229,13 @@ int ssl23_get_client_hello(SSL *s)
 					{
 					if (!(s->options & SSL_OP_NO_TLSv1))
 						{
-						tls1=1;
+						s->version=TLS1_VERSION;
 						/* type=2; */ /* done later to survive restarts */
 						s->state=SSL23_ST_SR_CLNT_HELLO_B;
 						}
 					else if (!(s->options & SSL_OP_NO_SSLv3))
 						{
+						s->version=SSL3_VERSION;
 						/* type=2; */
 						s->state=SSL23_ST_SR_CLNT_HELLO_B;
 						}
@@ -245,6 +246,7 @@ int ssl23_get_client_hello(SSL *s)
 					}
 				else if (!(s->options & SSL_OP_NO_SSLv3))
 					{
+					s->version=SSL3_VERSION;
 					/* type=2; */
 					s->state=SSL23_ST_SR_CLNT_HELLO_B;
 					}
@@ -329,11 +331,14 @@ int ssl23_get_client_hello(SSL *s)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))
 					{
+					s->version=TLS1_VERSION;
 					type=3;
-					tls1=1;
 					}
 				else if (!(s->options & SSL_OP_NO_SSLv3))
+					{
+					s->version=SSL3_VERSION;
 					type=3;
+					}
 				}
 			else if (!(s->options & SSL_OP_NO_SSLv3))
 				type=3;
@@ -356,12 +361,14 @@ int ssl23_get_client_hello(SSL *s)
 next_bit:
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
-		/* we have a SSLv3/TLSv1 in a SSLv2 header
-		 * (other cases skip this state)* */
+		/* we have SSLv3/TLSv1 in an SSLv2 header
+		 * (other cases skip this state) */
+
 		type=2;
 		p=s->packet;
-		v[0] = p[3];
+		v[0] = p[3]; /* == SSL3_VERSION_MAJOR */
 		v[1] = p[4];
+
 		n=((p[0]&0x7f)<<8)|p[1];
 		if (n > (1024*4))
 			{
@@ -386,11 +393,8 @@ next_bit:
 			goto err;
 			}
 
-		*(d++)=SSL3_VERSION_MAJOR;
-		if (tls1)
-			*(d++)=TLS1_VERSION_MINOR;
-		else
-			*(d++)=SSL3_VERSION_MINOR;
+		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
+		*(d++) = v[1];
 
 		/* lets populate the random area */
 		/* get the chalenge_length */
@@ -499,16 +503,10 @@ next_bit:
 			s->s3->rbuf.offset=0;
 			}
 
-		if (tls1)
-			{
-			s->version=TLS1_VERSION;
-			s->method=TLSv1_server_method();
-			}
+		if (s->version == TLS1_VERSION)
+			s->method = TLSv1_server_method();
 		else
-			{
-			s->version=SSL3_VERSION;
-			s->method=SSLv3_server_method();
-			}
+			s->method = SSLv3_server_method();
 #if 0 /* ssl3_get_client_hello does this */
 		s->client_version=(v[0]<<8)|v[1];
 #endif
@@ -530,4 +528,3 @@ err:
 	if (buf != buf_space) Free(buf);
 	return(-1);
 	}
-
