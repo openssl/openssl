@@ -116,7 +116,7 @@ static const EVP_CIPHER cipher_des_cbc =
 	{
 	NID_des_cbc,
 	8, 8, 8,
-	0,
+	0 | EVP_CIPH_CBC_MODE,
 	cipher_des_cbc_init,
 	cipher_des_cbc_code,
 	cipher_des_cbc_clean,
@@ -131,7 +131,7 @@ static const EVP_CIPHER cipher_des_ede3_cbc =
 	{
 	NID_des_ede3_cbc,
 	8, 24, 8,
-	0,
+	0 | EVP_CIPH_CBC_MODE,
 	cipher_des_ede3_cbc_init,
 	cipher_des_ede3_cbc_code,
 	cipher_des_ede3_cbc_clean,
@@ -146,7 +146,7 @@ static const EVP_CIPHER cipher_desx_cbc =
 	{
 	NID_desx_cbc,
 	8, 24, 8,
-	0,
+	0 | EVP_CIPH_CBC_MODE,
 	cipher_desx_cbc_init,
 	cipher_desx_cbc_code,
 	cipher_desx_cbc_clean,
