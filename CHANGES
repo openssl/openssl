@@ -5,8 +5,16 @@
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
   *) Change ./Configure so that certain algorithms can be disabled by default.
-     The new counterpiece to "no-xxx" is "enable-xxx", and RC5 will now be
-     disabled unless "enable-rc5" is specified.
+     The new counterpiece to "no-xxx" is "enable-xxx".
+
+     The patented RC5 and MDC2 algorithms will now be disabled unless
+     "enable-rc5" and "enable-mdc2", respectively, are specified.
+
+     (IDEA remains enabled despite being patented.  This is because IDEA
+     is frequently required for interoperability, and there is no license
+     fee for non-commercial use.  As before, "no-idea" can be used to
+     avoid this algorithm.)
+
      [Bodo Moeller]
 
   *) Add processing of proxy certificates (see RFC 3820).  This work was
