@@ -390,10 +390,10 @@ static unsigned char lvalues[3845]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x01,     /* [2583] OBJ_id_on_personalData */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x01,     /* [2591] OBJ_id_pda_dateOfBirth */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x02,     /* [2599] OBJ_id_pda_placeOfBirth */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x03,     /* [2607] OBJ_id_pda_pseudonym */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x04,     /* [2615] OBJ_id_pda_gender */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x05,     /* [2623] OBJ_id_pda_countryOfCitizenship */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x06,     /* [2631] OBJ_id_pda_countryOfResidence */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x06,     /* [2607] OBJ_id_pda_pseudonym */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x03,     /* [2615] OBJ_id_pda_gender */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x04,     /* [2623] OBJ_id_pda_countryOfCitizenship */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x05,     /* [2631] OBJ_id_pda_countryOfResidence */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x01,     /* [2639] OBJ_id_aca_authenticationInfo */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x02,     /* [2647] OBJ_id_aca_accessIdentity */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x03,     /* [2655] OBJ_id_aca_chargingIdentity */
@@ -2548,10 +2548,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[347]),/* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
 &(nid_objs[348]),/* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
 &(nid_objs[349]),/* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
-&(nid_objs[350]),/* OBJ_id_pda_pseudonym             1 3 6 1 5 5 7 9 3 */
-&(nid_objs[351]),/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 4 */
-&(nid_objs[352]),/* OBJ_id_pda_countryOfCitizenship  1 3 6 1 5 5 7 9 5 */
-&(nid_objs[353]),/* OBJ_id_pda_countryOfResidence    1 3 6 1 5 5 7 9 6 */
+&(nid_objs[351]),/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */
+&(nid_objs[352]),/* OBJ_id_pda_countryOfCitizenship  1 3 6 1 5 5 7 9 4 */
+&(nid_objs[353]),/* OBJ_id_pda_countryOfResidence    1 3 6 1 5 5 7 9 5 */
+&(nid_objs[350]),/* OBJ_id_pda_pseudonym             1 3 6 1 5 5 7 9 6 */
 &(nid_objs[354]),/* OBJ_id_aca_authenticationInfo    1 3 6 1 5 5 7 10 1 */
 &(nid_objs[355]),/* OBJ_id_aca_accessIdentity        1 3 6 1 5 5 7 10 2 */
 &(nid_objs[356]),/* OBJ_id_aca_chargingIdentity      1 3 6 1 5 5 7 10 3 */
