@@ -89,6 +89,14 @@ extern "C" {
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
 
+/* size of string represenations */
+#define DECIMAL_SIZE(type)     ((sizeof(type)*8+2)/3+1)
+#define HEX_SIZE(type)         ((sizeof(type)*2)
+
+/* die if we have to */
+void OpenSSLDie(const char *file,int line,const char *assertion);
+#define die(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
+
 #ifdef  __cplusplus
 }
 #endif
