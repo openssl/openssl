@@ -2,10 +2,10 @@
 #if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
 
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -164,10 +164,14 @@ int MAIN(int argc, char **argv)
 					 maciter = PKCS12_DEFAULT_ITER;
 		else if (!strcmp (*args, "-nomaciter"))
 					 maciter = 1;
+		else if (!strcmp (*args, "-nomac"))
+					 maciter = -1;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
 		else if (!strcmp (*args, "-certpbe")) {
 			if (args[1]) {
 				args++;
+				if (!strcmp(*args, "NONE"))
+					cert_pbe = -1;
 				cert_pbe=OBJ_txt2nid(*args);
 				if(cert_pbe == NID_undef) {
 					BIO_printf(bio_err,
@@ -178,7 +182,10 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp (*args, "-keypbe")) {
 			if (args[1]) {
 				args++;
-				key_pbe=OBJ_txt2nid(*args);
+				if (!strcmp(*args, "NONE"))
+					key_pbe = -1;
+				else
+					key_pbe=OBJ_txt2nid(*args);
 				if(key_pbe == NID_undef) {
 					BIO_printf(bio_err,
 						 "Unknown PBE algorithm %s\n", *args);
@@ -357,24 +364,6 @@ int MAIN(int argc, char **argv)
 	    goto end;
    }
 
-#if 0
-   if (certfile) {
-    	if(!(certsin = BIO_new_file(certfile, "r"))) {
-	    BIO_printf(bio_err, "Can't open certificate file %s\n", certfile);
-	    perror (certfile);
-	    goto end;
-	}
-    }
-
-    if (keyname) {
-    	if(!(inkey = BIO_new_file(keyname, "r"))) {
-	    BIO_printf(bio_err, "Can't key certificate file %s\n", keyname);
-	    perror (keyname);
-	    goto end;
-	}
-     }
-#endif
-
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
     CRYPTO_push_info("write files");
@@ -411,27 +400,31 @@ int MAIN(int argc, char **argv)
 
     if (export_cert) {
 	EVP_PKEY *key = NULL;
-	STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
-	STACK_OF(PKCS7) *safes = NULL;
-	PKCS12_SAFEBAG *bag = NULL;
-	PKCS8_PRIV_KEY_INFO *p8 = NULL;
-	PKCS7 *authsafe = NULL;
-	X509 *ucert = NULL;
+	X509 *ucert = NULL, *x = NULL;
 	STACK_OF(X509) *certs=NULL;
-	char *catmp = NULL;
+	unsigned char *catmp = NULL;
 	int i;
-	unsigned char keyid[EVP_MAX_MD_SIZE];
-	unsigned int keyidlen = 0;
+
+	if ((options & (NOCERTS|NOKEYS)) == (NOCERTS|NOKEYS))
+		{	
+		BIO_printf(bio_err, "Nothing to do!\n");
+		goto export_end;
+		}
+
+	if (options & NOCERTS)
+		chain = 0;
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_push_info("process -export_cert");
 	CRYPTO_push_info("reading private key");
 #endif
-	key = load_key(bio_err, keyname ? keyname : infile, FORMAT_PEM, 1,
-		passin, e, "private key");
-	if (!key) {
-		goto export_end;
-	}
+	if (!(options & NOKEYS))
+		{
+		key = load_key(bio_err, keyname ? keyname : infile,
+				FORMAT_PEM, 1, passin, e, "private key");
+		if (!key)
+			goto export_end;
+		}
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
@@ -439,49 +432,61 @@ int MAIN(int argc, char **argv)
 #endif
 
 	/* Load in all certs in input file */
-	if(!(certs = load_certs(bio_err, infile, FORMAT_PEM, NULL, e,
-		"certificates"))) {
-		goto export_end;
-	}
+	if(!(options & NOCERTS))
+		{
+		certs = load_certs(bio_err, infile, FORMAT_PEM, NULL, e,
+							"certificates");
+		if (!certs)
+			goto export_end;
+
+		if (key)
+			{
+			/* Look for matching private key */
+			for(i = 0; i < sk_X509_num(certs); i++)
+				{
+				x = sk_X509_value(certs, i);
+				if(X509_check_private_key(x, key))
+					{
+					ucert = x;
+					/* Zero keyid and alias */
+					X509_keyid_set1(ucert, NULL, 0);
+					X509_alias_set1(ucert, NULL, 0);
+					/* Remove from list */
+					sk_X509_delete(certs, i);
+					break;
+					}
+				}
+			if (!ucert)
+				{
+				BIO_printf(bio_err, "No certificate matches private key\n");
+				goto export_end;
+				}
+			}
+
+		}
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
 	CRYPTO_push_info("reading certs from input 2");
 #endif
 
-	for(i = 0; i < sk_X509_num(certs); i++) {
-		ucert = sk_X509_value(certs, i);
-		if(X509_check_private_key(ucert, key)) {
-			X509_digest(ucert, EVP_sha1(), keyid, &keyidlen);
-			break;
-		}
-	}
-	if(!keyidlen) {
-		ucert = NULL;
-		BIO_printf(bio_err, "No certificate matches private key\n");
-		goto export_end;
-	}
-	
+	/* Add any more certificates asked for */
+	if(certfile)
+		{
+		STACK_OF(X509) *morecerts=NULL;
+		if(!(morecerts = load_certs(bio_err, certfile, FORMAT_PEM,
+					    NULL, e,
+					    "certificates from certfile")))
+			goto export_end;
+		while(sk_X509_num(morecerts) > 0)
+			sk_X509_push(certs, sk_X509_shift(morecerts));
+		sk_X509_free(morecerts);
+ 		}
+
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
 	CRYPTO_push_info("reading certs from certfile");
 #endif
-
-	bags = sk_PKCS12_SAFEBAG_new_null ();
-
-	/* Add any more certificates asked for */
-	if (certfile) {
-		STACK_OF(X509) *morecerts=NULL;
-		if(!(morecerts = load_certs(bio_err, certfile, FORMAT_PEM,
-					    NULL, e,
-					    "certificates from certfile"))) {
-			goto export_end;
-		}
-		while(sk_X509_num(morecerts) > 0) {
-			sk_X509_push(certs, sk_X509_shift(morecerts));
-		}
-		sk_X509_free(morecerts);
- 	}
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
@@ -518,100 +523,51 @@ int MAIN(int argc, char **argv)
 		}			
     	}
 
-#ifdef CRYPTO_MDEBUG
-	CRYPTO_pop_info();
-	CRYPTO_push_info("building bags");
-#endif
+	/* Add any CA names */
 
-	/* We now have loads of certificates: include them all */
-	for(i = 0; i < sk_X509_num(certs); i++) {
-		X509 *cert = NULL;
-		cert = sk_X509_value(certs, i);
-		bag = PKCS12_x5092certbag(cert);
-		/* If it matches private key set id */
-		if(cert == ucert) {
-			if(name) PKCS12_add_friendlyname(bag, name, -1);
-			PKCS12_add_localkeyid(bag, keyid, keyidlen);
-		} else if((catmp = sk_shift(canames))) 
-				PKCS12_add_friendlyname(bag, catmp, -1);
-		sk_PKCS12_SAFEBAG_push(bags, bag);
-	}
-	sk_X509_pop_free(certs, X509_free);
-	certs = NULL;
+	for (i = 0; i < sk_num(canames); i++)
+		{
+		catmp = (unsigned char *)sk_value(canames, i);
+		X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
+		}
+		
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
-	CRYPTO_push_info("encrypting bags");
+	CRYPTO_push_info("reading password");
 #endif
 
 	if(!noprompt &&
-		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1)) {
-	    BIO_printf (bio_err, "Can't read Password\n");
-	    goto export_end;
-        }
+		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1))
+		{
+	    	BIO_printf (bio_err, "Can't read Password\n");
+	    	goto export_end;
+        	}
 	if (!twopass) strcpy(macpass, pass);
-	/* Turn certbags into encrypted authsafe */
-	authsafe = PKCS12_pack_p7encdata(cert_pbe, cpass, -1, NULL, 0,
-								 iter, bags);
-	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	bags = NULL;
 
-	if (!authsafe) {
-		ERR_print_errors (bio_err);
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+	CRYPTO_push_info("creating PKCS#12 structure");
+#endif
+
+	p12 = PKCS12_create(pass, name, key, ucert, certs,
+				key_pbe, cert_pbe, iter, -1, keytype);
+
+	if (!p12)
+		{
+	    	ERR_print_errors (bio_err);
 		goto export_end;
-	}
+		}
 
-	safes = sk_PKCS7_new_null ();
-	sk_PKCS7_push (safes, authsafe);
-
-#ifdef CRYPTO_MDEBUG
-	CRYPTO_pop_info();
-	CRYPTO_push_info("building shrouded key bag");
-#endif
-
-	/* Make a shrouded key bag */
-	p8 = EVP_PKEY2PKCS8 (key);
-	if(keytype) PKCS8_add_keyusage(p8, keytype);
-	bag = PKCS12_MAKE_SHKEYBAG(key_pbe, cpass, -1, NULL, 0, iter, p8);
-	PKCS8_PRIV_KEY_INFO_free(p8);
-	p8 = NULL;
-        if (name) PKCS12_add_friendlyname (bag, name, -1);
-	if(csp_name) PKCS12_add_CSPName_asc(bag, csp_name, -1);
-	PKCS12_add_localkeyid (bag, keyid, keyidlen);
-	bags = sk_PKCS12_SAFEBAG_new_null();
-	sk_PKCS12_SAFEBAG_push (bags, bag);
-
-#ifdef CRYPTO_MDEBUG
-	CRYPTO_pop_info();
-	CRYPTO_push_info("encrypting shrouded key bag");
-#endif
-
-	/* Turn it into unencrypted safe bag */
-	authsafe = PKCS12_pack_p7data (bags);
-	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	bags = NULL;
-	sk_PKCS7_push (safes, authsafe);
-
-#ifdef CRYPTO_MDEBUG
-	CRYPTO_pop_info();
-	CRYPTO_push_info("building pkcs12");
-#endif
-
-	p12 = PKCS12_init(NID_pkcs7_data);
-
-	PKCS12_pack_authsafes(p12, safes);
-
-	sk_PKCS7_pop_free(safes, PKCS7_free);
-	safes = NULL;
-
-	PKCS12_set_mac (p12, mpass, -1, NULL, 0, maciter, NULL);
+	if (maciter != -1)
+		PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, NULL);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
 	CRYPTO_push_info("writing pkcs12");
 #endif
 
-	i2d_PKCS12_bio (out, p12);
+	i2d_PKCS12_bio(out, p12);
 
 	ret = 0;
 
@@ -624,8 +580,7 @@ int MAIN(int argc, char **argv)
 
 	if (key) EVP_PKEY_free(key);
 	if (certs) sk_X509_pop_free(certs, X509_free);
-	if (safes) sk_PKCS7_pop_free(safes, PKCS7_free);
-	if (bags) sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+	if (ucert) X509_free(ucert);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();

@@ -249,6 +249,15 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 			 STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
 						 int mac_iter, int keytype);
+
+PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert);
+PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags, EVP_PKEY *key,
+						int key_usage, int iter,
+						int key_nid, char *pass);
+int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
+					int safe_nid, int iter, char *pass);
+PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
+
 int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12);
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);

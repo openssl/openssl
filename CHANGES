@@ -4,6 +4,22 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add new 'medium level' PKCS#12 API. Certificates and keys
+     can be added using this API to created arbitrary PKCS#12
+     files while avoiding the low level API.
+
+     New options to PKCS12_create(), key or cert can be NULL and
+     will then be omitted from the output file. The encryption
+     algorithm NIDs can be set to -1 for no encryption, the mac
+     iteration count can be set to 0 to omit the mac.
+
+     Enhance pkcs12 utility by making the -nokeys and -nocerts
+     options work when creating a PKCS#12 file. New option -nomac
+     to omit the mac, NONE can be set for an encryption algorithm.
+     New code is modified to use the enhanced PKCS12_create()
+     instead of the low level API.
+     [Steve Henson]
+
   *) Extend ASN1 encoder to support indefinite length constructed
      encoding. This can output sequences tags and octet strings in
      this form. Modify pk7_asn1.c to support indefinite length
