@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -553,7 +553,12 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
 	if((type < 0) || (type > 30)) return -1;
 	mbflag = tag2nbyte[type];
 	if(mbflag == -1) return -1;
-	mbflag |= MBSTRING_FLAG;
+	if (mbflag == 0)
+		mbflag = MBSTRING_UTF8;
+	else if (mbflag == 4)
+		mbflag = MBSTRING_UNIV;
+	else		
+		mbflag |= MBSTRING_FLAG;
 	stmp.data = NULL;
 	ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag, B_ASN1_UTF8STRING);
 	if(ret < 0) return ret;
