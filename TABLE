@@ -1106,7 +1106,7 @@ $ranlib       =
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -O3 -D_DARWIN -DB_ENDIAN
+$cflags       = -O3 -D_DARWIN -DB_ENDIAN -fno-common
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -3124,7 +3124,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_ldflag = 
+$shared_ldflag = -m64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
