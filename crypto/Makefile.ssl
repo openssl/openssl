@@ -198,3 +198,6 @@ tmdiff.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 tmdiff.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
 tmdiff.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 tmdiff.o: ../include/openssl/tmdiff.h cryptlib.h
+uid.o: ../include/openssl/crypto.h ../include/openssl/opensslv.h
+uid.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+uid.o: ../include/openssl/symhacks.h

@@ -784,7 +784,7 @@ $unistd       =
 $thread_cflag = (unknown)
 $lflags       = 
 $bn_ops       = 
-$bn_obj       = 
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -1891,6 +1891,27 @@ $shared_cflag =
 $shared_extension = 
 
 *** linux-ppc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -ldl
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+
+*** linux-s390
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
