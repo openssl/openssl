@@ -61,6 +61,11 @@
 
 #include <stdlib.h>
 #include <openssl/ossl_typ.h>
+#include <openssl/opensslconf.h>
+
+#if defined(OPENSSL_SYS_WINDOWS)
+#include <windows.h>
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -98,7 +103,7 @@ int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path,int bytes);
 int RAND_poll(void);
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WINDOWS)
 
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
