@@ -883,6 +883,7 @@ sub read_options
 	elsif (/^profile$/)	{ $profile=1; }
 	elsif (/^shlib$/)	{ $shlib=1; }
 	elsif (/^dll$/)		{ $shlib=1; }
+	elsif (/^shared$/)	{ } # We just need to ignore it for now...
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
 	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
