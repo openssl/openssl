@@ -370,7 +370,7 @@ bad:
 			if (comment == NULL)
 				comment = "";
 			if (sname == NULL)
-				sname == "";
+				sname = "";
 
 			len = BIO_printf(out, "  %-10s: ", sname);
 			if (len + strlen(comment) > 80)
