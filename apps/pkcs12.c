@@ -666,7 +666,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("verify MAC");
 #endif
 	/* If we enter empty password try no password first */
-	if(!macpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
+	if(!mpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
 		/* If mac and crypto pass the same set it to NULL too */
 		if(!twopass) cpass = NULL;
 	} else if (!PKCS12_verify_mac(p12, mpass, -1)) {
