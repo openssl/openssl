@@ -13,9 +13,15 @@ B<openssl> B<s_server>
 [B<-verify depth>]
 [B<-Verify depth>]
 [B<-cert filename>]
+[B<-certform DER|PEM>]
 [B<-key keyfile>]
+[B<-keyform DER|PEM>]
+[B<-pass arg>]
 [B<-dcert filename>]
+[B<-dcertform DER|PEM>]
 [B<-dkey keyfile>]
+[B<-dkeyform DER|PEM>]
+[B<-dpass arg>]
 [B<-dhparam filename>]
 [B<-nbio>]
 [B<-nbio_test>]
@@ -70,10 +76,23 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename "server.pem" will be used.
 
+=item B<-certform format>
+
+The certificate format to use: DER or PEM. PEM is the default.
+
 =item B<-key keyfile>
 
 The private key to use. If not specified then the certificate file will
 be used.
+
+=item B<-keyform format>
+
+The private format to use: DER or PEM. PEM is the default.
+
+=item B<-pass arg>
+
+the private key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-dcert filename>, B<-dkey keyname>
 
@@ -85,6 +104,10 @@ a certain type. Some cipher suites need a certificate carrying an RSA key
 and some a DSS (DSA) key. By using RSA and DSS certificates and keys
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
+
+=item B<-dcertform format>, B<-dkeyform format>, B<-dpass arg>
+
+addtional certificate and private key format and passphrase respectively.
 
 =item B<-nocert>
 

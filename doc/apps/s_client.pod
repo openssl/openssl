@@ -11,7 +11,10 @@ B<openssl> B<s_client>
 [B<-connect host:port>]
 [B<-verify depth>]
 [B<-cert filename>]
+[B<-certform DER|PEM>]
 [B<-key filename>]
+[B<-keyform DER|PEM>]
+[B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
 [B<-reconnect>]
@@ -57,10 +60,23 @@ then an attempt is made to connect to the local host on port 4433.
 The certificate to use, if one is requested by the server. The default is
 not to use a certificate.
 
+=item B<-certform format>
+
+The certificate format to use: DER or PEM. PEM is the default.
+
 =item B<-key keyfile>
 
 The private key to use. If not specified then the certificate file will
 be used.
+
+=item B<-keyform format>
+
+The private format to use: DER or PEM. PEM is the default.
+
+=item B<-pass arg>
+
+the private key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-verify depth>
 

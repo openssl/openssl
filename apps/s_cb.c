@@ -229,6 +229,32 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	return(1);
 	}
 
+int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
+	{
+	if (SSL_CTX_use_certificate(ctx,cert) <= 0)
+		{
+		BIO_printf(bio_err,"error setting certificate\n");
+		ERR_print_errors(bio_err);
+		return 0;
+		}
+	if (SSL_CTX_use_PrivateKey(ctx,key) <= 0)
+		{
+		BIO_printf(bio_err,"error setting private key\n");
+		ERR_print_errors(bio_err);
+		return 0;
+		}
+
+		
+		/* Now we know that a key and cert have been set against
+		 * the SSL context */
+	if (!SSL_CTX_check_private_key(ctx))
+		{
+		BIO_printf(bio_err,"Private key does not match the certificate public key\n");
+		return 0;
+		}
+	return 1;
+	}
+
 long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
 	int argi, long argl, long ret)
 	{

@@ -4,6 +4,11 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) New arguments -certform, -keyform and -pass for s_client and s_server
+     to allow alternative format key and certificate files and passphrase
+     sources.
+     [Steve Henson]
+
   *) New structure X509_VERIFY_PARAM which combines current verify parameters,
      update associated structures and add various utility functions.
 

@@ -296,12 +296,18 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
-	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
+	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
-	BIO_printf(bio_err," -key arg      - Private Key file to use, PEM format assumed, in cert file if\n");
+	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
+	BIO_printf(bio_err," -key arg      - Private Key file to use, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT);
+	BIO_printf(bio_err," -keyform arg  - key format (PEM, DER or ENGINE) PEM default\n");
+	BIO_printf(bio_err," -pass arg     - private key file pass phrase source\n");
 	BIO_printf(bio_err," -dcert arg    - second certificate file to use (usually for DSA)\n");
+	BIO_printf(bio_err," -dcertform x  - second certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err," -dkey arg     - second private key file to use (usually for DSA)\n");
+	BIO_printf(bio_err," -dkeyform arg - second key format (PEM, DER or ENGINE) PEM default\n");
+	BIO_printf(bio_err," -dpass arg    - second private key file pass phrase source\n");
 	BIO_printf(bio_err," -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
 	BIO_printf(bio_err,"                 or a default set of parameters is used\n");
 #ifndef OPENSSL_NO_ECDH
@@ -522,6 +528,12 @@ int MAIN(int argc, char *argv[])
 	ENGINE *e=NULL;
 #endif
 	char *inrand=NULL;
+	int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
+	char *passarg = NULL, *pass = NULL;
+	char *dpassarg = NULL, *dpass = NULL;
+	int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
+	X509 *s_cert = NULL, *s_dcert = NULL;
+	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
@@ -588,10 +600,25 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-certform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_cert_format = str2fmt(*(++argv));
+			}
 		else if	(strcmp(*argv,"-key") == 0)
 			{
 			if (--argc < 1) goto bad;
 			s_key_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_key_format = str2fmt(*(++argv));
+			}
+		else if	(strcmp(*argv,"-pass") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passarg = *(++argv);
 			}
 		else if	(strcmp(*argv,"-dhparam") == 0)
 			{
@@ -605,10 +632,25 @@ int MAIN(int argc, char *argv[])
 			named_curve = *(++argv);
 			}
 #endif
+		else if	(strcmp(*argv,"-dcertform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_dcert_format = str2fmt(*(++argv));
+			}
 		else if	(strcmp(*argv,"-dcert") == 0)
 			{
 			if (--argc < 1) goto bad;
 			s_dcert_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-dkeyform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_dkey_format = str2fmt(*(++argv));
+			}
+		else if	(strcmp(*argv,"-dpass") == 0)
+			{
+			if (--argc < 1) goto bad;
+			dpassarg = *(++argv);
 			}
 		else if	(strcmp(*argv,"-dkey") == 0)
 			{
@@ -738,6 +780,59 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
 #endif
+
+	if (!app_passwd(bio_err, passarg, dpassarg, &pass, &dpass))
+		{
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+		}
+
+
+	if (s_key_file == NULL)
+		s_key_file = s_cert_file;
+
+	s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
+		       "server certificate private key file");
+	if (!s_key)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	s_cert = load_cert(bio_err,s_cert_file,s_cert_format,
+			NULL, e, "server certificate file");
+
+	if (!s_cert)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	if (s_dcert_file)
+		{
+
+		if (s_dkey_file == NULL)
+			s_dkey_file = s_dcert_file;
+
+		s_dkey = load_key(bio_err, s_dkey_file, s_dkey_format,
+				0, dpass, e,
+			       "second certificate private key file");
+		if (!s_dkey)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
+		s_dcert = load_cert(bio_err,s_dcert_file,s_dcert_format,
+				NULL, e, "second server certificate file");
+
+		if (!s_dcert)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
+		}
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
@@ -903,11 +998,11 @@ bad:
 		}
 #endif
 	
-	if (!set_cert_stuff(ctx,s_cert_file,s_key_file))
+	if (!set_cert_key_stuff(ctx,s_cert,s_key))
 		goto end;
-	if (s_dcert_file != NULL)
+	if (s_dcert != NULL)
 		{
-		if (!set_cert_stuff(ctx,s_dcert_file,s_dkey_file))
+		if (!set_cert_key_stuff(ctx,s_dcert,s_dkey))
 			goto end;
 		}
 
@@ -958,6 +1053,18 @@ bad:
 	ret=0;
 end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
+	if (s_cert)
+		X509_free(s_cert);
+	if (s_dcert)
+		X509_free(s_dcert);
+	if (s_key)
+		EVP_PKEY_free(s_key);
+	if (s_dkey)
+		EVP_PKEY_free(s_dkey);
+	if (pass)
+		OPENSSL_free(pass);
+	if (dpass)
+		OPENSSL_free(dpass);
 	if (bio_s_out != NULL)
 		{
 		BIO_free(bio_s_out);

@@ -189,8 +189,11 @@ static void sc_usage(void)
 
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
-	BIO_printf(bio_err," -key arg      - Private key file to use, PEM format assumed, in cert file if\n");
+	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
+	BIO_printf(bio_err," -key arg      - Private key file to use, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified but cert file is.\n");
+	BIO_printf(bio_err," -keyform arg  - key format (PEM or DER) PEM default\n");
+	BIO_printf(bio_err," -pass arg     - private key file pass phrase source\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -reconnect    - Drop and re-make the connection with the same Session-ID\n");
@@ -241,6 +244,10 @@ int MAIN(int argc, char **argv)
 	int full_log=1;
 	char *host=SSL_HOST_NAME;
 	char *cert_file=NULL,*key_file=NULL;
+	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
+	char *passarg = NULL, *pass = NULL;
+	X509 *cert = NULL;
+	EVP_PKEY *key = NULL;
 	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE,bugs=0;
 	int crlf=0;
@@ -329,6 +336,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-certform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			cert_format = str2fmt(*(++argv));
+			}
 		else if	(strcmp(*argv,"-crl_check") == 0)
 			vflags |= X509_V_FLAG_CRL_CHECK;
 		else if	(strcmp(*argv,"-crl_check_all") == 0)
@@ -370,6 +382,16 @@ int MAIN(int argc, char **argv)
 #endif
 		else if (strcmp(*argv,"-bugs") == 0)
 			bugs=1;
+		else if	(strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			key_format = str2fmt(*(++argv));
+			}
+		else if	(strcmp(*argv,"-pass") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passarg = *(++argv);
+			}
 		else if	(strcmp(*argv,"-key") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -451,6 +473,31 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
 #endif
+	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL))
+		{
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+		}
+
+	if (key_file == NULL)
+		key_file = cert_file;
+
+	key = load_key(bio_err, key_file, key_format, 0, pass, e,
+		       "client certificate private key file");
+	if (!key)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	cert = load_cert(bio_err,cert_file,cert_format,
+			NULL, e, "client certificate file");
+
+	if (!cert)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
@@ -499,7 +546,7 @@ bad:
 #endif
 
 	SSL_CTX_set_verify(ctx,verify,verify_callback);
-	if (!set_cert_stuff(ctx,cert_file,key_file))
+	if (!set_cert_key_stuff(ctx,cert,key))
 		goto end;
 
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
@@ -932,6 +979,12 @@ end:
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
+	if (cert)
+		X509_free(cert);
+	if (key)
+		EVP_PKEY_free(key);
+	if (pass)
+		OPENSSL_free(pass);
 	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }
