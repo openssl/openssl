@@ -141,7 +141,6 @@ static int req_check_len(int len,int n_min,int n_max);
 static int check_end(char *str, char *end);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
-static CONF *config=NULL;
 #endif
 static CONF *req_conf=NULL;
 static int batch=0;
