@@ -397,7 +397,7 @@ B<spc_eq>, B<lname> and B<align>.
 =item B<esc_2253>
 
 escape the "special" characters required by RFC2253 in a field That is
-B<,+"E<lt>E<gt>;>. Additionally B<#> is escaped at the beginnging of a string
+B<,+"E<lt>E<gt>;>. Additionally B<#> is escaped at the beginning of a string
 and a space character at the beginning or end of a string.
 
 =item B<esc_ctrl>
@@ -451,7 +451,7 @@ B<#XXXX...> format.
 
 dump non character string types (for example OCTET STRING) if this
 option is not set then non character string types will be displayed
-as though each content octet repesents a single character.
+as though each content octet represents a single character.
 
 =item B<dump_all>
 

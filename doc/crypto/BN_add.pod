@@ -73,7 +73,7 @@ remainder in I<r>.
 BN_mod_add() adds I<a> to I<b> modulo I<m> and places the non-negative
 result in I<r>.
 
-BN_mod_sub() substracts I<b> from I<a> modulo I<m> and places the
+BN_mod_sub() subtracts I<b> from I<a> modulo I<m> and places the
 non-negative result in I<r>.
 
 BN_mod_mul() multiplies I<a> by I<b> and finds the non-negative

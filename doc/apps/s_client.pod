@@ -132,7 +132,7 @@ input.
 
 =item B<-quiet>
 
-inhibit printing of session and certificate information.  This implicitely
+inhibit printing of session and certificate information.  This implicitly
 turns on B<-ign_eof> as well.
 
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
@@ -180,7 +180,7 @@ all others.
 If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
 server. When used interactively (which means neither B<-quiet> nor B<-ign_eof>
-have been given), the session will be renegociated if the line begins with an
+have been given), the session will be renegotiated if the line begins with an
 B<R>, and if the line begins with a B<Q> or if end of file is reached, the
 connection will be closed down.
 

@@ -6,7 +6,7 @@
   crypto devices (eg. accelerator cards). This component is called ENGINE,
   and its presence in OpenSSL 0.9.6 (and subsequent bug-fix releases)
   caused a little confusion as 0.9.6** releases were rolled in two
-  versions, a "standard" and an "engine" verion. In development for 0.9.7,
+  versions, a "standard" and an "engine" version. In development for 0.9.7,
   the ENGINE code has been merged into the main branch and will be present
   in the standard releases from 0.9.7 forwards.
 
@@ -139,7 +139,7 @@
     gets its own copy of it. As such, multi-threaded code (or code that
     multiplexes multiple uses of 'dynamic' in a single application in any
     way at all) does not get confused by 'dynamic' being used to do many
-    independant things. Other ENGINEs typically don't do this so there is
+    independent things. Other ENGINEs typically don't do this so there is
     only ever 1 ENGINE structure of its type (and reference counts are used
     to keep order). The dynamic ENGINE itself provides absolutely no
     cryptographic functionality, and any attempt to "initialise" the ENGINE
@@ -208,7 +208,7 @@
     "-pre" syntax in the "openssl engine" utility is that some commands
     might be issued to an ENGINE *after* it has been initialised for use.
     Eg. if an ENGINE implementation requires a smart-card to be inserted
-    during intialisation (or a PIN to be typed, or whatever), there may be
+    during initialisation (or a PIN to be typed, or whatever), there may be
     a control command you can issue afterwards to "forget" the smart-card
     so that additional initialisation is no longer possible. In
     applications such as web-servers, where potentially volatile code may
@@ -230,8 +230,8 @@
     hand such applications would only have the memory footprint of any
     ENGINEs explicitly loaded using user/admin provided control commands.
     The main advantage of not statically linking ENGINEs and only using
-    "dynamic" for hardare support is that any installation using no
-    "external" ENGINE suffers no unecessary memory footprint from unused
+    "dynamic" for hardware support is that any installation using no
+    "external" ENGINE suffers no unnecessary memory footprint from unused
     ENGINEs. Likewise, installations that do require an ENGINE incur the
     overheads from only *that* ENGINE once it has been loaded.
 
@@ -243,7 +243,7 @@
     if OpenSSL itself is built as a shared library. The instructions are
     the same in each case, but in the former (statically linked any
     dependencies on OpenSSL) you must ensure OpenSSL is built with
-    position-independant code ("PIC"). The default OpenSSL compilation may
+    position-independent code ("PIC"). The default OpenSSL compilation may
     already specify the relevant flags to do this, but you should consult
     with your compiler documentation if you are in any doubt.
 
@@ -282,7 +282,7 @@
   PROBLEMS
   ========
 
-  It seems like the ENGINE part doesn't work too well with Cryptoswift on Win32.
+  It seems like the ENGINE part doesn't work too well with CryptoSwift on Win32.
   A quick test done right before the release showed that trying "openssl speed
   -engine cswift" generated errors. If the DSO gets enabled, an attempt is made
   to write at memory address 0x00000002.

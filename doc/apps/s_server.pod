@@ -195,7 +195,7 @@ emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded. The files loaded are
 assumed to contain a complete and correct HTTP response (lines that
-are part of the HTTP response line and headers must end wih CRLF).
+are part of the HTTP response line and headers must end with CRLF).
 
 =item B<-engine id>
 

@@ -93,7 +93,7 @@ a nonce is automatically added specifying B<no_nonce> overrides this.
 
 =item B<-req_text>, B<-resp_text>, B<-text>
 
-print out the text form of the OCSP request, reponse or both respectively.
+print out the text form of the OCSP request, response or both respectively.
 
 =item B<-reqout file>, B<-respout file>
 
@@ -124,14 +124,14 @@ the signature on the OCSP response.
 
 file containing additional certificates to search when attempting to locate
 the OCSP response signing certificate. Some responders omit the actual signer's
-certificate from the reponse: this option can be used to supply the neccesary
+certificate from the response: this option can be used to supply the necessary
 certificate in such cases.
 
 =item B<-trust_other>
 
 the certificates specified by the B<-verify_certs> option should be explicitly
 trusted and no additional checks will be performed on them. This is useful
-when the complete reponder certificate chain is not available or trusting a
+when the complete responder certificate chain is not available or trusting a
 root CA is not appropriate.
 
 =item B<-VAfile file>
@@ -154,11 +154,11 @@ with either the B<-verify_certs> or B<-VAfile> options.
 =item B<-no_sig_verify>
 
 don't check the signature on the OCSP response. Since this option tolerates invalid
-signatures on OCSP respondes it will normally only be used for testing purposes.
+signatures on OCSP responses it will normally only be used for testing purposes.
 
 =item B<-no_cert_verify>
 
-don't verify the OCSP reponse signers certificate at all. Since this option allows
+don't verify the OCSP response signers certificate at all. Since this option allows
 the OCSP response to be signed by any certificate it should only be used for
 testing purposes.
 
@@ -171,7 +171,7 @@ certificates.
 
 don't perform any additional checks on the OCSP response signers certificate.
 That is do not make any checks to see if the signers certificate is authorised
-to provide the neccessary status information: as a result this option should
+to provide the necessary status information: as a result this option should
 only be used for testing purposes.
 
 =item B<-validity_period nsec>, B<-status_age age>
@@ -255,7 +255,7 @@ omitted meaning fresh revocation information is immediately available.
 OCSP Response follows the rules specified in RFC2560.
 
 Initially the OCSP responder certificate is located and the signature on
-the OCSP request checked using the reponder certificate's public key.
+the OCSP request checked using the responder certificate's public key.
 
 Then a normal certificate verify is performed on the OCSP responder certificate
 building up a certificate chain in the process. The locations of the trusted

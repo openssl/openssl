@@ -78,7 +78,7 @@ The PEM PKCS#7 format uses the header and footer lines:
  -----BEGIN PKCS7-----
  -----END PKCS7-----
 
-For compatability with some CAs it will also accept:
+For compatibility with some CAs it will also accept:
 
  -----BEGIN CERTIFICATE-----
  -----END CERTIFICATE-----

@@ -120,7 +120,7 @@ lh_doall() will, for every entry in the hash table, call B<func> with
 the data item as its parameter.  For lh_doall() and lh_doall_arg(),
 function pointer casting should be avoided in the callbacks (see
 B<NOTE>) - instead, either declare the callbacks to match the
-prototype required in lh_new() or use the decare/implement macros to
+prototype required in lh_new() or use the declare/implement macros to
 create type-safe wrappers that cast variables prior to calling your
 type-specific callbacks.  An example of this is illustrated here where
 the callback is used to cleanup resources for items in the hash table

@@ -28,7 +28,7 @@ BIO_gets(), if its B<size> parameter is large enough finishes the
 digest calculation and returns the digest value. BIO_puts() is
 not supported.
 
-BIO_reset() reinitializes a digest BIO.
+BIO_reset() reinitialises a digest BIO.
 
 BIO_set_md() sets the message digest of BIO B<b> to B<md>: this
 must be called to initialize a digest BIO before any data is

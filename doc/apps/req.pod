@@ -179,7 +179,7 @@ days to certify the certificate for. The default is 30 days.
 
 =item B<-set_serial n>
 
-serial number to use when outputting a self signed certifcate. This
+serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
 It is possible to use negative serial numbers but this is not recommended.
 

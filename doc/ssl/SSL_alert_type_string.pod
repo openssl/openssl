@@ -130,9 +130,9 @@ other fields. This is always fatal.
 
 =item "DC"/"decryption failed"
 
-A TLSCiphertext decrypted in an invalid way: either it wasn`t an
+A TLSCiphertext decrypted in an invalid way: either it wasn't an
 even multiple of the block length or its padding values, when
-checked, weren`t correct. This message is always fatal.
+checked, weren't correct. This message is always fatal.
 
 =item "RO"/"record overflow"
 
@@ -144,7 +144,7 @@ with more than 2^14+1024 bytes. This message is always fatal.
 
 A valid certificate chain or partial chain was received, but the
 certificate was not accepted because the CA certificate could not
-be located or couldn`t be matched with a known, trusted CA.  This
+be located or couldn't be matched with a known, trusted CA.  This
 message is always fatal.
 
 =item "AD"/"access denied"

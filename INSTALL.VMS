@@ -33,11 +33,11 @@ Checking the distribution:
 ==========================
 
 There have been reports of places where the distribution didn't quite get
-through, for example if you've copied the tree from a NFS-mounted unix
+through, for example if you've copied the tree from a NFS-mounted Unix
 mount point.
 
 The easiest way to check if everything got through as it should is to check
-for oen of the following files:
+for one of the following files:
 
 	[.CRYPTO]OPENSSLCONF.H_IN
 	[.CRYPTO]OPENSSLCONF_H.IN
@@ -69,7 +69,7 @@ for a command procedure name xxx-LIB.COM (in the library directories)
 or MAKExxx.COM (in the program directories) and read the comments at
 the top to understand how to use them.  However, if you want to
 compile all you can get, the simplest is to use MAKEVMS.COM in the top
-directory.  The syntax is trhe following:
+directory.  The syntax is the following:
 
   @MAKEVMS <option> <rsaref-p> <debug-p> [<compiler>]
 
@@ -79,7 +79,7 @@ directory.  The syntax is trhe following:
       CONFIG    Just build the "[.CRYPTO]OPENSSLCONF.H" file.
       BUILDINF  Just build the "[.INCLUDE]BUILDINF.H" file.
       SOFTLINKS Just copies some files, to simulate Unix soft links.
-      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
+      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTLINKS aren't done.
       RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
       CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
       SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
@@ -92,7 +92,7 @@ directory.  The syntax is trhe following:
       RSAREF    compile using the RSAREF Library
       NORSAREF  compile without using RSAREF
 
-Note 0: The RASREF library IS NO LONGER NEEDED.  The RSA patent
+Note 0: The RSAREF library IS NO LONGER NEEDED.  The RSA patent
         expires September 20, 2000, and RSA Security chose to make
         the algorithm public domain two weeks before that.
 
@@ -264,7 +264,7 @@ following before you start compiling:
 The USER_CCDISABLEWARNINGS is there because otherwise, DEC C will complain
 that those macros have been changed.
 
-Note: Currently, this is only usefull for library compilation.  The
+Note: Currently, this is only useful for library compilation.  The
       programs will still be linked with the current version of the
       C library shareable image, and will thus complain if they are
       faced with an older version of the same C library shareable image.

@@ -136,7 +136,7 @@ and Microsoft IIS .key files, this uses unsalted RC4 for its encryption.
 It is not very secure and so should only be used when necessary.
 
 Some newer version of IIS have additional data in the exported .key
-files. To use thse with the utility view the file with a binary editor
+files. To use these with the utility, view the file with a binary editor
 and look for the string "private-key", then trace back to the byte
 sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
 from this point onwards to another file and use that as the input

@@ -262,7 +262,7 @@ the one corresponding to the private key. Certain software which requires
 a private key and certificate and assumes the first certificate in the
 file is the one corresponding to the private key: this may not always
 be the case. Using the B<-clcerts> option will solve this problem by only
-outputing the certificate corresponding to the private key. If the CA
+outputting the certificate corresponding to the private key. If the CA
 certificates are required then they can be output to a separate file using
 the B<-nokeys -cacerts> options to just output CA certificates.
 

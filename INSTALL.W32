@@ -257,5 +257,5 @@
  malloc(), free() and realloc() as the application.  However there are many
  standard library functions used by OpenSSL that call malloc() internally
  (e.g. fopen()), and OpenSSL cannot change these; so in general you cannot
- rely on CYRPTO_malloc_init() solving your problem, and you should
+ rely on CRYPTO_malloc_init() solving your problem, and you should
  consistently use the multithreaded library.

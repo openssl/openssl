@@ -15,7 +15,7 @@ I<num>
 =head1 DESCRIPTION
 
 The B<rand> command outputs I<num> pseudo-random bytes after seeding
-the random number generater once.  As in other B<openssl> command
+the random number generator once.  As in other B<openssl> command
 line tools, PRNG seeding uses the file I<$HOME/>B<.rnd> or B<.rnd>
 in addition to the files given in the B<-rand> option.  A new
 I<$HOME>/B<.rnd> or B<.rnd> file will be written back if enough

@@ -160,7 +160,7 @@ padding: this allows a rudimentary integrity or password check to be
 performed. However since the chance of random data passing the test is
 better than 1 in 256 it isn't a very good test.
 
-If padding is disabled then the input data must be a muliple of the cipher
+If padding is disabled then the input data must be a multiple of the cipher
 block length.
 
 All RC2 ciphers have the same key and effective key length.

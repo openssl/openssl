@@ -62,7 +62,7 @@
 
      X.509v3 certificates
         X509 encoding/decoding into/from binary ASN1 and a PEM
-             based ascii-binary encoding which supports encryption with a
+             based ASCII-binary encoding which supports encryption with a
              private key.  Program to generate RSA and DSA certificate
              requests and to generate RSA and DSA certificates.
 
@@ -97,7 +97,7 @@
  locations around the world. _YOU_ are responsible for ensuring that your use
  of any algorithms is legal by checking if there are any patents in your
  country.  The file contains some of the patents that we know about or are
- rumoured to exist. This is not a definitive list.
+ rumored to exist. This is not a definitive list.
 
  RSA Security holds software patents on the RC5 algorithm.  If you
  intend to use this cipher, you must contact RSA Security for
