@@ -26,7 +26,7 @@ This will build and install OpenSSL in the default location, which is
 /usr/local/ssl. If you want to install it anywhere else, do this
 after running ./Configure <system>:
 
-  utils/ssldir.pl /new/install/path
+  perl util/ssldir.pl /new/install/path
 
 If anything goes wrong, follow the detailed instructions below. If
 your operating system is not (yet) supported by OpenSSL, see the
