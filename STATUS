@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/22 14:56:04 $
+  ______________                           $Date: 2001/03/22 15:15:58 $
 
   DEVELOPMENT STATE
 
@@ -39,6 +39,7 @@
 
                        Beta 2 released on March 21st, 2001
 	OpenVMS (tested on VMS 7.2-1 for Alpha)	- PASSED [presumed normal]
+        solaris64-sparcv9-cc (SunOS 5.8)        - PASSED [normal]
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
