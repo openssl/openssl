@@ -4,6 +4,15 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) Add '-dsaparam' option to 'openssl dhparam' application.  This
+     converts DSA parameters into DH parameters. (When creating parameters,
+     DSA_generate_parameters is used.)
+     [Bodo Moeller]
+
+  *) Include 'length' (recommended exponent length) in C code generated
+     by 'openssl dhparam -C'.
+     [Bodo Moeller]
+
   *) The second argument to set_label in perlasm was already being used
      so couldn't be used as a "file scope" flag. Moved to third argument
      which was free.

@@ -1,4 +1,5 @@
 /* apps/gendh.c */
+/* obsoleted by dhparam.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,7 +160,7 @@ bad:
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
 
-	BIO_printf(bio_err,"Generating DH parameters, %d bit long strong prime, generator of %d\n",num,g);
+	BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");
 	dh=DH_generate_parameters(num,g,dh_cb,bio_err);
 		

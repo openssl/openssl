@@ -8,7 +8,7 @@ rand - generate pseudo-random bytes
 
 B<openssl rand>
 [B<-out> I<file>]
-[B<-rand> I<file(s)>
+[B<-rand> I<file(s)>]
 [B<-base64>]
 I<num>
 

@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #ifndef NO_DH
 #include <stdio.h>
@@ -69,6 +122,10 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
+#ifndef NO_DSA
+#include <openssl/dsa.h>
+#endif
+
 #undef PROG
 #define PROG	dhparam_main
 
@@ -78,6 +135,7 @@
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
+ * -dsaparam  - read or generate DSA parameters, convert to DH
  * -check	- check the parameters are ok
  * -noout
  * -text
@@ -92,6 +150,9 @@ int MAIN(int argc, char **argv)
 	{
 	DH *dh=NULL;
 	int i,badops=0,text=0;
+#ifndef NO_DSA
+	int dsaparam=0;
+#endif
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
@@ -138,6 +199,10 @@ int MAIN(int argc, char **argv)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
+#ifndef NO_DSA
+		else if (strcmp(*argv,"-dsaparam") == 0)
+			dsaparam=1;
+#endif
 		else if (strcmp(*argv,"-C") == 0)
 			C=1;
 		else if (strcmp(*argv,"-noout") == 0)
@@ -166,6 +231,9 @@ bad:
 		BIO_printf(bio_err," -outform arg  output format - one of DER PEM\n");
 		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
+#ifndef NO_DSA
+		BIO_printf(bio_err," -dsaparam     read or generate DSA parameters, convert to DH\n");
+#endif
 		BIO_printf(bio_err," -check        check the DH parameters\n");
 		BIO_printf(bio_err," -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
@@ -181,8 +249,25 @@ bad:
 
 	ERR_load_crypto_strings();
 
-	if(g && !num) num = DEFBITS;
-	else if(num && !g) g = 2;
+	if (g && !num)
+		num = DEFBITS;
+
+#ifndef NO_DSA
+	if (dsaparam)
+		{
+		if (g)
+			{
+			BIO_printf(bio_err, "generator may not be chosen for DSA parameters\n");
+			goto end;
+			}
+		}
+	else
+#endif
+		{
+		/* DH parameters */
+		if (num && !g)
+			g = 2;
+		}
 
 	if(num) {
 
@@ -194,11 +279,40 @@ bad:
 			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 				app_RAND_load_files(inrand));
 
-		BIO_printf(bio_err,"Generating DH parameters, %d bit long strong prime, generator of %d\n",num,g);
-		BIO_printf(bio_err,"This is going to take a long time\n");
-		dh=DH_generate_parameters(num,g,dh_cb,bio_err);
+#ifndef NO_DSA
+		if (dsaparam)
+			{
+			DSA *dsa;
 			
-		if (dh == NULL) goto end;
+			BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
+	        dsa = DSA_generate_parameters(num, NULL, 0, NULL, NULL, dh_cb, bio_err);
+			if (dsa == NULL)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+
+			dh = DSA_dup_DH(dsa);
+			DSA_free(dsa);
+			if (dh == NULL)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			}
+		else
+#endif
+			{
+			BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
+			BIO_printf(bio_err,"This is going to take a long time\n");
+			dh=DH_generate_parameters(num,g,dh_cb,bio_err);
+			
+			if (dh == NULL)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			}
 
 		app_RAND_write_file(NULL, bio_err);
 	} else {
@@ -220,24 +334,56 @@ bad:
 				}
 			}
 
-		if	(informat == FORMAT_ASN1)
-			dh=d2i_DHparams_bio(in,NULL);
-		else if (informat == FORMAT_PEM)
-			dh=PEM_read_bio_DHparams(in,NULL,NULL,NULL);
-		else
+		if	(informat != FORMAT_ASN1 && informat != FORMAT_PEM)
 			{
 			BIO_printf(bio_err,"bad input format specified\n");
 			goto end;
 			}
-		if (dh == NULL)
+
+#ifndef NO_DSA
+		if (dsaparam)
 			{
-			BIO_printf(bio_err,"unable to load DH parameters\n");
-			ERR_print_errors(bio_err);
-			goto end;
+			DSA *dsa;
+			
+			if (informat == FORMAT_ASN1)
+				dsa=d2i_DSAparams_bio(in,NULL);
+			else /* informat == FORMAT_PEM */
+				dsa=PEM_read_bio_DSAparams(in,NULL,NULL,NULL);
+			
+			if (dsa == NULL)
+				{
+				BIO_printf(bio_err,"unable to load DSA parameters\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			
+			dh = DSA_dup_DH(dsa);
+			DSA_free(dsa);
+			if (dh == NULL)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
 			}
-
+		else
+#endif
+			{
+			if (informat == FORMAT_ASN1)
+				dh=d2i_DHparams_bio(in,NULL);
+			else /* informat == FORMAT_PEM */
+				dh=PEM_read_bio_DHparams(in,NULL,NULL,NULL);
+			
+			if (dh == NULL)
+				{
+				BIO_printf(bio_err,"unable to load DH parameters\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			}
+		
+		/* dh != NULL */
 	}
-
+	
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
 		{
@@ -255,7 +401,6 @@ bad:
 			}
 		}
 
-	
 
 	if (text)
 		{
@@ -271,8 +416,8 @@ bad:
 			}
 		if (i & DH_CHECK_P_NOT_PRIME)
 			printf("p value is not prime\n");
-		if (i & DH_CHECK_P_NOT_STRONG_PRIME)
-			printf("p value is not a strong prime\n");
+		if (i & DH_CHECK_P_NOT_SAFE_PRIME)
+			printf("p value is not a safe prime\n");
 		if (i & DH_UNABLE_TO_CHECK_GENERATOR)
 			printf("unable to check the generator value\n");
 		if (i & DH_NOT_SUITABLE_GENERATOR)
@@ -320,6 +465,8 @@ bad:
 			bits,bits);
 		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
 		printf("\t\treturn(NULL);\n");
+		if (dh->length)
+			printf("\tdh->length = %d\n", dh->length);
 		printf("\treturn(dh);\n\t}\n");
 		Free(data);
 		}
@@ -350,6 +497,7 @@ end:
 	EXIT(ret);
 	}
 
+/* dh_cb is identical to dsa_cb in apps/dsaparam.c */
 static void MS_CALLBACK dh_cb(int p, int n, void *arg)
 	{
 	char c='*';

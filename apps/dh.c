@@ -1,4 +1,5 @@
 /* apps/dh.c */
+/* obsoleted by dhparam.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,8 +235,8 @@ bad:
 			}
 		if (i & DH_CHECK_P_NOT_PRIME)
 			printf("p value is not prime\n");
-		if (i & DH_CHECK_P_NOT_STRONG_PRIME)
-			printf("p value is not a strong prime\n");
+		if (i & DH_CHECK_P_NOT_SAFE_PRIME)
+			printf("p value is not a safe prime\n");
 		if (i & DH_UNABLE_TO_CHECK_GENERATOR)
 			printf("unable to check the generator value\n");
 		if (i & DH_NOT_SUITABLE_GENERATOR)
