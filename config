@@ -475,11 +475,17 @@ case "$GUESSOS" in
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
+# NB: This atalla support has been superceded by the ENGINE support
+# That contains its own header and definitions anyway. Support can
+# be enabled or disabled on any supported platform without external
+# headers, eg. by adding the "hw-atalla" switch to ./config or
+# perl Configure
+#
 # See whether we can compile Atalla support
-if [ -f /usr/include/atasi.h ]
-then
-  options="$options -DATALLA"
-fi
+#if [ -f /usr/include/atasi.h ]
+#then
+#  options="$options -DATALLA"
+#fi
 
 #get some basic shared lib support (behnke@trustcenter.de)
 case "$OUT" in
