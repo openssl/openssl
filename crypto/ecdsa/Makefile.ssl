@@ -88,10 +88,12 @@ ecs_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ecs_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_asn1.o: ../../include/openssl/symhacks.h ecdsa.h ecs_asn1.c
-ecs_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-ecs_err.o: ../../include/openssl/e_os2.h ../../include/openssl/ecdsa.h
-ecs_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-ecs_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+ecs_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ecs_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+ecs_err.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ecs_err.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+ecs_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+ecs_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_err.o: ../../include/openssl/symhacks.h ecs_err.c
 ecs_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

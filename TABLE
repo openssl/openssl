@@ -77,7 +77,7 @@ $arflags      =
 
 *** Cygwin
 $cc           = gcc
-$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -march=486 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = CYGWIN32
@@ -127,11 +127,11 @@ $arflags      =
 
 *** DJGPP
 $cc           = gcc
-$cflags       = -I/dev/env/DJDIR/watt32/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
+$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MSDOS
-$lflags       = -L/dev/env/DJDIR/watt32/lib -lwatt
+$lflags       = -L/dev/env/WATT_ROOT/lib -lwatt
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
@@ -1102,7 +1102,7 @@ $arflags      =
 
 *** aix43-gcc
 $cc           = gcc
-$cflags       = -O3 -DAIX -DB_ENDIAN
+$cflags       = -O1 -DAIX -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3930,9 +3930,34 @@ $cc           = gcc
 $cflags       = -O3 -mv8 -Dssize_t=int
 $unistd       = 
 $thread_cflag = (unknown)
-$sys_id       = 
+$sys_id       = SUNOS
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** tandem-c89
+$cc           = c89
+$cflags       = -Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = THIRTY_TWO_BIT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
