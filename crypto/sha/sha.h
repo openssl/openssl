@@ -89,12 +89,12 @@ extern "C" {
 #define SHA_LONG unsigned int
 #endif
 
-#define SHA_LBLOCK	16
+#define SHA_LBLOCK	16U
 #define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a
 					 * contiguous array of 32 bit
 					 * wide big-endian values. */
 #define SHA_LAST_BLOCK  (SHA_CBLOCK-8)
-#define SHA_DIGEST_LENGTH 20
+#define SHA_DIGEST_LENGTH 20U
 
 typedef struct SHAstate_st
 	{
@@ -135,8 +135,13 @@ typedef struct SHA256state_st
 
 #ifndef OPENSSL_NO_SHA256
 int SHA224_Init(SHA256_CTX *c);
+#if 0
 int SHA224_Update(SHA256_CTX *c, const void *data, size_t len);
 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
+#else
+#define SHA224_Update(c,data,len)	SHA256_Update((c),(data),(len))
+#define SHA224_Final(md,c)	SHA256_Final((md),(c))
+#endif
 unsigned char *SHA224(const unsigned char *d, size_t n,unsigned char *md);
 int SHA256_Init(SHA256_CTX *c);
 int SHA256_Update(SHA256_CTX *c, const void *data, size_t len);
