@@ -196,6 +196,8 @@ static void sv_usage()
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
 	BIO_printf(bio_err," -key arg      - RSA file to use, PEM format assumed, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT);
+	BIO_printf(bio_err," -dcert arg    - second certificate file to use (usually for DSA)\n");
+	BIO_printf(bio_err," -dkey arg     - second private key file to use (usually for DSA)\n");
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif

@@ -263,6 +263,8 @@ SSL/TLS.
 [B<-Verify> I<arg>]
 [B<-cert> I<arg>]
 [B<-key> I<arg>]
+[B<-dcert> I<arg>]
+[B<-dkey> I<arg>]
 [B<-nbio>]
 [B<-nbio_test>]
 [B<-debug>]
