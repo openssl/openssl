@@ -312,8 +312,9 @@ int MAIN(int argc, char **argv)
 	char *dbfile=NULL;
 	TXT_DB *db=NULL;
 	X509_CRL *crl=NULL;
-	X509_CRL_INFO *ci=NULL;
 	X509_REVOKED *r=NULL;
+	ASN1_TIME *tmptm;
+	ASN1_INTEGER *tmpser;
 	char **pp,*p,*f;
 	int i,j;
 	long l;
@@ -1431,15 +1432,16 @@ bad:
 
 		if (verbose) BIO_printf(bio_err,"making CRL\n");
 		if ((crl=X509_CRL_new()) == NULL) goto err;
-		ci=crl->crl;
-		X509_NAME_free(ci->issuer);
-		ci->issuer=X509_NAME_dup(x509->cert_info->subject);
-		if (ci->issuer == NULL) goto err;
+		if (!X509_CRL_set_issuer_name(crl, X509_get_issuer_name(x509))) goto err;
 
-		X509_gmtime_adj(ci->lastUpdate,0);
-		if (ci->nextUpdate == NULL)
-			ci->nextUpdate=ASN1_UTCTIME_new();
-		X509_gmtime_adj(ci->nextUpdate,(crldays*24+crlhours)*60*60);
+		tmptm = ASN1_TIME_new();
+		if (!tmptm) goto err;
+		X509_gmtime_adj(tmptm,0);
+		X509_CRL_set_lastUpdate(crl, tmptm);	
+		X509_gmtime_adj(tmptm,(crldays*24+crlhours)*60*60);
+		X509_CRL_set_nextUpdate(crl, tmptm);	
+
+		ASN1_TIME_free(tmptm);
 
 		for (i=0; i<sk_num(db->data); i++)
 			{
@@ -1452,22 +1454,20 @@ bad:
 				if (j == 2) crl_v2 = 1;
 				if (!BN_hex2bn(&serial, pp[DB_serial]))
 					goto err;
-				r->serialNumber = BN_to_ASN1_INTEGER(serial, r->serialNumber);
+				tmpser = BN_to_ASN1_INTEGER(serial, NULL);
 				BN_free(serial);
 				serial = NULL;
-				if (!r->serialNumber)
+				if (!tmpser)
 					goto err;
+				X509_REVOKED_set_serialNumber(r, tmpser);
+				ASN1_INTEGER_free(tmpser);
 				X509_CRL_add0_revoked(crl,r);
 				}
 			}
+
 		/* sort the data so it will be written in serial
 		 * number order */
-		sk_X509_REVOKED_sort(ci->revoked);
-		for (i=0; i<sk_X509_REVOKED_num(ci->revoked); i++)
-			{
-			r=sk_X509_REVOKED_value(ci->revoked,i);
-			r->sequence=i;
-			}
+		X509_CRL_sort(crl);
 
 		/* we now have a CRL */
 		if (verbose) BIO_printf(bio_err,"signing CRL\n");
@@ -1494,8 +1494,6 @@ bad:
 		if (crl_ext)
 			{
 			X509V3_CTX crlctx;
-			if (ci->version == NULL)
-				if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
 			X509V3_set_nconf(&crlctx, conf);
 
@@ -1504,9 +1502,8 @@ bad:
 			}
 		if (crl_ext || crl_v2)
 			{
-			if (ci->version == NULL)
-				if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
-			ASN1_INTEGER_set(ci->version,1); /* version 2 CRL */
+			if (!X509_CRL_set_version(crl, 1))
+				goto err; /* version 2 CRL */
 			}
 
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
@@ -2887,10 +2884,14 @@ int make_revoked(X509_REVOKED *rev, char *str)
 	ASN1_GENERALIZEDTIME *comp_time = NULL;
 	ASN1_ENUMERATED *rtmp = NULL;
 
+	ASN1_TIME *revDate = NULL;
 
-	i = unpack_revinfo(&rev->revocationDate, &reason_code, &hold, &comp_time, str);
+	i = unpack_revinfo(&revDate, &reason_code, &hold, &comp_time, str);
 
 	if (i == 0)
+		goto err;
+
+	if (rev && !X509_REVOKED_set_revocationDate(rev, revDate))
 		goto err;
 
 	if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS))
@@ -2923,6 +2924,7 @@ int make_revoked(X509_REVOKED *rev, char *str)
 	ASN1_OBJECT_free(hold);
 	ASN1_GENERALIZEDTIME_free(comp_time);
 	ASN1_ENUMERATED_free(rtmp);
+	ASN1_TIME_free(revDate);
 
 	return ret;
 	}
@@ -3120,6 +3122,8 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_G
 	if (preason) *preason = reason_code;
 	if (pinvtm) *pinvtm = comp_time;
 	else ASN1_GENERALIZEDTIME_free(comp_time);
+
+	ret = 1;
 
 	err:
 
