@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/27 14:01:42 $
+  ______________                           $Date: 2002/12/27 15:06:13 $
 
   DEVELOPMENT STATE
 
@@ -46,9 +46,6 @@
   [See also http://www.openssl.org/support/rt2.html]
 
   RELEASE SHOWSTOPPERS
-
-    o BN_mod_mul verification fails for mips3-sgi-irix
-      unless configured with no-asm
 
     o [2002-11-21]
       PR 343 mentions that scrubbing memory with 'memset(ptr, 0, n)' may
