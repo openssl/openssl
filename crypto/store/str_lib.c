@@ -69,7 +69,8 @@ const char * const STORE_object_type_string[STORE_OBJECT_TYPE_NUM+1] =
 	"X.509 CRL",
 	"Private Key",
 	"Public Key",
-	"Number"
+	"Number",
+	"Arbitrary Data"
 	};
 
 const int STORE_param_sizes[STORE_PARAM_TYPE_NUM+1] =
@@ -101,19 +102,20 @@ STORE *STORE_new_method(const STORE_METHOD *method)
 	{
 	STORE *ret;
 
+	if (method == NULL)
+		{
+		STOREerr(STORE_F_STORE_NEW_METHOD,ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+
 	ret=(STORE *)OPENSSL_malloc(sizeof(STORE));
 	if (ret == NULL)
 		{
 		STOREerr(STORE_F_STORE_NEW_METHOD,ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
-	if (method == NULL)
-		{
-		STOREerr(STORE_F_STORE_NEW_METHOD,ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
-	else
-		ret->meth=method;
+
+	ret->meth=method;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_STORE, ret, &ret->ex_data);
 	if (ret->meth->init && !ret->meth->init(ret))
@@ -261,12 +263,13 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[],
 int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_CERTIFICATE,
 		store_object,STORE_R_NO_STORE_OBJECT_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_CERTIFICATE,
@@ -452,12 +455,13 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
 int STORE_store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_PRIVATE_KEY,
 		store_object,STORE_R_NO_STORE_OBJECT_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_PRIVATE_KEY,
@@ -628,12 +632,13 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
 int STORE_store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_PUBLIC_KEY,
 		store_object,STORE_R_NO_STORE_OBJECT_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_PUBLIC_KEY,
@@ -830,12 +835,13 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[],
 int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_CRL,
 		store_object,STORE_R_NO_STORE_OBJECT_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_CRL,
@@ -953,12 +959,13 @@ int STORE_list_crl_endp(STORE *s, void *handle)
 int STORE_store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_NUMBER,
 		store_object,STORE_R_NO_STORE_OBJECT_NUMBER_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_NUMBER,
@@ -1024,12 +1031,13 @@ int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[],
 int STORE_store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STORE_OBJECT *object = STORE_OBJECT_new();
+	STORE_OBJECT *object;
 	int i;
 
 	check_store(s,STORE_F_STORE_ARBITRARY,
 		store_object,STORE_R_NO_STORE_OBJECT_ARBITRARY_FUNCTION);
 
+	object = STORE_OBJECT_new();
 	if (!object)
 		{
 		STOREerr(STORE_F_STORE_ARBITRARY,
