@@ -906,8 +906,8 @@ PBEPARAM *PBEPARAM_new(void);
 PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length);
 void PBEPARAM_free(PBEPARAM *a);
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
-X509_ALGOR *PKCS5_pbe2_set(EVP_CIPHER *cipher, int iter, unsigned char *salt,
-								 int saltlen);
+X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
+					 unsigned char *salt, int saltlen);
 
 int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp);
 PBKDF2PARAM *PBKDF2PARAM_new(void);

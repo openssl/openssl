@@ -5,6 +5,14 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add support for PKCS#5 v2.0 PBE algorithms. This will permit PKCS#8 to be
+     used with any cipher unlike PKCS#5 v1.5 which can at most handle 64 bit
+     ciphers. NOTE: although the key derivation function has been verified
+     against some published test vectors it has not been extensively tested
+     yet. Added a -v2 "cipher" option to pkcs8 application to allow the use
+     of v2.0.
+     [Steve Henson]
+
   *) Instead of "mkdir -p", which is not fully portable, use new
      Perl script "util/mkdir-p.pl".
 

@@ -71,6 +71,7 @@ int MAIN(int argc, char **argv)
 	BIO *in = NULL, *out = NULL;
 	int topk8 = 0;
 	int pbe_nid = -1;
+	const EVP_CIPHER *cipher = NULL;
 	int iter = PKCS12_DEFAULT_ITER;
 	int informat, outformat;
 	int p8_broken = PKCS8_OK;
@@ -87,7 +88,17 @@ int MAIN(int argc, char **argv)
 	SSLeay_add_all_algorithms();
 	args = argv + 1;
 	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args,"-inform")) {
+		if (!strcmp(*args,"-v2")) {
+			if (args[1]) {
+				args++;
+				cipher=EVP_get_cipherbyname(*args);
+				if(!cipher) {
+					BIO_printf(bio_err,
+						 "Unknown cipher %s\n", *args);
+					badarg = 1;
+				}
+			} else badarg = 1;
+		} else if (!strcmp(*args,"-inform")) {
 			if (args[1]) {
 				args++;
 				informat=str2fmt(*args);
@@ -126,10 +137,11 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-nooct     use (broken) no octet form\n");
 		BIO_printf (bio_err, "-noiter    use 1 as iteration count\n");
 		BIO_printf (bio_err, "-nocrypt   use or expect unencrypted private key\n");
+		BIO_printf (bio_err, "-v2 alg    use PKCS#5 v2.0 and cipher \"alg\"\n");
 		return (1);
 	}
 
-	if (pbe_nid == -1) pbe_nid = NID_pbeWithMD5AndDES_CBC;
+	if ((pbe_nid == -1) && !cipher) pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
 	if (infile) {
 		if (!(in = BIO_new_file (infile, "rb"))) {
@@ -153,6 +165,7 @@ int MAIN(int argc, char **argv)
 			ERR_print_errors(bio_err);
 			return (1);
 		}
+		BIO_free(in);
 		if (!(p8inf = EVP_PKEY2PKCS8(pkey))) {
 			BIO_printf (bio_err, "Error converting key\n", outfile);
 			ERR_print_errors(bio_err);
@@ -170,8 +183,9 @@ int MAIN(int argc, char **argv)
 			}
 		} else {
 			EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
-			if (!(p8 = PKCS8_encrypt(pbe_nid, pass, strlen(pass),
-					 NULL, 0, iter, p8inf))) {
+			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
+					pass, strlen(pass),
+					NULL, 0, iter, p8inf))) {
 				BIO_printf (bio_err, "Error encrypting key\n",
 								 outfile);
 				ERR_print_errors(bio_err);
@@ -188,6 +202,8 @@ int MAIN(int argc, char **argv)
 			X509_SIG_free(p8);
 		}
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
+		EVP_PKEY_free(pkey);
+		BIO_free(out);
 		return (0);
 	}
 
@@ -217,6 +233,7 @@ int MAIN(int argc, char **argv)
 		}
 		EVP_read_pw_string(pass, 50, "Enter Password:", 0);
 		p8inf = M_PKCS8_decrypt(p8, pass, strlen(pass));
+		X509_SIG_free(p8);
 	}
 
 	if (!p8inf) {
@@ -247,6 +264,10 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 
 	PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL);
+
+	EVP_PKEY_free(pkey);
+	BIO_free(out);
+	BIO_free(in);
 
 	return (0);
 }

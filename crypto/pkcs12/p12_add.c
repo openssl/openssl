@@ -115,7 +115,8 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG (int pbe_nid, const char *pass,
 
 	bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
 	if (!(bag->value.shkeybag = 
-	  PKCS8_encrypt(pbe_nid, pass, passlen, salt, saltlen, iter, p8))) {
+	  PKCS8_encrypt(pbe_nid, NULL, pass, passlen, salt, saltlen, iter,
+									 p8))) {
 		PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -180,9 +181,10 @@ PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, const char *pass, int passlen,
 	return p7;
 }
 
-X509_SIG *PKCS8_encrypt (int pbe_nid, const char *pass, int passlen,
-	     unsigned char *salt, int saltlen, int iter,
-	     PKCS8_PRIV_KEY_INFO *p8inf)
+X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
+			 const char *pass, int passlen,
+			 unsigned char *salt, int saltlen, int iter,
+						PKCS8_PRIV_KEY_INFO *p8inf)
 {
 	X509_SIG *p8;
 	X509_ALGOR *pbe;
@@ -192,7 +194,9 @@ X509_SIG *PKCS8_encrypt (int pbe_nid, const char *pass, int passlen,
 		return NULL;
 	}
 
-	if (!(pbe = PKCS5_pbe_set (pbe_nid, iter, salt, saltlen))) {
+	if(pbe_nid == -1) pbe = PKCS5_pbe2_set(cipher, iter, salt, saltlen);
+	else pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
+	if(!pbe) {
 		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

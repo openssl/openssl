@@ -197,7 +197,8 @@ ASN1_seq_unpack((p12)->authsafes->d.data->data, \
 
 PKCS12_SAFEBAG *PKCS12_pack_safebag(char *obj, int (*i2d)(), int nid1, int nid2);
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
-X509_SIG *PKCS8_encrypt(int pbe_nid, const char *pass, int passlen,
+X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, 
+			const char *pass, int passlen,
 			unsigned char *salt, int saltlen, int iter,
 			PKCS8_PRIV_KEY_INFO *p8);
 PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,

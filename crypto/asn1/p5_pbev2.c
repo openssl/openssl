@@ -153,7 +153,7 @@ PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, unsigned char **pp,
 void PBKDF2PARAM_free (PBKDF2PARAM *a)
 {
 	if(a==NULL) return;
-	ASN1_OCTET_STRING_free(a->salt);
+	ASN1_TYPE_free(a->salt);
 	ASN1_INTEGER_free(a->iter);
 	ASN1_INTEGER_free(a->keylength);
 	X509_ALGOR_free(a->prf);
@@ -164,8 +164,8 @@ void PBKDF2PARAM_free (PBKDF2PARAM *a)
  * yes I know this is horrible!
  */
 
-X509_ALGOR *PKCS5_pbe2_set(EVP_CIPHER *cipher, int iter, unsigned char *salt,
-	     int saltlen)
+X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
+				 unsigned char *salt, int saltlen)
 {
 	X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
 	int alg_nid;

@@ -83,6 +83,7 @@ EVP_PBE_alg_add(NID_pbeWithMD2AndRC2_CBC, EVP_rc2_64_cbc(), EVP_md2(),
 EVP_PBE_alg_add(NID_pbeWithSHA1AndRC2_CBC, EVP_rc2_64_cbc(), EVP_sha1(),
 							 PKCS5_PBE_keyivgen);
 #endif
+EVP_PBE_alg_add(NID_pbes2, NULL, NULL, PKCS5_v2_PBE_keyivgen);
 }
 
 int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
