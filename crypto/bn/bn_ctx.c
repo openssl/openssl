@@ -167,6 +167,19 @@ void BN_CTX_end(BN_CTX *ctx)
 
 	ctx->too_many = 0;
 	ctx->depth--;
+	/* It appears some "scrapbook" uses of BN_CTX result in BIGNUMs being
+	 * left in an inconsistent state when they are released (eg. BN_div).
+	 * These can trip us up when they get reused, so the safest fix is to
+	 * make sure the BIGNUMs are made sane when the context usage is
+	 * releasing them. */
 	if (ctx->depth < BN_CTX_NUM_POS)
+#if 0
 		ctx->tos = ctx->pos[ctx->depth];
+#else
+		{
+		while(ctx->tos > ctx->pos[ctx->depth])
+			/* This ensures the BIGNUM is sane(r) for reuse. */
+			ctx->bn[--(ctx->tos)].top = 0;
+		}
+#endif
 	}
