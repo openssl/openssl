@@ -4,6 +4,10 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Have ASN1_BIT_STRING_set_bit() really clear a bit when the requested
+     value is 0.
+     [Richard Levitte]
+
   *) Add the configuration target linux-s390x.
      [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
 
