@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix to avoid calling the underlying ASN1 print routine when
+     an extension cannot be parsed. Correct a typo in the
+     OCSP_SERVICELOC extension. Tidy up print OCSP format.
+     [Steve Henson]
+
   *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
      Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
      when writing a 32767 byte record.
@@ -19,6 +24,7 @@
 
   *) Make mkdef.pl parse some of the ASN1 macros and add apropriate
      entries for variables.
+     [Steve Henson]
 
   *) Add functionality to apps/openssl.c for detecting locking
      problems: As the program is single-threaded, all we have
@@ -66,7 +72,11 @@
      [Steve Henson]
 
   *) Merge in replacement ASN1 code from the ASN1 branch. This almost
-     completely replaces the old ASN1 functionality.
+     completely replaces the old ASN1 functionality with a table driven
+     encoder and decoder which interprets an ASN1_ITEM structure describing
+     the ASN1 module. Compatibility with the existing ASN1 API (i2d,d2i) is
+     largely maintained. Almost all of the old asn1_mac.h macro based ASN1
+     has also been converted to the new form.
      [Steve Henson]
 
   *) Change BN_mod_exp_recp so that negative moduli are tolerated

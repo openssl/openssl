@@ -229,7 +229,7 @@ static int i2r_ocsp_serviceloc(X509V3_EXT_METHOD *method, void *in, BIO *bp, int
 	OCSP_SERVICELOC *a = in;
 	ACCESS_DESCRIPTION *ad;
 
-        if (BIO_printf(bp, "%*ssIissuer: ", ind, "") <= 0) goto err;
+        if (BIO_printf(bp, "%*sIssuer: ", ind, "") <= 0) goto err;
         if (X509_NAME_print_ex(bp, a->issuer, 0, XN_FLAG_ONELINE) <= 0) goto err;
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(a->locator); i++)
 	        {

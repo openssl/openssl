@@ -112,7 +112,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	if(method->it) ext_str = ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
 	else ext_str = method->d2i(NULL, &p, ext->value->length);
 
-	if(!ext_str) unknown_ext_print(out, ext, flag, indent, 1);
+	if(!ext_str) return unknown_ext_print(out, ext, flag, indent, 1);
 
 	if(method->i2s) {
 		if(!(value = method->i2s(method, ext_str))) {
