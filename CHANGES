@@ -4,6 +4,9 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) New FIPS 180-2 algorithms, SHA-224/-256/-384/-512 are implemented.
+     [Andy Polyakov and a number of other people]
+
   *) Improved PowerPC platform support. Most notably BIGNUM assembler
      implementation contributed by IBM.
      [Suresh Chari, Peter Waltenberg, Andy Polyakov]
