@@ -167,7 +167,7 @@ X509_REQ *x;
 			sprintf(str,"%12s","");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
-
+			{
 			if (a->set)
 				{
 				ii=0;
@@ -183,6 +183,7 @@ get_next:
 				type=t->type;
 				bs=t->value.bit_string;
 				}
+			}
 			for (j=25-j; j>0; j--)
 				if (BIO_write(bp," ",1) != 1) goto err;
 			if (BIO_puts(bp,":") <= 0) goto err;
