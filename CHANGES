@@ -4,6 +4,9 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Check various X509_...() return values in apps/req.c.
+     [Nils Larsch <nla@trustcenter.de>]
+
   *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
      an end-of-file condition would erronously be flagged, when the CRLF
      was just at the end of a processed block. The bug was discovered when
