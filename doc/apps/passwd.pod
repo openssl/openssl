@@ -9,12 +9,12 @@ passwd - compute password hashes
 B<openssl passwd>
 [B<-crypt>]
 [B<-apr1>]
-[B<-salt string>]
-[B<-in file>]
+[B<-salt> I<string>]
+[B<-in> I<file>]
 [B<-stdin>]
 [B<-quiet>]
 [B<-table>]
-{B<password>}
+{I<password>}
 
 =head1 DESCRIPTION
 
@@ -37,13 +37,13 @@ Use the B<crypt> algorithm (default).
 
 Use the B<apr1> algorithm.
 
-=item B<-salt string>
+=item B<-salt> I<string>
 
 Use the specified salt.
 
-=item B<-in file>
+=item B<-in> I<file>
 
-Read passwords from B<file>.
+Read passwords from I<file>.
 
 =item B<-stdin>
 
@@ -60,10 +60,10 @@ to each password hash.
 
 =back
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 B<openssl passwd -crypt -salt xx password> prints B<xxj31ZMTZzkVA>.
 
-B<openssl passwd -apr1 -salt xx password> prints B<$apr1$xx$2eRrCdRwKOfJOth0w31wR.>.
+B<openssl passwd -apr1 -salt xxxxxxxx password> prints B<$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0>.
 
 =cut
