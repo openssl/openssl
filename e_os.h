@@ -184,7 +184,6 @@ extern "C" {
 #endif
 
 #ifdef WIN16
-#  define OPENSSL_NO_FP_API
 #  define MS_CALLBACK	_far _loadds
 #  define MS_FAR	_far
 #else
@@ -193,6 +192,7 @@ extern "C" {
 #endif
 
 #ifdef OPENSSL_NO_STDIO
+#  undef OPENSSL_NO_FP_API
 #  define OPENSSL_NO_FP_API
 #endif
 
