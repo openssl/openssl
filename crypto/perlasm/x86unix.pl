@@ -167,7 +167,7 @@ sub main'pop	{ &out1("popl",@_); $stack-=4; }
 sub main'pushf	{ &out0("pushf"); $stack+=4; }
 sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
-sub main'call	{ &out1("call",$under.$_[0]); }
+sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 
