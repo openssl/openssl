@@ -116,10 +116,12 @@
 
  * Compile OpenSSL:
 
-   > perl Configure Mingw32
-   > ms\mw.bat
+   > ms\mingw32
 
-   This will create the library and binaries in out.
+   This will create the library and binaries in out. In case any problems
+   occur, try
+   > ms\mingw32 no-asm
+   instead.
 
    libcrypto.a and libssl.a are the static libraries. To use the DLLs,
    link with libeay32.a and libssl32.a instead.
