@@ -13,25 +13,27 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  BIO_METHOD * BIO_s_connect(void);
 
- #define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
- #define BIO_set_conn_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
- #define BIO_set_conn_ip(b,ip)	  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)ip)
- #define BIO_set_conn_int_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,3,(char *)port)
- #define BIO_get_conn_hostname(b)  BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0)
- #define BIO_get_conn_port(b)      BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1)
- #define BIO_get_conn_ip(b,ip) BIO_ptr_ctrl(b,BIO_C_SET_CONNECT,2)
- #define BIO_get_conn_int_port(b,port) BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,port)
+ BIO *BIO_new_connect(char *name);
 
- #define BIO_set_nbio(b,n)	BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
+ long BIO_set_conn_hostname(BIO *b, char *name);
+ long BIO_set_conn_port(BIO *b, char *port);
+ long BIO_set_conn_ip(BIO *b, char *ip);
+ long BIO_set_conn_int_port(BIO *b, char *port);
+ char *BIO_get_conn_hostname(BIO *b);
+ char *BIO_get_conn_port(BIO *b);
+ char *BIO_get_conn_ip(BIO *b, dummy);
+ long BIO_get_conn_int_port(BIO *b, int port);
 
- #define BIO_do_connect(b)	BIO_do_handshake(b)
+ long BIO_set_nbio(BIO *b, long n);
+
+ int BIO_do_connect(BIO *b);
 
 =head1 DESCRIPTION
 
 BIO_s_connect() returns the connect BIO method. This is a wrapper
 round the platform's TCP/IP socket connection routines.
 
-Using connect BIOs TCP/IP connections can be made and data
+Using connect BIOs, TCP/IP connections can be made and data
 transferred using only BIO routines. In this way any platform
 specific operations are hidden by the BIO abstraction.
 
@@ -54,7 +56,7 @@ BIO_get_fd() places the underlying socket in B<c> if it is not NULL,
 it also returns the socket . If B<c> is not NULL it should be of
 type (int *).
 
-BIO_set_conn_hostname() uses the string B<name> to set the hostname
+BIO_set_conn_hostname() uses the string B<name> to set the hostname.
 The hostname can be an IP address. The hostname can also include the
 port in the form hostname:port . It is also acceptable to use the
 form "hostname/any/other/path" or "hostname:port/any/other/path".
@@ -86,6 +88,9 @@ zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
 is set. Blocking I/O is the default. The call to BIO_set_nbio()
 should be made before the connection is established because 
 non blocking I/O is set during the connect process.
+
+BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into
+a single call: that is it creates a new connect BIO with B<name>.
 
 BIO_do_connect() attempts to connect the supplied BIO. It returns 1
 if the connection was established successfully. A zero or negative
@@ -122,6 +127,11 @@ connection process with the reason BIO_RR_CONNECT. If this is returned
 then this is an indication that a connection attempt would block,
 the application should then take appropriate action to wait until
 the underlying socket has connected and retry the call.
+
+BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip(),
+BIO_set_conn_int_port(), BIO_get_conn_hostname(), BIO_get_conn_port(),
+BIO_get_conn_ip(), BIO_get_conn_int_port(), BIO_set_nbio() and
+BIO_do_connect() are macros.
 
 =head1 RETURN VALUES
 

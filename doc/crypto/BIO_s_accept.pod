@@ -10,31 +10,31 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD * BIO_s_accept(void);
+ BIO_METHOD *BIO_s_accept(void);
 
- #define BIO_set_accept_port(b,name) BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
- #define BIO_get_accept_port(b)	BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0)
+ long BIO_set_accept_port(BIO *b, char *name);
+ char *BIO_get_accept_port(BIO *b);
 
  BIO *BIO_new_accept(char *host_port);
 
- #define BIO_set_nbio_accept(b,n) BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(n)?"a":NULL)
- #define BIO_set_accept_bios(b,bio) BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(char *)bio)
+ long BIO_set_nbio_accept(BIO *b, int n);
+ long BIO_set_accept_bios(BIO *b, char *bio);
 
- #define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
- #define BIO_get_bind_mode(b,mode) BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
+ long BIO_set_bind_mode(BIO *b, long mode);
+ long BIO_get_bind_mode(BIO *b, long dummy);
 
  #define BIO_BIND_NORMAL		0
  #define BIO_BIND_REUSEADDR_IF_UNUSED	1
  #define BIO_BIND_REUSEADDR		2
 
- #define BIO_do_accept(b)	BIO_do_handshake(b)
+ int BIO_do_accept(BIO *b);
 
 =head1 DESCRIPTION
 
 BIO_s_accept() returns the accept BIO method. This is a wrapper
 round the platform's TCP/IP socket accept routines.
 
-Using accept BIOs TCP/IP connections can be accepted and data
+Using accept BIOs, TCP/IP connections can be accepted and data
 transferred using only BIO routines. In this way any platform
 specific operations are hidden by the BIO abstraction.
 
@@ -130,12 +130,16 @@ however because the accept BIO will still accept additional incoming
 connections. This can be resolved by using BIO_pop() (see above)
 and freeing up the accept BIO after the initial connection.
 
-If the underlying accept socket is non blocking and BIO_do_accept() is
+If the underlying accept socket is non-blocking and BIO_do_accept() is
 called to await an incoming connection it is possible for
 BIO_should_io_special() with the reason BIO_RR_ACCEPT. If this happens
 then it is an indication that an accept attempt would block: the application
 should take appropriate action to wait until the underlying socket has
 accepted a connection and retry the call.
+
+BIO_set_accept_port(), BIO_get_accept_port(), BIO_set_nbio_accept(),
+BIO_set_accept_bios(), BIO_set_bind_mode(), BIO_get_bind_mode() and
+BIO_do_accept() are macros.
 
 =head1 RETURN VALUES
 
