@@ -17,7 +17,7 @@ AR=		ar r
 
 FIPS_DES_ENC=fips_des_enc.o
 
-CFLAGS= $(INCLUDES) $(CFLAG) -g
+CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST= fips_desmovs.c
