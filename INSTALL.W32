@@ -112,10 +112,10 @@
  * Compiler installation:
 
    Mingw32 is available from <ftp://ftp.xraylith.wisc.edu/pub/khan/
-   gnu-win32/mingw32/gcc-2.95.2/gcc-2.95.2-msvcrt.exe>. GNU make is at
-   <ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/binaries/
-   make-3.76.1.zip>. Install both of them in C:\egcs-1.1.2 and run
-   C:\egcs-1.1.2\mingw32.bat to set the PATH.
+   gnu-win32/mingw32/gcc-2.95.2/gcc-2.95.2-msvcrt.exe>. Extract it
+   to a directory such as C:\gcc-2.95.2 and add c:\gcc-2.95.2\bin to
+   the PATH environment variable in "System Properties"; or edit and
+   run C:\gcc-2.95.2\mingw32.bat to set the PATH.
 
  * Compile OpenSSL:
 
