@@ -171,9 +171,13 @@ typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 
 #include <lmcons.h>
 #include <lmstats.h>
+#if 0 /* Some compilers use LMSTR, others (VC6, for example) use LPTSTR.
+       * This part is disabled until a fix is found.
+       */
 typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
         (LMSTR, LMSTR, DWORD, DWORD, LPBYTE*);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
+#endif
 
 int RAND_poll(void)
 {
@@ -187,8 +191,12 @@ int RAND_poll(void)
 	CRYPTACQUIRECONTEXT acquire = 0;
 	CRYPTGENRANDOM gen = 0;
 	CRYPTRELEASECONTEXT release = 0;
+#if 0 /* This part is disabled until a fix for the problem with the
+       * definition of NETSTATGET is found.
+       */
 	NETSTATGET netstatget = 0;
 	NETFREE netfree = 0;
+#endif
 
 	/* load functions dynamically - not available on all systems */
 	advapi = LoadLibrary("ADVAPI32.DLL");
@@ -196,6 +204,10 @@ int RAND_poll(void)
 	user = LoadLibrary("USER32.DLL");
 	netapi = LoadLibrary("NETAPI32.DLL");
 
+#if 0 /* This part is disabled until a fix for the problem with the
+       * definition of NETSTATGET is found.  Also, note that VC6 doesn't
+       * understand strings starting with L".
+       */
 	if (netapi)
 		{
 		netstatget = (NETSTATGET) GetProcAddress(netapi,"NetStatisticsGet");
@@ -220,6 +232,7 @@ int RAND_poll(void)
 
 	if (netapi)
 		FreeLibrary(netapi);
+#endif
  
 	/* Read Performance Statistics from NT/2000 registry */
 	/* The size of the performance data can vary from call to call */
@@ -248,7 +261,7 @@ int RAND_poll(void)
 		RAND_add(&length, sizeof(length), 0);
 		RAND_add(buf, length, 0);
 		}
-	if ( buf )
+	if (buf)
 		free(buf);
 	}
 
