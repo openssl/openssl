@@ -351,7 +351,7 @@ appropriate size (using ???) and return it.
 
 long B<SSL_set_tmp_rsa_callback>(SSL *ssl, RSA *(*cb)(SSL *ssl, int export, int keylength));
 
-The same as L<"SSL_CTX_set_tmp_rsa_callback">, except it operates on an SSL
+The same as B<SSL_CTX_set_tmp_rsa_callback>, except it operates on an SSL
 session instead of a context.
 
 =item void B<SSL_CTX_set_verify>(SSL_CTX *ctx, int mode, int (*cb);(void))
