@@ -284,7 +284,7 @@ done
 
 # figure out if gcc is available and if so we use it otherwise
 # we fallback to whatever cc does on the system
-GCCVER=`gcc -v 2>&1`
+GCCVER=`(gcc -v) 2>&1`
 if [ $? = "0" ]; then
   CC=gcc
 else
