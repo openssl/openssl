@@ -82,7 +82,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, B
 	signed char *r = NULL;
 	int sign = 1;
 	int bit, next_bit, mask;
-	size_t len, j;
+	size_t len = 0, j;
 	
 	BN_CTX_start(ctx);
 	c = BN_CTX_get(ctx);
