@@ -125,7 +125,7 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag, int *pclass,
 		(int)(omax+ *pp));
 
 #endif
-	if (*plength > (omax - (*p - *pp)))
+	if (*plength > (omax - (p - *pp)))
 		{
 		ASN1err(ASN1_F_ASN1_GET_OBJECT,ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough
