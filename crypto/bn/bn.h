@@ -485,6 +485,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
 #define BN_F_BN_CTX_NEW					 106
 #define BN_F_BN_DIV					 107
 #define BN_F_BN_EXPAND2					 108
+#define BN_F_BN_MOD_EXP2_MONT				 118
 #define BN_F_BN_MOD_EXP_MONT				 109
 #define BN_F_BN_MOD_EXP_MONT_WORD			 117
 #define BN_F_BN_MOD_INVERSE				 110

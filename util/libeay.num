@@ -1801,3 +1801,5 @@ X509_CRL_digest                         2391
 d2i_ASN1_SET_OF_PKCS7                   2397
 EVP_CIPHER_CTX_set_key_length           2399
 EVP_CIPHER_CTX_ctrl                     2400
+BN_mod_exp_mont_word                    2401
+RAND_egd_bytes                          2402

@@ -121,7 +121,7 @@
 #endif
 
 
-#define TABLE_SIZE	16
+#define TABLE_SIZE	32
 
 /* slow but works */
 int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
@@ -427,27 +427,22 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	ts=1;
 
 	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
-		goto err;				/* 2 */
 
-	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&val[i]);
-		if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
-			goto err;
+		if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
+			goto err;				/* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&val[i]);
+			if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
-
+		
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
 			 * buffer. */
@@ -574,25 +569,20 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	else
 		aa=a;
 	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
-	if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
 
-	if (bits <= 20) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&(val[i]));
-		if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
-			goto err;
+		if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&(val[i]));
+			if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
@@ -787,26 +777,21 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 	BN_init(&(val[0]));
 	ts=1;
 	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
-		goto err;				/* 2 */
 
-	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&(val[i]));
-		if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
-			goto err;
+		if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
+			goto err;				/* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&(val[i]));
+			if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
