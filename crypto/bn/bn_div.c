@@ -214,7 +214,6 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		res=BN_CTX_get(ctx);
 	else	res=dv;
 	if (sdiv == NULL || res == NULL) goto err;
-	tmp->neg=0;
 
 	/* First we normalise the numbers */
 	norm_shift=BN_BITS2-((BN_num_bits(divisor))%BN_BITS2);

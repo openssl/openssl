@@ -4,6 +4,10 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) BN_CTX_get() should return zero-valued bignums, providing the same
+     initialised value as BN_new().
+     [Geoff Thorpe, suggested by Ulf Möller]
+
   *) Support for inhibitAnyPolicy certificate extension.
      [Steve Henson]
 
@@ -21,7 +25,7 @@
      some point, these tighter rules will become openssl's default to improve
      maintainability, though the assert()s and other overheads will remain only
      in debugging configurations. See bn.h for more details.
-     [Geoff Thorpe]
+     [Geoff Thorpe, Nils Larsch, Ulf Möller]
 
   *) BN_CTX_init() has been deprecated, as BN_CTX is an opaque structure
      that can only be obtained through BN_CTX_new() (which implicitly

@@ -140,6 +140,7 @@ void BN_CTX_start(BN_CTX *ctx)
 
 BIGNUM *BN_CTX_get(BN_CTX *ctx)
 	{
+	BIGNUM *ret;
 	/* Note: If BN_CTX_get is ever changed to allocate BIGNUMs dynamically,
 	 * make sure that if BN_CTX_get fails once it will return NULL again
 	 * until BN_CTX_end is called.  (This is so that callers have to check
@@ -155,9 +156,10 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
 			}
 		return NULL;
 		}
+	ret = ctx->bn + (ctx->tos++);
 	/* always return a 'zeroed' bignum */
-	ctx->bn[ctx->tos].top = 0;
-	return (&(ctx->bn[ctx->tos++]));
+	BN_zero(ret);
+	return ret;
 	}
 
 void BN_CTX_end(BN_CTX *ctx)
