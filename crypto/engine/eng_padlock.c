@@ -65,6 +65,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
+#ifdef _MSC_VER
+# define alloca   _alloca
+# define snprintf _snprintf
+#endif
 
 #include <openssl/crypto.h>
 #include <openssl/dso.h>
@@ -489,7 +494,7 @@ padlock_verify_context(void *cdata)
 		}
 }
 
-sttic int __fastcall
+static int
 padlock_available(void)
 {	_asm	{
 		pushfd
@@ -608,7 +613,10 @@ static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int nbytes);
 
-#define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)(ctx->cipher_data + ((0x10 - ((size_t)(ctx->cipher_data) & 0x0F)) & 0x0F)))
+#define NEAREST_ALIGNED(ptr) ( (char *)(ptr) +		\
+	( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )	)
+#define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
+	NEAREST_ALIGNED(ctx->cipher_data))
 
 /* Declaring so many ciphers by hand would be a pain.
    Instead introduce a bit of preprocessor magic :-) */
@@ -733,6 +741,10 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		case 256:
 			/* Generate an extended AES key in software.
 			   Needed for AES192/AES256 */
+			/* Well, the above applies to Stepping 8 CPUs
+			   and is listed as hardware errata. They most
+			   likely will fix it at some point and then
+			   a check for stepping would be due here. */
 			if (enc)
 				AES_set_encrypt_key(key, key_len, &cdata->ks);
 			else
@@ -822,21 +834,20 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
 	struct padlock_cipher_data *cdata;
 	const  void *inp;
-	void  *out, *iv;
+	char  *out, *iv;
 	int    inp_misaligned, out_misaligned, realign_in_loop;
-	size_t chunk, allocated;
+	size_t chunk, allocated=0;
 
 	if (nbytes == 0)
 		return 1;
 	if (nbytes % AES_BLOCK_SIZE)
 		return 0; /* are we expected to do tail processing? */
 
-#if 0
-	/* There is more work to support CPUs that don't require alignment.
-	   Therefore disabled completely for now... */
+	/* VIA promises CPUs that won't require alignment in the future.
+	   For now padlock_aes_align_required is initialized to 1 and
+	   the condition is never met... */
 	if (!padlock_aes_align_required)
 		return padlock_aes_cipher_omnivorous(ctx, out_arg, in_arg, nbytes);
-#endif
 
 	inp_misaligned = (((size_t)in_arg) & 0x0F);
 	out_misaligned = (((size_t)out_arg) & 0x0F);
@@ -858,12 +869,8 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	if (out_misaligned) {
 		/* optmize for small input */
 		allocated = (chunk<nbytes?PADLOCK_CHUNK:nbytes);
-#ifdef _MSC_VER
-		out  = _alloca(0x10 + allocated);
-#else
-		out  =  alloca(0x10 + allocated);
-#endif
-		out += (0x10 - ((size_t)out & 0x0F)) & 0x0F;
+		out = alloca(0x10 + allocated);
+		out = NEAREST_ALIGNED(out);
 	}
 	else
 		out = out_arg;
@@ -883,7 +890,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ecb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -909,7 +916,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cbc(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -934,7 +941,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cfb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -954,7 +961,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ofb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -970,7 +977,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
 	/* Clean the realign buffer if it was used */
 	if (out_misaligned) {
-		volatile unsigned long *p=out;
+		volatile unsigned long *p=(void *)out;
 		size_t   n = allocated/sizeof(*p);
 		while (n--) *p++=0;
 	}
