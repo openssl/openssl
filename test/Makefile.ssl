@@ -131,17 +131,20 @@ tests:	exe apps $(TESTS)
 apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
 
-SET_SO_PATHS=OSSL_LIBPATH="`cd ..; pwd`"; \
-		LD_LIBRARY_PATH="$$OSSL_LIBPATH:$$LD_LIBRARY_PATH"; \
-		DYLD_LIBRARY_PATH="$$OSSL_LIBPATH:$$DYLD_LIBRARY_PATH"; \
-		SHLIB_PATH="$$OSSL_LIBPATH:$$SHLIB_PATH"; \
-		LIBPATH="$$OSSL_LIBPATH:$$LIBPATH"; \
-		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="$${LIBPATH}:$$PATH"; fi; \
-		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-		if [ -n "$(SHARED_LIBS)" ]; then \
-		  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
-		  export LD_PRELOAD; \
-		fi
+SET_SO_PATHS=\
+	if [ -n "$(SHARED_LIBS)" ]; then \
+	  OSSL_LIBPATH="`cd ..; pwd`"; \
+	  LD_LIBRARY_PATH="$$OSSL_LIBPATH:$$LD_LIBRARY_PATH"; \
+	  DYLD_LIBRARY_PATH="$$OSSL_LIBPATH:$$DYLD_LIBRARY_PATH"; \
+	  SHLIB_PATH="$$OSSL_LIBPATH:$$SHLIB_PATH"; \
+	  LIBPATH="$$OSSL_LIBPATH:$$LIBPATH"; \
+	  if [ "$(PLATFORM)" = "Cygwin" ]; then \
+	    PATH="$${LIBPATH}:$$PATH"; \
+	  fi; \
+	  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
+	  export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
+	  export LD_PRELOAD; \
+	fi
 
 alltests: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
