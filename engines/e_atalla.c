@@ -136,6 +136,7 @@ static RSA_METHOD atalla_rsa =
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 #endif

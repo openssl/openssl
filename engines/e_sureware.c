@@ -122,7 +122,8 @@ static RSA_METHOD surewarehk_rsa =
 	0,	/* RSA flag*/
 	NULL, 
 	NULL, /* OpenSSL sign*/
-	NULL  /* OpenSSL verify*/
+	NULL, /* OpenSSL verify*/
+	NULL  /* keygen */
 	};
 #endif
 

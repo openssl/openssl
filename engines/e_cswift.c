@@ -154,6 +154,7 @@ static RSA_METHOD cswift_rsa =
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 #endif

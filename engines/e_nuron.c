@@ -270,6 +270,7 @@ static RSA_METHOD nuron_rsa =
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 #endif

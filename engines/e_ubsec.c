@@ -144,6 +144,7 @@ static RSA_METHOD ubsec_rsa =
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 #endif

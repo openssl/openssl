@@ -185,6 +185,7 @@ static RSA_METHOD hwcrhk_rsa =
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 #endif

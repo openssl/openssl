@@ -182,7 +182,8 @@ static RSA_METHOD ibm_4758_cca_rsa =
 	RSA_FLAG_SIGN_VER,	  /* flags */
 	NULL, /* app_data */
 	cca_rsa_sign, /* rsa_sign */
-	cca_rsa_verify  /* rsa_verify */
+	cca_rsa_verify, /* rsa_verify */
+	NULL /* rsa_keygen */
 	};
 #endif
 

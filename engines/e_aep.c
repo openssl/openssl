@@ -172,7 +172,8 @@ static RSA_METHOD aep_rsa =
 	0,                   /*flags*/
 	NULL,                /*app_data*/
 	NULL,                /*rsa_sign*/
-	NULL                 /*rsa_verify*/
+	NULL,                /*rsa_verify*/
+	NULL                 /*rsa_keygen*/
 	};
 #endif
 
