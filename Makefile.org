@@ -277,8 +277,6 @@ dist:
 	perl Configure dist
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='${SDIRS}' clean
-	@$(MAKE) SDIRS='${SDIRS}' dclean
-	@$(MAKE) makefile.one
 	@$(MAKE) tar
 
 dist_pem_h:
