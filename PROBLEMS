@@ -1,0 +1,40 @@
+* System libcrypto.dylib and libssl.dylib are used by system ld on MacOS X.
+
+
+    NOTE: The problem described here only applies when OpenSSL isn't built
+    with shared library support (i.e. without the "shared" configuration
+    option).  If you build with shared library support, you will have no
+    problems as long as you set up DYLD_LIBRARY_PATH properly at all times.
+
+
+This is really a misfeature in ld, which seems to look for .dylib libraries
+along the whole library path before it bothers looking for .a libraries.  This
+means that -L switches won't matter unless OpenSSL is built with shared
+library support.
+
+The workaround may be to change the following lines in apps/Makefile.ssl and
+test/Makefile.ssl:
+
+  LIBCRYPTO=-L.. -lcrypto
+  LIBSSL=-L.. -lssl
+
+to:
+
+  LIBCRYPTO=../libcrypto.a
+  LIBSSL=../libssl.a
+
+It's possible that something similar is needed for shared library support
+as well.  That hasn't been well tested yet.
+
+
+Another solution that many seem to recommend is to move the libraries
+/usr/lib/libcrypto.0.9.dylib, /usr/lib/libssl.0.9.dylib to a different
+directory, build and install OpenSSL and anything that depends on your
+build, then move libcrypto.0.9.dylib and libssl.0.9.dylib back to their
+original places.  Note that the version numbers on those two libraries
+may differ on your machine.
+
+
+As long as Apple doesn't fix the problem with ld, this problem building
+OpenSSL will remain as is.
+
