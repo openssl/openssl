@@ -15,7 +15,8 @@ if [ -f "$LIBCRYPTOSO" ]; then
     LIBSSLSO="${THERE}/libssl.so${SOSUFFIX}"
 fi
 
-case "`(uname -s) 2>/dev/null`" in
+SYSNAME=`(uname -s) 2>/dev/null`;
+case "$SYSNAME" in
 SunOS|IRIX*)
 	# SunOS and IRIX run-time linkers evaluate alternative
 	# variables depending on target ABI...
@@ -58,8 +59,11 @@ if [ -f "$LIBCRYPTOSO" ]; then
 	# with -rpath pointing to previous version installation. Wrapping
 	# it into a script makes it possible to do so on multi-ABI
 	# platforms.
-	LD_PRELOAD="$LIBCRYPTOSO $LIBSSLSO"	    # SunOS, Linux, ELF HP-UX
-	_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"  # Tru64, o32 IRIX
+	case "$SYSNAME" in
+	*BSD)	LD_PRELOAD="$LIBCRYPTOSO:$LIBSSLSO" ;;	# *BSD
+	*)	LD_PRELOAD="$LIBCRYPTOSO $LIBSSLSO" ;;	# SunOS, Linux, ELF HP-UX
+	esac
+	_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"	# Tru64, o32 IRIX
 	export LD_PRELOAD _RLD_LIST
 fi
 
