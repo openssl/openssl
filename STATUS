@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/07/27 21:58:06 $
+  ______________                           $Date: 1999/08/05 00:15:15 $
 
   DEVELOPMENT STATE
 
@@ -120,4 +120,5 @@
 
   WISHES
 
-    o 
+    o Support optional q component in DH parameters to speed up
+      SSL ciphersuites with ephemeral DH.
