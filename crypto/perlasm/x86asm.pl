@@ -29,6 +29,8 @@ sub main'asm_init
 		{ $cpp=1; require "x86unix.pl"; }
 	elsif (	($type eq "win32"))
 		{ $win32=1; require "x86ms.pl"; }
+	elsif (	($type eq "win32n"))
+		{ $win32=1; require "x86nasm.pl"; }
 	else
 		{
 		print STDERR <<"EOF";
@@ -38,6 +40,7 @@ Pick one target type from
 	sol	- x86 solaris
 	cpp	- format so x86unix.cpp can be used
 	win32	- Windows 95/Windows NT
+	win32n	- Windows 95/Windows NT NASM format
 EOF
 		exit(1);
 		}
