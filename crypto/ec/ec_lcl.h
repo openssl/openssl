@@ -96,7 +96,7 @@ struct ec_method_st {
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 
 	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_make_affine */
-	int (*is_at_infinity)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+	int (*is_at_infinity)(const EC_GROUP *, EC_POINT *);
 	int (*is_on_curve)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
