@@ -141,7 +141,7 @@ overwritten) and 7 (by not using the 10 bytes given to the caller to
 update the 'state', but they are used to update 'md').
 
 So of the points raised, only 2 is not addressed (but see
-L<RAND_add()>).
+L<RAND_add(3)>).
 
 =head1 SEE ALSO
 
