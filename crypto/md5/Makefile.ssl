@@ -67,11 +67,14 @@ asm/mx86unix.cpp: asm/md5-586.pl
 	(cd asm; $(PERL) md5-586.pl cpp >mx86unix.cpp)
 
 # works for both SC and gcc
+# (PATH is changed because /usr/ccs/bin/as knows opcodes we need
+# that GNU as has never heard of)
 asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
-	$(CPP) -DULTRASPARC -DMD5_BLOCK_DATA_ORDER asm/md5-sparcv9.S | as -xarch=v8plus /dev/fd/0 -o asm/md5-sparcv8plus.o
+	$(CPP) -DULTRASPARC -DMD5_BLOCK_DATA_ORDER asm/md5-sparcv9.S | \
+	PATH=/usr/ccs/bin:$(PATH) as -xarch=v8plus /dev/fd/0 -o asm/md5-sparcv8plus.o
 
 asm/md5-sparcv9.o: asm/md5-sparcv9.S
-	$(CC) -xarch=v9 -DULTRASPARC -DMD5_BLOCK_DATA_ORDER -c asm/md5-sparcv9.S -o asm/md5-sparcv9.o
+	PATH=/usr/ccs/bin:$(PATH) $(CC) -xarch=v9 -DULTRASPARC -DMD5_BLOCK_DATA_ORDER -c asm/md5-sparcv9.S -o asm/md5-sparcv9.o
 
 
 files:
