@@ -116,11 +116,14 @@ OpenSSL.  Information on the OpenSSL mailing lists is available from
 
 * Where can I get a compiled version of OpenSSL?
 
+You can finder pointers to binary distributions in
+http://www.openssl.org/related/binaries.html .
+
 Some applications that use OpenSSL are distributed in binary form.
 When using such an application, you don't need to install OpenSSL
 yourself; the application will include the required parts (e.g. DLLs).
 
-If you want to install OpenSSL on a Windows system and you don't have
+If you want to build OpenSSL on a Windows system and you don't have
 a C compiler, read the "Mingw32" section of INSTALL.W32 for information
 on how to obtain and install the free GNU C compiler.
 
