@@ -94,8 +94,8 @@ tags:
 tests:	exe apps \
 	test_des test_idea test_sha test_md5 test_hmac test_md2 test_mdc2 \
 	test_rc2 test_rc4 test_rc5 test_bf test_cast \
-	test_rand test_enc test_x509 test_rsa test_crl test_sid test_reqgen \
-	test_req test_pkcs7 test_bn test_verify test_dh test_dsa \
+	test_rand test_bn test_enc test_x509 test_rsa test_crl test_sid \
+	test_reqgen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ssl test_ca
 
 apps:
@@ -174,12 +174,12 @@ test_pkcs7:
 	@sh ./tpkcs7d 2>/dev/null
 
 test_bn:
-	@echo 'test a^b%c implementations'
-	./$(EXPTEST)
 	@echo starting big number library test, could take a while...
 	@(./$(BNTEST)|bc) | awk '{ \
 if ($$0 != "0") {print "error"; exit(1); } \
 if (((NR+1)%64) == 0) print NR+1," tests done"; }'
+	@echo 'test a^b%c implementations'
+	./$(EXPTEST)
 
 test_verify:
 	@echo "The following command should have some OK's and some failures"
