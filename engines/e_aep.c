@@ -71,6 +71,7 @@ typedef int pid_t;
 #include <openssl/buffer.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_AEP

@@ -70,6 +70,9 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no

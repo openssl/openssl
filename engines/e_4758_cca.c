@@ -61,6 +61,7 @@
 #include <openssl/objects.h>
 #include <openssl/engine.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_4758_CCA
