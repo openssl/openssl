@@ -2060,3 +2060,11 @@ OBJ_NAME_do_all_sorted                  2648	EXIST::FUNCTION:
 OBJ_NAME_do_all                         2649	EXIST::FUNCTION:
 BN_nnmod                                2650	EXIST::FUNCTION:
 BN_swap                                 2651	EXIST::FUNCTION:
+BN_mod_add                              2652	EXIST::FUNCTION:
+BN_mod_lshift1                          2653	EXIST::FUNCTION:
+BN_mod_lshift                           2654	EXIST::FUNCTION:
+BN_mod_sub_quick                        2655	EXIST::FUNCTION:
+BN_mod_lshift1_quick                    2656	EXIST::FUNCTION:
+BN_mod_lshift_quick                     2657	EXIST::FUNCTION:
+BN_mod_add_quick                        2658	EXIST::FUNCTION:
+BN_mod_sub                              2659	EXIST::FUNCTION:

@@ -304,10 +304,15 @@ typedef struct bn_recp_ctx_st
                                 /* b >= 100 */ 27)
 
 #define BN_num_bytes(a)	((BN_num_bits(a)+7)/8)
-#define BN_is_word(a,w)	(((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w)))
-#define BN_is_zero(a)	(((a)->top == 0) || BN_is_word(a,0))
-#define BN_is_one(a)	(BN_is_word((a),1))
-#define BN_is_odd(a)	(((a)->top > 0) && ((a)->d[0] & 1))
+
+/* Note that BN_abs_is_word does not work reliably for w == 0 */
+#define BN_abs_is_word(a,w) (((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w)))
+#define BN_is_zero(a)       (((a)->top == 0) || BN_abs_is_word(a,0))
+#define BN_is_one(a)        (BN_abs_is_word((a),1) && !(a)->neg)
+#define BN_is_word(a,w)     ((w) ? BN_abs_is_word((a),(w)) && !(a)->neg : \
+                                   BN_is_zero((a)))
+#define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
+
 #define BN_one(a)	(BN_set_word((a),1))
 #define BN_zero(a)	(BN_set_word((a),0))
 
@@ -405,7 +410,8 @@ char *	BN_bn2hex(const BIGNUM *a);
 char *	BN_bn2dec(const BIGNUM *a);
 int 	BN_hex2bn(BIGNUM **a, const char *str);
 int 	BN_dec2bn(BIGNUM **a, const char *str);
-int	BN_gcd(BIGNUM *r,const BIGNUM *in_a,const BIGNUM *in_b,BN_CTX *ctx);
+int	BN_gcd(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx);
+int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,

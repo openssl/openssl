@@ -55,8 +55,60 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
@@ -77,6 +129,8 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 
 	if (BN_copy(a,in_a) == NULL) goto err;
 	if (BN_copy(b,in_b) == NULL) goto err;
+	a->neg = 0;
+	b->neg = 0;
 
 	if (BN_cmp(a,b) < 0) { t=a; a=b; b=t; }
 	t=euclid(a,b);
@@ -97,10 +151,10 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
 	bn_check_top(a);
 	bn_check_top(b);
 
-	for (;;)
+	/* 0 <= b <= a */
+	while (!BN_is_zero(b))
 		{
-		if (BN_is_zero(b))
-			break;
+		/* 0 < b <= a */
 
 		if (BN_is_odd(a))
 			{
@@ -133,7 +187,9 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
 				shifts++;
 				}
 			}
+		/* 0 <= b <= a */
 		}
+
 	if (shifts)
 		{
 		if (!BN_lshift(a,a,shifts)) goto err;
@@ -143,12 +199,13 @@ err:
 	return(NULL);
 	}
 
+
 /* solves ax == 1 (mod n) */
 BIGNUM *BN_mod_inverse(BIGNUM *in,
 	const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	{
 	BIGNUM *A,*B,*X,*Y,*M,*D,*R=NULL;
-	BIGNUM *T,*ret=NULL;
+	BIGNUM *ret=NULL;
 	int sign;
 
 	bn_check_top(a);
@@ -169,34 +226,94 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		R=in;
 	if (R == NULL) goto err;
 
-	BN_zero(X);
-	BN_one(Y);
-	if (BN_copy(A,a) == NULL) goto err;
-	if (BN_copy(B,n) == NULL) goto err;
-	sign=1;
+	BN_one(X);
+	BN_zero(Y);
+	if (BN_copy(B,a) == NULL) goto err;
+	if (BN_copy(A,n) == NULL) goto err;
+	A->neg = 0;
+	if (B->neg || (BN_ucmp(B, A) >= 0))
+		{
+		if (!BN_nnmod(B, B, A, ctx)) goto err;
+		}
+	sign = -1;
+	/* From  B = a mod |n|,  A = |n|  it follows that
+	 *
+	 *      0 <= B < A,
+	 *           X*a  ==  B   (mod |n|),
+	 *     -sign*Y*a  ==  A   (mod |n|).
+	 */
 
 	while (!BN_is_zero(B))
 		{
+		BIGNUM *tmp;
+
+		/*
+		 *      0 < B < A,
+		 * (*)       X*a  ==  B   (mod |n|),
+		 *     -sign*Y*a  ==  A   (mod |n|)
+		 */
+
 		if (!BN_div(D,M,A,B,ctx)) goto err;
-		T=A;
+		/* Now
+		 *      A = D*B + M;
+		 * thus we have
+		 * (**) -sign*Y*a  ==  D*B + M   (mod |n|).
+		 */
+		
+		tmp=A; /* keep the BIGNUM object, the value does not matter */
+
+		/* (A, B) := (B, A mod B) ... */
 		A=B;
 		B=M;
-		/* T has a struct, M does not */
+		/* ... so we have  0 <= B < A  again */
 
-		if (!BN_mul(T,D,X,ctx)) goto err;
-		if (!BN_add(T,T,Y)) goto err;
-		M=Y;
+		/* Since the former  M  is now  B  and the former  B  is now  A,
+		 * (**) translates into
+		 *      -sign*Y*a  ==  D*A + B    (mod |n|),
+		 * i.e.
+		 *      -sign*Y*a - D*A  ==  B    (mod |n|).
+		 * Similarly, (*) translates into
+		 *      X*a  ==  A          (mod |n|).
+		 *
+		 * Thus,
+		 *      -sign*Y*a - D*X*a  ==  B  (mod |n|),
+		 * i.e.
+		 *      -sign*(Y + D*X)*a  ==  B  (mod |n|).
+		 *
+		 * So if we set  (X, Y, sign) := (Y + D*X, X, -sign),  we arrive back at
+		 *            X*a  ==  B   (mod |n|),
+		 *      -sign*Y*a  ==  A   (mod |n|).
+		 * Note that  X  and  Y  stay non-negative all the time.
+		 */
+
+		if (!BN_mul(tmp,D,X,ctx)) goto err;
+		if (!BN_add(tmp,tmp,Y)) goto err;
+		M=Y; /* keep the BIGNUM object, the value does not matter */
 		Y=X;
-		X=T;
-		sign= -sign;
+		X=tmp;
+		sign = -sign;
 		}
+
+	/*
+	 * The while loop ends when
+	 *      A == gcd(a,n);
+	 * we have
+	 *      -sign*Y*a  ==  A  (mod |n|),
+	 * where  Y  is non-negative.
+	 */
+
 	if (sign < 0)
 		{
 		if (!BN_sub(Y,n,Y)) goto err;
 		}
+	/* Now  Y*a  ==  A  (mod |n|).  */
+	
 
 	if (BN_is_one(A))
-		{ if (!BN_mod(R,Y,n,ctx)) goto err; }
+		{
+		/* Y*a == 1  (mod |n|) */
+		if (!BN_mod(R,Y,n,ctx)) goto err;
+		}
 	else
 		{
 		BNerr(BN_F_BN_MOD_INVERSE,BN_R_NO_INVERSE);

@@ -3,6 +3,28 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function BN_kronecker.
+     [Bodo Moeller]
+
+  *) Fix BN_gcd so that it works on negative inputs; the result is
+     positive unless both parameters are zero.
+     Previously something reasonably close to an infinite loop was
+     possible because numbers could be growing instead of shrinking
+     in the implementation of Euclid's algorithm.
+     [Bodo Moeller]
+
+  *) Fix BN_is_word() and BN_is_one() macros to take into account the
+     sign of the number in question.
+
+     Fix BN_is_word(a,w) to work correctly for w == 0.
+
+     The old BN_is_word(a,w) macro is now called BN_abs_is_word(a,w)
+     because its test if the absolute value of 'a' equals 'w'.
+     Note that BN_abs_is_word does *not* handle w == 0 reliably;
+     it exists mostly for use in the implementations of BN_is_zero(),
+     BN_is_one(), and BN_is_word().
+     [Bodo Moeller]
+
   *) Initialise "ex_data" member of an RSA structure prior to calling the
      method-specific "init()" handler, and clean up ex_data after calling
      the method-specific "finish()" handler. Previously, this was happening
