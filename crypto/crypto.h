@@ -126,7 +126,9 @@ extern "C" {
 #define	CRYPTO_LOCK_DYNLOCK		28
 #define	CRYPTO_LOCK_ENGINE		29
 #define	CRYPTO_LOCK_UI			30
-#define	CRYPTO_NUM_LOCKS		31
+#define CRYPTO_LOCK_ECDSA               31
+#define CRYPTO_LOCK_EC			32
+#define	CRYPTO_NUM_LOCKS		33
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -233,6 +235,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 #define CRYPTO_EX_INDEX_ENGINE		9
 #define CRYPTO_EX_INDEX_X509		10
 #define CRYPTO_EX_INDEX_UI		11
+#define CRYPTO_EX_INDEX_ECDSA		12
 
 /* Dynamically assigned indexes start from this value (don't use directly, use
  * via CRYPTO_ex_data_new_class). */
