@@ -59,6 +59,7 @@
 /* Part of the code in here was originally in conf.c, which is now removed */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
@@ -73,7 +74,7 @@ static void clear_comments(CONF *conf, char *p);
 static int str_copy(CONF *conf,char *section,char **to, char *from);
 static char *scan_quote(CONF *conf, char *p);
 static char *scan_dquote(CONF *conf, char *p);
-#define scan_esc(p)	(((IS_EOF((conf),(p)[1]))?(p+=1):(p+=2)))
+#define scan_esc(conf,p)	(((IS_EOF((conf),(p)[1]))?((p)+1):((p)+2)))
 
 static CONF *def_create(CONF_METHOD *meth);
 static int def_init_default(CONF *conf);
@@ -465,7 +466,7 @@ static void clear_comments(CONF *conf, char *p)
 			}
 		if (IS_ESC(conf,*p))
 			{
-			p=scan_esc(p);
+			p=scan_esc(conf,p);
 			continue;
 			}
 		if (IS_EOF(conf,*p))
@@ -624,7 +625,7 @@ static char *eat_alpha_numeric(CONF *conf, char *p)
 		{
 		if (IS_ESC(conf,*p))
 			{
-			p=scan_esc(p);
+			p=scan_esc(conf,p);
 			continue;
 			}
 		if (!IS_ALPHA_NUMERIC_PUNCT(conf,*p))
