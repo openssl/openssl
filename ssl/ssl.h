@@ -1038,10 +1038,10 @@ int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 
 void	ERR_load_SSL_strings(void );
 void	SSL_load_error_strings(void );
-char * 	SSL_state_string(SSL *s);
-char * 	SSL_rstate_string(SSL *s);
-char * 	SSL_state_string_long(SSL *s);
-char * 	SSL_rstate_string_long(SSL *s);
+const char *SSL_state_string(SSL *s);
+const char *SSL_rstate_string(SSL *s);
+const char *SSL_state_string_long(SSL *s);
+const char *SSL_rstate_string_long(SSL *s);
 long	SSL_SESSION_get_time(SSL_SESSION *s);
 long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(SSL_SESSION *s);
@@ -1150,10 +1150,10 @@ int SSL_shutdown(SSL *s);
 
 SSL_METHOD *SSL_get_ssl_method(SSL *s);
 int SSL_set_ssl_method(SSL *s,SSL_METHOD *method);
-char *SSL_alert_type_string_long(int value);
-char *SSL_alert_type_string(int value);
-char *SSL_alert_desc_string_long(int value);
-char *SSL_alert_desc_string(int value);
+const char *SSL_alert_type_string_long(int value);
+const char *SSL_alert_type_string(int value);
+const char *SSL_alert_desc_string_long(int value);
+const char *SSL_alert_desc_string(int value);
 
 void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *list);
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *list);

@@ -59,9 +59,9 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 
-char *SSL_state_string_long(SSL *s)
+const char *SSL_state_string_long(SSL *s)
 	{
-	char *str;
+	const char *str;
 
 	switch (s->state)
 		{
@@ -199,9 +199,9 @@ default:	str="unknown state"; break;
 	return(str);
 	}
 
-char *SSL_rstate_string_long(SSL *s)
+const char *SSL_rstate_string_long(SSL *s)
 	{
-	char *str;
+	const char *str;
 
 	switch (s->rstate)
 		{
@@ -213,9 +213,9 @@ char *SSL_rstate_string_long(SSL *s)
 	return(str);
 	}
 
-char *SSL_state_string(SSL *s)
+const char *SSL_state_string(SSL *s)
 	{
-	char *str;
+	const char *str;
 
 	switch (s->state)
 		{
@@ -347,7 +347,7 @@ default:					str="UNKWN "; break;
 	return(str);
 	}
 
-char *SSL_alert_type_string_long(int value)
+const char *SSL_alert_type_string_long(int value)
 	{
 	value>>=8;
 	if (value == SSL3_AL_WARNING)
@@ -358,7 +358,7 @@ char *SSL_alert_type_string_long(int value)
 		return("unknown");
 	}
 
-char *SSL_alert_type_string(int value)
+const char *SSL_alert_type_string(int value)
 	{
 	value>>=8;
 	if (value == SSL3_AL_WARNING)
@@ -369,9 +369,9 @@ char *SSL_alert_type_string(int value)
 		return("U");
 	}
 
-char *SSL_alert_desc_string(int value)
+const char *SSL_alert_desc_string(int value)
 	{
-	char *str;
+	const char *str;
 
 	switch (value & 0xff)
 		{
@@ -404,9 +404,9 @@ char *SSL_alert_desc_string(int value)
 	return(str);
 	}
 
-char *SSL_alert_desc_string_long(int value)
+const char *SSL_alert_desc_string_long(int value)
 	{
-	char *str;
+	const char *str;
 
 	switch (value & 0xff)
 		{
@@ -487,9 +487,9 @@ char *SSL_alert_desc_string_long(int value)
 	return(str);
 	}
 
-char *SSL_rstate_string(SSL *s)
+const char *SSL_rstate_string(SSL *s)
 	{
-	char *str;
+	const char *str;
 
 	switch (s->rstate)
 		{
