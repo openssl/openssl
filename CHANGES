@@ -4,6 +4,16 @@
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
 
+  *) Fix various bugs revealed by running the NISCC test suite:
+
+     Stop out of bounds reads in the ASN1 code when presented with
+     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     
+     If verify callback ignores invalid public key errors don't try to check
+     certificate signature with the NULL public key.
+
+     [Steve Henson]
+
   *) In ssl3_accept() (ssl/s3_srvr.c) only accept a client certificate
      if the server requested one: as stated in TLS 1.0 and SSL 3.0
      specifications.

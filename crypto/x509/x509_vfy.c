@@ -490,7 +490,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				ok=(*cb)(0,ctx);
 				if (!ok) goto end;
 				}
-			if (X509_verify(xs,pkey) <= 0)
+			else if (X509_verify(xs,pkey) <= 0)
 				{
 				ctx->error=X509_V_ERR_CERT_SIGNATURE_FAILURE;
 				ctx->current_cert=xs;
