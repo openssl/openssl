@@ -123,6 +123,9 @@ int LIB$INIT_TIMER(), LIB$SHOW_TIMER();
 
 #include <string.h>		/* from ssltest.c */
 #include <errno.h>
+
+#include "openssl/e_os.h"
+
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
