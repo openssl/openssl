@@ -801,7 +801,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 						unsigned long chtype)
 	{
 	CONF_VALUE *v;
-	int i;
+	int i, mval;
 	char *p, *type;
 	if (!nm)
 		return 0;
@@ -824,8 +824,19 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 				if(*p) type = p;
 				break;
 				}
+#ifndef CHARSET_EBCDIC
+			if (*p == '+')
+#else
+			if (*p == os_toascii['+'])
+#endif
+			{
+			mval = -1;
+			p++;
+			}
+		else
+			mval = 0;
 		if (!X509_NAME_add_entry_by_txt(nm,type, chtype,
-				(unsigned char *) v->value,-1,-1,0))
+				(unsigned char *) v->value,-1,-1,mval))
 					return 0;
 
 		}

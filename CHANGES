@@ -4,6 +4,10 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Generate muti valued AVAs using '+' notation in config files for
+     req and dirName.
+     [Steve Henson]
+
   *) Support for nameConstraints certificate extension.
      [Steve Henson]
 

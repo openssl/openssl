@@ -133,7 +133,7 @@ static int add_attribute_object(X509_REQ *req, char *text,
 				char *def, char *value, int nid, int n_min,
 				int n_max, unsigned long chtype);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	int nid,int n_min,int n_max, unsigned long chtype);
+	int nid,int n_min,int n_max, unsigned long chtype, int mval);
 #ifndef OPENSSL_NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
@@ -1259,7 +1259,7 @@ static int prompt_info(X509_REQ *req,
 	int i;
 	char *p,*q;
 	char buf[100];
-	int nid;
+	int nid, mval;
 	long n_min,n_max;
 	char *type,*def,*value;
 	CONF_VALUE *v;
@@ -1302,6 +1302,13 @@ start:		for (;;)
 					if(*p) type = p;
 					break;
 				}
+			if (*type == '+')
+				{
+				mval = -1;
+				type++;
+				}
+			else
+				mval = 0;
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 
@@ -1339,7 +1346,7 @@ start:		for (;;)
 				}
 
 			if (!add_DN_object(subj,v->value,def,value,nid,
-				n_min,n_max, chtype))
+				n_min,n_max, chtype, mval))
 				return 0;
 			}
 		if (X509_NAME_entry_count(subj) == 0)
@@ -1429,6 +1436,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 
 	for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++)
 		{
+		int mval;
 		v=sk_CONF_VALUE_value(dn_sk,i);
 		p=q=NULL;
 		type=v->name;
@@ -1445,8 +1453,19 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 				if(*p) type = p;
 				break;
 			}
+#ifndef CHARSET_EBCDIC
+		if (*p == '+')
+#else
+		if (*p == os_toascii['+'])
+#endif
+			{
+			p++;
+			mval = -1;
+			}
+		else
+			mval = 0;
 		if (!X509_NAME_add_entry_by_txt(subj,type, chtype,
-				(unsigned char *) v->value,-1,-1,0)) return 0;
+				(unsigned char *) v->value,-1,-1,mval)) return 0;
 
 		}
 
@@ -1469,7 +1488,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 
 
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	     int nid, int n_min, int n_max, unsigned long chtype)
+	     int nid, int n_min, int n_max, unsigned long chtype, int mval)
 	{
 	int i,ret=0;
 	MS_STATIC char buf[1024];
@@ -1519,7 +1538,7 @@ start:
 #endif
 	if(!req_check_len(i, n_min, n_max)) goto start;
 	if (!X509_NAME_add_entry_by_NID(n,nid, chtype,
-				(unsigned char *) buf, -1,-1,0)) goto err;
+				(unsigned char *) buf, -1,-1,mval)) goto err;
 	ret=1;
 err:
 	return(ret);
