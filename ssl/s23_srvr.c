@@ -186,7 +186,7 @@ end:
 
 int ssl23_get_client_hello(SSL *s)
 	{
-	char buf_space[11];
+	char buf_space[11]; /* request this many bytes in initial read */
 	char *buf= &(buf_space[0]);
 	unsigned char *p,*d,*dd;
 	unsigned int i;
@@ -202,8 +202,8 @@ int ssl23_get_client_hello(SSL *s)
 
 		if (!ssl3_setup_buffers(s)) goto err;
 
-		n=ssl23_read_bytes(s,11);
-		if (n != 11) return(n); /* n == -1 || n == 0 */
+		n=ssl23_read_bytes(s, sizeof buf_space);
+		if (n != sizeof buf_space) return(n); /* n == -1 || n == 0 */
 
 		p=s->packet;
 
