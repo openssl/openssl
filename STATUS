@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/04/09 07:15:16 $
+  ______________                           $Date: 2001/05/30 14:59:14 $
 
   DEVELOPMENT STATE
 
@@ -100,4 +100,5 @@
 
   WISHES
 
-    o 
+    o  SRP
+       [wished by Dj <derek@yo.net> and Tom Wu <?@?>]
