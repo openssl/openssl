@@ -559,8 +559,13 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 
 static int ssleay_rand_status(void)
 	{
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+
 	if (!initialized)
 		ssleay_rand_initialize();
+
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+
 	return (entropy >= ENTROPY_NEEDED);
 	}
 
