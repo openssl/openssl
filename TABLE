@@ -3052,7 +3052,7 @@ $arflags      =
 
 *** linux-elf-arm
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
