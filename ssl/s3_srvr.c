@@ -1270,7 +1270,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		if ((p[0] != (s->version>>8)) || (p[1] != (s->version & 0xff)))
+		if ((p[0] != (s->client_version>>8)) || (p[1] != (s->client_version & 0xff)))
 			{
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
