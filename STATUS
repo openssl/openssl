@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/30 23:54:52 $
+  ______________                           $Date: 1999/05/31 12:13:10 $
 
   DEVELOPMENT STATE
 
@@ -12,7 +12,8 @@
 
   RELEASE SHOWSTOPPERS
 
-    o
+    o internal_verify doesn't know about X509.v3 (basicConstraints
+      CA flag ...)
 
   AVAILABLE PATCHES
 
