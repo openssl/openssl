@@ -98,6 +98,9 @@ typedef struct pkcs7_signer_info_st
 	EVP_PKEY			*pkey;
 	} PKCS7_SIGNER_INFO;
 
+DECLARE_STACK_OF(PKCS7_SIGNER_INFO)
+DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO)
+
 typedef struct pkcs7_recip_info_st
 	{
 	ASN1_INTEGER			*version;	/* version 0 */
@@ -113,7 +116,7 @@ typedef struct pkcs7_signed_st
 	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
 	STACK_OF(X509_CRL)		*crl;		/* [ 1 ] */
-	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
+	STACK_OF(PKCS7_SIGNER_INFO)	*signer_info;
 
 	struct pkcs7_st			*contents;
 	} PKCS7_SIGNED;
@@ -141,7 +144,7 @@ typedef struct pkcs7_signedandenveloped_st
 	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
 	STACK_OF(X509_CRL)		*crl;		/* [ 1 ] */
-	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
+	STACK_OF(PKCS7_SIGNER_INFO)	*signer_info;
 
 	PKCS7_ENC_CONTENT		*enc_data;
 	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
@@ -336,7 +339,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
 	EVP_PKEY *pkey, EVP_MD *dgst);
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
-STACK *PKCS7_get_signer_info(PKCS7 *p7);
+STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7);
 
 PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
 int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);

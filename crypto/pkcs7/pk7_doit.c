@@ -466,7 +466,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	PKCS7_SIGNER_INFO *si;
 	EVP_MD_CTX *mdc,ctx_tmp;
 	STACK_OF(X509_ATTRIBUTE) *sk;
-	STACK *si_sk=NULL;
+	STACK_OF(PKCS7_SIGNER_INFO) *si_sk=NULL;
 	unsigned char *p,*pp=NULL;
 	int x;
 	ASN1_OCTET_STRING *os=NULL;
@@ -505,10 +505,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_BIO_LIB);
 			goto err;
 			}
-		for (i=0; i<sk_num(si_sk); i++)
+		for (i=0; i<sk_PKCS7_SIGNER_INFO_num(si_sk); i++)
 			{
-			si=(PKCS7_SIGNER_INFO *)
-				sk_value(si_sk,i);
+			si=sk_PKCS7_SIGNER_INFO_value(si_sk,i);
 			if (si->pkey == NULL) continue;
 
 			j=OBJ_obj2nid(si->digest_alg->algorithm);

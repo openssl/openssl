@@ -190,7 +190,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 	{
 	int i,j,nid;
 	X509_ALGOR *alg;
-	STACK *signer_sk;
+	STACK_OF(PKCS7_SIGNER_INFO) *signer_sk;
 	STACK_OF(X509_ALGOR) *md_sk;
 
 	i=OBJ_obj2nid(p7->type);
@@ -229,7 +229,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 		sk_X509_ALGOR_push(md_sk,alg);
 		}
 
-	sk_push(signer_sk,(char *)psi);
+	sk_PKCS7_SIGNER_INFO_push(signer_sk,psi);
 	return(1);
 	}
 
@@ -342,7 +342,7 @@ err:
 	return(NULL);
 	}
 
-STACK *PKCS7_get_signer_info(PKCS7 *p7)
+STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
 	{
 	if (PKCS7_type_is_signed(p7))
 		{
