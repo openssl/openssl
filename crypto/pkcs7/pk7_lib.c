@@ -456,11 +456,12 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
 		}
 
 	/* Check cipher OID exists and has data in it*/
-	objtmp = OBJ_nid2obj(EVP_CIPHER_type(cipher));
-	if(!objtmp || !objtmp->data) {
+	i = EVP_CIPHER_type(cipher);
+	if(i == NID_undef) {
 		PKCS7err(PKCS7_F_PKCS7_SET_CIPHER,PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
 		return(0);
 	}
+	objtmp = OBJ_nid2obj(i);
 
 	ec->cipher = cipher;
 	return 1;

@@ -178,12 +178,12 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	ASN1_OBJECT *obj;
 
 	alg_nid = EVP_CIPHER_type(cipher);
-	obj = OBJ_nid2obj(alg_nid);
-	if(!obj || !obj->data) {
+	if(alg_nid == NID_undef) {
 		ASN1err(ASN1_F_PKCS5_PBE2_SET,
 				ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
 		goto err;
 	}
+	obj = OBJ_nid2obj(alg_nid);
 
 	if(!(pbe2 = PBE2PARAM_new())) goto merr;
 

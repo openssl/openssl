@@ -83,7 +83,7 @@ int MAIN(int argc, char **argv)
 	X509_SIG *p8;
 	PKCS8_PRIV_KEY_INFO *p8inf;
 	EVP_PKEY *pkey;
-	char pass[50], *passin = NULL, *passout = NULL;
+	char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
 	int badarg = 0;
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 	informat=FORMAT_PEM;
@@ -226,18 +226,21 @@ int MAIN(int argc, char **argv)
 				return (1);
 			}
 		} else {
-			if(!passout) {
-				passout = pass;
+			if(passout) p8pass = passout;
+			else {
+				p8pass = pass;
 				EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
 			}
+			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
-					passout, strlen(passout),
+					p8pass, strlen(p8pass),
 					NULL, 0, iter, p8inf))) {
 				BIO_printf(bio_err, "Error encrypting key\n",
 								 outfile);
 				ERR_print_errors(bio_err);
 				return (1);
 			}
+			app_RAND_write_file(NULL, bio_err);
 			if(outformat == FORMAT_PEM) 
 				PEM_write_bio_PKCS8(out, p8);
 			else if(outformat == FORMAT_ASN1)
@@ -251,6 +254,8 @@ int MAIN(int argc, char **argv)
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
 		EVP_PKEY_free(pkey);
 		BIO_free(out);
+		if(passin) Free(passin);
+		if(passout) Free(passout);
 		return (0);
 	}
 
@@ -278,11 +283,12 @@ int MAIN(int argc, char **argv)
 			ERR_print_errors(bio_err);
 			return (1);
 		}
-		if(!passin) {
-			passin = pass;
+		if(passin) p8pass = passin;
+		else {
+			p8pass = pass;
 			EVP_read_pw_string(pass, 50, "Enter Password:", 0);
 		}
-		p8inf = M_PKCS8_decrypt(p8, passin, strlen(passin));
+		p8inf = M_PKCS8_decrypt(p8, p8pass, strlen(p8pass));
 		X509_SIG_free(p8);
 	}
 
