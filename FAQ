@@ -467,10 +467,43 @@ OpenSSL.  This is described in the threads(3) manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 
-This is usually because you've missed the comment in INSTALL.W32. You
-must link with the multithreaded DLL version of the VC++ runtime library
-otherwise the conflict will cause a program to crash: typically on the
-first BIO related read or write operation.
+This is usually because you've missed the comment in INSTALL.W32.
+Your application must link against the same version of the Win32
+C-Runtime against which your openssl libraries were linked.  The
+default version for OpenSSL is /MD - "Multithreaded DLL".
+
+If you are using Microsoft Visual C++'s IDE (Visual Studio), in
+many cases, your new project most likely defaulted to "Debug
+Singlethreaded" - /ML.  This is NOT interchangeable with /MD and your
+program will crash, typically on the first BIO related read or write
+operation.
+
+For each of the six possible link stage configurations within Win32,
+your application must link  against the same by which OpenSSL was
+built.  If you are using MS Visual C++ (Studio) this can be changed
+by:
+
+1.  Select Settings... from the Project Menu.
+2.  Select the C/C++ Tab.
+3.  Select "Code Generation from the "Category" drop down list box
+4.  Select the Appropriate library (see table below) from the "Use
+    run-time library" drop down list box.  Perform this step for both
+    your debug and release versions of your application (look at the
+    top left of the settings panel to change between the two)
+
+    Single Threaded           /ML        -  MS VC++ often defaults to
+                                            this for the release
+                                            version of a new project.
+    Debug Single Threaded     /MLd       -  MS VC++ often defaults to
+                                            this for the debug version
+                                            of a new project.
+    Multithreaded             /MT
+    Debug Multithreaded       /MTd
+    Multithreaded DLL         /MD        -  OpenSSL defaults to this.
+    Debug Multithreaded DLL   /MDd
+
+Note that debug and release libraries are NOT interchangeable.  If you
+built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 
 
 * How do I read or write a DER encoded buffer using the ASN1 functions?
