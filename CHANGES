@@ -9,7 +9,7 @@
      first two bytes of the ClientHello message, i.e. client_version.
      (Note that this is a pathologic case that probably has never happened
      in real life.)  The previous approach was to use the version number
-     from the record header as a subsitute; but our protocol choice
+     from the record header as a substitute; but our protocol choice
      should not depend on that one because it is not authenticated
      by the Finished messages.
      [Bodo Moeller]
