@@ -138,14 +138,14 @@ DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 DO_GNU_SO=$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'
 DO_GNU_APP=LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME=$(APPNAME)
 
 #This is rather special.  It's a special target with which one can link
@@ -335,7 +335,7 @@ link_o.tru64:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -358,7 +358,7 @@ link_a.tru64:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -381,7 +381,7 @@ link_app.tru64:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
@@ -394,7 +394,7 @@ link_o.tru64-rpath:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -417,7 +417,7 @@ link_a.tru64-rpath:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -440,7 +440,7 @@ link_app.tru64-rpath:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
@@ -454,7 +454,7 @@ link_o.solaris:
 		(${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
@@ -470,7 +470,7 @@ link_a.solaris:
 		(${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
@@ -483,7 +483,7 @@ link_app.solaris:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS) -R $(LIBRPATH)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
@@ -579,7 +579,7 @@ link_o.irix:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		MINUSWL=""; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
@@ -595,7 +595,7 @@ link_a.irix:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		MINUSWL=""; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
@@ -610,7 +610,7 @@ link_app.irix:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
