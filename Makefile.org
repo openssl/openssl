@@ -187,14 +187,14 @@ HEADER=         e_os.h
 all: Makefile.ssl
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making $$i..." && \
+	(cd $$i && echo "making all in $$i..." && \
 	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' all ) || exit 1; \
 	done;
 
 sub_all:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making $$i..." && \
+	(cd $$i && echo "making all in $$i..." && \
 	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ) || exit 1; \
 	done;
 
@@ -204,21 +204,21 @@ Makefile.ssl: Makefile.org
 	@false
 
 libclean:
-	/bin/rm *.a */lib */*/lib
+	rm -f *.a */lib */*/lib
 
 clean:
-	/bin/rm -f shlib/*.o *.o core a.out fluff *.map
+	rm -f shlib/*.o *.o core a.out fluff *.map
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "cleaning $$i..." && \
+	(cd $$i && echo "making clean in $$i..." && \
 	$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
-	/bin/rm -f $(LIBS); \
+	rm -f $(LIBS); \
 	done;
-	/bin/rm -f *.a *.o speed.* *.map *.so .pure core
-	/bin/rm -f $(TARFILE)
+	rm -f *.a *.o speed.* *.map *.so .pure core
+	rm -f $(TARFILE)
 	@for i in $(ONEDIRS) ;\
 	do \
-	/bin/rm -fr $$i/*; \
+	rm -fr $$i/*; \
 	done
 
 makefile.one: files
@@ -234,21 +234,19 @@ files:  MINFO
 	done;
 
 links:
-	/bin/rm -f Makefile
-	./util/point.sh Makefile.ssl Makefile
-	$(TOP)/util/mklink.sh include $(EXHEADER)
-	@for i in $(DIRS) ;\
-	do \
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh include $(EXHEADER)
+	@for i in $(DIRS); do \
 	(cd $$i && echo "making links in $$i..." && \
 	$(MAKE) SDIRS='${SDIRS}' links ) || exit 1; \
 	done;
 	@(OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
 
 dclean:
-	/bin/rm -f *.bak
+	rm -f *.bak
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "undoing makedepend in $$i..." && \
+	(cd $$i && echo "making dclean in $$i..." && \
 	$(MAKE) SDIRS='${SDIRS}' dclean ) || exit 1; \
 	done;
 
@@ -258,7 +256,7 @@ rehash:
 test:   tests
 
 tests:
-	(cd test && echo "testing $$i..." && \
+	@(cd test && echo "testing..." && \
 	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' tests );
 	@apps/openssl version -a
 

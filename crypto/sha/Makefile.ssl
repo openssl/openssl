@@ -67,11 +67,10 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../../test $(TEST)
+	@$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -96,13 +95,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-sha1_one.o: sha.h
-sha1dgst.o: sha.h sha_locl.h
-sha_dgst.o: sha.h sha_locl.h
-sha_one.o: sha.h

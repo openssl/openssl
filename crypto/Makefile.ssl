@@ -12,7 +12,7 @@ INSTALLTOP=	/usr/local/ssl
 MAKE=           make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=       Makefile.ssl
-RM=             /bin/rm -f
+RM=             rm -f
 AR=		ar r
 
 PEX_LIBS=
@@ -55,7 +55,7 @@ date.h: ../Makefile.ssl
 subdirs:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i && echo "making all in $$i..." && \
+	(cd $$i && echo "making all in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' all ) || exit 1; \
 	done;
 
@@ -63,20 +63,18 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making 'files' in $$i..."; \
+	(cd $$i; echo "making 'files' in crypto/$$i..."; \
 	$(MAKE) files ); \
 	done;
 
 links:
-	/bin/rm -f Makefile 
-	$(TOP)/util/point.sh Makefile.ssl Makefile
-	$(TOP)/util/mklink.sh ../include $(HEADER)
-	$(TOP)/util/mklink.sh ../test $(TEST)
-	$(TOP)/util/mklink.sh ../apps $(APPS)
-	$(TOP)/util/point.sh Makefile.ssl Makefile
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i; echo "making links in $$i..."; \
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh ../include $(HEADER)
+	@$(TOP)/util/mklink.sh ../test $(TEST)
+	@$(TOP)/util/mklink.sh ../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@for i in $(SDIRS); do \
+	(cd $$i; echo "making links in crypto/$$i..."; \
 	$(MAKE) links ); \
 	done;
 
@@ -88,14 +86,14 @@ lib:	$(LIBOBJ)
 libs:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making libs in $$i..."; \
+	(cd $$i; echo "making libs in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
 	done;
 
 tests:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making tests in $$i..."; \
+	(cd $$i; echo "making tests in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
 	done;
 
@@ -107,14 +105,14 @@ install:
 	done;
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making install in $$i..."; \
+	(cd $$i; echo "making install in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
 	done;
 
 lint:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making lint in $$i..."; \
+	(cd $$i; echo "making lint in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' lint ); \
 	done;
 
@@ -122,15 +120,15 @@ depend:
 	$(MAKEDEPEND) $(INCLUDE) $(PROGS) $(LIBSRC)
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making depend in $$i..."; \
+	(cd $$i; echo "making depend in crypto/$$i..."; \
 	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' depend ); \
 	done;
 
 clean:
-	/bin/rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making clean in $$i..."; \
+	(cd $$i; echo "making clean in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' clean ); \
 	done;
 
@@ -139,7 +137,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making dclean in $$i..."; \
+	(cd $$i; echo "making dclean in crypto/$$i..."; \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
 	done;
 
@@ -153,22 +151,9 @@ errgen:
 	perl ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making errors in $$i..."; \
+	(cd $$i; echo "making errors in crypto/$$i..."; \
 	$(MAKE) errors ); \
 	done;
 
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-cpt_err.o: ../include/err.h ../include/stack.h crypto.h
-cryptlib.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-cryptlib.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
-cversion.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-cversion.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
-ex_data.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-ex_data.o: ../include/err.h ../include/lhash.h ../include/stack.h cryptlib.h
-ex_data.o: crypto.h
-mem.o: ../include/bio.h ../include/buffer.h ../include/e_os.h ../include/err.h
-mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
-tmdiff.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-tmdiff.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h tmdiff.h

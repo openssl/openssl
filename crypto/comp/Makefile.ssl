@@ -49,11 +49,10 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../../test $(TEST)
+	@$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -78,7 +77,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # This is a dummy to create comp.err: remove if we add any real errors to this
 # stuff.
@@ -93,13 +92,3 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-c_rle.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-c_rle.o: ../../include/crypto.h ../../include/objects.h ../../include/stack.h
-c_rle.o: comp.h
-c_zlib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-c_zlib.o: ../../include/crypto.h ../../include/objects.h ../../include/stack.h
-c_zlib.o: comp.h
-comp_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-comp_lib.o: ../../include/crypto.h ../../include/objects.h
-comp_lib.o: ../../include/stack.h comp.h

@@ -58,8 +58,8 @@ TMP_D=tmp
 # The output directory for the header files
 INC_D=outinc
 
-CP=/bin/cp
-RM=/bin/rm -f
+CP=cp
+RM=rm -f
 RANLIB=$(SRC_D)/util/ranlib.sh
 MKDIR=mkdir
 MKLIB=ar r

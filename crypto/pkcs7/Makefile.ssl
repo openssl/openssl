@@ -48,11 +48,10 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../../test $(TEST)
+	@$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -77,7 +76,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors: $(ERRC).c
 
@@ -86,33 +85,3 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-pk7_doit.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pk7_doit.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-pk7_doit.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-pk7_doit.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-pk7_doit.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-pk7_doit.o: ../../include/mdc2.h ../../include/objects.h ../../include/rand.h
-pk7_doit.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-pk7_doit.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
-pk7_doit.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-pk7_doit.o: ../cryptlib.h ../crypto.h pkcs7.h
-pk7_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pk7_lib.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-pk7_lib.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-pk7_lib.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-pk7_lib.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-pk7_lib.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
-pk7_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pk7_lib.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-pk7_lib.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-pk7_lib.o: ../crypto.h pkcs7.h
-pkcs7err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pkcs7err.o: ../../include/bn.h ../../include/cast.h ../../include/des.h
-pkcs7err.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
-pkcs7err.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
-pkcs7err.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pkcs7err.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-pkcs7err.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
-pkcs7err.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-pkcs7err.o: ../crypto.h pkcs7.h

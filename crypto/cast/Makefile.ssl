@@ -73,11 +73,10 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../../test $(TEST)
+	@$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -102,14 +101,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-c_cfb64.o: cast.h cast_lcl.h
-c_ecb.o: cast.h cast_lcl.h
-c_enc.o: cast.h cast_lcl.h
-c_ofb64.o: cast.h cast_lcl.h
-c_skey.o: cast.h cast_lcl.h cast_s.h

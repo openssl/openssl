@@ -21,15 +21,12 @@ do
 done
 to=..$to
 
-#echo from=$from
-#echo to  =$to
-#exit 1
-
 if [ "$*"x != "x" ]; then
 	for i in $*
 	do
-		/bin/rm -f $from/$i
-		point.sh $to/$i $from/$i
+		rm -f $from/$i
+		ln -s $to/$i $from/$i
+		echo "$i => $from/$i"
 	done
 fi
 exit 0;

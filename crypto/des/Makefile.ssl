@@ -99,15 +99,11 @@ files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile
-	/bin/rm -f des.doc
-	/bin/rm -fr asm/perlasm
-	$(TOP)/util/point.sh ../../perlasm asm/perlasm
-	$(TOP)/util/point.sh ../../doc/des.doc des.doc
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(TOP)/util/point.sh ../../perlasm asm/perlasm
+	@$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../../test $(TEST)
+	@$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install: installs
 
@@ -134,35 +130,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-cbc_cksm.o: des.h des_locl.h
-cbc_enc.o: des.h des_locl.h
-cfb64ede.o: des.h des_locl.h
-cfb64enc.o: des.h des_locl.h
-cfb_enc.o: des.h des_locl.h
-des_enc.o: des.h des_locl.h
-ecb3_enc.o: des.h des_locl.h
-ecb_enc.o: des.h des_locl.h spr.h
-ede_cbcm_enc.o: des.h des_locl.h
-enc_read.o: des.h des_locl.h
-enc_writ.o: des.h des_locl.h
-fcrypt.o: des.h des.h des_locl.h des_locl.h
-fcrypt_b.o: des.h des_locl.h
-ofb64ede.o: des.h des_locl.h
-ofb64enc.o: des.h des_locl.h
-ofb_enc.o: des.h des_locl.h
-pcbc_enc.o: des.h des_locl.h
-qud_cksm.o: des.h des_locl.h
-rand_key.o: des.h des_locl.h
-read2pwd.o: des.h des_locl.h
-read_pwd.o: des.h des_locl.h
-rpc_enc.o: des.h des_locl.h des_ver.h rpc_des.h
-set_key.o: des.h des_locl.h podd.h sk.h
-str2key.o: des.h des_locl.h
-supp.o: des.h des_locl.h
-xcbc_enc.o: des.h des_locl.h
