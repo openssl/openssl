@@ -691,6 +691,8 @@ aes 44			: AES-256-CFB		: aes-256-cfb
 			: AES-256-CFB8		: aes-256-cfb8
 			: DES-CFB1		: des-cfb1
 			: DES-CFB8		: des-cfb8
+			: DES-EDE3-CFB1		: des-ede3-cfb1
+			: DES-EDE3-CFB8		: des-ede3-cfb8
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code

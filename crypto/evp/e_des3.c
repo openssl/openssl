@@ -130,6 +130,42 @@ static int des_ede_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
+/* Although we have a CFB-r implementation for 3-DES, it doesn't pack the right
+   way, so wrap it here */
+static int des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, unsigned int inl)
+    {
+    unsigned int n;
+    unsigned char c[8],d[8]; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
+
+    memset(out,0,(inl+7)/8);
+    for(n=0 ; n < inl ; ++n)
+	{
+	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
+	DES_ede3_cfb_encrypt(c,d,1,1,
+			     &data(ctx)->ks1,&data(ctx)->ks2,&data(ctx)->ks3,
+			     (DES_cblock *)ctx->iv,ctx->encrypt);
+	out[n/8]=(out[n/8]&~(0x80 >> (n%8)))|((d[0]&0x80) >> (n%8));
+	}
+
+    return 1;
+    }
+
+static int des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, unsigned int inl)
+    {
+    unsigned char *tmp; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
+
+    tmp=alloca(inl+7);
+    memcpy(tmp,in,inl);
+    DES_ede3_cfb_encrypt(tmp,tmp,8,inl,
+			 &data(ctx)->ks1,&data(ctx)->ks2,&data(ctx)->ks3,
+			 (DES_cblock *)ctx->iv,ctx->encrypt);
+    memcpy(out,tmp,inl);
+
+    return 1;
+    }
+
 BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 			0, des_ede_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
@@ -146,6 +182,16 @@ BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
+
+BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,1,0,
+		     des_ede3_init_key,NULL,
+		     EVP_CIPHER_set_asn1_iv,
+		     EVP_CIPHER_get_asn1_iv,NULL)
+
+BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,8,0,
+		     des_ede3_init_key,NULL,
+		     EVP_CIPHER_set_asn1_iv,
+		     EVP_CIPHER_get_asn1_iv,NULL)
 
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			    const unsigned char *iv, int enc)

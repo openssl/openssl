@@ -2041,6 +2041,14 @@
 #define LN_des_cfb8		"des-cfb8"
 #define NID_des_cfb8		657
 
+#define SN_des_ede3_cfb1		"DES-EDE3-CFB1"
+#define LN_des_ede3_cfb1		"des-ede3-cfb1"
+#define NID_des_ede3_cfb1		658
+
+#define SN_des_ede3_cfb8		"DES-EDE3-CFB8"
+#define LN_des_ede3_cfb8		"des-ede3-cfb8"
+#define NID_des_ede3_cfb8		659
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430

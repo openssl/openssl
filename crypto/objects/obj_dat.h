@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 658
-#define NUM_SN 651
-#define NUM_LN 651
+#define NUM_NID 660
+#define NUM_SN 653
+#define NUM_LN 653
 #define NUM_OBJ 617
 
 static unsigned char lvalues[4455]={
@@ -1736,6 +1736,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"AES-256-CFB8","aes-256-cfb8",NID_aes_256_cfb8,0,NULL},
 {"DES-CFB1","des-cfb1",NID_des_cfb1,0,NULL},
 {"DES-CFB8","des-cfb8",NID_des_cfb8,0,NULL},
+{"DES-EDE3-CFB1","des-ede3-cfb1",NID_des_ede3_cfb1,0,NULL},
+{"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1786,6 +1788,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[33]),/* "DES-EDE3" */
 &(nid_objs[44]),/* "DES-EDE3-CBC" */
 &(nid_objs[61]),/* "DES-EDE3-CFB" */
+&(nid_objs[658]),/* "DES-EDE3-CFB1" */
+&(nid_objs[659]),/* "DES-EDE3-CFB8" */
 &(nid_objs[63]),/* "DES-EDE3-OFB" */
 &(nid_objs[45]),/* "DES-OFB" */
 &(nid_objs[80]),/* "DESX-CBC" */
@@ -2563,6 +2567,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[33]),/* "des-ede3" */
 &(nid_objs[44]),/* "des-ede3-cbc" */
 &(nid_objs[61]),/* "des-ede3-cfb" */
+&(nid_objs[658]),/* "des-ede3-cfb1" */
+&(nid_objs[659]),/* "des-ede3-cfb8" */
 &(nid_objs[63]),/* "des-ede3-ofb" */
 &(nid_objs[45]),/* "des-ofb" */
 &(nid_objs[107]),/* "description" */

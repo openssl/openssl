@@ -655,3 +655,5 @@ aes_192_cfb8		654
 aes_256_cfb8		655
 des_cfb1		656
 des_cfb8		657
+des_ede3_cfb1		658
+des_ede3_cfb8		659
