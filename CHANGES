@@ -42,10 +42,10 @@
      BN_is_one(), and BN_is_word().
      [Bodo Moeller]
 
-  *) Initialise "ex_data" member of an RSA structure prior to calling the
-     method-specific "init()" handler, and clean up ex_data after calling
-     the method-specific "finish()" handler. Previously, this was happening
-     the other way round.
+  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
+     the method-specific "init()" handler. Also clean up ex_data after
+     calling the method-specific "finish()" handler. Previously, this was
+     happening the other way round.
      [Geoff Thorpe]
 
   *) New function BN_swap.
