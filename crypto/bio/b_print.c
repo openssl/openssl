@@ -619,6 +619,7 @@ fmtfp(
     int caps = 0;
     long intpart;
     long fracpart;
+    long max10;
 
     if (max < 0)
         max = 6;
@@ -639,11 +640,12 @@ fmtfp(
 
     /* we "cheat" by converting the fractional part to integer by
        multiplying by a factor of 10 */
-    fracpart = roundv((pow10(max)) * (ufvalue - intpart));
+    max10 = roundv(pow10(max));
+    fracpart = roundv(pow10(max) * (ufvalue - intpart));
 
-    if (fracpart >= (long)pow10(max)) {
+    if (fracpart >= max10) {
         intpart++;
-        fracpart -= (long)pow10(max);
+        fracpart -= max10;
     }
 
     /* convert integer part */
