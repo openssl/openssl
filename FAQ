@@ -40,6 +40,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL compilation fail with "ar: command not found"?
 * Why does the OpenSSL compilation fail on Win32 with VC++?
 * What is special about OpenSSL on Redhat?
+* Why does the OpenSSL compilation fail on MacOS X?
+* Why does the OpenSSL test suite fail on MacOS X?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -495,6 +497,32 @@ FYI: Patent numbers and expiry dates of US patents:
 MDC-2: 4,908,861 13/03/2007
 IDEA:  5,214,703 25/05/2010
 RC5:   5,724,428 03/03/2015
+
+
+* Why does the OpenSSL compilation fail on MacOS X?
+
+If the failure happens when trying to build the "openssl" binary, with
+a large number of undefined symbols, it's very probable that you have
+OpenSSL 0.9.6b delivered with the operating system (you can find out by
+running '/usr/bin/openssl version') and that you were trying to build
+OpenSSL 0.9.7 or newer.  The problem is that the loader ('ld') in
+MacOS X has a misfeature that's quite difficult to go around.
+Look in the file PROBLEMS for a more detailed explanation and for possible
+solutions.
+
+
+* Why does the OpenSSL test suite fail on MacOS X?
+
+If the failure happens when running 'make test' and the RC4 test fails,
+it's very probable that you have OpenSSL 0.9.6b delivered with the
+operating system (you can find out by running '/usr/bin/openssl version')
+and that you were trying to build OpenSSL 0.9.6d.  The problem is that
+the loader ('ld') in MacOS X has a misfeature that's quite difficult to
+go around and has linked the programs "openssl" and the test programs
+with /usr/lib/libcrypto.dylib and /usr/lib/libssl.dylib instead of the
+libraries you just built.
+Look in the file PROBLEMS for a more detailed explanation and for possible
+solutions.
 
 [PROG] ========================================================================
 
