@@ -5,7 +5,7 @@
 
  Changes between 0.9.2b and 0.9.3
 
-  *) Change #include filenames from <foo.h> to <openssl.h>.
+  *) Change #include filenames from <foo.h> to <openssl/foo.h>.
      [Bodo Moeller]
 
   *) Change behaviour of ssl2_read when facing length-0 packets: Don't return
