@@ -45,8 +45,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL compilation fail on MacOS X?
 * Why does the OpenSSL test suite fail on MacOS X?
 * Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
-* Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented
-  segment type"?
+* Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -572,15 +571,14 @@ C compiler you should be able to produce a working build by running
 but the build should be operational. For further details turn to
 <openssl-dev@openssl.org>.
 
-* Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented
-  segment type"?
+* Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
 
-As of 0.9.7 assembler routines were overhauled for position independency
-of the machine code, which is essential for shared library support. Now
-for some reason OpenBSD is equipped with out-of-date GNU assembler which
-finds the new code offending. To work the problem around configure with
+As of 0.9.7 assembler routines were overhauled for position independence
+of the machine code, which is essential for shared library support. For
+some reason OpenBSD is equipped with an out-of-date GNU assembler which
+finds the new code offensive. To work around the problem, configure with
 no-asm (and sacrifice a great deal of performance) or upgrade /usr/bin/as.
-For your convenience a pre-compiled replacement binary is provided as
+For your convenience a pre-compiled replacement binary is provided at
 http://www.openssl.org/~appro/i386-openbsd3-as, which is compiled from
 binutils-2.8 released in 1997.
 
