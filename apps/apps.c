@@ -1054,7 +1054,9 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
 				0, err, 0);
 			}
+#if 0 /* not yet implemented but on it's way */
                 ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, UI_OpenSSL(), 0, 1);
+#endif
 		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
 			{
 			BIO_printf(err,"can't use that engine\n");
