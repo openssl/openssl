@@ -147,11 +147,14 @@ SSL_METHOD *SSLv2_server_method(void)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
 
-		memcpy((char *)&SSLv2_server_data,(char *)sslv2_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv2_server_data.ssl_accept=ssl2_accept;
-		SSLv2_server_data.get_ssl_method=ssl2_get_server_method;
-		init=0;
+		if (init)
+			{
+			memcpy((char *)&SSLv2_server_data,(char *)sslv2_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv2_server_data.ssl_accept=ssl2_accept;
+			SSLv2_server_data.get_ssl_method=ssl2_get_server_method;
+			init=0;
+			}
 
 		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}

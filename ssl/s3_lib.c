@@ -1819,16 +1819,19 @@ SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 
-		for (i=0; i<SSL3_NUM_CIPHERS; i++)
-			sorted[i]= &(ssl3_ciphers[i]);
+		if (init)
+			{
+			for (i=0; i<SSL3_NUM_CIPHERS; i++)
+				sorted[i]= &(ssl3_ciphers[i]);
 
-		qsort(	(char *)sorted,
-			SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-			FP_ICC ssl_cipher_ptr_id_cmp);
+			qsort(sorted,
+				SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
+				FP_ICC ssl_cipher_ptr_id_cmp);
 
+			init=0;
+			}
+		
 		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-
-		init=0;
 		}
 
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
