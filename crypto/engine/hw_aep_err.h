@@ -92,6 +92,7 @@ static void ERR_AEPHK_error(int function, int reason, char *file, int line);
 #define AEPHK_R_OK					 112
 #define AEPHK_R_RETURN_CONNECTION_FAILED		 113
 #define AEPHK_R_SETBNCALLBACK_FAILURE			 114
+#define AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 116
 #define AEPHK_R_UNIT_FAILURE				 115
 
 #ifdef  __cplusplus

@@ -94,6 +94,7 @@ static ERR_STRING_DATA AEPHK_str_reasons[]=
 {AEPHK_R_OK                              ,"ok"},
 {AEPHK_R_RETURN_CONNECTION_FAILED        ,"return connection failed"},
 {AEPHK_R_SETBNCALLBACK_FAILURE           ,"setbncallback failure"},
+{AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL     ,"size too large or too small"},
 {AEPHK_R_UNIT_FAILURE                    ,"unit failure"},
 {0,NULL}
 	};
