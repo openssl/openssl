@@ -93,6 +93,11 @@ typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
 #endif
 
+#ifdef OPENSSL_SYS_WIN32
+#undef X509_NAME
+#undef PKCS7_ISSUER_AND_SERIAL
+#endif
+
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct env_md_st EVP_MD;
