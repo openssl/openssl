@@ -79,6 +79,9 @@
  * -des		- encrypt output if PEM format with DES in cbc mode
  * -des3	- encrypt output if PEM format
  * -idea	- encrypt output if PEM format
+ * -aes128	- encrypt output if PEM format
+ * -aes192	- encrypt output if PEM format
+ * -aes256	- encrypt output if PEM format
  * -text	- print a text version
  * -modulus	- print the DSA public key
  */
@@ -188,6 +191,10 @@ bad:
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");
 		BIO_printf(bio_err," -noout          don't print key out\n");

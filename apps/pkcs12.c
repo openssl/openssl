@@ -151,6 +151,11 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-idea")) enc=EVP_idea_cbc();
 #endif
 		else if (!strcmp (*args, "-des3")) enc = EVP_des_ede3_cbc();
+#ifndef OPENSSL_NO_AES
+		else if (!strcmp(*argv,"-aes128")) enc=EVP_aes_128_cbc();
+		else if (!strcmp(*argv,"-aes192")) enc=EVP_aes_192_cbc();
+		else if (!strcmp(*argv,"-aes256")) enc=EVP_aes_256_cbc();
+#endif
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-maciter"))
 					 maciter = PKCS12_DEFAULT_ITER;
@@ -279,6 +284,10 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-des3         encrypt private keys with triple DES (default)\n");
 #ifndef OPENSSL_NO_IDEA
 	BIO_printf (bio_err, "-idea         encrypt private keys with idea\n");
+#endif
+#ifndef OPENSSL_NO_AES
+	BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
+	BIO_printf (bio_err, "              encrypt PEM output with cbc aes\n");
 #endif
 	BIO_printf (bio_err, "-nodes        don't encrypt private keys\n");
 	BIO_printf (bio_err, "-noiter       don't use encryption iteration\n");
