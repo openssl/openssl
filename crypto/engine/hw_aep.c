@@ -399,7 +399,6 @@ static int aep_init(ENGINE *e)
 	t_AEP_CloseConnection *p8;
 
 	int to_return = 0;
-	AEP_RV rv;
  
 	if(aep_dso != NULL)
 		{
