@@ -90,7 +90,7 @@ Installation in Detail
      If the install directory will be the default of /usr/local/ssl,
      skip to the next stage. Otherwise, run
 
-       utils/ssldir.pl /new/install/path
+       perl util/ssldir.pl /new/install/path
 
      This configures the installation location into the "install"
      target of the top-level Makefile, and also updates some defines
