@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) MIPS III/IV assembler module is reimplemented.
+     [Andy Polyakov]
+
   *) More DES library cleanups: remove references to srand/rand and
      delete an unused file.
      [Ulf Möller]

@@ -20,6 +20,7 @@ BN_ASM=		bn_asm.o
 #BN_ASM=	bn86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS=$(CFLAGS)
 
 GENERAL=Makefile
 TEST=bntest.c exptest.c
@@ -110,7 +111,6 @@ asm/sparcv8plus-gcc.o: asm/sparcv8plus.S
 
 # MIPS 64 bit assember 
 asm/mips3.o: asm/mips3.s
-	/usr/bin/as -mips3 -O2 -o asm/mips3.o asm/mips3.s            
 
 # MIPS 32 bit assember
 asm/mips1.o: asm/mips1.s
