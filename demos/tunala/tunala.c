@@ -80,7 +80,7 @@ static int selector_select(tunala_selector_t *selector);
  * which case *newfd is populated. */
 static int selector_get_listener(tunala_selector_t *selector, int fd, int *newfd);
 static int tunala_world_new_item(tunala_world_t *world, int fd,
-		const unsigned char *ip, unsigned short port);
+		const unsigned char *ip, unsigned short port, int flipped);
 static void tunala_world_del_item(tunala_world_t *world, unsigned int idx);
 static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item);
 
@@ -98,6 +98,7 @@ static const char *def_dcert = NULL;
 static const char *def_dkey = NULL;
 static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
+static int def_flipped = 0;
 static const char *def_cipher_list = NULL;
 static const char *def_dh_file = NULL;
 static const char *def_dh_special = NULL;
@@ -121,6 +122,7 @@ static const char *helpstring =
 " -dkey <path|NULL>      (usually for DSA, default = whatever '-dcert' is)\n"
 " -engine <id|NULL>      (default = NULL)\n"
 " -server <0|1>          (default = 0, ie. an SSL client)\n"
+" -flipped <0|1>         (makes SSL servers be network clients, and vice versa)\n"
 " -cipher <list>         (specifies cipher list to use)\n"
 " -dh_file <path>        (a PEM file containing DH parameters to use)\n"
 " -dh_special <NULL|generate|standard> (see below: def=NULL)\n"
@@ -143,7 +145,24 @@ static const char *helpstring =
 "    will be obtained from (or '-dh_special NULL' for the default choice) but\n"
 "    you cannot specify both. For dh_special, 'generate' will create new DH\n"
 "    parameters on startup, and 'standard' will use embedded parameters\n"
-"    instead.\n";
+"    instead.\n"
+"(3) Normally an ssl client connects to an ssl server - so that an 'ssl client\n"
+"    tunala' listens for 'clean' client connections and proxies ssl, and an\n"
+"    'ssl server tunala' listens for ssl connections and proxies 'clean'. With\n"
+"    '-flipped 1', this behaviour is reversed so that an 'ssl server tunala'\n"
+"    listens for clean client connections and proxies ssl (but participating\n"
+"    as an ssl *server* in the SSL/TLS protocol), and an 'ssl client tunala'\n"
+"    listens for ssl connections (participating as an ssl *client* in the\n"
+"    SSL/TLS protocol) and proxies 'clean' to the end destination. This can\n"
+"    be useful for allowing network access to 'servers' where only the server\n"
+"    needs to authenticate the client (ie. the other way is not required).\n"
+"    Even with client and server authentication, this 'technique' mitigates\n"
+"    some DoS (denial-of-service) potential as it will be the network client\n"
+"    having to perform the first private key operation rather than the other\n"
+"    way round.\n"
+"(4) The 'technique' used by setting '-flipped 1' is probably compatible with\n"
+"    absolutely nothing except another complimentary instance of 'tunala'\n"
+"    running with '-flipped 1'. :-)\n";
 
 /* Default DH parameters for use with "-dh_special standard" ... stolen striaght
  * from s_server. */
@@ -293,6 +312,7 @@ int main(int argc, char *argv[])
 	const char *dkey = def_dkey;
 	const char *engine_id = def_engine_id;
 	int server_mode = def_server_mode;
+	int flipped = def_flipped;
 	const char *cipher_list = def_cipher_list;
 	const char *dh_file = def_dh_file;
 	const char *dh_special = def_dh_special;
@@ -382,6 +402,13 @@ next_arg:
 				return usage("-server requires an argument", 0);
 			argc--; argv++;
 			if(!parse_server_mode(*argv, &server_mode))
+				return 1;
+			goto next_arg;
+		} else if(strcmp(*argv, "-flipped") == 0) {
+			if(argc < 2)
+				return usage("-flipped requires an argument", 0);
+			argc--; argv++;
+			if(!parse_server_mode(*argv, &flipped))
 				return 1;
 			goto next_arg;
 		} else if(strcmp(*argv, "-cipher") == 0) {
@@ -512,8 +539,8 @@ main_loop:
 					&world.selector, world.listen_fd,
 					&newfd) == 1)) {
 		/* We have a new connection */
-		if(!tunala_world_new_item(&world, newfd,
-					proxy_ip, proxy_port))
+		if(!tunala_world_new_item(&world, newfd, proxy_ip,
+						proxy_port, flipped))
 			fprintf(stderr, "tunala_world_new_item failed\n");
 		else
 			fprintf(stderr, "Info, new tunnel opened, now up to "
@@ -908,7 +935,7 @@ static int tunala_world_make_room(tunala_world_t *world)
 }
 
 static int tunala_world_new_item(tunala_world_t *world, int fd,
-		const unsigned char *ip, unsigned short port)
+		const unsigned char *ip, unsigned short port, int flipped)
 {
 	tunala_item_t *item;
 	int newfd;
@@ -929,8 +956,10 @@ static int tunala_world_new_item(tunala_world_t *world, int fd,
 		goto err;
 	/* Which way round? If we're a server, "fd" is the dirty side and the
 	 * connection we open is the clean one. For a client, it's the other way
-	 * around. */
-	if(world->server_mode) {
+	 * around. Unless, of course, we're "flipped" in which case everything
+	 * gets reversed. :-) */
+	if((world->server_mode && !flipped) ||
+			(!world->server_mode && flipped)) {
 		item->dirty_read = item->dirty_send = fd;
 		item->clean_read = item->clean_send = newfd;
 	} else {
