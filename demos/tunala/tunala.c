@@ -84,15 +84,6 @@ static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item);
 /* MAIN FUNCTION (and its utility functions) */
 /*********************************************/
 
-/* For now, hard-coded as follows;
- * (a) We're like "tunala -listen 127.0.0.1:9001 -proxy 127.0.0.1:9002"
- * (b) We max out at 50 simultaneous tunnels, listening will stop while we have
- *     that many tunnels operating and will recommence as/when tunnels close.
- * (c) We are an SSL client proxy
- * (d) We use the "openssl" ENGINE
- * (e) We use the CA cert file "cacert.pem"
- * */
-
 static const char *def_proxyhost = "127.0.0.1:443";
 static const char *def_listenhost = "127.0.0.1:8080";
 static int def_max_tunnels = 50;
