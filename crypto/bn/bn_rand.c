@@ -190,7 +190,7 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
 		{
 		do
 			{
-			/* range = 11..._2, so each iteration succeeds with probability > .75 */
+			/* range = 11..._2, so each iteration succeeds with probability >= .75 */
 			if (!BN_rand(r, n, 0, 0)) return 0;
 			}
 		while (BN_cmp(r, range) >= 0);
@@ -206,7 +206,7 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
 			 * (which is either  r, r - range,  or  r - 2*range).
 			 * Otherwise, iterate once more.
 			 * Since  3*range = 11..._2, each iteration succeeds with
-			 * probability > .75. */
+			 * probability >= .75. */
 			if (BN_cmp(r ,range) >= 0)
 				{
 				if (!BN_sub(r, r, range)) return 0;
