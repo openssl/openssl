@@ -1,0 +1,34 @@
+=pod
+
+=head1 NAME
+
+RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data - ...
+
+=head1 SYNOPSIS
+
+ #include <openssl/rsa.h>
+
+ int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+    int (*dup_func)(), void (*free_func)());
+
+ int RSA_set_ex_data(RSA *r,int idx,char *arg);
+
+ char *RSA_get_ex_data(RSA *r, int idx);
+
+=head1 DESCRIPTION
+
+...
+
+=head1 RETURN VALUES
+
+...
+
+=head1 SEE ALSO
+
+...
+
+=head1 HISTORY
+
+...
+
+=cut

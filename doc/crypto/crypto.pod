@@ -1,0 +1,62 @@
+=pod
+
+=head1 NAME
+
+crypto - OpenSSL cryptographic library
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+The OpenSSL B<crypto> library implements a wide range of cryptographic
+algorithms used in various Internet standards. The services provided
+by this library are used by the OpenSSL implementations of SSL, TLS
+and S/MIME, and they have also been used to implement SSH, OpenPGP, and
+other cryptographic standards.
+
+=head1 OVERVIEW
+
+B<libcrypto> consists of a number of sub-libraries that implement the
+individual algorithms.
+
+The functionality includes symmetric encryption, public key
+cryptography and key agreement, certificate handling, cryptographic
+hash functions and a cryptographic pseudo-random number generator.
+
+=over 4
+
+=item SYMMETRIC CIPHERS
+
+blowfish(3), cast(3), des(3), idea(3), rc2(3), rc4(3), rc5(3)
+
+=item PUBLIC KEY CRYPTOGRAPHY AND KEY AGREEMENT
+
+dsa(3), dh(3), rsa(3)
+
+=item CERTIFICATES
+
+x509(3), x509v3(3)
+
+=item AUTHENTICATION CODES, HASH FUNCTIONS
+
+hmac(3), md2(3), md5(3), mdc2(3), ripemd(3), sha(3)
+
+=item AUXILIARY FUNCTIONS
+
+err(3), rand(3)
+
+=item INPUT/OUTPUT, DATA ENCODING
+
+asn1(3), bio(3), evp(3), pem(3), pkcs7(3), pkcs12(3)
+
+=item INTERNAL FUNCTIONS
+
+bn(3), buffer(3), lhash(3), objects(3), stack(3), threads(3), txt_db(3)
+
+=back
+
+=head1 SEE ALSO
+
+openssl(1), ssl(3)
+
+=cut

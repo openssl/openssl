@@ -1,0 +1,31 @@
+=pod
+
+=head1 NAME
+
+RSA_print, RSA_print_fp - Print RSA key
+
+=head1 SYNOPSIS
+
+ #include <openssl/rsa.h>
+
+ int RSA_print(BIO *bp, RSA *x, int offset);
+
+ int RSA_print_fp(FILE *fp, RSA *x, int offset);
+
+=head1 DESCRIPTION
+
+...
+
+=head1 RETURN VALUES
+
+...
+
+=head1 SEE ALSO
+
+...
+
+=head1 HISTORY
+
+...
+
+=cut
