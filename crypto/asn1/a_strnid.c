@@ -74,7 +74,7 @@ static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b);
  * certain software (e.g. Netscape) has problems with them.
  */
 
-static long global_mask = 0xFFFFFFFFL;
+static unsigned long global_mask = 0xFFFFFFFFL;
 
 void ASN1_STRING_set_default_mask(unsigned long mask)
 {
