@@ -87,14 +87,13 @@ static void MS_CALLBACK cb(int p, int n, void *arg);
 #include "bss_file.c"
 #endif
 
-BIO *out=NULL;
-
 int main(int argc, char *argv[])
 	{
 	DH *a,*b;
 	char buf[12];
 	unsigned char *abuf=NULL,*bbuf=NULL;
 	int i,alen,blen,aout,bout,ret=1;
+	BIO *out;
 
 #ifdef WIN32
 	CRYPTO_malloc_init();
@@ -167,6 +166,9 @@ int main(int argc, char *argv[])
 err:
 	if (abuf != NULL) Free(abuf);
 	if (bbuf != NULL) Free(bbuf);
+	if(b != NULL) DH_free(b);
+	if(a != NULL) DH_free(a);
+	BIO_free(out);
 	exit(ret);
 	return(ret);
 	}

@@ -101,7 +101,7 @@ my %table=(
 "debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown):::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown):::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"debug-bodo",	"gcc:-DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -m486 -Wall::-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"debug-bodo",	"gcc:-DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -Wall  -pedantic -Wall -Wshadow -pipe::-D_REENTRANT::$x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "dist",		"cc:-O::(unknown):::::",
 

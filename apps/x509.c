@@ -754,6 +754,7 @@ end:
 	EVP_PKEY_free(CApkey);
 	X509_REQ_free(rq);
 	X509V3_EXT_cleanup();
+	X509_PURPOSE_cleanup();
 	EXIT(ret);
 	}
 

@@ -194,7 +194,11 @@ end:
 		ERR_print_errors(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
 	CRYPTO_mem_leaks(bio_err);
-	if (bio_err != NULL) BIO_free(bio_err);
+	if (bio_err != NULL)
+		{
+		BIO_free(bio_err);
+		bio_err = NULL;
+		}
 	exit(!ret);
 	return(0);
 	}

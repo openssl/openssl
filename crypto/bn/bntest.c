@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
 	BIO *out;
 	char *outfile=NULL;
 
+	results = 0;
+
 	argc--;
 	argv++;
 	while (argc >= 1)
@@ -206,6 +208,9 @@ int main(int argc, char *argv[])
 	fprintf(stderr,"test BN_exp\n");
 	if (!test_exp(out,ctx)) goto err;
 	fflush(stdout);
+
+	BN_CTX_free(ctx);
+	BIO_free(out);
 
 /**/
 	exit(0);

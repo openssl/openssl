@@ -160,7 +160,15 @@ int main(int argc, char *argv[])
 			exit(1);
 			}
 		}
+	BN_free(r_mont);
+	BN_free(r_recp);
+	BN_free(r_simple);
+	BN_free(a);
+	BN_free(b);
+	BN_free(m);
+	BN_CTX_free(ctx);
 	CRYPTO_mem_leaks(out);
+	BIO_free(out);
 	printf(" done\n");
 	exit(0);
 err:

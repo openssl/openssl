@@ -203,7 +203,7 @@ static int pad_unknown(void)
     return(0);
 }
 
-int main() 
+int main(int argc, char *argv[])
     {
     int err=0;
     int v;

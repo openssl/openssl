@@ -36,7 +36,7 @@ void add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
 		signed_string_nid=
 			OBJ_create("1.2.3.4.5","OID_example","Our example OID");
 	os=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os,str,strlen(str));
+	ASN1_OCTET_STRING_set(os,(unsigned char*)str,strlen(str));
 	/* When we add, we do not free */
 	PKCS7_add_signed_attribute(si,signed_string_nid,
 		V_ASN1_OCTET_STRING,(char *)os);
@@ -86,8 +86,8 @@ int add_signed_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 
 	os1=ASN1_OCTET_STRING_new();
 	os2=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os1,str1,strlen(str1));
-	ASN1_OCTET_STRING_set(os2,str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os1,(unsigned char*)str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os2,(unsigned char*)str1,strlen(str1));
 	i =i2d_ASN1_OCTET_STRING(os1,NULL);
 	i+=i2d_ASN1_OCTET_STRING(os2,NULL);
 	total=ASN1_object_size(1,i,V_ASN1_SEQUENCE);
@@ -197,7 +197,7 @@ X509_ATTRIBUTE *create_string(char *str)
 		signed_string_nid=
 			OBJ_create("1.2.3.4.5","OID_example","Our example OID");
 	os=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os,str,strlen(str));
+	ASN1_OCTET_STRING_set(os,(unsigned char*)str,strlen(str));
 	/* When we add, we do not free */
 	ret=X509_ATTRIBUTE_create(signed_string_nid,
 		V_ASN1_OCTET_STRING,(char *)os);
@@ -250,8 +250,8 @@ X509_ATTRIBUTE *add_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 
 	os1=ASN1_OCTET_STRING_new();
 	os2=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os1,str1,strlen(str1));
-	ASN1_OCTET_STRING_set(os2,str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os1,(unsigned char*)str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os2,(unsigned char*)str1,strlen(str1));
 	i =i2d_ASN1_OCTET_STRING(os1,NULL);
 	i+=i2d_ASN1_OCTET_STRING(os2,NULL);
 	total=ASN1_object_size(1,i,V_ASN1_SEQUENCE);

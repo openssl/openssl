@@ -317,11 +317,15 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 #define XKU_CODE_SIGN		0x8
 #define XKU_SGC			0x10
 
+#define X509_PURPOSE_DYNAMIC	0x1
+#define X509_PURPOSE_DYNAMIC_NAME	0x2
+
 typedef struct x509_purpose_st {
-int purpose_id;
-int (*check_purpose)(struct x509_purpose_st *, X509 *, int);
-char *purpose_name;
-void *usr_data;
+	int purpose_id;
+	int purpose_flags;
+	int (*check_purpose)(struct x509_purpose_st *, X509 *, int);
+	char *purpose_name;
+	/* void *usr_data; */ /* if we enable this it needs a free function */
 } X509_PURPOSE;
 
 DECLARE_STACK_OF(X509_PURPOSE)
@@ -492,6 +496,7 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
 int X509_check_purpose(X509 *x, int id, int ca);
 int X509_PURPOSE_add(X509_PURPOSE *xp);
+void X509_PURPOSE_cleanup(void);
 void X509_PURPOSE_add_standard(void);
 int X509_PURPOSE_enum(int (*efunc)(X509_PURPOSE *, void *), void *usr);
 int X509_PURPOSE_get_id(X509_PURPOSE *);
@@ -542,6 +547,7 @@ char * X509_PURPOSE_get_name(X509_PURPOSE *);
 #define X509V3_F_X509V3_EXT_I2D				 136
 #define X509V3_F_X509V3_GET_VALUE_BOOL			 110
 #define X509V3_F_X509V3_PARSE_LIST			 109
+#define X509V3_F_X509_PURPOSE_ADD			 137
 
 /* Reason codes. */
 #define X509V3_R_BAD_IP_ADDRESS				 118

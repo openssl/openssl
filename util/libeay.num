@@ -1992,3 +1992,4 @@ sk_ASN1_STRING_TABLE_new                2016
 EVP_PKEY_get_RSA                        2017
 EVP_PKEY_get_DH                         2018
 EVP_PKEY_get_DSA                        2019
+X509_PURPOSE_cleanup                    2020

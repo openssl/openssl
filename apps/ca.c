@@ -603,12 +603,14 @@ bad:
 			perror(outdir);
 			goto err;
 			}
+#ifdef S_IFDIR
 		if (!(sb.st_mode & S_IFDIR))
 			{
 			BIO_printf(bio_err,"%s need to be a directory\n",outdir);
 			perror(outdir);
 			goto err;
 			}
+#endif
 		}
 
 	/*****************************************************************/
@@ -1902,6 +1904,8 @@ err:
 		X509_NAME_free(CAname);
 	if (subject != NULL)
 		X509_NAME_free(subject);
+	if (tmptm != NULL)
+		ASN1_UTCTIME_free(tmptm);
 	if (ok <= 0)
 		{
 		if (ret != NULL) X509_free(ret);

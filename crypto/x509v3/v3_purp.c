@@ -76,18 +76,18 @@ static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca);
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b);
 
 static X509_PURPOSE xstandard[] = {
-{1, check_purpose_ssl_client, "SSL client", NULL},
-{2, check_purpose_ssl_server, "SSL server", NULL},
-{3, check_purpose_ns_ssl_server, "Netscape SSL server", NULL},
-{4, check_purpose_smime_sign, "S/MIME signing", NULL},
-{5, check_purpose_smime_encrypt, "S/MIME encryption", NULL},
-{6, check_purpose_crl_sign, "CRL signing", NULL},
-{-1, NULL, NULL, NULL}
+	{1, 0, check_purpose_ssl_client, "SSL client", /* NULL */},
+	{2, 0, check_purpose_ssl_server, "SSL server", /* NULL */},
+	{3, 0, check_purpose_ns_ssl_server, "Netscape SSL server", /* NULL */},
+	{4, 0, check_purpose_smime_sign, "S/MIME signing", /* NULL */},
+	{5, 0, check_purpose_smime_encrypt, "S/MIME encryption", /* NULL */},
+	{6, 0, check_purpose_crl_sign, "CRL signing", /* NULL */},
+	{-1, 0, NULL, NULL, /* NULL */}
 };
 
 IMPLEMENT_STACK_OF(X509_PURPOSE)
 
-static STACK_OF(X509_PURPOSE) *xptable;
+static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b)
 {
@@ -123,11 +123,42 @@ static int x509_purpose_get_idx(int id)
 int X509_PURPOSE_add(X509_PURPOSE *xp)
 {
 	int idx;
-	if(!xptable) xptable = sk_X509_PURPOSE_new(xp_cmp);
+	if(!xptable)
+		{
+		xptable = sk_X509_PURPOSE_new(xp_cmp);
+		if (!xptable) 
+			{
+			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
+			
 	idx = x509_purpose_get_idx(xp->purpose_id);
-	if(idx != -1) sk_X509_PURPOSE_set(xptable, idx, xp);
-	else sk_X509_PURPOSE_push(xptable, xp);
+	if(idx != -1)
+		sk_X509_PURPOSE_set(xptable, idx, xp);
+	else
+		if (!sk_X509_PURPOSE_push(xptable, xp))
+			{
+			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
 	return 1;
+}
+
+static void xptable_free(X509_PURPOSE *p)
+	{
+	if (p->purpose_flags & X509_PURPOSE_DYNAMIC) 
+		{
+		if (p->purpose_flags & X509_PURPOSE_DYNAMIC_NAME)
+			Free(p->purpose_name);
+		Free(p);
+		}
+	}
+
+void X509_PURPOSE_cleanup(void)
+{
+	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
+	xptable = NULL;
 }
 
 void X509_PURPOSE_add_standard(void)

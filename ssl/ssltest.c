@@ -97,8 +97,8 @@ static BIO *bio_err=NULL;
 static BIO *bio_stdout=NULL;
 
 static char *cipher=NULL;
-int verbose=0;
-int debug=0;
+static int verbose=0;
+static int debug=0;
 #if 0
 /* Not used yet. */
 #ifdef FIONBIO
@@ -167,11 +167,14 @@ int main(int argc, char *argv[])
 #ifndef NO_DH
 	DH *dh;
 #endif
+	verbose = 0;
+	debug = 0;
+	cipher = 0;
+	
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
-
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	argc--;
 	argv++;
@@ -432,6 +435,7 @@ end:
 	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_mem_leaks(bio_err);
+	if (bio_err != NULL) BIO_free(bio_err);
 	EXIT(ret);
 	}
 
