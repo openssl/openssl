@@ -333,11 +333,13 @@ link_o.solaris:
 		$(DO_GNU); \
 	else \
 		$(CALC_VERSIONS); \
+		MINUSZ='-z '; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
 		LIBDEPS="$(LIBDEPS) -lc" \
-		ALLSYMSFLAGS='-z allextract' \
-		NOALLSYMSFLAGS='' \
+		ALLSYMSFLAGS="$${MINUSZ}allextract" \
+		NOALLSYMSFLAGS="$${MINUSZ}defaultextract" \
 		SHAREDFLAGS='-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
 		SHAREDCMD='$(CC)'; \
 	fi; \
@@ -347,11 +349,13 @@ link_a.solaris:
 		$(DO_GNU); \
 	else \
 		$(CALC_VERSIONS); \
+		MINUSZ='-z '; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
 		LIBDEPS="$(LIBDEPS) -lc" \
-		ALLSYMSFLAGS='-z allextract' \
-		NOALLSYMSFLAGS='' \
+		ALLSYMSFLAGS="$${MINUSZ}allextract" \
+		NOALLSYMSFLAGS="$${MINUSZ}defaultextract" \
 		SHAREDFLAGS='-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
 		SHAREDCMD='$(CC)'; \
 	fi; \
