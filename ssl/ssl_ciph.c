@@ -111,7 +111,8 @@ typedef struct cipher_order_st
 	} CIPHER_ORDER;
 
 static SSL_CIPHER cipher_aliases[]={
-	{0,SSL_TXT_ALL, 0,SSL_ALL,   0,SSL_ALL},	/* must be first */
+	/* Don't include eNULL unless specifically enabled */
+	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, 0,SSL_ALL}, /* must be first */
 	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,SSL_MKEY_MASK},
 	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,SSL_MKEY_MASK},
 	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,SSL_MKEY_MASK},
@@ -403,7 +404,7 @@ char *str;
 		}
 
 	/* special case */
-	cipher_aliases[0].algorithms= ~mask;
+	cipher_aliases[0].algorithms &= ~mask;
 
 	/* get the aliases */
 	k=sizeof(cipher_aliases)/sizeof(SSL_CIPHER);
