@@ -282,7 +282,6 @@ void do_mct(char *amode,
 	int j;
 	int n;
 	EVP_CIPHER_CTX ctx;
-	unsigned char old_iv[8];
 	int kp=akeysz/64;
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
@@ -305,6 +304,10 @@ void do_mct(char *amode,
 
 	for(j=0 ; j < 10000 ; ++j)
 	    {
+	    unsigned char old_iv[8];
+	    unsigned char old_text[8];
+
+	    memcpy(old_text,text,8);
 	    if(j == 0)
 		{
 		memcpy(old_iv,ivec,8);
@@ -327,6 +330,14 @@ void do_mct(char *amode,
 	    if(dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
 		       || imode == CBC))
 		memcpy(text,old_iv,8);
+
+	    if(!dir && imode == CFB64)
+		{
+		/* the test specifies using the output of the raw DES operation
+		   which we don't have, so reconstruct it... */
+		for(n=0 ; n < 8 ; ++n)
+		    text[n]^=old_text[n];
+		}
 	    }
 	for(n=0 ; n < 8 ; ++n)
 	    akey[n]^=nk[16+n];
