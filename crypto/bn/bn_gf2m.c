@@ -988,7 +988,11 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 	
 	if (!BN_GF2m_mod_sqr_arr(w, z, p, ctx)) goto err;
 	if (!BN_GF2m_add(w, z, w)) goto err;
-	if (BN_GF2m_cmp(w, a)) goto err;
+	if (BN_GF2m_cmp(w, a))
+		{
+		BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR, BN_R_NO_SOLUTION);
+		goto err;
+		}
 
 	if (!BN_copy(r, z)) goto err;
 	bn_check_top(r);

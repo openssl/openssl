@@ -3,7 +3,7 @@
  * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -102,7 +102,7 @@ static const EC_CURVE_DATA _EC_NIST_PRIME_192 = {
 	"07192b95ffc8da78631011ed6b24cdd573f977a11e794811",
 	"FFFFFFFFFFFFFFFFFFFFFFFF99DEF836146BC9B1B4D22831",1,
 	_EC_NIST_PRIME_192_SEED, 20,
-	"192 bit prime curve from X9.62 and SECG"
+	"NIST/X9.62/SECG curve over a 192 bit prime field"
 	};
 
 static const unsigned char _EC_NIST_PRIME_224_SEED[] = {
@@ -117,7 +117,7 @@ static const EC_CURVE_DATA _EC_NIST_PRIME_224 = {
 	"bd376388b5f723fb4c22dfe6cd4375a05a07476444d5819985007e34",
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFF16A2E0B8F03E13DD29455C5C2A3D",1,
 	_EC_NIST_PRIME_224_SEED, 20,
-	"SECG/NIST recommended curve over a 224 bit prime field"
+	"NIST/SECG curve over a 224 bit prime field"
 	};
 
 static const unsigned char _EC_NIST_PRIME_384_SEED[] = {
@@ -138,7 +138,7 @@ static const EC_CURVE_DATA _EC_NIST_PRIME_384 = {
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0"
 	"DB248B0A77AECEC196ACCC52973",1,
 	_EC_NIST_PRIME_384_SEED, 20,
-	"SECG/NIST recommended curve over a 384 bit prime field"
+	"NIST/SECG curve over a 384 bit prime field"
 	};
 
 static const unsigned char _EC_NIST_PRIME_521_SEED[] = {
@@ -159,7 +159,7 @@ static const EC_CURVE_DATA _EC_NIST_PRIME_521 = {
 	"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51"
 	"868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409",1,
 	_EC_NIST_PRIME_521_SEED, 20,
-	"SECG/NIST recommended curve over a 521 bit prime field"
+	"NIST/SECG curve over a 521 bit prime field"
 	};
 /* the x9.62 prime curves (minus the nist prime curves) */
 static const unsigned char _EC_X9_62_PRIME_192V2_SEED[] = {
@@ -174,7 +174,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_192V2 = {
 	"6574d11d69b6ec7a672bb82a083df2f2b0847de970b2de15",
 	"FFFFFFFFFFFFFFFFFFFFFFFE5FB1A724DC80418648D8DD31",1,
 	_EC_X9_62_PRIME_192V2_SEED, 20,
-	"192 bit prime curve from X9.62"
+	"X9.62 curve over a 192 bit prime field"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_192V3_SEED[] = {
@@ -189,7 +189,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_192V3 = {
 	"38a90f22637337334b49dcb66a6dc8f9978aca7648a943b0",
 	"FFFFFFFFFFFFFFFFFFFFFFFF7A62D031C83F4294F640EC13",1,
 	_EC_X9_62_PRIME_192V3_SEED, 20,
-	"192 bit prime curve from X9.62"
+	"X9.62 curve over a 192 bit prime field"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V1_SEED[] = {
@@ -204,7 +204,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V1 = {
 	"7debe8e4e90a5dae6e4054ca530ba04654b36818ce226b39fccb7b02f1ae",
 	"7FFFFFFFFFFFFFFFFFFFFFFF7FFFFF9E5E9A9F5D9071FBD1522688909D0B",1,
 	_EC_X9_62_PRIME_239V1_SEED, 20,
-	"239 bit prime curve from X9.62"
+	"X9.62 curve over a 239 bit prime field"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V2_SEED[] = {
@@ -219,7 +219,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V2 = {
 	"5b0125e4dbea0ec7206da0fc01d9b081329fb555de6ef460237dff8be4ba",
 	"7FFFFFFFFFFFFFFFFFFFFFFF800000CFA7E8594377D414C03821BC582063",1,
 	_EC_X9_62_PRIME_239V2_SEED, 20,
-	"239 bit prime curve from X9.62"
+	"X9.62 curve over a 239 bit prime field"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V3_SEED[] = {
@@ -234,7 +234,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V3 = {
 	"1607e6898f390c06bc1d552bad226f3b6fcfe48b6e818499af18e3ed6cf3",
 	"7FFFFFFFFFFFFFFFFFFFFFFF7FFFFF975DEB41B3A6057C3C432146526551",1,
 	_EC_X9_62_PRIME_239V3_SEED, 20,
-	"239 bit prime curve from X9.62"
+	"X9.62 curve over a 239 bit prime field"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_256V1_SEED[] = {
@@ -249,7 +249,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_256V1 = {
 	"4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5",
 	"FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551",1,
 	_EC_X9_62_PRIME_256V1_SEED, 20,
-	"256 bit prime curve from X9.62 and SECG"
+	"X9.62/SECG curve over a 256 bit prime field"
 	};
 /* the secg prime curves (minus the nist and x9.62 prime curves) */
 static const unsigned char _EC_SECG_PRIME_112R1_SEED[] = {
@@ -264,7 +264,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_112R1 = {
 	"a89ce5af8724c0a23e0e0ff77500",
 	"DB7C2ABF62E35E7628DFAC6561C5",1,
 	_EC_SECG_PRIME_112R1_SEED, 20,
-	"SECG/WTLS recommended curve over a 112 bit prime field"
+	"SECG/WTLS curve over a 112 bit prime field"
 	};
 
 static const unsigned char _EC_SECG_PRIME_112R2_SEED[] = {
@@ -279,7 +279,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_112R2 = {
 	"adcd46f5882e3747def36e956e97",
 	"36DF0AAFD8B8D7597CA10520D04B",4, 
 	_EC_SECG_PRIME_112R2_SEED, 20,
-	"SECG recommended curve over a 112 bit prime field"
+	"SECG curve over a 112 bit prime field"
 	};
 
 static const unsigned char _EC_SECG_PRIME_128R1_SEED[] = {
@@ -294,7 +294,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_128R1 = {
 	"cf5ac8395bafeb13c02da292dded7a83",
 	"FFFFFFFE0000000075A30D1B9038A115",1,
 	_EC_SECG_PRIME_128R1_SEED, 20,
-	"SECG recommended curve over a 128 bit prime field"
+	"SECG curve over a 128 bit prime field"
 	};
 
 static const unsigned char _EC_SECG_PRIME_128R2_SEED[] = {
@@ -309,7 +309,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_128R2 = {
 	"27b6916a894d3aee7106fe805fc34b44",
 	"3FFFFFFF7FFFFFFFBE0024720613B5A3",4,
 	_EC_SECG_PRIME_128R2_SEED, 20,
-	"SECG recommended curve over a 128 bit prime field"
+	"SECG curve over a 128 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_PRIME_160K1 = {
@@ -321,7 +321,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_160K1 = {
 	"938cf935318fdced6bc28286531733c3f03c4fee",
 	"0100000000000000000001B8FA16DFAB9ACA16B6B3",1,
 	NULL, 0,
-	"SECG recommended curve over a 160 bit prime field"
+	"SECG curve over a 160 bit prime field"
 	};
 
 static const unsigned char _EC_SECG_PRIME_160R1_SEED[] = {
@@ -336,7 +336,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_160R1 = {
 	"23a628553168947d59dcc912042351377ac5fb32",
 	"0100000000000000000001F4C8F927AED3CA752257",1,
 	_EC_SECG_PRIME_160R1_SEED, 20,
-	"SECG recommended curve over a 160 bit prime field"
+	"SECG curve over a 160 bit prime field"
 	};
 
 static const unsigned char _EC_SECG_PRIME_160R2_SEED[] = {
@@ -351,7 +351,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_160R2 = {
 	"feaffef2e331f296e071fa0df9982cfea7d43f2e",
 	"0100000000000000000000351EE786A818F3A1A16B",1,
 	_EC_SECG_PRIME_160R2_SEED, 20,
-	"SECG/WTLS recommended curve over a 160 bit prime field"
+	"SECG/WTLS curve over a 160 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_PRIME_192K1 = {
@@ -363,7 +363,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_192K1 = {
 	"9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9d",
 	"FFFFFFFFFFFFFFFFFFFFFFFE26F2FC170F69466A74DEFD8D",1,
 	NULL, 20,
-	"SECG recommended curve over a 192 bit prime field"
+	"SECG curve over a 192 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_PRIME_224K1 = {
@@ -375,7 +375,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_224K1 = {
 	"7e089fed7fba344282cafbd6f7e319f7c0b0bd59e2ca4bdb556d61a5",
 	"010000000000000000000000000001DCE8D2EC6184CAF0A971769FB1F7",1,
 	NULL, 20,
-	"SECG recommended curve over a 224 bit prime field"
+	"SECG curve over a 224 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_PRIME_256K1 = {
@@ -387,7 +387,7 @@ static const EC_CURVE_DATA _EC_SECG_PRIME_256K1 = {
 	"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",1,
 	NULL, 20,
-	"SECG recommended curve over a 256 bit prime field"
+	"SECG curve over a 256 bit prime field"
 	};
 
 /* some wap/wtls curves */
@@ -400,7 +400,7 @@ static const EC_CURVE_DATA _EC_WTLS_8 = {
 	"2",
 	"0100000000000001ECEA551AD837E9",1,
 	NULL, 20,
-	"112 bit prime curve from the WTLS standard"
+	"WTLS curve over a 112 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_WTLS_9 = {
@@ -412,7 +412,7 @@ static const EC_CURVE_DATA _EC_WTLS_9 = {
 	"2",
 	"0100000000000000000001CDC98AE0E2DE574ABF33",1,
 	NULL, 20,
-	"160 bit prime curve from the WTLS standard"
+	"WTLS curve over a 160 bit prime field"
 	};
 
 static const EC_CURVE_DATA _EC_WTLS_12 = {
@@ -424,7 +424,7 @@ static const EC_CURVE_DATA _EC_WTLS_12 = {
 	"bd376388b5f723fb4c22dfe6cd4375a05a07476444d5819985007e34",
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFF16A2E0B8F03E13DD29455C5C2A3D", 1,
 	NULL, 0,
-	"224 bit prime curve from the WTLS standard"
+	"WTLS curvs over a 224 bit prime field"
 	};
 
 /* characteristic two curves */
@@ -440,7 +440,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_113R1 = {
 	"00A52830277958EE84D1315ED31886",
 	"0100000000000000D9CCEC8A39E56F", 2,
 	_EC_SECG_CHAR2_113R1_SEED, 20,
-	"SECG recommended curve over a 113 bit binary field"
+	"SECG curve over a 113 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_113R2_SEED[] = {
@@ -455,7 +455,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_113R2 = {
 	"00B3ADC94ED1FE674C06E695BABA1D",
 	"010000000000000108789B2496AF93", 2,
 	_EC_SECG_CHAR2_113R2_SEED, 20,
-	"SECG recommended curve over a 113 bit binary field"
+	"SECG curve over a 113 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_131R1_SEED[] = {
@@ -470,7 +470,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_131R1 = {
 	"078C6E7EA38C001F73C8134B1B4EF9E150",
 	"0400000000000000023123953A9464B54D", 2,
 	_EC_SECG_CHAR2_131R1_SEED, 20,
-	"SECG/WTLS recommended curve over a 131 bit binary field"
+	"SECG/WTLS curve over a 131 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_131R2_SEED[] = {
@@ -485,10 +485,10 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_131R2 = {
 	"0648F06D867940A5366D9E265DE9EB240F",
 	"0400000000000000016954A233049BA98F", 2,
 	_EC_SECG_CHAR2_131R2_SEED, 20,
-	"SECG recommended curve over a 131 bit binary field"
+	"SECG curve over a 131 bit binary field"
 	};
 
-static const EC_CURVE_DATA _EC_SECG_CHAR2_163K1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_163K = {
 	NID_X9_62_characteristic_two_field,
 	"0800000000000000000000000000000000000000C9",
 	"1",
@@ -497,7 +497,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163K1 = {
 	"0289070FB05D38FF58321F2E800536D538CCDAA3D9",
 	"04000000000000000000020108A2E0CC0D99F8A5EF", 2,
 	NULL, 0,
-	"\n\tSECG/NIST/WTLS recommended curve over a 163 bit binary field"
+	"NIST/SECG/WTLS curve over a 163 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_163R1_SEED[] = {
@@ -520,13 +520,13 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163R1 = {
 #else
 	NULL, 0,
 #endif
-	"SECG recommended curve over a 163 bit binary field"
+	"SECG curve over a 163 bit binary field"
 	};
 
-static const unsigned char _EC_SECG_CHAR2_163R2_SEED[] = {
+static const unsigned char _EC_NIST_CHAR2_163B_SEED[] = {
 	0x85,0xE2,0x5B,0xFE,0x5C,0x86,0x22,0x6C,0xDB,0x12,
 	0x01,0x6F,0x75,0x53,0xF9,0xD0,0xE6,0x93,0xA2,0x68};
-static const EC_CURVE_DATA _EC_SECG_CHAR2_163R2 ={
+static const EC_CURVE_DATA _EC_NIST_CHAR2_163B ={
 	NID_X9_62_characteristic_two_field,
 	"0800000000000000000000000000000000000000C9",
 	"1",
@@ -538,11 +538,11 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163R2 ={
  * basis representation (and not the polynomial representation used here) 
  */
 #if 0
-	_EC_SECG_CHAR2_163R2_SEED, 20,
+	_EC_NIST_CHAR2_163B_SEED, 20,
 #else
 	NULL, 0,
 #endif
-	"SECG/NIST recommended curve over a 163 bit binary field"
+	"NIST/SECG curve over a 163 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_193R1_SEED[] = {
@@ -557,7 +557,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_193R1 = {
 	"0025E399F2903712CCF3EA9E3A1AD17FB0B3201B6AF7CE1B05",
 	"01000000000000000000000000C7F34A778F443ACC920EBA49", 2,
 	_EC_SECG_CHAR2_193R1_SEED, 20,
-	"SECG recommended curve over a 193 bit binary field"
+	"SECG curve over a 193 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_193R2_SEED[] = {
@@ -572,10 +572,10 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_193R2 = {
 	"01CE94335607C304AC29E7DEFBD9CA01F596F927224CDECF6C",
 	"010000000000000000000000015AAB561B005413CCD4EE99D5", 2,
 	_EC_SECG_CHAR2_193R2_SEED, 20,
-	"SECG recommended curve over a 193 bit binary field"
+	"SECG curve over a 193 bit binary field"
 	};
 
-static const EC_CURVE_DATA _EC_SECG_CHAR2_233K1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_233K = {
 	NID_X9_62_characteristic_two_field,
 	"020000000000000000000000000000000000000004000000000000000001",
 	"0",
@@ -584,13 +584,13 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_233K1 = {
 	"01DB537DECE819B7F70F555A67C427A8CD9BF18AEB9B56E0C11056FAE6A3",
 	"008000000000000000000000000000069D5BB915BCD46EFB1AD5F173ABDF", 4,
 	NULL, 0,
-	"\n\tSECG/NIST/WTLS recommended curve over a 233 bit binary field"
+	"NIST/SECG/WTLS curve over a 233 bit binary field"
 	};
 
-static const unsigned char _EC_SECG_CHAR2_233R1_SEED[] = {
+static const unsigned char _EC_NIST_CHAR2_233B_SEED[] = {
 	0x74,0xD5,0x9F,0xF0,0x7F,0x6B,0x41,0x3D,0x0E,0xA1,
 	0x4B,0x34,0x4B,0x20,0xA2,0xDB,0x04,0x9B,0x50,0xC3};
-static const EC_CURVE_DATA _EC_SECG_CHAR2_233R1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_233B = {
 	NID_X9_62_characteristic_two_field,
 	"020000000000000000000000000000000000000004000000000000000001",
 	"000000000000000000000000000000000000000000000000000000000001",
@@ -598,8 +598,8 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_233R1 = {
 	"00FAC9DFCBAC8313BB2139F1BB755FEF65BC391F8B36F8F8EB7371FD558B",
 	"01006A08A41903350678E58528BEBF8A0BEFF867A7CA36716F7E01F81052",
 	"01000000000000000000000000000013E974E72F8A6922031D2603CFE0D7", 2,
-	_EC_SECG_CHAR2_233R1_SEED, 20,
-	"\n\tSECG/NIST/WTLS recommended curve over a 233 bit binary field"
+	_EC_NIST_CHAR2_233B_SEED, 20,
+	"NIST/SECG/WTLS curve over a 233 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_CHAR2_239K1 = {
@@ -611,10 +611,10 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_239K1 = {
 	"76310804F12E549BDB011C103089E73510ACB275FC312A5DC6B76553F0CA",
 	"2000000000000000000000000000005A79FEC67CB6E91F1C1DA800E478A5", 4,
 	NULL, 0,
-	"SECG recommended curve over a 239 bit binary field"
+	"SECG curve over a 239 bit binary field"
 	};
 
-static const EC_CURVE_DATA _EC_SECG_CHAR2_283K1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_283K = {
 	NID_X9_62_characteristic_two_field,
 	"080000000000000000000000000000000000000000000000000000000000000000001"
 	"0A1",
@@ -627,13 +627,13 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_283K1 = {
 	"01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE9AE2ED07577265DFF7F94451E061E163"
 	"C61", 4,
 	NULL, 20,
-	"SECG/NIST recommended curve over a 283 bit binary field"
+	"NIST/SECG curve over a 283 bit binary field"
 	};
 
-static const unsigned char _EC_SECG_CHAR2_283R1_SEED[] = {
+static const unsigned char _EC_NIST_CHAR2_283B_SEED[] = {
 	0x77,0xE2,0xB0,0x73,0x70,0xEB,0x0F,0x83,0x2A,0x6D,
 	0xD5,0xB6,0x2D,0xFC,0x88,0xCD,0x06,0xBB,0x84,0xBE};
-static const EC_CURVE_DATA _EC_SECG_CHAR2_283R1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_283B = {
 	NID_X9_62_characteristic_two_field,
 	"080000000000000000000000000000000000000000000000000000000000000000001"
 	"0A1",
@@ -647,11 +647,11 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_283R1 = {
 	"2F4",
 	"03FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEF90399660FC938A90165B042A7CEFADB"
 	"307", 2,
-	_EC_SECG_CHAR2_283R1_SEED, 20,
-	"SECG/NIST recommended curve over a 283 bit binary field"
+	_EC_NIST_CHAR2_283B_SEED, 20,
+	"NIST/SECG curve over a 283 bit binary field"
 	};
 
-static const EC_CURVE_DATA _EC_SECG_CHAR2_409K1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_409K = {
 	NID_X9_62_characteristic_two_field,
 	"020000000000000000000000000000000000000000000000000000000000000000000"
 	"00000000000008000000000000000000001",
@@ -664,13 +664,13 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_409K1 = {
 	"007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE5F83B2D4EA20400"
 	"EC4557D5ED3E3E7CA5B4B5C83B8E01E5FCF", 4,
 	NULL, 0,
-	"SECG/NIST recommended curve over a 409 bit binary field"
+	"NIST/SECG curve over a 409 bit binary field"
 	};
 
-static const unsigned char _EC_SECG_CHAR2_409R1_SEED[] = {
+static const unsigned char _EC_NIST_CHAR2_409B_SEED[] = {
 	0x40,0x99,0xB5,0xA4,0x57,0xF9,0xD6,0x9F,0x79,0x21,
 	0x3D,0x09,0x4C,0x4B,0xCD,0x4D,0x42,0x62,0x21,0x0B};
-static const EC_CURVE_DATA _EC_SECG_CHAR2_409R1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_409B = {
 	NID_X9_62_characteristic_two_field,
 	"020000000000000000000000000000000000000000000000000000000000000000000"
 	"00000000000008000000000000000000001",
@@ -684,11 +684,11 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_409R1 = {
 	"F1FDF4B4F40D2181B3681C364BA0273C706",
 	"010000000000000000000000000000000000000000000000000001E2AAD6A612F3330"
 	"7BE5FA47C3C9E052F838164CD37D9A21173", 2,
-	_EC_SECG_CHAR2_409R1_SEED, 20,
-	"SECG/NIST recommended curve over a 409 bit binary field"
+	_EC_NIST_CHAR2_409B_SEED, 20,
+	"NIST/SECG curve over a 409 bit binary field"
 	};
 
-static const EC_CURVE_DATA _EC_SECG_CHAR2_571K1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_571K = {
 	NID_X9_62_characteristic_two_field,
 	"800000000000000000000000000000000000000000000000000000000000000000000"
 	"000000000000000000000000000000000000000000000000000000000000000000000"
@@ -705,13 +705,13 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_571K1 = {
 	"000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F63"
 	"7C1001", 4,
 	NULL, 0,
-	"SECG/NIST recommended curve over a 571 bit binary field"
+	"NIST/SECG curve over a 571 bit binary field"
 	};
 
-static const unsigned char _EC_SECG_CHAR2_571R1_SEED[] = {
+static const unsigned char _EC_NIST_CHAR2_571B_SEED[] = {
 	0x2A,0xA0,0x58,0xF7,0x3A,0x0E,0x33,0xAB,0x48,0x6B,
 	0x0F,0x61,0x04,0x10,0xC5,0x3A,0x7F,0x13,0x23,0x10};
-static const EC_CURVE_DATA _EC_SECG_CHAR2_571R1 = {
+static const EC_CURVE_DATA _EC_NIST_CHAR2_571B = {
 	NID_X9_62_characteristic_two_field,
 	"800000000000000000000000000000000000000000000000000000000000000000000"
 	"000000000000000000000000000000000000000000000000000000000000000000000"
@@ -731,8 +731,8 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_571R1 = {
 	"03FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 	"FFFE661CE18FF55987308059B186823851EC7DD9CA1161DE93D5174D66E8382E9BB2F"
 	"E84E47", 2,
-	_EC_SECG_CHAR2_571R1_SEED, 20,
-	"SECG/NIST recommended curve over a 571 bit binary field"
+	_EC_NIST_CHAR2_571B_SEED, 20,
+	"NIST/SECG curve over a 571 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_163V1_SEED[] = {
@@ -747,7 +747,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V1 = {
 	"01EC23211B5966ADEA1D3F87F7EA5848AEF0B7CA9F",
 	"0400000000000000000001E60FC8821CC74DAEAFC1", 2,
 	_EC_X9_62_CHAR2_163V1_SEED, 20,
-	"163 bit binary curve from X9.62"
+	"X9.62 curve over a 163 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_163V2_SEED[] = {
@@ -762,7 +762,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V2 = {
 	"079F684DDF6684C5CD258B3890021B2386DFD19FC5",
 	"03FFFFFFFFFFFFFFFFFFFDF64DE1151ADBB78F10A7", 2,
 	_EC_X9_62_CHAR2_163V2_SEED, 20,
-	"163 bit binary curve from X9.62"
+	"X9.62 curve over a 163 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_163V3_SEED[] = {
@@ -777,7 +777,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V3 = {
 	"05B935590C155E17EA48EB3FF3718B893DF59A05D0",
 	"03FFFFFFFFFFFFFFFFFFFE1AEE140F110AFF961309", 2,
 	_EC_X9_62_CHAR2_163V3_SEED, 20,
-	"163 bit binary curve from X9.62"
+	"X9.62 curve over a 163 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_176V1 = {
@@ -789,7 +789,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_176V1 = {
 	"6FA4539C2DADDDD6BAB5167D61B436E1D92BB16A562C",
 	"00010092537397ECA4F6145799D62B0A19CE06FE26AD", 0xFF6E,
 	NULL, 0,
-	"176 bit binary curve from X9.62"
+	"X9.62 curve over a 176 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V1_SEED[] = {
@@ -804,7 +804,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V1 = {
 	"765BE73433B3F95E332932E70EA245CA2418EA0EF98018FB",
 	"40000000000000000000000004A20E90C39067C893BBB9A5", 2,
 	_EC_X9_62_CHAR2_191V1_SEED, 20,
-	"191 bit binary curve from X9.62"
+	"X9.62 curve over a 191 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V2_SEED[] = {
@@ -819,7 +819,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V2 = {
 	"17434386626D14F3DBF01760D9213A3E1CF37AEC437D668A",
 	"20000000000000000000000050508CB89F652824E06B8173", 4,
 	_EC_X9_62_CHAR2_191V2_SEED, 20,
-	"191 bit binary curve from X9.62"
+	"X9.62 curve over a 191 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V3_SEED[] = {
@@ -834,7 +834,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V3 = {
 	"545A39176196575D985999366E6AD34CE0A77CD7127B06BE",
 	"155555555555555555555555610C0B196812BFB6288A3EA3", 6,
 	_EC_X9_62_CHAR2_191V3_SEED, 20,
-	"191 bit binary curve from X9.62"
+	"X9.62 curve over a 191 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_208W1 = {
@@ -846,7 +846,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_208W1 = {
 	"0F55B51A06E78E9AC38A035FF520D8B01781BEB1A6BB08617DE3",
 	"000101BAF95C9723C57B6C21DA2EFF2D5ED588BDD5717E212F9D", 0xFE48,
 	NULL, 0,
-	"208 bit binary curve from X9.62"
+	"X9.62 curve over a 208 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V1_SEED[] = {
@@ -861,7 +861,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V1 = {
 	"61D8EE5077C33FECF6F1A16B268DE469C3C7744EA9A971649FC7A9616305",
 	"2000000000000000000000000000000F4D42FFE1492A4993F1CAD666E447", 4,
 	_EC_X9_62_CHAR2_239V1_SEED, 20,
-	"239 bit binary curve from X9.62"
+	"X9.62 curve over a 239 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V2_SEED[] = {
@@ -876,7 +876,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V2 = {
 	"5667334C45AFF3B5A03BAD9DD75E2C71A99362567D5453F7FA6E227EC833",
 	"1555555555555555555555555555553C6F2885259C31E3FCDF154624522D", 6,
 	_EC_X9_62_CHAR2_239V2_SEED, 20,
-	"239 bit binary curve from X9.62"
+	"X9.62 curve over a 239 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V3_SEED[] = {
@@ -891,7 +891,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V3 = {
 	"2E5A0EAF6E5E1305B9004DCE5C0ED7FE59A35608F33837C816D80B79F461",
 	"0CCCCCCCCCCCCCCCCCCCCCCCCCCCCCAC4912D2D9DF903EF9888B8A0E4CFF", 0xA,
 	_EC_X9_62_CHAR2_239V3_SEED, 20,
-	"239 bit binary curve from X9.62"
+	"X9.62 curve over a 239 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_272W1 = {
@@ -905,7 +905,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_272W1 = {
 	"000100FAF51354E0E39E4892DF6E319C72C8161603FA45AA7B998A167B8F1E629521",
 	0xFF06,
 	NULL, 0,
-	"272 bit binary curve from X9.62"
+	"X9.62 curve over a 272 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_304W1 = {
@@ -923,7 +923,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_304W1 = {
 	"000101D556572AABAC800101D556572AABAC8001022D5C91DD173F8FB561DA6899164"
 	"443051D", 0xFE2E,
 	NULL, 0,
-	"304 bit binary curve from X9.62"
+	"X9.62 curve over a 304 bit binary field"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_359V1_SEED[] = {
@@ -944,7 +944,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_359V1 = {
 	"01AF286BCA1AF286BCA1AF286BCA1AF286BCA1AF286BC9FB8F6B85C556892C20A7EB9"
 	"64FE7719E74F490758D3B", 0x4C,
 	_EC_X9_62_CHAR2_359V1_SEED, 20,
-	"359 bit binary curve from X9.62"
+	"X9.62 curve over a 359 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_368W1 = {
@@ -962,7 +962,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_368W1 = {
 	"00010090512DA9AF72B08349D98A5DD4C7B0532ECA51CE03E2D10F3B7AC579BD87E90"
 	"9AE40A6F131E9CFCE5BD967", 0xFF70,
 	NULL, 0,
-	"368 bit binary curve from X9.62"
+	"X9.62 curve over a 368 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_431R1 = {
@@ -980,7 +980,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_431R1 = {
 	"0340340340340340340340340340340340340340340340340340340323C313FAB5058"
 	"9703B5EC68D3587FEC60D161CC149C1AD4A91", 0x2760,
 	NULL, 0,
-	"431 bit binary curve from X9.62"
+	"X9.62 curve over a 431 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_WTLS_1 = {
@@ -992,7 +992,7 @@ static const EC_CURVE_DATA _EC_WTLS_1 = {
 	"00F44B4AF1ECC2630E08785CEBCC15",
 	"00FFFFFFFFFFFFFFFDBF91AF6DEA73", 2,
 	NULL, 0,
-	"113 bit binary curve from the WTLS standard"
+	"WTLS curve over a 113 bit binary field"
 	};
 
 /* IPSec curves */
@@ -1064,25 +1064,25 @@ static const ec_list_element curve_list[] = {
 	{ NID_X9_62_prime239v3, &_EC_X9_62_PRIME_239V3},
 	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1},
 	/* characteristic two field curves */
-	/* secg curves */
+	/* NIST/SECG curves */
 	{ NID_sect113r1, &_EC_SECG_CHAR2_113R1},
 	{ NID_sect113r2, &_EC_SECG_CHAR2_113R2},
 	{ NID_sect131r1, &_EC_SECG_CHAR2_131R1},
 	{ NID_sect131r2, &_EC_SECG_CHAR2_131R2},
-	{ NID_sect163k1, &_EC_SECG_CHAR2_163K1},
+	{ NID_sect163k1, &_EC_NIST_CHAR2_163K },
 	{ NID_sect163r1, &_EC_SECG_CHAR2_163R1},
-	{ NID_sect163r2, &_EC_SECG_CHAR2_163R2},
+	{ NID_sect163r2, &_EC_NIST_CHAR2_163B },
 	{ NID_sect193r1, &_EC_SECG_CHAR2_193R1},
 	{ NID_sect193r2, &_EC_SECG_CHAR2_193R2},
-	{ NID_sect233k1, &_EC_SECG_CHAR2_233K1},
-	{ NID_sect233r1, &_EC_SECG_CHAR2_233R1},
+	{ NID_sect233k1, &_EC_NIST_CHAR2_233K },
+	{ NID_sect233r1, &_EC_NIST_CHAR2_233B },
 	{ NID_sect239k1, &_EC_SECG_CHAR2_239K1},
-	{ NID_sect283k1, &_EC_SECG_CHAR2_283K1},
-	{ NID_sect283r1, &_EC_SECG_CHAR2_283R1},
-	{ NID_sect409k1, &_EC_SECG_CHAR2_409K1},
-	{ NID_sect409r1, &_EC_SECG_CHAR2_409R1},
-	{ NID_sect571k1, &_EC_SECG_CHAR2_571K1},
-	{ NID_sect571r1, &_EC_SECG_CHAR2_571R1},
+	{ NID_sect283k1, &_EC_NIST_CHAR2_283K },
+	{ NID_sect283r1, &_EC_NIST_CHAR2_283B },
+	{ NID_sect409k1, &_EC_NIST_CHAR2_409K },
+	{ NID_sect409r1, &_EC_NIST_CHAR2_409B },
+	{ NID_sect571k1, &_EC_NIST_CHAR2_571K },
+	{ NID_sect571r1, &_EC_NIST_CHAR2_571B },
 	/* X9.62 curves */
 	{ NID_X9_62_c2pnb163v1, &_EC_X9_62_CHAR2_163V1},
 	{ NID_X9_62_c2pnb163v2, &_EC_X9_62_CHAR2_163V2},
@@ -1102,15 +1102,15 @@ static const ec_list_element curve_list[] = {
 	{ NID_X9_62_c2tnb431r1, &_EC_X9_62_CHAR2_431R1},
 	/* the WAP/WTLS curves */
 	{ NID_wap_wsg_idm_ecid_wtls1, &_EC_WTLS_1},
-	{ NID_wap_wsg_idm_ecid_wtls3, &_EC_SECG_CHAR2_163K1},
+	{ NID_wap_wsg_idm_ecid_wtls3, &_EC_NIST_CHAR2_163K},
 	{ NID_wap_wsg_idm_ecid_wtls4, &_EC_SECG_CHAR2_113R1},
 	{ NID_wap_wsg_idm_ecid_wtls5, &_EC_X9_62_CHAR2_163V1},
 	{ NID_wap_wsg_idm_ecid_wtls6, &_EC_SECG_PRIME_112R1},
 	{ NID_wap_wsg_idm_ecid_wtls7, &_EC_SECG_PRIME_160R2},
 	{ NID_wap_wsg_idm_ecid_wtls8, &_EC_WTLS_8},
 	{ NID_wap_wsg_idm_ecid_wtls9, &_EC_WTLS_9 },
-	{ NID_wap_wsg_idm_ecid_wtls10, &_EC_SECG_CHAR2_233K1},
-	{ NID_wap_wsg_idm_ecid_wtls11, &_EC_SECG_CHAR2_233R1},
+	{ NID_wap_wsg_idm_ecid_wtls10, &_EC_NIST_CHAR2_233K},
+	{ NID_wap_wsg_idm_ecid_wtls11, &_EC_NIST_CHAR2_233B},
 	{ NID_wap_wsg_idm_ecid_wtls12, &_EC_WTLS_12},
 	/* IPSec curves */
 	{ NID_ipsec3, &_EC_IPSEC_155_ID3},

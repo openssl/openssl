@@ -640,6 +640,9 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 	BIGNUM *tmp1, *tmp2, *x, *y;
 	int ret = 0;
 
+	/* clear error queue*/
+	ERR_clear_error();
+
 	if (ctx == NULL)
 		{
 		ctx = new_ctx = BN_CTX_new();
@@ -711,11 +714,11 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 	
 	if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
 		{
-		unsigned long err = ERR_peek_error();
+		unsigned long err = ERR_peek_last_error();
 		
 		if (ERR_GET_LIB(err) == ERR_LIB_BN && ERR_GET_REASON(err) == BN_R_NOT_A_SQUARE)
 			{
-			(void)ERR_get_error();
+			ERR_clear_error();
 			ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES, EC_R_INVALID_COMPRESSED_POINT);
 			}
 		else
