@@ -147,6 +147,8 @@ static char *ca_usage[]={
 " -gencrl         - Generate a new CRL\n",
 " -crldays days   - Days is when the next CRL is due\n",
 " -crlhours hours - Hours is when the next CRL is due\n",
+" -startdate YYMMDDHHMMSSZ  - certificate validity notBefore\n",
+" -enddate YYMMDDHHMMSSZ    - certificate validity notAfter (overrides -days)\n",
 " -days arg       - number of days to certify the certificate for\n",
 " -md arg         - md to use, one of md2, md5, sha or sha1\n",
 " -policy arg     - The CA 'policy' to support\n",
