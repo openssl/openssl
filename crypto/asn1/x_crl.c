@@ -119,7 +119,7 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_TIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_TIME); }
-	M_ASN1_I2D_len_SEQUENCE_opt_ex_type(X509_REVOKED,a->revoked,
+	M_ASN1_I2D_len_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
 					 i2d_X509_REVOKED);
 	M_ASN1_I2D_len_EXP_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
@@ -136,7 +136,7 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_TIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_TIME); }
-	M_ASN1_I2D_put_SEQUENCE_opt_ex_type(X509_REVOKED,a->revoked,
+	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
 					 i2d_X509_REVOKED);
 	M_ASN1_I2D_put_EXP_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
@@ -260,7 +260,7 @@ X509_CRL_INFO *X509_CRL_INFO_new(void)
 	M_ASN1_New(ret->lastUpdate,M_ASN1_UTCTIME_new);
 	ret->nextUpdate=NULL;
 	M_ASN1_New(ret->revoked,sk_X509_REVOKED_new_null);
-	M_ASN1_New(ret->extensions,sk_X509_EXTENSION_new_null);
+	ret->extensions = NULL;
 	sk_X509_REVOKED_set_cmp_func(ret->revoked,X509_REVOKED_cmp);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_CRL_INFO_NEW);
