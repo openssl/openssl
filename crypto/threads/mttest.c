@@ -77,6 +77,10 @@
 #ifdef PTHREADS
 #include <pthread.h>
 #endif
+#ifdef VXWORKS
+#include <taskLib.h>
+#include <semLib.h>
+#endif
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
@@ -105,10 +109,12 @@ void irix_locking_callback(int mode,int type,char *file,int line);
 void solaris_locking_callback(int mode,int type,char *file,int line);
 void win32_locking_callback(int mode,int type,char *file,int line);
 void pthreads_locking_callback(int mode,int type,char *file,int line);
+void vxworks_locking_callback(int mode,int type,char *file,int line);
 
 unsigned long irix_thread_id(void );
 unsigned long solaris_thread_id(void );
 unsigned long pthreads_thread_id(void );
+unsigned long vxworks_thread_id(void );
 
 BIO *bio_err=NULL;
 BIO *bio_stdout=NULL;
@@ -1097,4 +1103,119 @@ unsigned long pthreads_thread_id(void)
 #endif /* PTHREADS */
 
 
+#ifdef VXWORKS
 
+#define DEFAULT_TASK_NAME               NULL
+#define DEFAULT_TASK_PRIORITY           100
+#define DEFAULT_TASK_OPTIONS            0
+#define DEFAULT_TASK_STACK_BYTES        32768
+
+static SEM_ID *lock_cs;
+static long *lock_count;
+
+extern int sysClkRateGet();
+
+void thread_setup(void)
+	{
+	int i;
+
+	lock_cs=OPENSSL_malloc(CRYPTO_num_locks() * sizeof(SEM_ID));
+	lock_count=OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
+	for (i=0; i<CRYPTO_num_locks(); i++)
+		{
+		lock_count[i]=0;
+		lock_cs[i] = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
+		}
+
+	CRYPTO_set_id_callback((unsigned long (*)())vxworks_thread_id);
+	CRYPTO_set_locking_callback((void (*)())vxworks_locking_callback);
+	}
+
+void thread_cleanup(void)
+	{
+	int i;
+
+	CRYPTO_set_locking_callback(NULL);
+	fprintf(stderr,"cleanup\n");
+	for (i=0; i<CRYPTO_num_locks(); i++)
+		{
+		semDelete(lock_cs[i]);
+		fprintf(stderr,"%8ld:%s\n",lock_count[i],
+			CRYPTO_get_lock_name(i));
+		}
+	OPENSSL_free(lock_cs);
+	OPENSSL_free(lock_count);
+
+	fprintf(stderr,"done cleanup\n");
+	}
+
+void vxworks_locking_callback(int mode, int type, char *file, int line)
+      {
+#ifdef undef
+	fprintf(stderr,"thread=%4d mode=%s lock=%s %s:%d\n",
+		CRYPTO_thread_id(),
+		(mode&CRYPTO_LOCK)?"l":"u",
+		(type&CRYPTO_READ)?"r":"w",file,line);
+#endif
+/*
+	if (CRYPTO_LOCK_SSL_CERT == type)
+		fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
+		CRYPTO_thread_id(),
+		mode,file,line);
+*/
+	if (mode & CRYPTO_LOCK)
+		{
+		semTake(lock_cs[type], WAIT_FOREVER);
+		lock_count[type]++;
+		}
+	else
+		{
+		semGive(lock_cs[type]);
+		}
+	}
+
+
+void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
+	{
+	SSL_CTX *ssl_ctx[2];
+	int thread_ctx[MAX_THREAD_NUMBER];
+	int i;
+
+	ssl_ctx[0]=s_ctx;
+	ssl_ctx[1]=c_ctx;
+
+	/*
+	thr_setconcurrency(thread_number);
+	*/
+	for (i=0; i<thread_number; i++)
+		{
+		thread_ctx[i] = taskSpawn(DEFAULT_TASK_NAME,
+				DEFAULT_TASK_PRIORITY,
+				DEFAULT_TASK_OPTIONS,
+				DEFAULT_TASK_STACK_BYTES,
+				(FUNCPTR)ndoit,
+				(int)ssl_ctx, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+		printf("Spawned task %d (%x)\n", i, thread_ctx[i]);
+		}
+
+	printf("reaping\n");
+	for (i=0; i<thread_number; i++)
+		{
+		while(taskIdVerify(thread_ctx[i]) != ERROR)
+			{
+			taskDelay(sysClkRateGet()/10);
+			}
+		printf("Reaped task %d (%x)\n", i, thread_ctx[i]);
+		}
+
+	printf("vxworks threads done (%d,%d)\n",
+		s_ctx->references,c_ctx->references);
+	}
+
+unsigned long vxworks_thread_id(void)
+	{
+	return((unsigned long)taskIdSelf());
+	}
+
+#endif /* VXWORKS */
