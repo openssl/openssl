@@ -125,7 +125,7 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
 	register DES_LONG tin0,tin1;
 	register DES_LONG ttin0,ttin1;
 	DES_LONG d[2],dd[2];
-	des_key_schedule k;
+	DES_key_schedule k;
 	unsigned char *p;
 	unsigned int i;
 
@@ -136,13 +136,13 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
 		c->h[0]=(c->h[0]&0x9f)|0x40;
 		c->hh[0]=(c->hh[0]&0x9f)|0x20;
 
-		des_set_odd_parity(&c->h);
-		des_set_key_unchecked(&c->h,&k);
-		des_encrypt1(d,&k,1);
+		DES_set_odd_parity(&c->h);
+		DES_set_key_unchecked(&c->h,&k);
+		DES_encrypt1(d,&k,1);
 
-		des_set_odd_parity(&c->hh);
-		des_set_key_unchecked(&c->hh,&k);
-		des_encrypt1(dd,&k,1);
+		DES_set_odd_parity(&c->hh);
+		DES_set_key_unchecked(&c->hh,&k);
+		DES_encrypt1(dd,&k,1);
 
 		ttin0=tin0^dd[0];
 		ttin1=tin1^dd[1];

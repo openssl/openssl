@@ -71,9 +71,9 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 typedef struct
     {
-    des_key_schedule ks;/* key schedule */
-    des_cblock inw;
-    des_cblock outw;
+    DES_key_schedule ks;/* key schedule */
+    DES_cblock inw;
+    DES_cblock outw;
     } DESX_CBC_KEY;
 
 #define data(ctx) ((DESX_CBC_KEY *)(ctx)->cipher_data)
@@ -100,9 +100,9 @@ const EVP_CIPHER *EVP_desx_cbc(void)
 static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			     const unsigned char *iv, int enc)
 	{
-	des_cblock *deskey = (des_cblock *)key;
+	DES_cblock *deskey = (DES_cblock *)key;
 
-	des_set_key_unchecked(deskey,&data(ctx)->ks);
+	DES_set_key_unchecked(deskey,&data(ctx)->ks);
 	memcpy(&data(ctx)->inw[0],&key[8],8);
 	memcpy(&data(ctx)->outw[0],&key[16],8);
 
@@ -112,8 +112,8 @@ static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			   const unsigned char *in, unsigned int inl)
 	{
-	des_xcbc_encrypt(in,out,inl,&data(ctx)->ks,
-			 (des_cblock *)&(ctx->iv[0]),
+	DES_xcbc_encrypt(in,out,inl,&data(ctx)->ks,
+			 (DES_cblock *)&(ctx->iv[0]),
 			 &data(ctx)->inw,
 			 &data(ctx)->outw,
 			 ctx->encrypt);

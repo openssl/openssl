@@ -376,8 +376,9 @@ bntest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 bntest.o: ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../include/openssl/cast.h casttest.c
-destest.o: ../include/openssl/des.h ../include/openssl/e_os2.h
-destest.o: ../include/openssl/opensslconf.h destest.c
+destest.o: ../include/openssl/des.h ../include/openssl/des_old.h
+destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+destest.o: ../include/openssl/symhacks.h destest.c
 dhtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h

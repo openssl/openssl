@@ -117,7 +117,7 @@
 #include <openssl/crypto.h>
 #include <openssl/md2.h>
 #include <openssl/rc4.h>
-#include <openssl/des.h>
+#include <openssl/des_old.h>
 #include <openssl/idea.h>
 #include <openssl/blowfish.h>
 

@@ -58,9 +58,9 @@
 
 #include "des_locl.h"
 
-void des_string_to_key(const char *str, des_cblock *key)
+void DES_string_to_key(const char *str, DES_cblock *key)
 	{
-	des_key_schedule ks;
+	DES_key_schedule ks;
 	int i,length;
 	register unsigned char j;
 
@@ -85,16 +85,16 @@ void des_string_to_key(const char *str, des_cblock *key)
 			}
 		}
 #endif
-	des_set_odd_parity(key);
-	des_set_key_unchecked(key,&ks);
-	des_cbc_cksum((const unsigned char*)str,key,length,&ks,key);
+	DES_set_odd_parity(key);
+	DES_set_key_unchecked(key,&ks);
+	DES_cbc_cksum((const unsigned char*)str,key,length,&ks,key);
 	memset(&ks,0,sizeof(ks));
-	des_set_odd_parity(key);
+	DES_set_odd_parity(key);
 	}
 
-void des_string_to_2keys(const char *str, des_cblock *key1, des_cblock *key2)
+void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 	{
-	des_key_schedule ks;
+	DES_key_schedule ks;
 	int i,length;
 	register unsigned char j;
 
@@ -143,13 +143,13 @@ void des_string_to_2keys(const char *str, des_cblock *key1, des_cblock *key2)
 		}
 	if (length <= 8) memcpy(key2,key1,8);
 #endif
-	des_set_odd_parity(key1);
-	des_set_odd_parity(key2);
-	des_set_key_unchecked(key1,&ks);
-	des_cbc_cksum((const unsigned char*)str,key1,length,&ks,key1);
-	des_set_key_unchecked(key2,&ks);
-	des_cbc_cksum((const unsigned char*)str,key2,length,&ks,key2);
+	DES_set_odd_parity(key1);
+	DES_set_odd_parity(key2);
+	DES_set_key_unchecked(key1,&ks);
+	DES_cbc_cksum((const unsigned char*)str,key1,length,&ks,key1);
+	DES_set_key_unchecked(key2,&ks);
+	DES_cbc_cksum((const unsigned char*)str,key2,length,&ks,key2);
 	memset(&ks,0,sizeof(ks));
-	des_set_odd_parity(key1);
-	des_set_odd_parity(key2);
+	DES_set_odd_parity(key1);
+	DES_set_odd_parity(key2);
 	}

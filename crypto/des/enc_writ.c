@@ -66,9 +66,9 @@
 /*
  * WARNINGS:
  *
- *  -  The data format used by des_enc_write() and des_enc_read()
+ *  -  The data format used by DES_enc_write() and DES_enc_read()
  *     has a cryptographic weakness: When asked to write more
- *     than MAXWRITE bytes, des_enc_write will split the data
+ *     than MAXWRITE bytes, DES_enc_write will split the data
  *     into several chunks that are all encrypted
  *     using the same IV.  So don't use these functions unless you
  *     are sure you know what you do (in which case you might
@@ -77,8 +77,8 @@
  *  -  This code cannot handle non-blocking sockets.
  */
 
-int des_enc_write(int fd, const void *_buf, int len,
-		  des_key_schedule *sched, des_cblock *iv)
+int DES_enc_write(int fd, const void *_buf, int len,
+		  DES_key_schedule *sched, DES_cblock *iv)
 	{
 #ifdef _LIBC
 	extern unsigned long time();
@@ -111,7 +111,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 		j=0;
 		for (i=0; i<len; i+=k)
 			{
-			k=des_enc_write(fd,&(buf[i]),
+			k=DES_enc_write(fd,&(buf[i]),
 				((len-i) > MAXWRITE)?MAXWRITE:(len-i),sched,iv);
 			if (k < 0)
 				return(k);
@@ -139,11 +139,11 @@ int des_enc_write(int fd, const void *_buf, int len,
 		rnum=((len+7)/8*8); /* round up to nearest eight */
 		}
 
-	if (des_rw_mode & DES_PCBC_MODE)
-		des_pcbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+	if (DES_rw_mode & DES_PCBC_MODE)
+		DES_pcbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
 				 DES_ENCRYPT); 
 	else
-		des_cbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+		DES_cbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
 				DES_ENCRYPT); 
 
 	/* output */

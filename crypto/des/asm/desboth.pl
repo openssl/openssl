@@ -3,7 +3,7 @@
 $L="edi";
 $R="esi";
 
-sub des_encrypt3
+sub DES_encrypt3
 	{
 	local($name,$enc)=@_;
 
@@ -47,15 +47,15 @@ sub des_encrypt3
 	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"eax");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
+	&call("DES_encrypt2");
 	&mov(&swtmp(2),	(DWC(($enc)?"0":"1")));
 	&mov(&swtmp(1),	"edi");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
+	&call("DES_encrypt2");
 	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"esi");
 	&mov(&swtmp(0),	"ebx");
-	&call("des_encrypt2");
+	&call("DES_encrypt2");
 
 	&stack_pop(3);
 	&mov($L,&DWP(0,"ebx","",0));

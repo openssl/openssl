@@ -62,16 +62,16 @@
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void des_ede3_ofb64_encrypt(register const unsigned char *in,
+void DES_ede3_ofb64_encrypt(register const unsigned char *in,
 			    register unsigned char *out, long length,
-			    des_key_schedule *k1, des_key_schedule *k2,
-			    des_key_schedule *k3, des_cblock *ivec,
+			    DES_key_schedule *k1, DES_key_schedule *k2,
+			    DES_key_schedule *k3, DES_cblock *ivec,
 			    int *num)
 	{
 	register DES_LONG v0,v1;
 	register int n= *num;
 	register long l=length;
-	des_cblock d;
+	DES_cblock d;
 	register char *dp;
 	DES_LONG ti[2];
 	unsigned char *iv;
@@ -91,7 +91,7 @@ void des_ede3_ofb64_encrypt(register const unsigned char *in,
 			{
 			/* ti[0]=v0; */
 			/* ti[1]=v1; */
-			des_encrypt3(ti,k1,k2,k3);
+			DES_encrypt3(ti,k1,k2,k3);
 			v0=ti[0];
 			v1=ti[1];
 
@@ -116,10 +116,10 @@ void des_ede3_ofb64_encrypt(register const unsigned char *in,
 	}
 
 #ifdef undef /* MACRO */
-void des_ede2_ofb64_encrypt(register unsigned char *in,
-	     register unsigned char *out, long length, des_key_schedule k1,
-	     des_key_schedule k2, des_cblock (*ivec), int *num)
+void DES_ede2_ofb64_encrypt(register unsigned char *in,
+	     register unsigned char *out, long length, DES_key_schedule k1,
+	     DES_key_schedule k2, DES_cblock (*ivec), int *num)
 	{
-	des_ede3_ofb64_encrypt(in, out, length, k1,k2,k1, ivec, num);
+	DES_ede3_ofb64_encrypt(in, out, length, k1,k2,k1, ivec, num);
 	}
 #endif

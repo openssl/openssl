@@ -129,7 +129,7 @@
 #endif
 
 #ifndef OPENSSL_NO_DES
-#include <openssl/des.h>
+#include <openssl/des_old.h>
 #endif
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
@@ -377,11 +377,13 @@ int MAIN(int argc, char **argv)
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	unsigned char iv[8];
 #ifndef OPENSSL_NO_DES
-	des_cblock *buf_as_des_cblock = NULL;
+	DES_cblock *buf_as_des_cblock = NULL;
 	static des_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
 	static des_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	static des_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
-	des_key_schedule sch,sch2,sch3;
+	DES_key_schedule sch;
+	DES_key_schedule sch2;
+	DES_key_schedule sch3;
 #endif
 #define	D_MD2		0
 #define	D_MDC2		1
@@ -804,9 +806,9 @@ int MAIN(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_DES
-	des_set_key_unchecked(&key,&sch);
-	des_set_key_unchecked(&key2,&sch2);
-	des_set_key_unchecked(&key3,&sch3);
+	DES_set_key_unchecked(&key,&sch);
+	DES_set_key_unchecked(&key2,&sch2);
+	DES_set_key_unchecked(&key3,&sch3);
 #endif
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
@@ -1088,7 +1090,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_CBC_DES],c[D_CBC_DES][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_DES][j]); count++)
-				des_ncbc_encrypt(buf,buf,lengths[j],&sch,
+				DES_ncbc_encrypt(buf,buf,lengths[j],&sch,
 						 &iv,DES_ENCRYPT);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
@@ -1104,7 +1106,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_EDE3_DES],c[D_EDE3_DES][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_EDE3_DES][j]); count++)
-				des_ede3_cbc_encrypt(buf,buf,lengths[j],
+				DES_ede3_cbc_encrypt(buf,buf,lengths[j],
 						     &sch,&sch2,&sch3,
 						     &iv,DES_ENCRYPT);
 			d=Time_F(STOP,usertime);

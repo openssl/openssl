@@ -63,15 +63,15 @@
 
 /* This has some uglies in it but it works - even over sockets. */
 /*extern int errno;*/
-OPENSSL_IMPLEMENT_GLOBAL(int,des_rw_mode)=DES_PCBC_MODE;
+OPENSSL_IMPLEMENT_GLOBAL(int,DES_rw_mode)=DES_PCBC_MODE;
 
 
 /*
  * WARNINGS:
  *
- *  -  The data format used by des_enc_write() and des_enc_read()
+ *  -  The data format used by DES_enc_write() and DES_enc_read()
  *     has a cryptographic weakness: When asked to write more
- *     than MAXWRITE bytes, des_enc_write will split the data
+ *     than MAXWRITE bytes, DES_enc_write will split the data
  *     into several chunks that are all encrypted
  *     using the same IV.  So don't use these functions unless you
  *     are sure you know what you do (in which case you might
@@ -84,8 +84,8 @@ OPENSSL_IMPLEMENT_GLOBAL(int,des_rw_mode)=DES_PCBC_MODE;
  */
 
 
-int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
-		 des_cblock *iv)
+int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
+		 DES_cblock *iv)
 	{
 	/* data to be unencrypted */
 	int net_num=0;
@@ -180,10 +180,10 @@ int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
 	/* Check if there will be data left over. */
 	if (len < num)
 		{
-		if (des_rw_mode & DES_PCBC_MODE)
-			des_pcbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
+		if (DES_rw_mode & DES_PCBC_MODE)
+			DES_pcbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
 		else
-			des_cbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
+			DES_cbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
 		memcpy(buf,unnet,len);
 		unnet_start=len;
 		unnet_left=num-len;
@@ -202,11 +202,11 @@ int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
 		if (len < rnum)
 			{
 
-			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt(net,tmpbuf,num,sched,iv,
+			if (DES_rw_mode & DES_PCBC_MODE)
+				DES_pcbc_encrypt(net,tmpbuf,num,sched,iv,
 						 DES_DECRYPT);
 			else
-				des_cbc_encrypt(net,tmpbuf,num,sched,iv,
+				DES_cbc_encrypt(net,tmpbuf,num,sched,iv,
 						DES_DECRYPT);
 
 			/* eay 26/08/92 fix a bug that returned more
@@ -215,11 +215,11 @@ int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
 			}
 		else
 			{
-			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt(net,buf,num,sched,iv,
+			if (DES_rw_mode & DES_PCBC_MODE)
+				DES_pcbc_encrypt(net,buf,num,sched,iv,
 						 DES_DECRYPT);
 			else
-				des_cbc_encrypt(net,buf,num,sched,iv,
+				DES_cbc_encrypt(net,buf,num,sched,iv,
 						DES_DECRYPT);
 			}
 		}

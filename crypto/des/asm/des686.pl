@@ -46,15 +46,15 @@ EOF
 $L="edi";
 $R="esi";
 
-&des_encrypt("des_encrypt1",1);
-&des_encrypt("des_encrypt2",0);
+&DES_encrypt("DES_encrypt1",1);
+&DES_encrypt("DES_encrypt2",0);
 
-&des_encrypt3("des_encrypt3",1);
-&des_encrypt3("des_decrypt3",0);
+&DES_encrypt3("DES_encrypt3",1);
+&DES_encrypt3("DES_decrypt3",0);
 
 &file_end();
 
-sub des_encrypt
+sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
 

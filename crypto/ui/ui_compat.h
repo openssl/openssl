@@ -73,8 +73,8 @@ extern "C" {
    and are provided here for backward compatibility reasons. */
 
 #ifndef OPENSSL_NO_DES
-int des_read_password(des_cblock *key,const char *prompt,int verify);
-int des_read_2passwords(des_cblock *key1,des_cblock *key2,
+int des_read_password(DES_cblock *key,const char *prompt,int verify);
+int des_read_2passwords(DES_cblock *key1,DES_cblock *key2,
 	const char *prompt,int verify);
 #endif
 

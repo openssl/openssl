@@ -58,22 +58,15 @@ static unsigned const char cov_2char[64]={
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
-void fcrypt_body(DES_LONG *out,des_key_schedule *ks,
+void fcrypt_body(DES_LONG *out,DES_key_schedule *ks,
 		 DES_LONG Eswap0, DES_LONG Eswap1);
 
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
-char *crypt(const char *buf, const char *salt)
-	{
-	return(des_crypt(buf, salt));
-	}
-#endif
-
-char *des_crypt(const char *buf, const char *salt)
+char *DES_crypt(const char *buf, const char *salt)
 	{
 	static char buff[14];
 
 #ifndef CHARSET_EBCDIC
-	return(des_fcrypt(buf,salt,buff));
+	return(DES_fcrypt(buf,salt,buff));
 #else
 	char e_salt[2+1];
 	char e_buf[32+1];	/* replace 32 by 8 ? */
@@ -89,14 +82,14 @@ char *des_crypt(const char *buf, const char *salt)
 	/* Make sure we have a delimiter */
 	e_salt[sizeof(e_salt)-1] = e_buf[sizeof(e_buf)-1] = '\0';
 
-	/* Convert the e_salt to ASCII, as that's what des_fcrypt works on */
+	/* Convert the e_salt to ASCII, as that's what DES_fcrypt works on */
 	ebcdic2ascii(e_salt, e_salt, sizeof e_salt);
 
 	/* Convert the cleartext password to ASCII */
 	ebcdic2ascii(e_buf, e_buf, sizeof e_buf);
 
 	/* Encrypt it (from/to ASCII) */
-	ret = des_fcrypt(e_buf,e_salt,buff);
+	ret = DES_fcrypt(e_buf,e_salt,buff);
 
 	/* Convert the result back to EBCDIC */
 	ascii2ebcdic(ret, ret, strlen(ret));
@@ -106,13 +99,13 @@ char *des_crypt(const char *buf, const char *salt)
 	}
 
 
-char *des_fcrypt(const char *buf, const char *salt, char *ret)
+char *DES_fcrypt(const char *buf, const char *salt, char *ret)
 	{
 	unsigned int i,j,x,y;
 	DES_LONG Eswap0,Eswap1;
 	DES_LONG out[2],ll;
-	des_cblock key;
-	des_key_schedule ks;
+	DES_cblock key;
+	DES_key_schedule ks;
 	unsigned char bb[9];
 	unsigned char *b=bb;
 	unsigned char c,u;
@@ -150,7 +143,7 @@ r=(r+7)/8;
 	for (; i<8; i++)
 		key[i]=0;
 
-	des_set_key_unchecked(&key,&ks);
+	DES_set_key_unchecked(&key,&ks);
 	fcrypt_body(&(out[0]),&ks,Eswap0,Eswap1);
 
 	ll=out[0]; l2c(ll,b);

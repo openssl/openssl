@@ -20,16 +20,16 @@ $L="edi";
 $R="esi";
 
 &external_label("des_SPtrans");
-&des_encrypt("des_encrypt1",1);
-&des_encrypt("des_encrypt2",0);
-&des_encrypt3("des_encrypt3",1);
-&des_encrypt3("des_decrypt3",0);
-&cbc("des_ncbc_encrypt","des_encrypt1","des_encrypt1",0,4,5,3,5,-1);
-&cbc("des_ede3_cbc_encrypt","des_encrypt3","des_decrypt3",0,6,7,3,4,5);
+&DES_encrypt("DES_encrypt1",1);
+&DES_encrypt("DES_encrypt2",0);
+&DES_encrypt3("DES_encrypt3",1);
+&DES_encrypt3("DES_decrypt3",0);
+&cbc("DES_ncbc_encrypt","DES_encrypt1","DES_encrypt1",0,4,5,3,5,-1);
+&cbc("DES_ede3_cbc_encrypt","DES_encrypt3","DES_decrypt3",0,6,7,3,4,5);
 
 &asm_finish();
 
-sub des_encrypt
+sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
 

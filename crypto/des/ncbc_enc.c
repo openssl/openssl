@@ -1,8 +1,8 @@
 /* crypto/des/ncbc_enc.c */
 /*
  * #included by:
- *    cbc_enc.c  (des_cbc_encrypt)
- *    des_enc.c  (des_ncbc_encrypt)
+ *    cbc_enc.c  (DES_cbc_encrypt)
+ *    des_enc.c  (DES_ncbc_encrypt)
  */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -64,11 +64,11 @@
 #include "des_locl.h"
 
 #ifdef CBC_ENC_C__DONT_UPDATE_IV
-void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-		     des_key_schedule *_schedule, des_cblock *ivec, int enc)
+void DES_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+		     DES_key_schedule *_schedule, DES_cblock *ivec, int enc)
 #else
-void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-		     des_key_schedule *_schedule, des_cblock *ivec, int enc)
+void DES_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+		     DES_key_schedule *_schedule, DES_cblock *ivec, int enc)
 #endif
 	{
 	register DES_LONG tin0,tin1;
@@ -89,7 +89,7 @@ void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			c2l(in,tin1);
 			tin0^=tout0; tin[0]=tin0;
 			tin1^=tout1; tin[1]=tin1;
-			des_encrypt1((DES_LONG *)tin,_schedule,DES_ENCRYPT);
+			DES_encrypt1((DES_LONG *)tin,_schedule,DES_ENCRYPT);
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
@@ -98,7 +98,7 @@ void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			c2ln(in,tin0,tin1,l+8);
 			tin0^=tout0; tin[0]=tin0;
 			tin1^=tout1; tin[1]=tin1;
-			des_encrypt1((DES_LONG *)tin,_schedule,DES_ENCRYPT);
+			DES_encrypt1((DES_LONG *)tin,_schedule,DES_ENCRYPT);
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
@@ -116,7 +116,7 @@ void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			{
 			c2l(in,tin0); tin[0]=tin0;
 			c2l(in,tin1); tin[1]=tin1;
-			des_encrypt1((DES_LONG *)tin,_schedule,DES_DECRYPT);
+			DES_encrypt1((DES_LONG *)tin,_schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2c(tout0,out);
@@ -128,7 +128,7 @@ void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			{
 			c2l(in,tin0); tin[0]=tin0;
 			c2l(in,tin1); tin[1]=tin1;
-			des_encrypt1((DES_LONG *)tin,_schedule,DES_DECRYPT);
+			DES_encrypt1((DES_LONG *)tin,_schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2cn(tout0,tout1,out,l+8);

@@ -71,9 +71,9 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 #ifndef OPENSSL_NO_DESCBCM
 #include "des_locl.h"
 
-void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
-	     long length, des_key_schedule *ks1, des_key_schedule *ks2,
-	     des_key_schedule *ks3, des_cblock *ivec1, des_cblock *ivec2,
+void DES_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
+	     long length, DES_key_schedule *ks1, DES_key_schedule *ks2,
+	     DES_key_schedule *ks3, DES_cblock *ivec1, DES_cblock *ivec2,
 	     int enc)
     {
     register DES_LONG tin0,tin1;
@@ -95,7 +95,7 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    {
 	    tin[0]=m0;
 	    tin[1]=m1;
-	    des_encrypt1(tin,ks3,1);
+	    DES_encrypt1(tin,ks3,1);
 	    m0=tin[0];
 	    m1=tin[1];
 
@@ -113,13 +113,13 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 
 	    tin[0]=tin0;
 	    tin[1]=tin1;
-	    des_encrypt1(tin,ks1,1);
+	    DES_encrypt1(tin,ks1,1);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt1(tin,ks2,0);
+	    DES_encrypt1(tin,ks2,0);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt1(tin,ks1,1);
+	    DES_encrypt1(tin,ks1,1);
 	    tout0=tin[0];
 	    tout1=tin[1];
 
@@ -146,7 +146,7 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    {
 	    tin[0]=m0;
 	    tin[1]=m1;
-	    des_encrypt1(tin,ks3,1);
+	    DES_encrypt1(tin,ks3,1);
 	    m0=tin[0];
 	    m1=tin[1];
 
@@ -158,13 +158,13 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 
 	    tin[0]=tin0;
 	    tin[1]=tin1;
-	    des_encrypt1(tin,ks1,0);
+	    DES_encrypt1(tin,ks1,0);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt1(tin,ks2,1);
+	    DES_encrypt1(tin,ks2,1);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt1(tin,ks1,0);
+	    DES_encrypt1(tin,ks1,0);
 	    tout0=tin[0];
 	    tout1=tin[1];
 
