@@ -95,7 +95,8 @@ static int atalla_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
-static int atalla_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 
@@ -172,7 +173,7 @@ ENGINE *ENGINE_atalla()
 	{
 	const RSA_METHOD *meth1;
 	const DSA_METHOD *meth2;
-	DH_METHOD *meth3;
+	const DH_METHOD *meth3;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the atalla-specific mod_exp and mod_exp_crt so we use
@@ -433,7 +434,8 @@ static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
-static int atalla_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return atalla_mod_exp(r, a, p, m, ctx);

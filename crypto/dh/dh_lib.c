@@ -64,11 +64,11 @@
 
 const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
-static DH_METHOD *default_DH_method;
+static const DH_METHOD *default_DH_method;
 static int dh_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dh_meth = NULL;
 
-void DH_set_default_openssl_method(DH_METHOD *meth)
+void DH_set_default_openssl_method(const DH_METHOD *meth)
 {
 	ENGINE *e;
 	/* We'll need to notify the "openssl" ENGINE of this
@@ -87,7 +87,7 @@ void DH_set_default_openssl_method(DH_METHOD *meth)
 		}
 }
 
-DH_METHOD *DH_get_default_openssl_method(void)
+const DH_METHOD *DH_get_default_openssl_method(void)
 {
 	if(!default_DH_method) default_DH_method = DH_OpenSSL();
 	return default_DH_method;
@@ -107,7 +107,7 @@ DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth)
 int DH_set_method(DH *dh, ENGINE *engine)
 {
 	ENGINE *mtmp;
-	DH_METHOD *meth;
+	const DH_METHOD *meth;
 	mtmp = dh->engine;
 	meth = ENGINE_get_DH(mtmp);
 	if (!ENGINE_init(engine))
@@ -133,7 +133,7 @@ DH *DH_new_method(DH_METHOD *meth)
 DH *DH_new_method(ENGINE *engine)
 #endif
 	{
-	DH_METHOD *meth;
+	const DH_METHOD *meth;
 	DH *ret;
 	ret=(DH *)OPENSSL_malloc(sizeof(DH));
 
@@ -180,7 +180,7 @@ DH *DH_new_method(ENGINE *engine)
 
 void DH_free(DH *r)
 	{
-	DH_METHOD *meth;
+	const DH_METHOD *meth;
 	int i;
 	if(r == NULL) return;
 	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
@@ -231,7 +231,7 @@ void *DH_get_ex_data(DH *d, int idx)
 	return(CRYPTO_get_ex_data(&d->ex_data,idx));
 	}
 
-int DH_size(DH *dh)
+int DH_size(const DH *dh)
 	{
 	return(BN_num_bytes(dh->p));
 	}

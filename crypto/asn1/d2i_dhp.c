@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-DH *d2i_DHparams(DH **a, unsigned char **pp, long length)
+DH *d2i_DHparams(DH **a, const unsigned char **pp, long length)
 	{
 	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;

@@ -177,8 +177,9 @@ static int nuron_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
-static int nuron_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-			    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+static int nuron_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
+		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return nuron_mod_exp(r, a, p, m, ctx);
 	}
@@ -252,7 +253,7 @@ ENGINE *ENGINE_nuron()
 	{
 	const RSA_METHOD *meth1;
 	const DSA_METHOD *meth2;
-	DH_METHOD *meth3;
+	const DH_METHOD *meth3;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the nuron-specific mod_exp and mod_exp_crt so we use

@@ -261,7 +261,7 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 
 #ifndef NO_DH
 #ifndef NO_FP_API
-int DHparams_print_fp(FILE *fp, DH *x)
+int DHparams_print_fp(FILE *fp, const DH *x)
         {
         BIO *b;
         int ret;
@@ -278,7 +278,7 @@ int DHparams_print_fp(FILE *fp, DH *x)
         }
 #endif
 
-int DHparams_print(BIO *bp, DH *x)
+int DHparams_print(BIO *bp, const DH *x)
 	{
 	unsigned char *m=NULL;
 	int reason=ERR_R_BUF_LIB,i,ret=0;

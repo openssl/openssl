@@ -454,7 +454,7 @@ int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
 	return 1;
 	}
 
-int ENGINE_set_DH(ENGINE *e, DH_METHOD *dh_meth)
+int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
 	{
 	if((e == NULL) || (dh_meth == NULL))
 		{
@@ -582,7 +582,7 @@ const DSA_METHOD *ENGINE_get_DSA(ENGINE *e)
 	return e->dsa_meth;
 	}
 
-DH_METHOD *ENGINE_get_DH(ENGINE *e)
+const DH_METHOD *ENGINE_get_DH(ENGINE *e)
 	{
 	if(e == NULL)
 		{

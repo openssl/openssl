@@ -104,8 +104,9 @@ static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
-static int hwcrhk_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
+	const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* RAND stuff */
 static int hwcrhk_rand_bytes(unsigned char *buf, int num);
@@ -292,7 +293,7 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 ENGINE *ENGINE_ncipher()
 	{
 	const RSA_METHOD *meth1;
-	DH_METHOD *meth2;
+	const DH_METHOD *meth2;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
@@ -860,7 +861,8 @@ static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
-static int hwcrhk_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);

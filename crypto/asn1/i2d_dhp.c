@@ -63,7 +63,7 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/dh.h>
 
-int i2d_DHparams(DH *a, unsigned char **pp)
+int i2d_DHparams(const DH *a, unsigned char **pp)
 	{
 	BIGNUM *num[3];
 	ASN1_INTEGER bs;

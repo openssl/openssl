@@ -64,8 +64,9 @@
 #include <openssl/engine.h>
 
 static int generate_key(DH *dh);
-static int compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh);
-static int dh_bn_mod_exp(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
+static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
+			const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *m_ctx);
 static int dh_init(DH *dh);
@@ -76,7 +77,7 @@ int DH_generate_key(DH *dh)
 	return ENGINE_get_DH(dh->engine)->generate_key(dh);
 	}
 
-int DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
+int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
 	return ENGINE_get_DH(dh->engine)->compute_key(key, pub_key, dh);
 	}
@@ -92,7 +93,7 @@ dh_finish,
 NULL
 };
 
-DH_METHOD *DH_OpenSSL(void)
+const DH_METHOD *DH_OpenSSL(void)
 {
 	return &dh_ossl;
 }
@@ -155,7 +156,7 @@ err:
 	return(ok);
 	}
 
-static int compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
+static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
 	BN_CTX ctx;
 	BN_MONT_CTX *mont;
@@ -193,7 +194,8 @@ err:
 	return(ret);
 	}
 
-static int dh_bn_mod_exp(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
+			const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *m_ctx)
 	{
