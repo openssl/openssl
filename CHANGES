@@ -101,6 +101,11 @@
  
  Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
 
+  *) Make sure tests can be performed even if the corresponding algorithms
+     have been removed entirely.  This was also the last step to make
+     OpenSSL compilable with DJGPP under all reasonable conditions.
+     [Richard Levitte, Doug Kaufman <dkaufman@rahul.net>]
+
   *) Add cipher selection rules COMPLEMENTOFALL and COMPLEMENTOFDEFAULT
      to allow version independent disabling of normally unselected ciphers,
      which may be activated as a side-effect of selecting a single cipher.
