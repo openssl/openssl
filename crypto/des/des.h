@@ -77,7 +77,12 @@ extern "C" {
 #endif
 
 typedef unsigned char des_cblock[8];
-typedef const unsigned char const_des_cblock[8];
+typedef /* const */ unsigned char const_des_cblock[8];
+/* With "const", gcc 2.8.1 on Solaris thinks that des_cblock *
+ * and const_des_cblock * are incompatible pointer types.
+ * I haven't seen that warning on other systems ... I'll look
+ * what the standard says. */
+
 
 typedef struct des_ks_struct
 	{
