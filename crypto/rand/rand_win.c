@@ -287,9 +287,18 @@ int RAND_poll(void)
 			{
                         /* For entropy count assume only least significant
 			 * byte of each DWORD is random.
-                         */
+			 */
 			RAND_add(&length, sizeof(length), 0);
 			RAND_add(buf, length, length / 4.0);
+
+			/* Close the Registry Key to allow Windows to cleanup/close
+			 * the open handle
+			 * Note: The 'HKEY_PERFORMANCE_DATA' key is implicitly opened
+			 *       when the RegQueryValueEx above is done.  However, if
+			 *       it is not explicitly closed, it can cause disk
+			 *       partition manipulation problems.
+			 */
+			RegCloseKey(HKEY_PERFORMANCE_DATA);
 			}
 		if (buf)
 			free(buf);
