@@ -384,7 +384,7 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	cpp=(SSL_CIPHER **)OBJ_bsearch((char *)&cp,
 		(char *)sorted,
 		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-		(int (*)())ssl_cipher_ptr_id_cmp);
+		FP_ICC ssl_cipher_ptr_id_cmp);
 	if ((cpp == NULL) || !(*cpp)->valid)
 		return(NULL);
 	else

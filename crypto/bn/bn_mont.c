@@ -85,7 +85,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 
 	if (a == b)
 		{
-#if 0
+#if 1 
 		bn_wexpand(tmp,a->top*2);
 		bn_wexpand(tmp2,a->top*4);
 		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);

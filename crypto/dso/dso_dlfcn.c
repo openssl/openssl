@@ -106,6 +106,26 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 	return(&dso_meth_dlfcn);
 	}
 
+/* Prior to using the dlopen() function, we should decide on the flag
+ * we send. There's a few different ways of doing this and it's a
+ * messy venn-diagram to match up which platforms support what. So
+ * as we don't have autoconf yet, I'm implementing a hack that could
+ * be hacked further relatively easily to deal with cases as we find
+ * them. Initially this is to cope with OpenBSD. */
+#ifdef __OpenBSD__
+#	ifdef DL_LAZY
+#		define DLOPEN_FLAG DL_LAZY
+#	else
+#		ifdef RTLD_NOW
+#			define DLOPEN_FLAG RTLD_NOW
+#		else
+#			define DLOPEN_FLAG 0
+#		endif
+#	endif
+#else
+#	define DLOPEN_FLAG RTLD_NOW /* Hope this works everywhere else */
+#endif
+
 /* For this DSO_METHOD, our meth_data STACK will contain;
  * (i) the handle (void*) returned from dlopen().
  */
@@ -126,11 +146,11 @@ static int dlfcn_load(DSO *dso, const char *filename)
 			(strstr(filename, "/") == NULL))
 		{
 		sprintf(translated, "lib%s.so", filename);
-		ptr = dlopen(translated, RTLD_NOW);
+		ptr = dlopen(translated, DLOPEN_FLAG);
 		}
 	else
 		{
-		ptr = dlopen(filename, RTLD_NOW);
+		ptr = dlopen(filename, DLOPEN_FLAG);
 		}
 	if(ptr == NULL)
 		{

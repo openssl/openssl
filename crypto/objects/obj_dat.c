@@ -79,9 +79,9 @@ static ASN1_OBJECT *ln_objs[1];
 static ASN1_OBJECT *obj_objs[1];
 #endif
 
-static int sn_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
-static int ln_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
-static int obj_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
+static int sn_cmp(const void *a, const void *b);
+static int ln_cmp(const void *a, const void *b);
+static int obj_cmp(const void *a, const void *b);
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
 #define ADDED_LNAME	2
@@ -96,11 +96,17 @@ typedef struct added_obj_st
 static int new_nid=NUM_NID;
 static LHASH *added=NULL;
 
-static int sn_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
-	{ return(strcmp((*ap)->sn,(*bp)->sn)); }
+static int sn_cmp(const void *a, const void *b)
+	{
+	const ASN1_OBJECT * const *ap = a, * const *bp = b;
+	return(strcmp((*ap)->sn,(*bp)->sn));
+	}
 
-static int ln_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
-	{ return(strcmp((*ap)->ln,(*bp)->ln)); }
+static int ln_cmp(const void *a, const void *b)
+	{ 
+	const ASN1_OBJECT * const *ap = a, * const *bp = b;
+	return(strcmp((*ap)->ln,(*bp)->ln));
+	}
 
 static unsigned long add_hash(ADDED_OBJ *ca)
 	{
@@ -365,7 +371,7 @@ int OBJ_obj2nid(ASN1_OBJECT *a)
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&a,(char *)obj_objs,NUM_OBJ,
-		sizeof(ASN1_OBJECT *),(int (*)())obj_cmp);
+		sizeof(ASN1_OBJECT *),obj_cmp);
 	if (op == NULL)
 		return(NID_undef);
 	return((*op)->nid);
@@ -504,7 +510,7 @@ int OBJ_ln2nid(const char *s)
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)ln_objs,NUM_LN,
-		sizeof(ASN1_OBJECT *),(int (*)())ln_cmp);
+		sizeof(ASN1_OBJECT *),ln_cmp);
 	if (op == NULL) return(NID_undef);
 	return((*op)->nid);
 	}
@@ -523,23 +529,23 @@ int OBJ_sn2nid(const char *s)
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)sn_objs,NUM_SN,
-		sizeof(ASN1_OBJECT *),(int (*)())sn_cmp);
+		sizeof(ASN1_OBJECT *),sn_cmp);
 	if (op == NULL) return(NID_undef);
 	return((*op)->nid);
 	}
 
-static int obj_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
+static int obj_cmp(const void *ap, const void *bp)
 	{
 	int j;
-	ASN1_OBJECT *a= *ap;
-	ASN1_OBJECT *b= *bp;
+	ASN1_OBJECT *a= *(ASN1_OBJECT **)ap;
+	ASN1_OBJECT *b= *(ASN1_OBJECT **)bp;
 
 	j=(a->length - b->length);
         if (j) return(j);
 	return(memcmp(a->data,b->data,a->length));
         }
 
-char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)())
+char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)(const void *, const void *))
 	{
 	int l,h,i,c;
 	char *p;

@@ -110,7 +110,8 @@
  */
 
 
-#ifdef WINDOWS
+#if defined(WINDOWS) || defined(WIN32)
+#include "cryptlib.h"
 #include <windows.h>
 #include <openssl/rand.h>
 /* XXX There are probably other includes missing here ... */

@@ -130,7 +130,7 @@ static int ok_read(BIO *h, char *buf, int size);
 static long ok_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ok_new(BIO *h);
 static int ok_free(BIO *data);
-static long ok_callback_ctrl(BIO *h, int cmd, void (*fp)());
+static long ok_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
 static void sig_out(BIO* b);
 static void sig_in(BIO* b);
@@ -431,7 +431,7 @@ static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(ret);
 	}
 
-static long ok_callback_ctrl(BIO *b, int cmd, void (*fp)())
+static long ok_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	{
 	long ret=1;
 

@@ -176,7 +176,6 @@ extern int EF_PROTECT_BELOW;
 extern int EF_ALIGNMENT;
 #endif
 
-static int add_oid_section(LHASH *conf);
 static void lookup_fail(char *name,char *tag);
 static unsigned long index_serial_hash(char **a);
 static int index_serial_cmp(char **a, char **b);
@@ -498,7 +497,7 @@ bad:
 				BIO_free(oid_bio);
 				}
 			}
-		if(!add_oid_section(conf)) 
+		if(!add_oid_section(bio_err,conf)) 
 			{
 			ERR_print_errors(bio_err);
 			goto err;
@@ -2099,28 +2098,6 @@ static int check_time_format(char *str)
 	tm.type=V_ASN1_UTCTIME;
 	return(ASN1_UTCTIME_check(&tm));
 	}
-
-static int add_oid_section(LHASH *hconf)
-{	
-	char *p;
-	STACK_OF(CONF_VALUE) *sktmp;
-	CONF_VALUE *cnf;
-	int i;
-	if(!(p=CONF_get_string(hconf,NULL,"oid_section"))) return 1;
-	if(!(sktmp = CONF_get_section(hconf, p))) {
-		BIO_printf(bio_err, "problem loading oid section %s\n", p);
-		return 0;
-	}
-	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
-		cnf = sk_CONF_VALUE_value(sktmp, i);
-		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
-			BIO_printf(bio_err, "problem creating object %s=%s\n",
-							 cnf->name, cnf->value);
-			return 0;
-		}
-	}
-	return 1;
-}
 
 static int do_revoke(X509 *x509, TXT_DB *db)
 {

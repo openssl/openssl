@@ -71,7 +71,7 @@ static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ssl_new(BIO *h);
 static int ssl_free(BIO *data);
-static long ssl_callback_ctrl(BIO *h, int cmd, void (*fp)());
+static long ssl_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 typedef struct bio_ssl_st
 	{
 	SSL *ssl; /* The ssl handle :-) */
@@ -470,7 +470,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(ret);
 	}
 
-static long ssl_callback_ctrl(BIO *b, int cmd, void (*fp)())
+static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	{
 	SSL *ssl;
 	BIO_SSL *bs;

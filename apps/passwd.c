@@ -1,10 +1,10 @@
 /* apps/passwd.c */
 
 #if defined NO_MD5 || defined CHARSET_EBCDIC
-# define NO_APR1
+# define NO_MD5CRYPT_1
 #endif
 
-#if !defined(NO_DES) || !defined(NO_APR1)
+#if !defined(NO_DES) || !defined(NO_MD5CRYPT_1)
 
 #include <assert.h>
 #include <string.h>
@@ -19,7 +19,7 @@
 #ifndef NO_DES
 # include <openssl/des.h>
 #endif
-#ifndef NO_APR1
+#ifndef NO_MD5CRYPT_1
 # include <openssl/md5.h>
 #endif
 
@@ -42,10 +42,11 @@ static unsigned const char cov_2char[64]={
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	char *passwd, BIO *out, int quiet, int table, int reverse,
-	size_t pw_maxlen, int usecrypt, int useapr1);
+	size_t pw_maxlen, int usecrypt, int use1, int useapr1);
 
 /* -crypt        - standard Unix password algorithm (default, only choice)
- * -apr1         - MD5-based password algorithm
+ * -1            - MD5-based password algorithm
+ * -apr1         - MD5-based password algorithm, Apache variant
  * -salt string  - salt
  * -in file      - read passwords from file
  * -stdin        - read passwords from stdin
@@ -68,7 +69,7 @@ int MAIN(int argc, char **argv)
 	BIO *in = NULL, *out = NULL;
 	int i, badopt, opt_done;
 	int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
-	int usecrypt = 0, useapr1 = 0;
+	int usecrypt = 0, use1 = 0, useapr1 = 0;
 	size_t pw_maxlen = 0;
 
 	apps_startup();
@@ -87,6 +88,8 @@ int MAIN(int argc, char **argv)
 		{
 		if (strcmp(argv[i], "-crypt") == 0)
 			usecrypt = 1;
+		else if (strcmp(argv[i], "-1") == 0)
+			use1 = 1;
 		else if (strcmp(argv[i], "-apr1") == 0)
 			useapr1 = 1;
 		else if (strcmp(argv[i], "-salt") == 0)
@@ -138,17 +141,17 @@ int MAIN(int argc, char **argv)
 			badopt = 1;
 		}
 
-	if (!usecrypt && !useapr1) /* use default */
+	if (!usecrypt && !use1 && !useapr1) /* use default */
 		usecrypt = 1;
-	if (usecrypt + useapr1 > 1) /* conflict */
+	if (usecrypt + use1 + useapr1 > 1) /* conflict */
 		badopt = 1;
 
 	/* reject unsupported algorithms */
 #ifdef NO_DES
 	if (usecrypt) badopt = 1;
 #endif
-#ifdef NO_APR1
-	if (useapr1) badopt = 1;
+#ifdef NO_MD5CRYPT_1
+	if (use1 || useapr1) badopt = 1;
 #endif
 
 	if (badopt) 
@@ -158,8 +161,9 @@ int MAIN(int argc, char **argv)
 #ifndef NO_DES
 		BIO_printf(bio_err, "-crypt             standard Unix password algorithm (default)\n");
 #endif
-#ifndef NO_APR1
-		BIO_printf(bio_err, "-apr1              MD5-based password algorithm\n");
+#ifndef NO_MD5CRYPT_1
+		BIO_printf(bio_err, "-1                 MD5-based password algorithm\n");
+		BIO_printf(bio_err, "-apr1              MD5-based password algorithm, Apache variant\n");
 #endif
 		BIO_printf(bio_err, "-salt string       use provided salt\n");
 		BIO_printf(bio_err, "-in file           read passwords from file\n");
@@ -191,7 +195,7 @@ int MAIN(int argc, char **argv)
 	
 	if (usecrypt)
 		pw_maxlen = 8;
-	else if (useapr1)
+	else if (use1 || useapr1)
 		pw_maxlen = 256; /* arbitrary limit, should be enough for most passwords */
 
 	if (passwds == NULL)
@@ -226,7 +230,7 @@ int MAIN(int argc, char **argv)
 			{
 			passwd = *passwds++;
 			if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
-				quiet, table, reverse, pw_maxlen, usecrypt, useapr1))
+				quiet, table, reverse, pw_maxlen, usecrypt, use1, useapr1))
 				goto err;
 			}
 		while (*passwds != NULL);
@@ -255,7 +259,7 @@ int MAIN(int argc, char **argv)
 					}
 				
 				if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
-					quiet, table, reverse, pw_maxlen, usecrypt, useapr1))
+					quiet, table, reverse, pw_maxlen, usecrypt, use1, useapr1))
 					goto err;
 				}
 			done = (r <= 0);
@@ -277,11 +281,18 @@ err:
 	}
 
 
-#ifndef NO_APR1
-/* MD5-based password algorithm compatible to the one found in Apache
- * (should probably be available as a library function;
- * then the static buffer would not be acceptable) */
-static char *apr1_crypt(const char *passwd, const char *salt)
+#ifndef NO_MD5CRYPT_1
+/* MD5-based password algorithm (should probably be available as a library
+ * function; then the static buffer would not be acceptable).
+ * For magic string "1", this should be compatible to the MD5-based BSD
+ * password algorithm.
+ * For 'magic' string "apr1", this is compatible to the MD5-based Apache
+ * password algorithm.
+ * (Apparently, the Apache password algorithm is identical except that the
+ * 'magic' string was changed -- the laziest application of the NIH principle
+ * I've ever encountered.)
+ */
+static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	{
 	static char out_buf[6 + 9 + 24 + 2]; /* "$apr1$..salt..$.......md5hash..........\0" */
 	unsigned char buf[MD5_DIGEST_LENGTH];
@@ -291,7 +302,11 @@ static char *apr1_crypt(const char *passwd, const char *salt)
 	size_t passwd_len, salt_len;
 
 	passwd_len = strlen(passwd);
-	strcpy(out_buf, "$apr1$");
+	out_buf[0] = '$';
+	out_buf[1] = 0;
+	assert(strlen(magic) <= 4); /* "1" or "apr1" */
+	strncat(out_buf, magic, 4);
+	strncat(out_buf, "$", 1);
 	strncat(out_buf, salt, 8);
 	assert(strlen(out_buf) <= 6 + 8); /* "$apr1$..salt.." */
 	salt_out = out_buf + 6;
@@ -300,7 +315,9 @@ static char *apr1_crypt(const char *passwd, const char *salt)
 	
 	MD5_Init(&md);
 	MD5_Update(&md, passwd, passwd_len);
-	MD5_Update(&md, "$apr1$", 6);
+	MD5_Update(&md, "$", 1);
+	MD5_Update(&md, magic, strlen(magic));
+	MD5_Update(&md, "$", 1);
 	MD5_Update(&md, salt_out, salt_len);
 	
 	 {
@@ -384,7 +401,7 @@ static char *apr1_crypt(const char *passwd, const char *salt)
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	char *passwd, BIO *out,	int quiet, int table, int reverse,
-	size_t pw_maxlen, int usecrypt, int useapr1)
+	size_t pw_maxlen, int usecrypt, int use1, int useapr1)
 	{
 	char *hash = NULL;
 
@@ -415,8 +432,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 			}
 #endif /* !NO_DES */
 
-#ifndef NO_APR1
-		if (useapr1)
+#ifndef NO_MD5CRYPT_1
+		if (use1 || useapr1)
 			{
 			int i;
 			
@@ -433,7 +450,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 				(*salt_p)[i] = cov_2char[(*salt_p)[i] & 0x3f]; /* 6 bits */
 			(*salt_p)[8] = 0;
 			}
-#endif /* !NO_APR1 */
+#endif /* !NO_MD5CRYPT_1 */
 		}
 	
 	assert(*salt_p != NULL);
@@ -452,9 +469,9 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	if (usecrypt)
 		hash = des_crypt(passwd, *salt_p);
 #endif
-#ifndef NO_APR1
-	if (useapr1)
-		hash = apr1_crypt(passwd, *salt_p);
+#ifndef NO_MD5CRYPT_1
+	if (use1 || useapr1)
+		hash = md5crypt(passwd, (use1 ? "1" : "apr1"), *salt_p);
 #endif
 	assert(hash != NULL);
 

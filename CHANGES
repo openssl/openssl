@@ -4,6 +4,27 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add BSD-style MD5-based passwords to 'openssl passwd' (option '-1').
+     [Bodo Moeller]
+
+  *) Addition of the command line parameter '-rand file' to 'openssl req'.
+     The given file adds to whatever has already been seeded into the
+     random pool through the RANDFILE configuration file option or
+     environment variable, or the default random state file.
+     [Richard Levitte]
+
+  *) mkstack.pl now sorts each macro group into lexical order.
+     Previously the output order depended on the order the files
+     appeared in the directory, resulting in needless rewriting
+     of safestack.h .
+     [Steve Henson]
+
+  *) Patches to make OpenSSL compile under Win32 again. Mostly
+     work arounds for the VC++ problem that it treats func() as
+     func(void). Also stripped out the parts of mkdef.pl that
+     added extra typesafe functions: these no longer exist.
+     [Steve Henson]
+
   *) Reorganisation of the stack code. The macros are now all 
      collected in safestack.h . Each macro is defined in terms of
      a "stack macro" of the form SKM_<name>(type, a, b). The 
@@ -13,8 +34,8 @@
      then the non typesafe macros are used instead. Also modified the
      mkstack.pl script to handle the new form. Needs testing to see
      if which (if any) compilers it chokes and maybe make DEBUG_SAFESTACK
-     the default if no major problems. Also need analagous stuff for
-     ASN1_SET_OF etc.
+     the default if no major problems. Similar behaviour for ASN1_SET_OF
+     and PKCS12_STACK_OF.
      [Steve Henson]
 
   *) When some versions of IIS use the 'NET' form of private key the
