@@ -91,8 +91,10 @@ UI *UI_new_method(const UI_METHOD *method);
 void UI_free(UI *ui);
 
 /* The following functions are used to add strings to be printed and prompt
-   strings to prompt for data.  The names are UI_{add,dup}_<function>_string,
-   with the following meanings:
+   strings to prompt for data.  The names are UI_{add,dup}_<function>_string
+   and UI_{add,dup}_input_boolean.
+
+   UI_{add,dup}_<function>_string have the following meanings:
 	add	add a text or prompt string.  The pointers given to these
 		functions are used verbatim, no copying is done.
 	dup	make a copy of the text or prompt string, then add the copy
@@ -108,12 +110,26 @@ void UI_free(UI *ui);
    Honestly, there's currently no difference between info and error for the
    moment.
 
-   All of the functions in this group take a UI and a string.  The input and
-   verify addition functions also take a flag argument, a buffer for the result
-   to end up with, a minimum input size and a maximum input size (the result
-   buffer MUST be large enough to be able to contain the maximum number of
-   characters).  Additionally, the verify addition functions takes another
-   buffer to compare the result against.
+   UI_{add,dup}_input_boolean have the same semantics for "add" and "dup",
+   and are typically used when one wants to prompt for a yes/no response.
+
+
+   All of the functions in this group take a UI and a prompt string.
+   The string input and verify addition functions also take a flag argument,
+   a buffer for the result to end up with, a minimum input size and a maximum
+   input size (the result buffer MUST be large enough to be able to contain
+   the maximum number of characters).  Additionally, the verify addition
+   functions takes another buffer to compare the result against.
+   The boolean input functions take an action description string (which should
+   be safe to ignore if the expected user action is obvious, for example with
+   a dialog box with an OK button and a Cancel button), a string of acceptable
+   characters to mean OK and to mean Cancel.  The two last strings are checked
+   to make sure they don't have common characters.  Additionally, the same
+   flag argument as for the string input is taken, as well as a result buffer.
+   The result buffer is required to be at least one byte long.  Depending on
+   the answer, the first character from the OK or the Cancel character strings
+   will be stored in the first byte of the result buffer.  No NUL will be
+   added, so the result is *not* a string.
 
    On success, the all return an index of the added information.  That index
    is usefull when retrieving results with UI_get0_result(). */
@@ -125,6 +141,12 @@ int UI_add_verify_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize, const char *test_buf);
 int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize, const char *test_buf);
+int UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
+	const char *ok_chars, const char *cancel_chars,
+	int flags, char *result_buf);
+int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
+	const char *ok_chars, const char *cancel_chars,
+	int flags, char *result_buf);
 int UI_add_info_string(UI *ui, const char *text);
 int UI_dup_info_string(UI *ui, const char *text);
 int UI_add_error_string(UI *ui, const char *text);
@@ -191,6 +213,22 @@ const char *UI_get0_result(UI *ui, int i);
 
 /* When all strings have been added, process the whole thing. */
 int UI_process(UI *ui);
+
+/* Give a user interface parametrised control commands.  This can be used to
+   send down an integer, a data pointer or a function pointer, as well as
+   be used to get information from a UI. */
+int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)());
+
+/* The commands */
+/* Use UI_CONTROL_PRINT_ERRORS with the value 1 to have UI_process print the
+   OpenSSL error stack before printing any info or added error messages and
+   before any prompting. */
+#define UI_CTRL_PRINT_ERRORS		1
+/* Check if a UI_process() is possible to do again with the same instance of
+   a user interface.  This makes UI_ctrl() return 1 if it is redoable, and 0
+   if not. */
+#define UI_CTRL_IS_REDOABLE		2
+
 
 /* Some methods may use extra data */
 #define UI_set_app_data(s,arg)         UI_set_ex_data(s,0,arg)
@@ -265,6 +303,7 @@ enum UI_string_types
 	UIT_NONE=0,
 	UIT_PROMPT,		/* Prompt for a string */
 	UIT_VERIFY,		/* Prompt for a string and verify */
+	UIT_BOOLEAN,		/* Prompt for a yes/no response */
 	UIT_INFO,		/* Send info to the user */
 	UIT_ERROR		/* Send an error message to the user */
 	};
@@ -292,6 +331,8 @@ enum UI_string_types UI_get_string_type(UI_STRING *uis);
 int UI_get_input_flags(UI_STRING *uis);
 /* Return the actual string to output (the prompt, info or error) */
 const char *UI_get0_output_string(UI_STRING *uis);
+/* Return the optional action string to output (the boolean promtp instruction) */
+const char *UI_get0_action_string(UI_STRING *uis);
 /* Return the result of a prompt */
 const char *UI_get0_result_string(UI_STRING *uis);
 /* Return the string to test the result against.  Only useful with verifies. */
@@ -301,7 +342,7 @@ int UI_get_result_minsize(UI_STRING *uis);
 /* Return the required maximum size of the result */
 int UI_get_result_maxsize(UI_STRING *uis);
 /* Set the result of a UI_STRING. */
-int UI_set_result(UI_STRING *uis, const char *result);
+int UI_set_result(UI *ui, UI_STRING *uis, const char *result);
 
 
 /* BEGIN ERROR CODES */
@@ -313,9 +354,13 @@ void ERR_load_UI_strings(void);
 /* Error codes for the UI functions. */
 
 /* Function codes. */
+#define UI_F_GENERAL_ALLOCATE_BOOLEAN			 108
+#define UI_F_GENERAL_ALLOCATE_PROMPT			 109
 #define UI_F_GENERAL_ALLOCATE_STRING			 100
+#define UI_F_UI_CTRL					 111
 #define UI_F_UI_DUP_ERROR_STRING			 101
 #define UI_F_UI_DUP_INFO_STRING				 102
+#define UI_F_UI_DUP_INPUT_BOOLEAN			 110
 #define UI_F_UI_DUP_INPUT_STRING			 103
 #define UI_F_UI_DUP_VERIFY_STRING			 106
 #define UI_F_UI_GET0_RESULT				 107
@@ -323,10 +368,13 @@ void ERR_load_UI_strings(void);
 #define UI_F_UI_SET_RESULT				 105
 
 /* Reason codes. */
+#define UI_R_COMMON_OK_AND_CANCEL_CHARACTERS		 104
 #define UI_R_INDEX_TOO_LARGE				 102
 #define UI_R_INDEX_TOO_SMALL				 103
+#define UI_R_NO_RESULT_BUFFER				 105
 #define UI_R_RESULT_TOO_LARGE				 100
 #define UI_R_RESULT_TOO_SMALL				 101
+#define UI_R_UNKNOWN_CONTROL_COMMAND			 106
 
 #ifdef  __cplusplus
 }

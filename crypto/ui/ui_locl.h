@@ -96,21 +96,36 @@ struct ui_method_st
 
 struct ui_string_st
 	{
-	const char *out_string;	/* Input */
 	enum UI_string_types type; /* Input */
+	const char *out_string;	/* Input */
 	int input_flags;	/* Flags from the user */
 
-	/* The following parameters are completely irrelevant for UI_INFO,
-	   and can therefore be set to 0 ro NULL */
+	/* The following parameters are completely irrelevant for UIT_INFO,
+	   and can therefore be set to 0 or NULL */
 	char *result_buf;	/* Input and Output: If not NULL, user-defined
 				   with size in result_maxsize.  Otherwise, it
 				   may be allocated by the UI routine, meaning
 				   result_minsize is going to be overwritten.*/
-	int result_minsize;	/* Input: minimum required size of the result*/
-	int result_maxsize;	/* Input: maximum permitted size of the
-				   result */
+	union
+		{
+		struct
+			{
+			int result_minsize;	/* Input: minimum required
+						   size of the result.
+						*/
+			int result_maxsize;	/* Input: maximum permitted
+						   size of the result */
 
-	const char *test_buf;	/* Input: test string to verify against */
+			const char *test_buf;	/* Input: test string to verify
+						   against */
+			} string_data;
+		struct
+			{
+			const char *action_desc; /* Input */
+			const char *ok_chars; /* Input */
+			const char *cancel_chars; /* Input */
+			} boolean_data;
+		} _;
 
 #define OUT_STRING_FREEABLE 0x01
 	int flags;		/* flags for internal use */
@@ -124,6 +139,10 @@ struct ui_st
 					 with different echoing status.  */
 	void *user_data;
 	CRYPTO_EX_DATA ex_data;
+
+#define UI_FLAG_REDOABLE	0x0001
+#define UI_FLAG_PRINT_ERRORS	0x0100
+	int flags;
 	};
 
 #endif
