@@ -120,7 +120,7 @@ int RAND_load_file(const char *file, long bytes)
 		if (bytes > 0)
 			{
 			bytes-=n;
-			if (bytes == 0) break;
+			if (bytes <= 0) break;
 			}
 		}
 	fclose(in);
