@@ -1322,7 +1322,7 @@ start:		for (;;)
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 			if (BIO_snprintf(buf,sizeof buf,"%s_default",v->name)
-				>= sizeof buf)
+				>= (int)sizeof(buf))
 			   {
 			   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
 			   return 0;
@@ -1387,7 +1387,7 @@ start2:			for (;;)
 					goto start2;
 
 				if (BIO_snprintf(buf,sizeof buf,"%s_default",type)
-					>= sizeof buf)
+					>= (int)sizeof(buf))
 				   {
 				   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
 				   return 0;

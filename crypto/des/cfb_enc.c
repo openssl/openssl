@@ -84,7 +84,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 	c2l(iv,v1);
 	if (enc)
 		{
-		while (l >= n)
+		while (l >= (unsigned long)n)
 			{
 			l-=n;
 			ti[0]=v0;
@@ -126,7 +126,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		}
 	else
 		{
-		while (l >= n)
+		while (l >= (unsigned long)n)
 			{
 			l-=n;
 			ti[0]=v0;
