@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Fix bug in PKCS#12 key generation routines. This was triggered
+     if a 3DES key was generated with a 0 initial byte. Include
+     PKCS12_BROKEN_KEYGEN compilation option to retain the old
+     (but broken) behaviour.
+     [Steve Henson]
+
   *) Fix memory leaks in err.c: free err_data string if necessary;
      don't write to the wrong index in ERR_set_error_data.
      [Bodo Moeller]

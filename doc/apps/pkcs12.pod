@@ -304,6 +304,26 @@ Include some extra certificates:
 
 Some would argue that the PKCS#12 standard is one big bug :-)
 
+Versions of OpenSSL before 0.9.6a had a bug in the PKCS#12 key generation
+routines. Under rare circumstances this could produce a PKCS#12 file encrypted
+with an invalid key. As a result some PKCS#12 files which triggered this bug
+from other implementations (MSIE or Netscape) could not be decrypted
+by OpenSSL and similarly OpenSSL could produce PKCS#12 files which could
+not be decrypted by other implementations. The chances of producing such
+a file are relatively small: less than 1 in 256.
+
+A side effect of fixing this bug is that any old invalidly encrypted PKCS#12
+files cannot no longer be parsed by the fixed version. Under such circumstances
+the B<pkcs12> utility will report that the MAC is OK but fail with a decryption
+error when extracting private keys.
+
+This problem can be resolved by extracting the private keys and certificates
+from the PKCS#12 file using an older version of OpenSSL and recreating the PKCS#12
+file from the keys and certificates using a newer version of OpenSSL. For example:
+
+ old-openssl -in bad.p12 -out keycerts.pem
+ openssl -in keycerts.pem -export -name "My PKCS#12 file" -out fixed.p12
+
 =head1 SEE ALSO
 
 L<pkcs8(1)|pkcs8(1)>
