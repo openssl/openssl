@@ -228,8 +228,9 @@ int RAND_poll(void)
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;
-#endif
+#else
 	return 0;
+#endif
 }
 
 #endif

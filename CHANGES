@@ -11,6 +11,19 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Move 'if (!initialized) RAND_poll()' into regions protected by
+     CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
+     having multiple threads calling RAND_poll() concurrently.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, replace 'add_do_not_lock' flag by a
+     combination of a flag and a thread ID variable.
+     Otherwise while one thread is in ssleay_rand_bytes (which sets the
+     flag), *other* threads can enter ssleay_add_bytes without obeying
+     the CRYPTO_LOCK_RAND lock (and may even illegaly release the lock
+     that they do not hold after the first thread unsets add_do_not_lock).
+     [Bodo Moeller]
+
   +) Implement binary inversion algorithm for BN_mod_inverse in addition
      to the algorithm using long divison.  The binary algorithm can be
      used only if the modulus is odd.  On 32-bit systems, it is faster
