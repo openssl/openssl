@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_f_base64 - base64 BIO
+BIO_f_base64 - base64 BIO
 
 =head1 SYNOPSIS
 

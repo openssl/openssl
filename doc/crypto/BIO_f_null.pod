@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_f_null - null filter
+BIO_f_null - null filter
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_set_callback, BIO_get_callback - BIO callback
+BIO_set_callback, BIO_get_callback - BIO callback
 
 =head1 SYNOPSIS
 

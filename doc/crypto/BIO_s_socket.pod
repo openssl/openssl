@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_s_socket - socket BIO
+BIO_s_socket - socket BIO
 
 =head1 SYNOPSIS
 

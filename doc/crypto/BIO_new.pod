@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_new, BIO_set, BIO_free, BIO_vfree, BIO_free_all - BIO allocation and freeing functions
+BIO_new, BIO_set, BIO_free, BIO_vfree, BIO_free_all - BIO allocation and freeing functions
 
 =head1 SYNOPSIS
 

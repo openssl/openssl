@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_s_file - FILE bio.
+BIO_s_file - FILE bio.
 
 =head1 SYNOPSIS
 

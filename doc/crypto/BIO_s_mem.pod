@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_s_mem - memory BIO
+BIO_s_mem - memory BIO
 
 =head1 SYNOPSIS
 

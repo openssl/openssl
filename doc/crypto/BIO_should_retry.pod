@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_should_retry, BIO_should_read, BIO_should_write - BIO retry functions
+BIO_should_retry, BIO_should_read, BIO_should_write - BIO retry functions
 
 =head1 SYNOPSIS
 
