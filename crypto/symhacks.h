@@ -242,6 +242,8 @@
 #undef ec_GFp_simple_set_compressed_coordinates_GFp
 #define ec_GFp_simple_set_compressed_coordinates_GFp \
                                                 ec_GFp_smp_set_compr_coords_GFp
+#undef ec_GFp_simple_group_check_discriminant
+#define ec_GFp_simple_group_check_discriminant	ec_GFp_simple_grp_chk_discrim
 
 #endif /* defined OPENSSL_SYS_VMS */
 
