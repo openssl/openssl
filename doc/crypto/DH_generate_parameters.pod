@@ -25,7 +25,7 @@ B<generator> is a small number E<gt> 1, typically 2 or 5.
 
 A callback function may be used to provide feedback about the progress
 of the key generation. If B<callback> is not B<NULL>, it will be
-called as described in L<BN_generate_prime(3)> while a random prime
+called as described in L<BN_generate_prime(3)|BN_generate_prime(3)> while a random prime
 number is generated, and when a prime has been found, B<callback(3,
 0, cb_arg)> is called.
 
@@ -40,7 +40,7 @@ checked, i.e. it does not equal 2 or 5.
 
 DH_generate_parameters() returns a pointer to the DH structure, or
 NULL if the parameter generation fails. The error codes can be
-obtained by ERR_get_error(3).
+obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 DH_check() returns 1 if the check could be performed, 0 otherwise.
 
@@ -54,7 +54,7 @@ used in signature schemes.
 
 =head1 SEE ALSO
 
-dh(3), err(3), rand(3), DH_free(3)
+L<dh(3)|dh(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<DH_free(3)|DH_free(3)>
 
 =head1 HISTORY
 

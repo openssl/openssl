@@ -47,7 +47,7 @@ RAND_SSLeay() return pointers to the respective methods.
 
 =head1 SEE ALSO
 
-rand(3)
+L<rand(3)|rand(3)>
 
 =head1 HISTORY
 

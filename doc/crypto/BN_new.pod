@@ -35,14 +35,14 @@ overwrites the data before the memory is returned to the system.
 
 BN_new() returns a pointer to the B<BIGNUM>. If the allocation fails,
 it returns B<NULL> and sets an error code that can be obtained
-by ERR_get_error(3).
+by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 BN_init(), BN_clear(), BN_free() and BN_clear_free() have no return
 values.
 
 =head1 SEE ALSO
 
-bn(3), err(3)
+L<bn(3)|bn(3)>, L<err(3)|err(3)>
 
 =head1 HISTORY
 

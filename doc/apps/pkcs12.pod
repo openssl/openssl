@@ -282,5 +282,5 @@ release.
 
 =head1 SEE ALSO
 
-pkcs8(1)
+L<pkcs8(1)|pkcs8(1)>
 

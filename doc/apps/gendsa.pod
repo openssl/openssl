@@ -51,6 +51,7 @@ much quicker that RSA key generation for example.
 
 =head1 SEE ALSO
 
-dsaparam(1), dsa(1), genrsa(1), rsa(1)
+L<dsaparam(1)|dsaparam(1)>, L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>,
+L<rsa(1)|rsa(1)>
 
 =cut

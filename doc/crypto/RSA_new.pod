@@ -22,14 +22,14 @@ erased before the memory is returned to the system.
 =head1 RETURN VALUES
 
 If the allocation fails, RSA_new() returns B<NULL> and sets an error
-code that can be obtained by ERR_get_error(3). Otherwise it returns
+code that can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. Otherwise it returns
 a pointer to the newly allocated structure.
 
 RSA_free() returns no value.
 
 =head1 SEE ALSO
 
-err(3), rsa(3), RSA_generate_key(3)
+L<err(3)|err(3)>, L<rsa(3)|rsa(3)>, L<RSA_generate_key(3)|RSA_generate_key(3)>
 
 =head1 HISTORY
 

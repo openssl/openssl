@@ -336,6 +336,6 @@ Include only 3DES ciphers and then place RSA ciphers last:
 
 =head1 SEE ALSO
 
-s_client(1), s_server(1), ssl(3)
+L<s_client(1)|s_client(1)>, L<s_server(1)|s_server(1)>, L<ssl(3)|ssl(3)>
 
 =cut

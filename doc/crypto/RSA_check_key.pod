@@ -26,11 +26,11 @@ RSA_check_key() returns 1 if B<rsa> is a valid RSA key, and 0 otherwise.
 -1 is returned if an error occurs while checking the key.
 
 If the key is invalid or an error occurred, the reason code can be
-obtained using ERR_get_error(3).
+obtained using L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-rsa(3), err(3)
+L<rsa(3)|rsa(3)>, L<err(3)|err(3)>
 
 =head1 HISTORY
 

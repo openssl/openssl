@@ -260,6 +260,6 @@ unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 
-sess_id(1), s_client(1), ciphers(1)
+L<sess_id(1)|sess_id(1)>, L<s_client(1)|s_client(1)>, L<ciphers(1)|ciphers(1)>
 
 =cut

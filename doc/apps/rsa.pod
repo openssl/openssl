@@ -155,6 +155,7 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-pkcs8(1), dsa(1), genrsa(1), gendsa(1)
+L<pkcs8(1)|pkcs8(1)>, L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>,
+L<gendsa(1)|gendsa(1)> 
 
 =cut

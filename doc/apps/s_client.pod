@@ -208,6 +208,6 @@ information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
-sess_id(1), s_server(1), ciphers(1)
+L<sess_id(1)|sess_id(1)>, L<s_server(1)|s_server(1)>, L<ciphers(1)|ciphers(1)>
 
 =cut

@@ -72,11 +72,11 @@ BN_is_prime() returns 0 if the number is composite, 1 if it is
 prime with an error probability of less than 0.25^B<checks>, and
 -1 on error.
 
-The error codes can be obtained by ERR_get_error(3).
+The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-bn(3), err(3), rand(3)
+L<bn(3)|bn(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>
 
 =head1 HISTORY
 

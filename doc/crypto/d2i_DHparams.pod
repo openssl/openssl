@@ -6,7 +6,7 @@ d2i_DHparams, i2d_DHparams - ...
 
 =head1 SYNOPSIS
 
-#include <openssl/dh.h>
+ #include <openssl/dh.h>
 
  DH *d2i_DHparams(DH **a, unsigned char **pp, long length);
  int i2d_DHparams(DH *a, unsigned char **pp);

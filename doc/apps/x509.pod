@@ -537,6 +537,7 @@ OpenSSL 0.9.5 and later.
 
 =head1 SEE ALSO
 
-req(1), ca(1), genrsa(1), gendsa(1), verify(1)
+L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
+L<gendsa(1)|gendsa(1)>, L<verify(1)|verify(1)>
 
 =cut

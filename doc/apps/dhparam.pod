@@ -109,6 +109,6 @@ There should be a way to generate and manipulate DH keys.
 
 =head1 SEE ALSO
 
-dsaparam(1)
+L<dsaparam(1)|dsaparam(1)>
 
 =cut

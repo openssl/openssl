@@ -149,6 +149,7 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-dsaparam(1), gendsa(1), rsa(1), genrsa(1)
+L<dsaparam(1)|dsaparam(1)>, L<gendsa(1)|gendsa(1)>, L<rsa(1)|rsa(1)>,
+L<genrsa(1)|genrsa(1)>
 
 =cut

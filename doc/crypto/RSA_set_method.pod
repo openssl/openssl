@@ -136,12 +136,12 @@ RSA_set_method() returns a pointer to the B<RSA_METHOD> previously
 associated with B<rsa>.
 
 RSA_new_method() returns B<NULL> and sets an error code that can be
-obtained by ERR_get_error(3) if the allocation fails. Otherwise it
+obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails. Otherwise it
 returns a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
-rsa(3), RSA_new(3)
+L<rsa(3)|rsa(3)>, L<RSA_new(3)|RSA_new(3)>
 
 =head1 HISTORY
 

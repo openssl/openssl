@@ -85,6 +85,6 @@ install user certificates and CAs in MSIE using the Xenroll control.
 
 =head1 SEE ALSO
 
-pkcs7(1)
+L<pkcs7(1)|pkcs7(1)>
 
 =cut

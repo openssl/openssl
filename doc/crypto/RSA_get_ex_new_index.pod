@@ -100,7 +100,7 @@ parameter.
 
 B<new_func()> and B<dup_func()> should return 0 for failure and 1 for success.
 
-On failure an error code can be obtained from B<ERR_get_error(3)>.
+On failure an error code can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 BUGS
 

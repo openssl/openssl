@@ -525,6 +525,7 @@ address in subjectAltName should be input by the user.
 
 =head1 SEE ALSO
 
-x509(1), ca(1), genrsa(1), gendsa(1), config(5)
+L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
+L<gendsa(1)|gendsa(1)>, L<config(5)|config(5)>
 
 =cut

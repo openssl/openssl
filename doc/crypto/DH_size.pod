@@ -24,7 +24,7 @@ The size in bytes.
 
 =head1 SEE ALSO
 
-dh(3), DH_generate_key(3)
+L<dh(3)|dh(3)>, L<DH_generate_key(3)|DH_generate_key(3)>
 
 =head1 HISTORY
 

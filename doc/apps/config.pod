@@ -133,6 +133,6 @@ file.
 
 =head1 SEE ALSO
 
-x509(1), req(1), ca(1)
+L<x509(1)|x509(1)>, L<req(1)|req(1)>, L<ca(1)|ca(1)>
 
 =cut

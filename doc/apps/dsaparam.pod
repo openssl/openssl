@@ -95,6 +95,7 @@ DSA parameters is often used to generate several distinct keys.
 
 =head1 SEE ALSO
 
-gendsa(1), dsa(1), genrsa(1), rsa(1)
+L<gendsa(1)|gendsa(1)>, L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>,
+L<rsa(1)|rsa(1)>
 
 =cut

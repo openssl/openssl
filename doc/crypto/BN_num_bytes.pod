@@ -27,7 +27,7 @@ The size.
 
 =head1 SEE ALSO
 
-bn(3)
+L<bn(3)|bn(3)>
 
 =head1 HISTORY
 

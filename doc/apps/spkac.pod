@@ -110,6 +110,6 @@ to be used in a "replay attack".
 
 =head1 SEE ALSO
 
-ca(1)
+L<ca(1)|ca(1)>
 
 =cut

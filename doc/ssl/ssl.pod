@@ -623,11 +623,11 @@ connection defined in the B<SSL> structure.
 
 =head1 SEE ALSO
 
-openssl(1), crypto(3)
+L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>
 
 =head1 HISTORY
 
-The ssl(3) document appeared in OpenSSL 0.9.2
+The L<ssl(3)|ssl(3)> document appeared in OpenSSL 0.9.2
 
 =cut
 

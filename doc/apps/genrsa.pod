@@ -69,4 +69,4 @@ be much larger (typically 1024 bits).
 
 =head1 SEE ALSO
 
-gendsa(1)
+L<gendsa(1)|gendsa(1)>

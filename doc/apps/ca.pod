@@ -467,6 +467,7 @@ create an empty file.
 
 =head1 SEE ALSO
 
-req(1), spkac(1), x509(1), CA.pl(1), config(5)
+L<req(1)|req(1)>, L<spkac(1)|spkac(1)>, L<x509(1)|x509(1)>, L<CA.pl(1)|CA.pl(1)>,
+L<config(5)|config(5)>
 
 =cut

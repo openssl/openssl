@@ -24,7 +24,7 @@ The size in bytes.
 
 =head1 SEE ALSO
 
-rsa(3)
+L<rsa(3)|rsa(3)>
 
 =head1 HISTORY
 

@@ -30,7 +30,7 @@ will be called as follows:
 =item *
 
 While a random prime number is generated, it is called as
-described in L<BN_generate_prime(3)>.
+described in L<BN_generate_prime(3)|BN_generate_prime(3)>.
 
 =item *
 
@@ -49,7 +49,7 @@ The process is then repeated for prime q with B<callback(3, 1, cb_arg)>.
 =head1 RETURN VALUE
 
 If key generation fails, RSA_generate_key() returns B<NULL>; the
-error codes can be obtained by ERR_get_error(3).
+error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 BUGS
 
@@ -59,7 +59,7 @@ RSA_generate_key() goes into an infinite loop for illegal input values.
 
 =head1 SEE ALSO
 
-err(3), rand(3), rsa(3), RSA_free(3)
+L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>, L<RSA_free(3)|RSA_free(3)>
 
 =head1 HISTORY
 
