@@ -368,7 +368,6 @@ my %table=(
 "unixware-7-gcc","gcc:-DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:gnu-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # OpenUNIX 8
-"OpenUNIX","cc:-O -DFILIO_H -Kalloca::-Kthread:-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 "OpenUNIX-8","cc:-O -DFILIO_H -Kalloca::-Kthread:-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 "OpenUNIX-8-gcc","gcc:-O -DFILIO_H -fomit-frame-pointer::-pthread:-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 "OpenUNIX-8-pentium","cc:-O -DFILIO_H -Kalloca -Kpentium::-Kthread:-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::",

@@ -352,28 +352,6 @@ $shared_cflag = -fPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
-*** OpenUNIX
-$cc           = cc
-$cflags       = -O -DFILIO_H -Kalloca
-$unistd       = 
-$thread_cflag = -Kthread
-$lflags       = -lsocket -lnsl
-$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
-$ranlib       = 
-
 *** OpenUNIX-8
 $cc           = cc
 $cflags       = -O -DFILIO_H -Kalloca
