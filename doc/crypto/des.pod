@@ -9,7 +9,6 @@ DES_cfb_encrypt, DES_ofb_encrypt, DES_pcbc_encrypt, DES_cfb64_encrypt,
 DES_ofb64_encrypt, DES_xcbc_encrypt, DES_ede2_cbc_encrypt,
 DES_ede2_cfb64_encrypt, DES_ede2_ofb64_encrypt, DES_ede3_cbc_encrypt,
 DES_ede3_cbcm_encrypt, DES_ede3_cfb64_encrypt, DES_ede3_ofb64_encrypt,
-DES_read_password, DES_read_2passwords, DES_read_pw_string,
 DES_cbc_cksum, DES_quad_cksum, DES_string_to_key, DES_string_to_2keys,
 DES_fcrypt, DES_crypt, DES_enc_read, DES_enc_write - DES encryption
 
@@ -85,12 +84,6 @@ DES_fcrypt, DES_crypt, DES_enc_read, DES_enc_write - DES encryption
         long length, DES_key_schedule *ks1, 
         DES_key_schedule *ks2, DES_key_schedule *ks3, 
         DES_cblock *ivec, int *num);
-
- int DES_read_password(DES_cblock *key, const char *prompt, int verify);
- int DES_read_2passwords(DES_cblock *key1, DES_cblock *key2, 
-        const char *prompt, int verify);
- int DES_read_pw_string(char *buf, int length, const char *prompt,
-        int verify);
 
  DES_LONG DES_cbc_cksum(const unsigned char *input, DES_cblock *output, 
         long length, DES_key_schedule *schedule, 
@@ -234,24 +227,7 @@ DES_ede3_ofb64_encrypt() and DES_ede2_ofb64_encrypt() is the same as
 DES_ofb64_encrypt(), using Triple-DES.
 
 The following functions are included in the DES library for
-compatibility with the MIT Kerberos library. DES_read_pw_string()
-is also available under the name EVP_read_pw_string().
-
-DES_read_pw_string() writes the string specified by I<prompt> to
-standard output, turns echo off and reads in input string from the
-terminal.  The string is returned in I<buf>, which must have space for
-at least I<length> bytes.  If I<verify> is set, the user is asked for
-the password twice and unless the two copies match, an error is
-returned.  A return code of -1 indicates a system error, 1 failure due
-to use interaction, and 0 is success.
-
-DES_read_password() does the same and converts the password to a DES
-key by calling DES_string_to_key(); DES_read_2password() operates in
-the same way as DES_read_password() except that it generates two keys
-by using the DES_string_to_2key() function.  DES_string_to_key() is
-available for backward compatibility with the MIT library.  New
-applications should use a cryptographic hash function.  The same
-applies for DES_string_to_2key().
+compatibility with the MIT Kerberos library.
 
 DES_cbc_cksum() produces an 8 byte checksum based on the input stream
 (via CBC encryption).  The last 4 bytes of the checksum are returned
@@ -330,8 +306,9 @@ implemented this way because most people will be using a multiple of 8
 and because once you get into pulling bytes input bytes apart things
 get ugly!
 
-DES_read_pw_string() is the most machine/OS dependent function and
-normally generates the most problems when porting this code.
+DES_string_to_key() is available for backward compatibility with the
+MIT library.  New applications should use a cryptographic hash function.
+The same applies for DES_string_to_2key().
 
 =head1 CONFORMING TO
 
@@ -357,8 +334,8 @@ already scheduled for removal.
 
 des_cbc_cksum(), des_cbc_encrypt(), des_ecb_encrypt(),
 des_is_weak_key(), des_key_sched(), des_pcbc_encrypt(),
-des_quad_cksum(), des_random_key(), des_read_password() and
-des_string_to_key() are available in the MIT Kerberos library;
+des_quad_cksum(), des_random_key() and des_string_to_key()
+are available in the MIT Kerberos library;
 des_check_key_parity(), des_fixup_key_parity() and des_is_weak_key()
 are available in newer versions of that library.
 
