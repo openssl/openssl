@@ -575,8 +575,6 @@ int SSL_check_private_key(SSL *ssl)
 		SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if (ssl->cert == NULL)
-		return(SSL_CTX_check_private_key(ssl->ctx));
 	if (ssl->cert->key->x509 == NULL)
 		{
 		SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,SSL_R_NO_CERTIFICATE_ASSIGNED);
