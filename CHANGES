@@ -4,6 +4,14 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix SSL_CTX_set_read_ahead macro to actually use its argument.
+
+     Copy SSL_CTX's read_ahead flag to SSL object directly in SSL_new
+     and not in SSL_clear because the latter is also used by the
+     accept/connect functions; previously, the settings made by
+     SSL_set_read_ahead would be lost during the handshake.
+     [Bodo Moeller; problems reported by Anders Gertz <gertz@epact.se>]     
+
   *) Correct util/mkdef.pl to be selective about disabled algorithms.
      Previously, it would create entries for disableed algorithms no
      matter what.
