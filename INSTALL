@@ -124,6 +124,9 @@
      (not on Sparcs!) you may have to install the GNU assembler to use
      OpenSSL assembler code -- /usr/ccs/bin/as won't do.]
 
+     Compiling parts of OpenSSL with gcc and others with the system
+     compiler will result in unresolved symbols on some systems.
+
   3. After a successful build, the libraries should be tested. Run:
 
        $ make test
