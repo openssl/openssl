@@ -179,7 +179,7 @@
 #ifndef PEDANTIC
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)     _lrotl(a,n)
-# elif defined(__GNUC__) && __GNUC__>=2
+# elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
    * rotates by *constant* number of bits! But that's exactly
@@ -211,7 +211,7 @@
  * Engage compiler specific "fetch in reverse byte order"
  * intrinsic function if available.
  */
-# if defined(__GNUC__) && __GNUC__>=2
+# if defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM)
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
 #  if defined(__i386) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\

@@ -330,7 +330,10 @@ my $options="";
 foreach (@ARGV)
 	{
 	if (/^no-asm$/)
-		{ $no_asm=1; }
+	 	{
+		$no_asm=1;
+		$flags .= "-DNO_ASM ";
+		}
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
 	elsif (/^threads$/)
