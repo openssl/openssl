@@ -72,11 +72,11 @@ typedef struct dso_meth_st
 	{
 	const char *name;
 	/* Loads a shared library */
-	int (*dso_load)(DSO *dso, char *filename);
+	int (*dso_load)(DSO *dso, const char *filename);
 	/* Unloads a shared library */
 	int (*dso_unload)(DSO *dso);
 	/* Binds a function, variable, or whatever */
-	int (*dso_bind)(DSO *dso, char *symname, void **symptr);
+	int (*dso_bind)(DSO *dso, const char *symname, void **symptr);
 
 /* I don't think this would actually be used in any circumstances. */
 #if 0
@@ -120,13 +120,13 @@ DSO_METHOD *DSO_get_method(DSO *dso);
 DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
 
 /* The all-singing all-dancing load function, you normally pass NULL
- * for the last two parameters. Use DSO_up and DSO_free for reference
- * count handling. */
-DSO *DSO_load(DSO *dso, char *filename, DSO_METHOD *meth);
+ * for the first and third parameters. Use DSO_up and DSO_free for
+ * reference count handling. */
+DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth);
 
 /* This function binds to a function, variable, whatever inside a
  * shared library. */
-void *DSO_bind(DSO *dso, char *symname);
+void *DSO_bind(DSO *dso, const char *symname);
 
 /* This method is the default, but will beg, borrow, or steal whatever
  * method should be the default on any particular platform (including

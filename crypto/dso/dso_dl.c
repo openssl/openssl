@@ -69,9 +69,9 @@ DSO_METHOD *DSO_METHOD_dl(void)
 
 #include <dl.h>
 
-static int dl_load(DSO *dso, char *filename);
+static int dl_load(DSO *dso, const char *filename);
 static int dl_unload(DSO *dso);
-static int dl_bind(DSO *dso, char *symname, void **symptr);
+static int dl_bind(DSO *dso, const char *symname, void **symptr);
 #if 0
 static int dl_unbind(DSO *dso, char *symname, void *symptr);
 static int dl_init(DSO *dso);
@@ -102,7 +102,7 @@ DSO_METHOD *DSO_METHOD_dl(void)
  * type so the cast is safe.
  */
 
-static int dl_load(DSO *dso, char *filename)
+static int dl_load(DSO *dso, const char *filename)
 	{
 	shl_t ptr;
 
@@ -148,7 +148,7 @@ static int dl_unload(DSO *dso)
 	return(1);
 	}
 
-static int dl_bind(DSO *dso, char *symname, void **symptr)
+static int dl_bind(DSO *dso, const char *symname, void **symptr)
 	{
 	shl_t ptr;
 	void *sym;

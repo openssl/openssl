@@ -71,9 +71,9 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #include <dlfcn.h>
 #endif
 
-static int dlfcn_load(DSO *dso, char *filename);
+static int dlfcn_load(DSO *dso, const char *filename);
 static int dlfcn_unload(DSO *dso);
-static int dlfcn_bind(DSO *dso, char *symname, void **symptr);
+static int dlfcn_bind(DSO *dso, const char *symname, void **symptr);
 #if 0
 static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
 static int dlfcn_init(DSO *dso);
@@ -102,7 +102,7 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
  * (i) the handle (void*) returned from dlopen().
  */
 
-static int dlfcn_load(DSO *dso, char *filename)
+static int dlfcn_load(DSO *dso, const char *filename)
 	{
 	void *ptr;
 
@@ -148,7 +148,7 @@ static int dlfcn_unload(DSO *dso)
 	return(1);
 	}
 
-static int dlfcn_bind(DSO *dso, char *symname, void **symptr)
+static int dlfcn_bind(DSO *dso, const char *symname, void **symptr)
 	{
 	void *ptr, *sym;
 

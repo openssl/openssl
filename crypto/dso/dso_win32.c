@@ -67,9 +67,9 @@ DSO_METHOD *DSO_METHOD_win32(void)
 	}
 #else
 
-static int win32_load(DSO *dso, char *filename);
+static int win32_load(DSO *dso, const char *filename);
 static int win32_unload(DSO *dso);
-static int win32_bind(DSO *dso, char *symname, void **symptr);
+static int win32_bind(DSO *dso, const char *symname, void **symptr);
 #if 0
 static int win32_unbind(DSO *dso, char *symname, void *symptr);
 static int win32_init(DSO *dso);
@@ -99,7 +99,7 @@ DSO_METHOD *DSO_METHOD_win32(void)
  *      LoadLibrary(), and copied.
  */
 
-static int win32_load(DSO *dso, char *filename)
+static int win32_load(DSO *dso, const char *filename)
 	{
 	HINSTANCE h, *p;
 
@@ -159,7 +159,7 @@ static int win32_unload(DSO *dso)
 	return(1);
 	}
 
-static int win32_bind(DSO *dso, char *symname, void **symptr)
+static int win32_bind(DSO *dso, const char *symname, void **symptr)
 	{
 	HINSTANCE *ptr;
 	void *sym;

@@ -187,7 +187,7 @@ int DSO_up(DSO *dso)
 	return(1);
 	}
 
-DSO *DSO_load(DSO *dso, char *filename, DSO_METHOD *meth)
+DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth)
 	{
 	DSO *ret;
 	int allocated = 0;
@@ -227,7 +227,7 @@ DSO *DSO_load(DSO *dso, char *filename, DSO_METHOD *meth)
 	return(ret);
 	}
 
-void *DSO_bind(DSO *dso, char *symname)
+void *DSO_bind(DSO *dso, const char *symname)
 	{
 	void *ret = NULL;
 
