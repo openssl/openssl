@@ -1876,7 +1876,6 @@
 #define NID_SNMPv2		387
 #define OBJ_SNMPv2		OBJ_internet,6L
 
-#define SN_Mail		"mail"
 #define LN_Mail		"Mail"
 #define NID_Mail		388
 #define OBJ_Mail		OBJ_internet,7L
@@ -2124,6 +2123,7 @@
 #define NID_textEncodedORAddress		459
 #define OBJ_textEncodedORAddress		OBJ_pilotAttributeType,2L
 
+#define SN_rfc822Mailbox		"mail"
 #define LN_rfc822Mailbox		"rfc822Mailbox"
 #define NID_rfc822Mailbox		460
 #define OBJ_rfc822Mailbox		OBJ_pilotAttributeType,3L

@@ -623,7 +623,12 @@ internet 3		: experimental		: Experimental
 internet 4		: private		: Private
 internet 5		: security		: Security
 internet 6		: snmpv2		: SNMPv2
-internet 7		: mail			: Mail
+# Documents refer to "internet 7" as "mail". This however leads to ambiguities
+# with RFC2798, Section 9.1.3, where "mail" is defined as the short name for
+# rfc822Mailbox. The short name is therefore here left out for a reason.
+# Subclasses of "mail", e.g. "MIME MHS" don't consitute a problem, as
+# references are realized via long name "Mail" (with capital M).
+internet 7		:			: Mail
 
 Private 1		: enterprises		: Enterprises
 
@@ -710,7 +715,7 @@ pilotObjectClass 21	:			: pilotDSA
 pilotObjectClass 22	:			: qualityLabelledData
 pilotAttributeType 1	: UID			: userId
 pilotAttributeType 2	:			: textEncodedORAddress
-pilotAttributeType 3	:			: rfc822Mailbox
+pilotAttributeType 3	: mail			: rfc822Mailbox
 pilotAttributeType 4	: info
 pilotAttributeType 5	:			: favouriteDrink
 pilotAttributeType 6	:			: roomNumber
