@@ -157,7 +157,7 @@ ca.o: ../include/lhash.h ../include/md2.h ../include/md5.h ../include/mdc2.h
 ca.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h ../include/rc2.h
 ca.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h ../include/rsa.h
 ca.o: ../include/sha.h ../include/stack.h ../include/txt_db.h ../include/x509.h
-ca.o: ../include/x509_vfy.h apps.h progs.h
+ca.o: ../include/x509_vfy.h ../include/x509v3.h apps.h progs.h
 ciphers.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
 ciphers.o: ../include/bn.h ../include/buffer.h ../include/cast.h
 ciphers.o: ../include/crypto.h ../include/des.h ../include/dh.h
@@ -273,6 +273,15 @@ genrsa.o: ../include/rand.h ../include/rc2.h ../include/rc4.h ../include/rc5.h
 genrsa.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
 genrsa.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h apps.h
 genrsa.o: progs.h
+nseq.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+nseq.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+nseq.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+nseq.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+nseq.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+nseq.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h
+nseq.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+nseq.o: ../include/rsa.h ../include/sha.h ../include/stack.h ../include/x509.h
+nseq.o: ../include/x509_vfy.h apps.h progs.h
 openssl.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
 openssl.o: ../include/bn.h ../include/buffer.h ../include/cast.h
 openssl.o: ../include/conf.h ../include/crypto.h ../include/des.h
@@ -302,7 +311,8 @@ req.o: ../include/lhash.h ../include/md2.h ../include/md5.h ../include/mdc2.h
 req.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h
 req.o: ../include/rand.h ../include/rc2.h ../include/rc4.h ../include/rc5.h
 req.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h ../include/stack.h
-req.o: ../include/x509.h ../include/x509_vfy.h apps.h progs.h
+req.o: ../include/x509.h ../include/x509_vfy.h ../include/x509v3.h apps.h
+req.o: progs.h
 rsa.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h ../include/bn.h
 rsa.o: ../include/buffer.h ../include/cast.h ../include/crypto.h
 rsa.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
@@ -415,4 +425,4 @@ x509.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
 x509.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h
 x509.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h ../include/ripemd.h
 x509.o: ../include/rsa.h ../include/sha.h ../include/stack.h ../include/x509.h
-x509.o: ../include/x509_vfy.h apps.h progs.h
+x509.o: ../include/x509_vfy.h ../include/x509v3.h apps.h progs.h

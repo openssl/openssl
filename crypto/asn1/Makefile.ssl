@@ -480,6 +480,15 @@ n_pkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 n_pkey.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
 n_pkey.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
 n_pkey.o: ../crypto.h asn1.h asn1_mac.h
+nsseq.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+nsseq.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+nsseq.o: ../../include/dsa.h ../../include/err.h ../../include/evp.h
+nsseq.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+nsseq.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+nsseq.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+nsseq.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+nsseq.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+nsseq.o: ../crypto.h asn1.h asn1_mac.h
 p7_dgst.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_dgst.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_dgst.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -602,8 +611,8 @@ t_x509.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 t_x509.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 t_x509.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 t_x509.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-t_x509.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-t_x509.o: ../crypto.h asn1.h
+t_x509.o: ../../include/x509.h ../../include/x509_vfy.h ../../include/x509v3.h
+t_x509.o: ../cryptlib.h ../crypto.h asn1.h
 x_algor.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_algor.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_algor.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
