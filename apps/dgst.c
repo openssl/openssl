@@ -465,7 +465,10 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		BIO_printf(out, "\n");
 		}
-	BIO_set_md_ctx(bmd,md_ctx);
+	if (hmac_key)
+		{
+		BIO_set_md_ctx(bmd,md_ctx);
+		}
 	return 0;
 	}
 
