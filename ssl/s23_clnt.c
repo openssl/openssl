@@ -200,6 +200,7 @@ int ssl23_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (s->in_handshake)
 	if (cb != NULL)
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
