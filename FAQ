@@ -176,10 +176,13 @@ first BIO related read or write operation.
 
 * I've called <some function> and it fails, why?
 
-Before submitting a report or asking in one of the mailing lists you
-should try to determine the cause. In particular you should call
+Before submitting a report or asking in one of the mailing lists, you
+should try to determine the cause. In particular, you should call
 ERR_print_errors() or ERR_print_errors_fp() after the failed call
-and see if the message helps. 
+and see if the message helps. Note that the problem may occur earlier
+than you think -- you should check for errors after every call where
+it is possible, otherwise the actual problem may be hidden because
+some OpenSSL functions clear the error state.
 
 
 * I just get a load of numbers for the error output, what do they mean?
