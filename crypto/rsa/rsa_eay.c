@@ -214,6 +214,7 @@ static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
 
 static BN_BLINDING *setup_blinding(RSA *rsa, BN_CTX *ctx)
 	{
+	const RSA_METHOD *meth;
 	BIGNUM *A, *Ai;
 	BN_BLINDING *ret = NULL;
 
@@ -223,6 +224,7 @@ static BN_BLINDING *setup_blinding(RSA *rsa, BN_CTX *ctx)
 	 * this should be placed in a new function of its own, but for reasons
 	 * of binary compatibility can't */
 
+	meth = ENGINE_get_RSA(rsa->engine);
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
 	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
@@ -237,7 +239,7 @@ static BN_BLINDING *setup_blinding(RSA *rsa, BN_CTX *ctx)
 		}
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
-	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
+	if (!meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
 		goto err;
 	ret = BN_BLINDING_new(A,Ai,rsa->n);
 	BN_free(Ai);
