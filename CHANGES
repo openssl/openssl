@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Clean old EAY MD5 hack from e_os.h.
+     [Richard Levitte]
+
   *) Fix SSL_CTX_set_read_ahead macro to actually use its argument.
 
      Copy SSL_CTX's read_ahead flag to SSL object directly in SSL_new
