@@ -4,6 +4,19 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) First update to verify code. Change the verify utility
+     so it warns if it is passed a self signed certificate:
+     for consistency with the normal behaviour. X509_verify
+     has been modified to it will now verify a self signed
+     certificate if *exactly* the same certificate appears
+     in the store: it was previously impossible to trust a
+     single self signed certificate. This means that:
+     openssl verify ss.pem
+     now gives a warning about a self signed certificate but
+     openssl verify -CAfile ss.pem ss.pem
+     is OK.
+     [Steve Henson]
+
   *) For servers, store verify_result in SSL_SESSION data structure
      (and add it to external session representation).
      This is needed when client certificate verifications fails,
@@ -18,7 +31,7 @@
   *) Fix a bug in the new PKCS#7 code: it didn't consider the
      case in PKCS7_dataInit() where the signed PKCS7 structure
      didn't contain any existing data because it was being created.
-     [Po-Cheng Chen" <pocheng@nst.com.tw>, slightly modified by Steve Henson]
+     [Po-Cheng Chen <pocheng@nst.com.tw>, slightly modified by Steve Henson]
 
   *) Add a salt to the key derivation routines in enc.c. This
      forms the first 8 bytes of the encrypted file. Also add a

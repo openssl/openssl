@@ -206,21 +206,18 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 
 	if (!ok)
 		{
-		/* since we are just checking the certificates, it is
-		 * ok if they are self signed. */
-		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
-			ok=1;
-		else
-			{
-			X509_NAME_oneline(
+		X509_NAME_oneline(
 				X509_get_subject_name(ctx->current_cert),buf,256);
-			printf("%s\n",buf);
-			printf("error %d at %d depth lookup:%s\n",ctx->error,
-				ctx->error_depth,
-				X509_verify_cert_error_string(ctx->error));
-			if (ctx->error == X509_V_ERR_CERT_HAS_EXPIRED)
-				ok=1;
-			}
+		printf("%s\n",buf);
+		printf("error %d at %d depth lookup:%s\n",ctx->error,
+			ctx->error_depth,
+			X509_verify_cert_error_string(ctx->error));
+		if (ctx->error == X509_V_ERR_CERT_HAS_EXPIRED) ok=1;
+		/* since we are just checking the certificates, it is
+		 * ok if they are self signed. But we should still warn
+		 * the user.
+ 		 */
+		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
 		}
 	if (!v_verbose)
 		ERR_clear_error();

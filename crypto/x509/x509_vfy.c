@@ -125,7 +125,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->last_untrusted=1;
 		}
 
-	/* We use a temporary so we can chop and hack at it */
+	/* We use a temporary STACK so we can chop and hack at it */
 	if (ctx->untrusted != NULL
 	    && (sktmp=sk_X509_dup(ctx->untrusted)) == NULL)
 		{
@@ -182,17 +182,37 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 	i=sk_X509_num(ctx->chain);
 	x=sk_X509_value(ctx->chain,i-1);
-	if (X509_NAME_cmp(X509_get_subject_name(x),X509_get_issuer_name(x))
+	xn = X509_get_subject_name(x);
+	if (X509_NAME_cmp(xn,X509_get_issuer_name(x))
 		== 0)
 		{
 		/* we have a self signed certificate */
 		if (sk_X509_num(ctx->chain) == 1)
 			{
-			ctx->error=X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
-			ctx->current_cert=x;
-			ctx->error_depth=i-1;
-			ok=cb(0,ctx);
-			if (!ok) goto end;
+			/* We have a single self signed certificate: see if
+			 * we can find it in the store. We must have an exact
+			 * match to avoid possible impersonation.
+			 */
+			ok=X509_STORE_get_by_subject(ctx,X509_LU_X509,xn,&obj);
+			if ((ok != X509_LU_X509) || X509_cmp(x, obj.data.x509)) 
+				{
+				ctx->error=X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
+				ctx->current_cert=x;
+				ctx->error_depth=i-1;
+				if(ok == X509_LU_X509) X509_OBJECT_free_contents(&obj);
+				ok=cb(0,ctx);
+				if (!ok) goto end;
+				}
+			else 
+				{
+				/* We have a match: replace certificate with store version
+				 * so we get any trust settings.
+				 */
+				X509_free(x);
+				x = obj.data.x509;
+				sk_X509_set(ctx->chain, i - 1, x);
+				ctx->last_untrusted=0;
+				}
 			}
 		else
 			{
