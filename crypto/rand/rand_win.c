@@ -310,7 +310,7 @@ int RAND_poll(void)
 			{
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
-				RAND_add(buf, sizeof(buf), sizeof(buf));
+				RAND_add(buf, sizeof(buf), 0);
 #ifdef DEBUG
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
