@@ -81,9 +81,9 @@ clean:
 
 conf.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-conf.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
-conf.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-conf.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-conf.o: ../cryptlib.h conf_lcl.h
+conf.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+conf.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+conf.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+conf.o: ../../include/openssl/stack.h ../cryptlib.h conf_lcl.h
 conf_err.o: ../../include/openssl/conf.h ../../include/openssl/err.h
 conf_err.o: ../../include/openssl/lhash.h ../../include/openssl/stack.h
