@@ -154,7 +154,7 @@
     - Stack Traceback (if the application dumps core)
 
  Report the bug to the OpenSSL project via the Request Tracker
- (http://www.openssl.org/rt2.html) by mail to:
+ (http://www.openssl.org/support/rt2.html) by mail to:
 
     openssl-bugs@openssl.org
 
