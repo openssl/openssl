@@ -458,10 +458,14 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *ssl_method,
 			{
 			ch= *l;
 			i=0;
+#ifndef CHARSET_EBCDIC
 			while (	((ch >= 'A') && (ch <= 'Z')) ||
 				((ch >= '0') && (ch <= '9')) ||
 				((ch >= 'a') && (ch <= 'z')) ||
 				 (ch == '-'))
+#else
+			while (	isalnum(ch) || (ch == '-'))
+#endif
 				 {
 				 buf[i]=ch;
 				 ch= *(++l);

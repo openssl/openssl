@@ -93,6 +93,9 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	unsigned char c='A';
 	int i,j,k;
 
+#ifdef CHARSET_EBCDIC
+	c = os_toascii[c]; /*'A' in ASCII */
+#endif
 	k=0;
 	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
 		{
@@ -514,9 +517,15 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	     int len)
 	{
 	static const unsigned char *salt[3]={
+#ifndef CHARSET_EBCDIC
 		(const unsigned char *)"A",
 		(const unsigned char *)"BB",
 		(const unsigned char *)"CCC",
+#else
+		(const unsigned char *)"\x41",
+		(const unsigned char *)"\x42\x42",
+		(const unsigned char *)"\x43\x43\x43",
+#endif
 		};
 	unsigned char buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;

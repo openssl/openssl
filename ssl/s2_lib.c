@@ -361,6 +361,11 @@ void ssl2_generate_key_material(SSL *s)
 	unsigned char *km;
 	unsigned char c='0';
 
+#ifdef CHARSET_EBCDIC
+	c = os_toascii['0']; /* Must be an ASCII '0', not EBCDIC '0',
+				see SSLv2 docu */
+#endif
+
 	km=s->s2->key_material;
 	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
 		{
