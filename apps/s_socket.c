@@ -62,6 +62,14 @@
 #include <errno.h>
 #include <signal.h>
 
+#define USE_SOCKETS
+#define NON_MAIN
+#include "apps.h"
+#undef USE_SOCKETS
+#undef NON_MAIN
+#include "s_apps.h"
+#include <openssl/ssl.h>
+
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
@@ -70,14 +78,6 @@
 #define __U_INT
 typedef unsigned int u_int;
 #endif
-
-#define USE_SOCKETS
-#define NON_MAIN
-#include "apps.h"
-#undef USE_SOCKETS
-#undef NON_MAIN
-#include "s_apps.h"
-#include <openssl/ssl.h>
 
 static struct hostent *GetHostByName(char *name);
 #ifdef OPENSSL_SYS_WINDOWS
