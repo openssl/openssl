@@ -66,8 +66,8 @@ LIBDEPS=
 #------------------------------------------------------------------------------
 # The rest is private to this makefile.
 
-#DEBUG=:
-DEBUG=set -x
+#SET_X=:
+SET_X=set -x
 
 top:
 	echo "Trying to use this makefile interactively?  Don't."
@@ -87,33 +87,33 @@ CALC_VERSIONS=	\
 	fi
 
 LINK_APP=	\
-  ( $(DEBUG);   \
+  ( $(SET_X);   \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$LDCMD $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
 
 LINK_SO=	\
-  ( $(DEBUG);   \
+  ( $(SET_X);   \
     nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$SHAREDCMD $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
-  $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
+  $(SYMLINK_SO); ( $(SET_X); rm -f lib$(LIBNAME).exp )
 SYMLINK_SO=	\
 	if [ -n "$$INHIBIT_SYMLINKS" ]; then :; else \
 		prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 		if [ -n "$$SHLIB_COMPAT" ]; then \
 			for x in $$SHLIB_COMPAT; do \
-				( $(DEBUG); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
+				( $(SET_X); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
 				  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
 				prev=$$SHLIB$$x$$SHLIB_SUFFIX; \
 			done; \
 		fi; \
 		if [ -n "$$SHLIB_SOVER" ]; then \
-			( $(DEBUG); rm -f $$SHLIB$$SHLIB_SUFFIX; \
+			( $(SET_X); rm -f $$SHLIB$$SHLIB_SUFFIX; \
 			  ln -s $$prev $$SHLIB$$SHLIB_SUFFIX ); \
 		fi; \
 	fi
@@ -123,7 +123,7 @@ LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_A_VIA_O=	\
   SHOBJECTS=lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( $(DEBUG); \
+  ( $(SET_X); \
     ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
   $(LINK_SO) && rm -f $(LIBNAME).o
 LINK_SO_A_UNPACKED=	\
@@ -202,7 +202,7 @@ link_o.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) -dynamiclib"; \
@@ -218,7 +218,7 @@ link_a.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) -dynamiclib"; \
@@ -233,7 +233,7 @@ link_a.darwin:
 link_app.darwin:
 	LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
 	$(LINK_APP)
 
@@ -276,7 +276,7 @@ link_o.alpha-osf1:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -299,7 +299,7 @@ link_a.alpha-osf1:
 	else \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -322,7 +322,7 @@ link_app.alpha-osf1:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"
 	fi; \
 	$(LINK_APP)
@@ -496,7 +496,7 @@ link_o.svr3:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$(CFLAGS) -G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
@@ -510,7 +510,7 @@ link_a.svr3:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$(CFLAGS) -G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
@@ -523,7 +523,7 @@ link_app.svr3:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
@@ -538,7 +538,7 @@ link_o.svr5:
 		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$(CFLAGS) $${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
@@ -554,7 +554,7 @@ link_a.svr5:
 		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$(CFLAGS) $${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
@@ -567,7 +567,7 @@ link_app.svr5:
 	else \
 		LDCMD=$(CC);\
 		LDFLAGS="$(CFLAGS)"; \
-		LIBDEPS="$(LIBDEPS) -lc"; \
+		LIBDEPS="$(LIBDEPS)"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
 	$(LINK_APP)
@@ -662,19 +662,23 @@ link_app.hpux:
 
 link_o.aix:
 	@ $(CALC_VERSIONS); \
+	OBJECT_MODE=`expr x$(SHARED_LDFLAGS) : 'x\-[a-z]\([0-9]*\)'`; \
+	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
 	SHAREDCMD='$(CC)'; \
-	$(LINK_SO_O)
+	$(LINK_SO_O); rm -rf lib$(LIBNAME).exp
 link_a.aix:
 	@ $(CALC_VERSIONS); \
+	OBJECT_MODE=`expr x$(SHARED_LDFLAGS) : 'x\-[a-z]\([0-9]*\)'`; \
+	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
@@ -683,7 +687,7 @@ link_a.aix:
 link_app.aix:
 	LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS) -blibpath:$(LIBRPATH)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"
 	$(LINK_APP)
 
@@ -691,7 +695,7 @@ link_o.reliantunix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) -G'; \
@@ -701,7 +705,7 @@ link_a.reliantunix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) -G'; \
@@ -710,7 +714,7 @@ link_a.reliantunix:
 link_app.reliantunix:
 	LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
+	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"
 	$(LINK_APP)
 
