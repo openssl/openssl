@@ -147,7 +147,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 		ASN1err(ASN1_F_BN_TO_ASN1_ENUMERATED,ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 		}
-	if(bn->neg) ret->type = V_ASN1_NEG_ENUMERATED;
+	if(BN_get_sign(bn)) ret->type = V_ASN1_NEG_ENUMERATED;
 	else ret->type=V_ASN1_ENUMERATED;
 	j=BN_num_bits(bn);
 	len=((j == 0)?0:((j/8)+1));
@@ -175,6 +175,6 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
 		ASN1err(ASN1_F_ASN1_ENUMERATED_TO_BN,ASN1_R_BN_LIB);
-	else if(ai->type == V_ASN1_NEG_ENUMERATED) ret->neg = 1;
+	else if(ai->type == V_ASN1_NEG_ENUMERATED) BN_set_sign(ret,1);
 	return(ret);
 	}

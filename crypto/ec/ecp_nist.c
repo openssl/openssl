@@ -191,7 +191,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 
 	/* group->field */
 	if (!BN_copy(&group->field, p)) goto err;
-	group->field.neg = 0;
+	BN_set_sign(&group->field, 0);
 
 	/* group->a */
 	if (!group->field_mod_func(&group->a, a, p, ctx)) goto err;

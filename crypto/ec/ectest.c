@@ -603,7 +603,7 @@ void prime_field_tests()
 
 		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
 		if (!BN_add(z, z, y)) ABORT;
-		z->neg = 1;
+		BN_set_sign(z, 1);
 		scalars[0] = y;
 		scalars[1] = z; /* z = -(order + y) */
 
@@ -615,7 +615,7 @@ void prime_field_tests()
 
 		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0)) ABORT;
 		if (!BN_add(z, x, y)) ABORT;
-		z->neg = 1;
+		BN_set_sign(z, 1);
 		scalars[0] = x;
 		scalars[1] = y;
 		scalars[2] = z; /* z = -(x+y) */
@@ -1069,7 +1069,7 @@ void char2_field_tests()
 
 		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
 		if (!BN_add(z, z, y)) ABORT;
-		z->neg = 1;
+		BN_set_sign(z, 1);
 		scalars[0] = y;
 		scalars[1] = z; /* z = -(order + y) */
 
@@ -1081,7 +1081,7 @@ void char2_field_tests()
 
 		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0)) ABORT;
 		if (!BN_add(z, x, y)) ABORT;
-		z->neg = 1;
+		BN_set_sign(z, 1);
 		scalars[0] = x;
 		scalars[1] = y;
 		scalars[2] = z; /* z = -(x+y) */

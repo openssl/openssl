@@ -4,6 +4,15 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Extend the BIGNUM API by creating new macros that behave like
+     functions
+
+          void BN_set_sign(BIGNUM *a, int neg);
+          int BN_get_sign(const BIGNUM *a);
+
+     and avoid the need to access 'a->neg' directly in applications.
+     [Nils Larsch  <nla@trustcenter.de>]
+
   *) Implement fast modular reduction for pseudo-Mersenne primes
      used in NIST curves (crypto/bn/bn_nist.c, crypto/ec/ecp_nist.c).
      EC_GROUP_new_curve_GFp() will now automatically use this

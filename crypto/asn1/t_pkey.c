@@ -575,7 +575,7 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	const char *neg;
 
 	if (num == NULL) return(1);
-	neg=(num->neg)?"-":"";
+	neg = (BN_get_sign(num))?"-":"";
 	if (off)
 		{
 		if (off > 128) off=128;

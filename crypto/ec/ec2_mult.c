@@ -297,8 +297,8 @@ static int point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scal
 		}
 
 	/* GF(2^m) field elements should always have BIGNUM::neg = 0 */
-	r->X.neg = 0;
-	r->Y.neg = 0;
+	BN_set_sign(&r->X, 0);
+	BN_set_sign(&r->Y, 0);
 
 	ret = 1;
 
@@ -342,14 +342,16 @@ int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if (scalar)
 		{
 		if (!point_multiply(group, p, scalar, group->generator, ctx)) goto err;
-		if (scalar->neg) if (!group->meth->invert(group, p, ctx)) goto err;
+		if (BN_get_sign(scalar)) 
+			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
 		}
 
 	for (i = 0; i < num; i++)
 		{
 		if (!point_multiply(group, p, scalars[i], points[i], ctx)) goto err;
-		if (scalars[i]->neg) if (!group->meth->invert(group, p, ctx)) goto err;
+		if (BN_get_sign(scalars[i]))
+			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
 		}
 

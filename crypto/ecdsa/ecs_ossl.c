@@ -353,13 +353,15 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	if (BN_is_zero(sig->r) || sig->r->neg || BN_ucmp(sig->r, order) >= 0)
+	if (BN_is_zero(sig->r) || BN_get_sign(sig->r) ||
+	    BN_ucmp(sig->r, order) >= 0)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_BAD_SIGNATURE);
 		ret = 0;
 		goto err;
 	}
-	if (BN_is_zero(sig->s) || sig->s->neg || BN_ucmp(sig->s, order) >= 0)
+	if (BN_is_zero(sig->s) || BN_get_sign(sig->s) ||
+	    BN_ucmp(sig->s, order) >= 0)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_BAD_SIGNATURE);
 		ret = 0;
