@@ -297,9 +297,9 @@ typedef struct ssl_session_st
 #define SSL_CTX_get_options(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_set_options(ssl,op) \
-	SSL_ctrl(ctx,SSL_CTRL_OPTIONS,0,NULL)
+	SSL_ctrl(ssl,SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_get_options(ssl) \
-        SSL_ctrl(ctx,SSL_CTRL_OPTIONS,0,NULL)
+        SSL_ctrl(ssl,SSL_CTRL_OPTIONS,0,NULL)
 
 #define SSL_OP_NO_SSLv2					0x01000000L
 #define SSL_OP_NO_SSLv3					0x02000000L
