@@ -100,9 +100,14 @@
      [Lutz Jaenicke]
 
   *) Change the Unix RAND_poll() variant to be able to poll several
-     random devices and only read data for a small fragment of time
-     to avoid hangs.  Also separate out the Unix variant to it's own
-     file, rand_unix.c.  For VMS, there's a currently-empty rand_vms.c.
+     random devices, as specified by DEVRANDOM, until a sufficient amount
+     of data has been collected.   We spend at most 10 ms on each file
+     (select timeout) and read in non-blocking mode.  DEVRANDOM now
+     defaults to the list "/dev/urandom", "/dev/random", "/dev/srandom"
+     (previously it was just the string "/dev/urandom"), so on typical
+     platforms the 10 ms delay will never occur.
+     Also separate out the Unix variant to its own file, rand_unix.c.
+     For VMS, there's a currently-empty rand_vms.c.
      [Richard Levitte]
 
   *) Move OCSP client related routines to ocsp_cl.c. These
