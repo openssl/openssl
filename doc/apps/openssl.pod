@@ -39,86 +39,86 @@ SYNOPSIS above), each of which often has a wealth of options and arguments
 
 =over 10
 
-=item B<asn1parse> 
+=item L<B<asn1parse>|asn1parse(1)>
 
 Parse an ASN.1 sequence.
 
-=item B<ca>
+=item L<B<ca>|ca(1)>
 
 Certificate Authority (CA) Management.  
 
-=item B<ciphers>
+=item L<B<ciphers>|ciphers(1)>
 
 Cipher Suite Description Determination.
 
-=item B<crl>
+=item L<B<crl>|crl(1)>
 
 Certificate Revocation List (CRL) Management.
 
-=item B<crl2pkcs7>      
+=item L<B<crl2pkcs7>|crl2pkcs7(1)>
 
 CRL to PKCS#7 Conversion.
 
-=item B<dgst>
+=item L<B<dgst>|dgst(1)>
 
 Message Digest Calculation.
 
-=item B<dh>
+=item L<B<dh>|dh(1)>
 
 Diffie-Hellman Data Management.
 
-=item B<dsa>
+=item L<B<dsa>|dsa(1)>
 
 DSA Data Management.
 
-=item B<dsaparam>
+=item L<B<dsaparam>|dsaparam(1)>
 
 DSA Parameter Generation.
 
-=item B<enc>            
+=item L<B<enc>|enc(1)>
 
 Encoding with Ciphers.
 
-=item B<errstr>
+=item L<B<errstr>|errstr(1)>
 
 Error Number to Error String Conversion.
 
-=item B<gendh>
+=item L<B<gendh>|gendh(1)>
 
 Generation of Diffie-Hellman Parameters.
 
-=item B<gendsa>
+=item L<B<gendsa>|gendsa(1)>
 
 Generation of DSA Parameters.
 
-=item B<genrsa>
+=item L<B<genrsa>|genrsa(1)>
 
 Generation of RSA Parameters.
 
-=item B<passwd>
+=item L<B<passwd>|passwd(1)>
 
 Generation of hashed passwords.
 
-=item B<pkcs7>
+=item L<B<pkcs7>|pkcs7(1)>
 
 PKCS#7 Data Management.
 
-=item B<req>
+=item L<B<req>|req(1)>
 
 X.509 Certificate Signing Request (CSR) Management.
 
-=item B<rsa>
+=item L<B<rsa>|rsa(1)>
 
 RSA Data Management.
 
-=item B<s_client>
+=item L<B<s_client>|s_client(1)>
 
 This implements a generic SSL/TLS client which can establish a transparent
 connection to a remote server speaking SSL/TLS. It's intended for testing
 purposes only and provides only rudimentary interface functionality but
 internally uses mostly all functionality of the OpenSSL B<ssl> library.
 
-=item B<s_server>
+=item L<B<s_server>|s_server(1)>
 
 This implements a generic SSL/TLS server which accepts connections from remote
 clients speaking SSL/TLS. It's intended for testing purposes only and provides
@@ -127,31 +127,31 @@ functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
 
-=item B<s_time>        
+=item L<B<s_time>|s_time(1)>
 
 SSL Connection Timer.
 
-=item B<sess_id>
+=item L<B<sess_id>|sess_id(1)>
 
 SSL Session Data Management.
 
-=item B<smime>
+=item L<B<smime>|smime(1)>
 
 S/MIME mail processing.
 
-=item B<speed>
+=item L<B<speed>|speed(1)>
 
 Algorithm Speed Measurement.
 
-=item B<verify>
+=item L<B<verify>|verify(1)>
 
 X.509 Certificate Verification.
 
-=item B<version>
+=item L<B<version>|version(1)>
 
 OpenSSL Version Information.
 
-=item B<x509>           
+=item L<B<x509>|x509(1)>
 
 X.509 Certificate Data Management.
 

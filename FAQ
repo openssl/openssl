@@ -3,7 +3,7 @@ OpenSSL  -  Frequently Asked Questions
 
 * Where is the documentation?
 * How can I contact the OpenSSL developers?
-* Do I have to license patents to use OpenSSL?
+* Do I need patent licenses to use OpenSSL?
 * Is OpenSSL thread-safe?
 * Why do I get a "PRNG not seeded" error message?
 
@@ -44,7 +44,7 @@ OpenSSL.  Information on the OpenSSL mailing lists is available from
 <URL: http://www.openssl.org>.
 
 
-* Do I have to license patents to use OpenSSL?
+* Do I need patent licenses to use OpenSSL?
 
 The patents section of the README file lists patents that may apply to
 you if you want to use OpenSSL.  For information on intellectual
