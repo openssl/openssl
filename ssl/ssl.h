@@ -973,6 +973,8 @@ char *	SSL_CIPHER_get_version(SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(SSL_CIPHER *c);
 
 int	SSL_get_fd(SSL *s);
+int	SSL_get_rfd(SSL *s);
+int	SSL_get_wfd(SSL *s);
 const char  * SSL_get_cipher_list(SSL *s,int n);
 char *	SSL_get_shared_ciphers(SSL *s, char *buf, int len);
 int	SSL_get_read_ahead(SSL * s);

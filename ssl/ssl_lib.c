@@ -445,10 +445,27 @@ BIO *SSL_get_wbio(SSL *s)
 
 int SSL_get_fd(SSL *s)
 	{
+	return(SSL_get_rfc(s));
+	}
+
+int SSL_get_rfd(SSL *s)
+	{
 	int ret= -1;
 	BIO *b,*r;
 
 	b=SSL_get_rbio(s);
+	r=BIO_find_type(b,BIO_TYPE_DESCRIPTOR);
+	if (r != NULL)
+		BIO_get_fd(r,&ret);
+	return(ret);
+	}
+
+int SSL_get_wfd(SSL *s)
+	{
+	int ret= -1;
+	BIO *b,*r;
+
+	b=SSL_get_wbio(s);
 	r=BIO_find_type(b,BIO_TYPE_DESCRIPTOR);
 	if (r != NULL)
 		BIO_get_fd(r,&ret);
