@@ -4,11 +4,8 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
-  *) Add a configuration entry for gcc on UnixWare 
+  *) Add a configuration entry for gcc on UnixWare.
      [Gary Benson <gbenson@redhat.com>]
-
-  *) Add assembler implementation for IA-64
-     [Andy Polyakov]
 
   *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
      messages are stored in a single piece (fixed-length part and
@@ -123,6 +120,9 @@
      Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
      messages might inadvertently be reject as too long.
      [Petr Lampa <lampa@fee.vutbr.cz>]
+
+  *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
+     [Andy Polyakov]
 
   *) Modified SSL library such that the verify_callback that has been set
      specificly for an SSL object with SSL_set_verify() is actually being
