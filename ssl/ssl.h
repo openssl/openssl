@@ -148,6 +148,7 @@ extern "C" {
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
@@ -402,7 +403,7 @@ struct ssl_ctx_st
 /**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
 
 	/* Default password callback. */
-/**/	int (*default_passwd_callback)();
+/**/	pem_password_cb *default_passwd_callback;
 
 	/* get client cert callback */
 /**/	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
@@ -954,7 +955,7 @@ int SSL_CTX_use_PrivateKey_ASN1(int pk,SSL_CTX *ctx,
 int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
 int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, unsigned char *d);
 
-void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx,int (*cb)());
+void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *);
 
 int SSL_CTX_check_private_key(SSL_CTX *ctx);
 int SSL_check_private_key(SSL *ctx);

@@ -65,7 +65,7 @@
 #include <openssl/pem.h>
 
 #ifndef NO_FP_API
-STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, int (*cb)())
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb)
 	{
         BIO *b;
         STACK_OF(X509_INFO) *ret;
@@ -82,7 +82,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, int (
 	}
 #endif
 
-STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, int (*cb)())
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb)
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
@@ -266,7 +266,7 @@ err:
 
 /* A TJH addition */
 int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
-	     unsigned char *kstr, int klen, int (*cb)())
+	     unsigned char *kstr, int klen, pem_password_cb *cb)
 	{
 	EVP_CIPHER_CTX ctx;
 	int i,ret=0;

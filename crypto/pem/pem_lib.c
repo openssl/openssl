@@ -149,7 +149,7 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 
 #ifndef NO_FP_API
 char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
-	     int (*cb)())
+	     pem_password_cb *cb)
 	{
         BIO *b;
         char *ret;
@@ -167,7 +167,7 @@ char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
 #endif
 
 char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
-	     int (*cb)())
+	     pem_password_cb *cb)
 	{
 	EVP_CIPHER_INFO cipher;
 	char *nm=NULL,*header=NULL;
@@ -236,7 +236,7 @@ int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
 
 int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     int (*callback)())
+	     pem_password_cb *callback)
 	{
 	EVP_CIPHER_CTX ctx;
 	int dsize=0,i,j,ret=0;
