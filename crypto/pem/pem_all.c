@@ -435,3 +435,35 @@ int PEM_write_bio_PKCS8(BIO *bp, X509_SIG *x)
 	return(PEM_ASN1_write_bio((int (*)())i2d_X509_SIG,
 		PEM_STRING_PKCS8,bp, (char *)x, NULL,NULL,0,NULL));
 	}
+
+#ifndef NO_FP_API
+PKCS8_PRIV_KEY_INFO *PEM_read_PKCS8_PRIV_KEY_INFO(FILE *fp,
+	     PKCS8_PRIV_KEY_INFO **x, pem_password_cb *cb)
+	{
+	return((PKCS8_PRIV_KEY_INFO *)
+		PEM_ASN1_read((char *(*)())d2i_PKCS8_PRIV_KEY_INFO,
+		PEM_STRING_PKCS8INF,fp,(char **)x,cb));
+	}
+#endif
+
+PKCS8_PRIV_KEY_INFO *PEM_read_bio_PKCS8_PRIV_KEY_INFO(BIO *bp,
+	     PKCS8_PRIV_KEY_INFO **x, pem_password_cb *cb)
+	{
+	return((PKCS8_PRIV_KEY_INFO *)
+		PEM_ASN1_read_bio((char *(*)())d2i_PKCS8_PRIV_KEY_INFO,
+		PEM_STRING_PKCS8INF,bp,(char **)x,cb));
+	}
+
+#ifndef NO_FP_API
+int PEM_write_PKCS8_PRIV_KEY_INFO(FILE *fp, PKCS8_PRIV_KEY_INFO *x)
+	{
+	return(PEM_ASN1_write((int (*)())i2d_PKCS8_PRIV_KEY_INFO,
+		PEM_STRING_PKCS8INF,fp, (char *)x, NULL,NULL,0,NULL));
+	}
+#endif
+
+int PEM_write_bio_PKCS8_PRIV_KEY_INFO(BIO *bp, PKCS8_PRIV_KEY_INFO *x)
+	{
+	return(PEM_ASN1_write_bio((int (*)())i2d_PKCS8_PRIV_KEY_INFO,
+		PEM_STRING_PKCS8INF,bp, (char *)x, NULL,NULL,0,NULL));
+	}

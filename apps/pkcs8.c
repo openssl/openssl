@@ -74,6 +74,7 @@ int MAIN(int argc, char **argv)
 	int iter = PKCS12_DEFAULT_ITER;
 	int informat, outformat;
 	int p8_broken = PKCS8_OK;
+	int nocrypt = 0;
 	X509_SIG *p8;
 	PKCS8_PRIV_KEY_INFO *p8inf;
 	EVP_PKEY *pkey;
@@ -98,6 +99,7 @@ int MAIN(int argc, char **argv)
 			} else badarg = 1;
 		} else if (!strcmp (*args, "-topk8")) topk8 = 1;
 		else if (!strcmp (*args, "-noiter")) iter = 1;
+		else if (!strcmp (*args, "-nocrypt")) nocrypt = 1;
 		else if (!strcmp (*args, "-nooct")) p8_broken = PKCS8_NO_OCTET;
 		else if (!strcmp (*args, "-in")) {
 			if (args[1]) {
@@ -116,11 +118,14 @@ int MAIN(int argc, char **argv)
 	if (badarg) {
 		BIO_printf (bio_err, "Usage pkcs8 [options]\n");
 		BIO_printf (bio_err, "where options are\n");
-		BIO_printf (bio_err, "-in file	input file\n");
-		BIO_printf (bio_err, "-out file	output file\n");
-		BIO_printf (bio_err, "-topk8    output PKCS8 file\n");
-		BIO_printf (bio_err, "-nooct    use (broken) no octet form\n");
-		BIO_printf (bio_err, "-noiter   use 1 as iteration cound\n");
+		BIO_printf (bio_err, "-in file   input file\n");
+		BIO_printf (bio_err, "-inform X  input format (DER or PEM)\n");
+		BIO_printf (bio_err, "-outform X output format (DER or PEM)\n");
+		BIO_printf (bio_err, "-out file  output file\n");
+		BIO_printf (bio_err, "-topk8     output PKCS8 file\n");
+		BIO_printf (bio_err, "-nooct     use (broken) no octet form\n");
+		BIO_printf (bio_err, "-noiter    use 1 as iteration count\n");
+		BIO_printf (bio_err, "-nocrypt   use or expect unencrypted private key\n");
 		return (1);
 	}
 
@@ -154,35 +159,66 @@ int MAIN(int argc, char **argv)
 			return (1);
 		}
 		PKCS8_set_broken(p8inf, p8_broken);
-		EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
-		if (!(p8 = PKCS8_encrypt(pbe_nid, pass, strlen(pass),
-				 NULL, 0, iter, p8inf))) {
-			BIO_printf (bio_err, "Error encrypting key\n", outfile);
-			ERR_print_errors(bio_err);
-			return (1);
+		if(nocrypt) {
+			if(outformat == FORMAT_PEM) 
+				PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
+			else if(outformat == FORMAT_ASN1)
+				i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8inf);
+			else {
+				BIO_printf(bio_err, "Bad format specified for key\n");
+				return (1);
+			}
+		} else {
+			EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
+			if (!(p8 = PKCS8_encrypt(pbe_nid, pass, strlen(pass),
+					 NULL, 0, iter, p8inf))) {
+				BIO_printf (bio_err, "Error encrypting key\n",
+								 outfile);
+				ERR_print_errors(bio_err);
+				return (1);
+			}
+			if(outformat == FORMAT_PEM) 
+				PEM_write_bio_PKCS8 (out, p8);
+			else if(outformat == FORMAT_ASN1)
+				i2d_PKCS8_bio(out, p8);
+			else {
+				BIO_printf(bio_err, "Bad format specified for key\n");
+				return (1);
+			}
+			X509_SIG_free(p8);
 		}
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
-		PEM_write_bio_PKCS8 (out, p8);
-		X509_SIG_free(p8);
 		return (0);
 	}
 
-	if(informat == FORMAT_PEM) 
-		p8 = PEM_read_bio_PKCS8(in, NULL, NULL);
-	else if(informat == FORMAT_ASN1)
-		p8 = d2i_PKCS8_bio(in, NULL);
-	else {
-		BIO_printf(bio_err, "Bad input format specified for key\n");
-		return (1);
+	if(nocrypt) {
+		if(informat == FORMAT_PEM) 
+			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in,NULL,NULL);
+		else if(informat == FORMAT_ASN1)
+			p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
+		else {
+			BIO_printf(bio_err, "Bad format specified for key\n");
+			return (1);
+		}
+	} else {
+		if(informat == FORMAT_PEM) 
+			p8 = PEM_read_bio_PKCS8(in, NULL, NULL);
+		else if(informat == FORMAT_ASN1)
+			p8 = d2i_PKCS8_bio(in, NULL);
+		else {
+			BIO_printf(bio_err, "Bad format specified for key\n");
+			return (1);
+		}
+
+		if (!p8) {
+			BIO_printf (bio_err, "Error reading key\n", outfile);
+			ERR_print_errors(bio_err);
+			return (1);
+		}
+		EVP_read_pw_string(pass, 50, "Enter Password:", 0);
+		p8inf = M_PKCS8_decrypt(p8, pass, strlen(pass));
 	}
 
-	if (!p8) {
-		BIO_printf (bio_err, "Error reading key\n", outfile);
-		ERR_print_errors(bio_err);
-		return (1);
-	}
-	EVP_read_pw_string(pass, 50, "Enter Password:", 0);
-	p8inf = M_PKCS8_decrypt(p8, pass, strlen(pass));
 	if (!p8inf) {
 		BIO_printf(bio_err, "Error decrypting key\n", outfile);
 		ERR_print_errors(bio_err);
@@ -210,7 +246,7 @@ int MAIN(int argc, char **argv)
 	
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 
-	PEM_write_bio_PrivateKey (out, pkey, NULL, NULL, 0, NULL);
+	PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL);
 
 	return (0);
 }
