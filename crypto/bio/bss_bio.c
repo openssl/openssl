@@ -198,7 +198,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 		return 0;
 		}
 	
-	if (b1->buf != NULL)
+	if (b1->buf == NULL)
 		{
 		b1->buf = Malloc(b1->size);
 		if (b1->buf == NULL)
@@ -210,7 +210,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 		b1->offset = 0;
 		}
 	
-	if (b2->buf != NULL)
+	if (b2->buf == NULL)
 		{
 		b2->buf = Malloc(b2->size);
 		if (b2->buf == NULL)

@@ -512,6 +512,14 @@ int BIO_fd_non_fatal_error(int error);
 int BIO_dump(BIO *b,const char *bytes,int len);
 
 struct hostent *BIO_gethostbyname(const char *name);
+/* We might want a thread-safe interface too:
+ * struct hostent *BIO_gethostbyname_r(const char *name,
+ *     struct hostent *result, void *buffer, size_t buflen);
+ * or something similar (caller allocates a struct hostent,
+ * pointed to by "result", and additional buffer space for the various
+ * substructures; if the buffer does not suffice, NULL is returned
+ * and an appropriate error code is set).
+ */
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg);
 int BIO_socket_nbio(int fd,int mode);
