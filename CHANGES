@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
+     client receives HelloRequest while in a handshake.
+     [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
+
   +) New function SSL_renegotiate_pending().  This returns true once
      renegotiation has been requested (either SSL_renegotiate() call
      or HelloRequest/ClientHello receveived from the peer) and becomes

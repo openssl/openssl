@@ -387,7 +387,11 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					 * if their format is correct. Does not count for
 					 * 'Finished' MAC. */
 					if (p[1] == 0 && p[2] == 0 &&p[3] == 0)
+						{
+						s->init_num = 0;
 						skip_message = 1;
+						}
+			
 			}
 		while (skip_message);
 
