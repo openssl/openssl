@@ -133,7 +133,7 @@ des_cblock seed;
 				}
 			else
 				{
-				lp=&output[out_count-i-1];
+				lp=&output[(out_count-i-1)*8];
 				l2n(z1,lp);
 				l2n(z0,lp);
 				}
