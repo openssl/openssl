@@ -70,7 +70,7 @@
 #define PROG	sess_id_main
 
 static char *sess_id_usage[]={
-"usage: crl args\n",
+"usage: sess_id args\n",
 "\n",
 " -inform arg     - input format - default PEM (one of DER, TXT or PEM)\n",
 " -outform arg    - output format - default PEM\n",
