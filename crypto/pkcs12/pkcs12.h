@@ -183,7 +183,8 @@ ASN1_seq_unpack((p12)->authsafes->d.data->data, \
 
 #define M_PKCS8_decrypt(p8, pass, passlen) \
 (PKCS8_PRIV_KEY_INFO *) PKCS12_decrypt_d2i ((p8)->algor, \
-(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (pass), (passlen), (p8)->digest, 2)
+(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_free,\
+			 (pass), (passlen), (p8)->digest, 2)
 
 #define PKCS12_get_attr(bag, attr_nid) \
 			 PKCS12_get_attr_gen(bag->attrib, attr_nid)

@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 168
+#define NUM_NID 171
 #define NUM_SN 119
-#define NUM_LN 164
-#define NUM_OBJ 139
+#define NUM_LN 167
+#define NUM_OBJ 142
 
-static unsigned char lvalues[957]={
+static unsigned char lvalues[984]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -206,6 +206,9 @@ static unsigned char lvalues[957]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [939] OBJ_id_qt_cps */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [947] OBJ_id_qt_unotice */
 0x0F,                                        /* [955] OBJ_SMIMECapabilities */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x04,/* [956] OBJ_pbeWithMD2AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x06,/* [965] OBJ_pbeWithMD5AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [974] OBJ_pbeWithSHA1AndDES_CBC */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -443,6 +446,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
 {"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,1,
 	&(lvalues[955]),0},
+{"pbeWithMD2AndRC2-CBC","pbeWithMD2AndRC2-CBC",
+	NID_pbeWithMD2AndRC2_CBC,9,&(lvalues[956]),0},
+{"pbeWithMD5AndRC2-CBC","pbeWithMD5AndRC2-CBC",
+	NID_pbeWithMD5AndRC2_CBC,9,&(lvalues[965]),0},
+{"pbeWithSHA1AndDES-CBC","pbeWithSHA1AndDES-CBC",
+	NID_pbeWithSHA1AndDES_CBC,9,&(lvalues[974]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -673,14 +682,17 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[ 9]),/* "pbeWithMD2AndDES-CBC" */
+&(nid_objs[168]),/* "pbeWithMD2AndRC2-CBC" */
 &(nid_objs[112]),/* "pbeWithMD5AndCast5CBC" */
 &(nid_objs[10]),/* "pbeWithMD5AndDES-CBC" */
+&(nid_objs[169]),/* "pbeWithMD5AndRC2-CBC" */
 &(nid_objs[148]),/* "pbeWithSHA1And128BitRC2-CBC" */
 &(nid_objs[144]),/* "pbeWithSHA1And128BitRC4" */
 &(nid_objs[147]),/* "pbeWithSHA1And2-KeyTripleDES-CBC" */
 &(nid_objs[146]),/* "pbeWithSHA1And3-KeyTripleDES-CBC" */
 &(nid_objs[149]),/* "pbeWithSHA1And40BitRC2-CBC" */
 &(nid_objs[145]),/* "pbeWithSHA1And40BitRC4" */
+&(nid_objs[170]),/* "pbeWithSHA1AndDES-CBC" */
 &(nid_objs[68]),/* "pbeWithSHA1AndRC2-CBC" */
 &(nid_objs[69]),/* "pbeWithSHA1AndRC4" */
 &(nid_objs[ 2]),/* "pkcs" */
@@ -823,6 +835,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[28]),/* OBJ_dhKeyAgreement               1 2 840 113549 1 3 1 */
 &(nid_objs[ 9]),/* OBJ_pbeWithMD2AndDES_CBC         1 2 840 113549 1 5 1 */
 &(nid_objs[10]),/* OBJ_pbeWithMD5AndDES_CBC         1 2 840 113549 1 5 3 */
+&(nid_objs[168]),/* OBJ_pbeWithMD2AndRC2_CBC         1 2 840 113549 1 5 4 */
+&(nid_objs[169]),/* OBJ_pbeWithMD5AndRC2_CBC         1 2 840 113549 1 5 6 */
+&(nid_objs[170]),/* OBJ_pbeWithSHA1AndDES_CBC        1 2 840 113549 1 5 10 */
 &(nid_objs[68]),/* OBJ_pbeWithSHA1AndRC2_CBC        1 2 840 113549 1 5 11  */
 &(nid_objs[69]),/* OBJ_pbeWithSHA1AndRC4            1 2 840 113549 1 5 12  */
 &(nid_objs[161]),/* OBJ_pbes2                        1 2 840 113549 1 5 13 */

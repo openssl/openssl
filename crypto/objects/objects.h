@@ -875,6 +875,18 @@ extern "C" {
 #define NID_SMIMECapabilities		167
 #define OBJ_SMIMECapabilities		OBJ_id_pkcs9,15L
 
+#define LN_pbeWithMD2AndRC2_CBC		"pbeWithMD2AndRC2-CBC"
+#define NID_pbeWithMD2AndRC2_CBC	168
+#define OBJ_pbeWithMD2AndRC2_CBC	OBJ_pkcs,5L,4L
+
+#define LN_pbeWithMD5AndRC2_CBC		"pbeWithMD5AndRC2-CBC"
+#define NID_pbeWithMD5AndRC2_CBC	169
+#define OBJ_pbeWithMD5AndRC2_CBC	OBJ_pkcs,5L,6L
+
+#define LN_pbeWithSHA1AndDES_CBC	"pbeWithSHA1AndDES-CBC"
+#define NID_pbeWithSHA1AndDES_CBC	170
+#define OBJ_pbeWithSHA1AndDES_CBC	OBJ_pkcs,5L,10L
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

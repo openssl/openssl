@@ -109,6 +109,7 @@ extern "C" {
 #define PEM_STRING_RSA_PUBLIC	"RSA PUBLIC KEY"
 #define PEM_STRING_DSA		"DSA PRIVATE KEY"
 #define PEM_STRING_PKCS7	"PKCS7"
+#define PEM_STRING_PKCS8	"ENCRYPTED PRIVATE KEY"
 #define PEM_STRING_DHPARAMS	"DH PARAMETERS"
 #define PEM_STRING_SSL_SESSION	"SSL SESSION PARAMETERS"
 #define PEM_STRING_DSAPARAMS	"DSA PARAMETERS"
@@ -401,6 +402,7 @@ DH *PEM_read_DHparams(FILE *fp,DH **x, pem_password_cb *);
 EVP_PKEY *PEM_read_PrivateKey(FILE *fp,EVP_PKEY **x, pem_password_cb *);
 PKCS7 *PEM_read_PKCS7(FILE *fp,PKCS7 **x, pem_password_cb *);
 NETSCAPE_CERT_SEQUENCE *PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp,NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *);
+X509_SIG *PEM_read_PKCS8(FILE *fp,X509_SIG **x, pem_password_cb *);
 int PEM_write_X509(FILE *fp,X509 *x);
 int PEM_write_X509_REQ(FILE *fp,X509_REQ *x);
 int PEM_write_X509_CRL(FILE *fp,X509_CRL *x);
@@ -424,6 +426,7 @@ int PEM_write_DHparams(FILE *fp,DH *x);
 int PEM_write_DSAparams(FILE *fp,DSA *x);
 #endif
 int PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp,NETSCAPE_CERT_SEQUENCE *x);
+int PEM_write_PKCS8(FILE *fp,X509_SIG *x);
 #endif
 
 #ifdef HEADER_BIO_H
@@ -443,6 +446,7 @@ PKCS7 *PEM_read_bio_PKCS7(BIO *bp,PKCS7 **x, pem_password_cb *);
 DH *PEM_read_bio_DHparams(BIO *bp,DH **x, pem_password_cb *);
 #endif
 NETSCAPE_CERT_SEQUENCE *PEM_read_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp,NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *);
+X509_SIG *PEM_read_bio_PKCS8(BIO *bp,X509_SIG **x, pem_password_cb *);
 #ifndef NO_DSA
 DSA *PEM_read_bio_DSAparams(BIO *bp,DSA **x, pem_password_cb *);
 #endif
@@ -468,6 +472,7 @@ int PEM_write_bio_DHparams(BIO *bp,DH *x);
 int PEM_write_bio_DSAparams(BIO *bp,DSA *x);
 #endif
 int PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp,NETSCAPE_CERT_SEQUENCE *x);
+int PEM_write_bio_PKCS8(BIO *bp,X509_SIG *x);
 #endif
 
 #endif /* SSLEAY_MACROS */
