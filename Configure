@@ -688,6 +688,14 @@ print "BF_PTR2 used\n" if $bf_ptr == 2;
 if($IsWindows) {
 	open (OUT,">crypto/date.h") || die "Can't open date.h";
 	printf OUT "#define DATE \"%s\"\n", scalar gmtime();
+	printf OUT <<EOF; # Kludge -- usually those are passed on the command line
+#ifndef CFLAGS
+#define CFLAGS "$cc $cflags"
+#endif
+#ifndef PLATFORM
+#define PLATFORM "$target"
+#endif
+EOF
 	close(OUT);
 	system "perl crypto/objects/obj_dat.pl <crypto/objects/objects.h >crypto/objects/obj_dat.h";
 } else {
