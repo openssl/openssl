@@ -61,6 +61,7 @@
 
 #ifndef NO_FP_API
 #include <stdio.h>
+#include <stdlib.h>
 #endif
 
 #ifdef	__cplusplus
