@@ -410,7 +410,9 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
 
 my $flags="";
 my $depflags="";
-my $defines="";
+my $openssl_exclude_defines="";
+my $openssl_thread_defines="";
+my $openssl_other_defines="";
 my $libs="";
 my $target="";
 my $options="";
@@ -420,7 +422,7 @@ foreach (@ARGV)
 	 	{
 		$no_asm=1;
 		$flags .= "-DNO_ASM ";
-		$defines .= "#define NO_ASM\n";
+		$openssl_exclude_defines .= "#define NO_ASM\n";
 		}
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
@@ -433,14 +435,14 @@ foreach (@ARGV)
 		$algo =~ tr/[a-z]/[A-Z]/;
 		$flags .= "-DNO_$algo ";
 		$depflags .= "-DNO_$algo ";
-		$defines .= "#define NO_$algo\n";
+		$openssl_exclude_defines .= "#define NO_$algo\n";
 		if ($algo eq "DES")
 			{
 			push @skip, "mdc2";
 			$options .= " no-mdc2";
 			$flags .= "-DNO_MDC2 ";
 			$depflags .= "-DNO_MDC2 ";
-			$defines .= "#define NO_MDC2\n";
+			$openssl_exclude_defines .= "#define NO_MDC2\n";
 			}
 		}
 	elsif (/^386$/)
@@ -449,7 +451,7 @@ foreach (@ARGV)
 		{
 		$libs.= "-lRSAglue -lrsaref ";
 		$flags.= "-DRSAref ";
-		$defines .= "#define RSAref\n";
+		$openssl_other_defines .= "#define RSAref\n";
 		}
 	elsif (/^[-+]/)
 		{
@@ -537,11 +539,13 @@ if ($thread_cflag eq "(unknown)")
 	{
 	# If the user asked for "threads", hopefully they also provided
 	# any system-dependent compiler options that are necessary.
-	$thread_cflags="-DTHREADS $cflags" 
+	$thread_cflags="-DTHREADS $cflags" ;
+	$thread_defines .= "#define THREADS\n";
 	}
 else
 	{
 	$thread_cflags="-DTHREADS $thread_cflag $cflags";
+	$thread_defines .= "#define THREADS\n";
 	foreach my $def (split ' ',$thread_cflag)
 		{
 		if ($def =~ s/^-D//)
@@ -562,7 +566,7 @@ if ($no_asm)
 if ($threads)
 	{
 		$cflags=$thread_cflags;
-		$defines .= $thread_defines;
+		$openssl_thread_defines .= $thread_defines;
 	}
 
 #my ($bn1)=split(/\s+/,$bn_obj);
@@ -718,13 +722,17 @@ foreach (sort split(/\s+/,$bn_ops))
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
 open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
-print OUT "/* opensslconf.h */"
+print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
-if ($defines ne "")
-	{
-	print OUT "/* OpenSSL was configured with the following options: */\n";
-	print OUT "#ifdef OPENSSL_EXCLUDED\n$defines#endif\n\n";
-	}
+
+print OUT "/* OpenSSL was configured with the following options: */\n";
+$openssl_exclude_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
+$openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
+$openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
+print OUT "#ifdef OPENSSL_EXCLUDE_DEFINES\n$openssl_exclude_defines#endif\n";
+print OUT "#ifdef OPENSSL_THREAD_DEFINES\n$openssl_thread_defines#endif\n";
+print OUT "#ifdef OPENSSL_OTHER_DEFINES\n$openssl_other_defines#endif\n\n";
+
 while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
