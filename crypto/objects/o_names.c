@@ -67,8 +67,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		{
 		MemCheck_off();
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
-		name_funcs->hash_func = lh_strhash;
-		name_funcs->cmp_func = strcmp;
+		name_funcs->hash_func = (LHASH_HASH_FN_TYPE)lh_strhash;
+		name_funcs->cmp_func = (LHASH_COMP_FN_TYPE)strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
 						* ((void *)0), which according
 						* to Compaq C is not really
