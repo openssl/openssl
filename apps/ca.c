@@ -587,17 +587,23 @@ bad:
 			BIO_printf(bio_err,"there needs to be defined a directory for new certificate to be placed in\n");
 			goto err;
 			}
-#ifdef VMS
-		/* For technical reasons, VMS misbehaves with X_OK */
-		if (access(outdir,R_OK|W_OK) != 0)
-#else
+#ifndef VMS /* outdir is a directory spec, but access() for VMS demands a
+	       filename.  In any case, stat(), below, will catch the problem
+	       if outdir is not a directory spec, and the fopen() or open()
+	       will catch an error if there is no write access.
+
+	       Presumably, this problem could also be solved by using the DEC
+	       C routines to convert the directory syntax to Unixly, and give
+	       that to access().  However, time's too short to do that just
+	       now.
+            */
 		if (access(outdir,R_OK|W_OK|X_OK) != 0)
-#endif
 			{
 			BIO_printf(bio_err,"I am unable to access the %s directory\n",outdir);
 			perror(outdir);
 			goto err;
 			}
+#endif
 
 		if (stat(outdir,&sb) != 0)
 			{
