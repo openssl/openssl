@@ -8,7 +8,7 @@ DSA_size - get DSA signature size
 
  #include <openssl/dsa.h>
 
- int DSA_size(DSA *dsa);
+ int DSA_size(const DSA *dsa);
 
 =head1 DESCRIPTION
 

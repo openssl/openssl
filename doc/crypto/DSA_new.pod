@@ -14,7 +14,8 @@ DSA_new, DSA_free - allocate and free DSA objects
 
 =head1 DESCRIPTION
 
-DSA_new() allocates and initializes a B<DSA> structure.
+DSA_new() allocates and initializes a B<DSA> structure. It is equivalent to
+calling DSA_new_method(NULL).
 
 DSA_free() frees the B<DSA> structure and its components. The values are
 erased before the memory is returned to the system.

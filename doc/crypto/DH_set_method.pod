@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_set_default_openssl_method, DH_get_default_openssl_method,
+DH_set_default_method, DH_get_default_method,
 DH_set_method, DH_new_method, DH_OpenSSL - select DH method
 
 =head1 SYNOPSIS
@@ -10,45 +10,47 @@ DH_set_method, DH_new_method, DH_OpenSSL - select DH method
  #include <openssl/dh.h>
  #include <openssl/engine.h>
 
- void DH_set_default_openssl_method(DH_METHOD *meth);
+ void DH_set_default_method(const DH_METHOD *meth);
 
- DH_METHOD *DH_get_default_openssl_method(void);
+ const DH_METHOD *DH_get_default_method(void);
 
- int DH_set_method(DH *dh, ENGINE *engine);
+ int DH_set_method(DH *dh, const DH_METHOD *meth);
 
  DH *DH_new_method(ENGINE *engine);
 
- DH_METHOD *DH_OpenSSL(void);
+ const DH_METHOD *DH_OpenSSL(void);
 
 =head1 DESCRIPTION
 
 A B<DH_METHOD> specifies the functions that OpenSSL uses for Diffie-Hellman
 operations. By modifying the method, alternative implementations
-such as hardware accelerators may be used.
+such as hardware accelerators may be used. IMPORTANT: See the NOTES section for
+important information about how these DH API functions are affected by the use
+of B<ENGINE> API calls.
 
-Initially, the default is to use the OpenSSL internal implementation.
-DH_OpenSSL() returns a pointer to that method.
+Initially, the default DH_METHOD is the OpenSSL internal implementation, as
+returned by DH_OpenSSL().
 
-DH_set_default_openssl_method() makes B<meth> the default method for all DH
-structures created later. B<NB:> This is true only whilst the default engine
-for Diffie-Hellman operations remains as "openssl". ENGINEs provide an
-encapsulation for implementations of one or more algorithms, and all the DH
-functions mentioned here operate within the scope of the default
-"openssl" engine.
+DH_set_default_method() makes B<meth> the default method for all DH
+structures created later. B<NB>: This is true only whilst no ENGINE has been set
+as a default for DH, so this function is no longer recommended.
 
-DH_get_default_openssl_method() returns a pointer to the current default
-method for the "openssl" engine.
+DH_get_default_method() returns a pointer to the current default DH_METHOD.
+However, the meaningfulness of this result is dependant on whether the ENGINE
+API is being used, so this function is no longer recommended.
 
-DH_set_method() selects B<engine> as the engine that will be responsible for
-all operations using the structure B<dh>. If this function completes successfully,
-then the B<dh> structure will have its own functional reference of B<engine>, so
-the caller should remember to free their own reference to B<engine> when they are
-finished with it. NB: An ENGINE's DH_METHOD can be retrieved (or set) by
-ENGINE_get_DH() or ENGINE_set_DH().
+DH_set_method() selects B<meth> to perform all operations using the key B<dh>.
+This will replace the DH_METHOD used by the DH key and if the previous method
+was supplied by an ENGINE, the handle to that ENGINE will be released during the
+change. It is possible to have DH keys that only work with certain DH_METHOD
+implementations (eg. from an ENGINE module that supports embedded
+hardware-protected keys), and in such cases attempting to change the DH_METHOD
+for the key can have unexpected results.
 
-DH_new_method() allocates and initializes a DH structure so that
-B<engine> will be used for the DH operations. If B<engine> is NULL,
-the default engine for Diffie-Hellman opertaions is used.
+DH_new_method() allocates and initializes a DH structure so that B<engine> will
+be used for the DH operations. If B<engine> is NULL, the default ENGINE for DH
+operations is used, and if no default ENGINE is set, the DH_METHOD controlled by
+DH_set_default_method() is used.
 
 =head1 THE DH_METHOD STRUCTURE
 
@@ -82,17 +84,28 @@ the default engine for Diffie-Hellman opertaions is used.
 
 =head1 RETURN VALUES
 
-DH_OpenSSL() and DH_get_default_openssl_method() return pointers to the
-respective B<DH_METHOD>s.
+DH_OpenSSL() and DH_get_default_method() return pointers to the respective
+B<DH_METHOD>s.
 
-DH_set_default_openssl_method() returns no value.
+DH_set_default_method() returns no value.
 
-DH_set_method() returns non-zero if the ENGINE associated with B<dh>
-was successfully changed to B<engine>.
+DH_set_method() returns non-zero if the provided B<meth> was successfully set as
+the method for B<dh> (including unloading the ENGINE handle if the previous
+method was supplied by an ENGINE).
 
-DH_new_method() returns NULL and sets an error code that can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails.
-Otherwise it returns a pointer to the newly allocated structure.
+DH_new_method() returns NULL and sets an error code that can be obtained by
+L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails. Otherwise it
+returns a pointer to the newly allocated structure.
+
+=head1 NOTES
+
+As of version 0.9.7, DH_METHOD implementations are grouped together with other
+algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in B<ENGINE> modules. If a
+default ENGINE is specified for DH functionality using an ENGINE API function,
+that will override any DH defaults set using the DH API (ie.
+DH_set_default_method()). For this reason, the ENGINE API is the recommended way
+to control default implementations for use in DH and other cryptographic
+algorithms.
 
 =head1 SEE ALSO
 
@@ -103,9 +116,14 @@ L<dh(3)|dh(3)>, L<DH_new(3)|DH_new(3)>
 DH_set_default_method(), DH_get_default_method(), DH_set_method(),
 DH_new_method() and DH_OpenSSL() were added in OpenSSL 0.9.4.
 
-DH_set_default_openssl_method() and DH_get_default_openssl_method()
-replaced DH_set_default_method() and DH_get_default_method() respectively,
-and DH_set_method() and DH_new_method() were altered to use B<ENGINE>s
-rather than B<DH_METHOD>s during development of OpenSSL 0.9.6.
+DH_set_default_openssl_method() and DH_get_default_openssl_method() replaced
+DH_set_default_method() and DH_get_default_method() respectively, and
+DH_set_method() and DH_new_method() were altered to use B<ENGINE>s rather than
+B<DH_METHOD>s during development of the engine version of OpenSSL 0.9.6. For
+0.9.7, the handling of defaults in the ENGINE API was restructured so that this
+change was reversed, and behaviour of the other functions resembled more closely
+the previous behaviour. The behaviour of defaults in the ENGINE API now
+transparently overrides the behaviour of defaults in the DH API without
+requiring changing these function prototypes.
 
 =cut
