@@ -122,8 +122,10 @@ int passlen;
 ASN1_OCTET_STRING *oct;
 int seq;
 {
-	unsigned char *out, *p, *ret;
+	unsigned char *out, *p;
+	char *ret;
 	int outlen;
+
 	if (!PKCS12_pbe_crypt (algor, pass, passlen, oct->data, oct->length,
 				 &out, &outlen, 0)) {
 		PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_PKCS12_PBE_CRYPT_ERROR);

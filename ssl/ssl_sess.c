@@ -251,7 +251,7 @@ int len;
 
 	if (ret->cipher == NULL)
 		{
-		char buf[5],*p;
+		unsigned char buf[5],*p;
 		unsigned long l;
 
 		p=buf;

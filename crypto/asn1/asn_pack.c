@@ -114,7 +114,9 @@ char *ASN1_unpack_string (oct, d2i)
 ASN1_STRING *oct;
 char *(*d2i)();
 {
-	unsigned char *p, *ret;
+	unsigned char *p;
+	char *ret;
+
 	p = oct->data;
 	if(!(ret = d2i(NULL, &p, oct->length)))
 		ASN1err(ASN1_F_ASN1_UNPACK_STRING,ASN1_R_DECODE_ERROR);

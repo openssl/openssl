@@ -192,7 +192,7 @@ int i;
 		}
 	}
 
-int rc2_get_asn1_type_and_iv(c,type)
+static int rc2_get_asn1_type_and_iv(c,type)
 EVP_CIPHER_CTX *c;
 ASN1_TYPE *type;
 	{

@@ -115,7 +115,7 @@ char *str;
 
 }
 
-ASN1_OCTET_STRING *s2i_skey_id(method, ctx, str)
+static ASN1_OCTET_STRING *s2i_skey_id(method, ctx, str)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
 char *str;
