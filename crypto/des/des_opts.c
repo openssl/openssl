@@ -118,7 +118,7 @@ extern void exit();
 #undef DES_RISC2
 #undef DES_PTR
 #undef D_ENCRYPT
-#define des_encrypt1  des_encrypt_u4_cisc_idx
+#define des_encrypt1 des_encrypt_u4_cisc_idx
 #define des_encrypt2 des_encrypt2_u4_cisc_idx
 #define des_encrypt3 des_encrypt3_u4_cisc_idx
 #define des_decrypt3 des_decrypt3_u4_cisc_idx
@@ -150,7 +150,7 @@ extern void exit();
 #undef des_encrypt2
 #undef des_encrypt3
 #undef des_decrypt3
-#define des_encrypt1  des_encrypt_u4_risc1_idx
+#define des_encrypt1 des_encrypt_u4_risc1_idx
 #define des_encrypt2 des_encrypt2_u4_risc1_idx
 #define des_encrypt3 des_encrypt3_u4_risc1_idx
 #define des_decrypt3 des_decrypt3_u4_risc1_idx
