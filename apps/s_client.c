@@ -337,7 +337,7 @@ bad:
 			}
 		}
 
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)

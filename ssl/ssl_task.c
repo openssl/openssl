@@ -226,7 +226,7 @@ int main ( int argc, char **argv )
 	printf("cipher list: %s\n", cipher ? cipher : "{undefined}" );
 
 	SSL_load_error_strings();
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 /* DRM, this was the original, but there is no such thing as SSLv2()
 	s_ctx=SSL_CTX_new(SSLv2());

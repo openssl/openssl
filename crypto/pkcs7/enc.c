@@ -77,7 +77,7 @@ char *argv[];
 	const EVP_CIPHER *cipher=NULL;
 	STACK_OF(X509) *recips=NULL;
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 
 	data=BIO_new(BIO_s_file());
 	while(argc > 1)

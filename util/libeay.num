@@ -499,9 +499,9 @@ SHA1_Update				504
 SHA_Final				505
 SHA_Init				506
 SHA_Update				507
-SSLeay_add_all_algorithms		508
-SSLeay_add_all_ciphers			509
-SSLeay_add_all_digests			510
+OpenSSL_add_all_algorithms		508
+OpenSSL_add_all_ciphers			509
+OpenSSL_add_all_digests			510
 TXT_DB_create_index			511
 TXT_DB_free				512
 TXT_DB_get_by_index			513

@@ -248,7 +248,7 @@ bad:
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
 
 	SSL_load_error_strings();
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 
 	c_ctx=SSL_CTX_new(ssl_method);
 	s_ctx=SSL_CTX_new(ssl_method);

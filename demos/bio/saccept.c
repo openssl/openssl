@@ -46,7 +46,7 @@ char *argv[];
 	SSL_load_error_strings();
 
 	/* Add ciphers and message digests */
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 
 	ctx=SSL_CTX_new(SSLv23_server_method());
 	if (!SSL_CTX_use_certificate_file(ctx,CERT_FILE,SSL_FILETYPE_PEM))

@@ -593,9 +593,12 @@ EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 
-void SSLeay_add_all_algorithms(void);
-void SSLeay_add_all_ciphers(void);
-void SSLeay_add_all_digests(void);
+void OpenSSL_add_all_algorithms(void);
+void OpenSSL_add_all_ciphers(void);
+void OpenSSL_add_all_digests(void);
+#define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
+#define SSLeay_add_all_ciphers() OpenSSL_add_all_ciphers()
+#define SSLeay_add_all_digests() OpenSSL_add_all_digests()
 
 int EVP_add_cipher(EVP_CIPHER *cipher);
 int EVP_add_digest(EVP_MD *digest);

@@ -4,6 +4,15 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Change the SSLeay_add_all_*() functions to OpenSSL_add_all_*() and
+     include a #define from the old name to the new. The original intent
+     was that statically linked binaries could for example just call
+     SSLeay_add_all_ciphers() to just add ciphers to the table and not
+     link with digests. This never worked becayse SSLeay_add_all_digests()
+     and SSLeay_add_all_ciphers() were in the same source file so calling
+     one would link with the other. They are now in separate source files.
+     [Steve Henson]
+
   *) Add a new -notext option to 'ca' and a -pubkey option to 'spkac'.
      [Steve Henson]
 

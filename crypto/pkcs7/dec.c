@@ -86,7 +86,7 @@ char *argv[];
 	int i,printit=0;
 	STACK_OF(PKCS7_SIGNER_INFO) *sk;
 
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 	data=BIO_new(BIO_s_file());

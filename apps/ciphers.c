@@ -141,7 +141,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL) goto err;

@@ -36,7 +36,7 @@ char *argv[];
 	SSL_load_error_strings();
 
 	/* Setup all the global SSL stuff */
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 	ssl_ctx=SSL_CTX_new(SSLv23_client_method());
 
 	/* Lets make a SSL structure */

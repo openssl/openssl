@@ -87,7 +87,7 @@ int MAIN(int argc, char **argv)
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
 	ERR_load_crypto_strings();
-	SSLeay_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 	args = argv + 1;
 	while (!badarg && *args && *args[0] == '-') {
 		if (!strcmp(*args,"-v2")) {
