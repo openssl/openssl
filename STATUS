@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 17:44:23 $
+  ______________                           $Date: 2000/09/21 20:09:16 $
 
   DEVELOPMENT STATE
 
@@ -108,11 +108,16 @@
 					libraries.  Tests pass as soon as
 					you make sure advapi32.lib gets
 					linked in. [FIXED]
+			VC-NT dynamic libs (NT4 SP6, VC6 SP4)	- success
 			VC-WIN32 (W2K Pro SP1, VC6 SP3, PSDK Jul2000)- success
 			hpux-parisc-gcc (B.10.20, gcc 2.95.2)	- success
 			hpux-parisc-cc (B.10.20, cc A.10.32.30)	- success
 			hpux-parisc-gcc [engine] (B.10.20, gcc 2.95.2)- success
 			hpux-parisc-cc [engine] (B.10.20, cc A.10.32.30)- success
+			hpux-parisc2-cc (B.11.11)		- success
+			hpux64-parisc2-cc (B.11.11)		- success
+				Kevin Steves also mentions that "All the new
+				targets look good on my end with hp-ux 11.0."
 			FreeBSD (2.2.5)				- failed
 				Only having USE_TOD made speed.c issue an
 					error. [FIXED]
