@@ -406,10 +406,9 @@ id-on 1			: id-on-personalData
 # personal data attributes
 id-pda 1		: id-pda-dateOfBirth
 id-pda 2		: id-pda-placeOfBirth
-id-pda 3		: id-pda-pseudonym
-id-pda 4		: id-pda-gender
-id-pda 5		: id-pda-countryOfCitizenship
-id-pda 6		: id-pda-countryOfResidence
+id-pda 3		: id-pda-gender
+id-pda 4		: id-pda-countryOfCitizenship
+id-pda 5		: id-pda-countryOfResidence
 
 # attribute certificate attributes
 id-aca 1		: id-aca-authenticationInfo
