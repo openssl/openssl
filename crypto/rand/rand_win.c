@@ -177,7 +177,7 @@ typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
         (LMSTR, LMSTR, DWORD, DWORD, LPBYTE*);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
-#endif
+#endif /* 0 */
 
 int RAND_poll(void)
 {
@@ -196,7 +196,7 @@ int RAND_poll(void)
        */
 	NETSTATGET netstatget = 0;
 	NETFREE netfree = 0;
-#endif
+#endif /* 0 */
 
 	/* load functions dynamically - not available on all systems */
 	advapi = LoadLibrary("ADVAPI32.DLL");
@@ -232,8 +232,11 @@ int RAND_poll(void)
 
 	if (netapi)
 		FreeLibrary(netapi);
-#endif
+#endif /* 0 */
  
+#if 0 /* It appears like this can cause an exception deep within ADVAPI32.DLL
+       * at random times.  Reported by Jeffrey Altman.
+       */
 	/* Read Performance Statistics from NT/2000 registry */
 	/* The size of the performance data can vary from call to call */
 	/* so we must guess the size of the buffer to use and increase */
@@ -264,6 +267,7 @@ int RAND_poll(void)
 	if (buf)
 		free(buf);
 	}
+#endif /* 0 */
 
 	if (advapi)
 		{
