@@ -1,8 +1,8 @@
 %define libmaj 0
 %define libmin 9
-%define librel 6
-#%define librev 
-Release: 2
+%define librel 7
+#%define librev a
+Release: 1
 
 %define openssldir /var/ssl
 
@@ -94,7 +94,7 @@ perl util/perlpath.pl /usr/bin/perl
 ./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
 %endif
 %ifarch alpha
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha-gcc shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
 %endif
 LD_LIBRARY_PATH=`pwd` make
 LD_LIBRARY_PATH=`pwd` make rehash
@@ -102,32 +102,15 @@ LD_LIBRARY_PATH=`pwd` make test
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install MANDIR=/usr/man INSTALL_PREFIX="$RPM_BUILD_ROOT"
+make MANDIR=/usr/man INSTALL_PREFIX="$RPM_BUILD_ROOT" install
 
 # Rename manpages
 for x in $RPM_BUILD_ROOT/usr/man/man*/* 
 	do mv ${x} ${x}ssl
 done
 
-## Install RSAref stuff
-#install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
-#install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
-
 # Make backwards-compatibility symlink to ssleay
 ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
-
-# Install shared libs
-install -m644 libcrypto.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libcrypto.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
-install -m644 libssl.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libssl.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
-(
-	cd $RPM_BUILD_ROOT/usr/lib
-	ln -sf libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
-	ln -sf libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
-	ln -sf libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
-	ln -sf libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
-)
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -167,6 +150,14 @@ ldconfig
 ldconfig
 
 %changelog
+* Thu Mar 22 2001 Richard Levitte <richard@levitte.org>
+- Removed redundant subsection that re-installed libcrypto.a and libssl.a
+  as well.  Also remove RSAref stuff completely, since it's not needed
+  any more.
+* Thu Mar 15 2001 Jeremiah Johnson <jjohnson@penguincomputing.com>
+- Removed redundant subsection that re-installed libcrypto.so.0.9.6 and
+  libssl.so.0.9.6.  As well as the subsection that created symlinks for
+  these.  make install handles all this.
 * Sat Oct 21 2000 Horms <horms@vergenet.net>
 - Make sure symlinks are created by using -f flag to ln.
   Otherwise some .so libraries are copied rather than
