@@ -97,7 +97,7 @@ static char *table2string(long s, OCSP_TBLSTR *ts, int len)
 	return "(UNKNOWN)";
 }
 
-static char* ocspResponseStatus2string(long s)
+char *OCSP_response_status_str(long s)
         {
 	static OCSP_TBLSTR rstat_tbl[] = {
 	        { OCSP_RESPONSE_STATUS_SUCCESSFUL, "successful" },
@@ -109,7 +109,7 @@ static char* ocspResponseStatus2string(long s)
 	return table2string(s, rstat_tbl, 6);
 	} 
 
-static char* ocspCertStatus2string(long s)
+char *OCSP_cert_status_str(long s)
         {
 	static OCSP_TBLSTR cstat_tbl[] = {
 	        { V_OCSP_CERTSTATUS_GOOD, "good" },
@@ -118,7 +118,7 @@ static char* ocspCertStatus2string(long s)
 	return table2string(s, cstat_tbl, 3);
 	} 
 
-static char * cRLReason2string(long s)
+char *OCSP_crl_reason_str(long s)
         {
 	OCSP_TBLSTR reason_tbl[] = {
 	  { OCSP_REVOKED_STATUS_UNSPECIFIED, "unspecified" },
@@ -195,7 +195,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 	if (BIO_puts(bp,"OCSP Response Data:\n") <= 0) goto err;
 	l=ASN1_ENUMERATED_get(o->responseStatus);
 	if (BIO_printf(bp,"    OCSP Response Status: %s (0x%x)\n",
-		       ocspResponseStatus2string(l), l) <= 0) goto err;
+		       OCSP_response_status_str(l), l) <= 0) goto err;
 	if (rb == NULL) return 1;
         if (BIO_puts(bp,"    Response Type: ") <= 0)
 	        goto err;
@@ -237,8 +237,8 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		cid = single->certId;
 		if(ocsp_certid_print(bp, cid, 4) <= 0) goto err;
 		cst = single->certStatus;
-		if (BIO_printf(bp,"\n    Cert Status: %s",
-			       ocspCertStatus2string(cst->type)) <= 0)
+		if (BIO_printf(bp,"    Cert Status: %s",
+			       OCSP_cert_status_str(cst->type)) <= 0)
 		        goto err;
 		if (cst->type == V_OCSP_CERTSTATUS_REVOKED)
 		        {
@@ -253,7 +253,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 				l=ASN1_ENUMERATED_get(rev->revocationReason);
 				if (BIO_printf(bp, 
 					 "\n    Revocation Reason: %s (0x%x)",
-					       cRLReason2string(l), l) <= 0)
+					       OCSP_crl_reason_str(l), l) <= 0)
 				        goto err;
 				}
 			}
@@ -271,6 +271,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 					"Response Single Extensions",
 					single->singleExtensions, flags, 8))
 							goto err;
+		if (!BIO_write(bp,"\n",1)) goto err;
 		}
 	if (!X509V3_extensions_print(bp, "Response Extensions",
 					rd->responseExtensions, flags, 4))
