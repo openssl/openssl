@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/20 15:15:37 $
+  ______________                           $Date: 2000/09/20 15:22:02 $
 
   DEVELOPMENT STATE
 
@@ -65,11 +65,12 @@
 				All hpux 10.20 targets succeeded provided -ldl
 					has been changed to -ldld.
 			solaris-sparcv9-gcc (2.6/ultra5)	- success
-			solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed
-				Complaints about a number of -x parameters to
-					the compiler and failed to compile an
-					assembler file.  Maybe a too old
-					compiler?
+			[ solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed      ]
+			[	Complaints about a number of -x parameters to ]
+			[		the compiler and failed to compile an ]
+			[		assembler file.  Maybe a too old      ]
+			[		compiler? (Yes, apparently:)          ]
+			solaris-sparcv9-cc (SunOS 5.6 SC4.2)	- success
 			FreeBSD (2.2.5-RELEASE)			- success
 			alpha-cc [engine] (OSF1 5.0A)		- success
 			irix-mips3-cc [engine] (Irix 6.2)	- success
