@@ -288,3 +288,15 @@
  targets for shared library creation, like linux-shared.  Those targets
  can currently be used on their own just as well, but this is expected
  to change in future versions of OpenSSL.
+
+ Note on random number generation
+ --------------------------------
+
+ Availability of cryptographically secure random numbers is required for
+ secret key generation. OpenSSL provides several options to seed the
+ internal PRNG. If not properly seeded, the internal PRNG will refuse
+ to deliver random bytes and a "PRNG not seeded error" will occur.
+ On systems without /dev/urandom (or similar) device, it may be necessary
+ to install additional support software to obtain random seed.
+ Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
+ and the FAQ for more information.
