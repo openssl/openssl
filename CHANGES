@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New X509V3_{X509,CRL,REVOKED}_get_d2i() functions. These will search
+     for, obtain and decode and extension and obtain its critical flag.
+     This allows all the necessary extension code to be handled in a
+     single function call.
+     [Steve Henson]
+
   *) RC4 tune-up featuring 30-40% performance improvement on most RISC
      platforms. See crypto/rc4/rc4_enc.c for further details.
      [Andy Polyakov]

@@ -175,3 +175,73 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 	return method->d2i(NULL, &p, ext->value->length);
 }
 
+/* Get critical flag and decoded version of extension from a NID.
+ * The "idx" variable returns the last found extension and can
+ * be used to retrieve multiple extensions of the same NID.
+ * However multiple extensions with the same NID is usually
+ * due to a badly encoded certificate so if idx is NULL we
+ * choke if multiple extensions exist.
+ * The "crit" variable is set to the critical value.
+ * The return value is the decoded extension or NULL on
+ * error. The actual error can have several different causes,
+ * the value of *crit reflects the cause:
+ * >= 0, extension found but not decoded (reflects critical value).
+ * -1 extension not found.
+ * -2 extension occurs more than once.
+ */
+
+void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
+{
+	int lastpos, i;
+	X509_EXTENSION *ex, *found_ex = NULL;
+	if(!x) {
+		if(idx) *idx = -1;
+		if(crit) *crit = -1;
+		return NULL;
+	}
+	if(idx) lastpos = *idx + 1;
+	else lastpos = 0;
+	if(lastpos < 0) lastpos = 0;
+	for(i = lastpos; i < sk_X509_EXTENSION_num(x); i++)
+	{
+		ex = sk_X509_EXTENSION_value(x, i);
+		if(OBJ_obj2nid(ex->object) == nid) {
+			if(idx) {
+				*idx = i;
+				break;
+			} else if(found_ex) {
+				/* Found more than one */
+				if(crit) *crit = -2;
+				return NULL;
+			}
+			found_ex = ex;
+		}
+	}
+	if(found_ex) {
+		/* Found it */
+		*crit = found_ex->critical;
+		return X509V3_EXT_d2i(found_ex);
+	}
+	
+	/* Extension not found */
+	if(idx) *idx = -1;
+	if(crit) *crit = -1;
+	return NULL;
+}
+
+/* As above but for a passed certificate */
+
+void *X509V3_X509_get_d2i(X509 *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
+}
+
+void *X509V3_CRL_get_d2i(X509_CRL *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->crl->extensions, nid, crit, idx);
+}
+
+void *X509V3_REVOKED_get_d2i(X509_REVOKED *x, int nid, int *crit, int *idx)
+{
+	return X509V3_get_d2i(x->extensions, nid, crit, idx);
+}
