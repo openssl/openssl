@@ -564,10 +564,10 @@ int main(int argc, char *argv[])
 		fflush(stdout);
 
 		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
-		if (!BN_copy(z, y)) ABORT;
+		if (!BN_add(z, z, y)) ABORT;
 		z->neg = 1;
 		scalars[0] = y;
-		scalars[1] = z; /* z = -y */
+		scalars[1] = z; /* z = -(order + y) */
 
 		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
 		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
