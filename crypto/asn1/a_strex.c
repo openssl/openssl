@@ -279,7 +279,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING 
  * otherwise it is the number of bytes per character
  */
 
-const static char tag2nbyte[] = {
+const static signed char tag2nbyte[] = {
 	-1, -1, -1, -1, -1,	/* 0-4 */
 	-1, -1, -1, -1, -1,	/* 5-9 */
 	-1, -1, 0, -1,		/* 10-13 */
