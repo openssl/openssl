@@ -246,6 +246,8 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		ts=(struct tm *)localtime(&t);
 		}
 #endif
+	if (ts == NULL)
+		return(NULL);
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))
 		{

@@ -95,36 +95,39 @@ extern "C" {
  * names in cryptlib.c
  */
 
-#define	CRYPTO_LOCK_ERR			1
-#define	CRYPTO_LOCK_ERR_HASH		2
-#define	CRYPTO_LOCK_X509		3
-#define	CRYPTO_LOCK_X509_INFO		4
-#define	CRYPTO_LOCK_X509_PKEY		5
+#define CRYPTO_LOCK_ERR			1
+#define CRYPTO_LOCK_ERR_HASH		2
+#define CRYPTO_LOCK_X509		3
+#define CRYPTO_LOCK_X509_INFO		4
+#define CRYPTO_LOCK_X509_PKEY		5
 #define CRYPTO_LOCK_X509_CRL		6
 #define CRYPTO_LOCK_X509_REQ		7
 #define CRYPTO_LOCK_DSA			8
 #define CRYPTO_LOCK_RSA			9
 #define CRYPTO_LOCK_EVP_PKEY		10
-#define	CRYPTO_LOCK_X509_STORE		11
-#define	CRYPTO_LOCK_SSL_CTX		12
-#define	CRYPTO_LOCK_SSL_CERT		13
-#define	CRYPTO_LOCK_SSL_SESSION		14
-#define	CRYPTO_LOCK_SSL_SESS_CERT	15
-#define	CRYPTO_LOCK_SSL			16
-#define	CRYPTO_LOCK_RAND		17
-#define	CRYPTO_LOCK_RAND2		18
-#define	CRYPTO_LOCK_MALLOC		19
-#define	CRYPTO_LOCK_BIO			20
-#define	CRYPTO_LOCK_GETHOSTBYNAME	21
-#define	CRYPTO_LOCK_GETSERVBYNAME	22
-#define	CRYPTO_LOCK_READDIR		23
-#define	CRYPTO_LOCK_RSA_BLINDING	24
-#define	CRYPTO_LOCK_DH			25
-#define	CRYPTO_LOCK_MALLOC2		26
-#define	CRYPTO_LOCK_DSO			27
-#define	CRYPTO_LOCK_DYNLOCK		28
-#define	CRYPTO_LOCK_ENGINE		29
-#define	CRYPTO_NUM_LOCKS		30
+#define CRYPTO_LOCK_X509_STORE		11
+#define CRYPTO_LOCK_SSL_CTX		12
+#define CRYPTO_LOCK_SSL_CERT		13
+#define CRYPTO_LOCK_SSL_SESSION		14
+#define CRYPTO_LOCK_SSL_SESS_CERT	15
+#define CRYPTO_LOCK_SSL			16
+/* for binary compatibility between 0.9.6 minor versions,
+ * reuse an existing lock (later version use a new one): */
+# define CRYPTO_LOCK_SSL_METHOD		CRYPTO_LOCK_SSL_CTX
+#define CRYPTO_LOCK_RAND		17
+#define CRYPTO_LOCK_RAND2		18
+#define CRYPTO_LOCK_MALLOC		19
+#define CRYPTO_LOCK_BIO			20
+#define CRYPTO_LOCK_GETHOSTBYNAME	21
+#define CRYPTO_LOCK_GETSERVBYNAME	22
+#define CRYPTO_LOCK_READDIR		23
+#define CRYPTO_LOCK_RSA_BLINDING	24
+#define CRYPTO_LOCK_DH			25
+#define CRYPTO_LOCK_MALLOC2		26
+#define CRYPTO_LOCK_DSO			27
+#define CRYPTO_LOCK_DYNLOCK		28
+#define CRYPTO_LOCK_ENGINE		29
+#define CRYPTO_NUM_LOCKS		30
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -146,7 +149,7 @@ extern "C" {
 #endif
 #else
 #define CRYPTO_w_lock(a)
-#define	CRYPTO_w_unlock(a)
+#define CRYPTO_w_unlock(a)
 #define CRYPTO_r_lock(a)
 #define CRYPTO_r_unlock(a)
 #define CRYPTO_add(a,b,c)	((*(a))+=(b))

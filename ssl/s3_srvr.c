@@ -151,11 +151,15 @@ SSL_METHOD *SSLv3_server_method(void)
 
 	if (init)
 		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
 		memcpy((char *)&SSLv3_server_data,(char *)sslv3_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv3_server_data.ssl_accept=ssl3_accept;
 		SSLv3_server_data.get_ssl_method=ssl3_get_server_method;
 		init=0;
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv3_server_data);
 	}

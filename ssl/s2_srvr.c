@@ -145,11 +145,15 @@ SSL_METHOD *SSLv2_server_method(void)
 
 	if (init)
 		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
 		memcpy((char *)&SSLv2_server_data,(char *)sslv2_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv2_server_data.ssl_accept=ssl2_accept;
 		SSLv2_server_data.get_ssl_method=ssl2_get_server_method;
 		init=0;
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv2_server_data);
 	}
@@ -1001,7 +1005,7 @@ static int request_certificate(SSL *s)
 	len = 6 + (unsigned long)s->s2->tmp.clen + (unsigned long)s->s2->tmp.rlen;
 	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
 		{
-		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_MESSAGE_TOO_LONG);
+		SSLerr(SSL_F_REQUEST_CERTIFICATE,SSL_R_MESSAGE_TOO_LONG);
 		goto end;
 		}
 	j = (int)len - s->init_num;

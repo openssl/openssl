@@ -27,7 +27,7 @@ Be careful to avoid small subgroup attacks when using this.
 
 =head1 SEE ALSO
 
-L<dh(3)|dh(3)>, L<dsa(3)|dsa(3)>, L<err(3)|err(3)>
+L<dh(3)|dh(3)>, L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>
 
 =head1 HISTORY
 

@@ -45,7 +45,7 @@ The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
+L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>,
 L<RAND_add(3)|RAND_add(3)>, L<RAND_bytes(3)|RAND_bytes(3)>
 
 =head1 HISTORY

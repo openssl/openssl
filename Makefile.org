@@ -270,9 +270,7 @@ do_gnu-shared:
 	done
 
 DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
-	collect2=`gcc -print-prog-name=collect2 2>&1` && \
-	[ -n "$$collect2" ] && \
-	my_ld=`$$collect2 --help 2>&1 | grep Usage: | sed 's/^Usage: *\([^ ][^ ]*\).*/\1/'` && \
+	my_ld=`gcc -print-prog-name=ld 2>&1` && \
 	[ -n "$$my_ld" ] && \
 	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
 
@@ -687,13 +685,13 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man3 \
 		$(INSTALL_PREFIX)$(MANDIR)/man5 \
 		$(INSTALL_PREFIX)$(MANDIR)/man7
-	@pod2man=`cd util; ./pod2mantest ignore`; \
+	@pod2man="`cd util; ./pod2mantest $(PERL)`"; \
 	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$(PERL) $$pod2man \
+		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
@@ -703,7 +701,7 @@ install_docs:
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$(PERL) $$pod2man \
+		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \

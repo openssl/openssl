@@ -90,7 +90,7 @@ Seed lengths E<gt> 20 are not supported.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
+L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>,
 L<DSA_free(3)|DSA_free(3)>
 
 =head1 HISTORY
