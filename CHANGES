@@ -2,7 +2,14 @@
  OpenSSL CHANGES
  _______________
 
+
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
+
+  *) Added the beginnings of Rijndael support.
+     [Ben Laurie]
+
+  *) Added untested support for Nuron crypto accelerator.
+     [Ben Laurie]
 
   *) Fix for bug in DirectoryString mask setting. Add support for
      X509_NAME_print_ex() in 'req' and X509_print_ex() function
@@ -26,6 +33,7 @@
      Previously, it would create entries for disableed algorithms no
      matter what.
      [Richard Levitte]
+
 
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 

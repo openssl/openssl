@@ -61,9 +61,9 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 393
-#define NUM_SN 392
-#define NUM_LN 392
+#define NUM_NID 405
+#define NUM_SN 401
+#define NUM_LN 401
 #define NUM_OBJ 366
 
 static unsigned char lvalues[2896]={
@@ -1045,6 +1045,27 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"dcobject","dcObject",NID_dcObject,3,&(lvalues[2872]),0},
 {"DC","domainComponent",NID_domainComponent,10,&(lvalues[2875]),0},
 {"domain","Domain",NID_Domain,10,&(lvalues[2885]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{"RIJNDAEL-ECB-K128-B128","rijndael-ecb-k128-b128",
+	NID_rijndael_ecb_k128_b128,0,NULL},
+{"RIJNDAEL-ECB-K192-B128","rijndael-ecb-k192-b128",
+	NID_rijndael_ecb_k192_b128,0,NULL},
+{"RIJNDAEL-ECB-K256-B128","rijndael-ecb-k256-b128",
+	NID_rijndael_ecb_k256_b128,0,NULL},
+{"RIJNDAEL-ECB-K128-B192","rijndael-ecb-k128-b192",
+	NID_rijndael_ecb_k128_b192,0,NULL},
+{"RIJNDAEL-ECB-K192-B192","rijndael-ecb-k192-b192",
+	NID_rijndael_ecb_k192_b192,0,NULL},
+{"RIJNDAEL-ECB-K256-B192","rijndael-ecb-k256-b192",
+	NID_rijndael_ecb_k256_b192,0,NULL},
+{"RIJNDAEL-ECB-K128-B256","rijndael-ecb-k128-b256",
+	NID_rijndael_ecb_k128_b256,0,NULL},
+{"RIJNDAEL-ECB-K192-B256","rijndael-ecb-k192-b256",
+	NID_rijndael_ecb_k192_b256,0,NULL},
+{"RIJNDAEL-ECB-K256-B256","rijndael-ecb-k256-b256",
+	NID_rijndael_ecb_k256_b256,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1134,6 +1155,15 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[122]),/* "RC5-CFB" */
 &(nid_objs[121]),/* "RC5-ECB" */
 &(nid_objs[123]),/* "RC5-OFB" */
+&(nid_objs[396]),/* "RIJNDAEL-ECB-K128-B128" */
+&(nid_objs[399]),/* "RIJNDAEL-ECB-K128-B192" */
+&(nid_objs[402]),/* "RIJNDAEL-ECB-K128-B256" */
+&(nid_objs[397]),/* "RIJNDAEL-ECB-K192-B128" */
+&(nid_objs[400]),/* "RIJNDAEL-ECB-K192-B192" */
+&(nid_objs[403]),/* "RIJNDAEL-ECB-K192-B256" */
+&(nid_objs[398]),/* "RIJNDAEL-ECB-K256-B128" */
+&(nid_objs[401]),/* "RIJNDAEL-ECB-K256-B192" */
+&(nid_objs[404]),/* "RIJNDAEL-ECB-K256-B256" */
 &(nid_objs[117]),/* "RIPEMD160" */
 &(nid_objs[124]),/* "RLE" */
 &(nid_objs[19]),/* "RSA" */
@@ -1804,6 +1834,15 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[122]),/* "rc5-cfb" */
 &(nid_objs[121]),/* "rc5-ecb" */
 &(nid_objs[123]),/* "rc5-ofb" */
+&(nid_objs[396]),/* "rijndael-ecb-k128-b128" */
+&(nid_objs[399]),/* "rijndael-ecb-k128-b192" */
+&(nid_objs[402]),/* "rijndael-ecb-k128-b256" */
+&(nid_objs[397]),/* "rijndael-ecb-k192-b128" */
+&(nid_objs[400]),/* "rijndael-ecb-k192-b192" */
+&(nid_objs[403]),/* "rijndael-ecb-k192-b256" */
+&(nid_objs[398]),/* "rijndael-ecb-k256-b128" */
+&(nid_objs[401]),/* "rijndael-ecb-k256-b192" */
+&(nid_objs[404]),/* "rijndael-ecb-k256-b256" */
 &(nid_objs[117]),/* "ripemd160" */
 &(nid_objs[119]),/* "ripemd160WithRSA" */
 &(nid_objs[19]),/* "rsa" */
