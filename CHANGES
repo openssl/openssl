@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
+     is called via tools/c89.sh because arguments have to be
+     rearranged (all '-L' options must appear before the first object
+     modules).
+     [Richard Shapiro <rshapiro@abinitio.com>]
+
   +) Use wNAFs in EC_POINTs_mul() for improved efficiency
      (up to about 10% better than before for P-192 and P-224).
      [Bodo Moeller]
