@@ -86,8 +86,8 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf,
 		return(-1);
 		}
 	EVP_MD_CTX_init(&tmp_ctx);
-	EVP_MD_CTX_copy(&tmp_ctx,ctx);     
-	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);     
+	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
 	EVP_MD_CTX_cleanup(&tmp_ctx);
         if (ctx->digest->verify == NULL)
                 {

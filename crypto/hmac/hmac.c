@@ -80,9 +80,9 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 		j=EVP_MD_block_size(md);
 		if (j < len)
 			{
-			EVP_DigestInit(&ctx->md_ctx,md);
+			EVP_DigestInit_ex(&ctx->md_ctx,md, NULL);
 			EVP_DigestUpdate(&ctx->md_ctx,key,len);
-			EVP_DigestFinal(&(ctx->md_ctx),ctx->key,
+			EVP_DigestFinal_ex(&(ctx->md_ctx),ctx->key,
 				&ctx->key_length);
 			}
 		else
@@ -99,15 +99,15 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 		{
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x36^ctx->key[i];
-		EVP_DigestInit(&ctx->i_ctx,md);
+		EVP_DigestInit_ex(&ctx->i_ctx,md, NULL);
 		EVP_DigestUpdate(&ctx->i_ctx,pad,EVP_MD_block_size(md));
 
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x5c^ctx->key[i];
-		EVP_DigestInit(&ctx->o_ctx,md);
+		EVP_DigestInit_ex(&ctx->o_ctx,md, NULL);
 		EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md));
 		}
-	EVP_MD_CTX_copy(&ctx->md_ctx,&ctx->i_ctx);
+	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx);
 	}
 
 void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
@@ -123,10 +123,10 @@ void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 
 	j=EVP_MD_block_size(ctx->md);
 
-	EVP_DigestFinal(&ctx->md_ctx,buf,&i);
-	EVP_MD_CTX_copy(&ctx->md_ctx,&ctx->o_ctx);
+	EVP_DigestFinal_ex(&ctx->md_ctx,buf,&i);
+	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->o_ctx);
 	EVP_DigestUpdate(&ctx->md_ctx,buf,i);
-	EVP_DigestFinal(&ctx->md_ctx,md,len);
+	EVP_DigestFinal_ex(&ctx->md_ctx,md,len);
 	}
 
 void HMAC_CTX_init(HMAC_CTX *ctx)

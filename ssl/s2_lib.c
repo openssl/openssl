@@ -428,14 +428,14 @@ void ssl2_generate_key_material(SSL *s)
 	km=s->s2->key_material;
 	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
 		{
-		EVP_DigestInit(&ctx,EVP_md5());
+		EVP_DigestInit_ex(&ctx,EVP_md5(), NULL);
 
 		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
 		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
 		EVP_DigestUpdate(&ctx,s->s2->challenge,s->s2->challenge_length);
 		EVP_DigestUpdate(&ctx,s->s2->conn_id,s->s2->conn_id_length);
-		EVP_DigestFinal(&ctx,km,NULL);
+		EVP_DigestFinal_ex(&ctx,km,NULL);
 		km+=MD5_DIGEST_LENGTH;
 		}
 	EVP_MD_CTX_cleanup(&ctx);

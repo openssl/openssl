@@ -176,7 +176,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 	case BIO_CTRL_RESET:
 		if (b->init)
-			EVP_DigestInit(ctx,ctx->digest);
+			EVP_DigestInit_ex(ctx,ctx->digest, NULL);
 		else
 			ret=0;
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
@@ -207,13 +207,13 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 	case BIO_C_SET_MD:
 		md=ptr;
-		EVP_DigestInit(ctx,md);
+		EVP_DigestInit_ex(ctx,md, NULL);
 		b->init=1;
 		break;
 	case BIO_CTRL_DUP:
 		dbio=ptr;
 		dctx=dbio->ptr;
-		EVP_MD_CTX_copy(dctx,ctx);
+		EVP_MD_CTX_copy_ex(dctx,ctx);
 		b->init=1;
 		break;
 	default:
@@ -246,7 +246,7 @@ static int md_gets(BIO *bp, char *buf, int size)
 	ctx=bp->ptr;
 	if (size < ctx->digest->md_size)
 		return(0);
-	EVP_DigestFinal(ctx,(unsigned char *)buf,&ret);
+	EVP_DigestFinal_ex(ctx,(unsigned char *)buf,&ret);
 	return((int)ret);
 	}
 

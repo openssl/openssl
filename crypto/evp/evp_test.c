@@ -245,7 +245,7 @@ static int test_digest(const char *digest,
     hexdump(stdout,"Digest",ciphertext,cn);
 
     EVP_MD_CTX_init(&ctx);
-    if(!EVP_DigestInit(&ctx,d))
+    if(!EVP_DigestInit_ex(&ctx,d, NULL))
 	{
 	fprintf(stderr,"DigestInit failed\n");
 	exit(100);
@@ -255,7 +255,7 @@ static int test_digest(const char *digest,
 	fprintf(stderr,"DigestUpdate failed\n");
 	exit(101);
 	}
-    if(!EVP_DigestFinal(&ctx,md,&mdn))
+    if(!EVP_DigestFinal_ex(&ctx,md,&mdn))
 	{
 	fprintf(stderr,"DigestFinal failed\n");
 	exit(101);

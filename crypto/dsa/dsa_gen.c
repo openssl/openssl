@@ -159,8 +159,8 @@ DSA *DSA_generate_parameters(int bits,
 				}
 
 			/* step 2 */
-			EVP_Digest(seed,SHA_DIGEST_LENGTH,md,NULL,HASH);
-			EVP_Digest(buf,SHA_DIGEST_LENGTH,buf2,NULL,HASH);
+			EVP_Digest(seed,SHA_DIGEST_LENGTH,md,NULL,HASH, NULL);
+			EVP_Digest(buf,SHA_DIGEST_LENGTH,buf2,NULL,HASH, NULL);
 			for (i=0; i<SHA_DIGEST_LENGTH; i++)
 				md[i]^=buf2[i];
 
@@ -207,7 +207,7 @@ DSA *DSA_generate_parameters(int bits,
 					if (buf[i] != 0) break;
 					}
 
-				EVP_Digest(buf,SHA_DIGEST_LENGTH,md,NULL,HASH);
+				EVP_Digest(buf,SHA_DIGEST_LENGTH,md,NULL,HASH, NULL);
 
 				/* step 8 */
 				if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,r0))

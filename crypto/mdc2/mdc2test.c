@@ -101,9 +101,9 @@ int main(int argc, char *argv[])
 #endif
 
 	EVP_MD_CTX_init(&c);
-	EVP_DigestInit(&c,EVP_mdc2());
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
 	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
-	EVP_DigestFinal(&c,&(md[0]),NULL);
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad1,MDC2_DIGEST_LENGTH) != 0)
 		{
@@ -118,11 +118,11 @@ int main(int argc, char *argv[])
 	else
 		printf("pad1 - ok\n");
 
-	EVP_DigestInit(&c,EVP_mdc2());
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
 	/* FIXME: use a ctl function? */
 	((MDC2_CTX *)c.md_data)->pad_type=2;
 	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
-	EVP_DigestFinal(&c,&(md[0]),NULL);
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad2,MDC2_DIGEST_LENGTH) != 0)
 		{

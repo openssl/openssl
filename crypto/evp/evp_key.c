@@ -121,19 +121,19 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	EVP_MD_CTX_init(&c);
 	for (;;)
 		{
-		EVP_DigestInit(&c,md);
+		EVP_DigestInit_ex(&c,md, NULL);
 		if (addmd++)
 			EVP_DigestUpdate(&c,&(md_buf[0]),mds);
 		EVP_DigestUpdate(&c,data,datal);
 		if (salt != NULL)
 			EVP_DigestUpdate(&c,salt,PKCS5_SALT_LEN);
-		EVP_DigestFinal(&c,&(md_buf[0]),&mds);
+		EVP_DigestFinal_ex(&c,&(md_buf[0]),&mds);
 
 		for (i=1; i<(unsigned int)count; i++)
 			{
-			EVP_DigestInit(&c,md);
+			EVP_DigestInit_ex(&c,md, NULL);
 			EVP_DigestUpdate(&c,&(md_buf[0]),mds);
-			EVP_DigestFinal(&c,&(md_buf[0]),&mds);
+			EVP_DigestFinal_ex(&c,&(md_buf[0]),&mds);
 			}
 		i=0;
 		if (nkey)

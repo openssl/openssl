@@ -944,7 +944,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD2],c[D_MD2][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD2][j]); count++)
-				EVP_Digest(buf,(unsigned long)lengths[j],&(md2[0]),NULL,EVP_md2());
+				EVP_Digest(buf,(unsigned long)lengths[j],&(md2[0]),NULL,EVP_md2(), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD2],d);
@@ -960,7 +960,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MDC2],c[D_MDC2][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MDC2][j]); count++)
-				EVP_Digest(buf,(unsigned long)lengths[j],&(mdc2[0]),NULL,EVP_mdc2());
+				EVP_Digest(buf,(unsigned long)lengths[j],&(mdc2[0]),NULL,EVP_mdc2(), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MDC2],d);
@@ -977,7 +977,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD4],c[D_MD4][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD4][j]); count++)
-				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md4[0]),NULL,EVP_md4());
+				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md4[0]),NULL,EVP_md4(), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD4],d);
@@ -994,7 +994,8 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
-				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,EVP_get_digestbyname("md5"));
+				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,
+										EVP_get_digestbyname("md5"), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD5],d);
@@ -1038,7 +1039,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_SHA1],c[D_SHA1][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_SHA1][j]); count++)
-				EVP_Digest(buf,(unsigned long)lengths[j],&(sha[0]),NULL,EVP_sha1());
+				EVP_Digest(buf,(unsigned long)lengths[j],&(sha[0]),NULL,EVP_sha1(), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_SHA1],d);
@@ -1054,7 +1055,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_RMD160],c[D_RMD160][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_RMD160][j]); count++)
-				EVP_Digest(buf,(unsigned long)lengths[j],&(rmd160[0]),NULL,EVP_ripemd160());
+				EVP_Digest(buf,(unsigned long)lengths[j],&(rmd160[0]),NULL,EVP_ripemd160(), NULL);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_RMD160],d);

@@ -911,7 +911,7 @@ static int request_certificate(SSL *s)
 		EVP_PKEY *pkey=NULL;
 
 		EVP_MD_CTX_init(&ctx);
-		EVP_VerifyInit(&ctx,s->ctx->rsa_md5);
+		EVP_VerifyInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_VerifyUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);

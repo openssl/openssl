@@ -63,7 +63,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	seed = to + 1;
 	db = to + SHA_DIGEST_LENGTH + 1;
 
-	EVP_Digest((void *)param, plen, db, NULL, EVP_sha1());
+	EVP_Digest((void *)param, plen, db, NULL, EVP_sha1(), NULL);
 	memset(db + SHA_DIGEST_LENGTH, 0,
 		emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
 	db[emlen - flen - SHA_DIGEST_LENGTH - 1] = 0x01;
@@ -134,7 +134,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	for (i = 0; i < dblen; i++)
 		db[i] ^= maskeddb[i];
 
-	EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1());
+	EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1(), NULL);
 
 	if (memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
 		goto decoding_err;
@@ -185,17 +185,17 @@ int MGF1(unsigned char *mask, long len,
 		cnt[1] = (unsigned char)((i >> 16) & 255);
 		cnt[2] = (unsigned char)((i >> 8)) & 255;
 		cnt[3] = (unsigned char)(i & 255);
-		EVP_DigestInit(&c,EVP_sha1());
+		EVP_DigestInit_ex(&c,EVP_sha1(), NULL);
 		EVP_DigestUpdate(&c, seed, seedlen);
 		EVP_DigestUpdate(&c, cnt, 4);
 		if (outlen + SHA_DIGEST_LENGTH <= len)
 			{
-			EVP_DigestFinal(&c, mask + outlen, NULL);
+			EVP_DigestFinal_ex(&c, mask + outlen, NULL);
 			outlen += SHA_DIGEST_LENGTH;
 			}
 		else
 			{
-			EVP_DigestFinal(&c, md, NULL);
+			EVP_DigestFinal_ex(&c, md, NULL);
 			memcpy(mask + outlen, md, len - outlen);
 			outlen = len;
 			}

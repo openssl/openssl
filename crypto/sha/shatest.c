@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		EVP_Digest(*P,(unsigned long)strlen((char *)*P),md,NULL,EVP_sha());
+		EVP_Digest(*P,(unsigned long)strlen((char *)*P),md,NULL,EVP_sha(), NULL);
 		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, 1000);
 #endif /*CHARSET_EBCDIC*/
-	EVP_DigestInit(&c,EVP_sha());
+	EVP_DigestInit_ex(&c,EVP_sha(), NULL);
 	for (i=0; i<1000; i++)
 		EVP_DigestUpdate(&c,buf,1000);
-	EVP_DigestFinal(&c,md,NULL);
+	EVP_DigestFinal_ex(&c,md,NULL);
 	p=pt(md);
 
 	r=bigret;

@@ -327,7 +327,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	assert(salt_len <= 8);
 	
 	EVP_MD_CTX_init(&md);
-	EVP_DigestInit(&md,EVP_md5());
+	EVP_DigestInit_ex(&md,EVP_md5(), NULL);
 	EVP_DigestUpdate(&md, passwd, passwd_len);
 	EVP_DigestUpdate(&md, "$", 1);
 	EVP_DigestUpdate(&md, magic, strlen(magic));
@@ -335,11 +335,11 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	EVP_DigestUpdate(&md, salt_out, salt_len);
 	
 	EVP_MD_CTX_init(&md2);
-	EVP_DigestInit(&md2,EVP_md5());
+	EVP_DigestInit_ex(&md2,EVP_md5(), NULL);
 	EVP_DigestUpdate(&md2, passwd, passwd_len);
 	EVP_DigestUpdate(&md2, salt_out, salt_len);
 	EVP_DigestUpdate(&md2, passwd, passwd_len);
-	EVP_DigestFinal(&md2, buf, NULL);
+	EVP_DigestFinal_ex(&md2, buf, NULL);
 
 	for (i = passwd_len; i > sizeof buf; i -= sizeof buf)
 		EVP_DigestUpdate(&md, buf, sizeof buf);
@@ -351,11 +351,11 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 		EVP_DigestUpdate(&md, (n & 1) ? "\0" : passwd, 1);
 		n >>= 1;
 		}
-	EVP_DigestFinal(&md, buf, NULL);
+	EVP_DigestFinal_ex(&md, buf, NULL);
 
 	for (i = 0; i < 1000; i++)
 		{
-		EVP_DigestInit(&md2,EVP_md5());
+		EVP_DigestInit_ex(&md2,EVP_md5(), NULL);
 		EVP_DigestUpdate(&md2, (i & 1) ? (unsigned char *) passwd : buf,
 		                       (i & 1) ? passwd_len : sizeof buf);
 		if (i % 3)
@@ -364,7 +364,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 			EVP_DigestUpdate(&md2, passwd, passwd_len);
 		EVP_DigestUpdate(&md2, (i & 1) ? buf : (unsigned char *) passwd,
 		                       (i & 1) ? sizeof buf : passwd_len);
-		EVP_DigestFinal(&md2, buf, NULL);
+		EVP_DigestFinal_ex(&md2, buf, NULL);
 		}
 	EVP_MD_CTX_cleanup(&md2);
 	

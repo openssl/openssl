@@ -65,7 +65,7 @@
 #ifdef undef
 void EVP_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 	{
-	EVP_DigestInit(ctx,type);
+	EVP_DigestInit_ex(ctx,type);
 	}
 
 void EVP_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
@@ -85,8 +85,8 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 
 	*siglen=0;
 	EVP_MD_CTX_init(&tmp_ctx);
-	EVP_MD_CTX_copy(&tmp_ctx,ctx);   
-	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);   
+	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
 	EVP_MD_CTX_cleanup(&tmp_ctx);
 	for (i=0; i<4; i++)
 		{

@@ -129,19 +129,19 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	else if(passlen == -1) passlen = strlen(pass);
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_DigestInit (&ctx, md);
-	EVP_DigestUpdate (&ctx, pass, passlen);
-	EVP_DigestUpdate (&ctx, salt, saltlen);
+	EVP_DigestInit_ex(&ctx, md, NULL);
+	EVP_DigestUpdate(&ctx, pass, passlen);
+	EVP_DigestUpdate(&ctx, salt, saltlen);
 	PBEPARAM_free(pbe);
-	EVP_DigestFinal (&ctx, md_tmp, NULL);
+	EVP_DigestFinal_ex(&ctx, md_tmp, NULL);
 	for (i = 1; i < iter; i++) {
-		EVP_DigestInit(&ctx, md);
+		EVP_DigestInit_ex(&ctx, md, NULL);
 		EVP_DigestUpdate(&ctx, md_tmp, EVP_MD_size(md));
-		EVP_DigestFinal (&ctx, md_tmp, NULL);
+		EVP_DigestFinal_ex (&ctx, md_tmp, NULL);
 	}
 	EVP_MD_CTX_cleanup(&ctx);
-	memcpy (key, md_tmp, EVP_CIPHER_key_length(cipher));
-	memcpy (iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
+	memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
+	memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
 						 EVP_CIPHER_iv_length(cipher));
 	EVP_CipherInit(cctx, cipher, key, iv, en_de);
 	memset(md_tmp, 0, EVP_MAX_MD_SIZE);

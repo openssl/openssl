@@ -196,7 +196,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	i = strlen((char *)buf);
 	/* If the key is used for SGC the algorithm is modified a little. */
 	if(sgckey) {
-		EVP_Digest(buf, i, buf, NULL, EVP_md5());
+		EVP_Digest(buf, i, buf, NULL, EVP_md5(), NULL);
 		memcpy(buf + 16, "SGCKEYSALT", 10);
 		i = 26;
 	}
@@ -284,7 +284,7 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 
 	i = strlen((char *)buf);
 	if(sgckey){
-		EVP_Digest(buf, i, buf, NULL, EVP_md5());
+		EVP_Digest(buf, i, buf, NULL, EVP_md5(), NULL);
 		memcpy(buf + 16, "SGCKEYSALT", 10);
 		i = 26;
 	}

@@ -538,7 +538,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
 			EVP_MD_CTX_init(&ctx_tmp);
-			EVP_MD_CTX_copy(&ctx_tmp,mdc);
+			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
 			if (!BUF_MEM_grow(buf,EVP_PKEY_size(si->pkey)))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_BIO_LIB);
@@ -565,7 +565,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 				/* Add digest */
 				md_tmp=EVP_MD_CTX_md(&ctx_tmp);
-				EVP_DigestFinal(&ctx_tmp,md_data,&md_len);
+				EVP_DigestFinal_ex(&ctx_tmp,md_data,&md_len);
 				digest=M_ASN1_OCTET_STRING_new();
 				M_ASN1_OCTET_STRING_set(digest,md_data,md_len);
 				PKCS7_add_signed_attribute(si,
@@ -573,7 +573,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 					V_ASN1_OCTET_STRING,digest);
 
 				/* Now sign the attributes */
-				EVP_SignInit(&ctx_tmp,md_tmp);
+				EVP_SignInit_ex(&ctx_tmp,md_tmp,NULL);
 				alen = ASN1_item_i2d((ASN1_VALUE *)sk,&abuf,
 							ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
 				if(!abuf) goto err;
@@ -729,7 +729,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
 	/* mdc is the digest ctx that we want, unless there are attributes,
 	 * in which case the digest is the signed attributes */
-	EVP_MD_CTX_copy(&mdc_tmp,mdc);
+	EVP_MD_CTX_copy_ex(&mdc_tmp,mdc);
 
 	sk=si->auth_attr;
 	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
@@ -738,7 +738,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
                 unsigned int md_len, alen;
 		ASN1_OCTET_STRING *message_digest;
 
-		EVP_DigestFinal(&mdc_tmp,md_dat,&md_len);
+		EVP_DigestFinal_ex(&mdc_tmp,md_dat,&md_len);
 		message_digest=PKCS7_digest_from_attributes(sk);
 		if (!message_digest)
 			{
@@ -763,7 +763,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 			goto err;
 			}
 
-		EVP_VerifyInit(&mdc_tmp,EVP_get_digestbynid(md_type));
+		EVP_VerifyInit_ex(&mdc_tmp,EVP_get_digestbynid(md_type), NULL);
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
 						ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));

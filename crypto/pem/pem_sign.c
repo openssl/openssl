@@ -66,7 +66,7 @@
 
 void PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 	{
-	EVP_DigestInit(ctx,type);
+	EVP_DigestInit_ex(ctx, type, NULL);
 	}
 
 void PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,

@@ -270,7 +270,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 		goto err;
 	i2d_X509_NAME(x->cert_info->subject, &dertmp);
 
-	EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1());
+	EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL);
 	for (i=0; i < SHA_DIGEST_LENGTH; i++)
 		{
 		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0) goto err;
@@ -284,7 +284,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 		goto err;
 
 	EVP_Digest(x->cert_info->key->public_key->data,
-		x->cert_info->key->public_key->length, SHA1md, NULL, EVP_sha1());
+		x->cert_info->key->public_key->length, SHA1md, NULL, EVP_sha1(), NULL);
 	for (i=0; i < SHA_DIGEST_LENGTH; i++)
 		{
 		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0)

@@ -576,8 +576,8 @@ int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in_ctx, unsigned char *out)
 	EVP_MD_CTX ctx;
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_copy(&ctx,in_ctx);
-	EVP_DigestFinal(&ctx,out,&ret);
+	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
+	EVP_DigestFinal_ex(&ctx,out,&ret);
 	EVP_MD_CTX_cleanup(&ctx);
 	return((int)ret);
 	}
@@ -595,11 +595,11 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
 	q+=slen;
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_copy(&ctx,in1_ctx);
-	EVP_DigestFinal(&ctx,q,&i);
+	EVP_MD_CTX_copy_ex(&ctx,in1_ctx);
+	EVP_DigestFinal_ex(&ctx,q,&i);
 	q+=i;
-	EVP_MD_CTX_copy(&ctx,in2_ctx);
-	EVP_DigestFinal(&ctx,q,&i);
+	EVP_MD_CTX_copy_ex(&ctx,in2_ctx);
+	EVP_DigestFinal_ex(&ctx,q,&i);
 	q+=i;
 
 	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(q-buf),

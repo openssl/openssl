@@ -1089,12 +1089,12 @@ static int ssl3_get_key_exchange(SSL *s)
 			q=md_buf;
 			for (num=2; num > 0; num--)
 				{
-				EVP_DigestInit(&md_ctx,(num == 2)
-					?s->ctx->md5:s->ctx->sha1);
+				EVP_DigestInit_ex(&md_ctx,(num == 2)
+					?s->ctx->md5:s->ctx->sha1, NULL);
 				EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 				EVP_DigestUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 				EVP_DigestUpdate(&md_ctx,param,param_len);
-				EVP_DigestFinal(&md_ctx,q,(unsigned int *)&i);
+				EVP_DigestFinal_ex(&md_ctx,q,(unsigned int *)&i);
 				q+=i;
 				j+=i;
 				}
@@ -1120,7 +1120,7 @@ static int ssl3_get_key_exchange(SSL *s)
 			if (pkey->type == EVP_PKEY_DSA)
 			{
 			/* lets do DSS */
-			EVP_VerifyInit(&md_ctx,EVP_dss1());
+			EVP_VerifyInit_ex(&md_ctx,EVP_dss1(), NULL);
 			EVP_VerifyUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 			EVP_VerifyUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 			EVP_VerifyUpdate(&md_ctx,param,param_len);

@@ -100,7 +100,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	p=buf_in;
 
 	i2d(data,&p);
-	EVP_VerifyInit(&ctx,type);
+	EVP_VerifyInit_ex(&ctx,type, NULL);
 	EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl);
 
 	memset(buf_in,0,(unsigned int)inl);
@@ -150,7 +150,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
-	EVP_VerifyInit(&ctx,type);
+	EVP_VerifyInit_ex(&ctx,type, NULL);
 	EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl);
 
 	memset(buf_in,0,(unsigned int)inl);

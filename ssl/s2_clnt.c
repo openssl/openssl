@@ -767,7 +767,7 @@ static int client_certificate(SSL *s)
 		 * do it first so we can reuse buf :-) */
 		p=buf;
 		EVP_MD_CTX_init(&ctx);
-		EVP_SignInit(&ctx,s->ctx->rsa_md5);
+		EVP_SignInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_SignUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);

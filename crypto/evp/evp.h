@@ -425,8 +425,10 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
 #define EVP_DECODE_LENGTH(l)	((l+3)/4*3+80)
 
+#define EVP_SignInit_ex(a,b,c)		EVP_DigestInit_ex(a,b,c)
 #define EVP_SignInit(a,b)		EVP_DigestInit(a,b)
 #define EVP_SignUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
+#define	EVP_VerifyInit_ex(a,b,c)	EVP_DigestInit_ex(a,b,c)
 #define	EVP_VerifyInit(a,b)		EVP_DigestInit(a,b)
 #define	EVP_VerifyUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
 #define EVP_OpenUpdate(a,b,c,d,e)	EVP_DecryptUpdate(a,b,c,d,e)
@@ -457,17 +459,20 @@ void	EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
-int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
 #define EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
 #define EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
 #define EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
-int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
-int	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
+int	EVP_DigestFinal_ex(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 int	EVP_Digest(void *data, unsigned int count,
-		unsigned char *md, unsigned int *size, const EVP_MD *type);
+		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
+
+int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+int	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 
 int	EVP_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void	EVP_set_pw_prompt(char *prompt);

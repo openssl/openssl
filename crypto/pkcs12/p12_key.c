@@ -148,14 +148,14 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	for (i = 0; i < Slen; i++) *p++ = salt[i % saltlen];
 	for (i = 0; i < Plen; i++) *p++ = pass[i % passlen];
 	for (;;) {
-		EVP_DigestInit (&ctx, md_type);
-		EVP_DigestUpdate (&ctx, D, v);
-		EVP_DigestUpdate (&ctx, I, Ilen);
-		EVP_DigestFinal (&ctx, Ai, NULL);
+		EVP_DigestInit_ex(&ctx, md_type, NULL);
+		EVP_DigestUpdate(&ctx, D, v);
+		EVP_DigestUpdate(&ctx, I, Ilen);
+		EVP_DigestFinal_ex(&ctx, Ai, NULL);
 		for (j = 1; j < iter; j++) {
-			EVP_DigestInit (&ctx, md_type);
-			EVP_DigestUpdate (&ctx, Ai, u);
-			EVP_DigestFinal (&ctx, Ai, NULL);
+			EVP_DigestInit_ex(&ctx, md_type, NULL);
+			EVP_DigestUpdate(&ctx, Ai, u);
+			EVP_DigestFinal_ex(&ctx, Ai, NULL);
 		}
 		memcpy (out, Ai, min (n, u));
 		if (u >= n) {

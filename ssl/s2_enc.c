@@ -170,13 +170,13 @@ void ssl2_mac(SSL *s, unsigned char *md, int send)
 
 	/* There has to be a MAC algorithm. */
 	EVP_MD_CTX_init(&c);
-	EVP_DigestInit(&c,s->read_hash);
+	EVP_DigestInit_ex(&c, s->read_hash, NULL);
 	EVP_DigestUpdate(&c,sec,
 		EVP_CIPHER_CTX_key_length(s->enc_read_ctx));
 	EVP_DigestUpdate(&c,act,len); 
 	/* the above line also does the pad data */
 	EVP_DigestUpdate(&c,sequence,4); 
-	EVP_DigestFinal(&c,md,NULL);
+	EVP_DigestFinal_ex(&c,md,NULL);
 	EVP_MD_CTX_cleanup(&c);
 	}
 #else /* !OPENSSL_NO_SSL2 */
