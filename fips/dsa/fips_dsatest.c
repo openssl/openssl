@@ -74,10 +74,10 @@
 #include <openssl/fips.h>
 #include <openssl/fips_rand.h>
 
-#ifdef OPENSSL_NO_DSA
+#if defined(OPENSSL_NO_DSA) && !defined(OPENSSL_FIPS)
 int main(int argc, char *argv[])
 {
-    printf("No DSA support\n");
+    printf("No FIPS DSA support\n");
     return(0);
 }
 #else
