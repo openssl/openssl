@@ -81,8 +81,7 @@ clean:
 md2_dgst.o: ../../include/openssl/md2.h ../../include/openssl/opensslconf.h
 md2_dgst.o: ../../include/openssl/opensslv.h
 md2_one.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-md2_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-md2_one.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-md2_one.o: ../../include/openssl/md2.h ../../include/openssl/opensslconf.h
-md2_one.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-md2_one.o: ../cryptlib.h
+md2_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+md2_one.o: ../../include/openssl/err.h ../../include/openssl/md2.h
+md2_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+md2_one.o: ../../include/openssl/stack.h ../cryptlib.h ../e_os.h

@@ -63,7 +63,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <openssl/e_os.h>
+
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
+
 #include <openssl/rand.h>
 
 #undef BUFSIZE

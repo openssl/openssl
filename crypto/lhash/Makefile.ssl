@@ -79,10 +79,10 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 lh_stats.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-lh_stats.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-lh_stats.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-lh_stats.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+lh_stats.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+lh_stats.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+lh_stats.o: ../../include/openssl/opensslconf.h
 lh_stats.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-lh_stats.o: ../cryptlib.h
+lh_stats.o: ../cryptlib.h ../e_os.h
 lhash.o: ../../include/openssl/crypto.h ../../include/openssl/lhash.h
 lhash.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h

@@ -60,7 +60,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <openssl/e_os.h>
+
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>

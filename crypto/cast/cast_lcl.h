@@ -60,7 +60,12 @@
 #include <stdlib.h>
 #endif
 
-#include <openssl/e_os.h>	/* OPENSSL_EXTERN */
+/* we need OPENSSL_EXTERN from e_os.h */
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
 
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \

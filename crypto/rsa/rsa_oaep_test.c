@@ -2,7 +2,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/e_os.h>
+
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
+
 #include <openssl/err.h>
 #ifdef NO_RSA
 int main(int argc, char *argv[])

@@ -88,12 +88,11 @@ o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 o_names.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 obj_dat.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 obj_dat.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-obj_dat.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-obj_dat.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-obj_dat.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
-obj_dat.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-obj_dat.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-obj_dat.o: ../cryptlib.h obj_dat.h
+obj_dat.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+obj_dat.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+obj_dat.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_dat.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+obj_dat.o: ../../include/openssl/stack.h ../cryptlib.h ../e_os.h obj_dat.h
 obj_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 obj_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 obj_err.o: ../../include/openssl/err.h ../../include/openssl/objects.h
@@ -101,9 +100,8 @@ obj_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 obj_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 obj_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 obj_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-obj_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-obj_lib.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
-obj_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-obj_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-obj_lib.o: ../cryptlib.h
+obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+obj_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+obj_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+obj_lib.o: ../../include/openssl/stack.h ../cryptlib.h ../e_os.h

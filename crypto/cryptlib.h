@@ -66,7 +66,12 @@
 extern "C" {
 #endif
 
-#include <openssl/e_os.h>
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
+
 #include <openssl/crypto.h>
 #include <openssl/buffer.h> 
 #include <openssl/bio.h> 

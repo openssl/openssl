@@ -60,7 +60,13 @@
 #include <sys/types.h>
 #include <time.h>
 #include <string.h>
-#include <openssl/e_os.h>
+
+#ifndef FLAT_INC
+# include "../e_os.h"
+#else
+# include "e_os.h"
+#endif
+
 #include <openssl/crypto.h>
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
