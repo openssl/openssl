@@ -111,9 +111,6 @@
 
 #define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
-#define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
-				   on Compaq platforms (at least with DEC C).
-				*/
 
 #include <assert.h>
 #include <errno.h>
@@ -134,6 +131,13 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+
+#define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
+				     on Compaq platforms (at least with DEC C).
+				     Do not try to put it earlier, or IPv6 includes
+				     get screwed...
+				  */
+
 #ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>
 #include "../crypto/bio/bss_file.c"
