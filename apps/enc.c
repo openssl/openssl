@@ -515,6 +515,14 @@ bad:
 			BIO_printf(bio_err,"invalid hex iv value\n");
 			goto end;
 			}
+		if ((hiv == NULL) && (str == NULL))
+			{
+			/* No IV was explicitly set and no IV was generated
+			 * during EVP_BytesToKey. Hence the IV is undefined,
+			 * making correct decryption impossible. */
+			BIO_printf(bio_err, "iv undefined\n");
+			goto end;
+			}
 		if ((hkey != NULL) && !set_hex(hkey,key,24))
 			{
 			BIO_printf(bio_err,"invalid hex key value\n");

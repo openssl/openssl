@@ -4,6 +4,10 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) When only the key is given to "enc", the IV is undefined. Print out
+     an error message in this case.
+     [Lutz Jaenicke]
+
   *) Handle special case when X509_NAME is empty in X509 printing routines.
      [Steve Henson]
 
