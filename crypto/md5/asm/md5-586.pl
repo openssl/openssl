@@ -29,7 +29,7 @@ $X="esi";
  0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9,	# R3
  );
 
-&md5_block("md5_block_x86");
+&md5_block("md5_block_asm_host_order");
 &asm_finish();
 
 sub Np
@@ -183,6 +183,7 @@ sub md5_block
 	 &mov($X,	&wparam(1)); # esi
 	&mov($C,	&wparam(2));
 	 &push("ebp");
+	&shl($C,	6);
 	&push("ebx");
 	 &add($C,	$X); # offset we end at
 	&sub($C,	64);

@@ -106,7 +106,7 @@ my %table=(
 # Solaris setups
 "solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
 "solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-usparc-gcc","gcc:-O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
+"solaris-usparc-gcc","gcc:-O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
 "debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
 "debug-solaris-usparc-gcc","gcc:-O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
 
@@ -115,12 +115,11 @@ my %table=(
 # SC4 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # -fast slows things like DES down quite a lot
 # Don't use -xtarget=ultra with SC4.2. It is broken, and will break exptest.
-# SC5.0 with the compiler common patch works.
 "solaris-sparc-sc4","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
 "solaris-usparc-sc4","cc:-xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o::",
 # SC5.0 note: Compiler common patch 107357-01 or later is required!
-"solaris-usparc-sc5","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o::",
-"solaris64-usparc-sc5","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
+"solaris-usparc-sc5","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+"solaris64-usparc-sc5","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
 
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST:(unknown)::DES_UNROLL:::",

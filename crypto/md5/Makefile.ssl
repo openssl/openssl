@@ -66,6 +66,14 @@ asm/mx86bsdi.o: asm/mx86unix.cpp
 asm/mx86unix.cpp: asm/md5-586.pl
 	(cd asm; $(PERL) md5-586.pl cpp >mx86unix.cpp)
 
+# works for both SC and gcc
+asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
+	$(CPP) -DULTRASPARC -DMD5_BLOCK_DATA_ORDER asm/md5-sparcv9.S | as -xarch=v8plus /dev/fd/0 -o asm/md5-sparcv8plus.o
+
+asm/md5-sparcv9.o: asm/md5-sparcv9.S
+	$(CC) -xarch=v9 -DULTRASPARC -DMD5_BLOCK_DATA_ORDER -c asm/md5-sparcv9.S -o asm/md5-sparcv9.o
+
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
@@ -103,5 +111,5 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 md5_dgst.o: ../../include/openssl/md5.h ../../include/openssl/opensslv.h
-md5_dgst.o: md5_locl.h
+md5_dgst.o: ../md32_common.h md5_locl.h
 md5_one.o: ../../include/openssl/md5.h md5_locl.h

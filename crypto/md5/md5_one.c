@@ -57,7 +57,8 @@
  */
 
 #include <stdio.h>
-#include "md5_locl.h"
+#include <string.h>
+#include <openssl/md5.h>
 
 unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md)
 	{
