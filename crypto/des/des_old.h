@@ -1,4 +1,20 @@
 /* crypto/des/des_comp.h -*- mode:C; c-file-style: "eay" -*- */
+
+/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ *
+ * The function names in here are deprecated and are only present to
+ * provide an interface compatible with libdes.  OpenSSL now provides
+ * functions where "des_" has been replaced with "DES_" in the names,
+ * to make it possible to make incompatible changes that are needed
+ * for C type security and other stuff.
+ *
+ * Please consider starting to use the DES_ functions rather than the
+ * des_ ones.  The des_ functions will dissapear completely before
+ * OpenSSL 1.0!
+ *
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ */
+
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -54,21 +70,6 @@
  * (eay@cryptsoft.com).  This product includes software written by Tim
  * Hudson (tjh@cryptsoft.com).
  *
- */
-
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- *
- * The function names in here are deprecated and are only present to
- * provide an interface compatible with libdes.  OpenSSL now provides
- * functions where "des_" has been replaced with "DES_" in the names,
- * to make it possible to make incompatible changes that are needed
- * for C type security and other stuff.
- *
- * Please consider starting to use the DES_ functions rather than the
- * des_ ones.  The des_ functions will dissapear completely before
- * OpenSSL 1.0!
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  */
 
 #ifndef HEADER_DES_COMP_H
