@@ -124,7 +124,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <inttypes.h>
 
 #define USE_SOCKETS
 #include "e_os.h"
@@ -1594,7 +1593,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	fprintf(stderr, "In app_verify_callback, allowing cert. ");
 	fprintf(stderr, "Arg is: %s\n", (char *)arg);
 	fprintf(stderr, "Finished printing do we have a context? 0x%x a cert? 0x%x\n",
-			(uintptr_t)ctx, (uintptr_t)ctx->cert);
+			(unsigned int)ctx, (unsigned int)ctx->cert);
 	if (ctx->cert)
 		s=X509_NAME_oneline(X509_get_subject_name(ctx->cert),buf,256);
 	if (s != NULL)
