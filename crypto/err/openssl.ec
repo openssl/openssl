@@ -33,7 +33,6 @@ L ECDH		crypto/ecdh/ecdh.h		crypto/ecdh/ech_err.c
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE
 L NONE		crypto/ec/ec_lcl.h		NONE
-L NONE		crypto/ecdsa/ecs_locl.h		NONE
 
 
 F RSAREF_F_RSA_BN2BIN
