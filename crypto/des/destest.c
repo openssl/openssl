@@ -320,6 +320,7 @@ static int ede_cfb64_test(unsigned char *cfb_cipher);
 int main(int argc, char *argv[])
 	{
 	int i,j,err=0;
+	int err2 = 0;
 	des_cblock in,out,outin,iv3,iv2;
 	des_key_schedule ks,ks2,ks3;
 	unsigned char cbc_in[40];
@@ -478,7 +479,7 @@ int main(int argc, char *argv[])
 	if (memcmp(cbc_out,xcbc_ok,32) != 0)
 		{
 		printf("des_xcbc_encrypt encrypt error\n");
-		err=1;
+		err2=1;
 		}
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 	des_xcbc_encrypt(cbc_out,cbc_in,strlen((char *)cbc_data)+1,ks,
@@ -784,6 +785,12 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		err=1;
 		}
 	printf("\n");
+	if (err2 && !err)
+		{
+		/* XXX */
+		printf("des_xcbc_encrypt failed -- incorrest test values or buggy implementation?\n"
+			"Send e-mail to bugs@openssl.org if you do _not_ see this message :-)\n");
+		}
 	exit(err);
 	}
 
