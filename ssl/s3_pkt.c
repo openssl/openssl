@@ -846,7 +846,7 @@ start:
 		if (dest_maxlen > 0)
 			{
 			n = dest_maxlen - *dest_len; /* available space in 'dest' */
-			if (rr->length < n)
+			if (rr->length < (unsigned int) n)
 				n = rr->length; /* available bytes */
 
 			/* now move 'n' bytes: */
