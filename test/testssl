@@ -12,7 +12,7 @@ else
 fi
 ssltest="./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
 
-if ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key'; then
+if ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
   dsa_cert=YES
 else
   dsa_cert=NO
@@ -111,6 +111,9 @@ echo test sslv2/sslv3 with both client and server authentication via BIO pair
 $ssltest -bio_pair -server_auth -client_auth $CA || exit 1
 
 #############################################################################
+
+echo test tls1 with 1024bit anonymous DH, multiple handshakes
+$ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time || exit 1
 
 if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
   echo test tls1 with 1024bit RSA, no DHE, multiple handshakes
