@@ -17,6 +17,7 @@ OpenSSL  -  Frequently Asked Questions
 [USER] Questions on using the OpenSSL applications
 
 * Why do I get a "PRNG not seeded" error message?
+* Why do I get an "unable to write 'random state'" error message?
 * How do I create certificates or certificate requests?
 * Why can't I create certificate requests?
 * Why does <SSL program> fail with a certificate verify error?
@@ -161,6 +162,7 @@ correctly.  Many open source operating systems provide a "randomness
 device" that serves this purpose.  On other systems, applications have
 to call the RAND_add() or RAND_seed() function with appropriate data
 before generating keys or performing public key encryption.
+(These functions initialize the pseudo-random number generator, PRNG.)
 
 Some broken applications do not do this.  As of version 0.9.5, the
 OpenSSL functions that need randomness report an error if the random
@@ -176,10 +178,24 @@ details.  Starting with version 0.9.7, OpenSSL will automatically look
 for an EGD socket at /var/run/egd-pool, /dev/egd-pool, /etc/egd-pool and
 /etc/entropy.
 
-Most components of the openssl command line tool try to use the
-file $HOME/.rnd (or $RANDFILE, if this environment variable is set)
-for seeding the PRNG.  If this file does not exist or is too short,
-the "PRNG not seeded" error message may occur.
+Most components of the openssl command line utility automatically try
+to seed the random number generator from a file.  The name of the
+default seeding file is determined as follows: If environment variable
+RANDFILE is set, then it names the seeding file.  Otherwise if
+environment variable HOME is set, then the seeding file is $HOME/.rnd.
+If neither RANDFILE nor HOME is set, versions up to OpenSSL 0.9.6 will
+use file .rnd in the current directory while OpenSSL 0.9.6a uses no
+default seeding file at all.  OpenSSL 0.9.6b and later will behave
+similarly to 0.9.6a, but will use a default of "C:" for HOME on
+Windows systems if the environment variable has not been set.
+
+If the default seeding file does not exist or is too short, the "PRNG
+not seeded" error message may occur.
+
+The openssl command line utility will write back a new state to the
+default seeding file (and create this file if necessary) unless
+there was no sufficient seeding.
+
 Pointing $RANDFILE to an Entropy Gathering Daemon socket does not work.
 Use the "-rand" option of the OpenSSL command line tools instead.
 The $RANDFILE environment variable and $HOME/.rnd are only used by the
@@ -193,6 +209,18 @@ adds a /dev/random device and make sure it gets used, usually through
 $RANDFILE.  There are probably similar patches for the other Solaris
 versions.  However, be warned that /dev/random is usually a blocking
 device, which may have some effects on OpenSSL.
+
+
+* Why do I get an "unable to write 'random state'" error message?
+
+
+Sometimes the openssl command line utility does not abort with
+a "PRNG not seeded" error message, but complains that it is
+"unable to write 'random state'".  This message refers to the
+default seeding file (see previous answer).  A possible reason
+is that no default filename is known because neither RANDFILE
+nor HOME is set.  (Versions up to 0.9.6 used file ".rnd" in the
+current directory in this case, but this has changed with 0.9.6a.)
 
 
 * How do I create certificates or certificate requests?
