@@ -62,7 +62,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "cryptlib.h"
 
 typedef struct ssl_session_asn1_st
 	{

@@ -63,7 +63,6 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#include "cryptlib.h"
 
 static long ssl2_default_timeout(void );
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
@@ -139,6 +138,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 /* IDEA_128_CBC_WITH_MD5 */
+#ifndef OPENSSL_NO_IDEA
 	{
 	1,
 	SSL2_TXT_IDEA_128_CBC_WITH_MD5,
@@ -151,6 +151,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
+#endif
 /* DES_64_CBC_WITH_MD5 */
 	{
 	1,

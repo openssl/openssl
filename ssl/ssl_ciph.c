@@ -135,7 +135,9 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_3DES,0,SSL_3DES,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_RC2,	0,SSL_RC2,   0,0,0,0,SSL_ENC_MASK,0},
+#ifndef OPENSSL_NO_IDEA
 	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
+#endif
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
@@ -176,8 +178,12 @@ static void load_ciphers(void)
 		EVP_get_cipherbyname(SN_rc4);
 	ssl_cipher_methods[SSL_ENC_RC2_IDX]= 
 		EVP_get_cipherbyname(SN_rc2_cbc);
+#ifndef OPENSSL_NO_IDEA
 	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= 
 		EVP_get_cipherbyname(SN_idea_cbc);
+#else
+	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= NULL;
+#endif
 	ssl_cipher_methods[SSL_ENC_AES128_IDX]=
 	  EVP_get_cipherbyname(SN_aes_128_cbc);
 	ssl_cipher_methods[SSL_ENC_AES256_IDX]=
