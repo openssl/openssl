@@ -122,6 +122,9 @@ static void sv_usage(void)
 #if !defined NO_DH && !defined NO_DSA
 	fprintf(stderr," -dhe1024      - generate 1024 bit key for DHE\n");
 #endif
+#if !defined NO_DH
+	fprintf(stderr," -no_dhe       - disable DHE\n");
+#endif
 #ifndef NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
@@ -159,7 +162,7 @@ int main(int argc, char *argv[])
 	int number=1,reuse=0;
 	long bytes=1L;
 	SSL_CIPHER *ciph;
-	int dhe1024 = 0;
+	int dhe1024 = 0, no_dhe = 0;
 #ifndef NO_DH
 	DH *dh;
 #endif
@@ -186,6 +189,8 @@ int main(int argc, char *argv[])
 			reuse=1;
 		else if	(strcmp(*argv,"-dhe1024") == 0)
 			dhe1024=1;
+		else if	(strcmp(*argv,"-no_dhe") == 0)
+			no_dhe=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -311,33 +316,36 @@ bad:
 		}
 
 #ifndef NO_DH
-# ifndef NO_DSA
-	if (dhe1024) 
+	if (!no_dhe)
 		{
-		DSA *dsa;
-		unsigned char seed[20];
-
-		if (verbose)
+# ifndef NO_DSA
+		if (dhe1024) 
 			{
-			fprintf(stdout, "Creating 1024 bit DHE parameters ...");
-			fflush(stdout);
+			DSA *dsa;
+			unsigned char seed[20];
+			
+			if (verbose)
+				{
+				fprintf(stdout, "Creating 1024 bit DHE parameters ...");
+				fflush(stdout);
+				}
+			
+			memcpy(seed, "Random String no. 12", 20);
+			dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, 0, NULL);
+			dh = DSA_dup_DH(dsa);	
+			DSA_free(dsa);
+			/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
+			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
+			
+			if (verbose)
+				fprintf(stdout, " done\n");
 			}
-
-		memcpy(seed, "Random String no. 12", 20);
-		dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, 0, NULL);
-		dh = DSA_dup_DH(dsa);	
-		DSA_free(dsa);
-		/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
-		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
-
-		if (verbose)
-			fprintf(stdout, " done\n");
-		}
-	else
+		else
 # endif
-		dh=get_dh512();
-	SSL_CTX_set_tmp_dh(s_ctx,dh);
-	DH_free(dh);
+			dh=get_dh512();
+		SSL_CTX_set_tmp_dh(s_ctx,dh);
+		DH_free(dh);
+		}
 #endif
 
 #ifndef NO_RSA
