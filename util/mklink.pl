@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-# mklink.pl -- a faster substitute for mklink.sh.
+# mklink.pl
 
 # The first command line argument is a non-empty relative path
 # specifying the "from" directory.
