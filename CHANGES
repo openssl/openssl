@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add the option -VAfile to 'openssl ocsp', so the user can give the
+     OCSP client a number of certificate to only verify the response
+     signature against.
+     [Richard Levitte]
+
   *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
      Bleichenbacher's DSA attack.
      [Ulf Moeller, Bodo Moeller]

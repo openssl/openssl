@@ -94,7 +94,9 @@ int MAIN(int argc, char **argv)
 	BIO *out = NULL;
 	int req_text = 0, resp_text = 0;
 	char *CAfile = NULL, *CApath = NULL;
+        char *VAfile = NULL;
 	X509_STORE *store = NULL;
+        STACK_OF(X509) *VAstore = NULL;
 	int ret = 1;
 	int badarg = 0;
 	int i;
@@ -164,6 +166,15 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				signfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-VAfile"))
+			{
+			if (args[1])
+				{
+				args++;
+				VAfile = *args;
 				}
 			else badarg = 1;
 			}
@@ -290,6 +301,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-path         path to use in OCSP request\n");
 		BIO_printf (bio_err, "-CApath dir   trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file  trusted certificates file\n");
+		BIO_printf (bio_err, "-VAfile file  validator certificates file\n");
 		BIO_printf (bio_err, "-noverify     don't verify response\n");
 		goto end;
 		}
@@ -438,6 +450,8 @@ int MAIN(int argc, char **argv)
 	store = setup_verify(bio_err, CAfile, CApath);
 	if(!store) goto end;
 
+        if (VAfile) VAstore = load_certs(bio_err, VAfile, FORMAT_PEM);
+
 	bs = OCSP_response_get1_basic(resp);
 
 	if (!bs)
@@ -454,7 +468,8 @@ int MAIN(int argc, char **argv)
 			goto end;
 			}
 
-		i = OCSP_basic_verify(bs, NULL, store, 0);
+		i = OCSP_basic_verify(bs, VAstore, store, OCSP_TRUSTOTHER);
+                if (i < 0) i = OCSP_basic_verify(bs, NULL, store, 0);
 
 		if(i <= 0)
 			{
@@ -475,6 +490,7 @@ end:
 	ERR_print_errors(bio_err);
 	X509_free(signer);
 	X509_STORE_free(store);
+        sk_X509_free(VAstore);
 	EVP_PKEY_free(key);
 	X509_free(issuer);
 	X509_free(cert);
