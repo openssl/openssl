@@ -523,6 +523,7 @@ sub main'printf
 
 sub pushvars
 	{
+	&out0("pushf");
 	&main'push("edx");
 	&main'push("ecx");
 	&main'push("eax");
@@ -533,4 +534,5 @@ sub popvars
 	&main'pop("eax");
 	&main'pop("ecx");
 	&main'pop("edx");
+	&out0("popf");
 	}
