@@ -12,7 +12,7 @@ BIO_new_bio_pair - create a new BIO pair
 
 =head1 DESCRIPTION
 
-BIO_new_bio_pair() creates a buffering BIO pair. It has two endpoints between
+BIO_new_bio_pair() creates a buffering BIO pair. It has two endpoints between which
 data can be buffered. Its typical use is to connect one endpoint as underlying
 input/output BIO to an SSL and access the other one controlled by the program
 instead of accessing the network connection directly.
