@@ -2,7 +2,9 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
+ Changes between 0.9.5 and 0.9.5a  [1 Apr 2000]
+
+  *) Make sure _lrotl and _lrotr are only used with MSVC.
 
   *) Use lock CRYPTO_LOCK_RAND correctly in ssleay_rand_status
      (the default implementation of RAND_status).
