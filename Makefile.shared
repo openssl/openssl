@@ -456,12 +456,14 @@ link_o.svr3:
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
+		SHARE_FLAG='-G'; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS='-z allextract'; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -470,12 +472,14 @@ link_a.svr3:
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
+		SHARE_FLAG='-G'; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS='-z allextract'; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A_UNPACKED)
