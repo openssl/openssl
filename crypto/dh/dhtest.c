@@ -65,6 +65,7 @@
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
+#include <openssl/rand.h>
 
 #ifdef NO_DH
 int main(int argc, char *argv[])
