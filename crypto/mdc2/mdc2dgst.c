@@ -136,11 +136,11 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
 
 		des_set_odd_parity(&c->h);
 		des_set_key_unchecked(&c->h,k);
-		des_encrypt(d,k,1);
+		des_encrypt1(d,k,1);
 
 		des_set_odd_parity(&c->hh);
 		des_set_key_unchecked(&c->hh,k);
-		des_encrypt(dd,k,1);
+		des_encrypt1(dd,k,1);
 
 		ttin0=tin0^dd[0];
 		ttin1=tin1^dd[1];
