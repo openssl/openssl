@@ -87,7 +87,7 @@ static SSL_METHOD SSLv23_data= {
 	ssl3_ctx_ctrl,
 	ssl23_get_cipher_by_char,
 	ssl23_put_cipher_by_char,
-	ssl_undefined_function,
+	ssl_undefined_const_function,
 	ssl23_num_ciphers,
 	ssl23_get_cipher,
 	ssl_bad_method,
