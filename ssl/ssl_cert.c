@@ -271,7 +271,9 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
+#ifndef NO_DH /* avoid 'unreferenced label' warning if NO_DH is defined */
 err:
+#endif
 #ifndef NO_RSA
 	if (ret->rsa_tmp != NULL)
 		RSA_free(ret->rsa_tmp);
