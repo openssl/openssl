@@ -22,9 +22,9 @@ BuildRoot:   /var/tmp/%{name}-%{version}-root
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
 Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1)
-protocols with full-strength cryptography world-wide. The project is
-managed by a worldwide community of volunteers that use the Internet to
-communicate, plan, and develop the OpenSSL tookit and its related
+protocols as well as a full-strength general purpose cryptography library.
+The project is managed by a worldwide community of volunteers that use the
+Internet to communicate, plan, and develop the OpenSSL tookit and its related
 documentation. 
 
 OpenSSL is based on the excellent SSLeay library developed from Eric A.
@@ -43,9 +43,9 @@ Requires: openssl
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
 Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1)
-protocols with full-strength cryptography world-wide. The project is
-managed by a worldwide community of volunteers that use the Internet to
-communicate, plan, and develop the OpenSSL tookit and its related
+protocols as well as a full-strength general purpose cryptography library.
+The project is managed by a worldwide community of volunteers that use the
+Internet to communicate, plan, and develop the OpenSSL tookit and its related
 documentation. 
 
 OpenSSL is based on the excellent SSLeay library developed from Eric A.
@@ -64,9 +64,9 @@ Requires: openssl
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
 Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1)
-protocols with full-strength cryptography world-wide. The project is
-managed by a worldwide community of volunteers that use the Internet to
-communicate, plan, and develop the OpenSSL tookit and its related
+protocols as well as a full-strength general purpose cryptography library.
+The project is managed by a worldwide community of volunteers that use the
+Internet to communicate, plan, and develop the OpenSSL tookit and its related
 documentation. 
 
 OpenSSL is based on the excellent SSLeay library developed from Eric A.
