@@ -84,7 +84,7 @@ long bytes;
 
 	i=stat(file,&sb);
 	/* If the state fails, put some crap in anyway */
-	RAND_seed((unsigned char *)&sb,sizeof(sb));
+	RAND_seed(&sb,sizeof(sb));
 	ret+=sizeof(sb);
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);

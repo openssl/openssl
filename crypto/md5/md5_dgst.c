@@ -97,11 +97,12 @@ MD5_CTX *c;
 	c->num=0;
 	}
 
-void MD5_Update(c, data, len)
+void MD5_Update(c, _data, len)
 MD5_CTX *c;
-register unsigned char *data;
+const void *_data;
 unsigned long len;
 	{
+	register const unsigned char *data=_data;
 	register ULONG *p;
 	int sw,sc;
 	ULONG l;

@@ -111,7 +111,7 @@ SSL *s;
 	int ret= -1;
 	int new_state,state;
 
-	RAND_seed((unsigned char *)&Time,sizeof(Time));
+	RAND_seed(&Time,sizeof(Time));
 	ERR_clear_error();
 	clear_sys_error();
 

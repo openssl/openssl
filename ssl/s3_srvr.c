@@ -138,7 +138,7 @@ SSL *s;
 	BIO *under;
 	int new_state,state,skip=0;
 
-	RAND_seed((unsigned char *)&Time,sizeof(Time));
+	RAND_seed(&Time,sizeof(Time));
 	ERR_clear_error();
 	clear_sys_error();
 

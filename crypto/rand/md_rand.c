@@ -131,7 +131,7 @@ static long md_count[2]={0,0};
 char *RAND_version="RAND part of OpenSSL 0.9.2 31-Dec-1998";
 
 static void ssleay_rand_cleanup(void);
-static void ssleay_rand_seed(unsigned char *buf, int num);
+static void ssleay_rand_seed(const void *buf, int num);
 static void ssleay_rand_bytes(unsigned char *buf, int num);
 
 RAND_METHOD rand_ssleay_meth={
@@ -156,7 +156,7 @@ static void ssleay_rand_cleanup()
 	}
 
 static void ssleay_rand_seed(buf,num)
-unsigned char *buf;
+const void *buf;
 int num;
 	{
 	int i,j,k,st_idx,st_num;
@@ -249,15 +249,15 @@ int num;
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		/* put in some default random data, we need more than
 		 * just this */
-		RAND_seed((unsigned char *)&m,sizeof(m));
+		RAND_seed(&m,sizeof(m));
 #ifndef MSDOS
 		l=getpid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 		l=getuid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 #endif
 		l=time(NULL);
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 
 /* #ifdef DEVRANDOM */
 		/* 

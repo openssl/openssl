@@ -57,7 +57,6 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
 #include <sys/types.h>
 #include <time.h>
 #include "rand.h"
@@ -87,7 +86,7 @@ void RAND_cleanup()
 	}
 
 void RAND_seed(buf,num)
-unsigned char *buf;
+const void *buf;
 int num;
 	{
 	if (rand_meth != NULL)

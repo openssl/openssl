@@ -122,7 +122,7 @@ SSL *s;
 	void (*cb)()=NULL;
 	int new_state,state;
 
-	RAND_seed((unsigned char *)&l,sizeof(l));
+	RAND_seed(&l,sizeof(l));
 	ERR_clear_error();
 	clear_sys_error();
 

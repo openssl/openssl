@@ -66,7 +66,7 @@ extern "C" {
 typedef struct rand_meth_st
 	{
 #ifndef NOPROTO
-	void (*seed)(unsigned char *buf, int num);
+	void (*seed)(const void *buf, int num);
 	void (*bytes)(unsigned char *buf, int num);
 	void (*cleanup)(void);
 #else
@@ -81,8 +81,8 @@ void RAND_set_rand_method(RAND_METHOD *meth);
 RAND_METHOD *RAND_get_rand_method(void );
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
-void RAND_bytes( unsigned char *buf,int num);
-void RAND_seed( unsigned char *buf,int num);
+void RAND_bytes(unsigned char *buf,int num);
+void RAND_seed(const void *buf,int num);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
 char *RAND_file_name(char *file,int num);
