@@ -70,6 +70,10 @@ static ERR_STRING_DATA CONF_str_functs[]=
 {ERR_PACK(0,CONF_F_CONF_LOAD,0),	"CONF_load"},
 {ERR_PACK(0,CONF_F_CONF_LOAD_BIO,0),	"CONF_load_bio"},
 {ERR_PACK(0,CONF_F_CONF_LOAD_FP,0),	"CONF_load_fp"},
+{ERR_PACK(0,CONF_F_CONF_MODULES_LOAD,0),	"CONF_modules_load"},
+{ERR_PACK(0,CONF_F_MODULE_INIT,0),	"MODULE_INIT"},
+{ERR_PACK(0,CONF_F_MODULE_LOAD_DSO,0),	"MODULE_LOAD_DSO"},
+{ERR_PACK(0,CONF_F_MODULE_RUN,0),	"MODULE_RUN"},
 {ERR_PACK(0,CONF_F_NCONF_DUMP_BIO,0),	"NCONF_dump_bio"},
 {ERR_PACK(0,CONF_F_NCONF_DUMP_FP,0),	"NCONF_dump_fp"},
 {ERR_PACK(0,CONF_F_NCONF_GET_NUMBER,0),	"NCONF_get_number"},
@@ -86,14 +90,19 @@ static ERR_STRING_DATA CONF_str_functs[]=
 
 static ERR_STRING_DATA CONF_str_reasons[]=
 	{
+{CONF_R_ERROR_LOADING_DSO                ,"error loading dso"},
 {CONF_R_MISSING_CLOSE_SQUARE_BRACKET     ,"missing close square bracket"},
 {CONF_R_MISSING_EQUAL_SIGN               ,"missing equal sign"},
+{CONF_R_MISSING_FINISH_FUNCTION          ,"missing finish function"},
+{CONF_R_MISSING_INIT_FUNCTION            ,"missing init function"},
+{CONF_R_MODULE_INITIALIZATION_ERROR      ,"module initialization error"},
 {CONF_R_NO_CLOSE_BRACE                   ,"no close brace"},
 {CONF_R_NO_CONF                          ,"no conf"},
 {CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE  ,"no conf or environment variable"},
 {CONF_R_NO_SECTION                       ,"no section"},
 {CONF_R_NO_VALUE                         ,"no value"},
 {CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
+{CONF_R_UNKNOWN_MODULE_NAME              ,"unknown module name"},
 {CONF_R_VARIABLE_HAS_NO_VALUE            ,"variable has no value"},
 {0,NULL}
 	};
