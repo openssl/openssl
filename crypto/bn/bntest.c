@@ -255,7 +255,6 @@ int test_add(BIO *bp)
 	{
 	BIGNUM a,b,c;
 	int i;
-	int j;
 
 	BN_init(&a);
 	BN_init(&b);
@@ -300,7 +299,6 @@ int test_sub(BIO *bp)
 	{
 	BIGNUM a,b,c;
 	int i;
-	int j;
 
 	BN_init(&a);
 	BN_init(&b);
@@ -352,7 +350,6 @@ int test_div(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,b,c,d,e;
 	int i;
-	int j;
 
 	BN_init(&a);
 	BN_init(&b);
@@ -418,7 +415,6 @@ int test_div_recp(BIO *bp, BN_CTX *ctx)
 	BIGNUM a,b,c,d,e;
 	BN_RECP_CTX recp;
 	int i;
-	int j;
 
 	BN_RECP_CTX_init(&recp);
 	BN_init(&a);
@@ -491,7 +487,6 @@ int test_mul(BIO *bp)
 	{
 	BIGNUM a,b,c,d,e;
 	int i;
-	int j;
 	BN_CTX ctx;
 
 	BN_CTX_init(&ctx);
@@ -546,7 +541,6 @@ int test_sqr(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,c,d,e;
 	int i;
-	int j;
 
 	BN_init(&a);
 	BN_init(&c);
@@ -590,7 +584,6 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 	BIGNUM a,b,c,d,A,B;
 	BIGNUM n;
 	int i;
-	int j;
 	BN_MONT_CTX *mont;
 
 	BN_init(&a);
@@ -665,7 +658,6 @@ int test_mod(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
 	int i;
-	int j;
 
 	a=BN_new();
 	b=BN_new();
