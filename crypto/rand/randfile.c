@@ -57,10 +57,13 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include <stdlib.h>
+#include <string.h>
+#include <memory.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "e_os.h"
 #include "rand.h"
 
 #undef BUFSIZE

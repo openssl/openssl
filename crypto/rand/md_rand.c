@@ -57,9 +57,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
 #include <sys/types.h>
 #include <time.h>
+#include <string.h>
+#include "e_os.h"
+#include "crypto.h"
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
 #ifndef NO_MD5
