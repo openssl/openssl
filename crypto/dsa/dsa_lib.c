@@ -1,5 +1,5 @@
 /* crypto/dsa/dsa_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -64,7 +64,7 @@
 #include "dsa.h"
 #include "asn1.h"
 
-char *DSA_version="\0DSA part of SSLeay 0.8.1b 29-Jun-1998";
+char *DSA_version="\0DSA part of SSLeay 0.9.0b 29-Jun-1998";
 
 DSA *DSA_new()
 	{
@@ -101,6 +101,9 @@ DSA *r;
 	if (r == NULL) return;
 
 	i=CRYPTO_add(&r->references,-1,CRYPTO_LOCK_DSA);
+#ifdef REF_PRINT
+	REF_PRINT("DSA",r);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)

@@ -1,5 +1,5 @@
 /* crypto/x509/x509_req.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -66,9 +66,10 @@
 #include "buffer.h"
 #include "pem.h"
 
-X509_REQ *X509_to_X509_REQ(x,pkey)
+X509_REQ *X509_to_X509_REQ(x,pkey,md)
 X509 *x;
 EVP_PKEY *pkey;
+EVP_MD *md;
 	{
 	X509_REQ *ret;
 	X509_REQ_INFO *ri;
@@ -94,9 +95,11 @@ EVP_PKEY *pkey;
 	i=X509_REQ_set_pubkey(ret,X509_get_pubkey(x));
 	if (!i) goto err;
 
-/* NEEDS FIXING EAY EAY EAY */
-	if (!X509_REQ_sign(ret,pkey,EVP_md5()))
-		goto err;
+	if (pkey != NULL)
+		{
+		if (!X509_REQ_sign(ret,pkey,md))
+			goto err;
+		}
 	return(ret);
 err:
 	X509_REQ_free(ret);
@@ -106,6 +109,8 @@ err:
 EVP_PKEY *X509_REQ_get_pubkey(req)
 X509_REQ *req;
 	{
+	if ((req == NULL) || (req->req_info == NULL))
+		return(NULL);
 	return(X509_PUBKEY_get(req->req_info->pubkey));
 	}
 

@@ -1,0 +1,43 @@
+SSL_CTX::new(method)
+	SSLv3
+	SSLv3_client
+	SSLv3_server
+	SSLv23
+	SSLv23_client
+	SSLv23_server
+	SSLv2
+	SSLv2_client
+	SSLv2_server
+
+SSL_CTX::use_PrivateKey_file(file[,type])
+	type eq "der" or "pem".  Default == 'pem'.
+
+SSL_CTX::set_options(...)
+	-info_callback	function
+
+SSL::new(SSL_CTX)
+
+SSL::connect(); returns 0, -1 or 1
+SSL::accept(); return 0, -1 or 1
+SSL::sysread(); as per sysread
+SSL::syswrite(); as per syswrite
+SSL::set_bio(bio);
+
+SSL::set_options(...)
+	-info_callback function
+	-connect_state
+	-accept_state
+
+SSL::state(); the state in numeric and text form.
+SSL::references(); debug stuff
+SSL::get_peer_certificate()
+SSL::do_handshake()
+SSL::renegotiate()
+SSL::shutdown()
+SSL::get_version()
+
+SSL::get_current_cipher();
+
+(key,alg)=SSL_CIPHER::get_bits();
+SSL_CIPHER::get_version();
+SSL_CIPHER::get_name();

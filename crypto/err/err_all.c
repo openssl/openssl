@@ -1,5 +1,5 @@
 /* crypto/err/err_all.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -110,6 +110,7 @@ void ERR_load_crypto_strings()
 	ERR_load_OBJ_strings();
 	ERR_load_PEM_strings();
 	ERR_load_X509_strings();
+	ERR_load_CRYPTO_strings();
 	ERR_load_PKCS7_strings();
 #endif
 	}

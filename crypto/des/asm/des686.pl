@@ -58,7 +58,7 @@ sub des_encrypt
 	{
 	local($name,$do_ip)=@_;
 
-	&function_begin($name,3,"EXTRN   _des_SPtrans:DWORD");
+	&function_begin($name,"EXTRN   _des_SPtrans:DWORD");
 
 	&comment("");
 	&comment("Load the 2 words");
@@ -72,7 +72,7 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("IP");
-		&IP($L,$R,"eax");
+		&IP_new($L,$R,"eax");
 		}
 
 	&comment("");
@@ -125,7 +125,7 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("FP");
-		&FP($R,$L,"eax");
+		&FP_new($R,$L,"eax");
 		}
 
 	&mov("eax",&wparam(0));
@@ -202,7 +202,7 @@ sub PERM_OP
 	&xor(	$a,		$tt		);
 	}
 
-sub IP
+sub IP_new
 	{
 	local($l,$r,$tt)=@_;
 
@@ -213,7 +213,7 @@ sub IP
 	&PERM_OP($r,$l,$tt, 1,"0x55555555");
 	}
 
-sub FP
+sub FP_new
 	{
 	local($l,$r,$tt)=@_;
 

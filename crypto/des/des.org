@@ -161,9 +161,6 @@ void des_ncbc_encrypt(des_cblock *input,des_cblock *output,long length,
 void des_xcbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,
 	des_cblock *inw,des_cblock *outw,int enc);
-void des_3cbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule sk1,des_key_schedule sk2,
-	des_cblock *ivec1,des_cblock *ivec2,int enc);
 void des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
 	long length,des_key_schedule schedule,des_cblock *ivec,int enc);
 void des_ecb_encrypt(des_cblock *input,des_cblock *output,
@@ -246,7 +243,6 @@ DES_LONG des_cbc_cksum();
 void des_cbc_encrypt();
 void des_ncbc_encrypt();
 void des_xcbc_encrypt();
-void des_3cbc_encrypt();
 void des_cfb_encrypt();
 void des_ede3_cfb64_encrypt();
 void des_ede3_ofb64_encrypt();

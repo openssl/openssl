@@ -1,5 +1,5 @@
 /* crypto/bn/bn_div.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -132,7 +132,7 @@ BN_CTX *ctx;
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
-	if (BN_is_zero(num))
+	if (BN_is_zero(divisor))
 		{
 		BNerr(BN_F_BN_DIV,BN_R_DIV_BY_ZERO);
 		return(0);
@@ -184,11 +184,11 @@ BN_CTX *ctx;
 	/* Setup to 'res' */
 	res->neg= (num->neg^divisor->neg);
 	res->top=loop;
-	if (!bn_expand(res,(loop+1)*BN_BITS2)) goto err;
+	if (!bn_wexpand(res,(loop+1))) goto err;
 	resp= &(res->d[loop-1]);
 
 	/* space for temp */
-	if (!bn_expand(tmp,(div_n+1)*BN_BITS2)) goto err;
+	if (!bn_wexpand(tmp,(div_n+1))) goto err;
 
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
@@ -237,9 +237,9 @@ BN_CTX *ctx;
 
 			t3t=LBITS(d0); t3h=HBITS(d0);
 			mul64(t3t,t3h,ql,qh); /* t3=t1-(BN_ULLONG)q*d0; */
-			t3l=(t1l-t3t);
+			t3l=(t1l-t3t)&BN_MASK2;
 			if (t3l > t1l) t3h++;
-			t3h=(t1h-t3h);
+			t3h=(t1h-t3h)&BN_MASK2;
 
 			/*if ((t3>>BN_BITS2) ||
 				(t2 <= ((t3<<BN_BITS2)+wnump[-2])))
@@ -252,7 +252,7 @@ BN_CTX *ctx;
 			}
 #endif
 		}
-		l0=bn_mul_word(tmp->d,sdiv->d,div_n,q);
+		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
 		tmp->d[div_n]=l0;
 		for (j=div_n+1; j>0; j--)
 			if (tmp->d[j-1]) break;

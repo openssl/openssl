@@ -1,5 +1,5 @@
 /* crypto/lhash/lhash.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -116,7 +116,7 @@ void lh_doall(LHASH *lh, void (*func)(/* char *b */));
 void lh_doall_arg(LHASH *lh, void (*func)(/*char *a,char *b*/),char *arg);
 unsigned long lh_strhash(char *c);
 
-#ifndef WIN16
+#ifndef NO_FP_API
 void lh_stats(LHASH *lh, FILE *out);
 void lh_node_stats(LHASH *lh, FILE *out);
 void lh_node_usage_stats(LHASH *lh, FILE *out);
@@ -137,7 +137,7 @@ void lh_doall();
 void lh_doall_arg();
 unsigned long lh_strhash();
 
-#ifndef WIN16
+#ifndef NO_FP_API
 void lh_stats();
 void lh_node_stats();
 void lh_node_usage_stats();

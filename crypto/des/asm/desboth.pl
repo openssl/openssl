@@ -7,13 +7,20 @@ sub des_encrypt3
 	{
 	local($name,$enc)=@_;
 
-	&function_begin($name,4,"");
+	&function_begin_B($name,"");
+	&push("ebx");
+	&mov("ebx",&wparam(0));
+
+	&push("ebp");
+	&push("esi");
+
+	&push("edi");
 
 	&comment("");
 	&comment("Load the data words");
-	&mov("ebx",&wparam(0));
 	&mov($L,&DWP(0,"ebx","",0));
 	&mov($R,&DWP(4,"ebx","",0));
+	&stack_push(3);
 
 	&comment("");
 	&comment("IP");
@@ -37,21 +44,21 @@ sub des_encrypt3
 		 &mov("edi",&wparam(2));
 		 &mov("eax",&wparam(3));
 		}
-	&push(($enc)?"1":"0");
-	&push("eax");
-	&push("ebx");
+	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&mov(&swtmp(1),	"eax");
+	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");
-	&push(($enc)?"0":"1");
-	&push("edi");
-	&push("ebx");
+	&mov(&swtmp(2),	(($enc)?"0":"1"));
+	&mov(&swtmp(1),	"edi");
+	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");
-	&push(($enc)?"1":"0");
-	&push("esi");
-	&push("ebx");
+	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&mov(&swtmp(1),	"esi");
+	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");
 
+	&stack_pop(3);
 	&mov($L,&DWP(0,"ebx","",0));
-	&add("esp",36);
 	&mov($R,&DWP(4,"ebx","",0));
 
 	&comment("");
@@ -61,7 +68,12 @@ sub des_encrypt3
 	&mov(&DWP(0,"ebx","",0),"eax");
 	&mov(&DWP(4,"ebx","",0),$R);
 
-	&function_end($name);
+	&pop("edi");
+	&pop("esi");
+	&pop("ebp");
+	&pop("ebx");
+	&ret();
+	&function_end_B($name);
 	}
 
 

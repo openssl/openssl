@@ -1,5 +1,5 @@
 /* crypto/bn/bn_print.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -65,7 +65,7 @@
 static char *Hex="0123456789ABCDEF";
 
 /* Must 'Free' the returned data */
-char *BN_bn2ascii(a)
+char *BN_bn2hex(a)
 BIGNUM *a;
 	{
 	int i,j,v,z=0;
@@ -75,7 +75,7 @@ BIGNUM *a;
 	buf=(char *)Malloc(a->top*BN_BYTES*2+2);
 	if (buf == NULL)
 		{
-		BNerr(BN_F_BN_BN2ASCII,ERR_R_MALLOC_FAILURE);
+		BNerr(BN_F_BN_BN2HEX,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	p=buf;
@@ -100,7 +100,63 @@ err:
 	return(buf);
 	}
 
-int BN_ascii2bn(bn,a)
+/* Must 'Free' the returned data */
+char *BN_bn2dec(a)
+BIGNUM *a;
+	{
+	int i=0,num;
+	char *buf=NULL;
+	char *p;
+	BIGNUM *t=NULL;
+	BN_ULONG *bn_data=NULL,*lp;
+
+	i=BN_num_bits(a)*3;
+	num=(i/10+i/1000+3)+1;
+	bn_data=(BN_ULONG *)Malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
+	buf=(char *)Malloc(num+3);
+	if ((buf == NULL) || (bn_data == NULL))
+		{
+		BNerr(BN_F_BN_BN2DEC,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+	if ((t=BN_dup(a)) == NULL) goto err;
+
+	p=buf;
+	lp=bn_data;
+	if (t->neg) *(p++)='-';
+	if (t->top == 0)
+		{
+		*(p++)='0';
+		*(p++)='\0';
+		}
+	else
+		{
+		i=0;
+		while (!BN_is_zero(t))
+			{
+			*lp=BN_div_word(t,BN_DEC_CONV);
+			lp++;
+			}
+		lp--;
+		/* We now have a series of blocks, BN_DEC_NUM chars
+		 * in length, where the last one needs trucation.
+		 * The blocks need to be reversed in order. */
+		sprintf(p,BN_DEC_FMT1,*lp);
+		while (*p) p++;
+		while (lp != bn_data)
+			{
+			lp--;
+			sprintf(p,BN_DEC_FMT2,*lp);
+			while (*p) p++;
+			}
+		}
+err:
+	if (bn_data != NULL) Free(bn_data);
+	if (t != NULL) BN_free(t);
+	return(buf);
+	}
+
+int BN_hex2bn(bn,a)
 BIGNUM **bn;
 char *a;
 	{
@@ -168,9 +224,68 @@ err:
 	return(0);
 	}
 
+int BN_dec2bn(bn,a)
+BIGNUM **bn;
+char *a;
+	{
+	BIGNUM *ret=NULL;
+	BN_ULONG l=0;
+	int neg=0,i,j;
+	int num;
+
+	if ((a == NULL) || (*a == '\0')) return(0);
+	if (*a == '-') { neg=1; a++; }
+
+	for (i=0; isdigit(a[i]); i++)
+		;
+
+	num=i+neg;
+	if (bn == NULL) return(num);
+
+	/* a is the start of the digets, and it is 'i' long.
+	 * We chop it into BN_DEC_NUM digets at a time */
+	if (*bn == NULL)
+		{
+		if ((ret=BN_new()) == NULL) return(0);
+		}
+	else
+		{
+		ret= *bn;
+		BN_zero(ret);
+		}
+
+	/* i is the number of digests, a bit of an over expand; */
+	if (bn_expand(ret,i*4) == NULL) goto err;
+
+	j=BN_DEC_NUM-(i%BN_DEC_NUM);
+	if (j == BN_DEC_NUM) j=0;
+	l=0;
+	while (*a)
+		{
+		l*=10;
+		l+= *a-'0';
+		a++;
+		if (++j == BN_DEC_NUM)
+			{
+			BN_mul_word(ret,BN_DEC_CONV);
+			BN_add_word(ret,l);
+			l=0;
+			j=0;
+			}
+		}
+	ret->neg=neg;
+
+	bn_fix_top(ret);
+	*bn=ret;
+	return(num);
+err:
+	if (*bn == NULL) BN_free(ret);
+	return(0);
+	}
+
 #ifndef NO_BIO
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int BN_print_fp(fp, a)
 FILE *fp;
 BIGNUM *a;

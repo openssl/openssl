@@ -1,0 +1,122 @@
+# Targets
+# make          - twidle the options yourself :-)
+# make cc       - standard cc options
+# make gcc      - standard gcc options
+# make x86-elf  - linux-elf etc
+# make x86-out  - linux-a.out, FreeBSD etc
+# make x86-solaris
+# make x86-bdsi
+
+DIR=    sha
+TOP=    .
+CC=     gcc
+CFLAG=	-O3 -fomit-frame-pointer
+
+CPP=    $(CC) -E
+INCLUDES=
+INSTALLTOP=/usr/local/lib
+MAKE=           make
+MAKEDEPEND=     makedepend
+MAKEFILE=       Makefile.uni
+AR=             ar r
+
+SHA_ASM_OBJ=
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile
+
+TEST1=shatest
+TEST2=sha1test
+APP1=sha
+APP2=sha1
+
+TEST=$(TEST1) $(TEST2)
+APPS=$(APP1) $(APP2)
+
+LIB=libsha.a
+LIBSRC=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c
+LIBOBJ=sha_dgst.o sha1dgst.o sha_one.o sha1_one.o $(SHA_ASM_OBJ)
+
+SRC= $(LIBSRC)
+
+EXHEADER= sha.h
+HEADER= sha_locl.h $(EXHEADER)
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+all:    $(LIB) $(TEST) $(APPS)
+
+$(LIB): $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	sh $(TOP)/ranlib.sh $(LIB)
+
+# elf
+asm/sx86-elf.o: asm/sx86unix.cpp
+	$(CPP) -DELF asm/sx86unix.cpp | as -o asm/sx86-elf.o
+
+# solaris
+asm/sx86-sol.o: asm/sx86unix.cpp
+	$(CC) -E -DSOL asm/sx86unix.cpp | sed 's/^#.*//' > asm/sx86-sol.s
+	as -o asm/sx86-sol.o asm/sx86-sol.s
+	rm -f asm/sx86-sol.s
+
+# a.out
+asm/sx86-out.o: asm/sx86unix.cpp
+	$(CPP) -DOUT asm/sx86unix.cpp | as -o asm/sx86-out.o
+
+# bsdi
+asm/sx86bsdi.o: asm/sx86unix.cpp
+	$(CPP) -DBSDI asm/sx86unix.cpp | as -o asm/sx86bsdi.o
+
+asm/sx86unix.cpp:
+	(cd asm; perl sha1-586.pl cpp >sx86unix.cpp)
+
+test:	$(TEST)
+	./$(TEST1)
+	./$(TEST2)
+
+$(TEST1): $(TEST1).c $(LIB)
+	$(CC) -o $(TEST1) $(CFLAGS) $(TEST1).c $(LIB)
+
+$(TEST2): $(TEST2).c $(LIB)
+	$(CC) -o $(TEST2) $(CFLAGS) $(TEST2).c $(LIB)
+
+$(APP1): $(APP1).c $(LIB)
+	$(CC) -o $(APP1) $(CFLAGS) $(APP1).c $(LIB)
+
+$(APP2): $(APP2).c $(LIB)
+	$(CC) -o $(APP2) $(CFLAGS) $(APP2).c $(LIB)
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+depend:
+	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+
+dclean:
+	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	/bin/rm -f $(LIB) $(TEST) $(APPS) *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+cc:
+	$(MAKE) SHA_ASM_OBJ="" CC="cc" CFLAG="-O" all
+
+gcc:
+	$(MAKE) SHA_ASM_OBJ="" CC="gcc" CFLAGS="-O3 -fomit-frame-pointer" all
+
+x86-elf:
+	$(MAKE) SHA_ASM_OBJ="asm/sx86-elf.o" CFLAG="-DELF -DSHA1_ASM -DL_ENDIAN $(CFLAGS)" all
+
+x86-out:
+	$(MAKE) SHA_ASM_OBJ="asm/sx86-out.o" CFLAG="-DOUT -DSHA1_ASM -DL_ENDIAN $(CFLAGS)" all
+
+x86-solaris:
+	$(MAKE) SHA_ASM_OBJ="asm/sx86-sol.o" CFLAG="-DSOL -DSHA1_ASM -DL_ENDIAN $(CFLAGS)" all
+
+x86-bdsi:
+	$(MAKE) SHA_ASM_OBJ="asm/sx86-bdsi.o" CFLAG="-DBDSI -DSHA1_ASM -DL_ENDIAN $(CFLAGS)" all
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

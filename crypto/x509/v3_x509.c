@@ -1,5 +1,5 @@
 /* crypto/x509/v3_x509.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -57,32 +57,197 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include "stack.h"
 #include "cryptlib.h"
+#include "bio.h"
 #include "asn1.h"
 #include "objects.h"
 #include "x509.h"
 
+#if 0
+static int i2a_key_usage(BIO *bp, X509 *x);
+static int a2i_key_usage(X509 *x, char *str, int len);
+#endif
+
+int X509v3_get_key_usage(X509 *x);
+int X509v3_set_key_usage(X509 *x,unsigned int use);
+int i2a_X509v3_key_usage(BIO *bp, unsigned int use);
+unsigned int a2i_X509v3_key_usage(char *p);
+
 #define STD_X509_EXT_NUM	9
 
-static X509_EXTENSION_METHOD std_x509_ext[STD_X509_EXT_NUM]={
-{NID_subject_key_identifier,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_key_usage,			V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_private_key_usage_period,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_subject_alt_name,		V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_issuer_alt_name,		V_ASN1_BIT_STRING,X509_EXT_PACK_STRING},
-{NID_basic_constraints,		V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_crl_number,		V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_certificate_policies,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_authority_key_identifier,  V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
+#if 0
+static X509_OBJECTS std_x509_ext[STD_X509_EXT_NUM]={
+{NID_subject_key_identifier,	NULL,NULL},
+{NID_key_usage,			a2i_key_usage,i2a_key_usage}, /**/
+{NID_private_key_usage_period,	NULL,NULL},
+{NID_subject_alt_name,		NULL,NULL},
+{NID_issuer_alt_name,		NULL,NULL},
+{NID_basic_constraints,		NULL,NULL},
+{NID_crl_number,		NULL,NULL},
+{NID_certificate_policies,	NULL,NULL},
+{NID_authority_key_identifier,  NULL,NULL},
 	};
+#endif
 
 int X509v3_add_standard_extensions()
 	{
-	int i;
 
+#if 0
 	for (i=0; i<STD_X509_EXT_NUM; i++)
 		if (!X509v3_add_extension(&(std_x509_ext[i])))
 			return(0);
+#endif
 	return(1);
 	}
+
+int X509v3_get_key_usage(x)
+X509 *x;
+	{
+	X509_EXTENSION *ext;
+	ASN1_STRING *st;
+	char *p;
+	int i;
+
+	i=X509_get_ext_by_NID(x,NID_key_usage,-1);
+	if (i < 0) return(X509v3_KU_UNDEF);
+	ext=X509_get_ext(x,i);
+	st=X509v3_unpack_string(NULL,V_ASN1_BIT_STRING,
+		X509_EXTENSION_get_data(X509_get_ext(x,i)));
+
+	p=(char *)ASN1_STRING_data(st);
+	if (ASN1_STRING_length(st) == 1)
+		i=p[0];
+	else if (ASN1_STRING_length(st) == 2)
+		i=p[0]|(p[1]<<8);
+	else
+		i=0;
+	return(i);
+	}
+
+static struct
+	{
+	char *name;
+	unsigned int value;
+	} key_usage_data[] ={
+	{"digitalSignature",	X509v3_KU_DIGITAL_SIGNATURE},
+	{"nonRepudiation",	X509v3_KU_NON_REPUDIATION},
+	{"keyEncipherment",	X509v3_KU_KEY_ENCIPHERMENT},
+	{"dataEncipherment",	X509v3_KU_DATA_ENCIPHERMENT},
+	{"keyAgreement",	X509v3_KU_KEY_AGREEMENT},
+	{"keyCertSign",		X509v3_KU_KEY_CERT_SIGN},
+	{"cRLSign",		X509v3_KU_CRL_SIGN},
+	{"encipherOnly",	X509v3_KU_ENCIPHER_ONLY},
+	{"decipherOnly",	X509v3_KU_DECIPHER_ONLY},
+	{NULL,0},
+	};
+
+#if 0
+static int a2i_key_usage(x,str,len)
+X509 *x;
+char *str;
+int len;
+	{
+	return(X509v3_set_key_usage(x,a2i_X509v3_key_usage(str)));
+	}
+
+static int i2a_key_usage(bp,x)
+BIO *bp;
+X509 *x;
+	{
+	return(i2a_X509v3_key_usage(bp,X509v3_get_key_usage(x)));
+	}
+#endif
+
+int i2a_X509v3_key_usage(bp,use)
+BIO *bp;
+unsigned int use;
+	{
+	int i=0,first=1;
+
+	for (;;)
+		{
+		if (use | key_usage_data[i].value)
+			{
+			BIO_printf(bp,"%s%s",((first)?"":" "),
+				key_usage_data[i].name);
+			first=0;
+			}
+		}
+	return(1);
+	}
+
+unsigned int a2i_X509v3_key_usage(p)
+char *p;
+	{
+	unsigned int ret=0;
+	char *q,*s;
+	int i,n;
+
+	q=p;
+	for (;;)
+		{
+		while ((*q != '\0') && isalnum(*q))
+			q++;
+		if (*q == '\0') break;
+		s=q++;
+		while (isalnum(*q))
+			q++;
+		n=q-s;
+		i=0;
+		for (;;)
+			{
+			if (strncmp(key_usage_data[i].name,s,n) == 0)
+				{
+				ret|=key_usage_data[i].value;
+				break;
+				}
+			i++;
+			if (key_usage_data[i].name == NULL)
+				return(X509v3_KU_UNDEF);
+			}
+		}
+	return(ret);
+	}
+
+int X509v3_set_key_usage(x,use)
+X509 *x;
+unsigned int use;
+	{
+	ASN1_OCTET_STRING *os;
+	X509_EXTENSION *ext;
+	int i;
+	unsigned char data[4];
+
+	i=X509_get_ext_by_NID(x,NID_key_usage,-1);
+	if (i < 0)
+		{
+		i=X509_get_ext_count(x)+1;
+		if ((ext=X509_EXTENSION_new()) == NULL) return(0);
+		if (!X509_add_ext(x,ext,i))
+			{
+			X509_EXTENSION_free(ext);
+			return(0);
+			}
+		}
+	else
+		ext=X509_get_ext(x,i);
+
+	/* fill in 'ext' */
+	os=X509_EXTENSION_get_data(ext);
+
+	i=0;
+	if (use > 0)
+		{
+		i=1;
+		data[0]=use&0xff;
+		}
+	if (use > 0xff)
+		{
+		i=2;
+		data[1]=(use>>8)&0xff;
+		}
+	return((X509v3_pack_string(&os,V_ASN1_BIT_STRING,data,i) == NULL)?0:1);
+	}
+

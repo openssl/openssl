@@ -1,5 +1,5 @@
 /* crypto/bn/bn_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-char *BN_version="Big Number part of SSLeay 0.8.1b 29-Jun-1998";
+char *BN_version="Big Number part of SSLeay 0.9.0b 29-Jun-1998";
 
 BIGNUM *BN_value_one()
 	{
@@ -188,7 +188,7 @@ BIGNUM *a;
 	i=(a->top-1)*BN_BITS2;
 	if (l == 0)
 		{
-#ifndef WIN16
+#if !defined(NO_STDIO) && !defined(WIN16)
 		fprintf(stderr,"BAD TOP VALUE\n");
 #endif
 		abort();
@@ -279,24 +279,23 @@ BN_CTX *c;
 	Free(c);
 	}
 
-BIGNUM *bn_expand2(b, bits)
+BIGNUM *bn_expand2(b, words)
 BIGNUM *b;
-int bits;
+int words;
 	{
 	BN_ULONG *p;
-	register int n;
 
-	while (bits > b->max*BN_BITS2)
+	if (words > b->max)
 		{
-		n=((bits+BN_BITS2-1)/BN_BITS2)*2;
-		p=b->d=(BN_ULONG *)Realloc(b->d,sizeof(BN_ULONG)*(n+1));
+		p=(BN_ULONG *)Realloc(b->d,sizeof(BN_ULONG)*(words+1));
 		if (p == NULL)
 			{
 			BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		memset(&(p[b->max]),0,((n+1)-b->max)*sizeof(BN_ULONG));
-		b->max=n;
+		b->d=p;
+		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG));
+		b->max=words;
 		}
 	return(b);
 	}
@@ -315,10 +314,53 @@ BIGNUM *BN_copy(a, b)
 BIGNUM *a;
 BIGNUM *b;
 	{
-	if (bn_expand(a,b->top*BN_BITS2) == NULL) return(NULL);
+	int i;
+	BN_ULONG *A,*B;
+
+	if (a == b) return(a);
+	if (bn_wexpand(a,b->top) == NULL) return(NULL);
+
+#if 1
+	A=a->d;
+	B=b->d;
+	for (i=b->top&(~7); i>0; i-=8)
+		{
+		A[0]=B[0];
+		A[1]=B[1];
+		A[2]=B[2];
+		A[3]=B[3];
+		A[4]=B[4];
+		A[5]=B[5];
+		A[6]=B[6];
+		A[7]=B[7];
+		A+=8;
+		B+=8;
+		}
+	switch (b->top&7)
+		{
+	case 7:
+		A[6]=B[6];
+	case 6:
+		A[5]=B[5];
+	case 5:
+		A[4]=B[4];
+	case 4:
+		A[3]=B[3];
+	case 3:
+		A[2]=B[2];
+	case 2:
+		A[1]=B[1];
+	case 1:
+		A[0]=B[0];
+		}
+#else
 	memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
+#endif
+
 /*	memset(&(a->d[b->top]),0,sizeof(a->d[0])*(a->max-b->top));*/
 	a->top=b->top;
+	if (a->top == 0)
+		a->d[0]=0;
 	a->neg=b->neg;
 	return(a);
 	}
@@ -507,7 +549,11 @@ int n;
 
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
-	if (a->top <= i) return(0);
+	if (a->top <= i)
+		{
+		if (bn_expand(a,n) == NULL) return(0);
+		a->top=i+1;
+		}
 
 	a->d[i]|=(1L<<j);
 	return(1);

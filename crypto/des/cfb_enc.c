@@ -1,5 +1,5 @@
 /* crypto/des/cfb_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -93,7 +93,7 @@ int enc;
 		if (num == 32)
 			mask0=0xffffffffL;
 		else	mask0=(1L<<num)-1;
-		mask1=0x00000000;
+		mask1=0x00000000L;
 		}
 
 	iv=(unsigned char *)ivec;

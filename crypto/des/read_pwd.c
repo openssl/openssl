@@ -1,5 +1,5 @@
 /* crypto/des/read_pwd.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+/* #define SIGACTION */ /* Define this if you have sigaction() */
 #ifdef WIN16TTY
 #undef WIN16
 #undef _WINDOWS
@@ -164,10 +165,14 @@ static int noecho_fgets();
 #endif
 #endif
 
-#ifndef NOPROTO
-static void (*savsig[NX509_SIG])(int );
+#ifdef SIGACTION
+ static struct sigaction savsig[NX509_SIG];
 #else
-static void (*savsig[NX509_SIG])();
+# ifndef NOPROTO
+  static void (*savsig[NX509_SIG])(int );
+# else
+  static void (*savsig[NX509_SIG])();
+# endif
 #endif
 static jmp_buf save;
 
@@ -239,6 +244,13 @@ int verify;
 		{
 #ifdef ENOTTY
 		if (errno == ENOTTY)
+			is_a_tty=0;
+		else
+#endif
+#ifdef EINVAL
+		/* Ariel Glenn ariel@columbia.edu reports that solaris
+		 * can return EINVAL instead.  This should be ok */
+		if (errno == EINVAL)
 			is_a_tty=0;
 		else
 #endif
@@ -359,7 +371,21 @@ static void pushsig()
 	int i;
 
 	for (i=1; i<NX509_SIG; i++)
+		{
+#ifdef SIGUSR1
+		if (i == SIGUSR1)
+			continue;
+#endif
+#ifdef SIGUSR2
+		if (i == SIGUSR2)
+			continue;
+#endif
+#ifdef SIGACTION
+		sigaction(i,NULL,&savsig[i]);
+#else
 		savsig[i]=signal(i,recsig);
+#endif
+		}
 
 #ifdef SIGWINCH
 	signal(SIGWINCH,SIG_DFL);
@@ -371,7 +397,21 @@ static void popsig()
 	int i;
 
 	for (i=1; i<NX509_SIG; i++)
+		{
+#ifdef SIGUSR1
+		if (i == SIGUSR1)
+			continue;
+#endif
+#ifdef SIGUSR2
+		if (i == SIGUSR2)
+			continue;
+#endif
+#ifdef SIGACTION
+		sigaction(i,&savsig[i],NULL);
+#else
 		signal(i,savsig[i]);
+#endif
+		}
 	}
 
 static void recsig(i)

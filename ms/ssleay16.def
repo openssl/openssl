@@ -17,7 +17,9 @@ STACKSIZE	8192
 EXPORTS
     _SSLeay_add_ssl_algorithms          @109
     _BIO_f_ssl                          @121
+    _BIO_new_buffer_ssl_connect         @173
     _BIO_new_ssl                        @122
+    _BIO_new_ssl_connect                @174
     _BIO_ssl_copy_session_id            @124
     _BIO_ssl_shutdown                   @131
     _ERR_load_SSL_strings               @1
@@ -32,14 +34,21 @@ EXPORTS
     _SSL_CTX_flush_sessions             @7
     _SSL_CTX_free                       @8
     _SSL_CTX_get_client_CA_list         @9
+    _SSL_CTX_get_ex_data                @138
+    _SSL_CTX_get_ex_new_index           @167
+    _SSL_CTX_get_quiet_shutdown         @140
     _SSL_CTX_get_verify_callback        @10
     _SSL_CTX_get_verify_mode            @11
+    _SSL_CTX_load_verify_locations      @141
     _SSL_CTX_new                        @12
     _SSL_CTX_remove_session             @13
     _SSL_CTX_set_cert_verify_cb         @14
     _SSL_CTX_set_cipher_list            @15
     _SSL_CTX_set_client_CA_list         @16
     _SSL_CTX_set_default_passwd_cb      @17
+    _SSL_CTX_set_default_verify_paths   @142
+    _SSL_CTX_set_ex_data                @143
+    _SSL_CTX_set_quiet_shutdown         @145
     _SSL_CTX_set_ssl_version            @19
     _SSL_CTX_set_verify                 @21
     _SSL_CTX_use_PrivateKey             @22
@@ -51,9 +60,18 @@ EXPORTS
     _SSL_CTX_use_certificate            @28
     _SSL_CTX_use_certificate_ASN1       @29
     _SSL_CTX_use_certificate_file       @30
+    _SSL_SESSION_cmp                    @132
     _SSL_SESSION_free                   @31
+    _SSL_SESSION_get_ex_data            @146
+    _SSL_SESSION_get_ex_new_index       @168
+    _SSL_SESSION_get_time               @134
+    _SSL_SESSION_get_timeout            @136
+    _SSL_SESSION_hash                   @133
     _SSL_SESSION_new                    @32
     _SSL_SESSION_print                  @33
+    _SSL_SESSION_set_ex_data            @148
+    _SSL_SESSION_set_time               @135
+    _SSL_SESSION_set_timeout            @137
     _SSL_accept                         @35
     _SSL_add_client_CA                  @36
     _SSL_alert_desc_string              @37
@@ -69,6 +87,7 @@ EXPORTS
     _SSL_dup                            @46
     _SSL_dup_CA_list                    @47
     _SSL_free                           @48
+    _SSL_get_SSL_CTX                    @150
     _SSL_get_certificate                @49
     _SSL_get_cipher_list                @52
     _SSL_get_ciphers                    @55
@@ -76,17 +95,22 @@ EXPORTS
     _SSL_get_current_cipher             @127
     _SSL_get_default_timeout            @57
     _SSL_get_error                      @58
+    _SSL_get_ex_data                    @151
+    _SSL_get_ex_new_index               @169
     _SSL_get_fd                         @59
+    _SSL_get_info_callback              @165
     _SSL_get_peer_cert_chain            @60
     _SSL_get_peer_certificate           @61
     _SSL_get_privatekey                 @126
+    _SSL_get_quiet_shutdown             @153
     _SSL_get_rbio                       @63
     _SSL_get_read_ahead                 @64
+    _SSL_get_session                    @154
     _SSL_get_shared_ciphers             @65
+    _SSL_get_shutdown                   @155
     _SSL_get_ssl_method                 @66
-    _SSL_get_time                       @67
-    _SSL_get_timeout                    @68
     _SSL_get_verify_mode                @70
+    _SSL_get_verify_result              @157
     _SSL_get_version                    @71
     _SSL_get_wbio                       @72
     _SSL_load_client_CA_file            @73
@@ -103,16 +127,20 @@ EXPORTS
     _SSL_set_cipher_list                @84
     _SSL_set_client_CA_list             @85
     _SSL_set_connect_state              @86
+    _SSL_set_ex_data                    @158
     _SSL_set_fd                         @87
+    _SSL_set_info_callback              @160
+    _SSL_set_quiet_shutdown             @161
     _SSL_set_read_ahead                 @88
     _SSL_set_rfd                        @89
     _SSL_set_session                    @90
+    _SSL_set_shutdown                   @162
     _SSL_set_ssl_method                 @91
-    _SSL_set_time                       @92
-    _SSL_set_timeout                    @93
     _SSL_set_verify                     @94
+    _SSL_set_verify_result              @163
     _SSL_set_wfd                        @95
     _SSL_shutdown                       @96
+    _SSL_state                          @166
     _SSL_state_string                   @97
     _SSL_state_string_long              @98
     _SSL_use_PrivateKey                 @99
@@ -124,6 +152,7 @@ EXPORTS
     _SSL_use_certificate                @105
     _SSL_use_certificate_ASN1           @106
     _SSL_use_certificate_file           @107
+    _SSL_version                        @164
     _SSL_write                          @108
     _SSLv23_client_method               @110
     _SSLv23_method                      @111
@@ -134,6 +163,9 @@ EXPORTS
     _SSLv3_client_method                @116
     _SSLv3_method                       @117
     _SSLv3_server_method                @118
+    _TLSv1_client_method                @172
+    _TLSv1_method                       @170
+    _TLSv1_server_method                @171
     _d2i_SSL_SESSION                    @119
     _i2d_SSL_SESSION                    @120
 

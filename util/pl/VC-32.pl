@@ -12,15 +12,21 @@ $rm='del';
 
 # C compiler stuff
 $cc='cl';
-$cflags='/W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DL_ENDIAN';
+$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN';
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
+
+$out_def="out32";
+$tmp_def="tmp32";
+$inc_def="inc32";
+
 if ($debug)
 	{
-	$cflags="/W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWINDOWS -DWIN32 -D_DEBUG -DL_ENDIAN";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
+
 $obj='.obj';
 $ofile="/Fo";
 
@@ -44,6 +50,7 @@ $shlib_ex_obj="";
 $app_ex_obj="setargv.obj";
 
 $asm='ml /Cp /coff /c /Cx';
+$asm.=" /Zi" if $debug;
 $afile='/Fo';
 
 $bn_mulw_obj='';
@@ -55,20 +62,34 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_mulw_obj='crypto\bn\asm\x86nt32.obj';
-	$bn_mulw_src='crypto\bn\asm\x86nt32.asm';
-	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\c-win32.obj';
-	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\c-win32.asm';
+	$bn_mulw_obj='crypto\bn\asm\bn-win32.obj';
+	$bn_mulw_src='crypto\bn\asm\bn-win32.asm';
+	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\y-win32.obj';
+	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\y-win32.asm';
 	$bf_enc_obj='crypto\bf\asm\b-win32.obj';
 	$bf_enc_src='crypto\bf\asm\b-win32.asm';
+	$cast_enc_obj='crypto\cast\asm\c-win32.obj';
+	$cast_enc_src='crypto\cast\asm\c-win32.asm';
+	$rc4_enc_obj='crypto\rc4\asm\r4-win32.obj';
+	$rc4_enc_src='crypto\rc4\asm\r4-win32.asm';
+	$rc5_enc_obj='crypto\rc5\asm\r5-win32.obj';
+	$rc5_enc_src='crypto\rc5\asm\r5-win32.asm';
+	$md5_asm_obj='crypto\md5\asm\m5-win32.obj';
+	$md5_asm_src='crypto\md5\asm\m5-win32.asm';
+	$sha1_asm_obj='crypto\sha\asm\s1-win32.obj';
+	$sha1_asm_src='crypto\sha\asm\s1-win32.asm';
+	$rmd160_asm_obj='crypto\ripemd\asm\rm-win32.obj';
+	$rmd160_asm_src='crypto\ripemd\asm\rm-win32.asm';
+	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
 
 if ($shlib)
 	{
 	$mlflags.=" $lflags /dll";
-	$cflags.=" /MD";
-	$cflags.="d" if ($debug);
-	$lib_cflag=" /GD";
+#	$cflags =~ s| /MD| /MT|;
+	$lib_cflag=" /GD -D_WINDLL -D_DLL";
+	$out_def="out32dll";
+	$tmp_def="tmp32dll";
 	}
 
 sub do_lib_rule
@@ -79,6 +100,7 @@ sub do_lib_rule
 	$taget =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
 
+#	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
 	if (!$shlib)
 		{
@@ -87,7 +109,7 @@ sub do_lib_rule
 		}
 	else
 		{
-		local($ex)=($target eq '$(O_SSL)')?' $(L_CRYPTO)':'';
+		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' wsock32.lib gdi32.lib';
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}

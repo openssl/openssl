@@ -1,5 +1,5 @@
 /* mt/mttest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -82,7 +82,7 @@
 #include "ssl.h"
 #include "err.h"
 
-#ifdef WIN16
+#ifdef NO_FP_API
 #define APPS_WIN16
 #include "../crypto/buffer/bss_file.c"
 #endif
@@ -98,25 +98,31 @@ int MS_CALLBACK verify_callback(int ok, X509 *xs, X509 *xi, int depth,
 void thread_setup(void);
 void thread_cleanup(void);
 void do_threads(SSL_CTX *s_ctx,SSL_CTX *c_ctx);
+
 void irix_locking_callback(int mode,int type,char *file,int line);
 void solaris_locking_callback(int mode,int type,char *file,int line);
 void win32_locking_callback(int mode,int type,char *file,int line);
-void linux_locking_callback(int mode,int type,char *file,int line);
+void pthreads_locking_callback(int mode,int type,char *file,int line);
+
 unsigned long irix_thread_id(void );
 unsigned long solaris_thread_id(void );
-unsigned long linix_thread_id(void );
+unsigned long pthreads_thread_id(void );
+
 #else
 int MS_CALLBACK verify_callback();
 void thread_setup();
 void thread_cleanup();
 void do_threads();
+
 void irix_locking_callback();
 void solaris_locking_callback();
 void win32_locking_callback();
-void linux_locking_callback();
+void pthreads_locking_callback();
+
 unsigned long irix_thread_id();
 unsigned long solaris_thread_id();
-unsigned long linix_thread_id();
+unsigned long pthreads_thread_id();
+
 #endif
 
 BIO *bio_err=NULL;
@@ -700,7 +706,7 @@ char *arg;
 
 #ifdef WIN32
 
-static HANDLE lock_cs[CRYPTO_NUM_LOCKS];
+static PRLOCK lock_cs[CRYPTO_NUM_LOCKS];
 
 void thread_setup()
 	{
@@ -792,7 +798,7 @@ SSL_CTX *s_ctx,*c_ctx;
 	printf("win32 threads done - %.3f seconds\n",ret);
 	}
 
-#endif
+#endif /* WIN32 */
 
 #ifdef SOLARIS
 
@@ -903,7 +909,7 @@ unsigned long solaris_thread_id()
 	ret=(unsigned long)thr_self();
 	return(ret);
 	}
-#endif
+#endif /* SOLARIS */
 
 #ifdef IRIX
 
@@ -1001,5 +1007,109 @@ unsigned long irix_thread_id()
 	ret=(unsigned long)getpid();
 	return(ret);
 	}
+#endif /* IRIX */
+
+#ifdef PTHREADS
+
+static pthread_mutex_t lock_cs[CRYPTO_NUM_LOCKS];
+static long lock_count[CRYPTO_NUM_LOCKS];
+
+void thread_setup()
+	{
+	int i;
+
+	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+		{
+		lock_count[i]=0;
+		pthread_mutex_init(&(lock_cs[i]),NULL);
+		}
+
+	CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
+	CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
+	}
+
+void thread_cleanup()
+	{
+	int i;
+
+	CRYPTO_set_locking_callback(NULL);
+	fprintf(stderr,"cleanup\n");
+	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+		{
+		pthread_mutex_destroy(&(lock_cs[i]));
+		fprintf(stderr,"%8ld:%s\n",lock_count[i],
+			CRYPTO_get_lock_name(i));
+		}
+	fprintf(stderr,"done cleanup\n");
+	}
+
+void pthreads_locking_callback(mode,type,file,line)
+int mode;
+int type;
+char *file;
+int line;
+      {
+#ifdef undef
+	fprintf(stderr,"thread=%4d mode=%s lock=%s %s:%d\n",
+		CRYPTO_thread_id(),
+		(mode&CRYPTO_LOCK)?"l":"u",
+		(type&CRYPTO_READ)?"r":"w",file,line);
 #endif
+/*
+	if (CRYPTO_LOCK_SSL_CERT == type)
+		fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
+		CRYPTO_thread_id(),
+		mode,file,line);
+*/
+	if (mode & CRYPTO_LOCK)
+		{
+		pthread_mutex_lock(&(lock_cs[type]));
+		lock_count[type]++;
+		}
+	else
+		{
+		pthread_mutex_unlock(&(lock_cs[type]));
+		}
+	}
+
+void do_threads(s_ctx,c_ctx)
+SSL_CTX *s_ctx,*c_ctx;
+	{
+	SSL_CTX *ssl_ctx[2];
+	pthread_t thread_ctx[MAX_THREAD_NUMBER];
+	int i;
+
+	ssl_ctx[0]=s_ctx;
+	ssl_ctx[1]=c_ctx;
+
+	/*
+	thr_setconcurrency(thread_number);
+	*/
+	for (i=0; i<thread_number; i++)
+		{
+		pthread_create(&(thread_ctx[i]), NULL,
+			(void *(*)())ndoit, (void *)ssl_ctx);
+		}
+
+	printf("reaping\n");
+	for (i=0; i<thread_number; i++)
+		{
+		pthread_join(thread_ctx[i],NULL);
+		}
+
+	printf("pthreads threads done (%d,%d)\n",
+	s_ctx->references,c_ctx->references);
+	}
+
+unsigned long pthreads_thread_id()
+	{
+	unsigned long ret;
+
+	ret=(unsigned long)pthread_self();
+	return(ret);
+	}
+
+#endif /* PTHREADS */
+
+
 

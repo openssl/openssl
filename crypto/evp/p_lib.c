@@ -1,5 +1,5 @@
 /* crypto/evp/p_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -72,6 +72,21 @@ static void EVP_PKEY_free_it(EVP_PKEY *x);
 static void EVP_PKEY_free_it();
 #endif
 
+int EVP_PKEY_bits(pkey)
+EVP_PKEY *pkey;
+	{
+#ifndef NO_RSA
+	if (pkey->type == EVP_PKEY_RSA)
+		return(BN_num_bits(pkey->pkey.rsa->n));
+	else
+#endif
+#ifndef NO_DSA
+		if (pkey->type == EVP_PKEY_DSA)
+		return(BN_num_bits(pkey->pkey.dsa->p));
+#endif
+	return(0);
+	}
+
 int EVP_PKEY_size(pkey)
 EVP_PKEY *pkey;
 	{
@@ -110,13 +125,13 @@ EVP_PKEY *to,*from;
 	if (to->type != from->type)
 		{
 		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,EVP_R_DIFFERENT_KEY_TYPES);
-		return(0);
+		goto err;
 		}
 
 	if (EVP_PKEY_missing_parameters(from))
 		{
 		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,EVP_R_MISSING_PARMATERS);
-		return(0);
+		goto err;
 		}
 #ifndef NO_DSA
 	if (to->type == EVP_PKEY_DSA)
@@ -155,6 +170,23 @@ EVP_PKEY *pkey;
 		}
 #endif
 	return(0);
+	}
+
+int EVP_PKEY_cmp_parameters(a,b)
+EVP_PKEY *a,*b;
+	{
+#ifndef NO_DSA
+	if ((a->type == EVP_PKEY_DSA) && (b->type == EVP_PKEY_DSA))
+		{
+		if (	BN_cmp(a->pkey.dsa->p,b->pkey.dsa->p) ||
+			BN_cmp(a->pkey.dsa->q,b->pkey.dsa->q) ||
+			BN_cmp(a->pkey.dsa->g,b->pkey.dsa->g))
+			return(0);
+		else
+			return(1);
+		}
+#endif
+	return(-1);
 	}
 
 EVP_PKEY *EVP_PKEY_new()
@@ -198,8 +230,10 @@ int type;
 	case EVP_PKEY_RSA2:
 		return(EVP_PKEY_RSA);
 	case EVP_PKEY_DSA:
+	case EVP_PKEY_DSA1:
 	case EVP_PKEY_DSA2:
 	case EVP_PKEY_DSA3:
+	case EVP_PKEY_DSA4:
 		return(EVP_PKEY_DSA);
 	case EVP_PKEY_DH:
 		return(EVP_PKEY_DH);
@@ -216,6 +250,9 @@ EVP_PKEY *x;
 	if (x == NULL) return;
 
 	i=CRYPTO_add(&x->references,-1,CRYPTO_LOCK_EVP_PKEY);
+#ifdef REF_PRINT
+	REF_PRINT("EVP_PKEY",x);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)
@@ -243,6 +280,7 @@ EVP_PKEY *x;
 	case EVP_PKEY_DSA:
 	case EVP_PKEY_DSA2:
 	case EVP_PKEY_DSA3:
+	case EVP_PKEY_DSA4:
 		DSA_free(x->pkey.dsa);
 		break;
 #endif

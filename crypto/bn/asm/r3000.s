@@ -55,9 +55,9 @@ __gnu_compiled_c:
 	.byte	0x0
 	.text
 	.align	2
-	.globl	bn_mul_add_word
-	.ent	bn_mul_add_word
-bn_mul_add_word:
+	.globl	bn_mul_add_words
+	.ent	bn_mul_add_words
+bn_mul_add_words:
 	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, extra= 0
 	.mask	0x00000000,0
 	.fmask	0x00000000,0
@@ -206,11 +206,11 @@ $L3:
 	.set	macro
 	.set	reorder
 
-	.end	bn_mul_add_word
+	.end	bn_mul_add_words
 	.align	2
-	.globl	bn_mul_word
-	.ent	bn_mul_word
-bn_mul_word:
+	.globl	bn_mul_words
+	.ent	bn_mul_words
+bn_mul_words:
 	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, extra= 0
 	.mask	0x00000000,0
 	.fmask	0x00000000,0
@@ -334,7 +334,7 @@ $L11:
 	.set	macro
 	.set	reorder
 
-	.end	bn_mul_word
+	.end	bn_mul_words
 	.align	2
 	.globl	bn_sqr_words
 	.ent	bn_sqr_words

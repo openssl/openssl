@@ -1,5 +1,5 @@
 /* crypto/asn1/a_utctm.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -150,6 +150,28 @@ ASN1_UTCTIME *d;
 	return(o == l);
 err:
 	return(0);
+	}
+
+int ASN1_UTCTIME_set_string(s,str)
+ASN1_UTCTIME *s;
+char *str;
+	{
+	ASN1_UTCTIME t;
+
+	t.type=V_ASN1_UTCTIME;
+	t.length=strlen(str);
+	t.data=(unsigned char *)str;
+	if (ASN1_UTCTIME_check(&t))
+		{
+		if (s != NULL)
+			{
+			ASN1_STRING_set((ASN1_STRING *)s,
+				(unsigned char *)str,t.length);
+			}
+		return(1);
+		}
+	else
+		return(0);
 	}
 
 ASN1_UTCTIME *ASN1_UTCTIME_set(s, t)

@@ -1,5 +1,5 @@
 /* ssl/ssl_rsa.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -99,6 +99,7 @@ X509 *x;
 	return(ssl_set_cert(c,x));
 	}
 
+#ifndef NO_STDIO
 int SSL_use_certificate_file(ssl, file, type)
 SSL *ssl;
 char *file;
@@ -109,11 +110,7 @@ int type;
 	int ret=0;
 	X509 *x=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE,ERR_R_BUF_LIB);
@@ -122,7 +119,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -154,6 +150,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_use_certificate_ASN1(ssl, len, d)
 SSL *ssl;
@@ -232,7 +229,16 @@ EVP_PKEY *pkey;
 
 	if (c->pkeys[i].x509 != NULL)
 		{
-		if (!X509_check_private_key(c->pkeys[i].x509,pkey))
+#ifndef NO_RSA
+		/* Don't check the public/private key, this is mostly
+		 * for smart cards. */
+		if ((pkey->type == EVP_PKEY_RSA) &&
+			(RSA_flags(pkey->pkey.rsa) &
+			 RSA_METHOD_FLAG_NO_CHECK))
+			 ok=1;
+		else
+#endif
+			if (!X509_check_private_key(c->pkeys[i].x509,pkey))
 			{
 			if ((i == SSL_PKEY_DH_RSA) || (i == SSL_PKEY_DH_DSA))
 				{
@@ -277,6 +283,7 @@ EVP_PKEY *pkey;
 	}
 
 #ifndef NO_RSA
+#ifndef NO_STDIO
 int SSL_use_RSAPrivateKey_file(ssl, file, type)
 SSL *ssl;
 char *file;
@@ -286,11 +293,7 @@ int type;
 	BIO *in;
 	RSA *rsa=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE,ERR_R_BUF_LIB);
@@ -299,7 +302,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -330,6 +332,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_use_RSAPrivateKey_ASN1(ssl,d,len)
 SSL *ssl;
@@ -383,6 +386,7 @@ EVP_PKEY *pkey;
 	return(ret);
 	}
 
+#ifndef NO_STDIO
 int SSL_use_PrivateKey_file(ssl, file, type)
 SSL *ssl;
 char *file;
@@ -392,11 +396,7 @@ int type;
 	BIO *in;
 	EVP_PKEY *pkey=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE,ERR_R_BUF_LIB);
@@ -405,7 +405,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -431,6 +430,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_use_PrivateKey_ASN1(type,ssl,d,len)
 int type;
@@ -491,14 +491,14 @@ X509 *x;
 	pkey=X509_get_pubkey(x);
 	if (pkey == NULL)
 		{
-		SSLerr(SSL_F_SSL_SET_PKEY,SSL_R_X509_LIB);
+		SSLerr(SSL_F_SSL_SET_CERT,SSL_R_X509_LIB);
 		return(0);
 		}
 
 	i=ssl_cert_type(x,pkey);
 	if (i < 0)
 		{
-		SSLerr(SSL_F_SSL_SET_PKEY,SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+		SSLerr(SSL_F_SSL_SET_CERT,SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		return(0);
 		}
 
@@ -547,6 +547,7 @@ X509 *x;
 	return(1);
 	}
 
+#ifndef NO_STDIO
 int SSL_CTX_use_certificate_file(ctx, file, type)
 SSL_CTX *ctx;
 char *file;
@@ -557,11 +558,7 @@ int type;
 	int ret=0;
 	X509 *x=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE,ERR_R_BUF_LIB);
@@ -570,7 +567,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -602,6 +598,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_CTX_use_certificate_ASN1(ctx, len, d)
 SSL_CTX *ctx;
@@ -663,6 +660,7 @@ RSA *rsa;
 	return(ret);
 	}
 
+#ifndef NO_STDIO
 int SSL_CTX_use_RSAPrivateKey_file(ctx, file, type)
 SSL_CTX *ctx;
 char *file;
@@ -672,11 +670,7 @@ int type;
 	BIO *in;
 	RSA *rsa=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE,ERR_R_BUF_LIB);
@@ -685,7 +679,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -716,6 +709,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_CTX_use_RSAPrivateKey_ASN1(ctx,d,len)
 SSL_CTX *ctx;
@@ -766,6 +760,7 @@ EVP_PKEY *pkey;
 	return(ssl_set_pkey(c,pkey));
 	}
 
+#ifndef NO_STDIO
 int SSL_CTX_use_PrivateKey_file(ctx, file, type)
 SSL_CTX *ctx;
 char *file;
@@ -775,11 +770,7 @@ int type;
 	BIO *in;
 	EVP_PKEY *pkey=NULL;
 
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE,ERR_R_BUF_LIB);
@@ -788,7 +779,6 @@ int type;
 
 	if (BIO_read_filename(in,file) <= 0)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE,ERR_R_SYS_LIB);
 		goto end;
 		}
@@ -814,6 +804,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	return(ret);
 	}
+#endif
 
 int SSL_CTX_use_PrivateKey_ASN1(type,ctx,d,len)
 int type;

@@ -1,5 +1,5 @@
 /* ssl/s3_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3 part of SSLeay 0.8.1b 29-Jun-1998";
+char *ssl3_version_str="SSLv3 part of SSLeay 0.9.0b 29-Jun-1998";
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
@@ -131,8 +131,8 @@ SSL_CIPHER ssl3_ciphers[]={
 /* Cipher 1B */
 	{
 	1,
-	SSL3_TXT_ADH_DES_196_CBC_SHA,
-	SSL3_CK_ADH_DES_196_CBC_SHA,
+	SSL3_TXT_ADH_DES_192_CBC_SHA,
+	SSL3_CK_ADH_DES_192_CBC_SHA,
 	SSL_kEDH |SSL_aNULL|SSL_3DES |SSL_SHA1|SSL_NOT_EXP|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
@@ -358,8 +358,22 @@ SSL_CIPHER ssl3_ciphers[]={
 /* end of list */
 	};
 
+static SSL3_ENC_METHOD SSLv3_enc_data={
+	ssl3_enc,
+	ssl3_mac,
+	ssl3_setup_key_block,
+	ssl3_generate_master_secret,
+	ssl3_change_cipher_state,
+	ssl3_final_finish_mac,
+	MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
+	ssl3_cert_verify_mac,
+	SSL3_MD_CLIENT_FINISHED_CONST,4,
+	SSL3_MD_SERVER_FINISHED_CONST,4,
+	ssl3_alert_code,
+	};
+
 static SSL_METHOD SSLv3_data= {
-	3,
+	SSL3_VERSION,
 	ssl3_new,
 	ssl3_clear,
 	ssl3_free,
@@ -379,6 +393,7 @@ static SSL_METHOD SSLv3_data= {
 	ssl3_get_cipher,
 	ssl_bad_method,
 	ssl3_default_timeout,
+	&SSLv3_enc_data,
 	};
 
 static long ssl3_default_timeout()
@@ -420,14 +435,18 @@ SSL *s;
 	SSL3_CTX *s3;
 
 	if ((s3=(SSL3_CTX *)Malloc(sizeof(SSL3_CTX))) == NULL) goto err;
+	memset(s3,0,sizeof(SSL3_CTX));
 
 	s->s3=s3;
+	/*
 	s->s3->tmp.ca_names=NULL;
 	s->s3->tmp.key_block=NULL;
+	s->s3->tmp.key_block_length=0;
 	s->s3->rbuf.buf=NULL;
 	s->s3->wbuf.buf=NULL;
+	*/
 
-	ssl3_clear(s);
+	s->method->ssl_clear(s);
 	return(1);
 err:
 	return(0);
@@ -465,16 +484,14 @@ SSL *s;
 	wp=s->s3->wbuf.buf;
 
 	memset(s->s3,0,sizeof(SSL3_CTX));
-	if (rp != NULL)
-		{
-		s->packet= &(s->s3->rbuf.buf[0]);
-		s->s3->rbuf.buf=rp;
-		s->s3->wbuf.buf=wp;
-		}
-	else
-		s->packet=NULL;
+	if (rp != NULL) s->s3->rbuf.buf=rp;
+	if (wp != NULL) s->s3->wbuf.buf=wp;
 	s->packet_length=0;
-	s->version=3;
+	s->s3->renegotiate=0;
+	s->s3->total_renegotiations=0;
+	s->s3->num_renegotiations=0;
+	s->s3->in_read_app_data=0;
+	s->version=SSL3_VERSION;
 	}
 
 long ssl3_ctrl(s,cmd,larg,parg)
@@ -483,7 +500,29 @@ int cmd;
 long larg;
 char *parg;
 	{
-	return(0);
+	int ret=0;
+
+	switch (cmd)
+		{
+	case SSL_CTRL_GET_SESSION_REUSED:
+		ret=s->hit;
+		break;
+	case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
+		break;
+	case SSL_CTRL_GET_NUM_RENEGOTIATIONS:
+		ret=s->s3->num_renegotiations;
+		break;
+	case SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS:
+		ret=s->s3->num_renegotiations;
+		s->s3->num_renegotiations=0;
+		break;
+	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
+		ret=s->s3->total_renegotiations;
+		break;
+	default:
+		break;
+		}
+	return(ret);
 	}
 
 long ssl3_ctx_ctrl(ctx,cmd,larg,parg)
@@ -623,49 +662,6 @@ unsigned char *p;
 	return(2);
 	}
 
-void ssl3_generate_key_block(s,km,num)
-SSL *s;
-unsigned char *km;
-int num;
-	{
-	MD5_CTX m5;
-	SHA_CTX s1;
-	unsigned char buf[8],smd[SHA_DIGEST_LENGTH];
-	unsigned char c='A';
-	int i,j,k;
-
-	k=0;
-	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
-		{
-		k++;
-		for (j=0; j<k; j++)
-			buf[j]=c;
-		c++;
-		SHA1_Init(  &s1);
-		SHA1_Update(&s1,buf,k);
-		SHA1_Update(&s1,s->session->master_key,
-			s->session->master_key_length);
-		SHA1_Update(&s1,s->s3->server_random,SSL3_RANDOM_SIZE);
-		SHA1_Update(&s1,s->s3->client_random,SSL3_RANDOM_SIZE);
-		SHA1_Final( smd,&s1);
-
-		MD5_Init(  &m5);
-		MD5_Update(&m5,s->session->master_key,
-			s->session->master_key_length);
-		MD5_Update(&m5,smd,SHA_DIGEST_LENGTH);
-		if ((i+MD5_DIGEST_LENGTH) > num)
-			{
-			MD5_Final(smd,&m5);
-			memcpy(km,smd,(num-i));
-			}
-		else
-			MD5_Final(km,&m5);
-
-		km+=MD5_DIGEST_LENGTH;
-		}
-	memset(smd,0,SHA_DIGEST_LENGTH);
-	}
-
 int ssl3_part_read(s,i)
 SSL *s;
 int i;
@@ -754,7 +750,8 @@ unsigned char *p;
 		p[ret++]=SSL3_CT_DSS_FIXED_DH;
 #endif
 		}
-	if (alg & (SSL_kEDH|SSL_kDHd|SSL_kDHr))
+	if ((s->version == SSL3_VERSION) &&
+		(alg & (SSL_kEDH|SSL_kDHd|SSL_kDHr)))
 		{
 #ifndef NO_RSA
 		p[ret++]=SSL3_CT_RSA_EPHEMERAL_DH;
@@ -767,7 +764,7 @@ unsigned char *p;
 #ifndef NO_RSA
 	p[ret++]=SSL3_CT_RSA_SIGN;
 #endif
-/*	p[ret++]=SSL3_CT_DSS_SIGN; */
+	p[ret++]=SSL3_CT_DSS_SIGN;
 	return(ret);
 	}
 
@@ -787,7 +784,7 @@ SSL *s;
 		{
 		s->shutdown|=SSL_SENT_SHUTDOWN;
 #if 1
-		ssl3_send_alert(s,SSL3_AL_WARNING,SSL3_AD_CLOSE_NOTIFY);
+		ssl3_send_alert(s,SSL3_AL_WARNING,SSL_AD_CLOSE_NOTIFY);
 #endif
 		/* our shutdown alert has been sent now, and if it still needs
 	 	 * to be written, s->s3->alert_dispatch will be true */
@@ -814,7 +811,7 @@ SSL *s;
 
 int ssl3_write(s,buf,len)
 SSL *s;
-const char *buf;
+char *buf;
 int len;
 	{
 	int ret,n;
@@ -827,7 +824,8 @@ int len;
 		return(0);
 		}
 #endif
-	errno=0;
+	clear_sys_error();
+	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
 
 	/* This is an experimental flag that sends the
 	 * last handshake message in the same packet as the first
@@ -867,6 +865,7 @@ int len;
 			(char *)buf,len);
 		if (ret <= 0) return(ret);
 		}
+
 	return(ret);
 	}
 
@@ -875,8 +874,24 @@ SSL *s;
 char *buf;
 int len;
 	{
-	errno=0;
-	return(ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len));
+	int ret;
+	
+	clear_sys_error();
+	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
+	s->s3->in_read_app_data=1;
+	ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len);
+	if ((ret == -1) && (s->s3->in_read_app_data == 0))
+		{
+		ERR_get_error(); /* clear the error */
+		s->s3->in_read_app_data=0;
+		s->in_handshake++;
+		ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len);
+		s->in_handshake--;
+		}
+	else
+		s->s3->in_read_app_data=0;
+
+	return(ret);
 	}
 
 int ssl3_peek(s,buf,len)
@@ -889,7 +904,12 @@ int len;
 
 	rr= &(s->s3->rrec);
 	if ((rr->length == 0) || (rr->type != SSL3_RT_APPLICATION_DATA))
-		return(0);
+		{
+		n=ssl3_read(s,buf,1);
+		if (n <= 0) return(n);
+		rr->length++;
+		rr->off--;
+		}
 
 	if ((unsigned int)len > rr->length)
 		n=rr->length;
@@ -908,8 +928,34 @@ SSL *s;
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 		return(0);
 
-	if (!SSL_in_init(s))
-		s->state=SSL_ST_RENEGOTIATE;
+	s->s3->renegotiate=1;
 	return(1);
 	}
+
+int ssl3_renegotiate_check(s)
+SSL *s;
+	{
+	int ret=0;
+
+	if (s->s3->renegotiate)
+		{
+		if (	(s->s3->rbuf.left == 0) &&
+			(s->s3->wbuf.left == 0) &&
+			!SSL_in_init(s))
+			{
+/*
+if we are the server, and we have sent a 'RENEGOTIATE' message, we
+need to go to SSL_ST_ACCEPT.
+*/
+			/* SSL_ST_ACCEPT */
+			s->state=SSL_ST_RENEGOTIATE;
+			s->s3->renegotiate=0;
+			s->s3->num_renegotiations++;
+			s->s3->total_renegotiations++;
+			ret=1;
+			}
+		}
+	return(ret);
+	}
+
 

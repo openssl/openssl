@@ -1,5 +1,5 @@
 /* ssl/s2_srvr.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -57,9 +57,6 @@
  */
 
 #include <stdio.h>
-#ifdef NO_MD5
-#include "md5.h"
-#endif
 #include "bio.h"
 #include "rand.h"
 #include "objects.h"
@@ -92,7 +89,7 @@ static int ssl_rsa_private_decrypt();
 static SSL_METHOD *ssl2_get_server_method(ver)
 int ver;
 	{
-	if (ver == 2)
+	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
 	else
 		return(NULL);
@@ -126,7 +123,7 @@ SSL *s;
 
 	RAND_seed((unsigned char *)&l,sizeof(l));
 	ERR_clear_error();
-	errno=0;
+	clear_sys_error();
 
 	if (s->info_callback != NULL)
 		cb=s->info_callback;
@@ -144,7 +141,7 @@ SSL *s;
 		return(-1);
 		}
 
-	errno=0;
+	clear_sys_error();
 	for (;;)
 		{
 		state=s->state;
@@ -158,7 +155,7 @@ SSL *s;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
-			s->version=2;
+			s->version=SSL2_VERSION;
 			s->type=SSL_ST_ACCEPT;
 
 			buf=s->init_buf;
@@ -309,13 +306,13 @@ SSL *s;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
 			goto end;
-			BREAK;
+			/* BREAK; */
 
 		default:
 			SSLerr(SSL_F_SSL2_ACCEPT,SSL_R_UNKNOWN_STATE);
 			ret= -1;
 			goto end;
-			BREAK;
+			/* BREAK; */
 			}
 		
 		if ((cb != NULL) && (s->state != state))
@@ -336,7 +333,7 @@ end:
 static int get_client_master_key(s)
 SSL *s;
 	{
-	int export,i,n,keya,ek;
+	int export,i,n,keya,error=0,ek;
 	unsigned char *p;
 	SSL_CIPHER *cp;
 	EVP_CIPHER *c;
@@ -390,7 +387,7 @@ SSL *s;
 	memcpy(s->session->key_arg,&(p[s->s2->tmp.clear+s->s2->tmp.enc]),
 		(unsigned int)keya);
 
-	if (s->session->cert->key->privatekey == NULL)
+	if (s->session->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_NO_PRIVATEKEY);
@@ -537,8 +534,8 @@ SSL *s;
 		}
 	else
 		{
-		i=ssl_get_prev_session(s,s->s2->tmp.session_id_length,
-			&(p[s->s2->tmp.cipher_spec_length]));
+		i=ssl_get_prev_session(s,&(p[s->s2->tmp.cipher_spec_length]),
+			s->s2->tmp.session_id_length);
 		if (i == 1)
 			{ /* previous session */
 			s->hit=1;
@@ -656,9 +653,9 @@ SSL *s;
 			/* put certificate type */
 			*(p++)=SSL2_CT_X509_CERTIFICATE;
 			s2n(s->version,p);	/* version */
-			n=i2d_X509(s->cert->key->x509,NULL);
+			n=i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
 			s2n(n,p);		/* certificate length */
-			i2d_X509(s->cert->key->x509,&d);
+			i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,&d);
 			n=0;
 			
 			/* lets send out the ciphers we like in the
@@ -687,23 +684,7 @@ SSL *s;
  	 */
  	if (s->hit)
  		{
- 		BIO *buf;
- 
- 		if (s->bbio == NULL)
- 			{
- 			buf=BIO_new(BIO_f_buffer());
- 			if (buf == NULL)
- 				{
- 				SSLerr(SSL_F_SERVER_HELLO,ERR_LIB_BUF);
- 				return(-1);
- 				}
- 			s->bbio=buf;
- 			}
- 		else
- 			buf=s->bbio;
- 		
- 		BIO_reset(buf);
- 		s->wbio=BIO_push(buf,s->wbio);
+		if (!ssl_init_wbio_buffer(s,1)) return(-1);
  		}
  
 	return(ssl2_do_write(s));
@@ -904,12 +885,12 @@ SSL *s;
 		EVP_MD_CTX ctx;
 		EVP_PKEY *pkey=NULL;
 
-		EVP_VerifyInit(&ctx,EVP_md5());
+		EVP_VerifyInit(&ctx,s->ctx->rsa_md5);
 		EVP_VerifyUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
-		i=i2d_X509(s->session->cert->key->x509,NULL);
+		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
 		buf2=(unsigned char *)Malloc((unsigned int)i);
 		if (buf2 == NULL)
 			{
@@ -917,7 +898,7 @@ SSL *s;
 			goto msg_end;
 			}
 		p2=buf2;
-		i=i2d_X509(s->session->cert->key->x509,&p2);
+		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,&p2);
 		EVP_VerifyUpdate(&ctx,buf2,(unsigned int)i);
 		Free(buf2);
 
@@ -962,17 +943,17 @@ int padding;
 	RSA *rsa;
 	int i;
 
-	if ((c == NULL) || (c->key->privatekey == NULL))
+	if ((c == NULL) || (c->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL))
 		{
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,SSL_R_NO_PRIVATEKEY);
 		return(-1);
 		}
-	if (c->key->privatekey->type != EVP_PKEY_RSA)
+	if (c->pkeys[SSL_PKEY_RSA_ENC].privatekey->type != EVP_PKEY_RSA)
 		{
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,SSL_R_PUBLIC_KEY_IS_NOT_RSA);
 		return(-1);
 		}
-	rsa=c->key->privatekey->pkey.rsa;
+	rsa=c->pkeys[SSL_PKEY_RSA_ENC].privatekey->pkey.rsa;
 
 	/* we have the public key */
 	i=RSA_private_decrypt(len,from,to,rsa,padding);

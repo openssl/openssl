@@ -35,7 +35,7 @@ LIBOBJ= bio_lib.o bio_cb.o $(ERRC).o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= bio.h
+EXHEADER= bio.h bss_file.c
 HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -61,7 +61,7 @@ links:
 	$(TOP)/util/mklink.sh ../../apps $(APPS)
 
 install:
-	@for i in $(EXHEADER) ; \
+	@for i in $(EXHEADER) bss_file.c ; \
 	do  \
 	(cp $$i $(INSTALLTOP)/include/$$i; \
 	chmod 644 $(INSTALLTOP)/include/$$i ); \
@@ -87,6 +87,6 @@ clean:
 
 errors:
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl $(ERR).h $(ERRC).c
+	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

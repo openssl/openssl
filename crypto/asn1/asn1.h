@@ -1,5 +1,5 @@
 /* crypto/asn1/asn1.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -86,6 +86,8 @@ extern "C" {
 #define V_ASN1_OCTET_STRING		4
 #define V_ASN1_NULL			5
 #define V_ASN1_OBJECT			6
+#define V_ASN1_OBJECT_DESCRIPTOR	7
+#define V_ASN1_EXTERNAL			8
 #define V_ASN1_REAL			9
 #define V_ASN1_ENUMERATED		10	/* microsoft weirdness */
 #define V_ASN1_SEQUENCE			16
@@ -103,6 +105,7 @@ extern "C" {
 #define V_ASN1_VISIBLESTRING		26	/* alias */
 #define V_ASN1_GENERALSTRING		27	/**/
 #define V_ASN1_UNIVERSALSTRING		28	/**/
+#define V_ASN1_BMPSTRING		30
 
 /* For use with d2i_ASN1_type_bytes() */
 #define B_ASN1_NUMERICSTRING	0x0001
@@ -115,6 +118,8 @@ extern "C" {
 #define B_ASN1_GENERALSTRING	0x0080
 #define B_ASN1_UNIVERSALSTRING	0x0100
 #define B_ASN1_OCTET_STRING	0x0200
+#define B_ASN1_BIT_STRING	0x0400
+#define B_ASN1_BMPSTRING	0x0800
 #define B_ASN1_UNKNOWN		0x1000
 
 #ifndef DEBUG
@@ -126,8 +131,10 @@ extern "C" {
 #define ASN1_T61STRING		ASN1_STRING
 #define ASN1_IA5STRING		ASN1_STRING
 #define ASN1_UTCTIME		ASN1_STRING
+#define ASN1_GENERALIZEDTIME	ASN1_STRING
 #define ASN1_GENERALSTRING	ASN1_STRING
 #define ASN1_UNIVERSALSTRING	ASN1_STRING
+#define ASN1_BMPSTRING		ASN1_STRING
 
 #else
 
@@ -187,12 +194,26 @@ typedef struct asn1_universalstring_st
 	unsigned char *data;
 	} ASN1_UNIVERSALSTRING;
 
+typedef struct asn1_bmpstring_st
+	{
+	int length;
+	int type;
+	unsigned char *data;
+	} ASN1_BMPSTRING;
+
 typedef struct asn1_utctime_st
 	{
 	int length;
 	int type;
 	unsigned char *data;
 	} ASN1_UTCTIME;
+
+typedef struct asn1_generalizedtime_st
+	{
+	int length;
+	int type;
+	unsigned char *data;
+	} ASN1_GENERALIZEDTIME;
 
 #endif
 
@@ -247,8 +268,10 @@ typedef struct asn1_type_st
 		ASN1_T61STRING *	t61string;
 		ASN1_IA5STRING *	ia5string;
 		ASN1_GENERALSTRING *	generalstring;
+		ASN1_BMPSTRING *	bmpstring;
 		ASN1_UNIVERSALSTRING *	universalstring;
 		ASN1_UTCTIME *		utctime;
+		ASN1_GENERALIZEDTIME *	generalizedtime;
 		/* set and sequence are left complete and still
 		 * contain the set or sequence bytes */
 		ASN1_STRING *		set;
@@ -272,6 +295,7 @@ typedef struct asn1_header_st
 	ASN1_METHOD *meth;
 	} ASN1_HEADER;
 
+#define ASN1_STRING_length(x)	((x)->length)
 #define ASN1_STRING_type(x)	((x)->type)
 #define ASN1_STRING_data(x)	((x)->data)
 
@@ -321,7 +345,9 @@ typedef struct asn1_header_st
 			B_ASN1_PRINTABLESTRING| \
 			B_ASN1_T61STRING| \
 			B_ASN1_IA5STRING| \
+			B_ASN1_BIT_STRING| \
 			B_ASN1_UNIVERSALSTRING|\
+			B_ASN1_BMPSTRING|\
 			B_ASN1_UNKNOWN)
 
 #define ASN1_PRINTABLESTRING_new() (ASN1_PRINTABLESTRING_STRING *)\
@@ -362,7 +388,16 @@ typedef struct asn1_header_st
 /* d2i_ASN1_UTCTIME() is a function */
 /* ASN1_UTCTIME_set() is a function */
 /* ASN1_UTCTIME_check() is a function */
-/* ASN1_UTCTIME_set() is a function */
+
+#define ASN1_GENERALIZEDTIME_new()	(ASN1_GENERALIZEDTIME *)\
+		ASN1_STRING_type_new(V_ASN1_GENERALIZEDTIME)
+#define ASN1_GENERALIZEDTIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define ASN1_GENERALIZEDTIME_dup(a) (ASN1_UTCTIME *)ASN1_STRING_dup(\
+	(ASN1_STRING *)a)
+/* DOES NOT EXIST YET i2d_ASN1_GENERALIZEDTIME() is a function */
+/* DOES NOT EXIST YET d2i_ASN1_GENERALIZEDTIME() is a function */
+/* DOES NOT EXIST YET ASN1_GENERALIZEDTIME_set() is a function */
+/* DOES NOT EXIST YET ASN1_GENERALIZEDTIME_check() is a function */
 
 #define ASN1_GENERALSTRING_new()	(ASN1_GENERALSTRING *)\
 		ASN1_STRING_type_new(V_ASN1_GENERALSTRING)
@@ -383,6 +418,16 @@ typedef struct asn1_header_st
 #define M_d2i_ASN1_UNIVERSALSTRING(a,pp,l) \
 		(ASN1_UNIVERSALSTRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_UNIVERSALSTRING)
+
+#define ASN1_BMPSTRING_new()	(ASN1_BMPSTRING *)\
+		ASN1_STRING_type_new(V_ASN1_BMPSTRING)
+#define ASN1_BMPSTRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
+#define M_i2d_ASN1_BMPSTRING(a,pp) \
+		i2d_ASN1_bytes((ASN1_STRING *)a,pp,V_ASN1_BMPSTRING,\
+			V_ASN1_UNIVERSAL)
+#define M_d2i_ASN1_BMPSTRING(a,pp,l) \
+		(ASN1_BMPSTRING *)d2i_ASN1_type_bytes\
+		((ASN1_STRING **)a,pp,l,B_ASN1_BMPSTRING)
 
 #ifndef NOPROTO
 ASN1_TYPE *	ASN1_TYPE_new(void );
@@ -408,6 +453,9 @@ int 		ASN1_STRING_set(ASN1_STRING *str,unsigned char *data, int len);
 int		i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a,unsigned char **pp);
 ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,unsigned char **pp,
 			long length);
+int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
+int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
+
 
 int		i2d_ASN1_BOOLEAN(int a,unsigned char **pp);
 int 		d2i_ASN1_BOOLEAN(int *a,unsigned char **pp,long length);
@@ -418,6 +466,7 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
 
 int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
+int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
 
 int		i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a,unsigned char **pp);
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a,
@@ -451,6 +500,7 @@ int i2a_ASN1_OBJECT(BIO *bp,ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp,ASN1_STRING *bs,char *buf,int size);
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
 #endif
+int i2t_ASN1_OBJECT(char *buf,int buf_len,ASN1_OBJECT *a);
 
 int a2d_ASN1_OBJECT(unsigned char *out,int olen, char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data,int len,
@@ -486,7 +536,7 @@ int ASN1_object_size(int constructed, int length, int tag);
 /* Used to implement other functions */
 char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 
-#ifndef WIN16
+#ifndef NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 #endif
@@ -515,6 +565,15 @@ ASN1_METHOD *RSAPrivateKey_asn1_meth(void);
 ASN1_METHOD *ASN1_IA5STRING_asn1_meth(void);
 ASN1_METHOD *ASN1_BIT_STRING_asn1_meth(void);
 
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a,
+	unsigned char *data, int len);
+int ASN1_TYPE_get_octetstring(ASN1_TYPE *a,
+	unsigned char *data, int max_len);
+int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
+	unsigned char *data, int len);
+int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
+	unsigned char *data, int max_len);
+
 #else
 
 ASN1_TYPE *	ASN1_TYPE_new();
@@ -536,12 +595,15 @@ int 		ASN1_STRING_cmp();
 int 		ASN1_STRING_set();
 int		i2d_ASN1_BIT_STRING();
 ASN1_BIT_STRING *d2i_ASN1_BIT_STRING();
+int		ASN1_BIT_STRING_set_bit();
+int		ASN1_BIT_STRING_get_bit();
 int		i2d_ASN1_BOOLEAN();
 int 		d2i_ASN1_BOOLEAN();
 int		i2d_ASN1_INTEGER();
 ASN1_INTEGER *d2i_ASN1_INTEGER();
 int ASN1_UTCTIME_check();
 ASN1_UTCTIME *ASN1_UTCTIME_set();
+int ASN1_UTCTIME_set_string();
 int		i2d_ASN1_OCTET_STRING();
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING();
 int i2d_ASN1_PRINTABLE();
@@ -570,7 +632,7 @@ int ASN1_check_infinite_end();
 void ASN1_put_object();
 int ASN1_object_size();
 char *ASN1_dup();
-#ifndef WIN16
+#ifndef NO_FP_API
 char *ASN1_d2i_fp();
 int ASN1_i2d_fp();
 #endif
@@ -583,6 +645,7 @@ int ASN1_parse();
 int i2a_ASN1_INTEGER();
 int a2i_ASN1_INTEGER();
 int i2a_ASN1_OBJECT();
+int i2t_ASN1_OBJECT();
 int a2i_ASN1_STRING();
 int i2a_ASN1_STRING();
 
@@ -597,6 +660,12 @@ ASN1_METHOD *ASN1_IA5STRING_asn1_meth();
 ASN1_METHOD *ASN1_BIT_STRING_asn1_meth();
 
 int ASN1_UNIVERSALSTRING_to_string();
+
+int ASN1_TYPE_set_octetstring();
+int ASN1_TYPE_get_octetstring();
+int ASN1_TYPE_set_int_octetstring();
+int ASN1_TYPE_get_int_octetstring();
+
 #endif
 
 /* BEGIN ERROR CODES */
@@ -620,108 +689,111 @@ int ASN1_UNIVERSALSTRING_to_string();
 #define ASN1_F_ASN1_SIGN				 114
 #define ASN1_F_ASN1_STRING_NEW				 115
 #define ASN1_F_ASN1_STRING_TYPE_NEW			 116
-#define ASN1_F_ASN1_TYPE_NEW				 117
-#define ASN1_F_ASN1_UTCTIME_NEW				 118
-#define ASN1_F_ASN1_VERIFY				 119
-#define ASN1_F_BN_TO_ASN1_INTEGER			 120
-#define ASN1_F_D2I_ASN1_BIT_STRING			 121
-#define ASN1_F_D2I_ASN1_BOOLEAN				 122
-#define ASN1_F_D2I_ASN1_BYTES				 123
-#define ASN1_F_D2I_ASN1_HEADER				 124
-#define ASN1_F_D2I_ASN1_INTEGER				 125
-#define ASN1_F_D2I_ASN1_OBJECT				 126
-#define ASN1_F_D2I_ASN1_OCTET_STRING			 127
-#define ASN1_F_D2I_ASN1_PRINT_TYPE			 128
-#define ASN1_F_D2I_ASN1_SET				 129
-#define ASN1_F_D2I_ASN1_TYPE				 130
-#define ASN1_F_D2I_ASN1_TYPE_BYTES			 131
-#define ASN1_F_D2I_ASN1_UTCTIME				 132
-#define ASN1_F_D2I_DHPARAMS				 133
-#define ASN1_F_D2I_DSAPARAMS				 134
-#define ASN1_F_D2I_DSAPRIVATEKEY			 135
-#define ASN1_F_D2I_DSAPUBLICKEY				 136
-#define ASN1_F_D2I_NETSCAPE_PKEY			 137
-#define ASN1_F_D2I_NETSCAPE_RSA				 138
-#define ASN1_F_D2I_NETSCAPE_RSA_2			 139
-#define ASN1_F_D2I_NETSCAPE_SPKAC			 140
-#define ASN1_F_D2I_NETSCAPE_SPKI			 141
-#define ASN1_F_D2I_PKCS7				 142
-#define ASN1_F_D2I_PKCS7_DIGEST				 143
-#define ASN1_F_D2I_PKCS7_ENCRYPT			 144
-#define ASN1_F_D2I_PKCS7_ENC_CONTENT			 145
-#define ASN1_F_D2I_PKCS7_ENVELOPE			 146
-#define ASN1_F_D2I_PKCS7_ISSUER_AND_SERIAL		 147
-#define ASN1_F_D2I_PKCS7_RECIP_INFO			 148
-#define ASN1_F_D2I_PKCS7_SIGNED				 149
-#define ASN1_F_D2I_PKCS7_SIGNER_INFO			 150
-#define ASN1_F_D2I_PKCS7_SIGN_ENVELOPE			 151
-#define ASN1_F_D2I_PRIVATEKEY				 152
-#define ASN1_F_D2I_PUBLICKEY				 153
-#define ASN1_F_D2I_RSAPRIVATEKEY			 154
-#define ASN1_F_D2I_RSAPUBLICKEY				 155
-#define ASN1_F_D2I_X509					 156
-#define ASN1_F_D2I_X509_ALGOR				 157
-#define ASN1_F_D2I_X509_ATTRIBUTE			 158
-#define ASN1_F_D2I_X509_CINF				 159
-#define ASN1_F_D2I_X509_CRL				 160
-#define ASN1_F_D2I_X509_CRL_INFO			 161
-#define ASN1_F_D2I_X509_EXTENSION			 162
-#define ASN1_F_D2I_X509_KEY				 163
-#define ASN1_F_D2I_X509_NAME				 164
-#define ASN1_F_D2I_X509_NAME_ENTRY			 165
-#define ASN1_F_D2I_X509_PKEY				 166
-#define ASN1_F_D2I_X509_PUBKEY				 167
-#define ASN1_F_D2I_X509_REQ				 168
-#define ASN1_F_D2I_X509_REQ_INFO			 169
-#define ASN1_F_D2I_X509_REVOKED				 170
-#define ASN1_F_D2I_X509_SIG				 171
-#define ASN1_F_D2I_X509_VAL				 172
-#define ASN1_F_I2A_ASN1_OBJECT				 173
-#define ASN1_F_I2D_ASN1_HEADER				 174
-#define ASN1_F_I2D_DHPARAMS				 175
-#define ASN1_F_I2D_DSAPARAMS				 176
-#define ASN1_F_I2D_DSAPRIVATEKEY			 177
-#define ASN1_F_I2D_DSAPUBLICKEY				 178
-#define ASN1_F_I2D_NETSCAPE_RSA				 179
-#define ASN1_F_I2D_PKCS7				 180
-#define ASN1_F_I2D_PRIVATEKEY				 181
-#define ASN1_F_I2D_PUBLICKEY				 182
-#define ASN1_F_I2D_RSAPRIVATEKEY			 183
-#define ASN1_F_I2D_RSAPUBLICKEY				 184
-#define ASN1_F_I2D_X509_ATTRIBUTE			 185
-#define ASN1_F_NETSCAPE_PKEY_NEW			 186
-#define ASN1_F_NETSCAPE_SPKAC_NEW			 187
-#define ASN1_F_NETSCAPE_SPKI_NEW			 188
-#define ASN1_F_PKCS7_DIGEST_NEW				 189
-#define ASN1_F_PKCS7_ENCRYPT_NEW			 190
-#define ASN1_F_PKCS7_ENC_CONTENT_NEW			 191
-#define ASN1_F_PKCS7_ENVELOPE_NEW			 192
-#define ASN1_F_PKCS7_ISSUER_AND_SERIAL_NEW		 193
-#define ASN1_F_PKCS7_NEW				 194
-#define ASN1_F_PKCS7_RECIP_INFO_NEW			 195
-#define ASN1_F_PKCS7_SIGNED_NEW				 196
-#define ASN1_F_PKCS7_SIGNER_INFO_NEW			 197
-#define ASN1_F_PKCS7_SIGN_ENVELOPE_NEW			 198
-#define ASN1_F_X509_ALGOR_NEW				 199
-#define ASN1_F_X509_ATTRIBUTE_NEW			 200
-#define ASN1_F_X509_CINF_NEW				 201
-#define ASN1_F_X509_CRL_INFO_NEW			 202
-#define ASN1_F_X509_CRL_NEW				 203
-#define ASN1_F_X509_DHPARAMS_NEW			 204
-#define ASN1_F_X509_EXTENSION_NEW			 205
-#define ASN1_F_X509_INFO_NEW				 206
-#define ASN1_F_X509_KEY_NEW				 207
-#define ASN1_F_X509_NAME_ENTRY_NEW			 208
-#define ASN1_F_X509_NAME_NEW				 209
-#define ASN1_F_X509_NEW					 210
-#define ASN1_F_X509_PKEY_NEW				 211
-#define ASN1_F_X509_PUBKEY_NEW				 212
-#define ASN1_F_X509_REQ_INFO_NEW			 213
-#define ASN1_F_X509_REQ_NEW				 214
-#define ASN1_F_X509_REVOKED_NEW				 215
-#define ASN1_F_X509_SIG_NEW				 216
-#define ASN1_F_X509_VAL_FREE				 217
-#define ASN1_F_X509_VAL_NEW				 218
+#define ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING		 117
+#define ASN1_F_ASN1_TYPE_GET_OCTETSTRING		 118
+#define ASN1_F_ASN1_TYPE_NEW				 119
+#define ASN1_F_ASN1_UTCTIME_NEW				 120
+#define ASN1_F_ASN1_VERIFY				 121
+#define ASN1_F_BN_TO_ASN1_INTEGER			 122
+#define ASN1_F_D2I_ASN1_BIT_STRING			 123
+#define ASN1_F_D2I_ASN1_BMPSTRING			 124
+#define ASN1_F_D2I_ASN1_BOOLEAN				 125
+#define ASN1_F_D2I_ASN1_BYTES				 126
+#define ASN1_F_D2I_ASN1_HEADER				 127
+#define ASN1_F_D2I_ASN1_INTEGER				 128
+#define ASN1_F_D2I_ASN1_OBJECT				 129
+#define ASN1_F_D2I_ASN1_OCTET_STRING			 130
+#define ASN1_F_D2I_ASN1_PRINT_TYPE			 131
+#define ASN1_F_D2I_ASN1_SET				 132
+#define ASN1_F_D2I_ASN1_TYPE				 133
+#define ASN1_F_D2I_ASN1_TYPE_BYTES			 134
+#define ASN1_F_D2I_ASN1_UTCTIME				 135
+#define ASN1_F_D2I_DHPARAMS				 136
+#define ASN1_F_D2I_DSAPARAMS				 137
+#define ASN1_F_D2I_DSAPRIVATEKEY			 138
+#define ASN1_F_D2I_DSAPUBLICKEY				 139
+#define ASN1_F_D2I_NETSCAPE_PKEY			 140
+#define ASN1_F_D2I_NETSCAPE_RSA				 141
+#define ASN1_F_D2I_NETSCAPE_RSA_2			 142
+#define ASN1_F_D2I_NETSCAPE_SPKAC			 143
+#define ASN1_F_D2I_NETSCAPE_SPKI			 144
+#define ASN1_F_D2I_PKCS7				 145
+#define ASN1_F_D2I_PKCS7_DIGEST				 146
+#define ASN1_F_D2I_PKCS7_ENCRYPT			 147
+#define ASN1_F_D2I_PKCS7_ENC_CONTENT			 148
+#define ASN1_F_D2I_PKCS7_ENVELOPE			 149
+#define ASN1_F_D2I_PKCS7_ISSUER_AND_SERIAL		 150
+#define ASN1_F_D2I_PKCS7_RECIP_INFO			 151
+#define ASN1_F_D2I_PKCS7_SIGNED				 152
+#define ASN1_F_D2I_PKCS7_SIGNER_INFO			 153
+#define ASN1_F_D2I_PKCS7_SIGN_ENVELOPE			 154
+#define ASN1_F_D2I_PRIVATEKEY				 155
+#define ASN1_F_D2I_PUBLICKEY				 156
+#define ASN1_F_D2I_RSAPRIVATEKEY			 157
+#define ASN1_F_D2I_RSAPUBLICKEY				 158
+#define ASN1_F_D2I_X509					 159
+#define ASN1_F_D2I_X509_ALGOR				 160
+#define ASN1_F_D2I_X509_ATTRIBUTE			 161
+#define ASN1_F_D2I_X509_CINF				 162
+#define ASN1_F_D2I_X509_CRL				 163
+#define ASN1_F_D2I_X509_CRL_INFO			 164
+#define ASN1_F_D2I_X509_EXTENSION			 165
+#define ASN1_F_D2I_X509_KEY				 166
+#define ASN1_F_D2I_X509_NAME				 167
+#define ASN1_F_D2I_X509_NAME_ENTRY			 168
+#define ASN1_F_D2I_X509_PKEY				 169
+#define ASN1_F_D2I_X509_PUBKEY				 170
+#define ASN1_F_D2I_X509_REQ				 171
+#define ASN1_F_D2I_X509_REQ_INFO			 172
+#define ASN1_F_D2I_X509_REVOKED				 173
+#define ASN1_F_D2I_X509_SIG				 174
+#define ASN1_F_D2I_X509_VAL				 175
+#define ASN1_F_I2D_ASN1_HEADER				 176
+#define ASN1_F_I2D_DHPARAMS				 177
+#define ASN1_F_I2D_DSAPARAMS				 178
+#define ASN1_F_I2D_DSAPRIVATEKEY			 179
+#define ASN1_F_I2D_DSAPUBLICKEY				 180
+#define ASN1_F_I2D_NETSCAPE_RSA				 181
+#define ASN1_F_I2D_PKCS7				 182
+#define ASN1_F_I2D_PRIVATEKEY				 183
+#define ASN1_F_I2D_PUBLICKEY				 184
+#define ASN1_F_I2D_RSAPRIVATEKEY			 185
+#define ASN1_F_I2D_RSAPUBLICKEY				 186
+#define ASN1_F_I2D_X509_ATTRIBUTE			 187
+#define ASN1_F_I2T_ASN1_OBJECT				 188
+#define ASN1_F_NETSCAPE_PKEY_NEW			 189
+#define ASN1_F_NETSCAPE_SPKAC_NEW			 190
+#define ASN1_F_NETSCAPE_SPKI_NEW			 191
+#define ASN1_F_PKCS7_DIGEST_NEW				 192
+#define ASN1_F_PKCS7_ENCRYPT_NEW			 193
+#define ASN1_F_PKCS7_ENC_CONTENT_NEW			 194
+#define ASN1_F_PKCS7_ENVELOPE_NEW			 195
+#define ASN1_F_PKCS7_ISSUER_AND_SERIAL_NEW		 196
+#define ASN1_F_PKCS7_NEW				 197
+#define ASN1_F_PKCS7_RECIP_INFO_NEW			 198
+#define ASN1_F_PKCS7_SIGNED_NEW				 199
+#define ASN1_F_PKCS7_SIGNER_INFO_NEW			 200
+#define ASN1_F_PKCS7_SIGN_ENVELOPE_NEW			 201
+#define ASN1_F_X509_ALGOR_NEW				 202
+#define ASN1_F_X509_ATTRIBUTE_NEW			 203
+#define ASN1_F_X509_CINF_NEW				 204
+#define ASN1_F_X509_CRL_INFO_NEW			 205
+#define ASN1_F_X509_CRL_NEW				 206
+#define ASN1_F_X509_DHPARAMS_NEW			 207
+#define ASN1_F_X509_EXTENSION_NEW			 208
+#define ASN1_F_X509_INFO_NEW				 209
+#define ASN1_F_X509_KEY_NEW				 210
+#define ASN1_F_X509_NAME_ENTRY_NEW			 211
+#define ASN1_F_X509_NAME_NEW				 212
+#define ASN1_F_X509_NEW					 213
+#define ASN1_F_X509_PKEY_NEW				 214
+#define ASN1_F_X509_PUBKEY_NEW				 215
+#define ASN1_F_X509_REQ_INFO_NEW			 216
+#define ASN1_F_X509_REQ_NEW				 217
+#define ASN1_F_X509_REVOKED_NEW				 218
+#define ASN1_F_X509_SIG_NEW				 219
+#define ASN1_F_X509_VAL_FREE				 220
+#define ASN1_F_X509_VAL_NEW				 221
 
 /* Reason codes. */
 #define ASN1_R_BAD_CLASS				 100
@@ -735,49 +807,50 @@ int ASN1_UNIVERSALSTRING_to_string();
 #define ASN1_R_BN_LIB					 108
 #define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 109
 #define ASN1_R_BUFFER_TOO_SMALL				 110
-#define ASN1_R_DECODING_ERROR				 111
-#define ASN1_R_ERROR_STACK				 112
-#define ASN1_R_EXPECTING_AN_INTEGER			 113
-#define ASN1_R_EXPECTING_AN_OBJECT			 114
-#define ASN1_R_EXPECTING_AN_OCTET_STRING		 115
-#define ASN1_R_EXPECTING_A_BIT_STRING			 116
-#define ASN1_R_EXPECTING_A_BOOLEAN			 117
-#define ASN1_R_EXPECTING_A_SEQUENCE			 118
-#define ASN1_R_EXPECTING_A_UTCTIME			 119
-#define ASN1_R_FIRST_NUM_TOO_LARGE			 120
-#define ASN1_R_HEADER_TOO_LONG				 121
-#define ASN1_R_INVALID_DIGIT				 122
-#define ASN1_R_INVALID_SEPARATOR			 123
-#define ASN1_R_INVALID_TIME_FORMAT			 124
-#define ASN1_R_IV_TOO_LARGE				 125
-#define ASN1_R_LENGTH_ERROR				 126
-#define ASN1_R_LENGTH_MISMATCH				 127
-#define ASN1_R_MISSING_EOS				 128
-#define ASN1_R_MISSING_SECOND_NUMBER			 129
-#define ASN1_R_NON_HEX_CHARACTERS			 130
-#define ASN1_R_NOT_ENOUGH_DATA				 131
-#define ASN1_R_ODD_NUMBER_OF_CHARS			 132
-#define ASN1_R_PARSING					 133
-#define ASN1_R_PRIVATE_KEY_HEADER_MISSING		 134
-#define ASN1_R_SECOND_NUMBER_TOO_LARGE			 135
-#define ASN1_R_SHORT_LINE				 136
-#define ASN1_R_STRING_TOO_SHORT				 137
-#define ASN1_R_TAG_VALUE_TOO_HIGH			 138
-#define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 139
-#define ASN1_R_TOO_LONG					 140
-#define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 141
-#define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 142
-#define ASN1_R_UNKNOWN_ATTRIBUTE_TYPE			 143
-#define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 144
-#define ASN1_R_UNKNOWN_OBJECT_TYPE			 145
-#define ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE			 146
-#define ASN1_R_UNSUPPORTED_CIPHER			 147
-#define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 148
-#define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE		 149
-#define ASN1_R_UTCTIME_TOO_LONG				 150
-#define ASN1_R_WRONG_PRINTABLE_TYPE			 151
-#define ASN1_R_WRONG_TAG				 152
-#define ASN1_R_WRONG_TYPE				 153
+#define ASN1_R_DATA_IS_WRONG				 111
+#define ASN1_R_DECODING_ERROR				 112
+#define ASN1_R_ERROR_STACK				 113
+#define ASN1_R_EXPECTING_AN_INTEGER			 114
+#define ASN1_R_EXPECTING_AN_OBJECT			 115
+#define ASN1_R_EXPECTING_AN_OCTET_STRING		 116
+#define ASN1_R_EXPECTING_A_BIT_STRING			 117
+#define ASN1_R_EXPECTING_A_BOOLEAN			 118
+#define ASN1_R_EXPECTING_A_SEQUENCE			 119
+#define ASN1_R_EXPECTING_A_UTCTIME			 120
+#define ASN1_R_FIRST_NUM_TOO_LARGE			 121
+#define ASN1_R_HEADER_TOO_LONG				 122
+#define ASN1_R_INVALID_DIGIT				 123
+#define ASN1_R_INVALID_SEPARATOR			 124
+#define ASN1_R_INVALID_TIME_FORMAT			 125
+#define ASN1_R_IV_TOO_LARGE				 126
+#define ASN1_R_LENGTH_ERROR				 127
+#define ASN1_R_LENGTH_MISMATCH				 128
+#define ASN1_R_MISSING_EOS				 129
+#define ASN1_R_MISSING_SECOND_NUMBER			 130
+#define ASN1_R_NON_HEX_CHARACTERS			 131
+#define ASN1_R_NOT_ENOUGH_DATA				 132
+#define ASN1_R_ODD_NUMBER_OF_CHARS			 133
+#define ASN1_R_PARSING					 134
+#define ASN1_R_PRIVATE_KEY_HEADER_MISSING		 135
+#define ASN1_R_SECOND_NUMBER_TOO_LARGE			 136
+#define ASN1_R_SHORT_LINE				 137
+#define ASN1_R_STRING_TOO_SHORT				 138
+#define ASN1_R_TAG_VALUE_TOO_HIGH			 139
+#define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 140
+#define ASN1_R_TOO_LONG					 141
+#define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 142
+#define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 143
+#define ASN1_R_UNKNOWN_ATTRIBUTE_TYPE			 144
+#define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 145
+#define ASN1_R_UNKNOWN_OBJECT_TYPE			 146
+#define ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE			 147
+#define ASN1_R_UNSUPPORTED_CIPHER			 148
+#define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 149
+#define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE		 150
+#define ASN1_R_UTCTIME_TOO_LONG				 151
+#define ASN1_R_WRONG_PRINTABLE_TYPE			 152
+#define ASN1_R_WRONG_TAG				 153
+#define ASN1_R_WRONG_TYPE				 154
  
 #ifdef  __cplusplus
 }

@@ -60,6 +60,7 @@
 #include "conf.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA CONF_str_functs[]=
 	{
 {ERR_PACK(0,CONF_F_CONF_LOAD,0),	"CONF_load"},
@@ -77,14 +78,19 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_CONF_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_CONF,CONF_str_functs);
 		ERR_load_strings(ERR_LIB_CONF,CONF_str_reasons);
+#endif
+
 		}
 	}

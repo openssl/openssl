@@ -1,5 +1,5 @@
 /* crypto/buffer/buffer.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -94,7 +94,11 @@ int len;
 	char *ret;
 	unsigned int n;
 
-	if (str->length >= len) return(len);
+	if (str->length >= len)
+		{
+		str->length=len;
+		return(len);
+		}
 	if (str->max >= len)
 		{
 		memset(&(str->data[str->length]),0,len-str->length);
@@ -125,6 +129,8 @@ char *str;
 	{
 	char *ret;
 	int n;
+
+	if (str == NULL) return(NULL);
 
 	n=strlen(str);
 	ret=Malloc(n+1);

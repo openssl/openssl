@@ -1,5 +1,5 @@
 /* crypto/cryptlib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -62,6 +62,10 @@
 #include "crypto.h"
 #include "date.h"
 
+#if defined(WIN32) || defined(WIN16)
+static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
+#endif
+
 /* real #defines in crypto.h, keep these upto date */
 static char* lock_names[CRYPTO_NUM_LOCKS] =
 	{
@@ -83,9 +87,12 @@ static char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ssl",
 	"rand",
 	"debug_malloc",
-	"bio_gethostbyname",
 	"BIO",
+	"bio_gethostbyname",
+	"RSA_blinding",
 	};
+
+static STACK *app_locks=NULL;
 
 #ifndef NOPROTO
 static void (MS_FAR *locking_callback)(int mode,int type,
@@ -98,6 +105,34 @@ static void (MS_FAR *locking_callback)()=NULL;
 static int (MS_FAR *add_lock_callback)()=NULL;
 static unsigned long (MS_FAR *id_callback)()=NULL;
 #endif
+
+int CRYPTO_get_new_lockid(name)
+char *name;
+	{
+	char *str;
+	int i;
+
+	/* A hack to make Visual C++ 5.0 work correctly when linking as
+	 * a DLL using /MT. Without this, the application cannot use
+	 * and floating point printf's.
+	 * It also seems to be needed for Visual C 1.5 (win16) */
+#if defined(WIN32) || defined(WIN16)
+	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
+#endif
+
+	if (app_locks == NULL)
+		if ((app_locks=sk_new_null()) == NULL)
+			CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
+			return(0);
+	if ((str=BUF_strdup(name)) == NULL)
+		return(0);
+	i=sk_push(app_locks,str);
+	if (!i)
+		Free(str);
+	else
+		i+=CRYPTO_NUM_LOCKS; /* gap of one :-) */
+	return(i);
+	}
 
 void (*CRYPTO_get_locking_callback(P_V))(P_I_I_P_I)
 	{
@@ -232,9 +267,14 @@ int line;
 char *CRYPTO_get_lock_name(type)
 int type;
 	{
-	if ((type < 0) || (type >= CRYPTO_NUM_LOCKS))
+	if (type < 0)
 		return("ERROR");
-	return(lock_names[type]);
+	else if (type < CRYPTO_NUM_LOCKS)
+		return(lock_names[type]);
+	else if (type-CRYPTO_NUM_LOCKS >= sk_num(app_locks))
+		return("ERROR");
+	else
+		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
 #ifdef _DLL

@@ -24,10 +24,13 @@ EX_LIBS=
  
 CFLAGS= $(INCLUDE) $(CFLAG) -DCFLAGS=" \"$(CC) $(CFLAG)\" "
 
+ERR=crypto
+ERRC=cpt_err
+
 LIBS=
 
-SDIRS=	md sha mdc2 \
-	des rc4 rc2 idea bf \
+SDIRS=	md2 md5 sha mdc2 hmac ripemd \
+	des rc2 rc4 rc5 idea bf cast \
 	bn rsa dsa dh \
 	buffer bio stack lhash rand err objects \
 	evp pem x509 \
@@ -36,8 +39,8 @@ SDIRS=	md sha mdc2 \
 GENERAL=Makefile README
 
 LIB= $(TOP)/libcrypto.a
-LIBSRC=	cryptlib.c mem.c cversion.c
-LIBOBJ= cryptlib.o mem.o cversion.o
+LIBSRC=	cryptlib.c mem.c cversion.c ex_data.c $(ERRC).c
+LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o $(ERRC).o
 
 SRC= $(LIBSRC)
 
@@ -58,7 +61,7 @@ subdirs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making all in $$i..."; \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_MULW='${BN_MULW}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' AR='${AR}' all ); \
+	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_MULW='${BN_MULW}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' all ); \
 	done;
 
 files:
@@ -72,7 +75,7 @@ files:
 links:
 	/bin/rm -f Makefile 
 	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../include $(EXHEADER) ;
+	$(TOP)/util/mklink.sh ../include $(HEADER) ;
 	$(TOP)/util/mklink.sh ../test $(TEST) ;
 	$(TOP)/util/mklink.sh ../apps $(APPS) ;
 	$(TOP)/util/point.sh Makefile.ssl Makefile;
@@ -146,7 +149,9 @@ dclean:
 	done;
 
 errors:
-	perl ./err/err_code.pl */*.c ../ssl/*.c ../rsaref/*.c
+	perl ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
+	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
+	perl err/err_genc.pl -s $(ERR).h $(ERRC).c
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making errors in $$i..."; \

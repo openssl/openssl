@@ -1,5 +1,5 @@
 /* crypto/stack/stack.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -72,7 +72,7 @@
 #undef MIN_NODES
 #define MIN_NODES	4
 
-char *STACK_version="STACK part of SSLeay 0.8.1b 29-Jun-1998";
+char *STACK_version="STACK part of SSLeay 0.9.0b 29-Jun-1998";
 
 #ifndef NOPROTO
 #define	FP_ICC	(int (*)(const void *,const void *))
@@ -193,14 +193,22 @@ STACK *st;
 int loc;
 	{
 	char *ret;
+	int i,j;
 
 	if ((st->num == 0) || (loc < 0) || (loc >= st->num)) return(NULL);
 
 	ret=st->data[loc];
 	if (loc != st->num-1)
-		memcpy( &(st->data[loc]),
-			&(st->data[loc+1]),
-			sizeof(char *)*(st->num-loc-1));
+		{
+		j=st->num-1;
+		for (i=loc; i<j; i++)
+			st->data[i]=st->data[i+1];
+		/* In theory memcpy is not safe for this
+		 * memcpy( &(st->data[loc]),
+		 *	&(st->data[loc+1]),
+		 *	sizeof(char *)*(st->num-loc-1));
+		 */
+		}
 	st->num--;
 	return(ret);
 	}

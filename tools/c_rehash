@@ -4,12 +4,12 @@
 # on the command line.
 #
 
-if [ "$SSLEAY"x = "x" ]; then
+if [ "$SSLEAY"x = "x" -o ! -x $SSLEAY ]; then
 	SSLEAY='ssleay'
 	export SSLEAY
 fi
 DIR=/usr/local/ssl
-#PATH=$DIR/bin:$PATH
+PATH=$DIR/bin:$PATH
 
 SSL_DIR=$DIR/certs
 

@@ -14,8 +14,8 @@ DGROUP	GROUP	CONST, _BSS, _DATA
 	ASSUME DS: DGROUP, SS: DGROUP
 F_TEXT      SEGMENT
 	ASSUME	CS: F_TEXT
-	PUBLIC	_bn_mul_add_word
-_bn_mul_add_word	PROC FAR
+	PUBLIC	_bn_mul_add_words
+_bn_mul_add_words	PROC FAR
 ; Line 58
 	push	bp
 	push	bx
@@ -133,9 +133,9 @@ $L547:
 	ret	
 	nop	
 
-_bn_mul_add_word	ENDP
-	PUBLIC	_bn_mul_word
-_bn_mul_word	PROC FAR
+_bn_mul_add_words	ENDP
+	PUBLIC	_bn_mul_words
+_bn_mul_words	PROC FAR
 ; Line 76
 	push	bp
 	push	bx
@@ -202,7 +202,7 @@ $L764:
 	pop	bp
 	ret	
 	nop	
-_bn_mul_word	ENDP
+_bn_mul_words	ENDP
 	PUBLIC	_bn_sqr_words
 _bn_sqr_words	PROC FAR
 ; Line 92

@@ -1,5 +1,5 @@
 /* apps/s_apps.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,9 +79,8 @@ int nbio_init_client_ip(int *sock,unsigned char ip[4], int port);
 int nbio_sock_error(int sock);
 int spawn(int argc, char **argv, int *in, int *out);
 int init_server(int *sock, int port);
+int init_server_long(int *sock, int port,char *ip);
 int should_retry(int i);
-int sock_err(void );
-int socket_ioctl(int, long,unsigned long *);
 void sock_cleanup(void );
 int extract_port(char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,short *p);
@@ -108,8 +107,6 @@ int nbio_sock_error();
 int spawn();
 int init_server();
 int should_retry();
-int sock_err();
-int socket_ioctl();
 void sock_cleanup();
 int extract_port();
 int extract_host_port();

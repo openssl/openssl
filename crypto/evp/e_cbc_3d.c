@@ -1,5 +1,5 @@
 /* crypto/evp/e_cbc_3d.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -80,6 +80,11 @@ static EVP_CIPHER d_cbc_ede_cipher2=
 	8,16,8,
 	des_cbc_ede_init_key,
 	des_cbc_ede_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	EVP_CIPHER_get_asn1_iv,
+	EVP_CIPHER_set_asn1_iv,
 	};
 
 static EVP_CIPHER d_cbc_ede_cipher3=
@@ -88,6 +93,11 @@ static EVP_CIPHER d_cbc_ede_cipher3=
 	8,24,8,
 	des_cbc_ede3_init_key,
 	des_cbc_ede_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_des_ede_cbc()
@@ -107,8 +117,8 @@ unsigned char *iv;
 int enc;
 	{
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_ede.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_ede.iv[0]),&(ctx->c.des_ede.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 
 	if (key != NULL)
 		{
@@ -127,8 +137,8 @@ unsigned char *iv;
 int enc;
 	{
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_ede.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_ede.iv[0]),&(ctx->c.des_ede.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 
 	if (key != NULL)
 		{
@@ -148,6 +158,6 @@ unsigned int inl;
 		(des_cblock *)in,(des_cblock *)out,
 		(long)inl, ctx->c.des_ede.ks1,
 		ctx->c.des_ede.ks2,ctx->c.des_ede.ks3,
-		(des_cblock *)&(ctx->c.des_ede.iv[0]),
+		(des_cblock *)&(ctx->iv[0]),
 		ctx->encrypt);
 	}

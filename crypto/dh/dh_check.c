@@ -1,5 +1,5 @@
 /* crypto/dh/dh_check.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -104,12 +104,12 @@ int *ret;
 	else
 		*ret|=DH_UNABLE_TO_CHECK_GENERATOR;
 
-	if (!BN_is_prime(dh->p,BN_prime_checks,NULL,ctx))
+	if (!BN_is_prime(dh->p,BN_prime_checks,NULL,ctx,NULL))
 		*ret|=DH_CHECK_P_NOT_PRIME;
 	else
 		{
 		if (!BN_rshift1(q,dh->p)) goto err;
-		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx))
+		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx,NULL))
 			*ret|=DH_CHECK_P_NOT_STRONG_PRIME;
 		}
 	ok=1;

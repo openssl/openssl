@@ -1,5 +1,5 @@
 /* crypto/des/cbc3_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -58,7 +58,7 @@
 
 #include "des_locl.h"
 
-/* HAS BUGS? DON'T USE */
+/* HAS BUGS? DON'T USE - this is only present for use in des.c */
 void des_3cbc_encrypt(input, output, length, ks1, ks2, iv1, iv2, enc)
 des_cblock (*input);
 des_cblock (*output);

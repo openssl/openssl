@@ -1,5 +1,5 @@
 /* crypto/idea/i_ecb.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -59,7 +59,7 @@
 #include "idea.h"
 #include "idea_lcl.h"
 
-char *IDEA_version="IDEA part of SSLeay 0.8.1b 29-Jun-1998";
+char *IDEA_version="IDEA part of SSLeay 0.9.0b 29-Jun-1998";
 
 char *idea_options()
 	{
@@ -84,55 +84,3 @@ IDEA_KEY_SCHEDULE *ks;
 	l0=l1=d[0]=d[1]=0;
 	}
 
-void idea_encrypt(d,key)
-unsigned long *d;
-IDEA_KEY_SCHEDULE *key;
-	{
-	int i;
-	register IDEA_INT *p;
-	register unsigned long x1,x2,x3,x4,t0,t1,ul;
-
-	x2=d[0];
-	x1=(x2>>16);
-	x4=d[1];
-	x3=(x4>>16);
-
-	p= &(key->data[0][0]);
-	for (i=0; i<8; i++)
-		{
-		x1&=0xffff;
-		idea_mul(x1,x1,*p,ul); p++;
-
-		x2+= *(p++);
-		x3+= *(p++);
-
-		x4&=0xffff;
-		idea_mul(x4,x4,*p,ul); p++;
-
-		t0=(x1^x3)&0xffff;
-		idea_mul(t0,t0,*p,ul); p++;
-
-		t1=(t0+(x2^x4))&0xffff;
-		idea_mul(t1,t1,*p,ul); p++;
-
-		t0+=t1;
-
-		x1^=t1;
-		x4^=t0;
-		ul=x2^t0;		/* do the swap to x3 */
-		x2=x3^t1;
-		x3=ul;
-		}
-
-	x1&=0xffff;
-	idea_mul(x1,x1,*p,ul); p++;
-
-	t0= x3+ *(p++);
-	t1= x2+ *(p++);
-
-	x4&=0xffff;
-	idea_mul(x4,x4,*p,ul);
-
-	d[0]=(t0&0xffff)|((x1&0xffff)<<16);
-	d[1]=(x4&0xffff)|((t1&0xffff)<<16);
-	}

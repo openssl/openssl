@@ -1,5 +1,5 @@
 /* crypto/x509/x509_cmp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -188,17 +188,27 @@ X509_NAME *b;
 	}
 
 #ifndef NO_MD5
-/* I should do a DER encoding of the name and then hash it. */
+/* I now DER encode the name and hash it.  Since I cache the DER encoding,
+ * this is reasonably effiecent. */
 unsigned long X509_NAME_hash(x)
 X509_NAME *x;
 	{
 	unsigned long ret=0;
 	unsigned char md[16];
-	char str[256];
+	unsigned char str[256],*p,*pp;
+	int i;
 
-	X509_NAME_oneline(x,str,256);
-	ret=strlen(str);
-	MD5((unsigned char *)str,ret,&(md[0]));
+	i=i2d_X509_NAME(x,NULL);
+	if (i > sizeof(str))
+		p=Malloc(i);
+	else
+		p=str;
+
+	pp=p;
+	i2d_X509_NAME(x,&pp);
+	MD5((unsigned char *)p,i,&(md[0]));
+	if (p != str) Free(p);
+
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
 		)&0xffffffffL;
@@ -226,7 +236,7 @@ ASN1_INTEGER *serial;
 		if (X509_issuer_and_serial_cmp(x509,&x) == 0)
 			return(x509);
 		}
-	return(x509);
+	return(NULL);
 	}
 
 X509 *X509_find_by_subject(sk,name)

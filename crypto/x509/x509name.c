@@ -1,5 +1,5 @@
 /* crypto/x509/x509name.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -103,37 +103,38 @@ X509_NAME *name;
 	return(sk_num(name->entries));
 	}
 
-int X509_NAME_get_index_by_NID(name,nid,oldpos)
+int X509_NAME_get_index_by_NID(name,nid,lastpos)
 X509_NAME *name;
 int nid;
-int oldpos;
+int lastpos;
 	{
 	ASN1_OBJECT *obj;
 
 	obj=OBJ_nid2obj(nid);
 	if (obj == NULL) return(-2);
-	return(X509_NAME_get_index_by_OBJ(name,obj,oldpos));
+	return(X509_NAME_get_index_by_OBJ(name,obj,lastpos));
 	}
 
-int X509_NAME_get_index_by_OBJ(name,obj,oldpos)
+/* NOTE: you should be passsing -1, not 0 as lastpos */
+int X509_NAME_get_index_by_OBJ(name,obj,lastpos)
 X509_NAME *name;
 ASN1_OBJECT *obj;
-int oldpos;
+int lastpos;
 	{
 	int n;
 	X509_NAME_ENTRY *ne;
 	STACK *sk;
 
 	if (name == NULL) return(-1);
-	if (oldpos < 0)
-		oldpos= -1;
+	if (lastpos < 0)
+		lastpos= -1;
 	sk=name->entries;
 	n=sk_num(sk);
-	for (oldpos++; oldpos < n; oldpos++)
+	for (lastpos++; lastpos < n; lastpos++)
 		{
-		ne=(X509_NAME_ENTRY *)sk_value(sk,oldpos);
+		ne=(X509_NAME_ENTRY *)sk_value(sk,lastpos);
 		if (OBJ_cmp(ne->object,obj) == 0)
-			return(oldpos);
+			return(lastpos);
 		}
 	return(-1);
 	}

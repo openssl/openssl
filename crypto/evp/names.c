@@ -1,5 +1,5 @@
 /* crypto/evp/names.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -158,7 +158,9 @@ char *aname;
 		}
 
 	if ((i=sk_find(aliases,(char *)a)) >= 0)
+		{
 		Free(sk_delete(aliases,i));
+		}
 	if (!sk_push(aliases,(char *)a)) goto err;
 	return(1);
 err:
@@ -207,6 +209,7 @@ char *name;
 			}
 
 		nid=OBJ_txt2nid(name);
+		if (nid == NID_undef) return(NULL);
 		c.nid=nid;
 		i=sk_find(ciphers,(char *)&c);
 		if (i >= 0)
@@ -245,6 +248,7 @@ char *name;
 			}
 
 		nid=OBJ_txt2nid(name);
+		if (nid == NID_undef) return(NULL);
 		c.pkey_type=nid;
 		i=sk_find(digests,(char *)&c);
 		if (i >= 0)

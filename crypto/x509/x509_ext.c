@@ -1,5 +1,5 @@
 /* crypto/x509/x509_ext.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -70,28 +70,28 @@ X509_CRL *x;
 	return(X509v3_get_ext_count(x->crl->extensions));
 	}
 
-int X509_CRL_get_ext_by_NID(x,nid,oldpos)
+int X509_CRL_get_ext_by_NID(x,nid,lastpos)
 X509_CRL *x;
 int nid;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_NID(x->crl->extensions,nid,oldpos));
+	return(X509v3_get_ext_by_NID(x->crl->extensions,nid,lastpos));
 	}
 
-int X509_CRL_get_ext_by_OBJ(x,obj,oldpos)
+int X509_CRL_get_ext_by_OBJ(x,obj,lastpos)
 X509_CRL *x;
 ASN1_OBJECT *obj;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_OBJ(x->crl->extensions,obj,oldpos));
+	return(X509v3_get_ext_by_OBJ(x->crl->extensions,obj,lastpos));
 	}
 
-int X509_CRL_get_ext_by_critical(x,crit,oldpos)
+int X509_CRL_get_ext_by_critical(x,crit,lastpos)
 X509_CRL *x;
 int crit;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_critical(x->crl->extensions,crit,oldpos));
+	return(X509v3_get_ext_by_critical(x->crl->extensions,crit,lastpos));
 	}
 
 X509_EXTENSION *X509_CRL_get_ext(x,loc)
@@ -122,28 +122,28 @@ X509 *x;
 	return(X509v3_get_ext_count(x->cert_info->extensions));
 	}
 
-int X509_get_ext_by_NID(x,nid,oldpos)
+int X509_get_ext_by_NID(x,nid,lastpos)
 X509 *x;
 int nid;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_NID(x->cert_info->extensions,nid,oldpos));
+	return(X509v3_get_ext_by_NID(x->cert_info->extensions,nid,lastpos));
 	}
 
-int X509_get_ext_by_OBJ(x,obj,oldpos)
+int X509_get_ext_by_OBJ(x,obj,lastpos)
 X509 *x;
 ASN1_OBJECT *obj;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_OBJ(x->cert_info->extensions,obj,oldpos));
+	return(X509v3_get_ext_by_OBJ(x->cert_info->extensions,obj,lastpos));
 	}
 
-int X509_get_ext_by_critical(x,crit,oldpos)
+int X509_get_ext_by_critical(x,crit,lastpos)
 X509 *x;
 int crit;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_critical(x->cert_info->extensions,crit,oldpos));
+	return(X509v3_get_ext_by_critical(x->cert_info->extensions,crit,lastpos));
 	}
 
 X509_EXTENSION *X509_get_ext(x,loc)
@@ -174,28 +174,28 @@ X509_REVOKED *x;
 	return(X509v3_get_ext_count(x->extensions));
 	}
 
-int X509_REVOKED_get_ext_by_NID(x,nid,oldpos)
+int X509_REVOKED_get_ext_by_NID(x,nid,lastpos)
 X509_REVOKED *x;
 int nid;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_NID(x->extensions,nid,oldpos));
+	return(X509v3_get_ext_by_NID(x->extensions,nid,lastpos));
 	}
 
-int X509_REVOKED_get_ext_by_OBJ(x,obj,oldpos)
+int X509_REVOKED_get_ext_by_OBJ(x,obj,lastpos)
 X509_REVOKED *x;
 ASN1_OBJECT *obj;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_OBJ(x->extensions,obj,oldpos));
+	return(X509v3_get_ext_by_OBJ(x->extensions,obj,lastpos));
 	}
 
-int X509_REVOKED_get_ext_by_critical(x,crit,oldpos)
+int X509_REVOKED_get_ext_by_critical(x,crit,lastpos)
 X509_REVOKED *x;
 int crit;
-int oldpos;
+int lastpos;
 	{
-	return(X509v3_get_ext_by_critical(x->extensions,crit,oldpos));
+	return(X509v3_get_ext_by_critical(x->extensions,crit,lastpos));
 	}
 
 X509_EXTENSION *X509_REVOKED_get_ext(x,loc)

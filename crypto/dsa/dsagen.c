@@ -1,5 +1,5 @@
 /* crypto/dsa/dsagen.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -98,8 +98,15 @@ main()
 	unsigned char seed_buf[20];
 	DSA *dsa;
 	int counter,h;
+	BIO *bio_err=NULL;
+
+	if (bio_err == NULL)
+		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 	memcpy(seed_buf,seed,20);
-	dsa=DSA_generate_key(1024,seed,20,&counter,&h,cb);
+	dsa=DSA_generate_parameters(1024,seed,20,&counter,&h,cb);
+
+	if (dsa == NULL)
+		DSA_print(bio_err,dsa,0);
 	}
 

@@ -2,7 +2,7 @@
 # SSLeay/crypto/err/Makefile
 #
 
-DIR=	error
+DIR=	err
 TOP=	../..
 CC=	cc
 INCLUDES= -I.. -I../../include

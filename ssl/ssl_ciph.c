@@ -1,5 +1,5 @@
 /* ssl/ssl_ciph.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -74,11 +74,10 @@ static EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	};
 
 #define SSL_MD_MD5_IDX	0
-#define SSL_MD_SHA0_IDX	1
-#define SSL_MD_SHA1_IDX	2
-#define SSL_MD_NUM_IDX	3
+#define SSL_MD_SHA1_IDX	1
+#define SSL_MD_NUM_IDX	2
 static EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
-	NULL,NULL,NULL,
+	NULL,NULL,
 	};
 
 typedef struct cipher_sort_st
@@ -90,15 +89,23 @@ typedef struct cipher_sort_st
 #define CIPHER_ADD	1
 #define CIPHER_KILL	2
 #define CIPHER_DEL	3
-#define CIPHER_ORDER	4
+#define CIPHER_ORD	4
 
 typedef struct cipher_choice_st
 	{
 	int type;
 	unsigned long algorithms;
 	unsigned long mask;
-	STACK *order;
+	long top;
 	} CIPHER_CHOICE;
+
+typedef struct cipher_order_st
+	{
+	SSL_CIPHER *cipher;
+	int active;
+	int dead;
+	struct cipher_order_st *next,*prev;
+	} CIPHER_ORDER;
 
 static SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ALL, 0,SSL_ALL,   0,SSL_ALL},	/* must be first */
@@ -126,7 +133,6 @@ static SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,SSL_ENC_MASK},
 
 	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,SSL_MAC_MASK},
-	{0,SSL_TXT_SHA0,0,SSL_SHA0,  0,SSL_MAC_MASK},
 	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,SSL_MAC_MASK},
 	{0,SSL_TXT_SHA,	0,SSL_SHA,   0,SSL_MAC_MASK},
 
@@ -169,8 +175,6 @@ static void load_ciphers()
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
-	ssl_digest_methods[SSL_MD_SHA0_IDX]=
-		EVP_get_digestbyname(SN_sha);
 	ssl_digest_methods[SSL_MD_SHA1_IDX]=
 		EVP_get_digestbyname(SN_sha1);
 	}
@@ -225,9 +229,6 @@ EVP_MD **md;
 	case SSL_MD5:
 		i=SSL_MD_MD5_IDX;
 		break;
-	case SSL_SHA0:
-		i=SSL_MD_SHA0_IDX;
-		break;
 	case SSL_SHA1:
 		i=SSL_MD_SHA1_IDX;
 		break;
@@ -246,6 +247,25 @@ EVP_MD **md;
 		return(0);
 	}
 
+#define ITEM_SEP(a) \
+	(((a) == ':') || ((a) == ' ') || ((a) == ';') || ((a) == ','))
+
+static void ll_append_tail(head,curr,tail)
+CIPHER_ORDER **head,*curr,**tail;
+	{
+	if (curr == *tail) return;
+	if (curr == *head)
+		*head=curr->next;
+	if (curr->prev != NULL)
+		curr->prev->next=curr->next;
+	if (curr->next != NULL) /* should always be true */
+		curr->next->prev=curr->prev;
+	(*tail)->next=curr;
+	curr->prev= *tail;
+	curr->next=NULL;
+	*tail=curr;
+	}
+
 STACK *ssl_create_cipher_list(ssl_method,cipher_list,cipher_list_by_id,str)
 SSL_METHOD *ssl_method;
 STACK **cipher_list,**cipher_list_by_id;
@@ -262,9 +282,11 @@ char *str;
 	int i,j,k,num=0,ch,multi;
 	unsigned long al;
 	STACK *ca_list=NULL;
-	STACK *c_list=NULL;
-	int old_x,old_y,current_x,num_x;
+	int current_x,num_x;
 	CIPHER_CHOICE *ops=NULL;
+	CIPHER_ORDER *list=NULL,*head=NULL,*tail=NULL,*curr,*tail2,*curr2;
+	int list_num;
+	int type;
 	SSL_CIPHER c_tmp,*cp;
 
 	if (str == NULL) return(NULL);
@@ -278,6 +300,7 @@ char *str;
 			goto err;
 			}
 		strcpy(tmp_str,SSL_DEFAULT_CIPHER_LIST);
+		strcat(tmp_str,":");
 		strcat(tmp_str,&(str[7]));
 		str=tmp_str;
 		}
@@ -286,7 +309,6 @@ char *str;
 	num=ssl_method->num_ciphers();
 
 	if ((ret=(STACK *)sk_new(NULL)) == NULL) goto err;
-	if ((c_list=(STACK *)sk_new(NULL)) == NULL) goto err;
 	if ((ca_list=(STACK *)sk_new(cmp_by_name)) == NULL) goto err;
 
 	mask =SSL_kFZA;
@@ -312,19 +334,41 @@ char *str;
 	mask|=(ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL)?SSL_eFZA:0;
 
 	mask|=(ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL)?SSL_MD5 :0;
-	mask|=(ssl_digest_methods[SSL_MD_SHA0_IDX] == NULL)?SSL_SHA0:0;
 	mask|=(ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL)?SSL_SHA1:0;
 
+	if ((list=(CIPHER_ORDER *)Malloc(sizeof(CIPHER_ORDER)*num)) == NULL)
+		goto err;
+
 	/* Get the initial list of ciphers */
+	list_num=0;
 	for (i=0; i<num; i++)
 		{
 		c=ssl_method->get_cipher((unsigned int)i);
 		/* drop those that use any of that is not available */
 		if ((c != NULL) && c->valid && !(c->algorithms & mask))
 			{
-			if (!sk_push(c_list,(char *)c)) goto err;
+			list[list_num].cipher=c;
+			list[list_num].next=NULL;
+			list[list_num].prev=NULL;
+			list[list_num].active=0;
+			list_num++;
 			if (!sk_push(ca_list,(char *)c)) goto err;
 			}
+		}
+	
+	for (i=1; i<list_num-1; i++)
+		{
+		list[i].prev= &(list[i-1]);
+		list[i].next= &(list[i+1]);
+		}
+	if (list_num > 0)
+		{
+		head= &(list[0]);
+		head->prev=NULL;
+		head->next= &(list[1]);
+		tail= &(list[list_num-1]);
+		tail->prev= &(list[list_num-2]);
+		tail->next=NULL;
 		}
 
 	/* special case */
@@ -346,12 +390,11 @@ char *str;
 	/* how many parameters are there? */
 	num=1;
 	for (l=str; *l; l++)
-		if (*l == ':') num++;
+		if (ITEM_SEP(*l))
+			num++;
 	ops=(CIPHER_CHOICE *)Malloc(sizeof(CIPHER_CHOICE)*num);
 	if (ops == NULL) goto err;
 	memset(ops,0,sizeof(CIPHER_CHOICE)*num);
-	for (i=0; i<num; i++)
-		if ((ops[i].order=sk_new_null()) == NULL) goto err;
 
 	/* we now parse the input string and create our operations */
 	l=str;
@@ -361,16 +404,19 @@ char *str;
 	for (;;)
 		{
 		ch= *l;
+
+		if (ch == '\0') break;
+
 		if (ch == '-')
 			{ j=CIPHER_DEL; l++; }
 		else if (ch == '+')
-			{ j=CIPHER_ORDER; l++; }
+			{ j=CIPHER_ORD; l++; }
 		else if (ch == '!')
 			{ j=CIPHER_KILL; l++; }
 		else	
 			{ j=CIPHER_ADD; }
 
-		if (*l == ':')
+		if (ITEM_SEP(ch))
 			{
 			l++;
 			continue;
@@ -395,20 +441,20 @@ char *str;
 				 if (i >= (CL_BUF-2)) break;
 				 }
 			buf[i]='\0';
-			if (ch != '\0') l++;
 
 			/* check for multi-part specification */
-			multi=(ch == '+')?1:0;
+			if (ch == '+')
+				{
+				multi=1;
+				l++;
+				}
+			else
+				multi=0;
 
 			c_tmp.name=buf;
 			j=sk_find(ca_list,(char *)&c_tmp);
 			if (j < 0)
-				{
-				if (ch == '\0')
-					break;
-				else
-					continue;
-				}
+				goto end_loop;
 
 			cp=(SSL_CIPHER *)sk_value(ca_list,j);
 			ops[current_x].algorithms|=cp->algorithms;
@@ -419,87 +465,86 @@ char *str;
 			}
 		current_x++;
 		if (ch == '\0') break;
+end_loop:
+		/* Make sure we scan until the next valid start point */
+		while ((*l != '\0') && ITEM_SEP(*l))
+			l++;
 		}
 
 	num_x=current_x;
 	current_x=0;
 
-#ifdef CIPHER_DEBUG
-	printf("<--->\n");
-#endif
-
-	for (i=0; i<sk_num(c_list); i++)
+	/* We will now process the list of ciphers, once for each category, to
+	 * decide what we should do with it. */
+	for (j=0; j<num_x; j++)
 		{
-		old_x= -1;
-		old_y= -1;
-		cp=(SSL_CIPHER *)sk_value(c_list,i);
-#ifdef CIPHER_DEBUG
-		printf("[%s]\n",cp->name);
-#endif
-		for (j=0; j<num_x; j++)
+		algorithms=ops[j].algorithms;
+		type=ops[j].type;
+		mask=ops[j].mask;
+
+		curr=head;
+		curr2=head;
+		tail2=tail;
+		for (;;)
 			{
-			algorithms=ops[j].algorithms;
-			ma=ops[j].mask & cp->algorithms;
-#ifdef CIPHER_DEBUG
-			printf("  %s %08lX&%08lX==0 || %08lX != %08lX \n",
-				cp->name,ops[j].mask,cp->algorithms,ma,algorithms);
-#endif
+			if ((curr == NULL) || (curr == tail2)) break;
+			curr=curr2;
+			curr2=curr->next;
+
+			cp=curr->cipher;
+			ma=mask & cp->algorithms;
 			if ((ma == 0) || ((ma & algorithms) != ma))
 				{
+				/* does not apply */
 				continue;
 				}
-			k=ops[j].type;
-#ifdef CIPHER_DEBUG
-			printf(">>%s\n",cp->name);
-#endif
 
 			/* add the cipher if it has not been added yet. */
-			if (k == CIPHER_ADD)
+			if (type == CIPHER_ADD)
 				{
-				if (old_x < 0)
+				if (!curr->active)
 					{
-					old_x=j;
-					old_y=sk_num(ops[j].order);
-					sk_push(ops[j].order,(char *)cp);
+					ll_append_tail(&head,curr,&tail);
+					curr->active=1;
 					}
 				}
 			/* Move the added cipher to this location */
-			else if (k == CIPHER_ORDER)
+			else if (type == CIPHER_ORD)
 				{
-				if (old_x >= 0)
+				if (curr->active)
 					{
-					sk_value(ops[old_x].order,old_y)=NULL;
-					old_y=sk_num(ops[j].order);
-					sk_push(ops[j].order,(char *)cp);
-					old_x=j;
+					ll_append_tail(&head,curr,&tail);
 					}
 				}
-			/* Remove added cipher */
-			else if ((k == CIPHER_DEL) || (k == CIPHER_KILL))
+			else if	(type == CIPHER_DEL)
+				curr->active=0;
+			if (type == CIPHER_KILL)
 				{
-				if (old_x >= 0)
-					{
-					sk_value(ops[old_x].order,old_y)=NULL;
-					old_x= -1;
-					}
-				if (k == CIPHER_KILL)
-					break;
+				if (head == curr)
+					head=curr->next;
+				else
+					curr->prev->next=curr->next;
+				if (tail == curr)
+					tail=curr->prev;
+				curr->active=0;
+				if (curr->next != NULL)
+					curr->next->prev=curr->prev;
+				if (curr->prev != NULL)
+					curr->prev->next=curr->next;
+				curr->next=NULL;
+				curr->prev=NULL;
 				}
 			}
 		}
 
-	for (i=0; i<num_x; i++)
+	for (curr=head; curr != NULL; curr=curr->next)
 		{
-		for (j=0; j<sk_num(ops[i].order); j++)
+		if (curr->active)
 			{
-			cp=(SSL_CIPHER *)sk_value(ops[i].order,j);
-			if (cp != NULL)
-				{
-				sk_push(ret,(char *)cp);
+			sk_push(ret,(char *)curr->cipher);
 #ifdef CIPHER_DEBUG
-				printf("<%s>\n",cp->name);
+			printf("<%s>\n",curr->cipher->name);
 #endif
-				}
 			}
 		}
 
@@ -528,16 +573,10 @@ char *str;
 	ret=NULL;
 err:
 	if (tmp_str) Free(tmp_str);
-	if (ops != NULL)
-		{
-		for (i=0; i<num; i++)
-			if (ops[i].order != NULL)
-				sk_free(ops[i].order);
-		Free(ops);
-		}
+	if (ops != NULL) Free(ops);
 	if (ret != NULL) sk_free(ret);
-	if (c_list != NULL) sk_free(c_list);
 	if (ca_list != NULL) sk_free(ca_list);
+	if (list != NULL) Free(list);
 	return(ok);
 	}
 
@@ -639,9 +678,6 @@ int len;
 	case SSL_MD5:
 		mac="MD5";
 		break;
-	case SSL_SHA0:
-		mac="SHA0";
-		break;
 	case SSL_SHA1:
 		mac="SHA1";
 		break;
@@ -667,9 +703,10 @@ SSL_CIPHER *c;
 	{
 	int i;
 
+	if (c == NULL) return("(NONE)");
 	i=(int)(c->id>>24L);
 	if (i == 3)
-		return("SSLv3");
+		return("TLSv1/SSLv3");
 	else if (i == 2)
 		return("SSLv2");
 	else

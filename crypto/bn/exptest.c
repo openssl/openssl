@@ -1,5 +1,5 @@
 /* crypto/bn/exptest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,6 +63,9 @@
 #include "bn.h"
 #include "rand.h"
 #include "err.h"
+#ifdef WINDOWS
+#include "../bio/bss_file.c"
+#endif
 
 #define NUM_BITS	(BN_BITS*2)
 
@@ -87,11 +90,8 @@ char *argv[];
 		(a == NULL) || (b == NULL))
 		goto err;
 
-#ifdef WIN16
-	out=BIO_new(BIO_s_file_internal_w16());
-#else
 	out=BIO_new(BIO_s_file());
-#endif
+
 	if (out == NULL) exit(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
@@ -112,7 +112,7 @@ char *argv[];
 		BN_mod(a,a,m,ctx);
 		BN_mod(b,b,m,ctx);
 
-		ret=BN_mod_exp_mont(r_mont,a,b,m,ctx);
+		ret=BN_mod_exp_mont(r_mont,a,b,m,ctx,NULL);
 		if (ret <= 0)
 			{ printf("BN_mod_exp_mont() problems\n"); exit(1); }
 

@@ -1,5 +1,5 @@
 /* apps/genrsa.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -75,7 +75,7 @@
 #define PROG genrsa_main
 
 #ifndef NOPROTO
-static void MS_CALLBACK genrsa_cb(int p, int n);
+static void MS_CALLBACK genrsa_cb(int p, int n, char *arg);
 static long gr_load_rand(char *names);
 #else
 static void MS_CALLBACK genrsa_cb();
@@ -101,7 +101,7 @@ char **argv;
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 	if ((out=BIO_new(BIO_s_file())) == NULL)
 		{
 		BIO_printf(bio_err,"unable to creat BIO for output\n");
@@ -201,7 +201,7 @@ bad:
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
-	rsa=RSA_generate_key(num,f4,genrsa_cb);
+	rsa=RSA_generate_key(num,f4,genrsa_cb,(char *)bio_err);
 		
 	if (randfile == NULL)
 		BIO_printf(bio_err,"unable to write 'random state'\n");
@@ -234,9 +234,10 @@ err:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK genrsa_cb(p, n)
+static void MS_CALLBACK genrsa_cb(p, n, arg)
 int p;
 int n;
+char *arg;
 	{
 	char c='*';
 
@@ -244,8 +245,8 @@ int n;
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(bio_err,&c,1);
-	BIO_flush(bio_err);
+	BIO_write((BIO *)arg,&c,1);
+	BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif

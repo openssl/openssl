@@ -1,0 +1,71 @@
+10-Apr-1998
+I said the next version would go out at easter, and so it shall.
+I expect a 0.9.1 will follow with portability fixes in the next few weeks.
+
+This is a quick, meet the deadline.  Look to ssl-users for comments on what
+is new etc.
+
+The state of play
+- TLSv1 - I need to do some explaining about how the methods interact.
+  The bad news is that SSLeay 0.8.x application will not roll back to
+  SSLv3, I suffed up.  0.8.x is rather pedantic about the '3.0' version
+  number.  Look at the 'no-tls' options in applications in the apps directory.
+- The perl5 stuff is very rough.  The SSL part does not work due to
+  reference count hassles in the BIO stuff.  I just have not had time to
+  look at it.  The cipher, digest and bignum stuff works though.  I just
+  need to clean up the API.
+- Lots of x86 assember.  I now have it for des, 3des, rc4, rc5, blowfish,
+  cast, md5, sha1 and ripemd160.  It has been tested on win32, linux (elf)
+  and FreeBSD (a.out).
+- As mentioned above, cast, rc5 and ripemd160 have been added.
+- A simple HMAC set of functions.
+- EX_DATA strucutre, which can be used by applications or other libraries
+  to tack arbitarty data against strucutures that include it.
+  You will probably have to see examples to see how to use it, and I will
+  elaberate on the ssl-users mailing list
+- RSA blinding.  If you fear timing attacks on RSA, you can turn on
+  blinding which defeats it.
+- From Tim Hudson, try running 'sh config' instead of 'perl Configure'.
+  I makes an educated guess as to what you are and then runs 'perl Configure'
+- The error stuff has been modified so arbitary strings can be taged
+  against an error message.  It is used in a few places to elaberate on
+  parameters that caused the error.
+
+Areas of work
+- The 16bit big-num assember needs a routine added.  The WIN16 and
+  WIN32 stuff is ok, but MS-DOS or 286 builds need the update.
+- Most of the bignum assember will not work.  There will be a function
+  missing, bn_add_words().  I need people to send me the C compiler output
+  for platforms I don't already have.  Currently, the assember is correct for
+  x86, win32, win16(386+), linux elf, FreeBSD a.out and sparc.
+- PKCS7, I have delusions of s/MIME.  I need to do a BIO interface.
+- perl5, it needs finishing
+- X509v3 extension.  I have some ideas, I just need to
+  implement them :-)
+- Public key methods.  I need to clean up the library internally so
+  public key methods are loaded is a similar way to symetric ciphers
+  and digests.  I also need to seperate out the digests from public
+  key methods.  This stuff is needed to support sortware patents, smaller
+  code size and hardware tokens.
+
+Anyway, this release gets out the bug fixes and TLS, but be warned, until
+all those old SSLeay 0.8.x based server get upgraded, you will need to
+connect with SSLv3 if TLSv1 fails.
+
+eric (about to go bushwalking for the 4 day easter break :-)
+
+PS Common problems
+- For Win32 build, use /MD to specify your libraries, or build SSLeay with
+  the same flags as your application.  Visual C stuffs up the malloc routines
+  if memory allocated by one memory model is freed by another.  FILE pointers
+  are a major cause of these problem.
+- If you are trying to use non-blocking IO and it is not working,
+  try 'ssleay s_client -help' and see if the -nbio option is listed.
+  For unixware, it has the non-block IO define in 'differnt' header file
+  and SSLeay will silently build without non-blocking IO calls (but for
+  unixware, the special header has been included).
+- -DL_ENDIAN.  For the message digests, some code needs to be turned off
+  in the C code when assember is used.  For x86, this means the L_ENDIAN
+  needs to defined when x86 -DSHA1_ASM is defined.  The reasons this is
+  not automagically done is because non-x86 assember could be bigendian.
+  For pure C code builds, the B_ENDIAN/L_ENDIAN flags are optional.

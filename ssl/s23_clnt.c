@@ -1,5 +1,5 @@
 /* ssl/s23_clnt.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -76,10 +76,12 @@ static int ssl23_get_server_hello();
 static SSL_METHOD *ssl23_get_client_method(ver)
 int ver;
 	{
-	if (ver == 2)
+	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
-	else if (ver == 3)
+	else if (ver == SSL3_VERSION)
 		return(SSLv3_client_method());
+	else if (ver == TLS1_VERSION)
+		return(TLSv1_client_method());
 	else
 		return(NULL);
 	}
@@ -111,7 +113,7 @@ SSL *s;
 
 	RAND_seed((unsigned char *)&Time,sizeof(Time));
 	ERR_clear_error();
-	errno=0;
+	clear_sys_error();
 
 	if (s->info_callback != NULL)
 		cb=s->info_callback;
@@ -134,7 +136,7 @@ SSL *s;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
-			s->version=3;
+			/* s->version=TLS1_VERSION; */
 			s->type=SSL_ST_CONNECT;
 
 			if (s->init_buf == NULL)
@@ -230,8 +232,26 @@ SSL *s;
 		p=d+9;
 
 		*(d++)=SSL2_MT_CLIENT_HELLO;
-		*(d++)=SSL3_VERSION_MAJOR;
-		*(d++)=SSL3_VERSION_MINOR;
+		if (!(s->options & SSL_OP_NO_TLSv1))
+			{
+			*(d++)=TLS1_VERSION_MAJOR;
+			*(d++)=TLS1_VERSION_MINOR;
+			}
+		else if (!(s->options & SSL_OP_NO_SSLv3))
+			{
+			*(d++)=SSL3_VERSION_MAJOR;
+			*(d++)=SSL3_VERSION_MINOR;
+			}
+		else if (!(s->options & SSL_OP_NO_SSLv2))
+			{
+			*(d++)=SSL2_VERSION_MAJOR;
+			*(d++)=SSL2_VERSION_MINOR;
+			}
+		else
+			{
+			SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_NO_PROTOCOLS_AVAILABLE);
+			return(-1);
+			}
 
 		/* Ciphers supported */
 		i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),p);
@@ -251,7 +271,7 @@ SSL *s;
 #endif
 		s2n(0,d);
 
-		if (s->ctx->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
+		if (s->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
 			ch_len=SSL2_CHALLENGE_LENGTH;
 		else
 			ch_len=SSL2_MAX_CHALLENGE_LENGTH;
@@ -290,7 +310,6 @@ SSL *s;
 	unsigned char *p;
 	int i,ch_len;
 	int n;
-	BIO *bbio;
 
 	n=ssl23_read_bytes(s,7);
 
@@ -306,6 +325,11 @@ SSL *s;
 		/* we need to clean up the SSLv3 setup and put in the
 		 * sslv2 stuff. */
 
+		if (s->options & SSL_OP_NO_SSLv2)
+			{
+			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
+			goto err;
+			}
 		if (s->s2 == NULL)
 			{
 			if (!ssl2_new(s))
@@ -314,7 +338,7 @@ SSL *s;
 		else
 			ssl2_clear(s);
 
-		if (s->ctx->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
+		if (s->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
 			ch_len=SSL2_CHALLENGE_LENGTH;
 		else
 			ch_len=SSL2_MAX_CHALLENGE_LENGTH;
@@ -355,33 +379,13 @@ SSL *s;
 		}
 	else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 		 (p[1] == SSL3_VERSION_MAJOR) &&
-		 (p[2] == SSL3_VERSION_MINOR) &&
+		 ((p[2] == SSL3_VERSION_MINOR) ||
+		  (p[2] == TLS1_VERSION_MINOR)) &&
 		 (p[5] == SSL3_MT_SERVER_HELLO))
 		{
-		/* we have sslv3 */
+		/* we have sslv3 or tls1 */
 
-		if (s->bbio == NULL)
-			{
-			bbio=BIO_new(BIO_f_buffer());
-			if (bbio == NULL)
-				{
-				SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,ERR_R_BUF_LIB);
-				goto err;
-				}
-			s->bbio=bbio;
-			}
-		else
-			bbio=s->bbio;
-
-		BIO_reset(bbio);
-		if (!BIO_set_write_buffer_size(bbio,16*1024))
-			{
-			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,ERR_R_BUF_LIB);
-			goto err;
-			}
-
-		/* start the buffering */
-		s->wbio=BIO_push(s->bbio,s->wbio);
+		if (!ssl_init_wbio_buffer(s,1)) goto err;
 
 		/* we are in this state */
 		s->state=SSL3_ST_CR_SRVR_HELLO_A;
@@ -395,12 +399,30 @@ SSL *s;
 		s->s3->rbuf.left=n;
 		s->s3->rbuf.offset=0;
 
-		s->method=SSLv3_client_method();
+		if ((p[2] == SSL3_VERSION_MINOR) &&
+			!(s->options & SSL_OP_NO_SSLv3))
+			{
+			s->version=SSL3_VERSION;
+			s->method=SSLv3_client_method();
+			}
+		else if ((p[2] == TLS1_VERSION_MINOR) &&
+			!(s->options & SSL_OP_NO_TLSv1))
+			{
+			s->version=TLS1_VERSION;
+			s->method=TLSv1_client_method();
+			}
+		else
+			{
+			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
+			goto err;
+			}
+			
 		s->handshake_func=s->method->ssl_connect;
 		}
 	else if ((p[0] == SSL3_RT_ALERT) &&
 		 (p[1] == SSL3_VERSION_MAJOR) &&
-		 (p[2] == SSL3_VERSION_MINOR) &&
+		 ((p[2] == SSL3_VERSION_MINOR) ||
+		  (p[2] == TLS1_VERSION_MINOR)) &&
 		 (p[3] == 0) &&
 		 (p[4] == 2))
 		{
@@ -421,7 +443,7 @@ SSL *s;
 			}
 
 		s->rwstate=SSL_NOTHING;
-		SSLerr(SSL_F_SSL3_READ_BYTES,1000+p[6]);
+		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,1000+p[6]);
 		goto err;
 		}
 	else

@@ -1,5 +1,5 @@
 /* apps/x509.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"
@@ -344,7 +344,7 @@ bad:
 			}
 
 		if (infile == NULL)
-			BIO_set_fp(in,stdin,BIO_NOCLOSE);
+			BIO_set_fp(in,stdin,BIO_NOCLOSE|BIO_FP_TEXT);
 		else
 			{
 			if (BIO_read_filename(in,infile) <= 0)
@@ -416,7 +416,7 @@ bad:
 
 	if (!noout || text)
 		{
-		OBJ_create_and_add_object("2.99999.3",
+		OBJ_create("2.99999.3",
 			"SET.ex3","SET x509v3 extension 3");
 
 		out=BIO_new(BIO_s_file());
@@ -625,7 +625,7 @@ bad:
 
 				BIO_printf(bio_err,"Generating certificate request\n");
 
-				rq=X509_to_X509_REQ(x,pk);
+				rq=X509_to_X509_REQ(x,pk,EVP_md5());
 				EVP_PKEY_free(pk);
 				if (rq == NULL)
 					{
@@ -812,9 +812,11 @@ int days;
 	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
 		goto end;
 
-	/* don't save DSA parameters in child if parent has them. */
+	/* don't save DSA parameters in child if parent has them
+	 * and the parents and the childs are the same. */
 	upkey=X509_get_pubkey(x);
-	if (!EVP_PKEY_missing_parameters(pkey))
+	if (!EVP_PKEY_missing_parameters(pkey) &&
+		(EVP_PKEY_cmp_parameters(pkey,upkey) == 0))
 		{
 		EVP_PKEY_save_parameters(upkey,0);
 		/* Force a re-write */

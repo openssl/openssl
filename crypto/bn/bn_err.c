@@ -60,17 +60,22 @@
 #include "bn.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA BN_str_functs[]=
 	{
-{ERR_PACK(0,BN_F_BN_BL_CTX_INIT,0),	"BN_BL_CTX_INIT"},
-{ERR_PACK(0,BN_F_BN_BL_CTX_NEW,0),	"BN_BL_CTX_NEW"},
-{ERR_PACK(0,BN_F_BN_BN2ASCII,0),	"BN_bn2ascii"},
+{ERR_PACK(0,BN_F_BN_BLINDING_CONVERT,0),	"BN_BLINDING_convert"},
+{ERR_PACK(0,BN_F_BN_BLINDING_INVERT,0),	"BN_BLINDING_invert"},
+{ERR_PACK(0,BN_F_BN_BLINDING_NEW,0),	"BN_BLINDING_new"},
+{ERR_PACK(0,BN_F_BN_BLINDING_UPDATE,0),	"BN_BLINDING_update"},
+{ERR_PACK(0,BN_F_BN_BN2DEC,0),	"BN_bn2dec"},
+{ERR_PACK(0,BN_F_BN_BN2HEX,0),	"BN_bn2hex"},
 {ERR_PACK(0,BN_F_BN_CTX_NEW,0),	"BN_CTX_new"},
 {ERR_PACK(0,BN_F_BN_DIV,0),	"BN_div"},
 {ERR_PACK(0,BN_F_BN_EXPAND2,0),	"bn_expand2"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP_MONT,0),	"BN_mod_exp_mont"},
 {ERR_PACK(0,BN_F_BN_MOD_INVERSE,0),	"BN_mod_inverse"},
 {ERR_PACK(0,BN_F_BN_MOD_MUL_RECIPROCAL,0),	"BN_mod_mul_reciprocal"},
+{ERR_PACK(0,BN_F_BN_MPI2BN,0),	"BN_mpi2bn"},
 {ERR_PACK(0,BN_F_BN_NEW,0),	"BN_new"},
 {ERR_PACK(0,BN_F_BN_RAND,0),	"BN_rand"},
 {0,NULL},
@@ -81,18 +86,26 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_BAD_RECIPROCAL                     ,"bad reciprocal"},
 {BN_R_CALLED_WITH_EVEN_MODULUS           ,"called with even modulus"},
 {BN_R_DIV_BY_ZERO                        ,"div by zero"},
+{BN_R_ENCODING_ERROR                     ,"encoding error"},
+{BN_R_INVALID_LENGTH                     ,"invalid length"},
+{BN_R_NOT_INITALISED                     ,"not initalised"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
 {0,NULL},
 	};
+
+#endif
 
 void ERR_load_BN_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_BN,BN_str_functs);
 		ERR_load_strings(ERR_LIB_BN,BN_str_reasons);
+#endif
+
 		}
 	}

@@ -1,5 +1,5 @@
 /* rsaref/rsaref.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -164,20 +164,20 @@ RSA_METHOD *RSA_PKCS1_RSAref();
 #define RSAREF_F_RSA_REF_PUBLIC_ENCRYPT			 112
 
 /* Reason codes. */
-#define RSAREF_R_CONTENT_ENCODING			 1024
-#define RSAREF_R_DATA					 1025
-#define RSAREF_R_DIGEST_ALGORITHM			 1026
-#define RSAREF_R_ENCODING				 1027
-#define RSAREF_R_ENCRYPTION_ALGORITHM			 1037
-#define RSAREF_R_KEY					 1028
-#define RSAREF_R_KEY_ENCODING				 1029
-#define RSAREF_R_LEN					 1030
-#define RSAREF_R_MODULUS_LEN				 1031
-#define RSAREF_R_NEED_RANDOM				 1032
-#define RSAREF_R_PRIVATE_KEY				 1033
-#define RSAREF_R_PUBLIC_KEY				 1034
-#define RSAREF_R_SIGNATURE				 1035
-#define RSAREF_R_SIGNATURE_ENCODING			 1036
+#define RSAREF_R_CONTENT_ENCODING			 0x0400
+#define RSAREF_R_DATA					 0x0401
+#define RSAREF_R_DIGEST_ALGORITHM			 0x0402
+#define RSAREF_R_ENCODING				 0x0403
+#define RSAREF_R_ENCRYPTION_ALGORITHM			 0x040d
+#define RSAREF_R_KEY					 0x0404
+#define RSAREF_R_KEY_ENCODING				 0x0405
+#define RSAREF_R_LEN					 0x0406
+#define RSAREF_R_MODULUS_LEN				 0x0407
+#define RSAREF_R_NEED_RANDOM				 0x0408
+#define RSAREF_R_PRIVATE_KEY				 0x0409
+#define RSAREF_R_PUBLIC_KEY				 0x040a
+#define RSAREF_R_SIGNATURE				 0x040b
+#define RSAREF_R_SIGNATURE_ENCODING			 0x040c
  
 #ifdef  __cplusplus
 }

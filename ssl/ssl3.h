@@ -1,5 +1,5 @@
 /* ssl/ssl3.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -94,7 +94,7 @@ extern "C" {
 #define SSL3_CK_ADH_RC4_128_MD5			0x03000018
 #define SSL3_CK_ADH_DES_40_CBC_SHA		0x03000019
 #define SSL3_CK_ADH_DES_64_CBC_SHA		0x0300001A
-#define SSL3_CK_ADH_DES_196_CBC_SHA		0x0300001B
+#define SSL3_CK_ADH_DES_192_CBC_SHA		0x0300001B
 
 #define SSL3_CK_FZA_DMS_NULL_SHA		0x0300001C
 #define SSL3_CK_FZA_DMS_FZA_SHA			0x0300001D
@@ -106,7 +106,7 @@ extern "C" {
 #define SSL3_TXT_RSA_RC4_128_MD5		"RC4-MD5"
 #define SSL3_TXT_RSA_RC4_128_SHA		"RC4-SHA"
 #define SSL3_TXT_RSA_RC2_40_MD5			"EXP-RC2-CBC-MD5"
-#define SSL3_TXT_RSA_IDEA_128_SHA		"IDEA-CBC-MD5"
+#define SSL3_TXT_RSA_IDEA_128_SHA		"IDEA-CBC-SHA"
 #define SSL3_TXT_RSA_DES_40_CBC_SHA		"EXP-DES-CBC-SHA"
 #define SSL3_TXT_RSA_DES_64_CBC_SHA		"DES-CBC-SHA"
 #define SSL3_TXT_RSA_DES_192_CBC3_SHA		"DES-CBC3-SHA"
@@ -121,7 +121,7 @@ extern "C" {
 #define SSL3_TXT_EDH_DSS_DES_40_CBC_SHA		"EXP-EDH-DSS-DES-CBC-SHA"
 #define SSL3_TXT_EDH_DSS_DES_64_CBC_SHA		"EDH-DSS-DES-CBC-SHA"
 #define SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA	"EDH-DSS-DES-CBC3-SHA"
-#define SSL3_TXT_EDH_RSA_DES_40_CBC_SHA		"EXP-EDH-RSA-DES-CBC"
+#define SSL3_TXT_EDH_RSA_DES_40_CBC_SHA		"EXP-EDH-RSA-DES-CBC-SHA"
 #define SSL3_TXT_EDH_RSA_DES_64_CBC_SHA		"EDH-RSA-DES-CBC-SHA"
 #define SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA	"EDH-RSA-DES-CBC3-SHA"
 
@@ -129,7 +129,7 @@ extern "C" {
 #define SSL3_TXT_ADH_RC4_128_MD5		"ADH-RC4-MD5"
 #define SSL3_TXT_ADH_DES_40_CBC_SHA		"EXP-ADH-DES-CBC-SHA"
 #define SSL3_TXT_ADH_DES_64_CBC_SHA		"ADH-DES-CBC-SHA"
-#define SSL3_TXT_ADH_DES_196_CBC_SHA		"ADH-DES-CBC3-SHA"
+#define SSL3_TXT_ADH_DES_192_CBC_SHA		"ADH-DES-CBC3-SHA"
 
 #define SSL3_TXT_FZA_DMS_NULL_SHA		"FZA-NULL-SHA"
 #define SSL3_TXT_FZA_DMS_FZA_SHA		"FZA-FZA-CBC-SHA"
@@ -172,8 +172,8 @@ extern "C" {
 #define SSL3_RS_PART_READ		4
 #define SSL3_RS_PART_WRITE		5
 
-#define SSL3_MD_CLIENT_FINISHED_CONST	0x43,0x4C,0x4E,0x54
-#define SSL3_MD_SERVER_FINISHED_CONST	0x53,0x52,0x56,0x52
+#define SSL3_MD_CLIENT_FINISHED_CONST	{0x43,0x4C,0x4E,0x54}
+#define SSL3_MD_SERVER_FINISHED_CONST	{0x53,0x52,0x56,0x52}
 
 #define SSL3_VERSION			0x0300
 #define SSL3_VERSION_MAJOR		0x03
@@ -236,6 +236,34 @@ typedef struct ssl3_compression_st {
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define SSL3_FLAGS_DELAY_CLIENT_FINISHED	0x0002
 #define SSL3_FLAGS_POP_BUFFER			0x0004
+#define	TLS1_FLAGS_TLS_PADDING_BUG		0x0008
+
+#if 0
+#define AD_CLOSE_NOTIFY			0
+#define AD_UNEXPECTED_MESSAGE		1
+#define AD_BAD_RECORD_MAC		2
+#define AD_DECRYPTION_FAILED		3
+#define AD_RECORD_OVERFLOW		4
+#define AD_DECOMPRESSION_FAILURE	5	/* fatal */
+#define AD_HANDSHAKE_FAILURE		6	/* fatal */
+#define AD_NO_CERTIFICATE		7	/* Not under TLS */
+#define AD_BAD_CERTIFICATE		8
+#define AD_UNSUPPORTED_CERTIFICATE	9
+#define AD_CERTIFICATE_REVOKED		10	
+#define AD_CERTIFICATE_EXPIRED		11
+#define AD_CERTIFICATE_UNKNOWN		12
+#define AD_ILLEGAL_PARAMETER		13	/* fatal */
+#define AD_UNKNOWN_CA			14	/* fatal */
+#define AD_ACCESS_DENIED		15	/* fatal */
+#define AD_DECODE_ERROR			16	/* fatal */
+#define AD_DECRYPT_ERROR		17
+#define AD_EXPORT_RESTRICION		18	/* fatal */
+#define AD_PROTOCOL_VERSION		19	/* fatal */
+#define AD_INSUFFICIENT_SECURITY	20	/* fatal */
+#define AD_INTERNAL_ERROR		21	/* fatal */
+#define AD_USER_CANCLED			22
+#define AD_NO_RENEGOTIATION		23
+#endif
 
 typedef struct ssl3_ctx_st
 	{
@@ -279,9 +307,17 @@ typedef struct ssl3_ctx_st
 	int alert_dispatch;
 	char send_alert[2];
 
+	/* This flag is set when we should renegotiate ASAP, basically when
+	 * there is no more data in the read or write buffers */
+	int renegotiate;
+	int total_renegotiations;
+	int num_renegotiations;
+
+	int in_read_app_data;
+
 	struct	{
-		unsigned char finish_md1[EVP_MAX_MD_SIZE];
-		unsigned char finish_md2[EVP_MAX_MD_SIZE];
+		/* Actually only needs to be 16+20 for SSLv3 and 12 for TLS */
+		unsigned char finish_md[EVP_MAX_MD_SIZE*2];
 		
 		unsigned long message_size;
 		int message_type;
@@ -309,6 +345,7 @@ typedef struct ssl3_ctx_st
 		EVP_CIPHER *new_sym_enc;
 		EVP_MD *new_hash;
 		SSL_COMPRESSION *new_compression;
+		int cert_request;
 		} tmp;
 	} SSL3_CTX;
 
@@ -353,6 +390,7 @@ typedef struct ssl3_ctx_st
 /* extra state */
 #define SSL3_ST_SW_FLUSH		(0x100|SSL_ST_ACCEPT)
 /* read from client */
+/* Do not change the number values, they do matter */
 #define SSL3_ST_SR_CLNT_HELLO_A		(0x110|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)

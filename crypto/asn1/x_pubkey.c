@@ -1,5 +1,5 @@
 /* crypto/asn1/x_pubkey.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -211,12 +211,16 @@ X509_PUBKEY *key;
 	long j;
 	int type;
 	unsigned char *p;
+#ifndef NO_DSA
 	X509_ALGOR *a;
+#endif
 
-	if (key->pkey != NULL)
-		{
-		return(key->pkey);
-		}
+	if (key == NULL) goto err;
+
+	if (key->pkey != NULL) return(key->pkey);
+
+	if (key->public_key == NULL) goto err;
+
 	type=OBJ_obj2nid(key->algor->algorithm);
 	p=key->public_key->data;
         j=key->public_key->length;

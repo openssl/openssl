@@ -1,5 +1,5 @@
 /* crypto/bf/bf_ecb.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -64,7 +64,7 @@
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-char *BF_version="BlowFish part of SSLeay 0.8.1b 29-Jun-1998";
+char *BF_version="BlowFish part of SSLeay 0.9.0b 29-Jun-1998";
 
 char *BF_options()
 	{
@@ -87,7 +87,10 @@ int encrypt;
 
 	n2l(in,l); d[0]=l;
 	n2l(in,l); d[1]=l;
-	BF_encrypt(d,ks,encrypt);
+	if (encrypt)
+		BF_encrypt(d,ks);
+	else
+		BF_decrypt(d,ks);
 	l=d[0]; l2n(l,out);
 	l=d[1]; l2n(l,out);
 	l=d[0]=d[1]=0;

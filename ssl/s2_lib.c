@@ -1,5 +1,5 @@
 /* ssl/s2_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -69,7 +69,7 @@ static int ssl2_ok();
 static long ssl2_default_timeout();
 #endif
 
-char *ssl2_version_str="SSLv2 part of SSLeay 0.8.1b 29-Jun-1998";
+char *ssl2_version_str="SSLv2 part of SSLeay 0.9.0b 29-Jun-1998";
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
@@ -139,17 +139,6 @@ SSL_CIPHER ssl2_ciphers[]={
 	0,
 	SSL_ALL_CIPHERS,
 	},
-/* DES_64_CBC_WITH_SHA */
-#if 0
-	{
-	1,
-	SSL2_TXT_DES_64_CBC_WITH_SHA,
-	SSL2_CK_DES_64_CBC_WITH_SHA,
-	SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA0|SSL_NOT_EXP|SSL_SSLV2|SSL_LOW,
-	0,
-	SSL_ALL_CIPHERS,
-	},
-#endif
 /* DES_192_EDE3_CBC_WITH_MD5 */
 	{
 	1,
@@ -159,17 +148,6 @@ SSL_CIPHER ssl2_ciphers[]={
 	0,
 	SSL_ALL_CIPHERS,
 	},
-/* DES_192_EDE3_CBC_WITH_SHA */
-#if 0
-	{
-	1,
-	SSL2_TXT_DES_192_EDE3_CBC_WITH_SHA,
-	SSL2_CK_DES_192_EDE3_CBC_WITH_SHA,
-	SSL_kRSA|SSL_aRSA|SSL_3DES|SSL_SHA0|SSL_NOT_EXP|SSL_SSLV2|SSL_HIGH,
-	0,
-	SSL_ALL_CIPHERS,
-	},
-#endif
 /* RC4_64_WITH_MD5 */
 #if 1
 	{
@@ -196,7 +174,7 @@ SSL_CIPHER ssl2_ciphers[]={
 	};
 
 static SSL_METHOD SSLv2_data= {
-	2,
+	SSL2_VERSION,
 	ssl2_new,	/* local */
 	ssl2_clear,	/* local */
 	ssl2_free,	/* local */
@@ -216,6 +194,7 @@ static SSL_METHOD SSLv2_data= {
 	ssl2_get_cipher,
 	ssl_bad_method,
 	ssl2_default_timeout,
+	&ssl3_undef_enc_method,
 	};
 
 static long ssl2_default_timeout()
@@ -254,6 +233,7 @@ SSL *s;
 	SSL2_CTX *s2;
 
 	if ((s2=(SSL2_CTX *)Malloc(sizeof(SSL2_CTX))) == NULL) goto err;
+	memset(s2,0,sizeof(SSL2_CTX));
 
 	if ((s2->rbuf=(unsigned char *)Malloc(
 		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
@@ -302,9 +282,8 @@ SSL *s;
 	s2->rbuf=rbuf;
 	s2->wbuf=wbuf;
 	s2->clear_text=1;
-	s2->first_packet=0;
 	s->packet=s2->rbuf;
-	s->version=2;
+	s->version=SSL2_VERSION;
 	s->packet_length=0;
 	}
 
@@ -314,7 +293,17 @@ int cmd;
 long larg;
 char *parg;
 	{
-	return(0);
+	int ret=0;
+
+	switch(cmd)
+		{
+	case SSL_CTRL_GET_SESSION_REUSED:
+		ret=s->hit;
+		break;
+	default:
+		break;
+		}
+	return(ret);
 	}
 
 long ssl2_ctx_ctrl(ctx,cmd,larg,parg)

@@ -1,5 +1,5 @@
 /* crypto/bn/bnspeed.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -58,6 +58,7 @@
 
 /* most of this code has been pilfered from my libdes speed.c program */
 
+#define BASENUM	1000000
 #undef PROG
 #define PROG bnspeed_main
 
@@ -169,8 +170,8 @@ int s;
 	}
 
 #define NUM_SIZES	5
-/*static int sizes[NUM_SIZES]={256,512,1024,2048};*/
-static int sizes[NUM_SIZES]={59,179,299,419,539};
+static int sizes[NUM_SIZES]={128,256,512,1024,2048};
+/*static int sizes[NUM_SIZES]={59,179,299,419,539}; */
 
 void do_mul(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_CTX *ctx); 
 
@@ -198,34 +199,41 @@ BN_CTX *ctx;
 	{
 	int i,j,k;
 	double tm;
+	long num;
 
 	for (i=0; i<NUM_SIZES; i++)
 		{
+		num=BASENUM;
+		if (i) num/=(i*3);
 		BN_rand(a,sizes[i],1,0);
 		for (j=i; j<NUM_SIZES; j++)
 			{
 			BN_rand(b,sizes[j],1,0);
 			Time_F(START);
-			for (k=0; k<100000; k++)
+			for (k=0; k<num; k++)
 				BN_mul(r,b,a);
 			tm=Time_F(STOP);
-			printf("mul %3d x %3d -> %7.4f\n",sizes[i],sizes[j],tm/10.0);
+			printf("mul %4d x %4d -> %8.3fms\n",sizes[i],sizes[j],tm*1000.0/num);
 			}
 		}
 
 	for (i=0; i<NUM_SIZES; i++)
 		{
+		num=BASENUM;
+		if (i) num/=(i*3);
 		BN_rand(a,sizes[i],1,0);
 		Time_F(START);
-		for (k=0; k<100000; k++)
+		for (k=0; k<num; k++)
 			BN_sqr(r,a,ctx);
 		tm=Time_F(STOP);
-		printf("sqr %3d x %3d -> %7.4f\n",sizes[i],sizes[i],tm/10.0);
+		printf("sqr %4d x %4d -> %8.3fms\n",sizes[i],sizes[i],tm*1000.0/num);
 		}
 
 	for (i=0; i<NUM_SIZES; i++)
 		{
-		BN_rand(a,sizes[i],1,0);
+		num=BASENUM/10;
+		if (i) num/=(i*3);
+		BN_rand(a,sizes[i]-1,1,0);
 		for (j=i; j<NUM_SIZES; j++)
 			{
 			BN_rand(b,sizes[j],1,0);
@@ -233,7 +241,7 @@ BN_CTX *ctx;
 			for (k=0; k<100000; k++)
 				BN_div(r, NULL, b, a,ctx);
 			tm=Time_F(STOP);
-			printf("div %3d / %3d -> %7.4f\n",sizes[j],sizes[i],tm/10.0);
+			printf("div %4d / %4d -> %8.3fms\n",sizes[j],sizes[i]-1,tm*1000.0/num);
 			}
 		}
 	}

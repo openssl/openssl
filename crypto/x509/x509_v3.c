@@ -1,5 +1,5 @@
 /* crypto/x509/x509_v3.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -81,59 +81,59 @@ STACK *x;
 	return(sk_num(x));
 	}
 
-int X509v3_get_ext_by_NID(x,nid,oldpos)
+int X509v3_get_ext_by_NID(x,nid,lastpos)
 STACK *x;
 int nid;
-int oldpos;
+int lastpos;
 	{
 	ASN1_OBJECT *obj;
 
 	obj=OBJ_nid2obj(nid);
 	if (obj == NULL) return(-2);
-	return(X509v3_get_ext_by_OBJ(x,obj,oldpos));
+	return(X509v3_get_ext_by_OBJ(x,obj,lastpos));
 	}
 
-int X509v3_get_ext_by_OBJ(sk,obj,oldpos)
+int X509v3_get_ext_by_OBJ(sk,obj,lastpos)
 STACK *sk;
 ASN1_OBJECT *obj;
-int oldpos;
+int lastpos;
 	{
 	int n;
 	X509_EXTENSION *ex;
 
 	if (sk == NULL) return(-1);
-	oldpos++;
-	if (oldpos < 0)
-		oldpos=0;
+	lastpos++;
+	if (lastpos < 0)
+		lastpos=0;
 	n=sk_num(sk);
-	for ( ; oldpos < n; oldpos++)
+	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,oldpos);
+		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
 		if (OBJ_cmp(ex->object,obj) == 0)
-			return(oldpos);
+			return(lastpos);
 		}
 	return(-1);
 	}
 
-int X509v3_get_ext_by_critical(sk,crit,oldpos)
+int X509v3_get_ext_by_critical(sk,crit,lastpos)
 STACK *sk;
 int crit;
-int oldpos;
+int lastpos;
 	{
 	int n;
 	X509_EXTENSION *ex;
 
 	if (sk == NULL) return(-1);
-	oldpos++;
-	if (oldpos < 0)
-		oldpos=0;
+	lastpos++;
+	if (lastpos < 0)
+		lastpos=0;
 	n=sk_num(sk);
-	for ( ; oldpos < n; oldpos++)
+	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,oldpos);
+		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
 		if (	(ex->critical && crit) ||
 			(!ex->critical && !crit))
-			return(oldpos);
+			return(lastpos);
 		}
 	return(-1);
 	}

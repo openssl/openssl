@@ -1,126 +1,127 @@
 @echo=off
 
-set bin=..\out
-set test=.
+set test=..\ms
+
+rem run this from inside the bin directory
 
 echo destest
-%bin%\destest
+destest
 if errorlevel 1 goto done
 
 echo ideatest
-%bin%\ideatest
+ideatest
 if errorlevel 1 goto done
 
 echo bftest
-%bin%\bftest
+bftest
 if errorlevel 1 goto done
 
 echo shatest
-%bin%\shatest
+shatest
 if errorlevel 1 goto done
 
 echo sha1test
-%bin%\sha1test
+sha1test
 if errorlevel 1 goto done
 
 echo md5test
-%bin%\md5test
+md5test
 if errorlevel 1 goto done
 
 echo md2test
-%bin%\md2test
+md2test
 if errorlevel 1 goto done
 
 echo mdc2test
-%bin%\mdc2test
+mdc2test
 if errorlevel 1 goto done
 
 echo rc2test
-%bin%\rc2test
+rc2test
 if errorlevel 1 goto done
 
 echo rc4test
-%bin%\rc4test
+rc4test
 if errorlevel 1 goto done
 
 echo randtest
-%bin%\randtest
+randtest
 if errorlevel 1 goto done
 
 echo dhtest
-%bin%\dhtest
+dhtest
 if errorlevel 1 goto done
 
 echo exptest
-%bin%\exptest
+exptest
 if errorlevel 1 goto done
 
 echo dsatest
-%bin%\dsatest
+dsatest
 if errorlevel 1 goto done
 
 echo testenc
-call %test%\testenc %bin%\ssleay
+call %test%\testenc ssleay
 if errorlevel 1 goto done
 
 echo testpem
-call %test%\testpem %bin%\ssleay
+call %test%\testpem ssleay
 if errorlevel 1 goto done
 
 echo verify
 copy ..\certs\*.pem cert.tmp >nul
-%bin%\ssleay verify -CAfile cert.tmp ..\certs\*.pem
+ssleay verify -CAfile cert.tmp ..\certs\*.pem
 
 echo testss
-call %test%\testss %bin%\ssleay
+call %test%\testss ssleay
 if errorlevel 1 goto done
 
 echo test sslv2
-%bin%\ssltest -ssl2
+ssltest -ssl2
 if errorlevel 1 goto done
 
 echo test sslv2 with server authentication
-%bin%\ssltest -ssl2 -server_auth -CAfile cert.tmp
+ssltest -ssl2 -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv2 with client authentication 
-%bin%\ssltest -ssl2 -client_auth -CAfile cert.tmp
+ssltest -ssl2 -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv2 with beoth client and server authentication
-%bin%\ssltest -ssl2 -server_auth -client_auth -CAfile cert.tmp
+echo test sslv2 with both client and server authentication
+ssltest -ssl2 -server_auth -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv3
-%bin%\ssltest -ssl3
+ssltest -ssl3
 if errorlevel 1 goto done
 
 echo test sslv3 with server authentication
-%bin%\ssltest -ssl3 -server_auth -CAfile cert.tmp
+ssltest -ssl3 -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv3 with client authentication 
-%bin%\ssltest -ssl3 -client_auth -CAfile cert.tmp
+ssltest -ssl3 -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv3 with beoth client and server authentication
-%bin%\ssltest -ssl3 -server_auth -client_auth -CAfile cert.tmp
+echo test sslv3 with both client and server authentication
+ssltest -ssl3 -server_auth -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv2/sslv3
-%bin%\ssltest
+ssltest
 if errorlevel 1 goto done
 
 echo test sslv2/sslv3 with server authentication
-%bin%\ssltest -server_auth -CAfile cert.tmp
+ssltest -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv2/sslv3 with client authentication 
-%bin%\ssltest -client_auth -CAfile cert.tmp
+ssltest -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv2/sslv3 with beoth client and server authentication
-%bin%\ssltest -server_auth -client_auth -CAfile cert.tmp
+echo test sslv2/sslv3 with both client and server authentication
+ssltest -server_auth -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
 

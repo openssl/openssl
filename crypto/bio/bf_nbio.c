@@ -1,5 +1,5 @@
 /* crypto/bio/bf_nbio.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -93,7 +93,8 @@ typedef struct nbio_test_st
 
 static BIO_METHOD methods_nbiof=
 	{
-	BIO_TYPE_NBIO_TEST,"non-blocking IO test filter",
+	BIO_TYPE_NBIO_TEST,
+	"non-blocking IO test filter",
 	nbiof_write,
 	nbiof_read,
 	nbiof_puts,
@@ -237,6 +238,7 @@ char *ptr;
 		BIO_copy_next_retry(b);
 		break;
 	case BIO_CTRL_DUP:
+		ret=0L;
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);

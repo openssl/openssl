@@ -21,6 +21,8 @@ EXPORTS
     _SSLeay_add_all_digests             @510
     _SSLeay_version                     @2
     _ASN1_BIT_STRING_asn1_meth          @3
+    _ASN1_BIT_STRING_get_bit            @1060
+    _ASN1_BIT_STRING_set_bit            @1061
     _ASN1_HEADER_free                   @4
     _ASN1_HEADER_new                    @5
     _ASN1_IA5STRING_asn1_meth           @6
@@ -40,12 +42,17 @@ EXPORTS
     _ASN1_STRING_type_new               @20
     _ASN1_TYPE_free                     @21
     _ASN1_TYPE_get                      @916
+    _ASN1_TYPE_get_int_octetstring      @1076
+    _ASN1_TYPE_get_octetstring          @1077
     _ASN1_TYPE_new                      @22
     _ASN1_TYPE_set                      @917
+    _ASN1_TYPE_set_int_octetstring      @1078
+    _ASN1_TYPE_set_octetstring          @1079
     _ASN1_UNIVERSALSTRING_to_string     @23
     _ASN1_UTCTIME_check                 @24
     _ASN1_UTCTIME_print                 @25
     _ASN1_UTCTIME_set                   @26
+    _ASN1_UTCTIME_set_string            @1080
     _ASN1_check_infinite_end            @27
     _ASN1_d2i_bio                       @28
     _ASN1_digest                        @30
@@ -59,6 +66,7 @@ EXPORTS
     _ASN1_verify                        @39
     _BF_cbc_encrypt                     @40
     _BF_cfb64_encrypt                   @41
+    _BF_decrypt                         @987
     _BF_ecb_encrypt                     @42
     _BF_encrypt                         @43
     _BF_ofb64_encrypt                   @44
@@ -67,7 +75,6 @@ EXPORTS
     _BIO_accept                         @51
     _BIO_copy_next_retry                @955
     _BIO_ctrl                           @52
-    _BIO_ctrl_int                       @53
     _BIO_debug_callback                 @54
     _BIO_dump                           @55
     _BIO_dup_chain                      @56
@@ -89,6 +96,8 @@ EXPORTS
     _BIO_get_retry_reason               @74
     _BIO_gethostbyname                  @75
     _BIO_gets                           @76
+    _BIO_ghbn_ctrl                      @1003
+    _BIO_int_ctrl                       @53
     _BIO_new                            @78
     _BIO_new_accept                     @79
     _BIO_new_connect                    @80
@@ -96,16 +105,16 @@ EXPORTS
     _BIO_new_socket                     @84
     _BIO_pop                            @85
     _BIO_printf                         @86
+    _BIO_ptr_ctrl                       @969
     _BIO_push                           @87
     _BIO_puts                           @88
     _BIO_read                           @89
     _BIO_s_accept                       @90
     _BIO_s_connect                      @91
     _BIO_s_fd                           @92
-    _BIO_s_file_internal_w16            @94
     _BIO_s_mem                          @95
     _BIO_s_null                         @96
-    _BIO_s_socket                       @99
+    _BIO_s_socket                       @98
     _BIO_set                            @100
     _BIO_set_cipher                     @101
     _BIO_set_tcp_ndelay                 @102
@@ -116,6 +125,11 @@ EXPORTS
     _BIO_sock_should_retry              @107
     _BIO_socket_ioctl                   @108
     _BIO_write                          @109
+    _BN_BLINDING_convert                @973
+    _BN_BLINDING_free                   @981
+    _BN_BLINDING_invert                 @974
+    _BN_BLINDING_new                    @980
+    _BN_BLINDING_update                 @975
     _BN_CTX_free                        @110
     _BN_CTX_new                         @111
     _BN_MONT_CTX_free                   @112
@@ -123,23 +137,27 @@ EXPORTS
     _BN_MONT_CTX_set                    @114
     _BN_add                             @115
     _BN_add_word                        @116
-    _BN_ascii2bn                        @117
     _BN_bin2bn                          @118
-    _BN_bn2ascii                        @119
     _BN_bn2bin                          @120
+    _BN_bn2dec                          @1002
+    _BN_bn2hex                          @119
+    _BN_bn2mpi                          @1058
     _BN_clear                           @121
     _BN_clear_bit                       @122
     _BN_clear_free                      @123
     _BN_cmp                             @124
     _BN_copy                            @125
+    _BN_dec2bn                          @1001
     _BN_div                             @126
     _BN_div_word                        @127
     _BN_dup                             @128
+    _BN_exp                             @998
     _BN_free                            @129
     _BN_from_montgomery                 @130
     _BN_gcd                             @131
     _BN_generate_prime                  @132
     _BN_get_word                        @133
+    _BN_hex2bn                          @117
     _BN_is_bit_set                      @134
     _BN_is_prime                        @135
     _BN_lshift                          @136
@@ -155,7 +173,9 @@ EXPORTS
     _BN_mod_mul_montgomery              @146
     _BN_mod_mul_reciprocal              @147
     _BN_mod_word                        @148
+    _BN_mpi2bn                          @1059
     _BN_mul                             @149
+    _BN_mul_word                        @999
     _BN_new                             @150
     _BN_num_bits                        @151
     _BN_num_bits_word                   @152
@@ -169,6 +189,7 @@ EXPORTS
     _BN_set_word                        @161
     _BN_sqr                             @162
     _BN_sub                             @163
+    _BN_sub_word                        @1000
     _BN_to_ASN1_INTEGER                 @164
     _BN_ucmp                            @165
     _BN_value_one                       @166
@@ -176,6 +197,13 @@ EXPORTS
     _BUF_MEM_grow                       @168
     _BUF_MEM_new                        @169
     _BUF_strdup                         @170
+    _CAST_cbc_encrypt                   @992
+    _CAST_cfb64_encrypt                 @993
+    _CAST_decrypt                       @990
+    _CAST_ecb_encrypt                   @991
+    _CAST_encrypt                       @989
+    _CAST_ofb64_encrypt                 @994
+    _CAST_set_key                       @988
     _CONF_free                          @171
     _CONF_get_number                    @172
     _CONF_get_section                   @173
@@ -186,20 +214,27 @@ EXPORTS
     _CRYPTO_dbg_malloc                  @178
     _CRYPTO_dbg_realloc                 @179
     _CRYPTO_dbg_remalloc                @180
+    _CRYPTO_dup_ex_data                 @1025
     _CRYPTO_free                        @181
+    _CRYPTO_free_ex_data                @1004
     _CRYPTO_get_add_lock_callback       @182
+    _CRYPTO_get_ex_data                 @1005
+    _CRYPTO_get_ex_new_index            @1041
     _CRYPTO_get_id_callback             @183
     _CRYPTO_get_lock_name               @184
     _CRYPTO_get_locking_callback        @185
     _CRYPTO_get_mem_functions           @186
+    _CRYPTO_get_new_lockid              @1026
     _CRYPTO_lock                        @187
     _CRYPTO_malloc                      @188
     _CRYPTO_mem_ctrl                    @189
     _CRYPTO_mem_leaks                   @190
     _CRYPTO_mem_leaks_cb                @191
+    _CRYPTO_new_ex_data                 @1027
     _CRYPTO_realloc                     @193
     _CRYPTO_remalloc                    @194
     _CRYPTO_set_add_lock_callback       @195
+    _CRYPTO_set_ex_data                 @1007
     _CRYPTO_set_id_callback             @196
     _CRYPTO_set_locking_callback        @197
     _CRYPTO_set_mem_functions           @198
@@ -223,6 +258,7 @@ EXPORTS
     _DSA_size                           @218
     _DSA_verify                         @219
     _DSAparams_print                    @220
+    _ERR_add_error_data                 @1081
     _ERR_clear_error                    @222
     _ERR_error_string                   @223
     _ERR_free_strings                   @224
@@ -230,6 +266,7 @@ EXPORTS
     _ERR_get_err_state_table            @226
     _ERR_get_error                      @227
     _ERR_get_error_line                 @228
+    _ERR_get_next_error_library         @966
     _ERR_get_state                      @229
     _ERR_get_string_table               @230
     _ERR_lib_error_string               @231
@@ -238,6 +275,7 @@ EXPORTS
     _ERR_load_BN_strings                @234
     _ERR_load_BUF_strings               @235
     _ERR_load_CONF_strings              @236
+    _ERR_load_CRYPTOlib_strings         @1009
     _ERR_load_DH_strings                @237
     _ERR_load_DSA_strings               @238
     _ERR_load_ERR_strings               @239
@@ -255,8 +293,14 @@ EXPORTS
     _ERR_put_error                      @252
     _ERR_reason_error_string            @253
     _ERR_remove_state                   @254
+    _ERR_set_error_data                 @1082
     _EVP_BytesToKey                     @255
     _EVP_CIPHER_CTX_cleanup             @256
+    _EVP_CIPHER_CTX_init                @961
+    _EVP_CIPHER_asn1_to_param           @1083
+    _EVP_CIPHER_get_asn1_iv             @1085
+    _EVP_CIPHER_param_to_asn1           @1084
+    _EVP_CIPHER_set_asn1_iv             @1086
     _EVP_CipherFinal                    @257
     _EVP_CipherInit                     @258
     _EVP_CipherUpdate                   @259
@@ -280,7 +324,11 @@ EXPORTS
     _EVP_OpenFinal                      @277
     _EVP_OpenInit                       @278
     _EVP_PKEY_assign                    @279
+    _EVP_PKEY_bits                      @1010
+    _EVP_PKEY_cmp_parameters            @967
     _EVP_PKEY_copy_parameters           @280
+    _EVP_PKEY_decrypt                   @1070
+    _EVP_PKEY_encrypt                   @1071
     _EVP_PKEY_free                      @281
     _EVP_PKEY_missing_parameters        @282
     _EVP_PKEY_new                       @283
@@ -298,6 +346,10 @@ EXPORTS
     _EVP_bf_cfb                         @295
     _EVP_bf_ecb                         @296
     _EVP_bf_ofb                         @297
+    _EVP_cast5_cbc                      @983
+    _EVP_cast5_cfb                      @984
+    _EVP_cast5_ecb                      @985
+    _EVP_cast5_ofb                      @986
     _EVP_cleanup                        @298
     _EVP_delete_alias                   @941
     _EVP_des_cbc                        @299
@@ -327,15 +379,26 @@ EXPORTS
     _EVP_md5                            @323
     _EVP_md_null                        @324
     _EVP_mdc2                           @942
+    _EVP_rc2_40_cbc                     @959
     _EVP_rc2_cbc                        @325
     _EVP_rc2_cfb                        @326
     _EVP_rc2_ecb                        @327
     _EVP_rc2_ofb                        @328
     _EVP_rc4                            @329
+    _EVP_rc4_40                         @960
+    _EVP_rc5_32_12_16_cbc               @1087
+    _EVP_rc5_32_12_16_cfb               @1088
+    _EVP_rc5_32_12_16_ecb               @1089
+    _EVP_rc5_32_12_16_ofb               @1090
     _EVP_read_pw_string                 @330
     _EVP_set_pw_prompt                  @331
     _EVP_sha                            @332
     _EVP_sha1                           @333
+    _HMAC                               @962
+    _HMAC_Final                         @965
+    _HMAC_Init                          @963
+    _HMAC_Update                        @964
+    _HMAC_cleanup                       @968
     _MD2                                @334
     _MD2_Final                          @335
     _MD2_Init                           @336
@@ -344,6 +407,7 @@ EXPORTS
     _MD5                                @339
     _MD5_Final                          @340
     _MD5_Init                           @341
+    _MD5_Transform                      @1011
     _MD5_Update                         @342
     _MDC2                               @343
     _MDC2_Final                         @344
@@ -359,7 +423,8 @@ EXPORTS
     _OBJ_bsearch                        @354
     _OBJ_cleanup                        @355
     _OBJ_cmp                            @356
-    _OBJ_create_and_add_object          @357
+    _OBJ_create                         @357
+    _OBJ_create_objects                 @997
     _OBJ_dup                            @358
     _OBJ_ln2nid                         @359
     _OBJ_new_nid                        @360
@@ -388,7 +453,7 @@ EXPORTS
     _PEM_read_bio_PKCS7                 @398
     _PEM_read_bio_PrivateKey            @399
     _PEM_read_bio_RSAPrivateKey         @400
-    _PEM_read_bio_RSAPublicKey          @948
+    _PEM_read_bio_RSAPublicKey          @943
     _PEM_read_bio_X509                  @401
     _PEM_read_bio_X509_CRL              @402
     _PEM_read_bio_X509_REQ              @403
@@ -399,7 +464,7 @@ EXPORTS
     _PEM_write_bio_PKCS7                @418
     _PEM_write_bio_PrivateKey           @419
     _PEM_write_bio_RSAPrivateKey        @420
-    _PEM_write_bio_RSAPublicKey         @950
+    _PEM_write_bio_RSAPublicKey         @944
     _PEM_write_bio_X509                 @421
     _PEM_write_bio_X509_CRL             @422
     _PEM_write_bio_X509_REQ             @423
@@ -416,6 +481,7 @@ EXPORTS
     _PKCS7_ISSUER_AND_SERIAL_new        @434
     _PKCS7_RECIP_INFO_free              @435
     _PKCS7_RECIP_INFO_new               @436
+    _PKCS7_RECIP_INFO_set               @1072
     _PKCS7_SIGNED_free                  @437
     _PKCS7_SIGNED_new                   @438
     _PKCS7_SIGNER_INFO_free             @439
@@ -425,6 +491,8 @@ EXPORTS
     _PKCS7_SIGN_ENVELOPE_new            @442
     _PKCS7_add_certificate              @932
     _PKCS7_add_crl                      @933
+    _PKCS7_add_recipient                @1073
+    _PKCS7_add_recipient_info           @1074
     _PKCS7_add_signature                @938
     _PKCS7_add_signer                   @931
     _PKCS7_cert_from_signer_info        @939
@@ -434,10 +502,11 @@ EXPORTS
     _PKCS7_dataInit                     @937
     _PKCS7_dataSign                     @935
     _PKCS7_dataVerify                   @936
-    _PKCS7_dup                          @924
+    _PKCS7_dup                          @443
     _PKCS7_free                         @444
     _PKCS7_get_signer_info              @940
     _PKCS7_new                          @445
+    _PKCS7_set_cipher                   @1075
     _PKCS7_set_content                  @929
     _PKCS7_set_type                     @928
     _RAND_bytes                         @464
@@ -449,6 +518,7 @@ EXPORTS
     _RAND_write_file                    @470
     _RC2_cbc_encrypt                    @471
     _RC2_cfb64_encrypt                  @472
+    _RC2_decrypt                        @995
     _RC2_ecb_encrypt                    @473
     _RC2_encrypt                        @474
     _RC2_ofb64_encrypt                  @475
@@ -456,20 +526,46 @@ EXPORTS
     _RC4                                @477
     _RC4_options                        @478
     _RC4_set_key                        @479
+    _RC5_32_cbc_encrypt                 @1051
+    _RC5_32_cfb64_encrypt               @1052
+    _RC5_32_decrypt                     @1050
+    _RC5_32_ecb_encrypt                 @1048
+    _RC5_32_encrypt                     @1049
+    _RC5_32_ofb64_encrypt               @1053
+    _RC5_32_set_key                     @1047
+    _RIPEMD160                          @1045
+    _RIPEMD160_Final                    @1044
+    _RIPEMD160_Init                     @1042
+    _RIPEMD160_Transform                @1046
+    _RIPEMD160_Update                   @1043
     _RSAPrivateKey_asn1_meth            @480
     _RSAPrivateKey_dup                  @481
     _RSAPublicKey_dup                   @482
     _RSA_PKCS1_SSLeay                   @483
+    _RSA_blinding_off                   @978
+    _RSA_blinding_on                    @977
+    _RSA_flags                          @956
     _RSA_free                           @484
     _RSA_generate_key                   @485
+    _RSA_get_ex_data                    @1029
+    _RSA_get_ex_new_index               @1030
     _RSA_new                            @486
     _RSA_new_method                     @487
+    _RSA_padding_add_PKCS1_type_1       @1031
+    _RSA_padding_add_PKCS1_type_2       @1032
+    _RSA_padding_add_SSLv23             @1033
+    _RSA_padding_add_none               @1034
+    _RSA_padding_check_PKCS1_type_1     @1035
+    _RSA_padding_check_PKCS1_type_2     @1036
+    _RSA_padding_check_SSLv23           @1037
+    _RSA_padding_check_none             @1038
     _RSA_print                          @488
     _RSA_private_decrypt                @490
     _RSA_private_encrypt                @491
     _RSA_public_decrypt                 @492
     _RSA_public_encrypt                 @493
     _RSA_set_default_method             @494
+    _RSA_set_ex_data                    @1028
     _RSA_sign                           @495
     _RSA_sign_ASN1_OCTET_STRING         @496
     _RSA_size                           @497
@@ -479,9 +575,11 @@ EXPORTS
     _SHA1                               @501
     _SHA1_Final                         @502
     _SHA1_Init                          @503
+    _SHA1_Transform                     @1012
     _SHA1_Update                        @504
     _SHA_Final                          @505
     _SHA_Init                           @506
+    _SHA_Transform                      @1013
     _SHA_Update                         @507
     _TXT_DB_create_index                @511
     _TXT_DB_free                        @512
@@ -594,8 +692,18 @@ EXPORTS
     _X509_SIG_free                      @620
     _X509_SIG_new                       @621
     _X509_STORE_CTX_cleanup             @622
+    _X509_STORE_CTX_get_chain           @1014
+    _X509_STORE_CTX_get_current_cert    @1015
+    _X509_STORE_CTX_get_error           @1016
+    _X509_STORE_CTX_get_error_depth     @1017
+    _X509_STORE_CTX_get_ex_data         @1018
     _X509_STORE_CTX_init                @623
+    _X509_STORE_CTX_set_cert            @1020
+    _X509_STORE_CTX_set_chain           @1021
+    _X509_STORE_CTX_set_error           @1022
+    _X509_STORE_CTX_set_ex_data         @1023
     _X509_STORE_add_cert                @624
+    _X509_STORE_add_crl                 @957
     _X509_STORE_add_lookup              @625
     _X509_STORE_free                    @626
     _X509_STORE_get_by_subject          @627
@@ -637,6 +745,7 @@ EXPORTS
     _X509_issuer_name_cmp               @661
     _X509_issuer_name_hash              @662
     _X509_load_cert_file                @663
+    _X509_load_crl_file                 @958
     _X509_new                           @664
     _X509_print                         @665
     _X509_set_issuer_name               @667
@@ -675,10 +784,12 @@ EXPORTS
     _a2i_ASN1_STRING                    @701
     _asn1_Finish                        @702
     _asn1_GetSequence                   @703
+    _asn1_add_error                     @1091
+    _bn_add_words                       @1039
     _bn_div64                           @704
     _bn_expand2                         @705
-    _bn_mul_add_word                    @706
-    _bn_mul_word                        @707
+    _bn_mul_add_words                   @706
+    _bn_mul_words                       @707
     _bn_qadd                            @708
     _bn_qsub                            @709
     _bn_sqr_words                       @710
@@ -706,6 +817,7 @@ EXPORTS
     _d2i_NETSCAPE_SPKAC                 @733
     _d2i_NETSCAPE_SPKI                  @734
     _d2i_Netscape_RSA                   @735
+    _d2i_Netscape_RSA_2                 @1040
     _d2i_PKCS7                          @736
     _d2i_PKCS7_DIGEST                   @737
     _d2i_PKCS7_ENCRYPT                  @738
@@ -716,13 +828,13 @@ EXPORTS
     _d2i_PKCS7_SIGNED                   @743
     _d2i_PKCS7_SIGNER_INFO              @744
     _d2i_PKCS7_SIGN_ENVELOPE            @745
-    _d2i_PKCS7_bio                      @925
+    _d2i_PKCS7_bio                      @746
     _d2i_PrivateKey                     @748
     _d2i_PublicKey                      @749
     _d2i_RSAPrivateKey                  @750
     _d2i_RSAPrivateKey_bio              @751
     _d2i_RSAPublicKey                   @753
-    _d2i_RSAPublicKey_bio               @951
+    _d2i_RSAPublicKey_bio               @945
     _d2i_X509                           @754
     _d2i_X509_ALGOR                     @755
     _d2i_X509_ATTRIBUTE                 @756
@@ -742,7 +854,6 @@ EXPORTS
     _d2i_X509_SIG                       @772
     _d2i_X509_VAL                       @773
     _d2i_X509_bio                       @774
-    _des_3cbc_encrypt                   @776
     _des_cbc_cksum                      @777
     _des_cbc_encrypt                    @778
     _des_cblock_print_file              @779
@@ -813,13 +924,13 @@ EXPORTS
     _i2d_PKCS7_SIGNED                   @846
     _i2d_PKCS7_SIGNER_INFO              @847
     _i2d_PKCS7_SIGN_ENVELOPE            @848
-    _i2d_PKCS7_bio                      @926
+    _i2d_PKCS7_bio                      @849
     _i2d_PrivateKey                     @851
     _i2d_PublicKey                      @852
     _i2d_RSAPrivateKey                  @853
     _i2d_RSAPrivateKey_bio              @854
     _i2d_RSAPublicKey                   @856
-    _i2d_RSAPublicKey_bio               @953
+    _i2d_RSAPublicKey_bio               @946
     _i2d_X509                           @857
     _i2d_X509_ALGOR                     @858
     _i2d_X509_ATTRIBUTE                 @859
@@ -839,6 +950,7 @@ EXPORTS
     _i2d_X509_SIG                       @875
     _i2d_X509_VAL                       @876
     _i2d_X509_bio                       @877
+    _i2t_ASN1_OBJECT                    @979
     _idea_cbc_encrypt                   @879
     _idea_cfb64_encrypt                 @880
     _idea_ecb_encrypt                   @881

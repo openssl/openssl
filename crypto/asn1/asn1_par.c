@@ -1,5 +1,5 @@
 /* crypto/asn1/asn1_par.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -144,7 +144,8 @@ int indent;
 		p="GENERALSTRING";
 	else if (tag == V_ASN1_UNIVERSALSTRING)
 		p="UNIVERSALSTRING";
-
+	else if (tag == V_ASN1_BMPSTRING)
+		p="BMPSTRING";
 	else
 		p2="(unknown)";
 		
@@ -184,6 +185,7 @@ int indent;
 	int nl,hl,j,r;
 	ASN1_OBJECT *o=NULL;
 	ASN1_OCTET_STRING *os=NULL;
+	/* ASN1_BMPSTRING *bmp=NULL;*/
 
 	p= *pp;
 	tot=p+length;
@@ -298,6 +300,10 @@ int indent;
 						goto end;
 					}
 				BIO_printf(bp,":%d",ii);
+				}
+			else if (tag == V_ASN1_BMPSTRING)
+				{
+				/* do the BMP thang */
 				}
 			else if (tag == V_ASN1_OCTET_STRING)
 				{

@@ -1,5 +1,5 @@
 /* crypto/rc2/rc2ofb64.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -92,7 +92,7 @@ int *num;
 		{
 		if (n == 0)
 			{
-			RC2_encrypt((unsigned long *)ti,schedule,RC2_ENCRYPT);
+			RC2_encrypt((unsigned long *)ti,schedule);
 			dp=(char *)d;
 			t=ti[0]; l2c(t,dp);
 			t=ti[1]; l2c(t,dp);

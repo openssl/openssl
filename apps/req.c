@@ -1,5 +1,5 @@
 /* apps/req.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"
@@ -111,7 +111,7 @@ static int add_attribute_object(STACK *n, char *text, char *def,
 	char *value, int nid,int min,int max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int min,int max);
-static void MS_CALLBACK req_cb(int p,int n);
+static void MS_CALLBACK req_cb(int p,int n,char *arg);
 static int req_fix_data(int nid,int *type,int len,int min,int max);
 #else
 static int make_REQ();
@@ -135,7 +135,9 @@ int MAIN(argc, argv)
 int argc;
 char **argv;
 	{
+#ifndef NO_DSA
 	DSA *dsa_params=NULL;
+#endif
 	int ex=1,x509=0,days=30;
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
@@ -160,7 +162,7 @@ char **argv;
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	infile=NULL;
 	outfile=NULL;
@@ -228,7 +230,9 @@ char **argv;
 				p+=4;
 				newkey= atoi(p);
 				}
-			else if (strncmp("dsa:",p,4) == 0)
+			else
+#ifndef NO_DSA
+				if (strncmp("dsa:",p,4) == 0)
 				{
 				X509 *xtmp=NULL;
 				EVP_PKEY *dtmp;
@@ -249,6 +253,9 @@ char **argv;
 						BIO_printf(bio_err,"unable to load DSA parameters from file\n");
 						goto end;
 						}
+
+					/* This will 'disapear'
+					 * when we free xtmp */
 					dtmp=X509_get_pubkey(xtmp);
 					if (dtmp->type == EVP_PKEY_DSA)
 						dsa_params=DSAparams_dup(dtmp->pkey.dsa);
@@ -258,18 +265,21 @@ char **argv;
 						BIO_printf(bio_err,"Certificate does not contain DSA parameters\n");
 						goto end;
 						}
-					
 					}
 				BIO_free(in);
 				newkey=BN_num_bits(dsa_params->p);
 				in=NULL;
 				}
-			else if (strncmp("dh:",p,4) == 0)
+			else 
+#endif
+#ifndef NO_DH
+				if (strncmp("dh:",p,4) == 0)
 				{
 				pkey_type=TYPE_DH;
 				p+=3;
 				}
 			else
+#endif
 				pkey_type=TYPE_RSA;
 
 			newreq=1;
@@ -463,7 +473,8 @@ bad:
 		if (pkey_type == TYPE_RSA)
 			{
 			if (!EVP_PKEY_assign_RSA(pkey,
-				RSA_generate_key(newkey,0x10001,req_cb)))
+				RSA_generate_key(newkey,0x10001,
+					req_cb,(char *)bio_err)))
 				goto end;
 			}
 		else
@@ -559,8 +570,10 @@ loop:
 
 	if (newreq || x509)
 		{
+#ifndef NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 			digest=EVP_dss1();
+#endif
 
 		if (pkey == NULL)
 			{
@@ -733,7 +746,9 @@ end:
 	if (pkey != NULL) EVP_PKEY_free(pkey);
 	if (req != NULL) X509_REQ_free(req);
 	if (x509ss != NULL) X509_free(x509ss);
+#ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
+#endif
 	EXIT(ex);
 	}
 
@@ -743,7 +758,7 @@ EVP_PKEY *pkey;
 int attribs;
 	{
 	int ret=0,i,j;
-	unsigned char *p;
+	unsigned char *p,*q;
 	X509_REQ_INFO *ri;
 	char buf[100];
 	int nid,min,max;
@@ -800,19 +815,43 @@ start:		for (;;)
 			if ((int)sk_num(sk) <= i) break;
 
 			v=(CONF_VALUE *)sk_value(sk,i);
-			p=NULL;
+			p=q=NULL;
 			type=v->name;
+			/* Allow for raw OIDs */
+			/* [n.mm.ooo.ppp] */
 			for (j=0; type[j] != '\0'; j++)
 				{
 				if (	(type[j] == ':') ||
 					(type[j] == ',') ||
 					(type[j] == '.'))
-					p= (unsigned char *)&(type[j+1]);
+					p=(unsigned char *)&(type[j+1]);
+				if (type[j] == '[')
+					{
+					p=(unsigned char *)&(type[j+1]);
+					for (j++; type[j] != '\0'; j++)
+						if (type[j] == ']')
+							{
+							q=(unsigned char *)&(type[j]);
+							break;
+							}
+					break;
+					}
 				}
 			if (p != NULL)
 				type=(char *)p;
 			if ((nid=OBJ_txt2nid(type)) == NID_undef)
-				goto start;
+				{
+				/* Add a new one if possible */
+				if ((p != NULL) && (q != NULL) && (*q == ']'))
+					{
+					*q='\0';
+					nid=OBJ_create((char *)p,NULL,NULL);
+					*q=']';
+					if (nid == NID_undef) goto start;
+					}
+				else
+					goto start;
+				}
 
 			sprintf(buf,"%s_default",v->name);
 			if ((def=CONF_get_string(req_conf,tmp,buf)) == NULL)
@@ -1044,9 +1083,10 @@ err:
 	return(0);
 	}
 
-static void MS_CALLBACK req_cb(p, n)
+static void MS_CALLBACK req_cb(p,n,arg)
 int p;
 int n;
+char *arg;
 	{
 	char c='*';
 
@@ -1054,8 +1094,8 @@ int n;
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(bio_err,&c,1);
-	BIO_flush(bio_err);
+	BIO_write((BIO *)arg,&c,1);
+	BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif

@@ -1,5 +1,5 @@
 /* crypto/buffer/buffer.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -65,9 +65,9 @@ extern "C" {
 
 typedef struct buf_mem_st
 	{
-	int length;
+	int length;	/* current number of bytes */
 	char *data;
-	int max;
+	int max;	/* size of buffer */
 	} BUF_MEM;
 
 #ifndef NOPROTO

@@ -1,5 +1,5 @@
 /* crypto/pem/pem_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -68,7 +68,7 @@
 #include "des.h"
 #endif
 
-char *PEM_version="PEM part of SSLeay 0.8.1b 29-Jun-1998";
+char *PEM_version="PEM part of SSLeay 0.9.0b 29-Jun-1998";
 
 #define MIN_LENGTH	4
 
@@ -89,7 +89,7 @@ char *buf;
 int num;
 int w;
 	{
-#ifdef WIN16
+#ifdef NO_FP_API
 	/* We should not ever call the default callback routine from
 	 * windows. */
 	PEMerr(PEM_F_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -166,7 +166,7 @@ char *str;
 	buf[j+i*2+1]='\0';
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 char *PEM_ASN1_read(d2i,name,fp, x, cb)
 char *(*d2i)();
 char *name;
@@ -241,7 +241,7 @@ err:
 	return(ret);
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_ASN1_write(i2d,name,fp, x, enc, kstr, klen, callback)
 int (*i2d)();
 char *name;
@@ -296,7 +296,12 @@ int (*callback)();
 			}
 		}
 
-	dsize=i2d(x,NULL);
+	if ((dsize=i2d(x,NULL)) < 0)
+		{
+		PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,ERR_R_MALLOC_FAILURE);
+		dsize=0;
+		goto err;
+		}
 	/* dzise + 8 bytes are needed */
 	data=(unsigned char *)Malloc((unsigned int)dsize+20);
 	if (data == NULL)
@@ -485,7 +490,7 @@ int num;
 	return(1);
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write(fp, name, header, data,len)
 FILE *fp;
 char *name;
@@ -567,7 +572,7 @@ err:
 	return(0);
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_read(fp, name, header, data,len)
 FILE *fp;
 char **name;

@@ -1,5 +1,5 @@
 /* apps/crl.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -109,7 +109,6 @@ char **argv;
 	BIO *out=NULL;
 	int informat,outformat;
 	char *infile=NULL,*outfile=NULL;
-	char *str=NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0;
 	char **pp,buf[256];
 
@@ -117,7 +116,7 @@ char **argv;
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	if (bio_out == NULL)
 		if ((bio_out=BIO_new(BIO_s_file())) != NULL)
@@ -209,7 +208,7 @@ bad:
 			if (issuer == i)
 				{
 				X509_NAME_oneline(x->crl->issuer,buf,256);
-				fprintf(stdout,"issuer= %s\n",str);
+				fprintf(stdout,"issuer= %s\n",buf);
 				}
 
 			if (hash == i)
@@ -226,7 +225,10 @@ bad:
 			if (nextupdate == i)
 				{
 				fprintf(stdout,"nextUpdate=");
-				ASN1_UTCTIME_print(bio_out,x->crl->nextUpdate);
+				if (x->crl->nextUpdate != NULL)
+					ASN1_UTCTIME_print(bio_out,x->crl->nextUpdate);
+				else
+					fprintf(stdout,"NONE");
 				fprintf(stdout,"\n");
 				}
 			}
@@ -259,8 +261,10 @@ bad:
 	else if (outformat == FORMAT_TEXT)
 		{
 		X509_REVOKED *r;
+		STACK *sk;
 
-		while ((r=(X509_REVOKED *)sk_pop(x->crl->revoked)) != NULL)
+		sk=sk_dup(x->crl->revoked);
+		while ((r=(X509_REVOKED *)sk_pop(sk)) != NULL)
 			{
 			fprintf(stdout,"revoked: serialNumber=");
 			i2a_ASN1_INTEGER(out,r->serialNumber);
@@ -268,6 +272,7 @@ bad:
 			ASN1_UTCTIME_print(bio_out,r->revocationDate);
 			fprintf(stdout,"\n");
 			}
+		sk_free(sk);
 		i=1;
 		}
 	else	

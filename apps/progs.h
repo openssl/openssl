@@ -6,7 +6,6 @@ extern int dgst_main(int argc,char *argv[]);
 extern int dh_main(int argc,char *argv[]);
 extern int enc_main(int argc,char *argv[]);
 extern int gendh_main(int argc,char *argv[]);
-extern int gendsa_main(int argc,char *argv[]);
 extern int errstr_main(int argc,char *argv[]);
 extern int ca_main(int argc,char *argv[]);
 extern int crl_main(int argc,char *argv[]);
@@ -32,7 +31,6 @@ extern int dgst_main();
 extern int dh_main();
 extern int enc_main();
 extern int gendh_main();
-extern int gendsa_main();
 extern int errstr_main();
 extern int ca_main();
 extern int crl_main();
@@ -77,9 +75,6 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"enc",enc_main},
 #ifndef NO_DH
 	{FUNC_TYPE_GENERAL,"gendh",gendh_main},
-#endif
-#ifndef NO_DSA
-	{FUNC_TYPE_GENERAL,"gendsa",gendsa_main},
 #endif
 	{FUNC_TYPE_GENERAL,"errstr",errstr_main},
 #ifndef NO_RSA
@@ -144,6 +139,12 @@ FUNCTION functions[] = {
 #endif
 #ifndef NO_BLOWFISH
 	{FUNC_TYPE_CIPHER,"bf",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast",enc_main},
+#endif
+#ifndef NO_RC5
+	{FUNC_TYPE_CIPHER,"rc5",enc_main},
 #endif
 #ifndef NO_DES
 	{FUNC_TYPE_CIPHER,"des-ecb",enc_main},
@@ -216,6 +217,33 @@ FUNCTION functions[] = {
 #endif
 #ifndef NO_BLOWFISH
 	{FUNC_TYPE_CIPHER,"bf-ofb",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast5-cbc",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast5-ecb",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast5-cfb",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast5-ofb",enc_main},
+#endif
+#ifndef NO_CAST
+	{FUNC_TYPE_CIPHER,"cast-cbc",enc_main},
+#endif
+#ifndef NO_RC5
+	{FUNC_TYPE_CIPHER,"rc5-cbc",enc_main},
+#endif
+#ifndef NO_RC5
+	{FUNC_TYPE_CIPHER,"rc5-ecb",enc_main},
+#endif
+#ifndef NO_RC5
+	{FUNC_TYPE_CIPHER,"rc5-cfb",enc_main},
+#endif
+#ifndef NO_RC5
+	{FUNC_TYPE_CIPHER,"rc5-ofb",enc_main},
 #endif
 	{0,NULL,NULL}
 	};

@@ -1,5 +1,5 @@
 /* crypto/objects/objects.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -373,10 +373,10 @@ extern "C" {
 #define NID_dsaWithSHA			66
 #define OBJ_dsaWithSHA			OBJ_algorithm,13L
 
-#define SN_dsa				"DSA"
-#define LN_dsa				"dsaEncryption"
-#define NID_dsa				67
-#define OBJ_dsa				OBJ_algorithm,12L
+#define SN_dsa_2			"DSA-old"
+#define LN_dsa_2			"dsaEncryption-old"
+#define NID_dsa_2			67
+#define OBJ_dsa_2			OBJ_algorithm,12L
 
 /* proposed by microsoft to RSA */
 #define LN_pbeWithSHA1AndRC2_CBC	"pbeWithSHA1AndRC2-CBC"
@@ -388,11 +388,11 @@ extern "C" {
 #define NID_pbeWithSHA1AndRC4		69
 #define OBJ_pbeWithSHA1AndRC4		OBJ_pkcs,5L,12L 
 
-#define SN_dsaWithSHA1			"DSA-SHA1"
-#define LN_dsaWithSHA1			"dsaWithSHA1"
-#define NID_dsaWithSHA1			70
+#define SN_dsaWithSHA1_2		"DSA-SHA1-old"
+#define LN_dsaWithSHA1_2		"dsaWithSHA1"
+#define NID_dsaWithSHA1_2		70
 /* Got this one from 'sdn706r20.pdf' which is actually an NSA document :-) */
-#define OBJ_dsaWithSHA1			OBJ_algorithm,27L
+#define OBJ_dsaWithSHA1_2		OBJ_algorithm,27L
 
 #define SN_netscape_cert_type		"nsCertType"
 #define LN_netscape_cert_type		"Netscape Cert Type"
@@ -512,13 +512,152 @@ extern "C" {
 #define LN_mdc2				"mdc2"
 #define NID_mdc2			95
 #define OBJ_mdc2			2L,5L,8L,3L,101L
+/* An alternative?			1L,3L,14L,3L,2L,19L */
 
 #define SN_mdc2WithRSA			"RSA-MDC2"
 #define LN_mdc2WithRSA			"mdc2withRSA"
 #define NID_mdc2WithRSA			96
 #define OBJ_mdc2WithRSA			2L,5L,8L,3L,100L
 
+#define SN_rc4_40			"RC4-40"
+#define LN_rc4_40			"rc4-40"
+#define NID_rc4_40			97
+
+#define SN_rc2_40_cbc			"RC2-40-CBC"
+#define LN_rc2_40_cbc			"rc2-40-cbc"
+#define NID_rc2_40_cbc			98
+
+#define SN_givenName			"G"
+#define LN_givenName			"givenName"
+#define NID_givenName			99
+#define OBJ_givenName			OBJ_X509,42L
+
+#define SN_surname			"S"
+#define LN_surname			"surname"
+#define NID_surname			100
+#define OBJ_surname			OBJ_X509,4L
+
+#define SN_initials			"I"
+#define LN_initials			"initials"
+#define NID_initials			101
+#define OBJ_initials			OBJ_X509,43L
+
+#define SN_uniqueIdentifier		"UID"
+#define LN_uniqueIdentifier		"uniqueIdentifier"
+#define NID_uniqueIdentifier		102
+#define OBJ_uniqueIdentifier		OBJ_X509,45L
+
+#define SN_crl_distribution_points	"crlDistributionPoints"
+#define LN_crl_distribution_points	"X509v3 CRL Distribution Points"
+#define NID_crl_distribution_points	103
+#define OBJ_crl_distribution_points	OBJ_ld_ce,31L
+
+#define SN_md5WithRSA			"RSA-NP-MD5"
+#define LN_md5WithRSA			"md5WithRSA"
+#define NID_md5WithRSA			104
+#define OBJ_md5WithRSA			OBJ_algorithm,3L
+
+#define SN_serialNumber			"SN"
+#define LN_serialNumber			"serialNumber"
+#define NID_serialNumber		105
+#define OBJ_serialNumber		OBJ_X509,5L
+
+#define SN_title			"T"
+#define LN_title			"title"
+#define NID_title			106
+#define OBJ_title			OBJ_X509,12L
+
+#define SN_description			"D"
+#define LN_description			"description"
+#define NID_description			107
+#define OBJ_description			OBJ_X509,13L
+
+/* CAST5 is CAST-128, I'm just sticking with the documentation */
+#define SN_cast5_cbc			"CAST5-CBC"
+#define LN_cast5_cbc			"cast5-cbc"
+#define NID_cast5_cbc			108
+#define OBJ_cast5_cbc			1L,2L,840L,113533L,7L,66L,10L
+
+#define SN_cast5_ecb			"CAST5-ECB"
+#define LN_cast5_ecb			"cast5-ecb"
+#define NID_cast5_ecb			109
+
+#define SN_cast5_cfb64			"CAST5-CFB"
+#define LN_cast5_cfb64			"cast5-cfb"
+#define NID_cast5_cfb64			110
+
+#define SN_cast5_ofb64			"CAST5-OFB"
+#define LN_cast5_ofb64			"cast5-ofb"
+#define NID_cast5_ofb64			111
+
+#define LN_pbeWithMD5AndCast5_CBC	"pbeWithMD5AndCast5CBC"
+#define NID_pbeWithMD5AndCast5_CBC	112
+#define OBJ_pbeWithMD5AndCast5_CBC	1L,2L,840L,113533L,7L,66L,12L
+
+/* This is one sun will soon be using :-(
+ * id-dsa-with-sha1 ID  ::= {
+ *   iso(1) member-body(2) us(840) x9-57 (10040) x9cm(4) 3 }
+ */
+#define SN_dsaWithSHA1			"DSA-SHA1"
+#define LN_dsaWithSHA1			"dsaWithSHA1"
+#define NID_dsaWithSHA1			113
+#define OBJ_dsaWithSHA1			1L,2L,840L,10040L,4L,3L
+
+#define NID_md5_sha1			114
+#define SN_md5_sha1			"MD5-SHA1"
+#define LN_md5_sha1			"md5-sha1"
+
+#define SN_sha1WithRSA			"RSA-SHA1-2"
+#define LN_sha1WithRSA			"sha1WithRSA"
+#define NID_sha1WithRSA			115
+#define OBJ_sha1WithRSA			OBJ_algorithm,29L
+
+#define SN_dsa				"DSA"
+#define LN_dsa				"dsaEncryption"
+#define NID_dsa				116
+#define OBJ_dsa				1L,2L,840L,10040L,4L,1L
+
+#define SN_ripemd160			"RIPEMD160"
+#define LN_ripemd160			"ripemd160"
+#define NID_ripemd160			117
+#define OBJ_ripemd160			1L,3L,36L,3L,2L,1L
+
+/* The name should actually be rsaSignatureWithripemd160, but I'm going
+ * to contiune using the convention I'm using with the other ciphers */
+#define SN_ripemd160WithRSA		"RSA-RIPEMD160"
+#define LN_ripemd160WithRSA		"ripemd160WithRSA"
+#define NID_ripemd160WithRSA		119
+#define OBJ_ripemd160WithRSA		1L,3L,36L,3L,3L,1L,2L
+
+/* Taken from rfc2040
+ *  RC5_CBC_Parameters ::= SEQUENCE {
+ *	version           INTEGER (v1_0(16)),
+ *	rounds            INTEGER (8..127),
+ *	blockSizeInBits   INTEGER (64, 128),
+ *	iv                OCTET STRING OPTIONAL
+ *	}
+ */
+#define SN_rc5_cbc			"RC5-CBC"
+#define LN_rc5_cbc			"rc5-cbc"
+#define NID_rc5_cbc			120
+#define OBJ_rc5_cbc			OBJ_rsadsi,3L,8L
+
+#define SN_rc5_ecb			"RC5-ECB"
+#define LN_rc5_ecb			"rc5-ecb"
+#define NID_rc5_ecb			121
+
+#define SN_rc5_cfb64			"RC5-CFB"
+#define LN_rc5_cfb64			"rc5-cfb"
+#define NID_rc5_cfb64			122
+
+#define SN_rc5_ofb64			"RC5-OFB"
+#define LN_rc5_ofb64			"rc5-ofb"
+#define NID_rc5_ofb64			123
+
+#include "bio.h"
 #include "asn1.h"
+
+#define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
 
 #ifndef NOPROTO
 
@@ -537,9 +676,9 @@ void		ERR_load_OBJ_strings(void );
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(ASN1_OBJECT *obj);
-int		OBJ_create_and_add_object(char *oid,char *sn,char *ln);
-
+int		OBJ_create(char *oid,char *sn,char *ln);
 void		OBJ_cleanup(void );
+int		OBJ_create_objects(BIO *in);
 
 #else
 
@@ -558,8 +697,9 @@ void		ERR_load_OBJ_strings();
 
 int		OBJ_new_nid();
 int		OBJ_add_object();
-int		OBJ_create_and_add_object();
+int		OBJ_create();
 void		OBJ_cleanup();
+int		OBJ_create_objects();
 
 #endif
 
@@ -567,7 +707,7 @@ void		OBJ_cleanup();
 /* Error codes for the OBJ functions. */
 
 /* Function codes. */
-#define OBJ_F_OBJ_CREATE_AND_ADD_OBJECT			 100
+#define OBJ_F_OBJ_CREATE				 100
 #define OBJ_F_OBJ_DUP					 101
 #define OBJ_F_OBJ_NID2LN				 102
 #define OBJ_F_OBJ_NID2OBJ				 103

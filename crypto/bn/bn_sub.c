@@ -1,5 +1,5 @@
 /* crypto/bn/bn_sub.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -87,12 +87,12 @@ BIGNUM *b;
 		if (carry)
 			{
 			carry=(t1 <= t2);
-			t1=(t1-t2-1);
+			t1=(t1-t2-1)&BN_MASK2;
 			}
 		else
 			{
 			carry=(t1 < t2);
-			t1=(t1-t2);
+			t1=(t1-t2)&BN_MASK2;
 			}
 #if defined(IRIX_CC_BUG) && !defined(LINT)
 		dummy=t1;
@@ -110,9 +110,12 @@ BIGNUM *b;
 			if (t1 > t2) break;
 			}
 		}
+#if 0
 	memcpy(rp,ap,sizeof(*rp)*(max-i));
-/*	for (; i<max; i++)
-		*(rp++)= *(ap++);*/
+#else
+	for (; i<max; i++)
+		*(rp++)= *(ap++);
+#endif
 
 	r->top=max;
 	bn_fix_top(r);
@@ -146,8 +149,9 @@ BIGNUM *b;
 
 	if (add)
 		{
-		i=(a->top > b->top);
-	        if (bn_expand(r,(((i)?a->top:b->top)+1)*BN_BITS2) == NULL)
+		/* As a fast max size, do a a->top | b->top */
+		i=(a->top | b->top)+1;
+	        if (bn_wexpand(r,i) == NULL)
 			return(0);
 		if (i)
 			bn_qadd(r,a,b);
@@ -160,7 +164,7 @@ BIGNUM *b;
 	/* We are actually doing a - b :-) */
 
 	max=(a->top > b->top)?a->top:b->top;
-	if (bn_expand(r,max*BN_BITS2) == NULL) return(0);
+	if (bn_wexpand(r,max) == NULL) return(0);
 	if (BN_ucmp(a,b) < 0)
 		{
 		bn_qsub(r,b,a);

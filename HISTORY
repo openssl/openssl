@@ -1,3 +1,193 @@
+16-Mar-98
+	- Patch for Cray T90 from Wayne Schroeder <schroede@SDSC.EDU>
+	- Lots and lots of changes
+
+29-Jan-98
+	- ASN1_BIT_STRING_set_bit()/ASN1_BIT_STRING_get_bit() from
+	  Goetz Babin-Ebell <babinebell@trustcenter.de>.
+	- SSL_version() now returns SSL2_VERSION, SSL3_VERSION or
+	  TLS1_VERSION.
+
+7-Jan-98
+	- Finally reworked the cipher string to ciphers again, so it
+	  works correctly
+	- All the app_data stuff is now ex_data with funcion calls to access.
+	  The index is supplied by a function and 'methods' can be setup
+	  for the types that are called on XXX_new/XXX_free.  This lets
+	  applications get notified on creation and destruction.  Some of
+	  the RSA methods could be implemented this way and I may do so.
+	- Oh yes, SSL under perl5 is working at the basic level.
+
+15-Dec-97
+	- Warning - the gethostbyname cache is not fully thread safe,
+	  but it should work well enough.
+	- Major internal reworking of the app_data stuff.  More functions
+	  but if you were accessing ->app_data directly, things will
+	  stop working.
+	- The perlv5 stuff is working.  Currently on message digests,
+	  ciphers and the bignum library.
+
+9-Dec-97
+	- Modified re-negotiation so that server initated re-neg
+	  will cause a SSL_read() to return -1 should retry.
+	  The danger otherwise was that the server and the
+	  client could end up both trying to read when using non-blocking
+	  sockets.
+
+4-Dec-97
+	- Lots of small changes
+	- Fix for binaray mode in Windows for the FILE BIO, thanks to
+	  Bob Denny <rdenny@dc3.com>
+
+17-Nov-97
+	- Quite a few internal cleanups, (removal of errno, and using macros
+	  defined in e_os.h).
+	- A bug in ca.c, pointed out by yasuyuki-ito@d-cruise.co.jp, where
+	  the automactic naming out output files was being stuffed up.
+
+29-Oct-97
+	- The Cast5 cipher has been added.  MD5 and SHA-1 are now in assember
+	  for x86.
+
+21-Oct-97
+	- Fixed a bug in the BIO_gethostbyname() cache.
+
+15-Oct-97
+	- cbc mode for blowfish/des/3des is now in assember.  Blowfish asm
+	  has also been improved.  At this point in time, on the pentium,
+	  md5 is %80 faster, the unoptimesed sha-1 is %79 faster,
+	  des-cbc is %28 faster, des-ede3-cbc is %9 faster and blowfish-cbc
+	  is %62 faster.
+
+12-Oct-97
+	- MEM_BUF_grow() has been fixed so that it always sets the buf->length
+	  to the value we are 'growing' to.  Think of MEM_BUF_grow() as the
+	  way to set the length value correctly.
+
+10-Oct-97
+	- I now hash for certificate lookup on the raw DER encoded RDN (md5).
+	  This breaks things again :-(.  This is efficent since I cache
+	  the DER encoding of the RDN.
+	- The text DN now puts in the numeric OID instead of UNKNOWN.
+	- req can now process arbitary OIDs in the config file.
+	- I've been implementing md5 in x86 asm, much faster :-).
+	- Started sha1 in x86 asm, needs more work.
+	- Quite a few speedups in the BN stuff.  RSA public operation
+	  has been made faster by caching the BN_MONT_CTX structure.
+	  The calulating of the Ai where A*Ai === 1 mod m was rather
+	  expensive.  Basically a 40-50% speedup on public operations.
+	  The RSA speedup is now 15% on pentiums and %20 on pentium
+	  pro.
+
+30-Sep-97
+	- After doing some profiling, I added x86 adm for bn_add_words(),
+	  which just adds 2 arrays of longs together.  A %10 speedup
+	  for 512 and 1024 bit RSA on the pentium pro.
+
+29-Sep-97
+	- Converted the x86 bignum assembler to us the perl scripts
+	  for generation.
+
+23-Sep-97
+	- If SSL_set_session() is passed a NULL session, it now clears the
+	  current session-id.
+
+22-Sep-97
+	- Added a '-ss_cert file' to apps/ca.c.  This will sign selfsigned
+	  certificates.
+	- Bug in crypto/evp/encode.c where by decoding of 65 base64
+	  encoded lines, one line at a time (via a memory BIO) would report
+	  EOF after the first line was decoded.
+	- Fix in X509_find_by_issuer_and_serial() from
+	  Dr Stephen Henson <shenson@bigfoot.com>
+
+19-Sep-97
+	- NO_FP_API and NO_STDIO added.
+	- Put in sh config command.  It auto runs Configure with the correct
+	  parameters.
+
+18-Sep-97
+	- Fix x509.c so if a DSA cert has different parameters to its parent,
+	  they are left in place.  Not tested yet.
+
+16-Sep-97
+	- ssl_create_cipher_list() had some bugs, fixes from
+	  Patrick Eisenacher <eisenach@stud.uni-frankfurt.de>
+	- Fixed a bug in the Base64 BIO, where it would return 1 instead
+	  of -1 when end of input was encountered but should retry.
+	  Basically a Base64/Memory BIO interaction problem.
+	- Added a HMAC set of functions in preporarion for TLS work.
+
+15-Sep-97
+	- Top level makefile tweak - Cameron Simpson <cs@zip.com.au>
+	- Prime generation spead up %25 (512 bit prime, pentium pro linux)
+	  by using montgomery multiplication in the prime number test.
+
+11-Sep-97
+	- Ugly bug in ssl3_write_bytes().  Basically if application land
+	  does a SSL_write(ssl,buf,len) where len > 16k, the SSLv3 write code
+	  did not check the size and tried to copy the entire buffer.
+	  This would tend to cause memory overwrites since SSLv3 has
+	  a maximum packet size of 16k.  If your program uses
+	  buffers <= 16k, you would probably never see this problem.
+	- Fixed a new errors that were cause by malloc() not returning
+	  0 initialised memory..
+	- SSL_OP_NETSCAPE_CA_DN_BUG was being switched on when using
+	  SSL_CTX_set_options(ssl_ctx,SSL_OP_ALL); which was a bad thing
+	  since this flags stops SSLeay being able to handle client
+	  cert requests correctly.
+
+08-Sep-97
+	- SSL_SESS_CACHE_NO_INTERNAL_LOOKUP option added.  When switched
+	  on, the SSL server routines will not use a SSL_SESSION that is
+	  held in it's cache.  This in intended to be used with the session-id
+	  callbacks so that while the session-ids are still stored in the
+	  cache, the decision to use them and how to look them up can be
+	  done by the callbacks.  The are the 'new', 'get' and 'remove'
+	  callbacks.  This can be used to determine the session-id
+	  to use depending on information like which port/host the connection
+	  is coming from.  Since the are also SSL_SESSION_set_app_data() and
+	  SSL_SESSION_get_app_data() functions, the application can hold
+	  information against the session-id as well.
+
+03-Sep-97
+	- Added lookup of CRLs to the by_dir method,
+	  X509_load_crl_file() also added.  Basically it means you can
+	  lookup CRLs via the same system used to lookup certificates.
+	- Changed things so that the X509_NAME structure can contain
+	  ASN.1 BIT_STRINGS which is required for the unique
+	  identifier OID.
+	- Fixed some problems with the auto flushing of the session-id
+	  cache.  It was not occuring on the server side.
+
+02-Sep-97
+	- Added SSL_CTX_sess_cache_size(SSL_CTX *ctx,unsigned long size)
+	  which is the maximum number of entries allowed in the
+	  session-id cache.  This is enforced with a simple FIFO list.
+	  The default size is 20*1024 entries which is rather large :-).
+	  The Timeout code is still always operating.
+
+01-Sep-97
+	- Added an argument to all the 'generate private key/prime`
+	  callbacks.  It is the last parameter so this should not
+	  break existing code but it is needed for C++.
+	- Added the BIO_FLAGS_BASE64_NO_NL flag for the BIO_f_base64()
+	  BIO.  This lets the BIO read and write base64 encoded data
+	  without inserting or looking for '\n' characters.  The '-A'
+	  flag turns this on when using apps/enc.c.
+	- RSA_NO_PADDING added to help BSAFE functionality.  This is a
+	  very dangerous thing to use, since RSA private key
+	  operations without random padding bytes (as PKCS#1 adds) can
+	  be attacked such that the private key can be revealed.
+	- ASN.1 bug and rc2-40-cbc and rc4-40 added by
+	  Dr Stephen Henson <shenson@bigfoot.com>
+
+31-Aug-97 (stuff added while I was away)	
+	- Linux pthreads by Tim Hudson (tjh@cryptsoft.com).
+	- RSA_flags() added allowing bypass of pub/priv match check
+	  in ssl/ssl_rsa.c - Tim Hudson.
+	- A few minor bugs.
+
 SSLeay 0.8.1 released.
 
 19-Jul-97

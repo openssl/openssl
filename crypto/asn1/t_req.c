@@ -1,5 +1,5 @@
 /* crypto/asn1/t_req.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,7 +63,7 @@
 #include "objects.h"
 #include "x509.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int X509_REQ_print_fp(fp,x)
 FILE *fp;
 X509_REQ *x;

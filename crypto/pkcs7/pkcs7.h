@@ -1,5 +1,5 @@
 /* crypto/pkcs7/pkcs7.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -99,16 +99,18 @@ typedef struct pkcs7_recip_info_st
 	PKCS7_ISSUER_AND_SERIAL		*issuer_and_serial;
 	X509_ALGOR			*key_enc_algor;
 	ASN1_OCTET_STRING		*enc_key;
+	X509				*cert; /* get the pub-key from this */
 	} PKCS7_RECIP_INFO;
 
 typedef struct pkcs7_signed_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
 	STACK /* X509_ALGOR's */	*md_algs;	/* md used */
-	struct pkcs7_st			*contents;
 	STACK /* X509 */		*cert;		/* [ 0 ] */
 	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
+
+	struct pkcs7_st			*contents;
 	} PKCS7_SIGNED;
 /* The above structure is very very similar to PKCS7_SIGN_ENVELOPE.
  * How about merging the two */
@@ -130,12 +132,13 @@ typedef struct pkcs7_enveloped_st
 typedef struct pkcs7_signedandenveloped_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
-	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
 	STACK /* X509_ALGOR's */	*md_algs;	/* md used */
-	PKCS7_ENC_CONTENT		*enc_data;
 	STACK /* X509 */		*cert;		/* [ 0 ] */
 	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
+
+	PKCS7_ENC_CONTENT		*enc_data;
+	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
 	} PKCS7_SIGN_ENVELOPE;
 
 typedef struct pkcs7_digest_st
@@ -204,6 +207,14 @@ typedef struct pkcs7_st
 #define PKCS7_get_detached(p) \
 		PKCS7_ctrl(p,PKCS7_OP_GET_DETACHED_SIGNATURE,0,NULL)
 
+#ifdef SSLEAY_MACROS
+
+#define PKCS7_ISSUER_AND_SERIAL_digest(data,type,md,len) \
+        ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,\
+	                (char *)data,md,len)
+#endif
+
+
 #ifndef NOPROTO
 PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new(void );
 void			PKCS7_ISSUER_AND_SERIAL_free(
@@ -214,8 +225,17 @@ PKCS7_ISSUER_AND_SERIAL *d2i_PKCS7_ISSUER_AND_SERIAL(
 				PKCS7_ISSUER_AND_SERIAL **a,
 				unsigned char **pp, long length);
 
+#ifndef SSLEAY_MACROS
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,EVP_MD *type,
 	unsigned char *md,unsigned int *len);
+#ifndef NO_FP_API
+PKCS7 *d2i_PKCS7_fp(FILE *fp,PKCS7 *p7);
+int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
+#endif
+PKCS7 *PKCS7_dup(PKCS7 *p7);
+PKCS7 *d2i_PKCS7_bio(BIO *bp,PKCS7 *p7);
+int i2d_PKCS7_bio(BIO *bp,PKCS7 *p7);
+#endif
 
 PKCS7_SIGNER_INFO	*PKCS7_SIGNER_INFO_new(void);
 void			PKCS7_SIGNER_INFO_free(PKCS7_SIGNER_INFO *a);
@@ -283,13 +303,6 @@ PKCS7			*d2i_PKCS7(PKCS7 **a,
 
 void ERR_load_PKCS7_strings(void);
 
-#ifndef WIN16
-PKCS7 *d2i_PKCS7_fp(FILE *fp,PKCS7 *p7);
-int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
-#endif
-PKCS7 *PKCS7_dup(PKCS7 *p7);
-PKCS7 *d2i_PKCS7_bio(BIO *bp,PKCS7 *p7);
-int i2d_PKCS7_bio(BIO *bp,PKCS7 *p7);
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 
@@ -313,6 +326,13 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 STACK *PKCS7_get_signer_info(PKCS7 *p7);
 
+PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
+int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);
+int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
+int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher);
+
+
+
 #else
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new();
@@ -320,7 +340,17 @@ void			PKCS7_ISSUER_AND_SERIAL_free();
 int 			i2d_PKCS7_ISSUER_AND_SERIAL();
 PKCS7_ISSUER_AND_SERIAL *d2i_PKCS7_ISSUER_AND_SERIAL();
 
+#ifndef SSLEAY_MACROS
 int			PKCS7_ISSUER_AND_SERIAL_digest();
+#ifndef NO_FP_API
+PKCS7 *d2i_PKCS7_fp();
+int i2d_PKCS7_fp();
+#endif
+PKCS7 *PKCS7_dup();
+PKCS7 *d2i_PKCS7_bio();
+int i2d_PKCS7_bio();
+
+#endif
 
 PKCS7_SIGNER_INFO	*PKCS7_SIGNER_INFO_new();
 void			PKCS7_SIGNER_INFO_free();
@@ -362,13 +392,6 @@ PKCS7			*d2i_PKCS7();
 
 void ERR_load_PKCS7_strings();
 
-#ifndef WIN16
-PKCS7 *d2i_PKCS7_fp();
-int i2d_PKCS7_fp();
-#endif
-PKCS7 *PKCS7_dup();
-PKCS7 *d2i_PKCS7_bio();
-int i2d_PKCS7_bio();
 long PKCS7_ctrl();
 int PKCS7_set_type();
 int PKCS7_set_content();
@@ -384,19 +407,28 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature();
 X509 *PKCS7_cert_from_signer_info();
 STACK *PKCS7_get_signer_info();
 
+PKCS7_RECIP_INFO *PKCS7_add_recipient();
+int PKCS7_add_recipient_info();
+int PKCS7_RECIP_INFO_set();
+int PKCS7_set_cipher();
+
 #endif
 
 /* BEGIN ERROR CODES */
 /* Error codes for the PKCS7 functions. */
 
 /* Function codes. */
-#define PKCS7_F_PKCS7_ADD_SIGNER			 100
-#define PKCS7_F_PKCS7_CTRL				 101
-#define PKCS7_F_PKCS7_DATAFINAL				 102
-#define PKCS7_F_PKCS7_DATAINIT				 103
-#define PKCS7_F_PKCS7_DATAVERIFY			 104
-#define PKCS7_F_PKCS7_SET_CONTENT			 105
-#define PKCS7_F_PKCS7_SET_TYPE				 106
+#define PKCS7_F_PKCS7_ADD_CERTIFICATE			 100
+#define PKCS7_F_PKCS7_ADD_CRL				 101
+#define PKCS7_F_PKCS7_ADD_RECIPIENT_INFO		 102
+#define PKCS7_F_PKCS7_ADD_SIGNER			 103
+#define PKCS7_F_PKCS7_CTRL				 104
+#define PKCS7_F_PKCS7_DATAINIT				 105
+#define PKCS7_F_PKCS7_DATASIGN				 106
+#define PKCS7_F_PKCS7_DATAVERIFY			 107
+#define PKCS7_F_PKCS7_SET_CIPHER			 108
+#define PKCS7_F_PKCS7_SET_CONTENT			 109
+#define PKCS7_F_PKCS7_SET_TYPE				 110
 
 /* Reason codes. */
 #define PKCS7_R_INTERNAL_ERROR				 100
@@ -406,8 +438,9 @@ STACK *PKCS7_get_signer_info();
 #define PKCS7_R_UNABLE_TO_FIND_MEM_BIO			 104
 #define PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST		 105
 #define PKCS7_R_UNKNOWN_DIGEST_TYPE			 106
-#define PKCS7_R_UNSUPPORTED_CONTENT_TYPE		 107
-#define PKCS7_R_WRONG_CONTENT_TYPE			 108
+#define PKCS7_R_UNSUPPORTED_CIPHER_TYPE			 107
+#define PKCS7_R_UNSUPPORTED_CONTENT_TYPE		 108
+#define PKCS7_R_WRONG_CONTENT_TYPE			 109
  
 #ifdef  __cplusplus
 }

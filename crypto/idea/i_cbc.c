@@ -1,5 +1,5 @@
 /* crypto/idea/i_cbc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -138,3 +138,38 @@ int encrypt;
 	tin[0]=tin[1]=0;
 	}
 
+void idea_encrypt(d,key)
+unsigned long *d;
+IDEA_KEY_SCHEDULE *key;
+	{
+	register IDEA_INT *p;
+	register unsigned long x1,x2,x3,x4,t0,t1,ul;
+
+	x2=d[0];
+	x1=(x2>>16);
+	x4=d[1];
+	x3=(x4>>16);
+
+	p= &(key->data[0][0]);
+
+	E_IDEA(0);
+	E_IDEA(1);
+	E_IDEA(2);
+	E_IDEA(3);
+	E_IDEA(4);
+	E_IDEA(5);
+	E_IDEA(6);
+	E_IDEA(7);
+
+	x1&=0xffff;
+	idea_mul(x1,x1,*p,ul); p++;
+
+	t0= x3+ *(p++);
+	t1= x2+ *(p++);
+
+	x4&=0xffff;
+	idea_mul(x4,x4,*p,ul);
+
+	d[0]=(t0&0xffff)|((x1&0xffff)<<16);
+	d[1]=(x4&0xffff)|((t1&0xffff)<<16);
+	}

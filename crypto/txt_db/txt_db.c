@@ -1,5 +1,5 @@
 /* crypto/txt_db/txt_db.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -66,7 +66,7 @@
 #undef BUFSIZE
 #define BUFSIZE	512
 
-char *TXT_DB_version="TXT_DB part of SSLeay 0.8.1b 29-Jun-1998";
+char *TXT_DB_version="TXT_DB part of SSLeay 0.9.0b 29-Jun-1998";
 
 TXT_DB *TXT_DB_read(in,num)
 BIO *in;
@@ -157,7 +157,7 @@ int num;
 		*(p++)='\0';
 		if ((n != num) || (*f != '\0'))
 			{
-#ifndef WIN16	/* temporaty fix :-( */
+#if !defined(NO_STDIO) && !defined(WIN16)	/* temporaty fix :-( */
 			fprintf(stderr,"wrong number of fields on line %ld\n",ln);
 #endif
 			er=2;
@@ -166,7 +166,7 @@ int num;
 		pp[n]=p;
 		if (!sk_push(ret->data,(char *)pp))
 			{
-#ifndef WIN16	/* temporaty fix :-( */
+#if !defined(NO_STDIO) && !defined(WIN16)	/* temporaty fix :-( */
 			fprintf(stderr,"failure in sk_push\n");
 #endif
 			er=2;
@@ -178,7 +178,7 @@ err:
 	BUF_MEM_free(buf);
 	if (er)
 		{
-#ifndef WIN16
+#if !defined(NO_STDIO) && !defined(WIN16)
 		if (er == 1) fprintf(stderr,"Malloc failure\n");
 #endif
 		if (ret->data != NULL) sk_free(ret->data);

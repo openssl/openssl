@@ -1,5 +1,5 @@
 /* crypto/evp/e_rc4.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,11 +79,29 @@ static EVP_CIPHER r4_cipher=
 	1,EVP_RC4_KEY_SIZE,0,
 	rc4_init_key,
 	rc4_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc4)),
+	NULL,
+	NULL,
+	};
+
+static EVP_CIPHER r4_40_cipher=
+	{
+	NID_rc4_40,
+	1,5 /* 40 bit */,0,
+	rc4_init_key,
+	rc4_cipher,
 	};
 
 EVP_CIPHER *EVP_rc4()
 	{
 	return(&r4_cipher);
+	}
+
+EVP_CIPHER *EVP_rc4_40()
+	{
+	return(&r4_40_cipher);
 	}
 
 static void rc4_init_key(ctx,key,iv,enc)

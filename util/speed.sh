@@ -18,7 +18,7 @@ apps/ssleay version -v -b -f >speed.1
 apps/ssleay speed >speed.1l
 
 perl Configure bl-4c-2c
-/bin/rm -f crypto/rc4/*.o crypto/bn/bn*.o crypto/md/md2_dgst.o
+/bin/rm -f crypto/rc4/*.o crypto/bn/bn*.o crypto/md2/md2_dgst.o
 make
 apps/ssleay speed rc4 rsa md2 >speed.2l
 

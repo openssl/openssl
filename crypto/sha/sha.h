@@ -1,5 +1,5 @@
 /* crypto/sha/sha.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -83,19 +83,23 @@ void SHA_Init(SHA_CTX *c);
 void SHA_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA(unsigned char *d, unsigned long n,unsigned char *md);
+void SHA_Transform(SHA_CTX *c, unsigned char *data);
 void SHA1_Init(SHA_CTX *c);
 void SHA1_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(unsigned char *d, unsigned long n,unsigned char *md);
+void SHA1_Transform(SHA_CTX *c, unsigned char *data);
 #else
 void SHA_Init();
 void SHA_Update();
 void SHA_Final();
 unsigned char *SHA();
+void SHA_Transform();
 void SHA1_Init();
 void SHA1_Update();
 void SHA1_Final();
 unsigned char *SHA1();
+void SHA1_Transform();
 #endif
 
 #ifdef  __cplusplus

@@ -1,5 +1,5 @@
 /* crypto/rc2/rc2_ecb.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -59,7 +59,7 @@
 #include "rc2.h"
 #include "rc2_locl.h"
 
-char *RC2_version="RC2 part of SSLeay 0.8.1b 29-Jun-1998";
+char *RC2_version="RC2 part of SSLeay 0.9.0b 29-Jun-1998";
 
 /* RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt
@@ -79,85 +79,12 @@ int encrypt;
 
 	c2l(in,l); d[0]=l;
 	c2l(in,l); d[1]=l;
-	RC2_encrypt(d,ks,encrypt);
+	if (encrypt)
+		RC2_encrypt(d,ks);
+	else
+		RC2_decrypt(d,ks);
 	l=d[0]; l2c(l,out);
 	l=d[1]; l2c(l,out);
 	l=d[0]=d[1]=0;
 	}
 
-void RC2_encrypt(d,key,encrypt)
-unsigned long *d;
-RC2_KEY *key;
-int encrypt;
-	{
-	int i,n;
-	register RC2_INT *p0,*p1;
-	register RC2_INT x0,x1,x2,x3,t;
-	unsigned long l;
-
-	l=d[0];
-	x0=(RC2_INT)l&0xffff;
-	x1=(RC2_INT)(l>>16L);
-	l=d[1];
-	x2=(RC2_INT)l&0xffff;
-	x3=(RC2_INT)(l>>16L);
-
-	n=3;
-	i=5;
-	if (encrypt)
-		{
-		p0=p1= &(key->data[0]);
-		for (;;)
-			{
-			t=(x0+(x1& ~x3)+(x2&x3)+ *(p0++))&0xffff;
-			x0=(t<<1)|(t>>15);
-			t=(x1+(x2& ~x0)+(x3&x0)+ *(p0++))&0xffff;
-			x1=(t<<2)|(t>>14);
-			t=(x2+(x3& ~x1)+(x0&x1)+ *(p0++))&0xffff;
-			x2=(t<<3)|(t>>13);
-			t=(x3+(x0& ~x2)+(x1&x2)+ *(p0++))&0xffff;
-			x3=(t<<5)|(t>>11);
-
-			if (--i == 0)
-				{
-				if (--n == 0) break;
-				i=(n == 2)?6:5;
-
-				x0+=p1[x3&0x3f];
-				x1+=p1[x0&0x3f];
-				x2+=p1[x1&0x3f];
-				x3+=p1[x2&0x3f];
-				}
-			}
-		}
-	else
-		{
-		p0= &(key->data[63]);
-		p1= &(key->data[0]);
-		for (;;)
-			{
-			t=((x3<<11)|(x3>>5))&0xffff;
-			x3=(t-(x0& ~x2)-(x1&x2)- *(p0--))&0xffff;
-			t=((x2<<13)|(x2>>3))&0xffff;
-			x2=(t-(x3& ~x1)-(x0&x1)- *(p0--))&0xffff;
-			t=((x1<<14)|(x1>>2))&0xffff;
-			x1=(t-(x2& ~x0)-(x3&x0)- *(p0--))&0xffff;
-			t=((x0<<15)|(x0>>1))&0xffff;
-			x0=(t-(x1& ~x3)-(x2&x3)- *(p0--))&0xffff;
-
-			if (--i == 0)
-				{
-				if (--n == 0) break;
-				i=(n == 2)?6:5;
-
-				x3=(x3-p1[x2&0x3f])&0xffff;
-				x2=(x2-p1[x1&0x3f])&0xffff;
-				x1=(x1-p1[x0&0x3f])&0xffff;
-				x0=(x0-p1[x3&0x3f])&0xffff;
-				}
-			}
-		}
-
-	d[0]=(unsigned long)(x0&0xffff)|((unsigned long)(x1&0xffff)<<16L);
-	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
-	}

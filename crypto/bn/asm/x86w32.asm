@@ -14,8 +14,8 @@ DGROUP	GROUP	CONST, _BSS, _DATA
 	ASSUME DS: DGROUP, SS: DGROUP
 F_TEXT      SEGMENT
 	ASSUME	CS: F_TEXT
-	PUBLIC	_bn_mul_add_word
-_bn_mul_add_word	PROC FAR
+	PUBLIC	_bn_mul_add_words
+_bn_mul_add_words	PROC FAR
 ; Line 58
 	push	bp
 	push	bx
@@ -133,10 +133,10 @@ $L547:
 	pop	bp
 	ret	
 	nop	
+_bn_mul_add_words	ENDP
 
-_bn_mul_add_word	ENDP
-	PUBLIC	_bn_mul_word
-_bn_mul_word	PROC FAR
+	PUBLIC	_bn_mul_words
+_bn_mul_words	PROC FAR
 ; Line 76
 	push	bp
 	push	bx
@@ -206,7 +206,7 @@ $L764:
 	pop	bp
 	ret	
 	nop	
-_bn_mul_word	ENDP
+_bn_mul_words	ENDP
 	PUBLIC	_bn_sqr_words
 _bn_sqr_words	PROC FAR
 ; Line 92
@@ -285,8 +285,8 @@ $L645:
 	pop	bx
 	pop	bp
 	ret	
-
 _bn_sqr_words	ENDP
+
 	PUBLIC	_bn_div64
 _bn_div64	PROC FAR
 	push	bp
@@ -299,5 +299,64 @@ _bn_div64	PROC FAR
 	pop	bp
 	ret	
 _bn_div64	ENDP
+
+	PUBLIC	_bn_add_words
+_bn_add_words	PROC FAR
+; Line 58
+	push	bp
+	push	bx
+	push	esi
+	push	di
+	push	ds
+	push	es
+	mov	bp,sp
+;	w = 28
+;	num = 26
+;	ap = 22
+;	rp = 18
+	xor	esi,esi			;c=0;
+	mov	si,WORD PTR [bp+22]	; load a
+	mov	es,WORD PTR [bp+24]	; load a
+	mov	di,WORD PTR [bp+26]	; load b
+	mov	ds,WORD PTR [bp+28]	; load b
+
+	mov	dx,WORD PTR [bp+30]	; load num
+	dec	dx
+	js	$L547
+	xor	ecx,ecx
+
+$L5477:
+	xor	ebx,ebx
+	mov	eax,DWORD PTR es:[si]	; *a
+	add	eax,ecx
+	adc	ebx,0
+	add	si,4			; a++
+	add	eax,DWORD PTR ds:[di]	; + *b
+	mov	ecx,ebx
+	adc	ecx,0
+	add	di,4
+	mov	bx,WORD PTR [bp+18]
+	mov	ds,WORD PTR [bp+20]
+	mov	DWORD PTR ds:[bx],eax
+	add	bx,4
+	mov	ds,WORD PTR [bp+28]
+	mov	WORD PTR [bp+18],bx
+	dec	dx
+	js	$L547			; Note that we are now testing for -1
+	jmp	$L5477
+	;
+$L547:
+	mov	eax,ecx
+	mov	edx,ecx
+	shr	edx,16
+	pop	es
+	pop	ds
+	pop	di
+	pop	esi
+	pop	bx
+	pop	bp
+	ret	
+	nop	
+_bn_add_words	ENDP
 F_TEXT	ENDS
 END

@@ -1,5 +1,5 @@
 /* crypto/lhash/lh_stats.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -59,9 +59,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-/* If you wish to build this outside of SSLeay, remove the following line
+/* If you wish to build this outside of SSLeay, remove the following lines
  * and things should work as expected */
-#include "bio.h"
+#include "cryptlib.h"
 
 #include "lhash.h"
 
@@ -141,7 +141,7 @@ FILE *out;
 
 #else
 
-#ifndef WIN16
+#ifndef NO_FP_API
 void lh_stats(lh,fp)
 LHASH *lh;
 FILE *fp;

@@ -1,5 +1,5 @@
 /* crypto/bn/bn_mulw.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -62,7 +62,7 @@
 
 #ifdef BN_LLONG 
 
-BN_ULONG bn_mul_add_word(rp,ap,num,w)
+BN_ULONG bn_mul_add_words(rp,ap,num,w)
 BN_ULONG *rp,*ap;
 int num;
 BN_ULONG w;
@@ -86,7 +86,7 @@ BN_ULONG w;
 	return(c1);
 	} 
 
-BN_ULONG bn_mul_word(rp,ap,num,w)
+BN_ULONG bn_mul_words(rp,ap,num,w)
 BN_ULONG *rp,*ap;
 int num;
 BN_ULONG w;
@@ -138,9 +138,45 @@ int n;
 		}
 	}
 
+BN_ULONG bn_add_words(r,a,b,n)
+BN_ULONG *r,*a,*b;
+int n;
+        {
+	BN_ULLONG ll;
+
+	ll=0;
+	for (;;)
+		{
+		ll+= (BN_ULLONG)a[0]+b[0];
+		r[0]=(BN_ULONG)ll&BN_MASK2;
+		ll>>=BN_BITS2;
+		if (--n <= 0) break;
+
+		ll+= (BN_ULLONG)a[1]+b[1];
+		r[1]=(BN_ULONG)ll&BN_MASK2;
+		ll>>=BN_BITS2;
+		if (--n <= 0) break;
+
+		ll+= (BN_ULLONG)a[2]+b[2];
+		r[2]=(BN_ULONG)ll&BN_MASK2;
+		ll>>=BN_BITS2;
+		if (--n <= 0) break;
+
+		ll+= (BN_ULLONG)a[3]+b[3];
+		r[3]=(BN_ULONG)ll&BN_MASK2;
+		ll>>=BN_BITS2;
+		if (--n <= 0) break;
+
+		a+=4;
+		b+=4;
+		r+=4;
+		}
+	return(ll&BN_MASK2);
+	}
+
 #else
 
-BN_ULONG bn_mul_add_word(rp,ap,num,w)
+BN_ULONG bn_mul_add_words(rp,ap,num,w)
 BN_ULONG *rp,*ap;
 int num;
 BN_ULONG w;
@@ -167,7 +203,7 @@ BN_ULONG w;
 	return(c);
 	} 
 
-BN_ULONG bn_mul_word(rp,ap,num,w)
+BN_ULONG bn_mul_words(rp,ap,num,w)
 BN_ULONG *rp,*ap;
 int num;
 BN_ULONG w;
@@ -217,6 +253,33 @@ int n;
 		}
 	}
 
+BN_ULONG bn_add_words(r,a,b,n)
+BN_ULONG *r,*a,*b;
+int n;
+        {
+	BN_ULONG t1,t2;
+	int carry,i;
+
+	carry=0;
+	for (i=0; i<n; i++)
+		{
+		t1= *(a++);
+		t2= *(b++);
+		if (carry)
+			{
+			carry=(t2 >= ((~t1)&BN_MASK2));
+			t2=(t1+t2+1)&BN_MASK2;
+			}
+		else
+			{
+			t2=(t1+t2)&BN_MASK2;
+			carry=(t2<t1);
+			}
+		*(r++)=t2;
+		}
+	return(carry);
+	}
+
 #endif
 
 #if defined(BN_LLONG) && defined(BN_DIV2W)
@@ -242,7 +305,7 @@ BN_ULONG h,l,d;
 	i=BN_num_bits_word(d);
 	if ((i != BN_BITS2) && (h > (BN_ULONG)1<<i))
 		{
-#ifndef WIN16
+#if !defined(NO_STDIO) && !defined(WIN16)
 		fprintf(stderr,"Division would overflow (%d)\n",i);
 #endif
 		abort();

@@ -1,5 +1,5 @@
 /* crypto/evp/evp_key.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -82,6 +82,10 @@ char *EVP_get_pw_prompt()
 		return(prompt_string);
 	}
 
+#ifdef NO_DES
+int des_read_pw_string(char *buf,int len,char *prompt,int verify);
+#endif
+
 int EVP_read_pw_string(buf,len,prompt,verify)
 char *buf;
 int len;
@@ -158,6 +162,6 @@ unsigned char *iv;
 		}
 	memset(&c,0,sizeof(c));
 	memset(&(md_buf[0]),0,EVP_MAX_MD_SIZE);
-	return(nkey);
+	return(type->key_len);
 	}
 

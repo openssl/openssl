@@ -1,5 +1,5 @@
 /* crypto/x509/by_dir.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -250,21 +250,46 @@ X509_NAME *name;
 X509_OBJECT *ret;
 	{
 	BY_DIR *ctx;
-	X509 st_x509;
-	X509_CINF st_x509_cinf;
+	union	{
+		struct	{
+			X509 st_x509;
+			X509_CINF st_x509_cinf;
+			} x509;
+		struct	{
+			X509_CRL st_crl;
+			X509_CRL_INFO st_crl_info;
+			} crl;
+		} data;
 	int ok=0;
 	int i,j,k;
 	unsigned long h;
 	BUF_MEM *b=NULL;
 	struct stat st;
 	X509_OBJECT stmp,*tmp;
+	char *postfix="";
 
 	if (name == NULL) return(0);
 
-	st_x509.cert_info= &st_x509_cinf;
-	st_x509_cinf.subject=name;
-	stmp.data.x509= &st_x509;
 	stmp.type=type;
+	if (type == X509_LU_X509)
+		{
+		data.x509.st_x509.cert_info= &data.x509.st_x509_cinf;
+		data.x509.st_x509_cinf.subject=name;
+		stmp.data.x509= &data.x509.st_x509;
+		postfix="";
+		}
+	else if (type == X509_LU_CRL)
+		{
+		data.crl.st_crl.crl= &data.crl.st_crl_info;
+		data.crl.st_crl_info.issuer=name;
+		stmp.data.crl= &data.crl.st_crl;
+		postfix="r";
+		}
+	else
+		{
+		X509err(X509_F_GET_CERT_BY_SUBJECT,X509_R_WRONG_LOOKUP_TYPE);
+		goto finish;
+		}
 
 	if ((b=BUF_MEM_new()) == NULL)
 		{
@@ -277,7 +302,7 @@ X509_OBJECT *ret;
 	h=X509_NAME_hash(name);
 	for (i=0; i<ctx->num_dirs; i++)
 		{
-		j=strlen(ctx->dirs[i])+1+8+6+1;
+		j=strlen(ctx->dirs[i])+1+8+6+1+1;
 		if (!BUF_MEM_grow(b,j))
 			{
 			X509err(X509_F_GET_CERT_BY_SUBJECT,ERR_R_MALLOC_FAILURE);
@@ -286,14 +311,25 @@ X509_OBJECT *ret;
 		k=0;
 		for (;;)
 			{
-			sprintf(b->data,"%s/%08lx.%d",ctx->dirs[i],h,k);
+			sprintf(b->data,"%s/%08lx.%s%d",ctx->dirs[i],h,
+				postfix,k);
 			k++;
 			if (stat(b->data,&st) < 0)
 				break;
 			/* found one. */
-			if ((X509_load_cert_file(xl,b->data,
-				ctx->dirs_type[i])) == 0)
+			if (type == X509_LU_X509)
+				{
+				if ((X509_load_cert_file(xl,b->data,
+					ctx->dirs_type[i])) == 0)
 					break;
+				}
+			else if (type == X509_LU_CRL)
+				{
+				if ((X509_load_crl_file(xl,b->data,
+					ctx->dirs_type[i])) == 0)
+					break;
+				}
+			/* else case will caught higher up */
 			}
 
 		/* we have added it to the cache so now pull
@@ -307,7 +343,10 @@ X509_OBJECT *ret;
 			{
 			ok=1;
 			ret->type=tmp->type;
-			ret->data.x509=tmp->data.x509;
+			memcpy(&ret->data,&tmp->data,sizeof(ret->data));
+			/* If we were going to up the reference count,
+			 * we would need to do it on a perl 'type'
+			 * basis */
 	/*		CRYPTO_add(&tmp->data.x509->references,1,
 				CRYPTO_LOCK_X509);*/
 			goto finish;

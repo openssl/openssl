@@ -1,5 +1,5 @@
 /* ssl/ssltest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,18 +60,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#ifdef WIN16
-#define APPS_WIN16
-#endif
+#include "e_os.h"
 #include "bio.h"
 #include "crypto.h"
-#include "../e_os.h"
 #include "x509.h"
 #include "ssl.h"
 #include "err.h"
-
-#ifdef WIN16
-#define APPS_WIN16
+#ifdef WINDOWS
 #include "../crypto/bio/bss_file.c"
 #endif
 
@@ -80,10 +75,16 @@
 
 #ifndef NOPROTO
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export);
+#ifndef NO_DSA
 static DH *get_dh512(void);
+#endif
 #else
 int MS_CALLBACK verify_callback();
+static RSA MS_CALLBACK *tmp_rsa_cb();
+#ifndef NO_DSA
 static DH *get_dh512();
+#endif
 #endif
 
 BIO *bio_err=NULL;
@@ -91,13 +92,14 @@ BIO *bio_stdout=NULL;
 
 static char *cipher=NULL;
 int verbose=0;
+int debug=0;
 #ifdef FIONBIO
 static int s_nbio=0;
 #endif
 
 
 #ifndef  NOPROTO
-int doit(SSL_CTX *s_ctx,SSL_CTX *c_ctx);
+int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
 #else
 int doit();
 #endif
@@ -109,14 +111,25 @@ static void sv_usage()
 	fprintf(stderr," -server_auth  - check server certificate\n");
 	fprintf(stderr," -client_auth  - do client authentication\n");
 	fprintf(stderr," -v            - more output\n");
+	fprintf(stderr," -d            - debug output\n");
+	fprintf(stderr," -reuse        - use session-id reuse\n");
+	fprintf(stderr," -num <val>    - number of connections to perform\n");
+	fprintf(stderr," -bytes <val>  - number of bytes to swap between client/server\n");
 #ifndef NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
 #ifndef NO_SSL3
 	fprintf(stderr," -ssl3         - use SSLv3\n");
 #endif
+#ifndef NO_TLS1
+	fprintf(stderr," -tls1         - use TLSv1\n");
+#endif
 	fprintf(stderr," -CApath arg   - PEM format directory of CA's\n");
 	fprintf(stderr," -CAfile arg   - PEM format file of CA's\n");
+	fprintf(stderr," -cert arg     - Certificate file\n");
+	fprintf(stderr," -s_cert arg   - Just the server certificate file\n");
+	fprintf(stderr," -c_cert arg   - Just the client certificate file\n");
+	fprintf(stderr," -cipher arg   - The cipher list\n");
 	}
 
 int main(argc, argv)
@@ -125,15 +138,21 @@ char *argv[];
 	{
 	char *CApath=NULL,*CAfile=NULL;
 	int badop=0;
-	int ssl2=0,ssl3=0,ret=1;
+	int tls1=0,ssl2=0,ssl3=0,ret=1;
 	int client_auth=0;
-	int server_auth=0;
+	int server_auth=0,i;
 	char *server_cert=TEST_SERVER_CERT;
 	char *client_cert=TEST_CLIENT_CERT;
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;
+	SSL *c_ssl,*s_ssl;
+	int number=1,reuse=0;
+	long bytes=1L;
+	SSL_CIPHER *ciph;
+#ifndef NO_DH
 	DH *dh;
+#endif
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
@@ -151,10 +170,31 @@ char *argv[];
 			client_auth=1;
 		else if	(strcmp(*argv,"-v") == 0)
 			verbose=1;
+		else if	(strcmp(*argv,"-d") == 0)
+			debug=1;
+		else if	(strcmp(*argv,"-reuse") == 0)
+			reuse=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
+		else if	(strcmp(*argv,"-tls1") == 0)
+			tls1=1;
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			ssl3=1;
+		else if	(strncmp(*argv,"-num",4) == 0)
+			{
+			if (--argc < 1) goto bad;
+			number= atoi(*(++argv));
+			if (number == 0) number=1;
+			}
+		else if	(strcmp(*argv,"-bytes") == 0)
+			{
+			if (--argc < 1) goto bad;
+			bytes= atol(*(++argv));
+			if (bytes == 0L) bytes=1L;
+			i=strlen(argv[0]);
+			if (argv[0][i-1] == 'k') bytes*=1024L;
+			if (argv[0][i-1] == 'm') bytes*=1024L*1024L;
+			}
 		else if	(strcmp(*argv,"-cert") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -210,6 +250,9 @@ bad:
 	if (ssl2)
 		meth=SSLv2_method();
 	else 
+	if (tls1)
+		meth=TLSv1_method();
+	else
 	if (ssl3)
 		meth=SSLv3_method();
 	else
@@ -239,7 +282,11 @@ bad:
 #ifndef NO_DH
 	dh=get_dh512();
 	SSL_CTX_set_tmp_dh(s_ctx,dh);
-        DH_free(dh);
+	DH_free(dh);
+#endif
+
+#ifndef NO_RSA
+	SSL_CTX_set_tmp_rsa_callback(s_ctx,tmp_rsa_cb);
 #endif
 
 	if (!SSL_CTX_use_certificate_file(s_ctx,server_cert,SSL_FILETYPE_PEM))
@@ -266,9 +313,9 @@ bad:
 		(!SSL_CTX_load_verify_locations(c_ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(c_ctx)))
 		{
-		fprintf(stderr,"SSL_load_verify_locations\n");
+		/* fprintf(stderr,"SSL_load_verify_locations\n"); */
 		ERR_print_errors(bio_err);
-		goto end;
+		/* goto end; */
 		}
 
 	if (client_auth)
@@ -285,7 +332,29 @@ bad:
 			verify_callback);
 		}
 
-	ret=doit(s_ctx,c_ctx);
+	c_ssl=SSL_new(c_ctx);
+	s_ssl=SSL_new(s_ctx);
+
+	for (i=0; i<number; i++)
+		{
+		if (!reuse) SSL_set_session(c_ssl,NULL);
+		ret=doit(s_ssl,c_ssl,bytes);
+		}
+
+	if (!verbose)
+		{
+		ciph=SSL_get_current_cipher(c_ssl);
+		fprintf(stdout,"Protocol %s, cipher %s, %s\n",
+			SSL_get_version(c_ssl),
+			SSL_CIPHER_get_version(ciph),
+			SSL_CIPHER_get_name(ciph));
+		}
+	if ((number > 1) || (bytes > 1L))
+		printf("%d handshakes of %ld bytes done\n",number,bytes);
+
+	SSL_free(s_ssl);
+	SSL_free(c_ssl);
+
 end:
 	if (s_ctx != NULL) SSL_CTX_free(s_ctx);
 	if (c_ctx != NULL) SSL_CTX_free(c_ctx);
@@ -303,32 +372,25 @@ end:
 #define C_DONE	1
 #define S_DONE	2
 
-int doit(s_ctx,c_ctx)
-SSL_CTX *s_ctx,*c_ctx;
+int doit(s_ssl,c_ssl,count)
+SSL *s_ssl,*c_ssl;
+long count;
 	{
-	static char cbuf[200],sbuf[200];
+	MS_STATIC char cbuf[1024*8],sbuf[1024*8];
+	long cw_num=count,cr_num=count;
+	long sw_num=count,sr_num=count;
 	int ret=1;
-	SSL *c_ssl=NULL;
-	SSL *s_ssl=NULL;
 	BIO *c_to_s=NULL;
 	BIO *s_to_c=NULL;
 	BIO *c_bio=NULL;
 	BIO *s_bio=NULL;
 	int c_r,c_w,s_r,s_w;
 	int c_want,s_want;
-	int i;
+	int i,j;
 	int done=0;
 	int c_write,s_write;
 	int do_server=0,do_client=0;
 	SSL_CIPHER *ciph;
-
-	c_ssl=SSL_new(c_ctx);
-	s_ssl=SSL_new(s_ctx);
-	if ((s_ssl == NULL) || (c_ssl == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto err;
-		}
 
 	c_to_s=BIO_new(BIO_s_mem());
 	s_to_c=BIO_new(BIO_s_mem());
@@ -348,11 +410,11 @@ SSL_CTX *s_ctx,*c_ctx;
 
 	SSL_set_connect_state(c_ssl);
 	SSL_set_bio(c_ssl,s_to_c,c_to_s);
-	BIO_set_ssl(c_bio,c_ssl,BIO_CLOSE);
+	BIO_set_ssl(c_bio,c_ssl,BIO_NOCLOSE);
 
 	SSL_set_accept_state(s_ssl);
 	SSL_set_bio(s_ssl,c_to_s,s_to_c);
-	BIO_set_ssl(s_bio,s_ssl,BIO_CLOSE);
+	BIO_set_ssl(s_bio,s_ssl,BIO_NOCLOSE);
 
 	c_r=0; s_r=1;
 	c_w=1; s_w=0;
@@ -372,26 +434,26 @@ SSL_CTX *s_ctx,*c_ctx;
 		i=(int)BIO_pending(c_bio);
 		if ((i && c_r) || c_w) do_client=1;
 
-		if (do_server && verbose)
+		if (do_server && debug)
 			{
 			if (SSL_in_init(s_ssl))
 				printf("server waiting in SSL_accept - %s\n",
 					SSL_state_string_long(s_ssl));
-			else if (s_write)
+/*			else if (s_write)
 				printf("server:SSL_write()\n");
-			else 
-				printf("server:SSL_read()\n");
+			else
+				printf("server:SSL_read()\n"); */
 			}
 
-		if (do_client && verbose)
+		if (do_client && debug)
 			{
 			if (SSL_in_init(c_ssl))
 				printf("client waiting in SSL_connect - %s\n",
 					SSL_state_string_long(c_ssl));
-			else if (c_write)
+/*			else if (c_write)
 				printf("client:SSL_write()\n");
 			else
-				printf("client:SSL_read()\n");
+				printf("client:SSL_read()\n"); */
 			}
 
 		if (!do_client && !do_server)
@@ -404,7 +466,9 @@ SSL_CTX *s_ctx,*c_ctx;
 			{
 			if (c_write)
 				{
-				i=BIO_write(c_bio,"hello from client\n",18);
+				j=(cw_num > (long)sizeof(cbuf))
+					?sizeof(cbuf):(int)cw_num;
+				i=BIO_write(c_bio,cbuf,j);
 				if (i < 0)
 					{
 					c_r=0;
@@ -430,13 +494,17 @@ SSL_CTX *s_ctx,*c_ctx;
 					}
 				else
 					{
+					if (debug)
+						printf("client wrote %d\n",i);
 					/* ok */
+					s_r=1;
 					c_write=0;
+					cw_num-=i;
 					}
 				}
 			else
 				{
-				i=BIO_read(c_bio,cbuf,100);
+				i=BIO_read(c_bio,cbuf,sizeof(cbuf));
 				if (i < 0)
 					{
 					c_r=0;
@@ -462,10 +530,20 @@ SSL_CTX *s_ctx,*c_ctx;
 					}
 				else
 					{
-					done|=C_DONE;
-					fprintf(stdout,"CLIENT:from server:");
-					fwrite(cbuf,1,i,stdout);
-					fflush(stdout);
+					if (debug)
+						printf("client read %d\n",i);
+					cr_num-=i;
+					if (sw_num > 0)
+						{
+						s_write=1;
+						s_w=1;
+						}
+					if (cr_num <= 0)
+						{
+						s_write=1;
+						s_w=1;
+						done=S_DONE|C_DONE;
+						}
 					}
 				}
 			}
@@ -474,7 +552,7 @@ SSL_CTX *s_ctx,*c_ctx;
 			{
 			if (!s_write)
 				{
-				i=BIO_read(s_bio,sbuf,100);
+				i=BIO_read(s_bio,sbuf,sizeof(cbuf));
 				if (i < 0)
 					{
 					s_r=0;
@@ -501,16 +579,27 @@ SSL_CTX *s_ctx,*c_ctx;
 					}
 				else
 					{
-					s_write=1;
-					s_w=1;
-					fprintf(stdout,"SERVER:from client:");
-					fwrite(sbuf,1,i,stdout);
-					fflush(stdout);
+					if (debug)
+						printf("server read %d\n",i);
+					sr_num-=i;
+					if (cw_num > 0)
+						{
+						c_write=1;
+						c_w=1;
+						}
+					if (sr_num <= 0)
+						{
+						s_write=1;
+						s_w=1;
+						c_write=0;
+						}
 					}
 				}
 			else
 				{
-				i=BIO_write(s_bio,"hello from server\n",18);
+				j=(sw_num > (long)sizeof(sbuf))?
+					sizeof(sbuf):(int)sw_num;
+				i=BIO_write(s_bio,sbuf,j);
 				if (i < 0)
 					{
 					s_r=0;
@@ -537,9 +626,13 @@ SSL_CTX *s_ctx,*c_ctx;
 					}
 				else
 					{
+					if (debug)
+						printf("server wrote %d\n",i);
+					sw_num-=i;
 					s_write=0;
-					s_r=1;
-					done|=S_DONE;
+					c_r=1;
+					if (sw_num <= 0)
+						done|=S_DONE;
 					}
 				}
 			}
@@ -548,8 +641,11 @@ SSL_CTX *s_ctx,*c_ctx;
 		}
 
 	ciph=SSL_get_current_cipher(c_ssl);
-	fprintf(stdout,"DONE, used %s, %s\n",SSL_CIPHER_get_version(ciph),
-		SSL_CIPHER_get_name(ciph));
+	if (verbose)
+		fprintf(stdout,"DONE, protocol %s, cipher %s, %s\n",
+			SSL_get_version(c_ssl),
+			SSL_CIPHER_get_version(ciph),
+			SSL_CIPHER_get_name(ciph));
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be
@@ -572,8 +668,8 @@ err:
 
 	if (c_to_s != NULL) BIO_free(c_to_s);
 	if (s_to_c != NULL) BIO_free(s_to_c);
-	if (c_bio != NULL) BIO_free(c_bio);
-	if (s_bio != NULL) BIO_free(s_bio);
+	if (c_bio != NULL) BIO_free_all(c_bio);
+	if (s_bio != NULL) BIO_free_all(s_bio);
 	return(ret);
 	}
 
@@ -607,6 +703,7 @@ X509_STORE_CTX *ctx;
 	return(ok);
 	}
 
+#ifndef NO_DH
 static unsigned char dh512_p[]={
 	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
 	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
@@ -623,13 +720,32 @@ static DH *get_dh512()
 	{
 	DH *dh=NULL;
 
-#ifndef NO_DH
 	if ((dh=DH_new()) == NULL) return(NULL);
 	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
 	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
 	if ((dh->p == NULL) || (dh->g == NULL))
 		return(NULL);
-#endif
 	return(dh);
 	}
+#endif
+
+static RSA MS_CALLBACK *tmp_rsa_cb(s,export)
+SSL *s;
+int export;
+	{
+	static RSA *rsa_tmp=NULL;
+
+	if (rsa_tmp == NULL)
+		{
+		BIO_printf(bio_err,"Generating temp (512 bit) RSA key...");
+		BIO_flush(bio_err);
+#ifndef NO_RSA
+		rsa_tmp=RSA_generate_key(512,RSA_F4,NULL,NULL);
+#endif
+		BIO_printf(bio_err,"\n");
+		BIO_flush(bio_err);
+		}
+	return(rsa_tmp);
+	}
+
 

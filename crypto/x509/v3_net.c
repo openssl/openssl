@@ -1,5 +1,5 @@
 /* crypto/x509/v3_net.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -66,9 +66,9 @@
 #define NETSCAPE_X509_EXT_NUM	8
 
 static X509_EXTENSION_METHOD netscape_x509_ext[NETSCAPE_X509_EXT_NUM]={
-{NID_netscape_ca_policy_url,V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_netscape_ssl_server_name,V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
-{NID_netscape_revocation_url,V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
+{NID_netscape_ca_policy_url,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
+{NID_netscape_ssl_server_name,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
+{NID_netscape_revocation_url,	V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
 {NID_netscape_base_url,V_ASN1_IA5STRING,X509_EXT_PACK_STRING},
 {NID_netscape_cert_type,V_ASN1_BIT_STRING,X509_EXT_PACK_STRING},
 {NID_netscape_ca_revocation_url,V_ASN1_IA5STRING,X509_EXT_PACK_STRING},

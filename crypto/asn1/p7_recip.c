@@ -1,5 +1,5 @@
 /* crypto/asn1/p7_recip.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -113,6 +113,7 @@ PKCS7_RECIP_INFO *PKCS7_RECIP_INFO_new()
 	M_ASN1_New(ret->issuer_and_serial,PKCS7_ISSUER_AND_SERIAL_new);
 	M_ASN1_New(ret->key_enc_algor,X509_ALGOR_new);
 	M_ASN1_New(ret->enc_key,ASN1_OCTET_STRING_new);
+	ret->cert=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS7_RECIP_INFO_NEW);
 	}
@@ -125,6 +126,7 @@ PKCS7_RECIP_INFO *a;
 	PKCS7_ISSUER_AND_SERIAL_free(a->issuer_and_serial);
 	X509_ALGOR_free(a->key_enc_algor);
 	ASN1_OCTET_STRING_free(a->enc_key);
+	if (a->cert != NULL) X509_free(a->cert);
 	Free((char *)a);
 	}
 

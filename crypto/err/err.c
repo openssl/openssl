@@ -1,5 +1,5 @@
 /* crypto/err/err.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -73,11 +73,16 @@ static unsigned long err_hash(ERR_STRING_DATA *a);
 static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b);
 static unsigned long pid_hash(ERR_STATE *pid);
 static int pid_cmp(ERR_STATE *a,ERR_STATE *pid);
+static unsigned long get_error_values(int inc,char **file,int *line,
+	char **data,int *flags);
+static void ERR_STATE_free(ERR_STATE *s);
 #else
 static unsigned long err_hash();
 static int err_cmp();
 static unsigned long pid_hash();
 static int pid_cmp();
+static void ERR_STATE_free();
+ERR_STATE *s;
 #endif
 
 #ifndef NO_ERR
@@ -147,6 +152,27 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 	};
 #endif
 
+#define err_clear_data(p,i) \
+	if (((p)->err_data[i] != NULL) && \
+		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
+		{  \
+		Free((p)->err_data[i]); \
+		(p)->err_data[i]=NULL; \
+		} \
+	(p)->err_data_flags[i]=0;
+
+static void ERR_STATE_free(s)
+ERR_STATE *s;
+	{
+	int i;
+
+	for (i=0; i<ERR_NUM_ERRORS; i++)
+		{
+		err_clear_data(s,i);
+		}
+	Free(s);
+	}
+
 void ERR_load_ERR_strings()
 	{
 	static int init=1;
@@ -211,6 +237,8 @@ void ERR_free_strings()
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 	}
 
+/********************************************************/
+
 void ERR_put_error(lib,func,reason,file,line)
 int lib,func,reason;
 char *file;
@@ -226,117 +254,109 @@ int line;
 	es->err_buffer[es->top]=ERR_PACK(lib,func,reason);
 	es->err_file[es->top]=file;
 	es->err_line[es->top]=line;
+	err_clear_data(es,es->top);
 	}
 
 void ERR_clear_error()
 	{
-	int i;
 	ERR_STATE *es;
 
 	es=ERR_get_state();
 
+#if 0
+	/* hmm... is this needed */
 	for (i=0; i<ERR_NUM_ERRORS; i++)
 		{
 		es->err_buffer[i]=0;
 		es->err_file[i]=NULL;
 		es->err_line[i]= -1;
+		err_clear_data(es,i);
 		}
+#endif
 	es->top=es->bottom=0;
 	}
 
-unsigned long ERR_peek_error()
-	{	
-	int i;
-	ERR_STATE *es;
-
-	/* should be fine since only one thread should ever be playing
-	 * with the value returned from this call */
-	es=ERR_get_state();
-
-	if (es->bottom == es->top) return(0);
-	i=(es->bottom+1)%ERR_NUM_ERRORS;
-
-
-	return(es->err_buffer[i]);
-	}
 
 unsigned long ERR_get_error()
-	{
-	int i;
-	unsigned long ret;
-	ERR_STATE *es;
-
-	es=ERR_get_state();
-
-	if (es->bottom == es->top) return(0);
-	i=(es->bottom+1)%ERR_NUM_ERRORS;
-	es->bottom=i;
-	ret=es->err_buffer[i];
-	es->err_buffer[i]=0;
-
-
-	return(ret);
-	}
-
-unsigned long ERR_peek_error_line(file,line)
-char **file;
-int *line;
-	{	
-	int i=0;
-	ERR_STATE *es;
-
-	es=ERR_get_state();
-
-	if (es->bottom == es->top)
-		{
-		return(0);
-		}
-
-	i=(es->bottom+1)%ERR_NUM_ERRORS;
-	if (es->err_file[i] == NULL)
-		{
-		*file="NA";
-		*line=0;
-		}
-	else
-		{
-		*file=es->err_file[i];
-		*line=es->err_line[i];
-		}
-
-	return(es->err_buffer[i]);
-	}
+	{ return(get_error_values(1,NULL,NULL,NULL,NULL)); }
 
 unsigned long ERR_get_error_line(file,line)
 char **file;
 int *line;
-	{
-	int i;
-	unsigned long ret;
+	{ return(get_error_values(1,file,line,NULL,NULL)); }
+
+unsigned long ERR_get_error_line_data(file,line,data,flags)
+char **file;
+int *line;
+char **data;
+int *flags;
+	{ return(get_error_values(1,file,line,data,flags)); }
+
+unsigned long ERR_peek_error()
+	{ return(get_error_values(0,NULL,NULL,NULL,NULL)); }
+
+unsigned long ERR_peek_error_line(file,line)
+char **file;
+int *line;
+	{ return(get_error_values(0,file,line,NULL,NULL)); }
+
+unsigned long ERR_peek_error_line_data(file,line,data,flags)
+char **file;
+int *line;
+char **data;
+int *flags;
+	{ return(get_error_values(0,file,line,data,flags)); }
+
+static unsigned long get_error_values(inc,file,line,data,flags)
+int inc;
+char **file;
+int *line;
+char **data;
+int *flags;
+	{	
+	int i=0;
 	ERR_STATE *es;
+	unsigned long ret;
 
 	es=ERR_get_state();
 
-	if (es->bottom == es->top)
-		return(0);
-
+	if (es->bottom == es->top) return(0);
 	i=(es->bottom+1)%ERR_NUM_ERRORS;
-	es->bottom=i;
-	ret=  es->err_buffer[i];
-	if (es->err_file[i] == NULL)
-		{
-		*file="NA";
-		*line=0;
-		}
-	else
-		{
-		*file=es->err_file[i];
-		*line=es->err_line[i];
-		}
-	es->err_buffer[i]=0;
-	es->err_file[i]=NULL;
-	es->err_line[i]= -1;
 
+	ret=es->err_buffer[i];
+	if (inc)
+		{
+		es->bottom=i;
+		es->err_buffer[i]=0;
+		}
+
+	if ((file != NULL) && (line != NULL))
+		{
+		if (es->err_file[i] == NULL)
+			{
+			*file="NA";
+			if (line != NULL) *line=0;
+			}
+		else
+			{
+			*file=es->err_file[i];
+			if (line != NULL) *line=es->err_line[i];
+			}
+		}
+
+	if (data != NULL)
+		{
+		if (es->err_data[i] == NULL)
+			{
+			*data="";
+			if (flags != NULL) *flags=0;
+			}
+		else
+			{
+			*data=es->err_data[i];
+			if (flags != NULL) *flags=es->err_data_flags[i];
+			}
+		}
 	return(ret);
 	}
 
@@ -498,14 +518,16 @@ unsigned long pid;
 	tmp.pid=pid;
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p=(ERR_STATE *)lh_delete(thread_hash,(char *)&tmp);
-	if (p != NULL) Free(p);
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+
+	if (p != NULL) ERR_STATE_free(p);
 	}
 
 ERR_STATE *ERR_get_state()
 	{
 	static ERR_STATE fallback;
 	ERR_STATE *ret=NULL,tmp,*tmpp;
+	int i;
 	unsigned long pid;
 
 	pid=(unsigned long)CRYPTO_thread_id();
@@ -539,12 +561,80 @@ ERR_STATE *ERR_get_state()
 		ret->pid=pid;
 		ret->top=0;
 		ret->bottom=0;
+		for (i=0; i<ERR_NUM_ERRORS; i++)
+			{
+			ret->err_data[i]=NULL;
+			ret->err_data_flags[i]=0;
+			}
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 		tmpp=(ERR_STATE *)lh_insert(thread_hash,(char *)ret);
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 		if (tmpp != NULL) /* old entry - should not happen */
-			Free(tmpp);
+			{
+			ERR_STATE_free(tmpp);
+			}
 		}
 	return(ret);
+	}
+
+int ERR_get_next_error_library()
+	{
+	static int value=ERR_LIB_USER;
+
+	return(value++);
+	}
+
+void ERR_set_error_data(data,flags)
+char *data;
+int flags;
+	{
+	ERR_STATE *es;
+	int i;
+
+	es=ERR_get_state();
+
+	i=es->top;
+	if (i == 0)
+		i=ERR_NUM_ERRORS-1;
+
+	es->err_data[i]=data;
+	es->err_data_flags[es->top]=flags;
+	}
+
+void ERR_add_error_data( VAR_PLIST(int , num))
+VAR_ALIST
+        {
+        VAR_BDEFN(args, int, num);
+	int i,n,s;
+	char *str,*p,*a;
+
+	s=64;
+	str=Malloc(s+1);
+	if (str == NULL) return;
+	str[0]='\0';
+
+	VAR_INIT(args,int,num);
+	n=0;
+	for (i=0; i<num; i++)
+		{
+		VAR_ARG(args,char *,a);
+		n+=strlen(a);
+		if (n > s)
+			{
+			s=n+20;
+			p=Realloc(str,s+1);
+			if (p == NULL)
+				{
+				Free(str);
+				return;
+				}
+			else
+				str=p;
+			}
+		strcat(str,a);
+		}
+	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);
+
+	VAR_END( args );
 	}
 

@@ -60,6 +60,7 @@
 #include "rsaref.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA RSAREF_str_functs[]=
 	{
 {ERR_PACK(0,RSAREF_F_BN_REF_MOD_EXP,0),	"BN_REF_MOD_EXP"},
@@ -111,14 +112,19 @@ static ERR_STRING_DATA RSAREF_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_RSAREF_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_RSAREF,RSAREF_str_functs);
 		ERR_load_strings(ERR_LIB_RSAREF,RSAREF_str_reasons);
+#endif
+
 		}
 	}

@@ -1,5 +1,5 @@
 /* crypto/idea/idea_lcl.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -65,7 +65,6 @@ if (ul != 0) \
 	{ \
 	r=(ul&0xffff)-(ul>>16); \
 	r-=((r)>>16); \
-/*	if (r&0xffff0000L) r=(r+0x10001); */ \
 	} \
 else \
 	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ \
@@ -195,3 +194,22 @@ else	{ \
 			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>24L)&0xff))
 #endif
+
+#define E_IDEA(num) \
+	x1&=0xffff; \
+	idea_mul(x1,x1,*p,ul); p++; \
+	x2+= *(p++); \
+	x3+= *(p++); \
+	x4&=0xffff; \
+	idea_mul(x4,x4,*p,ul); p++; \
+	t0=(x1^x3)&0xffff; \
+	idea_mul(t0,t0,*p,ul); p++; \
+	t1=(t0+(x2^x4))&0xffff; \
+	idea_mul(t1,t1,*p,ul); p++; \
+	t0+=t1; \
+	x1^=t1; \
+	x4^=t0; \
+	ul=x2^t0; /* do the swap to x3 */ \
+	x2=x3^t1; \
+	x3=ul;
+

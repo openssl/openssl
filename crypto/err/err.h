@@ -1,5 +1,5 @@
 /* crypto/err/err.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -77,11 +77,16 @@ extern "C" {
 
 #include <errno.h>
 
-#define ERR_NUM_ERRORS	10
+#define ERR_TXT_MALLOCED	0x01
+#define ERR_TXT_STRING		0x02
+
+#define ERR_NUM_ERRORS	16
 typedef struct err_state_st
 	{
 	unsigned long pid;
 	unsigned long err_buffer[ERR_NUM_ERRORS];
+	char *err_data[ERR_NUM_ERRORS];
+	int err_data_flags[ERR_NUM_ERRORS];
 	char *err_file[ERR_NUM_ERRORS];
 	int err_line[ERR_NUM_ERRORS];
 	int top,bottom;
@@ -102,6 +107,7 @@ typedef struct err_state_st
 #define ERR_LIB_METH		12
 #define ERR_LIB_ASN1		13
 #define ERR_LIB_CONF		14
+#define ERR_LIB_CRYPTO		15
 #define ERR_LIB_SSL		20
 #define ERR_LIB_SSL23		21
 #define ERR_LIB_SSL2		22
@@ -113,27 +119,28 @@ typedef struct err_state_st
 
 #define ERR_LIB_USER		128
 
-#define SYSerr(f,r)	ERR_PUT_error(ERR_LIB_SYS,(f),(r),ERR_file_name,__LINE__)
-#define BNerr(f,r)	ERR_PUT_error(ERR_LIB_BN,(f),(r),ERR_file_name,__LINE__)
-#define RSAerr(f,r)	ERR_PUT_error(ERR_LIB_RSA,(f),(r),ERR_file_name,__LINE__)
-#define DHerr(f,r)	ERR_PUT_error(ERR_LIB_DH,(f),(r),ERR_file_name,__LINE__)
-#define EVPerr(f,r)	ERR_PUT_error(ERR_LIB_EVP,(f),(r),ERR_file_name,__LINE__)
-#define BUFerr(f,r)	ERR_PUT_error(ERR_LIB_BUF,(f),(r),ERR_file_name,__LINE__)
-#define BIOerr(f,r)	ERR_PUT_error(ERR_LIB_BIO,(f),(r),ERR_file_name,__LINE__)
-#define OBJerr(f,r)	ERR_PUT_error(ERR_LIB_OBJ,(f),(r),ERR_file_name,__LINE__)
-#define PEMerr(f,r)	ERR_PUT_error(ERR_LIB_PEM,(f),(r),ERR_file_name,__LINE__)
-#define DSAerr(f,r)	ERR_PUT_error(ERR_LIB_DSA,(f),(r),ERR_file_name,__LINE__)
-#define X509err(f,r)	ERR_PUT_error(ERR_LIB_X509,(f),(r),ERR_file_name,__LINE__)
-#define METHerr(f,r)	ERR_PUT_error(ERR_LIB_METH,(f),(r),ERR_file_name,__LINE__)
-#define ASN1err(f,r)	ERR_PUT_error(ERR_LIB_ASN1,(f),(r),ERR_file_name,__LINE__)
-#define CONFerr(f,r)	ERR_PUT_error(ERR_LIB_CONF,(f),(r),ERR_file_name,__LINE__)
-#define SSLerr(f,r)	ERR_PUT_error(ERR_LIB_SSL,(f),(r),ERR_file_name,__LINE__)
-#define SSL23err(f,r)	ERR_PUT_error(ERR_LIB_SSL23,(f),(r),ERR_file_name,__LINE__)
-#define SSL2err(f,r)	ERR_PUT_error(ERR_LIB_SSL2,(f),(r),ERR_file_name,__LINE__)
-#define SSL3err(f,r)	ERR_PUT_error(ERR_LIB_SSL3,(f),(r),ERR_file_name,__LINE__)
-#define RSAREFerr(f,r)	ERR_PUT_error(ERR_LIB_RSAREF,(f),(r),ERR_file_name,__LINE__)
-#define PROXYerr(f,r)	ERR_PUT_error(ERR_LIB_PROXY,(f),(r),ERR_file_name,__LINE__)
-#define PKCS7err(f,r)	ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),ERR_file_name,__LINE__)
+#define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,(f),(r),ERR_file_name,__LINE__)
+#define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,(f),(r),ERR_file_name,__LINE__)
+#define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,(f),(r),ERR_file_name,__LINE__)
+#define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,(f),(r),ERR_file_name,__LINE__)
+#define EVPerr(f,r)  ERR_PUT_error(ERR_LIB_EVP,(f),(r),ERR_file_name,__LINE__)
+#define BUFerr(f,r)  ERR_PUT_error(ERR_LIB_BUF,(f),(r),ERR_file_name,__LINE__)
+#define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,(f),(r),ERR_file_name,__LINE__)
+#define OBJerr(f,r)  ERR_PUT_error(ERR_LIB_OBJ,(f),(r),ERR_file_name,__LINE__)
+#define PEMerr(f,r)  ERR_PUT_error(ERR_LIB_PEM,(f),(r),ERR_file_name,__LINE__)
+#define DSAerr(f,r)  ERR_PUT_error(ERR_LIB_DSA,(f),(r),ERR_file_name,__LINE__)
+#define X509err(f,r) ERR_PUT_error(ERR_LIB_X509,(f),(r),ERR_file_name,__LINE__)
+#define METHerr(f,r) ERR_PUT_error(ERR_LIB_METH,(f),(r),ERR_file_name,__LINE__)
+#define ASN1err(f,r) ERR_PUT_error(ERR_LIB_ASN1,(f),(r),ERR_file_name,__LINE__)
+#define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,(f),(r),ERR_file_name,__LINE__)
+#define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,(f),(r),ERR_file_name,__LINE__)
+#define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),ERR_file_name,__LINE__)
+#define SSL23err(f,r) ERR_PUT_error(ERR_LIB_SSL23,(f),(r),ERR_file_name,__LINE__)
+#define SSL2err(f,r) ERR_PUT_error(ERR_LIB_SSL2,(f),(r),ERR_file_name,__LINE__)
+#define SSL3err(f,r) ERR_PUT_error(ERR_LIB_SSL3,(f),(r),ERR_file_name,__LINE__)
+#define RSAREFerr(f,r) ERR_PUT_error(ERR_LIB_RSAREF,(f),(r),ERR_file_name,__LINE__)
+#define PROXYerr(f,r) ERR_PUT_error(ERR_LIB_PROXY,(f),(r),ERR_file_name,__LINE__)
+#define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -172,6 +179,7 @@ typedef struct err_state_st
 #define ERR_R_METH_LIB	ERR_LIB_METH
 #define ERR_R_ASN1_LIB	ERR_LIB_ASN1
 #define ERR_R_CONF_LIB	ERR_LIB_CONF
+#define ERR_R_CRYPTO_LIB ERR_LIB_CRYPTO
 #define ERR_R_SSL_LIB	ERR_LIB_SSL
 #define ERR_R_SSL23_LIB	ERR_LIB_SSL23
 #define ERR_R_SSL2_LIB	ERR_LIB_SSL2
@@ -193,20 +201,27 @@ typedef struct ERR_string_data_st
 
 #ifndef NOPROTO
 void ERR_put_error(int lib, int func,int reason,char *file,int line);
+void ERR_set_error_data(char *data,int flags);
+
 unsigned long ERR_get_error(void );
 unsigned long ERR_get_error_line(char **file,int *line);
+unsigned long ERR_get_error_line_data(char **file,int *line,
+		char **data, int *flags);
 unsigned long ERR_peek_error(void );
 unsigned long ERR_peek_error_line(char **file,int *line);
+unsigned long ERR_peek_error_line_data(char **file,int *line,
+		char **data,int *flags);
 void ERR_clear_error(void );
 char *ERR_error_string(unsigned long e,char *buf);
 char *ERR_lib_error_string(unsigned long e);
 char *ERR_func_error_string(unsigned long e);
 char *ERR_reason_error_string(unsigned long e);
-#ifndef WIN16
+#ifndef NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
 #endif
 #ifdef HEADER_BIO_H
 void ERR_print_errors(BIO *bp);
+void ERR_add_error_data( VAR_PLIST( int, num ) );
 #endif
 void ERR_load_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void );
@@ -224,9 +239,13 @@ char *ERR_get_string_table(void );
 char *ERR_get_err_state_table(void );
 #endif
 
+int ERR_get_next_error_library(void );
+
 #else
 
 void ERR_put_error();
+void ERR_set_error_data();
+
 unsigned long ERR_get_error();
 unsigned long ERR_get_error_line();
 unsigned long ERR_peek_error();
@@ -236,10 +255,11 @@ char *ERR_error_string();
 char *ERR_lib_error_string();
 char *ERR_func_error_string();
 char *ERR_reason_error_string();
-#ifndef WIN16
+#ifndef NO_FP_API
 void ERR_print_errors_fp();
 #endif
 void ERR_print_errors();
+void ERR_add_error_data();
 void ERR_load_strings();
 void ERR_load_ERR_strings();
 void ERR_load_crypto_strings();
@@ -255,6 +275,8 @@ LHASH *ERR_get_err_state_table();
 char *ERR_get_string_table();
 char *ERR_get_err_state_table();
 #endif
+
+int ERR_get_next_error_library();
 
 #endif
 

@@ -7,6 +7,8 @@
 # make x86-solaris
 # make x86-bdsi
 
+DIR=	bf
+TOP=	.
 # use BF_PTR2 for intel boxes,
 # BF_PTR for sparc and MIPS/SGI
 # use nothing for Alpha and HP.
@@ -42,14 +44,14 @@ MANDIR=/usr/local/man
 MAN1=1
 MAN3=3
 SHELL=/bin/sh
-LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cbc.o bf_cfb64.o bf_ofb64.o
-LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cbc.c bf_cfb64.c bf_ofb64.c
+LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cfb64.o bf_ofb64.o
+LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c
 
 GENERAL=Makefile Makefile.ssl Makefile.uni asm bf_locl.org README \
 	COPYRIGHT blowfish.doc INSTALL
-   
-TESTING=    bftest bfspeed
-TESTING_SRC=bftest.c bfspeed.c
+
+TESTING=    bftest bfspeed bf_opts
+TESTING_SRC=bftest.c bfspeed.c bf_opts.c
 HEADERS=bf_locl.h blowfish.h bf_pi.h
 
 ALL=	$(GENERAL) $(TESTING_SRC) $(LIBSRC) $(HEADERS)
@@ -77,23 +79,26 @@ x86-bsdi:
 	$(MAKE) BF_ENC='asm/bx86bsdi.o' CC=$(CC) CFLAGS="-DBSDI $(OPTS) $(CFLAG)" all
 
 # elf
-asm/bx86-elf.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-elf.o: asm/bx86unix.cpp
 	$(CPP) -DELF asm/bx86unix.cpp | $(AS) -o asm/bx86-elf.o
 
 # solaris
-asm/bx86-sol.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-sol.o: asm/bx86unix.cpp
 	$(CC) -E -DSOL asm/bx86unix.cpp | sed 's/^#.*//' > asm/bx86-sol.s
 	as -o asm/bx86-sol.o asm/bx86-sol.s
 	rm -f asm/bx86-sol.s
 
 # a.out
-asm/bx86-out.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-out.o: asm/bx86unix.cpp
 	$(CPP) -DOUT asm/bx86unix.cpp | $(AS) -o asm/bx86-out.o
 
 # bsdi
-asm/bx86bsdi.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86bsdi.o: asm/bx86unix.cpp
 	$(CPP) -DBSDI asm/bx86unix.cpp | $(AS) -o asm/bx86bsdi.o
 
+asm/bx86unix.cpp:
+	(cd asm; perl bf-586.pl cpp >bx86unix.cpp)
+	
 test:	all
 	./bftest
 
@@ -109,6 +114,9 @@ bftest: bftest.o $(BLIB)
 
 bfspeed: bfspeed.o $(BLIB)
 	$(CC) $(CFLAGS) -o bfspeed bfspeed.o $(BLIB)
+
+bf_opts: bf_opts.o $(BLIB)
+	$(CC) $(CFLAGS) -o bf_opts bf_opts.o $(BLIB)
 
 tags:
 	ctags $(TESTING_SRC) $(LIBBF)
@@ -157,4 +165,5 @@ install: $(BLIB)
 	    cp blowfish.h $(INCDIR)/blowfish.h; \
 	    chmod 644 $(INCDIR)/blowfish.h; \
 	fi
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.

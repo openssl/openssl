@@ -1,5 +1,5 @@
 /* crypto/bf/bf_cbc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -85,7 +85,7 @@ int encrypt;
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,ks,BF_ENCRYPT);
+			BF_encrypt(tin,ks);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -98,7 +98,7 @@ int encrypt;
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,ks,BF_ENCRYPT);
+			BF_encrypt(tin,ks);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -118,7 +118,7 @@ int encrypt;
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,ks,BF_DECRYPT);
+			BF_decrypt(tin,ks);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2n(tout0,out);
@@ -132,7 +132,7 @@ int encrypt;
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,ks,BF_DECRYPT);
+			BF_decrypt(tin,ks);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2nn(tout0,tout1,out,l+8);

@@ -35,7 +35,8 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_int.c a_octet.c a_print.c \
 	p7_dgst.c p7_s_e.c p7_enc.c p7_lib.c \
 	f_int.c f_string.c i2d_dhp.c i2d_dsap.c d2i_dhp.c d2i_dsap.c n_pkey.c \
 	a_hdr.c x_pkey.c a_bool.c x_exten.c \
-	asn1_par.c asn1_lib.c $(ERRC).c a_meth.c a_bytes.c
+	asn1_par.c asn1_lib.c $(ERRC).c a_meth.c a_bytes.c \
+	evp_asn1.c
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_int.o a_octet.o a_print.o \
 	a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_sign.o a_digest.o a_verify.o \
@@ -49,7 +50,8 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_int.o a_octet.o a_print.o \
 	p7_dgst.o p7_s_e.o p7_enc.o p7_lib.o \
 	f_int.o f_string.o i2d_dhp.o i2d_dsap.o d2i_dhp.o d2i_dsap.o n_pkey.o \
 	a_hdr.o x_pkey.o a_bool.o x_exten.o \
-	asn1_par.o asn1_lib.o $(ERRC).o a_meth.o a_bytes.o
+	asn1_par.o asn1_lib.o $(ERRC).o a_meth.o a_bytes.o \
+	evp_asn1.o
 
 SRC= $(LIBSRC)
 
@@ -113,6 +115,6 @@ clean:
 
 errors:
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl $(ERR).h $(ERRC).c
+	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

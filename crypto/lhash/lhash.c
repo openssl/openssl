@@ -1,5 +1,5 @@
 /* crypto/lhash/lhash.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-char *lh_version="lhash part of SSLeay 0.8.1b 29-Jun-1998";
+char *lh_version="lhash part of SSLeay 0.9.0b 29-Jun-1998";
 
 /* Code for dynamic hash table routines
  * Author - Eric Young v 2.0

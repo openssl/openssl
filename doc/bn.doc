@@ -246,8 +246,8 @@ int BN_is_bit_set(BIGNUM *a, int n);
 	This function return 1 if bit 'n' is set in 'a' else 0.
 
 int BN_set_bit(BIGNUM *a, int n);
-	This function sets bit 'n' to 1 in 'a'.  Return 0 if less than
-	'n' bits in 'a', else 1.  This is a&= ~(1<<n);
+	This function sets bit 'n' to 1 in 'a'. 
+	This is a&= ~(1<<n);
 
 int BN_clear_bit(BIGNUM *a, int n);
 	This function sets bit 'n' to zero in 'a'.  Return 0 if less
@@ -334,7 +334,8 @@ int BN_gcd(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_CTX *ctx);
 	'r' has the greatest common divisor of 'a' and 'b'.  'ctx' is
 	used for temporary variables and 0 is returned on error.
 
-int BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(),BN_CTX *ctx);
+int BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(),BN_CTX *ctx,
+	char *cb_arg);
 	This function is used to check if a BIGNUM ('p') is prime.
 	It performs this test by using the Miller-Rabin randomised
 	primality test.  This is a probalistic test that requires a
@@ -342,7 +343,7 @@ int BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(),BN_CTX *ctx);
 	degree of probability.  Since this can take quite some time, a
 	callback function can be passed and it will be called each
 	time 'p' passes a round of the prime testing.  'callback' will
-	be called as follows, callback(1,n) where n is the number of
+	be called as follows, callback(1,n,cb_arg) where n is the number of
 	the round, just passed.  As per usual 'ctx' contains temporary
 	variables used.  If ctx is NULL, it does not matter, a local version
 	will be malloced.  This parameter is present to save some mallocing
@@ -357,6 +358,7 @@ int strong,
 BIGNUM *a,
 BIGNUM *rems,
 void (*callback)());
+char *cb_arg
 	This function is used to generate prime numbers.  It returns a
 	new BIGNUM that has a high probability of being a prime.
 	'bits' is the number of bits that
@@ -373,7 +375,7 @@ void (*callback)());
 	can take quite some time, if callback is not NULL, it is called
 	in the following situations.
 	We have a suspected prime (from a quick sieve),
-	callback(0,sus_prime++).  Each item to be passed to BN_is_prime().
-	callback(1,round++).  Each successful 'round' in BN_is_prime().
-	callback(2,round). For each successful BN_is_prime() test.
+	callback(0,sus_prime++,cb_arg). Each item to be passed to BN_is_prime().
+	callback(1,round++,cb_arg).  Each successful 'round' in BN_is_prime().
+	callback(2,round,cb_arg). For each successful BN_is_prime() test.
 

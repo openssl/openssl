@@ -59,6 +59,7 @@ sub do_lib_rule
 	local($ret,$_,$Name);
 
 	$target =~ s/\//$o/g if $o ne '/';
+	$target="\$(LIB_D)$o$target";
 	($Name=$name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";

@@ -121,6 +121,10 @@ extern "C" {
 #define BN_MASK2h	(0xffffffff00000000L)
 #define BN_MASK2h1	(0xffffffff80000000L)
 #define BN_TBIT		(0x8000000000000000L)
+#define BN_DEC_CONV	(10000000000000000000L)
+#define BN_DEC_FMT1	"%lu"
+#define BN_DEC_FMT2	"%019lu"
+#define BN_DEC_NUM	19
 #endif
 
 #ifdef SIXTY_FOUR_BIT
@@ -137,6 +141,10 @@ extern "C" {
 #define BN_MASK2h	(0xffffffff00000000LL)
 #define BN_MASK2h1	(0xffffffff80000000LL)
 #define BN_TBIT		(0x8000000000000000LL)
+#define BN_DEC_CONV	(10000000000000000000L)
+#define BN_DEC_FMT1	"%lu"
+#define BN_DEC_FMT2	"%019lu"
+#define BN_DEC_NUM	19
 #endif
 
 #ifdef THIRTY_TWO_BIT
@@ -156,6 +164,10 @@ extern "C" {
 #define BN_MASK2h1	(0xffff8000L)
 #define BN_MASK2h	(0xffff0000L)
 #define BN_TBIT		(0x80000000L)
+#define BN_DEC_CONV	(1000000000L)
+#define BN_DEC_FMT1	"%lu"
+#define BN_DEC_FMT2	"%09lu"
+#define BN_DEC_NUM	9
 #endif
 
 #ifdef SIXTEEN_BIT
@@ -174,6 +186,10 @@ extern "C" {
 #define BN_MASK2h1	(0xff80)
 #define BN_MASK2h	(0xff00)
 #define BN_TBIT		(0x8000)
+#define BN_DEC_CONV	(100000)
+#define BN_DEC_FMT1	"%u"
+#define BN_DEC_FMT2	"%05u"
+#define BN_DEC_NUM	5
 #endif
 
 #ifdef EIGHT_BIT
@@ -192,6 +208,10 @@ extern "C" {
 #define BN_MASK2h1	(0xf8)
 #define BN_MASK2h	(0xf0)
 #define BN_TBIT		(0x80)
+#define BN_DEC_CONV	(100)
+#define BN_DEC_FMT1	"%u"
+#define BN_DEC_FMT2	"%02u"
+#define BN_DEC_NUM	2
 #endif
 
 #define BN_DEFAULT_BITS	1280
@@ -217,6 +237,14 @@ typedef struct bignum_ctx
 	BIGNUM *bn[BN_CTX_NUM+1];
 	} BN_CTX;
 
+typedef struct bn_blinding_st
+	{
+	int init;
+	BIGNUM *A;
+	BIGNUM *Ai;
+	BIGNUM *mod; /* just a reference */
+	} BN_BLINDING;
+
 /* Used for montgomery multiplication */
 typedef struct bn_mont_ctx_st
         {
@@ -241,6 +269,9 @@ typedef struct bn_mont_ctx_st
 #define BN_one(a)	(BN_set_word((a),1))
 #define BN_zero(a)	(BN_set_word((a),0))
 
+#define BN_ascii2bn(a)	BN_hex2bn(a)
+#define BN_bn2ascii(a)	BN_bn2hex(a)
+
 #define bn_fix_top(a) \
 	{ \
 	BN_ULONG *fix_top_l; \
@@ -248,7 +279,9 @@ typedef struct bn_mont_ctx_st
 		if (*(fix_top_l--)) break; \
 	}
 
-#define bn_expand(n,b) ((((b)/BN_BITS2) <= (n)->max)?(n):bn_expand2((n),(b)))
+#define bn_expand(n,b) ((((b)/BN_BITS2) <= (n)->max)?\
+	(n):bn_expand2((n),(b)/BN_BITS2))
+#define bn_wexpand(n,b) (((b) <= (n)->max)?(n):bn_expand2((n),(b)))
 
 
 #ifndef NOPROTO
@@ -264,6 +297,8 @@ void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(BIGNUM *a, unsigned char *to);
+BIGNUM *BN_mpi2bn(unsigned char *s,int len,BIGNUM *ret);
+int	BN_bn2mpi(BIGNUM *a, unsigned char *to);
 int	BN_sub(BIGNUM *r, BIGNUM *a, BIGNUM *b);
 void	bn_qsub(BIGNUM *r, BIGNUM *a, BIGNUM *b);
 void	bn_qadd(BIGNUM *r, BIGNUM *a, BIGNUM *b);
@@ -274,7 +309,9 @@ int	BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b);
 int	BN_sqr(BIGNUM *r, BIGNUM *a,BN_CTX *ctx);
 BN_ULONG BN_mod_word(BIGNUM *a, unsigned long w);
 BN_ULONG BN_div_word(BIGNUM *a, unsigned long w);
+int	BN_mul_word(BIGNUM *a, unsigned long w);
 int	BN_add_word(BIGNUM *a, unsigned long w);
+int	BN_sub_word(BIGNUM *a, unsigned long w);
 int	BN_set_word(BIGNUM *a, unsigned long w);
 unsigned long BN_get_word(BIGNUM *a);
 int	BN_cmp(BIGNUM *a, BIGNUM *b);
@@ -282,8 +319,10 @@ void	BN_free(BIGNUM *a);
 int	BN_is_bit_set(BIGNUM *a, int n);
 int	BN_lshift(BIGNUM *r, BIGNUM *a, int n);
 int	BN_lshift1(BIGNUM *r, BIGNUM *a);
+int	BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p,BN_CTX *ctx);
 int	BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,BN_CTX *ctx);
-int	BN_mod_exp_mont(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,BN_CTX *ctx);
+int	BN_mod_exp_mont(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,BN_CTX *ctx,
+		BN_MONT_CTX *m_ctx);
 int	BN_mod_exp_recp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,BN_CTX *ctx);
 int	BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p,
 	BIGNUM *m,BN_CTX *ctx);
@@ -309,20 +348,23 @@ BIGNUM *BN_dup(BIGNUM *a);
 int	BN_ucmp(BIGNUM *a, BIGNUM *b);
 int	BN_set_bit(BIGNUM *a, int n);
 int	BN_clear_bit(BIGNUM *a, int n);
-char *	BN_bn2ascii(BIGNUM *a);
-int 	BN_ascii2bn(BIGNUM **a,char *str);
+char *	BN_bn2hex(BIGNUM *a);
+char *	BN_bn2dec(BIGNUM *a);
+int 	BN_hex2bn(BIGNUM **a,char *str);
+int 	BN_dec2bn(BIGNUM **a,char *str);
 int	BN_gcd(BIGNUM *r,BIGNUM *in_a,BIGNUM *in_b,BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *a, BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(int bits,int strong,BIGNUM *add,
-		BIGNUM *rem,void (*callback)(int,int));
-int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int),
-		BN_CTX *ctx);
+		BIGNUM *rem,void (*callback)(int,int,char *),char *cb_arg);
+int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,char *),
+		BN_CTX *ctx,char *cb_arg);
 void	ERR_load_BN_strings(void );
 
-BN_ULONG bn_mul_add_word(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
-BN_ULONG bn_mul_word(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
 void     bn_sqr_words(BN_ULONG *rp, BN_ULONG *ap, int num);
 BN_ULONG bn_div64(BN_ULONG h, BN_ULONG l, BN_ULONG d);
+BN_ULONG bn_add_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
 int BN_mod_mul_montgomery(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_MONT_CTX *mont,
@@ -330,6 +372,12 @@ int BN_mod_mul_montgomery(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_MONT_CTX *mont,
 int BN_from_montgomery(BIGNUM *r,BIGNUM *a,BN_MONT_CTX *mont,BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont,BIGNUM *modulus,BN_CTX *ctx);
+
+BN_BLINDING *BN_BLINDING_new(BIGNUM *A,BIGNUM *Ai,BIGNUM *mod);
+void BN_BLINDING_free(BN_BLINDING *b);
+int BN_BLINDING_update(BN_BLINDING *b,BN_CTX *ctx);
+int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *r, BN_CTX *ctx);
+int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 
 #else
 
@@ -345,6 +393,8 @@ void	BN_clear_free();
 BIGNUM *BN_copy();
 BIGNUM *BN_bin2bn();
 int	BN_bn2bin();
+BIGNUM *BN_mpi2bn();
+int	BN_bn2mpi();
 int	BN_sub();
 void	bn_qsub();
 void	bn_qadd();
@@ -356,6 +406,8 @@ int	BN_sqr();
 BN_ULONG BN_mod_word();
 BN_ULONG BN_div_word();
 int	BN_add_word();
+int	BN_sub_word();
+int	BN_mul_word();
 int	BN_set_word();
 unsigned long BN_get_word();
 int	BN_cmp();
@@ -363,6 +415,7 @@ void	BN_free();
 int	BN_is_bit_set();
 int	BN_lshift();
 int	BN_lshift1();
+int	BN_exp();
 int	BN_mod_exp();
 int	BN_mod_exp_mont();
 int	BN_mod_exp_recp();
@@ -383,18 +436,21 @@ BIGNUM *BN_dup();
 int	BN_ucmp();
 int	BN_set_bit();
 int	BN_clear_bit();
-char *	BN_bn2ascii();
-int 	BN_ascii2bn();
+char *	BN_bn2hex();
+char *	BN_bn2dec();
+int 	BN_hex2bn();
+int 	BN_dec2bn();
 int	BN_gcd();
 BIGNUM *BN_mod_inverse();
 BIGNUM *BN_generate_prime();
 int	BN_is_prime();
 void	ERR_load_BN_strings();
 
-BN_ULONG bn_mul_add_word();
-BN_ULONG bn_mul_word();
+BN_ULONG bn_mul_add_words();
+BN_ULONG bn_mul_words();
 void     bn_sqr_words();
 BN_ULONG bn_div64();
+BN_ULONG bn_add_words();
 
 int BN_mod_mul_montgomery();
 int BN_from_montgomery();
@@ -402,29 +458,42 @@ BN_MONT_CTX *BN_MONT_CTX_new();
 void BN_MONT_CTX_free();
 int BN_MONT_CTX_set();
 
+BN_BLINDING *BN_BLINDING_new();
+void BN_BLINDING_free();
+int BN_BLINDING_update();
+int BN_BLINDING_convert();
+int BN_BLINDING_invert();
+
 #endif
 
 /* BEGIN ERROR CODES */
 /* Error codes for the BN functions. */
 
 /* Function codes. */
-#define BN_F_BN_BL_CTX_INIT				 100
-#define BN_F_BN_BL_CTX_NEW				 101
-#define BN_F_BN_BN2ASCII				 102
-#define BN_F_BN_CTX_NEW					 103
-#define BN_F_BN_DIV					 104
-#define BN_F_BN_EXPAND2					 105
-#define BN_F_BN_MOD_EXP_MONT				 106
-#define BN_F_BN_MOD_INVERSE				 107
-#define BN_F_BN_MOD_MUL_RECIPROCAL			 108
-#define BN_F_BN_NEW					 109
-#define BN_F_BN_RAND					 110
+#define BN_F_BN_BLINDING_CONVERT			 100
+#define BN_F_BN_BLINDING_INVERT				 101
+#define BN_F_BN_BLINDING_NEW				 102
+#define BN_F_BN_BLINDING_UPDATE				 103
+#define BN_F_BN_BN2DEC					 104
+#define BN_F_BN_BN2HEX					 105
+#define BN_F_BN_CTX_NEW					 106
+#define BN_F_BN_DIV					 107
+#define BN_F_BN_EXPAND2					 108
+#define BN_F_BN_MOD_EXP_MONT				 109
+#define BN_F_BN_MOD_INVERSE				 110
+#define BN_F_BN_MOD_MUL_RECIPROCAL			 111
+#define BN_F_BN_MPI2BN					 112
+#define BN_F_BN_NEW					 113
+#define BN_F_BN_RAND					 114
 
 /* Reason codes. */
 #define BN_R_BAD_RECIPROCAL				 100
 #define BN_R_CALLED_WITH_EVEN_MODULUS			 101
 #define BN_R_DIV_BY_ZERO				 102
-#define BN_R_NO_INVERSE					 103
+#define BN_R_ENCODING_ERROR				 103
+#define BN_R_INVALID_LENGTH				 104
+#define BN_R_NOT_INITALISED				 105
+#define BN_R_NO_INVERSE					 106
  
 #ifdef  __cplusplus
 }

@@ -60,6 +60,7 @@
 #include "dh.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA DH_str_functs[]=
 	{
 {ERR_PACK(0,DH_F_DHPARAMS_PRINT,0),	"DHparams_print"},
@@ -77,14 +78,19 @@ static ERR_STRING_DATA DH_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_DH_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_DH,DH_str_functs);
 		ERR_load_strings(ERR_LIB_DH,DH_str_reasons);
+#endif
+
 		}
 	}

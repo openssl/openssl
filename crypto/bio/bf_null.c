@@ -1,5 +1,5 @@
 /* crypto/bio/bf_null.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -85,7 +85,8 @@ static int nullf_free();
 
 static BIO_METHOD methods_nullf=
 	{
-	BIO_TYPE_NULL_FILTER,"NULL filter",
+	BIO_TYPE_NULL_FILTER,
+	"NULL filter",
 	nullf_write,
 	nullf_read,
 	nullf_puts,
@@ -166,6 +167,7 @@ char *ptr;
 		BIO_copy_next_retry(b);
 		break;
 	case BIO_CTRL_DUP:
+		ret=0L;
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);

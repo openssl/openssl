@@ -1,5 +1,5 @@
 /* apps/dgst.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -103,7 +103,7 @@ char **argv;
 		}
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
         program_name(argv[0],pname,PROG_NAME_SIZE);
@@ -135,16 +135,16 @@ char **argv;
 		BIO_printf(bio_err,"unknown option '%s'\n",*argv);
 		BIO_printf(bio_err,"options are\n");
 		BIO_printf(bio_err,"-c   to output the digest with separating colons\n");
-		BIO_printf(bio_err,"-c   to output debug info\n");
-		BIO_printf(bio_err,"-%3s to use the %s message digest alogorithm (default)\n",
+		BIO_printf(bio_err,"-d   to output debug info\n");
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm (default)\n",
 			LN_md5,LN_md5);
-		BIO_printf(bio_err,"-%3s to use the %s message digest alogorithm\n",
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_md2,LN_md2);
-		BIO_printf(bio_err,"-%3s to use the %s message digest alogorithm\n",
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_sha1,LN_sha1);
-		BIO_printf(bio_err,"-%3s to use the %s message digest alogorithm\n",
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_sha,LN_sha);
-		BIO_printf(bio_err,"-%3s to use the %s message digest alogorithm\n",
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_mdc2,LN_mdc2);
 		err=1;
 		goto end;

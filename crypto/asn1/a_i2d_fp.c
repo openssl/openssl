@@ -1,5 +1,5 @@
 /* crypto/asn1/a_i2d_fp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -61,7 +61,7 @@
 #include "buffer.h"
 #include "asn1_mac.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int ASN1_i2d_fp(i2d,out,x)
 int (*i2d)();
 FILE *out;

@@ -1,5 +1,5 @@
 /* crypto/des/supp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -87,7 +87,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: supp.c,v 1.1 1998/12/21 10:52:29 rse Exp $
+ * $Id: supp.c,v 1.1.1.2 1998/12/21 10:55:04 rse Exp $
  */
 
 #include <stdio.h>

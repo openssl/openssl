@@ -1,5 +1,5 @@
 /* crypto/bn/bntest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -59,14 +59,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN16
-#define APPS_WIN16
-#endif
+#include "e_os.h"
 #include "bio.h"
 #include "bn.h"
 #include "rand.h"
 #include "x509.h"
 #include "err.h"
+
+#ifdef WINDOWS
+#include "../bio/bss_file.c"
+#endif
 
 #ifndef NOPROTO
 int test_add (BIO *bp);
@@ -102,9 +104,9 @@ int rand_neg();
 
 static int results=0;
 
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
-#include "../bio/bss_file.c"
+#include "bss_file.c"
 #endif
 
 int main(argc,argv)
@@ -178,20 +180,20 @@ char *argv[];
 	if (!test_rshift(out)) goto err;
 	fflush(stdout);
 
-	fprintf(stderr,"test BN_div\n");
-	if (!test_div(out,ctx)) goto err;
-	fflush(stdout);
-
-	fprintf(stderr,"test BN_mod\n");
-	if (!test_mod(out,ctx)) goto err;
+	fprintf(stderr,"test BN_sqr\n");
+	if (!test_sqr(out,ctx)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_mul\n");
 	if (!test_mul(out)) goto err;
 	fflush(stdout);
 
-	fprintf(stderr,"test BN_sqr\n");
-	if (!test_sqr(out,ctx)) goto err;
+	fprintf(stderr,"test BN_div\n");
+	if (!test_div(out,ctx)) goto err;
+	fflush(stdout);
+
+	fprintf(stderr,"test BN_mod\n");
+	if (!test_mod(out,ctx)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_mod_mul\n");

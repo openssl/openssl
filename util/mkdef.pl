@@ -33,12 +33,15 @@ $crypto ="crypto/crypto.h";
 $crypto.=" crypto/des/des.h";
 $crypto.=" crypto/idea/idea.h";
 $crypto.=" crypto/rc4/rc4.h";
+$crypto.=" crypto/rc5/rc5.h";
 $crypto.=" crypto/rc2/rc2.h";
 $crypto.=" crypto/bf/blowfish.h";
-$crypto.=" crypto/md/md2.h";
-$crypto.=" crypto/md/md5.h";
+$crypto.=" crypto/cast/cast.h";
+$crypto.=" crypto/md2/md2.h";
+$crypto.=" crypto/md5/md5.h";
 $crypto.=" crypto/mdc2/mdc2.h";
 $crypto.=" crypto/sha/sha.h";
+$crypto.=" crypto/ripemd/ripemd.h";
 
 $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h";
@@ -63,6 +66,7 @@ $crypto.=" crypto/pkcs7/pkcs7.h";
 $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
 $crypto.=" crypto/rand/rand.h";
+$crypto.=" crypto/hmac/hmac.h";
 
 $match{'NOPROTO'}=1;
 $match2{'PERL5'}=1;
@@ -97,42 +101,45 @@ sub do_defs
 			}
 		foreach (split("\n",$a))
 			{
-			if (/^\#ifndef (.*)/)
+			if (/^\#\s*ifndef (.*)/)
 				{
 				push(@tag,$1);
 				$tag{$1}=-1;
 				next;
 				}
-			elsif (/^\#if !defined\(([^\)]+)\)/)
+			elsif (/^\#\s*if !defined\(([^\)]+)\)/)
 				{
 				push(@tag,$1);
 				$tag{$1}=-1;
 				next;
 				}
-			elsif (/^\#ifdef (.*)/)
+			elsif (/^\#\s*ifdef (.*)/)
 				{
 				push(@tag,$1);
 				$tag{$1}=1;
 				next;
 				}
-			elsif (/^\#if (.*)/)
+			elsif (/^\#\s*if defined(.*)/)
 				{
 				push(@tag,$1);
 				$tag{$1}=1;
 				next;
 				}
-			elsif (/^\#endif/)
+			elsif (/^\#\s*endif/)
 				{
 				$tag{$tag[$#tag]}=0;
 				pop(@tag);
 				next;
 				}
-			elsif (/^\#else/)
+			elsif (/^\#\s*else/)
 				{
 				$t=$tag[$#tag];
 				$tag{$t}= -$tag{$t};
 				next;
 				}
+#printf STDERR "$_\n%2d %2d %2d %2d %2d $NT\n",
+#$tag{'NOPROTO'},$tag{'FreeBSD'},$tag{'WIN16'},$tag{'PERL5'},$tag{'NO_FP_API'};
+
 			$t=undef;
 			if (/^extern .*;$/)
 				{ $t=&do_extern($name,$_); }
@@ -140,12 +147,20 @@ sub do_defs
 				($tag{'FreeBSD'} != 1) &&
 				(($NT && ($tag{'WIN16'} != 1)) ||
 				 (!$NT && ($tag{'WIN16'} != -1))) &&
-				($tag{'PERL5'} != 1))
+				($tag{'PERL5'} != 1) &&
+#				($tag{'_WINDLL'} != -1) &&
+				((!$NT && $tag{'_WINDLL'} != -1) ||
+				 ($NT && $tag{'_WINDLL'} != 1)) &&
+				((($tag{'NO_FP_API'} != 1) && $NT) ||
+				 (($tag{'NO_FP_API'} != -1) && !$NT)))
 				{ $t=&do_line($name,$_); }
+			else
+				{ $t=undef; }
 			if (($t ne undef) && (!$done{$name,$t}))
 				{
 				$done{$name,$t}++;
 				push(@ret,$t);
+#printf STDERR "one:$t\n" if $t =~ /BIO_/;
 				}
 			}
 		close(IN);
@@ -160,6 +175,7 @@ sub do_line
 
 	return(undef) if /^$/;
 	return(undef) if /^\s/;
+#printf STDERR "two:$_\n" if $_ =~ /BIO_/;
 	if (/(CRYPTO_get_locking_callback)/)
 		{ return($1); }
 	elsif (/(CRYPTO_get_id_callback)/)
@@ -168,6 +184,22 @@ sub do_line
 		{ return($1); }
 	elsif (/(SSL_CTX_get_verify_callback)/)
 		{ return($1); }
+	elsif (/(SSL_get_info_callback)/)
+		{ return($1); }
+	elsif ((!$NT) && /(ERR_load_CRYPTO_strings)/)
+		{ return("ERR_load_CRYPTOlib_strings"); }
+	elsif (!$NT && /BIO_s_file/)
+		{ return(undef); }
+	elsif (!$NT && /BIO_new_file/)
+		{ return(undef); }
+	elsif (!$NT && /BIO_new_fp/)
+		{ return(undef); }
+	elsif ($NT && /BIO_s_file_internal/)
+		{ return(undef); }
+	elsif ($NT && /BIO_new_file_internal/)
+		{ return(undef); }
+	elsif ($NT && /BIO_new_fp_internal/)
+		{ return(undef); }
 	else
 		{
 		/\s\**(\S+)\s*\(/;

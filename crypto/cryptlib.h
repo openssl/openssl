@@ -1,5 +1,5 @@
 /* crypto/cryptlib.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -66,7 +66,7 @@
 extern "C" {
 #endif
 
-#ifdef FLAT_INC
+/* #ifdef FLAT_INC */
 
 #include "e_os.h"
 #include "crypto.h"
@@ -74,6 +74,7 @@ extern "C" {
 #include "bio.h" 
 #include "err.h"
 
+/*
 #else
 
 #include "../e_os.h"
@@ -82,6 +83,7 @@ extern "C" {
 #include "bio/bio.h"
 #include "err/err.h"
 #endif
+*/
 
 #define X509_CERT_AREA		"/usr/local/ssl"
 #define X509_CERT_DIR		"/usr/local/ssl/certs"

@@ -1,5 +1,5 @@
 /* crypto/evp/encode.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -224,6 +224,7 @@ EVP_ENCODE_CTX *ctx;
 	ctx->length=30;
 	ctx->num=0;
 	ctx->line_num=0;
+	ctx->expect_nl=0;
 	}
 
 /* -1 for error
@@ -237,12 +238,13 @@ int *outl;
 unsigned char *in;
 int inl;
 	{
-	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,n,ln,tmp2;
+	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,n,ln,tmp2,exp_nl;
 	unsigned char *d;
 
 	n=ctx->num;
 	d=ctx->enc_data;
 	ln=ctx->line_num;
+	exp_nl=ctx->expect_nl;
 
 	/* last line of input. */
 	if ((inl == 0) || ((n == 0) && (conv_ascii2bin(in[0]) == B64_EOF)))
@@ -280,7 +282,16 @@ int inl;
 			}
 
 		/* eoln */
-		if (v == B64_EOLN) ln=0;
+		if (v == B64_EOLN)
+			{
+			ln=0;
+			if (exp_nl)
+				{
+				exp_nl=0;
+				continue;
+				}
+			}
+		exp_nl=0;
 
 		/* If we are at the end of input and it looks like a
 		 * line, process it. */
@@ -289,6 +300,10 @@ int inl;
 
 		if ((v == B64_EOF) || (n >= 64))
 			{
+			/* This is needed to work correctly on 64 byte input
+			 * lines.  We process the line and then need to
+			 * accept the '\n' */
+			if ((v != B64_EOF) && (n >= 64)) exp_nl=1;
 			tmp2=v;
 			if (n > 0)
 				{
@@ -322,6 +337,7 @@ end:
 	*outl=ret;
 	ctx->num=n;
 	ctx->line_num=ln;
+	ctx->expect_nl=exp_nl;
 	return(rv);
 	}
 

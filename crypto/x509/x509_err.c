@@ -60,6 +60,7 @@
 #include "x509.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA X509_str_functs[]=
 	{
 {ERR_PACK(0,X509_F_ADD_CERT_DIR,0),	"ADD_CERT_DIR"},
@@ -74,6 +75,7 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_PACK(0,X509_F_X509_EXTENSION_CREATE_BY_OBJ,0),	"X509_EXTENSION_create_by_OBJ"},
 {ERR_PACK(0,X509_F_X509_GET_PUBKEY_PARAMETERS,0),	"X509_get_pubkey_parameters"},
 {ERR_PACK(0,X509_F_X509_LOAD_CERT_FILE,0),	"X509_LOAD_CERT_FILE"},
+{ERR_PACK(0,X509_F_X509_LOAD_CRL_FILE,0),	"X509_LOAD_CRL_FILE"},
 {ERR_PACK(0,X509_F_X509_NAME_ADD_ENTRY,0),	"X509_NAME_add_entry"},
 {ERR_PACK(0,X509_F_X509_NAME_ENTRY_CREATE_BY_NID,0),	"X509_NAME_ENTRY_create_by_NID"},
 {ERR_PACK(0,X509_F_X509_NAME_ENTRY_SET_OBJECT,0),	"X509_NAME_ENTRY_set_object"},
@@ -86,6 +88,7 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_PACK(0,X509_F_X509_REQ_PRINT_FP,0),	"X509_REQ_print_fp"},
 {ERR_PACK(0,X509_F_X509_REQ_TO_X509,0),	"X509_REQ_to_X509"},
 {ERR_PACK(0,X509_F_X509_STORE_ADD_CERT,0),	"X509_STORE_ADD_CERT"},
+{ERR_PACK(0,X509_F_X509_STORE_ADD_CRL,0),	"X509_STORE_ADD_CRL"},
 {ERR_PACK(0,X509_F_X509_TO_X509_REQ,0),	"X509_to_X509_REQ"},
 {ERR_PACK(0,X509_F_X509_VERIFY_CERT,0),	"X509_verify_cert"},
 {0,NULL},
@@ -105,17 +108,23 @@ static ERR_STRING_DATA X509_str_reasons[]=
 {X509_R_UNKNOWN_NID                      ,"unknown nid"},
 {X509_R_UNKNOWN_STRING_TYPE              ,"unknown string type"},
 {X509_R_UNSUPPORTED_ALGORITHM            ,"unsupported algorithm"},
+{X509_R_WRONG_LOOKUP_TYPE                ,"wrong lookup type"},
 {0,NULL},
 	};
+
+#endif
 
 void ERR_load_X509_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_X509,X509_str_functs);
 		ERR_load_strings(ERR_LIB_X509,X509_str_reasons);
+#endif
+
 		}
 	}

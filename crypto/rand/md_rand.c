@@ -1,5 +1,5 @@
 /* crypto/rand/md_rand.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -61,7 +61,6 @@
 #include <sys/types.h>
 #include <time.h>
 
-
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
 #ifndef NO_MD5
 #define USE_MD5_RAND
@@ -119,19 +118,19 @@ We need a message digest of some type
 
 #define STATE_SIZE	1023
 static int state_num=0,state_index=0;
-static unsigned char state[STATE_SIZE];
+static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
-static int count=0;
+static int md_count=0;
 
-char *RAND_version="RAND part of SSLeay 0.8.1b 29-Jun-1998";
+char *RAND_version="RAND part of SSLeay 0.9.0b 29-Jun-1998";
 
 void RAND_cleanup()
 	{
-	memset(state,0,STATE_SIZE);
+	memset(state,0,sizeof(state));
 	state_num=0;
 	state_index=0;
 	memset(md,0,MD_DIGEST_LENGTH);
-	count=0;
+	md_count=0;
 	}
 
 void RAND_seed(buf,num)
@@ -150,7 +149,7 @@ int num;
 	st_num=state_num;
 
 	state_index=(state_index+num);
-	if (state_index > STATE_SIZE)
+	if (state_index >= STATE_SIZE)
 		{
 		state_index%=STATE_SIZE;
 		state_num=STATE_SIZE;
@@ -236,7 +235,7 @@ int num;
 		l=time(NULL);
 		RAND_seed((unsigned char *)&l,sizeof(l));
 
-#ifdef DEVRANDOM
+/* #ifdef DEVRANDOM */
 		/* 
 		 * Use a random entropy pool device.
 		 * Linux 1.3.x and FreeBSD-Current has 
@@ -246,17 +245,17 @@ int num;
 		 */
 		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
 			{
-			unsigned char buf[32];
+			unsigned char tmpbuf[32];
 
-			fread((unsigned char *)buf,1,32,fh);
+			fread((unsigned char *)tmpbuf,1,32,fh);
 			/* we don't care how many bytes we read,
 			 * we will just copy the 'stack' if there is
 			 * nothing else :-) */
 			fclose(fh);
-			RAND_seed(buf,32);
-			memset(buf,0,32);
+			RAND_seed(tmpbuf,32);
+			memset(tmpbuf,0,32);
 			}
-#endif
+/* #endif */
 #ifdef PURIFY
 		memset(state,0,STATE_SIZE);
 		memset(md,0,MD_DIGEST_LENGTH);
@@ -301,7 +300,7 @@ int num;
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,(unsigned char *)&count,sizeof(count)); count++;
+	MD_Update(&m,(unsigned char *)&md_count,sizeof(md_count)); md_count++;
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
 	MD_Final(md,&m);
 	memset(&m,0,sizeof(m));

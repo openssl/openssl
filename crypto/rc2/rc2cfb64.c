@@ -1,5 +1,5 @@
 /* crypto/rc2/rc2cfb64.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -88,7 +88,7 @@ int encrypt;
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				RC2_encrypt((unsigned long *)ti,schedule,RC2_ENCRYPT);
+				RC2_encrypt((unsigned long *)ti,schedule);
 				iv=(unsigned char *)ivec;
 				t=ti[0]; l2c(t,iv);
 				t=ti[1]; l2c(t,iv);
@@ -108,7 +108,7 @@ int encrypt;
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				RC2_encrypt((unsigned long *)ti,schedule,RC2_ENCRYPT);
+				RC2_encrypt((unsigned long *)ti,schedule);
 				iv=(unsigned char *)ivec;
 				t=ti[0]; l2c(t,iv);
 				t=ti[1]; l2c(t,iv);

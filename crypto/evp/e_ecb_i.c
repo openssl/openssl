@@ -1,5 +1,5 @@
 /* crypto/evp/e_ecb_i.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,6 +79,11 @@ static EVP_CIPHER i_ecb_cipher=
 	8,16,0,
 	idea_ecb_init_key,
 	idea_ecb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
+	NULL,
+	NULL,
 	};
 
 EVP_CIPHER *EVP_idea_ecb()
@@ -95,13 +100,13 @@ int enc;
 	if (key != NULL)
 		{
 		if (enc)
-			idea_set_encrypt_key(key,&(ctx->c.idea_ecb.ks));
+			idea_set_encrypt_key(key,&(ctx->c.idea_ks));
 		else
 			{
 			IDEA_KEY_SCHEDULE tmp;
 
 			idea_set_encrypt_key(key,&tmp);
-			idea_set_decrypt_key(&tmp, &(ctx->c.idea_ecb.ks));
+			idea_set_decrypt_key(&tmp, &(ctx->c.idea_ks));
 			memset((unsigned char *)&tmp,0,
 				sizeof(IDEA_KEY_SCHEDULE));
 			}
@@ -121,7 +126,7 @@ unsigned int inl;
 	for (i=0; i<=inl; i+=8)
 		{
 		idea_ecb_encrypt(
-			&(in[i]),&(out[i]),&(ctx->c.idea_ecb.ks));
+			&(in[i]),&(out[i]),&(ctx->c.idea_ks));
 		}
 	}
 

@@ -1,5 +1,5 @@
 /* crypto/rsa/rsa_sign.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -170,7 +170,7 @@ RSA *rsa;
 			(sigtype == NID_md2WithRSAEncryption)))
 			{
 			/* ok, we will let it through */
-#ifndef WIN16
+#if !defined(NO_STDIO) && !defined(WIN16)
 			fprintf(stderr,"signature has problems, re-make with post SSLeay045\n");
 #endif
 			}

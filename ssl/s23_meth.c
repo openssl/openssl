@@ -1,5 +1,5 @@
 /* ssl/s23_meth.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,10 +63,12 @@
 static SSL_METHOD *ssl23_get_method(ver)
 int ver;
 	{
-	if (ver == 2)
+	if (ver == SSL2_VERSION)
 		return(SSLv23_method());
-	else if (ver == 3)
+	else if (ver == SSL3_VERSION)
 		return(SSLv3_method());
+	else if (ver == TLS1_VERSION)
+		return(TLSv1_method());
 	else
 		return(NULL);
 	}

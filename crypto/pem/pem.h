@@ -122,10 +122,10 @@ extern "C" {
 
 #ifndef HEADER_ENVELOPE_H
 
-#define EVP_ENCODE_CTX_SIZE  92
-#define EVP_MD_SIZE  48
+#define EVP_ENCODE_CTX_SIZE  96
+#define EVP_MD_SIZE  60
 #define EVP_MD_CTX_SIZE  152
-#define EVP_CIPHER_SIZE  28
+#define EVP_CIPHER_SIZE  40
 #define EVP_CIPHER_CTX_SIZE  4212
 #define EVP_MAX_MD_SIZE  20
 

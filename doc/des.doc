@@ -186,7 +186,7 @@ des_key_schedule ks2,
 des_key_schedule ks3, 
 des_cblock *ivec,
 int enc);
-	This function implements inner triple CBC DES encryption with 3
+	This function implements outer triple CBC DES encryption with 3
 	keys.  What this means is that each 'DES' operation
 	inside the cbc mode is really an C=E(ks3,D(ks2,E(ks1,M))).
 	Again, this is cbc mode so an ivec is requires.

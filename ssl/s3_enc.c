@@ -1,5 +1,5 @@
 /* ssl/s3_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -76,6 +76,56 @@ static unsigned char ssl3_pad_2[48]={
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c };
 
+#ifndef NO_PROTO
+static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
+	unsigned char *sender, int len, unsigned char *p);
+#else
+static int ssl3_handshake_mac();
+#endif
+
+static void ssl3_generate_key_block(s,km,num)
+SSL *s;
+unsigned char *km;
+int num;
+	{
+	MD5_CTX m5;
+	SHA_CTX s1;
+	unsigned char buf[8],smd[SHA_DIGEST_LENGTH];
+	unsigned char c='A';
+	int i,j,k;
+
+	k=0;
+	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
+		{
+		k++;
+		for (j=0; j<k; j++)
+			buf[j]=c;
+		c++;
+		SHA1_Init(  &s1);
+		SHA1_Update(&s1,buf,k);
+		SHA1_Update(&s1,s->session->master_key,
+			s->session->master_key_length);
+		SHA1_Update(&s1,s->s3->server_random,SSL3_RANDOM_SIZE);
+		SHA1_Update(&s1,s->s3->client_random,SSL3_RANDOM_SIZE);
+		SHA1_Final( smd,&s1);
+
+		MD5_Init(  &m5);
+		MD5_Update(&m5,s->session->master_key,
+			s->session->master_key_length);
+		MD5_Update(&m5,smd,SHA_DIGEST_LENGTH);
+		if ((i+MD5_DIGEST_LENGTH) > num)
+			{
+			MD5_Final(smd,&m5);
+			memcpy(km,smd,(num-i));
+			}
+		else
+			MD5_Final(km,&m5);
+
+		km+=MD5_DIGEST_LENGTH;
+		}
+	memset(smd,0,SHA_DIGEST_LENGTH);
+	}
+
 int ssl3_change_cipher_state(s,which)
 SSL *s;
 int which;
@@ -122,6 +172,8 @@ int which;
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
 
+	EVP_CIPHER_CTX_init(dd);
+
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
 	j=(exp)?5:EVP_CIPHER_key_length(c);
@@ -164,18 +216,20 @@ int which;
 		MD5_Final(&(exp_key[0]),&md);
 		key= &(exp_key[0]);
 
-		MD5_Init(&md);
-		MD5_Update(&md,er1,SSL3_RANDOM_SIZE);
-		MD5_Update(&md,er2,SSL3_RANDOM_SIZE);
-		MD5_Final(&(exp_iv[0]),&md);
-		iv= &(exp_iv[0]);
+		if (k > 0)
+			{
+			MD5_Init(&md);
+			MD5_Update(&md,er1,SSL3_RANDOM_SIZE);
+			MD5_Update(&md,er2,SSL3_RANDOM_SIZE);
+			MD5_Final(&(exp_iv[0]),&md);
+			iv= &(exp_iv[0]);
+			}
 		}
 
-	s->session->key_arg_length=k;
-	if (k > 0)
-		memcpy(&(s->session->key_arg[0]),iv,k);
+	s->session->key_arg_length=0;
 
 	EVP_CipherInit(dd,c,key,iv,(which & SSL3_CC_WRITE));
+
 	memset(&(exp_key[0]),0,sizeof(exp_key));
 	memset(&(exp_iv[0]),0,sizeof(exp_iv));
 	return(1);
@@ -305,7 +359,7 @@ int send;
 			if (i > bs)
 				{
 				SSLerr(SSL_F_SSL3_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
-				ssl3_send_alert(s,SSL3_AL_FATAL,SSL3_AD_BAD_RECORD_MAC);
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPT_ERROR);
 				return(0);
 				}
 			rec->length-=i;
@@ -317,8 +371,8 @@ int send;
 void ssl3_init_finished_mac(s)
 SSL *s;
 	{
-	EVP_DigestInit(&(s->s3->finish_dgst1),EVP_md5());
-	EVP_DigestInit(&(s->s3->finish_dgst2),EVP_sha1());
+	EVP_DigestInit(&(s->s3->finish_dgst1),s->ctx->md5);
+	EVP_DigestInit(&(s->s3->finish_dgst2),s->ctx->sha1);
 	}
 
 void ssl3_finish_mac(s,buf,len)
@@ -330,10 +384,34 @@ int len;
 	EVP_DigestUpdate(&(s->s3->finish_dgst2),buf,len);
 	}
 
-int ssl3_final_finish_mac(s,in_ctx,sender,p)
+int ssl3_cert_verify_mac(s,ctx,p)
+SSL *s;
+EVP_MD_CTX *ctx;
+unsigned char *p;
+	{
+	return(ssl3_handshake_mac(s,ctx,NULL,0,p));
+	}
+
+int ssl3_final_finish_mac(s,ctx1,ctx2,sender,len,p)
+SSL *s;
+EVP_MD_CTX *ctx1,*ctx2;
+unsigned char *sender;
+int len;
+unsigned char *p;
+	{
+	int ret;
+
+	ret=ssl3_handshake_mac(s,ctx1,sender,len,p);
+	p+=ret;
+	ret+=ssl3_handshake_mac(s,ctx2,sender,len,p);
+	return(ret);
+	}
+
+static int ssl3_handshake_mac(s,in_ctx,sender,len,p)
 SSL *s;
 EVP_MD_CTX *in_ctx;
 unsigned char *sender;
+int len;
 unsigned char *p;
 	{
 	unsigned int ret;
@@ -348,7 +426,7 @@ unsigned char *p;
 	npad=(48/n)*n;
 
 	if (sender != NULL)
-		EVP_DigestUpdate(&ctx,sender,4);
+		EVP_DigestUpdate(&ctx,sender,len);
 	EVP_DigestUpdate(&ctx,s->session->master_key,
 		s->session->master_key_length);
 	EVP_DigestUpdate(&ctx,ssl3_pad_1,npad);
@@ -397,19 +475,6 @@ int send;
 	md_size=EVP_MD_size(hash);
 	npad=(48/md_size)*md_size;
 
-#ifdef MAC_DEBUG
-printf("npad=%d md_size=%d",npad,md_size);
-printf("\nmsec=");
-for (i=0; i<md_size; i++) printf("%02X ",mac_sec[i]);
-printf("\npad1=");
-for (i=0; i<npad; i++) printf("%02X ",ssl3_pad_1[i]);
-printf("\nseq =");
-for (i=0; i<8; i++) printf("%02X ",seq[i]);
-printf("\nreqt=%02X len=%04X\n",rec->type,rec->length);
-for (i=0; i<rec->length; i++) printf("%02X",rec->input[i]);
-printf("\n");
-#endif
-
 	/* Chop the digest off the end :-) */
 
 	EVP_DigestInit(  &md_ctx,hash);
@@ -433,12 +498,6 @@ printf("\n");
 	for (i=7; i>=0; i--)
 		if (++seq[i]) break; 
 
-#ifdef MAC_DEBUG
-printf("md=");
-for (i=0; i<md_size; i++) printf("%02X ",md[i]);
-printf("\n");
-#endif
-
 	return(md_size);
 	}
 
@@ -460,7 +519,7 @@ int len;
 
 	for (i=0; i<3; i++)
 		{
-		EVP_DigestInit(&ctx,EVP_sha1());
+		EVP_DigestInit(&ctx,s->ctx->sha1);
 		EVP_DigestUpdate(&ctx,salt[i],strlen((char *)salt[i]));
 		EVP_DigestUpdate(&ctx,p,len);
 		EVP_DigestUpdate(&ctx,&(s->s3->client_random[0]),
@@ -469,7 +528,7 @@ int len;
 			SSL3_RANDOM_SIZE);
 		EVP_DigestFinal(&ctx,buf,&n);
 
-		EVP_DigestInit(&ctx,EVP_md5());
+		EVP_DigestInit(&ctx,s->ctx->md5);
 		EVP_DigestUpdate(&ctx,p,len);
 		EVP_DigestUpdate(&ctx,buf,n);
 		EVP_DigestFinal(&ctx,out,&n);
@@ -477,5 +536,38 @@ int len;
 		ret+=n;
 		}
 	return(ret);
+	}
+
+int ssl3_alert_code(code)
+int code;
+	{
+	switch (code)
+		{
+	case SSL_AD_CLOSE_NOTIFY:	return(SSL3_AD_CLOSE_NOTIFY);
+	case SSL_AD_UNEXPECTED_MESSAGE:	return(SSL3_AD_UNEXPECTED_MESSAGE);
+	case SSL_AD_BAD_RECORD_MAC:	return(SSL3_AD_BAD_RECORD_MAC);
+	case SSL_AD_DECRYPTION_FAILED:	return(SSL3_AD_BAD_RECORD_MAC);
+	case SSL_AD_RECORD_OVERFLOW:	return(SSL3_AD_BAD_RECORD_MAC);
+	case SSL_AD_DECOMPRESSION_FAILURE:return(SSL3_AD_DECOMPRESSION_FAILURE);
+	case SSL_AD_HANDSHAKE_FAILURE:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_NO_CERTIFICATE:	return(SSL3_AD_NO_CERTIFICATE);
+	case SSL_AD_BAD_CERTIFICATE:	return(SSL3_AD_BAD_CERTIFICATE);
+	case SSL_AD_UNSUPPORTED_CERTIFICATE:return(SSL3_AD_UNSUPPORTED_CERTIFICATE);
+	case SSL_AD_CERTIFICATE_REVOKED:return(SSL3_AD_CERTIFICATE_REVOKED);
+	case SSL_AD_CERTIFICATE_EXPIRED:return(SSL3_AD_CERTIFICATE_EXPIRED);
+	case SSL_AD_CERTIFICATE_UNKNOWN:return(SSL3_AD_CERTIFICATE_UNKNOWN);
+	case SSL_AD_ILLEGAL_PARAMETER:	return(SSL3_AD_ILLEGAL_PARAMETER);
+	case SSL_AD_UNKNOWN_CA:		return(SSL3_AD_BAD_CERTIFICATE);
+	case SSL_AD_ACCESS_DENIED:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_DECODE_ERROR:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_DECRYPT_ERROR:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_EXPORT_RESTRICION:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_PROTOCOL_VERSION:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_INSUFFICIENT_SECURITY:return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_INTERNAL_ERROR:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_USER_CANCLED:	return(SSL3_AD_HANDSHAKE_FAILURE);
+	case SSL_AD_NO_RENEGOTIATION:	return(-1); /* Don't send it :-) */
+	default:			return(-1);
+		}
 	}
 

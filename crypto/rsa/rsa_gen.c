@@ -1,5 +1,5 @@
 /* crypto/rsa/rsa_gen.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -62,10 +62,11 @@
 #include "bn.h"
 #include "rsa.h"
 
-RSA *RSA_generate_key(bits, e_value, callback)
+RSA *RSA_generate_key(bits, e_value, callback,cb_arg)
 int bits;
 unsigned long e_value;
-void (*callback)(P_I_I);
+void (*callback)(P_I_I_P);
+char *cb_arg;
 	{
 	RSA *rsa=NULL;
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
@@ -95,27 +96,27 @@ void (*callback)(P_I_I);
 	/* generate p and q */
 	for (;;)
 		{
-		rsa->p=BN_generate_prime(bitsp,0,NULL,NULL,callback);
+		rsa->p=BN_generate_prime(bitsp,0,NULL,NULL,callback,cb_arg);
 		if (rsa->p == NULL) goto err;
 		if (!BN_sub(r2,rsa->p,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
 		if (BN_is_one(r1)) break;
-		if (callback != NULL) callback(2,n++);
+		if (callback != NULL) callback(2,n++,cb_arg);
 		BN_free(rsa->p);
 		}
-	if (callback != NULL) callback(3,0);
+	if (callback != NULL) callback(3,0,cb_arg);
 	for (;;)
 		{
-		rsa->q=BN_generate_prime(bitsq,0,NULL,NULL,callback);
+		rsa->q=BN_generate_prime(bitsq,0,NULL,NULL,callback,cb_arg);
 		if (rsa->q == NULL) goto err;
 		if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
 		if (BN_is_one(r1) && (BN_cmp(rsa->p,rsa->q) != 0))
 			break;
-		if (callback != NULL) callback(2,n++);
+		if (callback != NULL) callback(2,n++,cb_arg);
 		BN_free(rsa->q);
 		}
-	if (callback != NULL) callback(3,1);
+	if (callback != NULL) callback(3,1,cb_arg);
 	if (BN_cmp(rsa->p,rsa->q) < 0)
 		{
 		tmp=rsa->p;

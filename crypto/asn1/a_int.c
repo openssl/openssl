@@ -1,5 +1,5 @@
 /* crypto/asn1/a_int.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -251,7 +251,8 @@ ASN1_INTEGER *a;
 	
 	if (a->length > sizeof(long))
 		{
-		return(0xFFFFFFFFL);
+		/* hmm... a bit ugly */
+		return(0xffffffffL);
 		}
 	if (a->data == NULL)
 		return(0);

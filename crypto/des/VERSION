@@ -1,13 +1,37 @@
+	Defining SIGACTION causes sigaction() to be used instead of signal().
+	SIGUSR1/SIGUSR2 are no longer mapped in the read tty stuff because it
+	can cause problems.  This should hopefully not affect normal
+	applications.
+
+Version 4.04
+	Fixed a few tests in destest.  Also added x86 assember for
+	des_ncbc_encrypt() which is the standard cbc mode function.
+	This makes a very very large performace difference.
+	Ariel Glenn ariel@columbia.edu reports that the terminal
+	'turn echo off' can return (errno == EINVAL) under solaris
+	when redirection is used.  So I now catch that as well as ENOTTY.
+
+
+Version 4.03
+	Left a static out of enc_write.c, which caused to buffer to be
+	continiously malloc()ed.  Does anyone use these functions?  I keep
+	on feeling like removing them since I only had these in there
+	for a version of kerberised login.  Anyway, this was pointed out
+	by Theo de Raadt <deraadt@cvs.openbsd.org>
+	The 'n' bit ofb code was wrong, it was not shifting the shift
+	register. It worked correctly for n == 64.  Thanks to
+	Gigi Ankeny <Gigi.Ankeny@Eng.Sun.COM> for pointing this one out.
+
 Version 4.02
-	I was doing if (memcmp(weak_keys[i],key,sizeof(key)) == 0)
+	I was doing 'if (memcmp(weak_keys[i],key,sizeof(key)) == 0)'
 	when checking for weak keys which is wrong :-(, pointed out by
-	rkus F.X.J. Oberhumer <markus.oberhumer@jk.uni-linz.ac.at>.
+	Markus F.X.J. Oberhumer <markus.oberhumer@jk.uni-linz.ac.at>.
 
 Version 4.01
-	Even faster inner loop in the DES assember for x86 and a modification
+	Even faster inner loop in the DES assembler for x86 and a modification
 	for IP/FP which is faster on x86.  Both of these changes are
 	from Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>.  His
-	changes make the assember run %40 faster on a pentium.  This is just
+	changes make the assembler run %40 faster on a pentium.  This is just
 	a case of getting the instruction sequence 'just right'.
 	All credit to 'Svend' :-)
 	Quite a few special x86 'make' targets.
@@ -15,9 +39,9 @@ Version 4.01
 
 Version 4.00
 	After a bit of a pause, I'll up the major version number since this
-	is mostly a performace release.  I've added x86 assember and
+	is mostly a performace release.  I've added x86 assembler and
 	added more options for performance.  A %28 speedup for gcc 
-	on a pentium and the assember is a %50 speedup.
+	on a pentium and the assembler is a %50 speedup.
 	MIPS CPU's, sparc and Alpha are the main CPU's with speedups.
 	Run des_opts to work out which options should be used.
 	DES_RISC1/DES_RISC2 use alternative inner loops which use
@@ -35,7 +59,7 @@ Version 3.26
 	instead of L^=((..)|(..)|(..)..  This should save a register at
 	least.
 	Assember for x86.  The file to replace is des_enc.c, which is replaced
-	by one of the assember files found in asm.  Look at des/asm/readme
+	by one of the assembler files found in asm.  Look at des/asm/readme
 	for more info.
 
 	/* Modification to fcrypt so it can be compiled to support

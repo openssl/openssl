@@ -13,6 +13,10 @@ $rm='del';
 # C compiler stuff
 $cc='cl';
 
+$out_def="out16";
+$tmp_def="tmp16";
+$inc_def="inc16";
+
 if ($debug)
 	{
 	$op="/Od /Zi /Zd";
@@ -30,11 +34,12 @@ $lflags="$base_lflags /STACK:20000";
 
 if ($win16)
 	{
-	$cflags.=" -DWIN16";
+	$cflags.=" -DWINDOWS -DWIN16";
 	$app_cflag="/Gw /FPi87";
 	$lib_cflag="/Gw";
+	$lib_cflag.=" -D_WINDLL -D_DLL" if $shlib;
 	$lib_cflag.=" -DWIN16TTY" if !$shlib;
-	$lflags.=" /ALIGN:16";
+	$lflags.=" /ALIGN:256";
 	$ex_libs.="oldnames llibcewq libw";
 	}
 else
@@ -51,6 +56,8 @@ if ($shlib)
 	$libs="oldnames ldllcew libw";
 	$shlib_ex_obj="";
 #	$no_asm=1;
+	$out_def="out16dll";
+	$tmp_def="tmp16dll";
 	}
 else
 	{ $mlflags=''; }
@@ -106,6 +113,7 @@ sub do_lib_rule
 	$taget =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
 
+#	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
 #	$ret.="\t\$(RM) \$(O_$Name)\n";
 
@@ -126,7 +134,7 @@ sub do_lib_rule
 		}
 	else
 		{
-		local($ex)=($target eq '$(O_SSL)')?'$(L_CRYPTO)':"";
+		local($ex)=($target =~ /O_SSL/)?'$(L_CRYPTO)':"";
 		$ex.=' winsock';
 		$ret.="\t\$(LINK) \$(MLFLAGS) @<<\n";
 		$ret.=$dll_names;

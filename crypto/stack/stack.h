@@ -1,5 +1,5 @@
 /* crypto/stack/stack.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -73,8 +73,8 @@ typedef struct stack_st
 	int (*comp)();
 	} STACK;
 
-#define sk_num(sk)	((sk)->num)
-#define sk_value(sk,n)	((sk)->data[n])
+#define sk_num(sk)		((sk)->num)
+#define sk_value(sk,n)		((sk)->data[n])
 
 #define sk_new_null()	sk_new(NULL)
 #ifndef NOPROTO

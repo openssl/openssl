@@ -1,0 +1,107 @@
+#
+# SSLeay/crypto/rc5/Makefile
+#
+
+DIR=	rc5
+TOP=	../..
+CC=	cc
+CPP=	$(CC) -E
+INCLUDES=
+CFLAG=-g
+INSTALLTOP=/usr/local/ssl
+MAKE=		make -f Makefile.ssl
+MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEFILE=	Makefile.ssl
+AR=		ar r
+
+RC5_ENC=		rc5_enc.o
+# or use
+#DES_ENC=	r586-elf.o
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile
+TEST=rc5test.c
+APPS=
+
+LIB=$(TOP)/libcrypto.a
+LIBSRC=rc5_skey.c rc5_ecb.c rc5_enc.c rc5cfb64.c rc5ofb64.c 
+LIBOBJ=rc5_skey.o rc5_ecb.o $(RC5_ENC) rc5cfb64.o rc5ofb64.o
+
+SRC= $(LIBSRC)
+
+EXHEADER= rc5.h
+HEADER=	rc5_locl.h $(EXHEADER)
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+top:
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+
+all:	lib
+
+lib:	$(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	sh $(TOP)/util/ranlib.sh $(LIB)
+	@touch lib
+
+# elf
+asm/r586-elf.o: asm/r586unix.cpp
+	$(CPP) -DELF asm/r586unix.cpp | as -o asm/r586-elf.o
+
+# solaris
+asm/r586-sol.o: asm/r586unix.cpp
+	$(CC) -E -DSOL asm/r586unix.cpp | sed 's/^#.*//' > asm/r586-sol.s
+	as -o asm/r586-sol.o asm/r586-sol.s
+	rm -f asm/r586-sol.s
+
+# a.out
+asm/r586-out.o: asm/r586unix.cpp
+	$(CPP) -DOUT asm/r586unix.cpp | as -o asm/r586-out.o
+
+# bsdi
+asm/r586bsdi.o: asm/r586unix.cpp
+	$(CPP) -DBSDI asm/r586unix.cpp | as -o asm/r586bsdi.o
+
+asm/r586unix.cpp:
+	(cd asm; perl rc5-586.pl cpp >r586unix.cpp)
+
+files:
+	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+
+links:
+	/bin/rm -f Makefile
+	$(TOP)/util/point.sh Makefile.ssl Makefile ;
+	$(TOP)/util/point.sh ../../doc/rc5.doc rc5.doc ;
+	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	$(TOP)/util/mklink.sh ../../test $(TEST)
+	$(TOP)/util/mklink.sh ../../apps $(APPS)
+
+install:
+	@for i in $(EXHEADER) ; \
+	do  \
+	(cp $$i $(INSTALLTOP)/include/$$i; \
+	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	done;
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+depend:
+	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+
+dclean:
+	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	/bin/rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+errors:
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

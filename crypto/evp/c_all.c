@@ -1,5 +1,5 @@
 /* crypto/evp/c_all.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -97,6 +97,7 @@ void SSLeay_add_all_ciphers()
 
 #ifndef NO_RC4
 	EVP_add_cipher(EVP_rc4());
+	EVP_add_cipher(EVP_rc4_40());
 #endif
 
 #ifndef NO_IDEA
@@ -113,6 +114,7 @@ void SSLeay_add_all_ciphers()
 	EVP_add_cipher(EVP_rc2_cfb());
 	EVP_add_cipher(EVP_rc2_ofb());
 	EVP_add_cipher(EVP_rc2_cbc());
+	EVP_add_cipher(EVP_rc2_40_cbc());
 	EVP_add_alias(SN_rc2_cbc,"RC2");
 	EVP_add_alias(SN_rc2_cbc,"rc2");
 #endif
@@ -126,6 +128,28 @@ void SSLeay_add_all_ciphers()
 	EVP_add_alias(SN_bf_cbc,"bf");
 	EVP_add_alias(SN_bf_cbc,"blowfish");
 #endif
+
+#ifndef NO_CAST
+	EVP_add_cipher(EVP_cast5_ecb());
+	EVP_add_cipher(EVP_cast5_cfb());
+	EVP_add_cipher(EVP_cast5_ofb());
+	EVP_add_cipher(EVP_cast5_cbc());
+	EVP_add_alias(SN_cast5_cbc,"CAST");
+	EVP_add_alias(SN_cast5_cbc,"cast");
+	EVP_add_alias(SN_cast5_cbc,"CAST-cbc");
+	EVP_add_alias(SN_cast5_cbc,"cast-cbc");
+#endif
+
+#ifndef NO_RC5
+	EVP_add_cipher(EVP_rc5_32_12_16_ecb());
+	EVP_add_cipher(EVP_rc5_32_12_16_cfb());
+	EVP_add_cipher(EVP_rc5_32_12_16_ofb());
+	EVP_add_cipher(EVP_rc5_32_12_16_cbc());
+	EVP_add_alias(SN_rc5_cbc,"rc5");
+	EVP_add_alias(SN_rc5_cbc,"RC5");
+	EVP_add_alias(SN_rc5_cbc,"rc5-cbc");
+	EVP_add_alias(SN_rc5_cbc,"RC5-cbc");
+#endif
 	}
 
 
@@ -134,8 +158,10 @@ void SSLeay_add_all_digests()
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
 #endif
-#ifndef NO_MD2
+#ifndef NO_MD5
 	EVP_add_digest(EVP_md5());
+	EVP_add_alias(SN_md5,"ssl2-md5");
+	EVP_add_alias(SN_md5,"ssl3-md5");
 #endif
 #ifndef NO_SHA
 	EVP_add_digest(EVP_sha());
@@ -145,11 +171,20 @@ void SSLeay_add_all_digests()
 #endif
 #ifndef NO_SHA1
 	EVP_add_digest(EVP_sha1());
+	EVP_add_alias(SN_sha1,"ssl3-sha1");
 #ifndef NO_DSA
 	EVP_add_digest(EVP_dss1());
+	EVP_add_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
+	EVP_add_alias(SN_dsaWithSHA1,"DSS1");
+	EVP_add_alias(SN_dsaWithSHA1,"dss1");
 #endif
 #endif
 #if !defined(NO_MDC2) && !defined(NO_DES)
 	EVP_add_digest(EVP_mdc2());
+#endif
+#ifndef NO_RIPEMD160
+	EVP_add_digest(EVP_ripemd160());
+	EVP_add_alias(SN_ripemd160,"ripemd");
+	EVP_add_alias(SN_ripemd160,"rmd160");
 #endif
 	}

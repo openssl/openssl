@@ -1,5 +1,5 @@
 /* crypto/bn/bn_lcl.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -78,29 +78,21 @@ extern "C" {
 		if (*(fix_top_l--)) break; \
 	}
 
-#define bn_expand(n,b) ((((b)/BN_BITS2) <= (n)->max)?(n):bn_expand2((n),(b)))
+/* #define bn_expand(n,b) ((((b)/BN_BITS2) <= (n)->max)?(n):bn_expand2((n),(b))) */
 
 #ifdef BN_LLONG
 #define mul_add(r,a,w,c) { \
 	BN_ULLONG t; \
 	t=(BN_ULLONG)w * (a) + (r) + (c); \
-	(r)=Lw(t); \
+	(r)= Lw(t); \
 	(c)= Hw(t); \
 	}
 
 #define mul(r,a,w,c) { \
 	BN_ULLONG t; \
 	t=(BN_ULLONG)w * (a) + (c); \
-	(r)=Lw(t); \
+	(r)= Lw(t); \
 	(c)= Hw(t); \
-	}
-
-#define bn_mul_words(r1,r2,a,b) \
-	{ \
-	BN_ULLONG t; \
-	t=(BN_ULLONG)(a)*(b); \
-	r1=Lw(t); \
-	r2=Hw(t); \
 	}
 
 #else
@@ -126,10 +118,10 @@ extern "C" {
 	lt=(bl)*(lt); \
 	m1=(bl)*(ht); \
 	ht =(bh)*(ht); \
-	m+=m1; if ((m&BN_MASK2) < m1) ht+=L2HBITS(1L); \
+	m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS(1L); \
 	ht+=HBITS(m); \
 	m1=L2HBITS(m); \
-	lt+=m1; if ((lt&BN_MASK2) < m1) ht++; \
+	lt=(lt+m1)&BN_MASK2; if (lt < m1) ht++; \
 	(l)=lt; \
 	(h)=ht; \
 	}
@@ -146,7 +138,7 @@ extern "C" {
 	h*=h; \
 	h+=(m&BN_MASK2h1)>>(BN_BITS4-1); \
 	m =(m&BN_MASK2l)<<(BN_BITS4+1); \
-	l+=m; if ((l&BN_MASK2) < m) h++; \
+	l=(l+m)&BN_MASK2; if (l < m) h++; \
 	(lo)=l; \
 	(ho)=h; \
 	}
@@ -160,11 +152,11 @@ extern "C" {
 	mul64(l,h,(bl),(bh)); \
  \
 	/* non-multiply part */ \
-	l+=(c); if ((l&BN_MASK2) < (c)) h++; \
+	l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
 	(c)=(r); \
-	l+=(c); if ((l&BN_MASK2) < (c)) h++; \
+	l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
 	(c)=h&BN_MASK2; \
-	(r)=l&BN_MASK2; \
+	(r)=l; \
 	}
 
 #define mul(r,a,bl,bh,c) { \
@@ -181,31 +173,22 @@ extern "C" {
 	(r)=l&BN_MASK2; \
 	}
 
-#define bn_mul_words(r1,r2,a,b) \
-	{ \
-	BN_ULONG l,h,bl,bh; \
- \
-	h=(a); \
-	l=LBITS(h); \
-	h=HBITS(h); \
-	bh=(b); \
-	bl=LBITS(bh); \
-	bh=HBITS(bh); \
- \
-	mul64(l,h,bl,bh); \
- \
-	(r1)=l; \
-	(r2)=h; \
-	}
 #endif
 
 #ifndef NOPROTO
 
 BIGNUM *bn_expand2(BIGNUM *b, int bits);
 
+#ifdef X86_ASM
+void bn_add_words(BN_ULONG *r,BN_ULONG *a,int num);
+#endif
+
 #else
 
 BIGNUM *bn_expand2();
+#ifdef X86_ASM
+BN_ULONG bn_add_words();
+#endif
 
 #endif
 

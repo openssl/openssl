@@ -1,5 +1,5 @@
 /* crypto/bio/bf_buff.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -84,7 +84,8 @@ static int buffer_free();
 
 static BIO_METHOD methods_buffer=
 	{
-	BIO_TYPE_BUFFER,"buffer",
+	BIO_TYPE_BUFFER,
+	"buffer",
 	buffer_write,
 	buffer_read,
 	buffer_puts,
@@ -329,6 +330,19 @@ char *ptr;
 		if (ret == 0)
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
+	case BIO_C_SET_BUFF_READ_DATA:
+		if (num > ctx->ibuf_size)
+			{
+			p1=Malloc((int)num);
+			if (p1 == NULL) goto malloc_error;
+			if (ctx->ibuf != NULL) Free(ctx->ibuf);
+			ctx->ibuf=p1;
+			}
+		ctx->ibuf_off=0;
+		ctx->ibuf_len=(int)num;
+		memcpy(ctx->ibuf,ptr,(int)num);
+		ret=1;
+		break;
 	case BIO_C_SET_BUFF_SIZE:
 		if (ptr != NULL)
 			{
@@ -354,16 +368,15 @@ char *ptr;
 		if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size))
 			{
 			p1=(char *)Malloc((int)num);
-			if (p1 == NULL) { ret=0; break; }
+			if (p1 == NULL) goto malloc_error;
 			}
 		if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size))
 			{
 			p2=(char *)Malloc((int)num);
 			if (p2 == NULL)
 				{
-				ret=0;
 				if (p1 != ctx->ibuf) Free(p1);
-				break;
+				goto malloc_error;
 				}
 			}
 		if (ctx->ibuf != p1)
@@ -391,7 +404,10 @@ char *ptr;
 
 	case BIO_CTRL_FLUSH:
 		if (ctx->obuf_len <= 0)
+			{
+			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 			break;
+			}
 
 		for (;;)
 			{
@@ -428,6 +444,9 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 		break;
 		}
 	return(ret);
+malloc_error:
+	BIOerr(BIO_F_BUFFER_CTRL,ERR_R_MALLOC_FAILURE);
+	return(0);
 	}
 
 static int buffer_gets(b,buf,size)
@@ -436,32 +455,36 @@ char *buf;
 int size;
 	{
 	BIO_F_BUFFER_CTX *ctx;
-	int num=0,i;
+	int num=0,i,flag;
 	char *p;
 
 	ctx=(BIO_F_BUFFER_CTX *)b->ptr;
-	size--;
+	size--; /* reserve space for a '\0' */
 	BIO_clear_retry_flags(b);
 
 	for (;;)
 		{
-		if (ctx->ibuf_len != 0)
+		if (ctx->ibuf_len > 0)
 			{
 			p= &(ctx->ibuf[ctx->ibuf_off]);
-			for (i=0; (i<ctx->ibuf_len) && (i<(size-1)); i++)
+			flag=0;
+			for (i=0; (i<ctx->ibuf_len) && (i<size); i++)
 				{
 				*(buf++)=p[i];
-				if (p[i] == '\n') break;
+				if (p[i] == '\n')
+					{
+					flag=1;
+					i++;
+					break;
+					}
 				}
 			num+=i;
 			size-=i;
 			ctx->ibuf_len-=i;
 			ctx->ibuf_off+=i;
-			if (p[i] == '\n')
+			if ((flag) || (i == size))
 				{
-				buf[i+1]='\0';
-				ctx->ibuf_len--;
-				ctx->ibuf_off++;
+				*buf='\0';
 				return(num);
 				}
 			}

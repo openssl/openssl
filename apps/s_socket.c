@@ -1,5 +1,5 @@
 /* apps/s_socket.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -262,7 +262,7 @@ int port;
 		*sock=s;
 
 #ifdef FIONBIO
-		socket_ioctl(s,FIONBIO,&l);
+		BIO_socket_ioctl(s,FIONBIO,&l);
 #endif
 		}
 	else
@@ -306,18 +306,19 @@ int (*cb)();
 			}
 		i=(*cb)(name,sock);
 		if (name != NULL) Free(name);
-		SHUTDOWN(sock);
+		SHUTDOWN2(sock);
 		if (i < 0)
 			{
-			SHUTDOWN(accept_socket);
+			SHUTDOWN2(accept_socket);
 			return(i);
 			}
 		}
 	}
 
-int init_server(sock, port)
+int init_server_long(sock, port, ip)
 int *sock;
 int port;
+char *ip;
 	{
 	int ret=0;
 	struct sockaddr_in server;
@@ -328,7 +329,10 @@ int port;
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
 	server.sin_port=htons((unsigned short)port);
-	server.sin_addr.s_addr=INADDR_ANY;
+	if (ip == NULL)
+		server.sin_addr.s_addr=INADDR_ANY;
+	else
+		memcpy(&server.sin_addr.s_addr,ip,4);
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 
 	if (s == INVALID_SOCKET) goto err;
@@ -339,7 +343,8 @@ int port;
 #endif
 		goto err;
 		}
-	if (listen(s,5) == -1) goto err;
+	/* Make it 128 for linux */
+	if (listen(s,128) == -1) goto err;
 	i=0;
 	*sock=s;
 	ret=1;
@@ -349,6 +354,13 @@ err:
 		SHUTDOWN(s);
 		}
 	return(ret);
+	}
+
+int init_server(sock,port)
+int *sock;
+int port;
+	{
+	return(init_server_long(sock, port, NULL));
 	}
 
 int do_accept(acc_sock, sock, host)
@@ -399,9 +411,14 @@ redoit:
 */
 
 	if (host == NULL) goto end;
+#ifndef BIT_FIELD_LIMITS
 	/* I should use WSAAsyncGetHostByName() under windows */
 	h1=gethostbyaddr((char *)&from.sin_addr.s_addr,
 		sizeof(from.sin_addr.s_addr),AF_INET);
+#else
+	h1=gethostbyaddr((char *)&from.sin_addr,
+		sizeof(struct in_addr),AF_INET);
+#endif
 	if (h1 == NULL)
 		{
 		BIO_printf(bio_err,"bad gethostbyaddr\n");
@@ -433,38 +450,6 @@ redoit:
 end:
 	*sock=ret;
 	return(1);
-	}
-
-int socket_ioctl(fd,type,arg)
-int fd;
-long type;
-unsigned long *arg;
-	{
-	int i,err;
-#ifdef WINDOWS
-	i=ioctlsocket(fd,type,arg);
-#else
-	i=ioctl(fd,type,arg);
-#endif
-	if (i < 0)
-		{
-#ifdef WINDOWS
-		err=WSAGetLastError();
-#else
-		err=errno;
-#endif
-		BIO_printf(bio_err,"ioctl on socket failed:error %d\n",err);
-		}
-	return(i);
-	}
-
-int sock_err()
-	{
-#ifdef WINDOWS
-	return(WSAGetLastError());
-#else
-	return(errno);
-#endif
 	}
 
 int extract_host_port(str,host_ptr,ip,port_ptr)

@@ -1,5 +1,5 @@
 /* crypto/bn/bn_add.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -81,16 +81,16 @@ BIGNUM *b;
 			{ tmp=a; a=b; b=tmp; }
 
 		/* we are now a - b */
-		if (bn_expand(r,((a->top > b->top)?a->top:b->top)*BN_BITS2)
-			== NULL) return(0);
 
 		if (BN_ucmp(a,b) < 0)
 			{
+			if (bn_wexpand(r,b->top) == NULL) return(0);
 			bn_qsub(r,b,a);
 			r->neg=1;
 			}
 		else
 			{
+			if (bn_wexpand(r,a->top) == NULL) return(0);
 			bn_qsub(r,a,b);
 			r->neg=0;
 			}
@@ -103,12 +103,17 @@ BIGNUM *b;
 		r->neg=0;
 
 	i=(a->top > b->top);
-	if (bn_expand(r,(((i)?a->top:b->top)+1)*BN_BITS2) == NULL) return(0);
 
 	if (i)
+		{
+		if (bn_wexpand(r,a->top+1) == NULL) return(0);
 		bn_qadd(r,a,b);
+		}
 	else
+		{
+		if (bn_wexpand(r,b->top+1) == NULL) return(0);
 		bn_qadd(r,b,a);
+		}
 	return(1);
 	}
 
@@ -120,7 +125,7 @@ BIGNUM *b;
 	{
 	register int i;
 	int max,min;
-	BN_ULONG *ap,*bp,*rp,carry,t1,t2;
+	BN_ULONG *ap,*bp,*rp,carry,t1;
 
 	max=a->top;
 	min=b->top;
@@ -130,32 +135,24 @@ BIGNUM *b;
 	bp=b->d;
 	rp=r->d;
 	carry=0;
-	for (i=0; i<min; i++)
-		{
-		t1= *(ap++);
-		t2= *(bp++);
-		if (carry)
-			{
-			carry=(t2 >= ((~t1)&BN_MASK2));
-			t2=(t1+t2+1)&BN_MASK2;
-			}
-		else
-			{
-			t2=(t1+t2)&BN_MASK2;
-			carry=(t2 < t1);
-			}
-		*(rp++)=t2;
-		}
+
+	carry=bn_add_words(rp,ap,bp,min);
+	rp+=min;
+	ap+=min;
+	bp+=min;
+	i=min;
+
 	if (carry)
 		{
 		while (i < max)
 			{
-			t1= *(ap++);
-			t2=(t1+1)&BN_MASK2;
-			*(rp++)=t2;
-			carry=(t2 < t1);
 			i++;
-			if (!carry) break;
+			t1= *(ap++);
+			if ((*(rp++)=(t1+1)&BN_MASK2) >= t1)
+				{
+				carry=0;
+				break;
+				}
 			}
 		if ((i >= max) && carry)
 			{

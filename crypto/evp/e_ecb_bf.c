@@ -1,5 +1,5 @@
 /* crypto/evp/e_ecb_bf.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,6 +79,11 @@ static EVP_CIPHER bfish_ecb_cipher=
 	8,EVP_BLOWFISH_KEY_SIZE,0,
 	bf_ecb_init_key,
 	bf_ecb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.bf_ks)),
+	NULL,
+	NULL,
 	};
 
 EVP_CIPHER *EVP_bf_ecb()
@@ -93,7 +98,7 @@ unsigned char *iv;
 int enc;
 	{
 	if (key != NULL)
-		BF_set_key(&(ctx->c.bf_ecb.ks),EVP_BLOWFISH_KEY_SIZE,key);
+		BF_set_key(&(ctx->c.bf_ks),EVP_BLOWFISH_KEY_SIZE,key);
 	}
 
 static void bf_ecb_cipher(ctx,out,in,inl)
@@ -110,7 +115,7 @@ unsigned int inl;
 		{
 		BF_ecb_encrypt(
 			&(in[i]),&(out[i]),
-			&(ctx->c.bf_ecb.ks),ctx->encrypt);
+			&(ctx->c.bf_ks),ctx->encrypt);
 		}
 	}
 

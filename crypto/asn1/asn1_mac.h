@@ -1,5 +1,5 @@
 /* crypto/asn1/asn1_mac.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -91,6 +91,7 @@ extern "C" {
 	M_ASN1_D2I_Finish_2(a); \
 err:\
 	ASN1err((e),c.error); \
+	asn1_add_error(*pp,(int)(c.q- *pp)); \
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) func(ret); \
 	return(NULL)
 
@@ -257,7 +258,7 @@ err:\
 			{ \
 			unsigned char *q=p; \
 			f(a,&p); \
-			*q=(V_ASN1_CONTEXT_SPECIFIC|t); \
+			*q=(V_ASN1_CONTEXT_SPECIFIC|t|(*q&V_ASN1_CONSTRUCTED));\
 			}
 
 #define M_ASN1_I2D_put_SET(a,f) i2d_ASN1_SET(a,&p,f,V_ASN1_SET,\
@@ -307,8 +308,10 @@ err:\
 
 #ifndef NOPROTO
 int asn1_GetSequence(ASN1_CTX *c, long *length);
+void asn1_add_error(unsigned char *address,int offset);
 #else 
 int asn1_GetSequence();
+void asn1_add_error();
 #endif
 
 #ifdef  __cplusplus

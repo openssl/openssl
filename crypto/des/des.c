@@ -1,5 +1,5 @@
 /* crypto/des/des.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -99,6 +99,9 @@ void uufwriteEnd(FILE *fp);
 int uufread(unsigned char *out,int size,unsigned int num,FILE *fp);
 int uuencode(unsigned char *in,int num,unsigned char *out);
 int uudecode(unsigned char *in,int num,unsigned char *out);
+void des_3cbc_encrypt(des_cblock *input,des_cblock *output,long length,
+	des_key_schedule sk1,des_key_schedule sk2,
+	des_cblock *ivec1,des_cblock *ivec2,int enc);
 #else
 void usage();
 void doencryption();
@@ -107,10 +110,11 @@ void uufwriteEnd();
 int uufread();
 int uuencode();
 int uudecode();
+void des_3cbc_encrypt();
 #endif
 
 #ifdef VMS
-#define EXIT(a) exit(a&0x10000000)
+#define EXIT(a) exit(a&0x10000000L)
 #else
 #define EXIT(a) exit(a)
 #endif

@@ -1,5 +1,5 @@
 /* crypto/sha/sha_locl.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -120,7 +120,51 @@
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
-/* I have taken some of this code from my MD5 implementation */
+#undef c2l
+#define c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ), \
+			 l|=(((unsigned long)(*((c)++)))<< 8), \
+			 l|=(((unsigned long)(*((c)++)))<<16), \
+			 l|=(((unsigned long)(*((c)++)))<<24))
+
+#undef p_c2l
+#define p_c2l(c,l,n)	{ \
+			switch (n) { \
+			case 0: l =((unsigned long)(*((c)++))); \
+			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
+			case 2: l|=((unsigned long)(*((c)++)))<<16; \
+			case 3: l|=((unsigned long)(*((c)++)))<<24; \
+				} \
+			}
+
+#undef c2l_p
+/* NOTE the pointer is not incremented at the end of this */
+#define c2l_p(c,l,n)	{ \
+			l=0; \
+			(c)+=n; \
+			switch (n) { \
+			case 3: l =((unsigned long)(*(--(c))))<<16; \
+			case 2: l|=((unsigned long)(*(--(c))))<< 8; \
+			case 1: l|=((unsigned long)(*(--(c)))); \
+				} \
+			}
+
+#undef p_c2l_p
+#define p_c2l_p(c,l,sc,len) { \
+			switch (sc) \
+				{ \
+			case 0: l =((unsigned long)(*((c)++))); \
+				if (--len == 0) break; \
+			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
+				if (--len == 0) break; \
+			case 2: l|=((unsigned long)(*((c)++)))<<16; \
+				} \
+			}
+
+#undef l2c
+#define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
 #undef ROTATE
 #if defined(WIN32)
@@ -161,38 +205,42 @@
 
 #ifdef SHA_0
 #undef Xupdate
-#define Xupdate(a,i) \
-	X[(i)&0x0f]=(a)=\
-		(X[(i)&0x0f]^X[((i)+2)&0x0f]^X[((i)+8)&0x0f]^X[((i)+13)&0x0f]);
+#define Xupdate(a,i,ia,ib,ic,id) X[(i)&0x0f]=(a)=\
+	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);
 #endif
 #ifdef SHA_1
 #undef Xupdate
-#define Xupdate(a,i) \
-	(a)=(X[(i)&0x0f]^X[((i)+2)&0x0f]^X[((i)+8)&0x0f]^X[((i)+13)&0x0f]); \
+#define Xupdate(a,i,ia,ib,ic,id) (a)=\
+	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);\
 	X[(i)&0x0f]=(a)=ROTATE((a),1);
 #endif
 
-#define BODY_00_15(i,a,b,c,d,e,f) \
-	(f)=X[i]+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
+#define BODY_00_15(i,a,b,c,d,e,f,xa) \
+	(f)=xa[i]+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_16_19(i,a,b,c,d,e,f) \
-	Xupdate(f,i); \
+#define BODY_16_19(i,a,b,c,d,e,f,xa,xb,xc,xd) \
+	Xupdate(f,i,xa,xb,xc,xd); \
 	(f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_20_39(i,a,b,c,d,e,f) \
-	Xupdate(f,i); \
+#define BODY_20_31(i,a,b,c,d,e,f,xa,xb,xc,xd) \
+	Xupdate(f,i,xa,xb,xc,xd); \
 	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_40_59(i,a,b,c,d,e,f) \
-	Xupdate(f,i); \
+#define BODY_32_39(i,a,b,c,d,e,f,xa) \
+	Xupdate(f,i,xa,xa,xa,xa); \
+	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
+	(b)=ROTATE((b),30);
+
+#define BODY_40_59(i,a,b,c,d,e,f,xa) \
+	Xupdate(f,i,xa,xa,xa,xa); \
 	(f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#define BODY_60_79(i,a,b,c,d,e,f) \
-	Xupdate(f,i); \
+#define BODY_60_79(i,a,b,c,d,e,f,xa) \
+	Xupdate(f,i,xa,xa,xa,xa); \
 	(f)=X[(i)&0x0f]+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
