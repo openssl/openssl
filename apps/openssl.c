@@ -112,6 +112,7 @@ int main(int Argc, char *Argv[])
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	ERR_load_crypto_strings();
+	ENGINE_load_builtin_engines();
 
 	/* Lets load up our environment a little */
 	p=getenv("OPENSSL_CONF");

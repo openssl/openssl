@@ -122,14 +122,16 @@ extern BIO *bio_err;
 #    ifdef _O_BINARY
 #      define apps_startup() \
 		_fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		SSLeay_add_all_algorithms()
+		SSLeay_add_all_algorithms(); ENGINE_load_builtin_engines()
 #    else
 #      define apps_startup() \
 		_fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		SSLeay_add_all_algorithms()
+		SSLeay_add_all_algorithms(); ENGINE_load_builtin_engines()
 #    endif
 #  else
-#    define apps_startup()	do_pipe_sig(); SSLeay_add_all_algorithms();
+#    define apps_startup() \
+		do_pipe_sig(); SSLeay_add_all_algorithms(); \
+		ENGINE_load_builtin_engines()
 #  endif
 #endif
 

@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make it so the openssl application has all engines loaded by default.
+     [Richard Levitte]
+
   *) Constify the BIGNUM routines a little more.
      [Richard Levitte]
 

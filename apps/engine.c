@@ -73,11 +73,8 @@
 static char *engine_usage[]={
 "usage: engine opts [engine ...]\n",
 " -v          - verbose mode, a textual listing of the engines in OpenSSL\n",
-#if 0
 " -c          - for each engine, also list the capabilities\n",
-#endif
 " -t          - for each engine, check that they are really available\n",
-" -l          - load all built-in engines\n",
 NULL
 };
 
@@ -153,8 +150,6 @@ int MAIN(int argc, char **argv)
 			list_cap=1;
 		else if (strcmp(*argv,"-t") == 0)
 			test_avail=1;
-		else if (strcmp(*argv,"-l") == 0)
-			ENGINE_load_builtin_engines();
 		else if ((strncmp(*argv,"-h",2) == 0) ||
 			 (strcmp(*argv,"-?") == 0))
 			{
