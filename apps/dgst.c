@@ -105,7 +105,7 @@ int MAIN(int argc, char **argv)
 
 	argc--;
 	argv++;
-	for (i=0; i<argc; i++)
+	while (argc > 0)
 		{
 		if ((*argv)[0] != '-') break;
 		if (strcmp(*argv,"-c") == 0)
