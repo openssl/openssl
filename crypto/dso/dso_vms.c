@@ -62,7 +62,6 @@
 #ifdef VMS
 #pragma message disable DOLLARID
 #include <lib$routines.h>
-#include <libfisdef.h>
 #include <stsdef.h>
 #include <descrip.h>
 #include <starlet.h>
@@ -260,7 +259,8 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 	{
 	DSO_VMS_INTERNAL *ptr;
 	int status;
-	int flags = LIB$M_FIS_MIXEDCASE;
+	int flags = (1<<4); /* LIB$M_FIS_MIXEDCASE, but this symbol isn't
+                               defined in VMS older than 7.0 or so */
 	struct dsc$descriptor_s symname_dsc;
 	*sym = NULL;
 

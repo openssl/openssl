@@ -572,7 +572,10 @@ printf("rec=");
 #endif
 
 	for (i=7; i>=0; i--)
-		if (++seq[i]) break; 
+		{
+		++seq[i];
+		if (seq[i] != 0) break; 
+		}
 
 #ifdef TLS_DEBUG
 {unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",md[z]); printf("\n"); }
