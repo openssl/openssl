@@ -187,7 +187,7 @@ tell which one you are dealing with at any given point in time (after all
 they are both simply (ENGINE *) pointers, the difference is in the way they
 are used).
 
-=head3 Structural references
+I<Structural references>
 
 This basic type of reference is typically used for creating new ENGINEs
 dynamically, iterating across OpenSSL's internal linked-list of loaded
@@ -224,7 +224,7 @@ To clarify a particular function's handling of references, one should
 always consult that function's documentation "man" page, or failing that
 the openssl/engine.h header file includes some hints.
 
-=head3 Functional references
+I<Functional references>
 
 As mentioned, functional references exist when the cryptographic
 functionality of an ENGINE is required to be available. A functional
@@ -386,7 +386,7 @@ things, so we will simply illustrate the consequences as they apply to a
 couple of simple cases and leave developers to consider these and the
 source code to openssl's builtin utilities as guides.
 
-=head3 Using a specific ENGINE implementation
+I<Using a specific ENGINE implementation>
 
 Here we'll assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
@@ -418,7 +418,7 @@ illustrates how to approach this;
  /* Release the structural reference from ENGINE_by_id() */
  ENGINE_free(e);
 
-=head3 Automatically using builtin ENGINE implementations
+I<Automatically using builtin ENGINE implementations>
 
 Here we'll assume we want to load and register all ENGINE implementations
 bundled with OpenSSL, such that for any cryptographic algorithm required by
@@ -469,7 +469,7 @@ in same cases both. ENGINE implementations should provide indications of
 this in the descriptions attached to builtin control commands and/or in
 external product documentation.
 
-=head3 Issuing control commands to an ENGINE
+I<Issuing control commands to an ENGINE>
 
 Let's illustrate by example; a function for which the caller supplies the
 name of the ENGINE it wishes to use, a table of string-pairs for use before
@@ -526,7 +526,7 @@ return success without doing anything. In this case we assume the user is
 only supplying commands specific to the given ENGINE so we set this to
 FALSE.
 
-=head3 Discovering supported control commands
+I<Discovering supported control commands>
 
 It is possible to discover at run-time the names, numerical-ids, descriptions
 and input parameters of the control commands supported from a structural
