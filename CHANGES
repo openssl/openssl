@@ -3,9 +3,9 @@
  _______________
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
+
   *) ./config script fixes.
      [Ulf Moeller, Richard Levitte]
-
 
   *) Fix 'openssl passwd -1'.
      [Bodo Moeller]
