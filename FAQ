@@ -9,6 +9,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why do I get a "PRNG not seeded" error message?
 * Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
+* Why can't the OpenSSH configure script detect OpenSSL?
 
 
 * Which is the current version of OpenSSL?
@@ -150,3 +151,43 @@ a C compiler, read the "Mingw32" section of INSTALL.W32 for information
 on how to obtain and install the free GNU C compiler.
 
 A number of Linux and *BSD distributions include OpenSSL.
+
+
+* Why can't the OpenSSH configure script detect OpenSSL?
+
+There is a problem with OpenSSH 1.2.2p1, in that the configure script
+can't find the installed OpenSSL libraries.  The problem is actually
+a small glitch that is easily solved with the following patch to be
+applied to the OpenSSH distribution:
+
+--- openssh-1.2.2p1/configure.in.orig	Thu Mar 23 18:56:58 2000
++++ openssh-1.2.2p1/configure.in	Thu Mar 23 18:55:05 2000
+@@ -152,10 +152,10 @@
+ AC_MSG_CHECKING([for OpenSSL/SSLeay directory])
+ for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
+ 	if test ! -z "$ssldir" ; then
+-		LIBS="$saved_LIBS -L$ssldir"
++		LIBS="$saved_LIBS -L$ssldir/lib"
+ 		CFLAGS="$CFLAGS -I$ssldir/include"
+ 		if test "x$need_dash_r" = "x1" ; then
+-			LIBS="$LIBS -R$ssldir"
++			LIBS="$LIBS -R$ssldir/lib"
+ 		fi
+ 	fi
+ 	LIBS="$LIBS -lcrypto"
+--- openssh-1.2.2p1/configure.orig	Thu Mar 23 18:55:02 2000
++++ openssh-1.2.2p1/configure	Thu Mar 23 18:57:08 2000
+@@ -1890,10 +1890,10 @@
+ echo "configure:1891: checking for OpenSSL/SSLeay directory" >&5
+ for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
+ 	if test ! -z "$ssldir" ; then
+-		LIBS="$saved_LIBS -L$ssldir"
++		LIBS="$saved_LIBS -L$ssldir/lib"
+ 		CFLAGS="$CFLAGS -I$ssldir/include"
+ 		if test "x$need_dash_r" = "x1" ; then
+-			LIBS="$LIBS -R$ssldir"
++			LIBS="$LIBS -R$ssldir/lib"
+ 		fi
+ 	fi
+ 	LIBS="$LIBS -lcrypto"
+
