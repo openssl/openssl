@@ -127,6 +127,8 @@ void CONF_free(LHASH *conf);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
 
+void OPENSSL_config(void);
+
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */
 
@@ -170,7 +172,8 @@ int CONF_modules_load(CONF *cnf, char *appname, unsigned long flags);
 int CONF_modules_load_file(char *filename, char *appname, unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-int CONF_module_add(char *name, conf_init_func *ifunc, conf_finish_func *ffunc);
+int CONF_module_add(const char *name, conf_init_func *ifunc,
+		    conf_finish_func *ffunc);
 
 char *CONF_imodule_get_name(CONF_IMODULE *md);
 char *CONF_imodule_get_value(CONF_IMODULE *md);

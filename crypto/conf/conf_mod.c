@@ -109,7 +109,7 @@ static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
 static int module_run(CONF *cnf, char *name, char *value, unsigned long flags);
-static CONF_MODULE *module_add(DSO *dso, char *name,
+static CONF_MODULE *module_add(DSO *dso, const char *name,
 			conf_init_func *ifunc, conf_finish_func *ffunc);
 static CONF_MODULE *module_find(char *name);
 static int module_init(CONF_MODULE *pmod, char *name, char *value, CONF *cnf);
@@ -262,7 +262,7 @@ static CONF_MODULE *module_load_dso(CONF *cnf, char *name, char *value, unsigned
 	}
 
 /* add module to list */
-static CONF_MODULE *module_add(DSO *dso, char *name,
+static CONF_MODULE *module_add(DSO *dso, const char *name,
 			conf_init_func *ifunc, conf_finish_func *ffunc)
 	{
 	CONF_MODULE *tmod = NULL;
@@ -445,7 +445,8 @@ static void module_finish(CONF_IMODULE *imod)
 
 /* Add a static module to OpenSSL */
 
-int CONF_module_add(char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
+int CONF_module_add(const char *name, conf_init_func *ifunc, 
+		    conf_finish_func *ffunc)
 	{
 	if (module_add(NULL, name, ifunc, ffunc))
 		return 1;
