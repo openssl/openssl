@@ -89,8 +89,9 @@ extern "C" {
  * using "long long's", are 32bit, and are not using my assembler code. */
 #if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
     defined(OPENSSL_SYS_WIN32) || defined(linux)
-#undef BN_DIV2W
-#define BN_DIV2W
+# ifndef BN_DIV2W
+#  define BN_DIV2W
+# endif
 #endif
 
 /* assuming long is 64bit - this is the DEC Alpha
