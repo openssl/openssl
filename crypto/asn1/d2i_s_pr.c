@@ -92,6 +92,7 @@ DSA *d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length)
 		== NULL) goto err_bn;
 
 	M_ASN1_INTEGER_free(bs);
+	bs = NULL;
 
 	M_ASN1_D2I_Finish_2(a);
 err_bn:
