@@ -36,6 +36,7 @@ B<openssl> B<ca>
 [B<-batch>]
 [B<-msie_hack>]
 [B<-extensions section>]
+[B<-extfile section>]
 
 =head1 DESCRIPTION
 
@@ -162,9 +163,16 @@ and all certificates will be certified automatically.
 =item B<-extensions section>
 
 the section of the configuration file containing certificate extensions
-to be added when a certificate is issued. If no extension section is
-present then a V1 certificate is created. If the extension section
-is present (even if it is empty) then a V3 certificate is created.
+to be added when a certificate is issued (defaults to B<x509_extensions>
+unless the B<-extfile> option is used). If no extension section is
+present then, a V1 certificate is created. If the extension section
+is present (even if it is empty), then a V3 certificate is created.
+
+=item B<-extfile file>
+
+an additional configuration file to read certificate extensions from
+(using the default section unless the B<-extensions> option is also
+used).
 
 =back
 

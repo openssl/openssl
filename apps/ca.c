@@ -169,6 +169,7 @@ static char *ca_usage[]={
 " -msie_hack      - msie modifications to handle all those universal strings\n",
 " -revoke file    - Revoke a certificate (given in file)\n",
 " -extensions ..  - Extension section (override value in config file)\n",
+" -extfile file   - Configuration file with X509v3 extentions to add\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
 " -engine e       - use engine e, possibly a hardware device.\n",
 " -status serial  - Shows certificate status given the serial number\n",
@@ -215,6 +216,7 @@ static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
 static int check_time_format(char *str);
 static LHASH *conf=NULL;
+static LHASH *extconf=NULL;
 static char *section=NULL;
 
 static int preserve=0;
@@ -260,6 +262,7 @@ int MAIN(int argc, char **argv)
 	char *outdir=NULL;
 	char *serialfile=NULL;
 	char *extensions=NULL;
+	char *extfile=NULL;
 	char *crl_ext=NULL;
 	BIGNUM *serial=NULL;
 	char *startdate=NULL;
@@ -437,6 +440,11 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			extensions= *(++argv);
+			}
+		else if (strcmp(*argv,"-extfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			extfile= *(++argv);
 			}
 		else if (strcmp(*argv,"-status") == 0)
 			{
@@ -910,12 +918,36 @@ bad:
 			goto err;
 	  	}
 
+ 	/*****************************************************************/
+	/* Read extentions config file                                   */
+	if (extfile)
+		{
+		long errorline;
+		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
+			{
+			if (errorline <= 0)
+				BIO_printf(bio_err, "ERROR: loading the config file '%s'\n",
+					extfile);
+			else
+				BIO_printf(bio_err, "ERROR: on line %ld of config file '%s'\n",
+					errorline,extfile);
+			ret = 1;
+			goto err;
+			}
+
+		if (verbose)
+			BIO_printf(bio_err, "Succesfully loaded extensions file %s\n", extfile);
+
+		/* We can have sections in the ext file */
+		if (!extensions && !(extensions = CONF_get_string(extconf, "default", "extensions")))
+			extensions = "default";
+                }
+
 	/*****************************************************************/
 	if (req || gencrl)
 		{
 		if (outfile != NULL)
 			{
-
 			if (BIO_write_filename(Sout,outfile) <= 0)
 				{
 				perror(outfile);
@@ -965,25 +997,33 @@ bad:
 			lookup_fail(section,ENV_SERIAL);
 			goto err;
 			}
-		if (!extensions)
+
+		if (!extconf)
 			{
-			extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
+			/* no '-extfile' option, so we look for extensions
+			 * in the main configuration file */
 			if (!extensions)
-				ERR_clear_error();
-			}
-		if (extensions)
-			{
-			/* Check syntax of file */
-			X509V3_CTX ctx;
-			X509V3_set_ctx_test(&ctx);
-			X509V3_set_conf_lhash(&ctx, conf);
-			if (!X509V3_EXT_add_conf(conf, &ctx, extensions, NULL))
 				{
-				BIO_printf(bio_err,
-				 "Error Loading extension section %s\n",
+				extensions=CONF_get_string(conf,section,
+								ENV_EXTENSIONS);
+				if (!extensions)
+					ERR_clear_error();
+				}
+			if (extensions)
+				{
+				/* Check syntax of file */
+				X509V3_CTX ctx;
+				X509V3_set_ctx_test(&ctx);
+				X509V3_set_conf_lhash(&ctx, conf);
+				if (!X509V3_EXT_add_conf(conf, &ctx, extensions,
+								NULL))
+					{
+					BIO_printf(bio_err,
+				 	"Error Loading extension section %s\n",
 								 extensions);
-				ret = 1;
-				goto err;
+					ret = 1;
+					goto err;
+					}
 				}
 			}
 
@@ -2039,11 +2079,47 @@ again2:
 
 		ci->extensions = NULL;
 
+		/* Initialize the context structure */
 		X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
-		X509V3_set_conf_lhash(&ctx, lconf);
 
-		if (!X509V3_EXT_add_conf(lconf, &ctx, ext_sect, ret)) goto err;
+		if (extconf)
+			{
+			if (verbose)
+				BIO_printf(bio_err, "Extra configuration file found\n");
+ 
+			/* Use the extconf configuration db LHASH */
+			X509V3_set_conf_lhash(&ctx, extconf);
+ 
+			/* Test the structure (needed?) */
+			/* X509V3_set_ctx_test(&ctx); */
 
+			/* Adds exts contained in the configuration file */
+			if (!X509V3_EXT_add_conf(extconf, &ctx, ext_sect,ret))
+				{
+				BIO_printf(bio_err,
+				    "ERROR: adding extensions in section %s\n",
+								ext_sect);
+				ERR_print_errors(bio_err);
+				goto err;
+				}
+			if (verbose)
+				BIO_printf(bio_err, "Successfully added extensions from file.\n");
+			}
+		else if (ext_sect)
+			{
+			/* We found extensions to be set from config file */
+			X509V3_set_conf_lhash(&ctx, lconf);
+
+			if(!X509V3_EXT_add_conf(lconf, &ctx, ext_sect, ret))
+				{
+				BIO_printf(bio_err, "ERROR: adding extensions in section %s\n", ext_sect);
+				ERR_print_errors(bio_err);
+				goto err;
+				}
+
+			if (verbose) 
+				BIO_printf(bio_err, "Successfully added extensions from config\n");
+			}
 		}
 
 
@@ -2481,7 +2557,8 @@ static int get_certificate_status(const char *serial, TXT_DB *db)
 			
 	/* Make it Upper Case */
 	for (i=0; row[DB_serial][i] != '\0'; i++)
-		row[DB_serial][i] = toupper((unsigned char)row[DB_serial][i]);
+		row[DB_serial][i] = toupper(row[DB_serial][i]);
+	
 
 	ok=1;
 

@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New '-extfile ...' option to 'openssl ca' for reading X.509v3
+     extensions from a separate configuration file.
+     As when reading extensions from the main configuration file,
+     the '-extensions ...' option may be used for specifying the
+     section to use.
+     [Massimiliano Pala <madwolf@comune.modena.it>]
+
   *) Change PKCS12_key_gen_asc() so it can cope with non null
      terminated strings whose length is passed in the passlen
      parameter, for example from PEM callbacks. This was done
