@@ -211,6 +211,13 @@
 #define EC_POINT_get_affine_coordinates_GFp     EC_POINT_get_affine_coords_GFp
 #undef EC_POINT_set_compressed_coordinates_GFp
 #define EC_POINT_set_compressed_coordinates_GFp EC_POINT_set_compr_coords_GFp
+#undef EC_POINT_set_affine_coordinates_GF2m
+#define EC_POINT_set_affine_coordinates_GF2m    EC_POINT_set_affine_coords_GF2m
+#undef EC_POINT_get_affine_coordinates_GF2m
+#define EC_POINT_get_affine_coordinates_GF2m    EC_POINT_get_affine_coords_GF2m
+#undef EC_POINT_set_compressed_coordinates_GF2m
+#define EC_POINT_set_compressed_coordinates_GF2m \
+                                                EC_POINT_set_compr_coords_GF2m
 #undef ec_GFp_simple_group_set_curve_GFp
 #define ec_GFp_simple_group_set_curve_GFp       ec_GFp_simple_grp_set_curve_GFp
 #undef ec_GFp_simple_group_get_curve_GFp
@@ -246,6 +253,15 @@
 #undef ec_GFp_simple_set_compressed_coordinates_GFp
 #define ec_GFp_simple_set_compressed_coordinates_GFp \
                                                 ec_GFp_smp_set_compr_coords_GFp
+#undef ec_GFp_simple_point_set_affine_coordinates
+#define ec_GFp_simple_point_set_affine_coordinates \
+                                                ec_GFp_smp_pt_set_af_coords
+#undef ec_GFp_simple_point_get_affine_coordinates
+#define ec_GFp_simple_point_get_affine_coordinates \
+                                                ec_GFp_smp_pt_get_af_coords
+#undef ec_GFp_simple_set_compressed_coordinates
+#define ec_GFp_simple_set_compressed_coordinates \
+                                                ec_GFp_smp_set_compr_coords
 #undef ec_GFp_simple_group_check_discriminant
 #define ec_GFp_simple_group_check_discriminant	ec_GFp_simple_grp_chk_discrim
 
