@@ -114,6 +114,7 @@ int MAIN(int argc, char **argv)
 	unsigned char salt[PKCS5_SALT_LEN];
 	char *str=NULL, *passarg = NULL, *pass = NULL;
 	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
+	char *md=NULL;
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0,nosalt=0;
 	const EVP_CIPHER *cipher=NULL,*c;
@@ -254,6 +255,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			hiv= *(++argv);
 			}
+		else if (strcmp(*argv,"-md") == 0)
+			{
+			if (--argc < 1) goto bad;
+			md= *(++argv);
+			}
 		else if	((argv[0][0] == '-') &&
 			((c=EVP_get_cipherbyname(&(argv[0][1]))) != NULL))
 			{
@@ -275,6 +281,8 @@ bad:
 			BIO_printf(bio_err,"%-14s key is the next argument\n","-k");
 			BIO_printf(bio_err,"%-14s key is the first line of the file argument\n","-kfile");
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
+			BIO_printf(bio_err,"%-14s the next argument is the md to use to create a key,\n","-md");
+			BIO_printf(bio_err,"%-14s   one of md2, md5, sha or sha1\n");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
 #ifndef OPENSSL_NO_ENGINE
@@ -296,6 +304,12 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
+
+	if (md && dgst=EVP_get_digestbyname(md)) == NULL)
+		{
+		BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
+		goto end;
+		}
 
 	if (dgst == NULL)
 		{
