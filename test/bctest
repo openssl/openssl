@@ -12,10 +12,22 @@
 
 
 IFS=:
-for dir in $PATH; do
-    bc="$dir/bc"
+try_path=true
+# First we try "bc", then "$dir/bc" for each item in $PATH.
+for dir in dummy:$PATH; do
+    if [ "$try_path" = true ]; then
+      # first iteration
+      bc=bc
+      try_path=false
+    else
+      # second and later iterations
+      bc="$dir/bc"
+      if [ ! -f "$bc" ]; then  # '-x' is not available on Ultrix
+        bc=''
+      fi
+    fi
 
-    if [ -x "$bc" -a ! -d "$bc" ]; then
+    if [ ! "$bc" = '' ]; then
         failure=none
 
 

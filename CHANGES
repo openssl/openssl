@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change bctest again: '-x' expressions are not available in all
+     versions of 'test'.
+     [Bodo Moeller]
+
   *) Fix a couple of memory leaks in PKCS7_dataDecode()
      [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
 
