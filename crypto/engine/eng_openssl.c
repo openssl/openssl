@@ -63,32 +63,247 @@
 #include <openssl/engine.h>
 #include <openssl/dso.h>
 
+/* This testing gunk is implemented (and explained) lower down. It also assumes
+ * the application explicitly calls "ENGINE_load_openssl()" because this is no
+ * longer automatic in ENGINE_load_builtin_engines(). */
+#define TEST_ENG_OPENSSL_RC4
+/* #define TEST_ENC_OPENSSL_RC4_FALLBACK */
+/* #define TEST_ENG_OPENSSL_RC4_OTHERS */
+#define TEST_ENG_OPENSSL_RC4_P_INIT
+/* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
+#define TEST_ENG_OPENSSL_SHA
+/* #define TEST_ENG_OPENSSL_SHA_FALLBACK */
+/* #define TEST_ENG_OPENSSL_SHA_OTHERS */
+/* #define TEST_ENG_OPENSSL_SHA_P_INIT */
+/* #define TEST_ENG_OPENSSL_SHA_P_UPDATE */
+/* #define TEST_ENG_OPENSSL_SHA_P_FINAL */
+
+#ifdef TEST_ENG_OPENSSL_RC4
+static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+				const int **nids, int nid);
+#endif
+#ifdef TEST_ENG_OPENSSL_SHA
+static int openssl_digests(ENGINE *e, const EVP_MD **digest,
+				const int **nids, int nid);
+#endif
+
 /* The constants used when creating the ENGINE */
 static const char *engine_openssl_id = "openssl";
 static const char *engine_openssl_name = "Software engine support";
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_openssl(void)
+static ENGINE *engine_openssl(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
 		return NULL;
-	if(!ENGINE_set_id(ret, engine_openssl_id) ||
-			!ENGINE_set_name(ret, engine_openssl_name) ||
+	if(!ENGINE_set_id(ret, engine_openssl_id)
+			|| !ENGINE_set_name(ret, engine_openssl_name)
 #ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, RSA_get_default_method()) ||
+			|| !ENGINE_set_RSA(ret, RSA_get_default_method())
 #endif
 #ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, DSA_get_default_method()) ||
+			|| !ENGINE_set_DSA(ret, DSA_get_default_method())
 #endif
 #ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, DH_get_default_method()) ||
+			|| !ENGINE_set_DH(ret, DH_get_default_method())
 #endif
-			!ENGINE_set_RAND(ret, RAND_SSLeay()))
+			|| !ENGINE_set_RAND(ret, RAND_SSLeay())
+#ifdef TEST_ENG_OPENSSL_RC4
+			|| !ENGINE_set_ciphers(ret, openssl_ciphers)
+#endif
+#ifdef TEST_ENG_OPENSSL_SHA
+			|| !ENGINE_set_digests(ret, openssl_digests)
+#endif
+			)
 		{
 		ENGINE_free(ret);
 		return NULL;
 		}
 	return ret;
 	}
+
+void ENGINE_load_openssl(void)
+	{
+	ENGINE *toadd = engine_openssl();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	/* If the "add" worked, it gets a structural reference. So either way,
+	 * we release our just-created reference. */
+	ENGINE_free(toadd);
+	ERR_clear_error();
+	}
+
+#ifdef TEST_ENG_OPENSSL_RC4
+/* This section of code compiles an "alternative implementation" of two modes of
+ * RC4 into this ENGINE. The result is that EVP_CIPHER operation for "rc4"
+ * should under normal circumstances go via this support rather than the default
+ * EVP support. There are other symbols to tweak the testing;
+ *    TEST_ENC_OPENSSL_RC4_FALLBACK - declare support for "-1" so that all
+ *        uncached cipher lookups check with this ENGINE (ie. it'll get asked
+ *        about other ciphers, but hopefully not more than once for each nid).
+ *    TEST_ENC_OPENSSL_RC4_OTHERS - print a one line message to stderr each time
+ *        we're asked for a cipher we don't support (should only happen in
+ *        combination with the "FALLBACK" case).
+ *    TEST_ENG_OPENSSL_RC4_P_INIT - print a one line message to stderr each time
+ *        the "init_key" handler is called.
+ *    TEST_ENG_OPENSSL_RC4_P_CIPHER - ditto for the "cipher" handler.
+ */
+#include <openssl/evp.h>
+#include <openssl/rc4.h>
+#define TEST_RC4_KEY_SIZE		16
+#ifdef TEST_ENC_OPENSSL_RC4_FALLBACK
+static int test_cipher_nids[] = {-1};
+static int test_cipher_nids_number = 1;
+#else
+static int test_cipher_nids[] = {NID_rc4,NID_rc4_40};
+static int test_cipher_nids_number = 2;
+#endif
+typedef struct {
+	unsigned char key[TEST_RC4_KEY_SIZE];
+	RC4_KEY ks;
+	} TEST_RC4_KEY;
+#define test(ctx) ((TEST_RC4_KEY *)(ctx)->cipher_data)
+static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			const unsigned char *iv, int enc)
+	{
+#ifdef TEST_ENG_OPENSSL_RC4_P_INIT
+	fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
+#endif
+	memcpy(&test(ctx)->key[0],key,EVP_CIPHER_CTX_key_length(ctx));
+	RC4_set_key(&test(ctx)->ks,EVP_CIPHER_CTX_key_length(ctx),
+		test(ctx)->key);
+	return 1;
+	}
+static int test_rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		      const unsigned char *in, unsigned int inl)
+	{
+#ifdef TEST_ENG_OPENSSL_RC4_P_CIPHER
+	fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_cipher() called\n");
+#endif
+	RC4(&test(ctx)->ks,inl,in,out);
+	return 1;
+	}
+static const EVP_CIPHER test_r4_cipher=
+	{
+	NID_rc4,
+	1,TEST_RC4_KEY_SIZE,0,
+	EVP_CIPH_VARIABLE_LENGTH,
+	test_rc4_init_key,
+	test_rc4_cipher,
+	NULL,
+	sizeof(TEST_RC4_KEY),
+	NULL,
+	NULL,
+	NULL
+	};
+static const EVP_CIPHER test_r4_40_cipher=
+	{
+	NID_rc4_40,
+	1,5 /* 40 bit */,0,
+	EVP_CIPH_VARIABLE_LENGTH,
+	test_rc4_init_key,
+	test_rc4_cipher,
+	NULL,
+	sizeof(TEST_RC4_KEY),
+	NULL, 
+	NULL,
+	NULL
+	};
+static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+			const int **nids, int nid)
+	{
+	if(!cipher)
+		{
+		/* We are returning a list of supported nids */
+		*nids = test_cipher_nids;
+		return test_cipher_nids_number;
+		}
+	/* We are being asked for a specific cipher */
+	if(nid == NID_rc4)
+		*cipher = &test_r4_cipher;
+	else if(nid == NID_rc4_40)
+		*cipher = &test_r4_40_cipher;
+	else
+		{
+#ifdef TEST_ENG_OPENSSL_RC4_OTHERS
+		fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) returning NULL for "
+				"nid %d\n", nid);
+#endif
+		*cipher = NULL;
+		return 0;
+		}
+	return 1;
+	}
+#endif
+
+#ifdef TEST_ENG_OPENSSL_SHA
+/* Much the same sort of comment as for TEST_ENG_OPENSSL_RC4 */
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#ifdef TEST_ENC_OPENSSL_SHA_FALLBACK
+static int test_digest_nids[] = {-1};
+static int test_digest_nids_number = 1;
+#else
+static int test_digest_nids[] = {NID_sha1};
+static int test_digest_nids_number = 1;
+#endif
+static int test_sha1_init(EVP_MD_CTX *ctx)
+	{
+#ifdef TEST_ENG_OPENSSL_SHA_P_INIT
+	fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_init() called\n");
+#endif
+	return SHA1_Init(ctx->md_data);
+	}
+static int test_sha1_update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{
+#ifdef TEST_ENG_OPENSSL_SHA_P_UPDATE
+	fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_update() called\n");
+#endif
+	return SHA1_Update(ctx->md_data,data,count);
+	}
+static int test_sha1_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{
+#ifdef TEST_ENG_OPENSSL_SHA_P_FINAL
+	fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_final() called\n");
+#endif
+	return SHA1_Final(md,ctx->md_data);
+	}
+static const EVP_MD test_sha_md=
+	{
+	NID_sha1,
+	NID_sha1WithRSAEncryption,
+	SHA_DIGEST_LENGTH,
+	0,
+	test_sha1_init,
+	test_sha1_update,
+	test_sha1_final,
+	NULL,
+	NULL,
+	EVP_PKEY_RSA_method,
+	SHA_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(SHA_CTX),
+	};
+static int openssl_digests(ENGINE *e, const EVP_MD **digest,
+			const int **nids, int nid)
+	{
+	if(!digest)
+		{
+		/* We are returning a list of supported nids */
+		*nids = test_digest_nids;
+		return test_digest_nids_number;
+		}
+	/* We are being asked for a specific digest */
+	if(nid == NID_sha1)
+		*digest = &test_sha_md;
+	else
+		{
+#ifdef TEST_ENG_OPENSSL_SHA_OTHERS
+		fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) returning NULL for "
+				"nid %d\n", nid);
+#endif
+		*digest = NULL;
+		return 0;
+		}
+	return 1;
+	}
+#endif
