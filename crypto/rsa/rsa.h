@@ -128,10 +128,8 @@ struct rsa_st
 	int pad;
 	long version;
 	const RSA_METHOD *meth;
-#ifndef OPENSSL_NO_ENGINE
 	/* functional reference if 'meth' is ENGINE-provided */
 	ENGINE *engine;
-#endif
 	BIGNUM *n;
 	BIGNUM *e;
 	BIGNUM *d;

@@ -142,10 +142,8 @@ struct dsa_st
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DSA_METHOD *meth;
-#ifndef OPENSSL_NO_ENGINE
 	/* functional reference if 'meth' is ENGINE-provided */
 	ENGINE *engine;
-#endif
 	};
 
 #define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \

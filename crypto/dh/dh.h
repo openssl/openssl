@@ -119,9 +119,7 @@ struct dh_st
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DH_METHOD *meth;
-#ifndef OPENSSL_NO_ENGINE
 	ENGINE *engine;
-#endif
 	};
 
 #define DH_GENERATOR_2		2
