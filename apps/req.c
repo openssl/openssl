@@ -115,12 +115,16 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int min,int max);
 static void MS_CALLBACK req_cb(int p,int n,char *arg);
 static int req_fix_data(int nid,int *type,int len,int min,int max);
+static int check_end(char *str, char *end);
+static int add_oid_section(LHASH *conf);
 #else
 static int make_REQ();
 static int add_attribute_object();
 static int add_DN_object();
 static void MS_CALLBACK req_cb();
 static int req_fix_data();
+static int check_end();
+static int add_oid_section();
 #endif
 
 #ifndef MONOLITH
@@ -423,6 +427,7 @@ bad:
 				}
 			}
 		}
+		if(!add_oid_section(req_conf)) goto end;
 
 	if ((md_alg == NULL) &&
 		((p=CONF_get_string(req_conf,SECTION,"default_md")) != NULL))
@@ -800,11 +805,13 @@ end:
 		ERR_print_errors(bio_err);
 		}
 	if ((req_conf != NULL) && (req_conf != config)) CONF_free(req_conf);
-	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
-	if (pkey != NULL) EVP_PKEY_free(pkey);
-	if (req != NULL) X509_REQ_free(req);
-	if (x509ss != NULL) X509_free(x509ss);
+	BIO_free(in);
+	BIO_free(out);
+	EVP_PKEY_free(pkey);
+	X509_REQ_free(req);
+	X509_free(x509ss);
+	X509V3_EXT_cleanup();
+	OBJ_cleanup();
 #ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
@@ -816,7 +823,7 @@ X509_REQ *req;
 EVP_PKEY *pkey;
 int attribs;
 	{
-	int ret=0,i,j;
+	int ret=0,i;
 	unsigned char *p,*q;
 	X509_REQ_INFO *ri;
 	char buf[100];
@@ -876,42 +883,18 @@ start:		for (;;)
 			v=(CONF_VALUE *)sk_value(sk,i);
 			p=q=NULL;
 			type=v->name;
-			/* Allow for raw OIDs */
-			/* [n.mm.ooo.ppp] */
-			for (j=0; type[j] != '\0'; j++)
-				{
-				if (	(type[j] == ':') ||
-					(type[j] == ',') ||
-					(type[j] == '.'))
-					p=(unsigned char *)&(type[j+1]);
-				if (type[j] == '[')
-					{
-					p=(unsigned char *)&(type[j+1]);
-					for (j++; type[j] != '\0'; j++)
-						if (type[j] == ']')
-							{
-							q=(unsigned char *)&(type[j]);
-							break;
-							}
-					break;
-					}
-				}
-			if (p != NULL)
-				type=(char *)p;
-			if ((nid=OBJ_txt2nid(type)) == NID_undef)
-				{
-				/* Add a new one if possible */
-				if ((p != NULL) && (q != NULL) && (*q == ']'))
-					{
-					*q='\0';
-					nid=OBJ_create((char *)p,NULL,NULL);
-					*q=']';
-					if (nid == NID_undef) goto start;
-					}
-				else
-					goto start;
-				}
-
+			if(!check_end(type,"_min") || !check_end(type,"_max") ||
+				!check_end(type,"_default") ||
+					 !check_end(type,"_value")) continue;
+			/* Skip past any leading X. X: X, etc to allow for
+			 * multiple instances 
+			 */
+			for(p = v->name; *p ; p++) 
+				if ((*p != ':') || (*p != ',') ||
+							 (*p != '.')) break;
+			if (*p) type=(char *)p;
+			/* If OBJ not recognised ignore it */
+			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 			sprintf(buf,"%s_default",v->name);
 			if ((def=CONF_get_string(req_conf,tmp,buf)) == NULL)
 				def="";
@@ -1194,3 +1177,41 @@ int len,min,max;
 		}
 	return(1);
 	}
+
+/* Check if the end of a string matches 'end' */
+static int check_end(str, end)
+char *str;
+char *end;
+{
+	int elen, slen;	
+	char *tmp;
+	elen = strlen(end);
+	slen = strlen(str);
+	if(elen > slen) return 1;
+	tmp = str + slen - elen;
+fprintf(stderr, "Matching %s, %s %s\n", str, end, tmp);
+	return strcmp(tmp, end);
+}
+
+static int add_oid_section(conf)
+LHASH *conf;
+{	
+	char *p;
+	STACK *sktmp;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
+	if(!(sktmp = CONF_get_section(conf, p))) {
+		BIO_printf(bio_err, "problem loading oid section %s\n", p);
+		return 0;
+	}
+	for(i = 0; i < sk_num(sktmp); i++) {
+		cnf = (CONF_VALUE *)sk_value(sktmp, i);
+		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
+			BIO_printf(bio_err, "problem creating object %s=%s\n",
+							 cnf->name, cnf->value);
+			return 0;
+		}
+	}
+	return 1;
+}

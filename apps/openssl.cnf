@@ -5,6 +5,15 @@
 
 RANDFILE		= $ENV::HOME/.rnd
 oid_file		= $ENV::HOME/.oid
+oid_section		= new_oids
+
+[ new_oids ]
+
+# We can add new OIDs in here for use by 'ca' and 'req'.
+# Add a simple OID like this:
+# testoid1=1.2.3.4
+# Or use config file substitution like this:
+# testoid2=${testoid1}.5.6
 
 ####################################################################
 [ ca ]
@@ -92,7 +101,7 @@ commonName_max			= 64
 emailAddress			= Email Address
 emailAddress_max		= 40
 
-SET-ex3				= SET extension number 3
+# SET-ex3			= SET extension number 3
 
 [ req_attributes ]
 challengePassword		= A challenge password

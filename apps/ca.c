@@ -155,6 +155,7 @@ extern int EF_ALIGNMENT;
 #endif
 
 #ifndef NOPROTO
+static int add_oid_section(LHASH *conf);
 static void lookup_fail(char *name,char *tag);
 static int MS_CALLBACK key_callback(char *buf,int len,int verify);
 static unsigned long index_serial_hash(char **a);
@@ -181,6 +182,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, EVP_MD *dgst,
 	LHASH *conf);
 static int check_time_format(char *str);
 #else
+static int add_oid_section();
 static void lookup_fail();
 static int MS_CALLBACK key_callback();
 static unsigned long index_serial_hash();
@@ -452,6 +454,10 @@ bad:
 				BIO_free(oid_bio);
 				}
 			}
+		}
+		if(!add_oid_section(conf)) {
+			ERR_print_errors(bio_err);
+			goto err;
 		}
 
 	in=BIO_new(BIO_s_file());
@@ -1044,22 +1050,23 @@ bad:
 	/*****************************************************************/
 	ret=0;
 err:
-	if (hex != NULL) BIO_free(hex);
-	if (Cout != NULL) BIO_free(Cout);
-	if (Sout != NULL) BIO_free(Sout);
-	if (out != NULL) BIO_free(out);
-	if (in != NULL) BIO_free(in);
+	BIO_free(hex);
+	BIO_free(Cout);
+	BIO_free(Sout);
+	BIO_free(out);
+	BIO_free(in);
 
-	if (cert_sk != NULL) sk_pop_free(cert_sk,X509_free);
+	sk_pop_free(cert_sk,X509_free);
 
 	if (ret) ERR_print_errors(bio_err);
-	if (serial != NULL) BN_free(serial);
-	if (db != NULL) TXT_DB_free(db);
-	if (pkey != NULL) EVP_PKEY_free(pkey);
-	if (x509 != NULL) X509_free(x509);
-	if (crl != NULL) X509_CRL_free(crl);
-	if (conf != NULL) CONF_free(conf);
+	BN_free(serial);
+	TXT_DB_free(db);
+	EVP_PKEY_free(pkey);
+	X509_free(x509);
+	X509_CRL_free(crl);
+	CONF_free(conf);
 	X509V3_EXT_cleanup();
+	OBJ_cleanup();
 	EXIT(ret);
 	}
 
@@ -2009,3 +2016,25 @@ char *str;
 	return(ASN1_UTCTIME_check(&tm));
 	}
 
+static int add_oid_section(conf)
+LHASH *conf;
+{	
+	char *p;
+	STACK *sktmp;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
+	if(!(sktmp = CONF_get_section(conf, p))) {
+		BIO_printf(bio_err, "problem loading oid section %s\n", p);
+		return 0;
+	}
+	for(i = 0; i < sk_num(sktmp); i++) {
+		cnf = (CONF_VALUE *)sk_value(sktmp, i);
+		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
+			BIO_printf(bio_err, "problem creating object %s=%s\n",
+							 cnf->name, cnf->value);
+			return 0;
+		}
+	}
+	return 1;
+}
