@@ -52,6 +52,12 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 
 install:
+	-@if [ "x`echo x $(EX_LIBS) | grep RSAglue`" != x ]; then \
+	    echo "installing libRSAglue.a"; \
+	    cp $(LIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/libRSAglue.a; \
+	    $(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/libRSAglue.a; \
+	    chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/libRSAglue.a; \
+	fi
 
 #	@for i in $(EXHEADER) ; \
 #	do  \
