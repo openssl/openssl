@@ -451,6 +451,7 @@ static int hwcrhk_finish()
 		goto err;
 		}
  err:
+	logstream = NULL;
 	hwcrhk_dso = NULL;
 	p_hwcrhk_Init = NULL;
 	p_hwcrhk_Finish = NULL;
