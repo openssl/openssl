@@ -188,7 +188,7 @@ apps.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 apps.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 apps.o: ../include/openssl/sha.h ../include/openssl/stack.h
 apps.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-apps.o: ../include/openssl/x509_vfy.h apps.c apps.h
+apps.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.c apps.h
 asn1pars.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 asn1pars.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 asn1pars.o: ../include/openssl/buffer.h ../include/openssl/cast.h
