@@ -208,6 +208,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a function you should not call"},
 {ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
 {ERR_R_INTERNAL_ERROR			,"internal error"},
+{ERR_R_DISABLED				,"called a function that was disabled at compile-time"},
 
 {0,NULL},
 	};
