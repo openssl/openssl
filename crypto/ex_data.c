@@ -279,9 +279,8 @@ static int ex_data_check(void)
 #define EX_DATA_CHECK(iffail) if(!ex_data && !ex_data_check()) {iffail}
 
 /* This "inner" callback is used by the callback function that follows it */
-static void def_cleanup_util_cb(void *v)
+static void def_cleanup_util_cb(CRYPTO_EX_DATA_FUNCS *funcs)
 	{
-	CRYPTO_EX_DATA_FUNCS *funcs = (CRYPTO_EX_DATA_FUNCS *)v;
 	OPENSSL_free(funcs);
 	}
 
