@@ -89,7 +89,7 @@ CALC_VERSIONS=	\
 LINK_APP=	\
   ( $(DEBUG);   \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done'`; \
-    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`
+    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$LDCMD $(LDFLAGS) $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
 
@@ -97,7 +97,7 @@ LINK_SO=	\
   ( $(DEBUG);   \
     nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done'`; \
-    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`
+    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$SHAREDCMD $(SHARED_LDFLAGS) $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
