@@ -93,7 +93,8 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	bn_check_num(num);
 	if (num <= 0) return(c1);
 
-	for (;;)
+	/* for (;;) */
+	while (1) /* circumvent egcs-1.1.2 bug */
 		{
 		mul(rp[0],ap[0],w,c1);
 		if (--num == 0) break;
