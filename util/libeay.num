@@ -2159,3 +2159,17 @@ i2d_PrivateKey_bio                      2183
 X509_reject_clear                       2184
 X509_TRUST_set_default                  2185
 d2i_AutoPrivateKey                      2186
+X509_ATTRIBUTE_type_iget                2187
+X509_ATTRIBUTE_rset_data                2188
+X509_get_attr                           2189
+X509_get_attr_count                     2190
+X509_ATTRIBUTE_create_by_NID            2191
+X509_ATTRIBUTE_rset_object              2192
+X509_ATTRIBUTE_count                    2193
+X509_ATTRIBUTE_create_by_OBJ            2194
+X509_ATTRIBUTE_iget_object              2195
+X509_get_attr_by_NID                    2196
+X509_radd_attr                          2197
+X509_ATTRIBUTE_iget_data                2198
+X509_delete_attr                        2199
+X509_get_attr_by_OBJ                    2200

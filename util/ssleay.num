@@ -219,3 +219,5 @@ SSL_set_purpose                         236
 SSL_CTX_set_trust                       237
 SSL_CTX_set_purpose                     238
 SSL_set_trust                           239
+SSL_get_finished                        240
+SSL_get_peer_finished                   241
