@@ -84,10 +84,10 @@ const int STORE_param_sizes[STORE_PARAM_TYPE_NUM+1] =
 const int STORE_attr_sizes[STORE_ATTR_TYPE_NUM+1] =
 	{
 	0,
-	-1,			/* FRIENDLYNAME:		C string */
+	-1,			/* FRIENDLYNAME:	C string */
 	SHA_DIGEST_LENGTH,	/* KEYID:		SHA1 digest, 160 bits */
 	SHA_DIGEST_LENGTH,	/* ISSUERKEYID:		SHA1 digest, 160 bits */
-	SHA_DIGEST_LENGTH,	/* SUBJECTKEYID:		SHA1 digest, 160 bits */
+	SHA_DIGEST_LENGTH,	/* SUBJECTKEYID:	SHA1 digest, 160 bits */
 	SHA_DIGEST_LENGTH,	/* ISSUERSERIALHASH:	SHA1 digest, 160 bits */
 	sizeof(X509_NAME *),	/* ISSUER:		X509_NAME * */
 	sizeof(BIGNUM *),	/* SERIAL:		BIGNUM * */
