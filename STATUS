@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/18 10:24:02 $
+  ______________                           $Date: 2002/12/24 10:38:05 $
 
   DEVELOPMENT STATE
 
@@ -14,7 +14,9 @@
        Windows CE on HPC 2000				- PASSED
        Windows CE on PocketPC 2000			- PASSED
        Windows CE on PocketPC 2002			- PASSED
-       VMS (on any platform, DEC C)			- ERROR
+       VMS (>=6.0 on any platform, DEC C)		- ERROR
+							  (errors fixed
+							  PR: 407, 413)
        Windows XP, with Kerberos 5			- ERROR
        Windows 2000 (Cygwin)				- ERROR (PR: 404)
     o  OpenSSL 0.9.7-beta5: Released on December  5th, 2002
