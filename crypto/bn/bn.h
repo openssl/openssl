@@ -81,6 +81,22 @@
 extern "C" {
 #endif
 
+/* These preprocessor symbols control various aspects of the bignum headers and
+ * library code. They're not defined by any "normal" configuration, as they are
+ * intended for development and testing purposes. NB: defining all three can be
+ * useful for debugging application code as well as openssl itself.
+ *
+ * BN_DEBUG - turn on various debugging alterations to the bignum code
+ * BN_DEBUG_RAND - uses random poisoning of unused words to trip up
+ * mismanagement of bignum internals. You must also define BN_DEBUG.
+ * BN_STRICT - disables anything (not already caught by BN_DEBUG) that uses the
+ * old ambiguity over zero representation. At some point, this behaviour should
+ * become standard.
+ */
+/* #define BN_DEBUG */
+/* #define BN_DEBUG_RAND */
+/* #define BN_STRICT */
+
 #ifdef OPENSSL_SYS_VMS
 #undef BN_LLONG /* experimental, so far... */
 #endif
@@ -344,7 +360,11 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 /* Note that BN_abs_is_word didn't work reliably for w == 0 until 0.9.8 */
 #define BN_abs_is_word(a,w) ((((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w))) || \
 				(((w) == 0) && ((a)->top == 0)))
+#ifdef BN_STRICT
+#define BN_is_zero(a)       ((a)->top == 0)
+#else
 #define BN_is_zero(a)       BN_abs_is_word(a,0)
+#endif
 #define BN_is_one(a)        (BN_abs_is_word((a),1) && !(a)->neg)
 #define BN_is_word(a,w)     (BN_abs_is_word((a),(w)) && (!(w) || !(a)->neg))
 #define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
@@ -617,8 +637,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
  * defined. This not only improves external code, it provides more test
  * coverage for openssl's own code.
  */
-
-/* #define BN_DEBUG_RAND */
 
 #ifdef BN_DEBUG
 
