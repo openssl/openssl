@@ -11,6 +11,10 @@ B<openssl> B<ocsp>
 [B<-issuer file>]
 [B<-cert file>]
 [B<-serial n>]
+[B<-signer file>]
+[B<-signkey file>]
+[B<-sign_other file>]
+[B<-no_certs>]
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
@@ -20,26 +24,35 @@ B<openssl> B<ocsp>
 [B<-respin file>]
 [B<-nonce>]
 [B<-no_nonce>]
-[B<-url responder_url>]
+[B<-url URL>]
 [B<-host host:n>]
 [B<-path>]
-[B<-CApath file>]
+[B<-CApath dir>]
 [B<-CAfile file>]
 [B<-VAfile file>]
-[B<-verify_certs file>]
+[B<-validity_period n>]
+[B<-status_age n>]
 [B<-noverify>]
+[B<-verify_other file>]
 [B<-trust_other>]
 [B<-no_intern>]
-[B<-no_sig_verify>]
+[B<-no_signature_verify>]
 [B<-no_cert_verify>]
 [B<-no_chain>]
 [B<-no_cert_checks>]
-[B<-validity_period nsec>]
-[B<-status_age nsec>]
+[B<-port num>]
+[B<-index file>]
+[B<-CA file>]
+[B<-rsigner file>]
+[B<-rkey file>]
+[B<-rother file>]
+[B<-resp_no_certs>]
+[B<-nmin n>]
+[B<-ndays n>]
+[B<-resp_key_id>]
+[B<-nrequest n>]
 
 =head1 DESCRIPTION
-
-B<WARNING: this documentation is preliminary and subject to change.>
 
 The Online Certificate Status Protocol (OCSP) enables applications to
 determine the (revocation) state of an identified certificate (RFC 2560).
@@ -83,6 +96,10 @@ the B<signkey> option is not present then the private key is read
 from the same file as the certificate. If neither option is specified then
 the OCSP request is not signed.
 
+=item B<-sign_other filename>
+
+Additional certificates to include in the signed request.
+
 =item B<-nonce>, B<-no_nonce>
 
 Add an OCSP nonce extension to a request or disable OCSP nonce addition.
@@ -120,7 +137,7 @@ or "/" by default.
 file or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
 
-=item B<-verify_certs file>
+=item B<-verify_other file>
 
 file containing additional certificates to search when attempting to locate
 the OCSP response signing certificate. Some responders omit the actual signer's
@@ -151,7 +168,7 @@ ignore certificates contained in the OCSP response when searching for the
 signers certificate. With this option the signers certificate must be specified
 with either the B<-verify_certs> or B<-VAfile> options.
 
-=item B<-no_sig_verify>
+=item B<-no_signature_verify>
 
 don't check the signature on the OCSP response. Since this option tolerates invalid
 signatures on OCSP responses it will normally only be used for testing purposes.
