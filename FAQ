@@ -167,8 +167,8 @@ you if you want to use OpenSSL.  For information on intellectual
 property rights, please consult a lawyer.  The OpenSSL team does not
 offer legal advice.
 
-You can configure OpenSSL so as not to use RC5 and IDEA by using
- ./config no-rc5 no-idea
+You can configure OpenSSL so as not to use IDEA, MDC2 and RC5 by using
+ ./config no-idea no-mdc2 no-rc5
 
 
 * Can I use OpenSSL with GPL software?
