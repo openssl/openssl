@@ -270,7 +270,7 @@ my %table=(
 "debug-linux-elf","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
-"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::::",
+"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::::",
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-x86",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
