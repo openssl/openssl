@@ -211,6 +211,13 @@ err:
 	return(0);
 	}
 
+int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other)
+	{
+	p7->type = OBJ_nid2obj(type);
+	p7->d.other = other;
+	return 1;
+	}
+
 int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 	{
 	int i,j,nid;

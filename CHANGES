@@ -4,6 +4,13 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) New function PKCS7_set0_type_other() this initializes a PKCS7 
+     structure of type "other".
+     [Steve Henson]
+
+  *) Correctly initialize digested data content type in PKCS7_set_type().
+     [Steve Henson]
+
   *) Fix prime generation loop in crypto/bn/bn_prime.pl by making
      sure the loop does correctly stop and breaking ("division by zero")
      modulus operations are not performed. The (pre-generated) prime

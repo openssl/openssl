@@ -308,6 +308,7 @@ DECLARE_ASN1_NDEF_FUNCTION(PKCS7)
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 
 int PKCS7_set_type(PKCS7 *p7, int type);
+int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other);
 int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	const EVP_MD *dgst);
