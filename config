@@ -27,6 +27,7 @@ RELEASE=`(uname -r) 2>/dev/null` || RELEASE="unknown"
 SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
 VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
 
+
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
 # We need to work around FreeBSD 1.1.5.1 
@@ -50,6 +51,8 @@ if [ "x$XREL" != "x" ]; then
 	    4.2MP)
 		if [ "x$VERSION" = "x2.1.1" ]; then
 		    echo "${MACHINE}-whatever-unixware211"; exit 0
+		elif [ "x$VERSION" = "x2.1.2" ]; then
+		    echo "${MACHINE}-whatever-unixware212"; exit 0
 		else
 		    echo "${MACHINE}-whatever-unixware2"; exit 0
 		fi
@@ -57,8 +60,10 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
-	    5*)
-		echo "${MACHINE}-sco-unixware7"; exit 0
+	    5)
+		if [ "x$VERSION" = "x7" ]; then
+		    echo "${MACHINE}-sco-unixware7"; exit 0
+		fi
 		;;
 	esac
     fi
