@@ -656,8 +656,10 @@ bad:
 			break;
 			}
 		}
-#ifdef RL_DEBUG
 	else
+		ERR_clear_error();
+#ifdef RL_DEBUG
+	if (!p)
 		BIO_printf(bio_err, "DEBUG: unique_subject undefined\n", p);
 #endif
 #ifdef RL_DEBUG
