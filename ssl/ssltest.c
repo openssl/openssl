@@ -126,12 +126,12 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>
 #include "../crypto/bio/bss_file.c"
 #endif
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #  define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
 #  define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"
 #else
@@ -145,11 +145,11 @@
 #define COMP_ZLIB	2
 
 static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 static void free_tmp_rsa(void);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static DH *get_dh512(void);
 static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
@@ -183,18 +183,18 @@ static void sv_usage(void)
 	fprintf(stderr," -reuse        - use session-id reuse\n");
 	fprintf(stderr," -num <val>    - number of connections to perform\n");
 	fprintf(stderr," -bytes <val>  - number of bytes to swap between client/server\n");
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	fprintf(stderr," -dhe1024      - use 1024 bit key (safe prime) for DHE\n");
 	fprintf(stderr," -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
 	fprintf(stderr," -no_dhe       - disable DHE\n");
 #endif
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 	fprintf(stderr," -ssl3         - use SSLv3\n");
 #endif
-#ifndef NO_TLS1
+#ifndef OPENSSL_NO_TLS1
 	fprintf(stderr," -tls1         - use TLSv1\n");
 #endif
 	fprintf(stderr," -CApath arg   - PEM format directory of CA's\n");
@@ -230,7 +230,7 @@ static void print_details(SSL *c_ssl, const char *prefix)
 			{
 			if (0) 
 				;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			else if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
 				&& pkey->pkey.rsa->n != NULL)
 				{
@@ -238,7 +238,7 @@ static void print_details(SSL *c_ssl, const char *prefix)
 					BN_num_bits(pkey->pkey.rsa->n));
 				}
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			else if (pkey->type == EVP_PKEY_DSA && pkey->pkey.dsa != NULL
 				&& pkey->pkey.dsa->p != NULL)
 				{
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
 	SSL *c_ssl,*s_ssl;
 	int number=1,reuse=0;
 	long bytes=1L;
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	DH *dh;
 	int dhe1024 = 0, dhe1024dsa = 0;
 #endif
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 			debug=1;
 		else if	(strcmp(*argv,"-reuse") == 0)
 			reuse=1;
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 		else if	(strcmp(*argv,"-dhe1024") == 0)
 			dhe1024=1;
 		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
@@ -527,7 +527,7 @@ bad:
 			}
 		}
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	if (ssl2)
 		meth=SSLv2_method();
 	else 
@@ -539,7 +539,7 @@ bad:
 	else
 		meth=SSLv23_method();
 #else
-#ifdef NO_SSL2
+#ifdef OPENSSL_NO_SSL2
 	meth=SSLv3_method();
 #else
 	meth=SSLv2_method();
@@ -560,7 +560,7 @@ bad:
 		SSL_CTX_set_cipher_list(s_ctx,cipher);
 		}
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (!no_dhe)
 		{
 		if (dhe1024dsa)
@@ -580,7 +580,7 @@ bad:
 	(void)no_dhe;
 #endif
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	SSL_CTX_set_tmp_rsa_callback(s_ctx,tmp_rsa_cb);
 #endif
 
@@ -636,7 +636,7 @@ bad:
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 	if (c_ssl  &&  c_ssl->kssl_ctx)
                 {
                 char	localhost[257];
@@ -647,7 +647,7 @@ bad:
                                 localhost);
 			}
 		}
-#endif    /* NO_KRB5  */
+#endif    /* OPENSSL_NO_KRB5  */
 
 	for (i=0; i<number; i++)
 		{
@@ -695,7 +695,7 @@ end:
 
 	if (bio_stdout != NULL) BIO_free(bio_stdout);
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	free_tmp_rsa();
 #endif
 	ERR_free_strings();
@@ -1411,7 +1411,7 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	return(ok);
 	}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA *rsa_tmp=NULL;
 
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
@@ -1437,7 +1437,7 @@ static void free_tmp_rsa(void)
 	}
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 /* These DH parameters have been generated as follows:
  *    $ openssl dhparam -C -noout 512
  *    $ openssl dhparam -C -noout 1024

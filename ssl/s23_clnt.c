@@ -68,7 +68,7 @@ static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
 static SSL_METHOD *ssl23_get_client_method(int ver)
 	{
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
 #endif
@@ -322,7 +322,7 @@ static int ssl23_get_server_hello(SSL *s)
 	if ((p[0] & 0x80) && (p[2] == SSL2_MT_SERVER_HELLO) &&
 		(p[5] == 0x00) && (p[6] == 0x02))
 		{
-#ifdef NO_SSL2
+#ifdef OPENSSL_NO_SSL2
 		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 		goto err;
 #else

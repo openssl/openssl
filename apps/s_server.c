@@ -70,7 +70,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
@@ -86,11 +86,11 @@ typedef unsigned int u_int;
 #include <openssl/engine.h>
 #include "s_apps.h"
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include <conio.h>
 #endif
 
-#if (defined(VMS) && __VMS_VER < 70000000)
+#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
@@ -815,7 +815,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
 
@@ -882,7 +882,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		if (!read_from_sslcon)
 			{
 			FD_ZERO(&readfds);
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 			FD_SET(fileno(stdin),&readfds);
 #endif
 			FD_SET(s,&readfds);
@@ -892,7 +892,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			 * the compiler: if you do have a cast then you can either
 			 * go for (int *) or (void *).
 			 */
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 			/* Under Windows we can't select on stdin: only
 			 * on sockets. As a workaround we timeout the select every
 			 * second and check for any keypress. In a proper Windows
@@ -1294,7 +1294,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#ifndef MSDOS
+#ifndef OPENSSL_SYS_MSDOS
 				sleep(1);
 #endif
 				continue;

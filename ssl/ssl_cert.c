@@ -107,12 +107,11 @@
 #include <stdio.h>
 
 #include "openssl/e_os.h"
-
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 
-#if !defined(WIN32) && !defined(VSM) && !defined(NeXT) && !defined(MAC_OS_pre_X)
+#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) && !defined(NeXT) && !defined(MAC_OS_pre_X)
 #include <dirent.h>
 #endif
 
@@ -188,7 +187,7 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->mask = cert->mask;
 	ret->export_mask = cert->export_mask;
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (cert->rsa_tmp != NULL)
 		{
 		ret->rsa_tmp = cert->rsa_tmp;
@@ -197,7 +196,7 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->rsa_tmp_cb = cert->rsa_tmp_cb;
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (cert->dh_tmp != NULL)
 		{
 		/* DH parameters don't have a reference count */
@@ -280,14 +279,14 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
-#ifndef NO_DH /* avoid 'unreferenced label' warning if NO_DH is defined */
+#ifndef OPENSSL_NO_DH /* avoid 'unreferenced label' warning if OPENSSL_NO_DH is defined */
 err:
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (ret->rsa_tmp != NULL)
 		RSA_free(ret->rsa_tmp);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (ret->dh_tmp != NULL)
 		DH_free(ret->dh_tmp);
 #endif
@@ -324,10 +323,10 @@ void ssl_cert_free(CERT *c)
 		}
 #endif
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (c->rsa_tmp) RSA_free(c->rsa_tmp);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (c->dh_tmp) DH_free(c->dh_tmp);
 #endif
 
@@ -428,11 +427,11 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 #endif
 		}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (sc->peer_rsa_tmp != NULL)
 		RSA_free(sc->peer_rsa_tmp);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (sc->peer_dh_tmp != NULL)
 		DH_free(sc->peer_dh_tmp);
 #endif
@@ -476,7 +475,7 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		i=s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
 	else
 		{
-#ifndef NO_X509_VERIFY
+#ifndef OPENSSL_NO_X509_VERIFY
 		i=X509_verify_cert(&ctx);
 #else
 		i=0;
@@ -586,7 +585,7 @@ static int xname_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	return(X509_NAME_cmp(*a,*b));
 	}
 
-#ifndef NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 /*!
  * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
  * it doesn't really have anything to do with clients (except that a common use
@@ -716,8 +715,8 @@ err:
  * certs may have been added to \c stack.
  */
 
-#ifndef WIN32
-#ifndef VMS			/* XXXX This may be fixed in the future */
+#ifndef OPENSSL_SYS_WIN32
+#ifndef OPENSSL_SYS_VMS		/* XXXX This may be fixed in the future */
 #ifndef MAC_OS_pre_X
 
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,

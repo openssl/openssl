@@ -177,7 +177,7 @@ static ERR_STRING_DATA ERR_str_functs[]=
 	{ERR_PACK(0,SYS_F_BIND,0),		"bind"},
 	{ERR_PACK(0,SYS_F_LISTEN,0),		"listen"},
 	{ERR_PACK(0,SYS_F_ACCEPT,0),		"accept"},
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	{ERR_PACK(0,SYS_F_WSASTARTUP,0),	"WSAstartup"},
 #endif
 	{ERR_PACK(0,SYS_F_OPENDIR,0),		"opendir"},

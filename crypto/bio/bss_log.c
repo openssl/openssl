@@ -66,9 +66,11 @@
 #include <stdio.h>
 #include <errno.h>
 
-#if defined(WIN32)
+#include <openssl/opensslconf.h>
+
+#if defined(OPENSSL_SYS_WIN32)
 #  include <process.h>
-#elif defined(VMS) || defined(__VMS)
+#elif defined(OPENSSL_SYS_VMS)
 #  include <opcdef.h>
 #  include <descrip.h>
 #  include <lib$routines.h>
@@ -85,7 +87,7 @@
 
 #ifndef NO_SYSLOG
 
-#if defined(WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 #define LOG_EMERG	0
 #define LOG_ALERT	1
 #define LOG_CRIT	2
@@ -96,7 +98,7 @@
 #define LOG_DEBUG	7
 
 #define LOG_DAEMON	(3<<3)
-#elif defined(VMS)
+#elif defined(OPENSSL_SYS_VMS)
 /* On VMS, we don't really care about these, but we need them to compile */
 #define LOG_EMERG	0
 #define LOG_ALERT	1
@@ -118,7 +120,7 @@ static int MS_CALLBACK slg_free(BIO *data);
 static void xopenlog(BIO* bp, char* name, int level);
 static void xsyslog(BIO* bp, int priority, const char* string);
 static void xcloselog(BIO* bp);
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 LONG	(WINAPI *go_for_advapi)()	= RegOpenKeyEx;
 HANDLE	(WINAPI *register_event_source)()	= NULL;
 BOOL	(WINAPI *deregister_event_source)()	= NULL;
@@ -241,7 +243,7 @@ static int MS_CALLBACK slg_puts(BIO *bp, const char *str)
 	return(ret);
 	}
 
-#if defined(WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 
 static void xopenlog(BIO* bp, char* name, int level)
 {
@@ -313,7 +315,7 @@ static void xcloselog(BIO* bp)
 	bp->ptr= NULL;
 }
 
-#elif defined(VMS)
+#elif defined(OPENSSL_SYS_VMS)
 
 static int VMS_OPC_target = LOG_DAEMON;
 

@@ -63,7 +63,7 @@
 #ifdef LINUX
 #include <typedefs.h>
 #endif
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 #include <windows.h>
 #endif
 #ifdef SOLARIS
@@ -105,7 +105,7 @@ static unsigned long pthreads_thread_id(void );
 
 #define THREAD_STACK_SIZE (16*1024)
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 
 static HANDLE *lock_cs;
 
@@ -146,7 +146,7 @@ void win32_locking_callback(int mode, int type, char *file, int line)
 		}
 	}
 
-#endif /* WIN32 */
+#endif /* OPENSSL_SYS_WIN32 */
 
 #ifdef SOLARIS
 

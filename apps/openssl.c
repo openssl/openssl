@@ -254,7 +254,7 @@ int main(int Argc, char *Argv[])
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 		strcat(config_name,"/");
 #endif
 		strcat(config_name,OPENSSL_CONF);
@@ -372,7 +372,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	else if ((strncmp(argv[0],"no-",3)) == 0)
 		{
 		BIO *bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		bio_stdout = BIO_push(tmpbio, bio_stdout);
@@ -409,7 +409,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		else /* strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0 */
 			list_type = FUNC_TYPE_CIPHER;
 		bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		bio_stdout = BIO_push(tmpbio, bio_stdout);

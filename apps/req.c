@@ -435,7 +435,7 @@ bad:
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 		strcat(config_name,"/");
 #endif
 		strcat(config_name,OPENSSL_CONF);
@@ -697,7 +697,7 @@ bad:
 			{
 			BIO_printf(bio_err,"writing new private key to stdout\n");
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			{
 			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 			out = BIO_push(tmpbio, out);
@@ -910,7 +910,7 @@ loop:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);

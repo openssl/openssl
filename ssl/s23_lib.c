@@ -110,7 +110,7 @@ SSL_METHOD *sslv23_base_method(void)
 static int ssl23_num_ciphers(void)
 	{
 	return(ssl3_num_ciphers()
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	       + ssl2_num_ciphers()
 #endif
 	    );
@@ -123,7 +123,7 @@ static SSL_CIPHER *ssl23_get_cipher(unsigned int u)
 	if (u < uu)
 		return(ssl3_get_cipher(u));
 	else
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 		return(ssl2_get_cipher(u-uu));
 #else
 		return(NULL);
@@ -143,7 +143,7 @@ static SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p)
 		((unsigned long)p[1]<<8L)|(unsigned long)p[2];
 	c.id=id;
 	cp=ssl3_get_cipher_by_char(p);
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	if (cp == NULL)
 		cp=ssl2_get_cipher_by_char(p);
 #endif

@@ -204,7 +204,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=(char *)ptr;
 		b->init=1;
-#if defined(MSDOS) || defined(WINDOWS)
+#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS)
 		/* Set correct text/binary mode */
 		if (num & BIO_FP_TEXT)
 			_setmode(fileno((FILE *)ptr),_O_TEXT);
@@ -233,7 +233,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret=0;
 			break;
 			}
-#if defined(MSDOS) || defined(WINDOWS)
+#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS)
 		if (!(num & BIO_FP_TEXT))
 			strcat(p,"b");
 		else

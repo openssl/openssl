@@ -63,7 +63,7 @@
 #include <openssl/ssl.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA SSL_str_functs[]=
 	{
 {ERR_PACK(0,SSL_F_CLIENT_CERTIFICATE,0),	"CLIENT_CERTIFICATE"},
@@ -432,7 +432,7 @@ void ERR_load_SSL_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_SSL,SSL_str_functs);
 		ERR_load_strings(ERR_LIB_SSL,SSL_str_reasons);
 #endif

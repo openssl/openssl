@@ -66,7 +66,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
@@ -80,7 +80,7 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 
 static struct hostent *GetHostByName(char *name);
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static void sock_cleanup(void);
 #endif
 static int sock_init(void);
@@ -90,17 +90,17 @@ static int init_server_long(int *sock, int port,char *ip);
 static int do_accept(int acc_sock, int *sock, char **host);
 static int host_ip(char *str, unsigned char ip[4]);
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL	IPPROTO_TCP
 #endif
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static struct WSAData wsa_state;
 static int wsa_init_done=0;
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 static HWND topWnd=0;
 static FARPROC lpTopWndProc=NULL;
 static FARPROC lpTopHookProc=NULL;
@@ -129,10 +129,10 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 	return(FALSE);
 	}
 
-#endif /* WIN32 */
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WIN32 */
+#endif /* OPENSSL_SYS_WINDOWS */
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static void sock_cleanup(void)
 	{
 	if (wsa_init_done)
@@ -146,7 +146,7 @@ static void sock_cleanup(void)
 
 static int sock_init(void)
 	{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	if (!wsa_init_done)
 		{
 		int err;
@@ -163,15 +163,15 @@ static int sock_init(void)
 			return(0);
 			}
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 		EnumTaskWindows(GetCurrentTask(),enumproc,0L);
 		lpTopWndProc=(FARPROC)GetWindowLong(topWnd,GWL_WNDPROC);
 		lpTopHookProc=MakeProcInstance((FARPROC)topHookProc,_hInstance);
 
 		SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopHookProc);
-#endif /* WIN16 */
+#endif /* OPENSSL_SYS_WIN16 */
 		}
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WINDOWS */
 	return(1);
 	}
 
@@ -285,7 +285,7 @@ static int init_server_long(int *sock, int port, char *ip)
 #endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 		perror("bind");
 #endif
 		goto err;
@@ -318,7 +318,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
 
 	if (!sock_init()) return(0);
 
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 redoit:
 #endif
 
@@ -332,7 +332,7 @@ redoit:
 	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		i=WSAGetLastError();
 		BIO_printf(bio_err,"accept error %d\n",i);
 #else

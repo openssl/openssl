@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#if defined(WIN32) || defined(WIN16) || defined(WINDOWS)
-#ifndef MSDOS
-#define MSDOS
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_WINDOWS)
+#ifndef OPENSSL_SYS_MSDOS
+#define OPENSSL_SYS_MSDOS
 #endif
 #endif
 

@@ -65,7 +65,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c"
 #endif
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/dsa.h>
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define MS_CALLBACK     _far _loadds
 #else
 #define MS_CALLBACK

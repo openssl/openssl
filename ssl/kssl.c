@@ -62,7 +62,7 @@
 */
 
 #include <openssl/opensslconf.h>
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 #include <string.h>
 #include <openssl/ssl.h>
 
@@ -73,7 +73,7 @@
  * and we do not link to a .LIB file.
  */
 
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 /* 
  * The purpose of the following pre-processor statements is to provide
  * compatibility with different releases of MIT Kerberos for Windows.
@@ -470,7 +470,7 @@ kssl_krb5_cc_get_principal
 	else
 		return(krb5_x ((cache)->ops->get_princ,(context, cache, principal)));
 	}
-#endif  /* WINDOWS || WIN32 */
+#endif  /* OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32 */
 
 char
 *kstring(char *string)
@@ -1031,11 +1031,11 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 #endif
 	}
 
-#else /* !NO_KRB5 */
+#else /* !OPENSSL_NO_KRB5 */
 
 #ifdef PEDANTIC
 static int dummy=(int)&dummy;
 #endif
 
-#endif	/* !NO_KRB5	*/
+#endif	/* !OPENSSL_NO_KRB5	*/
 

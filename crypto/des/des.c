@@ -59,25 +59,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef MSDOS
-#ifndef VMS
 #include <openssl/opensslconf.h>
+#ifndef OPENSSL_SYS_MSDOS
+#ifndef OPENSSL_SYS_VMS
 #include OPENSSL_UNISTD
-#else /* VMS */
+#else /* OPENSSL_SYS_VMS */
 #ifdef __DECC
 #include <unistd.h>
 #else /* not __DECC */
 #include <math.h>
 #endif /* __DECC */
-#endif /* VMS */
-#else /* MSDOS */
+#endif /* OPENSSL_SYS_VMS */
+#else /* OPENSSL_SYS_MSDOS */
 #include <io.h>
 #endif
 
 #include <time.h>
 #include "des_ver.h"
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #include <types.h>
 #include <stat.h>
 #else
@@ -99,7 +99,7 @@ int uudecode(unsigned char *in,int num,unsigned char *out);
 void des_3cbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule sk1,des_key_schedule sk2,
 	des_cblock *ivec1,des_cblock *ivec2,int enc);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #define EXIT(a) exit(a&0x10000000L)
 #else
 #define EXIT(a) exit(a)
@@ -258,12 +258,12 @@ int main(int argc, char **argv)
 #endif			
 	if (	(in != NULL) &&
 		(out != NULL) &&
-#ifndef MSDOS
+#ifndef OPENSSL_SYS_MSDOS
 		(stat(in,&ins) != -1) &&
 		(stat(out,&outs) != -1) &&
 		(ins.st_dev == outs.st_dev) &&
 		(ins.st_ino == outs.st_ino))
-#else /* MSDOS */
+#else /* OPENSSL_SYS_MSDOS */
 		(strcmp(in,out) == 0))
 #endif
 			{
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
 		EXIT(5);
 		}
 
-#ifdef MSDOS
+#ifdef OPENSSL_SYS_MSDOS
 	/* This should set the file to binary mode. */
 	{
 #include <fcntl.h>
@@ -367,7 +367,7 @@ void doencryption(void)
 	des_cblock kk,k2;
 	FILE *O;
 	int Exit=0;
-#ifndef MSDOS
+#ifndef OPENSSL_SYS_MSDOS
 	static unsigned char buf[BUFSIZE+8],obuf[BUFSIZE+8];
 #else
 	static unsigned char *buf=NULL,*obuf=NULL;

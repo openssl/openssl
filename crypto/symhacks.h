@@ -158,7 +158,7 @@
 #undef ENGINE_set_default_BN_mod_exp_crt
 #define ENGINE_set_default_BN_mod_exp_crt	ENGINE_set_def_BN_mod_exp_crt
 
-#endif /* defined VMS */
+#endif /* defined OPENSSL_SYS_VMS */
 
 
 /* Case insensiteve linking causes problems.... */

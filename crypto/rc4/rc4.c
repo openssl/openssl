@@ -141,7 +141,7 @@ bad:
 			}
 		}
 		
-#ifdef MSDOS
+#ifdef OPENSSL_SYS_MSDOS
 	/* This should set the file to binary mode. */
 	{
 #include <fcntl.h>

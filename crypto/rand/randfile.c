@@ -61,7 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
 #endif
 #ifndef NO_SYS_TYPES_H
@@ -136,7 +136,7 @@ int RAND_write_file(const char *file)
 	FILE *out = NULL;
 	int n;
 	
-#if defined(O_CREAT) && !defined(WIN32)
+#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
 	/* For some reason Win32 can't write to files created this way */
 	
 	/* chmod(..., 0600) is too late to protect the file,
@@ -168,7 +168,7 @@ int RAND_write_file(const char *file)
 		ret+=i;
 		if (n <= 0) break;
                 }
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	/* Try to delete older versions of the file, until there aren't
 	   any */
 	{
@@ -186,7 +186,7 @@ int RAND_write_file(const char *file)
 				      some point... */
 		}
 	}
-#endif /* VMS */
+#endif /* OPENSSL_SYS_VMS */
 
 	fclose(out);
 	memset(buf,0,BUFSIZE);
@@ -214,7 +214,7 @@ const char *RAND_file_name(char *buf, int size)
 		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
 			{
 			strcpy(buf,s);
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 			strcat(buf,"/");
 #endif
 			strcat(buf,RFILE);

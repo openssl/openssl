@@ -57,7 +57,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <openssl/bio.h>
 #include <openssl/rand.h>
@@ -983,7 +983,7 @@ static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,ERR_R_RSA_LIB);
 	return(i);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

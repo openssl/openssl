@@ -1052,7 +1052,7 @@ start:
 	switch (rr->type)
 		{
 	default:
-#ifndef NO_TLS
+#ifndef OPENSSL_NO_TLS
 		/* TLS just ignores unknown message types */
 		if (s->version == TLS1_VERSION)
 			{

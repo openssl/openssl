@@ -87,7 +87,7 @@
 
 #if defined(__FreeBSD__)
 # define USE_TOD
-#elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#elif !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 # define TIMES
 #endif
 #if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(OPENSSL_SYS_MPE) && !defined(__NetBSD__) /* FIXME */
@@ -110,7 +110,7 @@
    The __TMS macro will show if it was.  If it wasn't defined, we should
    undefine TIMES, since that tells the rest of the program how things
    should be handled.				-- Richard Levitte */
-#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
 #undef TIMES
 #endif
 

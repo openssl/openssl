@@ -59,7 +59,7 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -82,7 +82,7 @@ OPENSSL_DECLARE_EXIT
    The __TMS macro will show if it was.  If it wasn't defined, we should
    undefine TIMES, since that tells the rest of the program how things
    should be handled.				-- Richard Levitte */
-#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
 #undef TIMES
 #endif
 
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 	printf("Blowfish raw ecb bytes per sec = %12.3f (%9.3fuS)\n",b,8.0e6/b);
 	printf("Blowfish cbc     bytes per sec = %12.3f (%9.3fuS)\n",c,8.0e6/c);
 	exit(0);
-#if defined(LINT) || defined(MSDOS)
+#if defined(LINT) || defined(OPENSSL_SYS_MSDOS)
 	return(0);
 #endif
 	}

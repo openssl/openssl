@@ -57,7 +57,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <openssl/objects.h>
 
@@ -86,7 +86,7 @@ SSL_METHOD *SSLv2_method(void)
 		}
 	return(&SSLv2_data);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -61,13 +61,13 @@
 #include <openssl/tmdiff.h>
 
 #ifdef TIMEB
-#undef WIN32
+#undef OPENSSL_SYS_WIN32
 #undef TIMES
 #endif
 
-#ifndef MSDOS
-#  ifndef WIN32
-#    if !defined(VMS) || defined(__DECC)
+#ifndef OPENSSL_SYS_MSDOS
+#  ifndef OPENSSL_SYS_WIN32
+#    if !defined(OPENSSL_SYS_VMS) || defined(__DECC)
 #      define TIMES
 #    endif
 #  endif
@@ -85,7 +85,7 @@
    The __TMS macro will show if it was.  If it wasn't defined, we should
    undefine TIMES, since that tells the rest of the program how things
    should be handled.				-- Richard Levitte */
-#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
 #undef TIMES
 #endif
 
@@ -99,7 +99,7 @@
 #include <sys/timeb.h>
 #endif
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 #include <windows.h>
 #endif
 
@@ -121,7 +121,7 @@ typedef struct ms_tm
 #ifdef TIMES
 	struct tms ms_tms;
 #else
-#  ifdef WIN32
+#  ifdef OPENSSL_SYS_WIN32
 	HANDLE thread_id;
 	FILETIME ms_win32;
 #  else
@@ -138,7 +138,7 @@ char *ms_time_new(void)
 	if (ret == NULL)
 		return(NULL);
 	memset(ret,0,sizeof(MS_TM));
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 	ret->thread_id=GetCurrentThread();
 #endif
 	return((char *)ret);
@@ -153,14 +153,14 @@ void ms_time_free(char *a)
 void ms_time_get(char *a)
 	{
 	MS_TM *tm=(MS_TM *)a;
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 	FILETIME tmpa,tmpb,tmpc;
 #endif
 
 #ifdef TIMES
 	times(&tm->ms_tms);
 #else
-#  ifdef WIN32
+#  ifdef OPENSSL_SYS_WIN32
 	GetThreadTimes(tm->thread_id,&tmpa,&tmpb,&tmpc,&(tm->ms_win32));
 #  else
 	ftime(&tm->ms_timeb);
@@ -177,7 +177,7 @@ double ms_time_diff(char *ap, char *bp)
 #ifdef TIMES
 	ret=(b->ms_tms.tms_utime-a->ms_tms.tms_utime)/HZ;
 #else
-# ifdef WIN32
+# ifdef OPENSSL_SYS_WIN32
 	{
 #ifdef __GNUC__
 	signed long long la,lb;
@@ -210,7 +210,7 @@ int ms_time_cmp(char *ap, char *bp)
 #ifdef TIMES
 	d=(b->ms_tms.tms_utime-a->ms_tms.tms_utime)/HZ;
 #else
-# ifdef WIN32
+# ifdef OPENSSL_SYS_WIN32
 	d =(b->ms_win32.dwHighDateTime&0x000fffff)*10+b->ms_win32.dwLowDateTime/1e7;
 	d-=(a->ms_win32.dwHighDateTime&0x000fffff)*10+a->ms_win32.dwLowDateTime/1e7;
 # else

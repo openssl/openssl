@@ -61,7 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
-#ifndef WIN32
+#ifndef OPENSSL_SYS_WIN32
 DSO_METHOD *DSO_METHOD_win32(void)
 	{
 	return NULL;
@@ -273,4 +273,4 @@ static char *win32_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
-#endif /* WIN32 */
+#endif /* OPENSSL_SYS_WIN32 */

@@ -70,7 +70,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/safestack.h>
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #  include "bss_file.c"
 #endif
 
@@ -184,7 +184,7 @@ int str2fmt(char *s)
 		return(FORMAT_UNDEF);
 	}
 
-#if defined(MSDOS) || defined(WIN32) || defined(WIN16)
+#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
 void program_name(char *in, char *out, int size)
 	{
 	int i,n;
@@ -222,7 +222,7 @@ void program_name(char *in, char *out, int size)
 	out[n]='\0';
 	}
 #else
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 void program_name(char *in, char *out, int size)
 	{
 	char *p=in, *q;
@@ -258,10 +258,10 @@ void program_name(char *in, char *out, int size)
 #endif
 #endif
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 int WIN32_rename(char *from, char *to)
 	{
-#ifdef WINNT
+#ifdef OPENSSL_SYS_WINNT
 	int ret;
 /* Note: MoveFileEx() doesn't work under Win95, Win98 */
 

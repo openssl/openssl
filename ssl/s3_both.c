@@ -158,7 +158,7 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p+=i;
 		l=i;
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 		/* MSVC 1.5 does not clear the top bytes of the word unless
 		 * I do this.
 		 */

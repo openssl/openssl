@@ -48,14 +48,14 @@ static COMP_METHOD zlib_method={
  * work.  Therefore, all ZLIB routines are loaded at run time
  * and we do not link to a .LIB file.
  */
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 # include <windows.h>
 
 # define Z_CALLCONV _stdcall
 # define ZLIB_SHARED
 #else
 # define Z_CALLCONV
-#endif /* !(WINDOWS || WIN32) */
+#endif /* !(OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32) */
 
 #ifdef ZLIB_SHARED
 #include <openssl/dso.h>
@@ -188,7 +188,7 @@ COMP_METHOD *COMP_zlib(void)
 #ifdef ZLIB_SHARED
 	if (!zlib_loaded)
 		{
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 		zlib_dso = DSO_load(NULL, "ZLIB", NULL, 0);
 #else
 		zlib_dso = DSO_load(NULL, "z", NULL, 0);

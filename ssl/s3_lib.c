@@ -526,7 +526,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 /* The Kerberos ciphers
 ** 20000107 VRS: And the first shall be last,
 ** in hopes of avoiding the lynx ssl renegotiation problem.
@@ -614,7 +614,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
-#endif	/* NO_KRB5 */
+#endif	/* OPENSSL_NO_KRB5 */
 
 
 #if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
@@ -973,7 +973,7 @@ void ssl3_free(SSL *s)
 		OPENSSL_free(s->s3->wbuf.buf);
 	if (s->s3->rrec.comp != NULL)
 		OPENSSL_free(s->s3->rrec.comp);
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
 #endif
@@ -997,7 +997,7 @@ void ssl3_clear(SSL *s)
 		OPENSSL_free(s->s3->rrec.comp);
 		s->s3->rrec.comp=NULL;
 		}
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
 #endif
@@ -1023,13 +1023,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 	{
 	int ret=0;
 
-#if !defined(NO_DSA) || !defined(NO_RSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
 	if (
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	    cmd == SSL_CTRL_SET_TMP_RSA ||
 	    cmd == SSL_CTRL_SET_TMP_RSA_CB ||
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	    cmd == SSL_CTRL_SET_TMP_DH ||
 	    cmd == SSL_CTRL_SET_TMP_DH_CB ||
 #endif
@@ -1063,7 +1063,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 	case SSL_CTRL_GET_FLAGS:
 		ret=(int)(s->s3->flags);
 		break;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_NEED_TMP_RSA:
 		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
 		    ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
@@ -1096,7 +1096,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		}
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH:
 		{
 			DH *dh = (DH *)parg;
@@ -1142,12 +1142,12 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	{
 	int ret=0;
 
-#if !defined(NO_DSA) || !defined(NO_RSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
 	if (
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	    cmd == SSL_CTRL_SET_TMP_RSA_CB ||
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	    cmd == SSL_CTRL_SET_TMP_DH_CB ||
 #endif
 		0)
@@ -1162,14 +1162,14 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)())
 
 	switch (cmd)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
 		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
 		}
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
 		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -1190,7 +1190,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 
 	switch (cmd)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_NEED_TMP_RSA:
 		if (	(cert->rsa_tmp == NULL) &&
 			((cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
@@ -1235,7 +1235,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		}
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH:
 		{
 		DH *new=NULL,*dh;
@@ -1292,14 +1292,14 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 
 	switch (cmd)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
 		cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
 		}
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
 		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -1461,31 +1461,31 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 
 	alg=s->s3->tmp.new_cipher->algorithms;
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (alg & (SSL_kDHr|SSL_kEDH))
 		{
-#  ifndef NO_RSA
+#  ifndef OPENSSL_NO_RSA
 		p[ret++]=SSL3_CT_RSA_FIXED_DH;
 #  endif
-#  ifndef NO_DSA
+#  ifndef OPENSSL_NO_DSA
 		p[ret++]=SSL3_CT_DSS_FIXED_DH;
 #  endif
 		}
 	if ((s->version == SSL3_VERSION) &&
 		(alg & (SSL_kEDH|SSL_kDHd|SSL_kDHr)))
 		{
-#  ifndef NO_RSA
+#  ifndef OPENSSL_NO_RSA
 		p[ret++]=SSL3_CT_RSA_EPHEMERAL_DH;
 #  endif
-#  ifndef NO_DSA
+#  ifndef OPENSSL_NO_DSA
 		p[ret++]=SSL3_CT_DSS_EPHEMERAL_DH;
 #  endif
 		}
-#endif /* !NO_DH */
-#ifndef NO_RSA
+#endif /* !OPENSSL_NO_DH */
+#ifndef OPENSSL_NO_RSA
 	p[ret++]=SSL3_CT_RSA_SIGN;
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	p[ret++]=SSL3_CT_DSS_SIGN;
 #endif
 	return(ret);

@@ -191,9 +191,9 @@ SSL *SSL_new(SSL_CTX *ctx)
 	if (s == NULL) goto err;
 	memset(s,0,sizeof(SSL));
 
-#ifndef	NO_KRB5
+#ifndef	OPENSSL_NO_KRB5
 	s->kssl_ctx = kssl_ctx_new();
-#endif	/* NO_KRB5 */
+#endif	/* OPENSSL_NO_KRB5 */
 
 	if (ctx->cert != NULL)
 		{
@@ -425,7 +425,7 @@ int SSL_get_fd(SSL *s)
 	return(ret);
 	}
 
-#ifndef NO_SOCK
+#ifndef OPENSSL_NO_SOCK
 int SSL_set_fd(SSL *s,int fd)
 	{
 	int ret=0;
@@ -1316,14 +1316,14 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 
 	kl=SSL_C_EXPORT_PKEYLENGTH(cipher);
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	rsa_tmp=(c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
 	rsa_tmp_export=(c->rsa_tmp_cb != NULL ||
 		(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
 #else
 	rsa_tmp=rsa_tmp_export=0;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
 	dh_tmp_export=(c->dh_tmp_cb != NULL ||
 		(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
@@ -1397,7 +1397,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	mask|=SSL_aNULL;
 	emask|=SSL_aNULL;
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 	mask|=SSL_kKRB5|SSL_aKRB5;
 	emask|=SSL_kKRB5|SSL_aKRB5;
 #endif
@@ -1946,7 +1946,7 @@ SSL_CTX *SSL_get_SSL_CTX(SSL *ssl)
 	return(ssl->ctx);
 	}
 
-#ifndef NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 	{
 	return(X509_STORE_set_default_paths(ctx->cert_store));
@@ -2048,7 +2048,7 @@ int SSL_want(SSL *s)
  * \param cb the callback
  */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,
 							  int is_export,
 							  int keylength))
@@ -2085,7 +2085,7 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
  * \param dh the callback
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
     {
@@ -2099,7 +2099,7 @@ void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
     }
 #endif
 
-#if defined(_WINDLL) && defined(WIN16)
+#if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"
 #endif
 

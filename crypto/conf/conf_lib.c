@@ -81,7 +81,7 @@ LHASH *CONF_load(LHASH *conf, const char *file, long *eline)
 	LHASH *ltmp;
 	BIO *in=NULL;
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	in=BIO_new_file(file, "r");
 #else
 	in=BIO_new_file(file, "rb");

@@ -93,7 +93,7 @@
  *   RAND_egd() is a wrapper for RAND_egd_bytes() with numbytes=255.
  */
 
-#if defined(WIN32) || defined(VMS) || defined(__VMS)
+#if defined(OPENSSL_SYS_WIN32) || defined(VMS) || defined(__VMS)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 	{
 	return(-1);

@@ -65,7 +65,7 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL IPPROTO_TCP
@@ -79,7 +79,7 @@
 #define MAX_LISTEN  32
 #endif
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static int wsa_init_done=0;
 #endif
 
@@ -429,7 +429,7 @@ end:
 
 int BIO_sock_init(void)
 	{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	static struct WSAData wsa_state;
 
 	if (!wsa_init_done)
@@ -449,13 +449,13 @@ int BIO_sock_init(void)
 			return(-1);
 			}
 		}
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WINDOWS */
 	return(1);
 	}
 
 void BIO_sock_cleanup(void)
 	{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	if (wsa_init_done)
 		{
 		wsa_init_done=0;
@@ -465,7 +465,7 @@ void BIO_sock_cleanup(void)
 #endif
 	}
 
-#if !defined(VMS) || __VMS_VER >= 70000000
+#if !defined(OPENSSL_SYS_VMS) || __VMS_VER >= 70000000
 
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 	{

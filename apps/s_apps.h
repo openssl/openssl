@@ -57,7 +57,9 @@
  */
 
 #include <sys/types.h>
-#if (defined(VMS) || defined(__VMS)) && !defined(FD_SET)
+#include <openssl/opensslconf.h>
+
+#if defined(OPENSSL_SYS_VMS) && !defined(FD_SET)
 /* VAX C does not defined fd_set and friends, but it's actually quite simple */
 /* These definitions are borrowed from SOCKETSHR.	/Richard Levitte */
 #define MAX_NOFILE	32

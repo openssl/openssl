@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c" 
 #endif
 #include <openssl/crypto.h>
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/dh.h>
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define MS_CALLBACK	_far _loadds
 #else
 #define MS_CALLBACK
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 	int i,alen,blen,aout,bout,ret=1;
 	BIO *out;
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 	CRYPTO_malloc_init();
 #endif
 

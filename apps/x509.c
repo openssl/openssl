@@ -193,7 +193,7 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	{
 	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 	STDout = BIO_push(tmpbio, STDout);
@@ -642,7 +642,7 @@ bad:
 		if (outfile == NULL)
 			{
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			{
 			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 			out = BIO_push(tmpbio, out);

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #include <descrip.h>
 #include <lnmdef.h>
 #include <starlet.h>
@@ -191,7 +191,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
 	char *p;
 	struct tm *ts;
-#if defined(OPENSSL_THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
 
 	struct tm data;
 #endif
@@ -201,13 +201,13 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	if (s == NULL)
 		return(NULL);
 
-#if defined(OPENSSL_THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
 	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 	ts=&data;
 #else
 	ts=gmtime(&t);
 #endif
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	if (ts == NULL)
 		{
 		static $DESCRIPTOR(tabnam,"LNM$DCL_LOGICAL");
@@ -284,7 +284,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 
 	t -= offset*60; /* FIXME: may overflow in extreme cases */
 
-#if defined(OPENSSL_THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
 	{ struct tm data; gmtime_r(&t, &data); tm = &data; }
 #else
 	tm = gmtime(&t);

@@ -198,7 +198,7 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 				(sigtype == NID_md2WithRSAEncryption)))
 				{
 				/* ok, we will let it through */
-#if !defined(OPENSSL_NO_STDIO) && !defined(WIN16)
+#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
 				fprintf(stderr,"signature has problems, re-make with post SSLeay045\n");
 #endif
 				}

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #pragma message disable DOLLARID
 #include <lib$routines.h>
 #include <libfisdef.h>
@@ -70,7 +70,7 @@
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 DSO_METHOD *DSO_METHOD_vms(void)
 	{
 	return NULL;
@@ -369,4 +369,4 @@ static char *vms_name_converter(DSO *dso, const char *filename)
 	return(filename);
 	}
 
-#endif /* VMS */
+#endif /* OPENSSL_SYS_VMS */

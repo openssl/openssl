@@ -113,7 +113,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if !(defined(WINDOWS) || defined(WIN32) || defined(VMS))
+#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS))
 
 #include <sys/types.h>
 #include <sys/time.h>

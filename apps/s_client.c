@@ -68,7 +68,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
@@ -82,12 +82,12 @@ typedef unsigned int u_int;
 #include <openssl/engine.h>
 #include "s_apps.h"
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include <conio.h>
 #endif
 
 
-#if (defined(VMS) && __VMS_VER < 70000000)
+#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
@@ -186,7 +186,7 @@ int MAIN(int argc, char **argv)
 	char *inrand=NULL;
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
 
@@ -537,7 +537,7 @@ re_start:
 
 		if (!ssl_pending)
 			{
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
@@ -564,7 +564,7 @@ re_start:
 			 * will choke the compiler: if you do have a cast then
 			 * you can either go for (int *) or (void *).
 			 */
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 			/* Under Windows we make the assumption that we can
 			 * always write to the tty: therefore if we need to
 			 * write to the tty we just fall through. Otherwise
@@ -663,7 +663,7 @@ re_start:
 				goto shut;
 				}
 			}
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		/* Assume Windows can always write */
 		else if (!ssl_pending && write_tty)
 #else
@@ -744,7 +744,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				}
 			}
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))

@@ -59,7 +59,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(VMS)
+#if defined(OPENSSL_SYS_VMS)
 
 /* For now, this does nothing.  I'm searching for a good random device,
    then we'll see. */

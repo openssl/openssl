@@ -300,16 +300,16 @@ static unsigned long ssl_cipher_get_disabled(void)
 	unsigned long mask;
 
 	mask = SSL_kFZA;
-#ifdef NO_RSA
+#ifdef OPENSSL_NO_RSA
 	mask |= SSL_aRSA|SSL_kRSA;
 #endif
-#ifdef NO_DSA
+#ifdef OPENSSL_NO_DSA
 	mask |= SSL_aDSS;
 #endif
-#ifdef NO_DH
+#ifdef OPENSSL_NO_DH
 	mask |= SSL_kDHr|SSL_kDHd|SSL_kEDH|SSL_aDH;
 #endif
-#ifdef NO_KRB5
+#ifdef OPENSSL_NO_KRB5
 	mask |= SSL_kKRB5|SSL_aKRB5;
 #endif
 

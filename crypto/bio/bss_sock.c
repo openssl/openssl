@@ -228,7 +228,7 @@ int BIO_sock_should_retry(int i)
 		{
 		err=get_last_socket_error();
 
-#if defined(WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
+#if defined(OPENSSL_SYS_WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
 		if ((i == -1) && (err == 0))
 			return(1);
 #endif
@@ -242,7 +242,7 @@ int BIO_sock_non_fatal_error(int err)
 	{
 	switch (err)
 		{
-#if defined(WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
 # if defined(WSAEWOULDBLOCK)
 	case WSAEWOULDBLOCK:
 # endif

@@ -70,9 +70,9 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 #include "kssl.h"
-#endif /* NO_KRB5 */
+#endif /* OPENSSL_NO_KRB5 */
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
@@ -267,9 +267,9 @@ int ssl3_accept(SSL *s)
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
 			if ((s->options & SSL_OP_EPHEMERAL_RSA)
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 				&& !(l & SSL_KRB5)
-#endif /* NO_KRB5 */
+#endif /* OPENSSL_NO_KRB5 */
 				)
 				s->s3->tmp.use_rsa_tmp=1;
 			else
@@ -555,7 +555,7 @@ static int ssl3_check_client_hello(SSL *s)
 		 * which will now be aborted. (A full SSL_clear would be too much.)
 		 * I hope that tmp.dh is the only thing that may need to be cleared
 		 * when a handshake is not completed ... */
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 		if (s->s3->tmp.dh != NULL)
 			{
 			DH_free(s->s3->tmp.dh);
@@ -927,14 +927,14 @@ static int ssl3_send_server_done(SSL *s)
 
 static int ssl3_send_server_key_exchange(SSL *s)
 	{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	int j,num;
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
 	unsigned int u;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	DH *dh=NULL,*dhp;
 #endif
 	EVP_PKEY *pkey;
@@ -957,7 +957,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 
 		r[0]=r[1]=r[2]=r[3]=NULL;
 		n=0;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		if (type & SSL_kRSA)
 			{
 			rsa=cert->rsa_tmp;
@@ -987,7 +987,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			}
 		else
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 			if (type & SSL_kEDH)
 			{
 			dhp=cert->dh_tmp;
@@ -1091,7 +1091,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			{
 			/* n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end. */
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			if (pkey->type == EVP_PKEY_RSA)
 				{
 				q=md_buf;
@@ -1119,7 +1119,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif
-#if !defined(NO_DSA)
+#if !defined(OPENSSL_NO_DSA)
 				if (pkey->type == EVP_PKEY_DSA)
 				{
 				/* lets do DSS */
@@ -1257,17 +1257,17 @@ static int ssl3_get_client_key_exchange(SSL *s)
 	long n;
 	unsigned long l;
 	unsigned char *p;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	RSA *rsa=NULL;
 	EVP_PKEY *pkey=NULL;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	BIGNUM *pub=NULL;
 	DH *dh_srvr;
 #endif
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
         KSSL_ERR kssl_err;
-#endif /* NO_KRB5 */
+#endif /* OPENSSL_NO_KRB5 */
 
 	n=ssl3_get_message(s,
 		SSL3_ST_SR_KEY_EXCH_A,
@@ -1281,7 +1281,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 	l=s->s3->tmp.new_cipher->algorithms;
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (l & SSL_kRSA)
 		{
 		/* FIX THIS UP EAY EAY EAY EAY */
@@ -1366,7 +1366,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		}
 	else
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 		if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 		{
 		n2s(p,i);
@@ -1429,7 +1429,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		}
 	else
 #endif
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
         if (l & SSL_kKRB5)
                 {
                 krb5_error_code	krb5rc;
@@ -1475,7 +1475,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
                 */
                 }
 	else
-#endif	/* NO_KRB5 */
+#endif	/* OPENSSL_NO_KRB5 */
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_UNKNOWN_CIPHER_TYPE);
@@ -1485,7 +1485,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-#if !defined(NO_DH) || !defined(NO_RSA)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA)
 err:
 #endif
 	return(-1);
@@ -1574,7 +1574,7 @@ static int ssl3_get_cert_verify(SSL *s)
 		goto f_err;
 		}
 
-#ifndef NO_RSA 
+#ifndef OPENSSL_NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA)
 		{
 		i=RSA_verify(NID_md5_sha1, s->s3->tmp.cert_verify_md,
@@ -1595,7 +1595,7 @@ static int ssl3_get_cert_verify(SSL *s)
 		}
 	else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 		{
 		j=DSA_verify(pkey->save_type,
@@ -1641,7 +1641,7 @@ static int ssl3_get_client_certificate(SSL *s)
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
 		-1,
-#if defined(MSDOS) && !defined(WIN32)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
 		1024*30, /* 30k max cert list :-) */
 #else
 		1024*100, /* 100k max cert list :-) */

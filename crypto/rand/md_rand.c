@@ -294,7 +294,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	    entropy += add;
 	if (!add_do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	
-#if !defined(OPENSSL_THREADS) && !defined(WIN32)
+#if !defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
 	assert(md_c[1] == md_count[1]);
 #endif
 	}

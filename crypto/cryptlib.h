@@ -74,7 +74,7 @@
 extern "C" {
 #endif
 
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 #define X509_CERT_AREA		OPENSSLDIR
 #define X509_CERT_DIR		OPENSSLDIR "/certs"
 #define X509_CERT_FILE		OPENSSLDIR "/cert.pem"

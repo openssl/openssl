@@ -63,7 +63,7 @@
 #ifdef LINUX
 #include <typedefs.h>
 #endif
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 #include <windows.h>
 #endif
 #ifdef SOLARIS
@@ -691,7 +691,7 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 
 #define THREAD_STACK_SIZE (16*1024)
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 
 static HANDLE *lock_cs;
 
@@ -782,7 +782,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	printf("win32 threads done - %.3f seconds\n",ret);
 	}
 
-#endif /* WIN32 */
+#endif /* OPENSSL_SYS_WIN32 */
 
 #ifdef SOLARIS
 

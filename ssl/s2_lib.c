@@ -57,7 +57,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
@@ -479,7 +479,7 @@ int ssl2_shutdown(SSL *s)
 	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 	return(1);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -57,7 +57,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
@@ -1001,7 +1001,7 @@ end:
 	EVP_PKEY_free(pkey);
 	return(i);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

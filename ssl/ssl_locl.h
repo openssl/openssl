@@ -127,6 +127,7 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/symhacks.h>
 
 #ifdef OPENSSL_BUILD_SHLIBSSL
 # undef OPENSSL_EXTERN
@@ -376,11 +377,11 @@ typedef struct cert_st
 	int valid;
 	unsigned long mask;
 	unsigned long export_mask;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	RSA *rsa_tmp;
 	RSA *(*rsa_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
@@ -403,10 +404,10 @@ typedef struct sess_cert_st
 	/* Obviously we don't have the private keys of these,
 	 * so maybe we shouldn't even use the CERT_PKEY type here. */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	RSA *peer_rsa_tmp; /* not used for SSL 2 */
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	DH *peer_dh_tmp; /* not used for SSL 2 */
 #endif
 
@@ -463,9 +464,9 @@ OPENSSL_EXTERN SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #undef SSL_COMP_get_compression_methods
-#define SSL_COMP_get_compression_methods SSL_COMP_get_compress_methods
+#define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
 #endif
 
 

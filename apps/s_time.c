@@ -82,7 +82,7 @@
 #include "wintext.h"
 #endif
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -98,7 +98,7 @@
    The __TMS macro will show if it was.  If it wasn't defined, we should
    undefine TIMES, since that tells the rest of the program how things
    should be handled.				-- Richard Levitte */
-#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
 #undef TIMES
 #endif
 
@@ -174,7 +174,7 @@ static int perform=0;
 #ifdef FIONBIO
 static int t_nbio=0;
 #endif
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 static int exitNow = 0;		/* Set when it's time to exit main */
 #endif
 
@@ -198,7 +198,7 @@ static void s_time_init(void)
 #ifdef FIONBIO
 	t_nbio=0;
 #endif
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 	exitNow = 0;		/* Set when it's time to exit main */
 #endif
 	}

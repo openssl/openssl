@@ -110,7 +110,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
@@ -708,7 +708,7 @@ static int ssl_mt_error(int n)
 		}
 	return(ret);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -63,7 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c"
 #endif
 

@@ -97,7 +97,7 @@ static void genprime_cb(int p, int n, void *arg);
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -113,7 +113,7 @@ static void genprime_cb(int p, int n, void *arg);
    The __TMS macro will show if it was.  If it wasn't defined, we should
    undefine TIMES, since that tells the rest of the program how things
    should be handled.				-- Richard Levitte */
-#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
 #undef TIMES
 #endif
 

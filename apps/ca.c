@@ -79,7 +79,7 @@
 #include <openssl/engine.h>
 
 #ifndef W_OK
-#  ifdef VMS
+#  ifdef OPENSSL_SYS_VMS
 #    if defined(__DECC)
 #      include <unistd.h>
 #    else
@@ -545,7 +545,7 @@ bad:
 	if (configfile == NULL)
 		{
 		/* We will just use 'buf[0]' as a temporary buffer.  */
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		strncpy(buf[0],X509_get_default_cert_area(),
 			sizeof(buf[0])-1-sizeof(CONFIG_FILE));
 #else
@@ -755,7 +755,8 @@ bad:
 			BIO_printf(bio_err,"there needs to be defined a directory for new certificate to be placed in\n");
 			goto err;
 			}
-#ifndef VMS /* outdir is a directory spec, but access() for VMS demands a
+#ifndef OPENSSL_SYS_VMS
+	    /* outdir is a directory spec, but access() for VMS demands a
 	       filename.  In any case, stat(), below, will catch the problem
 	       if outdir is not a directory spec, and the fopen() or open()
 	       will catch an error if there is no write access.
@@ -853,7 +854,7 @@ bad:
 	if (verbose)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT); /* cannot fail */
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -996,7 +997,7 @@ bad:
 		else
 			{
 			BIO_set_fp(Sout,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			{
 			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 			Sout = BIO_push(tmpbio, Sout);
@@ -1232,7 +1233,7 @@ bad:
 
 			strncpy(buf[0],serialfile,BSIZE-4);
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			strcat(buf[0],"-new");
 #else
 			strcat(buf[0],".new");
@@ -1242,7 +1243,7 @@ bad:
 
 			strncpy(buf[1],dbfile,BSIZE-4);
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			strcat(buf[1],"-new");
 #else
 			strcat(buf[1],".new");
@@ -1272,7 +1273,7 @@ bad:
 			
 			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
 
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 			strcat(buf[2],"/");
 #endif
 
@@ -1309,7 +1310,7 @@ bad:
 			/* Rename the database and the serial file */
 			strncpy(buf[2],serialfile,BSIZE-4);
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
 #else
 			strcat(buf[2],".old");
@@ -1337,7 +1338,7 @@ bad:
 
 			strncpy(buf[2],dbfile,BSIZE-4);
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
 #else
 			strcat(buf[2],".old");
