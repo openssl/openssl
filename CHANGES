@@ -63,13 +63,16 @@
      [Steve Henson]
 
   +) Modify the behaviour of EVP_DigestInit() and EVP_DigestFinal() to retain
-     compatibility with existing code. In particular the 'ctx' parameter is
-     not assumed to be valid before the call to EVP_DigestInit() and it is tidied
-     up after a call to EVP_DigestFinal(). A new function EVP_DigestFinal_ex()
-     but does not free up the ctx. Also change function EVP_MD_CTX_copy() to
-     assume the destination is uninitialized: EVP_MD_CTX_copy_ex() do assumes
-     the destiation is valid. Also modify all the OpenSSL digest calls to call 
-     EVP_DigestInit_ex(), EVP_DigestFinal_ex() and EVP_MD_CTX_copy_ex().
+     compatibility with existing code. In particular the 'ctx' parameter does
+     not have to be to be initialized before the call to EVP_DigestInit() and
+     it is tidied up after a call to EVP_DigestFinal(). New function
+     EVP_DigestFinal_ex() which does not tidy up the ctx. Similarly function
+     EVP_MD_CTX_copy() changed to not require the destination to be
+     initialized valid and new function EVP_MD_CTX_copy_ex() added which
+     requires the destination to be valid.
+
+     Modify all the OpenSSL digest calls to use EVP_DigestInit_ex(),
+     EVP_DigestFinal_ex() and EVP_MD_CTX_copy_ex().
      [Steve Henson]
 
   +) Change ssl3_get_message (ssl/s3_both.c) and the functions using it
