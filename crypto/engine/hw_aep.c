@@ -602,7 +602,6 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
  err:
   return rv;
 }
-#endif
 
 #ifdef AEPRAND
 static int aep_rand(unsigned char *buf,int len )
@@ -701,13 +700,7 @@ static int aep_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
   if (rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp)
     {
       rv =  aep_mod_exp_crt(r0,I,rsa->p,rsa->q, rsa->dmp1,rsa->dmq1,rsa->iqmp,ctx);
-      if (rv == FAIL_TO_SW)
-	{
-	  const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
-	  to_return = (*meth->rsa_mod_exp)(r0, I, rsa);
-	  goto err;
-	}
-      else if (rv != AEP_R_OK)
+      if (rv != AEP_R_OK)
 	goto err;
     }
   else
