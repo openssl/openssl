@@ -91,20 +91,21 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 		}			
 	} else {
 		while (len >= AES_BLOCK_SIZE) {
+			memcpy(tmp, in, AES_BLOCK_SIZE);
 			AES_decrypt(in, out, key);
 			for(n=0; n < AES_BLOCK_SIZE; ++n)
 				out[n] ^= ivec[n];
-			memcpy(ivec, in, AES_BLOCK_SIZE);
+			memcpy(ivec, tmp, AES_BLOCK_SIZE);
 			len -= AES_BLOCK_SIZE;
 			in += AES_BLOCK_SIZE;
 			out += AES_BLOCK_SIZE;
 		}
 		if (len) {
 			memcpy(tmp, in, AES_BLOCK_SIZE);
-			AES_decrypt(in, tmp, key);
+			AES_decrypt(tmp, tmp, key);
 			for(n=0; n < len; ++n)
 				out[n] = tmp[n] ^ ivec[n];
-			memcpy(ivec, in, AES_BLOCK_SIZE);
+			memcpy(ivec, tmp, AES_BLOCK_SIZE);
 		}			
 	}
 }
