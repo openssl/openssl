@@ -286,6 +286,8 @@ static int ok_write(BIO *b, const char *in, int inl)
 	int ret=0,n,i;
 	BIO_OK_CTX *ctx;
 
+	if (inl <= 0) return inl;
+
 	ctx=(BIO_OK_CTX *)b->ptr;
 	ret=inl;
 
@@ -321,7 +323,7 @@ static int ok_write(BIO *b, const char *in, int inl)
 		if ((in == NULL) || (inl <= 0)) return(0);
 
 		n= (inl+ ctx->buf_len > OK_BLOCK_SIZE+ OK_BLOCK_BLOCK) ? 
-				OK_BLOCK_SIZE+ OK_BLOCK_BLOCK- ctx->buf_len : inl;
+			(int)(OK_BLOCK_SIZE+OK_BLOCK_BLOCK-ctx->buf_len) : inl;
 
 		memcpy((unsigned char *)(&(ctx->buf[ctx->buf_len])),(unsigned char *)in,n);
 		ctx->buf_len+= n;
@@ -489,7 +491,7 @@ static void sig_in(BIO* b)
 	ctx=b->ptr;
 	md=&ctx->md;
 
-	if(ctx->buf_len- ctx->buf_off < 2* md->digest->md_size) return;
+	if((int)(ctx->buf_len-ctx->buf_off) < 2*md->digest->md_size) return;
 
 	EVP_DigestInit_ex(md, md->digest, NULL);
 	memcpy(md->md_data, &(ctx->buf[ctx->buf_off]), md->digest->md_size);
