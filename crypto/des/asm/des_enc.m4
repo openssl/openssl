@@ -1431,7 +1431,7 @@ DES_decrypt3:
 .PIC.me.up:
 	add	out0,%o7,out0			! pointer to .PIC.me.up
 
-#ifdef __PIC__
+#ifdef OPENSSL_PIC
 	sethi	%hi(DES_SPtrans),global1
 	or	global1,%lo(DES_SPtrans),global1
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
