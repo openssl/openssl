@@ -23,16 +23,27 @@ a currently open session is considered closed and good and will be kept in the
 session cache for further reuse.
 
 The shutdown procedure consists of 2 steps: the sending of the "close notify"
-shutdown alert and the receipt ion of the peer's "close notify" shutdown
-alert:
+shutdown alert and the reception of the peer's "close notify" shutdown
+alert. According to the TLS standard, it is acceptable for an application
+to only send its shutdown alert and then close the underlying connection
+without waiting for the peer's response (this way resources can be saved,
+as the process can already terminate or serve another connection).
+When the underlying connection shall be used for more communications, the
+complete shutdown procedure (bidirectional "close notify" alerts) must be
+performed, so that the peers stay synchronized.
+
+SSL_shutdown() supports both uni- and bidirectional shutdown by its 2 step
+behaviour.
 
 =over 4
 
 =item When the application is the first party to send the "close notify"
 alert, SSL_shutdown() will only send the alert and the set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
-be kept in cache). SSL_shutdown() will then return with 0. In order to
-complete the shutdown handshake, SSL_shutdown() must be called again.
+be kept in cache). SSL_shutdown() will then return with 0. If a unidirectional
+shutdown is enough (the underlying connection shall be closed anyway), this
+first call to SSL_shutdown() is sufficient. In order to complete the
+bidirectional shutdown handshake, SSL_shutdown() must be called again.
 The second call will make SSL_shutdown() wait for the peer's "close notify"
 shutdown alert. On success, the second call to SSL_shutdown() will return
 with 1.
@@ -40,7 +51,7 @@ with 1.
 =item If the peer already sent the "close notify" alert B<and> it was
 already processed implicitly inside another call of e.g.
 B<SSL_read(3)|SSL_read(3)>, SSL_shutdown() will send the "close notify"
-alert and will immediately return with 1.
+alert, set the SSL_SENT_SHUTDOWN flag and will immediately return with 1.
 
 =back
 
@@ -79,7 +90,8 @@ and the peer's "close notify" alert was received.
 
 =item 0
 
-The shutdown is not yet finished. Call SSL_shutdown() for a second time.
+The shutdown is not yet finished. Call SSL_shutdown() for a second time,
+if a bidirectional shutdown shall be performed.
 The output of L<SSL_get_error(3)|SSL_get_error(3)> may be misleading, as an
 erroneous SSL_ERROR_SYSCALL may be flagged even though no error occurred.
 
