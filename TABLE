@@ -482,7 +482,7 @@ $shared_cflag =
 
 *** aix-cc
 $cc           = cc
-$cflags       = -O -DAIX -DB_ENDIAN
+$cflags       = -O -DAIX -DB_ENDIAN -qmaxmem=16384
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
