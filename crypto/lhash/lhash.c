@@ -267,19 +267,8 @@ void *lh_retrieve(LHASH *lh, const void *data)
 	return((void *)ret);
 	}
 
-void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
-	{
-	/* Yikes that's bad - we're accepting a function that accepts 2
-	 * parameters (albeit we have to waive type-safety here) and then
-	 * forcibly calling that callback with *3* parameters leaving the 3rd
-	 * NULL. Obviously this "works" otherwise it wouldn't have survived so
-	 * long, but is it "good"??
-	 * FIXME: Use an internal function from this and the "_arg" version that
-	 * doesn't assume the ability to mutate function prototypes so badly. */
-	lh_doall_arg(lh, (LHASH_DOALL_ARG_FN_TYPE)func, NULL);
-	}
-
-void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
+static void doall_util_fn(LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
+			LHASH_DOALL_ARG_FN_TYPE func_arg, const void *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -294,10 +283,23 @@ void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
 			/* 28/05/91 - eay - n added so items can be deleted
 			 * via lh_doall */
 			n=a->next;
-			func(a->data,arg);
+			if(use_arg)
+				func_arg(a->data,arg);
+			else
+				func(a->data);
 			a=n;
 			}
 		}
+	}
+
+void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
+	{
+	doall_util_fn(lh, 0, func, (LHASH_DOALL_ARG_FN_TYPE)NULL, NULL);
+	}
+
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
+	{
+	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)NULL, func, arg);
 	}
 
 static void expand(LHASH *lh)
