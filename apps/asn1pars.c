@@ -333,7 +333,15 @@ bad:
 		num=tmplen;
 		}
 
-	if (length == 0) length=(unsigned int)num;
+	if (offset >= num)
+		{
+		BIO_printf(bio_err, "Error: offset too large\n");
+		goto end;
+		}
+
+	num -= offset;
+
+	if ((length == 0) || (length > num)) length=(unsigned int)num;
 	if(derout) {
 		if(BIO_write(derout, str + offset, length) != (int)length) {
 			BIO_printf(bio_err, "Error writing output\n");
