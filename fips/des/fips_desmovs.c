@@ -267,6 +267,7 @@ void do_mct(char *amode,
     {
     int i,imode;
     unsigned char nk[4*8]; /* longest key+8 */
+    unsigned char text0[8];
 
     for (imode=0 ; imode < 6 ; ++imode)
 	if(!strcmp(amode,t_mode[imode]))
@@ -277,12 +278,15 @@ void do_mct(char *amode,
 	exit(1);
 	}
 
+    memcpy(text0,text,8);
+
     for(i=0 ; i < 400 ; ++i)
 	{
 	int j;
 	int n;
 	EVP_CIPHER_CTX ctx;
 	int kp=akeysz/64;
+	unsigned char old_iv[8];
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
 	if(kp == 1)
@@ -304,7 +308,6 @@ void do_mct(char *amode,
 
 	for(j=0 ; j < 10000 ; ++j)
 	    {
-	    unsigned char old_iv[8];
 	    unsigned char old_text[8];
 
 	    memcpy(old_text,text,8);
@@ -327,8 +330,8 @@ void do_mct(char *amode,
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
 	    /*	    DebugValue("nk",nk,8); */
-	    if(dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
-		       || imode == CBC))
+	    if((dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
+			|| imode == CBC)) || imode == OFB)
 		memcpy(text,old_iv,8);
 
 	    if(!dir && (imode == CFB1 || imode == CFB8 || imode == CFB64))
@@ -350,6 +353,13 @@ void do_mct(char *amode,
 	if(numkeys < 2)
 	    memcpy(&akey[8],akey,8);
 	memcpy(ivec,ctx.iv,8);
+
+	/* pointless exercise - the final text doesn't depend on the
+	   initial text in OFB mode, so who cares what it is? (Who
+	   designed these tests?) */
+	if(imode == OFB)
+	    for(n=0 ; n < 8 ; ++n)
+		text[n]=text0[n]^old_iv[n];
 	}
     }
     
