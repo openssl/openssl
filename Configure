@@ -439,7 +439,7 @@ my %table=(
 "aix-cc",   "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
 "aix-gcc",  "gcc:-O3 -DB_ENDIAN::(unknown):AIX::BN_LLONG RC4_CHAR:::",
 "aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
-"aix43-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
+"aix43-gcc",  "gcc:-O1 -DAIX -DB_ENDIAN::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
 "aix64-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384 -q64::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHAR::::::::::dlfcn::::::-X 64",
 
 #
