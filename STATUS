@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/10 14:50:28 $
+  ______________                           $Date: 1999/03/10 14:53:54 $
 
   DEVELOPMENT STATE
 
@@ -8,10 +8,13 @@
        - No more feature commits, please. 
        - Commit bugfixes and cleanups only, please.
        - Already successfully tested platform:
-         o  FreeBSD 2.2.7  Ben Laurie            OK
-         o  FreeBSD 3.1    Ralf S. Engelschall   OK
-         o  Solaris 2.6    Ralf S. Engelschall   ctype warns, test fails in test_ssl
-         o  Linux RH 5.1   Steve Henson          OK
+         o  FreeBSD 2.2.7    Ben Laurie            OK
+         o  FreeBSD 3.1      Ralf S. Engelschall   OK
+         o  Solaris 2.6      Ralf S. Engelschall   ctype warns, test fails in test_ssl
+         o  Linux RH 5.1     Steve Henson          OK
+         o  Linux 2.0 RH 5.2 Ralf S. Engelschall   OK
+         o  Linux 2.2 RH 5.2 Peter 'Luna' Altberg  OK
+         o  WinNT VC++ 6.0   Peter 'Luna' Altberg  troubles - see openssl-dev
 
        Proposed release time: Monday, March 15th 1999
 
