@@ -136,10 +136,13 @@ typedef struct X509_name_entry_st
 	int size; 	/* temp variable */
 	} X509_NAME_ENTRY;
 
+DECLARE_STACK_OF(X509_NAME_ENTRY)
+DECLARE_ASN1_SET_OF(X509_NAME_ENTRY)
+
 /* we always keep X509_NAMEs in 2 forms. */
 typedef struct X509_name_st
 	{
-	STACK *entries; /* of X509_NAME_ENTRY */
+	STACK_OF(X509_NAME_ENTRY) *entries;
 	int modified;	/* true if 'bytes' needs to be built */
 #ifdef HEADER_BUFFER_H
 	BUF_MEM *bytes;

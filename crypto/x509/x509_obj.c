@@ -96,9 +96,9 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
 
 	len--; /* space for '\0' */
 	l=0;
-	for (i=0; (int)i<sk_num(a->entries); i++)
+	for (i=0; i<sk_X509_NAME_ENTRY_num(a->entries); i++)
 		{
-		ne=(X509_NAME_ENTRY *)sk_value(a->entries,i);
+		ne=sk_X509_NAME_ENTRY_value(a->entries,i);
 		n=OBJ_obj2nid(ne->object);
 		if ((n == NID_undef) || ((s=OBJ_nid2sn(n)) == NULL))
 			{

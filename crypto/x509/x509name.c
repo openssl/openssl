@@ -92,7 +92,7 @@ int X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,
 int X509_NAME_entry_count(X509_NAME *name)
 	{
 	if (name == NULL) return(0);
-	return(sk_num(name->entries));
+	return(sk_X509_NAME_ENTRY_num(name->entries));
 	}
 
 int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
@@ -110,16 +110,16 @@ int X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
 	{
 	int n;
 	X509_NAME_ENTRY *ne;
-	STACK *sk;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
 	if (name == NULL) return(-1);
 	if (lastpos < 0)
 		lastpos= -1;
 	sk=name->entries;
-	n=sk_num(sk);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	for (lastpos++; lastpos < n; lastpos++)
 		{
-		ne=(X509_NAME_ENTRY *)sk_value(sk,lastpos);
+		ne=sk_X509_NAME_ENTRY_value(sk,lastpos);
 		if (OBJ_cmp(ne->object,obj) == 0)
 			return(lastpos);
 		}
@@ -128,32 +128,34 @@ int X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
 
 X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc)
 	{
-	if (	(name == NULL) || (sk_num(name->entries) <= loc) || (loc < 0))
+	if(name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
+	   || loc < 0)
 		return(NULL);
 	else
-		return((X509_NAME_ENTRY *)sk_value(name->entries,loc));
+		return(sk_X509_NAME_ENTRY_value(name->entries,loc));
 	}
 
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 	{
 	X509_NAME_ENTRY *ret;
 	int i,n,set_prev,set_next;
-	STACK *sk;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
-	if ((name == NULL) || (sk_num(name->entries) <= loc) || (loc < 0))
+	if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
+	    || loc < 0)
 		return(NULL);
 	sk=name->entries;
-	ret=(X509_NAME_ENTRY *)sk_delete(sk,loc);
-	n=sk_num(sk);
+	ret=sk_X509_NAME_ENTRY_delete(sk,loc);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	name->modified=1;
 	if (loc == n) return(ret);
 
 	/* else we need to fixup the set field */
 	if (loc != 0)
-		set_prev=((X509_NAME_ENTRY *)sk_value(sk,loc-1))->set;
+		set_prev=(sk_X509_NAME_ENTRY_value(sk,loc-1))->set;
 	else
 		set_prev=ret->set-1;
-	set_next=((X509_NAME_ENTRY *)sk_value(sk,loc))->set;
+	set_next=sk_X509_NAME_ENTRY_value(sk,loc)->set;
 
 	/* set_prev is the previous set
 	 * set is the current set
@@ -165,7 +167,7 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 	 * re-number down by 1 */
 	if (set_prev+1 < set_next)
 		for (i=loc; i<n; i++)
-			((X509_NAME_ENTRY *)sk_value(sk,i))->set--;
+			sk_X509_NAME_ENTRY_value(sk,i)->set--;
 	return(ret);
 	}
 
@@ -176,11 +178,11 @@ int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
 	{
 	X509_NAME_ENTRY *new_name=NULL;
 	int n,i,inc;
-	STACK *sk;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
 	if (name == NULL) return(0);
 	sk=name->entries;
-	n=sk_num(sk);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	if (loc > n) loc=n;
 	else if (loc < 0) loc=n;
 
@@ -195,7 +197,7 @@ int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
 			}
 		else
 			{
-			set=((X509_NAME_ENTRY *)sk_value(sk,loc-1))->set;
+			set=sk_X509_NAME_ENTRY_value(sk,loc-1)->set;
 			inc=0;
 			}
 		}
@@ -204,29 +206,28 @@ int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
 		if (loc >= n)
 			{
 			if (loc != 0)
-				set=((X509_NAME_ENTRY *)
-					sk_value(sk,loc-1))->set+1;
+				set=sk_X509_NAME_ENTRY_value(sk,loc-1)->set+1;
 			else
 				set=0;
 			}
 		else
-			set=((X509_NAME_ENTRY *)sk_value(sk,loc))->set;
+			set=sk_X509_NAME_ENTRY_value(sk,loc)->set;
 		inc=(set == 0)?1:0;
 		}
 
 	if ((new_name=X509_NAME_ENTRY_dup(ne)) == NULL)
 		goto err;
 	new_name->set=set;
-	if (!sk_insert(sk,(char *)new_name,loc))
+	if (!sk_X509_NAME_ENTRY_insert(sk,new_name,loc))
 		{
 		X509err(X509_F_X509_NAME_ADD_ENTRY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	if (inc)
 		{
-		n=sk_num(sk);
+		n=sk_X509_NAME_ENTRY_num(sk);
 		for (i=loc+1; i<n; i++)
-			((X509_NAME_ENTRY *)sk_value(sk,i-1))->set+=1;
+			sk_X509_NAME_ENTRY_value(sk,i-1)->set+=1;
 		}	
 	return(1);
 err:

@@ -907,7 +907,7 @@ start:		for (;;)
 				min,max))
 				goto err;
 			}
-		if (sk_num(ri->subject->entries) == 0)
+		if (sk_X509_NAME_ENTRY_num(ri->subject->entries) == 0)
 			{
 			BIO_printf(bio_err,"error, no objects specified in config file\n");
 			goto err;

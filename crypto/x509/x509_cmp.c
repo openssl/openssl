@@ -143,12 +143,14 @@ int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
 	int i,j;
 	X509_NAME_ENTRY *na,*nb;
 
-	if (sk_num(a->entries) != sk_num(b->entries))
-		return(sk_num(a->entries)-sk_num(b->entries));
-	for (i=sk_num(a->entries)-1; i>=0; i--)
+	if (sk_X509_NAME_ENTRY_num(a->entries)
+	    != sk_X509_NAME_ENTRY_num(b->entries))
+		return sk_X509_NAME_ENTRY_num(a->entries)
+		  -sk_X509_NAME_ENTRY_num(b->entries);
+	for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
 		{
-		na=(X509_NAME_ENTRY *)sk_value(a->entries,i);
-		nb=(X509_NAME_ENTRY *)sk_value(b->entries,i);
+		na=sk_X509_NAME_ENTRY_value(a->entries,i);
+		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
 		j=na->value->length-nb->value->length;
 		if (j) return(j);
 		j=memcmp(na->value->data,nb->value->data,
@@ -161,10 +163,10 @@ int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
 	/* We will check the object types after checking the values
 	 * since the values will more often be different than the object
 	 * types. */
-	for (i=sk_num(a->entries)-1; i>=0; i--)
+	for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
 		{
-		na=(X509_NAME_ENTRY *)sk_value(a->entries,i);
-		nb=(X509_NAME_ENTRY *)sk_value(b->entries,i);
+		na=sk_X509_NAME_ENTRY_value(a->entries,i);
+		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
 		j=OBJ_cmp(na->object,nb->object);
 		if (j) return(j);
 		}

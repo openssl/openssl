@@ -154,6 +154,10 @@ err:\
 		M_ASN1_D2I_get_imp_set(r,func,free_func, \
 			V_ASN1_SET,V_ASN1_UNIVERSAL);
 
+#define M_ASN1_D2I_get_set_type(type,r,func,free_func) \
+		M_ASN1_D2I_get_imp_set_type(type,r,func,free_func, \
+			V_ASN1_SET,V_ASN1_UNIVERSAL);
+
 #define M_ASN1_D2I_get_set_opt(r,func,free_func) \
 	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
 		V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
