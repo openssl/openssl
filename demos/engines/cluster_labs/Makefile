@@ -1,11 +1,11 @@
-LIBNAME=	librsaref
-SRC=		rsaref.c
-OBJ=		rsaref.o
-HEADER=		rsaref.h
+LIBNAME=	libclabs
+SRC=		hw_cluster_labs.c
+OBJ=		hw_cluster_labs.o
+HEADER=		hw_cluster_labs.h
 
 CC=		gcc
 PIC=		-fPIC
-CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT
+CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
 AR=		ar r
 RANLIB=		ranlib
 
@@ -24,70 +24,65 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.install:
-install:	FORCE.install
-		cd install; \
-			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
-
 FORCE.update:
 update:		FORCE.update
-		perl ../../../util/mkerr.pl -conf rsaref.ec \
-			-nostatic -staticloader -write rsaref.c
+		perl ../../../util/mkerr.pl -conf hw_cluster_labs.ec \
+			-nostatic -staticloader -write hw_cluster_labs.c
 
-gnu:		install $(SHLIB).gnu
-tru64:		install $(SHLIB).tru64
-solaris:	install $(SHLIB).solaris
-irix:		install $(SHLIB).irix
-hpux32:		install $(SHLIB).hpux32
-hpux64:		install $(SHLIB).hpux64
-aix:		install $(SHLIB).aix
+gnu:		$(SHLIB).gnu
+tru64:		$(SHLIB).tru64
+solaris:	$(SHLIB).solaris
+irix:		$(SHLIB).irix
+hpux32:		$(SHLIB).hpux32
+hpux64:		$(SHLIB).hpux64
+aix:		$(SHLIB).aix
 
 $(LIB):		$(OBJ)
 		$(AR) $(LIB) $(OBJ)
 		- $(RANLIB) $(LIB)
 
 LINK_SO=	\
-  ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) install/librsaref.a && \
+  ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) && \
   (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
    $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
 
-$(SHLIB).gnu:	$(LIB) install/librsaref.a
+$(SHLIB).gnu:	$(LIB)
 		ALLSYMSFLAGS='--whole-archive' \
 		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
 		touch $(SHLIB).gnu
-$(SHLIB).tru64:	$(LIB) install/librsaref.a
+$(SHLIB).tru64:	$(LIB)
 		ALLSYMSFLAGS='-all' \
 		SHAREDFLAGS='-shared' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
 		touch $(SHLIB).tru64
-$(SHLIB).solaris:	$(LIB) install/librsaref.a
+$(SHLIB).solaris:	$(LIB)
 		ALLSYMSFLAGS='-z allextract' \
 		SHAREDFLAGS='-G -h $(SHLIB)' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
 		touch $(SHLIB).solaris
-$(SHLIB).irix:	$(LIB) install/librsaref.a
+$(SHLIB).irix:	$(LIB)
 		ALLSYMSFLAGS='-all' \
 		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB)' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
 		touch $(SHLIB).irix
-$(SHLIB).hpux32:	$(LIB) install/librsaref.a
+$(SHLIB).hpux32:	$(LIB)
 		ALLSYMSFLAGS='-Fl' \
 		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
 		$(LINK_SO)
 		touch $(SHLIB).hpux32
-$(SHLIB).hpux64:	$(LIB) install/librsaref.a
+$(SHLIB).hpux64:	$(LIB)
 		ALLSYMSFLAGS='+forceload' \
 		SHAREDFLAGS='-b -z +h $(SHLIB)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
 		$(LINK_SO)
 		touch $(SHLIB).hpux64
-$(SHLIB).aix:	$(LIB) install/librsaref.a
+$(SHLIB).aix:	$(LIB)
 		ALLSYMSFLAGS='-bnogc' \
 		SHAREDFLAGS='-G -bE:$(LIBNAME).exp -bM:SRE' \
 		SHAREDCMD='$(CC)'; \
