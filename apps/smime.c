@@ -104,6 +104,7 @@ int MAIN(int argc, char **argv)
 	char *inrand = NULL;
 	int need_rand = 0;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
+        int keyform = FORMAT_PEM;
 	char *engine=NULL;
 
 	args = argv + 1;
@@ -194,6 +195,11 @@ int MAIN(int argc, char **argv)
 			if (args[1]) {
 				args++;
 				keyfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-keyform")) {
+			if (args[1]) {
+				args++;
+				keyform = str2fmt(*args);
 			} else badarg = 1;
 		} else if (!strcmp (*args, "-certfile")) {
 			if (args[1]) {
@@ -288,6 +294,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-in file       input file\n");
 		BIO_printf (bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
 		BIO_printf (bio_err, "-inkey file    input private key (if not signer or recipient)\n");
+		BIO_printf (bio_err, "-keyform arg   input private key format (PEM or ENGINE)\n");
 		BIO_printf (bio_err, "-out file      output file\n");
 		BIO_printf (bio_err, "-outform arg   output format SMIME (default), PEM or DER\n");
 		BIO_printf (bio_err, "-content file  supply or override content for detached signature\n");
@@ -399,11 +406,19 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin, NULL))) {
-			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
-			ERR_print_errors(bio_err);
-			goto end;
-		}
+                if (keyform == FORMAT_ENGINE) {
+        		if (!e) {
+        			BIO_printf(bio_err,"no engine specified\n");
+                		goto err;
+			}
+                        key = ENGINE_load_private_key(e, keyfile, passin);
+                } else {
+                        if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin, NULL))) {
+                                BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
+        			ERR_print_errors(bio_err);
+                		goto end;
+                        }
+                }
 	}
 
 	if (infile) {
