@@ -133,7 +133,7 @@
        $ make install
 
      This will create the installation directory (if it does not exist) and
-     then create the following subdirectories:
+     then the following subdirectories:
 
        certs           Initially empty, this is the default location
                        for certificate files.
@@ -141,14 +141,14 @@
        private         Initially empty, this is the default location
                        for private key files.
 
-     If you didn't chose a different installation prefix, lib also contains
-     the library files themselves, and the following additional subdirectories
-     will be created:
+     If you didn't chose a different installation prefix, the
+     following additional subdirectories will be created:
 
        bin             Contains the openssl binary and a few other 
                        utility programs. 
        include/openssl Contains the header files needed if you want to
                        compile programs with libcrypto or libssl.
+       lib             Contains the OpenSSL library files themselves.
 
      Package builders who want to configure the library for standard
      locations, but have the package installed somewhere else so that
@@ -236,7 +236,7 @@
  necessary).
 
  On other systems, to enable support for multi-threading, you will have
- to specifiy at least two options: "threads", and a system-dependent option.
+ to specify at least two options: "threads", and a system-dependent option.
  (The latter is "-D_REENTRANT" on various systems.)  The default in this
  case, obviously, is not to include support for multi-threading (but
  you can still use "no-threads" to suppress an annoying warning message

@@ -19,7 +19,7 @@ typedef struct buf_mem_st
 
 'length' is the current size of the buffer in bytes, 'max' is the amount of
 memory allocated to the buffer. There are three functions which handle these
-and one "miscelanous" function.
+and one "miscellaneous" function.
 
 BUF_MEM *BUF_MEM_new()
 
@@ -141,7 +141,7 @@ reject it as invalid. Some broken software will reject certificates which
 have *any* critical extensions (these violates PKIX but we have to live
 with it).
 
-There are three main types of extension: string extensions, multi valued
+There are three main types of extension: string extensions, multi-valued
 extensions, and raw extensions.
 
 String extensions simply have a string which contains either the value itself
@@ -151,7 +151,7 @@ For example:
 
 nsComment="This is a Comment"
 
-Multi valued extensions have a short form and a long form. The short form
+Multi-valued extensions have a short form and a long form. The short form
 is a list of names and values:
 
 basicConstraints=critical,CA:true,pathlen:1
@@ -217,7 +217,7 @@ nsComment="This is a test comment"
 
 Bit Strings.
 
-Bit string extensions just consist of a list of suppported bits, currently
+Bit string extensions just consist of a list of supported bits, currently
 two extensions are in this category: PKIX keyUsage and the Netscape specific
 nsCertType.
 
@@ -237,7 +237,7 @@ keyUsage=critical, digitalSignature, nonRepudiation
 
 Basic Constraints.
 
-Basic constraints is a multi valued extension that supports a CA and an
+Basic constraints is a multi-valued extension that supports a CA and an
 optional pathlen option. The CA option takes the values true and false and
 pathlen takes an integer. Note if the CA option is false the pathlen option
 should be omitted.
@@ -300,7 +300,7 @@ certificate (if possible).
 
 CRL distribution points.
 
-This is a multivalued extension that supports all the literal options of
+This is a multi-valued extension that supports all the literal options of
 subject alternative name. Of the few software packages that currently interpret
 this extension most only interpret the URI option.
 
@@ -322,7 +322,7 @@ crlDistributionPoints=URI:http://www.my.com/my.crl,URI:http://www.oth.com/my.crl
 Certificate Policies.
 
 This is a RAW extension. It attempts to display the contents of this extension:
-unfortuntately this extension is often improperly encoded.
+unfortunately this extension is often improperly encoded.
 
 The certificate policies extension will rarely be used in practice: few
 software packages interpret it correctly or at all. IE5 does partially
@@ -413,9 +413,9 @@ standard SSLeay_add_all_algorithms() is sufficient. If you do not wish to
 add all algorithms (you should at least add SHA1 though) then you can manually
 initialise the PKCS#12 library with:
 
-PKSC12_PBE_add();
+PKCS12_PBE_add();
 
-The memory allocated by the PKCS#12 libray is freed up when EVP_cleanup() is
+The memory allocated by the PKCS#12 library is freed up when EVP_cleanup() is
 called or it can be directly freed with:
 
 EVP_PBE_cleanup();
@@ -712,7 +712,7 @@ NID_pbe_WithSHA1And128BitRC2_CBC
 NID_pbe_WithSHA1And40BitRC2_CBC
 
 Which you use depends on the implementation you are exporting to. "Export
-grade" (i.e. cryptograhically challenged) products cannot support all
+grade" (i.e. cryptographically challenged) products cannot support all
 algorithms. Typically you may be able to use any encryption on shrouded key
 bags but they must then be placed in an unencrypted authsafe. Other authsafes
 may only support 40bit encryption. Of course if you are using SSLeay
@@ -731,3 +731,4 @@ to recompile your code.
 macro of the form PKCS12_MAKE_SOMETHING(other) the "other" structure can be
 reused or freed up safely.
 
+ LocalWords:  PKIX keyUsage

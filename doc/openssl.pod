@@ -52,7 +52,7 @@ Cipher Suite Description Determination.
 
 =item B<crl>
 
-Certificate Revokation List (CRL) Management.
+Certificate Revocation List (CRL) Management.
 
 =item B<crl2pkcs7>      
 
