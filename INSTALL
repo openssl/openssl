@@ -7,8 +7,11 @@
 
  To install OpenSSL, you will need:
 
+  * make
   * Perl 5
   * an ANSI C compiler
+  * a development environment in form of development libraries and C
+    header files
   * a supported Unix operating system
 
  Quick Start
