@@ -275,7 +275,6 @@ tar:
 
 dist:   
 	perl Configure dist
-	perl util/up_ver.pl ${VERSION}
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='${SDIRS}' clean
 	@$(MAKE) SDIRS='${SDIRS}' dclean
