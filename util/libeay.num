@@ -2771,3 +2771,4 @@ des_xcbc_encrypt                        3185	EXIST:!VMS,!WIN16:FUNCTION:DES
 odes_xcbc_encrypt                       3185	EXIST:VMS,WIN16:FUNCTION:DES
 des_ecb_encrypt                         3186	EXIST:!VMS,!WIN16:FUNCTION:DES
 odes_ecb_encrypt                        3186	EXIST:VMS,WIN16:FUNCTION:DES
+HMAC_Init_ex                            3187	EXIST::FUNCTION:HMAC
