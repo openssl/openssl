@@ -253,14 +253,12 @@ void ERR_remove_state(unsigned long pid); /* if zero we look it up */
 ERR_STATE *ERR_get_state(void);
 
 #ifdef HEADER_LHASH_H
-LHASH *ERR_get_string_table(void );
-LHASH *ERR_get_err_state_table(void );
-#else
-char *ERR_get_string_table(void );
-char *ERR_get_err_state_table(void );
+LHASH *ERR_get_string_table(void);
+LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
+				       * ERR_get_string_table :-) */
 #endif
 
-int ERR_get_next_error_library(void );
+int ERR_get_next_error_library(void);
 
 #ifdef	__cplusplus
 }

@@ -116,9 +116,8 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 
 
 static LHASH *error_hash=NULL;
@@ -545,6 +544,7 @@ LHASH *ERR_get_string_table(void)
 	return(error_hash);
 	}
 
+/* not thread-safe */
 LHASH *ERR_get_err_state_table(void)
 	{
 	return(thread_hash);
@@ -652,6 +652,12 @@ void ERR_remove_state(unsigned long pid)
 	tmp.pid=pid;
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
+	if (lh_num_items(thread_hash) == 0)
+		{
+		/* make sure we don't leak memory */
+		lh_free(thread_hash);
+		thread_hash = NULL;
+		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 	if (p != NULL) ERR_STATE_free(p);
@@ -661,33 +667,19 @@ ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
 	ERR_STATE *ret=NULL,tmp,*tmpp;
+	int thread_state_exists;
 	int i;
 	unsigned long pid;
 
 	pid=(unsigned long)CRYPTO_thread_id();
 
 	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
-	if (thread_hash == NULL)
-		{
-		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-		if (thread_hash == NULL)
-			{
-			MemCheck_off();
-			thread_hash=lh_new(pid_hash,pid_cmp);
-			MemCheck_on();
-			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-			if (thread_hash == NULL) return(&fallback);
-			}
-		else
-			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-		}
-	else
+	if (thread_hash != NULL)
 		{
 		tmp.pid=pid;
 		ret=(ERR_STATE *)lh_retrieve(thread_hash,&tmp);
-		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 		}
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)
@@ -702,9 +694,29 @@ ERR_STATE *ERR_get_state(void)
 			ret->err_data[i]=NULL;
 			ret->err_data_flags[i]=0;
 			}
+
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-		tmpp=(ERR_STATE *)lh_insert(thread_hash,ret);
+
+		/* no entry yet in thread_hash for current thread -
+		 * thus, it may have changed since we last looked at it */
+		if (thread_hash == NULL)
+			thread_hash = lh_new(pid_hash, pid_cmp);
+		if (thread_hash == NULL)
+			thread_state_exists = 0; /* allocation error */
+		else
+			{
+			tmpp=(ERR_STATE *)lh_insert(thread_hash,ret);
+			thread_state_exists = 1;
+			}
+
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+
+		if (!thread_state_exists)
+			{
+			ERR_STATE_free(ret); /* could not insert it */
+			return(&fallback);
+			}
+		
 		if (tmpp != NULL) /* old entry - should not happen */
 			{
 			ERR_STATE_free(tmpp);

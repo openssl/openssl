@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Avoid 'thread_hash' memory leak in crypto/err/err.c by freeing
+     it in ERR_remove_state if appropriate, and change ERR_get_state
+     accordingly to avoid race conditions (this is necessary because
+     thread_hash is no longer constant once set).
+     [Bodo Moeller]
+
   *) Bugfix for linux-elf makefile.one.
      [Ulf Möller]
 
