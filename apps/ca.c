@@ -114,6 +114,7 @@
 #define ENV_RANDFILE		"RANDFILE"
 #define ENV_DEFAULT_DAYS 	"default_days"
 #define ENV_DEFAULT_STARTDATE 	"default_startdate"
+#define ENV_DEFAULT_ENDDATE 	"default_enddate"
 #define ENV_DEFAULT_CRL_DAYS 	"default_crl_days"
 #define ENV_DEFAULT_CRL_HOURS 	"default_crl_hours"
 #define ENV_DEFAULT_MD		"default_md"
@@ -183,22 +184,24 @@ static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
-		   BIGNUM *serial, char *startdate,int days,int batch,
-		   char *ext_sect, LHASH *conf,int verbose);
+		   BIGNUM *serial, char *startdate,char *enddate, int days,
+		   int batch, char *ext_sect, LHASH *conf,int verbose);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			TXT_DB *db, BIGNUM *serial,char *startdate,int days,
-			int batch, char *ext_sect, LHASH *conf,int verbose);
+			TXT_DB *db, BIGNUM *serial,char *startdate,
+			char *enddate, int days, int batch, char *ext_sect,
+			LHASH *conf,int verbose);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			 TXT_DB *db, BIGNUM *serial,char *startdate,int days,
-			 char *ext_sect,LHASH *conf,int verbose);
+			 TXT_DB *db, BIGNUM *serial,char *startdate,
+			 char *enddate, int days, char *ext_sect,LHASH *conf,
+				int verbose);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
-	char *startdate, int days, int batch, int verbose, X509_REQ *req,
-	char *ext_sect, LHASH *conf);
+	char *startdate, char *enddate, int days, int batch, int verbose,
+	X509_REQ *req, char *ext_sect, LHASH *conf);
 static int do_revoke(X509 *x509, TXT_DB *db);
 static int check_time_format(char *str);
 static LHASH *conf;
@@ -238,6 +241,7 @@ int MAIN(int argc, char **argv)
 	char *crl_ext=NULL;
 	BIGNUM *serial=NULL;
 	char *startdate=NULL;
+	char *enddate=NULL;
 	int days=0;
 	int batch=0;
 	X509 *x509=NULL;
@@ -294,6 +298,11 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			startdate= *(++argv);
+			}
+		else if (strcmp(*argv,"-enddate") == 0)
+			{
+			if (--argc < 1) goto bad;
+			enddate= *(++argv);
 			}
 		else if (strcmp(*argv,"-days") == 0)
 			{
@@ -729,18 +738,25 @@ bad:
 
 		if (startdate == NULL)
 			{
-			startdate=(char *)CONF_get_string(conf,section,
+			startdate=CONF_get_string(conf,section,
 				ENV_DEFAULT_STARTDATE);
-			if (startdate == NULL)
-				startdate="today";
-			else
-				{
-				if (!ASN1_UTCTIME_set_string(NULL,startdate))
-					{
-					BIO_printf(bio_err,"start date is invalid, it should be YYMMDDHHMMSS\n");
-					goto err;
-					}
-				}
+			}
+		if (startdate && !ASN1_UTCTIME_set_string(NULL,startdate))
+			{
+			BIO_printf(bio_err,"start date is invalid, it should be YYMMDDHHMMSSZ\n");
+			goto err;
+			}
+		if (startdate == NULL) startdate="today";
+
+		if (enddate == NULL)
+			{
+			enddate=CONF_get_string(conf,section,
+				ENV_DEFAULT_ENDDATE);
+			}
+		if (enddate && !ASN1_UTCTIME_set_string(NULL,enddate))
+			{
+			BIO_printf(bio_err,"end date is invalid, it should be YYMMDDHHMMSSZ\n");
+			goto err;
 			}
 
 		if (days == 0)
@@ -748,7 +764,7 @@ bad:
 			days=(int)CONF_get_number(conf,section,
 				ENV_DEFAULT_DAYS);
 			}
-		if (days == 0)
+		if (!enddate && (days == 0))
 			{
 			BIO_printf(bio_err,"cannot lookup how many days to certify for\n");
 			goto err;
@@ -781,7 +797,8 @@ bad:
 			{
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
-				serial,startdate,days,extensions,conf,verbose);
+				serial,startdate,enddate, days,extensions,conf,
+				verbose);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -804,7 +821,7 @@ bad:
 			{
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
-				db,serial,startdate,days,batch,
+				db,serial,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -823,7 +840,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
-				serial,startdate,days,batch,
+				serial,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -842,7 +859,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
-				serial,startdate,days,batch,
+				serial,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1325,8 +1342,8 @@ err:
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, int days, int batch,
-	     char *ext_sect, LHASH *lconf, int verbose)
+	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     int batch, char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509_REQ *req=NULL;
 	BIO *in=NULL;
@@ -1373,7 +1390,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	else
 		BIO_printf(bio_err,"Signature ok\n");
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate, enddate,
 		days,batch,verbose,req,ext_sect,lconf);
 
 err:
@@ -1384,8 +1401,8 @@ err:
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, int days, int batch,
-	     char *ext_sect, LHASH *lconf, int verbose)
+	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     int batch, char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509 *req=NULL;
 	X509_REQ *rreq=NULL;
@@ -1435,7 +1452,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if ((rreq=X509_to_X509_REQ(req,NULL,EVP_md5())) == NULL)
 		goto err;
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,enddate,days,
 		batch,verbose,rreq,ext_sect,lconf);
 
 err:
@@ -1447,8 +1464,8 @@ err:
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
-	     char *startdate, int days, int batch, int verbose, X509_REQ *req,
-	     char *ext_sect, LHASH *lconf)
+	     char *startdate, char *enddate, int days, int batch, int verbose,
+	     X509_REQ *req, char *ext_sect, LHASH *lconf)
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1744,17 +1761,16 @@ again2:
 
 	BIO_printf(bio_err,"Certificate is to be certified until ");
 	if (strcmp(startdate,"today") == 0)
-		{
 		X509_gmtime_adj(X509_get_notBefore(ret),0);
+	else ASN1_UTCTIME_set_string(X509_get_notBefore(ret),startdate);
+
+	if (enddate == NULL)
 		X509_gmtime_adj(X509_get_notAfter(ret),(long)60*60*24*days);
-		}
-	else
-		{
-		/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
-		ASN1_UTCTIME_set_string(X509_get_notBefore(ret),startdate);
-		}
+	else ASN1_UTCTIME_set_string(X509_get_notAfter(ret),enddate);
+
 	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
-	BIO_printf(bio_err," (%d days)\n",days);
+	if(days) BIO_printf(bio_err," (%d days)",days);
+	BIO_printf(bio_err, "\n");
 
 	if (!X509_set_subject_name(ret,subject)) goto err;
 
@@ -1905,8 +1921,8 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der)
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, int days, char *ext_sect,
-	     LHASH *lconf, int verbose)
+	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     char *ext_sect, LHASH *lconf, int verbose)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;
 	LHASH *parms=NULL;
@@ -2050,7 +2066,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,enddate,
 		   days,1,verbose,req,ext_sect,lconf);
 err:
 	if (req != NULL) X509_REQ_free(req);

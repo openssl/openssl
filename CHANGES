@@ -4,6 +4,10 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Aug 1999]
 
+  *) Fix -startdate and -enddate (which was missing) arguments to 'ca'
+     program.
+     [Steve Henson]
+
   *) New function DSA_dup_DH, which duplicates DSA parameters/keys as
      DH parameters/keys (q is lost during that conversion, but the resulting
      DH parameters contain its length).
