@@ -921,11 +921,10 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		if (!BN_sub_word(t, 1)) goto err;
 		if (!BN_rshift1(t, t)) goto err;
 		/* r := a^t mod b */
-		/* FIXME: Using BN_mod_exp (Montgomery variant) leads to
-		 * incorrect results if  b  is negative ("Legendre symbol
-		 * computation failed").
-		 * We want computations to be carried out modulo |b|. */
-		if (!BN_mod_exp_simple(r, a, t, b, ctx)) goto err;
+		b->neg=0;
+		
+		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err; /* XXX should be BN_mod_exp_recp, but ..._recp triggers a bug that must be fixed */
+		b->neg=1;
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
@@ -934,7 +933,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		else
 			{
 			if (!BN_add_word(r, 1)) goto err;
-			if (0 != BN_cmp(r, b))
+			if (0 != BN_ucmp(r, b))
 				{
 				fprintf(stderr, "Legendre symbol computation failed\n");
 				goto err;
@@ -1220,7 +1219,7 @@ int test_rshift1(BIO *bp)
 			}
 		BN_sub(c,a,b);
 		BN_sub(c,c,b);
-		if(!BN_is_zero(c) && !BN_is_one(c))
+		if(!BN_is_zero(c) && !BN_abs_is_word(c, 1))
 		    {
 		    fprintf(stderr,"Right shift one test failed!\n");
 		    return 0;

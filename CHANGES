@@ -3,6 +3,16 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change BN_mod_exp_recp so that negative moduli are tolerated
+     (the sign is ignored).  Similarly, ignore the sign in BN_MONT_CTX_set
+     so that BN_mod_exp_mont and BN_mod_exp_mont_word work
+     for negative moduli.
+     [Bodo Moeller]
+
+  *) Fix BN_uadd and BN_usub: Always return non-negative results instead
+     of not touching the result's sign bit.
+     [Bodo Moeller]
+
   *) BN_div bugfix: If the result is 0, the sign (res->neg) must not be
      set.
      [Bodo Moeller]

@@ -246,7 +246,17 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if ((aa = BN_CTX_get(ctx)) == NULL) goto err;
 
 	BN_RECP_CTX_init(&recp);
-	if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
+	if (m->neg)
+		{
+		/* ignore sign of 'm' */
+		if (!BN_copy(aa, m)) goto err;
+		aa->neg = 0;
+		if (BN_RECP_CTX_set(&recp,aa,ctx) <= 0) goto err;
+		}
+	else
+		{
+		if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
+		}
 
 	BN_init(&(val[0]));
 	ts=1;
@@ -497,9 +507,13 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		(/* BN_ucmp(r, (m)) < 0 ? 1 :*/  \
 			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
 		/* BN_MOD_MUL_WORD is only used with 'w' large,
-		  * so the BN_ucmp test is probably more overhead
-		  * than always using BN_mod (which uses BN_copy if
-		  * a similar test returns true). */
+		 * so the BN_ucmp test is probably more overhead
+		 * than always using BN_mod (which uses BN_copy if
+		 * a similar test returns true). */
+		/* We can use BN_mod and do not need BN_nnmod because our
+		 * accumulator is never negative (the result of BN_mod does
+		 * not depend on the sign of the modulus).
+		 */
 #define BN_TO_MONTGOMERY_WORD(r, w, mont) \
 		(BN_set_word(r, (w)) && BN_to_montgomery(r, r, (mont), ctx))
 

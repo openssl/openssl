@@ -64,6 +64,7 @@
 int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
 	const BIGNUM *tmp;
+	int a_neg = a->neg;
 
 	bn_check_top(a);
 	bn_check_top(b);
@@ -73,10 +74,10 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	 * -a +  b	b-a
 	 * -a + -b	-(a+b)
 	 */
-	if (a->neg ^ b->neg)
+	if (a_neg ^ b->neg)
 		{
 		/* only one is negative */
-		if (a->neg)
+		if (a_neg)
 			{ tmp=a; a=b; b=tmp; }
 
 		/* we are now a - b */
@@ -94,12 +95,11 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		return(1);
 		}
 
-	if (a->neg) /* both are neg */
+	if (!BN_uadd(r,a,b)) return(0);
+	if (a_neg) /* both are neg */
 		r->neg=1;
 	else
 		r->neg=0;
-
-	if (!BN_uadd(r,a,b)) return(0);
 	return(1);
 	}
 
@@ -160,6 +160,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 			*(rp++)= *(ap++);
 		}
 	/* memcpy(rp,ap,sizeof(*ap)*(max-i));*/
+	r->neg = 0;
 	return(1);
 	}
 
@@ -251,6 +252,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 #endif
 
 	r->top=max;
+	r->neg=0;
 	bn_fix_top(r);
 	return(1);
 	}

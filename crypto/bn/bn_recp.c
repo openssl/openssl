@@ -93,8 +93,8 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 
 int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	{
-	BN_copy(&(recp->N),d);
-	BN_zero(&(recp->Nr));
+	if (!BN_copy(&(recp->N),d)) return 0;
+	if (!BN_zero(&(recp->Nr))) return 0;
 	recp->num_bits=BN_num_bits(d);
 	recp->shift=0;
 	return(1);
@@ -120,8 +120,7 @@ int BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
 	else
 		ca=x; /* Just do the mod */
 
-	BN_div_recp(NULL,r,ca,recp,ctx);
-	ret=1;
+	ret = BN_div_recp(NULL,r,ca,recp,ctx);
 err:
 	BN_CTX_end(ctx);
 	return(ret);
@@ -148,8 +147,8 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 
 	if (BN_ucmp(m,&(recp->N)) < 0)
 		{
-		BN_zero(d);
-		BN_copy(r,m);
+		if (!BN_zero(d)) return 0;
+		if (!BN_copy(r,m)) return 0;
 		BN_CTX_end(ctx);
 		return(1);
 		}
@@ -159,21 +158,28 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 	 * we need multiply ABCDEF by 3 digests of the reciprocal of ab
 	 *
 	 */
-	i=BN_num_bits(m);
 
+	/* i := max(BN_num_bits(m), 2*BN_num_bits(N)) */
+	i=BN_num_bits(m);
 	j=recp->num_bits<<1;
 	if (j>i) i=j;
-	j>>=1;
 
+	/* Nr := round(2^i / N) */
 	if (i != recp->shift)
 		recp->shift=BN_reciprocal(&(recp->Nr),&(recp->N),
 			i,ctx); /* BN_reciprocal returns i, or -1 for an error */
 	if (recp->shift == -1) goto err;
 
-	if (!BN_rshift(a,m,j)) goto err;
+	/* d := |round(round(m / 2^BN_num_bits(N)) * recp->Nr / 2^(i - BN_num_bits(N)))|
+	 *    = |round(round(m / 2^BN_num_bits(N)) * round(2^i / N) / 2^(i - BN_num_bits(N)))|
+	 *   <= |(m / 2^BN_num_bits(N)) * (2^i / N) * (2^BN_num_bits(N) / 2^i)|
+	 *    = |m/N|
+	 */
+	if (!BN_rshift(a,m,recp->num_bits)) goto err;
 	if (!BN_mul(b,a,&(recp->Nr),ctx)) goto err;
-	if (!BN_rshift(d,b,i-j)) goto err;
+	if (!BN_rshift(d,b,i-recp->num_bits)) goto err;
 	d->neg=0;
+
 	if (!BN_mul(b,&(recp->N),d,ctx)) goto err;
 	if (!BN_usub(r,m,b)) goto err;
 	r->neg=0;
@@ -212,13 +218,50 @@ int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 
 	BN_init(&t);
 
-	BN_zero(&t);
+	if (!BN_zero(&t)) goto err;
 	if (!BN_set_bit(&t,len)) goto err;
 
 	if (!BN_div(r,NULL,&t,m,ctx)) goto err;
+
+#if 1
+	{
+	BIGNUM v;
+	
+	BN_init(&v);
+	BN_mul(&v,r,m,ctx);
+	if (BN_num_bits(&v) > BN_num_bits(r) + BN_num_bits(m))
+		{
+		fprintf(stderr,"bn_recp.c: BN_mul does not work\n");
+		fprintf(stderr,"r =");
+		BN_print_fp(stderr,r);
+		fprintf(stderr,"\nm =");
+		BN_print_fp(stderr,m);
+		fprintf(stderr,"\nr*m =");
+		BN_print_fp(stderr,&v);
+		fprintf(stderr,"\n");
+		abort();
+
+/* Example output (Linux x86):
+
+bn_recp.c: BN_mul does not work
+r =11F5575B94E4AA12CA5D2B7A3DDC5E1A68C77758A941F3C50749D2BB2C65F8D2424E23642AC2CEEFE520FE594626AF7440772AD8C2F3801925E13B11B4398A51A
+m =E415484B146C8AC93EE7B5CAA1C0B0182324E60263BE95C3E26542CD3ADF818D92DD52C073E2B38AEEA5F6C926D2D3D53D7190461D3DF62A20449B5BEAF4F74D
+r*m =1B96E67C0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001B96E67AB2626FFC8A5076B1BE234C8A69F72D9D73A71EDB1649209D42FA20ACA2FAE36B481D9C6F2FE021A437FD81ABB62B5F13E8DEB58366ACEE8493B4F610BCFDBED2
+
+The result should be
+r*m =FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB2626FFC8A5076B1BE234C8A69F72D9D73A71EDB1649209D42FA20ACA2FAE36B481D9C6F2FE021A437FD81ABB62B5F13E8DEB58366ACEE8493B4F610BCFDBED2
+(according to GNU bc).
+
+*/
+
+
+		}
+	BN_free(&v);
+	}
+#endif	
+
 	ret=len;
 err:
 	BN_free(&t);
 	return(ret);
 	}
-
