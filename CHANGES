@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Support INSTALL_PREFIX for package builders, as proposed by
+     David Harris.
+     [Bodo Moeller]
+
   *) New Configure options "threads" and "no-threads".  For systems
      where the proper compiler options are known (currently Solaris
      and Linux), "threads" is the default.

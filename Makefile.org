@@ -6,6 +6,10 @@ VERSION=
 MAJOR=
 MINOR=
 PLATFORM=dist
+# INSTALL_PREFIX is for package builders so that they can configure
+# for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
+# Normally it is left empty.
+INSTALL_PREFIX=
 INSTALLTOP=/usr/local/ssl
 
 # Do not edit this manually. Use Configure --openssldir=DIR do change this!
@@ -307,24 +311,24 @@ dist_pem_h:
 	(cd crypto/pem; $(MAKE) SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
 install: all
-	@-mkdir -p $(INSTALLTOP)/bin 2>/dev/null
-	@-mkdir -p $(INSTALLTOP)/lib 2>/dev/null
-	@-mkdir -p $(INSTALLTOP)/include/openssl 2>/dev/null
-	@-mkdir -p $(OPENSSLDIR)/misc 2>/dev/null
-	@-mkdir -p $(OPENSSLDIR)/certs 2>/dev/null
-	@-mkdir -p $(OPENSSLDIR)/private 2>/dev/null
-	@-mkdir -p $(OPENSSLDIR)/lib 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/bin 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/lib 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/misc 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/certs 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/private 2>/dev/null
+	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/lib 2>/dev/null
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "installing $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' install ); \
+	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' install ); \
 	done
 	@for i in $(LIBS) ;\
 	do \
 	(       echo installing $$i; \
-		cp $$i $(INSTALLTOP)/lib; \
-		$(RANLIB) $(INSTALLTOP)/lib/$$i; \
-		chmod 644 $(INSTALLTOP)/lib/$$i ); \
+		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+		$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

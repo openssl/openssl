@@ -7,6 +7,7 @@ TOP=		..
 CC=		cc
 INCLUDES=	-I../include
 CFLAG=		-g -static
+INSTALL_PREFIX=
 INSTALLTOP=	/usr/local/ssl
 OPENSSLDIR=	/usr/local/ssl
 MAKE=		make -f Makefile.ssl
@@ -91,17 +92,17 @@ install:
 	@for i in $(EXE); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALLTOP)/bin/$$i; \
-	 chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
 	 done;
 	@for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(OPENSSLDIR)/misc/$$i; \
-	 chmod 755 $(OPENSSLDIR)/misc/$$i ); \
+	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	 done;
-	cp openssl.cnf $(OPENSSLDIR)/lib; \
-	chmod 644 $(OPENSSLDIR)/lib/openssl.cnf
+	cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/lib; \
+	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/lib/openssl.cnf
 
 tags:
 	ctags $(SRC)

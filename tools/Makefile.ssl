@@ -7,6 +7,8 @@ TOP=	..
 CC=	cc
 INCLUDES= -I.. -I../../include
 CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
@@ -24,13 +26,13 @@ all:
 install:
 	@for i in $(APPS) ; \
 	do  \
-	(cp $$i $(INSTALLTOP)/bin/$$i; \
-	chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
 	done;
 	@for i in $(MISC_APPS) ; \
 	do  \
-	(cp $$i $(OPENSSLTOP)/misc/$$i; \
-	chmod 755 $(OPENSSLTOP)/misc/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+	chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	done;
 
 files:

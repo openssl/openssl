@@ -8,6 +8,8 @@ CC=		cc
 INCLUDE=	-I. -I../include
 INCLUDES=	-I.. -I../../include
 CFLAG=		-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=	/usr/local/ssl
 MAKE=           make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
@@ -85,7 +87,7 @@ libs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making libs in crypto/$$i..."; \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
+	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
 	done;
 
 tests:
@@ -98,8 +100,8 @@ tests:
 install:
 	@for i in $(EXHEADER) ;\
 	do \
-	(cp $$i $(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALLTOP)/include/openssl/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@for i in $(SDIRS) ;\
 	do \

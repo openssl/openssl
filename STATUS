@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/27 12:01:53 $
+  ______________                           $Date: 1999/04/29 21:51:00 $
 
   DEVELOPMENT STATE
 
@@ -30,7 +30,6 @@
   AVAILABLE PATCHES
 
     o OCSP (titchenert@certco.com) 
-    o Install prefix for packagers (dharris@drh.net)
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
     o MingW support (niklas@canit.se)
@@ -94,24 +93,6 @@
                       Configure and config. Or even let us use GNU Autoconf
                       itself. Then we can avoid a lot of those platform checks
                       which are currently in Configure.
-
-    o  The installation under "make install" produces a very
-       installation layout: $prefix/certs and $prefix/private dirs.  That's
-       not nice. Ralf suggests to move the two certs and private dirs either
-       to $prefix/etc/, $prefix/lib/ or $prefix/share. Alternatively
-       we could also not install the certs at all.
-
-       Status: Ralf +1 for both not installing the certs at all and
-                       moving it to $prefix/etc/. +0 for $prefix/lib/
-                       and $prefix/share.
-               Paul: why is it not nice?
-               Ralf: because it messes up the install dir when
-                     $prefix is not a dedicated area like /usr/local/ssl.
-                     When we move them to a standard subdir like
-                     etc/ lib/ or share/ we don't mess up things
-                     when $prefix is /usr or /usr/local, etc.
-                     Additionally it makes package vendors life
-                     easier....
 
     o  Support for Shared Libraries has to be added at least
        for the major Unix platforms. The details we can rip from the stuff

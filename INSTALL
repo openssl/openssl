@@ -122,6 +122,17 @@
        include/openssl Contains the header files needed if you want to
                        compile programs with libcrypto or libssl.
 
+     Package builders who want to configure the library for standard
+     locations, but have the package installed somewhere else so that
+     it can easily be packaged, can use
+
+       $ make INSTALL_PREFIX=/tmp/package-root install
+
+     (or specify "-install_prefix=/tmp/package-root" as a configure
+     option).  The specified prefix will be prepended to all
+     installation target filenames.
+
+
   NOTE: The header files used to reside directly in the include
   directory, but have now been moved to include/openssl so that
   OpenSSL can co-exist with other libraries which use some of the

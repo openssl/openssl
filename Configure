@@ -13,10 +13,16 @@ use strict;
 my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no-threads] [no-asm] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
+#
 # --openssldir  install OpenSSL in OPENSSLDIR (Default: DIR/ssl if the
 #               --prefix option is given; /usr/local/ssl otherwise)
 # --prefix      prefix for the OpenSSL include, lib and bin directories
 #               (Default: the OPENSSLDIR directory)
+#
+# --install_prefix  Additional prefix for package builders (empty by
+#               default).  This needn't be set in advance, you can
+#               just as well use "make INSTALL_PREFIX=/whatever install".
+#
 # rsaref        use RSAref
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -248,8 +254,9 @@ my %table=(
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
 	BC-16 CygWin32);
 
-my $installprefix="";
+my $prefix="";
 my $openssldir="";
+my $install_prefix="";
 my $no_threads=0;
 my $threads=0;
 my $no_asm=0;
@@ -321,11 +328,15 @@ foreach (@ARGV)
 			}
 		elsif (/^--prefix=(.*)$/)
 			{
-			$installprefix=$1;
+			$prefix=$1;
 			}
 		elsif (/^--openssldir=(.*)$/)
 			{
 			$openssldir=$1;
+			}
+		elsif (/^--install.prefix=(.*)$/)
+			{
+			$install_prefix=$1;
 			}
 		else
 			{
@@ -348,14 +359,14 @@ foreach (@ARGV)
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
-$openssldir="/usr/local/ssl" if ($openssldir eq "" and $installprefix eq "");
-$installprefix=$openssldir if $installprefix eq "";
+$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
+$prefix=$openssldir if $prefix eq "";
 
 chop $openssldir if $openssldir =~ /\/$/;
-chop $installprefix if $installprefix =~ /\/$/;
+chop $prefix if $prefix =~ /\/$/;
 
-$openssldir=$installprefix . "/ssl" if $openssldir eq "";
-$openssldir=$installprefix . "/" . $openssldir if $openssldir !~ /^\//;
+$openssldir=$prefix . "/ssl" if $openssldir eq "";
+$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
 
 
 print "IsWindows=$IsWindows\n";
@@ -457,8 +468,9 @@ while (<IN>)
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
-	s/^INSTALLTOP=.*$/INSTALLTOP=$installprefix/;
+	s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
+	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^CC=.*$/CC= $cc/;
 	s/^CFLAG=.*$/CFLAG= $cflags/;
@@ -650,7 +662,7 @@ conflicts with other libraries.
 
 To compile programs that use the old form <foo.h>,
 usually an additional compiler option will suffice: E.g., add
-     -I$installprefix/include/openssl
+     -I$prefix/include/openssl
 or
      -I$pwd/include/openssl
 to the CFLAGS in the Makefile of the program that you want to compile
