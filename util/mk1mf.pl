@@ -730,8 +730,6 @@ sub cc_compile_target
 	local($target,$source,$ex_flags)=@_;
 	local($ret);
 	
-	# EAY EAY
-	$ex_flags.=' -DCFLAGS="\"$(CC) $(CFLAG)\"" -DPLATFORM="\"$(PLATFORM)\""' if ($source =~ /cversion/ and $dcflags ne 'n');
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";

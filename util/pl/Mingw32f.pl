@@ -14,7 +14,6 @@ if ($debug)
 	{ $cflags="-g2 -ggdb"; }
 else
 	{ $cflags="-O3 -fomit-frame-pointer"; }
-$dcflags='n'; # Make can't handle -DCFLAGS definition
 
 $obj='.o';
 $ofile='-o ';
