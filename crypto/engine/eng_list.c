@@ -591,10 +591,10 @@ int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
 #ifndef OPENSSL_NO_RSA
 			ENGINE_set_RSA(dest, ENGINE_get_RSA(src)) &&
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DSA
 			ENGINE_set_DSA(dest, ENGINE_get_DSA(src)) &&
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DH
 			ENGINE_set_DH(dest, ENGINE_get_DH(src)) &&
 #endif
 			ENGINE_set_RAND(dest, ENGINE_get_RAND(src)) &&
