@@ -706,8 +706,8 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  */
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	{
-	int al,j,ret;
-	unsigned int i,n;
+	int al,i,j,ret;
+	unsigned int n;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
 
@@ -890,9 +890,9 @@ start:
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s))
 				{
-				n=s->handshake_func(s);
-				if (n < 0) return(n);
-				if (n == 0)
+				i=s->handshake_func(s);
+				if (i < 0) return(i);
+				if (i == 0)
 					{
 					SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 					return(-1);
