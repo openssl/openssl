@@ -73,6 +73,7 @@
  */
 
 #include <openssl/des_old.h>
+#include <openssl/rand.h>
 
 const char *des_options(void)
 	{
