@@ -63,6 +63,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <openssl/crypto.h>
 
 /* These are the 'types' of BIOs */

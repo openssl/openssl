@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifndef NO_FP_API
+#include <stdio.h>
+#endif
+
 /* The following is a bit of a trick to help the object files only contain
  * the 'name of the file' string once.  Since 'err.h' is protected by the
  * HEADER_ERR_H stuff, this should be included only once per file. */

@@ -60,6 +60,8 @@
 #define HEADER_SSL3_H 
 
 #include <openssl/buffer.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -67,6 +67,10 @@
 extern "C" {
 #endif
 
+#ifndef NO_FP_API
+#include <stdio.h>
+#endif
+
 typedef struct lhash_node_st
 	{
 	char *data;

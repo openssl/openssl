@@ -56,6 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef HEADER_X509_H
+#include <openssl/x509.h>
+/* openssl/x509.h ends up #include-ing this file at about the only
+ * appropriate moment. */
+#endif
+
 #ifndef HEADER_X509_VFY_H
 #define HEADER_X509_VFY_H
 

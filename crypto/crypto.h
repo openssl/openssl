@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifndef NO_FP_API
+#include <stdio.h>
+#endif
+
 #include <openssl/stack.h>
 #include <openssl/opensslv.h>
 
