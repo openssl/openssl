@@ -71,6 +71,7 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <openssl/rand.h>
 
 #ifdef OPENSSL_SYS_VMS
 # include <builtins.h>
