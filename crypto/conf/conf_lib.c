@@ -156,13 +156,21 @@ char *CONF_get_string(LHASH *conf,char *group,char *name)
 long CONF_get_number(LHASH *conf,char *group,char *name)
 	{
 	CONF ctmp;
+	int status;
+	long result = 0;
 
 	if (default_CONF_method == NULL)
 		default_CONF_method = NCONF_default();
 
 	default_CONF_method->init(&ctmp);
 	ctmp.data = conf;
-	return NCONF_get_number(&ctmp, group, name);
+	status = NCONF_get_number_e(&ctmp, group, name, &result);
+	if (status == 0)
+		{
+		/* This function does not believe in errors... */
+		ERR_get_error();
+		}
+	return result;
 	}
 
 void CONF_free(LHASH *conf)
@@ -322,25 +330,33 @@ char *NCONF_get_string(CONF *conf,char *group,char *name)
                         CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return NULL;
 		}
+	CONFerr(CONF_F_NCONF_GET_STRING,
+		CONF_R_NO_VALUE);
 	return NULL;
 	}
 
-long NCONF_get_number(CONF *conf,char *group,char *name)
+int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result)
 	{
-#if 0 /* As with _CONF_get_string(), we rely on the possibility of finding
-         an environment variable with a suitable name.  Unfortunately, there's
-         no way with the current API to see if we found one or not...
-         The meaning of this is that if a number is not found anywhere, it
-         will always default to 0. */
-	if (conf == NULL)
+	char *str;
+
+	if (result == NULL)
 		{
-		CONFerr(CONF_F_NCONF_GET_NUMBER,
-                        CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
+		CONFerr(CONF_F_NCONF_GET_NUMBER_E,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-#endif
-	
-	return _CONF_get_number(conf, group, name);
+
+	str = NCONF_get_string(conf,group,name);
+
+	if (str == NULL)
+		return 0;
+
+	for (;conf->meth->is_number(conf, *str);)
+		{
+		*result = (*result)*10 + conf->meth->to_int(conf, *str);
+		str++;
+		}
+
+	return 1;
 	}
 
 #ifndef NO_FP_API
@@ -367,5 +383,21 @@ int NCONF_dump_bio(CONF *conf, BIO *out)
 		}
 
 	return conf->meth->dump(conf, out);
+	}
+
+/* This function should be avoided */
+#undef NCONF_get_number
+long NCONF_get_number(CONF *conf,char *group,char *name)
+	{
+	int status;
+	long ret=0;
+
+	status = NCONF_get_number_e(conf, group, name, &ret);
+	if (status == 0)
+		{
+		/* This function does not believe in errors... */
+		ERR_get_error();
+		}
+	return ret;
 	}
 

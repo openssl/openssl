@@ -153,6 +153,9 @@ char *_CONF_get_string(CONF *conf, char *section, char *name)
 		return(Getenv(name));
 	}
 
+#if 0 /* There's no way to provide error checking with this function, so
+	 force implementors of the higher levels to get a string and read
+	 the number themselves. */
 long _CONF_get_number(CONF *conf, char *section, char *name)
 	{
 	char *str;
@@ -169,6 +172,7 @@ long _CONF_get_number(CONF *conf, char *section, char *name)
 		str++;
 		}
 	}
+#endif
 
 int _CONF_new_data(CONF *conf)
 	{

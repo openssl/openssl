@@ -73,6 +73,7 @@ static ERR_STRING_DATA CONF_str_functs[]=
 {ERR_PACK(0,CONF_F_NCONF_DUMP_BIO,0),	"NCONF_dump_bio"},
 {ERR_PACK(0,CONF_F_NCONF_DUMP_FP,0),	"NCONF_dump_fp"},
 {ERR_PACK(0,CONF_F_NCONF_GET_NUMBER,0),	"NCONF_get_number"},
+{ERR_PACK(0,CONF_F_NCONF_GET_NUMBER_E,0),	"NCONF_get_number_e"},
 {ERR_PACK(0,CONF_F_NCONF_GET_SECTION,0),	"NCONF_get_section"},
 {ERR_PACK(0,CONF_F_NCONF_GET_STRING,0),	"NCONF_get_string"},
 {ERR_PACK(0,CONF_F_NCONF_LOAD_BIO,0),	"NCONF_load_bio"},
@@ -89,6 +90,7 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 {CONF_R_NO_CONF                          ,"no conf"},
 {CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE  ,"no conf or environment variable"},
 {CONF_R_NO_SECTION                       ,"no section"},
+{CONF_R_NO_VALUE                         ,"no value"},
 {CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
 {CONF_R_VARIABLE_HAS_NO_VALUE            ,"variable has no value"},
 {0,NULL}

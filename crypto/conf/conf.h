@@ -136,9 +136,16 @@ int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
 int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
 STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section);
 char *NCONF_get_string(CONF *conf,char *group,char *name);
-long NCONF_get_number(CONF *conf,char *group,char *name);
+int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result);
 int NCONF_dump_fp(CONF *conf, FILE *out);
 int NCONF_dump_bio(CONF *conf, BIO *out);
+
+#if 0 /* The following function has no error checking,
+	 and should therefore be avoided */
+long NCONF_get_number(CONF *conf,char *group,char *name);
+#else
+#define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r);
+#endif
 
 
 /* BEGIN ERROR CODES */
@@ -156,6 +163,7 @@ int NCONF_dump_bio(CONF *conf, BIO *out);
 #define CONF_F_NCONF_DUMP_BIO				 105
 #define CONF_F_NCONF_DUMP_FP				 106
 #define CONF_F_NCONF_GET_NUMBER				 107
+#define CONF_F_NCONF_GET_NUMBER_E			 112
 #define CONF_F_NCONF_GET_SECTION			 108
 #define CONF_F_NCONF_GET_STRING				 109
 #define CONF_F_NCONF_LOAD_BIO				 110
@@ -169,6 +177,7 @@ int NCONF_dump_bio(CONF *conf, BIO *out);
 #define CONF_R_NO_CONF					 105
 #define CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE		 106
 #define CONF_R_NO_SECTION				 107
+#define CONF_R_NO_VALUE					 108
 #define CONF_R_UNABLE_TO_CREATE_NEW_SECTION		 103
 #define CONF_R_VARIABLE_HAS_NO_VALUE			 104
 
