@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/20 14:07:07 $
+  ______________                           $Date: 2002/02/20 18:03:00 $
 
   DEVELOPMENT STATE
 
@@ -60,9 +60,6 @@
     o  An (optional) countermeasure against the predictable-IV CBC
        weakness in SSL/TLS should be added; see
        http://www.openssl.org/~bodo/tls-cbc.txt
-
-    o  All 'openssl' subprograms taking '-des' and '-des3' options should
-       include AES support (0.9.7-dev)
 
     o  'openssl speed' should include AES support (0.9.7-dev)
 

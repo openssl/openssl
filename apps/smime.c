@@ -129,6 +129,14 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-rc2-64")) 
 				cipher = EVP_rc2_64_cbc();
 #endif
+#ifndef OPENSSL_NO_AES
+		else if (!strcmp(*argv,"-aes128") == 0)
+				cipher = EVP_aes_128_cbc();
+		else if (!strcmp(*argv,"-aes192") == 0)
+				cipher = EVP_aes_192_cbc();
+		else if (!strcmp(*argv,"-aes256") == 0)
+				cipher = EVP_aes_256_cbc();
+#endif
 		else if (!strcmp (*args, "-text")) 
 				flags |= PKCS7_TEXT;
 		else if (!strcmp (*args, "-nointern")) 
@@ -283,6 +291,10 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40 (default)\n");
 		BIO_printf (bio_err, "-rc2-64        encrypt with RC2-64\n");
 		BIO_printf (bio_err, "-rc2-128       encrypt with RC2-128\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
+		BIO_printf (bio_err, "               encrypt PEM output with cbc aes\n");
 #endif
 		BIO_printf (bio_err, "-nointern      don't search certificates in message for signer\n");
 		BIO_printf (bio_err, "-nosigs        don't verify message signature\n");

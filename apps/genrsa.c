@@ -139,6 +139,14 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
+#ifndef OPENSSL_NO_AES
+		else if (strcmp(*argv,"-aes128") == 0)
+			enc=EVP_aes_128_cbc();
+		else if (strcmp(*argv,"-aes192") == 0)
+			enc=EVP_aes_192_cbc();
+		else if (strcmp(*argv,"-aes256") == 0)
+			enc=EVP_aes_256_cbc();
+#endif
 		else if (strcmp(*argv,"-passout") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -157,6 +165,10 @@ bad:
 		BIO_printf(bio_err," -des3           encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt the generated key with IDEA in cbc mode\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
 #endif
 		BIO_printf(bio_err," -out file       output the key to 'file\n");
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
