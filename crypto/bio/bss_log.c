@@ -67,19 +67,22 @@
 #include <errno.h>
 
 #if defined(WIN32)
-#include <process.h>
+#  include <process.h>
+#elif defined (MSDOS)
+#  define NO_SYSLOG
 #elif defined(VMS) || defined(__VMS)
-#include <opcdef.h>
-#include <descrip.h>
+#  include <opcdef.h>
+#  include <descrip.h>
 #elif defined(__ultrix)
-#include <sys/syslog.h>
+#  include <sys/syslog.h>
 #else
-#include <syslog.h>
+#  include <syslog.h>
 #endif
 
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
 #ifndef NO_SYSLOG
 
 #if defined(WIN32)
@@ -210,10 +213,7 @@ static int MS_CALLBACK slg_puts(BIO *bp, char *str)
 
 static void xopenlog(BIO* bp, const char* name, int level)
 {
-	if((bp->ptr= (char *)RegisterEventSource(NULL, name)) == NULL){
-		return(0);
-	}
-	return(1);
+	bp->ptr= (char *)RegisterEventSource(NULL, name);
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)
@@ -241,12 +241,11 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
 	sprintf(pidbuf, "[%d] ", pid);
 	lpszStrings[0] = pidbuf;
-	lpszStrings[1] = pp;
+	lpszStrings[1] = string;
 
 	if(bp->ptr)
 		ReportEvent(bp->ptr, evtype, 0, 1024, NULL, 2, 0,
 				lpszStrings, NULL);
-	return 1;
 }
 	
 static void xcloselog(BIO* bp)
@@ -254,7 +253,6 @@ static void xcloselog(BIO* bp)
 	if(bp->ptr)
 		DeregisterEventSource((HANDLE)(bp->ptr));
 	bp->ptr= NULL;
-	return(1);
 }
 
 #elif defined(VMS)
@@ -298,7 +296,7 @@ static void xcloselog(BIO* bp)
 {
 }
 
-#else
+#else /* Unix */
 
 static void xopenlog(BIO* bp, const char* name, int level)
 {
@@ -315,6 +313,6 @@ static void xcloselog(BIO* bp)
 	closelog();
 }
 
-#endif
+#endif /* Unix */
 
-#endif
+#endif /* NO_SYSLOG */
