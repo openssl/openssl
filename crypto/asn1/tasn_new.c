@@ -276,7 +276,7 @@ int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	return ret;
 }
 
-void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
+static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
 	/* If ADB or STACK just NULL the field */
 	if(tt->flags & (ASN1_TFLG_ADB_MASK|ASN1_TFLG_SK_MASK)) 

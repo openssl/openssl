@@ -1222,7 +1222,7 @@ static int hwcrhk_mutex_lock(HWCryptoHook_Mutex *mt)
 	return 0;
 	}
 
-void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
+static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
 	{
 	CRYPTO_w_unlock(mt->lockid);
 	}

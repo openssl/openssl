@@ -415,7 +415,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
  * rest.
  */
 
-int asn1_template_ex_d2i(ASN1_VALUE **val, unsigned char **in, long inlen, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
+static int asn1_template_ex_d2i(ASN1_VALUE **val, unsigned char **in, long inlen, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
 {
 	int flags, aclass;
 	int ret;
