@@ -696,13 +696,30 @@
   +) Rationalise EVP so it can be extended: don't include a union of
      cipher/digest structures, add init/cleanup functions. This also reduces
      the number of header dependencies.
+     Usage example:
+
+         EVP_MD_CTX md;
+
+         EVP_MD_CTX_init(&md);             /* new function call */
+         EVP_DigestInit(&md, EVP_sha1());
+         EVP_DigestUpdate(&md, in, len);
+         EVP_DigestFinal(&md, out, NULL);
+         EVP_MD_CTX_cleanup(&md);          /* new function call */
+
      [Ben Laurie]
 
   +) Make DES key schedule conform to the usual scheme, as well as
      correcting its structure. This means that calls to DES functions
      now have to pass a pointer to a des_key_schedule instead of a
      plain des_key_schedule (which was actually always a pointer
-     anyway).
+     anyway): E.g.,
+
+         des_key_schedule ks;
+
+	 des_set_key_checked(..., &ks);
+	 des_ncbc_encrypt(..., &ks, ...);
+
+     (Note that a later change renames 'des_...' into 'DES_...'.)
      [Ben Laurie]
 
   *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
