@@ -50,7 +50,7 @@ use is defined by the extension code itself: check out the certificate
 policies extension for an example.
 
 If an extension type is unsupported then the I<arbitrary> extension syntax
-must be used, see the ARBITRARY EXTENSION section for more details.
+must be used, see the L<ARBITRART EXTENSIONS|/"ARBITRARY EXTENSIONS"> section for more details.
 
 =head1 STANDARD EXTENSIONS
 
@@ -148,8 +148,12 @@ identifier from the parent certificate. If the value "always" is present
 then an error is returned if the option fails.
 
 The issuer option copies the issuer and serial number from the issuer
-certificate. Normally this will only be done if the keyid option fails or
-is not included: the "always" flag will always include the value.
+certificate. This will only be done if the keyid option fails or
+is not included unless the "always" flag will always include the value.
+
+Example:
+
+ authorityKeyIdentifier=keyid,issuer
 
 
 =head2 Subject Alternative Name.
@@ -237,7 +241,7 @@ Examples:
 
 =head2 Certificate Policies.
 
-This is a B<raw> extension. All the fields of this extension can be set by
+This is a I<raw> extension. All the fields of this extension can be set by
 using the appropriate syntax.
 
 If you follow the PKIX recommendations and just using one OID then you just
@@ -308,10 +312,26 @@ Example:
  inhibitAnyPolicy = 2
 
 
+=head2 Name Constraints
+
+The name constraints extension is a multi-valued extension. The name should
+begin with the word B<permitted> or B<excluded> followed by a B<;>. The rest of
+the name and the value follows the syntax of subjectAltName except email:copy
+is not supported and the B<IP> form should consist of an IP addresses and 
+subnet mask separated by a B</>.
+
+Examples:
+
+ nameConstraints=permitted;IP:192.168.0.0/255.255.0.0
+
+ nameConstraints=permitted;email:.somedomain.com
+
+ nameConstraints=excluded;email:.com
+
 =head1 DEPRECATED EXTENSIONS
 
-The following extensions are considered non standard, Netscape specific and
-largely obsolete. Their use in new applications is discouraged.
+The following extensions are non standard, Netscape specific and largely
+obsolete. Their use in new applications is discouraged.
 
 =head2 Netscape String extensions.
 
@@ -415,3 +435,20 @@ will only recognize the last value. This can be worked around by using the form:
 
  email.1=steve@here
  email.2=steve@there
+
+=head1 HISTORY
+
+The X509v3 extension code was first added to OpenSSL 0.9.2.
+
+Policy mappings, name constraints, inhibit any policy and name
+constraints support was added in OpenSSL 0.9.8
+
+The B<directoryName> and B<otherName> option as well as the B<ASN1> option
+for arbitrary extensions was added in OpenSSL 0.9.8
+
+=head1 SEE ALSO
+
+L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<x509(1)|x509(1)>
+
+
+=cut
