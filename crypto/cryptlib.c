@@ -571,13 +571,12 @@ void OPENSSL_cpuid_setup()
 void OPENSSL_cpuid_setup() {}
 #endif
 
-#ifdef _DLL
-#ifdef OPENSSL_SYS_WIN32
+#if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_DLL)
 
 /* All we really need to do is remove the 'error' state when a thread
  * detaches */
 
-BOOL WINAPI DLLEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason,
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	     LPVOID lpvReserved)
 	{
 	switch(fdwReason)
@@ -595,8 +594,6 @@ BOOL WINAPI DLLEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason,
 		}
 	return(TRUE);
 	}
-#endif
-
 #endif
 
 void OpenSSLDie(const char *file,int line,const char *assertion)
