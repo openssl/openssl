@@ -2,14 +2,19 @@
 ##  Makefile.PL -- Perl MakeMaker specification
 ##
 
+$V = '0.9.2';
+print "Configuring companion Perl module for OpenSSL $V\n";
+
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'OPTIMIZE'      => '',
-    'DISTNAME'      => 'OpenSSL-0.9.2',
+    'DISTNAME'      => "openssl-$V",
     'NAME'          => 'OpenSSL',
     'VERSION_FROM'  => 'OpenSSL.pm',
-    'LIBS'          => ['-L.. -lssl -lcrypto'],
+    'LIBS'          => ( $^O eq 'MSWin32'
+                         ? [ '-L../out32dll -lssleay32 -llibeay32' ]
+                         : [ '-L.. -lssl -lcrypto' ]                 ),
     'DEFINE'        => '',
     'INC'           => '-I../include',
     'H'             => ['openssl.h'],

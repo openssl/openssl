@@ -1,3 +1,4 @@
+README.1ST
 MANIFEST
 Makefile.PL
 typemap
@@ -12,3 +13,6 @@ openssl_err.xs
 openssl_ssl.xs
 openssl_x509.xs
 openssl_cb.c
+t/01-use.t
+t/02-version.t
+t/03-bio.t

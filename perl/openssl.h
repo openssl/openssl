@@ -58,18 +58,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
 #ifdef __cplusplus
 }
 #endif
 
-typedef struct datum_st
-	{
-	char *dptr;
-	int dsize;
-	} datum;
+typedef struct datum_st {
+    char *dptr;
+    int dsize;
+} datum;
 
 #include "crypto.h"
 #include "buffer.h"
@@ -79,10 +80,10 @@ typedef struct datum_st
 #include "x509.h"
 #include "ssl.h"
 
-#if 0
-#define pr_name(name)		printf("%s\n",name)
-#define pr_name_d(name,p2)	printf("%s %d\n",name,p2)
-#define pr_name_dd(name,p2,p3)	printf("%s %d %d\n",name,p2,p3)
+#ifdef DEBUG
+#define pr_name(name)           printf("%s\n",name)
+#define pr_name_d(name,p2)      printf("%s %d\n",name,p2)
+#define pr_name_dd(name,p2,p3)  printf("%s %d %d\n",name,p2,p3)
 #else
 #define pr_name(name)
 #define pr_name_d(name,p2)
@@ -90,7 +91,6 @@ typedef struct datum_st
 #endif
 
 SV *new_ref(char *type, char *obj, int mort);
-int ex_new(char *obj,SV *data,CRYPTO_EX_DATA *ad,int idx,long argl,char *argp);
-void ex_cleanup(char *obj,SV *data,CRYPTO_EX_DATA *ad,int idx,
-	long argl,char *argp);
+int ex_new(char *obj, SV *data, CRYPTO_EX_DATA *ad, int idx, long argl, char *argp);
+void ex_cleanup(char *obj, SV *data, CRYPTO_EX_DATA *ad, int idx, long argl, char *argp);
 
