@@ -14,7 +14,6 @@ MAKE=		make -f Makefile.ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
-PERL= perl
 RM=		rm -f
 # KRB5 stuff
 KRB5_INCLUDES=

@@ -14,7 +14,6 @@ MAKEFILE=	Makefile.ssl
 MAKE=		make -f $(MAKEFILE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-PERL=		perl
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
