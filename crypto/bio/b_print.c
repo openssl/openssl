@@ -827,7 +827,7 @@ int BIO_vprintf (BIO *bio, const char *format, va_list args)
 #ifdef USE_ALLOCATING_PRINT
 	char *hugebuf;
 #else
-	MS_STATIC char hugebuf[1024*2];
+	MS_STATIC char hugebuf[1024*10];
 #endif
 
 #ifndef USE_ALLOCATING_PRINT
