@@ -349,6 +349,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 
 		if (str->data == NULL)
 			{
+			ASN1err(ASN1_F_ASN1_STRING_SET,ERR_R_MALLOC_FAILURE);
 			str->data=c;
 			return(0);
 			}

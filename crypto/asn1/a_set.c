@@ -118,8 +118,13 @@ int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(), int ex_tag,
 		}
 
         pStart  = p; /* Catch the beg of Setblobs*/
-        if (!(rgSetBlob = (MYBLOB *)OPENSSL_malloc( sk_num(a) * sizeof(MYBLOB)))) return 0; /* In this array
-we will store the SET blobs */
+		/* In this array we will store the SET blobs */
+		rgSetBlob = (MYBLOB *)OPENSSL_malloc(sk_num(a) * sizeof(MYBLOB));
+		if (rgSetBlob == NULL)
+			{
+			ASN1err(ASN1_F_I2D_ASN1_SET,ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
 
         for (i=0; i<sk_num(a); i++)
 	        {
@@ -135,7 +140,11 @@ SetBlob
  /* Now we have to sort the blobs. I am using a simple algo.
     *Sort ptrs *Copy to temp-mem *Copy from temp-mem to user-mem*/
         qsort( rgSetBlob, sk_num(a), sizeof(MYBLOB), SetBlobCmp);
-        if (!(pTempMem = OPENSSL_malloc(totSize))) return 0;
+		if (!(pTempMem = OPENSSL_malloc(totSize)))
+			{
+			ASN1err(ASN1_F_I2D_ASN1_SET,ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
 
 /* Copy to temp mem */
         p = pTempMem;
@@ -160,7 +169,13 @@ STACK *d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 	STACK *ret=NULL;
 
 	if ((a == NULL) || ((*a) == NULL))
-		{ if ((ret=sk_new_null()) == NULL) goto err; }
+		{
+		if ((ret=sk_new_null()) == NULL)
+			{
+			ASN1err(ASN1_F_D2I_ASN1_SET,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		}
 	else
 		ret=(*a);
 

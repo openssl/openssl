@@ -156,7 +156,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 		unsigned char *new_data=OPENSSL_realloc(ret->data, len+4);
 		if (!new_data)
 			{
-			ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
+			ASN1err(ASN1_F_BN_TO_ASN1_ENUMERATED,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 		ret->data=new_data;

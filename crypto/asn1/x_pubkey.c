@@ -80,8 +80,7 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	{
-	int ok=0;
-	X509_PUBKEY *pk;
+	X509_PUBKEY *pk=NULL;
 	X509_ALGOR *a;
 	ASN1_OBJECT *o;
 	unsigned char *s,*p = NULL;
@@ -104,7 +103,11 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			(a->parameter->type != V_ASN1_NULL))
 			{
 			ASN1_TYPE_free(a->parameter);
-			a->parameter=ASN1_TYPE_new();
+			if (!(a->parameter=ASN1_TYPE_new()))
+				{
+				X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
 			a->parameter->type=V_ASN1_NULL;
 			}
 		}
@@ -118,14 +121,34 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		dsa=pkey->pkey.dsa;
 		dsa->write_params=0;
 		ASN1_TYPE_free(a->parameter);
-		i=i2d_DSAparams(dsa,NULL);
-		if ((p=(unsigned char *)OPENSSL_malloc(i)) == NULL) goto err;
+		if ((i=i2d_DSAparams(dsa,NULL)) <= 0)
+			goto err;
+		if (!(p=(unsigned char *)OPENSSL_malloc(i)))
+			{
+			X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		pp=p;
 		i2d_DSAparams(dsa,&pp);
-		a->parameter=ASN1_TYPE_new();
+		if (!(a->parameter=ASN1_TYPE_new()))
+			{
+			OPENSSL_free(p);
+			X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		a->parameter->type=V_ASN1_SEQUENCE;
-		a->parameter->value.sequence=ASN1_STRING_new();
-		ASN1_STRING_set(a->parameter->value.sequence,p,i);
+		if (!(a->parameter->value.sequence=ASN1_STRING_new()))
+			{
+			OPENSSL_free(p);
+			X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		if (!ASN1_STRING_set(a->parameter->value.sequence,p,i))
+			{
+			OPENSSL_free(p);
+			X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		OPENSSL_free(p);
 		}
 	else
@@ -143,7 +166,12 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		}
 	p=s;
 	i2d_PublicKey(pkey,&p);
-	if (!M_ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
+	if (!M_ASN1_BIT_STRING_set(pk->public_key,s,i))
+		{
+		X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+  	/* Set number of unused bits to zero */
 	/* Set number of unused bits to zero */
 	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;
@@ -159,12 +187,11 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		X509_PUBKEY_free(*x);
 
 	*x=pk;
-	pk=NULL;
 
-	ok=1;
+	return 1;
 err:
 	if (pk != NULL) X509_PUBKEY_free(pk);
-	return(ok);
+	return 0;
 	}
 
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)

@@ -301,7 +301,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 
 	if ((dsize=i2d(x,NULL)) < 0)
 		{
-		PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,ERR_R_MALLOC_FAILURE);
+		PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,ERR_R_ASN1_LIB);
 		dsize=0;
 		goto err;
 		}

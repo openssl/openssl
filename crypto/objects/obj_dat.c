@@ -236,13 +236,13 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 	if (added == NULL)
 		if (!init_added()) return(0);
 	if ((o=OBJ_dup(obj)) == NULL) goto err;
-	if (!(ao[ADDED_NID]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ)))) goto err;
+	if (!(ao[ADDED_NID]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ)))) goto err2;
 	if ((o->length != 0) && (obj->data != NULL))
-		ao[ADDED_DATA]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
+		if (!(ao[ADDED_DATA]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ)))) goto err2;
 	if (o->sn != NULL)
-		ao[ADDED_SNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
+		if (!(ao[ADDED_SNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ)))) goto err2;
 	if (o->ln != NULL)
-		ao[ADDED_LNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
+		if (!(ao[ADDED_LNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ)))) goto err2;
 
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
 		{
@@ -260,6 +260,8 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 			ASN1_OBJECT_FLAG_DYNAMIC_DATA);
 
 	return(o->nid);
+err2:
+	OBJerr(OBJ_F_OBJ_ADD_OBJECT,ERR_R_MALLOC_FAILURE);
 err:
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
 		if (ao[i] != NULL) OPENSSL_free(ao[i]);
@@ -648,7 +650,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 
 	if ((buf=(unsigned char *)OPENSSL_malloc(i)) == NULL)
 		{
-		OBJerr(OBJ_F_OBJ_CREATE,OBJ_R_MALLOC_FAILURE);
+		OBJerr(OBJ_F_OBJ_CREATE,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
 	i=a2d_ASN1_OBJECT(buf,i,oid,-1);

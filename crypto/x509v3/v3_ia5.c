@@ -82,7 +82,10 @@ static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
 {
 	char *tmp;
 	if(!ia5 || !ia5->length) return NULL;
-	if (!(tmp = OPENSSL_malloc(ia5->length + 1))) return NULL;
+	if(!(tmp = OPENSSL_malloc(ia5->length + 1))) {
+		X509V3err(X509V3_F_I2S_ASN1_IA5STRING,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
 	memcpy(tmp, ia5->data, ia5->length);
 	tmp[ia5->length] = 0;
 	return tmp;

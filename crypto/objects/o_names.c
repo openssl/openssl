@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
 #include <openssl/safestack.h>
@@ -80,7 +81,11 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		MemCheck_off();
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
 		MemCheck_on();
-		if (!name_funcs) return(0);
+		if (!name_funcs)
+			{
+			OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX,ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = OPENSSL_strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to

@@ -235,7 +235,11 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 		return NULL;
 	}
 	p8->broken = broken;
-	ASN1_INTEGER_set (p8->version, 0);
+	if (!ASN1_INTEGER_set(p8->version, 0)) {
+		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		PKCS8_PRIV_KEY_INFO_free (p8);
+		return NULL;
+	}
 	if (!(p8->pkeyalg->parameter = ASN1_TYPE_new ())) {
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		PKCS8_PRIV_KEY_INFO_free (p8);
@@ -303,29 +307,35 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
 #ifndef OPENSSL_NO_DSA
 static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 {
-	ASN1_STRING *params;
-	ASN1_INTEGER *prkey;
-	ASN1_TYPE *ttmp;
-	STACK_OF(ASN1_TYPE) *ndsa;
-	unsigned char *p, *q;
+	ASN1_STRING *params = NULL;
+	ASN1_INTEGER *prkey = NULL;
+	ASN1_TYPE *ttmp = NULL;
+	STACK_OF(ASN1_TYPE) *ndsa = NULL;
+	unsigned char *p = NULL, *q;
 	int len;
 
 	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 	len = i2d_DSAparams (pkey->pkey.dsa, NULL);
 	if (!(p = OPENSSL_malloc(len))) {
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-		PKCS8_PRIV_KEY_INFO_free (p8);
-		return 0;
+		goto err;
 	}
 	q = p;
 	i2d_DSAparams (pkey->pkey.dsa, &q);
-	params = ASN1_STRING_new();
-	ASN1_STRING_set(params, p, len);
+	if (!(params = ASN1_STRING_new())) {
+		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!ASN1_STRING_set(params, p, len)) {
+		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 	OPENSSL_free(p);
+	p = NULL;
 	/* Get private key into integer */
 	if (!(prkey = BN_to_ASN1_INTEGER (pkey->pkey.dsa->priv_key, NULL))) {
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
-		return 0;
+		goto err;
 	}
 
 	switch(p8->broken) {
@@ -336,12 +346,13 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		if (!ASN1_pack_string((char *)prkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			M_ASN1_INTEGER_free (prkey);
-			return 0;
+			goto err;
 		}
 
 		M_ASN1_INTEGER_free (prkey);
+		prkey = NULL;
 		p8->pkeyalg->parameter->value.sequence = params;
+		params = NULL;
 		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
 
 		break;
@@ -349,32 +360,51 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		case PKCS8_NS_DB:
 
 		p8->pkeyalg->parameter->value.sequence = params;
+		params = NULL;
 		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
-		ndsa = sk_ASN1_TYPE_new_null();
-		ttmp = ASN1_TYPE_new();
-		if (!(ttmp->value.integer = BN_to_ASN1_INTEGER (pkey->pkey.dsa->pub_key, NULL))) {
+		if (!(ndsa = sk_ASN1_TYPE_new_null())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		if (!(ttmp = ASN1_TYPE_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		if (!(ttmp->value.integer =
+			BN_to_ASN1_INTEGER(pkey->pkey.dsa->pub_key, NULL))) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
-			PKCS8_PRIV_KEY_INFO_free(p8);
-			return 0;
+			goto err;
 		}
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 
-		ttmp = ASN1_TYPE_new();
+		if (!(ttmp = ASN1_TYPE_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		ttmp->value.integer = prkey;
+		prkey = NULL;
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		ttmp = NULL;
 
-		p8->pkey->value.octet_string = ASN1_OCTET_STRING_new();
+		if (!(p8->pkey->value.octet_string = ASN1_OCTET_STRING_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 
 		if (!ASN1_seq_pack_ASN1_TYPE(ndsa, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
-			M_ASN1_INTEGER_free(prkey);
-			return 0;
+			goto err;
 		}
 		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
 		break;
@@ -382,31 +412,57 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		case PKCS8_EMBEDDED_PARAM:
 
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
-		ndsa = sk_ASN1_TYPE_new_null();
-		ttmp = ASN1_TYPE_new();
+		if (!(ndsa = sk_ASN1_TYPE_new_null())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		if (!(ttmp = ASN1_TYPE_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		ttmp->value.sequence = params;
+		params = NULL;
 		ttmp->type = V_ASN1_SEQUENCE;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 
-		ttmp = ASN1_TYPE_new();
+		if (!(ttmp = ASN1_TYPE_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		ttmp->value.integer = prkey;
+		prkey = NULL;
 		ttmp->type = V_ASN1_INTEGER;
-		sk_ASN1_TYPE_push(ndsa, ttmp);
+		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		ttmp = NULL;
 
-		p8->pkey->value.octet_string = ASN1_OCTET_STRING_new();
+		if (!(p8->pkey->value.octet_string = ASN1_OCTET_STRING_new())) {
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 
 		if (!ASN1_seq_pack_ASN1_TYPE(ndsa, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
-			M_ASN1_INTEGER_free (prkey);
-			return 0;
+			goto err;
 		}
 		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
 		break;
 	}
 	return 1;
+err:
+	if (p != NULL) OPENSSL_free(p);
+	if (params != NULL) ASN1_STRING_free(params);
+	if (prkey != NULL) M_ASN1_INTEGER_free(prkey);
+	if (ttmp != NULL) ASN1_TYPE_free(ttmp);
+	if (ndsa != NULL) sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+	return 0;
 }
 #endif

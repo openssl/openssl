@@ -76,47 +76,55 @@ IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
 	     int saltlen)
 {
-	PBEPARAM *pbe;
+	PBEPARAM *pbe=NULL;
 	ASN1_OBJECT *al;
 	X509_ALGOR *algor;
-	ASN1_TYPE *astype;
+	ASN1_TYPE *astype=NULL;
 
 	if (!(pbe = PBEPARAM_new ())) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
-	ASN1_INTEGER_set (pbe->iter, iter);
+	if (!ASN1_INTEGER_set(pbe->iter, iter)) {
+		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 	if (!saltlen) saltlen = PKCS5_SALT_LEN;
 	if (!(pbe->salt->data = OPENSSL_malloc (saltlen))) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 	pbe->salt->length = saltlen;
 	if (salt) memcpy (pbe->salt->data, salt, saltlen);
 	else if (RAND_pseudo_bytes (pbe->salt->data, saltlen) < 0)
-		return NULL;
+		goto err;
 
 	if (!(astype = ASN1_TYPE_new())) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 
 	astype->type = V_ASN1_SEQUENCE;
 	if(!ASN1_pack_string(pbe, i2d_PBEPARAM, &astype->value.sequence)) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 	PBEPARAM_free (pbe);
+	pbe = NULL;
 	
 	al = OBJ_nid2obj(alg); /* never need to free al */
 	if (!(algor = X509_ALGOR_new())) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 	ASN1_OBJECT_free(algor->algorithm);
 	algor->algorithm = al;
 	algor->parameter = astype;
 
 	return (algor);
+err:
+	if (pbe != NULL) PBEPARAM_free(pbe);
+	if (astype != NULL) ASN1_TYPE_free(astype);
+	return NULL;
 }

@@ -1,6 +1,6 @@
 /* crypto/objects/obj_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,8 +66,10 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA OBJ_str_functs[]=
 	{
+{ERR_PACK(0,OBJ_F_OBJ_ADD_OBJECT,0),	"OBJ_add_object"},
 {ERR_PACK(0,OBJ_F_OBJ_CREATE,0),	"OBJ_create"},
 {ERR_PACK(0,OBJ_F_OBJ_DUP,0),	"OBJ_dup"},
+{ERR_PACK(0,OBJ_F_OBJ_NAME_NEW_INDEX,0),	"OBJ_NAME_new_index"},
 {ERR_PACK(0,OBJ_F_OBJ_NID2LN,0),	"OBJ_nid2ln"},
 {ERR_PACK(0,OBJ_F_OBJ_NID2OBJ,0),	"OBJ_nid2obj"},
 {ERR_PACK(0,OBJ_F_OBJ_NID2SN,0),	"OBJ_nid2sn"},

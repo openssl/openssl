@@ -124,7 +124,12 @@ static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 		for(bnam = method->usr_data; bnam->lname; bnam++) {
 			if(!strcmp(bnam->sname, val->name) ||
 				!strcmp(bnam->lname, val->name) ) {
-				ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1);
+				if(!ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1)) {
+					X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
+						ERR_R_MALLOC_FAILURE);
+					M_ASN1_BIT_STRING_free(bs);
+					return NULL;
+				}
 				break;
 			}
 		}

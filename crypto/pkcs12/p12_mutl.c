@@ -148,7 +148,10 @@ int PKCS12_setup_mac (PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 			PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		ASN1_INTEGER_set(p12->mac->iter, iter);
+		if (!ASN1_INTEGER_set(p12->mac->iter, iter)) {
+			PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
 	}
 	if (!saltlen) saltlen = PKCS12_SALT_LEN;
 	p12->mac->salt->length = saltlen;

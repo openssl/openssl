@@ -164,7 +164,12 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		p7->type=obj;
 		if ((p7->d.sign=PKCS7_SIGNED_new()) == NULL)
 			goto err;
-		ASN1_INTEGER_set(p7->d.sign->version,1);
+		if (!ASN1_INTEGER_set(p7->d.sign->version,1))
+			{
+			PKCS7_SIGNED_free(p7->d.sign);
+			p7->d.sign=NULL;
+			goto err;
+			}
 		break;
 	case NID_pkcs7_data:
 		p7->type=obj;
@@ -176,6 +181,9 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		if ((p7->d.signed_and_enveloped=PKCS7_SIGN_ENVELOPE_new())
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1);
+		if (!ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1))
+			goto err;
+  		break;
 		p7->d.signed_and_enveloped->enc_data->content_type
 						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
@@ -183,7 +191,8 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		p7->type=obj;
 		if ((p7->d.enveloped=PKCS7_ENVELOPE_new())
 			== NULL) goto err;
-		ASN1_INTEGER_set(p7->d.enveloped->version,0);
+		if (!ASN1_INTEGER_set(p7->d.enveloped->version,0))
+			goto err;
 		p7->d.enveloped->enc_data->content_type
 						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
@@ -191,7 +200,8 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		p7->type=obj;
 		if ((p7->d.encrypted=PKCS7_ENCRYPT_new())
 			== NULL) goto err;
-		ASN1_INTEGER_set(p7->d.encrypted->version,0);
+		if (!ASN1_INTEGER_set(p7->d.encrypted->version,0))
+			goto err;
 		p7->d.encrypted->enc_data->content_type
 						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
@@ -318,15 +328,18 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	if (pkey->type == EVP_PKEY_DSA) is_dsa = 1;
 	else is_dsa = 0;
 	/* We now need to add another PKCS7_SIGNER_INFO entry */
-	ASN1_INTEGER_set(p7i->version,1);
-	X509_NAME_set(&p7i->issuer_and_serial->issuer,
-		X509_get_issuer_name(x509));
+	if (!ASN1_INTEGER_set(p7i->version,1))
+		goto err;
+	if (!X509_NAME_set(&p7i->issuer_and_serial->issuer,
+			X509_get_issuer_name(x509)))
+		goto err;
 
 	/* because ASN1_INTEGER_set is used to set a 'long' we will do
 	 * things the ugly way. */
 	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
-	p7i->issuer_and_serial->serial=
-		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
+	if (!(p7i->issuer_and_serial->serial=
+			M_ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
+		goto err;
 
 	/* lets keep the pkey around for a while */
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
@@ -423,16 +436,20 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 	{
-	ASN1_INTEGER_set(p7i->version,0);
-	X509_NAME_set(&p7i->issuer_and_serial->issuer,
-		X509_get_issuer_name(x509));
+	if (!ASN1_INTEGER_set(p7i->version,0))
+		return 0;
+	if (!X509_NAME_set(&p7i->issuer_and_serial->issuer,
+		X509_get_issuer_name(x509)))
+		return 0;
 
 	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
-	p7i->issuer_and_serial->serial=
-		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
+	if (!(p7i->issuer_and_serial->serial=
+		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
+		return 0;
 
 	X509_ALGOR_free(p7i->key_enc_algor);
-	p7i->key_enc_algor= X509_ALGOR_dup(x509->cert_info->key->algor);
+	if (!(p7i->key_enc_algor= X509_ALGOR_dup(x509->cert_info->key->algor)))
+		return 0;
 
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
 	p7i->cert=x509;
