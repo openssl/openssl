@@ -145,7 +145,7 @@ RSA *	RSA_new(void);
 RSA *	RSA_new_method(RSA_METHOD *method);
 int	RSA_size(RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
-		(*callback)(int,int,char *),char *cb_arg);
+		(*callback)(int,int,void *),void *cb_arg);
 	/* next 4 return -1 on error */
 int	RSA_public_encrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);

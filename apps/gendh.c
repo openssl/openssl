@@ -74,7 +74,7 @@
 #undef PROG
 #define PROG gendh_main
 
-static void MS_CALLBACK dh_cb(int p, int n, char *arg);
+static void MS_CALLBACK dh_cb(int p, int n, void *arg);
 static long dh_load_rand(char *names);
 int MAIN(int argc, char **argv)
 	{
@@ -164,7 +164,7 @@ bad:
 
 	BIO_printf(bio_err,"Generating DH parameters, %d bit long strong prime, generator of %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");
-	dh=DH_generate_parameters(num,g,dh_cb,(char *)bio_err);
+	dh=DH_generate_parameters(num,g,dh_cb,bio_err);
 		
 	if (dh == NULL) goto end;
 
@@ -184,7 +184,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dh_cb(int p, int n, char *arg)
+static void MS_CALLBACK dh_cb(int p, int n, void *arg)
 	{
 	char c='*';
 

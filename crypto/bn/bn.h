@@ -381,9 +381,9 @@ int 	BN_dec2bn(BIGNUM **a,char *str);
 int	BN_gcd(BIGNUM *r,BIGNUM *in_a,BIGNUM *in_b,BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *ret,BIGNUM *a, BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int strong,BIGNUM *add,
-		BIGNUM *rem,void (*callback)(int,int,char *),char *cb_arg);
-int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,char *),
-		BN_CTX *ctx,char *cb_arg);
+		BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);
+int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
+		BN_CTX *ctx,void *cb_arg);
 void	ERR_load_BN_strings(void );
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);

@@ -112,7 +112,7 @@ DH *	DH_new(void);
 void	DH_free(DH *dh);
 int	DH_size(DH *dh);
 DH *	DH_generate_parameters(int prime_len,int generator,
-		void (*callback)(int,int,char *),char *cb_arg);
+		void (*callback)(int,int,void *),void *cb_arg);
 int	DH_check(DH *dh,int *codes);
 int	DH_generate_key(DH *dh);
 int	DH_compute_key(unsigned char *key,BIGNUM *pub_key,DH *dh);

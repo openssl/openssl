@@ -63,7 +63,7 @@
 #include <openssl/rsa.h>
 
 RSA *RSA_generate_key(int bits, unsigned long e_value,
-	     void (*callback)(int,int,char *), char *cb_arg)
+	     void (*callback)(int,int,void *), void *cb_arg)
 	{
 	RSA *rsa=NULL;
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;

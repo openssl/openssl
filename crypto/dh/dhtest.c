@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 #define MS_CALLBACK
 #endif
 
-static void MS_CALLBACK cb(int p, int n, char *arg);
+static void MS_CALLBACK cb(int p, int n, void *arg);
 #ifdef NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	if (out == NULL) exit(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
-	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,(char *)out);
+	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
 	if (a == NULL) goto err;
 
 	BIO_puts(out,"\np    =");
@@ -171,7 +171,7 @@ err:
 	return(ret);
 	}
 
-static void MS_CALLBACK cb(int p, int n, char *arg)
+static void MS_CALLBACK cb(int p, int n, void *arg)
 	{
 	char c='*';
 
