@@ -179,7 +179,6 @@ bad:
 		BIO_printf(bio_err," -outform arg    output format - one of DER NET PEM\n");
 		BIO_printf(bio_err," -in arg         input file\n");
 		BIO_printf(bio_err," -passin arg     input file pass phrase source\n");
-		BIO_printf(bio_err," -in arg         input file\n");
 		BIO_printf(bio_err," -out arg        output file\n");
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");

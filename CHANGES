@@ -4,6 +4,12 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) In ERR_load_ERR_strings(), build an ERR_LIB_SYS error reason table
+     using strerror.  Previously, ERR_reason_error_string() returned
+     library names as reason strings for SYSerr; but SYSerr is a special
+     case where small numbers are errno values, not library numbers.
+     [Bodo Moeller]
+
   *) Add '-dsaparam' option to 'openssl dhparam' application.  This
      converts DSA parameters into DH parameters. (When creating parameters,
      DSA_generate_parameters is used.)

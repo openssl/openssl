@@ -159,7 +159,7 @@ void lh_free(LHASH *lh)
 	unsigned int i;
 	LHASH_NODE *n,*nn;
 
-	if(lh == NULL)
+	if (lh == NULL)
 	    return;
 
 	for (i=0; i<lh->num_nodes; i++)

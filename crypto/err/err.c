@@ -55,9 +55,63 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
@@ -154,6 +208,54 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 
 {0,NULL},
 	};
+
+
+#define NUM_SYS_STR_REASONS 127
+#define LEN_SYS_STR_REASON 32
+
+static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
+/* SYS_str_reasons is filled with copies of strerror() results at
+ * initialization.
+ * 'errno' values up to 127 should cover all usual errors,
+ * others will be displayed numerically by ERR_error_string.
+ * It is crucial that we have something for each reason code
+ * that occurs in ERR_str_reasons, or bogus reason strings
+ * will be returned for SYSerr(), which always gets an errno
+ * value and never one of those 'standard' reason codes. */
+
+static void build_SYS_str_reasons()
+	{
+	/* Malloc cannot be used here, use static storage instead */
+	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+	int i;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
+
+	for (i = 1; i <= NUM_SYS_STR_REASONS; i++)
+		{
+		ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
+
+		str->error = (unsigned long)i;
+		if (str->string == NULL)
+			{
+			char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
+			char *src = strerror(i);
+			if (src != NULL)
+				{
+				strncpy(*dest, src, sizeof *dest);
+				(*dest)[sizeof *dest - 1] = '\0';
+				str->string = *dest;
+				}
+			}
+		if (str->string == NULL)
+			str->string = "unknown";
+		}
+
+	/* Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
+	 * as required by ERR_load_strings. */
+
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
+	}
 #endif
 
 #define err_clear_data(p,i) \
@@ -191,14 +293,16 @@ void ERR_load_ERR_strings(void)
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 			return;
 			}
-		init=0;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 #ifndef NO_ERR
 		ERR_load_strings(0,ERR_str_libraries);
 		ERR_load_strings(0,ERR_str_reasons);
 		ERR_load_strings(ERR_LIB_SYS,ERR_str_functs);
+		build_SYS_str_reasons();
+		ERR_load_strings(ERR_LIB_SYS,SYS_str_reasons);
 #endif
+		init=0;
 		}
 	}
 
