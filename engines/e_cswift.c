@@ -262,6 +262,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 static ENGINE *engine_cswift(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -284,6 +285,7 @@ void ENGINE_load_cswift(void)
 	ENGINE_free(toadd);
 	ERR_clear_error();
 	}
+#endif
 
 /* This is a process-global DSO handle used for loading and unloading
  * the CryptoSwift library. NB: This is only set (or unset) during an

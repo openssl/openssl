@@ -223,6 +223,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 static ENGINE *engine_4758_cca(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -244,6 +245,7 @@ void ENGINE_load_4758cca(void)
 	ENGINE_free(e_4758);
 	ERR_clear_error();   
 	}
+#endif
 
 static int ibm_4758_cca_destroy(ENGINE *e)
 	{
