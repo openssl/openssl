@@ -544,10 +544,10 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if (rsa->e && rsa->n)
 		{
-		if (!rsa->meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,NULL)) goto err;
+		if (!meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,NULL)) goto err;
 		if (BN_cmp(I, &vrfy) != 0)
 			{
-			if (!rsa->meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
+			if (!meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
 			}
 		}
 	ret=1;
