@@ -307,7 +307,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 int PKCS7_set_type(PKCS7 *p7, int type);
 int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
-	EVP_MD *dgst);
+	const EVP_MD *dgst);
 int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *p7i);
 int PKCS7_add_certificate(PKCS7 *p7, X509 *x509);
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *x509);
@@ -323,7 +323,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
 
 
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
-	EVP_PKEY *pkey, EVP_MD *dgst);
+	EVP_PKEY *pkey, const EVP_MD *dgst);
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7);
 
@@ -350,7 +350,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 					BIO *indata, BIO *out, int flags);
 STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
-PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
+PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
 								int flags);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
 

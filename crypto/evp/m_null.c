@@ -67,7 +67,7 @@ static int function(void)
 	return 1;
 	}
 
-static EVP_MD null_md=
+static const EVP_MD null_md=
 	{
 	NID_undef,
 	NID_undef,
@@ -81,7 +81,7 @@ static EVP_MD null_md=
 	sizeof(EVP_MD *),
 	};
 
-EVP_MD *EVP_md_null(void)
+const EVP_MD *EVP_md_null(void)
 	{
 	return(&null_md);
 	}

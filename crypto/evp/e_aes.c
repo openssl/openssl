@@ -61,7 +61,7 @@ static int aes_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
 				const unsigned char *in, unsigned int inl);
 
 #define IMPLEMENT_AES_CIPHER(name, ciph_func, keylen, ivlen, mode) \
-static EVP_CIPHER name##_cipher_st = \
+static const EVP_CIPHER name##_cipher_st = \
 	{ \
 	NID_##name, \
 	16,keylen,ivlen, \
@@ -76,7 +76,7 @@ static EVP_CIPHER name##_cipher_st = \
 	NULL, \
 	NULL \
 	}; \
-EVP_CIPHER * EVP_##name(void) \
+const EVP_CIPHER * EVP_##name(void) \
 	{ \
 	return &name##_cipher_st; \
 	}

@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static EVP_MD sha_md=
+static const EVP_MD sha_md=
 	{
 	NID_sha,
 	NID_shaWithRSAEncryption,
@@ -76,7 +76,7 @@ static EVP_MD sha_md=
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
-EVP_MD *EVP_sha(void)
+const EVP_MD *EVP_sha(void)
 	{
 	return(&sha_md);
 	}

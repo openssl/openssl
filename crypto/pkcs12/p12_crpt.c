@@ -85,7 +85,7 @@ EVP_PBE_alg_add(NID_pbe_WithSHA1And40BitRC2_CBC, EVP_rc2_40_cbc(),
 }
 
 int PKCS12_PBE_keyivgen (EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-		ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md, int en_de)
+		ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md, int en_de)
 {
 	PBEPARAM *pbe;
 	int saltlen, iter;

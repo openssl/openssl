@@ -113,7 +113,7 @@ int PKCS12_verify_mac (PKCS12 *p12, const char *pass, int passlen)
 /* Set a mac */
 
 int PKCS12_set_mac (PKCS12 *p12, const char *pass, int passlen,
-	     unsigned char *salt, int saltlen, int iter, EVP_MD *md_type)
+	     unsigned char *salt, int saltlen, int iter, const EVP_MD *md_type)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
@@ -137,7 +137,7 @@ int PKCS12_set_mac (PKCS12 *p12, const char *pass, int passlen,
 
 /* Set up a mac structure */
 int PKCS12_setup_mac (PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
-	     EVP_MD *md_type)
+	     const EVP_MD *md_type)
 {
 	if (!(p12->mac = PKCS12_MAC_DATA_new())) return PKCS12_ERROR;
 	if (iter > 1) {

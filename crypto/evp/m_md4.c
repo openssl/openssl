@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static EVP_MD md4_md=
+static const EVP_MD md4_md=
 	{
 	NID_md4,
 	0,
@@ -76,7 +76,7 @@ static EVP_MD md4_md=
 	sizeof(EVP_MD *)+sizeof(MD4_CTX),
 	};
 
-EVP_MD *EVP_md4(void)
+const EVP_MD *EVP_md4(void)
 	{
 	return(&md4_md);
 	}

@@ -63,7 +63,7 @@
 #include <openssl/x509.h>
 
 #ifndef OPENSSL_NO_SHA
-static EVP_MD dsa_md=
+static const EVP_MD dsa_md=
 	{
 	NID_dsaWithSHA,
 	NID_dsaWithSHA,
@@ -76,7 +76,7 @@ static EVP_MD dsa_md=
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
-EVP_MD *EVP_dss(void)
+const EVP_MD *EVP_dss(void)
 	{
 	return(&dsa_md);
 	}

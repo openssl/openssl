@@ -101,7 +101,7 @@ EVP_PBE_alg_add(NID_pbes2, NULL, NULL, PKCS5_v2_PBE_keyivgen);
 }
 
 int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
-			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
+			 ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md,
 			 int en_de)
 {
 	EVP_MD_CTX ctx;

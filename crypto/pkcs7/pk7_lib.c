@@ -305,7 +305,7 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 	}
 
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
-	     EVP_MD *dgst)
+	     const EVP_MD *dgst)
 	{
 	char is_dsa;
 	if (pkey->type == EVP_PKEY_DSA) is_dsa = 1;
@@ -353,7 +353,7 @@ err:
 	}
 
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
-	     EVP_MD *dgst)
+	     const EVP_MD *dgst)
 	{
 	PKCS7_SIGNER_INFO *si;
 

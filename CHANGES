@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Constify the cipher and digest 'method' functions and structures
+     and modify related functions to take constant EVP_MD and EVP_CIPHER
+     pointers.
+     [Steve Henson]
+
   *) Implement ssl23_peek (analogous to ssl23_read), which previously
      did not exist.
      [Bodo Moeller]

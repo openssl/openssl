@@ -89,7 +89,7 @@ int MAIN(int argc, char **argv)
 	char *infile = NULL, *outfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
-	EVP_CIPHER *cipher = NULL;
+	const EVP_CIPHER *cipher = NULL;
 	PKCS7 *p7 = NULL;
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;

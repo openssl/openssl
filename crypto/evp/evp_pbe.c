@@ -69,8 +69,8 @@ static STACK *pbe_algs;
 
 typedef struct {
 int pbe_nid;
-EVP_CIPHER *cipher;
-EVP_MD *md;
+const EVP_CIPHER *cipher;
+const EVP_MD *md;
 EVP_PBE_KEYGEN *keygen;
 } EVP_PBE_CTL;
 
@@ -112,7 +112,7 @@ static int pbe_cmp(const char * const *a, const char * const *b)
 
 /* Add a PBE algorithm */
 
-int EVP_PBE_alg_add (int nid, EVP_CIPHER *cipher, EVP_MD *md,
+int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 	     EVP_PBE_KEYGEN *keygen)
 {
 	EVP_PBE_CTL *pbe_tmp;

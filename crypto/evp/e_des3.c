@@ -174,12 +174,12 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
-EVP_CIPHER *EVP_des_ede(void)
+const EVP_CIPHER *EVP_des_ede(void)
 {
 	return &des_ede_ecb;
 }
 
-EVP_CIPHER *EVP_des_ede3(void)
+const EVP_CIPHER *EVP_des_ede3(void)
 {
 	return &des_ede3_ecb;
 }

@@ -95,7 +95,7 @@ int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 #endif
 	}
 
-int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md, unsigned char *salt,
+int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md, unsigned char *salt,
 	     unsigned char *data, int datal, int count, unsigned char *key,
 	     unsigned char *iv)
 	{

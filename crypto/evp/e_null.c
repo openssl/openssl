@@ -65,7 +65,7 @@ static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv,int enc);
 static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-static EVP_CIPHER n_cipher=
+static const EVP_CIPHER n_cipher=
 	{
 	NID_undef,
 	1,0,0,
@@ -79,7 +79,7 @@ static EVP_CIPHER n_cipher=
 	NULL
 	};
 
-EVP_CIPHER *EVP_enc_null(void)
+const EVP_CIPHER *EVP_enc_null(void)
 	{
 	return(&n_cipher);
 	}

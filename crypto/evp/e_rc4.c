@@ -67,7 +67,7 @@ static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv,int enc);
 static int rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		      const unsigned char *in, unsigned int inl);
-static EVP_CIPHER r4_cipher=
+static const EVP_CIPHER r4_cipher=
 	{
 	NID_rc4,
 	1,EVP_RC4_KEY_SIZE,0,
@@ -82,7 +82,7 @@ static EVP_CIPHER r4_cipher=
 	NULL
 	};
 
-static EVP_CIPHER r4_40_cipher=
+static const EVP_CIPHER r4_40_cipher=
 	{
 	NID_rc4_40,
 	1,5 /* 40 bit */,0,
@@ -97,12 +97,12 @@ static EVP_CIPHER r4_40_cipher=
 	NULL
 	};
 
-EVP_CIPHER *EVP_rc4(void)
+const EVP_CIPHER *EVP_rc4(void)
 	{
 	return(&r4_cipher);
 	}
 
-EVP_CIPHER *EVP_rc4_40(void)
+const EVP_CIPHER *EVP_rc4_40(void)
 	{
 	return(&r4_40_cipher);
 	}

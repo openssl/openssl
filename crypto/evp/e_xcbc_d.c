@@ -66,7 +66,7 @@ static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			     const unsigned char *iv,int enc);
 static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			   const unsigned char *in, unsigned int inl);
-static EVP_CIPHER d_xcbc_cipher=
+static const EVP_CIPHER d_xcbc_cipher=
 	{
 	NID_desx_cbc,
 	8,24,8,
@@ -81,7 +81,7 @@ static EVP_CIPHER d_xcbc_cipher=
 	NULL
 	};
 
-EVP_CIPHER *EVP_desx_cbc(void)
+const EVP_CIPHER *EVP_desx_cbc(void)
 	{
 	return(&d_xcbc_cipher);
 	}

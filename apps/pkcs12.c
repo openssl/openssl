@@ -70,7 +70,7 @@
 
 #define PROG pkcs12_main
 
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 
 
 #define NOKEYS		0x1

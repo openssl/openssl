@@ -85,7 +85,7 @@ int MAIN(int argc, char **argv)
 	char *inrand=NULL,*dsaparams=NULL;
 	char *passargout = NULL, *passout = NULL;
 	BIO *out=NULL,*in=NULL;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	char *engine=NULL;
 
 	apps_startup();

@@ -143,7 +143,7 @@ main()
  */
 
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-                         ASN1_TYPE *param, EVP_CIPHER *c, EVP_MD *md,
+                         ASN1_TYPE *param, const EVP_CIPHER *c, const EVP_MD *md,
                          int en_de)
 {
 	unsigned char *pbuf, *salt, key[EVP_MAX_KEY_LENGTH];

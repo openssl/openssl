@@ -13,9 +13,9 @@ EVP digest routines
 
  #include <openssl/evp.h>
 
- void EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
- void EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
- void EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
+ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
+ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
 
  #define EVP_MAX_MD_SIZE (16+20) /* The SSLv3 md5+sha1 type */
@@ -32,15 +32,15 @@ EVP digest routines
  #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
  #define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
 
- EVP_MD *EVP_md_null(void);
- EVP_MD *EVP_md2(void);
- EVP_MD *EVP_md5(void);
- EVP_MD *EVP_sha(void);
- EVP_MD *EVP_sha1(void);
- EVP_MD *EVP_dss(void);
- EVP_MD *EVP_dss1(void);
- EVP_MD *EVP_mdc2(void);
- EVP_MD *EVP_ripemd160(void);
+ const EVP_MD *EVP_md_null(void);
+ const EVP_MD *EVP_md2(void);
+ const EVP_MD *EVP_md5(void);
+ const EVP_MD *EVP_sha(void);
+ const EVP_MD *EVP_sha1(void);
+ const EVP_MD *EVP_dss(void);
+ const EVP_MD *EVP_dss1(void);
+ const EVP_MD *EVP_mdc2(void);
+ const EVP_MD *EVP_ripemd160(void);
 
  const EVP_MD *EVP_get_digestbyname(const char *name);
  #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
@@ -107,7 +107,8 @@ using, for example, OpenSSL_add_all_digests() for these functions to work.
 
 =head1 RETURN VALUES
 
-EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal() do not return values.
+EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal() return 1 for
+success and 0 for failure.
 
 EVP_MD_CTX_copy() returns 1 if successful or 0 for failure.
 
@@ -133,6 +134,10 @@ transparent to the digest used and much more flexible.
 
 SHA1 is the digest of choice for new applications. The other digest algorithms
 are still in common use.
+
+The functions EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal(),
+did not return errors in OpenSSL versions before 0.9.7 or earlier. Software only
+versions of digest algorithms will never return error codes for these functions.
 
 =head1 EXAMPLE
 
@@ -176,10 +181,6 @@ digest name passed on the command line.
  }
 
 =head1 BUGS
-
-Several of the functions do not return values: maybe they should. Although the
-internal digest operations will never fail some future hardware based operations
-might.
 
 The link between digests and signing algorithms results in a situation where
 EVP_sha1() must be used with RSA and EVP_dss1() must be used with DSS

@@ -160,7 +160,7 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 	char *extensions = NULL;
 	char *req_exts = NULL;
-	EVP_CIPHER *cipher=NULL;
+	const EVP_CIPHER *cipher=NULL;
 	ASN1_INTEGER *serial = NULL;
 	int modulus=0;
 	char *inrand=NULL;

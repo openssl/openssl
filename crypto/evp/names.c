@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_add_cipher(EVP_CIPHER *c)
+int EVP_add_cipher(const EVP_CIPHER *c)
 	{
 	int r;
 
@@ -72,7 +72,7 @@ int EVP_add_cipher(EVP_CIPHER *c)
 	return(r);
 	}
 
-int EVP_add_digest(EVP_MD *md)
+int EVP_add_digest(const EVP_MD *md)
 	{
 	int r;
 	const char *name;

@@ -84,7 +84,7 @@ IMPLEMENT_BLOCK_CIPHER(rc2, rc2.ks, RC2, rc2, NID_rc2,
 #define RC2_64_MAGIC	0x78
 #define RC2_128_MAGIC	0x3a
 
-static EVP_CIPHER r2_64_cbc_cipher=
+static const EVP_CIPHER r2_64_cbc_cipher=
 	{
 	NID_rc2_64_cbc,
 	8,8 /* 64 bit */,8,
@@ -100,7 +100,7 @@ static EVP_CIPHER r2_64_cbc_cipher=
 	NULL
 	};
 
-static EVP_CIPHER r2_40_cbc_cipher=
+static const EVP_CIPHER r2_40_cbc_cipher=
 	{
 	NID_rc2_40_cbc,
 	8,5 /* 40 bit */,8,
@@ -116,12 +116,12 @@ static EVP_CIPHER r2_40_cbc_cipher=
 	NULL
 	};
 
-EVP_CIPHER *EVP_rc2_64_cbc(void)
+const EVP_CIPHER *EVP_rc2_64_cbc(void)
 	{
 	return(&r2_64_cbc_cipher);
 	}
 
-EVP_CIPHER *EVP_rc2_40_cbc(void)
+const EVP_CIPHER *EVP_rc2_40_cbc(void)
 	{
 	return(&r2_40_cbc_cipher);
 	}

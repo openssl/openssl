@@ -86,7 +86,7 @@ int MAIN(int argc, char **argv)
 	RSA *rsa=NULL;
 	int i,num=DEFBITS;
 	long l;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
 	char *passargout = NULL, *passout = NULL;
