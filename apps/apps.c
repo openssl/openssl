@@ -925,7 +925,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 	}
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-EVP_PKEY *
+static EVP_PKEY *
 load_netscape_key(BIO *err, BIO *key, const char *file,
 		const char *key_descrip, int format)
 	{
