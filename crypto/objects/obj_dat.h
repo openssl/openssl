@@ -58,13 +58,13 @@
 
 /* THIS FILE IS GENERATED FROM Objects.h by obj_dat.pl via the
  * following command:
- * perl obj_dat.pl objects.h obj_dat.h
+ * perl obj_dat.pl obj_mac.h obj_dat.h
  */
 
 #define NUM_NID 480
-#define NUM_SN 481
-#define NUM_LN 481
-#define NUM_OBJ 455
+#define NUM_SN 478
+#define NUM_LN 478
+#define NUM_OBJ 452
 
 static unsigned char lvalues[3694]={
 0x00,                                        /* [  0] OBJ_undef */
@@ -495,7 +495,7 @@ static unsigned char lvalues[3694]={
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x17,/* [3423] OBJ_lastModifiedTime */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x18,/* [3433] OBJ_lastModifiedBy */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1A,/* [3443] OBJ_aRecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1B,/* [3453] OBJ_ */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1B,/* [3453] OBJ_pilotAttributeType27 */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1C,/* [3463] OBJ_mXRecord */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1D,/* [3473] OBJ_nSRecord */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1E,/* [3483] OBJ_sOARecord */
@@ -1219,7 +1219,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"lastModifiedBy","lastModifiedBy",NID_lastModifiedBy,10,
 	&(lvalues[3433]),0},
 {"aRecord","aRecord",NID_aRecord,10,&(lvalues[3443]),0},
-{"NULL","NULL",NID_,10,&(lvalues[3453]),0},
+{"pilotAttributeType27","pilotAttributeType27",
+	NID_pilotAttributeType27,10,&(lvalues[3453]),0},
 {"mXRecord","mXRecord",NID_mXRecord,10,&(lvalues[3463]),0},
 {"nSRecord","nSRecord",NID_nSRecord,10,&(lvalues[3473]),0},
 {"sOARecord","sOARecord",NID_sOARecord,10,&(lvalues[3483]),0},
@@ -1323,10 +1324,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[ 4]),/* "MD5" */
 &(nid_objs[114]),/* "MD5-SHA1" */
 &(nid_objs[95]),/* "MDC2" */
-&(nid_objs[118]),/* "NULL" */
-&(nid_objs[393]),/* "NULL" */
-&(nid_objs[456]),/* "NULL" */
-&(nid_objs[480]),/* "NULL" */
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[366]),/* "Nonce" */
 &(nid_objs[17]),/* "O" */
@@ -1678,6 +1675,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[414]),/* "pilot" */
 &(nid_objs[416]),/* "pilotAttributeSyntax" */
 &(nid_objs[415]),/* "pilotAttributeType" */
+&(nid_objs[456]),/* "pilotAttributeType27" */
 &(nid_objs[433]),/* "pilotDSA" */
 &(nid_objs[418]),/* "pilotGroups" */
 &(nid_objs[421]),/* "pilotObject" */
@@ -1775,10 +1773,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
 &(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
-&(nid_objs[118]),/* "NULL" */
-&(nid_objs[393]),/* "NULL" */
-&(nid_objs[456]),/* "NULL" */
-&(nid_objs[480]),/* "NULL" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -2146,6 +2140,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[414]),/* "pilot" */
 &(nid_objs[416]),/* "pilotAttributeSyntax" */
 &(nid_objs[415]),/* "pilotAttributeType" */
+&(nid_objs[456]),/* "pilotAttributeType27" */
 &(nid_objs[433]),/* "pilotDSA" */
 &(nid_objs[418]),/* "pilotGroups" */
 &(nid_objs[421]),/* "pilotObject" */
@@ -2548,10 +2543,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[454]),/* OBJ_lastModifiedBy               0 9 2342 19200300 100 1 24 */
 &(nid_objs[391]),/* OBJ_domainComponent              0 9 2342 19200300 100 1 25 */
 &(nid_objs[455]),/* OBJ_aRecord                      0 9 2342 19200300 100 1 26 */
-&(nid_objs[118]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
-&(nid_objs[393]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
-&(nid_objs[456]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
-&(nid_objs[480]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
+&(nid_objs[456]),/* OBJ_pilotAttributeType27         0 9 2342 19200300 100 1 27 */
 &(nid_objs[457]),/* OBJ_mXRecord                     0 9 2342 19200300 100 1 28 */
 &(nid_objs[458]),/* OBJ_nSRecord                     0 9 2342 19200300 100 1 29 */
 &(nid_objs[459]),/* OBJ_sOARecord                    0 9 2342 19200300 100 1 30 */

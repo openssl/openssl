@@ -224,7 +224,7 @@ print OUT <<'EOF';
 
 /* THIS FILE IS GENERATED FROM Objects.h by obj_dat.pl via the
  * following command:
- * perl obj_dat.pl objects.h obj_dat.h
+ * perl obj_dat.pl obj_mac.h obj_dat.h
  */
 
 EOF

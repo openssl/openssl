@@ -446,9 +446,9 @@ util/libeay.num::
 util/ssleay.num::
 	$(PERL) util/mkdef.pl ssl update
 
-crypto/objects/obj_dat.h: crypto/objects/obj_mac.h crypto/objects/obj_dat.pl
+crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
 	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
-crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt 
+crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/obj_mac.num
 	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
 
 TABLE: Configure

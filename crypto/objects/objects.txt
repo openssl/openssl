@@ -669,7 +669,7 @@ pilotAttributeType 23	:			: lastModifiedTime
 pilotAttributeType 24	:			: lastModifiedBy
 pilotAttributeType 25	: DC			: domainComponent
 pilotAttributeType 26	:			: aRecord
-pilotAttributeType 27	:			: 
+pilotAttributeType 27	:			: pilotAttributeType27
 pilotAttributeType 28	:			: mXRecord
 pilotAttributeType 29	:			: nSRecord
 pilotAttributeType 30	:			: sOARecord

@@ -2070,8 +2070,9 @@
 #define NID_aRecord		455
 #define OBJ_aRecord		OBJ_pilotAttributeType,26L
 
-#define NID_		456
-#define OBJ_		OBJ_pilotAttributeType,27L
+#define LN_pilotAttributeType27		"pilotAttributeType27"
+#define NID_pilotAttributeType27		456
+#define OBJ_pilotAttributeType27		OBJ_pilotAttributeType,27L
 
 #define LN_mXRecord		"mXRecord"
 #define NID_mXRecord		457

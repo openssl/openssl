@@ -9,7 +9,9 @@ while(<NUMIN>)
 	$o++;
 	s/#.*$//;
 	next if /^\s*$/;
+	$_ = 'X'.$_;
 	($Cname,$mynum) = split;
+	$Cname =~ s/^X//;
 	if (defined($nidn{$mynum}))
 		{ die "$ARGV[1]:$o:There's already an object with NID ",$mynum," on line ",$order{$mynum},"\n"; }
 	$nid{$Cname} = $mynum;
