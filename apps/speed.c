@@ -352,10 +352,11 @@ int MAIN(int argc, char **argv)
 	ENGINE *e;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
-	long count=0,rsa_count,save_count=0;
+	long count=0,save_count=0;
 	int i,j,k;
 #ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
+	long rsa_count;
 #endif
 	unsigned char md[EVP_MAX_MD_SIZE];
 #ifndef OPENSSL_NO_MD2
