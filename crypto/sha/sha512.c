@@ -1,6 +1,7 @@
 /* crypto/sha/sha512.c */
 /* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
+ * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
 /*
@@ -47,6 +48,10 @@
 #include <openssl/opensslv.h>
 
 const char *SHA512_version="SHA-512" OPENSSL_VERSION_PTEXT;
+
+#if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386) || defined(__x86_64)
+#define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+#endif
 
 int SHA384_Init (SHA512_CTX *c)
 	{
@@ -167,7 +172,7 @@ int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 	if (len >= sizeof(c->u))
 		{
 #ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
-		if ((int)data%sizeof(c->u.d[0]) != 0)
+		if ((size_t)data%sizeof(c->u.d[0]) != 0)
 			while (len >= sizeof(c->u))
 				memcpy (p,data,sizeof(c->u)),
 				sha512_block (c,p,1),
@@ -260,10 +265,47 @@ static const SHA_LONG64 K512[80] = {
         U64(0x4cc5d4becb3e42b6),U64(0x597f299cfc657e2a),
         U64(0x5fcb6fab3ad6faec),U64(0x6c44198c4a475817) };
 
+#ifndef PEDANTIC
+# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#  if defined(__x86_64) || defined(__x86_64__)
+#   define PULL64(x) ({ SHA_LONG64 ret=*((SHA_LONG64 *)(&(x)));	\
+				asm ("bswapq	%0"		\
+				: "=r"(ret)			\
+				: "0"(ret)); ret;		})
+#  endif
+# endif
+#endif
+
+#ifndef PULL64
 #define B(x,j)    (((SHA_LONG64)(*(((unsigned char *)(&x))+j)))<<((7-j)*8))
 #define PULL64(x) (B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
+#endif
 
+#ifndef PEDANTIC
+# if defined(_MSC_VER)
+#  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */
+#   define ROTR(a,n)	_rotr64((a),n)
+#  endif
+# elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#  if defined(__x86_64) || defined(__x86_64__)
+#   define ROTR(a,n)	({ unsigned long ret;		\
+				asm ("rorq %1,%0"	\
+				: "=r"(ret)		\
+				: "J"(n),"0"(a)		\
+				: "cc"); ret;		})
+#  elif defined(_ARCH_PPC) && defined(__64BIT__)
+#   define ROTR(a,n)	({ unsigned long ret;		\
+				asm ("rotrdi %0,%1,%2"	\
+				: "=r"(ret)		\
+				: "r"(a),"K"(n)); ret;	})
+#  endif
+# endif
+#endif
+
+#ifndef ROTR
 #define ROTR(x,s)	(((x)>>s) | (x)<<(64-s))
+#endif
+
 #define Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
 #define Sigma1(x)	(ROTR((x),14) ^ ROTR((x),18) ^ ROTR((x),41))
 #define sigma0(x)	(ROTR((x),1)  ^ ROTR((x),8)  ^ ((x)>>7))
@@ -271,6 +313,15 @@ static const SHA_LONG64 K512[80] = {
 
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+
+#if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM)
+#define	GO_FOR_SSE2(ctx,in,num)		do {		\
+	extern int	OPENSSL_ia32cap;		\
+	void		sha512_block_sse2(void *,const void *,size_t);	\
+	if (!(OPENSSL_ia32cap & (1<<26))) break;	\
+	sha512_block_sse2(ctx->h,in,num); return;	\
+					} while (0)
+#endif
 
 #ifdef OPENSSL_SMALL_FOOTPRINT
 
@@ -280,6 +331,10 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG64	X[16];
 	int i;
+
+#ifdef GO_FOR_SSE2
+	GO_FOR_SSE2(ctx,in,num);
+#endif
 
 			while (num--) {
 
@@ -314,6 +369,7 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	ctx->h[0] += a;	ctx->h[1] += b;	ctx->h[2] += c;	ctx->h[3] += d;
 	ctx->h[4] += e;	ctx->h[5] += f;	ctx->h[6] += g;	ctx->h[7] += h;
 
+			W+=SHA_LBLOCK;
 			}
 	}
 
@@ -327,7 +383,7 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 #define	ROUND_16_80(i,a,b,c,d,e,f,g,h,X)	do {	\
 	s0 = X[(i+1)&0x0f];	s0 = sigma0(s0);	\
 	s1 = X[(i+14)&0x0f];	s1 = sigma1(s1);	\
-	T1 = X[i&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
+	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
 	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
 
 static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
@@ -336,6 +392,10 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG64	X[16];
 	int i;
+
+#ifdef GO_FOR_SSE2
+	GO_FOR_SSE2(ctx,in,num);
+#endif
 
 			while (num--) {
 
@@ -393,6 +453,7 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	ctx->h[0] += a;	ctx->h[1] += b;	ctx->h[2] += c;	ctx->h[3] += d;
 	ctx->h[4] += e;	ctx->h[5] += f;	ctx->h[6] += g;	ctx->h[7] += h;
 
+			W+=SHA_LBLOCK;
 			}
 	}
 

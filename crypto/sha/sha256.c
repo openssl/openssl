@@ -1,6 +1,7 @@
 /* crypto/sha/sha256.c */
 /* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
+ * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
 #include <stdlib.h>
@@ -131,6 +132,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG	X[16];
 	int i;
+	const unsigned char *data=in;
 
 			while (num--) {
 
@@ -139,7 +141,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 
 	if (host)
 		{
-		const SHA_LONG *W=in;
+		const SHA_LONG *W=(const SHA_LONG *)data;
 
 		for (i=0;i<16;i++)
 			{
@@ -152,7 +154,6 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 		}
 	else
 		{
-		const unsigned char *data=in;
 		SHA_LONG l;
 
 		for (i=0;i<16;i++)
@@ -180,6 +181,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	ctx->h[0] += a;	ctx->h[1] += b;	ctx->h[2] += c;	ctx->h[3] += d;
 	ctx->h[4] += e;	ctx->h[5] += f;	ctx->h[6] += g;	ctx->h[7] += h;
 
+			data += SHA256_CBLOCK;
 			}
 }
 
@@ -193,7 +195,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 #define	ROUND_16_63(i,a,b,c,d,e,f,g,h,X)	do {	\
 	s0 = X[(i+1)&0x0f];	s0 = sigma0(s0);	\
 	s1 = X[(i+14)&0x0f];	s1 = sigma1(s1);	\
-	T1 = X[i&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
+	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
 	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
 
 static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
@@ -201,6 +203,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG	X[16];
 	int i;
+	const unsigned char *data=in;
 
 			while (num--) {
 
@@ -209,7 +212,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 
 	if (host)
 		{
-		const SHA_LONG *W=in;
+		const SHA_LONG *W=(const SHA_LONG *)data;
 
 		T1 = X[0] = W[0];	ROUND_00_15(0,a,b,c,d,e,f,g,h);
 		T1 = X[1] = W[1];	ROUND_00_15(1,h,a,b,c,d,e,f,g);
@@ -230,7 +233,6 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 		}
 	else
 		{
-		const unsigned char *data=in;
 		SHA_LONG l;
 
 		HOST_c2l(data,l); T1 = X[0] = l;  ROUND_00_15(0,a,b,c,d,e,f,g,h);
@@ -266,6 +268,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	ctx->h[0] += a;	ctx->h[1] += b;	ctx->h[2] += c;	ctx->h[3] += d;
 	ctx->h[4] += e;	ctx->h[5] += f;	ctx->h[6] += g;	ctx->h[7] += h;
 
+			data += SHA256_CBLOCK;
 			}
 	}
 

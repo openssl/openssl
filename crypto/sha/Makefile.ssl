@@ -23,12 +23,12 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
-TEST=shatest.c sha1test.c
+TEST=shatest.c sha1test.c sha256t.c sha512t.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c
-LIBOBJ=sha_dgst.o sha1dgst.o sha_one.o sha1_one.o $(SHA1_ASM_OBJ)
+LIBSRC=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
+LIBOBJ=sha_dgst.o sha1dgst.o sha_one.o sha1_one.o sha256.o sha512.o $(SHA1_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -50,6 +50,8 @@ lib:    $(LIBOBJ)
 # elf
 asm/sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > sx86-elf.s)
+asm/sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > sse2-elf.s)
 
 # a.out
 asm/sx86-out.o: asm/sx86unix.cpp
