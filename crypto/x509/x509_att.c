@@ -154,7 +154,7 @@ err2:
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
-	     int atrtype, void *data)
+	     int atrtype, void *data, int len)
 {
 	ASN1_OBJECT *obj;
 	X509_ATTRIBUTE *ret;
@@ -165,13 +165,13 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 		X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_NID,X509_R_UNKNOWN_NID);
 		return(NULL);
 		}
-	ret=X509_ATTRIBUTE_create_by_OBJ(attr,obj,atrtype,data);
+	ret=X509_ATTRIBUTE_create_by_OBJ(attr,obj,atrtype,data,len);
 	if (ret == NULL) ASN1_OBJECT_free(obj);
 	return(ret);
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
-	     ASN1_OBJECT *obj, int atrtype, void *data)
+	     ASN1_OBJECT *obj, int atrtype, void *data, int len)
 {
 	X509_ATTRIBUTE *ret;
 
@@ -188,7 +188,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
 	if (!X509_ATTRIBUTE_rset_object(ret,obj))
 		goto err;
-	if (!X509_ATTRIBUTE_iset_data(ret,atrtype,data))
+	if (!X509_ATTRIBUTE_rset_data(ret,atrtype,data,len))
 		goto err;
 	
 	if ((attr != NULL) && (*attr == NULL)) *attr=ret;
@@ -208,15 +208,30 @@ int X509_ATTRIBUTE_rset_object(X509_ATTRIBUTE *attr, ASN1_OBJECT *obj)
 	return(1);
 }
 
-int X509_ATTRIBUTE_iset_data(X509_ATTRIBUTE *attr, int attrtype, void *data)
+int X509_ATTRIBUTE_rset_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int len)
 {
 	ASN1_TYPE *ttmp;
+	ASN1_STRING *stmp;
+	int atype;
 	if (!attr) return 0;
+	if(attrtype & MBSTRING_FLAG) {
+		stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
+						OBJ_obj2nid(attr->object));
+		if(!stmp) {
+			X509err(X509_F_X509_ATTRIBUTE_ISET_DATA, ERR_R_ASN1_LIB);
+			return 0;
+		}
+		atype = stmp->type;
+	} else {
+		if(!(stmp = ASN1_STRING_type_new(attrtype))) goto err;
+		if(!ASN1_STRING_set(stmp, data, len)) goto err;
+		atype = attrtype;
+	}
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
 	attr->set = 1;
-	ASN1_TYPE_set(ttmp, attrtype, data);
+	ASN1_TYPE_set(ttmp, atype, data);
 	return 1;
 	err:
 	X509err(X509_F_X509_ATTRIBUTE_ISET_DATA, ERR_R_MALLOC_FAILURE);

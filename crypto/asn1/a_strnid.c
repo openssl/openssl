@@ -163,11 +163,14 @@ static ASN1_STRING_TABLE tbl_standard[] = {
 {NID_organizationName,		1, ub_organization_name, DIRSTRING_TYPE, 0},
 {NID_organizationalUnitName,	1, ub_organization_unit_name, DIRSTRING_TYPE, 0},
 {NID_pkcs9_emailAddress,	1, ub_email_address, B_ASN1_IA5STRING, STABLE_NO_MASK},
+{NID_pkcs9_unstructuredName,	1, -1, PKCS9STRING_TYPE, 0},
+{NID_pkcs9_challengePassword,	1, -1, PKCS9STRING_TYPE, 0},
+{NID_pkcs9_unstructuredAddress,	1, -1, DIRSTRING_TYPE, 0},
 {NID_givenName,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_surname,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_initials,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_name,			1, ub_name, DIRSTRING_TYPE, 0},
-{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
+{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK}
 };
 
 static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b)

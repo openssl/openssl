@@ -215,6 +215,7 @@ typedef struct asn1_string_st
 #define STABLE_NO_MASK		0x02
 #define DIRSTRING_TYPE	\
  (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_BMPSTRING|B_ASN1_UTF8STRING)
+#define PKCS9STRING_TYPE (DIRSTRING_TYPE|B_ASN1_IA5STRING)
 
 typedef struct asn1_string_table_st {
 	int nid;

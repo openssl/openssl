@@ -818,8 +818,8 @@ void		X509_CERT_AUX_free(X509_CERT_AUX *a);
 int		i2d_X509_CERT_AUX(X509_CERT_AUX *a,unsigned char **pp);
 X509_CERT_AUX *	d2i_X509_CERT_AUX(X509_CERT_AUX **a,unsigned char **pp,
 								long length);
-int X509_alias_set(X509 *x, unsigned char *name, int len);
-unsigned char * X509_alias_get(X509 *x, int *len);
+int X509_alias_rset(X509 *x, unsigned char *name, int len);
+unsigned char * X509_alias_iget(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
 int X509_radd_trust_object(X509 *x, ASN1_OBJECT *obj);
 int X509_radd_reject_object(X509 *x, ASN1_OBJECT *obj);
@@ -1030,13 +1030,14 @@ X509_ATTRIBUTE *X509_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
 STACK_OF(X509_ATTRIBUTE) *X509_radd_attr(STACK_OF(X509_ATTRIBUTE) **x,
 					 X509_ATTRIBUTE *attr, int loc);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
-	     int atrtype, void *data);
+	     int atrtype, void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
-	     ASN1_OBJECT *obj, int atrtype, void *data);
+	     ASN1_OBJECT *obj, int atrtype, void *data, int len);
 int X509_ATTRIBUTE_rset_object(X509_ATTRIBUTE *attr, ASN1_OBJECT *obj);
-int X509_ATTRIBUTE_iset_data(X509_ATTRIBUTE *attr, int attrtype, void *data);
+int X509_ATTRIBUTE_rset_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int len);
 void *X509_ATTRIBUTE_iget_data(X509_ATTRIBUTE *attr, int idx,
 					int atrtype, void *data);
+int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr);
 ASN1_OBJECT *X509_ATTRIBUTE_iget_object(X509_ATTRIBUTE *attr);
 ASN1_TYPE *X509_ATTRIBUTE_type_iget(X509_ATTRIBUTE *attr, int idx);
 

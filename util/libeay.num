@@ -1905,7 +1905,7 @@ sk_X509_PURPOSE_value                   1929
 sk_X509_PURPOSE_zero                    1930
 X509_TRUST_add                          1931
 ASN1_VISIBLESTRING_new                  1932
-X509_alias_set                          1933
+X509_alias_rset                         1933
 ASN1_PRINTABLESTRING_free               1934
 EVP_PKEY_rget_DSA                       1935
 ASN1_BMPSTRING_new                      1936
@@ -2046,7 +2046,7 @@ sk_ASN1_STRING_TABLE_set_cmp_func       2070
 X509_NAME_ENTRY_create_by_txt           2071
 ASN1_STRING_get_default_mask            2072
 sk_X509_TRUST_dup                       2073
-X509_alias_get                          2074
+X509_alias_iget                         2074
 ASN1_STRING_data                        2075
 sk_X509_TRUST_insert                    2076
 i2d_ACCESS_DESCRIPTION                  2077

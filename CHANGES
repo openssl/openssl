@@ -4,6 +4,17 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add PKCS#10 attributes to field table: challengePassword, 
+     unstructuredName and unstructuredAddress. These are taken from
+     draft PKCS#9 v2.0 but are compatible with v1.2 provided no 
+     international characters are used.
+
+     More changes to X509_ATTRIBUTE code: allow the setting of types
+     based on strings. Remove the 'loc' parameter when adding
+     attributes because these will be a SET OF encoding which is sorted
+     in ASN1 order.
+     [Steve Henson]
+
   *) Initial changes to the 'req' utility to allow request generation
      automation. This will allow an application to just generate a template
      file containing all the field values and have req construct the

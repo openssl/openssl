@@ -557,7 +557,7 @@ bad:
 			}
 		}
 
-	if(alias) X509_alias_set(x, (unsigned char *)alias, -1);
+	if(alias) X509_alias_rset(x, (unsigned char *)alias, -1);
 
 	if(clrtrust) X509_trust_clear(x);
 	if(clrreject) X509_reject_clear(x);
@@ -601,7 +601,7 @@ bad:
 			else if (aliasout == i)
 				{
 				unsigned char *alstr;
-				alstr = X509_alias_get(x, NULL);
+				alstr = X509_alias_iget(x, NULL);
 				if(alstr) BIO_printf(STDout,"%s\n", alstr);
 				else BIO_puts(STDout,"<No Alias>\n");
 				}
