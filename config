@@ -473,7 +473,8 @@ case "$GUESSOS" in
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke './Configure irix64-mips4-$CC' *manually*."
 	echo "         Type return if you want to continue, Ctrl-C to abort."
-	read waste < /dev/tty
+	# Do not stop if /dev/tty is unavailable
+	(read waste < /dev/tty) || true
         CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
         CPU=${CPU:-0}
         if [ $CPU -ge 5000 ]; then
@@ -528,7 +529,8 @@ EOF
 	#echo "WARNING! If you wish to build 64-bit library, then you have to"
 	#echo "         invoke './Configure linux64-sparcv9' *manually*."
 	#echo "         Type return if you want to continue, Ctrl-C to abort."
-	#read waste < /dev/tty
+	# Do not stop if /dev/tty is unavailable
+	#(read waste < /dev/tty) || true
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
 	KARCH=`awk '/^type/{print$3}' /proc/cpuinfo`
@@ -569,7 +571,8 @@ EOF
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
 		echo "         Type return if you want to continue, Ctrl-C to abort."
-		read waste < /dev/tty
+		# Do not stop if /dev/tty is unavailable
+		(read waste < /dev/tty) || true
 	fi
 	OUT="solaris-sparcv9-$CC" ;;
   sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
