@@ -271,27 +271,40 @@ EVP_PKEY *k;
 	int ok=0;
 
 	xk=X509_get_pubkey(x);
-	if (xk->type != k->type) goto err;
+	if (xk->type != k->type)
+	    {
+	    SSLerr(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
+	    goto err;
+	    }
 	switch (k->type)
 		{
 #ifndef NO_RSA
 	case EVP_PKEY_RSA:
-		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0) goto err;
-		if (BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0) goto err;
+		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0
+		    || BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0)
+		    {
+		    SSLerr(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
+		    goto err;
+		    }
 		break;
 #endif
 #ifndef NO_DSA
 	case EVP_PKEY_DSA:
 		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
-			goto err;
+		    {
+		    SSLerr(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
+		    goto err;
+		    }
 		break;
 #endif
 #ifndef NO_DH
 	case EVP_PKEY_DH:
 		/* No idea */
+	        SSLerr(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
 		goto err;
 #endif
 	default:
+	        SSLerr(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_UNKNOWN_KEY_TYPE);
 		goto err;
 		}
 
