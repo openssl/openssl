@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Remove defunct assembler files from Configure.
+     [Ulf Möller]
+
   *) SPARC v8 assembler BIGNUM implementation.
      [Andy Polyakov <appro@fy.chalmers.se>]
 

@@ -8,11 +8,12 @@ eval 'exec perl -S $0 ${1+"$@"}'
 require 5.000;
 use strict;
 
+# see INSTALL for instructions.
 #
-# see PROBLEMS for instructions on what sort of things to do when 
-# tracking a bug --tjh
-#
-# extra options
+# Configure options:
+# rsaref        use RSAref
+# no_asm        do not use assembler
+# 386           generate 80386 code
 # -DRSAref	build to use RSAref
 # -DNO_IDEA	build with no IDEA algorithm
 # -DNO_RC4	build with no RC4 algorithm
@@ -79,39 +80,40 @@ my %table=(
 #"bl-4c-ri",	"$tcc:$tflags:$tlib:${bits1}BN_LLONG RC4_CHAR RC4_INDEX:$tbn_mul::",
 #"b2-is-ri-dp",	"$tcc:$tflags:$tlib:${bits2}IDEA_SHORT RC4_INDEX DES_PTR:$tbn_mul::",
 
-# A few of my development configs
+# Our development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall:-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:-lefence::::",
 "debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -O2 -Wall -Wshadow -Werror -pipe:::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe:::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
-"dist",		"cc:-O -DNOPROTO::::",
+"dist",		"cc:-O:::::",
 
 # Basic configs that should work on any box
 "gcc",		"gcc:-O3::BN_LLONG:::",
-"cc",		"cc:-O -DNOPROTO -DNOCONST:::::",
+"cc",		"cc:-O:::::",
 
 
-# My solaris setups
+# Solaris setups
 "solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
-"solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
+"solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
+
 # DO NOT use /xO[34] on sparc with SC3.0. 
 # It is broken, and will not pass the tests
 "solaris-sparc-cc","cc:-fast -O -Xa -DB_ENDIAN:\
-	-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:asm/sparc.o::",
+	-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
 # SC4.0 is ok, better than gcc, except for the bignum stuff.
 # -fast slows things like DES down quite a lot
 "solaris-sparc-sc4","cc:-xO5 -Xa -DB_ENDIAN:-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
 "solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO5 -DB_ENDIAN:\
 	-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
 "solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
 
 # Sunos configs, assuming sparc for the gcc one.
-"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::DES_UNROLL:::",
+##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::DES_UNROLL:::",
 "sunos-gcc","gcc:-O3 -mv8::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
 
 # SGI configurations.  If the box is rather old (r3000 cpu), you will
@@ -120,22 +122,18 @@ my %table=(
 # I've recently done 32 and 64 bit mips assember, it make this RSA
 # 3 times faster, use if at all possible.
 #"irix-gcc","gcc:-O2 -mips2::SIXTY_FOUR_BIT BN_LLONG RC4_INDEX RC4_CHAR:::",
-"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:asm/mips1.o::",
-"irix64-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:asm/mips3.o::",
-"irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:asm/mips1.o::",
-"irix64-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:asm/mips3.o::",
-"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:::asm/r3000.o::",
+"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
+"irix64-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
+"irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
+"irix64-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
+"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:::::",
 # This is the n64 mode build.
-"irix-n64-cc", "cc:-64 -O2 -use_readonly_const -DTERMIOS::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:asm/mips3_64.o::",
+"irix-n64-cc", "cc:-64 -O2 -use_readonly_const -DTERMIOS::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:::",
 
 # HPUX config.  I've been building on HPUX 9, so the options may be
-# different on version 10.  The pa-risc2.o assember file is 2 times
-# faster than the old asm/pa-risc.o version but it may not run on old
-# PA-RISC CPUs.  If you have problems, swap back to the old one.
-# Both were generated by gcc, so use the C version with the PA-RISC specific
-# options turned on if you are using gcc.
-"hpux-cc",	"cc:-DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit +O4 -Wl,-a,archive::DES_PTR DES_UNROLL DES_RISC1:asm/pa-risc2.o::",
-"hpux-kr-cc",	"cc:-DB_ENDIAN -DNOCONST -DNOPROTO -D_HPUX_SOURCE::DES_PTR DES_UNROLL:asm/pa-risc2.o::",
+# different on version 10.
+"hpux-cc",	"cc:-DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit +O4 -Wl,-a,archive::DES_PTR DES_UNROLL DES_RISC1:::",
+##"hpux-kr-cc",	"cc:-DB_ENDIAN -DNOCONST -DNOPROTO -D_HPUX_SOURCE::DES_PTR DES_UNROLL:::",
 "hpux-gcc",	"gcc:-DB_ENDIAN -O3::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # HPUX from www.globus.org
 "hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::DES_PTR DES_UNROLL DES_RISC1:::",
@@ -144,9 +142,14 @@ my %table=(
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
-"alpha-gcc","gcc:-O3::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:asm/alpha.o::",
-"alpha-cc", "cc:-tune host -O4 -readonly_strings::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
-"alpha164-cc", "cc:-tune host -fast -readonly_strings::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+"alpha-gcc","gcc:-O3::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:::",
+"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::SIXTY_FOUR_BIT_LONG:::",
+"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::SIXTY_FOUR_BIT_LONG:::",
+# assembler versions -- currently defunct:
+##"alpha-gcc","gcc:-O3::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:asm/alpha.o::",
+##"alpha-cc", "cc:-tune host -O4 -readonly_strings::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+##"alpha164-cc", "cc:-tune host -fast -readonly_strings::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+##"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
 
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
@@ -225,15 +228,17 @@ my %table=(
 # CygWin32
 "CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
-# Our old Ultrix box :-). -O2 breaks some of the bignum stuff (now fixed,
-# it is a compiler bug, look in bug/ultrixcc.c for example code.
-"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN:::asm/mips1.o:::",
+# Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
+"ultrix","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::::::",
+# K&R C is no longer supported; you need gcc on old Ultrix installations
+##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::::::",
 
 # Some OpenBSD from Bob Beck <beck@obtuse.com>
-"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
+"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:::",
 "OpenBSD-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "OpenBSD",      "gcc:-DTERMIOS -O3 -fomit-frame-pointer::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:::",
 "OpenBSD-mips","gcc:-O2 -DL_ENDIAN:BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR::::",
+
 );
 
 # Miscellaneous hacks: this is designed to allow environments where the "one
