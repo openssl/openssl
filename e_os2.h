@@ -131,6 +131,9 @@ extern "C" {
 # define OPENSSL_SYS_VMS
 # if defined(__DECC)
 #  define OPENSSL_SYS_VMS_DECC
+# elif defined(__DECCXX)
+#  define OPENSSL_SYS_VMS_DECC
+#  define OPENSSL_SYS_VMS_DECCXX
 # else
 #  define OPENSSL_SYS_VMS_NODECC
 # endif
