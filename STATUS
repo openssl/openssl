@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 16:42:55 $
+  ______________                           $Date: 2000/02/27 17:56:54 $
 
   DEVELOPMENT STATE
 
@@ -18,9 +18,11 @@
                        0.9.5beta2 is available.
                          hpux-parisc-cc       - test passed
                          hpux-parisc-gcc (gcc 2.7.1) - test passed
+                         hpux-parisc-gcc (gcc 2.8.0) - test passed
                          AIX 4.3 (aix-cc)     - test passed
                          FreeBSD 3.0-RELEASE  - test passed
                          OpenVMS V7.1/Alpha   - test passed
+                         OpenVMS V7.2-1/Alpha - test passed
                          OpenVMS V7.1/VAX     - test failed on BN (config prob)
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
