@@ -87,6 +87,8 @@ static void MS_CALLBACK cb(int p, int n, void *arg);
 #include "bss_file.c"
 #endif
 
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
 int main(int argc, char *argv[])
 	{
 	DH *a;
@@ -99,6 +101,8 @@ int main(int argc, char *argv[])
 #ifdef WIN32
 	CRYPTO_malloc_init();
 #endif
+
+	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	out=BIO_new(BIO_s_file());
 	if (out == NULL) exit(1);

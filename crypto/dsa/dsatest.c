@@ -120,6 +120,8 @@ static unsigned char out_g[]={
 
 static const unsigned char str1[]="12345678901234567890";
 
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
 static BIO *bio_err=NULL;
 
 int main(int argc, char **argv)
@@ -130,6 +132,8 @@ int main(int argc, char **argv)
 	unsigned long h;
 	unsigned char sig[256];
 	unsigned int siglen;
+
+	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
