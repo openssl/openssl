@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/20 15:22:02 $
+  ______________                           $Date: 2000/09/21 10:27:35 $
 
   DEVELOPMENT STATE
 
@@ -84,6 +84,7 @@
 			alpha-gcc (V4.0E, gcc 2.8.1)		- success
 			ultrix-cc (V4.5)			- success
 			ultrix-gcc (V4.5, gcc 2.8.1)		- success
+                       0.9.6-beta3 is available:
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
