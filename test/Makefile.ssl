@@ -334,6 +334,8 @@ rc2test.o: ../include/rc2.h
 rc4test.o: ../include/rc4.h
 rc5test.o: ../include/rc5.h
 rmdtest.o: ../include/ripemd.h
+rsa_oaep_test.o: ../include/bn.h ../include/crypto.h ../include/e_os.h
+rsa_oaep_test.o: ../include/rsa.h ../include/stack.h
 sha1test.o: ../include/sha.h
 shatest.o: ../include/sha.h
 ssltest.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h

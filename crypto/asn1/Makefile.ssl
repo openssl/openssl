@@ -602,6 +602,16 @@ p7_signi.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_signi.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
 p7_signi.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
 p7_signi.o: ../crypto.h asn1.h asn1_mac.h
+t_crl.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+t_crl.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+t_crl.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+t_crl.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+t_crl.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+t_crl.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+t_crl.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+t_crl.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+t_crl.o: ../../include/x509.h ../../include/x509_vfy.h ../../include/x509v3.h
+t_crl.o: ../cryptlib.h ../crypto.h asn1.h
 t_pkey.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 t_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
 t_pkey.o: ../../include/err.h ../../include/rsa.h ../../include/stack.h

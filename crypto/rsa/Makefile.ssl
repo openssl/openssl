@@ -101,6 +101,10 @@ rsa_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h
 rsa_none.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 rsa_none.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
 rsa_none.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h
+rsa_oaep.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+rsa_oaep.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+rsa_oaep.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+rsa_oaep.o: rsa.h
 rsa_pk1.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 rsa_pk1.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
 rsa_pk1.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h

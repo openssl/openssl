@@ -179,8 +179,8 @@ crl.o: ../include/err.h ../include/evp.h ../include/idea.h ../include/md2.h
 crl.o: ../include/md5.h ../include/mdc2.h ../include/objects.h ../include/pem.h
 crl.o: ../include/pem2.h ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
 crl.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h ../include/sha.h
-crl.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h apps.h
-crl.o: progs.h
+crl.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h
+crl.o: ../include/x509v3.h apps.h progs.h
 crl2p7.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
 crl2p7.o: ../include/bn.h ../include/buffer.h ../include/cast.h
 crl2p7.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h

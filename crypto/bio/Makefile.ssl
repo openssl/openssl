@@ -139,6 +139,8 @@ bss_fd.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
 bss_fd.o: ../../include/stack.h ../cryptlib.h ../crypto.h bio.h bss_sock.c
 bss_file.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
 bss_file.o: ../../include/stack.h ../cryptlib.h ../crypto.h bio.h
+bss_log.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bss_log.o: ../../include/stack.h ../cryptlib.h ../crypto.h bio.h
 bss_mem.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
 bss_mem.o: ../../include/stack.h ../cryptlib.h ../crypto.h bio.h
 bss_null.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h

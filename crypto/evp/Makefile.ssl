@@ -139,6 +139,15 @@ bio_md.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
 bio_md.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 bio_md.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
 bio_md.o: evp.h
+bio_ok.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+bio_ok.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+bio_ok.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+bio_ok.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+bio_ok.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+bio_ok.o: ../../include/objects.h ../../include/rand.h ../../include/rc2.h
+bio_ok.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+bio_ok.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+bio_ok.o: ../cryptlib.h ../crypto.h evp.h
 c_all.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 c_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 c_all.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h

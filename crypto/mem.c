@@ -341,6 +341,8 @@ MEM_LEAK *l;
 	{
 	char buf[128];
 
+	if(m->addr == (char *)l->bio)
+	    return;
 	sprintf(buf,"%5ld file=%s, line=%d, number=%d, address=%08lX\n",
 		m->order,m->file,m->line,m->num,(long)m->addr);
 	BIO_puts(l->bio,buf);
