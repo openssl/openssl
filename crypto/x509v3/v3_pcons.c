@@ -1,9 +1,9 @@
-/* ext_dat.h */
+/* v3_pcons.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,64 +55,82 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* This file contains a table of "standard" extensions */
 
-extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
-extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;
-extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
-extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate, v3_cpols, v3_crld;
-extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
-extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
-extern X509V3_EXT_METHOD v3_crl_hold;
-extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 
-/* This table will be searched using OBJ_bsearch so it *must* kept in
- * order of the ext_nid values.
- */
+#include <stdio.h>
+#include "cryptlib.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
 
-static X509V3_EXT_METHOD *standard_exts[] = {
-&v3_nscert,
-&v3_ns_ia5_list[0],
-&v3_ns_ia5_list[1],
-&v3_ns_ia5_list[2],
-&v3_ns_ia5_list[3],
-&v3_ns_ia5_list[4],
-&v3_ns_ia5_list[5],
-&v3_ns_ia5_list[6],
-&v3_skey_id,
-&v3_key_usage,
-&v3_pkey_usage_period,
-&v3_alt[0],
-&v3_alt[1],
-&v3_bcons,
-&v3_crl_num,
-&v3_cpols,
-&v3_akey_id,
-&v3_crld,
-&v3_ext_ku,
-&v3_crl_reason,
-#ifndef OPENSSL_NO_OCSP
-&v3_crl_invdate,
-#endif
-&v3_sxnet,
-&v3_info,
-#ifndef OPENSSL_NO_OCSP
-&v3_ocsp_nonce,
-&v3_ocsp_crlid,
-&v3_ocsp_accresp,
-&v3_ocsp_nocheck,
-&v3_ocsp_acutoff,
-&v3_ocsp_serviceloc,
-#endif
-&v3_sinfo,
-&v3_policy_constraints,
-#ifndef OPENSSL_NO_OCSP
-&v3_crl_hold,
-#endif
-&v3_policy_mappings
+static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
+				void *bcons, STACK_OF(CONF_VALUE) *extlist);
+static void *v2i_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
+
+X509V3_EXT_METHOD v3_policy_constraints = {
+NID_policy_constraints, 0,
+ASN1_ITEM_ref(POLICY_CONSTRAINTS),
+0,0,0,0,
+0,0,
+i2v_POLICY_CONSTRAINTS,
+v2i_POLICY_CONSTRAINTS,
+NULL,NULL,
+NULL
 };
 
-/* Number of standard extensions */
+ASN1_SEQUENCE(POLICY_CONSTRAINTS) = {
+	ASN1_OPT(POLICY_CONSTRAINTS, requireExplicitPolicy, ASN1_INTEGER),
+	ASN1_OPT(POLICY_CONSTRAINTS, inhibitPolicyMapping, ASN1_INTEGER)
+} ASN1_SEQUENCE_END(POLICY_CONSTRAINTS)
 
-#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
+
+
+static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
+	     void *a, STACK_OF(CONF_VALUE) *extlist)
+{
+	POLICY_CONSTRAINTS *pcons = a;
+	X509V3_add_value_int("Require Explicit Policy",
+			pcons->requireExplicitPolicy, &extlist);
+	X509V3_add_value_int("Inhibit Policy Mapping",
+			pcons->inhibitPolicyMapping, &extlist);
+	return extlist;
+}
+
+static void *v2i_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
+	     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values)
+{
+	POLICY_CONSTRAINTS *pcons=NULL;
+	CONF_VALUE *val;
+	int i;
+	if(!(pcons = POLICY_CONSTRAINTS_new())) {
+		X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	for(i = 0; i < sk_CONF_VALUE_num(values); i++) {
+		val = sk_CONF_VALUE_value(values, i);
+		if(!strcmp(val->name, "requireExplicitPolicy")) {
+			if(!X509V3_get_value_int(val,
+				&pcons->requireExplicitPolicy)) goto err;
+		} else if(!strcmp(val->name, "inhibitPolicyMapping")) {
+			if(!X509V3_get_value_int(val,
+				&pcons->inhibitPolicyMapping)) goto err;
+		} else {
+			X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, X509V3_R_INVALID_NAME);
+			X509V3_conf_err(val);
+			goto err;
+		}
+	}
+	if (!pcons->inhibitPolicyMapping && !pcons->requireExplicitPolicy) {
+		X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, X509V3_R_ILLEGAL_EMPTY_EXTENSION);
+		goto err;
+	}
+
+	return pcons;
+	err:
+	POLICY_CONSTRAINTS_free(pcons);
+	return NULL;
+}
 

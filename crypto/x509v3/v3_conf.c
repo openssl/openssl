@@ -134,7 +134,7 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 		{
 		if(*value == '@') nval = NCONF_get_section(conf, value + 1);
 		else nval = X509V3_parse_list(value);
-		if(!nval)
+		if(sk_CONF_VALUE_num(nval) <= 0)
 			{
 			X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_INVALID_EXTENSION_STRING);
 			ERR_add_error_data(4, "name=", OBJ_nid2sn(ext_nid), ",section=", value);
