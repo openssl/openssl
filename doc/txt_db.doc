@@ -1,0 +1,4 @@
+TXT_DB, a simple text based in memory database.
+
+It holds rows of ascii data, for which the only special character is '\0'.
+The rows can be of an unlimited length.

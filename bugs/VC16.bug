@@ -1,0 +1,18 @@
+Microsoft (R) C/C++ Optimizing Compiler Version 8.00c
+
+Compile with /O2 chokes the compiler on these files
+
+crypto\md\md5_dgst.c		warning '@(#)reg86.c:1.26', line 1110
+crypto\des\ofb64ede.c		warning '@(#)grammar.c:1.147', line 168
+crypto\des\ofb64enc.c		warning '@(#)grammar.c:1.147', line 168
+crypto\des\qud_cksm.c		warning '@(#)grammar.c:1.147', line 168
+crypto\rc2\rc2ofb64.c		warning '@(#)grammar.c:1.147', line 168
+crypto\objects\obj_dat.c	warning	'@(#)grammar.c:1.147', line 168
+				fatal	'@(#)grammar.c:1.147', line 168
+crypto\objects\obj_lib.c	warning	'@(#)grammar.c:1.147', line 168
+				fatal	'@(#)grammar.c:1.147', line 168
+ssl\ssl_auth.c			warning	'@(#)grammar.c:1.147', line 168
+				fatal	'@(#)grammar.c:1.147', line 168
+
+Turning on /G3 with build flags that worked fine for /G2 came up with
+divide by zero errors in 'normal' code in speed.c :-(

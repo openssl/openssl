@@ -1,0 +1,110 @@
+#!/usr/local/bin/perl
+
+@l=(
+	 0, 1, 2, 3, 4, 5, 6, 7,
+	 8, 9,10,11,12,13,14,15,
+	16,17,18,19,20,21,22,23,
+	24,25,26,27,28,29,30,31
+	);
+@r=(
+	32,33,34,35,36,37,38,39,
+	40,41,42,43,44,45,46,47,
+	48,49,50,51,52,53,54,55,
+	56,57,58,59,60,61,62,63
+	);
+
+require 'shifts.pl';
+
+sub PERM_OP
+	{
+	local(*a,*b,*t,$n,$m)=@_;
+
+	@z=&shift(*a,-$n);
+	@z=&xor(*b,*z);
+	@z=&and(*z,$m);
+	@b=&xor(*b,*z);
+	@z=&shift(*z,$n);
+	@a=&xor(*a,*z);
+	}
+
+sub HPERM_OP2
+	{
+	local(*a,*t,$n,$m)=@_;
+	local(@x,@y,$i);
+
+	@z=&shift(*a,16-$n);
+	@z=&xor(*a,*z);
+	@z=&and(*z,$m);
+	@a=&xor(*a,*z);
+	@z=&shift(*z,$n-16);
+	@a=&xor(*a,*z);
+	}
+
+sub HPERM_OP
+        {
+        local(*a,*t,$n,$m)=@_;
+        local(@x,@y,$i);
+
+        for ($i=0; $i<16; $i++)
+                {
+                $x[$i]=$a[$i];
+                $y[$i]=$a[16+$i];
+                }
+        @z=&shift(*x,-$n);
+        @z=&xor(*y,*z);
+        @z=&and(*z,$m);
+        @y=&xor(*y,*z);
+        @z=&shift(*z,$n);
+        @x=&xor(*x,*z);
+        for ($i=0; $i<16; $i++)
+                {
+                $a[$i]=$x[$i];
+                $a[16+$i]=$y[$i];
+                }
+        }
+
+@L=@l;
+@R=@r;
+
+	print "---\n"; &printit(@R);
+&PERM_OP(*R,*L,*T,4,0x0f0f0f0f);
+	print "---\n"; &printit(@R);
+&HPERM_OP2(*L,*T,-2,0xcccc0000);
+&HPERM_OP2(*R,*T,-2,0xcccc0000);
+	print "---\n"; &printit(@R);
+&PERM_OP(*R,*L,*T,1,0x55555555);
+	print "---\n"; &printit(@R);
+&PERM_OP(*L,*R,*T,8,0x00ff00ff);
+	print "---\n"; &printit(@R);
+&PERM_OP(*R,*L,*T,1,0x55555555);
+	print "---\n"; &printit(@R);
+#	&printit(@L);
+	&printit(@R);
+print <<"EOF";
+==============================
+63  55  47  39  31  23  15   7  
+62  54  46  38  30  22  14   6  
+61  53  45  37  29  21  13   5  
+60  52  44  36  --  --  --  --  
+
+57  49  41  33  25  17   9   1  
+58  50  42  34  26  18  10   2  
+59  51  43  35  27  19  11   3  
+28  20  12   4  --  --  --  --  
+EOF
+exit(1);
+@A=&and(*R,0x000000ff);
+@A=&shift(*A,16);
+@B=&and(*R,0x0000ff00);
+@C=&and(*R,0x00ff0000);
+@C=&shift(*C,-16);
+@D=&and(*L,0xf0000000);
+@D=&shift(*D,-4);
+@A=&or(*A,*B);
+@B=&or(*D,*C);
+@R=&or(*A,*B);
+@L=&and(*L,0x0fffffff);
+
+	&printit(@L);
+	&printit(@R);
+

@@ -1,0 +1,154 @@
+The following documentation was supplied by Jeff Barber, who provided the
+patch to the CA program to add this functionality.
+
+eric
+--
+Jeff Barber                                Email: jeffb@issl.atl.hp.com
+
+Hewlett Packard                            Phone: (404) 648-9503
+Internet and System Security Lab           Fax:   (404) 648-9516
+
+                         oo
+---------------------cut /\ here for ns-ca.doc ------------------------------
+
+This document briefly describes how to use SSLeay to implement a 
+certificate authority capable of dynamically serving up client
+certificates for version 3.0 beta 5 (and presumably later) versions of
+the Netscape Navigator.  Before describing how this is done, it's
+important to understand a little about how the browser implements its
+client certificate support.  This is documented in some detail in the
+URLs based at <URL:http://home.netscape.com/eng/security/certs.html>.
+Here's a brief overview:
+
+-	The Navigator supports a new HTML tag "KEYGEN" which will cause
+	the browser to generate an RSA key pair when you submit a form
+	containing the tag.  The public key, along with an optional
+	challenge (supposedly provided for use in certificate revocation
+	but I don't use it) is signed, DER-encoded, base-64 encoded
+	and sent to the web server as the value of the variable
+	whose NAME is provided in the KEYGEN tag.  The private key is
+	stored by the browser in a local key database.
+
+	This "Signed Public Key And Challenge" (SPKAC) arrives formatted
+	into 64 character lines (which are of course URL-encoded when 
+	sent via HTTP -- i.e. spaces, newlines and most punctuatation are
+	encoded as "%HH" where HH is the hex equivalent of the ASCII code).
+	Note that the SPKAC does not contain the other usual attributes
+	of a certificate request, especially the subject name fields.
+	These must be otherwise encoded in the form for submission along
+	with the SPKAC.
+
+-	Either immediately (in response to this form submission), or at
+	some later date (a real CA will probably verify your identity in
+	some way before issuing the certificate), a web server can send a
+	certificate based on the public key and other attributes back to
+	the browser by encoding it in DER (the binary form) and sending it
+	to the browser as MIME type:
+	"Content-type: application/x-x509-user-cert"
+
+	The browser uses the public key encoded in the certificate to
+	associate the certificate with the appropriate private key in
+	its local key database.  Now, the certificate is "installed".
+
+-	When a server wants to require authentication based on client
+	certificates, it uses the right signals via the SSL protocol to
+	trigger the Navigator to ask you which certificate you want to
+	send.  Whether the certificate is accepted is dependent on CA
+	certificates and so forth installed in the server and is beyond
+	the scope of this document.
+
+
+Now, here's how the SSLeay package can be used to provide client 
+certficates:
+
+-	You prepare a file for input to the SSLeay ca application.
+	The file contains a number of "name = value" pairs that identify
+	the subject.  The names here are the same subject name component
+	identifiers used in the CA section of the lib/ssleay.conf file,
+	such as "emailAddress", "commonName" "organizationName" and so
+	forth.  Both the long version and the short version (e.g. "Email",
+	"CN", "O") can be used.
+
+	One more name is supported: this one is "SPKAC".  Its value
+	is simply the value of the base-64 encoded SPKAC sent by the
+	browser (with all the newlines and other space charaters
+	removed -- and newline escapes are NOT supported).
+
+	[ As of SSLeay 0.6.4, multiple lines are supported.
+	  Put a \ at the end of each line and it will be joined with the
+	  previous line with the '\n' removed - eay ]
+	
+	Here's a sample input file:
+
+C = US
+SP = Georgia
+O = Some Organization, Inc.
+OU = Netscape Compatibility Group
+CN = John X. Doe
+Email = jxdoe@someorg.com
+SPKAC = MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAwmk6FMJ4uAVIYbcvIOx5+bDGTfvL8X5gE+R67ccMk6rCSGbVQz2cetyQtnI+VIs0NwdD6wjuSuVtVFbLoHonowIDAQABFgAwDQYJKoZIhvcNAQEEBQADQQBFZDUWFl6BJdomtN1Bi53mwijy1rRgJ4YirF15yBEDM3DjAQkKXHYOIX+qpz4KXKnl6EYxTnGSFL5wWt8X2iyx
+
+-	You execute the ca command (either from a CGI program run out of
+	the web server, or as a later manual task) giving it the above
+	file as input.  For example, if the file were named /tmp/cert.req,
+	you'd run:
+	$SSLDIR/bin/ca -spkac /tmp/cert.req -out /tmp/cert
+
+	The output is in DER format (binary) if a -out argument is 
+	provided, as above; otherwise, it's in the PEM format (base-64
+	encoded DER).  Also, the "-batch" switch is implied by the
+	"-spkac" so you don't get asked whether to complete the signing
+	(probably it shouldn't work this way but I was only interested
+	in hacking together an online CA that could be used for issuing
+	test certificates).
+
+	The "-spkac" capability doesn't support multiple files (I think).
+
+	Any CHALLENGE provided in the SPKAC is simply ignored.
+
+	The interactions between the identification fields you provide
+	and those identified in your lib/ssleay.conf are the same as if
+	you did an ordinary "ca -in infile -out outfile" -- that is, if
+	something is marked as required in the ssleay.conf file and it
+	isn't found in the -spkac file, the certificate won't be issued.
+
+-	Now, you pick up the output from /tmp/cert and pass it back to
+	the Navigator prepending the Content-type string described earlier.
+
+-	In order to run the ca command out of a CGI program, you must
+	provide a password to decrypt the CA's private key.  You can
+	do this by using "echo MyKeyPassword | $SSLDIR/bin/ca ..."
+	I think there's a way to not encrypt the key file in the first
+	place, but I didn't see how to do that, so I made a small change
+	to the library that allows the password to be accepted from a pipe.
+	Either way is UTTERLY INSECURE and a real CA would never do that.
+
+	[ You can use the 'ssleay rsa' command to remove the password
+	  from the private key, or you can use the '-key' option to the
+	  ca command to specify the decryption key on the command line
+	  or use the -nodes option when generating the key.
+	  ca will try to clear the command line version of the password
+	  but for quite a few operating systems, this is not possible.
+	  - eric ]
+
+So, what do you have to do to make use of this stuff to create an online 
+demo CA capability with SSLeay?
+
+1	Create an HTML form for your users.  The form should contain
+	fields for all of the required or optional fields in ssleay.conf.
+	The form must contain a KEYGEN tag somewhere with at least a NAME
+	attribute.
+
+2	Create a CGI program to process the form input submitted by the
+	browser.  The CGI program must URL-decode the variables and create
+	the file described above, containing subject identification info
+	as well as the SPKAC block.  It should then run the the ca program
+	with the -spkac option.  If it works (check the exit status),
+	return the new certificate with the appropriate MIME type.  If not,
+	return the output of the ca command with MIME type "text/plain".
+
+3	Set up your web server to accept connections signed by your demo
+	CA.  This probably involves obtaining the PEM-encoded CA certificate
+	(ordinarily in $SSLDIR/CA/cacert.pem) and installing it into a
+	server database.  See your server manual for instructions.
+

@@ -1,0 +1,401 @@
+The ASN.1 Routines.
+
+ASN.1 is a specification for how to encode structured 'data' in binary form.
+The approach I have take to the manipulation of structures and their encoding
+into ASN.1 is as follows.
+
+For each distinct structure there are 4 function of the following form
+TYPE *TYPE_new(void);
+void TYPE_free(TYPE *);
+TYPE *d2i_TYPE(TYPE **a,unsigned char **pp,long length);
+long i2d_TYPE(TYPE *a,unsigned char **pp); 	/* CHECK RETURN VALUE */
+
+where TYPE is the type of the 'object'.  The TYPE that have these functions
+can be in one of 2 forms, either the internal C malloc()ed data structure
+or in the DER (a variant of ASN.1 encoding) binary encoding which is just
+an array of unsigned bytes.  The 'i2d' functions converts from the internal
+form to the DER form and the 'd2i' functions convert from the DER form to
+the internal form.
+
+The 'new' function returns a malloc()ed version of the structure with all
+substructures either created or left as NULL pointers.  For 'optional'
+fields, they are normally left as NULL to indicate no value.  For variable
+size sub structures (often 'SET OF' or 'SEQUENCE OF' in ASN.1 syntax) the
+STACK data type is used to hold the values.  Have a read of stack.doc
+and have a look at the relevant header files to see what I mean.  If there
+is an error while malloc()ing the structure, NULL is returned.
+
+The 'free' function will free() all the sub components of a particular
+structure.  If any of those sub components have been 'removed', replace
+them with NULL pointers, the 'free' functions are tolerant of NULL fields.
+
+The 'd2i' function copies a binary representation into a C structure.  It
+operates as follows.  'a' is a pointer to a pointer to
+the structure to populate, 'pp' is a pointer to a pointer to where the DER
+byte string is located and 'length' is the length of the '*pp' data.
+If there are no errors, a pointer to the populated structure is returned.
+If there is an error, NULL is returned.  Errors can occur because of
+malloc() failures but normally they will be due to syntax errors in the DER
+encoded data being parsed. It is also an error if there was an
+attempt to read more that 'length' bytes from '*p'.  If
+everything works correctly, the value in '*p' is updated
+to point at the location just beyond where the DER
+structure was read from.  In this way, chained calls to 'd2i' type
+functions can be made, with the pointer into the 'data' array being
+'walked' along the input byte array.
+Depending on the value passed for 'a', different things will be done.  If
+'a' is NULL, a new structure will be malloc()ed and returned.  If '*a' is
+NULL, a new structure will be malloc()ed and put into '*a' and returned.
+If '*a' is not NULL, the structure in '*a' will be populated, or in the
+case of an error, free()ed and then returned.
+Having these semantics means that a structure
+can call a 'd2i' function to populate a field and if the field is currently
+NULL, the structure will be created.
+
+The 'i2d' function type is used to copy a C structure to a byte array.
+The parameter 'a' is the structure to convert and '*p' is where to put it.
+As for the 'd2i' type structure, 'p' is updated to point after the last
+byte written.  If p is NULL, no data is written.  The function also returns
+the number of bytes written.  Where this becomes useful is that if the
+function is called with a NULL 'p' value, the length is returned.  This can
+then be used to malloc() an array of bytes and then the same function can
+be recalled passing the malloced array to be written to. e.g.
+
+int len;
+unsigned char *bytes,*p;
+len=i2d_X509(x,NULL);	/* get the size of the ASN1 encoding of 'x' */
+if ((bytes=(unsigned char *)malloc(len)) == NULL)
+	goto err;
+p=bytes;
+i2d_X509(x,&p);
+
+Please note that a new variable, 'p' was passed to i2d_X509.  After the
+call to i2d_X509 p has been incremented by len bytes.
+
+Now the reason for this functional organisation is that it allows nested
+structures to be built up by calling these functions as required.  There
+are various macros used to help write the general 'i2d', 'd2i', 'new' and
+'free' functions.  They are discussed in another file and would only be
+used by some-one wanting to add new structures to the library.  As you
+might be able to guess, the process of writing ASN.1 files can be a bit CPU
+expensive for complex structures.  I'm willing to live with this since the
+simpler library code make my life easier and hopefully most programs using
+these routines will have their execution profiles dominated by cipher or
+message digest routines.
+What follows is a list of 'TYPE' values and the corresponding ASN.1
+structure and where it is used.
+
+TYPE			ASN.1
+ASN1_INTEGER		INTEGER
+ASN1_BIT_STRING		BIT STRING
+ASN1_OCTET_STRING	OCTET STRING
+ASN1_OBJECT		OBJECT IDENTIFIER
+ASN1_PRINTABLESTRING	PrintableString
+ASN1_T61STRING		T61String
+ASN1_IA5STRING		IA5String
+ASN1_UTCTIME		UTCTime
+ASN1_TYPE		Any of the above mentioned types plus SEQUENCE and SET
+
+Most of the above mentioned types are actualled stored in the
+ASN1_BIT_STRING type and macros are used to differentiate between them.
+The 3 types used are
+
+typedef struct asn1_object_st
+	{
+	/* both null if a dynamic ASN1_OBJECT, one is
+	 * defined if a 'static' ASN1_OBJECT */
+	char *sn,*ln;
+	int nid;
+	int length;
+	unsigned char *data;
+	} ASN1_OBJECT;
+This is used to store ASN1 OBJECTS.  Read 'objects.doc' for details ono
+routines to manipulate this structure.  'sn' and 'ln' are used to hold text
+strings that represent the object (short name and long or lower case name).
+These are used by the 'OBJ' library.  'nid' is a number used by the OBJ
+library to uniquely identify objects.  The ASN1 routines will populate the
+'length' and 'data' fields which will contain the bit string representing
+the object.
+
+typedef struct asn1_bit_string_st
+	{
+	int length;
+	int type;
+	unsigned char *data;
+	} ASN1_BIT_STRING;
+This structure is used to hold all the other base ASN1 types except for
+ASN1_UTCTIME (which is really just a 'char *').  Length is the number of
+bytes held in data and type is the ASN1 type of the object (there is a list
+in asn1.h).
+
+typedef struct asn1_type_st
+	{
+	int type;
+	union	{
+		char *ptr;
+		ASN1_INTEGER *		integer;
+		ASN1_BIT_STRING *	bit_string;
+		ASN1_OCTET_STRING *	octet_string;
+		ASN1_OBJECT *		object;
+		ASN1_PRINTABLESTRING *	printablestring;
+		ASN1_T61STRING *	t61string;
+		ASN1_IA5STRING *	ia5string;
+		ASN1_UTCTIME *		utctime;
+		ASN1_BIT_STRING *	set;
+		ASN1_BIT_STRING *	sequence;
+		} value;
+	} ASN1_TYPE;
+This structure is used in a few places when 'any' type of object can be
+expected.
+
+X509			Certificate
+X509_CINF		CertificateInfo
+X509_ALGOR		AlgorithmIdentifier
+X509_NAME		Name			
+X509_NAME_ENTRY		A single sub component of the name.
+X509_VAL		Validity
+X509_PUBKEY		SubjectPublicKeyInfo
+The above mentioned types are declared in x509.h. They are all quite
+straight forward except for the X509_NAME/X509_NAME_ENTRY pair.
+A X509_NAME is a STACK (see stack.doc) of X509_NAME_ENTRY's.
+typedef struct X509_name_entry_st
+	{
+	ASN1_OBJECT *object;
+	ASN1_BIT_STRING *value;
+	int set;
+	int size; 	/* temp variable */
+	} X509_NAME_ENTRY;
+The size is a temporary variable used by i2d_NAME and set is the set number
+for the particular NAME_ENTRY.  A X509_NAME is encoded as a sequence of
+sequence of sets.  Normally each set contains only a single item.
+Sometimes it contains more.  Normally throughout this library there will be
+only one item per set.  The set field contains the 'set' that this entry is
+a member of.  So if you have just created a X509_NAME structure and
+populated it with X509_NAME_ENTRYs, you should then traverse the X509_NAME
+(which is just a STACK) and set the 'set/' field to incrementing numbers.
+For more details on why this is done, read the ASN.1 spec for Distinguished
+Names.
+
+X509_REQ		CertificateRequest
+X509_REQ_INFO		CertificateRequestInfo
+These are used to hold certificate requests.
+
+X509_CRL		CertificateRevocationList
+These are used to hold a certificate revocation list
+
+RSAPrivateKey		PrivateKeyInfo
+RSAPublicKey		PublicKeyInfo
+Both these 'function groups' operate on 'RSA' structures (see rsa.doc).
+The difference is that the RSAPublicKey operations only manipulate the m
+and e fields in the RSA structure.
+
+DSAPrivateKey		DSS private key
+DSAPublicKey		DSS public key
+Both these 'function groups' operate on 'DSS' structures (see dsa.doc).
+The difference is that the RSAPublicKey operations only manipulate the 
+XXX fields in the DSA structure.
+
+DHparams		DHParameter
+This is used to hold the p and g value for The Diffie-Hellman operation.
+The function deal with the 'DH' strucure (see dh.doc).
+
+Now all of these function types can be used with several other functions to give
+quite useful set of general manipulation routines.  Normally one would
+not uses these functions directly but use them via macros. 
+
+char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
+'x' is the input structure case to a 'char *', 'i2d' is the 'i2d_TYPE'
+function for the type that 'x' is and d2i is the 'd2i_TYPE' function for the
+type that 'x' is.  As is obvious from the parameters, this function
+duplicates the strucutre by transforming it into the DER form and then
+re-loading it into a new strucutre and returning the new strucutre.  This
+is obviously a bit cpu intensive but when faced with a complex dynamic
+structure this is the simplest programming approach.  There are macros for
+duplicating the major data types but is simple to add extras.
+
+char *ASN1_d2i_fp(char *(*new)(),char *(*d2i)(),FILE *fp,unsigned char **x);
+'x' is a pointer to a pointer of the 'desired type'.  new and d2i are the
+corresponding 'TYPE_new' and 'd2i_TYPE' functions for the type and 'fp' is
+an open file pointer to read from.  This function reads from 'fp' as much
+data as it can and then uses 'd2i' to parse the bytes to load and return
+the parsed strucutre in 'x' (if it was non-NULL) and to actually return the
+strucutre.  The behavior of 'x' is as per all the other d2i functions.
+
+char *ASN1_d2i_bio(char *(*new)(),char *(*d2i)(),BIO *fp,unsigned char **x);
+The 'BIO' is the new IO type being used in SSLeay (see bio.doc).  This
+function is the same as ASN1_d2i_fp() except for the BIO argument.
+ASN1_d2i_fp() actually calls this function.
+
+int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
+'x' is converted to bytes by 'i2d' and then written to 'out'.  ASN1_i2d_fp
+and ASN1_d2i_fp are not really symetric since ASN1_i2d_fp will read all
+available data from the file pointer before parsing a single item while
+ASN1_i2d_fp can be used to write a sequence of data objects.  To read a
+series of objects from a file I would sugest loading the file into a buffer
+and calling the relevent 'd2i' functions.
+
+char *ASN1_d2i_bio(char *(*new)(),char *(*d2i)(),BIO *fp,unsigned char **x);
+This function is the same as ASN1_i2d_fp() except for the BIO argument.
+ASN1_i2d_fp() actually calls this function.
+
+char *	PEM_ASN1_read(char *(*d2i)(),char *name,FILE *fp,char **x,int (*cb)());
+This function will read the next PEM encoded (base64) object of the same
+type as 'x' (loaded by the d2i function).  'name' is the name that is in
+the '-----BEGIN name-----' that designates the start of that object type.
+If the data is encrypted, 'cb' will be called to prompt for a password.  If
+it is NULL a default function will be used to prompt from the password.
+'x' is delt with as per the standard 'd2i' function interface.  This
+function can be used to read a series of objects from a file.  While any
+data type can be encrypted (see PEM_ASN1_write) only RSA private keys tend
+to be encrypted.
+
+char *	PEM_ASN1_read_bio(char *(*d2i)(),char *name,BIO *fp,
+	char **x,int (*cb)());
+Same as PEM_ASN1_read() except using a BIO.  This is called by
+PEM_ASN1_read().
+
+int	PEM_ASN1_write(int (*i2d)(),char *name,FILE *fp,char *x,EVP_CIPHER *enc,
+		unsigned char *kstr,int klen,int (*callback)());
+
+int	PEM_ASN1_write_bio(int (*i2d)(),char *name,BIO *fp,
+		char *x,EVP_CIPHER *enc,unsigned char *kstr,int klen,
+		int (*callback)());
+
+int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
+	ASN1_BIT_STRING *signature, char *data, RSA *rsa, EVP_MD *type);
+int ASN1_verify(int (*i2d)(), X509_ALGOR *algor1,
+	ASN1_BIT_STRING *signature,char *data, RSA *rsa);
+
+int ASN1_BIT_STRING_cmp(ASN1_BIT_STRING *a, ASN1_BIT_STRING *b);
+ASN1_BIT_STRING *ASN1_BIT_STRING_type_new(int type );
+
+int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
+void ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
+ASN1_UTCTIME *ASN1_UTCTIME_dup(ASN1_UTCTIME *a);
+
+ASN1_BIT_STRING *d2i_asn1_print_type(ASN1_BIT_STRING **a,unsigned char **pp,
+		long length,int type);
+
+int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
+			int (*func)(), int ex_tag, int ex_class);
+STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
+			char *(*func)(), int ex_tag, int ex_class);
+
+int i2a_ASN1_OBJECT(BIO *bp,ASN1_OBJECT *object);
+int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
+int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);
+
+int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
+long ASN1_INTEGER_get(ASN1_INTEGER *a);
+ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai);
+BIGNUM *ASN1_INTEGER_to_BN(ASN1_INTEGER *ai,BIGNUM *bn);
+
+/* given a string, return the correct type.  Max is the maximum number
+ * of bytes to parse.  It stops parsing when 'max' bytes have been
+ * processed or a '\0' is hit */
+int ASN1_PRINTABLE_type(unsigned char *s,int max);
+
+void ASN1_parse(BIO *fp,unsigned char *pp,long len);
+
+int i2d_ASN1_bytes(ASN1_BIT_STRING *a, unsigned char **pp, int tag, int class);
+ASN1_BIT_STRING *d2i_ASN1_bytes(ASN1_OCTET_STRING **a, unsigned char **pp,
+	long length, int Ptag, int Pclass);
+
+/* PARSING */
+int asn1_Finish(ASN1_CTX *c);
+
+/* SPECIALS */
+int ASN1_get_object(unsigned char **pp, long *plength, int *ptag,
+	int *pclass, long omax);
+int ASN1_check_infinite_end(unsigned char **p,long len);
+void ASN1_put_object(unsigned char **pp, int constructed, int length,
+	int tag, int class);
+int ASN1_object_size(int constructed, int length, int tag);
+
+X509 *	X509_get_cert(CERTIFICATE_CTX *ctx,X509_NAME * name,X509 *tmp_x509);
+int  	X509_add_cert(CERTIFICATE_CTX *ctx,X509 *);
+
+char *	X509_cert_verify_error_string(int n);
+int 	X509_add_cert_file(CERTIFICATE_CTX *c,char *file, int type);
+char *	X509_gmtime (char *s, long adj);
+int	X509_add_cert_dir (CERTIFICATE_CTX *c,char *dir, int type);
+int	X509_load_verify_locations (CERTIFICATE_CTX *ctx,
+		char *file_env, char *dir_env);
+int	X509_set_default_verify_paths(CERTIFICATE_CTX *cts);
+X509 *	X509_new_D2i_X509(int len, unsigned char *p);
+char *	X509_get_default_cert_area(void );
+char *	X509_get_default_cert_dir(void );
+char *	X509_get_default_cert_file(void );
+char *	X509_get_default_cert_dir_env(void );
+char *	X509_get_default_cert_file_env(void );
+char *	X509_get_default_private_dir(void );
+X509_REQ *X509_X509_TO_req(X509 *x, RSA *rsa);
+int	X509_cert_verify(CERTIFICATE_CTX *ctx,X509 *xs, int (*cb)()); 
+
+CERTIFICATE_CTX *CERTIFICATE_CTX_new();
+void CERTIFICATE_CTX_free(CERTIFICATE_CTX *c);
+
+void X509_NAME_print(BIO *fp, X509_NAME *name, int obase);
+int		X509_print_fp(FILE *fp,X509 *x);
+int		X509_print(BIO *fp,X509 *x);
+
+X509_INFO *	X509_INFO_new(void);
+void		X509_INFO_free(X509_INFO *a);
+
+char *		X509_NAME_oneline(X509_NAME *a);
+
+#define X509_verify(x,rsa)
+#define X509_REQ_verify(x,rsa)
+#define X509_CRL_verify(x,rsa)
+
+#define X509_sign(x,rsa,md)
+#define X509_REQ_sign(x,rsa,md)
+#define X509_CRL_sign(x,rsa,md)
+
+#define X509_dup(x509)
+#define d2i_X509_fp(fp,x509)
+#define i2d_X509_fp(fp,x509)
+#define d2i_X509_bio(bp,x509)
+#define i2d_X509_bio(bp,x509)
+
+#define X509_CRL_dup(crl)
+#define d2i_X509_CRL_fp(fp,crl)
+#define i2d_X509_CRL_fp(fp,crl)
+#define d2i_X509_CRL_bio(bp,crl)
+#define i2d_X509_CRL_bio(bp,crl)
+
+#define X509_REQ_dup(req)
+#define d2i_X509_REQ_fp(fp,req)
+#define i2d_X509_REQ_fp(fp,req)
+#define d2i_X509_REQ_bio(bp,req)
+#define i2d_X509_REQ_bio(bp,req)
+
+#define RSAPrivateKey_dup(rsa)
+#define d2i_RSAPrivateKey_fp(fp,rsa)
+#define i2d_RSAPrivateKey_fp(fp,rsa)
+#define d2i_RSAPrivateKey_bio(bp,rsa)
+#define i2d_RSAPrivateKey_bio(bp,rsa)
+
+#define X509_NAME_dup(xn)
+#define X509_NAME_ENTRY_dup(ne)
+
+void X509_REQ_print_fp(FILE *fp,X509_REQ *req);
+void X509_REQ_print(BIO *fp,X509_REQ *req);
+
+RSA *X509_REQ_extract_key(X509_REQ *req);
+RSA *X509_extract_key(X509 *x509);
+
+int		X509_issuer_and_serial_cmp(X509 *a, X509 *b);
+unsigned long	X509_issuer_and_serial_hash(X509 *a);
+
+X509_NAME *	X509_get_issuer_name(X509 *a);
+int		X509_issuer_name_cmp(X509 *a, X509 *b);
+unsigned long	X509_issuer_name_hash(X509 *a);
+
+X509_NAME *	X509_get_subject_name(X509 *a);
+int		X509_subject_name_cmp(X509 *a,X509 *b);
+unsigned long	X509_subject_name_hash(X509 *x);
+
+int		X509_NAME_cmp (X509_NAME *a, X509_NAME *b);
+unsigned long	X509_NAME_hash(X509_NAME *x);
+

@@ -1,0 +1,54 @@
+#
+# SSLeay/tools/Makefile
+#
+
+DIR=	tools
+TOP=	..
+CC=	cc
+INCLUDES= -I.. -I../../include
+CFLAG=-g
+INSTALLTOP=/usr/local/ssl
+MAKE=		make -f Makefile.ssl
+MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEFILE=	Makefile.ssl
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile.ssl
+TEST=
+APPS= c_hash c_info c_issuer c_name c_rehash
+
+all:
+
+install:
+	@for i in $(APPS) ; \
+	do  \
+	(cp $$i $(INSTALLTOP)/bin/$$i; \
+	chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	done;
+
+files:
+	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+
+links:
+	/bin/rm -f Makefile
+	$(TOP)/util/point.sh Makefile.ssl Makefile ;
+
+lint:
+
+tags:
+
+errors:
+
+depend:
+
+dclean:
+	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+errors:
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

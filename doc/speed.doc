@@ -1,0 +1,96 @@
+To get an idea of the performance of this library, use
+ssleay speed
+
+perl util/sp-diff.pl file1 file2
+
+will print out the relative differences between the 2 files which are
+expected to be the output from the speed program.
+
+The performace of the library is very dependant on the Compiler
+quality and various flags used to build.
+
+---
+
+These are some numbers I did comparing RSAref and SSLeay on a Pentium 100.
+[ These numbers are all out of date, as of SSL - 0.6.1 the RSA
+operations are about 2 times faster, so check the version number ]
+
+RSA performance.
+
+SSLeay 0.6.0
+Pentium 100, 32meg, Windows NT Workstation 3.51
+linux - gcc v 2.7.0 -O3 -fomit-frame-pointer -m486
+and
+Windows NT  - Windows NT 3.51 - Visual C++ 4.1   - 586 code + 32bit assember
+Windows 3.1 - Windows NT 3.51 - Visual C++ 1.52c - 286 code + 32bit assember
+NT Dos Shell- Windows NT 3.51 - Visual C++ 1.52c - 286 code + 16bit assember
+
+Times are how long it takes to do an RSA private key operation.
+
+	       512bits 1024bits
+-------------------------------
+SSLeay NT dll	0.042s   0.202s see above
+SSLeay linux	0.046s   0.218s	Assember inner loops (normal build) 
+SSLeay linux	0.067s   0.380s Pure C code with BN_LLONG defined
+SSLeay W3.1 dll	0.108s 	 0.478s see above
+SSLeay linux	0.109s   0.713s C without BN_LLONG.
+RSAref2.0 linux	0.149s   0.936s
+SSLeay MS-DOS	0.197s   1.049s see above
+
+486DX66, 32meg, Windows NT Server 3.51
+	       512bits 1024bits
+-------------------------------
+SSLeay NT dll   0.084s	 0.495s	<- SSLeay 0.6.3
+SSLeay NT dll   0.154s   0.882s
+SSLeay W3.1 dll 0.335s   1.538s
+SSLeay MS-DOS	0.490s   2.790s
+
+What I find cute is that I'm still faster than RSAref when using standard C,
+without using the 'long long' data type :-), %35 faster for 512bit and we
+scale up to 3.2 times faster for the 'default linux' build.  I should mention
+that people should 'try' to use either x86-lnx.s (elf), x86-lnxa.s or
+x86-sol.s for any x86 based unix they are building on.  The only problems
+with be with syntax but the performance gain is quite large, especially for
+servers.  The code is very simple, you just need to modify the 'header'.
+
+The message is, if you are stuck using RSAref, the RSA performance will be
+bad. Considering the code was compiled for a pentium, the 486DX66 number
+would indicate 'Use RSAref and turn you Pentium 100 into a 486DX66' :-). 
+[ As of verson 0.6.1, it would be correct to say 'turn you pentium 100
+ into a 486DX33' :-) ]
+
+I won't tell people if the DLL's are using RSAref or my stuff if no-one
+asks :-).
+
+eric
+
+PS while I know I could speed things up further, I will probably not do
+   so due to the effort involved.  I did do some timings on the
+   SSLeay bignum format -> RSAref number format conversion that occurs
+   each time RSAref is used by SSLeay, and the numbers are trivial.
+   0.00012s a call for 512bit vs 0.149s for the time spent in the function.
+   0.00018s for 1024bit vs 0.938s.  Insignificant.
+   So the 'way to go', to support faster RSA libraries, if people are keen,
+   is to write 'glue' code in a similar way that I do for RSAref and send it
+   to me :-).
+   My base library still has the advantage of being able to operate on 
+   any size numbers, and is not that far from the performance from the
+   leaders in the field. (-%30?)
+   [ Well as of 0.6.1 I am now the leader in the filed on x86 (we at
+     least very close :-) ]
+
+   I suppose I should also mention some other numbers RSAref numbers, again
+   on my Pentium.
+		DES CBC		EDE-DES		MD5
+   RSAref linux	 830k/s		 302k/s		4390k/s
+   SSLeay linux  855k/s          319k/s        10025k/s
+   SSLeay NT	1158k/s		 410k/s	       10470k/s
+   SSLeay w31	 378k/s		 143k/s         2383k/s (fully 16bit)
+
+   Got to admit that Visual C++ 4.[01] is a damn fine compiler :-)
+--
+Eric Young                  | BOOL is tri-state according to Bill Gates.
+AARNet: eay@cryptsoft.com   | RTFM Win32 GetMessage().
+
+
+

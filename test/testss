@@ -1,0 +1,89 @@
+#!/bin/sh
+
+digest='-mdc2'
+reqcmd="../apps/ssleay req"
+x509cmd="../apps/ssleay x509 $digest"
+verifycmd="../apps/ssleay verify"
+
+CAkey="keyCA.ss"
+CAcert="certCA.ss"
+CAreq="reqCA.ss"
+CAconf="CAss.cnf"
+CAreq2="req2CA.ss"	# temp
+
+Uconf="Uss.cnf"
+Ukey="keyU.ss"
+Ureq="reqU.ss"
+Ucert="certU.ss"
+
+echo
+echo "make a certificate request using 'req'"
+$reqcmd -config $CAconf -out $CAreq -keyout $CAkey -new #>err.ss
+if [ $? != 0 ]; then
+	echo "error using 'req' to generate a certificate request"
+	exit 1
+fi
+echo
+echo "convert the certificate request into a self signed certificate using 'x509'"
+$x509cmd -CAcreateserial -in $CAreq -days 30 -req -out $CAcert -signkey $CAkey >err.ss
+if [ $? != 0 ]; then
+	echo "error using 'x509' to self sign a certificate request"
+	exit 1
+fi
+
+echo
+echo "convert a certificate into a certificate request using 'x509'"
+$x509cmd -in $CAcert -x509toreq -signkey $CAkey -out $CAreq2 >err.ss
+if [ $? != 0 ]; then
+	echo "error using 'x509' convert a certificate to a certificate request"
+	exit 1
+fi
+
+$reqcmd -verify -in $CAreq -noout
+if [ $? != 0 ]; then
+	echo first generated request is invalid
+	exit 1
+fi
+
+$reqcmd -verify -in $CAreq2 -noout
+if [ $? != 0 ]; then
+	echo second generated request is invalid
+	exit 1
+fi
+
+$verifycmd -CAfile $CAcert $CAcert
+if [ $? != 0 ]; then
+	echo first generated cert is invalid
+	exit 1
+fi
+
+echo
+echo "make another certificate request using 'req'"
+$reqcmd -config $Uconf -out $Ureq -keyout $Ukey -new >err.ss
+if [ $? != 0 ]; then
+	echo "error using 'req' to generate a certificate request"
+	exit 1
+fi
+
+echo
+echo "sign certificate request with the just created CA via 'x509'"
+$x509cmd -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey >err.ss
+if [ $? != 0 ]; then
+	echo "error using 'x509' to sign a certificate request"
+	exit 1
+fi
+
+$verifycmd -CAfile $CAcert $Ucert
+echo
+echo "Certificate details"
+$x509cmd -subject -issuer -startdate -enddate -noout -in $Ucert
+
+echo
+echo The generated CA certificate is $CAcert
+echo The generated CA private key is $CAkey
+
+echo The generated user certificate is $Ucert
+echo The generated user private key is $Ukey
+
+/bin/rm err.ss
+exit 0

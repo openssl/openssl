@@ -1,0 +1,35 @@
+This package can be compiled to use the RSAref library.
+This library is not allowed outside of the USA but inside the USA it is
+claimed by RSA to be the only RSA public key library that can be used
+besides BSAFE..
+
+There are 2 files, rsaref/rsaref.c and rsaref/rsaref.h that contain the glue
+code to use RSAref.  These files were written by looking at the PGP
+source code and seeing which routines it used to access RSAref.
+I have also been sent by some-one a copy of the RSAref header file that
+contains the library error codes.
+
+[ Jun 1996 update - I have recently gotten hold of RSAref 2.0 from
+  South Africa and have been doing some performace tests. ]
+	
+They have now been tested against the recently announced RSAEURO
+library.
+
+There are 2 ways to use SSLeay and RSAref.  First, to build so that
+the programs must be linked with RSAref, add '-DRSAref' to CFLAG in the top
+level makefile and -lrsaref (or where ever you are keeping RSAref) to
+EX_LIBS.
+
+To build a makefile via util/mk1mf.pl to do this, use the 'rsaref' option.
+
+The second method is to build as per normal and link applications with
+the RSAglue library.  The correct library order would be
+cc -o cmd cmd.o -lssl -lRSAglue -lcrypto -lrsaref -ldes
+The RSAglue library is built in the rsa directory and is NOT
+automatically installed.
+
+Be warned that the RSAEURO library, that is claimed to be compatible
+with RSAref contains a different value for the maximum number of bits
+supported.  This changes structure sizes and so if you are using
+RSAEURO, change the value of RSAref_MAX_BITS in rsa/rsaref.h
+

@@ -1,0 +1,17 @@
+s_mult is a test program I hacked up on a Sunday for testing non-blocking
+IO.  It has a select loop at it's centre that handles multiple readers
+and writers.
+
+Try the following command
+ssleay s_mult -echo -nbio -ssl -v
+echo - sends any sent text back to the sender
+nbio - turns on non-blocking IO
+ssl  - accept SSL connections, default is normal text
+v    - print lots
+	type Q<cr> to quit
+
+In another window, run the following
+ssleay s_client -pause </etc/termcap
+
+The pause option puts in a 1 second pause in each read(2)/write(2) call
+so the other end will have read()s fail.

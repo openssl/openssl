@@ -1,0 +1,505 @@
+#!/usr/local/bin/perl
+#
+# see PROBLEMS for instructions on what sort of things to do when 
+# tracking a bug --tjh
+#
+# extra options
+# -DRSAref	build to use RSAref
+# -DNO_IDEA	build with no IDEA algorithm
+# -DNO_RC4	build with no RC4 algorithm
+# -DNO_RC2	build with no RC2 algorithm
+# -DNO_BF	build with no Blowfish algorithm
+# -DNO_DES	build with no DES/3DES algorithm
+# -DNO_MD2	build with no MD2 algorithm
+#
+# DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h
+# DES_RISC1	use different DES_ENCRYPT macro that helps reduce register
+#		dependancies but needs to more registers, good for RISC CPU's
+# DES_RISC2	A different RISC variant.
+# DES_UNROLL	unroll the inner DES loop, sometimes helps, somtimes hinders.
+# DES_INT	use 'int' instead of 'long' for DES_LONG in crypto/des/des.h
+#		This is used on the DEC Alpha where long is 8 bytes
+#		and int is 4
+# BN_LLONG	use the type 'long long' in crypto/bn/bn.h
+# MD2_CHAR	use 'char' instead of 'int' for MD2_INT in crypto/md/md2.h
+# MD2_LONG	use 'long' instead of 'int' for MD2_INT in crypto/md/md2.h
+# IDEA_SHORT	use 'short' instead of 'int' for IDEA_INT in crypto/idea/idea.h
+# IDEA_LONG	use 'long' instead of 'int' for IDEA_INT in crypto/idea/idea.h
+# RC2_SHORT	use 'short' instead of 'int' for RC2_INT in crypto/rc2/rc2.h
+# RC2_LONG	use 'long' instead of 'int' for RC2_INT in crypto/rc2/rc2.h
+# RC4_CHAR	use 'char' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
+# RC4_LONG	use 'long' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
+# RC4_INDEX	define RC4_INDEX in crypto/rc4/rc4_enc.c.  This turns on
+#		array lookups instead of pointer use.
+# BF_PTR	use 'pointer arithmatic' for Blowfish (unsafe on Alpha).
+# BF_PTR2	use a pentium/intel specific version.
+
+$x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
+
+# MD2_CHAR slags pentium pros
+$x86_gcc_opts="RC4_INDEX MD2_INT BF_PTR2";
+
+# MODIFY THESE PARAMETERS IF YOU ARE GOING TO USE THE 'util/speed.sh SCRIPT
+# Don't worry about these normally
+
+$tcc="cc";
+$tflags="-fast -Xa";
+$tbn_mul="";
+$tlib="-lnsl -lsocket";
+#$bits1="SIXTEEN_BIT ";
+#$bits2="THIRTY_TWO_BIT ";
+$bits1="THIRTY_TWO_BIT ";
+$bits2="SIXTY_FOUR_BIT ";
+
+# -DB_ENDIAN slows things down on a sparc
+
+#config-string	CC : CFLAGS : LDFLAGS : special header file mods:bn_asm \
+# des_asm:bf_asm
+%table=(
+#"b",		"$tcc:$tflags:$tlib:$bits1:$tbn_mul::",
+#"bl-4c-2c",	"$tcc:$tflags:$tlib:${bits1}BN_LLONG RC4_CHAR MD2_CHAR:$tbn_mul::",
+#"bl-4c-ri",	"$tcc:$tflags:$tlib:${bits1}BN_LLONG RC4_CHAR RC4_INDEX:$tbn_mul::",
+#"b2-is-ri-dp",	"$tcc:$tflags:$tlib:${bits2}IDEA_SHORT RC4_INDEX DES_PTR:$tbn_mul::",
+
+# A few of my development configs
+"purify",	"purify gcc:-g -DPURIFY -Wall:-lsocket -lnsl::::",
+"debug",	"gcc:-DREF_CHECK -DCRYPTO_MDEBUG -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:::::",
+"dist",		"cc:-O -DNOPROTO::::",
+
+# Basic configs that should work on any box
+"gcc",		"gcc:-O3::BN_LLONG:::",
+"cc",		"cc:-O -DNOPROTO -DNOCONST:::::",
+
+# My solaris setups
+"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN:\
+	-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-sol.o:asm/dx86-sol.o asm/cx86-sol.o:asm/bx86-sol.o",
+"solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall:\
+	-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
+# DO NOT use /xO[34] on sparc with SC3.0. 
+# It is broken, and will not pass the tests
+"solaris-sparc-cc","cc:-fast -O -Xa -DB_ENDIAN:\
+	-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:asm/sparc.o::",
+# SC4.0 is ok, better than gcc, except for the bignum stuff.
+# -fast slows things like DES down quite a lot
+"solaris-sparc-sc4","cc:-xO5 -Xa -DB_ENDIAN:-lsocket -lnsl:\
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+"solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO5 -DB_ENDIAN:\
+	-lsocket -lnsl:\
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+
+# Sunos configs, assuming sparc for the gcc one.
+"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::DES_UNROLL:::",
+"sunos-gcc","gcc:-O3 -mv8::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
+
+# SGI configurations.  If the box is rather old (r3000 cpu), you will
+# probably have to remove the '-mips2' flag.  I've only been using
+# IRIX 5.[23].
+#"irix-gcc","gcc:-O2 -mips2::BN_LLONG RC4_INDEX RC4_CHAR:::",
+"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
+"irix-cc", "cc:-O2 -DTERMIOS -DB_ENDIAN::DES_PTR DES_RISC2 DES_UNROLL BF_PTR:asm/r3000.o::",
+"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:::asm/r3000.o::",
+
+# HPUX config.  I've been building on HPUX 9, so the options may be
+# different on version 10.  The pa-risc2.o assember file is 2 times
+# faster than the old asm/pa-risc.o version but it may not run on old
+# PA-RISC CPUs.  If you have problems, swap back to the old one.
+# Both were generated by gcc, so use the C version with the PA-RISC specific
+# options turned on if you are using gcc.
+"hpux-cc",	"cc:-DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit +O4 -Wl,-a,archive::DES_PTR DES_UNROLL DES_RISC1:asm/pa-risc2.o::",
+"hpux-kr-cc",	"cc:-DB_ENDIAN -DNOCONST -DNOPROTO -D_HPUX_SOURCE::DES_PTR DES_UNROLL:asm/pa-risc2.o::",
+"hpux-gcc",	"gcc:-DB_ENDIAN -O3::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+
+# Dec Alpha, OSF/1 - the alpha400-cc is the flags for a 21164A with
+# the new compiler
+"alpha-gcc","gcc:-O3::SIXTY_FOUR_BIT_LONGS DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
+"alpha-cc", "cc:-O2::SIXTY_FOUR_BIT_LONGS DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
+"alpha400-cc", "cc:-arch host -tune host -fast -std -O4 -inline speed::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+
+# The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
+# x86-lnx.o file file since it is hand tweaked assembler.
+"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized::BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnx.o:asm/dx86-elf.o asm/cx86-elf.o:asm/bx86-elf.o",
+"debug-linux-elf","gcc:-DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall:-lefence:BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnx.o:asm/dx86-elf.o asm/cx86-elf.o:asm/bx86-elf.o",
+"linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnxa.o:asm/dx86-out.o asm/cx86-out.o:asm/bx86-out.o",
+"NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
+"NetBSD-x86",	"gcc:-DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnxa.o:asm/dx86-out.o asm/cx86-out.o:asm/bx86-out.o",
+"FreeBSD",   "gcc:-DTERMIOS -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnxa.o:asm/dx86-out.o asm/cx86-out.o:asm/bx86-out.o",
+#"bsdi-gcc",	"shlicc2:-O3 -ffast-math-m486::RSA_LLONG $x86_gcc_des $x86_gcc_opts:::",
+#"bsdi-gcc",     "gcc:-O3 -ffast-math -DPERL5 -m486::RSA_LLONG $x86_gc_des $x86_gcc_opts:asm/x86-bsdi.o:asm/dx86bsdi.o asm/cx86bsdi.o:asm/bx86bsdi.o",
+"bsdi-gcc",     "gcc:-O3 -ffast-math -DPERL5 -m486::RSA_LLONG $x86_gc_des $x86_gcc_opts:::",
+"nextstep",	"cc:-O3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:::",
+
+# UnixWare 2.0
+"unixware-2.0","cc:-O:-lsocket -lnsl:$x86_gcc_des $x86_gcc_opts:::",
+"unixware-2.0-pentium","cc:-O -Kpentium -Kthread:-lsocket -lnsl:MD2_CHAR RC4_INDEX $x86_des_des::",
+
+# IBM's AIX.
+"aix-cc",   "cc:-O -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
+"aix-gcc",  "gcc:-O2 -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
+
+# DGUX, 88100.
+"dgux-R3-gcc",	"gcc:-O3 -fomit-frame-pointer::RC4_INDEX DES_UNROLL:::",
+"dgux-R4-gcc",	"gcc:-O3 -fomit-frame-pointer:-lnsl -lsocket:RC4_INDEX:RC4_INDEX DES_UNROLL:::",
+"dgux-R4-x86-gcc",	"gcc:-O3 -fomit-frame-pointer -DL_ENDIAN:-lnsl -lsocket:BN_LLONG $x86_gcc_des $x86_gcc_opts:asm/x86-lnx.o:asm/dx86-elf.o asm/cx86-elf.o:asm/bx86-elf.o",
+
+# SCO 5
+"sco5-cc",  "cc:-O:-lsocket:$x86_gcc_des $x86_gcc_opts:::", # des options?
+
+# Sinix RM400
+"SINIX-N","/usr/ucb/cc:-O2 -misaligned:-lucb:RC4_INDEX RC4_CHAR:::",
+
+# Windows NT, Microsoft Visual C++ 4.0
+
+# hmm... bug in perl under NT, I need to concatinate :-(
+"VC-NT","cl:::BN_LLONG RC4_INDEX ".$x86_gcc_opts.":::",
+"VC-WIN32","cl:::BN_LLONG RC4_INDEX ".$x86_gcc_opts.":::",
+"VC-WIN16","cl:::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
+"VC-W31-16","cl:::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+"VC-W31-32","cl:::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
+"VC-MSDOS","cl:::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+
+# Borland C++ 4.5
+"BC-32","bcc32:::DES_PTR RC4_INDEX:::",
+"BC-16","bcc:::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+);
+
+$postfix="org";
+$Makefile="Makefile.ssl";
+$des_locl="crypto/des/des_locl.h";
+$des	="crypto/des/des.h";
+$bn	="crypto/bn/bn.h";
+$md2	="crypto/md/md2.h";
+$rc4	="crypto/rc4/rc4.h";
+$rc4_enc="crypto/rc4/rc4_enc.c";
+$idea	="crypto/idea/idea.h";
+$rc2	="crypto/rc2/rc2.h";
+$bf	="crypto/bf/bf_locl.h";
+$bn_mulw="bn_mulw.o";
+$des_enc="des_enc.o fcrypt_b.o";
+$bf_enc	="bf_enc.o";
+
+if ($#ARGV < 0)
+	{
+	&bad_target;
+	exit(1);
+	}
+
+$flags="";
+foreach (@ARGV)
+	{
+	if ($_ =~ /^-/)
+		{
+		if ($_ =~ /^-[lL](.*)$/)
+			{
+			$libs.=$_." ";
+			}
+		elsif ($_ =~ /^-D(.*)$/)
+			{
+			$flags.=$_." ";
+			}
+		else
+			{
+			die "unknown options, only -Dxxx, -Lxxx -lxxx supported\n";
+			}
+		}
+	else
+		{
+		die "target already defined - $target\n" if ($target ne "");
+		$target=$_;
+		if (!defined($table{$target}))
+			{
+			&bad_target;
+			exit(1);
+			}
+		}
+	}
+
+if (!defined($table{$target}))
+	{
+	&bad_target;
+	exit(1);
+	}
+
+($cc,$cflags,$lflags,$bn_ops,$bn_obj,$des_obj,$bf_obj)=
+	split(/\s*:\s*/,$table{$target});
+$cflags="$flags$cflags" if ($flags ne "");
+$lflags="$libs$lflags"if ($libs ne "");
+
+$bn_obj=$bn_mulw unless ($bn_obj =~ /\.o$/);
+$des_obj=$des_enc unless ($des_obj =~ /\.o$/);
+$bf_obj=$bf_enc unless ($bf_obj =~ /\.o$/);
+
+$n=&file_new($Makefile);
+open(IN,"<".$Makefile) || die "unable to read $Makefile:$!\n";
+open(OUT,">".$n) || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	chop;
+	s/^CC=.*$/CC= $cc/;
+	s/^CFLAG=.*$/CFLAG= $cflags/;
+	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
+	s/^BN_MULW=.*$/BN_MULW= $bn_obj/;
+	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
+	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
+	print OUT $_."\n";
+	}
+close(IN);
+close(OUT);
+&Rename($Makefile,&file_old($Makefile));
+&Rename($n,$Makefile);
+print "CC     =$cc\n";
+print "CFLAG  =$cflags\n";
+print "EX_LIBS=$lflags\n";
+print "BN_MULW=$bn_obj\n";
+print "DES_ENC=$des_obj\n";
+print "BF_ENC =$bf_obj\n";
+
+$des_ptr=0;
+$des_risc1=0;
+$des_risc2=0;
+$des_unroll=0;
+$bn_ll=0;
+$def_int=2;
+$rc4_int=$def_int;
+$md2_int=$def_int;
+$idea_int=$def_int;
+$rc2_int=$def_int;
+$rc4_idx=0;
+$bf_ptr=0;
+@type=("char","short","int","long");
+($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0);
+
+foreach (sort split(/\s+/,$bn_ops))
+	{
+	$des_ptr=1 if /DES_PTR/;
+	$des_risc1=1 if /DES_RISC1/;
+	$des_risc2=1 if /DES_RISC2/;
+	$des_unroll=1 if /DES_UNROLL/;
+	$des_int=1 if /DES_INT/;
+	$bn_ll=1 if /BN_LLONG/;
+	$rc4_int=0 if /RC4_CHAR/;
+	$rc4_int=3 if /RC4_LONG/;
+	$rc4_idx=1 if /RC4_INDEX/;
+	$md2_int=0 if /MD2_CHAR/;
+	$md2_int=3 if /MD2_LONG/;
+	$idea_int=1 if /IDEA_SHORT/;
+	$idea_int=3 if /IDEA_LONG/;
+	$rc2_int=1 if /RC2_SHORT/;
+	$rc2_int=3 if /RC2_LONG/;
+	$bf_ptr=1 if $_ eq "BF_PTR";
+	$bf_ptr=2 if $_ eq "BF_PTR2";
+	($b64l,$b64,$b32,$b16,$b8)=(1,0,0,0,0) if /SIXTY_FOUR_BIT_LONG/;
+	($b64l,$b64,$b32,$b16,$b8)=(0,1,0,0,0) if /SIXTY_FOUR_BIT/;
+	($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0) if /THIRTY_TWO_BIT/;
+	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,1,0) if /SIXTEEN_BIT/;
+	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,0,1) if /EIGHT_BIT/;
+	}
+
+(($in=$bn) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($bn);
+open(IN,"<".$in) || die "unable to read $bn:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
+		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
+	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT/)
+		{ printf OUT "#%s SIXTY_FOUR_BIT\n",($b64)?"define":"undef"; }
+	elsif	(/^#((define)|(undef))\s+THIRTY_TWO_BIT/)
+		{ printf OUT "#%s THIRTY_TWO_BIT\n",($b32)?"define":"undef"; }
+	elsif	(/^#((define)|(undef))\s+SIXTEEN_BIT/)
+		{ printf OUT "#%s SIXTEEN_BIT\n",($b16)?"define":"undef"; }
+	elsif	(/^#((define)|(undef))\s+EIGHT_BIT/)
+		{ printf OUT "#%s EIGHT_BIT\n",($b8)?"define":"undef"; }
+	elsif	(/^#((define)|(undef))\s+BN_LLONG\s*$/)
+		{ printf OUT "#%s BN_LLONG\n",($bn_ll)?"define":"undef"; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($bn,&file_old($bn));
+&Rename($n,$bn);
+
+(($in=$des) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($des);
+open(IN,"<".$in) || die "unable to read $des:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^\#define\s+DES_LONG\s+.*/)
+		{ printf OUT "#define DES_LONG unsigned %s\n",
+			($des_int)?'int':'long'; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($des,&file_old($des));
+&Rename($n,$des);
+
+(($in=$des_locl) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($des_locl);
+open(IN,"<".$in) || die "unable to read $des_locl:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^\#(define|undef)\s+DES_PTR/)
+		{ printf OUT "#%s DES_PTR\n",($des_ptr)?'define':'undef'; }
+	elsif	(/^\#(define|undef)\s+DES_RISC1/)
+		{ printf OUT "#%s DES_RISC1\n",($des_risc1)?'define':'undef'; }
+	elsif	(/^\#(define|undef)\s+DES_RISC2/)
+		{ printf OUT "#%s DES_RISC2\n",($des_risc2)?'define':'undef'; }
+	elsif	(/^\#(define|undef)\s+DES_UNROLL/)
+		{ printf OUT "#%s DES_UNROLL\n",($des_unroll)?'define':'undef'; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($des_locl,&file_old($des_locl));
+&Rename($n,$des_locl);
+
+(($in=$rc4) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($rc4);
+open(IN,"<".$in) || die "unable to read $rc4:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#define\s+RC4_INT\s/)
+		{ printf OUT "#define RC4_INT unsigned %s\n",$type[$rc4_int]; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($rc4,&file_old($rc4));
+&Rename($n,$rc4);
+
+(($in=$rc4_enc) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($rc4_enc);
+open(IN,"<".$in) || die "unable to read $rc4_enc:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#((define)|(undef))\s+RC4_INDEX/)
+		{ printf OUT "#%s RC4_INDEX\n",($rc4_idx)?"define":"undef"; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($rc4_enc,&file_old($rc4_enc));
+&Rename($n,$rc4_enc);
+
+(($in=$md2) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($md2);
+open(IN,"<".$in) || die "unable to read $bn:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#define\s+MD2_INT\s/)
+		{ printf OUT "#define MD2_INT unsigned %s\n",$type[$md2_int]; }
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($md2,&file_old($md2));
+&Rename($n,$md2);
+
+(($in=$idea) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($idea);
+open(IN,"<".$in) || die "unable to read $idea:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#define\s+IDEA_INT\s/)
+		{printf OUT "#define IDEA_INT unsigned %s\n",$type[$idea_int];}
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($idea,&file_old($idea));
+&Rename($n,$idea);
+
+(($in=$rc2) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($rc2);
+open(IN,"<".$in) || die "unable to read $rc2:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if	(/^#define\s+RC2_INT\s/)
+		{printf OUT "#define RC2_INT unsigned %s\n",$type[$rc2_int];}
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($rc2,&file_old($rc2));
+&Rename($n,$rc2);
+
+(($in=$bf) =~ s/\.([^.]+)/.$postfix/);
+$n=&file_new($bf);
+open(IN,"<".$in) || die "unable to read $bf:$!\n";
+open(OUT,">$n") || die "unable to read $n:$!\n";
+while (<IN>)
+	{
+	if (/^#(define|undef)\s+BF_PTR/)
+		{
+		printf OUT "#undef BF_PTR\n" if $bf_ptr == 0;
+		printf OUT "#define BF_PTR\n" if $bf_ptr == 1;
+		printf OUT "#define BF_PTR2\n" if $bf_ptr == 2;
+		}
+	else
+		{ print OUT $_; }
+	}
+close(IN);
+close(OUT);
+&Rename($bf,&file_old($bf));
+&Rename($n,$bf);
+
+print "SIXTY_FOUR_BIT_LONG mode\n" if $b64l;
+print "SIXTY_FOUR_BIT mode\n" if $b64;
+print "THIRTY_TWO_BIT mode\n" if $b32;
+print "SIXTEEN_BIT mode\n" if $b16;
+print "EIGHT_BIT mode\n" if $b8;
+print "DES_PTR used\n" if $des_ptr;
+print "DES_RISC1 used\n" if $des_risc1;
+print "DES_RISC2 used\n" if $des_risc2;
+print "DES_UNROLL used\n" if $des_unroll;
+print "DES_INT used\n" if $des_int;
+print "BN_LLONG mode\n" if $bn_ll;
+print "RC4 uses u$type[$rc4_int]\n" if $rc4_int != $def_int;
+print "RC4_INDEX mode\n" if $rc4_idx;
+print "MD2 uses u$type[$md2_int]\n" if $md2_int != $def_int;
+print "IDEA uses u$type[$idea_int]\n" if $idea_int != $def_int;
+print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
+print "BF_PTR used\n" if $bf_ptr == 1; 
+print "BF_PTR2 used\n" if $bf_ptr == 2; 
+exit(0);
+
+sub bad_target
+	{
+	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] os/compiler\n";
+	print STDERR "pick os/compiler from:";
+	$j=0;
+	foreach $i (sort keys %table)
+		{
+		next if /^b-/;
+		print STDERR "\n" if ($j++ % 4) == 0;
+		printf(STDERR "%-18s ",$i);
+		}
+	print STDERR "\n";
+	}
+
+sub Rename
+	{
+	local($from,$to)=@_;
+
+	unlink($to);
+	rename($from,$to) || die "unable to rename $from to $to:$!\n";
+	}
+
+sub file_new { local($a)=@_; $a =~ s/(\.[^.]+$|$)/.new/; $a; }
+sub file_old { local($a)=@_; $a =~ s/(\.[^.]+$|$)/.old/; $a; }

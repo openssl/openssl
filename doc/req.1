@@ -1,0 +1,137 @@
+The 'req' command is used to manipulate and deal with pkcs#10
+certificate requests.
+
+It's default mode of operation is to load a certificate and then
+write it out again.
+
+By default the 'req' is read from stdin in 'PEM' format.
+The -inform option can be used to specify 'pem' format or 'der'
+format.  PEM format is the base64 encoding of the DER format.
+
+By default 'req' then writes the request back out. -outform can be used
+to indicate the desired output format, be it 'pem' or 'der'.
+
+To specify an input file, use the '-in' option and the '-out' option
+can be used to specify the output file.
+
+If you wish to perform a command and not output the certificate
+request afterwards, use the '-noout' option.
+
+When a certificate is loaded, it can be printed in a human readable
+ascii format via the '-text' option.
+
+To check that the signature on a certificate request is correct, use
+the '-verify' option to make sure that the private key contained in the
+certificate request corresponds to the signature.
+
+Besides the default mode, there is also the 'generate a certificate
+request' mode.  There are several flags that trigger this mode.
+
+-new will generate a new RSA key (if required) and then prompts
+the user for details for the certificate request.
+-newkey has an argument that is the number of bits to make the new
+key.  This function also triggers '-new'.
+
+The '-new' option can have a key to use specified instead of having to
+load one, '-key' is used to specify the file containg the key.
+-keyform can be used to specify the format of the key.  Only
+'pem' and 'der' formats are supported, later, 'netscape' format may be added.
+
+Finally there is the '-x509' options which makes req output a self
+signed x509 certificate instead of a certificate request.
+
+Now as you may have noticed, there are lots of default options that
+cannot be specified via the command line.  They are held in a 'template'
+or 'configuration file'.  The -config option specifies which configuration
+file to use.  See conf.doc for details on the syntax of this file.
+
+The req command uses the 'req' section of the config file.
+
+---
+# The following variables are defined.  For this example I will populate
+# the various values
+[ req ]
+default_bits	= 512		# default number of bits to use.
+default_keyfile	= testkey.pem	# Where to write the generated keyfile
+				# if not specified.
+distinguished_name= req_dn	# The section that contains the
+				# information about which 'object' we
+				# want to put in the DN.
+attributes	= req_attr	# The objects we want for the
+				# attributes field.
+encrypt_rsa_key	= no		# Should we encrypt newly generated
+				# keys.  I strongly recommend 'yes'.
+
+# The distinguished name section.  For the following entries, the
+# object names must exist in the SSLeay header file objects.h.  If they
+# do not, they will be silently ignored.  The entries have the following
+# format.
+# <object_name>		=> string to prompt with
+# <object_name>_default	=> default value for people
+# <object_name>_value	=> Automatically use this value for this field.
+# <object_name>_min	=> minimum number of characters for data (def. 0)
+# <object_name>_max	=> maximum number of characters for data (def. inf.)
+# All of these entries are optional except for the first one.
+[ req_dn ]
+countryName			= Country Name (2 letter code)
+countryName_default		= AU
+
+stateOrProvinceName		= State or Province Name (full name)
+stateOrProvinceName_default	= Queensland
+
+localityName			= Locality Name (eg, city)
+
+organizationName		= Organization Name (eg, company)
+organizationName_default	= Mincom Pty Ltd
+
+organizationalUnitName		= Organizational Unit Name (eg, section)
+organizationalUnitName_default	= MTR
+
+commonName			= Common Name (eg, YOUR name)
+commonName_max			= 64
+
+emailAddress			= Email Address
+emailAddress_max		= 40
+
+# The next section is the attributes section.  This is exactly the
+# same as for the previous section except that the resulting objects are
+# put in the attributes field. 
+[ req_attr ]
+challengePassword		= A challenge password
+challengePassword_min		= 4
+challengePassword_max		= 20
+
+unstructuredName		= An optional company name
+
+----
+Also note that the order that attributes appear in this file is the
+order they will be put into the distinguished name.
+
+Once this request has been generated, it can be sent to a CA for
+certifying.
+
+----
+A few quick examples....
+
+To generate a new request and a new key
+req -new
+
+To generate a new request and a 1058 bit key
+req -newkey 1058
+
+To generate a new request using a pre-existing key
+req -new -key key.pem
+
+To generate a self signed x509 certificate from a certificate
+request using a supplied key, and we want to see the text form of the
+output certificate (which we will put in the file selfSign.pem
+req -x509 -in req.pem -key key.pem -text -out selfSign.pem
+
+Verify that the signature is correct on a certificate request.
+req -verify -in req.pem
+
+Verify that the signature was made using a specified public key.
+req -verify -in req.pem -key key.pem
+
+Print the contents of a certificate request
+req -text -in req.pem

@@ -1,0 +1,121 @@
+From eay@orb.mincom.oz.au Thu Dec 28 23:56:45 1995
+Received: by orb.mincom.oz.au id AA07374
+  (5.65c/IDA-1.4.4 for eay); Thu, 28 Dec 1995 13:56:45 +1000
+Date: Thu, 28 Dec 1995 13:56:45 +1000 (EST)
+From: Eric Young <eay@mincom.oz.au>
+X-Sender: eay@orb
+To: sameer <sameer@c2.org>
+Cc: ssleay@mincom.oz.au
+Subject: Re: 'ca'
+In-Reply-To: <199512230440.UAA23410@infinity.c2.org>
+Message-Id: <Pine.SOL.3.91.951228133525.7269A-100000@orb>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: RO
+X-Status: 
+
+On Fri, 22 Dec 1995, sameer wrote:
+> 	I could use documentation on 'ca'. Thanks.
+
+Very quickly.
+The ca program uses the ssleay.conf file for most of its configuration
+
+./ca -help
+
+ -verbose        - Talk alot while doing things
+ -config file    - A config file. If you don't want to use the
+		   default config file
+ -name arg       - The particular CA definition to use
+	In the config file, the section to use for parameters.  This lets 
+	multiple setups to be contained in the one file.  By default, the 
+	default_ca variable is looked up in the [ ca ] section.  So in the 
+	shipped ssleay.conf, the CA definition used is CA_default.  It could be 
+	any other name.
+ -gencrl days    - Generate a new CRL, days is when the next CRL is due
+	This will generate a new certificate revocion list.
+ -days arg       - number of days to certify the certificate for
+	When certifiying certificates, this is the number of days to use.
+ -md arg         - md to use, one of md2, md5, sha or sha1
+ -policy arg     - The CA 'policy' to support
+	I'll describe this later, but there are 2 policies definied in the 
+	shipped ssleay.conf
+ -keyfile arg    - PEM RSA private key file
+ -key arg        - key to decode the RSA private key if it is encrypted
+	since we need to keep the CA's RSA key encrypted
+ -cert           - The CA certificate
+ -in file        - The input PEM encoded certificate request(s)
+ -out file       - Where to put the output file(s)
+ -outdir dir     - Where to put output certificates
+	The -out options concatinates all the output certificied
+	certificates to one file, -outdir puts them in a directory,
+	named by serial number.
+ -infiles ....   - The last argument, requests to process
+	The certificate requests to process, -in is the same.
+
+Just about all the above have default values defined in ssleay.conf.
+
+The key variables in ssleay.conf are (for the pariticular '-name' being 
+used, in the default, it is CA_default).
+
+dir is where all the CA database stuff is kept.
+certs is where all the previously issued certificates are kept.
+The database is a simple text database containing the following tab separated 
+fields.
+status: a value of 'R' - revoked, 'E' -expired or 'V' valid.
+issued date:  When the certificate was certified.
+revoked date:  When it was revoked, blank if not revoked.
+serial number:  The certificate serial number.
+certificate:	Where the certificate is located.
+CN:	The name of the certificate.
+
+The demo file has quite a few made up values it it.  The last 2 were 
+added by the ca program and are acurate.
+The CA program does not update the 'certificate' file correctly right now.
+The serial field should be unique as should the CN/status combination.
+The ca program checks these at startup.  What still needs to be 
+wrtten is a program to 'regenerate' the data base file from the issued 
+certificate list (and a CRL list).
+
+Back to the CA_default variables.
+
+Most of the variables are commented.
+
+policy is the default policy.
+
+Ok for policies, they define the order and which fields must be present 
+in the certificate request and what gets filled in.
+
+So a value of
+countryName             = match
+means that the country name must match the CA certificate.
+organizationalUnitName  = optional
+The org.Unit,Name does not have to be present and
+commonName              = supplied
+commonName must be supplied in the certificate request.
+
+For the 'policy_match' polocy, the order of the attributes in the 
+generated certiticate would be
+countryName
+stateOrProvinceName
+organizationName
+organizationalUnitName
+commonName
+emailAddress
+
+Have a play, it sort of makes sense.  If you think about how the persona 
+requests operate, it is similar to the 'policy_match' policy and the
+'policy_anything' is similar to what versign is doing.
+
+I hope this helps a bit.  Some backend scripts are definitly needed to 
+update the database and to make certificate revocion easy.  All 
+certificates issued should also be kept forever (or until they expire?)
+
+hope this helps
+eric (who has to run off an buy some cheap knee pads for the caving in 4 
+days time :-)
+
+--
+Eric Young                  | Signature removed since it was generating
+AARNet: eay@mincom.oz.au    | more followups than the message contents :-)
+
+

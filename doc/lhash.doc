@@ -1,0 +1,151 @@
+The LHASH library.
+
+I wrote this library in 1991 and have since forgotten why I called it lhash.
+It implements a hash table from an article I read at the
+time from 'Communications of the ACM'.  What makes this hash
+table different is that as the table fills, the hash table is
+increased (or decreased) in size via realloc().
+When a 'resize' is done, instead of all hashes being redistributed over
+twice as many 'buckets', one bucket is split.  So when an 'expand' is done,
+there is only a minimal cost to redistribute some values.  Subsequent
+inserts will cause more single 'bucket' redistributions but there will
+never be a sudden large cost due to redistributing all the 'buckets'.
+
+The state for a particular hash table is kept in the LHASH structure.
+The LHASH structure also records statistics about most aspects of accessing
+the hash table.  This is mostly a legacy of my writing this library for
+the reasons of implementing what looked like a nice algorithm rather than
+for a particular software product.
+
+Internal stuff you probably don't want to know about.
+The decision to increase or decrease the hash table size is made depending
+on the 'load' of the hash table.  The load is the number of items in the
+hash table divided by the size of the hash table.  The default values are
+as follows.  If (hash->up_load < load) => expand.
+if (hash->down_load > load) =>  contract.  The 'up_load' has a default value of
+1 and 'down_load' has a default value of 2.  These numbers can be modified
+by the application by just playing with the 'up_load' and 'down_load'
+variables.  The 'load' is kept in a form which is multiplied by 256.  So
+hash->up_load=8*256; will cause a load of 8 to be set.
+
+If you are interested in performance the field to watch is
+num_comp_calls.  The hash library keeps track of the 'hash' value for
+each item so when a lookup is done, the 'hashes' are compared, if
+there is a match, then a full compare is done, and
+hash->num_comp_calls is incremented.  If num_comp_calls is not equal
+to num_delete plus num_retrieve it means that your hash function is
+generating hashes that are the same for different values.  It is
+probably worth changing your hash function if this is the case because
+even if your hash table has 10 items in a 'bucked', it can be searched
+with 10 'unsigned long' compares and 10 linked list traverses.  This
+will be much less expensive that 10 calls to you compare function.
+
+LHASH *lh_new(
+unsigned long (*hash)(),
+int (*cmp)());
+	This function is used to create a new LHASH structure.  It is passed
+	function pointers that are used to store and retrieve values passed
+	into the hash table.  The 'hash'
+	function is a hashing function that will return a hashed value of
+	it's passed structure.  'cmp' is passed 2 parameters, it returns 0
+	is they are equal, otherwise, non zero.
+	If there are any problems (usually malloc failures), NULL is
+	returned, otherwise a new LHASH structure is returned.  The
+	hash value is normally truncated to a power of 2, so make sure
+	that your hash function returns well mixed low order bits.
+	
+void lh_free(
+LHASH *lh);
+	This function free()s a LHASH structure.  If there is malloced
+	data in the hash table, it will not be freed.  Consider using the
+	lh_doall function to deallocate any remaining entries in the hash
+	table.
+	
+char *lh_insert(
+LHASH *lh,
+char *data);
+	This function inserts the data pointed to by data into the lh hash
+	table.  If there is already and entry in the hash table entry, the
+	value being replaced is returned.  A NULL is returned if the new
+	entry does not clash with an entry already in the table (the normal
+	case) or on a malloc() failure (perhaps I should change this....).
+	The 'char *data' is exactly what is passed to the hash and
+	comparison functions specified in lh_new().
+	
+char *lh_delete(
+LHASH *lh,
+char *data);
+	This routine deletes an entry from the hash table.  The value being
+	deleted is returned.  NULL is returned if there is no such value in
+	the hash table.
+
+char *lh_retrieve(
+LHASH *lh,
+char *data);
+	If 'data' is in the hash table it is returned, else NULL is
+	returned.  The way these routines would normally be uses is that a
+	dummy structure would have key fields populated and then
+	ret=lh_retrieve(hash,&dummy);.  Ret would now be a pointer to a fully
+	populated structure.
+
+void lh_doall(
+LHASH *lh,
+void (*func)(char *a));
+	This function will, for every entry in the hash table, call function
+	'func' with the data item as parameters.
+	This function can be quite useful when used as follows.
+	void cleanup(STUFF *a)
+		{ STUFF_free(a); }
+	lh_doall(hash,cleanup);
+	lh_free(hash);
+	This can be used to free all the entries, lh_free() then
+	cleans up the 'buckets' that point to nothing.  Be careful
+	when doing this.  If you delete entries from the hash table,
+	in the call back function, the table may decrease in size,
+	moving item that you are
+	currently on down lower in the hash table.  This could cause
+	some entries to be skipped.  The best solution to this problem
+	is to set lh->down_load=0 before you start.  This will stop
+	the hash table ever being decreased in size.
+
+void lh_doall_arg(
+LHASH *lh;
+void(*func)(char *a,char *arg));
+char *arg;
+	This function is the same as lh_doall except that the function
+	called will be passed 'arg' as the second argument.
+	
+unsigned long lh_strhash(
+char *c);
+	This function is a demo string hashing function.  Since the LHASH
+	routines would normally be passed structures, this routine would
+	not normally be passed to lh_new(), rather it would be used in the
+	function passed to lh_new().
+
+The next three routines print out various statistics about the state of the
+passed hash table.  These numbers are all kept in the lhash structure.
+
+void lh_stats(
+LHASH *lh,
+FILE *out);
+	This function prints out statistics on the size of the hash table,
+	how many entries are in it, and the number and result of calls to
+	the routines in this library.
+
+void lh_node_stats(
+LHASH *lh,
+FILE *out);
+	For each 'bucket' in the hash table, the number of entries is
+	printed.
+	
+void lh_node_usage_stats(
+LHASH *lh,
+FILE *out);
+	This function prints out a short summary of the state of the hash
+	table.  It prints what I call the 'load' and the 'actual load'.
+	The load is the average number of data items per 'bucket' in the
+	hash table.  The 'actual load' is the average number of items per
+	'bucket', but only for buckets which contain entries.  So the
+	'actual load' is the average number of searches that will need to
+	find an item in the hash table, while the 'load' is the average number
+	that will be done to record a miss.

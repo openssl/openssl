@@ -1,0 +1,126 @@
+SSLeay 0.8.1 released.
+
+19-Jul-97
+	- Server side initated dynamic renegotiation is broken.  I will fix
+	  it when I get back from holidays.
+
+15-Jul-97
+	- Quite a few small changes.
+	- INVALID_SOCKET usage cleanups from Alex Kiernan <alex@hisoft.co.uk>
+
+09-Jul-97
+	- Added 2 new values to the SSL info callback.
+	  SSL_CB_START which is passed when the SSL protocol is started
+	  and SSL_CB_DONE when it has finished sucsessfully.
+
+08-Jul-97
+	- Fixed a few bugs problems in apps/req.c and crypto/asn1/x_pkey.c
+	  that related to DSA public/private keys.
+	- Added all the relevent PEM and normal IO functions to support
+	  reading and writing RSAPublic keys.
+	- Changed makefiles to use ${AR} instead of 'ar r'
+
+07-Jul-97
+	- Error in ERR_remove_state() that would leave a dangling reference
+	  to a free()ed location - thanks to Alex Kiernan <alex@hisoft.co.uk>
+	- s_client now prints the X509_NAMEs passed from the server
+	  when requesting a client cert.
+	- Added a ssl->type, which is one of SSL_ST_CONNECT or
+	  SSL_ST_ACCEPT.  I had to add it so I could tell if I was
+	  a connect or an accept after the handshake had finished.
+	- SSL_get_client_CA_list(SSL *s) now returns the CA names
+	  passed by the server if called by a client side SSL.
+
+05-Jul-97
+	- Bug in X509_NAME_get_text_by_OBJ(), looking starting at index
+	  0, not -1 :-(  Fix from Tim Hudson (tjh@cryptsoft.com).
+
+04-Jul-97
+	- Fixed some things in X509_NAME_add_entry(), thanks to
+	  Matthew Donald <matthew@world.net>.
+	- I had a look at the cipher section and though that it was a
+	  bit confused, so I've changed it.
+	- I was not setting up the RC4-64-MD5 cipher correctly.  It is
+	  a MS special that appears in exported MS Money.
+	- Error in all my DH ciphers.  Section 7.6.7.3 of the SSLv3
+	  spec.  I was missing the two byte length header for the
+	  ClientDiffieHellmanPublic value.  This is a packet sent from
+	  the client to the server.  The SSL_OP_SSLEAY_080_CLIENT_DH_BUG
+	  option will enable SSLeay server side SSLv3 accept either
+	  the correct or my 080 packet format.
+	- Fixed a few typos in crypto/pem.org.
+
+02-Jul-97
+	- Alias mapping for EVP_get_(digest|cipher)byname is now
+	  performed before a lookup for actual cipher.  This means
+	  that an alias can be used to 're-direct' a cipher or a
+	  digest.
+	- ASN1_read_bio() had a bug that only showed up when using a
+	  memory BIO.  When EOF is reached in the memory BIO, it is
+	  reported as a -1 with BIO_should_retry() set to true.
+
+01-Jul-97
+	- Fixed an error in X509_verify_cert() caused by my
+	  miss-understanding how 'do { contine } while(0);' works.
+	  Thanks to Emil Sit <sit@mit.edu> for educating me :-)
+
+30-Jun-97
+	- Base64 decoding error.  If the last data line did not end with
+	  a '=', sometimes extra data would be returned.
+	- Another 'cut and paste' bug in x509.c related to setting up the
+	  STDout BIO.
+
+27-Jun-97
+	- apps/ciphers.c was not printing due to an editing error.
+	- Alex Kiernan <alex@hisoft.co.uk> send in a nice fix for
+	  a library build error in util/mk1mf.pl
+
+26-Jun-97
+	- Still did not have the auto 'experimental' code removal
+	  script correct.
+	- A few header tweaks for Watcom 11.0 under Win32 from
+	  Rolf Lindemann <Lindemann@maz-hh.de>
+	- 0 length OCTET_STRING bug in asn1_parse
+	- A minor fix with an non-existent function in the MS .def files.
+	- A few changes to the PKCS7 stuff.
+
+25-Jun-97
+	SSLeay 0.8.0 finally it gets released.
+
+24-Jun-97
+	Added a SSL_OP_EPHEMERAL_RSA option which causes all SSLv3 RSA keys to
+	use a temporary RSA key.  This is experimental and needs some more work.
+	Fixed a few Win16 build problems.
+
+23-Jun-97
+	SSLv3 bug. I was not doing the 'lookup' of the CERT structure
+	correctly. I was taking the SSL->ctx->default_cert when I should
+	have been using SSL->cert. The bug was in ssl/s3_srvr.c
+
+20-Jun-97
+	X509_ATTRIBUTES were being encoded wrongly by apps/reg.c and the
+	rest of the library. Even though I had the code required to do
+	it correctly, apps/req.c was doing the wrong thing.  I have fixed
+	and tested everything.
+
+	Missing a few #ifdef FIONBIO sections in crypto/bio/bss_acpt.c.
+
+19-Jun-97
+	Fixed a bug in the SSLv2 server side first packet handling. When
+	using the non-blocking test BIO, the ssl->s2->first_packet flag
+	was being reset when a would-block failure occurred when reading
+	the first 5 bytes of the first packet. This caused the checking
+	logic to run at the wrong time and cause an error.
+
+	Fixed a problem with specifying cipher. If RC4-MD5 were used,
+	only the SSLv3 version would be picked up.  Now this will pick
+	up both SSLv2 and SSLv3 versions. This required changing the
+	SSL_CIPHER->mask values so that they only mask the ciphers,
+	digests, authentication, export type and key-exchange algorithms.
+
+	I found that when a SSLv23 session is established, a reused
+	session, of type SSLv3 was attempting to write the SSLv2 
+	ciphers, which were invalid. The SSL_METHOD->put_cipher_by_char 
+	method has been modified so it will only write out cipher which
+	that method knows about.  
+

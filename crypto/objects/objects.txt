@@ -1,0 +1,40 @@
+1 2			: ISO member bodies
+1 2 840			: US (ANSI)
+1 2 840 113549		: rsadsi	: RSA Data Security, Inc.
+1 2 840 113549 1	: pkcs		: RSA Data Security, Inc. PKCS
+1 2 840 113549 1 1 1	: rsaEncryption
+1 2 840 113549 1 1 2	: md2withRSAEncryption
+1 2 840 113549 1 1 4	: md5withRSAEncryption
+1 2 840 113549 1 7	: pkcs-7
+1 2 840 113549 1 7 1	: pkcs-7-data
+1 2 840 113549 1 7 2	: pkcs-7-signedData
+1 2 840 113549 1 7 3	: pkcs-7-envelopedData
+1 2 840 113549 1 7 4	: pkcs-7-signedAndEnvelopedData
+1 2 840 113549 1 7 5	: pkcs-7-digestData
+1 2 840 113549 1 7 6	: pkcs-7-encryptedData
+1 2 840 113549 2 2	: md2
+1 2 840 113549 2 4	: md4
+1 2 840 113549 2 5	: md5
+1 2 840 113549 3 4	: rc4
+1 2 840 113549 5 1	: pbeWithMD2AndDES_CBC
+1 2 840 113549 5 3	: pbeWithMD5AndDES_CBC
+2 5			: X500		: directory services (X.500)
+2 5 4			: X509
+2 5 4 3			: commonName
+2 5 4 6			: countryName
+2 5 4 7			: localityName
+2 5 4 8			: stateOrProvinceName
+2 5 4 10		: organizationName
+2 5 4 11		: organizationalUnitName
+2 5 8			: directory services - algorithms
+2 5 8 1 1		: rsa
+
+algorithm 18		: sha
+encryptionAlgorithm 1	: rsa
+algorithm 11		: rsaSignature
+
+algorithm 6		: desECB
+algorithm 7		: desCBC
+algorithm 8		: desOFB
+algorithm 9		: desCFB
+algorithm 17		: desEDE2

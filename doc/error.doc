@@ -1,0 +1,115 @@
+The error routines.
+
+The 'error' system I've implemented is intended to server 2 purpose, to
+record the reason why a command failed and to record where in the libraries
+the failure occurred.  It is more or less setup to record a 'trace' of which
+library components were being traversed when the error occurred.
+
+When an error is recorded, it is done so a as single unsigned long which is
+composed of three parts.  The top byte is the 'library' number, the middle
+12 bytes is the function code, and the bottom 12 bits is the 'reason' code.
+
+Each 'library', or should a say, 'section' of the SSLeay library has a
+different unique 'library' error number.  Each function in the library has
+a number that is unique for that library.  Each 'library' also has a number
+for each 'error reason' that is only unique for that 'library'.
+
+Due to the way these error routines record a 'error trace', there is an
+array per thread that is used to store the error codes.
+The various functions in this library are used to access
+and manipulate this array.
+
+void ERR_put_error(int lib, int func,int reason);
+	This routine records an error in library 'lib', function 'func'
+and reason 'reason'.  As errors get 'put' into the buffer, they wrap
+around and overwrite old errors if too many are written.  It is assumed
+that the last errors are the most important.
+
+unsigned long ERR_get_error(void );
+	This function returns the last error added to the error buffer.
+In effect it is popping the value off the buffer so repeated calls will
+continue to return values until there are no more errors to return in which
+case 0 is returned.
+
+unsigned long ERR_peek_error(void );
+	This function returns the value of the last error added to the
+error buffer but does not 'pop' it from the buffer.
+
+void ERR_clear_error(void );
+	This function clears the error buffer, discarding all unread
+errors.
+
+While the above described error system obviously produces lots of different
+error number, a method for 'reporting' these errors in a human readable
+form is required.  To achieve this, each library has the option of
+'registering' error strings.
+
+typedef struct ERR_string_data_st
+	{
+	unsigned long error;
+	char *string;
+	} ERR_STRING_DATA;
+
+The 'ERR_STRING_DATA' contains an error code and the corresponding text
+string.  To add new function error strings for a library, the
+ERR_STRING_DATA needs to be 'registered' with the library.
+
+void ERR_load_strings(unsigned long lib,ERR_STRING_DATA *err);
+	This function 'registers' the array of ERR_STRING_DATA pointed to by
+'err' as error text strings for the error library 'lib'.
+
+void ERR_free_strings(void);
+	This function free()s all the loaded error strings.
+
+char *ERR_error_string(unsigned long error,char *buf);
+	This function returns a text string that is a human readable
+version of the error represented by 'error'.  Buff should be at least 120
+bytes long and if it is NULL, the return value is a pointer to a static
+variable that will contain the error string, otherwise 'buf' is returned.
+If there is not a text string registered for a particular error, a text
+string containing the error number is returned instead.
+
+void ERR_print_errors(BIO *bp);
+void ERR_print_errors_fp(FILE *fp);
+	This function is a convenience routine that prints the error string
+for each error until all errors have been accounted for.
+
+char *ERR_lib_error_string(unsigned long e);
+char *ERR_func_error_string(unsigned long e);
+char *ERR_reason_error_string(unsigned long e);
+The above three functions return the 3 different components strings for the
+error 'e'.  ERR_error_string() uses these functions.
+
+void ERR_load_ERR_strings(void );
+	This function 'registers' the error strings for the 'ERR' module.
+
+void ERR_load_crypto_strings(void );
+	This function 'register' the error strings for just about every
+library in the SSLeay package except for the SSL routines.  There is no
+need to ever register any error text strings and you will probably save in
+program size.  If on the other hand you do 'register' all errors, it is
+quite easy to determine why a particular routine failed.
+
+As a final footnote as to why the error system is designed as it is.
+1) I did not want a single 'global' error code.
+2) I wanted to know which subroutine a failure occurred in.
+3) For Windows NT etc, it should be simple to replace the 'key' routines
+   with code to pass error codes back to the application.
+4) I wanted the option of meaningful error text strings.
+
+Late breaking news - the changes to support threads.
+
+Each 'thread' has an 'ERR_STATE' state associated with it.
+ERR_STATE *ERR_get_state(void ) will return the 'state' for the calling
+thread/process.
+
+ERR_remove_state(unsigned long pid); will 'free()' this state.  If pid == 0
+the current 'thread/process' will have it's error state removed.
+If you do not remove the error state of a thread, this could be considered a
+form of memory leak, so just after 'reaping' a thread that has died,
+call ERR_remove_state(pid).
+
+Have a read of thread.doc for more details for what is required for
+multi-threading support.  All the other error routines will
+work correctly when using threads.
+

@@ -1,0 +1,213 @@
+SSLeay: a cryptographic kitchen sink.
+
+1st December 1995
+Way back at the start of April 1995, I was looking for a mindless
+programming project.  A friend of mine (Tim Hudson) said "why don't you do SSL,
+it has DES encryption in it and I would not mind using it in a SSL telnet".
+While it was true I had written a DES library in previous years, litle
+did I know what an expansive task SSL would turn into.
+
+First of all, the SSL protocol contains DES encryption.  Well and good.  My
+DES library was fast and portable.  It also contained the RSA's RC4 stream
+cipher.  Again, not a problem, some-one had just posted to sci.crypt
+something that was claimed to be RC4.  It also contained IDEA, I had the
+specifications, not a problem to implement.  MD5, an RFC, trivial, at most
+I could spend a week or so trying to see if I could speed up the
+implementation.  All in all a nice set of ciphers.
+Then the first 'expantion of the scope', RSA public key
+encryption.  Since I did not knowing a thing about public key encryption
+or number theory, this appeared quite a daunting task.  Just writing a
+big number library would be problomatic in itself, let alone making it fast.
+At this point the scope of 'implementing SSL' expands eponentialy.
+First of all, the RSA private keys  were being kept in ASN.1 format.
+Thankfully the RSA PKCS series of documents explains this format.  So I now
+needed to be able to encode and decode arbitary ASN.1 objects.  The Public
+keys were embeded in X509 certificates.  Hmm... these are not only
+ASN.1 objects but they make up a heirachy of authentication.  To
+authenticate a X509 certificate one needs to retrieve it's issuers
+certificate etc etc.  Hmm..., so I also need to implement some kind
+of certificate management software.  I would also have to implement
+software to authenticate certificates.  At this point the support code made
+the SSL part of my library look quite small.
+Around this time, the first version of SSLeay was released.
+
+Ah, but here was the problem, I was not happy with the code so far.  As may
+have become obvious, I had been treating all of this as a learning
+exersize, so I have completely written the library myself.  As such, due
+to the way it had grown like a fungus, much of the library was not
+'elagent' or neat.  There were global and static variables all over the
+place, the SSL part did not even handle non-blocking IO.
+The Great rewrite began.
+
+As of this point in time, the 'Great rewrite' has almost finished.  So what
+follows is an approximate list of what is actually SSLeay 0.5.0
+
+/********* This needs to be updated for 0.6.0+ *************/
+
+---
+The library contains the following routines.  Please note that most of these
+functions are not specfic for SSL or any other particular cipher
+implementation.  I have tried to make all the routines as general purpose
+as possible.  So you should not think of this library as an SSL
+implemtation, but rather as a library of cryptographic functions
+that also contains SSL.  I refer to each of these function groupings as
+libraries since they are often capable of functioning as independant
+libraries
+
+First up, the general ciphers and message digests supported by the library.
+
+MD2	rfc???, a standard 'by parts' interface to this algorithm.
+MD5	rfc???, the same type of interface as for the MD2 library except a
+	different algorithm.
+SHA	THe Secure Hash Algorithm.  Again the same type of interface as
+	MD2/MD5 except the digest is 20 bytes.
+SHA1	The 'revised' version of SHA.  Just about identical to SHA except
+	for one tweak of an inner loop.
+DES	This is my libdes library that has been floating around for the last
+	few years.  It has been enhanced for no other reason than completeness.
+	It now supports ecb, cbc, cfb, ofb, cfb64, ofb64 in normal mode and
+	triple DES modes of ecb, cbc, cfb64 and ofb64.  cfb64 and ofb64 are
+	functional interfaces to the 64 bit modes of cfb and ofb used in
+	such a way thay they function as single character interfaces.
+RC4	The RSA Inc. stream cipher.
+RC2	The RSA Inc. block cipher.
+IDEA	An implmentation of the IDEA cipher, the library supports ecb, cbc,
+	cfb64 and ofb64 modes of operation.
+
+Now all the above mentioned ciphers and digests libraries support high
+speed, minimal 'crap in the way' type interfaces.  For fastest and
+lowest level access, these routines should be used directly.
+
+Now there was also the matter of public key crypto systems.  These are
+based on large integer arithmatic.
+
+BN	This is my large integer library.  It supports all the normal
+	arithmentic operations.  It uses malloc extensivly and as such has
+	no limits of the size of the numbers being manipulated.  If you
+	wish to use 4000 bit RSA moduli, these routines will handle it.
+	This library also contains routines to 'generate' prime numbers and
+	to test for primality.  The RSA and DH libraries sit on top of this
+	library.  As of this point in time, I don't support SHA, but
+	when I do add it, it will just sit on top of the routines contained
+	in this library.
+RSA	This implements the RSA public key algorithm.  It also contains
+	routines that will generate a new private/public key pair.
+	All the RSA functions conform to the PKCS#1 standard.
+DH	This is an implementation of the
+	Diffie-Hellman protocol.  There are all the require routines for
+	the protocol, plus extra routines that can be used to generate a
+	strong prime for use with a specified generator.  While this last
+	routine is not generally required by applications implementing DH,
+	It is present for completeness and because I thing it is much
+	better to be able to 'generate' your own 'magic' numbers as oposed
+	to using numbers suplied by others.  I conform to the PKCS#3
+	standard where required.
+
+You may have noticed the preceeding section mentions the 'generation' of
+prime numbers.  Now this requries the use of 'random numbers'. 
+
+RAND	This psuedo-random number library is based on MD5 at it's core
+	and a large internal state (2k bytes).  Once you have entered enough
+	seed data into this random number algorithm I don't feel
+	you will ever need to worry about it generating predictable output.
+	Due to the way I am writing a portable library, I have left the
+	issue of how to get good initial random seed data upto the
+	application but I do have support routines for saving and loading a
+	persistant random number state for use between program runs.
+	
+Now to make all these ciphers easier to use, a higher level
+interface was required.  In this form, the same function would be used to
+encrypt 'by parts', via any one of the above mentioned ciphers.
+
+EVP	The Digital EnVeloPe library is quite large.  At it's core are
+	function to perform encryption and decryption by parts while using
+	an initial parameter to specify which of the 17 different ciphers
+	or 4 different message digests to use.  On top of these are implmented
+	the digital signature functions, sign, verify, seal and open.
+	Base64 encoding of binary data is also done in this library.
+
+PEM	rfc???? describe the format for Privacy Enhanced eMail.
+	As part of this standard, methods of encoding digital enveloped
+	data is an ascii format are defined.  As such, I use a form of these
+	to encode enveloped data.  While at this point in time full support
+	for PEM has not been built into the library, a minimal subset of
+	the secret key and Base64 encoding is present.  These reoutines are
+	mostly used to Ascii encode binary data with a 'type' associated
+	with it and perhaps details of private key encryption used to
+	encrypt the data.
+	
+PKCS7	This is another Digital Envelope encoding standard which uses ASN.1
+	to encode the data.  At this point in time, while there are some
+	routines to encode and decode this binary format, full support is
+	not present.
+	
+As Mentioned, above, there are several different ways to encode
+data structures.
+
+ASN1	This library is more a set of primatives used to encode the packing
+	and unpacking of data structures.  It is used by the X509
+	certificate standard and by the PKCS standards which are used by
+	this library.  It also contains routines for duplicating and signing
+	the structures asocisated with X509.
+	
+X509	The X509 library contains routines for packing and unpacking,
+	verifying and just about every thing else you would want to do with
+	X509 certificates.
+
+PKCS7	PKCS-7 is a standard for encoding digital envelope data
+	structures.  At this point in time the routines will load and save
+	DER forms of these structees.  They need to be re-worked to support
+	the BER form which is the normal way PKCS-7 is encoded.  If the
+	previous 2 sentances don't make much sense, don't worry, this
+	library is not used by this version of SSLeay anyway.
+
+OBJ	ASN.1 uses 'object identifiers' to identify objects.  A set of
+	functions were requred to translate from ASN.1 to an intenger, to a
+	character string.  This library provieds these translations
+	
+Now I mentioned an X509 library.  X509 specified a hieachy of certificates
+which needs to be traversed to authenticate particular certificates.
+
+METH	This library is used to push 'methods' of retrieving certificates
+	into the library.  There are some supplied 'methods' with SSLeay
+	but applications can add new methods if they so desire.
+	This library has not been finished and is not being used in this
+	version.
+	
+Now all the above are required for use in the initial point of this project.
+
+SSL	The SSL protocol.  This is a full implmentation of SSL v 2.  It
+	support both server and client authentication.  SSL v 3 support
+	will be added when the SSL v 3 specification is released in it's
+	final form.
+
+Now quite a few of the above mentioned libraries rely on a few 'complex'
+data structures.  For each of these I have a library.
+
+Lhash	This is a hash table library which is used extensivly.
+
+STACK	An implemetation of a Stack data structure.
+
+BUF	A simple character array structure that also support a function to
+	check that the array is greater that a certain size, if it is not,
+	it is realloced so that is it.
+	
+TXT_DB	A simple memory based text file data base.  The application can specify
+	unique indexes that will be enforced at update time.
+
+CONF	Most of the programs written for this library require a configuration
+	file.  Instead of letting programs constantly re-implment this
+	subsystem, the CONF library provides a consistant and flexable
+	interface to not only configuration files but also environment
+	variables.
+
+But what about when something goes wrong?
+The one advantage (and perhaps disadvantage) of all of these
+functions being in one library was the ability to implement a
+single error reporting system.
+	
+ERR	This library is used to report errors.  The error system records
+	library number, function number (in the library) and reason
+	number.  Multiple errors can be reported so that an 'error' trace
+	is created.  The errors can be printed in numeric or textual form.
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# print out the issuer
+#
+
+for i in $*
+do
+	n=`ssleay x509 -issuer -noout -in $i`
+	echo "$i\t$n"
+done

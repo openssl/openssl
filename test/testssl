@@ -1,0 +1,40 @@
+#!/bin/sh
+
+echo test sslv2
+./ssltest -ssl2 || exit 1
+
+echo test sslv2 with server authentication
+./ssltest -ssl2 -server_auth -CApath ../certs || exit 1
+
+echo test sslv2 with client authentication
+./ssltest -ssl2 -client_auth -CApath ../certs || exit 1
+
+echo test sslv2 with both client and server authentication
+./ssltest -ssl2 -server_auth -client_auth -CApath ../certs || exit 1
+
+echo test sslv3
+./ssltest -ssl3 || exit 1
+
+echo test sslv3 with server authentication
+./ssltest -ssl3 -server_auth -CApath ../certs || exit 1
+
+echo test sslv3 with client authentication
+./ssltest -ssl3 -client_auth -CApath ../certs || exit 1
+
+echo test sslv3 with both client and server authentication
+./ssltest -ssl3 -server_auth -client_auth -CApath ../certs || exit 1
+
+echo test sslv2/sslv3
+./ssltest || exit 1
+
+echo test sslv2/sslv3 with server authentication
+./ssltest -server_auth -CApath ../certs || exit 1
+
+echo test sslv2/sslv3 with client authentication
+./ssltest -client_auth -CApath ../certs || exit 1
+
+echo test sslv2/sslv3 with both client and server authentication
+./ssltest -server_auth -client_auth -CApath ../certs || exit 1
+
+exit 0
+

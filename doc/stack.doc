@@ -1,0 +1,96 @@
+The stack data structure is used to store an ordered list of objects.
+It is basically misnamed to call it a stack but it can function that way
+and that is what I originally used it for.  Due to the way element
+pointers are kept in a malloc()ed array, the most efficient way to use this
+structure is to add and delete elements from the end via sk_pop() and
+sk_push().  If you wish to do 'lookups' sk_find() is quite efficient since
+it will sort the stack (if required) and then do a binary search to lookup 
+the requested item.  This sorting occurs automatically so just sk_push()
+elements on the stack and don't worry about the order.  Do remember that if
+you do a sk_find(), the order of the elements will change.
+
+You should never need to 'touch' this structure directly.
+typedef struct stack_st
+	{
+	unsigned int num;
+	char **data;
+	int sorted;
+
+	unsigned int num_alloc;
+	int (*comp)();
+	} STACK;
+
+'num' holds the number of elements in the stack, 'data' is the array of
+elements.  'sorted' is 1 is the list has been sorted, 0 if not.
+
+num_alloc is the number of 'nodes' allocated in 'data'.  When num becomes
+larger than num_alloc, data is realloced to a larger size.
+If 'comp' is set, it is a function that is used to compare 2 of the items
+in the stack.  The function should return -1, 0 or 1, depending on the
+ordering.
+
+#define sk_num(sk)	((sk)->num)
+#define sk_value(sk,n)	((sk)->data[n])
+
+These 2 macros should be used to access the number of elements in the
+'stack' and to access a pointer to one of the values.
+
+STACK *sk_new(int (*c)());
+	This creates a new stack.  If 'c', the comparison function, is not
+specified, the various functions that operate on a sorted 'stack' will not
+work (sk_find()).  NULL is returned on failure.
+
+void sk_free(STACK *);
+	This function free()'s a stack structure.  The elements in the
+stack will not be freed so one should 'pop' and free all elements from the
+stack before calling this function or call sk_pop_free() instead.
+
+void sk_pop_free(STACK *st; void (*func)());
+	This function calls 'func' for each element on the stack, passing
+the element as the argument.  sk_free() is then called to free the 'stack'
+structure.
+
+int sk_insert(STACK *sk,char *data,int where);
+	This function inserts 'data' into stack 'sk' at location 'where'.
+If 'where' is larger that the number of elements in the stack, the element
+is put at the end.  This function tends to be used by other 'stack'
+functions.  Returns 0 on failure, otherwise the number of elements in the
+new stack.
+
+char *sk_delete(STACK *st,int loc);
+	Remove the item a location 'loc' from the stack and returns it.
+Returns NULL if the 'loc' is out of range.
+
+char *sk_delete_ptr(STACK *st, char *p);
+	If the data item pointed to by 'p' is in the stack, it is deleted
+from the stack and returned.  NULL is returned if the element is not in the
+stack.
+
+int sk_find(STACK *st,char *data);
+	Returns the location that contains a value that is equal to 
+the 'data' item.  If the comparison function was not set, this function
+does a linear search.  This function actually qsort()s the stack if it is not
+in order and then uses bsearch() to do the initial search.  If the
+search fails,, -1 is returned.  For mutliple items with the same
+value, the index of the first in the array is returned.
+
+int sk_push(STACK *st,char *data);
+	Append 'data' to the stack.  0 is returned if there is a failure
+(due to a malloc failure), else 1.  This is 
+sk_insert(st,data,sk_num(st));
+
+int sk_unshift(STACK *st,char *data);
+	Prepend 'data' to the front (location 0) of the stack.  This is
+sk_insert(st,data,0);
+
+char *sk_shift(STACK *st);
+	Return and delete from the stack the first element in the stack.
+This is sk_delete(st,0);
+
+char *sk_pop(STACK *st);
+	Return and delete the last element on the stack.  This is
+sk_delete(st,sk_num(sk)-1);
+
+void sk_zero(STACK *st);
+	Removes all items from the stack.  It does not 'free'
+pointers but is a quick way to clear a 'stack of references'.
