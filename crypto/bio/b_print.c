@@ -618,7 +618,7 @@ fmtfp(
 
     if (fracpart >= pow10(max)) {
         intpart++;
-        fracpart -= pow10(max);
+        fracpart -= (long)pow10(max);
     }
 
     /* convert integer part */
