@@ -272,9 +272,82 @@ Issuer Alternative Name.
 
 The issuer alternative name option supports all the literal options of
 subject alternative name. It does *not* support the email:copy option because
-that would not make sense. It does support and additional issuer:copy option
+that would not make sense. It does support an additional issuer:copy option
 that will copy all the subject alternative name values from the issuer 
 certificate (if possible).
+
+CRL distribution points.
+
+This is a multivalued extension that supports all the literal options of
+subject alternative name. Of the few software packages that currently interpret
+this extension most only interpret the URI option.
+
+Currently each option will set a new DistributionPoint with the fullName
+field set to the given value.
+
+Other fields like cRLissuer and reasons cannot currently be set or displayed:
+at this time no examples were available that used these fields.
+
+If you see this extension with <UNSUPPORTED> when you attempt to print it out
+or it doesn't appear to display correctly then let me know, including the
+certificate (mail me at steve@openssl.org) .
+
+Examples:
+
+crlDistributionPoints=URI:http://www.myhost.com/myca.crl
+crlDistributionPoints=URI:http://www.my.com/my.crl,URI:http://www.oth.com/my.crl
+
+Certificate Policies.
+
+This is a RAW extension. It attempts to display the contents of this extension:
+unfortuntately this extension is often improperly encoded.
+
+The certificate policies extension will rarely be used in practice: few
+software packages interpret it correctly or at all.
+
+All the fields of this extension can be set by using the appropriate syntax.
+
+If you follow the PKIX recommendations of not including any qualifiers and just
+using only one OID then you just include the value of that OID. Multiple OIDs
+can be set separated by commas, for example:
+
+certificatePolicies= 1.2.4.5, 1.1.3.4
+
+If you wish to include qualifiers then the policy OID and qualifiers need to
+be specified in a separate section: this is done by using the @section syntax
+instead of a literal OID value.
+
+The section referred to must include the policy OID using the name
+policyIdentifier, cPSuri qualifiers can be included using the syntax:
+
+CPS.nnn=value
+
+userNotice qualifiers can be set using the syntax:
+
+userNotice.nnn=@notice
+
+The value of the userNotice qualifier is specified in the relevant section. This
+section can include explicitText, organization and noticeNumbers options. 
+explicitText and organization are text strings, noticeNumbers is a comma
+separated list of numbers. The organization and noticeNumbers options (if
+included) must BOTH be present.
+
+Example:
+
+certificatePolicies=1.2.3.4,1.5.6.7.8,@polsect
+
+[polsect]
+
+policyIdentifier = 1.3.5.8
+CPS.1="http://my.host.name/"
+CPS.2="http://my.your.name/"
+userNotice.1=@notice
+
+[notice]
+
+explicitText="Explicit Text Here"
+organization="Organisation Name"
+noticeNumbers=1,2,3,4
 
 Display only extensions.
 

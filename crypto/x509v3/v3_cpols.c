@@ -209,14 +209,13 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs)
 
 	return pol;
 
+	merr:
+	X509V3err(X509V3_F_POLICY_SECTION,ERR_R_MALLOC_FAILURE);
+
 	err:
 	POLICYINFO_free(pol);
 	return NULL;
 	
-	merr:
-	X509V3err(X509V3_F_POLICY_SECTION,ERR_R_MALLOC_FAILURE);
-	POLICYINFO_free(pol);
-	return NULL;
 	
 }
 
@@ -277,12 +276,10 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot)
 
 	return qual;
 
-	err:
-	POLICYQUALINFO_free(qual);
-	return NULL;
-
 	merr:
 	X509V3err(X509V3_F_NOTICE_SECTION,ERR_R_MALLOC_FAILURE);
+
+	err:
 	POLICYQUALINFO_free(qual);
 	return NULL;
 }
@@ -304,12 +301,10 @@ static STACK *nref_nos(STACK *nos)
 	}
 	return nnums;
 
-	err:
-	sk_pop_free(nnums, ASN1_STRING_free);
-	return NULL;
-
 	merr:
 	X509V3err(X509V3_F_NOTICE_SECTION,ERR_R_MALLOC_FAILURE);
+
+	err:
 	sk_pop_free(nnums, ASN1_STRING_free);
 	return NULL;
 }

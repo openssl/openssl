@@ -180,6 +180,21 @@ union {
 DECLARE_STACK_OF(GENERAL_NAME)
 DECLARE_ASN1_SET_OF(GENERAL_NAME)
 
+typedef struct DIST_POINT_NAME_st {
+/* NB: this is a CHOICE type and only one of these should be set */
+STACK_OF(GENERAL_NAME) *fullname;
+X509_NAME *relativename;
+} DIST_POINT_NAME;
+
+typedef struct DIST_POINT_st {
+DIST_POINT_NAME	*distpoint;
+ASN1_BIT_STRING *reasons;
+STACK_OF(GENERAL_NAME) *CRLissuer;
+} DIST_POINT;
+
+DECLARE_STACK_OF(DIST_POINT)
+DECLARE_ASN1_SET_OF(DIST_POINT)
+
 typedef struct AUTHORITY_KEYID_st {
 ASN1_OCTET_STRING *keyid;
 STACK_OF(GENERAL_NAME) *issuer;
@@ -342,6 +357,23 @@ int i2d_NOTICEREF(NOTICEREF *a, unsigned char **pp);
 NOTICEREF *NOTICEREF_new(void);
 NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, unsigned char **pp, long length);
 void NOTICEREF_free(NOTICEREF *a);
+
+int i2d_CRL_DIST_POINTS(STACK_OF(DIST_POINT) *a, unsigned char **pp);
+STACK_OF(DIST_POINT) *CRL_DIST_POINTS_new(void);
+void CRL_DIST_POINTS_free(STACK_OF(DIST_POINT) *a);
+STACK_OF(DIST_POINT) *d2i_CRL_DIST_POINTS(STACK_OF(DIST_POINT) **a,
+                unsigned char **pp,long length);
+
+int i2d_DIST_POINT(DIST_POINT *a, unsigned char **pp);
+DIST_POINT *DIST_POINT_new(void);
+DIST_POINT *d2i_DIST_POINT(DIST_POINT **a, unsigned char **pp, long length);
+void DIST_POINT_free(DIST_POINT *a);
+
+int i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **pp);
+DIST_POINT_NAME *DIST_POINT_NAME_new(void);
+void DIST_POINT_NAME_free(DIST_POINT_NAME *a);
+DIST_POINT_NAME *d2i_DIST_POINT_NAME(DIST_POINT_NAME **a, unsigned char **pp,
+             long length);
 
 #ifdef HEADER_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_VALUE *cnf);
@@ -537,6 +569,7 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
 #define X509V3_F_V2I_AUTHORITY_KEYID			 119
 #define X509V3_F_V2I_BASIC_CONSTRAINTS			 102
+#define X509V3_F_V2I_CRLD				 134
 #define X509V3_F_V2I_EXT_KU				 103
 #define X509V3_F_V2I_GENERAL_NAME			 117
 #define X509V3_F_V2I_GENERAL_NAMES			 118
