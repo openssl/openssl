@@ -177,7 +177,7 @@ WDIRS=  windows
 LIBS=   libcrypto.a libssl.a 
 
 GENERAL=        Makefile
-BASENAME=       opentls
+BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
@@ -289,8 +289,8 @@ tar:
 	@gtar --no-recursion -cvf - \
 		`find * -depth -print | grep -v CVS | grep -v .cvsignore | sort` |\
 	tardy --user_number=0  --user_name=rse      \
-	      --group_number=0 --group_name=opentls \
-	      --prefix=opentls-$(VERSION) - |\
+	      --group_number=0 --group_name=openssl \
+	      --prefix=openssl-$(VERSION) - |\
 	gzip --best >../$(TARFILE).gz; \
 	ls -l ../$(TARFILE).gz
 
