@@ -5,6 +5,15 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6e and OpenSSL 0.9.6f:
+
+      o Various important bugfixes.
+
+  Major changes between OpenSSL 0.9.6d and OpenSSL 0.9.6e:
+
+      o Important security related bugfixes.
+      o Various SSL/TLS library bugfixes.
+
   Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
 
       o Various SSL/TLS library bugfixes.
