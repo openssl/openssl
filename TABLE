@@ -986,6 +986,23 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
+*** hpux-parisc-cc-o4
+$cc           = cc
+$cflags       = -Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
+$unistd       = 
+$thread_cflag = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
 *** hpux-parisc-gcc
 $cc           = gcc
 $cflags       = -O3 -DB_ENDIAN -DBN_DIV2W
