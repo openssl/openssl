@@ -119,6 +119,9 @@ static void sv_usage(void)
 	fprintf(stderr," -reuse        - use session-id reuse\n");
 	fprintf(stderr," -num <val>    - number of connections to perform\n");
 	fprintf(stderr," -bytes <val>  - number of bytes to swap between client/server\n");
+#if !defined NO_DH && !defined NO_DSA
+	fprintf(stderr," -dhe1024      - generate 1024 bit key for DHE\n");
+#endif
 #ifndef NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
@@ -156,6 +159,7 @@ int main(int argc, char *argv[])
 	int number=1,reuse=0;
 	long bytes=1L;
 	SSL_CIPHER *ciph;
+	int dhe1024 = 0;
 #ifndef NO_DH
 	DH *dh;
 #endif
@@ -180,6 +184,8 @@ int main(int argc, char *argv[])
 			debug=1;
 		else if	(strcmp(*argv,"-reuse") == 0)
 			reuse=1;
+		else if	(strcmp(*argv,"-dhe1024") == 0)
+			dhe1024=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -305,7 +311,29 @@ bad:
 		}
 
 #ifndef NO_DH
-	dh=get_dh512();
+# ifndef NO_DSA
+	if (dhe1024) 
+		{
+		DSA *dsa;
+
+		if (verbose)
+			{
+			fprintf(stdout, "Creating 1024 bit DHE parameters ...");
+			fflush(stdout);
+			}
+
+		dsa = DSA_generate_parameters(1024, NULL, 0, NULL, NULL, 0, NULL);
+		dh = DSA_dup_DH(dsa);	
+		DSA_free(dsa);
+		/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
+		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
+
+		if (verbose)
+			fprintf(stdout, " done\n");
+		}
+	else
+# endif
+		dh=get_dh512();
 	SSL_CTX_set_tmp_dh(s_ctx,dh);
 	DH_free(dh);
 #endif

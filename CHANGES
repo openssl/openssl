@@ -4,6 +4,27 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Aug 1999]
 
+  *) New function DSA_dup_DH, which duplicates DSA parameters/keys as
+     DH parameters/keys (q is lost during that conversion, but the resulting
+     DH parameters contain its length).
+
+     For 1024-bit p, DSA_generate_parameters followed by DSA_dup_DH is
+     much faster than DH_generate_parameters (which creates parameters
+     where p = 2*q + 1), and also the smaller q makes DH computations
+     much more efficient (160-bit exponentiation instead of 1024-bit
+     exponentiation); so this provides a convenient way to support DHE
+     ciphersuites in SSL/TLS servers (see ssl/ssltest.c).  It is of
+     utter importance to use
+         SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
+     or
+         SSL_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
+     when such DH parameters are used, because otherwise small subgroup
+     attacks may become possible!
+     [Bodo Moeller]
+
+  *) Avoid memory leak in i2d_DHparams.
+     [Bodo Moeller]
+
   *) Allow the -k option to be used more than once in the enc program:
      this allows the same encrypted message to be read by multiple recipients.
      [Steve Henson]

@@ -94,7 +94,12 @@ int i2d_DHparams(DH *a, unsigned char **pp)
 		}
 
 	t=ASN1_object_size(1,tot,V_ASN1_SEQUENCE);
-	if (pp == NULL) return(t);
+	if (pp == NULL)
+		{
+		if (num[2] != NULL)
+			BN_free(num[2]);
+		return(t);
+		}
 
 	p= *pp;
 	ASN1_put_object(&p,1,tot,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);

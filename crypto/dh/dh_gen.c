@@ -92,6 +92,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	BN_CTX *ctx=NULL;
 
 	ret=DH_new();
+	if (ret == NULL) goto err;
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	t1= &(ctx->bn[0]);

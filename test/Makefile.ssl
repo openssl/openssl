@@ -327,10 +327,10 @@ dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dhtest.o: ../include/openssl/stack.h
 dsatest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-dsatest.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-dsatest.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
-dsatest.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
-dsatest.o: ../include/openssl/stack.h
+dsatest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+dsatest.o: ../include/openssl/dsa.h ../include/openssl/err.h
+dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dsatest.o: ../include/openssl/rand.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/err.h
 exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h

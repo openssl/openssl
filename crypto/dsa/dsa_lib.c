@@ -145,3 +145,40 @@ int DSA_size(DSA *r)
 	return(ret);
 	}
 
+#ifndef NO_DH
+DH *DSA_dup_DH(DSA *r)
+	{
+	/* DSA has p, q, g, optional pub_key, optional priv_key.
+	 * DH has p, optional length, g, optional pub_key, optional priv_key.
+	 */ 
+
+	DH *ret;
+
+	if (r == NULL)
+		goto err;
+	ret = DH_new();
+	if (ret == NULL)
+		goto err;
+	if (r->p != NULL) 
+		if ((ret->p = BN_dup(r->p)) == NULL)
+			goto err;
+	if (r->q != NULL)
+		ret->length = BN_num_bits(r->q);
+	if (r->g != NULL)
+		if ((ret->g = BN_dup(r->g)) == NULL)
+			goto err;
+	if (r->pub_key != NULL)
+		if ((ret->pub_key = BN_dup(r->pub_key)) == NULL)
+			goto err;
+	if (r->priv_key != NULL)
+		if ((ret->priv_key = BN_dup(r->priv_key)) == NULL)
+			goto err;
+
+	return ret;
+
+ err:
+	if (ret != NULL)
+		DH_free(ret);
+	return NULL;
+	}
+#endif

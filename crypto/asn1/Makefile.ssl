@@ -346,9 +346,10 @@ d2i_dhp.o: ../../include/openssl/stack.h ../cryptlib.h
 d2i_dsap.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 d2i_dsap.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 d2i_dsap.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-d2i_dsap.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-d2i_dsap.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-d2i_dsap.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+d2i_dsap.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+d2i_dsap.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+d2i_dsap.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+d2i_dsap.o: ../../include/openssl/opensslconf.h
 d2i_dsap.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 d2i_dsap.o: ../../include/openssl/stack.h ../cryptlib.h
 d2i_pr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
@@ -402,17 +403,19 @@ d2i_r_pu.o: ../cryptlib.h
 d2i_s_pr.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 d2i_s_pr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 d2i_s_pr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-d2i_s_pr.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-d2i_s_pr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-d2i_s_pr.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+d2i_s_pr.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+d2i_s_pr.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+d2i_s_pr.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+d2i_s_pr.o: ../../include/openssl/opensslconf.h
 d2i_s_pr.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 d2i_s_pr.o: ../../include/openssl/stack.h ../cryptlib.h
 d2i_s_pu.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 d2i_s_pu.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 d2i_s_pu.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-d2i_s_pu.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-d2i_s_pu.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-d2i_s_pu.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+d2i_s_pu.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+d2i_s_pu.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+d2i_s_pu.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+d2i_s_pu.o: ../../include/openssl/opensslconf.h
 d2i_s_pu.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 d2i_s_pu.o: ../../include/openssl/stack.h ../cryptlib.h
 evp_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
@@ -454,9 +457,9 @@ i2d_dhp.o: ../cryptlib.h
 i2d_dsap.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 i2d_dsap.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 i2d_dsap.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-i2d_dsap.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-i2d_dsap.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-i2d_dsap.o: ../../include/openssl/opensslconf.h
+i2d_dsap.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+i2d_dsap.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+i2d_dsap.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 i2d_dsap.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 i2d_dsap.o: ../../include/openssl/stack.h ../cryptlib.h
 i2d_pr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
@@ -510,17 +513,19 @@ i2d_r_pu.o: ../cryptlib.h
 i2d_s_pr.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 i2d_s_pr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 i2d_s_pr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-i2d_s_pr.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-i2d_s_pr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-i2d_s_pr.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+i2d_s_pr.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+i2d_s_pr.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+i2d_s_pr.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+i2d_s_pr.o: ../../include/openssl/opensslconf.h
 i2d_s_pr.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 i2d_s_pr.o: ../../include/openssl/stack.h ../cryptlib.h
 i2d_s_pu.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 i2d_s_pu.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 i2d_s_pu.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-i2d_s_pu.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-i2d_s_pu.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-i2d_s_pu.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+i2d_s_pu.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+i2d_s_pu.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+i2d_s_pu.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+i2d_s_pu.o: ../../include/openssl/opensslconf.h
 i2d_s_pu.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 i2d_s_pu.o: ../../include/openssl/stack.h ../cryptlib.h
 n_pkey.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
