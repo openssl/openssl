@@ -359,7 +359,7 @@ the same as the B<-md> option. The message digest to use. Mandatory.
 the text database file to use. Mandatory. This file must be present
 though initially it will be empty.
 
-=item B<serialfile>
+=item B<serial>
 
 a text file containing the next serial number to use in hex. Mandatory.
 This file must be present and contain a valid serial number.
