@@ -125,6 +125,24 @@
 #include <unistd.h>
 #include <time.h>
 
+#ifdef __OpenBSD__
+int RAND_poll(void)
+{
+	u_int32_t rnd = 0, i;
+	unsigned char buf[ENTROPY_NEEDED];
+
+	for (i = 0; i < sizeof(buf); i++) {
+		if (i % 4 == 0)
+			rnd = arc4random();
+		buf[i] = rnd;
+		rnd >>= 8;
+	}
+	RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
+	memset(buf, 0, sizeof(buf));
+
+	return 1;
+}
+#else
 int RAND_poll(void)
 {
 	unsigned long l;
@@ -236,6 +254,7 @@ int RAND_poll(void)
 #endif
 }
 
+#endif
 #endif
 
 #if defined(OPENSSL_SYS_VXWORKS)

@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+/* We need to define this to get macros like S_IFBLK and S_IFCHR */
+#define _XOPEN_SOURCE 1
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +67,7 @@
 #include "e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
+#include <openssl/buffer.h>
 
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
@@ -106,6 +110,14 @@ int RAND_load_file(const char *file, long bytes)
 
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
+	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+	  /* this file is a device. we don't want read an infinite number
+	   * of bytes from a random device, nor do we want to use buffered
+	   * I/O because we will waste system entropy. 
+	   */
+	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
+	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
+	}
 	for (;;)
 		{
 		if (bytes > 0)
@@ -135,7 +147,20 @@ int RAND_write_file(const char *file)
 	int i,ret=0,rand_err=0;
 	FILE *out = NULL;
 	int n;
+	struct stat sb;
 	
+	i=stat(file,&sb);
+	if (i != -1) { 
+	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+	    /* this file is a device. we don't write back to it. 
+	     * we "succeed" on the assumption this is some sort 
+	     * of random device. Otherwise attempting to write to 
+	     * and chmod the device causes problems.
+	     */
+	    return(1); 
+	  }
+	}
+
 #if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
 	/* For some reason Win32 can't write to files created this way */
 	
@@ -197,16 +222,17 @@ err:
 const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
-	char *ret=NULL;
+	int ok = 0;
+#ifdef __OpenBSD__
+	struct stat sb;
+#endif
 
 	if (OPENSSL_issetugid() == 0)
 		s=getenv("RANDFILE");
-	if (s != NULL)
+	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
-		if(strlen(s) >= size)
+		if (BUF_strlcpy(buf,s,size) >= size)
 			return NULL;
-		strcpy(buf,s);
-		ret=buf;
 		}
 	else
 		{
@@ -218,17 +244,36 @@ const char *RAND_file_name(char *buf, size_t size)
 			s = DEFAULT_HOME;
 			}
 #endif
-		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
+		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
 			{
-			strcpy(buf,s);
+			BUF_strlcpy(buf,s,size);
 #ifndef OPENSSL_SYS_VMS
-			strcat(buf,"/");
+			BUF_strlcat(buf,"/",size);
 #endif
-			strcat(buf,RFILE);
-			ret=buf;
+			BUF_strlcat(buf,RFILE,size);
+			ok = 1;
 			}
 		else
 		  	buf[0] = '\0'; /* no file name */
 		}
-	return(ret);
+
+#ifdef __OpenBSD__
+	/* given that all random loads just fail if the file can't be 
+	 * seen on a stat, we stat the file we're returning, if it
+	 * fails, use /dev/arandom instead. this allows the user to 
+	 * use their own source for good random data, but defaults
+	 * to something hopefully decent if that isn't available. 
+	 */
+
+	if (!ok)
+		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
+			return(NULL);
+		}	
+	if (stat(buf,&sb) == -1)
+		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
+			return(NULL);
+		}	
+
+#endif
+	return(buf);
 	}
