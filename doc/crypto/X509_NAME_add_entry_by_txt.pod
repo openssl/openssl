@@ -1,9 +1,9 @@
 =pod
 
+=head1 NAME
+
 X509_NAME_add_entry_by_txt, X509_NAME_add_entry_by_OBJ, X509_NAME_add_entry_by_NID,
 X509_NAME_add_entry, X509_NAME_delete_entry - X509_NAME modification functions
-
-=head1 NAME
 
 =head1 SYNOPSIS
 
