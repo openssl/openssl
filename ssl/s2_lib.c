@@ -454,6 +454,9 @@ int ssl2_generate_key_material(SSL *s)
 
 		EVP_DigestInit_ex(&ctx, md5, NULL);
 
+		OPENSSL_assert(s->session->master_key_length >= 0
+		    && s->session->master_key_length
+		    < sizeof s->session->master_key);
 		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
 		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
@@ -492,9 +495,7 @@ void ssl2_write_error(SSL *s)
 
 	error=s->error; /* number of bytes left to write */
 	s->error=0;
-	if (error < 0 || error > sizeof buf) /* can't happen */
- 		return;
-  
+	OPENSSL_assert(error >= 0 && error <= sizeof buf);
 	i=ssl2_write(s,&(buf[3-error]),error);
 
 /*	if (i == error) s->rwstate=state; */

@@ -203,8 +203,9 @@ const char *RAND_file_name(char *buf, size_t size)
 		s=getenv("RANDFILE");
 	if (s != NULL)
 		{
-		strncpy(buf,s,size-1);
-		buf[size-1]='\0';
+		if(strlen(s) >= size)
+			return NULL;
+		strcpy(buf,s);
 		ret=buf;
 		}
 	else

@@ -666,7 +666,6 @@ static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM *, MEM_LEAK *)
 void CRYPTO_mem_leaks(BIO *b)
 	{
 	MEM_LEAK ml;
-	char buf[80];
 
 	if (mh == NULL && amih == NULL)
 		return;
@@ -681,9 +680,8 @@ void CRYPTO_mem_leaks(BIO *b)
 				(char *)&ml);
 	if (ml.chunks != 0)
 		{
-		sprintf(buf,"%ld bytes leaked in %d chunks\n",
-			ml.bytes,ml.chunks);
-		BIO_puts(b,buf);
+		BIO_printf(b,"%ld bytes leaked in %d chunks\n",
+			   ml.bytes,ml.chunks);
 		}
 	else
 		{

@@ -191,7 +191,9 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		if (a->data == NULL)
 			c=(unsigned char *)OPENSSL_malloc(w+1);
 		else
-			c=(unsigned char *)OPENSSL_realloc(a->data,w+1);
+			c=(unsigned char *)OPENSSL_realloc_clean(a->data,
+								 a->length,
+								 w+1);
 		if (c == NULL) return(0);
 		if (w+1-a->length > 0) memset(c+a->length, 0, w+1-a->length);
 		a->data=c;

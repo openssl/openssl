@@ -149,7 +149,7 @@ typedef struct pem_recip_st
 
 	int cipher;
 	int key_enc;
-	char iv[8];
+	/*	char iv[8]; unused and wrong size */
 	} PEM_USER;
 
 typedef struct pem_ctx_st
@@ -165,7 +165,8 @@ typedef struct pem_ctx_st
 
 	struct	{
 		int cipher;
-		unsigned char iv[8];
+	/* unused, and wrong size
+	   unsigned char iv[8]; */
 		} DEK_info;
 		
 	PEM_USER *originator;
@@ -187,7 +188,8 @@ typedef struct pem_ctx_st
 	EVP_CIPHER *dec;	/* date encryption cipher */
 	int key_len;		/* key length */
 	unsigned char *key;	/* key */
-	unsigned char iv[8];	/* the iv */
+	/* unused, and wrong size
+	   unsigned char iv[8]; */
 
 	
 	int  data_enc;		/* is the data encrypted */

@@ -783,24 +783,6 @@ char
 	return ((string == NULL)? null: string);
         }
 
-#define	MAXKNUM	255
-char
-*knumber(int len, krb5_octet *contents)
-        {
-	static char	buf[MAXKNUM+1];
-	int 		i;
-
-	BIO_snprintf(buf, MAXKNUM, "[%d] ", len);
-
-	for (i=0; i < len  &&  MAXKNUM > strlen(buf)+3; i++)
-                {
-                BIO_snprintf(&buf[strlen(buf)], 3, "%02x", contents[i]);
-                }
-
-	return (buf);
-	}
-
-
 /*	Given KRB5 enctype (basically DES or 3DES),
 **	return closest match openssl EVP_ encryption algorithm.
 **	Return NULL for unknown or problematic (krb5_dk_encrypt) enctypes.
@@ -2037,7 +2019,7 @@ krb5_error_code  kssl_check_authent(
             }
 #endif
 	enc = kssl_map_enc(enctype);
-	memset(iv, 0, EVP_MAX_IV_LENGTH);       /* per RFC 1510 */
+	memset(iv, 0, sizeof iv);       /* per RFC 1510 */
 
 	if (enc == NULL)
 		{

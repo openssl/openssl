@@ -134,7 +134,7 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	err=	X509_STORE_CTX_get_error(ctx);
 	depth=	X509_STORE_CTX_get_error_depth(ctx);
 
-	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,256);
+	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
 	BIO_printf(bio_err,"depth=%d %s\n",depth,buf);
 	if (!ok)
 		{
@@ -154,7 +154,7 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	switch (ctx->error)
 		{
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,256);
+		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
 		BIO_printf(bio_err,"issuer= %s\n",buf);
 		break;
 	case X509_V_ERR_CERT_NOT_YET_VALID:

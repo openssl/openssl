@@ -296,6 +296,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_LENGTH_TOO_SHORT                  ,"length too short"},
 {SSL_R_LIBRARY_BUG                       ,"library bug"},
 {SSL_R_LIBRARY_HAS_NO_CIPHERS            ,"library has no ciphers"},
+{SSL_R_MASTER_KEY_TOO_LONG               ,"master key too long"},
 {SSL_R_MESSAGE_TOO_LONG                  ,"message too long"},
 {SSL_R_MISSING_DH_DSA_CERT               ,"missing dh dsa cert"},
 {SSL_R_MISSING_DH_KEY                    ,"missing dh key"},

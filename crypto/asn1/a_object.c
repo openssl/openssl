@@ -183,8 +183,8 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 
 	if ((a == NULL) || (a->data == NULL))
 		return(BIO_write(bp,"NULL",4));
-	i=i2t_ASN1_OBJECT(buf,80,a);
-	if (i > 80) i=80;
+	i=i2t_ASN1_OBJECT(buf,sizeof buf,a);
+	if (i > sizeof buf) i=sizeof buf;
 	BIO_write(bp,buf,i);
 	return(i);
 	}

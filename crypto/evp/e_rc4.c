@@ -69,8 +69,6 @@
 
 typedef struct
     {
-    /* FIXME: what is the key for? */
-    unsigned char key[EVP_RC4_KEY_SIZE];
     RC4_KEY ks;	/* working key */
     } EVP_RC4_KEY;
 
@@ -121,9 +119,8 @@ const EVP_CIPHER *EVP_rc4_40(void)
 static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv, int enc)
 	{
-	memcpy(&data(ctx)->key[0],key,EVP_CIPHER_CTX_key_length(ctx));
 	RC4_set_key(&data(ctx)->ks,EVP_CIPHER_CTX_key_length(ctx),
-		data(ctx)->key);
+		    key);
 	return 1;
 	}
 

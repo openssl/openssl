@@ -59,6 +59,7 @@
 #include "ssl_locl.h"
 #ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
+#include "cryptlib.h"
 
 int ssl2_enc_init(SSL *s, int client)
 	{
@@ -95,10 +96,12 @@ int ssl2_enc_init(SSL *s, int client)
 
 	num=c->key_len;
 	s->s2->key_material_length=num*2;
+	OPENSSL_assert(s->s2->key_material_length <= sizeof s->s2->key_material);
 
 	if (ssl2_generate_key_material(s) <= 0)
 		return 0;
 
+	OPENSSL_assert(c->iv_len <= sizeof s->session->key_arg);
 	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
 	EVP_DecryptInit_ex(rs,c,NULL,&(s->s2->key_material[(client)?0:num]),

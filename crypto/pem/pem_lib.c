@@ -138,7 +138,7 @@ void PEM_proc_type(char *buf, int type)
 
 void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	{
-	static unsigned char map[17]="0123456789ABCDEF";
+	static const unsigned char map[17]="0123456789ABCDEF";
 	long i;
 	int j;
 
@@ -304,6 +304,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		goto err;
 		}
 	/* dzise + 8 bytes are needed */
+	// actually it needs the cipher block size extra...
 	data=(unsigned char *)OPENSSL_malloc((unsigned int)dsize+20);
 	if (data == NULL)
 		{
@@ -333,6 +334,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 			kstr=(unsigned char *)buf;
 			}
 		RAND_add(data,i,0);/* put in the RSA key. */
+		OPENSSL_assert(enc->iv_len <= sizeof iv);
 		if (RAND_pseudo_bytes(iv,enc->iv_len) < 0) /* Generate a salt */
 			goto err;
 		/* The 'iv' is used as the iv and as a salt.  It is
@@ -340,6 +342,8 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		EVP_BytesToKey(enc,EVP_md5(),iv,kstr,klen,1,key,NULL);
 
 		if (kstr == (unsigned char *)buf) memset(buf,0,PEM_BUFSIZE);
+
+		OPENSSL_assert(strlen(objstr)+23+2*enc->iv_len+13 <= sizeof buf);
 
 		buf[0]='\0';
 		PEM_proc_type(buf,PEM_TYPE_ENCRYPTED);
@@ -691,7 +695,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 			if (strncmp(buf,"-----END ",9) == 0)
 				break;
 			if (i > 65) break;
-			if (!BUF_MEM_grow(dataB,i+bl+9))
+			if (!BUF_MEM_grow_clean(dataB,i+bl+9))
 				{
 				PEMerr(PEM_F_PEM_READ_BIO,ERR_R_MALLOC_FAILURE);
 				goto err;

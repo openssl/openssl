@@ -218,7 +218,8 @@ int main(int Argc, char *Argv[])
 #define PROG_NAME_SIZE	39
 	char pname[PROG_NAME_SIZE+1];
 	FUNCTION f,*fp;
-	MS_STATIC char *prompt,buf[1024],config_name[256];
+	MS_STATIC char *prompt,buf[1024];
+	char *to_free=NULL;
 	int n,i,ret=0;
 	int argc;
 	char **argv,*p;
@@ -261,14 +262,7 @@ int main(int Argc, char *Argv[])
 	if (p == NULL)
 		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
-		{
-		strcpy(config_name,X509_get_default_cert_area());
-#ifndef OPENSSL_SYS_VMS
-		strcat(config_name,"/");
-#endif
-		strcat(config_name,OPENSSL_CONF);
-		p=config_name;
-		}
+		p=to_free=make_config_name();
 
 	default_config_file=p;
 
@@ -284,7 +278,7 @@ int main(int Argc, char *Argv[])
 	prog=prog_init();
 
 	/* first check the program name */
-	program_name(Argv[0],pname,PROG_NAME_SIZE);
+	program_name(Argv[0],pname,sizeof pname);
 
 	f.name=pname;
 	fp=(FUNCTION *)lh_retrieve(prog,&f);
@@ -312,7 +306,7 @@ int main(int Argc, char *Argv[])
 		{
 		ret=0;
 		p=buf;
-		n=1024;
+		n=sizeof buf;
 		i=0;
 		for (;;)
 			{
@@ -346,6 +340,8 @@ int main(int Argc, char *Argv[])
 	BIO_printf(bio_err,"bad exit\n");
 	ret=1;
 end:
+	if (to_free)
+		OPENSSL_free(to_free);
 	if (config != NULL)
 		{
 		NCONF_free(config);

@@ -146,6 +146,8 @@
 #undef BUFSIZZ
 #define BUFSIZZ 1024*10
 
+#define MYBUFSIZ 1024*8
+
 #undef min
 #undef max
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -320,6 +322,11 @@ static int parseArgs(int argc, char **argv)
 		{
 		if (--argc < 1) goto bad;
 		s_www_path= *(++argv);
+		if(strlen(s_www_path) > MYBUFSIZ-100)
+			{
+			BIO_printf(bio_err,"-www option too long\n");
+			badop=1;
+			}
 		}
 	else if(strcmp(*argv,"-bugs") == 0)
 	    st_bugs=1;

@@ -192,7 +192,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	{
 	unsigned char *p,*key_block,*mac_secret;
 	unsigned char exp_key[EVP_MAX_KEY_LENGTH];
-	unsigned char exp_iv[EVP_MAX_KEY_LENGTH];
+	unsigned char exp_iv[EVP_MAX_IV_LENGTH];
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	EVP_CIPHER_CTX *dd;
 	const EVP_CIPHER *c;

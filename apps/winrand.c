@@ -118,7 +118,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         HDC hdc;
 	PAINTSTRUCT ps;
         RECT rect;
-        char buffer[200];
         static int seeded = 0;
 
 	switch (iMsg)

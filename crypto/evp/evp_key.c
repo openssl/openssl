@@ -118,6 +118,8 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 
 	nkey=type->key_len;
 	niv=type->iv_len;
+	OPENSSL_assert(nkey <= EVP_MAX_KEY_LENGTH);
+	OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
 
 	if (data == NULL) return(nkey);
 

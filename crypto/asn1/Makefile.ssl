@@ -286,13 +286,14 @@ a_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_sign.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 a_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 a_sign.o: ../cryptlib.h a_sign.c
-a_strex.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-a_strex.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-a_strex.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-a_strex.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-a_strex.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-a_strex.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-a_strex.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+a_strex.o: ../../e_os.h ../../include/openssl/aes.h
+a_strex.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+a_strex.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+a_strex.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+a_strex.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+a_strex.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+a_strex.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+a_strex.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 a_strex.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
 a_strex.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
 a_strex.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
@@ -305,7 +306,7 @@ a_strex.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 a_strex.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 a_strex.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 a_strex.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
-a_strex.o: ../../include/openssl/x509_vfy.h a_strex.c charmap.h
+a_strex.o: ../../include/openssl/x509_vfy.h ../cryptlib.h a_strex.c charmap.h
 a_strnid.o: ../../e_os.h ../../include/openssl/asn1.h
 a_strnid.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 a_strnid.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

@@ -664,7 +664,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 		if(!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL)) goto err;
 		len = buf.length;
 		/* Append a final null to string */
-		if(!BUF_MEM_grow(&buf, len + 1)) {
+		if(!BUF_MEM_grow_clean(&buf, len + 1)) {
 			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
@@ -857,7 +857,7 @@ static int collect_data(BUF_MEM *buf, unsigned char **p, long plen)
 		int len;
 		if(buf) {
 			len = buf->length;
-			if(!BUF_MEM_grow(buf, len + plen)) {
+			if(!BUF_MEM_grow_clean(buf, len + plen)) {
 				ASN1err(ASN1_F_COLLECT_DATA, ERR_R_MALLOC_FAILURE);
 				return 0;
 			}

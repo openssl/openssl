@@ -464,7 +464,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 
 		sprintf(tbuf,"%d.%lu",i,l);
 		i=strlen(tbuf);
-		strncpy(buf,tbuf,buf_len);
+		BUF_strlcpy(buf,tbuf,buf_len);
 		buf_len-=i;
 		buf+=i;
 		n+=i;
@@ -476,7 +476,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 				sprintf(tbuf,".%lu",l);
 				i=strlen(tbuf);
 				if (buf_len > 0)
-					strncpy(buf,tbuf,buf_len);
+					BUF_strlcpy(buf,tbuf,buf_len);
 				buf_len-=i;
 				buf+=i;
 				n+=i;
@@ -488,10 +488,9 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		s=OBJ_nid2ln(nid);
 		if (s == NULL)
 			s=OBJ_nid2sn(nid);
-		strncpy(buf,s,buf_len);
+		BUF_strlcpy(buf,s,buf_len);
 		n=strlen(s);
 	}
-	buf[buf_len-1]='\0';
 	return(n);
 }
 

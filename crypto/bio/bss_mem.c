@@ -190,7 +190,7 @@ static int mem_write(BIO *b, const char *in, int inl)
 
 	BIO_clear_retry_flags(b);
 	blen=bm->length;
-	if (BUF_MEM_grow(bm,blen+inl) != (blen+inl))
+	if (BUF_MEM_grow_clean(bm,blen+inl) != (blen+inl))
 		goto end;
 	memcpy(&(bm->data[blen]),in,inl);
 	ret=inl;
@@ -284,7 +284,11 @@ static int mem_gets(BIO *bp, char *buf, int size)
 
 	BIO_clear_retry_flags(bp);
 	j=bm->length;
-	if (j <= 0) return(0);
+	if (j <= 0)
+		{
+		*buf='\0';
+		return 0;
+		}
 	p=bm->data;
 	for (i=0; i<j; i++)
 		{

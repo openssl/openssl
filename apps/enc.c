@@ -102,7 +102,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	static const char magic[]="Salted__";
-	char mbuf[8];	/* should be 1 smaller than magic */
+	char mbuf[sizeof magic-1];
 	char *strbuf=NULL;
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
@@ -131,7 +131,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 
 	/* first check the program name */
-	program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,sizeof pname);
 	if (strcmp(pname,"base64") == 0)
 		base64=1;
 
@@ -216,7 +216,7 @@ int MAIN(int argc, char **argv)
 				goto bad;
 				}
 			buf[0]='\0';
-			fgets(buf,128,infile);
+			fgets(buf,sizeof buf,infile);
 			fclose(infile);
 			i=strlen(buf);
 			if ((i > 0) &&
@@ -442,12 +442,12 @@ bad:
 			else {
 				if(enc) {
 					if(hsalt) {
-						if(!set_hex(hsalt,salt,PKCS5_SALT_LEN)) {
+						if(!set_hex(hsalt,salt,sizeof salt)) {
 							BIO_printf(bio_err,
 								"invalid hex salt value\n");
 							goto end;
 						}
-					} else if (RAND_pseudo_bytes(salt, PKCS5_SALT_LEN) < 0)
+					} else if (RAND_pseudo_bytes(salt, sizeof salt) < 0)
 						goto end;
 					/* If -P option then don't bother writing */
 					if((printkey != 2)
@@ -455,14 +455,14 @@ bad:
 							 sizeof magic-1) != sizeof magic-1
 					       || BIO_write(wbio,
 							    (char *)salt,
-							    PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
+							    sizeof salt) != sizeof salt)) {
 						BIO_printf(bio_err,"error writing output file\n");
 						goto end;
 					}
 				} else if(BIO_read(rbio,mbuf,sizeof mbuf) != sizeof mbuf
 					  || BIO_read(rbio,
 						      (unsigned char *)salt,
-				    PKCS5_SALT_LEN) != PKCS5_SALT_LEN) {
+				    sizeof salt) != sizeof salt) {
 					BIO_printf(bio_err,"error reading input file\n");
 					goto end;
 				} else if(memcmp(mbuf,magic,sizeof magic-1)) {
@@ -524,7 +524,7 @@ bad:
 			if (!nosalt)
 				{
 				printf("salt=");
-				for (i=0; i<PKCS5_SALT_LEN; i++)
+				for (i=0; i<sizeof salt; i++)
 					printf("%02X",salt[i]);
 				printf("\n");
 				}

@@ -186,7 +186,7 @@ if(*bool == -1) printf("BOOL MISSING\n");
 			char objbuf[80], *ln;
 			ln = OBJ_nid2ln(OBJ_obj2nid(fld));
 			if(!ln) ln = "";
-			OBJ_obj2txt(objbuf, 80, fld, 1);
+			OBJ_obj2txt(objbuf, sizeof objbuf, fld, 1);
 			BIO_printf(out, "%*s%s:%s (%s)", indent, "", "OBJECT", ln, objbuf);
 		} else {
 			BIO_printf(out, "%*s%s:", indent, "", name);

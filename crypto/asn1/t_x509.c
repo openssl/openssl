@@ -433,15 +433,17 @@ err:
 
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	{
-	char *s,*c;
+	char *s,*c,*b;
 	int ret=0,l,ll,i,first=1;
-	char buf[256];
 
 	ll=80-2-obase;
 
-	s=X509_NAME_oneline(name,buf,256);
+	b=s=X509_NAME_oneline(name,NULL,0);
 	if (!*s)
+		{
+		free(b);
 		return 1;
+		}
 	s++; /* skip the first slash */
 
 	l=ll;
@@ -497,6 +499,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 err:
 		X509err(X509_F_X509_NAME_PRINT,ERR_R_BUF_LIB);
 		}
+	free(b);
 	return(ret);
 	}
 

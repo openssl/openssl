@@ -482,7 +482,7 @@ static int buffer_gets(BIO *b, char *buf, int size)
 			size-=i;
 			ctx->ibuf_len-=i;
 			ctx->ibuf_off+=i;
-			if ((flag) || (i == size))
+			if (flag || size == 0)
 				{
 				*buf='\0';
 				return(num);

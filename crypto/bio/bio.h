@@ -522,6 +522,7 @@ int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, const void *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
+int	BIO_indent(BIO *b,int indent,int max);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long));
 char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
@@ -608,7 +609,7 @@ int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
 
 void BIO_copy_next_retry(BIO *b);
 
-long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
+/*long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);*/
 
 int BIO_printf(BIO *bio, const char *format, ...);
 int BIO_vprintf(BIO *bio, const char *format, va_list args);

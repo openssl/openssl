@@ -84,11 +84,11 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 
 int X509_CRL_print(BIO *out, X509_CRL *x)
 {
-	char buf[256];
 	STACK_OF(X509_REVOKED) *rev;
 	X509_REVOKED *r;
 	long l;
 	int i, n;
+	char *p;
 
 	BIO_printf(out, "Certificate Revocation List (CRL):\n");
 	l = X509_CRL_get_version(x);
@@ -96,8 +96,9 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 	i = OBJ_obj2nid(x->sig_alg->algorithm);
 	BIO_printf(out, "%8sSignature Algorithm: %s\n", "",
 				 (i == NID_undef) ? "NONE" : OBJ_nid2ln(i));
-	X509_NAME_oneline(X509_CRL_get_issuer(x),buf,256);
-	BIO_printf(out,"%8sIssuer: %s\n","",buf);
+	p=X509_NAME_oneline(X509_CRL_get_issuer(x),NULL,0);
+	BIO_printf(out,"%8sIssuer: %s\n","",p);
+	OPENSSL_free(p);
 	BIO_printf(out,"%8sLast Update: ","");
 	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
 	BIO_printf(out,"\n%8sNext Update: ","");

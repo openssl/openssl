@@ -519,7 +519,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 			else if (num == 2)
 				{
 				char buf[16];
-				char *p = ptr;
+				unsigned char *p = ptr;
 
 				sprintf(buf,"%d.%d.%d.%d",
 					p[0],p[1],p[2],p[3]);
@@ -530,7 +530,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 				}
 			else if (num == 3)
 				{
-				char buf[16];
+				char buf[DECIMAL_SIZE(int)+1];
 
 				sprintf(buf,"%d",*(int *)ptr);
 				if (data->param_port != NULL)

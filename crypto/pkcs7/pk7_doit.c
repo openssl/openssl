@@ -578,7 +578,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
 			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
-			if (!BUF_MEM_grow(buf,EVP_PKEY_size(si->pkey)))
+			if (!BUF_MEM_grow_clean(buf,EVP_PKEY_size(si->pkey)))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_BIO_LIB);
 				goto err;

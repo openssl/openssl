@@ -108,7 +108,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 		if (offset != 0)
 			{
 			size+=BUFSIZE;
-			if (!BUF_MEM_grow(buf,size)) goto err;
+			if (!BUF_MEM_grow_clean(buf,size)) goto err;
 			}
 		buf->data[offset]='\0';
 		BIO_gets(in,&(buf->data[offset]),size-offset);
@@ -268,7 +268,7 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
 			if (pp[j] != NULL)
 				l+=strlen(pp[j]);
 			}
-		if (!BUF_MEM_grow(buf,(int)(l*2+nn))) goto err;
+		if (!BUF_MEM_grow_clean(buf,(int)(l*2+nn))) goto err;
 
 		p=buf->data;
 		for (j=0; j<nn; j++)
