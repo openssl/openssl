@@ -330,7 +330,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return(NULL);
 		}
-	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*(words+1));
+	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*words);
 	if (A == NULL)
 		{
 		BNerr(BN_F_BN_EXPAND_INTERNAL,ERR_R_MALLOC_FAILURE);
@@ -369,7 +369,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		}
 
 #else
-	memset(A,0,sizeof(BN_ULONG)*(words+1));
+	memset(A,0,sizeof(BN_ULONG)*words);
 	memcpy(A,b->d,sizeof(b->d[0])*b->top);
 #endif
 		
@@ -387,6 +387,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
  * while bn_dup_expand() makes sure allocation is made only once.
  */
 
+#ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 	{
 	BIGNUM *r = NULL;
@@ -430,6 +431,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 	bn_check_top(r);
 	return r;
 	}
+#endif
 
 /* This is an internal function that should not be used in applications.
  * It ensures that 'b' has enough room for a 'words' word number
@@ -439,9 +441,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
-	BN_ULONG *A;
-	int i;
-
 	bn_check_top(b);
 
 	if (words > b->dmax)
@@ -453,10 +452,13 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		b->dmax=words;
 		}
 
+/* None of this should be necessary because of what b->top means! */
+#if 0
 	/* NB: bn_wexpand() calls this only if the BIGNUM really has to grow */
 	if (b->top < b->dmax)
 		{
-		A = &(b->d[b->top]);
+		int i;
+		BN_ULONG *A = &(b->d[b->top]);
 		for (i=(b->dmax - b->top)>>3; i>0; i--,A+=8)
 			{
 			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
@@ -466,6 +468,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 			A[0]=0;
 		assert(A == &(b->d[b->dmax]));
 		}
+#endif
 	bn_check_top(b);
 	return b;
 	}
@@ -632,6 +635,7 @@ BN_ULONG BN_get_word(const BIGNUM *a)
 	return(ret);
 	}
 
+#if 0 /* a->d[0] is a BN_ULONG, w is a BN_ULONG, what's the big deal? */
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i,n;
@@ -660,6 +664,18 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 	bn_check_top(a);
 	return(1);
 	}
+#else
+int BN_set_word(BIGNUM *a, BN_ULONG w)
+	{
+	bn_check_top(a);
+	if (bn_expand(a,(int)sizeof(BN_ULONG)*8) == NULL) return(0);
+	a->neg = 0;
+	a->d[0] = w;
+	a->top = (w ? 1 : 0);
+	bn_check_top(a);
+	return(1);
+	}
+#endif
 
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	{

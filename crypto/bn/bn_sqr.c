@@ -86,7 +86,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	if (!rr || !tmp) goto err;
 
 	max = 2 * al; /* Non-zero (from above) */
-	if (bn_wexpand(rr,max+1) == NULL) goto err;
+	if (bn_wexpand(rr,max) == NULL) goto err;
 
 	if (al == 4)
 		{
