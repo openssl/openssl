@@ -45,6 +45,10 @@
      always load it have also been added.
      [Steve Henson]
 
+  +) Add the OFB, CFB and CTR (all with 128 bit feedback) to AES.
+     Adjust NIDs and EVP layer.
+     [Stephen Sprunk <stephen@sprunk.org> and Richard Levitte]
+
   +) Config modules support in openssl utility.
 
      Most commands now load modules from the config file,
