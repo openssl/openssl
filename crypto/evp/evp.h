@@ -228,7 +228,7 @@ typedef struct evp_pkey_md_st
 			EVP_rsa_octet_string(),EVP_mdc2())
 #define EVP_dsa_sha() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA,\
-			EVP_dsa(),EVP_mdc2())
+			EVP_dsa(),EVP_sha())
 #define EVP_dsa_sha1() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA1,\
 			EVP_dsa(),EVP_sha1())
