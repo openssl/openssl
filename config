@@ -647,8 +647,10 @@ case "$GUESSOS" in
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
-  *86*-*-freebsd[3-9]*)	OUT="BSD-x86-elf" ;;
-  *86*-*-*bsd*)		OUT="BSD-x86" ;;
+  *86*-*-*bsd*)		case "`(file -L /usr/lib/libc.so.*) 2>/dev/null`" in
+			*ELF*)	OUT="BSD-x86-elf" ;;
+			*)	OUT="BSD-x86" ;;
+			esac ;;
   *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
@@ -660,15 +662,9 @@ case "$GUESSOS" in
 	  OUT="OpenUNIX-8" 
 	fi
 	;;
-  *-*-unixware7) OUT="unixware-7" ;;
-  *-*-UnixWare7) OUT="unixware-7" ;;
-  *-*-Unixware7) OUT="unixware-7" ;;
-  *-*-unixware20*) OUT="unixware-2.0" ;;
-  *-*-unixware21*) OUT="unixware-2.1" ;;
-  *-*-UnixWare20*) OUT="unixware-2.0" ;;
-  *-*-UnixWare21*) OUT="unixware-2.1" ;;
-  *-*-Unixware20*) OUT="unixware-2.0" ;;
-  *-*-Unixware21*) OUT="unixware-2.1" ;;
+  *-*-[Uu]nix[Ww]are7) OUT="unixware-7" ;;
+  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0" ;;
+  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1" ;;
   *-*-vos)
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"
