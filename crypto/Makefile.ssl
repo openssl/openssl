@@ -85,7 +85,7 @@ subdirs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making all in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	$(MAKE) -e INCLUDES='${INCLUDES}' all ) || exit 1; \
 	done;
 
 files:

@@ -244,7 +244,7 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	if [ -d "$$dir" ]; then \
 		(cd $$dir && echo "making $$target in $$dir..." && \
-		$(MAKE) $(BUILDENV) $$target ) || exit 1; \
+		$(MAKE) -e $(BUILDENV) $$target ) || exit 1; \
 	else \
 		$(MAKE) $$dir; \
 	fi; fi

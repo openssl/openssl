@@ -21,6 +21,7 @@ AES_ASM_OBJ=aes_core.o aes_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
+AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
 #TEST=aestest.c
