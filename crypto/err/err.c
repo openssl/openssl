@@ -535,7 +535,7 @@ char *ERR_error_string(unsigned long e, char *ret)
 	static char buf[256];
 
 	if (ret == NULL) ret=buf;
-	ERR_error_string_n(e, buf, 256);
+	ERR_error_string_n(e, ret, 256);
 
 	return(ret);
 	}
