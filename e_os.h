@@ -320,8 +320,8 @@ extern HINSTANCE _hInstance;
 
 #    define SSLeay_Read(a,b,c)     read((a),(b),(c))
 #    define SSLeay_Write(a,b,c)    write((a),(b),(c))
-#    define SHUTDOWN(fd)    { shutdown((fd),0); close((fd)); }
-#    define SHUTDOWN2(fd)   { shutdown((fd),2); close((fd)); }
+#    define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
+#    define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #    define INVALID_SOCKET	(-1)
 #  endif
 #endif
