@@ -27,7 +27,7 @@ arithmetic operations.
 
 BN_add_word() adds B<w> to B<a> (C<a+=w>).
 
-BN_sub_word() substracts B<w> from B<a> (C<a-=w>).
+BN_sub_word() subtracts B<w> from B<a> (C<a-=w>).
 
 BN_mul_word() multiplies B<a> and B<w> (C<a*=b>).
 

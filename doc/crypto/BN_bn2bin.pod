@@ -18,7 +18,7 @@ BN_print, BN_print_fp, BN_bn2mpi, BN_mpi2bn - Format conversions
  int BN_dec2bn(BIGNUM **a, const char *str);
 
  int BN_print(BIO *fp, const BIGNUM *a);
- int BN_print_fp(FILE *fp, BIGNUM *a);
+ int BN_print_fp(FILE *fp, const BIGNUM *a);
 
  int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
  BIGNUM *BN_mpi2bn(unsigned char *s, int len, BIGNUM *ret);
@@ -59,7 +59,7 @@ must be large enough to hold the result. The size can be determined by
 calling BN_bn2mpi(B<a>, NULL).
 
 BN_mpi2bn() converts the B<len> bytes long representation at B<s> to
-a B<BIGNUM> and stores it ar B<ret>, or in a newly allocated B<BIGNUM>
+a B<BIGNUM> and stores it at B<ret>, or in a newly allocated B<BIGNUM>
 if B<ret> is NULL.
 
 =head1 RETURN VALUES

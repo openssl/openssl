@@ -42,7 +42,7 @@ L<bn(3)|bn(3)>, L<err(3)|err(3)>, L<BN_add(3)|BN_add(3)>
 
 =head1 HISTORY
 
-BN_CTX_new() and BN_CTX_free() are availabe in all versions on SSLeay
+BN_CTX_new() and BN_CTX_free() are available in all versions on SSLeay
 and OpenSSL. BN_CTX_init() was added in SSLeay 0.9.1b.
 
 =cut

@@ -257,16 +257,15 @@ typedef struct bn_blinding_st
 
 /* Used for montgomery multiplication */
 typedef struct bn_mont_ctx_st
-        {
-	int use_word;	/* 0 for word form, 1 for long form */
-        int ri;         /* number of bits in R */
-        BIGNUM RR;     /* used to convert to montgomery form */
-        BIGNUM N;      /* The modulus */
-        BIGNUM Ni;     /* The inverse of N */
-	BN_ULONG n0;	/* word form of inverse, normally only one of
-			 * Ni or n0 is defined */
+	{
+	int use_word;  /* 0 for word form, 1 for bignum form */
+	int ri;        /* number of bits in R */
+	BIGNUM RR;     /* used to convert to montgomery form */
+	BIGNUM N;      /* The modulus */
+	BIGNUM Ni;     /* The inverse of N (bignum form) */
+	BN_ULONG n0;   /* The inverse of N in word form */
 	int flags;
-        } BN_MONT_CTX;
+	} BN_MONT_CTX;
 
 /* Used for reciprocal division/mod functions
  * It cannot be shared between threads
@@ -360,7 +359,7 @@ int	BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p,
 int	BN_mask_bits(BIGNUM *a,int n);
 int	BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx);
 #ifndef WIN16
-int	BN_print_fp(FILE *fp, BIGNUM *a);
+int	BN_print_fp(FILE *fp, const BIGNUM *a);
 #endif
 #ifdef HEADER_BIO_H
 int	BN_print(BIO *fp, const BIGNUM *a);

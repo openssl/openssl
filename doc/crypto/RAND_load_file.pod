@@ -28,7 +28,7 @@ up to to B<max_bytes> are read; if B<max_bytes> is -1, the complete file
 is read.
 
 RAND_write_file() writes a number of random bytes (currently 1024) to
-file B<filename> which can be used to initialze the PRNG by calling
+file B<filename> which can be used to initialize the PRNG by calling
 RAND_load_file() in a later session.
 
 =head1 RETURN VALUES

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Clean up BN_mod_mul_montgomery(): replace the broken (and unreadable)
+     bignum version of BN_from_montgomery() with the working code from
+     SSLeay 0.9.0 (the word based version is faster anyway), and clean up
+     the comments.
+     [Ulf Möller]
+
   *) Avoid a race condition in s2_clnt.c (function get_server_hello) that
      made it impossible to use the same SSL_SESSION data structure in
      SSL2 clients in multiple threads.

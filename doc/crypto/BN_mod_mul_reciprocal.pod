@@ -69,6 +69,6 @@ L<BN_CTX_new(3)|BN_CTX_new(3)>
 
 B<BN_RECP_CTX> was added in SSLeay 0.9.0. Before that, the function
 BN_reciprocal() was used instead, and the BN_mod_mul_reciprocal()
-arguments werde different.
+arguments were different.
 
 =cut

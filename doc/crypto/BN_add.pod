@@ -37,13 +37,15 @@ BN_mod_exp, BN_gcd - Arithmetic operations on BIGNUMs
 BN_add() adds B<a> and B<b> and places the result in B<r> (C<r=a+b>).
 B<r> may be the same B<BIGNUM> as B<a> or B<b>.
 
-BN_sub() substracts B<b> from B<a> and places the result in B<r> (C<r=a-b>).
+BN_sub() subtracts B<b> from B<a> and places the result in B<r> (C<r=a-b>).
 
 BN_mul() multiplies B<a> and B<b> and places the result in B<r> (C<r=a*b>).
+For multiplication by powers of 2, use BN_lshift(3).
 
 BN_div() divides B<a> by B<d> and places the result in B<dv> and the
 remainder in B<rem> (C<dv=a/d, rem=a%d>). Either of B<dv> and B<rem> may
 be NULL, in which case the respective value is not returned.
+For division by powers of 2, use BN_rshift(3).
 
 BN_sqr() takes the square of B<a> and places the result in B<r>
 (C<r=a^2>). B<r> and B<a> may be the same B<BIGNUM>.

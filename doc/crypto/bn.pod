@@ -81,7 +81,7 @@ bn - Multiprecision integer arithmetics
  int BN_hex2bn(BIGNUM **a, const char *str);
  int BN_dec2bn(BIGNUM **a, const char *str);
  int BN_print(BIO *fp, const BIGNUM *a);
- int BN_print_fp(FILE *fp, BIGNUM *a);
+ int BN_print_fp(FILE *fp, const BIGNUM *a);
  int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
  BIGNUM *BN_mpi2bn(unsigned char *s, int len, BIGNUM *ret);
 
@@ -125,7 +125,7 @@ should not be modified or accessed directly.
 
 The creation of B<BIGNUM> objects is described in L<BN_new(3)|BN_new(3)>;
 L<BN_add(3)|BN_add(3)> describes most of the arithmetic operations.
-Comparision is described in L<BN_cmp(3)|BN_cmp(3)>; L<BN_zero(3)|BN_zero(3)>
+Comparison is described in L<BN_cmp(3)|BN_cmp(3)>; L<BN_zero(3)|BN_zero(3)>
 describes certain assignments, L<BN_rand(3)|BN_rand(3)> the generation of
 random numbers, L<BN_generate_prime(3)|BN_generate_prime(3)> deals with prime
 numbers and L<BN_set_bit(3)|BN_set_bit(3)> with bit operations. The conversion

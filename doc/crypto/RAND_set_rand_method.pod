@@ -25,7 +25,7 @@ returns a pointer to that method.
 RAND_set_rand_method() sets the RAND method to B<meth>.
 RAND_get_rand_method() returns a pointer to the current method.
 
-=head1 THE RAND_METHOD STUCTURE
+=head1 THE RAND_METHOD STRUCTURE
 
  typedef struct rand_meth_st
  {

@@ -280,7 +280,7 @@ err:
 #ifndef NO_BIO
 
 #ifndef NO_FP_API
-int BN_print_fp(FILE *fp, BIGNUM *a)
+int BN_print_fp(FILE *fp, const BIGNUM *a)
 	{
 	BIO *b;
 	int ret;

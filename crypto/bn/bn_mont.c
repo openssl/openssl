@@ -66,8 +66,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#define MONT_WORD
-
 int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
@@ -108,6 +106,7 @@ err:
 int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 	     BN_CTX *ctx)
 	{
+	int retn=0;
 #ifdef BN_RECURSION_MONT
 	if (mont->use_word)
 #endif
@@ -115,23 +114,23 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 		BIGNUM *n,*r;
 		BN_ULONG *ap,*np,*rp,n0,v,*nrp;
 		int al,nl,max,i,x,ri;
-		int retn=0;
 
 		r= &(ctx->bn[ctx->tos]);
 
-		if (!BN_copy(r,a)) goto err1;
+		if (!BN_copy(r,a)) goto err;
 		n= &(mont->N);
 
 		ap=a->d;
-		/* mont->ri is the size of mont->N in bits/words */
+		/* mont->ri is the size of mont->N in bits (rounded up
+                   to the word size) */
 		al=ri=mont->ri/BN_BITS2;
 
 		nl=n->top;
 		if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
 
 		max=(nl+al+1); /* allow for overflow (no?) XXX */
-		if (bn_wexpand(r,max) == NULL) goto err1;
-		if (bn_wexpand(ret,max) == NULL) goto err1;
+		if (bn_wexpand(r,max) == NULL) goto err;
+		if (bn_wexpand(ret,max) == NULL) goto err;
 
 		r->neg=a->neg^n->neg;
 		np=n->d;
@@ -204,64 +203,34 @@ printf("word BN_from_montgomery %d * %d\n",nl,nl);
 			BN_usub(ret,ret,&(mont->N)); /* XXX */
 			}
 		retn=1;
-err1:
-		return(retn);
 		}
 #ifdef BN_RECURSION_MONT
 	else /* bignum version */ 
 		{
-		BIGNUM *t1,*t2,*t3;
-		int j,i;
+		BIGNUM *t1,*t2;
 
-#ifdef BN_COUNT
-printf("number BN_from_montgomery\n");
-#endif
+		t1=&(ctx->bn[ctx->tos]);
+		t2=&(ctx->bn[ctx->tos+1]);
+		ctx->tos+=2;
 
-		t1= &(ctx->bn[ctx->tos]);
-		t2= &(ctx->bn[ctx->tos+1]);
-		t3= &(ctx->bn[ctx->tos+2]);
+		if (!BN_copy(t1,a)) goto err;
+		BN_mask_bits(t1,mont->ri);
 
-		i=mont->Ni.top;
-		bn_wexpand(ret,i); /* perhaps only i*2 */
-		bn_wexpand(t1,i*4); /* perhaps only i*2 */
-		bn_wexpand(t2,i*2); /* perhaps only i   */
+		if (!BN_mul(t2,t1,&mont->Ni,ctx)) goto err;
+		BN_mask_bits(t2,mont->ri);
 
-		bn_mul_low_recursive(t2->d,a->d,mont->Ni.d,i,t1->d);
+		if (!BN_mul(t1,t2,&mont->N,ctx)) goto err;
+		if (!BN_add(t2,a,t1)) goto err;
+		BN_rshift(ret,t2,mont->ri);
 
-		BN_zero(t3);
-		BN_set_bit(t3,mont->N.top*BN_BITS2);
-		bn_sub_words(t3->d,t3->d,a->d,i);
-		bn_mul_high(ret->d,t2->d,mont->N.d,t3->d,i,t1->d);
-
-		/* hmm... if a is between i and 2*i, things are bad */
-		if (a->top > i)
-			{
-			j=(int)(bn_add_words(ret->d,ret->d,&(a->d[i]),i));
-			if (j) /* overflow */
-				bn_sub_words(ret->d,ret->d,mont->N.d,i);
-			}
-		ret->top=i;
-		bn_fix_top(ret);
-		if (a->d[0])
-			BN_add_word(ret,1); /* Always? */
-		else	/* Very very rare */
-			{
-			for (i=1; i<mont->N.top-1; i++)
-				{
-				if (a->d[i])
-					{
-					BN_add_word(ret,1); /* Always? */
-					break;
-					}
-				}
-			}
-
-		if (BN_ucmp(ret,&(mont->N)) >= 0)
-			BN_usub(ret,ret,&(mont->N));
-
-		return(1);
+		if (BN_ucmp(ret,&mont->N) >= 0)
+			BN_usub(ret,ret,&mont->N);
+		ctx->tos-=2;
+		retn=1;
 		}
 #endif
+ err:
+	return(retn);
 	}
 
 BN_MONT_CTX *BN_MONT_CTX_new(void)
@@ -307,7 +276,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	BN_copy(&(mont->N),mod);			/* Set N */
 
 #ifdef BN_RECURSION_MONT
-	if (mont->N.top < BN_MONT_CTX_SET_SIZE_WORD)
+	/* the word-based algorithm is faster */
+	if (mont->N.top > BN_MONT_CTX_SET_SIZE_WORD)
 #endif
 		{
 		BIGNUM tmod;
@@ -317,74 +287,47 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
 		BN_zero(R);
-		BN_set_bit(R,BN_BITS2);
-		/* I was bad, this modification of a passed variable was
-		 * breaking the multithreaded stuff :-(
-		 * z=mod->top;
-		 * mod->top=1; */
+		BN_set_bit(R,BN_BITS2);			/* R = 2^ri */
 
-		buf[0]=mod->d[0];
+		buf[0]=mod->d[0]; /* tmod = N mod word size */
 		buf[1]=0;
 		tmod.d=buf;
 		tmod.top=1;
-		tmod.max=mod->max;
+		tmod.max=2;
 		tmod.neg=mod->neg;
-
+							/* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,&tmod,ctx)) == NULL)
 			goto err;
-		BN_lshift(&Ri,&Ri,BN_BITS2);			/* R*Ri */
+		BN_lshift(&Ri,&Ri,BN_BITS2);		/* R*Ri */
 		if (!BN_is_zero(&Ri))
-			{
-#if 1
 			BN_sub_word(&Ri,1);
-#else
-			BN_usub(&Ri,&Ri,BN_value_one());	/* R*Ri - 1 */
-#endif
-			}
-		else
-			{
-			/* This is not common..., 1 in BN_MASK2,
-			 * It happens when buf[0] was == 1.  So for 8 bit,
-			 * this is 1/256, 16bit, 1 in 2^16 etc.
-			 */
-			BN_set_word(&Ri,BN_MASK2);
-			}
-		BN_div(&Ri,NULL,&Ri,&tmod,ctx);
+		else /* if N mod word size == 1 */
+			BN_set_word(&Ri,BN_MASK2);  /* Ri-- (mod word size) */
+		BN_div(&Ri,NULL,&Ri,&tmod,ctx);	  	 /* Ni = (R*Ri-1)/N */
 		mont->n0=Ri.d[0];
 		BN_free(&Ri);
-		/* mod->top=z; */
 		}
 #ifdef BN_RECURSION_MONT
 	else
-		{
+		{ /* bignum version */
 		mont->use_word=0;
-		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
-#if 1
+		mont->ri=BN_num_bits(mod);
 		BN_zero(R);
-		BN_set_bit(R,mont->ri);
-#else
-		BN_lshift(R,BN_value_one(),mont->ri);	/* R */
-#endif
+		BN_set_bit(R,mont->ri);			/* R = 2^ri */
+							/* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,mod,ctx)) == NULL)
 			goto err;
 		BN_lshift(&Ri,&Ri,mont->ri);		/* R*Ri */
-#if 1
 		BN_sub_word(&Ri,1);
-#else
-		BN_usub(&Ri,&Ri,BN_value_one());	/* R*Ri - 1 */
-#endif
+							/* Ni = (R*Ri-1) / N */
 		BN_div(&(mont->Ni),NULL,&Ri,mod,ctx);
 		BN_free(&Ri);
 		}
 #endif
 
 	/* setup RR for conversions */
-#if 1
 	BN_zero(&(mont->RR));
 	BN_set_bit(&(mont->RR),mont->ri*2);
-#else
-	BN_lshift(mont->RR,BN_value_one(),mont->ri*2);
-#endif
 	BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx);
 
 	return(1);
