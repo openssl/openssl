@@ -75,6 +75,7 @@
 
 static int ubsec_init(ENGINE *e);
 static int ubsec_finish(ENGINE *e);
+static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -104,7 +105,16 @@ static int ubsec_dh_generate_key(DH *dh);
 static int ubsec_rand_bytes(unsigned char *buf, int num);
 static int ubsec_rand_status(void);
 #endif
- 
+
+#define UBSEC_CMD_SO_PATH		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN ubsec_cmd_defns[] = {
+	{UBSEC_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'ubsec' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{0, NULL, NULL, 0}
+	};
+
 /* Our internal RSA_METHOD that we provide pointers to */
 
 static RSA_METHOD ubsec_rsa =
@@ -175,7 +185,9 @@ ENGINE *ENGINE_ubsec()
 			!ENGINE_set_BN_mod_exp(ret, ubsec_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(ret, ubsec_mod_exp_crt) ||
 			!ENGINE_set_init_function(ret, ubsec_init) ||
-			!ENGINE_set_finish_function(ret, ubsec_finish))
+			!ENGINE_set_finish_function(ret, ubsec_finish) ||
+			!ENGINE_set_ctrl_function(ret, ubsec_ctrl) ||
+			!ENGINE_set_cmd_defns(ret, ubsec_cmd_defns))
 		{
 		ENGINE_free(ret);
 		return NULL;
@@ -371,6 +383,31 @@ static int ubsec_finish(ENGINE *e)
 	p_UBSEC_math_accelerate_ioctl = NULL;
 	p_UBSEC_rng_ioctl = NULL;
 	return 1;
+	}
+
+static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	int initialised = ((ubsec_dso == NULL) ? 0 : 1);
+	switch(cmd)
+		{
+	case UBSEC_CMD_SO_PATH:
+		if(p == NULL)
+			{
+			ENGINEerr(ENGINE_F_UBSEC_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		if(initialised)
+			{
+			ENGINEerr(ENGINE_F_UBSEC_CTRL,ENGINE_R_ALREADY_LOADED);
+			return 0;
+			}
+		UBSEC_LIBNAME = (const char *)p;
+		return 1;
+	default:
+		break;
+		}
+	ENGINEerr(ENGINE_F_UBSEC_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	return 0;
 	}
 
 static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,

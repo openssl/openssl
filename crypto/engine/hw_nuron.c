@@ -66,8 +66,19 @@
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_NURON
 
-static const char *NURON_LIBNAME = "nuronssl";
+static const char def_NURON_LIBNAME[] = "nuronssl";
+static const char *NURON_LIBNAME = def_NURON_LIBNAME;
 static const char *NURON_F1 = "nuron_mod_exp";
+
+/* The definitions for control commands specific to this engine */
+#define NURON_CMD_SO_PATH		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN nuron_cmd_defns[] = {
+	{NURON_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'nuronssl' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{0, NULL, NULL, 0}
+	};
 
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
@@ -82,7 +93,7 @@ static int nuron_init(ENGINE *e)
 		return 0;
 		}
 
-	pvDSOHandle=DSO_load(NULL, NURON_LIBNAME, NULL,
+	pvDSOHandle = DSO_load(NULL, NURON_LIBNAME, NULL,
 		DSO_FLAG_NAME_TRANSLATION_EXT_ONLY);
 	if(!pvDSOHandle)
 		{
@@ -90,7 +101,7 @@ static int nuron_init(ENGINE *e)
 		return 0;
 		}
 
-	pfnModExp=(tfnModExp *)DSO_bind_func(pvDSOHandle, NURON_F1);
+	pfnModExp = (tfnModExp *)DSO_bind_func(pvDSOHandle, NURON_F1);
 	if(!pfnModExp)
 		{
 		ENGINEerr(ENGINE_F_NURON_INIT,ENGINE_R_DSO_FUNCTION_NOT_FOUND);
@@ -116,6 +127,31 @@ static int nuron_finish(ENGINE *e)
 	pfnModExp=NULL;
 	return 1;
 	}
+
+static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	int initialised = ((pvDSOHandle == NULL) ? 0 : 1);
+	switch(cmd)
+		{
+	case NURON_CMD_SO_PATH:
+		if(p == NULL)
+			{
+			ENGINEerr(ENGINE_F_NURON_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		if(initialised)
+			{
+			ENGINEerr(ENGINE_F_NURON_CTRL,ENGINE_R_ALREADY_LOADED);
+			return 0;
+			}
+		NURON_LIBNAME = (const char *)p;
+		return 1;
+	default:
+		break;
+		}
+	ENGINEerr(ENGINE_F_NURON_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	return 0;
+}
 
 static int nuron_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,
 			 const BIGNUM *m,BN_CTX *ctx)
@@ -250,7 +286,9 @@ ENGINE *ENGINE_nuron()
 			!ENGINE_set_DH(ret, &nuron_dh) ||
 			!ENGINE_set_BN_mod_exp(ret, nuron_mod_exp) ||
 			!ENGINE_set_init_function(ret, nuron_init) ||
-			!ENGINE_set_finish_function(ret, nuron_finish))
+			!ENGINE_set_finish_function(ret, nuron_finish) ||
+			!ENGINE_set_ctrl_function(ret, nuron_ctrl) ||
+			!ENGINE_set_cmd_defns(ret, nuron_cmd_defns))
 		{
 		ENGINE_free(ret);
 		return NULL;

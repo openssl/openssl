@@ -73,6 +73,7 @@
 
 static int atalla_init(ENGINE *e);
 static int atalla_finish(ENGINE *e);
+static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
 /* BIGNUM stuff */
 static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -98,6 +99,15 @@ static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+/* The definitions for control commands specific to this engine */
+#define ATALLA_CMD_SO_PATH		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN atalla_cmd_defns[] = {
+	{ATALLA_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'atasi' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{0, NULL, NULL, 0}
+	};
 
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD atalla_rsa =
@@ -166,7 +176,9 @@ ENGINE *ENGINE_atalla()
 			!ENGINE_set_DH(ret, &atalla_dh) ||
 			!ENGINE_set_BN_mod_exp(ret, atalla_mod_exp) ||
 			!ENGINE_set_init_function(ret, atalla_init) ||
-			!ENGINE_set_finish_function(ret, atalla_finish))
+			!ENGINE_set_finish_function(ret, atalla_finish) ||
+			!ENGINE_set_ctrl_function(ret, atalla_ctrl) ||
+			!ENGINE_set_cmd_defns(ret, atalla_cmd_defns))
 		{
 		ENGINE_free(ret);
 		return NULL;
@@ -220,7 +232,8 @@ static tfnASI_GetPerformanceStatistics *p_Atalla_GetPerformanceStatistics = NULL
  * atasi.dll on win32). For the purposes of testing, I have created a symbollic
  * link called "libatasi.so" so that we can use native name-translation - a
  * better solution will be needed. */
-static const char *ATALLA_LIBNAME = "atasi";
+static const char def_ATALLA_LIBNAME[] = "atasi";
+static const char *ATALLA_LIBNAME = def_ATALLA_LIBNAME;
 static const char *ATALLA_F1 = "ASI_GetHardwareConfig";
 static const char *ATALLA_F2 = "ASI_RSAPrivateKeyOpFn";
 static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
@@ -302,6 +315,31 @@ static int atalla_finish(ENGINE *e)
 	p_Atalla_RSAPrivateKeyOpFn = NULL;
 	p_Atalla_GetPerformanceStatistics = NULL;
 	return 1;
+	}
+
+static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	int initialised = ((atalla_dso == NULL) ? 0 : 1);
+	switch(cmd)
+		{
+	case ATALLA_CMD_SO_PATH:
+		if(p == NULL)
+			{
+			ENGINEerr(ENGINE_F_ATALLA_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		if(initialised)
+			{
+			ENGINEerr(ENGINE_F_ATALLA_CTRL,ENGINE_R_ALREADY_LOADED);
+			return 0;
+			}
+		ATALLA_LIBNAME = (const char *)p;
+		return 1;
+	default:
+		break;
+		}
+	ENGINEerr(ENGINE_F_ATALLA_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	return 0;
 	}
 
 static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,

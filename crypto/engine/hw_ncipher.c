@@ -126,6 +126,26 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	HWCryptoHook_CallerContext *cactx);
 static void hwcrhk_log_message(void *logstr, const char *message);
 
+/* The definitions for control commands specific to this engine */
+#define HWCRHK_CMD_SO_PATH		ENGINE_CMD_BASE
+#define HWCRHK_CMD_FORK_CHECK		(ENGINE_CMD_BASE + 1)
+#define HWCRHK_CMD_THREAD_LOCKING	(ENGINE_CMD_BASE + 2)
+static const ENGINE_CMD_DEFN hwcrhk_cmd_defns[] = {
+	{HWCRHK_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'hwcrhk' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{HWCRHK_CMD_FORK_CHECK,
+		"FORK_CHECK",
+		"Turns fork() checking on or off (boolean)",
+		ENGINE_CMD_FLAG_NUMERIC},
+	{HWCRHK_CMD_THREAD_LOCKING,
+		"THREAD_LOCKING",
+		"Turns thread-safe locking on or off (boolean)",
+		ENGINE_CMD_FLAG_NUMERIC},
+	{0, NULL, NULL, 0}
+	};
+
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD hwcrhk_rsa =
 	{
@@ -289,7 +309,8 @@ ENGINE *ENGINE_ncipher()
 			!ENGINE_set_finish_function(ret, hwcrhk_finish) ||
 			!ENGINE_set_ctrl_function(ret, hwcrhk_ctrl) ||
 			!ENGINE_set_load_privkey_function(ret, hwcrhk_load_privkey) ||
-			!ENGINE_set_load_pubkey_function(ret, hwcrhk_load_pubkey))
+			!ENGINE_set_load_pubkey_function(ret, hwcrhk_load_pubkey) ||
+			!ENGINE_set_cmd_defns(ret, hwcrhk_cmd_defns))
 		{
 		ENGINE_free(ret);
 		return NULL;
@@ -337,7 +358,8 @@ static HWCryptoHook_RSAUnloadKey_t *p_hwcrhk_RSAUnloadKey = NULL;
 static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 
 /* Used in the DSO operations. */
-static const char *HWCRHK_LIBNAME = "nfhwcrhk";
+static const char def_HWCRHK_LIBNAME[] = "nfhwcrhk";
+static const char *HWCRHK_LIBNAME = def_HWCRHK_LIBNAME;
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";
 static const char *n_hwcrhk_Finish = "HWCryptoHook_Finish";
 static const char *n_hwcrhk_ModExp = "HWCryptoHook_ModExp";
@@ -513,6 +535,19 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 
 	switch(cmd)
 		{
+	case HWCRHK_CMD_SO_PATH:
+		if(hwcrhk_dso)
+			{
+			ENGINEerr(ENGINE_F_HWCRHK_CTRL,ENGINE_R_ALREADY_LOADED);
+			return 0;
+			}
+		if(p == NULL)
+			{
+			ENGINEerr(ENGINE_F_HWCRHK_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		HWCRHK_LIBNAME = (const char *)p;
+		return 1;
 	case ENGINE_CTRL_SET_LOGSTREAM:
 		{
 		BIO *bio = (BIO *)p;
@@ -538,6 +573,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	/* this enables or disables the "SimpleForkCheck" flag used in the
 	 * initialisation structure. */
 	case ENGINE_CTRL_CHIL_SET_FORKCHECK:
+	case HWCRHK_CMD_FORK_CHECK:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 		if(i)
 			hwcrhk_globals.flags |=
@@ -555,6 +591,11 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case ENGINE_CTRL_CHIL_NO_LOCKING:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 		disable_mutex_callbacks = 1;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	case HWCRHK_CMD_THREAD_LOCKING:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		disable_mutex_callbacks = ((i == 0) ? 0 : 1);
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 

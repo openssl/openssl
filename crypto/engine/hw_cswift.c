@@ -83,8 +83,9 @@
 #include "vendor_defns/cswift.h"
 #endif
 
-static int cswift_init(ENGINE *);
-static int cswift_finish(ENGINE *);
+static int cswift_init(ENGINE *e);
+static int cswift_finish(ENGINE *e);
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
 /* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -110,6 +111,15 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+/* The definitions for control commands specific to this engine */
+#define CSWIFT_CMD_SO_PATH		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN cswift_cmd_defns[] = {
+	{CSWIFT_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'cswift' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{0, NULL, NULL, 0}
+	};
 
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD cswift_rsa =
@@ -178,7 +188,9 @@ ENGINE *ENGINE_cswift()
 			!ENGINE_set_BN_mod_exp(ret, &cswift_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(ret, &cswift_mod_exp_crt) ||
 			!ENGINE_set_init_function(ret, cswift_init) ||
-			!ENGINE_set_finish_function(ret, cswift_finish))
+			!ENGINE_set_finish_function(ret, cswift_finish) ||
+			!ENGINE_set_ctrl_function(ret, cswift_ctrl) ||
+			!ENGINE_set_cmd_defns(ret, cswift_cmd_defns))
 		{
 		ENGINE_free(ret);
 		return NULL;
@@ -219,7 +231,8 @@ t_swSimpleRequest *p_CSwift_SimpleRequest = NULL;
 t_swReleaseAccContext *p_CSwift_ReleaseAccContext = NULL;
 
 /* Used in the DSO operations. */
-static const char *CSWIFT_LIBNAME = "swift";
+static const char def_CSWIFT_LIBNAME[] = "swift";
+static const char *CSWIFT_LIBNAME = def_CSWIFT_LIBNAME;
 static const char *CSWIFT_F1 = "swAcquireAccContext";
 static const char *CSWIFT_F2 = "swAttachKeyParam";
 static const char *CSWIFT_F3 = "swSimpleRequest";
@@ -324,6 +337,33 @@ static int cswift_finish(ENGINE *e)
 	p_CSwift_SimpleRequest = NULL;
 	p_CSwift_ReleaseAccContext = NULL;
 	return 1;
+	}
+
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	int initialised = ((cswift_dso == NULL) ? 0 : 1);
+	switch(cmd)
+		{
+	case CSWIFT_CMD_SO_PATH:
+		if(p == NULL)
+			{
+			ENGINEerr(ENGINE_F_CSWIFT_CTRL,
+				ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		if(initialised)
+			{
+			ENGINEerr(ENGINE_F_CSWIFT_CTRL,
+				ENGINE_R_ALREADY_LOADED);
+			return 0;
+			}
+		CSWIFT_LIBNAME = (const char *)p;
+		return 1;
+	default:
+		break;
+		}
+	ENGINEerr(ENGINE_F_CSWIFT_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	return 0;
 	}
 
 /* Un petit mod_exp */

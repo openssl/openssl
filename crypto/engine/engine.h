@@ -422,10 +422,12 @@ void ERR_load_ENGINE_strings(void);
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
+#define ENGINE_F_ATALLA_CTRL				 173
 #define ENGINE_F_ATALLA_FINISH				 159
 #define ENGINE_F_ATALLA_INIT				 160
 #define ENGINE_F_ATALLA_MOD_EXP				 161
 #define ENGINE_F_ATALLA_RSA_MOD_EXP			 162
+#define ENGINE_F_CSWIFT_CTRL				 174
 #define ENGINE_F_CSWIFT_DSA_SIGN			 133
 #define ENGINE_F_CSWIFT_DSA_VERIFY			 134
 #define ENGINE_F_CSWIFT_FINISH				 100
@@ -465,9 +467,11 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_HWCRHK_RSA_MOD_EXP			 140
 #define ENGINE_F_INT_CTRL_HELPER			 172
 #define ENGINE_F_LOG_MESSAGE				 141
+#define ENGINE_F_NURON_CTRL				 175
 #define ENGINE_F_NURON_FINISH				 157
 #define ENGINE_F_NURON_INIT				 156
 #define ENGINE_F_NURON_MOD_EXP				 158
+#define ENGINE_F_UBSEC_CTRL				 176
 #define ENGINE_F_UBSEC_DSA_SIGN				 163
 #define ENGINE_F_UBSEC_DSA_VERIFY			 164
 #define ENGINE_F_UBSEC_FINISH				 165
