@@ -4,6 +4,45 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New options to smime application. -inform and -outform
+     allow alternative formats for the S/MIME message including
+     PEM and DER. The -content option allows the content to be
+     specified separately. This should allow things like Netscape
+     form signing output easier to verify.
+     [Steve Henson]
+
+  *) Fix the ASN1 encoding of tags using the 'long form'.
+     [Steve Henson]
+
+  *) New ASN1 functions, i2c_* and c2i_* for INTEGER and BIT
+     STRING types. These convert content octets to and from the
+     underlying type. The actual tag and length octets are
+     already assumed to have been read in and checked. These
+     are needed because all other string types have virtually
+     identical handling apart from the tag. By having versions
+     of the ASN1 functions that just operate on content octets
+     IMPLICIT tagging can be handled properly. It also allows
+     the ASN1_ENUMERATED code to be cut down because ASN1_ENUMERATED
+     and ASN1_INTEGER are identical apart from the tag.
+     [Steve Henson]
+
+  *) Change the handling of OID objects as follows:
+
+     - New object identifiers are inserted in objects.txt, following
+       the syntax given in objects.README.
+     - objects.pl is used to process obj_mac.num and create a new
+       obj_mac.h.
+     - obj_dat.pl is used to create a new obj_dat.h, using the data in
+       obj_mac.h.
+
+     This is currently kind of a hack, and the perl code in objects.pl
+     isn't very elegant, but it works as I intended.  The simplest way
+     to check that it worked correctly is to look in obj_dat.h and
+     check the array nid_objs and make sure the objects haven't moved
+     around (this is important!).  Additions are OK, as well as
+     consistent name changes. 
+     [Richard Levitte]
+
   *) Add BSD-style MD5-based passwords to 'openssl passwd' (option '-1').
      [Bodo Moeller]
 

@@ -181,7 +181,7 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	     int xclass)
 	{
 	unsigned char *p= *pp;
-	int i;
+	int i, ttag;
 
 	i=(constructed)?V_ASN1_CONSTRUCTED:0;
 	i|=(xclass&V_ASN1_PRIVATE);
@@ -190,12 +190,15 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	else
 		{
 		*(p++)=i|V_ASN1_PRIMITIVE_TAG;
-		while (tag > 0x7f)
+		for(i = 0, ttag = tag; ttag > 0; i++) ttag >>=7;
+		ttag = i;
+		while(i-- > 0)
 			{
-			*(p++)=(tag&0x7f)|0x80;
-			tag>>=7;
+			p[i] = tag & 0x7f;
+			if(i != (ttag - 1)) p[i] |= 0x80;
+			tag >>= 7;
 			}
-		*(p++)=(tag&0x7f);
+		p += ttag;
 		}
 	if ((constructed == 2) && (length == 0))
 		*(p++)=0x80; /* der_put_length would output 0 instead */

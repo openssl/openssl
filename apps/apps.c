@@ -164,6 +164,8 @@ int str2fmt(char *s)
 		return(FORMAT_PEM);
 	else if ((*s == 'N') || (*s == 'n'))
 		return(FORMAT_NETSCAPE);
+	else if ((*s == 'S') || (*s == 's'))
+		return(FORMAT_SMIME);
 	else if ((*s == '1')
 		|| (strcmp(s,"PKCS12") == 0) || (strcmp(s,"pkcs12") == 0)
 		|| (strcmp(s,"P12") == 0) || (strcmp(s,"p12") == 0))

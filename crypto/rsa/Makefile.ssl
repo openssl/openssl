@@ -95,13 +95,13 @@ rsa_eay.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 rsa_eay.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 rsa_eay.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
 rsa_eay.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-rsa_eay.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-rsa_eay.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-rsa_eay.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-rsa_eay.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-rsa_eay.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-rsa_eay.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-rsa_eay.o: ../cryptlib.h
+rsa_eay.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_eay.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rsa_eay.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
+rsa_eay.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+rsa_eay.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+rsa_eay.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+rsa_eay.o: ../../include/openssl/stack.h ../cryptlib.h
 rsa_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_err.o: ../../include/openssl/crypto.h ../../include/openssl/err.h
 rsa_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
@@ -124,13 +124,13 @@ rsa_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 rsa_lib.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 rsa_lib.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
 rsa_lib.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-rsa_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-rsa_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-rsa_lib.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-rsa_lib.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-rsa_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-rsa_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-rsa_lib.o: ../cryptlib.h
+rsa_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rsa_lib.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
+rsa_lib.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+rsa_lib.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+rsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+rsa_lib.o: ../../include/openssl/stack.h ../cryptlib.h
 rsa_none.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_none.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_none.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
@@ -173,8 +173,8 @@ rsa_saos.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 rsa_saos.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rsa_saos.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
 rsa_saos.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
-rsa_saos.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
-rsa_saos.o: ../../include/openssl/opensslconf.h
+rsa_saos.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+rsa_saos.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 rsa_saos.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
 rsa_saos.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 rsa_saos.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
@@ -192,7 +192,8 @@ rsa_sign.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 rsa_sign.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 rsa_sign.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
 rsa_sign.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-rsa_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+rsa_sign.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_sign.o: ../../include/openssl/opensslconf.h
 rsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
 rsa_sign.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
 rsa_sign.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h

@@ -1898,3 +1898,7 @@ ENGINE_get_ctrl_function                2473
 ENGINE_set_ctrl_function                2474
 ENGINE_load_public_key                  2475
 ENGINE_load_private_key                 2476
+c2i_ASN1_BIT_STRING                     2477
+i2c_ASN1_BIT_STRING                     2478
+c2i_ASN1_INTEGER                        2479
+i2c_ASN1_INTEGER                        2480

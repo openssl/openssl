@@ -87,7 +87,7 @@ int MAIN(int argc, char **argv)
 	char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
-	char *certfile = NULL, *keyfile = NULL;
+	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	EVP_CIPHER *cipher = NULL;
 	PKCS7 *p7 = NULL;
 	X509_STORE *store = NULL;
@@ -102,6 +102,7 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
+	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
 	args = argv + 1;
 
 	ret = 1;
@@ -205,10 +206,25 @@ int MAIN(int argc, char **argv)
 				args++;
 				infile = *args;
 			} else badarg = 1;
+		} else if (!strcmp (*args, "-inform")) {
+			if (args[1]) {
+				args++;
+				informat = str2fmt(*args);
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-outform")) {
+			if (args[1]) {
+				args++;
+				outformat = str2fmt(*args);
+			} else badarg = 1;
 		} else if (!strcmp (*args, "-out")) {
 			if (args[1]) {
 				args++;
 				outfile = *args;
+			} else badarg = 1;
+		} else if (!strcmp (*args, "-content")) {
+			if (args[1]) {
+				args++;
+				contfile = *args;
 			} else badarg = 1;
 		} else badarg = 1;
 		args++;
@@ -292,9 +308,12 @@ int MAIN(int argc, char **argv)
 
 	if(operation != SMIME_SIGN) flags &= ~PKCS7_DETACHED;
 
-	if(flags & PKCS7_BINARY) {
-		if(operation & SMIME_OP) inmode = "rb";
-		else outmode = "rb";
+	if(operation & SMIME_OP) {
+		if(flags & PKCS7_BINARY) inmode = "rb";
+		if(outformat == FORMAT_ASN1) outmode = "wb";
+	} else {
+		if(flags & PKCS7_BINARY) outmode = "wb";
+		if(informat == FORMAT_ASN1) inmode = "rb";
 	}
 
 	if(operation == SMIME_ENCRYPT) {
@@ -383,9 +402,27 @@ int MAIN(int argc, char **argv)
 		p7 = PKCS7_sign(signer, key, other, in, flags);
 		BIO_reset(in);
 	} else {
-		if(!(p7 = SMIME_read_PKCS7(in, &indata))) {
+		if(informat == FORMAT_SMIME) 
+			p7 = SMIME_read_PKCS7(in, &indata);
+		else if(informat == FORMAT_PEM) 
+			p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
+		else if(informat == FORMAT_ASN1) 
+			p7 = d2i_PKCS7_bio(in, NULL);
+		else {
+			BIO_printf(bio_err, "Bad input format for PKCS#7 file\n");
+			goto end;
+		}
+
+		if(!p7) {
 			BIO_printf(bio_err, "Error reading S/MIME message\n");
 			goto end;
+		}
+		if(contfile) {
+			BIO_free(indata);
+			if(!(indata = BIO_new_file(contfile, "rb"))) {
+				BIO_printf(bio_err, "Can't read content file %s\n", contfile);
+				goto end;
+			}
 		}
 	}
 
@@ -422,7 +459,16 @@ int MAIN(int argc, char **argv)
 		if(to) BIO_printf(out, "To: %s\n", to);
 		if(from) BIO_printf(out, "From: %s\n", from);
 		if(subject) BIO_printf(out, "Subject: %s\n", subject);
-		SMIME_write_PKCS7(out, p7, in, flags);
+		if(outformat == FORMAT_SMIME) 
+			SMIME_write_PKCS7(out, p7, in, flags);
+		else if(outformat == FORMAT_PEM) 
+			PEM_write_bio_PKCS7(out,p7);
+		else if(outformat == FORMAT_ASN1) 
+			i2d_PKCS7_bio(out,p7);
+		else {
+			BIO_printf(bio_err, "Bad output format for PKCS#7 file\n");
+			goto end;
+		}
 	}
 	ret = 0;
 end:

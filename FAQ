@@ -23,6 +23,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why can't the OpenSSH configure script detect OpenSSL?
 * Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
+* Why does the OpenSSL compilation fail on Alpha True64 Unix?
+* Why does the OpenSSL compilation fail with "ar: command not found"?
 
 
 * Which is the current version of OpenSSL?
@@ -131,6 +133,13 @@ the "PRNG not seeded" error message may occur.
 0.9.5 does not do this and will fail on systems without /dev/urandom
 when trying to password-encrypt an RSA key!  This is a bug in the
 library; try a later version instead.]
+
+For Solaris 2.6, Tim Nibbe <tnibbe@sprint.net> and others have suggested
+installing the SUNski package from Sun patch 105710-01 (Sparc) which
+adds a /dev/random device and make sure it gets used, usually through
+$RANDFILE.  There are probably similar patches for the other Solaris
+versions.  However, be warned that /dev/random is usually a blocking
+device, which may have som effects on OpenSSL.
 
 
 * Why does the linker complain about undefined symbols?
@@ -323,3 +332,57 @@ you run the test suite (using "make test").  The message returned is "bc:
 implementation of bc and compile/install it.  For example, GNU bc (see
 http://www.gnu.org/software/software.html for download instructions) can
 be safely used.
+
+
+* Why does the OpenSSL compilation fail on Alpha True64 Unix?
+
+On some Alpha installations running True64 Unix and Compaq C, the compilation
+of crypto/sha/sha_dgst.c fails with the message 'Fatal:  Insufficient virtual
+memory to continue compilation.'  As far as the tests have shown, this may be
+a compiler bug.  What happens is that it eats up a lot of resident memory
+to build something, probably a table.  The problem is clearly in the
+optimization code, because if one eliminates optimization completely (-O0),
+the compilation goes through (and the compiler consumes about 2MB of resident
+memory instead of 240MB or whatever one's limit is currently).
+
+There are three options to solve this problem:
+
+1. set your current data segment size soft limit higher.  Experience shows
+that about 241000 kbytes seems to be enough on an AlphaServer DS10.  You do
+this with the command 'ulimit -Sd nnnnnn', where 'nnnnnn' is the number of
+kbytes to set the limit to.
+
+2. If you have a hard limit that is lower than what you need and you can't
+get it changed, you can compile all of OpenSSL with -O0 as optimization
+level.  This is however not a very nice thing to do for those who expect to
+get the best result from OpenSSL.  A bit more complicated solution is the
+following:
+
+----- snip:start -----
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
+       sed -e 's/ -O[0-9] / -O0 /'`"
+  rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
+  make
+----- snip:end -----
+
+This will only compile sha_dgst.c with -O0, the rest with the optimization
+level chosen by the configuration process.  When the above is done, do the
+test and installation and you're set.
+
+
+* Why does the OpenSSL compilation fail with "ar: command not found"?
+
+Getting this message is quite usual on Solaris 2, because Sun has hidden
+away 'ar' and other development commands in directories that aren't in
+$PATH by default.  One of those directories is '/usr/ccs/bin'.  The
+quickest way to fix this is to do the following (it assumes you use sh
+or any sh-compatible shell):
+
+----- snip:start -----
+  PATH=${PATH}:/usr/ccs/bin; export PATH
+----- snip:end -----
+
+and then redo the compilation.  What you should really do is make sure
+'/usr/ccs/bin' is permanently in your $PATH, for example through your
+'.profile' (again, assuming you use a sh-compatible shell).
+
