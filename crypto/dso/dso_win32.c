@@ -119,8 +119,8 @@ static int win32_load(DSO *dso, const char *filename)
 	len = strlen(filename);
 	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
 			(len + 4 < DSO_MAX_TRANSLATED_SIZE) &&
-			(strstr(filename, "/") == NULL)
-			(strstr(filename, "\\") == NULL)
+			(strstr(filename, "/") == NULL) &&
+			(strstr(filename, "\\") == NULL) &&
 			(strstr(filename, ":") == NULL))
 		{
 		sprintf(translated, "%s.dll", filename);
