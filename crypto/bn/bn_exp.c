@@ -66,6 +66,7 @@
 # include <dlfcn.h>
 #endif
 
+
 #define TABLE_SIZE	16
 
 /* slow but works */
@@ -91,42 +92,6 @@ err:
 	return(r);
 	}
 
-#if 0
-/* this one works - simple but works */
-int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
-	{
-	int i,bits,ret=0;
-	BIGNUM *v,*tmp;
-
-	BN_CTX_start(ctx);
-	v = BN_CTX_get(ctx);
-	tmp = BN_CTX_get(ctx);
-	if (v == NULL || tmp == NULL) goto err;
-
-	if (BN_copy(v,a) == NULL) goto err;
-	bits=BN_num_bits(p);
-
-	if (BN_is_odd(p))
-		{ if (BN_copy(r,a) == NULL) goto err; }
-	else	{ if (!BN_one(r)) goto err; }
-
-	for (i=1; i<bits; i++)
-		{
-		if (!BN_sqr(tmp,v,ctx)) goto err;
-		if (!BN_mod(v,tmp,m,ctx)) goto err;
-		if (BN_is_bit_set(p,i))
-			{
-			if (!BN_mul(tmp,r,v,ctx)) goto err;
-			if (!BN_mod(r,tmp,m,ctx)) goto err;
-			}
-		}
-	ret=1;
-err:
-	BN_CTX_end(ctx);
-	return(ret);
-	}
-
-#endif
 
 /* this one works - simple but works */
 int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
@@ -162,6 +127,7 @@ err:
 	BN_CTX_end(ctx);
 	return(ret);
 	}
+
 
 #ifdef ATALLA
 
@@ -330,6 +296,7 @@ int BN_mod_exp_atalla(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m)
         }
 #endif /* def ATALLA */
 
+
 int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	       BN_CTX *ctx)
 	{
@@ -354,7 +321,15 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 /*	if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
 
 	if (BN_is_odd(m))
-		{ ret=BN_mod_exp_mont(r,a,p,m,ctx,NULL); }
+		{
+		if (a->top == 1)
+			{
+			BN_ULONG A = a->d[0];
+			ret=BN_mod_exp_mont_word(r,A,p,m,ctx,NULL);
+			}
+		else
+			ret=BN_mod_exp_mont(r,a,p,m,ctx,NULL);
+		}
 	else
 #endif
 #ifdef RECP_MUL_MOD
@@ -370,7 +345,7 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	return(ret);
 	}
 
-/* #ifdef RECP_MUL_MOD */
+
 int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx)
 	{
@@ -485,9 +460,8 @@ err:
 	BN_RECP_CTX_free(&recp);
 	return(ret);
 	}
-/* #endif */
 
-/* #ifdef MONT_MUL_MOD */
+
 int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
@@ -527,11 +501,9 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	/* If this is not done, things will break in the montgomery
 	 * part */
 
-#if 1
 	if (in_mont != NULL)
 		mont=in_mont;
 	else
-#endif
 		{
 		if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 		if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
@@ -541,7 +513,8 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	ts=1;
 	if (BN_ucmp(a,m) >= 0)
 		{
-		BN_mod(&(val[0]),a,m,ctx);
+		if (!BN_mod(&(val[0]),a,m,ctx))
+			goto err;
 		aa= &(val[0]);
 		}
 	else
@@ -574,7 +547,7 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	wstart=bits-1;	/* The top bit of the window */
 	wend=0;		/* The bottom bit of the window */
 
-        if (!BN_to_montgomery(r,BN_value_one(),mont,ctx)) goto err;
+	if (!BN_to_montgomery(r,BN_value_one(),mont,ctx)) goto err;
 	for (;;)
 		{
 		if (BN_is_bit_set(p,wstart) == 0)
@@ -635,7 +608,82 @@ err:
 		BN_clear_free(&(val[i]));
 	return(ret);
 	}
-/* #endif */
+
+int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
+                         const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
+/* if we had BN_mod_exp_mont_2, we could even use windowing in it */
+	{
+	int b, bits, ret=0;
+	BIGNUM *d, *r, *t;
+	BN_MONT_CTX *mont = NULL;
+
+	bn_check_top(p);
+	bn_check_top(m);
+
+	if (!(m->d[0] & 1))
+		{
+		BNerr(BN_F_BN_MOD_EXP_MONT_WORD,BN_R_CALLED_WITH_EVEN_MODULUS);
+		return(0);
+		}
+	bits = BN_num_bits(p);
+	if (bits == 0)
+		{
+		BN_one(rr);
+		return(1);
+		}
+	BN_CTX_start(ctx);
+	d = BN_CTX_get(ctx);
+	r = BN_CTX_get(ctx);
+	t = BN_CTX_get(ctx);
+	if (d == NULL || r == NULL || t == NULL) goto err;
+
+#ifdef ATALLA
+	if (!tried_atalla)
+		{
+		BN_set_word(t, a);
+		if (BN_mod_exp_word_atalla(rr, t, p, m))
+			return 1;
+		}
+/* If it fails, try the other methods */
+#endif
+
+	if (in_mont != NULL)
+		mont=in_mont;
+	else
+		{
+		if ((mont = BN_MONT_CTX_new()) == NULL) goto err;
+		if (!BN_MONT_CTX_set(mont, m, ctx)) goto err;
+		}
+
+	if (!BN_to_montgomery(r, BN_value_one(), mont, ctx)) goto err;
+	for (b = bits-1; b >= 0; b--)
+		{
+		if (BN_is_bit_set(p, b))
+			{
+			if (!BN_mul_word(r, a))
+				goto err;
+			if (BN_ucmp(r, m) >= 0)
+				{
+				if (!BN_mod(t, r, m, ctx))
+					goto err;
+				{ BIGNUM *swap_tmp = r; r = t; t = swap_tmp; }
+				}
+			}
+		
+		if (b > 0)
+			{
+			if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
+				goto err;
+			}
+		}
+	BN_from_montgomery(rr, r, mont, ctx);
+	ret = 1;
+err:
+	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
+	BN_CTX_end(ctx);
+	return(ret);
+	}
+
 
 /* The old fallback, simple version :-) */
 int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
