@@ -83,9 +83,9 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(_DARWIN)
 # define USE_TOD
-#elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC)) || defined(_DARWIN)
+#elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
 #if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(MPE) && !defined(__NetBSD__) && !defined(_DARWIN)
