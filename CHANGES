@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add the function sk_find_ex() which works like sk_find(), but will
+     return an index to an element even if an exact match couldn't be
+     found.  The index is guaranteed to point at the element where the
+     searched-for key would be inserted to preserve sorting order.
+     [Richard Levitte]
+
   *) Add the function OBJ_bsearch_ex() which works like OBJ_bsearch() but
      takes an extra flags argument for optional functionality.  Currently,
      the following flags are defined:
@@ -18,6 +24,7 @@
 	element where the comparing function returns zero.  This is useful
 	if there are more than one element where the comparing function
 	returns zero.
+     [Richard Levitte]
 
   *) Make it possible to create self-signed certificates with 'openssl ca'
      in such a way that the self-signed certificate becomes part of the
