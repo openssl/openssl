@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6i and 0.9.6j  [xx XXX 2003]
+
+  *) 
+
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
