@@ -272,6 +272,7 @@ my $rc5_enc="rc5_enc.o";
 my $md5_obj="";
 my $sha1_obj="";
 my $rmd160_obj="";
+my $processor="";
 
 if ($#ARGV < 0)
 	{
@@ -286,6 +287,8 @@ foreach (@ARGV)
 	{
 	if ($_ =~ /^no-asm$/)
 		{ $no_asm=1; }
+	elsif ($_ =~ /^386$/)
+		{ $processor=386; }
 	elsif ($_ =~ /^-/)
 		{
 		if ($_ =~ /^-[lL](.*)$/)
@@ -389,6 +392,7 @@ while (<IN>)
 	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
+	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	print OUT $_."\n";
 	}
 close(IN);
@@ -406,6 +410,7 @@ print "RC5_ENC       =$rc5_obj\n";
 print "MD5_OBJ_ASM   =$md5_obj\n";
 print "SHA1_OBJ_ASM  =$sha1_obj\n";
 print "RMD160_OBJ_ASM=$rmd160_obj\n";
+print "PROCESSOR     =$processor\n";
 
 my $des_ptr=0;
 my $des_risc1=0;

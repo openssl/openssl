@@ -64,7 +64,7 @@ asm/bx86bsdi.o: asm/bx86unix.cpp
 	$(CPP) -DBSDI asm/bx86unix.cpp | sed 's/ :/:/' | as -o asm/bx86bsdi.o
 
 asm/bx86unix.cpp:
-	(cd asm; perl bf-586.pl cpp >bx86unix.cpp)
+	(cd asm; perl bf-586.pl cpp $(PROCESSOR) >bx86unix.cpp)
 
 files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO

@@ -5,7 +5,7 @@ $normal=0;
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"sha1-586.pl");
+&asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
 
 $A="eax";
 $B="ebx";

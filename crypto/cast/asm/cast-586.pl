@@ -7,7 +7,7 @@ push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 
-&asm_init($ARGV[0],"cast-586.pl");
+&asm_init($ARGV[0],"cast-586.pl",$ARGV[$#ARGV] eq "386");
 
 $CAST_ROUNDS=16;
 $L="edi";
@@ -173,3 +173,4 @@ sub E_CAST {
     &xor(	$L,		$tmp1);
     # XXX
 }
+

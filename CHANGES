@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) New config option to avoid instructions that are illegal on the 80386.
+     The default code is faster, but requires at least a 486.
+     [Ulf Möller]
+  
   *) Got rid of old SSL2_CLIENT_VERSION (inconsistently used) and
      SSL2_SERVER_VERSION (not used at all) macros, which are now the
      same as SSL2_VERSION anyway.
