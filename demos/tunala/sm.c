@@ -55,7 +55,7 @@ SSL *state_machine_get_SSL(state_machine_t *machine)
 	return machine->ssl;
 }
 
-void state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server)
+int state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server)
 {
 	if(machine->ssl)
 		/* Shouldn't ever be set twice */
@@ -75,7 +75,7 @@ void state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server)
 	/* If we're the first one to generate traffic - do it now otherwise we
 	 * go into the next select empty-handed and our peer will not send data
 	 * but will similarly wait for us. */
-	state_machine_churn(machine);
+	return state_machine_churn(machine);
 }
 
 /* Performs the data-IO loop and returns zero if the machine should close */
@@ -98,13 +98,14 @@ int state_machine_churn(state_machine_t *machine)
 			/* Still buffered data on the clean side to go out */
 			return 1;
 	}
-	if(SSL_get_shutdown(machine->ssl)) {
-		/* An SSL shutdown was underway */
-		if(buffer_empty(&machine->dirty_out)) {
-			/* Great, we can seal off the dirty side completely */
-			if(!state_machine_close_dirty(machine))
-				return 0;
-		}
+	/* We close on the SSL side if the info callback noticed some problems
+	 * or an SSL shutdown was underway and shutdown traffic had all been
+	 * sent. */
+	if(SSL_get_app_data(machine->ssl) || (SSL_get_shutdown(machine->ssl) &&
+				buffer_empty(&machine->dirty_out))) {
+		/* Great, we can seal off the dirty side completely */
+		if(!state_machine_close_dirty(machine))
+			return 0;
 	}
 	/* Either the SSL is alive and well, or the closing process still has
 	 * outgoing data waiting to be sent */

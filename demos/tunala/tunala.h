@@ -89,6 +89,10 @@ void buffer_from_SSL(buffer_t *buf, SSL *ssl);
 void buffer_to_SSL(buffer_t *buf, SSL *ssl);
 void buffer_from_BIO(buffer_t *buf, BIO *bio);
 void buffer_to_BIO(buffer_t *buf, BIO *bio);
+
+/* Callbacks */
+void cb_ssl_info(SSL *s, int where, int ret);
+void cb_ssl_info_set_output(FILE *fp); /* Called if output should be sent too */
 #endif /* !defined(NO_OPENSSL) */
 #endif /* !defined(NO_BUFFER) */
 
@@ -111,7 +115,7 @@ void state_machine_init(state_machine_t *machine);
 void state_machine_close(state_machine_t *machine);
 buffer_t *state_machine_get_buffer(state_machine_t *machine, sm_buffer_t type);
 SSL *state_machine_get_SSL(state_machine_t *machine);
-void state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server);
+int state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server);
 /* Performs the data-IO loop and returns zero if the machine should close */
 int state_machine_churn(state_machine_t *machine);
 /* Is used to handle closing conditions - namely when one side of the tunnel has

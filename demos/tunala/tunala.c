@@ -67,7 +67,8 @@ typedef struct _tunala_world_t {
 /*****************************/
 
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
-		const char *CAfile, const char *cert, const char *key);
+		const char *CAfile, const char *cert, const char *key,
+		const char *cipher_list, int out_state);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
 static void selector_add_tunala(tunala_selector_t *selector, tunala_item_t *t);
@@ -92,6 +93,8 @@ static const char *def_cert = NULL;
 static const char *def_key = NULL;
 static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
+static const char *def_cipher_list = NULL;
+static int def_out_state = 0;
 
 static const char *helpstring =
 	"\n'Tunala' (A tunneler with a New Zealand accent)\n"
@@ -104,6 +107,8 @@ static const char *helpstring =
 	"    -key <path|NULL>       (default = whatever '-cert' is)\n"
 	"    -engine <id|NULL>      (default = NULL)\n"
 	"    -server <0|1>          (default = 0, ie. an SSL client)\n"
+	"    -cipher <list>         (specifies cipher list to use)\n"
+	"    -out_state             (prints SSL handshake states)\n"
 	"    -<h|help|?>            (displays this help screen)\n"
 	"NB: It is recommended to specify a cert+key when operating as an\n"
 	"SSL server. If you only specify '-cert', the same file must\n"
@@ -178,6 +183,8 @@ int main(int argc, char *argv[])
 	const char *key = def_key;
 	const char *engine_id = def_engine_id;
 	int server_mode = def_server_mode;
+	const char *cipher_list = def_cipher_list;
+	int out_state = def_out_state;
 
 /* Parse command-line arguments */
 next_arg:
@@ -242,6 +249,15 @@ next_arg:
 			if(!parse_server_mode(*argv, &server_mode))
 				return 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-cipher") == 0) {
+			if(argc < 2)
+				return usage("-cipher requires an argument", 0);
+			argc--; argv++;
+			cipher_list = *argv;
+			goto next_arg;
+		} else if(strcmp(*argv, "-out_state") == 0) {
+			out_state = 1;
+			goto next_arg;
 		} else if((strcmp(*argv, "-h") == 0) ||
 				(strcmp(*argv, "-help") == 0) ||
 				(strcmp(*argv, "-?") == 0)) {
@@ -257,7 +273,7 @@ next_arg:
 	err_str0("ip_initialise succeeded");
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
-			cacert, cert, key)) == NULL)
+			cacert, cert, key, cipher_list, out_state)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
 	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
@@ -306,12 +322,11 @@ main_loop:
 					&newfd) == 1)) {
 		/* We have a new connection */
 		if(!tunala_world_new_item(&world, newfd,
-					proxy_ip, proxy_port)) {
+					proxy_ip, proxy_port))
 			fprintf(stderr, "tunala_world_new_item failed\n");
-			abort();
-		}
-		fprintf(stderr, "Info, new tunnel opened, now up to %d\n",
-				world.tunnels_used);
+		else
+			fprintf(stderr, "Info, new tunnel opened, now up to "
+					"%d\n", world.tunnels_used);
 	}
 	/* Give each tunnel its moment, note the while loop is because it makes
 	 * the logic easier than with "for" to deal with an array that may shift
@@ -344,7 +359,8 @@ main_loop:
 /****************/
 
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
-		const char *CAfile, const char *cert, const char *key)
+		const char *CAfile, const char *cert, const char *key,
+		const char *cipher_list, int out_state)
 {
 	SSL_CTX *ctx, *ret = NULL;
 	SSL_METHOD *meth;
@@ -438,6 +454,23 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		fprintf(stderr, "Info, operating with key in '%s'\n", key);
 	} else
 		fprintf(stderr, "Info, operating without a cert or key\n");
+
+	/* cipher_list */
+	if(cipher_list) {
+		if(!SSL_CTX_set_cipher_list(ctx, cipher_list)) {
+			fprintf(stderr, "Error setting cipher list '%s'\n",
+					cipher_list);
+			goto err;
+		}
+		fprintf(stderr, "Info, set cipher list '%s'\n", cipher_list);
+	} else
+		fprintf(stderr, "Info, operating with default cipher list\n");
+
+	/* out_state (output of SSL handshake states to screen). */
+	if(out_state) {
+		SSL_CTX_set_info_callback(ctx, cb_ssl_info);
+		cb_ssl_info_set_output(stderr);
+	}
 
 	/* Success! */
 	ret = ctx;
@@ -577,9 +610,15 @@ static int tunala_world_new_item(tunala_world_t *world, int fd,
 {
 	tunala_item_t *item;
 	int newfd;
+	SSL *new_ssl = NULL;
 
 	if(!tunala_world_make_room(world))
 		return 0;
+	if((new_ssl = SSL_new(world->ssl_ctx)) == NULL) {
+		fprintf(stderr, "Error creating new SSL\n");
+		ERR_print_errors_fp(stderr);
+		return 0;
+	}
 	item = world->tunnels + (world->tunnels_used++);
 	state_machine_init(&item->sm);
 	item->clean_read = item->clean_send =
@@ -596,11 +635,13 @@ static int tunala_world_new_item(tunala_world_t *world, int fd,
 		item->clean_read = item->clean_send = fd;
 		item->dirty_read = item->dirty_send = newfd;
 	}
-	state_machine_set_SSL(&item->sm, SSL_new(world->ssl_ctx),
-			world->server_mode);
+	/* We use the SSL's "app_data" to indicate a call-back induced "kill" */
+	SSL_set_app_data(new_ssl, NULL);
+	if(!state_machine_set_SSL(&item->sm, new_ssl, world->server_mode))
+		goto err;
 	return 1;
 err:
-	state_machine_close(&item->sm);
+	tunala_world_del_item(world, world->tunnels_used - 1);
 	return 0;
 
 }

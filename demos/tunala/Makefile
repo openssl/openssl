@@ -17,8 +17,8 @@ COMPILE=$(CC) $(CFLAGS) -c
 # Edit, particularly the "-ldl" if not building with "dlfcn" support
 LINK_FLAGS=-L$(SSL_LIBDIR) -lssl -lcrypto -ldl
 
-SRCS=buffer.c ip.c sm.c tunala.c
-OBJS=buffer.o ip.o sm.o tunala.o
+SRCS=buffer.c cb.c ip.c sm.c tunala.c
+OBJS=buffer.o cb.o ip.o sm.o tunala.o
 
 TARGETS=tunala
 
@@ -35,6 +35,7 @@ tunala: $(OBJS)
 
 # Extra dependencies, should really use makedepend
 buffer.o: buffer.c tunala.h
+cb.o: cb.c tunala.h
 ip.o: ip.c tunala.h
 sm.o: sm.c tunala.h
 tunala.o: tunala.c tunala.h
