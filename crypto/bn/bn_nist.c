@@ -127,40 +127,39 @@ const static BN_ULONG _nist_p_521[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 	0xFF,0x01};
 #endif
 
-static const BIGNUM_C bn_nist_p_192 =
-	{ _nist_p_192, BN_NIST_192_TOP, BN_NIST_192_TOP, 0, BN_FLG_STATIC_DATA };
-static const BIGNUM_C bn_nist_p_224 =
-	{ _nist_p_224, BN_NIST_224_TOP, BN_NIST_224_TOP, 0, BN_FLG_STATIC_DATA };
-static const BIGNUM_C bn_nist_p_256 =
-	{ _nist_p_256, BN_NIST_256_TOP, BN_NIST_256_TOP, 0, BN_FLG_STATIC_DATA };
-static const BIGNUM_C bn_nist_p_384 =
-	{ _nist_p_384, BN_NIST_384_TOP, BN_NIST_384_TOP, 0, BN_FLG_STATIC_DATA };
-static const BIGNUM_C bn_nist_p_521 =
-	{ _nist_p_521, BN_NIST_521_TOP, BN_NIST_521_TOP, 0, BN_FLG_STATIC_DATA };
-
 const BIGNUM *BN_get0_nist_prime_192(void)
 	{
-	return BIGNUM_CONST(&bn_nist_p_192);
+	static BIGNUM const_nist_192 = { (BN_ULONG *)_nist_p_192,
+		BN_NIST_192_TOP, BN_NIST_192_TOP, 0, BN_FLG_STATIC_DATA };
+	return &const_nist_192;
 	}
 
 const BIGNUM *BN_get0_nist_prime_224(void)
 	{
-	return BIGNUM_CONST(&bn_nist_p_224);
+	static BIGNUM const_nist_224 = { (BN_ULONG *)_nist_p_224,
+		BN_NIST_224_TOP, BN_NIST_224_TOP, 0, BN_FLG_STATIC_DATA };
+	return &const_nist_224;
 	}
 
 const BIGNUM *BN_get0_nist_prime_256(void)
 	{
-	return BIGNUM_CONST(&bn_nist_p_256);
+	static BIGNUM const_nist_256 = { (BN_ULONG *)_nist_p_256,
+		BN_NIST_256_TOP, BN_NIST_256_TOP, 0, BN_FLG_STATIC_DATA };
+	return &const_nist_256;
 	}
 
 const BIGNUM *BN_get0_nist_prime_384(void)
 	{
-	return BIGNUM_CONST(&bn_nist_p_384);
+	static BIGNUM const_nist_384 = { (BN_ULONG *)_nist_p_384,
+		BN_NIST_384_TOP, BN_NIST_384_TOP, 0, BN_FLG_STATIC_DATA };
+	return &const_nist_384;
 	}
 
 const BIGNUM *BN_get0_nist_prime_521(void)
 	{
-	return BIGNUM_CONST(&bn_nist_p_521);
+	static BIGNUM const_nist_521 = { (BN_ULONG *)_nist_p_521,
+		BN_NIST_521_TOP, BN_NIST_521_TOP, 0, BN_FLG_STATIC_DATA };
+	return &const_nist_521;
 	}
 
 /* some misc internal functions */
