@@ -58,6 +58,8 @@
 
 const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
 
+static void ecdsa_finish(EC_KEY *);
+
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
 
 void ECDSA_set_default_method(const ECDSA_METHOD *meth)
@@ -72,36 +74,55 @@ const ECDSA_METHOD *ECDSA_get_default_method(void)
 	return default_ECDSA_method;
 }
 
-ECDSA *ECDSA_new(void)
-{
-	return ECDSA_new_method(NULL);
-}
-
-int ECDSA_set_method(ECDSA *ecdsa, const ECDSA_METHOD *meth)
+int ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 {
         const ECDSA_METHOD *mtmp;
+	ECDSA_DATA *ecdsa;
+
+	ecdsa = ecdsa_check(eckey);
+
+	if (ecdsa == NULL)
+		return 0;
+
         mtmp = ecdsa->meth;
-        if (mtmp->finish) mtmp->finish(ecdsa);
+#if 0
+        if (mtmp->finish)
+		mtmp->finish(eckey);
+#endif
 	if (ecdsa->engine)
 	{
 		ENGINE_finish(ecdsa->engine);
 		ecdsa->engine = NULL;
 	}
         ecdsa->meth = meth;
-        if (meth->init) meth->init(ecdsa);
+#if 0
+        if (meth->init) 
+		meth->init(eckey);
+#endif
         return 1;
 }
 
-ECDSA *ECDSA_new_method(ENGINE *engine)
+ECDSA_DATA *ECDSA_DATA_new(void)
 {
-	ECDSA *ret;
+	return ECDSA_DATA_new_method(NULL);
+}
 
-	ret=(ECDSA *)OPENSSL_malloc(sizeof(ECDSA));
+ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
+{
+	ECDSA_DATA *ret;
+
+	ret=(ECDSA_DATA *)OPENSSL_malloc(sizeof(ECDSA_DATA));
 	if (ret == NULL)
 	{
-		ECDSAerr(ECDSA_F_ECDSA_NEW,ERR_R_MALLOC_FAILURE);
+		ECDSAerr(ECDSA_F_ECDSA_DATA_NEW, ERR_R_MALLOC_FAILURE);
 		return(NULL);
 	}
+
+	ret->init = NULL;
+	ret->finish = ecdsa_finish;
+
+	ret->kinv = NULL;
+	ret->r    = NULL;
 
 	ret->meth = ECDSA_get_default_method();
 	ret->engine = engine;
@@ -112,73 +133,69 @@ ECDSA *ECDSA_new_method(ENGINE *engine)
 		ret->meth = ENGINE_get_ECDSA(ret->engine);
 		if (!ret->meth)
 		{
-			ECDSAerr(ECDSA_R_ECDSA_F_ECDSA_NEW, ERR_R_ENGINE_LIB);
+			ECDSAerr(ECDSA_F_ECDSA_DATA_NEW, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			OPENSSL_free(ret);
 			return NULL;
 		}
 	}
 
-	ret->version = 1;
-	ret->conversion_form = ECDSA_get_default_conversion_form();
-	ret->group = NULL;
-
-	ret->pub_key = NULL;
-	ret->priv_key = NULL;
-
-	ret->kinv = NULL;
-	ret->r = NULL;
-
-	ret->enc_flag = 0;
-
-	ret->references = 1;
 	ret->flags = ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
+#if 0
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 	{
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 	}
-	
+#endif	
 	return(ret);
 }
 
-void ECDSA_free(ECDSA *r)
+void ECDSA_DATA_free(ECDSA_DATA *r)
 {
-	int i;
+	if (r->kinv)
+		BN_clear_free(r->kinv);
+	if (r->r)
+		BN_clear_free(r->r);
 
-	if (r == NULL) return;
-
-	i=CRYPTO_add(&r->references,-1,CRYPTO_LOCK_ECDSA);
-#ifdef REF_PRINT
-	REF_PRINT("ECDSA",r);
-#endif
-	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-	{
-		fprintf(stderr,"ECDSA_free, bad reference count\n");
-		abort();
-	}
-#endif
-
+#if 0
 	if (r->meth->finish)
 		r->meth->finish(r);
+#endif
 	if (r->engine)
 		ENGINE_finish(r->engine);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 
-	if (r->group    != NULL) EC_GROUP_free(r->group);
-	if (r->pub_key  != NULL) EC_POINT_free(r->pub_key);
-	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	if (r->kinv != NULL) BN_clear_free(r->kinv);
-	if (r->r    != NULL) BN_clear_free(r->r);
+	memset((void *)r, 0x0, sizeof(ECDSA_DATA));
+
 	OPENSSL_free(r);
 }
 
-int ECDSA_size(const ECDSA *r)
+ECDSA_DATA *ecdsa_check(EC_KEY *key)
+{
+	if (key->meth_data)
+	{
+		if (key->meth_data->finish != ecdsa_finish)
+		{
+			key->meth_data->finish(key);
+			key->meth_data = (EC_KEY_METH_DATA *)ECDSA_DATA_new();
+		}
+	}
+	else
+		key->meth_data = (EC_KEY_METH_DATA *)ECDSA_DATA_new();
+	return (ECDSA_DATA *)key->meth_data;
+}
+
+static void ecdsa_finish(EC_KEY *key)
+{
+	if (key->meth_data && key->meth_data->finish == ecdsa_finish)
+		ECDSA_DATA_free((ECDSA_DATA *)key->meth_data);
+}
+
+int ECDSA_size(const EC_KEY *r)
 {
 	int ret,i;
 	ASN1_INTEGER bs;
@@ -207,6 +224,7 @@ int ECDSA_size(const ECDSA *r)
 	return(ret);
 }
 
+
 int ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
@@ -214,60 +232,20 @@ int ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 				new_func, dup_func, free_func);
 }
 
-int ECDSA_set_ex_data(ECDSA *d, int idx, void *arg)
+int ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
-	return(CRYPTO_set_ex_data(&d->ex_data,idx,arg));
+	ECDSA_DATA *ecdsa;
+	ecdsa = ecdsa_check(d);
+	if (ecdsa == NULL)
+		return 0;
+	return(CRYPTO_set_ex_data(&ecdsa->ex_data,idx,arg));
 }
 
-void *ECDSA_get_ex_data(ECDSA *d, int idx)
+void *ECDSA_get_ex_data(EC_KEY *d, int idx)
 {
-	return(CRYPTO_get_ex_data(&d->ex_data,idx));
-}
-
-int ECDSA_up_ref(ECDSA *ecdsa)
-{
-	int i = CRYPTO_add(&ecdsa->references, 1, CRYPTO_LOCK_ECDSA);
-#ifdef REF_PRINT
-	REF_PRINT("ECDSA",r);
-#endif	
-#ifdef REF_CHECK
-	if (i < 2)
-	{
-	        fprintf(stderr, "ECDSA_up_ref, bad reference count\n");
-                abort();
-        }
-#endif
-        return ((i > 1) ? 1 : 0);
-}
-        
-void	ECDSA_set_conversion_form(ECDSA *ecdsa, const point_conversion_form_t form)
-{
-	if (ecdsa) ecdsa->conversion_form = form;
-}
-
-point_conversion_form_t ECDSA_get_conversion_form(const ECDSA *ecdsa)
-{
-	return ecdsa ? ecdsa->conversion_form : 0;
-}
-
-static point_conversion_form_t default_conversion_form = POINT_CONVERSION_UNCOMPRESSED;
-
-void	ECDSA_set_default_conversion_form(const point_conversion_form_t form)
-{
-	default_conversion_form = form;
-}
-
-point_conversion_form_t ECDSA_get_default_conversion_form(void)
-{
-	return default_conversion_form;
-}
-
-unsigned int ECDSA_get_enc_flag(const ECDSA *ecdsa)
-{
-	return ecdsa->enc_flag;
-}
-
-void ECDSA_set_enc_flag(ECDSA *ecdsa, unsigned int flag)
-{
-	ecdsa->enc_flag = flag;
+	ECDSA_DATA *ecdsa;
+	ecdsa = ecdsa_check(d);
+	if (ecdsa == NULL)
+		return NULL;
+	return(CRYPTO_get_ex_data(&ecdsa->ex_data,idx));
 }

@@ -125,8 +125,8 @@ static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa);
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
-static ECDSA *pkey_get_ecdsa(EVP_PKEY *key, ECDSA **ecdsa);
+#ifndef OPENSSL_NO_EC
+static EC_KEY *pkey_get_eckey(EVP_PKEY *key, EC_KEY **eckey);
 #endif
 
 IMPLEMENT_PEM_rw(X509_REQ, X509_REQ, PEM_STRING_X509_REQ, X509_REQ)
@@ -234,50 +234,49 @@ IMPLEMENT_PEM_rw(DSAparams, DSA, PEM_STRING_DSAPARAMS, DSAparams)
 
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
 
-static ECDSA *pkey_get_ecdsa(EVP_PKEY *key, ECDSA **ecdsa)
+#ifndef OPENSSL_NO_EC
+static EC_KEY *pkey_get_eckey(EVP_PKEY *key, EC_KEY **eckey)
 {
-	ECDSA *dtmp;
+	EC_KEY *dtmp;
 	if(!key) return NULL;
-	dtmp = EVP_PKEY_get1_ECDSA(key);
+	dtmp = EVP_PKEY_get1_EC_KEY(key);
 	EVP_PKEY_free(key);
 	if(!dtmp) return NULL;
-	if(ecdsa) 
+	if(eckey) 
 	{
- 		ECDSA_free(*ecdsa);
-		*ecdsa = dtmp;
+ 		EC_KEY_free(*eckey);
+		*eckey = dtmp;
 	}
 	return dtmp;
 }
 
-ECDSA *PEM_read_bio_ECDSAPrivateKey(BIO *bp, ECDSA **ecdsa, pem_password_cb *cb,
+EC_KEY *PEM_read_bio_ECPrivateKey(BIO *bp, EC_KEY **key, pem_password_cb *cb,
 							void *u)
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_bio_PrivateKey(bp, NULL, cb, u);
-	return pkey_get_ecdsa(pktmp, ecdsa);
+	return pkey_get_eckey(pktmp, key);
 }
 
-IMPLEMENT_PEM_write_cb(ECDSAPrivateKey, ECDSA, PEM_STRING_ECPRIVATEKEY, ECDSAPrivateKey)
-IMPLEMENT_PEM_rw(ECDSA_PUBKEY, ECDSA, PEM_STRING_PUBLIC, ECDSA_PUBKEY)
+IMPLEMENT_PEM_rw(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS, ECPKParameters)
+
+IMPLEMENT_PEM_write_cb(ECPrivateKey, EC_KEY, PEM_STRING_ECPRIVATEKEY, ECPrivateKey)
+
+IMPLEMENT_PEM_rw(EC_PUBKEY, EC_KEY, PEM_STRING_PUBLIC, EC_PUBKEY)
 
 #ifndef OPENSSL_NO_FP_API
  
-ECDSA *PEM_read_ECDSAPrivateKey(FILE *fp, ECDSA **ecdsa, pem_password_cb *cb,
+EC_KEY *PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb,
  								void *u)
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_PrivateKey(fp, NULL, cb, u);
-	return pkey_get_ecdsa(pktmp, ecdsa);
+	return pkey_get_eckey(pktmp, eckey);
 }
 
 #endif
 
-#endif
-
-#ifndef OPENSSL_NO_EC
-IMPLEMENT_PEM_rw(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS, ECPKParameters)
 #endif
 
 #ifndef OPENSSL_NO_DH

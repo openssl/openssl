@@ -56,16 +56,19 @@
 #include "ecdsa.h"
 #include <openssl/engine.h>
 
-ECDSA_SIG * ECDSA_do_sign(const unsigned char *dgst, int dlen, ECDSA *ecdsa)
+ECDSA_SIG * ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {
-	return ecdsa->meth->ecdsa_do_sign(dgst, dlen, ecdsa);
+	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
+	if (ecdsa == NULL)
+		return NULL;
+	return ecdsa->meth->ecdsa_do_sign(dgst, dlen, eckey);
 }
 
-int ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
-	     unsigned int *siglen, ECDSA *ecdsa)
+int ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char 
+		*sig, unsigned int *siglen, EC_KEY *eckey)
 {
 	ECDSA_SIG *s;
-	s=ECDSA_do_sign(dgst,dlen,ecdsa);
+	s=ECDSA_do_sign(dgst,dlen,eckey);
 	if (s == NULL)
 	{
 		*siglen=0;
@@ -76,7 +79,11 @@ int ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig
 	return(1);
 }
 
-int ECDSA_sign_setup(ECDSA *ecdsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, 
+		BIGNUM **rp)
 {
-	return ecdsa->meth->ecdsa_sign_setup(ecdsa, ctx_in, kinvp, rp);
+	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
+	if (ecdsa == NULL)
+		return 0;
+	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp); 
 }

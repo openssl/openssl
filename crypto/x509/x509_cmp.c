@@ -295,10 +295,11 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 		    }
 		break;
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	case EVP_PKEY_ECDSA:
+#ifndef OPENSSL_NO_EC
+	case EVP_PKEY_EC:
 		{
-		int  r = EC_POINT_cmp(xk->pkey.ecdsa->group,xk->pkey.ecdsa->pub_key,k->pkey.ecdsa->pub_key,NULL);
+		int  r = EC_POINT_cmp(xk->pkey.eckey->group, 
+			xk->pkey.eckey->pub_key,k->pkey.eckey->pub_key,NULL);
 		if (r != 0)
 			{
 			if (r == 1)

@@ -134,11 +134,11 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 		}
 	else
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		if (pkey != NULL && pkey->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+		if (pkey != NULL && pkey->type == EVP_PKEY_EC)
 		{
-			BIO_printf(bp, "%12sECDSA Public Key: \n","");
-			ECDSA_print(bp, pkey->pkey.ecdsa, 16);
+			BIO_printf(bp, "%12sEC Public Key: \n","");
+			EC_KEY_print(bp, pkey->pkey.eckey, 16);
 		}
 	else
 #endif

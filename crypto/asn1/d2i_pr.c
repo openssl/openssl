@@ -68,8 +68,8 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
 #endif
 
 EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
@@ -111,9 +111,9 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
 			}
 		break;
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	case EVP_PKEY_ECDSA:
-		if ((ret->pkey.ecdsa = d2i_ECDSAPrivateKey(NULL, 
+#ifndef OPENSSL_NO_EC
+	case EVP_PKEY_EC:
+		if ((ret->pkey.eckey = d2i_ECPrivateKey(NULL, 
 			(const unsigned char **)pp, length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY, ERR_R_ASN1_LIB);
@@ -154,7 +154,7 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
 	if(sk_ASN1_TYPE_num(inkey) == 6) 
 		keytype = EVP_PKEY_DSA;
 	else if (sk_ASN1_TYPE_num(inkey) == 4)
-		keytype = EVP_PKEY_ECDSA;
+		keytype = EVP_PKEY_EC;
 	else keytype = EVP_PKEY_RSA;
 	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
 	return d2i_PrivateKey(keytype, a, pp, length);

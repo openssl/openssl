@@ -65,8 +65,8 @@
 #ifndef OPENSSL_NO_DSA
 static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8inf, EVP_PKEY *pkey);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-static int ecdsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8inf, EVP_PKEY *pkey);
+#ifndef OPENSSL_NO_EC
+static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8inf, EVP_PKEY *pkey);
 #endif
 
 /* Extract a private key from a PKCS8 structure */
@@ -80,8 +80,8 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa = NULL;
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	ECDSA    *ecdsa = NULL;
+#ifndef OPENSSL_NO_EC
+	EC_KEY *eckey = NULL;
 #endif
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	ASN1_INTEGER *privkey;
@@ -236,34 +236,37 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		else /* nid == NID_ecdsa_with_SHA1 */
 		{
 #ifndef OPENSSL_NO_ECDSA
-			if ((ecdsa = d2i_ECDSAParameters(NULL, &cp, plen)) == NULL)
+			if ((eckey = d2i_ECParameters(NULL, &cp, 
+				plen)) == NULL)
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 				goto err;
 			}
-			if ((ecdsa->priv_key = ASN1_INTEGER_to_BN(privkey, NULL)) == NULL)
+			if ((eckey->priv_key = ASN1_INTEGER_to_BN(privkey, 
+				NULL)) == NULL)
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 				goto err;
 			}
-			if ((ecdsa->pub_key = EC_POINT_new(ecdsa->group)) == NULL)
+			if ((eckey->pub_key = EC_POINT_new(eckey->group)) == NULL)
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto err;
 			}
-			if (!EC_POINT_copy(ecdsa->pub_key, EC_GROUP_get0_generator(ecdsa->group)))
+			if (!EC_POINT_copy(eckey->pub_key, 
+				EC_GROUP_get0_generator(eckey->group)))
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto err;
 			}
-			if (!EC_POINT_mul(ecdsa->group, ecdsa->pub_key, ecdsa->priv_key,
-					  NULL, NULL, ctx))
+			if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
+				eckey->priv_key, NULL, NULL, ctx))
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto err;
 			}
 			
-			EVP_PKEY_assign_ECDSA(pkey, ecdsa);
+			EVP_PKEY_assign_EC_KEY(pkey, eckey);
 			BN_CTX_free(ctx);
 			if (n_stack) sk_ASN1_TYPE_pop_free(n_stack, ASN1_TYPE_free);
 			else
@@ -280,8 +283,9 @@ err:
 #ifndef OPENSSL_NO_DSA
 		if (dsa)   DSA_free(dsa);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		if (ecdsa) ECDSA_free(ecdsa);
+#ifndef OPENSSL_NO_EC
+		if (eckey) 
+			EC_KEY_free(eckey);
 #endif
 		if (pkey)  EVP_PKEY_free(pkey);
 		return NULL;
@@ -348,7 +352,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 #endif
 #ifndef OPENSSL_NO_ECDSA
 		case EVP_PKEY_ECDSA:
-		if (!ecdsa_pkey2pkcs8(p8, pkey))
+		if (!eckey_pkey2pkcs8(p8, pkey))
 		{
 			PKCS8_PRIV_KEY_INFO_free(p8);
 			return(NULL);
@@ -499,53 +503,54 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 }
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
-static int ecdsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
+#ifndef OPENSSL_NO_EC
+static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 {
 	ASN1_STRING 	  *params=NULL;
 	ASN1_INTEGER      *prkey=NULL;
 	ASN1_TYPE         *ttmp=NULL;
-	STACK_OF(ASN1_TYPE) *necdsa=NULL;
+	STACK_OF(ASN1_TYPE) *neckey=NULL;
 	unsigned char 	  *p=NULL, *q=NULL;
 	int len=0;
 	EC_POINT	  *point=NULL;
 
-	if (pkey->pkey.ecdsa == NULL || pkey->pkey.ecdsa->group == NULL)
+	if (pkey->pkey.eckey == NULL || pkey->pkey.eckey->group == NULL)
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
 		return 0;
 	}
 	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_ecdsa_with_SHA1);
-	len = i2d_ECDSAParameters(pkey->pkey.ecdsa, NULL);
+	len = i2d_ECParameters(pkey->pkey.eckey, NULL);
 	if ((p = OPENSSL_malloc(len)) == NULL)
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	q = p;
-	if (!i2d_ECDSAParameters(pkey->pkey.ecdsa, &q))
+	if (!i2d_ECParameters(pkey->pkey.eckey, &q))
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_ECDSA_LIB);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ECDSA_LIB);
 		OPENSSL_free(p);
 		return 0;
 	}
 	if ((params = ASN1_STRING_new()) == NULL)
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		OPENSSL_free(p);
 		return 0;
 		
 	}
 	if (!ASN1_STRING_set(params, p, len))
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_ASN1_LIB);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
 		OPENSSL_free(p);
 		return 0;
 	}
 	OPENSSL_free(p);
-	if ((prkey = BN_to_ASN1_INTEGER(pkey->pkey.ecdsa->priv_key, NULL)) == NULL)
+	if ((prkey = BN_to_ASN1_INTEGER(pkey->pkey.eckey->priv_key, NULL)) 
+		== NULL)
 	{
-		EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_ASN1_LIB);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
 		return 0;
 	}
 
@@ -557,7 +562,7 @@ static int ecdsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		if (!ASN1_pack_string((char *)prkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) 
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 			M_ASN1_INTEGER_free(prkey);
 			return 0;
 		}
@@ -572,134 +577,137 @@ static int ecdsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 		p8->pkeyalg->parameter->value.sequence = params;
 		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
-		necdsa = sk_ASN1_TYPE_new_null();
-		if (necdsa == NULL || (ttmp = ASN1_TYPE_new()) == NULL)
+		neckey = sk_ASN1_TYPE_new_null();
+		if (neckey == NULL || (ttmp = ASN1_TYPE_new()) == NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}
 
-		if ((point = EC_GROUP_get0_generator(pkey->pkey.ecdsa->group)) == NULL)
+		if ((point = EC_GROUP_get0_generator(pkey->pkey.eckey->group)) 
+			== NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_EC_LIB);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			return 0;
 		}
-		len = EC_POINT_point2oct(pkey->pkey.ecdsa->group, point, ECDSA_get_conversion_form(pkey->pkey.ecdsa),
-				         NULL, 0, NULL);
+		len = EC_POINT_point2oct(pkey->pkey.eckey->group, point, 
+			pkey->pkey.eckey->conv_form, NULL, 0, NULL);
 		p = OPENSSL_malloc(len);
-		if (!len || !p || !EC_POINT_point2oct(pkey->pkey.ecdsa->group, point,
-			ECDSA_get_conversion_form(pkey->pkey.ecdsa), p, len, NULL))
+		if (!len || !p || !EC_POINT_point2oct(pkey->pkey.eckey->group, 
+			point, pkey->pkey.eckey->conv_form, p, len, NULL))
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_EC_LIB);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			OPENSSL_free(p);
 			return 0;
 		}
-		if ((ttmp->value.octet_string = ASN1_OCTET_STRING_new()) == NULL)
+		if ((ttmp->value.octet_string =ASN1_OCTET_STRING_new()) == NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		if (!ASN1_OCTET_STRING_set(ttmp->value.octet_string, p, len))
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, EVP_R_ASN1_LIB);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, EVP_R_ASN1_LIB);
 			return 0;
 		}
 		OPENSSL_free(p);
 		
 		ttmp->type = V_ASN1_OCTET_STRING;
-		if (!sk_ASN1_TYPE_push(necdsa, ttmp))
+		if (!sk_ASN1_TYPE_push(neckey, ttmp))
 		{
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 
 		if ((ttmp = ASN1_TYPE_new()) == NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		ttmp->value.integer = prkey;
 		ttmp->type = V_ASN1_INTEGER;
-		if (!sk_ASN1_TYPE_push(necdsa, ttmp))
+		if (!sk_ASN1_TYPE_push(neckey, ttmp))
 		{
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 
-		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) == NULL)
+		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) 
+			== NULL)
 		{	
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}
 
-		if (!ASN1_seq_pack_ASN1_TYPE(necdsa, i2d_ASN1_TYPE,
+		if (!ASN1_seq_pack_ASN1_TYPE(neckey, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) 
 		{
 
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}
-		sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+		sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 		break;
 
 		case PKCS8_EMBEDDED_PARAM:
 
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
-		necdsa = sk_ASN1_TYPE_new_null();
+		neckey = sk_ASN1_TYPE_new_null();
 		if ((ttmp = ASN1_TYPE_new()) == NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 		ttmp->value.sequence = params;
 		ttmp->type = V_ASN1_SEQUENCE;
-		if (!sk_ASN1_TYPE_push(necdsa, ttmp))
+		if (!sk_ASN1_TYPE_push(neckey, ttmp))
 		{
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 
 		if ((ttmp = ASN1_TYPE_new()) == NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 		ttmp->value.integer = prkey;
 		ttmp->type = V_ASN1_INTEGER;
-		if (!sk_ASN1_TYPE_push(necdsa, ttmp))
+		if (!sk_ASN1_TYPE_push(neckey, ttmp))
 		{
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			ASN1_INTEGER_free(prkey);
 			return 0;
 		}
 
-		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) == NULL)
+		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) 
+			== NULL)
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}
 
-		if (!ASN1_seq_pack_ASN1_TYPE(necdsa, i2d_ASN1_TYPE,
+		if (!ASN1_seq_pack_ASN1_TYPE(neckey, i2d_ASN1_TYPE,
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) 
 		{
 			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}
-		sk_ASN1_TYPE_pop_free(necdsa, ASN1_TYPE_free);
+		sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 		break;
 	}
 	return 1;

@@ -81,6 +81,10 @@
 #include <openssl/dsa.h>
 #endif
 
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
+#endif
+
 #ifndef OPENSSL_NO_ECDSA
 #include <openssl/ecdsa.h>
 #endif
@@ -656,15 +660,15 @@ extern "C" {
 #define i2d_DSAPrivateKey_bio(bp,dsa) ASN1_i2d_bio(i2d_DSAPrivateKey,bp, \
 		(unsigned char *)dsa)
 
-#define d2i_ECDSAPrivateKey_fp(fp,ecdsa) (ECDSA *)ASN1_d2i_fp((char *(*)())\
-		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (fp), \
+#define d2i_ECPrivateKey_fp(fp,ecdsa) (EC_KEY *)ASN1_d2i_fp((char *(*)())\
+		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (fp), \
 		(unsigned char **)(ecdsa))
-#define i2d_ECDSAPrivateKey_fp(fp,ecdsa) ASN1_i2d_fp(i2d_ECDSAPrivateKey,fp, \
+#define i2d_ECPrivateKey_fp(fp,ecdsa) ASN1_i2d_fp(i2d_ECPrivateKey,fp, \
 		(unsigned char *)ecdsa)
-#define d2i_ECDSAPrivateKey_bio(bp,ecdsa) (ECDSA *)ASN1_d2i_bio((char *(*)())\
-		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (bp), \
+#define d2i_ECPrivateKey_bio(bp,ecdsa) (EC_KEY *)ASN1_d2i_bio((char *(*)())\
+		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (bp), \
 		(unsigned char **)(ecdsa))
-#define i2d_ECDSAPrivateKey_bio(bp,ecdsa) ASN1_i2d_bio(i2d_ECDSAPrivateKey,bp, \
+#define i2d_ECPrivateKey_bio(bp,ecdsa) ASN1_i2d_bio(i2d_ECPrivateKey,bp, \
 		(unsigned char *)ecdsa)
 
 #define X509_ALGOR_dup(xn) (X509_ALGOR *)ASN1_dup((int (*)())i2d_X509_ALGOR,\
@@ -770,11 +774,11 @@ int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-ECDSA *d2i_ECDSA_PUBKEY_fp(FILE *fp, ECDSA **ecdsa);
-int   i2d_ECDSA_PUBKEY_fp(FILE *fp, ECDSA *ecdsa);
-ECDSA *d2i_ECDSAPrivateKey_fp(FILE *fp, ECDSA **ecdsa);
-int   i2d_ECDSAPrivateKey_fp(FILE *fp, ECDSA *ecdsa);
+#ifndef OPENSSL_NO_EC
+EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey);
+int   i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey);
+EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey);
+int   i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey);
 #endif
 X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
 int i2d_PKCS8_fp(FILE *fp,X509_SIG *p8);
@@ -809,11 +813,11 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-ECDSA *d2i_ECDSA_PUBKEY_bio(BIO *bp, ECDSA **ecdsa);
-int   i2d_ECDSA_PUBKEY_bio(BIO *bp, ECDSA *ecdsa);
-ECDSA *d2i_ECDSAPrivateKey_bio(BIO *bp, ECDSA **ecdsa);
-int   i2d_ECDSAPrivateKey_bio(BIO *bp, ECDSA *ecdsa);
+#ifndef OPENSSL_NO_EC
+EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey);
+int   i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *eckey);
+EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey);
+int   i2d_ECPrivateKey_bio(BIO *bp, EC_KEY *eckey);
 #endif
 X509_SIG *d2i_PKCS8_bio(BIO *bp,X509_SIG **p8);
 int i2d_PKCS8_bio(BIO *bp,X509_SIG *p8);
@@ -879,9 +883,9 @@ int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
 DSA *		d2i_DSA_PUBKEY(DSA **a,unsigned char **pp,
 			long length);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-int		i2d_ECDSA_PUBKEY(ECDSA *a, unsigned char **pp);
-ECDSA 		*d2i_ECDSA_PUBKEY(ECDSA **a, unsigned char **pp,
+#ifndef OPENSSL_NO_EC
+int		i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp);
+EC_KEY 		*d2i_EC_PUBKEY(EC_KEY **a, unsigned char **pp,
 			long length);
 #endif
 

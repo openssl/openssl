@@ -203,10 +203,10 @@ start:
 			}
 		else
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
  			if (strcmp(name,PEM_STRING_ECPRIVATEKEY) == 0)
  			{
- 				d2i=(char *(*)())d2i_ECDSAPrivateKey;
+ 				d2i=(char *(*)())d2i_ECPrivateKey;
  				if (xi->x_pkey != NULL) 
  				{
  					if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -220,8 +220,8 @@ start:
  			xi->x_pkey=X509_PKEY_new();
  			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
  				goto err;
- 			xi->x_pkey->dec_pkey->type=EVP_PKEY_ECDSA;
- 			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.ecdsa);
+ 			xi->x_pkey->dec_pkey->type=EVP_PKEY_EC;
+ 			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.eckey);
  			if ((int)strlen(header) > 10) /* assume encrypted */
  				raw=1;
 			}

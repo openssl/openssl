@@ -142,7 +142,7 @@ static int batch=0;
 #define TYPE_RSA	1
 #define TYPE_DSA	2
 #define TYPE_DH		3
-#define TYPE_ECDSA	4
+#define TYPE_EC		4
 
 int MAIN(int, char **);
 
@@ -152,8 +152,8 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa_params=NULL;
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	ECDSA *ecdsa_params = NULL;
+#ifndef OPENSSL_NO_EC
+	EC_KEY *ec_params = NULL;
 #endif
 	unsigned long nmflag = 0;
 	int ex=1,x509=0,days=30;
@@ -327,41 +327,41 @@ int MAIN(int argc, char **argv)
 				}
 			else 
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 				if (strncmp("ecdsa:",p,4) == 0)
 				{
 				X509 *xtmp=NULL;
 				EVP_PKEY *dtmp;
 
-				pkey_type=TYPE_ECDSA;
+				pkey_type=TYPE_EC;
 				p+=6;
 				if ((in=BIO_new_file(p,"r")) == NULL)
 					{
 					perror(p);
 					goto end;
 					}
-				if ((ecdsa_params = ECDSA_new()) == NULL)
+				if ((ec_params = EC_KEY_new()) == NULL)
 					goto end;
-				if ((ecdsa_params->group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL)) == NULL)
+				if ((ec_params->group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL)) == NULL)
 					{
-					if (ecdsa_params)
-						ECDSA_free(ecdsa_params);
+					if (ec_params)
+						EC_KEY_free(ec_params);
 					ERR_clear_error();
 					(void)BIO_reset(in);
 					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
 						{	
-						BIO_printf(bio_err,"unable to load ECDSA parameters from file\n");
+						BIO_printf(bio_err,"unable to load EC parameters from file\n");
 						goto end;
 						}
 
 					if ((dtmp=X509_get_pubkey(xtmp)) == NULL) goto end;
-					if (dtmp->type == EVP_PKEY_ECDSA)
-						ecdsa_params = ECDSAParameters_dup(dtmp->pkey.ecdsa);
+					if (dtmp->type == EVP_PKEY_EC)
+						ec_params = ECParameters_dup(dtmp->pkey.eckey);
 					EVP_PKEY_free(dtmp);
 					X509_free(xtmp);
-					if (ecdsa_params == NULL)
+					if (ec_params == NULL)
 						{
-						BIO_printf(bio_err,"Certificate does not contain ECDSA parameters\n");
+						BIO_printf(bio_err,"Certificate does not contain EC parameters\n");
 						goto end;
 						}
 					}
@@ -374,7 +374,7 @@ int MAIN(int argc, char **argv)
 				
 				if (!order)
 					goto end;
-				if (!EC_GROUP_get_order(ecdsa_params->group, order, NULL))
+				if (!EC_GROUP_get_order(ec_params->group, order, NULL))
 					goto end;
 				newkey = BN_num_bits(order);
 				BN_free(order);
@@ -745,12 +745,13 @@ bad:
 			dsa_params=NULL;
 			}
 #endif
-#ifndef OPENSSL_NO_ECDSA
-			if (pkey_type == TYPE_ECDSA)
+#ifndef OPENSSL_NO_EC
+			if (pkey_type == TYPE_EC)
 			{
-			if (!ECDSA_generate_key(ecdsa_params)) goto end;
-			if (!EVP_PKEY_assign_ECDSA(pkey, ecdsa_params)) goto end;
-			ecdsa_params = NULL;
+			if (!EC_KEY_generate_key(ec_params)) goto end;
+			if (!EVP_PKEY_assign_EC_KEY(pkey, ec_params)) 
+				goto end;
+			ec_params = NULL;
 			}
 #endif
 
@@ -1144,8 +1145,8 @@ end:
 #ifndef OPENSSL_NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	if (ecdsa_params != NULL) ECDSA_free(ecdsa_params);
+#ifndef OPENSSL_NO_EC
+	if (ec_params != NULL) EC_KEY_free(ec_params);
 #endif
 	apps_shutdown();
 	EXIT(ex);

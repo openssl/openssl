@@ -168,7 +168,8 @@
 #define EVP_PKEY_DSA3	NID_dsaWithSHA1
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
-#define EVP_PKEY_ECDSA	NID_X9_62_id_ecPublicKey
+#define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
+#define EVP_PKEY_ECDSA	EVP_PKEY_EC
 
 #ifdef	__cplusplus
 extern "C" {
@@ -193,8 +194,8 @@ struct evp_pkey_st
 #ifndef OPENSSL_NO_DH
 		struct dh_st *dh;	/* DH */
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		struct ecdsa_st *ecdsa;	/* ECDSA */
+#ifndef OPENSSL_NO_EC
+		struct ec_key_st *eckey;/* ECC */
 #endif
 		} pkey;
 	int save_parameters;
@@ -454,9 +455,9 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 					(char *)(dh))
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
-#define EVP_PKEY_assign_ECDSA(pkey,ecdsa) EVP_PKEY_assign((pkey),EVP_PKEY_ECDSA,\
-                                        (char *)(ecdsa))
+#ifndef OPENSSL_NO_EC
+#define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
+                                        (char *)(eckey))
 #endif
 
 /* Add some extra combinations */
@@ -785,10 +786,10 @@ struct dh_st;
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey,struct dh_st *key);
 struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 #endif
-#ifndef OPENSSL_NO_ECDSA
-struct ecdsa_st;
-int EVP_PKEY_set1_ECDSA(EVP_PKEY *pkey,struct ecdsa_st *key);
-struct ecdsa_st *EVP_PKEY_get1_ECDSA(EVP_PKEY *pkey);
+#ifndef OPENSSL_NO_EC
+struct ec_key_st;
+int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey,struct ec_key_st *key);
+struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 #endif
 
 EVP_PKEY *	EVP_PKEY_new(void);
@@ -848,6 +849,7 @@ void ERR_load_EVP_strings(void);
 /* Function codes. */
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_ECDSA_PKEY2PKCS8				 129
+#define EVP_F_EC_KEY_PKEY2PKCS8				 132
 #define EVP_F_EVP_CIPHERINIT				 123
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
@@ -867,6 +869,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_PKEY_GET1_DH				 119
 #define EVP_F_EVP_PKEY_GET1_DSA				 120
 #define EVP_F_EVP_PKEY_GET1_ECDSA			 130
+#define EVP_F_EVP_PKEY_GET1_EC_KEY			 131
 #define EVP_F_EVP_PKEY_GET1_RSA				 121
 #define EVP_F_EVP_PKEY_NEW				 106
 #define EVP_F_EVP_RIJNDAEL				 126
@@ -896,6 +899,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_EXPECTING_A_DH_KEY			 128
 #define EVP_R_EXPECTING_A_DSA_KEY			 129
 #define EVP_R_EXPECTING_A_ECDSA_KEY			 141
+#define EVP_R_EXPECTING_A_EC_KEY			 142
 #define EVP_R_INITIALIZATION_ERROR			 134
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
 #define EVP_R_INVALID_KEY_LENGTH			 130

@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,6 +68,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
 {ERR_PACK(0,EVP_F_ECDSA_PKEY2PKCS8,0),	"ECDSA_PKEY2PKCS8"},
+{ERR_PACK(0,EVP_F_EC_KEY_PKEY2PKCS8,0),	"EC_KEY_PKEY2PKCS8"},
 {ERR_PACK(0,EVP_F_EVP_CIPHERINIT,0),	"EVP_CipherInit"},
 {ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_CTRL,0),	"EVP_CIPHER_CTX_ctrl"},
 {ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,0),	"EVP_CIPHER_CTX_set_key_length"},
@@ -86,7 +87,8 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_PKEY_ENCRYPT,0),	"EVP_PKEY_encrypt"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_GET1_DH,0),	"EVP_PKEY_get1_DH"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_GET1_DSA,0),	"EVP_PKEY_get1_DSA"},
-{ERR_PACK(0,EVP_F_EVP_PKEY_GET1_ECDSA,0),	"EVP_PKEY_get1_ECDSA"},
+{ERR_PACK(0,EVP_F_EVP_PKEY_GET1_ECDSA,0),	"EVP_PKEY_GET1_ECDSA"},
+{ERR_PACK(0,EVP_F_EVP_PKEY_GET1_EC_KEY,0),	"EVP_PKEY_get1_EC_KEY"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_GET1_RSA,0),	"EVP_PKEY_get1_RSA"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_NEW,0),	"EVP_PKEY_new"},
 {ERR_PACK(0,EVP_F_EVP_RIJNDAEL,0),	"EVP_RIJNDAEL"},
@@ -119,6 +121,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_EXPECTING_A_DH_KEY                ,"expecting a dh key"},
 {EVP_R_EXPECTING_A_DSA_KEY               ,"expecting a dsa key"},
 {EVP_R_EXPECTING_A_ECDSA_KEY             ,"expecting a ecdsa key"},
+{EVP_R_EXPECTING_A_EC_KEY                ,"expecting a ec key"},
 {EVP_R_INITIALIZATION_ERROR              ,"initialization error"},
 {EVP_R_INPUT_NOT_INITIALIZED             ,"input not initialized"},
 {EVP_R_INVALID_KEY_LENGTH                ,"invalid key length"},

@@ -93,11 +93,11 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 		}
 		else
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+		if (pkey->type == EVP_PKEY_EC)
 		{
-			BIO_printf(out, "  ECDSA Public Key:\n");
-			ECDSA_print(out, pkey->pkey.ecdsa,2);
+			BIO_printf(out, "  EC Public Key:\n");
+			EC_KEY_print(out, pkey->pkey.eckey,2);
 		}
 		else
 #endif

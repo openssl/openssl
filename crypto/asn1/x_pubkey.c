@@ -129,14 +129,14 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		OPENSSL_free(p);
 		}
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	else if (pkey->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+	else if (pkey->type == EVP_PKEY_EC)
 		{
 		int nid=0;
 		unsigned char *pp;
-		ECDSA *ecdsa;
+		EC_KEY *eckey;
 		
-		ecdsa = pkey->pkey.ecdsa;
+		eckey = pkey->pkey.eckey;
 		ASN1_TYPE_free(a->parameter);
 
 		if ((a->parameter = ASN1_TYPE_new()) == NULL)
@@ -145,8 +145,8 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			goto err;
 			}
 
-		if (EC_GROUP_get_asn1_flag(ecdsa->group)
-                     && (nid = EC_GROUP_get_nid(ecdsa->group)))
+		if (EC_GROUP_get_asn1_flag(eckey->group)
+                     && (nid = EC_GROUP_get_nid(eckey->group)))
 			{
 			/* just set the OID */
 			a->parameter->type = V_ASN1_OBJECT;
@@ -154,9 +154,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			}
 		else /* explicit parameters */
 			{
-			if ((i = i2d_ECDSAParameters(ecdsa, NULL)) == 0)
+			if ((i = i2d_ECParameters(eckey, NULL)) == 0)
 				{
-				X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_EC_LIB);
 				goto err;
 				}
 			if ((p = (unsigned char *) OPENSSL_malloc(i)) == NULL)
@@ -165,9 +165,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 				goto err;
 				}	
 			pp = p;
-			if (!i2d_ECDSAParameters(ecdsa, &pp))
+			if (!i2d_ECParameters(eckey, &pp))
 				{
-				X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_EC_LIB);
 				OPENSSL_free(p);
 				goto err;
 				}
@@ -277,24 +277,25 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		ret->save_parameters=1;
 		}
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	else if (ret->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+	else if (ret->type == EVP_PKEY_EC)
 		{
 		if (a->parameter && (a->parameter->type == V_ASN1_SEQUENCE))
 			{
 			/* type == V_ASN1_SEQUENCE => we have explicit parameters
                          * (e.g. parameters in the X9_62_EC_PARAMETERS-structure )
 			 */
-			if ((ret->pkey.ecdsa= ECDSA_new()) == NULL)
+			if ((ret->pkey.eckey= EC_KEY_new()) == NULL)
 				{
-				X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
+				X509err(X509_F_X509_PUBKEY_GET, 
+					ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
 			cp = p = a->parameter->value.sequence->data;
 			j = a->parameter->value.sequence->length;
-			if (!d2i_ECDSAParameters(&ret->pkey.ecdsa, &cp, (long)j))
+			if (!d2i_ECParameters(&ret->pkey.eckey, &cp, (long)j))
 				{
-				X509err(X509_F_X509_PUBKEY_GET, ERR_R_ECDSA_LIB);
+				X509err(X509_F_X509_PUBKEY_GET, ERR_R_EC_LIB);
 				goto err;
 				}
 			}
@@ -303,16 +304,16 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			/* type == V_ASN1_OBJECT => the parameters are given
 			 * by an asn1 OID
 			 */
-			ECDSA *ecdsa;
-			if (ret->pkey.ecdsa == NULL)
-				ret->pkey.ecdsa = ECDSA_new();
-			ecdsa = ret->pkey.ecdsa;
-			if (ecdsa->group)
-				EC_GROUP_free(ecdsa->group);
-			if ((ecdsa->group = EC_GROUP_new_by_name(
+			EC_KEY *eckey;
+			if (ret->pkey.eckey == NULL)
+				ret->pkey.eckey = EC_KEY_new();
+			eckey = ret->pkey.eckey;
+			if (eckey->group)
+				EC_GROUP_free(eckey->group);
+			if ((eckey->group = EC_GROUP_new_by_nid(
                              OBJ_obj2nid(a->parameter->value.object))) == NULL)
 				goto err;
-			EC_GROUP_set_asn1_flag(ecdsa->group, 
+			EC_GROUP_set_asn1_flag(eckey->group, 
 						OPENSSL_EC_NAMED_CURVE);
 			}
 			/* the case implicitlyCA is currently not implemented */
@@ -453,38 +454,38 @@ int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
 	}
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
-ECDSA *d2i_ECDSA_PUBKEY(ECDSA **a, unsigned char **pp, long length)
+#ifndef OPENSSL_NO_EC
+EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, unsigned char **pp, long length)
 	{
 	EVP_PKEY *pkey;
-	ECDSA *key;
+	EC_KEY *key;
 	unsigned char *q;
 	q = *pp;
 	pkey = d2i_PUBKEY(NULL, &q, length);
 	if (!pkey) return(NULL);
-	key = EVP_PKEY_get1_ECDSA(pkey);
+	key = EVP_PKEY_get1_EC_KEY(pkey);
 	EVP_PKEY_free(pkey);
 	if (!key)  return(NULL);
 	*pp = q;
 	if (a)
 		{
-		ECDSA_free(*a);
+		EC_KEY_free(*a);
 		*a = key;
 		}
 	return(key);
 	}
 
-int i2d_ECDSA_PUBKEY(ECDSA *a, unsigned char **pp)
+int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
 	{
 	EVP_PKEY *pktmp;
 	int ret;
 	if (!a)	return(0);
 	if ((pktmp = EVP_PKEY_new()) == NULL)
 		{
-		ASN1err(ASN1_F_I2D_ECDSA_PUBKEY, ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	EVP_PKEY_set1_ECDSA(pktmp, a);
+	EVP_PKEY_set1_EC_KEY(pktmp, a);
 	ret = i2d_PUBKEY(pktmp, pp);
 	EVP_PKEY_free(pktmp);
 	return(ret);

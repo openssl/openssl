@@ -325,58 +325,57 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_FP_API
-ECDSA *d2i_ECDSAPrivateKey_fp(FILE *fp, ECDSA **ecdsa)
+EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 	{
-	return((ECDSA *)ASN1_d2i_fp((char *(*)())
-		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (fp),
-		(unsigned char **)(ecdsa)));
+	return((EC_KEY *)ASN1_d2i_fp((char *(*)())
+		EC_KEY_new,(char *(*)())d2i_EC_PUBKEY, (fp),
+		(unsigned char **)(eckey)));
 	}
   
-int i2d_ECDSAPrivateKey_fp(FILE *fp, ECDSA *ecdsa)
+int i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey)
 	{
-	return(ASN1_i2d_fp(i2d_ECDSAPrivateKey,fp,(unsigned char *)ecdsa));
+	return(ASN1_i2d_fp(i2d_EC_PUBKEY,fp,(unsigned char *)eckey));
+	}
+
+EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
+	{
+	return((EC_KEY *)ASN1_d2i_fp((char *(*)())
+		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (fp),
+		(unsigned char **)(eckey)));
 	}
   
-ECDSA *d2i_ECDSA_PUBKEY_fp(FILE *fp, ECDSA **ecdsa)
+int i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey)
 	{
-	return((ECDSA *)ASN1_d2i_fp((char *(*)())
-		ECDSA_new,(char *(*)())d2i_ECDSA_PUBKEY, (fp),
-		(unsigned char **)(ecdsa)));
-	}
-  
-int i2d_ECDSA_PUBKEY_fp(FILE *fp, ECDSA *ecdsa)
-	{
-	return(ASN1_i2d_fp(i2d_ECDSA_PUBKEY,fp,(unsigned char *)ecdsa));
+	return(ASN1_i2d_fp(i2d_ECPrivateKey,fp,(unsigned char *)eckey));
 	}
 #endif
-  
-ECDSA *d2i_ECDSAPrivateKey_bio(BIO *bp, ECDSA **ecdsa)
+EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
 	{
-	return((ECDSA *)ASN1_d2i_bio((char *(*)())
-		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (bp),
-		(unsigned char **)(ecdsa)));
+	return((EC_KEY *)ASN1_d2i_bio((char *(*)())
+		EC_KEY_new,(char *(*)())d2i_EC_PUBKEY, (bp),
+		(unsigned char **)(eckey)));
 	}
   
-int i2d_ECDSAPrivateKey_bio(BIO *bp, ECDSA *ecdsa)
+int i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *ecdsa)
 	{
-	return(ASN1_i2d_bio(i2d_ECDSAPrivateKey,bp,(unsigned char *)ecdsa));
+	return(ASN1_i2d_bio(i2d_EC_PUBKEY,bp,(unsigned char *)ecdsa));
+	}
+
+EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
+	{
+	return((EC_KEY *)ASN1_d2i_bio((char *(*)())
+		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (bp),
+		(unsigned char **)(eckey)));
 	}
   
-ECDSA *d2i_ECDSA_PUBKEY_bio(BIO *bp, ECDSA **ecdsa)
+int i2d_ECPrivateKey_bio(BIO *bp, EC_KEY *eckey)
 	{
-	return((ECDSA *)ASN1_d2i_bio((char *(*)())
-		ECDSA_new,(char *(*)())d2i_ECDSA_PUBKEY, (bp),
-		(unsigned char **)(ecdsa)));
+	return(ASN1_i2d_bio(i2d_ECPrivateKey,bp,(unsigned char *)eckey));
 	}
-  
-int i2d_ECDSA_PUBKEY_bio(BIO *bp, ECDSA *ecdsa)
-	{
-	return(ASN1_i2d_bio(i2d_ECDSA_PUBKEY,bp,(unsigned char *)ecdsa));
-	}
-  
 #endif
+
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)

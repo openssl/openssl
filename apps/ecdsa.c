@@ -60,8 +60,8 @@
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/ecdsa.h>
 #include <openssl/evp.h>
+#include <openssl/ecdsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
@@ -85,7 +85,7 @@ int MAIN(int argc, char **argv)
 {
 	ENGINE 	*e = NULL;
 	int 	ret = 1;
-	ECDSA 	*ecdsa = NULL;
+	EC_KEY 	*eckey = NULL;
 	int 	i, badops = 0;
 	const EVP_CIPHER *enc = NULL;
 	BIO 	*in = NULL, *out = NULL;
@@ -279,17 +279,17 @@ bad:
 	if (informat == FORMAT_ASN1) 
 		{
 		if (pubin) 
-			ecdsa = d2i_ECDSA_PUBKEY_bio(in, NULL);
+			eckey = d2i_EC_PUBKEY_bio(in, NULL);
 		else 
-			ecdsa = d2i_ECDSAPrivateKey_bio(in, NULL);
+			eckey = d2i_ECPrivateKey_bio(in, NULL);
 		} 
 	else if (informat == FORMAT_PEM) 
 		{
 		if (pubin) 
-			ecdsa = PEM_read_bio_ECDSA_PUBKEY(in, NULL, NULL, 
+			eckey = PEM_read_bio_EC_PUBKEY(in, NULL, NULL, 
 				NULL);
 		else 
-			ecdsa = PEM_read_bio_ECDSAPrivateKey(in, NULL, NULL,
+			eckey = PEM_read_bio_ECPrivateKey(in, NULL, NULL,
 				passin);
 		} 
 	else
@@ -297,7 +297,7 @@ bad:
 		BIO_printf(bio_err, "bad input format specified for key\n");
 		goto end;
 		}
-	if (ecdsa == NULL)
+	if (eckey == NULL)
 		{
 		BIO_printf(bio_err,"unable to load Key\n");
 		ERR_print_errors(bio_err);
@@ -325,15 +325,15 @@ bad:
 
 	if (new_form)
 		{
-		EC_GROUP_set_point_conversion_form(ecdsa->group, form);
-		ECDSA_set_conversion_form(ecdsa, form);
+		EC_GROUP_set_point_conversion_form(eckey->group, form);
+		eckey->conv_form = form;
 		}
 
 	if (new_asn1_flag)
-		EC_GROUP_set_asn1_flag(ecdsa->group, asn1_flag);
+		EC_GROUP_set_asn1_flag(eckey->group, asn1_flag);
 
 	if (text) 
-		if (!ECDSA_print(out, ecdsa, 0))
+		if (!EC_KEY_print(out, eckey, 0))
 			{
 			perror(outfile);
 			ERR_print_errors(bio_err);
@@ -343,24 +343,24 @@ bad:
 	if (noout) 
 		goto end;
 
-	BIO_printf(bio_err, "writing ECDSA key\n");
+	BIO_printf(bio_err, "writing EC key\n");
 	if (outformat == FORMAT_ASN1) 
 		{
 		if (param_out)
-			i = i2d_ECPKParameters_bio(out, ecdsa->group);
+			i = i2d_ECPKParameters_bio(out, eckey->group);
 		else if (pubin || pubout) 
-			i = i2d_ECDSA_PUBKEY_bio(out, ecdsa);
+			i = i2d_EC_PUBKEY_bio(out, eckey);
 		else 
-			i = i2d_ECDSAPrivateKey_bio(out, ecdsa);
+			i = i2d_ECPrivateKey_bio(out, eckey);
 		} 
 	else if (outformat == FORMAT_PEM) 
 		{
 		if (param_out)
-			i = PEM_write_bio_ECPKParameters(out, ecdsa->group);
+			i = PEM_write_bio_ECPKParameters(out, eckey->group);
 		else if (pubin || pubout)
-			i = PEM_write_bio_ECDSA_PUBKEY(out, ecdsa);
+			i = PEM_write_bio_EC_PUBKEY(out, eckey);
 		else 
-			i = PEM_write_bio_ECDSAPrivateKey(out, ecdsa, enc,
+			i = PEM_write_bio_ECPrivateKey(out, eckey, enc,
 						NULL, 0, NULL, passout);
 		} 
 	else 
@@ -382,8 +382,8 @@ end:
 		BIO_free(in);
 	if (out)
 		BIO_free_all(out);
-	if (ecdsa)
-		ECDSA_free(ecdsa);
+	if (eckey)
+		EC_KEY_free(eckey);
 	if (passin)
 		OPENSSL_free(passin);
 	if (passout)

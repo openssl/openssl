@@ -1010,6 +1010,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_I2D_ASN1_TIME				 160
 #define ASN1_F_I2D_DSA_PUBKEY				 161
 #define ASN1_F_I2D_ECDSA_PUBKEY				 174
+#define ASN1_F_I2D_EC_PUBKEY				 176
 #define ASN1_F_I2D_NETSCAPE_RSA				 162
 #define ASN1_F_I2D_PRIVATEKEY				 163
 #define ASN1_F_I2D_PUBLICKEY				 164

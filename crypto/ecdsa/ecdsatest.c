@@ -89,7 +89,7 @@ static const char rnd_seed[] = "string to make the random number generator think
 ECDSA_SIG*	signatures[ECDSA_NIST_TESTS];
 unsigned char	digest[ECDSA_NIST_TESTS][20];
 
-void clear_ecdsa(ECDSA *ecdsa)
+void clear_ecdsa(EC_KEY *ecdsa)
 {
 	if (!ecdsa)
 		return;
@@ -110,7 +110,7 @@ void clear_ecdsa(ECDSA *ecdsa)
 	}
 }
 
-int set_p192_param(ECDSA *ecdsa)
+int set_p192_param(EC_KEY *ecdsa)
 {
 	BN_CTX	 *ctx=NULL;
 	int 	 ret=0;
@@ -143,7 +143,7 @@ err :	if (ctx)	BN_CTX_free(ctx);
 	return ret;
 }
 
-int set_p239_param(ECDSA *ecdsa)
+int set_p239_param(EC_KEY *ecdsa)
 {
 	BN_CTX	 *ctx=NULL;
 	int 	 ret=0;
@@ -176,7 +176,7 @@ err :	if (ctx)	BN_CTX_free(ctx);
 	return ret;
 }
 
-int test_sig_vrf(ECDSA *ecdsa, const unsigned char* dgst)
+int test_sig_vrf(EC_KEY *ecdsa, const unsigned char* dgst)
 {
         int       ret=0,type=0;
         unsigned char *buffer=NULL;
@@ -216,7 +216,7 @@ err:    OPENSSL_free(buffer);
         return(ret == 1);
 }
 
-int test_x962_sig_vrf(ECDSA *ecdsa, const unsigned char *dgst,
+int test_x962_sig_vrf(EC_KEY *eckey, const unsigned char *dgst,
                            const char *k_in, const char *r_in, const char *s_in)
 {
         int       ret=0;
@@ -225,23 +225,28 @@ int test_x962_sig_vrf(ECDSA *ecdsa, const unsigned char *dgst,
         BIGNUM    *r=NULL,*s=NULL,*k=NULL,*x=NULL,*y=NULL,*m=NULL,*ord=NULL;
         BN_CTX    *ctx=NULL;
         char      *tmp_char=NULL;
- 
-        if (!ecdsa || !ecdsa->group || !ecdsa->pub_key || !ecdsa->priv_key)
+	ECDSA_DATA *ecdsa = ecdsa_check(eckey);;
+	
+        if (!eckey || !eckey->group || !eckey->pub_key || !eckey->priv_key
+		|| !ecdsa)
                 return 0;
-        if ((point = EC_POINT_new(ecdsa->group)) == NULL) goto err;
-        if ((r = BN_new()) == NULL || (s = BN_new()) == NULL || (k = BN_new()) == NULL ||
-            (x = BN_new()) == NULL || (y = BN_new()) == NULL || (m = BN_new()) == NULL ||
-            (ord = BN_new()) == NULL) goto err;
+        if ((point = EC_POINT_new(eckey->group)) == NULL) goto err;
+        if ((r = BN_new()) == NULL || (s = BN_new()) == NULL 
+		|| (k = BN_new()) == NULL || (x = BN_new()) == NULL || 
+		(y = BN_new()) == NULL || (m = BN_new()) == NULL ||
+		(ord = BN_new()) == NULL) goto err;
         if ((ctx = BN_CTX_new()) == NULL) goto err;
         if (!BN_bin2bn(dgst, 20, m)) goto err;
         if (!BN_dec2bn(&k, k_in)) goto err;
-        if (!EC_POINT_mul(ecdsa->group, point, k, NULL, NULL, ctx)) goto err;
-        if (!EC_POINT_get_affine_coordinates_GFp(ecdsa->group, point, x, y, ctx)) goto err;
-        if (!EC_GROUP_get_order(ecdsa->group, ord, ctx)) goto err;
+        if (!EC_POINT_mul(eckey->group, point, k, NULL, NULL, ctx)) goto err;
+        if (!EC_POINT_get_affine_coordinates_GFp(eckey->group, point, x, y,
+		ctx)) goto err;
+        if (!EC_GROUP_get_order(eckey->group, ord, ctx)) goto err;
         if ((ecdsa->r = BN_dup(x)) == NULL) goto err;
-        if ((ecdsa->kinv = BN_mod_inverse(NULL, k, ord, ctx)) == NULL) goto err;
+        if ((ecdsa->kinv = BN_mod_inverse(NULL, k, ord, ctx)) == NULL)
+		goto err;
  
-        if ((sig = ECDSA_do_sign(dgst, 20, ecdsa)) == NULL)
+        if ((sig = ECDSA_do_sign(dgst, 20, eckey)) == NULL)
         {
                 BIO_printf(bio_err,"ECDSA_do_sign() failed \n");
                 goto err;
@@ -260,7 +265,7 @@ int test_x962_sig_vrf(ECDSA *ecdsa, const unsigned char *dgst,
                 BIO_printf(bio_err,"sig->s = %s\n",tmp_char);
                 goto err;
         }
-	        ret = ECDSA_do_verify(dgst, 20, sig, ecdsa);
+	        ret = ECDSA_do_verify(dgst, 20, sig, eckey);
         if (ret != 1)
         {
                 BIO_printf(bio_err,"ECDSA_do_verify : signature verification failed \n");
@@ -282,7 +287,7 @@ err :   if (r)    BN_free(r);
         return(ret == 1);
 }
 
-int ecdsa_cmp(const ECDSA *a, const ECDSA *b)
+int ecdsa_cmp(const EC_KEY *a, const EC_KEY *b)
 {
 	int 	ret=1;
 	BN_CTX	*ctx=NULL;
@@ -316,7 +321,7 @@ err:	if (tmp_a1) BN_free(tmp_a1);
 
 int main(void)
 {
-	ECDSA	 	*ecdsa=NULL, *ret_ecdsa=NULL;
+	EC_KEY	 	*ecdsa=NULL, *ret_ecdsa=NULL;
 	BIGNUM	 	*d=NULL;
 	X509_PUBKEY 	*x509_pubkey=NULL;
 	PKCS8_PRIV_KEY_INFO *pkcs8=NULL;
@@ -351,41 +356,41 @@ int main(void)
 
 	RAND_seed(rnd_seed, sizeof(rnd_seed));
 
-	if ((ecdsa = ECDSA_new()) == NULL)   goto err;
+	if ((ecdsa = EC_KEY_new()) == NULL)   goto err;
 
 	set_p192_param(ecdsa);
-	ECDSA_print(bio_err, ecdsa, 0);
+	EC_KEY_print(bio_err, ecdsa, 0);
 
 	/* en- decode tests */
 
-	/* i2d_ - d2i_ECDSAParameters() */
+	/* i2d_ - d2i_ECParameters() */
 	BIO_printf(bio_err, "\nTesting i2d_ - d2i_ECDSAParameters \n");
-	buf_len = i2d_ECDSAParameters(ecdsa, NULL);
+	buf_len = i2d_ECParameters(ecdsa, NULL);
 	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL) goto err;
 	pp = buffer;
-	if (!i2d_ECDSAParameters(ecdsa, &pp)) goto err;
+	if (!i2d_ECParameters(ecdsa, &pp)) goto err;
 	pp = buffer;
-	if ((ret_ecdsa = d2i_ECDSAParameters(&ret_ecdsa, (const unsigned char **)&pp, 
+	if ((ret_ecdsa = d2i_ECParameters(&ret_ecdsa, (const unsigned char **)&pp, 
 			buf_len)) == NULL) goto err;
-	ECDSAParameters_print(bio_err, ret_ecdsa);
+	ECParameters_print(bio_err, ret_ecdsa);
 	if (ecdsa_cmp(ecdsa, ret_ecdsa)) goto err;
 	OPENSSL_free(buffer);
 	buffer = NULL;
-	ECDSA_free(ret_ecdsa);
+	EC_KEY_free(ret_ecdsa);
 	ret_ecdsa = NULL;
 
-	/* i2d_ - d2i_ECDSAPrivateKey() */
+	/* i2d_ - d2i_ECPrivateKey() */
 	BIO_printf(bio_err, "\nTesting i2d_ - d2i_ECDSAPrivateKey \n");
-	buf_len = i2d_ECDSAPrivateKey(ecdsa, NULL);
+	buf_len = i2d_ECPrivateKey(ecdsa, NULL);
 	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL) goto err;
 	pp = buffer;
-	if (!i2d_ECDSAPrivateKey(ecdsa, &pp)) goto err;
+	if (!i2d_ECPrivateKey(ecdsa, &pp)) goto err;
 	pp = buffer;
-	if ((ret_ecdsa = d2i_ECDSAPrivateKey(&ret_ecdsa, (const unsigned char**)&pp, 
+	if ((ret_ecdsa = d2i_ECPrivateKey(&ret_ecdsa, (const unsigned char**)&pp, 
 			buf_len)) == NULL) goto err;
-	ECDSA_print(bio_err, ret_ecdsa, 0);
+	EC_KEY_print(bio_err, ret_ecdsa, 0);
 	if (ecdsa_cmp(ecdsa, ret_ecdsa)) goto err;
-	ECDSA_free(ret_ecdsa);
+	EC_KEY_free(ret_ecdsa);
 	ret_ecdsa = NULL;
 	OPENSSL_free(buffer);
 	buffer = NULL;
@@ -394,12 +399,12 @@ int main(void)
 
 	BIO_printf(bio_err, "\nTesting X509_PUBKEY_{get,set}            : ");
 	if ((pkey = EVP_PKEY_new()) == NULL) goto err;
-	EVP_PKEY_assign_ECDSA(pkey, ecdsa);
+	EVP_PKEY_assign_EC_KEY(pkey, ecdsa);
 	if ((x509_pubkey = X509_PUBKEY_new()) == NULL) goto err;
 	if (!X509_PUBKEY_set(&x509_pubkey, pkey)) goto err;
 
 	if ((ret_pkey = X509_PUBKEY_get(x509_pubkey)) == NULL) goto err;
-	ret_ecdsa = EVP_PKEY_get1_ECDSA(ret_pkey);
+	ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
 	EVP_PKEY_free(ret_pkey);
 	ret_pkey = NULL;
 
@@ -411,7 +416,7 @@ int main(void)
 	else BIO_printf(bio_err, "TEST OK \n");
 	X509_PUBKEY_free(x509_pubkey);
 	x509_pubkey = NULL;
-	ECDSA_free(ret_ecdsa);
+	EC_KEY_free(ret_ecdsa);
 	ret_ecdsa = NULL;
 
 	/* Testing PKCS8_PRIV_KEY_INFO <-> EVP_PKEY */
@@ -419,7 +424,7 @@ int main(void)
 	BIO_printf(bio_err, "PKCS8_OK              : ");
 	if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_OK)) == NULL) goto err;
 	if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-	ret_ecdsa = EVP_PKEY_get1_ECDSA(ret_pkey);
+	ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
 	if (ecdsa_cmp(ecdsa, ret_ecdsa))
 	{
 		BIO_printf(bio_err, "TEST FAILED \n");
@@ -428,13 +433,13 @@ int main(void)
 	else BIO_printf(bio_err, "TEST OK \n");
 	EVP_PKEY_free(ret_pkey);
 	ret_pkey = NULL;
-	ECDSA_free(ret_ecdsa);
+	EC_KEY_free(ret_ecdsa);
 	ret_ecdsa = NULL;
 	PKCS8_PRIV_KEY_INFO_free(pkcs8);
 	BIO_printf(bio_err, "PKCS8_NO_OCTET        : ");
         if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_NO_OCTET)) == NULL) goto err;
         if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_ECDSA(ret_pkey);
+        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
         if (ecdsa_cmp(ecdsa, ret_ecdsa))
         {
                 BIO_printf(bio_err, "TEST FAILED \n");
@@ -443,13 +448,13 @@ int main(void)
         else BIO_printf(bio_err, "TEST OK \n");
         EVP_PKEY_free(ret_pkey);
         ret_pkey = NULL;
-        ECDSA_free(ret_ecdsa);
+        EC_KEY_free(ret_ecdsa);
         ret_ecdsa = NULL;
 	PKCS8_PRIV_KEY_INFO_free(pkcs8);
 	BIO_printf(bio_err, "PKCS8_EMBEDDED_PARAM  : ");
         if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_EMBEDDED_PARAM)) == NULL) goto err;
         if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_ECDSA(ret_pkey);
+        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
         if (ecdsa_cmp(ecdsa, ret_ecdsa))
         {
                 BIO_printf(bio_err, "TEST FAILED \n");
@@ -458,13 +463,13 @@ int main(void)
         else BIO_printf(bio_err, "TEST OK \n");
         EVP_PKEY_free(ret_pkey);
         ret_pkey = NULL;
-        ECDSA_free(ret_ecdsa);
+        EC_KEY_free(ret_ecdsa);
         ret_ecdsa = NULL;
 	PKCS8_PRIV_KEY_INFO_free(pkcs8);
         BIO_printf(bio_err, "PKCS8_NS_DB           : ");
         if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_NS_DB)) == NULL) goto err;
         if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_ECDSA(ret_pkey);
+        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
         if (ecdsa_cmp(ecdsa, ret_ecdsa))
         {
                 BIO_printf(bio_err, "TEST FAILED \n");
@@ -473,7 +478,7 @@ int main(void)
         else BIO_printf(bio_err, "TEST OK \n");
         EVP_PKEY_free(ret_pkey);
         ret_pkey = NULL;
-        ECDSA_free(ret_ecdsa);
+        EC_KEY_free(ret_ecdsa);
         ret_ecdsa = NULL;
 	EVP_PKEY_free(pkey);
 	pkey  = NULL;
@@ -492,7 +497,7 @@ int main(void)
         BIO_printf(bio_err, "Performing tests based on examples H.3.1 and H.3.2 of X9.62 \n");
  
         BIO_printf(bio_err, "PRIME_192_V1 : ");
-	if ((ecdsa = ECDSA_new()) == NULL) goto err;
+	if ((ecdsa = EC_KEY_new()) == NULL) goto err;
         if (!set_p192_param(ecdsa)) goto err;
         if (!test_x962_sig_vrf(ecdsa, dgst, "6140507067065001063065065565667405560006161556565665656654",
                                "3342403536405981729393488334694600415596881826869351677613",
@@ -510,7 +515,7 @@ int main(void)
         else
                 BIO_printf(bio_err, "OK\n");
 
-	ECDSA_free(ecdsa);
+	EC_KEY_free(ecdsa);
 	ecdsa = NULL;
 	OPENSSL_free(dgst);
 	dgst = NULL;
@@ -522,10 +527,11 @@ int main(void)
 		if (!RAND_bytes(digest[i], 20)) goto err;	
 
  	BIO_printf(bio_err, "\nTesting sign & verify with NIST Prime-Curve P-192 : \n");
-	ECDSA_free(ecdsa);
-	if ((ecdsa = ECDSA_new()) == NULL) goto err;
-	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_192)) == NULL) goto err;
-	if (!ECDSA_generate_key(ecdsa)) goto err;
+	EC_KEY_free(ecdsa);
+	if ((ecdsa = EC_KEY_new()) == NULL) goto err;
+	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_192)) 
+		== NULL) goto err;
+	if (!EC_KEY_generate_key(ecdsa)) goto err;
         tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
@@ -548,10 +554,10 @@ int main(void)
 
 	/* EC_GROUP_NIST_PRIME_224 */
 	BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-224 : \n");
-        ECDSA_free(ecdsa);
-        if ((ecdsa = ECDSA_new()) == NULL) goto err;
+        EC_KEY_free(ecdsa);
+        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_224)) == NULL) goto err;
-        if (!ECDSA_generate_key(ecdsa)) goto err;
+        if (!EC_KEY_generate_key(ecdsa)) goto err;
         tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
@@ -574,10 +580,10 @@ int main(void)
 
 	/* EC_GROUP_NIST_PRIME_256 */
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-256 : \n");
-        ECDSA_free(ecdsa);
-        if ((ecdsa = ECDSA_new()) == NULL) goto err;
+        EC_KEY_free(ecdsa);
+        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_256)) == NULL) goto err;
-        if (!ECDSA_generate_key(ecdsa)) goto err;
+        if (!EC_KEY_generate_key(ecdsa)) goto err;
         tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
@@ -600,10 +606,10 @@ int main(void)
 
 	/* EC_GROUP_NIST_PRIME_384 */
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-384 : \n");
-        ECDSA_free(ecdsa);
-        if ((ecdsa = ECDSA_new()) == NULL) goto err;
+        EC_KEY_free(ecdsa);
+        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_384)) == NULL) goto err;
-        if (!ECDSA_generate_key(ecdsa)) goto err;
+        if (!EC_KEY_generate_key(ecdsa)) goto err;
         tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
@@ -626,10 +632,10 @@ int main(void)
 
 	/* EC_GROUP_NIST_PRIME_521 */
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-521 : \n");
-        ECDSA_free(ecdsa);
-        if ((ecdsa = ECDSA_new()) == NULL) goto err;
+        EC_KEY_free(ecdsa);
+        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_521)) == NULL) goto err;
-        if (!ECDSA_generate_key(ecdsa)) goto err;
+        if (!EC_KEY_generate_key(ecdsa)) goto err;
         tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
@@ -644,7 +650,7 @@ int main(void)
         tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
                 , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
-	ECDSA_free(ecdsa);
+	EC_KEY_free(ecdsa);
 	ecdsa = NULL;
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 	{
@@ -665,7 +671,7 @@ err:	if (!ret)
 		BIO_printf(bio_err, "TEST PASSED \n");
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (ecdsa)	ECDSA_free(ecdsa);
+	if (ecdsa)	EC_KEY_free(ecdsa);
 	if (d)		BN_free(d);
 	if (dgst)	OPENSSL_free(dgst);
 	if (md_ctx)	EVP_MD_CTX_destroy(md_ctx);

@@ -61,9 +61,13 @@
  *      0: incorrect signature
  *     -1: error
  */
-int ECDSA_do_verify(const unsigned char *dgst, int dgst_len, ECDSA_SIG *sig, ECDSA *ecdsa)
+int ECDSA_do_verify(const unsigned char *dgst, int dgst_len, 
+		ECDSA_SIG *sig, EC_KEY *eckey)
 	{
-	return ecdsa->meth->ecdsa_do_verify(dgst, dgst_len, sig, ecdsa);
+	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
+	if (ecdsa == NULL)
+		return 0;
+	return ecdsa->meth->ecdsa_do_verify(dgst, dgst_len, sig, eckey);
 	}
 
 /* returns
@@ -71,15 +75,16 @@ int ECDSA_do_verify(const unsigned char *dgst, int dgst_len, ECDSA_SIG *sig, ECD
  *      0: incorrect signature
  *     -1: error
  */
-int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len, const unsigned char *sigbuf, int sig_len, ECDSA *ecdsa)
+int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
+		const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
  	{
 	ECDSA_SIG *s;
 	int ret=-1;
 
 	s = ECDSA_SIG_new();
 	if (s == NULL) return(ret);
-	if (d2i_ECDSA_SIG(&s,&sigbuf,sig_len) == NULL) goto err;
-	ret=ECDSA_do_verify(dgst,dgst_len,s,ecdsa);
+	if (d2i_ECDSA_SIG(&s, &sigbuf, sig_len) == NULL) goto err;
+	ret=ECDSA_do_verify(dgst, dgst_len, s, eckey);
 err:
 	ECDSA_SIG_free(s);
 	return(ret);

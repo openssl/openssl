@@ -1,4 +1,7 @@
 /* apps/ecparam.c */
+/*
+ * Originally written by Nils Larsch for the OpenSSL project.
+ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -78,7 +81,7 @@
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +92,9 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#ifndef OPENSSL_NO_ECDSA
 #include <openssl/ecdsa.h>
+#endif
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
@@ -673,36 +678,36 @@ bad:
 
 	if (genkey)
 		{
-		ECDSA *ecdsa = ECDSA_new();
+		EC_KEY *eckey = EC_KEY_new();
 
-		if (ecdsa == NULL)
+		if (eckey == NULL)
 			goto end;
 
 		assert(need_rand);
 
-		ecdsa->group = group;
+		eckey->group = group;
 		
-		if (!ECDSA_generate_key(ecdsa))
+		if (!EC_KEY_generate_key(eckey))
 			{
-			ecdsa->group = NULL;
-			ECDSA_free(ecdsa);
+			eckey->group = NULL;
+			EC_KEY_free(eckey);
 			goto end;
 			}
 		if (outformat == FORMAT_ASN1)
-			i = i2d_ECDSAPrivateKey_bio(out, ecdsa);
+			i = i2d_ECPrivateKey_bio(out, eckey);
 		else if (outformat == FORMAT_PEM)
-			i = PEM_write_bio_ECDSAPrivateKey(out, ecdsa, NULL,
+			i = PEM_write_bio_ECPrivateKey(out, eckey, NULL,
 				NULL, 0, NULL, NULL);
 		else	
 			{
 			BIO_printf(bio_err, "bad output format specified "
 				"for outfile\n");
-			ecdsa->group = NULL;
-			ECDSA_free(ecdsa);
+			eckey->group = NULL;
+			EC_KEY_free(eckey);
 			goto end;
 			}
-		ecdsa->group = NULL;
-		ECDSA_free(ecdsa);
+		eckey->group = NULL;
+		EC_KEY_free(eckey);
 		}
 
 	if (need_rand)

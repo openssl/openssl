@@ -66,8 +66,8 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
 #endif
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -232,11 +232,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			}
 		else
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+		if (pkey->type == EVP_PKEY_EC)
 			{
-			BIO_printf(bp, "%12sECDSA Public Key:\n","");
-			ECDSA_print(bp, pkey->pkey.ecdsa, 16);
+			BIO_printf(bp, "%12sEC Public Key:\n","");
+			EC_KEY_print(bp, pkey->pkey.eckey, 16);
 			}
 		else
 #endif
