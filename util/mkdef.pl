@@ -452,7 +452,7 @@ sub do_defs
 				$tag{"TRUE"}=-1;
 				print STDERR "DEBUG: $file: found 0\n" if $debug;
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
-				 && $symhacking) {
+				 && $symhacking && $tag{'TRUE'} != -1) {
 				my $s = $1;
 				my $a = $2;
 				my $a1 = join(",",
@@ -491,95 +491,95 @@ sub do_defs
 					    .join(',',@current_algorithms).";";
 				next;
 			}
-			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
-				next;
-			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$def .= "int d2i_$3(void);";
-				$def .= "int i2d_$3(void);";
-				$def .= "OPENSSL_EXTERN int $2_it;";
-				next;
-			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$def .= "int d2i_$3(void);";
-				$def .= "int i2d_$3(void);";
-				$def .= "int $3_free(void);";
-				$def .= "int $3_new(void);";
-				$def .= "OPENSSL_EXTERN int $2_it;";
-			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/ ||
-				/^\s*DECLARE_ASN1_FUNCTIONS_const\s*\(\s*(\w*)\s*\)/) {
-				$def .= "int d2i_$1(void);";
-				$def .= "int i2d_$1(void);";
-				$def .= "int $1_free(void);";
-				$def .= "int $1_new(void);";
-				$def .= "OPENSSL_EXTERN int $1_it;";
-				next;
-			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_const\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$def .= "int d2i_$2(void);";
-				$def .= "int i2d_$2(void);";
-				$def .= "OPENSSL_EXTERN int $2_it;";
-				next;
-			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$def .= "int d2i_$2(void);";
-				$def .= "int i2d_$2(void);";
-				$def .= "int $2_free(void);";
-				$def .= "int $2_new(void);";
-				$def .= "OPENSSL_EXTERN int $2_it;";
-				next;
-			} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*,(\w*)\s*\)/) {
-				$def .= "OPENSSL_EXTERN int $1_it;";
-				next;
-			} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
-				next;
-			} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
-				next;
-			} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
-				 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
-				# Things not in Win16
-				$def .=
-				    "#INFO:"
-					.join(',',"!WIN16",@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				$def .= "int PEM_read_$1(void);";
-				$def .= "int PEM_write_$1(void);";
-				$def .=
-				    "#INFO:"
-					.join(',',@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				# Things that are everywhere
-				$def .= "int PEM_read_bio_$1(void);";
-				$def .= "int PEM_write_bio_$1(void);";
-			} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
-				     /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
-				# Things not in Win16
-				$def .=
-				    "#INFO:"
-					.join(',',"!WIN16",@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				$def .= "int PEM_write_$1(void);";
-				$def .=
-				    "#INFO:"
-					.join(',',@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				# Things that are everywhere
-				$def .= "int PEM_write_bio_$1(void);";
-			} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
-				     /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
-				# Things not in Win16
-				$def .=
-				    "#INFO:"
-					.join(',',"!WIN16",@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				$def .= "int PEM_read_$1(void);";
-				$def .=
-				    "#INFO:"
-					.join(',',@current_platforms).":"
-					    .join(',',@current_algorithms).";";
-				# Things that are everywhere
-				$def .= "int PEM_read_bio_$1(void);";
-			} elsif (
-				($tag{'TRUE'} != -1)
-				&& ($tag{'CONST_STRICT'} != 1)
-				 )
-				{
+			if ($tag{'TRUE'} != -1) {
+				if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+					next;
+				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$3(void);";
+					$def .= "int i2d_$3(void);";
+					$def .= "OPENSSL_EXTERN int $2_it;";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$3(void);";
+					$def .= "int i2d_$3(void);";
+					$def .= "int $3_free(void);";
+					$def .= "int $3_new(void);";
+					$def .= "OPENSSL_EXTERN int $2_it;";
+				} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/ ||
+					 /^\s*DECLARE_ASN1_FUNCTIONS_const\s*\(\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$1(void);";
+					$def .= "int i2d_$1(void);";
+					$def .= "int $1_free(void);";
+					$def .= "int $1_new(void);";
+					$def .= "OPENSSL_EXTERN int $1_it;";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_const\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$2(void);";
+					$def .= "int i2d_$2(void);";
+					$def .= "OPENSSL_EXTERN int $2_it;";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$2(void);";
+					$def .= "int i2d_$2(void);";
+					$def .= "int $2_free(void);";
+					$def .= "int $2_new(void);";
+					$def .= "OPENSSL_EXTERN int $2_it;";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*,(\w*)\s*\)/) {
+					$def .= "OPENSSL_EXTERN int $1_it;";
+					next;
+				} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+					next;
+				} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
+					next;
+				} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
+					 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
+					# Things not in Win16
+					$def .=
+					    "#INFO:"
+						.join(',',"!WIN16",@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					$def .= "int PEM_read_$1(void);";
+					$def .= "int PEM_write_$1(void);";
+					$def .=
+					    "#INFO:"
+						.join(',',@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					# Things that are everywhere
+					$def .= "int PEM_read_bio_$1(void);";
+					$def .= "int PEM_write_bio_$1(void);";
+					next;
+				} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
+					 /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
+					# Things not in Win16
+					$def .=
+					    "#INFO:"
+						.join(',',"!WIN16",@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					$def .= "int PEM_write_$1(void);";
+					$def .=
+					    "#INFO:"
+						.join(',',@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					# Things that are everywhere
+					$def .= "int PEM_write_bio_$1(void);";
+					next;
+				} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
+					 /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
+					# Things not in Win16
+					$def .=
+					    "#INFO:"
+						.join(',',"!WIN16",@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					$def .= "int PEM_read_$1(void);";
+					$def .=
+					    "#INFO:"
+						.join(',',@current_platforms).":"
+						    .join(',',@current_algorithms).";";
+					# Things that are everywhere
+					$def .= "int PEM_read_bio_$1(void);";
+					next;
+				} elsif ($tag{'CONST_STRICT'} != 1) {
 					if (/\{|\/\*|\([^\)]*$/) {
 						$line = $_;
 					} else {
@@ -587,6 +587,7 @@ sub do_defs
 					}
 				}
 			}
+		}
 		close(IN);
 
 		my $algs;
@@ -669,6 +670,11 @@ sub do_defs
 
         delete $syms{"bn_dump1"};
 	$platform{"BIO_s_log"} .= ",!WIN32,!WIN16,!macintosh";
+
+	$platform{"PEM_read_NS_CERT_SEQ"} = "VMS";
+	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
+	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
+	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
 
 	# Info we know about
 
@@ -884,24 +890,19 @@ EOF
 				} else {
 					printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
 				}
-#			} else {
-#				print STDERR "DEBUG: \"$sym\" (@p):",
-#				" rsaref:", !!(!@p
-#					       || (!$negatives
-#						   && ($rsaref || !grep(/^RSAREF$/,@p)))
-#					       || ($negatives
-#						   && (!$rsaref || !grep(/^!RSAREF$/,@p))))?1:0,
-#				" 16:", !!($W16 && (!@p_purged
-#						    || (!$negatives && grep(/^WIN16$/,@p))
-#						    || ($negatives && !grep(/^!WIN16$/,@p)))),
-#				" 32:", !!($W32 && (!@p_purged
-#						    || (!$negatives && grep(/^WIN32$/,@p))
-#						    || ($negatives && !grep(/^!WIN32$/,@p)))),
-#				" NT:", !!($NT && (!@p_purged
-#						   || (!$negatives && grep(/^WINNT$/,@p))
-#						   || ($negatives && !grep(/^!WINNT$/,@p)))),
-#				"\n";
 			}
+#			print STDERR "DEBUG: \"$sym\" (@p):",
+#			" negatives:", $negatives,
+#			" 16:", !!($W16 && (!@p_purged
+#					    || (!$negatives && grep(/^WIN16$/,@p))
+#					    || ($negatives && !grep(/^!WIN16$/,@p)))),
+#			" 32:", !!($W32 && (!@p_purged
+#					    || (!$negatives && grep(/^WIN32$/,@p))
+#					    || ($negatives && !grep(/^!WIN32$/,@p)))),
+#			" NT:", !!($NT && (!@p_purged
+#					   || (!$negatives && grep(/^WINNT$/,@p))
+#					   || ($negatives && !grep(/^!WINNT$/,@p)))),
+#			"\n";
 		}
 	}
 	printf OUT "\n";
