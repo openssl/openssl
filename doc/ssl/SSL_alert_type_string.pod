@@ -8,11 +8,11 @@ SSL_alert_type_string, SSL_alert_type_string_long, SSL_alert_desc_string, SSL_al
 
  #include <openssl/ssl.h>
 
- const char *SSL_alert_type_string(int value);
- const char *SSL_alert_type_string_long(int value);
+ char *SSL_alert_type_string(int value);
+ char *SSL_alert_type_string_long(int value);
 
- const char *SSL_alert_desc_string(int value);
- const char *SSL_alert_desc_string_long(int value);
+ char *SSL_alert_desc_string(int value);
+ char *SSL_alert_desc_string_long(int value);
 
 =head1 DESCRIPTION
 
