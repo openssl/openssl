@@ -298,8 +298,8 @@ my %table=(
 # CygWin32
 # (Note: the real CFLAGS for Windows builds are defined by util/mk1mf.pl
 # and its library files in util/pl/*)
-"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
-"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -DWINDOWS -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"Mingw32", "gcc:-DL_ENDIAN -DWINDOWS -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
