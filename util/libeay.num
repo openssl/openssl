@@ -2828,3 +2828,17 @@ EVP_rc5_32_12_16_cfb64                  3269	EXIST::FUNCTION:RC5
 EVP_des_cfb1                            3270	EXIST::FUNCTION:DES
 AES_cfb1_encrypt                        3271	EXIST::FUNCTION:AES
 EVP_des_ede3_cfb1                       3272	EXIST::FUNCTION:DES
+FIPS_corrupt_rsa                        3273	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_selftest_des                       3274	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_mode_set                           3275	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_selftest_dsa                       3276	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_allow_md5                          3277	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_des                        3278	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_selftest_aes                       3279	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_dsa                        3280	EXIST:OPENSSL_FIPS:FUNCTION:
+ERR_load_FIPS_strings                   3281	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_aes                        3282	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_selftest_sha1                      3283	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_selftest_rsa                       3284	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_sha1                       3285	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_dsa_check                          3286	EXIST:OPENSSL_FIPS:FUNCTION:
