@@ -48,13 +48,16 @@ te0=r40;    te1=r41;    te2=r42;    te3=r43;
 # define ADDP	add
 #endif
 
+// Why is the key schedule sparse on 64-bit architectures? When/if we fix
+// it in C, these are the lines to modify accordingly.
 #ifndef	KSZ
 # define KSZ	8
 # define LDKEY	ld8
 #endif
 
 // void AES_encrypt (const void *in,void *out,const AES_KEY *key);
-// measured timing om Itanium 2 is (48 + 14*rounds) cycles
+// measured timing on Itanium 2 is (48 + 14*rounds) cycles, or
+// 11.75 cycles per byte for 128 bit key...
 .global	AES_encrypt#
 .proc	AES_encrypt#
 .align	32
