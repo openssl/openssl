@@ -562,6 +562,7 @@ struct ssl_st
 	/* client cert? */
 	/* This is used to hold the server certificate used */
 	struct cert_st /* CERT */ *cert;
+	/* XXX should be struct sess_cert_st *sess_cert */
 
 	/* the session_id_context is used to ensure sessions are only reused
 	 * in the appropriate context */

@@ -247,23 +247,12 @@
 typedef struct cert_pkey_st
 	{
 	X509 *x509;
-/*	EVP_PKEY *publickey; *//* when extracted */
 	EVP_PKEY *privatekey;
 	} CERT_PKEY;
 
 typedef struct cert_st
 	{
 	int cert_type;
-
-#ifdef undef
-	X509 *x509;
-	EVP_PKEY *publickey; /* when extracted */
-	EVP_PKEY *privatekey;
-
-	pkeys[SSL_PKEY_RSA_ENC].x509
-/*	pkeys[SSL_PKEY_RSA_ENC].publickey */
-	pkeys[SSL_PKEY_RSA_ENC].privatekey
-#endif
 
 	/* Current active set */
 	CERT_PKEY *key;
@@ -279,18 +268,24 @@ typedef struct cert_st
 #endif
 #ifndef NO_DH
 	DH *dh_tmp;
-	/* FIXME: Although rsa_tmp and dh_tmp are properties of the cert,
-	   callbacks probably aren't, and besides only the context default
-	   cert's callbacks are actually used. Too close to a release to fix
-	   this now - Ben 6 Mar 1999 */
 	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
 #endif
+
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
-	STACK_OF(X509) *cert_chain;
+	STACK_OF(X509) *cert_chain; /* XXX should only exist in sess_cert_st */
 
 	int references;
 	} CERT;
+
+
+#if 0	/* XXX not yet */
+typedef struct sess_cert_st
+{
+	/* anything that we want to keep per session */
+} SESS_CERT;
+#endif
+
 
 /*#define MAC_DEBUG	*/
 
