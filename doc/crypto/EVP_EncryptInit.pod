@@ -479,6 +479,7 @@ General encryption, decryption function example using FILE I/O and RC2 with an
 		if(!EVP_CipherUpdate(&ctx, outbuf, &outlen, inbuf, inlen))
 			{
 			/* Error */
+			EVP_CIPHER_CTX_cleanup(&ctx);
 			return 0;
 			}
 		fwrite(outbuf, 1, outlen, out);
@@ -486,6 +487,7 @@ General encryption, decryption function example using FILE I/O and RC2 with an
 	if(!EVP_CipherFinal_ex(&ctx, outbuf, &outlen))
 		{
 		/* Error */
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 0;
 		}
 	fwrite(outbuf, 1, outlen, out);
