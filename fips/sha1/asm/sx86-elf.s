@@ -1500,7 +1500,7 @@ sha1_block_asm_data_order:
 	movl	%edi,		16(%ebp)
 	cmpl	%eax,		%esi
 	movl	%ecx,		4(%ebp)
-	jl	.L000start
+	jb	.L000start
 	addl	$108,		%esp
 	popl	%edi
 	popl	%ebx

@@ -405,7 +405,7 @@ sub sha1_block_data
 	&mov(&DWP(16,$tmp1,"",0),$E);
 	 &cmp("esi","eax");
 	&mov(&DWP( 4,$tmp1,"",0),$B);
-	 &jl(&label("start"));
+	 &jb(&label("start"));
 
 	&stack_pop(18+9);
 	 &pop("edi");
