@@ -594,11 +594,11 @@ static void build_SYS_str_reasons()
 
 #define err_clear(p,i) \
 	do { \
-	es->err_flags[i]=0; \
-	es->err_buffer[i]=0; \
+	(p)->err_flags[i]=0; \
+	(p)->err_buffer[i]=0; \
 	err_clear_data(p,i); \
-	es->err_file[i]=NULL; \
-	es->err_line[i]= -1; \
+	(p)->err_file[i]=NULL; \
+	(p)->err_line[i]= -1; \
 	} while(0)
 
 static void ERR_STATE_free(ERR_STATE *s)
