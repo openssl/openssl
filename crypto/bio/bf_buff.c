@@ -432,6 +432,7 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 				break;
 				}
 			}
+		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
