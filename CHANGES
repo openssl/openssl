@@ -4,9 +4,6 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
-  *) Make -nameopt work fully for req and add -reqopt switch.
-     [Michael Bell <michael.bell@rz.hu-berlin.de>, Steve Henson]
-
   *) Add support for ECC-based ciphersuites from draft-ietf-tls-ecc-01.txt.
      As these are not official, they are not included in "ALL";
      the "ECCdraft" ciphersuite group alias can be used to select them.
@@ -247,6 +244,9 @@ TODO: bug: pad  x  with leading zeros if necessary
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
  Changes between 0.9.6g and 0.9.7  [XX xxx 2002]
+
+  *) Make -nameopt work fully for req and add -reqopt switch.
+     [Michael Bell <michael.bell@rz.hu-berlin.de>, Steve Henson]
 
   *) The "block size" for block ciphers in CFB and OFB mode should be 1.
      [Steve Henson, reported by Yngve Nysaeter Pettersen <yngve@opera.com>]
