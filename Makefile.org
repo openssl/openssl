@@ -420,6 +420,7 @@ do_hpux-shared:
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} ; \
 	libs="$$libs -L. -l$$i"; \
 	done
 
@@ -430,6 +431,7 @@ do_hpux64-shared:
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} ; \
 	libs="$$libs -L. -l$$i"; \
 	done
 
