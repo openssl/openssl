@@ -291,6 +291,8 @@ int RSA_padding_add_PKCS1_type_1();
 int RSA_padding_check_PKCS1_type_1();
 int RSA_padding_add_PKCS1_type_2();
 int RSA_padding_check_PKCS1_type_2();
+int RSA_padding_add_PKCS1_OAEP();
+int RSA_padding_check_PKCS1_OAEP();
 int RSA_padding_add_SSLv23();
 int RSA_padding_check_SSLv23();
 int RSA_padding_add_none();
