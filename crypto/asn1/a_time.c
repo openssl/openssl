@@ -98,7 +98,7 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 
 #if defined(THREADS) && !defined(WIN32)
 	gmtime_r(&t,&data);
-    ts=&data;
+	ts=&data; /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 #else
 	ts=gmtime(&t);
 #endif

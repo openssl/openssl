@@ -177,7 +177,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		return(NULL);
 
 #if defined(THREADS) && !defined(WIN32)
-	gmtime_r(&t,&data);
+	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 	ts=&data;
 #else
 	ts=gmtime(&t);

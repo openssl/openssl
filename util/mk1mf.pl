@@ -5,7 +5,7 @@
 # funny stuff
 #
 
-$INSTALLTOP="/usr/local/ssl";
+$INSTALLTOP="/usr/ssl";
 
 $ssl_version="0.9.2b";
 

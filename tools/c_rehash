@@ -8,7 +8,7 @@ if [ "$OPENSSL"x = "x" -o ! -x "$OPENSSL" ]; then
 	OPENSSL='openssl'
 	export OPENSSL
 fi
-DIR=/usr/local/ssl
+DIR=/usr/ssl
 PATH=$DIR/bin:$PATH
 
 if [ ! -f "$OPENSSL" ]; then
