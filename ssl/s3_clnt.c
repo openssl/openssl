@@ -679,7 +679,7 @@ static int ssl3_get_server_certificate(SSL *s)
 	X509 *x=NULL;
 	unsigned char *p,*d,*q;
 	STACK_OF(X509) *sk=NULL;
-	CERT *c;
+	SESS_CERT *sc;
 	EVP_PKEY *pkey=NULL;
 
 	n=ssl3_get_message(s,
@@ -764,13 +764,13 @@ static int ssl3_get_server_certificate(SSL *s)
 		goto f_err; 
 		}
 
-	c=ssl_cert_new();
-	if (c == NULL) goto err;
+	sc=ssl_sess_cert_new();
+	if (sc == NULL) goto err;
 
-	if (s->session->sess_cert) ssl_cert_free(s->session->sess_cert);
-	s->session->sess_cert=c;
+	if (s->session->sess_cert) ssl_sess_cert_free(s->session->sess_cert);
+	s->session->sess_cert=sc;
 
-	c->cert_chain=sk;
+	sc->cert_chain=sk;
 	x=sk_X509_value(sk,0);
 	sk=NULL;
 
@@ -793,14 +793,16 @@ static int ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 		}
 
-	c->cert_type=i;
+	sc->peer_cert_type=i;
 	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-	if (c->pkeys[i].x509 != NULL)
-		X509_free(c->pkeys[i].x509);
-	c->pkeys[i].x509=x;
-	c->key= &(c->pkeys[i]);
+	if (sc->peer_pkeys[i].x509 != NULL) /* Why would this ever happen?
+										 * We just created sc a couple of
+										 * lines ago. */
+		X509_free(sc->peer_pkeys[i].x509);
+	sc->peer_pkeys[i].x509=x;
+	sc->peer_key= &(sc->peer_pkeys[i]);
 
-	if ((s->session != NULL) && (s->session->peer != NULL)) 
+	if (s->session->peer != NULL)
 		X509_free(s->session->peer);
 	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
 	s->session->peer=x;
@@ -857,23 +859,23 @@ static int ssl3_get_key_exchange(SSL *s)
 	if (s->session->sess_cert != NULL)
 		{
 #ifndef NO_RSA
-		if (s->session->sess_cert->rsa_tmp != NULL)
+		if (s->session->sess_cert->peer_rsa_tmp != NULL)
 			{
-			RSA_free(s->session->sess_cert->rsa_tmp);
-			s->session->sess_cert->rsa_tmp=NULL;
+			RSA_free(s->session->sess_cert->peer_rsa_tmp);
+			s->session->sess_cert->peer_rsa_tmp=NULL;
 			}
 #endif
 #ifndef NO_DH
-		if (s->session->sess_cert->dh_tmp)
+		if (s->session->sess_cert->peer_dh_tmp)
 			{
-			DH_free(s->session->sess_cert->dh_tmp);
-			s->session->sess_cert->dh_tmp=NULL;
+			DH_free(s->session->sess_cert->peer_dh_tmp);
+			s->session->sess_cert->peer_dh_tmp=NULL;
 			}
 #endif
 		}
 	else
 		{
-		s->session->sess_cert=ssl_cert_new();
+		s->session->sess_cert=ssl_sess_cert_new();
 		}
 
 	param_len=0;
@@ -920,13 +922,13 @@ static int ssl3_get_key_exchange(SSL *s)
 
 		/* this should be because we are using an export cipher */
 		if (alg & SSL_aRSA)
-			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
 			goto err;
 			}
-		s->session->sess_cert->rsa_tmp=rsa;
+		s->session->sess_cert->peer_rsa_tmp=rsa;
 		}
 	else
 #endif
@@ -986,16 +988,16 @@ static int ssl3_get_key_exchange(SSL *s)
 
 #ifndef NO_RSA
 		if (alg & SSL_aRSA)
-			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 #endif
 #ifndef NO_DSA
 		if (alg & SSL_aDSS)
-			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_DSA_SIGN].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
 #endif
 		/* else anonymous DH, so no certificate or pkey. */
 
-		s->session->sess_cert->dh_tmp=dh;
+		s->session->sess_cert->peer_dh_tmp=dh;
 		dh=NULL;
 		}
 	else if ((alg & SSL_kDHr) || (alg & SSL_kDHd))
@@ -1311,11 +1313,11 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
-			if (s->session->sess_cert->rsa_tmp != NULL)
-				rsa=s->session->sess_cert->rsa_tmp;
+			if (s->session->sess_cert->peer_rsa_tmp != NULL)
+				rsa=s->session->sess_cert->peer_rsa_tmp;
 			else
 				{
-				pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+				pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 				if ((pkey == NULL) ||
 					(pkey->type != EVP_PKEY_RSA) ||
 					(pkey->pkey.rsa == NULL))
@@ -1368,8 +1370,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			{
 			DH *dh_srvr,*dh_clnt;
 
-			if (s->session->sess_cert->dh_tmp != NULL)
-				dh_srvr=s->session->sess_cert->dh_tmp;
+			if (s->session->sess_cert->peer_dh_tmp != NULL)
+				dh_srvr=s->session->sess_cert->peer_dh_tmp;
 			else
 				{
 				/* we get them from the cert */
@@ -1597,7 +1599,7 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	int i,idx;
 	long algs;
 	EVP_PKEY *pkey=NULL;
-	CERT *c;
+	SESS_CERT *sc;
 #ifndef NO_RSA
 	RSA *rsa;
 #endif
@@ -1605,9 +1607,9 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	DH *dh;
 #endif
 
-	c=s->session->sess_cert;
+	sc=s->session->sess_cert;
 
-	if (c == NULL)
+	if (sc == NULL)
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_INTERNAL_ERROR);
 		goto err;
@@ -1620,17 +1622,17 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 		return(1);
 
 #ifndef NO_RSA
-	rsa=s->session->sess_cert->rsa_tmp;
+	rsa=s->session->sess_cert->peer_rsa_tmp;
 #endif
 #ifndef NO_DH
-	dh=s->session->sess_cert->dh_tmp;
+	dh=s->session->sess_cert->peer_dh_tmp;
 #endif
 
 	/* This is the passed certificate */
 
-	idx=c->cert_type;
-	pkey=X509_get_pubkey(c->pkeys[idx].x509);
-	i=X509_certificate_type(c->pkeys[idx].x509,pkey);
+	idx=sc->peer_cert_type;
+	pkey=X509_get_pubkey(sc->peer_pkeys[idx].x509);
+	i=X509_certificate_type(sc->peer_pkeys[idx].x509,pkey);
 	EVP_PKEY_free(pkey);
 
 	

@@ -318,12 +318,9 @@ void ssl_cert_free(CERT *c)
 			EVP_PKEY_free(c->pkeys[i].publickey);
 #endif
 		}
-	if (c->cert_chain != NULL)
-		sk_X509_pop_free(c->cert_chain,X509_free);
 	Free(c);
 	}
 
-#if 1
 int ssl_cert_inst(CERT **o)
 	{
 	/* Create a CERT if there isn't already one
@@ -352,32 +349,76 @@ int ssl_cert_inst(CERT **o)
 	return(1);
 	}
 
-#else /* Not needed any longer: SSL's always have their own copy */
-int ssl_cert_instantiate(CERT **o, CERT *d)
+
+SESS_CERT *ssl_sess_cert_new(void)
 	{
-	CERT *n;
-	if (o == NULL) 
+	SESS_CERT *ret;
+
+	ret = Malloc(sizeof *ret);
+	if (ret == NULL)
 		{
-		SSLerr(SSL_F_SSL_CERT_INSTANTIATE, ERR_R_PASSED_NULL_PARAMETER);
-		return(0);
+		SSLerr(SSL_F_SSL_SESS_CERT_NEW, ERR_R_MALLOC_FAILURE);
+		return NULL;
 		}
-	if (*o != NULL && (d == NULL || *o != d))
-	    return(1);
-	if ((n = ssl_cert_new()) == NULL) 
-		{
-		SSLerr(SSL_F_SSL_CERT_INSTANTIATE, ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	if (*o != NULL) 
-		ssl_cert_free(*o);
-	*o = n;
-	return(1);
+
+	memset(ret, 0 ,sizeof *ret);
+	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA_ENC]);
+	ret->references = 1;
+
+	return ret;
 	}
+
+void ssl_sess_cert_free(SESS_CERT *sc)
+	{
+	int i;
+
+	if (sc == NULL)
+		return;
+
+	i = CRYPTO_add(&sc->references, -1, CRYPTO_LOCK_SSL_SESS_CERT);
+#ifdef REF_PRINT
+	REF_PRINT("SESS_CERT", sc);
+#endif
+	if (i > 0)
+		return;
+#ifdef REF_CHECK
+	if (i < 0)
+		{
+		fprintf(stderr,"ssl_sess_cert_free, bad reference count\n");
+		abort(); /* ok */
+		}
 #endif
 
-int ssl_set_cert_type(CERT *c,int type)
+	/* i == 0 */
+	if (sc->cert_chain != NULL)
+		sk_X509_pop_free(sc->cert_chain, X509_free);
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		if (sc->peer_pkeys[i].x509 != NULL)
+			X509_free(sc->peer_pkeys[i].x509);
+#if 0 /* We don't have the peer's private key.  These lines are just
+	   * here as a reminder that we're still using a not-quite-appropriate
+	   * data structure. */
+		if (sc->peer_pkeys[i].privatekey != NULL)
+			EVP_PKEY_free(sc->peer_pkeys[i].privatekey);
+#endif
+		}
+
+#ifndef NO_RSA
+	if (sc->peer_rsa_tmp != NULL)
+		RSA_free(sc->peer_rsa_tmp);
+#endif
+#ifndef NO_DH
+	if (sc->peer_dh_tmp != NULL)
+		DH_free(sc->peer_dh_tmp);
+#endif
+
+	Free(sc);
+	}
+
+int ssl_set_peer_cert_type(SESS_CERT *sc,int type)
 	{
-	c->cert_type=type;
+	sc->peer_cert_type = type;
 	return(1);
 	}
 

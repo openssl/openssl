@@ -72,7 +72,7 @@ static int client_hello(SSL *s);
 static int client_master_key(SSL *s);
 static int client_finished(SSL *s);
 static int client_certificate(SSL *s);
-static int ssl_rsa_public_encrypt(CERT *c, int len, unsigned char *from,
+static int ssl_rsa_public_encrypt(SESS_CERT *sc, int len, unsigned char *from,
 	unsigned char *to,int padding);
 #define BREAK	break
 
@@ -431,9 +431,10 @@ static int get_server_hello(SSL *s)
 		s->session->cipher=sk_SSL_CIPHER_value(cl,i);
 		}
 
-	if ((s->session != NULL) && (s->session->peer != NULL))
+	if (s->session->peer != NULL)
 		X509_free(s->session->peer);
 
+#if 0 /* What is all this meant to accomplish?? */
 	/* hmmm, can we have the problem of the other session with this
 	 * cert, Free's it before we increment the reference count. */
 	CRYPTO_w_lock(CRYPTO_LOCK_X509);
@@ -442,6 +443,11 @@ static int get_server_hello(SSL *s)
 	/*CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);*/
 	s->session->peer->references++;
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+#else
+	s->session->peer = s->session->sess_cert->peer_key->x509;
+    /* peer_key->x509 has been set by ssl2_set_certificate. */
+	CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
+#endif
 
 	s->s2->conn_id_length=s->s2->tmp.conn_id_length;
 	memcpy(s->s2->conn_id,p,s->s2->tmp.conn_id_length);
@@ -733,7 +739,7 @@ static int client_certificate(SSL *s)
 		EVP_SignUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
-		n=i2d_X509(s->session->sess_cert->key->x509,&p);
+		n=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
 		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
 
 		p=buf;
@@ -874,7 +880,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 	{
 	STACK_OF(X509) *sk=NULL;
 	EVP_PKEY *pkey=NULL;
-	CERT *c=NULL;
+	SESS_CERT *sc=NULL;
 	int i;
 	X509 *x509=NULL;
 	int ret=0;
@@ -900,22 +906,18 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 		goto err;
 		}
 
-	/* cert for ssl */
-	c=ssl_cert_new();
-	if (c == NULL)
+	/* server's cert for this session */
+	sc=ssl_sess_cert_new();
+	if (sc == NULL)
 		{
 		ret= -1;
 		goto err;
 		}
+	if (s->session->sess_cert) ssl_sess_cert_free(s->session->sess_cert);
+	s->session->sess_cert=sc;
 
-	/* cert for session */
-	if (s->session->sess_cert) ssl_cert_free(s->session->sess_cert);
-	s->session->sess_cert=c;
-
-/*	c->cert_type=type; */
-
-	c->pkeys[SSL_PKEY_RSA_ENC].x509=x509;
-	c->key= &(c->pkeys[SSL_PKEY_RSA_ENC]);
+	sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509=x509;
+	sc->peer_key= &(sc->peer_pkeys[SSL_PKEY_RSA_ENC]);
 
 	pkey=X509_get_pubkey(x509);
 	x509=NULL;
@@ -930,7 +932,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 		goto err;
 		}
 
-	if (!ssl_set_cert_type(c,SSL2_CT_X509_CERTIFICATE))
+	if (!ssl_set_peer_cert_type(sc,SSL2_CT_X509_CERTIFICATE))
 		goto err;
 	ret=1;
 err:
@@ -940,14 +942,14 @@ err:
 	return(ret);
 	}
 
-static int ssl_rsa_public_encrypt(CERT *c, int len, unsigned char *from,
+static int ssl_rsa_public_encrypt(SESS_CERT *sc, int len, unsigned char *from,
 	     unsigned char *to, int padding)
 	{
 	EVP_PKEY *pkey=NULL;
 	int i= -1;
 
-	if ((c == NULL) || (c->key->x509 == NULL) ||
-		((pkey=X509_get_pubkey(c->key->x509)) == NULL))
+	if ((sc == NULL) || (sc->peer_key->x509 == NULL) ||
+		((pkey=X509_get_pubkey(sc->peer_key->x509)) == NULL))
 		{
 		SSLerr(SSL_F_SSL_RSA_PUBLIC_ENCRYPT,SSL_R_NO_PUBLICKEY);
 		return(-1);

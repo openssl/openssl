@@ -158,6 +158,7 @@ extern int verify_depth;
 
 static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
+static int s_server_session_id_context = 1; /* anything will do */
 static char *s_cert_file=TEST_CERT,*s_key_file=NULL;
 static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 #ifdef FIONBIO
@@ -521,6 +522,8 @@ bad:
 	if (cipher != NULL)
 		SSL_CTX_set_cipher_list(ctx,cipher);
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
+	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
+		sizeof s_server_session_id_context);
 
 	SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));
 

@@ -275,18 +275,31 @@ typedef struct cert_st
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
-	STACK_OF(X509) *cert_chain; /* XXX should only exist in sess_cert_st */
-
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
 
 
-#if 0	/* XXX not yet */
 typedef struct sess_cert_st
-{
-	/* anything that we want to keep per session */
-} SESS_CERT;
+	{
+	STACK_OF(X509) *cert_chain; /* as received from peer (not for SSL2) */
+
+	/* The 'peer_...' members are used only by clients. */
+	int peer_cert_type;
+
+	CERT_PKEY *peer_key; /* points to an element of peer_pkeys (never NULL!) */
+	CERT_PKEY peer_pkeys[SSL_PKEY_NUM];
+	/* Obviously we don't have the private keys of these,
+	 * so maybe we shouldn't even use the CERT_PKEY type here. */
+
+#ifndef NO_RSA
+	RSA *peer_rsa_tmp; /* not used for SSL 2 */
 #endif
+#ifndef NO_DH
+	DH *peer_dh_tmp; /* not used for SSL 2 */
+#endif
+
+	int references; /* actually always 1 at the moment */
+	} SESS_CERT;
 
 
 /*#define MAC_DEBUG	*/
@@ -353,13 +366,11 @@ void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
-#if 1
 int ssl_cert_inst(CERT **o);
-#else
-int ssl_cert_instantiate(CERT **o, CERT *d);
-#endif
 void ssl_cert_free(CERT *c);
-int ssl_set_cert_type(CERT *c, int type);
+SESS_CERT *ssl_sess_cert_new(void);
+void ssl_sess_cert_free(SESS_CERT *sc);
+int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session,int len);
 int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b);

@@ -50,11 +50,12 @@
      Changing settings for an SSL_CTX *ctx after having done s = SSL_new(ctx)
      does not influence s as it used to.
      
-     Projected further changes:
      In order to clean up things more thoroughly, inside SSL_SESSION
-     we should not use CERT any longer, but a new structure SESS_CERT
-     that holds per-session data, and CERT should hold only those
-     values that can have meaningful defaults in an SSL_CTX.
+     we don't use CERT any longer, but a new structure SESS_CERT
+     that holds per-session data (if available); currently, this is
+     the peer's certificate chain and, for clients, the server's certificate
+     and temporary key.  CERT holds only those values that can have
+     meaningful defaults in an SSL_CTX.
      [Bodo Moeller]
 
   *) New function X509V3_EXT_i2d() to create an X509_EXTENSION structure

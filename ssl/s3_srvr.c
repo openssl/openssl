@@ -110,7 +110,6 @@ int ssl3_accept(SSL *s)
 	void (*cb)()=NULL;
 	long num1;
 	int ret= -1;
-	CERT *ct;
 	int new_state,state,skip=0;
 
 	RAND_seed(&Time,sizeof(Time));
@@ -126,17 +125,11 @@ int ssl3_accept(SSL *s)
 	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 	s->in_handshake++;
 
-#ifdef undef
-	/* FIX THIS EAY EAY EAY */
-	/* we don't actually need a cert, we just need a cert or a DH_tmp */
-	if (((s->session == NULL) || (s->session->sess_cert == NULL)) &&
-		(s->cert == NULL))
+	if (s->cert == NULL)
 		{
 		SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_NO_CERTIFICATE_SET);
-		ret= -1;
-		goto end;
+		return(-1);
 		}
-#endif
 
 	for (;;)
 		{
@@ -261,15 +254,6 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_KEY_EXCH_A:
 		case SSL3_ST_SW_KEY_EXCH_B:
 			l=s->s3->tmp.new_cipher->algorithms;
-			if (s->session->sess_cert == NULL)
-				{
-				if (s->cert != NULL)
-					{
-					CRYPTO_add(&s->cert->references,1,CRYPTO_LOCK_SSL_CERT);
-					s->session->sess_cert=s->cert;
-					}
-				}
-			ct=s->session->sess_cert;
 
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
@@ -283,9 +267,9 @@ int ssl3_accept(SSL *s)
 			if (s->s3->tmp.use_rsa_tmp
 			    || (l & (SSL_DH|SSL_kFZA))
 			    || ((l & SSL_kRSA)
-				&& (ct->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
+				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_IS_EXPORT(l)
-					&& EVP_PKEY_size(ct->pkeys[SSL_PKEY_RSA_ENC].privatekey)*8 > SSL_EXPORT_PKEYLENGTH(l)
+					&& EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey)*8 > SSL_EXPORT_PKEYLENGTH(l)
 					)
 				    )
 				)
@@ -898,7 +882,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	if (s->state == SSL3_ST_SW_KEY_EXCH_A)
 		{
 		type=s->s3->tmp.new_cipher->algorithms & SSL_MKEY_MASK;
-		cert=s->session->sess_cert;
+		cert=s->cert;
 
 		buf=s->init_buf;
 
@@ -1207,11 +1191,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		/* FIX THIS UP EAY EAY EAY EAY */
 		if (s->s3->tmp.use_rsa_tmp)
 			{
-			if ((s->session->sess_cert != NULL) &&
-				(s->session->sess_cert->rsa_tmp != NULL))
-				rsa=s->session->sess_cert->rsa_tmp;
-			else if ((s->cert != NULL) &&
-				(s->cert->rsa_tmp != NULL))
+			if ((s->cert != NULL) && (s->cert->rsa_tmp != NULL))
 				rsa=s->cert->rsa_tmp;
 			/* Don't do a callback because rsa_tmp should
 			 * be sent already */
@@ -1643,11 +1623,23 @@ static int ssl3_get_client_certificate(SSL *s)
 			}
 		}
 
-	/* This should not be needed */
-	if (s->session->peer != NULL)
+	if (s->session->peer != NULL) /* This should not be needed */
 		X509_free(s->session->peer);
 	s->session->peer=sk_X509_shift(sk);
 
+	/* With the current implementation, sess_cert will always be NULL
+	 * when we arrive here. */
+	if (s->session->sess_cert == NULL)
+		{
+		s->session->sess_cert = ssl_sess_cert_new();
+		if (s->session->sess_cert == NULL)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		}
+	if (s->session->sess_cert->cert_chain != NULL)
+		sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
 	s->session->sess_cert->cert_chain=sk;
 
 	sk=NULL;

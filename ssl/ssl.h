@@ -241,11 +241,10 @@ typedef struct ssl_session_st
 	int not_resumable;
 
 	/* The cert is the certificate used to establish this connection */
-	struct cert_st /* CERT */ *sess_cert;
-	/* XXX should be struct sess_cert_st *sess_cert */
+	struct sess_cert_st /* SESS_CERT */ *sess_cert;
 
 	/* This is the cert for the other end.
-	 * On clients, it will be the same as sess_cert->key->x509
+	 * On clients, it will be the same as sess_cert->peer_key->x509
 	 * (the latter is not enough as sess_cert is not retained
 	 * in the external representation of sessions, see ssl_asn1.c). */
 	X509 *peer;
@@ -1215,6 +1214,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_RSA_PUBLIC_ENCRYPT			 188
 #define SSL_F_SSL_SESSION_NEW				 189
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
+#define SSL_F_SSL_SESS_CERT_NEW				 225
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_FD				 192
 #define SSL_F_SSL_SET_PKEY				 193

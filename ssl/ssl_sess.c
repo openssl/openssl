@@ -115,6 +115,8 @@ SSL_SESSION *SSL_SESSION_new(void)
 
 int ssl_get_new_session(SSL *s, int session)
 	{
+	/* This gets used by clients and servers. */
+
 	SSL_SESSION *ss=NULL;
 
 	if ((ss=SSL_SESSION_new()) == NULL) return(0);
@@ -183,6 +185,8 @@ int ssl_get_new_session(SSL *s, int session)
 
 int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	{
+	/* This is used only by servers. */
+
 	SSL_SESSION *ret=NULL,data;
 	int copy=1;
 
@@ -377,7 +381,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
 	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);
 	memset(ss->session_id,0,SSL_MAX_SSL_SESSION_ID_LENGTH);
-	if (ss->sess_cert != NULL) ssl_cert_free(ss->sess_cert);
+	if (ss->sess_cert != NULL) ssl_sess_cert_free(ss->sess_cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 	memset(ss,0,sizeof(*ss));
