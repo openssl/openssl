@@ -77,7 +77,9 @@ static int RSA_null_public_decrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 static int RSA_null_private_decrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
+#if 0 /* not currently used */
 static int RSA_null_mod_exp(BIGNUM *r0, BIGNUM *i, RSA *rsa);
+#endif
 static int RSA_null_init(RSA *rsa);
 static int RSA_null_finish(RSA *rsa);
 static RSA_METHOD rsa_null_meth={
@@ -126,11 +128,13 @@ static int RSA_null_public_decrypt(int flen, unsigned char *from,
 	return -1;
 	}
 
+#if 0 /* not currently used */
 static int RSA_null_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
 	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
+#endif
 
 static int RSA_null_init(RSA *rsa)
 	{

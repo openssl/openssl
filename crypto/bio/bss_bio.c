@@ -229,7 +229,7 @@ static size_t bio_nread0(BIO *bio, char **buf)
 		char dummy;
 		
 		/* avoid code duplication -- nothing available for reading */
-		return bio_read(bio, &dummy, num); /* returns 0 or -1 */
+		return bio_read(bio, &dummy, 1); /* returns 0 or -1 */
 		}
 
 	num = peer_b->len;
@@ -401,7 +401,7 @@ static size_t bio_nwrite0(BIO *bio, char **buf)
 
 static size_t bio_nwrite(BIO *bio, char **buf, size_t num)
 	{
-	struct bio_bio_st *b;
+	struct bio_bio_st *b=bio->ptr;
 	size_t space;
 
 	space = bio_nwrite0(bio, buf);
