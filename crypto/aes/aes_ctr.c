@@ -68,7 +68,7 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 	/* Grab bottom dword of counter and increment */
 	c = GETU32(counter + 12);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter + 12, c);
 
 	/* if no overflow, we're done */
@@ -77,7 +77,7 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 	/* Grab 1st dword of counter and increment */
 	c = GETU32(counter +  8);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  8, c);
 
 	/* if no overflow, we're done */
@@ -86,7 +86,7 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 	/* Grab 2nd dword of counter and increment */
 	c = GETU32(counter +  4);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  4, c);
 
 	/* if no overflow, we're done */
@@ -95,7 +95,7 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 	/* Grab top dword of counter and increment */
 	c = GETU32(counter +  0);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  0, c);
 }
 
