@@ -59,8 +59,8 @@
 #include "des_locl.h"
 
 void des_ecb3_encrypt(in, out, ks1, ks2, ks3, enc)
-const des_cblock in;
-des_cblock out;
+const unsigned char *in;
+unsigned char *out;
 des_key_schedule ks1;
 des_key_schedule ks2;
 des_key_schedule ks3;
