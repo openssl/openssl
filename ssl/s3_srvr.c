@@ -1262,7 +1262,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		SSL3_ST_SR_KEY_EXCH_A,
 		SSL3_ST_SR_KEY_EXCH_B,
 		SSL3_MT_CLIENT_KEY_EXCHANGE,
-		400, /* ???? */
+		2048, /* ??? */
 		&ok);
 
 	if (!ok) return((int)n);
