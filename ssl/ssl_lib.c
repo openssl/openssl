@@ -1658,7 +1658,6 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 		/* key usage, if present, must allow key agreement */
 		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
 			{
-			printf("ECC cert not authorized for key agreement\n");
 			return 0;
 			}
 		if (alg & SSL_aECDSA) 
@@ -1666,7 +1665,6 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
 				{
-				printf("ECC cert not signed w/ ECDSA\n");
 				return 0;
 				}
 			}
@@ -1677,7 +1675,6 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 			    (signature_nid != NID_md4WithRSAEncryption) &&
 			    (signature_nid != NID_md2WithRSAEncryption))
 				{
-				printf("ECC cert not signed w/ RSA\n");
 				return 0;
 				}
 			}
@@ -1687,7 +1684,6 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 		/* key usage, if present, must allow signing */
 		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
 			{
-			printf("ECC cert not authorized for signature\n");
 			return 0;
 			}
 		}
