@@ -250,6 +250,7 @@ bad:
 end:
 	BIO_free(out);
 	BIO_free(bio_out);
+	bio_out=NULL;
 	X509_CRL_free(x);
 	X509V3_EXT_cleanup();
 	EXIT(ret);

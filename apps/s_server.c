@@ -107,7 +107,9 @@ static void print_stats(BIO *bp,SSL_CTX *ctx);
 static DH *load_dh_param(void );
 static DH *get_dh512(void);
 #endif
-/* static void s_server_init(void);*/
+#ifdef MONOLITH
+static void s_server_init(void);
+#endif
 
 #ifndef S_ISDIR
 # if defined(_S_IFMT) && defined(_S_IFDIR)
@@ -175,9 +177,12 @@ static BIO *bio_s_out=NULL;
 static int s_debug=0;
 static int s_quiet=0;
 
-#if 0
+static int hack=0;
+
+#ifdef MONOLITH
 static void s_server_init(void)
 	{
+	accept_socket=-1;
 	cipher=NULL;
 	s_server_verify=SSL_VERIFY_NONE;
 	s_dcert_file=NULL;
@@ -194,6 +199,7 @@ static void s_server_init(void)
 	bio_s_out=NULL;
 	s_debug=0;
 	s_quiet=0;
+	hack=0;
 	}
 #endif
 
@@ -240,7 +246,6 @@ static void sv_usage(void)
 
 static int local_argc=0;
 static char **local_argv;
-static int hack=0;
 
 #ifdef CHARSET_EBCDIC
 static int ebcdic_new(BIO *bi);
@@ -419,8 +424,9 @@ int MAIN(int argc, char *argv[])
 	local_argv=argv;
 
 	apps_startup();
-	s_quiet=0;
-	s_debug=0;
+#ifdef MONOLITH
+	s_server_init();
+#endif
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);

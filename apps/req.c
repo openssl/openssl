@@ -152,6 +152,7 @@ int MAIN(int argc, char **argv)
 	MS_STATIC char config_name[256];
 #endif
 
+	req_conf = NULL;
 #ifndef NO_DES
 	cipher=EVP_des_ede3_cbc();
 #endif
