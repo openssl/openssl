@@ -65,7 +65,23 @@ print "#endif\n";
 if ($static)
 	{ $lib="ERR_LIB_$type"; }
 else
-	{ $lib="${type}_lib_error_code"; }
+	{ 
+	print <<"EOF";
+
+#ifdef ${type}_LIB_NAME
+static ERR_STRING_DATA ${type}_lib_name[]=
+        {
+{0	,${type}_LIB_NAME},
+{0,NULL}
+	};
+#endif
+
+EOF
+	$lib="${type}_lib_error_code"; 
+
+
+
+	}
 
 $str="";
 $str.="#ifndef NO_ERR\n";
@@ -77,7 +93,7 @@ if (!$static)
 	{
 print <<"EOF";
 
-static int ${type}_lib_error_code=0;
+int ${type}_lib_error_code=0;
 
 void ERR_load_${type}_strings()
 	{
@@ -90,6 +106,10 @@ void ERR_load_${type}_strings()
 		{
 		init=0;
 $str
+#ifdef ${type}_LIB_NAME
+		${type}_lib_name->error = ERR_PACK(${type}_lib_error_code,0,0);
+		ERR_load_strings(0,${type}_lib_name);
+#endif;
 		}
 	}
 
