@@ -593,68 +593,33 @@ link_app.irix:
 # WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
 #          by temporarily specifying "+s"!
 #
-link_o.hpux32:
+link_o.hpux:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
-	expr $(PLATFORM) : '.*64' > /dev/null && ALLSYMFLAGS='-Wl,+forceload'; \
+	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD=$(CC); \
 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
-link_a.hpux32:
+link_a.hpux:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
-	expr $(PLATFORM) : '.*64' > /dev/null && ALLSYMFLAGS='-Wl,+forceload'; \
+	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
-link_app.hpux32:
+link_app.hpux:
 	LDCMD=$(CC);\
 	LDFLAGS="-Wl,+b,$(LIBRPATH)"; \
 	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
-	$(LINK_APP)
-
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-#
-# HP-UX in 64bit mode has "+s" enabled by default; it will search for
-# shared libraries along LD_LIBRARY_PATH _and_ SHLIB_PATH.
-#
-link_o.hpux64:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).sl; \
-	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	ALLSYMSFLAGS='+forceload'; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="-b -z +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX +b $(LIBRPATH)"; \
-	SHAREDCMD='/usr/ccs/bin/ld'; \
-	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
-link_a.hpux64:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).sl; \
-	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	ALLSYMSFLAGS='+forceload'; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="-b -z +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX +b $(LIBRPATH)"; \
-	SHAREDCMD='/usr/ccs/bin/ld'; \
-	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
-link_app.hpux64:
-	LDCMD=$(CC);\
-	LDFLAGS="-Wl,+b,$(LIBRPATH)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	APPNAME="$(APPNAME)"
 	$(LINK_APP)
 
 link_o.aix:
@@ -722,7 +687,7 @@ symlink.darwin:
 	SHLIB=lib$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
 	$(SYMLINK_SO)
-symlink.hpux32 symlink.hpux64:
+symlink.hpux:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	$(SYMLINK_SO)
@@ -770,14 +735,10 @@ link_o.irix-shared: link_o.irix
 link_a.irix-shared: link_a.irix
 link_app.irix-shared: link_app.irix
 symlink.irix-shared: symlink.irix
-link_o.hpux-shared: link_o.hpux32
-link_a.hpux-shared: link_a.hpux32
-link_app.hpux-shared: link_app.hpux32
-symlink.hpux-shared: symlink.hpux32
-link_o.hpux64-shared: link_o.hpux64
-link_a.hpux64-shared: link_a.hpux64
-link_app.hpux64-shared: link_app.hpux64
-symlink.hpux64-shared: symlink.hpux64
+link_o.hpux-shared: link_o.hpux
+link_a.hpux-shared: link_a.hpux
+link_app.hpux-shared: link_app.hpux
+symlink.hpux-shared: symlink.hpux
 link_o.aix-shared: link_o.aix
 link_a.aix-shared: link_a.aix
 link_app.aix-shared: link_app.aix
