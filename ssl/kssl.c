@@ -772,7 +772,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 		{
 		krb5rc = krb5_kt_resolve(krb5context, kssl_ctx->keytab_file,
                         &krb5keytab);
-		if (krb5c)
+		if (krb5rc)
 			{
 			kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
 				"krb5_kt_resolve() fails.\n");
