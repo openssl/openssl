@@ -11,6 +11,10 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Fix a memory leak in 'sk_dup()' in the case reallocation fails. (Also
+     tidy up some unecessarily weird code in 'sk_new()').
+     [Geoff, reported by Diego Tartara <dtartara@novamens.com>]
+
   +) Change the key loading routines for ENGINEs to use the same kind
      callback (pem_password_cb) as all other routines that need this
      kind of callback.

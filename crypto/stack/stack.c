@@ -106,6 +106,8 @@ STACK *sk_dup(STACK *sk)
 	ret->comp=sk->comp;
 	return(ret);
 err:
+	if(ret)
+		sk_free(ret);
 	return(NULL);
 	}
 
@@ -120,9 +122,9 @@ STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	int i;
 
 	if ((ret=(STACK *)OPENSSL_malloc(sizeof(STACK))) == NULL)
-		goto err0;
+		goto err;
 	if ((ret->data=(char **)OPENSSL_malloc(sizeof(char *)*MIN_NODES)) == NULL)
-		goto err1;
+		goto err;
 	for (i=0; i<MIN_NODES; i++)
 		ret->data[i]=NULL;
 	ret->comp=c;
@@ -130,9 +132,9 @@ STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	ret->num=0;
 	ret->sorted=0;
 	return(ret);
-err1:
-	OPENSSL_free(ret);
-err0:
+err:
+	if(ret)
+		OPENSSL_free(ret);
 	return(NULL);
 	}
 
