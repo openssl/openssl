@@ -522,7 +522,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #if defined(ioctlsocket)
 #undef ioctlsocket
 #endif
-#define ioctlsocket(a,b,c) ioctl((a),(b),*(c))
+#define ioctlsocket(a,b,c)  ioctl((a),(b),*(int*)(c))
 
 #include <vxWorks.h>
 #include <sockLib.h>
