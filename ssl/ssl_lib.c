@@ -59,7 +59,9 @@
  */
 
 
-#include <assert.h>
+#ifdef REF_CHECK
+#  include <assert.h>
+#endif
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/lhash.h>

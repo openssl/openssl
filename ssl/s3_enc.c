@@ -57,7 +57,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -82,7 +81,7 @@ static unsigned char ssl3_pad_2[48]={
 static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	const char *sender, int len, unsigned char *p);
 
-static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
+static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
 	MD5_CTX m5;
 	SHA_CTX s1;
@@ -97,9 +96,13 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
 		{
 		k++;
-		/* If this assert is triggered, it means buf needs to be
-		   resized.  This should never be triggered in a release. */
-		assert(k <= sizeof(buf));
+		if (k > sizeof buf)
+			{
+			/* bug: 'buf' is too small for this ciphersuite */
+			SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
+			return 0;
+			}
+		
 		for (j=0; j<k; j++)
 			buf[j]=c;
 		c++;
@@ -126,6 +129,7 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 		km+=MD5_DIGEST_LENGTH;
 		}
 	memset(smd,0,SHA_DIGEST_LENGTH);
+	return 1;
 	}
 
 int ssl3_change_cipher_state(SSL *s, int which)
@@ -310,9 +314,8 @@ int ssl3_setup_key_block(SSL *s)
 	s->s3->tmp.key_block_length=num;
 	s->s3->tmp.key_block=p;
 
-	ssl3_generate_key_block(s,p,num);
+	return ssl3_generate_key_block(s,p,num);
 
-	return(1);
 err:
 	SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);
 	return(0);
