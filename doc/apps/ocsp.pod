@@ -22,6 +22,9 @@ B<openssl> B<ocsp>
 [B<-no_nonce>]
 [B<-host host:n>]
 [B<-path>]
+[B<-CApath file>]
+[B<-CAfile file>]
+[B<-noverify>]
 
 =head1 DESCRIPTION
 
@@ -57,7 +60,9 @@ issuer certificate is specified.
 =item B<-serial num>
 
 Same as the B<cert> option except the certificate with serial number
-B<num> (in decimal) is added to the request.
+B<num> is added to the request. The serial number is interpreted as a
+decimal integer unless preceded by B<0x>. Negative integers can also
+be specified by preceding the value by a B<-> sign.
 
 =item B<-signer filename>, B<-signkey filename>
 
@@ -95,7 +100,55 @@ if the B<host> option is present then the OCSP request is sent to the host
 B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
 or "/" by default.
 
+=item B<-CAfile file>, B<-CApath pathname>
+
+file or pathname containing trusted CA certificates. These are used to verify
+the signature on the OCSP response.
+
+=item B<-noverify>
+
+don't attempt to verify the OCSP response signature or the nonce values.
+
 =back
+
+=head1 OCSP Response verification.
+
+OCSP Response follows the rules specified in RFC2560.
+
+Initially the OCSP responder certificate is located and the signature on
+the OCSP request checked using the reponder certificate's public key.
+
+Then a normal certificate verify is performed on the OCSP responder certificate
+building up a certificate chain in the process. The locations of the trusted
+certificates used to build the chain can be specified by the B<CAfile>
+and B<CApath> options or they will be looked for in the standard OpenSSL
+certificates directory.
+
+If the initial verify fails then the OCSP verify process halts with an
+error.
+
+Otherwise the issuing CA certificate in the request is compared to the OCSP
+responder certificate: if there is a match then the OCSP verify succeeds.
+
+Otherwise the OCSP responder certificate's CA is checked against the issuing
+CA certificate in the request. If there is a match and the OCSPSigning
+extended key usage is present in the OCSP responder certificate then the
+OCSP verify succeeds.
+
+Otherwise the root CA of the OCSP responders CA is checked to see if it
+is trusted for OCSP signing. If it is the OCSP verify succeeds.
+
+If none of these checks is successful then the OCSP verify fails.
+
+What this effectively means if that if the OCSP responder certificate is
+authorised directly by the CA it is issuing revocation information about
+(and it is correctly configured) then verification will succeed.
+
+If the OCSP responder is a "global responder" which can give details about
+multiple CAs and has its own separate certificate chain then its root
+CA must be trusted for OCSP signing. For example:
+
+ openssl x509 -in ocspCA.pem -addtrust OCSPSigning -out trustedCA.pem
 
 =head1 NOTES
 
@@ -126,14 +179,10 @@ Read in an OCSP response and print out text form:
 
 =head1 BUGS
 
-This utility is incomplete. It currently does not check the OCSP response's
-validity in any way.
+This utility is incomplete. It currently does not completely check the OCSP
+response's: it does not check the validity dates for example.
 
 The B<host> and B<path> options may well go away and be replaced by a B<url>
-option and an option to determine the URI based on certificate extensions.
-
-The B<serial> option only supports postive serial numbers and must be supplied
-in decimal form. Some CAs issue certificates with negative serial numbers
-(probably unintentionally) and cannot currently be specified.
+option or an option to determine the URI based on certificate extensions.
 
 SSL OCSP responders using https URLs cannot currently be queried.
