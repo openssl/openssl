@@ -1158,9 +1158,14 @@ bad:
 			}
 		if (verbose)
 			{
-			if ((f=BN_bn2hex(serial)) == NULL) goto err;
-			BIO_printf(bio_err,"next serial number is %s\n",f);
-			OPENSSL_free(f);
+			if (BN_is_zero(serial))
+				BIO_printf(bio_err,"next serial number is 00\n");
+			else
+				{
+				if ((f=BN_bn2hex(serial)) == NULL) goto err;
+				BIO_printf(bio_err,"next serial number is %s\n",f);
+				OPENSSL_free(f);
+				}
 			}
 
 		if ((attribs=NCONF_get_section(conf,policy)) == NULL)
@@ -2089,7 +2094,10 @@ again2:
 			}
 		}
 
-	row[DB_serial]=BN_bn2hex(serial);
+	if (BN_is_zero(serial))
+		row[DB_serial]=BUF_strdup("00");
+	else
+		row[DB_serial]=BN_bn2hex(serial);
 	if (row[DB_serial] == NULL)
 		{
 		BIO_printf(bio_err,"Memory allocation failure\n");
@@ -2573,7 +2581,10 @@ static int do_revoke(X509 *x509, TXT_DB *db, int type, char *value)
 		row[i]=NULL;
 	row[DB_name]=X509_NAME_oneline(X509_get_subject_name(x509),NULL,0);
 	bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509),NULL);
-	row[DB_serial]=BN_bn2hex(bn);
+	if (BN_is_zero(bn))
+		row[DB_serial]=BUF_strdup("00");
+	else
+		row[DB_serial]=BN_bn2hex(bn);
 	BN_free(bn);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
