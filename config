@@ -407,7 +407,7 @@ case "$GUESSOS" in
 	options="$options -mips4"
 	OUT="irix-mips3-$CC"
 	;;
-  alpha-*-linux2
+  alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4}' /proc/cpuinfo`
 	case ${ISA:-generic} in
 	*[67])	OUT="linux-alpha+bwx-$CC" ;;
