@@ -60,13 +60,13 @@ $(SHLIB).darwin:	$(LIB) install/librsaref.a
 		SHAREDFLAGS='-dynamiclib -install_name $(SHLIB)' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
-		touch $(SHLIB).gnu
+		touch $(SHLIB).darwin
 $(SHLIB).cygwin:	$(LIB) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
 		SHAREDFLAGS='-shared -Wl,-Bsymbolic -Wl,--out-implib,$(LIBNAME).dll.a' \
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
-		touch $(SHLIB).gnu
+		touch $(SHLIB).cygwin
 $(SHLIB).gnu:	$(LIB) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
 		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
