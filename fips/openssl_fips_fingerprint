@@ -15,7 +15,7 @@ fi
 
 elib=`echo $lib| sed 's/\//\\\\\//g'`
 echo "Checking library fingerprint for $lib"
-openssl sha1 $lib | sed "s/$elib/libcrypto.a/" | diff -u ${lib%.a}.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
+openssl sha1 $lib | sed "s/$elib/libcrypto.a/" | diff ${lib%.a}.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
 
 echo "Making fingerprint for $exe"
 openssl sha1 -binary $exe > $exe.sha1
