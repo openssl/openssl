@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix bug in PKCS7_verify() which caused an infinite loop
+     if there was more than one signature.
+     [Sven Uszpelkat <su@celocom.de>]
+
   *) Major change in util/mkdef.pl to include extra information
      about each symbol, as well as presentig variables as well
      as functions.  This change means that there's n more need

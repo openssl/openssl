@@ -71,6 +71,11 @@ use:
 
  next = bio->next_bio;
 
+=head1 BUGS
+
+BIO_find_type() in OpenSSL 0.9.5a and earlier could not be safely passed a
+NULL pointer for the B<b> argument.
+
 =head1 EXAMPLE
 
 Traverse a chain looking for digest BIOs:
@@ -78,14 +83,14 @@ Traverse a chain looking for digest BIOs:
  BIO *btmp;
  btmp = in_bio;	/* in_bio is chain to search through */
 
- for(;;) {
+ do {
  	btmp = BIO_find_type(btmp, BIO_TYPE_MD);
 	if(btmp == NULL) break;	/* Not found */
 	/* btmp is a digest BIO, do something with it ...*/
    	...
 
 	btmp = BIO_next(btmp);
- } 
+ } while(btmp);
 
 
 =head1 SEE ALSO
