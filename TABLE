@@ -1517,6 +1517,29 @@ $shared_cflag = -fPIC
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** hpux-ia64-cc
+$cc           = cc
+$cflags       = -Ae +DD32 +O3 +ESlit -z -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = asm/ia64-cpp.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** hpux-parisc-cc
 $cc           = cc
 $cflags       = +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
@@ -1721,6 +1744,29 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** hpux64-ia64-cc
+$cc           = cc
+$cflags       = -Ae +DD64 +O3 +ESlit -z -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = asm/ia64-cpp.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= hpux64-shared
+$shared_cflag = +Z
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
@@ -2096,11 +2142,11 @@ $ranlib       =
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -D_REENTRANT
 $sys_id       = 
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG
-$bn_obj       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR
+$bn_obj       = asm/ia64.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -2109,10 +2155,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-m68k

@@ -124,6 +124,18 @@ asm/sparcv8plus-gcc27.o: asm/sparcv8plus.S
 	$(CC) $(ASFLAGS) -E asm/sparcv8plus.S | \
 		/usr/ccs/bin/as -xarch=v8plus - -o asm/sparcv8plus-gcc27.o
 
+
+asm/ia64.o:	asm/ia64.S
+
+# Some compiler drivers (most notably HP-UX and Intel C++) don't
+# understand .S extension:-( I wish I could pipe output from cc -E,
+# but it's too compiler driver/ABI dependent to cover with a single
+# rule...	<appro@fy.chalmers.se>
+asm/ia64-cpp.o:	asm/ia64.S
+	$(CC) $(ASFLAGS) -E asm/ia64.S > /tmp/ia64.$$$$.s &&	\
+	$(CC) $(ASFLAGS) -c -o asm/ia64-cpp.o /tmp/ia64.$$$$.s;	\
+	rm -f /tmp/ia64.$$$$.s
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
