@@ -235,8 +235,8 @@
 
   +) Change all functions with names starting with des_ to be starting
      with DES_ instead.  Add wrappers that are compatible with libdes,
-     but are named _old_des_*.  Finally, add macros that map the des_*
-     symbols to the corresponding _old_des_*.
+     but are named _ossl_old_des_*.  Finally, add macros that map the
+     des_* symbols to the corresponding _ossl_old_des_*.
 
      All this is done because there are increasing clashes with libdes
      and other DES libraries that are currently used by other projects.
