@@ -3,7 +3,7 @@
  _______________
 
 
- Changes between 0.9.01c and 0.9.1d
+ Changes between 0.9.1c and 0.9.1d
 
   *) Autodetect FreeBSD3.
      [Ben Laurie]
@@ -16,7 +16,7 @@
      sco5-cc.
      [Ben Laurie]
 
- Changes between 0.9.01b and 0.9.1c
+ Changes between 0.9.1b and 0.9.1c
 
   *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and 
      changed SSLeay to OpenSSL in version strings.
