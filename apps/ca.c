@@ -706,7 +706,7 @@ bad:
 		}
 	pkey = load_key(bio_err, keyfile, keyform, 0, key, e, 
 		"CA private key");
-	if (key) memset(key,0,strlen(key));
+	if (key) OPENSSL_cleanse(key,strlen(key));
 	if (pkey == NULL)
 		{
 		/* load_key() has already printed an appropriate message */

@@ -220,7 +220,7 @@ int des_read_pw_string(char *buf, int length, const char *prompt,
 	int ret;
 
 	ret=des_read_pw(buf,buff,(length>BUFSIZ)?BUFSIZ:length,prompt,verify);
-	memset(buff,0,BUFSIZ);
+	OPENSSL_cleanse(buff,BUFSIZ);
 	return(ret);
 	}
 

@@ -215,7 +215,7 @@ int RAND_poll(void)
 	if (n > 0)
 		{
 		RAND_add(tmpbuf,sizeof tmpbuf,n);
-		memset(tmpbuf,0,n);
+		OPENSSL_cleanse(tmpbuf,n);
 		}
 #endif
 

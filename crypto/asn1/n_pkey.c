@@ -187,7 +187,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	i2d_NETSCAPE_PKEY(pkey,&zz);
 
 	/* Wipe the private key encoding */
-	memset(pkey->private_key->data, 0, rsalen);
+	OPENSSL_cleanse(pkey->private_key->data, rsalen);
 		
 	if (cb == NULL)
 		cb=EVP_read_pw_string;
@@ -206,7 +206,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	}
 
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
-	memset(buf,0,256);
+	OPENSSL_cleanse(buf,256);
 
 	/* Encrypt private key in place */
 	zz = enckey->enckey->digest->data;
@@ -294,7 +294,7 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 	}
 		
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
-	memset(buf,0,256);
+	OPENSSL_cleanse(buf,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_DecryptInit_ex(&ctx,EVP_rc4(),NULL, key,NULL);

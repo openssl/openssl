@@ -101,7 +101,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char *ek,
 
 	ret=1;
 err:
-	if (key != NULL) memset(key,0,size);
+	if (key != NULL) OPENSSL_cleanse(key,size);
 	OPENSSL_free(key);
 	return(ret);
 	}

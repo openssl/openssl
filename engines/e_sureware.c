@@ -906,7 +906,7 @@ static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned c
 err:
 	if (buf)
 	{
-		memset(buf,0,tlen);
+		OPENSSL_cleanse(buf,tlen);
 		OPENSSL_free(buf);
 	}
 	return ret;

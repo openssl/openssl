@@ -170,7 +170,7 @@ void ECDSA_DATA_free(ECDSA_DATA *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 
-	memset((void *)r, 0x0, sizeof(ECDSA_DATA));
+	OPENSSL_cleanse((void *)r, sizeof(ECDSA_DATA));
 
 	OPENSSL_free(r);
 }

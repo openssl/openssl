@@ -717,7 +717,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
 	if (type == NID_sha1 || type == NID_md5)
 		{
-		memset(hashBuffer, 0, keyLength+1);
+		OPENSSL_cleanse(hashBuffer, keyLength+1);
 		OPENSSL_free(hashBuffer);
 		}
 
@@ -840,7 +840,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 
 	if (type == NID_sha1 || type == NID_md5)
 		{
-		memset(hashBuffer, 0, keyLength+1);
+		OPENSSL_cleanse(hashBuffer, keyLength+1);
 		OPENSSL_free(hashBuffer);
 		}
 

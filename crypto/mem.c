@@ -343,7 +343,7 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
 	ret=malloc_ex_func(num,file,line);
 	if(ret)
 		memcpy(ret,str,old_len);
-	memset(str,'\0',old_len);
+	OPENSSL_cleanse(str,old_len);
 	free_func(str);
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);

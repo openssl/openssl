@@ -118,7 +118,7 @@ void EC_KEY_free(EC_KEY *r)
 	if (r->meth_data && r->meth_data->finish)
 		r->meth_data->finish(r);
 
-	memset((void *)r, 0x0, sizeof(EC_KEY));
+	OPENSSL_cleanse((void *)r, sizeof(EC_KEY));
 
 	OPENSSL_free(r);
 	}

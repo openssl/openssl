@@ -481,9 +481,9 @@ bad:
 			 * bug picked up by
 			 * Larry J. Hughes Jr. <hughes@indiana.edu> */
 			if (str == strbuf)
-				memset(str,0,SIZE);
+				OPENSSL_cleanse(str,SIZE);
 			else
-				memset(str,0,strlen(str));
+				OPENSSL_cleanse(str,strlen(str));
 			}
 		if ((hiv != NULL) && !set_hex(hiv,iv,sizeof iv))
 			{

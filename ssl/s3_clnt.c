@@ -1657,7 +1657,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
 					tmp_buf,sizeof tmp_buf);
-			memset(tmp_buf,0,sizeof tmp_buf);
+			OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
@@ -1788,8 +1788,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 					s->session->master_key,
 					tmp_buf, sizeof tmp_buf);
 
-			memset(tmp_buf, 0, sizeof tmp_buf);
-			memset(epms, 0, outl);
+			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+			OPENSSL_cleanse(epms, outl);
                         }
 #endif
 #ifndef OPENSSL_NO_DH

@@ -70,7 +70,7 @@ unsigned char *SHA(const unsigned char *d, unsigned long n, unsigned char *md)
 	SHA_Init(&c);
 	SHA_Update(&c,d,n);
 	SHA_Final(md,&c);
-	memset(&c,0,sizeof(c));
+	OPENSSL_cleanse(&c,sizeof(c));
 	return(md);
 	}
 #endif

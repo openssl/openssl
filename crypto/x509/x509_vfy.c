@@ -1158,7 +1158,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 		ctx->chain=NULL;
 		}
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &(ctx->ex_data));
-	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
+	OPENSSL_cleanse(&ctx->ex_data,sizeof(CRYPTO_EX_DATA));
 	}
 
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags)

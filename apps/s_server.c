@@ -1262,7 +1262,7 @@ err:
 	BIO_printf(bio_s_out,"CONNECTION CLOSED\n");
 	if (buf != NULL)
 		{
-		memset(buf,0,bufsize);
+		OPENSSL_cleanse(buf,bufsize);
 		OPENSSL_free(buf);
 		}
 	if (ret >= 0)

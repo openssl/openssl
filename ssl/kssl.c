@@ -1550,7 +1550,7 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
         {
 	if (kssl_ctx == NULL)  return kssl_ctx;
 
-	if (kssl_ctx->key)  		memset(kssl_ctx->key, 0,
+	if (kssl_ctx->key)  		OPENSSL_cleanse(kssl_ctx->key,
 							      kssl_ctx->length);
 	if (kssl_ctx->key)  		free(kssl_ctx->key);
 	if (kssl_ctx->client_princ) 	free(kssl_ctx->client_princ);
@@ -1654,7 +1654,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 
 	if (kssl_ctx->key)
                 {
-		memset(kssl_ctx->key, 0, kssl_ctx->length);
+		OPENSSL_cleanse(kssl_ctx->key, kssl_ctx->length);
 		free(kssl_ctx->key);
 		}
 
