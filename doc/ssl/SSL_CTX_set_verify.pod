@@ -235,7 +235,7 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
      * At this point, err contains the last verification error. We can use
      * it for something special
      */
-    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)
+    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT))
     {
       X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), buf, 256);
       printf("issuer= %s\n", buf);
