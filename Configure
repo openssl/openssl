@@ -106,7 +106,7 @@ my %table=(
 # -fast slows things like DES down quite a lot
 "solaris-sparc-sc4","cc:-xO5 -Xa -DB_ENDIAN:-lsocket -lnsl:\
 	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
-"solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO5 -DB_ENDIAN:\
+"solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO2 -DB_ENDIAN:\
 	-lsocket -lnsl:\
 	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
 #"solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
