@@ -57,7 +57,11 @@
 #include <openssl/evp.h>
 #include "eng_int.h"
 /* Maybe this is needed? ... */
+#ifdef FLAT_INC
+#include "evp_locl.h"
+#else
 #include "../evp/evp_locl.h"
+#endif
 
 #ifndef OPENSSL_OPENBSD_DEV_CRYPTO
 
