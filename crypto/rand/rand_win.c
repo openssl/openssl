@@ -461,7 +461,7 @@ int RAND_poll(void)
 						hlist.th32ProcessID,
 						hlist.th32HeapID))
 						{
-						int entrycnt = 50;
+						int entrycnt = 80;
 						do
 							RAND_add(&hentry,
 								hentry.dwSize, 5);
