@@ -16,7 +16,7 @@ SSL_read() tries to read B<num> bytes from the specified B<ssl> into the
 buffer B<buf>. If necessary, SSL_read() will negotiate a TLS/SSL session, if
 not already explicitly performed by SSL_connect() or SSL_accept(). If the
 peer requests a re-negotiation, it will be performed transparently during
-the SSL_read() operation. The behavior of SSL_read() depends on the
+the SSL_read() operation. The behaviour of SSL_read() depends on the
 underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_read() will only return, once the

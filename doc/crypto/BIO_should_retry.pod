@@ -97,7 +97,7 @@ the performance may be poor if SSL BIOs are present because long delays
 can occur during the initial handshake process. 
 
 It is possible for a BIO to block indefinitely if the underlying I/O
-structure cannot process or return any data. This depends on the behavior of
+structure cannot process or return any data. This depends on the behaviour of
 the platforms I/O functions. This is often not desirable: one solution
 is to use non blocking I/O and use a timeout on the select() (or
 equivalent) call.

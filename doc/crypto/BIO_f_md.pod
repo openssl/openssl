@@ -127,7 +127,7 @@ outputs them. This could be used with the examples above.
 
 =head1 BUGS
 
-The lack of support for BIO_puts() and the non standard behavior of
+The lack of support for BIO_puts() and the non standard behaviour of
 BIO_gets() could be regarded as anomalous. It could be argued that BIO_gets()
 and BIO_puts() should be passed to the next BIO in the chain and digest
 the data passed through and that digests should be retrieved using a

@@ -14,7 +14,7 @@ SSL_accept - wait for a TLS/SSL client to initiate a TLS/SSL handshake
 
 SSL_accept() waits for a TLS/SSL client to initiate the TLS/SSL handshake.
 The communication channel must already have been set and assigned to the
-B<ssl> by setting an underlying B<BIO>. The behavior of SSL_accept() depends
+B<ssl> by setting an underlying B<BIO>. The behaviour of SSL_accept() depends
 on the underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_accept() will only return once the

@@ -15,8 +15,8 @@ SSL_set_bio - connect the SSL object with a BIO
 SSL_set_bio() connects the BIOs B<rbio> and B<wbio> for the read and write
 operations of the TLS/SSL (encrypted) side of B<ssl>.
 
-The SSL engine inherits the behavior of B<rbio> and B<wbio>, respectively.
-If a BIO is non-blocking, the B<ssl> will also have non-blocking behavior.
+The SSL engine inherits the behaviour of B<rbio> and B<wbio>, respectively.
+If a BIO is non-blocking, the B<ssl> will also have non-blocking behaviour.
 
 If there was already a BIO connected to B<ssl>, BIO_free() will be called
 (for both the reading and writing side, if different).
