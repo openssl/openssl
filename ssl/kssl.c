@@ -120,9 +120,12 @@
 #define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
 #define krb5_timeofday           kssl_krb5_timeofday
 #define krb5_rc_default           kssl_krb5_rc_default
-#define krb5_krb5_rc_initialize   kssl_krb5_rc_initialize
-#define krb5_krb5_rc_get_lifespan kssl_krb5_rc_get_lifespan
-#define krb5_krb5_rc_destroy      kssl_krb5_rc_destroy
+#define krb5_rc_initialize   kssl_krb5_rc_initialize
+#define krb5_rc_get_lifespan kssl_krb5_rc_get_lifespan
+#define krb5_rc_destroy      kssl_krb5_rc_destroy
+#define valid_cksumtype      kssl_valid_cksumtype
+#define krb5_checksum_size   kssl_krb5_checksum_size
+#define krb5_kt_free_entry   kssl_krb5_kt_free_entry
 
 /* Prototypes for built in stubs */
 void kssl_krb5_free_data_contents(krb5_context, krb5_data *);
@@ -140,16 +143,6 @@ krb5_error_code kssl_krb5_rd_req(krb5_context, krb5_auth_context *,
 
 krb5_boolean kssl_krb5_principal_compare(krb5_context, krb5_const_principal,
                                          krb5_const_principal);
-krb5_error_code krb5_decrypt_tkt_part(krb5_context, krb5_const krb5_keyblock *,
-				      krb5_ticket *);
-krb5_error_code krb5_timeofday(krb5_context context, krb5_int32 *timeret);
-krb5_error_code krb5_rc_default(krb5_context context, krb5_rcache *rc);
-krb5_error_code krb5_rc_initialize(krb5_context context, krb5_rcache rc,
-				     krb5_deltat lifespan);
-krb5_error_code krb5_rc_get_lifespan(krb5_context context, krb5_rcache rc,
-				     krb5_deltat *lifespan);
-krb5_error_code krb5_rc_destroy(krb5_context context, krb5_rcache rc);
-
 krb5_error_code kssl_krb5_mk_req_extended(krb5_context,
                                           krb5_auth_context  *,
                                           krb5_const krb5_flags,
@@ -175,6 +168,9 @@ krb5_error_code kssl_krb5_cc_get_principal(krb5_context context,
                                            krb5_ccache cache,
                                            krb5_principal *principal);
 krb5_error_code kssl_krb5_auth_con_free(krb5_context,krb5_auth_context);
+size_t kssl_krb5_checksum_size(krb5_context context,krb5_cksumtype ctype);
+krb5_boolean kssl_valid_cksumtype(krb5_cksumtype ctype);
+krb5_error_code krb5_kt_free_entry(krb5_context,krb5_keytab_entry FAR * );
 
 /* Function pointers (almost all Kerberos functions are _stdcall) */
 static void (_stdcall *p_krb5_free_data_contents)(krb5_context, krb5_data *)
@@ -214,6 +210,27 @@ static krb5_error_code (_stdcall *p_krb5_cc_get_principal)
 			 krb5_principal *principal)=NULL;
 static krb5_error_code (_stdcall *p_krb5_auth_con_free)
 			(krb5_context, krb5_auth_context)=NULL;
+static krb5_error_code (_stdcall *p_krb5_decrypt_tkt_part)
+                        (krb5_context, krb5_const krb5_keyblock *,
+                                           krb5_ticket *)=NULL;
+static krb5_error_code (_stdcall *p_krb5_timeofday)
+                        (krb5_context context, krb5_int32 *timeret)=NULL;
+static krb5_error_code (_stdcall *p_krb5_rc_default)
+                        (krb5_context context, krb5_rcache *rc)=NULL;
+static krb5_error_code (_stdcall *p_krb5_rc_initialize)
+                        (krb5_context context, krb5_rcache rc,
+                                     krb5_deltat lifespan)=NULL;
+static krb5_error_code (_stdcall *p_krb5_rc_get_lifespan)
+                        (krb5_context context, krb5_rcache rc,
+                                       krb5_deltat *lifespan)=NULL;
+static krb5_error_code (_stdcall *p_krb5_rc_destroy)
+                        (krb5_context context, krb5_rcache rc)=NULL;
+static krb5_boolean (_stdcall *p_krb5_principal_compare)
+                     (krb5_context, krb5_const_principal, krb5_const_principal)=NULL;
+static size_t (_stdcall *p_krb5_checksum_size)(krb5_context context,krb5_cksumtype ctype)=NULL;
+static krb5_boolean (_stdcall *p_valid_cksumtype)(krb5_cksumtype ctype)=NULL;
+static krb5_error_code (_stdcall *p_krb5_kt_free_entry)
+                        (krb5_context,krb5_keytab_entry * )=NULL;
 static int krb5_loaded = 0;     /* only attempt to initialize func ptrs once */
 
 /* Function to Load the Kerberos 5 DLL and initialize function pointers */
@@ -271,6 +288,12 @@ load_krb5_dll(void)
 		GetProcAddress( hKRB5_32, "krb5_kt_resolve" );
 	(FARPROC) p_krb5_auth_con_init =
 		GetProcAddress( hKRB5_32, "krb5_auth_con_init" );
+        (FARPROC) p_valid_cksumtype =
+                GetProcAddress( hKRB5_32, "valid_cksumtype" );
+        (FARPROC) p_krb5_checksum_size =
+                GetProcAddress( hKRB5_32, "krb5_checksum_size" );
+        (FARPROC) p_krb5_kt_free_entry =
+                GetProcAddress( hKRB5_32, "krb5_kt_free_entry" );
 	}
 
 /* Stubs for each function to be dynamicly loaded */
@@ -463,7 +486,7 @@ krb5_principal_compare(krb5_context con, krb5_const_principal princ1,
 		load_krb5_dll();
 
 	if ( p_krb5_principal_compare )
-		return(p_krb5_principal_compare(con,princ1,princ2);
+		return(p_krb5_principal_compare(con,princ1,princ2));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -476,7 +499,7 @@ krb5_decrypt_tkt_part(krb5_context con, krb5_const krb5_keyblock *keys,
 		load_krb5_dll();
 
 	if ( p_krb5_decrypt_tkt_part )
-		return(p_krb5_decrypt_tkt_part(con,keys,ticket);
+		return(p_krb5_decrypt_tkt_part(con,keys,ticket));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -488,7 +511,7 @@ krb5_timeofday(krb5_context con, krb5_int32 *timeret)
 		load_krb5_dll();
 
 	if ( p_krb5_timeofday )
-		return(p_krb5_timeofday(con,timeret);
+		return(p_krb5_timeofday(con,timeret));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -500,7 +523,7 @@ krb5_rc_default(krb5_context con, krb5_rcache *rc)
 		load_krb5_dll();
 
 	if ( p_krb5_rc_default )
-		return(p_krb5_rc_default(con,rc);
+		return(p_krb5_rc_default(con,rc));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -512,7 +535,7 @@ krb5_rc_initialize(krb5_context con, krb5_rcache rc, krb5_deltat lifespan)
 		load_krb5_dll();
 
 	if ( p_krb5_rc_initialize )
-		return(p_krb5_rc_initialize(con, rc, lifespan);
+		return(p_krb5_rc_initialize(con, rc, lifespan));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -524,7 +547,7 @@ krb5_rc_get_lifespan(krb5_context con, krb5_rcache rc, krb5_deltat *lifespanp)
 		load_krb5_dll();
 
 	if ( p_krb5_rc_get_lifespan )
-		return(p_krb5_rc_get_lifespan(con, rc, lifespanp);
+		return(p_krb5_rc_get_lifespan(con, rc, lifespanp));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
@@ -536,11 +559,47 @@ krb5_rc_destroy(krb5_context con, krb5_rcache rc)
 		load_krb5_dll();
 
 	if ( p_krb5_rc_destroy )
-		return(p_krb5_rc_destroy(con, rc);
+		return(p_krb5_rc_destroy(con, rc));
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
 
+size_t 
+krb5_checksum_size(krb5_context context,krb5_cksumtype ctype)
+        {
+        if (!krb5_loaded)
+                load_krb5_dll();
+
+        if ( p_krb5_checksum_size )
+                return(p_krb5_checksum_size(context, ctype));
+        else
+                return KRB5KRB_ERR_GENERIC;
+        }
+
+krb5_boolean 
+valid_cksumtype(krb5_cksumtype ctype)
+        {
+        if (!krb5_loaded)
+                load_krb5_dll();
+
+        if ( p_valid_cksumtype )
+                return(p_valid_cksumtype(ctype));
+        else
+                return KRB5KRB_ERR_GENERIC;
+        }
+
+krb5_error_code 
+krb5_kt_free_entry(krb5_context con,krb5_keytab_entry * entry)
+        {
+        if (!krb5_loaded)
+                load_krb5_dll();
+
+        if ( p_krb5_kt_free_entry )
+                return(p_krb5_kt_free_entry(con,entry));
+        else
+                return KRB5KRB_ERR_GENERIC;
+        }
+                 
 /* Structure definitions  */
 #ifndef NO_DEF_KRB5_CCACHE
 #ifndef krb5_x
@@ -562,36 +621,36 @@ typedef struct _krb5_cc_ops
 	krb5_magic magic;
 	char  *prefix;
 	char  * (KRB5_CALLCONV *get_name)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+		(krb5_context, krb5_ccache);
 	krb5_error_code (KRB5_CALLCONV *resolve)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *, const char  *));
+		(krb5_context, krb5_ccache  *, const char  *);
 	krb5_error_code (KRB5_CALLCONV *gen_new)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *));
+		(krb5_context, krb5_ccache  *);
 	krb5_error_code (KRB5_CALLCONV *init)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_principal));
+		(krb5_context, krb5_ccache, krb5_principal);
 	krb5_error_code (KRB5_CALLCONV *destroy)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+		(krb5_context, krb5_ccache);
 	krb5_error_code (KRB5_CALLCONV *close)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+		(krb5_context, krb5_ccache);
 	krb5_error_code (KRB5_CALLCONV *store)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_creds  *));
+		(krb5_context, krb5_ccache, krb5_creds  *);
 	krb5_error_code (KRB5_CALLCONV *retrieve)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_flags, krb5_creds  *, krb5_creds  *));
+		(krb5_context, krb5_ccache,
+		krb5_flags, krb5_creds  *, krb5_creds  *);
 	krb5_error_code (KRB5_CALLCONV *get_princ)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_principal  *));
+		(krb5_context, krb5_ccache, krb5_principal  *);
 	krb5_error_code (KRB5_CALLCONV *get_first)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_cc_cursor  *));
+		(krb5_context, krb5_ccache, krb5_cc_cursor  *);
 	krb5_error_code (KRB5_CALLCONV *get_next)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_cc_cursor  *, krb5_creds  *));
+		(krb5_context, krb5_ccache,
+		krb5_cc_cursor  *, krb5_creds  *);
 	krb5_error_code (KRB5_CALLCONV *end_get)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_cc_cursor  *));
+		(krb5_context, krb5_ccache, krb5_cc_cursor  *);
 	krb5_error_code (KRB5_CALLCONV *remove_cred)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_flags, krb5_creds  *));
+		(krb5_context, krb5_ccache,
+		krb5_flags, krb5_creds  *);
 	krb5_error_code (KRB5_CALLCONV *set_flags)
-		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_flags));
+		(krb5_context, krb5_ccache, krb5_flags);
 	} krb5_cc_ops;
 #endif /* NO_DEF_KRB5_CCACHE */
 
@@ -697,23 +756,29 @@ int 	kssl_test_confound(unsigned char *p)
 /*	Allocate, fill, and return cksumlens array of checksum lengths.
 **	This array holds just the unique elements from the krb5_cksumarray[].
 **	array[n] == 0 signals end of data.
+**
+**      The krb5_cksumarray[] was an internal variable that has since been
+**      replaced by a more general method for storing the data.  It should
+**      not be used.  Instead we use real API calls and make a guess for 
+**      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
+**      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
 */
 int 	*populate_cksumlens(void)
 	{
-	int 		i, j, n = krb5_max_cksum+1;
-	static int 	*cklens = NULL;
+	int 		i, j, n = 0x0010+1;
+	static size_t 	*cklens = NULL;
 
 #ifdef KRB5CHECKAUTH
-	if (!cklens && !(cklens = (int *) calloc(sizeof(int), n)))  return NULL;
+	if (!cklens && !(cklens = (size_t *) calloc(sizeof(int), n)))  return NULL;
 
-	for (i=0; i < krb5_max_cksum; i++)  {
-		if (!krb5_cksumarray[i])  continue;	/*  array has holes  */
-		for (j=0; j < krb5_max_cksum; j++)  {
+	for (i=0; i < n; i++)  {
+		if (!valid_cksumtype(i))  continue;	/*  array has holes  */
+		for (j=0; j < n; j++)  {
 			if (cklens[j] == 0)  {
-				cklens[j] = krb5_cksumarray[i]->checksum_length;
+				cklens[j] = krb5_checksum_size(NULL,i);
 				break;		/*  krb5 elem was new: add   */
 				}
-			if (cklens[j] == krb5_cksumarray[i]->checksum_length)  {
+			if (cklens[j] == krb5_checksum_size(NULL,i))  {
 				break;		/*  ignore duplicate elements */
 				}
 			}
@@ -768,7 +833,7 @@ kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text)
 void
 print_krb5_data(char *label, krb5_data *kdata)
         {
-	int 	i;
+	unsigned int 	i;
 
 	printf("%s[%d] ", label, kdata->length);
 	for (i=0; i < kdata->length; i++)
@@ -813,7 +878,7 @@ print_krb5_authdata(char *label, krb5_authdata **adata)
 void
 print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
         {
-	int 	i;
+	unsigned int 	i;
 
 	if (keyblk == NULL)
                 {
@@ -845,17 +910,18 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 void
 print_krb5_princ(char *label, krb5_principal_data *princ)
         {
-	int 	i, j;
+	unsigned int 	ui, uj;
+        int i;
 
 	printf("%s principal Realm: ", label);
 	if (princ == NULL)  return;
-	for (i=0; i < princ->realm.length; i++)  putchar(princ->realm.data[i]);
+	for (ui=0; ui < princ->realm.length; ui++)  putchar(princ->realm.data[ui]);
 	printf(" (nametype %d) has %d strings:\n", princ->type,princ->length);
 	for (i=0; i < princ->length; i++)
                 {
 		printf("\t%d [%d]: ", i, princ->data[i].length);
-		for (j=0; j < princ->data[i].length; j++)  {
-			putchar(princ->data[i].data[j]);
+		for (uj=0; uj < princ->data[i].length; uj++)  {
+			putchar(princ->data[i].data[uj]);
 			}
 		printf("\n");
 		}
@@ -996,7 +1062,8 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 			}
 
 		if (ap_req)  KRB5_APREQ_free((KRB5_APREQ *) ap_req);
-		if (krb5_app_req.length)  krb5_xfree(krb5_app_req.data);
+		if (krb5_app_req.length)  
+                        krb5_free_data_contents(krb5context,&krb5_app_req);
 		}
 #ifdef KRB5_HEIMDAL
 	if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->session))
@@ -1531,6 +1598,7 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
 	return;
         }
 
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_WIN32)
 void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 	{
 #ifdef KRB5_HEIMDAL
@@ -1545,7 +1613,7 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 	krb5_free_data_contents(NULL, data);
 #endif
 	}
-
+#endif /* !OPENSSL_SYS_WINDOWS && !OPENSSL_SYS_WIN32 */
 
 /*  Helper function for kssl_validate_times().
 **  We need context->clockskew, but krb5_context is an opaque struct.
@@ -1631,6 +1699,7 @@ krb5_error_code  kssl_check_authent(
 	int 			padl, outl, unencbufsize;
 	struct tm		tm_time, *tm_l, *tm_g;
 	time_t			now, tl, tg, tz_offset;
+        char * strptime();
 
 	*atimep = 0;
 	kssl_err_set(kssl_err, 0, "");
@@ -1728,7 +1797,7 @@ krb5_error_code  kssl_check_authent(
 		}
 	else	strncpy(tbuf, auth->ctime->data, auth->ctime->length);
 	
-	if (strptime(tbuf, "%Y%m%d%H%M%S", &tm_time) != NULL)
+	if ((char *)strptime(tbuf, "%Y%m%d%H%M%S", &tm_time) != NULL)
 		{
 		now  = time(&now);
 		tm_l = localtime(&now); 	tl = mktime(tm_l);
