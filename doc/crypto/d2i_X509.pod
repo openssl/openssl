@@ -50,10 +50,12 @@ d2i_X509_fp() is similar to d2i_X509() except it attempts
 to parse data from FILE pointer B<fp>.
 
 i2d_X509_bio() is similar to i2d_X509() except it writes
-the encoding of the structure B<x> to BIO B<bp>.
+the encoding of the structure B<x> to BIO B<bp> and it
+returns 1 for success and 0 for failure.
 
 i2d_X509_fp() is similar to i2d_X509() except it writes
-the encoding of the structure B<x> to BIO B<bp>.
+the encoding of the structure B<x> to BIO B<bp> and it
+returns 1 for success and 0 for failure.
 
 =head1 NOTES
 
@@ -213,6 +215,9 @@ L<ERR_get_error(3)|ERR_get_error(3)>.
 i2d_X509(), i2d_X509_bio() and i2d_X509_fp() return a the number of bytes
 successfully encoded or a negative value if an error occurs. The error code
 can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
+
+i2d_X509_bio() and i2d_X509_fp() returns 1 for success and 0 if an error 
+occurs The error code can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
 
 =head1 SEE ALSO
 
