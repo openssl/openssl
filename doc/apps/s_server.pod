@@ -96,7 +96,7 @@ using a set of DH parameters. If not specified then an attempt is made to
 load the parameters from the server certificate file. If this fails then
 a static set of parameters hard coded into the s_server program will be used.
 
-=item B<-nodhe>
+=item B<-no_dhe>
 
 if this option is set then no DH parameters will be loaded effectively
 disabling the ephemeral DH cipher suites.
