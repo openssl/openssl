@@ -570,7 +570,7 @@ int MAIN(int argc, char **argv)
 #ifndef RSA_NULL
 			if (strcmp(*argv,"openssl") == 0) 
 			{
-			RSA_set_default_openssl_method(RSA_PKCS1_SSLeay());
+			RSA_set_default_method(RSA_PKCS1_SSLeay());
 			j--;
 			}
 		else

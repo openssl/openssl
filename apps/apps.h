@@ -126,21 +126,21 @@ extern BIO *bio_err;
 #    ifdef _O_BINARY
 #      define apps_startup() \
 		do { _fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		ERR_load_crypto_strings(); \
-		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
-                setup_ui_method(); } while(0)
+		ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
+		ENGINE_load_builtin_engines(); ENGINE_register_all_complete(); \
+		setup_ui_method(); } while(0)
 #    else
 #      define apps_startup() \
 		do { _fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		ERR_load_crypto_strings(); \
-		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
-                setup_ui_method(); } while(0)
+		ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
+		ENGINE_load_builtin_engines(); ENGINE_register_all_complete(); \
+		setup_ui_method(); } while(0)
 #    endif
 #  else
 #    define apps_startup() \
 		do { do_pipe_sig(); OpenSSL_add_all_algorithms(); \
-		ERR_load_crypto_strings(); \
-		ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
+		ERR_load_crypto_strings(); ENGINE_load_builtin_engines(); \
+		ENGINE_register_all_complete(); setup_ui_method(); } while(0)
 #  endif
 #  define apps_shutdown() \
 		do { destroy_ui_method(); EVP_cleanup(); \

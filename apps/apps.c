@@ -1167,8 +1167,6 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			return NULL;
 			}
 
-		ENGINE_load_engine_ciphers(e);
-
 		BIO_printf(err,"engine \"%s\" set.\n", engine);
 
 		/* Free our "structural" reference. */
