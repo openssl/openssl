@@ -169,6 +169,8 @@ struct rsa_st
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
 
+#define RSA_PKCS1_PADDING_SIZE	11
+
 #define RSA_set_app_data(s,arg)         RSA_set_ex_data(s,0,arg)
 #define RSA_get_app_data(s)             RSA_get_ex_data(s,0)
 
