@@ -2193,7 +2193,7 @@ again2:
 
 #ifdef X509_V3
 	/* Make it an X509 v3 certificate. */
-	if (!X509_set_version(x509,2)) goto err;
+	if (!X509_set_version(ret,2)) goto err;
 #endif
 
 	if (BN_to_ASN1_INTEGER(serial,ci->serialNumber) == NULL)
