@@ -88,7 +88,7 @@ EVP_PKEY *pkey;
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_WRONG_PUBLIC_KEY_TYPE);
 		return(-1);
 		}
-	memcpy(&tmp_ctx,ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&tmp_ctx,ctx);     
 	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
         if (ctx->digest->verify == NULL)
                 {

@@ -460,6 +460,7 @@ typedef struct evp_Encode_Ctx_st
 
 #ifndef NOPROTO
 
+int     EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);  
 void	EVP_DigestInit(EVP_MD_CTX *ctx, EVP_MD *type);
 void	EVP_DigestUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
 void	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
@@ -626,6 +627,7 @@ int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
 
 #else
 
+int     EVP_MD_CTX_copy(); 
 void	EVP_DigestInit();
 void	EVP_DigestUpdate();
 void	EVP_DigestFinal();
@@ -782,6 +784,7 @@ int EVP_CIPHER_get_asn1_iv();
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_RC2_MAGIC_TO_METH				 109
+#define EVP_F_EVP_MD_CTX_COPY                            110
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
@@ -795,6 +798,7 @@ int EVP_CIPHER_get_asn1_iv();
 #define EVP_R_UNSUPPORTED_KEY_SIZE			 108
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
+#define EVP_R_INPUT_NOT_INITALISED                       111
  
 #ifdef  __cplusplus
 }

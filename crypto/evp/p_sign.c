@@ -91,7 +91,7 @@ EVP_PKEY *pkey;
 	MS_STATIC EVP_MD_CTX tmp_ctx;
 
 	*siglen=0;
-	memcpy(&tmp_ctx,ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&tmp_ctx,ctx);   
 	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
 	for (i=0; i<4; i++)
 		{

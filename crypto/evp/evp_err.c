@@ -73,6 +73,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_SIGNFINAL,0),	"EVP_SignFinal"},
 {ERR_PACK(0,EVP_F_EVP_VERIFYFINAL,0),	"EVP_VerifyFinal"},
 {ERR_PACK(0,EVP_F_RC2_MAGIC_TO_METH,0),	"RC2_MAGIC_TO_METH"},
+{ERR_PACK(0,EVP_F_EVP_MD_CTX_COPY,0),	"EVP_MD_CTX_copy"},
 {0,NULL},
 	};
 
@@ -89,6 +90,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_UNSUPPORTED_KEY_SIZE              ,"unsupported key size"},
 {EVP_R_WRONG_FINAL_BLOCK_LENGTH          ,"wrong final block length"},
 {EVP_R_WRONG_PUBLIC_KEY_TYPE             ,"wrong public key type"},
+{EVP_R_INPUT_NOT_INITALISED              ,"input not initalised"},
 {0,NULL},
 	};
 

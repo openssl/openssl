@@ -11,6 +11,7 @@
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_RC2_MAGIC_TO_METH				 109
+#define EVP_F_EVP_MD_CTX_COPY                            110
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
@@ -24,3 +25,4 @@
 #define EVP_R_UNSUPPORTED_KEY_SIZE			 108
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
+#define EVP_R_INPUT_NOT_INITALISED                       111
