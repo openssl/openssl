@@ -133,6 +133,7 @@ sub main'xorb	{ &out2("xor",@_); }
 sub main'add	{ &out2("add",@_); }
 sub main'adc	{ &out2("adc",@_); }
 sub main'sub	{ &out2("sub",@_); }
+sub main'sbb	{ &out2("sbb",@_); }
 sub main'rotl	{ &out2("rol",@_); }
 sub main'rotr	{ &out2("ror",@_); }
 sub main'exch	{ &out2("xchg",@_); }
@@ -160,8 +161,8 @@ sub main'jne	{ &out1("jne",@_); }
 sub main'jno	{ &out1("jno",@_); }
 sub main'push	{ &out1("push",@_); $stack+=4; }
 sub main'pop	{ &out1("pop",@_); $stack-=4; }
-sub main'pushf	{ &out0("pushf"); $stack+=4; }
-sub main'popf	{ &out0("popf"); $stack-=4; }
+sub main'pushf	{ &out0("pushfd"); $stack+=4; }
+sub main'popf	{ &out0("popfd"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
@@ -172,6 +173,7 @@ sub main'bt	{ &out2("bt",@_); }
 sub main'leave	{ &out0("leave"); }
 sub main'cpuid  { &out0("DW\t0A20Fh"); }
 sub main'rdtsc  { &out0("DW\t0310Fh"); }
+sub main'halt	{ &out0("hlt"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }

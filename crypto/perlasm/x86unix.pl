@@ -164,6 +164,7 @@ sub main'xorb	{ &out2("xorb",@_); }
 sub main'add	{ &out2("addl",@_); }
 sub main'adc	{ &out2("adcl",@_); }
 sub main'sub	{ &out2("subl",@_); }
+sub main'sbb	{ &out2("sbbl",@_); }
 sub main'rotl	{ &out2("roll",@_); }
 sub main'rotr	{ &out2("rorl",@_); }
 sub main'exch	{ &out2("xchg",@_); }
@@ -191,8 +192,8 @@ sub main'dec	{ &out1("decl",@_); }
 sub main'inc	{ &out1("incl",@_); }
 sub main'push	{ &out1("pushl",@_); $stack+=4; }
 sub main'pop	{ &out1("popl",@_); $stack-=4; }
-sub main'pushf	{ &out0("pushf"); $stack+=4; }
-sub main'popf	{ &out0("popf"); $stack-=4; }
+sub main'pushf	{ &out0("pushfl"); $stack+=4; }
+sub main'popf	{ &out0("popfl"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
 sub main'call	{	my $pre=$under;
 			foreach $i (%label)
@@ -206,6 +207,7 @@ sub main'bt	{ &out2("btl",@_); }
 sub main'leave	{ &out0("leave"); }
 sub main'cpuid	{ &out0(".word\t0xa20f"); }
 sub main'rdtsc	{ &out0(".word\t0x310f"); }
+sub main'halt	{ &out0("hlt"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
