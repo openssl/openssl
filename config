@@ -513,7 +513,7 @@ EOF
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
 		if [ "$TEST" = "false" ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (stty -icanon min 0 max 50; read waste) < /dev/tty
+		  (stty -icanon min 0 time 50; read waste) < /dev/tty
 		fi
 	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
 		# $GCC_ARCH denotes default ABI chosen by compiler driver
@@ -525,7 +525,7 @@ EOF
 		echo "         invoke './Configure solaris-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (stty -icanon min 0 max 50; read waste) < /dev/tty
+		  (stty -icanon min 0 time 50; read waste) < /dev/tty
 		fi
 	    elif [ "$GCC_ARCH" = "-m32" ]; then
 		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
@@ -533,7 +533,7 @@ EOF
 		echo "        invoke './Configure solaris64-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (stty -icanon min 0 max 50; read waste) < /dev/tty
+		  (stty -icanon min 0 time 50; read waste) < /dev/tty
 		fi
 	    fi
 	fi
