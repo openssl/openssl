@@ -64,6 +64,8 @@ sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
+asm/sha1-ia64.s:   asm/sha1-ia64.pl
+	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
 asm/sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 asm/sha512-ia64.s: asm/sha512-ia64.pl
