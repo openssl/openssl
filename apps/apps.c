@@ -1088,6 +1088,7 @@ int set_cert_ex(unsigned long *flags, const char *arg)
 		{ "no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
 		{ "no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
 		{ "no_aux", X509_FLAG_NO_AUX, 0},
+		{ "no_attributes", X509_FLAG_NO_ATTRIBUTES, 0},
 		{ "ext_default", X509V3_EXT_DEFAULT, X509V3_EXT_UNKNOWN_MASK},
 		{ "ext_error", X509V3_EXT_ERROR_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
 		{ "ext_parse", X509V3_EXT_PARSE_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
