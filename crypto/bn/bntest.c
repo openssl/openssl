@@ -949,8 +949,8 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	for (i = 0; i < num0; i++)
 		{
 		if (!BN_rand(a, 512, 0, 0)) goto err;
-		if (!BN_nnmod(a, a, b, ctx)) goto err;
-		
+		a->neg = rand_neg();
+
 		/* r := (b-1)/2  (note that b is odd) */
 		if (!BN_copy(r, b)) goto err;
 		if (!BN_sub_word(r, 1)) goto err;

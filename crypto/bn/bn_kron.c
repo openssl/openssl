@@ -65,7 +65,7 @@
 int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
 	int i;
-	int ret;
+	int ret = -2; /* avoid 'uninitialized' warning */
 	int err = 0;
 	BIGNUM *A, *B, *tmp;
 	/* In 'tab', only odd-indexed entries are relevant:
@@ -165,7 +165,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	
 		/* Cohen's step 4: */
 		/* multiply 'ret' by  $(-1)^{(A-1)(B-1)/4}$ */
-		if (BN_lsw(A) & BN_lsw(B) & 2)
+		if ((A->neg ? ~BN_lsw(A) : BN_lsw(A)) & BN_lsw(B) & 2)
 			ret = -ret;
 		
 		/* (A, B) := (B mod |A|, |A|) */
