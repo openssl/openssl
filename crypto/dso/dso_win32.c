@@ -126,6 +126,7 @@ static int win32_load(DSO *dso)
 	if(h == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_LOAD_FAILED);
+		ERR_add_error_data(3, "filename(", filename, ")");
 		goto err;
 		}
 	p = (HINSTANCE *)OPENSSL_malloc(sizeof(HINSTANCE));
@@ -210,6 +211,7 @@ static void *win32_bind_var(DSO *dso, const char *symname)
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_VAR,DSO_R_SYM_FAILURE);
+		ERR_add_error_data(3, "symname(", symname, ")");
 		return(NULL);
 		}
 	return(sym);
@@ -240,6 +242,7 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_FUNC,DSO_R_SYM_FAILURE);
+		ERR_add_error_data(3, "symname(", symname, ")");
 		return(NULL);
 		}
 	return((DSO_FUNC_TYPE)sym);
