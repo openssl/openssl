@@ -115,7 +115,7 @@ int MAIN(int argc, char **argv)
 	X509_OBJECT xobj;
 	EVP_PKEY *pkey;
 	int do_ver = 0;
-	const EVP_MD *md_alg,*digest=EVP_md5();
+	const EVP_MD *md_alg,*digest=EVP_sha1();
 
 	apps_startup();
 

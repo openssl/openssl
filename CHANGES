@@ -2,7 +2,11 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7f and 0.9.8  [xx XXX xxxx]
+
+  *) Use SHA-1 instead of MD5 as the default digest algorithm for
+     the apps/openssl applications.
+     [Nils Larsch]
 
   *) Compile clean with "-Wall -Wmissing-prototypes
      -Wstrict-prototypes -Wmissing-declarations -Werror". Currently

@@ -67,7 +67,7 @@ cert_opt 	= ca_default		# Certificate field options
 
 default_days	= 365			# how long to certify for
 default_crl_days= 30			# how long before next CRL
-default_md	= md5			# which md to use.
+default_md	= sha1			# which md to use.
 preserve	= no			# keep passed DN ordering
 
 # A few difference way of specifying how similar the request should look

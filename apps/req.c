@@ -187,7 +187,7 @@ int MAIN(int argc, char **argv)
 	char *p;
 	char *subj = NULL;
 	int multirdn = 0;
-	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
+	const EVP_MD *md_alg=NULL,*digest=EVP_sha1();
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	char *to_free;

@@ -184,7 +184,7 @@ int MAIN(int argc, char **argv)
 	X509_REQ *rq=NULL;
 	int fingerprint=0;
 	char buf[256];
-	const EVP_MD *md_alg,*digest=EVP_md5();
+	const EVP_MD *md_alg,*digest=EVP_sha1();
 	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
