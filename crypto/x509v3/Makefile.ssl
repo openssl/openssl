@@ -87,6 +87,101 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+pcy_cache.o: ../../e_os.h ../../include/openssl/asn1.h
+pcy_cache.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+pcy_cache.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+pcy_cache.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+pcy_cache.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+pcy_cache.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pcy_cache.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pcy_cache.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_cache.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_cache.o: ../../include/openssl/opensslconf.h
+pcy_cache.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pcy_cache.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
+pcy_cache.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pcy_cache.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pcy_cache.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pcy_cache.o: ../../include/openssl/x509v3.h ../cryptlib.h pcy_cache.c pcy_int.h
+pcy_data.o: ../../e_os.h ../../include/openssl/asn1.h
+pcy_data.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+pcy_data.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+pcy_data.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+pcy_data.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+pcy_data.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pcy_data.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pcy_data.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_data.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_data.o: ../../include/openssl/opensslconf.h
+pcy_data.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pcy_data.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
+pcy_data.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pcy_data.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pcy_data.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pcy_data.o: ../../include/openssl/x509v3.h ../cryptlib.h pcy_data.c pcy_int.h
+pcy_lib.o: ../../e_os.h ../../include/openssl/asn1.h
+pcy_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+pcy_lib.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+pcy_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+pcy_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+pcy_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pcy_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pcy_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+pcy_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+pcy_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+pcy_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+pcy_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pcy_lib.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+pcy_lib.o: ../cryptlib.h pcy_int.h pcy_lib.c
+pcy_map.o: ../../e_os.h ../../include/openssl/asn1.h
+pcy_map.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+pcy_map.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+pcy_map.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+pcy_map.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+pcy_map.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pcy_map.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pcy_map.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_map.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_map.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+pcy_map.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+pcy_map.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+pcy_map.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+pcy_map.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pcy_map.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+pcy_map.o: ../cryptlib.h pcy_int.h pcy_map.c
+pcy_node.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+pcy_node.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+pcy_node.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+pcy_node.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+pcy_node.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+pcy_node.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+pcy_node.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_node.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_node.o: ../../include/openssl/opensslconf.h
+pcy_node.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pcy_node.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
+pcy_node.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pcy_node.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pcy_node.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pcy_node.o: ../../include/openssl/x509v3.h pcy_int.h pcy_node.c
+pcy_tree.o: ../../e_os.h ../../include/openssl/asn1.h
+pcy_tree.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+pcy_tree.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+pcy_tree.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+pcy_tree.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+pcy_tree.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pcy_tree.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pcy_tree.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pcy_tree.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pcy_tree.o: ../../include/openssl/opensslconf.h
+pcy_tree.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pcy_tree.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
+pcy_tree.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pcy_tree.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pcy_tree.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pcy_tree.o: ../../include/openssl/x509v3.h ../cryptlib.h pcy_int.h pcy_tree.c
 v3_akey.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_akey.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 v3_akey.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
