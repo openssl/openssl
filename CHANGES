@@ -3,6 +3,11 @@
  _______________
 
 
+ Changes between 0.9.3a and 0.9.4
+
+  *) New configuration variant "bsdi-elf-gcc" (BSD/OS 4.x)
+     [Bodo Moeller]
+
  Changes between 0.9.3 and 0.9.3a  [29 May 1999]
 
   *) New configuration variant "sco5-gcc".

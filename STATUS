@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/30 13:54:25 $
+  ______________                           $Date: 1999/05/30 23:54:52 $
 
   DEVELOPMENT STATE
 
@@ -12,7 +12,7 @@
 
   RELEASE SHOWSTOPPERS
 
-    o BSD/OS: assembler functions must not have leading underscores
+    o
 
   AVAILABLE PATCHES
 
@@ -61,11 +61,6 @@
     o  broken demos
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
-    o  [ Compilation warnings: ctype-related int vs. char ]
-       => now casts (unsigned char), maybe those arrays should have
-          members of that type rather than plain char (i.e.
-          unsigned char *p; ....; if (isspace(*p)) ...; where it's now
-          char *p; ....; if (isspace((unsigned char)*p)) ...;)
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
     o  dubious declaration of crypt() in des.h

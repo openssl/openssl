@@ -114,6 +114,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-lynx-lynxos"; exit 0
 	;;
 
+    BSD/OS:4.*)
+	echo "${MACHINE}-whatever-bsdi4"; exit 0
+	;;
+
     BSD/386:*:*:*486*|BSD/OS:*:*:*:*486*)
 	echo "i486-whatever-bsdi"; exit 0
 	;;
@@ -321,6 +325,7 @@ case "$GUESSOS" in
   alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
   pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
+  *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alpha-cc" ;;
   *-*-unixware*) OUT="unixware-2.0" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
