@@ -27,6 +27,13 @@
  *
  */
 
+/* NOTE: This file is licensed pursuant to the OpenSSL license below
+ * and may be modified; but after modifications, the above covenant
+ * may no longer apply!  In such cases, the corresponding paragraph
+ * ["In addition, Sun covenants ... causes the infringement."] and
+ * this note can be edited out; but please keep the Sun copyright
+ * notice and attribution. */
+
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
