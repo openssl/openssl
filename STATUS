@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/17 11:56:53 $
+  ______________                           $Date: 2000/09/17 22:36:25 $
 
   DEVELOPMENT STATE
 
@@ -37,6 +37,7 @@
 			aix-gcc (AIX 4.3.2)		- passed
 			VMS/Alpha			- failed
 				Some things were missing [FIXED]
+                       0.9.6-beta1 is available:
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
