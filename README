@@ -14,13 +14,13 @@
  protocols as well as a full-strength general purpose cryptography library.
  The project is managed by a worldwide community of volunteers that use the
  Internet to communicate, plan, and develop the OpenSSL toolkit and its
- related documentation. 
+ related documentation.
 
  OpenSSL is based on the excellent SSLeay library developed from Eric A. Young
  and Tim J. Hudson.  The OpenSSL toolkit is licensed under a dual-license (the
  OpenSSL license plus the SSLeay license) situation, which basically means
  that you are free to get and use it for commercial and non-commercial
- purposes as long as you fulfill the conditions of both licenses. 
+ purposes as long as you fulfill the conditions of both licenses.
 
  OVERVIEW
  --------
@@ -53,9 +53,9 @@
         MDC2 message digest. A DES based hash that is popular on smart cards.
 
      Public Key
-        RSA encryption/decryption/generation.  
+        RSA encryption/decryption/generation.
             There is no limit on the number of bits.
-        DSA encryption/decryption/generation.   
+        DSA encryption/decryption/generation.
             There is no limit on the number of bits.
         Diffie-Hellman key-exchange/key generation.  
             There is no limit on the number of bits.
