@@ -80,8 +80,10 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 	ts = result;
 #elif !defined(OPENSSL_SYS_VMS)
 	ts = gmtime(timer);
-	if (ts != NULL)
-		memcpy(result, ts, sizeof(struct tm));
+	if (ts == NULL)
+		return NULL;
+
+	memcpy(result, ts, sizeof(struct tm));
 	ts = result;
 #endif
 #ifdef OPENSSL_SYS_VMS
