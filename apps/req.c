@@ -1051,6 +1051,7 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, i);
 #endif
+	if(!req_fix_data(-1, NULL, i, min, max)) goto err;
 	if (!X509_NAME_add_entry_by_NID(n,nid, MBSTRING_ASC,
 				(unsigned char *) buf, -1,-1,0)) goto err;
 	ret=1;
@@ -1123,7 +1124,7 @@ start:
 		else	goto err;
 		}
 
-	if (!ASN1_STRING_set(bs,(unsigned char *)buf,i+1))
+	if (!ASN1_STRING_set(bs,(unsigned char *)buf,i))
 		{ BIO_printf(bio_err,"Malloc failure\n"); goto err; }
 
 	if ((at=ASN1_TYPE_new()) == NULL)
@@ -1161,23 +1162,24 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 
 static int req_fix_data(int nid, int *type, int len, int min, int max)
 	{
-	if (nid == NID_pkcs9_emailAddress)
-		*type=V_ASN1_IA5STRING;
-	if ((nid == NID_commonName) && (*type == V_ASN1_IA5STRING))
-		*type=V_ASN1_T61STRING;
-	if ((nid == NID_pkcs9_challengePassword) &&
-		(*type == V_ASN1_IA5STRING))
-		*type=V_ASN1_T61STRING;
+	if(type) {
+		if (nid == NID_pkcs9_emailAddress)
+			*type=V_ASN1_IA5STRING;
+		if ((nid == NID_commonName) && (*type == V_ASN1_IA5STRING))
+			*type=V_ASN1_T61STRING;
+		if ((nid == NID_pkcs9_challengePassword) &&
+			(*type == V_ASN1_IA5STRING))
+			*type=V_ASN1_T61STRING;
 
-	if ((nid == NID_pkcs9_unstructuredName) &&
-		(*type == V_ASN1_T61STRING))
-		{
-		BIO_printf(bio_err,"invalid characters in string, please re-enter the string\n");
-		return(0);
-		}
-	if (nid == NID_pkcs9_unstructuredName)
-		*type=V_ASN1_IA5STRING;
-
+		if ((nid == NID_pkcs9_unstructuredName) &&
+			(*type == V_ASN1_T61STRING))
+			{
+			BIO_printf(bio_err,"invalid characters in string, please re-enter the string\n");
+			return(0);
+			}
+		if (nid == NID_pkcs9_unstructuredName)
+			*type=V_ASN1_IA5STRING;
+	}
 	if (len < min)
 		{
 		BIO_printf(bio_err,"string is too short, it needs to be at least %d bytes long\n",min);

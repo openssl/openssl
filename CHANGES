@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix for 'req': it was adding a null to request attributes.
+     Also change the X509_LOOKUP and X509_INFO code to handle
+     certificate auxiliary information.
+     [Steve Henson]
+
   *) Add support for 40 and 64 bit RC2 and RC4 algorithms: document
      the 'enc' command.
      [Steve Henson]

@@ -132,6 +132,17 @@ start:
 				}
 			pp=(char **)&(xi->x509);
 			}
+		else if ((strcmp(name,PEM_STRING_X509_TRUSTED) == 0))
+			{
+			d2i=(char *(*)())d2i_X509_AUX;
+			if (xi->x509 != NULL)
+				{
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
+				if ((xi=X509_INFO_new()) == NULL) goto err;
+				goto start;
+				}
+			pp=(char **)&(xi->x509);
+			}
 		else if (strcmp(name,PEM_STRING_X509_CRL) == 0)
 			{
 			d2i=(char *(*)())d2i_X509_CRL;
