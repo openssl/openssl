@@ -5,6 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6 and OpenSSL x.x.x:
+
+      o New library section OCSP.
+      o Complete haul-over of the ASN.1 library section [1].
+
+    [1] The haul-over is currently a separate line of development.
+
   Major changes between OpenSSL 0.9.5a and OpenSSL 0.9.6:
 
       o Some documentation for BIO and SSL libraries.
