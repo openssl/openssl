@@ -8,6 +8,7 @@ CC=		cc
 INCLUDES=	-I../include
 CFLAG=		-g -static
 INSTALLTOP=	/usr/local/ssl
+OPENSSLDIR=	/usr/local/ssl
 MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
@@ -93,8 +94,8 @@ install:
 	 cp $$i $(INSTALLTOP)/bin/$$i; \
 	 chmod 755 $(INSTALLTOP)/bin/$$i ); \
 	 done; \
-	cp openssl.cnf $(INSTALLTOP)/lib; \
-	chmod 644 $(INSTALLTOP)/lib/openssl.cnf
+	cp openssl.cnf $(OPENSSLDIR)/lib; \
+	chmod 644 $(OPENSSLDIR)/lib/openssl.cnf
 
 tags:
 	ctags $(SRC)

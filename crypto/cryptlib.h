@@ -66,29 +66,17 @@
 extern "C" {
 #endif
 
-/* #ifdef FLAT_INC */
-
 #include <openssl/e_os.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h> 
 #include <openssl/bio.h> 
 #include <openssl/err.h>
+#include <openssl/opensslconf.h>
 
-/*
-#else
-
-#include "../e_os.h"
-#include <openssl/crypto.h>
-#include "buffer/buffer.h"
-#include "bio/bio.h"
-#include "err/err.h"
-#endif
-*/
-
-#define X509_CERT_AREA		"/usr/local/ssl"
-#define X509_CERT_DIR		"/usr/local/ssl/certs"
-#define X509_CERT_FILE		"/usr/local/ssl/cert.pem"
-#define X509_PRIVATE_DIR	"/usr/local/ssl/private"
+#define X509_CERT_AREA		OPENSSLDIR
+#define X509_CERT_DIR		OPENSSLDIR "/certs"
+#define X509_CERT_FILE		OPENSSLDIR "/cert.pem"
+#define X509_PRIVATE_DIR	OPENSSLDIR "/private"
 
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
