@@ -657,6 +657,7 @@ L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
 L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
+L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>,
 L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
 L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
