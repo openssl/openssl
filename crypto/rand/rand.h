@@ -72,6 +72,10 @@ typedef struct rand_meth_st
 	int (*pseudorand)(unsigned char *buf, int num);
 	} RAND_METHOD;
 
+#ifdef BN_DEBUG
+extern int rand_predictable;
+#endif
+
 void RAND_set_rand_method(RAND_METHOD *meth);
 RAND_METHOD *RAND_get_rand_method(void );
 RAND_METHOD *RAND_SSLeay(void);
@@ -85,7 +89,7 @@ int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,int num);
 int RAND_status(void);
 int RAND_egd(const char *path);
-#ifdef WINDOWS
+#if defined(WINDOWS) || defined(WIN32)
 void RAND_screen(void);
 #endif
 void	ERR_load_RAND_strings(void);
