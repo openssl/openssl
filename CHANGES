@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make sk_sort() tolerate a NULL argument.
+     [Steve Henson reported by Massimiliano Pala <madwolf@comune.modena.it>]
+
   *) New OCSP verify flag OCSP_TRUSTOTHER. When set the "other" certificates
      passed by the function are trusted implicitly. If any of them signed the
      reponse then it is assumed to be valid and is not verified.

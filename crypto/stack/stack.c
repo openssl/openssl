@@ -316,7 +316,7 @@ char *sk_set(STACK *st, int i, char *value)
 
 void sk_sort(STACK *st)
 	{
-	if (!st->sorted)
+	if (st && !st->sorted)
 		{
 		int (*comp_func)(const void *,const void *);
 
