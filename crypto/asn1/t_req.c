@@ -85,8 +85,7 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 int X509_REQ_print(BIO *bp, X509_REQ *x)
 	{
 	unsigned long l;
-	int i,n;
-	char *s;
+	int i;
 	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
@@ -226,24 +225,8 @@ get_next:
 		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	}
 
-	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	sprintf(str,"%4sSignature Algorithm: %s","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
-	if (BIO_puts(bp,str) <= 0) goto err;
+	if(!X509_signature_print(bp, x->sig_alg, x->signature)) goto err;
 
-	n=x->signature->length;
-	s=(char *)x->signature->data;
-	for (i=0; i<n; i++)
-		{
-		if ((i%18) == 0)
-			{
-			sprintf(str,"\n%8s","");
-			if (BIO_puts(bp,str) <= 0) goto err;
-			}
-		sprintf(str,"%02x%s",(unsigned char)s[i],((i+1) == n)?"":":");
-		if (BIO_puts(bp,str) <= 0) goto err;
-		}
-	if (BIO_puts(bp,"\n") <= 0) goto err;
 	return(1);
 err:
 	X509err(X509_F_X509_REQ_PRINT,ERR_R_BUF_LIB);

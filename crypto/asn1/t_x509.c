@@ -102,7 +102,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	{
 	long l;
 	int ret=0,i,j,n;
-	char *m=NULL,*s, mlch = ' ';
+	char *m=NULL,mlch = ' ';
 	int nmindent = 0;
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
@@ -256,20 +256,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 	if(!(cflag & X509_FLAG_NO_SIGDUMP))
 		{
-		i=OBJ_obj2nid(x->sig_alg->algorithm);
-		if (BIO_printf(bp,"%4sSignature Algorithm: %s","",
-			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
-
-		n=x->signature->length;
-		s=(char *)x->signature->data;
-		for (i=0; i<n; i++)
-			{
-			if ((i%18) == 0)
-				if (BIO_write(bp,"\n        ",9) <= 0) goto err;
-			if (BIO_printf(bp,"%02x%s",(unsigned char)s[i],
-				((i+1) == n)?"":":") <= 0) goto err;
-			}
-		if (BIO_write(bp,"\n",1) != 1) goto err;
+		if(X509_signature_print(bp, x->sig_alg, x->signature) <= 0) goto err;
 		}
 	if(!(cflag & X509_FLAG_NO_AUX))
 		{
@@ -331,6 +318,26 @@ err:
 	if (der != NULL) OPENSSL_free(der);
 	return(0);
 	}
+
+int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
+{
+	unsigned char *s;
+	int i, n;
+	if (BIO_puts(bp,"    Signature Algorithm: ") <= 0) return 0;
+	if (i2a_ASN1_OBJECT(bp, sigalg->algorithm) <= 0) return 0;
+
+	n=sig->length;
+	s=sig->data;
+	for (i=0; i<n; i++)
+		{
+		if ((i%18) == 0)
+			if (BIO_write(bp,"\n        ",9) <= 0) return 0;
+			if (BIO_printf(bp,"%02x%s",s[i],
+				((i+1) == n)?"":":") <= 0) return 0;
+		}
+	if (BIO_write(bp,"\n",1) != 1) return 0;
+	return 1;
+}
 
 int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	{

@@ -86,7 +86,6 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 int X509_CRL_print(BIO *out, X509_CRL *x)
 {
 	char buf[256];
-	unsigned char *s;
 	STACK_OF(X509_REVOKED) *rev;
 	X509_REVOKED *r;
 	long l;
@@ -131,19 +130,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 		for(j = 0; j < X509_REVOKED_get_ext_count(r); j++)
 				ext_print(out, X509_REVOKED_get_ext(r, j));
 	}
-
-	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	BIO_printf(out,"    Signature Algorithm: %s",
-				(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
-
-	s = x->signature->data;
-	n = x->signature->length;
-	for (i=0; i<n; i++, s++)
-	{
-		if ((i%18) == 0) BIO_write(out,"\n        ",9);
-		BIO_printf(out,"%02x%s",*s, ((i+1) == n)?"":":");
-	}
-	BIO_write(out,"\n",1);
+	X509_signature_print(out, x->sig_alg, x->signature);
 
 	return 1;
 
