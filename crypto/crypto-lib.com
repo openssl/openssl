@@ -184,16 +184,18 @@ $ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
-	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist"
+	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
+	"bn_depr"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_recp,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
 	"ec2_smpl,ec2_mult"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_asn1"
-$ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
+	"rsa_asn1,rsa_depr"
+$ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
+	"dsa_err,dsa_ossl,dsa_depr"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
-$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err"
+$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
