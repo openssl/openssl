@@ -567,7 +567,7 @@ static int client_master_key(SSL *s)
 			if (RAND_bytes(sess->master_key,i) <= 0)
 				{
 				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
-				goto err;
+				return(-1);
 				}
 			}
 
