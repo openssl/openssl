@@ -436,8 +436,11 @@
 
   *) Add the possibility to add extra information to the memory leak
      detecting output, to form tracebacks, showing from where each
-     allocation was originated.  Also updated sid code to be multi-
-     thread-safe.
+     allocation was originated: CRYPTO_push_info("constant string") adds
+     the string plus current file name and line number to a per-thread
+     stack, CRYPTO_pop_info() does the obvious, CRYPTO_remove_all_info()
+     is like calling CYRPTO_pop_info() until the stack is empty.
+     Also updated memory leak detection code to be multi-thread-safe.
      [Richard Levitte]
 
   *) Add options -text and -noout to pkcs7 utility and delete the
@@ -473,11 +476,11 @@
      for all purposes.
      [Steve Henson]
 
-  *) Fix assembler for Alpha (tested only on DEC OSF not Linux or *BSD).  The
-     problem was that one of the replacement routines had not been working since
-     SSLeay releases.  For now the offending routine has been replaced with
-     non-optimised assembler.  Even so, this now gives around 95% performance
-     improvement for 1024 bit RSA signs.
+  *) Fix assembler for Alpha (tested only on DEC OSF not Linux or *BSD).
+     The problem was that one of the replacement routines had not been working
+     since SSLeay releases.  For now the offending routine has been replaced
+     with non-optimised assembler.  Even so, this now gives around 95%
+     performance improvement for 1024 bit RSA signs.
      [Mark Cox]
 
   *) Hack to fix PKCS#7 decryption when used with some unorthodox RC2 

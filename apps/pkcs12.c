@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/crypto.h>
 #include <openssl/des.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -264,6 +265,10 @@ int MAIN(int argc, char **argv)
 
     ERR_load_crypto_strings();
 
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_push_info("read files");
+#endif
+
     if (!infile) in = BIO_new_fp(stdin, BIO_NOCLOSE);
     else in = BIO_new_file(infile, "rb");
     if (!in) {
@@ -289,6 +294,11 @@ int MAIN(int argc, char **argv)
 	}
      }
 
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_pop_info();
+    CRYPTO_push_info("write files");
+#endif
+
     if (!outfile) out = BIO_new_fp(stdout, BIO_NOCLOSE);
     else out = BIO_new_file(outfile, "wb");
     if (!out) {
@@ -298,11 +308,17 @@ int MAIN(int argc, char **argv)
 	goto end;
     }
     if (twopass) {
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_push_info("read MAC password");
+#endif
 	if(EVP_read_pw_string (macpass, 50, "Enter MAC Password:", export_cert))
 	{
     	    BIO_printf (bio_err, "Can't read Password\n");
     	    goto end;
        	}
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_pop_info();
+#endif
     }
 
     if (export_cert) {
@@ -317,6 +333,10 @@ int MAIN(int argc, char **argv)
 	int i;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
 	unsigned int keyidlen = 0;
+
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_push_info("process -export_cert");
+#endif
 	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, NULL);
 	if (!inkey) (void) BIO_reset(in);
 	else BIO_free(inkey);
@@ -440,6 +460,10 @@ int MAIN(int argc, char **argv)
 	PKCS12_free(p12);
 
 	ret = 0;
+
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+#endif
 	goto end;
 	
     }
@@ -449,30 +473,52 @@ int MAIN(int argc, char **argv)
 	goto end;
     }
 
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_push_info("read import password");
+#endif
     if(!noprompt && EVP_read_pw_string(pass, 50, "Enter Import Password:", 0)) {
 	BIO_printf (bio_err, "Can't read Password\n");
 	goto end;
     }
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_pop_info();
+#endif
 
     if (!twopass) strcpy(macpass, pass);
 
     if (options & INFO) BIO_printf (bio_err, "MAC Iteration %ld\n", p12->mac->iter ? ASN1_INTEGER_get (p12->mac->iter) : 1);
     if(macver) {
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_push_info("verify MAC");
+#endif
 	if (!PKCS12_verify_mac (p12, mpass, -1)) {
 	    BIO_printf (bio_err, "Mac verify errror: invalid password?\n");
 	    ERR_print_errors (bio_err);
 	    goto end;
 	} else BIO_printf (bio_err, "MAC verified OK\n");
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_pop_info();
+#endif
     }
 
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_push_info("output keys and certificates");
+#endif
     if (!dump_certs_keys_p12 (out, p12, cpass, -1, options)) {
 	BIO_printf(bio_err, "Error outputting keys and certificates\n");
 	ERR_print_errors (bio_err);
 	goto end;
     }
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_pop_info();
+#endif
     PKCS12_free(p12);
     ret = 0;
     end:
+#ifdef CRYPTO_MDEBUG
+    CRYPTO_remove_all_info();
+#endif
+    BIO_free(in);
     BIO_free(out);
     EXIT(ret);
 }
@@ -599,7 +645,7 @@ int get_cert_chain (X509 *cert, STACK_OF(X509) **chain)
 	X509_STORE_CTX store_ctx;
 	STACK_OF(X509) *chn;
 	int i;
-	X509 *x;
+
 	store = X509_STORE_new ();
 	X509_STORE_set_default_paths (store);
 	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
