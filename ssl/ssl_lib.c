@@ -445,7 +445,7 @@ BIO *SSL_get_wbio(SSL *s)
 
 int SSL_get_fd(SSL *s)
 	{
-	return(SSL_get_rfc(s));
+	return(SSL_get_rfd(s));
 	}
 
 int SSL_get_rfd(SSL *s)
