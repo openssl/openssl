@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/14 11:50:46 $
+  ______________                           $Date: 1999/05/17 08:17:30 $
 
   DEVELOPMENT STATE
 
@@ -74,7 +74,9 @@
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
     o  [ Compilation warnings: ctype-related int vs. char ]
        => now casts (unsigned char), maybe those arrays should have
-          members of that type rather than plain char.
+          members of that type rather than plain char (i.e.
+          unsigned char *p; ....; if (isspace(*p)) ...; where it's now
+          char *p; ....; if (isspace((unsigned char)*p)) ...;)
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
     o  dubious declaration of crypt() in des.h
