@@ -195,8 +195,12 @@ test_bn:
 	@echo starting big number library test, could take a while...
 	@./$(BNTEST) >tmp.bntest
 	@echo quit >>tmp.bntest
-	@echo "running bc"
-	@bc tmp.bntest 2>&1 | $(PERL) -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} print STDERR "."; $$i++;} print STDERR "\n$$i tests passed\n"'
+	@if sh ./bctest; then \
+	    echo "running bc"; \
+	    bc tmp.bntest 2>&1 | $(PERL) -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} print STDERR "."; $$i++;} print STDERR "\n$$i tests passed\n"'; \
+	else \
+	    echo "skipping bc-based verification"; \
+	fi
 	@echo 'test a^b%c implementations'
 	./$(EXPTEST)
 
