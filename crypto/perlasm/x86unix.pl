@@ -205,8 +205,8 @@ sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }
 sub main'bt	{ &out2("btl",@_); }
 sub main'leave	{ &out0("leave"); }
-sub main'cpuid	{ &out0(".word\t0xa20f"); }
-sub main'rdtsc	{ &out0(".word\t0x310f"); }
+sub main'cpuid	{ &out0(".byte 0x0f; .byte 0xa2"); }
+sub main'rdtsc	{ &out0(".byte 0x0f; .byte 0x31"); }
 sub main'halt	{ &out0("hlt"); }
 
 # SSE2
@@ -552,18 +552,18 @@ sub main'file_end
 		pushf
 		popl	%eax
 		xorl	%ecx,%eax
-		bt	\$21,%eax
+		btl	\$21,%eax
 		jnc	1f
 		pushl	%edi
 		pushl	%ebx
 		movl	%edx,%edi
 		movl	\$1,%eax
-		.word	0xa20f
+		.byte 0x0f; .byte 0xa2
 		orl	\$1<<10,%edx
 		movl	%edx,0(%edi)
 		popl	%ebx
 		popl	%edi
-	.align	4
+	.align	$align
 	1:
 ___
 		push (@out,$tmp);
@@ -708,6 +708,7 @@ sub main'initseg
 		$tmp=<<___;
 .section	.init
 	call	$under$f
+	.align	$align
 ___
 		}
 	elsif ($main'coff)
