@@ -1,4 +1,4 @@
-#!/usr/my/bin/perl -w
+#!/usr/local/bin/perl -w
 #
 # generate a .def file
 #
