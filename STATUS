@@ -1,10 +1,10 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/22 09:02:38 $
+  ______________                           $Date: 2001/03/22 10:59:16 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.6a: In development...
+    o  OpenSSL 0.9.6a: Bugfix release -- under development...
                        Beta 1 released on March 13th, 2001
 	HP-UX 10.20 (hpux-parisc-cc)		- PASSED [normal+engine]
 	HP-UX 10.20 (hpux-parisc-gcc)		- PASSED [normal+engine]
@@ -50,14 +50,13 @@
 
   AVAILABLE PATCHES
 
-    o CA.pl patch (Damien Miller)
-
   IN PROGRESS
 
     o Steve is currently working on (in no particular order):
         ASN1 code redesign, butchery, replacement.
+        OCSP
         EVP cipher enhancement.
-        Proper (or at least usable) certificate chain verification.
+        Enhanced certificate chain verification.
 	Private key, certificate and CRL API and implementation.
 	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
@@ -66,19 +65,29 @@
     o Richard is currently working on:
 	UTIL (a new set of library functions to support some higher level
 	      functionality that is currently missing).
-	Dynamic thread-lock support.
 	Shared library support for VMS.
+	OCSP
+	Kerberos 5 authentication
+	Constification
 
   NEEDS PATCH
 
-    o  non-blocking socket on AIX
-    o  $(PERL) in */Makefile.ssl
-    o  "Sign the certificate?" - "n" creates empty certificate file
+    o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
+
+    o  OpenSSL_0_9_6-stable:
+       #include <openssl/e_os.h> in exported header files is illegal since
+       e_os.h is suitable only for library-internal use.
+
+    o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
+       or an error is reported
 
   OPEN ISSUES
 
-    o internal_verify doesn't know about X509.v3 (basicConstraints
-      CA flag ...)
+    o  crypto/ex_data.c is not really thread-safe and so must be used
+       with care (e.g., extra locking where necessary, or don't call
+       CRYPTO_get_ex_new_index once multiple threads exist).
+       The current API is not suitable for everything that it pretends
+       to offer.
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
