@@ -63,9 +63,9 @@
 
 #include "pcy_int.h"
 
-static int node_cmp(void *pa, void *pb)
+static int node_cmp(const X509_POLICY_NODE * const *a,
+			const X509_POLICY_NODE * const *b)
 	{
-	X509_POLICY_NODE **a = pa, **b = pb;
 	return OBJ_cmp((*a)->data->valid_policy, (*b)->data->valid_policy);
 	}
 
@@ -99,7 +99,7 @@ X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 	}
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-			const X509_POLICY_DATA *data,
+			X509_POLICY_DATA *data,
 			X509_POLICY_NODE *parent,
 			X509_POLICY_TREE *tree)
 	{

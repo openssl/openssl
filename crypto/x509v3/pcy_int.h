@@ -76,7 +76,7 @@ struct X509_POLICY_DATA_st
 	unsigned int flags;
 	/* Policy OID and qualifiers for this data */
 	ASN1_OBJECT *valid_policy;
-	STACK_OF(POLICYQUALIFIER) *qualifier_set;
+	STACK_OF(POLICYQUALINFO) *qualifier_set;
 	STACK_OF(ASN1_OBJECT) *expected_policy_set;
 	};
 
@@ -128,7 +128,7 @@ struct X509_POLICY_CACHE_st {
 	/* other policy data */
 	STACK_OF(X509_POLICY_DATA) *data;
 	/* If policyMappings extension present a table of mapped policies */
-	STACK_OF(POLICY_REF) *maps;
+	STACK_OF(X509_POLICY_REF) *maps;
 	/* If InhibitAnyPolicy present this is its value or -1 if absent. */
 	long any_skip;
 	/* If policyConstraints and requireExplicitPolicy present this is its
@@ -210,11 +210,11 @@ void policy_cache_free(X509_POLICY_CACHE *cache);
 X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 					const ASN1_OBJECT *id);
 
-X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_TREE) *sk,
+X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *sk,
 						const ASN1_OBJECT *id);
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-			const X509_POLICY_DATA *data,
+			X509_POLICY_DATA *data,
 			X509_POLICY_NODE *parent,
 			X509_POLICY_TREE *tree);
 void policy_node_free(X509_POLICY_NODE *node);

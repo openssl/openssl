@@ -410,11 +410,11 @@ static int tree_add_auth_node(STACK_OF(X509_POLICY_NODE) **pnodes,
  */
 
 static int tree_calculate_authority_set(X509_POLICY_TREE *tree,
-					STACK_OF(X509_POLICY_NODES) **pnodes)
+					STACK_OF(X509_POLICY_NODE) **pnodes)
 	{
 	X509_POLICY_LEVEL *curr;
 	X509_POLICY_NODE *node, *anyptr;
-	STACK_OF(X509_POLICY_NODES) **addnodes;
+	STACK_OF(X509_POLICY_NODE) **addnodes;
 	int i, j;
 	curr = tree->levels + tree->nlevel - 1;
 
@@ -596,7 +596,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
 	{
 	int ret;
 	X509_POLICY_TREE *tree = NULL;
-	STACK_OF(X509_NODE) *nodes, *auth_nodes = NULL;
+	STACK_OF(X509_POLICY_NODE) *nodes, *auth_nodes = NULL;
 	*ptree = NULL;
 
 	*explicit = 0;

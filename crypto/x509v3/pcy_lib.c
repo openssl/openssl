@@ -148,7 +148,7 @@ int X509_policy_node_get_critical(const X509_POLICY_NODE *node)
 	}
 #endif
 
-STACK_OF(POLICYQUALIFIER) *
+STACK_OF(POLICYQUALINFO) *
 		X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node)
 	{
 	if (!node)

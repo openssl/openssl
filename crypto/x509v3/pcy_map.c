@@ -62,9 +62,9 @@
 
 #include "pcy_int.h"
 
-static int ref_cmp(void *pa, void *pb)
+static int ref_cmp(const X509_POLICY_REF * const *a,
+			const X509_POLICY_REF * const *b)
 	{
-	X509_POLICY_REF **a = pa; X509_POLICY_REF **b = pb;
 	return OBJ_cmp((*a)->subjectDomainPolicy, (*b)->subjectDomainPolicy);
 	}
 
