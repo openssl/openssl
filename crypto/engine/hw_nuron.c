@@ -62,9 +62,6 @@
 #include <openssl/dso.h>
 #include "engine_int.h"
 #include <openssl/engine.h>
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
 
 
 #ifndef NO_HW
