@@ -201,6 +201,8 @@ id-smime-cti 6		: id-smime-cti-ets-proofOfCreation
 
 pkcs9 20		:			: friendlyName
 pkcs9 21		:			: localKeyID
+!Cname ms-csp-name
+1 3 6 1 4 1 311 17 1	: CSPName		: Microsoft CSP Name
 !Alias certTypes pkcs9 22
 certTypes 1		:			: x509Certificate
 certTypes 2		:			: sdsiCertificate

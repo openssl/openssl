@@ -967,14 +967,14 @@ X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
 X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
 int X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr);
 int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
-			ASN1_OBJECT *obj, int type,
-			unsigned char *bytes, int len);
+			const ASN1_OBJECT *obj, int type,
+			const unsigned char *bytes, int len);
 int X509_REQ_add1_attr_by_NID(X509_REQ *req,
 			int nid, int type,
-			unsigned char *bytes, int len);
+			const unsigned char *bytes, int len);
 int X509_REQ_add1_attr_by_txt(X509_REQ *req,
-			char *attrname, int type,
-			unsigned char *bytes, int len);
+			const char *attrname, int type,
+			const unsigned char *bytes, int len);
 
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
 
@@ -1113,22 +1113,22 @@ X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 					 X509_ATTRIBUTE *attr);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
-			ASN1_OBJECT *obj, int type,
-			unsigned char *bytes, int len);
+			const ASN1_OBJECT *obj, int type,
+			const unsigned char *bytes, int len);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
 			int nid, int type,
-			unsigned char *bytes, int len);
+			const unsigned char *bytes, int len);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
-			char *attrname, int type,
-			unsigned char *bytes, int len);
+			const char *attrname, int type,
+			const unsigned char *bytes, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
-	     int atrtype, void *data, int len);
+	     int atrtype, const void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
-	     ASN1_OBJECT *obj, int atrtype, void *data, int len);
+	     const ASN1_OBJECT *obj, int atrtype, const void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
-		char *atrname, int type, unsigned char *bytes, int len);
-int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, ASN1_OBJECT *obj);
-int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int len);
+		const char *atrname, int type, const unsigned char *bytes, int len);
+int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj);
+int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data, int len);
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
 					int atrtype, void *data);
 int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr);

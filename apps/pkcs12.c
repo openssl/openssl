@@ -99,6 +99,7 @@ int MAIN(int argc, char **argv)
     BIO *in=NULL, *out = NULL, *inkey = NULL, *certsin = NULL;
     char **args;
     char *name = NULL;
+    char *csp_name = NULL;
     PKCS12 *p12 = NULL;
     char pass[50], macpass[50];
     int export_cert = 0;
@@ -196,6 +197,11 @@ int MAIN(int argc, char **argv)
 		    if (args[1]) {
 			args++;	
 			name = *args;
+		    } else badarg = 1;
+		} else if (!strcmp (*args, "-CSP")) {
+		    if (args[1]) {
+			args++;	
+			csp_name = *args;
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-caname")) {
 		    if (args[1]) {
@@ -572,6 +578,7 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO_free(p8);
 	p8 = NULL;
         if (name) PKCS12_add_friendlyname (bag, name, -1);
+	if(csp_name) PKCS12_add_CSPName_asc(bag, csp_name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
 	bags = sk_PKCS12_SAFEBAG_new_null();
 	sk_PKCS12_SAFEBAG_push (bags, bag);

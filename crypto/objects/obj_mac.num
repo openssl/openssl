@@ -489,3 +489,4 @@ X9_62_prime239v2		488
 X9_62_prime239v3		489
 X9_62_prime256v1		490
 ecdsa_with_SHA1		491
+ms_csp_name		492

@@ -61,12 +61,12 @@
  * perl obj_dat.pl obj_mac.h obj_dat.h
  */
 
-#define NUM_NID 492
-#define NUM_SN 490
-#define NUM_LN 490
-#define NUM_OBJ 464
+#define NUM_NID 493
+#define NUM_SN 491
+#define NUM_LN 491
+#define NUM_OBJ 465
 
-static unsigned char lvalues[3783]={
+static unsigned char lvalues[3792]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -531,6 +531,7 @@ static unsigned char lvalues[3783]={
 0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x06,     /* [3759] OBJ_X9_62_prime239v3 */
 0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x07,     /* [3767] OBJ_X9_62_prime256v1 */
 0x2A,0x86,0x48,0xCE,0x3D,0x04,0x01,          /* [3775] OBJ_ecdsa_with_SHA1 */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x01,/* [3782] OBJ_ms_csp_name */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1284,6 +1285,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"prime256v1","prime256v1",NID_X9_62_prime256v1,8,&(lvalues[3767]),0},
 {"ecdsa-with-SHA1","ecdsa-with-SHA1",NID_ecdsa_with_SHA1,7,
 	&(lvalues[3775]),0},
+{"CSPName","Microsoft CSP Name",NID_ms_csp_name,9,&(lvalues[3782]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1312,6 +1314,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[410]),/* "CCITT" */
 &(nid_objs[13]),/* "CN" */
 &(nid_objs[141]),/* "CRLReason" */
+&(nid_objs[492]),/* "CSPName" */
 &(nid_objs[367]),/* "CrlID" */
 &(nid_objs[107]),/* "D" */
 &(nid_objs[391]),/* "DC" */
@@ -1807,6 +1810,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[142]),/* "Invalidity Date" */
 &(nid_objs[388]),/* "Mail" */
 &(nid_objs[383]),/* "Management" */
+&(nid_objs[492]),/* "Microsoft CSP Name" */
 &(nid_objs[135]),/* "Microsoft Commercial Code Signing" */
 &(nid_objs[138]),/* "Microsoft Encrypted File System" */
 &(nid_objs[171]),/* "Microsoft Extension Request" */
@@ -2542,6 +2546,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[188]),/* OBJ_SMIME                        1 2 840 113549 1 9 16 */
 &(nid_objs[156]),/* OBJ_friendlyName                 1 2 840 113549 1 9 20 */
 &(nid_objs[157]),/* OBJ_localKeyID                   1 2 840 113549 1 9 21 */
+&(nid_objs[492]),/* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
 &(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[315]),/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
 &(nid_objs[316]),/* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */

@@ -77,7 +77,8 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	const unsigned char *s = NULL;
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
-	if(rsa->flags & RSA_FLAG_SIGN_VER)
+	if((rsa->flags & RSA_FLAG_SIGN_VER)
+	      && ENGINE_get_RSA(rsa->engine)->rsa_sign)
 	      return ENGINE_get_RSA(rsa->engine)->rsa_sign(type,
 			m, m_len, sigret, siglen, rsa);
 	/* Special case: SSL signature, just check the length */
@@ -154,7 +155,8 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 
-	if(rsa->flags & RSA_FLAG_SIGN_VER)
+	if((rsa->flags & RSA_FLAG_SIGN_VER)
+	    && ENGINE_get_RSA(rsa->engine)->rsa_verify)
 	    return ENGINE_get_RSA(rsa->engine)->rsa_verify(dtype,
 			m, m_len, sigbuf, siglen, rsa);
 

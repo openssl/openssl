@@ -170,8 +170,10 @@ static ASN1_STRING_TABLE tbl_standard[] = {
 {NID_givenName,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_surname,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_initials,			1, ub_name, DIRSTRING_TYPE, 0},
+{NID_friendlyName,		-1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK},
 {NID_name,			1, ub_name, DIRSTRING_TYPE, 0},
-{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK}
+{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
+{NID_ms_csp_name,		-1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK}
 };
 
 static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
