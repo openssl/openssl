@@ -87,7 +87,7 @@
 #elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi)
+#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__)
 # define TIMEB
 #endif
 
