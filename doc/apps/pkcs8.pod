@@ -21,6 +21,7 @@ B<openssl> B<pkcs8>
 [B<-nsdb>]
 [B<-v2 alg>]
 [B<-v1 alg>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -121,6 +122,13 @@ B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
 
 This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use. A complete
 list of possible algorithms is included below.
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

@@ -16,6 +16,7 @@ B<openssl dsaparam>
 [B<-C>]
 [B<-rand file(s)>]
 [B<-genkey>]
+[B<-engine id>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -81,6 +82,13 @@ all others.
 this option specifies that a parameter set should be generated of size
 B<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

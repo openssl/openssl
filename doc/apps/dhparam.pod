@@ -18,6 +18,7 @@ B<openssl dhparam>
 [B<-2>]
 [B<-5>]
 [B<-rand> I<file(s)>]
+[B<-engine id>]
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -95,6 +96,13 @@ this option prints out the DH parameters in human readable form.
 
 this option converts the parameters into C code. The parameters can then
 be loaded by calling the B<get_dh>I<numbits>B<()> function.
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

@@ -43,6 +43,7 @@ B<openssl> B<ca>
 [B<-msie_hack>]
 [B<-extensions section>]
 [B<-extfile section>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -194,6 +195,13 @@ is present (even if it is empty), then a V3 certificate is created.
 an additional configuration file to read certificate extensions from
 (using the default section unless the B<-extensions> option is also
 used).
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

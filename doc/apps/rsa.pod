@@ -24,6 +24,7 @@ B<openssl> B<rsa>
 [B<-check>]
 [B<-pubin>]
 [B<-pubout>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -116,6 +117,13 @@ option a public key is read instead.
 by default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
+
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 
