@@ -706,9 +706,10 @@ install: all install_docs
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
-			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
-			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+			mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 		fi; \
 	done;
 	@if [ -n "$(SHARED_LIBS)" ]; then \
@@ -718,14 +719,17 @@ install: all install_docs
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+					mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
 					c=`echo $$i | sed 's/^lib/cyg/'`; \
-					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
+					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
+					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
+					mv $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
+					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
+					mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
 				fi ); \
 			fi; \
 		done; \
