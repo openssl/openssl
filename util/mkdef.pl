@@ -244,6 +244,7 @@ $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/comp/comp.h" ; # unless $no_comp;
 $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
+$crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
 
 my $symhacks="crypto/symhacks.h";
