@@ -103,9 +103,16 @@
 # define HASH_INIT			SHA1_Init
 # define HASH_BLOCK_HOST_ORDER   	sha1_block_host_order
 # define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
-# define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
+# if defined(__MWERKS__) && defined(__MC68K__)
+   /* Metrowerks for Motorola fails otherwise:-( <appro@fy.chalmers.se> */
+#  define Xupdate(a,ix,ia,ib,ic,id)	do { (a)=(ia^ib^ic^id);		\
+					     ix=(a)=ROTATE((a),1);	\
+					} while (0)
+# else
+#  define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
 					  ix=(a)=ROTATE((a),1)	\
 					)
+# endif
 
 # ifdef SHA1_ASM
 #  if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)
