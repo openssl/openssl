@@ -293,7 +293,7 @@ sub md5_block
 	 &mov(&DWP(12,$tmp2,"",0),$D);
 
 	&cmp($tmp1,$X) unless $normal;			# check count
-	 &jge(&label("start")) unless $normal;
+	 &jae(&label("start")) unless $normal;
 
 	&pop("eax"); # pop the temp variable off the stack
 	 &pop("ebx");
