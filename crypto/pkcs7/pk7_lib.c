@@ -297,6 +297,9 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	     EVP_MD *dgst)
 	{
+	char is_dsa;
+	if (pkey->type == EVP_PKEY_DSA) is_dsa = 1;
+	else is_dsa = 0;
 	/* We now need to add another PKCS7_SIGNER_INFO entry */
 	ASN1_INTEGER_set(p7i->version,1);
 	X509_NAME_set(&p7i->issuer_and_serial->issuer,
@@ -313,8 +316,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	p7i->pkey=pkey;
 
 	/* Set the algorithms */
-	if (pkey->type == EVP_PKEY_DSA)
-		p7i->digest_alg->algorithm=OBJ_nid2obj(NID_sha1);
+	if (is_dsa) p7i->digest_alg->algorithm=OBJ_nid2obj(NID_sha1);
 	else	
 		p7i->digest_alg->algorithm=OBJ_nid2obj(EVP_MD_type(dgst));
 
@@ -328,9 +330,12 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 
 	if (p7i->digest_enc_alg->parameter != NULL)
 		ASN1_TYPE_free(p7i->digest_enc_alg->parameter);
-	if ((p7i->digest_enc_alg->parameter=ASN1_TYPE_new()) == NULL)
-		goto err;
-	p7i->digest_enc_alg->parameter->type=V_ASN1_NULL;
+	if(is_dsa) p7i->digest_enc_alg->parameter = NULL;
+	else {
+		if (!(p7i->digest_enc_alg->parameter=ASN1_TYPE_new()))
+			goto err;
+		p7i->digest_enc_alg->parameter->type=V_ASN1_NULL;
+	}
 
 	return(1);
 err:

@@ -261,13 +261,13 @@ int MAIN(int argc, char **argv)
 
 	if(operation == SMIME_ENCRYPT) {
 		if (!cipher) cipher = EVP_rc2_40_cbc();
+		encerts = sk_X509_new_null();
 		while (*args) {
-			encerts = sk_X509_new_null();
 			if(!(cert = load_cert(*args))) {
 				BIO_printf(bio_err, "Can't read recipent certificate file %s\n", *args);
 				goto end;
 			}
-			sk_X509_push (encerts, cert);
+			sk_X509_push(encerts, cert);
 			cert = NULL;
 			args++;
 		}
@@ -356,13 +356,13 @@ int MAIN(int argc, char **argv)
 		}
 	} else if(operation == SMIME_VERIFY) {
 		STACK_OF(X509) *signers;
-		signers = PKCS7_iget_signers(p7, other, flags);
 		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
 			BIO_printf(bio_err, "Verification Successful\n");
 		} else {
 			BIO_printf(bio_err, "Verification Failure\n");
 			goto end;
 		}
+		signers = PKCS7_iget_signers(p7, other, flags);
 		if(!save_certs(signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
 								signerfile);
