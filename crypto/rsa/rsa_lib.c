@@ -329,6 +329,10 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if (rsa->blinding != NULL)
 		BN_BLINDING_free(rsa->blinding);
 
+	/* NB: similar code appears in setup_blinding (rsa_eay.c);
+	 * this should be placed in a new function of its own, but for reasons
+	 * of binary compatibility can't */
+
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
 	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
@@ -344,8 +348,11 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
-	    goto err;
-	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
+		goto err;
+	if ((rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n)) == NULL) goto err;
+	/* to make things thread-safe without excessive locking,
+	 * rsa->blinding will be used just by the current thread: */
+	rsa->blinding->thread_id = CRYPTO_thread_id();
 	rsa->flags |= RSA_FLAG_BLINDING;
 	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
 	BN_free(Ai);

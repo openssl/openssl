@@ -248,6 +248,8 @@ typedef struct bn_blinding_st
 	BIGNUM *A;
 	BIGNUM *Ai;
 	BIGNUM *mod; /* just a reference */
+	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
+				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
 	} BN_BLINDING;
 
 /* Used for montgomery multiplication */

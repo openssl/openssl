@@ -158,8 +158,8 @@ struct rsa_st
 #define RSA_FLAG_CACHE_PUBLIC		0x02
 #define RSA_FLAG_CACHE_PRIVATE		0x04
 #define RSA_FLAG_BLINDING		0x08
-#define RSA_FLAG_NO_BLINDING		0x80 /* new with 0.9.7b; the built-in RSA
-                                              * implementation now uses blinding by
+#define RSA_FLAG_NO_BLINDING		0x80 /* new with 0.9.6j and 0.9.7b; the built-in
+                                              * RSA implementation now uses blinding by
                                               * default (ignoring RSA_FLAG_BLINDING),
                                               * but other engines might not need it
                                               */
