@@ -5,6 +5,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Instead of "mkdir -p", which is not fully portable, use new
+     Perl script "util/mkdir-p.pl".
+
   *) Rewrite the way password based encryption (PBE) is handled. It used to
      assume that the ASN1 AlgorithmIdentifier parameter was a PBEParameter
      structure. This was true for the PKCS#5 v1.5 and PKCS#12 PBE algorithms
