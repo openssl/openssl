@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7d and OpenSSL 0.9.7e:
+
+      o Fix race condition in CRL checking code.
+      o Fixes to PKCS#7 (S/MIME) code.
+
   Major changes between OpenSSL 0.9.7c and OpenSSL 0.9.7d:
 
       o Security: Fix Kerberos ciphersuite SSL/TLS handshaking bug
