@@ -17,6 +17,7 @@ static COMP_METHOD rle_method={
 	rle_compress_block,
 	rle_expand_block,
 	NULL,
+	NULL,
 	};
 
 COMP_METHOD *COMP_rle(void)

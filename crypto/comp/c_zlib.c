@@ -14,6 +14,7 @@ static COMP_METHOD zlib_method_nozlib={
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	};
 
 #ifndef ZLIB
@@ -37,6 +38,7 @@ static COMP_METHOD zlib_method={
 	NULL,
 	zlib_compress_block,
 	zlib_expand_block,
+	NULL,
 	NULL,
 	};
 
