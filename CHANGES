@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Replace rdtsc with _emit statements for VC++ version 5.
+     [Jeremy Cooper <jeremy@baymoo.org>]
+
   *) Make it possible to reuse SSLv2 sessions.
      [Richard Levitte]
 
