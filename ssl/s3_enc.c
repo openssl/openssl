@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -85,7 +86,7 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
 	MD5_CTX m5;
 	SHA_CTX s1;
-	unsigned char buf[8],smd[SHA_DIGEST_LENGTH];
+	unsigned char buf[16],smd[SHA_DIGEST_LENGTH];
 	unsigned char c='A';
 	int i,j,k;
 
@@ -96,6 +97,9 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
 		{
 		k++;
+		/* If this assert is triggered, it means buf needs to be
+		   resized.  This should never be triggered in a release. */
+		assert(k <= sizeof(buf));
 		for (j=0; j<k; j++)
 			buf[j]=c;
 		c++;
