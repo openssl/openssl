@@ -66,7 +66,7 @@
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
-static DSA_METHOD *default_DSA_method;
+static DSA_METHOD *default_DSA_method = NULL;
 static int dsa_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dsa_meth = NULL;
 
