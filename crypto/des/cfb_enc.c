@@ -72,8 +72,8 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		     int enc)
 	{
 	register DES_LONG d0,d1,v0,v1;
-	register unsigned long l=length;
-	register int num=numbits,n=(numbits+7)/8,i;
+	register unsigned long l=length,n=(numbits+7)/8;
+	register int num=numbits,i;
 	DES_LONG ti[2];
 	unsigned char *iv;
 	unsigned char ovec[16];
