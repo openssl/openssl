@@ -251,7 +251,7 @@ static void release_context(SW_CONTEXT_HANDLE hac)
 	}
 
 /* (de)initialisation functions. */
-static int cswift_init()
+static int cswift_init(void)
 	{
         SW_CONTEXT_HANDLE hac;
         t_swAcquireAccContext *p1;
@@ -308,7 +308,7 @@ err:
 	return 0;
 	}
 
-static int cswift_finish()
+static int cswift_finish(void)
 	{
 	if(cswift_dso == NULL)
 		{

@@ -216,7 +216,7 @@ static tfnASI_RSAPrivateKeyOpFn *p_Atalla_RSAPrivateKeyOpFn = NULL;
 static tfnASI_GetPerformanceStatistics *p_Atalla_GetPerformanceStatistics = NULL;
 
 /* (de)initialisation functions. */
-static int atalla_init()
+static int atalla_init(void)
 	{
 	tfnASI_GetHardwareConfig *p1;
 	tfnASI_RSAPrivateKeyOpFn *p2;
@@ -275,7 +275,7 @@ err:
 	return 0;
 	}
 
-static int atalla_finish()
+static int atalla_finish(void)
 	{
 	if(atalla_dso == NULL)
 		{

@@ -376,7 +376,7 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 	}
 
 /* (de)initialisation functions. */
-static int hwcrhk_init()
+static int hwcrhk_init(void)
 	{
 	HWCryptoHook_Init_t *p1;
 	HWCryptoHook_Finish_t *p2;
@@ -475,7 +475,7 @@ err:
 	return 0;
 	}
 
-static int hwcrhk_finish()
+static int hwcrhk_finish(void)
 	{
 	int to_return = 1;
 	if(hwcrhk_dso == NULL)
