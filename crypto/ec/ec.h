@@ -153,8 +153,10 @@ int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 #define EC_F_EC_GROUP_CLEAR_FREE			 103
 #define EC_F_EC_GROUP_COPY				 102
 #define EC_F_EC_GROUP_FREE				 104
+#define EC_F_EC_GROUP_GET_EXTRA_DATA			 115
 #define EC_F_EC_GROUP_NEW				 100
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 101
+#define EC_F_EC_GROUP_SET_EXTRA_DATA			 116
 #define EC_F_EC_GROUP_SET_GENERATOR			 106
 #define EC_F_EC_POINT_ADD				 107
 #define EC_F_EC_POINT_COPY				 108
@@ -168,6 +170,8 @@ int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 
 /* Reason codes. */
 #define EC_R_INCOMPATIBLE_OBJECTS			 100
+#define EC_R_NO_SUCH_EXTRA_DATA				 101
+#define EC_R_SLOT_FULL					 102
 
 #ifdef  __cplusplus
 }

@@ -119,8 +119,13 @@ struct ec_method_st {
 struct ec_group_st {
 	const EC_METHOD *meth;
 
-	/* All members except 'meth' are handled by the method functions,
-	 * even if they appear generic */
+	void *extra_data;
+	void *(*extra_data_dup_func)(void *);
+	void (*extra_data_free_func)(void *);
+	void (*extra_data_clear_free_func)(void *);
+
+	/* All members except 'meth' and 'extra_data...' are handled by
+	 * the method functions, even if they appear generic */
 	
 	BIGNUM field; /* Field specification.
 	               * For curves over GF(p), this is the modulus. */
@@ -140,6 +145,22 @@ struct ec_group_st {
 
 	/* optional Lim/Lee precomputation table */
 } /* EC_GROUP */;
+
+
+/* Basically a 'mixin' for extra data, but available for EC_GROUPs only
+ * (with visibility limited to 'package' level for now).
+ * We use the function pointers as index for retrieval; this obviates
+ * global ex_data-style index tables.
+ * (Currently, we have one slot only, but is is possible to extend this
+ * if necessary.) */
+
+int EC_GROUP_set_extra_data(EC_GROUP *, void *extra_data, void *(*extra_data_dup_func)(void *),
+	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
+void *EC_GROUP_get_extra_data(EC_GROUP *, void *(*extra_data_dup_func)(void *),
+	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
+void EC_GROUP_free_extra_data(EC_GROUP *);
+void EC_GROUP_clear_free_extra_data(EC_GROUP *);
+
 
 
 struct ec_point_st {

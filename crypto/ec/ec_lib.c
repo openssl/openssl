@@ -85,6 +85,11 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 		}
 
 	ret->meth = meth;
+
+	ret->extra_data = NULL;
+	ret->extra_data_dup_func = 0;
+	ret->extra_data_free_func = 0;
+	ret->extra_data_clear_free_func = 0;
 	
 	if (!meth->group_init(ret))
 		{
@@ -112,6 +117,9 @@ void EC_GROUP_free(EC_GROUP *group)
 	{
 	if (group->meth->group_finish != 0)
 		group->meth->group_finish(group);
+
+	EC_GROUP_free_extra_data(group);
+
 	OPENSSL_free(group);
 	}
  
@@ -122,6 +130,9 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 		group->meth->group_clear_finish(group);
 	else if (group->meth != NULL && group->meth->group_finish != 0)
 		group->meth->group_finish(group);
+
+	EC_GROUP_clear_free_extra_data(group);
+
 	memset(group, 0, sizeof *group);
 	OPENSSL_free(group);
 	}
@@ -140,6 +151,21 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 		return 0;
 		}
 	
+	EC_GROUP_clear_free_extra_data(dest);
+	if (src->extra_data_dup_func)
+		{
+		if (src->extra_data != NULL)
+			{
+			dest->extra_data = src->extra_data_dup_func(src->extra_data);
+			if (dest->extra_data == NULL)
+				return 0;
+			}
+
+		dest->extra_data_dup_func = src->extra_data_dup_func;
+		dest->extra_data_free_func = src->extra_data_free_func;
+		dest->extra_data_clear_free_func = src->extra_data_clear_free_func;
+		}
+
 	return dest->meth->group_copy(dest, src);
 	}
 
@@ -156,6 +182,69 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 
 
 /* TODO: 'get' functions for EC_GROUPs */
+
+
+/* this has 'package' visibility */
+int EC_GROUP_set_extra_data(EC_GROUP *group, void *extra_data, void *(*extra_data_dup_func)(void *),
+	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *))
+	{
+	if ((group->extra_data != NULL)
+		|| (group->extra_data_dup_func != 0)
+		|| (group->extra_data_free_func != 0)
+		|| (group->extra_data_clear_free_func != 0))
+		{
+		ECerr(EC_F_EC_GROUP_SET_EXTRA_DATA, EC_R_SLOT_FULL);
+		return 0;
+		}
+
+	group->extra_data = extra_data;
+	group->extra_data_dup_func = extra_data_dup_func;
+	group->extra_data_free_func = extra_data_free_func;
+	group->extra_data_clear_free_func = extra_data_clear_free_func;
+	return 1;
+	}
+
+
+/* this has 'package' visibility */
+void *EC_GROUP_get_extra_data(EC_GROUP *group, void *(*extra_data_dup_func)(void *),
+	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *))
+	{
+	if ((group->extra_data_dup_func != extra_data_dup_func)
+		|| (group->extra_data_free_func != extra_data_free_func)
+		|| (group->extra_data_clear_free_func != extra_data_clear_free_func))
+		{
+		ECerr(EC_F_EC_GROUP_GET_EXTRA_DATA, EC_R_NO_SUCH_EXTRA_DATA);
+		return NULL;
+		}
+
+	return group->extra_data;
+	}
+
+
+/* this has 'package' visibility */
+void EC_GROUP_free_extra_data(EC_GROUP *group)
+	{
+	if (group->extra_data_free_func)
+		group->extra_data_free_func(group->extra_data);
+	group->extra_data = NULL;
+	group->extra_data_dup_func = 0;
+	group->extra_data_free_func = 0;
+	group->extra_data_clear_free_func = 0;
+	}
+
+
+/* this has 'package' visibility */
+void EC_GROUP_clear_free_extra_data(EC_GROUP *group)
+	{
+	if (group->extra_data_clear_free_func)
+		group->extra_data_clear_free_func(group->extra_data);
+	else if (group->extra_data_free_func)
+		group->extra_data_free_func(group->extra_data);
+	group->extra_data = NULL;
+	group->extra_data_dup_func = 0;
+	group->extra_data_free_func = 0;
+	group->extra_data_clear_free_func = 0;
+	}
 
 
 

@@ -69,8 +69,10 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GROUP_CLEAR_FREE,0),	"EC_GROUP_clear_free"},
 {ERR_PACK(0,EC_F_EC_GROUP_COPY,0),	"EC_GROUP_copy"},
 {ERR_PACK(0,EC_F_EC_GROUP_FREE,0),	"EC_GROUP_free"},
+{ERR_PACK(0,EC_F_EC_GROUP_GET_EXTRA_DATA,0),	"EC_GROUP_GET_EXTRA_DATA"},
 {ERR_PACK(0,EC_F_EC_GROUP_NEW,0),	"EC_GROUP_new"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_CURVE_GFP,0),	"EC_GROUP_set_curve_GFp"},
+{ERR_PACK(0,EC_F_EC_GROUP_SET_EXTRA_DATA,0),	"EC_GROUP_SET_EXTRA_DATA"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_GENERATOR,0),	"EC_GROUP_set_generator"},
 {ERR_PACK(0,EC_F_EC_POINT_ADD,0),	"EC_POINT_add"},
 {ERR_PACK(0,EC_F_EC_POINT_COPY,0),	"EC_POINT_copy"},
@@ -87,6 +89,8 @@ static ERR_STRING_DATA EC_str_functs[]=
 static ERR_STRING_DATA EC_str_reasons[]=
 	{
 {EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
+{EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
+{EC_R_SLOT_FULL                          ,"slot full"},
 {0,NULL}
 	};
 
