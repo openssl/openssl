@@ -201,7 +201,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 		/* t := (2*a)*b^2 - 1*/
 		if (!BN_mod_mul(t, t, y, p, ctx)) goto end;
-		if (!BN_sub_word(t, 1)) goto end; /* cannot become negative */
+		if (!BN_sub_word(t, 1)) goto end;
 
 		/* x = a*b*t */
 		if (!BN_mod_mul(x, a, b, p, ctx)) goto end;
