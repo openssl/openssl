@@ -147,6 +147,7 @@ int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 err:
 	if (r != rr) BN_copy(r,rr);
 	BN_CTX_end(ctx);
+	bn_check_top(r);
 	return(ret);
 	}
 
@@ -221,6 +222,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		{ ret=BN_mod_exp_simple(r,a,p,m,ctx); }
 #endif
 
+	bn_check_top(r);
 	return(ret);
 	}
 
@@ -347,6 +349,7 @@ err:
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
 	BN_RECP_CTX_free(&recp);
+	bn_check_top(r);
 	return(ret);
 	}
 
@@ -490,6 +493,7 @@ err:
 	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
+	bn_check_top(rr);
 	return(ret);
 	}
 
@@ -630,6 +634,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
+	bn_check_top(rr);
 	return(ret);
 	}
 
@@ -742,6 +747,7 @@ err:
 	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
+	bn_check_top(r);
 	return(ret);
 	}
 

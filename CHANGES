@@ -4,6 +4,22 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) An audit of the BIGNUM code is underway, for which debugging code is
+     enabled when BN_DEBUG is defined. This makes stricter enforcements on what
+     is considered valid when processing BIGNUMs, and causes execution to
+     assert() when a problem is discovered. If BN_DEBUG_RAND is defined,
+     further steps are taken to deliberately pollute unused data in BIGNUM
+     structures to try and expose faulty code further on. For now, openssl will
+     (in its default mode of operation) continue to tolerate the inconsistent
+     forms that it has tolerated in the past, but authors and packagers should
+     consider trying openssl and their own applications when compiled with
+     these debugging symbols defined. It will help highlight potential bugs in
+     their own code, and will improve the test coverage for OpenSSL itself. At
+     some point, these tighter rules will become openssl's default to improve
+     maintainability, though the assert()s and other overheads will remain only
+     in debugging configurations. See bn.h for more details.
+     [Geoff Thorpe]
+
   *) BN_CTX_init() has been deprecated, as BN_CTX is an opaque structure
      that can only be obtained through BN_CTX_new() (which implicitly
      initialises it). The presence of this function only made it possible

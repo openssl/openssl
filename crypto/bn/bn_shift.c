@@ -89,6 +89,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 		*rp=1;
 		r->top++;
 		}
+	bn_check_top(r);
 	return(1);
 	}
 
@@ -117,7 +118,8 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
 		rp[i]=((t>>1)&BN_MASK2)|c;
 		c=(t&1)?BN_TBIT:0;
 		}
-	bn_fix_top(r);
+	bn_correct_top(r);
+	bn_check_top(r);
 	return(1);
 	}
 
@@ -149,7 +151,8 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 /*	for (i=0; i<nw; i++)
 		t[i]=0;*/
 	r->top=a->top+nw+1;
-	bn_fix_top(r);
+	bn_correct_top(r);
+	bn_check_top(r);
 	return(1);
 	}
 
@@ -200,6 +203,7 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 		*(t++) =(l>>rb)&BN_MASK2;
 		}
 	*t=0;
-	bn_fix_top(r);
+	bn_correct_top(r);
+	bn_check_top(r);
 	return(1);
 	}

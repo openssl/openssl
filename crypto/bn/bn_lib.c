@@ -286,6 +286,7 @@ void BN_free(BIGNUM *a)
 void BN_init(BIGNUM *a)
 	{
 	memset(a,0,sizeof(BIGNUM));
+	bn_check_top(a);
 	}
 
 BIGNUM *BN_new(void)
@@ -302,6 +303,7 @@ BIGNUM *BN_new(void)
 	ret->neg=0;
 	ret->dmax=0;
 	ret->d=NULL;
+	bn_check_top(ret);
 	return(ret);
 	}
 
@@ -420,6 +422,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 		r = BN_dup(b);
 		}
 
+	bn_check_top(r);
 	return r;
 	}
 
@@ -462,6 +465,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 			A[0]=0;
 		assert(A == &(b->d[b->dmax]));
 		}
+	else if(b) bn_check_top(b);
 	return b;
 	}
 
@@ -479,6 +483,7 @@ BIGNUM *BN_dup(const BIGNUM *a)
 	/* now  r == t || r == NULL */
 	if (r == NULL)
 		BN_free(t);
+	bn_check_top(r);
 	return r;
 	}
 
@@ -518,6 +523,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 	if ((a->top == 0) && (a->d != NULL))
 		a->d[0]=0;
 	a->neg=b->neg;
+	bn_check_top(a);
 	return(a);
 	}
 
@@ -561,8 +567,9 @@ BIGNUM *BN_ncopy(BIGNUM *a, const BIGNUM *b, size_t n)
 	a->top = min;
 
 	a->neg = b->neg;
-	bn_fix_top(a);
+	bn_correct_top(a);
 
+	bn_check_top(a);
 	return(a);
 	}
 
@@ -592,6 +599,8 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
 	
 	a->flags = (flags_old_a & BN_FLG_MALLOCED) | (flags_old_b & BN_FLG_STATIC_DATA);
 	b->flags = (flags_old_b & BN_FLG_MALLOCED) | (flags_old_a & BN_FLG_STATIC_DATA);
+	bn_check_top(a);
+	bn_check_top(b);
 	}
 
 
@@ -601,6 +610,7 @@ void BN_clear(BIGNUM *a)
 		memset(a->d,0,a->dmax*sizeof(a->d[0]));
 	a->top=0;
 	a->neg=0;
+	bn_check_top(a);
 	}
 
 BN_ULONG BN_get_word(const BIGNUM *a)
@@ -648,6 +658,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 		a->d[i]=(BN_ULONG)w&BN_MASK2;
 		if (a->d[i] != 0) a->top=i+1;
 		}
+	bn_check_top(a);
 	return(1);
 	}
 
@@ -684,7 +695,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 		}
 	/* need to call this due to clear byte at top if avoiding
 	 * having the top bit set (-ve number) */
-	bn_fix_top(ret);
+	bn_correct_top(ret);
 	return(ret);
 	}
 
@@ -700,6 +711,7 @@ int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 		l=a->d[i/BN_BYTES];
 		*(to++)=(unsigned char)(l>>(8*(i%BN_BYTES)))&0xff;
 		}
+	bn_check_top(a);
 	return(n);
 	}
 
@@ -781,6 +793,7 @@ int BN_set_bit(BIGNUM *a, int n)
 		}
 
 	a->d[i]|=(((BN_ULONG)1)<<j);
+	bn_check_top(a);
 	return(1);
 	}
 
@@ -793,7 +806,7 @@ int BN_clear_bit(BIGNUM *a, int n)
 	if (a->top <= i) return(0);
 
 	a->d[i]&=(~(((BN_ULONG)1)<<j));
-	bn_fix_top(a);
+	bn_correct_top(a);
 	return(1);
 	}
 
@@ -822,7 +835,7 @@ int BN_mask_bits(BIGNUM *a, int n)
 		a->top=w+1;
 		a->d[w]&= ~(BN_MASK2<<b);
 		}
-	bn_fix_top(a);
+	bn_correct_top(a);
 	return(1);
 	}
 

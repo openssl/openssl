@@ -90,6 +90,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 		}
 	/* reduce from aRR to aR */
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
+	bn_check_top(r);
 	ret=1;
 err:
 	BN_CTX_end(ctx);
@@ -172,7 +173,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 			for (x=2; (((++nrp[x])&BN_MASK2) == 0); x++) ;
 			}
 		}
-	bn_fix_top(r);
+	bn_correct_top(r);
 	
 	/* mont->ri will be a multiple of the word size */
 #if 0
@@ -229,6 +230,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 		if (!BN_usub(ret,ret,&(mont->N))) goto err;
 		}
 	retn=1;
+	bn_check_top(ret);
  err:
 	BN_CTX_end(ctx);
 	return(retn);

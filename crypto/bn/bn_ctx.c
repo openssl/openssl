@@ -121,8 +121,10 @@ void BN_CTX_free(BN_CTX *ctx)
 	if (ctx == NULL) return;
 	assert(ctx->depth == 0);
 
-	for (i=0; i < BN_CTX_NUM; i++)
+	for (i=0; i < BN_CTX_NUM; i++) {
+		bn_check_top(&(ctx->bn[i]));
 		BN_clear_free(&(ctx->bn[i]));
+	}
 	if (ctx->flags & BN_FLG_MALLOCED)
 		OPENSSL_free(ctx);
 	}
@@ -152,6 +154,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
 			}
 		return NULL;
 		}
+	bn_check_top(&(ctx->bn[ctx->tos]));
 	return (&(ctx->bn[ctx->tos++]));
 	}
 

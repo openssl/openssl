@@ -139,6 +139,7 @@ int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 		if (!BN_BLINDING_update(b,ctx))
 			return(0);
 		}
+	bn_check_top(n);
 	return(ret);
 	}
 

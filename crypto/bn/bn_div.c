@@ -249,7 +249,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	/* space for temp */
 	if (!bn_wexpand(tmp,(div_n+1))) goto err;
 
-	bn_fix_top(&wnum);
+	bn_correct_top(&wnum);
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
 		if (!BN_usub(&wnum,&wnum,sdiv)) goto err;
@@ -359,7 +359,7 @@ X) -> 0x%08X\n",
 		tmp->top=j;
 
 		j=wnum.top;
-		bn_fix_top(&wnum);
+		bn_correct_top(&wnum);
 		if (!BN_sub(&wnum,&wnum,tmp)) goto err;
 
 		snum->top=snum->top+wnum.top-j;
@@ -380,14 +380,16 @@ X) -> 0x%08X\n",
 		 * BN_rshift() will overwrite it.
 		 */
 		int neg = num->neg;
-		bn_fix_top(snum);
+		bn_correct_top(snum);
 		BN_rshift(rm,snum,norm_shift);
 		if (!BN_is_zero(rm))
 			rm->neg = neg;
+		bn_check_top(rm);
 		}
 	BN_CTX_end(ctx);
 	return(1);
 err:
+	bn_check_top(rm);
 	BN_CTX_end(ctx);
 	return(0);
 	}

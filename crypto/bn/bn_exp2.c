@@ -309,5 +309,6 @@ err:
 		BN_clear_free(&(val1[i]));
 	for (i=0; i<ts2; i++)
 		BN_clear_free(&(val2[i]));
+	bn_check_top(rr);
 	return(ret);
 	}

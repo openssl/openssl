@@ -226,6 +226,7 @@ loop:
 err:
 	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
+	bn_check_top(ret);
 	return found;
 	}
 
@@ -363,6 +364,7 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 		}
 	/* If we get here, 'w' is the (a-1)/2-th power of the original 'w',
 	 * and it is neither -1 nor +1 -- so 'a' cannot be prime */
+	bn_check_top(w);
 	return 1;
 	}
 
@@ -394,6 +396,7 @@ again:
 			}
 		}
 	if (!BN_add_word(rnd,delta)) return(0);
+	bn_check_top(rnd);
 	return(1);
 	}
 
@@ -431,6 +434,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 	ret=1;
 err:
 	BN_CTX_end(ctx);
+	bn_check_top(rnd);
 	return(ret);
 	}
 
@@ -482,5 +486,6 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
 	ret=1;
 err:
 	BN_CTX_end(ctx);
+	bn_check_top(p);
 	return(ret);
 	}

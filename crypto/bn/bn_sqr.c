@@ -145,6 +145,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	ret = 1;
  err:
 	BN_CTX_end(ctx);
+	bn_check_top(r);
 	return(ret);
 	}
 

@@ -611,7 +611,34 @@ const BIGNUM *BN_get0_nist_prime_521(void);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 
-#define bn_fix_top(a) \
+/* Bignum consistency macros
+ * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
+ * bignum data after direct manipulations on the data. There is also an
+ * "internal" macro, bn_check_top(), for verifying that there are no leading
+ * zeroes. Unfortunately, some auditing is required due to the fact that
+ * bn_fix_top() has become an overabused duct-tape because bignum data is
+ * occasionally passed around in an inconsistent state. So the following
+ * changes have been made to sort this out;
+ * - bn_fix_top()s implementation has been moved to bn_correct_top()
+ * - if BN_DEBUG isn't defined, bn_fix_top() maps to bn_correct_top(), and
+ *   bn_check_top() is as before.
+ * - if BN_DEBUG *is* defined;
+ *   - bn_check_top() tries to pollute unused words even if the bignum 'top' is
+ *     consistent. (ed: only if BN_DEBUG_RAND is defined)
+ *   - bn_fix_top() maps to bn_check_top() rather than "fixing" anything.
+ * The idea is to have debug builds flag up inconsistent bignums when they
+ * occur. If that occurs in a bn_fix_top(), we examine the code in question; if
+ * the use of bn_fix_top() was appropriate (ie. it follows directly after code
+ * that manipulates the bignum) it is converted to bn_correct_top(), and if it
+ * was not appropriate, we convert it permanently to bn_check_top() and track
+ * down the cause of the bug. Eventually, no internal code should be using the
+ * bn_fix_top() macro. External applications and libraries should try this with
+ * their own code too, both in terms of building against the openssl headers
+ * with BN_DEBUG defined *and* linking with a version of OpenSSL built with it
+ * defined. This not only improves external code, it provides more test
+ * coverage for openssl's own code.
+ */
+#define bn_correct_top(a) \
         { \
         BN_ULONG *ftl; \
 	if ((a)->top > 0) \
@@ -620,6 +647,55 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 		if (*(ftl--)) break; \
 		} \
 	}
+
+/* #define BN_DEBUG_RAND */
+
+#ifdef BN_DEBUG
+
+/* We only need assert() when debugging */
+#include <assert.h>
+
+#ifdef BN_DEBUG_RAND
+/* To avoid "make update" cvs wars due to BN_DEBUG, use some tricks */
+#ifndef RAND_pseudo_bytes
+int RAND_pseudo_bytes(unsigned char *buf,int num);
+#define BN_DEBUG_TRIX
+#endif
+#define bn_check_top(a) \
+	do { \
+		const BIGNUM *_tbignum = (a); \
+		assert((_tbignum->top == 0) || \
+				(_tbignum->d[_tbignum->top - 1] != 0)); \
+		if(_tbignum->top < _tbignum->dmax) { \
+			/* We cast away const without the compiler knowing, any \
+			 * *genuinely* constant variables that aren't mutable \
+			 * wouldn't be constructed with top!=dmax. */ \
+			BN_ULONG *_not_const; \
+			memcpy(&_not_const, &_tbignum->d, sizeof(BN_ULONG*)); \
+			RAND_pseudo_bytes((unsigned char *)(_not_const + _tbignum->top), \
+				(_tbignum->dmax - _tbignum->top) * sizeof(BN_ULONG)); \
+		} \
+	} while(0)
+#ifdef BN_DEBUG_TRIX
+#undef RAND_pseudo_bytes
+#endif
+#else /* !BN_DEBUG_RAND */
+#define bn_check_top(a) \
+	do { \
+		const BIGNUM *_tbignum = (a); \
+		assert((_tbignum->top == 0) || \
+				(_tbignum->d[_tbignum->top - 1] != 0)); \
+	} while(0)
+#endif
+
+#define bn_fix_top(a)		bn_check_top(a)
+
+#else /* !BN_DEBUG */
+
+#define bn_check_top(a)		do { ; } while(0)
+#define bn_fix_top(a)		bn_correct_top(a)
+
+#endif
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);

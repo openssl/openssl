@@ -123,6 +123,7 @@ int BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
 	ret = BN_div_recp(NULL,r,ca,recp,ctx);
 err:
 	BN_CTX_end(ctx);
+	bn_check_top(r);
 	return(ret);
 	}
 
@@ -228,5 +229,6 @@ int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	ret=len;
 err:
 	BN_free(&t);
+	bn_check_top(r);
 	return(ret);
 	}

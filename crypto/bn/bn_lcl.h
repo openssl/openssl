@@ -250,14 +250,6 @@ extern "C" {
 	}
 
 
-/* This is used for internal error checking and is not normally used */
-#ifdef BN_DEBUG
-# include <assert.h>
-# define bn_check_top(a) assert ((a)->top >= 0 && (a)->top <= (a)->dmax);
-#else
-# define bn_check_top(a)
-#endif
-
 /* This macro is to add extra stuff for development checking */
 #ifdef BN_DEBUG
 #define	bn_set_max(r) ((r)->max=(r)->top,BN_set_flags((r),BN_FLG_STATIC_DATA))

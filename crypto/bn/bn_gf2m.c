@@ -303,7 +303,7 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		}
 	
 	r->top = at->top;
-	bn_fix_top(r);
+	bn_correct_top(r);
 	
 	return 1;
 	}
@@ -392,7 +392,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 		
 		}
 
-	bn_fix_top(r);
+	bn_correct_top(r);
 	
 	return 1;
 	}
@@ -414,6 +414,7 @@ int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 		goto err;
 		}
 	ret = BN_GF2m_mod_arr(r, a, arr);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -457,8 +458,9 @@ int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 			}
 		}
 
-	bn_fix_top(s);
+	bn_correct_top(s);
 	BN_GF2m_mod_arr(r, s, p);
+	bn_check_top(r);
 	ret = 1;
 
   err:
@@ -485,6 +487,7 @@ int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 		goto err;
 		}
 	ret = BN_GF2m_mod_mul_arr(r, a, b, arr, ctx);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -508,8 +511,9 @@ int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_C
 		}
 
 	s->top = 2 * a->top;
-	bn_fix_top(s);
+	bn_correct_top(s);
 	if (!BN_GF2m_mod_arr(r, s, p)) goto err;
+	bn_check_top(r);
 	ret = 1;
   err:
 	BN_CTX_end(ctx);
@@ -533,6 +537,7 @@ int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto err;
 		}
 	ret = BN_GF2m_mod_sqr_arr(r, a, arr, ctx);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -594,6 +599,7 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 
 	if (!BN_copy(r, b)) goto err;
+	bn_check_top(r);
 	ret = 1;
 
   err:
@@ -617,6 +623,7 @@ int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const unsigned int p[], BN_
 	if (!BN_GF2m_arr2poly(p, field)) goto err;
 	
 	ret = BN_GF2m_mod_inv(r, xx, field, ctx);
+	bn_check_top(r);
 
   err:
 	BN_CTX_end(ctx);
@@ -639,6 +646,7 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	
 	if (!BN_GF2m_mod_inv(xinv, x, p, ctx)) goto err;
 	if (!BN_GF2m_mod_mul(r, y, xinv, p, ctx)) goto err;
+	bn_check_top(r);
 	ret = 1;
 
   err:
@@ -711,6 +719,7 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 		} while (1);
 
 	if (!BN_copy(r, u)) goto err;
+	bn_check_top(r);
 	ret = 1;
 
   err:
@@ -736,6 +745,7 @@ int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *yy, const BIGNUM *xx, const uns
 	if (!BN_GF2m_arr2poly(p, field)) goto err;
 	
 	ret = BN_GF2m_mod_div(r, yy, xx, field, ctx);
+	bn_check_top(r);
 
   err:
 	BN_CTX_end(ctx);
@@ -773,6 +783,7 @@ int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 			}
 		}
 	if (!BN_copy(r, u)) goto err;
+	bn_check_top(r);
 
 	ret = 1;
 
@@ -799,6 +810,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 		goto err;
 		}
 	ret = BN_GF2m_mod_exp_arr(r, a, b, arr, ctx);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -819,6 +831,7 @@ int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_
 	if (!BN_zero(u)) goto err;
 	if (!BN_set_bit(u, p[0] - 1)) goto err;
 	ret = BN_GF2m_mod_exp_arr(r, a, u, p, ctx);
+	bn_check_top(r);
 
   err:
 	BN_CTX_end(ctx);
@@ -843,6 +856,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto err;
 		}
 	ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -917,6 +931,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 	if (BN_GF2m_cmp(w, a)) goto err;
 
 	if (!BN_copy(r, z)) goto err;
+	bn_check_top(r);
 
 	ret = 1;
 
@@ -942,6 +957,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *
 		goto err;
 		}
 	ret = BN_GF2m_mod_solve_quad_arr(r, a, arr, ctx);
+	bn_check_top(r);
   err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
@@ -990,6 +1006,7 @@ int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a)
 		BN_set_bit(a, p[i]);
 		}
 	BN_set_bit(a, 0);
+	bn_check_top(a);
 	
 	return 1;
 	}

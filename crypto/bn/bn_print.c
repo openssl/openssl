@@ -210,10 +210,11 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
 		j-=(BN_BYTES*2);
 		}
 	ret->top=h;
-	bn_fix_top(ret);
+	bn_correct_top(ret);
 	ret->neg=neg;
 
 	*bn=ret;
+	bn_check_top(ret);
 	return(num);
 err:
 	if (*bn == NULL) BN_free(ret);
@@ -269,8 +270,9 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
 		}
 	ret->neg=neg;
 
-	bn_fix_top(ret);
+	bn_correct_top(ret);
 	*bn=ret;
+	bn_check_top(ret);
 	return(num);
 err:
 	if (*bn == NULL) BN_free(ret);

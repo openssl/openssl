@@ -358,14 +358,15 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #if 1
 	bn_clear_top2max(r);
 #endif
-	bn_fix_top(r);
+	bn_correct_top(r);
 
 	if (BN_ucmp(r, field) >= 0)
 		{
 		bn_sub_words(r_d, r_d, _nist_p_192, BN_NIST_192_TOP);
-		bn_fix_top(r);
+		bn_correct_top(r);
 		}
 
+	bn_check_top(r);
 	return 1;
 	}
 
@@ -450,13 +451,14 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #if 1
 	bn_clear_top2max(r);
 #endif
-	bn_fix_top(r);
+	bn_correct_top(r);
 
 	if (BN_ucmp(r, field) >= 0)
 		{
 		bn_sub_words(r_d, r_d, _nist_p_224, BN_NIST_224_TOP);
-		bn_fix_top(r);
+		bn_correct_top(r);
 		}
+	bn_check_top(r);
 	return 1;
 #else
 	return 0;
@@ -608,13 +610,14 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #if 1
 	bn_clear_top2max(r);
 #endif
-	bn_fix_top(r);
+	bn_correct_top(r);
 
 	if (BN_ucmp(r, field) >= 0)
 		{
 		bn_sub_words(r_d, r_d, _nist_p_256, BN_NIST_256_TOP);
-		bn_fix_top(r);
+		bn_correct_top(r);
 		}
+	bn_check_top(r);
 	return 1;
 #else
 	return 0;
@@ -776,13 +779,14 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #if 1
 	bn_clear_top2max(r);
 #endif
-	bn_fix_top(r);
+	bn_correct_top(r);
 
 	if (BN_ucmp(r, field) >= 0)
 		{
 		bn_sub_words(r_d, r_d, _nist_p_384, BN_NIST_384_TOP);
-		bn_fix_top(r);
+		bn_correct_top(r);
 		}
+	bn_check_top(r);
 	return 1;
 #else
 	return 0;
@@ -824,7 +828,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	if (tmp->top == BN_NIST_521_TOP)
 		tmp->d[BN_NIST_521_TOP-1]  &= BN_NIST_521_TOP_MASK;
 
-	bn_fix_top(tmp);
+	bn_correct_top(tmp);
 	if (!BN_uadd(r, tmp, r))
 		return 0;
 	top = r->top;
@@ -835,11 +839,12 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		BN_NIST_ADD_ONE(r_d)
 		r_d[BN_NIST_521_TOP-1] &= BN_NIST_521_TOP_MASK; 
 		}
-	bn_fix_top(r);
+	bn_correct_top(r);
 
 	ret = 1;
 err:
 	BN_CTX_end(ctx);
 
+	bn_check_top(r);
 	return ret;
 	}

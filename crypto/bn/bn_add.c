@@ -100,6 +100,7 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		r->neg=1;
 	else
 		r->neg=0;
+	bn_check_top(r);
 	return(1);
 	}
 
@@ -161,6 +162,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		}
 	/* memcpy(rp,ap,sizeof(*ap)*(max-i));*/
 	r->neg = 0;
+	bn_check_top(r);
 	return(1);
 	}
 
@@ -253,7 +255,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	r->top=max;
 	r->neg=0;
-	bn_fix_top(r);
+	bn_correct_top(r);
 	return(1);
 	}
 
@@ -304,6 +306,7 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		if (!BN_usub(r,a,b)) return(0);
 		r->neg=0;
 		}
+	bn_check_top(r);
 	return(1);
 	}
 
