@@ -143,6 +143,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_DSA
 	DSA *dsa_params=NULL;
 #endif
+	unsigned long nmflag = 0;
 	int ex=1,x509=0,days=30;
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
@@ -150,7 +151,7 @@ int MAIN(int argc, char **argv)
 	int i,badops=0,newreq=0,newkey= -1,pkey_type=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
-	int nodes=0,kludge=0,newhdr=0;
+	int nodes=0,kludge=0,newhdr=0,subject=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
 	char *extensions = NULL;
 	char *req_exts = NULL;
@@ -322,6 +323,13 @@ int MAIN(int argc, char **argv)
 			nodes=1;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
+		else if (strcmp(*argv,"-nameopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
+			}
+		else if (strcmp(*argv,"-subject") == 0)
+			subject=1;
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
 		else if (strcmp(*argv,"-x509") == 0)
@@ -803,7 +811,7 @@ loop:
 			BIO_printf(bio_err,"verify OK\n");
 		}
 
-	if (noout && !text && !modulus)
+	if (noout && !text && !modulus && !subject)
 		{
 		ex=0;
 		goto end;
@@ -838,6 +846,14 @@ loop:
 			X509_print(out,x509ss);
 		else	
 			X509_REQ_print(out,req);
+		}
+
+	if(subject) 
+		{
+		if(x509)
+			print_name(out, "subject=", X509_get_subject_name(x509ss), nmflag);
+		else
+			print_name(out, "subject=", X509_REQ_get_subject_name(req), nmflag);
 		}
 
 	if (modulus)

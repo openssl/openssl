@@ -72,6 +72,11 @@
 
 #ifndef NO_FP_API
 int X509_print_fp(FILE *fp, X509 *x)
+	{
+	return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
+	}
+
+int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
         {
         BIO *b;
         int ret;
@@ -82,17 +87,22 @@ int X509_print_fp(FILE *fp, X509 *x)
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=X509_print(b, x);
+        ret=X509_print_ex(b, x, nmflag, cflag);
         BIO_free(b);
         return(ret);
         }
 #endif
 
 int X509_print(BIO *bp, X509 *x)
+{
+	return X509_print_ex(bp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
+}
+
+int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	{
 	long l;
 	int ret=0,i,j,n;
-	char *m=NULL,*s;
+	char *m=NULL,*s, mlch = ' ';
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
@@ -100,89 +110,122 @@ int X509_print(BIO *bp, X509 *x)
 	X509_EXTENSION *ex;
 	ASN1_STRING *str=NULL;
 
+	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE)
+			mlch = '\n';
+
 	ci=x->cert_info;
-	if (BIO_write(bp,"Certificate:\n",13) <= 0) goto err;
-	if (BIO_write(bp,"    Data:\n",10) <= 0) goto err;
-	l=X509_get_version(x);
-	if (BIO_printf(bp,"%8sVersion: %lu (0x%lx)\n","",l+1,l) <= 0) goto err;
-	if (BIO_write(bp,"        Serial Number:",22) <= 0) goto err;
-
-	bs=X509_get_serialNumber(x);
-	if (bs->length <= 4)
+	if(!(cflag & X509_FLAG_NO_HEADER))
 		{
-		l=ASN1_INTEGER_get(bs);
-		if (l < 0)
-			{
-			l= -l;
-			neg="-";
-			}
-		else
-			neg="";
-		if (BIO_printf(bp," %s%lu (%s0x%lx)\n",neg,l,neg,l) <= 0)
-			goto err;
+		if (BIO_write(bp,"Certificate:\n",13) <= 0) goto err;
+		if (BIO_write(bp,"    Data:\n",10) <= 0) goto err;
 		}
-	else
+	if(!(cflag & X509_FLAG_NO_VERSION))
 		{
-		neg=(bs->type == V_ASN1_NEG_INTEGER)?" (Negative)":"";
-		if (BIO_printf(bp,"\n%12s%s","",neg) <= 0) goto err;
+		l=X509_get_version(x);
+		if (BIO_printf(bp,"%8sVersion: %lu (0x%lx)\n","",l+1,l) <= 0) goto err;
+		}
+	if(!(cflag & X509_FLAG_NO_SERIAL))
+		{
 
-		for (i=0; i<bs->length; i++)
+		if (BIO_write(bp,"        Serial Number:",22) <= 0) goto err;
+
+		bs=X509_get_serialNumber(x);
+		if (bs->length <= 4)
 			{
-			if (BIO_printf(bp,"%02x%c",bs->data[i],
-				((i+1 == bs->length)?'\n':':')) <= 0)
+			l=ASN1_INTEGER_get(bs);
+			if (l < 0)
+				{
+				l= -l;
+				neg="-";
+				}
+			else
+				neg="";
+			if (BIO_printf(bp," %s%lu (%s0x%lx)\n",neg,l,neg,l) <= 0)
 				goto err;
 			}
+		else
+			{
+			neg=(bs->type == V_ASN1_NEG_INTEGER)?" (Negative)":"";
+			if (BIO_printf(bp,"\n%12s%s","",neg) <= 0) goto err;
+
+			for (i=0; i<bs->length; i++)
+				{
+				if (BIO_printf(bp,"%02x%c",bs->data[i],
+					((i+1 == bs->length)?'\n':':')) <= 0)
+					goto err;
+				}
+			}
+
 		}
 
-	i=OBJ_obj2nid(ci->signature->algorithm);
-	if (BIO_printf(bp,"%8sSignature Algorithm: %s\n","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0)
-		goto err;
-
-	if (BIO_write(bp,"        Issuer: ",16) <= 0) goto err;
-	if (!X509_NAME_print(bp,X509_get_issuer_name(x),16)) goto err;
-	if (BIO_write(bp,"\n        Validity\n",18) <= 0) goto err;
-	if (BIO_write(bp,"            Not Before: ",24) <= 0) goto err;
-	if (!ASN1_TIME_print(bp,X509_get_notBefore(x))) goto err;
-	if (BIO_write(bp,"\n            Not After : ",25) <= 0) goto err;
-	if (!ASN1_TIME_print(bp,X509_get_notAfter(x))) goto err;
-	if (BIO_write(bp,"\n        Subject: ",18) <= 0) goto err;
-	if (!X509_NAME_print(bp,X509_get_subject_name(x),16)) goto err;
-	if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)
-		goto err;
-	i=OBJ_obj2nid(ci->key->algor->algorithm);
-	if (BIO_printf(bp,"%12sPublic Key Algorithm: %s\n","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
-
-	pkey=X509_get_pubkey(x);
-	if (pkey == NULL)
+	if(!(cflag & X509_FLAG_NO_SIGNAME))
 		{
-		BIO_printf(bp,"%12sUnable to load Public Key\n","");
-		ERR_print_errors(bp);
+		i=OBJ_obj2nid(ci->signature->algorithm);
+		if (BIO_printf(bp,"%8sSignature Algorithm: %s\n","",
+			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0)
+			goto err;
 		}
-	else
+
+	if(!(cflag & X509_FLAG_NO_ISSUER))
+		{
+		if (BIO_printf(bp,"        Issuer:%c",mlch) <= 0) goto err;
+		if (!X509_NAME_print_ex(bp,X509_get_issuer_name(x),16, nmflags)) goto err;
+		}
+	if(!(cflag & X509_FLAG_NO_VALIDITY))
+		{
+		if (BIO_write(bp,"\n        Validity\n",18) <= 0) goto err;
+		if (BIO_write(bp,"            Not Before: ",24) <= 0) goto err;
+		if (!ASN1_TIME_print(bp,X509_get_notBefore(x))) goto err;
+		if (BIO_write(bp,"\n            Not After : ",25) <= 0) goto err;
+		if (!ASN1_TIME_print(bp,X509_get_notAfter(x))) goto err;
+		if (BIO_write(bp,"\n",1) <= 0) goto err;
+		}
+	if(!(cflag & X509_FLAG_NO_SUBJECT))
+		{
+		if (BIO_printf(bp,"        Subject:%c",mlch) <= 0) goto err;
+		if (!X509_NAME_print(bp,X509_get_subject_name(x),16)) goto err;
+		}
+	if(!(cflag & X509_FLAG_NO_PUBKEY))
+		{
+		if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)
+			goto err;
+		i=OBJ_obj2nid(ci->key->algor->algorithm);
+		if (BIO_printf(bp,"%12sPublic Key Algorithm: %s\n","",
+			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
+
+		pkey=X509_get_pubkey(x);
+		if (pkey == NULL)
+			{
+			BIO_printf(bp,"%12sUnable to load Public Key\n","");
+			ERR_print_errors(bp);
+			}
+		else
 #ifndef NO_RSA
-	if (pkey->type == EVP_PKEY_RSA)
-		{
-		BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
-		BN_num_bits(pkey->pkey.rsa->n));
-		RSA_print(bp,pkey->pkey.rsa,16);
-		}
-	else
+		if (pkey->type == EVP_PKEY_RSA)
+			{
+			BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
+			BN_num_bits(pkey->pkey.rsa->n));
+			RSA_print(bp,pkey->pkey.rsa,16);
+			}
+		else
 #endif
 #ifndef NO_DSA
-	if (pkey->type == EVP_PKEY_DSA)
-		{
-		BIO_printf(bp,"%12sDSA Public Key:\n","");
-		DSA_print(bp,pkey->pkey.dsa,16);
-		}
-	else
+		if (pkey->type == EVP_PKEY_DSA)
+			{
+			BIO_printf(bp,"%12sDSA Public Key:\n","");
+			DSA_print(bp,pkey->pkey.dsa,16);
+			}
+		else
 #endif
-		BIO_printf(bp,"%12sUnknown Public Key:\n","");
+			BIO_printf(bp,"%12sUnknown Public Key:\n","");
 
-	EVP_PKEY_free(pkey);
+		EVP_PKEY_free(pkey);
+		}
 
-	n=X509_get_ext_count(x);
+	if (cflag & X509_FLAG_NO_EXTENSIONS)
+		n = 0;
+	else
+		n=X509_get_ext_count(x);
 	if (n > 0)
 		{
 		BIO_printf(bp,"%8sX509v3 extensions:\n","");
@@ -205,21 +248,27 @@ int X509_print(BIO *bp, X509 *x)
 			}
 		}
 
-	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	if (BIO_printf(bp,"%4sSignature Algorithm: %s","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
-
-	n=x->signature->length;
-	s=(char *)x->signature->data;
-	for (i=0; i<n; i++)
+	if(!(cflag & X509_FLAG_NO_SIGDUMP))
 		{
-		if ((i%18) == 0)
-			if (BIO_write(bp,"\n        ",9) <= 0) goto err;
-		if (BIO_printf(bp,"%02x%s",(unsigned char)s[i],
-			((i+1) == n)?"":":") <= 0) goto err;
+		i=OBJ_obj2nid(x->sig_alg->algorithm);
+		if (BIO_printf(bp,"%4sSignature Algorithm: %s","",
+			(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
+
+		n=x->signature->length;
+		s=(char *)x->signature->data;
+		for (i=0; i<n; i++)
+			{
+			if ((i%18) == 0)
+				if (BIO_write(bp,"\n        ",9) <= 0) goto err;
+			if (BIO_printf(bp,"%02x%s",(unsigned char)s[i],
+				((i+1) == n)?"":":") <= 0) goto err;
+			}
+		if (BIO_write(bp,"\n",1) != 1) goto err;
 		}
-	if (BIO_write(bp,"\n",1) != 1) goto err;
-	if (!X509_CERT_AUX_print(bp, x->aux, 0)) goto err;
+	if(!(cflag & X509_FLAG_NO_AUX))
+		{
+		if (!X509_CERT_AUX_print(bp, x->aux, 0)) goto err;
+		}
 	ret=1;
 err:
 	if (str != NULL) ASN1_STRING_free(str);

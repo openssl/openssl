@@ -4,6 +4,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix for bug in DirectoryString mask setting. Add support for
+     X509_NAME_print_ex() in 'req' and initial X509_print_ex() function
+     to allow certificate printing to more controllable.
+     [Steve Henson]
+
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
