@@ -238,9 +238,10 @@ e_des.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 e_des.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 e_des.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 e_des.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-e_des.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-e_des.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-e_des.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_des.c evp_locl.h
+e_des.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+e_des.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+e_des.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+e_des.o: ../cryptlib.h e_des.c evp_locl.h
 e_des3.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_des3.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 e_des3.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
@@ -249,9 +250,10 @@ e_des3.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 e_des3.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 e_des3.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 e_des3.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-e_des3.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-e_des3.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-e_des3.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_des3.c evp_locl.h
+e_des3.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+e_des3.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+e_des3.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+e_des3.o: ../cryptlib.h e_des3.c evp_locl.h
 e_idea.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_idea.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 e_idea.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

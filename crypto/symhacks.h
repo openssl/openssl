@@ -127,6 +127,10 @@
 /* Hack some long X509 names */
 #undef X509_REVOKED_get_ext_by_critical
 #define X509_REVOKED_get_ext_by_critical	X509_REVOKED_get_ext_by_critic
+#undef X509_policy_tree_get0_user_policies
+#define X509_policy_tree_get0_user_policies	X509_pcy_tree_get0_usr_policies
+#undef X509_policy_node_get0_qualifiers
+#define X509_policy_node_get0_qualifiers	X509_pcy_node_get0_qualifiers
 
 /* Hack some long CRYPTO names */
 #undef CRYPTO_set_dynlock_destroy_callback
@@ -287,6 +291,56 @@
                                                 ec_GFp_smp_set_compr_coords
 #undef ec_GFp_simple_group_check_discriminant
 #define ec_GFp_simple_group_check_discriminant	ec_GFp_simple_grp_chk_discrim
+
+/* Hack som long STORE names */
+#undef STORE_method_set_initialise_function
+#define STORE_method_set_initialise_function	STORE_meth_set_initialise_fn
+#undef STORE_method_set_cleanup_function
+#define STORE_method_set_cleanup_function	STORE_meth_set_cleanup_fn
+#undef STORE_method_set_generate_function
+#define STORE_method_set_generate_function	STORE_meth_set_generate_fn
+#undef STORE_method_set_modify_function
+#define STORE_method_set_modify_function	STORE_meth_set_modify_fn
+#undef STORE_method_set_revoke_function
+#define STORE_method_set_revoke_function	STORE_meth_set_revoke_fn
+#undef STORE_method_set_delete_function
+#define STORE_method_set_delete_function	STORE_meth_set_delete_fn
+#undef STORE_method_set_list_start_function
+#define STORE_method_set_list_start_function	STORE_meth_set_list_start_fn
+#undef STORE_method_set_list_next_function
+#define STORE_method_set_list_next_function	STORE_meth_set_list_next_fn
+#undef STORE_method_set_list_end_function
+#define STORE_method_set_list_end_function	STORE_meth_set_list_end_fn
+#undef STORE_method_set_update_store_function
+#define STORE_method_set_update_store_function	STORE_meth_set_update_store_fn
+#undef STORE_method_set_lock_store_function
+#define STORE_method_set_lock_store_function	STORE_meth_set_lock_store_fn
+#undef STORE_method_set_unlock_store_function
+#define STORE_method_set_unlock_store_function	STORE_meth_set_unlock_store_fn
+#undef STORE_method_get_initialise_function
+#define STORE_method_get_initialise_function	STORE_meth_get_initialise_fn
+#undef STORE_method_get_cleanup_function
+#define STORE_method_get_cleanup_function	STORE_meth_get_cleanup_fn
+#undef STORE_method_get_generate_function
+#define STORE_method_get_generate_function	STORE_meth_get_generate_fn
+#undef STORE_method_get_modify_function
+#define STORE_method_get_modify_function	STORE_meth_get_modify_fn
+#undef STORE_method_get_revoke_function
+#define STORE_method_get_revoke_function	STORE_meth_get_revoke_fn
+#undef STORE_method_get_delete_function
+#define STORE_method_get_delete_function	STORE_meth_get_delete_fn
+#undef STORE_method_get_list_start_function
+#define STORE_method_get_list_start_function	STORE_meth_get_list_start_fn
+#undef STORE_method_get_list_next_function
+#define STORE_method_get_list_next_function	STORE_meth_get_list_next_fn
+#undef STORE_method_get_list_end_function
+#define STORE_method_get_list_end_function	STORE_meth_get_list_end_fn
+#undef STORE_method_get_update_store_function
+#define STORE_method_get_update_store_function	STORE_meth_get_update_store_fn
+#undef STORE_method_get_lock_store_function
+#define STORE_method_get_lock_store_function	STORE_meth_get_lock_store_fn
+#undef STORE_method_get_unlock_store_function
+#define STORE_method_get_unlock_store_function	STORE_meth_get_unlock_store_fn
 
 #endif /* defined OPENSSL_SYS_VMS */
 
