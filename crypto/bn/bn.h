@@ -692,7 +692,7 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 
 #else /* !BN_DEBUG */
 
-#define bn_check_top(a)		do { ; } while(0)
+#define bn_check_top(a)
 #define bn_fix_top(a)		bn_correct_top(a)
 
 #endif
