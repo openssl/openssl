@@ -102,7 +102,6 @@ extern "C" {
 /* As we're missing a BIGNUM_METHOD, we need a couple of locally
  * defined function types that engines can implement. */
 
-#ifndef HEADER_ENGINE_INT_H
 /* mod_exp operation, calculates; r = a ^ p mod m
  * NB: ctx can be NULL, but if supplied, the implementation may use
  * it if it wishes. */
@@ -116,9 +115,9 @@ typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
 /* Generic function pointer */
-typedef void (*ENGINE_GEN_FUNC_PTR)();
+typedef int (*ENGINE_GEN_FUNC_PTR)();
 /* Generic function pointer taking no arguments */
-typedef void (*ENGINE_GEN_INT_FUNC_PTR)(void);
+typedef int (*ENGINE_GEN_INT_FUNC_PTR)(void);
 /* Specific control function pointer */
 typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
 
@@ -126,8 +125,8 @@ typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
  * pointers (not dynamic because static is fine for now and we otherwise
  * have to hook an appropriate load/unload function in to initialise and
  * cleanup). */
+struct engine_st;
 typedef struct engine_st ENGINE;
-#endif
 
 /* STRUCTURE functions ... all of these functions deal with pointers to
  * ENGINE structures where the pointers have a "structural reference".
@@ -151,6 +150,13 @@ int ENGINE_add(ENGINE *e);
 int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
+/* Add all the built-in engines.  By default, only the OpenSSL software
+   engine is loaded */
+void ENGINE_load_cswift(void);
+void ENGINE_load_chil(void);
+void ENGINE_load_atalla(void);
+void ENGINE_load_nuron(void);
+void ENGINE_load_builtin_engines(void);
 
 /* These functions are useful for manufacturing new ENGINE
  * structures. They don't address reference counting at all -
@@ -297,10 +303,10 @@ void ERR_load_ENGINE_strings(void);
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
-#define ENGINE_F_ATALLA_FINISH				 135
-#define ENGINE_F_ATALLA_INIT				 136
-#define ENGINE_F_ATALLA_MOD_EXP				 137
-#define ENGINE_F_ATALLA_RSA_MOD_EXP			 138
+#define ENGINE_F_ATALLA_FINISH				 159
+#define ENGINE_F_ATALLA_INIT				 160
+#define ENGINE_F_ATALLA_MOD_EXP				 161
+#define ENGINE_F_ATALLA_RSA_MOD_EXP			 162
 #define ENGINE_F_CSWIFT_DSA_SIGN			 133
 #define ENGINE_F_CSWIFT_DSA_VERIFY			 134
 #define ENGINE_F_CSWIFT_FINISH				 100

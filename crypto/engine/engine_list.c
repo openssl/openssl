@@ -185,24 +185,6 @@ static int engine_internal_check(void)
 	 * with our statically compiled-in engines. */
 	if(!engine_list_add(ENGINE_openssl()))
 		return 0;
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
-	if(!engine_list_add(ENGINE_cswift()))
-		return 0;
-#endif /* !NO_HW_CSWIFT */
-#ifndef NO_HW_NCIPHER
-	if(!engine_list_add(ENGINE_ncipher()))
-		return 0;
-#endif /* !NO_HW_NCIPHER */
-#ifndef NO_HW_ATALLA
-	if(!engine_list_add(ENGINE_atalla()))
-		return 0;
-#endif /* !NO_HW_ATALLA */
-#ifndef NO_HW_NURON
-	if(!engine_list_add(ENGINE_nuron()))
-		return 0;
-#endif /* !NO_HW_NURON */
-#endif /* !NO_HW */
 	engine_list_flag = 1;
 	return 1;
 	}

@@ -1,9 +1,9 @@
-/* crypto/engine/engine_int.h */
-/* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
+/* crypto/engine/engine_all.c -*- mode: C; c-file-style: "eay" -*- */
+/* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,89 +56,60 @@
  *
  */
 
-#ifndef HEADER_ENGINE_INT_H
-#define HEADER_ENGINE_INT_H
-
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-
-/* Take public definitions from engine.h */
 #include <openssl/engine.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-/* Bitwise OR-able values for the "flags" variable in ENGINE. */
-#define ENGINE_FLAGS_MALLOCED	0x0001
-
-/* This is a structure for storing implementations of various crypto
- * algorithms and functions. */
-struct engine_st
+#include "engine_int.h"
+static int engine_add(ENGINE *e)
 	{
-	const char *id;
-	const char *name;
-	RSA_METHOD *rsa_meth;
-	DSA_METHOD *dsa_meth;
-	DH_METHOD *dh_meth;
-	RAND_METHOD *rand_meth;
-	BN_MOD_EXP bn_mod_exp;
-	BN_MOD_EXP_CRT bn_mod_exp_crt;
-	int (*init)(void);
-	int (*finish)(void);
-	int (*ctrl)(int cmd, long i, void *p, void (*f)());
-	EVP_PKEY *(*load_privkey)(const char *key_id, const char *passphrase);
-	EVP_PKEY *(*load_pubkey)(const char *key_id, const char *passphrase);
-	int flags;
-	/* reference count on the structure itself */
-	int struct_ref;
-	/* reference count on usability of the engine type. NB: This
-	 * controls the loading and initialisation of any functionlity
-	 * required by this engine, whereas the previous count is
-	 * simply to cope with (de)allocation of this structure. Hence,
-	 * running_ref <= struct_ref at all times. */
-	int funct_ref;
-	/* Used to maintain the linked-list of engines. */
-	struct engine_st *prev;
-	struct engine_st *next;
-	};
+	if (!ENGINE_by_id(ENGINE_get_id(e)))
+		return ENGINE_add(e);
+	return 1;
+	}
 
-/* BUILT-IN ENGINES. (these functions are only ever called once and
- * do not return references - they are purely for bootstrapping). */
-
-/* Returns a structure of software only methods (the default). */
-ENGINE *ENGINE_openssl();
-
+void ENGINE_load_cswift(void)
+	{
 #ifndef NO_HW
-
 #ifndef NO_HW_CSWIFT
-/* Returns a structure of cswift methods ... NB: This can exist and be
- * "used" even on non-cswift systems because the "init" will fail if the
- * card/library are not found. */
-ENGINE *ENGINE_cswift();
+	engine_add(ENGINE_cswift());
 #endif /* !NO_HW_CSWIFT */
-
-#ifndef NO_HW_NCIPHER
-ENGINE *ENGINE_ncipher();
-#endif /* !NO_HW_NCIPHER */
-
-#ifndef NO_HW_ATALLA
-/* Returns a structure of atalla methods. */
-ENGINE *ENGINE_atalla();
-#endif /* !NO_HW_ATALLA */
-
-#ifndef NO_HW_NURON
-ENGINE *ENGINE_nuron();
-#endif /* !NO_HW_NURON */
-
 #endif /* !NO_HW */
+	}
 
-#ifdef  __cplusplus
-}
-#endif
+void ENGINE_load_chil(void)
+	{
+#ifndef NO_HW
+#ifndef NO_HW_CSWIFT
+	engine_add(ENGINE_ncipher());
+#endif /* !NO_HW_CSWIFT */
+#endif /* !NO_HW */
+	}
 
-#endif /* HEADER_ENGINE_INT_H */
+void ENGINE_load_atalla(void)
+	{
+#ifndef NO_HW
+#ifndef NO_HW_CSWIFT
+	engine_add(ENGINE_atalla());
+#endif /* !NO_HW_CSWIFT */
+#endif /* !NO_HW */
+	}
+
+void ENGINE_load_nuron(void)
+	{
+#ifndef NO_HW
+#ifndef NO_HW_CSWIFT
+	engine_add(ENGINE_nuron());
+#endif /* !NO_HW_CSWIFT */
+#endif /* !NO_HW */
+	}
+
+void ENGINE_load_builtin_engines(void)
+	{
+	static int done=0;
+
+	if (done) return;
+	done=1;
+
+	ENGINE_load_cswift();
+	ENGINE_load_chil();
+	ENGINE_load_atalla();
+	ENGINE_load_nuron();
+	}

@@ -22,9 +22,9 @@ TEST= enginetest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= engine_err.c engine_lib.c engine_list.c engine_openssl.c \
+LIBSRC= engine_err.c engine_lib.c engine_list.c engine_all.c engine_openssl.c \
 	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c
-LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_openssl.o \
+LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_all.o engine_openssl.o \
 	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o
 
 SRC= $(LIBSRC)

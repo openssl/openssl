@@ -4,6 +4,24 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add the following functions:
+
+	ENGINE_load_cswift()
+	ENGINE_load_chil()
+	ENGINE_load_atalla()
+	ENGINE_load_nuron()
+	ENGINE_load_builtin_engines()
+
+     That way, an application can itself choose if external engines that
+     are built-in in OpenSSL shall ever be used or not.  The benefit is
+     that applications won't have to be linked with libdl or other dso
+     libraries unless it's really needed.
+
+     Changed 'openssl engine' to load all engines on demand.
+     Changed the engine header files to avoid the duplication of some
+     declarations (they differed!).
+     [Richard Levitte]
+
   *) 'openssl engine' can now list capabilities.
      [Richard Levitte]
 
