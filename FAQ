@@ -490,44 +490,16 @@ OpenSSL_add_all_algorithms(). See the manual page for more information.
 
 * Why can't the OpenSSH configure script detect OpenSSL?
 
-There is a problem with OpenSSH 1.2.2p1, in that the configure script
-can't find the installed OpenSSL libraries.  The problem is actually
-a small glitch that is easily solved with the following patch to be
-applied to the OpenSSH distribution:
+Several reasons for problems with the automatic detection exist.
+OpenSSH requires at least version 0.9.5a of the OpenSSL libraries.
+Sometimes the distribution has installed an older version in the system
+locations that is detected instead of a new one installed. The OpenSSL
+library might have been compiled for another CPU or another mode (32/64 bits).
+Permissions might be wrong.
 
------ snip:start -----
---- openssh-1.2.2p1/configure.in.orig	Thu Mar 23 18:56:58 2000
-+++ openssh-1.2.2p1/configure.in	Thu Mar 23 18:55:05 2000
-@@ -152,10 +152,10 @@
- AC_MSG_CHECKING([for OpenSSL/SSLeay directory])
- for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
- 	if test ! -z "$ssldir" ; then
--		LIBS="$saved_LIBS -L$ssldir"
-+		LIBS="$saved_LIBS -L$ssldir/lib"
- 		CFLAGS="$CFLAGS -I$ssldir/include"
- 		if test "x$need_dash_r" = "x1" ; then
--			LIBS="$LIBS -R$ssldir"
-+			LIBS="$LIBS -R$ssldir/lib"
- 		fi
- 	fi
- 	LIBS="$LIBS -lcrypto"
---- openssh-1.2.2p1/configure.orig	Thu Mar 23 18:55:02 2000
-+++ openssh-1.2.2p1/configure	Thu Mar 23 18:57:08 2000
-@@ -1890,10 +1890,10 @@
- echo "configure:1891: checking for OpenSSL/SSLeay directory" >&5
- for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
- 	if test ! -z "$ssldir" ; then
--		LIBS="$saved_LIBS -L$ssldir"
-+		LIBS="$saved_LIBS -L$ssldir/lib"
- 		CFLAGS="$CFLAGS -I$ssldir/include"
- 		if test "x$need_dash_r" = "x1" ; then
--			LIBS="$LIBS -R$ssldir"
-+			LIBS="$LIBS -R$ssldir/lib"
- 		fi
- 	fi
- 	LIBS="$LIBS -lcrypto"
------ snip:end -----
-
+The general answer is to check the config.log file generated when running
+the OpenSSH configure script. It should contain the detailed information
+on why the OpenSSL library was not detected or considered incompatible.
 
 * Can I use OpenSSL's SSL library with non-blocking I/O?
 
