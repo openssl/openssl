@@ -683,15 +683,8 @@ EOF
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
   *-hpux1*)
-	if [ $CC = "gcc" ];
-	then
-	  if [ $GCC_BITS = "64" ]; then
-	    OUT="hpux64-parisc-gcc"
-	  else
-	    OUT="hpux-parisc-gcc"
-	  fi
-	else
-	  OUT="hpux-parisc-$CC"
+	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
+	    OUT="hpux64-parisc2-gcc"
 	fi
 	KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
@@ -708,9 +701,7 @@ EOF
 	     fi
 	     OUT="hpux64-ia64-cc"
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
-	     if [ "$CC" = "cc" ]; then
-		OUT="hpux-parisc2-cc" # can't we have hpux-parisc2-gcc?
-	     fi
+	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
 		echo "WARNING! If you wish to build 64-bit library then you have to"
 		echo "         invoke './Configure hpux64-parisc2-cc' *manually*."
@@ -720,9 +711,9 @@ EOF
 		fi
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     :
+	     OUT="hpux-parisc-${CC}
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
-	     :
+	     OUT="hpux-parisc-${CC}
 	else					# Motorola(?) CPU
 	     OUT="hpux-$CC"
 	fi

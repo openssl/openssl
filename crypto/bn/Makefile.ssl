@@ -122,6 +122,13 @@ asm/ia64-cpp.o:	asm/ia64.S
 
 asm/x86_64-gcc.o: asm/x86_64-gcc.c
 
+# GNU assembler fails to compile PA-RISC2 modules, insist on calling
+# vendor assembler...
+asm/pa-risc2W.o: asm/pa-risc2W.s
+	/usr/ccs/bin/as -o asm/pa-rics2W.o asm/pa-risc2W.s
+asm/pa-risc2.o: asm/pa-risc2.s
+	/usr/ccs/bin/as -o asm/pa-rics2.o asm/pa-risc2.s
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 

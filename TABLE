@@ -1702,7 +1702,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1727,7 +1727,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1752,7 +1752,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1777,7 +1777,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2350,6 +2350,31 @@ $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
+*** hpux-ia64-gcc
+$cc           = gcc
+$cflags       = -O3 -DB_ENDIAN -D_ILP32
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = asm/ia64.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= hpux-shared
+$shared_cflag = -fpic
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** hpux-m68k-gcc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
@@ -2500,6 +2525,31 @@ $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
+*** hpux-parisc2-gcc
+$cc           = gcc
+$cflags       = -march=2.0 -O3 -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -Wl,+s -ldld
+$bn_ops       = SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = asm/pa-risc2.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dl
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** hpux10-brokencc
 $cc           = cc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z
@@ -2622,6 +2672,31 @@ $shared_target= hpux64-shared
 $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
+*** hpux64-ia64-gcc
+$cc           = gcc
+$cflags       = -mlp64 -O3 -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = asm/ia64.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= hpux-shared
+$shared_cflag = -fpic
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
