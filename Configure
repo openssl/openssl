@@ -1099,7 +1099,9 @@ $openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#end
 $openssl_sys_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 $openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 print OUT $openssl_sys_defines;
+print OUT "#ifndef OPENSSL_DOING_MAKEDEPEND\n\n";
 print OUT $openssl_algorithm_defines;
+print OUT "\n#endif /* OPENSSL_DOING_MAKEDEPEND */\n";
 print OUT $openssl_thread_defines;
 print OUT $openssl_other_defines,"\n";
 
