@@ -62,6 +62,7 @@
 #endif
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
