@@ -378,7 +378,7 @@ _dopr(
             case 'p':
                 value = (long)va_arg(args, void *);
                 fmtint(sbuffer, buffer, &currlen, maxlen,
-                    value, 16, min, max, flags);
+                    value, 16, min, max, flags|DP_F_NUM);
                 break;
             case 'n': /* XXX */
                 if (cflags == DP_C_SHORT) {
@@ -482,8 +482,9 @@ fmtint(
     int flags)
 {
     int signvalue = 0;
+    char *prefix = "";
     unsigned LLONG uvalue;
-    char convert[DECIMAL_SIZE(value)+1];
+    char convert[DECIMAL_SIZE(value)+3];
     int place = 0;
     int spadlen = 0;
     int zpadlen = 0;
@@ -501,6 +502,10 @@ fmtint(
         else if (flags & DP_F_SPACE)
             signvalue = ' ';
     }
+    if (flags & DP_F_NUM) {
+	if (base == 8) prefix = "0";
+	if (base == 16) prefix = "0x";
+    }
     if (flags & DP_F_UP)
         caps = 1;
     do {
@@ -514,7 +519,7 @@ fmtint(
     convert[place] = 0;
 
     zpadlen = max - place;
-    spadlen = min - OSSL_MAX(max, place) - (signvalue ? 1 : 0);
+    spadlen = min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)
@@ -535,6 +540,12 @@ fmtint(
     /* sign */
     if (signvalue)
         doapr_outch(sbuffer, buffer, currlen, maxlen, signvalue);
+
+    /* prefix */
+    while (*prefix) {
+	doapr_outch(sbuffer, buffer, currlen, maxlen, *prefix);
+	prefix++;
+    }
 
     /* zeros */
     if (zpadlen > 0) {
@@ -692,7 +703,7 @@ fmtfp(
      * Decimal point. This should probably use locale to find the correct
      * char to print out.
      */
-    if (max > 0) {
+    if (max > 0 || (flags & DP_F_NUM)) {
         doapr_outch(sbuffer, buffer, currlen, maxlen, '.');
 
         while (fplace > 0)
