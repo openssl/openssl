@@ -195,7 +195,7 @@ $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .NES. "" THEN LIB_BN_ASM = "bn_asm"
-$ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_mul,"+ -
+$ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+",bn_recp,bn_mont,"+ -
 	"bn_mpi,bn_exp2"
@@ -227,7 +227,8 @@ $ LIB_EVP_2 = "e_ecb_c,e_cbc_c,e_cfb_c,e_ofb_c,"+ -
 	"m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
-	"c_all,evp_lib,bio_ok,evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
+	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
+	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_null,a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
 	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,"+ -
