@@ -600,7 +600,7 @@ static int asn1_str2tag(const char *tagstr, int len)
 	tntmp = tnst;	
 	for (i = 0; i < sizeof(tnst) / sizeof(struct tag_name_st); i++, tntmp++)
 		{
-		if (!strncmp(tntmp->strnam, tagstr, tntmp->len))
+		if ((len == tntmp->len) && !strncmp(tntmp->strnam, tagstr, len))
 			return tntmp->tag;
 		}
 	
