@@ -12,6 +12,14 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
+     returns early because it has nothing to do.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) [In 0.9.6c-engine and 0.9.7 release:]
+     Fix mutex callback return values in crypto/engine/hw_ncipher.c.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
   *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
      is called via tools/c89.sh because arguments have to be
      rearranged (all '-L' options must appear before the first object
