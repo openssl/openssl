@@ -1,4 +1,5 @@
-#include "p5SSLeay.h"
+
+#include "openssl.h"
 
 static int p5_bio_ex_bio_ptr=0;
 static int p5_bio_ex_bio_callback=0;
@@ -60,7 +61,7 @@ int ret;
 int boot_bio()
 	{
 	p5_bio_ex_bio_ptr=
-		BIO_get_ex_new_index(0,"SSLeay::BIO",ex_new,NULL,
+		BIO_get_ex_new_index(0,"OpenSSL::BIO",ex_new,NULL,
 			ex_cleanup);
 	p5_bio_ex_bio_callback=	
 		BIO_get_ex_new_index(0,"bio_callback",NULL,NULL,
@@ -71,7 +72,7 @@ int boot_bio()
 	return(1);
 	}
 
-MODULE =  SSLeay::BIO	PACKAGE = SSLeay::BIO PREFIX = p5_BIO_
+MODULE =  OpenSSL::BIO	PACKAGE = OpenSSL::BIO PREFIX = p5_BIO_
 
 VERSIONCHECK: DISABLE
 
@@ -89,8 +90,8 @@ p5_BIO_new_buffer_ssl_connect(...)
 		else
 			arg=NULL;
 
-		if ((arg == NULL) || !(sv_derived_from(arg,"SSLeay::SSL::CTX")))
-			croak("Usage: SSLeay::BIO::new_buffer_ssl_connect(SSL_CTX)");
+		if ((arg == NULL) || !(sv_derived_from(arg,"OpenSSL::SSL::CTX")))
+			croak("Usage: OpenSSL::BIO::new_buffer_ssl_connect(SSL_CTX)");
 		else
 			{
 			IV tmp=SvIV((SV *)SvRV(arg));
@@ -115,8 +116,8 @@ p5_BIO_new_ssl_connect(...)
 		else
 			arg=NULL;
 
-		if ((arg == NULL) || !(sv_derived_from(arg,"SSLeay::SSL::CTX")))
-			croak("Usage: SSLeay::BIO::new_ssl_connect(SSL_CTX)");
+		if ((arg == NULL) || !(sv_derived_from(arg,"OpenSSL::SSL::CTX")))
+			croak("Usage: OpenSSL::BIO::new_ssl_connect(SSL_CTX)");
 		else
 			{
 			IV tmp=SvIV((SV *)SvRV(arg));
@@ -140,7 +141,7 @@ p5_BIO_new(...)
 		else if ((items == 2) && SvPOK(ST(1)))
 			type=SvPV(ST(1),na);
 		else
-			croak("Usage: SSLeay::BIO::new(type)");
+			croak("Usage: OpenSSL::BIO::new(type)");
 
 		EXTEND(sp,1);
 		if (strcmp(type,"connect") == 0)
@@ -189,7 +190,7 @@ p5_BIO_push(b,bio)
 	CODE:
 		/* This reference will be reduced when the reference is
 		 * let go, and then when the BIO_free_all() is called
-		 * inside the SSLeay library by the BIO with this
+		 * inside the OpenSSL library by the BIO with this
 		 * pushed into */
 		bio->references++;
 		RETVAL=BIO_push(b,bio);
@@ -210,12 +211,12 @@ p5_BIO_pop(b)
 			/* This BIO will either be one created in the
 			 * perl library, in which case it will have a perl
 			 * SV, otherwise it will have been created internally,
-			 * inside SSLeay.  For the 'pushed in', it needs
+			 * inside OpenSSL.  For the 'pushed in', it needs
 			 * the reference count decememted. */
 			arg=(SV *)BIO_get_ex_data(bio,p5_bio_ex_bio_ptr);
 			if (arg == NULL)
 				{
-				arg=new_ref("SSLeay::BIO",(char *)bio,0);
+				arg=new_ref("OpenSSL::BIO",(char *)bio,0);
 				BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
 				PUSHs(arg);
 				}
@@ -355,7 +356,7 @@ p5_BIO_next_bio(b)
 			arg=(SV *)BIO_get_ex_data(bio,p5_bio_ex_bio_ptr);
 			if (arg == NULL)
 				{
-				arg=new_ref("SSLeay::BIO",(char *)bio,0);
+				arg=new_ref("OpenSSL::BIO",(char *)bio,0);
 				BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
 				bio->references++;
 				PUSHs(arg);
@@ -388,7 +389,7 @@ p5_BIO_set_callback(bio,cb,...)
 		SV *arg2=NULL;
 	CODE:
 		if (items > 3)
-			croak("Usage: SSLeay::BIO::set_callback(bio,callback[,arg]");
+			croak("Usage: OpenSSL::BIO::set_callback(bio,callback[,arg]");
 		if (items == 3)
 			{
 			arg2=sv_mortalcopy(ST(2));

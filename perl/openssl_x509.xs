@@ -1,6 +1,7 @@
-#include "p5SSLeay.h"
 
-MODULE =  SSLeay::X509	PACKAGE = SSLeay::X509	PREFIX = p5_X509_
+#include "openssl.h"
+
+MODULE =  OpenSSL::X509	PACKAGE = OpenSSL::X509	PREFIX = p5_X509_
 
 PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
@@ -15,7 +16,7 @@ p5_X509_new(void )
 		EXTEND(sp,1);
 		PUSHs(sv_newmortal());
 		x509=X509_new();
-		sv_setref_pv(ST(0),"SSLeay::X509",(void *)x509);
+		sv_setref_pv(ST(0),"OpenSSL::X509",(void *)x509);
 
 char *
 p5_X509_get_subject_name(x509)

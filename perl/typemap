@@ -14,83 +14,83 @@ INPUT
 T_DATUM
 	$var.dptr=SvPV($arg,$var.dsize);
 T_MD_CTX
-	if (sv_derived_from($arg, \"SSLeay::MD\")) {
+	if (sv_derived_from($arg, \"OpenSSL::MD\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (EVP_MD_CTX *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::MD\")
+		croak(\"$var is not of type OpenSSL::MD\")
 T_CIPHER_CTX
-	if (sv_derived_from($arg, \"SSLeay::Cipher\")) {
+	if (sv_derived_from($arg, \"OpenSSL::Cipher\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (EVP_CIPHER_CTX *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::Cipher\")
+		croak(\"$var is not of type OpenSSL::Cipher\")
 T_BIGNUM
-	sv_to_BIGNUM(&($var),$arg,\"$var is not of type SSLeay::MD, int or string\")
+	sv_to_BIGNUM(&($var),$arg,\"$var is not of type OpenSSL::MD, int or string\")
 T_SSL_METHOD
-	if (sv_derived_from($arg, \"SSLeay::SSL::METHOD\")) {
+	if (sv_derived_from($arg, \"OpenSSL::SSL::METHOD\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (SSL_METHOD *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::SSL::METHOD\")
+		croak(\"$var is not of type OpenSSL::SSL::METHOD\")
 T_SSL_CTX
-	if (sv_derived_from($arg, \"SSLeay::SSL::CTX\")) {
+	if (sv_derived_from($arg, \"OpenSSL::SSL::CTX\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (SSL_CTX *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::SSL::CTX\")
+		croak(\"$var is not of type OpenSSL::SSL::CTX\")
 T_SSL_CIPHER
-	if (sv_derived_from($arg, \"SSLeay::SSL::CIPHER\")) {
+	if (sv_derived_from($arg, \"OpenSSL::SSL::CIPHER\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (SSL_CIPHER *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::SSL::CIPHER\")
+		croak(\"$var is not of type OpenSSL::SSL::CIPHER\")
 T_SSL
-	if (sv_derived_from($arg, \"SSLeay::SSL\")) {
+	if (sv_derived_from($arg, \"OpenSSL::SSL\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (SSL *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::SSL\")
+		croak(\"$var is not of type OpenSSL::SSL\")
 T_BIO
-	if (sv_derived_from($arg, \"SSLeay::BIO\")) {
+	if (sv_derived_from($arg, \"OpenSSL::BIO\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (BIO *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::BIO\")
+		croak(\"$var is not of type OpenSSL::BIO\")
 T_X509
-	if (sv_derived_from($arg, \"SSLeay::X509\")) {
+	if (sv_derived_from($arg, \"OpenSSL::X509\")) {
 		IV tmp = SvIV((SV*)SvRV($arg));
 		$var = (X509 *) tmp;
 		}
 	else
-		croak(\"$var is not of type SSLeay::X509\")
+		croak(\"$var is not of type OpenSSL::X509\")
 OUTPUT
 T_DATUM
 	sv_setpvn($arg,$var.dptr,$var.dsize);
 T_MD_CTX
-	sv_setref_pv($arg, \"SSLeay::MD\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::MD\", (void*)$var);
 T_CIPHER_CTX
-	sv_setref_pv($arg, \"SSLeay::Cipher\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::Cipher\", (void*)$var);
 T_BIGNUM
-	sv_setref_pv($arg, \"SSLeay::BN\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::BN\", (void*)$var);
 T_SSL_METHOD
-	sv_setref_pv($arg, \"SSLeay::SSL::METHOD\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::SSL::METHOD\", (void*)$var);
 T_SSL_CTX
-	sv_setref_pv($arg, \"SSLeay::SSL::CTX\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::SSL::CTX\", (void*)$var);
 T_SSL_CIPHER
-	sv_setref_pv($arg, \"SSLeay::SSL::CIPHER\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::SSL::CIPHER\", (void*)$var);
 T_SSL
-	sv_setref_pv($arg, \"SSLeay::SSL\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::SSL\", (void*)$var);
 T_BIO
-	sv_setref_pv($arg, \"SSLeay::BIO\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::BIO\", (void*)$var);
 T_X509
-	sv_setref_pv($arg, \"SSLeay::X509\", (void*)$var);
+	sv_setref_pv($arg, \"OpenSSL::X509\", (void*)$var);
 
 

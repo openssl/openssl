@@ -1,4 +1,5 @@
-#include "p5SSLeay.h"
+
+#include "openssl.h"
 
 int boot_cipher()
 	{
@@ -6,7 +7,7 @@ int boot_cipher()
 	return(1);
 	}
 
-MODULE =  SSLeay::Cipher	PACKAGE = SSLeay::Cipher PREFIX = p5_EVP_C_
+MODULE =  OpenSSL::Cipher	PACKAGE = OpenSSL::Cipher PREFIX = p5_EVP_C_
 
 VERSIONCHECK: DISABLE
 
@@ -22,14 +23,14 @@ p5_EVP_C_new(...)
 		else if ((items == 2) && SvPOK(ST(1)))
 			name=SvPV(ST(1),na);
 		else
-			croak("Usage: SSLeay::Cipher::new(type)");
+			croak("Usage: OpenSSL::Cipher::new(type)");
 		PUSHs(sv_newmortal());
 		c=EVP_get_cipherbyname(name);
 		if (c != NULL)
 			{
 			ctx=malloc(sizeof(EVP_CIPHER_CTX));
 			EVP_EncryptInit(ctx,c,NULL,NULL);
-			sv_setref_pv(ST(0), "SSLeay::Cipher", (void*)ctx);
+			sv_setref_pv(ST(0), "OpenSSL::Cipher", (void*)ctx);
 			}
 
 datum

@@ -1,2 +1,0 @@
-ERR::get_error()
-ERR::peek_error()

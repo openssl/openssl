@@ -1,4 +1,5 @@
-#include "p5SSLeay.h"
+
+#include "openssl.h"
 
 int boot_digest()
 	{
@@ -6,12 +7,12 @@ int boot_digest()
 	return(1);
 	}
 
-MODULE =  SSLeay::MD	PACKAGE = SSLeay::MD	PREFIX = p5_EVP_MD_
+MODULE =  OpenSSL::MD	PACKAGE = OpenSSL::MD	PREFIX = p5_EVP_MD_
 
 PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
 
-# SSLeay::MD::new(name) name= md2, md5, sha, sha1, or mdc2
+# OpenSSL::MD::new(name) name= md2, md5, sha, sha1, or mdc2
 #	md->name() - returns the name
 #	md->init() - reinitalises the digest
 #	md->update(data) - adds more data to digest
@@ -30,14 +31,14 @@ p5_EVP_MD_new(...)
 		else if ((items == 2) && SvPOK(ST(1)))
 			name=SvPV(ST(1),na);
 		else
-			croak("Usage: SSLeay::MD::new(type)");
+			croak("Usage: OpenSSL::MD::new(type)");
 		PUSHs(sv_newmortal());
 		md=EVP_get_digestbyname(name);
 		if (md != NULL)
 			{
 			ctx=malloc(sizeof(EVP_MD_CTX));
 			EVP_DigestInit(ctx,md);
-			sv_setref_pv(ST(0), "SSLeay::MD", (void*)ctx);
+			sv_setref_pv(ST(0), "OpenSSL::MD", (void*)ctx);
 			}
 
 datum

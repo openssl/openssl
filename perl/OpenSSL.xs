@@ -1,4 +1,8 @@
-#include "p5SSLeay.h"
+/*
+**  OpenSSL.xs
+*/
+
+#include "openssl.h"
 
 SV *new_ref(type,obj,mort)
 char *type;
@@ -47,7 +51,7 @@ fprintf(stderr,"ex_cleanup %08X %s\n",obj,argp);
 		SvREFCNT_dec((SV *)data);
 	}
 
-MODULE =  SSLeay        PACKAGE = SSLeay
+MODULE =  OpenSSL        PACKAGE = OpenSSL
 
 BOOT:
 	boot_bio();
@@ -55,11 +59,11 @@ BOOT:
 	boot_digest();
 	boot_err();
 	boot_ssl();
-	boot_SSLeay__BN();
-	boot_SSLeay__BIO();
-	boot_SSLeay__Cipher();
-	boot_SSLeay__MD();
-	boot_SSLeay__ERR();
-	boot_SSLeay__SSL();
-	boot_SSLeay__X509();
+	boot_OpenSSL__BN();
+	boot_OpenSSL__BIO();
+	boot_OpenSSL__Cipher();
+	boot_OpenSSL__MD();
+	boot_OpenSSL__ERR();
+	boot_OpenSSL__SSL();
+	boot_OpenSSL__X509();
 

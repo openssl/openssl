@@ -1,4 +1,5 @@
-#include "p5SSLeay.h"
+
+#include "openssl.h"
 
 int boot_err()
 	{
@@ -6,7 +7,7 @@ int boot_err()
 	return(1);
 	}
 
-MODULE =  SSLeay::ERR	PACKAGE = SSLeay::ERR	PREFIX = p5_ERR_
+MODULE =  OpenSSL::ERR	PACKAGE = OpenSSL::ERR	PREFIX = p5_ERR_
 
 PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE

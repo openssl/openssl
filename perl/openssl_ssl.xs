@@ -1,4 +1,5 @@
-#include "p5SSLeay.h"
+
+#include "openssl.h"
 
 static int p5_ssl_ex_ssl_ptr=0;
 static int p5_ssl_ex_ssl_info_callback=0;
@@ -44,7 +45,7 @@ int ret;
 int boot_ssl()
 	{
 	p5_ssl_ex_ssl_ptr=		
-		SSL_get_ex_new_index(0,"SSLeay::SSL",ex_new,NULL,ex_cleanup);
+		SSL_get_ex_new_index(0,"OpenSSL::SSL",ex_new,NULL,ex_cleanup);
 	p5_ssl_ex_ssl_info_callback=
 		SSL_get_ex_new_index(0,"ssl_info_callback",NULL,NULL,
 			ex_cleanup);
@@ -57,7 +58,7 @@ int boot_ssl()
 	return(1);
 	}
 
-MODULE =  SSLeay::SSL	PACKAGE = SSLeay::SSL::CTX PREFIX = p5_SSL_CTX_
+MODULE =  OpenSSL::SSL	PACKAGE = OpenSSL::SSL::CTX PREFIX = p5_SSL_CTX_
 
 VERSIONCHECK: DISABLE
 
@@ -74,7 +75,7 @@ p5_SSL_CTX_new(...)
 		else if ((items == 2) && SvPOK(ST(1)))
 			method=SvPV(ST(1),na);
 		else
-			croak("Usage: SSLeay::SSL_CTX::new(type)");
+			croak("Usage: OpenSSL::SSL_CTX::new(type)");
 			
 		if (strcmp(method,"SSLv3") == 0)
 			meth=SSLv3_method();
@@ -101,7 +102,7 @@ p5_SSL_CTX_new(...)
 		EXTEND(sp,1);
 		PUSHs(sv_newmortal());
 		ctx=SSL_CTX_new(meth);
-		sv_setref_pv(ST(0), "SSLeay::SSL::CTX", (void*)ctx);
+		sv_setref_pv(ST(0), "OpenSSL::SSL::CTX", (void*)ctx);
 
 int
 p5_SSL_CTX_use_PrivateKey_file(ctx,file,...)
@@ -113,7 +114,7 @@ p5_SSL_CTX_use_PrivateKey_file(ctx,file,...)
 	CODE:
 		pr_name("p5_SSL_CTX_use_PrivateKey_file");
 		if (items > 3)
-			croak("SSLeay::SSL::CTX::use_PrivateKey_file(ssl_ctx,file[,type])");
+			croak("OpenSSL::SSL::CTX::use_PrivateKey_file(ssl_ctx,file[,type])");
 		if (items == 3)
 			{
 			ptr=SvPV(ST(2),na);
@@ -139,7 +140,7 @@ p5_SSL_CTX_set_options(ctx,...)
 		for (i=1; i<items; i++)
 			{
 			if (!SvPOK(ST(i)))
-				croak("Usage: SSLeay::SSL_CTX::set_options(ssl_ctx[,option,value]+)");
+				croak("Usage: OpenSSL::SSL_CTX::set_options(ssl_ctx[,option,value]+)");
 			ptr=SvPV(ST(i),na);
 			if (strcmp(ptr,"-info_callback") == 0)
 				{
@@ -154,7 +155,7 @@ p5_SSL_CTX_set_options(ctx,...)
 				}
 			else
 				{
-				croak("SSLeay::SSL_CTX::set_options(): unknown option");
+				croak("OpenSSL::SSL_CTX::set_options(): unknown option");
 				}
 			}
 
@@ -167,7 +168,7 @@ p5_SSL_CTX_DESTROY(ctx)
 		pr_name_d("p5_SSL_CTX_DESTROY",ctx->references);
 		SSL_CTX_free(ctx);
 
-MODULE =  SSLeay::SSL	PACKAGE = SSLeay::SSL PREFIX = p5_SSL_
+MODULE =  OpenSSL::SSL	PACKAGE = OpenSSL::SSL PREFIX = p5_SSL_
 
 void
 p5_SSL_new(...)
@@ -180,20 +181,20 @@ p5_SSL_new(...)
 	PPCODE:
 		pr_name("p5_SSL_new");
 		if ((items != 1) && (items != 2))
-			croak("Usage: SSLeay::SSL::new(ssl_ctx)");
-		if (sv_derived_from(ST(items-1),"SSLeay::SSL::CTX"))
+			croak("Usage: OpenSSL::SSL::new(ssl_ctx)");
+		if (sv_derived_from(ST(items-1),"OpenSSL::SSL::CTX"))
 			{
 			IV tmp = SvIV((SV*)SvRV(ST(items-1)));
 			ctx=(SSL_CTX *)tmp;
 			sv_ctx=ST(items-1);
 			}
 		else
-			croak("ssl_ctx is not of type SSLeay::SSL::CTX");
+			croak("ssl_ctx is not of type OpenSSL::SSL::CTX");
 
 		EXTEND(sp,1);
 		PUSHs(sv_newmortal());
 		ssl=SSL_new(ctx);
-		sv_setref_pv(ST(0), "SSLeay::SSL", (void*)ssl);
+		sv_setref_pv(ST(0), "OpenSSL::SSL", (void*)ssl);
 
 		/* Now this is being a little hairy, we keep a pointer to
 		 * our perl reference.  We need to do a different one
@@ -317,7 +318,7 @@ p5_SSL_set_options(ssl,...)
 		for (i=1; i<items; i++)
 			{
 			if (!SvPOK(ST(i)))
-				croak("Usage: SSLeay::SSL::set_options(ssl[,option,value]+)");
+				croak("Usage: OpenSSL::SSL::set_options(ssl[,option,value]+)");
 			ptr=SvPV(ST(i),na);
 			if (strcmp(ptr,"-info_callback") == 0)
 				{
@@ -339,7 +340,7 @@ p5_SSL_set_options(ssl,...)
 				}
 			else
 				{
-				croak("SSLeay::SSL::set_options(): unknown option");
+				croak("OpenSSL::SSL::set_options(): unknown option");
 				}
 			}
 
@@ -421,7 +422,7 @@ p5_SSL_get_peer_certificate(ssl)
 	OUTPUT:
 		RETVAL
 
-MODULE =  SSLeay::SSL	PACKAGE = SSLeay::SSL::CIPHER PREFIX = p5_SSL_CIPHER_
+MODULE =  OpenSSL::SSL	PACKAGE = OpenSSL::SSL::CIPHER PREFIX = p5_SSL_CIPHER_
 
 int
 p5_SSL_CIPHER_get_bits(sc)
@@ -452,7 +453,7 @@ p5_SSL_CIPHER_get_name(sc)
 	OUTPUT:
 		RETVAL
 
-MODULE =  SSLeay::SSL	PACKAGE = SSLeay::BIO PREFIX = p5_BIO_
+MODULE =  OpenSSL::SSL	PACKAGE = OpenSSL::BIO PREFIX = p5_BIO_
 
 void
 p5_BIO_get_ssl(bio)
