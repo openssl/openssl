@@ -1108,7 +1108,7 @@ bad:
 			}
 		if ((crldays == 0) && (crlhours == 0))
 			{
-			BIO_printf(bio_err,"cannot lookup how long until the next CRL is issuer\n");
+			BIO_printf(bio_err,"cannot lookup how long until the next CRL is issued\n");
 			goto err;
 			}
 
