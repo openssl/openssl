@@ -72,7 +72,7 @@ applications.
 
  typedef struct bignum_st
         {
-        int top;      /* index of last used d (most significant word) */
+        int top;      /* index of last used d (most significant word) + 1 */
         BN_ULONG *d;  /* pointer to an array of 'BITS2' bit chunks */
         int max;      /* size of the d array */
         int neg;      /* sign */
@@ -84,7 +84,7 @@ in size (B<BITS2>), depending on the 'number of bits' specified in
 C<openssl/bn.h>.
 
 B<max> is the size of the B<d> array that has been allocated.  B<top>
-is the 'last' entry being used, so for a value of 4, bn.d[0]=4 and
+is the 'last' entry being used plus one, so for a value of 4, bn.d[0]=4 and
 bn.top=1.  B<neg> is 1 if the number is negative.  When a B<BIGNUM> is
 B<0>, the B<d> field can be B<NULL> and B<top> == B<0>.
 
@@ -202,7 +202,7 @@ call bn_expand2(), which allocates a new B<d> array and copies the
 data.  They return B<NULL> on error, B<b> otherwise.
 
 The bn_fix_top() macro reduces B<a-E<gt>top> to point to the most
-significant non-zero word when B<a> has shrunk.
+significant non-zero word plus one when B<a> has shrunk.
 
 =head2 Debugging
 
