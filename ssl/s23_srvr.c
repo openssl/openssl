@@ -453,7 +453,7 @@ next_bit:
 	if (type == 1)
 		{
 #ifdef NO_SSL2
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNKNOWN_PROTOCOL);
+		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 		goto err;
 #else
 		/* we are talking sslv2 */
