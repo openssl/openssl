@@ -39,7 +39,7 @@ BN_MONT_CTX_init() initializes an existing uninitialized B<BN_MONT_CTX>.
 BN_MONT_CTX_set() sets up the B<mont> structure from the modulus B<m>
 by precomputing its inverse and a value R.
 
-BN_MONT_CTX_copy() copies the B<N_MONT_CTX> B<from> to B<to>.
+BN_MONT_CTX_copy() copies the B<BN_MONT_CTX> B<from> to B<to>.
 
 BN_MONT_CTX_free() frees the components of the B<BN_MONT_CTX>, and, if
 it was created by BN_MONT_CTX_new(), also the structure itself.
