@@ -320,6 +320,7 @@ int do_mct(char *amode,
 	/* printf("Iteration %d\n", i); */
 	if (i > 0)
 	    {
+	    fprintf(rfp,"COUNT = %d\n",i);
 	    OutputValue("KEY",key[i],nkeysz,rfp,0);
 	    if (imode != ECB)  /* ECB */
 		OutputValue("IV",iv[i],AES_BLOCK_SIZE,rfp,0);
