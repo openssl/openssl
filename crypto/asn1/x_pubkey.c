@@ -84,7 +84,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	X509_PUBKEY *pk;
 	X509_ALGOR *a;
 	ASN1_OBJECT *o;
-	unsigned char *s,*p;
+	unsigned char *s,*p = NULL;
 	int i;
 
 	if (x == NULL) return(0);
