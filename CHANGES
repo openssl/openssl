@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Add support for PKCS#5 v2.0 ASN1 PBES2 structures. No other support,
+     yet...
+     [Steve Henson]
+
   *) New variables $(RANLIB) and $(PERL) in the Makefiles.
      [Ulf Möller]
 

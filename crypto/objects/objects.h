@@ -840,7 +840,19 @@ extern "C" {
 #define	NID_x509Crl		160
 #define OBJ_x509Crl		OBJ_crlTypes, 1L
 
+/* PKCS#5 v2 OIDs */
 
+#define LN_pbes2		"PBES2"
+#define NID_pbes2		161
+#define OBJ_pbes2		OBJ_pkcs,5L,13L
+
+#define LN_pbmac1		"PBMAC1"
+#define NID_pbmac1		162
+#define OBJ_pbmac1		OBJ_pkcs,5L,14L
+
+#define LN_hmacWithSHA1		"hmacWithSHA1"
+#define NID_hmacWithSHA1	163
+#define OBJ_hmacWithSHA1	OBJ_rsadsi,2L,7L
 
 #include "bio.h"
 #include "asn1.h"

@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 161
+#define NUM_NID 164
 #define NUM_SN 115
-#define NUM_LN 157
-#define NUM_OBJ 133
+#define NUM_LN 160
+#define NUM_OBJ 136
 
-static unsigned char lvalues[914]={
+static unsigned char lvalues[940]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -200,6 +200,9 @@ static unsigned char lvalues[914]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x01,/* [883] OBJ_x509Certificate */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x16,0x02,/* [893] OBJ_sdsiCertificate */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x17,0x01,/* [903] OBJ_x509Crl */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0D,/* [913] OBJ_pbes2 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0E,/* [922] OBJ_pbmac1 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [931] OBJ_hmacWithSHA1 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -428,6 +431,9 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"sdsiCertificate","sdsiCertificate",NID_sdsiCertificate,10,
 	&(lvalues[893]),0},
 {"x509Crl","x509Crl",NID_x509Crl,10,&(lvalues[903]),0},
+{"PBES2","PBES2",NID_pbes2,9,&(lvalues[913]),0},
+{"PBMAC1","PBMAC1",NID_pbmac1,9,&(lvalues[922]),0},
+{"hmacWithSHA1","hmacWithSHA1",NID_hmacWithSHA1,8,&(lvalues[931]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -571,6 +577,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[73]),/* "Netscape Revocation Url" */
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
+&(nid_objs[161]),/* "PBES2" */
+&(nid_objs[162]),/* "PBMAC1" */
 &(nid_objs[143]),/* "Strong Extranet ID" */
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
@@ -628,6 +636,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
 &(nid_objs[156]),/* "friendlyName" */
 &(nid_objs[99]),/* "givenName" */
+&(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[34]),/* "idea-cbc" */
 &(nid_objs[35]),/* "idea-cfb" */
 &(nid_objs[36]),/* "idea-ecb" */
@@ -773,6 +782,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[47]),/* OBJ_pkcs9                        1 2 840 113549 1 9 */
 &(nid_objs[ 3]),/* OBJ_md2                          1 2 840 113549 2 2 */
 &(nid_objs[ 4]),/* OBJ_md5                          1 2 840 113549 2 5 */
+&(nid_objs[163]),/* OBJ_hmacWithSHA1                 1 2 840 113549 2 7 */
 &(nid_objs[37]),/* OBJ_rc2_cbc                      1 2 840 113549 3 2 */
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
@@ -795,6 +805,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[10]),/* OBJ_pbeWithMD5AndDES_CBC         1 2 840 113549 1 5 3 */
 &(nid_objs[68]),/* OBJ_pbeWithSHA1AndRC2_CBC        1 2 840 113549 1 5 11  */
 &(nid_objs[69]),/* OBJ_pbeWithSHA1AndRC4            1 2 840 113549 1 5 12  */
+&(nid_objs[161]),/* OBJ_pbes2                        1 2 840 113549 1 5 13 */
+&(nid_objs[162]),/* OBJ_pbmac1                       1 2 840 113549 1 5 14 */
 &(nid_objs[21]),/* OBJ_pkcs7_data                   1 2 840 113549 1 7 1 */
 &(nid_objs[22]),/* OBJ_pkcs7_signed                 1 2 840 113549 1 7 2 */
 &(nid_objs[23]),/* OBJ_pkcs7_enveloped              1 2 840 113549 1 7 3 */

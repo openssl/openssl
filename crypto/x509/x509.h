@@ -344,6 +344,21 @@ ASN1_OCTET_STRING *salt;
 ASN1_INTEGER *iter;
 } PBEPARAM;
 
+/* Password based encryption V2 structures */
+
+typedef struct PBE2PARAM_st {
+X509_ALGOR *keyfunc;
+X509_ALGOR *encryption;
+} PBE2PARAM;
+
+typedef struct PBKDF2PARAM_st {
+ASN1_OCTET_STRING *salt;
+ASN1_INTEGER *iter;
+ASN1_INTEGER *keylength;
+X509_ALGOR *prf;
+} PBKDF2PARAM;
+
+
 /* PKCS#8 private key info structure */
 
 typedef struct pkcs8_priv_key_info_st
@@ -865,6 +880,16 @@ PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length);
 void PBEPARAM_free(PBEPARAM *a);
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
 
+int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp);
+PBKDF2PARAM *PBKDF2PARAM_new(void);
+PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, unsigned char **pp, long length);
+void PBKDF2PARAM_free(PBKDF2PARAM *a);
+
+int i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **pp);
+PBE2PARAM *PBE2PARAM_new(void);
+PBE2PARAM *d2i_PBE2PARAM(PBE2PARAM **a, unsigned char **pp, long length);
+void PBE2PARAM_free(PBE2PARAM *a);
+
 /* PKCS#8 utilities */
 
 int i2d_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO *a, unsigned char **pp);
@@ -1188,6 +1213,16 @@ int i2d_PBEPARAM();
 PBEPARAM *PBEPARAM_new();
 PBEPARAM *d2i_PBEPARAM();
 void PBEPARAM_free();
+
+int i2d_PBKDF2PARAM();
+PBKDF2PARAM *PBKDF2PARAM_new();
+PBKDF2PARAM *d2i_PBKDF2PARAM();
+void PBKDF2PARAM_free();
+
+int i2d_PBE2PARAM();
+PBE2PARAM *PBE2PARAM_new();
+PBE2PARAM *d2i_PBE2PARAM();
+void PBE2PARAM_free();
 
 int i2d_PKCS8_PRIV_KEY_INFO();
 PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new();
