@@ -256,67 +256,169 @@ do_linux-shared: do_gnu-shared
 do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
 	done
 
+DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
+	collect2=`gcc -print-prog-name=collect2 2>&1` && \
+	[ -n "$$collect2" ] && \
+	my_ld=`$$collect2 --help 2>&1 | grep Usage: | sed 's/^Usage: *\([^ ][^ ]*\).*/\1/'` && \
+	[ -n "$$my_ld" ] && \
+	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
+
 # This assumes that GNU utilities are *not* used
 do_alpha-osf1-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -o lib$$i.so \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 # The difference between alpha-osf1-shared and tru64-shared is the `-msym'
 # option passed to the linker.
 do_tru64-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -msym -no_archive -o lib$$i.so \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 # The difference between tru64-shared and tru64-shared-rpath is the
 # -rpath ${INSTALLTOP}/lib passed to the linker.
 do_tru64-shared-rpath:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -msym -no_archive -o lib$$i.so \
-		-rpath  ${INSTALLTOP}/lib \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+			-rpath  ${INSTALLTOP}/lib \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 
 # This assumes that GNU utilities are *not* used
 do_solaris-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # UnixWare 7 and OpenUNIX 8 native compilers used
 do_svr5-shared:
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  find . -name "*.o" -print > allobjs ; \
+		  OBJS= ; export OBJS ; \
+		  for obj in `ar t lib$$i.a` ; do \
+		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+		  done ; \
+		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
+
+# This assumes that GNU utilities are *not* used
+do_irix-shared:
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
+
+# This assumes that GNU utilities are *not* used
+do_hpux-shared:
+	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; /usr/ccs/bin/ld +vnocompatwarnings \
+		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	done
+
+# This assumes that GNU utilities are *not* used
+do_hpux64-shared:
+	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	done
+
+# The following method is said to work on all platforms.  Tests will
+# determine if that's how it's gong to be used.
+# This assumes that for all but GNU systems, GNU utilities are *not* used.
+# ALLSYMSFLAGS would be:
+#  GNU systems: --whole-archive
+#  Tru64 Unix:  -all
+#  Solaris:     -z allextract
+#  Irix:        -all
+#  HP/UX-32bit: -Fl
+#  HP/UX-64bit: +forceload
+#  AIX:		-bnogc
+# SHAREDFLAGS would be:
+#  GNU systems: -shared -Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  Tru64 Unix:  -shared \
+#		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}"
+#  Solaris:     -G -h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  Irix:        -shared -Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  HP/UX-32bit: +vnocompatwarnings -b -z +s \
+#		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  HP/UX-64bit: -b -z +h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  AIX:		-G -bE:lib$$i.exp -bM:SRE
+# SHAREDCMD would be:
+#  GNU systems: $(CC)
+#  Tru64 Unix:  $(CC)
+#  Solaris:     $(CC)
+#  Irix:        $(CC)
+#  HP/UX-32bit: /usr/ccs/bin/ld
+#  HP/UX-64bit: /usr/ccs/bin/ld
+#  AIX:		$(CC)
+ALLSYMSFLAG=-bnogc
+SHAREDFLAGS=-G -bE:lib$$i.exp -bM:SRE
+SHAREDCMD=$(CC)
+do_aix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-	  find . -name "*.o" -print > allobjs ; \
-	  OBJS= ; export OBJS ; \
-	  for obj in `ar t lib$$i.a` ; do \
-	    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
-	  done ; \
-	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
+	( set -x; \
+	  ld -r -o $$i.o $(ALLSYMSFLAG) lib$$i.a && \
+	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
+	    $(SHAREDCMD) $(SHAREDFLAG) -o lib$$i.so lib$$i.o \
+		$$libs ${EX_LIBS} ) ) \
+	|| exit 1; \
 	libs="$$libs -l$$i"; \
 	done
 
@@ -389,7 +491,7 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' EXE_EXT='${EXE_EXT}' tests );
+	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' EXE_EXT='${EXE_EXT}' tests );
 	@apps/openssl version -a
 
 report:
@@ -423,25 +525,25 @@ tags:
 	done;
 
 errors:
-	perl util/mkerr.pl -recurse -write
+	$(PERL) util/mkerr.pl -recurse -write
 
 stacks:
-	perl util/mkstack.pl -write
+	$(PERL) util/mkstack.pl -write
 
 util/libeay.num::
-	perl util/mkdef.pl crypto update
+	$(PERL) util/mkdef.pl crypto update
 
 util/ssleay.num::
-	perl util/mkdef.pl ssl update
+	$(PERL) util/mkdef.pl ssl update
 
 crypto/objects/obj_dat.h: crypto/objects/obj_mac.h crypto/objects/obj_dat.pl
-	perl crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
+	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
 crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt 
-	perl crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
 
 TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
-	perl Configure TABLE) > TABLE
+	$(PERL) Configure TABLE) > TABLE
 
 update: depend errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
 
@@ -498,8 +600,8 @@ install: all install_docs
 		do \
 			if [ -f "$$i" ]; then \
 			(       echo installing $$i; \
-				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-				chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+				cp -f $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+				chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 			fi \
 		done; \
 		(	here="`pwd`"; \
@@ -517,7 +619,7 @@ install_docs:
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `dirname $$i`; \
+		(cd `echo $$i | sed -e 's|/[^/]*$||'`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
 			 --release=$(VERSION) `basename $$i`) \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
@@ -526,7 +628,7 @@ install_docs:
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `dirname $$i`; \
+		(cd `echo $$i | sed -e 's|/[^/]*$||'`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`) \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \

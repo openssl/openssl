@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/11/12 22:26:22 $
+  ______________                           $Date: 2001/11/15 08:15:00 $
 
   DEVELOPMENT STATE
 
@@ -20,10 +20,7 @@
 
   AVAILABLE PATCHES
 
-    o IA-64 (a.k.a. Intel Itanium) public-key operation performance 
-      patch for Linux is available for download at
-      http://www.openssl.org/~appro/096b.linux-ia64.diff. As URL
-      suggests the patch is relative to OpenSSL 0.9.6b.
+    o 
 
   IN PROGRESS
 
