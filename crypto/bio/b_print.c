@@ -762,7 +762,9 @@ int BIO_vprintf (BIO *bio, const char *format, va_list args)
 	{
 	int ret;
 	size_t retlen;
-	MS_STATIC char hugebuf[1024*10];
+	char hugebuf[1024*2];	/* Was previously 10k, which is unreasonable
+				   in small-stack environments, like threads
+				   or DOS programs. */
 	char *hugebufp = hugebuf;
 	size_t hugebufsize = sizeof(hugebuf);
 	char *dynbuf = NULL;
