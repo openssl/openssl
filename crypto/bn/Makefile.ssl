@@ -65,6 +65,8 @@ knuth: bn_knuth.c
 knuth.fast: bn_knuth.c
 	cc -pg -fast -I.. -I../../include bn_knuth.c -o knuth $(LIB) #../../../libefence.a
 
+divtest: divtest.c
+	cc -I../../include divtest.c -o divtest ../../libcrypto.a
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
