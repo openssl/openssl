@@ -7,9 +7,10 @@
 
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a:
 
+      o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8 
       o Shared library support for HPUX and Solaris-gcc
       o Support of Linux/IA64
-      o Support of Mingw32
+      o Assembler support for Mingw32
       o New 'rand' application
       o New way to check for existence of algorithms from scripts
 
