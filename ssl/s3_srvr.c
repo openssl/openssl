@@ -903,7 +903,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	unsigned int u;
 #endif
 #ifndef NO_DH
-	DH *dh,*dhp;
+	DH *dh=NULL,*dhp;
 #endif
 	EVP_PKEY *pkey;
 	unsigned char *p,*d;

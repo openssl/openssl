@@ -205,7 +205,7 @@ char **TXT_DB_get_by_index(TXT_DB *db, int idx, char **value)
 		db->error=DB_ERROR_NO_INDEX;
 		return(NULL);
 		}
-	ret=(char **)lh_retrieve(lh,(char *)value);
+	ret=(char **)lh_retrieve(lh,value);
 	db->error=DB_ERROR_OK;
 	return(ret);
 	}
@@ -306,7 +306,7 @@ int TXT_DB_insert(TXT_DB *db, char **row)
 			{
 			if ((db->qual[i] != NULL) &&
 				(db->qual[i](row) == 0)) continue;
-			r=(char **)lh_retrieve(db->index[i],(char *)row);
+			r=(char **)lh_retrieve(db->index[i],row);
 			if (r != NULL)
 				{
 				db->error=DB_ERROR_INDEX_CLASH;
@@ -329,7 +329,7 @@ int TXT_DB_insert(TXT_DB *db, char **row)
 			{
 			if ((db->qual[i] != NULL) &&
 				(db->qual[i](row) == 0)) continue;
-			lh_insert(db->index[i],(char *)row);
+			lh_insert(db->index[i],row);
 			}
 		}
 	return(1);

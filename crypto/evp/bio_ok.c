@@ -456,7 +456,7 @@ static void sig_out(BIO* b)
 	longswap(&(ctx->buf[ctx->buf_len]), md->digest->md_size);
 	ctx->buf_len+= md->digest->md_size;
 
-	EVP_DigestUpdate(md, (unsigned char*)WELLKNOWN, strlen(WELLKNOWN));
+	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
 	md->digest->final(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]));
 	ctx->buf_len+= md->digest->md_size;
 	ctx->blockout= 1;
@@ -480,7 +480,7 @@ static void sig_in(BIO* b)
 	longswap(&(md->md.base[0]), md->digest->md_size);
 	ctx->buf_off+= md->digest->md_size;
 
-	EVP_DigestUpdate(md, (unsigned char*)WELLKNOWN, strlen(WELLKNOWN));
+	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
 	md->digest->final(tmp, &(md->md.base[0]));
 	ret= memcmp(&(ctx->buf[ctx->buf_off]), tmp, md->digest->md_size) == 0;
 	ctx->buf_off+= md->digest->md_size;

@@ -377,7 +377,7 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
 		abort();
 		}
 
-	tmp=(X509_OBJECT *)lh_retrieve(h,(char *)&stmp);
+	tmp=(X509_OBJECT *)lh_retrieve(h,&stmp);
 	return(tmp);
 	}
 

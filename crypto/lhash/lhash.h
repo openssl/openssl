@@ -73,7 +73,7 @@ extern "C" {
 
 typedef struct lhash_node_st
 	{
-	char *data;
+	void *data;
 	struct lhash_node_st *next;
 #ifndef NO_HASH_COMP
 	unsigned long hash;
@@ -116,13 +116,13 @@ typedef struct lhash_st
  * in lh_insert(). */
 #define lh_error(lh)	((lh)->error)
 
-LHASH *lh_new(unsigned long (*h)(), int (*c)());
+LHASH *lh_new(unsigned long (*h)(/* void *a */), int (*c)(/* void *a,void *b */));
 void lh_free(LHASH *lh);
-char *lh_insert(LHASH *lh, char *data);
-char *lh_delete(LHASH *lh, char *data);
-char *lh_retrieve(LHASH *lh, char *data);
-void lh_doall(LHASH *lh, void (*func)(/* char *b */));
-void lh_doall_arg(LHASH *lh, void (*func)(/*char *a,char *b*/),char *arg);
+void *lh_insert(LHASH *lh, void *data);
+void *lh_delete(LHASH *lh, void *data);
+void *lh_retrieve(LHASH *lh, void *data);
+    void lh_doall(LHASH *lh, void (*func)(/*void *b*/));
+void lh_doall_arg(LHASH *lh, void (*func)(/*void *a,void *b*/),void *arg);
 unsigned long lh_strhash(const char *c);
 
 #ifndef NO_FP_API

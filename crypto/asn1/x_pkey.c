@@ -147,5 +147,5 @@ void X509_PKEY_free(X509_PKEY *x)
 	if (x->enc_pkey != NULL) M_ASN1_OCTET_STRING_free(x->enc_pkey);
 	if (x->dec_pkey != NULL)EVP_PKEY_free(x->dec_pkey);
 	if ((x->key_data != NULL) && (x->key_free)) Free((char *)x->key_data);
-	Free((char *)(char *)x);
+	Free((char *)x);
 	}

@@ -622,13 +622,13 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 
 	X509_OBJECT_up_ref_count(obj);
 
-	r=(X509_OBJECT *)lh_insert(ctx->certs,(char *)obj);
+	r=(X509_OBJECT *)lh_insert(ctx->certs,obj);
 	if (r != NULL)
 		{ /* oops, put it back */
-		lh_delete(ctx->certs,(char *)obj);
+		lh_delete(ctx->certs,obj);
 		X509_OBJECT_free_contents(obj);
 		Free(obj);
-		lh_insert(ctx->certs,(char *)r);
+		lh_insert(ctx->certs,r);
 		X509err(X509_F_X509_STORE_ADD_CERT,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;
 		}
@@ -657,13 +657,13 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 
 	X509_OBJECT_up_ref_count(obj);
 
-	r=(X509_OBJECT *)lh_insert(ctx->certs,(char *)obj);
+	r=(X509_OBJECT *)lh_insert(ctx->certs,obj);
 	if (r != NULL)
 		{ /* oops, put it back */
-		lh_delete(ctx->certs,(char *)obj);
+		lh_delete(ctx->certs,obj);
 		X509_OBJECT_free_contents(obj);
 		Free(obj);
-		lh_insert(ctx->certs,(char *)r);
+		lh_insert(ctx->certs,r);
 		X509err(X509_F_X509_STORE_ADD_CRL,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;
 		}

@@ -92,7 +92,7 @@ int BIO_dump(BIO *bio, const char *s, int len)
       if (((i*DUMP_WIDTH)+j)>=len) {
 	strcat(buf,"   ");
       } else {
-        ch=((unsigned char)*((char *)(s)+i*DUMP_WIDTH+j)) & 0xff;
+        ch=((unsigned char)*(s+i*DUMP_WIDTH+j)) & 0xff;
 	sprintf(tmp,"%02x%c",ch,j==7?'-':' ');
         strcat(buf,tmp);
       }
@@ -101,7 +101,7 @@ int BIO_dump(BIO *bio, const char *s, int len)
     for(j=0;j<DUMP_WIDTH;j++) {
       if (((i*DUMP_WIDTH)+j)>=len)
 	break;
-      ch=((unsigned char)*((char *)(s)+i*DUMP_WIDTH+j)) & 0xff;
+      ch=((unsigned char)*(s+i*DUMP_WIDTH+j)) & 0xff;
 #ifndef CHARSET_EBCDIC
       sprintf(tmp,"%c",((ch>=' ')&&(ch<='~'))?ch:'.');
 #else

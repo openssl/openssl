@@ -60,7 +60,7 @@
 #include "cast_lcl.h"
 #include <openssl/opensslv.h>
 
-char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
+const char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
 
 void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
 		      CAST_KEY *ks, int enc)

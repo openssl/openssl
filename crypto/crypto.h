@@ -302,12 +302,12 @@ void CRYPTO_get_mem_functions(void *(**m)(size_t),void *(**r)(void *, size_t), v
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
 void CRYPTO_get_mem_debug_functions(void (**m)(),void (**r)(),void (**f)(),void (**so)(),long (**go)());
 
-void *CRYPTO_malloc_locked(int num, char *file, int line);
+void *CRYPTO_malloc_locked(int num, const char *file, int line);
 void CRYPTO_free_locked(void *);
-void *CRYPTO_malloc(int num, char *file, int line);
+void *CRYPTO_malloc(int num, const char *file, int line);
 void CRYPTO_free(void *);
-void *CRYPTO_realloc(void *addr,int num, char *file, int line);
-void *CRYPTO_remalloc(void *addr,int num, char *file, int line);
+void *CRYPTO_realloc(void *addr,int num, const char *file, int line);
+void *CRYPTO_remalloc(void *addr,int num, const char *file, int line);
 
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options();

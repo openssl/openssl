@@ -257,7 +257,7 @@ static APP_INFO *pop_info()
 	if (amih != NULL)
 		{
 		tmp.thread=CRYPTO_thread_id();
-		if ((ret=(APP_INFO *)lh_delete(amih,(char *)&tmp)) != NULL)
+		if ((ret=(APP_INFO *)lh_delete(amih,&tmp)) != NULL)
 			{
 			APP_INFO *next=ret->next;
 

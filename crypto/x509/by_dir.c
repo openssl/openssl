@@ -326,8 +326,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		/* we have added it to the cache so now pull
 		 * it out again */
 		CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
-		tmp=(X509_OBJECT *)lh_retrieve(xl->store_ctx->certs,
-			(char *)&stmp);
+		tmp=(X509_OBJECT *)lh_retrieve(xl->store_ctx->certs,&stmp);
 		CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
 
 		if (tmp != NULL)

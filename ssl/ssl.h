@@ -1042,7 +1042,7 @@ long	SSL_ctrl(SSL *ssl,int cmd, long larg, char *parg);
 long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, char *parg);
 
 int	SSL_get_error(SSL *s,int ret_code);
-char *	SSL_get_version(SSL *s);
+const char *SSL_get_version(SSL *s);
 
 /* This sets the 'default' SSL version that SSL_new() will create */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx,SSL_METHOD *meth);

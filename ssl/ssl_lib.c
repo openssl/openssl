@@ -64,7 +64,7 @@
 #include <openssl/x509v3.h>
 #include "ssl_locl.h"
 
-char *SSL_version_str=OPENSSL_VERSION_TEXT;
+const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_meth=NULL;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_ctx_meth=NULL;
@@ -1615,7 +1615,7 @@ SSL_METHOD *ssl_bad_method(int ver)
 	return(NULL);
 	}
 
-char *SSL_get_version(SSL *s)
+const char *SSL_get_version(SSL *s)
 	{
 	if (s->version == TLS1_VERSION)
 		return("TLSv1");

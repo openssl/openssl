@@ -132,7 +132,7 @@ const char *OBJ_NAME_get(const char *name, int type)
 
 	for (;;)
 		{
-		ret=(OBJ_NAME *)lh_retrieve(names_lh,(char *)&on);
+		ret=(OBJ_NAME *)lh_retrieve(names_lh,&on);
 		if (ret == NULL) return(NULL);
 		if ((ret->alias) && !alias)
 			{
@@ -168,7 +168,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 	onp->type=type;
 	onp->data=data;
 
-	ret=(OBJ_NAME *)lh_insert(names_lh,(char *)onp);
+	ret=(OBJ_NAME *)lh_insert(names_lh,onp);
 	if (ret != NULL)
 		{
 		/* free things */
@@ -203,7 +203,7 @@ int OBJ_NAME_remove(const char *name, int type)
 	type&= ~OBJ_NAME_ALIAS;
 	on.name=name;
 	on.type=type;
-	ret=(OBJ_NAME *)lh_delete(names_lh,(char *)&on);
+	ret=(OBJ_NAME *)lh_delete(names_lh,&on);
 	if (ret != NULL)
 		{
 		/* free things */

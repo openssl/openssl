@@ -159,7 +159,7 @@ void CRYPTO_get_mem_debug_functions(void (**m)(), void (**r)(), void (**f)(),voi
 	}
 
 
-void *CRYPTO_malloc_locked(int num, char *file, int line)
+void *CRYPTO_malloc_locked(int num, const char *file, int line)
 	{
 	char *ret = NULL;
 
@@ -191,7 +191,7 @@ void CRYPTO_free_locked(void *str)
 		free_debug_func(NULL, 1);
 	}
 
-void *CRYPTO_malloc(int num, char *file, int line)
+void *CRYPTO_malloc(int num, const char *file, int line)
 	{
 	char *ret = NULL;
 
@@ -211,7 +211,7 @@ void *CRYPTO_malloc(int num, char *file, int line)
 	return ret;
 	}
 
-void *CRYPTO_realloc(void *str, int num, char *file, int line)
+void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 	{
 	char *ret = NULL;
 
@@ -239,7 +239,7 @@ void CRYPTO_free(void *str)
 		free_debug_func(NULL, 1);
 	}
 
-void *CRYPTO_remalloc(void *a, int num, char *file, int line)
+void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 	{
 	if (a != NULL) Free(a);
 	a=(char *)Malloc(num);

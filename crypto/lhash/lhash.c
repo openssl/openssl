@@ -107,12 +107,9 @@ const char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 #define UP_LOAD		(2*LH_LOAD_MULT) /* load times 256  (default 2) */
 #define DOWN_LOAD	(LH_LOAD_MULT)   /* load times 256  (default 1) */
 
-
-#define P_CP	char *
-#define P_CPP	char *,char *
 static void expand(LHASH *lh);
 static void contract(LHASH *lh);
-static LHASH_NODE **getrn(LHASH *lh, char *data, unsigned long *rhash);
+static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash);
 
 LHASH *lh_new(unsigned long (*h)(), int (*c)())
 	{
@@ -179,11 +176,11 @@ void lh_free(LHASH *lh)
 	Free((char *)lh);
 	}
 
-char *lh_insert(LHASH *lh, char *data)
+void *lh_insert(LHASH *lh, void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	char *ret;
+	void *ret;
 
 	lh->error=0;
 	if (lh->up_load <= (lh->num_items*LH_LOAD_MULT/lh->num_nodes))
@@ -217,11 +214,11 @@ char *lh_insert(LHASH *lh, char *data)
 	return(ret);
 	}
 
-char *lh_delete(LHASH *lh, char *data)
+void *lh_delete(LHASH *lh, void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
-	char *ret;
+	void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -248,11 +245,11 @@ char *lh_delete(LHASH *lh, char *data)
 	return(ret);
 	}
 
-char *lh_retrieve(LHASH *lh, char *data)
+void *lh_retrieve(LHASH *lh, void *data)
 	{
 	unsigned long hash;
 	LHASH_NODE **rn;
-	char *ret;
+	void *ret;
 
 	lh->error=0;
 	rn=getrn(lh,data,&hash);
@@ -275,7 +272,7 @@ void lh_doall(LHASH *lh, void (*func)())
 	lh_doall_arg(lh,func,NULL);
 	}
 
-void lh_doall_arg(LHASH *lh, void (*func)(), char *arg)
+void lh_doall_arg(LHASH *lh, void (*func)(), void *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -332,7 +329,7 @@ static void expand(LHASH *lh)
 	if ((lh->p) >= lh->pmax)
 		{
 		j=(int)lh->num_alloc_nodes*2;
-		n=(LHASH_NODE **)Realloc((char *)lh->b,
+		n=(LHASH_NODE **)Realloc(lh->b,
 			(unsigned int)sizeof(LHASH_NODE *)*j);
 		if (n == NULL)
 			{
@@ -360,7 +357,7 @@ static void contract(LHASH *lh)
 	lh->b[lh->p+lh->pmax-1]=NULL; /* 24/07-92 - eay - weird but :-( */
 	if (lh->p == 0)
 		{
-		n=(LHASH_NODE **)Realloc((char *)lh->b,
+		n=(LHASH_NODE **)Realloc(lh->b,
 			(unsigned int)(sizeof(LHASH_NODE *)*lh->pmax));
 		if (n == NULL)
 			{
@@ -391,7 +388,7 @@ static void contract(LHASH *lh)
 		}
 	}
 
-static LHASH_NODE **getrn(LHASH *lh, char *data, unsigned long *rhash)
+static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash)
 	{
 	LHASH_NODE **ret,*n1;
 	unsigned long hash,nn;
@@ -426,8 +423,7 @@ static LHASH_NODE **getrn(LHASH *lh, char *data, unsigned long *rhash)
 	}
 
 /*
-static unsigned long lh_strhash(str)
-char *str;
+unsigned long lh_strhash(char *str)
 	{
 	int i,l;
 	unsigned long ret=0;

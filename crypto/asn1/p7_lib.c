@@ -251,7 +251,7 @@ void PKCS7_free(PKCS7 *a)
 		{
 		ASN1_OBJECT_free(a->type);
 		}
-	Free((char *)(char *)a);
+	Free((char *)a);
 	}
 
 void PKCS7_content_free(PKCS7 *a)

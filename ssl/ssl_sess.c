@@ -180,8 +180,7 @@ int ssl_get_new_session(SSL *s, int session)
 
 			RAND_pseudo_bytes(ss->session_id,ss->session_id_length);
 			CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-			r=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,
-				(char *)ss);
+			r=(SSL_SESSION *)lh_retrieve(s->ctx->sessions, ss);
 			CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 			if (r == NULL) break;
 			/* else - woops a session_id match */
@@ -225,7 +224,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		{
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,(char *)&data);
+		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,&data);
 		if (ret != NULL)
 		    /* don't allow other threads to steal it: */
 		    CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -358,7 +357,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	/* if session c is in already in cache, we take back the increment later */
 
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	s=(SSL_SESSION *)lh_insert(ctx->sessions,(char *)c);
+	s=(SSL_SESSION *)lh_insert(ctx->sessions,c);
 	
 	/* s != NULL iff we already had a session with the given PID.
 	 * In this case, s == c should hold (then we did not really modify
@@ -424,7 +423,7 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	if ((c != NULL) && (c->session_id_length != 0))
 		{
 		if(lck) CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		r=(SSL_SESSION *)lh_delete(ctx->sessions,(char *)c);
+		r=(SSL_SESSION *)lh_delete(ctx->sessions,c);
 		if (r != NULL)
 			{
 			ret=1;
@@ -585,7 +584,7 @@ static void timeout(SSL_SESSION *s, TIMEOUT_PARAM *p)
 		{
 		/* The reason we don't call SSL_CTX_remove_session() is to
 		 * save on locking overhead */
-		lh_delete(p->cache,(char *)s);
+		lh_delete(p->cache,s);
 		SSL_SESSION_list_remove(p->ctx,s);
 		s->not_resumable=1;
 		if (p->ctx->remove_session_cb != NULL)
@@ -606,7 +605,7 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	i=tp.cache->down_load;
 	tp.cache->down_load=0;
-	lh_doall_arg(tp.cache,(void (*)())timeout,(char *)&tp);
+	lh_doall_arg(tp.cache,(void (*)())timeout,&tp);
 	tp.cache->down_load=i;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	}

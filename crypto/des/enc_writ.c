@@ -135,7 +135,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 		}
 	else
 		{
-		cp=(unsigned char*)buf;
+		cp=buf;
 		rnum=((len+7)/8*8); /* round up to nearest eight */
 		}
 

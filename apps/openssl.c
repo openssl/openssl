@@ -164,7 +164,7 @@ int main(int Argc, char *Argv[])
 	program_name(Argv[0],pname,PROG_NAME_SIZE);
 
 	f.name=pname;
-	fp=(FUNCTION *)lh_retrieve(prog,(char *)&f);
+	fp=(FUNCTION *)lh_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		Argv[0]=pname;
@@ -262,7 +262,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	if ((argc <= 0) || (argv[0] == NULL))
 		{ ret=0; goto end; }
 	f.name=argv[0];
-	fp=(FUNCTION *)lh_retrieve(prog,(char *)&f);
+	fp=(FUNCTION *)lh_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		ret=fp->func(argc,argv);
@@ -361,7 +361,7 @@ static LHASH *prog_init(void)
 	if ((ret=lh_new(hash,cmp)) == NULL) return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
-		lh_insert(ret,(char *)f);
+		lh_insert(ret,f);
 	return(ret);
 	}
 

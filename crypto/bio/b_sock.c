@@ -166,7 +166,11 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
- 		s=getservbyname((char *)str,"tcp");
+ 		s=getservbyname(
+#ifndef CONST_STRICT
+		    (char *)
+#endif
+		    str,"tcp");
 		if(s != NULL)
 			*port_ptr=ntohs((unsigned short)s->s_port);
 		CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
@@ -374,7 +378,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
-		ret=gethostbyname((char *)name);
+		ret=gethostbyname(
+#ifndef CONST_STRICT
+		    (char *)
+#endif
+		    name);
 
 		if (ret == NULL)
 			goto end;
