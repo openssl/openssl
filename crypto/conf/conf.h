@@ -67,6 +67,7 @@ extern "C" {
 #include <openssl/lhash.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
+#include <openssl/e_os.h>
 
 typedef struct
 	{
@@ -77,6 +78,25 @@ typedef struct
 
 DECLARE_STACK_OF(CONF_VALUE)
 
+struct conf_st;
+typedef struct conf_st CONF;
+struct conf_method_st;
+typedef struct conf_method_st CONF_METHOD;
+
+struct conf_method_st
+	{
+	const char *name;
+	CONF *(MS_FAR *create)(CONF_METHOD *meth);
+	int (MS_FAR *init)(CONF *conf);
+	int (MS_FAR *destroy)(CONF *conf);
+	int (MS_FAR *destroy_data)(CONF *conf);
+	int (MS_FAR *load)(CONF *conf, BIO *bp, long *eline);
+	int (MS_FAR *dump)(CONF *conf, BIO *bp);
+	int (MS_FAR *is_number)(CONF *conf, char c);
+	int (MS_FAR *to_int)(CONF *conf, char c);
+	};
+
+int CONF_set_default_method(CONF_METHOD *meth);
 LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
 #ifndef NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
@@ -86,7 +106,40 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section);
 char *CONF_get_string(LHASH *conf,char *group,char *name);
 long CONF_get_number(LHASH *conf,char *group,char *name);
 void CONF_free(LHASH *conf);
+void CONF_dump(LHASH *conf, BIO *out);
+int CONF_dump_fp(LHASH *conf, FILE *out);
+int CONF_dump_bio(LHASH *conf, BIO *out);
 void ERR_load_CONF_strings(void );
+
+/* New conf code.  The semantics are different from the functions above.
+   If that wasn't the case, the above functions would have been replaced */
+
+struct conf_st
+	{
+	CONF_METHOD *meth;
+	void *meth_data;
+	LHASH *data;
+	};
+
+CONF *NCONF_new(CONF_METHOD *meth);
+CONF_METHOD *NCONF_default();
+CONF_METHOD *NCONF_WIN32();
+#if 0 /* Just to give you an idea of what I have in mind */
+CONF_METHOD *NCONF_XML();
+#endif
+void NCONF_free(CONF *conf);
+void NCONF_free_data(CONF *conf);
+
+int NCONF_load(CONF *conf,const char *file,long *eline);
+#ifndef NO_FP_API
+int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
+#endif
+int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
+STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section);
+char *NCONF_get_string(CONF *conf,char *group,char *name);
+long NCONF_get_number(CONF *conf,char *group,char *name);
+int NCONF_dump_fp(CONF *conf, FILE *out);
+int NCONF_dump_bio(CONF *conf, BIO *out);
 
 
 /* BEGIN ERROR CODES */
@@ -97,15 +150,24 @@ void ERR_load_CONF_strings(void );
 /* Error codes for the CONF functions. */
 
 /* Function codes. */
+#define CONF_F_CONF_DUMP_FP				 104
 #define CONF_F_CONF_LOAD				 100
 #define CONF_F_CONF_LOAD_BIO				 102
 #define CONF_F_CONF_LOAD_FP				 103
+#define CONF_F_NCONF_DUMP_BIO				 105
+#define CONF_F_NCONF_DUMP_FP				 106
+#define CONF_F_NCONF_GET_NUMBER				 107
+#define CONF_F_NCONF_GET_SECTION			 108
+#define CONF_F_NCONF_GET_STRING				 109
+#define CONF_F_NCONF_LOAD_BIO				 110
+#define CONF_F_NCONF_NEW				 111
 #define CONF_F_STR_COPY					 101
 
 /* Reason codes. */
 #define CONF_R_MISSING_CLOSE_SQUARE_BRACKET		 100
 #define CONF_R_MISSING_EQUAL_SIGN			 101
 #define CONF_R_NO_CLOSE_BRACE				 102
+#define CONF_R_NO_CONF					 105
 #define CONF_R_UNABLE_TO_CREATE_NEW_SECTION		 103
 #define CONF_R_VARIABLE_HAS_NO_VALUE			 104
 

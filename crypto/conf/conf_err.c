@@ -66,9 +66,17 @@
 #ifndef NO_ERR
 static ERR_STRING_DATA CONF_str_functs[]=
 	{
+{ERR_PACK(0,CONF_F_CONF_DUMP_FP,0),	"CONF_dump_fp"},
 {ERR_PACK(0,CONF_F_CONF_LOAD,0),	"CONF_load"},
 {ERR_PACK(0,CONF_F_CONF_LOAD_BIO,0),	"CONF_load_bio"},
 {ERR_PACK(0,CONF_F_CONF_LOAD_FP,0),	"CONF_load_fp"},
+{ERR_PACK(0,CONF_F_NCONF_DUMP_BIO,0),	"NCONF_dump_bio"},
+{ERR_PACK(0,CONF_F_NCONF_DUMP_FP,0),	"NCONF_dump_fp"},
+{ERR_PACK(0,CONF_F_NCONF_GET_NUMBER,0),	"NCONF_get_number"},
+{ERR_PACK(0,CONF_F_NCONF_GET_SECTION,0),	"NCONF_get_section"},
+{ERR_PACK(0,CONF_F_NCONF_GET_STRING,0),	"NCONF_get_string"},
+{ERR_PACK(0,CONF_F_NCONF_LOAD_BIO,0),	"NCONF_load_bio"},
+{ERR_PACK(0,CONF_F_NCONF_NEW,0),	"NCONF_new"},
 {ERR_PACK(0,CONF_F_STR_COPY,0),	"STR_COPY"},
 {0,NULL}
 	};
@@ -78,6 +86,7 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 {CONF_R_MISSING_CLOSE_SQUARE_BRACKET     ,"missing close square bracket"},
 {CONF_R_MISSING_EQUAL_SIGN               ,"missing equal sign"},
 {CONF_R_NO_CLOSE_BRACE                   ,"no close brace"},
+{CONF_R_NO_CONF                          ,"no conf"},
 {CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
 {CONF_R_VARIABLE_HAS_NO_VALUE            ,"variable has no value"},
 {0,NULL}

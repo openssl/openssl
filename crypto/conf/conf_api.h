@@ -1,4 +1,4 @@
-/* crypto/conf/conf_lcl.h */
+/* conf_api.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,61 +56,33 @@
  * [including the GNU Public Licence.]
  */
 
-#define CONF_NUMBER		1
-#define CONF_UPPER		2
-#define CONF_LOWER		4
-#define CONF_UNDER		256
-#define CONF_PUNCTUATION	512
-#define CONF_WS			16
-#define CONF_ESC		32
-#define CONF_QUOTE		64
-#define CONF_COMMENT		128
-#define CONF_EOF		8
-#define CONF_ALPHA		(CONF_UPPER|CONF_LOWER)
-#define CONF_ALPHA_NUMERIC	(CONF_ALPHA|CONF_NUMBER|CONF_UNDER)
-#define CONF_ALPHA_NUMERIC_PUNCT (CONF_ALPHA|CONF_NUMBER|CONF_UNDER| \
-					CONF_PUNCTUATION)
+#ifndef  HEADER_CONF_API_H
+#define HEADER_CONF_API_H
 
-#ifndef CHARSET_EBCDIC
-#define IS_COMMENT(a)		(CONF_COMMENT&(CONF_type[(a)&0x7f]))
-#define IS_EOF(a)		((a) == '\0')
-#define IS_ESC(a)		((a) == '\\')
-#define IS_NUMER(a)		(CONF_type[(a)&0x7f]&CONF_NUMBER)
-#define IS_WS(a)		(CONF_type[(a)&0x7f]&CONF_WS)
-#define IS_ALPHA_NUMERIC(a)	(CONF_type[(a)&0x7f]&CONF_ALPHA_NUMERIC)
-#define IS_ALPHA_NUMERIC_PUNCT(a) \
-				(CONF_type[(a)&0x7f]&CONF_ALPHA_NUMERIC_PUNCT)
-#define IS_QUOTE(a)		(CONF_type[(a)&0x7f]&CONF_QUOTE)
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-#else /*CHARSET_EBCDIC*/
+#include <openssl/lhash.h>
+#include <openssl/conf.h>
 
-#define IS_COMMENT(a)		(CONF_COMMENT&(CONF_type[os_toascii[a]&0x7f]))
-#define IS_EOF(a)		(os_toascii[a] == '\0')
-#define IS_ESC(a)		(os_toascii[a] == '\\')
-#define IS_NUMER(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_NUMBER)
-#define IS_WS(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_WS)
-#define IS_ALPHA_NUMERIC(a)	(CONF_type[os_toascii[a]&0x7f]&CONF_ALPHA_NUMERIC)
-#define IS_ALPHA_NUMERIC_PUNCT(a) \
-				(CONF_type[os_toascii[a]&0x7f]&CONF_ALPHA_NUMERIC_PUNCT)
-#define IS_QUOTE(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_QUOTE)
-#endif /*CHARSET_EBCDIC*/
+/* This was new_section */
+CONF_VALUE *_CONF_new_section(CONF *conf, char *section);
+/* This was get_section */
+CONF_VALUE *_CONF_get_section(CONF *conf, char *section);
+/* This was CONF_get_section */
+STACK_OF(CONF_VALUE) *_CONF_get_section_values(CONF *conf, char *section);
 
-static unsigned short CONF_type[128]={
-	0x008,0x000,0x000,0x000,0x000,0x000,0x000,0x000,
-	0x000,0x010,0x010,0x000,0x000,0x010,0x000,0x000,
-	0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,
-	0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,
-	0x010,0x200,0x040,0x080,0x000,0x200,0x200,0x040,
-	0x000,0x000,0x200,0x200,0x200,0x200,0x200,0x200,
-	0x001,0x001,0x001,0x001,0x001,0x001,0x001,0x001,
-	0x001,0x001,0x000,0x200,0x000,0x000,0x000,0x200,
-	0x200,0x002,0x002,0x002,0x002,0x002,0x002,0x002,
-	0x002,0x002,0x002,0x002,0x002,0x002,0x002,0x002,
-	0x002,0x002,0x002,0x002,0x002,0x002,0x002,0x002,
-	0x002,0x002,0x002,0x000,0x020,0x000,0x200,0x100,
-	0x040,0x004,0x004,0x004,0x004,0x004,0x004,0x004,
-	0x004,0x004,0x004,0x004,0x004,0x004,0x004,0x004,
-	0x004,0x004,0x004,0x004,0x004,0x004,0x004,0x004,
-	0x004,0x004,0x004,0x000,0x200,0x000,0x200,0x000,
-	};
+STACK_OF(CONF_VALUE) *_CONF_get_section_values(CONF *conf, char *section);
+int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value);
+char *_CONF_get_string(CONF *conf, char *section, char *name);
+long _CONF_get_number(CONF *conf, char *section, char *name);
+
+int _CONF_new_data(CONF *conf);
+void _CONF_free_data(CONF *conf);
+
+#ifdef  __cplusplus
+}
+#endif
+#endif
 

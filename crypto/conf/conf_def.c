@@ -56,72 +56,128 @@
  * [including the GNU Public Licence.]
  */
 
+/* Part of the code in here was originally in conf.c, which is now removed */
+
 #include <stdio.h>
-#include <errno.h>
-#include "cryptlib.h"
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
+#include <openssl/conf_api.h>
+#include "conf_def.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
-#include "conf_lcl.h"
+static char *eat_ws(CONF *conf, char *p);
+static char *eat_alpha_numeric(CONF *conf, char *p);
+static void clear_comments(CONF *conf, char *p);
+static int str_copy(CONF *conf,char *section,char **to, char *from);
+static char *scan_quote(CONF *conf, char *p);
+static char *scan_dquote(CONF *conf, char *p);
+#define scan_esc(p)	(((IS_EOF((conf),(p)[1]))?(p+=1):(p+=2)))
 
-static void value_free_hash(CONF_VALUE *a, LHASH *conf);
-static void value_free_stack(CONF_VALUE *a,LHASH *conf);
-static unsigned long hash(CONF_VALUE *v);
-static int cmp_conf(CONF_VALUE *a,CONF_VALUE *b);
-static char *eat_ws(char *p);
-static char *eat_alpha_numeric(char *p);
-static void clear_comments(char *p);
-static int str_copy(LHASH *conf,char *section,char **to, char *from);
-static char *scan_quote(char *p);
-static CONF_VALUE *new_section(LHASH *conf,char *section);
-static CONF_VALUE *get_section(LHASH *conf,char *section);
-#define scan_esc(p)	((((p)[1] == '\0')?(p++):(p+=2)),p)
+static CONF *def_create(CONF_METHOD *meth);
+static int def_init_default(CONF *conf);
+static int def_init_WIN32(CONF *conf);
+static int def_destroy(CONF *conf);
+static int def_destroy_data(CONF *conf);
+static int def_load(CONF *conf, BIO *bp, long *eline);
+static int def_dump(CONF *conf, BIO *bp);
+static int def_is_number(CONF *conf, char c);
+static int def_to_int(CONF *conf, char c);
 
-const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;
+const char *CONF_def_version="CONF_def" OPENSSL_VERSION_PTEXT;
 
+static CONF_METHOD default_method = {
+	"OpenSSL default",
+	def_create,
+	def_init_default,
+	def_destroy,
+	def_destroy_data,
+	def_load,
+	def_dump,
+	def_is_number,
+	def_to_int
+	};
 
-LHASH *CONF_load(LHASH *h, const char *file, long *line)
+static CONF_METHOD WIN32_method = {
+	"WIN32",
+	def_create,
+	def_init_WIN32,
+	def_destroy,
+	def_destroy_data,
+	def_load,
+	def_dump,
+	def_is_number,
+	def_to_int
+	};
+
+CONF_METHOD *NCONF_default()
 	{
-	LHASH *ltmp;
-	BIO *in=NULL;
-
-#ifdef VMS
-	in=BIO_new_file(file, "r");
-#else
-	in=BIO_new_file(file, "rb");
-#endif
-	if (in == NULL)
-		{
-		CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
-		return NULL;
-		}
-
-	ltmp = CONF_load_bio(h, in, line);
-	BIO_free(in);
-
-	return ltmp;
-}
-#ifndef NO_FP_API
-LHASH *CONF_load_fp(LHASH *h, FILE *in, long *line)
-{
-	BIO *btmp;
-	LHASH *ltmp;
-	if(!(btmp = BIO_new_fp(in, BIO_NOCLOSE))) {
-		CONFerr(CONF_F_CONF_LOAD_FP,ERR_R_BUF_LIB);
-		return NULL;
+	return &default_method;
 	}
-	ltmp = CONF_load_bio(h, btmp, line);
-	BIO_free(btmp);
-	return ltmp;
-}
-#endif
-
-LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
+CONF_METHOD *NCONF_WIN32()
 	{
-	LHASH *ret=NULL;
+	return &WIN32_method;
+	}
+
+static CONF *def_create(CONF_METHOD *meth)
+	{
+	CONF *ret;
+
+	ret = (CONF *)Malloc(sizeof(CONF) + sizeof(unsigned short *));
+	if (ret)
+		if (meth->init(ret) == 0)
+			{
+			Free(ret);
+			ret = NULL;
+			}
+	return ret;
+	}
+	
+static int def_init_default(CONF *conf)
+	{
+	if (conf == NULL)
+		return 0;
+
+	conf->meth = &default_method;
+	conf->meth_data = (void *)CONF_type_default;
+	conf->data = NULL;
+
+	return 1;
+	}
+
+static int def_init_WIN32(CONF *conf)
+	{
+	if (conf == NULL)
+		return 0;
+
+	conf->meth = &WIN32_method;
+	conf->meth_data = (void *)CONF_type_win32;
+	conf->data = NULL;
+
+	return 1;
+	}
+
+static int def_destroy(CONF *conf)
+	{
+	if (def_destroy_data(conf))
+		{
+		Free(conf);
+		return 1;
+		}
+	return 0;
+	}
+
+static int def_destroy_data(CONF *conf)
+	{
+	if (conf == NULL)
+		return 0;
+	_CONF_free_data(conf);
+	return 1;
+	}
+
+static int def_load(CONF *conf, BIO *in, long *line)
+	{
 #define BUFSIZE	512
 	char btmp[16];
 	int bufnum=0,i,ii;
@@ -129,11 +185,12 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 	char *s,*p,*end;
 	int again,n;
 	long eline=0;
-	CONF_VALUE *v=NULL,*vv,*tv;
+	CONF_VALUE *v=NULL,*tv;
 	CONF_VALUE *sv=NULL;
 	char *section=NULL,*buf;
 	STACK_OF(CONF_VALUE) *section_sk=NULL,*ts;
 	char *start,*psection,*pname;
+	void *h = (void *)(conf->data);
 
 	if ((buff=BUF_MEM_new()) == NULL)
 		{
@@ -149,18 +206,13 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 		}
 	strcpy(section,"default");
 
-	if (h == NULL)
+	if (_CONF_new_data(conf) == 0)
 		{
-		if ((ret=lh_new(hash,cmp_conf)) == NULL)
-			{
-			CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
+		CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
+		goto err;
 		}
-	else
-		ret=h;
 
-	sv=new_section(ret,section);
+	sv=_CONF_new_section(conf,section);
 	if (sv == NULL)
 		{
 		CONFerr(CONF_F_CONF_LOAD_BIO,
@@ -213,8 +265,8 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 			/* If we have bytes and the last char '\\' and
 			 * second last char is not '\\' */
 			p= &(buff->data[bufnum-1]);
-			if (	IS_ESC(p[0]) &&
-				((bufnum <= 1) || !IS_ESC(p[-1])))
+			if (IS_ESC(conf,p[0]) &&
+				((bufnum <= 1) || !IS_ESC(conf,p[-1])))
 				{
 				bufnum--;
 				again=1;
@@ -224,20 +276,20 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 		bufnum=0;
 		buf=buff->data;
 
-		clear_comments(buf);
+		clear_comments(conf, buf);
 		n=strlen(buf);
-		s=eat_ws(buf);
-		if (IS_EOF(*s)) continue; /* blank line */
+		s=eat_ws(conf, buf);
+		if (IS_EOF(conf,*s)) continue; /* blank line */
 		if (*s == '[')
 			{
 			char *ss;
 
 			s++;
-			start=eat_ws(s);
+			start=eat_ws(conf, s);
 			ss=start;
 again:
-			end=eat_alpha_numeric(ss);
-			p=eat_ws(end);
+			end=eat_alpha_numeric(conf, ss);
+			p=eat_ws(conf, end);
 			if (*p != ']')
 				{
 				if (*p != '\0')
@@ -250,9 +302,9 @@ again:
 				goto err;
 				}
 			*end='\0';
-			if (!str_copy(ret,NULL,&section,start)) goto err;
-			if ((sv=get_section(ret,section)) == NULL)
-				sv=new_section(ret,section);
+			if (!str_copy(conf,NULL,&section,start)) goto err;
+			if ((sv=_CONF_get_section(conf,section)) == NULL)
+				sv=_CONF_new_section(conf,section);
 			if (sv == NULL)
 				{
 				CONFerr(CONF_F_CONF_LOAD_BIO,
@@ -266,16 +318,16 @@ again:
 			{
 			pname=s;
 			psection=NULL;
-			end=eat_alpha_numeric(s);
+			end=eat_alpha_numeric(conf, s);
 			if ((end[0] == ':') && (end[1] == ':'))
 				{
 				*end='\0';
 				end+=2;
 				psection=pname;
 				pname=end;
-				end=eat_alpha_numeric(end);
+				end=eat_alpha_numeric(conf, end);
 				}
-			p=eat_ws(end);
+			p=eat_ws(conf, end);
 			if (*p != '=')
 				{
 				CONFerr(CONF_F_CONF_LOAD_BIO,
@@ -284,11 +336,11 @@ again:
 				}
 			*end='\0';
 			p++;
-			start=eat_ws(p);
-			while (!IS_EOF(*p))
+			start=eat_ws(conf, p);
+			while (!IS_EOF(conf,*p))
 				p++;
 			p--;
-			while ((p != start) && (IS_WS(*p)))
+			while ((p != start) && (IS_WS(conf,*p)))
 				p--;
 			p++;
 			*p='\0';
@@ -309,13 +361,13 @@ again:
 				goto err;
 				}
 			strcpy(v->name,pname);
-			if (!str_copy(ret,psection,&(v->value),start)) goto err;
+			if (!str_copy(conf,psection,&(v->value),start)) goto err;
 
 			if (strcmp(psection,section) != 0)
 				{
-				if ((tv=get_section(ret,psection))
+				if ((tv=_CONF_get_section(conf,psection))
 					== NULL)
-					tv=new_section(ret,psection);
+					tv=_CONF_new_section(conf,psection);
 				if (tv == NULL)
 					{
 					CONFerr(CONF_F_CONF_LOAD_BIO,
@@ -329,6 +381,14 @@ again:
 				tv=sv;
 				ts=section_sk;
 				}
+#if 1
+			if (_CONF_add_string(conf, tv, v) == 0)
+				{
+				CONFerr(CONF_F_CONF_LOAD_BIO,
+							ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+#else
 			v->section=tv->section;	
 			if (!sk_CONF_VALUE_push(ts,v))
 				{
@@ -336,7 +396,7 @@ again:
 							ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			vv=(CONF_VALUE *)lh_insert(ret,v);
+			vv=(CONF_VALUE *)lh_insert(conf->data,v);
 			if (vv != NULL)
 				{
 				sk_CONF_VALUE_delete_ptr(ts,vv);
@@ -344,173 +404,78 @@ again:
 				Free(vv->value);
 				Free(vv);
 				}
+#endif
 			v=NULL;
 			}
 		}
 	if (buff != NULL) BUF_MEM_free(buff);
 	if (section != NULL) Free(section);
-	return(ret);
+	return(1);
 err:
 	if (buff != NULL) BUF_MEM_free(buff);
 	if (section != NULL) Free(section);
 	if (line != NULL) *line=eline;
 	sprintf(btmp,"%ld",eline);
 	ERR_add_error_data(2,"line ",btmp);
-	if ((h != ret) && (ret != NULL)) CONF_free(ret);
+	if ((h != conf->data) && (conf->data != NULL)) CONF_free(conf->data);
 	if (v != NULL)
 		{
 		if (v->name != NULL) Free(v->name);
 		if (v->value != NULL) Free(v->value);
 		if (v != NULL) Free(v);
 		}
-	return(NULL);
+	return(0);
 	}
 
-char *CONF_get_string(LHASH *conf, char *section, char *name)
-	{
-	CONF_VALUE *v,vv;
-	char *p;
-
-	if (name == NULL) return(NULL);
-	if (conf != NULL)
-		{
-		if (section != NULL)
-			{
-			vv.name=name;
-			vv.section=section;
-			v=(CONF_VALUE *)lh_retrieve(conf,&vv);
-			if (v != NULL) return(v->value);
-			if (strcmp(section,"ENV") == 0)
-				{
-				p=Getenv(name);
-				if (p != NULL) return(p);
-				}
-			}
-		vv.section="default";
-		vv.name=name;
-		v=(CONF_VALUE *)lh_retrieve(conf,&vv);
-		if (v != NULL)
-			return(v->value);
-		else
-			return(NULL);
-		}
-	else
-		return(Getenv(name));
-	}
-
-static CONF_VALUE *get_section(LHASH *conf, char *section)
-	{
-	CONF_VALUE *v,vv;
-
-	if ((conf == NULL) || (section == NULL)) return(NULL);
-	vv.name=NULL;
-	vv.section=section;
-	v=(CONF_VALUE *)lh_retrieve(conf,&vv);
-	return(v);
-	}
-
-STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf, char *section)
-	{
-	CONF_VALUE *v;
-
-	v=get_section(conf,section);
-	if (v != NULL)
-		return((STACK_OF(CONF_VALUE) *)v->value);
-	else
-		return(NULL);
-	}
-
-long CONF_get_number(LHASH *conf, char *section, char *name)
-	{
-	char *str;
-	long ret=0;
-
-	str=CONF_get_string(conf,section,name);
-	if (str == NULL) return(0);
-	for (;;)
-		{
-		if (IS_NUMER(*str))
-			ret=ret*10+(*str -'0');
-		else
-			return(ret);
-		str++;
-		}
-	}
-
-void CONF_free(LHASH *conf)
-	{
-	if (conf == NULL) return;
-
-	conf->down_load=0; 	/* evil thing to make sure the 'Free()'
-				 * works as expected */
-	lh_doall_arg(conf,(void (*)())value_free_hash,conf);
-
-	/* We now have only 'section' entries in the hash table.
-	 * Due to problems with */
-
-	lh_doall_arg(conf,(void (*)())value_free_stack,conf);
-	lh_free(conf);
-	}
-
-static void value_free_hash(CONF_VALUE *a, LHASH *conf)
-	{
-	if (a->name != NULL)
-		{
-		a=(CONF_VALUE *)lh_delete(conf,a);
-		}
-	}
-
-static void value_free_stack(CONF_VALUE *a, LHASH *conf)
-	{
-	CONF_VALUE *vv;
-	STACK *sk;
-	int i;
-
-	if (a->name != NULL) return;
-
-	sk=(STACK *)a->value;
-	for (i=sk_num(sk)-1; i>=0; i--)
-		{
-		vv=(CONF_VALUE *)sk_value(sk,i);
-		Free(vv->value);
-		Free(vv->name);
-		Free(vv);
-		}
-	if (sk != NULL) sk_free(sk);
-	Free(a->section);
-	Free(a);
-	}
-
-static void clear_comments(char *p)
+static void clear_comments(CONF *conf, char *p)
 	{
 	char *to;
 
 	to=p;
 	for (;;)
 		{
-		if (IS_COMMENT(*p))
+		if (IS_FCOMMENT(conf,*p))
 			{
 			*p='\0';
 			return;
 			}
-		if (IS_QUOTE(*p))
+		if (!IS_WS(conf,*p))
 			{
-			p=scan_quote(p);
+			break;
+			}
+		p++;
+		}
+
+	for (;;)
+		{
+		if (IS_COMMENT(conf,*p))
+			{
+			*p='\0';
+			return;
+			}
+		if (IS_DQUOTE(conf,*p))
+			{
+			p=scan_dquote(conf, p);
 			continue;
 			}
-		if (IS_ESC(*p))
+		if (IS_QUOTE(conf,*p))
+			{
+			p=scan_quote(conf, p);
+			continue;
+			}
+		if (IS_ESC(conf,*p))
 			{
 			p=scan_esc(p);
 			continue;
 			}
-		if (IS_EOF(*p))
+		if (IS_EOF(conf,*p))
 			return;
 		else
 			p++;
 		}
 	}
 
-static int str_copy(LHASH *conf, char *section, char **pto, char *from)
+static int str_copy(CONF *conf, char *section, char **pto, char *from)
 	{
 	int q,r,rr=0,to=0,len=0;
 	char *s,*e,*rp,*p,*rrp,*np,*cp,v;
@@ -523,32 +488,54 @@ static int str_copy(LHASH *conf, char *section, char **pto, char *from)
 
 	for (;;)
 		{
-		if (IS_QUOTE(*from))
+		if (IS_QUOTE(conf,*from))
 			{
 			q= *from;
 			from++;
-			while ((*from != '\0') && (*from != q))
+			while (!IS_EOF(conf,*from) && (*from != q))
 				{
-				if (*from == '\\')
+				if (IS_ESC(conf,*from))
 					{
 					from++;
-					if (*from == '\0') break;
+					if (IS_EOF(conf,*from)) break;
 					}
 				buf->data[to++]= *(from++);
 				}
+			if (*from == q) from++;
 			}
-		else if (*from == '\\')
+		else if (IS_DQUOTE(conf,*from))
+			{
+			q= *from;
+			from++;
+			while (!IS_EOF(conf,*from))
+				{
+				if (*from == q)
+					{
+					if (*(from+1) == q)
+						{
+						from++;
+						}
+					else
+						{
+						break;
+						}
+					}
+				buf->data[to++]= *(from++);
+				}
+			if (*from == q) from++;
+			}
+		else if (IS_ESC(conf,*from))
 			{
 			from++;
 			v= *(from++);
-			if (v == '\0') break;
+			if (IS_EOF(conf,v)) break;
 			else if (v == 'r') v='\r';
 			else if (v == 'n') v='\n';
 			else if (v == 'b') v='\b';
 			else if (v == 't') v='\t';
 			buf->data[to++]= v;
 			}
-		else if (*from == '\0')
+		else if (IS_EOF(conf,*from))
 			break;
 		else if (*from == '$')
 			{
@@ -564,7 +551,7 @@ static int str_copy(LHASH *conf, char *section, char **pto, char *from)
 			if (q) s++;
 			cp=section;
 			e=np=s;
-			while (IS_ALPHA_NUMERIC(*e))
+			while (IS_ALPHA_NUMERIC(conf,*e))
 				e++;
 			if ((e[0] == ':') && (e[1] == ':'))
 				{
@@ -574,7 +561,7 @@ static int str_copy(LHASH *conf, char *section, char **pto, char *from)
 				*rrp='\0';
 				e+=2;
 				np=e;
-				while (IS_ALPHA_NUMERIC(*e))
+				while (IS_ALPHA_NUMERIC(conf,*e))
 					e++;
 				}
 			r= *e;
@@ -598,7 +585,7 @@ static int str_copy(LHASH *conf, char *section, char **pto, char *from)
 			 * r and s are the chars replaced by the '\0'
 			 * rp and sp is where 'r' and 's' came from.
 			 */
-			p=CONF_get_string(conf,cp,np);
+			p=_CONF_get_string(conf,cp,np);
 			if (rrp != NULL) *rrp=rr;
 			*rp=r;
 			if (p == NULL)
@@ -624,65 +611,39 @@ err:
 	return(0);
 	}
 
-static char *eat_ws(char *p)
+static char *eat_ws(CONF *conf, char *p)
 	{
-	while (IS_WS(*p) && (!IS_EOF(*p)))
+	while (IS_WS(conf,*p) && (!IS_EOF(conf,*p)))
 		p++;
 	return(p);
 	}
 
-static char *eat_alpha_numeric(char *p)
+static char *eat_alpha_numeric(CONF *conf, char *p)
 	{
 	for (;;)
 		{
-		if (IS_ESC(*p))
+		if (IS_ESC(conf,*p))
 			{
 			p=scan_esc(p);
 			continue;
 			}
-		if (!IS_ALPHA_NUMERIC_PUNCT(*p))
+		if (!IS_ALPHA_NUMERIC_PUNCT(conf,*p))
 			return(p);
 		p++;
 		}
 	}
 
-static unsigned long hash(CONF_VALUE *v)
-	{
-	return((lh_strhash(v->section)<<2)^lh_strhash(v->name));
-	}
-
-static int cmp_conf(CONF_VALUE *a, CONF_VALUE *b)
-	{
-	int i;
-
-	if (a->section != b->section)
-		{
-		i=strcmp(a->section,b->section);
-		if (i) return(i);
-		}
-
-	if ((a->name != NULL) && (b->name != NULL))
-		{
-		i=strcmp(a->name,b->name);
-		return(i);
-		}
-	else if (a->name == b->name)
-		return(0);
-	else
-		return((a->name == NULL)?-1:1);
-	}
-
-static char *scan_quote(char *p)
+static char *scan_quote(CONF *conf, char *p)
 	{
 	int q= *p;
 
 	p++;
-	while (!(IS_EOF(*p)) && (*p != q))
+	while (!(IS_EOF(conf,*p)) && (*p != q))
 		{
-		if (IS_ESC(*p))
+		if (IS_ESC(conf,*p))
 			{
 			p++;
-			if (IS_EOF(*p)) return(p);
+			if (IS_EOF(conf,*p)) return(p);
 			}
 		p++;
 		}
@@ -690,41 +651,52 @@ static char *scan_quote(char *p)
 	return(p);
 	}
 
-static CONF_VALUE *new_section(LHASH *conf, char *section)
+
+static char *scan_dquote(CONF *conf, char *p)
 	{
-	STACK *sk=NULL;
-	int ok=0,i;
-	CONF_VALUE *v=NULL,*vv;
+	int q= *p;
 
-	if ((sk=sk_new_null()) == NULL)
-		goto err;
-	if ((v=(CONF_VALUE *)Malloc(sizeof(CONF_VALUE))) == NULL)
-		goto err;
-	i=strlen(section)+1;
-	if ((v->section=(char *)Malloc(i)) == NULL)
-		goto err;
-
-	memcpy(v->section,section,i);
-	v->name=NULL;
-	v->value=(char *)sk;
-	
-	vv=(CONF_VALUE *)lh_insert(conf,v);
-	if (vv != NULL)
+	p++;
+	while (!(IS_EOF(conf,*p)))
 		{
-#if !defined(NO_STDIO) && !defined(WIN16)
-		fprintf(stderr,"internal fault\n");
-#endif
-		abort();
+		if (*p == q)
+			{
+			if (*(p+1) == q)
+				{
+				p++;
+				}
+			else
+				{
+				break;
+				}
+			}
+		p++;
 		}
-	ok=1;
-err:
-	if (!ok)
-		{
-		if (sk != NULL) sk_free(sk);
-		if (v != NULL) Free(v);
-		v=NULL;
-		}
-	return(v);
+	if (*p == q) p++;
+	return(p);
 	}
 
-IMPLEMENT_STACK_OF(CONF_VALUE)
+static void dump_value(CONF_VALUE *a, BIO *out)
+	{
+	if (a->name)
+		BIO_printf(out, "[%s] %s=%s\n", a->section, a->name, a->value);
+	else
+		BIO_printf(out, "[[%s]]\n", a->section);
+	}
+
+static int def_dump(CONF *conf, BIO *out)
+	{
+	lh_doall_arg(conf->data, (void (*)())dump_value, out);
+	return 1;
+	}
+
+static int def_is_number(CONF *conf, char c)
+	{
+	return IS_NUMBER(conf,c);
+	}
+
+static int def_to_int(CONF *conf, char c)
+	{
+	return c - '0';
+	}
+
