@@ -1,5 +1,5 @@
 HMAC-SHA1(fips_sha1dgst.c)= 10575600a9540eb15188a7d3b0b031e60aedbc18
 HMAC-SHA1(fips_sha1_selftest.c)= 98910a0c85eff1688bd7adb23e738dc75b39546e
 HMAC-SHA1(asm/sx86-elf.s)= 6286cba0ea3b071e67ab5c1e607d1387de6a871d
-HMAC-SHA1(fips_sha_locl.h)= 61e5b59c8a43e21d2f022101852467a7176e52eb
+HMAC-SHA1(fips_sha_locl.h)= 4a83a6c5181483244e0f44a902225425835f54bc
 HMAC-SHA1(fips_md32_common.h)= 1c7e761db430067391b1b7b86da5d2bf6df92834
