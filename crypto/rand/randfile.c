@@ -61,8 +61,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "openssl/e_os.h"
-
 #ifdef VMS
 #include <unixio.h>
 #endif
@@ -75,6 +73,7 @@
 # include <sys/stat.h>
 #endif
 
+#include <openssl/e_os.h>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
