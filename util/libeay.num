@@ -1873,3 +1873,4 @@ BIO_f_linebuffer                        2463	EXIST:VMS:FUNCTION:
 X509_print_ex                           2464	EXIST::FUNCTION:
 X509_print_ex_fp                        2465	EXIST::FUNCTION:FP_API
 EVP_rijndael_ecb                        2466	EXIST::FUNCTION:
+NCONF_get_number_e                      2467	EXIST::FUNCTION:
