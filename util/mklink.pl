@@ -4,14 +4,14 @@
 
 # The first command line argument is a non-empty relative path
 # specifying the "from" directory.
-# Each other argument is a file name not containing / and names
-# a file in the current directory.
+# Each other argument is a file name not containing / and
+# names a file in the current directory.
 #
 # For each of these files, we create in the "from" directory a link
 # of the same name pointing to the local file.
 #
-# We assume that the directory structure is a tree, i.e. that does not
-# contain symbolic links and that the parent of / is never referenced.
+# We assume that the directory structure is a tree, i.e. that it does
+# not contain symbolic links and that the parent of / is never referenced.
 # Apart from this, this script should be able to handle even the most
 # pathological cases.
 
