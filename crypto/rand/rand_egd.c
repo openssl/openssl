@@ -54,6 +54,7 @@
  *
  */
 
+#include <stdlib.h>
 #include <openssl/rand.h>
 
 /* Query the EGD <URL: http://www.lothar.com/tech/crypto/>.
@@ -83,11 +84,16 @@ int RAND_egd_bytes(const char *path,int bytes)
 
 int RAND_egd(const char *path)
 	{
+	const char *s;
 	int ret = -1;
 	struct sockaddr_un addr;
 	int len, num;
 	int fd = -1;
 	unsigned char buf[256];
+
+	s=getenv("RANDEGD");
+	if (s != NULL)
+		path = s;
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -115,11 +121,16 @@ int RAND_egd(const char *path)
 
 int RAND_egd_bytes(const char *path,int bytes)
 	{
+	const char *s;
 	int ret = 0;
 	struct sockaddr_un addr;
 	int len, num;
 	int fd = -1;
 	unsigned char buf[255];
+
+	s=getenv("RANDEGD");
+	if (s != NULL)
+		path = s;
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
