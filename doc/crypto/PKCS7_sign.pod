@@ -47,6 +47,28 @@ an SMIMECapabilities attribute. If B<PKCS7_NOATTR> is set then no authenticatedA
 will be used. If B<PKCS7_NOSMIMECAP> is set then just the SMIMECapabilities are
 omitted.
 
+If present the SMIMECapabilities attribute indicates support for the following
+algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2. If any
+of these algorithms is disabled then it will not be included.
+
+=head1 BUGS
+
+PKCS7_sign() is somewhat limited. It does not support multiple signers, some
+advanced attributes such as counter signatures are not supported.
+
+The SHA1 digest algorithm is currently always used.
+
+When the signed data is not detached it will be stored in memory within the
+B<PKCS7> structure. This effectively limits the size of messages which can be
+signed due to memory restraints. There should be a way to sign data without
+having to hold it all in memory, this would however require fairly major
+revisions of the OpenSSL ASN1 code.
+
+Clear text signing does not store the content in memory but the way PKCS7_sign()
+operates means that two passes of the data must typically be made: one to compute
+the signatures and a second to output the data along with the signature. There
+should be a way to process the data with only a single pass.
+
 =head1 RETURN VALUES
 
 PKCS7_sign() returns either a valid PKCS7 structure or NULL if an error occurred.
@@ -58,6 +80,6 @@ L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_verify(3)|PKCS7_verify(3)>
 
 =head1 HISTORY
 
-TBA
+PKCS7_sign() was added to OpenSSL 0.9.5
 
 =cut

@@ -8,7 +8,7 @@ d2i_X509_ALGOR, i2d_X509_ALGOR - AlgorithmIdentifier functions.
 
  #include <openssl/x509.h>
 
- DH *d2i_X509_ALGOR(X509_ALGOR **a, unsigned char **pp, long length);
+ X509_ALGOR *d2i_X509_ALGOR(X509_ALGOR **a, unsigned char **pp, long length);
  int i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **pp);
 
 =head1 DESCRIPTION
