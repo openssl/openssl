@@ -224,7 +224,7 @@ test_ec:
 test_verify:
 	@echo "The following command should have some OK's and some failures"
 	@echo "There are definitly a few expired certificates"
-	../apps/openssl verify -CApath ../certs ../certs/*.pem
+	-../apps/openssl verify -CApath ../certs ../certs/*.pem
 
 test_dh:
 	@echo "Generate a set of DH parameters"

@@ -9,7 +9,9 @@ $	test := p.txt
 $	cmd := mcr 'exe_dir'openssl
 $
 $	if f$search(test) .nes. "" then delete 'test';*
-$	copy 'testsrc' 'test'
+$	convert/fdl=sys$input: 'testsrc' 'test'
+RECORD
+	FORMAT STREAM_LF
 $
 $	if f$search(test+"-cipher") .nes. "" then delete 'test'-cipher;*
 $	if f$search(test+"-clear") .nes. "" then delete 'test'-clear;*

@@ -13,7 +13,9 @@ $	write sys$output "testing req conversions"
 $	if f$search("fff.*") .nes "" then delete fff.*;*
 $	if f$search("ff.*") .nes "" then delete ff.*;*
 $	if f$search("f.*") .nes "" then delete f.*;*
-$	copy 't' fff.p
+$	convert/fdl=sys$input: 't' fff.p
+RECORD
+	FORMAT STREAM_LF
 $
 $	write sys$output "p -> d"
 $	'cmd' -in fff.p -inform p -outform d -out f.d
