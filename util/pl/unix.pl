@@ -38,7 +38,7 @@ $ex_libs="";
 # static library stuff
 $mklib='ar r';
 $mlflags='';
-$ranlib='util/ranlib.sh';
+$ranlib=&which("ranlib") or $ranlib="true";
 $plib='lib';
 $libp=".a";
 $shlibp=".a";
@@ -78,6 +78,19 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
 	return($ret);
+	}
+
+sub which
+	{
+	my ($name)=@_;
+	my $path;
+	foreach $path (split /:/, $ENV{PATH})
+		{
+		if (-x "$path/$name")
+			{
+			return "$path/$name";
+			}
+		}
 	}
 
 1;

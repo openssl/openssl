@@ -40,7 +40,7 @@ all:    lib
 
 lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 # elf
@@ -62,10 +62,10 @@ asm/rm86bsdi.o: asm/rm86unix.cpp
 	$(CPP) -DBSDI asm/rm86unix.cpp | sed 's/ :/:/' | as -o asm/rm86bsdi.o
 
 asm/rm86unix.cpp: asm/rmd-586.pl
-	(cd asm; perl rmd-586.pl cpp >rm86unix.cpp)
+	(cd asm; $(PERL) rmd-586.pl cpp >rm86unix.cpp)
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
@@ -92,7 +92,7 @@ depend:
 	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:

@@ -44,6 +44,8 @@ CFLAG= -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall -DSHA1_ASM -DMD
 PEX_LIBS= -L. -L.. -L../.. -L../../..
 EX_LIBS= 
 AR=ar r
+RANLIB= ranlib
+PERL= perl
 
 # Set BN_ASM to bn_asm.o if you want to use the C version
 BN_ASM= bn_asm.o
@@ -167,14 +169,14 @@ all: Makefile.ssl
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making all in $$i..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='$(PROCESSOR)' all ) || exit 1; \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
 	done;
 
 sub_all:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making all in $$i..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='$(PROCESSOR)' all ) || exit 1; \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
 	done;
 
 Makefile.ssl: Makefile.org
@@ -202,11 +204,11 @@ clean:
 	done
 
 makefile.one: files
-	perl util/mk1mf.pl >makefile.one; \
+	$(PERL) util/mk1mf.pl >makefile.one; \
 	sh util/do_ms.sh
 
 files:  MINFO
-	perl $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making 'files' in $$i..." && \
@@ -278,7 +280,7 @@ tar:
 	ls -l ../$(TARFILE).gz
 
 dist:   
-	perl Configure dist
+	$(PERL) Configure dist
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='${SDIRS}' clean
 	@$(MAKE) tar
@@ -301,7 +303,7 @@ install: all
 	do \
 	(       echo installing $$i; \
 		cp $$i $(INSTALLTOP)/lib; \
-		sh util/ranlib.sh $(INSTALLTOP)/lib/$$i; \
+		$(RANLIB) $(INSTALLTOP)/lib/$$i; \
 		chmod 644 $(INSTALLTOP)/lib/$$i ); \
 	done
 

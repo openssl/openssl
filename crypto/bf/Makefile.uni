@@ -29,6 +29,7 @@ CFLAG= -O3 -fomit-frame-pointer
 CFLAGS=$(OPTS) $(CFLAG)
 CPP=$(CC) -E
 AS=as
+RANLIB=ranlib
 
 # Assember version of bf_encrypt().
 BF_ENC=bf_enc.o		# normal C version
@@ -105,9 +106,7 @@ test:	all
 $(BLIB): $(LIBOBJ)
 	/bin/rm -f $(BLIB)
 	ar cr $(BLIB) $(LIBOBJ)
-	-if test -s /bin/ranlib; then /bin/ranlib $(BLIB); \
-	else if test -s /usr/bin/ranlib; then /usr/bin/ranlib $(BLIB); \
-	else exit 0; fi; fi
+	$(RANLIB) $(BLIB)
 
 bftest: bftest.o $(BLIB)
 	$(CC) $(CFLAGS) -o bftest bftest.o $(BLIB)
@@ -142,25 +141,14 @@ install: $(BLIB)
 	if test $(INSTALLTOP); then \
 	    echo SSL style install; \
 	    cp $(BLIB) $(INSTALLTOP)/lib; \
-	    if test -s /bin/ranlib; then \
-	        /bin/ranlib $(INSTALLTOP)/lib/$(BLIB); \
-	    else \
-		if test -s /usr/bin/ranlib; then \
-		/usr/bin/ranlib $(INSTALLTOP)/lib/$(BLIB); \
-	    fi; fi; \
+		$(RANLIB) $(BLIB); \
 	    chmod 644 $(INSTALLTOP)/lib/$(BLIB); \
 	    cp blowfish.h $(INSTALLTOP)/include; \
 	    chmod 644 $(INSTALLTOP)/include/blowfish.h; \
 	else \
 	    echo Standalone install; \
 	    cp $(BLIB) $(LIBDIR)/$(BLIB); \
-	    if test -s /bin/ranlib; then \
-	      /bin/ranlib $(LIBDIR)/$(BLIB); \
-	    else \
-	      if test -s /usr/bin/ranlib; then \
-		/usr/bin/ranlib $(LIBDIR)/$(BLIB); \
-	      fi; \
-	    fi; \
+		$(RANLIB) $(BLIB); \
 	    chmod 644 $(LIBDIR)/$(BLIB); \
 	    cp blowfish.h $(INCDIR)/blowfish.h; \
 	    chmod 644 $(INCDIR)/blowfish.h; \

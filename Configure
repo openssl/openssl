@@ -273,6 +273,11 @@ my $md5_obj="";
 my $sha1_obj="";
 my $rmd160_obj="";
 my $processor="";
+my $ranlib;
+my $perl;
+
+$ranlib=&which("ranlib") or $ranlib="true";
+$perl=&which("perl5") or $perl=&which("perl");
 
 if ($#ARGV < 0)
 	{
@@ -393,6 +398,8 @@ while (<IN>)
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
+	s/^RANLIB=.*/RANLIB= $ranlib/;
+	s/^PERL=.*/PERL= $perl/;
 	print OUT $_."\n";
 	}
 close(IN);
@@ -411,6 +418,8 @@ print "MD5_OBJ_ASM   =$md5_obj\n";
 print "SHA1_OBJ_ASM  =$sha1_obj\n";
 print "RMD160_OBJ_ASM=$rmd160_obj\n";
 print "PROCESSOR     =$processor\n";
+print "RANLIB        =$ranlib\n";
+print "PERL          =$perl\n";
 
 my $des_ptr=0;
 my $des_risc1=0;
@@ -713,3 +722,17 @@ sub Rename
 
 sub file_new { my($a)=@_; $a =~ s/(\.[^.]+$|$)/.new/; $a; }
 sub file_old { my($a)=@_; $a =~ s/(\.[^.]+$|$)/.old/; $a; }
+
+sub which
+	{
+	my($name)=@_;
+	my $path;
+	foreach $path (split /:/, $ENV{PATH})
+		{
+		if (-x "$path/$name")
+			{
+			return "$path/$name";
+			}
+		}
+	}
+

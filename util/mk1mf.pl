@@ -234,11 +234,6 @@ else	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
-if ($ranlib ne "")
-	{
-	$ranlib="\$(SRC_D)$o$ranlib";
-	}
-
 if ($msdos)
 	{
 	$banner ="\t\@echo Make sure you have run 'perl Configure $platform' in the\n";

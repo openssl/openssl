@@ -43,7 +43,7 @@ all:    $(LIB) $(TEST) $(APPS)
 
 $(LIB):    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 
 # elf
 asm/mx86-elf.o: asm/mx86unix.cpp

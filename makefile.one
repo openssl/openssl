@@ -60,7 +60,7 @@ INC_D=outinc
 
 CP=cp
 RM=rm -f
-RANLIB=$(SRC_D)/util/ranlib.sh
+RANLIB=ranlib
 MKDIR=mkdir
 MKLIB=ar r
 MLFLAGS=

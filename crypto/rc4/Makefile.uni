@@ -19,6 +19,7 @@ MAKE=           make
 MAKEDEPEND=     makedepend
 MAKEFILE=       Makefile.uni
 AR=             ar r
+RANLIB=         ranlib
 
 RC4_ENC=rc4_enc.o
 # or use
@@ -48,7 +49,7 @@ all:    $(LIB) $(TEST) $(APPS)
 
 $(LIB):    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 
 # elf
 asm/rx86-elf.o: asm/rx86unix.cpp

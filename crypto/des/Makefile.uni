@@ -51,6 +51,7 @@ CFLAG= -O3 -fomit-frame-pointer
 CFLAGS=$(OPTS) $(CFLAG)
 CPP=$(CC) -E
 AS=as
+RANLIB=ranlib
 
 # Assember version of des_encrypt*().
 DES_ENC=des_enc.o fcrypt_b.o		# normal C version
@@ -169,9 +170,7 @@ test:	all
 $(DLIB): $(OBJ)
 	/bin/rm -f $(DLIB)
 	ar cr $(DLIB) $(OBJ)
-	-if test -s /bin/ranlib; then /bin/ranlib $(DLIB); \
-	else if test -s /usr/bin/ranlib; then /usr/bin/ranlib $(DLIB); \
-	else exit 0; fi; fi
+	$(RANLIB) $(DLIB)
 
 des_opts: des_opts.o $(DLIB)
 	$(CC) $(CFLAGS) -o des_opts des_opts.o $(DLIB)
@@ -231,25 +230,14 @@ install: des
 	if test $(INSTALLTOP); then \
 	    echo SSL style install; \
 	    cp $(DLIB) $(INSTALLTOP)/lib; \
-	    if test -s /bin/ranlib; then \
-	        /bin/ranlib $(INSTALLTOP)/lib/$(DLIB); \
-	    else \
-		if test -s /usr/bin/ranlib; then \
-		/usr/bin/ranlib $(INSTALLTOP)/lib/$(DLIB); \
-	    fi; fi; \
+		$(RANLIB) $(DLIB); \
 	    chmod 644 $(INSTALLTOP)/lib/$(DLIB); \
 	    cp des.h $(INSTALLTOP)/include; \
 	    chmod 644 $(INSTALLTOP)/include/des.h; \
 	else \
 	    echo Standalone install; \
 	    cp $(DLIB) $(LIBDIR)/$(DLIB); \
-	    if test -s /bin/ranlib; then \
-	      /bin/ranlib $(LIBDIR)/$(DLIB); \
-	    else \
-	      if test -s /usr/bin/ranlib; then \
-		/usr/bin/ranlib $(LIBDIR)/$(DLIB); \
-	      fi; \
-	    fi; \
+		$(RANLIB) $(DLIB); \
 	    chmod 644 $(LIBDIR)/$(DLIB); \
 	    cp des $(BINDIR)/des; \
 	    chmod 711 $(BINDIR)/des; \

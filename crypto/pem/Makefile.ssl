@@ -50,11 +50,11 @@ $(CTX_SIZE): $(CTX_SIZE).o
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links: $(EXHEADER)
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
@@ -81,7 +81,7 @@ depend:
 	$(MAKEDEPEND) $(INCLUDES) $(CTX_SIZE).c $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
@@ -90,9 +90,9 @@ clean:
 errors: $(ERRC).c
 
 $(ERRC).c: $(ERR).err
-	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).org # SPECIAL CASE .org
-	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
+	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).org # SPECIAL CASE .org
+	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
+	$(PERL) ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -60,7 +60,7 @@ subdirs:
 	done;
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making 'files' in crypto/$$i..."; \
@@ -80,7 +80,7 @@ links:
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 libs:
@@ -133,7 +133,7 @@ clean:
 	done;
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	@for i in $(SDIRS) ;\
 	do \
@@ -144,11 +144,11 @@ dclean:
 errors: errgen $(ERRC).c
 
 $(ERRC).c: $(ERR).err
-	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl err/err_genc.pl -s $(ERR).h $(ERRC).c
+	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
+	$(PERL) err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 errgen:
-	perl ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
+	$(PERL) ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making errors in crypto/$$i..."; \

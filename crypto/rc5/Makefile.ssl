@@ -42,7 +42,7 @@ all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 # elf
@@ -64,10 +64,10 @@ asm/r586bsdi.o: asm/r586unix.cpp
 	$(CPP) -DBSDI asm/r586unix.cpp | sed 's/ :/:/' | as -o asm/r586bsdi.o
 
 asm/r586unix.cpp:
-	(cd asm; perl rc5-586.pl cpp >r586unix.cpp)
+	(cd asm; $(PERL) rc5-586.pl cpp >r586unix.cpp)
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
@@ -94,7 +94,7 @@ depend:
 	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:

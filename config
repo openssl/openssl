@@ -332,10 +332,34 @@ if [ -z "$OUT" ]; then
   OUT="$CC"
 fi
 
+if [ ".$PERL" = . ] ; then
+	for i in . `echo $PATH | sed 's/:/ /g'`; do
+		if [ -f "$i/perl5" ] ; then
+			PERL="$i/perl5"
+			break;
+		fi;
+	done
+fi
+
+if [ ".$PERL" = . ] ; then
+	for i in . `echo $PATH | sed 's/:/ /g'`; do
+		if [ -f "$i/perl" ] ; then
+			PERL="$i/perl"
+			break;
+		fi;
+	done
+fi
+
+if $PERL -e 'exit($]>=5.0);' ; then
+	echo "You need Perl 5."
+	exit 1
+fi
+
 # run Configure to check to see if we need to specify the 
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
-perl ./Configure 2>&1 | grep "$OUT-$CC" > /dev/null
+
+$PERL ./Configure 2>&1 | grep "$OUT-$CC" > /dev/null
 if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
@@ -348,9 +372,9 @@ OUT="$PREFIX$OUT"
 echo Configuring for $OUT
 
 if [ "$TEST" = "true" ]; then
-  echo ./Configure $OUT $options
+  echo $PERL ./Configure $OUT $options
 else
-  perl ./Configure $OUT $options
+  $PERL ./Configure $OUT $options
 fi
 
 )

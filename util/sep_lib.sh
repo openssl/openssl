@@ -21,9 +21,6 @@ do
 	/bin/rm -f *.old
 	/bin/mv Makefile.uni Makefile
 
-	cp $cwd/util/ranlib.sh .
-	chmod +x ranlib.sh
-
 	if [ -d asm ]; then
 		mkdir asm/perlasm
 		cp $cwd/crypto/perlasm/*.pl asm/perlasm

@@ -24,6 +24,7 @@ MAKE=           make
 MAKEDEPEND=     makedepend
 MAKEFILE=       Makefile.uni
 AR=             ar r
+RANLIB=         ranlib
 
 CAST_ENC=c_enc.o
 # or use
@@ -55,7 +56,7 @@ all:    $(LIB) $(TEST) $(APPS)
 
 $(LIB):    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 # elf
 asm/cx86-elf.o: asm/cx86unix.cpp
 	$(CPP) -DELF asm/cx86unix.cpp | as -o asm/cx86-elf.o

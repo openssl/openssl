@@ -15,6 +15,7 @@ MAKE=           make
 MAKEDEPEND=     makedepend
 MAKEFILE=       Makefile.uni
 AR=             ar r
+RANLIB=         ranlib
 
 IDEA_ENC=rc2_cbc.o
 
@@ -39,7 +40,7 @@ all:    $(LIB) $(TEST) $(APPS)
 
 $(LIB):    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 
 test:	$(TEST)
 	./$(TEST)
