@@ -10,6 +10,9 @@
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 
+#define RSAREF_LIB_NAME "rsaref engine"
+#include "rsaref_err.c"
+
 /* Constants used when creating the ENGINE */
 static const char *engine_rsaref_id = "rsaref";
 static const char *engine_rsaref_name = "RSAref engine support";
@@ -54,95 +57,6 @@ static RSA_METHOD rsaref_rsa =
   NULL
 };
 
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in rsaref operation */
-#define RSAREF_F_BNREF_MOD_EXP				 100
-#define RSAREF_F_RSAREF_BN2BIN				 101
-#define RSAREF_F_RSA_BN2BIN				 102
-#define RSAREF_F_RSA_PRIVATE_DECRYPT			 103
-#define RSAREF_F_RSA_PRIVATE_ENCRYPT			 104
-#define RSAREF_F_RSA_PUBLIC_DECRYPT			 105
-#define RSAREF_F_RSA_PUBLIC_ENCRYPT			 106
-#define RSAREF_F_RSAREF_MOD_EXP				 108
-#define RSAREF_F_RSAREF_PRIVATE_DECRYPT			 109
-#define RSAREF_F_RSAREF_PRIVATE_ENCRYPT			 110
-#define RSAREF_F_RSAREF_PUBLIC_DECRYPT			 111
-#define RSAREF_F_RSAREF_PUBLIC_ENCRYPT			 112
-/* Error reason codes */
-#define RSAREF_R_CONTENT_ENCODING			 0x0400
-#define RSAREF_R_DATA					 0x0401
-#define RSAREF_R_DIGEST_ALGORITHM			 0x0402
-#define RSAREF_R_ENCODING				 0x0403
-#define RSAREF_R_ENCRYPTION_ALGORITHM			 0x040d
-#define RSAREF_R_KEY					 0x0404
-#define RSAREF_R_KEY_ENCODING				 0x0405
-#define RSAREF_R_LEN					 0x0406
-#define RSAREF_R_MODULUS_LEN				 0x0407
-#define RSAREF_R_NEED_RANDOM				 0x0408
-#define RSAREF_R_PRIVATE_KEY				 0x0409
-#define RSAREF_R_PUBLIC_KEY				 0x040a
-#define RSAREF_R_SIGNATURE				 0x040b
-#define RSAREF_R_SIGNATURE_ENCODING			 0x040c
-
-static ERR_STRING_DATA rsaref_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"rsaref engine code"},
-{ERR_PACK(0,RSAREF_F_BNREF_MOD_EXP,0),	"BN_REF_MOD_EXP"},
-{ERR_PACK(0,RSAREF_F_RSAREF_BN2BIN,0),	"RSAREF_BN2BIN"},
-{ERR_PACK(0,RSAREF_F_RSA_BN2BIN,0),	"RSA_BN2BIN"},
-{ERR_PACK(0,RSAREF_F_RSA_PRIVATE_DECRYPT,0),	"RSA_private_decrypt"},
-{ERR_PACK(0,RSAREF_F_RSA_PRIVATE_ENCRYPT,0),	"RSA_private_encrypt"},
-{ERR_PACK(0,RSAREF_F_RSA_PUBLIC_DECRYPT,0),	"RSA_public_decrypt"},
-{ERR_PACK(0,RSAREF_F_RSA_PUBLIC_ENCRYPT,0),	"RSA_public_encrypt"},
-{ERR_PACK(0,RSAREF_F_RSAREF_MOD_EXP,0),	"RSA_REF_MOD_EXP"},
-{ERR_PACK(0,RSAREF_F_RSAREF_PRIVATE_DECRYPT,0),	"RSA_REF_PRIVATE_DECRYPT"},
-{ERR_PACK(0,RSAREF_F_RSAREF_PRIVATE_ENCRYPT,0),	"RSA_REF_PRIVATE_ENCRYPT"},
-{ERR_PACK(0,RSAREF_F_RSAREF_PUBLIC_DECRYPT,0),	"RSA_REF_PUBLIC_DECRYPT"},
-{ERR_PACK(0,RSAREF_F_RSAREF_PUBLIC_ENCRYPT,0),	"RSA_REF_PUBLIC_ENCRYPT"},
-{RSAREF_R_CONTENT_ENCODING               ,"content encoding"},
-{RSAREF_R_DATA                           ,"data"},
-{RSAREF_R_DIGEST_ALGORITHM               ,"digest algorithm"},
-{RSAREF_R_ENCODING                       ,"encoding"},
-{RSAREF_R_ENCRYPTION_ALGORITHM           ,"encryption algorithm"},
-{RSAREF_R_KEY                            ,"key"},
-{RSAREF_R_KEY_ENCODING                   ,"key encoding"},
-{RSAREF_R_LEN                            ,"len"},
-{RSAREF_R_MODULUS_LEN                    ,"modulus len"},
-{RSAREF_R_NEED_RANDOM                    ,"need random"},
-{RSAREF_R_PRIVATE_KEY                    ,"private key"},
-{RSAREF_R_PUBLIC_KEY                     ,"public key"},
-{RSAREF_R_SIGNATURE                      ,"signature"},
-{RSAREF_R_SIGNATURE_ENCODING             ,"signature encoding"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int rsaref_err_lib = -1;
-#define RSAREFerr(f,r) ERR_PUT_error(rsaref_err_lib,(f),(r),__FILE__,__LINE__)
-static void rsaref_load_error_strings(void)
-	{
-	if(rsaref_err_lib < 0)
-		{
-		if((rsaref_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		rsaref_str_functs[0].error = ERR_PACK(rsaref_err_lib,0,0);
-		ERR_load_strings(rsaref_err_lib, rsaref_str_functs);
-		}
-	}
-static void rsaref_unload_error_strings(void)
-	{
-	if(rsaref_err_lib >= 0)
-		{
-		ERR_unload_strings(rsaref_err_lib, rsaref_str_functs);
-		rsaref_err_lib = -1;
-		}
-	}
-#else
-#define RSAREFerr(f,r)					/* NOP */
-static void rsaref_load_error_strings(void) { }		/* NOP */
-static void rsaref_unload_error_strings(void) { }	/* NOP */
-#endif
-
 /* Now, to our own code */
 
 static int bind_rsaref(ENGINE *e)
@@ -159,7 +73,7 @@ static int bind_rsaref(ENGINE *e)
 		return 0;
 
 	/* Ensure the rsaref error handling is set up */
-	rsaref_load_error_strings();
+	ERR_load_RSAREF_strings();
 	return 1;
 	}
 
@@ -214,7 +128,7 @@ static int rsaref_finish(ENGINE *e)
 /* Destructor (complements the "ENGINE_ncipher()" constructor) */
 static int rsaref_destroy(ENGINE *e)
 	{
-	rsaref_unload_error_strings();
+	ERR_unload_RSAREF_strings();
 	return 1;
 	}
 
