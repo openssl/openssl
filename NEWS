@@ -20,6 +20,7 @@
       o Security fix: prevent Bleichenbacher's DSA attack.
       o Security fix: Zero the premaster secret after deriving the
         master secret in DH ciphersuites.
+      o Reimplement SSL_peek(), which had various problems.
       o Compatibility fix: the function des_encrypt() renamed to
         des_encrypt1() to avoid clashes with some Unixen libc.
       o Bug fixes for Win32, HP/UX and Irix.
@@ -31,7 +32,7 @@
       o Add tighter checks of BIGNUM routines.
       o Shared library support has been reworked for generality.
       o More documentation.
-      o New function BN_rand_range()
+      o New function BN_rand_range().
       o Add "-rand" option to openssl s_client and s_server.
 
   Major changes between OpenSSL 0.9.5a and OpenSSL 0.9.6:
