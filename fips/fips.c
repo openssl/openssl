@@ -134,17 +134,18 @@ static int FIPS_check_exe(const char *path)
 	return 0;
 	}
     HMAC_Init(&hmac,key,strlen(key),EVP_sha1());
-    do
+    while(!feof(f))
 	{
 	n=fread(buf,1,sizeof buf,f);
-	if(n < 0)
+	if(ferror(f))
 	    {
+	    clearerr(f);
 	    fclose(f);
 	    FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
 	    return 0;
 	    }
-	HMAC_Update(&hmac,buf,n);
-	} while(n > 0);
+	if (n) HMAC_Update(&hmac,buf,n);
+	}
     fclose(f);
     HMAC_Final(&hmac,mdbuf,&n);
     BIO_snprintf(p2,sizeof p2,"%s.sha1",path);
