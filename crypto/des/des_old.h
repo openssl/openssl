@@ -3,13 +3,29 @@
 /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  *
  * The function names in here are deprecated and are only present to
- * provide an interface compatible with libdes.  OpenSSL now provides
- * functions where "des_" has been replaced with "DES_" in the names,
- * to make it possible to make incompatible changes that are needed
- * for C type security and other stuff.
+ * provide an interface compatible with openssl 0.9.6 and older as
+ * well as libdes.  OpenSSL now provides functions where "des_" has
+ * been replaced with "DES_" in the names, to make it possible to
+ * make incompatible changes that are needed for C type security and
+ * other stuff.
+ *
+ * This include files has two compatibility modes:
+ *
+ *   - If OPENSSL_DES_LIBDES_COMPATIBILITY is defined, you get an API
+ *     that is compatible with libdes and SSLeay.
+ *   - If OPENSSL_DES_LIBDES_COMPATIBILITY isn't defined, you get an
+ *     API that is compatible with OpenSSL 0.9.5x to 0.9.6x.
+ *
+ * Note that these modes break earlier snapshots of OpenSSL, where
+ * libdes compatibility was the only available mode or (later on) the
+ * prefered compatibility mode.  However, after much consideration
+ * (and more or less violent discussions with external parties), it
+ * was concluded that OpenSSL should be compatible with earlier versions
+ * of itself before anything else.  Also, in all honesty, libdes is
+ * an old beast that shouldn't really be used any more.
  *
  * Please consider starting to use the DES_ functions rather than the
- * des_ ones.  The des_ functions will dissapear completely before
+ * des_ ones.  The des_ functions will disappear completely before
  * OpenSSL 1.0!
  *
  * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
@@ -19,7 +35,7 @@
  * project 2001.
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,15 +123,16 @@ typedef struct _ossl_old_des_ks_struct
 		} ks;
 	} _ossl_old_des_key_schedule[16];
 
-#ifdef OPENSSL_DES_PRE_0_9_7_COMPATIBILITY
+#ifndef OPENSSL_DES_LIBDES_COMPATIBILITY
 #define des_cblock DES_cblock
+#define const_des_cblock const_DES_cblock
 #define des_key_schedule DES_key_schedule
 #define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
 	DES_ecb3_encrypt((i),(o),(k1),(k2),(k3),(e))
 #define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
 	DES_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
 #define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
-	DES_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+	DES_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n),(e))
 #define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
 	DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n))
 #define des_options()\
@@ -128,8 +145,8 @@ typedef struct _ossl_old_des_ks_struct
 	DES_ncbc_encrypt((i),(o),(l),(k),(iv),(e))
 #define des_xcbc_encrypt(i,o,l,k,iv,inw,outw,e)\
 	DES_xcbc_encrypt((i),(o),(l),(k),(iv),(inw),(outw),(e))
-#define des_cfb_encrypt(i,o,l,k,iv,e)\
-	DES_cfb_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_cfb_encrypt(i,o,n,l,k,iv,e)\
+	DES_cfb_encrypt((i),(o),(n),(l),(k),(iv),(e))
 #define des_ecb_encrypt(i,o,k,e)\
 	DES_ecb_encrypt((i),(o),(k),(e))
 #define des_encrypt(d,k,e)\
@@ -206,7 +223,7 @@ typedef struct _ossl_old_des_ks_struct
 #define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
 	_ossl_old_des_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
 #define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
-	_ossl_old_des_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+	_ossl_old_des_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n),(e))
 #define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
 	_ossl_old_des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n))
 #define des_options()\
@@ -219,8 +236,8 @@ typedef struct _ossl_old_des_ks_struct
 	_ossl_old_des_ncbc_encrypt((i),(o),(l),(k),(iv),(e))
 #define des_xcbc_encrypt(i,o,l,k,iv,inw,outw,e)\
 	_ossl_old_des_xcbc_encrypt((i),(o),(l),(k),(iv),(inw),(outw),(e))
-#define des_cfb_encrypt(i,o,l,k,iv,e)\
-	_ossl_old_des_cfb_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_cfb_encrypt(i,o,n,l,k,iv,e)\
+	_ossl_old_des_cfb_encrypt((i),(o),(n),(l),(k),(iv),(e))
 #define des_ecb_encrypt(i,o,k,e)\
 	_ossl_old_des_ecb_encrypt((i),(o),(k),(e))
 #define des_encrypt(d,k,e)\
