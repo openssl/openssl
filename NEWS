@@ -42,6 +42,11 @@
 
   Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
 
+      o Important security related bugfixes.
+      o Various SSL/TLS library bugfixes.
+
+  Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
+
       o Various SSL/TLS library bugfixes.
       o Fix DH parameter generation for 'non-standard' generators.
 
