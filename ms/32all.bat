@@ -1,4 +1,4 @@
-set OPTS=no_asm
+set OPTS=no-asm
 
 perl Configure VC-WIN32
 perl util\mk1mf.pl %OPTS% debug VC-WIN32 >d32.mak
