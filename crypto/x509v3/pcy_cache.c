@@ -232,6 +232,7 @@ static int policy_cache_new(X509 *x)
 	
 }
 
+#if 0
 void policy_cache_free(X509_POLICY_CACHE *cache)
 	{
 	if (!cache)
@@ -242,6 +243,7 @@ void policy_cache_free(X509_POLICY_CACHE *cache)
 		sk_X509_POLICY_DATA_pop_free(cache->data, policy_data_free);
 	OPENSSL_free(cache);
 	}
+#endif
 
 const X509_POLICY_CACHE *policy_cache_set(X509 *x)
 	{

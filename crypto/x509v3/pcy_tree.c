@@ -81,11 +81,11 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 	X509 *x;
 	int ret = 1;
 	int i, n;
-	*ptree = NULL;
-	n = sk_X509_num(certs);
 	int explicit_policy;
 	int any_skip;
 	int map_skip;
+	*ptree = NULL;
+	n = sk_X509_num(certs);
 
 	/* Disable policy mapping for now... */
 	flags |= X509_V_FLAG_INHIBIT_MAP;

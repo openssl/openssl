@@ -75,7 +75,7 @@ static void policy_map_free(X509_POLICY_REF *map)
 	OPENSSL_free(map);
 	}
 
-X509_POLICY_REF *policy_map_find(X509_POLICY_CACHE *cache, ASN1_OBJECT *id)
+static X509_POLICY_REF *policy_map_find(X509_POLICY_CACHE *cache, ASN1_OBJECT *id)
 	{
 	X509_POLICY_REF tmp;
 	int idx;
