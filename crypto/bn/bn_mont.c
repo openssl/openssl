@@ -85,36 +85,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 
 	if (a == b)
 		{
-#if 0 /* buggy -- try squaring  g  (after converting it to Montgomery
-         representation) in the following parameters
-         (but note that squaring 2 or 4 works):
-Diffie-Hellman-Parameters: (1024 bit)
-    prime:
-        00:ff:ff:ff:ff:ff:ff:ff:ff:c9:0f:da:a2:21:68:
-        c2:34:c4:c6:62:8b:80:dc:1c:d1:29:02:4e:08:8a:
-        67:cc:74:02:0b:be:a6:3b:13:9b:22:51:4a:08:79:
-        8e:34:04:dd:ef:95:19:b3:cd:3a:43:1b:30:2b:0a:
-        6d:f2:5f:14:37:4f:e1:35:6d:6d:51:c2:45:e4:85:
-        b5:76:62:5e:7e:c6:f4:4c:42:e9:a6:37:ed:6b:0b:
-        ff:5c:b6:f4:06:b7:ed:ee:38:6b:fb:5a:89:9f:a5:
-        ae:9f:24:11:7c:4b:1f:e6:49:28:66:51:ec:e6:53:
-        81:ff:ff:ff:ff:ff:ff:ff:ff
-    generator: 8 (0x8)
------BEGIN DH PARAMETERS-----
-MIGHAoGBAP//////////yQ/aoiFowjTExmKLgNwc0SkCTgiKZ8x0Agu+pjsTmyJR
-Sgh5jjQE3e+VGbPNOkMbMCsKbfJfFDdP4TVtbVHCReSFtXZiXn7G9ExC6aY37WsL
-/1y29Aa37e44a/taiZ+lrp8kEXxLH+ZJKGZR7OZTgf//////////AgEI
------END DH PARAMETERS-----
-*/
-		bn_wexpand(tmp,a->top*2);
-		bn_wexpand(tmp2,a->top*4);
-		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);
-		tmp->top=a->top*2;
-		while (tmp->top > 0 && tmp->d[tmp->top-1] == 0)
-			tmp->top--;
-#else
 		if (!BN_sqr(tmp,a,ctx)) goto err;
-#endif
 		}
 	else
 		{

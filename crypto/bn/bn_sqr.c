@@ -188,7 +188,7 @@ void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp)
 
 #ifdef BN_RECURSION
 /* r is 2*n words in size,
- * a and b are both n words in size.
+ * a and b are both n words in size.    (There's not actually a 'b' here ...)
  * n must be a power of 2.
  * We multiply and return the result.
  * t must be 2*n words in size

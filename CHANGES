@@ -4,7 +4,7 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) Disable 'optimized' squaring variant in BN_mod_mul_montgomery,
+  *) Remove 'optimized' squaring variant in BN_mod_mul_montgomery,
      it can return incorrect results.
      (Note: The buggy variant was not enabled in OpenSSL 0.9.5a,
      but it was in 0.9.6-beta[12].)
