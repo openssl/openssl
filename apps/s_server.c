@@ -1395,7 +1395,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#ifndef OPENSSL_SYS_MSDOS
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
 				sleep(1);
 #endif
 				continue;

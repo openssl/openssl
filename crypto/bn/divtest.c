@@ -1,7 +1,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 
-static int rand(n)
+static int Rand(n)
 {
     unsigned char x[2];
     RAND_pseudo_bytes(x,2);
@@ -26,8 +26,8 @@ main()
     BN_CTX *ctx=BN_CTX_new();
 
     for(;;) {
-	BN_pseudo_rand(a,rand(),0,0);
-	BN_pseudo_rand(b,rand(),0,0);
+	BN_pseudo_rand(a,Rand(),0,0);
+	BN_pseudo_rand(b,Rand(),0,0);
 	if (BN_is_zero(b)) continue;
 
 	BN_RECP_CTX_set(recp,b,ctx);

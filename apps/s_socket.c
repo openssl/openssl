@@ -83,9 +83,9 @@ typedef unsigned int u_int;
 
 static struct hostent *GetHostByName(char *name);
 #ifdef OPENSSL_SYS_WINDOWS
-static void sock_cleanup(void);
+static void ssl_sock_cleanup(void);
 #endif
-static int sock_init(void);
+static int ssl_sock_init(void);
 static int init_client_ip(int *sock,unsigned char ip[4], int port);
 static int init_server(int *sock, int port);
 static int init_server_long(int *sock, int port,char *ip);
@@ -118,7 +118,7 @@ static LONG FAR PASCAL topHookProc(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_DESTROY:
 		case WM_CLOSE:
 			SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopWndProc);
-			sock_cleanup();
+			ssl_sock_cleanup();
 			break;
 			}
 		}
@@ -135,7 +135,7 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 #endif /* OPENSSL_SYS_WINDOWS */
 
 #ifdef OPENSSL_SYS_WINDOWS
-static void sock_cleanup(void)
+static void ssl_sock_cleanup(void)
 	{
 	if (wsa_init_done)
 		{
@@ -146,15 +146,21 @@ static void sock_cleanup(void)
 	}
 #endif
 
-static int sock_init(void)
+static int ssl_sock_init(void)
 	{
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef WATT32
+	extern int _watt_do_exit;
+	_watt_do_exit = 0;
+	dbug_init();
+	if (sock_init())
+		return (0);
+#elif defined(OPENSSL_SYS_WINDOWS)
 	if (!wsa_init_done)
 		{
 		int err;
 	  
 #ifdef SIGINT
-		signal(SIGINT,(void (*)(int))sock_cleanup);
+		signal(SIGINT,(void (*)(int))ssl_sock_cleanup);
 #endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
@@ -196,7 +202,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	struct sockaddr_in them;
 	int s,i;
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
 	memset((char *)&them,0,sizeof(them));
 	them.sin_family=AF_INET;
@@ -261,7 +267,7 @@ static int init_server_long(int *sock, int port, char *ip)
 	struct sockaddr_in server;
 	int s= -1,i;
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
@@ -318,7 +324,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
 	int len;
 /*	struct linger ling; */
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
 #ifndef OPENSSL_SYS_WINDOWS
 redoit:
@@ -448,7 +454,7 @@ static int host_ip(char *str, unsigned char ip[4])
 		{ /* do a gethostbyname */
 		struct hostent *he;
 
-		if (!sock_init()) return(0);
+		if (!ssl_sock_init()) return(0);
 
 		he=GetHostByName(str);
 		if (he == NULL)
