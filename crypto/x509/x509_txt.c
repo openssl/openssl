@@ -147,6 +147,12 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
 		return("unhandled critical extension");
 
+	case X509_V_ERR_KEYUSAGE_NO_CRL_SIGN:
+		return("key usage does not include CRL signing");
+
+	case X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION:
+		return("unhandled critical CRL extension");
+
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);

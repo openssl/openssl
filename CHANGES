@@ -617,6 +617,14 @@
 
  Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
 
+  *) X509 verify fixes. Disable broken certificate workarounds when 
+     X509_V_FLAGS_X509_STRICT is set. Check CRL issuer has cRLSign set if
+     keyUsage extension present. Don't accept CRLs with unhandled critical
+     extensions: since verify currently doesn't process CRL extensions this
+     rejects a CRL with *any* critical extensions. Add new verify error codes
+     for these cases.
+     [Steve Henson]
+
   *) When creating an OCSP nonce use an OCTET STRING inside the extnValue.
      A clarification of RFC2560 will require the use of OCTET STRINGs and 
      some implementations cannot handle the current raw format. Since OpenSSL
