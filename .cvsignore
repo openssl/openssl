@@ -1,3 +1,6 @@
 Makefile.ssl
 MINFO
 makefile.one
+tmp
+out
+outinc
