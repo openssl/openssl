@@ -464,23 +464,29 @@ sub main'data_word
 	push(@out,"\t.long $_[0]\n");
 	}
 
+# debug output functions: puts, putx, printf
+
 sub main'puts
 	{
+	&pushvars();
 	&main'push('$Lstring' . ++$constl);
 	&main'call('puts');
 	$stack-=4;
 	&main'add("esp",4);
+	&popvars();
 
 	$const .= "Lstring$constl:\n\t.string \"@_[0]\"\n";
 	}
 
 sub main'putx
 	{
+	&pushvars();
 	&main'push($_[0]);
 	&main'push('$Lstring' . ++$constl);
 	&main'call('printf');
 	$stack-=8;
 	&main'add("esp",8);
+	&popvars();
 
 	$const .= "Lstring$constl:\n\t.string \"\%X\"\n";
 	}
@@ -488,6 +494,7 @@ sub main'putx
 sub main'printf
 	{
 	$ostack = $stack;
+	&pushvars();
 	for ($i = @_ - 1; $i >= 0; $i--)
 		{
 		$constl++;
@@ -509,6 +516,21 @@ sub main'printf
 			}
 		}
 	&main'call('printf');
-	$stack=$ostack;
+	$stack-=4*@_;
+	&popvars();
 	&main'add("esp",4*@_);
+	}
+
+sub pushvars
+	{
+	&main'push("edx");
+	&main'push("ecx");
+	&main'push("eax");
+	}
+
+sub popvars
+	{
+	&main'pop("eax");
+	&main'pop("ecx");
+	&main'pop("edx");
 	}
