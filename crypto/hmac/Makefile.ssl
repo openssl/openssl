@@ -84,6 +84,6 @@ hmac.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
 hmac.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
 hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-hmac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-hmac.o: ../../include/openssl/types.h hmac.c
+hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+hmac.o: ../../include/openssl/symhacks.h hmac.c

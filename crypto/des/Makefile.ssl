@@ -173,9 +173,9 @@ enc_writ.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_writ.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 enc_writ.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 enc_writ.o: ../../include/openssl/opensslconf.h
-enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-enc_writ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-enc_writ.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+enc_writ.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+enc_writ.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 enc_writ.o: ../cryptlib.h des_locl.h enc_writ.c
 fcrypt.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 fcrypt.o: ../../include/openssl/opensslconf.h des_locl.h fcrypt.c
@@ -192,8 +192,9 @@ pcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h pcbc_enc.c
 qud_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h qud_cksm.c
 rand_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
-rand_key.o: ../../include/openssl/types.h rand_key.c
+rand_key.o: ../../include/openssl/opensslconf.h
+rand_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+rand_key.o: rand_key.c
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
 rpc_enc.o: rpc_enc.c
