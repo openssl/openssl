@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/12 16:40:59 $
+  ______________                           $Date: 2000/09/12 22:19:41 $
 
   DEVELOPMENT STATE
 
@@ -15,6 +15,7 @@
 			hpux-brokengcc			- failed (BN_sqr)
 			linux-elf			- passed
 			linux-sparcv7			- passed
+			linux-ppc			- passed
 			Solaris [engine]		- failed (speed cswift)
 								 [FIXED]
 			solaris-sparcv8-gcc		- passed
@@ -26,7 +27,8 @@
 			FreeBSD				- passed
 			Win32				- failed (PCURSORINFO)
                                   RAND_poll() problem on Win2000
-	o  OpenSSL 0.9.5a: Released on April     1st, 2000
+			aix-gcc (AIX 4.3.2)		- passed
+    o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
