@@ -264,6 +264,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 		if (lkey) {
 			*keymatch |= MATCH_CERT;
 			if (cert) *cert = x509;
+			else X509_free(x509);
 		} else {
 			if(ca) sk_X509_push (*ca, x509);
 			else X509_free(x509);
