@@ -358,7 +358,7 @@ int main(int argc,char **argv)
 	    p[-1] = '\0';
 	    encdec = -1;
 	} else {
-	    encdec = atoi(ustrsep(&p,"\n"));
+	    encdec = atoi(strsep(&p,"\n"));
 	}
 	      
 
