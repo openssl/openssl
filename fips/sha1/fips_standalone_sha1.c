@@ -74,7 +74,7 @@ int main(int argc,char **argv)
 	    perror(argv[n]);
 	    exit(2);
 	    }
-	
+
 	SHA1_Init(&sha);
 	for( ; ; )
 	    {
