@@ -200,7 +200,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     SunOS:5.*)
-	echo "${MACHINE}-sun-solaris2"; exit 0
+	echo "${MACHINE}-whatever-solaris2"; exit 0
 	;;
 
     SunOS:*)
@@ -429,7 +429,7 @@ case "$GUESSOS" in
   arm*-*-linux2) OUT="linux-elf-arm" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
-  sun4u*-sun-solaris2)
+  sun4u*-*-solaris2)
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" -a "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
@@ -438,10 +438,10 @@ case "$GUESSOS" in
 		read waste < /dev/tty
 	fi
 	OUT="solaris-sparcv9-$CC" ;;
-  sun4m-sun-solaris2)	OUT="solaris-sparcv8-$CC" ;;
-  sun4d-sun-solaris2)	OUT="solaris-sparcv8-$CC" ;;
-  sun4*-sun-solaris2)	OUT="solaris-sparcv7-$CC" ;;
-  *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
+  sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
+  sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
+  sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
+  *86*-*-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
   alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
   *-freebsd[3-9]*) OUT="FreeBSD-elf" ;;
@@ -493,17 +493,6 @@ then
   sleep 5
   OUT=linux-sparcv8
 fi
-# To start with $OUT is never i86pc-sun-solaris2. Secondly why
-# ban *all* assembler implementation if it can't stand only one,
-# SHA-0 implementation.
-#if [ "$OUT" = "i86pc-sun-solaris2" ]
-#then
-#  ASM=`as -V /dev/null 2>&1`
-#  case "$ASM" in
-#    GNU*) ;;
-#    *) options="$options no-asm" ; echo "WARNING: You need the GNU assembler to use OpenSSL assembler code." ; echo "Sun as is not supported on Solaris x86." ;;
-#  esac
-#fi
 
 case "$GUESSOS" in
   i386-*) options="$options 386" ;;
