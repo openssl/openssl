@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/02/21 12:33:58 $
+  ______________                           $Date: 1999/02/25 14:44:55 $
 
   DEVELOPMENT STATE
 
@@ -143,4 +143,10 @@
        This would also be a great boon to binary package makers.  The
        SSLeay-0.9.1b RPM already includes some patches which do some of this.
        I can forward them if you wish."
+
+    o  Mats Nilsson <mats.nilsson@xware.se>:
+       "Add reference counting to all substructures of X509 etc. For instance,
+       X509_NAME lacks a reference counter, while EVP_PKEY has one.  I'm
+       making COM-wrappers for selected parts of SSLeay for a project of ours,
+       and has found this inconsistency in copy semantics annoying."
 
