@@ -82,7 +82,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(_DARWIN)
 # define USE_TOD
 #elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
