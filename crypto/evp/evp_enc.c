@@ -162,8 +162,25 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	i=ctx->buf_len;
 	bl=ctx->cipher->block_size;
+	if ((inl == 0) && (i != bl))
+		{
+		*outl=0;
+		return 1;
+		}
+	if(i == 0 && (inl&(bl-1)) == 0)
+		{
+		if(ctx->cipher->do_cipher(ctx,out,in,inl))
+			{
+			*outl=inl;
+			return 1;
+			}
+		else
+			{
+			*outl=0;
+			return 0;
+			}
+		}
 	*outl=0;
-	if ((inl == 0) && (i != bl)) return 1;
 	if (i != 0)
 		{
 		if (i+inl < bl)
@@ -183,7 +200,6 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			*outl+=bl;
 			}
 		}
-	//	i=inl%bl; /* how much is left */
 	i=inl&(bl-1);
 	inl-=i;
 	if (inl > 0)
