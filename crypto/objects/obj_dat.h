@@ -67,7 +67,7 @@
 #define NUM_LN 566
 #define NUM_OBJ 540
 
-static unsigned char lvalues[4218]={
+static unsigned char lvalues[4228]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -429,185 +429,185 @@ static unsigned char lvalues[4218]={
 0x2B,0x06,0x01,0x05,                         /* [2851] OBJ_Security */
 0x2B,0x06,0x01,0x06,                         /* [2855] OBJ_SNMPv2 */
 0x2B,0x06,0x01,0x07,                         /* [2859] OBJ_Mail */
-0x01,                                        /* [2863] OBJ_Enterprises */
-0xBA,0x82,0x58,                              /* [2864] OBJ_dcObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2867] OBJ_domainComponent */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2877] OBJ_Domain */
-0x50,                                        /* [2887] OBJ_joint_iso_ccitt */
-0x55,0x01,0x05,                              /* [2888] OBJ_selected_attribute_types */
-0x55,0x01,0x05,0x37,                         /* [2891] OBJ_clearance */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2895] OBJ_md4WithRSAEncryption */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2904] OBJ_ac_proxying */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2912] OBJ_sinfo_access */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2920] OBJ_id_aca_encAttrs */
-0x55,0x04,0x48,                              /* [2928] OBJ_role */
-0x55,0x1D,0x24,                              /* [2931] OBJ_policy_constraints */
-0x55,0x1D,0x37,                              /* [2934] OBJ_target_information */
-0x55,0x1D,0x38,                              /* [2937] OBJ_no_rev_avail */
-0x00,                                        /* [2940] OBJ_ccitt */
-0x2A,0x86,0x48,0xCE,0x3D,                    /* [2941] OBJ_ansi_X9_62 */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x01,          /* [2946] OBJ_X9_62_prime_field */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,          /* [2953] OBJ_X9_62_characteristic_two_field */
-0x2A,0x86,0x48,0xCE,0x3D,0x02,0x01,          /* [2960] OBJ_X9_62_id_ecPublicKey */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x01,     /* [2967] OBJ_X9_62_prime192v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x02,     /* [2975] OBJ_X9_62_prime192v2 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x03,     /* [2983] OBJ_X9_62_prime192v3 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x04,     /* [2991] OBJ_X9_62_prime239v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x05,     /* [2999] OBJ_X9_62_prime239v2 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x06,     /* [3007] OBJ_X9_62_prime239v3 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x07,     /* [3015] OBJ_X9_62_prime256v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x04,0x01,          /* [3023] OBJ_ecdsa_with_SHA1 */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x01,/* [3030] OBJ_ms_csp_name */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x01,/* [3039] OBJ_aes_128_ecb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x02,/* [3048] OBJ_aes_128_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x03,/* [3057] OBJ_aes_128_ofb128 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x04,/* [3066] OBJ_aes_128_cfb128 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x15,/* [3075] OBJ_aes_192_ecb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x16,/* [3084] OBJ_aes_192_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x17,/* [3093] OBJ_aes_192_ofb128 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x18,/* [3102] OBJ_aes_192_cfb128 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x29,/* [3111] OBJ_aes_256_ecb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2A,/* [3120] OBJ_aes_256_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [3129] OBJ_aes_256_ofb128 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [3138] OBJ_aes_256_cfb128 */
-0x55,0x1D,0x17,                              /* [3147] OBJ_hold_instruction_code */
-0x2A,0x86,0x48,0xCE,0x38,0x02,0x01,          /* [3150] OBJ_hold_instruction_none */
-0x2A,0x86,0x48,0xCE,0x38,0x02,0x02,          /* [3157] OBJ_hold_instruction_call_issuer */
-0x2A,0x86,0x48,0xCE,0x38,0x02,0x03,          /* [3164] OBJ_hold_instruction_reject */
-0x09,                                        /* [3171] OBJ_data */
-0x09,0x92,0x26,                              /* [3172] OBJ_pss */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,          /* [3175] OBJ_ucl */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,     /* [3182] OBJ_pilot */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,/* [3190] OBJ_pilotAttributeType */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,/* [3199] OBJ_pilotAttributeSyntax */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,/* [3208] OBJ_pilotObjectClass */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x0A,/* [3217] OBJ_pilotGroups */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,0x04,/* [3226] OBJ_iA5StringSyntax */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,0x05,/* [3236] OBJ_caseIgnoreIA5StringSyntax */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x03,/* [3246] OBJ_pilotObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x04,/* [3256] OBJ_pilotPerson */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x05,/* [3266] OBJ_account */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x06,/* [3276] OBJ_document */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x07,/* [3286] OBJ_room */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x09,/* [3296] OBJ_documentSeries */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0E,/* [3306] OBJ_rFC822localPart */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0F,/* [3316] OBJ_dNSDomain */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x11,/* [3326] OBJ_domainRelatedObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x12,/* [3336] OBJ_friendlyCountry */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x13,/* [3346] OBJ_simpleSecurityObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x14,/* [3356] OBJ_pilotOrganization */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x15,/* [3366] OBJ_pilotDSA */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x16,/* [3376] OBJ_qualityLabelledData */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x01,/* [3386] OBJ_userId */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x02,/* [3396] OBJ_textEncodedORAddress */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x03,/* [3406] OBJ_rfc822Mailbox */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x04,/* [3416] OBJ_info */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x05,/* [3426] OBJ_favouriteDrink */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x06,/* [3436] OBJ_roomNumber */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x07,/* [3446] OBJ_photo */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x08,/* [3456] OBJ_userClass */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x09,/* [3466] OBJ_host */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0A,/* [3476] OBJ_manager */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0B,/* [3486] OBJ_documentIdentifier */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0C,/* [3496] OBJ_documentTitle */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0D,/* [3506] OBJ_documentVersion */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0E,/* [3516] OBJ_documentAuthor */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0F,/* [3526] OBJ_documentLocation */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x14,/* [3536] OBJ_homeTelephoneNumber */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x15,/* [3546] OBJ_secretary */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x16,/* [3556] OBJ_otherMailbox */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x17,/* [3566] OBJ_lastModifiedTime */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x18,/* [3576] OBJ_lastModifiedBy */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1A,/* [3586] OBJ_aRecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1B,/* [3596] OBJ_pilotAttributeType27 */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1C,/* [3606] OBJ_mXRecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1D,/* [3616] OBJ_nSRecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1E,/* [3626] OBJ_sOARecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1F,/* [3636] OBJ_cNAMERecord */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x25,/* [3646] OBJ_associatedDomain */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x26,/* [3656] OBJ_associatedName */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x27,/* [3666] OBJ_homePostalAddress */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x28,/* [3676] OBJ_personalTitle */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x29,/* [3686] OBJ_mobileTelephoneNumber */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2A,/* [3696] OBJ_pagerTelephoneNumber */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2B,/* [3706] OBJ_friendlyCountryName */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2D,/* [3716] OBJ_organizationalStatus */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2E,/* [3726] OBJ_janetMailbox */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2F,/* [3736] OBJ_mailPreferenceOption */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x30,/* [3746] OBJ_buildingName */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x31,/* [3756] OBJ_dSAQuality */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x32,/* [3766] OBJ_singleLevelQuality */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x33,/* [3776] OBJ_subtreeMinimumQuality */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x34,/* [3786] OBJ_subtreeMaximumQuality */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x35,/* [3796] OBJ_personalSignature */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x36,/* [3806] OBJ_dITRedirect */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x37,/* [3816] OBJ_audio */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x38,/* [3826] OBJ_documentPublisher */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,     /* [3836] OBJ_X9_62_id_characteristic_two_basis */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x01,/* [3844] OBJ_X9_62_onBasis */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x02,/* [3853] OBJ_X9_62_tpBasis */
-0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x03,/* [3862] OBJ_X9_62_ppBasis */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x01,     /* [3871] OBJ_X9_62_c2pnb163v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x02,     /* [3879] OBJ_X9_62_c2pnb163v2 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x03,     /* [3887] OBJ_X9_62_c2pnb163v3 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x04,     /* [3895] OBJ_X9_62_c2pnb176v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x05,     /* [3903] OBJ_X9_62_c2tnb191v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x06,     /* [3911] OBJ_X9_62_c2tnb191v2 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x07,     /* [3919] OBJ_X9_62_c2tnb191v3 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x08,     /* [3927] OBJ_X9_62_c2onb191v4 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x09,     /* [3935] OBJ_X9_62_c2onb191v5 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0A,     /* [3943] OBJ_X9_62_c2pnb208w1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0B,     /* [3951] OBJ_X9_62_c2tnb239v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0C,     /* [3959] OBJ_X9_62_c2tnb239v2 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0D,     /* [3967] OBJ_X9_62_c2tnb239v3 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0E,     /* [3975] OBJ_X9_62_c2onb239v4 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0F,     /* [3983] OBJ_X9_62_c2onb239v5 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x10,     /* [3991] OBJ_X9_62_c2pnb272w1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x11,     /* [3999] OBJ_X9_62_c2pnb304w1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x12,     /* [4007] OBJ_X9_62_c2tnb359v1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x13,     /* [4015] OBJ_X9_62_c2pnb368w1 */
-0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x14,     /* [4023] OBJ_X9_62_c2tnb431r1 */
-0x2B,                                        /* [4031] OBJ_identified_organization */
-0x2B,0x81,0x04,                              /* [4032] OBJ_certicom_arc */
-0x2B,0x81,0x04,0x00,0x06,                    /* [4035] OBJ_secp112r1 */
-0x2B,0x81,0x04,0x00,0x07,                    /* [4040] OBJ_secp112r2 */
-0x2B,0x81,0x04,0x00,0x1C,                    /* [4045] OBJ_secp128r1 */
-0x2B,0x81,0x04,0x00,0x1D,                    /* [4050] OBJ_secp128r2 */
-0x2B,0x81,0x04,0x00,0x09,                    /* [4055] OBJ_secp160k1 */
-0x2B,0x81,0x04,0x00,0x08,                    /* [4060] OBJ_secp160r1 */
-0x2B,0x81,0x04,0x00,0x1E,                    /* [4065] OBJ_secp160r2 */
-0x2B,0x81,0x04,0x00,0x1F,                    /* [4070] OBJ_secp192k1 */
-0x00,                                        /* [4075] OBJ_secp192r1 */
-0x2B,0x81,0x04,0x00,0x20,                    /* [4076] OBJ_secp224k1 */
-0x2B,0x81,0x04,0x00,0x21,                    /* [4081] OBJ_secp224r1 */
-0x2B,0x81,0x04,0x00,0x0A,                    /* [4086] OBJ_secp256k1 */
-0x00,                                        /* [4091] OBJ_secp256r1 */
-0x2B,0x81,0x04,0x00,0x22,                    /* [4092] OBJ_secp384r1 */
-0x2B,0x81,0x04,0x00,0x23,                    /* [4097] OBJ_secp521r1 */
-0x2B,0x81,0x04,0x00,0x04,                    /* [4102] OBJ_sect113r1 */
-0x2B,0x81,0x04,0x00,0x05,                    /* [4107] OBJ_sect113r2 */
-0x2B,0x81,0x04,0x00,0x16,                    /* [4112] OBJ_sect131r1 */
-0x2B,0x81,0x04,0x00,0x17,                    /* [4117] OBJ_sect131r2 */
-0x2B,0x81,0x04,0x00,0x01,                    /* [4122] OBJ_sect163k1 */
-0x2B,0x81,0x04,0x00,0x02,                    /* [4127] OBJ_sect163r1 */
-0x2B,0x81,0x04,0x00,0x0F,                    /* [4132] OBJ_sect163r2 */
-0x2B,0x81,0x04,0x00,0x18,                    /* [4137] OBJ_sect193r1 */
-0x2B,0x81,0x04,0x00,0x19,                    /* [4142] OBJ_sect193r2 */
-0x2B,0x81,0x04,0x00,0x1A,                    /* [4147] OBJ_sect233k1 */
-0x2B,0x81,0x04,0x00,0x1B,                    /* [4152] OBJ_sect233r1 */
-0x2B,0x81,0x04,0x00,0x03,                    /* [4157] OBJ_sect239k1 */
-0x2B,0x81,0x04,0x00,0x10,                    /* [4162] OBJ_sect283k1 */
-0x2B,0x81,0x04,0x00,0x11,                    /* [4167] OBJ_sect283r1 */
-0x2B,0x81,0x04,0x00,0x24,                    /* [4172] OBJ_sect409k1 */
-0x2B,0x81,0x04,0x00,0x25,                    /* [4177] OBJ_sect409r1 */
-0x2B,0x81,0x04,0x00,0x26,                    /* [4182] OBJ_sect571k1 */
-0x2B,0x81,0x04,0x00,0x27,                    /* [4187] OBJ_sect571r1 */
-0x67,0x2B,                                   /* [4192] OBJ_wap */
-0x67,0x2B,0x0D,                              /* [4194] OBJ_wap_wsg */
-0x67,0x2B,0x0D,0x04,0x01,                    /* [4197] OBJ_wap_wsg_idm_ecid_wtls1 */
-0x67,0x2B,0x0D,0x04,0x06,                    /* [4202] OBJ_wap_wsg_idm_ecid_wtls6 */
-0x67,0x2B,0x0D,0x04,0x08,                    /* [4207] OBJ_wap_wsg_idm_ecid_wtls8 */
-0x67,0x2B,0x0D,0x04,0x09,                    /* [4212] OBJ_wap_wsg_idm_ecid_wtls9 */
+0x2B,0x06,0x01,0x04,0x01,                    /* [2863] OBJ_Enterprises */
+0x2B,0x06,0x01,0x04,0x01,0x8B,0x3A,0x82,0x58,/* [2868] OBJ_dcObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2877] OBJ_domainComponent */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2887] OBJ_Domain */
+0x50,                                        /* [2897] OBJ_joint_iso_ccitt */
+0x55,0x01,0x05,                              /* [2898] OBJ_selected_attribute_types */
+0x55,0x01,0x05,0x37,                         /* [2901] OBJ_clearance */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2905] OBJ_md4WithRSAEncryption */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2914] OBJ_ac_proxying */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2922] OBJ_sinfo_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2930] OBJ_id_aca_encAttrs */
+0x55,0x04,0x48,                              /* [2938] OBJ_role */
+0x55,0x1D,0x24,                              /* [2941] OBJ_policy_constraints */
+0x55,0x1D,0x37,                              /* [2944] OBJ_target_information */
+0x55,0x1D,0x38,                              /* [2947] OBJ_no_rev_avail */
+0x00,                                        /* [2950] OBJ_ccitt */
+0x2A,0x86,0x48,0xCE,0x3D,                    /* [2951] OBJ_ansi_X9_62 */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x01,          /* [2956] OBJ_X9_62_prime_field */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,          /* [2963] OBJ_X9_62_characteristic_two_field */
+0x2A,0x86,0x48,0xCE,0x3D,0x02,0x01,          /* [2970] OBJ_X9_62_id_ecPublicKey */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x01,     /* [2977] OBJ_X9_62_prime192v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x02,     /* [2985] OBJ_X9_62_prime192v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x03,     /* [2993] OBJ_X9_62_prime192v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x04,     /* [3001] OBJ_X9_62_prime239v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x05,     /* [3009] OBJ_X9_62_prime239v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x06,     /* [3017] OBJ_X9_62_prime239v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x07,     /* [3025] OBJ_X9_62_prime256v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x01,          /* [3033] OBJ_ecdsa_with_SHA1 */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x01,/* [3040] OBJ_ms_csp_name */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x01,/* [3049] OBJ_aes_128_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x02,/* [3058] OBJ_aes_128_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x03,/* [3067] OBJ_aes_128_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x04,/* [3076] OBJ_aes_128_cfb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x15,/* [3085] OBJ_aes_192_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x16,/* [3094] OBJ_aes_192_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x17,/* [3103] OBJ_aes_192_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x18,/* [3112] OBJ_aes_192_cfb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x29,/* [3121] OBJ_aes_256_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2A,/* [3130] OBJ_aes_256_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [3139] OBJ_aes_256_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [3148] OBJ_aes_256_cfb128 */
+0x55,0x1D,0x17,                              /* [3157] OBJ_hold_instruction_code */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x01,          /* [3160] OBJ_hold_instruction_none */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x02,          /* [3167] OBJ_hold_instruction_call_issuer */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x03,          /* [3174] OBJ_hold_instruction_reject */
+0x09,                                        /* [3181] OBJ_data */
+0x09,0x92,0x26,                              /* [3182] OBJ_pss */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,          /* [3185] OBJ_ucl */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,     /* [3192] OBJ_pilot */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,/* [3200] OBJ_pilotAttributeType */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,/* [3209] OBJ_pilotAttributeSyntax */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,/* [3218] OBJ_pilotObjectClass */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x0A,/* [3227] OBJ_pilotGroups */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,0x04,/* [3236] OBJ_iA5StringSyntax */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x03,0x05,/* [3246] OBJ_caseIgnoreIA5StringSyntax */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x03,/* [3256] OBJ_pilotObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x04,/* [3266] OBJ_pilotPerson */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x05,/* [3276] OBJ_account */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x06,/* [3286] OBJ_document */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x07,/* [3296] OBJ_room */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x09,/* [3306] OBJ_documentSeries */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0E,/* [3316] OBJ_rFC822localPart */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0F,/* [3326] OBJ_dNSDomain */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x11,/* [3336] OBJ_domainRelatedObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x12,/* [3346] OBJ_friendlyCountry */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x13,/* [3356] OBJ_simpleSecurityObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x14,/* [3366] OBJ_pilotOrganization */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x15,/* [3376] OBJ_pilotDSA */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x16,/* [3386] OBJ_qualityLabelledData */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x01,/* [3396] OBJ_userId */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x02,/* [3406] OBJ_textEncodedORAddress */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x03,/* [3416] OBJ_rfc822Mailbox */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x04,/* [3426] OBJ_info */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x05,/* [3436] OBJ_favouriteDrink */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x06,/* [3446] OBJ_roomNumber */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x07,/* [3456] OBJ_photo */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x08,/* [3466] OBJ_userClass */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x09,/* [3476] OBJ_host */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0A,/* [3486] OBJ_manager */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0B,/* [3496] OBJ_documentIdentifier */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0C,/* [3506] OBJ_documentTitle */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0D,/* [3516] OBJ_documentVersion */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0E,/* [3526] OBJ_documentAuthor */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x0F,/* [3536] OBJ_documentLocation */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x14,/* [3546] OBJ_homeTelephoneNumber */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x15,/* [3556] OBJ_secretary */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x16,/* [3566] OBJ_otherMailbox */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x17,/* [3576] OBJ_lastModifiedTime */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x18,/* [3586] OBJ_lastModifiedBy */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1A,/* [3596] OBJ_aRecord */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1B,/* [3606] OBJ_pilotAttributeType27 */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1C,/* [3616] OBJ_mXRecord */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1D,/* [3626] OBJ_nSRecord */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1E,/* [3636] OBJ_sOARecord */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x1F,/* [3646] OBJ_cNAMERecord */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x25,/* [3656] OBJ_associatedDomain */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x26,/* [3666] OBJ_associatedName */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x27,/* [3676] OBJ_homePostalAddress */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x28,/* [3686] OBJ_personalTitle */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x29,/* [3696] OBJ_mobileTelephoneNumber */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2A,/* [3706] OBJ_pagerTelephoneNumber */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2B,/* [3716] OBJ_friendlyCountryName */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2D,/* [3726] OBJ_organizationalStatus */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2E,/* [3736] OBJ_janetMailbox */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x2F,/* [3746] OBJ_mailPreferenceOption */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x30,/* [3756] OBJ_buildingName */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x31,/* [3766] OBJ_dSAQuality */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x32,/* [3776] OBJ_singleLevelQuality */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x33,/* [3786] OBJ_subtreeMinimumQuality */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x34,/* [3796] OBJ_subtreeMaximumQuality */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x35,/* [3806] OBJ_personalSignature */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x36,/* [3816] OBJ_dITRedirect */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x37,/* [3826] OBJ_audio */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x38,/* [3836] OBJ_documentPublisher */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,     /* [3846] OBJ_X9_62_id_characteristic_two_basis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x01,/* [3854] OBJ_X9_62_onBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x02,/* [3863] OBJ_X9_62_tpBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x03,/* [3872] OBJ_X9_62_ppBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x01,     /* [3881] OBJ_X9_62_c2pnb163v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x02,     /* [3889] OBJ_X9_62_c2pnb163v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x03,     /* [3897] OBJ_X9_62_c2pnb163v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x04,     /* [3905] OBJ_X9_62_c2pnb176v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x05,     /* [3913] OBJ_X9_62_c2tnb191v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x06,     /* [3921] OBJ_X9_62_c2tnb191v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x07,     /* [3929] OBJ_X9_62_c2tnb191v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x08,     /* [3937] OBJ_X9_62_c2onb191v4 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x09,     /* [3945] OBJ_X9_62_c2onb191v5 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0A,     /* [3953] OBJ_X9_62_c2pnb208w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0B,     /* [3961] OBJ_X9_62_c2tnb239v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0C,     /* [3969] OBJ_X9_62_c2tnb239v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0D,     /* [3977] OBJ_X9_62_c2tnb239v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0E,     /* [3985] OBJ_X9_62_c2onb239v4 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0F,     /* [3993] OBJ_X9_62_c2onb239v5 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x10,     /* [4001] OBJ_X9_62_c2pnb272w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x11,     /* [4009] OBJ_X9_62_c2pnb304w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x12,     /* [4017] OBJ_X9_62_c2tnb359v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x13,     /* [4025] OBJ_X9_62_c2pnb368w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x14,     /* [4033] OBJ_X9_62_c2tnb431r1 */
+0x2B,                                        /* [4041] OBJ_identified_organization */
+0x2B,0x81,0x04,                              /* [4042] OBJ_certicom_arc */
+0x2B,0x81,0x04,0x00,0x06,                    /* [4045] OBJ_secp112r1 */
+0x2B,0x81,0x04,0x00,0x07,                    /* [4050] OBJ_secp112r2 */
+0x2B,0x81,0x04,0x00,0x1C,                    /* [4055] OBJ_secp128r1 */
+0x2B,0x81,0x04,0x00,0x1D,                    /* [4060] OBJ_secp128r2 */
+0x2B,0x81,0x04,0x00,0x09,                    /* [4065] OBJ_secp160k1 */
+0x2B,0x81,0x04,0x00,0x08,                    /* [4070] OBJ_secp160r1 */
+0x2B,0x81,0x04,0x00,0x1E,                    /* [4075] OBJ_secp160r2 */
+0x2B,0x81,0x04,0x00,0x1F,                    /* [4080] OBJ_secp192k1 */
+0x00,                                        /* [4085] OBJ_secp192r1 */
+0x2B,0x81,0x04,0x00,0x20,                    /* [4086] OBJ_secp224k1 */
+0x2B,0x81,0x04,0x00,0x21,                    /* [4091] OBJ_secp224r1 */
+0x2B,0x81,0x04,0x00,0x0A,                    /* [4096] OBJ_secp256k1 */
+0x00,                                        /* [4101] OBJ_secp256r1 */
+0x2B,0x81,0x04,0x00,0x22,                    /* [4102] OBJ_secp384r1 */
+0x2B,0x81,0x04,0x00,0x23,                    /* [4107] OBJ_secp521r1 */
+0x2B,0x81,0x04,0x00,0x04,                    /* [4112] OBJ_sect113r1 */
+0x2B,0x81,0x04,0x00,0x05,                    /* [4117] OBJ_sect113r2 */
+0x2B,0x81,0x04,0x00,0x16,                    /* [4122] OBJ_sect131r1 */
+0x2B,0x81,0x04,0x00,0x17,                    /* [4127] OBJ_sect131r2 */
+0x2B,0x81,0x04,0x00,0x01,                    /* [4132] OBJ_sect163k1 */
+0x2B,0x81,0x04,0x00,0x02,                    /* [4137] OBJ_sect163r1 */
+0x2B,0x81,0x04,0x00,0x0F,                    /* [4142] OBJ_sect163r2 */
+0x2B,0x81,0x04,0x00,0x18,                    /* [4147] OBJ_sect193r1 */
+0x2B,0x81,0x04,0x00,0x19,                    /* [4152] OBJ_sect193r2 */
+0x2B,0x81,0x04,0x00,0x1A,                    /* [4157] OBJ_sect233k1 */
+0x2B,0x81,0x04,0x00,0x1B,                    /* [4162] OBJ_sect233r1 */
+0x2B,0x81,0x04,0x00,0x03,                    /* [4167] OBJ_sect239k1 */
+0x2B,0x81,0x04,0x00,0x10,                    /* [4172] OBJ_sect283k1 */
+0x2B,0x81,0x04,0x00,0x11,                    /* [4177] OBJ_sect283r1 */
+0x2B,0x81,0x04,0x00,0x24,                    /* [4182] OBJ_sect409k1 */
+0x2B,0x81,0x04,0x00,0x25,                    /* [4187] OBJ_sect409r1 */
+0x2B,0x81,0x04,0x00,0x26,                    /* [4192] OBJ_sect571k1 */
+0x2B,0x81,0x04,0x00,0x27,                    /* [4197] OBJ_sect571r1 */
+0x67,0x2B,                                   /* [4202] OBJ_wap */
+0x67,0x2B,0x0D,                              /* [4204] OBJ_wap_wsg */
+0x67,0x2B,0x0D,0x04,0x01,                    /* [4207] OBJ_wap_wsg_idm_ecid_wtls1 */
+0x67,0x2B,0x0D,0x04,0x06,                    /* [4212] OBJ_wap_wsg_idm_ecid_wtls6 */
+0x67,0x2B,0x0D,0x04,0x08,                    /* [4217] OBJ_wap_wsg_idm_ecid_wtls8 */
+0x67,0x2B,0x0D,0x04,0x09,                    /* [4222] OBJ_wap_wsg_idm_ecid_wtls9 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1216,241 +1216,241 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"security","Security",NID_Security,4,&(lvalues[2851]),0},
 {"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2855]),0},
 {"mail","Mail",NID_Mail,4,&(lvalues[2859]),0},
-{"enterprises","Enterprises",NID_Enterprises,1,&(lvalues[2863]),0},
-{"dcobject","dcObject",NID_dcObject,3,&(lvalues[2864]),0},
-{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2867]),0},
-{"domain","Domain",NID_Domain,10,&(lvalues[2877]),0},
+{"enterprises","Enterprises",NID_Enterprises,5,&(lvalues[2863]),0},
+{"dcobject","dcObject",NID_dcObject,9,&(lvalues[2868]),0},
+{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2877]),0},
+{"domain","Domain",NID_Domain,10,&(lvalues[2887]),0},
 {"JOINT-ISO-CCITT","joint-iso-ccitt",NID_joint_iso_ccitt,1,
-	&(lvalues[2887]),0},
+	&(lvalues[2897]),0},
 {"selected-attribute-types","Selected Attribute Types",
-	NID_selected_attribute_types,3,&(lvalues[2888]),0},
-{"clearance","clearance",NID_clearance,4,&(lvalues[2891]),0},
+	NID_selected_attribute_types,3,&(lvalues[2898]),0},
+{"clearance","clearance",NID_clearance,4,&(lvalues[2901]),0},
 {"RSA-MD4","md4WithRSAEncryption",NID_md4WithRSAEncryption,9,
-	&(lvalues[2895]),0},
-{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2904]),0},
+	&(lvalues[2905]),0},
+{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2914]),0},
 {"subjectInfoAccess","Subject Information Access",NID_sinfo_access,8,
-	&(lvalues[2912]),0},
+	&(lvalues[2922]),0},
 {"id-aca-encAttrs","id-aca-encAttrs",NID_id_aca_encAttrs,8,
-	&(lvalues[2920]),0},
-{"role","role",NID_role,3,&(lvalues[2928]),0},
+	&(lvalues[2930]),0},
+{"role","role",NID_role,3,&(lvalues[2938]),0},
 {"policyConstraints","X509v3 Policy Constraints",
-	NID_policy_constraints,3,&(lvalues[2931]),0},
+	NID_policy_constraints,3,&(lvalues[2941]),0},
 {"targetInformation","X509v3 AC Targeting",NID_target_information,3,
-	&(lvalues[2934]),0},
+	&(lvalues[2944]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
-	&(lvalues[2937]),0},
-{"CCITT","ccitt",NID_ccitt,1,&(lvalues[2940]),0},
-{"ansi-X9-62","ANSI X9.62",NID_ansi_X9_62,5,&(lvalues[2941]),0},
-{"prime-field","prime-field",NID_X9_62_prime_field,7,&(lvalues[2946]),0},
+	&(lvalues[2947]),0},
+{"CCITT","ccitt",NID_ccitt,1,&(lvalues[2950]),0},
+{"ansi-X9-62","ANSI X9.62",NID_ansi_X9_62,5,&(lvalues[2951]),0},
+{"prime-field","prime-field",NID_X9_62_prime_field,7,&(lvalues[2956]),0},
 {"characteristic-two-field","characteristic-two-field",
-	NID_X9_62_characteristic_two_field,7,&(lvalues[2953]),0},
+	NID_X9_62_characteristic_two_field,7,&(lvalues[2963]),0},
 {"id-ecPublicKey","id-ecPublicKey",NID_X9_62_id_ecPublicKey,7,
-	&(lvalues[2960]),0},
-{"prime192v1","prime192v1",NID_X9_62_prime192v1,8,&(lvalues[2967]),0},
-{"prime192v2","prime192v2",NID_X9_62_prime192v2,8,&(lvalues[2975]),0},
-{"prime192v3","prime192v3",NID_X9_62_prime192v3,8,&(lvalues[2983]),0},
-{"prime239v1","prime239v1",NID_X9_62_prime239v1,8,&(lvalues[2991]),0},
-{"prime239v2","prime239v2",NID_X9_62_prime239v2,8,&(lvalues[2999]),0},
-{"prime239v3","prime239v3",NID_X9_62_prime239v3,8,&(lvalues[3007]),0},
-{"prime256v1","prime256v1",NID_X9_62_prime256v1,8,&(lvalues[3015]),0},
+	&(lvalues[2970]),0},
+{"prime192v1","prime192v1",NID_X9_62_prime192v1,8,&(lvalues[2977]),0},
+{"prime192v2","prime192v2",NID_X9_62_prime192v2,8,&(lvalues[2985]),0},
+{"prime192v3","prime192v3",NID_X9_62_prime192v3,8,&(lvalues[2993]),0},
+{"prime239v1","prime239v1",NID_X9_62_prime239v1,8,&(lvalues[3001]),0},
+{"prime239v2","prime239v2",NID_X9_62_prime239v2,8,&(lvalues[3009]),0},
+{"prime239v3","prime239v3",NID_X9_62_prime239v3,8,&(lvalues[3017]),0},
+{"prime256v1","prime256v1",NID_X9_62_prime256v1,8,&(lvalues[3025]),0},
 {"ecdsa-with-SHA1","ecdsa-with-SHA1",NID_ecdsa_with_SHA1,7,
-	&(lvalues[3023]),0},
-{"CSPName","Microsoft CSP Name",NID_ms_csp_name,9,&(lvalues[3030]),0},
-{"AES-128-ECB","aes-128-ecb",NID_aes_128_ecb,9,&(lvalues[3039]),0},
-{"AES-128-CBC","aes-128-cbc",NID_aes_128_cbc,9,&(lvalues[3048]),0},
-{"AES-128-OFB","aes-128-ofb",NID_aes_128_ofb128,9,&(lvalues[3057]),0},
-{"AES-128-CFB","aes-128-cfb",NID_aes_128_cfb128,9,&(lvalues[3066]),0},
-{"AES-192-ECB","aes-192-ecb",NID_aes_192_ecb,9,&(lvalues[3075]),0},
-{"AES-192-CBC","aes-192-cbc",NID_aes_192_cbc,9,&(lvalues[3084]),0},
-{"AES-192-OFB","aes-192-ofb",NID_aes_192_ofb128,9,&(lvalues[3093]),0},
-{"AES-192-CFB","aes-192-cfb",NID_aes_192_cfb128,9,&(lvalues[3102]),0},
-{"AES-256-ECB","aes-256-ecb",NID_aes_256_ecb,9,&(lvalues[3111]),0},
-{"AES-256-CBC","aes-256-cbc",NID_aes_256_cbc,9,&(lvalues[3120]),0},
-{"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb128,9,&(lvalues[3129]),0},
-{"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb128,9,&(lvalues[3138]),0},
+	&(lvalues[3033]),0},
+{"CSPName","Microsoft CSP Name",NID_ms_csp_name,9,&(lvalues[3040]),0},
+{"AES-128-ECB","aes-128-ecb",NID_aes_128_ecb,9,&(lvalues[3049]),0},
+{"AES-128-CBC","aes-128-cbc",NID_aes_128_cbc,9,&(lvalues[3058]),0},
+{"AES-128-OFB","aes-128-ofb",NID_aes_128_ofb128,9,&(lvalues[3067]),0},
+{"AES-128-CFB","aes-128-cfb",NID_aes_128_cfb128,9,&(lvalues[3076]),0},
+{"AES-192-ECB","aes-192-ecb",NID_aes_192_ecb,9,&(lvalues[3085]),0},
+{"AES-192-CBC","aes-192-cbc",NID_aes_192_cbc,9,&(lvalues[3094]),0},
+{"AES-192-OFB","aes-192-ofb",NID_aes_192_ofb128,9,&(lvalues[3103]),0},
+{"AES-192-CFB","aes-192-cfb",NID_aes_192_cfb128,9,&(lvalues[3112]),0},
+{"AES-256-ECB","aes-256-ecb",NID_aes_256_ecb,9,&(lvalues[3121]),0},
+{"AES-256-CBC","aes-256-cbc",NID_aes_256_cbc,9,&(lvalues[3130]),0},
+{"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb128,9,&(lvalues[3139]),0},
+{"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb128,9,&(lvalues[3148]),0},
 {"holdInstructionCode","Hold Instruction Code",
-	NID_hold_instruction_code,3,&(lvalues[3147]),0},
+	NID_hold_instruction_code,3,&(lvalues[3157]),0},
 {"holdInstructionNone","Hold Instruction None",
-	NID_hold_instruction_none,7,&(lvalues[3150]),0},
+	NID_hold_instruction_none,7,&(lvalues[3160]),0},
 {"holdInstructionCallIssuer","Hold Instruction Call Issuer",
-	NID_hold_instruction_call_issuer,7,&(lvalues[3157]),0},
+	NID_hold_instruction_call_issuer,7,&(lvalues[3167]),0},
 {"holdInstructionReject","Hold Instruction Reject",
-	NID_hold_instruction_reject,7,&(lvalues[3164]),0},
-{"data","data",NID_data,1,&(lvalues[3171]),0},
-{"pss","pss",NID_pss,3,&(lvalues[3172]),0},
-{"ucl","ucl",NID_ucl,7,&(lvalues[3175]),0},
-{"pilot","pilot",NID_pilot,8,&(lvalues[3182]),0},
+	NID_hold_instruction_reject,7,&(lvalues[3174]),0},
+{"data","data",NID_data,1,&(lvalues[3181]),0},
+{"pss","pss",NID_pss,3,&(lvalues[3182]),0},
+{"ucl","ucl",NID_ucl,7,&(lvalues[3185]),0},
+{"pilot","pilot",NID_pilot,8,&(lvalues[3192]),0},
 {"pilotAttributeType","pilotAttributeType",NID_pilotAttributeType,9,
-	&(lvalues[3190]),0},
+	&(lvalues[3200]),0},
 {"pilotAttributeSyntax","pilotAttributeSyntax",
-	NID_pilotAttributeSyntax,9,&(lvalues[3199]),0},
+	NID_pilotAttributeSyntax,9,&(lvalues[3209]),0},
 {"pilotObjectClass","pilotObjectClass",NID_pilotObjectClass,9,
-	&(lvalues[3208]),0},
-{"pilotGroups","pilotGroups",NID_pilotGroups,9,&(lvalues[3217]),0},
+	&(lvalues[3218]),0},
+{"pilotGroups","pilotGroups",NID_pilotGroups,9,&(lvalues[3227]),0},
 {"iA5StringSyntax","iA5StringSyntax",NID_iA5StringSyntax,10,
-	&(lvalues[3226]),0},
+	&(lvalues[3236]),0},
 {"caseIgnoreIA5StringSyntax","caseIgnoreIA5StringSyntax",
-	NID_caseIgnoreIA5StringSyntax,10,&(lvalues[3236]),0},
-{"pilotObject","pilotObject",NID_pilotObject,10,&(lvalues[3246]),0},
-{"pilotPerson","pilotPerson",NID_pilotPerson,10,&(lvalues[3256]),0},
-{"account","account",NID_account,10,&(lvalues[3266]),0},
-{"document","document",NID_document,10,&(lvalues[3276]),0},
-{"room","room",NID_room,10,&(lvalues[3286]),0},
+	NID_caseIgnoreIA5StringSyntax,10,&(lvalues[3246]),0},
+{"pilotObject","pilotObject",NID_pilotObject,10,&(lvalues[3256]),0},
+{"pilotPerson","pilotPerson",NID_pilotPerson,10,&(lvalues[3266]),0},
+{"account","account",NID_account,10,&(lvalues[3276]),0},
+{"document","document",NID_document,10,&(lvalues[3286]),0},
+{"room","room",NID_room,10,&(lvalues[3296]),0},
 {"documentSeries","documentSeries",NID_documentSeries,10,
-	&(lvalues[3296]),0},
-{"rFC822localPart","rFC822localPart",NID_rFC822localPart,10,
 	&(lvalues[3306]),0},
-{"dNSDomain","dNSDomain",NID_dNSDomain,10,&(lvalues[3316]),0},
+{"rFC822localPart","rFC822localPart",NID_rFC822localPart,10,
+	&(lvalues[3316]),0},
+{"dNSDomain","dNSDomain",NID_dNSDomain,10,&(lvalues[3326]),0},
 {"domainRelatedObject","domainRelatedObject",NID_domainRelatedObject,
-	10,&(lvalues[3326]),0},
+	10,&(lvalues[3336]),0},
 {"friendlyCountry","friendlyCountry",NID_friendlyCountry,10,
-	&(lvalues[3336]),0},
+	&(lvalues[3346]),0},
 {"simpleSecurityObject","simpleSecurityObject",
-	NID_simpleSecurityObject,10,&(lvalues[3346]),0},
+	NID_simpleSecurityObject,10,&(lvalues[3356]),0},
 {"pilotOrganization","pilotOrganization",NID_pilotOrganization,10,
-	&(lvalues[3356]),0},
-{"pilotDSA","pilotDSA",NID_pilotDSA,10,&(lvalues[3366]),0},
+	&(lvalues[3366]),0},
+{"pilotDSA","pilotDSA",NID_pilotDSA,10,&(lvalues[3376]),0},
 {"qualityLabelledData","qualityLabelledData",NID_qualityLabelledData,
-	10,&(lvalues[3376]),0},
-{"UID","userId",NID_userId,10,&(lvalues[3386]),0},
+	10,&(lvalues[3386]),0},
+{"UID","userId",NID_userId,10,&(lvalues[3396]),0},
 {"textEncodedORAddress","textEncodedORAddress",
-	NID_textEncodedORAddress,10,&(lvalues[3396]),0},
-{"rfc822Mailbox","rfc822Mailbox",NID_rfc822Mailbox,10,&(lvalues[3406]),0},
-{"info","info",NID_info,10,&(lvalues[3416]),0},
+	NID_textEncodedORAddress,10,&(lvalues[3406]),0},
+{"rfc822Mailbox","rfc822Mailbox",NID_rfc822Mailbox,10,&(lvalues[3416]),0},
+{"info","info",NID_info,10,&(lvalues[3426]),0},
 {"favouriteDrink","favouriteDrink",NID_favouriteDrink,10,
-	&(lvalues[3426]),0},
-{"roomNumber","roomNumber",NID_roomNumber,10,&(lvalues[3436]),0},
-{"photo","photo",NID_photo,10,&(lvalues[3446]),0},
-{"userClass","userClass",NID_userClass,10,&(lvalues[3456]),0},
-{"host","host",NID_host,10,&(lvalues[3466]),0},
-{"manager","manager",NID_manager,10,&(lvalues[3476]),0},
+	&(lvalues[3436]),0},
+{"roomNumber","roomNumber",NID_roomNumber,10,&(lvalues[3446]),0},
+{"photo","photo",NID_photo,10,&(lvalues[3456]),0},
+{"userClass","userClass",NID_userClass,10,&(lvalues[3466]),0},
+{"host","host",NID_host,10,&(lvalues[3476]),0},
+{"manager","manager",NID_manager,10,&(lvalues[3486]),0},
 {"documentIdentifier","documentIdentifier",NID_documentIdentifier,10,
-	&(lvalues[3486]),0},
-{"documentTitle","documentTitle",NID_documentTitle,10,&(lvalues[3496]),0},
+	&(lvalues[3496]),0},
+{"documentTitle","documentTitle",NID_documentTitle,10,&(lvalues[3506]),0},
 {"documentVersion","documentVersion",NID_documentVersion,10,
-	&(lvalues[3506]),0},
-{"documentAuthor","documentAuthor",NID_documentAuthor,10,
 	&(lvalues[3516]),0},
-{"documentLocation","documentLocation",NID_documentLocation,10,
+{"documentAuthor","documentAuthor",NID_documentAuthor,10,
 	&(lvalues[3526]),0},
+{"documentLocation","documentLocation",NID_documentLocation,10,
+	&(lvalues[3536]),0},
 {"homeTelephoneNumber","homeTelephoneNumber",NID_homeTelephoneNumber,
-	10,&(lvalues[3536]),0},
-{"secretary","secretary",NID_secretary,10,&(lvalues[3546]),0},
-{"otherMailbox","otherMailbox",NID_otherMailbox,10,&(lvalues[3556]),0},
+	10,&(lvalues[3546]),0},
+{"secretary","secretary",NID_secretary,10,&(lvalues[3556]),0},
+{"otherMailbox","otherMailbox",NID_otherMailbox,10,&(lvalues[3566]),0},
 {"lastModifiedTime","lastModifiedTime",NID_lastModifiedTime,10,
-	&(lvalues[3566]),0},
-{"lastModifiedBy","lastModifiedBy",NID_lastModifiedBy,10,
 	&(lvalues[3576]),0},
-{"aRecord","aRecord",NID_aRecord,10,&(lvalues[3586]),0},
+{"lastModifiedBy","lastModifiedBy",NID_lastModifiedBy,10,
+	&(lvalues[3586]),0},
+{"aRecord","aRecord",NID_aRecord,10,&(lvalues[3596]),0},
 {"pilotAttributeType27","pilotAttributeType27",
-	NID_pilotAttributeType27,10,&(lvalues[3596]),0},
-{"mXRecord","mXRecord",NID_mXRecord,10,&(lvalues[3606]),0},
-{"nSRecord","nSRecord",NID_nSRecord,10,&(lvalues[3616]),0},
-{"sOARecord","sOARecord",NID_sOARecord,10,&(lvalues[3626]),0},
-{"cNAMERecord","cNAMERecord",NID_cNAMERecord,10,&(lvalues[3636]),0},
+	NID_pilotAttributeType27,10,&(lvalues[3606]),0},
+{"mXRecord","mXRecord",NID_mXRecord,10,&(lvalues[3616]),0},
+{"nSRecord","nSRecord",NID_nSRecord,10,&(lvalues[3626]),0},
+{"sOARecord","sOARecord",NID_sOARecord,10,&(lvalues[3636]),0},
+{"cNAMERecord","cNAMERecord",NID_cNAMERecord,10,&(lvalues[3646]),0},
 {"associatedDomain","associatedDomain",NID_associatedDomain,10,
-	&(lvalues[3646]),0},
-{"associatedName","associatedName",NID_associatedName,10,
 	&(lvalues[3656]),0},
-{"homePostalAddress","homePostalAddress",NID_homePostalAddress,10,
+{"associatedName","associatedName",NID_associatedName,10,
 	&(lvalues[3666]),0},
-{"personalTitle","personalTitle",NID_personalTitle,10,&(lvalues[3676]),0},
+{"homePostalAddress","homePostalAddress",NID_homePostalAddress,10,
+	&(lvalues[3676]),0},
+{"personalTitle","personalTitle",NID_personalTitle,10,&(lvalues[3686]),0},
 {"mobileTelephoneNumber","mobileTelephoneNumber",
-	NID_mobileTelephoneNumber,10,&(lvalues[3686]),0},
+	NID_mobileTelephoneNumber,10,&(lvalues[3696]),0},
 {"pagerTelephoneNumber","pagerTelephoneNumber",
-	NID_pagerTelephoneNumber,10,&(lvalues[3696]),0},
+	NID_pagerTelephoneNumber,10,&(lvalues[3706]),0},
 {"friendlyCountryName","friendlyCountryName",NID_friendlyCountryName,
-	10,&(lvalues[3706]),0},
+	10,&(lvalues[3716]),0},
 {"organizationalStatus","organizationalStatus",
-	NID_organizationalStatus,10,&(lvalues[3716]),0},
-{"janetMailbox","janetMailbox",NID_janetMailbox,10,&(lvalues[3726]),0},
+	NID_organizationalStatus,10,&(lvalues[3726]),0},
+{"janetMailbox","janetMailbox",NID_janetMailbox,10,&(lvalues[3736]),0},
 {"mailPreferenceOption","mailPreferenceOption",
-	NID_mailPreferenceOption,10,&(lvalues[3736]),0},
-{"buildingName","buildingName",NID_buildingName,10,&(lvalues[3746]),0},
-{"dSAQuality","dSAQuality",NID_dSAQuality,10,&(lvalues[3756]),0},
+	NID_mailPreferenceOption,10,&(lvalues[3746]),0},
+{"buildingName","buildingName",NID_buildingName,10,&(lvalues[3756]),0},
+{"dSAQuality","dSAQuality",NID_dSAQuality,10,&(lvalues[3766]),0},
 {"singleLevelQuality","singleLevelQuality",NID_singleLevelQuality,10,
-	&(lvalues[3766]),0},
+	&(lvalues[3776]),0},
 {"subtreeMinimumQuality","subtreeMinimumQuality",
-	NID_subtreeMinimumQuality,10,&(lvalues[3776]),0},
+	NID_subtreeMinimumQuality,10,&(lvalues[3786]),0},
 {"subtreeMaximumQuality","subtreeMaximumQuality",
-	NID_subtreeMaximumQuality,10,&(lvalues[3786]),0},
+	NID_subtreeMaximumQuality,10,&(lvalues[3796]),0},
 {"personalSignature","personalSignature",NID_personalSignature,10,
-	&(lvalues[3796]),0},
-{"dITRedirect","dITRedirect",NID_dITRedirect,10,&(lvalues[3806]),0},
-{"audio","audio",NID_audio,10,&(lvalues[3816]),0},
+	&(lvalues[3806]),0},
+{"dITRedirect","dITRedirect",NID_dITRedirect,10,&(lvalues[3816]),0},
+{"audio","audio",NID_audio,10,&(lvalues[3826]),0},
 {"documentPublisher","documentPublisher",NID_documentPublisher,10,
-	&(lvalues[3826]),0},
+	&(lvalues[3836]),0},
 {"id-characteristic-two-basis","id-characteristic-two-basis",
-	NID_X9_62_id_characteristic_two_basis,8,&(lvalues[3836]),0},
-{"onBasis","onBasis",NID_X9_62_onBasis,9,&(lvalues[3844]),0},
-{"tpBasis","tpBasis",NID_X9_62_tpBasis,9,&(lvalues[3853]),0},
-{"ppBasis","ppBasis",NID_X9_62_ppBasis,9,&(lvalues[3862]),0},
-{"c2pnb163v1","c2pnb163v1",NID_X9_62_c2pnb163v1,8,&(lvalues[3871]),0},
-{"c2pnb163v2","c2pnb163v2",NID_X9_62_c2pnb163v2,8,&(lvalues[3879]),0},
-{"c2pnb163v3","c2pnb163v3",NID_X9_62_c2pnb163v3,8,&(lvalues[3887]),0},
-{"c2pnb176v1","c2pnb176v1",NID_X9_62_c2pnb176v1,8,&(lvalues[3895]),0},
-{"c2tnb191v1","c2tnb191v1",NID_X9_62_c2tnb191v1,8,&(lvalues[3903]),0},
-{"c2tnb191v2","c2tnb191v2",NID_X9_62_c2tnb191v2,8,&(lvalues[3911]),0},
-{"c2tnb191v3","c2tnb191v3",NID_X9_62_c2tnb191v3,8,&(lvalues[3919]),0},
-{"c2onb191v4","c2onb191v4",NID_X9_62_c2onb191v4,8,&(lvalues[3927]),0},
-{"c2onb191v5","c2onb191v5",NID_X9_62_c2onb191v5,8,&(lvalues[3935]),0},
-{"c2pnb208w1","c2pnb208w1",NID_X9_62_c2pnb208w1,8,&(lvalues[3943]),0},
-{"c2tnb239v1","c2tnb239v1",NID_X9_62_c2tnb239v1,8,&(lvalues[3951]),0},
-{"c2tnb239v2","c2tnb239v2",NID_X9_62_c2tnb239v2,8,&(lvalues[3959]),0},
-{"c2tnb239v3","c2tnb239v3",NID_X9_62_c2tnb239v3,8,&(lvalues[3967]),0},
-{"c2onb239v4","c2onb239v4",NID_X9_62_c2onb239v4,8,&(lvalues[3975]),0},
-{"c2onb239v5","c2onb239v5",NID_X9_62_c2onb239v5,8,&(lvalues[3983]),0},
-{"c2pnb272w1","c2pnb272w1",NID_X9_62_c2pnb272w1,8,&(lvalues[3991]),0},
-{"c2pnb304w1","c2pnb304w1",NID_X9_62_c2pnb304w1,8,&(lvalues[3999]),0},
-{"c2tnb359v1","c2tnb359v1",NID_X9_62_c2tnb359v1,8,&(lvalues[4007]),0},
-{"c2pnb368w1","c2pnb368w1",NID_X9_62_c2pnb368w1,8,&(lvalues[4015]),0},
-{"c2tnb431r1","c2tnb431r1",NID_X9_62_c2tnb431r1,8,&(lvalues[4023]),0},
+	NID_X9_62_id_characteristic_two_basis,8,&(lvalues[3846]),0},
+{"onBasis","onBasis",NID_X9_62_onBasis,9,&(lvalues[3854]),0},
+{"tpBasis","tpBasis",NID_X9_62_tpBasis,9,&(lvalues[3863]),0},
+{"ppBasis","ppBasis",NID_X9_62_ppBasis,9,&(lvalues[3872]),0},
+{"c2pnb163v1","c2pnb163v1",NID_X9_62_c2pnb163v1,8,&(lvalues[3881]),0},
+{"c2pnb163v2","c2pnb163v2",NID_X9_62_c2pnb163v2,8,&(lvalues[3889]),0},
+{"c2pnb163v3","c2pnb163v3",NID_X9_62_c2pnb163v3,8,&(lvalues[3897]),0},
+{"c2pnb176v1","c2pnb176v1",NID_X9_62_c2pnb176v1,8,&(lvalues[3905]),0},
+{"c2tnb191v1","c2tnb191v1",NID_X9_62_c2tnb191v1,8,&(lvalues[3913]),0},
+{"c2tnb191v2","c2tnb191v2",NID_X9_62_c2tnb191v2,8,&(lvalues[3921]),0},
+{"c2tnb191v3","c2tnb191v3",NID_X9_62_c2tnb191v3,8,&(lvalues[3929]),0},
+{"c2onb191v4","c2onb191v4",NID_X9_62_c2onb191v4,8,&(lvalues[3937]),0},
+{"c2onb191v5","c2onb191v5",NID_X9_62_c2onb191v5,8,&(lvalues[3945]),0},
+{"c2pnb208w1","c2pnb208w1",NID_X9_62_c2pnb208w1,8,&(lvalues[3953]),0},
+{"c2tnb239v1","c2tnb239v1",NID_X9_62_c2tnb239v1,8,&(lvalues[3961]),0},
+{"c2tnb239v2","c2tnb239v2",NID_X9_62_c2tnb239v2,8,&(lvalues[3969]),0},
+{"c2tnb239v3","c2tnb239v3",NID_X9_62_c2tnb239v3,8,&(lvalues[3977]),0},
+{"c2onb239v4","c2onb239v4",NID_X9_62_c2onb239v4,8,&(lvalues[3985]),0},
+{"c2onb239v5","c2onb239v5",NID_X9_62_c2onb239v5,8,&(lvalues[3993]),0},
+{"c2pnb272w1","c2pnb272w1",NID_X9_62_c2pnb272w1,8,&(lvalues[4001]),0},
+{"c2pnb304w1","c2pnb304w1",NID_X9_62_c2pnb304w1,8,&(lvalues[4009]),0},
+{"c2tnb359v1","c2tnb359v1",NID_X9_62_c2tnb359v1,8,&(lvalues[4017]),0},
+{"c2pnb368w1","c2pnb368w1",NID_X9_62_c2pnb368w1,8,&(lvalues[4025]),0},
+{"c2tnb431r1","c2tnb431r1",NID_X9_62_c2tnb431r1,8,&(lvalues[4033]),0},
 {"identified-organization","identified-organization",
-	NID_identified_organization,1,&(lvalues[4031]),0},
-{"certicom-arc","certicom-arc",NID_certicom_arc,3,&(lvalues[4032]),0},
-{"secp112r1","secp112r1",NID_secp112r1,5,&(lvalues[4035]),0},
-{"secp112r2","secp112r2",NID_secp112r2,5,&(lvalues[4040]),0},
-{"secp128r1","secp128r1",NID_secp128r1,5,&(lvalues[4045]),0},
-{"secp128r2","secp128r2",NID_secp128r2,5,&(lvalues[4050]),0},
-{"secp160k1","secp160k1",NID_secp160k1,5,&(lvalues[4055]),0},
-{"secp160r1","secp160r1",NID_secp160r1,5,&(lvalues[4060]),0},
-{"secp160r2","secp160r2",NID_secp160r2,5,&(lvalues[4065]),0},
-{"secp192k1","secp192k1",NID_secp192k1,5,&(lvalues[4070]),0},
-{"secp192r1","secp192r1",NID_secp192r1,1,&(lvalues[4075]),0},
-{"secp224k1","secp224k1",NID_secp224k1,5,&(lvalues[4076]),0},
-{"secp224r1","secp224r1",NID_secp224r1,5,&(lvalues[4081]),0},
-{"secp256k1","secp256k1",NID_secp256k1,5,&(lvalues[4086]),0},
-{"secp256r1","secp256r1",NID_secp256r1,1,&(lvalues[4091]),0},
-{"secp384r1","secp384r1",NID_secp384r1,5,&(lvalues[4092]),0},
-{"secp521r1","secp521r1",NID_secp521r1,5,&(lvalues[4097]),0},
-{"sect113r1","sect113r1",NID_sect113r1,5,&(lvalues[4102]),0},
-{"sect113r2","sect113r2",NID_sect113r2,5,&(lvalues[4107]),0},
-{"sect131r1","sect131r1",NID_sect131r1,5,&(lvalues[4112]),0},
-{"sect131r2","sect131r2",NID_sect131r2,5,&(lvalues[4117]),0},
-{"sect163k1","sect163k1",NID_sect163k1,5,&(lvalues[4122]),0},
-{"sect163r1","sect163r1",NID_sect163r1,5,&(lvalues[4127]),0},
-{"sect163r2","sect163r2",NID_sect163r2,5,&(lvalues[4132]),0},
-{"sect193r1","sect193r1",NID_sect193r1,5,&(lvalues[4137]),0},
-{"sect193r2","sect193r2",NID_sect193r2,5,&(lvalues[4142]),0},
-{"sect233k1","sect233k1",NID_sect233k1,5,&(lvalues[4147]),0},
-{"sect233r1","sect233r1",NID_sect233r1,5,&(lvalues[4152]),0},
-{"sect239k1","sect239k1",NID_sect239k1,5,&(lvalues[4157]),0},
-{"sect283k1","sect283k1",NID_sect283k1,5,&(lvalues[4162]),0},
-{"sect283r1","sect283r1",NID_sect283r1,5,&(lvalues[4167]),0},
-{"sect409k1","sect409k1",NID_sect409k1,5,&(lvalues[4172]),0},
-{"sect409r1","sect409r1",NID_sect409r1,5,&(lvalues[4177]),0},
-{"sect571k1","sect571k1",NID_sect571k1,5,&(lvalues[4182]),0},
-{"sect571r1","sect571r1",NID_sect571r1,5,&(lvalues[4187]),0},
-{"wap","wap",NID_wap,2,&(lvalues[4192]),0},
-{"wap-wsg","wap-wsg",NID_wap_wsg,3,&(lvalues[4194]),0},
+	NID_identified_organization,1,&(lvalues[4041]),0},
+{"certicom-arc","certicom-arc",NID_certicom_arc,3,&(lvalues[4042]),0},
+{"secp112r1","secp112r1",NID_secp112r1,5,&(lvalues[4045]),0},
+{"secp112r2","secp112r2",NID_secp112r2,5,&(lvalues[4050]),0},
+{"secp128r1","secp128r1",NID_secp128r1,5,&(lvalues[4055]),0},
+{"secp128r2","secp128r2",NID_secp128r2,5,&(lvalues[4060]),0},
+{"secp160k1","secp160k1",NID_secp160k1,5,&(lvalues[4065]),0},
+{"secp160r1","secp160r1",NID_secp160r1,5,&(lvalues[4070]),0},
+{"secp160r2","secp160r2",NID_secp160r2,5,&(lvalues[4075]),0},
+{"secp192k1","secp192k1",NID_secp192k1,5,&(lvalues[4080]),0},
+{"secp192r1","secp192r1",NID_secp192r1,1,&(lvalues[4085]),0},
+{"secp224k1","secp224k1",NID_secp224k1,5,&(lvalues[4086]),0},
+{"secp224r1","secp224r1",NID_secp224r1,5,&(lvalues[4091]),0},
+{"secp256k1","secp256k1",NID_secp256k1,5,&(lvalues[4096]),0},
+{"secp256r1","secp256r1",NID_secp256r1,1,&(lvalues[4101]),0},
+{"secp384r1","secp384r1",NID_secp384r1,5,&(lvalues[4102]),0},
+{"secp521r1","secp521r1",NID_secp521r1,5,&(lvalues[4107]),0},
+{"sect113r1","sect113r1",NID_sect113r1,5,&(lvalues[4112]),0},
+{"sect113r2","sect113r2",NID_sect113r2,5,&(lvalues[4117]),0},
+{"sect131r1","sect131r1",NID_sect131r1,5,&(lvalues[4122]),0},
+{"sect131r2","sect131r2",NID_sect131r2,5,&(lvalues[4127]),0},
+{"sect163k1","sect163k1",NID_sect163k1,5,&(lvalues[4132]),0},
+{"sect163r1","sect163r1",NID_sect163r1,5,&(lvalues[4137]),0},
+{"sect163r2","sect163r2",NID_sect163r2,5,&(lvalues[4142]),0},
+{"sect193r1","sect193r1",NID_sect193r1,5,&(lvalues[4147]),0},
+{"sect193r2","sect193r2",NID_sect193r2,5,&(lvalues[4152]),0},
+{"sect233k1","sect233k1",NID_sect233k1,5,&(lvalues[4157]),0},
+{"sect233r1","sect233r1",NID_sect233r1,5,&(lvalues[4162]),0},
+{"sect239k1","sect239k1",NID_sect239k1,5,&(lvalues[4167]),0},
+{"sect283k1","sect283k1",NID_sect283k1,5,&(lvalues[4172]),0},
+{"sect283r1","sect283r1",NID_sect283r1,5,&(lvalues[4177]),0},
+{"sect409k1","sect409k1",NID_sect409k1,5,&(lvalues[4182]),0},
+{"sect409r1","sect409r1",NID_sect409r1,5,&(lvalues[4187]),0},
+{"sect571k1","sect571k1",NID_sect571k1,5,&(lvalues[4192]),0},
+{"sect571r1","sect571r1",NID_sect571r1,5,&(lvalues[4197]),0},
+{"wap","wap",NID_wap,2,&(lvalues[4202]),0},
+{"wap-wsg","wap-wsg",NID_wap_wsg,3,&(lvalues[4204]),0},
 {"wap-wsg-idm-ecid-wtls1","wap-wsg-idm-ecid-wtls1",
-	NID_wap_wsg_idm_ecid_wtls1,5,&(lvalues[4197]),0},
+	NID_wap_wsg_idm_ecid_wtls1,5,&(lvalues[4207]),0},
 {"wap-wsg-idm-ecid-wtls6","wap-wsg-idm-ecid-wtls6",
-	NID_wap_wsg_idm_ecid_wtls6,5,&(lvalues[4202]),0},
+	NID_wap_wsg_idm_ecid_wtls6,5,&(lvalues[4212]),0},
 {"wap-wsg-idm-ecid-wtls8","wap-wsg-idm-ecid-wtls8",
-	NID_wap_wsg_idm_ecid_wtls8,5,&(lvalues[4207]),0},
+	NID_wap_wsg_idm_ecid_wtls8,5,&(lvalues[4217]),0},
 {"wap-wsg-idm-ecid-wtls9","wap-wsg-idm-ecid-wtls9",
-	NID_wap_wsg_idm_ecid_wtls9,5,&(lvalues[4212]),0},
+	NID_wap_wsg_idm_ecid_wtls9,5,&(lvalues[4222]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2593,10 +2593,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[404]),/* OBJ_ccitt                        0 */
 &(nid_objs[541]),/* OBJ_secp256r1                    OBJ_X9_62_prime256v1 */
+&(nid_objs[404]),/* OBJ_ccitt                        0 */
 &(nid_objs[537]),/* OBJ_secp192r1                    OBJ_X9_62_prime192v1 */
-&(nid_objs[389]),/* OBJ_Enterprises                   1 */
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
@@ -2649,7 +2648,6 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[402]),/* OBJ_target_information           2 5 29 55 */
 &(nid_objs[403]),/* OBJ_no_rev_avail                 2 5 29 56 */
 &(nid_objs[563]),/* OBJ_wap_wsg                      2 23 43 13 */
-&(nid_objs[390]),/* OBJ_dcObject                      1466 344 */
 &(nid_objs[382]),/* OBJ_Directory                    1 3 6 1 1 */
 &(nid_objs[383]),/* OBJ_Management                   1 3 6 1 2 */
 &(nid_objs[384]),/* OBJ_Experimental                 1 3 6 1 3 */
@@ -2664,6 +2662,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
 &(nid_objs[184]),/* OBJ_X9_57                        1 2 840 10040 */
 &(nid_objs[405]),/* OBJ_ansi_X9_62                   1 2 840 10045 */
+&(nid_objs[389]),/* OBJ_Enterprises                  1 3 6 1 4 1 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */
@@ -2937,6 +2936,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[505]),/* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
 &(nid_objs[506]),/* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
 &(nid_objs[417]),/* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
+&(nid_objs[390]),/* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
 &(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[315]),/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
 &(nid_objs[316]),/* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */
