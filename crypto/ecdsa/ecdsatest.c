@@ -472,54 +472,9 @@ int main(void)
 	EC_KEY_free(ret_ecdsa);
 	ret_ecdsa = NULL;
 	PKCS8_PRIV_KEY_INFO_free(pkcs8);
-	BIO_printf(bio_err, "PKCS8_NO_OCTET        : ");
-        if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_NO_OCTET)) == NULL) goto err;
-        if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
-        if (ecdsa_cmp(ecdsa, ret_ecdsa))
-        {
-                BIO_printf(bio_err, "TEST FAILED \n");
-                goto err;
-        }
-        else BIO_printf(bio_err, "TEST OK \n");
-        EVP_PKEY_free(ret_pkey);
-        ret_pkey = NULL;
-        EC_KEY_free(ret_ecdsa);
-        ret_ecdsa = NULL;
-	PKCS8_PRIV_KEY_INFO_free(pkcs8);
-	BIO_printf(bio_err, "PKCS8_EMBEDDED_PARAM  : ");
-        if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_EMBEDDED_PARAM)) == NULL) goto err;
-        if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
-        if (ecdsa_cmp(ecdsa, ret_ecdsa))
-        {
-                BIO_printf(bio_err, "TEST FAILED \n");
-                goto err;
-        }
-        else BIO_printf(bio_err, "TEST OK \n");
-        EVP_PKEY_free(ret_pkey);
-        ret_pkey = NULL;
-        EC_KEY_free(ret_ecdsa);
-        ret_ecdsa = NULL;
-	PKCS8_PRIV_KEY_INFO_free(pkcs8);
-        BIO_printf(bio_err, "PKCS8_NS_DB           : ");
-        if ((pkcs8 = EVP_PKEY2PKCS8_broken(pkey, PKCS8_NS_DB)) == NULL) goto err;
-        if ((ret_pkey = EVP_PKCS82PKEY(pkcs8)) == NULL) goto err;
-        ret_ecdsa = EVP_PKEY_get1_EC_KEY(ret_pkey);
-        if (ecdsa_cmp(ecdsa, ret_ecdsa))
-        {
-                BIO_printf(bio_err, "TEST FAILED \n");
-                goto err;
-        }
-        else BIO_printf(bio_err, "TEST OK \n");
-        EVP_PKEY_free(ret_pkey);
-        ret_pkey = NULL;
-        EC_KEY_free(ret_ecdsa);
-        ret_ecdsa = NULL;
 	EVP_PKEY_free(pkey);
 	pkey  = NULL;
 	ecdsa = NULL;
-	PKCS8_PRIV_KEY_INFO_free(pkcs8);
 	pkcs8 = NULL;
 
 	/* sign and verify tests */

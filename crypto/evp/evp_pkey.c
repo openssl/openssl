@@ -79,14 +79,15 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #endif
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa = NULL;
+	ASN1_TYPE *t1, *t2;
+	STACK_OF(ASN1_TYPE) *ndsa = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
 	EC_KEY *eckey = NULL;
 #endif
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
+	ASN1_TYPE    *param = NULL;	
 	ASN1_INTEGER *privkey;
-	ASN1_TYPE    *t1, *t2, *param = NULL;
-	STACK_OF(ASN1_TYPE) *n_stack = NULL;
 	BN_CTX *ctx = NULL;
 	int plen;
 #endif
@@ -124,172 +125,188 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		EVP_PKEY_assign_RSA (pkey, rsa);
 		break;
 #endif
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
-		case NID_ecdsa_with_SHA1:
+#ifndef OPENSSL_NO_DSA
 		case NID_dsa:
-		/* PKCS#8 DSA/ECDSA is weird: you just get a private key integer
+		/* PKCS#8 DSA is weird: you just get a private key integer
 	         * and parameters in the AlgorithmIdentifier the pubkey must
 		 * be recalculated.
 		 */
 	
-		/* Check for broken DSA/ECDSA PKCS#8, UGH! */
-		if(*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED)) 
-		{
-		    	if(!(n_stack = ASN1_seq_unpack_ASN1_TYPE(p, pkeylen, 
+		/* Check for broken DSA PKCS#8, UGH! */
+		if(*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED)) {
+		    if(!(ndsa = ASN1_seq_unpack_ASN1_TYPE(p, pkeylen, 
 							  d2i_ASN1_TYPE,
-							  ASN1_TYPE_free))) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
-		    	}
-		    	if(sk_ASN1_TYPE_num(n_stack) != 2 ) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
-		    	}
+							  ASN1_TYPE_free))) {
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+			goto dsaerr;
+		    }
+		    if(sk_ASN1_TYPE_num(ndsa) != 2 ) {
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+			goto dsaerr;
+		    }
 		    /* Handle Two broken types:
 		     * SEQUENCE {parameters, priv_key}
 		     * SEQUENCE {pub_key, priv_key}
 		     */
 
-		    t1 = sk_ASN1_TYPE_value(n_stack, 0);
-		    t2 = sk_ASN1_TYPE_value(n_stack, 1);
-		    if(t1->type == V_ASN1_SEQUENCE) 
-		    {
+		    t1 = sk_ASN1_TYPE_value(ndsa, 0);
+		    t2 = sk_ASN1_TYPE_value(ndsa, 1);
+		    if(t1->type == V_ASN1_SEQUENCE) {
 			p8->broken = PKCS8_EMBEDDED_PARAM;
 			param = t1;
-		    } 
-		    else if(a->parameter->type == V_ASN1_SEQUENCE) 
-		    {
+		    } else if(a->parameter->type == V_ASN1_SEQUENCE) {
 			p8->broken = PKCS8_NS_DB;
 			param = a->parameter;
-		    } 
-		    else 
-		    {
+		    } else {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-			goto err;
+			goto dsaerr;
 		    }
 
 		    if(t2->type != V_ASN1_INTEGER) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-			goto err;
+			goto dsaerr;
 		    }
 		    privkey = t2->value.integer;
-		} 
-		else 
-		{
-			if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) 
-			{
+		} else {
+			if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) {
 				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
+				goto dsaerr;
 			}
 			param = p8->pkeyalg->parameter;
 		}
-		if (!param || (param->type != V_ASN1_SEQUENCE)) 
-		{
+		if (!param || (param->type != V_ASN1_SEQUENCE)) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-			goto err;
+			goto dsaerr;
 		}
 		cp = p = param->value.sequence->data;
 		plen = param->value.sequence->length;
-		if (!(ctx = BN_CTX_new())) 
-		{
+		if (!(dsa = d2i_DSAparams (NULL, &cp, plen))) {
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+			goto dsaerr;
+		}
+		/* We have parameters now set private key */
+		if (!(dsa->priv_key = ASN1_INTEGER_to_BN(privkey, NULL))) {
+			EVPerr(EVP_F_EVP_PKCS82PKEY,EVP_R_BN_DECODE_ERROR);
+			goto dsaerr;
+		}
+		/* Calculate public key (ouch!) */
+		if (!(dsa->pub_key = BN_new())) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY,ERR_R_MALLOC_FAILURE);
-			goto err;
+			goto dsaerr;
 		}
-		if (nid == NID_dsa)
-		{
-#ifndef OPENSSL_NO_DSA
-			if (!(dsa = d2i_DSAparams (NULL, &cp, plen))) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
-			}
-			/* We have parameters now set private key */
-			if (!(dsa->priv_key = ASN1_INTEGER_to_BN(privkey, NULL))) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY,EVP_R_BN_DECODE_ERROR);
-				goto err;
-			}
-			/* Calculate public key (ouch!) */
-			if (!(dsa->pub_key = BN_new())) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY,ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-			if (!BN_mod_exp(dsa->pub_key, dsa->g,
-						 dsa->priv_key, dsa->p, ctx)) 
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY,EVP_R_BN_PUBKEY_ERROR);
-				goto err;
-			}
-
-			EVP_PKEY_assign_DSA(pkey, dsa);
-			BN_CTX_free(ctx);
-			if(n_stack) sk_ASN1_TYPE_pop_free(n_stack, ASN1_TYPE_free);
-			else ASN1_INTEGER_free(privkey);
-#else
-			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-			goto err;
-#endif 
-		} 
-		else /* nid == NID_ecdsa_with_SHA1 */
-		{
-#ifndef OPENSSL_NO_EC
-			if ((eckey = d2i_ECParameters(NULL, &cp, 
-				plen)) == NULL)
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
-			}
-			if ((eckey->priv_key = ASN1_INTEGER_to_BN(privkey, 
-				NULL)) == NULL)
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-				goto err;
-			}
-			if ((eckey->pub_key = EC_POINT_new(eckey->group)) == NULL)
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-				goto err;
-			}
-			if (!EC_POINT_copy(eckey->pub_key, 
-				EC_GROUP_get0_generator(eckey->group)))
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-				goto err;
-			}
-			if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
-				eckey->priv_key, NULL, NULL, ctx))
-			{
-				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-				goto err;
-			}
+		if (!(ctx = BN_CTX_new())) {
+			EVPerr(EVP_F_EVP_PKCS82PKEY,ERR_R_MALLOC_FAILURE);
+			goto dsaerr;
+		}
 			
-			EVP_PKEY_assign_EC_KEY(pkey, eckey);
-			BN_CTX_free(ctx);
-			if (n_stack) sk_ASN1_TYPE_pop_free(n_stack, ASN1_TYPE_free);
-			else
-				ASN1_INTEGER_free(privkey);
-#else
-			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-			goto err;
-#endif
+		if (!BN_mod_exp(dsa->pub_key, dsa->g,
+						 dsa->priv_key, dsa->p, ctx)) {
+			
+			EVPerr(EVP_F_EVP_PKCS82PKEY,EVP_R_BN_PUBKEY_ERROR);
+			goto dsaerr;
 		}
+
+		EVP_PKEY_assign_DSA(pkey, dsa);
+		BN_CTX_free (ctx);
+		if(ndsa) sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+		else ASN1_INTEGER_free(privkey);
 		break;
-err:
-		if (ctx)   BN_CTX_free(ctx);
-		sk_ASN1_TYPE_pop_free(n_stack, ASN1_TYPE_free);
-#ifndef OPENSSL_NO_DSA
-		if (dsa)   DSA_free(dsa);
-#endif
-#ifndef OPENSSL_NO_EC
-		if (eckey) 
-			EC_KEY_free(eckey);
-#endif
-		if (pkey)  EVP_PKEY_free(pkey);
+		dsaerr:
+		BN_CTX_free (ctx);
+		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
+		DSA_free(dsa);
+		EVP_PKEY_free(pkey);
 		return NULL;
 		break;
+#endif
+#ifndef OPENSSL_NO_EC
+		case NID_X9_62_id_ecPublicKey:
+		if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen)))
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+			goto ecerr;
+		}
+		param = p8->pkeyalg->parameter;
+
+		if (!param || ((param->type != V_ASN1_SEQUENCE) &&
+		    (param->type != V_ASN1_OBJECT)))
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+			goto ecerr;
+		}
+
+		if (param->type == V_ASN1_SEQUENCE)
+		{
+			cp = p = param->value.sequence->data;
+			plen = param->value.sequence->length;
+
+			if (!(eckey = d2i_ECParameters(NULL, &cp, plen)))
+			{
+				EVPerr(EVP_F_EVP_PKCS82PKEY,
+					EVP_R_DECODE_ERROR);
+				goto ecerr;
+			}
+		}
+		else
+		{
+			cp = p = param->value.object->data;
+			plen = param->value.object->length;
+
+			/* type == V_ASN1_OBJECT => the parameters are given
+			 * by an asn1 OID
+			 */
+			if ((eckey = EC_KEY_new()) == NULL)
+			{
+				EVPerr(EVP_F_EVP_PKCS82PKEY,
+					ERR_R_MALLOC_FAILURE);
+				goto ecerr;
+			}
+			if ((eckey->group = EC_GROUP_new_by_nid(
+                             OBJ_obj2nid(a->parameter->value.object))) == NULL)
+				goto ecerr;
+			EC_GROUP_set_asn1_flag(eckey->group, 
+						OPENSSL_EC_NAMED_CURVE);
+		}
+
+		/* We have parameters now set private key */
+		if (!(eckey->priv_key = ASN1_INTEGER_to_BN(privkey, NULL)))
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_BN_DECODE_ERROR);
+			goto ecerr;
+		}
+		/* Calculate public key */
+		if ((eckey->pub_key = EC_POINT_new(eckey->group)) == NULL)
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+			goto ecerr;
+		}
+		if (!EC_POINT_copy(eckey->pub_key, 
+			EC_GROUP_get0_generator(eckey->group)))
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+			goto ecerr;
+		}
+		if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
+			eckey->priv_key, NULL, NULL, ctx))
+		{
+			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+			goto ecerr;
+		}
+
+		EVP_PKEY_assign_EC_KEY(pkey, eckey);
+		if (ctx)
+			BN_CTX_free(ctx);
+		if (privkey)
+			ASN1_INTEGER_free(privkey);
+		break;
+ecerr:
+		if (ctx)
+			BN_CTX_free(ctx);
+		if (eckey)
+			EC_KEY_free(eckey);
+		if (pkey)
+			EVP_PKEY_free(pkey);
+		return NULL;
 #endif
 		default:
 		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
@@ -506,47 +523,78 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 #ifndef OPENSSL_NO_EC
 static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 {
-	ASN1_STRING 	  *params=NULL;
-	ASN1_INTEGER      *prkey=NULL;
-	ASN1_TYPE         *ttmp=NULL;
-	STACK_OF(ASN1_TYPE) *neckey=NULL;
-	unsigned char 	  *p=NULL, *q=NULL;
-	int len=0;
-	EC_POINT	  *point=NULL;
+	EC_KEY		*eckey;
+	ASN1_INTEGER	*prkey = NULL;
+	unsigned char	*p, *pp;
+	int 		nid;
 
 	if (pkey->pkey.eckey == NULL || pkey->pkey.eckey->group == NULL)
 	{
 		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
 		return 0;
 	}
-	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_ecdsa_with_SHA1);
-	len = i2d_ECParameters(pkey->pkey.eckey, NULL);
-	if ((p = OPENSSL_malloc(len)) == NULL)
+	eckey = pkey->pkey.eckey;
+
+	/* set the ec parameters OID */
+	if (p8->pkeyalg->algorithm)
+		ASN1_OBJECT_free(p8->pkeyalg->algorithm);
+
+	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_X9_62_id_ecPublicKey);
+
+	/* set the ec parameters */
+
+	if (p8->pkeyalg->parameter)
+	{
+		ASN1_TYPE_free(p8->pkeyalg->parameter);
+		p8->pkeyalg->parameter = NULL;
+	}
+
+	if ((p8->pkeyalg->parameter = ASN1_TYPE_new()) == NULL)
 	{
 		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	q = p;
-	if (!i2d_ECParameters(pkey->pkey.eckey, &q))
+	
+	if (EC_GROUP_get_asn1_flag(eckey->group)
+                     && (nid = EC_GROUP_get_nid(eckey->group)))
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
-		OPENSSL_free(p);
-		return 0;
+		/* we have a 'named curve' => just set the OID */
+		p8->pkeyalg->parameter->type = V_ASN1_OBJECT;
+		p8->pkeyalg->parameter->value.object = OBJ_nid2obj(nid);
 	}
-	if ((params = ASN1_STRING_new()) == NULL)
+	else	/* explicit parameters */
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		int i;
+		if ((i = i2d_ECParameters(eckey, NULL)) == 0)
+		{
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+			return 0;
+		}
+		if ((p = (unsigned char *) OPENSSL_malloc(i)) == NULL)
+		{
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			return 0;
+		}	
+		pp = p;
+		if (!i2d_ECParameters(eckey, &pp))
+		{
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+			OPENSSL_free(p);
+			return 0;
+		}
+		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
+		if ((p8->pkeyalg->parameter->value.sequence 
+			= ASN1_STRING_new()) == NULL)
+		{
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
+			OPENSSL_free(p);
+			return 0;
+		}
+		ASN1_STRING_set(p8->pkeyalg->parameter->value.sequence, p, i);
 		OPENSSL_free(p);
-		return 0;
-		
 	}
-	if (!ASN1_STRING_set(params, p, len))
-	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
-		OPENSSL_free(p);
-		return 0;
-	}
-	OPENSSL_free(p);
+
+	/* set the private key */
 	if ((prkey = BN_to_ASN1_INTEGER(pkey->pkey.eckey->priv_key, NULL)) 
 		== NULL)
 	{
@@ -557,8 +605,6 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	switch(p8->broken) {
 
 		case PKCS8_OK:
-		case PKCS8_NO_OCTET:
-
 		if (!ASN1_pack_string((char *)prkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) 
 		{
@@ -568,147 +614,15 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		}
 
 		ASN1_INTEGER_free(prkey);
-		p8->pkeyalg->parameter->value.sequence = params;
-		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
 
 		break;
+		case PKCS8_NO_OCTET:		/* RSA specific */
+		case PKCS8_NS_DB:		/* DSA specific */
+		case PKCS8_EMBEDDED_PARAM:	/* DSA specific */
+		default:
+			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
+			return 0;
 
-		case PKCS8_NS_DB:
-
-		p8->pkeyalg->parameter->value.sequence = params;
-		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
-		neckey = sk_ASN1_TYPE_new_null();
-		if (neckey == NULL || (ttmp = ASN1_TYPE_new()) == NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			return 0;
-		}
-
-		if ((point = EC_GROUP_get0_generator(pkey->pkey.eckey->group)) 
-			== NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
-			return 0;
-		}
-		len = EC_POINT_point2oct(pkey->pkey.eckey->group, point, 
-			pkey->pkey.eckey->conv_form, NULL, 0, NULL);
-		p = OPENSSL_malloc(len);
-		if (!len || !p || !EC_POINT_point2oct(pkey->pkey.eckey->group, 
-			point, pkey->pkey.eckey->conv_form, p, len, NULL))
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
-			OPENSSL_free(p);
-			return 0;
-		}
-		if ((ttmp->value.octet_string =ASN1_OCTET_STRING_new()) == NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		if (!ASN1_OCTET_STRING_set(ttmp->value.octet_string, p, len))
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, EVP_R_ASN1_LIB);
-			return 0;
-		}
-		OPENSSL_free(p);
-		
-		ttmp->type = V_ASN1_OCTET_STRING;
-		if (!sk_ASN1_TYPE_push(neckey, ttmp))
-		{
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-
-		if ((ttmp = ASN1_TYPE_new()) == NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		ttmp->value.integer = prkey;
-		ttmp->type = V_ASN1_INTEGER;
-		if (!sk_ASN1_TYPE_push(neckey, ttmp))
-		{
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-
-		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) 
-			== NULL)
-		{	
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			return 0;
-		}
-
-		if (!ASN1_seq_pack_ASN1_TYPE(neckey, i2d_ASN1_TYPE,
-					 &p8->pkey->value.octet_string->data,
-					 &p8->pkey->value.octet_string->length)) 
-		{
-
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			return 0;
-		}
-		sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-		break;
-
-		case PKCS8_EMBEDDED_PARAM:
-
-		p8->pkeyalg->parameter->type = V_ASN1_NULL;
-		neckey = sk_ASN1_TYPE_new_null();
-		if ((ttmp = ASN1_TYPE_new()) == NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-		ttmp->value.sequence = params;
-		ttmp->type = V_ASN1_SEQUENCE;
-		if (!sk_ASN1_TYPE_push(neckey, ttmp))
-		{
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-
-		if ((ttmp = ASN1_TYPE_new()) == NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-		ttmp->value.integer = prkey;
-		ttmp->type = V_ASN1_INTEGER;
-		if (!sk_ASN1_TYPE_push(neckey, ttmp))
-		{
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			ASN1_INTEGER_free(prkey);
-			return 0;
-		}
-
-		if ((p8->pkey->value.octet_string = ASN1_OCTET_STRING_new()) 
-			== NULL)
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			return 0;
-		}
-
-		if (!ASN1_seq_pack_ASN1_TYPE(neckey, i2d_ASN1_TYPE,
-					 &p8->pkey->value.octet_string->data,
-					 &p8->pkey->value.octet_string->length)) 
-		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-			return 0;
-		}
-		sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
-		break;
 	}
 	return 1;
 }
