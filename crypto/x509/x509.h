@@ -285,6 +285,7 @@ struct x509_st
 	unsigned long ex_nscert;
 	ASN1_OCTET_STRING *skid;
 	struct AUTHORITY_KEYID_st *akid;
+	X509_POLICY_CACHE *policy_cache;
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif

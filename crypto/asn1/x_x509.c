@@ -79,6 +79,8 @@ ASN1_SEQUENCE(X509_CINF) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
 
+extern void policy_cache_free(X509_POLICY_CACHE *cache);
+
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	X509 *ret = (X509 *)*pval;
@@ -106,6 +108,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 		X509_CERT_AUX_free(ret->aux);
 		ASN1_OCTET_STRING_free(ret->skid);
 		AUTHORITY_KEYID_free(ret->akid);
+		policy_cache_free(ret->policy_cache);
 
 		if (ret->name != NULL) OPENSSL_free(ret->name);
 		break;

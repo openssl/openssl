@@ -4,6 +4,11 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Preliminary support for certificate policy evaluation and checking. This
+     is initially intended to pass the tests outlined in "Conformance Testing
+     of Relying Party Client Certificate Path Processing Logic" v1.07.
+     [Steve Henson]
+
   *) bn_dup_expand() has been deprecated, it was introduced in 0.9.7 and
      remained unused and not that useful. A variety of other little bignum
      tweaks and fixes have also been made continuing on from the audit (see
