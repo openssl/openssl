@@ -67,6 +67,9 @@
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_NURON
 
+static const char *NURON_LIBNAME = "nuronssl";
+static const char *NURON_F1 = "nuron_mod_exp";
+
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
 
@@ -80,7 +83,7 @@ static int nuron_init(ENGINE *e)
 		return 0;
 		}
 
-	pvDSOHandle=DSO_load(NULL,"nuronssl",NULL,
+	pvDSOHandle=DSO_load(NULL, NURON_LIBNAME, NULL,
 		DSO_FLAG_NAME_TRANSLATION_EXT_ONLY);
 	if(!pvDSOHandle)
 		{
@@ -88,7 +91,7 @@ static int nuron_init(ENGINE *e)
 		return 0;
 		}
 
-	pfnModExp=(tfnModExp *)DSO_bind_func(pvDSOHandle,"nuron_mod_exp");
+	pfnModExp=(tfnModExp *)DSO_bind_func(pvDSOHandle, NURON_F1);
 	if(!pfnModExp)
 		{
 		ENGINEerr(ENGINE_F_NURON_INIT,ENGINE_R_DSO_FUNCTION_NOT_FOUND);
