@@ -323,7 +323,7 @@ bad:
 
 	if (extfile) {
 		long errorline;
-		X509V3_CTX ctx;
+		X509V3_CTX ctx2;
 		if (!(extconf=CONF_load(NULL,extfile,&errorline))) {
 			if (errorline <= 0)
 				BIO_printf(bio_err,
@@ -337,9 +337,9 @@ bad:
 		}
 		if(!(extsect = CONF_get_string(extconf, "default",
 					 "extensions"))) extsect = "default";
-		X509V3_set_ctx_test(&ctx);
-		X509V3_set_conf_lhash(&ctx, extconf);
-		if(!X509V3_EXT_add_conf(extconf, &ctx, extsect, NULL)) {
+		X509V3_set_ctx_test(&ctx2);
+		X509V3_set_conf_lhash(&ctx2, extconf);
+		if(!X509V3_EXT_add_conf(extconf, &ctx2, extsect, NULL)) {
 			BIO_printf(bio_err,
 				"Error Loading extension section %s\n",
 								 extsect);
@@ -868,11 +868,11 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	EVP_PKEY_free(upkey);
 
 	if(conf) {
-		X509V3_CTX ctx;
+		X509V3_CTX ctx2;
 		X509_set_version(x,2); /* version 3 certificate */
-                X509V3_set_ctx(&ctx, xca, x, NULL, NULL, 0);
-                X509V3_set_conf_lhash(&ctx, conf);
-                if(!X509V3_EXT_add_conf(conf, &ctx, section, x)) goto end;
+                X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
+                X509V3_set_conf_lhash(&ctx2, conf);
+                if(!X509V3_EXT_add_conf(conf, &ctx2, section, x)) goto end;
 	}
 
 	if (!X509_sign(x,pkey,digest)) goto end;
