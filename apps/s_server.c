@@ -683,6 +683,11 @@ bad:
 		goto end;
 		}
 
+	SSL_load_error_strings();
+	OpenSSL_add_ssl_algorithms();
+
+        e = setup_engine(bio_err, engine_id, 1);
+
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
 		{
@@ -714,11 +719,6 @@ bad:
 		s_dcert_file=NULL;
 		s_dkey_file=NULL;
 		}
-
-	SSL_load_error_strings();
-	OpenSSL_add_ssl_algorithms();
-
-        e = setup_engine(bio_err, engine_id, 1);
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
