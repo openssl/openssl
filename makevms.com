@@ -546,7 +546,7 @@ $ @FIPS-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUI
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @FIPS-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
