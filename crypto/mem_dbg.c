@@ -238,8 +238,8 @@ long CRYPTO_dbg_get_options(void)
 /* static int mem_cmp(MEM *a, MEM *b) */
 static int mem_cmp(const void *a_void, const void *b_void)
 	{
-	return((const char *)((MEM *)a_void)->addr
-		- (const char *)((MEM *)b_void)->addr);
+	return((const char *)((const MEM *)a_void)->addr
+		- (const char *)((const MEM *)b_void)->addr);
 	}
 
 /* static unsigned long mem_hash(MEM *a) */
@@ -576,7 +576,7 @@ typedef struct mem_leak_st
 	long bytes;
 	} MEM_LEAK;
 
-static void print_leak(MEM *m, MEM_LEAK *l)
+static void print_leak(const MEM *m, MEM_LEAK *l)
 	{
 	char buf[1024];
 	char *bufp = buf;
@@ -661,7 +661,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 #endif
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, MEM *, MEM_LEAK *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM *, MEM_LEAK *)
 
 void CRYPTO_mem_leaks(BIO *b)
 	{
@@ -753,12 +753,12 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 /* NB: The prototypes have been typedef'd to CRYPTO_MEM_LEAK_CB inside crypto.h
  * If this code is restructured, remove the callback type if it is no longer
  * needed. -- Geoff Thorpe */
-static void cb_leak(MEM *m, CRYPTO_MEM_LEAK_CB **cb)
+static void cb_leak(const MEM *m, CRYPTO_MEM_LEAK_CB **cb)
 	{
 	(**cb)(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, MEM *, CRYPTO_MEM_LEAK_CB **)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, const MEM *, CRYPTO_MEM_LEAK_CB **)
 
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 	{

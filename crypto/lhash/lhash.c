@@ -268,7 +268,7 @@ void *lh_retrieve(LHASH *lh, const void *data)
 	}
 
 static void doall_util_fn(LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
-			LHASH_DOALL_ARG_FN_TYPE func_arg, const void *arg)
+			  LHASH_DOALL_ARG_FN_TYPE func_arg, void *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -297,7 +297,7 @@ void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
 	doall_util_fn(lh, 0, func, (LHASH_DOALL_ARG_FN_TYPE)0, NULL);
 	}
 
-void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
 	{
 	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)0, func, arg);
 	}

@@ -87,7 +87,7 @@ typedef struct lhash_node_st
 typedef int (*LHASH_COMP_FN_TYPE)(const void *, const void *);
 typedef unsigned long (*LHASH_HASH_FN_TYPE)(const void *);
 typedef void (*LHASH_DOALL_FN_TYPE)(const void *);
-typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
+typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, void *);
 
 /* Macros for declaring and implementing type-safe wrappers for LHASH callbacks.
  * This way, callbacks can be provided to LHASH structures without function
@@ -126,9 +126,9 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
 
 /* Fourth: "doall_arg" functions */
 #define DECLARE_LHASH_DOALL_ARG_FN(f_name,o_type,a_type) \
-	void f_name##_LHASH_DOALL_ARG(const void *, const void *);
+	void f_name##_LHASH_DOALL_ARG(const void *, void *);
 #define IMPLEMENT_LHASH_DOALL_ARG_FN(f_name,o_type,a_type) \
-	void f_name##_LHASH_DOALL_ARG(const void *arg1, const void *arg2) { \
+	void f_name##_LHASH_DOALL_ARG(const void *arg1, void *arg2) { \
 		o_type a = (o_type)arg1; \
 		a_type b = (a_type)arg2; \
 		f_name(a,b); }
@@ -176,7 +176,7 @@ void *lh_insert(LHASH *lh, const void *data);
 void *lh_delete(LHASH *lh, const void *data);
 void *lh_retrieve(LHASH *lh, const void *data);
 void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func);
-void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg);
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const LHASH *lh);
 
