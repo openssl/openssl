@@ -77,9 +77,9 @@ extern "C" {
 #endif
 
 #ifndef DEVRANDOM
-/* set this to your 'random' device if you have one.
- * My default, we will try to read this file */
-#define DEVRANDOM "/dev/urandom"
+/* set this to a comma-separated list of 'random' device files to try out.
+ * My default, we will try to read at least one of these files */
+#define DEVRANDOM "/dev/random","/dev/srandom","/dev/urandom"
 #endif
 
 #if defined(__MWERKS__) && defined(macintosh)
@@ -245,6 +245,8 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ','
 #    define NUL_DEV		"NLA0:"
+  /* We don't have any well-defined random devices on VMS, yet... */
+#    undef DEVRANDOM
   /* We need to do this since VMS has the following coding on status codes:
 
      Bits 0-2: status type: 0 = warning, 1 = success, 2 = error, 3 = info ...

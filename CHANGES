@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change the Unix RAND_poll() variant to be able to poll several
+     random devices and only read data for a small fragment of time
+     to avoid hangs.  Also separate out the Unix variant to it's own
+     file, rand_unix.c.  For VMS, there's a currently-empty rand_vms.c.
+     [Richard Levitte]
+
   *) Move OCSP client related routines to ocsp_cl.c. These
      provide utility functions which an application needing
      to issue a request to an OCSP responder and analyse the
