@@ -713,3 +713,5 @@ wap_wsg_idm_ecid_wtls7		712
 wap_wsg_idm_ecid_wtls10		713
 wap_wsg_idm_ecid_wtls11		714
 wap_wsg_idm_ecid_wtls12		715
+ms_smartcard_login		716
+ms_upn		717
