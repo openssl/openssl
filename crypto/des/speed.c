@@ -191,12 +191,12 @@ int main(int argc, char **argv)
 	printf("program when this computer is idle.\n");
 #endif
 
-	des_set_key((C_Block *)key2,sch2);
-	des_set_key((C_Block *)key3,sch3);
+	des_set_key(&key2,sch2);
+	des_set_key(&key3,sch3);
 
 #ifndef SIGALRM
 	printf("First we calculate the approximate speed ...\n");
-	des_set_key((C_Block *)key,sch);
+	des_set_key(&key,sch);
 	count=10;
 	do	{
 		long i;
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
 	Time_F(START);
 	for (count=0,run=1; COND(ca); count++)
-		des_set_key((C_Block *)key,sch);
+		des_set_key(&key,sch);
 	d=Time_F(STOP);
 	printf("%ld set_key's in %.2f seconds\n",count,d);
 	a=((double)COUNT(ca))/d;
@@ -258,8 +258,8 @@ int main(int argc, char **argv)
 #endif
 	Time_F(START);
 	for (count=0,run=1; COND(cc); count++)
-		des_ncbc_encrypt((C_Block *)buf,(C_Block *)buf,BUFSIZE,&(sch[0]),
-			(C_Block *)&(key[0]),DES_ENCRYPT);
+		des_ncbc_encrypt(buf,buf,BUFSIZE,&(sch[0]),
+			&key,DES_ENCRYPT);
 	d=Time_F(STOP);
 	printf("%ld des_cbc_encrypt's of %ld byte blocks in %.2f second\n",
 		count,BUFSIZE,d);
@@ -275,11 +275,11 @@ int main(int argc, char **argv)
 #endif
 	Time_F(START);
 	for (count=0,run=1; COND(cd); count++)
-		des_ede3_cbc_encrypt((C_Block *)buf,(C_Block *)buf,BUFSIZE,
+		des_ede3_cbc_encrypt(buf,buf,BUFSIZE,
 			&(sch[0]),
 			&(sch2[0]),
 			&(sch3[0]),
-			(C_Block *)&(key[0]),
+			&key,
 			DES_ENCRYPT);
 	d=Time_F(STOP);
 	printf("%ld des_ede_cbc_encrypt's of %ld byte blocks in %.2f second\n",

@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	int i;
 
 	printf("read passwd\n");
-	if ((i=des_read_password((C_Block *)k,"Enter password:",0)) == 0)
+	if ((i=des_read_password(&k,"Enter password:",0)) == 0)
 		{
 		printf("password = ");
 		for (i=0; i<8; i++)
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 		printf("error %d\n",i);
 	printf("\n");
 	printf("read 2passwds and verify\n");
-	if ((i=des_read_2passwords((C_Block *)k,(C_Block *)k1,
+	if ((i=des_read_2passwords(&k,&k1,
 		"Enter verified password:",1)) == 0)
 		{
 		printf("password1 = ");
