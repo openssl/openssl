@@ -88,7 +88,11 @@ LHASH *CONF_load(LHASH *h, const char *file, long *line)
 	LHASH *ltmp;
 	BIO *in=NULL;
 
+#ifdef VMS
+	in=BIO_new_file(file, "r");
+#else
 	in=BIO_new_file(file, "rb");
+#endif
 	if (in == NULL)
 		{
 		CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
