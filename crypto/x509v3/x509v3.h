@@ -238,12 +238,13 @@ STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
 void ext_ku_free(STACK *a);
 STACK *ext_ku_new(void);
 
+char *str_dup(char *val);
+
 #ifdef HEADER_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_VALUE *cnf);
 void X509V3_conf_free(CONF_VALUE *val);
 X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, char *value);
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
-char *str_dup(char *val);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
 int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
@@ -308,9 +309,10 @@ STACK *d2i_ext_ku();
 void ext_ku_free();
 STACK *ext_ku_new();
 
+char *str_dup();
+
 #ifdef HEADER_CONF_H
 void X509V3_conf_free();
-char *str_dup();
 X509_EXTENSION *X509V3_EXT_conf_nid();
 X509_EXTENSION *X509V3_EXT_conf();
 int X509V3_EXT_add_conf();
