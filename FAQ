@@ -674,6 +674,7 @@ The general answer is to check the config.log file generated when running
 the OpenSSH configure script. It should contain the detailed information
 on why the OpenSSL library was not detected or considered incompatible.
 
+
 * Can I use OpenSSL's SSL library with non-blocking I/O?
 
 Yes; make sure to read the SSL_get_error(3) manual page!
