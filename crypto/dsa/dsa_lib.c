@@ -107,9 +107,8 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(!default_DSA_method) default_DSA_method = DSA_OpenSSL();
 	if(meth) ret->meth = meth;
-	else ret->meth = default_DSA_method;
+	else ret->meth = DSA_get_default_method();
 	ret->pad=0;
 	ret->version=0;
 	ret->write_params=1;

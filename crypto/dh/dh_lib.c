@@ -103,9 +103,8 @@ DH *DH_new_method(DH_METHOD *meth)
 		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(!default_DH_method) default_DH_method = DH_OpenSSL();
 	if(meth) ret->meth = meth;
-	else ret->meth = default_DH_method;
+	else ret->meth = DH_get_default_method();
 	ret->pad=0;
 	ret->version=0;
 	ret->p=NULL;
