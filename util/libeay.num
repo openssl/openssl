@@ -1806,3 +1806,6 @@ RAND_egd_bytes                          2402
 X509_REQ_get1_email                     2403
 X509_get1_email                         2404
 X509_email_free                         2405
+i2d_RSA_NET                             2406
+d2i_RSA_NET_2                           2407
+d2i_RSA_NET                             2408

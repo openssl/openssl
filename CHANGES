@@ -4,6 +4,18 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) When some versions of IIS use the 'NET' form of private key the
+     key derivation algorithm is different. Normally MD5(password) is
+     used as a 128 bit RC4 key. In the modified case
+     MD5(MD5(password) + "SGCKEYSALT")  is used insted. Added some
+     new functions i2d_RSA_NET(), d2i_RSA_NET() etc which are the same
+     as the old Netscape_RSA functions except they have an additional
+     'sgckey' parameter which uses the modified algorithm. Also added
+     an -sgckey command line option to the rsa utility. Thanks to 
+     Adrian Peck <bertie@ncipher.com> for posting details of the modified
+     algorithm to openssl-dev.
+     [Steve Henson]
+
   *) The evp_local.h macros were using 'c.##kname' which resulted in
      invalid expansion on some systems (SCO 5.0.5 for example).
      Corrected to 'c.kname'.

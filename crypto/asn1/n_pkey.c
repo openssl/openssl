@@ -81,6 +81,11 @@ static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
 
 int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
+{
+	return i2d_RSA_NET(a, pp, cb, 0);
+}
+
+int i2d_RSA_NET(RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	{
 	int i,j,l[6];
 	NETSCAPE_PKEY *pkey;
@@ -164,8 +169,18 @@ int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 		}
-	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
-		strlen((char *)buf),1,key,NULL);
+	i = strlen((char *)buf);
+	/* If the key is used for SGC the algorithm is modified a little. */
+	if(sgckey){
+		EVP_MD_CTX mctx;
+		EVP_DigestInit(&mctx, EVP_md5());
+		EVP_DigestUpdate(&mctx, buf, i);
+		EVP_DigestFinal(&mctx, buf, NULL);
+		memcpy(buf + 16, "SGCKEYSALT", 10);
+		i = 26;
+	}
+		
+	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
 	memset(buf,0,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
@@ -189,7 +204,13 @@ err:
 	return(ret);
 	}
 
+
 RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
+{
+	return d2i_RSA_NET(a, pp, length, cb, 0);
+}
+
+RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey)
 	{
 	RSA *ret=NULL;
 	ASN1_OCTET_STRING *os=NULL;
@@ -210,7 +231,7 @@ RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
 		}
 	M_ASN1_BIT_STRING_free(os);
 	c.q=c.p;
-	if ((ret=d2i_Netscape_RSA_2(a,&c.p,c.slen,cb)) == NULL) goto err;
+	if ((ret=d2i_RSA_NET_2(a,&c.p,c.slen,cb, sgckey)) == NULL) goto err;
 	/* Note: some versions of IIS key files use length values that are
 	 * too small for the surrounding SEQUENCEs. This following line
 	 * effectively disable length checking.
@@ -222,6 +243,12 @@ RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
 
 RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
 	     int (*cb)())
+{
+	return d2i_RSA_NET_2(a, pp, length, cb, 0);
+}
+
+RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length,
+	     int (*cb)(), int sgckey)
 	{
 	NETSCAPE_PKEY *pkey=NULL;
 	RSA *ret=NULL;
@@ -254,8 +281,17 @@ RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
 		goto err;
 		}
 
-	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
-		strlen((char *)buf),1,key,NULL);
+	i = strlen((char *)buf);
+	if(sgckey){
+		EVP_MD_CTX mctx;
+		EVP_DigestInit(&mctx, EVP_md5());
+		EVP_DigestUpdate(&mctx, buf, i);
+		EVP_DigestFinal(&mctx, buf, NULL);
+		memcpy(buf + 16, "SGCKEYSALT", 10);
+		i = 26;
+	}
+		
+	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
 	memset(buf,0,256);
 
 	EVP_CIPHER_CTX_init(&ctx);

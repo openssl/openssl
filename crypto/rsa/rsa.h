@@ -216,6 +216,10 @@ int	RSA_print_fp(FILE *fp, RSA *r,int offset);
 int	RSA_print(BIO *bp, RSA *r,int offset);
 #endif
 
+int i2d_RSA_NET(RSA *a, unsigned char **pp, int (*cb)(), int sgckey);
+RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey);
+RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey);
+
 int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)());
 RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)());
 /* Naughty internal function required elsewhere, to handle a MS structure
