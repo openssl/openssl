@@ -1057,7 +1057,7 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 		return(NULL);
 	}
 
-int ssl3_pending(SSL *s)
+int ssl3_pending(const SSL *s)
 	{
 	if (s->rstate == SSL_ST_READ_BODY)
 		return 0;

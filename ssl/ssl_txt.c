@@ -61,7 +61,7 @@
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_FP_API
-int SSL_SESSION_print_fp(FILE *fp, SSL_SESSION *x)
+int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 	{
 	BIO *b;
 	int ret;
@@ -78,7 +78,7 @@ int SSL_SESSION_print_fp(FILE *fp, SSL_SESSION *x)
 	}
 #endif
 
-int SSL_SESSION_print(BIO *bp, SSL_SESSION *x)
+int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	{
 	unsigned int i;
 	char *s;

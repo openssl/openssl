@@ -187,7 +187,7 @@ static void load_ciphers(void)
 	init_ciphers=0;
 	}
 
-int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
+int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	     const EVP_MD **md, SSL_COMP **comp)
 	{
 	int i;
@@ -1065,7 +1065,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	return(buf);
 	}
 
-char *SSL_CIPHER_get_version(SSL_CIPHER *c)
+char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 	{
 	int i;
 
@@ -1080,7 +1080,7 @@ char *SSL_CIPHER_get_version(SSL_CIPHER *c)
 	}
 
 /* return the actual cipher being used */
-const char *SSL_CIPHER_get_name(SSL_CIPHER *c)
+const char *SSL_CIPHER_get_name(const SSL_CIPHER *c)
 	{
 	if (c != NULL)
 		return(c->name);
@@ -1088,7 +1088,7 @@ const char *SSL_CIPHER_get_name(SSL_CIPHER *c)
 	}
 
 /* number of bits for symmetric cipher */
-int SSL_CIPHER_get_bits(SSL_CIPHER *c, int *alg_bits)
+int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 	{
 	int ret=0;
 

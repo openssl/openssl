@@ -263,7 +263,7 @@ SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 		return(NULL);
 	}
 
-int ssl2_pending(SSL *s)
+int ssl2_pending(const SSL *s)
 	{
 	return SSL_in_init(s) ? 0 : s->s2->ract_data_length;
 	}

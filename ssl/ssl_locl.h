@@ -499,10 +499,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 					     STACK_OF(SSL_CIPHER) **sorted,
 					     const char *rule_str);
 void ssl_update_cache(SSL *s, int mode);
-int ssl_cipher_get_evp(SSL_SESSION *s,const EVP_CIPHER **enc,const EVP_MD **md,
-		       SSL_COMP **comp);
+int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
+		       const EVP_MD **md,SSL_COMP **comp);
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
+int ssl_undefined_const_function(const SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
@@ -536,7 +537,7 @@ long	ssl2_ctrl(SSL *s,int cmd, long larg, void *parg);
 long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
 long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)());
 long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
-int	ssl2_pending(SSL *s);
+int	ssl2_pending(const SSL *s);
 
 SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
@@ -584,7 +585,7 @@ long	ssl3_ctrl(SSL *s,int cmd, long larg, void *parg);
 long	ssl3_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
 long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)());
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
-int	ssl3_pending(SSL *s);
+int	ssl3_pending(const SSL *s);
 
 int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);

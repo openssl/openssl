@@ -829,7 +829,7 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai,BIGNUM *bn);
 
 /* General */
 /* given a string, return the correct type, max is the maximum length */
-int ASN1_PRINTABLE_type(unsigned char *s, int max);
+int ASN1_PRINTABLE_type(const unsigned char *s, int max);
 
 int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass);
 ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp,

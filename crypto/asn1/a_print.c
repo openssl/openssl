@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-int ASN1_PRINTABLE_type(unsigned char *s, int len)
+int ASN1_PRINTABLE_type(const unsigned char *s, int len)
 	{
 	int c;
 	int ia5=0;

@@ -501,18 +501,18 @@ void SSL_set_bio(SSL *s,BIO *rbio,BIO *wbio)
 	s->wbio=wbio;
 	}
 
-BIO *SSL_get_rbio(SSL *s)
+BIO *SSL_get_rbio(const SSL *s)
 	{ return(s->rbio); }
 
-BIO *SSL_get_wbio(SSL *s)
+BIO *SSL_get_wbio(const SSL *s)
 	{ return(s->wbio); }
 
-int SSL_get_fd(SSL *s)
+int SSL_get_fd(const SSL *s)
 	{
 	return(SSL_get_rfd(s));
 	}
 
-int SSL_get_rfd(SSL *s)
+int SSL_get_rfd(const SSL *s)
 	{
 	int ret= -1;
 	BIO *b,*r;
@@ -524,7 +524,7 @@ int SSL_get_rfd(SSL *s)
 	return(ret);
 	}
 
-int SSL_get_wfd(SSL *s)
+int SSL_get_wfd(const SSL *s)
 	{
 	int ret= -1;
 	BIO *b,*r;
@@ -606,7 +606,7 @@ err:
 
 
 /* return length of latest Finished message we sent, copy to 'buf' */
-size_t SSL_get_finished(SSL *s, void *buf, size_t count)
+size_t SSL_get_finished(const SSL *s, void *buf, size_t count)
 	{
 	size_t ret = 0;
 	
@@ -621,7 +621,7 @@ size_t SSL_get_finished(SSL *s, void *buf, size_t count)
 	}
 
 /* return length of latest Finished message we expected, copy to 'buf' */
-size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count)
+size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 	{
 	size_t ret = 0;
 	
@@ -636,32 +636,32 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count)
 	}
 
 
-int SSL_get_verify_mode(SSL *s)
+int SSL_get_verify_mode(const SSL *s)
 	{
 	return(s->verify_mode);
 	}
 
-int SSL_get_verify_depth(SSL *s)
+int SSL_get_verify_depth(const SSL *s)
 	{
 	return(s->verify_depth);
 	}
 
-int (*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *)
+int (*SSL_get_verify_callback(const SSL *s))(int,X509_STORE_CTX *)
 	{
 	return(s->verify_callback);
 	}
 
-int SSL_CTX_get_verify_mode(SSL_CTX *ctx)
+int SSL_CTX_get_verify_mode(const SSL_CTX *ctx)
 	{
 	return(ctx->verify_mode);
 	}
 
-int SSL_CTX_get_verify_depth(SSL_CTX *ctx)
+int SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 	{
 	return(ctx->verify_depth);
 	}
 
-int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *)
+int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int,X509_STORE_CTX *)
 	{
 	return(ctx->default_verify_callback);
 	}
@@ -684,12 +684,12 @@ void SSL_set_read_ahead(SSL *s,int yes)
 	s->read_ahead=yes;
 	}
 
-int SSL_get_read_ahead(SSL *s)
+int SSL_get_read_ahead(const SSL *s)
 	{
 	return(s->read_ahead);
 	}
 
-int SSL_pending(SSL *s)
+int SSL_pending(const SSL *s)
 	{
 	/* SSL_pending cannot work properly if read-ahead is enabled
 	 * (SSL_[CTX_]ctrl(..., SSL_CTRL_SET_READ_AHEAD, 1, NULL)),
@@ -701,7 +701,7 @@ int SSL_pending(SSL *s)
 	return(s->method->ssl_pending(s));
 	}
 
-X509 *SSL_get_peer_certificate(SSL *s)
+X509 *SSL_get_peer_certificate(const SSL *s)
 	{
 	X509 *r;
 	
@@ -717,7 +717,7 @@ X509 *SSL_get_peer_certificate(SSL *s)
 	return(r);
 	}
 
-STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s)
+STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
 	{
 	STACK_OF(X509) *r;
 	
@@ -734,7 +734,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s)
 
 /* Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled */
-void SSL_copy_session_id(SSL *t,SSL *f)
+void SSL_copy_session_id(SSL *t,const SSL *f)
 	{
 	CERT *tmp;
 
@@ -763,7 +763,7 @@ void SSL_copy_session_id(SSL *t,SSL *f)
 	}
 
 /* Fix this so it checks all the valid key/cert options */
-int SSL_CTX_check_private_key(SSL_CTX *ctx)
+int SSL_CTX_check_private_key(const SSL_CTX *ctx)
 	{
 	if (	(ctx == NULL) ||
 		(ctx->cert == NULL) ||
@@ -781,7 +781,7 @@ int SSL_CTX_check_private_key(SSL_CTX *ctx)
 	}
 
 /* Fix this function so that it takes an optional type parameter */
-int SSL_check_private_key(SSL *ssl)
+int SSL_check_private_key(const SSL *ssl)
 	{
 	if (ssl == NULL)
 		{
@@ -825,7 +825,7 @@ int SSL_connect(SSL *s)
 	return(s->method->ssl_connect(s));
 	}
 
-long SSL_get_default_timeout(SSL *s)
+long SSL_get_default_timeout(const SSL *s)
 	{
 	return(s->method->get_timeout());
 	}
@@ -1072,7 +1072,7 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 
 /** return a STACK of the ciphers available for the SSL and in order of
  * preference */
-STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s)
+STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 	{
 	if (s != NULL)
 		{
@@ -1109,7 +1109,7 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
 	}
 
 /** The old interface to get the same thing as SSL_get_ciphers() */
-const char *SSL_get_cipher_list(SSL *s,int n)
+const char *SSL_get_cipher_list(const SSL *s,int n)
 	{
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *sk;
@@ -1146,7 +1146,7 @@ int SSL_set_cipher_list(SSL *s,const char *str)
 	}
 
 /* works well for SSLv2, not so good for SSLv3 */
-char *SSL_get_shared_ciphers(SSL *s,char *buf,int len)
+char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	{
 	char *p;
 	const char *cp;
@@ -1250,7 +1250,7 @@ err:
 	return(NULL);
 	}
 
-unsigned long SSL_SESSION_hash(SSL_SESSION *a)
+unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
 	{
 	unsigned long l;
 
@@ -1267,7 +1267,7 @@ unsigned long SSL_SESSION_hash(SSL_SESSION *a)
  * SSL_CTX_has_matching_session_id() is checked accordingly. It relies on being
  * able to construct an SSL_SESSION that will collide with any existing session
  * with a matching session ID. */
-int SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b)
+int SSL_SESSION_cmp(const SSL_SESSION *a,const SSL_SESSION *b)
 	{
 	if (a->ssl_version != b->ssl_version)
 		return(1);
@@ -1731,7 +1731,7 @@ int SSL_set_ssl_method(SSL *s,SSL_METHOD *meth)
 	return(ret);
 	}
 
-int SSL_get_error(SSL *s,int i)
+int SSL_get_error(const SSL *s,int i)
 	{
 	int reason;
 	unsigned long l;
@@ -1865,13 +1865,19 @@ int ssl_undefined_function(SSL *s)
 	return(0);
 	}
 
+int ssl_undefined_const_function(const SSL *s)
+	{
+	SSLerr(SSL_F_SSL_UNDEFINED_CONST_FUNCTION,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	return(0);
+	}
+
 SSL_METHOD *ssl_bad_method(int ver)
 	{
 	SSLerr(SSL_F_SSL_BAD_METHOD,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(NULL);
 	}
 
-const char *SSL_get_version(SSL *s)
+const char *SSL_get_version(const SSL *s)
 	{
 	if (s->version == TLS1_VERSION)
 		return("TLSv1");
@@ -2040,7 +2046,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 	}
 
 /* Fix this function so that it takes an optional type parameter */
-X509 *SSL_get_certificate(SSL *s)
+X509 *SSL_get_certificate(const SSL *s)
 	{
 	if (s->cert != NULL)
 		return(s->cert->key->x509);
@@ -2057,7 +2063,7 @@ EVP_PKEY *SSL_get_privatekey(SSL *s)
 		return(NULL);
 	}
 
-SSL_CIPHER *SSL_get_current_cipher(SSL *s)
+SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 	{
 	if ((s->session != NULL) && (s->session->cipher != NULL))
 		return(s->session->cipher);
@@ -2121,7 +2127,7 @@ void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx,int mode)
 	ctx->quiet_shutdown=mode;
 	}
 
-int SSL_CTX_get_quiet_shutdown(SSL_CTX *ctx)
+int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx)
 	{
 	return(ctx->quiet_shutdown);
 	}
@@ -2131,7 +2137,7 @@ void SSL_set_quiet_shutdown(SSL *s,int mode)
 	s->quiet_shutdown=mode;
 	}
 
-int SSL_get_quiet_shutdown(SSL *s)
+int SSL_get_quiet_shutdown(const SSL *s)
 	{
 	return(s->quiet_shutdown);
 	}
@@ -2141,17 +2147,17 @@ void SSL_set_shutdown(SSL *s,int mode)
 	s->shutdown=mode;
 	}
 
-int SSL_get_shutdown(SSL *s)
+int SSL_get_shutdown(const SSL *s)
 	{
 	return(s->shutdown);
 	}
 
-int SSL_version(SSL *s)
+int SSL_version(const SSL *s)
 	{
 	return(s->version);
 	}
 
-SSL_CTX *SSL_get_SSL_CTX(SSL *ssl)
+SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 	{
 	return(ssl->ctx);
 	}
@@ -2177,12 +2183,12 @@ void SSL_set_info_callback(SSL *ssl,
 	ssl->info_callback=cb;
 	}
 
-void (*SSL_get_info_callback(SSL *ssl))(const SSL *ssl,int type,int val)
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,int type,int val)
 	{
 	return ssl->info_callback;
 	}
 
-int SSL_state(SSL *ssl)
+int SSL_state(const SSL *ssl)
 	{
 	return(ssl->state);
 	}
@@ -2192,7 +2198,7 @@ void SSL_set_verify_result(SSL *ssl,long arg)
 	ssl->verify_result=arg;
 	}
 
-long SSL_get_verify_result(SSL *ssl)
+long SSL_get_verify_result(const SSL *ssl)
 	{
 	return(ssl->verify_result);
 	}
@@ -2209,7 +2215,7 @@ int SSL_set_ex_data(SSL *s,int idx,void *arg)
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-void *SSL_get_ex_data(SSL *s,int idx)
+void *SSL_get_ex_data(const SSL *s,int idx)
 	{
 	return(CRYPTO_get_ex_data(&s->ex_data,idx));
 	}
@@ -2226,7 +2232,7 @@ int SSL_CTX_set_ex_data(SSL_CTX *s,int idx,void *arg)
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-void *SSL_CTX_get_ex_data(SSL_CTX *s,int idx)
+void *SSL_CTX_get_ex_data(const SSL_CTX *s,int idx)
 	{
 	return(CRYPTO_get_ex_data(&s->ex_data,idx));
 	}
@@ -2236,7 +2242,7 @@ int ssl_ok(SSL *s)
 	return(1);
 	}
 
-X509_STORE *SSL_CTX_get_cert_store(SSL_CTX *ctx)
+X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 	{
 	return(ctx->cert_store);
 	}
@@ -2248,7 +2254,7 @@ void SSL_CTX_set_cert_store(SSL_CTX *ctx,X509_STORE *store)
 	ctx->cert_store=store;
 	}
 
-int SSL_want(SSL *s)
+int SSL_want(const SSL *s)
 	{
 	return(s->rwstate);
 	}

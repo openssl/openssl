@@ -1038,18 +1038,18 @@ int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
 int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
 			unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
-		char *field, int type, unsigned char *bytes, int len);
+		const char *field, int type, const unsigned char *bytes, int len);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
 			int type,unsigned char *bytes, int len);
-int X509_NAME_add_entry_by_txt(X509_NAME *name, char *field, int type,
-			unsigned char *bytes, int len, int loc, int set);
+int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
+			const unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
-			ASN1_OBJECT *obj, int type,unsigned char *bytes,
+			ASN1_OBJECT *obj, int type,const unsigned char *bytes,
 			int len);
 int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
 			ASN1_OBJECT *obj);
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
-			unsigned char *bytes, int len);
+			const unsigned char *bytes, int len);
 ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
 ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 

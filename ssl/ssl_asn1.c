@@ -226,7 +226,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	M_ASN1_I2D_finish();
 	}
 
-SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
+SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char * const *pp,
 	     long length)
 	{
 	int version,ssl_version=0,i;
