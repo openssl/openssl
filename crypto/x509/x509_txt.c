@@ -95,7 +95,7 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_CRL_NOT_YET_VALID:
 		return("CRL is not yet valid");
 	case X509_V_ERR_CERT_HAS_EXPIRED:
-		return("Certificate has expired");
+		return("certificate has expired");
 	case X509_V_ERR_CRL_HAS_EXPIRED:
 		return("CRL has expired");
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
