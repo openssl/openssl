@@ -64,8 +64,7 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,
-	     int slen)
+int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	{
 	unsigned char *p,*d;
 	int i;

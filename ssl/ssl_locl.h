@@ -330,10 +330,10 @@ typedef struct ssl3_enc_method
 	int (*final_finish_mac)();
 	int finish_mac_length;
 	int (*cert_verify_mac)();
-	unsigned char client_finished[20];
-	int client_finished_len;
-	unsigned char server_finished[20];
-	int server_finished_len;
+	const char *client_finished_label;
+	int client_finished_label_len;
+	const char *server_finished_label;
+	int server_finished_label_len;
 	int (*alert_value)();
 	} SSL3_ENC_METHOD;
 
@@ -433,7 +433,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);
 int ssl3_get_req_cert_type(SSL *s,unsigned char *p);
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,int slen);
+int ssl3_send_finished(SSL *s, int a, int b, const char *sender,int slen);
 int ssl3_num_ciphers(void);
 SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl); 

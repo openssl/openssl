@@ -935,7 +935,7 @@ err:
 static int do_change_cipher_spec(SSL *s)
 	{
 	int i;
-	unsigned char *sender;
+	const char *sender;
 	int slen;
 
 	if (s->state & SSL_ST_ACCEPT)
@@ -957,13 +957,13 @@ static int do_change_cipher_spec(SSL *s)
 	 * the finished message */
 	if (s->state & SSL_ST_CONNECT)
 		{
-		sender=s->method->ssl3_enc->server_finished;
-		slen=s->method->ssl3_enc->server_finished_len;
+		sender=s->method->ssl3_enc->server_finished_label;
+		slen=s->method->ssl3_enc->server_finished_label_len;
 		}
 	else
 		{
-		sender=s->method->ssl3_enc->client_finished;
-		slen=s->method->ssl3_enc->client_finished_len;
+		sender=s->method->ssl3_enc->client_finished_label;
+		slen=s->method->ssl3_enc->client_finished_label_len;
 		}
 
 	s->method->ssl3_enc->final_finish_mac(s,

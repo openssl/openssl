@@ -425,8 +425,8 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_FINISHED_B:
 			ret=ssl3_send_finished(s,
 				SSL3_ST_SW_FINISHED_A,SSL3_ST_SW_FINISHED_B,
-				s->method->ssl3_enc->server_finished,
-				s->method->ssl3_enc->server_finished_len);
+				s->method->ssl3_enc->server_finished_label,
+				s->method->ssl3_enc->server_finished_label_len);
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
 			if (s->hit)
