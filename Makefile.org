@@ -505,8 +505,8 @@ install: all install_docs
 		do \
 			if [ -f "$$i" ]; then \
 			(       echo installing $$i; \
-				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-				chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+				cp -f $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+				chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 			fi \
 		done; \
 		(	here="`pwd`"; \
