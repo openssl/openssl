@@ -95,6 +95,13 @@ extern "C" {
  */
 #define DSO_FLAG_UPCASE_SYMBOL			0x10
 
+/* This flag loads the library with public symbols.
+ * Meaning: The exported symbols of this library are public
+ * to all libraries loaded after this library.
+ * At the moment only implemented in unix.
+ */
+#define DSO_FLAG_GLOBAL_SYMBOLS			0x20
+
 
 typedef void (*DSO_FUNC_TYPE)(void);
 

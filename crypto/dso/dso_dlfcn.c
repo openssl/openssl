@@ -140,13 +140,19 @@ static int dlfcn_load(DSO *dso)
 	void *ptr = NULL;
 	/* See applicable comments in dso_dl.c */
 	char *filename = DSO_convert_filename(dso, NULL);
+	int flags = DLOPEN_FLAG;
 
 	if(filename == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
-	ptr = dlopen(filename, DLOPEN_FLAG);
+
+#ifdef RTLD_GLOBAL
+	if (dso->flags & DSO_FLAG_GLOBAL_SYMBOLS)
+		flags |= RTLD_GLOBAL;
+#endif
+	ptr = dlopen(filename, flags);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_LOAD_FAILED);

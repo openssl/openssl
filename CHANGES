@@ -4,6 +4,9 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add the possibility to load symbols globally with DSO.
+     [Götz Babin-Ebell <babin-ebell@trustcenter.de> via Richard Levitte]
+
   *) Add the functions ERR_set_mark() and ERR_pop_to_mark() for better
      control of the error stack.
      [Richard Levitte]
