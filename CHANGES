@@ -763,6 +763,28 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating
+     server and client random values. Previously
+     (SSL_RANDOM_VALUE - sizeof(time_t)) would be used which would result in
+     less random data when sizeof(time_t) > 4 (some 64 bit platforms).
+
+     This change has negligible security impact because:
+
+     1. Server and client random values still have 24 bytes of pseudo random
+        data.
+
+     2. Server and client random values are sent in the clear in the initial
+        handshake.
+
+     3. The master secret is derived using the premaster secret (48 bytes in
+        size for static RSA ciphersuites) as well as client server and random
+        values.
+
+     The OpenSSL team would like to thank the UK NISCC for bringing this issue
+     to our attention. 
+
+     [Stephen Henson, reported by UK NISCC]
+
   *) Use Windows randomness collection on Cygwin.
      [Ulf Möller]
 
