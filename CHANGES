@@ -4,6 +4,26 @@
 
  Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
 
+  *) Add appropriate support for separate platform-dependent build
+     directories.  The recommended way to make a platform-dependent
+     build directory is the following (tested on Linux), maybe with
+     some local tweaks:
+
+	# Place yourself outside of the OpenSSL source tree.  In
+	# this example, the environment variable OPENSSL_SOURCE
+	# is assumed to contain the absolute OpenSSL source directory.
+	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+	(cd $OPENSSL_SOURCE; find . -type f -o -type l) | while read F; do
+		mkdir -p `dirname $F`
+		ln -s $OPENSSL_SOURCE/$F $F
+	done
+
+     To be absolutely sure not to disturb the source tree, a "make clean"
+     is a good thing.  If it isn't successfull, don't worry about it,
+     it probably means the source directory is very clean.
+     [Richard Levitte]
+
   *) Make sure any ENGINE control commands make local copies of string
      pointers passed to them whenever necessary. Otherwise it is possible
      the caller may have overwritten (or deallocated) the original string
