@@ -51,6 +51,10 @@ encryption.
 Some additional functionality was added to PKCS12_create() in OpenSSL
 0.9.8. These extensions are detailed below.
 
+If a certificate contains an B<alias> or B<keyid> then this will be
+used for the corresponding B<friendlyName> or B<localKeyID> in the
+PKCS12 structure.
+
 Either B<pkey>, B<cert> or both can be B<NULL> to indicate that no key or
 certficate is required. In previous versions both hasves to be present or
 a fatal error is returned.
