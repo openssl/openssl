@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/09/11 12:46:50 $
+  ______________                           $Date: 2001/09/14 08:45:43 $
 
   DEVELOPMENT STATE
 
@@ -18,7 +18,8 @@
 
   RELEASE SHOWSTOPPERS
 
-    o BIGNUM library failures on 64-bit platforms (0.9.7-dev)
+    o BIGNUM library failures on 64-bit platforms (0.9.7-dev):
+      - BN_mod_mul verificiation (bc) fails for solaris64-sparcv9-cc
 
   AVAILABLE PATCHES
 
