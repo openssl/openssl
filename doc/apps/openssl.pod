@@ -104,7 +104,7 @@ Encoding with Ciphers.
 
 Error Number to Error String Conversion.
 
-=item LB<dhparam>|dhparam(1)>
+=item L<B<dhparam>|dhparam(1)>
 
 Generation and Management of Diffie-Hellman Parameters.
 
