@@ -168,7 +168,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         ;;
 
     NetBSD:*:*:*386*)
-        echo "`/usr/sbin/sysctl -n hw.model | sed 's,.*\(.\)86-class.*,i\186,'`-whatever-netbsd"; exit 0
+        echo "`(/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model) | sed 's,.*\(.\)86-class.*,i\186,'`-whatever-netbsd"; exit 0
 	;;
 
     NetBSD:*)
@@ -427,7 +427,7 @@ case "$GUESSOS" in
 	#read waste < /dev/tty
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
-	KARCH=`awk '/type/{print$3}' /proc/cpuinfo`
+	KARCH=`awk '/^type/{print$3}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
 	sun4u*)	OUT="linux-sparcv9" ;;
 	sun4m)	OUT="linux-sparcv8" ;;
@@ -557,7 +557,7 @@ OUT="$PREFIX$OUT"
 
 $PERL ./Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
-  #echo Configuring for $OUT
+  echo Configuring for $OUT
 
   if [ "$TEST" = "true" ]; then
     echo $PERL ./Configure $OUT $options
