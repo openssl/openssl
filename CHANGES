@@ -4,6 +4,10 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) RC4 performance overhaul on modern architectures/implementations, such
+     as Intel P4, IA-64 and AMD64.
+     [Andy Polyakov]
+
   *) New utility extract-section.pl. This can be used specify an alternative
      section number in a pod file instead of having to treat each file as
      a separate case in Makefile. This can be done by adding two lines to the
