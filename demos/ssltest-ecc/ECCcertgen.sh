@@ -19,6 +19,8 @@ COMBO_DIR=$CERTS_DIR
 CAT=/bin/cat
 # rm command
 RM=/bin/rm
+# mkdir command
+MKDIR=/bin/mkdir
 # The certificate will expire these many days after the issue date.
 DAYS=1500
 TEST_CA_CURVE=secp160r1
@@ -40,6 +42,10 @@ TEST_CLIENT_DN="/C=US/ST=CA/L=Mountain View/O=Sun Microsystems, Inc./OU=Sun Micr
 # 4. [Optional] One can combine the cert and private key into a single
 #    file and also delete the certificate request
 
+$MKDIR -p $CERTS_DIR
+$MKDIR -p $KEYS_DIR
+$MKDIR -p $COMBO_DIR
+
 echo "Generating self-signed CA certificate (on curve $TEST_CA_CURVE)"
 echo "==============================================================="
 $OPENSSL_CMD ecparam -name $TEST_CA_CURVE -out $TEST_CA_CURVE.pem
@@ -51,7 +57,7 @@ $OPENSSL_CMD ecparam -name $TEST_CA_CURVE -out $TEST_CA_CURVE.pem
 # stored in the clear (rather than encrypted with a password).
 $OPENSSL_CMD req $OPENSSL_CNF -nodes -subj "$TEST_CA_DN" \
     -keyout $KEYS_DIR/$TEST_CA_FILE.key.pem \
-    -newkey ecdsa:$TEST_CA_CURVE.pem -new \
+    -newkey ec:$TEST_CA_CURVE.pem -new \
     -out $CERTS_DIR/$TEST_CA_FILE.req.pem
 
 # Sign the certificate request in $TEST_CA_FILE.req.pem using the
@@ -89,7 +95,7 @@ $OPENSSL_CMD ecparam -name $TEST_SERVER_CURVE -out $TEST_SERVER_CURVE.pem
 # stored in the clear (rather than encrypted with a password).
 $OPENSSL_CMD req $OPENSSL_CNF -nodes -subj "$TEST_SERVER_DN" \
     -keyout $KEYS_DIR/$TEST_SERVER_FILE.key.pem \
-    -newkey ecdsa:$TEST_SERVER_CURVE.pem -new \
+    -newkey ec:$TEST_SERVER_CURVE.pem -new \
     -out $CERTS_DIR/$TEST_SERVER_FILE.req.pem
 
 # Sign the certificate request in $TEST_SERVER_FILE.req.pem using the
@@ -128,7 +134,7 @@ $OPENSSL_CMD ecparam -name $TEST_CLIENT_CURVE -out $TEST_CLIENT_CURVE.pem
 # stored in the clear (rather than encrypted with a password).
 $OPENSSL_CMD req $OPENSSL_CNF -nodes -subj "$TEST_CLIENT_DN" \
 	     -keyout $KEYS_DIR/$TEST_CLIENT_FILE.key.pem \
-	     -newkey ecdsa:$TEST_CLIENT_CURVE.pem -new \
+	     -newkey ec:$TEST_CLIENT_CURVE.pem -new \
 	     -out $CERTS_DIR/$TEST_CLIENT_FILE.req.pem
 
 # Sign the certificate request in $TEST_CLIENT_FILE.req.pem using the
@@ -154,20 +160,5 @@ $CAT $KEYS_DIR/$TEST_CLIENT_FILE.key.pem >> $COMBO_DIR/$TEST_CLIENT_FILE.pem
 # Remove the cert request file (no longer needed)
 $RM $CERTS_DIR/$TEST_CLIENT_FILE.req.pem
 
-############################################################################
-#OLD STUFF (ignore this)
-#
-#These are the commands I used, but you may wish to add -named_curve to the first command per our discussion about parameter encoding in certificates.
-#
-#apps/openssl ecdsaparam -out nist192.param.pem -NIST_192
-#
-#apps/openssl ecdsaparam -out nistB163.param.pem -named_curve -NIST_B163
-# the nodes option causes output key to be stored unencrypted
-#apps/openssl req -nodes -keyout nistB163.priv.pem -newkey ecdsa:nistB163.param.pem -new -out nistB163.req.pem
-#apps/openssl x509 -req -in nistB163.req.pem -extfile apps/cert.cnf -extensions v3_ca -signkey nistB163.priv.pem -out nistB163.cert.pem
-#
-#crypto/x509/x509_ext.c  has X509_EXTENSION *X509_get_ext(X509 *x, int loc)
-#crypto/asn1/t_x509.c    has code to print certificates
-#crypto/x509v3/v3_prn.c  has code to print extensions X509V3_extensions_print
 
 

@@ -19,6 +19,8 @@ COMBO_DIR=$CERTS_DIR
 CAT=/bin/cat
 # rm command
 RM=/bin/rm
+# mkdir command
+MKDIR=/bin/mkdir
 # The certificate will expire these many days after the issue date.
 DAYS=1500
 TEST_CA_FILE=rsa1024TestCA
@@ -38,6 +40,9 @@ TEST_CLIENT_DN="/C=US/ST=CA/L=Mountain View/O=Sun Microsystems, Inc./OU=Sun Micr
 # 4. [Optional] One can combine the cert and private key into a single
 #    file and also delete the certificate request
 
+$MKDIR -p $CERTS_DIR
+$MKDIR -p $KEYS_DIR
+$MKDIR -p $COMBO_DIR
 
 echo "GENERATING A TEST SERVER CERTIFICATE (ECC key signed with RSA)"
 echo "=============================================================="
@@ -45,7 +50,7 @@ $OPENSSL_CMD ecparam -name $TEST_SERVER_CURVE -out $TEST_SERVER_CURVE.pem
 
 $OPENSSL_CMD req $OPENSSL_CNF -nodes -subj "$TEST_SERVER_DN" \
     -keyout $KEYS_DIR/$TEST_SERVER_FILE.key.pem \
-    -newkey ecdsa:$TEST_SERVER_CURVE.pem -new \
+    -newkey ec:$TEST_SERVER_CURVE.pem -new \
     -out $CERTS_DIR/$TEST_SERVER_FILE.req.pem
 
 $OPENSSL_CMD x509 -req -days $DAYS \
@@ -71,7 +76,7 @@ $OPENSSL_CMD ecparam -name $TEST_CLIENT_CURVE -out $TEST_CLIENT_CURVE.pem
 
 $OPENSSL_CMD req $OPENSSL_CNF -nodes -subj "$TEST_CLIENT_DN" \
 	     -keyout $KEYS_DIR/$TEST_CLIENT_FILE.key.pem \
-	     -newkey ecdsa:$TEST_CLIENT_CURVE.pem -new \
+	     -newkey ec:$TEST_CLIENT_CURVE.pem -new \
 	     -out $CERTS_DIR/$TEST_CLIENT_FILE.req.pem
 
 $OPENSSL_CMD x509 -req -days $DAYS \

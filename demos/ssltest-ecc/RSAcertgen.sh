@@ -19,6 +19,8 @@ COMBO_DIR=$CERTS_DIR
 CAT=/bin/cat
 # rm command
 RM=/bin/rm
+# mkdir command
+MKDIR=/bin/mkdir
 # The certificate will expire these many days after the issue date.
 DAYS=1500
 TEST_CA_FILE=rsa1024TestCA
@@ -36,6 +38,10 @@ TEST_CLIENT_DN="/C=US/ST=CA/L=Mountain View/O=Sun Microsystems, Inc./OU=Sun Micr
 # 3. Signing the certificate request 
 # 4. [Optional] One can combine the cert and private key into a single
 #    file and also delete the certificate request
+
+$MKDIR -p $CERTS_DIR
+$MKDIR -p $KEYS_DIR
+$MKDIR -p $COMBO_DIR
 
 echo "Generating self-signed CA certificate (RSA)"
 echo "==========================================="
