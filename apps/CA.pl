@@ -68,7 +68,7 @@ foreach (@ARGV) {
 		# if explictly asked for or it doesn't exist then setup the
 		# directory structure that Eric likes to manage things 
 	    $NEW="1";
-	    if ( "$NEW" || ! -f ${CATOP}/serial ) {
+	    if ( "$NEW" || ! -f "${CATOP}/serial" ) {
 		# create the directory hierarchy
 		mkdir $CATOP, $DIRMODE;
 		mkdir "${CATOP}/certs", $DIRMODE;
