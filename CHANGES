@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
   *) In crypto/ec/ec_mult.c, implement fast point multiplication with
      precomputation, based on wNAF splitting: EC_GROUP_precompute_mult()
