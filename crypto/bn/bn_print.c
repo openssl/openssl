@@ -294,7 +294,7 @@ int BN_print_fp(FILE *fp, BIGNUM *a)
 	}
 #endif
 
-int BN_print(BIO *bp, BIGNUM *a)
+int BN_print(BIO *bp, const BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	int ret=0;

@@ -469,7 +469,7 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);  
 void	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
-void	EVP_DigestUpdate(EVP_MD_CTX *ctx,const unsigned char *d,
+void	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
 void	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 

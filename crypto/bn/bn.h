@@ -362,9 +362,9 @@ int	BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx);
 int	BN_print_fp(FILE *fp, BIGNUM *a);
 #endif
 #ifdef HEADER_BIO_H
-int	BN_print(BIO *fp, BIGNUM *a);
+int	BN_print(BIO *fp, const BIGNUM *a);
 #else
-int	BN_print(char *fp, BIGNUM *a);
+int	BN_print(char *fp, const BIGNUM *a);
 #endif
 int	BN_reciprocal(BIGNUM *r, BIGNUM *m, int len, BN_CTX *ctx);
 int	BN_rshift(BIGNUM *r, BIGNUM *a, int n);
