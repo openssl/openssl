@@ -166,6 +166,8 @@ static int mem_read(BIO *b, char *out, int outl)
 		if (b->num != 0)
 			BIO_set_retry_read(b);
 		ret= b->num;
+		if(ret < 0)
+		    BIOerr(BIO_F_MEM_READ,BIO_R_EOF_ON_MEMORY_BIO);
 		}
 	return(ret);
 	}

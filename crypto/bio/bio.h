@@ -638,6 +638,7 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args);
 #define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
+#define BIO_F_MEM_READ					 128
 #define BIO_F_MEM_WRITE					 117
 #define BIO_F_SSL_NEW					 118
 #define BIO_F_WSASTARTUP				 119
@@ -648,6 +649,7 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args);
 #define BIO_R_BAD_HOSTNAME_LOOKUP			 102
 #define BIO_R_BROKEN_PIPE				 124
 #define BIO_R_CONNECT_ERROR				 103
+#define BIO_R_EOF_ON_MEMORY_BIO				 127
 #define BIO_R_ERROR_SETTING_NBIO			 104
 #define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET	 105
 #define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET	 106
