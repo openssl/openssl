@@ -67,7 +67,7 @@ X509V3_EXT_METHOD v3_crl_num = {
 	0,
 	0,0,0,0, NULL};
 
-void * s2i_asn1_int(X509V3_EXT_METHOD *meth, X509V3_CTX *ctx, char *value)
+static void * s2i_asn1_int(X509V3_EXT_METHOD *meth, X509V3_CTX *ctx, char *value)
 	{
 	return s2i_ASN1_INTEGER(meth, value);
 	}
