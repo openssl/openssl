@@ -650,6 +650,12 @@ if($IsWindows) {
 	# Run "make depend" manually if you want to be able to delete
 	# the source code files of ciphers you left out.
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
+	if ( $perl =~ m@^/@) {
+	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
+	} else {
+	    # No path for Perl known ...
+	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
+	}	    
 }
 
 my $pwd;
