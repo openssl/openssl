@@ -728,8 +728,6 @@ if($IsWindows) {
 #endif
 EOF
 	close(OUT);
-
-	system "perl crypto/objects/obj_dat.pl crypto/objects/objects.h crypto/objects/obj_dat.h";
 } else {
 	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
 	### (system 'make depend') == 0 or exit $? if $depflags ne "";

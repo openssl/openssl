@@ -661,12 +661,12 @@ extern "C" {
 #define SN_rle_compression		"RLE"
 #define LN_rle_compression		"run length compression"
 #define NID_rle_compression		124
-#define OBJ_rle_compression		1L,1L,1L,1L,666L.1L
+#define OBJ_rle_compression		1L,1L,1L,1L,666L,1L
 
 #define SN_zlib_compression		"ZLIB"
 #define LN_zlib_compression		"zlib compression"
 #define NID_zlib_compression		125
-#define OBJ_zlib_compression		1L,1L,1L,1L,666L.2L
+#define OBJ_zlib_compression		1L,1L,1L,1L,666L,2L
 
 #define SN_ext_key_usage		"extendedKeyUsage"
 #define LN_ext_key_usage		"X509v3 Extended Key Usage"

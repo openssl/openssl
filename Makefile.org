@@ -299,11 +299,14 @@ util/libeay.num::
 util/ssleay.num::
 	perl util/mkdef.pl ssl update
 
+crypto/objects/obj_dat.h::
+	perl crypto/objects/obj_dat.pl crypto/objects/objects.h crypto/objects/obj_dat.h
+
 TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	perl Configure TABLE) > TABLE
 
-update: depend errors util/libeay.num util/ssleay.num TABLE
+update: depend errors util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
 
 tar:
 	@tar --norecurse -cvf - \

@@ -37,9 +37,6 @@ top:
 
 all:	obj_dat.h lib
 
-obj_dat.h: objects.h obj_dat.pl
-	$(PERL) ./obj_dat.pl objects.h obj_dat.h
-
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB)
