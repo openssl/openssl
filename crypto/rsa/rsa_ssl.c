@@ -142,6 +142,11 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen, unsigned char *from,
 
 	i++; /* Skip over the '\0' */
 	j-=i;
+	if (j > tlen)
+		{
+		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,RSA_R_DATA_TOO_LARGE);
+		return(-1);
+		}
 	memcpy(to,p,(unsigned int)j);
 
 	return(j);

@@ -79,7 +79,7 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
 	*(p++)=0;
 	*(p++)=1; /* Private Key BT (Block Type) */
 
-	/* padd out with 0xff data */
+	/* pad out with 0xff data */
 	j=tlen-3-flen;
 	memset(p,0xff,j);
 	p+=j;
@@ -130,6 +130,11 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
 		}
 	i++; /* Skip over the '\0' */
 	j-=i;
+	if (j > tlen)
+		{
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,RSA_R_DATA_TOO_LARGE);
+		return(-1);
+		}
 	memcpy(to,p,(unsigned int)j);
 
 	return(j);
@@ -207,6 +212,11 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 		}
 	i++; /* Skip over the '\0' */
 	j-=i;
+	if (j > tlen)
+		{
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,RSA_R_DATA_TOO_LARGE);
+		return(-1);
+		}
 	memcpy(to,p,(unsigned int)j);
 
 	return(j);
