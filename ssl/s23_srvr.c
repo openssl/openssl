@@ -202,7 +202,7 @@ int ssl23_get_client_hello(SSL *s)
 	                     *  9/10  client_version  /
 	                     */
 	char *buf= &(buf_space[0]);
-	unsigned char *p,*d,*dd;
+	unsigned char *p,*d,*d_len,*dd;
 	unsigned int i;
 	unsigned int csl,sil,cl;
 	int n=0,j;
@@ -365,6 +365,14 @@ int ssl23_get_client_hello(SSL *s)
 			goto err;
 			}
 
+		/* record header: version ... */
+		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
+		*(d++) = v[1];
+		/* ... and length (actual value will be written later) */
+		d_len = d++;
+		d++;
+
+		/* client_version */
 		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
 		*(d++) = v[1];
 
@@ -396,6 +404,7 @@ int ssl23_get_client_hello(SSL *s)
 		*(d++)=0;
 		
 		i=(d-(unsigned char *)s->init_buf->data);
+		s2n(i, d_len);
 
 		/* get the data reused from the init_buf */
 		s->s3->tmp.reuse_message=1;

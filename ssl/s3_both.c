@@ -109,6 +109,7 @@
  *
  */
 
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <openssl/buffer.h>
@@ -205,7 +206,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 		}
 	s->s3->change_cipher_spec=0;
 
-	p = (unsigned char *)s->init_buf->data;
+	p = (unsigned char *)s->init_msg;
 	i = s->s3->tmp.peer_finish_md_len;
 
 	if (i != n)
@@ -355,6 +356,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto f_err;
 			}
 		*ok=1;
+		s->init_msg = s->init_buf->data + 4;
 		return((int)s->s3->tmp.message_size);
 		}
 
@@ -415,8 +417,6 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			ssl3_init_finished_mac(s);
 			}
 
-		ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, 4);
-			
 		s->s3->tmp.message_type= *(p++);
 
 		n2l3(p,l);
@@ -426,7 +426,13 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 			}
-		if (l && !BUF_MEM_grow(s->init_buf,(int)l))
+		if (l > (INT_MAX-4)) /* BUF_MEM_grow takes an 'int' parameter */
+			{
+			al=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+			goto f_err;
+			}
+		if (l && !BUF_MEM_grow(s->init_buf,(int)l+4))
 			{
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,ERR_R_BUF_LIB);
 			goto err;
@@ -434,13 +440,13 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		s->s3->tmp.message_size=l;
 		s->state=stn;
 
-		s->init_num=0;
+		s->init_msg = s->init_buf->data + 4;
+		s->init_num = 0;
 		}
 
 	/* next state (stn) */
-	p=(unsigned char *)s->init_buf->data;
-	n=s->s3->tmp.message_size;
-	n -= s->init_num;
+	p = s->init_msg;
+	n = s->s3->tmp.message_size - s->init_num;
 	while (n > 0)
 		{
 		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],n,0);
@@ -453,7 +459,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		s->init_num += i;
 		n -= i;
 		}
-	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
+	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
 	*ok=1;
 	return s->init_num;
 f_err:

@@ -554,7 +554,7 @@ static int ssl3_get_server_hello(SSL *s)
 		&ok);
 
 	if (!ok) return((int)n);
-	d=p=(unsigned char *)s->init_buf->data;
+	d=p=(unsigned char *)s->init_msg;
 
 	if ((p[0] != (s->version>>8)) || (p[1] != (s->version&0xff)))
 		{
@@ -710,7 +710,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_BAD_MESSAGE_TYPE);
 		goto f_err;
 		}
-	d=p=(unsigned char *)s->init_buf->data;
+	d=p=(unsigned char *)s->init_msg;
 
 	if ((sk=sk_X509_new_null()) == NULL)
 		{
@@ -895,7 +895,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		return(1);
 		}
 
-	param=p=(unsigned char *)s->init_buf->data;
+	param=p=(unsigned char *)s->init_msg;
 
 	if (s->session->sess_cert != NULL)
 		{
@@ -1218,7 +1218,7 @@ static int ssl3_get_certificate_request(SSL *s)
 			}
 		}
 
-	d=p=(unsigned char *)s->init_buf->data;
+	d=p=(unsigned char *)s->init_msg;
 
 	if ((ca_sk=sk_X509_NAME_new(ca_dn_cmp)) == NULL)
 		{

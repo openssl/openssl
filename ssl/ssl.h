@@ -652,6 +652,7 @@ struct ssl_st
 	int rstate;	/* where we are when reading */
 
 	BUF_MEM *init_buf;	/* buffer used during init */
+	void *init_msg;   	/* pointer to handshake message body, set by ssl3_get_message() */
 	int init_num;		/* amount read/written */
 	int init_off;		/* amount read/written */
 

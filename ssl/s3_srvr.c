@@ -663,7 +663,7 @@ static int ssl3_get_client_hello(SSL *s)
 		&ok);
 
 	if (!ok) return((int)n);
-	d=p=(unsigned char *)s->init_buf->data;
+	d=p=(unsigned char *)s->init_msg;
 
 	/* use version from inside client hello, not from record header
 	 * (may differ: see RFC 2246, Appendix E, second paragraph) */
@@ -1355,7 +1355,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		&ok);
 
 	if (!ok) return((int)n);
-	p=(unsigned char *)s->init_buf->data;
+	p=(unsigned char *)s->init_msg;
 
 	l=s->s3->tmp.new_cipher->algorithms;
 
@@ -1756,7 +1756,7 @@ static int ssl3_get_cert_verify(SSL *s)
 		}
 
 	/* we now have a signature that we need to verify */
-	p=(unsigned char *)s->init_buf->data;
+	p=(unsigned char *)s->init_msg;
 	n2s(p,i);
 	n-=2;
 	if (i > n)
@@ -1872,7 +1872,7 @@ static int ssl3_get_client_certificate(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_WRONG_MESSAGE_TYPE);
 		goto f_err;
 		}
-	d=p=(unsigned char *)s->init_buf->data;
+	d=p=(unsigned char *)s->init_msg;
 
 	if ((sk=sk_X509_new_null()) == NULL)
 		{
