@@ -171,11 +171,13 @@
   *) Rebuild of the memory allocation routines used by OpenSSL code and
      possibly others as well.  The purpose is to make an interface that
      provide hooks so anyone can build a separate set of allocation and
-     deallocation routines to be used by OpenSSL, for example if memory
-     pool implementations, or something else.  The same is provided for
-     memory debugging code.  OpenSSL already comes with code that finds
-     memory leaks, but this gives people a chance to debug other memory
-     problems.
+     deallocation routines to be used by OpenSSL, for example memory
+     pool implementations, or something else, which was previously hard
+     since Malloc(), Realloc() and Free() were defined as macros having
+     the values malloc, realloc and free, respectively.  Also, The same
+     is provided for memory debugging code.  OpenSSL already comes with
+     functionality to find memory leaks, but this gives people a chance
+     to debug other memory problems.
 
      With these changes, a new set of functions and macros have appeared:
 
@@ -187,8 +189,14 @@
 
      The memory debug functions are NULL by default, unless the library
      is compiled with CRYPTO_MDEBUG or friends is defined.  If someone
-     wants to debug memory anyway, CRYPTO_malloc_debug_init() or
-     CRYPTO_set_mem_debug_functions() must be used.
+     wants to debug memory anyway, CRYPTO_malloc_debug_init() (which
+     gives the standard debugging functions that come with OpenSSL) or
+     CRYPTO_set_mem_debug_functions() (tells OpenSSL to use functions
+     provided by the library user) must be used.  When the standard
+     debugging functions are used, CRYPTO_dbg_set_options can be used to
+     request additional information:
+     CRYPTO_dbg_set_options(V_CYRPTO_MDEBUG_xxx) corresponds to setting
+     the CRYPTO_MDEBUG_xxx macro when compiling the library.   
 
      Also, things like CRYPTO_set_mem_functions will always give the
      expected result (the new set of functions is used for allocation
@@ -203,7 +211,7 @@
        CRYPTO_dbg_free()
 
      All macros of value have retained their old syntax.
-     [Richard Levitte]
+     [Richard Levitte and Bodo Moeller]
 
   *) Some S/MIME fixes. The OID for SMIMECapabilities was wrong, the
      ordering of SMIMECapabilities wasn't in "strength order" and there
