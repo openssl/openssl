@@ -517,18 +517,6 @@ A sample configuration file with the relevant sections for B<ca>:
  commonName             = supplied
  emailAddress           = optional
 
-=head1 WARNINGS
-
-The B<ca> command is quirky and at times downright unfriendly.
-
-The B<ca> utility was originally meant as an example of how to do things
-in a CA. It was not supposed to be used as a full blown CA itself:
-nevertheless some people are using it for this purpose.
-
-The B<ca> command is effectively a single user command: no locking is
-done on the various files and attempts to run more than one B<ca> command
-on the same database can have unpredictable results.
-
 =head1 FILES
 
 Note: the location of all files can change either by compile time options,
@@ -592,6 +580,16 @@ Cancelling some commands by refusing to certify a certificate can
 create an empty file.
 
 =head1 WARNINGS
+
+The B<ca> command is quirky and at times downright unfriendly.
+
+The B<ca> utility was originally meant as an example of how to do things
+in a CA. It was not supposed to be used as a full blown CA itself:
+nevertheless some people are using it for this purpose.
+
+The B<ca> command is effectively a single user command: no locking is
+done on the various files and attempts to run more than one B<ca> command
+on the same database can have unpredictable results.
 
 The B<copy_extensions> option should be used with caution. If care is
 not taken then it can be a security risk. For example if a certificate
