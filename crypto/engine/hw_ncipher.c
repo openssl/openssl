@@ -1175,7 +1175,7 @@ static int hwcrhk_insert_card(const char *prompt_info,
 		      HWCryptoHook_PassphraseContext *ppctx,
 		      HWCryptoHook_CallerContext *cactx)
         {
-        int ok = 1;
+        int ok = -1;
         UI *ui;
 	void *callback_data = NULL;
         UI_METHOD *ui_method = NULL;
@@ -1211,7 +1211,7 @@ static int hwcrhk_insert_card(const char *prompt_info,
                         BIO_snprintf(buf, sizeof(buf)-1,
                                 "Current card: \"%s\"\n", wrong_info);
                 ok = UI_dup_info_string(ui, buf);
-                if (ok == 0 && prompt_info)
+                if (ok && prompt_info)
                         {
                         BIO_snprintf(buf, sizeof(buf)-1,
                                 "Insert card \"%s\"\n then hit <enter> or C<enter> to cancel\n", prompt_info);
@@ -1219,15 +1219,20 @@ static int hwcrhk_insert_card(const char *prompt_info,
                                 answer, 0, sizeof(answer)-1);
                         }
                 UI_add_user_data(ui, callback_data);
-                if (ok == 0)
+                if (ok)
                         ok = UI_process(ui);
                 UI_free(ui);
-                if (strchr("Cc",answer[0]) == 0)
+		/* If canceled input treat as 'cancel' */
+		if (ok == -2)
+			ok = 1;
+		else if(ok != 0)
+			ok = -1;
+                else if (answer[0] == 'c' || answer[0] == 'C')
                         ok = 1;
+		else 
+			ok = 0;
                 }
-        if (ok == 0)
-                return 0;
-        return -1;
+        return ok;
         }
 
 static void hwcrhk_log_message(void *logstr, const char *message)
