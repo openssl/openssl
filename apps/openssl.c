@@ -120,9 +120,6 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
-	/* SSLeay_add_ssl_algorithms(); is called in apps_startup() */
-	apps_startup();
-
 #if defined(DEBUG) && !defined(WINDOWS) && !defined(MSDOS)
 #ifdef SIGBUS
 	signal(SIGBUS,sig_stop);
@@ -132,11 +129,13 @@ int main(int Argc, char *Argv[])
 #endif
 #endif
 
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+	apps_startup();
+
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	ERR_load_crypto_strings();
 
