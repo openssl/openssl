@@ -88,10 +88,13 @@ int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp)
 
 	switch(a->type) {
 
-		case GEN_OTHERNAME:
 		case GEN_X400:
 		case GEN_EDIPARTY:
 		ret = i2d_ASN1_TYPE(a->d.other, pp);
+		break;
+
+		case GEN_OTHERNAME:
+		ret = i2d_OTHERNAME(a->d.otherName, pp);
 		break;
 
 		case GEN_EMAIL:
@@ -137,10 +140,13 @@ GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp,
 
 	switch(ret->type) {
 		/* Just put these in a "blob" for now */
-		case GEN_OTHERNAME:
 		case GEN_X400:
 		case GEN_EDIPARTY:
 		M_ASN1_D2I_get_imp(ret->d.other, d2i_ASN1_TYPE,V_ASN1_SEQUENCE);
+		break;
+
+		case GEN_OTHERNAME:
+		M_ASN1_D2I_get_imp(ret->d.otherName, d2i_OTHERNAME,V_ASN1_SEQUENCE);
 		break;
 
 		case GEN_EMAIL:
@@ -176,10 +182,13 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 {
 	if (a == NULL) return;
 	switch(a->type) {
-		case GEN_OTHERNAME:
 		case GEN_X400:
 		case GEN_EDIPARTY:
 		ASN1_TYPE_free(a->d.other);
+		break;
+
+		case GEN_OTHERNAME:
+		OTHERNAME_free(a->d.otherName);
 		break;
 
 		case GEN_EMAIL:
@@ -205,8 +214,8 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 	Free ((char *)a);
 }
 
-/* Now the GeneralNames versions: a SEQUENCE OF GeneralName These are needed as
- * an explicit functions.
+/* Now the GeneralNames versions: a SEQUENCE OF GeneralName. These are needed as
+ * explicit functions.
  */
 
 STACK_OF(GENERAL_NAME) *GENERAL_NAMES_new()
@@ -234,4 +243,49 @@ return i2d_ASN1_SET_OF_GENERAL_NAME(a, pp, i2d_GENERAL_NAME, V_ASN1_SEQUENCE,
 
 IMPLEMENT_STACK_OF(GENERAL_NAME)
 IMPLEMENT_ASN1_SET_OF(GENERAL_NAME)
+
+int i2d_OTHERNAME(OTHERNAME *a, unsigned char **pp)
+{
+	int v = 0;
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len(a->type_id, i2d_ASN1_OBJECT);
+	M_ASN1_I2D_len_EXP_opt(a->value, i2d_ASN1_TYPE, 0, v);
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put(a->type_id, i2d_ASN1_OBJECT);
+	M_ASN1_I2D_put_EXP_opt(a->value, i2d_ASN1_TYPE, 0, v);
+
+	M_ASN1_I2D_finish();
+}
+
+OTHERNAME *OTHERNAME_new(void)
+{
+	OTHERNAME *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, OTHERNAME);
+	ret->type_id = OBJ_nid2obj(NID_undef);
+	M_ASN1_New(ret->value, ASN1_TYPE_new);
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_OTHERNAME_NEW);
+}
+
+OTHERNAME *d2i_OTHERNAME(OTHERNAME **a, unsigned char **pp, long length)
+{
+	M_ASN1_D2I_vars(a,OTHERNAME *,OTHERNAME_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	M_ASN1_D2I_get(ret->type_id, d2i_ASN1_OBJECT);
+	M_ASN1_D2I_get_EXP_opt(ret->value, d2i_ASN1_TYPE, 0);
+	M_ASN1_D2I_Finish(a, OTHERNAME_free, ASN1_F_D2I_OTHERNAME);
+}
+
+void OTHERNAME_free(OTHERNAME *a)
+{
+	if (a == NULL) return;
+	ASN1_OBJECT_free(a->type_id);
+	ASN1_TYPE_free(a->value);
+	Free ((char *)a);
+}
 

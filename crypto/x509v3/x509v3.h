@@ -149,6 +149,11 @@ ASN1_GENERALIZEDTIME *notBefore;
 ASN1_GENERALIZEDTIME *notAfter;
 } PKEY_USAGE_PERIOD;
 
+typedef struct otherName_st {
+ASN1_OBJECT *type_id;
+ASN1_TYPE *value;
+} OTHERNAME;
+
 typedef struct GENERAL_NAME_st {
 
 #define GEN_OTHERNAME	(0|V_ASN1_CONTEXT_SPECIFIC)
@@ -168,7 +173,8 @@ union {
 	ASN1_OCTET_STRING *ip; /* iPAddress */
 	X509_NAME *dirn;		/* dirn */
 	ASN1_OBJECT *rid; /* registeredID */
-	ASN1_TYPE *other; /* otherName, ediPartyName, x400Address */
+	OTHERNAME *otherName; /* otherName */
+	ASN1_TYPE *other; /* ediPartyName, x400Address */
 } d;
 } GENERAL_NAME;
 
@@ -375,6 +381,11 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 		STACK_OF(GENERAL_NAME) *gen, STACK_OF(CONF_VALUE) *extlist);
 STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+
+int i2d_OTHERNAME(OTHERNAME *a, unsigned char **pp);
+OTHERNAME *OTHERNAME_new(void);
+OTHERNAME *d2i_OTHERNAME(OTHERNAME **a, unsigned char **pp, long length);
+void OTHERNAME_free(OTHERNAME *a);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);

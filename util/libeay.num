@@ -2020,3 +2020,9 @@ X509_notrust_set_bit_asc                2044
 i2d_X509_AUX                            2045
 ASN1_BIT_STRING_name_print              2046
 X509_add_trust_object                   2047
+OTHERNAME_new                           2048
+i2d_OTHERNAME                           2049
+CRYPTO_add_info                         2050
+d2i_OTHERNAME                           2051
+OTHERNAME_free                          2052
+X509_cmp                                2053

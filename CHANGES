@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Code to support otherName option in GeneralName.
+     [Steve Henson]
+
   *) First update to verify code. Change the verify utility
      so it warns if it is passed a self signed certificate:
      for consistency with the normal behaviour. X509_verify
