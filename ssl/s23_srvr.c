@@ -200,6 +200,7 @@ int ssl23_get_client_hello(SSL *s)
 	                     *  6-8   length           > Client Hello message
 	                     *  9/10  client_version  /
 	                     */
+/* XXX */
 	char *buf= &(buf_space[0]);
 	unsigned char *p,*d,*dd;
 	unsigned int i;
@@ -277,6 +278,7 @@ int ssl23_get_client_hello(SSL *s)
 					 * throw this away and implement it in a way
 					 * that makes sense */
 					{
+#if 0
 					STACK_OF(SSL_CIPHER) *sk;
 					SSL_CIPHER *c;
 					int ne2,ne3;
@@ -326,6 +328,10 @@ int ssl23_get_client_hello(SSL *s)
 							goto next_bit;
 							}
 						}
+#else
+					SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNSUPPORTED_OPTION);
+					goto err;
+#endif
 					}
 				}
 			}

@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Bugfix: Tolerate fragmentation and interleaving in the SSL 3/TLS
+     record layer.
+     [Bodo Moeller]
+
   *) Change the 'other' type in certificate aux info to a STACK_OF
      X509_ALGOR. Although not an AlgorithmIdentifier as such it has
      the required ASN1 format: arbitrary types determined by an OID.

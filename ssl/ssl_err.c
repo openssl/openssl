@@ -392,6 +392,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_UNKNOWN_STATE                     ,"unknown state"},
 {SSL_R_UNSUPPORTED_CIPHER                ,"unsupported cipher"},
 {SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM ,"unsupported compression algorithm"},
+{SSL_R_UNSUPPORTED_OPTION                ,"unsupported option"},
 {SSL_R_UNSUPPORTED_PROTOCOL              ,"unsupported protocol"},
 {SSL_R_UNSUPPORTED_SSL_VERSION           ,"unsupported ssl version"},
 {SSL_R_WRITE_BIO_NOT_SET                 ,"write bio not set"},

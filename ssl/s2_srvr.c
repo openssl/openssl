@@ -898,7 +898,7 @@ static int request_certificate(SSL *s)
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
 		i=i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
-		buf2=(unsigned char *)Malloc((unsigned int)i);
+		buf2=Malloc((unsigned int)i);
 		if (buf2 == NULL)
 			{
 			SSLerr(SSL_F_REQUEST_CERTIFICATE,ERR_R_MALLOC_FAILURE);

@@ -188,12 +188,12 @@ extern "C" {
 
 typedef struct ssl3_record_st
 	{
-/*r */	int type;		/* type of record */
-/*rw*/	unsigned int length;	/* How many bytes available */
-/*r */	unsigned int off;	/* read/write offset into 'buf' */
-/*rw*/	unsigned char *data;	/* pointer to the record data */
-/*rw*/	unsigned char *input;	/* where the decode bytes are */
-/*r */	unsigned char *comp;	/* only used with decompression - malloc()ed */
+/*r */	int type;               /* type of record */
+/*rw*/	unsigned int length;    /* How many bytes available */
+/*r */	unsigned int off;       /* read/write offset into 'buf' */
+/*rw*/	unsigned char *data;    /* pointer to the record data */
+/*rw*/	unsigned char *input;   /* where the decode bytes are */
+/*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -218,34 +218,7 @@ typedef struct ssl3_buffer_st
 #define SSL3_FLAGS_POP_BUFFER			0x0004
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 
-#if 0
-#define AD_CLOSE_NOTIFY			0
-#define AD_UNEXPECTED_MESSAGE		1
-#define AD_BAD_RECORD_MAC		2
-#define AD_DECRYPTION_FAILED		3
-#define AD_RECORD_OVERFLOW		4
-#define AD_DECOMPRESSION_FAILURE	5	/* fatal */
-#define AD_HANDSHAKE_FAILURE		6	/* fatal */
-#define AD_NO_CERTIFICATE		7	/* Not under TLS */
-#define AD_BAD_CERTIFICATE		8
-#define AD_UNSUPPORTED_CERTIFICATE	9
-#define AD_CERTIFICATE_REVOKED		10	
-#define AD_CERTIFICATE_EXPIRED		11
-#define AD_CERTIFICATE_UNKNOWN		12
-#define AD_ILLEGAL_PARAMETER		13	/* fatal */
-#define AD_UNKNOWN_CA			14	/* fatal */
-#define AD_ACCESS_DENIED		15	/* fatal */
-#define AD_DECODE_ERROR			16	/* fatal */
-#define AD_DECRYPT_ERROR		17
-#define AD_EXPORT_RESTRICION		18	/* fatal */
-#define AD_PROTOCOL_VERSION		19	/* fatal */
-#define AD_INSUFFICIENT_SECURITY	20	/* fatal */
-#define AD_INTERNAL_ERROR		21	/* fatal */
-#define AD_USER_CANCLED			22
-#define AD_NO_RENEGOTIATION		23
-#endif
-
-typedef struct ssl3_ctx_st
+typedef struct ssl3_state_st
 	{
 	long flags;
 	int delay_buf_pop_ret;
@@ -260,10 +233,16 @@ typedef struct ssl3_ctx_st
 
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
 	SSL3_BUFFER wbuf;	/* write IO goes into here */
+
 	SSL3_RECORD rrec;	/* each decoded record goes in here */
 	SSL3_RECORD wrec;	/* goes out from here */
-				/* Used by ssl3_read_n to point
-				 * to input data packet */
+
+	/* storage for Alert/Handshake protocol data received but not
+	 * yet processed by ssl3_read_bytes: */
+	unsigned char alert_fragment[2];
+	int alert_fragment_len;
+	unsigned char handshake_fragment[4];
+	int handshake_fragment_len;
 
 	/* partial write - check the numbers match */
 	unsigned int wnum;	/* number of bytes sent so far */
@@ -339,7 +318,7 @@ typedef struct ssl3_ctx_st
 		int cert_request;
 		} tmp;
 
-	} SSL3_CTX;
+	} SSL3_STATE;
 
 /* SSLv3 */
 /*client */

@@ -262,14 +262,14 @@ int ssl2_pending(SSL *s)
 
 int ssl2_new(SSL *s)
 	{
-	SSL2_CTX *s2;
+	SSL2_STATE *s2;
 
-	if ((s2=(SSL2_CTX *)Malloc(sizeof(SSL2_CTX))) == NULL) goto err;
-	memset(s2,0,sizeof(SSL2_CTX));
+	if ((s2=Malloc(sizeof *s2)) == NULL) goto err;
+	memset(s2,0,sizeof *s2);
 
-	if ((s2->rbuf=(unsigned char *)Malloc(
+	if ((s2->rbuf=Malloc(
 		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
-	if ((s2->wbuf=(unsigned char *)Malloc(
+	if ((s2->wbuf=Malloc(
 		SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER+2)) == NULL) goto err;
 	s->s2=s2;
 
@@ -287,7 +287,7 @@ err:
 
 void ssl2_free(SSL *s)
 	{
-	SSL2_CTX *s2;
+	SSL2_STATE *s2;
 
 	if(s == NULL)
 	    return;
@@ -295,14 +295,14 @@ void ssl2_free(SSL *s)
 	s2=s->s2;
 	if (s2->rbuf != NULL) Free(s2->rbuf);
 	if (s2->wbuf != NULL) Free(s2->wbuf);
-	memset(s2,0,sizeof(SSL2_CTX));
+	memset(s2,0,sizeof *s2);
 	Free(s2);
 	s->s2=NULL;
 	}
 
 void ssl2_clear(SSL *s)
 	{
-	SSL2_CTX *s2;
+	SSL2_STATE *s2;
 	unsigned char *rbuf,*wbuf;
 
 	s2=s->s2;
@@ -310,7 +310,7 @@ void ssl2_clear(SSL *s)
 	rbuf=s2->rbuf;
 	wbuf=s2->wbuf;
 
-	memset(s2,0,sizeof(SSL2_CTX));
+	memset(s2,0,sizeof *s2);
 
 	s2->rbuf=rbuf;
 	s2->wbuf=wbuf;

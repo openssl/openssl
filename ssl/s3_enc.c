@@ -300,7 +300,7 @@ int ssl3_setup_key_block(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p=(unsigned char *)Malloc(num)) == NULL)
+	if ((p=Malloc(num)) == NULL)
 		goto err;
 
 	s->s3->tmp.key_block_length=num;

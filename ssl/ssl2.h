@@ -151,7 +151,7 @@ extern "C" {
 #define  CERT		char
 #endif
 
-typedef struct ssl2_ctx_st
+typedef struct ssl2_state_st
 	{
 	int three_byte_header;
 	int clear_text;		/* clear text */
@@ -214,7 +214,7 @@ typedef struct ssl2_ctx_st
 		unsigned int clen;
 		unsigned int rlen;
 		} tmp;
-	} SSL2_CTX;
+	} SSL2_STATE;
 
 /* SSLv2 */
 /* client */

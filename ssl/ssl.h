@@ -581,8 +581,8 @@ struct ssl_st
 	unsigned char *packet;
 	unsigned int packet_length;
 
-	struct ssl2_ctx_st *s2;	/* SSLv2 variables */
-	struct ssl3_ctx_st *s3;	/* SSLv3 variables */
+	struct ssl2_state_st *s2; /* SSLv2 variables */
+	struct ssl3_state_st *s3; /* SSLv3 variables */
 
 	int read_ahead;		/* Read as many input bytes as possible
 	               	 	 * (for non-blocking reads) */
@@ -1510,6 +1510,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_UNKNOWN_STATE				 255
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257
+#define SSL_R_UNSUPPORTED_OPTION			 1091
 #define SSL_R_UNSUPPORTED_PROTOCOL			 258
 #define SSL_R_UNSUPPORTED_SSL_VERSION			 259
 #define SSL_R_WRITE_BIO_NOT_SET				 260

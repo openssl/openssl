@@ -655,19 +655,12 @@ int ssl3_pending(SSL *s)
 
 int ssl3_new(SSL *s)
 	{
-	SSL3_CTX *s3;
+	SSL3_STATE *s3;
 
-	if ((s3=(SSL3_CTX *)Malloc(sizeof(SSL3_CTX))) == NULL) goto err;
-	memset(s3,0,sizeof(SSL3_CTX));
+	if ((s3=Malloc(sizeof *s3)) == NULL) goto err;
+	memset(s3,0,sizeof *s3);
 
 	s->s3=s3;
-	/*
-	s->s3->tmp.ca_names=NULL;
-	s->s3->tmp.key_block=NULL;
-	s->s3->tmp.key_block_length=0;
-	s->s3->rbuf.buf=NULL;
-	s->s3->wbuf.buf=NULL;
-	*/
 
 	s->method->ssl_clear(s);
 	return(1);
@@ -693,7 +686,7 @@ void ssl3_free(SSL *s)
 #endif
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
-	memset(s->s3,0,sizeof(SSL3_CTX));
+	memset(s->s3,0,sizeof *s->s3);
 	Free(s->s3);
 	s->s3=NULL;
 	}
@@ -715,7 +708,7 @@ void ssl3_clear(SSL *s)
 	rp=s->s3->rbuf.buf;
 	wp=s->s3->wbuf.buf;
 
-	memset(s->s3,0,sizeof(SSL3_CTX));
+	memset(s->s3,0,sizeof *s->s3);
 	if (rp != NULL) s->s3->rbuf.buf=rp;
 	if (wp != NULL) s->s3->wbuf.buf=wp;
 
@@ -999,21 +992,6 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	return(2);
 	}
 
-int ssl3_part_read(SSL *s, int i)
-	{
-	s->rwstate=SSL_READING;
-
-	if (i < 0)
-		{
-		return(i);
-		}
-	else
-		{
-		s->init_num+=i;
-		return(0);
-		}
-	}
-
 SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 	     STACK_OF(SSL_CIPHER) *pref)
 	{
@@ -1214,8 +1192,12 @@ int ssl3_read(SSL *s, void *buf, int len)
 	ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len);
 	if ((ret == -1) && (s->s3->in_read_app_data == 0))
 		{
-		ERR_get_error(); /* clear the error */
-		s->s3->in_read_app_data=0;
+		/* ssl3_read_bytes decided to call s->handshake_func, which
+		 * called ssl3_read_bytes to read handshake data.
+		 * However, ssl3_read_bytes actually found application data
+		 * and thinks that application data makes sense here (signalled
+		 * by resetting 'in_read_app_data', strangely); so disable
+		 * handshake processing and try to read application data again. */
 		s->in_handshake++;
 		ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len);
 		s->in_handshake--;
