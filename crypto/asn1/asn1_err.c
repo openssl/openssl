@@ -243,7 +243,6 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_DATA_IS_WRONG                    ,"data is wrong"},
 {ASN1_R_DECODE_ERROR                     ,"decode error"},
 {ASN1_R_DECODING_ERROR                   ,"decoding error"},
-{ASN1_R_DEOCDE_ERROR                     ,"deocde error"},
 {ASN1_R_ENCODE_ERROR                     ,"encode error"},
 {ASN1_R_ERROR_PARSING_SET_ELEMENT        ,"error parsing set element"},
 {ASN1_R_EXPECTING_AN_ENUMERATED          ,"expecting an enumerated"},
