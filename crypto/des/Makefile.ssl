@@ -155,6 +155,7 @@ des_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 des_enc.o: ../../include/openssl/opensslconf.h des_enc.c des_locl.h ncbc_enc.c
 des_old.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 des_old.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+des_old.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 des_old.o: ../../include/openssl/symhacks.h des_old.c
 ecb3_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ecb3_enc.o: ../../include/openssl/opensslconf.h des_locl.h ecb3_enc.c
