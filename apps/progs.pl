@@ -34,7 +34,7 @@ foreach (@ARGV)
 		{ print "#ifndef NO_RSA\n${str}#endif\n";  }
 	elsif ( ($_ =~ /^dsa$/) || ($_ =~ /^gendsa$/) || ($_ =~ /^dsaparam$/))
 		{ print "#ifndef NO_DSA\n${str}#endif\n"; }
-	elsif ( ($_ =~ /^dh$/) || ($_ =~ /^gendh$/))
+	elsif ( ($_ =~ /^dh$/) || ($_ =~ /^gendh$/) || ($_ =~ /^dhparam$/))
 		{ print "#ifndef NO_DH\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^pkcs12$/))
 		{ print "#if !defined(NO_DES) && !defined(NO_SHA1)\n${str}#endif\n"; }
