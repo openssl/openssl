@@ -56,11 +56,16 @@ $!
 $! If you don't speficy a compiler, it will try to determine which
 $! "C" compiler to use.
 $!
-$!  P5, if defined, sets a TCP/IP library to use, through one of the following
-$!  keywords:
+$! P5, if defined, sets a TCP/IP library to use, through one of the following
+$! keywords:
 $!
 $!	UCX		for UCX or UCX emulation
+$!	TCPIP		for TCP/IP Services or TCP/IP Services emulation
+$!			(this is prefered over UCX)
 $!	SOCKETSHR	for SOCKETSHR+NETLIB
+$!	NONE		to avoid specifying which TCP/IP implementation to
+$!			use at build time (this works with DEC C).  This is
+$!			the default.
 $!
 $! P6, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
@@ -377,7 +382,7 @@ $ SOFTLINKS:
 $!
 $! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
 $!
-$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
+$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
 $!
 $ DELETE SYS$DISK:[.APPS]MD4.C;*,MD5.C;*,RMD160.C;*
 $!
@@ -1001,7 +1006,8 @@ $ ENDIF
 $!
 $! Time to check the contents of P5, and to make sure we get the correct library.
 $!
-$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX"
+$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX" -
+     .OR. P5.EQS."TCPIP" .OR. P5.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -1011,7 +1017,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
 $!
 $!    Tell the user
 $!
@@ -1045,13 +1051,47 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
 $!
 $!    Tell the user
 $!
 $     WRITE SYS$OUTPUT "Using UCX or an emulation thereof for TCP/IP"
 $!
 $!    Done with UCX
+$!
+$   ENDIF
+$!
+$!  Check to see if TCPIP was chosen
+$!
+$   IF P5.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP (post UCX).
+$!
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "Using TCPIP (post UCX) for TCP/IP"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P5.EQS."NONE"
+$   THEN
+$!
+$!    Do not use a TCPIP library.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "A specific TCPIP library will not be used."
+$!
+$!    Done with NONE.
 $!
 $   ENDIF
 $!
@@ -1076,6 +1116,8 @@ $     WRITE SYS$OUTPUT "The Option ",P5," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $     WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$     WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP TCP/IP (post UCX) library."
+$     WRITE SYS$OUTPUT "    NONE       :  To not link with a specific TCP/IP library."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
@@ -1083,9 +1125,19 @@ $!
 $     EXIT
 $   ELSE
 $!
+$! If TCPIP is not defined, then hardcode it to make
+$! it clear that no TCPIP is desired.
+$!
+$     IF P5 .EQS. ""
+$     THEN
+$       TCPIP_LIB = ""
+$       TCPIP_TYPE = "NONE"
+$     ELSE
+$!
 $!    Set the TCPIP_TYPE symbol
 $!
-$     TCPIP_TYPE = P5
+$       TCPIP_TYPE = P5
+$     ENDIF
 $   ENDIF
 $!
 $!  Done with TCP/IP libraries
