@@ -3,7 +3,7 @@
 int rand(n)
 {
     unsigned char x[2];
-    RAND_bytes(&x,2);
+    RAND_pseudo_bytes(&x,2);
     return (x[0] + 2*x[1]);
 }
 
@@ -14,6 +14,7 @@ void bug(char *m, BIGNUM *a, BIGNUM *b)
     printf("\nb=");
     BN_print_fp(stdout, b);
     printf("\n");
+    fflush(stdout);
 }
 
 main()
@@ -24,8 +25,8 @@ main()
     BN_CTX *ctx=BN_CTX_new();
 
     for(;;) {
-	BN_rand(a,rand(),0,0);
-	BN_rand(b,rand(),0,0);
+	BN_pseudo_rand(a,rand(),0,0);
+	BN_pseudo_rand(b,rand(),0,0);
 	if (BN_is_zero(b)) continue;
 
 	BN_RECP_CTX_set(recp,b,ctx);
