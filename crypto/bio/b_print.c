@@ -315,7 +315,7 @@ dopr(
                 flags |= DP_F_UNSIGNED;
                 switch (cflags) {
                 case DP_C_SHORT:
-                    value = (unsigned short int)va_arg(args, int);
+                    value = (unsigned short int)va_arg(args, unsigned int);
                     break;
                 case DP_C_LONG:
                     value = (LLONG) va_arg(args,
