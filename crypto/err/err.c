@@ -666,7 +666,7 @@ void ERR_remove_state(unsigned long pid)
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
-	ERR_STATE *ret=NULL,tmp,*tmpp;
+	ERR_STATE *ret=NULL,tmp,*tmpp=NULL;
 	int thread_state_exists;
 	int i;
 	unsigned long pid;
