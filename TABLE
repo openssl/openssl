@@ -2795,7 +2795,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_ldflag = 
+$shared_ldflag = -n32
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
@@ -2820,7 +2820,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_ldflag = 
+$shared_ldflag = -mabi=n32
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
@@ -2845,7 +2845,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_ldflag = 
+$shared_ldflag = -64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
@@ -2870,7 +2870,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_ldflag = 
+$shared_ldflag = -mabi=64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
@@ -4378,31 +4378,6 @@ $arflags      =
 *** vxworks-ppc750-debug
 $cc           = ccppc
 $cflags       = -ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I$(WIND_BASE)/target/h -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DDEBUG -g
-$unistd       = 
-$thread_cflag = 
-$sys_id       = VXWORKS
-$lflags       = -r
-$bn_ops       = 
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
-*** vxworks-ppc860
-$cc           = ccppc
-$cflags       = -g -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I$(WIND_BASE)/target/h
 $unistd       = 
 $thread_cflag = 
 $sys_id       = VXWORKS
