@@ -279,6 +279,9 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6g and 0.9.7  [XX xxx 2002]
 
+  *) Change the SSL kerb5 codes to match RFC 2712.
+     [Richard Levitte]
+
   *) Make -nameopt work fully for req and add -reqopt switch.
      [Michael Bell <michael.bell@rz.hu-berlin.de>, Steve Henson]
 
