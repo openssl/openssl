@@ -149,6 +149,8 @@ my %table=(
 "linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "debug-linux-elf","gcc:-DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall:-lefence:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"linux-mips",    "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+-Wuninitialized:::BN_LLONG:",
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-x86",	"gcc:-DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
