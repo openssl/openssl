@@ -102,6 +102,9 @@ static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
 		M_ASN1_IA5STRING_free(ia5);
 		goto err;
 	}
+#ifdef CHARSET_EBCDIC
+        ebcdic2ascii(ia5->data, ia5->data, ia5->length);
+#endif /*CHARSET_EBCDIC*/
 	return ia5;
 	err:
 	X509V3err(X509V3_F_S2I_ASN1_IA5STRING,ERR_R_MALLOC_FAILURE);

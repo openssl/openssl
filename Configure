@@ -281,7 +281,7 @@ my %table=(
 "SINIX-N","/usr/ucb/cc:-O2 -misaligned::(unknown):-lucb:RC4_INDEX RC4_CHAR:::",
 
 # SIEMENS BS2000/OSD: an EBCDIC-based mainframe
-"BS2000-OSD","c89:-XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC::(unknown):-lsocket -lnsl:THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
+"BS2000-OSD","c89:-O -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC::(unknown):-lsocket -lnsl:THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
 
 # Windows NT, Microsoft Visual C++ 4.0
 
