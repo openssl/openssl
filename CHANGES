@@ -4,6 +4,10 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) In dsa_do_verify (crypto/dsa/dsa_ossl.c), verify that r and s are
+     positive and less than q.
+     [Bodo Moeller]
+
   *) Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
      used: it isn't thread safe and the add_lock_callback should handle
      that itself.
