@@ -146,7 +146,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
 		if (BN_is_zero(A))
 			{
-			ret = BN_is_one(B);
+			ret = BN_is_one(B) ? ret : 0;
 			goto end;
 			}
 

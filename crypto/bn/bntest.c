@@ -902,7 +902,17 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 
 int test_kron(BIO *bp, BN_CTX *ctx)
 	{
+	/* We test BN_kronecker(a, b, ctx) just for  b  odd (Jacobi symbol).
+	 * In this case we know that if  b  is prime, then BN_kronecker(a, b, ctx)
+	 * is congruent to $a^{(b-1)/2}$, modulo $b$ (Legendre symbol).
+	 * So we generate a random prime  b  and compare these values
+	 * for a number of random  a's.  (That is, we run the Solovay-Strassen
+	 * primality test to confirm that  b  is prime, except that we
+	 * don't want to test whether  b  is prime but whether BN_kronecker
+	 * works.) */
+
 	/* XXX */
+
 	return(1);
 	}
 
