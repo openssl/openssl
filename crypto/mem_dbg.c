@@ -65,7 +65,12 @@
 #include <openssl/lhash.h>
 #include "cryptlib.h"
 
-/* State CRYPTO_MEM_CHECK_ON exists only temporarily when the library
+static int mh_mode=CRYPTO_MEM_CHECK_OFF;
+/* The state changes to CRYPTO_MEM_CHECK_ON | CRYPTO_MEM_CHECK_ENABLE
+ * when the application asks for it (usually after library initialisation
+ * for which no book-keeping is desired).
+ *
+ * State CRYPTO_MEM_CHECK_ON exists only temporarily when the library
  * thinks that certain allocations should not be checked (e.g. the data
  * structures used for memory checking).  It is not suitable as an initial
  * state: the library will unexpectedly enable memory checking when it
@@ -74,27 +79,34 @@
  *
  * State CRYPTO_MEM_CHECK_ENABLE without ..._ON makes no sense whatsoever.
  */
-static int mh_mode=CRYPTO_MEM_CHECK_OFF;
-static unsigned long disabling_thread = 0;
 
+static unsigned long order = 0; /* number of memory requests */
+static LHASH *mh=NULL; /* hash-table of memory requests (address as key) */
 
-static unsigned long order=0;
-
-static LHASH *amih=NULL;
 
 typedef struct app_mem_info_st
+/* For application-defined information (static C-string `info')
+ * to be displayed in memory leak list.
+ * Each thread has its own stack.  For applications, there is
+ *   CRYPTO_add_info("...")     to push an entry,
+ *   CRYPTO_remove_info()       to pop an entry,
+ *   CRYPTO_remove_all_info()   to pop all entries.
+ */
 	{	
 	unsigned long thread;
 	const char *file;
 	int line;
 	const char *info;
-	struct app_mem_info_st *next;
+	struct app_mem_info_st *next; /* tail of thread's stack */
 	int references;
 	} APP_INFO;
 
-static LHASH *mh=NULL;
+static LHASH *amih=NULL; /* hash-table with those app_mem_info_st's
+                          * that are at the top of their thread's stack
+                          * (with `thread' as key) */
 
 typedef struct mem_st
+/* memory-block description */
 	{
 	char *addr;
 	int num;
@@ -106,30 +118,17 @@ typedef struct mem_st
 	APP_INFO *app_info;
 	} MEM;
 
-
-#ifdef CRYPTO_MDEBUG_ALL
-# ifndef CRYPTO_MDEBUG_TIME
-#  define CRYPTO_MDEBUG_TIME
-# endif
-# ifndef CRYPTO_MDEBUG_THREAD
-#  define CRYPTO_MDEBUG_THREAD
-# endif
+static long options =             /* extra information to be recorded */
+#if defined(CRYPTO_MDEBUG_TIME) || defined(CRYPTO_MDEBUG_ALL)
+	V_CRYPTO_MDEBUG_TIME |
 #endif
-
-/* Get defaults that will depend on some macros defined elsewhere */
-#ifdef CRYPTO_MDEBUG_TIME
-#define DEF_V_CRYPTO_MDEBUG_TIME V_CRYPTO_MDEBUG_TIME
-#else
-#define DEF_V_CRYPTO_MDEBUG_TIME 0
+#if defined(CRYPTO_MDEBUG_THREAD) || defined(CRYPTO_MDEBUG_ALL)
+	V_CRYPTO_MDEBUG_THREAD |
 #endif
-#ifdef CRYPTO_MDEBUG_THREAD
-#define DEF_V_CRYPTO_MDEBUG_THREAD V_CRYPTO_MDEBUG_THREAD
-#else
-#define DEF_V_CRYPTO_MDEBUG_THREAD 0
-#endif
+	0;
 
-static int options = DEF_V_CRYPTO_MDEBUG_TIME | DEF_V_CRYPTO_MDEBUG_THREAD;
 
+static unsigned long disabling_thread = 0;
 
 int CRYPTO_mem_ctrl(int mode)
 	{
@@ -157,8 +156,8 @@ int CRYPTO_mem_ctrl(int mode)
 				{
 				/* Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed while
 				 * we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock if
-				 * somebody else holds CRYPTO_LOCK_MALLOC2 (and cannot release it
-				 * because we block entry to this function).
+				 * somebody else holds CRYPTO_LOCK_MALLOC2 (and cannot release
+				 * it because we block entry to this function).
 				 * Give them a chance, first, and then claim the locks in
 				 * appropriate order (long-time lock first).
 				 */
@@ -193,7 +192,7 @@ int CRYPTO_mem_ctrl(int mode)
 	return(ret);
 	}
 
-int CRYPTO_mem_check_on(void)
+int CRYPTO_is_mem_check_on(void)
 	{
 	int ret = 0;
 
@@ -210,12 +209,12 @@ int CRYPTO_mem_check_on(void)
 	}	
 
 
-void CRYPTO_dbg_set_options(int bits)
+void CRYPTO_dbg_set_options(long bits)
 	{
 	options = bits;
 	}
 
-int CRYPTO_dbg_get_options()
+long CRYPTO_dbg_get_options()
 	{
 	return options;
 	}
@@ -237,7 +236,7 @@ static unsigned long mem_hash(MEM *a)
 
 static int app_info_cmp(APP_INFO *a, APP_INFO *b)
 	{
-	return(a->thread - b->thread);
+	return(a->thread != b->thread);
 	}
 
 static unsigned long app_info_hash(APP_INFO *a)
@@ -287,7 +286,7 @@ static APP_INFO *remove_info()
 	return(ret);
 	}
 
-int CRYPTO_add_info(const char *file, int line, const char *info)
+int CRYPTO_add_info_(const char *file, int line, const char *info)
 	{
 	APP_INFO *ami, *amim;
 	int ret=0;
@@ -341,12 +340,14 @@ int CRYPTO_remove_info(void)
 	{
 	int ret=0;
 
-	if (is_MemCheck_on())
+	if (is_MemCheck_on()) /* _must_ be true, or something went severly wrong */
 		{
 		MemCheck_off();
+		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 
 		ret=(remove_info() != NULL);
 
+		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 		MemCheck_on();
 		}
 	return(ret);
@@ -356,13 +357,15 @@ int CRYPTO_remove_all_info(void)
 	{
 	int ret=0;
 
-	if (is_MemCheck_on())
+	if (is_MemCheck_on()) /* _must_ be true */
 		{
 		MemCheck_off();
+		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 
 		while(remove_info() != NULL)
 			ret++;
 
+		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 		MemCheck_on();
 		}
 	return(ret);
@@ -393,6 +396,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				MemCheck_on();
 				return;
 				}
+			CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 			if (mh == NULL)
 				{
 				if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
@@ -449,6 +453,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				Free(mm);
 				}
 		err:
+			CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 			MemCheck_on();
 			}
 		break;
@@ -520,6 +525,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 		if (is_MemCheck_on())
 			{
 			MemCheck_off();
+			CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 
 			m.addr=addr1;
 			mp=(MEM *)lh_delete(mh,(char *)&m);
@@ -536,6 +542,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 				lh_insert(mh,(char *)mp);
 				}
 
+			CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 			MemCheck_on();
 			}
 		break;

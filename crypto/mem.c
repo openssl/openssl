@@ -62,62 +62,94 @@
 #include "cryptlib.h"
 
 
-static char *(*malloc_locked_func)()=(char *(*)())malloc;
-static void (*free_locked_func)()=(void (*)())free;
-static char *(*malloc_func)()=	(char *(*)())malloc;
-static char *(*realloc_func)()=	(char *(*)())realloc;
-static void (*free_func)()=	(void (*)())free;
+static int allow_customize = 1;      /* we provide flexible functions for */
+static int allow_customize_debug = 1;/* exchanging memory-related functions at
+                                      * run-time, but this must be done
+                                      * before any blocks are actually
+                                      * allocated; or we'll run into huge
+                                      * problems when malloc/free pairs
+                                      * don't match etc. */
 
+/* may be changed as long as `allow_customize' is set */
+static void *(*malloc_locked_func)(size_t)  = malloc;
+static void (*free_locked_func)(void *)     = free;
+static void *(*malloc_func)(size_t)         = malloc;
+static void *(*realloc_func)(void *, size_t)= realloc;
+static void (*free_func)(void *)            = free;
+
+/* may be changed as long as `allow_customize_debug' is set */
+/* XXX use correct function pointer types */
 #ifdef CRYPTO_MDEBUG
-static void (*malloc_debug_func)()= (void (*)())CRYPTO_dbg_malloc;
-static void (*realloc_debug_func)()= (void (*)())CRYPTO_dbg_realloc;
-static void (*free_debug_func)()= (void (*)())CRYPTO_dbg_free;
-static void (*set_debug_options_func)()= (void (*)())CRYPTO_dbg_set_options;
-static int (*get_debug_options_func)()= (int (*)())CRYPTO_dbg_get_options;
+  /* use default functions from mem_dbg.c */
+  static void (*malloc_debug_func)()= (void (*)())CRYPTO_dbg_malloc;
+  static void (*realloc_debug_func)()= (void (*)())CRYPTO_dbg_realloc;
+  static void (*free_debug_func)()= (void (*)())CRYPTO_dbg_free;
+  static void (*set_debug_options_func)()= (void (*)())CRYPTO_dbg_set_options;
+  static long (*get_debug_options_func)()= (long (*)())CRYPTO_dbg_get_options;
 #else
-static void (*malloc_debug_func)()= (void (*)())NULL;
-static void (*realloc_debug_func)()= (void (*)())NULL;
-static void (*free_debug_func)()= (void (*)())NULL;
-static void (*set_debug_options_func)()= (void (*)())NULL;
-static int (*get_debug_options_func)()= (int (*)())NULL;
+  /* applications can use CRYPTO_malloc_debug_init() to select above case
+   * at run-time */
+  static void (*malloc_debug_func)()= NULL;
+  static void (*realloc_debug_func)()= NULL;
+  static void (*free_debug_func)()= NULL;
+  static void (*set_debug_options_func)()= NULL;
+  static int (*get_debug_options_func)()= NULL;
 #endif
 
-void CRYPTO_set_mem_functions(char *(*m)(), char *(*r)(), void (*f)())
+
+int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
+	void (*f)(void *))
 	{
-	if ((m == NULL) || (r == NULL) || (f == NULL)) return;
+	if (!allow_customize)
+		return 0;
+	if ((m == NULL) || (r == NULL) || (f == NULL))
+		return 0;
 	malloc_func=m;
 	realloc_func=r;
 	free_func=f;
 	malloc_locked_func=m;
 	free_locked_func=f;
+	return 1;
 	}
 
-void CRYPTO_set_mem_debug_functions(void (*m)(), void (*r)(), void (*f)(),void (*so)(),int (*go)())
+int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 	{
-	if ((m == NULL) || (r == NULL) || (f == NULL) || (so == NULL) || (go == NULL))
-		return;
+	if (!allow_customize)
+		return 0;
+	if ((m == NULL) || (f == NULL))
+		return 0;
+	malloc_locked_func=m;
+	free_locked_func=f;
+	return 1;
+	}
+
+int CRYPTO_set_mem_debug_functions(void (*m)(), void (*r)(), void (*f)(),void (*so)(),long (*go)())
+	{
+	if (!allow_customize_debug)
+		return 0;
 	malloc_debug_func=m;
 	realloc_debug_func=r;
 	free_debug_func=f;
 	set_debug_options_func=so;
 	get_debug_options_func=go;
+	return 1;
 	}
 
-void CRYPTO_set_locked_mem_functions(char *(*m)(), void (*f)())
-	{
-	if ((m == NULL) || (f == NULL)) return;
-	malloc_locked_func=m;
-	free_locked_func=f;
-	}
-
-void CRYPTO_get_mem_functions(char *(**m)(), char *(**r)(), void (**f)())
+void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
+	void (**f)(void *))
 	{
 	if (m != NULL) *m=malloc_func;
 	if (r != NULL) *r=realloc_func;
 	if (f != NULL) *f=free_func;
 	}
 
-void CRYPTO_get_mem_debug_functions(void (**m)(), void (**r)(), void (**f)(),void (**so)(),int (**go)())
+void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
+	{
+	if (m != NULL) *m=malloc_locked_func;
+	if (f != NULL) *f=free_locked_func;
+	}
+
+void CRYPTO_get_mem_debug_functions(void (**m)(), void (**r)(), void (**f)(),void (**so)(),long (**go)())
 	{
 	if (m != NULL) *m=malloc_debug_func;
 	if (r != NULL) *r=realloc_debug_func;
@@ -126,18 +158,17 @@ void CRYPTO_get_mem_debug_functions(void (**m)(), void (**r)(), void (**f)(),voi
 	if (go != NULL) *go=get_debug_options_func;
 	}
 
-void CRYPTO_get_locked_mem_functions(char *(**m)(), void (**f)())
-	{
-	if (m != NULL) *m=malloc_locked_func;
-	if (f != NULL) *f=free_locked_func;
-	}
 
 void *CRYPTO_malloc_locked(int num, char *file, int line)
 	{
 	char *ret = NULL;
 
+	allow_customize = 0;
 	if (malloc_debug_func != NULL)
+		{
+		allow_customize_debug = 0;
 		malloc_debug_func(NULL, num, file, line, 0);
+		}
 	ret = malloc_locked_func(num);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
@@ -164,8 +195,12 @@ void *CRYPTO_malloc(int num, char *file, int line)
 	{
 	char *ret = NULL;
 
+	allow_customize = 0;
 	if (malloc_debug_func != NULL)
+		{
+		allow_customize_debug = 0;
 		malloc_debug_func(NULL, num, file, line, 0);
+		}
 	ret = malloc_func(num);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
@@ -204,7 +239,6 @@ void CRYPTO_free(void *str)
 		free_debug_func(NULL, 1);
 	}
 
-
 void *CRYPTO_remalloc(void *a, int num, char *file, int line)
 	{
 	if (a != NULL) Free(a);
@@ -212,14 +246,16 @@ void *CRYPTO_remalloc(void *a, int num, char *file, int line)
 	return(a);
 	}
 
-void CRYPTO_set_mem_debug_options(int bits)
+
+void CRYPTO_set_mem_debug_options(long bits)
 	{
 	if (set_debug_options_func != NULL)
 		set_debug_options_func(bits);
 	}
 
-int CRYPTO_get_mem_debug_options()
+long CRYPTO_get_mem_debug_options()
 	{
 	if (get_debug_options_func != NULL)
 		return get_debug_options_func();
+	return 0;
 	}
