@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix for pkcs12 program. It was hashing an invalid certificate pointer
+     when producing the local key id.
+     [Richard Levitte <levitte@stacken.kth.se>]
+
   *) New option -dhparam in s_server. This allows a DH parameter file to be
      stated explicitly. If it is not stated then it tries the first server
      certificate file. The previous behaviour hard coded the filename

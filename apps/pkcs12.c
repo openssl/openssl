@@ -281,13 +281,13 @@ int MAIN(int argc, char **argv)
        	}
     }
 
-if (export_cert) {
+    if (export_cert) {
 	EVP_PKEY *key;
 	STACK *bags, *safes;
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
-	X509 *cert = NULL, *ucert = NULL;
+	X509 *ucert = NULL;
 	STACK_OF(X509) *certs;
 	char *catmp;
 	int i;
@@ -313,7 +313,7 @@ if (export_cert) {
 	for(i = 0; i < sk_X509_num(certs); i++) {
 		ucert = sk_X509_value(certs, i);
 		if(X509_check_private_key(ucert, key)) {
-			X509_digest(cert, EVP_sha1(), keyid, &keyidlen);
+			X509_digest(ucert, EVP_sha1(), keyid, &keyidlen);
 			break;
 		}
 	}
@@ -354,6 +354,7 @@ if (export_cert) {
 
 	/* We now have loads of certificates: include them all */
 	for(i = 0; i < sk_X509_num(certs); i++) {
+		X509 *cert = NULL;
 		cert = sk_X509_value(certs, i);
 		bag = M_PKCS12_x5092certbag(cert);
 		/* If it matches private key set id */
