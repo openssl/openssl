@@ -11,9 +11,6 @@ BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
 
  void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
 
- void BF_encrypt(BF_LONG *data,const BF_KEY *key);
- void BF_decrypt(BF_LONG *data,const BF_KEY *key);
- 
  void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
          BF_KEY *key, int enc);
  void BF_cbc_encrypt(const unsigned char *in, unsigned char *out,
@@ -25,6 +22,9 @@ BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
  	 long length, BF_KEY *schedule, unsigned char *ivec, int *num);
  const char *BF_options(void);
 
+ void BF_encrypt(BF_LONG *data,const BF_KEY *key);
+ void BF_decrypt(BF_LONG *data,const BF_KEY *key);
+ 
 =head1 DESCRIPTION
 
 This library implements the Blowfish cipher, which is invented and described
@@ -42,11 +42,6 @@ phase.
 
 BF_set_key() sets up the B<BF_KEY> B<key> using the B<len> bytes long key
 at B<data>.
-
-BF_encrypt() and BF_decrypt() are the lowest level functions for Blowfish
-encryption.  They encrypt/decrypt the first 64 bits of the vector pointed by
-B<data>, using the key B<key>.  These functions should not be used unless you
-implement 'modes' of Blowfish.
 
 BF_ecb_encrypt() is the basic Blowfish encryption and decryption function.
 It encrypts or decrypts the first 64 bits of B<in> using the key B<key>,
@@ -86,6 +81,14 @@ be initially zero.
 BF_ofb64_encrypt() is the OFB mode for Blowfish with 64 bit feedback.
 It uses the same parameters as BF_cfb64_encrypt(), which must be initialised
 the same way.
+
+BF_encrypt() and BF_decrypt() are the lowest level functions for Blowfish
+encryption.  They encrypt/decrypt the first 64 bits of the vector pointed by
+B<data>, using the key B<key>.  These functions should not be used unless you
+implement 'modes' of Blowfish.  The alternative is to use BF_ecb_encrypt().
+If you still want to use these functions, you should be aware that they take
+each 32-bit chunk in host-byte order, which is little-endian on little-endian
+platforms and big-endian on big-endian ones.
 
 =head1 RETURN VALUES
 
