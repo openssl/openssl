@@ -62,78 +62,10 @@
  */
 
 #include <openssl/bio.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509.h>
-
-/* Make sure we work well with older variants of OpenSSL */
-#ifndef OPENSSL_malloc
-#define OPENSSL_malloc Malloc
-#endif
-#ifndef OPENSSL_realloc
-#define OPENSSL_realloc Realloc
-#endif
-#ifndef OPENSSL_free
-#define OPENSSL_free Free
-#endif
-
-OCSP_SIGNATURE *OCSP_SIGNATURE_new(void)
-	{
-	ASN1_CTX c;
-	OCSP_SIGNATURE *ret=NULL;
-
-	M_ASN1_New_Malloc(ret, OCSP_SIGNATURE);
-	M_ASN1_New(ret->signatureAlgorithm, X509_ALGOR_new);
-	M_ASN1_New(ret->signature, ASN1_BIT_STRING_new);
-	ret->certs = NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_OCSP_SIGNATURE_NEW);
-	}
-	
-void OCSP_SIGNATURE_free(OCSP_SIGNATURE *a)
-	{
-	if (a == NULL) return;
-	X509_ALGOR_free(a->signatureAlgorithm);
-	ASN1_BIT_STRING_free(a->signature);
-	if (a->certs) sk_X509_pop_free(a->certs, X509_free);
-	OPENSSL_free((char *)a);
-	}
-
-int i2d_OCSP_SIGNATURE(OCSP_SIGNATURE *a,
-		       unsigned char **pp)
-	{
-	int v=0;
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->signatureAlgorithm, i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->signature, i2d_ASN1_BIT_STRING);
-	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509, a->certs, i2d_X509,
-			     0,	V_ASN1_SEQUENCE, v);
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->signatureAlgorithm, i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->signature, i2d_ASN1_BIT_STRING);
-	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509, a->certs, i2d_X509, 0,
-					V_ASN1_SEQUENCE, v);
-	M_ASN1_I2D_finish();
-	}
-
-OCSP_SIGNATURE *d2i_OCSP_SIGNATURE(OCSP_SIGNATURE **a,
-				   unsigned char **pp,
-				   long length)
-	{
-	M_ASN1_D2I_vars(a,OCSP_SIGNATURE *,OCSP_SIGNATURE_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->signatureAlgorithm, d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->signature, d2i_ASN1_BIT_STRING);
-	/* there is no M_ASN1_D2I_get_EXP_seq* code, so
-	   we're using the set version */
-	M_ASN1_D2I_get_EXP_set_opt_type(X509, ret->certs, d2i_X509,
-				   X509_free, 0, V_ASN1_SEQUENCE);
-	M_ASN1_D2I_Finish(a,OCSP_SIGNATURE_free,ASN1_F_D2I_OCSP_SIGNATURE);
-	}
 
 int i2a_OCSP_SIGNATURE(BIO *bp,
 		       OCSP_SIGNATURE* a)

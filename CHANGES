@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Reimplement the OCSP ASN1 module using the new code.
+     [Steve Henson]
+
   *) Update the X509V3 code to permit the use of an ASN1_ITEM structure
      for its ASN1 operations. The old style function pointers still exist
      for now but they will eventually go away.

@@ -177,11 +177,11 @@ typedef struct ocsp_response_st
  *      byName   [1] Name,
  *      byKey    [2] KeyHash }
  */
-#define V_OCSP_RESPID_NAME 1
-#define V_OCSP_RESPID_KEY  2
+#define V_OCSP_RESPID_NAME 0
+#define V_OCSP_RESPID_KEY  1
 typedef struct ocsp_responder_id_st
 	{
-	int tag;
+	int type;
 	union   {
 		X509_NAME* byName;
         	ASN1_OCTET_STRING *byKey;
@@ -211,10 +211,12 @@ typedef struct ocsp_revoked_info_st
 #define V_OCSP_CERTSTATUS_UNKNOWN 2
 typedef struct ocsp_cert_status_st
 	{
-	int tag;
-	/* good [0] IMPLICIT NULL */
-	OCSP_REVOKEDINFO *revoked;
-	/* unknown [2] OCSP_UNKNOWNINFO *unknown, which is NULL */
+	int type;
+	union	{
+		ASN1_NULL *good;
+		OCSP_REVOKEDINFO *revoked;
+		ASN1_NULL *unknown;
+		} value;
 	} OCSP_CERTSTATUS;
 
 /*   SingleResponse ::= SEQUENCE {

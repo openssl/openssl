@@ -62,100 +62,10 @@
  */
 
 #include <openssl/bio.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509v3.h>
-
-/* Make sure we work well with older variants of OpenSSL */
-#ifndef OPENSSL_malloc
-#define OPENSSL_malloc Malloc
-#endif
-#ifndef OPENSSL_realloc
-#define OPENSSL_realloc Realloc
-#endif
-#ifndef OPENSSL_free
-#define OPENSSL_free Free
-#endif
-
-IMPLEMENT_STACK_OF(OCSP_ONEREQ)
-IMPLEMENT_ASN1_SET_OF(OCSP_ONEREQ)
-
-OCSP_REQINFO *OCSP_REQINFO_new(void)
-	{
-	OCSP_REQINFO *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret, OCSP_REQINFO);
-	ret->version = NULL;
-	ret->requestorName = NULL;
-	ret->requestList = NULL;
-	ret->requestExtensions = NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_OCSP_REQINFO_NEW);
-	}
-
-void OCSP_REQINFO_free(OCSP_REQINFO *a)
-	{
-	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
-	GENERAL_NAME_free(a->requestorName);
-	sk_OCSP_ONEREQ_pop_free(a->requestList, OCSP_ONEREQ_free);
-	sk_X509_EXTENSION_pop_free(a->requestExtensions, X509_EXTENSION_free);
-	OPENSSL_free((char *)a);
-	}
-
-int i2d_OCSP_REQINFO(OCSP_REQINFO *a,
-		     unsigned char **pp)
-	{
-	int v1=0,v2=0,v3=0;
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len_EXP_opt(a->version,i2d_ASN1_INTEGER,0,v1);
-	M_ASN1_I2D_len_EXP_opt(a->requestorName,i2d_GENERAL_NAME,1,v2);
-	M_ASN1_I2D_len_SEQUENCE_type(OCSP_ONEREQ,
-		     a->requestList, i2d_OCSP_ONEREQ);
-	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509_EXTENSION,
-	     a->requestExtensions, i2d_X509_EXTENSION,2,V_ASN1_SEQUENCE,v3);
-
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put_EXP_opt(a->version,i2d_ASN1_INTEGER,0,v1);
-	M_ASN1_I2D_put_EXP_opt(a->requestorName,i2d_GENERAL_NAME,1,v2);
-	M_ASN1_I2D_put_SEQUENCE_type(OCSP_ONEREQ,a->requestList,i2d_OCSP_ONEREQ);
-	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->requestExtensions,i2d_X509_EXTENSION,2,V_ASN1_SEQUENCE,v3);
-
-	M_ASN1_I2D_finish();
-	}
-
-OCSP_REQINFO *d2i_OCSP_REQINFO(OCSP_REQINFO **a,
-			       unsigned char **pp,
-			       long length)
-	{
-	M_ASN1_D2I_vars(a,OCSP_REQINFO *,OCSP_REQINFO_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	/* we have the optional version field */
-	if (M_ASN1_next == (V_ASN1_CONTEXT_SPECIFIC | V_ASN1_CONSTRUCTED | 0))
-		{ M_ASN1_D2I_get_EXP_opt(ret->version,d2i_ASN1_INTEGER,0);}
-	else
-		{
-		if (ret->version != NULL)
-			{
-			ASN1_INTEGER_free(ret->version);
-			ret->version=NULL;
-			}
-		}
-	M_ASN1_D2I_get_EXP_opt(ret->requestorName,d2i_GENERAL_NAME,1);
-	M_ASN1_D2I_get_seq_type(OCSP_ONEREQ, ret->requestList,
-				d2i_OCSP_ONEREQ,OCSP_ONEREQ_free);
-	/* there is no M_ASN1_D2I_get_EXP_seq* code, so
-	   we're using the set version */
-	M_ASN1_D2I_get_EXP_set_opt_type(X509_EXTENSION,
-		ret->requestExtensions,d2i_X509_EXTENSION,
-		X509_EXTENSION_free,2,V_ASN1_SEQUENCE);
-	M_ASN1_D2I_Finish(a,OCSP_REQINFO_free,ASN1_F_D2I_OCSP_REQINFO);
-	}
 
 int i2a_OCSP_REQINFO(BIO *bp,
 		     OCSP_REQINFO* a)
@@ -183,114 +93,12 @@ int i2a_OCSP_REQINFO(BIO *bp,
 	return j;
 	}
 
-OCSP_REQUEST *OCSP_REQUEST_new(void)
-	{
-	ASN1_CTX c;
-	OCSP_REQUEST *ret=NULL;
-
-	M_ASN1_New_Malloc(ret, OCSP_REQUEST);
-	M_ASN1_New(ret->tbsRequest, OCSP_REQINFO_new);
-	ret->optionalSignature = NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_OCSP_REQUEST_NEW);
-	}
-	
-void OCSP_REQUEST_free(OCSP_REQUEST *a)
-	{
-	if (a == NULL) return;
-	OCSP_REQINFO_free(a->tbsRequest);
-	OCSP_SIGNATURE_free(a->optionalSignature);
-	OPENSSL_free((char *)a);
-	}
-
-int i2d_OCSP_REQUEST(OCSP_REQUEST *a,
-		     unsigned char **pp)
-	{
-	int v=0;
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->tbsRequest, i2d_OCSP_REQINFO);
-	M_ASN1_I2D_len_EXP_opt(a->optionalSignature, i2d_OCSP_SIGNATURE, 0, v);
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->tbsRequest, i2d_OCSP_REQINFO); 
-	M_ASN1_I2D_put_EXP_opt(a->optionalSignature, i2d_OCSP_SIGNATURE, 0, v);
-	M_ASN1_I2D_finish();
-	}
-
-OCSP_REQUEST *d2i_OCSP_REQUEST(OCSP_REQUEST **a,
-			       unsigned char **pp,
-			       long length)
-	{
-	M_ASN1_D2I_vars(a,OCSP_REQUEST *,OCSP_REQUEST_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->tbsRequest, d2i_OCSP_REQINFO);
-	M_ASN1_D2I_get_EXP_opt(ret->optionalSignature, d2i_OCSP_SIGNATURE, 0);
-	M_ASN1_D2I_Finish(a,OCSP_REQUEST_free,ASN1_F_D2I_OCSP_REQUEST);
-	}
-
 int i2a_OCSP_REQUEST(BIO *bp,
 		     OCSP_REQUEST* a)
         {
 	i2a_OCSP_REQINFO(bp, a->tbsRequest);
 	i2a_OCSP_SIGNATURE(bp, a->optionalSignature);
 	return a->optionalSignature ? 2 : 1;
-	}
-
-OCSP_ONEREQ *OCSP_ONEREQ_new(void)
-	{
-	ASN1_CTX c;
-	OCSP_ONEREQ *ret=NULL;
-
-	M_ASN1_New_Malloc(ret, OCSP_ONEREQ);
-	M_ASN1_New(ret->reqCert, OCSP_CERTID_new);
-	ret->singleRequestExtensions = NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_OCSP_ONEREQ_NEW);
-	}
-	
-void OCSP_ONEREQ_free(OCSP_ONEREQ *a)
-	{
-	if (a == NULL) return;
-	OCSP_CERTID_free(a->reqCert);
-	sk_X509_EXTENSION_pop_free(a->singleRequestExtensions, X509_EXTENSION_free);
-	OPENSSL_free((char *)a);
-	}
-
-int i2d_OCSP_ONEREQ(OCSP_ONEREQ *a,
-		    unsigned char **pp)
-	{
-	int v=0;
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->reqCert, i2d_OCSP_CERTID);
-	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509_EXTENSION,
-	     a->singleRequestExtensions, i2d_X509_EXTENSION, 0,
-	     V_ASN1_SEQUENCE, v);
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->reqCert, i2d_OCSP_CERTID);
-	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,
-	     a->singleRequestExtensions, i2d_X509_EXTENSION, 0,
-	     V_ASN1_SEQUENCE, v);
-	M_ASN1_I2D_finish();
-	}
-
-OCSP_ONEREQ *d2i_OCSP_ONEREQ(OCSP_ONEREQ **a,
-			     unsigned char **pp,
-			     long length)
-	{
-	M_ASN1_D2I_vars(a,OCSP_ONEREQ *,OCSP_ONEREQ_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->reqCert, d2i_OCSP_CERTID);
-	/* there is no M_ASN1_D2I_get_EXP_seq* code, so
-	   we're using the set version */
-	M_ASN1_D2I_get_EXP_set_opt_type(X509_EXTENSION,
-		ret->singleRequestExtensions, d2i_X509_EXTENSION,
-		X509_EXTENSION_free, 0, V_ASN1_SEQUENCE);
-	M_ASN1_D2I_Finish(a,OCSP_ONEREQ_free,ASN1_F_D2I_OCSP_ONEREQ);
 	}
 
 int i2a_OCSP_ONEREQ(BIO *bp,

@@ -64,7 +64,6 @@
 #include <stdio.h>
 #include <cryptlib.h>
 #include <openssl/objects.h>
-#include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -142,14 +141,14 @@ OCSP_CERTSTATUS *OCSP_cert_status_new(int status, int reason, char *tim)
 	OCSP_CERTSTATUS *cs = NULL;
 
 	if (!(cs = OCSP_CERTSTATUS_new())) goto err;
-	if ((cs->tag = status) == V_OCSP_CERTSTATUS_REVOKED)
+	if ((cs->type = status) == V_OCSP_CERTSTATUS_REVOKED)
 	        {
 		if (!time)
 		        {
 		        OCSPerr(OCSP_F_CERT_STATUS_NEW,OCSP_R_REVOKED_NO_TIME);
 			goto err;
 		        }
-		if (!(cs->revoked = ri = OCSP_REVOKEDINFO_new())) goto err;
+		if (!(cs->value.revoked = ri = OCSP_REVOKEDINFO_new())) goto err;
 		if (!ASN1_GENERALIZEDTIME_set_string(ri->revocationTime,tim))
 			goto err;	
 		if (reason != OCSP_REVOKED_STATUS_NOSTATUS)
@@ -239,7 +238,7 @@ err:
 	return 0;
 	}
 
-OCSP_BASICRESP *OCSP_basic_response_new(int tag,
+OCSP_BASICRESP *OCSP_basic_response_new(int type,
 					X509* cert,
 					STACK_OF(X509_EXTENSION) *extensions)
         {
@@ -251,7 +250,7 @@ OCSP_BASICRESP *OCSP_basic_response_new(int tag,
 	
 	if (!(rsp = OCSP_BASICRESP_new())) goto err;
 	rid = rsp->tbsResponseData->responderId;
-	switch (rid->tag = tag)
+	switch (rid->type = type)
 	        {
 		case V_OCSP_RESPID_NAME:
 		        /* cert is user cert */
@@ -601,11 +600,11 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o)
 		        goto err;
 		cst = single->certStatus;
 		if (BIO_printf(bp,"\n    Cert Status: %s (0x%x)",
-			       ocspCertStatus2string(cst->tag), cst->tag) <= 0)
+			       ocspCertStatus2string(cst->type), cst->type) <= 0)
 		        goto err;
-		if (cst->tag == V_OCSP_CERTSTATUS_REVOKED)
+		if (cst->type == V_OCSP_CERTSTATUS_REVOKED)
 		        {
-		        rev = cst->revoked;
+		        rev = cst->value.revoked;
 			if (BIO_printf(bp, "\n    Revocation Time: ") <= 0) 
 			        goto err;
 			if (!ASN1_GENERALIZEDTIME_print(bp, 

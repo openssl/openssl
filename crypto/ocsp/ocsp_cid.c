@@ -62,84 +62,9 @@
  */
 
 #include <openssl/bio.h>
-#include <openssl/asn1_mac.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509.h>
-
-/* Make sure we work well with older variants of OpenSSL */
-#ifndef OPENSSL_malloc
-#define OPENSSL_malloc Malloc
-#endif
-#ifndef OPENSSL_realloc
-#define OPENSSL_realloc Realloc
-#endif
-#ifndef OPENSSL_free
-#define OPENSSL_free Free
-#endif
-
-OCSP_CERTID *OCSP_CERTID_new(void)
-	{
-	ASN1_CTX c;
-	OCSP_CERTID *ret=NULL;
-
-	M_ASN1_New_Malloc(ret, OCSP_CERTID);
-	M_ASN1_New(ret->hashAlgorithm, X509_ALGOR_new);
-	M_ASN1_New(ret->issuerNameHash, ASN1_OCTET_STRING_new);
-	M_ASN1_New(ret->issuerKeyHash, ASN1_OCTET_STRING_new);
-	M_ASN1_New(ret->serialNumber, ASN1_INTEGER_new);
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_OCSP_CERTID_NEW);
-	}
-	
-void OCSP_CERTID_free(OCSP_CERTID *a)
-	{
-	if (a == NULL) return;
-	X509_ALGOR_free(a->hashAlgorithm);
-	ASN1_OCTET_STRING_free(a->issuerNameHash);
-	ASN1_OCTET_STRING_free(a->issuerKeyHash);
-	ASN1_INTEGER_free(a->serialNumber);
-	OPENSSL_free((char *)a);
-	}
-
-int i2d_OCSP_CERTID(OCSP_CERTID *a,
-		    unsigned char **pp)
-	{
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->hashAlgorithm, i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->issuerNameHash, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(a->issuerKeyHash, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len(a->serialNumber, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->hashAlgorithm, i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->issuerNameHash, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(a->issuerKeyHash, i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put(a->serialNumber, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_finish();
-	}
-
-OCSP_CERTID *d2i_OCSP_CERTID(OCSP_CERTID **a,
-			     unsigned char **pp,
-			     long length)
-	{
-	M_ASN1_D2I_vars(a,OCSP_CERTID *,OCSP_CERTID_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->hashAlgorithm, d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->issuerNameHash, d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get(ret->issuerKeyHash, d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get(ret->serialNumber, d2i_ASN1_INTEGER);
-
-	/* protect against malformed CERTID's */
-	if (ASN1_STRING_length(ret->issuerNameHash) == 0 ||
-		ASN1_STRING_length(ret->issuerKeyHash) == 0 ||
-		ASN1_STRING_length(ret->serialNumber) == 0)
-		goto err;
-
-	M_ASN1_D2I_Finish(a,OCSP_CERTID_free,ASN1_F_D2I_OCSP_CERTID);
-	}
 
 int i2a_OCSP_CERTID(BIO *bp,
 		    OCSP_CERTID* a)
