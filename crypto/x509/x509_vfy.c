@@ -502,10 +502,10 @@ end:
 	return(ok);
 	}
 
-int X509_cmp_current_time(ASN1_UTCTIME *ctm)
+int X509_cmp_current_time(ASN1_TIME *ctm)
 	{
 	char *str;
-	ASN1_UTCTIME atm;
+	ASN1_TIME atm;
 	time_t offset;
 	char buff1[24],buff2[24],*p;
 	int i,j;
@@ -513,14 +513,32 @@ int X509_cmp_current_time(ASN1_UTCTIME *ctm)
 	p=buff1;
 	i=ctm->length;
 	str=(char *)ctm->data;
-	if ((i < 11) || (i > 17)) return(0);
-	memcpy(p,str,10);
-	p+=10;
-	str+=10;
+	if(ctm->type == V_ASN1_UTCTIME) {
+		if ((i < 11) || (i > 17)) return(0);
+		memcpy(p,str,10);
+		p+=10;
+		str+=10;
+	} else {
+		if(i < 13) return 0;
+		memcpy(p,str,12);
+		p+=12;
+		str+=12;
+	}
 
 	if ((*str == 'Z') || (*str == '-') || (*str == '+'))
 		{ *(p++)='0'; *(p++)='0'; }
-	else	{ *(p++)= *(str++); *(p++)= *(str++); }
+	else
+		{ 
+		*(p++)= *(str++);
+		*(p++)= *(str++);
+		/* Skip any fractional seconds... */
+		if(*str == '.')
+			{
+			str++;
+			while((*str >= '0') && (*str <= '9')) str++;
+			}
+
+	}
 	*(p++)='Z';
 	*(p++)='\0';
 
@@ -535,19 +553,22 @@ int X509_cmp_current_time(ASN1_UTCTIME *ctm)
 		if (*str == '-')
 			offset= -offset;
 		}
-	atm.type=V_ASN1_UTCTIME;
+	atm.type=ctm->type;
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
 	X509_gmtime_adj(&atm,-offset*60);
 
-	i=(buff1[0]-'0')*10+(buff1[1]-'0');
-	if (i < 50) i+=100; /* cf. RFC 2459 */
-	j=(buff2[0]-'0')*10+(buff2[1]-'0');
-	if (j < 50) j+=100;
+	if(ctm->type == V_ASN1_UTCTIME)
+		{
+		i=(buff1[0]-'0')*10+(buff1[1]-'0');
+		if (i < 50) i+=100; /* cf. RFC 2459 */
+		j=(buff2[0]-'0')*10+(buff2[1]-'0');
+		if (j < 50) j+=100;
 
-	if (i < j) return (-1);
-	if (i > j) return (1);
+		if (i < j) return (-1);
+		if (i > j) return (1);
+		}
 	i=strcmp(buff1,buff2);
 	if (i == 0) /* wait a second then return younger :-) */
 		return(-1);
@@ -555,13 +576,14 @@ int X509_cmp_current_time(ASN1_UTCTIME *ctm)
 		return(i);
 	}
 
-ASN1_UTCTIME *X509_gmtime_adj(ASN1_UTCTIME *s, long adj)
+ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
 	{
 	time_t t;
 
 	time(&t);
 	t+=adj;
-	return(ASN1_UTCTIME_set(s,t));
+	if(s->type == V_ASN1_UTCTIME) return(ASN1_UTCTIME_set(s,t));
+	return ASN1_GENERALIZEDTIME_set(s, t);
 	}
 
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)

@@ -145,7 +145,9 @@ void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
+void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags);
 #endif
+int set_name_ex(unsigned long *flags, const char *arg);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);
 X509 *load_cert(BIO *err, char *file, int format);

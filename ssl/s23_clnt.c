@@ -366,7 +366,9 @@ static int ssl23_get_server_hello(SSL *s)
 			}
 
 		s->state=SSL2_ST_GET_SERVER_HELLO_A;
-		s->s2->ssl2_rollback=1;
+		if (!(s->client_version == SSL2_VERSION))
+			/* use special padding (SSL 3.0 draft/RFC 2246, App. E.2) */
+			s->s2->ssl2_rollback=1;
 
 		/* setup the 5 bytes we have read so we get them from
 		 * the sslv2 buffer */

@@ -128,6 +128,7 @@ static char *x509_usage[]={
 " -extfile        - configuration file with X509V3 extensions to add\n",
 " -extensions     - section from config file with X509V3 extensions to add\n",
 " -clrext         - delete extensions before signing and input certificate\n",
+" -nameopt arg    - various certificate name options\n",
 NULL
 };
 
@@ -173,6 +174,7 @@ int MAIN(int argc, char **argv)
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
+	unsigned long nmflag = 0;
 
 	reqfile=0;
 
@@ -315,6 +317,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			alias= *(++argv);
 			trustout = 1;
+			}
+		else if (strcmp(*argv,"-nameopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if(!set_name_ex(&nmflag, *(++argv))) goto bad;
 			}
 		else if (strcmp(*argv,"-setalias") == 0)
 			{
@@ -524,9 +531,8 @@ bad:
 			}
 		else
 			BIO_printf(bio_err,"Signature ok\n");
-		
-		X509_NAME_oneline(req->req_info->subject,buf,256);
-		BIO_printf(bio_err,"subject=%s\n",buf);
+
+		print_name(bio_err, "subject=", X509_REQ_get_subject_name(req), nmflag);
 
 		if ((x=X509_new()) == NULL) goto end;
 		ci=x->cert_info;
@@ -600,15 +606,13 @@ bad:
 			{
 			if (issuer == i)
 				{
-				X509_NAME_oneline(X509_get_issuer_name(x),
-					buf,256);
-				BIO_printf(STDout,"issuer= %s\n",buf);
+				print_name(STDout, "issuer= ",
+					X509_get_issuer_name(x), nmflag);
 				}
 			else if (subject == i) 
 				{
-				X509_NAME_oneline(X509_get_subject_name(x),
-					buf,256);
-				BIO_printf(STDout,"subject=%s\n",buf);
+				print_name(STDout, "issuer= ",
+					X509_get_subject_name(x), nmflag);
 				}
 			else if (serial == i)
 				{
@@ -1082,7 +1086,6 @@ end:
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 	{
-	char buf[256];
 	int err;
 	X509 *err_cert;
 
@@ -1104,8 +1107,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 	else
 		{
 		err_cert=X509_STORE_CTX_get_current_cert(ctx);
-		X509_NAME_oneline(X509_get_subject_name(err_cert),buf,256);
-		BIO_printf(bio_err,"%s\n",buf);
+		print_name(bio_err, NULL, X509_get_subject_name(err_cert),0);
 		BIO_printf(bio_err,"error with certificate - error %d at depth %d\n%s\n",
 			err,X509_STORE_CTX_get_error_depth(ctx),
 			X509_verify_cert_error_string(err));

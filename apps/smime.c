@@ -277,8 +277,11 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-signer file   signer certificate file\n");
 		BIO_printf (bio_err, "-recip  file   recipient certificate file for decryption\n");
 		BIO_printf (bio_err, "-in file       input file\n");
+		BIO_printf (bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
 		BIO_printf (bio_err, "-inkey file    input private key (if not signer or recipient)\n");
 		BIO_printf (bio_err, "-out file      output file\n");
+		BIO_printf (bio_err, "-outform arg   output format SMIME (default), PEM or DER\n");
+		BIO_printf (bio_err, "-content file  supply or override content for detached signature\n");
 		BIO_printf (bio_err, "-to addr       to address\n");
 		BIO_printf (bio_err, "-from ad       from address\n");
 		BIO_printf (bio_err, "-subject s     subject\n");

@@ -77,6 +77,7 @@ int ASN1_INTEGER_cmp(ASN1_INTEGER *x, ASN1_INTEGER *y)
 int i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
 	int len, ret;
+	if(!a) return 0;
 	len = i2c_ASN1_INTEGER(a, NULL);	
 	ret=ASN1_object_size(0,len,V_ASN1_INTEGER);
 	if(pp) {

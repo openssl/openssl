@@ -66,13 +66,20 @@
 
 #define TRUNCATE
 #define DUMP_WIDTH	16
+#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH-((i-(i>6?6:i)+3)/4))
 
 int BIO_dump(BIO *bio, const char *s, int len)
+	{
+	return BIO_dump_indent(bio, s, len, 0);
+	}
+
+int BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 {
   int ret=0;
-  char buf[160+1],tmp[20];
+  char buf[288+1],tmp[20],str[128+1];
   int i,j,rows,trunc;
   unsigned char ch;
+  int dump_width;
 
   trunc=0;
 
@@ -81,27 +88,37 @@ int BIO_dump(BIO *bio, const char *s, int len)
     trunc++;
 #endif
 
-  rows=(len/DUMP_WIDTH);
-  if ((rows*DUMP_WIDTH)<len)
+  if (indent < 0)
+    indent = 0;
+  if (indent) {
+    if (indent > 128) indent=128;
+    memset(str,' ',indent);
+  }
+  str[indent]='\0';
+
+  dump_width=DUMP_WIDTH_LESS_INDENT(indent);
+  rows=(len/dump_width);
+  if ((rows*dump_width)<len)
     rows++;
   for(i=0;i<rows;i++) {
     buf[0]='\0';	/* start with empty string */
-    sprintf(tmp,"%04x - ",i*DUMP_WIDTH);
-    strcpy(buf,tmp);
-    for(j=0;j<DUMP_WIDTH;j++) {
-      if (((i*DUMP_WIDTH)+j)>=len) {
+    strcpy(buf,str);
+    sprintf(tmp,"%04x - ",i*dump_width);
+    strcat(buf,tmp);
+    for(j=0;j<dump_width;j++) {
+      if (((i*dump_width)+j)>=len) {
 	strcat(buf,"   ");
       } else {
-        ch=((unsigned char)*(s+i*DUMP_WIDTH+j)) & 0xff;
+        ch=((unsigned char)*(s+i*dump_width+j)) & 0xff;
 	sprintf(tmp,"%02x%c",ch,j==7?'-':' ');
         strcat(buf,tmp);
       }
     }
     strcat(buf,"  ");
-    for(j=0;j<DUMP_WIDTH;j++) {
-      if (((i*DUMP_WIDTH)+j)>=len)
+    for(j=0;j<dump_width;j++) {
+      if (((i*dump_width)+j)>=len)
 	break;
-      ch=((unsigned char)*(s+i*DUMP_WIDTH+j)) & 0xff;
+      ch=((unsigned char)*(s+i*dump_width+j)) & 0xff;
 #ifndef CHARSET_EBCDIC
       sprintf(tmp,"%c",((ch>=' ')&&(ch<='~'))?ch:'.');
 #else
@@ -119,7 +136,7 @@ int BIO_dump(BIO *bio, const char *s, int len)
   }
 #ifdef TRUNCATE
   if (trunc > 0) {
-    sprintf(buf,"%04x - <SPACES/NULS>\n",len+trunc);
+    sprintf(buf,"%s%04x - <SPACES/NULS>\n",str,len+trunc);
     ret+=BIO_write(bio,(char *)buf,strlen(buf));
   }
 #endif

@@ -88,7 +88,7 @@ int MAIN(int argc, char **argv)
 	unsigned int length=0;
 	long num,tmplen;
 	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
-	int informat,indent=0, noout = 0;
+	int informat,indent=0, noout = 0, dump = 0;
 	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
 	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
@@ -149,6 +149,16 @@ int MAIN(int argc, char **argv)
 			length= atoi(*(++argv));
 			if (length == 0) goto bad;
 			}
+		else if (strcmp(*argv,"-dump") == 0)
+			{
+			dump= -1;
+			}
+		else if (strcmp(*argv,"-dlimit") == 0)
+			{
+			if (--argc < 1) goto bad;
+			dump= atoi(*(++argv));
+			if (dump <= 0) goto bad;
+			}
 		else if (strcmp(*argv,"-strparse") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -176,6 +186,8 @@ bad:
 		BIO_printf(bio_err," -offset arg   offset into file\n");
 		BIO_printf(bio_err," -length arg   length of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
+		BIO_printf(bio_err," -dump         dump unknown data in hex form\n");
+		BIO_printf(bio_err," -dlimit arg   dump the first arg bytes of unknown data in hex form\n");
 		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
 		BIO_printf(bio_err," -strparse offset\n");
 		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
@@ -293,7 +305,8 @@ bad:
 		}
 	}
 	if (!noout &&
-	    !ASN1_parse(out,(unsigned char *)&(str[offset]),length,indent))
+	    !ASN1_parse_dump(out,(unsigned char *)&(str[offset]),length,
+		    indent,dump))
 		{
 		ERR_print_errors(bio_err);
 		goto end;

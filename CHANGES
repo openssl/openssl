@@ -4,6 +4,67 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
+     RSA_padding_check_SSLv23(), special padding was never detected
+     and thus the SSL 3.0/TLS 1.0 countermeasure against protocol
+     version rollback attacks was not effective.
+
+     In s23_clnt.c, don't use special rollback-attack detection padding
+     (RSA_SSLV23_PADDING) if SSL 2.0 is the only protocol enabled in the
+     client; similarly, in s23_srvr.c, don't do the rollback check if
+     SSL 2.0 is the only protocol enabled in the server.
+     [Bodo Moeller]
+
+  *) Make it possible to get hexdumps of unprintable data with 'openssl
+     asn1parse'.  By implication, the functions ASN1_parse_dump() and
+     BIO_dump_indent() are added.
+     [Richard Levitte]
+
+  *) New functions ASN1_STRING_print_ex() and X509_NAME_print_ex()
+     these print out strings and name structures based on various
+     flags including RFC2253 support and proper handling of
+     multibyte characters. Added options to the 'x509' utility 
+     to allow the various flags to be set.
+     [Steve Henson]
+
+  *) Various fixes to use ASN1_TIME instead of ASN1_UTCTIME.
+     Also change the functions X509_cmp_current_time() and
+     X509_gmtime_adj() work with an ASN1_TIME structure,
+     this will enable certificates using GeneralizedTime in validity
+     dates to be checked.
+     [Steve Henson]
+
+  *) Make the NEG_PUBKEY_BUG code (which tolerates invalid
+     negative public key encodings) on by default,
+     NO_NEG_PUBKEY_BUG can be set to disable it.
+     [Steve Henson]
+
+  *) New function c2i_ASN1_OBJECT() which acts on ASN1_OBJECT
+     content octets. An i2c_ASN1_OBJECT is unnecessary because
+     the encoding can be trivially obtained from the structure.
+     [Steve Henson]
+
+  *) crypto/err.c locking bugfix: Use write locks (CRYPTO_w_[un]lock),
+     not read locks (CRYPTO_r_[un]lock).
+     [Bodo Moeller]
+
+  *) A first attempt at creating official support for shared
+     libraries through configuration.  I've kept it so the
+     default is static libraries only, and the OpenSSL programs
+     are always statically linked for now, but there are
+     preparations for dynamic linking in place.
+     This has been tested on Linux and True64.
+     [Richard Levitte]
+
+  *) Randomness polling function for Win9x, as described in:
+     Peter Gutmann, Software Generation of Practically Strong
+     Random Numbers.
+     [Ulf Möller]
+
+  *) Fix so PRNG is seeded in req if using an already existing
+     DSA key.
+     [Steve Henson]
+
   *) New options to smime application. -inform and -outform
      allow alternative formats for the S/MIME message including
      PEM and DER. The -content option allows the content to be

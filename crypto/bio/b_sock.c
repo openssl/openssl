@@ -105,17 +105,22 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 	struct hostent *he;
 
 	i=get_ip(str,ip);
-	if (i > 0) return(1);
 	if (i < 0)
 		{
 		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_INVALID_IP_ADDRESS);
 		goto err;
 		}
 
-	/* do a gethostbyname */
+	/* At this point, we have something that is most probably correct
+	   in some way, so let's init the socket. */
 	if (!BIO_sock_init())
 		return(0); /* don't generate another error code here */
 
+	/* If the string actually contained an IP address, we need not do
+	   anything more */
+	if (i > 0) return(1);
+
+	/* do a gethostbyname */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
 	locked = 1;
 	he=BIO_gethostbyname(str);

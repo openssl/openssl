@@ -8,6 +8,7 @@ passwd - compute password hashes
 
 B<openssl passwd>
 [B<-crypt>]
+[B<-1>]
 [B<-apr1>]
 [B<-salt> I<string>]
 [B<-in> I<file>]
@@ -22,8 +23,8 @@ The B<passwd> command computes the hash of a password typed at
 run-time or the hash of each password in a list.  The password list is
 taken from the named file for option B<-in file>, from stdin for
 option B<-stdin>, and from the command line otherwise.
-The Unix standard algorithm B<crypt> and the MD5-based B<apr1> algorithm
-are available.
+The Unix standard algorithm B<crypt> and the MD5-based BSD password
+algorithm B<1> and its Apache variant B<apr1> are available.
 
 =head1 OPTIONS
 
@@ -33,9 +34,13 @@ are available.
 
 Use the B<crypt> algorithm (default).
 
+=item B<-1>
+
+Use the MD5 based BSD password algorithm B<1>.
+
 =item B<-apr1>
 
-Use the B<apr1> algorithm.
+Use the B<apr1> algorithm (Apache variant of the BSD algorithm).
 
 =item B<-salt> I<string>
 
@@ -63,6 +68,8 @@ to each password hash.
 =head1 EXAMPLES
 
 B<openssl passwd -crypt -salt xx password> prints B<xxj31ZMTZzkVA>.
+
+B<openssl passwd -1 -salt xxxxxxxx password> prints B<$1$xxxxxxxx$8XJIcl6ZXqBMCK0qFevqT1>.
 
 B<openssl passwd -apr1 -salt xxxxxxxx password> prints B<$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0>.
 

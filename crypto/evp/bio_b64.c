@@ -370,10 +370,11 @@ static int b64_write(BIO *b, const char *in, int inl)
 		n-=i;
 		}
 	/* at this point all pending data has been written */
+	ctx->buf_off=0;
+	ctx->buf_len=0;
 
 	if ((in == NULL) || (inl <= 0)) return(0);
 
-	ctx->buf_off=0;
 	while (inl > 0)
 		{
 		n=(inl > B64_BLOCK_SIZE)?B64_BLOCK_SIZE:inl;
@@ -383,14 +384,20 @@ static int b64_write(BIO *b, const char *in, int inl)
 			if (ctx->tmp_len > 0)
 				{
 				n=3-ctx->tmp_len;
+				/* There's a teoretical possibility for this */
+				if (n > inl) 
+					n=inl;
 				memcpy(&(ctx->tmp[ctx->tmp_len]),in,n);
 				ctx->tmp_len+=n;
-				n=ctx->tmp_len;
-				if (n < 3)
+				if (ctx->tmp_len < 3)
 					break;
 				ctx->buf_len=EVP_EncodeBlock(
 					(unsigned char *)ctx->buf,
-					(unsigned char *)ctx->tmp,n);
+					(unsigned char *)ctx->tmp,
+					ctx->tmp_len);
+				/* Since we're now done using the temporary
+				   buffer, the length should be 0'd */
+				ctx->tmp_len=0;
 				}
 			else
 				{

@@ -94,6 +94,7 @@ int RAND_status(void);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path,int bytes);
 void ERR_load_RAND_strings(void);
+int RAND_poll(void);
 
 #ifdef  __cplusplus
 }

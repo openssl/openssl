@@ -104,36 +104,36 @@ int X509_set_subject_name(X509 *x, X509_NAME *name)
 	return(X509_NAME_set(&x->cert_info->subject,name));
 	}
 
-int X509_set_notBefore(X509 *x, ASN1_UTCTIME *tm)
+int X509_set_notBefore(X509 *x, ASN1_TIME *tm)
 	{
-	ASN1_UTCTIME *in;
+	ASN1_TIME *in;
 
 	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
 	in=x->cert_info->validity->notBefore;
 	if (in != tm)
 		{
-		in=M_ASN1_UTCTIME_dup(tm);
+		in=M_ASN1_TIME_dup(tm);
 		if (in != NULL)
 			{
-			M_ASN1_UTCTIME_free(x->cert_info->validity->notBefore);
+			M_ASN1_TIME_free(x->cert_info->validity->notBefore);
 			x->cert_info->validity->notBefore=in;
 			}
 		}
 	return(in != NULL);
 	}
 
-int X509_set_notAfter(X509 *x, ASN1_UTCTIME *tm)
+int X509_set_notAfter(X509 *x, ASN1_TIME *tm)
 	{
-	ASN1_UTCTIME *in;
+	ASN1_TIME *in;
 
 	if ((x == NULL) || (x->cert_info->validity == NULL)) return(0);
 	in=x->cert_info->validity->notAfter;
 	if (in != tm)
 		{
-		in=M_ASN1_UTCTIME_dup(tm);
+		in=M_ASN1_TIME_dup(tm);
 		if (in != NULL)
 			{
-			M_ASN1_UTCTIME_free(x->cert_info->validity->notAfter);
+			M_ASN1_TIME_free(x->cert_info->validity->notAfter);
 			x->cert_info->validity->notAfter=in;
 			}
 		}

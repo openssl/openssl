@@ -495,9 +495,12 @@ int ssl23_get_client_hello(SSL *s)
 
 		s->state=SSL2_ST_GET_CLIENT_HELLO_A;
 		if ((s->options & SSL_OP_MSIE_SSLV2_RSA_PADDING) ||
-			use_sslv2_strong)
+			use_sslv2_strong ||
+			(s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3))
 			s->s2->ssl2_rollback=0;
 		else
+			/* reject SSL 2.0 session if client supports SSL 3.0 or TLS 1.0
+			 * (SSL 3.0 draft/RFC 2246, App. E.2) */
 			s->s2->ssl2_rollback=1;
 
 		/* setup the n bytes we have read so we get them from

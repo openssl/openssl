@@ -560,7 +560,7 @@ const char *ERR_lib_error_string(unsigned long e)
 
 	l=ERR_GET_LIB(e);
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -568,7 +568,7 @@ const char *ERR_lib_error_string(unsigned long e)
 		p=(ERR_STRING_DATA *)lh_retrieve(error_hash,&d);
 		}
 
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -581,7 +581,7 @@ const char *ERR_func_error_string(unsigned long e)
 	l=ERR_GET_LIB(e);
 	f=ERR_GET_FUNC(e);
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -589,7 +589,7 @@ const char *ERR_func_error_string(unsigned long e)
 		p=(ERR_STRING_DATA *)lh_retrieve(error_hash,&d);
 		}
 
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -602,7 +602,7 @@ const char *ERR_reason_error_string(unsigned long e)
 	l=ERR_GET_LIB(e);
 	r=ERR_GET_REASON(e);
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -615,7 +615,7 @@ const char *ERR_reason_error_string(unsigned long e)
 			}
 		}
 
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -646,7 +646,7 @@ static int pid_cmp(ERR_STATE *a, ERR_STATE *b)
 
 void ERR_remove_state(unsigned long pid)
 	{
-	ERR_STATE *p,tmp;
+	ERR_STATE *p = NULL,tmp;
 
 	if (thread_hash == NULL)
 		return;
@@ -654,12 +654,15 @@ void ERR_remove_state(unsigned long pid)
 		pid=(unsigned long)CRYPTO_thread_id();
 	tmp.pid=pid;
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
-	if (lh_num_items(thread_hash) == 0)
+	if (thread_hash)
 		{
-		/* make sure we don't leak memory */
-		lh_free(thread_hash);
-		thread_hash = NULL;
+		p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
+		if (lh_num_items(thread_hash) == 0)
+			{
+			/* make sure we don't leak memory */
+			lh_free(thread_hash);
+			thread_hash = NULL;
+			}
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
@@ -676,13 +679,13 @@ ERR_STATE *ERR_get_state(void)
 
 	pid=(unsigned long)CRYPTO_thread_id();
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 	if (thread_hash != NULL)
 		{
 		tmp.pid=pid;
 		ret=(ERR_STATE *)lh_retrieve(thread_hash,&tmp);
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)

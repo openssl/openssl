@@ -69,7 +69,7 @@ list box), otherwise the name "My Certificate" is used.
 
 calls the B<ca> program to sign a certificate request. It expects the request
 to be in the file "newreq.pem". The new certificate is written to the file
-"newcert.pem" except in the case of the B<-xcert> option when it is written
+"newcert.pem" except in the case of the B<-xsign> option when it is written
 to standard output.
 
 =item B<-signcert>
@@ -122,7 +122,7 @@ Create the CA directories and files:
 
 enter cacert.pem when prompted for the CA file name.
 
-Create a DSA certificate request and privat key (a different set of parameters
+Create a DSA certificate request and private key (a different set of parameters
 can optionally be created first):
 
  openssl req -out newreq.pem -newkey dsa:dsap.pem 

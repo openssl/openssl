@@ -180,6 +180,35 @@
  desired, GNU bc can be built with CygWin32 without change.
 
 
+ Installation
+ ------------
+
+ There's currently no real installation procedure for Win32.  There are,
+ however, some suggestions:
+
+    - do nothing.  The include files are found in the inc32/ subdirectory,
+      all binaries are found in out32dll/ or out32/ depending if you built
+      dynamic or static libraries.
+
+    - do as is written in INSTALL.Win32 that comes with modssl:
+
+	$ md c:\openssl 
+	$ md c:\openssl\bin
+	$ md c:\openssl\lib
+	$ md c:\openssl\include
+	$ md c:\openssl\include\openssl
+	$ copy /b inc32\*               c:\openssl\include\openssl
+	$ copy /b out32dll\ssleay32.lib c:\openssl\lib
+	$ copy /b out32dll\libeay32.lib c:\openssl\lib
+	$ copy /b out32dll\ssleay32.dll c:\openssl\bin
+	$ copy /b out32dll\libeay32.dll c:\openssl\bin
+	$ copy /b out32dll\openssl.exe  c:\openssl\bin
+
+      Of course, you can choose another device than c:.  C: is used here
+      because that's usually the first (and often only) harddisk device.
+      Note: in the modssl INSTALL.Win32, p: is used rather than c:.
+
+
  Troubleshooting
  ---------------
 

@@ -79,8 +79,11 @@ while (($lib, $hdr) = each %hinc)
 	next if($hdr eq "NONE");
 	print STDERR "Scanning header file $hdr\n" if $debug; 
 	open(IN, "<$hdr") || die "Can't open Header file $hdr\n";
-	my $line = "", $def= "";
+	my $line = "", $def= "", $linenr = 0;
 	while(<IN>) {
+	    $linenr++;
+	    print STDERR "line: $linenr\r" if $debug;
+
 	    last if(/BEGIN\s+ERROR\s+CODES/);
 	    if ($line ne '') {
 		$_ = $line . $_;
@@ -110,7 +113,12 @@ while (($lib, $hdr) = each %hinc)
 	    }
 	}
 
+	print STDERR "                                  \r" if $debug;
+        $defnr = 0;
 	foreach (split /;/, $def) {
+	    $defnr++;
+	    print STDERR "def: $defnr\r" if $debug;
+
 	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
 	    next if(/typedef\W/);
@@ -135,6 +143,8 @@ while (($lib, $hdr) = each %hinc)
 		print STDERR "Header $hdr: cannot parse: $_;\n";
 	    }
 	}
+
+	print STDERR "                                  \r" if $debug;
 
 	next if $reindex;
 
