@@ -341,7 +341,7 @@ printf("which = %04X\nmac key=",which);
 #ifdef KSSL_DEBUG
 	{
         int i;
-	printf("EVP_CipherInit(dd,c,key=,iv=,which)\n");
+	printf("EVP_CipherInit_ex(dd,c,key=,iv=,which)\n");
 	printf("\tkey= "); for (i=0; i<c->key_len; i++) printf("%02x", key[i]);
 	printf("\n");
 	printf("\t iv= "); for (i=0; i<c->iv_len; i++) printf("%02x", iv[i]);
@@ -349,7 +349,7 @@ printf("which = %04X\nmac key=",which);
 	}
 #endif	/* KSSL_DEBUG */
 
-	EVP_CipherInit(dd,c,key,iv,(which & SSL3_CC_WRITE));
+	EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
 #ifdef TLS_DEBUG
 printf("which = %04X\nkey=",which);
 { int z; for (z=0; z<EVP_CIPHER_key_length(c); z++) printf("%02X%c",key[z],((z+1)%16)?' ':'\n'); }

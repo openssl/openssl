@@ -183,7 +183,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	}
 
 	/* Fixup cipher based on AlgorithmIdentifier */
-	EVP_CipherInit(ctx, cipher, NULL, NULL, en_de);
+	EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de);
 	if(EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
 					EVP_R_CIPHER_PARAMETER_ERROR);
@@ -229,7 +229,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	saltlen = kdf->salt->value.octet_string->length;
 	iter = ASN1_INTEGER_get(kdf->iter);
 	PKCS5_PBKDF2_HMAC_SHA1(pass, passlen, salt, saltlen, iter, keylen, key);
-	EVP_CipherInit(ctx, NULL, key, NULL, en_de);
+	EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 	memset(key, 0, keylen);
 	PBKDF2PARAM_free(kdf);
 	return 1;

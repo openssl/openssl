@@ -339,7 +339,7 @@ static long ber_ctrl(BIO *b, int cmd, long num, char *ptr)
 	case BIO_CTRL_RESET:
 		ctx->ok=1;
 		ctx->finished=0;
-		EVP_CipherInit(&(ctx->cipher),NULL,NULL,NULL,
+		EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
 			ctx->cipher.berrypt);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
@@ -376,7 +376,7 @@ again:
 			{
 			ctx->finished=1;
 			ctx->buf_off=0;
-			ret=EVP_CipherFinal(&(ctx->cipher),
+			ret=EVP_CipherFinal_ex(&(ctx->cipher),
 				(unsigned char *)ctx->buf,
 				&(ctx->buf_len));
 			ctx->ok=(int)ret;
@@ -458,7 +458,7 @@ void BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *k, unsigned char *i,
 
 	b->init=1;
 	ctx=(BIO_ENC_CTX *)b->ptr;
-	EVP_CipherInit(&(ctx->cipher),c,k,i,e);
+	EVP_CipherInit_ex(&(ctx->cipher),c,NULL,k,i,e);
 	
 	if (b->callback != NULL)
 		b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,1L);

@@ -73,11 +73,14 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 	/* ctx->cipher=NULL; */
 	}
 
+
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
+	EVP_CIPHER_CTX_init(ctx);
 	return EVP_CipherInit_ex(ctx,cipher,NULL,key,iv,enc);
 	}
+
 int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
@@ -187,6 +190,13 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	else	return EVP_DecryptUpdate(ctx,out,outl,in,inl);
 	}
 
+int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+	{
+	if (ctx->encrypt)
+		return EVP_EncryptFinal_ex(ctx,out,outl);
+	else	return EVP_DecryptFinal_ex(ctx,out,outl);
+	}
+
 int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	if (ctx->encrypt)
@@ -197,7 +207,7 @@ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv)
 	{
-	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
+	return EVP_CipherInit(ctx, cipher, key, iv, 1);
 	}
 
 int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
@@ -275,6 +285,14 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	}
 
 int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+	{
+	int ret;
+	ret = EVP_EncryptFinal_ex(ctx, out, outl);
+	EVP_CIPHER_CTX_cleanup(ctx);
+	return ret;
+	}
+
+int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int i,n,b,bl,ret;
 
@@ -358,6 +376,14 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	}
 
 int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+	{
+	int ret;
+	ret = EVP_DecryptFinal_ex(ctx, out, outl);
+	EVP_CIPHER_CTX_cleanup(ctx);
+	return ret;
+	}
+
+int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int i,b;
 	int n;

@@ -1216,9 +1216,9 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_EVP],save_count,
 						  lengths[j]);
 			if(decrypt)
-				EVP_DecryptInit(&ctx,evp,key16,iv);
+				EVP_DecryptInit_ex(&ctx,evp,NULL,key16,iv);
 			else
-				EVP_EncryptInit(&ctx,evp,key16,iv);
+				EVP_EncryptInit_ex(&ctx,evp,NULL,key16,iv);
 				
 			Time_F(START,usertime);
 			if(decrypt)
@@ -1228,9 +1228,9 @@ int MAIN(int argc, char **argv)
 				for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
 					EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
 			if(decrypt)
-				EVP_DecryptFinal(&ctx,buf,&outl);
+				EVP_DecryptFinal_ex(&ctx,buf,&outl);
 			else
-				EVP_EncryptFinal(&ctx,buf,&outl);
+				EVP_EncryptFinal_ex(&ctx,buf,&outl);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 					   count,names[D_EVP],d);

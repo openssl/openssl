@@ -57,7 +57,8 @@ void do_cipher(char *pw, int operation)
 
 	EVP_BytesToKey(ALG, EVP_md5(), "salu", pw, strlen(pw), 1, key, iv);
 
-	EVP_CipherInit(&ectx, ALG, key, iv, operation);
+	EVP_CIPHER_CTX_init(&ectx);
+	EVP_CipherInit_ex(&ectx, ALG, NULL, key, iv, operation);
 
 	while(1)
 	{
@@ -79,7 +80,8 @@ void do_cipher(char *pw, int operation)
 		write(STDOUT, ebuf, ebuflen);
 	}
 
-        EVP_CipherFinal(&ectx, ebuf, &ebuflen); 
+        EVP_CipherFinal_ex(&ectx, ebuf, &ebuflen); 
+	EVP_CIPHER_CTX_cleanup(&ectx);
 
 	write(STDOUT, ebuf, ebuflen); 
 }

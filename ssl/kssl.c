@@ -1997,10 +1997,10 @@ krb5_error_code  kssl_check_authent(
 		*/
 		goto err;
 		}
-	if (!EVP_DecryptInit(&ciph_ctx, enc, kssl_ctx->key, iv))
+	if (!EVP_DecryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv))
 		{
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptInit error decrypting authenticator.\n");
+			"EVP_DecryptInit_ex error decrypting authenticator.\n");
 		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		goto err;
 		}
@@ -2019,10 +2019,10 @@ krb5_error_code  kssl_check_authent(
 		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		goto err;
 		}
-	if (!EVP_DecryptFinal(&ciph_ctx, &(unenc_authent[outl]), &padl))
+	if (!EVP_DecryptFinal_ex(&ciph_ctx, &(unenc_authent[outl]), &padl))
 		{
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptFinal error decrypting authenticator.\n");
+			"EVP_DecryptFinal_ex error decrypting authenticator.\n");
 		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		goto err;
 		}

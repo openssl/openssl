@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Modify the behaviour of EVP cipher functions in similar way to digests
+     to retain compatibility with existing code.
+     [Steve Henson]
+
   +) Modify the behaviour of EVP_DigestInit() and EVP_DigestFinal() to retain
      compatibility with existing code. In particular the 'ctx' parameter is
      not assumed to be valid before the call to EVP_DigestInit() and it is tidied

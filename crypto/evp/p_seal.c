@@ -74,7 +74,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek
 	
 	if(type) {
 		EVP_CIPHER_CTX_init(ctx);
-		if(!EVP_EncryptInit(ctx,type,NULL,NULL)) return 0;
+		if(!EVP_EncryptInit_ex(ctx,type,NULL,NULL,NULL)) return 0;
 	}
 	if (npubk <= 0) return(0);
 	if (RAND_bytes(key,EVP_MAX_KEY_LENGTH) <= 0)
@@ -82,7 +82,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek
 	if (EVP_CIPHER_CTX_iv_length(ctx))
 		RAND_pseudo_bytes(iv,EVP_CIPHER_CTX_iv_length(ctx));
 
-	if(!EVP_EncryptInit(ctx,NULL,key,iv)) return 0;
+	if(!EVP_EncryptInit_ex(ctx,NULL,NULL,key,iv)) return 0;
 
 	for (i=0; i<npubk; i++)
 		{
@@ -107,6 +107,6 @@ int inl;
 
 void EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	EVP_EncryptFinal(ctx,out,outl);
-	EVP_EncryptInit(ctx,NULL,NULL,NULL);
+	EVP_EncryptFinal_ex(ctx,out,outl);
+	EVP_EncryptInit_ex(ctx,NULL,NULL,NULL,NULL);
 	}

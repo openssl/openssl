@@ -275,7 +275,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	s->session->key_arg_length=0;
 
-	EVP_CipherInit(dd,c,key,iv,(which & SSL3_CC_WRITE));
+	EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
 
 	memset(&(exp_key[0]),0,sizeof(exp_key));
 	memset(&(exp_iv[0]),0,sizeof(exp_iv));

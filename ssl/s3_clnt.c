@@ -1519,17 +1519,17 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			    goto err;
 
 			/*  20010420 VRS.  Tried it this way; failed.
-			**	EVP_EncryptInit(&ciph_ctx,enc, NULL,NULL);
+			**	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
 			**	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
 			**				kssl_ctx->length);
-			**	EVP_EncryptInit(&ciph_ctx,NULL, key,iv);
+			**	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
 			*/
 
 			memset(iv, 0, EVP_MAX_IV_LENGTH);  /* per RFC 1510 */
-			EVP_EncryptInit(&ciph_ctx,enc, kssl_ctx->key,iv);
+			EVP_EncryptInit_ex(&ciph_ctx,enc, kssl_ctx->key,iv);
 			EVP_EncryptUpdate(&ciph_ctx,epms,&outl,tmp_buf,
 						SSL_MAX_MASTER_KEY_LENGTH);
-			EVP_EncryptFinal(&ciph_ctx,&(epms[outl]),&padl);
+			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
 			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 

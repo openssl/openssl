@@ -207,9 +207,9 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	/* Encrypt private key in place */
 	zz = enckey->enckey->digest->data;
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit(&ctx,EVP_rc4(),key,NULL);
+	EVP_EncryptInit_ex(&ctx,EVP_rc4(),NULL,key,NULL);
 	EVP_EncryptUpdate(&ctx,zz,&i,zz,pkeylen);
-	EVP_EncryptFinal(&ctx,zz + i,&j);
+	EVP_EncryptFinal_ex(&ctx,zz + i,&j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
 	ret = i2d_NETSCAPE_ENCRYPTED_PKEY(enckey, pp);
@@ -293,9 +293,9 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 	memset(buf,0,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit(&ctx,EVP_rc4(),key,NULL);
+	EVP_DecryptInit_ex(&ctx,EVP_rc4(),NULL, key,NULL);
 	EVP_DecryptUpdate(&ctx,os->data,&i,os->data,os->length);
-	EVP_DecryptFinal(&ctx,&(os->data[i]),&j);
+	EVP_DecryptFinal_ex(&ctx,&(os->data[i]),&j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	os->length=i+j;
 

@@ -346,9 +346,9 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		PEM_dek_info(buf,objstr,8,(char *)iv);
 		/* k=strlen(buf); */
 	
-		EVP_EncryptInit(&ctx,enc,key,iv);
+		EVP_EncryptInit_ex(&ctx,enc,NULL,key,iv);
 		EVP_EncryptUpdate(&ctx,data,&j,data,i);
-		EVP_EncryptFinal(&ctx,&(data[j]),&i);
+		EVP_EncryptFinal_ex(&ctx,&(data[j]),&i);
 		i+=j;
 		ret=1;
 		}
@@ -399,9 +399,9 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 		(unsigned char *)buf,klen,1,key,NULL);
 
 	j=(int)len;
-	EVP_DecryptInit(&ctx,cipher->cipher,key,&(cipher->iv[0]));
+	EVP_DecryptInit_ex(&ctx,cipher->cipher,NULL, key,&(cipher->iv[0]));
 	EVP_DecryptUpdate(&ctx,data,&i,data,j);
-	o=EVP_DecryptFinal(&ctx,&(data[i]),&j);
+	o=EVP_DecryptFinal_ex(&ctx,&(data[i]),&j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	memset((char *)buf,0,sizeof(buf));
 	memset((char *)key,0,sizeof(key));

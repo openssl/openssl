@@ -143,7 +143,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
 	memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
 						 EVP_CIPHER_iv_length(cipher));
-	EVP_CipherInit(cctx, cipher, key, iv, en_de);
+	EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de);
 	memset(md_tmp, 0, EVP_MAX_MD_SIZE);
 	memset(key, 0, EVP_MAX_KEY_LENGTH);
 	memset(iv, 0, EVP_MAX_IV_LENGTH);

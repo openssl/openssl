@@ -98,9 +98,9 @@ int ssl2_enc_init(SSL *s, int client)
 
 	ssl2_generate_key_material(s);
 
-	EVP_EncryptInit(ws,c,&(s->s2->key_material[(client)?num:0]),
+	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
-	EVP_DecryptInit(rs,c,&(s->s2->key_material[(client)?0:num]),
+	EVP_DecryptInit_ex(rs,c,NULL,&(s->s2->key_material[(client)?0:num]),
 		s->session->key_arg);
 	s->s2->read_key=  &(s->s2->key_material[(client)?0:num]);
 	s->s2->write_key= &(s->s2->key_material[(client)?num:0]);

@@ -161,7 +161,7 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 		goto err;
 		}
 
-	EVP_EncryptFinal(&ctx->cipher,s,(int *)&i);
+	EVP_EncryptFinal_ex(&ctx->cipher,s,(int *)&i);
 	EVP_EncodeUpdate(&ctx->encode,out,&j,s,i);
 	*outl=j;
 	out+=j;

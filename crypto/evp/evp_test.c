@@ -142,7 +142,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	exit(5);
 	}
     EVP_CIPHER_CTX_init(&ctx);
-    if(!EVP_EncryptInit(&ctx,c,key,iv))
+    if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,iv))
 	{
 	fprintf(stderr,"EncryptInit failed\n");
 	exit(10);
@@ -154,7 +154,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	fprintf(stderr,"Encrypt failed\n");
 	exit(6);
 	}
-    if(!EVP_EncryptFinal(&ctx,out+outl,&outl2))
+    if(!EVP_EncryptFinal_ex(&ctx,out+outl,&outl2))
 	{
 	fprintf(stderr,"EncryptFinal failed\n");
 	exit(7);
@@ -175,7 +175,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	exit(9);
 	}
 
-    if(!EVP_DecryptInit(&ctx,c,key,iv))
+    if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,iv))
 	{
 	fprintf(stderr,"DecryptInit failed\n");
 	exit(11);
@@ -187,7 +187,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	fprintf(stderr,"Decrypt failed\n");
 	exit(6);
 	}
-    if(!EVP_DecryptFinal(&ctx,out+outl,&outl2))
+    if(!EVP_DecryptFinal_ex(&ctx,out+outl,&outl2))
 	{
 	fprintf(stderr,"DecryptFinal failed\n");
 	exit(7);

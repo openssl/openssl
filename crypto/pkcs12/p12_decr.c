@@ -90,7 +90,7 @@ unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 
 	EVP_CipherUpdate (&ctx, out, &i, in, inlen);
 	outlen = i;
-	if(!EVP_CipherFinal (&ctx, out + i, &i)) {
+	if(!EVP_CipherFinal_ex (&ctx, out + i, &i)) {
 		OPENSSL_free (out);
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
 		return NULL;
