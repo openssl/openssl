@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -229,10 +229,11 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		else
 			a=algor2;
 		if (a == NULL) continue;
-                if (type->pkey_type == NID_dsaWithSHA1)
+                if (type->pkey_type == NID_dsaWithSHA1 ||
+			type->pkey_type == NID_ecdsa_with_SHA1)
 			{
-			/* special case: RFC 2459 tells us to omit 'parameters'
-			 * with id-dsa-with-sha1 */
+			/* special case: RFC 3279 tells us to omit 'parameters'
+			 * with id-dsa-with-sha1 and ecdsa-with-SHA1 */
 			ASN1_TYPE_free(a->parameter);
 			a->parameter = NULL;
 			}
