@@ -191,6 +191,7 @@ MAKE=     $(NEWMAKE) -f Makefile.ssl
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
 MAN3=3
+MANSUFFIX=
 SHELL=/bin/sh
 
 TOP=    .
@@ -568,33 +569,33 @@ install_docs:
 	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
-		echo "installing man$$sec/$$fn.$$sec"; \
+		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$$sec; \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			grep -v $$filecase "^$$fn\$$" | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$$sec $$n.$$sec; \
+				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) $$n.$${sec}$(MANSUFFIX); \
 			 done); \
 	done; \
 	for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
-		echo "installing man$$sec/$$fn.$$sec"; \
+		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$$sec; \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			grep -v $$filecase "^$$fn\$$" | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$$sec $$n.$$sec; \
+				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) $$n.$${sec}$(MANSUFFIX); \
 			 done); \
 	done
 
