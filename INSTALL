@@ -15,10 +15,12 @@
 
  If you want to just get on with it, do:
 
-  $ ./config                  [if this fails, go to step 1b below]
+  $ ./config
   $ make
   $ make test
   $ make install
+
+ [If any of these steps fails, see section Installation in Detail below.]
 
  This will build and install OpenSSL in the default location, which is (for
  historical reasons) /usr/local/ssl. If you want to install it anywhere else,
@@ -26,16 +28,21 @@
 
   $ ./config --prefix=/usr/local --openssldir=/usr/local/openssl
 
+
+ Configuration Options
+ ---------------------
+
  There are several options to ./config to customize the build:
 
-  --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include. Configuration
-                files used by OpenSSL will be in DIR/ssl or the directory
-                specified by --openssldir.
+  --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include/openssl.
+	        Configuration files used by OpenSSL will be in DIR/ssl
+                or the directory specified by --openssldir.
 
   --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
                 the library files and binaries are also installed there.
 
-  rsaref        Build with RSADSI's RSAREF toolkit.
+  rsaref        Build with RSADSI's RSAREF toolkit (this assumes that
+                librsaref.a is in the library search path).
 
   no-threads    Don't try to build with support for multi-threaded
                 applications.
@@ -44,26 +51,35 @@
                 This will usually require additional system-dependent options!
                 See "Note on multi-threading" below.
 
-  no-asm        Build with no assembler code.
+  no-asm        Do not use assembler code.
 
   386           Use the 80386 instruction set only (the default x86 code is
                 more efficient, but requires at least a 486).
 
- If anything goes wrong, follow the detailed instructions below. If your
- operating system is not (yet) supported by OpenSSL, see the section on
- porting to a new system.
+  no-<cipher>   Build without the specified cipher (bf, cast, des, dh, dsa,
+                hmac, md2, md5, mdc2, rc2, rc4, rc5, rsa, sha).
+
+  -Dxxx, -lxxx, -Lxxx, -fxxx, -Kxxx These system specific options will
+                be passed through to the compiler to allow you to
+                define preprocessor symbols, specify additional libraries,
+                library directories or other compiler options.
+
 
  Installation in Detail
  ----------------------
 
  1a. Configure OpenSSL for your operation system automatically:
 
-       $ ./config
+       $ ./config [options]
 
      This guesses at your operating system (and compiler, if necessary) and
-     configures OpenSSL based on this guess. Run ./config -t -v to see
+     configures OpenSSL based on this guess. Run ./config -t to see
      if it guessed correctly. If it did not get it correct or you want to
      use a different compiler then go to step 1b. Otherwise go to step 2.
+
+     On some systems, you can include debugging information as follows:
+
+       $ ./config -d [options]
 
  1b. Configure OpenSSL for your operating system manually
 
@@ -78,14 +94,14 @@
      as the argument to ./Configure. For example, a "linux-elf" user would
      run:
 
-       $ ./Configure linux-elf [--prefix=DIR] [--openssldir=OPENSSLDIR]
+       $ ./Configure linux-elf [options]
 
      If your system is not available, you will have to edit the Configure
      program and add the correct configuration for your system. The
      generic configurations "cc" or "gcc" should usually work.
 
-     Configure creates the Makefile.ssl from Makefile.org and defines
-     various macros in crypto/opensslconf.h (generated from
+     Configure creates the file Makefile.ssl from Makefile.org and
+     defines various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
   2. Build OpenSSL by running:
@@ -96,9 +112,18 @@
      OpenSSL binary ("openssl"). The libraries will be built in the top-level
      directory, and the binary will be in the "apps" directory.
 
+     If "make" fails, please report the problem to <openssl-bugs@openssl.org>.
+     Include the output of "./config -t" and the OpenSSL version
+     number in your message.
+
   3. After a successful build, the libraries should be tested. Run:
 
        $ make test
+
+    If a test fails, try removing any compiler optimization flags from
+    the CFLAGS line in Makefile.ssl and run "make clean; make". Please
+    send a bug report to <openssl-bugs@openssl.org>, including the
+    output of "openssl version -a" and of the failed test.
 
   4. If everything tests ok, install OpenSSL with
 
@@ -109,10 +134,10 @@
 
        certs           Initially empty, this is the default location
                        for certificate files.
-       private         Initially empty, this is the default location
-                       for private key files.
        lib             Contains the OpenSSL configuration file "openssl.cnf".
        misc            Various scripts.
+       private         Initially empty, this is the default location
+                       for private key files.
 
      If you didn't chose a different installation prefix, lib also contains
      the library files themselves, and the following additional subdirectories

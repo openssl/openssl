@@ -144,8 +144,7 @@
  a Win32 platform, read the INSTALL.W32 file.
 
  For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
- public key library, RSAref. Read doc/ssleay.txt under 'rsaref.doc' on how to
- build with RSAref.
+ public key library, RSAREF, by configuring OpenSSL with the option "rsaref".
 
  Read the documentation in the doc/ directory.  It is quite rough, but it
  lists the functions, you will probably have to look at the code to work out

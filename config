@@ -240,7 +240,7 @@ esac
 # At this point we gone through all the one's
 # we know of: Punt
 
-echo "${MACHINE}-whatever-${SYSTEM}|${RELEASE}|${VERSION}" 
+echo "${MACHINE}-whatever-${SYSTEM}" 
 exit 0
 ) 2>/dev/null | (
 
@@ -250,7 +250,6 @@ exit 0
 
 PREFIX=""
 SUFFIX=""
-VERBOSE="false"
 TEST="false"
 
 # pick up any command line args to config
@@ -258,12 +257,10 @@ for i
 do
 case "$i" in 
 -d*) PREFIX="debug-";;
--v*) VERBOSE="true";;
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
 Usage: config [options]
  -d	Add a debug- prefix to machine choice.
- -v	Verbose mode.
  -t	Test mode, do not run the Configure perl script.
  -h	This help.
 
@@ -288,9 +285,7 @@ fi
 # read the output of the embedded GuessOS 
 read GUESSOS
 
-if [ "$VERBOSE" = "true" ]; then
-  echo GUESSOS $GUESSOS
-fi
+echo Operating system: $GUESSOS
 
 # now map the output into SSLeay terms ... really should hack into the
 # script above so we end up with values in vars but that would take
@@ -366,16 +361,16 @@ fi
 
 OUT="$PREFIX$OUT"
 
-# at this point we have the answer ... which we could check again
-# and then fallback to a vanilla SSLeay build but then this script
-# wouldn't get updated
-echo Configuring for $OUT
+$PERL ./Configure 2>&1 | grep "$OUT" > /dev/null
+if [ $? = "0" ]; then
+  echo Configuring for $OUT
 
-if [ "$TEST" = "true" ]; then
-  echo $PERL ./Configure $OUT $options
+  if [ "$TEST" = "true" ]; then
+    echo $PERL ./Configure $OUT $options
+  else
+    $PERL ./Configure $OUT $options
+  fi
 else
-  $PERL ./Configure $OUT $options
+  echo "This system is not supported. See file INSTALL for details."
 fi
-
 )
-
