@@ -158,29 +158,78 @@
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
+#ifndef SHA_LONG_LOG2
+#define SHA_LONG_LOG2	2	/* default to 32 bits */
+#endif
+
 #undef ROTATE
+#undef Endian_Reverse32
 #if defined(WIN32)
 #define ROTATE(a,n)     _lrotl(a,n)
-#else
-#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
+#elif defined(__GNUC__)
+/* some inline assembler templates by <appro@fy.chalmers.se> */
+#if defined(__i386)
+#define ROTATE(a,n)	({ register unsigned int ret;	\
+				asm ("roll %1,%0"	\
+				: "=r"(ret)		\
+				: "I"(n), "0"(a)	\
+				: "cc");		\
+			   ret;				\
+			})
+#ifndef I386_ONLY
+#define Endian_Reverse32(a) \
+			{ register unsigned int l=(a);	\
+				asm ("bswapl %0"	\
+				: "=r"(l) : "0"(l));	\
+			  (a)=l;			\
+			}
+#endif
+#elif defined(__powerpc)
+#define ROTATE(a,n)	({ register unsigned int ret;		\
+				asm ("rlwinm %0,%1,%2,0,31"	\
+				: "=r"(ret)			\
+				: "r"(a), "I"(n));		\
+			   ret;					\
+			})
+/* Endian_Reverse32 is not needed for PowerPC */
+#endif
 #endif
 
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
-#if defined(WIN32)
+#ifdef ROTATE
+#ifndef Endian_Reverse32
 /* 5 instructions with rotate instruction, else 9 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
-	(a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
+	unsigned long t=(a); \
+	(a)=((ROTATE(t,8)&0x00FF00FF)|(ROTATE((t&0x00FF00FF),24))); \
 	}
+#endif
 #else
+#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
+#ifndef Endian_Reverse32
 /* 6 instructions with rotate instruction, else 8 */
 #define Endian_Reverse32(a) \
 	{ \
-	unsigned long l=(a); \
-	l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
-	(a)=ROTATE(l,16L); \
+	unsigned long t=(a); \
+	t=(((t>>8)&0x00FF00FF)|((t&0x00FF00FF)<<8)); \
+	(a)=ROTATE(t,16); \
 	}
+#endif
+/*
+ * Originally the middle line started with l=(((l&0xFF00FF00)>>8)|...
+ * It's rewritten as above for two reasons:
+ *	- RISCs aren't good at long constants and have to explicitely
+ *	  compose 'em with several (well, usually 2) instructions in a
+ *	  register before performing the actual operation and (as you
+ *	  already realized:-) having same constant should inspire the
+ *	  compiler to permanently allocate the only register for it;
+ *	- most modern CPUs have two ALUs, but usually only one has
+ *	  circuitry for shifts:-( this minor tweak inspires compiler
+ *	  to schedule shift instructions in a better way...
+ *
+ *				<appro@fy.chalmers.se>
+ */
 #endif
 
 /* As  pointed out by Wei Dai <weidai@eskimo.com>, F() below can be
@@ -195,13 +244,12 @@
 #define F_40_59(b,c,d)	(((b) & (c)) | (((b)|(c)) & (d))) 
 #define	F_60_79(b,c,d)	F_20_39(b,c,d)
 
-#ifdef SHA_0
 #undef Xupdate
+#ifdef SHA_0
 #define Xupdate(a,i,ia,ib,ic,id) X[(i)&0x0f]=(a)=\
 	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);
 #endif
 #ifdef SHA_1
-#undef Xupdate
 #define Xupdate(a,i,ia,ib,ic,id) (a)=\
 	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);\
 	X[(i)&0x0f]=(a)=ROTATE((a),1);

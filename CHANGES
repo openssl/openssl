@@ -5,8 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) SHA-1 cleanups and performance enhancements.
+     [Andy Polyakov <appro@fy.chalmers.se>]
+
   *) Sparc v8plus assembler for the bignum library.
-    [Andy Polyakov <appro@fy.chalmers.se>]
+     [Andy Polyakov <appro@fy.chalmers.se>]
 
   *) Accept any -xxx and +xxx compiler options in Configure.
      [Ulf Möller]

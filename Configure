@@ -587,6 +587,9 @@ while (<IN>)
 		{ printf OUT "#define RC4_INT unsigned %s\n",$type[$rc4_int]; }
 	elsif	(/^#((define)|(undef))\s+RC4_INDEX/)
 		{ printf OUT "#%s RC4_INDEX\n",($rc4_idx)?"define":"undef"; }
+	elsif (/^#(define|undef)\s+I386_ONLY/)
+		{ printf OUT "#%s I386_ONLY\n", ($processor == 386)?
+			"define":"undef"; }
 	elsif	(/^#define\s+MD2_INT\s/)
 		{ printf OUT "#define MD2_INT unsigned %s\n",$type[$md2_int]; }
 	elsif	(/^#define\s+IDEA_INT\s/)

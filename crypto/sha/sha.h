@@ -67,18 +67,28 @@ extern "C" {
 #error SHA is disabled.
 #endif
 
-#define SHA_CBLOCK	64
-#define SHA_LBLOCK	16
-#define SHA_BLOCK	16
-#define SHA_LAST_BLOCK  56
-#define SHA_LENGTH_BLOCK 8
-#define SHA_DIGEST_LENGTH 20
+/*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
+ * ! SHA_LONG_LOG2 has to be defined along.                        !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
 
-#ifdef WIN16
+#if defined(WIN16) || defined(__LP32__)
 #define SHA_LONG unsigned long
+#elif defined(_CRAY) || defined(__ILP64__)
+#define SHA_LONG unsigned long
+#define SHA_LONG_LOG2 3
 #else
 #define SHA_LONG unsigned int
-#endif	
+#endif
+
+#define SHA_LBLOCK	16
+#define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a
+					 * contiguous array of 32 bit
+					 * wide big-endian values. */
+#define SHA_LAST_BLOCK  (SHA_CBLOCK-8)
+#define SHA_DIGEST_LENGTH 20
 
 typedef struct SHAstate_st
 	{
