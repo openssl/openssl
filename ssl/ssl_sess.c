@@ -322,7 +322,7 @@ int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c)
 	return remove_session_lock(ctx, c, 1);
 }
 
-int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
+static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	{
 	SSL_SESSION *r;
 	int ret=0;
