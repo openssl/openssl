@@ -69,19 +69,22 @@
 #define HASH    EVP_sha1()
 #endif 
 
-#ifndef OPENSSL_NO_SHA
-
-#ifdef FIPS
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 /*#include "cryptlib.h"*/
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_SHA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_RAND
 #include <openssl/rand.h>
+#endif
+#ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
+
+#ifdef FIPS
 
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,
