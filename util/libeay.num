@@ -1854,3 +1854,17 @@ BIO_nwrite0                             1878
 X509_REQ_add_extensions_nid             1879
 BIO_nread0                              1880
 X509_REQ_add_extensions                 1881
+BIO_new_mem_buf                         1882
+DH_set_ex_data                          1883
+DH_set_method                           1884
+DSA_OpenSSL                             1885
+DH_get_ex_data                          1886
+DH_get_ex_new_index                     1887
+DSA_new_method                          1888
+DH_new_method                           1889
+DH_OpenSSL                              1890
+DSA_get_ex_new_index                    1891
+DH_get_default_method                   1892
+DSA_set_ex_data                         1893
+DH_set_default_method                   1894
+DSA_get_ex_data                         1895

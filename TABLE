@@ -731,6 +731,23 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
+*** debug-ulf
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -Wall  -pedantic -Wall -Wshadow -pipe
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
 *** dgux-R3-gcc
 $cc           = gcc
 $cflags       = -O3 -fomit-frame-pointer
@@ -1022,7 +1039,7 @@ $rc5_obj      =
 
 *** irix-mips3-cc
 $cc           = cc
-$cflags       = -n32 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -n32 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1039,7 +1056,7 @@ $rc5_obj      =
 
 *** irix-mips3-gcc
 $cc           = gcc
-$cflags       = -mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN
+$cflags       = -mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1056,7 +1073,7 @@ $rc5_obj      =
 
 *** irix64-mips4-cc
 $cc           = cc
-$cflags       = -64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1073,7 +1090,7 @@ $rc5_obj      =
 
 *** irix64-mips4-gcc
 $cc           = gcc
-$cflags       = -mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN
+$cflags       = -mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 

@@ -88,9 +88,10 @@ dsa_asn1.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 dsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 dsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 dsa_asn1.o: ../../include/openssl/stack.h ../cryptlib.h
-dsa_err.o: ../../include/openssl/bn.h ../../include/openssl/dh.h
-dsa_err.o: ../../include/openssl/dsa.h ../../include/openssl/err.h
-dsa_err.o: ../../include/openssl/opensslconf.h
+dsa_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+dsa_err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+dsa_err.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dsa_err.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
 dsa_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_gen.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
@@ -115,6 +116,15 @@ dsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 dsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dsa_lib.o: ../cryptlib.h
+dsa_ossl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_ossl.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_ossl.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+dsa_ossl.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+dsa_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_ossl.o: ../../include/openssl/opensslconf.h
+dsa_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+dsa_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_ossl.o: ../cryptlib.h
 dsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dsa_sign.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
