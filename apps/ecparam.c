@@ -342,7 +342,6 @@ bad:
 		EC_builtin_curve *curves = NULL;
 		size_t crv_len = 0;
 		size_t n = 0;
-		size_t len;
 
 		crv_len = EC_get_builtin_curves(NULL, 0);
 
@@ -369,11 +368,8 @@ bad:
 			if (sname == NULL)
 				sname = "";
 
-			len = BIO_printf(out, "  %-10s: ", sname);
-			if (len + strlen(comment) > 80)
-				BIO_printf(out, "\n%80s\n", comment);
-			else
-				BIO_printf(out, "%s\n", comment);
+			BIO_printf(out, "  %-10s: ", sname);
+			BIO_printf(out, "%s\n", comment);
 			} 
 
 		OPENSSL_free(curves);

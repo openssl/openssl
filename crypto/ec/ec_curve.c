@@ -86,8 +86,7 @@ typedef struct ec_curve_data_st {
 	const BN_ULONG cofactor;/* the cofactor */
 	const unsigned char *seed;/* the seed (optional) */
 	size_t	seed_len;
-	const char *comment;	/* a short (less than 80 characters)
-				 * description of the curve */
+	const char *comment;	/* a short description of the curve */
 } EC_CURVE_DATA;
 
 /* the nist prime curves */
@@ -498,7 +497,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163K1 = {
 	"0289070FB05D38FF58321F2E800536D538CCDAA3D9",
 	"04000000000000000000020108A2E0CC0D99F8A5EF", 2,
 	NULL, 0,
-	"SECG/NIST/WTLS recommended curve over a 163 bit binary field"
+	"\n\tSECG/NIST/WTLS recommended curve over a 163 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_163R1_SEED[] = {
@@ -512,7 +511,15 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163R1 = {
 	"0369979697AB43897789566789567F787A7876A654",
 	"00435EDB42EFAFB2989D51FEFCE3C80988F41FF883",
 	"03FFFFFFFFFFFFFFFFFFFF48AAB689C29CA710279B", 2,
+/* The algorithm used to derive the curve parameters from
+ * the seed used here is slightly different than the
+ * algorithm described in X9.62 .
+ */
+#if 0
 	_EC_SECG_CHAR2_163R1_SEED, 20,
+#else
+	NULL, 0,
+#endif
 	"SECG recommended curve over a 163 bit binary field"
 	};
 
@@ -527,7 +534,14 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_163R2 ={
 	"03F0EBA16286A2D57EA0991168D4994637E8343E36",
 	"00D51FBC6C71A0094FA2CDD545B11C5C0C797324F1",
 	"040000000000000000000292FE77E70C12A4234C33", 2,
+/* The seed here was used to created the curve parameters in normal
+ * basis representation (and not the polynomial representation used here) 
+ */
+#if 0
 	_EC_SECG_CHAR2_163R2_SEED, 20,
+#else
+	NULL, 0,
+#endif
 	"SECG/NIST recommended curve over a 163 bit binary field"
 	};
 
@@ -570,7 +584,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_233K1 = {
 	"01DB537DECE819B7F70F555A67C427A8CD9BF18AEB9B56E0C11056FAE6A3",
 	"008000000000000000000000000000069D5BB915BCD46EFB1AD5F173ABDF", 4,
 	NULL, 0,
-	"SECG/NIST/WTLS recommended curve over a 233 bit binary field"
+	"\n\tSECG/NIST/WTLS recommended curve over a 233 bit binary field"
 	};
 
 static const unsigned char _EC_SECG_CHAR2_233R1_SEED[] = {
@@ -585,7 +599,7 @@ static const EC_CURVE_DATA _EC_SECG_CHAR2_233R1 = {
 	"01006A08A41903350678E58528BEBF8A0BEFF867A7CA36716F7E01F81052",
 	"01000000000000000000000000000013E974E72F8A6922031D2603CFE0D7", 2,
 	_EC_SECG_CHAR2_233R1_SEED, 20,
-	"SECG/NIST/WTLS recommended curve over a 233 bit binary field"
+	"\n\tSECG/NIST/WTLS recommended curve over a 233 bit binary field"
 	};
 
 static const EC_CURVE_DATA _EC_SECG_CHAR2_239K1 = {
@@ -982,6 +996,11 @@ static const EC_CURVE_DATA _EC_WTLS_1 = {
 	};
 
 /* IPSec curves */
+/* NOTE: The of curves over a extension field of non prime degree
+ * is not recommended (Weil-descent).
+ * As the group order is not a prime this curve is not suitable
+ * for ECDSA.
+ */
 static const EC_CURVE_DATA _EC_IPSEC_155_ID3 = {
 	NID_X9_62_characteristic_two_field,
 	"0800000000000000000000004000000000000001",
@@ -991,9 +1010,15 @@ static const EC_CURVE_DATA _EC_IPSEC_155_ID3 = {
 	"1c8",
 	"2AAAAAAAAAAAAAAAAAAC7F3C7881BD0868FA86C",3,
 	NULL, 0,
-	"IPSec/IKE/Oakley curve #3 over a 155 bit binary field"
+	"\n\tIPSec/IKE/Oakley curve #3 over a 155 bit binary field.\n"
+	"\tNot suitable for ECDSA.\n\tQuestionable extension field!"
 	};
 
+/* NOTE: The of curves over a extension field of non prime degree
+ * is not recommended (Weil-descent).
+ * As the group order is not a prime this curve is not suitable
+ * for ECDSA.
+ */
 static const EC_CURVE_DATA _EC_IPSEC_185_ID4 = {
 	NID_X9_62_characteristic_two_field,
 	"020000000000000000000000000000200000000000000001",
@@ -1003,7 +1028,8 @@ static const EC_CURVE_DATA _EC_IPSEC_185_ID4 = {
 	"0d",
 	"FFFFFFFFFFFFFFFFFFFFFFEDF97C44DB9F2420BAFCA75E",2,
 	NULL, 0,
-	"IPSec/IKE/Oakley curve #4 over a 185 bit binary field"
+	"\n\tIPSec/IKE/Oakley curve #4 over a 185 bit binary field.\n"
+	"\tNot suitable for ECDSA.\n\tQuestionable extension field!"
 	};
 
 typedef struct _ec_list_element_st {
