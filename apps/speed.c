@@ -689,7 +689,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"\n");
 #endif
 
-#ifdef TIMES
+#if defined(TIMES) || defined(USE_TOD)
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available options:\n");
 			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
