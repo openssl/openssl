@@ -152,18 +152,21 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
 	fi
-	-(cd ..; OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
-		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
-		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
-		SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
-		LIBPATH="`pwd`:$$LIBPATH"; \
-		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
-		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-		if [ -n "$(SHARED_LIBS)" ]; then \
-		  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
-		  export LD_PRELOAD; \
-		fi; \
-		$(PERL) tools/c_rehash certs)
+	-(cd ..; 
+	  if [ -n "$(SHARED_LIBS)" ]; then \
+	    OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
+	    LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
+	    DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
+	    SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
+	    LIBPATH="`pwd`:$$LIBPATH"; \
+	    if [ "$(PLATFORM)" = "Cygwin" ]; then \
+	      PATH="`pwd`:$$PATH"; \
+	    fi; \
+	    LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
+	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
+	    export LD_PRELOAD; \
+	  fi; \
+	  $(PERL) tools/c_rehash certs)
 
 progs.h: progs.pl
 	$(PERL) progs.pl $(E_EXE) >progs.h
