@@ -78,16 +78,16 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 
 	HMAC_CTX_init(&ctx);
 	HMAC_CTX_init(&ctx_tmp);
-	HMAC_Init_ex(&ctx,sec,sec_len,md);
-	HMAC_Init_ex(&ctx_tmp,sec,sec_len,md);
+	HMAC_Init_ex(&ctx,sec,sec_len,md, NULL);
+	HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL);
 	HMAC_Update(&ctx,seed,seed_len);
 	HMAC_Final(&ctx,A1,&A1_len);
 
 	n=0;
 	for (;;)
 		{
-		HMAC_Init_ex(&ctx,NULL,0,NULL); /* re-init */
-		HMAC_Init_ex(&ctx_tmp,NULL,0,NULL); /* re-init */
+		HMAC_Init_ex(&ctx,NULL,0,NULL,NULL); /* re-init */
+		HMAC_Init_ex(&ctx_tmp,NULL,0,NULL,NULL); /* re-init */
 		HMAC_Update(&ctx,A1,A1_len);
 		HMAC_Update(&ctx_tmp,A1,A1_len);
 		HMAC_Update(&ctx,seed,seed_len);
@@ -652,7 +652,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	/* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
 	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash);
+	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash,NULL);
 	HMAC_Update(&hmac,seq,8);
 	HMAC_Update(&hmac,buf,5);
 	HMAC_Update(&hmac,rec->input,rec->length);

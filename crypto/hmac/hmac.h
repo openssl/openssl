@@ -91,7 +91,7 @@ void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	       const EVP_MD *md); /* deprecated */
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
-		  const EVP_MD *md);
+		  const EVP_MD *md, ENGINE *impl);
 void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,

@@ -1494,6 +1494,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 						+ EVP_MAX_IV_LENGTH];
 			int 		padl, outl = sizeof(epms);
 
+			EVP_CIPHER_CTX_init(&ciph_ctx);
+
 #ifdef KSSL_DEBUG
                         printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
                                 l, SSL_kKRB5);

@@ -100,7 +100,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 		itmp[1] = (unsigned char)((i >> 16) & 0xff);
 		itmp[2] = (unsigned char)((i >> 8) & 0xff);
 		itmp[3] = (unsigned char)(i & 0xff);
-		HMAC_Init_ex(&hctx, pass, passlen, EVP_sha1());
+		HMAC_Init_ex(&hctx, pass, passlen, EVP_sha1(), NULL);
 		HMAC_Update(&hctx, salt, saltlen);
 		HMAC_Update(&hctx, itmp, 4);
 		HMAC_Final(&hctx, digtmp, NULL);

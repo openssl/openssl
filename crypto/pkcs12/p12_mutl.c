@@ -87,11 +87,11 @@ int PKCS12_gen_mac (PKCS12 *p12, const char *pass, int passlen,
 		return 0;
 	}
 	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex (&hmac, key, PKCS12_MAC_KEY_LENGTH, md_type);
-    	HMAC_Update (&hmac, p12->authsafes->d.data->data,
+	HMAC_Init_ex(&hmac, key, PKCS12_MAC_KEY_LENGTH, md_type, NULL);
+    	HMAC_Update(&hmac, p12->authsafes->d.data->data,
 					 p12->authsafes->d.data->length);
-    	HMAC_Final (&hmac, mac, maclen);
-    	HMAC_CTX_cleanup (&hmac);
+    	HMAC_Final(&hmac, mac, maclen);
+    	HMAC_CTX_cleanup(&hmac);
 	return 1;
 }
 

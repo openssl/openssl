@@ -1557,6 +1557,8 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		krb5_timestamp		authtime = 0;
 		krb5_ticket_times	ttimes;
 
+		EVP_CIPHER_CTX_init(&ciph_ctx);
+
                 if (!kssl_ctx)  kssl_ctx = kssl_ctx_new();
 
 		n2s(p,i);
