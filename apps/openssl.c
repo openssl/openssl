@@ -237,7 +237,7 @@ end:
 	ERR_free_strings();
 
 #ifdef LEVITTE_DEBUG
-	/* Just to make sure I get a memory leak I can see :-) */
+	CRYPTO_add_info("Just to make sure I get a memory leak I can see :-)");
 	(void)Malloc(1024);
 #endif
 

@@ -286,14 +286,14 @@ static APP_INFO *remove_info()
 	return(ret);
 	}
 
-int CRYPTO_add_info_(const char *file, int line, const char *info)
+int CRYPTO_add_info_(const char *info, const char *file, int line)
 	{
 	APP_INFO *ami, *amim;
 	int ret=0;
 
 	if (is_MemCheck_on())
 		{
-		MemCheck_off();
+		MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
 		if ((ami = (APP_INFO *)Malloc(sizeof(APP_INFO))) == NULL)
 			{
@@ -330,7 +330,7 @@ int CRYPTO_add_info_(const char *file, int line, const char *info)
 			ami->next=amim;
 			}
  err:
-		MemCheck_on();
+		MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 		}
 
 	return(ret);
@@ -340,15 +340,13 @@ int CRYPTO_remove_info(void)
 	{
 	int ret=0;
 
-	if (is_MemCheck_on()) /* _must_ be true, or something went severly wrong */
+	if (is_MemCheck_on()) /* _must_ be true, or something went severely wrong */
 		{
-		MemCheck_off();
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+		MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
 		ret=(remove_info() != NULL);
 
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
+		MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 		}
 	return(ret);
 	}
@@ -359,14 +357,12 @@ int CRYPTO_remove_all_info(void)
 
 	if (is_MemCheck_on()) /* _must_ be true */
 		{
-		MemCheck_off();
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+		MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
 		while(remove_info() != NULL)
 			ret++;
 
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
+		MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 		}
 	return(ret);
 	}
@@ -389,14 +385,13 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 
 		if (is_MemCheck_on())
 			{
-			MemCheck_off();
+			MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 			if ((m=(MEM *)Malloc(sizeof(MEM))) == NULL)
 				{
 				Free(addr);
-				MemCheck_on();
+				MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 				return;
 				}
-			CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 			if (mh == NULL)
 				{
 				if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
@@ -453,8 +448,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				Free(mm);
 				}
 		err:
-			CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-			MemCheck_on();
+			MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 			}
 		break;
 		}
@@ -490,7 +484,7 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 				Free(mp);
 				}
 
-			MemCheck_on();
+			MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 			}
 		break;
 	case 1:
@@ -524,8 +518,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 
 		if (is_MemCheck_on())
 			{
-			MemCheck_off();
-			CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+			MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
 			m.addr=addr1;
 			mp=(MEM *)lh_delete(mh,(char *)&m);
@@ -542,8 +535,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 				lh_insert(mh,(char *)mp);
 				}
 
-			CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-			MemCheck_on();
+			MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 			}
 		break;
 		}
@@ -610,7 +602,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
 		sprintf(buf + ami_cnt,
-			"thread=%lu, file=%s, line=%d, info=\"",
+			" thread=%lu, file=%s, line=%d, info=\"",
 			amip->thread, amip->file, amip->line);
 		buf_len=strlen(buf);
 		info_len=strlen(amip->info);

@@ -213,7 +213,7 @@ typedef struct crypto_ex_data_func_st
 #endif
 
 /* Set standard debugging functions (not done by default
- * unless CRYPTO_MDEBUG ist defined) */
+ * unless CRYPTO_MDEBUG is defined) */
 #define CRYPTO_malloc_debug_init()	do {\
 	CRYPTO_set_mem_debug_functions(\
 		(void (*)())CRYPTO_dbg_malloc,\
@@ -304,7 +304,7 @@ long CRYPTO_get_mem_debug_options();
 
 #define CRYPTO_add_info(info) \
         CRYPTO_add_info_(info, __FILE__, __LINE__);
-int CRYPTO_add_info_(const char *file, int line, const char *info);
+int CRYPTO_add_info_(const char *info, const char *file, int line);
 int CRYPTO_remove_info(void);
 int CRYPTO_remove_all_info(void);
 
