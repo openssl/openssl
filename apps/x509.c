@@ -1032,7 +1032,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 	MS_STATIC char buf2[1024];
 	ASN1_INTEGER *bs = NULL, bs2;
 	BIO *io = NULL;
-	BIGNUM *serial;
+	BIGNUM *serial = NULL;
 	buf=OPENSSL_malloc( ((serialfile == NULL)
 			?(strlen(CAfile)+strlen(POSTFIX)+1)
 			:(strlen(serialfile)))+1);
