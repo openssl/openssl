@@ -142,6 +142,11 @@ ASN1_INTEGER *serial;
 } AUTHORITY_KEYID;
 
 typedef struct {
+ASN1_GENERALIZEDTIME *notBefore;
+ASN1_GENERALIZEDTIME *notAfter;
+} PKEY_USAGE_PERIOD;
+
+typedef struct {
 
 #define GEN_OTHERNAME	(0|V_ASN1_CONTEXT_SPECIFIC)
 #define GEN_EMAIL	(1|V_ASN1_CONTEXT_SPECIFIC)
@@ -211,6 +216,11 @@ AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp, lo
 AUTHORITY_KEYID *AUTHORITY_KEYID_new(void);
 void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a);
 
+int i2d_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD *a, unsigned char **pp);
+PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a, unsigned char **pp, long length);
+PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new(void);
+void PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a);
+
 STACK *GENERAL_NAMES_new(void);
 void GENERAL_NAMES_free(STACK *a);
 STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length);
@@ -248,6 +258,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
 X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK *X509V3_parse_list(char *line);
+char *X509V3_EXT_d2i(X509_EXTENSION *ext);
 
 char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
@@ -270,6 +281,11 @@ GENERAL_NAME *GENERAL_NAME_new();
 void GENERAL_NAME_free();
 STACK *i2v_GENERAL_NAME();
 GENERAL_NAME *v2i_GENERAL_NAME();
+
+int i2d_PKEY_USAGE_PERIOD();
+PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD();
+PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new();
+void PKEY_USAGE_PERIOD_free();
 
 STACK *GENERAL_NAMES_new():
 void GENERAL_NAMES_free():
@@ -307,6 +323,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get();
 X509V3_EXT_METHOD *X509V3_EXT_get_nid();
 int X509V3_add_standard_extensions();
 STACK *X509V3_parse_list();
+char *X509V3_EXT_get_d2i();
 
 char *hex_to_string();
 unsigned char *string_to_hex();
@@ -327,6 +344,7 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_S2I_S2I_SKEY_ID			 115
 #define X509V3_F_STRING_TO_HEX				 113
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
+#define X509V3_F_V2I_AUTHORITY_KEYID			 119
 #define X509V3_F_V2I_BASIC_CONSTRAINTS			 102
 #define X509V3_F_V2I_EXT_KU				 103
 #define X509V3_F_V2I_GENERAL_NAME			 117
@@ -357,9 +375,13 @@ int X509V3_EXT_print_fp();
 #define X509V3_R_INVALID_NULL_NAME			 108
 #define X509V3_R_INVALID_NULL_VALUE			 109
 #define X509V3_R_INVALID_OBJECT_IDENTIFIER		 110
+#define X509V3_R_NO_ISSUER_CERTIFICATE			 121
 #define X509V3_R_NO_PUBLIC_KEY				 114
 #define X509V3_R_ODD_NUMBER_OF_DIGITS			 112
+#define X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS		 122
+#define X509V3_R_UNABLE_TO_GET_ISSUER_KEYID		 123
 #define X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT		 111
+#define X509V3_R_UNKNOWN_OPTION				 120
 #define X509V3_R_UNSUPPORTED_OPTION			 117
  
 #ifdef  __cplusplus

@@ -147,6 +147,7 @@ X509V3_EXT_METHOD *ext;
 }
 
 extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
+extern X509V3_EXT_METHOD v3_pkey_usage_period;
 extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 
 int X509V3_add_standard_extensions()
@@ -159,5 +160,19 @@ int X509V3_add_standard_extensions()
 	X509V3_EXT_add(&v3_ext_ku);
 	X509V3_EXT_add(&v3_skey_id);
 	X509V3_EXT_add(&v3_akey_id);
+	X509V3_EXT_add(&v3_pkey_usage_period);
 	return 1;
 }
+
+/* Return an extension internal structure */
+
+char *X509V3_EXT_d2i(ext)
+X509_EXTENSION *ext;
+{
+	X509V3_EXT_METHOD *method;
+	unsigned char *p;
+	if(!(method = X509V3_EXT_get(ext)) || !method->d2i) return NULL;
+	p = ext->value->data;
+	return method->d2i(NULL, &p, ext->value->length);
+}
+

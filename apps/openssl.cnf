@@ -127,7 +127,11 @@ basicConstraints=CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 
 nsComment			= "OpenSSL Generated Certificate"
+
+# PKIX recommendations
 subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer:always
+
 
 #nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
 #nsBaseUrl
@@ -146,6 +150,8 @@ basicConstraints = CA:true
 # PKIX recommendation.
 
 subjectKeyIdentifier=hash
+
+authorityKeyIdentifier=keyid:always,issuer:always
 
 # This is what PKIX recommends but some broken software chokes on critical
 # extensions.
