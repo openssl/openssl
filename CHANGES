@@ -7,6 +7,7 @@
 
   *) Make DH_free() tolerate being passed a NULL pointer (like RSA_free() and
      DSA_free()). Make X509_PUBKEY_set() check for errors in d2i_PublicKey().
+     [Steve Henson]
 
   *) X509_name_add_entry() freed the wrong thing after an error.
      [Arne Ansper <arne@ats.cyber.ee>]
