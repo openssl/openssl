@@ -772,6 +772,8 @@ static int ssl3_get_server_certificate(SSL *s)
 	s->session->sess_cert=sc;
 
 	sc->cert_chain=sk;
+	/* Inconsistency alert: cert_chain does include the peer's
+	 * certificate, which we don't include in s3_srvr.c */
 	x=sk_X509_value(sk,0);
 	sk=NULL;
 

@@ -1698,6 +1698,8 @@ static int ssl3_get_client_certificate(SSL *s)
 	if (s->session->sess_cert->cert_chain != NULL)
 		sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
 	s->session->sess_cert->cert_chain=sk;
+	/* Inconsistency alert: cert_chain does *not* include the
+	 * peer's own certificate, while we do include it in s3_clnt.c */
 
 	sk=NULL;
 
