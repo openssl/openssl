@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Convert casted X509_INFO stacks to type-safe STACK_OF(X509_INFO).
+     [Ralf S. Engelschall]
+
   *) New function SSL_CTX_use_certificate_chain_file that sets the
      "extra_cert"s in addition to the certificate.  (This makes sense
      only for "PEM" format files, as chains as a whole are not

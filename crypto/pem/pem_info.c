@@ -65,10 +65,10 @@
 #include <openssl/pem.h>
 
 #ifndef NO_FP_API
-STACK *PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)())
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, int (*cb)())
 	{
         BIO *b;
-        STACK *ret;
+        STACK_OF(X509_INFO) *ret;
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
@@ -82,20 +82,20 @@ STACK *PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)())
 	}
 #endif
 
-STACK *PEM_X509_INFO_read_bio(BIO *bp, STACK *sk, int (*cb)())
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, int (*cb)())
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
 	unsigned char *data=NULL,*p;
 	long len,error=0;
 	int ok=0;
-	STACK *ret=NULL;
+	STACK_OF(X509_INFO) *ret=NULL;
 	unsigned int i,raw;
 	char *(*d2i)();
 
 	if (sk == NULL)
 		{
-		if ((ret=sk_new_null()) == NULL)
+		if ((ret=sk_X509_INFO_new_null()) == NULL)
 			{
 			PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -126,7 +126,7 @@ start:
 			d2i=(char *(*)())d2i_X509;
 			if (xi->x509 != NULL)
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -137,7 +137,7 @@ start:
 			d2i=(char *(*)())d2i_X509_CRL;
 			if (xi->crl != NULL)
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -150,7 +150,7 @@ start:
 			d2i=(char *(*)())d2i_RSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -174,7 +174,7 @@ start:
 			d2i=(char *(*)())d2i_DSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -240,7 +240,7 @@ start:
 	if ((xi->x509 != NULL) || (xi->crl != NULL) ||
 		(xi->x_pkey != NULL) || (xi->enc_data != NULL))
 		{
-		if (!sk_push(ret,(char *)xi)) goto err;
+		if (!sk_X509_INFO_push(ret,xi)) goto err;
 		xi=NULL;
 		}
 	ok=1;
@@ -248,12 +248,12 @@ err:
 	if (xi != NULL) X509_INFO_free(xi);
 	if (!ok)
 		{
-		for (i=0; ((int)i)<sk_num(ret); i++)
+		for (i=0; ((int)i)<sk_X509_INFO_num(ret); i++)
 			{
-			xi=(X509_INFO *)sk_value(ret,i);
+			xi=sk_X509_INFO_value(ret,i);
 			X509_INFO_free(xi);
 			}
-		if (ret != sk) sk_free(ret);
+		if (ret != sk) sk_X509_INFO_free(ret);
 		ret=NULL;
 		}
 		

@@ -287,7 +287,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	BIO *in=NULL;
 	int count=0;
 	int ret= -1;
-	STACK *sk=NULL;
+	STACK_OF(X509_INFO) *sk=NULL;
 	X509_INFO *xi;
 
 	if ((stat(certfile,&st) != 0))
@@ -311,9 +311,9 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	}
 
 	/* scan over it and pull out the CRL's */
-	while (sk_num(sk))
+	while (sk_X509_INFO_num(sk))
 		{
-		xi=(X509_INFO *)sk_shift(sk);
+		xi=sk_X509_INFO_shift(sk);
 		if (xi->x509 != NULL)
 			{
 			sk_X509_push(stack,xi->x509);
@@ -327,7 +327,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 end:
  	/* never need to Free x */
 	if (in != NULL) BIO_free(in);
-	if (sk != NULL) sk_free(sk);
+	if (sk != NULL) sk_X509_INFO_free(sk);
 	return(ret);
 	}
 

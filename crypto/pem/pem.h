@@ -331,7 +331,7 @@ char *	PEM_ASN1_read_bio(char *(*d2i)(),const char *name,BIO *bp,char **x,
 int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
 			   const EVP_CIPHER *enc,unsigned char *kstr,int klen,
 			   int (*callback)());
-STACK *	PEM_X509_INFO_read_bio(BIO *bp, STACK *sk, int (*cb)());
+STACK_OF(X509_INFO) *	PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, int (*cb)());
 int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 		unsigned char *kstr, int klen, int (*cb)());
 #endif
@@ -345,7 +345,7 @@ char *	PEM_ASN1_read(char *(*d2i)(),const char *name,FILE *fp,char **x,
 int	PEM_ASN1_write(int (*i2d)(),const char *name,FILE *fp,char *x,
 		       const EVP_CIPHER *enc,unsigned char *kstr,int klen,
 		       int (*callback)());
-STACK *	PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)());
+STACK_OF(X509_INFO) *	PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, int (*cb)());
 #endif
 
 int	PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type,

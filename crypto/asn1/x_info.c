@@ -108,3 +108,6 @@ void X509_INFO_free(X509_INFO *x)
 	if (x->x_pkey != NULL) X509_PKEY_free(x->x_pkey);
 	Free((char *)x);
 	}
+
+IMPLEMENT_STACK_OF(X509_INFO)
+

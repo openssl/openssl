@@ -292,6 +292,8 @@ typedef struct X509_info_st
 
 	int references;
 	} X509_INFO;
+
+DECLARE_STACK_OF(X509_INFO)
 #endif
 
 /* The next 2 structures and their 8 routines were sent to me by
