@@ -98,7 +98,7 @@ mdc2WithRSA		96
 rc4_40		97
 rc2_40_cbc		98
 givenName		99
-surname		100
+surName		100
 initials		101
 uniqueIdentifier		102
 crl_distribution_points		103
