@@ -4,6 +4,9 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Prompt for pass phrases when appropriate for PKCS12 input format.
+     [Steve Henson]
+
   *) Back-port of selected performance improvements from development
      branch, as well as improved support for PowerPC platforms.
      [Andy Polyakov]
