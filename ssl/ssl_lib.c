@@ -1803,7 +1803,7 @@ void ssl_update_cache(SSL *s,int mode)
 
 	i=s->ctx->session_cache_mode;
 	if ((i & mode) && (!s->hit)
-		&& ((i & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)
+		&& ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
 		    || SSL_CTX_add_session(s->ctx,s->session))
 		&& (s->ctx->new_session_cb != NULL))
 		{
