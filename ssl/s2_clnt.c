@@ -310,7 +310,13 @@ static int get_server_hello(SSL *s)
 					SSL_R_PEER_ERROR);
 			return(-1);
 			}
+#ifdef __APPLE_CC__
+		/* The Rhapsody 5.5 (a.k.a. MacOS X) compiler bug
+		 * workaround. <appro@fy.chalmers.se> */
+		s->hit=(i=*(p++))?1:0;
+#else
 		s->hit=(*(p++))?1:0;
+#endif
 		s->s2->tmp.cert_type= *(p++);
 		n2s(p,i);
 		if (i < s->version) s->version=i;
