@@ -867,8 +867,10 @@ bad:
 
 				BIO_printf(bio_err,"Generating certificate request\n");
 
+#ifndef NO_DSA
 		                if (pk->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
+#endif
 
 				rq=X509_to_X509_REQ(x,pk,digest);
 				EVP_PKEY_free(pk);
