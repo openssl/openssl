@@ -79,12 +79,9 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md_rand.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
-md_rand.o: ../../include/err.h ../../include/md5.h ../../include/stack.h
-md_rand.o: ../cryptlib.h ../crypto.h rand.h
+md_rand.o: ../../include/e_os.h ../../include/md5.h ../../include/stack.h
+md_rand.o: ../crypto.h rand.h
 rand_lib.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 rand_lib.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
 rand_lib.o: rand.h
-randfile.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
-randfile.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-randfile.o: rand.h
+randfile.o: ../../include/e_os.h rand.h
