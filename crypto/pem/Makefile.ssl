@@ -21,8 +21,6 @@ GENERAL=Makefile
 TEST=
 APPS=
 
-CTX_SIZE= ctx_size
-
 LIB=$(TOP)/libcrypto.a
 LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c $(ERRC).c
 
@@ -38,15 +36,7 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	pem.h lib
-
-pem.h: $(CTX_SIZE) pem.org
-	./$(CTX_SIZE) <pem.org >pem.new
-	if [ -f pem.h ]; then mv -f pem.h pem.old; fi
-	mv -f pem.new pem.h
-
-$(CTX_SIZE): $(CTX_SIZE).o
-	$(CC) $(CFLAGS) -o $(CTX_SIZE) $(CTX_SIZE).o
+all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
@@ -78,14 +68,14 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(CTX_SIZE).c $(LIBSRC)
+	$(MAKEDEPEND) $(INCLUDES) $(LIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f $(CTX_SIZE) *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors: $(ERRC).c
 

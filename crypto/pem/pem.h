@@ -121,36 +121,6 @@ extern "C" {
 #define PEM_STRING_SSL_SESSION	"SSL SESSION PARAMETERS"
 #define PEM_STRING_DSAPARAMS	"DSA PARAMETERS"
 
-#ifndef HEADER_ENVELOPE_H
-
-#define EVP_ENCODE_CTX_SIZE  92
-#define EVP_MD_SIZE  48
-#define EVP_MD_CTX_SIZE  152
-#define EVP_CIPHER_SIZE  28
-#define EVP_CIPHER_CTX_SIZE  4212
-#define EVP_MAX_MD_SIZE  20
-
-typedef struct evp_encode_ctx_st
-	{
-	char data[EVP_ENCODE_CTX_SIZE];
-	} EVP_ENCODE_CTX;
-
-typedef struct env_md_ctx_st
-	{
-	char data[EVP_MD_CTX_SIZE];
-	} EVP_MD_CTX;
-
-typedef struct evp_cipher_st
-	{
-	char data[EVP_CIPHER_SIZE];
-	} EVP_CIPHER;
-
-typedef struct evp_cipher_ctx_st
-	{
-	char data[EVP_CIPHER_CTX_SIZE];
-	} EVP_CIPHER_CTX;
-#endif
-
 
 typedef struct PEM_Encode_Seal_st
 	{
