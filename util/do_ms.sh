@@ -10,6 +10,8 @@ PATH=util:../util:$PATH
 perl util/mk1mf.pl VC-WIN16 dll >ms/w31dll.mak
 # perl util/mk1mf.pl VC-WIN32 >ms/nt.mak
 perl util/mk1mf.pl VC-WIN32 dll >ms/ntdll.mak
+perl util/mk1mf.pl Mingw32 >ms/mingw32.mak
+perl util/mk1mf.pl Mingw32-files >ms/mingw32f.mak
 
 perl util/mkdef.pl 16 libeay > ms/libeay16.def
 perl util/mkdef.pl 32 libeay > ms/libeay32.def
