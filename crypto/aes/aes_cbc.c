@@ -120,9 +120,11 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 		}
 		if (len) {
 			memcpy(tmp, in, AES_BLOCK_SIZE);
-			AES_decrypt(tmp, tmp, key);
+			AES_decrypt(tmp, out, key);
 			for(n=0; n < len; ++n)
-				out[n] = tmp[n] ^ ivec[n];
+				out[n] ^= ivec[n];
+			for(n=len; n < AES_BLOCK_SIZE; ++n)
+				out[n] = tmp[n];
 			memcpy(ivec, tmp, AES_BLOCK_SIZE);
 		}
 	}
