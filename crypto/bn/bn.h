@@ -341,12 +341,12 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
 #define BN_num_bytes(a)	((BN_num_bits(a)+7)/8)
 
-/* Note that BN_abs_is_word does not work reliably for w == 0 */
-#define BN_abs_is_word(a,w) (((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w)))
-#define BN_is_zero(a)       (((a)->top == 0) || BN_abs_is_word(a,0))
+/* Note that BN_abs_is_word didn't work reliably for w == 0 until 0.9.8 */
+#define BN_abs_is_word(a,w) ((((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w))) || \
+				(((w) == 0) && ((a)->top == 0)))
+#define BN_is_zero(a)       BN_abs_is_word(a,0)
 #define BN_is_one(a)        (BN_abs_is_word((a),1) && !(a)->neg)
-#define BN_is_word(a,w)     ((w) ? BN_abs_is_word((a),(w)) && !(a)->neg : \
-                                   BN_is_zero((a)))
+#define BN_is_word(a,w)     (BN_abs_is_word((a),(w)) && (!(w) || !(a)->neg))
 #define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
 
 #define BN_one(a)	(BN_set_word((a),1))
