@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Bugfixes in apps/x509.c: Avoid a memory leak; and don't use
+     perror when PEM_read_bio_X509_REQ fails, the error message must
+     be obtained from the error queue.
+     [Bodo Moeller]
+
   *) Avoid 'thread_hash' memory leak in crypto/err/err.c by freeing
      it in ERR_remove_state if appropriate, and change ERR_get_state
      accordingly to avoid race conditions (this is necessary because
