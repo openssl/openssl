@@ -24,7 +24,7 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758_cca aep atalla cryptodev cswift ncipher nuron sureware ubsec
+LIBNAMES= 4758_cca aep atalla cswift ncipher nuron sureware ubsec
 	
 LIBSRC=	e_4758_cca.c \
 	e_aep.c \
@@ -161,31 +161,31 @@ e_aep.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_aep.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_aep.c
 e_aep.o: e_aep_err.c e_aep_err.h vendor_defns/aep.h
 e_atalla.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_atalla.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-e_atalla.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_atalla.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_atalla.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_atalla.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_atalla.o: ../include/openssl/err.h ../include/openssl/lhash.h
-e_atalla.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_atalla.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-e_atalla.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_atalla.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_atalla.o: ../include/openssl/ui.h e_atalla.c e_atalla_err.c
-e_atalla.o: e_atalla_err.h vendor_defns/atalla.h
+e_atalla.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_atalla.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_atalla.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_atalla.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_atalla.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_atalla.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_atalla.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+e_atalla.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_atalla.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+e_atalla.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+e_atalla.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_atalla.c
+e_atalla.o: e_atalla_err.c e_atalla_err.h vendor_defns/atalla.h
 e_cswift.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_cswift.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-e_cswift.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_cswift.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_cswift.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_cswift.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_cswift.o: ../include/openssl/err.h ../include/openssl/lhash.h
-e_cswift.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_cswift.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-e_cswift.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_cswift.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_cswift.o: ../include/openssl/ui.h e_cswift.c e_cswift_err.c
-e_cswift.o: e_cswift_err.h vendor_defns/cswift.h
+e_cswift.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_cswift.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_cswift.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_cswift.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_cswift.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_cswift.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_cswift.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+e_cswift.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_cswift.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+e_cswift.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+e_cswift.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_cswift.c
+e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
 e_ncipher.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_ncipher.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 e_ncipher.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -213,17 +213,18 @@ e_ncipher.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 e_ncipher.o: e_ncipher.c e_ncipher_err.c e_ncipher_err.h
 e_ncipher.o: vendor_defns/hwcryptohook.h
 e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_nuron.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-e_nuron.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_nuron.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_nuron.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_nuron.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_nuron.o: ../include/openssl/err.h ../include/openssl/lhash.h
-e_nuron.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_nuron.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-e_nuron.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_nuron.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_nuron.o: ../include/openssl/ui.h e_nuron.c e_nuron_err.c e_nuron_err.h
+e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_nuron.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_nuron.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_nuron.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_nuron.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_nuron.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+e_nuron.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_nuron.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+e_nuron.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+e_nuron.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_nuron.c
+e_nuron.o: e_nuron_err.c e_nuron_err.h
 e_sureware.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_sureware.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 e_sureware.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -251,15 +252,15 @@ e_sureware.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 e_sureware.o: e_sureware.c e_sureware_err.c e_sureware_err.h
 e_sureware.o: vendor_defns/sureware.h
 e_ubsec.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_ubsec.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-e_ubsec.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-e_ubsec.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_ubsec.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_ubsec.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_ubsec.o: ../include/openssl/err.h ../include/openssl/lhash.h
-e_ubsec.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_ubsec.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-e_ubsec.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_ubsec.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_ubsec.o: ../include/openssl/ui.h e_ubsec.c e_ubsec_err.c e_ubsec_err.h
-e_ubsec.o: vendor_defns/hw_ubsec.h
+e_ubsec.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_ubsec.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_ubsec.o: ../include/openssl/dsa.h ../include/openssl/dso.h
+e_ubsec.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_ubsec.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_ubsec.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_ubsec.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+e_ubsec.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_ubsec.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+e_ubsec.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+e_ubsec.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_ubsec.c
+e_ubsec.o: e_ubsec_err.c e_ubsec_err.h vendor_defns/hw_ubsec.h
