@@ -173,6 +173,7 @@ static ASN1_STRING_TABLE tbl_standard[] = {
 {NID_friendlyName,		-1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK},
 {NID_name,			1, ub_name, DIRSTRING_TYPE, 0},
 {NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
+{NID_domainComponent,		1, -1, B_ASN1_IA5STRING, STABLE_NO_MASK},
 {NID_ms_csp_name,		-1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK}
 };
 
@@ -249,4 +250,38 @@ static void st_free(ASN1_STRING_TABLE *tbl)
 	if(tbl->flags & STABLE_FLAGS_MALLOC) OPENSSL_free(tbl);
 }
 
+
 IMPLEMENT_STACK_OF(ASN1_STRING_TABLE)
+
+#ifdef STRING_TABLE_TEST
+
+main()
+{
+	ASN1_STRING_TABLE *tmp;
+	int i, last_nid = -1;
+
+	for (tmp = tbl_standard, i = 0;
+		i < sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE); i++, tmp++)
+		{
+			if (tmp->nid < last_nid)
+				{
+				last_nid = 0;
+				break;
+				}
+			last_nid = tmp->nid;
+		}
+
+	if (last_nid != 0)
+		{
+		printf("Table order OK\n");
+		exit(0);
+		}
+
+	for (tmp = tbl_standard, i = 0;
+		i < sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE); i++, tmp++)
+			printf("Index %d, NID %d, Name=%s\n", i, tmp->nid,
+							OBJ_nid2ln(tmp->nid));
+
+}
+
+#endif
