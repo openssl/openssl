@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 20:09:16 $
+  ______________                           $Date: 2000/09/21 20:49:47 $
 
   DEVELOPMENT STATE
 
@@ -118,6 +118,7 @@
 			hpux64-parisc2-cc (B.11.11)		- success
 				Kevin Steves also mentions that "All the new
 				targets look good on my end with hp-ux 11.0."
+			MPE/iX-gcc				- success
 			FreeBSD (2.2.5)				- failed
 				Only having USE_TOD made speed.c issue an
 					error. [FIXED]
