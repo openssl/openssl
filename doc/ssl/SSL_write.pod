@@ -50,6 +50,17 @@ non-blocking socket, nothing is to be done, but select() can be used to check
 for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
 
+SSL_write() will only return with success, when the complete contents
+of B<buf> of length B<num> has been written. This default behaviour
+can be changed with the SSL_MODE_ENABLE_PARTIAL_WRITE option of
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>. When this flag is set,
+SSL_write() will also return with success, when a partial write has been
+successfully completed. In this case the SSL_write() operation is considered
+completed. The bytes are sent and a new SSL_write() operation with a new
+buffer (with the already sent bytes removed) must be started.
+A partial write is performed with the size of a message block, which is
+16kB for SSLv3/TLSv1.
+
 =head1 WARNING
 
 When an SSL_write() operation has to be repeated because of
