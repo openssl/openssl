@@ -956,7 +956,17 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		if (!BN_sub_word(r, 1)) goto err;
 		if (!BN_rshift1(r, r)) goto err;
 		/* r := a^r mod b */
+#if 0 /* These three variants should produce the same result, but with
+       * BN_mod_exp_recp or BN_mod_exp_simple, the test fails with
+       * the "Legendre symbol computation failed" error.
+       * (Platform: debug-solaris-sparcv9-gcc)
+       */
 		if (!BN_mod_exp(r, a, r, b, ctx)) goto err;
+#elsif 0
+		if (!BN_mod_exp_recp(r, a, r, b, ctx)) goto err;
+#else
+		if (!BN_mod_exp_simple(r, a, r, b, ctx)) goto err;
+#endif
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
