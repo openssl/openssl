@@ -5,6 +5,12 @@
 
  Changes between 0.9.1c and 0.9.2
 
+  *) Modify configure script 'Configure' to automatically create crypto/date.h
+     file under Win32 and also build pem.h from pem.org. New script
+     util/mkfiles.pl to create the MINFO file on environments that can't do a
+     'make files': perl util/mkfiles.pl >MINFO should work.
+     [Steve Henson]
+
   *) Major rework of DES function declarations, in the pursuit of correctness
      and purity. As a result, many evil casts evaporated, and some weirdness,
      too. You may find this causes warnings in your code. Zapping your evil
