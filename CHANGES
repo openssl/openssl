@@ -6,7 +6,7 @@
 
   *) Don't set the two most significant bits to one when generating a
      random number < q in the DSA library.
-	 [Ulf Möller]
+     [Ulf Möller]
 
   *) New SSL API mode 'SSL_MODE_AUTO_RETRY'.  This disables the default
      behaviour that SSL_read may result in SSL_ERROR_WANT_READ (even if
