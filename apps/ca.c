@@ -2046,29 +2046,25 @@ again2:
 	/* Build the correct Subject if no e-mail is wanted in the subject */
 	/* and add it later on because of the method extensions are added (altName) */
 	 
-	if (!email_dn)
+	if (email_dn)
+		dn_subject = subject;
+	else
 		{
-		if ((dn_subject=X509_NAME_new()) == NULL)
+		X509_NAME_ENTRY *tmpne;
+		/* Its best to dup the subject DN and then delete any email
+		 * addresses because this retains its structure.
+		 */
+		if (!(dn_subject = X509_NAME_dup(subject)))
 			{
 			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto err;
 			}
-
-		for (i=0; i<X509_NAME_entry_count(subject); i++)
+		while((i = X509_NAME_get_index_by_NID(dn_subject,
+					NID_pkcs9_emailAddress, -1) >= 0))
 			{
-			ne= X509_NAME_get_entry(subject,i);
-			obj=X509_NAME_ENTRY_get_object(ne);
-			nid=OBJ_obj2nid(obj);
-
-			str=X509_NAME_ENTRY_get_data(ne);
-
-			if (nid == NID_pkcs9_emailAddress) continue;
-
-			if (!X509_NAME_add_entry(dn_subject,ne, -1, 0))
-				{
-				BIO_printf(bio_err,"Memory allocation failure\n");
-				goto err;
-				}
+			tmpne = X509_NAME_get_entry(dn_subject, i);
+			X509_NAME_delete_entry(dn_subject, i);
+			X509_NAME_ENTRY_free(tmpne);
 			}
 		}
 
@@ -2327,6 +2323,8 @@ err:
 		X509_NAME_free(CAname);
 	if (subject != NULL)
 		X509_NAME_free(subject);
+	if ((dn_subject != NULL) && !email_dn)
+		X509_NAME_free(dn_subject);
 	if (tmptm != NULL)
 		ASN1_UTCTIME_free(tmptm);
 	if (ok <= 0)
