@@ -30,7 +30,7 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
-	    char *plaintext, unsigned char *ciphertext, int len)
+	    unsigned char *plaintext, unsigned char *ciphertext, int len)
     {
     const EVP_CIPHER *cipher = NULL;
     int ret = 1;
@@ -52,7 +52,7 @@ int AESTest(EVP_CIPHER_CTX *ctx,
     else
 	{
 	printf("Unknown mode: %s\n", amode);
-	ret = 0;
+	exit(1);
 	}
     if (ret)
 	{
@@ -201,6 +201,27 @@ int bin2hex(unsigned char *in, int len, char *out)
   return n2;
 }
 
+/* NB: this return the number of _bits_ read */
+int bint2bin(const char *in, int len, unsigned char *out)
+    {
+    int n;
+
+    memset(out,0,len);
+    for(n=0 ; n < len ; ++n)
+	if(in[n] == '1')
+	    out[n/8]|=(0x80 >> (n%8));
+    return len;
+    }
+
+int bin2bint(const unsigned char *in,int len,char *out)
+    {
+    int n;
+
+    for(n=0 ; n < len ; ++n)
+	out[n]=(in[n/8]&(0x80 >> (n%8))) ? '1' : '0';
+    return n;
+    }
+
 /*-----------------------------------------------*/
 
 void PrintValue(char *tag, unsigned char *val, int len)
@@ -219,12 +240,11 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     int olen;
 
     if(bitmode)
-	fprintf(rfp,"%s = %d\n",tag,val[0] ? 1 : 0);
+	olen=bin2bint(val,len,obuf);
     else
-	{
-	olen = bin2hex(val, len, obuf);
-	fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
-	}
+	olen=bin2hex(val,len,obuf);
+
+    fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
 #if VERBOSE
     printf("%s = %.*s\n", tag, olen, obuf);
 #endif
@@ -304,7 +324,7 @@ int do_mct(char *amode,
 		    { /* set up encryption */
 		    ret = AESTest(&ctx, amode, akeysz, key[i], NULL, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
-				  (char*)ptext[j], ctext[j], len);
+				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
 			memcpy(ptext[j+1], ctext[j], len);
 		    else
@@ -332,7 +352,7 @@ int do_mct(char *amode,
 		    {
 		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
-				  (char*)ptext[j], ctext[j], len);
+				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
 			memcpy(ptext[j+1], iv[i], len);
 		    else
@@ -358,7 +378,7 @@ int do_mct(char *amode,
 		    {
 		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
-				  (char*)ptext[j], ctext[j], len);
+				  ptext[j], ctext[j], len);
 		    }
 		else
 		    {
@@ -390,7 +410,7 @@ int do_mct(char *amode,
 		    if(i == 0)
 			ptext[0][0]<<=7;
 		    ret=AESTest(&ctx,amode,akeysz,key[i],iv[i],dir,
-				(char*)ptext[j], ctext[j], len);
+				ptext[j], ctext[j], len);
 		    }
 		else
 		    {
@@ -562,7 +582,7 @@ int proc_file(char *rqfile)
     int akeysz = 0;
     unsigned char iVec[20], aKey[40];
     int dir = -1, err = 0, step = 0;
-    char plaintext[2048];
+    unsigned char plaintext[2048];
     unsigned char ciphertext[2048];
     char *rp;
     EVP_CIPHER_CTX ctx;
@@ -748,8 +768,10 @@ int proc_file(char *rqfile)
 	    else
 		{
 		int nn = strlen(ibuf+12);
-		len = hex2bin((char*)ibuf+12, nn-1, 
-			      (unsigned char*)plaintext);
+		if(!strcmp(amode,"CFB1"))
+		    len=bint2bin(ibuf+12,nn-1,plaintext);
+		else
+		    len=hex2bin(ibuf+12, nn-1,plaintext);
 		if (len < 0)
 		    {
 		    printf("Invalid PLAINTEXT: %s", ibuf+12);
@@ -773,7 +795,8 @@ int proc_file(char *rqfile)
 		    ret = AESTest(&ctx, amode, akeysz, aKey, iVec, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
-		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,0);
+		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
+				!strcmp(amode,"CFB1"));
 		    }
 		step = 6;
 		}
@@ -788,7 +811,10 @@ int proc_file(char *rqfile)
 		}
 	    else
 		{
-		len = hex2bin((char*)ibuf+13, strlen(ibuf+13)-1, ciphertext);
+		if(!strcmp(amode,"CFB1"))
+		    len=bint2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
+		else
+		    len = hex2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
 		if (len < 0)
 		    {
 		    printf("Invalid CIPHERTEXT\n");
@@ -808,7 +834,7 @@ int proc_file(char *rqfile)
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
-				0);
+				!strcmp(amode,"CFB1"));
 		    }
 		step = 6;
 		}
