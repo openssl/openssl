@@ -2051,7 +2051,7 @@ int MAIN(int argc, char **argv)
 				}
 			else
 				{
-				ecdh_b[j]->group = ecdh_a[j]->group;
+				ecdh_b[j]->group = EC_GROUP_dup(ecdh_a[j]->group);
 
 				/* generate two ECDH key pairs */
 				if (!EC_KEY_generate_key(ecdh_a[j]) ||
