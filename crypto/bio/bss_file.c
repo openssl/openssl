@@ -215,9 +215,9 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->init=1;
 #if defined(OPENSSL_SYS_WINDOWS)
 		if (num & BIO_FP_TEXT)
-			_setmode(fd,_O_TEXT);
+			_setmode(fileno((FILE *)ptr),_O_TEXT);
 		else
-			_setmode(fd,_O_BINARY);
+			_setmode(fileno((FILE *)ptr),_O_BINARY);
 #elif defined(OPENSSL_SYS_MSDOS)
 		{
 		int fd = fileno((FILE*)ptr);
