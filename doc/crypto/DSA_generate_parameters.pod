@@ -62,7 +62,7 @@ B<callback(0, counter, cb_arg)> is called.
 =item *
 
 When a candidate for p has passed the test by trial division,
-B<callback(1, -1 , cb_arg)> is called.
+B<callback(1, -1, cb_arg)> is called.
 While it is tested by the Miller-Rabin primality test,
 B<callback(1, i, cb_arg)> is called in the outer loop
 (once for each witness that confirms that the candidate may be prime).
