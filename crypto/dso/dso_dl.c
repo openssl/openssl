@@ -234,9 +234,14 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 
 /* This function is identical to the one in dso_dlfcn.c, but as it is highly
  * unlikely that both the "dl" *and* "dlfcn" variants are being compiled at the
- * same time, there's no great duplicating the code. Figuring out an elegant way
- * to share one copy of the code would be more difficult and would not leave the
- * implementations independant. */
+ * same time, there's no great duplicating the code. Figuring out an elegant 
+ * way to share one copy of the code would be more difficult and would not
+ * leave the implementations independant. */
+#if defined(__hpux)
+static const char extension[] = ".sl";
+#else
+static const char extension[] = ".so";
+#endif
 static char *dl_name_converter(DSO *dso, const char *filename)
 	{
 	char *translated;
@@ -246,8 +251,8 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 	rsize = len + 1;
 	transform = (strstr(filename, "/") == NULL);
 		{
-		/* We will convert this to "%s.so" or "lib%s.so" */
-		rsize += 3;	/* The length of ".so" */
+		/* We will convert this to "%s.s?" or "lib%s.s?" */
+		rsize += strlen(extension);/* The length of ".s?" */
 		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
 			rsize += 3; /* The length of "lib" */
 		}
@@ -261,9 +266,9 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 	if(transform)
 		{
 		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-			sprintf(translated, "lib%s.so", filename);
+			sprintf(translated, "lib%s%s", filename, extension);
 		else
-			sprintf(translated, "%s.so", filename);
+			sprintf(translated, "%s%s", filename, extension);
 		}
 	else
 		sprintf(translated, "%s", filename);
