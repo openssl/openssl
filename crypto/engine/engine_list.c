@@ -224,28 +224,28 @@ ENGINE *ENGINE_get_first(void)
 	{
 	ENGINE *ret = NULL;
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if(engine_internal_check())
 		{
 		ret = engine_list_head;
 		if(ret)
 			ret->struct_ref++;
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 ENGINE *ENGINE_get_last(void)
 	{
 	ENGINE *ret = NULL;
 
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if(engine_internal_check())
 		{
 		ret = engine_list_tail;
 		if(ret)
 			ret->struct_ref++;
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 
@@ -259,12 +259,12 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->next;
 	e->struct_ref--;
 	if(ret)
 		ret->struct_ref++;
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 ENGINE *ENGINE_get_prev(ENGINE *e)
@@ -276,12 +276,12 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->prev;
 	e->struct_ref--;
 	if(ret)
 		ret->struct_ref++;
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
 
@@ -341,7 +341,7 @@ ENGINE *ENGINE_by_id(const char *id)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 		}
-	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if(!engine_internal_check())
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
 			ENGINE_R_INTERNAL_LIST_ERROR);
@@ -354,7 +354,7 @@ ENGINE *ENGINE_by_id(const char *id)
 			/* We need to return a structural reference */
 			iterator->struct_ref++;
 		}
-	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if(iterator == NULL)
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
 			ENGINE_R_NO_SUCH_ENGINE);
