@@ -407,15 +407,13 @@ do_svr3-shared:
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-		  SHARE_FLAG='-G'; \
-		  (${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
 		  for obj in `ar t lib$$i.a` ; do \
 		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
 		  done ; \
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
-			$${SHARE_FLAG} -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
 		libs="-l$$i $$libs"; \
@@ -433,13 +431,14 @@ do_svr5-shared:
 		fi; \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
 		  SHARE_FLAG='-G'; \
-		  (${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
+		  (${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
 		  for obj in `ar t lib$$i.a` ; do \
 		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
 		  done ; \
-		  set -x; ${CC} ${SHARED_LDFLAGS} \
+		  set -x; LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+			${CC} ${SHARED_LDFLAGS} \
 			$${SHARE_FLAG} -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
