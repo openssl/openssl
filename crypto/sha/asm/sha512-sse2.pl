@@ -23,7 +23,7 @@
 #		2.4GHz P4	1.4GHz AMD32	1.4GHz AMD64(*)
 # SHA256/gcc(*)	54		43		59
 # SHA512/gcc	17		23		92
-# SHA512/sse2	54(**)		55(**)
+# SHA512/sse2	61(**)		57(**)
 # SHA512/icc	26		28
 # SHA256/icc(*)	65		54
 #
@@ -81,9 +81,6 @@ sub SHA2_ROUND()
 	&movq	("mm4",&QWP($Foff,$W512));	# load f
 	&movq	("mm5",&QWP($Goff,$W512));	# load g
 	&movq	("mm6",&QWP($Hoff,$W512));	# load h
-	&movq	(&QWP($Foff,$W512),$E);		# f = e
-	&movq	(&QWP($Goff,$W512),"mm4");	# g = f
-	&movq	(&QWP($Hoff,$W512),"mm5");	# h = g
 
 	&movq	("mm2",$E);			# %mm2 is sliding right
 	&movq	("mm3",$E);			# %mm3 is sliding left
@@ -100,6 +97,10 @@ sub SHA2_ROUND()
 	&pxor	("mm7","mm2");
 	&pxor	("mm7","mm3");			# T1=Sigma1_512(e)
 
+	&movq	(&QWP($Foff,$W512),$E);		# f = e
+	&movq	(&QWP($Goff,$W512),"mm4");	# g = f
+	&movq	(&QWP($Hoff,$W512),"mm5");	# h = g
+
 	&pxor	("mm4","mm5");			# f^=g
 	&pand	("mm4",$E);			# f&=e
 	&pxor	("mm4","mm5");			# f^=g
@@ -108,9 +109,6 @@ sub SHA2_ROUND()
 	&movq	("mm2",&QWP($Boff,$W512));	# load b
 	&movq	("mm3",&QWP($Coff,$W512));	# load c
 	&movq	($E,&QWP($Doff,$W512));		# e = d
-	&movq	(&QWP($Boff,$W512),$A);		# b = a
-	&movq	(&QWP($Coff,$W512),"mm2");	# c = b
-	&movq	(&QWP($Doff,$W512),"mm3");	# d = c
 
 	&paddq	("mm7","mm6");			# T1+=h
 	&paddq	("mm7",&QWP(0,$K512,$kidx,8));	# T1+=K512[i]
@@ -132,12 +130,15 @@ sub SHA2_ROUND()
 	&pxor	("mm6","mm4");
 	&pxor	("mm6","mm5");			# T2=Sigma0_512(a)
 
-	&movq	("mm4","mm2");			# %mm4=b
-	&pand	("mm2",$A);			# b&=a
-	&pand	("mm4","mm3");			# %mm4&=c
-	&pand	("mm3",$A);			# c&=a
-	&pxor	("mm4","mm2");			# %mm4^=b&a
-	&pxor	("mm4","mm3");			# %mm4^=c&a
+	&movq	(&QWP($Boff,$W512),$A);		# b = a
+	&movq	(&QWP($Coff,$W512),"mm2");	# c = b
+	&movq	(&QWP($Doff,$W512),"mm3");	# d = c
+
+	&movq	("mm4",$A);			# %mm4=a
+	&por	($A,"mm3");			# a=a|c
+	&pand	("mm4","mm3");			# %mm4=a&c
+	&pand	($A,"mm2");			# a=(a|c)&b
+	&por	("mm4",$A);			# %mm4=(a&c)|((a|c)&b)
 	&paddq	("mm6","mm4");			# T2+=Maj(a,b,c)
 
 	&movq	($A,"mm7");			# a=T1
@@ -201,8 +202,6 @@ $func="sha512_block_sse2";
 	# available memory slots to fill. It will only relieve some
 	# pressure off memory bus...
 
-&align(8);
-&set_label("_1st_loop");		# 0-15
 	# flip input stream byte order...
 	&mov	("eax",&DWP(0,$data,$Widx,8));
 	&mov	("ebx",&DWP(4,$data,$Widx,8));
@@ -213,10 +212,24 @@ $func="sha512_block_sse2";
 	&mov	(&DWP(128+0,$W512,$Widx,8),"ebx");	# copy of W512[i]
 	&mov	(&DWP(128+4,$W512,$Widx,8),"eax");
 
+&align(8);
+&set_label("_1st_loop");		# 0-15
+	# flip input stream byte order...
+	&mov	("eax",&DWP(0+8,$data,$Widx,8));
+	&mov	("ebx",&DWP(4+8,$data,$Widx,8));
+	&bswap	("eax");
+	&bswap	("ebx");
+	&mov	(&DWP(0+8,$W512,$Widx,8),"ebx");	# W512[i]
+	&mov	(&DWP(4+8,$W512,$Widx,8),"eax");
+	&mov	(&DWP(128+0+8,$W512,$Widx,8),"ebx");	# copy of W512[i]
+	&mov	(&DWP(128+4+8,$W512,$Widx,8),"eax");
+&set_label("_1st_looplet");
 	&SHA2_ROUND($Widx,$Widx); &inc($Widx);
 
-&cmp	($Widx,16)
+&cmp	($Widx,15)
 &jl	(&label("_1st_loop"));
+&je	(&label("_1st_looplet"));	# playing similar trick on 2nd loop
+					# does not improve performance...
 
 	$Kidx = "ebx";			# start using %ebx as Kidx
 	&mov	($Kidx,$Widx);
