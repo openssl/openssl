@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_win.c,v 1.5 2004/07/20 22:39:13 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_win.c,v 1.6 2004/07/21 21:16:23 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -30,10 +30,15 @@
 #include "LPdir.h"
 #endif
 
-/* It seems like WinCE doesn't always have the "normal" mapping
-   macros.  We're opting for the UNICODE ones. */
+/* We're most likely overcautious here, but let's reserve for
+    broken WinCE headers and explicitly opt for UNICODE call.
+    Keep in mind that our WinCE builds are compiled with -DUNICODE
+    [as well as -D_UNICODE]. */
 #if defined(LP_SYS_WINCE) && !defined(FindFirstFile)
 # define FindFirstFile FindFirstFileW
+#endif
+#if defined(LP_SYS_WINCE) && !defined(FindFirstFile)
+# define FindNextFile FindNextFileW
 #endif
 
 struct LP_dir_context_st
