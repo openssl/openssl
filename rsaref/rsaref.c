@@ -283,6 +283,11 @@ int padding;
 	int i,outlen= -1;
 	RSArefPrivateKey RSAkey;
 
+	if (padding != RSA_PKCS1_PADDING)
+		{
+		RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+		goto err;
+	}
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
 	if ((i=RSAPrivateEncrypt(to,&outlen,from,len,&RSAkey)) != 0)
@@ -328,9 +333,12 @@ int padding;
 	RSARandomState rnd;
 	unsigned char buf[16];
 
-	if (padding == RSA_PKCS1_OAEP_PADDING) 
+	if (padding != RSA_PKCS1_PADDING && padding != RSA_SSLV23_PADDING) 
+		{
+		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;
-
+		}
+	
 	R_RandomInit(&rnd);
 	R_GetRandomBytesNeeded((unsigned int *)&i,&rnd);
 	while (i > 0)

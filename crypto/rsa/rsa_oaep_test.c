@@ -1,8 +1,10 @@
 /* test vectors from p1ovect1.txt */
 
 #include <stdio.h>
+#include <string.h>
 #include "e_os.h"
 #include "rsa.h"
+#include "err.h"
 
 #define SetKey \
   key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \
@@ -182,6 +184,15 @@ int key3(RSA *key, unsigned char *c)
     SetKey;
     }
 
+int pad_unknown()
+{
+    unsigned long l;
+    while ((l = ERR_get_error()) != 0)
+      if (ERR_GET_REASON(l) == RSA_R_UNKNOWN_PADDING_TYPE)
+	return(1);
+    return(0);
+}
+
 int main() 
     {
     int err=0;
@@ -194,11 +205,6 @@ int main()
     int plen;
     int clen = 0;
     int num;
-
-#ifdef RSAref
-    printf("No OAEP support with RSAref - skipping test\n");
-    return 0;
-#endif
 
     plen = sizeof(ptext_ex) - 1;
 
@@ -218,10 +224,36 @@ int main()
 	}
 
 	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
-				 RSA_PKCS1_OAEP_PADDING);
+				 RSA_PKCS1_PADDING);
 	if (num != clen)
 	    {
-	    printf("Encryption failed!\n");
+	    printf("PKCS#1 v1.5 encryption failed!\n");
+	    err=1;
+	    goto oaep;
+	    }
+  
+	num = RSA_private_decrypt(num, ctext, ptext, key,
+				  RSA_PKCS1_PADDING);
+	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
+	    {
+	    printf("PKCS#1 v1.5 decryption failed!\n");
+	    err=1;
+	    }
+	else
+	    printf("PKCS #1 v1.5 encryption/decryption ok\n");
+
+    oaep:
+	ERR_clear_error();
+	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
+				 RSA_PKCS1_OAEP_PADDING);
+	if (num == -1 && pad_unknown())
+	    {
+	    printf("No OAEP support\n");
+	    goto next;
+	    }
+	if (num != clen)
+	    {
+	    printf("OAEP encryption failed!\n");
 	    err=1;
 	    goto next;
 	    }
@@ -230,14 +262,14 @@ int main()
 				  RSA_PKCS1_OAEP_PADDING);
 	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
 	    {
-	    printf("Decryption failed!\n");
+	    printf("OAEP decryption failed!\n");
 	    err=1;
 	    goto next;
 	    }
   
 	if (memcmp(ctext, ctext_ex, num) == 0)
 	    {
-	    printf("Vector %d passed!\n", v);
+	    printf("OAEP test vector %d passed!\n", v);
 	    goto next;
 	    }
     
@@ -249,12 +281,11 @@ int main()
 
 	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
 	    {
-	    printf("Decryption failed!\n");
+	    printf("OAEP decryption (test vector data) failed!\n");
 	    err=1;
 	    }
 	else
-	    printf("Encryption/decryption successful!\n");
-
+	    printf("OAEP encryption/decryption ok\n");
     next:
 	RSA_free(key);
 	}
