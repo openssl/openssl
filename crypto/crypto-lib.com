@@ -174,7 +174,7 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,tmdiff,cpt_err"
+$ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
