@@ -48,6 +48,12 @@
 
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
+  *) Add various sanity checks to asn1_get_length() to reject
+     the ASN1 length bytes if they exceed sizeof(long), will appear
+     negative or the content length exceeds the length of the
+     supplied buffer.
+     [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
+
   *) Fix cipher selection routines: ciphers without encryption had no flags
      for the cipher strength set and where therefore not handled correctly
      by the selection routines (PR #130).
@@ -79,7 +85,7 @@
   *) Add various sanity checks to asn1_get_length() to reject
      the ASN1 length bytes if they exceed sizeof(long), will appear
      negative or the content length exceeds the length of the
-     supplied buffer.
+     supplied buffer. (CAN-2002-0659)
      [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
 
   *) Assertions for various potential buffer overflows, not known to
@@ -184,8 +190,8 @@
      value is 0.
      [Richard Levitte]
 
-  *) [In 0.9.6c-engine release:]
-     Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
+  *) [In 0.9.6d-engine release:]
+     Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
   *) Add the configuration target linux-s390x.
