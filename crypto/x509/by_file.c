@@ -285,7 +285,8 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 		if(itmp->x509) {
 			X509_STORE_add_cert(ctx->store_ctx, itmp->x509);
 			count++;
-		} else if(itmp->crl) {
+		}
+		if(itmp->crl) {
 			X509_STORE_add_crl(ctx->store_ctx, itmp->crl);
 			count++;
 		}
