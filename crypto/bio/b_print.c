@@ -652,8 +652,8 @@ fmtfp(
             (caps ? "0123456789ABCDEF"
               : "0123456789abcdef")[intpart % 10];
         intpart = (intpart / 10);
-    } while (intpart && (iplace < (int)sizeof(iplace)));
-    if (iplace == sizeof iplace)
+    } while (intpart && (iplace < (int)sizeof(iconvert)));
+    if (iplace == sizeof iconvert)
         iplace--;
     iconvert[iplace] = 0;
 
@@ -664,7 +664,7 @@ fmtfp(
               : "0123456789abcdef")[fracpart % 10];
         fracpart = (fracpart / 10);
     } while (fplace < max);
-    if (fplace == sizeof fplace)
+    if (fplace == sizeof fconvert)
         fplace--;
     fconvert[fplace] = 0;
 
