@@ -171,13 +171,16 @@ typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 
 #include <lmcons.h>
 #include <lmstats.h>
-#if 0 /* Some compilers use LMSTR, others (VC6, for example) use LPTSTR.
-       * This part is disabled until a fix is found.
+#if 1 /* The NET API is Unicode only.  It requires the use of the UNICODE
+       * macro.  When UNICODE is defined LPTSTR becomes LPWSTR.  LMSTR was
+       * was added to the Platform SDK to allow the NET API to be used in
+       * non-Unicode applications provided that Unicode strings were still
+       * used for input.  LMSTR is defined as LPWSTR.
        */
 typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
-        (LMSTR, LMSTR, DWORD, DWORD, LPBYTE*);
+        (LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE*);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
-#endif /* 0 */
+#endif /* 1 */
 
 int RAND_poll(void)
 {
@@ -191,12 +194,20 @@ int RAND_poll(void)
 	CRYPTACQUIRECONTEXT acquire = 0;
 	CRYPTGENRANDOM gen = 0;
 	CRYPTRELEASECONTEXT release = 0;
-#if 0 /* This part is disabled until a fix for the problem with the
-       * definition of NETSTATGET is found.
+#if 1 /* There was previously a problem with NETSTATGET.  Currently, this
+       * section is still experimental, but if all goes well, this conditional
+       * will be removed
        */
 	NETSTATGET netstatget = 0;
 	NETFREE netfree = 0;
-#endif /* 0 */
+#endif /* 1 */
+
+	/* Determine the OS version we are on so we can turn off things 
+	 * that do not work properly.
+	 */
+        OSVERSIONINFO osverinfo ;
+        osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+        GetVersionEx( &osverinfo ) ;
 
 	/* load functions dynamically - not available on all systems */
 	advapi = LoadLibrary("ADVAPI32.DLL");
@@ -204,9 +215,9 @@ int RAND_poll(void)
 	user = LoadLibrary("USER32.DLL");
 	netapi = LoadLibrary("NETAPI32.DLL");
 
-#if 0 /* This part is disabled until a fix for the problem with the
-       * definition of NETSTATGET is found.  Also, note that VC6 doesn't
-       * understand strings starting with L".
+#if 1 /* There was previously a problem with NETSTATGET.  Currently, this
+       * section is still experimental, but if all goes well, this conditional
+       * will be removed
        */
 	if (netapi)
 		{
@@ -217,57 +228,68 @@ int RAND_poll(void)
 	if (netstatget && netfree)
 		{
 		LPBYTE outbuf;
-		/* NetStatisticsGet() is a Unicode only function */
+		/* NetStatisticsGet() is a Unicode only function
+ 		 * STAT_WORKSTATION_0 contains 45 fields and STAT_SERVER_0
+		 * contains 17 fields.  We treat each field as a source of
+		 * one byte of entropy.
+                 */
+
 		if (netstatget(NULL, L"LanmanWorkstation", 0, 0, &outbuf) == 0)
 			{
-			RAND_add(outbuf, sizeof(STAT_WORKSTATION_0), 0);
+			RAND_add(outbuf, sizeof(STAT_WORKSTATION_0), 45);
 			netfree(outbuf);
 			}
 		if (netstatget(NULL, L"LanmanServer", 0, 0, &outbuf) == 0)
 			{
-			RAND_add(outbuf, sizeof(STAT_SERVER_0), 0);
+			RAND_add(outbuf, sizeof(STAT_SERVER_0), 17);
 			netfree(outbuf);
 			}
 		}
 
 	if (netapi)
 		FreeLibrary(netapi);
-#endif /* 0 */
+#endif /* 1 */
  
-#if 0 /* It appears like this can cause an exception deep within ADVAPI32.DLL
-       * at random times.  Reported by Jeffrey Altman.
-       */
-	/* Read Performance Statistics from NT/2000 registry */
-	/* The size of the performance data can vary from call to call */
-	/* so we must guess the size of the buffer to use and increase */
-	/* its size if we get an ERROR_MORE_DATA return instead of     */
-	/* ERROR_SUCCESS.                                              */
-	{
-	LONG   rc=ERROR_MORE_DATA;
-	char * buf=NULL;
-	DWORD bufsz=0;
-	DWORD length;
-
-	while (rc == ERROR_MORE_DATA)
+        /* It appears like this can cause an exception deep within ADVAPI32.DLL
+         * at random times on Windows 2000.  Reported by Jeffrey Altman.  
+         * Only use it on NT.
+	 */
+        if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+		osverinfo.dwMajorVersion < 5)
 		{
-		buf = realloc(buf,bufsz+8192);
-		if (!buf)
-			break;
-		bufsz += 8192;
+		/* Read Performance Statistics from NT/2000 registry
+		 * The size of the performance data can vary from call
+		 * to call so we must guess the size of the buffer to use
+		 * and increase its size if we get an ERROR_MORE_DATA
+		 * return instead of ERROR_SUCCESS.
+		 */
+		LONG   rc=ERROR_MORE_DATA;
+		char * buf=NULL;
+		DWORD bufsz=0;
+		DWORD length;
 
-		length = bufsz;
-		rc = RegQueryValueEx(HKEY_PERFORMANCE_DATA, "Global",
-			NULL, NULL, buf, &length);
+		while (rc == ERROR_MORE_DATA)
+			{
+			buf = realloc(buf,bufsz+8192);
+			if (!buf)
+				break;
+			bufsz += 8192;
+
+			length = bufsz;
+			rc = RegQueryValueEx(HKEY_PERFORMANCE_DATA, "Global",
+				NULL, NULL, buf, &length);
+			}
+		if (rc == ERROR_SUCCESS)
+			{
+                        /* For entropy count assume only least significant
+			 * byte of each DWORD is random.
+                         */
+			RAND_add(&length, sizeof(length), 0);
+			RAND_add(buf, length, length / 4.0);
+			}
+		if (buf)
+			free(buf);
 		}
-	if (rc == ERROR_SUCCESS)
-		{
-		RAND_add(&length, sizeof(length), 0);
-		RAND_add(buf, length, 0);
-		}
-	if (buf)
-		free(buf);
-	}
-#endif /* 0 */
 
 	if (advapi)
 		{
@@ -282,12 +304,13 @@ int RAND_poll(void)
 	if (acquire && gen && release)
 		{
 		/* poll the CryptoAPI PRNG */
+                /* The CryptoAPI returns sizeof(buf) bytes of randomness */
 		if (acquire(&hProvider, 0, 0, PROV_RSA_FULL,
 			CRYPT_VERIFYCONTEXT))
 			{
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
-				RAND_add(buf, sizeof(buf), 0);
+				RAND_add(buf, sizeof(buf), sizeof(buf));
 #ifdef DEBUG
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
@@ -300,7 +323,7 @@ int RAND_poll(void)
 			{
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
-				RAND_add(buf, sizeof(buf), 0);
+				RAND_add(buf, sizeof(buf), sizeof(buf));
 #ifdef DEBUG
 				printf("randomness from PROV_INTEL_SEC\n");
 #endif
@@ -321,7 +344,7 @@ int RAND_poll(void)
 
 	/* process ID */
 	w = GetCurrentProcessId();
-	RAND_add(&w, sizeof(w), 0);
+	RAND_add(&w, sizeof(w), 1);
 
 	if (user)
 		{
@@ -334,41 +357,37 @@ int RAND_poll(void)
 		queue = (GETQUEUESTATUS) GetProcAddress(user, "GetQueueStatus");
 
 		if (win)
-		{
+			{
 			/* window handle */
 			h = win();
 			RAND_add(&h, sizeof(h), 0);
-		}
-
+			}
 		if (cursor)
 			{
 			/* unfortunately, its not safe to call GetCursorInfo()
 			 * on NT4 even though it exists in SP3 (or SP6) and
 			 * higher.
 			 */
-			OSVERSIONINFO osverinfo ;
-			osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-			GetVersionEx( &osverinfo ) ;
-
 			if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
 				osverinfo.dwMajorVersion < 5)
 				cursor = 0;
 			}
-
 		if (cursor)
 			{
 			/* cursor position */
+                        /* assume 2 bytes of entropy */
 			CURSORINFO ci;
 			ci.cbSize = sizeof(CURSORINFO);
 			if (cursor(&ci))
-				RAND_add(&ci, ci.cbSize, 0);
+				RAND_add(&ci, ci.cbSize, 2);
 			}
 
 		if (queue)
 			{
 			/* message queue status */
+                        /* assume 1 byte of entropy */
 			w = queue(QS_ALLEVENTS);
-			RAND_add(&w, sizeof(w), 0);
+			RAND_add(&w, sizeof(w), 1);
 			}
 
 		FreeLibrary(user);
@@ -406,7 +425,7 @@ int RAND_poll(void)
 		MODULEENTRY32 m;
 
 		snap = (CREATETOOLHELP32SNAPSHOT)
-		  GetProcAddress(kernel, "CreateToolhelp32Snapshot");
+			GetProcAddress(kernel, "CreateToolhelp32Snapshot");
 		heap_first = (HEAP32FIRST) GetProcAddress(kernel, "Heap32First");
 		heap_next = (HEAP32NEXT) GetProcAddress(kernel, "Heap32Next");
 		heaplist_first = (HEAP32LIST) GetProcAddress(kernel, "Heap32ListFirst");
@@ -425,11 +444,18 @@ int RAND_poll(void)
 			!= NULL)
 			{
 			/* heap list and heap walking */
+                        /* HEAPLIST32 contains 3 fields that will change with
+                         * each entry.  Consider each field a source of 1 byte
+                         * of entropy.
+                         * HEAPENTRY32 contains 5 fields that will change with 
+                         * each entry.  Consider each field a source of 1 byte
+                         * of entropy.
+                         */
 			hlist.dwSize = sizeof(HEAPLIST32);		
 			if (heaplist_first(handle, &hlist))
 				do
 					{
-					RAND_add(&hlist, hlist.dwSize, 0);
+					RAND_add(&hlist, hlist.dwSize, 3);
 					hentry.dwSize = sizeof(HEAPENTRY32);
 					if (heap_first(&hentry,
 						hlist.th32ProcessID,
@@ -438,34 +464,46 @@ int RAND_poll(void)
 						int entrycnt = 50;
 						do
 							RAND_add(&hentry,
-								hentry.dwSize, 0);
+								hentry.dwSize, 5);
 						while (heap_next(&hentry)
 							&& --entrycnt > 0);
 						}
 					} while (heaplist_next(handle,
 						&hlist));
-
+			
 			/* process walking */
+                        /* PROCESSENTRY32 contains 9 fields that will change
+                         * with each entry.  Consider each field a source of
+                         * 1 byte of entropy.
+                         */
 			p.dwSize = sizeof(PROCESSENTRY32);
 			if (process_first(handle, &p))
 				do
-					RAND_add(&p, p.dwSize, 0);
+					RAND_add(&p, p.dwSize, 9);
 				while (process_next(handle, &p));
-			
+
 			/* thread walking */
+                        /* THREADENTRY32 contains 6 fields that will change
+                         * with each entry.  Consider each field a source of
+                         * 1 byte of entropy.
+                         */
 			t.dwSize = sizeof(THREADENTRY32);
 			if (thread_first(handle, &t))
 				do
-					RAND_add(&t, t.dwSize, 0);
+					RAND_add(&t, t.dwSize, 6);
 				while (thread_next(handle, &t));
-			
+
 			/* module walking */
+                        /* MODULEENTRY32 contains 9 fields that will change
+                         * with each entry.  Consider each field a source of
+                         * 1 byte of entropy.
+                         */
 			m.dwSize = sizeof(MODULEENTRY32);
 			if (module_first(handle, &m))
 				do
-					RAND_add(&m, m.dwSize, 1);
+					RAND_add(&m, m.dwSize, 9);
 				while (module_next(handle, &m));
-			
+
 			CloseHandle(handle);
 			}
 
