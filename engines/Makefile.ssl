@@ -149,7 +149,7 @@ e_4758_cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 e_4758_cca.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 e_4758_cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 e_4758_cca.o: e_4758_cca.c e_4758_cca_err.c e_4758_cca_err.h
-e_4758_cca.o: vendor_defns/e_4758_cca.h
+e_4758_cca.o: vendor_defns/hw_4758_cca.h
 e_aep.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_aep.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_aep.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -286,4 +286,4 @@ e_ubsec.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 e_ubsec.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_ubsec.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 e_ubsec.o: ../include/openssl/ui.h e_ubsec.c e_ubsec_err.c e_ubsec_err.h
-e_ubsec.o: vendor_defns/e_ubsec.h
+e_ubsec.o: vendor_defns/hw_ubsec.h
