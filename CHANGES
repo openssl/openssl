@@ -5,6 +5,14 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Bugfix: In test/testenc, don't test "openssl <cipher>" for
+     ciphers that were excluded, e.g. by -DNO_IDEA.  Also, test
+     all available cipers including rc5, which was forgotten until now.
+     In order to let the testing shell script know which algorithms
+     are available, a new (up to now undocumented) command
+     "openssl list-cipher-commands" is used.
+     [Bodo Moeller]
+
   *) Bugfix: s_client occasionally would sleep in select() when
      it should have checked SSL_pending() first.
      [Bodo Moeller]

@@ -254,6 +254,10 @@ end:
 	EXIT(ret);
 	}
 
+#define LIST_STANDARD_COMMANDS "list-standard-commands"
+#define LIST_MESSAGE_DIGEST_COMMANDS "list-message-digest-commands"
+#define LIST_CIPHER_COMMANDS "list-cipher-commands"
+
 static int do_cmd(prog,argc,argv)
 LHASH *prog;
 int argc;
@@ -276,6 +280,28 @@ char *argv[];
 		(strcmp(argv[0],"bye") == 0))
 		{
 		ret= -1;
+		goto end;
+		}
+	else if ((strcmp(argv[0],LIST_STANDARD_COMMANDS) == 0) ||
+		(strcmp(argv[0],LIST_MESSAGE_DIGEST_COMMANDS) == 0) ||
+		(strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0))
+		{
+		int list_type;
+		BIO *bio_stdout;
+
+		if (strcmp(argv[0],LIST_STANDARD_COMMANDS) == 0)
+			list_type = FUNC_TYPE_GENERAL;
+		else if (strcmp(argv[0],LIST_MESSAGE_DIGEST_COMMANDS) == 0)
+			list_type = FUNC_TYPE_MD;
+		else /* strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0 */
+			list_type = FUNC_TYPE_CIPHER;
+		bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
+		
+		for (fp=functions; fp->name != NULL; fp++)
+			if (fp->type == list_type)
+				BIO_printf(bio_stdout, "%s\n", fp->name);
+		BIO_free(bio_stdout);
+		ret=0;
 		goto end;
 		}
 	else
