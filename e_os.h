@@ -84,8 +84,11 @@ extern "C" {
 
 #if defined(__MWERKS__) && defined(macintosh)
 # if macintosh==1
-#  define MAC_OS_pre_X
-#  define NO_SYS_TYPES_H
+#  ifndef MAC_OS_GUSI_SOURCE
+#    define MAC_OS_pre_X
+#    define NO_SYS_TYPES_H
+#  endif
+#  define NO_SYS_PARAM_H
 #  define NO_CHMOD
 #  define NO_SYSLOG
 #  undef  DEVRANDOM
@@ -249,6 +252,7 @@ extern "C" {
                                      __VMS_EXIT |= 0x10000000; \
 				     return(n); } while(0)
 #    endif
+#    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
 #    ifdef OPENSSL_UNISTD
@@ -307,7 +311,7 @@ extern HINSTANCE _hInstance;
 
 #  else
 
-#    ifndef VMS
+#    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
 #    include <sys/time.h> /* Needed under linux for FD_XXX */

@@ -127,7 +127,7 @@
 #undef  SGTTY
 #endif
 
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(VMS) && !defined(MSDOS) && !defined(MAC_OS_pre_X)
+#if !defined(TERMIO) && !defined(TERMIOS) && !defined(VMS) && !defined(MSDOS) && !defined(MAC_OS_pre_X) && !defined(MAC_OS_GUSI_SOURCE)
 #undef  TERMIOS
 #undef  TERMIO
 #define SGTTY
@@ -178,7 +178,7 @@ struct IOSB {
 	};
 #endif
 
-#ifdef MAC_OS_pre_X
+#if defined(MAC_OS_pre_X) || defined(MAC_OS_GUSI_SOURCE)
 /*
  * This one needs work. As a matter of fact the code is unoperational
  * and this is only a trick to get it compiled.
