@@ -286,6 +286,8 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 	if(i < 0) return 0;
 	single = OCSP_resp_get0(bs, i);
 	i = OCSP_single_get0_status(single, reason, revtime, thisupd, nextupd);
-	if(reason) *reason = i;
+	if(status) *status = i;
 	return 1;
 	}
+
+

@@ -417,6 +417,19 @@ int OCSP_request_sign(OCSP_REQUEST   *req,
 int OCSP_response_status(OCSP_RESPONSE *resp);
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
+int OCSP_resp_count(OCSP_BASICRESP *bs);
+OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
+int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
+int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
+				ASN1_GENERALIZEDTIME **revtime,
+				ASN1_GENERALIZEDTIME **thisupd,
+				ASN1_GENERALIZEDTIME **nextupd);
+int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
+				int *reason,
+				ASN1_GENERALIZEDTIME **revtime,
+				ASN1_GENERALIZEDTIME **thisupd,
+				ASN1_GENERALIZEDTIME **nextupd);
+
 int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
 
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
