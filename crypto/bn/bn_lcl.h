@@ -73,19 +73,6 @@ extern "C" {
 #define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL	(32) /* 32 */
 #define BN_MONT_CTX_SET_SIZE_WORD		(64) /* 32 */
 
-#if 0
-#ifndef BN_MUL_COMBA
-/* #define bn_mul_comba8(r,a,b)	bn_mul_normal(r,a,8,b,8) */
-/* #define bn_mul_comba4(r,a,b)	bn_mul_normal(r,a,4,b,4) */
-#endif
-
-#ifndef BN_SQR_COMBA
-/* This is probably faster than using the C code - I need to check */
-#define bn_sqr_comba8(r,a)	bn_mul_normal(r,a,8,a,8)
-#define bn_sqr_comba4(r,a)	bn_mul_normal(r,a,4,a,4)
-#endif
-#endif
-
 #if !defined(NO_ASM) && !defined(NO_INLINE_ASM) && !defined(PEDANTIC)
 /*
  * BN_UMULT_HIGH section.
@@ -140,15 +127,12 @@ extern "C" {
 #define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
 #define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
-/* These are used for internal error checking and are not normally used */
+/* This is used for internal error checking and is not normally used */
 #ifdef BN_DEBUG
-#define bn_check_top(a) \
-	{ if (((a)->top < 0) || ((a)->top > (a)->max)) \
-		{ char *nullp=NULL; *nullp='z'; } }
-#define bn_check_num(a) if ((a) < 0) { char *nullp=NULL; *nullp='z'; }
+# include <assert.h>
+# define bn_check_top(a) assert ((a)->top >= 0 && (a)->top <= (a)->max);
 #else
-#define bn_check_top(a)
-#define bn_check_num(a)
+# define bn_check_top(a)
 #endif
 
 /* This macro is to add extra stuff for development checking */
@@ -181,8 +165,6 @@ extern "C" {
 	(r)->flags|=BN_FLG_STATIC_DATA; \
 	bn_set_max(r); \
 	}
-
-/* #define bn_expand(n,b) ((((b)/BN_BITS2) <= (n)->max)?(n):bn_expand2((n),(b))) */
 
 #ifdef BN_LLONG
 #define mul_add(r,a,w,c) { \
@@ -313,21 +295,7 @@ extern "C" {
 	(c)=h&BN_MASK2; \
 	(r)=l&BN_MASK2; \
 	}
-
-#endif
-
-OPENSSL_EXTERN int bn_limit_bits;
-OPENSSL_EXTERN int bn_limit_num;        /* (1<<bn_limit_bits) */
-/* Recursive 'low' limit */
-OPENSSL_EXTERN int bn_limit_bits_low;
-OPENSSL_EXTERN int bn_limit_num_low;    /* (1<<bn_limit_bits_low) */
-/* Do modified 'high' part calculation' */
-OPENSSL_EXTERN int bn_limit_bits_high;
-OPENSSL_EXTERN int bn_limit_num_high;   /* (1<<bn_limit_bits_high) */
-OPENSSL_EXTERN int bn_limit_bits_mont;
-OPENSSL_EXTERN int bn_limit_num_mont;   /* (1<<bn_limit_bits_mont) */
-
-BIGNUM *bn_expand2(BIGNUM *b, int bits);
+#endif /* !BN_LLONG */
 
 void bn_mul_normal(BN_ULONG *r,BN_ULONG *a,int na,BN_ULONG *b,int nb);
 void bn_mul_comba8(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);

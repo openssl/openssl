@@ -78,21 +78,23 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 	unsigned int neg,zero;
 	BN_ULONG ln,lo,*p;
 
-#ifdef BN_COUNT
-printf(" bn_mul_recursive %d * %d\n",n2,n2);
-#endif
-#ifdef BN_MUL_COMBA
-/*	if (n2 == 4)
+# ifdef BN_COUNT
+	printf(" bn_mul_recursive %d * %d\n",n2,n2);
+# endif
+# ifdef BN_MUL_COMBA
+#  if 0
+	if (n2 == 4)
 		{
 		bn_mul_comba4(r,a,b);
 		return;
 		}
-	else */ if (n2 == 8)
+#  endif
+	if (n2 == 8)
 		{
 		bn_mul_comba8(r,a,b);
 		return; 
 		}
-#endif
+# endif /* BN_MUL_COMBA */
 	if (n2 < BN_MUL_RECURSIVE_SIZE_NORMAL)
 		{
 		/* This should not happen */
@@ -136,7 +138,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 		break;
 		}
 
-#ifdef BN_MUL_COMBA
+# ifdef BN_MUL_COMBA
 	if (n == 4)
 		{
 		if (!zero)
@@ -158,7 +160,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 		bn_mul_comba8(&(r[n2]),&(a[n]),&(b[n]));
 		}
 	else
-#endif
+# endif /* BN_MUL_COMBA */
 		{
 		p= &(t[n2*2]);
 		if (!zero)
@@ -222,9 +224,9 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	unsigned int c1;
 	BN_ULONG ln,lo,*p;
 
-#ifdef BN_COUNT
-printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
-#endif
+# ifdef BN_COUNT
+	printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
+# endif
 	if (n < 8)
 		{
 		i=tn+n;
@@ -236,14 +238,17 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 	bn_sub_words(t,      a,      &(a[n]),n); /* + */
 	bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
 
-/*	if (n == 4)
+# if 0
+	if (n == 4)
 		{
 		bn_mul_comba4(&(t[n2]),t,&(t[n]));
 		bn_mul_comba4(r,a,b);
 		bn_mul_normal(&(r[n2]),&(a[n]),tn,&(b[n]),tn);
 		memset(&(r[n2+tn*2]),0,sizeof(BN_ULONG)*(n2-tn*2));
 		}
-	else */ if (n == 8)
+	else
+# endif
+	if (n == 8)
 		{
 		bn_mul_comba8(&(t[n2]),t,&(t[n]));
 		bn_mul_comba8(r,a,b);
@@ -345,9 +350,9 @@ void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 	{
 	int n=n2/2;
 
-#ifdef BN_COUNT
-printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
-#endif
+# ifdef BN_COUNT
+	printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
+# endif
 
 	bn_mul_recursive(r,a,b,n,&(t[0]));
 	if (n >= BN_MUL_LOW_RECURSIVE_SIZE_NORMAL)
@@ -379,9 +384,9 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	int neg,oneg,zero;
 	BN_ULONG ll,lc,*lp,*mp;
 
-#ifdef BN_COUNT
-printf(" bn_mul_high %d * %d\n",n2,n2);
-#endif
+# ifdef BN_COUNT
+	printf(" bn_mul_high %d * %d\n",n2,n2);
+# endif
 	n=n2/2;
 
 	/* Calculate (al-ah)*(bh-bl) */
@@ -424,14 +429,14 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	oneg=neg;
 	/* t[10] = (a[0]-a[1])*(b[1]-b[0]) */
 	/* r[10] = (a[1]*b[1]) */
-#ifdef BN_MUL_COMBA
+# ifdef BN_MUL_COMBA
 	if (n == 8)
 		{
 		bn_mul_comba8(&(t[0]),&(r[0]),&(r[n]));
 		bn_mul_comba8(r,&(a[n]),&(b[n]));
 		}
 	else
-#endif
+# endif
 		{
 		bn_mul_recursive(&(t[0]),&(r[0]),&(r[n]),n,&(t[n2]));
 		bn_mul_recursive(r,&(a[n]),&(b[n]),n,&(t[n2]));
@@ -555,19 +560,23 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 			}
 		}
 	}
-#endif
+#endif /* BN_RECURSION */
 
 int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int top,al,bl;
 	BIGNUM *rr;
+	int ret = 0;
+#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
+	int i;
+#endif
 #ifdef BN_RECURSION
 	BIGNUM *t;
-	int i,j,k;
+	int j,k;
 #endif
 
 #ifdef BN_COUNT
-printf("BN_mul %d * %d\n",a->top,b->top);
+	printf("BN_mul %d * %d\n",a->top,b->top);
 #endif
 
 	bn_check_top(a);
@@ -594,113 +603,91 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 		rr = r;
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
-	if (al == bl)
+	i = al-bl;
+#endif
+#ifdef BN_MUL_COMBA
+	if (i == 0)
 		{
-#  ifdef BN_MUL_COMBA
-/*		if (al == 4)
+# if 0
+		if (al == 4)
 			{
 			if (bn_wexpand(rr,8) == NULL) goto err;
 			rr->top=8;
 			bn_mul_comba4(rr->d,a->d,b->d);
 			goto end;
 			}
-		else */ if (al == 8)
+# endif
+		if (al == 8)
 			{
 			if (bn_wexpand(rr,16) == NULL) goto err;
 			rr->top=16;
 			bn_mul_comba8(rr->d,a->d,b->d);
 			goto end;
 			}
-		else
-#  endif
-#ifdef BN_RECURSION
-		if (al < BN_MULL_SIZE_NORMAL)
-#endif
-			{
-			if (bn_wexpand(rr,top) == NULL) goto err;
-			rr->top=top;
-			bn_mul_normal(rr->d,a->d,al,b->d,bl);
-			goto end;
-			}
-#  ifdef BN_RECURSION
-		goto symmetric;
-#  endif
 		}
-#endif
+#endif /* BN_MUL_COMBA */
 #ifdef BN_RECURSION
-	else if ((al < BN_MULL_SIZE_NORMAL) || (bl < BN_MULL_SIZE_NORMAL))
+	if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL))
 		{
-		if (bn_wexpand(rr,top) == NULL) goto err;
-		rr->top=top;
-		bn_mul_normal(rr->d,a->d,al,b->d,bl);
-		goto end;
-		}
-	else
-		{
-		i=(al-bl);
-		if ((i ==  1) && !BN_get_flags(b,BN_FLG_STATIC_DATA))
+		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
 			bn_wexpand(b,al);
 			b->d[bl]=0;
 			bl++;
-			goto symmetric;
+			i--;
 			}
-		else if ((i ==  -1) && !BN_get_flags(a,BN_FLG_STATIC_DATA))
+		else if (i == -1 && !BN_get_flags(a,BN_FLG_STATIC_DATA))
 			{
 			bn_wexpand(a,bl);
 			a->d[al]=0;
 			al++;
-			goto symmetric;
+			i++;
+			}
+		if (i == 0)
+			{
+			/* symmetric and > 4 */
+			/* 16 or larger */
+			j=BN_num_bits_word((BN_ULONG)al);
+			j=1<<(j-1);
+			k=j+j;
+			t = BN_CTX_get(ctx);
+			if (al == j) /* exact multiple */
+				{
+				bn_wexpand(t,k*2);
+				bn_wexpand(rr,k*2);
+				bn_mul_recursive(rr->d,a->d,b->d,al,t->d);
+				}
+			else
+				{
+				bn_wexpand(a,k);
+				bn_wexpand(b,k);
+				bn_wexpand(t,k*4);
+				bn_wexpand(rr,k*4);
+				for (i=a->top; i<k; i++)
+					a->d[i]=0;
+				for (i=b->top; i<k; i++)
+					b->d[i]=0;
+				bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
+				}
+			rr->top=top;
+			goto end;
 			}
 		}
-#endif
+#endif /* BN_RECURSION */
 
-	/* asymmetric and >= 4 */ 
 	if (bn_wexpand(rr,top) == NULL) goto err;
 	rr->top=top;
 	bn_mul_normal(rr->d,a->d,al,b->d,bl);
 
-#ifdef BN_RECURSION
-	if (0)
-		{
-symmetric:
-		/* symmetric and > 4 */
-		/* 16 or larger */
-		j=BN_num_bits_word((BN_ULONG)al);
-		j=1<<(j-1);
-		k=j+j;
-		t = BN_CTX_get(ctx);
-		if (al == j) /* exact multiple */
-			{
-			bn_wexpand(t,k*2);
-			bn_wexpand(rr,k*2);
-			bn_mul_recursive(rr->d,a->d,b->d,al,t->d);
-			}
-		else
-			{
-			bn_wexpand(a,k);
-			bn_wexpand(b,k);
-			bn_wexpand(t,k*4);
-			bn_wexpand(rr,k*4);
-			for (i=a->top; i<k; i++)
-				a->d[i]=0;
-			for (i=b->top; i<k; i++)
-				b->d[i]=0;
-			bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
-			}
-		rr->top=top;
-		}
-#endif
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 end:
 #endif
 	bn_fix_top(rr);
 	if (r != rr) BN_copy(r,rr);
-	BN_CTX_end(ctx);
-	return(1);
+	ret=1;
 err:
 	BN_CTX_end(ctx);
-	return(0);
+	return(ret);
 	}
 
 void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
@@ -708,7 +695,7 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 	BN_ULONG *rr;
 
 #ifdef BN_COUNT
-printf(" bn_mul_normal %d * %d\n",na,nb);
+	printf(" bn_mul_normal %d * %d\n",na,nb);
 #endif
 
 	if (na < nb)
@@ -742,7 +729,7 @@ printf(" bn_mul_normal %d * %d\n",na,nb);
 void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	{
 #ifdef BN_COUNT
-printf(" bn_mul_low_normal %d * %d\n",n,n);
+	printf(" bn_mul_low_normal %d * %d\n",n,n);
 #endif
 	bn_mul_words(r,a,n,b[0]);
 
@@ -760,4 +747,3 @@ printf(" bn_mul_low_normal %d * %d\n",n,n);
 		b+=4;
 		}
 	}
-

@@ -2226,3 +2226,4 @@ PEM_write_X509_REQ_NEW                  2251
 BIO_callback_ctrl                       2252
 RAND_egd                                2253
 RAND_status                             2254
+bn_dump1                                2255

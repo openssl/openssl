@@ -1,5 +1,5 @@
 All assember in this directory are just version of the file
-crypto/bn/bn_mulw.c.
+crypto/bn/bn_asm.c.
 
 Quite a few of these files are just the assember output from gcc since on 
 quite a few machines they are 2 times faster than the system compiler.
@@ -14,13 +14,6 @@ On the 2 alpha C compilers I had access to, it was not possible to do
 64b x 64b -> 128b calculations (both long and the long long data types
 were 64 bits).  So the hand assember gives access to the 128 bit result and
 a 2 times speedup :-).
-
-The x86xxxx.obj files are the assembled version of x86xxxx.asm files.
-I had such a hard time finding a macro assember for Microsoft, I decided to
-include the object file to save others the hassle :-).
-
-I have also included uu encoded versions of the .obj incase they get
-trashed.
 
 There are 2 versions of assember for the HP PA-RISC.
 pa-risc.s is the origional one which works fine.

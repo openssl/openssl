@@ -71,14 +71,14 @@ const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
  * 7 - 128 == 4096
  * 8 - 256 == 8192
  */
-OPENSSL_GLOBAL int bn_limit_bits=0;
-OPENSSL_GLOBAL int bn_limit_num=8;        /* (1<<bn_limit_bits) */
-OPENSSL_GLOBAL int bn_limit_bits_low=0;
-OPENSSL_GLOBAL int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
-OPENSSL_GLOBAL int bn_limit_bits_high=0;
-OPENSSL_GLOBAL int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
-OPENSSL_GLOBAL int bn_limit_bits_mont=0;
-OPENSSL_GLOBAL int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
+static int bn_limit_bits=0;
+static int bn_limit_num=8;        /* (1<<bn_limit_bits) */
+static int bn_limit_bits_low=0;
+static int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
+static int bn_limit_bits_high=0;
+static int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
+static int bn_limit_bits_mont=0;
+static int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
 
 void BN_set_params(int mult, int high, int low, int mont)
 	{
@@ -305,10 +305,10 @@ BIGNUM *BN_new(void)
 	}
 
 /* This is an internal function that should not be used in applications.
- * It ensures that 'b' has enough room for a 'bits' bit number.  It is
- * mostly used by the various BIGNUM routines.  If there is an error,
- * NULL is returned. if not, 'b' is returned.
- */
+ * It ensures that 'b' has enough room for a 'words' word number number.
+ * It is mostly used by the various BIGNUM routines. If there is an error,
+ * NULL is returned. If not, 'b' is returned. */
+
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
 	BN_ULONG *A,*a;

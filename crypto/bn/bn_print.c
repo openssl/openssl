@@ -278,7 +278,6 @@ err:
 	}
 
 #ifndef NO_BIO
-
 #ifndef NO_FP_API
 int BN_print_fp(FILE *fp, const BIGNUM *a)
 	{
@@ -319,5 +318,17 @@ int BN_print(BIO *bp, const BIGNUM *a)
 end:
 	return(ret);
 	}
+#endif
 
+#ifdef BN_DEBUG
+void bn_dump1(FILE *o, const char *a, BN_ULONG *b,int n)
+	{
+	int i;
+	fprintf(o, "%s=", a);
+	for (i=n;i>=0;i--)
+		{
+		fprintf(o, "[%08lX]", b[i]);
+		}
+	fprintf(o, "\n");
+	}
 #endif

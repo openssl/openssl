@@ -59,14 +59,11 @@ all:	lib
 bn_prime.h: bn_prime.pl
 	$(PERL) bn_prime.pl >bn_prime.h
 
-knuth: bn_knuth.c
-	cc -pg -I.. -I../../include bn_knuth.c -o knuth $(LIB) #../../../libefence.a
-
-knuth.fast: bn_knuth.c
-	cc -pg -fast -I.. -I../../include bn_knuth.c -o knuth $(LIB) #../../../libefence.a
-
-divtest: divtest.c
+divtest: divtest.c ../../libcrypto.a
 	cc -I../../include divtest.c -o divtest ../../libcrypto.a
+
+bnbug: bnbug.c ../../libcrypto.a
+	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
