@@ -121,6 +121,10 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 #endif
 
+/* RAND stuff */
+static int cswift_rand_bytes(unsigned char *buf, int num);
+static int cswift_rand_status(void);
+
 /* The definitions for control commands specific to this engine */
 #define CSWIFT_CMD_SO_PATH		ENGINE_CMD_BASE
 static const ENGINE_CMD_DEFN cswift_cmd_defns[] = {
@@ -183,6 +187,18 @@ static DH_METHOD cswift_dh =
 	};
 #endif
 
+static RAND_METHOD cswift_random =
+    {
+    /* "CryptoSwift RAND method", */
+    NULL,
+    cswift_rand_bytes,
+    NULL,
+    NULL,
+    cswift_rand_bytes,
+    cswift_rand_status,
+    };
+
+
 /* Constants used when creating the ENGINE */
 static const char *engine_cswift_id = "cswift";
 static const char *engine_cswift_name = "CryptoSwift hardware engine support";
@@ -208,7 +224,7 @@ static int bind_helper(ENGINE *e)
 #ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(e, &cswift_dh) ||
 #endif
-			!ENGINE_set_destroy_function(e, cswift_destroy) ||
+			!ENGINE_set_RAND(e, &cswift_random) ||
 			!ENGINE_set_init_function(e, cswift_init) ||
 			!ENGINE_set_finish_function(e, cswift_finish) ||
 			!ENGINE_set_ctrl_function(e, cswift_ctrl) ||
@@ -904,6 +920,60 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 #endif
+
+/* Random bytes are good */
+static int cswift_rand_bytes(unsigned char *buf, int num)
+{
+	SW_CONTEXT_HANDLE hac;
+	SW_STATUS swrc;
+	SW_LARGENUMBER largenum;
+	size_t nbytes = 0;
+	int acquired = 0;
+	int to_return = 0; /* assume failure */
+
+	if (!get_context(&hac))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_CTRL, CSWIFT_R_UNIT_FAILURE);
+		goto err;
+	}
+	acquired = 1;
+
+	while (nbytes < num)
+	{
+		/* tell CryptoSwift how many bytes we want and where we want it.
+		 * Note: - CryptoSwift cannot do more than 4096 bytes at a time.
+		 *       - CryptoSwift can only do multiple of 32-bits. */
+		largenum.value = (SW_BYTE *) buf + nbytes;
+		if (4096 > num - nbytes)
+			largenum.nbytes = num - nbytes;
+		else
+			largenum.nbytes = 4096;
+
+		swrc = p_CSwift_SimpleRequest(hac, SW_CMD_RAND, NULL, 0, &largenum, 1);
+		if (swrc != SW_OK)
+		{
+			char tmpbuf[20];
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL, CSWIFT_R_REQUEST_FAILED);
+			sprintf(tmpbuf, "%ld", swrc);
+			ERR_add_error_data(2, "CryptoSwift error number is ", tmpbuf);
+			goto err;
+		}
+
+		nbytes += largenum.nbytes;
+	}
+	to_return = 1;  /* success */
+
+err:
+	if (acquired)
+		release_context(hac);
+	return to_return;
+}
+
+static int cswift_rand_status(void)
+{
+	return 1;
+}
+
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
  * shared-library. */
