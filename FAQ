@@ -152,7 +152,8 @@ Use MD5 to check that a tarball from a mirror site is identical:
    md5sum TARBALL | awk '{print $1;}' | cmp - TARBALL.md5
 
 You can check authenticity using pgp or gpg. You need the OpenSSL team
-member public key used to sign it (download it from a key server). Then
+member public key used to sign it (download it from a key server, see a
+list of keys at <URL: http://www.openssl.org/about/>). Then
 just do:
 
    pgp TARBALL.asc
