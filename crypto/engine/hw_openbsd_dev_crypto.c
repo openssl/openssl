@@ -57,6 +57,8 @@
 #include <openssl/evp.h>
 #include "engine_int.h"
 
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+
 static void load_ciphers(ENGINE *e)
     {
     ENGINE_add_cipher(e,EVP_dev_crypto_des_ede3_cbc());
@@ -78,3 +80,4 @@ ENGINE *ENGINE_openbsd_dev_crypto(void)
     return engine;
     }
 
+#endif
