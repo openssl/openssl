@@ -10,13 +10,20 @@
 
  You need Perl for Win32.  Unless you will build on Cygwin, you will need
  ActiveState Perl, available from http://www.activestate.com/ActivePerl.
- For Cygwin users, there's more info in the Cygwin section.
 
  and one of the following C compilers:
 
   * Visual C++
   * Borland C
-  * GNU C (MinGW or Cygwin)
+  * GNU C (Cygwin or MinGW)
+
+ If you are compiling from a tarball or a CVS snapshot then the Win32 files
+ may well be not up to date. This may mean that some "tweaking" is required to
+ get it all to work. See the trouble shooting section later on for if (when?)
+ it goes wrong.
+
+ Visual C++
+ ----------
 
  If you want to compile in the assembly language routines with Visual C++ then
  you will need an assembler. This is worth doing because it will result in
@@ -38,14 +45,6 @@
  may also work. It is available from many places, see for example:
  http://www.kernel.org/pub/software/devel/nasm/binaries/win32/
  The NASM binary nasmw.exe needs to be installed anywhere on your PATH.
-
- If you are compiling from a tarball or a CVS snapshot then the Win32 files
- may well be not up to date. This may mean that some "tweaking" is required to
- get it all to work. See the trouble shooting section later on for if (when?)
- it goes wrong.
-
- Visual C++
- ----------
 
  Firstly you should run Configure:
 
@@ -120,13 +119,71 @@
  * Run make:
    > make -f bcb.mak
 
+ GNU C (Cygwin)
+ --------------
+
+ Cygwin provides a bash shell and GNU tools environment running
+ on NT 4.0, Windows 9x, Windows ME, Windows 2000, and Windows XP.
+ Consequently, a make of OpenSSL with Cygwin is closer to a GNU
+ bash environment such as Linux than to other the other Win32
+ makes.
+
+ Cygwin implements a Posix/Unix runtime system (cygwin1.dll).
+ It is also possible to create Win32 binaries that only use the
+ Microsoft C runtime system (msvcrt.dll or crtdll.dll) using
+ MinGW. MinGW can be used in the Cygwin development environment
+ or in a standalone setup as described in the following section.
+
+ To build OpenSSL using Cygwin:
+
+ * Install Cygwin (see http://cygwin.com/)
+
+ * Install Perl and ensure it is in the path. Both Cygwin perl
+   (5.6.1-2 or newer) and ActivePerl work.
+
+ * Run the Cygwin bash shell
+
+ * $ tar zxvf openssl-x.x.x.tar.gz
+   $ cd openssl-x.x.x
+
+   To build the Cygwin version of OpenSSL:
+
+   $ ./config
+   [...]
+   $ make
+   [...]
+   $ make test
+   $ make install
+
+   This will create a default install in /usr/local/ssl.
+
+   To build the MinGW version (native Windows) in Cygwin:
+
+   $ ./Configure mingw
+   [...]
+   $ make
+   [...]
+   $ make test
+   $ make install
+
+ Cygwin Notes:
+
+ "make test" and normal file operations may fail in directories
+ mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin
+ stripping of carriage returns. To avoid this ensure that a binary
+ mount is used, e.g. mount -b c:\somewhere /home.
+
+ "bc" is not provided in older Cygwin distribution.  This causes a
+ non-fatal error in "make test" but is otherwise harmless.  If
+ desired and needed, GNU bc can be built with Cygwin without change.
+
  GNU C (MinGW)
  -------------
 
  * Compiler installation:
 
    MinGW is available from http://www.mingw.org. Run the installer and
-   set the MinGW \bin directory to the PATH in "System Properties" or
+   set the MinGW bin directory to the PATH in "System Properties" or
    autoexec.bat.
 
  * Compile OpenSSL:
@@ -148,49 +205,6 @@
 
    > cd out
    > ..\ms\test
-
- GNU C (Cygwin)
- --------------
-
- Cygwin provides a bash shell and GNU tools environment running
- on NT 4.0, Windows 9x, Windows ME, Windows 2000, and Windows XP.
- Consequently, a make of OpenSSL with Cygwin is closer to a GNU
- bash environment such as Linux than to other W32 makes which are
- based on a single makefile approach. Cygwin implements Posix/Unix
- calls through cygwin1.dll, and is contrasted to MingW which links
- dynamically to msvcrt.dll or crtdll.dll.
-
- To build OpenSSL using Cygwin:
-
- * Install Cygwin (see http://cygwin.com/)
-
- * Install Perl and ensure it is in the path (recent Cygwin perl 
-   (version 5.6.1-2 of the latter has been reported to work) or
-   ActivePerl)
-
- * Run the Cygwin bash shell
-
- * $ tar zxvf openssl-x.x.x.tar.gz
-   $ cd openssl-x.x.x
-   $ ./config
-   [...]
-   $ make
-   [...]
-   $ make test
-   $ make install
-
- This will create a default install in /usr/local/ssl.
-
- Cygwin Notes:
-
- "make test" and normal file operations may fail in directories
- mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin
- stripping of carriage returns. To avoid this ensure that a binary
- mount is used, e.g. mount -b c:\somewhere /home.
-
- "bc" is not provided in older Cygwin distribution.  This causes a
- non-fatal error in "make test" but is otherwise harmless.  If
- desired and needed, GNU bc can be built with Cygwin without change.
 
 
  Installation

@@ -4,7 +4,9 @@
 
  Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
 
-  *) 
+  *) Target "mingw" now allows native Windows code to be generated in
+     the Cygwin environment as well as with the MinGW compiler.
+     [Ulf Moeller] 
 
  Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
 
