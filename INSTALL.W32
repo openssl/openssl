@@ -44,19 +44,19 @@
  > perl Configure VC-WIN32
 
  Next you need to build the Makefiles and optionally the assembly language
- files.
+ files:
 
- If you are using MASM then run:
+ - If you are using MASM then run:
 
- > ms\do_masm
+   > ms\do_masm
 
- If you are using NASM then run:
+ - If you are using NASM then run:
 
- > ms\do_nasm
+   > ms\do_nasm
 
- If you don't want to use the assembly language files at all then run:
+ - If you don't want to use the assembly language files at all then run:
 
- > ms\do_ms
+   > ms\do_ms
 
  If you get errors about things not having numbers assigned then check the
  troubleshooting section: you probably wont be able to compile it as it
