@@ -92,6 +92,7 @@ static int aep_destroy(ENGINE *e);
 
 static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR hConnection);
 static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection);
+static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection);
 static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use);
 
 /* BIGNUM stuff */
@@ -950,7 +951,7 @@ static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
 	return AEP_R_OK;
 	}
 
-static int aep_close_connection(unsigned int hConnection)
+static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
 	{
 	int count;
 
