@@ -917,7 +917,7 @@ end:
 		bio_c_out=NULL;
 		}
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 

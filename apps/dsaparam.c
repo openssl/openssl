@@ -372,7 +372,7 @@ end:
 	if (out != NULL) BIO_free_all(out);
 	if (dsa != NULL) DSA_free(dsa);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void MS_CALLBACK dsa_cb(int p, int n, void *arg)

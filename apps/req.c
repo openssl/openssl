@@ -1075,7 +1075,7 @@ end:
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
 	apps_shutdown();
-	EXIT(ex);
+	OPENSSL_EXIT(ex);
 	}
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,

@@ -333,6 +333,6 @@ end:
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #endif

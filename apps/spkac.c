@@ -295,5 +295,5 @@ end:
 	EVP_PKEY_free(pkey);
 	if(passin) OPENSSL_free(passin);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

@@ -292,7 +292,7 @@ err:
 	if (out)
 		BIO_free_all(out);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 
@@ -505,6 +505,6 @@ err:
 int MAIN(int argc, char **argv)
 	{
 	fputs("Program not available.\n", stderr)
-	EXIT(1);
+	OPENSSL_EXIT(1);
 	}
 #endif

@@ -203,6 +203,6 @@ end:
 	if (ssl != NULL) SSL_free(ssl);
 	if (STDout != NULL) BIO_free_all(STDout);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 

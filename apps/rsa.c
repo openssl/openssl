@@ -369,7 +369,7 @@ end:
 	if(passin) OPENSSL_free(passin);
 	if(passout) OPENSSL_free(passout);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #else /* !OPENSSL_NO_RSA */
 

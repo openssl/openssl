@@ -516,5 +516,5 @@ end:
 	sk_pop_free(post_cmds, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

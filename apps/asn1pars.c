@@ -332,6 +332,6 @@ end:
 	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 

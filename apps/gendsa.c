@@ -246,6 +246,6 @@ end:
 	if (dsa != NULL) DSA_free(dsa);
 	if(passout) OPENSSL_free(passout);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #endif

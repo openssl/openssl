@@ -213,5 +213,5 @@ err:
 	if (out)
 		BIO_free_all(out);
 	apps_shutdown();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

@@ -899,7 +899,7 @@ end:
 		SSL_CTX_free(ctx);
 		}
 
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 }
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
