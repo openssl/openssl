@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add an implementation of SSL_add_dir_cert_subjects_to_stack for Win32.
+     [Massimo Santin via Richard Levitte]
+
   +) Major restructuring to the underlying ENGINE code. This includes
      reduction of linker bloat, separation of pure "ENGINE" manipulation
      (initialisation, etc) from functionality dealing with implementations
