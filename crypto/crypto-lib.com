@@ -1325,7 +1325,7 @@ $   CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
 $!
 $!  Show user the result
 $!
-$   WRITE SYS$OUTPUT "Main C Compiling Command: ",CC
+$   WRITE/SYMBOL SYS$OUTPUT "Main C Compiling Command: ",CC
 $!
 $!  Else The User Entered An Invalid Arguement.
 $!
@@ -1356,7 +1356,7 @@ $ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE
 $!
 $!  Show user the result
 $!
-$   WRITE SYS$OUTPUT "Main MACRO Compiling Command: ",MACRO
+$   WRITE/SYMBOL SYS$OUTPUT "Main MACRO Compiling Command: ",MACRO
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!

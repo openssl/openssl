@@ -887,7 +887,7 @@ $   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $!
 $!  Show user the result
 $!
-$   WRITE SYS$OUTPUT "Main Compiling Command: ",CC
+$   WRITE/SYMBOL SYS$OUTPUT "Main Compiling Command: ",CC
 $!
 $!  Else The User Entered An Invalid Arguement.
 $!

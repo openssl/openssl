@@ -1086,7 +1086,7 @@ $ CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $!
 $! Show user the result
 $!
-$ WRITE SYS$OUTPUT "Main Compiling Command: ",CC
+$ WRITE/SYMBOL SYS$OUTPUT "Main Compiling Command: ",CC
 $!
 $! Special Threads For OpenVMS v7.1 Or Later
 $!
