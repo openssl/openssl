@@ -117,7 +117,7 @@ struct dsa_st
 	/* This first variable is used to pick up errors where
 	 * a DSA is passed instead of of a EVP_PKEY */
 	int pad;
-	int version;
+	long version;
 	int write_params;
 	BIGNUM *p;
 	BIGNUM *q;	/* == 20 */
