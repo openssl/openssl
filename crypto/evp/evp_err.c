@@ -85,6 +85,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_PKEY_GET1_DSA,0),	"EVP_PKEY_get1_DSA"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_GET1_RSA,0),	"EVP_PKEY_get1_RSA"},
 {ERR_PACK(0,EVP_F_EVP_PKEY_NEW,0),	"EVP_PKEY_new"},
+{ERR_PACK(0,EVP_F_EVP_RIJNDAEL,0),	"EVP_RIJNDAEL"},
 {ERR_PACK(0,EVP_F_EVP_SIGNFINAL,0),	"EVP_SignFinal"},
 {ERR_PACK(0,EVP_F_EVP_VERIFYFINAL,0),	"EVP_VerifyFinal"},
 {ERR_PACK(0,EVP_F_PKCS5_PBE_KEYIVGEN,0),	"PKCS5_PBE_keyivgen"},
@@ -96,7 +97,9 @@ static ERR_STRING_DATA EVP_str_functs[]=
 
 static ERR_STRING_DATA EVP_str_reasons[]=
 	{
+{EVP_R_BAD_BLOCK_LENGTH                  ,"bad block length"},
 {EVP_R_BAD_DECRYPT                       ,"bad decrypt"},
+{EVP_R_BAD_KEY_LENGTH                    ,"bad key length"},
 {EVP_R_BN_DECODE_ERROR                   ,"bn decode error"},
 {EVP_R_BN_PUBKEY_ERROR                   ,"bn pubkey error"},
 {EVP_R_CIPHER_PARAMETER_ERROR            ,"cipher parameter error"},

@@ -591,3 +591,13 @@ enterprises 1466 344	: dcobject		: dcObject
 !Cname zlib-compression
 1 1 1 1 666 2		: ZLIB			: zlib compression
 
+# Rijndael
+			: RIJNDAEL-ECB-K128-B128: rijndael-ecb-k128-b128
+			: RIJNDAEL-ECB-K192-B128: rijndael-ecb-k192-b128
+			: RIJNDAEL-ECB-K256-B128: rijndael-ecb-k256-b128
+			: RIJNDAEL-ECB-K128-B192: rijndael-ecb-k128-b192
+			: RIJNDAEL-ECB-K192-B192: rijndael-ecb-k192-b192
+			: RIJNDAEL-ECB-K256-B192: rijndael-ecb-k256-b192
+			: RIJNDAEL-ECB-K128-B256: rijndael-ecb-k128-b256
+			: RIJNDAEL-ECB-K192-B256: rijndael-ecb-k192-b256
+			: RIJNDAEL-ECB-K256-B256: rijndael-ecb-k256-b256

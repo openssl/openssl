@@ -1796,3 +1796,39 @@
 #define NID_zlib_compression		125
 #define OBJ_zlib_compression		1L,1L,1L,1L,666L,2L
 
+#define SN_rijndael_ecb_k128_b128		"RIJNDAEL-ECB-K128-B128"
+#define LN_rijndael_ecb_k128_b128		"rijndael-ecb-k128-b128"
+#define NID_rijndael_ecb_k128_b128		396
+
+#define SN_rijndael_ecb_k192_b128		"RIJNDAEL-ECB-K192-B128"
+#define LN_rijndael_ecb_k192_b128		"rijndael-ecb-k192-b128"
+#define NID_rijndael_ecb_k192_b128		397
+
+#define SN_rijndael_ecb_k256_b128		"RIJNDAEL-ECB-K256-B128"
+#define LN_rijndael_ecb_k256_b128		"rijndael-ecb-k256-b128"
+#define NID_rijndael_ecb_k256_b128		398
+
+#define SN_rijndael_ecb_k128_b192		"RIJNDAEL-ECB-K128-B192"
+#define LN_rijndael_ecb_k128_b192		"rijndael-ecb-k128-b192"
+#define NID_rijndael_ecb_k128_b192		399
+
+#define SN_rijndael_ecb_k192_b192		"RIJNDAEL-ECB-K192-B192"
+#define LN_rijndael_ecb_k192_b192		"rijndael-ecb-k192-b192"
+#define NID_rijndael_ecb_k192_b192		400
+
+#define SN_rijndael_ecb_k256_b192		"RIJNDAEL-ECB-K256-B192"
+#define LN_rijndael_ecb_k256_b192		"rijndael-ecb-k256-b192"
+#define NID_rijndael_ecb_k256_b192		401
+
+#define SN_rijndael_ecb_k128_b256		"RIJNDAEL-ECB-K128-B256"
+#define LN_rijndael_ecb_k128_b256		"rijndael-ecb-k128-b256"
+#define NID_rijndael_ecb_k128_b256		402
+
+#define SN_rijndael_ecb_k192_b256		"RIJNDAEL-ECB-K192-B256"
+#define LN_rijndael_ecb_k192_b256		"rijndael-ecb-k192-b256"
+#define NID_rijndael_ecb_k192_b256		403
+
+#define SN_rijndael_ecb_k256_b256		"RIJNDAEL-ECB-K256-B256"
+#define LN_rijndael_ecb_k256_b256		"rijndael-ecb-k256-b256"
+#define NID_rijndael_ecb_k256_b256		404
+

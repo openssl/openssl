@@ -308,6 +308,11 @@ bad:
 				LN_rc5_cfb64, LN_rc5_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","rc5", LN_rc5_cbc);
 #endif
+#ifndef NO_RIJNDAEL
+			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s\n",
+				   LN_rijndael_ecb_k128_b128,"","","","");
+#endif
+			
 			goto end;
 			}
 		argc--;

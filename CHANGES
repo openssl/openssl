@@ -26,6 +26,9 @@
      this case.
      [Steve Henson]
 
+  *) Added the beginnings of Rijndael support.
+     [Ben Laurie]
+
   *) Fix for bug in DirectoryString mask setting. Add support for
      X509_NAME_print_ex() in 'req' and X509_print_ex() function
      to allow certificate printing to more controllable, additional

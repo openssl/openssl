@@ -109,6 +109,9 @@
 #ifndef NO_MDC2
 #include <openssl/mdc2.h>
 #endif
+#ifndef NO_RIJNDAEL
+#include <openssl/rijndael.h>
+#endif
 
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
@@ -116,8 +119,8 @@
 #define EVP_CAST5_KEY_SIZE		16
 #define EVP_RC5_32_12_16_KEY_SIZE	16
 #define EVP_MAX_MD_SIZE			(16+20) /* The SSLv3 md5+sha1 type */
-#define EVP_MAX_KEY_LENGTH		24
-#define EVP_MAX_IV_LENGTH		8
+#define EVP_MAX_KEY_LENGTH		32
+#define EVP_MAX_IV_LENGTH		16
 
 #define PKCS5_SALT_LEN			8
 /* Default PKCS#5 iteration count */
@@ -398,7 +401,8 @@ struct evp_cipher_ctx_st
 
 	void *app_data;		/* application stuff */
 	int key_len;		/* May change for variable length cipher */
-	union	{
+	union
+		{
 #ifndef NO_RC4
 		struct
 			{
@@ -425,22 +429,27 @@ struct evp_cipher_ctx_st
 		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
 #endif
 #ifndef NO_RC2
-		struct {
+		struct
+			{
 			int key_bits;	/* effective key bits */
 			RC2_KEY ks;/* key schedule */
-		} rc2;
+			} rc2;
 #endif
 #ifndef NO_RC5
-		struct {
+		struct
+			{
 			int rounds;	/* number of rounds */
 			RC5_32_KEY ks;/* key schedule */
-		} rc5;
+			} rc5;
 #endif
 #ifndef NO_BF
 		BF_KEY bf_ks;/* key schedule */
 #endif
 #ifndef NO_CAST
 		CAST_KEY cast_ks;/* key schedule */
+#endif
+#ifndef NO_RIJNDAEL
+		RIJNDAEL_KEY rijndael;
 #endif
 		} c;
 	};
@@ -693,6 +702,10 @@ EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
+#ifndef NO_RIJNDAEL
+EVP_CIPHER *EVP_rijndael_ecb(int nBlockLength,int nKeyLength);
+#endif
+
 void OpenSSL_add_all_algorithms(void);
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);
@@ -800,6 +813,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_PKEY_GET1_DSA				 120
 #define EVP_F_EVP_PKEY_GET1_RSA				 121
 #define EVP_F_EVP_PKEY_NEW				 106
+#define EVP_F_EVP_RIJNDAEL				 126
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
@@ -808,7 +822,9 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
+#define EVP_R_BAD_BLOCK_LENGTH				 136
 #define EVP_R_BAD_DECRYPT				 100
+#define EVP_R_BAD_KEY_LENGTH				 137
 #define EVP_R_BN_DECODE_ERROR				 112
 #define EVP_R_BN_PUBKEY_ERROR				 113
 #define EVP_R_CIPHER_PARAMETER_ERROR			 122

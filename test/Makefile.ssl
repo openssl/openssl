@@ -106,7 +106,7 @@ tests:	exe apps \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast \
 	test_rand test_bn test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
-	test_ss test_ca test_ssl
+	test_ss test_ca test_ssl test_rd
 
 apps:
 	@(cd ../apps; $(MAKE)  CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' all)
@@ -229,6 +229,10 @@ test_ca:
 	  sh ./testca; \
  	fi
 
+test_rd: #$(RDTEST)
+	@echo "test Rijndael"
+	#./$(RDTEST)
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
@@ -317,6 +321,12 @@ $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	$(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
 
+#$(RDTEST).o: $(RDTEST).c
+#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(RDTEST).c
+
+#$(RDTEST): $(RDTEST).o $(DLIBCRYPTO)
+#	$(CC) -o $(RDTEST) $(CFLAGS) $(RDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 bftest.o: ../include/openssl/blowfish.h
@@ -334,7 +344,8 @@ bntest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 bntest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 bntest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 bntest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-bntest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+bntest.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+bntest.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 bntest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 bntest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -372,6 +383,7 @@ hmactest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
 hmactest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 hmactest.o: ../include/openssl/opensslv.h ../include/openssl/rc2.h
 hmactest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+hmactest.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 hmactest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 hmactest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 hmactest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -411,6 +423,7 @@ ssltest.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 ssltest.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ssltest.o: ../include/openssl/rand.h ../include/openssl/rc2.h
 ssltest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+ssltest.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 ssltest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 ssltest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h

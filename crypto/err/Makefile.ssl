@@ -102,7 +102,8 @@ err_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 err_all.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
 err_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 err_all.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-err_all.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+err_all.o: ../../include/openssl/rc5.h ../../include/openssl/rijndael-alg-fst.h
+err_all.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 err_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 err_all.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 err_all.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h

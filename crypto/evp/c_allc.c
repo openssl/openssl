@@ -64,6 +64,8 @@
 
 void OpenSSL_add_all_ciphers(void)
 	{
+	int i,j;
+
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cfb());
 	EVP_add_cipher(EVP_des_ede_cfb());
@@ -143,6 +145,12 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher(EVP_rc5_32_12_16_cbc());
 	EVP_add_cipher_alias(SN_rc5_cbc,"rc5");
 	EVP_add_cipher_alias(SN_rc5_cbc,"RC5");
+#endif
+
+#ifndef NO_RIJNDAEL
+	for(i=0 ; i < 3 ; ++i)
+	    for(j=0 ; j < 3 ; ++j)
+		EVP_add_cipher(EVP_rijndael_ecb(i,j));
 #endif
 	PKCS12_PBE_add();
 	PKCS5_PBE_add();

@@ -158,6 +158,7 @@ app_rand.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 app_rand.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
 app_rand.o: ../include/openssl/rand.h ../include/openssl/rc2.h
 app_rand.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+app_rand.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 app_rand.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 app_rand.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 app_rand.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -178,7 +179,8 @@ apps.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 apps.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 apps.o: ../include/openssl/pkcs12.h ../include/openssl/pkcs7.h
 apps.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-apps.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+apps.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+apps.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 apps.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 apps.o: ../include/openssl/sha.h ../include/openssl/stack.h
 apps.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -199,6 +201,7 @@ asn1pars.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 asn1pars.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 asn1pars.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 asn1pars.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+asn1pars.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 asn1pars.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 asn1pars.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 asn1pars.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -218,7 +221,8 @@ ca.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 ca.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 ca.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ca.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-ca.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+ca.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+ca.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 ca.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 ca.o: ../include/openssl/sha.h ../include/openssl/stack.h
 ca.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
@@ -240,7 +244,8 @@ ciphers.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 ciphers.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 ciphers.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ciphers.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-ciphers.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+ciphers.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+ciphers.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 ciphers.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 ciphers.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 ciphers.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -263,6 +268,7 @@ crl.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 crl.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 crl.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 crl.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+crl.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 crl.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 crl.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 crl.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -284,6 +290,7 @@ crl2p7.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 crl2p7.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 crl2p7.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 crl2p7.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+crl2p7.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 crl2p7.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 crl2p7.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 crl2p7.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -304,6 +311,7 @@ dgst.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dgst.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 dgst.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 dgst.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+dgst.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 dgst.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 dgst.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 dgst.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -323,7 +331,8 @@ dh.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 dh.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 dh.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 dh.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-dh.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+dh.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+dh.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 dh.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 dh.o: ../include/openssl/sha.h ../include/openssl/stack.h
 dh.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -344,6 +353,7 @@ dsa.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dsa.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 dsa.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 dsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+dsa.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 dsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 dsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 dsa.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -364,6 +374,7 @@ dsaparam.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dsaparam.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 dsaparam.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 dsaparam.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+dsaparam.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 dsaparam.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 dsaparam.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 dsaparam.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -384,7 +395,8 @@ enc.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 enc.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 enc.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 enc.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-enc.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+enc.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+enc.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 enc.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 enc.o: ../include/openssl/sha.h ../include/openssl/stack.h
 enc.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -405,7 +417,8 @@ errstr.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 errstr.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 errstr.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 errstr.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-errstr.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+errstr.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+errstr.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 errstr.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 errstr.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 errstr.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -428,7 +441,8 @@ gendh.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 gendh.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 gendh.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 gendh.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-gendh.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+gendh.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+gendh.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 gendh.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 gendh.o: ../include/openssl/sha.h ../include/openssl/stack.h
 gendh.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -449,6 +463,7 @@ gendsa.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 gendsa.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 gendsa.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 gendsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+gendsa.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 gendsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 gendsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 gendsa.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -469,6 +484,7 @@ genrsa.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 genrsa.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 genrsa.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 genrsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+genrsa.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 genrsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 genrsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 genrsa.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -489,6 +505,7 @@ nseq.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 nseq.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 nseq.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 nseq.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+nseq.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 nseq.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 nseq.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 nseq.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -509,7 +526,8 @@ openssl.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 openssl.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 openssl.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 openssl.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-openssl.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+openssl.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+openssl.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 openssl.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 openssl.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 openssl.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -532,7 +550,8 @@ passwd.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 passwd.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 passwd.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 passwd.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-passwd.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+passwd.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+passwd.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 passwd.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 passwd.o: ../include/openssl/sha.h ../include/openssl/stack.h
 passwd.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -553,7 +572,8 @@ pkcs12.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 pkcs12.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 pkcs12.o: ../include/openssl/pkcs12.h ../include/openssl/pkcs7.h
 pkcs12.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-pkcs12.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+pkcs12.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+pkcs12.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 pkcs12.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 pkcs12.o: ../include/openssl/sha.h ../include/openssl/stack.h
 pkcs12.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -574,6 +594,7 @@ pkcs7.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 pkcs7.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 pkcs7.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 pkcs7.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+pkcs7.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 pkcs7.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 pkcs7.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 pkcs7.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -594,7 +615,8 @@ pkcs8.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 pkcs8.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 pkcs8.o: ../include/openssl/pkcs12.h ../include/openssl/pkcs7.h
 pkcs8.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-pkcs8.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+pkcs8.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+pkcs8.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 pkcs8.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 pkcs8.o: ../include/openssl/sha.h ../include/openssl/stack.h
 pkcs8.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -614,7 +636,8 @@ rand.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 rand.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 rand.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 rand.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-rand.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+rand.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+rand.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 rand.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 rand.o: ../include/openssl/sha.h ../include/openssl/stack.h
 rand.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -635,6 +658,7 @@ req.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 req.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 req.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 req.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+req.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 req.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 req.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 req.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -656,6 +680,7 @@ rsa.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 rsa.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 rsa.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 rsa.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+rsa.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 rsa.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 rsa.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 rsa.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -676,6 +701,7 @@ rsautl.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 rsautl.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 rsautl.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 rsautl.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+rsautl.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 rsautl.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 rsautl.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 rsautl.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -696,7 +722,8 @@ s_cb.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 s_cb.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 s_cb.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 s_cb.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-s_cb.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+s_cb.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+s_cb.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 s_cb.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 s_cb.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 s_cb.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -719,7 +746,8 @@ s_client.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 s_client.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 s_client.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 s_client.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-s_client.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+s_client.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+s_client.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 s_client.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 s_client.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 s_client.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -743,7 +771,8 @@ s_server.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 s_server.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 s_server.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 s_server.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-s_server.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+s_server.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+s_server.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 s_server.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 s_server.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 s_server.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -767,6 +796,7 @@ s_socket.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 s_socket.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 s_socket.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 s_socket.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+s_socket.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 s_socket.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 s_socket.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 s_socket.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
@@ -790,7 +820,8 @@ s_time.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 s_time.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 s_time.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 s_time.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-s_time.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+s_time.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+s_time.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 s_time.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 s_time.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 s_time.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -814,7 +845,8 @@ sess_id.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 sess_id.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
 sess_id.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 sess_id.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-sess_id.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+sess_id.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+sess_id.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 sess_id.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 sess_id.o: ../include/openssl/sha.h ../include/openssl/ssl.h
 sess_id.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
@@ -837,6 +869,7 @@ smime.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 smime.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 smime.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 smime.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+smime.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 smime.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 smime.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 smime.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -857,6 +890,7 @@ speed.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 speed.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
 speed.o: ../include/openssl/rand.h ../include/openssl/rc2.h
 speed.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+speed.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 speed.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 speed.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -878,6 +912,7 @@ spkac.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 spkac.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 spkac.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 spkac.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+spkac.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 spkac.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 spkac.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 spkac.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -898,6 +933,7 @@ verify.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 verify.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 verify.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 verify.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+verify.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 verify.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 verify.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 verify.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -917,7 +953,8 @@ version.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
 version.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 version.o: ../include/openssl/opensslv.h ../include/openssl/pkcs7.h
 version.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-version.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+version.o: ../include/openssl/rc5.h ../include/openssl/rijndael-alg-fst.h
+version.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 version.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 version.o: ../include/openssl/sha.h ../include/openssl/stack.h
 version.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
@@ -938,6 +975,7 @@ x509.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 x509.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 x509.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
 x509.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+x509.o: ../include/openssl/rijndael-alg-fst.h ../include/openssl/rijndael.h
 x509.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 x509.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 x509.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
