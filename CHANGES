@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Improve RPM specification file by forcing symbolic linking and making
+     sure the installed documentation is also owned by root.root.
+     [Damien Miller <djm@mindrot.org>]
+
   *) Add configuration option to build on Linux on both big-endian and
      little-endian MIPS.
      [Ralf Baechle <ralf@uni-koblenz.de>]

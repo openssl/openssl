@@ -2,7 +2,7 @@
 %define libmin 9
 %define librel 6
 #%define librev 
-Release: 1
+Release: 2
 
 %define openssldir /var/ssl
 
@@ -114,7 +114,7 @@ install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
 install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
 
 # Make backwards-compatibility symlink to ssleay
-ln -s /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
+ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
 
 # Install shared libs
 install -m644 libcrypto.a $RPM_BUILD_ROOT/usr/lib
@@ -123,10 +123,10 @@ install -m644 libssl.a $RPM_BUILD_ROOT/usr/lib
 install -m755 libssl.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
 (
 	cd $RPM_BUILD_ROOT/usr/lib
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
+	ln -sf libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
+	ln -sf libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
+	ln -sf libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
+	ln -sf libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
 )
 
 %clean
@@ -148,14 +148,15 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0750,root,root) %{openssldir}/private
 
 %files devel
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
-%defattr(0644,root,root,0755)
 %attr(0644,root,root) /usr/lib/*.a
 %attr(0644,root,root) /usr/include/openssl/*
 %attr(0644,root,root) /usr/man/man[3]/*
 
 %files doc
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 %doc doc
 
@@ -166,6 +167,14 @@ ldconfig
 ldconfig
 
 %changelog
+* Sat Oct 21 2000 Horms <horms@vergenet.net>
+- Make sure symlinks are created by using -f flag to ln.
+  Otherwise some .so libraries are copied rather than
+  linked in the resulting binary RPM. This causes the package
+  to be larger than neccessary and makes ldconfig complain.
+* Fri Oct 13 2000 Horms <horms@vergenet.net>
+- Make defattr is set for files in all packages so packages built as
+  non-root will still be installed with files owned by root.
 * Thu Sep 14 2000 Richard Levitte <richard@levitte.org>
 - Changed to adapt to the new (supported) way of making shared libraries
 - Installs all static libraries, not just libRSAglue.a
