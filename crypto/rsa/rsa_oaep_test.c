@@ -184,6 +184,7 @@ int key3(RSA *key, unsigned char *c)
 
 int main() 
     {
+    int err=0;
     int v;
     RSA *key;
     unsigned char ptext[256];
@@ -216,6 +217,7 @@ int main()
 	if (num != clen)
 	    {
 	    printf("Encryption failed!\n");
+	    err=1;
 	    goto next;
 	    }
   
@@ -224,6 +226,7 @@ int main()
 	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
 	    {
 	    printf("Decryption failed!\n");
+	    err=1;
 	    goto next;
 	    }
   
@@ -240,12 +243,15 @@ int main()
 				  RSA_PKCS1_OAEP_PADDING);
 
 	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
+	    {
 	    printf("Decryption failed!\n");
+	    err=1;
+	    }
 	else
-	    printf("Encyption/decryption successful!\n");
+	    printf("Encryption/decryption successful!\n");
 
     next:
 	RSA_free(key);
 	}
-    return (0);
+    return err;
     }
