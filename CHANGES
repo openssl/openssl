@@ -804,9 +804,6 @@
      between threads, blinding will still be very fast).
      [Bodo Moeller]
 
-yet to be integrated into this CVS branch:
-- Geoff's ENGINE_set_default() fix
-
   *) Target "mingw" now allows native Windows code to be generated in
      the Cygwin environment as well as with the MinGW compiler.
      [Ulf Moeller] 
