@@ -88,7 +88,7 @@ int PKCS12_PBE_keyivgen (EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md, int en_de)
 {
 	PBEPARAM *pbe;
-	int saltlen, iter;
+	int saltlen, iter, ret;
 	unsigned char *salt, *pbuf;
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 
@@ -117,8 +117,8 @@ int PKCS12_PBE_keyivgen (EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		return 0;
 	}
 	PBEPARAM_free(pbe);
-	EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, en_de);
+	ret = EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, en_de);
 	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
 	OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
-	return 1;
+	return ret;
 }
