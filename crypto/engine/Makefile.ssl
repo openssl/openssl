@@ -182,7 +182,7 @@ engine_openssl.o: ../../include/openssl/rijndael.h
 engine_openssl.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 engine_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_openssl.o: ../../include/openssl/stack.h
-engine_openssl.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
+engine_openssl.o: ../../include/openssl/symhacks.h ../cryptlib.h
 engine_openssl.o: engine_openssl.c
 hw_atalla.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_atalla.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
@@ -203,8 +203,8 @@ hw_atalla.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 hw_atalla.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hw_atalla.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_atalla.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hw_atalla.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
-hw_atalla.o: hw_atalla.c vendor_defns/atalla.h
+hw_atalla.o: ../../include/openssl/symhacks.h ../cryptlib.h hw_atalla.c
+hw_atalla.o: vendor_defns/atalla.h
 hw_cswift.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_cswift.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 hw_cswift.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -224,8 +224,8 @@ hw_cswift.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 hw_cswift.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hw_cswift.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_cswift.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hw_cswift.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
-hw_cswift.o: hw_cswift.c vendor_defns/cswift.h
+hw_cswift.o: ../../include/openssl/symhacks.h ../cryptlib.h hw_cswift.c
+hw_cswift.o: vendor_defns/cswift.h
 hw_ncipher.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ncipher.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 hw_ncipher.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -248,8 +248,7 @@ hw_ncipher.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 hw_ncipher.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_ncipher.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_ncipher.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-hw_ncipher.o: ../cryptlib.h engine_int.h hw_ncipher.c
-hw_ncipher.o: vendor_defns/hwcryptohook.h
+hw_ncipher.o: ../cryptlib.h hw_ncipher.c vendor_defns/hwcryptohook.h
 hw_nuron.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_nuron.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 hw_nuron.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -269,8 +268,7 @@ hw_nuron.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 hw_nuron.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hw_nuron.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_nuron.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hw_nuron.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
-hw_nuron.o: hw_nuron.c
+hw_nuron.o: ../../include/openssl/symhacks.h ../cryptlib.h hw_nuron.c
 hw_ubsec.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ubsec.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 hw_ubsec.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -290,5 +288,5 @@ hw_ubsec.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 hw_ubsec.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hw_ubsec.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_ubsec.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hw_ubsec.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
-hw_ubsec.o: hw_ubsec.c vendor_defns/hw_ubsec.h
+hw_ubsec.o: ../../include/openssl/symhacks.h ../cryptlib.h hw_ubsec.c
+hw_ubsec.o: vendor_defns/hw_ubsec.h

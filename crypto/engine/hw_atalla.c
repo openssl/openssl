@@ -60,7 +60,6 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_HW
@@ -146,26 +145,9 @@ static DH_METHOD atalla_dh =
 	NULL
 	};
 
-/* Our ENGINE structure. */
-static ENGINE engine_atalla =
-        {
-	"atalla",
-	"Atalla hardware engine support",
-	&atalla_rsa,
-	&atalla_dsa,
-	&atalla_dh,
-	NULL,
-	atalla_mod_exp,
-	NULL,
-	atalla_init,
-	atalla_finish,
-	NULL, /* no ctrl() */
-	NULL, /* no load_privkey() */
-	NULL, /* no load_pubkey() */
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-        };
+/* Constants used when creating the ENGINE */
+static const char *engine_atalla_id = "atalla";
+static const char *engine_atalla_name = "Atalla hardware engine support";
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
@@ -174,6 +156,21 @@ ENGINE *ENGINE_atalla()
 	const RSA_METHOD *meth1;
 	const DSA_METHOD *meth2;
 	const DH_METHOD *meth3;
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!ENGINE_set_id(ret, engine_atalla_id) ||
+			!ENGINE_set_name(ret, engine_atalla_name) ||
+			!ENGINE_set_RSA(ret, &atalla_rsa) ||
+			!ENGINE_set_DSA(ret, &atalla_dsa) ||
+			!ENGINE_set_DH(ret, &atalla_dh) ||
+			!ENGINE_set_BN_mod_exp(ret, atalla_mod_exp) ||
+			!ENGINE_set_init_function(ret, atalla_init) ||
+			!ENGINE_set_finish_function(ret, atalla_finish))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the atalla-specific mod_exp and mod_exp_crt so we use
@@ -199,7 +196,7 @@ ENGINE *ENGINE_atalla()
 	meth3 = DH_OpenSSL();
 	atalla_dh.generate_key = meth3->generate_key;
 	atalla_dh.compute_key = meth3->compute_key;
-	return &engine_atalla;
+	return ret;
 	}
 
 /* This is a process-global DSO handle used for loading and unloading

@@ -62,7 +62,6 @@
 #include <openssl/pem.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_HW
@@ -169,26 +168,9 @@ static RAND_METHOD hwcrhk_rand =
 	hwcrhk_rand_status,
 	};
 
-/* Our ENGINE structure. */
-static ENGINE engine_hwcrhk =
-        {
-	"chil",
-	"nCipher hardware engine support",
-	&hwcrhk_rsa,
-	NULL,
-	&hwcrhk_dh,
-	&hwcrhk_rand,
-	hwcrhk_mod_exp,
-	NULL,
-	hwcrhk_init,
-	hwcrhk_finish,
-	hwcrhk_ctrl,
-	hwcrhk_load_privkey,
-	hwcrhk_load_pubkey,
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-        };
+/* Constants used when creating the ENGINE */
+static const char *engine_hwcrhk_id = "chil";
+static const char *engine_hwcrhk_name = "nCipher hardware engine support";
 
 /* Internal stuff for HWCryptoHook */
 
@@ -294,6 +276,24 @@ ENGINE *ENGINE_ncipher()
 	{
 	const RSA_METHOD *meth1;
 	const DH_METHOD *meth2;
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!ENGINE_set_id(ret, engine_hwcrhk_id) ||
+			!ENGINE_set_name(ret, engine_hwcrhk_name) ||
+			!ENGINE_set_RSA(ret, &hwcrhk_rsa) ||
+			!ENGINE_set_DH(ret, &hwcrhk_dh) ||
+			!ENGINE_set_RAND(ret, &hwcrhk_rand) ||
+			!ENGINE_set_BN_mod_exp(ret, hwcrhk_mod_exp) ||
+			!ENGINE_set_init_function(ret, hwcrhk_init) ||
+			!ENGINE_set_finish_function(ret, hwcrhk_finish) ||
+			!ENGINE_set_ctrl_function(ret, hwcrhk_ctrl) ||
+			!ENGINE_set_load_privkey_function(ret, hwcrhk_load_privkey) ||
+			!ENGINE_set_load_pubkey_function(ret, hwcrhk_load_pubkey))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
@@ -312,7 +312,7 @@ ENGINE *ENGINE_ncipher()
 	meth2 = DH_OpenSSL();
 	hwcrhk_dh.generate_key = meth2->generate_key;
 	hwcrhk_dh.compute_key = meth2->compute_key;
-	return &engine_hwcrhk;
+	return ret;
 	}
 
 /* This is a process-global DSO handle used for loading and unloading
@@ -605,7 +605,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 			ENGINE_R_NO_KEY);
 		goto err;
 		}
-	rtmp = RSA_new_method(&engine_hwcrhk);
+	rtmp = RSA_new_method(eng);
 	RSA_set_ex_data(rtmp, hndidx, (char *)hptr);
 	rtmp->e = BN_new();
 	rtmp->n = BN_new();

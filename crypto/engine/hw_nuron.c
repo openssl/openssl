@@ -60,7 +60,6 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
 
 
@@ -230,25 +229,9 @@ static DH_METHOD nuron_dh =
 	NULL
 	};
 
-static ENGINE engine_nuron =
-	{
-	"nuron",
-	"Nuron hardware engine support",
-	&nuron_rsa,
-	&nuron_dsa,
-	&nuron_dh,
-	NULL,
-	nuron_mod_exp,
-	NULL,
-	nuron_init,
-	nuron_finish,
-	NULL, /* no ctrl() */
-	NULL, /* no load_privkey() */
-	NULL, /* no load_pubkey() */
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-	};
+/* Constants used when creating the ENGINE */
+static const char *engine_nuron_id = "nuron";
+static const char *engine_nuron_name = "Nuron hardware engine support";
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
@@ -257,6 +240,21 @@ ENGINE *ENGINE_nuron()
 	const RSA_METHOD *meth1;
 	const DSA_METHOD *meth2;
 	const DH_METHOD *meth3;
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!ENGINE_set_id(ret, engine_nuron_id) ||
+			!ENGINE_set_name(ret, engine_nuron_name) ||
+			!ENGINE_set_RSA(ret, &nuron_rsa) ||
+			!ENGINE_set_DSA(ret, &nuron_dsa) ||
+			!ENGINE_set_DH(ret, &nuron_dh) ||
+			!ENGINE_set_BN_mod_exp(ret, nuron_mod_exp) ||
+			!ENGINE_set_init_function(ret, nuron_init) ||
+			!ENGINE_set_finish_function(ret, nuron_finish))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the nuron-specific mod_exp and mod_exp_crt so we use
@@ -282,7 +280,7 @@ ENGINE *ENGINE_nuron()
 	meth3=DH_OpenSSL();
 	nuron_dh.generate_key=meth3->generate_key;
 	nuron_dh.compute_key=meth3->compute_key;
-	return &engine_nuron;
+	return ret;
 	}
 
 #endif /* !OPENSSL_NO_HW_NURON */

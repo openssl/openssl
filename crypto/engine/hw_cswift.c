@@ -60,7 +60,6 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_HW
@@ -158,26 +157,9 @@ static DH_METHOD cswift_dh =
 	NULL
 	};
 
-/* Our ENGINE structure. */
-static ENGINE engine_cswift =
-        {
-	"cswift",
-	"CryptoSwift hardware engine support",
-	&cswift_rsa,
-	&cswift_dsa,
-	&cswift_dh,
-	NULL,
-	cswift_mod_exp,
-	cswift_mod_exp_crt,
-	cswift_init,
-	cswift_finish,
-	NULL, /* no ctrl() */
-	NULL, /* no load_privkey() */
-	NULL, /* no load_pubkey() */
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-        };
+/* Constants used when creating the ENGINE */
+static const char *engine_cswift_id = "cswift";
+static const char *engine_cswift_name = "CryptoSwift hardware engine support";
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
@@ -185,6 +167,22 @@ ENGINE *ENGINE_cswift()
 	{
 	const RSA_METHOD *meth1;
 	const DH_METHOD *meth2;
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!ENGINE_set_id(ret, engine_cswift_id) ||
+			!ENGINE_set_name(ret, engine_cswift_name) ||
+			!ENGINE_set_RSA(ret, &cswift_rsa) ||
+			!ENGINE_set_DSA(ret, &cswift_dsa) ||
+			!ENGINE_set_DH(ret, &cswift_dh) ||
+			!ENGINE_set_BN_mod_exp(ret, &cswift_mod_exp) ||
+			!ENGINE_set_BN_mod_exp_crt(ret, &cswift_mod_exp_crt) ||
+			!ENGINE_set_init_function(ret, cswift_init) ||
+			!ENGINE_set_finish_function(ret, cswift_finish))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
@@ -203,7 +201,7 @@ ENGINE *ENGINE_cswift()
 	meth2 = DH_OpenSSL();
 	cswift_dh.generate_key = meth2->generate_key;
 	cswift_dh.compute_key = meth2->compute_key;
-	return &engine_cswift;
+	return ret;
 	}
 
 /* This is a process-global DSO handle used for loading and unloading

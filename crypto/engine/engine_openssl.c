@@ -60,7 +60,6 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "engine_int.h"
 #include <openssl/engine.h>
 #include <openssl/dso.h>
 #include <openssl/rsa.h>
@@ -76,39 +75,30 @@ static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
-/* The ENGINE structure that can be pointed to. */
-static ENGINE engine_openssl =
-        {
-	"openssl",
-	"Software default engine support",
-	NULL,
-	NULL,
-	NULL, /* these methods are "stolen" in ENGINE_openssl() */
-	NULL,
-	NULL,
-	openssl_mod_exp_crt,
-	NULL, /* no init() */
-	NULL, /* no finish() */
-	NULL, /* no ctrl() */
-	NULL, /* no load_privkey() */
-	NULL, /* no load_pubkey() */
-	0, /* no flags */
-	0, 0, /* no references. */
-	NULL, NULL /* unlinked */
-        };
+/* The constants used when creating the ENGINE */
+static const char *engine_openssl_id = "openssl";
+static const char *engine_openssl_name = "Software default engine support";
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_openssl()
 	{
-	/* We need to populate our structure with the software pointers
-	 * that we want to steal. */
-	engine_openssl.rsa_meth = RSA_get_default_openssl_method();
-	engine_openssl.dsa_meth = DSA_get_default_openssl_method();
-	engine_openssl.dh_meth = DH_get_default_openssl_method();
-	engine_openssl.rand_meth = RAND_SSLeay();
-	engine_openssl.bn_mod_exp = BN_mod_exp;
-	return &engine_openssl;
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!ENGINE_set_id(ret, engine_openssl_id) ||
+			!ENGINE_set_name(ret, engine_openssl_name) ||
+			!ENGINE_set_RSA(ret, RSA_get_default_openssl_method()) ||
+			!ENGINE_set_DSA(ret, DSA_get_default_openssl_method()) ||
+			!ENGINE_set_DH(ret, DH_get_default_openssl_method()) ||
+			!ENGINE_set_RAND(ret, RAND_SSLeay()) ||
+			!ENGINE_set_BN_mod_exp(ret, BN_mod_exp) ||
+			!ENGINE_set_BN_mod_exp_crt(ret, openssl_mod_exp_crt))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
 	}
 
 /* Chinese Remainder Theorem, taken and adapted from rsa_eay.c */
@@ -134,11 +124,11 @@ static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if (!BN_copy(temp_bn, iqmp)) goto err;
  
 	if (!BN_mod(&r1, a, q, bn_ctx)) goto err;
-	if (!engine_openssl.bn_mod_exp(&m1, &r1, dmq1, q, bn_ctx))
+	if (!BN_mod_exp(&m1, &r1, dmq1, q, bn_ctx))
 		goto err;
  
 	if (!BN_mod(&r1, a, p, bn_ctx)) goto err;
-	if (!engine_openssl.bn_mod_exp(r, &r1, dmp1, p, bn_ctx))
+	if (!BN_mod_exp(r, &r1, dmp1, p, bn_ctx))
 		goto err;
 
 	if (!BN_sub(r, r, &m1)) goto err;
