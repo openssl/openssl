@@ -585,8 +585,7 @@ if corrupted it can be difficult to fix. It is theoretically possible
 to rebuild the index file from all the issued certificates and a current
 CRL: however there is no option to do this.
 
-V2 CRL features like delta CRL support and CRL numbers are not currently
-supported.
+V2 CRL features like delta CRLs are not currently supported.
 
 Although several requests can be input and handled at once it is only
 possible to include one SPKAC or self signed certificate.
