@@ -68,6 +68,9 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 	     long length)
@@ -100,13 +103,23 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPublicKey(NULL,
+		if ((ret->pkey.dsa=d2i_DSAPublicKey(&(ret->pkey.dsa),
 			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_ASN1_LIB);
 			goto err;
 			}
 		break;
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	case EVP_PKEY_ECDSA:
+		if ((ret->pkey.ecdsa = d2i_ECDSAPublicKey(&(ret->pkey.ecdsa), 
+			(const unsigned char **)pp, length)) == NULL)
+			{
+			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			goto err;
+			}
+	break;
 #endif
 	default:
 		ASN1err(ASN1_F_D2I_PUBLICKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);

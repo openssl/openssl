@@ -308,7 +308,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	     const EVP_MD *dgst)
 	{
 	char is_dsa;
-	if (pkey->type == EVP_PKEY_DSA) is_dsa = 1;
+	if (pkey->type == EVP_PKEY_DSA || pkey->type == EVP_PKEY_ECDSA) is_dsa = 1;
 	else is_dsa = 0;
 	/* We now need to add another PKCS7_SIGNER_INFO entry */
 	ASN1_INTEGER_set(p7i->version,1);

@@ -866,6 +866,10 @@ bad:
 		                if (Upkey->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
 #endif
+#ifndef OPENSSL_NO_ECDSA
+				if (Upkey->type == EVP_PKEY_ECDSA)
+					digest=EVP_ecdsa();
+#endif
 
 				assert(need_rand);
 				if (!sign(x,Upkey,days,clrext,digest,
@@ -884,6 +888,10 @@ bad:
 #ifndef OPENSSL_NO_DSA
 		                if (CApkey->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
+#endif
+#ifndef OPENSSL_NO_ECDSA
+				if (CApkey->type == EVP_PKEY_ECDSA)
+					digest = EVP_ecdsa();
 #endif
 				
 				assert(need_rand);
@@ -914,6 +922,8 @@ bad:
 
 		                if (pk->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
+				else if (pk->type == EVP_PKEY_ECDSA)
+					digest=EVP_ecdsa();
 
 				rq=X509_to_X509_REQ(x,pk,digest);
 				EVP_PKEY_free(pk);

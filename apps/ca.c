@@ -1502,6 +1502,11 @@ bad:
 				dgst=EVP_dss1();
 			else
 #endif
+#ifndef OPENSSL_NO_ECDSA
+			if (pkey->type == EVP_PKEY_ECDSA)
+				dgst=EVP_ecdsa();
+			else
+#endif
 				dgst=EVP_md5();
 			}
 
@@ -2270,6 +2275,16 @@ again2:
 		EVP_PKEY_copy_parameters(pktmp,pkey);
 	EVP_PKEY_free(pktmp);
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	if (pkey->type == EVP_PKEY_ECDSA)
+		dgst = EVP_ecdsa();
+	pktmp = X509_get_pubkey(ret);
+	if (EVP_PKEY_missing_parameters(pktmp) &&
+		!EVP_PKEY_missing_parameters(pkey))
+		EVP_PKEY_copy_parameters(pktmp, pkey);
+	EVP_PKEY_free(pktmp);
+#endif
+
 
 	if (!X509_sign(ret,pkey,dgst))
 		goto err;

@@ -68,6 +68,9 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
 
 EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
 	     long length)
@@ -108,6 +111,16 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
 			}
 		break;
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	case EVP_PKEY_ECDSA:
+		if ((ret->pkey.ecdsa = d2i_ECDSAPrivateKey(NULL, 
+			(const unsigned char **)pp, length)) == NULL)
+			{
+			ASN1err(ASN1_F_D2I_PRIVATEKEY, ERR_R_ASN1_LIB);
+			goto err;
+			}
+		break;
+#endif
 	default:
 		ASN1err(ASN1_F_D2I_PRIVATEKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
@@ -138,7 +151,10 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
 	/* Since we only need to discern "traditional format" RSA and DSA
 	 * keys we can just count the elements.
          */
-	if(sk_ASN1_TYPE_num(inkey) == 6) keytype = EVP_PKEY_DSA;
+	if(sk_ASN1_TYPE_num(inkey) == 6) 
+		keytype = EVP_PKEY_DSA;
+	else if (sk_ASN1_TYPE_num(inkey) == 4)
+		keytype = EVP_PKEY_ECDSA;
 	else keytype = EVP_PKEY_RSA;
 	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
 	return d2i_PrivateKey(keytype, a, pp, length);

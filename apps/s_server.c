@@ -702,7 +702,7 @@ bad:
 			}
 		}
 
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	if (nocert)
 #endif
 		{

@@ -2,19 +2,45 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7 and 0.9.8  [xx XXX 2001]
+ Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
-  *)
+  *) Add ECDSA in new directory crypto/ecdsa/.
 
- Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
+     Add applications 'openssl ecdsaparam' and 'openssl ecdsa'
+     (these are variants of 'openssl dsaparam' and 'openssl dsa').
 
-     OpenSSL 0.9.6a/0.9.6b/0.9.6c (bugfix releases, 5 Apr 2001, 9 July 2001
-     and 21 Dec 2001) and OpenSSL 0.9.7 were developed in parallel, based
-     on OpenSSL 0.9.6.  
+     ECDSA support is also included in various other files across the
+     library.  Most notably,
+     - 'openssl req' now has a '-newkey ecdsa:file' option;
+     - EVP_PKCS82PKEY (crypto/evp/evp_pkey.c) now can handle ECDSA;
+     - X509_PUBKEY_get (crypto/asn1/x_pubkey.c) and
+       d2i_PublicKey (crypto/asn1/d2i_pu.c) have been modified to make
+       them suitable for ECDSA where domain parameters must be
+       extracted before the specific public key.
+     [Nils Larsch <nla@trustcenter.de]
+
+  *) Add reference counting for EC_GROUP objects.
+     [Nils Larsch <nla@trustcenter.de]
+
+  *) Include some named elliptic curves.  These can be obtained from
+     the new functions
+          EC_GROUP_new_by_nid()
+          EC_GROUP_new_by_name()
+     Also add a 'nid' field to EC_GROUP objects, which can be accessed
+     via
+         EC_GROUP_set_nid()
+         EC_GROUP_get_nid()
+     [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
+ 
+ Changes between 0.9.6 and 0.9.7  [xx XXX 2002]
+
+     OpenSSL 0.9.6a/0.9.6b/0.9.6c/0.9.6d (bugfix releases, 5 Apr 2001,
+     9 July 2001, 21 Dec 2001 and xx XXX 2002) and OpenSSL 0.9.7 were
+     developed in parallel, based on OpenSSL 0.9.6.  
 
      Change log entries are tagged as follows:
-         -) applies to 0.9.6a/0.9.6b/0.9.6c only
-         *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
+         -) applies to 0.9.6a ... 0.9.6d only
+         *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
   *) Add information about CygWin32 1.3 and on, and preserve proper

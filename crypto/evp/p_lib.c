@@ -58,6 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/asn1_mac.h>
@@ -67,14 +69,37 @@ static void EVP_PKEY_free_it(EVP_PKEY *x);
 
 int EVP_PKEY_bits(EVP_PKEY *pkey)
 	{
+	if (0)
+		return 0;
 #ifndef OPENSSL_NO_RSA
-	if (pkey->type == EVP_PKEY_RSA)
+	else if (pkey->type == EVP_PKEY_RSA)
 		return(BN_num_bits(pkey->pkey.rsa->n));
-	else
 #endif
 #ifndef OPENSSL_NO_DSA
-		if (pkey->type == EVP_PKEY_DSA)
+	else if (pkey->type == EVP_PKEY_DSA)
 		return(BN_num_bits(pkey->pkey.dsa->p));
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	else if (pkey->type == EVP_PKEY_ECDSA)
+		{
+		BIGNUM *order = BN_new();
+		int ret;
+
+		if (!order)
+			{
+			ERR_clear_error();
+			return 0;
+			}
+		if (!EC_GROUP_get_order(pkey->pkey.ecdsa->group, order, NULL))
+			{
+			ERR_clear_error();
+			return 0;
+			}
+
+		ret = BN_num_bits(order);
+		BN_free(order);
+		return ret;
+		}
 #endif
 	return(0);
 	}
@@ -92,6 +117,11 @@ int EVP_PKEY_size(EVP_PKEY *pkey)
 		if (pkey->type == EVP_PKEY_DSA)
 		return(DSA_size(pkey->pkey.dsa));
 #endif
+#ifndef OPENSSL_NO_ECDSA
+		if (pkey->type == EVP_PKEY_ECDSA)
+		return(ECDSA_size(pkey->pkey.ecdsa));
+#endif
+
 	return(0);
 	}
 
@@ -104,6 +134,16 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
 		if (mode >= 0)
 			pkey->save_parameters=mode;
+		return(ret);
+		}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	if (pkey->type == EVP_PKEY_ECDSA)
+		{
+		int ret = pkey->save_parameters;
+
+		if (mode >= 0)
+			pkey->save_parameters = mode;
 		return(ret);
 		}
 #endif
@@ -141,6 +181,15 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
 		to->pkey.dsa->g=a;
 		}
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	if (to->type == EVP_PKEY_ECDSA)
+		{
+		if (to->pkey.ecdsa->group != NULL)
+			EC_GROUP_free(to->pkey.ecdsa->group);
+		if ((to->pkey.ecdsa->group = EC_GROUP_new(EC_GROUP_method_of(from->pkey.ecdsa->group))) == NULL) goto err;
+		if (!EC_GROUP_copy(to->pkey.ecdsa->group,from->pkey.ecdsa->group)) goto err;
+		}
+#endif
 	return(1);
 err:
 	return(0);
@@ -158,6 +207,14 @@ int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
 			return(1);
 		}
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	if (pkey->type == EVP_PKEY_ECDSA)
+		{
+		if (pkey->pkey.ecdsa->group == NULL)
+			return(1);
+		}
+#endif
+
 	return(0);
 	}
 
@@ -246,6 +303,28 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 }
 #endif
 
+#ifndef OPENSSL_NO_ECDSA
+
+int EVP_PKEY_set1_ECDSA(EVP_PKEY *pkey, ECDSA *key)
+{
+	int ret = EVP_PKEY_assign_ECDSA(pkey,key);
+	if (ret) CRYPTO_add(&key->references, 1,CRYPTO_LOCK_ECDSA);
+		return ret;
+}
+
+ECDSA *EVP_PKEY_get1_ECDSA(EVP_PKEY *pkey)
+{
+	if (pkey->type != EVP_PKEY_ECDSA)
+	{
+		EVPerr(EVP_F_EVP_PKEY_GET1_ECDSA, EVP_R_EXPECTING_A_ECDSA_KEY);
+		return NULL;
+	}
+	CRYPTO_add(&pkey->pkey.ecdsa->references, 1, CRYPTO_LOCK_ECDSA);
+	return pkey->pkey.ecdsa;
+}
+#endif
+
+
 #ifndef OPENSSL_NO_DH
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
@@ -282,6 +361,8 @@ int EVP_PKEY_type(int type)
 		return(EVP_PKEY_DSA);
 	case EVP_PKEY_DH:
 		return(EVP_PKEY_DH);
+	case EVP_PKEY_ECDSA:
+		return(EVP_PKEY_ECDSA);
 	default:
 		return(NID_undef);
 		}
@@ -325,6 +406,11 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 	case EVP_PKEY_DSA3:
 	case EVP_PKEY_DSA4:
 		DSA_free(x->pkey.dsa);
+		break;
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	case EVP_PKEY_ECDSA:
+		ECDSA_free(x->pkey.ecdsa);
 		break;
 #endif
 #ifndef OPENSSL_NO_DH

@@ -142,6 +142,7 @@ static int batch=0;
 #define TYPE_RSA	1
 #define TYPE_DSA	2
 #define TYPE_DH		3
+#define TYPE_ECDSA	4
 
 int MAIN(int, char **);
 
@@ -150,6 +151,9 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa_params=NULL;
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	ECDSA *ecdsa_params = NULL;
 #endif
 	unsigned long nmflag = 0;
 	int ex=1,x509=0,days=30;
@@ -317,10 +321,62 @@ int MAIN(int argc, char **argv)
 						}
 					}
 				BIO_free(in);
-				newkey=BN_num_bits(dsa_params->p);
 				in=NULL;
+				newkey=BN_num_bits(dsa_params->p);
 				}
 			else 
+#endif
+#ifndef OPENSSL_NO_ECDSA
+				if (strncmp("ecdsa:",p,4) == 0)
+				{
+				X509 *xtmp=NULL;
+				EVP_PKEY *dtmp;
+
+				pkey_type=TYPE_ECDSA;
+				p+=6;
+				if ((in=BIO_new_file(p,"r")) == NULL)
+					{
+					perror(p);
+					goto end;
+					}
+				if ((ecdsa_params = PEM_read_bio_ECDSAParameters(in, NULL, NULL, NULL)) == NULL)
+					{
+					ERR_clear_error();
+					(void)BIO_reset(in);
+					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
+						{	
+						BIO_printf(bio_err,"unable to load ECDSA parameters from file\n");
+						goto end;
+						}
+
+					dtmp=X509_get_pubkey(xtmp);
+					if (dtmp->type == EVP_PKEY_ECDSA)
+						ecdsa_params = ECDSAParameters_dup(dtmp->pkey.ecdsa);
+					EVP_PKEY_free(dtmp);
+					X509_free(xtmp);
+					if (ecdsa_params == NULL)
+						{
+						BIO_printf(bio_err,"Certificate does not contain ECDSA parameters\n");
+						goto end;
+						}
+					}
+
+				BIO_free(in);
+				in=NULL;
+				
+				{
+				BIGNUM *order = BN_new();
+				
+				if (!order)
+					goto end;
+				if (!EC_GROUP_get_order(ecdsa_params->group, order, NULL))
+					goto end;
+				newkey = BN_num_bits(order);
+				BN_free(order);
+				}
+
+				}
+			else
 #endif
 #ifndef OPENSSL_NO_DH
 				if (strncmp("dh:",p,4) == 0)
@@ -433,6 +489,7 @@ bad:
 		BIO_printf(bio_err,"                the random number generator\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err," -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
+		BIO_printf(bio_err," -newkey ecdsa:file generate a new ECDSA key, parameters taken from CA in 'file'\n");
 		BIO_printf(bio_err," -[digest]      Digest to sign with (md5, sha1, md2, mdc2, md4)\n");
 		BIO_printf(bio_err," -config file   request template file.\n");
 		BIO_printf(bio_err," -subj arg      set or modify request subject\n");
@@ -626,7 +683,7 @@ bad:
 			   message */
 			goto end;
 			}
-		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)
+		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA || EVP_PKEY_type(pkey->type) == EVP_PKEY_ECDSA)
 			{
 			char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 			if (randfile == NULL)
@@ -650,14 +707,15 @@ bad:
 				newkey=DEFAULT_KEY_LENGTH;
 			}
 
-		if (newkey < MIN_KEY_LENGTH)
+		if (newkey < MIN_KEY_LENGTH && (pkey_type == TYPE_RSA || pkey_type == TYPE_DSA))
+		/* TODO: appropriate minimal keylength for the different algorithm (esp. ECDSA) */
 			{
 			BIO_printf(bio_err,"private key length is too short,\n");
 			BIO_printf(bio_err,"it needs to be at least %d bits, not %d\n",MIN_KEY_LENGTH,newkey);
 			goto end;
 			}
 		BIO_printf(bio_err,"Generating a %d bit %s private key\n",
-			newkey,(pkey_type == TYPE_RSA)?"RSA":"DSA");
+			newkey,(pkey_type == TYPE_RSA)?"RSA":(pkey_type == TYPE_DSA)?"DSA":"ECDSA");
 
 		if ((pkey=EVP_PKEY_new()) == NULL) goto end;
 
@@ -677,6 +735,14 @@ bad:
 			if (!DSA_generate_key(dsa_params)) goto end;
 			if (!EVP_PKEY_assign_DSA(pkey,dsa_params)) goto end;
 			dsa_params=NULL;
+			}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+			if (pkey_type == TYPE_ECDSA)
+			{
+			if (!ECDSA_generate_key(ecdsa_params)) goto end;
+			if (!EVP_PKEY_assign_ECDSA(pkey, ecdsa_params)) goto end;
+			ecdsa_params = NULL;
 			}
 #endif
 
@@ -784,6 +850,10 @@ loop:
 #ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 			digest=EVP_dss1();
+#endif
+#ifndef OPENSSL_NO_ECDSA
+		if (pkey->type == EVP_PKEY_ECDSA)
+			digest=EVP_ecdsa();
 #endif
 		if (req == NULL)
 			{
@@ -1064,6 +1134,9 @@ end:
 	OBJ_cleanup();
 #ifndef OPENSSL_NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	if (ecdsa_params != NULL) ECDSA_free(ecdsa_params);
 #endif
 	apps_shutdown();
 	EXIT(ex);

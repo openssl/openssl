@@ -203,6 +203,30 @@ start:
 			}
 		else
 #endif
+#ifndef OPENSSL_NO_ECDSA
+ 			if (strcmp(name,PEM_STRING_ECDSA) == 0)
+ 			{
+ 				d2i=(char *(*)())d2i_ECDSAPrivateKey;
+ 				if (xi->x_pkey != NULL) 
+ 				{
+ 					if (!sk_X509_INFO_push(ret,xi)) goto err;
+ 					if ((xi=X509_INFO_new()) == NULL) goto err;
+ 						goto start;
+ 				}
+ 
+ 			xi->enc_data=NULL;
+ 			xi->enc_len=0;
+ 
+ 			xi->x_pkey=X509_PKEY_new();
+ 			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
+ 				goto err;
+ 			xi->x_pkey->dec_pkey->type=EVP_PKEY_ECDSA;
+ 			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.ecdsa);
+ 			if ((int)strlen(header) > 10) /* assume encrypted */
+ 				raw=1;
+			}
+		else
+#endif
 			{
 			d2i=NULL;
 			pp=NULL;

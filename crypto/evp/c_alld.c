@@ -91,6 +91,9 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	EVP_add_digest(EVP_ecdsa());
+#endif
 #endif
 #if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DES)
 	EVP_add_digest(EVP_mdc2());

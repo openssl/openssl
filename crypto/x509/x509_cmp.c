@@ -295,6 +295,22 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 		    }
 		break;
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	case EVP_PKEY_ECDSA:
+		{
+		int  r = EC_POINT_cmp(xk->pkey.ecdsa->group,xk->pkey.ecdsa->pub_key,k->pkey.ecdsa->pub_key,NULL);
+		if (r != 0)
+			{
+			if (r == 1)
+				X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_VALUES_MISMATCH);
+			else
+				X509err(X509_F_X509_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
+			
+			goto err;
+			}
+		}
+ 		break;
+#endif
 #ifndef OPENSSL_NO_DH
 	case EVP_PKEY_DH:
 		/* No idea */

@@ -325,6 +325,59 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 
 #endif
 
+#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_FP_API
+ECDSA *d2i_ECDSAPrivateKey_fp(FILE *fp, ECDSA **ecdsa)
+	{
+	return((ECDSA *)ASN1_d2i_fp((char *(*)())
+		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (fp),
+		(unsigned char **)(ecdsa)));
+	}
+  
+int i2d_ECDSAPrivateKey_fp(FILE *fp, ECDSA *ecdsa)
+	{
+	return(ASN1_i2d_fp(i2d_ECDSAPrivateKey,fp,(unsigned char *)ecdsa));
+	}
+  
+ECDSA *d2i_ECDSA_PUBKEY_fp(FILE *fp, ECDSA **ecdsa)
+	{
+	return((ECDSA *)ASN1_d2i_fp((char *(*)())
+		ECDSA_new,(char *(*)())d2i_ECDSA_PUBKEY, (fp),
+		(unsigned char **)(ecdsa)));
+	}
+  
+int i2d_ECDSA_PUBKEY_fp(FILE *fp, ECDSA *ecdsa)
+	{
+	return(ASN1_i2d_fp(i2d_ECDSA_PUBKEY,fp,(unsigned char *)ecdsa));
+	}
+#endif
+  
+ECDSA *d2i_ECDSAPrivateKey_bio(BIO *bp, ECDSA **ecdsa)
+	{
+	return((ECDSA *)ASN1_d2i_bio((char *(*)())
+		ECDSA_new,(char *(*)())d2i_ECDSAPrivateKey, (bp),
+		(unsigned char **)(ecdsa)));
+	}
+  
+int i2d_ECDSAPrivateKey_bio(BIO *bp, ECDSA *ecdsa)
+	{
+	return(ASN1_i2d_bio(i2d_ECDSAPrivateKey,bp,(unsigned char *)ecdsa));
+	}
+  
+ECDSA *d2i_ECDSA_PUBKEY_bio(BIO *bp, ECDSA **ecdsa)
+	{
+	return((ECDSA *)ASN1_d2i_bio((char *(*)())
+		ECDSA_new,(char *(*)())d2i_ECDSA_PUBKEY, (bp),
+		(unsigned char **)(ecdsa)));
+	}
+  
+int i2d_ECDSA_PUBKEY_bio(BIO *bp, ECDSA *ecdsa)
+	{
+	return(ASN1_i2d_bio(i2d_ECDSA_PUBKEY,bp,(unsigned char *)ecdsa));
+	}
+  
+#endif
+
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{

@@ -146,6 +146,7 @@ struct engine_st
 	const RSA_METHOD *rsa_meth;
 	const DSA_METHOD *dsa_meth;
 	const DH_METHOD *dh_meth;
+	const ECDSA_METHOD *ecdsa_meth;
 	const RAND_METHOD *rand_meth;
 	/* Cipher handling is via this callback */
 	ENGINE_CIPHERS_PTR ciphers;

@@ -86,6 +86,9 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 	case EVP_PKEY_DSA:
 		ret=EVP_PK_DSA|EVP_PKT_SIGN;
 		break;
+	case EVP_PKEY_ECDSA:
+		ret=EVP_PK_ECDSA|EVP_PKT_SIGN;
+		break;
 	case EVP_PKEY_DH:
 		ret=EVP_PK_DH|EVP_PKT_EXCH;
 		break;
@@ -101,6 +104,9 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 		break;
 	case EVP_PKS_DSA:
 		ret|=EVP_PKS_DSA;
+		break;
+	case EVP_PKS_ECDSA:
+		ret|=EVP_PKS_ECDSA;
 		break;
 	default:
 		break;

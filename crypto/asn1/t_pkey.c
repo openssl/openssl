@@ -69,26 +69,29 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
 
 static int print(BIO *fp,const char *str,BIGNUM *num,
 		unsigned char *buf,int off);
 #ifndef OPENSSL_NO_RSA
 #ifndef OPENSSL_NO_FP_API
 int RSA_print_fp(FILE *fp, const RSA *x, int off)
-        {
-        BIO *b;
-        int ret;
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
 		RSAerr(RSA_F_RSA_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=RSA_print(b,x,off);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=RSA_print(b,x,off);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
 int RSA_print(BIO *bp, const RSA *x, int off)
@@ -209,6 +212,139 @@ err:
 	}
 #endif /* !OPENSSL_NO_DSA */
 
+#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_FP_API
+int ECDSA_print_fp(FILE *fp, const ECDSA *x, int off)
+{
+	BIO *b;
+	int ret;
+ 
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+	{
+		ECDSAerr(ECDSA_F_ECDSA_PRINT_FP, ERR_R_BIO_LIB);
+		return(0);
+	}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECDSA_print(b, x, off);
+	BIO_free(b);
+	return(ret);
+}
+#endif
+
+int ECDSA_print(BIO *bp, const ECDSA *x, int off)
+	{
+	char str[128];
+	unsigned char *buffer=NULL;
+	int     i, buf_len=0, ret=0, reason=ERR_R_BIO_LIB;
+	BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL,
+		*tmp_4=NULL, *tmp_5=NULL;
+	BN_CTX  *ctx=NULL;
+	EC_POINT *point=NULL;
+ 
+	/* TODO: fields other than prime fields */
+       
+	if (!x || !x->group)
+		{
+		reason = ECDSA_R_MISSING_PARAMETERS;
+		goto err;
+		}
+	if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
+		(tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+	if (!EC_GROUP_get_curve_GFp(x->group, tmp_1, tmp_2, tmp_3, ctx))
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+	if ((point = EC_GROUP_get0_generator(x->group)) == NULL)
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+	if ((buf_len = EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx)) == 0)
+		{
+		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
+		goto err;
+		}
+	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+	if (!EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, 
+				buffer, buf_len, ctx)) goto err;
+	if ((tmp_4 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
+		{
+		reason = ERR_R_BN_LIB;
+		goto err;
+		}
+	if ((i = EC_POINT_point2oct(x->group, x->pub_key, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx)) == 0)
+		{
+		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
+		goto err;
+		}
+	if (i > buf_len && (buffer = OPENSSL_realloc(buffer, i)) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		buf_len = i;
+		goto err;
+		}
+	if (!EC_POINT_point2oct(x->group, x->pub_key, POINT_CONVERSION_COMPRESSED, 
+				buffer, buf_len, ctx))
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+	if ((tmp_5 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
+		{
+		reason = ERR_R_BN_LIB;
+		goto err;
+		}
+	if (tmp_1 != NULL)
+		i = BN_num_bytes(tmp_1)*2;
+	else
+		i=256;
+	if ((i + 10) > buf_len && (buffer = OPENSSL_realloc(buffer, i+10)) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		buf_len = i;
+		goto err;
+		}
+	if (off)
+		{
+		if (off > 128) off=128;
+		memset(str,' ',off);
+		}
+	if (x->priv_key != NULL)
+		{
+		if (off && (BIO_write(bp, str, off) <= 0)) goto err;
+		if (BIO_printf(bp, "Private-Key: (%d bit)\n", BN_num_bits(tmp_1)) <= 0) goto err;
+		}
+  
+	if ((x->priv_key != NULL) && !print(bp, "priv:", x->priv_key, buffer, off)) goto err;
+	if ((tmp_5 != NULL) && !print(bp, "pub: ", tmp_5, buffer, off)) goto err;
+	if ((tmp_1 != NULL) && !print(bp, "P:   ", tmp_1, buffer, off)) goto err;
+	if ((tmp_2 != NULL) && !print(bp, "A:   ", tmp_2, buffer, off)) goto err;
+	if ((tmp_3 != NULL) && !print(bp, "B:   ", tmp_3, buffer, off)) goto err;
+	if ((tmp_4 != NULL) && !print(bp, "Gen: ", tmp_4, buffer, off)) goto err;
+	ret=1;
+err:
+	if (!ret)
+ 		ECDSAerr(ECDSA_F_ECDSA_PRINT, reason);
+	if (tmp_1) BN_free(tmp_1);
+	if (tmp_2) BN_free(tmp_2);
+	if (tmp_3) BN_free(tmp_3);
+	if (tmp_4) BN_free(tmp_4);
+	if (tmp_5) BN_free(tmp_5);
+	if (ctx)   BN_CTX_free(ctx);
+	if (buffer != NULL) OPENSSL_free(buffer);
+	return(ret);
+	}
+#endif
+
 static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	     int off)
 	{
@@ -262,20 +398,20 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 #ifndef OPENSSL_NO_DH
 #ifndef OPENSSL_NO_FP_API
 int DHparams_print_fp(FILE *fp, const DH *x)
-        {
-        BIO *b;
-        int ret;
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
 		DHerr(DH_F_DHPARAMS_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=DHparams_print(b, x);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=DHparams_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
 int DHparams_print(BIO *bp, const DH *x)
@@ -315,20 +451,20 @@ err:
 #ifndef OPENSSL_NO_DSA
 #ifndef OPENSSL_NO_FP_API
 int DSAparams_print_fp(FILE *fp, const DSA *x)
-        {
-        BIO *b;
-        int ret;
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
 		DSAerr(DSA_F_DSAPARAMS_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=DSAparams_print(b, x);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=DSAparams_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
 int DSAparams_print(BIO *bp, const DSA *x)
@@ -359,3 +495,87 @@ err:
 
 #endif /* !OPENSSL_NO_DSA */
 
+#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_FP_API
+int ECDSAParameters_print_fp(FILE *fp, const ECDSA *x)
+	{
+	BIO *b;
+	int ret;
+ 
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+	{
+		ECDSAerr(ECDSA_F_ECDSAPARAMETERS_PRINT_FP, ERR_R_BIO_LIB);
+		return(0);
+	}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECDSAParameters_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
+#endif
+
+int ECDSAParameters_print(BIO *bp, const ECDSA *x)
+       {
+       unsigned char *buffer=NULL;
+       int     buf_len;
+       int     reason=ERR_R_EC_LIB, i, ret=0;
+       BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL, *tmp_4=NULL;
+       BN_CTX  *ctx=NULL;
+       EC_POINT *point=NULL;
+ 
+       /* TODO: fields other than prime fields */
+       if (!x || !x->group)
+       {
+		reason = ECDSA_R_MISSING_PARAMETERS;
+		goto err;
+       }
+       if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
+	   (tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
+       {
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+	}
+	if (!EC_GROUP_get_curve_GFp(x->group, tmp_1, tmp_2, tmp_3, ctx)) goto err;
+	if ((point = EC_GROUP_get0_generator(x->group)) == NULL) goto err;
+	buf_len = EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx);
+	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL)
+	{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+	}
+	if (!EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, buffer, buf_len, ctx))
+	{
+		reason = ERR_R_EC_LIB;
+		goto err;
+	}
+	if ((tmp_4 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
+	{
+		reason = ERR_R_BN_LIB;
+		goto err;
+	}
+  
+	i = BN_num_bits(tmp_1) + 10;
+	if (i > buf_len && (buffer = OPENSSL_realloc(buffer, i)) == NULL)
+	{
+		reason=ERR_R_MALLOC_FAILURE;
+		goto err;
+	}
+ 
+	if (BIO_printf(bp, "ECDSA-Parameters: (%d bit)\n", BN_num_bits(tmp_1)) <= 0) goto err;
+	if (!print(bp, "Prime p:", tmp_1, buffer, 4)) goto err;
+	if (!print(bp, "Curve a:", tmp_2, buffer, 4)) goto err;
+	if (!print(bp, "Curve b:", tmp_3, buffer, 4)) goto err;
+	if (!print(bp, "Generator ( compressed ) :", tmp_4, buffer, 4)) goto err; 
+	ret=1;
+err:
+	if (tmp_1)  BN_free(tmp_1);
+	if (tmp_2)  BN_free(tmp_2);
+	if (tmp_3)  BN_free(tmp_3);
+	if (tmp_4)  BN_free(tmp_4);
+	if (ctx)    BN_CTX_free(ctx);
+	if (buffer) OPENSSL_free(buffer);
+	ECDSAerr(ECDSA_F_ECDSAPARAMETERS_PRINT, reason);
+	return(ret);
+	}
+  
+#endif

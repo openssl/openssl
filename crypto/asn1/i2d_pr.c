@@ -67,6 +67,9 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
 
 int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 	{
@@ -81,6 +84,12 @@ int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 	if (a->type == EVP_PKEY_DSA)
 		{
 		return(i2d_DSAPrivateKey(a->pkey.dsa,pp));
+		}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	if (a->type == EVP_PKEY_ECDSA)
+		{
+		return(i2d_ECDSAPrivateKey(a->pkey.ecdsa, pp));
 		}
 #endif
 
