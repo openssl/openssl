@@ -610,9 +610,10 @@ $ ELSE
 $!
 $!  Else, Check To See If P1 Has A Valid Arguement.
 $!
-$   IF (P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS").OR.(P1.EQS."CRYPTO") -
-       .OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF").OR.(P1.EQS."SSL_TASK") -
-       .OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
+$   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
+       .OR.(P1.EQS."BUILDALL") -
+       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF") -
+       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
 $   THEN
 $!
 $!    A Valid Arguement.
