@@ -57,8 +57,11 @@
  */
 
 #include <stdio.h>
+#include <openssl/e_os2.h>
+#ifdef OPENSSL_SYS_VMS_DECC
+# define _XOPEN_SOURCE_EXTENDED
+#endif
 #include <string.h>
-#include <strings.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
