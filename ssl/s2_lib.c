@@ -411,7 +411,7 @@ void ssl2_generate_key_material(SSL *s)
 		MD5_Init(&ctx);
 
 		MD5_Update(&ctx,s->session->master_key,s->session->master_key_length);
-		MD5_Update(&ctx,(unsigned char *)&c,1);
+		MD5_Update(&ctx,&c,1);
 		c++;
 		MD5_Update(&ctx,s->s2->challenge,s->s2->challenge_length);
 		MD5_Update(&ctx,s->s2->conn_id,s->s2->conn_id_length);
