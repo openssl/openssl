@@ -333,11 +333,12 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 	if(flags & PKCS7_TEXT) BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
 	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
 		eol = 0;
-		while(iscrlf(linebuf[len - 1])) {
+		while(len && iscrlf(linebuf[len - 1])) {
 			len--;
 			eol = 1;
-		}	
-		BIO_write(out, linebuf, len);
+		}
+		if (len)
+			BIO_write(out, linebuf, len);
 		if(eol) BIO_write(out, "\r\n", 2);
 	}
 	return 1;
@@ -402,7 +403,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 		} else if(part) {
 			/* Strip CR+LF from linebuf */
 			next_eol = 0;
-			while(iscrlf(linebuf[len - 1])) {
+			while(len && iscrlf(linebuf[len - 1])) {
 				next_eol = 1;
 				len--;
 			}
@@ -413,7 +414,8 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 			} else if (eol)
 				BIO_write(bpart, "\r\n", 2);
 			eol = next_eol;
-			BIO_write(bpart, linebuf, len);
+			if (len)
+				BIO_write(bpart, linebuf, len);
 		}
 	}
 	return 0;
