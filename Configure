@@ -338,7 +338,8 @@ my $ranlib;
 my $perl;
 
 $ranlib=&which("ranlib") or $ranlib="true";
-$perl=$ENV{'PERL'} or &which("perl5") or $perl=&which("perl") or $perl="perl";
+$perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
+  or $perl="perl";
 
 &usage if ($#ARGV < 0);
 
