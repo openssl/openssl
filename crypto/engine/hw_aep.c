@@ -137,8 +137,8 @@ static int aep_rand_status(void);
 #endif
 
 /* Bignum conversion stuff */
-static AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize);
-static AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
+static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize);
+static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
 	unsigned char* AEP_BigNum);
 static AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
 	unsigned char* AEP_BigNum);
@@ -650,9 +650,6 @@ static int aep_rand(unsigned char *buf,int len )
 	AEP_RV rv = AEP_R_OK;
 	AEP_CONNECTION_HNDL hConnection;
 
-	int to_return = 0;
-
-  
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	/*Can the request be serviced with what's already in the buffer?*/
@@ -1010,7 +1007,7 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 /*BigNum call back functions, used to convert OpenSSL bignums into AEP bignums.
   Note only 32bit Openssl build support*/
 
-static AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize)
+static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize)
 	{
 	BIGNUM* bn;
 
@@ -1028,7 +1025,7 @@ static AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize)
 	return AEP_R_OK;
 	}
 
-static AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
+static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
 	unsigned char* AEP_BigNum)
 	{
 	BIGNUM* bn;
@@ -1050,8 +1047,8 @@ static AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
 		{
 		buf = (unsigned char*)&bn->d[i];
 
-		*((AEP_U32*)AEP_BigNum) =
-			(AEP_U32) ((unsigned) buf[1] << 8 | buf[0]) |
+		*((AEP_U32*)AEP_BigNum) = (AEP_U32)
+			((unsigned) buf[1] << 8 | buf[0]) |
 			((unsigned) buf[3] << 8 | buf[2])  << 16;
 
 		AEP_BigNum += 4;
