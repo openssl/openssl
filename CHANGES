@@ -174,10 +174,10 @@
      deallocation routines to be used by OpenSSL, for example memory
      pool implementations, or something else, which was previously hard
      since Malloc(), Realloc() and Free() were defined as macros having
-     the values malloc, realloc and free, respectively.  Also, The same
-     is provided for memory debugging code.  OpenSSL already comes with
-     functionality to find memory leaks, but this gives people a chance
-     to debug other memory problems.
+     the values malloc, realloc and free, respectively (except for Win32
+     compilations).  The same is provided for memory debugging code.
+     OpenSSL already comes with functionality to find memory leaks, but
+     this gives people a chance to debug other memory problems.
 
      With these changes, a new set of functions and macros have appeared:
 
