@@ -2537,3 +2537,17 @@ ERR_print_errors_cb                     2997	EXIST::FUNCTION:
 UI_get0_action_string                   2998	EXIST::FUNCTION:
 UI_destroy_method                       2999	EXIST::FUNCTION:
 UI_ctrl                                 3000	EXIST::FUNCTION:
+X509V3_EXT_nconf                        3001	EXIST::FUNCTION:
+ASN1_GENERALSTRING_free                 3002	EXIST::FUNCTION:
+i2d_ASN1_GENERALSTRING                  3003	EXIST::FUNCTION:
+X509V3_EXT_REQ_add_nconf                3004	EXIST::FUNCTION:
+X509V3_set_nconf                        3005	EXIST::FUNCTION:
+ASN1_GENERALSTRING_it                   3006	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_GENERALSTRING_it                   3006	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+X509V3_EXT_add_nconf_sk                 3007	EXIST::FUNCTION:
+d2i_ASN1_GENERALSTRING                  3008	EXIST::FUNCTION:
+X509V3_EXT_add_nconf                    3009	EXIST::FUNCTION:
+ASN1_GENERALSTRING_new                  3010	EXIST::FUNCTION:
+X509V3_EXT_nconf_nid                    3011	EXIST::FUNCTION:
+X509V3_EXT_CRL_add_nconf                3012	EXIST::FUNCTION:
+CONF_set_nconf                          3013	EXIST::FUNCTION:
