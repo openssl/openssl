@@ -116,8 +116,7 @@ the key; it is used to speed the encryption process.
 
 DES_random_key() generates a random key.  The PRNG must be seeded
 prior to using this function (see L<rand(3)|rand(3)>).  If the PRNG
-could not generate a secure key, 0 is returned.  In earlier versions
-of the library, DES_random_key() did not generate secure keys.
+could not generate a secure key, 0 is returned.
 
 Before a DES key can be used, it must be converted into the
 architecture dependent I<DES_key_schedule> via the
@@ -128,14 +127,13 @@ and is not a week or semi-weak key.  If the parity is wrong, then -1
 is returned.  If the key is a weak key, then -2 is returned.  If an
 error is returned, the key schedule is not generated.
 
-DES_set_key() (called DES_key_sched() in the MIT library) works like
+DES_set_key() works like
 DES_set_key_checked() if the I<DES_check_key> flag is non-zero,
 otherwise like DES_set_key_unchecked().  These functions are available
 for compatibility; it is recommended to use a function that does not
 depend on a global variable.
 
-DES_set_odd_parity() (called DES_fixup_key_parity() in the MIT
-library) sets the parity of the passed I<key> to odd.
+DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
 DES_is_weak_key() returns 1 is the passed key is a weak key, 0 if it
 is ok.  The probability that a randomly generated key is weak is
@@ -326,8 +324,9 @@ crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
 In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
 clashes with older versions of libdes.  Compatibility des_ functions
 are provided for a short while, as well as crypt().
-Declarations for these are in <openssl/des_old.h>.  des_random_seed()
-is were not kept as DES_ variants.  This will happen to other functions
+Declarations for these are in <openssl/des_old.h>. There is no DES_
+variant for des_random_seed().
+This will happen to other functions
 as well if they are deemed redundant (des_random_seed() just calls
 RAND_seed() and is present for backward compatibility only), buggy or
 already scheduled for removal.
