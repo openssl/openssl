@@ -130,11 +130,7 @@
 # error "Either SHA_0 or SHA_1 must be defined."
 #endif
 
-#ifndef FLAT_INC
-#include "../md32_common.h"
-#else
 #include "md32_common.h"
-#endif
 
 #define INIT_DATA_h0 0x67452301UL
 #define INIT_DATA_h1 0xefcdab89UL

@@ -106,11 +106,7 @@ void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,int num);
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
 #endif
 
-#ifndef FLAT_INC
-#include "../md32_common.h"
-#else
 #include "md32_common.h"
-#endif
 
 #if 0
 #define F1(x,y,z)	 ((x)^(y)^(z))
