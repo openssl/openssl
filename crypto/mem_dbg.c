@@ -266,7 +266,7 @@ static APP_INFO *pop_info()
 				next->references++;
 				lh_insert(amih,(char *)next);
 				}
-#ifdef LEVITTE_DEBUG
+#ifdef LEVITTE_DEBUG_MEM
 			if (ret->thread != tmp.thread)
 				{
 				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
@@ -319,7 +319,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 
 		if ((amim=(APP_INFO *)lh_insert(amih,(char *)ami)) != NULL)
 			{
-#ifdef LEVITTE_DEBUG
+#ifdef LEVITTE_DEBUG_MEM
 			if (ami->thread != amim->thread)
 				{
 				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
@@ -418,8 +418,8 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				m->order=order;
 				}
 			m->order=order++;
-#ifdef LEVITTE_DEBUG
-			fprintf(stderr, "LEVITTE_DEBUG: [%5d] %c 0x%p (%d)\n",
+#ifdef LEVITTE_DEBUG_MEM
+			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] %c 0x%p (%d)\n",
 				m->order,
 				(before_p & 128) ? '*' : '+',
 				m->addr, m->num);
@@ -473,8 +473,8 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 			mp=(MEM *)lh_delete(mh,(char *)&m);
 			if (mp != NULL)
 				{
-#ifdef LEVITTE_DEBUG
-			fprintf(stderr, "LEVITTE_DEBUG: [%5d] - 0x%p (%d)\n",
+#ifdef LEVITTE_DEBUG_MEM
+			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] - 0x%p (%d)\n",
 				mp->order, mp->addr, mp->num);
 #endif
 				if (mp->app_info != NULL)
@@ -497,8 +497,8 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 	{
 	MEM m,*mp;
 
-#ifdef LEVITTE_DEBUG
-	fprintf(stderr, "LEVITTE_DEBUG: --> CRYPTO_dbg_malloc(addr1 = %p, addr2 = %p, num = %d, file = \"%s\", line = %d, before_p = %d)\n",
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM: --> CRYPTO_dbg_malloc(addr1 = %p, addr2 = %p, num = %d, file = \"%s\", line = %d, before_p = %d)\n",
 		addr1, addr2, num, file, line, before_p);
 #endif
 
@@ -524,8 +524,8 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 			mp=(MEM *)lh_delete(mh,(char *)&m);
 			if (mp != NULL)
 				{
-#ifdef LEVITTE_DEBUG
-				fprintf(stderr, "LEVITTE_DEBUG: [%5d] * 0x%p (%d) -> 0x%p (%d)\n",
+#ifdef LEVITTE_DEBUG_MEM
+				fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] * 0x%p (%d) -> 0x%p (%d)\n",
 					mp->order,
 					mp->addr, mp->num,
 					addr2, num);
@@ -626,7 +626,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 		}
 	while(amip && amip->thread == ti);
 		
-#ifdef LEVITTE_DEBUG
+#ifdef LEVITTE_DEBUG_MEM
 	if (amip)
 		{
 		fprintf(stderr, "Thread switch detected in backtrace!!!!\n");
