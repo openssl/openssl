@@ -82,7 +82,7 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 #endif
 	iname = X509_get_issuer_name(subject);
 	serial = X509_get_serialNumber(subject);
-	ikey = issuer->cert_info->key->public_key;
+	ikey = X509_get0_pubkey_bitstr(issuer);
 	return OCSP_cert_id_new(dgst, iname, ikey, serial);
 }
 
@@ -97,7 +97,6 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 	X509_ALGOR *alg;
 	OCSP_CERTID *cid = NULL;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX ctx;
 
 	if (!(cid = OCSP_CERTID_new())) goto err;
 
@@ -116,9 +115,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 	if (!(ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i))) goto err;
 
 	/* Calculate the issuerKey hash, excluding tag and length */
-	EVP_DigestInit(&ctx,dgst);
-	EVP_DigestUpdate(&ctx,issuerKey->data, issuerKey->length);
-	EVP_DigestFinal(&ctx,md,&i);
+	EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst);
 
 	if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i))) goto err;
 	
@@ -186,7 +183,6 @@ OCSP_BASICRESP *OCSP_basic_response_new(int type, X509* cert)
         {
 	time_t t;
 	OCSP_RESPID *rid;
-        ASN1_BIT_STRING *bs;
 	OCSP_BASICRESP *rsp = NULL;
 	unsigned char md[SHA_DIGEST_LENGTH];
 	
@@ -205,9 +201,7 @@ OCSP_BASICRESP *OCSP_basic_response_new(int type, X509* cert)
 			/* SHA-1 hash of responder's public key
                          * (excluding the tag and length fields)
 			 */
-		        bs = cert->cert_info->key->public_key;
-		        SHA1(ASN1_STRING_data((ASN1_STRING*)bs), 
-			     ASN1_STRING_length((ASN1_STRING*)bs), md);
+			X509_pubkey_digest(cert, EVP_sha1(), md, NULL);
 			if (!(rid->value.byKey = ASN1_OCTET_STRING_new()))
 				goto err;
 			if (!(ASN1_OCTET_STRING_set(rid->value.byKey,

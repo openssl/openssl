@@ -104,7 +104,6 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 	ASN1_OCTET_STRING *oct;
 	ASN1_BIT_STRING *pk;
 	unsigned char pkey_dig[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX md;
 	unsigned int diglen;
 
 	if(strcmp(str, "hash")) return s2i_ASN1_OCTET_STRING(method, ctx, str);
@@ -130,9 +129,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 		goto err;
 	}
 
-	EVP_DigestInit(&md, EVP_sha1());
-	EVP_DigestUpdate(&md, pk->data, pk->length);
-	EVP_DigestFinal(&md, pkey_dig, &diglen);
+	EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1());
 
 	if(!M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
 		X509V3err(X509V3_F_S2I_S2I_SKEY_ID,ERR_R_MALLOC_FAILURE);

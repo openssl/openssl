@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Various new functions. EVP_Digest() combines EVP_Digest{Init,Update,Final}()
+     in a single operation. X509_get0_pubkey_bitstr() extracts the public_key
+     structure from a certificate. X509_pubkey_digest() digests tha public_key
+     contents: this is used in various key identifiers. 
+     [Steve Henson]
+
   *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
      keyUsage if basicConstraints absent for a CA.
      [Steve Henson]

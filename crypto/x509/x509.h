@@ -719,6 +719,8 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
+int X509_pubkey_digest(const X509 *data,const EVP_MD *type,
+		unsigned char *md, unsigned int *len);
 int X509_digest(const X509 *data,const EVP_MD *type,
 		unsigned char *md, unsigned int *len);
 int X509_CRL_digest(const X509_CRL *data,const EVP_MD *type,
@@ -937,6 +939,7 @@ int 		X509_set_notBefore(X509 *x, ASN1_TIME *tm);
 int 		X509_set_notAfter(X509 *x, ASN1_TIME *tm);
 int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
+ASN1_BIT_STRING * X509_get0_pubkey_bitstr(const X509 *x);
 int		X509_certificate_type(X509 *x,EVP_PKEY *pubkey /* optional */);
 
 int		X509_REQ_set_version(X509_REQ *x,long version);

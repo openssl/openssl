@@ -525,7 +525,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
 	if(!*req) *req = OCSP_REQUEST_new();
 	if(!*req) goto err;
 	iname = X509_get_subject_name(issuer);
-	ikey = issuer->cert_info->key->public_key;
+	ikey = X509_get0_pubkey_bitstr(issuer);
 	sno = s2i_ASN1_INTEGER(NULL, serial);
 	if(!sno)
 		{

@@ -559,6 +559,8 @@ void	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 void	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
 void	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
+int	EVP_Digest(void *data, unsigned int count,
+		unsigned char *md, unsigned int *size, const EVP_MD *type);
 
 int	EVP_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void	EVP_set_pw_prompt(char *prompt);

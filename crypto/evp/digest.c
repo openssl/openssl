@@ -89,4 +89,14 @@ int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in)
     }
     memcpy((char *)out,(char *)in,in->digest->ctx_size);
     return 1;
-}    
+}
+
+int EVP_Digest(void *data, unsigned int count,
+		unsigned char *md, unsigned int *size, const EVP_MD *type)
+{
+	EVP_MD_CTX ctx;
+	EVP_DigestInit(&ctx, type);
+	EVP_DigestUpdate(&ctx, data, count);
+	EVP_DigestFinal(&ctx, md, size);
+	return 1;
+}

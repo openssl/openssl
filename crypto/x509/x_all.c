@@ -379,6 +379,15 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne)
 	return ASN1_item_dup(&X509_NAME_ENTRY_it, ne);
 	}
 
+int X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
+	     unsigned int *len)
+	{
+	ASN1_BIT_STRING *key;
+	key = X509_get0_pubkey_bitstr(data);
+	if(!key) return 0;
+	return EVP_Digest(key->data, key->length, md, len, type);
+	}
+
 int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
