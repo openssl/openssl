@@ -5,6 +5,7 @@
 DIR=    sha
 TOP=    ../..
 CC=     cc
+CPP=    $(CC) -E
 INCLUDES=
 CFLAG=-g
 INSTALL_PREFIX=

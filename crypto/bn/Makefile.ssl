@@ -5,6 +5,7 @@
 DIR=	bn
 TOP=	../..
 CC=	cc
+CPP=    $(CC) -E
 INCLUDES= -I.. -I../../include
 CFLAG=-g
 INSTALL_PREFIX=
