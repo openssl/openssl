@@ -38,6 +38,9 @@ B<dsa> is the signer's public key.
 
 The B<type> parameter is ignored.
 
+The PRNG must be seeded before DSA_sign() (or DSA_sign_setup())
+is called.
+
 =head1 RETURN VALUES
 
 DSA_sign() and DSA_sign_setup() return 1 on success, 0 on error.
@@ -52,7 +55,8 @@ Standard, DSS), ANSI X9.30
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<err(3)|err(3)>, L<DSA_do_sign(3)|DSA_do_sign(3)>
+L<dsa(3)|dsa(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
+L<DSA_do_sign(3)|DSA_do_sign(3)>
 
 =head1 HISTORY
 

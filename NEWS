@@ -31,6 +31,8 @@
       o Memory leak detection now allows applications to add extra information
         via a per-thread stack
       o PRNG robustness improved
+      o Enhanced support for Alpha Linux
+      o Experimental MacOS support
 
   Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4:
 

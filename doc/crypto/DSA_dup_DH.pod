@@ -8,7 +8,7 @@ DSA_dup_DH - Create a DH structure out of DSA structure
 
  #include <openssl/dsa.h>
 
- DH *	DSA_dup_DH(DSA *r);
+ DH * DSA_dup_DH(DSA *r);
 
 =head1 DESCRIPTION
 
@@ -20,6 +20,10 @@ contain its length.
 
 DSA_dup_DH() returns the new B<DH> structure, and NULL on error. The
 error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+
+=head1 NOTE
+
+Be careful to avoid small subgroup attacks when using this.
 
 =head1 SEE ALSO
 

@@ -17,7 +17,7 @@ rand - Pseudo-random number generator
 
  int  RAND_load_file(const char *file,long max_bytes);
  int  RAND_write_file(const char *file);
- char *RAND_file_name(char *file,int num);
+ const char *RAND_file_name(char *file,int num);
 
  void RAND_set_rand_method(RAND_METHOD *meth);
  RAND_METHOD *RAND_get_rand_method(void);

@@ -8,7 +8,7 @@ DSA_generate_parameters - Generate DSA parameters
 
  #include <openssl/dsa.h>
 
- DSA *	DSA_generate_parameters(int bits, unsigned char *seed,
+ DSA *DSA_generate_parameters(int bits, unsigned char *seed,
                 int seed_len, int *counter_ret, unsigned long *h_ret,
 		void (*callback)(), void *cb_arg);
 

@@ -228,7 +228,7 @@ RC5 Cipher
 
 L<asn1parse(1)|asn1parse(1)>, L<ca(1)|ca(1)>, L<config(5)|config(5)>,
 L<crl(1)|crl(1)>, L<crl2pkcs7(1)|crl2pkcs7(1)>, L<dgst(1)|dgst(1)>,
-L<dh(1)|dh(1)>, L<dsa(1)|dsa(1)>, L<dsaparam(1)|dsaparam(1)>,
+L<dhparam(1)|dhparam(1)>, L<dsa(1)|dsa(1)>, L<dsaparam(1)|dsaparam(1)>,
 L<enc(1)|enc(1)>, L<gendh(1)|gendh(1)>, L<gendsa(1)|gendsa(1)>,
 L<genrsa(1)|genrsa(1)>, L<nseq(1)|nseq(1)>, L<openssl(1)|openssl(1)>,
 L<pkcs12(1)|pkcs12(1)>, L<pkcs7(1)|pkcs7(1)>, L<pkcs8(1)|pkcs8(1)>,

@@ -30,7 +30,7 @@ L<RSA_get_ex_new_index()|RSA_get_ex_new_index()>, L<dh(3)|dh(3)>
 
 =head1 HISTORY
 
-RSA_get_ex_new_index(), RSA_set_ex_data() and RSA_get_ex_data() are
+DH_get_ex_new_index(), DH_set_ex_data() and DH_get_ex_data() are
 available since OpenSSL 0.9.5.
 
 =cut
