@@ -699,6 +699,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	if (i <= 0) 
 		{
 		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,ERR_R_X509_LIB);
+		X509_STORE_CTX_cleanup(ctx);
 		goto err;
 		}
 	X509_STORE_CTX_cleanup(ctx);
