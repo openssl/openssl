@@ -507,15 +507,19 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 
 BIGNUM *BN_dup(const BIGNUM *a)
 	{
-	BIGNUM *r;
+	BIGNUM *r, *t;
 
 	if (a == NULL) return NULL;
 
 	bn_check_top(a);
 
-	r=BN_new();
-	if (r == NULL) return(NULL);
-	return((BIGNUM *)BN_copy(r,a));
+	t = BN_new();
+	if (t == NULL) return(NULL);
+	r = BN_copy(t, a);
+	/* now  r == t || r == NULL */
+	if (r == NULL)
+		BN_free(t);
+	return r;
 	}
 
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
