@@ -40,7 +40,9 @@ $
 $	set noon
 $	call deltree [.demoCA]*.*
 $	set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) demoCA.dir;*
-$	delete demoCA.dir;*,newcert.pem;*,newreq.pem;*
+$	delete demoCA.dir;*
+$	if f$search("newcert.pem") .nes. "" then delete newcert.pem;*
+$	if f$search("newcert.pem") .nes. "" then delete newreq.pem;*
 $	set on
 $!	#usage: CA -newcert|-newreq|-newca|-sign|-verify
 $

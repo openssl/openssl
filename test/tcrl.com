@@ -10,6 +10,9 @@ $	t := testcrl.pem
 $	if p1 .nes. "" then t = p1
 $
 $	write sys$output "testing CRL conversions"
+$	if f$search("fff.*") .nes "" then delete fff.*;*
+$	if f$search("ff.*") .nes "" then delete ff.*;*
+$	if f$search("f.*") .nes "" then delete f.*;*
 $	copy 't' fff.p
 $
 $	write sys$output "p -> d"
