@@ -494,6 +494,7 @@ static int buffer_gets(BIO *b, char *buf, int size)
 			if (i <= 0)
 				{
 				BIO_copy_next_retry(b);
+				*buf='\0';
 				if (i < 0) return((num > 0)?num:i);
 				if (i == 0) return(num);
 				}
