@@ -302,7 +302,7 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     const unsigned char *in, int inl)
 	{
-	int b;
+	int b, fix_len;
 
 	if (inl == 0)
 		{
@@ -314,12 +314,17 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
 	b=ctx->cipher->block_size;
+
 	if(ctx->final_used)
 		{
 		memcpy(out,ctx->final,b);
 		out+=b;
+		fix_len = 1;
 		}
-		
+	else
+		fix_len = 0;
+
+
 	if(!EVP_EncryptUpdate(ctx,out,outl,in,inl))
 		return 0;
 
@@ -327,18 +332,16 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	 * we have a copy of this last block */
 	if (b > 1 && !ctx->buf_len)
 		{
-		if(!ctx->final_used)
-			{
-			*outl-=b;
-			ctx->final_used=1;
-			}
+		*outl-=b;
+		ctx->final_used=1;
 		memcpy(ctx->final,&out[*outl],b);
 		}
-	else if(ctx->final_used)
-		{
-		ctx->final_used=0;
-		*outl+=b;
-		}
+	else
+		ctx->final_used = 0;
+
+	if (fix_len)
+		*outl += b;
+		
 	return 1;
 	}
 
