@@ -55,7 +55,7 @@ close(IN);
 
 foreach (sort keys %out)
 	{
-	print "static ERR_STRING_DATA ${_}[]=\n\t{\n";
+	print "static ERR_STRING_DATA ${_}\[\]=\n\t{\n";
 	print $out{$_};
 	print "{0,NULL},\n";
 	print "\t};\n\n";
