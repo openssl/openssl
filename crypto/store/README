@@ -18,6 +18,7 @@ X.509 CRL
 private key
 public key
 number
+arbitrary (application) data
 
 The intention is that a STORE should be able to store everything
 needed by an application that wants a cert/key store, as well as
