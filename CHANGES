@@ -8,9 +8,6 @@
   *) Add missing sk_<type>_unshift() function to safestack.h
      [Ralf S. Engelschall]
 
-  *) Convert casted X509_INFO stacks to type-safe STACK_OF(X509_INFO).
-     [Ralf S. Engelschall]
-
   *) New function SSL_CTX_use_certificate_chain_file that sets the
      "extra_cert"s in addition to the certificate.  (This makes sense
      only for "PEM" format files, as chains as a whole are not
@@ -170,6 +167,9 @@
 
   *) Introduce type-safe ASN.1 SETs.
      [Ben Laurie]
+
+  *) Convert various additional casted stacks to type-safe STACK_OF() variants.
+     [Ben Laurie, Ralf S. Engelschall]
 
   *) Introduce type-safe STACKs. This will almost certainly break lots of code
      that links with OpenSSL (well at least cause lots of warnings), but fear
