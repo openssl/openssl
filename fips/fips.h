@@ -64,6 +64,7 @@ extern void *FIPS_rand_check;
 struct dsa_st;
 
 int FIPS_mode_set(int onoff,const char *path);
+void FIPS_allow_md5(int onoff);
 int FIPS_dsa_check(struct dsa_st *dsa);
 void FIPS_corrupt_sha1(void);
 int FIPS_selftest_sha1(void);

@@ -233,11 +233,21 @@ int main(int Argc, char *Argv[])
 	arg.count=0;
 
 #ifdef OPENSSL_FIPS
-	if(getenv("OPENSSL_FIPS") && !FIPS_mode_set(1,Argv[0]))
-		{
+	if(getenv("OPENSSL_FIPS")) {
+#if defined(_WIN32)
+		char filename[MAX_PATH] = "";
+		GetModuleFileName( NULL, filename, MAX_PATH) ;
+		p = filename;
+#else
+		p = Argv[0];
+#endif
+		if (!FIPS_mode_set(1,p)) {
 		ERR_load_crypto_strings();
 		ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 		exit(1);
+			}
+		if (getenv("OPENSSL_FIPS_MD5"))
+			FIPS_allow_md5(1);
 		}
 #endif
 	if (bio_err == NULL)

@@ -267,7 +267,7 @@ $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
-$crypto.=" fips/fips.h fips/fips_locl.h fips/rand/fips_rand.h";
+$crypto.=" fips/fips.h fips/rand/fips_rand.h";
 
 my $symhacks="crypto/symhacks.h";
 

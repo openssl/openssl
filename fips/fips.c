@@ -111,7 +111,7 @@ static int FIPS_check_exe(const char *path)
     f=fopen(p2,"rb");
     if(!f || fread(buf,1,20,f) != 20)
 	{
-	fclose(f);
+	if (f) fclose(f);
 	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE_DIGEST);
 	return 0;
 	}
