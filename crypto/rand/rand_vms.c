@@ -101,11 +101,12 @@ int RAND_poll(void)
 	pitem = item;
 
 	/* Setup */
-	while (pitems_data->length)
+	while (pitems_data->length
+		&& (total_length + pitems_data->length <= 256))
 		{
 		pitem->length = pitems_data->length;
 		pitem->code = pitems_data->code;
-		pitem->buffer = (long *)data_buffer[total_length];
+		pitem->buffer = (long *)&data_buffer[total_length];
 		pitem->retlen = 0;
 		total_length += pitems_data->length;
 		pitems_data++;
