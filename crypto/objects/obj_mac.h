@@ -67,20 +67,26 @@
 #define NID_undef			0
 #define OBJ_undef			0L
 
-#define SN_ccitt		"CCITT"
-#define LN_ccitt		"ccitt"
+#define SN_itu_t		"ITU-T"
+#define LN_itu_t		"itu-t"
+#define NID_itu_t		721
+#define OBJ_itu_t		0L
+
 #define NID_ccitt		404
-#define OBJ_ccitt		0L
+#define OBJ_ccitt		OBJ_itu_t
 
 #define SN_iso		"ISO"
 #define LN_iso		"iso"
 #define NID_iso		181
 #define OBJ_iso		1L
 
-#define SN_joint_iso_ccitt		"JOINT-ISO-CCITT"
-#define LN_joint_iso_ccitt		"joint-iso-ccitt"
+#define SN_joint_iso_itu_t		"JOINT-ISO-ITU-T"
+#define LN_joint_iso_itu_t		"joint-iso-itu-t"
+#define NID_joint_iso_itu_t		722
+#define OBJ_joint_iso_itu_t		2L
+
 #define NID_joint_iso_ccitt		393
-#define OBJ_joint_iso_ccitt		2L
+#define OBJ_joint_iso_ccitt		OBJ_joint_iso_itu_t
 
 #define SN_member_body		"member-body"
 #define LN_member_body		"ISO Member Body"
@@ -95,9 +101,14 @@
 #define NID_certicom_arc		528
 #define OBJ_certicom_arc		OBJ_identified_organization,132L
 
+#define SN_international_organizations		"international-organizations"
+#define LN_international_organizations		"International Organizations"
+#define NID_international_organizations		723
+#define OBJ_international_organizations		OBJ_joint_iso_itu_t,23L
+
 #define SN_wap		"wap"
 #define NID_wap		562
-#define OBJ_wap		OBJ_joint_iso_ccitt,23L,43L
+#define OBJ_wap		OBJ_international_organizations,43L
 
 #define SN_wap_wsg		"wap-wsg"
 #define NID_wap_wsg		563
@@ -106,7 +117,7 @@
 #define SN_selected_attribute_types		"selected-attribute-types"
 #define LN_selected_attribute_types		"Selected Attribute Types"
 #define NID_selected_attribute_types		394
-#define OBJ_selected_attribute_types		OBJ_joint_iso_ccitt,5L,1L,5L
+#define OBJ_selected_attribute_types		OBJ_joint_iso_itu_t,5L,1L,5L
 
 #define SN_clearance		"clearance"
 #define NID_clearance		395
@@ -2332,7 +2343,7 @@
 
 #define SN_data		"data"
 #define NID_data		434
-#define OBJ_data		OBJ_ccitt,9L
+#define OBJ_data		OBJ_itu_t,9L
 
 #define SN_pss		"pss"
 #define NID_pss		435
@@ -2621,7 +2632,7 @@
 #define SN_id_set		"id-set"
 #define LN_id_set		"Secure Electronic Transactions"
 #define NID_id_set		576
-#define OBJ_id_set		2L,23L,42L
+#define OBJ_id_set		OBJ_international_organizations,42L
 
 #define SN_set_ctype		"set-ctype"
 #define LN_set_ctype		"content types"

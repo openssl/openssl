@@ -1,8 +1,11 @@
-0			: CCITT			: ccitt
+# CCITT was renamed to ITU-T quite some time ago
+0			: ITU-T			: itu-t
+!Alias ccitt itu-t
 
 1			: ISO			: iso
 
-2			: JOINT-ISO-CCITT	: joint-iso-ccitt
+2			: JOINT-ISO-ITU-T	: joint-iso-itu-t
+!Alias joint-iso-ccitt joint-iso-itu-t
 
 iso 2			: member-body		: ISO Member Body
 
@@ -10,10 +13,12 @@ iso 3			: identified-organization
 
 identified-organization 132	: certicom-arc
 
-joint-iso-ccitt 23 43	: wap
+joint-iso-itu-t 23	: international-organizations	: International Organizations
+
+international-organizations 43	: wap
 wap 13			: wap-wsg
 
-joint-iso-ccitt 5 1 5	: selected-attribute-types	: Selected Attribute Types
+joint-iso-itu-t 5 1 5	: selected-attribute-types	: Selected Attribute Types
 
 selected-attribute-types 55	: clearance
 
@@ -781,9 +786,9 @@ holdInstruction 2	: holdInstructionCallIssuer : Hold Instruction Call Issuer
 !Cname hold-instruction-reject
 holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
 
-# OID's from CCITT.  Most of this is defined in RFC 1274.  A couple of
+# OID's from ITU-T.  Most of this is defined in RFC 1274.  A couple of
 # them are also mentioned in RFC 2247
-ccitt 9			: data
+itu-t 9			: data
 data 2342		: pss
 pss 19200300		: ucl
 ucl 100			: pilot
@@ -857,7 +862,7 @@ pilotAttributeType 54	:			: dITRedirect
 pilotAttributeType 55	: audio
 pilotAttributeType 56	:			: documentPublisher
 
-2 23 42			: id-set		: Secure Electronic Transactions
+international-organizations 42	: id-set	: Secure Electronic Transactions
 
 id-set 0		: set-ctype		: content types
 id-set 1		: set-msgExt		: message extensions
