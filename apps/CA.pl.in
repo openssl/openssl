@@ -82,9 +82,6 @@ foreach (@ARGV) {
 		mkdir "${CATOP}/crl", $DIRMODE ;
 		mkdir "${CATOP}/newcerts", $DIRMODE;
 		mkdir "${CATOP}/private", $DIRMODE;
-		open OUT, ">${CATOP}/serial";
-		print OUT "01\n";
-		close OUT;
 		open OUT, ">${CATOP}/index.txt";
 		close OUT;
 	    }
@@ -105,6 +102,10 @@ foreach (@ARGV) {
 			"${CATOP}/private/$CAKEY -out ${CATOP}/$CACERT $DAYS");
 		    $RET=$?;
 		}
+	    }
+	    if (! -f "${CATOP}/serial" ) {
+		system ("$X509 -in ${CATOP}/$CACERT -noout "
+			. "-next_serial -out ${CATOP}/serial");
 	    }
 	} elsif (/^-pkcs12$/) {
 	    my $cname = $ARGV[1];
