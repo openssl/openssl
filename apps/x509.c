@@ -291,24 +291,26 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-addtrust") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if(!(objtmp = OBJ_txt2obj(*(++argv), 0))) {
+			if (!(objtmp = OBJ_txt2obj(*(++argv), 0)))
+				{
 				BIO_printf(bio_err,
 					"Invalid trust object value %s\n", *argv);
 				goto bad;
-			}
-			if(!trust) trust = sk_ASN1_OBJECT_new_null();
+				}
+			if (!trust) trust = sk_ASN1_OBJECT_new_null();
 			sk_ASN1_OBJECT_push(trust, objtmp);
 			trustout = 1;
 			}
 		else if (strcmp(*argv,"-addreject") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if(!(objtmp = OBJ_txt2obj(*(++argv), 0))) {
+			if (!(objtmp = OBJ_txt2obj(*(++argv), 0)))
+				{
 				BIO_printf(bio_err,
 					"Invalid reject object value %s\n", *argv);
 				goto bad;
-			}
-			if(!reject) reject = sk_ASN1_OBJECT_new_null();
+				}
+			if (!reject) reject = sk_ASN1_OBJECT_new_null();
 			sk_ASN1_OBJECT_push(reject, objtmp);
 			trustout = 1;
 			}
@@ -321,7 +323,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-nameopt") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if(!set_name_ex(&nmflag, *(++argv))) goto bad;
+			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
 			}
 		else if (strcmp(*argv,"-setalias") == 0)
 			{
@@ -417,10 +419,11 @@ bad:
 
 	ERR_load_crypto_strings();
 
-	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL))
+		{
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
-	}
+		}
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{
@@ -436,10 +439,12 @@ bad:
 		goto end;
 		}
 
-	if (extfile) {
+	if (extfile)
+		{
 		long errorline;
 		X509V3_CTX ctx2;
-		if (!(extconf=CONF_load(NULL,extfile,&errorline))) {
+		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
+			{
 			if (errorline <= 0)
 				BIO_printf(bio_err,
 					"error loading the config file '%s'\n",
@@ -449,19 +454,20 @@ bad:
 				       "error on line %ld of config file '%s'\n"
 							,errorline,extfile);
 			goto end;
-		}
-		if(!extsect && !(extsect = CONF_get_string(extconf, "default",
+			}
+		if (!extsect && !(extsect = CONF_get_string(extconf, "default",
 					 "extensions"))) extsect = "default";
 		X509V3_set_ctx_test(&ctx2);
 		X509V3_set_conf_lhash(&ctx2, extconf);
-		if(!X509V3_EXT_add_conf(extconf, &ctx2, extsect, NULL)) {
+		if (!X509V3_EXT_add_conf(extconf, &ctx2, extsect, NULL))
+			{
 			BIO_printf(bio_err,
 				"Error Loading extension section %s\n",
 								 extsect);
 			ERR_print_errors(bio_err);
 			goto end;
-                }
-	} 
+			}
+		}
 
 
 	if (reqfile)
@@ -581,24 +587,28 @@ bad:
 			}
 		}
 
-	if(alias) X509_alias_set1(x, (unsigned char *)alias, -1);
+	if (alias) X509_alias_set1(x, (unsigned char *)alias, -1);
 
-	if(clrtrust) X509_trust_clear(x);
-	if(clrreject) X509_reject_clear(x);
+	if (clrtrust) X509_trust_clear(x);
+	if (clrreject) X509_reject_clear(x);
 
-	if(trust) {
-		for(i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
+	if (trust)
+		{
+		for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++)
+			{
 			objtmp = sk_ASN1_OBJECT_value(trust, i);
 			X509_add1_trust_object(x, objtmp);
+			}
 		}
-	}
 
-	if(reject) {
-		for(i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
+	if (reject)
+		{
+		for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++)
+			{
 			objtmp = sk_ASN1_OBJECT_value(reject, i);
 			X509_add1_reject_object(x, objtmp);
+			}
 		}
-	}
 
 	if (num)
 		{
@@ -625,7 +635,7 @@ bad:
 				int j;
 				STACK *emlst;
 				emlst = X509_get1_email(x);
-				for(j = 0; j < sk_num(emlst); j++)
+				for (j = 0; j < sk_num(emlst); j++)
 					BIO_printf(STDout, "%s\n", sk_value(emlst, j));
 				X509_email_free(emlst);
 				}
@@ -633,7 +643,7 @@ bad:
 				{
 				unsigned char *alstr;
 				alstr = X509_alias_get0(x, NULL);
-				if(alstr) BIO_printf(STDout,"%s\n", alstr);
+				if (alstr) BIO_printf(STDout,"%s\n", alstr);
 				else BIO_puts(STDout,"<No Alias>\n");
 				}
 			else if (hash == i)
@@ -645,7 +655,7 @@ bad:
 				X509_PURPOSE *ptmp;
 				int j;
 				BIO_printf(STDout, "Certificate purposes:\n");
-				for(j = 0; j < X509_PURPOSE_get_count(); j++)
+				for (j = 0; j < X509_PURPOSE_get_count(); j++)
 					{
 					ptmp = X509_PURPOSE_get0(j);
 					purpose_print(STDout, x, ptmp);
@@ -863,12 +873,11 @@ bad:
 			}
 		}
 
-	if(checkend)
+	if (checkend)
 		{
-		time_t t=ASN1_UTCTIME_get(X509_get_notAfter(x));
 		time_t tnow=time(NULL);
 
-		if(tnow+checkoffset > t)
+		if (ASN1_UTCTIME_cmp_time_t(X509_get_notAfter(x), tnow+checkoffset) == -1)
 			{
 			BIO_printf(out,"Certificate will expire\n");
 			ret=1;
@@ -889,10 +898,12 @@ bad:
 
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_X509_bio(out,x);
-	else if (outformat == FORMAT_PEM) {
-		if(trustout) i=PEM_write_bio_X509_AUX(out,x);
+	else if (outformat == FORMAT_PEM)
+		{
+		if (trustout) i=PEM_write_bio_X509_AUX(out,x);
 		else i=PEM_write_bio_X509(out,x);
-	} else if (outformat == FORMAT_NETSCAPE)
+		}
+	else if (outformat == FORMAT_NETSCAPE)
 		{
 		ASN1_HEADER ah;
 		ASN1_OCTET_STRING os;
@@ -910,7 +921,8 @@ bad:
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
 		}
-	if (!i) {
+	if (!i)
+		{
 		BIO_printf(bio_err,"unable to write certificate\n");
 		ERR_print_errors(bio_err);
 		goto end;
@@ -932,7 +944,7 @@ end:
 	X509_REQ_free(rq);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-	if(passin) OPENSSL_free(passin);
+	if (passin) OPENSSL_free(passin);
 	EXIT(ret);
 	}
 
@@ -1059,17 +1071,19 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
 		goto end;
 
-	if(clrext) {
-		while(X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
-	}
+	if (clrext)
+		{
+		while (X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
+		}
 
-	if(conf) {
+	if (conf)
+		{
 		X509V3_CTX ctx2;
 		X509_set_version(x,2); /* version 3 certificate */
                 X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
                 X509V3_set_conf_lhash(&ctx2, conf);
-                if(!X509V3_EXT_add_conf(conf, &ctx2, section, x)) goto end;
-	}
+                if (!X509V3_EXT_add_conf(conf, &ctx2, section, x)) goto end;
+		}
 
 	if (!X509_sign(x,pkey,digest)) goto end;
 	ret=1;
@@ -1081,7 +1095,7 @@ end:
 	if (bs != NULL) ASN1_INTEGER_free(bs);
 	if (io != NULL)	BIO_free(io);
 	if (serial != NULL) BN_free(serial);
-	return(ret);
+	return ret;
 	}
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
@@ -1094,7 +1108,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 	 * final ok == 1 calls to this function */
 	err=X509_STORE_CTX_get_error(ctx);
 	if (err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
-		return(1);
+		return 1;
 
 	/* BAD we should have gotten an error.  Normally if everything
 	 * worked X509_STORE_CTX_get_error(ctx) will still be set to
@@ -1102,7 +1116,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 	if (ok)
 		{
 		BIO_printf(bio_err,"error with certificate to be certified - should be self signed\n");
-		return(0);
+		return 0;
 		}
 	else
 		{
@@ -1111,7 +1125,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 		BIO_printf(bio_err,"error with certificate - error %d at depth %d\n%s\n",
 			err,X509_STORE_CTX_get_error_depth(ctx),
 			X509_verify_cert_error_string(err));
-		return(1);
+		return 1;
 		}
 	}
 
@@ -1138,21 +1152,23 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *dig
 		goto err;
 
 	if (!X509_set_pubkey(x,pkey)) goto err;
-	if(clrext) {
-		while(X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
-	}
-	if(conf) {
+	if (clrext)
+		{
+		while (X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
+		}
+	if (conf)
+		{
 		X509V3_CTX ctx;
 		X509_set_version(x,2); /* version 3 certificate */
                 X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
                 X509V3_set_conf_lhash(&ctx, conf);
-                if(!X509V3_EXT_add_conf(conf, &ctx, section, x)) goto err;
-	}
+                if (!X509V3_EXT_add_conf(conf, &ctx, section, x)) goto err;
+		}
 	if (!X509_sign(x,pkey,digest)) goto err;
-	return(1);
+	return 1;
 err:
 	ERR_print_errors(bio_err);
-	return(0);
+	return 0;
 	}
 
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
@@ -1161,13 +1177,14 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 	char *pname;
 	id = X509_PURPOSE_get_id(pt);
 	pname = X509_PURPOSE_get0_name(pt);
-	for(i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++)
+		{
 		idret = X509_check_purpose(cert, id, i);
 		BIO_printf(bio, "%s%s : ", pname, i ? " CA" : ""); 
-		if(idret == 1) BIO_printf(bio, "Yes\n");
+		if (idret == 1) BIO_printf(bio, "Yes\n");
 		else if (idret == 0) BIO_printf(bio, "No\n");
 		else BIO_printf(bio, "Yes (WARNING code=%d)\n", idret);
-	}
+		}
 	return 1;
 }
 
