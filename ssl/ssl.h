@@ -698,10 +698,6 @@ struct ssl_st
 #define SSL_get_timeout(a)	SSL_SESSION_get_timeout(a)
 #define SSL_set_timeout(a,b)	SSL_SESSION_set_timeout((a),(b))
 
-/* VMS linker has a 31 char name limit */
-#define SSL_CTX_set_cert_verify_callback(a,b,c) \
-		SSL_CTX_set_cert_verify_cb((a),(b),(c))
-
 #if 1 /*SSLEAY_MACROS*/
 #define d2i_SSL_SESSION_bio(bp,s_id) (SSL_SESSION *)ASN1_d2i_bio( \
 	(char *(*)())SSL_SESSION_new,(char *(*)())d2i_SSL_SESSION, \
@@ -818,6 +814,21 @@ struct ssl_st
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
+/* VMS uses only 31 characters for symbols. */
+#ifdef VMS
+#undef SSL_CTX_set_cert_verify_callback
+#define SSL_CTX_set_cert_verify_callback SSL_CTX_set_cert_verify_cb
+#undef SSL_CTX_use_certificate_chain_file
+#define SSL_CTX_use_certificate_chain_file SSL_CTX_use_cert_chain_file
+#undef SSL_CTX_set_default_verify_paths
+#define SSL_CTX_set_default_verify_paths SSL_CTX_set_def_verify_paths
+#undef SSL_get_ex_data_X509_STORE_CTX_idx
+#define SSL_get_ex_data_X509_STORE_CTX_idx SSL_get_ex_data_X509_STOR_CTX_i
+#undef SSL_add_file_cert_subjects_to_stack
+#define SSL_add_file_cert_subjects_to_stack SSL_add_file_cert_sub_to_stack
+#undef SSL_add_dir_cert_subjects_to_stack
+#define SSL_add_dir_cert_subjects_to_stack SSL_add_dir_cert_sub_to_stack
+#endif
 
 #ifdef HEADER_BIO_H
 BIO_METHOD *BIO_f_ssl(void);
@@ -933,7 +944,7 @@ int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
-void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx, int (*cb)(),char *arg);
+void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(),char *arg);
 #ifndef NO_RSA
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 #endif

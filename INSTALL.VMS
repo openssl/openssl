@@ -1,0 +1,204 @@
+			VMS Installation instructions
+			written by Richard Levitte
+			<richard@levitte.org>
+
+
+Intro:
+======
+
+This file is divided in the following parts:
+
+  Compilation			- Mandatory reading.
+  Test				- Mandatory reading.
+  Installation			- Mandatory reading.
+  Backward portability		- Read if it's an issue.
+  Possible bugs or quirks	- A few warnings on things that
+				  may go wrong or may surprise you.
+  Report			- How to get in touch with me.
+
+Compilation:
+============
+
+I've used the very good command procedures written by Robert Byer
+<byer@mail.all-net.net>, and just slightly modified them, making
+them slightly more general and easier to maintain.
+
+You can actually compile in almost any directory separately.  Look
+for a command procedure name xxx-LIB.COM (in the library directories)
+or MAKExxx.COM (in the program directories) and read the comments at
+the top to understand how to use them.  However, if you want to
+compile all you can get, the simplest is to use MAKEVMS.COM in the top
+directory.  The syntax is trhe following:
+
+  @MAKEVMS <option> <rsaref-p> <debug-p> [<compiler>]
+
+<option> must be one of the following:
+
+      ALL       Just build "everything".
+      DATE      Just build the "[.INCLUDE]DATE.H" file.
+      SOFTLINKS Just copies some files, to simulate Unix soft links.
+      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
+      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
+      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
+      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
+      TEST      Just build the "test" programs for OpenSSL.
+      APPS      Just build the "application" programs for OpenSSL.
+
+<rsaref-p> must be one of the following:
+
+      RSAREF    compile using the RSAREF Library
+      NORSAREF  compile without using RSAREF
+
+Note: The RSAREF libraries are NOT INCLUDED and you have to
+      download it from "ftp://ftp.rsa.com/rsaref".  You have to
+      get the ".tar-Z" file as the ".zip" file dosen't have the
+      directory structure stored.  You have to extract the file
+      into the [.RSAREF] directory as that is where the scripts
+      will look for the files.
+
+Note 2: I have never done this, so I've no idea if it works or not.
+
+<debug-p> must be one of the following:
+
+      DEBUG     compile with debugging info (will not optimize)
+      NODEBUG   compile without debugging info (will optimize)
+
+<compiler> must be one of the following:
+
+      VAXC      For VAX C.
+      DECC      For DEC C.
+      GNUC      For GNU C.
+
+
+You will find the crypto library in [.xxx.EXE.CRYPTO], called LIBCRYPTO.OLB,
+where xxx is VAX or AXP.  You will find the SSL library in [.xxx.EXE.SSL],
+named LIBSSL.OLB, and you will find a bunch of useful programs in
+[.xxx.EXE.APPS].  However, these shouldn't be used right off unless it's
+just to test them.  For production use, make sure you install first, see
+Installation below.
+
+Note: Some programs in this package require a TCP/IP library.
+
+Note 2: if you want to compile the crypto library only, please make sure
+        you have at least done a @MAKEVMS DATE and a @MAKEVMS SOFTLINKS.
+        A lot of things will break if you don't.
+
+Test:
+=====
+
+Testing is very simple, just do the following:
+
+  @[.TEST]TESTS
+
+If a test fails, try with defining the logical name OPENSSL_NO_ASM (yes,
+it's an ugly hack!) and rebuild. Please send a bug report to
+<openssl-bugs@openssl.org>, including the output of "openssl version -a"
+and of the failed test.
+
+Installation:
+=============
+
+Installation is easy, just do the following:
+
+  @INSTALL <root>
+
+<root> is the directory in which everything will be installed,
+subdirectories, libraries, header files, programs and startup command
+procedures.
+
+In the [.VMS] subdirectory of the installation, you will find the
+following command procedures:
+
+  OPENSSL_STARTUP.COM
+
+        defines all needed logical names.  Takes one argument that
+        tells it in what logical name table to insert the logical
+        names.  If you insert if it SYS$MANAGER:SYSTARTUP_VMS.COM, the
+        call should look like this: 
+
+          @openssldev:[openssldir.VMS]OPENSSL_STARTUP "/SYSTEM"
+
+  OPENSSL_UTILS.COM
+
+        sets up the symbols to the applications.  Should be called
+        from for example SYS$MANAGER:SYLOGIN.COM 
+
+The logical names that are set up are the following:
+
+  SSLROOT       a dotted concealed logical name pointing at the
+                root directory.
+  SSLLIB        points at the directory where CRYPTORTL.OLB and
+		SSLRTL.OLB are installed.
+  SSLINCLUDE    points at the directory where the header files are
+                installed.
+  SSLEXE        points at the directory where the applications are
+                installed.
+  SSLCERTS      the place where the certificates are stored.
+  SSLPRIVATE    I'm actually not sure what this is used for.
+
+
+Backward portability:
+=====================
+
+One great problem when you build a library is making sure it will work
+on as many versions of VMS as possible.  Especially, code compiled on
+OpenVMS version 7.x and above tend to be unusable in version 6.x or
+lower, because some C library routines have changed names internally
+(the C programmer won't usually see it, because the old name is
+maintained through C macros).  One obvious solution is to make sure
+you have a development machine with an old enough version of OpenVMS.
+However, if you are stuck with a bunch of Alphas running OpenVMS version
+7.1, you seem to be out of luck.  Fortunately, the DEC C header files
+are cluttered with conditionals that make some declarations and definitions
+dependent on the OpenVMS version or the C library version, *and* you
+can use those macros to simulate older OpenVMS or C library versions,
+by defining the macros _VMS_V6_SOURCE, __VMS_VER and __CTRL_VER with
+correct values.  In the compilation scripts, I've provided the possibility
+for the user to influense the creation of such macros, through a bunch of
+symbols, all having names starting with USER_.  Here's the list of them:
+
+  USER_CCFLAGS		 - Used to give additional qualifiers to the
+			   compiler.  It can't be used to define macros
+			   since the scripts will do such things as well.
+			   To do such things, use USER_CCDEFS.
+  USER_CCDEFS		 - Used to define macros on the command line.  The
+			   value of this symbol will be inserted inside a
+			   /DEFINE=(...).
+  USER_CCDISABLEWARNINGS - Used to disable some warnings.  The value is
+			   inserted inside a /DISABLE=WARNING=(...).
+
+So, to maintain backward compatibility with older VMS versions, do the
+following before you start compiling:
+
+  $ USER_CCDEFS := _VMS_V6_SOURCE=1,__VMS_VER=60000000,__CRTL_VER=60000000
+  $ USER_CCDISABLEWARNINGS := PREOPTW
+
+The USER_CCDISABLEWARNINGS is there because otherwise, DEC C will complain
+that those macros have been changed.
+
+Note: Currently, this is only usefull for library compilation.  The
+      programs will still be linked with the current version of the
+      C library shareable image, and will thus complain if they are
+      faced with an older version of the same C library shareable image.
+      This will probably be fixed in a future revision of OpenSSL.
+
+
+Possible bugs or quirks:
+========================
+
+I'm not perfectly sure all the programs will use the SSLCERTS:
+directory by default, it may very well be that you have to give them
+extra arguments.  Please experiment.
+
+
+Report:
+=======
+
+I maintain a few mailinglists for bug reports and such on software that
+I develop/port/enhance/destroy.  Please look at http://www.free.lp.se/
+for further info.
+
+
+-- 
+Richard Levitte <richard@levitte.org>
+1999-03-09

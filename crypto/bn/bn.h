@@ -68,6 +68,10 @@
 extern "C" {
 #endif
 
+#ifdef VMS
+#undef BN_LLONG /* experimental, so far... */
+#endif
+
 #define BN_MUL_COMBA
 #define BN_SQR_COMBA
 #define BN_RECURSION

@@ -147,7 +147,9 @@ int main(int Argc, char *Argv[])
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
+#ifndef VMS
 		strcat(config_name,"/");
+#endif
 		strcat(config_name,OPENSSL_CONF);
 		p=config_name;
 		}

@@ -17,7 +17,7 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile
+GENERAL=Makefile rsaref-lib.com install.com
 TEST=
 APPS=
 

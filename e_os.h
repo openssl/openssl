@@ -192,25 +192,66 @@ extern "C" {
 
 #else /* The non-microsoft world world */
 
-#  ifdef VMS
-#    include <unixlib.h>
-#  else
-#    include <unistd.h>
+#  if defined(__VMS) && !defined(VMS)
+#  define VMS 1
 #  endif
 
-#  define OPENSSL_CONF	"openssl.cnf"
-#  define SSLEAY_CONF	OPENSSL_CONF
-#  define RFILE		".rnd"
-#  define LIST_SEPARATOR_CHAR ':'
-#  ifndef MONOLITH
-#    define EXIT(n)		exit(n); return(n)
+#  ifdef VMS
+  /* some programs don't include stdlib, so exit() and others give implicit 
+     function warnings */
+#    include <stdlib.h>
+#    if defined(__DECC)
+#      include <unistd.h>
+#    else
+#      include <unixlib.h>
+#    endif
+#    define OPENSSL_CONF	"openssl.cnf"
+#    define SSLEAY_CONF		OPENSSL_CONF
+#    define RFILE		".rnd"
+#    define LIST_SEPARATOR_CHAR ','
+#    define NUL_DEV		"NLA0:"
+  /* We need to do this, because DEC C converts exit code 0 to 1, but not 1
+     to 0.  We will convert 1 to 3!  Also, add the inhibit message bit... */
+#    ifndef MONOLITH
+#      define EXIT(n)		do { int __VMS_EXIT = n; \
+                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
+                                     __VMS_EXIT |= 0x10000000; \
+				     exit(n); return(n); } while(0)
+#    else
+#      define EXIT(n)		do { int __VMS_EXIT = n; \
+                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
+                                     __VMS_EXIT |= 0x10000000; \
+				     return(n); } while(0)
+#    endif
 #  else
-#    define EXIT(n)		return(n)
+#    include <unistd.h>
+
+#    define OPENSSL_CONF	"openssl.cnf"
+#    define SSLEAY_CONF		OPENSSL_CONF
+#    define RFILE		".rnd"
+#    define LIST_SEPARATOR_CHAR ':'
+#    define NUL_DEV		"/dev/null"
+#    ifndef MONOLITH
+#      define EXIT(n)		exit(n); return(n)
+#    else
+#      define EXIT(n)		return(n)
+#    endif
 #  endif
-#  define NUL_DEV		"/dev/null"
 
 #  define SSLeay_getpid()	getpid()
 
+#endif
+
+/* Definitions of GLOBAL and EXTERN, to define and declare certain global
+   symbols that, with some compilers under VMS, have to be defined and
+   declared explicitely with globaldef and globalref.  On other OS:es,
+   these macros are defined with something sensible. */
+#if defined(VMS) && !defined(__DECC)
+#define EXTERN globalref
+#define GLOBAL globaldef
+#else
+#define EXTERN extern
+#define GLOBAL
 #endif
 
 /*************/
@@ -236,16 +277,21 @@ extern HINSTANCE _hInstance;
 
 #  else
 
+#    include <sys/types.h>
 #    ifndef VMS
-      /* unix world */
-#      include <netdb.h>
-#      include <sys/types.h>
+#      include <sys/param.h>
+#    endif
+#    include <sys/time.h> /* Needed under linux for FD_XXX */
+
+#    include <netdb.h>
+#    if defined(VMS) && !defined(__DECC)
+#      include <socket.h>
+#      include <in.h>
+#    else
 #      include <sys/socket.h>
 #      ifdef FILIO_H
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
-#      include <sys/param.h>
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
 #      include <netinet/in.h>
 #    endif
 
@@ -261,11 +307,21 @@ extern HINSTANCE _hInstance;
 #    if defined(sun)
 #      include <sys/filio.h>
 #    else
-#      include <sys/ioctl.h>
+#      ifndef VMS
+#        include <sys/ioctl.h>
+#      else
+	 /* ioctl is only in VMS > 7.0 and when socketshr is not used */
+#        if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
+#          include <sys/ioctl.h>
+#        endif
+#      endif
 #    endif
 
 #    ifdef VMS
 #      include <unixio.h>
+#      if defined(TCPIP_TYPE_SOCKETSHR)
+#        include <socketshr.h>
+#      endif
 #    endif
 
 #    define SSLeay_Read(a,b,c)     read((a),(b),(c))

@@ -56,6 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+/* With IPv6, it looks like Digital has mixed up the proper order of
+   recursive header file inclusion, resulting in the compiler complaining
+   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
+   is needed to have fileno() declared correctly...  So let's define u_int */
+#if defined(__DECC) && !defined(__U_INT)
+#define __U_INT
+typedef unsigned int u_int;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +78,11 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include "s_apps.h"
+
+#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
+			      and that isn't in VMS < 7.0 */
+#undef FIONBIO
+#endif
 
 #if defined(NO_RSA) && !defined(NO_SSL2)
 #define NO_SSL2
@@ -454,7 +468,14 @@ re_start:
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-			i=select(width,&readfds,&writefds,NULL,NULL);
+			/* Note: under VMS with SOCKETSHR the third parameter
+			 * is currently of type (int *) whereas under other
+			 * systems it is (void *) if you don't have a cast it
+			 * will choke the compiler: if you do have a cast then
+			 * you can either go for (int *) or (void *).
+			 */
+			i=select(width,(void *)&readfds,(void *)&writefds,
+				 NULL,NULL);
 			if ( i < 0)
 				{
 				BIO_printf(bio_err,"bad select %d\n",

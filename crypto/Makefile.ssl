@@ -31,7 +31,7 @@ SDIRS=	md2 md5 sha mdc2 hmac ripemd \
 	buffer bio stack lhash rand err objects \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp
 
-GENERAL=Makefile README
+GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 LIBSRC=	cryptlib.c mem.c cversion.c ex_data.c tmdiff.c cpt_err.c

@@ -201,6 +201,27 @@ void program_name(char *in, char *out, int size)
 	out[n]='\0';
 	}
 #else
+#ifdef VMS
+void program_name(char *in, char *out, int size)
+	{
+	char *p=in, *q;
+	char *chars=":]>";
+
+	while(*chars != '\0')
+		{
+		q=strrchr(p,*chars);
+		if (q > p)
+			p = q + 1;
+		chars++;
+		}
+
+	q=strrchr(p,'.');
+	if (q == NULL)
+		q = in+size;
+	strncpy(out,p,q-p);
+	out[q-p]='\0';
+	}
+#else
 void program_name(char *in, char *out, int size)
 	{
 	char *p;
@@ -213,6 +234,7 @@ void program_name(char *in, char *out, int size)
 	strncpy(out,p,size-1);
 	out[size-1]='\0';
 	}
+#endif
 #endif
 
 #ifdef WIN32

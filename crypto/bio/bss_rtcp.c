@@ -58,6 +58,7 @@
 
 /* Written by David L. Jones <jonesd@kcgl1.eng.ohio-state.edu>
  * Date:   22-JUL-1996
+ * Revised: 25-SEP-1997		Update for 0.8.1, BIO_CTRL_SET -> BIO_C_SET_FD
  */
 /* VMS */
 #include <stdio.h>
@@ -68,7 +69,8 @@
 #include <openssl/bio.h>
 
 #include <iodef.h>		/* VMS IO$_ definitions */
-extern int SYS$QIOW();
+#include <starlet.h>
+
 typedef unsigned short io_channel;
 /*************************************************************************/
 struct io_status { short status, count; long flags; };
@@ -114,11 +116,17 @@ BIO_METHOD *BIO_s_rtcp(void)
 /*****************************************************************************/
 /* Decnet I/O routines.
  */
+
+#ifdef __DECC
+#pragma message save
+#pragma message disable DOLLARID
+#endif
+
 static int get ( io_channel chan, char *buffer, int maxlen, int *length )
 {
     int status;
     struct io_status iosb;
-    status = SYS$QIOW ( 0, chan, IO$_READVBLK, &iosb, 0, 0,
+    status = sys$qiow ( 0, chan, IO$_READVBLK, &iosb, 0, 0,
 	buffer, maxlen, 0, 0, 0, 0 );
     if ( (status&1) == 1 ) status = iosb.status;
     if ( (status&1) == 1 ) *length = iosb.count;
@@ -129,11 +137,16 @@ static int put ( io_channel chan, char *buffer, int length )
 {
     int status;
     struct io_status iosb;
-    status = SYS$QIOW ( 0, chan, IO$_WRITEVBLK, &iosb, 0, 0,
+    status = sys$qiow ( 0, chan, IO$_WRITEVBLK, &iosb, 0, 0,
 	buffer, length, 0, 0, 0, 0 );
     if ( (status&1) == 1 ) status = iosb.status;
     return status;
 }
+
+#ifdef __DECC
+#pragma message restore
+#endif
+
 /***************************************************************************/
 
 static int rtcp_new(BIO *bi)
@@ -243,7 +256,7 @@ static long rtcp_ctrl(BIO *b, int cmd, long num, char *ptr)
 	case BIO_CTRL_EOF:
 		ret = 1;
 		break;
-	case BIO_CTRL_SET:
+	case BIO_C_SET_FD:
 		b->num = num;
 		ret = 1;
 	 	break;

@@ -59,7 +59,7 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#ifndef MSDOS
+#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -71,7 +71,6 @@
 extern int exit();
 #endif
 #include <signal.h>
-#ifndef VMS
 #ifndef _IRIX
 #include <time.h>
 #endif
@@ -79,15 +78,15 @@ extern int exit();
 #include <sys/types.h>
 #include <sys/times.h>
 #endif
-#else /* VMS */
-#include <types.h>
-struct tms {
-	time_t tms_utime;
-	time_t tms_stime;
-	time_t tms_uchild;	/* I dunno...  */
-	time_t tms_uchildsys;	/* so these names are a guess :-) */
-	}
+
+/* Depending on the VMS version, the tms structure is perhaps defined.
+   The __TMS macro will show if it was.  If it wasn't defined, we should
+   undefine TIMES, since that tells the rest of the program how things
+   should be handled.				-- Richard Levitte */
+#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#undef TIMES
 #endif
+
 #ifndef TIMES
 #include <sys/timeb.h>
 #endif

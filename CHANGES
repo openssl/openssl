@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) VMS support.
+     [Richard Levitte <richard@levitte.org>]
+
   *) New option -out to asn1parse to allow the parsed structure to be
      output to a file. This is most useful when combined with the -strparse
      option to examine the output of things like OCTET STRINGS.

@@ -17,7 +17,7 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile README
+GENERAL=Makefile README ssl-lib.com install.com
 TEST=ssltest.c
 APPS=
 

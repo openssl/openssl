@@ -20,7 +20,7 @@ EX_LIBS=
 
 CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile
+GENERAL=Makefile makeapps.com install.com
 
 DLIBCRYPTO=../libcrypto.a
 DLIBSSL=../libssl.a

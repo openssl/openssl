@@ -61,7 +61,7 @@
 #include <string.h>
 
 #define USE_SOCKETS
-#include "../e_os.h"
+#include <openssl/e_os.h>
 
 #include <openssl/buffer.h>
 #include <openssl/stack.h>

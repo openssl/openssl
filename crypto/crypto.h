@@ -231,7 +231,7 @@ typedef struct crypto_ex_data_func_st
 #endif /* MDEBUG */
 
 /* Case insensiteve linking causes problems.... */
-#ifdef WIN16
+#if defined(WIN16) || defined(VMS)
 #define ERR_load_CRYPTO_strings	ERR_load_CRYPTOlib_strings
 #endif
 

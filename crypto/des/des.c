@@ -59,7 +59,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef MSDOS
+#ifndef VMS
 #include <unistd.h>
+#else /* VMS */
+#ifdef __DECC
+#include <unistd.h>
+#if __CRTL_VER < 70000000
+#define RAND
+#endif
+#else /* not __DECC */
+#include <math.h>
+#define RAND
+#endif /* __DECC */
+#endif /* VMS */
 #else
 #include <io.h>
 #define RAND

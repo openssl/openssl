@@ -69,6 +69,12 @@ extern "C" {
 
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
+#include <openssl/e_os.h>	/* EXTERN */
+
+#ifdef VMS
+#undef des_init_random_number_generator
+#define des_init_random_number_generator des_init_random_num_generator
+#endif
 
 typedef unsigned char des_cblock[8];
 typedef unsigned char *des_cblocks; /* Unfortunately there's no way to say that
@@ -132,9 +138,9 @@ typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
 #define des_check_key_parity check_parity
 
-extern int des_check_key;	/* defaults to false */
-extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
-extern int des_set_weak_key_flag; /* set the weak key flag */
+EXTERN int des_check_key;	/* defaults to false */
+EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+EXTERN int des_set_weak_key_flag; /* set the weak key flag */
 
 const char *des_options(void);
 void des_ecb3_encrypt(const des_cblock input, des_cblock output,

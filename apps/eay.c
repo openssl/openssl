@@ -62,7 +62,7 @@
 
 #define MONOLITH
 #define USE_SOCKETS
-#include "../e_os.h"
+#include <openssl/e_os.h>
 
 #include <openssl/bio.h>
 #include <openssl/stack.h>

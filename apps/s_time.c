@@ -74,10 +74,10 @@
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif
+#define USE_SOCKETS
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
-#define USE_SOCKETS
 #include "apps.h"
 #include "s_apps.h"
 #include <openssl/err.h>
@@ -86,11 +86,10 @@
 #include "wintext.h"
 #endif
 
-#ifndef MSDOS
+#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
 #endif
 
-#ifndef VMS
 #ifndef _IRIX
 #include <time.h>
 #endif
@@ -98,15 +97,15 @@
 #include <sys/types.h>
 #include <sys/times.h>
 #endif
-#else /* VMS */
-#include <types.h>
-struct tms {
-	time_t tms_utime;
-	time_t tms_stime;
-	time_t tms_uchild;	/* I dunno...  */
-	time_t tms_uchildsys;	/* so these names are a guess :-) */
-	}
+
+/* Depending on the VMS version, the tms structure is perhaps defined.
+   The __TMS macro will show if it was.  If it wasn't defined, we should
+   undefine TIMES, since that tells the rest of the program how things
+   should be handled.				-- Richard Levitte */
+#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#undef TIMES
 #endif
+
 #ifndef TIMES
 #include <sys/timeb.h>
 #endif
@@ -138,6 +137,7 @@ struct tms {
 #undef PROG
 #define PROG s_time_main
 
+#undef ioctl
 #define ioctl ioctlsocket
 
 #define SSL_CONNECT_NAME	"localhost:4433"
@@ -668,7 +668,13 @@ static SSL *doConnection(SSL *scon)
 			width=i+1;
 			FD_ZERO(&readfds);
 			FD_SET(i,&readfds);
-			select(width,&readfds,NULL,NULL,NULL);
+			/* Note: under VMS with SOCKETSHR the third parameter
+			 * is currently of type (int *) whereas under other
+			 * systems it is (void *) if you don't have a cast it
+			 * will choke the compiler: if you do have a cast then
+			 * you can either go for (int *) or (void *).
+			 */
+			select(width,(void *)&readfds,NULL,NULL,NULL);
 			continue;
 			}
 		break;

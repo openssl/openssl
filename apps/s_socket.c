@@ -56,6 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+/* With IPv6, it looks like Digital has mixed up the proper order of
+   recursive header file inclusion, resulting in the compiler complaining
+   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
+   is needed to have fileno() declared correctly...  So let's define u_int */
+#if defined(__DECC) && !defined(__U_INT)
+#define __U_INT
+typedef unsigned int u_int;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +77,14 @@
 #undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
+
+#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
+			      and that isn't in VMS < 7.0 */
+#undef FIONBIO
+#endif
+#ifdef VMS /* for vfork() */
+#include <processes.h>
+#endif
 
 static struct hostent *GetHostByName(char *name);
 int sock_init(void );
@@ -206,7 +223,12 @@ int nbio_sock_error(int sock)
 	int size;
 
 	size=sizeof(int);
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,&size);
+	/* Note: under VMS with SOCKETSHR the third parameter is currently
+	 * of type (int *) whereas under other systems it is (void *) if
+	 * you don't have a cast it will choke the compiler: if you do
+	 * have a cast then you can either go for (int *) or (void *).
+	 */
+	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,(void *)&size);
 	if (i < 0)
 		return(1);
 	else
@@ -321,7 +343,7 @@ int init_server_long(int *sock, int port, char *ip)
 		{
 		int j = 1;
 		setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-			   (const void *) &j, sizeof j);
+			   (void *) &j, sizeof j);
 		}
 #endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
@@ -365,7 +387,12 @@ redoit:
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);
-	ret=accept(acc_sock,(struct sockaddr *)&from,&len);
+	/* Note: under VMS with SOCKETSHR the third parameter is currently
+	 * of type (int *) whereas under other systems it is (void *) if
+	 * you don't have a cast it will choke the compiler: if you do
+	 * have a cast then you can either go for (int *) or (void *).
+	 */
+	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
 #ifdef WINDOWS
@@ -589,7 +616,11 @@ int spawn(int argc, char **argv, int *in, int *out)
 
 	if ((pipe(p1) < 0) || (pipe(p2) < 0)) return(-1);
 
+#ifdef VMS
+	if ((pid=vfork()) == 0)
+#else
 	if ((pid=fork()) == 0)
+#endif
 		{ /* child */
 		if (dup2(CHILD_WRITE,fileno(stdout)) < 0)
 			perror("dup2");

@@ -74,8 +74,13 @@
 #define NO_SSL2
 #endif
 
-#define TEST_SERVER_CERT "../apps/server.pem"
-#define TEST_CLIENT_CERT "../apps/client.pem"
+#ifdef VMS
+#  define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
+#  define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"
+#else
+#  define TEST_SERVER_CERT "../apps/server.pem"
+#  define TEST_CLIENT_CERT "../apps/client.pem"
+#endif
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef NO_RSA

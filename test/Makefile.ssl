@@ -19,7 +19,10 @@ EX_LIBS= #-lnsl -lsocket
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile.ssl
+GENERAL=Makefile.ssl maketests.com \
+	tests.com testenc.com tx509.com trsa.com tcrl.com tsid.com treq.com \
+	tpkcs7.com tpkcs7d.com tverify.com testgen.com testss.com testssl.com \
+	testca.com VMSca-response.1 VMSca-response.2
 
 DLIBCRYPTO= ../libcrypto.a
 DLIBSSL= ../libssl.a

@@ -68,7 +68,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef MSDOS
+#if !defined(VMS) || defined(__DECC)
 #include <unistd.h>
+#endif
 #endif
 #include <openssl/des.h>
 
@@ -81,6 +83,17 @@
 #include <io.h>
 #ifndef RAND
 #define RAND
+#endif
+#endif
+
+#ifdef VMS
+#ifndef __DECC
+#include <math.h>
+#define RAND
+#else
+#if __CRTL_VER < 70000000
+#define RAND
+#endif
 #endif
 #endif
 
@@ -418,7 +431,7 @@
 	PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
 	}
 
-extern const DES_LONG des_SPtrans[8][64];
+EXTERN const DES_LONG des_SPtrans[8][64];
 
 void fcrypt_body(DES_LONG *out,des_key_schedule ks,
 	DES_LONG Eswap0, DES_LONG Eswap1);

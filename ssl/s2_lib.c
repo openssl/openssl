@@ -68,7 +68,7 @@ const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
-SSL_CIPHER ssl2_ciphers[]={
+GLOBAL SSL_CIPHER ssl2_ciphers[]={
 /* NULL_WITH_MD5 v3 */
 #if 0
 	{

@@ -76,7 +76,22 @@
 #include <openssl/pem.h>
 
 #ifndef W_OK
-#include <sys/file.h>
+#  ifdef VMS
+#    if defined(__DECC)
+#      include <unistd.h>
+#    else
+#      include <unixlib.h>
+#    endif
+#  else
+#    include <sys/file.h>
+#  endif
+#endif
+
+#ifndef W_OK
+#  define F_OK 0
+#  define X_OK 1
+#  define W_OK 2
+#  define R_OK 4
 #endif
 
 #undef PROG
@@ -395,9 +410,14 @@ bad:
 	if (configfile == NULL)
 		{
 		/* We will just use 'buf[0]' as a temporary buffer.  */
+#ifdef VMS
+		strncpy(buf[0],X509_get_default_cert_area(),
+			sizeof(buf[0])-1-sizeof(CONFIG_FILE));
+#else
 		strncpy(buf[0],X509_get_default_cert_area(),
 			sizeof(buf[0])-2-sizeof(CONFIG_FILE));
 		strcat(buf[0],"/");
+#endif
 		strcat(buf[0],CONFIG_FILE);
 		configfile=buf[0];
 		}
@@ -537,7 +557,12 @@ bad:
 			BIO_printf(bio_err,"there needs to be defined a directory for new certificate to be placed in\n");
 			goto err;
 			}
+#ifdef VMS
+		/* For technical reasons, VMS misbehaves with X_OK */
+		if (access(outdir,R_OK|W_OK) != 0)
+#else
 		if (access(outdir,R_OK|W_OK|X_OK) != 0)
+#endif
 			{
 			BIO_printf(bio_err,"I am unable to acces the %s directory\n",outdir);
 			perror(outdir);
@@ -855,12 +880,23 @@ bad:
 			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_num(cert_sk));
 
 			strncpy(buf[0],serialfile,BSIZE-4);
+
+#ifdef VMS
+			strcat(buf[0],"-new");
+#else
 			strcat(buf[0],".new");
+#endif
 
 			if (!save_serial(buf[0],serial)) goto err;
 
 			strncpy(buf[1],dbfile,BSIZE-4);
+
+#ifdef VMS
+			strcat(buf[1],"-new");
+#else
 			strcat(buf[1],".new");
+#endif
+
 			if (BIO_write_filename(out,buf[1]) <= 0)
 				{
 				perror(dbfile);
@@ -884,7 +920,11 @@ bad:
 			p=(char *)x->cert_info->serialNumber->data;
 			
 			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
+
+#ifndef VMS
 			strcat(buf[2],"/");
+#endif
+
 			n=(unsigned char *)&(buf[2][strlen(buf[2])]);
 			if (j > 0)
 				{
@@ -917,7 +957,13 @@ bad:
 			{
 			/* Rename the database and the serial file */
 			strncpy(buf[2],serialfile,BSIZE-4);
+
+#ifdef VMS
+			strcat(buf[2],"-old");
+#else
 			strcat(buf[2],".old");
+#endif
+
 			BIO_free(in);
 			BIO_free(out);
 			in=NULL;
@@ -939,7 +985,13 @@ bad:
 				}
 
 			strncpy(buf[2],dbfile,BSIZE-4);
+
+#ifdef VMS
+			strcat(buf[2],"-old");
+#else
 			strcat(buf[2],".old");
+#endif
+
 			if (rename(dbfile,buf[2]) < 0)
 				{
 				BIO_printf(bio_err,"unabel to rename %s to %s\n",

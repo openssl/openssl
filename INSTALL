@@ -2,7 +2,8 @@
  INSTALLATION ON THE UNIX PLATFORM
  ---------------------------------
 
- [For instructions for compiling OpenSSL on Windows systems, see INSTALL.W32].
+ [See INSTALL.W32 for instructions for compiling OpenSSL on Windows systems,
+  and INSTALL.VMS for installing on OpenVMS systems.]
 
  To install OpenSSL, you will need:
 

@@ -63,6 +63,11 @@
 extern "C" {
 #endif
 
+#ifdef VMS
+#undef X509_REVOKED_get_ext_by_critical
+#define X509_REVOKED_get_ext_by_critical X509_REVOKED_get_ext_by_critic
+#endif
+
 #include <openssl/stack.h>
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>

@@ -368,6 +368,16 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
 #ifndef SSLEAY_MACROS
 
+#ifdef VMS
+/* Too long names need to be abbreviated to at most 31 characters */
+#undef PEM_write_NETSCAPE_CERT_SEQUENCE
+#define PEM_write_NETSCAPE_CERT_SEQUENCE PEM_write_NETSCAPE_CERT_SEQ
+#undef PEM_read_bio_NETSCAPE_CERT_SEQUENCE
+#define PEM_read_bio_NETSCAPE_CERT_SEQUENCE PEM_read_bio_NETSCAPE_CERT_SEQ
+#undef PEM_write_bio_NETSCAPE_CERT_SEQUENCE
+#define PEM_write_bio_NETSCAPE_CERT_SEQUENCE PEM_write_bio_NETSCAPE_CERT_SEQ
+#endif
+
 #ifndef WIN16
 X509 *PEM_read_X509(FILE *fp,X509 **x,int (*cb)());
 X509_REQ *PEM_read_X509_REQ(FILE *fp,X509_REQ **x,int (*cb)());

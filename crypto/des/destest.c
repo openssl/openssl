@@ -65,7 +65,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef MSDOS
+#if !defined(VMS) || defined(__DECC)
 #include <unistd.h>
+#endif /* VMS */
 #else
 #include <io.h>
 #endif

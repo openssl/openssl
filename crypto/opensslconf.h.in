@@ -4,8 +4,10 @@
 /* Generate 80386 code? */
 #undef I386_ONLY
 
+#if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
 #define OPENSSLDIR "/usr/local/ssl"
+#endif
 #endif
 
 #if defined(HEADER_IDEA_H) && !defined(IDEA_INT)

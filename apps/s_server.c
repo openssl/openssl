@@ -56,6 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+/* With IPv6, it looks like Digital has mixed up the proper order of
+   recursive header file inclusion, resulting in the compiler complaining
+   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
+   is needed to have fileno() declared correctly...  So let's define u_int */
+#if defined(__DECC) && !defined(__U_INT)
+#define __U_INT
+typedef unsigned int u_int;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,6 +82,11 @@
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include "s_apps.h"
+
+#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
+			      and that isn't in VMS < 7.0 */
+#undef FIONBIO
+#endif
 
 #if defined(NO_RSA) && !defined(NO_SSL2)
 #define NO_SSL2
@@ -94,7 +108,11 @@ static DH *get_dh512(void);
 /* static void s_server_init(void);*/
 
 #ifndef S_ISDIR
+#if defined(VMS) && !defined(__DECC)
+#define S_ISDIR(a)	(((a) & S_IFMT) == S_IFDIR)
+#else
 #define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
+#endif
 #endif
 
 #ifndef NO_DH
@@ -610,7 +628,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		FD_SET(fileno(stdin),&readfds);
 #endif
 		FD_SET(s,&readfds);
-		i=select(width,&readfds,NULL,NULL,NULL);
+		/* Note: under VMS with SOCKETSHR the third parameter is
+		 * currently of type (int *) whereas under other systems
+		 * it is (void *) if you don't have a cast it will choke
+		 * the compiler: if you do have a cast then you can either
+		 * go for (int *) or (void *).
+		 */
+		i=select(width,(void *)&readfds,NULL,NULL,NULL);
 		if (i <= 0) continue;
 		if (FD_ISSET(fileno(stdin),&readfds))
 			{

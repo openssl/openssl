@@ -58,7 +58,7 @@
 
 #include "des_locl.h"
 
-extern int des_check_key;
+EXTERN int des_check_key;
 
 void des_string_to_key(const char *str, des_cblock key)
 	{

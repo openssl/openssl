@@ -105,7 +105,11 @@ LHASH *CONF_load(LHASH *h, char *file, long *line)
 		goto err;
 		}
 
+#ifdef VMS
+	in=fopen(file,"r");
+#else
 	in=fopen(file,"rb");
+#endif
 	if (in == NULL)
 		{
 		SYSerr(SYS_F_FOPEN,get_last_sys_error());

@@ -259,6 +259,21 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
+		  /* These functions are being redefined in another directory,
+		     and clash when the linker is case-insensitive, so let's
+		     hide them a little, by giving them an extra 'o' at the
+		     beginning of the name... */
+#ifdef VMS
+#undef X509v3_cleanup_extensions
+#define X509v3_cleanup_extensions oX509v3_cleanup_extensions
+#undef X509v3_add_extension
+#define X509v3_add_extension oX509v3_add_extension
+#undef X509v3_add_netscape_extensions
+#define X509v3_add_netscape_extensions oX509v3_add_netscape_extensions
+#undef X509v3_add_standard_extensions
+#define X509v3_add_standard_extensions oX509v3_add_standard_extensions
+#endif
+
 #ifdef HEADER_LHASH_H
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h,int type,X509_NAME *name);
 #endif

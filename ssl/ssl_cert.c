@@ -107,7 +107,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #ifndef WIN32
+#ifndef VMS
 #include <dirent.h>
+#endif
 #endif
 #include <openssl/objects.h>
 #include <openssl/bio.h>
@@ -640,6 +642,7 @@ err:
  */
 
 #ifndef WIN32
+#ifndef VMS			/* XXXX This may be fixed in the future */
 
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
@@ -672,4 +675,5 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return 1;
     }
 
+#endif
 #endif

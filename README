@@ -141,7 +141,8 @@
  ------------
 
  To install this package under a Unix derivative, read the INSTALL file.  For
- a Win32 platform, read the INSTALL.W32 file.
+ a Win32 platform, read the INSTALL.W32 file.  For OpenVMS systems, read
+ INSTALL.VMS.
 
  For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
  public key library, RSAREF, by configuring OpenSSL with the option "rsaref".

@@ -124,7 +124,7 @@ int LIB$INIT_TIMER(), LIB$SHOW_TIMER();
 #include <string.h>		/* from ssltest.c */
 #include <errno.h>
 #include <openssl/buffer.h>
-#include "../e_os.h"
+#include <openssl/e_os.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -224,8 +224,12 @@ int main ( int argc, char **argv )
 	printf("cipher list: %s\n", cipher ? cipher : "{undefined}" );
 
 	SSL_load_error_strings();
+	SSLeay_add_all_algorithms();
 
+/* DRM, this was the original, but there is no such thing as SSLv2()
 	s_ctx=SSL_CTX_new(SSLv2());
+*/
+	s_ctx=SSL_CTX_new(SSLv2_server_method());
 
 	if (s_ctx == NULL) goto end;
 
@@ -267,8 +271,12 @@ int doit(io_channel chan, SSL_CTX *s_ctx )
 	c_to_s=BIO_new(BIO_s_rtcp());
 	s_to_c=BIO_new(BIO_s_rtcp());
 	if ((s_to_c == NULL) || (c_to_s == NULL)) goto err;
+/* original, DRM 24-SEP-1997
 	BIO_set_fd ( c_to_s, "", chan );
 	BIO_set_fd ( s_to_c, "", chan );
+*/
+	BIO_set_fd ( c_to_s, 0, chan );
+	BIO_set_fd ( s_to_c, 0, chan );
 
 	c_bio=BIO_new(BIO_f_ssl());
 	s_bio=BIO_new(BIO_f_ssl());

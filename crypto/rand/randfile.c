@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +114,17 @@ int RAND_write_file(const char *file)
 	FILE *out;
 	int n;
 
-	out=fopen(file,"wb");
+	/* Under VMS, fopen(file, "wb") will craete a new version of the
+	   same file.  This is not good, so let's try updating an existing
+	   one, and create file only if it doesn't already exist.  This
+	   should be completely harmless on system that have no file
+	   versions.					-- Richard Levitte */
+	out=fopen(file,"rb+");
+	if (out == NULL && errno == ENOENT)
+		{
+		errno = 0;
+		out=fopen(file,"wb");
+		}
 	if (out == NULL) goto err;
 	chmod(file,0600);
 	n=RAND_DATA;
@@ -156,7 +167,9 @@ char *RAND_file_name(char *buf, int size)
 		if (((int)(strlen(s)+strlen(RFILE)+2)) > size)
 			return(RFILE);
 		strcpy(buf,s);
+#ifndef VMS
 		strcat(buf,"/");
+#endif
 		strcat(buf,RFILE);
 		ret=buf;
 		}

@@ -86,6 +86,13 @@
 #include <setjmp.h>
 #include <errno.h>
 
+#ifdef VMS			/* prototypes for sys$whatever */
+#include <starlet.h>
+#ifdef __DECC
+#pragma message disable DOLLARID
+#endif
+#endif
+
 #ifdef WIN_CONSOLE_BUG
 #include <windows.h>
 #include <wincon.h>
@@ -275,10 +282,10 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	memcpy(&(tty_new),&(tty_orig),sizeof(tty_orig));
 #endif
 #ifdef VMS
-	status = SYS$ASSIGN(&terminal,&channel,0,0);
+	status = sys$assign(&terminal,&channel,0,0);
 	if (status != SS$_NORMAL)
 		return(-1);
-	status=SYS$QIOW(0,channel,IO$_SENSEMODE,&iosb,0,0,tty_orig,12,0,0,0,0);
+	status=sys$qiow(0,channel,IO$_SENSEMODE,&iosb,0,0,tty_orig,12,0,0,0,0);
 	if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
 		return(-1);
 #endif
@@ -298,7 +305,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	tty_new[0] = tty_orig[0];
 	tty_new[1] = tty_orig[1] | TT$M_NOECHO;
 	tty_new[2] = tty_orig[2];
-	status = SYS$QIOW(0,channel,IO$_SETMODE,&iosb,0,0,tty_new,12,0,0,0,0);
+	status = sys$qiow(0,channel,IO$_SETMODE,&iosb,0,0,tty_new,12,0,0,0,0);
 	if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
 		return(-1);
 #endif
@@ -344,19 +351,19 @@ error:
 	perror("fgets(tty)");
 #endif
 	/* What can we do if there is an error? */
-#if defined(TTY_set) && !defined(VMS) 
+#if defined(TTY_set) && !defined(VMS)
 	if (ps >= 2) TTY_set(fileno(tty),&tty_orig);
 #endif
 #ifdef VMS
 	if (ps >= 2)
-		status = SYS$QIOW(0,channel,IO$_SETMODE,&iosb,0,0
+		status = sys$qiow(0,channel,IO$_SETMODE,&iosb,0,0
 			,tty_orig,12,0,0,0,0);
 #endif
 	
 	if (ps >= 1) popsig();
 	if (stdin != tty) fclose(tty);
 #ifdef VMS
-	status = SYS$DASSGN(channel);
+	status = sys$dassgn(channel);
 #endif
 	return(!ok);
 	}

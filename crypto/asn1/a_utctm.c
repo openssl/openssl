@@ -58,6 +58,11 @@
 
 #include <stdio.h>
 #include <time.h>
+#ifdef VMS
+#include <descrip.h>
+#include <lnmdef.h>
+#include <starlet.h>
+#endif
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
@@ -181,6 +186,43 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	ts=&data;
 #else
 	ts=gmtime(&t);
+#endif
+#ifdef VMS
+	if (ts == NULL)
+		{
+		static $DESCRIPTOR(tabnam,"LNM$DCL_LOGICAL");
+		static $DESCRIPTOR(lognam,"SYS$TIMEZONE_DIFFERENTIAL");
+		char result[256];
+		unsigned int reslen = 0;
+		struct {
+			short buflen;
+			short code;
+			void *bufaddr;
+			unsigned int *reslen;
+		} itemlist[] = {
+			{ 0, LNM$_STRING, 0, 0 },
+			{ 0, 0, 0, 0 },
+		};
+		int status;
+
+		/* Get the value for SYS$TIMEZONE_DIFFERENTIAL */
+		itemlist[0].buflen = sizeof(result);
+		itemlist[0].bufaddr = result;
+		itemlist[0].reslen = &reslen;
+		status = sys$trnlnm(0, &tabnam, &lognam, 0, itemlist);
+		if (!(status & 1))
+			return NULL;
+		result[reslen] = '\0';
+
+		/* Get the numerical value of the equivalence string */
+		status = atoi(result);
+
+		/* and use it to move time to GMT */
+		t -= status;
+
+		/* then convert the result to the time structure */
+		ts=(struct tm *)localtime(&t);
+		}
 #endif
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))

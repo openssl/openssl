@@ -162,7 +162,7 @@ SHELL=/bin/sh
 
 TOP=    .
 ONEDIRS=out tmp
-EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep
+EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a 
 
@@ -308,7 +308,7 @@ dist:
 	@$(MAKE) tar
 
 dist_pem_h:
-	(cd crypto/pem; $(MAKE) SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
+	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
 install: all
 	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/bin 2>/dev/null

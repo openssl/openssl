@@ -71,14 +71,14 @@ const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
  * 7 - 128 == 4096
  * 8 - 256 == 8192
  */
-int bn_limit_bits=0;
-int bn_limit_num=8;        /* (1<<bn_limit_bits) */
-int bn_limit_bits_low=0;
-int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
-int bn_limit_bits_high=0;
-int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
-int bn_limit_bits_mont=0;
-int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
+GLOBAL int bn_limit_bits=0;
+GLOBAL int bn_limit_num=8;        /* (1<<bn_limit_bits) */
+GLOBAL int bn_limit_bits_low=0;
+GLOBAL int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
+GLOBAL int bn_limit_bits_high=0;
+GLOBAL int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
+GLOBAL int bn_limit_bits_mont=0;
+GLOBAL int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
 
 void BN_set_params(int mult, int high, int low, int mont)
 	{

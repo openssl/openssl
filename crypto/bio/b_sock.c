@@ -195,7 +195,7 @@ int BIO_sock_error(int sock)
 	 * a cast it will choke the compiler: if you do have a cast then
 	 * you can either go for (char *) or (void *).
 	 */
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(void *)&j,&size);
+	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(void *)&j,(void *)&size);
 	if (i < 0)
 		return(1);
 	else
@@ -408,6 +408,8 @@ void BIO_sock_cleanup(void)
 #endif
 	}
 
+#if !defined(VMS) || __VMS_VER >= 70000000
+
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 	{
 	int i;
@@ -417,6 +419,7 @@ int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
 	return(i);
 	}
+#endif /* __VMS_VER */
 
 /* The reason I have implemented this instead of using sscanf is because
  * Visual C 1.52c gives an unresolved external when linking a DLL :-( */
@@ -593,7 +596,12 @@ int BIO_accept(int sock, char **addr)
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);
-	ret=accept(sock,(struct sockaddr *)&from,&len);
+	/* Note: under VMS with SOCKETSHR the third parameter is currently
+	 * of type (int *) whereas under other systems it is (void *) if
+	 * you don't have a cast it will choke the compiler: if you do
+	 * have a cast then you can either go for (int *) or (void *).
+	 */
+	ret=accept(sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
 		SYSerr(SYS_F_ACCEPT,get_last_socket_error());
