@@ -103,11 +103,11 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	@@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
 
 generate: $(SRC)
 $(SRC):
-	@$(TOP)/util/point.sh dummytest.c $@
+	@sh $(TOP)/util/point.sh dummytest.c $@
 
 errors:
 
