@@ -1961,7 +1961,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
 
-  *) 
+  *) Change X509_cretificate_type() to mark the key as exported/exportable
+     when it's 512 *bits* long, not 512 bytes.
+     [Richard Levitte]
 
  Changes between 0.9.6i and 0.9.6j  [10 Apr 2003]
 
