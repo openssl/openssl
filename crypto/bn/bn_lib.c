@@ -782,6 +782,9 @@ int BN_set_bit(BIGNUM *a, int n)
 	{
 	int i,j,k;
 
+	if (n < 0)
+		return 0;
+
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
 	if (a->top <= i)
@@ -800,6 +803,9 @@ int BN_set_bit(BIGNUM *a, int n)
 int BN_clear_bit(BIGNUM *a, int n)
 	{
 	int i,j;
+
+	if (n < 0)
+		return 0;
 
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
@@ -824,6 +830,9 @@ int BN_is_bit_set(const BIGNUM *a, int n)
 int BN_mask_bits(BIGNUM *a, int n)
 	{
 	int b,w;
+
+	if (n < 0)
+		return 0;
 
 	w=n/BN_BITS2;
 	b=n%BN_BITS2;
