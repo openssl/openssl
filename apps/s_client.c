@@ -433,6 +433,11 @@ bad:
 		goto end;
 		}
 
+	OpenSSL_add_ssl_algorithms();
+	SSL_load_error_strings();
+
+        e = setup_engine(bio_err, engine_id, 1);
+
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
 		{
@@ -454,11 +459,6 @@ bad:
 				bio_c_out=BIO_new_fp(stdout,BIO_NOCLOSE);
 			}
 		}
-
-	OpenSSL_add_ssl_algorithms();
-	SSL_load_error_strings();
-
-        e = setup_engine(bio_err, engine_id, 1);
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
