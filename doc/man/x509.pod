@@ -224,10 +224,8 @@ option.
 =item B<-purpose>
 
 this option performs tests on the certificate extensions and outputs
-the results. It checks to see if the certificate can be used as an
-end user or CA certificate for various purposes. Since many commercial
-certificates have invalid extensions it is possible that warnings will
-be output for some certificates. Known problems have work arounds added.
+the results. For a more complete description see the B<CERTIFICATE
+EXTENSIONS> section.
 
 =back
 
@@ -402,6 +400,119 @@ two certificates with the same fingerprint can be considered to be the same.
 
 The Netscape fingerprint uses MD5 whereas MSIE uses SHA1.
 
+=head1 CERTIFICATE EXTENSIONS
+
+The B<-purpose> option checks the certificate extensions and determines
+what the certificate can be used for. The actual checks done are rather
+complex and include various hacks and workarounds to handle broken
+certificates and software.
+
+The same code is used when verifying untrusted certificates in chains
+so this section is useful if a chain is rejected by the verify code.
+
+The basicConstraints extension CA flag is used to determine whether the
+certificate can be used as a CA. If the CA flag is true then it is a CA,
+if the CA flag is false then it is not a CA. B<All> CAs should have the
+CA flag set to true.
+
+If the basicConstraints extension is absent then the certificate is
+considered to be a "possible CA" other extensions are checked according
+to the intended use of the certificate. A warning is given in this case
+because the certificate should really not be regarded as a CA: however
+it is allowed to be a CA to work around some broken software.
+
+If the certificate is a V1 certificate (and thus has no extensions) and
+it is self signed it is also assumed to be a CA but a warning is again
+given: this is to work around the problem of Verisign roots which are V1
+self signed certificates.
+
+If the keyUsage extension is present then additional restraints are
+made on the uses of the certificate. A CA certificate B<must> have the
+keyCertSign bit set if the keyUsage extension is present.
+
+The extended key usage extension places additional restrictions on the
+certificate uses. If this extension is present (whether critical or not)
+the key can only be used for the purposes specified.
+
+A complete description of each test is given below. The comments about
+basicConstraints and keyUsage and V1 certificates above apply to B<all>
+CA certificates.
+
+
+=over 4
+
+=item B<SSL Client>
+
+The extended key usage extension must be absent or include the "web client
+authentication" OID.  keyUsage must be absent or it must have the
+digitalSignature bit set. Netscape certificate type must be absent or it must
+have the SSL client bit set.
+
+=item B<SSL Client CA>
+
+The extended key usage extension must be absent or include the "web client
+authentication" OID. Netscape certificate type must be absent or it must have
+the SSL CA bit set: this is used as a work around if the basicConstraints
+extension is absent.
+
+=item B<SSL Server>
+
+The extended key usage extension must be absent or include the "web server
+authentication" and/or one of the SGC OIDs.  keyUsage must be absent or it
+must have the digitalSignature, the keyEncipherment set or both bits set.
+Netscape certificate type must be absent or have the SSL server bit set.
+
+=item B<SSL Server CA>
+
+The extended key usage extension must be absent or include the "web server
+authentication" and/or one of the SGC OIDs.  Netscape certificate type must
+be absent or the SSL CA bit must be set: this is used as a work around if the
+basicConstraints extension is absent.
+
+=item B<Netscape SSL Server>
+
+For Netscape SSL clients to connect to an SSL server it must have the
+keyEncipherment bit set if the keyUsage extension is present. This isn't
+always valid because some cipher suites use the key for digital signing.
+Otherwise it is the same as a normal SSL server.
+
+=item B<Common S/MIME Client Tests>
+
+The extended key usage extension must be absent or include the "email
+protection" OID. Netscape certificate type must be absent or should have the
+S/MIME bit set. If the S/MIME bit is not set in netscape certificate type
+then the SSL client bit is tolerated as an alternative but a warning is shown:
+this is because some Verisign certificates don't set the S/MIME bit.
+
+=item B<S/MIME Signing>
+
+In addition to the common S/MIME client tests the digitalSignature bit must
+be set if the keyUsage extension is present.
+
+=item B<S/MIME Encryption>
+
+In addition to the common S/MIME tests the keyEncipherment bit must be set
+if the keyUsage extension is present.
+
+=item B<S/MIME CA>
+
+The extended key usage extension must be absent or include the "email
+protection" OID. Netscape certificate type must be absent or must have the
+S/MIME CA bit set: this is used as a work around if the basicConstraints
+extension is absent. 
+
+=item B<CRL Signing>
+
+The keyUsage extension must be absent or it must have the CRL signing bit
+set.
+
+=item B<CRL Signing CA>
+
+The normal CA tests apply. Except in this case the basicConstraints extension
+must be present.
+
+=back
+
 =head1 BUGS
 
 The way DNs are printed is in a "historical SSLeay" format which doesn't
@@ -425,6 +536,6 @@ OpenSSL 0.9.5 and later.
 
 =head1 SEE ALSO
 
-req(1), ca(1), genrsa(1), gendsa(1)
+req(1), ca(1), genrsa(1), gendsa(1), verify(1)
 
 =cut
