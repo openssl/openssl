@@ -63,7 +63,7 @@
 
 const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
-static DH_METHOD *default_DH_method;
+static DH_METHOD *default_DH_method = NULL;
 static int dh_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dh_meth = NULL;
 
