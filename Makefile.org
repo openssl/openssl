@@ -609,7 +609,7 @@ install_docs:
 	fi; \
 	set -e; for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
-		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
+		sec=`$(PERL) util/extract-section.pl 1 < $$i`; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \
@@ -626,7 +626,7 @@ install_docs:
 	done; \
 	set -e; for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
-		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
+		sec=`$(PERL) util/extract-section.pl 3 < $$i`; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "$$pod2man \

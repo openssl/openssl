@@ -60,7 +60,7 @@ EVP_BytesToKey() returns the size of the derived key in bytes.
 =head1 SEE ALSO
 
 L<evp(3)|evp(3)>, L<rand(3)|rand(3)>,
-L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>,
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
 
 =head1 HISTORY
 

@@ -1,6 +1,8 @@
 
 =pod
 
+=for comment openssl_manual_section:5
+
 =head1 NAME
 
 config - OpenSSL CONF library configuration files

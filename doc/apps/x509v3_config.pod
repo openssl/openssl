@@ -1,5 +1,7 @@
 =pod
 
+=for comment openssl_manual_section:5
+
 =head1 NAME
 
 x509v3_config - X509 V3 certificate extension configuration format
