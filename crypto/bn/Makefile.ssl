@@ -102,7 +102,6 @@ asm/co86unix.cpp: asm/co-586.pl
 asm/sparcv8.o: asm/sparcv8.S
 
 asm/sparcv8plus.o: asm/sparcv8plus.S
-	$(CC) -xarch=v8plus -c asm/sparcv8plus.S -o asm/sparcv8plus.o
 
 asm/sparcv8plus-gcc.o: asm/sparcv8plus.S
 	gcc -E asm/sparcv8plus.S | /usr/ccs/bin/as -xarch=v8plus - -o asm/sparcv8plus-gcc.o

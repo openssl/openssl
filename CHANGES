@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
 
+  *) Added support for SPARC Linux.
+     [Andy Polyakov]
+
   *) pem_password_cb function type incompatibly changed from
           typedef int pem_password_cb(char *buf, int size, int rwflag);
      to

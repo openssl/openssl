@@ -121,6 +121,18 @@ my %table=(
 "solaris-usparc-cc","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
 "solaris64-usparc-cc","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
 
+#### SPARC Linux setups
+"linux-sparcv7","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR::",
+# Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
+# assisted with debugging of following two configs.
+"linux-sparcv8","gcc:-mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::::",
+# it's a real mess with -mcpu=ultrasparc option under Linux, but
+# -Wa,-Av8plus should do the trick no matter what.
+"linux-sparcv9","gcc:-mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DULTRASPARC -DBN_DIV2W::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+# !!!Folowing can't be even tested yet!!!
+#    We have to wait at least till 64-bit libc is available!!!
+#"linux64-sparcv9","sparc64-linux-gcc:-m64 -mcpu=v9 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DULTRASPARC -DBN_DIV2W::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
+
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown)::DES_UNROLL:::",
 "sunos-gcc","gcc:-O3 -mv8::(unknown)::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
@@ -188,8 +200,6 @@ my %table=(
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
 "linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::::",
-"linux-sparc","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR::",
-"linux-sparc64","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mv8 -Wall::-D_REENTRANT:::::",
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-x86",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",

@@ -292,9 +292,13 @@ done
 
 # figure out if gcc is available and if so we use it otherwise
 # we fallback to whatever cc does on the system
-GCCVER=`(gcc -v) 2>&1`
-if [ $? = "0" ]; then
+GCCVER=`(gcc --version) 2>/dev/null`
+if [ "$GCCVER" != "" ]; then
   CC=gcc
+  # then strip off whatever prefix Cygnus prepends the number with...
+  GCCVER=`echo $GCCVER | sed 's/^[a-z]*\-//'`
+  # peak only digits before and after first dot, e.g. 2.95.1 gives 29
+  GCCVER=`echo $GCCVER | sed '/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
   CC=cc
   if [ "$SYSTEM" = "SunOS" ]
@@ -319,8 +323,22 @@ case "$GUESSOS" in
   alpha-*-linux2) OUT="alpha-gcc" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   mips-*-linux?) OUT="linux-mips" ;;
+  sparc64-*-linux2)
+	#Before we uncomment following line we have to wait at least till
+	#64-bit glibc for SPARC is available:-(
+    #echo "WARNING! If you wish to build 64-bit library, then you have to"
+	#echo "         invoke './Configure linux64-sparcv9' *manually*."
+	#echo "         Type Ctrl-C if you don't want to continue."
+	#read waste < /dev/tty
+	OUT="linux-sparcv9" ;;
   sparc-*-linux2) OUT="linux-sparc" ;;
-  sparc64-*-linux2) OUT="linux-sparc64" ;;
+	KARCH=`awk '/type/{print$3}' /proc/cpuinfo`
+	case ${KARCH:-sun4} in
+	sun4u*)	OUT="linux-sparcv9" ;;
+	sun4m)	OUT="linux-sparcv8" ;;
+	sun4d)	OUT="linux-sparcv8" ;;
+	*)	OUT="linux-sparcv7" ;;
+	esac ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u-sun-solaris2) OUT="solaris-usparc-$CC" ;;
@@ -350,21 +368,16 @@ case "$GUESSOS" in
 esac
 
 # gcc < 2.8 does not support -mcpu=ultrasparc
-if [ "$OUT" = solaris-usparc-gcc ]
+if [ "$OUT" = solaris-usparc-gcc -a $GCCVER -lt 28 ]
 then
- GCCVERMAJOR="`echo $GCCVER | sed 's/.*version \([^.]*\).*/\1/`"
- GCCVERMINOR="`echo $GCCVER | sed 's/.*version[^.]*\.\([^.]*\).*/\1/`"
- echo "gcc version $GCCVERMAJOR.$GCCVERMINOR.x"
- case "$GCCVERMAJOR" in
-   egcs*)
-     ;;
-   *)
-     if [ $GCCVERMAJOR$GCCVERMINOR -lt 28 ]
-     then
-       OUT=solaris-usparc-oldgcc
-     fi
-     ;;
-  esac
+  echo "WARNING! Do consider upgrading to gcc-2.8 or later."
+  OUT=solaris-usparc-oldgcc
+fi
+if [ "$OUT" = "linux-sparcv9" -a $GCCVER -lt 28 ]
+then
+  echo "WARNING! Falling down to 'linux-sparcv8'."
+  echo "         Upgrade to gcc-2.8 or later."
+  OUT=linux-sparcv8
 fi
 
 case "$GUESSOS" in
