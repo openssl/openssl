@@ -54,7 +54,7 @@
  */
 
 #include <string.h>
-#include <openssl/ui.h>
+#include "ui_locl.h"
 
 int UI_UTIL_read_pw_string(char *buf,int length,const char *prompt,int verify)
 	{
