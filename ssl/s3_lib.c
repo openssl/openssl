@@ -68,7 +68,7 @@ const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 static long ssl3_default_timeout(void );
 
-GLOBAL SSL_CIPHER ssl3_ciphers[]={
+OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* The RSA ciphers */
 /* Cipher 01 */
 	{

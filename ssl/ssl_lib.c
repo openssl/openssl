@@ -70,7 +70,7 @@ static STACK *ssl_ctx_meth=NULL;
 static int ssl_meth_num=0;
 static int ssl_ctx_meth_num=0;
 
-GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
+OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
 	ssl_undefined_function,
 	ssl_undefined_function,
 	ssl_undefined_function,
