@@ -246,9 +246,12 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     QNX:*)
-	case "$VERSION" in
+	case "$RELEASE" in
 	    4*)
 		echo "${MACHINE}-whatever-qnx4"
+		;;
+	    6*)
+		echo "${MACHINE}-whatever-qnx6"
 		;;
 	    *)
 		echo "${MACHINE}-whatever-qnx"

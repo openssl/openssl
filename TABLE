@@ -1,4 +1,3 @@
-Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -2698,6 +2697,29 @@ $unistd       =
 $thread_cflag = (unknown)
 $sys_id       = 
 $lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** qnx6
+$cc           = cc
+$cflags       = -DL_ENDIAN -DTERMIOS
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = -lsocket
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
