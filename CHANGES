@@ -4,7 +4,7 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
-  *) Support the EBCDIC character set completed.
+  *) Support for the EBCDIC character set completed.
      [Martin Kraemer <Martin.Kraemer@Mch.SNI.De>]
 
   *) Source code cleanups: use const where appropriate, eliminate casts,
