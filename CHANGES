@@ -4,7 +4,7 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
-  *) Change function names to the new naming convention.
+  *) Change function names to the new get0/get1 naming convention.
      [Steve Henson]
 
   *) Allow for the possibility of temp RSA key generation failure:
