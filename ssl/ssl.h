@@ -441,7 +441,7 @@ struct ssl_ctx_st
 	/* get client cert callback */
 /**/	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
 
-	/* what we put in client requests */
+	/* what we put in client cert requests */
 	STACK_OF(X509_NAME) *client_CA;
 
 /**/	int quiet_shutdown;
@@ -575,7 +575,8 @@ struct ssl_st
 	struct ssl2_ctx_st *s2;	/* SSLv2 variables */
 	struct ssl3_ctx_st *s3;	/* SSLv3 variables */
 
-	int read_ahead;		/* Read as many input bytes as possible */
+	int read_ahead;		/* Read as many input bytes as possible
+	               	 	 * (for non-blocking reads) */
 	int hit;		/* reusing a previous session */
 
 	int purpose;		/* Purpose setting */
@@ -1310,7 +1311,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
 #define SSL_R_BAD_CHECKSUM				 104
-#define SSL_R_BAD_CLIENT_REQUEST			 105
+#define SSL_R_BAD_HELLO_REQUEST			 	 105
 #define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK		 106
 #define SSL_R_BAD_DECOMPRESSION				 107
 #define SSL_R_BAD_DH_G_LENGTH				 108

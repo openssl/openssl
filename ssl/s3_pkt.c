@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-1999 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <errno.h>
@@ -71,104 +124,91 @@ static int ssl3_get_record(SSL *s);
 static int do_compress(SSL *ssl);
 static int do_uncompress(SSL *ssl);
 static int do_change_cipher_spec(SSL *ssl);
+
 static int ssl3_read_n(SSL *s, int n, int max, int extend)
 	{
+	/* If extend == 0, obtain new n-byte packet; if extend == 1, increase
+	 * packet by another n bytes.
+	 * The packet will be in the sub-array of s->s3->rbuf.buf specified
+	 * by s->packet and s->packet_length.
+	 * (If s->read_ahead is set, 'max' bytes may be stored in rbuf
+	 * [plus s->packet_length bytes if extend == 1].)
+	 */
 	int i,off,newb;
 
-	/* if there is stuff still in the buffer from a previous read,
-	 * and there is more than we want, take some. */
+	if (!extend)
+		{
+		/* start with empty packet ... */
+		if (s->s3->rbuf.left == 0)
+			s->s3->rbuf.offset = 0;
+		s->packet = s->s3->rbuf.buf + s->s3->rbuf.offset;
+		s->packet_length = 0;
+		/* ... now we can act as if 'extend' was set */
+		}
+
+	/* if there is enough in the buffer from a previous read, take some */
 	if (s->s3->rbuf.left >= (int)n)
 		{
-		if (extend)
-			s->packet_length+=n;
-		else
-			{
-			s->packet= &(s->s3->rbuf.buf[s->s3->rbuf.offset]);
-			s->packet_length=n;
-			}
+		s->packet_length+=n;
 		s->s3->rbuf.left-=n;
 		s->s3->rbuf.offset+=n;
 		return(n);
 		}
 
 	/* else we need to read more data */
-	if (!s->read_ahead) max=n;
-	if (max > SSL3_RT_MAX_PACKET_SIZE)
-		max=SSL3_RT_MAX_PACKET_SIZE;
+	if (!s->read_ahead)
+		max=n;
 
-	/* First check if there is some left or we want to extend */
-	off=0;
-	if (	(s->s3->rbuf.left != 0) ||
-		((s->packet_length != 0) && extend))
+	{
+		/* avoid buffer overflow */
+		int max_max = SSL3_RT_MAX_PACKET_SIZE - s->packet_length;
+		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
+			max_max += SSL3_RT_MAX_EXTRA;
+		if (max > max_max)
+			max = max_max;
+	}
+
+	off = s->packet_length;
+	newb = s->s3->rbuf.left;
+	/* Move any available bytes to front of buffer:
+	 * 'off' bytes already pointed to by 'packet',
+	 * 'newb' extra ones at the end */
+	if (s->packet != s->s3->rbuf.buf)
 		{
-		newb=s->s3->rbuf.left;
-		if (extend)
-			{
-			/* Copy bytes back to the front of the buffer 
-			 * Take the bytes already pointed to by 'packet'
-			 * and take the extra ones on the end. */
-			off=s->packet_length;
-			if (s->packet != s->s3->rbuf.buf)
-				memcpy(s->s3->rbuf.buf,s->packet,newb+off);
-			}
-		else if (s->s3->rbuf.offset != 0)
-			{ /* so the data is not at the start of the buffer */
-			memcpy(s->s3->rbuf.buf,
-				&(s->s3->rbuf.buf[s->s3->rbuf.offset]),newb);
-			s->s3->rbuf.offset=0;
-			}
-
-		s->s3->rbuf.left=0;
+		/*  off > 0 */
+		memmove(s->s3->rbuf.buf, s->packet, off+newb);
+		s->packet = s->s3->rbuf.buf;
 		}
-	else
-		newb=0;
-
-	/* So we now have 'newb' bytes at the front of 
-	 * s->s3->rbuf.buf and need to read some more in on the end
-	 * We start reading into the buffer at 's->s3->rbuf.offset'
-	 */
-	s->packet=s->s3->rbuf.buf;
-
+	
 	while (newb < n)
 		{
+		/* Now we have off+newb bytes at the front of s->s3->rbuf.buf and need
+		 * to read in more until we have off+n (up to off+max if possible) */
+
 		clear_sys_error();
 		if (s->rbio != NULL)
 			{
 			s->rwstate=SSL_READING;
-			i=BIO_read(s->rbio,
-				(char *)&(s->s3->rbuf.buf[off+newb]),
-				max-newb);
+			i=BIO_read(s->rbio,	&(s->s3->rbuf.buf[off+newb]), max-newb);
 			}
 		else
 			{
 			SSLerr(SSL_F_SSL3_READ_N,SSL_R_READ_BIO_NOT_SET);
-			i= -1;
+			i = -1;
 			}
 
 		if (i <= 0)
 			{
-			s->s3->rbuf.left+=newb;
+			s->s3->rbuf.left = newb;
 			return(i);
 			}
 		newb+=i;
 		}
 
-	/* record used data read */
-	if (newb > n)
-		{
-		s->s3->rbuf.offset=n+off;
-		s->s3->rbuf.left=newb-n;
-		}
-	else
-		{
-		s->s3->rbuf.offset=0;
-		s->s3->rbuf.left=0;
-		}
-
-	if (extend)
-		s->packet_length+=n;
-	else
-		s->packet_length+=n;
+	/* done reading, now the book-keeping */
+	s->s3->rbuf.offset = off + n;
+	s->s3->rbuf.left = newb - n;
+	s->packet_length += n;
 	return(n);
 	}
 
@@ -176,8 +216,8 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
  * It will return <= 0 if more data is needed, normally due to an error
  * or non-blocking IO.
  * When it finishes, one packet has been decoded and can be found in
- * ssl->s3->rrec.type	- is the type of record
- * ssl->s3->rrec.data, 	- data
+ * ssl->s3->rrec.type    - is the type of record
+ * ssl->s3->rrec.data, 	 - data
  * ssl->s3->rrec.length, - number of bytes
  */
 static int ssl3_get_record(SSL *s)
@@ -262,7 +302,6 @@ again:
 		if (rr->length > (s->packet_length-SSL3_RT_HEADER_LENGTH))
 			{
 			i=rr->length;
-			/*-(s->packet_length-SSL3_RT_HEADER_LENGTH); */
 			n=ssl3_read_n(s,i,i,1);
 			if (n <= 0) return(n); /* error or non-blocking io */
 			}
@@ -645,7 +684,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	void (*cb)()=NULL;
 	BIO *bio;
 
-	if (s->s3->rbuf.buf == NULL) /* Not initialize yet */
+	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))
 			return(-1);
 
@@ -662,10 +701,10 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 start:
 	s->rwstate=SSL_NOTHING;
 
-	/* s->s3->rrec.type	- is the type of record
-	 * s->s3->rrec.data, 	- data
-	 * s->s3->rrec.off, 	- ofset into 'data' for next read
-	 * s->s3->rrec.length,	- number of bytes. */
+	/* s->s3->rrec.type	    - is the type of record
+	 * s->s3->rrec.data,    - data
+	 * s->s3->rrec.off,     - offset into 'data' for next read
+	 * s->s3->rrec.length,  - number of bytes. */
 	rr= &(s->s3->rrec);
 
 	/* get new packet */
@@ -692,16 +731,16 @@ start:
 		return(0);
 		}
 
-	/* Check for an incoming 'Client Request' message */
+	/* Check for an incoming 'Hello Request' message from client */
 	if ((rr->type == SSL3_RT_HANDSHAKE) && (rr->length == 4) &&
-		(rr->data[0] == SSL3_MT_CLIENT_REQUEST) &&
+		(rr->data[0] == SSL3_MT_HELLO_REQUEST) &&
 		(s->session != NULL) && (s->session->cipher != NULL))
 		{
 		if ((rr->data[1] != 0) || (rr->data[2] != 0) ||
 			(rr->data[3] != 0))
 			{
 			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_CLIENT_REQUEST);
+			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_HELLO_REQUEST);
 			goto err;
 			}
 
@@ -1038,4 +1077,3 @@ int ssl3_dispatch_alert(SSL *s)
 		}
 	return(i);
 	}
-

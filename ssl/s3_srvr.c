@@ -503,7 +503,7 @@ static int ssl3_send_hello_request(SSL *s)
 	if (s->state == SSL3_ST_SW_HELLO_REQ_A)
 		{
 		p=(unsigned char *)s->init_buf->data;
-		*(p++)=SSL3_MT_CLIENT_REQUEST;
+		*(p++)=SSL3_MT_HELLO_REQUEST;
 		*(p++)=0;
 		*(p++)=0;
 		*(p++)=0;

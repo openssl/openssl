@@ -205,7 +205,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_BAD_AUTHENTICATION_TYPE           ,"bad authentication type"},
 {SSL_R_BAD_CHANGE_CIPHER_SPEC            ,"bad change cipher spec"},
 {SSL_R_BAD_CHECKSUM                      ,"bad checksum"},
-{SSL_R_BAD_CLIENT_REQUEST                ,"bad client request"},
+{SSL_R_BAD_HELLO_REQUEST                 ,"bad hello request"},
 {SSL_R_BAD_DATA_RETURNED_BY_CALLBACK     ,"bad data returned by callback"},
 {SSL_R_BAD_DECOMPRESSION                 ,"bad decompression"},
 {SSL_R_BAD_DH_G_LENGTH                   ,"bad dh g length"},

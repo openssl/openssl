@@ -158,22 +158,6 @@ extern "C" {
 #define SSL3_RT_MAX_PACKET_SIZE		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 #define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
 
-/* the states that a SSL3_RECORD can be in
- * For SSL_read it goes
- * rbuf->ENCODED	-> read 
- * ENCODED		-> we need to decode everything - call decode_record
- */
- 
-#define SSL3_RS_BLANK			1
-#define SSL3_RS_DATA
-
-#define SSL3_RS_ENCODED			2
-#define SSL3_RS_READ_MORE		3
-#define SSL3_RS_WRITE_MORE
-#define SSL3_RS_PLAIN			3
-#define SSL3_RS_PART_READ		4
-#define SSL3_RS_PART_WRITE		5
-
 #define SSL3_MD_CLIENT_FINISHED_CONST	"\x43\x4C\x4E\x54"
 #define SSL3_MD_SERVER_FINISHED_CONST	"\x53\x52\x56\x52"
 
@@ -205,7 +189,6 @@ extern "C" {
 typedef struct ssl3_record_st
 	{
 /*r */	int type;		/* type of record */
-/*  */	/*int state;*/		/* any data in it? */
 /*rw*/	unsigned int length;	/* How many bytes available */
 /*r */	unsigned int off;	/* read/write offset into 'buf' */
 /*rw*/	unsigned char *data;	/* pointer to the record data */
@@ -215,11 +198,10 @@ typedef struct ssl3_record_st
 
 typedef struct ssl3_buffer_st
 	{
-/*r */	int total;		/* used in non-blocking writes */
-/*r */	int wanted;		/* how many more bytes we need */
-/*rw*/	int left;		/* how many bytes left */
-/*rw*/	int offset;		/* where to 'copy from' */
-/*rw*/	unsigned char *buf;	/* SSL3_RT_MAX_PACKET_SIZE bytes */
+	unsigned char *buf;	/* SSL3_RT_MAX_PACKET_SIZE bytes (more if
+	                   	 * SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER is set) */
+	int offset;		/* where to 'copy from' */
+	int left;		/* how many bytes left */
 	} SSL3_BUFFER;
 
 #define SSL3_CT_RSA_SIGN			1
@@ -436,7 +418,7 @@ typedef struct ssl3_ctx_st
 #define SSL3_ST_SW_FINISHED_A		(0x1E0|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_FINISHED_B		(0x1E1|SSL_ST_ACCEPT)
 
-#define SSL3_MT_CLIENT_REQUEST			0
+#define SSL3_MT_HELLO_REQUEST			0
 #define SSL3_MT_CLIENT_HELLO			1
 #define SSL3_MT_SERVER_HELLO			2
 #define SSL3_MT_CERTIFICATE			11
