@@ -237,8 +237,8 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 		if(verbose == 1)
 			{
 			/* We're just listing names, comma-delimited */
-			if((xpos > strlen(indent)) &&
-					(xpos + strlen(name) > line_wrap))
+			if((xpos > (int)strlen(indent)) &&
+					(xpos + (int)strlen(name) > line_wrap))
 				{
 				BIO_printf(bio_out, "\n");
 				xpos = BIO_printf(bio_out, indent);

@@ -109,7 +109,11 @@
 #endif
 
 #if HAVE_LONG_LONG
-#define LLONG long long
+# if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
+# define LLONG _int64
+# else
+# define LLONG long long
+# endif
 #else
 #define LLONG long
 #endif
