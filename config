@@ -381,13 +381,12 @@ done
 
 # figure out if gcc is available and if so we use it otherwise
 # we fallback to whatever cc does on the system
-GCCVER=`(gcc --version) 2>/dev/null | head -1`
+GCCVER=`(gcc -dumpversion) 2>/dev/null`
 if [ "$GCCVER" != "" ]; then
   CC=gcc
-  # then strip off whatever prefix Cygnus as well as GCC 3.1 prepends
-  # the number with...  Hopefully, this will work for any future prefixes
-  # as well.
-  GCCVER=`echo $GCCVER | sed 's/^[a-zA-Z ()---]*//'`
+  # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
+  # does give us what we want though, so we use that.  We just just the
+  # major and minor version numbers.
   # peak single digit before and after first dot, e.g. 2.95.1 gives 29
   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
