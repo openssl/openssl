@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/20 18:03:54 $
+  ______________                           $Date: 2002/02/21 17:23:08 $
 
   DEVELOPMENT STATE
 
@@ -60,8 +60,6 @@
     o  An (optional) countermeasure against the predictable-IV CBC
        weakness in SSL/TLS should be added; see
        http://www.openssl.org/~bodo/tls-cbc.txt
-
-    o  'openssl speed' should include AES support (0.9.7-dev)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
