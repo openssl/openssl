@@ -454,6 +454,8 @@ void *CRYPTO_realloc_clean(void *addr,int old_num,int num,const char *file,
 			   int line);
 void *CRYPTO_remalloc(void *addr,int num, const char *file, int line);
 
+void OPENSSL_cleanse(void *ptr, size_t len);
+
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options(void);
 
