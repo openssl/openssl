@@ -208,6 +208,8 @@ sub process_oid
 	if (!($a[0] =~ /^[0-9]+$/))
 		{
 		$a[0] =~ s/-/_/g;
+		if (!defined($obj{$a[0]}))
+			{ die "$ARGV[0]:$o:Undefined identifier ",$a[0],"\n"; }
 		$pref_oid = "OBJ_" . $a[0];
 		$pref_sep = ",";
 		shift @a;
