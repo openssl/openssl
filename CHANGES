@@ -5,6 +5,12 @@
 
  Changes between 0.9.3 and 0.9.3a [?]  [xx May? 1999]
 
+  *) Add missing BIO_free at exit of pkcs12 application.
+     [Wu Zhigang]
+
+  *) Fix memory leak in conf.c.
+     [Steve Henson]
+
   *) Updates for Win32 to assembler version of MD5.
      [Steve Henson]
 
