@@ -1596,7 +1596,7 @@
 #define OBJ_commonName		OBJ_X509,3L
 
 #define SN_surname		"SN"
-#define LN_surname		"surName"
+#define LN_surname		"surname"
 #define NID_surname		100
 #define OBJ_surname		OBJ_X509,4L
 
