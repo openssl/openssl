@@ -1889,3 +1889,4 @@ DSA_set_default_openssl_method          2464
 ENGINE_add                              2465
 DH_set_default_openssl_method           2466
 ENGINE_get_DSA                          2467
+ENGINE_ctrl                             2468

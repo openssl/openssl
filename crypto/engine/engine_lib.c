@@ -216,6 +216,30 @@ int ENGINE_finish(ENGINE *e)
 	return to_return;
 	}
 
+/* Initialise a engine type for use (or up its functional reference count
+ * if it's already in use). */
+int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	if(e->funct_ref == 0)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NOT_INITIALISED);
+		return 0;
+		}
+	if (!e->ctrl)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_CONTROL_FUNCTION);
+		return 0;
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	return e->ctrl(cmd, i, p, f);
+	}
+
 static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 	{
 	ENGINE *ret = NULL;

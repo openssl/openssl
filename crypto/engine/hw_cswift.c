@@ -165,6 +165,7 @@ static ENGINE engine_cswift =
 	cswift_mod_exp_crt,
 	cswift_init,
 	cswift_finish,
+	NULL, /* no ctrl() */
 	0, /* no flags */
 	0, 0, /* no references */
 	NULL, NULL /* unlinked */

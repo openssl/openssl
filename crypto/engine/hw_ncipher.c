@@ -78,6 +78,7 @@
 
 static int hwcrhk_init();
 static int hwcrhk_finish();
+static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)()); 
 
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
@@ -163,6 +164,7 @@ static ENGINE engine_hwcrhk =
 	NULL,
 	hwcrhk_init,
 	hwcrhk_finish,
+	hwcrhk_ctrl,
 	0, /* no flags */
 	0, 0, /* no references */
 	NULL, NULL /* unlinked */
@@ -460,6 +462,24 @@ static int hwcrhk_finish()
 	return to_return;
 	}
 
+static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
+	{
+	int to_return = 1;
+
+	switch(cmd)
+		{
+	case ENGINE_CTRL_SET_LOGSTREAM:
+		logstream = (BIO *)p;
+		break;
+	default:
+		ENGINEerr(ENGINE_F_HWCRHK_CTRL,
+			ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+		to_return = 0;
+		break;
+		}
+
+	return to_return;
+	}
 /* A little mod_exp */
 static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)

@@ -81,6 +81,13 @@ extern "C" {
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
 
+/* These flags are used to tell the ctrl function what should be done.
+ * All command numbers are shared between all engines, even if some don't
+ * make sense to some engines.  In such a case, they do nothing but return
+ * the error ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED. */
+#define ENGINE_CTRL_SET_LOGSTREAM	1
+
+
 /* As we're missing a BIGNUM_METHOD, we need a couple of locally
  * defined function types that engines can implement. */
 
@@ -202,6 +209,12 @@ int ENGINE_init(ENGINE *e);
  * a corresponding call to ENGINE_free as it also releases a structural
  * reference. */
 int ENGINE_finish(ENGINE *e);
+/* Send control parametrised commands to the engine.  The possibilities
+ * to send down an integer, a pointer to data or a function pointer are
+ * provided.  Any of the parameters may or may not be NULL, depending
+ * on the command number */
+/* WARNING: This is currently experimental and may change radically! */
+int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
 /* This returns a pointer for the current ENGINE structure that
  * is (by default) performing any RSA operations. The value returned
@@ -265,6 +278,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_CSWIFT_RSA_MOD_EXP			 104
 #define ENGINE_F_ENGINE_ADD				 105
 #define ENGINE_F_ENGINE_BY_ID				 106
+#define ENGINE_F_ENGINE_CTRL				 142
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
 #define ENGINE_F_ENGINE_GET_BN_MOD_EXP			 109
@@ -291,6 +305,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_SET_NAME			 130
 #define ENGINE_F_ENGINE_SET_RAND			 131
 #define ENGINE_F_ENGINE_SET_RSA				 132
+#define ENGINE_F_HWCRHK_CTRL				 143
 #define ENGINE_F_HWCRHK_FINISH				 135
 #define ENGINE_F_HWCRHK_INIT				 136
 #define ENGINE_F_HWCRHK_MOD_EXP				 137
@@ -304,6 +319,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_BN_CTX_FULL				 101
 #define ENGINE_R_BN_EXPAND_FAIL				 102
 #define ENGINE_R_CONFLICTING_ENGINE_ID			 103
+#define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED		 119
 #define ENGINE_R_DSO_FAILURE				 104
 #define ENGINE_R_ENGINE_IS_NOT_IN_LIST			 105
 #define ENGINE_R_FINISH_FAILED				 106
@@ -314,6 +330,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_MISSING_KEY_COMPONENTS			 111
 #define ENGINE_R_NOT_INITIALISED			 117
 #define ENGINE_R_NOT_LOADED				 112
+#define ENGINE_R_NO_CONTROL_FUNCTION			 120
 #define ENGINE_R_NO_SUCH_ENGINE				 116
 #define ENGINE_R_PROVIDE_PARAMETERS			 113
 #define ENGINE_R_REQUEST_FAILED				 114

@@ -100,8 +100,9 @@ typedef struct engine_st
 	RAND_METHOD *rand_meth;
 	BN_MOD_EXP bn_mod_exp;
 	BN_MOD_EXP_CRT bn_mod_exp_crt;
-	int (*init)();
-	int (*finish)();
+	int (*init)(void);
+	int (*finish)(void);
+	int (*ctrl)(int cmd, long i, void *p, void (*f)());
 	int flags;
 	/* reference count on the structure itself */
 	int struct_ref;
