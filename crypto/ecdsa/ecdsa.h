@@ -144,7 +144,7 @@ int 	  ECDSA_sign_setup(ECDSA *ecdsa, BN_CTX *ctx, BIGNUM **kinv, BIGNUM **rp);
 int	  ECDSA_sign(int type, const unsigned char *dgst, int dgst_len, unsigned char *sig, 
 		     unsigned int *siglen, ECDSA *ecdsa);
 int 	  ECDSA_verify(int type, const unsigned char *dgst, int dgst_len, const unsigned char *sig,
-		       const int sig_len, ECDSA *ecdsa);
+		       int sig_len, ECDSA *ecdsa);
 int	  ECDSA_up_ref(ECDSA *ecdsa);
 void	  ECDSA_free(ECDSA *a);
 int 	  ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
