@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/25 09:28:54 $
+  ______________                           $Date: 2000/03/25 10:14:15 $
 
   DEVELOPMENT STATE
 
@@ -24,7 +24,7 @@
                         Mingw32                         - passed
                         VMS/Alpha 7.1 w/ DEC C 5.6-003  - passed
                         VMS/Alpha 7.2-1 w/ CPQ C 6.2-003- passed
-						VMS/VAX 7.1 w/ DEC C 5.6-003    - passed
+                        VMS/VAX 7.1 w/ DEC C 5.6-003    - passed
                         AIX 4.3.3.0 w/ cc               - passed
                         AIX 4.3.3.0 w/ gcc (2.7.2.3?)   - passed
                         Irix 6.4 w/ cc                  - passed
