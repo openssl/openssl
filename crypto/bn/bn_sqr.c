@@ -66,7 +66,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	{
 	int max,al;
 	int ret = 0;
-	BIGNUM *tmp,*rr,*free_a = NULL;
+	BIGNUM *tmp,*rr;
 
 #ifdef BN_COUNT
 	fprintf(stderr,"BN_sqr %d * %d\n",a->top,a->top);
@@ -144,7 +144,6 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	if (rr != r) BN_copy(r,rr);
 	ret = 1;
  err:
-	if (free_a) BN_free(free_a);
 	BN_CTX_end(ctx);
 	return(ret);
 	}
