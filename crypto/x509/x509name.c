@@ -154,7 +154,7 @@ X509_NAME *name;
 int loc;
 	{
 	X509_NAME_ENTRY *ret;
-	int i,j,n,set_prev,set_next;
+	int i,n,set_prev,set_next;
 	STACK *sk;
 
 	if ((name == NULL) || (sk_num(name->entries) <= loc) || (loc < 0))
