@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New functions UTF8_getc() and UTF8_putc() that parse and generate
+     UTF8 strings a character at a time.
+     [Steve Henson]
+
   *) Use client_version from client hello to select the protocol
      (s23_srvr.c) and for RSA client key exchange verification
      (s3_srvr.c), as required by the SSL 3.0/TLS 1.0 specifications.

@@ -553,6 +553,10 @@ int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp);
 ASN1_BMPSTRING *d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, unsigned char **pp,
 	long length);
 
+
+int UTF8_getc(unsigned char *str, int len, unsigned long *val);
+int UTF8_putc(unsigned char *str, int len, unsigned long value);
+
 int i2d_ASN1_PRINTABLE(ASN1_STRING *a,unsigned char **pp);
 ASN1_STRING *d2i_ASN1_PRINTABLE(ASN1_STRING **a,
 	unsigned char **pp, long l);

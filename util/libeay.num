@@ -1874,3 +1874,5 @@ NETSCAPE_SPKI_set_pubkey                1898
 NETSCAPE_SPKI_b64_encode                1899
 NETSCAPE_SPKI_get_pubkey                1900
 NETSCAPE_SPKI_b64_decode                1901
+UTF8_putc                               1902
+UTF8_getc                               1903
