@@ -121,12 +121,12 @@ void main ()
     str = X509_NAME_oneline (X509_get_subject_name (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t subject: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
     str = X509_NAME_oneline (X509_get_issuer_name  (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t issuer: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
     /* We could do all sorts of certificate verification stuff here before
        deallocating the certificate. */
