@@ -554,14 +554,14 @@ else
 	{
 	$thread_cflags="-DTHREADS $thread_cflag $cflags";
 	$thread_defines .= "#define THREADS\n";
-	my $def;
-	foreach $def (split ' ',$thread_cflag)
-		{
-		if ($def =~ s/^-D// && $def !~ /^_/)
-			{
-			$thread_defines .= "#define $def\n";
-			}
-		}
+#	my $def;
+#	foreach $def (split ' ',$thread_cflag)
+#		{
+#		if ($def =~ s/^-D// && $def !~ /^_/)
+#			{
+#			$thread_defines .= "#define $def\n";
+#			}
+#		}
 	}	
 
 $lflags="$libs$lflags"if ($libs ne "");

@@ -222,3 +222,5 @@ SSL_set_trust                           239
 SSL_get_finished                        240
 SSL_get_peer_finished                   241
 SSL_get1_session                        242
+SSL_CTX_callback_ctrl                   243
+SSL_callback_ctrl                       244
