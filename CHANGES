@@ -712,6 +712,9 @@
 
  Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
 
+  *) Add Delta CRL to the extension code.
+     [Steve Henson]
+
   *) Various fixes to s3_pkt.c so alerts are sent properly.
      [David Holmes <d.holmes@f5.com>]
 
