@@ -400,28 +400,14 @@ static int hwcrhk_init()
 		goto err;
 		}
 	/* Everything's fine. */
-	hndidx = RSA_get_ex_new_index(0, "nFast HWCryptoHook RSA key handle",
-		NULL, NULL, hwcrhk_ex_free);
+	if (hdnidx == -1)
+		hndidx = RSA_get_ex_new_index(0,
+			"nFast HWCryptoHook RSA key handle",
+			NULL, NULL, hwcrhk_ex_free);
 	return 1;
 err:
 	if(hwcrhk_dso)
 		DSO_free(hwcrhk_dso);
-	return 0;
-	}
-
-static int hwcrhk_finish()
-	{
-	if(hwcrhk_dso == NULL)
-		{
-		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_NOT_LOADED);
-		return 0;
-		}
-	release_context(hwcrhk_context);
-	if(!DSO_free(hwcrhk_dso))
-		{
-		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_DSO_FAILURE);
-		return 0;
-		}
 	hwcrhk_dso = NULL;
 	p_hwcrhk_Init = NULL;
 	p_hwcrhk_Finish = NULL;
@@ -430,7 +416,35 @@ static int hwcrhk_finish()
 	p_hwcrhk_RSAUnloadKey = NULL;
 	p_hwcrhk_ModExpCRT = NULL;
 	p_hwcrhk_RandomBytes = NULL;
-	return 1;
+	return 0;
+	}
+
+static int hwcrhk_finish()
+	{
+	int to_return = 1;
+	if(hwcrhk_dso == NULL)
+		{
+		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_NOT_LOADED);
+		to_return = 0;
+		goto err;
+		}
+	release_context(hwcrhk_context);
+	if(!DSO_free(hwcrhk_dso))
+		{
+		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_DSO_FAILURE);
+		to_return = 0;
+		goto err;
+		}
+ err:
+	hwcrhk_dso = NULL;
+	p_hwcrhk_Init = NULL;
+	p_hwcrhk_Finish = NULL;
+	p_hwcrhk_ModExp = NULL;
+	p_hwcrhk_RSA = NULL;
+	p_hwcrhk_RSAUnloadKey = NULL;
+	p_hwcrhk_ModExpCRT = NULL;
+	p_hwcrhk_RandomBytes = NULL;
+	return to_return;
 	}
 
 /* A little mod_exp */
