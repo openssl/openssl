@@ -440,7 +440,7 @@ then
 fi
 if [ "$OUT" = "i86pc-sun-solaris2" ]
 then
-  ASM=`as -V /dev/null`
+  ASM=`as -V /dev/null 2>&1`
   case "$ASM" in
     GNU*) ;;
     *) options="$options no-asm" ; echo "WARNING: You need the GNU assembler to use OpenSSL assembler code." ; echo "Sun as is not supported on Solaris x86." ;;
