@@ -231,10 +231,12 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 		}
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->next;
-	e->struct_ref--;
 	if(ret)
+		/* Return a valid structural refernce to the next ENGINE */
 		ret->struct_ref++;
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	/* Release the structural reference to the previous ENGINE */
+	ENGINE_free(e);
 	return ret;
 	}
 ENGINE *ENGINE_get_prev(ENGINE *e)
@@ -248,10 +250,12 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 		}
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->prev;
-	e->struct_ref--;
 	if(ret)
+		/* Return a valid structural reference to the next ENGINE */
 		ret->struct_ref++;
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+	/* Release the structural reference to the previous ENGINE */
+	ENGINE_free(e);
 	return ret;
 	}
 
@@ -331,37 +335,6 @@ ENGINE *ENGINE_by_id(const char *id)
 	return iterator;
 	}
 
-/* As per the comments in engine.h, it is generally better all round
- * if the ENGINE structure is allocated within this framework. */
-#if 0
-int ENGINE_get_struct_size(void)
-	{
-	return sizeof(ENGINE);
-	}
-
-ENGINE *ENGINE_new(ENGINE *e)
-	{
-	ENGINE *ret;
-
-	if(e == NULL)
-		{
-		ret = (ENGINE *)(OPENSSL_malloc(sizeof(ENGINE));
-		if(ret == NULL)
-			{
-			ENGINEerr(ENGINE_F_ENGINE_NEW,
-				ERR_R_MALLOC_FAILURE);
-			return NULL;
-			}
-		}
-	else
-		ret = e;
-	memset(ret, 0, sizeof(ENGINE));
-	if(e)
-		ret->flags = ENGINE_FLAGS_MALLOCED;
-	ret->struct_ref = 1;
-	return ret;
-	}
-#else
 ENGINE *ENGINE_new(void)
 	{
 	ENGINE *ret;
@@ -377,7 +350,6 @@ ENGINE *ENGINE_new(void)
 	ret->struct_ref = 1;
 	return ret;
 	}
-#endif
 
 int ENGINE_free(ENGINE *e)
 	{
