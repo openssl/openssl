@@ -58,7 +58,10 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+
+#ifdef OPENSSL_FIPS
 
 /* Check that p is a safe prime and
  * if g is 2, 3 or 5, check that is is a suitable generator
@@ -117,3 +120,6 @@ err:
 	if (q != NULL) BN_free(q);
 	return(ok);
 	}
+
+#endif
+#endif

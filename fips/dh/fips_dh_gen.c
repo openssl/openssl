@@ -60,8 +60,13 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/fips.h>
+
+#ifndef OPENSSL_NO_DH
+#ifdef OPENSSL_FIPS
 
 /* We generate DH parameters as follows
  * find a prime q which is prime_len/2 bits long.
@@ -88,8 +93,6 @@
  * It's just as OK (and in some sense better) to use a generator of the
  * order-q subgroup.
  */
-
-#ifdef OPENSSL_FIPS
 
 DH *DH_generate_parameters(int prime_len, int generator,
 	     void (*callback)(int,int,void *), void *cb_arg)
@@ -179,4 +182,5 @@ err:
 	return(ret);
 	}
 
+#endif
 #endif

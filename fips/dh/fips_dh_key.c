@@ -59,8 +59,13 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_RAND
 #include <openssl/rand.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+
+#ifdef OPENSSL_FIPS
 
 static int generate_key(DH *dh);
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
@@ -220,3 +225,6 @@ static int dh_finish(DH *dh)
 		BN_MONT_CTX_free((BN_MONT_CTX *)dh->method_mont_p);
 	return(1);
 	}
+
+#endif
+#endif
