@@ -123,7 +123,7 @@ int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data)
 		{
 	case NID_pkcs7_signed:
 		if (p7->d.sign->contents != NULL)
-			PKCS7_content_free(p7->d.sign->contents);
+			PKCS7_free(p7->d.sign->contents);
 		p7->d.sign->contents=p7_data;
 		break;
 	case NID_pkcs7_digest:

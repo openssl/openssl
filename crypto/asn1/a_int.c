@@ -202,7 +202,12 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		goto err;
 		}
 	to=s;
-	if (*p & 0x80) /* a negative number */
+	if(!len) {
+		/* Strictly speaking this is an illegal INTEGER but we
+		 * tolerate it.
+		 */
+		ret->type=V_ASN1_INTEGER;
+	} else if (*p & 0x80) /* a negative number */
 		{
 		ret->type=V_ASN1_NEG_INTEGER;
 		if ((*p == 0xff) && (len != 1)) {
@@ -301,7 +306,8 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		goto err;
 		}
 	to=s;
-		ret->type=V_ASN1_INTEGER;
+	ret->type=V_ASN1_INTEGER;
+	if(len) {
 		if ((*p == 0) && (len != 1))
 			{
 			p++;
@@ -309,6 +315,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
 			}
 		memcpy(s,p,(int)len);
 		p+=len;
+	}
 
 	if (ret->data != NULL) Free((char *)ret->data);
 	ret->data=s;
