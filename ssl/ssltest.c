@@ -109,7 +109,7 @@
  *
  */
 
-#define _XOPEN_SOURCE 600	/* Or gethostname won't be declared properly
+#define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
 #define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
 				   on Compaq platforms (at least with DEC C).
