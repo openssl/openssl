@@ -2029,44 +2029,23 @@ krb5_error_code  kssl_check_authent(
 		*/
 		goto err;
 		}
-	if (!EVP_DecryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptInit_ex error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (!EVP_DecryptUpdate(&ciph_ctx, unenc_authent, &outl,
-			dec_authent->cipher->data, dec_authent->cipher->length))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptUpdate error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (outl > unencbufsize)
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-                        "Buffer overflow decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	if (!EVP_DecryptFinal_ex(&ciph_ctx, &(unenc_authent[outl]), &padl))
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"EVP_DecryptFinal_ex error decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	outl += padl;
-	if (outl > unencbufsize)
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-                        "Buffer overflow decrypting authenticator.\n");
-		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-		goto err;
-		}
-	EVP_CIPHER_CTX_cleanup(&ciph_ctx);
+
+        if (!EVP_CipherInit(&ciph_ctx,enc,kssl_ctx->key,iv,0))
+                {
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "EVP_DecryptInit_ex error decrypting authenticator.\n");
+                krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+                goto err;
+                }
+        outl = dec_authent->cipher->length;
+        if (!EVP_Cipher(&ciph_ctx,unenc_authent,dec_authent->cipher->data,outl))
+                {
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "EVP_Cipher error decrypting authenticator.\n");
+                krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+                goto err;
+                }
+        EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
 	printf("kssl_check_authent: decrypted authenticator[%d] =\n", outl);
