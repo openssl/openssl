@@ -315,6 +315,7 @@ bad:
 	if (dhe1024) 
 		{
 		DSA *dsa;
+		unsigned char seed[20];
 
 		if (verbose)
 			{
@@ -322,7 +323,8 @@ bad:
 			fflush(stdout);
 			}
 
-		dsa = DSA_generate_parameters(1024, NULL, 0, NULL, NULL, 0, NULL);
+		memcpy(seed, "Random String no. 12", 20);
+		dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, 0, NULL);
 		dh = DSA_dup_DH(dsa);	
 		DSA_free(dsa);
 		/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
