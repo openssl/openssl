@@ -373,6 +373,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifndef ENGINE_DYNAMIC_SUPPORT
 static ENGINE *engine_ncipher(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -395,6 +396,7 @@ void ENGINE_load_chil(void)
 	ENGINE_free(toadd);
 	ERR_clear_error();
 	}
+#endif
 
 /* This is a process-global DSO handle used for loading and unloading
  * the HWCryptoHook library. NB: This is only set (or unset) during an

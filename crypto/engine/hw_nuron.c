@@ -374,6 +374,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
+#ifndef ENGINE_DYNAMIC_SUPPORT
 static ENGINE *engine_nuron(void)
 	{
 	ENGINE *ret = ENGINE_new();
@@ -396,6 +397,7 @@ void ENGINE_load_nuron(void)
 	ENGINE_free(toadd);
 	ERR_clear_error();
 	}
+#endif
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
  * shared-library. */	   
