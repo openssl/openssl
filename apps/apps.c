@@ -591,18 +591,18 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 	return BUF_strdup(tpass);
 }
 
-int add_oid_section(BIO *err, LHASH *conf)
+int add_oid_section(BIO *err, CONF *conf)
 {	
 	char *p;
 	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(p=CONF_get_string(conf,NULL,"oid_section")))
+	if(!(p=NCONF_get_string(conf,NULL,"oid_section")))
 		{
 		ERR_clear_error();
 		return 1;
 		}
-	if(!(sktmp = CONF_get_section(conf, p))) {
+	if(!(sktmp = NCONF_get_section(conf, p))) {
 		BIO_printf(err, "problem loading oid section %s\n", p);
 		return 0;
 	}

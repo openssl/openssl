@@ -139,10 +139,10 @@ NULL
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static int sign (X509 *x, EVP_PKEY *pkey,int days,int clrext, const EVP_MD *digest,
-						LHASH *conf, char *section);
+						CONF *conf, char *section);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
-			 int create,int days, int clrext, LHASH *conf, char *section,
+			 int create,int days, int clrext, CONF *conf, char *section,
 						ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
@@ -179,7 +179,7 @@ int MAIN(int argc, char **argv)
 	int fingerprint=0;
 	char buf[256];
 	const EVP_MD *md_alg,*digest=EVP_md5();
-	LHASH *extconf = NULL;
+	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
@@ -479,7 +479,8 @@ bad:
 		{
 		long errorline;
 		X509V3_CTX ctx2;
-		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
+		extconf = NCONF_new(NULL);
+		if (!NCONF_load(extconf, extfile,&errorline))
 			{
 			if (errorline <= 0)
 				BIO_printf(bio_err,
@@ -493,7 +494,7 @@ bad:
 			}
 		if (!extsect)
 			{
-			extsect = CONF_get_string(extconf, "default", "extensions");
+			extsect = NCONF_get_string(extconf, "default", "extensions");
 			if (!extsect)
 				{
 				ERR_clear_error();
@@ -501,8 +502,8 @@ bad:
 				}
 			}
 		X509V3_set_ctx_test(&ctx2);
-		X509V3_set_conf_lhash(&ctx2, extconf);
-		if (!X509V3_EXT_add_conf(extconf, &ctx2, extsect, NULL))
+		X509V3_set_nconf(&ctx2, extconf);
+		if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL))
 			{
 			BIO_printf(bio_err,
 				"Error Loading extension section %s\n",
@@ -995,7 +996,7 @@ end:
 	if (need_rand)
 		app_RAND_write_file(NULL, bio_err);
 	OBJ_cleanup();
-	CONF_free(extconf);
+	NCONF_free(extconf);
 	BIO_free_all(out);
 	BIO_free_all(STDout);
 	X509_STORE_free(ctx);
@@ -1116,7 +1117,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	     X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile, int create,
-	     int days, int clrext, LHASH *conf, char *section, ASN1_INTEGER *sno)
+	     int days, int clrext, CONF *conf, char *section, ASN1_INTEGER *sno)
 	{
 	int ret=0;
 	ASN1_INTEGER *bs=NULL;
@@ -1166,8 +1167,8 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 		X509V3_CTX ctx2;
 		X509_set_version(x,2); /* version 3 certificate */
                 X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
-                X509V3_set_conf_lhash(&ctx2, conf);
-                if (!X509V3_EXT_add_conf(conf, &ctx2, section, x)) goto end;
+                X509V3_set_nconf(&ctx2, conf);
+                if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x)) goto end;
 		}
 
 	if (!X509_sign(x,pkey,digest)) goto end;
@@ -1213,7 +1214,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 
 /* self sign */
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest, 
-						LHASH *conf, char *section)
+						CONF *conf, char *section)
 	{
 
 	EVP_PKEY *pktmp;
@@ -1243,8 +1244,8 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *dig
 		X509V3_CTX ctx;
 		X509_set_version(x,2); /* version 3 certificate */
                 X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
-                X509V3_set_conf_lhash(&ctx, conf);
-                if (!X509V3_EXT_add_conf(conf, &ctx, section, x)) goto err;
+                X509V3_set_nconf(&ctx, conf);
+                if (!X509V3_EXT_add_nconf(conf, &ctx, section, x)) goto err;
 		}
 	if (!X509_sign(x,pkey,digest)) goto err;
 	return 1;

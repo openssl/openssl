@@ -98,6 +98,7 @@ struct conf_method_st
 	};
 
 int CONF_set_default_method(CONF_METHOD *meth);
+void CONF_set_nconf(CONF *conf,LHASH *hash);
 LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
 #ifndef OPENSSL_NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
@@ -145,7 +146,7 @@ int NCONF_dump_bio(CONF *conf, BIO *out);
 	 and should therefore be avoided */
 long NCONF_get_number(CONF *conf,char *group,char *name);
 #else
-#define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r);
+#define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)
 #endif
 
 

@@ -213,28 +213,28 @@ static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
 		   BIGNUM *serial, char *subj, char *startdate,char *enddate,
-		   int days, int batch, char *ext_sect, LHASH *conf,int verbose,
+		   long days, int batch, char *ext_sect, CONF *conf,int verbose,
 		   unsigned long certopt, unsigned long nameopt, int default_op,
 		   int ext_copy);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			TXT_DB *db, BIGNUM *serial, char *subj, char *startdate,
-			char *enddate, int days, int batch, char *ext_sect,
-			LHASH *conf,int verbose, unsigned long certopt,
+			char *enddate, long days, int batch, char *ext_sect,
+			CONF *conf,int verbose, unsigned long certopt,
 			unsigned long nameopt, int default_op, int ext_copy,
 			ENGINE *e);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			 TXT_DB *db, BIGNUM *serial,char *subj, char *startdate,
-			 char *enddate, int days, char *ext_sect,LHASH *conf,
+			 char *enddate, long days, char *ext_sect,CONF *conf,
 			 int verbose, unsigned long certopt, unsigned long nameopt,
 			 int default_op, int ext_copy);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,char *subj,
-	char *startdate, char *enddate, int days, int batch, int verbose,
-	X509_REQ *req, char *ext_sect, LHASH *conf,
+	char *startdate, char *enddate, long days, int batch, int verbose,
+	X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
 	int ext_copy);
 static X509_NAME *do_subject(char *subject);
@@ -245,8 +245,8 @@ static int check_time_format(char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, char *str);
 int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
-static LHASH *conf=NULL;
-static LHASH *extconf=NULL;
+static CONF *conf=NULL;
+static CONF *extconf=NULL;
 static char *section=NULL;
 
 static int preserve=0;
@@ -300,7 +300,7 @@ int MAIN(int argc, char **argv)
 	BIGNUM *serial=NULL;
 	char *startdate=NULL;
 	char *enddate=NULL;
-	int days=0;
+	long days=0;
 	int batch=0;
 	int notext=0;
 	unsigned long nameopt = 0, certopt = 0;
@@ -571,7 +571,8 @@ bad:
 		}
 
 	BIO_printf(bio_err,"Using configuration from %s\n",configfile);
-	if ((conf=CONF_load(NULL,configfile,&errorline)) == NULL)
+	conf = NCONF_new(NULL);
+	if (NCONF_load(conf,configfile,&errorline) <= 0)
 		{
 		if (errorline <= 0)
 			BIO_printf(bio_err,"error loading the config file '%s'\n",
@@ -585,7 +586,7 @@ bad:
 	/* Lets get the config section we are using */
 	if (section == NULL)
 		{
-		section=CONF_get_string(conf,BASE_SECTION,ENV_DEFAULT_CA);
+		section=NCONF_get_string(conf,BASE_SECTION,ENV_DEFAULT_CA);
 		if (section == NULL)
 			{
 			lookup_fail(BASE_SECTION,ENV_DEFAULT_CA);
@@ -595,7 +596,7 @@ bad:
 
 	if (conf != NULL)
 		{
-		p=CONF_get_string(conf,NULL,"oid_file");
+		p=NCONF_get_string(conf,NULL,"oid_file");
 		if (p == NULL)
 			ERR_clear_error();
 		if (p != NULL)
@@ -624,7 +625,7 @@ bad:
 			}
 		}
 
-	randfile = CONF_get_string(conf, BASE_SECTION, "RANDFILE");
+	randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
 	if (randfile == NULL)
 		ERR_clear_error();
 	app_RAND_load_file(randfile, bio_err, 0);
@@ -643,7 +644,7 @@ bad:
 	/* report status of cert with serial number given on command line */
 	if (ser_status)
 	{
-		if ((dbfile=CONF_get_string(conf,section,ENV_DATABASE)) == NULL)
+		if ((dbfile=NCONF_get_string(conf,section,ENV_DATABASE)) == NULL)
 			{
 			lookup_fail(section,ENV_DATABASE);
 			goto err;
@@ -676,7 +677,7 @@ bad:
 	/*****************************************************************/
 	/* we definitely need a public key, so let's get it */
 
-	if ((keyfile == NULL) && ((keyfile=CONF_get_string(conf,
+	if ((keyfile == NULL) && ((keyfile=NCONF_get_string(conf,
 		section,ENV_PRIVATE_KEY)) == NULL))
 		{
 		lookup_fail(section,ENV_PRIVATE_KEY);
@@ -698,7 +699,7 @@ bad:
 
 	/*****************************************************************/
 	/* we need a certificate */
-	if ((certfile == NULL) && ((certfile=CONF_get_string(conf,
+	if ((certfile == NULL) && ((certfile=NCONF_get_string(conf,
 		section,ENV_CERTIFICATE)) == NULL))
 		{
 		lookup_fail(section,ENV_CERTIFICATE);
@@ -715,18 +716,18 @@ bad:
 		goto err;
 		}
 
-	f=CONF_get_string(conf,BASE_SECTION,ENV_PRESERVE);
+	f=NCONF_get_string(conf,BASE_SECTION,ENV_PRESERVE);
 	if (f == NULL)
 		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		preserve=1;
-	f=CONF_get_string(conf,BASE_SECTION,ENV_MSIE_HACK);
+	f=NCONF_get_string(conf,BASE_SECTION,ENV_MSIE_HACK);
 	if (f == NULL)
 		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		msie_hack=1;
 
-	f=CONF_get_string(conf,section,ENV_NAMEOPT);
+	f=NCONF_get_string(conf,section,ENV_NAMEOPT);
 
 	if (f)
 		{
@@ -740,7 +741,7 @@ bad:
 	else
 		ERR_clear_error();
 
-	f=CONF_get_string(conf,section,ENV_CERTOPT);
+	f=NCONF_get_string(conf,section,ENV_CERTOPT);
 
 	if (f)
 		{
@@ -754,7 +755,7 @@ bad:
 	else
 		ERR_clear_error();
 
-	f=CONF_get_string(conf,section,ENV_EXTCOPY);
+	f=NCONF_get_string(conf,section,ENV_EXTCOPY);
 
 	if (f)
 		{
@@ -773,7 +774,7 @@ bad:
 		{
 		struct stat sb;
 
-		if ((outdir=CONF_get_string(conf,section,ENV_NEW_CERTS_DIR))
+		if ((outdir=NCONF_get_string(conf,section,ENV_NEW_CERTS_DIR))
 			== NULL)
 			{
 			BIO_printf(bio_err,"there needs to be defined a directory for new certificate to be placed in\n");
@@ -816,7 +817,7 @@ bad:
 
 	/*****************************************************************/
 	/* we need to load the database file */
-	if ((dbfile=CONF_get_string(conf,section,ENV_DATABASE)) == NULL)
+	if ((dbfile=NCONF_get_string(conf,section,ENV_DATABASE)) == NULL)
 		{
 		lookup_fail(section,ENV_DATABASE);
 		goto err;
@@ -995,7 +996,8 @@ bad:
 	/* Read extentions config file                                   */
 	if (extfile)
 		{
-		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
+		extconf = NCONF_new(NULL);
+		if (NCONF_load(extconf,extfile,&errorline) <= 0)
 			{
 			if (errorline <= 0)
 				BIO_printf(bio_err, "ERROR: loading the config file '%s'\n",
@@ -1011,7 +1013,7 @@ bad:
 			BIO_printf(bio_err, "Succesfully loaded extensions file %s\n", extfile);
 
 		/* We can have sections in the ext file */
-		if (!extensions && !(extensions = CONF_get_string(extconf, "default", "extensions")))
+		if (!extensions && !(extensions = NCONF_get_string(extconf, "default", "extensions")))
 			extensions = "default";
 		}
 
@@ -1040,7 +1042,7 @@ bad:
 
 	if (req)
 		{
-		if ((md == NULL) && ((md=CONF_get_string(conf,
+		if ((md == NULL) && ((md=NCONF_get_string(conf,
 			section,ENV_DEFAULT_MD)) == NULL))
 			{
 			lookup_fail(section,ENV_DEFAULT_MD);
@@ -1054,7 +1056,7 @@ bad:
 		if (verbose)
 			BIO_printf(bio_err,"message digest is %s\n",
 				OBJ_nid2ln(dgst->type));
-		if ((policy == NULL) && ((policy=CONF_get_string(conf,
+		if ((policy == NULL) && ((policy=NCONF_get_string(conf,
 			section,ENV_POLICY)) == NULL))
 			{
 			lookup_fail(section,ENV_POLICY);
@@ -1063,7 +1065,7 @@ bad:
 		if (verbose)
 			BIO_printf(bio_err,"policy is %s\n",policy);
 
-		if ((serialfile=CONF_get_string(conf,section,ENV_SERIAL))
+		if ((serialfile=NCONF_get_string(conf,section,ENV_SERIAL))
 			== NULL)
 			{
 			lookup_fail(section,ENV_SERIAL);
@@ -1076,7 +1078,7 @@ bad:
 			 * in the main configuration file */
 			if (!extensions)
 				{
-				extensions=CONF_get_string(conf,section,
+				extensions=NCONF_get_string(conf,section,
 								ENV_EXTENSIONS);
 				if (!extensions)
 					ERR_clear_error();
@@ -1086,8 +1088,8 @@ bad:
 				/* Check syntax of file */
 				X509V3_CTX ctx;
 				X509V3_set_ctx_test(&ctx);
-				X509V3_set_conf_lhash(&ctx, conf);
-				if (!X509V3_EXT_add_conf(conf, &ctx, extensions,
+				X509V3_set_nconf(&ctx, conf);
+				if (!X509V3_EXT_add_nconf(conf, &ctx, extensions,
 								NULL))
 					{
 					BIO_printf(bio_err,
@@ -1101,7 +1103,7 @@ bad:
 
 		if (startdate == NULL)
 			{
-			startdate=CONF_get_string(conf,section,
+			startdate=NCONF_get_string(conf,section,
 				ENV_DEFAULT_STARTDATE);
 			if (startdate == NULL)
 				ERR_clear_error();
@@ -1115,7 +1117,7 @@ bad:
 
 		if (enddate == NULL)
 			{
-			enddate=CONF_get_string(conf,section,
+			enddate=NCONF_get_string(conf,section,
 				ENV_DEFAULT_ENDDATE);
 			if (enddate == NULL)
 				ERR_clear_error();
@@ -1128,8 +1130,8 @@ bad:
 
 		if (days == 0)
 			{
-			days=(int)CONF_get_number(conf,section,
-				ENV_DEFAULT_DAYS);
+			if(!NCONF_get_number(conf,section, ENV_DEFAULT_DAYS, &days))
+				days = 0;
 			}
 		if (!enddate && (days == 0))
 			{
@@ -1149,7 +1151,7 @@ bad:
 			OPENSSL_free(f);
 			}
 
-		if ((attribs=CONF_get_section(conf,policy)) == NULL)
+		if ((attribs=NCONF_get_section(conf,policy)) == NULL)
 			{
 			BIO_printf(bio_err,"unable to find 'section' for %s\n",policy);
 			goto err;
@@ -1404,7 +1406,7 @@ bad:
 		int crl_v2 = 0;
 		if (!crl_ext)
 			{
-			crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
+			crl_ext=NCONF_get_string(conf,section,ENV_CRLEXT);
 			if (!crl_ext)
 				ERR_clear_error();
 			}
@@ -1413,8 +1415,8 @@ bad:
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
-			X509V3_set_conf_lhash(&ctx, conf);
-			if (!X509V3_EXT_add_conf(conf, &ctx, crl_ext, NULL))
+			X509V3_set_nconf(&ctx, conf);
+			if (!X509V3_EXT_add_nconf(conf, &ctx, crl_ext, NULL))
 				{
 				BIO_printf(bio_err,
 				 "Error Loading CRL extension section %s\n",
@@ -1426,10 +1428,12 @@ bad:
 
 		if (!crldays && !crlhours)
 			{
-			crldays=CONF_get_number(conf,section,
-				ENV_DEFAULT_CRL_DAYS);
-			crlhours=CONF_get_number(conf,section,
-				ENV_DEFAULT_CRL_HOURS);
+			if (!NCONF_get_number(conf,section,
+				ENV_DEFAULT_CRL_DAYS, &crldays))
+				crldays = 0;
+			if (!NCONF_get_number(conf,section,
+				ENV_DEFAULT_CRL_HOURS, &crlhours))
+				crlhours = 0;
 			}
 		if ((crldays == 0) && (crlhours == 0))
 			{
@@ -1505,9 +1509,9 @@ bad:
 			if (ci->version == NULL)
 				if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
-			X509V3_set_conf_lhash(&crlctx, conf);
+			X509V3_set_nconf(&crlctx, conf);
 
-			if (!X509V3_EXT_CRL_add_conf(conf, &crlctx,
+			if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx,
 				crl_ext, crl)) goto err;
 			}
 		if (crl_ext || crl_v2)
@@ -1593,7 +1597,7 @@ err:
 	EVP_PKEY_free(pkey);
 	X509_free(x509);
 	X509_CRL_free(crl);
-	CONF_free(conf);
+	NCONF_free(conf);
 	OBJ_cleanup();
 	apps_shutdown();
 	EXIT(ret);
@@ -1704,8 +1708,8 @@ err:
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     int batch, char *ext_sect, LHASH *lconf, int verbose,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
+	     int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy)
 	{
@@ -1766,8 +1770,8 @@ err:
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     int batch, char *ext_sect, LHASH *lconf, int verbose,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
+	     int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy, ENGINE *e)
 	{
@@ -1820,8 +1824,8 @@ err:
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial, char *subj,
-	     char *startdate, char *enddate, int days, int batch, int verbose,
-	     X509_REQ *req, char *ext_sect, LHASH *lconf,
+	     char *startdate, char *enddate, long days, int batch, int verbose,
+	     X509_REQ *req, char *ext_sect, CONF *lconf,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy)
 	{
@@ -2143,13 +2147,13 @@ again2:
 				BIO_printf(bio_err, "Extra configuration file found\n");
  
 			/* Use the extconf configuration db LHASH */
-			X509V3_set_conf_lhash(&ctx, extconf);
+			X509V3_set_nconf(&ctx, extconf);
  
 			/* Test the structure (needed?) */
 			/* X509V3_set_ctx_test(&ctx); */
 
 			/* Adds exts contained in the configuration file */
-			if (!X509V3_EXT_add_conf(extconf, &ctx, ext_sect,ret))
+			if (!X509V3_EXT_add_nconf(extconf, &ctx, ext_sect,ret))
 				{
 				BIO_printf(bio_err,
 				    "ERROR: adding extensions in section %s\n",
@@ -2163,9 +2167,9 @@ again2:
 		else if (ext_sect)
 			{
 			/* We found extensions to be set from config file */
-			X509V3_set_conf_lhash(&ctx, lconf);
+			X509V3_set_nconf(&ctx, lconf);
 
-			if(!X509V3_EXT_add_conf(lconf, &ctx, ext_sect, ret))
+			if(!X509V3_EXT_add_nconf(lconf, &ctx, ext_sect, ret))
 				{
 				BIO_printf(bio_err, "ERROR: adding extensions in section %s\n", ext_sect);
 				ERR_print_errors(bio_err);
@@ -2318,8 +2322,8 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     char *ext_sect, LHASH *lconf, int verbose, unsigned long certopt,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
+	     char *ext_sect, CONF *lconf, int verbose, unsigned long certopt,
 	     unsigned long nameopt, int default_op, int ext_copy)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;

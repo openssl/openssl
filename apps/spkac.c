@@ -90,7 +90,7 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passin = NULL;
 	char *spkac = "SPKAC", *spksect = "default", *spkstr = NULL;
 	char *challenge = NULL, *keyfile = NULL;
-	LHASH *conf = NULL;
+	CONF *conf = NULL;
 	NETSCAPE_SPKI *spki = NULL;
 	EVP_PKEY *pkey = NULL;
 	char *engine=NULL;
@@ -228,15 +228,16 @@ bad:
 		goto end;
 	}
 
-	conf = CONF_load_bio(NULL, in, NULL);
+	conf = NCONF_new(NULL);
+	i = NCONF_load_bio(conf, in, NULL);
 
-	if(!conf) {
+	if(!i) {
 		BIO_printf(bio_err, "Error parsing config file\n");
 		ERR_print_errors(bio_err);
 		goto end;
 	}
 
-	spkstr = CONF_get_string(conf, spksect, spkac);
+	spkstr = NCONF_get_string(conf, spksect, spkac);
 		
 	if(!spkstr) {
 		BIO_printf(bio_err, "Can't find SPKAC called \"%s\"\n", spkac);
@@ -285,7 +286,7 @@ bad:
 	ret = 0;
 
 end:
-	CONF_free(conf);
+	NCONF_free(conf);
 	NETSCAPE_SPKI_free(spki);
 	BIO_free(in);
 	BIO_free_all(out);

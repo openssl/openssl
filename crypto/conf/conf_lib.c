@@ -67,6 +67,17 @@ const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD *default_CONF_method=NULL;
 
+/* Init a 'CONF' structure from an old LHASH */
+
+void CONF_set_nconf(CONF *conf, LHASH *hash)
+	{
+	if (default_CONF_method == NULL)
+		default_CONF_method = NCONF_default();
+
+	default_CONF_method->init(conf);
+	conf->data = hash;
+	}
+
 /* The following section contains the "CONF classic" functions,
    rewritten in terms of the new CONF interface. */
 
@@ -118,11 +129,8 @@ LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline)
 	CONF ctmp;
 	int ret;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+	CONF_set_nconf(&ctmp, conf);
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
 	ret = NCONF_load_bio(&ctmp, bp, eline);
 	if (ret)
 		return ctmp.data;
@@ -138,12 +146,7 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section)
 	else
 		{
 		CONF ctmp;
-
-		if (default_CONF_method == NULL)
-			default_CONF_method = NCONF_default();
-
-		default_CONF_method->init(&ctmp);
-		ctmp.data = conf;
+		CONF_set_nconf(&ctmp, conf);
 		return NCONF_get_section(&ctmp, section);
 		}
 	}
@@ -157,12 +160,7 @@ char *CONF_get_string(LHASH *conf,char *group,char *name)
 	else
 		{
 		CONF ctmp;
-
-		if (default_CONF_method == NULL)
-			default_CONF_method = NCONF_default();
-
-		default_CONF_method->init(&ctmp);
-		ctmp.data = conf;
+		CONF_set_nconf(&ctmp, conf);
 		return NCONF_get_string(&ctmp, group, name);
 		}
 	}
@@ -179,12 +177,7 @@ long CONF_get_number(LHASH *conf,char *group,char *name)
 	else
 		{
 		CONF ctmp;
-
-		if (default_CONF_method == NULL)
-			default_CONF_method = NCONF_default();
-
-		default_CONF_method->init(&ctmp);
-		ctmp.data = conf;
+		CONF_set_nconf(&ctmp, conf);
 		status = NCONF_get_number_e(&ctmp, group, name, &result);
 		}
 
@@ -199,12 +192,7 @@ long CONF_get_number(LHASH *conf,char *group,char *name)
 void CONF_free(LHASH *conf)
 	{
 	CONF ctmp;
-
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
-
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
+	CONF_set_nconf(&ctmp, conf);
 	NCONF_free_data(&ctmp);
 	}
 
@@ -227,12 +215,7 @@ int CONF_dump_fp(LHASH *conf, FILE *out)
 int CONF_dump_bio(LHASH *conf, BIO *out)
 	{
 	CONF ctmp;
-
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
-
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
+	CONF_set_nconf(&ctmp, conf);
 	return NCONF_dump_bio(&ctmp, out);
 	}
 
@@ -362,7 +345,7 @@ int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result)
 	if (str == NULL)
 		return 0;
 
-	for (;conf->meth->is_number(conf, *str);)
+	for (*result = 0;conf->meth->is_number(conf, *str);)
 		{
 		*result = (*result)*10 + conf->meth->to_int(conf, *str);
 		str++;

@@ -101,7 +101,7 @@ extern BIO *bio_err;
 #else
 
 #define MAIN(a,v)	PROG(a,v)
-extern LHASH *config;
+extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;
 
@@ -175,7 +175,7 @@ int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
-int add_oid_section(BIO *err, LHASH *conf);
+int add_oid_section(BIO *err, CONF *conf);
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
 EVP_PKEY *load_key(BIO *err, const char *file, int format,

@@ -119,20 +119,20 @@ static int prompt_info(X509_REQ *req,
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
 				STACK_OF(CONF_VALUE) *attr, int attribs);
 static int add_attribute_object(X509_REQ *req, char *text,
-				char *def, char *value, int nid, int min,
-				int max);
+				char *def, char *value, int nid, int n_min,
+				int n_max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	int nid,int min,int max);
+	int nid,int n_min,int n_max);
 #ifndef OPENSSL_NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
-static int req_check_len(int len,int min,int max);
+static int req_check_len(int len,int n_min,int n_max);
 static int check_end(char *str, char *end);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
-static LHASH *config=NULL;
+static CONF *config=NULL;
 #endif
-static LHASH *req_conf=NULL;
+static CONF *req_conf=NULL;
 static int batch=0;
 
 #define TYPE_RSA	1
@@ -152,7 +152,8 @@ int MAIN(int argc, char **argv)
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
 	EVP_PKEY *pkey=NULL;
-	int i,badops=0,newreq=0,newkey= -1,verbose=0,pkey_type=TYPE_RSA;
+	int i,badops=0,newreq=0,verbose=0,pkey_type=TYPE_RSA;
+	long newkey = -1;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0,newhdr=0,subject=0;
@@ -457,7 +458,8 @@ bad:
 		p=config_name;
 		}
 	default_config_file=p;
-	config=CONF_load(config,p,NULL);
+	config=NCONF_new(NULL);
+	i=NCONF_load(config, p);
 #endif
 
 	if (template != NULL)
@@ -465,8 +467,9 @@ bad:
 		long errline;
 
 		BIO_printf(bio_err,"Using configuration from %s\n",template);
-		req_conf=CONF_load(NULL,template,&errline);
-		if (req_conf == NULL)
+		req_conf=NCONF_new(NULL);
+		i=NCONF_load(req_conf,template,&errline);
+		if (i == 0)
 			{
 			BIO_printf(bio_err,"error on line %ld of %s\n",errline,template);
 			goto end;
@@ -477,7 +480,7 @@ bad:
 		req_conf=config;
 		BIO_printf(bio_err,"Using configuration from %s\n",
 			default_config_file);
-		if (req_conf == NULL)
+		if (i == 0)
 			{
 			BIO_printf(bio_err,"Unable to load config info\n");
 			}
@@ -485,7 +488,7 @@ bad:
 
 	if (req_conf != NULL)
 		{
-		p=CONF_get_string(req_conf,NULL,"oid_file");
+		p=NCONF_get_string(req_conf,NULL,"oid_file");
 		if (p == NULL)
 			ERR_clear_error();
 		if (p != NULL)
@@ -511,7 +514,7 @@ bad:
 
 	if (md_alg == NULL)
 		{
-		p=CONF_get_string(req_conf,SECTION,"default_md");
+		p=NCONF_get_string(req_conf,SECTION,"default_md");
 		if (p == NULL)
 			ERR_clear_error();
 		if (p != NULL)
@@ -523,7 +526,7 @@ bad:
 
 	if (!extensions)
 		{
-		extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
+		extensions = NCONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
 		if (!extensions)
 			ERR_clear_error();
 		}
@@ -531,8 +534,8 @@ bad:
 		/* Check syntax of file */
 		X509V3_CTX ctx;
 		X509V3_set_ctx_test(&ctx);
-		X509V3_set_conf_lhash(&ctx, req_conf);
-		if(!X509V3_EXT_add_conf(req_conf, &ctx, extensions, NULL)) {
+		X509V3_set_nconf(&ctx, req_conf);
+		if(!X509V3_EXT_add_nconf(req_conf, &ctx, extensions, NULL)) {
 			BIO_printf(bio_err,
 			 "Error Loading extension section %s\n", extensions);
 			goto end;
@@ -541,19 +544,19 @@ bad:
 
 	if(!passin)
 		{
-		passin = CONF_get_string(req_conf, SECTION, "input_password");
+		passin = NCONF_get_string(req_conf, SECTION, "input_password");
 		if (!passin)
 			ERR_clear_error();
 		}
 	
 	if(!passout)
 		{
-		passout = CONF_get_string(req_conf, SECTION, "output_password");
+		passout = NCONF_get_string(req_conf, SECTION, "output_password");
 		if (!passout)
 			ERR_clear_error();
 		}
 
-	p = CONF_get_string(req_conf, SECTION, STRING_MASK);
+	p = NCONF_get_string(req_conf, SECTION, STRING_MASK);
 	if (!p)
 		ERR_clear_error();
 
@@ -564,7 +567,7 @@ bad:
 
 	if(!req_exts)
 		{
-		req_exts = CONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+		req_exts = NCONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
 		if (!req_exts)
 			ERR_clear_error();
 		}
@@ -572,8 +575,8 @@ bad:
 		/* Check syntax of file */
 		X509V3_CTX ctx;
 		X509V3_set_ctx_test(&ctx);
-		X509V3_set_conf_lhash(&ctx, req_conf);
-		if(!X509V3_EXT_add_conf(req_conf, &ctx, req_exts, NULL)) {
+		X509V3_set_nconf(&ctx, req_conf);
+		if(!X509V3_EXT_add_nconf(req_conf, &ctx, req_exts, NULL)) {
 			BIO_printf(bio_err,
 			 "Error Loading request extension section %s\n",
 								req_exts);
@@ -600,7 +603,7 @@ bad:
 			}
 		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)
 			{
-			char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+			char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 			if (randfile == NULL)
 				ERR_clear_error();
 			app_RAND_load_file(randfile, bio_err, 0);
@@ -609,7 +612,7 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
-		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+		char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 		if (randfile == NULL)
 			ERR_clear_error();
 		app_RAND_load_file(randfile, bio_err, 0);
@@ -618,8 +621,7 @@ bad:
 	
 		if (newkey <= 0)
 			{
-			newkey=(int)CONF_get_number(req_conf,SECTION,BITS);
-			if (newkey <= 0)
+			if (!NCONF_get_number(req_conf,SECTION,BITS, &newkey))
 				newkey=DEFAULT_KEY_LENGTH;
 			}
 
@@ -659,7 +661,7 @@ bad:
 
 		if (keyout == NULL)
 			{
-			keyout=CONF_get_string(req_conf,SECTION,KEYFILE);
+			keyout=NCONF_get_string(req_conf,SECTION,KEYFILE);
 			if (keyout == NULL)
 				ERR_clear_error();
 			}
@@ -685,11 +687,11 @@ bad:
 				}
 			}
 
-		p=CONF_get_string(req_conf,SECTION,"encrypt_rsa_key");
+		p=NCONF_get_string(req_conf,SECTION,"encrypt_rsa_key");
 		if (p == NULL)
 			{
 			ERR_clear_error();
-			p=CONF_get_string(req_conf,SECTION,"encrypt_key");
+			p=NCONF_get_string(req_conf,SECTION,"encrypt_key");
 			if (p == NULL)
 				ERR_clear_error();
 			}
@@ -806,10 +808,10 @@ loop:
 			/* Set up V3 context struct */
 
 			X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, 0);
-			X509V3_set_conf_lhash(&ext_ctx, req_conf);
+			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if(extensions && !X509V3_EXT_add_conf(req_conf, 
+			if(extensions && !X509V3_EXT_add_nconf(req_conf, 
 				 	&ext_ctx, extensions, x509ss))
 				{
 				BIO_printf(bio_err,
@@ -828,10 +830,10 @@ loop:
 			/* Set up V3 context struct */
 
 			X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, 0);
-			X509V3_set_conf_lhash(&ext_ctx, req_conf);
+			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if(req_exts && !X509V3_EXT_REQ_add_conf(req_conf, 
+			if(req_exts && !X509V3_EXT_REQ_add_nconf(req_conf, 
 				 	&ext_ctx, req_exts, req))
 				{
 				BIO_printf(bio_err,
@@ -1009,7 +1011,7 @@ end:
 		{
 		ERR_print_errors(bio_err);
 		}
-	if ((req_conf != NULL) && (req_conf != config)) CONF_free(req_conf);
+	if ((req_conf != NULL) && (req_conf != config)) NCONF_free(req_conf);
 	BIO_free(in);
 	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
@@ -1033,26 +1035,26 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs)
 	STACK_OF(CONF_VALUE) *dn_sk, *attr_sk = NULL;
 	char *tmp, *dn_sect,*attr_sect;
 
-	tmp=CONF_get_string(req_conf,SECTION,PROMPT);
+	tmp=NCONF_get_string(req_conf,SECTION,PROMPT);
 	if (tmp == NULL)
 		ERR_clear_error();
 	if((tmp != NULL) && !strcmp(tmp, "no")) no_prompt = 1;
 
-	dn_sect=CONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
+	dn_sect=NCONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
 	if (dn_sect == NULL)
 		{
 		BIO_printf(bio_err,"unable to find '%s' in config\n",
 			DISTINGUISHED_NAME);
 		goto err;
 		}
-	dn_sk=CONF_get_section(req_conf,dn_sect);
+	dn_sk=NCONF_get_section(req_conf,dn_sect);
 	if (dn_sk == NULL)
 		{
 		BIO_printf(bio_err,"unable to get '%s' section\n",dn_sect);
 		goto err;
 		}
 
-	attr_sect=CONF_get_string(req_conf,SECTION,ATTRIBUTES);
+	attr_sect=NCONF_get_string(req_conf,SECTION,ATTRIBUTES);
 	if (attr_sect == NULL)
 		{
 		ERR_clear_error();		
@@ -1060,7 +1062,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs)
 		}
 	else
 		{
-		attr_sk=CONF_get_section(req_conf,attr_sect);
+		attr_sk=NCONF_get_section(req_conf,attr_sect);
 		if (attr_sk == NULL)
 			{
 			BIO_printf(bio_err,"unable to get '%s' section\n",attr_sect);
@@ -1159,7 +1161,8 @@ static int prompt_info(X509_REQ *req,
 	int i;
 	char *p,*q;
 	char buf[100];
-	int nid,min,max;
+	int nid;
+	long n_min,n_max;
 	char *type,*def,*value;
 	CONF_VALUE *v;
 	X509_NAME *subj;
@@ -1204,27 +1207,29 @@ start:		for (;;)
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 			sprintf(buf,"%s_default",v->name);
-			if ((def=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+			if ((def=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				def="";
 				}
 				
 			sprintf(buf,"%s_value",v->name);
-			if ((value=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+			if ((value=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				value=NULL;
 				}
 
 			sprintf(buf,"%s_min",v->name);
-			min=(int)CONF_get_number(req_conf,dn_sect,buf);
+			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_min))
+				n_min = -1;
 
 			sprintf(buf,"%s_max",v->name);
-			max=(int)CONF_get_number(req_conf,dn_sect,buf);
+			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_max))
+				n_max = -1;
 
 			if (!add_DN_object(subj,v->value,def,value,nid,
-				min,max))
+				n_min,n_max))
 				return 0;
 			}
 		if (X509_NAME_entry_count(subj) == 0)
@@ -1255,7 +1260,7 @@ start2:			for (;;)
 					goto start2;
 
 				sprintf(buf,"%s_default",type);
-				if ((def=CONF_get_string(req_conf,attr_sect,buf))
+				if ((def=NCONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					{
 					ERR_clear_error();
@@ -1264,7 +1269,7 @@ start2:			for (;;)
 				
 				
 				sprintf(buf,"%s_value",type);
-				if ((value=CONF_get_string(req_conf,attr_sect,buf))
+				if ((value=NCONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					{
 					ERR_clear_error();
@@ -1272,13 +1277,15 @@ start2:			for (;;)
 					}
 
 				sprintf(buf,"%s_min",type);
-				min=(int)CONF_get_number(req_conf,attr_sect,buf);
+				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_min))
+					n_min = -1;
 
 				sprintf(buf,"%s_max",type);
-				max=(int)CONF_get_number(req_conf,attr_sect,buf);
+				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_max))
+					n_max = -1;
 
 				if (!add_attribute_object(req,
-					v->value,def,value,nid,min,max))
+					v->value,def,value,nid,n_min,n_max))
 					return 0;
 				}
 			}
@@ -1346,7 +1353,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 
 
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	     int nid, int min, int max)
+	     int nid, int n_min, int n_max)
 	{
 	int i,ret=0;
 	MS_STATIC char buf[1024];
@@ -1393,7 +1400,7 @@ start:
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, i);
 #endif
-	if(!req_check_len(i, min, max)) goto start;
+	if(!req_check_len(i, n_min, n_max)) goto start;
 	if (!X509_NAME_add_entry_by_NID(n,nid, MBSTRING_ASC,
 				(unsigned char *) buf, -1,-1,0)) goto err;
 	ret=1;
@@ -1402,8 +1409,8 @@ err:
 	}
 
 static int add_attribute_object(X509_REQ *req, char *text,
-				char *def, char *value, int nid, int min,
-				int max)
+				char *def, char *value, int nid, int n_min,
+				int n_max)
 	{
 	int i;
 	static char buf[1024];
@@ -1451,7 +1458,7 @@ start:
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, i);
 #endif
-	if(!req_check_len(i, min, max)) goto start;
+	if(!req_check_len(i, n_min, n_max)) goto start;
 
 	if(!X509_REQ_add1_attr_by_NID(req, nid, MBSTRING_ASC,
 					(unsigned char *)buf, -1)) {
@@ -1482,16 +1489,16 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	}
 #endif
 
-static int req_check_len(int len, int min, int max)
+static int req_check_len(int len, int n_min, int n_max)
 	{
-	if (len < min)
+	if ((n_min > 0) && (len < n_min))
 		{
-		BIO_printf(bio_err,"string is too short, it needs to be at least %d bytes long\n",min);
+		BIO_printf(bio_err,"string is too short, it needs to be at least %d bytes long\n",n_min);
 		return(0);
 		}
-	if ((max != 0) && (len > max))
+	if ((n_max >= 0) && (len > n_max))
 		{
-		BIO_printf(bio_err,"string is too long, it needs to be less than  %d bytes long\n",max);
+		BIO_printf(bio_err,"string is too long, it needs to be less than  %d bytes long\n",n_max);
 		return(0);
 		}
 	return(1);

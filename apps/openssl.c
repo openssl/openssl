@@ -138,7 +138,7 @@ static unsigned long MS_CALLBACK hash(const void *a_void);
 static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-LHASH *config=NULL;
+CONF *config=NULL;
 char *default_config_file=NULL;
 
 /* Make sure there is only one when MONOLITH is defined */
@@ -269,8 +269,9 @@ int main(int Argc, char *Argv[])
 
 	default_config_file=p;
 
-	config=CONF_load(config,p,&errline);
-	if (config == NULL) ERR_clear_error();
+	config=NCONF_new(NULL);
+	i=NCONF_load(config,p,&errline);
+	if (i == 0) ERR_clear_error();
 
 	prog=prog_init();
 
@@ -339,7 +340,7 @@ int main(int Argc, char *Argv[])
 end:
 	if (config != NULL)
 		{
-		CONF_free(config);
+		NCONF_free(config);
 		config=NULL;
 		}
 	if (prog != NULL) lh_free(prog);
