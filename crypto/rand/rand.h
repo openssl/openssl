@@ -82,7 +82,7 @@ extern int rand_predictable;
 struct engine_st;
 
 int RAND_set_rand_method(struct engine_st *meth);
-RAND_METHOD *RAND_get_rand_method(void );
+const RAND_METHOD *RAND_get_rand_method(void );
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
 int  RAND_bytes(unsigned char *buf,int num);

@@ -82,7 +82,7 @@ int RAND_set_rand_method(ENGINE *engine)
 	}
 #endif
 
-RAND_METHOD *RAND_get_rand_method(void)
+const RAND_METHOD *RAND_get_rand_method(void)
 	{
 	if (rand_engine == NULL
 		&& (rand_engine = ENGINE_get_default_RAND()) == NULL)
@@ -92,28 +92,28 @@ RAND_METHOD *RAND_get_rand_method(void)
 
 void RAND_cleanup(void)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->cleanup)
 		meth->cleanup();
 	}
 
 void RAND_seed(const void *buf, int num)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->seed)
 		meth->seed(buf,num);
 	}
 
 void RAND_add(const void *buf, int num, double entropy)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->add)
 		meth->add(buf,num,entropy);
 	}
 
 int RAND_bytes(unsigned char *buf, int num)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->bytes)
 		return meth->bytes(buf,num);
 	return(-1);
@@ -121,7 +121,7 @@ int RAND_bytes(unsigned char *buf, int num)
 
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->pseudorand)
 		return meth->pseudorand(buf,num);
 	return(-1);
@@ -129,7 +129,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 
 int RAND_status(void)
 	{
-	RAND_METHOD *meth = RAND_get_rand_method();
+	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->status)
 		return meth->status();
 	return 0;
