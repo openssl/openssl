@@ -994,24 +994,26 @@ bad:
 			}
 		}
 
+	if ((md == NULL) && ((md=NCONF_get_string(conf,
+		section,ENV_DEFAULT_MD)) == NULL))
+		{
+		lookup_fail(section,ENV_DEFAULT_MD);
+		goto err;
+		}
+
+	if ((dgst=EVP_get_digestbyname(md)) == NULL)
+		{
+		BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
+		goto err;
+		}
+
 	if (req)
 		{
-		if ((md == NULL) && ((md=NCONF_get_string(conf,
-			section,ENV_DEFAULT_MD)) == NULL))
-			{
-			lookup_fail(section,ENV_DEFAULT_MD);
-			goto err;
-			}
 		if ((email_dn == 1) && ((tmp_email_dn=NCONF_get_string(conf,
 			section,ENV_DEFAULT_EMAIL_DN)) != NULL ))
 			{
 			if(strcmp(tmp_email_dn,"no") == 0)
 				email_dn=0;
-			}
-		if ((dgst=EVP_get_digestbyname(md)) == NULL)
-			{
-			BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
-			goto err;
 			}
 		if (verbose)
 			BIO_printf(bio_err,"message digest is %s\n",
@@ -1395,23 +1397,10 @@ bad:
 
 		/* we now have a CRL */
 		if (verbose) BIO_printf(bio_err,"signing CRL\n");
-		if (md != NULL)
-			{
-			if ((dgst=EVP_get_digestbyname(md)) == NULL)
-				{
-				BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
-				goto err;
-				}
-			}
-		else
-			{
 #ifndef OPENSSL_NO_DSA
-			if (pkey->type == EVP_PKEY_DSA) 
-				dgst=EVP_dss1();
-			else
+		if (pkey->type == EVP_PKEY_DSA) 
+			dgst=EVP_dss1();
 #endif
-				dgst=EVP_md5();
-			}
 
 		/* Add any extensions asked for */
 
