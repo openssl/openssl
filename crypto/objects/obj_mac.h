@@ -2152,12 +2152,12 @@
 #define SN_Enterprises		"enterprises"
 #define LN_Enterprises		"Enterprises"
 #define NID_Enterprises		389
-#define OBJ_Enterprises		OBJ_private,1L
+#define OBJ_Enterprises		OBJ_Private,1L
 
 #define SN_dcObject		"dcobject"
 #define LN_dcObject		"dcObject"
 #define NID_dcObject		390
-#define OBJ_dcObject		OBJ_enterprises,1466L,344L
+#define OBJ_dcObject		OBJ_Enterprises,1466L,344L
 
 #define SN_rle_compression		"RLE"
 #define LN_rle_compression		"run length compression"

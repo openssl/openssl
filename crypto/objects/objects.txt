@@ -699,10 +699,10 @@ internet 5		: security		: Security
 internet 6		: snmpv2		: SNMPv2
 internet 7		: mail			: Mail
 
-private 1		: enterprises		: Enterprises
+Private 1		: enterprises		: Enterprises
 
 # RFC 2247
-enterprises 1466 344	: dcobject		: dcObject
+Enterprises 1466 344	: dcobject		: dcObject
 
 # What the hell are these OIDs, really?
 !Cname rle-compression
