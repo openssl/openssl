@@ -735,3 +735,81 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, unsigned char *d,
 	}
 
 
+#ifndef NO_STDIO
+/* Read a file that contains our certificate in "PEM" format,
+ * possibly followed by a sequence of CA certificates that should be
+ * sent to the peer in the Certificate message.
+ */
+int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
+	{
+	BIO *in;
+	int ret=0;
+	X509 *x=NULL;
+
+	in=BIO_new(BIO_s_file_internal());
+	if (in == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_BUF_LIB);
+		goto end;
+		}
+
+	if (BIO_read_filename(in,file) <= 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_SYS_LIB);
+		goto end;
+		}
+
+	x=PEM_read_bio_X509(in,NULL,ctx->default_passwd_callback);
+	if (x == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_PEM_LIB);
+		goto end;
+		}
+
+	ret=SSL_CTX_use_certificate(ctx,x);
+	if (ERR_peek_error() != 0)
+		ret = 0;  /* Key/certificate mismatch doesn't imply ret==0 ... */
+	if (ret)
+		{
+		/* If we could set up our certificate, now proceed to
+		 * the CA certificates.
+		 */
+		X509 *ca;
+		int r;
+		unsigned long err;
+		
+		if (ctx->extra_certs != NULL) 
+			{
+			sk_X509_pop_free(ctx->extra_certs, X509_free);
+			ctx->extra_certs = NULL;
+			}
+
+		while ((ca = PEM_read_bio_X509(in,NULL,ctx->default_passwd_callback))
+			!= NULL)
+			{
+			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
+			if (!r) 
+				{
+				X509_free(ca);
+				ret = 0;
+				goto end;
+				}
+			/* Note that we must not free r if it was succesully
+			 * added to the chain (while we must free the main
+			 * certificate, since its reference count is increased
+			 * by SSL_CTX_use_certificate). */
+			}
+		/* When the while loop ends, it's usually just EOF. */
+		err = ERR_peek_error();
+		if (ERR_GET_LIB(err) == ERR_LIB_PEM && ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
+			(void) ERR_get_error();
+		else 
+			ret = 0; /* some real error */
+		}
+
+end:
+	if (x != NULL) X509_free(x);
+	if (in != NULL) BIO_free(in);
+	return(ret);
+	}
+#endif

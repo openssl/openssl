@@ -874,6 +874,7 @@ int	SSL_use_certificate_file(SSL *ssl, char *file, int type);
 int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
+int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM type */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK *stackCAs,
 					    const char *file);
@@ -1168,6 +1169,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172
+#define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE	 220
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_FILE		 173
 #define SSL_F_SSL_CTX_USE_PRIVATEKEY			 174
 #define SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1		 175
