@@ -507,6 +507,47 @@ details about the structures returned. The returned structure should be freed
 after use using the relevant free function, BASIC_CONSTRAINTS_free() for 
 example.
 
+void	*	X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
+void	*	X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx);
+void	*	X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx);
+void 	*	X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx);
+
+These functions combine the operations of searching for extensions and
+parsing them. They search a certificate, a CRL a CRL entry or a stack
+of extensions respectively for extension whose NID is 'nid' and return
+the parsed result of NULL if an error occurred. For example:
+
+BASIC_CONSTRAINTS *bs;
+bs = X509_get_ext_d2i(cert, NID_basic_constraints, NULL, NULL);
+
+This will search for the basicConstraints extension and either return
+it value or NULL. NULL can mean either the extension was not found, it
+occurred more than once or it could not be parsed.
+
+If 'idx' is NULL then an extension is only parsed if it occurs precisely
+once. This is standard behaviour because extensions normally cannot occur
+more than once. If however more than one extension of the same type can
+occur it can be used to parse successive extensions for example:
+
+int i;
+void *ext;
+
+i = -1;
+for(;;) {
+	ext = X509_get_ext_d2i(x, nid, crit, &idx);
+	if(ext == NULL) break;
+	 /* Do something with ext */
+}
+
+If 'crit' is not NULL and the extension was found then the int it points to
+is set to 1 for critical extensions and 0 for non critical. Therefore if the
+function returns NULL but 'crit' is set to 0 or 1 then the extension was
+found but it could not be parsed.
+
+The int pointed to by crit will be set to -1 if the extension was not found
+and -2 if the extension occurred more than once (this will only happen if
+idx is NULL). In both cases the function will return NULL.
+
 3. Generating extensions.
 
 An extension will typically be generated from a configuration file, or some
