@@ -1624,7 +1624,9 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 		char *p = NCONF_get_string(dbattr_conf,NULL,"unique_subject");
 		if (p)
 			{
+#ifdef RL_DEBUG
 			BIO_printf(bio_err, "DEBUG[load_index]: unique_subject = \"%s\"\n", p);
+#endif
 			switch(*p)
 				{
 			case 'f': /* false */
