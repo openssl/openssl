@@ -131,38 +131,59 @@ LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline)
 
 STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NULL;
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_section(&ctmp, section);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_section(&ctmp, section);
+		}
 	}
 
 char *CONF_get_string(LHASH *conf,char *group,char *name)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NCONF_get_string(NULL, group, name);
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_string(&ctmp, group, name);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_string(&ctmp, group, name);
+		}
 	}
 
 long CONF_get_number(LHASH *conf,char *group,char *name)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NCONF_get_number(NULL, group, name);
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_number(&ctmp, group, name);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_number(&ctmp, group, name);
+		}
 	}
 
 void CONF_free(LHASH *conf)
