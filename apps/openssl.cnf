@@ -25,7 +25,7 @@ crl		= $dir/crl.pem 		# The current CRL
 private_key	= $dir/private/cakey.pem# The private key
 RANDFILE	= $dir/private/.rand	# private random number file
 
-x509_extensions	= x509v3_extensions	# The extentions to add to the cert
+x509_extensions	= usr_cert		# The extentions to add to the cert
 default_days	= 365			# how long to certify for
 default_crl_days= 30			# how long before next CRL
 default_md	= md5			# which md to use.
@@ -63,7 +63,7 @@ default_bits		= 1024
 default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 attributes		= req_attributes
-x509_extensions	= v3_ca	# The extentions to add to the cert
+x509_extensions	= v3_ca	# The extentions to add to the self signed cert
 
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
@@ -101,28 +101,53 @@ challengePassword_max		= 20
 
 unstructuredName		= An optional company name
 
-[ x509v3_extensions ]
+[ usr_cert ]
 
-nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
-nsComment			= "This is a comment"
+# These extensions are added when 'ca' signs a request.
 
-# under ASN.1, the 0 bit would be encoded as 80
-nsCertType			= 0x40
+# This goes against PKIX guidelines but some CAs do it and some software
+# requires this to avoid interpreting an end user certificate as a CA.
 
+basicConstraints=CA:FALSE
+
+# Here are some examples of the usage of nsCertType. If it is omitted
+# the certificate can be used for anything *except* object signing.
+
+# This is OK for an SSL server.
+#nsCertType			= server
+
+# For an object signing certificate this would be used.
+#nsCertType = objsign
+
+# For normal client use this is typical
+#nsCertType = client, email
+
+# This is typical also
+
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+
+nsComment			= "OpenSSL Generated Certificate"
+
+#nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
 #nsBaseUrl
 #nsRevocationUrl
 #nsRenewalUrl
 #nsCaPolicyUrl
 #nsSslServerName
-#nsCertSequence
-#nsCertExt
-#nsDataType
 
 [ v3_ca]
 
 # Extensions for a typical CA
 
+# It's a CA certificate
 basicConstraints = CA:true
+
+# This is what PKIX recommends but some broken software chokes on critical
+# extensions.
+#basicConstraints = critical,CA:true
+
+# Key usage: again this should really be critical.
 keyUsage = cRLSign, keyCertSign
 
-
+# Some might want this also
+#nsCertType = sslCA, emailCA

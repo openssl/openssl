@@ -70,6 +70,7 @@
 #include "txt_db.h"
 #include "evp.h"
 #include "x509.h"
+#include "x509v3.h"
 #include "objects.h"
 #include "pem.h"
 #include "conf.h"
@@ -154,7 +155,6 @@ extern int EF_ALIGNMENT;
 #endif
 
 #ifndef NOPROTO
-static STACK *load_extensions(char *section);
 static void lookup_fail(char *name,char *tag);
 static int MS_CALLBACK key_callback(char *buf,int len,int verify);
 static unsigned long index_serial_hash(char **a);
@@ -166,21 +166,21 @@ static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days, int batch, STACK *extensions,int verbose);
+	int days, int batch, char *ext_sect, LHASH *conf,int verbose);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days,int batch,STACK *extensions,int verbose);
+	int days,int batch,char *ext_sect, LHASH *conf,int verbose);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 	EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,char *startdate,
-	int days,STACK *extensions,int verbose);
+	int days,char *ext_sect,LHASH *conf,int verbose);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, EVP_MD *dgst,
 	STACK *policy, TXT_DB *db, BIGNUM *serial, char *startdate,
-	int days, int batch, int verbose, X509_REQ *req, STACK *extensions);
+	int days, int batch, int verbose, X509_REQ *req, char *ext_sect,
+	LHASH *conf);
 static int check_time_format(char *str);
 #else
-static STACK *load_extensions();
 static void lookup_fail();
 static int MS_CALLBACK key_callback();
 static unsigned long index_serial_hash();
@@ -251,7 +251,6 @@ char **argv;
 	long l;
 	EVP_MD *dgst=NULL;
 	STACK *attribs=NULL;
-	STACK *extensions_sk=NULL;
 	STACK *cert_sk=NULL;
 	BIO *hex=NULL;
 #undef BSIZE
@@ -266,7 +265,7 @@ EF_ALIGNMENT=0;
 
 	apps_startup();
 
-	X509v3_add_netscape_extensions();
+	X509V3_add_standard_extensions();
 
 	preserve=0;
 	if (bio_err == NULL)
@@ -688,12 +687,17 @@ bad:
 			goto err;
 			}
 
-		if ((extensions=CONF_get_string(conf,section,ENV_EXTENSIONS))
-			!= NULL)
-			{
-			if ((extensions_sk=load_extensions(extensions)) == NULL)
+		extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
+		if(!extensions) {
+
+			/* Check syntax of file */
+			if(!X509V3_EXT_add_conf(conf, NULL, extensions, NULL)) {
+				BIO_printf(bio_err,
+				 "Error Loading extension section %s\n",
+								 extensions);
 				goto err;
 			}
+		}
 
 		if (startdate == NULL)
 			{
@@ -749,7 +753,7 @@ bad:
 			{
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
-				serial,startdate,days,extensions_sk,verbose);
+				serial,startdate,days,extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -773,7 +777,7 @@ bad:
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
 				db,serial,startdate,days,batch,
-				extensions_sk,verbose);
+				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -792,7 +796,7 @@ bad:
 			total++;
 			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
 				serial,startdate,days,batch,
-				extensions_sk,verbose);
+				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -811,7 +815,7 @@ bad:
 			total++;
 			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
 				serial,startdate,days,batch,
-				extensions_sk,verbose);
+				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1046,8 +1050,6 @@ err:
 	if (in != NULL) BIO_free(in);
 
 	if (cert_sk != NULL) sk_pop_free(cert_sk,X509_free);
-	if (extensions_sk != NULL)
-		sk_pop_free(extensions_sk,X509_EXTENSION_free);
 
 	if (ret) ERR_print_errors(bio_err);
 	if (serial != NULL) BN_free(serial);
@@ -1056,7 +1058,7 @@ err:
 	if (x509 != NULL) X509_free(x509);
 	if (crl != NULL) X509_CRL_free(crl);
 	if (conf != NULL) CONF_free(conf);
-	X509v3_cleanup_extensions();
+	X509V3_EXT_cleanup();
 	EXIT(ret);
 	}
 
@@ -1188,7 +1190,7 @@ err:
 	}
 
 static int certify(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,days,
-	batch,extensions,verbose)
+	batch,ext_sect,conf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1200,7 +1202,8 @@ BIGNUM *serial;
 char *startdate;
 int days;
 int batch;
-STACK *extensions;
+char *ext_sect;
+LHASH *conf;
 int verbose;
 	{
 	X509_REQ *req=NULL;
@@ -1249,7 +1252,7 @@ int verbose;
 		BIO_printf(bio_err,"Signature ok\n");
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
-		days,batch,verbose,req,extensions);
+		days,batch,verbose,req,ext_sect,conf);
 
 err:
 	if (req != NULL) X509_REQ_free(req);
@@ -1258,7 +1261,7 @@ err:
 	}
 
 static int certify_cert(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,
-	days, batch,extensions,verbose)
+	days, batch,ext_sect,conf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1270,7 +1273,8 @@ BIGNUM *serial;
 char *startdate;
 int days;
 int batch;
-STACK *extensions;
+char *ext_sect;
+LHASH *conf;
 int verbose;
 	{
 	X509 *req=NULL;
@@ -1322,7 +1326,7 @@ int verbose;
 		goto err;
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
-		batch,verbose,rreq,extensions);
+		batch,verbose,rreq,ext_sect,conf);
 
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
@@ -1332,7 +1336,7 @@ err:
 	}
 
 static int do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
-	batch,verbose,req, extensions)
+	batch,verbose,req, ext_sect,conf)
 X509 **xret;
 EVP_PKEY *pkey;
 X509 *x509;
@@ -1345,7 +1349,8 @@ int days;
 int batch;
 int verbose;
 X509_REQ *req;
-STACK *extensions;
+char *ext_sect;
+LHASH *conf;
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1355,7 +1360,6 @@ STACK *extensions;
 	X509_CINF *ci;
 	X509_NAME_ENTRY *ne;
 	X509_NAME_ENTRY *tne,*push;
-	X509_EXTENSION *ex=NULL;
 	EVP_PKEY *pktmp;
 	int ok= -1,i,j,last,nid;
 	char *p;
@@ -1662,7 +1666,7 @@ again2:
 	if (!i) goto err;
 
 	/* Lets add the extensions, if there are any */
-	if ((extensions != NULL) && (sk_num(extensions) > 0))
+	if (ext_sect)
 		{
 		if (ci->version == NULL)
 			if ((ci->version=ASN1_INTEGER_new()) == NULL)
@@ -1674,17 +1678,10 @@ again2:
 		if (ci->extensions != NULL)
 			sk_pop_free(ci->extensions,X509_EXTENSION_free);
 
-		if ((ci->extensions=sk_new_null()) == NULL)
-			goto err;
+		ci->extensions = NULL;
 
-		/* Lets 'copy' in the new ones */
-		for (i=0; i<sk_num(extensions); i++)
-			{
-			ex=X509_EXTENSION_dup((X509_EXTENSION *)
-				sk_value(extensions,i));
-			if (ex == NULL) goto err;
-			if (!sk_push(ci->extensions,(char *)ex)) goto err;
-			}
+		if(!X509V3_EXT_add_conf(conf, NULL, ext_sect, ret)) goto err;
+
 		}
 
 
@@ -1807,7 +1804,7 @@ int output_der;
 	}
 
 static int certify_spkac(xret,infile,pkey,x509,dgst,policy,db,serial,
-	startdate,days,extensions,verbose)
+	startdate,days,ext_sect,conf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1818,7 +1815,8 @@ TXT_DB *db;
 BIGNUM *serial;
 char *startdate;
 int days;
-STACK *extensions;
+char *ext_sect;
+LHASH *conf;
 int verbose;
 	{
 	STACK *sk=NULL;
@@ -1964,7 +1962,7 @@ int verbose;
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
-		days,1,verbose,req,extensions);
+		days,1,verbose,req,ext_sect,conf);
 err:
 	if (req != NULL) X509_REQ_free(req);
 	if (parms != NULL) CONF_free(parms);
@@ -1990,102 +1988,6 @@ int *type;
 	if (nid == NID_pkcs9_unstructuredName)
 		*type=V_ASN1_IA5STRING;
 	return(1);
-	}
-
-
-static STACK *load_extensions(sec)
-char *sec;
-	{
-	STACK *ext;
-	STACK *ret=NULL;
-	CONF_VALUE *cv;
-	ASN1_OCTET_STRING *str=NULL;
-	ASN1_STRING *tmp=NULL;
-	X509_EXTENSION *x;
-	BIO *mem=NULL;
-	BUF_MEM *buf=NULL;
-	int i,nid,len;
-	unsigned char *ptr;
-	int pack_type;
-	int data_type;
-
-	if ((ext=CONF_get_section(conf,sec)) == NULL)
-		{
-		BIO_printf(bio_err,"unable to find extension section called '%s'\n",sec);
-		return(NULL);
-		}
-
-	if ((ret=sk_new_null()) == NULL) return(NULL);
-
-	for (i=0; i<sk_num(ext); i++)
-		{
-		cv=(CONF_VALUE *)sk_value(ext,i); /* get the object id */
-		if ((nid=OBJ_txt2nid(cv->name)) == NID_undef)
-			{
-			BIO_printf(bio_err,"%s:unknown object type in section, '%s'\n",sec,cv->name);
-			goto err;
-			}
-
-		pack_type=X509v3_pack_type_by_NID(nid);
-		data_type=X509v3_data_type_by_NID(nid);
-
-		/* pack up the input bytes */
-		ptr=(unsigned char *)cv->value;
-		len=strlen((char *)ptr);
-		if ((len > 2) && (cv->value[0] == '0') &&
-			(cv->value[1] == 'x'))
-			{
-			if (data_type == V_ASN1_UNDEF)
-				{
-				BIO_printf(bio_err,"data type for extension %s is unknown\n",cv->name);
-				goto err;
-				}
-			if (mem == NULL)
-				if ((mem=BIO_new(BIO_s_mem())) == NULL)
-					goto err;
-			if (((buf=BUF_MEM_new()) == NULL) ||
-				!BUF_MEM_grow(buf,128))
-				goto err;
-			if ((tmp=ASN1_STRING_new()) == NULL) goto err;
-
-			BIO_reset(mem);
-			BIO_write(mem,(char *)&(ptr[2]),len-2);
-			if (!a2i_ASN1_STRING(mem,tmp,buf->data,buf->max))
-				goto err;
-			len=tmp->length;
-			ptr=tmp->data;
-			}
-
-		switch (pack_type)
-			{
-		case X509_EXT_PACK_STRING:
-			if ((str=X509v3_pack_string(&str,
-				data_type,ptr,len)) == NULL)
-				goto err;
-			break;
-		case X509_EXT_PACK_UNKNOWN:
-		default:
-			BIO_printf(bio_err,"Don't know how to pack extension %s\n",cv->name);
-			goto err;
-			/* break; */
-			}
-
-		if ((x=X509_EXTENSION_create_by_NID(NULL,nid,0,str)) == NULL)
-			goto err;
-		sk_push(ret,(char *)x);
-		}
-
-	if (0)
-		{
-err:
-		if (ret != NULL) sk_pop_free(ret,X509_EXTENSION_free);
-		ret=NULL;
-		}
-	if (str != NULL) ASN1_OCTET_STRING_free(str);
-	if (tmp != NULL) ASN1_STRING_free(tmp);
-	if (buf != NULL) BUF_MEM_free(buf);
-	if (mem != NULL) BIO_free(mem);
-	return(ret);
 	}
 
 static int check_time_format(str)

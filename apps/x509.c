@@ -694,7 +694,7 @@ end:
 	if (Upkey != NULL) EVP_PKEY_free(Upkey);
 	if (CApkey != NULL) EVP_PKEY_free(CApkey);
 	if (rq != NULL) X509_REQ_free(rq);
-	X509v3_cleanup_extensions();
+	X509V3_EXT_cleanup();
 	EXIT(ret);
 	}
 
