@@ -116,12 +116,8 @@ A number of Linux and *BSD distributions include OpenSSL.
 
 * Why aren't tools like 'autoconf' and 'libtool' used?
 
-autoconf is a nice tool, but is unfortunately very Unix-centric.
-Although one can come up with solution to have ports keep in track,
-there's also some work needed for that, and can be quite painful at
-times.  If there was a 'autoconf'-like tool that generated perl
-scripts or something similarly general, it would probably be used
-in OpenSSL much earlier.
+autoconf will probably be used in future OpenSSL versions. If it was
+less Unix-centric, it might have been used much earlier.
 
 libtool has repeatadly been reported by some members of the OpenSSL
 development and others to be a pain to use.  So far, those in the
