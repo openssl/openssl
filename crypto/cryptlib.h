@@ -62,10 +62,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include "openssl/e_os.h"
 
 #include <openssl/crypto.h>
@@ -73,6 +69,10 @@ extern "C" {
 #include <openssl/bio.h> 
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #ifndef VMS
 #define X509_CERT_AREA		OPENSSLDIR
