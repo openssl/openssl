@@ -159,7 +159,7 @@ $	if $severity .ne. 1 then goto exit3
 $
 $!###########################################################################
 $
-$	write sys$output "test tls1 with 1024bit anonymous SH, multiple handshakes"
+$	write sys$output "test tls1 with 1024bit anonymous DH, multiple handshakes"
 $	'ssltest' -v -bio_pair -tls1 -cipher "ADH" -dhe1024dsa -num 10 -f -time
 $	if $severity .ne. 1 then goto exit3
 $
