@@ -85,6 +85,7 @@ my %table=(
 "debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -O2 -Wall -Wshadow -Werror -pipe:::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe:::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
 "dist",		"cc:-O -DNOPROTO::::",
 
 # Basic configs that should work on any box
