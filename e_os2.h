@@ -195,6 +195,11 @@ extern "C" {
 # endif
 #endif
 
+/* --------------------------------- VOS ----------------------------------- */
+#ifdef OPENSSL_SYSNAME_VOS
+# define OPENSSL_SYS_VOS
+#endif
+
 /* ------------------------------- VxWorks --------------------------------- */
 #ifdef OPENSSL_SYSNAME_VXWORKS
 # define OPENSSL_SYS_VXWORKS

@@ -377,7 +377,7 @@ dclean:
 
 rehash: rehash.time
 rehash.time: certs
-	@(OPENSSL="`pwd`/apps/openssl"; OPENSSL_DEBUG_MEMORY=on; \
+	@(OPENSSL="`pwd`/apps/openssl$(EXE_EXT)"; OPENSSL_DEBUG_MEMORY=on; \
 		export OPENSSL OPENSSL_DEBUG_MEMORY; \
 		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
@@ -493,7 +493,9 @@ dist:
 dist_pem_h:
 	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
-install: all install_docs
+install: all install_docs install_sw
+
+install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines \

@@ -68,16 +68,16 @@ EVPTEST=	evp_test
 
 TESTS=		alltests
 
-EXE=	$(BNTEST) $(ECTEST)  $(ECDSATEST) $(ECDHTEST) $(IDEATEST) \
-	$(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTEST) \
-	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
-	$(DESTEST) $(SHATEST) $(SHA1TEST) $(SHA256TEST) $(SHA512TEST) \
-	$(MDC2TEST) $(RMDTEST) \
-	$(RANDTEST) $(DHTEST) $(ENGINETEST) \
-	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST) \
-	$(EVPTEST)
+EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
+	$(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) \
+	$(RC2TEST)$(EXE_EXT) $(RC4TEST)$(EXE_EXT) $(RC5TEST)$(EXE_EXT) \
+	$(DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
+	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
+	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
+	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
+	$(EVPTEST)$(EXE_EXT)
 
-# $(METHTEST)
+# $(METHTEST)$(EXE_EXT)
 
 OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
@@ -107,7 +107,7 @@ top:
 
 all:	exe
 
-exe:	$(EXE) dummytest
+exe:	$(EXE) dummytest$(EXE_EXT)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -310,7 +310,7 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-$(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
+$(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -320,13 +320,13 @@ $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RSATEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RSATEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RSATEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
+$(BNTEST)$(EXE_EXT): $(BNTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -336,13 +336,13 @@ $(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(BNTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(BNTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(BNTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(ECTEST): $(ECTEST).o $(DLIBCRYPTO)
+$(ECTEST)$(EXE_EXT): $(ECTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -352,13 +352,13 @@ $(ECTEST): $(ECTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(ECTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(ECTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(ECTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(EXPTEST): $(EXPTEST).o $(DLIBCRYPTO)
+$(EXPTEST)$(EXE_EXT): $(EXPTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -368,13 +368,13 @@ $(EXPTEST): $(EXPTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(EXPTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(EXPTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(EXPTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(IDEATEST): $(IDEATEST).o $(DLIBCRYPTO)
+$(IDEATEST)$(EXE_EXT): $(IDEATEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -384,13 +384,13 @@ $(IDEATEST): $(IDEATEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(IDEATEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(IDEATEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(IDEATEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(MD2TEST): $(MD2TEST).o $(DLIBCRYPTO)
+$(MD2TEST)$(EXE_EXT): $(MD2TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -400,13 +400,13 @@ $(MD2TEST): $(MD2TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(MD2TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(MD2TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(MD2TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(SHATEST): $(SHATEST).o $(DLIBCRYPTO)
+$(SHATEST)$(EXE_EXT): $(SHATEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -416,13 +416,13 @@ $(SHATEST): $(SHATEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(SHATEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(SHATEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SHATEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
+$(SHA1TEST)$(EXE_EXT): $(SHA1TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -432,13 +432,13 @@ $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(SHA1TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(SHA1TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SHA1TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(SHA256TEST): $(SHA256TEST).o $(DLIBCRYPTO)
+$(SHA256TEST)$(EXE_EXT): $(SHA256TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -448,13 +448,13 @@ $(SHA256TEST): $(SHA256TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(SHA256TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(SHA256TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SHA256TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(SHA512TEST): $(SHA512TEST).o $(DLIBCRYPTO)
+$(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -464,13 +464,13 @@ $(SHA512TEST): $(SHA512TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(SHA512TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(SHA512TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SHA512TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
+$(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -480,13 +480,13 @@ $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RMDTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RMDTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RMDTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(MDC2TEST): $(MDC2TEST).o $(DLIBCRYPTO)
+$(MDC2TEST)$(EXE_EXT): $(MDC2TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -496,13 +496,13 @@ $(MDC2TEST): $(MDC2TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(MDC2TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(MDC2TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(MDC2TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(MD4TEST): $(MD4TEST).o $(DLIBCRYPTO)
+$(MD4TEST)$(EXE_EXT): $(MD4TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -512,13 +512,13 @@ $(MD4TEST): $(MD4TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(MD4TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(MD4TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(MD4TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(MD5TEST): $(MD5TEST).o $(DLIBCRYPTO)
+$(MD5TEST)$(EXE_EXT): $(MD5TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -528,13 +528,13 @@ $(MD5TEST): $(MD5TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(MD5TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(MD5TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(MD5TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(HMACTEST): $(HMACTEST).o $(DLIBCRYPTO)
+$(HMACTEST)$(EXE_EXT): $(HMACTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -544,13 +544,13 @@ $(HMACTEST): $(HMACTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(HMACTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(HMACTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(HMACTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(RC2TEST): $(RC2TEST).o $(DLIBCRYPTO)
+$(RC2TEST)$(EXE_EXT): $(RC2TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -560,13 +560,13 @@ $(RC2TEST): $(RC2TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RC2TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RC2TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RC2TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(BFTEST): $(BFTEST).o $(DLIBCRYPTO)
+$(BFTEST)$(EXE_EXT): $(BFTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -576,13 +576,13 @@ $(BFTEST): $(BFTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(BFTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(BFTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(BFTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(CASTTEST): $(CASTTEST).o $(DLIBCRYPTO)
+$(CASTTEST)$(EXE_EXT): $(CASTTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -592,13 +592,13 @@ $(CASTTEST): $(CASTTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(CASTTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(CASTTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(CASTTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(RC4TEST): $(RC4TEST).o $(DLIBCRYPTO)
+$(RC4TEST)$(EXE_EXT): $(RC4TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -608,13 +608,13 @@ $(RC4TEST): $(RC4TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RC4TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RC4TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RC4TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(RC5TEST): $(RC5TEST).o $(DLIBCRYPTO)
+$(RC5TEST)$(EXE_EXT): $(RC5TEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -624,13 +624,13 @@ $(RC5TEST): $(RC5TEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RC5TEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RC5TEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RC5TEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(DESTEST): $(DESTEST).o $(DLIBCRYPTO)
+$(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -640,13 +640,13 @@ $(DESTEST): $(DESTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(DESTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(DESTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(DESTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
+$(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -656,13 +656,13 @@ $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(RANDTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(RANDTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(RANDTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
+$(DHTEST)$(EXE_EXT): $(DHTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -672,13 +672,13 @@ $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(DHTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(DHTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(DHTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
+$(DSATEST)$(EXE_EXT): $(DSATEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -688,13 +688,13 @@ $(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(DSATEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(DSATEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(DSATEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
+$(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -704,13 +704,13 @@ $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(METHTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(METHTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(METHTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
+$(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -720,13 +720,13 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(SSLTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(SSLTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(SSLTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
+$(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -736,13 +736,13 @@ $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(ENGINETEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(ENGINETEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(ENGINETEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
+$(EVPTEST)$(EXE_EXT): $(EVPTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -752,13 +752,13 @@ $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(EVPTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(EVPTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(EVPTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(ECDSATEST): $(ECDSATEST).o $(DLIBCRYPTO)
+$(ECDSATEST)$(EXE_EXT): $(ECDSATEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -768,13 +768,13 @@ $(ECDSATEST): $(ECDSATEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(ECDSATEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(ECDSATEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(ECDSATEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
-$(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
+$(ECDHTEST)$(EXE_EXT): $(ECDHTEST).o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -784,7 +784,7 @@ $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(ECDHTEST) LDFLAGS="$(CFLAGS)" \
+		APPNAME=$(ECDHTEST)$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="$(ECDHTEST).o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
@@ -793,14 +793,14 @@ $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
-#$(AESTEST): $(AESTEST).o $(DLIBCRYPTO)
+#$(AESTEST)$(EXE_EXT): $(AESTEST).o $(DLIBCRYPTO)
 #	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-#	  $(CC) -o $(AESTEST) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 #	else \
-#	  $(CC) -o $(AESTEST) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 #	fi
 
-dummytest: dummytest.o $(DLIBCRYPTO)
+dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -810,7 +810,7 @@ dummytest: dummytest.o $(DLIBCRYPTO)
 	  LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=dummytest LDFLAGS="$(CFLAGS)" \
+		APPNAME=dummytest$(EXE_EXT) LDFLAGS="$(CFLAGS)" \
 		OBJECTS="dummytest.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \

@@ -85,7 +85,7 @@ top:
 
 all:	exe
 
-exe:	$(PROGRAM)
+exe:	$(EXE)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -151,8 +151,8 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-$(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
-	$(RM) $(PROGRAM)
+$(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
+	$(RM) $(EXE)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
@@ -162,12 +162,12 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(PROGRAM) LDFLAGS="$(CFLAG)" \
+		APPNAME=$(EXE) LDFLAGS="$(CFLAG)" \
 		OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
-	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
+	-(cd ..; OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
 		SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
