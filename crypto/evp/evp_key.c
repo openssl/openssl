@@ -152,8 +152,8 @@ int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md,
 			}
 		if ((nkey == 0) && (niv == 0)) break;
 		}
-	memset(&c,0,sizeof(c));
-	memset(&(md_buf[0]),0,EVP_MAX_MD_SIZE);
+	OPENSSL_cleanse(&c,sizeof(c));
+	OPENSSL_cleanse(&(md_buf[0]),EVP_MAX_MD_SIZE);
 	return(type->key_len);
 	}
 

@@ -570,7 +570,7 @@ bad:
 		goto err;
 		}
 		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,key);
-		if(key) memset(key,0,strlen(key));
+		if(key) OPENSSL_cleanse(key,strlen(key));
 	if (pkey == NULL)
 		{
 		BIO_printf(bio_err,"unable to load CA private key\n");

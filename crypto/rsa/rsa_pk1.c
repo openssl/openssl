@@ -68,7 +68,7 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
 	int j;
 	unsigned char *p;
 
-	if (flen > (tlen-11))
+	if (flen > (tlen-RSA_PKCS1_PADDING_SIZE))
 		{
 		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1,RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return(0);

@@ -602,6 +602,6 @@ void HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	c->num=0;
 	/* clear stuff, HASH_BLOCK may be leaving some stuff on the stack
 	 * but I'm not worried :-)
-	memset((void *)c,0,sizeof(HASH_CTX));
+	OPENSSL_cleanse((void *)c,sizeof(HASH_CTX));
 	 */
 	}

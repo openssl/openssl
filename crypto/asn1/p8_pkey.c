@@ -119,8 +119,8 @@ void PKCS8_PRIV_KEY_INFO_free (PKCS8_PRIV_KEY_INFO *a)
 	X509_ALGOR_free(a->pkeyalg);
 	/* Clear sensitive data */
 	if (a->pkey->value.octet_string)
-		memset (a->pkey->value.octet_string->data,
-				 0, a->pkey->value.octet_string->length);
+		OPENSSL_cleanse(a->pkey->value.octet_string->data,
+				a->pkey->value.octet_string->length);
 	ASN1_TYPE_free (a->pkey);
 	sk_X509_ATTRIBUTE_pop_free (a->attributes, X509_ATTRIBUTE_free);
 	OPENSSL_free (a);

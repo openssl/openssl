@@ -187,7 +187,7 @@ err:
 	BN_clear_free(&ret);
 	if (buf != NULL) 
 		{
-		memset(buf,0,num);
+		OPENSSL_cleanse(buf,num);
 		OPENSSL_free(buf);
 		}
 	return(r);
@@ -273,7 +273,7 @@ err:
 	BN_clear_free(&f);
 	if (buf != NULL)
 		{
-		memset(buf,0,num);
+		OPENSSL_cleanse(buf,num);
 		OPENSSL_free(buf);
 		}
 	return(r);
@@ -374,7 +374,7 @@ err:
 	BN_clear_free(&ret);
 	if (buf != NULL)
 		{
-		memset(buf,0,num);
+		OPENSSL_cleanse(buf,num);
 		OPENSSL_free(buf);
 		}
 	return(r);
@@ -473,7 +473,7 @@ err:
 	BN_clear_free(&ret);
 	if (buf != NULL)
 		{
-		memset(buf,0,num);
+		OPENSSL_cleanse(buf,num);
 		OPENSSL_free(buf);
 		}
 	return(r);

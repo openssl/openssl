@@ -358,7 +358,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 	ret=1;
 
 err:
-	memset((char *)&ctx,0,sizeof(ctx));
-	memset(buf,0,PEM_BUFSIZE);
+	OPENSSL_cleanse((char *)&ctx,sizeof(ctx));
+	OPENSSL_cleanse(buf,PEM_BUFSIZE);
 	return(ret);
 	}

@@ -800,7 +800,7 @@ static int surewarehk_rsa_priv_dec(int flen,unsigned char *from,unsigned char *t
 err:
 	if (buf)
 	{
-		memset(buf,0,tlen);
+		OPENSSL_cleanse(buf,tlen);
 		OPENSSL_free(buf);
 	}
 	return ret;

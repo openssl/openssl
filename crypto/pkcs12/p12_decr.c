@@ -137,7 +137,7 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
 	if (seq & 1) ret = (char *) d2i_ASN1_SET(NULL, &p, outlen, d2i,
 				free_func, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 	else ret = d2i(NULL, &p, outlen);
-	if (seq & 2) memset(out, 0, outlen);
+	if (seq & 2) OPENSSL_cleanse(out, outlen);
 	if(!ret) PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_DECODE_ERROR);
 	OPENSSL_free (out);
 	return ret;
