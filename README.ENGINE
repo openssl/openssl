@@ -5,7 +5,7 @@
   With OpenSSL 0.9.6, a new component has been added to support external 
   crypto devices, for example accelerator cards.  The component is called
   ENGINE, and has still a pretty experimental status and almost no
-  documentation.  It's designed to be faily easily extensible by the
+  documentation.  It's designed to be fairly easily extensible by the
   calling programs.
 
   There's currently built-in support for the following crypto devices:
@@ -48,7 +48,7 @@
   No external crypto device is chosen unless you say so.  You have actively
   tell the openssl utility commands to use it through a new command line
   switch called "-engine".  And if you want to use the ENGINE library to
-  do something similar, you must also explicitely choose an external crypto
+  do something similar, you must also explicitly choose an external crypto
   device, or the built-in crypto routines will be used, just as in the
   default OpenSSL distribution.
 
@@ -56,7 +56,7 @@
   PROBLEMS
   ========
 
-  It seems like the ENGINE part doesn't work too well with Cryptoswift on
+  It seems like the ENGINE part doesn't work too well with CryptoSwift on
   Win32.  A quick test done right before the release showed that trying
   "openssl speed -engine cswift" generated errors.  If the DSO gets enabled,
   an attempt is made to write at memory address 0x00000002.
