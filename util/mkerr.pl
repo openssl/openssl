@@ -66,7 +66,6 @@ while(<IN>)
 	} elsif (/^R\s+(\S+)\s+(\S+)/) {
 		$rextra{$1} = $2;
 		$rcodes{$1} = $2;
-	# Add extra reason with $1, value $2
 	}
 }
 
@@ -114,20 +113,24 @@ while (($lib, $hdr) = each %hinc)
 	foreach (split /;/, $def) {
 	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
-	    next if (/\w+\W+(\w+)\W*\(\s*\)$/s); # K&R C
-	    next if (/\(\*(\w*)\([^\)]+/);
-	    if (/\w+\W+\w+\W*\(.*\)$/s) {
+	    next if(/typedef\W/);
+	    if (/\(\*(\w*)\([^\)]+/) {
+		my $name = $1;
+		$name =~ tr/[a-z]/[A-Z]/;
+		$ftrans{$name} = $1;
+	    } elsif (/\w+\W+(\w+)\W*\(\s*\)$/s){
+		# K&R C
+		next ;
+	    } elsif (/\w+\W+\w+\W*\(.*\)$/s) {
 		while (not /\(\)$/s) {
 		    s/[^\(\)]*\)$/\)/s;
 		    s/\([^\(\)]*\)\)$/\)/s;
 		}
 		s/\(void\)//;
 		/(\w+)\W*\(\)/s;
-		next if(/typedef\W/);
 		my $name = $1;
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;
-		
 	    } elsif (/\(/ and not (/=/ or /DECLARE_STACK/)) {
 		print STDERR "Header $hdr: cannot parse: $_;\n";
 	    }

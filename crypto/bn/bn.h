@@ -473,6 +473,7 @@ int	BN_lshift1();
 int	BN_exp();
 int	BN_mod_exp();
 int	BN_mod_exp_mont();
+int	BN_mod_exp2_mont();
 int	BN_mod_exp_recp();
 int	BN_mod_exp_simple();
 int	BN_mask_bits();

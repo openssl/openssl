@@ -222,11 +222,9 @@ struct x509_store_state_st
 #define X509_L_FILE_LOAD	1
 #define X509_L_ADD_DIR		2
 
-X509_LOOKUP_METHOD *X509_LOOKUP_file();
 #define X509_LOOKUP_load_file(x,name,type) \
 		X509_LOOKUP_ctrl((x),X509_L_FILE_LOAD,(name),(long)(type),NULL)
 
-X509_LOOKUP_METHOD *X509_LOOKUP_dir();
 #define X509_LOOKUP_add_dir(x,name,type) \
 		X509_LOOKUP_ctrl((x),X509_L_ADD_DIR,(name),(long)(type),NULL)
 
@@ -275,6 +273,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
 X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
+X509_LOOKUP_METHOD *X509_LOOKUP_dir(void);
 
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
@@ -338,6 +337,7 @@ X509_LOOKUP *X509_STORE_add_lookup();
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir();
 X509_LOOKUP_METHOD *X509_LOOKUP_file();
+X509_LOOKUP_METHOD *X509_LOOKUP_dir();
 
 int X509_STORE_add_cert();
 int X509_STORE_add_crl();
