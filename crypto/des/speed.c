@@ -190,12 +190,12 @@ int main(int argc, char **argv)
 	printf("program when this computer is idle.\n");
 #endif
 
-	des_set_key(&key2,sch2);
-	des_set_key(&key3,sch3);
+	des_set_key_unchecked(&key2,sch2);
+	des_set_key_unchecked(&key3,sch3);
 
 #ifndef SIGALRM
 	printf("First we calculate the approximate speed ...\n");
-	des_set_key(&key,sch);
+	des_set_key_unchecked(&key,sch);
 	count=10;
 	do	{
 		long i;
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 
 	Time_F(START);
 	for (count=0,run=1; COND(ca); count++)
-		des_set_key(&key,sch);
+		des_set_key_unchecked(&key,sch);
 	d=Time_F(STOP);
 	printf("%ld set_key's in %.2f seconds\n",count,d);
 	a=((double)COUNT(ca))/d;

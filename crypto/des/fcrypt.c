@@ -151,7 +151,7 @@ r=(r+7)/8;
 	for (; i<8; i++)
 		key[i]=0;
 
-	des_set_key(&key,ks);
+	des_set_key_unchecked(&key,ks);
 	fcrypt_body(&(out[0]),ks,Eswap0,Eswap1);
 
 	ll=out[0]; l2c(ll,b);

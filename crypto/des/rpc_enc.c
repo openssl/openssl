@@ -66,7 +66,7 @@ int _des_crypt(char *buf, int len, struct desparams *desp)
 	des_key_schedule ks;
 	int enc;
 
-	des_set_key(&desp->des_key,ks);
+	des_set_key_unchecked(&desp->des_key,ks);
 	enc=(desp->des_dir == ENCRYPT)?DES_ENCRYPT:DES_DECRYPT;
 
 	if (desp->des_mode == CBC)

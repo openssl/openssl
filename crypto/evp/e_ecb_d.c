@@ -90,7 +90,7 @@ static void des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	des_cblock *deskey = (des_cblock *)key;
 
 	if (deskey != NULL)
-		des_set_key(deskey,ctx->c.des_ks);
+		des_set_key_unchecked(deskey,ctx->c.des_ks);
 	}
 
 static void des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

@@ -425,7 +425,7 @@ void doencryption(void)
 			else
 				k2[i-8]=k;
 			}
-		des_set_key(&k2,ks2);
+		des_set_key_unchecked(&k2,ks2);
 		memset(k2,0,sizeof(k2));
 		}
 	else if (longk || flag3)
@@ -433,7 +433,7 @@ void doencryption(void)
 		if (flag3)
 			{
 			des_string_to_2keys(key,&kk,&k2);
-			des_set_key(&k2,ks2);
+			des_set_key_unchecked(&k2,ks2);
 			memset(k2,0,sizeof(k2));
 			}
 		else
@@ -455,7 +455,7 @@ void doencryption(void)
 				kk[i]=key[i]|0x80;
 			}
 
-	des_set_key(&kk,ks);
+	des_set_key_unchecked(&kk,ks);
 	memset(key,0,sizeof(key));
 	memset(kk,0,sizeof(kk));
 	/* woops - A bug that does not showup under unix :-( */

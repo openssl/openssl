@@ -116,8 +116,8 @@ static void des_ede_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
 		{
-		des_set_key(&deskey[0],ctx->c.des_ede.ks1);
-		des_set_key(&deskey[1],ctx->c.des_ede.ks2);
+		des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+		des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
 		memcpy( (char *)ctx->c.des_ede.ks3,
 			(char *)ctx->c.des_ede.ks1,
 			sizeof(ctx->c.des_ede.ks1));
@@ -136,9 +136,9 @@ static void des_ede3_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
 		{
-		des_set_key(&deskey[0],ctx->c.des_ede.ks1);
-		des_set_key(&deskey[1],ctx->c.des_ede.ks2);
-		des_set_key(&deskey[2],ctx->c.des_ede.ks3);
+		des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
+		des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);
+		des_set_key_unchecked(&deskey[2],ctx->c.des_ede.ks3);
 		}
 	}
 

@@ -438,13 +438,13 @@ int main(int argc, char **argv)
 	fprintf(stderr,"program when this computer is idle.\n");
 #endif
 
-	des_set_key(&key,sch);
-	des_set_key(&key2,sch2);
-	des_set_key(&key3,sch3);
+	des_set_key_unchecked(&key,sch);
+	des_set_key_unchecked(&key2,sch2);
+	des_set_key_unchecked(&key3,sch3);
 
 #ifndef SIGALRM
 	fprintf(stderr,"First we calculate the approximate speed ...\n");
-	des_set_key(&key,sch);
+	des_set_key_unchecked(&key,sch);
 	count=10;
 	do	{
 		long i;

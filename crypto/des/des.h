@@ -193,8 +193,13 @@ int des_read_2passwords(des_cblock *key1,des_cblock *key2,
 int des_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void des_set_odd_parity(des_cblock *key);
 int des_is_weak_key(const_des_cblock *key);
+/* des_set_key (= set_key = des_key_sched = key_sched) calls
+ * des_set_key_checked if global variable des_check_key is set,
+ * des_set_key_unchecked otherwise. */
 int des_set_key(const_des_cblock *key,des_key_schedule schedule);
 int des_key_sched(const_des_cblock *key,des_key_schedule schedule);
+int des_set_key_checked(const_des_cblock *key,des_key_schedule schedule);
+void des_set_key_unchecked(const_des_cblock *key,des_key_schedule schedule);
 void des_string_to_key(const char *str,des_cblock *key);
 void des_string_to_2keys(const char *str,des_cblock *key1,des_cblock *key2);
 void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,

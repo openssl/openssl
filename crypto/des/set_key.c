@@ -145,26 +145,40 @@ int des_is_weak_key(const_des_cblock *key)
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
 	(a)=(a)^(t)^(t>>(16-(n))))
 
+int des_set_key(const_des_cblock *key, des_key_schedule schedule)
+	{
+	if (des_check_key)
+		{
+		return des_set_key_checked(key, schedule);
+		}
+	else
+		{
+		des_set_key_unchecked(key, schedule);
+		return 0;
+		}
+	}
+
 /* return 0 if key parity is odd (correct),
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */
-int des_set_key(const_des_cblock *key, des_key_schedule schedule)
+int des_set_key_checked(const_des_cblock *key, des_key_schedule schedule)
+	{
+	if (!check_parity(key))
+		return(-1);
+	if (des_is_weak_key(key))
+		return(-2);
+	des_set_key_unchecked(key, schedule);
+	return 0;
+	}
+
+void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
 	{
 	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
 	register const unsigned char *in;
 	register DES_LONG *k;
 	register int i;
-
-	if (des_check_key)
-		{
-		if (!check_parity(key))
-			return(-1);
-
-		if (des_is_weak_key(key))
-			return(-2);
-		}
 
 	k = &schedule->ks.deslong[0];
 	in = &(*key)[0];
@@ -225,7 +239,6 @@ int des_set_key(const_des_cblock *key, des_key_schedule schedule)
 		t2=((s>>16L)|(t&0xffff0000L));
 		*(k++)=ROTATE(t2,26)&0xffffffffL;
 		}
-	return(0);
 	}
 
 int des_key_sched(const_des_cblock *key, des_key_schedule schedule)

@@ -95,7 +95,7 @@ static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
-		des_set_key(deskey,ctx->c.des_ks);
+		des_set_key_unchecked(deskey,ctx->c.des_ks);
 	}
 
 static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

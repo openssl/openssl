@@ -590,9 +590,9 @@ int MAIN(int argc, char **argv)
 #endif
 
 #ifndef NO_DES
-	des_set_key(&key,sch);
-	des_set_key(&key2,sch2);
-	des_set_key(&key3,sch3);
+	des_set_key_unchecked(&key,sch);
+	des_set_key_unchecked(&key2,sch2);
+	des_set_key_unchecked(&key3,sch3);
 #endif
 #ifndef NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);

@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add variants des_set_key_checked and des_set_key_unchecked of
+     des_set_key (aka des_key_sched).  Global variable des_check_key
+     decides which of these is called by des_set_key; this way
+     des_check_key behaves as it always did, but applications and
+     the library itself, which was buggy for des_check_key == 1,
+     have a cleaner way to pick the version they need.
+     [Bodo Moeller]
+
   *) New function PKCS12_newpass() which changes the password of a
      PKCS12 structure.
      [Steve Henson]

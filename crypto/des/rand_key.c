@@ -100,11 +100,11 @@ void des_random_key(des_cblock *ret)
 	l2c(t,p);
 
 	des_set_odd_parity(&data);
-	des_set_key(&data,ks);
+	des_set_key_unchecked(&data,ks);
 	des_cbc_cksum(key,&key,sizeof(key),ks,&data);
 
 	des_set_odd_parity(&key);
-	des_set_key(&key,ks);
+	des_set_key_unchecked(&key,ks);
 	des_cbc_cksum(key,&data,sizeof(key),ks,&key);
 
 	memcpy(ret,data,sizeof(key));

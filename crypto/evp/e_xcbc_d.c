@@ -94,7 +94,7 @@ static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
 		{
-		des_set_key(deskey,ctx->c.desx_cbc.ks);
+		des_set_key_unchecked(deskey,ctx->c.desx_cbc.ks);
 		memcpy(&(ctx->c.desx_cbc.inw[0]),&(key[8]),8);
 		memcpy(&(ctx->c.desx_cbc.outw[0]),&(key[16]),8);
 		}
