@@ -259,7 +259,7 @@ ECDSA *PEM_read_bio_ECDSAPrivateKey(BIO *bp, ECDSA **ecdsa, pem_password_cb *cb,
 	return pkey_get_ecdsa(pktmp, ecdsa);
 }
 
-IMPLEMENT_PEM_write_cb(ECDSAPrivateKey, ECDSA, PEM_STRING_ECDSA, ECDSAPrivateKey)
+IMPLEMENT_PEM_write_cb(ECDSAPrivateKey, ECDSA, PEM_STRING_ECPRIVATEKEY, ECDSAPrivateKey)
 IMPLEMENT_PEM_rw(ECDSA_PUBKEY, ECDSA, PEM_STRING_PUBLIC, ECDSA_PUBKEY)
 
 #ifndef OPENSSL_NO_FP_API
@@ -294,7 +294,7 @@ IMPLEMENT_PEM_rw(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
  * appropriate.)
  */
 IMPLEMENT_PEM_write_cb(PrivateKey, EVP_PKEY, ((x->type == EVP_PKEY_DSA)?PEM_STRING_DSA:\
-			(x->type == EVP_PKEY_RSA)?PEM_STRING_RSA:PEM_STRING_ECDSA), PrivateKey)
+			(x->type == EVP_PKEY_RSA)?PEM_STRING_RSA:PEM_STRING_ECPRIVATEKEY), PrivateKey)
 
 IMPLEMENT_PEM_rw(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
 

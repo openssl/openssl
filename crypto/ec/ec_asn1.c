@@ -53,9 +53,8 @@
  *
  */
 
-#include "cryptlib.h"
 #include "ec_lcl.h"
-#include <openssl/asn1.h>
+#include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
@@ -162,6 +161,15 @@ ASN1_CHOICE(ECPKPARAMETERS) = {
 
 DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
 IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
+
+ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+	ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+	ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
+	ASN1_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS),
+	ASN1_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING)
+} ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+
+IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
 
 /* some internal functions */
 

@@ -54,17 +54,8 @@
  */
 
 #include "ecdsa.h"
-#include "cryptlib.h"
-#include <openssl/asn1.h>
+#include <openssl/err.h>
 #include <openssl/asn1t.h>
-
-typedef struct ecdsa_priv_key_st {
-        int               version;
-        ECPKPARAMETERS	  *parameters;
-	ASN1_OBJECT	  *named_curve;
-        ASN1_OCTET_STRING *pub_key;
-        BIGNUM            *priv_key;
-        } ECDSAPrivateKey;
 
 ASN1_SEQUENCE(ECDSA_SIG) = {
 	ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
@@ -74,18 +65,6 @@ ASN1_SEQUENCE(ECDSA_SIG) = {
 DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
 IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
-
-ASN1_SEQUENCE(ECDSAPrivateKey) = {
-	ASN1_SIMPLE(ECDSAPrivateKey, version, LONG),
-	ASN1_SIMPLE(ECDSAPrivateKey, parameters, ECPKPARAMETERS),
-	ASN1_SIMPLE(ECDSAPrivateKey, pub_key, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(ECDSAPrivateKey, priv_key, BIGNUM)
-} ASN1_SEQUENCE_END(ECDSAPrivateKey)
-
-DECLARE_ASN1_FUNCTIONS_const(ECDSAPrivateKey)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSAPrivateKey, ecdsaPrivateKey)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(ECDSAPrivateKey, ECDSAPrivateKey, ECDSAPrivateKey)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSAPrivateKey, ECDSAPrivateKey, ecdsaPrivateKey)
 
 int i2d_ECDSAParameters(ECDSA *a, unsigned char **out)
 	{
@@ -145,19 +124,18 @@ ECDSA *d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len)
 	{
 	int             ok=0;
 	ECDSA           *ret=NULL;
-	ECDSAPrivateKey *priv_key=NULL;
+	EC_PRIVATEKEY   *priv_key=NULL;
 
-	if ((priv_key = ECDSAPrivateKey_new()) == NULL)
+	if ((priv_key = EC_PRIVATEKEY_new()) == NULL)
 		{
 		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
 
-	if ((priv_key = d2i_ecdsaPrivateKey(&priv_key, in, len)) == NULL)
+	if ((priv_key = d2i_EC_PRIVATEKEY(&priv_key, in, len)) == NULL)
 		{
-		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY,
-                         ECDSA_R_D2I_ECDSA_PRIVATEKEY_FAILURE);
-		ECDSAPrivateKey_free(priv_key);
+		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+		EC_PRIVATEKEY_free(priv_key);
 		return NULL;
 		}
 
@@ -175,10 +153,13 @@ ECDSA *d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len)
 	else
 		ret = *a;
 
-	if (ret->group)
-		EC_GROUP_clear_free(ret->group);
+	if (priv_key->parameters)
+		{
+		if (ret->group)
+			EC_GROUP_clear_free(ret->group);
+		ret->group = EC_ASN1_pkparameters2group(priv_key->parameters);
+		}
 
-	ret->group = EC_ASN1_pkparameters2group(priv_key->parameters);
 	if (ret->group == NULL)
 		{
 		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
@@ -186,9 +167,14 @@ ECDSA *d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len)
 		}
 
 	ret->version = priv_key->version;
-	if (priv_key->priv_key)
+
+	if (priv_key->privateKey)
 		{
-		if ((ret->priv_key = BN_dup(priv_key->priv_key)) == NULL)
+		ret->priv_key = BN_bin2bn(
+			M_ASN1_STRING_data(priv_key->privateKey),
+			M_ASN1_STRING_length(priv_key->privateKey),
+			ret->priv_key);
+		if (ret->priv_key == NULL)
 			{
 			ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY,
                                  ERR_R_BN_LIB);
@@ -202,100 +188,146 @@ ECDSA *d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len)
 		goto err;
 		}
 
-	if ((ret->pub_key = EC_POINT_new(ret->group)) == NULL)
+	if (priv_key->publicKey)
 		{
-		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
-		goto err;
-		}
-
-	if (!EC_POINT_oct2point(ret->group, ret->pub_key, 
-                priv_key->pub_key->data, priv_key->pub_key->length, NULL))
-		{
-		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
-		goto err;
+		if (ret->pub_key)
+			EC_POINT_clear_free(ret->pub_key);
+		ret->pub_key = EC_POINT_new(ret->group);
+		if (ret->pub_key == NULL)
+			{
+			ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+			goto err;
+			}
+		if (!EC_POINT_oct2point(ret->group, ret->pub_key,
+			M_ASN1_STRING_data(priv_key->publicKey),
+			M_ASN1_STRING_length(priv_key->publicKey), NULL))
+			{
+			ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+			goto err;
+			}
 		}
 
 	ok = 1;
-
-err :	if (!ok)
-	{
-		if (ret) ECDSA_free(ret);
+err:
+	if (!ok)
+		{
+		if (ret)
+			ECDSA_free(ret);
 		ret = NULL;
-	}
+		}
+
 	if (priv_key)
-		ECDSAPrivateKey_free(priv_key);
+		EC_PRIVATEKEY_free(priv_key);
+
 	return(ret);
-}
+	}
 
 int	i2d_ECDSAPrivateKey(ECDSA *a, unsigned char **out)
-{
-	int ret=0, ok=0;
+	{
+	int             ret=0, ok=0;
 	unsigned char   *buffer=NULL;
-	size_t		buf_len=0;
-	ECDSAPrivateKey *priv_key=NULL;
+	size_t          buf_len=0, tmp_len;
+	EC_PRIVATEKEY   *priv_key=NULL;
 
-	if (a == NULL || a->group == NULL)
+	if (a == NULL || a->group == NULL || a->priv_key == NULL)
 		{
 		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY,
                          ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 		}
 
-	if ((priv_key = ECDSAPrivateKey_new()) == NULL)
+	if ((priv_key = EC_PRIVATEKEY_new()) == NULL)
 		{
 		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY,
                          ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	if ((priv_key->parameters = EC_ASN1_group2pkparameters(a->group, 
-                                    priv_key->parameters)) == NULL)
+	priv_key->version = a->version;
+
+	buf_len = (size_t)BN_num_bytes(a->priv_key);
+	buffer = OPENSSL_malloc(buf_len);
+	if (buffer == NULL)
 		{
-		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY,
+                         ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-
-	priv_key->version      = a->version;
-
-	if (BN_copy(priv_key->priv_key, a->priv_key) == NULL)
+	
+	if (!BN_bn2bin(a->priv_key, buffer))
 		{
 		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_BN_LIB);
 		goto err;
 		}
 
-	buf_len = EC_POINT_point2oct(a->group, a->pub_key, 
-                           ECDSA_get_conversion_form(a), NULL, 0, NULL);
-	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+	if (!M_ASN1_OCTET_STRING_set(priv_key->privateKey, buffer, buf_len))
 		{
-		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_ASN1_LIB);
 		goto err;
+		}	
+
+	if (!(ECDSA_get_enc_flag(a) & ECDSA_PKEY_NO_PARAMETERS))
+		{
+		if ((priv_key->parameters = EC_ASN1_group2pkparameters(
+			a->group, priv_key->parameters)) == NULL)
+			{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+			goto err;
+			}
 		}
-	if (!EC_POINT_point2oct(a->group, a->pub_key, 
+
+	if (!(ECDSA_get_enc_flag(a) & ECDSA_PKEY_NO_PUBKEY))
+		{
+		priv_key->publicKey = M_ASN1_BIT_STRING_new();
+		if (priv_key->publicKey == NULL)
+			{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY,
+				ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		tmp_len = EC_POINT_point2oct(a->group, a->pub_key, 
+                           ECDSA_get_conversion_form(a), NULL, 0, NULL);
+
+		if (tmp_len > buf_len)
+			buffer = OPENSSL_realloc(buffer, tmp_len);
+		if (buffer == NULL)
+			{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY,
+				ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		buf_len = tmp_len;
+
+		if (!EC_POINT_point2oct(a->group, a->pub_key, 
 			ECDSA_get_conversion_form(a), buffer, buf_len, NULL))
+			{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+			goto err;
+			}
+
+		if (!M_ASN1_BIT_STRING_set(priv_key->publicKey, buffer, 
+				buf_len))
+			{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_ASN1_LIB);
+			goto err;
+			}
+		}
+
+	if ((ret = i2d_EC_PRIVATEKEY(priv_key, out)) == 0)
 		{
 		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
 		goto err;
 		}
-	if (!M_ASN1_OCTET_STRING_set(priv_key->pub_key, buffer, buf_len))
-		{
-		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, ERR_R_ASN1_LIB);
-		goto err;
-		}
-	if ((ret = i2d_ecdsaPrivateKey(priv_key, out)) == 0)
-		{
-		ECDSAerr(ECDSA_F_I2D_ECDSAPRIVATEKEY, 
-                         ECDSA_R_I2D_ECDSA_PRIVATEKEY);
-		goto err;
-		}
 	ok=1;
-	
 err:
 	if (buffer)
 		OPENSSL_free(buffer);
 	if (priv_key)
-		ECDSAPrivateKey_free(priv_key);	
+		EC_PRIVATEKEY_free(priv_key);
 	return(ok?ret:0);
-}
+	}
 
 
 ECDSA 	*ECDSAPublicKey_set_octet_string(ECDSA **a, const unsigned char **in, long len)

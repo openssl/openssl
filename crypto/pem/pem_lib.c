@@ -193,7 +193,7 @@ static int check_pem(const char *nm, const char *name)
 	if(!strcmp(nm,PEM_STRING_DSA) &&
 		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
 
- 	if(!strcmp(nm,PEM_STRING_ECDSA) &&
+ 	if(!strcmp(nm,PEM_STRING_ECPRIVATEKEY) &&
  		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
 	/* Permit older strings */
 

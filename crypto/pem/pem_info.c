@@ -204,7 +204,7 @@ start:
 		else
 #endif
 #ifndef OPENSSL_NO_ECDSA
- 			if (strcmp(name,PEM_STRING_ECDSA) == 0)
+ 			if (strcmp(name,PEM_STRING_ECPRIVATEKEY) == 0)
  			{
  				d2i=(char *(*)())d2i_ECDSAPrivateKey;
  				if (xi->x_pkey != NULL) 

@@ -64,10 +64,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,12 +103,18 @@ struct ecdsa_st
 	BIGNUM	 *kinv; /* signing pre-calc */
 	BIGNUM	 *r;	/* signing pre-calc */
 
+	unsigned int enc_flag;
+
 	int 	references;
 	int	flags;
 	CRYPTO_EX_DATA ex_data;
 	const ECDSA_METHOD *meth;
 	struct engine_st *engine;
 };
+
+/* some values for the encoding_flag */
+#define ECDSA_PKEY_NO_PARAMETERS	0x001
+#define ECDSA_PKEY_NO_PUBKEY		0x002
 
 ECDSA_SIG *ECDSA_SIG_new(void);
 void	  ECDSA_SIG_free(ECDSA_SIG *a);
@@ -152,6 +155,11 @@ int	ECDSA_print(BIO *bp, const ECDSA *x, int off);
 int	ECDSAParameters_print_fp(FILE *fp, const ECDSA *x);
 int	ECDSA_print_fp(FILE *fp, const ECDSA *x, int off);
 #endif 
+
+/* the ECDSA_{set|get}_enc_flag() specify the encoding
+ * of the elliptic curve private key */
+unsigned int ECDSA_get_enc_flag(const ECDSA *);
+void ECDSA_set_enc_flag(ECDSA *, unsigned int);
 
 /* The ECDSA_{set|get}_conversion_type() functions set/get the
  * conversion form for ec-points (see ec.h) in a ECDSA-structure */
