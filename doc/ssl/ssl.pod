@@ -544,11 +544,11 @@ connection defined in the B<SSL> structure.
 
 =item long B<SSL_num_renegotiations>(SSL *ssl);
 
-=item int B<SSL_peek>(SSL *ssl, char *buf, int num);
+=item int B<SSL_peek>(SSL *ssl, void *buf, int num);
 
 =item int B<SSL_pending>(SSL *ssl);
 
-=item int B<SSL_read>(SSL *ssl, char *buf, int num);
+=item int B<SSL_read>(SSL *ssl, void *buf, int num);
 
 =item int B<SSL_renegotiate>(SSL *ssl);
 
@@ -640,7 +640,7 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_want_x509_lookup>(s);
 
-=item int B<SSL_write>(SSL *ssl, char *buf, int num);
+=item int B<SSL_write>(SSL *ssl, const void *buf, int num);
 
 =back
 
