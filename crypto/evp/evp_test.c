@@ -118,7 +118,7 @@ static char *sstrsep(char **string, const char *delim)
     }
 
 static unsigned char *ustrsep(char **p,const char *sep)
-    { return (unsigned char *)sstrsep((char **)p,sep); }
+    { return (unsigned char *)sstrsep(p,sep); }
 
 static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		  const unsigned char *iv,int in,
@@ -358,7 +358,7 @@ int main(int argc,char **argv)
 	    p[-1] = '\0';
 	    encdec = -1;
 	} else {
-	    encdec = atoi(strsep(&p,"\n"));
+	    encdec = atoi(sstrsep(&p,"\n"));
 	}
 	      
 
