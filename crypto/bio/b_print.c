@@ -640,7 +640,7 @@ fmtfp(
             (caps ? "0123456789ABCDEF"
               : "0123456789abcdef")[fracpart % 10];
         fracpart = (fracpart / 10);
-    } while (fracpart && (fplace < 20));
+    } while (fplace < max);
     if (fplace == 20)
         fplace--;
     fconvert[fplace] = 0;
