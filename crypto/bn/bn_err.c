@@ -87,6 +87,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_MPI2BN,0),	"BN_mpi2bn"},
 {ERR_PACK(0,BN_F_BN_NEW,0),	"BN_new"},
 {ERR_PACK(0,BN_F_BN_RAND,0),	"BN_rand"},
+{ERR_PACK(0,BN_F_BN_RAND_RANGE,0),	"BN_rand_range"},
 {ERR_PACK(0,BN_F_BN_USUB,0),	"BN_usub"},
 {0,NULL}
 	};
@@ -102,6 +103,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_EXPAND_ON_STATIC_BIGNUM_DATA       ,"expand on static bignum data"},
 {BN_R_INPUT_NOT_REDUCED                  ,"input not reduced"},
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
+{BN_R_INVALID_RANGE                      ,"invalid range"},
 {BN_R_NOT_A_SQUARE                       ,"not a square"},
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},

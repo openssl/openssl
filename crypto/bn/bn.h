@@ -329,7 +329,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void	BN_CTX_end(BN_CTX *ctx);
 int     BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
-int	BN_rand_range(BIGNUM *rnd, BIGNUM *min, BIGNUM *max);
+int	BN_rand_range(BIGNUM *rnd, BIGNUM *min, BIGNUM *range);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG);
 BIGNUM *BN_new(void);
@@ -527,6 +527,7 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top,int bottom);
 #define BN_F_BN_MPI2BN					 112
 #define BN_F_BN_NEW					 113
 #define BN_F_BN_RAND					 114
+#define BN_F_BN_RAND_RANGE				 122
 #define BN_F_BN_USUB					 115
 
 /* Reason codes. */
@@ -539,6 +540,7 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top,int bottom);
 #define BN_R_EXPAND_ON_STATIC_BIGNUM_DATA		 105
 #define BN_R_INPUT_NOT_REDUCED				 110
 #define BN_R_INVALID_LENGTH				 106
+#define BN_R_INVALID_RANGE				 115
 #define BN_R_NOT_A_SQUARE				 111
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108

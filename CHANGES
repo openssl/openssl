@@ -5,7 +5,7 @@
 
   *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
      Bleichenbacher's DSA attack.
-     [Ulf Moeller]
+     [Ulf Moeller, Bodo Moeller]
 
   *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
      handle the new API. Currently only ECB, CBC modes supported. Add new
