@@ -4,6 +4,10 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
 
+  *) Allow the -k option to be used more than once in the enc program:
+     this allows the same encrypted message to be read by multiple recipients.
+     [Steve Henson]
+
   *) New function OBJ_obj2txt(buf, buf_len, a, no_name), this converts
      an ASN1_OBJECT to a text string. If the "no_name" parameter is set then
      it will always use the numerical form of the OID, even if it has a short

@@ -74,6 +74,7 @@ char *argv[];
 	int nodetach=1;
 	char *keyfile = NULL;
 	const EVP_CIPHER *cipher=NULL;
+	STACK_OF(X509) *recips=NULL;
 
 	SSLeay_add_all_algorithms();
 
@@ -96,13 +97,20 @@ char *argv[];
 			keyfile = argv[2];
 			argc-=2;
 			argv+=2;
+			if (!(in=BIO_new_file(keyfile,"r"))) goto err;
+			if (!(x509=PEM_read_bio_X509(in,NULL,NULL))) goto err;
+			if(!recips) recips = sk_X509_new_null();
+			sk_X509_push(recips, x509);
+			BIO_free(in);
 		} else break;
 	}
 
-	if (!BIO_read_filename(data,argv[1])) goto err;
+	if(!recips) {
+		fprintf(stderr, "No recipients\n");
+		goto err;
+	}
 
-	if ((in=BIO_new_file(keyfile,"r")) == NULL) goto err;
-	if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+	if (!BIO_read_filename(data,argv[1])) goto err;
 
 	p7=PKCS7_new();
 #if 0
@@ -120,9 +128,10 @@ char *argv[];
 	if(!cipher) cipher = EVP_des_ede3_cbc();
 
 	if (!PKCS7_set_cipher(p7,cipher)) goto err;
-	if (PKCS7_add_recipient(p7,x509) == NULL) goto err;
-
-
+	for(i = 0; i < sk_X509_num(recips); i++) {
+		if (!PKCS7_add_recipient(p7,sk_X509_value(recips, i))) goto err;
+	}
+	sk_X509_pop_free(recips, X509_free);
 
 	/* Set the content of the signed to 'data' */
 	/* PKCS7_content_new(p7,NID_pkcs7_data); not used in envelope */
