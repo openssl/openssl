@@ -152,7 +152,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
 	fi
-	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0;
+	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 	-(cd ..; \
 	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \
 	  $(PERL) tools/c_rehash certs)

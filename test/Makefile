@@ -585,7 +585,7 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o dummytest$(EXE_EXT) $(CFLAGS) dummytest.o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0
+	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
