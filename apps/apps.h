@@ -257,6 +257,8 @@ int make_serial_index(TXT_DB *db);
 #define FORMAT_PKCS12   5
 #define FORMAT_SMIME    6
 #define FORMAT_ENGINE   7
+#define FORMAT_IISSGC	8	/* XXX this stupid macro helps us to avoid
+				 * adding yet another param to load_*key() */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1

@@ -147,6 +147,13 @@ static UI_METHOD *ui_method = NULL;
 static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 
+#ifndef OPENSSL_NO_RC4
+/* Looks like this stuff is worth moving into separate function */
+static EVP_PKEY *
+load_netscape_key(BIO *err, BIO *key, const char *file,
+		const char *key_descrip, int format);
+#endif
+
 int app_init(long mesgwin);
 #ifdef undef /* never finished - probably never will be :-) */
 int args_from_file(char *file, int *argc, char **argv[])
@@ -828,6 +835,10 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 		pkey=PEM_read_bio_PrivateKey(key,NULL,
 			(pem_password_cb *)password_callback, &cb_data);
 		}
+#ifndef OPENSSL_NO_RC4
+	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
+		pkey = load_netscape_key(err, key, file, key_descrip, format);
+#endif
 	else if (format == FORMAT_PKCS12)
 		{
 		PKCS12 *p12 = d2i_PKCS12_bio(key, NULL);
@@ -893,6 +904,10 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 		pkey=PEM_read_bio_PUBKEY(key,NULL,
 			(pem_password_cb *)password_callback, &cb_data);
 		}
+#ifndef OPENSSL_NO_RC4
+	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
+		pkey = load_netscape_key(err, key, file, key_descrip, format);
+#endif
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");
@@ -904,6 +919,52 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 		BIO_printf(err,"unable to load %s\n", key_descrip);
 	return(pkey);
 	}
+
+#ifndef OPENSSL_NO_RC4
+EVP_PKEY *
+load_netscape_key(BIO *err, BIO *key, const char *file,
+		const char *key_descrip, int format)
+	{
+	EVP_PKEY *pkey;
+	BUF_MEM *buf;
+	RSA	*rsa;
+	const unsigned char *p;
+	int size, i;
+
+	buf=BUF_MEM_new();
+	pkey = EVP_PKEY_new();
+	size = 0;
+	if (buf == NULL || pkey == NULL)
+		goto error;
+	for (;;)
+		{
+		if (!BUF_MEM_grow(buf,size+1024*10))
+			goto error;
+		i = BIO_read(key, &(buf->data[size]), 1024*10);
+		size += i;
+		if (i == 0)
+			break;
+		if (i < 0)
+			{
+				BIO_printf(err, "Error reading %s %s",
+					key_descrip, file);
+				goto error;
+			}
+		}
+	p=(unsigned char *)buf->data;
+	rsa = d2i_RSA_NET(NULL,&p,(long)size,NULL,
+		(format == FORMAT_IISSGC ? 1 : 0));
+	if (rsa == NULL)
+		goto error;
+	BUF_MEM_free(buf);
+	EVP_PKEY_set1_RSA(pkey, rsa);
+	return pkey;
+error:
+	BUF_MEM_free(buf);
+	EVP_PKEY_free(pkey);
+	return NULL;
+	}
+#endif /* ndef OPENSSL_NO_RC4 */
 
 STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)

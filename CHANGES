@@ -12,6 +12,16 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add the configuration target debug-linux-ppro.
+     Make 'openssl rsa' use the general key loading routines
+     implemented in apps.c, and make those routines able to
+     handle the key format FORMAT_NETSCAPE and the variant
+     FORMAT_IISSGC.
+     [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
+
+  *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
+     [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
+
   +) Add -keyform to rsautl, and document -engine.
      [Richard Levitte, inspired by Toomas Kiisk <vix@cyber.ee>]
 

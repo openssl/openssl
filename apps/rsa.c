@@ -95,7 +95,7 @@ int MAIN(int argc, char **argv)
 	RSA *rsa=NULL;
 	int i,badops=0, sgckey=0;
 	const EVP_CIPHER *enc=NULL;
-	BIO *in=NULL,*out=NULL;
+	BIO *out=NULL;
 	int informat,outformat,text=0,check=0,noout=0;
 	int pubin = 0, pubout = 0;
 	char *infile,*outfile,*prog;
@@ -220,69 +220,29 @@ bad:
 		goto end;
 	}
 
-	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
 
-	if (infile == NULL)
-		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_read_filename(in,infile) <= 0)
-			{
-			perror(infile);
-			goto end;
-			}
-		}
+	{
+		EVP_PKEY	*pkey;
 
-	BIO_printf(bio_err,"read RSA key\n");
-	if	(informat == FORMAT_ASN1) {
-		if (pubin) rsa=d2i_RSA_PUBKEY_bio(in,NULL);
-		else rsa=d2i_RSAPrivateKey_bio(in,NULL);
+		if (pubin)
+			pkey = load_pubkey(bio_err, infile,
+				(informat == FORMAT_NETSCAPE && sgckey ?
+					FORMAT_IISSGC : informat),
+				passin, e, "Public Key");
+		else
+			pkey = load_key(bio_err, infile,
+				(informat == FORMAT_NETSCAPE && sgckey ?
+					FORMAT_IISSGC : informat),
+				passin, e, "Private Key");
+
+		if (pkey != NULL)
+		rsa = pkey == NULL ? NULL : EVP_PKEY_get1_RSA(pkey);
+		EVP_PKEY_free(pkey);
 	}
-#ifndef OPENSSL_NO_RC4
-	else if (informat == FORMAT_NETSCAPE)
-		{
-		BUF_MEM *buf=NULL;
-		const unsigned char *p;
-		int size=0;
 
-		buf=BUF_MEM_new();
-		for (;;)
-			{
-			if ((buf == NULL) || (!BUF_MEM_grow(buf,size+1024*10)))
-				goto end;
-			i=BIO_read(in,&(buf->data[size]),1024*10);
-			size+=i;
-			if (i == 0) break;
-			if (i < 0)
-				{
-				perror("reading private key");
-				BUF_MEM_free(buf);
-				goto end;
-				}
-			}
-		p=(unsigned char *)buf->data;
-		rsa=d2i_RSA_NET(NULL,&p,(long)size,NULL, sgckey);
-		BUF_MEM_free(buf);
-		}
-#endif
-	else if (informat == FORMAT_PEM) {
-		if(pubin) rsa=PEM_read_bio_RSA_PUBKEY(in,NULL,NULL,NULL);
-		else rsa=PEM_read_bio_RSAPrivateKey(in,NULL, NULL,passin);
-	}
-	else
-		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
-		}
 	if (rsa == NULL)
 		{
-		BIO_printf(bio_err,"unable to load key\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}
@@ -394,7 +354,6 @@ bad:
 	else
 		ret=0;
 end:
-	if(in != NULL) BIO_free(in);
 	if(out != NULL) BIO_free_all(out);
 	if(rsa != NULL) RSA_free(rsa);
 	if(passin) OPENSSL_free(passin);
