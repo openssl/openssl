@@ -311,7 +311,7 @@ int RAND_poll(void)
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
 				RAND_add(buf, sizeof(buf), sizeof(buf));
-#ifdef DEBUG
+#if 0
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
 				}
@@ -324,7 +324,7 @@ int RAND_poll(void)
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
 				RAND_add(buf, sizeof(buf), sizeof(buf));
-#ifdef DEBUG
+#if 0
 				printf("randomness from PROV_INTEL_SEC\n");
 #endif
 				}
@@ -510,7 +510,7 @@ int RAND_poll(void)
 		FreeLibrary(kernel);
 		}
 
-#ifdef DEBUG
+#if 0
 	printf("Exiting RAND_poll\n");
 #endif
 
