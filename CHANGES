@@ -281,7 +281,15 @@ TODO: bug: pad  x  with leading zeros if necessary
          EC_GROUP_get_nid()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
- Changes between 0.9.6g and 0.9.7  [XX xxx 2002]
+ Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
+
+  *) Change from security patch (see 0.9.6e below) that did not affect
+     the 0.9.6 release series:
+
+     Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized master key in Kerberos-enabled versions.
+     (CAN-2002-0657)
+     [Ben Laurie (CHATS)]
 
   *) Change the SSL kerb5 codes to match RFC 2712.
      [Richard Levitte]
@@ -291,9 +299,6 @@ TODO: bug: pad  x  with leading zeros if necessary
 
   *) The "block size" for block ciphers in CFB and OFB mode should be 1.
      [Steve Henson, reported by Yngve Nysaeter Pettersen <yngve@opera.com>]
-
-  *) The "block size" for block ciphers in CFB and OFB mode should be 1.
-     [Steve Henson]
 
   *) Make sure tests can be performed even if the corresponding algorithms
      have been removed entirely.  This was also the last step to make
@@ -317,8 +322,8 @@ TODO: bug: pad  x  with leading zeros if necessary
 	# Place yourself outside of the OpenSSL source tree.  In
 	# this example, the environment variable OPENSSL_SOURCE
 	# is assumed to contain the absolute OpenSSL source directory.
-	mkdir -p objtree/`uname -s`-`uname -r`-`uname -m`
-	cd objtree/`uname -s`-`uname -r`-`uname -m`
+	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
 	(cd $OPENSSL_SOURCE; find . -type f -o -type l) | while read F; do
 		mkdir -p `dirname $F`
 		ln -s $OPENSSL_SOURCE/$F $F
@@ -2001,7 +2006,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      overflow checks added in 0.9.6e.  This prevents DoS (the
      assertions could call abort()).
      [Arne Ansper <arne@ats.cyber.ee>, Bodo Moeller]
-  
+
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Add various sanity checks to asn1_get_length() to reject
@@ -2051,11 +2056,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Various temporary buffers to hold ASCII versions of integers were
      too small for 64 bit platforms. (CAN-2002-0655)
      [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
-
-  *) Remote buffer overflow in SSL3 protocol - an attacker could
-     supply an oversized master key in Kerberos-enabled versions.
-     (CAN-2002-0657)
-     [Ben Laurie (CHATS)]
 
   *) Remote buffer overflow in SSL3 protocol - an attacker could
      supply an oversized session ID to a client. (CAN-2002-0656)
@@ -2151,12 +2151,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      value is 0.
      [Richard Levitte]
 
-  *) Add the configuration target linux-s390x.
-     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
-
   *) [In 0.9.6d-engine release:]
      Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
+
+  *) Add the configuration target linux-s390x.
+     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
 
   *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
      ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag
