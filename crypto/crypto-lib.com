@@ -211,7 +211,7 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio" ! + ",bss_log" for syslog
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
-$ LIB_RAND = "md_rand,randfile,rand_lib"
+$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
@@ -232,11 +232,11 @@ $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_null,a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
 	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,"+ -
-	"x_name,x_cinf,x_x509,x_crl,x_info,x_spki,nsseq,"+ -
+	"x_name,x_cinf,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
 	"d2i_r_pr,i2d_r_pr,d2i_r_pu,i2d_r_pu,"+ -
 	"d2i_s_pr,i2d_s_pr,d2i_s_pu,i2d_s_pu,"+ -
 	"d2i_pu,d2i_pr,i2d_pu,i2d_pr"
-$ LIB_ASN1_2 = "t_req,t_x509,t_crl,t_pkey,t_spki,"+ -
+$ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"p7_i_s,p7_signi,p7_signd,p7_recip,p7_enc_c,p7_evp,"+ -
 	"p7_dgst,p7_s_e,p7_enc,p7_lib,"+ -
 	"f_int,f_string,i2d_dhp,i2d_dsap,d2i_dhp,d2i_dsap,n_pkey,"+ -
@@ -247,12 +247,12 @@ $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
 	"x509_set,x509rset,x509_err,"+ -
-	"x509name,x509_v3,x509_ext,"+ -
+	"x509name,x509_v3,x509_ext,x509_att,"+ -
 	"x509type,x509_lu,x_all,x509_txt,"+ -
 	"x509_trs,by_file,by_dir"
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
-	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp"
+	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info"
 $ LIB_CONF = "conf,conf_err"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,pk7_mime"

@@ -22,7 +22,7 @@ $	    tests := -
 	test_des,test_idea,test_sha,test_md5,test_hmac,test_md2,test_mdc2,-
 	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
-	test_reqgen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
+	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ssl,test_ca
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
@@ -180,7 +180,7 @@ $ test_dsa:
 $	write sys$output "Generate as set of DSA parameters"
 $	mcr 'texe_dir''dsatest'
 $	goto loop_tests
-$ test_reqgen:
+$ test_gen:
 $	write sys$output "Generate and verify a certificate request"
 $	@testgen.com
 $	goto loop_tests
