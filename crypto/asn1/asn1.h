@@ -86,11 +86,13 @@ extern "C" {
 
 #define V_ASN1_APP_CHOOSE		-2	/* let the recipient choose */
 
+#define V_ASN1_NEG			0x100	/* negative flag */
+
 #define V_ASN1_UNDEF			-1
 #define V_ASN1_EOC			0
 #define V_ASN1_BOOLEAN			1	/**/
 #define V_ASN1_INTEGER			2
-#define V_ASN1_NEG_INTEGER		(2+0x100)
+#define V_ASN1_NEG_INTEGER		(2 | V_ASN1_NEG)
 #define V_ASN1_BIT_STRING		3
 #define V_ASN1_OCTET_STRING		4
 #define V_ASN1_NULL			5
@@ -99,7 +101,7 @@ extern "C" {
 #define V_ASN1_EXTERNAL			8
 #define V_ASN1_REAL			9
 #define V_ASN1_ENUMERATED		10
-#define V_ASN1_NEG_ENUMERATED		(10+0x100)
+#define V_ASN1_NEG_ENUMERATED		(10 | V_ASN1_NEG)
 #define V_ASN1_UTF8STRING		12
 #define V_ASN1_SEQUENCE			16
 #define V_ASN1_SET			17
@@ -526,7 +528,10 @@ unsigned char * ASN1_STRING_data(ASN1_STRING *x);
 ASN1_BIT_STRING *	ASN1_BIT_STRING_new(void);
 void		ASN1_BIT_STRING_free(ASN1_BIT_STRING *a);
 int		i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a,unsigned char **pp);
+int		i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a,unsigned char **pp);
 ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,unsigned char **pp,
+			long length);
+ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,unsigned char **pp,
 			long length);
 int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 			int length );
@@ -547,7 +552,10 @@ int 		d2i_ASN1_BOOLEAN(int *a,unsigned char **pp,long length);
 ASN1_INTEGER *	ASN1_INTEGER_new(void);
 void		ASN1_INTEGER_free(ASN1_INTEGER *a);
 int		i2d_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp);
+int		i2c_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp);
 ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
+			long length);
+ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
 			long length);
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a,unsigned char **pp,
 			long length);

@@ -4,6 +4,18 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New ASN1 functions, i2c_* and c2i_* for INTEGER and BIT
+     STRING types. These convert content octets to and from the
+     underlying type. The actual tag and length octets are
+     already assumed to have been read in and checked. These
+     are needed because all other string types have virtually
+     identical handling apart from the tag. By having versions
+     of the ASN1 functions that just operate on content octets
+     IMPLICIT tagging can be handled properly. It also allows
+     the ASN1_ENUMERATED code to be cut down because ASN1_ENUMERATED
+     and ASN1_INTEGER are identical apart from the tag.
+     [Steve Henson]
+
   *) Change the handling of OID objects as follows:
 
      - New object identifiers are inserted in objects.txt, following
