@@ -8,6 +8,7 @@ Intro:
 
 This file is divided in the following parts:
 
+  Requirements			- Mandatory reading.
   Checking the distribution	- Mandatory reading.
   Compilation			- Mandatory reading.
   Logical names			- Mandatory reading.
@@ -18,6 +19,15 @@ This file is divided in the following parts:
 				  may go wrong or may surprise you.
   TODO				- Things that are to come.
 
+
+Requirements:
+=============
+
+To build and install OpenSSL, you will need:
+
+ * DEC C or some other ANSI C compiler.  VAX C is *not* supported.
+   [Note: OpenSSL has only been tested with DEC C.  Compiling with 
+    a different ANSI C compiler may require some work]
 
 Checking the distribution:
 ==========================

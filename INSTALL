@@ -7,8 +7,11 @@
 
  To install OpenSSL, you will need:
 
+  * make
   * Perl 5
   * an ANSI C compiler
+  * a development environment in form of development libraries and C
+    header files
   * a supported Unix operating system
 
  Quick Start
@@ -42,9 +45,6 @@
 
   --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
                 the library files and binaries are also installed there.
-
-  rsaref        Build with RSADSI's RSAREF toolkit (this assumes that
-                librsaref.a is in the library search path).
 
   no-threads    Don't try to build with support for multi-threaded
                 applications.
@@ -125,7 +125,7 @@
      directory, and the binary will be in the "apps" directory.
 
      If "make" fails, look at the output.  There may be reasons for
-     the failure that isn't a problem in OpenSSL itself (like missing
+     the failure that aren't problems in OpenSSL itself (like missing
      standard headers).  If it is a problem with OpenSSL itself, please
      report the problem to <openssl-bugs@openssl.org> (note that your
      message will be forwarded to a public mailing list).  Include the
