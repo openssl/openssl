@@ -68,9 +68,9 @@
 
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_KRB5
-#include <string.h>
 #define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
 #include <time.h>
+#include <string.h>
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
