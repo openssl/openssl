@@ -1,15 +1,3 @@
-#define SSL_CTX_sess_set_new_cb(ctx,cb)	((ctx)->new_session_cb=(cb))
-#define SSL_CTX_sess_get_new_cb(ctx)	((ctx)->new_session_cb)
-#define SSL_CTX_sess_set_remove_cb(ctx,cb)	((ctx)->remove_session_cb=(cb))
-#define SSL_CTX_sess_get_remove_cb(ctx)	((ctx)->remove_session_cb)
-#define SSL_CTX_sess_set_get_cb(ctx,cb)	((ctx)->get_session_cb=(cb))
-#define SSL_CTX_sess_get_get_cb(ctx)	((ctx)->get_session_cb)
-#define SSL_CTX_set_info_callback(ctx,cb)	((ctx)->info_callback=(cb))
-#define SSL_CTX_get_info_callback(ctx)		((ctx)->info_callback)
-
-#define SSL_CTX_set_client_cert_cb(ctx,cb)	((ctx)->client_cert_cb=(cb))
-#define SSL_CTX_get_client_cert_cb(ctx)		((ctx)->client_cert_cb)
-
 /* ssl/ssl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -457,6 +445,17 @@ struct ssl_ctx_st
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_TIMEOUTS,0,NULL)
 #define SSL_CTX_sess_cache_full(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_CACHE_FULL,0,NULL)
+
+#define SSL_CTX_sess_set_new_cb(ctx,cb)	((ctx)->new_session_cb=(cb))
+#define SSL_CTX_sess_get_new_cb(ctx)	((ctx)->new_session_cb)
+#define SSL_CTX_sess_set_remove_cb(ctx,cb)	((ctx)->remove_session_cb=(cb))
+#define SSL_CTX_sess_get_remove_cb(ctx)	((ctx)->remove_session_cb)
+#define SSL_CTX_sess_set_get_cb(ctx,cb)	((ctx)->get_session_cb=(cb))
+#define SSL_CTX_sess_get_get_cb(ctx)	((ctx)->get_session_cb)
+#define SSL_CTX_set_info_callback(ctx,cb)	((ctx)->info_callback=(cb))
+#define SSL_CTX_get_info_callback(ctx)		((ctx)->info_callback)
+#define SSL_CTX_set_client_cert_cb(ctx,cb)	((ctx)->client_cert_cb=(cb))
+#define SSL_CTX_get_client_cert_cb(ctx)		((ctx)->client_cert_cb)
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
