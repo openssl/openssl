@@ -623,9 +623,9 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 
 			if ((!c_quiet) && (cbuf[0] == 'R'))
 				{
+				BIO_printf(bio_err,"RENEGOTIATING\n");
 				SSL_renegotiate(con);
-				read_tty=0;
-				write_ssl=1;
+				cbuf_len=0;
 				}
 			else
 				{
@@ -633,8 +633,8 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				cbuf_off=0;
 				}
 
-			read_tty=0;
 			write_ssl=1;
+			read_tty=0;
 			}
 #endif
 		}
