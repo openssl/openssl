@@ -1675,6 +1675,13 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
 
+  *) Don't impose a 16-byte length minimum on session IDs in ssl/s3_clnt.c
+     (the SSL 3.0 and TLS 1.0 specifications allow any length up to 32 bytes).
+     [Bodo Moeller]
+
+  *) Fix race condition in SSLv3_client_method().
+     [Bodo Moeller]
+
   *) Reorder cleanup sequence in SSL_CTX_free(): only remove the ex_data after
      the cached sessions are flushed, as the remove_cb() might use ex_data
      contents. Bug found by Sam Varshavchik <mrsam@courier-mta.com>
