@@ -10,7 +10,7 @@ B<openssl gendh>
 [B<-out filename>]
 [B<-2>]
 [B<-5>]
-[B<-rand file:file>]
+[B<-rand file(s)>]
 [numbits]
 
 =head1 DESCRIPTION
@@ -31,10 +31,12 @@ a PKCS#5 DHParameter structure.
 
 The generator to use, either 2 or 5. 2 is the default.
 
-=item B<-rand file:file>
+=item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator. Multiple files can be specified separated by B<:>.
+generator. Multiple files can be specified separated by a OS-dependent
+character.  For MS-Windows, the separator is B<;>.  For OpenVMS, it's
+B<,>.  For all others, it's B<:>.
 
 =item B<numbits>
 
