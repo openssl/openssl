@@ -155,7 +155,7 @@ static RAND_METHOD hwcrhk_rand =
 /* Our ENGINE structure. */
 static ENGINE engine_hwcrhk =
         {
-	"hwcrhk",
+	"chil",
 	"nCipher hardware engine support",
 	&hwcrhk_rsa,
 	NULL,
@@ -233,14 +233,16 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 	0,			/* Max simultaneous, 0 = default */
 
 	/* The next few are mutex stuff: we write wrapper functions
-	   round the OS mutex functions.
-	   Currently, the support in OpenSSL is just not good enough,
-	   so this part is currently skipped, but worked on. */
+	   around the OS mutex functions.  We initialise them to 0
+	   here, and change that to actual function pointers in hwcrhk_init()
+	   if dynamic locks are support (that is, if the application
+	   programmer has made sure of setting up callbacks bafore starting
+	   this engine). */
 	sizeof(HWCryptoHook_Mutex),
-	hwcrhk_mutex_init,
-	hwcrhk_mutex_lock,
-	hwcrhk_mutex_unlock,
-	hwcrhk_mutex_destroy,
+	0,
+	0,
+	0,
+	0,
 
 	/* The next few are condvar stuff: we write wrapper functions
 	   round the OS functions.  Currently not implemented and not
