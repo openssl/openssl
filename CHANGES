@@ -13,11 +13,32 @@
      memory leaks, but this gives people a chance to debug other memory
      problems.
 
-     This change means that a call `CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)'
-     is no longer dependent on if the macro CRYPTO_MDEBUG or friends were
-     used when the OpenSSL libcrypto was built.  This is under debate and
-     may change back, but with another option to still get debugging even
-     if the library wasn't compiled that way.
+     With these changes, a new set of functions and macros have appeared:
+
+       CRYPTO_set_mem_debug_functions()		[F]
+       CRYPTO_get_mem_debug_functions()		[F]
+       CRYPTO_dbg_set_options()			[F]
+       CRYPTO_dbg_get_options()			[F]
+       CRYPTO_melloc_debug_init()		[M]
+
+     The memory debug functions are NULL by default, unless the library
+     is compiled with CRYPTO_MDEBUG or friends is defined.  If someone
+     wants to debug memory anyway, CRYPTO_malloc_debug_init() or
+     CRYPTO_set_mem_debug_functions() must be used.
+
+     Also, things like CRYPTO_set_mem_functions will always give the
+     expected result (the new set of functions is used for allocation
+     and deallocation) at all times, regardless of platform and compiler
+     options.
+
+     To finish it up, some functions that were never use in any other
+     way than through macros have a new API and new semantic:
+
+       CRYPTO_dbg_malloc()
+       CRYPTO_dbg_realloc()
+       CRYPTO_dbg_free()
+
+     All macros of value have retained their old syntax.
      [Richard Levitte]
 
   *) Some S/MIME fixes. The OID for SMIMECapabilities was wrong, the

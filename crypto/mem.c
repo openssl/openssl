@@ -68,11 +68,19 @@ static char *(*malloc_func)()=	(char *(*)())malloc;
 static char *(*realloc_func)()=	(char *(*)())realloc;
 static void (*free_func)()=	(void (*)())free;
 
+#ifdef CRYPTO_MDEBUG
 static void (*malloc_debug_func)()= (void (*)())CRYPTO_dbg_malloc;
 static void (*realloc_debug_func)()= (void (*)())CRYPTO_dbg_realloc;
 static void (*free_debug_func)()= (void (*)())CRYPTO_dbg_free;
 static void (*set_debug_options_func)()= (void (*)())CRYPTO_dbg_set_options;
 static int (*get_debug_options_func)()= (int (*)())CRYPTO_dbg_get_options;
+#else
+static void (*malloc_debug_func)()= (void (*)())NULL;
+static void (*realloc_debug_func)()= (void (*)())NULL;
+static void (*free_debug_func)()= (void (*)())NULL;
+static void (*set_debug_options_func)()= (void (*)())NULL;
+static int (*get_debug_options_func)()= (int (*)())NULL;
+#endif
 
 void CRYPTO_set_mem_functions(char *(*m)(), char *(*r)(), void (*f)())
 	{
@@ -128,36 +136,42 @@ void *CRYPTO_malloc_locked(int num, char *file, int line)
 	{
 	char *ret = NULL;
 
-	malloc_debug_func(NULL, num, file, line, 0);
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(NULL, num, file, line, 0);
 	ret = malloc_locked_func(num);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
 #endif
-	malloc_debug_func(ret, num, file, line, 1);
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(ret, num, file, line, 1);
 
 	return ret;
 	}
 
 void CRYPTO_free_locked(void *str)
 	{
-	free_debug_func(str, 0);
+	if (free_debug_func != NULL)
+		free_debug_func(str, 0);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         < 0x%p\n", str);
 #endif
 	free_locked_func(str);
-	free_debug_func(NULL, 1);
+	if (free_debug_func != NULL)
+		free_debug_func(NULL, 1);
 	}
 
 void *CRYPTO_malloc(int num, char *file, int line)
 	{
 	char *ret = NULL;
 
-	malloc_debug_func(NULL, num, file, line, 0);
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(NULL, num, file, line, 0);
 	ret = malloc_func(num);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         > 0x%p (%d)\n", ret, num);
 #endif
-	malloc_debug_func(ret, num, file, line, 1);
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(ret, num, file, line, 1);
 
 	return ret;
 	}
@@ -166,24 +180,28 @@ void *CRYPTO_realloc(void *str, int num, char *file, int line)
 	{
 	char *ret = NULL;
 
-	realloc_debug_func(str, NULL, num, file, line, 0);
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, NULL, num, file, line, 0);
 	ret = realloc_func(str,num);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
 #endif
-	realloc_debug_func(str, ret, num, file, line, 1);
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, ret, num, file, line, 1);
 
 	return ret;
 	}
 
 void CRYPTO_free(void *str)
 	{
-	free_debug_func(str, 0);
+	if (free_debug_func != NULL)
+		free_debug_func(str, 0);
 #ifdef LEVITTE_DEBUG
 	fprintf(stderr, "LEVITTE_DEBUG:         < 0x%p\n", str);
 #endif
 	free_func(str);
-	free_debug_func(NULL, 1);
+	if (free_debug_func != NULL)
+		free_debug_func(NULL, 1);
 	}
 
 
@@ -196,10 +214,12 @@ void *CRYPTO_remalloc(void *a, int num, char *file, int line)
 
 void CRYPTO_set_mem_debug_options(int bits)
 	{
-	set_debug_options_func(bits);
+	if (set_debug_options_func != NULL)
+		set_debug_options_func(bits);
 	}
 
 int CRYPTO_get_mem_debug_options()
 	{
-	return get_debug_options_func();
+	if (get_debug_options_func != NULL)
+		return get_debug_options_func();
 	}

@@ -217,8 +217,8 @@ typedef struct crypto_ex_data_func_st
 		(void (*)())CRYPTO_dbg_realloc,\
 		(void (*)())CRYPTO_dbg_free,\
 		(void (*)())CRYPTO_dbg_set_options,\
-		(void (*)())CRYPTO_dbg_get_options);\
-	} while(0);
+		(int (*)())CRYPTO_dbg_get_options);\
+	} while(0)
 
 #if defined CRYPTO_MDEBUG_ALL || defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
@@ -226,13 +226,8 @@ typedef struct crypto_ex_data_func_st
 # endif
 #endif
 
-#ifdef CRYPTO_MDEBUG
 #define MemCheck_start() CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)
 #define MemCheck_stop()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF)
-#else
-#define MemCheck_start()
-#define MemCheck_stop()
-#endif
 #define MemCheck_on()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE)
 #define MemCheck_off()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
 #define is_MemCheck_on() CRYPTO_mem_check_on()
