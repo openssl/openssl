@@ -62,7 +62,7 @@
 #include "bn_lcl.h"
 
 /* The old slow way */
-#if 1
+#if 0
 int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	   BN_CTX *ctx)
 	{
@@ -125,6 +125,32 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	}
 
 #else
+
+#if !defined(NO_ASM) && !defined(PEDANTIC) && !defined(BN_DIV3W)
+# if defined(__GNUC__) && __GNUC__>=2
+#  if defined(__i386)
+   /*
+    * There were two reasons for implementing this template:
+    * - GNU C generates a call to a function (__udivdi3 to be exact)
+    *   in reply to ((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0 (I fail to
+    *   understand why...);
+    * - divl doesn't only calculate quotient, but also leaves
+    *   remainder in %edx which we can definitely use here:-)
+    *
+    *					<appro@fy.chalmers.se>
+    */
+#  define bn_div_words(n0,n1,d0)		\
+	({  asm volatile (			\
+		"divl	%4"			\
+		: "=a"(q), "=d"(rem)		\
+		: "a"(n1), "d"(n0), "g"(d0)	\
+		: "cc");			\
+	    q;					\
+	})
+#  define REMAINDER_IS_ALREADY_CALCULATED
+#  endif /* __<cpu> */
+# endif /* __GNUC__ */
+#endif /* NO_ASM */
 
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	   BN_CTX *ctx)
@@ -214,103 +240,72 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #ifdef BN_DIV3W
 		q=bn_div_3_words(wnump,d1,d0);
 #else
-
-#if !defined(NO_ASM) && !defined(PEDANTIC)
-# if defined(__GNUC__) && __GNUC__>=2
-#  if defined(__i386)
-   /*
-    * There were two reasons for implementing this template:
-    * - GNU C generates a call to a function (__udivdi3 to be exact)
-    *   in reply to ((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0 (I fail to
-    *   understand why...);
-    * - divl doesn't only calculate quotient, but also leaves
-    *   remainder in %edx which we can definitely use here:-)
-    *
-    *					<appro@fy.chalmers.se>
-    */
-#  define bn_div_words(n0,n1,d0)		\
-	({  asm volatile (			\
-		"divl	%4"			\
-		: "=a"(q), "=d"(rem)		\
-		: "a"(n1), "d"(n0), "g"(d0)	\
-		: "cc");			\
-	    q;					\
-	})
-#  define REMAINDER_IS_ALREADY_CALCULATED
-#  endif /* __<cpu> */
-# endif /* __GNUC__ */
-#endif /* NO_ASM */
 		BN_ULONG n0,n1,rem=0;
 
 		n0=wnump[0];
 		n1=wnump[-1];
 		if (n0 == d0)
-			{
 			q=BN_MASK2;
-#ifdef REMAINDER_IS_ALREADY_CALCULATED /* in this case it isn't */
-			rem=(n1-q*d0)&BN_MASK2;
-#endif
-			}
-		else /* n0 < d0 */
+		else 			/* n0 < d0 */
+			{
+#ifdef BN_LLONG
+			BN_ULLONG t2;
+
 #if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
 			q=(BN_ULONG)(((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0);
 #else
 			q=bn_div_words(n0,n1,d0);
 #endif
-		{
-#ifdef BN_LLONG
-		BN_ULLONG t2;
 
 #ifndef REMAINDER_IS_ALREADY_CALCULATED
-		/*
-		 * rem doesn't have to be BN_ULLONG. The least we
-		 * know it's less that d0, isn't it?
-		 */
-		rem=(n1-q*d0)&BN_MASK2;
+			/*
+			 * rem doesn't have to be BN_ULLONG. The least we
+			 * know it's less that d0, isn't it?
+			 */
+			rem=(n1-q*d0)&BN_MASK2;
 #endif
-		t2=(BN_ULLONG)d1*q;
+			t2=(BN_ULLONG)d1*q;
 
-		for (;;)
-			{
-                        if (t2 <= ((((BN_ULLONG)rem)<<BN_BITS2)|wnump[-2]))
-				break;
-			q--;
-			rem += d0;
-			if (rem < d0) break; /* don't let rem overflow */
-			t2 -= d1;
-			}
-#else
-		BN_ULONG t2l,t2h,ql,qh;
+			for (;;)
+				{
+				if (t2 <= ((((BN_ULLONG)rem)<<BN_BITS2)|wnump[-2]))
+					break;
+				q--;
+				rem += d0;
+				if (rem < d0) break; /* don't let rem overflow */
+				t2 -= d1;
+				}
+#else /* !BN_LLONG */
+			BN_ULONG t2l,t2h,ql,qh;
 
+			q=bn_div_words(n0,n1,d0);
 #ifndef REMAINDER_IS_ALREADY_CALCULATED
-		/*
-		 * It's more than enough with the only multiplication.
-		 * See the comment above in BN_LLONG section...
-		 */
-		rem=(n1-q*d0)&BN_MASK2;
+			rem=(n1-q*d0)&BN_MASK2;
 #endif
+
 #ifdef BN_UMULT_HIGH
-		t2l = d1 * q;
-		t2h = BN_UMULT_HIGH(d1,q);
+			t2l = d1 * q;
+			t2h = BN_UMULT_HIGH(d1,q);
 #else
-		t2l=LBITS(d1); t2h=HBITS(d1);
-		ql =LBITS(q);  qh =HBITS(q);
-		mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
+			t2l=LBITS(d1); t2h=HBITS(d1);
+			ql =LBITS(q);  qh =HBITS(q);
+			mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
 #endif
 
-		for (;;)
-			{
-			if ((t2h < rem) ||
-				((t2h == rem) && (t2l <= wnump[-2])))
-				break;
-			q--;
-			rem += d0;
-			if (rem < d0) break; /* don't let rem overflow */
-			if (t2l < d1) t2h--; t2l -= d1;
+			for (;;)
+				{
+				if ((t2h < rem) ||
+					((t2h == rem) && (t2l <= wnump[-2])))
+					break;
+				q--;
+				rem += d0;
+				if (rem < d0) break; /* don't let rem overflow */
+				if (t2l < d1) t2h--; t2l -= d1;
+				}
+#endif /* !BN_LLONG */
 			}
-#endif
-		}
 #endif /* !BN_DIV3W */
+
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
 		wnum.d--; wnum.top++;
 		tmp->d[div_n]=l0;
@@ -341,7 +336,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_CTX_end(ctx);
 	return(1);
 err:
-	BN_CX_end(ctx);
+	BN_CTX_end(ctx);
 	return(0);
 	}
 

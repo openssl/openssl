@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Bug fix for BN_div() when the first words of num and divsor are
+     equal (it gave wrong results if (rem=(n1-q*d0)&BN_MASK2) < d0).
+     [Ulf Möller]
+
   *) Add support for various broken PKCS#8 formats, and command line
      options to produce them.
      [Steve Henson]
