@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/14 13:44:59 $
+  ______________                           $Date: 2001/03/15 06:15:26 $
 
   DEVELOPMENT STATE
 
@@ -10,17 +10,22 @@
 	HP-UX 10.20 (hpux-parisc-gcc)		- PASSED [normal+engine]
 	HP-UX 11.00 32bit (hpux-parisc-gcc)	- FAILED [engine]
 		"openssl speed rsa1024 -engine cswift" fails unless
-		libswift.sl is in $CWD, even if $SHLIB_PATH is defined.
+		libswift.sl is renamed to libswift.so.
+		[CORRECTED]
+	HP MPE/iX				- PASSED [presumed normal]
 	Linux 2.2.17 SMP (linux-elf)		- PASSED [normal+engine]
 	Windows (VC-WIN32)			- FAILED [presumed normal]
 		Missing line in ms/32all.bat:
 			perl util\mkfiles.pl >MINFO
 		[CORRECTED]
 		In randfile.c, line 214, signed and unsigned int are mixed.
+		[CORRECTED]
 		In s_client.c and s_server.c, RAND_status() needs to get
-		declared (#include <oenssl/rand.h>)
+		declared (#include <openssl/rand.h>)
+		[CORRECTED]
 	OpenVMS (any version)			- FAILED [normal+engine]
-		Missing istructions in building script.
+		Missing instructions in building script.
+		[CORRECTED]
 	AIX 4.3					- FAILED [engine]
 		Needs -DDSO_DLFCN and -DHAVE_DLFCN_H to work.
 	Irix 6.5.11				- FAILED [presumed normal]
