@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6f and OpenSSL 0.9.6g:
+
+      o Important building fixes on Unix.
+
   Major changes between OpenSSL 0.9.6e and OpenSSL 0.9.6f:
 
       o Various important bugfixes.

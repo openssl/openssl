@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6f and 0.9.6g  [xx XXX xxxx]
+ Changes between 0.9.6f and 0.9.6g  [9 Aug 2002]
 
   *) [In 0.9.6g-engine release:]
      Fix crypto/engine/vendor_defns/cswift.h for WIN32 (use '_stdcall').
