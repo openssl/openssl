@@ -152,7 +152,7 @@ int ssl_cert_instantiate(CERT **o, CERT *d)
 		SSLerr(SSL_F_SSL_CERT_INSTANTIATE, ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if (*o != NULL && d != NULL && *o != d)
+	if (*o != NULL && (d == NULL || *o != d))
 	    return(1);
 	if ((n = ssl_cert_new()) == NULL) 
 		{
