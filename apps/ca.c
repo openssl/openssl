@@ -1986,8 +1986,17 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 		cv=sk_CONF_VALUE_value(sk,i);
 		type=cv->name;
-		buf=cv->value;
+		/* Skip past any leading X. X: X, etc to allow for
+		 * multiple instances
+		 */
+		for(buf = cv->name; *buf ; buf++)
+			if ((*buf == ':') || (*buf == ',') || (*buf == '.')) {
+					buf++;
+					if(*buf) type = buf;
+					break;
+		}
 
+		buf=cv->value;
 		if ((nid=OBJ_txt2nid(type)) == NID_undef)
 			{
 			if (strcmp(type, "SPKAC") == 0)

@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add new feature to the SPKAC handling in ca.  Now you can include
+     the same field multiple times by preceding it by "XXXX." for example:
+     1.OU="Unit name 1"
+     2.OU="Unit name 2"
+     this is the same syntax as used in the req config file.
+     [Steve Henson]
+
   *) Allow certificate extensions to be added to certificate requests. These
      are specified in a 'req_extensions' option of the req section of the
      config file. They can be printed out with the -text option to req but
