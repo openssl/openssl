@@ -21,7 +21,7 @@ PLATFORM=dist
 #           number generator is initalised.
 # SSL_ALLOW_ADH - define if you want the server to be able to use the
 #           SSLv3 anon-DH ciphers.
-# SSL_ALLOW_ENULL - define if you want the server to be able to use the
+# SSL_FORBID_ENULL - define if you want the server to be not able to use the
 #           NULL encryption ciphers.
 #
 # LOCK_DEBUG - turns on lots of lock debug output :-)
