@@ -61,7 +61,7 @@ top:
 
 CALC_VERSIONS=	\
 	SHLIB_COMPAT=; SHLIB_SOVER=; \
-	if [ -n "$(LIBVERSION) $(LIBCOMPATVERSIONS)" ]; then \
+	if [ -n "$(LIBVERSION)$(LIBCOMPATVERSIONS)" ]; then \
 		prev=""; \
 		for v in `echo "$(LIBVERSION) $(LIBCOMPATVERSIONS)" | cut -d';' -f1`; do \
 			SHLIB_SOVER_NODOT=$$v \
@@ -80,14 +80,19 @@ LINK_SO=	\
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
   $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
 SYMLINK_SO=	\
+	prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	if [ -n "$$SHLIB_COMPAT"]; then \
-		prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 		for x in $$SHLIB_COMPAT; do \
 			( $(DEBUG); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
 			  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
 			prev=$$SHLIB$$x$$SHLIB_SUFFIX; \
 		done; \
+	fi; \
+	if [ -n "$$SHLIB_SOVER" ]; then \
+		( $(DEBUG); rm -f $$SHLIB$$SHLIB_SUFFIX; \
+		  ln -s $$prev $$SHLIB$$SHLIB_SUFFIX ); \
 	fi
+
 LINK_SO_A=	SHOBJECTS="lib$(LIBNAME).a $(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_A_VIA_O=	\
