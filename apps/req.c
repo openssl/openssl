@@ -544,7 +544,7 @@ bad:
 			BIO_printf(bio_err,"can't use that engine\n");
 			goto end;
 			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", *argv);
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
 		/* Free our "structural" reference. */
 		ENGINE_free(e);
 		}
