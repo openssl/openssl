@@ -24,8 +24,8 @@
 #define SHA_BIT_SIZE  (160)
 #define MAX_CRYPTO_KEY_LENGTH 24
 #define MAX_MAC_KEY_LENGTH 64
-#define UBSEC_CRYPTO_DEVICE_NAME "/dev/ubscrypt"
-#define UBSEC_KEY_DEVICE_NAME "/dev/ubskey"
+#define UBSEC_CRYPTO_DEVICE_NAME ((unsigned char *)"/dev/ubscrypt")
+#define UBSEC_KEY_DEVICE_NAME ((unsigned char *)"/dev/ubskey")
 
 /* Math command types. */
 #define UBSEC_MATH_MODADD 0x0001

@@ -84,12 +84,14 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 static int ubsec_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#if NOT_USED
 static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 		BN_CTX *ctx, BN_MONT_CTX *in_mont);
 static int ubsec_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 		const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
 		BN_MONT_CTX *m_ctx);
+#endif
 static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
                                 DSA_SIG *sig, DSA *dsa);
@@ -98,8 +100,11 @@ static int ubsec_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
 		BN_MONT_CTX *m_ctx);
 static int ubsec_dh_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh);
 static int ubsec_dh_generate_key(DH *dh);
+
+#if NOT_USED
 static int ubsec_rand_bytes(unsigned char *buf, int num);
 static int ubsec_rand_status(void);
+#endif
  
 /* Our internal RSA_METHOD that we provide pointers to */
 
@@ -473,6 +478,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return 1;
 }
 
+#if NOT_USED
 static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 		BN_CTX *ctx, BN_MONT_CTX *in_mont)
@@ -499,6 +505,7 @@ static int ubsec_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 	{
 	return ubsec_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 /*
  * This function is aliased to mod_exp (with the mont stuff dropped).
@@ -651,6 +658,7 @@ static int ubsec_dh_generate_key (DH *dh)
 	return 0;
 	}
 
+#ifdef NOT_USED
 static int ubsec_rand_bytes(unsigned char *buf, int num)
 	{
 	return 0;
@@ -660,6 +668,7 @@ static int ubsec_rand_status(void)
 	{
 	return 0;
 	}
+#endif
 
 #endif /* !NO_HW_UBSEC */
 #endif /* !NO_HW */
