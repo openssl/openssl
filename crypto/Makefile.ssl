@@ -50,7 +50,7 @@ top:
 all: date.h lib subdirs
 
 date.h: ../Makefile.ssl
-	echo "#define DATE	\"`date`\"" >date.h
+	echo "#define DATE \"`date`\"" >date.h
 
 subdirs:
 	@for i in $(SDIRS) ;\
