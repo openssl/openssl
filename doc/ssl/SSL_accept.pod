@@ -37,11 +37,6 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
-When using a generic method (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>), it
-is necessary to call SSL_set_accept_state()
-before calling SSL_accept() to explicitly switch the B<ssl> to server
-mode.
-
 =head1 RETURN VALUES
 
 The following return values can occur:
