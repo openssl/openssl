@@ -67,6 +67,8 @@ void OpenSSL_add_all_ciphers(void)
 
 #ifndef OPENSSL_NO_DES
 	EVP_add_cipher(EVP_des_cfb());
+	EVP_add_cipher(EVP_des_cfb1());
+	EVP_add_cipher(EVP_des_cfb8());
 	EVP_add_cipher(EVP_des_ede_cfb());
 	EVP_add_cipher(EVP_des_ede3_cfb());
 
