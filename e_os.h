@@ -59,6 +59,8 @@
 #ifndef HEADER_E_OS_H
 #define HEADER_E_OS_H
 
+#include <openssl/opensslconf.h>
+
 #include <openssl/e_os2.h>
 /* <openssl/e_os2.h> contains what we can justify to make visible
  * to the outside; this file e_os.h is not part of the exported
@@ -226,7 +228,8 @@ extern "C" {
 				     return(n); } while(0)
 #    endif
 #  else
-#    include <unistd.h>
+     /* !defined VMS */
+#    include OPENSSL_UNISTD
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
