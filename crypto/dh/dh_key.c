@@ -111,7 +111,9 @@ static int generate_key(DH *dh)
 		{
 		priv_key=BN_new();
 		if (priv_key == NULL) goto err;
-		if (!BN_rand_range(priv_key, dh->p)) goto err;
+		do
+			if (!BN_rand_range(priv_key, dh->p)) goto err;
+		while (BN_is_zero(priv_key));
 		}
 	else
 		priv_key=dh->priv_key;
