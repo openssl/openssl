@@ -238,42 +238,42 @@ int MAIN(int argc, char **argv)
 
     ERR_load_crypto_strings();
 
-    in = BIO_new (BIO_s_file());
-    out = BIO_new (BIO_s_file());
-
-    if (!infile) BIO_set_fp (in, stdin, BIO_NOCLOSE);
-    else {
-        if (BIO_read_filename (in, infile) <= 0) {
+    if (!infile) in = BIO_new_fp(stdin, BIO_NOCLOSE);
+    else in = BIO_new_file(infile, "rb");
+    if (!in) {
+	    BIO_printf(bio_err, "Error opening input file %s\n",
+						infile ? infile : "<stdin>");
 	    perror (infile);
 	    goto end;
-	}
-    }
+   }
 
    if (certfile) {
-    	certsin = BIO_new (BIO_s_file());
-        if (BIO_read_filename (certsin, certfile) <= 0) {
+    	if(!(certsin = BIO_new_file(certfile, "r"))) {
+	    BIO_printf(bio_err, "Can't open certificate file %s\n", certfile);
 	    perror (certfile);
 	    goto end;
 	}
     }
 
     if (keyname) {
-    	inkey = BIO_new (BIO_s_file());
-        if (BIO_read_filename (inkey, keyname) <= 0) {
+    	if(!(inkey = BIO_new_file(keyname, "r"))) {
+	    BIO_printf(bio_err, "Can't key certificate file %s\n", keyname);
 	    perror (keyname);
 	    goto end;
 	}
      }
 
-    if (!outfile) BIO_set_fp (out, stdout, BIO_NOCLOSE);
-    else {
-        if (BIO_write_filename (out, outfile) <= 0) {
-	    perror (outfile);
-	    goto end;
-	}
+    if (!outfile) out = BIO_new_fp(stdout, BIO_NOCLOSE);
+    else out = BIO_new_file(outfile, "wb");
+    if (!out) {
+	BIO_printf(bio_err, "Error opening output file %s\n",
+						outfile ? outfile : "<stdout>");
+	perror (outfile);
+	goto end;
     }
     if (twopass) {
-	if(EVP_read_pw_string (macpass, 50, "Enter MAC Password:", export_cert)) {
+	if(EVP_read_pw_string (macpass, 50, "Enter MAC Password:", export_cert))
+	{
     	    BIO_printf (bio_err, "Can't read Password\n");
     	    goto end;
        	}
@@ -285,15 +285,14 @@ if (export_cert) {
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
-	X509 *cert, *ucert = NULL;
+	X509 *cert = NULL, *ucert = NULL;
 	STACK_OF(X509) *certs;
 	char *catmp;
-	int i, pmatch = 0;
+	int i;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
-	unsigned int keyidlen;
-	/* Get private key so we can match it to a certificate */
+	unsigned int keyidlen = 0;
 	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, NULL);
-	if (!inkey) (void)BIO_reset(in);
+	if (!inkey) (void) BIO_reset(in);
 	if (!key) {
 		BIO_printf (bio_err, "Error loading private key\n");
 		ERR_print_errors(bio_err);
@@ -306,6 +305,19 @@ if (export_cert) {
 	if(!cert_load(in, certs)) {
 		BIO_printf(bio_err, "Error loading certificates from input\n");
 		ERR_print_errors(bio_err);
+		goto end;
+	}
+
+	for(i = 0; i < sk_X509_num(certs); i++) {
+		ucert = sk_X509_value(certs, i);
+		if(X509_check_private_key(ucert, key)) {
+			X509_digest(cert, EVP_sha1(), keyid, &keyidlen);
+			break;
+		}
+	}
+
+	if(!keyidlen) {
+		BIO_printf(bio_err, "No certificate matches private key\n");
 		goto end;
 	}
 	
@@ -321,26 +333,10 @@ if (export_cert) {
 	    	BIO_free(certsin);
  	}
 
-	/* Find certificate (if any) matching private key */
-
-	for(i = 0; i < sk_X509_num(certs); i++) {
-			cert = sk_X509_value(certs, i);
-			if(X509_check_private_key(cert, key)) {
-				ucert = cert;
-				break;
-			}
-	}
-
-	if(!ucert) {
-		BIO_printf(bio_err, "No certificate matches private key\n");
-		goto end;
-	}
-
 	/* If chaining get chain from user cert */
 	if (chain) {
         	int vret;
 		STACK_OF(X509) *chain2;
-			
 		vret = get_cert_chain (ucert, &chain2);
 		if (vret) {
 			BIO_printf (bio_err, "Error %s getting chain.\n",
@@ -358,12 +354,10 @@ if (export_cert) {
 	for(i = 0; i < sk_X509_num(certs); i++) {
 		cert = sk_X509_value(certs, i);
 		bag = M_PKCS12_x5092certbag(cert);
-		/* If it matches private key mark it */
+		/* If it matches private key set id */
 		if(cert == ucert) {
 			if(name) PKCS12_add_friendlyname(bag, name, -1);
-			X509_digest(cert, EVP_sha1(), keyid, &keyidlen);
 			PKCS12_add_localkeyid(bag, keyid, keyidlen);
-			pmatch = 1;
 		} else if((catmp = sk_shift(canames))) 
 				PKCS12_add_friendlyname(bag, catmp, -1);
 		sk_push(bags, (char *)bag);
@@ -378,7 +372,7 @@ if (export_cert) {
         }
 	if (!twopass) strcpy(macpass, pass);
 	/* Turn certbags into encrypted authsafe */
-	authsafe = PKCS12_pack_p7encdata (cert_pbe, cpass, -1, NULL, 0,
+	authsafe = PKCS12_pack_p7encdata(cert_pbe, cpass, -1, NULL, 0,
 								 iter, bags);
 	sk_pop_free(bags, PKCS12_SAFEBAG_free);
 
@@ -394,11 +388,11 @@ if (export_cert) {
 	p8 = EVP_PKEY2PKCS8 (key);
 	EVP_PKEY_free(key);
 	if(keytype) PKCS8_add_keyusage(p8, keytype);
-	bag = PKCS12_MAKE_SHKEYBAG (NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+	bag = PKCS12_MAKE_SHKEYBAG(NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
 			cpass, -1, NULL, 0, iter, p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
-	if(pmatch) PKCS12_add_localkeyid (bag, keyid, keyidlen);
+	PKCS12_add_localkeyid (bag, keyid, keyidlen);
 	bags = sk_new(NULL);
 	sk_push (bags, (char *)bag);
 	/* Turn it into unencrypted safe bag */
