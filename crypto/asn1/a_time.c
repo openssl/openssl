@@ -97,9 +97,10 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 #endif
 
 #if defined(THREADS) && !defined(WIN32)
-	ts=(struct tm *)gmtime_r(&t,&data);
+	gmtime_r(&t,&data);
+    ts=&data;
 #else
-	ts=(struct tm *)gmtime(&t);
+	ts=gmtime(&t);
 #endif
 	if((ts->tm_year >= 1950) && (ts->tm_year < 2050))
 					return ASN1_UTCTIME_set(s, t);

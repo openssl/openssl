@@ -183,9 +183,10 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 		return(NULL);
 
 #if defined(THREADS) && !defined(WIN32)
-	ts=(struct tm *)gmtime_r(&t,&data);
+	gmtime_r(&t,&data);
+    ts=&data;
 #else
-	ts=(struct tm *)gmtime(&t);
+	ts=gmtime(&t);
 #endif
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 16))

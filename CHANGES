@@ -5,6 +5,12 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Accept any -xxx and +xxx compiler options in Configure.
+     [Ulf Möller]
+
+  *) Update HPUX configuration.
+     [Anonymous]
+  
   *) Add missing sk_<type>_unshift() function to safestack.h
      [Ralf S. Engelschall]
 

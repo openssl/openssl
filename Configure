@@ -30,7 +30,7 @@ my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no
 # no-asm        do not use assembler
 # 386           generate 80386 code
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
-# -D, -L, -l, -f, -K: compiler options are passed through 
+# -<xxx> +<xxx> compiler options are passed through 
 # 
 # DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h
 # DES_RISC1	use different DES_ENCRYPT macro that helps reduce register
@@ -136,14 +136,17 @@ my %table=(
 # This is the n64 mode build.
 "irix-n64-cc", "cc:-64 -O2 -use_readonly_const -DTERMIOS:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:::",
 
-# HPUX config.  I've been building on HPUX 9, so the options may be
-# different on version 10.
-"hpux-cc",	"cc:-DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit +O4 -Wl,-a,archive:(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
-##"hpux-kr-cc",	"cc:-DB_ENDIAN -DNOCONST -DNOPROTO -D_HPUX_SOURCE:(unknown)::DES_PTR DES_UNROLL:::",
-"hpux-gcc",	"gcc:-DB_ENDIAN -O3:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-# HPUX from www.globus.org
-"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit:(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit:(unknown)::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
+# HPUX 9.X config.
+# Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or gcc.
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# HPUX 10.X config.  Supports threads.
+"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z:-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3:-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# HPUX 11.X from www.globus.org.
+# Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
+"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit:-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit:-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
 
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
@@ -319,7 +322,7 @@ foreach (@ARGV)
 			{
 			$libs.=$_." ";
 			}
-		elsif (/^-[DfK](.*)$/)
+		elsif (/^-[^-]/ or /^\+/)
 			{
 			$flags.=$_." ";
 			}
