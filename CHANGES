@@ -17,6 +17,8 @@
 
   *) Change bctest to avoid here-documents inside command substitution
      (workaround for FreeBSD /bin/sh bug).
+     For compatibility with Ultrix, avoid shell functions (introduced
+     in the bctest version that searches along $PATH).
      [Bodo Moeller]
 
   *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
