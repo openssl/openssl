@@ -61,7 +61,9 @@
 #include "cryptlib.h"
 #include <openssl/crypto.h>
 
+#ifndef NO_WINDOWS_BRAINDEATH
 #include "buildinf.h"
+#endif
 
 const char *SSLeay_version(int t)
 	{
@@ -72,7 +74,7 @@ const char *SSLeay_version(int t)
 #ifdef DATE
 		static char buf[sizeof(DATE)+11];
 
-		sprintf(buf,"built on: %s",DATE);
+		BIO_snprintf(buf,sizeof buf,"built on: %s",DATE);
 		return(buf);
 #else
 		return("built on: date not available");
@@ -83,7 +85,7 @@ const char *SSLeay_version(int t)
 #ifdef CFLAGS
 		static char buf[sizeof(CFLAGS)+11];
 
-		sprintf(buf,"compiler: %s",CFLAGS);
+		BIO_snprintf(buf,sizeof buf,"compiler: %s",CFLAGS);
 		return(buf);
 #else
 		return("compiler: information not available");
@@ -94,7 +96,7 @@ const char *SSLeay_version(int t)
 #ifdef PLATFORM
 		static char buf[sizeof(PLATFORM)+11];
 
-		sprintf(buf,"platform: %s", PLATFORM);
+		BIO_snprintf(buf,sizeof buf,"platform: %s", PLATFORM);
 		return(buf);
 #else
 		return("platform: information not available");

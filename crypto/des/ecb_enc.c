@@ -60,6 +60,7 @@
 #include "des_ver.h"
 #include "spr.h"
 #include <openssl/opensslv.h>
+#include <openssl/bio.h>
 
 OPENSSL_GLOBAL const char *libdes_version="libdes" OPENSSL_VERSION_PTEXT;
 OPENSSL_GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
@@ -97,7 +98,8 @@ const char *DES_options(void)
 			size="int";
 		else
 			size="long";
-		sprintf(buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,size);
+		BIO_snprintf(buf,sizeof buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,
+			     size);
 		init=0;
 		}
 	return(buf);

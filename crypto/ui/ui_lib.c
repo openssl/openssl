@@ -430,14 +430,14 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
 		len += sizeof(prompt3) - 1;
 
 		prompt = (char *)OPENSSL_malloc(len + 1);
-		strcpy(prompt, prompt1);
-		strcat(prompt, object_desc);
+		BUF_strlcpy(prompt, prompt1, len + 1);
+		BUF_strlcat(prompt, object_desc, len + 1);
 		if (object_name)
 			{
-			strcat(prompt, prompt2);
-			strcat(prompt, object_name);
+			BUF_strlcat(prompt, prompt2, len + 1);
+			BUF_strlcat(prompt, object_name, len + 1);
 			}
-		strcat(prompt, prompt3);
+		BUF_strlcat(prompt, prompt3, len + 1);
 		}
 	return prompt;
 	}
@@ -865,7 +865,8 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 			return -1;
 			}
 
-		strcpy(uis->result_buf, result);
+		BUF_strlcpy(uis->result_buf, result,
+			    uis->_.string_data.result_maxsize + 1);
 		break;
 	case UIT_BOOLEAN:
 		{

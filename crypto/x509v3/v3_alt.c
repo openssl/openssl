@@ -137,7 +137,8 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 			X509V3_add_value("IP Address","<invalid>", &ret);
 			break;
 		}
-		sprintf(oline, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+		BIO_snprintf(oline, sizeof oline,
+			     "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 		X509V3_add_value("IP Address",oline, &ret);
 		break;
 

@@ -579,16 +579,19 @@ bad:
 	if (configfile == NULL)
 		{
 		const char *s=X509_get_default_cert_area();
+		size_t len;
 
 #ifdef OPENSSL_SYS_VMS
-		tofree=OPENSSL_malloc(strlen(s)+sizeof(CONFIG_FILE));
+		len = strlen(s)+sizeof(CONFIG_FILE);
+		tofree=OPENSSL_malloc(len);
 		strcpy(tofree,s);
 #else
-		tofree=OPENSSL_malloc(strlen(s)+sizeof(CONFIG_FILE)+1);
-		strcpy(tofree,s);
-		strcat(tofree,"/");
+		len = strlen(s)+sizeof(CONFIG_FILE)+1;
+		tofree=OPENSSL_malloc(len);
+		BUF_strlcpy(tofree,s,len);
+		BUF_strlcat(tofree,"/",len);
 #endif
-		strcat(tofree,CONFIG_FILE);
+		BUF_strlcat(tofree,CONFIG_FILE,len);
 		configfile=tofree;
 		}
 
@@ -1312,7 +1315,7 @@ bad:
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[0],"-new");
 #else
-			strcat(buf[0],".new");
+			BUF_strlcat(buf[0],".new",sizeof(buf[0]));
 #endif
 
 			if (!save_serial(buf[0],serial)) goto err;
@@ -1322,7 +1325,7 @@ bad:
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[1],"-new");
 #else
-			strcat(buf[1],".new");
+			BUF_strlcat(buf[1],".new",sizeof(buf[1]));
 #endif
 
 			if (BIO_write_filename(out,buf[1]) <= 0)
@@ -1340,7 +1343,7 @@ bad:
 		for (i=0; i<sk_X509_num(cert_sk); i++)
 			{
 			int k;
-			unsigned char *n;
+			char *n;
 
 			x=sk_X509_value(cert_sk,i);
 
@@ -1356,15 +1359,19 @@ bad:
 			strcpy(buf[2],outdir);
 
 #ifndef OPENSSL_SYS_VMS
-			strcat(buf[2],"/");
+			BUF_strlcat(buf[2],"/",sizeof(buf[2]));
 #endif
 
-			n=(unsigned char *)&(buf[2][strlen(buf[2])]);
+			n=(char *)&(buf[2][strlen(buf[2])]);
 			if (j > 0)
 				{
 				for (k=0; k<j; k++)
 					{
-					sprintf((char *)n,"%02X",(unsigned char)*(p++));
+					if (n >= &(buf[2][sizeof(buf[2])]))
+						break;
+					BIO_snprintf(n,
+						     &buf[2][0] + sizeof(buf[2]) - n,
+						     "%02X",(unsigned char)*(p++));
 					n+=2;
 					}
 				}
@@ -1396,7 +1403,7 @@ bad:
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
 #else
-			strcat(buf[2],".old");
+			BUF_strlcat(buf[2],".old",sizeof(buf[2]));
 #endif
 
 			BIO_free(in);
@@ -1425,7 +1432,7 @@ bad:
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
 #else
-			strcat(buf[2],".old");
+			BUF_strlcat(buf[2],".old",sizeof(buf[2]));
 #endif
 
 			if (rename(dbfile,buf[2]) < 0)
@@ -1595,7 +1602,7 @@ bad:
 
 			strcpy(buf[0],dbfile);
 #ifndef OPENSSL_SYS_VMS
-			strcat(buf[0],".new");
+			BUF_strlcat(buf[0],".new",sizeof(buf[0]));
 #else
 			strcat(buf[0],"-new");
 #endif
@@ -1614,7 +1621,7 @@ bad:
 			strncpy(buf[1],dbfile,BSIZE-4);
 			buf[1][BSIZE-4]='\0';
 #ifndef OPENSSL_SYS_VMS
-			strcat(buf[1],".old");
+			BUF_strlcat(buf[1],".old",sizeof(buf[1]));
 #else
 			strcat(buf[1],"-old");
 #endif
@@ -2352,7 +2359,7 @@ again2:
 		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
-	strcpy(row[DB_file],"unknown");
+	BUF_strlcpy(row[DB_file],"unknown",8);
 	row[DB_type][0]='V';
 	row[DB_type][1]='\0';
 
@@ -2653,7 +2660,7 @@ static int do_revoke(X509 *x509, TXT_DB *db, int type, char *value)
 			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto err;
 			}
-		strcpy(row[DB_file],"unknown");
+		BUF_strlcpy(row[DB_file],"unknown",8);
 		row[DB_type][0]='V';
 		row[DB_type][1]='\0';
 
@@ -2977,16 +2984,16 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 
 	if (!str) return NULL;
 
-	strcpy(str, (char *)revtm->data);
+	BUF_strlcpy(str, (char *)revtm->data, i);
 	if (reason)
 		{
-		strcat(str, ",");
-		strcat(str, reason);
+		BUF_strlcat(str, ",", i);
+		BUF_strlcat(str, reason, i);
 		}
 	if (other)
 		{
-		strcat(str, ",");
-		strcat(str, other);
+		BUF_strlcat(str, ",", i);
+		BUF_strlcat(str, other, i);
 		}
 	ASN1_UTCTIME_free(revtm);
 	return str;

@@ -1065,7 +1065,7 @@ void ERR_add_error_data(int num, ...)
 				else
 					str=p;
 				}
-			strcat(str,a);
+			BUF_strlcat(str,a,s+1);
 			}
 		}
 	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);

@@ -302,8 +302,9 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		k=0;
 		for (;;)
 			{
-			sprintf(b->data,"%s/%08lx.%s%d",ctx->dirs[i],h,
-				postfix,k);
+			BIO_snprintf(b->data,b->max,
+				     "%s/%08lx.%s%d",ctx->dirs[i],h,
+				     postfix,k);
 			k++;
 			if (stat(b->data,&st) < 0)
 				break;

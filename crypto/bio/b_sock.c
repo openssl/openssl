@@ -709,12 +709,12 @@ int BIO_accept(int sock, char **addr)
 			}
 		*addr=p;
 		}
-	sprintf(*addr,"%d.%d.%d.%d:%d",
-		(unsigned char)(l>>24L)&0xff,
-		(unsigned char)(l>>16L)&0xff,
-		(unsigned char)(l>> 8L)&0xff,
-		(unsigned char)(l     )&0xff,
-		port);
+	BIO_snprintf(*addr,24,"%d.%d.%d.%d:%d",
+		     (unsigned char)(l>>24L)&0xff,
+		     (unsigned char)(l>>16L)&0xff,
+		     (unsigned char)(l>> 8L)&0xff,
+		     (unsigned char)(l     )&0xff,
+		     port);
 end:
 	return(ret);
 	}

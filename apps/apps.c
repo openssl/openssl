@@ -1411,14 +1411,16 @@ int load_config(BIO *err, CONF *cnf)
 char *make_config_name()
 	{
 	const char *t=X509_get_default_cert_area();
+	size_t len;
 	char *p;
 
-	p=OPENSSL_malloc(strlen(t)+strlen(OPENSSL_CONF)+2);
-	strcpy(p,t);
+	len=strlen(t)+strlen(OPENSSL_CONF)+2;
+	p=OPENSSL_malloc(len);
+	BUF_strlcpy(p,t,len);
 #ifndef OPENSSL_SYS_VMS
-	strcat(p,"/");
+	BUF_strlcat(p,"/",len);
 #endif
-	strcat(p,OPENSSL_CONF);
+	BUF_strlcat(p,OPENSSL_CONF,len);
 
 	return p;
 	}
