@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/fips.h>
 
 /* We generate DH parameters as follows
  * find a prime q which is prime_len/2 bits long.
@@ -93,6 +94,14 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	DH *ret=NULL;
 	int g,ok= -1;
 	BN_CTX *ctx=NULL;
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode)
+		{
+		DHerr(DH_F_DH_GENERATE_PARAMETERS, DH_R_NOT_PERMITTED_IN_FIPS_MODE);
+		return NULL;
+		}
+#endif
 
 	ret=DH_new();
 	if (ret == NULL) goto err;

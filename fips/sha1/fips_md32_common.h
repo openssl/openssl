@@ -417,6 +417,9 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 	register unsigned long l;
 	int sw,sc,ew,ec;
 
+	if(FIPS_selftest_fail)
+		return 0;
+
 	if (len==0) return 1;
 
 	l=(c->Nl+(len<<3))&0xffffffffL;

@@ -68,7 +68,7 @@ static int FIPS_des_test()
     DES_cblock buf;
 
     ERR_clear_error();
-    if (DES_set_key(&userkey, &key))
+    if (DES_set_key(&userkey, &key) < 0)
         return 0;
     DES_ecb_encrypt( &plaintext, &ciphertext, &key, 1);
     DES_ecb_encrypt( &ciphertext, &buf, &key, 0);
@@ -172,10 +172,11 @@ static int dh_test()
     {
     DH *dh;
 
+    ERR_clear_error();
     dh = DH_generate_parameters(256, 2, NULL, NULL);
     if (dh)
-        return 0;
-    return 1;
+        return 1;
+    return 0;
     }
 
 static int Error;
