@@ -455,6 +455,9 @@ struct evp_cipher_ctx_st
 		RIJNDAEL_KEY rijndael;
 #endif
 		} c;
+	int final_used;
+	int block_mask;
+	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
 	};
 
 typedef struct evp_Encode_Ctx_st

@@ -24,9 +24,9 @@ des-cbc           3480.74k     5068.76k     5510.34k     5609.87k     5635.52k
 des-cbc           3483.72k     5067.62k     5504.60k     5708.01k     5724.80k
      After:
 encrypt
-des-cbc           4581.64k     5666.39k     5811.23k     5871.60k     5833.23k
+des-cbc           4660.16k     5650.19k     5807.19k     5827.13k     5783.32k
 decrypt
-des-cbc           3615.18k     5102.53k     5501.58k     5631.13k     5635.52k
+des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Ben Laurie]
 
   *) Fix crypto/bn/asm/mips3.s.
