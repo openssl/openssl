@@ -119,7 +119,9 @@ int SSL_clear(SSL *s)
 	s->client_version=s->version;
 	s->rwstate=SSL_NOTHING;
 	s->rstate=SSL_ST_READ_HEADER;
+#if 0
 	s->read_ahead=s->ctx->read_ahead;
+#endif
 
 	if (s->init_buf != NULL)
 		{
