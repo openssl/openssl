@@ -1,4 +1,4 @@
-/* crypto/bn/bn_nist.p */
+/* crypto/bn/bn_nist.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
