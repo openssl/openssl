@@ -793,9 +793,20 @@ that is allocated when an application starts up. Since such tables do not grow
 in size over time they are harmless.
 
 These internal tables can be freed up when an application closes using various
-functions.  Currently these include: EVP_cleanup(), ERR_remove_state(),
-ERR_free_strings(), ENGINE_cleanup(), CONF_modules_unload() and
-CRYPTO_cleanup_all_ex_data().
+functions.  Currently these include following:
+
+Thread-local cleanup functions:
+
+  ERR_remove_state()
+
+Application-global cleanup functions that are aware of usage (and therefore
+thread-safe):
+
+  ENGINE_cleanup() and CONF_modules_unload()
+
+"Brutal" (thread-unsafe) Application-global cleanup functions:
+
+  ERR_free_strings(), EVP_cleanup() and CRYPTO_cleanup_all_ex_data().
 
 
 ===============================================================================
