@@ -86,6 +86,8 @@ extern "C" {
 #define OCSP_NODELEGATED		0x80
 #define OCSP_NOCHECKS			0x100
 #define OCSP_TRUSTOTHER			0x200
+#define OCSP_RESPID_KEY			0x400
+#define OCSP_NOTIME			0x800
 
 /*   CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
@@ -446,29 +448,21 @@ int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
 int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 
-OCSP_BASICRESP *OCSP_basic_response_new(int tag,
-					X509* cert);
-
-int OCSP_basic_response_add(OCSP_BASICRESP           *rsp,
-			    OCSP_CERTID              *cid,
-			    OCSP_CERTSTATUS          *cst,
-			    char                     *thisUpdate,
-			    char                     *nextUpdate);
-
-int OCSP_basic_response_sign(OCSP_BASICRESP *brsp, 
-			     EVP_PKEY       *key,
-			     const EVP_MD   *dgst,
-			     STACK_OF(X509) *certs);
-
-int OCSP_response_verify(OCSP_RESPONSE *rsp, EVP_PKEY *pkey);
-
-int OCSP_basic_response_verify(OCSP_BASICRESP *rsp, EVP_PKEY *pkey);
-
-
-OCSP_RESPONSE *OCSP_response_new(int status,
-				 int nid,
-				 int (*i2d)(),
-				 char *data);
+int OCSP_request_onereq_count(OCSP_REQUEST *req);
+OCSP_ONEREQ *OCSP_request_onereq_get0(OCSP_REQUEST *req, int i);
+OCSP_CERTID *OCSP_onereq_get0_id(OCSP_ONEREQ *one);
+int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
+			ASN1_OCTET_STRING **pikeyHash,
+			ASN1_INTEGER **pserial, OCSP_CERTID *cid);
+OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
+						OCSP_CERTID *cid,
+						int status, int reason,
+						ASN1_TIME *revtime,
+					ASN1_TIME *thisupd, ASN1_TIME *nextupd);
+int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
+int OCSP_basic_sign(OCSP_BASICRESP *brsp, 
+			X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
+			STACK_OF(X509) *certs, unsigned long flags);
 
 ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(), 
 				char *data, STACK_OF(ASN1_OBJECT) *sk);
@@ -567,6 +561,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_CERT_ID_NEW				 102
 #define OCSP_F_CERT_STATUS_NEW				 103
 #define OCSP_F_D2I_OCSP_NONCE				 109
+#define OCSP_F_OCSP_BASIC_ADD1_STATUS			 118
 #define OCSP_F_OCSP_BASIC_VERIFY			 113
 #define OCSP_F_OCSP_CHECK_DELEGATED			 117
 #define OCSP_F_OCSP_CHECK_IDS				 114
@@ -598,6 +593,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_NO_CONTENT				 115
 #define OCSP_R_NO_PUBLIC_KEY				 103
 #define OCSP_R_NO_RESPONSE_DATA				 104
+#define OCSP_R_NO_REVOKED_TIME				 132
 #define OCSP_R_NO_SIGNATURE				 105
 #define OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA	 129
 #define OCSP_R_REVOKED_NO_TIME				 106

@@ -3,6 +3,19 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Functions for OCSP responders. OCSP_request_onereq_count(),
+     OCSP_request_onereq_get0(), OCSP_onereq_get0_id() and OCSP_id_get0_info()
+     extract information from a certificate request. OCSP_response_create()
+     creates a response and optionally adds a basic response structure.
+     OCSP_basic_add1_status() adds a complete single response to a basic
+     reponse and returns the OCSP_SINGLERESP structure just added (to allow
+     extensions to be included for example). OCSP_basic_add1_cert() adds a
+     certificate to a basic response and OCSP_basic_sign() signs a basic
+     response with various flags. New helper functions ASN1_TIME_check()
+     (checks validity of ASN1_TIME structure) and ASN1_TIME_to_generalizedtime()
+     (converts ASN1_TIME to GeneralizedTime).
+     [Steve Henson]
+
   *) Various new functions. EVP_Digest() combines EVP_Digest{Init,Update,Final}()
      in a single operation. X509_get0_pubkey_bitstr() extracts the public_key
      structure from a certificate. X509_pubkey_digest() digests tha public_key
