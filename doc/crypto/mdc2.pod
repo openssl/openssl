@@ -44,13 +44,16 @@ MDC2() returns a pointer to the hash value.
 
 MDC2_Init(), MDC2_Update() and MDC2_Final() do not return values.
 
+Applications should use the higher level functions EVP_DigestInit(3) etc.
+instead of calling the hash functions directly.
+
 =head1 CONFORMING TO
 
 ISO/IEC 10118-2, with DES
 
 =head1 SEE ALSO
 
-L<sha(3)|sha(3)>
+L<sha(3)|sha(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
 
 =head1 HISTORY
 

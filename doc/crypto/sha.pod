@@ -37,6 +37,9 @@ be hashed (B<len> bytes at B<data>).
 SHA1_Final() places the message digest in B<md>, which must have space
 for SHA_DIGEST_LENGTH == 20 bytes of output, and erases the B<SHA_CTX>.
 
+Applications should use the higher level functions EVP_DigestInit(3) etc.
+instead of calling the hash functions directly.
+
 The predecessor of SHA-1, SHA, is also implemented, but it should be
 used only when backward compatibility is required.
 
@@ -56,7 +59,7 @@ ANSI X9.30
 
 =head1 SEE ALSO
 
-L<ripemd(3)|ripemd(3)>, L<hmac(3)|hmac(3)>
+L<ripemd(3)|ripemd(3)>, L<hmac(3)|hmac(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
 
 =head1 HISTORY
 

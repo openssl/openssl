@@ -44,6 +44,8 @@ BN_rshift() shifts B<a> right by B<n> bits and places the result in
 B<r> (C<r=a/2^n>). BN_rshift1() shifts B<a> right by one and places
 the result in B<r> (C<r=a/2>).
 
+For the shift functions, B<r> and B<a> may be the same variable.
+
 =head1 RETURN VALUES
 
 BN_is_bit_set() returns 1 if the bit is set, 0 otherwise.

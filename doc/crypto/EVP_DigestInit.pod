@@ -43,60 +43,60 @@ EVP_DigestInit, EVP_DigestUpdate, EVP_DigestFinal - EVP digest routines
 
 The EVP digest routines are a high level interface to message digests.
 
-B<EVP_DigestInit()> initialises a digest context B<ctx> to use a digest
+EVP_DigestInit() initialises a digest context B<ctx> to use a digest
 B<type>: this will typically be supplied by a function such as
-B<EVP_sha1()>.
+EVP_sha1().
 
-B<EVP_DigestUpdate()> hashes B<cnt> bytes of data at B<d> into the
+EVP_DigestUpdate() hashes B<cnt> bytes of data at B<d> into the
 digest context B<ctx>. This funtion can be called several times on the
 same B<ctx> to hash additional data.
 
-B<EVP_DigestFinal()> retrieves the digest value from B<ctx> and places
+EVP_DigestFinal() retrieves the digest value from B<ctx> and places
 it in B<md>. If the B<s> parameter is not NULL then the number of
 bytes of data written (i.e. the length of the digest) will be written
 to the integer at B<s>, at most B<EVP_MAX_MD_SIZE> bytes will be written.
-After calling B<EVP_DigestFinal> no additional calls to B<EVP_DigestUpdate>
-can be made, but B<EVP_DigestInit> can be called to initialiase a new
+After calling EVP_DigestFinal() no additional calls to EVP_DigestUpdate()
+can be made, but EVP_DigestInit() can be called to initialiase a new
 digest operation.
 
-B<EVP_MD_CTX_copy> can be used to copy the message digest state from
+EVP_MD_CTX_copy() can be used to copy the message digest state from
 B<in> to B<out>. This is useful if large amounts of data are to be
 hashed which only differ in the last few bytes.
 
-B<EVP_MD_size> and B<EVP_MD_CTX_size> return the size of the message digest
+EVP_MD_size() and EVP_MD_CTX_size() return the size of the message digest
 when passed an B<EVP_MD> or an B<EVP_MD_CTX> structure, i.e. the size of the
 hash.
 
-B<EVP_MD_block_size> and B<EVP_MD_CTX_block_size> return the block size of the
+EVP_MD_block_size() and EVP_MD_CTX_block_size() return the block size of the
 message digest when passed an B<EVP_MD> or an B<EVP_MD_CTX> structure.
 
-B<EVP_MD_type> and B<EVP_MD_CTX_type> return the NID of the OBJECT IDENTIFIER
+EVP_MD_type() and EVP_MD_CTX_type() return the NID of the OBJECT IDENTIFIER
 representing the given message digest when passed an B<EVP_MD> structure.
-For example B<EVP_MD_type(EVP_sha1())> returns B<NID_sha1>. This function is
+For example EVP_MD_type(EVP_sha1()) returns B<NID_sha1>. This function is
 normally used when setting ASN1 OIDs.
 
-B<EVP_MD_CTX_type> return the B<EVP_MD> structure corresponding to the passed
+EVP_MD_CTX_type() returns the B<EVP_MD> structure corresponding to the passed
 B<EVP_MD_CTX>.
 
-B<EVP_MD_pkey_type> returns the NID of the public key signing algorithm associated
-with this digest. For example B<EVP_sha1()> is associated with RSA so this will
+EVP_MD_pkey_type() returns the NID of the public key signing algorithm associated
+with this digest. For example EVP_sha1() is associated with RSA so this will
 return B<NID_sha1WithRSAEncryption>. This "link" between digests and signature
 algorithms may not be retained in future versions of OpenSSL.
 
-B<EVP_md2>, B<EVP_md5>, B<EVP_sha>, B<EVP_sha1>, B<EVP_mdc2> and B<EVP_ripemd160>
+EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(), EVP_mdc2() and EVP_ripemd160()
 return B<EVP_MD> structures for the MD2, MD5, SHA, SHA1, MDC2 and RIPEMD160 digest
 algorithms respectively. The associated signature algorithm is RSA in each case.
 
-B<EVP_dss> and B<EVP_dss1> return B<EVP_MD> structures for SHA and SHA1 digest
+EVP_dss() and EVP_dss1() return B<EVP_MD> structures for SHA and SHA1 digest
 algorithms but using DSS (DSA) for the signature algorithm.
 
-B<EVP_md_null> is a "null" message digest that does nothing: i.e. the hash it
+EVP_md_null() is a "null" message digest that does nothing: i.e. the hash it
 returns is of zero length.
 
-B<EVP_get_digestbyname>, B<EVP_get_digestbynid> and B<EVP_get_digestbyobj>
+EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return an B<EVP_MD> structure when passed a digest name, a digest NID or
 and ASN1_OBJECT structure respectively. The digest table must be initialised
-using, for example, B<OpenSSL_add_all_digests()> for these functions to work.
+using, for example, OpenSSL_add_all_digests() for these functions to work.
 
 =head1 RETURN VALUES
 
@@ -178,7 +178,7 @@ internal digest operations will never fail some future hardware based operations
 might.
 
 The link between digests and signing algorithms results in a situation where
-B<EVP_sha1()> must be used with RSA and B<EVP_dss1()> must be used with DSS
+EVP_sha1() must be used with RSA and EVP_dss1() must be used with DSS
 even though they are identical digests.
 
 The size of an B<EVP_MD_CTX> structure is determined at compile time: this results
@@ -186,6 +186,13 @@ in code that must be recompiled if the size of B<EVP_MD_CTX> increases.
 
 =head1 SEE ALSO
 
+L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
+L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
+L<sha(3)|sha(3)>
+
 =head1 HISTORY
+
+EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal() are
+available in all versions of SSLeay and OpenSSL.
 
 =cut
