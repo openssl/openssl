@@ -34,7 +34,7 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
 	des_enc.c fcrypt_b.c \
 	xcbc_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.o
+	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c
 
 LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 	ecb3_enc.o cfb64enc.o cfb64ede.o cfb_enc.o  ofb64ede.o \
