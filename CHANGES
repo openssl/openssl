@@ -4,6 +4,9 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) OpenUNIX-8 support (Boyd Lynn Gerber <gerberb@zenez.com>)
+     [Lutz Jaenicke]
+
   *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
      'wristwatch attack' using huge encoding parameters (cf.
      James H. Manger's CRYPTO 2001 paper).  Note that the
