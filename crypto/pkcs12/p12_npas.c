@@ -107,7 +107,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 {
 	STACK_OF(PKCS7) *asafes, *newsafes;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
-	int i, bagnid, pbe_nid, pbe_iter, pbe_saltlen;
+	int i, bagnid, pbe_nid = 0, pbe_iter = 0, pbe_saltlen = 0;
 	PKCS7 *p7, *p7new;
 	ASN1_OCTET_STRING *p12_data_tmp = NULL, *macnew = NULL;
 	unsigned char mac[EVP_MAX_MD_SIZE];
