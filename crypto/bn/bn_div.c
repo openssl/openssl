@@ -235,8 +235,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		n0=wnump[0];
 		n1=wnump[-1];
 		if (n0 == d0)
+			{
 			q=BN_MASK2;
-		else
+#ifdef REMAINDER_IS_ALREADY_CALCULATED /* in this case it isn't */
+			rem=(n1-q*d0)&BN_MASK2;
+#endif
+			}
+		else /* n0 < d0 */
 #if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
 			q=(BN_ULONG)(((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0);
 #else
