@@ -114,7 +114,7 @@ static char *x509_usage[]={
 " -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
 " -md2/-md5/-sha1/-mdc2 - digest to do an RSA sign with\n",
-" -config         - configuration file with X509V3 extensions to add\n",
+" -extfile        - configuration file with X509V3 extensions to add\n",
 NULL
 };
 
@@ -213,7 +213,7 @@ int MAIN(int argc, char **argv)
 				goto bad;
 				}
 			}
-		else if (strcmp(*argv,"-config") == 0)
+		else if (strcmp(*argv,"-extfile") == 0)
 			{
 			if (--argc < 1) goto bad;
 			extfile= *(++argv);

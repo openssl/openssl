@@ -99,7 +99,7 @@ extension section is used when the -x509 option is present to create a
 self signed root certificate.
 
 The 'x509' utility also supports extensions when it signs a certificate.
-The -config option is used to set the configuration file containing the
+The -extfile option is used to set the configuration file containing the
 extensions. In this case a line with:
 
 extensions = extension_section
