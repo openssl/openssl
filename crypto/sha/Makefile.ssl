@@ -21,6 +21,7 @@ SHA1_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
+AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
 TEST=shatest.c sha1test.c sha256t.c sha512t.c
@@ -58,10 +59,10 @@ asm/sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 asm/s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-sse2.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
 # a.out
-asm/sx86-out.o: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl a.out $(CFLAGS) $(PROCESSOR) | as -o ../$@)
-asm/s512sse2-out.o:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) | as -o ../$@)
+sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha1-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
 asm/sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl $@ $(CFLAGS))
@@ -100,7 +101,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/sx86unix.cpp asm/*.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f asm/sx86unix.cpp asm/*.s asm/*.o *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -347,7 +347,7 @@ EOF
 		{ $tmp=push(@out,"TYPE($func,\@function)\n"); }
 	elsif ($main'coff)
 		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
-	elsif ($main'aout)
+	elsif ($main'aout and !$main'pic)
 		{ }
 	else	{ $tmp=push(@out,".type\t$func,\@function\n"); }
 	push(@out,".align\t$align\n");
@@ -379,7 +379,7 @@ EOF
 		{ push(@out,"TYPE($func,\@function)\n"); }
 	elsif ($main'coff)
 		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
-	elsif ($main'aout)
+	elsif ($main'aout and !$main'pic)
 		{ }
 	else	{ push(@out,".type	$func,\@function\n"); }
 	push(@out,".align\t$align\n");
@@ -717,11 +717,13 @@ ___
 		}
 	elsif ($main'aout)
 		{
-		$tmp=<<___;	# OpenBSD way...
-.text
-.globl	${under}_GLOBAL_\$I\$$f
+		local($ctor)="${under}_GLOBAL_\$I\$$f";
+		$tmp=".text\n";
+		$tmp.=".type	$ctor,\@function\n" if ($main'pic);
+		$tmp.=<<___;	# OpenBSD way...
+.globl	$ctor
 .align	2
-${under}_GLOBAL_\$I\$$f
+$ctor:
 	jmp	$under$f
 ___
 		}

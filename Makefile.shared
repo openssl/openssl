@@ -167,6 +167,36 @@ link_a.gnu:
 link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
+link_o.bsd:
+	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	$(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so; \
+	SHLIB_SUFFIX=; \
+	LIBDEPS=; \
+	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
+	NOALLSYMSFLAGS=; \
+	SHAREDFLAGS="-shared -nostdlib"; \
+	SHAREDCMD=$(CC); \
+	fi; $(LINK_SO_O)
+link_a.bsd:
+	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	$(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so; \
+	SHLIB_SUFFIX=; \
+	LIBDEPS=; \
+	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
+	NOALLSYMSFLAGS=; \
+	SHAREDFLAGS="-shared -nostdlib"; \
+	SHAREDCMD=$(CC); \
+	fi; $(LINK_SO_A)
+link_app.bsd:
+	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
+	LDCMD=$(CC); \
+	LDFLAGS="-Wl,-rpath,$(LIBPATH)"; \
+	LIBDEPS="$(LIBDEPS)"; \
+	APPNAME="$(APPNAME)"; \
+	fi; $(LINK_APP)
+
 # For Darwin AKA Mac OS/X (dyld)
 link_o.darwin:
 	@ $(CALC_VERSIONS); \
@@ -707,7 +737,10 @@ symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
 link_a.bsd-gcc-shared link_a.linux-shared link_a.gnu-shared: link_a.gnu
 link_app.bsd-gcc-shared link_app.linux-shared link_app.gnu-shared: link_app.gnu
-symlink.bsd-gcc-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
+symlink.bsd-gcc-shared symlink.bsd-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
+link_o.bsd-shared: link_o.bsd
+link_a.bsd-shared: link_a.bsd
+link_app.bsd-shared: link_app.bsd
 link_o.darwin-shared: link_o.darwin
 link_a.darwin-shared: link_a.darwin
 link_app.darwin-shared: link_app.darwin

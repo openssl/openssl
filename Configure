@@ -116,7 +116,7 @@ my $bits2="SIXTY_FOUR_BIT ";
 
 my $x86_elf_asm="x86cpuid-elf.o:asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o::asm/bx86-elf.o:asm/mx86-elf.o:asm/sx86-elf.o asm/s512sse2-elf.o:asm/cx86-elf.o:asm/rx86-elf.o:asm/rm86-elf.o:asm/r586-elf.o";
 my $x86_coff_asm="x86cpuid-cof.o:asm/bn86-cof.o asm/co86-cof.o:asm/dx86-cof.o asm/yx86-cof.o::asm/bx86-cof.o:asm/mx86-cof.o:asm/sx86-cof.o asm/s512sse2-cof.o:asm/cx86-cof.o:asm/rx86-cof.o:asm/rm86-cof.o:asm/r586-cof.o";
-my $x86_out_asm="x86cpuid-out.o:asm/bn86-out.o asm/co86-out.o:asm/dx86-out.o asm/yx86-out.o::asm/bx86-out.o:asm/mx86-out.o:asm/sx86-out.o asm/s512sse2-out.o:asm/cx86-out.o:asm/rx86-out.o:asm/rm86-out.o:asm/r586-out.o";
+my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o::bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o";
 my $no_asm="::::::::::";
 
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
@@ -363,7 +363,7 @@ my %table=(
 # Some OpenBSD from Bob Beck <beck@obtuse.com>
 "OpenBSD",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "OpenBSD-alpha",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-i386",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-i386",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "OpenBSD-m68k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "OpenBSD-m88k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "OpenBSD-mips",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
