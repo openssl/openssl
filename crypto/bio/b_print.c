@@ -836,5 +836,5 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 		 * had the buffer been large enough.) */
 		return -1;
 	else
-		return (retlen <= INT_MAX) ? retlen : -1;
+		return (retlen <= INT_MAX) ? (int)retlen : -1;
 	}
