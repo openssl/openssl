@@ -233,7 +233,7 @@ ERR_load_EVP_strings                    240	EXIST::FUNCTION:
 ERR_load_OBJ_strings                    241	EXIST::FUNCTION:
 ERR_load_PEM_strings                    242	EXIST::FUNCTION:
 ERR_load_PROXY_strings                  243	NOEXIST::FUNCTION:
-ERR_load_RSA_strings                    244	EXIST::FUNCTION:RSA
+ERR_load_RSA_strings                    244	NOEXIST::FUNCTION:
 ERR_load_X509_strings                   245	EXIST::FUNCTION:
 ERR_load_crypto_strings                 246	EXIST::FUNCTION:
 ERR_load_strings                        247	EXIST::FUNCTION:
@@ -948,7 +948,7 @@ HMAC_Update                             964	EXIST::FUNCTION:HMAC
 HMAC_Final                              965	EXIST::FUNCTION:HMAC
 ERR_get_next_error_library              966	EXIST::FUNCTION:
 EVP_PKEY_cmp_parameters                 967	EXIST::FUNCTION:
-HMAC_cleanup                            968	EXIST::FUNCTION:HMAC
+HMAC_cleanup                            968	NOEXIST::FUNCTION:
 BIO_ptr_ctrl                            969	EXIST::FUNCTION:
 BIO_new_file_internal                   970	EXIST:WIN16:FUNCTION:FP_API
 BIO_new_fp_internal                     971	EXIST:WIN16:FUNCTION:FP_API
@@ -2617,3 +2617,14 @@ KRB5_TICKET_it                          3066	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 KRB5_TICKET_it                          3066	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 KRB5_TICKET_free                        3067	EXIST::FUNCTION:
 KRB5_APREQ_free                         3068	EXIST::FUNCTION:
+EVP_dev_crypto_des_ede3_cbc             3069	EXIST::FUNCTION:DES
+PEM_bytes_read_bio                      3070	EXIST::FUNCTION:BIO
+X509_STORE_CTX_set_verify_cb            3071	EXIST::FUNCTION:
+PEM_def_callback                        3072	EXIST::FUNCTION:
+EVP_MD_CTX_init                         3073	EXIST::FUNCTION:
+EVP_MD_CTX_create                       3074	EXIST::FUNCTION:
+HMAC_CTX_init                           3075	EXIST::FUNCTION:HMAC
+HMAC_CTX_cleanup                        3076	EXIST::FUNCTION:HMAC
+EVP_MD_CTX_cleanup                      3077	EXIST::FUNCTION:
+EVP_MD_CTX_destroy                      3078	EXIST::FUNCTION:
+des_release_key                         3079	EXIST::FUNCTION:DES
