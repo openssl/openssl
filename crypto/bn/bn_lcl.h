@@ -73,12 +73,17 @@ extern "C" {
 #define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL	(32) /* 32 */
 #define BN_MONT_CTX_SET_SIZE_WORD		(64) /* 32 */
 
+#if 0
 #ifndef BN_MUL_COMBA
-#define bn_mul_comba8(r,a,b)	bn_mul_normal(r,a,8,b,8)
-#define bn_mul_comba4(r,a,b)	bn_mul_normal(r,a,4,b,4)
+/* #define bn_mul_comba8(r,a,b)	bn_mul_normal(r,a,8,b,8) */
+/* #define bn_mul_comba4(r,a,b)	bn_mul_normal(r,a,4,b,4) */
+#endif
+
+#ifndef BN_SQR_COMBA
 /* This is probably faster than using the C code - I need to check */
 #define bn_sqr_comba8(r,a)	bn_mul_normal(r,a,8,a,8)
 #define bn_sqr_comba4(r,a)	bn_mul_normal(r,a,4,a,4)
+#endif
 #endif
 
 /*************************************************************

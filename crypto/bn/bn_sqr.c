@@ -68,13 +68,14 @@ BIGNUM *a;
 BN_CTX *ctx;
 	{
 	int max,al;
-	BIGNUM *tmp;
+	BIGNUM *tmp,*rr;
 
 #ifdef BN_COUNT
 printf("BN_sqr %d * %d\n",a->top,a->top);
 #endif
 	bn_check_top(a);
 	tmp= &(ctx->bn[ctx->tos]);
+	rr=(a != r)?r: (&ctx->bn[ctx->tos+1]);
 
 	al=a->top;
 	if (al <= 0)
@@ -84,25 +85,25 @@ printf("BN_sqr %d * %d\n",a->top,a->top);
 		}
 
 	max=(al+al);
-	if (bn_wexpand(r,max+1) == NULL) return(0);
+	if (bn_wexpand(rr,max+1) == NULL) return(0);
 
 	r->neg=0;
 	if (al == 4)
 		{
 #ifndef BN_SQR_COMBA
 		BN_ULONG t[8];
-		bn_sqr_normal(r->d,a->d,4,t);
+		bn_sqr_normal(rr->d,a->d,4,t);
 #else
-		bn_sqr_comba4(r->d,a->d);
+		bn_sqr_comba4(rr->d,a->d);
 #endif
 		}
 	else if (al == 8)
 		{
 #ifndef BN_SQR_COMBA
 		BN_ULONG t[16];
-		bn_sqr_normal(r->d,a->d,8,t);
+		bn_sqr_normal(rr->d,a->d,8,t);
 #else
-		bn_sqr_comba8(r->d,a->d);
+		bn_sqr_comba8(rr->d,a->d);
 #endif
 		}
 	else 
@@ -111,21 +112,36 @@ printf("BN_sqr %d * %d\n",a->top,a->top);
 		if (al < BN_SQR_RECURSIVE_SIZE_NORMAL)
 			{
 			BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL*2];
-			bn_sqr_normal(r->d,a->d,al,t);
+			bn_sqr_normal(rr->d,a->d,al,t);
 			}
 		else
 			{
-			if (bn_wexpand(tmp,2*max+1) == NULL) return(0);
-			bn_sqr_recursive(r->d,a->d,al,tmp->d);
+			int j,k;
+
+			j=BN_num_bits_word((BN_ULONG)al);
+			j=1<<(j-1);
+			k=j+j;
+			if (al == j)
+				{
+				if (bn_wexpand(a,k*2) == NULL) return(0);
+				if (bn_wexpand(tmp,k*2) == NULL) return(0);
+				bn_sqr_recursive(rr->d,a->d,al,tmp->d);
+				}
+			else
+				{
+				if (bn_wexpand(tmp,max) == NULL) return(0);
+				bn_sqr_normal(rr->d,a->d,al,tmp->d);
+				}
 			}
 #else
 		if (bn_wexpand(tmp,max) == NULL) return(0);
-		bn_sqr_normal(r->d,a->d,al,tmp->d);
+		bn_sqr_normal(rr->d,a->d,al,tmp->d);
 #endif
 		}
 
-	r->top=max;
-	if ((max > 0) && (r->d[max-1] == 0)) r->top--;
+	rr->top=max;
+	if ((max > 0) && (rr->d[max-1] == 0)) rr->top--;
+	if (rr != r) BN_copy(r,rr);
 	return(1);
 	}
 

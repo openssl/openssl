@@ -390,7 +390,7 @@ BN_ULONG *t;
 #ifdef BN_COUNT
 printf(" bn_mul_high %d * %d\n",n2,n2);
 #endif
-	n=(n2+1)/2;
+	n=n2/2;
 
 	/* Calculate (al-ah)*(bh-bl) */
 	neg=zero=0;
@@ -569,11 +569,12 @@ int BN_mul(r,a,b,ctx)
 BIGNUM *r,*a,*b;
 BN_CTX *ctx;
 	{
-	int top,i,j,k,al,bl;
+	int top,al,bl;
+	BIGNUM *rr;
+#ifdef BN_RECURSION
 	BIGNUM *t;
-
-	t=NULL;
-	i=j=k=0;
+	int i,j,k;
+#endif
 
 #ifdef BN_COUNT
 printf("BN_mul %d * %d\n",a->top,b->top);
@@ -593,22 +594,28 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 		return(1);
 		}
 	top=al+bl;
+
+	if ((r == a) || (r == b))
+		rr= &(ctx->bn[ctx->tos+1]);
+	else
+		rr=r;
+
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 	if (al == bl)
 		{
 #  ifdef BN_MUL_COMBA
 /*		if (al == 4)
 			{
-			if (bn_wexpand(r,8) == NULL) return(0);
+			if (bn_wexpand(rr,8) == NULL) return(0);
 			r->top=8;
-			bn_mul_comba4(r->d,a->d,b->d);
+			bn_mul_comba4(rr->d,a->d,b->d);
 			goto end;
 			}
 		else */ if (al == 8)
 			{
-			if (bn_wexpand(r,16) == NULL) return(0);
+			if (bn_wexpand(rr,16) == NULL) return(0);
 			r->top=16;
-			bn_mul_comba8(r->d,a->d,b->d);
+			bn_mul_comba8(rr->d,a->d,b->d);
 			goto end;
 			}
 		else
@@ -617,9 +624,9 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 		if (al < BN_MULL_SIZE_NORMAL)
 #endif
 			{
-			if (bn_wexpand(r,top) == NULL) return(0);
-			r->top=top;
-			bn_mul_normal(r->d,a->d,al,b->d,bl);
+			if (bn_wexpand(rr,top) == NULL) return(0);
+			rr->top=top;
+			bn_mul_normal(rr->d,a->d,al,b->d,bl);
 			goto end;
 			}
 #  ifdef BN_RECURSION
@@ -630,9 +637,9 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #ifdef BN_RECURSION
 	else if ((al < BN_MULL_SIZE_NORMAL) || (bl < BN_MULL_SIZE_NORMAL))
 		{
-		if (bn_wexpand(r,top) == NULL) return(0);
-		r->top=top;
-		bn_mul_normal(r->d,a->d,al,b->d,bl);
+		if (bn_wexpand(rr,top) == NULL) return(0);
+		rr->top=top;
+		bn_mul_normal(rr->d,a->d,al,b->d,bl);
 		goto end;
 		}
 	else
@@ -656,9 +663,9 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #endif
 
 	/* asymetric and >= 4 */ 
-	if (bn_wexpand(r,top) == NULL) return(0);
-	r->top=top;
-	bn_mul_normal(r->d,a->d,al,b->d,bl);
+	if (bn_wexpand(rr,top) == NULL) return(0);
+	rr->top=top;
+	bn_mul_normal(rr->d,a->d,al,b->d,bl);
 
 #ifdef BN_RECURSION
 	if (0)
@@ -673,26 +680,29 @@ symetric:
 		if (al == j) /* exact multiple */
 			{
 			bn_wexpand(t,k*2);
-			bn_wexpand(r,k*2);
-			bn_mul_recursive(r->d,a->d,b->d,al,t->d);
+			bn_wexpand(rr,k*2);
+			bn_mul_recursive(rr->d,a->d,b->d,al,t->d);
 			}
 		else
 			{
 			bn_wexpand(a,k);
 			bn_wexpand(b,k);
 			bn_wexpand(t,k*4);
-			bn_wexpand(r,k*4);
+			bn_wexpand(rr,k*4);
 			for (i=a->top; i<k; i++)
 				a->d[i]=0;
 			for (i=b->top; i<k; i++)
 				b->d[i]=0;
-			bn_mul_part_recursive(r->d,a->d,b->d,al-j,j,t->d);
+			bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
 			}
-		r->top=top;
+		rr->top=top;
 		}
 #endif
+#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 end:
-	bn_fix_top(r);
+#endif
+	bn_fix_top(rr);
+	if (r != rr) BN_copy(r,rr);
 	return(1);
 	}
 

@@ -106,7 +106,7 @@ BN_CTX *ctx;
 
 	if (BN_is_odd(p))
 		{ if (BN_copy(r,a) == NULL) goto err; }
-	else	{ if (BN_one(r)) goto err; }
+	else	{ if (!BN_one(r)) goto err; }
 
 	for (i=1; i<bits; i++)
 		{
@@ -131,30 +131,35 @@ int BN_exp(r,a,p,ctx)
 BIGNUM *r,*a,*p;
 BN_CTX *ctx;
 	{
-	int i,bits,ret=0;
-	BIGNUM *v,*tmp;
+	int i,bits,ret=0,tos;
+	BIGNUM *v,*rr;
 
+	tos=ctx->tos;
 	v= &(ctx->bn[ctx->tos++]);
-	tmp= &(ctx->bn[ctx->tos++]);
+	if ((r == a) || (r == p))
+		rr= &(ctx->bn[ctx->tos++]);
+	else
+		rr=r;
 
 	if (BN_copy(v,a) == NULL) goto err;
 	bits=BN_num_bits(p);
 
 	if (BN_is_odd(p))
-		{ if (BN_copy(r,a) == NULL) goto err; }
-	else	{ if (BN_one(r)) goto err; }
+		{ if (BN_copy(rr,a) == NULL) goto err; }
+	else	{ if (!BN_one(rr)) goto err; }
 
 	for (i=1; i<bits; i++)
 		{
-		if (!BN_sqr(tmp,v,ctx)) goto err;
+		if (!BN_sqr(v,v,ctx)) goto err;
 		if (BN_is_bit_set(p,i))
 			{
-			if (!BN_mul(tmp,r,v,ctx)) goto err;
+			if (!BN_mul(rr,rr,v,ctx)) goto err;
 			}
 		}
 	ret=1;
 err:
-	ctx->tos-=2;
+	ctx->tos=tos;
+	if (r != rr) BN_copy(r,rr);
 	return(ret);
 	}
 

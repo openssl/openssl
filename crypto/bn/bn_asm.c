@@ -447,7 +447,7 @@ int n;
 	return(c);
 	}
 
-#ifdef BN_COMBA
+#ifdef BN_MUL_COMBA
 
 #undef bn_mul_comba8
 #undef bn_mul_comba4
@@ -790,6 +790,7 @@ BN_ULONG *r,*a;
 #else
 
 /* hmm... is it faster just to do a multiply? */
+#undef bn_sqr_comba4
 void bn_sqr_comba4(r,a)
 BN_ULONG *r,*a;
 	{
@@ -797,6 +798,7 @@ BN_ULONG *r,*a;
 	bn_sqr_normal(r,a,4,t);
 	}
 
+#undef bn_sqr_comba8
 void bn_sqr_comba8(r,a)
 BN_ULONG *r,*a;
 	{

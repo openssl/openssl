@@ -85,6 +85,7 @@ int test_mont(BIO *bp,BN_CTX *ctx);
 int test_mod(BIO *bp,BN_CTX *ctx);
 int test_mod_mul(BIO *bp,BN_CTX *ctx);
 int test_mod_exp(BIO *bp,BN_CTX *ctx);
+int test_exp(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 #else
 int test_add ();
@@ -100,6 +101,7 @@ int test_mont ();
 int test_mod ();
 int test_mod_mul ();
 int test_mod_exp ();
+int test_exp ();
 int rand_neg();
 #endif
 
@@ -212,6 +214,10 @@ char *argv[];
 */
 	fprintf(stderr,"test BN_mod_exp\n");
 	if (!test_mod_exp(out,ctx)) goto err;
+	fflush(stdout);
+
+	fprintf(stderr,"test BN_exp\n");
+	if (!test_exp(out,ctx)) goto err;
 	fflush(stdout);
 
 /**/
@@ -694,6 +700,46 @@ BN_CTX *ctx;
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
+	BN_free(d);
+	BN_free(e);
+	return(1);
+	}
+
+int test_exp(bp,ctx)
+BIO *bp;
+BN_CTX *ctx;
+	{
+	BIGNUM *a,*b,*d,*e;
+	int i;
+
+	a=BN_new();
+	b=BN_new();
+	d=BN_new();
+	e=BN_new();
+
+	for (i=0; i<6; i++)
+		{
+		BN_rand(a,20+i*5,0,0); /**/
+		BN_rand(b,2+i,0,0); /**/
+
+		if (!BN_exp(d,a,b,ctx))
+			return(00);
+
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,a);
+				BIO_puts(bp," ^ ");
+				BN_print(bp,b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,d);
+			BIO_puts(bp,"\n");
+			}
+		}
+	BN_free(a);
+	BN_free(b);
 	BN_free(d);
 	BN_free(e);
 	return(1);
