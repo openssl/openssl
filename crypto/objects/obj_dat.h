@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 175
-#define NUM_SN 123
-#define NUM_LN 171
-#define NUM_OBJ 146
+#define NUM_NID 180
+#define NUM_SN 128
+#define NUM_LN 174
+#define NUM_OBJ 151
 
-static unsigned char lvalues[1011]={
+static unsigned char lvalues[1049]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -213,6 +213,11 @@ static unsigned char lvalues[1011]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [995] OBJ_ext_req */
 0x55,0x04,0x29,                              /* [1004] OBJ_name */
 0x55,0x04,0x2E,                              /* [1007] OBJ_dnQualifier */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,          /* [1010] OBJ_id_pe */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,          /* [1017] OBJ_id_ad */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1024] OBJ_info_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1032] OBJ_ad_OCSP */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1040] OBJ_ad_ca_issuers */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -460,6 +465,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"extReq","Extension Request",NID_ext_req,9,&(lvalues[995]),0},
 {"name","name",NID_name,3,&(lvalues[1004]),0},
 {"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1007]),0},
+{"id-pe","id-pe",NID_id_pe,7,&(lvalues[1010]),0},
+{"id-ad","id-ad",NID_id_ad,7,&(lvalues[1017]),0},
+{"authorityInfoAccess","Authority Information Access",NID_info_access,
+	8,&(lvalues[1024]),0},
+{"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1032]),0},
+{"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1040]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -507,6 +518,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[95]),/* "MDC2" */
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[17]),/* "O" */
+&(nid_objs[178]),/* "OCSP" */
 &(nid_objs[18]),/* "OU" */
 &(nid_objs[127]),/* "PKIX" */
 &(nid_objs[98]),/* "RC2-40-CBC" */
@@ -543,8 +555,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[102]),/* "UID" */
 &(nid_objs[ 0]),/* "UNDEF" */
 &(nid_objs[125]),/* "ZLIB" */
+&(nid_objs[177]),/* "authorityInfoAccess" */
 &(nid_objs[90]),/* "authorityKeyIdentifier" */
 &(nid_objs[87]),/* "basicConstraints" */
+&(nid_objs[179]),/* "caIssuers" */
 &(nid_objs[89]),/* "certificatePolicies" */
 &(nid_objs[130]),/* "clientAuth" */
 &(nid_objs[131]),/* "codeSigning" */
@@ -555,7 +569,9 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[172]),/* "extReq" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
+&(nid_objs[176]),/* "id-ad" */
 &(nid_objs[128]),/* "id-kp" */
+&(nid_objs[175]),/* "id-pe" */
 &(nid_objs[164]),/* "id-qt-cps" */
 &(nid_objs[165]),/* "id-qt-unotice" */
 &(nid_objs[142]),/* "invalidityDate" */
@@ -589,6 +605,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 };
 
 static ASN1_OBJECT *ln_objs[NUM_LN]={
+&(nid_objs[177]),/* "Authority Information Access" */
+&(nid_objs[179]),/* "CA Issuers" */
 &(nid_objs[141]),/* "CRL Reason Code" */
 &(nid_objs[131]),/* "Code Signing" */
 &(nid_objs[132]),/* "E-mail Protection" */
@@ -613,6 +631,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[73]),/* "Netscape Revocation Url" */
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
+&(nid_objs[178]),/* "OCSP" */
 &(nid_objs[161]),/* "PBES2" */
 &(nid_objs[69]),/* "PBKDF2" */
 &(nid_objs[162]),/* "PBMAC1" */
@@ -823,7 +842,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 2]),/* OBJ_pkcs                         1 2 840 113549 1 */
 &(nid_objs[116]),/* OBJ_dsa                          1 2 840 10040 4 1 */
 &(nid_objs[113]),/* OBJ_dsaWithSHA1                  1 2 840 10040 4 3 */
+&(nid_objs[175]),/* OBJ_id_pe                        1 3 6 1 5 5 7 1 */
 &(nid_objs[128]),/* OBJ_id_kp                        1 3 6 1 5 5 7 3 */
+&(nid_objs[176]),/* OBJ_id_ad                        1 3 6 1 5 5 7 48 */
 &(nid_objs[57]),/* OBJ_netscape                     2 16 840 1 113730 */
 &(nid_objs[27]),/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 &(nid_objs[20]),/* OBJ_pkcs7                        1 2 840 113549 1 7 */
@@ -835,6 +856,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
 &(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
+&(nid_objs[177]),/* OBJ_info_access                  1 3 6 1 5 5 7 1 1 */
 &(nid_objs[164]),/* OBJ_id_qt_cps                    1 3 6 1 5 5 7 2 1 */
 &(nid_objs[165]),/* OBJ_id_qt_unotice                1 3 6 1 5 5 7 2 2 */
 &(nid_objs[129]),/* OBJ_server_auth                  1 3 6 1 5 5 7 3 1 */
@@ -842,6 +864,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[131]),/* OBJ_code_sign                    1 3 6 1 5 5 7 3 3 */
 &(nid_objs[132]),/* OBJ_email_protect                1 3 6 1 5 5 7 3 4 */
 &(nid_objs[133]),/* OBJ_time_stamp                   1 3 6 1 5 5 7 3 8 */
+&(nid_objs[178]),/* OBJ_ad_OCSP                      1 3 6 1 5 5 7 48 1 */
+&(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
 &(nid_objs[59]),/* OBJ_netscape_data_type           2 16 840 1 113730 2 */
 &(nid_objs[108]),/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */

@@ -912,6 +912,29 @@ extern "C" {
 #define NID_dnQualifier			174
 #define OBJ_dnQualifier			OBJ_X509,46L
 
+#define SN_id_pe			"id-pe"
+#define NID_id_pe			175
+#define OBJ_id_pe			OBJ_id_pkix,1L
+
+#define SN_id_ad			"id-ad"
+#define NID_id_ad			176
+#define OBJ_id_ad			OBJ_id_pkix,48L
+
+#define SN_info_access			"authorityInfoAccess"
+#define LN_info_access			"Authority Information Access"
+#define NID_info_access			177
+#define OBJ_info_access			OBJ_id_pe,1L
+
+#define SN_ad_OCSP			"OCSP"
+#define LN_ad_OCSP			"OCSP"
+#define NID_ad_OCSP			178
+#define OBJ_ad_OCSP			OBJ_id_ad,1L
+
+#define SN_ad_ca_issuers		"caIssuers"
+#define LN_ad_ca_issuers		"CA Issuers"
+#define NID_ad_ca_issuers		179
+#define OBJ_ad_ca_issuers		OBJ_id_ad,2L
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

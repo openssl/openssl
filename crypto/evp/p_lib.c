@@ -208,14 +208,15 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 #ifndef NO_RSA
 int EVP_PKEY_rset_RSA(EVP_PKEY *pkey, RSA *key)
 {
-	CRYPTO_add(&key->references, 1, CRYPTO_LOCK_RSA);
-	return EVP_PKEY_assign_RSA(pkey, key);
+	int ret = EVP_PKEY_assign_RSA(pkey, key);
+	if(ret) CRYPTO_add(&key->references, 1, CRYPTO_LOCK_RSA);
+	return ret;
 }
 
 RSA *EVP_PKEY_rget_RSA(EVP_PKEY *pkey)
 	{
 	if(pkey->type != EVP_PKEY_RSA) {
-		EVPerr(EVP_F_EVP_PKEY_GET_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
+		EVPerr(EVP_F_EVP_PKEY_RGET_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
 		return NULL;
 	}
 	CRYPTO_add(&pkey->pkey.rsa->references, 1, CRYPTO_LOCK_RSA);
@@ -226,14 +227,15 @@ RSA *EVP_PKEY_rget_RSA(EVP_PKEY *pkey)
 #ifndef NO_DSA
 int EVP_PKEY_rset_DSA(EVP_PKEY *pkey, DSA *key)
 {
-	CRYPTO_add(&key->references, 1, CRYPTO_LOCK_DSA);
-	return EVP_PKEY_assign_DSA(pkey, key);
+	int ret = EVP_PKEY_assign_DSA(pkey, key);
+	if(ret) CRYPTO_add(&key->references, 1, CRYPTO_LOCK_DSA);
+	return ret;
 }
 
 DSA *EVP_PKEY_rget_DSA(EVP_PKEY *pkey)
 	{
 	if(pkey->type != EVP_PKEY_DSA) {
-		EVPerr(EVP_F_EVP_PKEY_GET_DSA, EVP_R_EXPECTING_A_DSA_KEY);
+		EVPerr(EVP_F_EVP_PKEY_RGET_DSA, EVP_R_EXPECTING_A_DSA_KEY);
 		return NULL;
 	}
 	CRYPTO_add(&pkey->pkey.dsa->references, 1, CRYPTO_LOCK_DSA);
@@ -245,14 +247,15 @@ DSA *EVP_PKEY_rget_DSA(EVP_PKEY *pkey)
 
 int EVP_PKEY_rset_DH(EVP_PKEY *pkey, DH *key)
 {
-	CRYPTO_add(&key->references, 1, CRYPTO_LOCK_DH);
-	return EVP_PKEY_assign_DH(pkey, key);
+	int ret = EVP_PKEY_assign_DH(pkey, key);
+	if(ret) CRYPTO_add(&key->references, 1, CRYPTO_LOCK_DH);
+	return ret;
 }
 
 DH *EVP_PKEY_rget_DH(EVP_PKEY *pkey)
 	{
 	if(pkey->type != EVP_PKEY_DH) {
-		EVPerr(EVP_F_EVP_PKEY_GET_DH, EVP_R_EXPECTING_A_DH_KEY);
+		EVPerr(EVP_F_EVP_PKEY_RGET_DH, EVP_R_EXPECTING_A_DH_KEY);
 		return NULL;
 	}
 	CRYPTO_add(&pkey->pkey.dh->references, 1, CRYPTO_LOCK_DH);

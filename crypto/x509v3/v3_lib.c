@@ -140,7 +140,7 @@ static void ext_list_free(X509V3_EXT_METHOD *ext)
 }
 
 extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
-extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet;
+extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info;
 extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 
 extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols, v3_crld;
@@ -158,6 +158,7 @@ int X509V3_add_standard_extensions(void)
 	X509V3_EXT_add(&v3_pkey_usage_period);
 	X509V3_EXT_add(&v3_crl_num);
 	X509V3_EXT_add(&v3_sxnet);
+	X509V3_EXT_add(&v3_info);
 	X509V3_EXT_add(&v3_crl_reason);
 	X509V3_EXT_add(&v3_cpols);
 	X509V3_EXT_add(&v3_crld);

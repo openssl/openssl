@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Support for the authority information access extension. Not
+     very well tested yet.
+     [Steve Henson]
+
   *) Modify RSA and DSA PEM read routines to transparently handle
      PKCS#8 format private keys. New *_PUBKEY_* functions that handle
      public keys in a format compatible with certificate
