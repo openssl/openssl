@@ -447,7 +447,7 @@ bad:
 
 	if (extfile)
 		{
-		long errorline;
+		long errorline = -1;
 		X509V3_CTX ctx2;
 		if (!(extconf=CONF_load(NULL,extfile,&errorline)))
 			{

@@ -422,7 +422,7 @@ bad:
 
 	if (template != NULL)
 		{
-		long errline;
+		long errline = -1;
 
 		BIO_printf(bio_err,"Using configuration from %s\n",template);
 		req_conf=CONF_load(NULL,template,&errline);
