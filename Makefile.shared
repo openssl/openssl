@@ -64,6 +64,7 @@ CALC_VERSIONS=	\
 	if [ -n "$(LIBVERSION) $(LIBCOMPATVERSIONS)" ]; then \
 		prev=""; \
 		for v in `echo "$(LIBVERSION) $(LIBCOMPATVERSIONS)" | cut -d';' -f1`; do \
+			SHLIB_SOVER_NODOT=$$v \
 			SHLIB_SOVER=.$$v; \
 			if [ -n "$$prev" ]; then \
 				SHLIB_COMPAT=$$SHLIB_COMPAT .$$prev; \
@@ -133,17 +134,17 @@ link_o.darwin:
 	LIBDEPS="$(LIBDEPS)" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
-	SHAREDFLAGS="-current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER" \
+	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER_NODOT" \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_O)
 link_a.darwin:
 	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME)$$SHLIB_SOVER.dylib \
+	SHLIB=lib$(LIBNAME) \
 	SHLIB_SUFFIX=.dylib \
 	LIBDEPS="$(LIBDEPS)" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
-	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER" \
+	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER_NODOT" \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_A)
 
