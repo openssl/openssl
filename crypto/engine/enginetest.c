@@ -63,7 +63,7 @@
 # define _XOPEN_SOURCE_EXTENDED
 #endif
 #ifdef OPENSSL_SYS_UNIX
-# define _XOPEN_SOURCE
+/* # define _XOPEN_SOURCE */
 # define _XOPEN_SOURCE_EXTENDED	/* For Linux and probably anything GNU */
 #endif
 #include <stdio.h>
