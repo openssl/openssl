@@ -44,7 +44,7 @@ sub R0
 	local($pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
 
 	&mov($tmp1,$C)  if $pos < 0;
-	 &mov($tmp2,&DWP($xo[$ki]*4,$K,"",0)) if $pos < 0; # very first one 
+	&mov($tmp2,&DWP($xo[$ki]*4,$K,"",0)) if $pos < 0; # very first one 
 
 	# body proper
 
@@ -54,7 +54,6 @@ sub R0
 	&and($tmp1,$b); # F function - part 3
 	&lea($a,&DWP($t,$a,$tmp2,1));
 
-	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
 	&xor($tmp1,$d); # F function - part 4
 
 	&add($a,$tmp1);
@@ -62,8 +61,10 @@ sub R0
 	&mov($tmp1,&Np($c)) if $pos == 1;	# next tmp1 for R1
 
 	&rotl($a,$s);
-	&add($a,$b);
 
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
+
+	&add($a,$b);
 	}
 
 sub R1
@@ -100,16 +101,16 @@ if (($n & 1) == 0)
 	# make sure to do 'D' first, not 'B', else we clash with
 	# the last add from the previous round.
 
-	 &xor($tmp1,$d); # H function - part 2
+	&xor($tmp1,$d); # H function - part 2
 
 	&xor($tmp1,$b); # H function - part 3
-	 &lea($a,&DWP($t,$a,$tmp2,1));
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
 	&add($a,$tmp1);
-	 &mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0));
 
 	&rotl($a,$s);
 
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0));
 	&mov($tmp1,&Np($c));
 	}
 else
@@ -118,17 +119,17 @@ else
 	# make sure to do 'D' first, not 'B', else we clash with
 	# the last add from the previous round.
 
-	 &lea($a,&DWP($t,$a,$tmp2,1));
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
 	&add($b,$c);			# MOVED FORWARD
-	 &xor($tmp1,$d); # H function - part 2
+	&xor($tmp1,$d); # H function - part 2
 
 	&xor($tmp1,$b); # H function - part 3
-	 &mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
 
 	&add($a,$tmp1);
-	 &mov($tmp1,&Np($c)) if $pos < 1;	# H function - part 1
-	 &mov($tmp1,-1) if $pos == 1;		# I function - part 1
+	&mov($tmp1,&Np($c)) if $pos < 1;	# H function - part 1
+	&mov($tmp1,-1) if $pos == 1;		# I function - part 1
 
 	&rotl($a,$s);
 
@@ -146,21 +147,21 @@ sub R3
 	&xor($tmp1,$d) if $pos < 0; 	# I function - part 2
 
 	&or($tmp1,$b);				# I function - part 3
-	 &lea($a,&DWP($t,$a,$tmp2,1));
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
 	&xor($tmp1,$c); 			# I function - part 4
-	 &mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0))	if $pos != 2; # load X/k value
-	 &mov($tmp2,&wparam(0)) if $pos == 2;
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0))	if $pos != 2; # load X/k value
+	&mov($tmp2,&wparam(0)) if $pos == 2;
 
 	&add($a,$tmp1);
-	 &mov($tmp1,-1) if $pos < 1;	# H function - part 1
-	 &add($K,64) if $pos >=1 && !$normal;
+	&mov($tmp1,-1) if $pos < 1;	# H function - part 1
+	&add($K,64) if $pos >=1 && !$normal;
 
 	&rotl($a,$s);
 
 	&xor($tmp1,&Np($d)) if $pos <= 0; 	# I function - part = first time
 	&mov($tmp1,&DWP( 0,$tmp2,"",0)) if $pos > 0;
-	 &add($a,$b);
+	&add($a,$b);
 	}
 
 
