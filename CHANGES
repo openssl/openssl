@@ -13,7 +13,7 @@
 
   *) Move 'if (!initialized) RAND_poll()' into regions protected by
      CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
-     having multiple threads calling RAND_poll() concurrently.
+     having multiple threads call RAND_poll() concurrently.
      [Bodo Moeller]
 
   *) In crypto/rand/md_rand.c, replace 'add_do_not_lock' flag by a
