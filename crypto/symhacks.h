@@ -52,43 +52,76 @@
  *
  */
 
-#ifndef HEADER_VMS_IDHACKS_H
-#define HEADER_VMS_IDHACKS_H
+#ifndef HEADER_SYMHACKS_H
+#define HEADER_SYMHACKS_H
 
+/* Hacks to solve the problem with linkers incapable of handling very long
+   symbol names.  In the case of VMS, the limit is 31 characters on VMS for
+   VAX. */
 #ifdef VMS
 
 /* Hack a long name in crypto/asn1/a_mbstr.c */
-#define ASN1_STRING_set_default_mask_asc ASN1_STRING_set_def_mask_asc
+#undef ASN1_STRING_set_default_mask_asc
+#define ASN1_STRING_set_default_mask_asc	ASN1_STRING_set_def_mask_asc
 
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO) */
+#undef i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO
 #define i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO	i2d_ASN1_SET_OF_PKCS7_SIGINF
+#undef d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO
 #define d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO	d2i_ASN1_SET_OF_PKCS7_SIGINF
 
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO) */
+#undef i2d_ASN1_SET_OF_PKCS7_RECIP_INFO
 #define i2d_ASN1_SET_OF_PKCS7_RECIP_INFO	i2d_ASN1_SET_OF_PKCS7_RECGINF
+#undef d2i_ASN1_SET_OF_PKCS7_RECIP_INFO
 #define d2i_ASN1_SET_OF_PKCS7_RECIP_INFO	d2i_ASN1_SET_OF_PKCS7_RECGINF
 
 /* Hack the names created with DECLARE_ASN1_SET_OF(ACCESS_DESCRIPTION) */
+#undef i2d_ASN1_SET_OF_ACCESS_DESCRIPTION
 #define i2d_ASN1_SET_OF_ACCESS_DESCRIPTION	i2d_ASN1_SET_OF_ACC_DESC
+#undef d2i_ASN1_SET_OF_ACCESS_DESCRIPTION
 #define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION	d2i_ASN1_SET_OF_ACC_DESC
 
 /* Hack the names created with DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE) */
-#define PEM_read_NETSCAPE_CERT_SEQUENCE		PEM_read_NS_CERT_SEQUENCE
-#define PEM_write_NETSCAPE_CERT_SEQUENCE	PEM_write_NS_CERT_SEQUENCE
-#define PEM_read_bio_NETSCAPE_CERT_SEQUENCE	PEM_read_bio_NS_CERT_SEQUENCE
-#define PEM_write_bio_NETSCAPE_CERT_SEQUENCE	PEM_write_bio_NS_CERT_SEQUENCE
-#define PEM_write_cb_bio_NETSCAPE_CERT_SEQUENCE	PEM_write_cb_bio_NS_CERT_SEQUENCE
+#undef PEM_read_NETSCAPE_CERT_SEQUENCE
+#define PEM_read_NETSCAPE_CERT_SEQUENCE		PEM_read_NS_CERT_SEQ
+#undef PEM_write_NETSCAPE_CERT_SEQUENCE
+#define PEM_write_NETSCAPE_CERT_SEQUENCE	PEM_write_NS_CERT_SEQ
+#undef PEM_read_bio_NETSCAPE_CERT_SEQUENCE
+#define PEM_read_bio_NETSCAPE_CERT_SEQUENCE	PEM_read_bio_NS_CERT_SEQ
+#undef PEM_write_bio_NETSCAPE_CERT_SEQUENCE
+#define PEM_write_bio_NETSCAPE_CERT_SEQUENCE	PEM_write_bio_NS_CERT_SEQ
+#undef PEM_write_cb_bio_NETSCAPE_CERT_SEQUENCE
+#define PEM_write_cb_bio_NETSCAPE_CERT_SEQUENCE	PEM_write_cb_bio_NS_CERT_SEQ
 
 /* Hack the names created with DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO) */
+#undef PEM_read_PKCS8_PRIV_KEY_INFO
 #define PEM_read_PKCS8_PRIV_KEY_INFO		PEM_read_P8_PRIV_KEY_INFO
+#undef PEM_write_PKCS8_PRIV_KEY_INFO
 #define PEM_write_PKCS8_PRIV_KEY_INFO		PEM_write_P8_PRIV_KEY_INFO
+#undef PEM_read_bio_PKCS8_PRIV_KEY_INFO
 #define PEM_read_bio_PKCS8_PRIV_KEY_INFO	PEM_read_bio_P8_PRIV_KEY_INFO
+#undef PEM_write_bio_PKCS8_PRIV_KEY_INFO
 #define PEM_write_bio_PKCS8_PRIV_KEY_INFO	PEM_write_bio_P8_PRIV_KEY_INFO
+#undef PEM_write_cb_bio_PKCS8_PRIV_KEY_INFO
 #define PEM_write_cb_bio_PKCS8_PRIV_KEY_INFO	PEM_wrt_cb_bio_P8_PRIV_KEY_INFO
 
 /* Hack other PEM names */
+#undef PEM_write_bio_PKCS8PrivateKey_nid
 #define PEM_write_bio_PKCS8PrivateKey_nid	PEM_write_bio_PKCS8PrivKey_nid
 
+/* Hack some long X509 names */
+#undef X509_REVOKED_get_ext_by_critical
+#define X509_REVOKED_get_ext_by_critical	X509_REVOKED_get_ext_by_critic
+
 #endif /* defined VMS */
+
+
+/* Case insensiteve linking causes problems.... */
+#if defined(WIN16) || defined(VMS)
+#undef ERR_load_CRYPTO_strings
+#define ERR_load_CRYPTO_strings			ERR_load_CRYPTOlib_strings
+#endif
+
 
 #endif /* ! defined HEADER_VMS_IDHACKS_H */

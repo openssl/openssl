@@ -73,10 +73,9 @@
 #include <openssl/ebcdic.h>
 #endif
 
-#if defined(VMS) || defined(__VMS)
-#include "vms_idhacks.h"
-#endif
-
+/* Resolve problems on some operating systems with symbol names that clash
+   one way or another */
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -273,12 +272,6 @@ int CRYPTO_is_mem_check_on(void);
 #define OPENSSL_malloc_locked(num) \
 	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
-
-
-/* Case insensiteve linking causes problems.... */
-#if defined(WIN16) || defined(VMS)
-#define ERR_load_CRYPTO_strings	ERR_load_CRYPTOlib_strings
-#endif
 
 
 const char *SSLeay_version(int type);

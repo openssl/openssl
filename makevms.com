@@ -365,7 +365,7 @@ $ SDIRS := ,MD2,MD5,SHA,MDC2,HMAC,RIPEMD,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
    EVP,ASN1,PEM,X509,X509V3,-
    CONF,TXT_DB,PKCS7,PKCS12,COMP
-$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h
+$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD5 := md5.h
 $ EXHEADER_SHA := sha.h
@@ -425,11 +425,6 @@ $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
-$!
-$! Copy All The ".H" Files From The [.VMS] Directory.
-$!
-$ EXHEADER := vms_idhacks.h
-$ COPY SYS$DISK:[.VMS]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
 $!
