@@ -40,6 +40,10 @@ as available CAs during the TLS/SSL handshake.
 If B<CApath> is not NULL, it points to a directory containing CA certificates
 in PEM format. The files each contain one CA certificate. The files are
 looked up by the CA subject name hash value, which must hence be available.
+If more than one CA certificate with the same name hash value exist, the
+extension must be different (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search
+is performed in the ordering of the extension number, regardless of other
+properties of the certificates.
 Use the B<c_rehash> utility to create the necessary links.
 
 The certificates in B<CAfile> are only looked up when required, e.g. when
@@ -48,6 +52,24 @@ of a peer certificate.
 
 On a server, the certificates in B<CApath> are not listed as available
 CA certificates to a client during a TLS/SSL handshake.
+
+When looking up CA certificates, the OpenSSL library will first search the
+certificates in B<CAfile>, then those in B<CApath>. Certificate matching
+is done based on the subject name, the key identifier (if present), and the
+serial number as taken from the certificate to be verified. If these data
+do not match, the next certificate will be tried. If a first certificate
+matching the parameters is found, the verification process will be performed;
+no other certificates for the same parameters will be searched in case of
+failure.
+
+=head1 WARNINGS
+
+If several CA certificates matching the name, key identifier, and serial
+number condition are available, only the first one will be examined. This
+may lead to unexpected results if the same CA certificate is available
+with different expiration dates. If a "certificate expired" verification
+error occurs, no other certificate will be searched. Make sure to not
+have expired certificates mixed with valid ones.
 
 =head1 EXAMPLES
 
