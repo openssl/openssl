@@ -166,8 +166,11 @@
 					ret;			\
 				})
 # endif
-#else
+#endif
+#ifndef ROTATE_l32
 #define ROTATE_l32(a,n)     (((a)<<(n&0x1f))|(((a)&0xffffffff)>>(32-(n&0x1f))))
+#endif
+#ifndef ROTATE_r32
 #define ROTATE_r32(a,n)     (((a)<<(32-(n&0x1f)))|(((a)&0xffffffff)>>(n&0x1f)))
 #endif
 

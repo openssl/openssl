@@ -169,7 +169,8 @@
 			   ret;				\
 			})
 # endif
-#else
+#endif
+#ifndef ROTATE
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))
 #endif
 
