@@ -361,8 +361,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
-	crypto_lock_rand = 1;
 	locking_thread = CRYPTO_thread_id();
+	crypto_lock_rand = 1;
 
 	if (!initialized)
 		{
@@ -435,7 +435,6 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	/* before unlocking, we must clear 'crypto_lock_rand' */
 	crypto_lock_rand = 0;
-	locking_thread = 0;
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
@@ -528,8 +527,8 @@ static int ssleay_rand_status(void)
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 		
 		/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
-		crypto_lock_rand = 1;
 		locking_thread = CRYPTO_thread_id();
+		crypto_lock_rand = 1;
 		}
 	
 	if (!initialized)
@@ -544,7 +543,6 @@ static int ssleay_rand_status(void)
 		{
 		/* before unlocking, we must clear 'crypto_lock_rand' */
 		crypto_lock_rand = 0;
-		locking_thread = 0;
 		
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		}

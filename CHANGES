@@ -4,7 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
-  *) 
+  *) In crypto/rand/md_rand.c, set 'locking_thread' to current thread's ID
+     *before* setting the 'crypto_lock_rand' flag.  The previous code had
+     a race condition if 0 is a valid thread ID.
+     [Travis Vitek <vitek@roguewave.com>]
 
  Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
 
