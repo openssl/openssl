@@ -287,7 +287,38 @@ char *make_config_name(void);
 /* Functions defined in ca.c and also used in ocsp.c */
 int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 			ASN1_GENERALIZEDTIME **pinvtm, char *str);
-int make_serial_index(TXT_DB *db);
+
+#define DB_type         0
+#define DB_exp_date     1
+#define DB_rev_date     2
+#define DB_serial       3       /* index - unique */
+#define DB_file         4       
+#define DB_name         5       /* index - unique when active and not disabled */
+#define DB_NUMBER       6
+
+#define DB_TYPE_REV	'R'
+#define DB_TYPE_EXP	'E'
+#define DB_TYPE_VAL	'V'
+
+typedef struct db_attr_st
+	{
+	int unique_subject;
+	} DB_ATTR;
+typedef struct ca_db_st
+	{
+	DB_ATTR attributes;
+	TXT_DB *db;
+	} CA_DB;
+
+BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai);
+int save_serial(char *serialfile, char *suffix, BIGNUM *serial, ASN1_INTEGER **retai);
+int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix);
+CA_DB *load_index(char *dbfile, DB_ATTR *dbattr);
+int index_index(CA_DB *db);
+int save_index(char *dbfile, char *suffix, CA_DB *db);
+int rotate_index(char *dbfile, char *new_suffix, char *old_suffix);
+void free_index(CA_DB *db);
+int index_name_cmp(const char **a, const char **b);
 
 X509_NAME *do_subject(char *str, long chtype);
 
