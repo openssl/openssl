@@ -1,6 +1,6 @@
 %define libmaj 0
 %define libmin 9
-%define librel 7
+%define librel 8
 #%define librev a
 Release: 1
 
