@@ -1,0 +1,22 @@
+ 
+ Installation on OS/2
+ --------------------
+
+ You need to have the following tools installed:
+
+  * EMX GCC
+  * PERL
+  * GNU make
+
+
+ To build the makefile, run
+
+ > os2\os2-emx
+
+ This will configure OpenSSL and create OS2-EMX.mak which you then use to 
+ build the OpenSSL libraries & programs by running
+
+ > make -f os2-emx.mak
+
+ If that finishes successfully you will find the libraries and programs in the
+ "out" directory.

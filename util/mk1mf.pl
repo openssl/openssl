@@ -37,6 +37,7 @@ $infile="MINFO";
 	"linux-elf","Linux elf",
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
+	"OS2-EMX", "EMX GCC OS/2",
 	"default","cc under unix",
 	);
 
@@ -181,6 +182,11 @@ elsif ($platform eq "ultrix-mips")
 	require "unix.pl";
 	require "ultrix.pl";
 	$unix=1;
+	}
+elsif ($platform eq "OS2-EMX")
+	{
+	$wc=1;
+	require 'OS2-EMX.pl';
 	}
 else
 	{

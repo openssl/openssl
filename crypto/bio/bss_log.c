@@ -77,7 +77,7 @@
 #  include <starlet.h>
 #elif defined(__ultrix)
 #  include <sys/syslog.h>
-#elif !defined(MSDOS) /* Unix */
+#elif !defined(MSDOS) && !defined(NO_SYSLOG) /* Unix */
 #  include <syslog.h>
 #endif
 

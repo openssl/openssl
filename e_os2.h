@@ -136,6 +136,12 @@ extern "C" {
 # endif
 #endif
 
+/* --------------------------------- OS/2 ---------------------------------- */
+#if defined(__EMX__) || defined(__OS2__)
+# undef OPENSSL_SYS_UNIX
+# define OPENSSL_SYS_OS2
+#endif
+
 /* --------------------------------- Unix ---------------------------------- */
 #ifdef OPENSSL_SYS_UNIX
 # if defined(linux) || defined(OPENSSL_SYSNAME_LINUX)

@@ -453,10 +453,13 @@ my %table=(
 ##### GNU Hurd
 "hurd-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC",
 
+##### OS/2 EMX
+"OS2-EMX", "gcc::::::::",
+
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
-	BC-16 Mingw32);
+	BC-16 Mingw32 OS2-EMX);
 
 my $prefix="";
 my $openssldir="";

@@ -210,6 +210,11 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			_setmode(fileno((FILE *)ptr),_O_TEXT);
 		else
 			_setmode(fileno((FILE *)ptr),_O_BINARY);
+#elif defined(OPENSSL_SYS_OS2)
+		if (num & BIO_FP_TEXT)
+			setmode(fileno((FILE *)ptr), O_TEXT);
+		else
+			setmode(fileno((FILE *)ptr), O_BINARY);
 #endif
 		break;
 	case BIO_C_SET_FILENAME:
