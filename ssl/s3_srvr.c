@@ -1338,6 +1338,7 @@ static int ssl3_send_certificate_request(SSL *s)
 		s->init_num += 4;
 #endif
 
+		s->state = SSL3_ST_SW_CERT_REQ_B;
 		}
 
 	/* SSL3_ST_SW_CERT_REQ_B */
