@@ -1,6 +1,6 @@
 /* crypto/aes/aes.h -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,8 +58,10 @@
 
 static const int AES_DECRYPT = 0;
 static const int AES_ENCRYPT = 1;
-#define AES_MAXNR 14 /* array size can't be a const in C */
-static const int AES_BLOCK_SIZE = 16; /* bytes */
+/* Because array size can't be a const in C, the following two are macros.
+   Both sizes are in bytes. */
+#define AES_MAXNR 14
+#define AES_BLOCK_SIZE 16
 
 #ifdef  __cplusplus
 extern "C" {
@@ -74,17 +76,31 @@ typedef struct aes_key_st AES_KEY;
 
 const char *AES_options(void);
 
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+	AES_KEY *key);
+int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+	AES_KEY *key);
 
-void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
-void AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
+void AES_encrypt(const unsigned char *in, unsigned char *out,
+	const AES_KEY *key);
+void AES_decrypt(const unsigned char *in, unsigned char *out,
+	const AES_KEY *key);
 
 void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
-	       	     const AES_KEY *key, const int enc);
+	const AES_KEY *key, const int enc);
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-	       	     const unsigned long length, const AES_KEY *key,
-		     unsigned char *ivec, const int enc);
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, const int enc);
+void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num, const int enc);
+void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num);
+void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *counter, unsigned int *num);
+
 
 #ifdef  __cplusplus
 }
