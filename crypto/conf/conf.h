@@ -63,7 +63,7 @@
 #include <openssl/lhash.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
-#include <openssl/e_os.h>
+#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
