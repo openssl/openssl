@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/05/26 23:51:09 $
+  ______________                           $Date: 2000/06/14 17:27:02 $
 
   DEVELOPMENT STATE
 
@@ -27,6 +27,12 @@
 	Private key, certificate and CRL API and implementation.
 	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
+    o Geoff and Richard are currently working on:
+	ENGINE (the new code that gives hardware support among others).
+    o Richard is currently working on:
+	UTIL (a new set of library functions to support some higher level
+	      functionality that is currently missing).
+	Dynamic thread-lock support.
 
   NEEDS PATCH
 
