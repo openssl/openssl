@@ -375,7 +375,7 @@ bad:
 	}
 	
 	if (C)
-	{	// TODO : characteristic two
+	  {	/* TODO : characteristic two */
 		int 	l, len, bits_p;
 		if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
 		    (tmp_3 = BN_new()) == NULL || (tmp_4 = BN_new()) == NULL ||
