@@ -6,7 +6,7 @@ Modes of DES - the variants of DES and other crypto algorithms of OpenSSL
 
 =head1 DESCRIPTION
 
-Several crypto algorithms fo OpenSSL can be used in a number of modes.  Those
+Several crypto algorithms for OpenSSL can be used in a number of modes.  Those
 are used for using block ciphers in a way similar to stream ciphers, among
 other things.
 
@@ -165,13 +165,13 @@ only one bit to be in error in the deciphered plaintext.
 
 =item *
 
-OFB mode is not self-synchronising.  If the two operation of
+OFB mode is not self-synchronizing.  If the two operation of
 encipherment and decipherment get out of synchronism, the system needs
-to be re-initialised.
+to be re-initialized.
 
 =item *
 
-Each re-initialisation should use a value of the start variable
+Each re-initialization should use a value of the start variable
 different from the start variable values used before with the same
 key.  The reason for this is that an identical bit stream would be
 produced each time from the same parameters.  This would be

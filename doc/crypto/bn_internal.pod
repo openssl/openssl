@@ -149,7 +149,7 @@ word array B<a>, the B<nb> word array B<b> and the B<na>+B<nb> word
 array B<r>.  It computes B<a>*B<b> and places the result in B<r>.
 
 bn_mul_low_normal(B<r>, B<a>, B<b>, B<n>) operates on the B<n> word
-arrays B<r>, B<a> und B<b>.  It computes the B<n> low words of
+arrays B<r>, B<a> and B<b>.  It computes the B<n> low words of
 B<a>*B<b> and places the result in B<r>.
 
 bn_mul_recursive(B<r>, B<a>, B<b>, B<n2>, B<t>) operates on the B<n2>

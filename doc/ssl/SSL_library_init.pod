@@ -27,8 +27,8 @@ SSL_library_init() must be called before any other action takes place.
 =head1 IMPORTANT
 
 SSL_library_init() only registers ciphers. Another important initialization
-is the seeding of the PRNG (Pseude Random Number Generator), which has to
-be performed seperately.
+is the seeding of the PRNG (Pseudo Random Number Generator), which has to
+be performed separately.
 
 =head1 EXAMPLES
 

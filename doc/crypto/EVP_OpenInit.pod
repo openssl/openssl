@@ -21,7 +21,7 @@ The EVP envelope routines are a high level interface to envelope
 decryption. They decrypt a public key encrypted symmetric key and
 then decrypt data using it.
 
-EVP_OpenInit() initialises a cipher context B<ctx> for decryption
+EVP_OpenInit() initializes a cipher context B<ctx> for decryption
 with cipher B<type>. It decrypts the encrypted symmetric key of length
 B<ekl> bytes passed in the B<ek> parameter using the private key B<priv>.
 The IV is supplied in the B<iv> parameter.
@@ -35,7 +35,7 @@ page.
 
 It is possible to call EVP_OpenInit() twice in the same way as
 EVP_DecryptInit(). The first call should have B<priv> set to NULL
-and (after setting any cipher paramaters) it should be called again
+and (after setting any cipher parameters) it should be called again
 with B<type> set to NULL.
 
 If the cipher passed in the B<type> parameter is a variable length

@@ -17,17 +17,17 @@ EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal - EVP signature verification f
 The EVP signature verification routines are a high level interface to digital
 signatures.
 
-EVP_VerifyInit() initialises a verification context B<ctx> to using digest
+EVP_VerifyInit() initializes a verification context B<ctx> to using digest
 B<type>: this will typically be supplied by a function such as EVP_sha1().
 
 EVP_VerifyUpdate() hashes B<cnt> bytes of data at B<d> into the
-verification context B<ctx>. This funtion can be called several times on the
+verification context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data.
 
 EVP_VerifyFinal() verifies the data in B<ctx> using the public key B<pkey>
 and against the B<siglen> bytes at B<sigbuf>. After calling EVP_VerifyFinal()
 no additional calls to EVP_VerifyUpdate() can be made, but EVP_VerifyInit()
-can be called to initialiase a new verification operation.
+can be called to initialize a new verification operation.
 
 =head1 RETURN VALUES
 

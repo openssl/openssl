@@ -19,12 +19,12 @@ EVP_SignInit, EVP_SignUpdate, EVP_SignFinal - EVP signing functions
 The EVP signature routines are a high level interface to digital
 signatures.
 
-EVP_SignInit() initialises a signing context B<ctx> to using digest
+EVP_SignInit() initializes a signing context B<ctx> to using digest
 B<type>: this will typically be supplied by a function such as
 EVP_sha1().
 
 EVP_SignUpdate() hashes B<cnt> bytes of data at B<d> into the
-signature context B<ctx>. This funtion can be called several times on the
+signature context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data.
 
 EVP_SignFinal() signs the data in B<ctx> using the private key B<pkey>
@@ -32,7 +32,7 @@ and places the signature in B<sig>. If the B<s> parameter is not NULL
 then the number of bytes of data written (i.e. the length of the signature)
 will be written to the integer at B<s>, at most EVP_PKEY_size(pkey) bytes
 will be written.  After calling EVP_SignFinal() no additional calls to
-EVP_SignUpdate() can be made, but EVP_SignInit() can be called to initialiase
+EVP_SignUpdate() can be made, but EVP_SignInit() can be called to initialize
 a new signature operation.
 
 EVP_PKEY_size() returns the maximum size of a signature in bytes. The actual
