@@ -66,7 +66,6 @@
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/asn1.h>
@@ -501,25 +500,9 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
-		char *randfile;
-		char buffer[200];
-
-		if ((randfile=CONF_get_string(req_conf,SECTION,"RANDFILE")) == NULL)
-			randfile=RAND_file_name(buffer,200);
-#ifdef WINDOWS
-		BIO_printf(bio_err,"Loading 'screen' into random state -");
-		BIO_flush(bio_err);
-		RAND_screen();
-		BIO_printf(bio_err," done\n");
-#endif
-		if ((randfile == NULL) || !RAND_load_file(randfile,1024L*1024L))
-			{
-			BIO_printf(bio_err,"unable to load 'random state'\n");
-			BIO_printf(bio_err,"What this means is that the random number generator has not been seeded\n");
-			BIO_printf(bio_err,"with much random data.\n");
-			BIO_printf(bio_err,"Consider setting the RANDFILE environment variable to point at a file that\n");
-			BIO_printf(bio_err,"'random' data can be kept in.\n");
-			}
+		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+		app_RAND_load_file(randfile, bio_err, 0);
+	
 		if (newkey <= 0)
 			{
 			newkey=(int)CONF_get_number(req_conf,SECTION,BITS);
@@ -557,8 +540,7 @@ bad:
 			}
 #endif
 
-		if ((randfile == NULL) || (RAND_write_file(randfile) == 0))
-			BIO_printf(bio_err,"unable to write 'random state'\n");
+		app_RAND_write_file(randfile, bio_err);
 
 		if (pkey == NULL) goto end;
 

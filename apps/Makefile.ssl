@@ -13,6 +13,7 @@ OPENSSLDIR=	/usr/local/ssl
 MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
+PERL=/usr/local/bin/perl
 RM=		rm -f
 
 PEX_LIBS=
@@ -45,12 +46,14 @@ A_OBJ=apps.o
 A_SRC=apps.c
 S_OBJ=	s_cb.o s_socket.o
 S_SRC=	s_cb.c s_socket.c
+RAND_OBJ=app_rand.o
+RAND_SRC=app_rand.c
 
 E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o enc.o gendh.o errstr.o ca.o \
 	pkcs7.o crl2p7.o crl.o \
 	rsa.o dsa.o dsaparam.o \
 	x509.o genrsa.o gendsa.o s_server.o s_client.o speed.o \
-	s_time.o $(A_OBJ) $(S_OBJ) version.o sess_id.o \
+	s_time.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) version.o sess_id.o \
 	ciphers.o nseq.o pkcs12.o pkcs8.o spkac.o
 
 #	pem_mail.o
@@ -59,7 +62,7 @@ E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c gendh.c errstr.c ca.c \
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c dsa.c dsaparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
-	s_time.c $(A_SRC) $(S_SRC) version.c sess_id.c \
+	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
 	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c
 
 #	pem_mail.c
@@ -81,7 +84,7 @@ all:	exe
 exe:	$(EXE)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
-	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(RAND_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
@@ -138,8 +141,8 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
 	@(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
 
-progs.h:
-	$(PERL) ./progs.pl $(E_EXE) >progs.h
+progs.h: progs.pl
+	$(PERL) progs.pl $(E_EXE) >progs.h
 	$(RM) $(PROGRAM).o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -78,7 +78,7 @@
 #define BUFSIZE	1024
 #define RAND_DATA 1024
 
-/* #define RFILE ".rand" - defined in ../../e_os.h */
+/* #define RFILE ".rnd" - defined in ../../e_os.h */
 
 int RAND_load_file(const char *file, long bytes)
 	{
@@ -119,7 +119,7 @@ int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
 	int i,ret=0;
-	FILE *out;
+	FILE *out = NULL;
 	int n;
 
 	/* Under VMS, fopen(file, "wb") will create a new version of the
@@ -130,12 +130,22 @@ int RAND_write_file(const char *file)
 	out=fopen(file,"rb+");
 	if (out == NULL
 #ifdef ENOENT
- && errno == ENOENT
+	    && errno == ENOENT
 #endif
 	   )
 		{
 		errno = 0;
+#if defined O_CREAT && defined O_EXCL
+		/* chmod(..., 0600) is too late to protect the file,
+		 * permissions should be restrictive from the start */
+		{
+		    int fd = open(file, O_CREAT | O_EXCL, 0600);
+		    if (fd != -1)
+			out = fdopen(fd, "wb");
+		}
+#else		
 		out=fopen(file,"wb");
+#endif
 		}
 	if (out == NULL) goto err;
 #ifndef NO_CHMOD

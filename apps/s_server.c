@@ -583,6 +583,8 @@ bad:
 		goto end;
 		}
 
+	app_RAND_load_file(NULL, bio_err, 0);
+
 	if (bio_s_out == NULL)
 		{
 		if (s_quiet && !s_debug)

@@ -57,6 +57,7 @@
  */
 
 #ifndef NO_DSA
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -65,7 +66,6 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
@@ -93,7 +93,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog,*inrand=NULL;
 	int numbits= -1,num,genkey=0;
-	char buffer[200],*randfile=NULL;
+	int need_rand=0;
 
 	apps_startup();
 
@@ -136,11 +136,15 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-C") == 0)
 			C=1;
 		else if (strcmp(*argv,"-genkey") == 0)
+			{
 			genkey=1;
+			need_rand=1;
+			}
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
+			need_rand=1;
 			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
@@ -148,6 +152,7 @@ int MAIN(int argc, char **argv)
 			{
 			/* generate a key */
 			numbits=num;
+			need_rand=1;
 			}
 		else
 			{
@@ -207,11 +212,17 @@ bad:
 			}
 		}
 
+	if (need_rand)
+		{
+		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
+		if (inrand != NULL)
+			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+				app_RAND_load_files(inrand));
+		}
+
 	if (numbits > 0)
 		{
-		randfile=RAND_file_name(buffer,200);
-		RAND_load_file(randfile,1024L*1024L);
-
+		assert(need_rand);
 		BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
 	        BIO_printf(bio_err,"This could take some time\n");
 	        dsa=DSA_generate_parameters(num,NULL,0,NULL,NULL,
@@ -316,6 +327,7 @@ bad:
 		{
 		DSA *dsakey;
 
+		assert(need_rand);
 		if ((dsakey=DSAparams_dup(dsa)) == NULL) goto end;
 		if (!DSA_generate_key(dsakey)) goto end;
 		if 	(outformat == FORMAT_ASN1)
@@ -328,6 +340,8 @@ bad:
 			}
 		DSA_free(dsakey);
 		}
+	if (need_rand)
+		app_RAND_write_file(NULL, bio_err);
 	ret=0;
 end:
 	if (in != NULL) BIO_free(in);

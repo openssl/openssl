@@ -266,6 +266,7 @@ int MAIN(int argc, char **argv)
 #undef BSIZE
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
+	char *randfile;
 
 #ifdef EFENCE
 EF_PROTECT_FREE=1;
@@ -495,12 +496,16 @@ bad:
 				BIO_free(oid_bio);
 				}
 			}
-		}
-		if(!add_oid_section(conf)) {
+		if(!add_oid_section(conf)) 
+			{
 			ERR_print_errors(bio_err);
 			goto err;
+			}
 		}
 
+	randfile = CONF_get_string(conf, BASE_SECTION, "RANDFILE");
+	app_RAND_load_file(randfile, bio_err, 0);
+	
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
 	Sout=BIO_new(BIO_s_file());
@@ -1236,6 +1241,7 @@ err:
 	sk_pop_free(cert_sk,X509_free);
 
 	if (ret) ERR_print_errors(bio_err);
+	app_RAND_write_file(randfile, bio_err);
 	BN_free(serial);
 	TXT_DB_free(db);
 	EVP_PKEY_free(pkey);

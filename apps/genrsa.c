@@ -63,7 +63,6 @@
 #include <sys/stat.h>
 #include "apps.h"
 #include <openssl/bio.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -76,18 +75,16 @@
 #define PROG genrsa_main
 
 static void MS_CALLBACK genrsa_cb(int p, int n, void *arg);
-static long gr_load_rand(char *names);
 int MAIN(int argc, char **argv)
 	{
 	int ret=1;
-	char buffer[200];
 	RSA *rsa=NULL;
 	int i,num=DEFBITS;
-	long rnum=0,l;
+	long l;
 	EVP_CIPHER *enc=NULL;
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
-	char *inrand=NULL,*randfile;
+	char *inrand=NULL;
 	BIO *out=NULL;
 
 	apps_startup();
@@ -165,41 +162,19 @@ bad:
 			}
 		}
 
-#ifdef WINDOWS
-	BIO_printf(bio_err,"Loading 'screen' into random state -");
-	BIO_flush(bio_err);
-	RAND_screen();
-	BIO_printf(bio_err," done\n");
-#endif
-	randfile=RAND_file_name(buffer,200);
-	if ((randfile == NULL) ||
-		 !(rnum=(long)RAND_load_file(randfile,1024L*1024L)))
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
 		{
-		BIO_printf(bio_err,"unable to load 'random state'\n");
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 		}
-
-	if (inrand == NULL)
-		{
-		if (rnum == 0)
-			{
-			BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
-			}
-		}
-	else
-		{
-		rnum+=gr_load_rand(inrand);
-		}
-	if (rnum != 0)
-		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",rnum);
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
 	rsa=RSA_generate_key(num,f4,genrsa_cb,bio_err);
 		
-	if (randfile == NULL)
-		BIO_printf(bio_err,"unable to write 'random state'\n");
-	else
-		RAND_write_file(randfile);
+	app_RAND_write_file(NULL, bio_err);
 
 	if (rsa == NULL) goto err;
 	
@@ -240,27 +215,5 @@ static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)
 #ifdef LINT
 	p=n;
 #endif
-	}
-
-static long gr_load_rand(char *name)
-	{
-	char *p,*n;
-	int last;
-	long tot=0;
-
-	for (;;)
-		{
-		last=0;
-		for (p=name; ((*p != '\0') && (*p != LIST_SEPARATOR_CHAR)); p++);
-		if (*p == '\0') last=1;
-		*p='\0';
-		n=name;
-		name=p+1;
-		if (*n == '\0') break;
-
-		tot+=RAND_load_file(n,1024L*1024L);
-		if (last) break;
-		}
-	return(tot);
 	}
 #endif

@@ -63,7 +63,6 @@
 #include <sys/stat.h>
 #include "apps.h"
 #include <openssl/bio.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -74,14 +73,12 @@
 #undef PROG
 #define PROG gendsa_main
 
-static long dsa_load_rand(char *names);
 int MAIN(int argc, char **argv)
 	{
-	char buffer[200];
 	DSA *dsa=NULL;
 	int ret=1;
 	char *outfile=NULL;
-	char *inrand=NULL,*randfile,*dsaparams=NULL;
+	char *inrand=NULL,*dsaparams=NULL;
 	BIO *out=NULL,*in=NULL;
 	EVP_CIPHER *enc=NULL;
 
@@ -176,26 +173,19 @@ bad:
 			}
 		}
 
-	randfile=RAND_file_name(buffer,200);
-	if ((randfile == NULL)|| !RAND_load_file(randfile,1024L*1024L))
-		BIO_printf(bio_err,"unable to load 'random state'\n");
-
-	if (inrand == NULL)
-		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
-	else
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
 		{
-		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
-			dsa_load_rand(inrand));
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 		}
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	BIO_printf(bio_err,"Generating DSA key, %d bits\n",
 							BN_num_bits(dsa->p));
 	if (!DSA_generate_key(dsa)) goto end;
 
-	if (randfile == NULL)
-		BIO_printf(bio_err,"unable to write 'random state'\n");
-	else
-		RAND_write_file(randfile);
+	app_RAND_write_file(NULL, bio_err);
 
 	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL))
 		goto end;
@@ -206,27 +196,5 @@ end:
 	if (out != NULL) BIO_free(out);
 	if (dsa != NULL) DSA_free(dsa);
 	EXIT(ret);
-	}
-
-static long dsa_load_rand(char *name)
-	{
-	char *p,*n;
-	int last;
-	long tot=0;
-
-	for (;;)
-		{
-		last=0;
-		for (p=name; ((*p != '\0') && (*p != LIST_SEPARATOR_CHAR)); p++);
-		if (*p == '\0') last=1;
-		*p='\0';
-		n=name;
-		name=p+1;
-		if (*n == '\0') break;
-
-		tot+=RAND_load_file(n,1);
-		if (last) break;
-		}
-	return(tot);
 	}
 #endif

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,6 +162,7 @@ int MAIN(int argc, char **argv)
 	const EVP_MD *md_alg,*digest=EVP_md5();
 	LHASH *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL;
+	int need_rand = 0;
 
 	reqfile=0;
 
@@ -201,7 +203,10 @@ int MAIN(int argc, char **argv)
 			keyformat=str2fmt(*(++argv));
 			}
 		else if (strcmp(*argv,"-req") == 0)
+			{
 			reqfile=1;
+			need_rand = 1;
+			}
 		else if (strcmp(*argv,"-CAform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -247,6 +252,7 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			keyfile= *(++argv);
 			sign_flag= ++num;
+			need_rand = 1;
 			}
 		else if (strcmp(*argv,"-CA") == 0)
 			{
@@ -319,6 +325,9 @@ bad:
 			BIO_printf(bio_err,*pp);
 		goto end;
 		}
+
+	if (need_rand)
+		app_RAND_load_file(NULL, bio_err, 0);
 
 	ERR_load_crypto_strings();
 	X509V3_add_standard_extensions();
@@ -651,6 +660,7 @@ bad:
 		                        digest=EVP_dss1();
 #endif
 
+				assert(need_rand);
 				if (!sign(x,Upkey,days,digest,
 						 extconf, extsect)) goto end;
 				}
@@ -667,6 +677,7 @@ bad:
 		                        digest=EVP_dss1();
 #endif
 				
+				assert(need_rand);
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
 					CApkey, CAserial,CA_createserial,days,
 					extconf, extsect))
@@ -742,6 +753,8 @@ bad:
 		}
 	ret=0;
 end:
+	if (need_rand)
+		app_RAND_write_file(NULL, bio_err);
 	OBJ_cleanup();
 	CONF_free(extconf);
 	BIO_free(out);

@@ -73,14 +73,14 @@ FUNCTION functions[] = {
 #ifndef NO_DSA
 	{FUNC_TYPE_GENERAL,"gendsa",gendsa_main},
 #endif
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(O_SSL3))
+#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_server",s_server_main},
 #endif
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(O_SSL3))
+#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_client",s_client_main},
 #endif
 	{FUNC_TYPE_GENERAL,"speed",speed_main},
-#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(O_SSL3))
+#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_time",s_time_main},
 #endif
 	{FUNC_TYPE_GENERAL,"version",version_main},

@@ -4,6 +4,33 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New file apps/app_rand.c with commonly needed functionality
+     for handling the random seed file.
+
+     Use the random seed file in some applications that previously did not:
+          ca,
+          dsaparam -genkey (which also ignored its `-rand' option), 
+          s_client,
+          s_server,
+          x509 (when signing).
+     Except on systems with /dev/urandom, it is crucial to have a random
+     seed file at least for key creation, DSA signing, and for DH exchanges;
+     for RSA signatures it might not hurt _that_ much not to have one.
+
+     gendh and gendsa (unlike genrsa) used to read only the first byte
+     of each file listed in the `-rand' option.  The function as previously
+     found in genrsa is now in app_rand.c and is used by all programs
+     that support `-rand'.
+     [Bodo Moeller]
+
+  *) In RAND_write_file, use mode 0600 for creating files;
+     don't just chmod when it may be too late.
+     [Bodo Moeller]
+
+  *) Report an error from X509_STORE_load_locations
+     when X509_LOOKUP_load_file or X509_LOOKUP_add_dir failed.
+     [Bill Perry]
+
   *) New function ASN1_mbstring_copy() this copies a string in either
      ASCII, Unicode, Universal (4 bytes per character) or UTF8 format
      into an ASN1_STRING type. A mask of permissible types is passed

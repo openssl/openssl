@@ -66,6 +66,16 @@
 #include <openssl/crypto.h>
 #include "progs.h"
 
+int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
+int app_RAND_write_file(const char *file, BIO *bio_e);
+/* When `file' is NULL, use defaults.
+ * `bio_e' is for error messages. */
+void app_RAND_allow_write_file(void);
+long app_RAND_load_files(char *file); /* `file' is a list of files to read,
+                                       * separated by LIST_SEPARATOR_CHAR
+                                       * (see e_os.h).  The string is
+                                       * destroyed! */
+
 #ifdef NO_STDIO
 BIO_METHOD *BIO_s_file();
 #endif
