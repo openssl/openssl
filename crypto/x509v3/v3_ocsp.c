@@ -56,6 +56,8 @@
  *
  */
 
+#ifndef OPENSSL_NO_OCSP
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
@@ -270,3 +272,4 @@ static int i2r_ocsp_serviceloc(X509V3_EXT_METHOD *method, void *in, BIO *bp, int
 err:
 	return 0;
 	}
+#endif

@@ -55,6 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+#ifndef OPENSSL_NO_OCSP
 
 #include <stdio.h>
 #include <string.h>
@@ -722,7 +723,12 @@ int MAIN(int argc, char **argv)
 		}
 	else if (host)
 		{
+#ifndef OPENSSL_NO_SOCK
 		cbio = BIO_new_connect(host);
+#else
+		BIO_printf(bio_err, "Error creating connect BIO - sockets not supported.\n");
+		goto end;
+#endif
 		if (!cbio)
 			{
 			BIO_printf(bio_err, "Error creating connect BIO\n");
@@ -1139,7 +1145,11 @@ static BIO *init_responder(char *port)
 	bufbio = BIO_new(BIO_f_buffer());
 	if (!bufbio) 
 		goto err;
+#ifndef OPENSSL_NO_SOCK
 	acbio = BIO_new_accept(port);
+#else
+	BIO_printf(bio_err, "Error setting up accept BIO - sockets not supported.\n");
+#endif
 	if (!acbio)
 		goto err;
 	BIO_set_accept_bios(acbio, bufbio);
@@ -1226,3 +1236,4 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	return 1;
 	}
 
+#endif
