@@ -4,6 +4,9 @@
 
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) The "block size" for block ciphers in CFB and OFB mode should be 1.
+     [Steve Henson, reported by Yngve Nysaeter Pettersen <yngve@opera.com>]
+
   *) Make sure tests can be performed even if the corresponding algorithms
      have been removed entirely.  This was also the last step to make
      OpenSSL compilable with DJGPP under all reasonable conditions.
