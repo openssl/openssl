@@ -4,6 +4,23 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Change the handling of OID objects as follows:
+
+     - New object identifiers are inserted in objects.txt, following
+       the syntax given in objects.README.
+     - objects.pl is used to process obj_mac.num and create a new
+       obj_mac.h.
+     - obj_dat.pl is used to create a new obj_dat.h, using the data in
+       obj_mac.h.
+
+     This is currently kind of a hack, and the perl code in objects.pl
+     isn't very elegant, but it works as I intended.  The simplest way
+     to check that it worked correctly is to look in obj_dat.h and
+     check the array nid_objs and make sure the objects haven't moved
+     around (this is important!).  Additions are OK, as well as
+     consistent name changes. 
+     [Richard Levitte]
+
   *) Add BSD-style MD5-based passwords to 'openssl passwd' (option '-1').
      [Bodo Moeller]
 
