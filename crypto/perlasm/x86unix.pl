@@ -342,12 +342,11 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
+$const
+.${func}_end:
 EOF
 	push(@out,$tmp);
-
-	push(@out,$const);
 	$const="";
-	push(@out,".${func}_end:\n");
 
 	if ($main'cpp)
 		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
