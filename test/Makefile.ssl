@@ -143,8 +143,10 @@ alltests: \
 	test_ss test_ca test_engine test_evp test_ssl fips_test_aes
 
 fips_test_aes:
-	-mkdir fips_aes_data/rsp
-	$(SET_SO_PATHS); ./$(FIPS_AESTEST) -d fips_aes_data/list
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  mkdir -p fips_aes_data/rsp; \
+	  $(SET_SO_PATHS); ./$(FIPS_AESTEST) -d fips_aes_data/list; \
+	fi
 
 test_evp:
 	$(SET_SO_PATHS); ./$(EVPTEST) evptests.txt
@@ -158,7 +160,9 @@ test_idea:
 test_sha:
 	$(SET_SO_PATHS); ./$(SHATEST)
 	$(SET_SO_PATHS); ./$(SHA1TEST)
-	$(SET_SO_PATHS); ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt -
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(SET_SO_PATHS); ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
+	fi
 
 test_mdc2:
 	$(SET_SO_PATHS); ./$(MDC2TEST)
@@ -195,7 +199,9 @@ test_rc5:
 
 test_rand:
 	$(SET_SO_PATHS); ./$(RANDTEST)
-	$(SET_SO_PATHS); ./$(FIPS_RANDTEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(SET_SO_PATHS); ./$(FIPS_RANDTEST); \
+	fi
 
 test_enc:
 	@$(SET_SO_PATHS); sh ./testenc
@@ -252,8 +258,10 @@ test_dsa:
 	@echo "Generate a set of DSA parameters"
 	$(SET_SO_PATHS); ./$(DSATEST)
 	$(SET_SO_PATHS); ./$(DSATEST) -app2_1
-	$(SET_SO_PATHS); ./$(FIPS_DSATEST)
-	$(SET_SO_PATHS); ./$(FIPS_DSATEST) -app2_1
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(SET_SO_PATHS); ./$(FIPS_DSATEST); \
+	  $(SET_SO_PATHS); ./$(FIPS_DSATEST) -app2_1; \
+	fi
 
 test_gen:
 	@echo "Generate and verify a certificate request"
@@ -308,7 +316,9 @@ $(FIPS_AESTEST): $(FIPS_AESTEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_AESTEST) $(CFLAGS) $(FIPS_AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
+	fi
 
 $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
@@ -380,7 +390,9 @@ $(FIPS_SHA1TEST): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST); \
+	fi
 
 $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
@@ -477,7 +489,9 @@ $(FIPS_DESTEST): $(FIPS_DESTEST).o $(DLIBCRYPTO)
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(FIPS_DESTEST) $(CFLAGS) $(FIPS_DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
+	fi
 
 $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
@@ -493,7 +507,9 @@ $(FIPS_RANDTEST): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
+	fi
 
 $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
@@ -517,7 +533,9 @@ $(FIPS_DSATEST): $(FIPS_DSATEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST)
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
+	fi
 
 $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \

@@ -226,7 +226,9 @@ all: Makefile.ssl sub_all openssl.pc
 
 sigs:	$(SIGS)
 libcrypto.sha1: libcrypto.a
-	fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.sha1
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+		fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.sha1; \
+	fi
 
 sub_all:
 	@for i in $(DIRS); \

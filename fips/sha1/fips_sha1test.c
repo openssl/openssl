@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <openssl/sha.h>
 #include <openssl/err.h>
+
+#ifndef FIPS
+int main(int argc, char *argv[])
+{
+    printf("No FIPS SHA1 support\n");
+    return(0);
+}
+#else
 #include <openssl/fips.h>
 
 #define MAX_TEST_BITS 103432
@@ -134,3 +142,4 @@ int main(int argc,char **argv)
 	}
     return 0;
     }
+#endif
