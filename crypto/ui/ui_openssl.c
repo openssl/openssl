@@ -430,7 +430,10 @@ static int open_console(UI *ui)
 	is_a_tty = 1;
 
 #ifdef OPENSSL_SYS_MSDOS
-	if ((tty=fopen("con","w+")) == NULL)
+	/* For some bizarre reason this call to fopen() on Windows 
+         * fails if the mode is "w+" or "r+", whereas "w" works fine.
+	 */
+	if ((tty=fopen("con","w")) == NULL)
 		tty=stdin;
 #elif defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
 	tty=stdin;
