@@ -15,22 +15,10 @@ $!
 $!  It was written so it would try to determine what "C" compiler to
 $!  use or you can specify which "C" compiler to use.
 $!
-$!  Specify RSAREF as P1 to compile with the RSAREF library instead of
-$!  the regular one.  If you specify NORSAREF it will compile with the
-$!  regular RSAREF routines.  (Note: If you are in the United States
-$!  you MUST compile with RSAREF unless you have a license from RSA).
-$!
-$!  Note: The RSAREF libraries are NOT INCLUDED and you have to
-$!        download it from "ftp://ftp.rsa.com/rsaref".  You have to
-$!        get the ".tar-Z" file as the ".zip" file dosen't have the
-$!        directory structure stored.  You have to extract the file
-$!        into the [.RSAREF] directory under the root directory as that
-$!        is where the scripts will look for the files.
-$!
-$!  Specify DEBUG or NODEBUG as P2 to compile with or without debugger
+$!  Specify DEBUG or NODEBUG as P1 to compile with or without debugger
 $!  information.
 $!
-$!  Specify which compiler at P3 to try to compile under.
+$!  Specify which compiler at P2 to try to compile under.
 $!
 $!	   VAXC	 For VAX C.
 $!	   DECC	 For DEC C.
@@ -39,16 +27,16 @@ $!
 $!  If you don't speficy a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
-$!  P4, if defined, sets a TCP/IP library to use, through one of the following
+$!  P3, if defined, sets a TCP/IP library to use, through one of the following
 $!  keywords:
 $!
 $!	UCX		for UCX
 $!	SOCKETSHR	for SOCKETSHR+NETLIB
 $!	TCPIP		for TCPIP (post UCX)
 $!
-$!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
+$!  P4, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
-$!  P6, if defined, sets a choice of programs to compile.
+$!  P5, if defined, sets a choice of programs to compile.
 $!
 $!
 $! Define A TCP/IP Library That We Will Need To Link To.
@@ -100,10 +88,6 @@ $!
 $! Define The CRYPTO Library.
 $!
 $ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
-$!
-$! Define The RSAREF Library.
-$!
-$ RSAREF_LIB := SYS$DISK:[-.'ARCH'.EXE.RSAREF]LIBRSAGLUE.OLB
 $!
 $! Define The SSL Library.
 $!
@@ -293,73 +277,31 @@ $   WRITE SYS$OUTPUT FILE_NAME," needs a TCP/IP library.  Can't link.  Skipping.
 $   GOTO NEXT_FILE
 $ ENDIF
 $!
-$! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
+$! Link The Program.
+$! Check To See If We Are To Link With A Specific TCP/IP Library.
 $!
-$ IF (RSAREF.EQS."TRUE")
+$ IF (TCPIP_LIB.NES."")
 $ THEN
 $!
-$!  Check To See If We Are To Link With A Specific TCP/IP Library.
+$! Don't Link With The RSAREF Routines And TCP/IP Library.
 $!
-$   IF (TCPIP_LIB.NES."")
-$   THEN
-$!
-$!    Link With The RSAREF Library And A Specific TCP/IP Library.
-$!
-$     LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	  'OBJECT_FILE''EXTRA_OBJ', -
-          'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-          'TCPIP_LIB','OPT_FILE'/OPTION
-$!
-$!  Else...
-$!
-$   ELSE
-$!
-$!    Link With The RSAREF Library And NO TCP/IP Library.
-$!
-$     LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	  'OBJECT_FILE''EXTRA_OBJ', -
-          'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-          'OPT_FILE'/OPTION
-$!
-$!  End The TCP/IP Library Check.
-$!
-$   ENDIF
+$   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+	'OBJECT_FILE''EXTRA_OBJ', -
+        'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
+        'TCPIP_LIB','OPT_FILE'/OPTION
 $!
 $! Else...
 $!
 $ ELSE
 $!
-$!  Don't Link With The RSAREF Routines.
+$! Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
 $!
+$   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+	'OBJECT_FILE''EXTRA_OBJ', -
+        'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
+        'OPT_FILE'/OPTION
 $!
-$!  Check To See If We Are To Link With A Specific TCP/IP Library.
-$!
-$   IF (TCPIP_LIB.NES."")
-$   THEN
-$!
-$!    Don't Link With The RSAREF Routines And TCP/IP Library.
-$!
-$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	    'OBJECT_FILE''EXTRA_OBJ', -
-            'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-            'TCPIP_LIB','OPT_FILE'/OPTION
-$!
-$!  Else...
-$!
-$   ELSE
-$!
-$!    Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
-$!
-$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	    'OBJECT_FILE''EXTRA_OBJ', -
-            'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-            'OPT_FILE'/OPTION
-$!
-$!  End The TCP/IP Library Check.
-$!
-$   ENDIF
-$!
-$! End The RSAREF Link Check.
+$! End The TCP/IP Library Check.
 $!
 $ ENDIF
 $!
@@ -526,32 +468,6 @@ $! End The Crypto Library Check.
 $!
 $ ENDIF
 $!
-$! See If We Need The RSAREF Library.
-$!
-$ IF (RSAREF.EQS."TRUE")
-$ THEN
-$!
-$!  Look For The Library LIBRSAGLUE.OLB.
-$!
-$   IF (F$SEARCH(RSAREF_LIB).EQS."")
-$   THEN
-$!
-$!    Tell The User We Can't Find The LIBRSAGLUE.OLB Library.
-$!
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "Can't Find The Library ",RSAREF_LIB,"."
-$     WRITE SYS$OUTPUT "We Can't Link Without It."
-$     WRITE SYS$OUTPUT ""
-$!
-$!    Since We Can't Link Without It, Exit.
-$!
-$     EXIT
-$   ENDIF
-$!
-$! End The RSAREF Library Check.
-$!
-$ ENDIF
-$!
 $! Look For The Library LIBSSL.OLB.
 $!
 $ IF (F$SEARCH(SSL_LIB).EQS."")
@@ -582,87 +498,10 @@ $ CHECK_OPTIONS:
 $!
 $! Check To See If P1 Is Blank.
 $!
-$ P1 = "NORSAREF"
-$ IF (P1.EQS."NORSAREF")
+$ IF (P1.EQS."NODEBUG")
 $ THEN
 $!
-$!   P1 Is NORSAREF, So Compile With The Regular RSA Libraries.
-$!
-$    RSAREF = "FALSE"
-$!
-$! Else...
-$!
-$ ELSE
-$!
-$!  Check To See If We Are To Use The RSAREF Library.
-$!
-$   IF (P1.EQS."RSAREF")
-$   THEN
-$!
-$!    Check To Make Sure We Have The RSAREF Source Code Directory.
-$!
-$     IF (F$SEARCH("SYS$DISK:[-.RSAREF]SOURCE.DIR").EQS."")
-$     THEN
-$!
-$!      We Don't Have The RSAREF Souce Code Directory, So Tell The
-$!      User This.
-$!
-$       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "It appears that you don't have the RSAREF Souce Code."
-$       WRITE SYS$OUTPUT "You need to go to 'ftp://ftp.rsa.com/rsaref'.  You have to"
-$       WRITE SYS$OUTPUT "get the '.tar-Z' file as the '.zip' file dosen't have the"
-$       WRITE SYS$OUTPUT "directory structure stored.  You have to extract the file"
-$       WRITE SYS$OUTPUT "into the [.RSAREF] directory under the root directory"
-$       WRITE SYS$OUTPUT "as that is where the scripts will look for the files."
-$       WRITE SYS$OUTPUT ""
-$!
-$!      Time To Exit.
-$!
-$       EXIT
-$!
-$!    Else...
-$!
-$     ELSE
-$!
-$!      Compile Using The RSAREF Library.
-$!
-$       RSAREF = "TRUE"
-$!
-$!    End The RSAREF Soure Directory Check.
-$!
-$     ENDIF
-$!
-$!  Else...
-$!
-$   ELSE 
-$!
-$!    They Entered An Invalid Option..
-$!
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "     RSAREF   :  Compile With The RSAREF Library."
-$     WRITE SYS$OUTPUT "     NORSAREF :  Compile With The Regular RSA Library."
-$     WRITE SYS$OUTPUT ""
-$!
-$!    Time To EXIT.
-$!
-$     EXIT
-$!
-$!  End The Valid Arguement Check.
-$!
-$   ENDIF
-$!
-$! End P1 Check.
-$!
-$ ENDIF
-$!
-$! Check To See If P2 Is Blank.
-$!
-$ IF (P2.EQS."NODEBUG")
-$ THEN
-$!
-$!   P2 Is NODEBUG, So Compile Without Debugger Information.
+$!   P1 Is NODEBUG, So Compile Without Debugger Information.
 $!
 $    DEBUGGER  = "NODEBUG"
 $    TRACEBACK = "NOTRACEBACK" 
@@ -677,7 +516,7 @@ $ ELSE
 $!
 $!  Check To See If We Are To Compile With Debugger Information.
 $!
-$   IF (P2.EQS."DEBUG")
+$   IF (P1.EQS."DEBUG")
 $   THEN
 $!
 $!    Compile With Debugger Information.
@@ -693,7 +532,7 @@ $!
 $!    Tell The User Entered An Invalid Option..
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The Option ",P2," Is Invalid.  The Valid Options Are:"
+$     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    DEBUG    :  Compile With The Debugger Information."
 $     WRITE SYS$OUTPUT "    NODEBUG  :  Compile Without The Debugger Information."
@@ -707,13 +546,13 @@ $!  End The Valid Arguement Check.
 $!
 $   ENDIF
 $!
-$! End The P2 Check.
+$! End The P1 Check.
 $!
 $ ENDIF
 $!
-$! Check To See If P3 Is Blank.
+$! Check To See If P2 Is Blank.
 $!
-$ IF (P3.EQS."")
+$ IF (P2.EQS."")
 $ THEN
 $!
 $!  O.K., The User Didn't Specify A Compiler, Let's Try To
@@ -726,7 +565,7 @@ $   THEN
 $!
 $!    Looks Like GNUC, Set To Use GNUC.
 $!
-$     P3 = "GNUC"
+$     P2 = "GNUC"
 $!
 $!  Else...
 $!
@@ -739,7 +578,7 @@ $     THEN
 $!
 $!      Looks Like DECC, Set To Use DECC.
 $!
-$       P3 = "DECC"
+$       P2 = "DECC"
 $!
 $!    Else...
 $!
@@ -747,7 +586,7 @@ $     ELSE
 $!
 $!      Looks Like VAXC, Set To Use VAXC.
 $!
-$       P3 = "VAXC"
+$       P2 = "VAXC"
 $!
 $!    End The VAXC Compiler Check.
 $!
@@ -761,9 +600,9 @@ $!  End The Compiler Check.
 $!
 $ ENDIF
 $!
-$! Check To See If We Have A Option For P4.
+$! Check To See If We Have A Option For P3.
 $!
-$ IF (P4.EQS."")
+$ IF (P3.EQS."")
 $ THEN
 $!
 $!  Find out what socket library we have available
@@ -773,7 +612,7 @@ $   THEN
 $!
 $!    We have SOCKETSHR, and it is my opinion that it's the best to use.
 $!
-$     P4 = "SOCKETSHR"
+$     P3 = "SOCKETSHR"
 $!
 $!    Tell the user
 $!
@@ -793,7 +632,7 @@ $     THEN
 $!
 $!	Last resort: a UCX or UCX-compatible library
 $!
-$	P4 = "UCX"
+$	P3 = "UCX"
 $!
 $!      Tell the user
 $!
@@ -817,12 +656,12 @@ $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 $!
 $!  Check To See If The User Entered A Valid Paramter.
 $!
-$ IF (P3.EQS."VAXC").OR.(P3.EQS."DECC").OR.(P3.EQS."GNUC")
+$ IF (P2.EQS."VAXC").OR.(P2.EQS."DECC").OR.(P2.EQS."GNUC")
 $ THEN
 $!
 $!  Check To See If The User Wanted DECC.
 $!
-$   IF (P3.EQS."DECC")
+$   IF (P2.EQS."DECC")
 $   THEN
 $!
 $!    Looks Like DECC, Set To Use DECC.
@@ -852,7 +691,7 @@ $   ENDIF
 $!
 $!  Check To See If We Are To Use VAXC.
 $!
-$   IF (P3.EQS."VAXC")
+$   IF (P2.EQS."VAXC")
 $   THEN
 $!
 $!    Looks Like VAXC, Set To Use VAXC.
@@ -889,7 +728,7 @@ $   ENDIF
 $!
 $!  Check To See If We Are To Use GNU C.
 $!
-$   IF (P3.EQS."GNUC")
+$   IF (P2.EQS."GNUC")
 $   THEN
 $!
 $!    Looks Like GNUC, Set To Use GNUC.
@@ -918,31 +757,6 @@ $!  Set up default defines
 $!
 $   CCDEFS = """FLAT_INC=1""," + CCDEFS
 $!
-$!  Check To See If We Are To Compile With RSAREF Routines.
-$!
-$   IF (RSAREF.EQS."TRUE")
-$   THEN
-$!
-$!    Compile With RSAREF.
-$!
-$     CCDEFS = CCDEFS + ",""RSAref=1"""
-$!
-$!    Tell The User This.
-$!
-$     WRITE SYS$OUTPUT "Compiling With RSAREF Routines."
-$!
-$!    Else, We Don't Care.  Compile Without The RSAREF Library.
-$!
-$   ELSE
-$!
-$!    Tell The User We Are Compile Without The RSAREF Routines.
-$!
-$     WRITE SYS$OUTPUT "Compiling Without The RSAREF Routines.
-$!
-$!  End The RSAREF Check.
-$!
-$   ENDIF
-$!
 $!  Else The User Entered An Invalid Arguement.
 $!
 $ ELSE
@@ -950,7 +764,7 @@ $!
 $!  Tell The User We Don't Know What They Want.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The Option ",P3," Is Invalid.  The Valid Options Are:"
+$   WRITE SYS$OUTPUT "The Option ",P2," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "    VAXC  :  To Compile With VAX C."
 $   WRITE SYS$OUTPUT "    DECC  :  To Compile With DEC C."
@@ -964,13 +778,13 @@ $ ENDIF
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!
-$ IF P4.EQS."SOCKETSHR" .OR. P4.EQS."MULTINET" .OR. P4.EQS."UCX" -
-     .OR. P4.EQS."TCPIP" .OR. P4.EQS."NONE"
+$ IF P3.EQS."SOCKETSHR" .OR. P3.EQS."MULTINET" .OR. P3.EQS."UCX" -
+     .OR. P3.EQS."TCPIP" .OR. P3.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
 $!
-$   IF P4.EQS."SOCKETSHR"
+$   IF P3.EQS."SOCKETSHR"
 $   THEN
 $!
 $!    Set the library to use SOCKETSHR
@@ -983,12 +797,12 @@ $   ENDIF
 $!
 $!  Check to see if MULTINET was chosen
 $!
-$   IF P4.EQS."MULTINET"
+$   IF P3.EQS."MULTINET"
 $   THEN
 $!
 $!    Set the library to use UCX emulation.
 $!
-$     P4 = "UCX"
+$     P3 = "UCX"
 $!
 $!    Done with MULTINET
 $!
@@ -996,7 +810,7 @@ $   ENDIF
 $!
 $!  Check to see if UCX was chosen
 $!
-$   IF P4.EQS."UCX"
+$   IF P3.EQS."UCX"
 $   THEN
 $!
 $!    Set the library to use UCX.
@@ -1016,7 +830,7 @@ $   ENDIF
 $!
 $!  Check to see if TCPIP (post UCX) was chosen
 $!
-$   IF P4.EQS."TCPIP"
+$   IF P3.EQS."TCPIP"
 $   THEN
 $!
 $!    Set the library to use TCPIP.
@@ -1029,7 +843,7 @@ $   ENDIF
 $!
 $!  Check to see if NONE was chosen
 $!
-$   IF P4.EQS."NONE"
+$   IF P3.EQS."NONE"
 $   THEN
 $!
 $!    Do not use TCPIP.
@@ -1042,7 +856,7 @@ $   ENDIF
 $!
 $!  Add TCP/IP type to CC definitions.
 $!
-$   CCDEFS = CCDEFS + ",TCPIP_TYPE_''P4'"
+$   CCDEFS = CCDEFS + ",TCPIP_TYPE_''P3'"
 $!
 $!  Print info
 $!
@@ -1055,7 +869,7 @@ $!
 $!  Tell The User We Don't Know What They Want.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The Option ",P4," Is Invalid.  The Valid Options Are:"
+$   WRITE SYS$OUTPUT "The Option ",P3," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $   WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
@@ -1094,9 +908,9 @@ $! Written By:  Richard Levitte
 $!              richard@levitte.org
 $!
 $!
-$! Check To See If We Have A Option For P5.
+$! Check To See If We Have A Option For P4.
 $!
-$ IF (P5.EQS."")
+$ IF (P4.EQS."")
 $ THEN
 $!
 $!  Get The Version Of VMS We Are Using.
@@ -1118,15 +932,15 @@ $!  End The VMS Version Check.
 $!
 $   ENDIF
 $!
-$! End The P5 Check.
+$! End The P4 Check.
 $!
 $ ENDIF
 $!
 $! Check if the user wanted to compile just a subset of all the programs.
 $!
-$ IF P6 .NES. ""
+$ IF P5 .NES. ""
 $ THEN
-$   PROGRAMS = P6
+$   PROGRAMS = P5
 $ ENDIF
 $!
 $!  Time To RETURN...
