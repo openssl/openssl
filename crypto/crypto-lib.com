@@ -213,13 +213,13 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio,bss_log"
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
-$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd"
+$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,rand_win"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
 	"e_rc4,names,"+ -
-	"e_xcbc_d,e_rc2,e_cast,e_rc5,"
+	"e_xcbc_d,e_rc2,e_cast,e_rc5"
 $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
@@ -278,10 +278,10 @@ $!
 $   IF (F$SEARCH("SYS$DISK:[-.RSAREF]RSAREF.C").EQS."")
 $   THEN
 $!
-$!    Tell The User That The File Dosen't Exist.
+$!    Tell The User That The File Doesn't Exist.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAREF.C Dosen't Exist."
+$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAREF.C Doesn't Exist."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Exit The Build.
@@ -313,10 +313,10 @@ $!
 $   IF (F$SEARCH("SYS$DISK:[-.RSAREF]RSAR_ERR.C").EQS."")
 $   THEN
 $!
-$!    Tell The User That The File Dosen't Exist.
+$!    Tell The User That The File Doesn't Exist.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAR_ERR.C Dosen't Exist."
+$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAR_ERR.C Doesn't Exist."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Exit The Build.
@@ -529,10 +529,10 @@ $!
 $ IF (F$SEARCH(SOURCE_FILE).EQS."")
 $ THEN
 $!
-$!  Tell The User That The File Dosen't Exist.
+$!  Tell The User That The File Doesn't Exist.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Doesn't Exist."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Exit The Build.
@@ -915,7 +915,7 @@ $!
 $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "It appears that you don't have the RSAREF Souce Code."
 $       WRITE SYS$OUTPUT "You need to go to 'ftp://ftp.rsa.com/rsaref'.  You have to"
-$       WRITE SYS$OUTPUT "get the '.tar-Z' file as the '.zip' file dosen't have the"
+$       WRITE SYS$OUTPUT "get the '.tar-Z' file as the '.zip' file doesn't have the"
 $       WRITE SYS$OUTPUT "directory structure stored.  You have to extract the file"
 $       WRITE SYS$OUTPUT "into the [.RSAREF] directory under the root directory"
 $       WRITE SYS$OUTPUT "as that is where the scripts will look for the files."

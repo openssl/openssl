@@ -64,23 +64,29 @@
 #undef ASN1_STRING_set_default_mask_asc
 #define ASN1_STRING_set_default_mask_asc	ASN1_STRING_set_def_mask_asc
 
+#if 0 /* No longer needed, since safestack macro magic does the job */
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO) */
 #undef i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO
 #define i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO	i2d_ASN1_SET_OF_PKCS7_SIGINF
 #undef d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO
 #define d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO	d2i_ASN1_SET_OF_PKCS7_SIGINF
+#endif
 
+#if 0 /* No longer needed, since safestack macro magic does the job */
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO) */
 #undef i2d_ASN1_SET_OF_PKCS7_RECIP_INFO
-#define i2d_ASN1_SET_OF_PKCS7_RECIP_INFO	i2d_ASN1_SET_OF_PKCS7_RECGINF
+#define i2d_ASN1_SET_OF_PKCS7_RECIP_INFO	i2d_ASN1_SET_OF_PKCS7_RECINF
 #undef d2i_ASN1_SET_OF_PKCS7_RECIP_INFO
-#define d2i_ASN1_SET_OF_PKCS7_RECIP_INFO	d2i_ASN1_SET_OF_PKCS7_RECGINF
+#define d2i_ASN1_SET_OF_PKCS7_RECIP_INFO	d2i_ASN1_SET_OF_PKCS7_RECINF
+#endif
 
+#if 0 /* No longer needed, since safestack macro magic does the job */
 /* Hack the names created with DECLARE_ASN1_SET_OF(ACCESS_DESCRIPTION) */
 #undef i2d_ASN1_SET_OF_ACCESS_DESCRIPTION
 #define i2d_ASN1_SET_OF_ACCESS_DESCRIPTION	i2d_ASN1_SET_OF_ACC_DESC
 #undef d2i_ASN1_SET_OF_ACCESS_DESCRIPTION
 #define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION	d2i_ASN1_SET_OF_ACC_DESC
+#endif
 
 /* Hack the names created with DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE) */
 #undef PEM_read_NETSCAPE_CERT_SEQUENCE
@@ -113,6 +119,23 @@
 /* Hack some long X509 names */
 #undef X509_REVOKED_get_ext_by_critical
 #define X509_REVOKED_get_ext_by_critical	X509_REVOKED_get_ext_by_critic
+
+/* Hack some long CRYPTO names */
+#define CRYPTO_set_dynlock_destroy_callback     CRYPTO_set_dynlock_destroy_cb
+#define CRYPTO_set_dynlock_create_callback      CRYPTO_set_dynlock_create_cb
+#define CRYPTO_set_dynlock_lock_callback        CRYPTO_set_dynlock_lock_cb
+#define CRYPTO_get_dynlock_lock_callback        CRYPTO_get_dynlock_lock_cb
+#define CRYPTO_get_dynlock_destroy_callback     CRYPTO_get_dynlock_destroy_cb
+#define CRYPTO_get_dynlock_create_callback      CRYPTO_get_dynlock_create_cb
+
+/* Hack some long SSL names */
+#define SSL_CTX_set_default_verify_paths        SSL_CTX_set_def_verify_paths
+#define SSL_get_ex_data_X509_STORE_CTX_idx      SSL_get_ex_d_X509_STORE_CTX_idx
+#define SSL_add_file_cert_subjects_to_stack     SSL_add_file_cert_subjs_to_stk
+#define SSL_add_dir_cert_subjects_to_stack      SSL_add_dir_cert_subjs_to_stk
+#define SSL_CTX_use_certificate_chain_file      SSL_CTX_use_cert_chain_file
+#define SSL_CTX_set_cert_verify_callback        SSL_CTX_set_cert_verify_cb
+#define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 
 #endif /* defined VMS */
 
