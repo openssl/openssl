@@ -15,7 +15,7 @@ RSA_check_key - Validate RSA keys
 This function validates RSA keys. It checks that B<p> and B<q> are
 in fact prime, and that B<n = p*q>.
 
-In the case of private keys, it also checks that B<d*e = 1 mod (p-1*q-1)>,
+It also checks that B<d*e = 1 mod (p-1*q-1)>,
 and that B<dmp1>, B<dmq1> and B<iqmp> are set correctly or are B<NULL>.
 
 The key's public components may not be B<NULL>.

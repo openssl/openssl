@@ -14,7 +14,7 @@ RSA_blinding_on, RSA_blinding_off - Protect the RSA operation from timing attack
 
 =head1 DESCRIPTION
 
-RSA is vulnerable from timing attacks. In a setup where attackers can
+RSA is vulnerable to timing attacks. In a setup where attackers can
 measure the time of RSA decryption or signature operations, blinding
 must be used to protect the RSA operation from that attack.
 
