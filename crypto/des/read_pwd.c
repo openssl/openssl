@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(MSDOS) && !defined(VMS)
+#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32)
 #include <unistd.h>
 /* If unistd.h defines _POSIX_VERSION, we conclude that we
  * are on a POSIX system and have sigaction and termios. */

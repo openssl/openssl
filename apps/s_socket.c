@@ -345,7 +345,8 @@ char *ip;
 #if defined SOL_SOCKET && defined SO_REUSEADDR
 		{
 		int j = 1;
-		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &j, sizeof j);
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+			   (const void *) &j, sizeof j);
 		}
 #endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)

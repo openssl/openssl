@@ -442,8 +442,8 @@ re_start:
 		ssl_pending = read_ssl && SSL_pending(con);
 
 		if (!ssl_pending)
-#ifndef WINDOWS
 			{
+#ifndef WINDOWS
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
