@@ -310,18 +310,18 @@ char *sk_set(STACK *st, int i, char *value)
 }
 
 void sk_sort(STACK *st)
-    {
-    if (!st->sorted)
 	{
-	int (*comp_func)(const void *,const void *);
+	if (!st->sorted)
+		{
+		int (*comp_func)(const void *,const void *);
 
-	/* same comment as in sk_find ... previously st->comp was declared
-	 * as a (void*,void*) callback type, but this made the population
-	 * of the callback pointer illogical - our callbacks compare
-	 * type** with type**, so we leave the casting until absolutely
-	 * necessary (ie. "now"). */
-	comp_func=(int (*)(const void *,const void *))(st->comp);
-	qsort(st->data,st->num,sizeof(char *), comp_func);
-	st->sorted=1;
+		/* same comment as in sk_find ... previously st->comp was declared
+		 * as a (void*,void*) callback type, but this made the population
+		 * of the callback pointer illogical - our callbacks compare
+		 * type** with type**, so we leave the casting until absolutely
+		 * necessary (ie. "now"). */
+		comp_func=(int (*)(const void *,const void *))(st->comp);
+		qsort(st->data,st->num,sizeof(char *), comp_func);
+		st->sorted=1;
+		}
 	}
-    }
