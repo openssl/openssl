@@ -141,7 +141,7 @@ DO_GNU_SO=$(CALC_VERSIONS); \
 	LIBDEPS="$(LIBDEPS)"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'
 DO_GNU_APP=LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
@@ -457,7 +457,7 @@ link_o.solaris:
 		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -473,7 +473,7 @@ link_a.solaris:
 		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A)

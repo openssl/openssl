@@ -89,6 +89,7 @@ sparcv8plus.o:	asm/sparcv8plus.S
 mips3.o:	asm/mips3.s
 
 x86_64-gcc.o:	asm/x86_64-gcc.c
+	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
 
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
