@@ -87,12 +87,12 @@ sub main'DWP
 	$ret.=$addr if ($addr ne "") && ($addr ne 0);
 	if ($reg2 ne "")
 		{
-		if($idx ne "")
+		if($idx ne "" && $idx != 0)
 		    { $ret.="($reg1,$reg2,$idx)"; }
 		else
 		    { $ret.="($reg1,$reg2)"; }
 	        }
-	else
+	elsif ($reg1 ne "")
 		{ $ret.="($reg1)" }
 	return($ret);
 	}
@@ -542,3 +542,22 @@ sub popvars
 	&main'pop("edx");
 	&main'popf();
 	}
+
+sub main'picmeup
+	{
+	local($dst,$sym)=@_;
+	local($tmp)=<<___;
+#if (defined(ELF) || defined(SOL)) && defined(PIC)
+	.align	8
+	call	1f
+1:	popl	$regs{$dst}
+	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
+	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
+#else
+	movl	\$$sym,$regs{$dst}
+#endif
+___
+	push(@out,$tmp);
+	}
+
+sub main'blindpop { &out1("popl",@_); }
