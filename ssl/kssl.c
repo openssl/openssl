@@ -953,7 +953,7 @@ print_krb5_authdata(char *label, krb5_authdata **adata)
 		printf("%s, authdata==0\n", label);
 		return;
 		}
-	printf("%s [%p]\n", label, adata);
+	printf("%s [%p]\n", label, (void *)adata);
 #if 0
 	{
         int 	i;
@@ -1725,7 +1725,7 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
 		return;
 		}
 	else
-		printf("%p\n", kssl_ctx);
+		printf("%p\n", (void *)kssl_ctx);
 
 	printf("\tservice:\t%s\n",
                 (kssl_ctx->service_name)? kssl_ctx->service_name: "NULL");
