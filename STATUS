@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/07 20:02:20 $
+  ______________                           $Date: 2002/12/07 20:03:42 $
 
   DEVELOPMENT STATE
 
@@ -70,6 +70,7 @@
 	Shared library support for VMS.
 	Kerberos 5 authentication (Heimdal)
 	Constification
+	Compression
 	Attribute Certificate support
 	Certificate Pair support
 	Storage Engines (primarly an LDAP storage engine)
