@@ -962,11 +962,41 @@ int test_kron(BIO *bp, BN_CTX *ctx)
        * (Platform: debug-solaris-sparcv9-gcc)
        */
 		if (!BN_mod_exp(r, a, r, b, ctx)) goto err;
-#elsif 0
+#elif 0
 		if (!BN_mod_exp_recp(r, a, r, b, ctx)) goto err;
 #else
 		if (!BN_mod_exp_simple(r, a, r, b, ctx)) goto err;
 #endif
+
+/*
+On my Linux system, all variants of BN_mod_exp appear to work here,
+but a SIGSEGV occurs later:
+
+Program received signal SIGSEGV, Segmentation fault.
+0x40066e59 in   ()
+(gdb) bt
+#0  0x40066e59 in   ()
+#1  0x40066d3e in   ()
+#2  0x805e64a in CRYPTO_free (str=0x807d968) at mem.c:248
+#3  0x804f68f in bn_expand2 (b=0x807d6b4, words=10) at bn_lib.c:438
+#4  0x8055366 in BN_lshift (r=0x807d6b4, a=0x807d68c, n=63) at bn_shift.c:132
+#5  0x804ca7a in BN_div (dv=0x0, rm=0x807d68c, num=0x807d68c, 
+    divisor=0x807d678, ctx=0x807d610) at bn_div.c:205
+#6  0x805391a in BN_nnmod (r=0x807d68c, m=0x807d68c, d=0x807d678, 
+    ctx=0x807d610) at bn_mod.c:132
+#7  0x8056198 in BN_kronecker (a=0x807d664, b=0x807d848, ctx=0x807d610)
+    at bn_kron.c:170
+#8  0x805d351 in BN_mod_sqrt (in=0x807d860, a=0x807d830, p=0x807d848, 
+    ctx=0x807d610) at bn_sqrt.c:165
+#9  0x804b365 in test_sqrt (bp=0x807d7e8, ctx=0x807d610) at bntest.c:1057
+#10 0x8048da8 in main (argc=0, argv=0xbffffbb8) at bntest.c:240
+#11 0x4002f78a in   ()
+
+These symptoms indicate that the error probably happens earlier
+in the program.  I've disabled the calls to all earlier test_...
+functions and replaced BN_generate_prime by BN_set_word(.., 65537)
+in bntest.c, but this does not help.
+ */
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
