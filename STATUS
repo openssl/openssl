@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/12 10:07:19 $
+  ______________                           $Date: 2000/09/12 15:46:04 $
 
   DEVELOPMENT STATE
 
@@ -18,6 +18,9 @@
 			Solaris [engine]		- failed (speed cswift)
 								 [FIXED]
 			solaris-sparcv8-gcc		- passed
+			solaris-sparcv9-gcc		- passed
+			solaris-sparcv9-cc		- passed
+			solaris64-sparcv9-cc		- passed
 			sco5-gcc			- passed
 			sco5-cc				- passed
 			FreeBSD				- passed
