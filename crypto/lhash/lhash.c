@@ -422,21 +422,6 @@ static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash)
 	return(ret);
 	}
 
-/*
-unsigned long lh_strhash(char *str)
-	{
-	int i,l;
-	unsigned long ret=0;
-	unsigned short *s;
-
-	if (str == NULL) return(0);
-	l=(strlen(str)+1)/2;
-	s=(unsigned short *)str;
-	for (i=0; i<l; i++)
-		ret^=(s[i]<<(i&0x0f));
-	return(ret);
-	} */
-
 /* The following hash seems to work very well on normal text strings
  * no collisions on /usr/dict/words and it distributes on %2^n quite
  * well, not as good as MD5, but still good.
@@ -470,3 +455,7 @@ unsigned long lh_strhash(const char *c)
 	return((ret>>16)^ret);
 	}
 
+unsigned long lh_num_items(LHASH *lh)
+	{
+	return lh ? lh->num_items : 0;
+	}

@@ -640,19 +640,54 @@ void CRYPTO_mem_leaks(BIO *b)
 	MEM_LEAK ml;
 	char buf[80];
 
-	if (mh == NULL) return;
+	if (mh == NULL && amih == NULL)
+		return;
 	ml.bio=b;
 	ml.bytes=0;
 	ml.chunks=0;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
+	MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
+	if (mh != NULL)
+		lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
 	if (ml.chunks != 0)
 		{
 		sprintf(buf,"%ld bytes leaked in %d chunks\n",
 			ml.bytes,ml.chunks);
 		BIO_puts(b,buf);
 		}
+	else
+		{
+		/* Make sure that, if we found no leaks, memory-leak debugging itself
+		 * does not introduce memory leaks (which might irritate
+		 * external debugging tools).
+		 * (When someone enables leak checking, but does not call
+		 * this function, we declare it to be their fault.)
+		 *
+		 * XXX    This should be in CRYPTO_mem_leaks_cb,
+		 * and CRYPTO_mem_leaks should be implemented by
+		 * using CRYPTO_mem_leaks_cb.
+		 * (Also their should be a variant of lh_doall_arg
+		 * that takes a function pointer instead of a void *;
+		 * this would obviate the ugly and illegal
+		 * void_fn_to_char kludge in CRYPTO_mem_leaks_cb.
+		 * Otherwise the code police will come and get us.)
+		 */
+		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+		if (mh != NULL)
+			{
+			lh_free(mh);
+			mh = NULL;
+			}
+		if (amih != NULL)
+			{
+			if (lh_num_items(amih) == 0) 
+				{
+				lh_free(amih);
+				amih = NULL;
+				}
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+		}
+	MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 
 #if 0
 	lh_stats_bio(mh,b);
