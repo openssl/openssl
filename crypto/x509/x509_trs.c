@@ -99,10 +99,10 @@ static int tr_cmp(const X509_TRUST * const *a,
 
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
 {
-int (*oldtrust)(int , X509 *, int);
-oldtrust = default_trust;
-default_trust = trust;
-return oldtrust;
+	int (*oldtrust)(int , X509 *, int);
+	oldtrust = default_trust;
+	default_trust = trust;
+	return oldtrust;
 }
 
 
