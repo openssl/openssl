@@ -398,23 +398,23 @@ static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
 	nam = cc$rms_nam;
 #endif
 
-	fab.fab$l_fna = filespec1;
+	fab.fab$l_fna = (char *)filespec1;
 	fab.fab$b_fns = filespec1len;
-	fab.fab$l_dna = filespec2;
+	fab.fab$l_dna = (char *)filespec2;
 	fab.fab$b_dns = filespec2len;
 #ifdef NAML$C_MAXRSS
 	if (filespec1len > NAM$C_MAXRSS)
 		{
-		fab.fab$l_fna = -1;
+		fab.fab$l_fna = 0;
 		fab.fab$b_fns = 0;
-		nam.naml$l_long_filename = filespec1;
+		nam.naml$l_long_filename = (char *)filespec1;
 		nam.naml$l_long_filename_size = filespec1len;
 		}
 	if (filespec2len > NAM$C_MAXRSS)
 		{
-		fab.fab$l_dna = -1;
+		fab.fab$l_dna = 0;
 		fab.fab$b_dns = 0;
-		nam.naml$l_long_defname = filespec2;
+		nam.naml$l_long_defname = (char *)filespec2;
 		nam.naml$l_long_defname_size = filespec2len;
 		}
 	nam.naml$l_esa = esa;
@@ -422,13 +422,14 @@ static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
 	nam.naml$l_long_expand = esa;
 	nam.naml$l_long_expand_alloc = sizeof(esa);
 	nam.naml$b_nop = NAM$M_SYNCHK | NAM$M_PWD;
-	nam.naml$v_no_short_updase = 1;
+	nam.naml$v_no_short_upcase = 1;
+	fab.fab$l_naml = &nam;
 #else
 	nam.nam$l_esa = esa;
 	nam.nam$b_ess = NAM$C_MAXRSS;
 	nam.nam$b_nop = NAM$M_SYNCHK | NAM$M_PWD;
-#endif
 	fab.fab$l_nam = &nam;
+#endif
 
 	status = sys$parse(&fab, 0, 0);
 
@@ -443,8 +444,6 @@ static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
 		errstring_dsc.dsc$b_class = DSC$K_CLASS_S;
 		errstring_dsc.dsc$a_pointer = errstring;
 
-		*sym = NULL;
-
 		status = sys$getmsg(status, &length, &errstring_dsc, 1, 0);
 
 		if (!$VMS_STATUS_SUCCESS(status))
@@ -454,10 +453,10 @@ static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
 			errstring[length] = '\0';
 
 			DSOerr(DSO_F_VMS_MERGER,DSO_R_FAILURE);
-			ERR_add_error_data(9,
-				"filespec \"", filespec1, "\", ",
-				"defaults \"", filespec2, "\": "
-				errstring);
+			ERR_add_error_data(7,
+					   "filespec \"", filespec1, "\", ",
+					   "defaults \"", filespec2, "\": ",
+					   errstring);
 			}
 		return(NULL);
 		}
@@ -473,20 +472,20 @@ static char *vms_merger(DSO *dso, const char *filespec1, const char *filespec2)
 		}
 	else
 		{
-		merged = OPENSSL_malloc(nam.naml$l_esl + 1);
+		merged = OPENSSL_malloc(nam.naml$b_esl + 1);
 		if(!merged)
 			goto malloc_err;
 		strncpy(merged, nam.naml$l_esa,
-			nam.naml$l_esl);
-		merged[nam.naml$l_esl] = '\0';
+			nam.naml$b_esl);
+		merged[nam.naml$b_esl] = '\0';
 		}
 #else
-	merged = OPENSSL_malloc(nam.nam$l_esl + 1);
+	merged = OPENSSL_malloc(nam.nam$b_esl + 1);
 	if(!merged)
 		goto malloc_err;
 	strncpy(merged, nam.nam$l_esa,
-		nam.nam$l_esl);
-	merged[nam.nam$l_esl] = '\0';
+		nam.nam$b_esl);
+	merged[nam.nam$b_esl] = '\0';
 #endif
 	return(merged);
  malloc_err:
