@@ -1803,3 +1803,6 @@ EVP_CIPHER_CTX_set_key_length           2399
 EVP_CIPHER_CTX_ctrl                     2400
 BN_mod_exp_mont_word                    2401
 RAND_egd_bytes                          2402
+X509_REQ_get1_email                     2403
+X509_get1_email                         2404
+X509_email_free                         2405

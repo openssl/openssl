@@ -484,7 +484,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
+$dso_scheme   = dlfcn
 
 *** alpha-gcc
 $cc           = gcc
@@ -502,7 +502,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
+$dso_scheme   = dlfcn
 
 *** alpha164-cc
 $cc           = cc
@@ -1859,7 +1859,7 @@ $cc           = gcc
 $cflags       = -O3 -mv8 -Dssize_t=int
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -liberty
+$lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1
 $bn_obj       = 
 $des_obj      = 
