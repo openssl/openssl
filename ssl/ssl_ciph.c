@@ -197,6 +197,10 @@ static int sk_comp_cmp(const SSL_COMP * const *a,
 
 static void load_builtin_compressions(void)
 	{
+	if (ssl_comp_methods != NULL)
+		return;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 	if (ssl_comp_methods == NULL)
 		{
 		SSL_COMP *comp = NULL;
@@ -222,6 +226,7 @@ static void load_builtin_compressions(void)
 			}
 		MemCheck_on();
 		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
 	}
 
 int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
@@ -793,7 +798,12 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	if (rule_str == NULL) return(NULL);
 
-	if (init_ciphers) load_ciphers();
+	if (init_ciphers)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
+		if (init_ciphers) load_ciphers();
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+		}
 
 	/*
 	 * To reduce the work to do we only want to process the compiled
