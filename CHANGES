@@ -4,6 +4,15 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New SSL API mode 'SSL_MODE_AUTO_RETRY'.  This disables the default
+     behaviour that SSL_read may result in SSL_ERROR_WANT_READ (even if
+     the underlying transport is blocking) if a handshake took place.
+     (The default behaviour is needed by applications such as s_client
+     and s_server that use select() to determine when to use SSL_read;
+     but for applications that know in advance when to expect data, it
+     just makes things more complicated.)
+     [Bodo Moeller]
+
   *) Add RAND_egd_bytes(), which gives control over the number of bytes read
      from EGD.
      [Ben Laurie]
