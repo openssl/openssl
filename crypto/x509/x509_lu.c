@@ -94,7 +94,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
 
 int X509_LOOKUP_init(X509_LOOKUP *ctx)
 	{
-	if (ctx->method == NULL) return (0);
+	if (ctx->method == NULL) return 0;
 	if (ctx->method->init != NULL)
 		return ctx->method->init(ctx);
 	else
