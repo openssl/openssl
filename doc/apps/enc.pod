@@ -86,7 +86,7 @@ versions of OpenSSL. Superseded by the B<-pass> argument.
 =item B<-kfile filename>
 
 read the password to derive the key from the first line of B<filename>.
-This is for computability with previous versions of OpenSSL. Superseded by
+This is for compatibility with previous versions of OpenSSL. Superseded by
 the B<-pass> argument.
 
 =item B<-S salt>
