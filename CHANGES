@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) ./config script fixes.
+     [Ulf Moeller, Richard Levitte]
+
   *) Make X509_time_adj() cope with the new behaviour of ASN1_TIME_new().
      Previously it initialised the 'type' argument to V_ASN1_UTCTIME which
      effectively meant GeneralizedTime would never be used. Now it
