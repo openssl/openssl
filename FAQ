@@ -27,6 +27,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
 * Why does the OpenSSL compilation fail on Alpha True64 Unix?
 * Why does the OpenSSL compilation fail with "ar: command not found"?
+* Why does the OpenSSL compilation fail on Win32 with VC++?
+* Why aren't tools like 'autoconf' and 'libtool' used?
 
 
 * Which is the current version of OpenSSL?
@@ -429,4 +431,30 @@ or any sh-compatible shell):
 and then redo the compilation.  What you should really do is make sure
 '/usr/ccs/bin' is permanently in your $PATH, for example through your
 '.profile' (again, assuming you use a sh-compatible shell).
+
+
+* Why does the OpenSSL compilation fail on Win32 with VC++?
+
+Sometimes, you may get reports from VC++ command line (cl) that it
+can't find standard include files like stdio.h and other weirdnesses.
+One possible cause is that the environment isn't correctly set up.
+To solve that problem, one should run VCVARS32.BAT which is found in
+the 'bin' subdirectory of the VC++ installation directory (somewhere
+under 'Program Files').  This needs to be done prior to running NMAKE,
+and the changes are only valid for the current DOS session.
+
+
+* Why aren't tools like 'autoconf' and 'libtool' used?
+
+autoconf is a nice tool, but is unfortunately very Unix-centric.
+Although one can come up with solution to have ports keep in track,
+there's also some work needed for that, and can be quite painful at
+times.  If there was a 'autoconf'-like tool that generated perl
+scripts or something similarly general, it would probably be used
+in OpenSSL much earlier.
+
+libtool has repeatadly been reported by some members of the OpenSSL
+development and others to be a pain to use.  So far, those in the
+development team who have said anything about this have expressed
+a wish to avoid libtool for that reason.
 
