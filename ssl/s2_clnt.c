@@ -668,7 +668,7 @@ static int client_master_key(SSL *s)
 		sess->master_key_length=i;
 		if (i > 0)
 			{
-			if (i > sizeof sess->master_key)
+			if (i > (int)sizeof(sess->master_key))
 				{
 				ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
 				SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);
@@ -688,7 +688,7 @@ static int client_master_key(SSL *s)
 		else
 			enc=i;
 
-		if (i < enc)
+		if ((int)i < enc)
 			{
 			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 			SSLerr(SSL_F_CLIENT_MASTER_KEY,SSL_R_CIPHER_TABLE_SRC_ERROR);
@@ -717,7 +717,7 @@ static int client_master_key(SSL *s)
 		d+=enc;
 		karg=sess->key_arg_length;	
 		s2n(karg,p); /* key arg size */
-		if (karg > sizeof sess->key_arg)
+		if (karg > (int)sizeof(sess->key_arg))
 			{
 			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 			SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);

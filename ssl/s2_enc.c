@@ -101,7 +101,7 @@ int ssl2_enc_init(SSL *s, int client)
 	if (ssl2_generate_key_material(s) <= 0)
 		return 0;
 
-	OPENSSL_assert(c->iv_len <= sizeof s->session->key_arg);
+	OPENSSL_assert(c->iv_len <= (int)sizeof(s->session->key_arg));
 	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
 	EVP_DecryptInit_ex(rs,c,NULL,&(s->s2->key_material[(client)?0:num]),

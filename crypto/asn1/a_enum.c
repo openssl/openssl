@@ -67,12 +67,13 @@
 
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 	{
-	int i,j,k;
+	int j,k;
+	unsigned int i;
 	unsigned char buf[sizeof(long)+1];
 	long d;
 
 	a->type=V_ASN1_ENUMERATED;
-	if (a->length < (sizeof(long)+1))
+	if (a->length < (int)(sizeof(long)+1))
 		{
 		if (a->data != NULL)
 			OPENSSL_free(a->data);
@@ -116,7 +117,7 @@ long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 	else if (i != V_ASN1_ENUMERATED)
 		return -1;
 	
-	if (a->length > sizeof(long))
+	if (a->length > (int)sizeof(long))
 		{
 		/* hmm... a bit ugly */
 		return(0xffffffffL);

@@ -534,7 +534,7 @@ bad:
 			if (!nosalt)
 				{
 				printf("salt=");
-				for (i=0; i<sizeof salt; i++)
+				for (i=0; i<(int)sizeof(salt); i++)
 					printf("%02X",salt[i]);
 				printf("\n");
 				}

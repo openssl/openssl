@@ -1016,7 +1016,7 @@ static int ssl3_send_server_hello(SSL *s)
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;
-		if (sl > sizeof s->session->session_id)
+		if (sl > (int)sizeof(s->session->session_id))
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
 			return -1;

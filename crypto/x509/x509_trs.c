@@ -128,7 +128,7 @@ int X509_TRUST_get_count(void)
 X509_TRUST * X509_TRUST_get0(int idx)
 {
 	if(idx < 0) return NULL;
-	if(idx < X509_TRUST_COUNT) return trstandard + idx;
+	if(idx < (int)X509_TRUST_COUNT) return trstandard + idx;
 	return sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
 }
 
@@ -219,7 +219,7 @@ static void trtable_free(X509_TRUST *p)
 
 void X509_TRUST_cleanup(void)
 {
-	int i;
+	unsigned int i;
 	for(i = 0; i < X509_TRUST_COUNT; i++) trtable_free(trstandard + i);
 	sk_X509_TRUST_pop_free(trtable, trtable_free);
 	trtable = NULL;

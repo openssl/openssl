@@ -205,7 +205,7 @@ int MAIN(int argc, char **argv)
 		int chunk;
 
 		chunk = num;
-		if (chunk > sizeof buf)
+		if (chunk > (int)sizeof(buf))
 			chunk = sizeof buf;
 		r = RAND_bytes(buf, chunk);
 		if (r <= 0)

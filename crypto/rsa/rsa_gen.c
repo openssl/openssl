@@ -85,7 +85,8 @@ int RSA_generate_key_ex(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
 static int rsa_builtin_keygen(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
 	{
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
-	int bitsp,bitsq,ok= -1,n=0,i;
+	int bitsp,bitsq,ok= -1,n=0;
+	unsigned int i;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 
 	ctx=BN_CTX_new();

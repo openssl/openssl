@@ -140,7 +140,7 @@ int X509_PURPOSE_get_count(void)
 X509_PURPOSE * X509_PURPOSE_get0(int idx)
 {
 	if(idx < 0) return NULL;
-	if(idx < X509_PURPOSE_COUNT) return xstandard + idx;
+	if(idx < (int)X509_PURPOSE_COUNT) return xstandard + idx;
 	return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
@@ -240,7 +240,7 @@ static void xptable_free(X509_PURPOSE *p)
 
 void X509_PURPOSE_cleanup(void)
 {
-	int i;
+	unsigned int i;
 	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
 	for(i = 0; i < X509_PURPOSE_COUNT; i++) xptable_free(xstandard + i);
 	xptable = NULL;

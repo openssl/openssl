@@ -168,16 +168,17 @@ static int rc2_magic_to_meth(int i)
 static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	{
 	long num=0;
-	int i=0,l;
+	int i=0;
 	int key_bits;
+	unsigned int l;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 
 	if (type != NULL)
 		{
 		l=EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(l <= sizeof iv);
+		OPENSSL_assert(l <= sizeof(iv));
 		i=ASN1_TYPE_get_int_octetstring(type,&num,iv,l);
-		if (i != l)
+		if (i != (int)l)
 			return(-1);
 		key_bits =rc2_magic_to_meth((int)num);
 		if (!key_bits)

@@ -390,7 +390,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 	unsigned char exitData[8];
 	unsigned char ruleArray[8];
 	unsigned char keyLabel[64];
-	long keyLabelLength = strlen(key_id);
+	unsigned long keyLabelLength = strlen(key_id);
 	unsigned char modulus[256];
 	long modulusFieldLength = sizeof(modulus);
 	long modulusLength = 0;
@@ -482,7 +482,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 	unsigned char exitData[8];
 	unsigned char ruleArray[8];
 	unsigned char keyLabel[64];
-	long keyLabelLength = strlen(key_id);
+	unsigned long keyLabelLength = strlen(key_id);
 	unsigned char modulus[512];
 	long modulusFieldLength = sizeof(modulus);
 	long modulusLength = 0;
@@ -922,7 +922,7 @@ static int cca_get_random_bytes(unsigned char* buf, int num)
 	unsigned char form[] = "RANDOM  ";
 	unsigned char rand_buf[8];
 
-	while(num >= sizeof(rand_buf))
+	while(num >= (int)sizeof(rand_buf))
 		{
 		randomNumberGenerate(&ret_code, &reason_code, &exit_data_length,
 			exit_data, form, rand_buf);

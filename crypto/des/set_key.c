@@ -87,7 +87,7 @@ static const unsigned char odd_parity[256]={
 
 void DES_set_odd_parity(DES_cblock *key)
 	{
-	int i;
+	unsigned int i;
 
 	for (i=0; i<DES_KEY_SZ; i++)
 		(*key)[i]=odd_parity[(*key)[i]];
@@ -95,7 +95,7 @@ void DES_set_odd_parity(DES_cblock *key)
 
 int DES_check_key_parity(const_DES_cblock *key)
 	{
-	int i;
+	unsigned int i;
 
 	for (i=0; i<DES_KEY_SZ; i++)
 		{

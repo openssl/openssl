@@ -300,7 +300,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	 * other thread's seeding remains without effect (except for
 	 * the incremented counter).  By XORing it we keep at least as
 	 * much entropy as fits into md. */
-	for (k = 0; k < sizeof md; k++)
+	for (k = 0; k < (int)sizeof(md); k++)
 		{
 		md[k] ^= local_md[k];
 		}

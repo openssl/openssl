@@ -187,7 +187,8 @@ skip_to_init:
 
 			case EVP_CIPH_CBC_MODE:
 
-			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <= sizeof ctx->iv);
+			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
+					(int)sizeof(ctx->iv));
 			if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 			break;
@@ -274,7 +275,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		}
 	i=ctx->buf_len;
 	bl=ctx->cipher->block_size;
-	OPENSSL_assert(bl <= sizeof ctx->buf);
+	OPENSSL_assert(bl <= (int)sizeof(ctx->buf));
 	if (i != 0)
 		{
 		if (i+inl < bl)
@@ -320,7 +321,8 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,n,b,bl,ret;
+	int n,ret;
+	unsigned int i, b, bl;
 
 	b=ctx->cipher->block_size;
 	OPENSSL_assert(b <= sizeof ctx->buf);
@@ -356,7 +358,8 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     const unsigned char *in, int inl)
 	{
-	int b, fix_len;
+	int fix_len;
+	unsigned int b;
 
 	if (inl == 0)
 		{
@@ -409,8 +412,8 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,b;
-	int n;
+	int i,n;
+	unsigned int b;
 
 	*outl=0;
 	b=ctx->cipher->block_size;
@@ -433,7 +436,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			}
 		OPENSSL_assert(b <= sizeof ctx->final);
 		n=ctx->final[b-1];
-		if (n > b)
+		if (n > (int)b)
 			{
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
 			return(0);

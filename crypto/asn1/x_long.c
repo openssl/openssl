@@ -136,7 +136,7 @@ static int long_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, 
 	int neg, i;
 	long ltmp;
 	unsigned long utmp = 0;
-	if(len > sizeof(long)) {
+	if(len > (int)sizeof(long)) {
 		ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
 		return 0;
 	}

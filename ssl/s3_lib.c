@@ -1914,7 +1914,7 @@ SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	static SSL_CIPHER *sorted[SSL3_NUM_CIPHERS];
 	SSL_CIPHER c,*cp= &c,**cpp;
 	unsigned long id;
-	int i;
+	unsigned int i;
 
 	if (init)
 		{

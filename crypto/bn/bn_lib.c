@@ -91,28 +91,28 @@ void BN_set_params(int mult, int high, int low, int mont)
 	{
 	if (mult >= 0)
 		{
-		if (mult > (sizeof(int)*8)-1)
+		if (mult > (int)(sizeof(int)*8)-1)
 			mult=sizeof(int)*8-1;
 		bn_limit_bits=mult;
 		bn_limit_num=1<<mult;
 		}
 	if (high >= 0)
 		{
-		if (high > (sizeof(int)*8)-1)
+		if (high > (int)(sizeof(int)*8)-1)
 			high=sizeof(int)*8-1;
 		bn_limit_bits_high=high;
 		bn_limit_num_high=1<<high;
 		}
 	if (low >= 0)
 		{
-		if (low > (sizeof(int)*8)-1)
+		if (low > (int)(sizeof(int)*8)-1)
 			low=sizeof(int)*8-1;
 		bn_limit_bits_low=low;
 		bn_limit_num_low=1<<low;
 		}
 	if (mont >= 0)
 		{
-		if (mont > (sizeof(int)*8)-1)
+		if (mont > (int)(sizeof(int)*8)-1)
 			mont=sizeof(int)*8-1;
 		bn_limit_bits_mont=mont;
 		bn_limit_num_mont=1<<mont;
@@ -610,7 +610,7 @@ BN_ULONG BN_get_word(const BIGNUM *a)
 	BN_ULONG ret=0;
 
 	n=BN_num_bytes(a);
-	if (n > sizeof(BN_ULONG))
+	if (n > (int)sizeof(BN_ULONG))
 		return(BN_MASK2);
 	for (i=a->top-1; i>=0; i--)
 		{
@@ -628,7 +628,7 @@ BN_ULONG BN_get_word(const BIGNUM *a)
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i,n;
-	if (bn_expand(a,sizeof(BN_ULONG)*8) == NULL) return(0);
+	if (bn_expand(a,(int)sizeof(BN_ULONG)*8) == NULL) return(0);
 
 	n=sizeof(BN_ULONG)/BN_BYTES;
 	a->neg=0;

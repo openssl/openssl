@@ -312,7 +312,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	static char out_buf[6 + 9 + 24 + 2]; /* "$apr1$..salt..$.......md5hash..........\0" */
 	unsigned char buf[MD5_DIGEST_LENGTH];
 	char *salt_out;
-	int n, i;
+	int n;
+	unsigned int i;
 	EVP_MD_CTX md,md2;
 	size_t passwd_len, salt_len;
 

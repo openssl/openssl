@@ -1350,8 +1350,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			if (c_write)
 				{
-				j=(cw_num > (long)sizeof(cbuf))
-					?sizeof(cbuf):(int)cw_num;
+				j = (cw_num > (long)sizeof(cbuf)) ?
+					(int)sizeof(cbuf) : (int)cw_num;
 				i=BIO_write(c_bio,cbuf,j);
 				if (i < 0)
 					{
@@ -1481,8 +1481,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 				}
 			else
 				{
-				j=(sw_num > (long)sizeof(sbuf))?
-					sizeof(sbuf):(int)sw_num;
+				j = (sw_num > (long)sizeof(sbuf)) ?
+					(int)sizeof(sbuf) : (int)sw_num;
 				i=BIO_write(s_bio,sbuf,j);
 				if (i < 0)
 					{

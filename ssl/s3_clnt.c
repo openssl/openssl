@@ -582,7 +582,7 @@ static int ssl3_client_hello(SSL *s)
 		*(p++)=i;
 		if (i != 0)
 			{
-			if (i > sizeof s->session->session_id)
+			if (i > (int)sizeof(s->session->session_id))
 				{
 				SSLerr(SSL_F_SSL3_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
 				goto err;

@@ -313,12 +313,13 @@ err:
 
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	{
-	int i,j,k;
+	int j,k;
+	unsigned int i;
 	unsigned char buf[sizeof(long)+1];
 	long d;
 
 	a->type=V_ASN1_INTEGER;
-	if (a->length < (sizeof(long)+1))
+	if (a->length < (int)(sizeof(long)+1))
 		{
 		if (a->data != NULL)
 			OPENSSL_free(a->data);
@@ -362,7 +363,7 @@ long ASN1_INTEGER_get(ASN1_INTEGER *a)
 	else if (i != V_ASN1_INTEGER)
 		return -1;
 	
-	if (a->length > sizeof(long))
+	if (a->length > (int)sizeof(long))
 		{
 		/* hmm... a bit ugly */
 		return(0xffffffffL);

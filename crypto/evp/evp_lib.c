@@ -85,14 +85,15 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	{
-	int i=0,l;
+	int i=0;
+	unsigned int l;
 
 	if (type != NULL) 
 		{
 		l=EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(l <= sizeof c->iv);
+		OPENSSL_assert(l <= sizeof(c->iv));
 		i=ASN1_TYPE_get_octetstring(type,c->oiv,l);
-		if (i != l)
+		if (i != (int)l)
 			return(-1);
 		else if (i > 0)
 			memcpy(c->iv,c->oiv,l);
@@ -102,12 +103,13 @@ int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	{
-	int i=0,j;
+	int i=0;
+	unsigned int j;
 
 	if (type != NULL)
 		{
 		j=EVP_CIPHER_CTX_iv_length(c);
-		OPENSSL_assert(j <= sizeof c->iv);
+		OPENSSL_assert(j <= sizeof(c->iv));
 		i=ASN1_TYPE_set_octetstring(type,c->oiv,j);
 		}
 	return(i);

@@ -295,11 +295,11 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 
 	if (os.length > i)
 		os.length = i;
-	if (os.length > sizeof ret->session_id) /* can't happen */
-		os.length = sizeof ret->session_id;
+	if (os.length > (int)sizeof(ret->session_id)) /* can't happen */
+		os.length = sizeof(ret->session_id);
 
 	ret->session_id_length=os.length;
-	OPENSSL_assert(os.length <= sizeof ret->session_id);
+	OPENSSL_assert(os.length <= (int)sizeof(ret->session_id));
 	memcpy(ret->session_id,os.data,os.length);
 
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);

@@ -3005,7 +3005,8 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_G
 	char *tmp = NULL;
 	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
 	int reason_code = -1;
-	int i, ret = 0;
+	int ret = 0;
+	unsigned int i;
 	ASN1_OBJECT *hold = NULL;
 	ASN1_GENERALIZEDTIME *comp_time = NULL;
 	tmp = BUF_strdup(str);
