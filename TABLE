@@ -23,6 +23,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** BC-32
 $cc           = bcc32
@@ -47,6 +48,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** BS2000-OSD
 $cc           = c89
@@ -71,6 +73,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** Cygwin
 $cc           = gcc
@@ -95,6 +98,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .dll
 $ranlib       = 
+$arflags      = 
 
 *** Cygwin-pre1.3
 $cc           = gcc
@@ -119,6 +123,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** DJGPP
 $cc           = gcc
@@ -143,6 +148,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** FreeBSD
 $cc           = gcc
@@ -167,6 +173,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** FreeBSD-alpha
 $cc           = gcc
@@ -191,6 +198,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** FreeBSD-elf
 $cc           = gcc
@@ -215,6 +223,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** MPE/iX-gcc
 $cc           = gcc
@@ -239,6 +248,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** Mingw32
 $cc           = gcc
@@ -263,6 +273,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** NetBSD-m68
 $cc           = gcc
@@ -287,6 +298,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** NetBSD-sparc
 $cc           = gcc
@@ -311,6 +323,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** NetBSD-x86
 $cc           = gcc
@@ -335,6 +348,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OS2-EMX
 $cc           = gcc
@@ -359,6 +373,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** OS390-Unix
 $cc           = c89.sh
@@ -383,6 +398,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD
 $cc           = gcc
@@ -407,6 +423,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-alpha
 $cc           = gcc
@@ -431,6 +448,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-hppa
 $cc           = gcc
@@ -455,6 +473,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-i386
 $cc           = gcc
@@ -479,6 +498,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-m68k
 $cc           = gcc
@@ -503,6 +523,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-m88k
 $cc           = gcc
@@ -527,6 +548,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-mips
 $cc           = gcc
@@ -551,6 +573,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-powerpc
 $cc           = gcc
@@ -575,6 +598,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-sparc
 $cc           = gcc
@@ -599,6 +623,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-sparc64
 $cc           = gcc
@@ -623,6 +648,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenBSD-vax
 $cc           = gcc
@@ -647,6 +673,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenUNIX-8
 $cc           = cc
@@ -671,6 +698,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenUNIX-8-gcc
 $cc           = gcc
@@ -695,6 +723,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenUNIX-8-pentium
 $cc           = cc
@@ -719,6 +748,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** OpenUNIX-8-pentium_pro
 $cc           = cc
@@ -743,6 +773,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** ReliantUNIX
 $cc           = cc
@@ -767,6 +798,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** SINIX
 $cc           = cc
@@ -791,6 +823,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** SINIX-N
 $cc           = /usr/ucb/cc
@@ -815,6 +848,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** UWIN
 $cc           = cc
@@ -839,6 +873,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-MSDOS
 $cc           = cl
@@ -863,6 +898,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-NT
 $cc           = cl
@@ -887,6 +923,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-W31-16
 $cc           = cl
@@ -911,6 +948,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-W31-32
 $cc           = cl
@@ -935,6 +973,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-WIN16
 $cc           = cl
@@ -959,6 +998,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** VC-WIN32
 $cc           = cl
@@ -983,6 +1023,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** aix-cc
 $cc           = cc
@@ -1007,6 +1048,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** aix-gcc
 $cc           = gcc
@@ -1031,6 +1073,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** aix43-cc
 $cc           = cc
@@ -1055,6 +1098,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** aix43-gcc
 $cc           = gcc
@@ -1079,6 +1123,32 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
+
+*** aix64-cc
+$cc           = cc
+$cflags       = -O -DAIX -DB_ENDIAN -qmaxmem=16384 -q64
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = -X 64
 
 *** alpha-cc
 $cc           = cc
@@ -1103,6 +1173,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so
 $ranlib       = 
+$arflags      = 
 
 *** alpha-cc-rpath
 $cc           = cc
@@ -1127,6 +1198,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so
 $ranlib       = 
+$arflags      = 
 
 *** alpha-gcc
 $cc           = gcc
@@ -1151,6 +1223,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so
 $ranlib       = 
+$arflags      = 
 
 *** alpha164-cc
 $cc           = cc
@@ -1175,6 +1248,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so
 $ranlib       = 
+$arflags      = 
 
 *** alphaold-cc
 $cc           = cc
@@ -1199,6 +1273,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so
 $ranlib       = 
+$arflags      = 
 
 *** bsdi-elf-gcc
 $cc           = gcc
@@ -1223,6 +1298,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** bsdi-gcc
 $cc           = gcc
@@ -1247,6 +1323,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** cc
 $cc           = cc
@@ -1271,6 +1348,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** cray-j90
 $cc           = cc
@@ -1295,6 +1373,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** cray-t3e
 $cc           = cc
@@ -1319,6 +1398,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** darwin-i386-cc
 $cc           = cc
@@ -1343,6 +1423,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
+$arflags      = 
 
 *** darwin-ppc-cc
 $cc           = cc
@@ -1367,6 +1448,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
+$arflags      = 
 
 *** debug
 $cc           = gcc
@@ -1391,6 +1473,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ben
 $cc           = gcc
@@ -1415,6 +1498,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ben-debug
 $cc           = gcc
@@ -1439,6 +1523,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ben-openbsd
 $cc           = gcc
@@ -1463,6 +1548,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ben-openbsd-debug
 $cc           = gcc
@@ -1487,6 +1573,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ben-strict
 $cc           = gcc
@@ -1511,6 +1598,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-bodo
 $cc           = gcc
@@ -1535,6 +1623,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-levitte-linux-elf
 $cc           = gcc
@@ -1559,6 +1648,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
@@ -1583,6 +1673,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-linux-elf
 $cc           = gcc
@@ -1607,6 +1698,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-linux-elf-noefence
 $cc           = gcc
@@ -1631,6 +1723,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-linux-pentium
 $cc           = gcc
@@ -1655,6 +1748,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-linux-ppro
 $cc           = gcc
@@ -1679,6 +1773,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-rse
 $cc           = cc
@@ -1703,6 +1798,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-solaris-sparcv8-cc
 $cc           = cc
@@ -1727,6 +1823,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
@@ -1751,6 +1848,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
@@ -1775,6 +1873,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
@@ -1799,6 +1898,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** debug-steve
 $cc           = gcc
@@ -1823,6 +1923,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-steve-linux-pseudo64
 $cc           = gcc
@@ -1847,6 +1948,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** debug-ulf
 $cc           = gcc
@@ -1871,6 +1973,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** dgux-R3-gcc
 $cc           = gcc
@@ -1895,6 +1998,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** dgux-R4-gcc
 $cc           = gcc
@@ -1919,6 +2023,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** dgux-R4-x86-gcc
 $cc           = gcc
@@ -1943,6 +2048,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** dist
 $cc           = cc
@@ -1967,6 +2073,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** gcc
 $cc           = gcc
@@ -1991,6 +2098,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** hpux-brokencc
 $cc           = cc
@@ -2015,6 +2123,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-brokengcc
 $cc           = gcc
@@ -2039,6 +2148,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-cc
 $cc           = cc
@@ -2063,6 +2173,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-gcc
 $cc           = gcc
@@ -2087,6 +2198,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-ia64-cc
 $cc           = cc
@@ -2111,6 +2223,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-m68k-gcc
 $cc           = gcc
@@ -2135,6 +2248,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** hpux-parisc-cc
 $cc           = cc
@@ -2159,6 +2273,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-parisc-cc-o4
 $cc           = cc
@@ -2183,6 +2298,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-parisc-gcc
 $cc           = gcc
@@ -2207,6 +2323,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-parisc1_1-cc
 $cc           = cc
@@ -2231,6 +2348,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux-parisc2-cc
 $cc           = cc
@@ -2255,6 +2373,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux10-brokencc
 $cc           = cc
@@ -2279,6 +2398,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux10-brokengcc
 $cc           = gcc
@@ -2303,6 +2423,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux10-cc
 $cc           = cc
@@ -2327,6 +2448,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux10-gcc
 $cc           = gcc
@@ -2351,6 +2473,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux64-ia64-cc
 $cc           = cc
@@ -2375,6 +2498,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux64-parisc-cc
 $cc           = cc
@@ -2399,6 +2523,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux64-parisc-gcc
 $cc           = gcc
@@ -2423,6 +2548,7 @@ $shared_cflag = -fpic
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hpux64-parisc2-cc
 $cc           = cc
@@ -2447,6 +2573,7 @@ $shared_cflag = +Z
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** hurd-x86
 $cc           = gcc
@@ -2471,6 +2598,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** irix-cc
 $cc           = cc
@@ -2495,6 +2623,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** irix-gcc
 $cc           = gcc
@@ -2519,6 +2648,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** irix-mips3-cc
 $cc           = cc
@@ -2543,6 +2673,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** irix-mips3-gcc
 $cc           = gcc
@@ -2567,6 +2698,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** irix64-mips4-cc
 $cc           = cc
@@ -2591,6 +2723,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** irix64-mips4-gcc
 $cc           = gcc
@@ -2615,6 +2748,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
@@ -2639,6 +2773,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-alpha+bwx-gcc
 $cc           = gcc
@@ -2663,6 +2798,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-alpha-ccc
 $cc           = ccc
@@ -2687,6 +2823,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-alpha-gcc
 $cc           = gcc
@@ -2711,6 +2848,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-aout
 $cc           = gcc
@@ -2735,6 +2873,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-elf
 $cc           = gcc
@@ -2759,6 +2898,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-elf-arm
 $cc           = gcc
@@ -2783,6 +2923,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-ia64
 $cc           = gcc
@@ -2807,6 +2948,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-k6
 $cc           = gcc
@@ -2831,6 +2973,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-m68k
 $cc           = gcc
@@ -2855,6 +2998,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-mips
 $cc           = gcc
@@ -2879,6 +3023,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-mipsel
 $cc           = gcc
@@ -2903,6 +3048,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-parisc
 $cc           = gcc
@@ -2927,6 +3073,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-pentium
 $cc           = gcc
@@ -2951,6 +3098,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-ppc
 $cc           = gcc
@@ -2975,6 +3123,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-ppro
 $cc           = gcc
@@ -2999,6 +3148,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-s390
 $cc           = gcc
@@ -3023,6 +3173,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-s390x
 $cc           = gcc
@@ -3047,6 +3198,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-sparcv7
 $cc           = gcc
@@ -3071,6 +3223,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** linux-sparcv8
 $cc           = gcc
@@ -3095,6 +3248,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** linux-sparcv9
 $cc           = gcc
@@ -3119,6 +3273,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** ncr-scde
 $cc           = cc
@@ -3143,6 +3298,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** newsos4-gcc
 $cc           = gcc
@@ -3167,6 +3323,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** nextstep
 $cc           = cc
@@ -3191,6 +3348,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** nextstep3.3
 $cc           = cc
@@ -3215,6 +3373,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** purify
 $cc           = purify gcc
@@ -3239,6 +3398,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** qnx4
 $cc           = cc
@@ -3263,6 +3423,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** qnx6
 $cc           = cc
@@ -3287,6 +3448,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** rhapsody-ppc-cc
 $cc           = cc
@@ -3311,6 +3473,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** sco3-gcc
 $cc           = gcc
@@ -3335,6 +3498,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** sco5-cc
 $cc           = cc
@@ -3359,6 +3523,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** sco5-cc-pentium
 $cc           = cc
@@ -3383,6 +3548,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** sco5-gcc
 $cc           = gcc
@@ -3407,6 +3573,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparc-sc3
 $cc           = cc
@@ -3431,6 +3598,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv7-cc
 $cc           = cc
@@ -3455,6 +3623,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
@@ -3479,6 +3648,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv8-cc
 $cc           = cc
@@ -3503,6 +3673,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
@@ -3527,6 +3698,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv9-cc
 $cc           = cc
@@ -3551,6 +3723,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
@@ -3575,6 +3748,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
@@ -3599,6 +3773,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-x86-cc
 $cc           = cc
@@ -3623,6 +3798,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris-x86-gcc
 $cc           = gcc
@@ -3647,6 +3823,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris64-sparcv9-cc
 $cc           = cc
@@ -3671,6 +3848,7 @@ $shared_cflag = -KPIC
 $shared_ldflag = -xarch=v9
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = /usr/ccs/bin/ar rs
+$arflags      = 
 
 *** solaris64-sparcv9-gcc
 $cc           = gcc
@@ -3695,6 +3873,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = -m64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** solaris64-sparcv9-gcc31
 $cc           = gcc
@@ -3719,6 +3898,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = -m64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** sunos-gcc
 $cc           = gcc
@@ -3743,6 +3923,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** ultrix-cc
 $cc           = cc
@@ -3767,6 +3948,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** ultrix-gcc
 $cc           = gcc
@@ -3791,6 +3973,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-2.0
 $cc           = cc
@@ -3815,6 +3998,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-2.0-pentium
 $cc           = cc
@@ -3839,6 +4023,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-2.1
 $cc           = cc
@@ -3863,6 +4048,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-2.1-p6
 $cc           = cc
@@ -3887,6 +4073,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-2.1-pentium
 $cc           = cc
@@ -3911,6 +4098,7 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
 
 *** unixware-7
 $cc           = cc
@@ -3935,6 +4123,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** unixware-7-gcc
 $cc           = gcc
@@ -3959,6 +4148,7 @@ $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** unixware-7-pentium
 $cc           = cc
@@ -3983,6 +4173,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** unixware-7-pentium_pro
 $cc           = cc
@@ -4007,6 +4198,7 @@ $shared_cflag = -Kpic
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
+$arflags      = 
 
 *** vxworks-ppc405
 $cc           = ccppc
@@ -4031,3 +4223,4 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
