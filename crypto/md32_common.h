@@ -315,7 +315,7 @@
 #  endif
 #endif
 
-#if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED) || HASH_BLOCK_DATA_ORDER_ALIGNED==1
+#if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
 #ifndef HASH_BLOCK_DATA_ORDER
 #error "HASH_BLOCK_DATA_ORDER must be defined!"
 #endif
@@ -461,7 +461,7 @@ void HASH_UPDATE (HASH_CTX *c, const unsigned char *data, unsigned long len)
 	sw=len/HASH_CBLOCK;
 	if (sw > 0)
 		{
-#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_BLOCK_DATA_ORDER_ALIGNED!=1
+#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
 		/*
 		 * Note that HASH_BLOCK_DATA_ORDER_ALIGNED gets defined
 		 * only if sizeof(HASH_LONG)==4.
@@ -513,7 +513,7 @@ void HASH_UPDATE (HASH_CTX *c, const unsigned char *data, unsigned long len)
 
 void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 	{
-#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_BLOCK_DATA_ORDER_ALIGNED!=1
+#if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
 	if ((((unsigned long)data)%4) == 0)
 		/* data is properly aligned so that we can cast it: */
 		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,1);
