@@ -56,13 +56,11 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
-	@if test -n "$(EXHEADER)"; then \
-	  for i in $(EXHEADER) ; \
-	  do  \
-	    (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	    chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	  done; \
-	fi
+	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	do  \
+	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done
 
 tags:
 	ctags $(SRC)

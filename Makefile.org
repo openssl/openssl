@@ -176,7 +176,7 @@ LIBKRB5=
 SHLIB_MARK=
 
 DIRS=   crypto fips ssl $(SHLIB_MARK) sigs apps test tools
-SHLIBDIRS= fips crypto ssl
+SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
 SDIRS=  objects \
@@ -800,7 +800,7 @@ install_sw:
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
-	@for i in $(EXHEADER) ;\
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
