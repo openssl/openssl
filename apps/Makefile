@@ -152,9 +152,9 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
 	fi
-	-(cd ..; 
+	-(cd ..; \
+	  OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 	  if [ -n "$(SHARED_LIBS)" ]; then \
-	    OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
 	    LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 	    DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
 	    SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
