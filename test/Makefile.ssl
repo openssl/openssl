@@ -844,7 +844,7 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
-	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0
+	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

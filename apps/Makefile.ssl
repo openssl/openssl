@@ -171,7 +171,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
-	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0
+	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 	-(cd ..; \
 	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \
 	  $(PERL) tools/c_rehash certs)
