@@ -469,6 +469,18 @@ int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
 	{
 	return(ASN1_i2d_fp(i2d_PKCS8_PRIV_KEY_INFO,fp,(unsigned char *)p8inf));
 	}
+
+int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
+	{
+	PKCS8_PRIV_KEY_INFO *p8inf;
+	int ret;
+	p8inf = EVP_PKEY2PKCS8(key);
+	if(!p8inf) return 0;
+	ret = i2d_PKCS8_PRIV_KEY_INFO_fp(fp, p8inf);
+	PKCS8_PRIV_KEY_INFO_free(p8inf);
+	return ret;
+	}
+
 #endif
 
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
@@ -483,4 +495,15 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
 	{
 	return(ASN1_i2d_bio(i2d_PKCS8_PRIV_KEY_INFO,bp,(unsigned char *)p8inf));
+	}
+
+int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
+	{
+	PKCS8_PRIV_KEY_INFO *p8inf;
+	int ret;
+	p8inf = EVP_PKEY2PKCS8(key);
+	if(!p8inf) return 0;
+	ret = i2d_PKCS8_PRIV_KEY_INFO_bio(bp, p8inf);
+	PKCS8_PRIV_KEY_INFO_free(p8inf);
+	return ret;
 	}

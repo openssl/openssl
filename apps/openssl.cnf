@@ -3,6 +3,9 @@
 # This is mostly being used for generation of certificate requests.
 #
 
+# This definition stops the following lines choking if HOME isn't
+# defined.
+HOME			= .
 RANDFILE		= $ENV::HOME/.rnd
 oid_file		= $ENV::HOME/.oid
 oid_section		= new_oids
@@ -85,6 +88,10 @@ default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 attributes		= req_attributes
 x509_extensions	= v3_ca	# The extentions to add to the self signed cert
+
+# Passwords for private keys if not present they will be prompted for
+# input_password = secret
+# output_password = secret
 
 # This sets the permitted types in a DirectoryString. There are several
 # options. 

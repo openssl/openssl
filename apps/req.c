@@ -146,6 +146,7 @@ int MAIN(int argc, char **argv)
 	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
+	char *passin = NULL, *passout = NULL;
 	char *p;
 	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
 #ifndef MONOLITH
@@ -216,6 +217,39 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			keyout= *(++argv);
+			}
+		else if (strcmp(*argv,"-passin") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passin= *(++argv);
+			}
+		else if (strcmp(*argv,"-envpassin") == 0)
+			{
+			if (--argc < 1) goto bad;
+				if(!(passin= getenv(*(++argv))))
+				{
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badops = 1;
+				}
+			}
+		else if (strcmp(*argv,"-envpassout") == 0)
+			{
+			if (--argc < 1) goto bad;
+				if(!(passout= getenv(*(++argv))))
+				{
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badops = 1;
+				}
+			argv++;
+			}
+		else if (strcmp(*argv,"-passout") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passout= *(++argv);
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
@@ -452,6 +486,12 @@ bad:
 		}
 	}
 
+	if(!passin)
+		passin = CONF_get_string(req_conf, SECTION, "input_password");
+
+	if(!passout)
+		passout = CONF_get_string(req_conf, SECTION, "output_password");
+
 	p = CONF_get_string(req_conf, SECTION, DIRSTRING_TYPE);
 
 	if(p && !ASN1_STRING_set_default_mask_asc(p)) {
@@ -491,7 +531,9 @@ bad:
 			rsa=d2i_RSAPrivateKey_bio(in,NULL);
 		else */
 		if (keyform == FORMAT_PEM)
-			pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL);
+			{
+			pkey=PEM_read_bio_PrivateKey(in,NULL,PEM_cb,passin);
+			}
 		else
 			{
 			BIO_printf(bio_err,"bad input format specified for X509 request\n");
@@ -579,7 +621,7 @@ bad:
 		i=0;
 loop:
 		if (!PEM_write_bio_PrivateKey(out,pkey,cipher,
-			NULL,0,NULL,NULL))
+			NULL,0,PEM_cb,passout))
 			{
 			if ((ERR_GET_REASON(ERR_peek_error()) ==
 				PEM_R_PROBLEMS_GETTING_PASSWORD) && (i < 3))

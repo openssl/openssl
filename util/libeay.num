@@ -2149,3 +2149,6 @@ i2d_ASN1_NULL                           2173
 i2d_PKCS8PrivateKey_nid_fp              2174
 d2i_PKCS8PrivateKey_fp                  2175
 i2d_PKCS8PrivateKey_nid_bio             2176
+i2d_PKCS8PrivateKeyInfo_fp              2177
+i2d_PKCS8PrivateKeyInfo_bio             2178
+PEM_cb                                  2179

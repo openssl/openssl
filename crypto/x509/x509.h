@@ -663,6 +663,7 @@ int i2d_PKCS8_fp(FILE *fp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
 						PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,PKCS8_PRIV_KEY_INFO *p8inf);
+int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key);
 #endif
 #endif
 
@@ -692,6 +693,7 @@ int i2d_PKCS8_bio(BIO *bp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 						PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,PKCS8_PRIV_KEY_INFO *p8inf);
+int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key);
 #endif
 
 X509 *X509_dup(X509 *x509);

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a password callback function PEM_cb() which either prompts for
+     a password if usr_data is NULL or otherwise assumes it is a null
+     terminate password. Allow passwords to be passed on command line
+     environment or config files in a few more utilities.
+     [Steve Henson]
+
   *) Add a bunch of DER and PEM functions to handle PKCS#8 format private
      keys. Add some short names for PKCS#8 PBE algorithms and allow them
      to be specified on the command line for the pkcs8 and pkcs12 utilities.

@@ -143,7 +143,6 @@ int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
 void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
-int MS_CALLBACK key_cb(char *buf,int len,int verify,void *u);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 #endif

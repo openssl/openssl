@@ -236,11 +236,7 @@ bad:
 		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
 	} else if (informat == FORMAT_PEM) {
 		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
-		else {
-			if(passin) dsa=PEM_read_bio_DSAPrivateKey(in,NULL,
-								key_cb,passin);
-			else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,NULL);
-		}
+		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,PEM_cb,passin);
 	} else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -287,12 +283,8 @@ bad:
 	} else if (outformat == FORMAT_PEM) {
 		if(pubin || pubout)
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
-		else {
-			if(passout) i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
-							NULL,0,key_cb, passout);
-			i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,
-								     NULL,NULL);
-		}
+		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
+							NULL,0,PEM_cb, passout);
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

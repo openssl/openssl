@@ -278,11 +278,7 @@ bad:
 #endif
 	else if (informat == FORMAT_PEM) {
 		if(pubin) rsa=PEM_read_bio_RSA_PUBKEY(in,NULL,NULL,NULL);
-		else {
-			if(passin) rsa=PEM_read_bio_RSAPrivateKey(in,NULL,
-								key_cb,passin);
-			else rsa=PEM_read_bio_RSAPrivateKey(in,NULL,NULL,NULL);
-		}
+		else rsa=PEM_read_bio_RSAPrivateKey(in,NULL, PEM_cb,passin);
 	}
 	else
 		{
@@ -381,12 +377,8 @@ bad:
 	else if (outformat == FORMAT_PEM) {
 		if(pubout || pubin)
 		    i=PEM_write_bio_RSA_PUBKEY(out,rsa);
-		else {
-			if(passout) i=PEM_write_bio_RSAPrivateKey(out,rsa,
-						enc,NULL,0,key_cb,passout);
-			else i=PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,
-								0,NULL,NULL);
-		}
+		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
+						enc,NULL,0,PEM_cb,passout);
 	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

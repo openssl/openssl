@@ -92,6 +92,8 @@ static char *x509_usage[]={
 " -CAkeyform arg  - CA key format - default PEM\n",
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
+" -passin arg     - private key password\n",
+" -envpassin arg  - read private key password from encvironment variable \"arg\"\n",
 " -serial         - print serial number value\n",
 " -hash           - print hash value\n",
 " -subject        - print subject DN\n",
@@ -129,7 +131,7 @@ NULL
 };
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
-static EVP_PKEY *load_key(char *file, int format);
+static EVP_PKEY *load_key(char *file, int format, char *passin);
 static X509 *load_cert(char *file, int format);
 static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest,
 						LHASH *conf, char *section);
@@ -166,7 +168,7 @@ int MAIN(int argc, char **argv)
 	char buf[256];
 	const EVP_MD *md_alg,*digest=EVP_md5();
 	LHASH *extconf = NULL;
-	char *extsect = NULL, *extfile = NULL;
+	char *extsect = NULL, *extfile = NULL, *passin = NULL;
 	int need_rand = 0;
 
 	reqfile=0;
@@ -230,6 +232,22 @@ int MAIN(int argc, char **argv)
 				{
 				BIO_printf(STDout,"bad number of days\n");
 				goto bad;
+				}
+			}
+		else if (strcmp(*argv,"-passin") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passin= *(++argv);
+			}
+		else if (strcmp(*argv,"-envpassin") == 0)
+			{
+			if (--argc < 1) goto bad;
+				if(!(passin= getenv(*(++argv))))
+				{
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badops = 1;
 				}
 			}
 		else if (strcmp(*argv,"-extfile") == 0)
@@ -751,7 +769,7 @@ bad:
 				BIO_printf(bio_err,"Getting Private key\n");
 				if (Upkey == NULL)
 					{
-					Upkey=load_key(keyfile,keyformat);
+					Upkey=load_key(keyfile,keyformat, passin);
 					if (Upkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -768,7 +786,7 @@ bad:
 				BIO_printf(bio_err,"Getting CA Private Key\n");
 				if (CAkeyfile != NULL)
 					{
-					CApkey=load_key(CAkeyfile,CAkeyformat);
+					CApkey=load_key(CAkeyfile,CAkeyformat, passin);
 					if (CApkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -794,7 +812,7 @@ bad:
 					}
 				else
 					{
-					pk=load_key(keyfile,FORMAT_PEM);
+					pk=load_key(keyfile,FORMAT_PEM, passin);
 					if (pk == NULL) goto end;
 					}
 
@@ -1049,7 +1067,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 		}
 	}
 
-static EVP_PKEY *load_key(char *file, int format)
+static EVP_PKEY *load_key(char *file, int format, char *passin)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -1088,7 +1106,7 @@ static EVP_PKEY *load_key(char *file, int format)
 #endif
 		if (format == FORMAT_PEM)
 		{
-		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,NULL);
+		pkey=PEM_read_bio_PrivateKey(key,NULL,PEM_cb,passin);
 		}
 	else
 		{

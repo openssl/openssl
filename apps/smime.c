@@ -60,14 +60,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "apps.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
-#include "apps.h"
 
 #undef PROG
 #define PROG smime_main
 static X509 *load_cert(char *file);
-static EVP_PKEY *load_key(char *file);
+static EVP_PKEY *load_key(char *file, char *pass);
 static STACK_OF(X509) *load_certs(char *file);
 static X509_STORE *setup_verify(char *CAfile, char *CApath);
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
@@ -98,7 +98,7 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int flags = PKCS7_DETACHED;
 	char *to = NULL, *from = NULL, *subject = NULL;
-	char *CAfile = NULL, *CApath = NULL;
+	char *CAfile = NULL, *CApath = NULL, *passin = NULL;
 
 	args = argv + 1;
 
@@ -138,7 +138,18 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))
 				flags |= PKCS7_NOSIGS;
-		else if (!strcmp (*args, "-to")) {
+		else if (!strcmp(*argv,"-passin")) {
+			if (--argc < 1) badarg = 1;
+			else passin= *(++argv);
+		} else if (!strcmp(*argv,"-envpassin")) {
+			if (--argc < 1) badarg = 1;
+			else if(!(passin= getenv(*(++argv)))) {
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badarg = 1;
+			}
+		} else if (!strcmp (*args, "-to")) {
 			if (args[1]) {
 				args++;
 				to = *args;
@@ -303,7 +314,7 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		if(!(key = load_key(keyfile))) {
+		if(!(key = load_key(keyfile, passin))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -405,12 +416,12 @@ static X509 *load_cert(char *file)
 	return cert;
 }
 
-static EVP_PKEY *load_key(char *file)
+static EVP_PKEY *load_key(char *file, char *pass)
 {
 	BIO *in;
 	EVP_PKEY *key;
 	if(!(in = BIO_new_file(file, "r"))) return NULL;
-	key = PEM_read_bio_PrivateKey(in, NULL, NULL,NULL);
+	key = PEM_read_bio_PrivateKey(in, NULL,PEM_cb,pass);
 	BIO_free(in);
 	return key;
 }
