@@ -181,6 +181,7 @@ int MAIN(int argc, char **argv)
 	int prexit = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
+	char *inrand=NULL;
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
 #ifdef WINDOWS
@@ -320,6 +321,11 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-nbio") == 0)
 			{ c_nbio=1; }
 #endif
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
+			}
 		else if	(strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
