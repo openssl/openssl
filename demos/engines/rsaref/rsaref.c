@@ -3,11 +3,9 @@
    be found a little here and there. */
 
 #include <stdio.h>
-#if 0
 #include "./source/global.h"
 #include "./source/rsaref.h"
-#endif
-#include "rsaref.h"
+#include "./source/rsa.h"
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/engine.h>
@@ -274,11 +272,11 @@ static int RSAref_Public_ref2eay(RSArefPublicKey *from, RSA *to)
 	}
 #endif
 
-static int RSAref_Public_eay2ref(RSA *from, RSArefPublicKey *to)
+static int RSAref_Public_eay2ref(RSA *from, R_RSA_PUBLIC_KEY *to)
 	{
 	to->bits=BN_num_bits(from->n);
-	if (!RSAref_bn2bin(from->n,to->m,RSAref_MAX_LEN)) return(0);
-	if (!RSAref_bn2bin(from->e,to->e,RSAref_MAX_LEN)) return(0);
+	if (!RSAref_bn2bin(from->n,to->modulus,MAX_RSA_MODULUS_LEN)) return(0);
+	if (!RSAref_bn2bin(from->e,to->exponent,MAX_RSA_MODULUS_LEN)) return(0);
 	return(1);
 	}
 
@@ -307,17 +305,17 @@ static int RSAref_Private_ref2eay(RSArefPrivateKey *from, RSA *to)
 	}
 #endif
 
-static int RSAref_Private_eay2ref(RSA *from, RSArefPrivateKey *to)
+static int RSAref_Private_eay2ref(RSA *from, R_RSA_PRIVATE_KEY *to)
 	{
 	to->bits=BN_num_bits(from->n);
-	if (!RSAref_bn2bin(from->n,to->m,RSAref_MAX_LEN)) return(0);
-	if (!RSAref_bn2bin(from->e,to->e,RSAref_MAX_LEN)) return(0);
-	if (!RSAref_bn2bin(from->d,to->d,RSAref_MAX_LEN)) return(0);
-	if (!RSAref_bn2bin(from->p,to->prime[0],RSAref_MAX_PLEN)) return(0);
-	if (!RSAref_bn2bin(from->q,to->prime[1],RSAref_MAX_PLEN)) return(0);
-	if (!RSAref_bn2bin(from->dmp1,to->pexp[0],RSAref_MAX_PLEN)) return(0);
-	if (!RSAref_bn2bin(from->dmq1,to->pexp[1],RSAref_MAX_PLEN)) return(0);
-	if (!RSAref_bn2bin(from->iqmp,to->coef,RSAref_MAX_PLEN)) return(0);
+	if (!RSAref_bn2bin(from->n,to->modulus,MAX_RSA_MODULUS_LEN)) return(0);
+	if (!RSAref_bn2bin(from->e,to->publicExponent,MAX_RSA_MODULUS_LEN)) return(0);
+	if (!RSAref_bn2bin(from->d,to->exponent,MAX_RSA_MODULUS_LEN)) return(0);
+	if (!RSAref_bn2bin(from->p,to->prime[0],MAX_RSA_PRIME_LEN)) return(0);
+	if (!RSAref_bn2bin(from->q,to->prime[1],MAX_RSA_PRIME_LEN)) return(0);
+	if (!RSAref_bn2bin(from->dmp1,to->primeExponent[0],MAX_RSA_PRIME_LEN)) return(0);
+	if (!RSAref_bn2bin(from->dmq1,to->primeExponent[1],MAX_RSA_PRIME_LEN)) return(0);
+	if (!RSAref_bn2bin(from->iqmp,to->coefficient,MAX_RSA_PRIME_LEN)) return(0);
 	return(1);
 	}
 
@@ -325,13 +323,13 @@ static int rsaref_private_decrypt(int len, const unsigned char *from, unsigned c
 	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
-	RSArefPrivateKey RSAkey;
+	R_RSA_PRIVATE_KEY RSAkey;
 
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
 	if ((i=RSAPrivateDecrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_DECRYPT,i);
+		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_DECRYPT,i);
 		outlen= -1;
 		}
 err:
@@ -343,18 +341,18 @@ static int rsaref_private_encrypt(int len, const unsigned char *from, unsigned c
 	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
-	RSArefPrivateKey RSAkey;
+	R_RSA_PRIVATE_KEY RSAkey;
 
 	if (padding != RSA_PKCS1_PADDING)
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;
 	}
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
 	if ((i=RSAPrivateEncrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_ENCRYPT,i);
+		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_ENCRYPT,i);
 		outlen= -1;
 		}
 err:
@@ -366,13 +364,13 @@ static int rsaref_public_decrypt(int len, const unsigned char *from, unsigned ch
 	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
-	RSArefPublicKey RSAkey;
+	R_RSA_PUBLIC_KEY RSAkey;
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
 	if ((i=RSAPublicDecrypt(to,&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_DECRYPT,i);
+		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_DECRYPT,i);
 		outlen= -1;
 		}
 err:
@@ -385,13 +383,13 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 	{
 	int outlen= -1;
 	int i;
-	RSArefPublicKey RSAkey;
-	RSARandomState rnd;
+	R_RSA_PUBLIC_KEY RSAkey;
+	R_RANDOM_STRUCT rnd;
 	unsigned char buf[16];
 
 	if (padding != RSA_PKCS1_PADDING && padding != RSA_SSLV23_PADDING) 
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;
 		}
 	
@@ -409,7 +407,7 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 		goto err;
 	if ((i=RSAPublicEncrypt(to,&outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
 		{
-		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,i);
+		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT,i);
 		outlen= -1;
 		goto err;
 		}
