@@ -120,6 +120,8 @@ long n;
 		return("unable to verify the first certificate");
 	case X509_V_ERR_CERT_CHAIN_TOO_LONG:
 		return("certificate chain too long");
+	case X509_V_ERR_CERT_REVOKED:
+		return("certificate revoked");
 	case X509_V_ERR_APPLICATION_VERIFICATION:
 		return("application verification failure");
 	default:

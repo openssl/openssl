@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Make sure a corresponding plain text error message exists for the
+     X509_V_ERR_CERT_REVOKED/23 error number which can occur when a
+     verify callback function determined that a certificate was revoked.
+     [Ralf S. Engelschall]
+
   *) Bugfix: In test/testenc, don't test "openssl <cipher>" for
      ciphers that were excluded, e.g. by -DNO_IDEA.  Also, test
      all available cipers including rc5, which was forgotten until now.
