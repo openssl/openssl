@@ -4,6 +4,15 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
+     in the current directory if neither $RANDFILE nor $HOME was set.
+     RAND_file_name() in 0.9.6a returned NULL in this case.  This has
+     caused some confusion to Windows users who haven't defined $HOME.
+     Thus RAND_file_name() is changed again: e_os.h can define a
+     DEFAULT_HOME, which will be used if $HOME is not set.
+     For Windows, we use "C:"; on other platforms, we still require
+     environment variables.
+
   *) Move 'if (!initialized) RAND_poll()' into regions protected by
      CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
      having multiple threads call RAND_poll() concurrently.
