@@ -5,6 +5,13 @@
 
  Changes between 0.9.01c and 0.9.1d
 
+  *) Fix various bugs in Configure. This affects the following platforms:
+     nextstep
+     ncr-scde
+     unixware-2.0
+     unixware-2.0-pentium
+     sco5-cc.
+     [Ben Laurie]
 
  Changes between 0.9.01b and 0.9.1c
 

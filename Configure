@@ -1,4 +1,7 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
+
+use strict;
+
 #
 # see PROBLEMS for instructions on what sort of things to do when 
 # tracking a bug --tjh
@@ -37,34 +40,34 @@
 # SHA1_ASM	use some extra sha1 assember, must define L_ENDIAN for x86
 # RMD160_ASM	use some extra ripemd160 assember,
 
-$x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
+my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
 
 # MD2_CHAR slags pentium pros
-$x86_gcc_opts="RC4_INDEX MD2_INT BF_PTR2";
+my $x86_gcc_opts="RC4_INDEX MD2_INT BF_PTR2";
 
 # MODIFY THESE PARAMETERS IF YOU ARE GOING TO USE THE 'util/speed.sh SCRIPT
 # Don't worry about these normally
 
-$tcc="cc";
-$tflags="-fast -Xa";
-$tbn_mul="";
-$tlib="-lnsl -lsocket";
+my $tcc="cc";
+my $tflags="-fast -Xa";
+my $tbn_mul="";
+my $tlib="-lnsl -lsocket";
 #$bits1="SIXTEEN_BIT ";
 #$bits2="THIRTY_TWO_BIT ";
-$bits1="THIRTY_TWO_BIT ";
-$bits2="SIXTY_FOUR_BIT ";
+my $bits1="THIRTY_TWO_BIT ";
+my $bits2="SIXTY_FOUR_BIT ";
 
-$x86_sol_asm="asm/bn86-sol.o asm/co86-sol.o:asm/dx86-sol.o asm/yx86-sol.o:asm/bx86-sol.o:asm/mx86-sol.o:asm/sx86-sol.o:asm/cx86-sol.o:asm/rx86-sol.o:asm/rm86-sol.o:asm/r586-sol.o";
-$x86_elf_asm="asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o:asm/bx86-elf.o:asm/mx86-elf.o:asm/sx86-elf.o:asm/cx86-elf.o:asm/rx86-elf.o:asm/rm86-elf.o:asm/r586-elf.o";
-$x86_out_asm="asm/bn86-out.o asm/co86-out.o:asm/dx86-out.o asm/yx86-out.o:asm/bx86-out.o:asm/mx86-out.o:asm/sx86-out.o:asm/cx86-out.o:asm/rx86-out.o:asm/rm86-out.o:asm/r586-out.o";
-$x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/bx86bsdi.o:asm/mx86bsdi.o:asm/sx86bsdi.o:asm/cx86bsdi.o:asm/rx86bsdi.o:asm/rm86bsdi.o:asm/r586bsdi.o";
+my $x86_sol_asm="asm/bn86-sol.o asm/co86-sol.o:asm/dx86-sol.o asm/yx86-sol.o:asm/bx86-sol.o:asm/mx86-sol.o:asm/sx86-sol.o:asm/cx86-sol.o:asm/rx86-sol.o:asm/rm86-sol.o:asm/r586-sol.o";
+my $x86_elf_asm="asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o:asm/bx86-elf.o:asm/mx86-elf.o:asm/sx86-elf.o:asm/cx86-elf.o:asm/rx86-elf.o:asm/rm86-elf.o:asm/r586-elf.o";
+my $x86_out_asm="asm/bn86-out.o asm/co86-out.o:asm/dx86-out.o asm/yx86-out.o:asm/bx86-out.o:asm/mx86-out.o:asm/sx86-out.o:asm/cx86-out.o:asm/rx86-out.o:asm/rm86-out.o:asm/r586-out.o";
+my $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/bx86bsdi.o:asm/mx86bsdi.o:asm/sx86bsdi.o:asm/cx86bsdi.o:asm/rx86bsdi.o:asm/rm86bsdi.o:asm/r586bsdi.o";
 
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
 # So the md5_locl.h file has an undef B_ENDIAN if sun is defined
 
 #config-string	CC : CFLAGS : LDFLAGS : special header file mods:bn_asm \
 # des_asm:bf_asm
-%table=(
+my %table=(
 #"b",		"$tcc:$tflags:$tlib:$bits1:$tbn_mul::",
 #"bl-4c-2c",	"$tcc:$tflags:$tlib:${bits1}BN_LLONG RC4_CHAR MD2_CHAR:$tbn_mul::",
 #"bl-4c-ri",	"$tcc:$tflags:$tlib:${bits1}BN_LLONG RC4_CHAR RC4_INDEX:$tbn_mul::",
@@ -146,13 +149,13 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 "FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 #"bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::RSA_LLONG $x86_gc_des $x86_gcc_opts:$x86_bsdi_asm",
-"nextstep",	"cc:-O3 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:::",
+"nextstep",	"cc:-O3 -Wall::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",
 # NCR MP-RAS UNIX ver 02.03.01
-"ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw:-lsocket -lnsl:$x86_gcc_des $x86_gcc_opts:::",
+"ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw:-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
 
 # UnixWare 2.0
-"unixware-2.0","cc:-O -DFILIO_H:-lsocket -lnsl:$x86_gcc_des $x86_gcc_opts:::",
-"unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread:-lsocket -lnsl:MD2_CHAR RC4_INDEX $x86_des_des::",
+"unixware-2.0","cc:-O -DFILIO_H:-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
+"unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread:-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # IBM's AIX.
 "aix-cc",   "cc:-O -DAIX -DB_ENDIAN::BN_LLONG RC4_CHAR:::",
@@ -188,7 +191,7 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 
 # SCO 5 - Ben Laurie <ben@algroup.co.uk> says the -O breaks the
 # SCO cc.
-"sco5-cc",  "cc::-lsocket:$x86_gcc_des $x86_gcc_opts:::", # des options?
+"sco5-cc",  "cc::-lsocket:$x86_gcc_des ${x86_gcc_opts}:::", # des options?
 
 # Sinix RM400
 "SINIX-N","/usr/ucb/cc:-O2 -misaligned:-lucb:RC4_INDEX RC4_CHAR:::",
@@ -218,27 +221,27 @@ $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/b
 "OpenBSD-mips","gcc:-O2 -DL_ENDIAN:BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR::::",
 );
 
-$no_asm=0;
-$postfix="org";
-$Makefile="Makefile.ssl";
-$des_locl="crypto/des/des_locl.h";
-$des	="crypto/des/des.h";
-$bn	="crypto/bn/bn.h";
-$md2	="crypto/md2/md2.h";
-$rc4	="crypto/rc4/rc4.h";
-$rc4_locl="crypto/rc4/rc4_locl.h";
-$idea	="crypto/idea/idea.h";
-$rc2	="crypto/rc2/rc2.h";
-$bf	="crypto/bf/bf_locl.h";
-$bn_asm	="bn_asm.o";
-$des_enc="des_enc.o fcrypt_b.o";
-$bf_enc	="bf_enc.o";
-$cast_enc="c_enc.o";
-$rc4_enc="rc4_enc.o";
-$rc5_enc="rc5_enc.o";
-$md5_obj="";
-$sha1_obj="";
-$rmd160_obj="";
+my $no_asm=0;
+my $postfix="org";
+my $Makefile="Makefile.ssl";
+my $des_locl="crypto/des/des_locl.h";
+my $des	="crypto/des/des.h";
+my $bn	="crypto/bn/bn.h";
+my $md2	="crypto/md2/md2.h";
+my $rc4	="crypto/rc4/rc4.h";
+my $rc4_locl="crypto/rc4/rc4_locl.h";
+my $idea	="crypto/idea/idea.h";
+my $rc2	="crypto/rc2/rc2.h";
+my $bf	="crypto/bf/bf_locl.h";
+my $bn_asm	="bn_asm.o";
+my $des_enc="des_enc.o fcrypt_b.o";
+my $bf_enc	="bf_enc.o";
+my $cast_enc="c_enc.o";
+my $rc4_enc="rc4_enc.o";
+my $rc5_enc="rc5_enc.o";
+my $md5_obj="";
+my $sha1_obj="";
+my $rmd160_obj="";
 
 if ($#ARGV < 0)
 	{
@@ -246,7 +249,9 @@ if ($#ARGV < 0)
 	exit(1);
 	}
 
-$flags="";
+my $flags="";
+my $libs="";
+my $target="";
 foreach (@ARGV)
 	{
 	if ($_ =~ /^no-asm$/)
@@ -284,8 +289,8 @@ if (!defined($table{$target}))
 	exit(1);
 	}
 
-($cc,$cflags,$lflags,$bn_ops,$bn_obj,$des_obj,$bf_obj,$md5_obj,$sha1_obj,
-	$cast_obj,$rc4_obj,$rmd160_obj,$rc5_obj)=
+(my $cc,my $cflags,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
+ $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
 	split(/\s*:\s*/,$table{$target});
 $cflags="$flags$cflags" if ($flags ne "");
 $lflags="$libs$lflags"if ($libs ne "");
@@ -296,7 +301,7 @@ if ($no_asm)
 	$sha1_obj=$md5_obj=$rmd160_obj="";
 	}
 
-($bn1)=split(/\s+/,$bn_obj);
+my ($bn1)=split(/\s+/,$bn_obj);
 $bn1=$bn_asm unless ($bn1 =~ /\.o$/);
 $bn_obj="$bn1";
 
@@ -321,7 +326,7 @@ if ($rmd160_obj =~ /\.o$/)
 	$cflags.=" -DRMD160_ASM";
 	}
 
-$n=&file_new($Makefile);
+my $n=&file_new($Makefile);
 open(IN,"<".$Makefile) || die "unable to read $Makefile:$!\n";
 open(OUT,">".$n) || die "unable to read $n:$!\n";
 while (<IN>)
@@ -359,20 +364,22 @@ print "MD5_OBJ_ASM   =$md5_obj\n";
 print "SHA1_OBJ_ASM  =$sha1_obj\n";
 print "RMD160_OBJ_ASM=$rmd160_obj\n";
 
-$des_ptr=0;
-$des_risc1=0;
-$des_risc2=0;
-$des_unroll=0;
-$bn_ll=0;
-$def_int=2;
-$rc4_int=$def_int;
-$md2_int=$def_int;
-$idea_int=$def_int;
-$rc2_int=$def_int;
-$rc4_idx=0;
-$bf_ptr=0;
-@type=("char","short","int","long");
-($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0);
+my $des_ptr=0;
+my $des_risc1=0;
+my $des_risc2=0;
+my $des_unroll=0;
+my $bn_ll=0;
+my $def_int=2;
+my $rc4_int=$def_int;
+my $md2_int=$def_int;
+my $idea_int=$def_int;
+my $rc2_int=$def_int;
+my $rc4_idx=0;
+my $bf_ptr=0;
+my @type=("char","short","int","long");
+my ($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0);
+
+my $des_int;
 
 foreach (sort split(/\s+/,$bn_ops))
 	{
@@ -400,7 +407,7 @@ foreach (sort split(/\s+/,$bn_ops))
 	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,0,1) if /EIGHT_BIT/;
 	}
 
-(($in=$bn) =~ s/\.([^.]+)/.$postfix/);
+((my $in=$bn) =~ s/\.([^.]+)/.$postfix/);
 $n=&file_new($bn);
 open(IN,"<".$in) || die "unable to read $bn:$!\n";
 open(OUT,">$n") || die "unable to read $n:$!\n";
@@ -589,8 +596,8 @@ sub bad_target
 	{
 	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] os/compiler\n";
 	print STDERR "pick os/compiler from:";
-	$j=0;
-	foreach $i (sort keys %table)
+	my $j=0;
+	foreach my $i (sort keys %table)
 		{
 		next if /^b-/;
 		print STDERR "\n" if ($j++ % 4) == 0;
@@ -601,7 +608,7 @@ sub bad_target
 
 sub Rename
 	{
-	local($from,$to)=@_;
+	my($from,$to)=@_;
 
 	unlink($to);
 	rename($from,$to) || die "unable to rename $from to $to:$!\n";
