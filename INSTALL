@@ -308,3 +308,23 @@
  to install additional support software to obtain random seed.
  Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
  and the FAQ for more information.
+
+ Note on support for multiple builds
+ -----------------------------------
+
+ OpenSSL is usually built in it's source tree.  Unfortunately, this doesn't
+ support building for multiple platforms from the same source tree very well.
+ It is however possible to build in a separate tree through the use of lots
+ of symbolic links, which should be prepared like this:
+
+	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
+		mkdir -p `dirname $F`
+		ln -s $OPENSSL_SOURCE/$F $F
+	done
+
+ OPENSSL_SOURCE is an environment variable that contains the absolute (this
+ is important!) path to the OpenSSL source tree.
+
+ Also, operations like 'make update' should still be made in the source tree.
