@@ -93,8 +93,8 @@
 # define HASH_BLOCK_DATA_ORDER   	sha_block_data_order
 # define Xupdate(a,ix,ia,ib,ic,id)	(ix=(a)=(ia^ib^ic^id))
 
-  void sha_block_host_order (SHA_CTX *c, const void *p,int num);
-  void sha_block_data_order (SHA_CTX *c, const void *p,int num);
+  void sha_block_host_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
+  void sha_block_data_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
 
 #elif defined(SHA_1)
 
@@ -124,8 +124,8 @@
 #   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
 #  endif
 # endif
-  void sha1_block_host_order (SHA_CTX *c, const void *p,int num);
-  void sha1_block_data_order (SHA_CTX *c, const void *p,int num);
+  void sha1_block_host_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
+  void sha1_block_data_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
 
 #else
 # error "Either SHA_0 or SHA_1 must be defined."
@@ -222,7 +222,7 @@ int HASH_INIT (SHA_CTX *c)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
-void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
+void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, FIPS_SHA_SIZE_T num)
 	{
 	const SHA_LONG *W=d;
 	register unsigned MD32_REG_T A,B,C,D,E,T;
@@ -350,7 +350,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
-void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
+void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, FIPS_SHA_SIZE_T num)
 	{
 	const unsigned char *data=p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;

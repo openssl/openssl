@@ -179,7 +179,7 @@
  */
 #undef ROTATE
 #ifndef PEDANTIC
-# if 0 /* defined(_MSC_VER) */
+# if defined(_MSC_VER) || defined(__ICC)
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
 #  if defined(__POWERPC__)
@@ -410,11 +410,11 @@
  * Time for some action:-)
  */
 
-int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, FIPS_SHA_SIZE_T len)
 	{
 	const unsigned char *data=data_;
 	register HASH_LONG * p;
-	register unsigned long l;
+	register HASH_LONG l;
 	int sw,sc,ew,ec;
 
 	if(FIPS_selftest_fail)
@@ -422,7 +422,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 
 	if (len==0) return 1;
 
-	l=(c->Nl+(len<<3))&0xffffffffL;
+	l=(c->Nl+(((HASH_LONG)len)<<3))&0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
@@ -487,7 +487,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 		if ((((unsigned long)data)%4) == 0)
 			{
 			/* data is properly aligned so that we can cast it: */
-			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,sw);
+			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,sw);
 			sw*=HASH_CBLOCK;
 			data+=sw;
 			len-=sw;
@@ -535,7 +535,7 @@ void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 #if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
 	if ((((unsigned long)data)%4) == 0)
 		/* data is properly aligned so that we can cast it: */
-		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,1);
+		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,1);
 	else
 #if !defined(HASH_BLOCK_DATA_ORDER)
 		{

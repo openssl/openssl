@@ -71,6 +71,10 @@
 extern "C" {
 #endif
 
+#if defined(OPENSSL_FIPS)
+#define FIPS_RAND_SIZE_T int
+#endif
+
 typedef struct rand_meth_st
 	{
 	void (*seed)(const void *buf, int num);

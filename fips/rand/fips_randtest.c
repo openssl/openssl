@@ -191,14 +191,14 @@ static void run_test(const PRNGtest *t)
     FIPS_test_mode(1,t->time);
     RAND_seed(t->seed,sizeof t->seed);
 
-    if(RAND_bytes(buf,8) != 8)
+    if(RAND_bytes(buf,8) <= 0)
 	{
 	ERR_print_errors_fp(stderr);
 	exit(2);
 	}
     compare(buf,t->block1,8);
     for(n=0 ; n < 99 ; ++n)
-	if(RAND_bytes(buf,8) != 8)
+	if(RAND_bytes(buf,8) <= 0)
 	    {
 	    ERR_print_errors_fp(stderr);
 	    exit(2);

@@ -75,8 +75,8 @@
 #define SEED_SIZE	8
 
 static unsigned char seed[SEED_SIZE];
-static int n_seed;
-static int o_seed;
+static FIPS_RAND_SIZE_T n_seed;
+static FIPS_RAND_SIZE_T o_seed;
 static DES_cblock key1;
 static DES_cblock key2;
 static DES_key_schedule ks1,ks2;
@@ -90,8 +90,8 @@ static int key_pid;
 #endif
 
 static void fips_rand_cleanup(void);
-static void fips_rand_add(const void *buf, int num, double add_entropy);
-static int fips_rand_bytes(unsigned char *buf, int num);
+static void fips_rand_add(const void *buf, FIPS_RAND_SIZE_T num, double add_entropy);
+static int fips_rand_bytes(unsigned char *buf, FIPS_RAND_SIZE_T num);
 static int fips_rand_status(void);
 
 static RAND_METHOD rand_fips_meth=
@@ -195,10 +195,10 @@ static void fips_rand_cleanup(void)
     n_seed=0;
     }
 
-void FIPS_rand_seed(const void *buf_, int num)
+void FIPS_rand_seed(const void *buf_, FIPS_RAND_SIZE_T num)
     {
     const char *buf=buf_;
-    int n;
+    FIPS_RAND_SIZE_T n;
     static int init;
 
     /* If the key hasn't been set, we can't seed! */
@@ -219,7 +219,7 @@ void FIPS_rand_seed(const void *buf_, int num)
      */
     for(n=0 ; n < num ; )
 	{
-	int t=num-n;
+	FIPS_RAND_SIZE_T t=num-n;
 
 	if(o_seed+t > sizeof seed)
 	    t=sizeof seed-o_seed;
@@ -239,14 +239,14 @@ void FIPS_rand_seed(const void *buf_, int num)
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
     }
 
-static void fips_rand_add(const void *buf, int num, double add_entropy)
+static void fips_rand_add(const void *buf, FIPS_RAND_SIZE_T num, double add_entropy)
     {
     FIPS_rand_seed(buf,num);
     }
 
-static int fips_rand_bytes(unsigned char *buf,int num)
+static int fips_rand_bytes(unsigned char *buf,FIPS_RAND_SIZE_T num)
     {
-    int n;
+    FIPS_RAND_SIZE_T n;
     unsigned char timeseed[8];
     unsigned char intermediate[SEED_SIZE];
     unsigned char output[SEED_SIZE];
@@ -260,6 +260,18 @@ static int fips_rand_bytes(unsigned char *buf,int num)
 	RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_NOT_SEEDED);
 	return 0;
 	}
+
+#ifdef FIPS_RAND_MAX_SIZE_T
+    if (num > FIPS_RAND_MAX_SIZE_T)
+	{
+#ifdef RAND_R_PRNG_ASKING_FOR_TOO_MUCH
+	RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_ASKING_FOR_TOO_MUCH);
+	return 0;
+#else
+	return -1; /* signal "not supported" condition */
+#endif
+	}
+#endif
 
 #ifndef GETPID_IS_MEANINGLESS
     pid=getpid();
@@ -283,7 +295,7 @@ static int fips_rand_bytes(unsigned char *buf,int num)
     for(n=0 ; n < num ; )
 	{
 	unsigned char t[SEED_SIZE];
-	int l;
+	FIPS_RAND_SIZE_T l;
 	
 	/* now generate a full 64 bits of "randomness" */
 	for(l=0 ; l < sizeof t ; ++l)
@@ -296,6 +308,7 @@ static int fips_rand_bytes(unsigned char *buf,int num)
 	if(second && !memcmp(output,previous,sizeof previous))
 	    {
 	    RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_STUCK);
+	    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	    return 0;
 	    }
 	memcpy(previous,output,sizeof previous);
@@ -308,7 +321,7 @@ static int fips_rand_bytes(unsigned char *buf,int num)
 
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-    return num;
+    return 1;
     }
 
 static int fips_rand_status(void)
