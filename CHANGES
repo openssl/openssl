@@ -81,7 +81,7 @@
   *) Introduce "mode" for SSL structures (with defaults in SSL_CTX),
      which largely parallels "options", but is for changing API behaviour,
      whereas "options" are about protocol behaviour.
-     Initial "mode" flags (still experimental) are:
+     Initial "mode" flags are:
 
      SSL_MODE_ENABLE_PARTIAL_WRITE   Allow SSL_write to report success when
                                      a single record has been written.
