@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/03/06 06:25:21 $
+  ______________                           $Date: 2002/03/11 09:35:33 $
 
   DEVELOPMENT STATE
 
@@ -21,6 +21,7 @@
 
     o BIGNUM library failures on 64-bit platforms (0.9.7-dev):
       - BN_mod_mul verificiation (bc) fails for solaris64-sparcv9-cc
+        and other 64-bit platforms
 
 	Checked on			Result
 	alpha-cc (Tru64 version 4.0)	works
@@ -30,6 +31,9 @@
 
 	Needs checked on
 	[add platforms here]
+
+      - BN_mod_mul verification fails for mips3-sgi-irix
+        unless configured with no-asm
 
   AVAILABLE PATCHES
 
