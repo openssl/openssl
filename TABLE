@@ -102,7 +102,7 @@ $shared_cflag =
 
 *** FreeBSD-alpha
 $cc           = gcc
-$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$cflags       = -DTERMIOS -O -fomit-frame-pointer
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
