@@ -4,6 +4,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix for non blocking accept BIOs. Added new I/O special reason
+     BIO_RR_ACCEPT to cover this case. Previously use of accept BIOs
+     with non blocking I/O was not possible because no retry code was
+     implemented. Also added new SSL code SSL_WANT_ACCEPT to cover
+     this case.
+     [Steve Henson]
+
   *) Fix for bug in DirectoryString mask setting. Add support for
      X509_NAME_print_ex() in 'req' and X509_print_ex() function
      to allow certificate printing to more controllable, additional

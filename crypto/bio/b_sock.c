@@ -661,6 +661,7 @@ int BIO_accept(int sock, char **addr)
 	ret=accept(sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
+		if(BIO_sock_should_retry(ret)) return -2;
 		SYSerr(SYS_F_ACCEPT,get_last_socket_error());
 		BIOerr(BIO_F_BIO_ACCEPT,BIO_R_ACCEPT_ERROR);
 		goto end;
