@@ -150,7 +150,10 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
-		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
+		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
+		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
+		SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
+		LIBPATH="`pwd`:$$LIBPATH"; \
 		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		$(PERL) tools/c_rehash certs)
