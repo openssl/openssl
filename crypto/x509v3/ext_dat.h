@@ -61,7 +61,8 @@ extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info;
 extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols, v3_crld;
-extern X509V3_EXT_METHOD v3_ocsp_nonce;
+extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
+extern X509V3_EXT_METHOD v3_ocsp_crlid;
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -90,7 +91,10 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 &v3_crl_reason,
 &v3_sxnet,
 &v3_info,
-&v3_ocsp_nonce
+&v3_ocsp_nonce,
+&v3_ocsp_crlid,
+&v3_ocsp_accresp,
+&v3_ocsp_acutoff
 };
 
 /* Number of standard extensions */

@@ -1,4 +1,4 @@
-/* v3_nonce.c */
+/* v3_ocsp.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -63,15 +63,35 @@
 #include <openssl/ocsp.h>
 #include <openssl/x509v3.h>
 
-/* OCSP nonce. This is needs special treatment because it doesn't have
- * an ASN1 encoding at all: it just contains arbitrary data.
+/* OCSP extensions.
  */
+
+static int i2r_ocsp_crlid(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
+static int i2r_ocsp_acutoff(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
 
 static void *ocsp_nonce_new(void);
 static int i2d_ocsp_nonce(void *a, unsigned char **pp);
 static void *d2i_ocsp_nonce(void *a, unsigned char **pp, long length);
 static void ocsp_nonce_free(void *a);
 static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
+
+X509V3_EXT_METHOD v3_ocsp_crlid = {
+	NID_id_pkix_OCSP_CrlID, 0, &OCSP_CRLID_it,
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_ocsp_crlid,0,
+	NULL
+};
+
+X509V3_EXT_METHOD v3_ocsp_acutoff = {
+	NID_id_pkix_OCSP_archiveCutoff, 0, &ASN1_GENERALIZEDTIME_it,
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_ocsp_acutoff,0,
+	NULL
+};
 
 X509V3_EXT_METHOD v3_ocsp_nonce = {
 	NID_id_pkix_OCSP_Nonce, 0, NULL,
@@ -84,6 +104,44 @@ X509V3_EXT_METHOD v3_ocsp_nonce = {
 	i2r_ocsp_nonce,0,
 	NULL
 };
+
+static int i2r_ocsp_crlid(X509V3_EXT_METHOD *method, void *in, BIO *bp, int ind)
+{
+	OCSP_CRLID *a = in;
+	if (a->crlUrl)
+	        {
+		if (!BIO_printf(bp, "%*scrlUrl: ", ind, "")) goto err;
+		if (!ASN1_STRING_print(bp, (ASN1_STRING*)a->crlUrl)) goto err;
+		if (!BIO_write(bp, "\n", 1)) goto err;
+		}
+	if (a->crlNum)
+	        {
+		if (!BIO_printf(bp, "%*scrlNum: ", ind, "")) goto err;
+		if (!i2a_ASN1_INTEGER(bp, a->crlNum)) goto err;
+		if (!BIO_write(bp, "\n", 1)) goto err;
+		}
+	if (a->crlTime)
+	        {
+		if (!BIO_printf(bp, "%*scrlTime: ", ind, "")) goto err;
+		if (!ASN1_GENERALIZEDTIME_print(bp, a->crlTime)) goto err;
+		if (!BIO_write(bp, "\n", 1)) goto err;
+		}
+	return 1;
+	err:
+	return 0;
+}
+
+static int i2r_ocsp_acutoff(X509V3_EXT_METHOD *method, void *cutoff, BIO *bp, int ind)
+{
+	if (!BIO_printf(bp, "%*s", ind, "")) return 0;
+	if(!ASN1_GENERALIZEDTIME_print(bp, cutoff)) return 0;
+	return 1;
+}
+
+
+/* OCSP nonce. This is needs special treatment because it doesn't have
+ * an ASN1 encoding at all: it just contains arbitrary data.
+ */
 
 static void *ocsp_nonce_new(void)
 {
@@ -130,3 +188,5 @@ static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int 
 	if(i2a_ASN1_STRING(out, nonce, V_ASN1_OCTET_STRING) <= 0) return 0;
 	return 1;
 }
+
+

@@ -444,10 +444,7 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char* tim);
 
 X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME* issuer, char **urls);
 
-OCSP_SINGLERESP *OCSP_SINGLERESP_new(void);
-void OCSP_SINGLERESP_free(OCSP_SINGLERESP *a);
-int i2d_OCSP_SINGLERESP(OCSP_SINGLERESP *a, unsigned char **pp);
-OCSP_SINGLERESP *d2i_OCSP_SINGLERESP(OCSP_SINGLERESP **a, unsigned char **pp, long length);
+DECLARE_ASN1_FUNCTIONS(OCSP_SINGLERESP)
 int i2a_OCSP_SINGLERESP(BIO *bp, OCSP_SINGLERESP* a);
 
 OCSP_CERTSTATUS *OCSP_CERTSTATUS_new(void);
@@ -518,23 +515,14 @@ int i2d_OCSP_SIGNATURE(OCSP_SIGNATURE *a, unsigned char **pp);
 OCSP_SIGNATURE *d2i_OCSP_SIGNATURE(OCSP_SIGNATURE **a, unsigned char **pp, long length);
 int i2a_OCSP_SIGNATURE(BIO *bp, OCSP_SIGNATURE* a);
 
-OCSP_REQINFO *OCSP_REQINFO_new(void);
-void OCSP_REQINFO_free(OCSP_REQINFO *a);
-int i2d_OCSP_REQINFO(OCSP_REQINFO *a, unsigned char **pp);
-OCSP_REQINFO *d2i_OCSP_REQINFO(OCSP_REQINFO **a, unsigned char **pp, long length);
+DECLARE_ASN1_FUNCTIONS(OCSP_REQINFO)
 int i2a_OCSP_REQINFO(BIO *bp, OCSP_REQINFO* a);
 
-OCSP_CRLID *OCSP_CRLID_new(void);
-void OCSP_CRLID_free(OCSP_CRLID *a);
-int i2d_OCSP_CRLID(OCSP_CRLID *a, unsigned char **pp);
-OCSP_CRLID *d2i_OCSP_CRLID(OCSP_CRLID **a, unsigned char **pp, long length);
+DECLARE_ASN1_FUNCTIONS(OCSP_CRLID)
 int i2a_OCSP_CRLID(BIO *bp, OCSP_CRLID* a);
 int OCSP_CRLID_print(BIO *bp, OCSP_CRLID *a, int ind);
 
-OCSP_SERVICELOC *OCSP_SERVICELOC_new(void);
-void OCSP_SERVICELOC_free(OCSP_SERVICELOC *a);
-int i2d_OCSP_SERVICELOC(OCSP_SERVICELOC *a, unsigned char **pp);
-OCSP_SERVICELOC *d2i_OCSP_SERVICELOC(OCSP_SERVICELOC **a, unsigned char **pp, long length);
+DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
 int i2a_OCSP_SERVICELOC(BIO *bp, OCSP_SERVICELOC* a);
 int OCSP_SERVICELOC_print(BIO *bp, OCSP_SERVICELOC* a, int ind);
 
