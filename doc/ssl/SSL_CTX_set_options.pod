@@ -100,18 +100,6 @@ doing a re-connect, always takes the first cipher in the cipher list.
 
 ...
 
-=item SSL_OP_TLS_ROLLBACK_BUG
-
-Disable version rollback attack detection.
-
-During the client key exchange, the client must send the same information
-about acceptable SSL/TLS protocol levels as during the first hello. Some
-clients violate this rule by adapting to the server's answer. (Example:
-the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
-only understands up to SSLv3. In this case the client must still use the
-same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
-to the server's answer and violate the version rollback protection.)
-
 =item SSL_OP_ALL
 
 All of the above bug workarounds.
@@ -124,6 +112,18 @@ options.
 The following B<modifying> options are available:
 
 =over 4
+
+=item SSL_OP_TLS_ROLLBACK_BUG
+
+Disable version rollback attack detection.
+
+During the client key exchange, the client must send the same information
+about acceptable SSL/TLS protocol levels as during the first hello. Some
+clients violate this rule by adapting to the server's answer. (Example:
+the client sends a SSLv2 hello and accepts up to SSLv3.1=TLSv1, the server
+only understands up to SSLv3. In this case the client must still use the
+same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
+to the server's answer and violate the version rollback protection.)
 
 =item SSL_OP_SINGLE_DH_USE
 
@@ -207,6 +207,8 @@ L<dhparam(1)|dhparam(1)>
 
 SSL_OP_CIPHER_SERVER_PREFERENCE has been added in OpenSSL 0.9.7.
 
-SSL_OP_TLS_ROLLBACK_BUG has been added in OpenSSL 0.9.6.
+SSL_OP_TLS_ROLLBACK_BUG has been added in OpenSSL 0.9.6 and was automatically
+enabled with SSL_OP_ALL. As of 0.9.7 it is no longer included in SSL_OP_ALL
+and must be explicitely set.
 
 =cut

@@ -332,7 +332,6 @@ typedef struct ssl_session_st
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
-#define SSL_OP_TLS_ROLLBACK_BUG				0x00000400L
 
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
@@ -341,6 +340,11 @@ typedef struct ssl_session_st
 /* Set on servers to choose the cipher according to the server's
  * preferences */
 #define SSL_OP_CIPHER_SERVER_PREFERENCE			0x00400000L
+/* If set, a server will allow a client to issue a SSLv3.0 version number
+ * as latest version supported in the premaster secret, even when TLSv1.0
+ * (version 3.1) was announced in the client hello. Normally this is
+ * forbidden to prevent version rollback attacks. */
+#define SSL_OP_TLS_ROLLBACK_BUG				0x00800000L
 
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
