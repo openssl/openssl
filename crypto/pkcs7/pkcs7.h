@@ -71,8 +71,9 @@ extern "C" {
 #endif
 
 #ifdef WIN32
-/* Under Win32 this is defined in wincrypt.h */
+/* Under Win32 thes are defined in wincrypt.h */
 #undef PKCS7_ISSUER_AND_SERIAL
+#undef PKCS7_SIGNER_INFO
 #endif
 
 /*

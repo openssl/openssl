@@ -192,7 +192,7 @@ DECLARE_ASN1_SET_OF(ACCESS_DESCRIPTION)
 typedef struct DIST_POINT_NAME_st {
 /* NB: this is a CHOICE type and only one of these should be set */
 STACK_OF(GENERAL_NAME) *fullname;
-X509_NAME *relativename;
+STACK_OF(X509_NAME_ENTRY) *relativename;
 } DIST_POINT_NAME;
 
 typedef struct DIST_POINT_st {

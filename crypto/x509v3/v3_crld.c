@@ -218,13 +218,13 @@ void DIST_POINT_free(DIST_POINT *a)
 
 int i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **pp)
 {
-	int v = 0;
 	M_ASN1_I2D_vars(a);
 
 	if(a->fullname) {
 		M_ASN1_I2D_len_IMP_opt (a->fullname, i2d_GENERAL_NAMES);
 	} else {
-		M_ASN1_I2D_len_EXP_opt (a->relativename, i2d_X509_NAME, 1, v);
+		M_ASN1_I2D_len_IMP_SET_opt_type(X509_NAME_ENTRY,
+				a->relativename, i2d_X509_NAME_ENTRY, 1);
 	}
 
 	/* Don't want a SEQUENCE so... */
@@ -234,7 +234,8 @@ int i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **pp)
 	if(a->fullname) {
 		M_ASN1_I2D_put_IMP_opt (a->fullname, i2d_GENERAL_NAMES, 0);
 	} else {
-		M_ASN1_I2D_put_EXP_opt (a->relativename, i2d_X509_NAME, 1, v);
+		M_ASN1_I2D_put_IMP_SET_opt_type(X509_NAME_ENTRY,
+				a->relativename, i2d_X509_NAME_ENTRY, 1);
 	}
 	M_ASN1_I2D_finish();
 }
@@ -253,7 +254,7 @@ DIST_POINT_NAME *DIST_POINT_NAME_new(void)
 void DIST_POINT_NAME_free(DIST_POINT_NAME *a)
 {
 	if (a == NULL) return;
-	X509_NAME_free(a->relativename);
+	sk_X509_NAME_ENTRY_pop_free(a->relativename, X509_NAME_ENTRY_free);
 	sk_GENERAL_NAME_pop_free(a->fullname, GENERAL_NAME_free);
 	Free ((char *)a);
 }
@@ -273,7 +274,8 @@ DIST_POINT_NAME *d2i_DIST_POINT_NAME(DIST_POINT_NAME **a, unsigned char **pp,
 		M_ASN1_D2I_get_imp(ret->fullname, d2i_GENERAL_NAMES,
 							V_ASN1_SEQUENCE);
 	} else if (tag == (1|V_ASN1_CONTEXT_SPECIFIC)) {
-		M_ASN1_D2I_get_EXP_opt (ret->relativename, d2i_X509_NAME, 1);
+		M_ASN1_D2I_get_IMP_set_opt_type (X509_NAME_ENTRY,
+			ret->relativename, d2i_X509_NAME_ENTRY, X509_NAME_ENTRY_free, 1);
 	} else {
 		c.error = ASN1_R_BAD_TAG;
 		goto err;
