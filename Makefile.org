@@ -281,7 +281,8 @@ do_solaris-shared:
 # This assumes that GNU utilities are *not* used
 do_hpux-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	( set -x; /usr/ccs/bin/ld +vnocompatwarnings \
+		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
