@@ -60,7 +60,7 @@
 #include <string.h>
 
 #include <openssl/e_os2.h>
-#ifndef OPENSSL_SYS_MSDOS
+#if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
 #include <sys/types.h>
 #include <unistd.h>
 #else
