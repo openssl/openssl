@@ -2,20 +2,22 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
   *) The new 'RSA_generate_key_ex' function now takes a BIGNUM for the public
      exponent rather than 'unsigned long'. There is a corresponding change to
      the new 'rsa_keygen' element of the RSA_METHOD structure.
      [Jelte Jansen, Geoff Thorpe]
 
-  *) Reduce the chances of duplicate issuer name and serial numbers (in
-     violation of RFC3280) using the OpenSSL certificate creation utilities. 
-     This is done by creating a random 64 bit value for the initial serial
-     number when a serial number file is created or when a self signed
-     certificate is created using 'openssl req -x509'. The initial serial
-     number file is now moved from CA.pl to the 'ca' utility with a new
-     option -create_serial.
+  *) Functionality for creating the initial serial number file is now
+     moved from CA.pl to the 'ca' utility with a new option -create_serial.
+
+     (Before OpenSSL 0.9.7e, CA.pl used to initialize the serial
+     number file to 1, which is bound to cause problems.  To avoid
+     the problems while respecting compatibility between different 0.9.7
+     patchlevels, 0.9.7e  employed 'openssl x509 -next_serial' in
+     CA.pl for serial number initialization.  With the new release 0.9.8,
+     we can fix the problem directly in the 'ca' utility.)
      [Steve Henson]
 
   *) Reduced header interdepencies by declaring more opaque objects in
@@ -254,12 +256,6 @@
 
   *) Support for policyMappings certificate extension.
      [Steve Henson]
-
-  *) Fixed a typo bug that would cause ENGINE_set_default() to set an
-     ENGINE as defaults for all supported algorithms irrespective of
-     the 'flags' parameter. 'flags' is now honoured, so applications
-     should make sure they are passing it correctly.
-     [Geoff Thorpe]
 
   *) Make sure the default DSA_METHOD implementation only uses its
      dsa_mod_exp() and/or bn_mod_exp() handlers if they are non-NULL,
@@ -704,7 +700,34 @@
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
+ Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
+
+  *) Reduce the chances of duplicate issuer name and serial numbers (in
+     violation of RFC3280) using the OpenSSL certificate creation utilities.
+     This is done by creating a random 64 bit value for the initial serial
+     number when a serial number file is created or when a self signed
+     certificate is created using 'openssl req -x509'. The initial serial
+     number file is created using 'openssl x509 -next_serial' in CA.pl
+     rather than being initialized to 1.
+     [Steve Henson]
+
+ Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
+
+  *) Fix null-pointer assignment in do_change_cipher_spec() revealed           
+     by using the Codenomicon TLS Test Tool (CAN-2004-0079)                    
+     [Joe Orton, Steve Henson]   
+
+  *) Fix flaw in SSL/TLS handshaking when using Kerberos ciphersuites
+     (CAN-2004-0112)
+     [Joe Orton, Steve Henson]   
+
+  *) Make it possible to have multiple active certificates with the same
+     subject in the CA index file.  This is done only if the keyword
+     'unique_subject' is set to 'no' in the main CA section (default
+     if 'CA_default') of the configuration file.  The value is saved
+     with the database itself in a separate index attribute file,
+     named like the index file with '.attr' appended to the name.
+     [Richard Levitte]
 
   *) X509 verify fixes. Disable broken certificate workarounds when 
      X509_V_FLAGS_X509_STRICT is set. Check CRL issuer has cRLSign set if
@@ -808,6 +831,12 @@
      avoids excessive locking; and if an RSA object is not shared
      between threads, blinding will still be very fast).
      [Bodo Moeller]
+
+  *) Fixed a typo bug that would cause ENGINE_set_default() to set an
+     ENGINE as defaults for all supported algorithms irrespective of
+     the 'flags' parameter. 'flags' is now honoured, so applications
+     should make sure they are passing it correctly.
+     [Geoff Thorpe]
 
   *) Target "mingw" now allows native Windows code to be generated in
      the Cygwin environment as well as with the MinGW compiler.
@@ -2717,17 +2746,21 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
+ Changes between 0.9.6l and 0.9.6m  [17 Mar 2004]
 
-  *) Fix various bugs revealed by running the NISCC test suite:
+  *) Fix null-pointer assignment in do_change_cipher_spec() revealed
+     by using the Codenomicon TLS Test Tool (CAN-2004-0079)
+     [Joe Orton, Steve Henson]
 
-     Stop out of bounds reads in the ASN1 code when presented with
-     invalid tags (CAN-2003-0543 and CAN-2003-0544).
-     
-     If verify callback ignores invalid public key errors don't try to check
-     certificate signature with the NULL public key.
+ Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
 
+  *) Fix additional bug revealed by the NISCC test suite:
+
+     Stop bug triggering large recursion when presented with
+     certain ASN.1 tags (CAN-2003-0851)
      [Steve Henson]
+
+ Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
 
   *) Fix various bugs revealed by running the NISCC test suite:
 
