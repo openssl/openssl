@@ -635,12 +635,14 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 	do { \
 		const BIGNUM *_bnum1 = (a); \
 		if(_bnum1->top < _bnum1->dmax) { \
+			unsigned char _tmp_char; \
 			/* We cast away const without the compiler knowing, any \
 			 * *genuinely* constant variables that aren't mutable \
 			 * wouldn't be constructed with top!=dmax. */ \
 			BN_ULONG *_not_const; \
 			memcpy(&_not_const, &_bnum1->d, sizeof(BN_ULONG*)); \
-			RAND_pseudo_bytes((unsigned char *)(_not_const + _bnum1->top), \
+			RAND_pseudo_bytes(&_tmp_char, 1); \
+			memset((unsigned char *)(_not_const + _bnum1->top), _tmp_char, \
 				(_bnum1->dmax - _bnum1->top) * sizeof(BN_ULONG)); \
 		} \
 	} while(0)
