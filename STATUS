@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/28 22:07:50 $
+  ______________                           $Date: 2002/03/06 06:25:31 $
 
   DEVELOPMENT STATE
 
@@ -26,6 +26,7 @@
 	alpha-cc (Tru64 version 4.0)	works
 	linux-alpha+bwx-gcc		doesn't work. Reported by
 					Sean O'Riordain <seanpor@acm.org>
+	OpenBSD-sparc64			doesn't work.  BN_mod_mul breaks.
 
 	Needs checked on
 	[add platforms here]
