@@ -117,11 +117,11 @@ pkcs7err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pkcs7err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pkcs7err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pkcs7err.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-pkcs7err.o: ../../include/openssl/dsa.h ../../include/openssl/err.h
-pkcs7err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-pkcs7err.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
-pkcs7err.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
-pkcs7err.o: ../../include/openssl/opensslconf.h
+pkcs7err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+pkcs7err.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+pkcs7err.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+pkcs7err.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+pkcs7err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 pkcs7err.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
 pkcs7err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 pkcs7err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h

@@ -696,15 +696,16 @@ evp_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 evp_err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 evp_err.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-evp_err.o: ../../include/openssl/dsa.h ../../include/openssl/err.h
-evp_err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-evp_err.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
-evp_err.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
-evp_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-evp_err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-evp_err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-evp_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-evp_err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+evp_err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+evp_err.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+evp_err.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+evp_err.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+evp_err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+evp_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
+evp_err.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+evp_err.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+evp_err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+evp_err.o: ../../include/openssl/stack.h
 evp_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_key.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 evp_key.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

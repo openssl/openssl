@@ -327,14 +327,15 @@ pk12err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pk12err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pk12err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pk12err.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-pk12err.o: ../../include/openssl/dsa.h ../../include/openssl/err.h
-pk12err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-pk12err.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
-pk12err.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
-pk12err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-pk12err.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
-pk12err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-pk12err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-pk12err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-pk12err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pk12err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pk12err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+pk12err.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+pk12err.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+pk12err.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+pk12err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+pk12err.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
+pk12err.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+pk12err.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+pk12err.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+pk12err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pk12err.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+pk12err.o: ../../include/openssl/x509_vfy.h

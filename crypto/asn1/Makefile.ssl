@@ -776,16 +776,17 @@ nsseq.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 nsseq.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
 nsseq.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 nsseq.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-nsseq.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-nsseq.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
-nsseq.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-nsseq.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-nsseq.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
-nsseq.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
-nsseq.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-nsseq.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-nsseq.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-nsseq.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+nsseq.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+nsseq.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+nsseq.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+nsseq.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+nsseq.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+nsseq.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+nsseq.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+nsseq.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+nsseq.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+nsseq.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+nsseq.o: ../../include/openssl/x509_vfy.h
 p5_pbe.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 p5_pbe.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 p5_pbe.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
