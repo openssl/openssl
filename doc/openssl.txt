@@ -188,7 +188,7 @@ email.1=steve@here
 email.2=steve@there
 
 This is because the configuration file code cannot handle the same name
-occurring twice in the same extension.
+occurring twice in the same section.
 
 The syntax of raw extensions is governed by the extension code: it can
 for example contain data in multiple sections. The correct syntax to
@@ -314,6 +314,36 @@ NOTE: for a CA to be considered valid it must have the CA option set to
 TRUE. An end user certificate MUST NOT have the CA value set to true.
 According to PKIX recommendations it should exclude the extension entirely,
 however some software may require CA set to FALSE for end entity certificates.
+
+Extended Key Usage.
+
+This extensions consists of a list of usages.
+
+These can either be object short names of the dotted numerical form of OIDs.
+While any OID can be used only certain values make sense. In partiular the
+following PKIX, NS and MS values are meaningful:
+
+Value			Meaning
+-----			-------
+serverAuth		SSL/TLS Web Server Authentication.
+clientAuth		SSL/TLS Web Client Authentication.
+codeSigning		Code signing.
+emailProtection		E-mail Protection (S/MIME).
+timeStamping		Trusted Timestamping
+msCodeInd		Microsoft Individual Code Signing (authenticode)
+msCodeCom		Microsoft Commercial Code Signing (authenticode)
+msCTLSign		Microsoft Trust List Signing
+msSGC			Microsoft Server Gated Crypto
+msEFS			Microsoft Encrypted File System
+nsSGC			Netscape Server Gated Crypto
+
+For example, under IE5 a CA can be used for any purpose: by including a list
+of the above usages the CA can be restricted to only authorised uses.
+
+Note: software packages may place additional interpretations on certificate 
+use, in particular some usages may only work for selected CAs. Don't for example
+expect just including msSGC or nsSGC will automatically mean that a certificate
+can be used for SGC ("step up" encryption) otherwise anyone could use it.
 
 Subject Key Identifier.
 

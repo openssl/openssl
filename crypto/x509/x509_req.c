@@ -113,3 +113,59 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
 	return(X509_PUBKEY_get(req->req_info->pubkey));
 	}
 
+/* It seems several organisations had the same idea of including a list of
+ * extensions in a certificate request. There are at least two OIDs that are
+ * used and there may be more: so the list is configurable.
+ */
+
+static int ext_nid_list[] = { NID_ms_ext_req, NID_ext_req, NID_undef};
+
+static int *ext_nids = ext_nid_list;
+
+int X509_REQ_extension_nid(int req_nid)
+{
+	int i, nid;
+	for(i = 0; ; i++) {
+		nid = ext_nids[i];
+		if(nid == NID_undef) return 0;
+		else if (req_nid == nid) return 1;
+	}
+}
+
+int *X509_REQ_get_extesion_nids(void)
+{
+	return ext_nids;
+}
+	
+void X509_REQ_set_extension_nids(int *nids)
+{
+	ext_nids = nids;
+}
+
+STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
+{
+	X509_ATTRIBUTE *attr;
+	STACK_OF(X509_ATTRIBUTE) *sk;
+	ASN1_TYPE *ext = NULL;
+	int i;
+	unsigned char *p;
+	if ((req == NULL) || (req->req_info == NULL))
+		return(NULL);
+	sk=req->req_info->attributes;
+        if (!sk) return NULL;
+	for(i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
+		attr = sk_X509_ATTRIBUTE_value(sk, i);
+		if(X509_REQ_extension_nid(OBJ_obj2nid(attr->object))) {
+			if(attr->set && sk_ASN1_TYPE_num(attr->value.set))
+				ext = sk_ASN1_TYPE_value(attr->value.set, 0);
+			else ext = attr->value.single;
+			break;
+		}
+	}
+	if(!ext || (ext->type != V_ASN1_SEQUENCE)) return NULL;
+	p = ext->value.sequence->data;
+	return d2i_ASN1_SET_OF_X509_EXTENSION(NULL, &p,
+			ext->value.sequence->length,
+			d2i_X509_EXTENSION, X509_EXTENSION_free,
+			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+}

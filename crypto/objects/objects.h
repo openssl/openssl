@@ -890,6 +890,18 @@ extern "C" {
 #define NID_pbeWithSHA1AndDES_CBC	170
 #define OBJ_pbeWithSHA1AndDES_CBC	OBJ_pkcs,5L,10L
 
+/* Extension request OIDs */
+
+#define LN_ms_ext_req			"Microsoft Extension Request"
+#define SN_ms_ext_req			"msExtReq"
+#define NID_ms_ext_req			171
+#define OBJ_ms_ext_req			1L,3L,6L,1L,4L,1L,311L,2L,1L,14L
+
+#define LN_ext_req			"Extension Request"
+#define SN_ext_req			"extReq"
+#define NID_ext_req			172
+#define OBJ_ext_req			OBJ_pkcs9,14L
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

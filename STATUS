@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/09 11:14:06 $
+  ______________                           $Date: 1999/08/09 22:37:59 $
 
   DEVELOPMENT STATE
 
@@ -15,7 +15,6 @@
 
   AVAILABLE PATCHES
 
-    o OCSP (titchenert@certco.com) 
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
 
   IN PROGRESS
@@ -24,6 +23,7 @@
         Proper (or at least usable) certificate chain verification.
 	Private key, certificate and CRL API and implementation.
 	Checking and bugfixing PKCS#7 (S/MIME code).
+        Various X509 issues: character sets, certificate request extensions.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initial support for certificate extension requests, these are included
+     in things like Xenroll certificate requests. They will later be used to
+     allow PKCS#10 requests to include a list of "requested extensions" which
+     can be added.
+     [Steve Henson]
+
   *) -crlf option to s_client and s_server for sending newlines as
      CRLF (as required by many protocols).
      [Bodo Moeller]

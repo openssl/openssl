@@ -188,11 +188,7 @@ int X509_print(BIO *bp, X509 *x)
 		BIO_printf(bp,"%8sX509v3 extensions:\n","");
 		for (i=0; i<n; i++)
 			{
-#if 0
-			int data_type,pack_type;
-#endif
 			ASN1_OBJECT *obj;
-
 			ex=X509_get_ext(x,i);
 			if (BIO_printf(bp,"%12s","") <= 0) goto err;
 			obj=X509_EXTENSION_get_object(ex);
