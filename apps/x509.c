@@ -97,6 +97,7 @@ static char *x509_usage[]={
 " -issuer         - print issuer DN\n",
 " -startdate      - notBefore field\n",
 " -enddate        - notAfter field\n",
+" -purpose        - print out certificate purposes\n",
 " -dates          - both Before and After dates\n",
 " -modulus        - print the RSA key modulus\n",
 " -fingerprint    - print the certificate fingerprint\n",
@@ -127,7 +128,13 @@ static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest,
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
 			 int create,int days, LHASH *conf, char *section);
+static int efunc(X509_PURPOSE *pt, void *arg);
 static int reqfile=0;
+
+typedef struct {
+BIO *bio;
+X509 *cert;
+} X509_PPRINT;
 
 int MAIN(int argc, char **argv)
 	{
@@ -145,6 +152,7 @@ int MAIN(int argc, char **argv)
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0;
+	int pprint = 0;
 	char **pp;
 	X509_STORE *ctx=NULL;
 	X509_REQ *rq=NULL;
@@ -279,6 +287,8 @@ int MAIN(int argc, char **argv)
 			startdate= ++num;
 			enddate= ++num;
 			}
+		else if (strcmp(*argv,"-purpose") == 0)
+			pprint= ++num;
 		else if (strcmp(*argv,"-startdate") == 0)
 			startdate= ++num;
 		else if (strcmp(*argv,"-enddate") == 0)
@@ -312,6 +322,7 @@ bad:
 
 	ERR_load_crypto_strings();
 	X509V3_add_standard_extensions();
+	X509_PURPOSE_add_standard();
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{
@@ -499,6 +510,14 @@ bad:
 			else if (hash == i)
 				{
 				BIO_printf(STDout,"%08lx\n",X509_subject_name_hash(x));
+				}
+			else if (pprint == i)
+				{
+				X509_PPRINT ptmp;
+				ptmp.bio = STDout;
+				ptmp.cert = x;
+				BIO_printf(STDout, "Certificate purposes:\n");
+				X509_PURPOSE_enum(efunc, &ptmp);
 				}
 			else
 				if (modulus == i)
@@ -1090,3 +1109,24 @@ err:
 	ERR_print_errors(bio_err);
 	return(0);
 	}
+
+static int efunc(X509_PURPOSE *pt, void *arg)
+{
+	X509_PPRINT *ptmp;
+	int id, i, idret;
+	char *pname;
+	ptmp = arg;
+	id = X509_PURPOSE_get_id(pt);
+	pname = X509_PURPOSE_get_name(pt);
+	for(i = 0; i < 2; i++) {
+		idret = X509_check_purpose(ptmp->cert, id, i);
+		BIO_printf(ptmp->bio, "%s%s : ", pname, i ? " CA" : ""); 
+		if(idret == 1) BIO_printf(ptmp->bio, "Yes\n");
+		else if (idret == 0) BIO_printf(ptmp->bio, "No\n");
+		else BIO_printf(ptmp->bio, "Yes (WARNING code=%d)\n", idret);
+	}
+	return 1;
+}
+
+
+

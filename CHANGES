@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add various functions that can check a certificate's extensions
+     to see if it usable for various purposes such as SSL client,
+     server or S/MIME and CAs of these types. This is currently 
+     VERY EXPERIMENTAL but will ultimately be used for certificate chain
+     verification. Also added a -purpose flag to x509 utility to
+     print out all the purposes.
+     [Steve Henson]
+
   *) Add a CRYPTO_EX_DATA to X509 certificate structure and associated
      functions.
      [Steve Henson]

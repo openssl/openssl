@@ -116,6 +116,7 @@ X509 *X509_new(void)
 	M_ASN1_New_Malloc(ret,X509);
 	ret->references=1;
 	ret->valid=0;
+	ret->ex_flags = 0;
 	ret->name=NULL;
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);

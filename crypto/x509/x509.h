@@ -239,6 +239,12 @@ typedef struct x509_st
 	int references;
 	char *name;
 	CRYPTO_EX_DATA ex_data;
+	/* These contain copies of various extension values */
+	long ex_pathlen;
+	unsigned long ex_flags;
+	unsigned long ex_kusage;
+	unsigned long ex_xkusage;
+	unsigned long ex_nscert;
 	} X509;
 
 DECLARE_STACK_OF(X509)
