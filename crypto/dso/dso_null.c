@@ -72,6 +72,7 @@ static DSO_METHOD dso_meth_null = {
 #if 0
 	NULL, /* unbind */
 #endif
+	NULL, /* ctrl */
 	NULL, /* init */
 	NULL  /* finish */
 	};

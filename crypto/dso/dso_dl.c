@@ -69,6 +69,9 @@ DSO_METHOD *DSO_METHOD_dl(void)
 
 #include <dl.h>
 
+/* Part of the hack in "dl_load" ... */
+#define DSO_MAX_TRANSLATED_SIZE 256
+
 static int dl_load(DSO *dso, const char *filename);
 static int dl_unload(DSO *dso);
 static int dl_bind(DSO *dso, const char *symname, void **symptr);
@@ -77,6 +80,7 @@ static int dl_unbind(DSO *dso, char *symname, void *symptr);
 static int dl_init(DSO *dso);
 static int dl_finish(DSO *dso);
 #endif
+static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg);
 
 static DSO_METHOD dso_meth_dl = {
 	"OpenSSL 'dl' shared library method",
@@ -87,6 +91,7 @@ static DSO_METHOD dso_meth_dl = {
 #if 0
 	NULL, /* unbind */
 #endif
+	dl_ctrl,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -105,8 +110,20 @@ DSO_METHOD *DSO_METHOD_dl(void)
 static int dl_load(DSO *dso, const char *filename)
 	{
 	shl_t ptr;
+	char translated[DSO_MAX_TRANSLATED_SIZE];
+	int len;
 
-	ptr = shl_load(filename, BIND_IMMEDIATE, NULL);
+	/* The same comment as in dlfcn_load applies here. bleurgh. */
+	len = strlen(filename);
+	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
+			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
+			(strstr(filename, "/") == NULL))
+		{
+		sprintf(translated, "lib%s.so", filename);
+		ptr = shl_load(translated, BIND_IMMEDIATE, NULL);
+		}
+	else
+		ptr = shl_load(filename, BIND_IMMEDIATE, NULL);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DL_LOAD,DSO_R_LOAD_FAILED);
@@ -163,7 +180,6 @@ static int dl_bind(DSO *dso, const char *symname, void **symptr)
 		DSOerr(DSO_F_DL_BIND,DSO_R_STACK_ERROR);
 		return(0);
 		}
-	/* Is this actually legal? */
 	ptr = (shl_t)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
@@ -177,6 +193,30 @@ static int dl_bind(DSO *dso, const char *symname, void **symptr)
 		}
 	*symptr = sym;
 	return(1);
+	}
+
+static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg)
+	{
+	if(dso == NULL)
+		{
+		DSOerr(DSO_F_DL_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+		return(-1);
+		}
+	switch(cmd)
+		{
+	case DSO_CTRL_GET_FLAGS:
+		return dso->flags;
+	case DSO_CTRL_SET_FLAGS:
+		dso->flags = (int)larg;
+		return(0);
+	case DSO_CTRL_OR_FLAGS:
+		dso->flags |= (int)larg;
+		return(0);
+	default:
+		break;
+		}
+	DSOerr(DSO_F_DL_CTRL,DSO_R_UNKNOWN_COMMAND);
+	return(-1);
 	}
 
 #endif /* DSO_DL */

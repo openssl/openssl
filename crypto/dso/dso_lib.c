@@ -187,7 +187,7 @@ int DSO_up(DSO *dso)
 	return(1);
 	}
 
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth)
+DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
 	{
 	DSO *ret;
 	int allocated = 0;
@@ -209,6 +209,15 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth)
 		}
 	else
 		ret = dso;
+	/* Bleurgh ... have to check for negative return values for
+	 * errors. <grimace> */
+	if(DSO_ctrl(ret, DSO_CTRL_SET_FLAGS, flags, NULL) < 0)
+		{
+		DSOerr(DSO_F_DSO_LOAD,DSO_R_CTRL_FAILED);
+		if(allocated)
+			DSO_free(ret);
+		return(NULL);
+		}
 	if(ret->meth->dso_load == NULL)
 		{
 		DSOerr(DSO_F_DSO_LOAD,DSO_R_UNSUPPORTED);
@@ -248,4 +257,27 @@ void *DSO_bind(DSO *dso, const char *symname)
 		}
 	/* Success */
 	return(ret);
+	}
+
+/* I don't really like these *_ctrl functions very much to be perfectly
+ * honest. For one thing, I think I have to return a negative value for
+ * any error because possible DSO_ctrl() commands may return values
+ * such as "size"s that can legitimately be zero (making the standard
+ * "if(DSO_cmd(...))" form that works almost everywhere else fail at
+ * odd times. I'd prefer "output" values to be passed by reference and
+ * the return value as success/failure like usual ... but we conform
+ * when we must... :-) */
+long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
+	{
+	if(dso == NULL)
+		{
+		DSOerr(DSO_F_DSO_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+		return(-1);
+		}
+	if((dso->meth == NULL) || (dso->meth->dso_ctrl == NULL))
+		{
+		DSOerr(DSO_F_DSO_CTRL,DSO_R_UNSUPPORTED);
+		return(-1);
+		}
+	return(dso->meth->dso_ctrl(dso,cmd,larg,parg));
 	}

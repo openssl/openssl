@@ -4,6 +4,13 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Added native name translation to the existing DSO code
+     that will convert (if the flag to do so is set) filenames
+     that are sufficiently small and have no path information
+     into a canonical native form. Eg. "blah" converted to
+     "libblah.so" or "blah.dll" etc.
+     [Geoff Thorpe]
+
   *) New function ERR_error_string_n(e, buf, len) which is like
      ERR_error_string(e, buf), but writes at most 'len' bytes
      including the 0 terminator.  For ERR_error_string_n, 'buf'

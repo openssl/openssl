@@ -65,6 +65,20 @@
 extern "C" {
 #endif
 
+/* These values are used as commands to DSO_ctrl() */
+#define DSO_CTRL_GET_FLAGS	1
+#define DSO_CTRL_SET_FLAGS	2
+#define DSO_CTRL_OR_FLAGS	3
+
+/* These flags control the translation of file-names from canonical to
+ * native. Eg. in the CryptoSwift support, the "dl" and "dlfcn"
+ * methods will translate "swift" -> "libswift.so" whereas the "win32"
+ * method will translate "swift" -> "swift.dll". NB: Until I can figure
+ * out how to be more "conventional" with this, the methods will only
+ * honour this flag if it looks like it was passed a file without any
+ * path and if the filename is small enough.
+ */
+#define DSO_FLAG_NAME_TRANSLATION 0x01
 
 typedef struct dso_st DSO;
 
@@ -83,7 +97,11 @@ typedef struct dso_meth_st
 	/* Unbinds a symbol */
 	int (*dso_unbind)(DSO *dso, char *symname, void *symptr);
 #endif
+	/* The generic (yuck) "ctrl()" function. NB: Negative return
+	 * values (rather than zero) indicate errors. */
+	long (*dso_ctrl)(DSO *dso, int cmd, long larg, void *parg);
 
+	/* [De]Initialisation handlers. */
 	int (*init)(DSO *dso);
 	int (*finish)(DSO *dso);
 	} DSO_METHOD;
@@ -113,6 +131,7 @@ DSO *	DSO_new_method(DSO_METHOD *method);
 int	DSO_free(DSO *dso);
 int	DSO_flags(DSO *dso);
 int	DSO_up(DSO *dso);
+long	DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
 
 void DSO_set_default_method(DSO_METHOD *meth);
 DSO_METHOD *DSO_get_default_method(void);
@@ -121,8 +140,11 @@ DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
 
 /* The all-singing all-dancing load function, you normally pass NULL
  * for the first and third parameters. Use DSO_up and DSO_free for
- * reference count handling. */
-DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth);
+ * subsequent reference count handling. Any flags passed in will be set
+ * in the constructed DSO after its init() function but before the
+ * load operation. This will be done with;
+ *    DSO_ctrl(dso, DSO_CTRL_SET_FLAGS, flags, NULL); */
+DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
 
 /* This function binds to a function, variable, whatever inside a
  * shared library. */
@@ -163,17 +185,21 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DLFCN_BIND				 100
 #define DSO_F_DLFCN_LOAD				 101
 #define DSO_F_DLFCN_UNLOAD				 102
-#define DSO_F_DL_BIND					 103
-#define DSO_F_DL_LOAD					 104
-#define DSO_F_DL_UNLOAD					 105
-#define DSO_F_DSO_BIND					 106
-#define DSO_F_DSO_FREE					 107
-#define DSO_F_DSO_LOAD					 108
-#define DSO_F_DSO_NEW_METHOD				 109
-#define DSO_F_DSO_UP					 110
-#define DSO_F_WIN32_BIND				 111
-#define DSO_F_WIN32_LOAD				 112
-#define DSO_F_WIN32_UNLOAD				 113
+#define DSO_F_DLFCN_CTRL				 103
+#define DSO_F_DL_BIND					 104
+#define DSO_F_DL_LOAD					 105
+#define DSO_F_DL_UNLOAD					 106
+#define DSO_F_DL_CTRL					 107
+#define DSO_F_DSO_BIND					 108
+#define DSO_F_DSO_FREE					 109
+#define DSO_F_DSO_LOAD					 110
+#define DSO_F_DSO_NEW_METHOD				 111
+#define DSO_F_DSO_UP					 112
+#define DSO_F_DSO_CTRL					 113
+#define DSO_F_WIN32_BIND				 114
+#define DSO_F_WIN32_LOAD				 115
+#define DSO_F_WIN32_UNLOAD				 116
+#define DSO_F_WIN32_CTRL				 117
 
 /* Reason codes. */
 #define DSO_R_FINISH_FAILED				 100
@@ -183,6 +209,8 @@ void ERR_load_DSO_strings(void);
 #define DSO_R_SYM_FAILURE				 104
 #define DSO_R_UNLOAD_FAILED				 105
 #define DSO_R_UNSUPPORTED				 106
+#define DSO_R_UNKNOWN_COMMAND				 107
+#define DSO_R_CTRL_FAILED				 108
 
 #ifdef  __cplusplus
 }

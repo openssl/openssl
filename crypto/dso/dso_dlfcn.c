@@ -71,6 +71,9 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #include <dlfcn.h>
 #endif
 
+/* Part of the hack in "dlfcn_load" ... */
+#define DSO_MAX_TRANSLATED_SIZE 256
+
 static int dlfcn_load(DSO *dso, const char *filename);
 static int dlfcn_unload(DSO *dso);
 static int dlfcn_bind(DSO *dso, const char *symname, void **symptr);
@@ -79,6 +82,7 @@ static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
 static int dlfcn_init(DSO *dso);
 static int dlfcn_finish(DSO *dso);
 #endif
+static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
 
 static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
@@ -89,6 +93,7 @@ static DSO_METHOD dso_meth_dlfcn = {
 #if 0
 	NULL, /* unbind */
 #endif
+	dlfcn_ctrl,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -105,8 +110,25 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 static int dlfcn_load(DSO *dso, const char *filename)
 	{
 	void *ptr;
+	char translated[DSO_MAX_TRANSLATED_SIZE];
+	int len;
 
-	ptr = dlopen(filename, RTLD_NOW);
+	/* NB: This is a hideous hack, but I'm not yet sure what
+	 * to replace it with. This attempts to convert any filename,
+	 * that looks like it has no path information, into a
+	 * translated form, e. "blah" -> "libblah.so" */
+	len = strlen(filename);
+	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
+			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
+			(strstr(filename, "/") == NULL))
+		{
+		sprintf(translated, "lib%s.so", filename);
+		ptr = dlopen(translated, RTLD_NOW);
+		}
+	else
+		{
+		ptr = dlopen(filename, RTLD_NOW);
+		}
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_LOAD_FAILED);
@@ -176,6 +198,30 @@ static int dlfcn_bind(DSO *dso, const char *symname, void **symptr)
 		}
 	*symptr = sym;
 	return(1);
+	}
+
+static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg)
+	{
+	if(dso == NULL)
+		{
+		DSOerr(DSO_F_DLFCN_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+		return(-1);
+		}
+	switch(cmd)
+		{
+	case DSO_CTRL_GET_FLAGS:
+		return dso->flags;
+	case DSO_CTRL_SET_FLAGS:
+		dso->flags = (int)larg;
+		return(0);
+	case DSO_CTRL_OR_FLAGS:
+		dso->flags |= (int)larg;
+		return(0);
+	default:
+		break;
+		}
+	DSOerr(DSO_F_DLFCN_CTRL,DSO_R_UNKNOWN_COMMAND);
+	return(-1);
 	}
 
 #endif /* DSO_DLFCN */
