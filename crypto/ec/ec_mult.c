@@ -68,7 +68,7 @@
 
 
 
-/* Determine the width-(w+1) Non-Adjacent Form of 'scalar'.
+/* Determine the width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array  r[]  of values that are either zero or odd with an
  * absolute value less than  2^w  satisfying
  *     scalar = \sum_j r[j]*2^j
@@ -87,7 +87,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, B
 	c = BN_CTX_get(ctx);
 	if (c == NULL) goto err;
 	
-	if (w <= 0 || w > 7) /* 'unsigned char' can represent integers with absolute values less than 2^7 */
+	if (w <= 0 || w > 7) /* 'signed char' can represent integers with absolute values less than 2^7 */
 		{
 		ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 		goto err;
@@ -197,9 +197,9 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	int r_is_inverted = 0;
 	int r_is_at_infinity = 1;
 	size_t *wsize = NULL; /* individual window sizes */
+	signed char **wNAF = NULL; /* individual wNAFs */
 	size_t *wNAF_len = NULL;
 	size_t max_len = 0;
-	signed char **wNAF = NULL; /* individual wNAFs */
 	size_t num_val;
 	EC_POINT **val = NULL; /* precomputation */
 	EC_POINT **v;
