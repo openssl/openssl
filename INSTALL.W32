@@ -94,11 +94,8 @@
  You can also build a static version of the library using the Makefile
  ms\nt.mak
 
- Borland C++ builder 3 and 4
- ---------------------------
-
- There are two alternatives.  With Borland C++ Builder, Borland make and nasm,
- you can build with optimized assembler by doing the following:
+ Borland C++ builder 5
+ ---------------------
 
  * Configure for building with Borland Builder:
    > perl Configure BC-32
@@ -109,8 +106,8 @@
  * Build
    > make -f ms\bcb.mak
 
- The other (older) alternative builds using GNU make and doesn't use the
- optimized assembler code.  You use it by doing the following:
+ Borland C++ builder 3 and 4
+ ---------------------------
 
  * Setup PATH. First must be GNU make then bcb4/bin 
 
