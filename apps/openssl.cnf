@@ -1,0 +1,116 @@
+#
+# SSLeay example configuration file.
+# This is mostly being used for generation of certificate requests.
+#
+
+RANDFILE		= $ENV::HOME/.rnd
+
+####################################################################
+[ ca ]
+default_ca	= CA_default		# The default ca section
+
+####################################################################
+[ CA_default ]
+
+dir		= ./demoCA		# Where everything is kept
+certs		= $dir/certs		# Where the issued certs are kept
+crl_dir		= $dir/crl		# Where the issued crl are kept
+database	= $dir/index.txt	# database index file.
+new_certs_dir	= $dir/newcerts		# default place for new certs.
+
+certificate	= $dir/cacert.pem 	# The CA certificate
+serial		= $dir/serial 		# The current serial number
+crl		= $dir/crl.pem 		# The current CRL
+private_key	= $dir/private/cakey.pem# The private key
+RANDFILE	= $dir/private/.rand	# private random number file
+
+x509_extensions	= x509v3_extensions	# The extentions to add to the cert
+default_days	= 365			# how long to certify for
+default_crl_days= 30			# how long before next CRL
+default_md	= md5			# which md to use.
+preserve	= no			# keep passed DN ordering
+
+# A few difference way of specifying how similar the request should look
+# For type CA, the listed attributes must be the same, and the optional
+# and supplied fields are just that :-)
+policy		= policy_match
+
+# For the CA policy
+[ policy_match ]
+countryName		= match
+stateOrProvinceName	= match
+organizationName	= match
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+# For the 'anything' policy
+# At this point in time, you must list all acceptable 'object'
+# types.
+[ policy_anything ]
+countryName		= optional
+stateOrProvinceName	= optional
+localityName		= optional
+organizationName	= optional
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+####################################################################
+[ req ]
+default_bits		= 1024
+default_keyfile 	= privkey.pem
+distinguished_name	= req_distinguished_name
+attributes		= req_attributes
+
+[ req_distinguished_name ]
+countryName			= Country Name (2 letter code)
+countryName_default		= AU
+countryName_min			= 2
+countryName_max			= 2
+
+stateOrProvinceName		= State or Province Name (full name)
+stateOrProvinceName_default	= Some-State
+
+localityName			= Locality Name (eg, city)
+
+0.organizationName		= Organization Name (eg, company)
+0.organizationName_default	= Internet Widgits Pty Ltd
+
+# we can do this but it is not needed normally :-)
+#1.organizationName		= Second Organization Name (eg, company)
+#1.organizationName_default	= CryptSoft Pty Ltd
+
+organizationalUnitName		= Organizational Unit Name (eg, section)
+#organizationalUnitName_default	=
+
+commonName			= Common Name (eg, YOUR name)
+commonName_max			= 64
+
+emailAddress			= Email Address
+emailAddress_max		= 40
+
+[ req_attributes ]
+challengePassword		= A challenge password
+challengePassword_min		= 4
+challengePassword_max		= 20
+
+unstructuredName		= An optional company name
+
+[ x509v3_extensions ]
+
+nsCaRevocationUrl		= http://www.cryptsoft.com/ca-crl.pem
+nsComment			= "This is a comment"
+
+# under ASN.1, the 0 bit would be encoded as 80
+nsCertType			= 0x40
+
+#nsBaseUrl
+#nsRevocationUrl
+#nsRenewalUrl
+#nsCaPolicyUrl
+#nsSslServerName
+#nsCertSequence
+#nsCertExt
+#nsDataType
+

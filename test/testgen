@@ -1,0 +1,30 @@
+#!/bin/sh
+
+T=testcert
+KEY=512
+CA=../certs/testca.pem
+
+/bin/rm -f $T.1 $T.2 $T.key
+
+PATH=../apps:$PATH;
+export PATH
+
+echo "generating certificate request"
+
+echo "There should be a 2 sequences of .'s and some +'s."
+echo "There should not be more that at most 80 per line"
+echo "This could take some time."
+
+../apps/ssleay req -config test.cnf -new -out testreq.pem
+if [ $? != 0 ]; then
+echo problems creating request
+exit 1
+fi
+
+../apps/ssleay req -verify -in testreq.pem -noout
+if [ $? != 0 ]; then
+echo signature on req is wrong
+exit 1
+fi
+
+exit 0

@@ -1,0 +1,423 @@
+BIO Routines
+
+This documentation is rather sparse, you are probably best 
+off looking at the code for specific details.
+
+The BIO library is a IO abstraction that was originally 
+inspired by the need to have callbacks to perform IO to FILE 
+pointers when using Windows 3.1 DLLs.  There are two types 
+of BIO; a source/sink type and a filter type.
+The source/sink methods are as follows:
+-	BIO_s_mem()  memory buffer - a read/write byte array that
+	grows until memory runs out :-).
+-	BIO_s_file()  FILE pointer - A wrapper around the normal 
+	'FILE *' commands, good for use with stdin/stdout.
+-	BIO_s_fd()  File descriptor - A wrapper around file 
+	descriptors, often used with pipes.
+-	BIO_s_socket()  Socket - Used around sockets.  It is 
+	mostly in the Microsoft world that sockets are different 
+	from file descriptors and there are all those ugly winsock 
+	commands.
+-	BIO_s_null()  Null - read nothing and write nothing.; a 
+	useful endpoint for filter type BIO's specifically things 
+	like the message digest BIO.
+
+The filter types are
+-	BIO_f_buffer()  IO buffering - does output buffering into 
+	larger chunks and performs input buffering to allow gets() 
+	type functions.
+-	BIO_f_md()  Message digest - a transparent filter that can 
+	be asked to return a message digest for the data that has 
+	passed through it.
+-	BIO_f_cipher()  Encrypt or decrypt all data passing 
+	through the filter.
+-	BIO_f_base64()  Base64 decode on read and encode on write.
+-	BIO_f_ssl()  A filter that performs SSL encryption on the 
+	data sent through it.
+
+Base BIO functions.
+The BIO library has a set of base functions that are 
+implemented for each particular type.  Filter BIOs will 
+normally call the equivalent function on the source/sink BIO 
+that they are layered on top of after they have performed 
+some modification to the data stream.  Multiple filter BIOs 
+can be 'push' into a stack of modifers, so to read from a 
+file, unbase64 it, then decrypt it, a BIO_f_cipher, 
+BIO_f_base64 and a BIO_s_file would probably be used.  If a 
+sha-1 and md5 message digest needed to be generated, a stack 
+two BIO_f_md() BIOs and a BIO_s_null() BIO could be used.
+The base functions are
+-	BIO *BIO_new(BIO_METHOD *type); Create  a new BIO of  type 'type'.
+-	int BIO_free(BIO *a); Free a BIO structure.  Depending on 
+	the configuration, this will free the underlying data 
+	object for a source/sink BIO.
+-	int BIO_read(BIO *b, char *data, int len); Read upto 'len' 
+	bytes into 'data'. 
+-	int BIO_gets(BIO *bp,char *buf, int size); Depending on 
+	the BIO, this can either be a 'get special' or a get one 
+	line of data, as per fgets();
+-	int BIO_write(BIO *b, char *data, int len); Write 'len' 
+	bytes from 'data' to the 'b' BIO.
+-	int BIO_puts(BIO *bp,char *buf); Either a 'put special' or 
+	a write null terminated string as per fputs().
+-	long BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);  A 
+	control function which is used to manipulate the BIO 
+	structure and modify it's state and or report on it.  This 
+	function is just about never used directly, rather it 
+	should be used in conjunction with BIO_METHOD specific 
+	macros.
+-	BIO *BIO_push(BIO *new_top, BIO *old); new_top is apped to the
+	top of the 'old' BIO list.  new_top should be a filter BIO.
+	All writes will go through 'new_top' first and last on read.
+	'old' is returned.
+-	BIO *BIO_pop(BIO *bio); the new topmost BIO is returned, NULL if
+	there are no more.
+
+If a particular low level BIO method is not supported 
+(normally BIO_gets()), -2 will be returned if that method is 
+called.  Otherwise the IO methods (read, write, gets, puts) 
+will return the number of bytes read or written, and 0 or -1 
+for error (or end of input).  For the -1 case, 
+BIO_should_retry(bio) can be called to determine if it was a 
+genuine error or a temporary problem.  -2 will also be 
+returned if the BIO has not been initalised yet, in all 
+cases, the correct error codes are set (accessible via the 
+ERR library).
+
+
+The following functions are convenience functions:
+-	int BIO_printf(BIO *bio, char * format, ..);  printf but 
+	to a BIO handle.
+-	long BIO_ctrl_int(BIO *bp,int cmd,long larg,int iarg); a 
+	convenience function to allow a different argument types 
+	to be passed to BIO_ctrl().
+-	int BIO_dump(BIO *b,char *bytes,int len); output 'len' 
+	bytes from 'bytes' in a hex dump debug format.
+-	long BIO_debug_callback(BIO *bio, int cmd, char *argp, int 
+	argi, long argl, long ret) - a default debug BIO callback, 
+	this is mentioned below.  To use this one normally has to 
+	use the BIO_set_callback_arg() function to assign an 
+	output BIO for the callback to use.
+-	BIO *BIO_find_type(BIO *bio,int type); when there is a 'stack'
+	of BIOs, this function scan the list and returns the first
+	that is of type 'type', as listed in buffer.h under BIO_TYPE_XXX.
+-	void BIO_free_all(BIO *bio); Free the bio and all other BIOs
+	in the list.  It walks the bio->next_bio list.
+
+
+
+Extra commands are normally implemented as macros calling BIO_ctrl().
+-	BIO_number_read(BIO *bio) - the number of bytes processed 
+	by BIO_read(bio,.).
+-	BIO_number_written(BIO *bio) - the number of bytes written 
+	by BIO_write(bio,.).
+-	BIO_reset(BIO *bio) - 'reset' the BIO.
+-	BIO_eof(BIO *bio) - non zero if we are at the current end 
+	of input.
+-	BIO_set_close(BIO *bio, int close_flag) - set the close flag.
+-	BIO_get_close(BIO *bio) - return the close flag.
+	BIO_pending(BIO *bio) - return the number of bytes waiting 
+	to be read (normally buffered internally).
+-	BIO_flush(BIO *bio) - output any data waiting to be output.
+-	BIO_should_retry(BIO *io) - after a BIO_read/BIO_write 
+	operation returns 0 or -1, a call to this function will 
+	return non zero if you should retry the call later (this 
+	is for non-blocking IO).
+-	BIO_should_read(BIO *io) - we should retry when data can 
+	be read.
+-	BIO_should_write(BIO *io) - we should retry when data can 
+	be written.
+-	BIO_method_name(BIO *io) - return a string for the method name.
+-	BIO_method_type(BIO *io) - return the unique ID of the BIO method.
+-	BIO_set_callback(BIO *io,  long (*callback)(BIO *io, int 
+	cmd, char *argp, int argi, long argl, long ret); - sets 
+	the debug callback.
+-	BIO_get_callback(BIO *io) - return the assigned function 
+	as mentioned above.
+-	BIO_set_callback_arg(BIO *io, char *arg)  - assign some 
+	data against the BIO.  This is normally used by the debug 
+	callback but could in reality be used for anything.  To 
+	get an idea of how all this works, have a look at the code 
+	in the default debug callback mentioned above.  The 
+	callback can modify the return values.
+
+Details of the BIO_METHOD structure.
+typedef struct bio_method_st
+        {
+	int type;
+	char *name;
+	int (*bwrite)();
+	int (*bread)();
+	int (*bputs)();
+	int (*bgets)();
+	long (*ctrl)();
+	int (*create)();
+	int (*destroy)();
+	} BIO_METHOD;
+
+The 'type' is the numeric type of the BIO, these are listed in buffer.h;
+'Name' is a textual representation of the BIO 'type'.
+The 7 function pointers point to the respective function 
+methods, some of which can be NULL if not implemented.
+The BIO structure
+typedef struct bio_st
+	{
+	BIO_METHOD *method;
+	long (*callback)(BIO * bio, int mode, char *argp, int 
+		argi, long argl, long ret);
+	char *cb_arg; /* first argument for the callback */
+	int init;
+	int shutdown;
+	int flags;      /* extra storage */
+	int num;
+	char *ptr;
+	struct bio_st *next_bio; /* used by filter BIOs */
+	int references;
+	unsigned long num_read;
+	unsigned long num_write;
+	} BIO;
+
+-	'Method' is the BIO method.
+-	'callback', when configured, is called before and after 
+	each BIO method is called for that particular BIO.  This 
+	is intended primarily for debugging and of informational feedback.
+-	'init' is 0 when the BIO can be used for operation.  
+	Often, after a BIO is created, a number of operations may 
+	need to be performed before it is available for use.  An 
+	example is for BIO_s_sock().  A socket needs to be 
+	assigned to the BIO before it can be used.
+-	'shutdown', this flag indicates if the underlying 
+	comunication primative being used should be closed/freed 
+	when the BIO is closed.
+-	'flags' is used to hold extra state.  It is primarily used 
+	to hold information about why a non-blocking operation 
+	failed and to record startup protocol information for the 
+	SSL BIO.
+-	'num' and 'ptr' are used to hold instance specific state 
+	like file descriptors or local data structures.
+-	'next_bio' is used by filter BIOs to hold the pointer of the
+	next BIO in the chain. written data is sent to this BIO and
+	data read is taken from it.
+-	'references' is used to indicate the number of pointers to 
+	this structure.  This needs to be '1' before a call to 
+	BIO_free() is made if the BIO_free() function is to 
+	actually free() the structure, otherwise the reference 
+	count is just decreased.  The actual BIO subsystem does 
+	not really use this functionality but it is useful when 
+	used in more advanced applicaion.
+-	num_read and num_write are the total number of bytes 
+	read/written via the 'read()' and 'write()' methods.
+
+BIO_ctrl operations.
+The following is the list of standard commands passed as the 
+second parameter to BIO_ctrl() and should be supported by 
+all BIO as best as possible.  Some are optional, some are 
+manditory, in any case, where is makes sense, a filter BIO 
+should pass such requests to underlying BIO's.
+-	BIO_CTRL_RESET	- Reset the BIO back to an initial state.
+-	BIO_CTRL_EOF	- return 0 if we are not at the end of input, 
+	non 0 if we are.
+-	BIO_CTRL_INFO	- BIO specific special command, normal
+	information return.
+-	BIO_CTRL_SET	- set IO specific parameter.
+-	BIO_CTRL_GET	- get IO specific parameter.
+-	BIO_CTRL_GET_CLOSE - Get the close on BIO_free() flag, one 
+	of BIO_CLOSE or BIO_NOCLOSE.
+-	BIO_CTRL_SET_CLOSE - Set the close on BIO_free() flag.
+-	BIO_CTRL_PENDING - Return the number of bytes available 
+	for instant reading
+-	BIO_CTRL_FLUSH	- Output pending data, return number of bytes output.
+-	BIO_CTRL_SHOULD_RETRY - After an IO error (-1 returned) 
+	should we 'retry' when IO is possible on the underlying IO object.
+-	BIO_CTRL_RETRY_TYPE - What kind of IO are we waiting on.
+
+The following command is a special BIO_s_file() specific option.
+-	BIO_CTRL_SET_FILENAME - specify a file to open for IO.
+
+The BIO_CTRL_RETRY_TYPE needs a little more explanation.  
+When performing non-blocking IO, or say reading on a memory 
+BIO, when no data is present (or cannot be written), 
+BIO_read() and/or BIO_write() will return -1.  
+BIO_should_retry(bio) will return true if this is due to an 
+IO condition rather than an actual error.  In the case of 
+BIO_s_mem(), a read when there is no data will return -1 and 
+a should retry when there is more 'read' data.
+The retry type is deduced from 2 macros
+BIO_should_read(bio) and BIO_should_write(bio).
+Now while it may appear obvious that a BIO_read() failure 
+should indicate that a retry should be performed when more 
+read data is available, this is often not true when using 
+things like an SSL BIO.  During the SSL protocol startup 
+multiple reads and writes are performed, triggered by any 
+SSL_read or SSL_write.
+So to write code that will transparently handle either a 
+socket or SSL BIO,
+	i=BIO_read(bio,..)
+	if (I == -1)
+		{
+		if (BIO_should_retry(bio))
+			{
+			if (BIO_should_read(bio))
+				{
+				/* call us again when BIO can be read */
+				}
+			if (BIO_should_write(bio))
+				{
+				/* call us again when BIO can be written */
+				}
+			}
+		}
+
+At this point in time only read and write conditions can be 
+used but in the future I can see the situation for other 
+conditions, specifically with SSL there could be a condition 
+of a X509 certificate lookup taking place and so the non-
+blocking BIO_read would require a retry when the certificate 
+lookup subsystem has finished it's lookup.  This is all 
+makes more sense and is easy to use in a event loop type 
+setup.
+When using the SSL BIO, either SSL_read() or SSL_write()s 
+can be called during the protocol startup and things will 
+still work correctly.
+The nice aspect of the use of the BIO_should_retry() macro 
+is that all the errno codes that indicate a non-fatal error 
+are encapsulated in one place.  The Windows specific error 
+codes and WSAGetLastError() calls are also hidden from the 
+application.
+
+Notes on each BIO method.
+Normally buffer.h is just required but depending on the 
+BIO_METHOD, ssl.h or evp.h will also be required.
+
+BIO_METHOD *BIO_s_mem(void);
+-	BIO_set_mem_buf(BIO *bio, BUF_MEM *bm, int close_flag) - 
+	set the underlying BUF_MEM structure for the BIO to use.
+-	BIO_get_mem_ptr(BIO *bio, char **pp) - if pp is not NULL, 
+	set it to point to the memory array and return the number 
+	of bytes available.
+A read/write BIO.  Any data written is appended to the 
+memory array and any read is read from the front.  This BIO 
+can be used for read/write at the same time. BIO_gets() is 
+supported in the fgets() sense.
+BIO_CTRL_INFO can be used to retrieve pointers to the memory 
+buffer and it's length.
+
+BIO_METHOD *BIO_s_file(void);
+-	BIO_set_fp(BIO *bio, FILE *fp, int close_flag) - set 'FILE *' to use.
+-	BIO_get_fp(BIO *bio, FILE **fp) - get the 'FILE *' in use.
+-	BIO_read_filename(BIO *bio, char *name) - read from file.
+-	BIO_write_filename(BIO *bio, char *name) - write to file.
+-	BIO_append_filename(BIO *bio, char *name) - append to file.
+This BIO sits over the normal system fread()/fgets() type 
+functions. Gets() is supported.  This BIO in theory could be 
+used for read and write but it is best to think of each BIO 
+of this type as either a read or a write BIO, not both.
+
+BIO_METHOD *BIO_s_socket(void);
+BIO_METHOD *BIO_s_fd(void);
+-	BIO_sock_should_retry(int i) - the underlying function 
+	used to determine if a call should be retried; the 
+	argument is the '0' or '-1' returned by the previous BIO 
+	operation.
+-	BIO_fd_should_retry(int i) - same as the 
+-	BIO_sock_should_retry() except that it is different internally.
+-	BIO_set_fd(BIO *bio, int fd, int close_flag) - set the 
+	file descriptor to use
+-	BIO_get_fd(BIO *bio, int *fd) - get the file descriptor.
+These two methods are very similar.  Gets() is not 
+supported, if you want this functionality, put a 
+BIO_f_buffer() onto it.  This BIO is bi-directional if the 
+underlying file descriptor is.  This is normally the case 
+for sockets but not the case for stdio descriptors.
+
+BIO_METHOD *BIO_s_null(void);
+Read and write as much data as you like, it all disappears 
+into this BIO.
+
+BIO_METHOD *BIO_f_buffer(void);
+-	BIO_get_buffer_num_lines(BIO *bio) - return the number of 
+	complete lines in the buffer.
+-	BIO_set_buffer_size(BIO *bio, long size) - set the size of 
+	the buffers.
+This type performs input and output buffering.  It performs 
+both at the same time.  The size of the buffer can be set 
+via the set buffer size option.  Data buffered for output is 
+only written when the buffer fills.
+
+BIO_METHOD *BIO_f_ssl(void);
+-	BIO_set_ssl(BIO *bio, SSL *ssl, int close_flag) - the SSL 
+	structure to use.
+-	BIO_get_ssl(BIO *bio, SSL **ssl) - get the SSL structure 
+	in use.
+The SSL bio is a little different from normal BIOs because 
+the underlying SSL structure is a little different.  A SSL 
+structure performs IO via a read and write BIO.  These can 
+be different and are normally set via the
+SSL_set_rbio()/SSL_set_wbio() calls.  The SSL_set_fd() calls 
+are just wrappers that create socket BIOs and then call 
+SSL_set_bio() where the read and write BIOs are the same.  
+The BIO_push() operation makes the SSLs IO BIOs the same, so 
+make sure the BIO pushed is capable of two directional 
+traffic.  If it is not, you will have to install the BIOs 
+via the more conventional SSL_set_bio() call.  BIO_pop() will retrieve
+the 'SSL read' BIO.
+
+BIO_METHOD *BIO_f_md(void);
+-	BIO_set_md(BIO *bio, EVP_MD *md) - set the message digest 
+	to use.
+-	BIO_get_md(BIO *bio, EVP_MD **mdp) - return the digest 
+	method in use in mdp, return 0 if not set yet.
+-	BIO_reset() reinitializes the digest (EVP_DigestInit()) 
+	and passes the reset to the underlying BIOs.
+All data read or written via BIO_read() or BIO_write() to 
+this BIO will be added to the calculated digest.  This 
+implies that this BIO is only one directional.  If read and 
+write operations are performed, two separate BIO_f_md() BIOs 
+are reuqired to generate digests on both the input and the 
+output.  BIO_gets(BIO *bio, char *md, int size) will place the 
+generated digest into 'md' and return the number of bytes.  
+The EVP_MAX_MD_SIZE should probably be used to size the 'md' 
+array.  Reading the digest will also reset it.
+
+BIO_METHOD *BIO_f_cipher(void);
+-	BIO_reset() reinitializes the cipher.
+-	BIO_flush() should be called when the last bytes have been 
+	output to flush the final block of block ciphers.
+-	BIO_get_cipher_status(BIO *b), when called after the last 
+	read from a cipher BIO, returns non-zero if the data 
+	decrypted correctly, otherwise, 0.
+-	BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *key, 
+	unsigned char *iv, int encrypt)   This function is used to 
+	setup a cipher BIO.  The length of key and iv are 
+	specified by the choice of EVP_CIPHER.  Encrypt is 1 to 
+	encrypt and 0 to decrypt.
+
+BIO_METHOD *BIO_f_base64(void);
+-	BIO_flush() should be called when the last bytes have been output.
+This BIO base64 encodes when writing and base64 decodes when 
+reading.  It will scan the input until a suitable begin line 
+is found.  After reading data, BIO_reset() will reset the 
+BIO to start scanning again.  Do not mix reading and writing 
+on the same base64 BIO.  It is meant as a single stream BIO.
+
+Directions	type
+both		BIO_s_mem()
+one/both	BIO_s_file()
+both		BIO_s_fd()
+both		BIO_s_socket() 
+both		BIO_s_null()
+both		BIO_f_buffer()
+one		BIO_f_md()  
+one		BIO_f_cipher()  
+one		BIO_f_base64()  
+both		BIO_f_ssl()
+
+It is easy to mix one and two directional BIOs, all one has 
+to do is to keep two separate BIO pointers for reading and 
+writing and be careful about usage of underlying BIOs.  The 
+SSL bio by it's very nature has to be two directional but 
+the BIO_push() command will push the one BIO into the SSL 
+BIO for both reading and writing.
+
+The best example program to look at is apps/enc.c and/or perhaps apps/dgst.c.
+

@@ -1,0 +1,48 @@
+I have lots more references etc, and will update this list in the future,
+30 Aug 1996 - eay
+
+
+SSL	The SSL Protocol - from Netscapes.
+
+RC4	Newsgroups: sci.crypt
+	From: sterndark@netcom.com (David Sterndark)
+	Subject: RC4 Algorithm revealed.
+	Message-ID: <sternCvKL4B.Hyy@netcom.com>
+
+RC2	Newsgroups: sci.crypt
+	From: pgut01@cs.auckland.ac.nz (Peter Gutmann)
+	Subject: Specification for Ron Rivests Cipher No.2
+	Message-ID: <4fk39f$f70@net.auckland.ac.nz>
+
+MD2	RFC1319 The MD2 Message-Digest Algorithm
+MD5	RFC1321 The MD5 Message-Digest Algorithm
+
+X509 Certificates
+	RFC1421 Privacy Enhancement for Internet Electronic Mail: Part I
+	RFC1422 Privacy Enhancement for Internet Electronic Mail: Part II
+	RFC1423 Privacy Enhancement for Internet Electronic Mail: Part III
+	RFC1424 Privacy Enhancement for Internet Electronic Mail: Part IV
+
+RSA and various standard encoding
+	PKCS#1 RSA Encryption Standard
+	PKCS#5 Password-Based Encryption Standard
+	PKCS#7 Cryptographic Message Syntax Standard
+	A Layman's Guide to a Subset of ASN.1, BER, and DER
+	An Overview of the PKCS Standards
+	Some Examples of the PKCS Standards
+
+IDEA	Chapter 3 The Block Cipher IDEA
+
+RSA, prime number generation and bignum algorithms
+	Introduction To Algorithms,
+	Thomas Cormen, Charles Leiserson, Ronald Rivest,
+	Section 29 Arithmetic Circuits
+	Section 33 Number-Theoretic Algorithms
+
+Fast Private Key algorithm
+	Fast Decipherment Algorithm for RSA Public-Key Cryptosystem
+	J.-J. Quisquater and C. Couvreur, Electronics Letters,
+	14th October 1982, Vol. 18 No. 21
+
+Prime number generation and bignum algorithms.
+	PGP-2.3a

@@ -1,0 +1,49 @@
+The MD2 library.
+MD2 is a message digest algorithm that can be used to condense an arbitrary
+length message down to a 16 byte hash.  The functions all need to be passed
+a MD2_CTX which is used to hold the MD2 context during multiple MD2_Update()
+function calls.  The normal method of use for this library is as follows
+
+MD2_Init(...);
+MD2_Update(...);
+...
+MD2_Update(...);
+MD2_Final(...);
+
+This library requires the inclusion of 'md2.h'.
+
+The main negative about MD2 is that it is slow, especially when compared
+to MD5.
+
+The functions are as follows:
+
+void MD2_Init(
+MD2_CTX *c);
+	This function needs to be called to initiate a MD2_CTX structure for
+	use.
+	
+void MD2_Update(
+MD2_CTX *c;
+unsigned char *data;
+unsigned long len);
+	This updates the message digest context being generated with 'len'
+	bytes from the 'data' pointer.  The number of bytes can be any
+	length.
+
+void MD2_Final(
+unsigned char *md;
+MD2_CTX *c;
+	This function is called when a message digest of the data digested
+	with MD2_Update() is wanted.  The message digest is put in the 'md'
+	array and is MD2_DIGEST_LENGTH (16) bytes long.
+
+unsigned char *MD2(
+unsigned long n;
+unsigned char *d;
+unsigned char *md;
+	This function performs a MD2_Init(), followed by a MD2_Update()
+	followed by a MD2_Final() (using a local MD2_CTX).
+	The resulting digest is put into 'md' if it is not NULL.
+	Regardless of the value of 'md', the message
+	digest is returned from the function.  If 'md' was NULL, the message
+	digest returned is being stored in a static structure.

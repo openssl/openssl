@@ -1,0 +1,22 @@
+X509_verify_cert_chain(
+	CERT_STORE *cert_store,
+	STACK /* X509 */ *certs,
+	int *verify_result,
+	int (*verify_error_callback)()
+	char *argument_to_callback, /* SSL */
+
+app_verify_callback(
+	char *app_verify_arg, /* from SSL_CTX */
+	STACK /* X509 */ *certs,
+	int *verify_result,
+	int (*verify_error_callback)()
+	SSL *s,
+
+int X509_verify_cert(
+	CERT_STORE *cert_store,
+	X509 *x509,
+	int *verify_result,
+	int (*verify_error_callback)(),
+	char *arg,
+
+

@@ -1,0 +1,24 @@
+SSLeay 0.8.1
+	- Mostly bug fixes.  There is an Ephemeral DH cipher problem which
+	  is fixed.
+
+SSLeay 0.8.0
+	- New release, for those that are wondering what happend to
+	  0.7.x, call it our internal development version :-)
+	- There have been lots of changes, mostly the addition of SSLv3.
+	- There have been many additions from people and amongst
+	  others, C2Net has assisted greatly.
+
+SSLeay 0.6.6
+	SSLeay 0.8.0 is not upward compatable with SSLeay 0.6.6, so
+	if your application requires 0.6.6, use it.  There have been
+	lots of bug fixes to 0.8.x that have not been applied to 0.6.6
+	so use 0.8.0+ in preference.
+
+PORTING 0.6.6 to 0.8.0
+	I'll be documenting this over the next few weeks but as
+	pressures have been increasing for making SSLv3 support
+	available I'm shipping it without this documentation as I
+	basically have not had time to write it (too busy earning a
+	living :-)
+

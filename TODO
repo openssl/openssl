@@ -1,0 +1,28 @@
+- The loading of the netscape RC4 encrypted key is a crock of pig pellets.
+  It will be reworked along with a nice general mechanism for encrypting
+  ASN.1 stuff. [ Jun 96 ] I've cleaned up private keys internally but
+  still have not done PKCS#8 support.
+
+- Winsock support in s_client/s_server for windows nt/3.1 is a crock.
+  I will probably not get this fixed for a while, it is just there so
+  I could test things.
+
+- Be able to generate DSS certificates.
+
+- Add CRL to the X509 verification stuff, this will probably be added with
+  SSLv3.
+
++ X509 callback.  I need to callback the application to retrieve certificates
+  and CRL.
+
+*<- designates the things I'm activly working on.
++<- designates that which I have next in the queue.
+
+====
+
+X509v3 extensions
+verify certificate chains
+X509 cert lookup methods
+RSA/DSA/DH methods mostly for smart cards
+dsa cert generation
+

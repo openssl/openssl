@@ -1,0 +1,277 @@
+22 Jun 1996
+This file belongs in ../apps, but I'll leave it here because it deals
+with SSL :-)  It is rather dated but it gives you an idea of how
+things work.
+===
+
+17 Jul 1995
+I have been changing things quite a bit and have not fully updated
+this file, so take what you read with a grain of salt
+eric
+===
+The s_client and s_server programs can be used to test SSL capable
+IP/port addresses and the verification of the X509 certificates in use
+by these services.  I strongly advise having a look at the code to get
+an idea of how to use the authentication under SSLeay.  Any feedback
+on changes and improvements would be greatly accepted.
+
+This file will probably be gibberish unless you have read
+rfc1421, rfc1422, rfc1423 and rfc1424 which describe PEM
+authentication.
+
+A Brief outline (and examples) how to use them to do so.
+
+NOTE:
+The environment variable SSL_CIPER is used to specify the prefered
+cipher to use, play around with setting it's value to combinations of
+RC4-MD5, EXP-RC4-MD5, CBC-DES-MD5, CBC3-DES-MD5, CFB-DES-NULL
+in a : separated list.
+
+This directory contains 3 X509 certificates which can be used by these programs.
+client.pem: a file containing a certificate and private key to be used
+	by s_client.
+server.pem :a file containing a certificate and private key to be used
+	by s_server.
+eay1024.pem:the certificate used to sign client.pem and server.pem.
+	This would be your CA's certificate.  There is also a link
+	from the file a8556381.0 to eay1024.PEM.  The value a8556381
+	is returned by 'x509 -hash -noout <eay1024.pem' and is the
+	value used by X509 verification routines to 'find' this
+	certificte when search a directory for it.
+	[the above is not true any more, the CA cert is 
+	 ../certs/testca.pem which is signed by ../certs/mincomca.pem]
+
+When testing the s_server, you may get
+bind: Address already in use
+errors.  These indicate the port is still being held by the unix
+kernel and you are going to have to wait for it to let go of it.  If
+this is the case, remember to use the port commands on the s_server and
+s_client to talk on an alternative port.
+
+=====
+s_client.
+This program can be used to connect to any IP/hostname:port that is
+talking SSL.  Once connected, it will attempt to authenticate the
+certificate it was passed and if everything works as expected, a 2
+directional channel will be open.  Any text typed will be sent to the
+other end.  type Q<cr> to exit.  Flags are as follows.
+-host arg	: Arg is the host or IP address to connect to.
+-port arg	: Arg is the port to connect to (https is 443).
+-verify arg	: Turn on authentication of the server certificate.
+		: Arg specifies the 'depth', this will covered below.
+-cert arg	: The optional certificate to use.  This certificate
+		: will be returned to the server if the server
+		: requests it for client authentication.
+-key arg	: The private key that matches the certificate
+		: specified by the -cert option.  If this is not
+		: specified (but -cert is), the -cert file will be
+		: searched for the Private key.  Both files are
+		: assumed to be in PEM format.
+-CApath arg	: When to look for certificates when 'verifying' the
+		: certificate from the server.
+-CAfile arg	: A file containing certificates to be used for
+		: 'verifying' the server certificate.
+-reconnect	: Once a connection has been made, drop it and
+		: reconnect with same session-id.  This is for testing :-).
+
+The '-verify n' parameter specifies not only to verify the servers
+certificate but to also only take notice of 'n' levels.  The best way
+to explain is to show via examples.
+Given
+s_server -cert server.PEM is running.
+
+s_client
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	issuer= /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify error:num=1:unable to get issuer certificate
+	verify return:1
+	CIPHER is CBC-DES-MD5
+What has happened is that the 'SSLeay demo server' certificate's
+issuer ('CA') could not be found but because verify is not on, we
+don't care and the connection has been made anyway.  It is now 'up'
+using CBC-DES-MD5 mode.  This is an unauthenticate secure channel.
+You may not be talking to the right person but the data going to them
+is encrypted.
+
+s_client -verify 0
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	issuer= /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify error:num=1:unable to get issuer certificate
+	verify return:1
+	CIPHER is CBC-DES-MD5
+We are 'verifying' but only to depth 0, so since the 'SSLeay demo server'
+certificate passed the date and checksum, we are happy to proceed.
+
+s_client -verify 1
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	issuer= /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify error:num=1:unable to get issuer certificate
+	verify return:0
+	ERROR
+	verify error:unable to get issuer certificate
+In this case we failed to make the connection because we could not
+authenticate the certificate because we could not find the
+'CA' certificate.
+
+s_client -verify 1 -CAfile eay1024.PEM
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+We loaded the certificates from the file eay1024.PEM.  Everything
+checked out and so we made the connection.
+
+s_client -verify 1 -CApath .
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+We looked in out local directory for issuer certificates and 'found'
+a8556381.0 and so everything is ok.
+
+It is worth noting that 'CA' is a self certified certificate.  If you
+are passed one of these, it will fail to 'verify' at depth 0 because
+we need to lookup the certifier of a certificate from some information
+that we trust and keep locally.
+
+SSL_CIPHER=CBC3-DES-MD5:RC4-MD5
+export SSL_CIPHER
+s_client -verify 10 -CApath . -reconnect
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	drop the connection and reconnect with the same session id
+	CIPHER is CBC3-DES-MD5
+This has done a full connection and then re-estabished it with the
+same session id but a new socket.  No RSA stuff occures on the second
+connection.  Note that we said we would prefer to use CBC3-DES-MD5
+encryption and so, since the server supports it, we are.
+
+=====
+s_server
+This program accepts SSL connections on a specified port
+Once connected, it will estabish an SSL connection and optionaly
+attempt to authenticate the client.  A 2 directional channel will be
+open.  Any text typed will be sent to the other end.  Type Q<cr> to exit.
+Flags are as follows.
+-port arg	: Arg is the port to listen on.
+-verify arg	: Turn on authentication of the client if they have a
+		: certificate.  Arg specifies the 'depth'.
+-Verify arg	: Turn on authentication of the client. If they don't
+		: have a valid certificate, drop the connection.
+-cert arg	: The certificate to use.  This certificate
+		: will be passed to the client.  If it is not
+		: specified, it will default to server.PEM
+-key arg	: The private key that matches the certificate
+		: specified by the -cert option.  If this is not
+		: specified (but -cert is), the -cert file will be
+		: searched for the Private key.  Both files are
+		: assumed to be in PEM format.  Default is server.PEM
+-CApath arg	: When to look for certificates when 'verifying' the
+		: certificate from the client.
+-CAfile arg	: A file containing certificates to be used for
+		: 'verifying' the client certificate.
+
+For the following 'demo'  I will specify the s_server command and
+the s_client command and then list the output from the s_server.
+s_server
+s_client
+	CONNECTED
+	CIPHER is CBC-DES-MD5
+Everything up and running
+
+s_server -verify 0
+s_client  
+	CONNECTED
+	CIPHER is CBC-DES-MD5
+Ok since no certificate was returned and we don't care.
+
+s_server -verify 0
+./s_client -cert client.PEM
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo client
+	issuer= /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify error:num=1:unable to get issuer certificate
+	verify return:1
+	CIPHER is CBC-DES-MD5
+Ok since we were only verifying to level 0
+
+s_server -verify 4
+s_client -cert client.PEM
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo client
+	issuer= /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify error:num=1:unable to get issuer certificate
+	verify return:0
+	ERROR
+	verify error:unable to get issuer certificate
+Bad because we could not authenticate the returned certificate.
+
+s_server -verify 4 -CApath .
+s_client -cert client.PEM
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo client
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+Ok because we could authenticate the returned certificate :-).
+
+s_server -Verify 0 -CApath .
+s_client
+	CONNECTED
+	ERROR
+	SSL error:function is:REQUEST_CERTIFICATE
+		 :error is   :client end did not return a certificate
+Error because no certificate returned.
+
+s_server -Verify 4 -CApath .
+s_client -cert client.PEM
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo client
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+Full authentication of the client.
+
+So in summary to do full authentication of both ends
+s_server -Verify 9 -CApath .
+s_client -cert client.PEM -CApath . -verify 9
+From the server side
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo client
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+From the client side
+	CONNECTED
+	depth=0 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=SSLeay demo server
+	verify return:1
+	depth=1 /C=AU/SOP=QLD/O=Mincom Pty. Ltd./OU=CS/CN=CA
+	verify return:1
+	CIPHER is CBC-DES-MD5
+
+For general probing of the 'internet https' servers for the
+distribution area, run
+s_client -host www.netscape.com -port 443 -verify 4 -CApath ../rsa/hash
+Then enter
+GET /
+and you should be talking to the https server on that host.
+
+www.rsa.com was refusing to respond to connections on 443 when I was
+testing.
+
+have fun :-).
+
+eric

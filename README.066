@@ -1,0 +1,27 @@
+
+SSLeay 0.6.6 13-Jan-1997
+
+The main additions are
+
+- assember for x86 DES improvments.
+  From 191,000 per second on a pentium 100, I now get 281,000.  The inner
+  loop and the IP/FP modifications are from
+  Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>.  Many thanks for his
+  contribution.
+- The 'DES macros' introduced in 0.6.5 now have 3 types.
+  DES_PTR1, DES_PTR2 and 'normal'.  As per before, des_opts reports which
+  is best and there is a summery of mine in crypto/des/options.txt
+- A few bug fixes.
+- Added blowfish.  It is not used by SSL but all the other stuff that
+  deals with ciphers can use it in either ecb, cbc, cfb64 or ofb64 modes.
+  There are 3 options for optimising Blowfish.  BF_PTR, BF_PTR2 and 'normal'.
+  BF_PTR2 is pentium/x86 specific.  The correct option is setup in
+  the 'Configure' script.
+- There is now a 'get client certificate' callback which can be
+  'non-blocking'.  If more details are required, let me know.  It will
+  documented more in SSLv3 when I finish it.
+- Bug fixes from 0.6.5 including the infamous 'ca' bug.  The 'make test'
+  now tests the ca program.
+- Lots of little things modified and tweaked.
+
+eric

@@ -1,0 +1,50 @@
+If you have any problems with SSLeay then please take the following 
+steps:
+
+    Remove the ASM version of the BN routines (edit Configure)
+    Remove the compiler optimisation flags
+    Add in the compiler debug flags (-g)
+
+Note: if using gcc then remove -fomit-frame-pointer before you try
+      to debug things.
+
+If you wish to report a bug then please include the following information
+in any bug report:
+
+    SSLeay Details
+	- Version, most of these details can be got from the
+	  'ssleay version -a' command.
+    Operating System Details
+	- OS Name
+	- OS Version
+	- Hardware platform
+    Compiler Details
+	- Name
+	- Version
+    Application Details 
+	- Name 
+	- Version 
+    Problem Description
+	- include steps that will reproduce the problem (if known)
+    Stack Traceback (if the application dumps core)
+
+For example:
+
+    SSLeay-0.5.1a
+    SunOS 5.3, SPARC, SunC 3.0
+    SSLtelnet-0.7
+
+    Core dumps when using telnet with SSL support in bn_mul() with 
+    the following stack trackback 
+	...
+
+
+Report the bug to either
+    ssleay@mincom.oz.au (Eric and Tim)
+or
+    ssl-bugs@mincom.oz.au (mailing list of active developers)
+
+
+Tim Hudson
+tjh@mincom.oz.au
+

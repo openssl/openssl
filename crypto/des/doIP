@@ -1,0 +1,46 @@
+#!/usr/local/bin/perl
+
+@l=(
+	 0, 1, 2, 3, 4, 5, 6, 7,
+	 8, 9,10,11,12,13,14,15,
+	16,17,18,19,20,21,22,23,
+	24,25,26,27,28,29,30,31
+	);
+@r=(
+	32,33,34,35,36,37,38,39,
+	40,41,42,43,44,45,46,47,
+	48,49,50,51,52,53,54,55,
+	56,57,58,59,60,61,62,63
+	);
+
+require 'shifts.pl';
+
+sub PERM_OP
+	{
+	local(*a,*b,*t,$n,$m)=@_;
+
+	@z=&shift(*a,-$n);
+	@z=&xor(*b,*z);
+	@z=&and(*z,$m);
+	@b=&xor(*b,*z);
+	@z=&shift(*z,$n);
+	@a=&xor(*a,*z);
+	}
+
+
+@L=@l;
+@R=@r;
+&PERM_OP(*R,*L,*T,4,0x0f0f0f0f);
+&PERM_OP(*L,*R,*T,16,0x0000ffff);
+&PERM_OP(*R,*L,*T,2,0x33333333);
+&PERM_OP(*L,*R,*T,8,0x00ff00ff);
+&PERM_OP(*R,*L,*T,1,0x55555555);
+	&printit(@L);
+	&printit(@R);
+&PERM_OP(*R,*L,*T,1,0x55555555);
+&PERM_OP(*L,*R,*T,8,0x00ff00ff);
+&PERM_OP(*R,*L,*T,2,0x33333333);
+&PERM_OP(*L,*R,*T,16,0x0000ffff);
+&PERM_OP(*R,*L,*T,4,0x0f0f0f0f);
+	&printit(@L);
+	&printit(@R);

@@ -1,0 +1,16 @@
+crypt	<= 	crypt(buf,salt)
+key	<=	set_odd_parity(key)
+int	<=	is_weak_key(key)
+keysched<=	set_key(key)
+key	<=	ecb_encrypt(string8,ks,enc)
+key	<=	ecb3_encrypt(input,ks1,ks2,enc)
+string	<=	cbc_encrypt(input,ks,ivec,enc)			=> ivec 
+string	<=	cbc3_encrypt(input,ks1,ks2,ivec1,ivec2,enc)	=> ivec1&ivec2 
+ck1,ck2	<=	cbc_cksum(input,ks,ivec)			=> ivec
+string	<=	pcbc_encrypt(input,ks,ivec,enc)			=> ivec 
+string	<=	ofb_encrypt(input,numbits,ks,ivec)		=> ivec
+string	<=	cfb_encrypt(input,numbits,ks,ivec,enc)		=> ivec
+key	<=	random_key()
+key	<=	string_to_key(string)
+key1,key2<=	string_to_2keys(string)
+

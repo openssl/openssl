@@ -1,0 +1,9 @@
+/* Error codes for the BUF functions. */
+
+/* Function codes. */
+#define BUF_F_BUF_MEM_GROW				 100
+#define BUF_F_BUF_MEM_NEW				 101
+#define BUF_F_BUF_STRDUP				 102
+#define BUF_F_PXYCLNT_READ				 103
+
+/* Reason codes. */

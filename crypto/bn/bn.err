@@ -1,0 +1,20 @@
+/* Error codes for the BN functions. */
+
+/* Function codes. */
+#define BN_F_BN_BL_CTX_INIT				 100
+#define BN_F_BN_BL_CTX_NEW				 101
+#define BN_F_BN_BN2ASCII				 102
+#define BN_F_BN_CTX_NEW					 103
+#define BN_F_BN_DIV					 104
+#define BN_F_BN_EXPAND2					 105
+#define BN_F_BN_MOD_EXP_MONT				 106
+#define BN_F_BN_MOD_INVERSE				 107
+#define BN_F_BN_MOD_MUL_RECIPROCAL			 108
+#define BN_F_BN_NEW					 109
+#define BN_F_BN_RAND					 110
+
+/* Reason codes. */
+#define BN_R_BAD_RECIPROCAL				 100
+#define BN_R_CALLED_WITH_EVEN_MODULUS			 101
+#define BN_R_DIV_BY_ZERO				 102
+#define BN_R_NO_INVERSE					 103
