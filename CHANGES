@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Initialise "ex_data" member of an RSA structure prior to calling the
+     method-specific "init()" handler, and clean up ex_data after calling
+     the method-specific "finish()" handler. Previously, this was happening
+     the other way round.
+     [Geoff Thorpe]
+
   *) New function BN_swap.
      [Bodo Moeller]
 
