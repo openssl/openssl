@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/09/11 12:20:20 $
+  ______________                           $Date: 2001/09/11 12:46:50 $
 
   DEVELOPMENT STATE
 
@@ -17,6 +17,8 @@
     o  OpenSSL 0.9.1c: Released on December  23th, 1998
 
   RELEASE SHOWSTOPPERS
+
+    o BIGNUM library failures on 64-bit platforms (0.9.7-dev)
 
   AVAILABLE PATCHES
 
