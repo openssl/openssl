@@ -66,6 +66,12 @@
 #ifndef NO_ERR
 static ERR_STRING_DATA ENGINE_str_functs[]=
 	{
+{ERR_PACK(0,ENGINE_F_AEP_FINISH,0),	"AEP_FINISH"},
+{ERR_PACK(0,ENGINE_F_AEP_INIT,0),	"AEP_INIT"},
+{ERR_PACK(0,ENGINE_F_AEP_MOD_EXP,0),	"AEP_MOD_EXP"},
+{ERR_PACK(0,ENGINE_F_AEP_MOD_EXP_CRT,0),	"AEP_MOD_EXP_CRT"},
+{ERR_PACK(0,ENGINE_F_AEP_RAND,0),	"AEP_RAND"},
+{ERR_PACK(0,ENGINE_F_AEP_RSA_MOD_EXP,0),	"AEP_RSA_MOD_EXP"},
 {ERR_PACK(0,ENGINE_F_ATALLA_FINISH,0),	"ATALLA_FINISH"},
 {ERR_PACK(0,ENGINE_F_ATALLA_INIT,0),	"ATALLA_INIT"},
 {ERR_PACK(0,ENGINE_F_ATALLA_MOD_EXP,0),	"ATALLA_MOD_EXP"},
@@ -131,6 +137,7 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 
 static ERR_STRING_DATA ENGINE_str_reasons[]=
 	{
+{ENGINE_R_AEP_INIT_FAILURE               ,"aep init failure"},
 {ENGINE_R_ALREADY_LOADED                 ,"already loaded"},
 {ENGINE_R_BIO_WAS_FREED                  ,"bio was freed"},
 {ENGINE_R_BN_CTX_FULL                    ,"BN_CTX full"},
@@ -144,10 +151,13 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_FAILED_LOADING_PUBLIC_KEY      ,"failed loading public key"},
 {ENGINE_R_FINISH_FAILED                  ,"finish failed"},
 {ENGINE_R_GET_HANDLE_FAILED              ,"could not obtain hardware handle"},
+{ENGINE_R_GET_RANDOM_FAILED              ,"get random failed"},
 {ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
 {ENGINE_R_INIT_FAILED                    ,"init failed"},
 {ENGINE_R_INTERNAL_LIST_ERROR            ,"internal list error"},
 {ENGINE_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
+{ENGINE_R_MOD_EXP_CRT_FAILED             ,"mod exp crt failed"},
+{ENGINE_R_MOD_EXP_FAILED                 ,"mod exp failed"},
 {ENGINE_R_NOT_INITIALISED                ,"not initialised"},
 {ENGINE_R_NOT_LOADED                     ,"not loaded"},
 {ENGINE_R_NO_CALLBACK                    ,"no callback"},
@@ -160,6 +170,8 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},
 {ENGINE_R_REQUEST_FAILED                 ,"request failed"},
 {ENGINE_R_REQUEST_FALLBACK               ,"request fallback"},
+{ENGINE_R_RETURN_CONNECTION_FAILED       ,"return connection failed"},
+{ENGINE_R_SETBNCALLBACK_FAILURE          ,"setbncallback failure"},
 {ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL    ,"size too large or too small"},
 {ENGINE_R_UNIT_FAILURE                   ,"unit failure"},
 {0,NULL}

@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= engine_err.c engine_lib.c engine_list.c engine_openssl.c \
-	hw_atalla.c hw_cswift.c hw_ncipher.c
+	hw_atalla.c hw_cswift.c hw_ncipher.c hw_aep.c
 LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_openssl.o \
-	hw_atalla.o hw_cswift.o hw_ncipher.o
+	hw_atalla.o hw_cswift.o hw_ncipher.o hw_aep.o
 
 SRC= $(LIBSRC)
 
@@ -156,6 +156,25 @@ engine_openssl.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 engine_openssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 engine_openssl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 engine_openssl.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
+hw_aep.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+hw_aep.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+hw_aep.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+hw_aep.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+hw_aep.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+hw_aep.o: ../../include/openssl/dso.h ../../include/openssl/e_os.h
+hw_aep.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+hw_aep.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+hw_aep.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+hw_aep.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+hw_aep.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+hw_aep.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+hw_aep.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+hw_aep.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
+hw_aep.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+hw_aep.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+hw_aep.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+hw_aep.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+hw_aep.o: ../cryptlib.h engine_int.h vendor_defns/aep.h
 hw_atalla.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hw_atalla.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 hw_atalla.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

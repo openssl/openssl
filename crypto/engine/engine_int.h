@@ -151,6 +151,11 @@ ENGINE *ENGINE_ncipher();
 ENGINE *ENGINE_atalla();
 #endif /* !NO_HW_ATALLA */
 
+#ifndef NO_HW_AEP
+/* Returns a structure of AEP methods. */
+ENGINE *ENGINE_aep();
+#endif /* !NO_HW_AEP */
+
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus
