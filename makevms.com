@@ -23,6 +23,8 @@ $!      SOFTLINKS Just fix the Unix soft links.
 $!      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
 $!      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
+$!      CRYPTO/x  Just build the x part of the
+$!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
 $!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
@@ -452,7 +454,7 @@ $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
-$ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
@@ -595,6 +597,16 @@ $! Check The User's Options.
 $!
 $ CHECK_OPTIONS:
 $!
+$! Check if there's a "part", and separate it out
+$!
+$ BUILDPART = F$ELEMENT(1,"/",P1)
+$ IF BUILDPART .EQS. "/"
+$ THEN
+$   BUILDPART = ""
+$ ELSE
+$   P1 = F$EXTRACT(0,F$LENGTH(P1) - F$LENGTH(BUILDPART) - 1, P1)
+$ ENDIF
+$!
 $! Check To See If P1 Is Blank.
 $!
 $ IF (P1.EQS."ALL")
@@ -636,6 +648,8 @@ $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
 $     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
+$     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
+$     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT "    TEST     :  To Build Just The OpenSSL Test Programs."
