@@ -56,8 +56,10 @@
  *
  */
 
+#include <openssl/err.h>
 #include <openssl/engine.h>
 #include "engine_int.h"
+
 static int engine_add(ENGINE *e)
 	{
 	if (!ENGINE_by_id(ENGINE_get_id(e)))
