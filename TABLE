@@ -1156,6 +1156,23 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
+*** nextstep3.3
+$cc           = cc
+$cflags       = -O3 -Wall
+$unistd       = <libc.h>
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
 *** purify
 $cc           = purify gcc
 $cflags       = -g -DPURIFY -Wall
