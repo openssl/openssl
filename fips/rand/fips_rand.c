@@ -56,7 +56,9 @@
 /* If we don't define _XOPEN_SOURCE_EXTENDED, struct timeval won't
    be defined and gettimeofday() won't be declared with strict compilers
    like DEC C in ANSI C mode.  */
-#define _XOPEN_SOURCE_EXTENDED
+#ifndef _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED 1
+#endif
 
 #include <openssl/des.h>
 #include <openssl/rand.h>
