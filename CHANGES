@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Fixed a typo bug that would cause ENGINE_set_default() to set an
+     ENGINE as defaults for all supported algorithms irrespective of
+     the 'flags' parameter. 'flags' is now honoured, so applications
+     should make sure they are passing it correctly.
+     [Geoff Thorpe]
+
   *) Make sure the default DSA_METHOD implementation only uses its
      dsa_mod_exp() and/or bn_mod_exp() handlers if they are non-NULL,
      and change its own handlers to be NULL so as to remove unnecessary
