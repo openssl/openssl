@@ -87,10 +87,11 @@ the default method is used.
 	int (*rsa_priv_dec)(int flen, unsigned char *from,
           unsigned char *to, RSA *rsa, int padding);
 
-     /* compute r0 = r0 ^ I mod rsa->n. May be NULL */
+     /* compute r0 = r0 ^ I mod rsa->n (May be NULL for some
+                                        implementations) */
 	int (*rsa_mod_exp)(BIGNUM *r0, BIGNUM *I, RSA *rsa);
 
-     /* compute r = a ^ p mod m. May be NULL */
+     /* compute r = a ^ p mod m (May be NULL for some implementations) */
 	int (*bn_mod_exp)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
           const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 

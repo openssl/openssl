@@ -86,8 +86,9 @@ contain public as well as private RSA keys:
 In public keys, the private exponent and the related secret values are
 B<NULL>.
 
-B<dmp1>, B<dmq1> and B<iqmp> may be B<NULL> in private keys, but the
-RSA operations are much faster when these values are available.
+B<p>, B<q>, B<dmp1>, B<dmq1> and B<iqmp> may be B<NULL> in private
+keys, but the RSA operations are much faster when these values are
+available.
 
 =head1 CONFORMING TO
 

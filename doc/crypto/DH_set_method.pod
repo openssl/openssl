@@ -56,7 +56,7 @@ the default method is used.
      /* compute shared secret */
         int (*compute_key)(unsigned char *key, BIGNUM *pub_key, DH *dh);
 
-     /* compute r = a ^ p mod m. May be NULL */
+     /* compute r = a ^ p mod m (May be NULL for some implementations) */
         int (*bn_mod_exp)(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
                                 const BIGNUM *m, BN_CTX *ctx,
                                 BN_MONT_CTX *m_ctx);
