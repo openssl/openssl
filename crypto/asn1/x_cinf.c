@@ -147,7 +147,14 @@ long length;
 		M_ASN1_D2I_get_IMP_opt(ret->subjectUID,d2i_ASN1_BIT_STRING, 2,
 			V_ASN1_BIT_STRING);
 		}
+/* Note: some broken certificates include extensions but don't set
+ * the version number properly. By bypassing this check they can
+ * be parsed.
+ */
+
+#ifdef VERSION_EXT_CHECK
 	if (ver >= 2) /* version 3 extensions */
+#endif
 		{
 		if (ret->extensions != NULL)
 			while (sk_num(ret->extensions))

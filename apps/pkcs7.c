@@ -277,9 +277,9 @@ bad:
 				BIO_puts(out,buf);
 
 				BIO_puts(out,"\nlast update=");
-				ASN1_UTCTIME_print(out,crl->crl->lastUpdate);
+				ASN1_TIME_print(out,crl->crl->lastUpdate);
 				BIO_puts(out,"\nnext update=");
-				ASN1_UTCTIME_print(out,crl->crl->nextUpdate);
+				ASN1_TIME_print(out,crl->crl->nextUpdate);
 				BIO_puts(out,"\n");
 
 				PEM_write_bio_X509_CRL(out,crl);

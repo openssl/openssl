@@ -85,13 +85,13 @@ unsigned char **pp;
 	M_ASN1_I2D_vars(a);
 
 	M_ASN1_I2D_len(a->serialNumber,i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(a->revocationDate,i2d_ASN1_UTCTIME);
+	M_ASN1_I2D_len(a->revocationDate,i2d_ASN1_TIME);
 	M_ASN1_I2D_len_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(a->serialNumber,i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(a->revocationDate,i2d_ASN1_UTCTIME);
+	M_ASN1_I2D_put(a->revocationDate,i2d_ASN1_TIME);
 	M_ASN1_I2D_put_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_finish();
@@ -107,7 +107,7 @@ long length;
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->serialNumber,d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get(ret->revocationDate,d2i_ASN1_UTCTIME);
+	M_ASN1_D2I_get(ret->revocationDate,d2i_ASN1_TIME);
 	M_ASN1_D2I_get_seq_opt(ret->extensions,d2i_X509_EXTENSION,
 		X509_EXTENSION_free);
 	M_ASN1_D2I_Finish(a,X509_REVOKED_free,ASN1_F_D2I_X509_REVOKED);
@@ -130,9 +130,9 @@ unsigned char **pp;
 		}
 	M_ASN1_I2D_len(a->sig_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_len(a->issuer,i2d_X509_NAME);
-	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_UTCTIME);
+	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_TIME);
 	if (a->nextUpdate != NULL)
-		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_UTCTIME); }
+		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_TIME); }
 	M_ASN1_I2D_len_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
 	M_ASN1_I2D_len_EXP_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION,0,
 		V_ASN1_SEQUENCE,v1);
@@ -177,8 +177,18 @@ long length;
 		}
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->issuer,d2i_X509_NAME);
-	M_ASN1_D2I_get(ret->lastUpdate,d2i_ASN1_UTCTIME);
-	M_ASN1_D2I_get_opt(ret->nextUpdate,d2i_ASN1_UTCTIME,V_ASN1_UTCTIME);
+	M_ASN1_D2I_get(ret->lastUpdate,d2i_ASN1_TIME);
+	/* Manually handle the OPTIONAL ASN1_TIME stuff */
+	if((c.slen != 0) && 
+		( ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
+			 V_ASN1_UNIVERSAL|V_ASN1_UTCTIME)
+		|| ( ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
+			 V_ASN1_UNIVERSAL|V_ASN1_GENERALIZEDTIME) ) ) ) {
+		M_ASN1_D2I_get(ret->nextUpdate,d2i_ASN1_TIME);
+	}
+	if(!ret->nextUpdate) 
+		M_ASN1_D2I_get_opt(ret->nextUpdate,d2i_ASN1_GENERALIZEDTIME,
+							V_ASN1_GENERALIZEDTIME);
 	if (ret->revoked != NULL)
 		{
 		while (sk_num(ret->revoked))

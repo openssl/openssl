@@ -214,14 +214,14 @@ bad:
 			if (lastupdate == i)
 				{
 				fprintf(stdout,"lastUpdate=");
-				ASN1_UTCTIME_print(bio_out,x->crl->lastUpdate);
+				ASN1_TIME_print(bio_out,x->crl->lastUpdate);
 				fprintf(stdout,"\n");
 				}
 			if (nextupdate == i)
 				{
 				fprintf(stdout,"nextUpdate=");
 				if (x->crl->nextUpdate != NULL)
-					ASN1_UTCTIME_print(bio_out,x->crl->nextUpdate);
+					ASN1_TIME_print(bio_out,x->crl->nextUpdate);
 				else
 					fprintf(stdout,"NONE");
 				fprintf(stdout,"\n");
@@ -264,7 +264,7 @@ bad:
 			fprintf(stdout,"revoked: serialNumber=");
 			i2a_ASN1_INTEGER(out,r->serialNumber);
 			fprintf(stdout," revocationDate=");
-			ASN1_UTCTIME_print(bio_out,r->revocationDate);
+			ASN1_TIME_print(bio_out,r->revocationDate);
 			fprintf(stdout,"\n");
 			}
 		sk_free(sk);

@@ -146,9 +146,9 @@ X509 *x;
 	if (!X509_NAME_print(bp,X509_get_issuer_name(x),16)) goto err;
 	if (BIO_write(bp,"\n        Validity\n",18) <= 0) goto err;
 	if (BIO_write(bp,"            Not Before: ",24) <= 0) goto err;
-	if (!ASN1_UTCTIME_print(bp,X509_get_notBefore(x))) goto err;
+	if (!ASN1_TIME_print(bp,X509_get_notBefore(x))) goto err;
 	if (BIO_write(bp,"\n            Not After : ",25) <= 0) goto err;
-	if (!ASN1_UTCTIME_print(bp,X509_get_notAfter(x))) goto err;
+	if (!ASN1_TIME_print(bp,X509_get_notAfter(x))) goto err;
 	if (BIO_write(bp,"\n        Subject: ",18) <= 0) goto err;
 	if (!X509_NAME_print(bp,X509_get_subject_name(x),16)) goto err;
 	if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)

@@ -550,13 +550,13 @@ bad:
 			else if (startdate == i)
 				{
 				BIO_puts(STDout,"notBefore=");
-				ASN1_UTCTIME_print(STDout,X509_get_notBefore(x));
+				ASN1_TIME_print(STDout,X509_get_notBefore(x));
 				BIO_puts(STDout,"\n");
 				}
 			else if (enddate == i)
 				{
 				BIO_puts(STDout,"notAfter=");
-				ASN1_UTCTIME_print(STDout,X509_get_notAfter(x));
+				ASN1_TIME_print(STDout,X509_get_notAfter(x));
 				BIO_puts(STDout,"\n");
 				}
 			else if (fingerprint == i)
