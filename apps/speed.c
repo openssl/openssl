@@ -505,21 +505,8 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"no engine given\n");
 				goto end;
 				}
-			if((e = ENGINE_by_id(*argv)) == NULL)
-				{
-				BIO_printf(bio_err,"invalid engine \"%s\"\n",
-					*argv);
-				goto end;
-				}
-			if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-				{
-				BIO_printf(bio_err,"can't use that engine\n");
-				goto end;
-				}
-			BIO_printf(bio_err,"engine \"%s\" set.\n", *argv);
-			/* Free our "structural" reference. */
-			ENGINE_free(e);
-			/* It will be increased again further down.  We just
+                        e = setup_engine(bio_err, *argv, 0);
+			/* j will be increased again further down.  We just
 			   don't want speed to confuse an engine with an
 			   algorithm, especially when none is given (which
 			   means all of them should be run) */

@@ -657,28 +657,7 @@ bad:
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
-	if (engine_id != NULL)
-		{
-		if((e = ENGINE_by_id(engine_id)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if (s_debug)
-			{
-			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
-				0, bio_err, 0);
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine_id, 1);
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)

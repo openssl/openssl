@@ -176,6 +176,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
+ENGINE *setup_engine(BIO *err, const char *engine, int debug);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

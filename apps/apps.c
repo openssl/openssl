@@ -1037,3 +1037,32 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
 	X509_STORE_free(store);
 	return NULL;
 }
+
+ENGINE *setup_engine(BIO *err, const char *engine, int debug)
+        {
+        ENGINE *e = NULL;
+
+        if (engine)
+                {
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(err,"invalid engine \"%s\"\n", engine);
+			return NULL;
+			}
+		if (debug)
+			{
+			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
+				0, err, 0);
+			}
+                ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, UI_OpenSSL(), 0, 1);
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(err,"can't use that engine\n");
+			return NULL;
+			}
+		BIO_printf(err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+        return e;
+        }
