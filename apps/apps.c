@@ -126,16 +126,6 @@
 #include <openssl/engine.h>
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
-#define strcasecmp _stricmp
-#else
-#  ifdef NO_STRINGS_H
-    int	strcasecmp();
-#  else
-#    include <strings.h>
-#  endif /* NO_STRINGS_H */
-#endif
-
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
@@ -375,22 +365,6 @@ int WIN32_rename(char *from, char *to)
 	return result;
 	}
 #endif
-	}
-#endif
-
-#ifdef OPENSSL_SYS_VMS
-int VMS_strcasecmp(const char *str1, const char *str2)
-	{
-	while (*str1 && *str2)
-		{
-		int res = toupper(*str1) - toupper(*str2);
-		if (res) return res < 0 ? -1 : 1;
-		}
-	if (*str1)
-		return 1;
-	if (*str2)
-		return -1;
-	return 0;
 	}
 #endif
 
