@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) RC4 tune-up featuring 30-40% performance improvement on most RISC
+     platforms. See crypto/rc4/rc4_enc.c for further details.
+     [Andy Polyakov]
+
   *) New -noout option to asn1parse. This causes no output to be produced
      its main use is when combined with -strparse and -out to extract data
      from a file (which may not be in ASN.1 format).
