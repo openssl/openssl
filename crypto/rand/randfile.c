@@ -73,7 +73,7 @@
 # include <sys/stat.h>
 #endif
 
-#include <openssl/e_os.h>
+#include "openssl/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
