@@ -1,3 +1,3 @@
 HMAC-SHA1(fips_rsa_eay.c)= eabab59a2f11f3da4c21e1144efe1684f5e8f1ec
 HMAC-SHA1(fips_rsa_gen.c)= 4bbc0afcade1ac53f469aaa89f84c413678254bf
-HMAC-SHA1(fips_rsa_selftest.c)= ed69ec28f12af451b8e694e52ac8b6c9bffc0db2
+HMAC-SHA1(fips_rsa_selftest.c)= c31301785f748b091a1a0bb20641116a448ff02d

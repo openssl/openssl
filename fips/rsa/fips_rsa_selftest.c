@@ -51,6 +51,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/rsa.h>
+#include <openssl/sha.h>
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_FIPS
@@ -159,7 +160,21 @@ int FIPS_selftest_rsa()
 	"\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78"
 	"\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a"
 	"\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc"
-	"\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde";
+	"\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde"
+	"\xf0\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde";
+    unsigned char md[SHA_DIGEST_LENGTH];
+    unsigned char mdkat[SHA_DIGEST_LENGTH] =
+	"\x2d\x57\x1d\x6f\x5c\x37\xf9\xf0\x3b\xb4\x3c\xe8\x2c\x4c\xb3\x04"
+	"\x75\xa2\x0e\xfb";
+    unsigned char ctextkat[] =
+	"\x3e\xc5\x0a\xbe\x29\xa2\xca\x9a\x35\x14\x17\x26\xa4\x0f\xa3\x03"
+	"\x65\xb5\x37\xf5\x6a\xaa\xb\xf\x2c\x0d\x8\xc0\x73\x8\x3c\x88\x85"
+	"\x36\x68\x16\xfe\x2f\x59\x77\x7e\x2a\x76\x9a\xc7\x27\x19\x9b\x54"
+	"\x14\x87\xf3\xe0\xce\x1e\x68\x10\x40\x14\xac\xbc\xe6\x6f\x26\x1f"
+	"\x55\xd1\x15\x81\x48\x10\xf4\x89\xe5\x67\x52\x42\x87\x04\x74\x4e"
+	"\x96\x14\x7c\x53\xc9\x1e\x84\x11\x7d\x7d\x23\xbd\xff\x6c\xcb\x00"
+	"\x96\x2e\x7d\xfb\x47\xea\x78\xcd\xd8\x04\x3a\x98\x06\x13\x68\x39"
+	"\xa1\xe2\xbc\x9f\x64\xc7\x62\xf0\x74\x4d\x42\xe0\x0b\xcf\x24\x48";
     int i;
 
     /* Perform pairwise consistency test by: ... */
@@ -169,13 +184,8 @@ int FIPS_selftest_rsa()
     /* ...1) apply public key to plaintext, resulting ciphertext must be
      * different
     */
-    i=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,
+    i=RSA_public_encrypt(128,original_ptext,ctext,key,
 			 RSA_NO_PADDING);
-    if(i < 0)
-	{
-	ERR_print_errors_fp(stderr);
-	exit(1);
-	}
     if(i != clen || memcmp(ctext,expected_ctext,i))
   	{
   	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
@@ -190,16 +200,50 @@ int FIPS_selftest_rsa()
      *       original plaintext; results must be equal
     */
     i=RSA_private_decrypt(i,ctext,ptext,key,RSA_NO_PADDING);
-    if(i < 0)
-	{
-	ERR_print_errors_fp(stderr);
-	exit(1);
-	}
-    if(i != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,i))
+    if(i != 128 || memcmp(ptext,original_ptext,i))
 	{
 	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
 	return 0;
 	}
+
+    /* Perform sign and verify Known Answer Test by... */
+
+    /* ...1)  using the same RSA key to encrypt the SHA-1 hash of a
+     * plaintext value larger than the RSA key size
+    */
+    if (RSA_size(key) >= strlen(original_ptext))
+	{
+	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
+	return 0;
+	}
+    /* ...2) then generate the SHA-1 digest of plaintext, and compare the
+     * digest to the Known Answer (note here we duplicate the SHA-1 KAT)
+     */
+    SHA1((unsigned char*)original_ptext,strlen(original_ptext),md);
+    if(memcmp(md,mdkat,SHA_DIGEST_LENGTH))
+	{
+	FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
+	return 0;
+	}
+    /* ...3) then encrypt the digest, and compare the ciphertext
+     * to the Known Answer
+     */
+    i=RSA_private_encrypt(sizeof(md),md,ctext,key,RSA_PKCS1_PADDING);
+    if(i != clen || memcmp(ctextkat,ctext,i))
+	{
+	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
+	return 0;
+	}
+    /* ...4) and finally decrypt the signed digest and compare with
+     * the original Known Answer
+     */
+    i=RSA_public_decrypt(i,ctext,md,key,RSA_PKCS1_PADDING);
+    if(i != sizeof(md) || memcmp(mdkat,md,i))
+	{
+	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
+	return 0;
+	}
+
     RSA_free(key);
     return 1;
     }
