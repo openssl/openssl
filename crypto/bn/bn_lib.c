@@ -522,6 +522,51 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 	return(a);
 	}
 
+BIGNUM *BN_ncopy(BIGNUM *a, const BIGNUM *b, size_t n)
+	{
+	int i, min;
+	BN_ULONG *A;
+	const BN_ULONG *B;
+
+	bn_check_top(b);
+
+	if (a == b)
+		return a;
+
+	min = (b->top < (int)n)? b->top: (int)n;
+
+	if (!min)
+		{
+		BN_zero(a);
+		return a;
+		}
+
+	if (bn_wexpand(a, min) == NULL)
+		return NULL;
+
+	A=a->d;
+	B=b->d;
+	for (i=min>>2; i>0; i--, A+=4, B+=4)
+		{
+		BN_ULONG a0,a1,a2,a3;
+		a0=B[0]; a1=B[1]; a2=B[2]; a3=B[3];
+		A[0]=a0; A[1]=a1; A[2]=a2; A[3]=a3;
+		}
+	switch (min&3)
+		{
+		case 3: A[2]=B[2];
+		case 2: A[1]=B[1];
+		case 1: A[0]=B[0];
+		case 0: ;
+		}
+	a->top = min;
+
+	a->neg = b->neg;
+	bn_fix_top(a);
+
+	return(a);
+	}
+
 void BN_swap(BIGNUM *a, BIGNUM *b)
 	{
 	int flags_old_a, flags_old_b;

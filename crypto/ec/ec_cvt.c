@@ -82,6 +82,7 @@
  *
  */
 
+#include <openssl/err.h>
 #include "ec_lcl.h"
 
 
@@ -89,11 +90,8 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 	{
 	const EC_METHOD *meth;
 	EC_GROUP *ret;
-	
-	/* Finally, this will use EC_GFp_nist_method if 'p' is a special
-	 * prime with optimized modular arithmetics (for NIST curves)
-	 */
-	meth = EC_GFp_mont_method();
+
+	meth = EC_GFp_nist_method();
 	
 	ret = EC_GROUP_new(meth);
 	if (ret == NULL)
@@ -101,8 +99,21 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
 		{
+		/* remove the last error code form the error queue */
+		ERR_get_error();
+		/* try the normal mont method */
 		EC_GROUP_clear_free(ret);
-		return NULL;
+		meth = EC_GFp_mont_method();
+
+		ret = EC_GROUP_new(meth);
+		if (ret == NULL)
+			return NULL;
+
+		if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
+			{
+			EC_GROUP_clear_free(ret);
+			return NULL;
+			}
 		}
 
 	return ret;

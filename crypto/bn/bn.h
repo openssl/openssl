@@ -355,6 +355,8 @@ BIGNUM *BN_new(void);
 void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
+/* BN_ncopy(): like BN_copy() but copies at most the first n BN_ULONGs */
+BIGNUM *BN_ncopy(BIGNUM *a, const BIGNUM *b, size_t n);
 void	BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(const BIGNUM *a, unsigned char *to);
@@ -513,6 +515,20 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[
 int BN_GF2m_poly2arr(const BIGNUM *a, unsigned int p[], int max);
 int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a);
 
+/* faster mod functions for the 'NIST primes' 
+ * 0 <= a < p^2 */
+int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+
+const BIGNUM *BN_get0_nist_prime_192(void);
+const BIGNUM *BN_get0_nist_prime_224(void);
+const BIGNUM *BN_get0_nist_prime_256(void);
+const BIGNUM *BN_get0_nist_prime_384(void);
+const BIGNUM *BN_get0_nist_prime_521(void);
+
 /* library internal functions */
 
 #define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
@@ -529,6 +545,14 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 		for (ftl= &((a)->d[(a)->top-1]); (a)->top > 0; (a)->top--) \
 		if (*(ftl--)) break; \
 		} \
+	}
+
+#define bn_clear_top2max(a) \
+	{ \
+	int      index = (a)->dmax - (a)->top; \
+	BN_ULONG *ftl = &(a)->d[(a)->top-1]; \
+	for (; index != 0; index--) \
+		*(++ftl) = 0x0; \
 	}
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);

@@ -3022,3 +3022,15 @@ ASN1_item_ndef_i2d                      3454	EXIST::FUNCTION:
 i2d_PKCS7_NDEF                          3455	EXIST::FUNCTION:
 ENGINE_up_ref                           3456	EXIST::FUNCTION:
 ENGINE_get_static_state                 3457	EXIST::FUNCTION:
+BN_get0_nist_prime_384                  3458	EXIST::FUNCTION:
+BN_ncopy                                3459	EXIST::FUNCTION:
+BN_nist_mod_224                         3460	EXIST::FUNCTION:
+BN_nist_mod_256                         3461	EXIST::FUNCTION:
+EC_GFp_nist_method                      3462	EXIST::FUNCTION:EC
+BN_nist_mod_384                         3463	EXIST::FUNCTION:
+BN_get0_nist_prime_192                  3464	EXIST::FUNCTION:
+BN_get0_nist_prime_521                  3465	EXIST::FUNCTION:
+BN_get0_nist_prime_224                  3466	EXIST::FUNCTION:
+BN_get0_nist_prime_256                  3467	EXIST::FUNCTION:
+BN_nist_mod_192                         3468	EXIST::FUNCTION:
+BN_nist_mod_521                         3469	EXIST::FUNCTION:

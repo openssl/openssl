@@ -1,6 +1,9 @@
 /* crypto/ec/ecp_nist.c */
+/*
+ * Written by Nils Larsch for the OpenSSL project.
+ */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,12 +61,14 @@
  * and contributed to the OpenSSL project.
  */
 
+#include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include "ec_lcl.h"
 
-#if 0
 const EC_METHOD *EC_GFp_nist_method(void)
 	{
 	static const EC_METHOD ret = {
+		NID_X9_62_prime_field,
 		ec_GFp_nist_group_init,
 		ec_GFp_nist_group_finish,
 		ec_GFp_nist_group_clear_finish,
@@ -71,10 +76,6 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_nist_group_set_curve,
 		ec_GFp_simple_group_get_curve,
 		ec_GFp_simple_group_get_degree,
-		ec_GFp_simple_group_set_generator,
-		ec_GFp_simple_group_get0_generator,
-		ec_GFp_simple_group_get_order,
-		ec_GFp_simple_group_get_cofactor,
 		ec_GFp_simple_group_check_discriminant,
 		ec_GFp_simple_point_init,
 		ec_GFp_simple_point_finish,
@@ -107,8 +108,13 @@ const EC_METHOD *EC_GFp_nist_method(void)
 
 	return &ret;
 	}
-#endif
 
+#define	ECP_MOD_CAST	\
+	(int (*)(BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *))
+
+#if BN_BITS2 == 64 && UINT_MAX != 4294967295UL && ULONG_MAX != 4294967295UL
+#define	NO_32_BIT_TYPE
+#endif
 
 int ec_GFp_nist_group_init(EC_GROUP *group)
 	{
@@ -119,26 +125,154 @@ int ec_GFp_nist_group_init(EC_GROUP *group)
 	return ok;
 	}
 
-
-int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-/* TODO */
-
-
-void ec_GFp_nist_group_finish(EC_GROUP *group);
-/* TODO */
-
-
-void ec_GFp_nist_group_clear_finish(EC_GROUP *group);
-/* TODO */
+void ec_GFp_nist_group_finish(EC_GROUP *group)
+	{
+	BN_free(&group->field);
+	BN_free(&group->a);
+	BN_free(&group->b);
+	}
 
 
-int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src);
-/* TODO */
+void ec_GFp_nist_group_clear_finish(EC_GROUP *group)
+	{
+	BN_clear_free(&group->field);
+	BN_clear_free(&group->a);
+	BN_clear_free(&group->b);
+	}
 
 
-int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-/* TODO */
+int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
+	const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+	{
+	int ret = 0;
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp_bn;
+	
+	if (ctx == NULL)
+		if ((ctx = new_ctx = BN_CTX_new()) == NULL) return 0;
 
+	BN_CTX_start(ctx);
+	if ((tmp_bn = BN_CTX_get(ctx)) == NULL) goto err;
 
-int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
-/* TODO */
+	if (BN_ucmp(BN_get0_nist_prime_192(), p) == 0)
+		group->field_data1 = (void *)BN_nist_mod_192;
+	else if (BN_ucmp(BN_get0_nist_prime_224(), p) == 0)
+#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_data1 = (void *)BN_nist_mod_224;
+#else
+		goto err;
+#endif
+	else if (BN_ucmp(BN_get0_nist_prime_256(), p) == 0)
+#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_data1 = (void *)BN_nist_mod_256;
+#else
+		goto err;
+#endif
+	else if (BN_ucmp(BN_get0_nist_prime_384(), p) == 0)
+#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_data1 = (void *)BN_nist_mod_384;
+#else
+		goto err;
+#endif
+	else if (BN_ucmp(BN_get0_nist_prime_521(), p) == 0)
+		group->field_data1 = (void *)BN_nist_mod_521;
+	else
+		{
+		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, 
+			EC_R_PRIME_IS_NOT_A_NIST_PRIME);
+		goto err;
+		}
+
+	/* group->field */
+	if (!BN_copy(&group->field, p)) goto err;
+	group->field.neg = 0;
+
+	/* group->a */
+	(ECP_MOD_CAST group->field_data1)(&group->a, a, p, ctx);
+
+	/* group->b */
+	(ECP_MOD_CAST group->field_data1)(&group->b, b, p, ctx);
+
+	/* group->a_is_minus3 */
+	if (!BN_add_word(tmp_bn, 3)) goto err;
+	group->a_is_minus3 = (0 == BN_cmp(tmp_bn, &group->field));
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+	{
+	if (dest == NULL || src == NULL)
+		return 0;
+
+	if (!BN_copy(&dest->field, &src->field))
+		return 0;
+	if (!BN_copy(&dest->a, &src->a))
+		return 0;
+	if (!BN_copy(&dest->b, &src->b))
+		return 0;
+
+	dest->curve_name  = src->curve_name;
+
+	dest->a_is_minus3 = src->a_is_minus3;
+
+	dest->field_data1 = src->field_data1;
+
+	return 1;
+	}
+
+int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+	const BIGNUM *b, BN_CTX *ctx)
+	{
+	int	ret=0;
+	BN_CTX	*ctx_new=NULL;
+
+	if (!group || !r || !a || !b)
+		{
+		ECerr(EC_F_EC_GFP_NIST_FIELD_MUL, ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+		}
+	if (!ctx)
+		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
+
+	if (!BN_mul(r, a, b, ctx)) goto err;
+	if (!(ECP_MOD_CAST group->field_data1)(r, r, &group->field, ctx))
+		goto err;
+
+	ret=1;
+err:
+	if (ctx_new)
+		BN_CTX_free(ctx_new);
+	return ret;
+	}
+
+int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+	BN_CTX *ctx)
+	{
+	int	ret=0;
+	BN_CTX	*ctx_new=NULL;
+
+	if (!group || !r || !a)
+		{
+		ECerr(EC_F_EC_GFP_NIST_FIELD_SQR, EC_R_PASSED_NULL_PARAMETER);
+		goto err;
+		}
+	if (!ctx)
+		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
+
+	if (!BN_sqr(r, a, ctx)) goto err;
+	if (!(ECP_MOD_CAST group->field_data1)(r, r, &group->field, ctx))
+		goto err;
+
+	ret=1;
+err:
+	if (ctx_new)
+		BN_CTX_free(ctx_new);
+	return ret;
+	}
