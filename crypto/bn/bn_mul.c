@@ -221,7 +221,7 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	     int n, BN_ULONG *t)
 	{
 	int i,j,n2=n*2;
-	unsigned int c1;
+	unsigned int c1,c2,neg,zero;
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
@@ -235,9 +235,43 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		}
 
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
-	bn_sub_words(t,      a,      &(a[n]),n); /* + */
-	bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
-
+	c1=bn_cmp_words(a,&(a[n]),n);
+	c2=bn_cmp_words(&(b[n]),b,n);
+	zero=neg=0;
+	switch (c1*3+c2)
+		{
+	case -4:
+		bn_sub_words(t,      &(a[n]),a,      n); /* - */
+		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		break;
+	case -3:
+		zero=1;
+		/* break; */
+	case -2:
+		bn_sub_words(t,      &(a[n]),a,      n); /* - */
+		bn_sub_words(&(t[n]),&(b[n]),b,      n); /* + */
+		neg=1;
+		break;
+	case -1:
+	case 0:
+	case 1:
+		zero=1;
+		/* break; */
+	case 2:
+		bn_sub_words(t,      a,      &(a[n]),n); /* + */
+		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		neg=1;
+		break;
+	case 3:
+		zero=1;
+		/* break; */
+	case 4:
+		bn_sub_words(t,      a,      &(a[n]),n);
+		bn_sub_words(&(t[n]),&(b[n]),b,      n);
+		break;
+		}
+		/* The zero case isn't yet implemented here. The speedup
+		   would probably be negligible. */
 # if 0
 	if (n == 4)
 		{
@@ -313,7 +347,16 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	 */
 
 	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
-	c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
+
+	if (neg) /* if t[32] is negative */
+		{
+		c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
+		}
+	else
+		{
+		/* Might have a carry */
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),t,n2));
+		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
 	 * r[10] holds (a[0]*b[0])
@@ -674,7 +717,6 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 			}
 		}
 #endif /* BN_RECURSION */
-
 	if (bn_wexpand(rr,top) == NULL) goto err;
 	rr->top=top;
 	bn_mul_normal(rr->d,a->d,al,b->d,bl);
