@@ -236,23 +236,46 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
 	return(ret);
 	}
 
-void *DSO_bind(DSO *dso, const char *symname)
+void *DSO_bind_var(DSO *dso, const char *symname)
 	{
 	void *ret = NULL;
 
 	if((dso == NULL) || (symname == NULL))
 		{
-		DSOerr(DSO_F_DSO_BIND,ERR_R_PASSED_NULL_PARAMETER);
+		DSOerr(DSO_F_DSO_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(dso->meth->dso_bind == NULL)
+	if(dso->meth->dso_bind_var == NULL)
 		{
-		DSOerr(DSO_F_DSO_BIND,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_DSO_BIND_VAR,DSO_R_UNSUPPORTED);
 		return(NULL);
 		}
-	if(!dso->meth->dso_bind(dso, symname, &ret))
+	if((ret = dso->meth->dso_bind_var(dso, symname)) == NULL)
 		{
-		DSOerr(DSO_F_DSO_BIND,DSO_R_SYM_FAILURE);
+		DSOerr(DSO_F_DSO_BIND_VAR,DSO_R_SYM_FAILURE);
+		return(NULL);
+		}
+	/* Success */
+	return(ret);
+	}
+
+DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
+	{
+	DSO_FUNC_TYPE ret = NULL;
+
+	if((dso == NULL) || (symname == NULL))
+		{
+		DSOerr(DSO_F_DSO_BIND_FUNC,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if(dso->meth->dso_bind_func == NULL)
+		{
+		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_UNSUPPORTED);
+		return(NULL);
+		}
+	if((ret = dso->meth->dso_bind_func(dso, symname)) == NULL)
+		{
+		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_SYM_FAILURE);
 		return(NULL);
 		}
 	/* Success */

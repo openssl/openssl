@@ -80,6 +80,8 @@ extern "C" {
  */
 #define DSO_FLAG_NAME_TRANSLATION 0x01
 
+typedef void (*DSO_FUNC_TYPE)(void);
+
 typedef struct dso_st DSO;
 
 typedef struct dso_meth_st
@@ -89,13 +91,22 @@ typedef struct dso_meth_st
 	int (*dso_load)(DSO *dso, const char *filename);
 	/* Unloads a shared library */
 	int (*dso_unload)(DSO *dso);
-	/* Binds a function, variable, or whatever */
-	int (*dso_bind)(DSO *dso, const char *symname, void **symptr);
+	/* Binds a variable */
+	void *(*dso_bind_var)(DSO *dso, const char *symname);
+	/* Binds a function - assumes a return type of DSO_FUNC_TYPE.
+	 * This should be cast to the real function prototype by the
+	 * caller. Platforms that don't have compatible representations
+	 * for different prototypes (this is possible within ANSI C)
+	 * are highly unlikely to have shared libraries at all, let
+	 * alone a DSO_METHOD implemented for them. */
+	DSO_FUNC_TYPE (*dso_bind_func)(DSO *dso, const char *symname);
 
 /* I don't think this would actually be used in any circumstances. */
 #if 0
-	/* Unbinds a symbol */
-	int (*dso_unbind)(DSO *dso, char *symname, void *symptr);
+	/* Unbinds a variable */
+	int (*dso_unbind_var)(DSO *dso, char *symname, void *symptr);
+	/* Unbinds a function */
+	int (*dso_unbind_func)(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
 #endif
 	/* The generic (yuck) "ctrl()" function. NB: Negative return
 	 * values (rather than zero) indicate errors. */
@@ -146,9 +157,11 @@ DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
  *    DSO_ctrl(dso, DSO_CTRL_SET_FLAGS, flags, NULL); */
 DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
 
-/* This function binds to a function, variable, whatever inside a
- * shared library. */
-void *DSO_bind(DSO *dso, const char *symname);
+/* This function binds to a variable inside a shared library. */
+void *DSO_bind_var(DSO *dso, const char *symname);
+
+/* This function binds to a function inside a shared library. */
+DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
 
 /* This method is the default, but will beg, borrow, or steal whatever
  * method should be the default on any particular platform (including
@@ -182,35 +195,39 @@ void ERR_load_DSO_strings(void);
 /* Error codes for the DSO functions. */
 
 /* Function codes. */
-#define DSO_F_DLFCN_BIND				 100
-#define DSO_F_DLFCN_LOAD				 101
-#define DSO_F_DLFCN_UNLOAD				 102
-#define DSO_F_DLFCN_CTRL				 103
-#define DSO_F_DL_BIND					 104
-#define DSO_F_DL_LOAD					 105
-#define DSO_F_DL_UNLOAD					 106
+#define DSO_F_DLFCN_BIND_FUNC				 100
+#define DSO_F_DLFCN_BIND_VAR				 101
+#define DSO_F_DLFCN_CTRL				 102
+#define DSO_F_DLFCN_LOAD				 103
+#define DSO_F_DLFCN_UNLOAD				 104
+#define DSO_F_DL_BIND_FUNC				 105
+#define DSO_F_DL_BIND_VAR				 106
 #define DSO_F_DL_CTRL					 107
-#define DSO_F_DSO_BIND					 108
-#define DSO_F_DSO_FREE					 109
-#define DSO_F_DSO_LOAD					 110
-#define DSO_F_DSO_NEW_METHOD				 111
-#define DSO_F_DSO_UP					 112
-#define DSO_F_DSO_CTRL					 113
-#define DSO_F_WIN32_BIND				 114
-#define DSO_F_WIN32_LOAD				 115
-#define DSO_F_WIN32_UNLOAD				 116
-#define DSO_F_WIN32_CTRL				 117
+#define DSO_F_DL_LOAD					 108
+#define DSO_F_DL_UNLOAD					 109
+#define DSO_F_DSO_BIND_FUNC				 110
+#define DSO_F_DSO_BIND_VAR				 111
+#define DSO_F_DSO_CTRL					 112
+#define DSO_F_DSO_FREE					 113
+#define DSO_F_DSO_LOAD					 114
+#define DSO_F_DSO_NEW_METHOD				 115
+#define DSO_F_DSO_UP					 116
+#define DSO_F_WIN32_BIND_FUNC				 117
+#define DSO_F_WIN32_BIND_VAR				 118
+#define DSO_F_WIN32_CTRL				 119
+#define DSO_F_WIN32_LOAD				 120
+#define DSO_F_WIN32_UNLOAD				 121
 
 /* Reason codes. */
-#define DSO_R_FINISH_FAILED				 100
-#define DSO_R_LOAD_FAILED				 101
-#define DSO_R_NULL_HANDLE				 102
-#define DSO_R_STACK_ERROR				 103
-#define DSO_R_SYM_FAILURE				 104
-#define DSO_R_UNLOAD_FAILED				 105
-#define DSO_R_UNSUPPORTED				 106
-#define DSO_R_UNKNOWN_COMMAND				 107
-#define DSO_R_CTRL_FAILED				 108
+#define DSO_R_CTRL_FAILED				 100
+#define DSO_R_FINISH_FAILED				 101
+#define DSO_R_LOAD_FAILED				 102
+#define DSO_R_NULL_HANDLE				 103
+#define DSO_R_STACK_ERROR				 104
+#define DSO_R_SYM_FAILURE				 105
+#define DSO_R_UNKNOWN_COMMAND				 106
+#define DSO_R_UNLOAD_FAILED				 107
+#define DSO_R_UNSUPPORTED				 108
 
 #ifdef  __cplusplus
 }

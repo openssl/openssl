@@ -1765,7 +1765,7 @@ DSO_get_default_method                  2265
 DSO_get_method                          2266
 DSO_set_method                          2267
 DSO_load                                2268
-DSO_bind                                2269
+DSO_bind_var                            2269
 DSO_METHOD_null                         2270
 DSO_METHOD_openssl                      2271
 DSO_METHOD_dlfcn                        2272
@@ -1809,3 +1809,4 @@ X509_email_free                         2405
 i2d_RSA_NET                             2406
 d2i_RSA_NET_2                           2407
 d2i_RSA_NET                             2408
+DSO_bind_func                           2409

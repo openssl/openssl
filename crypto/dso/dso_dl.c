@@ -74,9 +74,11 @@ DSO_METHOD *DSO_METHOD_dl(void)
 
 static int dl_load(DSO *dso, const char *filename);
 static int dl_unload(DSO *dso);
-static int dl_bind(DSO *dso, const char *symname, void **symptr);
+static void *dl_bind_var(DSO *dso, const char *symname);
+static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname);
 #if 0
-static int dl_unbind(DSO *dso, char *symname, void *symptr);
+static int dl_unbind_var(DSO *dso, char *symname, void *symptr);
+static int dl_unbind_func(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
 static int dl_init(DSO *dso);
 static int dl_finish(DSO *dso);
 #endif
@@ -86,10 +88,12 @@ static DSO_METHOD dso_meth_dl = {
 	"OpenSSL 'dl' shared library method",
 	dl_load,
 	dl_unload,
-	dl_bind,
+	dl_bind_var,
+	dl_bind_func,
 /* For now, "unbind" doesn't exist */
 #if 0
-	NULL, /* unbind */
+	NULL, /* unbind_var */
+	NULL, /* unbind_func */
 #endif
 	dl_ctrl,
 	NULL, /* init */
@@ -162,34 +166,62 @@ static int dl_unload(DSO *dso)
 	return(1);
 	}
 
-static int dl_bind(DSO *dso, const char *symname, void **symptr)
+static void *dl_bind_var(DSO *dso, const char *symname)
 	{
 	shl_t ptr;
 	void *sym;
 
-	if((dso == NULL) || (symptr == NULL) || (symname == NULL))
+	if((dso == NULL) || (symname == NULL))
 		{
-		DSOerr(DSO_F_DL_BIND,ERR_R_PASSED_NULL_PARAMETER);
-		return(0);
+		DSOerr(DSO_F_DL_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
 		}
 	if(sk_num(dso->meth_data) < 1)
 		{
-		DSOerr(DSO_F_DL_BIND,DSO_R_STACK_ERROR);
-		return(0);
+		DSOerr(DSO_F_DL_BIND_VAR,DSO_R_STACK_ERROR);
+		return(NULL);
 		}
 	ptr = (shl_t)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
-		DSOerr(DSO_F_DL_BIND,DSO_R_NULL_HANDLE);
-		return(0);
+		DSOerr(DSO_F_DL_BIND_VAR,DSO_R_NULL_HANDLE);
+		return(NULL);
 		}
 	if (shl_findsym(ptr, symname, TYPE_UNDEFINED, &sym) < 0)
 		{
-		DSOerr(DSO_F_DL_BIND,DSO_R_SYM_FAILURE);
-		return(0);
+		DSOerr(DSO_F_DL_BIND_VAR,DSO_R_SYM_FAILURE);
+		return(NULL);
 		}
-	*symptr = sym;
-	return(1);
+	return(sym);
+	}
+
+static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
+	{
+	shl_t ptr;
+	void *sym;
+
+	if((dso == NULL) || (symname == NULL))
+		{
+		DSOerr(DSO_F_DL_BIND_FUNC,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if(sk_num(dso->meth_data) < 1)
+		{
+		DSOerr(DSO_F_DL_BIND_FUNC,DSO_R_STACK_ERROR);
+		return(NULL);
+		}
+	ptr = (shl_t)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	if(ptr == NULL)
+		{
+		DSOerr(DSO_F_DL_BIND_FUNC,DSO_R_NULL_HANDLE);
+		return(NULL);
+		}
+	if (shl_findsym(ptr, symname, TYPE_UNDEFINED, &sym) < 0)
+		{
+		DSOerr(DSO_F_DL_BIND_FUNC,DSO_R_SYM_FAILURE);
+		return(NULL);
+		}
+	return((DSO_FUNC_TYPE)sym);
 	}
 
 static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg)

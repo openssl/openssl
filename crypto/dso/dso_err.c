@@ -66,38 +66,42 @@
 #ifndef NO_ERR
 static ERR_STRING_DATA DSO_str_functs[]=
 	{
-{ERR_PACK(0,DSO_F_DLFCN_BIND,0),	"dlfcn_bind"},
-{ERR_PACK(0,DSO_F_DLFCN_LOAD,0),	"dlfcn_load"},
-{ERR_PACK(0,DSO_F_DLFCN_UNLOAD,0),	"dlfcn_unload"},
-{ERR_PACK(0,DSO_F_DLFCN_CTRL,0),	"dlfcn_ctrl"},
-{ERR_PACK(0,DSO_F_DL_BIND,0),	"dl_bind"},
-{ERR_PACK(0,DSO_F_DL_LOAD,0),	"dl_load"},
-{ERR_PACK(0,DSO_F_DL_UNLOAD,0),	"dl_unload"},
-{ERR_PACK(0,DSO_F_DL_CTRL,0),	"dl_ctrl"},
-{ERR_PACK(0,DSO_F_DSO_BIND,0),	"DSO_bind"},
+{ERR_PACK(0,DSO_F_DLFCN_BIND_FUNC,0),	"DLFCN_BIND_FUNC"},
+{ERR_PACK(0,DSO_F_DLFCN_BIND_VAR,0),	"DLFCN_BIND_VAR"},
+{ERR_PACK(0,DSO_F_DLFCN_CTRL,0),	"DLFCN_CTRL"},
+{ERR_PACK(0,DSO_F_DLFCN_LOAD,0),	"DLFCN_LOAD"},
+{ERR_PACK(0,DSO_F_DLFCN_UNLOAD,0),	"DLFCN_UNLOAD"},
+{ERR_PACK(0,DSO_F_DL_BIND_FUNC,0),	"DL_BIND_FUNC"},
+{ERR_PACK(0,DSO_F_DL_BIND_VAR,0),	"DL_BIND_VAR"},
+{ERR_PACK(0,DSO_F_DL_CTRL,0),	"DL_CTRL"},
+{ERR_PACK(0,DSO_F_DL_LOAD,0),	"DL_LOAD"},
+{ERR_PACK(0,DSO_F_DL_UNLOAD,0),	"DL_UNLOAD"},
+{ERR_PACK(0,DSO_F_DSO_BIND_FUNC,0),	"DSO_bind_func"},
+{ERR_PACK(0,DSO_F_DSO_BIND_VAR,0),	"DSO_bind_var"},
+{ERR_PACK(0,DSO_F_DSO_CTRL,0),	"DSO_ctrl"},
 {ERR_PACK(0,DSO_F_DSO_FREE,0),	"DSO_free"},
 {ERR_PACK(0,DSO_F_DSO_LOAD,0),	"DSO_load"},
 {ERR_PACK(0,DSO_F_DSO_NEW_METHOD,0),	"DSO_new_method"},
 {ERR_PACK(0,DSO_F_DSO_UP,0),	"DSO_up"},
-{ERR_PACK(0,DSO_F_DSO_CTRL,0),	"DSO_ctrl"},
-{ERR_PACK(0,DSO_F_WIN32_BIND,0),	"win32_bind"},
-{ERR_PACK(0,DSO_F_WIN32_LOAD,0),	"win32_load"},
-{ERR_PACK(0,DSO_F_WIN32_UNLOAD,0),	"win32_unload"},
-{ERR_PACK(0,DSO_F_WIN32_CTRL,0),	"win32_ctrl"},
+{ERR_PACK(0,DSO_F_WIN32_BIND_FUNC,0),	"WIN32_BIND_FUNC"},
+{ERR_PACK(0,DSO_F_WIN32_BIND_VAR,0),	"WIN32_BIND_VAR"},
+{ERR_PACK(0,DSO_F_WIN32_CTRL,0),	"WIN32_CTRL"},
+{ERR_PACK(0,DSO_F_WIN32_LOAD,0),	"WIN32_LOAD"},
+{ERR_PACK(0,DSO_F_WIN32_UNLOAD,0),	"WIN32_UNLOAD"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA DSO_str_reasons[]=
 	{
+{DSO_R_CTRL_FAILED                       ,"control command failed"},
 {DSO_R_FINISH_FAILED                     ,"cleanup method function failed"},
 {DSO_R_LOAD_FAILED                       ,"could not load the shared library"},
 {DSO_R_NULL_HANDLE                       ,"a null shared library handle was used"},
 {DSO_R_STACK_ERROR                       ,"the meth_data stack is corrupt"},
 {DSO_R_SYM_FAILURE                       ,"could not bind to the requested symbol name"},
+{DSO_R_UNKNOWN_COMMAND                   ,"unknown control command"},
 {DSO_R_UNLOAD_FAILED                     ,"could not unload the shared library"},
 {DSO_R_UNSUPPORTED                       ,"functionality not supported"},
-{DSO_R_UNKNOWN_COMMAND			 ,"unknown control command"},
-{DSO_R_CTRL_FAILED			 ,"control command failed"},
 {0,NULL}
 	};
 
