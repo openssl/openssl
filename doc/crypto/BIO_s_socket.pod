@@ -30,7 +30,7 @@ BIO_set_fd() sets the socket of BIO B<b> to B<fd> and the close
 flag to B<c>.
 
 BIO_get_fd() places the socket in B<c> if it is not NULL, it also
-returns the socket . If B<c> is not NULL it should be of type (int *).
+returns the socket. If B<c> is not NULL it should be of type (int *).
 
 BIO_new_socket() returns a socket BIO using B<sock> and B<close_flag>.
 
