@@ -328,13 +328,13 @@ int MAIN(int argc, char **argv)
 			else 
 #endif
 #ifndef OPENSSL_NO_ECDSA
-				if (strncmp("ec:",p,4) == 0)
+				if (strncmp("ec:",p,3) == 0)
 				{
 				X509 *xtmp=NULL;
 				EVP_PKEY *dtmp;
 
 				pkey_type=TYPE_EC;
-				p+=6;
+				p+=3;
 				if ((in=BIO_new_file(p,"r")) == NULL)
 					{
 					perror(p);
