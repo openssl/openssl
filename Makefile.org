@@ -237,7 +237,7 @@ files:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making 'files' in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' files ) || exit 1; \
+	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' files ) || exit 1; \
 	done;
 
 links:

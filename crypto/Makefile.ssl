@@ -64,7 +64,7 @@ files:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making 'files' in crypto/$$i..."; \
-	$(MAKE) files ); \
+	$(MAKE) PERL='${PERL}' files ); \
 	done;
 
 links:
