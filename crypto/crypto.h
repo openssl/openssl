@@ -121,7 +121,8 @@ extern "C" {
 #define	CRYPTO_LOCK_RSA_BLINDING	23
 #define	CRYPTO_LOCK_DH			24
 #define	CRYPTO_LOCK_MALLOC2		25
-#define	CRYPTO_NUM_LOCKS		26
+#define	CRYPTO_LOCK_DSO			26
+#define	CRYPTO_NUM_LOCKS		27
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

@@ -86,7 +86,7 @@ my $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:as
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
 # So the md5_locl.h file has an undef B_ENDIAN if sun is defined
 
-#config-string	$cc : $cflags : $unistd : $thread_cflag : $lflags : $bn_ops : $bn_obj : $des_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj
+#config-string	$cc : $cflags : $unistd : $thread_cflag : $lflags : $bn_ops : $bn_obj : $des_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $dso_scheme
 
 my %table=(
 #"b",		"${tcc}:${tflags}::${tlib}:${bits1}:${tbn_mul}::",
@@ -104,7 +104,7 @@ my %table=(
 "debug-bodo",	"gcc:-DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Werror -Wshadow -pipe::-D_REENTRANT::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
-"debug-levitte-linux-elf","gcc:-DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe::-D_REENTRANT:::",
+"debug-levitte-linux-elf","gcc:-DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe::-D_REENTRANT:-ldl:::::::::::dlfcn",
 "dist",		"cc:-O::(unknown):::::",
 
 # Basic configs that should work on any (32 and less bit) box
@@ -117,32 +117,32 @@ my %table=(
 # surrounds it with #APP #NO_APP comment pair which (at least Solaris
 # 7_x86) /usr/ccs/bin/as fails to assemble with "Illegal mnemonic"
 # error message.
-"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DNO_INLINE_ASM::-D_REENTRANT:-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_sol_asm}",
+"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DNO_INLINE_ASM::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_sol_asm}:dlfcn",
 
 #### SPARC Solaris with GNU C setups
-"solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"solaris-sparcv8-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-sparcv9-gcc","gcc:-mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+"solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::::::::dlfcn",
+"solaris-sparcv8-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn",
+"solaris-sparcv9-gcc","gcc:-mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn",
 # gcc pre-2.8 doesn't understand -mcpu=ultrasparc, so fall down to -mv8
 # but keep the assembler modules.
-"solaris-sparcv9-gcc27","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus-gcc27.o:::asm/md5-sparcv8plus-gcc27.o:",
+"solaris-sparcv9-gcc27","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus-gcc27.o:::asm/md5-sparcv8plus-gcc27.o::::::dlfcn",
 ####
-"debug-solaris-sparcv8-gcc","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"debug-solaris-sparcv9-gcc","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus.o::",
+"debug-solaris-sparcv8-gcc","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn",
+"debug-solaris-sparcv9-gcc","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus.o:::::::::dlfcn",
 
 #### SPARC Solaris with Sun C setups
 # DO NOT use /xO[34] on sparc with SC3.0.  It is broken, and will not pass the tests
-"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:::",
+"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn",
 # SC4.0 doesn't pass 'make test', upgrade to SC5.0 or SC4.2.
 # SC4.2 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # SC5.0 note: Compiler common patch 107357-01 or later is required!
-"solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
-"solaris-sparcv8-cc","cc:-xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
-"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
+"solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::::::::dlfcn",
+"solaris-sparcv8-cc","cc:-xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn",
+"solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn",
+"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn",
 ####
-"debug-solaris-sparcv8-cc","cc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"debug-solaris-sparcv9-cc","cc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+"debug-solaris-sparcv8-cc","cc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn",
+"debug-solaris-sparcv9-cc","cc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn",
 
 #### SPARC Linux setups
 "linux-sparcv7","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::",
@@ -202,34 +202,34 @@ my %table=(
 #   crypto/sha/sha_lcl.h.
 #					<appro@fy.chalmers.se>
 #
-"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # Since there is mention of this in shlib/hpux10-cc.sh
-"hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:::",
+"hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
+"hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
+"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldld:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
 
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::(unknown):-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # If hpux-cc fails (e.g. during "make test"), try the next one; otherwise,
 # please report your OS and compiler version to the openssl-bugs@openssl.org
 # mailing list.
-"hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::(unknown):-ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 
-"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown):-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # If hpux-gcc fails, try this one:
-"hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown):-ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 
 # HPUX 10.X config.  Supports threads.
-"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT:-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # If hpux10-cc fails, try this one (if still fails, try deleting BN_LLONG):
-"hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::-D_REENTRANT:-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 
-"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT:-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # If hpux10-gcc fails, try this one:
-"hpux10-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT:-ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 
 # HPUX 11.X from www.globus.org.
 # Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
@@ -268,8 +268,8 @@ my %table=(
 
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
-"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
-"debug-linux-elf","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
+"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-elf","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 "linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
 "linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
@@ -539,9 +539,18 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
 print "IsWindows=$IsWindows\n";
 
 (my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
- $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
+ $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme)=
 	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
+
+# For now the translation from dso_scheme to cflags is trivial. This may well
+# "grow", eg. we could add "dlfcn_no_h" to do what "dlfcn" does and have the
+# latter additionally define HAVE_DLFCN_H (some systems don't have dlfcn.h and
+# it's not needed).
+if ($dso_scheme ne "") {
+	$dso_scheme =~ tr/[a-z]/[A-Z]/;
+	$cflags = "-DDSO_$dso_scheme $cflags";
+}
 
 my $thread_cflags;
 my $thread_defines;
@@ -952,7 +961,8 @@ sub print_table_entry
 
 	(my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,
 	my $bn_obj,my $des_obj,my $bf_obj,
-	$md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
+	$md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,
+	$dso_scheme)=
 	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
 			
 	print <<EOF
@@ -973,5 +983,6 @@ sub print_table_entry
 \$rc4_obj      = $rc4_obj
 \$rmd160_obj   = $rmd160_obj
 \$rc5_obj      = $rc5_obj
+\$dso_scheme   = $dso_scheme
 EOF
 	}

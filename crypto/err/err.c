@@ -155,6 +155,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
 {ERR_PACK(ERR_LIB_PKCS12,0,0)		,"PKCS12 routines"},
 {ERR_PACK(ERR_LIB_RAND,0,0)		,"random number generator"},
+{ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
 {0,NULL},
 	};
 
@@ -205,6 +206,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_EXPECTING_AN_ASN1_SEQUENCE	,"expecting an asn1 sequence"},
 {ERR_R_ASN1_LENGTH_MISMATCH		,"asn1 length mismatch"},
 {ERR_R_MISSING_ASN1_EOS			,"missing asn1 eos"},
+{ERR_R_DSO_LIB				,"DSO lib"},
 
 {0,NULL},
 	};

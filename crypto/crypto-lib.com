@@ -88,7 +88,7 @@ $! Define The Different Encryption Types.
 $!
 $ ENCRYPT_TYPES = "Basic,MD2,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
-		  "BN,RSA,DSA,DH,"+ -
+		  "BN,RSA,DSA,DH,DSO,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP"
@@ -203,6 +203,7 @@ $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
 $ LIB_DH = "dh_gen,dh_key,dh_lib,dh_check,dh_err"
+$ LIB_DSO = "dso_err,dso_lib,dso_null,dso_openssl,dso_vms"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -

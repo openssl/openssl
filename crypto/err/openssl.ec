@@ -3,6 +3,7 @@ L CRYPTO	crypto/crypto.h			crypto/cpt_err.c
 L BN		crypto/bn/bn.h			crypto/bn/bn_err.c
 L RSA		crypto/rsa/rsa.h		crypto/rsa/rsa_err.c
 L DSA		crypto/dsa/dsa.h		crypto/dsa/dsa_err.c
+L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
 L DH		crypto/dh/dh.h			crypto/dh/dh_err.c
 L EVP		crypto/evp/evp.h		crypto/evp/evp_err.c
 L BUF		crypto/buffer/buffer.h		crypto/buffer/buf_err.c

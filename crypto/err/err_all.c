@@ -82,6 +82,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/dso.h>
 
 void ERR_load_crypto_strings(void)
 	{
@@ -118,5 +119,6 @@ void ERR_load_crypto_strings(void)
 	ERR_load_PKCS7_strings();
 	ERR_load_PKCS12_strings();
 	ERR_load_RAND_strings();
+	ERR_load_DSO_strings();
 #endif
 	}
