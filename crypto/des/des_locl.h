@@ -69,6 +69,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef OPENSSL_SYS_MSDOS
 #if !defined(OPENSSL_SYS_VMS) || defined(__DECC)
@@ -87,10 +88,6 @@
 #include <errno.h>
 #include <time.h>
 #include <io.h>
-#endif
-
-#if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
-#include <string.h>
 #endif
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
