@@ -70,6 +70,8 @@
 #endif
 #include <string.h>
 
+#ifdef OPENSSL_FIPS
+
 #define SEED_SIZE	8
 
 static unsigned char seed[SEED_SIZE];
@@ -87,7 +89,7 @@ static void fips_rand_add(const void *buf, int num, double add_entropy);
 static int fips_rand_bytes(unsigned char *buf, int num);
 static int fips_rand_status(void);
 
-RAND_METHOD rand_fips_meth=
+static RAND_METHOD rand_fips_meth=
     {
     FIPS_rand_seed,
     fips_rand_bytes,
@@ -284,3 +286,5 @@ static int fips_rand_status(void)
     {
     return n_seed == sizeof seed;
     }
+
+#endif /* OPENSSL_FIPS */
