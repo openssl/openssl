@@ -41,6 +41,12 @@ of compression methods supported on a per connection basis.
 The OpenSSL library has the compression methods B<COMP_rle()> and (when
 especially enabled during compilation) B<COMP_zlib()> available.
 
+=head1 WARNINGS
+
+Once the identities of the compression methods for the TLS protocol have
+been standardized, the compression API will most likely be changed. Using
+it in the current state is not recommended.
+
 =head1 RETURN VALUES
 
 SSL_COMP_add_compression_method() may return the following values:
