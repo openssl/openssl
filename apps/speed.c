@@ -357,6 +357,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
 #endif
+	unsigned char md[EVP_MAX_MD_SIZE];
 #ifndef OPENSSL_NO_MD2
 	unsigned char md2[MD2_DIGEST_LENGTH];
 #endif
@@ -451,7 +452,8 @@ int MAIN(int argc, char **argv)
 	int dsa_doit[DSA_NUM];
 	int doit[ALGOR_NUM];
 	int pr_header=0;
-	const EVP_CIPHER *evp=NULL;
+	const EVP_CIPHER *evp_cipher=NULL;
+	const EVP_MD *evp_md=NULL;
 	int decrypt=0;
 #ifdef HAVE_FORK
 	int multi=0;
@@ -521,10 +523,14 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"no EVP given\n");
 				goto end;
 				}
-			evp=EVP_get_cipherbyname(*argv);
-			if(!evp)
+			evp_cipher=EVP_get_cipherbyname(*argv);
+			if(!evp_cipher)
 				{
-				BIO_printf(bio_err,"%s is an unknown cipher\n",*argv);
+				evp_md=EVP_get_digestbyname(*argv);
+				}
+			if(!evp_cipher && !evp_md)
+				{
+				BIO_printf(bio_err,"%s is an unknown cipher or digest\n",*argv);
 				goto end;
 				}
 			doit[D_EVP]=1;
@@ -1236,30 +1242,46 @@ int MAIN(int argc, char **argv)
 		{
 		for (j=0; j<SIZE_NUM; j++)
 			{
-			EVP_CIPHER_CTX ctx;
-			int outl;
+			if (evp_cipher)
+				{
+				EVP_CIPHER_CTX ctx;
+				int outl;
 
-			names[D_EVP]=OBJ_nid2ln(evp->nid);
-			print_message(names[D_EVP],save_count,
-						  lengths[j]);
-			EVP_CIPHER_CTX_init(&ctx);
-			if(decrypt)
-				EVP_DecryptInit_ex(&ctx,evp,NULL,key16,iv);
-			else
-				EVP_EncryptInit_ex(&ctx,evp,NULL,key16,iv);
-				
-			Time_F(START);
-			if(decrypt)
+				names[D_EVP]=OBJ_nid2ln(evp_cipher->nid);
+				print_message(names[D_EVP],save_count,
+					lengths[j]);
+
+				EVP_CIPHER_CTX_init(&ctx);
+				if(decrypt)
+					EVP_DecryptInit_ex(&ctx,evp_cipher,NULL,key16,iv);
+				else
+					EVP_EncryptInit_ex(&ctx,evp_cipher,NULL,key16,iv);
+
+				Time_F(START);
+				if(decrypt)
+					for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
+						EVP_DecryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
+				else
+					for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
+						EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
+				if(decrypt)
+					EVP_DecryptFinal_ex(&ctx,buf,&outl);
+				else
+					EVP_EncryptFinal_ex(&ctx,buf,&outl);
+				d=Time_F(STOP);
+				}
+			if (evp_md)
+				{
+				names[D_EVP]=OBJ_nid2ln(evp_md->type);
+				print_message(names[D_EVP],save_count,
+					lengths[j]);
+
+				Time_F(START);
 				for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
-					EVP_DecryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
-			else
-				for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
-					EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
-			if(decrypt)
-				EVP_DecryptFinal_ex(&ctx,buf,&outl);
-			else
-				EVP_EncryptFinal_ex(&ctx,buf,&outl);
-			d=Time_F(STOP);
+					EVP_Digest(buf,lengths[j],&(md[0]),NULL,evp_md,NULL);
+
+				d=Time_F(STOP);
+				}
 			print_result(D_EVP,j,count,d);
 			}
 		}
