@@ -589,6 +589,7 @@ void	ERR_load_EVP_strings(void );
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
+int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
 #ifdef HEADER_BIO_H
 BIO_METHOD *BIO_f_md(void);
@@ -738,6 +739,7 @@ void EVP_PBE_cleanup(void);
 /* Function codes. */
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_EVP_CIPHERINIT				 123
+#define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_MD_CTX_COPY				 110
@@ -759,12 +761,15 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
 #define EVP_F_RC2_MAGIC_TO_METH				 109
+#define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
 #define EVP_R_BN_DECODE_ERROR				 112
 #define EVP_R_BN_PUBKEY_ERROR				 113
 #define EVP_R_CIPHER_PARAMETER_ERROR			 122
+#define EVP_R_CTRL_NOT_IMPLEMENTED			 132
+#define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED		 133
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
 #define EVP_R_ENCODE_ERROR				 115
@@ -772,6 +777,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127
 #define EVP_R_EXPECTING_A_DH_KEY			 128
 #define EVP_R_EXPECTING_A_DSA_KEY			 129
+#define EVP_R_INITIALIZATION_ERROR			 134
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
 #define EVP_R_INVALID_KEY_LENGTH			 130
 #define EVP_R_IV_TOO_LARGE				 102
@@ -784,6 +790,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE			 117
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
 #define EVP_R_UNKNOWN_PBE_ALGORITHM			 121
+#define EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS		 135
 #define EVP_R_UNSUPPORTED_CIPHER			 107
 #define EVP_R_UNSUPPORTED_KEYLENGTH			 123
 #define EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION	 124

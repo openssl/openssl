@@ -66,16 +66,19 @@
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static int rc2_meth_to_magic(const EVP_CIPHER *e);
-static EVP_CIPHER *rc2_magic_to_meth(int i);
+static int rc2_meth_to_magic(EVP_CIPHER_CTX *ctx);
+static int rc2_magic_to_meth(int i);
 static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+static int rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
 IMPLEMENT_BLOCK_CIPHER(rc2, rc2.ks, RC2, rc2, NID_rc2,
 			8,
 			EVP_RC2_KEY_SIZE, 8,
-			EVP_CIPH_VARIABLE_LENGTH, rc2_init_key, NULL,
-			rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv, NULL)
+			EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+			rc2_init_key, NULL,
+			rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv, 
+			rc2_ctrl)
 
 #define RC2_40_MAGIC	0xa0
 #define RC2_64_MAGIC	0x78
@@ -85,7 +88,7 @@ static EVP_CIPHER r2_64_cbc_cipher=
 	{
 	NID_rc2_64_cbc,
 	8,8 /* 64 bit */,8,
-	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
 	rc2_init_key,
 	rc2_cbc_cipher,
 	NULL,
@@ -93,7 +96,7 @@ static EVP_CIPHER r2_64_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
-	NULL,
+	rc2_ctrl,
 	NULL
 	};
 
@@ -101,7 +104,7 @@ static EVP_CIPHER r2_40_cbc_cipher=
 	{
 	NID_rc2_40_cbc,
 	8,5 /* 40 bit */,8,
-	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH,
+	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
 	rc2_init_key,
 	rc2_cbc_cipher,
 	NULL,
@@ -109,7 +112,7 @@ static EVP_CIPHER r2_40_cbc_cipher=
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
-	NULL,
+	rc2_ctrl,
 	NULL
 	};
 
@@ -127,30 +130,30 @@ static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	RC2_set_key(&(ctx->c.rc2.ks),EVP_CIPHER_CTX_key_length(ctx),
-			key,EVP_CIPHER_key_length(ctx->cipher)*8);
+			key,ctx->c.rc2.key_bits);
 	return 1;
 	}
 
-static int rc2_meth_to_magic(const EVP_CIPHER *e)
+static int rc2_meth_to_magic(EVP_CIPHER_CTX *e)
 	{
 	int i;
 
-	i=EVP_CIPHER_key_length(e);
-	if 	(i == 16) return(RC2_128_MAGIC);
-	else if (i == 8)  return(RC2_64_MAGIC);
-	else if (i == 5)  return(RC2_40_MAGIC);
+	EVP_CIPHER_CTX_ctrl(e, EVP_CTRL_GET_RC2_KEY_BITS, 0, &i);
+	if 	(i == 128) return(RC2_128_MAGIC);
+	else if (i == 64)  return(RC2_64_MAGIC);
+	else if (i == 40)  return(RC2_40_MAGIC);
 	else return(0);
 	}
 
-static EVP_CIPHER *rc2_magic_to_meth(int i)
+static int rc2_magic_to_meth(int i)
 	{
-	if      (i == RC2_128_MAGIC) return(EVP_rc2_cbc());
-	else if (i == RC2_64_MAGIC)  return(EVP_rc2_64_cbc());
-	else if (i == RC2_40_MAGIC)  return(EVP_rc2_40_cbc());
+	if      (i == RC2_128_MAGIC) return 128;
+	else if (i == RC2_64_MAGIC)  return 64;
+	else if (i == RC2_40_MAGIC)  return 40;
 	else
 		{
 		EVPerr(EVP_F_RC2_MAGIC_TO_METH,EVP_R_UNSUPPORTED_KEY_SIZE);
-		return(NULL);
+		return(0);
 		}
 	}
 
@@ -158,25 +161,21 @@ static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	{
 	long num=0;
 	int i=0,l;
-	EVP_CIPHER *e;
+	int key_bits;
+	unsigned char iv[EVP_MAX_IV_LENGTH];
 
 	if (type != NULL)
 		{
 		l=EVP_CIPHER_CTX_iv_length(c);
-		i=ASN1_TYPE_get_int_octetstring(type,&num,c->oiv,l);
+		i=ASN1_TYPE_get_int_octetstring(type,&num,iv,l);
 		if (i != l)
 			return(-1);
-		else if (i > 0)
-			memcpy(c->iv,c->oiv,l);
-		e=rc2_magic_to_meth((int)num);
-		if (e == NULL)
+		key_bits =rc2_magic_to_meth((int)num);
+		if (!key_bits)
 			return(-1);
-		if (e != EVP_CIPHER_CTX_cipher(c))
-			{
-			EVP_CIPHER_CTX_cipher(c)=e;
-			EVP_CIPHER_CTX_set_key_length(c, EVP_CIPHER_key_length(c));
-			rc2_init_key(c,NULL,NULL,1);
-			}
+		if(i > 0) EVP_CipherInit(c, NULL, NULL, iv, -1);
+		EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_RC2_KEY_BITS, key_bits, NULL);
+		EVP_CIPHER_CTX_set_key_length(c, key_bits / 8);
 		}
 	return(i);
 	}
@@ -188,11 +187,36 @@ static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (type != NULL)
 		{
-		num=rc2_meth_to_magic(EVP_CIPHER_CTX_cipher(c));
+		num=rc2_meth_to_magic(c);
 		j=EVP_CIPHER_CTX_iv_length(c);
 		i=ASN1_TYPE_set_int_octetstring(type,num,c->oiv,j);
 		}
 	return(i);
+	}
+
+static int rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+	{
+		switch(type) {
+
+			case EVP_CTRL_INIT:
+			c->c.rc2.key_bits = EVP_CIPHER_CTX_key_length(c) * 8;
+			return 1;
+
+			case EVP_CTRL_GET_RC2_KEY_BITS:
+			*(int *)ptr = c->c.rc2.key_bits;
+			return 1;
+			
+			
+			case EVP_CTRL_SET_RC2_KEY_BITS:
+			if(arg > 0) {
+				c->c.rc2.key_bits = arg;
+				return 1;
+			}
+			return 0;
+
+			default:
+			return -1;
+		}
 	}
 
 #endif

@@ -66,53 +66,53 @@
 
 static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
+static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
 IMPLEMENT_BLOCK_CIPHER(rc5_32_12_16, rc5.ks, RC5_32, rc5, NID_rc5,
 			8, EVP_RC5_32_12_16_KEY_SIZE, 8, 
-			0, r_32_12_16_init_key, NULL,
-			NULL, NULL, NULL)
+			EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+			r_32_12_16_init_key, NULL,
+			NULL, NULL, rc5_ctrl)
 
-#if 0
-static int r_32_12_16_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	unsigned char *in, unsigned int inl);
-static EVP_CIPHER rc5_32_12_16_cbc_cipher=
-	{
-	NID_rc5_cbc,
-	8,EVP_RC5_32_12_16_KEY_SIZE,8,
-	EVP_CIPH_CBC_MODE,
-	r_32_12_16_cbc_init_key,
-	r_32_12_16_cbc_cipher,
-	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc5)),
-	NULL,
-	NULL,
-	NULL
-	};
 
-EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)
+
+static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
-	return(&rc5_32_12_16_cbc_cipher);
+		switch(type) {
+
+			case EVP_CTRL_INIT:
+			c->c.rc5.rounds = RC5_12_ROUNDS;
+			return 1;
+
+			case EVP_CTRL_GET_RC5_ROUNDS:
+			*(int *)ptr = c->c.rc5.rounds;
+			return 1;
+			
+			
+			case EVP_CTRL_SET_RC5_ROUNDS:
+			switch(arg) {
+				case RC5_8_ROUNDS:
+				case RC5_12_ROUNDS:
+				case RC5_16_ROUNDS:
+				c->c.rc5.rounds = arg;
+				return 1;
+
+				default:
+				EVPerr(EVP_F_RC5_CTRL, EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+				return 0;
+			}
+
+			default:
+			return -1;
+		}
 	}
-#endif
-	
+
 static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
-	RC5_32_set_key(&(ctx->c.rc5.ks),EVP_RC5_32_12_16_KEY_SIZE,
-			key,RC5_12_ROUNDS);
+	RC5_32_set_key(&(ctx->c.rc5.ks),EVP_CIPHER_CTX_key_length(ctx),
+			key,ctx->c.rc5.rounds);
 	return 1;
 	}
-#if 0
-static int r_32_12_16_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	     unsigned char *in, unsigned int inl)
-	{
-	RC5_32_cbc_encrypt(
-		in,out,(long)inl,
-		&(ctx->c.rc5.ks),&(ctx->iv[0]),
-		ctx->encrypt);
-	return 1;
-	}
-#endif
 
 #endif

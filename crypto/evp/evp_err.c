@@ -68,6 +68,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
 {ERR_PACK(0,EVP_F_EVP_CIPHERINIT,0),	"EVP_CipherInit"},
+{ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_CTRL,0),	"EVP_CIPHER_CTX_ctrl"},
 {ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,0),	"EVP_CIPHER_CTX_set_key_length"},
 {ERR_PACK(0,EVP_F_EVP_DECRYPTFINAL,0),	"EVP_DecryptFinal"},
 {ERR_PACK(0,EVP_F_EVP_MD_CTX_COPY,0),	"EVP_MD_CTX_copy"},
@@ -89,6 +90,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_PKCS5_PBE_KEYIVGEN,0),	"PKCS5_PBE_keyivgen"},
 {ERR_PACK(0,EVP_F_PKCS5_V2_PBE_KEYIVGEN,0),	"PKCS5_v2_PBE_keyivgen"},
 {ERR_PACK(0,EVP_F_RC2_MAGIC_TO_METH,0),	"RC2_MAGIC_TO_METH"},
+{ERR_PACK(0,EVP_F_RC5_CTRL,0),	"RC5_CTRL"},
 {0,NULL}
 	};
 
@@ -98,6 +100,8 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_BN_DECODE_ERROR                   ,"bn decode error"},
 {EVP_R_BN_PUBKEY_ERROR                   ,"bn pubkey error"},
 {EVP_R_CIPHER_PARAMETER_ERROR            ,"cipher parameter error"},
+{EVP_R_CTRL_NOT_IMPLEMENTED              ,"ctrl not implemented"},
+{EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED    ,"ctrl operation not implemented"},
 {EVP_R_DECODE_ERROR                      ,"decode error"},
 {EVP_R_DIFFERENT_KEY_TYPES               ,"different key types"},
 {EVP_R_ENCODE_ERROR                      ,"encode error"},
@@ -105,6 +109,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_EXPECTING_AN_RSA_KEY              ,"expecting an rsa key"},
 {EVP_R_EXPECTING_A_DH_KEY                ,"expecting a dh key"},
 {EVP_R_EXPECTING_A_DSA_KEY               ,"expecting a dsa key"},
+{EVP_R_INITIALIZATION_ERROR              ,"initialization error"},
 {EVP_R_INPUT_NOT_INITIALIZED             ,"input not initialized"},
 {EVP_R_INVALID_KEY_LENGTH                ,"invalid key length"},
 {EVP_R_IV_TOO_LARGE                      ,"iv too large"},
@@ -117,6 +122,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE         ,"pkcs8 unknown broken type"},
 {EVP_R_PUBLIC_KEY_NOT_RSA                ,"public key not rsa"},
 {EVP_R_UNKNOWN_PBE_ALGORITHM             ,"unknown pbe algorithm"},
+{EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS       ,"unsuported number of rounds"},
 {EVP_R_UNSUPPORTED_CIPHER                ,"unsupported cipher"},
 {EVP_R_UNSUPPORTED_KEYLENGTH             ,"unsupported keylength"},
 {EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION,"unsupported key derivation function"},

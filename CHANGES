@@ -4,10 +4,27 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) Remove lots of duplicated code from the EVP library. For example *every*
+  *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
+     the handshake is continued after ssl_verify_cert_chain();
+     otherwise, if SSL_VERIFY_NONE is set, remaining error codes
+     can lead to 'unexplainable' connection aborts later.
+     [Bodo Moeller; problem tracked down by Lutz Jaenicke]
+
+  *) Major EVP API cipher revision.
+     Add hooks for extra EVP features. This allows various cipher
+     parameters to be set in the EVP interface. Support added for variable
+     key length ciphers via the EVP_CIPHER_CTX_set_key_length() function and
+     setting of RC2 and RC5 parameters.
+
+     Modify EVP_OpenInit() and EVP_SealInit() to cope with variable key length
+     ciphers.
+
+     Remove lots of duplicated code from the EVP library. For example *every*
      cipher init() function handles the 'iv' in the same way according to the
      cipher mode. They also all do nothing if the 'key' parameter is NULL and
      for CFB and OFB modes they zero ctx->num.
+
+     New functionality allows removal of S/MIME code RC2 hack.
 
      Most of the routines have the same form and so can be declared in terms
      of macros.
@@ -16,23 +33,6 @@
      all individual ciphers. If the cipher wants to handle IVs or keys
      differently it can set the EVP_CIPH_CUSTOM_IV or EVP_CIPH_ALWAYS_CALL_INIT
      flags.
-     [Steve Henson]
-
-  *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
-     the handshake is continued after ssl_verify_cert_chain();
-     otherwise, if SSL_VERIFY_NONE is set, remaining error codes
-     can lead to 'unexplainable' connection aborts later.
-     [Bodo Moeller; problem tracked down by Lutz Jaenicke]
-
-  *) EVP cipher enhancement. Add hooks for extra EVP features. This will allow
-     various cipher parameters to be set in the EVP interface. Initially
-     support added for variable key length ciphers via the
-     EVP_CIPHER_CTX_set_key_length() function. Other cipher specific
-     parameters will be added later via the new catchall 'ctrl' function.
-     New functionality allows removal of S/MIME code RC2 hack.
-
-     Still needs support in other library functions, and allow parameter
-     setting for algorithms like RC2, RC5.
 
      Change lots of functions like EVP_EncryptUpdate() to now return a
      value: although software versions of the algorithms cannot fail
