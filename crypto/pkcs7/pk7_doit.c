@@ -226,7 +226,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 				os=p7->d.sign->contents->d.data;
 				if (os->length > 0) bio = 
 					BIO_new_mem_buf(os->data, os->length);
-			} else {
+			} 
+			if(bio == NULL) {
 				bio=BIO_new(BIO_s_mem());
 				BIO_set_mem_eof_return(bio,0);
 			}

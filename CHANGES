@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix a bug in the new PKCS#7 code: it didn't consider the
+     case in PKCS7_dataInit() where the signed PKCS7 structure
+     didn't contain any existing data because it was being created.
+     [Po-Cheng Chen" <pocheng@nst.com.tw>, slightly modified by Steve Henson]
+
   *) Add a salt to the key derivation routines in enc.c. This
      forms the first 8 bytes of the encrypted file. Also add a
      -S option to allow a salt to be input on the command line.

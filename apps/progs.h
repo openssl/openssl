@@ -119,9 +119,6 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_CIPHER,"rc4",enc_main},
 #endif
 #ifndef NO_RC4
-	{FUNC_TYPE_CIPHER,"rc4-64",enc_main},
-#endif
-#ifndef NO_RC4
 	{FUNC_TYPE_CIPHER,"rc4-40",enc_main},
 #endif
 #ifndef NO_RC2

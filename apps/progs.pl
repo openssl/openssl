@@ -50,7 +50,7 @@ foreach ("md2","md5","sha","sha1","mdc2","rmd160")
 
 foreach (
 	"base64",
-	"des", "des3", "desx", "idea", "rc4", "rc4-64", "rc4-40",
+	"des", "des3", "desx", "idea", "rc4", "rc4-40",
 	"rc2", "bf", "cast", "rc5",
 	"des-ecb", "des-ede",    "des-ede3",
 	"des-cbc", "des-ede-cbc","des-ede3-cbc",
