@@ -449,7 +449,7 @@ builtin_err:
 
 int main(void)
 	{
-	int 	ret = 0;
+	int 	ret = 1;
 	BIO	*out;
 
 	out = BIO_new_fp(stdout, BIO_NOCLOSE);
@@ -477,9 +477,9 @@ int main(void)
 	if (!x9_62_tests(out))  goto err;
 	if (!test_builtin(out)) goto err;
 	
-	ret = 1;
+	ret = 0;
 err:	
-	if (!ret) 	
+	if (ret) 	
 		BIO_printf(out, "\nECDSA test failed\n");
 	else 
 		BIO_printf(out, "\nECDSA test passed\n");
@@ -491,6 +491,6 @@ err:
 	CRYPTO_mem_leaks(out);
 	if (out != NULL)
 		BIO_free(out);
-	return(0);
+	return ret;
 	}	
 #endif
