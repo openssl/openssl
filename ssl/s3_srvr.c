@@ -956,7 +956,7 @@ static int ssl3_send_server_hello(SSL *s)
 		p=s->s3->server_random;
 		Time=time(NULL);			/* Time */
 		l2n(Time,p);
-		if(RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time)) <= 0)
+		if(RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
