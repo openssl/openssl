@@ -80,7 +80,7 @@ i2d_ext_ku,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_ext_ku,
 (X509V3_EXT_V2I)v2i_ext_ku,
-NULL,
+NULL,NULL,
 NULL
 };
 

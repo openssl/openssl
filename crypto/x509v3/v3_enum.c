@@ -81,7 +81,7 @@ NID_crl_reason, 0,
 i2d_ASN1_ENUMERATED,
 (X509V3_EXT_I2S)i2s_ASN1_ENUMERATED_TABLE,
 (X509V3_EXT_S2I)NULL,
-NULL, NULL, NULL, (char *)crl_reasons};
+NULL, NULL, NULL, NULL, (char *)crl_reasons};
 
 
 static ASN1_ENUMERATED *asn1_enumerated_new()

@@ -80,6 +80,7 @@ typedef char * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, char *ext);
 typedef char * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
 typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, char *ext, BIO *out);
+typedef char *(*X509V3_EXT_R2I)(struct v3_ext_method *method, char *db, char *value);
 
 /* V3 extension structure */
 
@@ -99,8 +100,9 @@ X509V3_EXT_S2I s2i;
 X509V3_EXT_I2V i2v;
 X509V3_EXT_V2I v2i;
 
-/* The following is used for raw extensions */
+/* The following are used for raw extensions */
 X509V3_EXT_I2R i2r;
+X509V3_EXT_R2I r2i;	/* Doesn't do anything *YET* */
 
 char *usr_data;	/* Any extension specific data */
 };
@@ -184,7 +186,7 @@ union {
 			NULL, NULL, \
 			(X509V3_EXT_I2V)i2v_ASN1_BIT_STRING, \
 			(X509V3_EXT_V2I)v2i_ASN1_BIT_STRING, \
-			NULL, \
+			NULL, NULL, \
 			(char *)table}
 
 #define EXT_IA5STRING(nid) { nid, 0, \
@@ -193,11 +195,11 @@ union {
 			i2d_ASN1_IA5STRING, \
 			(X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
 			(X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
-			NULL, NULL, NULL, \
+			NULL, NULL, NULL, NULL, \
 			NULL}
 
 #define EXT_END { -1, 0, NULL, NULL, NULL, NULL, NULL, NULL, \
-			 NULL, NULL, NULL, \
+			 NULL, NULL, NULL, NULL, \
 			 NULL}
 
 #ifndef NOPROTO

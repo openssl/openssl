@@ -76,7 +76,7 @@ NID_subject_key_identifier, 0,
 i2d_ASN1_OCTET_STRING,
 (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
 (X509V3_EXT_S2I)s2i_skey_id,
-NULL, NULL, NULL, NULL};
+NULL, NULL, NULL, NULL, NULL};
 
 
 static ASN1_OCTET_STRING *octet_string_new(void)
