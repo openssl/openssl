@@ -76,7 +76,11 @@
  * The hwcryptohook.h included here is from May 2000.
  * [Richard Levitte]
  */
+#ifdef FLAT_INC
+#include "hwcryptohook.h"
+#else
 #include "vendor_defns/hwcryptohook.h"
+#endif
 
 static int hwcrhk_init(void);
 static int hwcrhk_finish(void);

@@ -66,7 +66,11 @@
 #ifndef NO_HW
 #ifndef NO_HW_ATALLA
 
+#ifdef FLAT_INC
+#include "atalla.h"
+#else
 #include "vendor_defns/atalla.h"
+#endif
 
 static int atalla_init(void);
 static int atalla_finish(void);
