@@ -4,6 +4,14 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add RPM specification openssl.spec and modify it to build three
+     packages.  The default package contains applications, application
+     documentation and run-time libraries.  The devel package contains
+     include files, static libraries and function documentation.  The
+     doc package contains the contents of the doc directory.  The original
+     openssl.spec was provided by Damien Miller <djm@mindrot.org>.
+     [Richard Levitte]
+     
   *) Add a large number of documentation files for many SSL routines.
      [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>]
 
