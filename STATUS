@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/22 21:32:26 $
+  ______________                           $Date: 2001/03/22 22:13:16 $
 
   DEVELOPMENT STATE
 
@@ -43,6 +43,7 @@
         solaris64-sparcv9-cc (SunOS 5.8)        - PASSED [normal]
 	AIX 4.3					- FAILED [engine]
 		(because it's not automagically configured to use DSO)
+		[CORRECTED]
 	BSDI 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
 	HP-UX 11.00 32bit (hpux-parisc-gcc)	- PASSED [engine]
 	Solaris 8 (solaris-sparv8-gcc)		- PASSED [presumed normal]
