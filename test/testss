@@ -1,9 +1,9 @@
 #!/bin/sh
 
 digest='-mdc2'
-reqcmd="../apps/ssleay req"
-x509cmd="../apps/ssleay x509 $digest"
-verifycmd="../apps/ssleay verify"
+reqcmd="../apps/openssl req"
+x509cmd="../apps/openssl x509 $digest"
+verifycmd="../apps/openssl verify"
 
 CAkey="keyCA.ss"
 CAcert="certCA.ss"

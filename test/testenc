@@ -2,7 +2,7 @@
 
 testsrc=Makefile.ssl
 test=./p
-cmd=../apps/ssleay
+cmd=../apps/openssl
 
 cat $testsrc >$test;
 

@@ -23,7 +23,7 @@ if [ $? != 0 ]; then
 fi
 
 
-SSLEAY_CONFIG="-config ../apps/ssleay.cnf"
+SSLEAY_CONFIG="-config ../apps/openssl.cnf"
 export SSLEAY_CONFIG
 $SH ../apps/CA.sh -sign  <<EOF
 y

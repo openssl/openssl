@@ -3,7 +3,7 @@
 PATH=../apps:$PATH
 export PATH
 
-cmd='../apps/ssleay crl'
+cmd='../apps/openssl crl'
 
 if [ "$1"x != "x" ]; then
 	t=$1

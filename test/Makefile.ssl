@@ -183,7 +183,7 @@ if (((NR+1)%64) == 0) print NR+1," tests done"; }'
 test_verify:
 	@echo "The following command should have some OK's and some failures"
 	@echo "There are definitly a few expired certificates"
-	../apps/ssleay verify -CApath ../certs ../certs/*.pem
+	../apps/openssl verify -CApath ../certs ../certs/*.pem
 
 test_dh:
 	@echo "Generate as set of DH parameters"

@@ -3,7 +3,7 @@
 PATH=../apps:$PATH
 export PATH
 
-cmd='../apps/ssleay rsa'
+cmd='../apps/openssl rsa'
 
 if [ "$1"x != "x" ]; then
 	t=$1

@@ -3,7 +3,7 @@
 PATH=../apps:$PATH
 export PATH
 
-cmd='../apps/ssleay pkcs7'
+cmd='../apps/openssl pkcs7'
 
 if [ "$1"x != "x" ]; then
 	t=$1
@@ -11,7 +11,7 @@ else
 	t=pkcs7-1.pem
 fi
 
-echo testing pkcs7 conversions
+echo "testing pkcs7 conversions (2)"
 cp $t fff.p
 
 echo "p -> d"

@@ -3,7 +3,7 @@
 PATH=../apps:$PATH
 export PATH
 
-cmd='../apps/ssleay x509'
+cmd='../apps/openssl x509'
 
 if [ "$1"x != "x" ]; then
 	t=$1
