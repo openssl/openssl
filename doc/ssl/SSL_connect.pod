@@ -66,6 +66,7 @@ to find out the reason.
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_accept(3)|SSL_accept(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>,
 L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
+L<SSL_do_handshake(3)|SSL_do_handshake(3)>,
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>
 
 =cut

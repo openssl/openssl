@@ -2,36 +2,38 @@
 
 =head1 NAME
 
-SSL_accept - wait for a TLS/SSL client to initiate a TLS/SSL handshake
+SSL_do_handshake - perform a TLS/SSL handshake
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int SSL_accept(SSL *ssl);
+ int SSL_do_handshake(SSL *ssl);
 
 =head1 DESCRIPTION
 
-SSL_accept() waits for a TLS/SSL client to initiate the TLS/SSL handshake.
-The communication channel must already have been set and assigned to the
-B<ssl> by setting an underlying B<BIO>.
+SSL_do_handshake() will wait for a SSL/TLS handshake to take place. If the
+connection is in client mode, the handshake will be started. The handshake
+routines may have to be explicitly set in advance using either
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)> or
+L<SSL_set_accept_state(3)|SSL_set_accept_state(3)>.
 
 =head1 NOTES
 
-The behaviour of SSL_accept() depends on the underlying BIO. 
+The behaviour of SSL_do_handshake() depends on the underlying BIO.
 
-If the underlying BIO is B<blocking>, SSL_accept() will only return once the
-handshake has been finished or an error occurred, except for SGC (Server
-Gated Cryptography). For SGC, SSL_accept() may return with -1, but
-SSL_get_error() will yield B<SSL_ERROR_WANT_READ/WRITE> and SSL_accept()
-should be called again.
+If the underlying BIO is B<blocking>, SSL_do_handshake() will only return
+once the handshake has been finished or an error occurred, except for SGC
+(Server Gated Cryptography). For SGC, SSL_do_handshake() may return with -1,
+but SSL_get_error() will yield B<SSL_ERROR_WANT_READ/WRITE> and
+SSL_do_handshake() should be called again.
 
-If the underlying BIO is B<non-blocking>, SSL_accept() will also return
-when the underlying BIO could not satisfy the needs of SSL_accept()
+If the underlying BIO is B<non-blocking>, SSL_do_handshake() will also return
+when the underlying BIO could not satisfy the needs of SSL_do_handshake()
 to continue the handshake. In this case a call to SSL_get_error() with the
-return value of SSL_accept() will yield B<SSL_ERROR_WANT_READ> or
+return value of SSL_do_handshake() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
-taking appropriate action to satisfy the needs of SSL_accept().
+taking appropriate action to satisfy the needs of SSL_do_handshake().
 The action depends on the underlying BIO. When using a non-blocking socket,
 nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
@@ -67,9 +69,7 @@ to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_connect(3)|SSL_connect(3)>,
-L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>,
-L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
-L<SSL_do_handshake(3)|SSL_do_handshake(3)>,
-L<SSL_CTX_new(3)|SSL_CTX_new(3)>
+L<SSL_accept(3)|SSL_accept(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>,
+L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
 
 =cut
