@@ -14,11 +14,15 @@ my %files;
 my $thisfile="";
 while(<STDIN>) {
     my ($dummy, $file,$deps)=/^((.*):)? (.*)$/;
+    my $origfile="";
     $thisfile=$file if defined $file;
     next if !defined $deps;
+    $origfile=$thisfile;
+    $origfile=~s/\.o$/.c/;
     my @deps=split ' ',$deps;
     @deps=grep(!/^\//,@deps);
     @deps=grep(!/^\\$/,@deps);
+    @deps=grep(!/^$origfile$/,@deps);
     push @{$files{$thisfile}},@deps;
 }
 
@@ -26,6 +30,9 @@ my $file;
 foreach $file (sort keys %files) {
     my $len=0;
     my $dep;
+    my $origfile=$file;
+    $origfile=~s/\.o$/.c/;
+    push @{$files{$file}},$origfile;
     foreach $dep (sort @{$files{$file}}) {
 	$len=0 if $len+length($dep)+1 >= 80;
 	if($len == 0) {
