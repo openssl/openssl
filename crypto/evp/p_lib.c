@@ -81,7 +81,9 @@ int EVP_PKEY_bits(EVP_PKEY *pkey)
 
 int EVP_PKEY_size(EVP_PKEY *pkey)
 	{
-#ifndef OPENSSL_NO_RSA
+	if (pkey == NULL)
+		return(0);
+  #ifndef OPENSSL_NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		return(RSA_size(pkey->pkey.rsa));
 	else
