@@ -688,7 +688,7 @@ PROCESS_ARGS:
 		elsif (/^no-asm$/)
 		 	{
 			$no_asm=1;
-			$flags .= "-DOPENSSL_NO_ASM ";
+			#$flags .= "-DOPENSSL_NO_ASM ";
 			$openssl_other_defines .= "#define OPENSSL_NO_ASM\n";
 			}
 		elsif (/^no-err$/)
@@ -700,12 +700,12 @@ PROCESS_ARGS:
 			{
 			my $hw=$1;
 			$hw =~ tr/[a-z]/[A-Z]/;
-			$flags .= "-DOPENSSL_NO_HW_$hw ";
+			#$flags .= "-DOPENSSL_NO_HW_$hw ";
 			$openssl_other_defines .= "#define OPENSSL_NO_HW_$hw\n";
 			}
 		elsif (/^no-hw$/)
 			{
-			$flags .= "-DOPENSSL_NO_HW ";
+			#$flags .= "-DOPENSSL_NO_HW ";
 			$openssl_other_defines .= "#define OPENSSL_NO_HW\n";
 			}
 		elsif (/^no-dso$/)
@@ -741,22 +741,22 @@ PROCESS_ARGS:
 			my $algo=$1;
 			push @skip,$algo;
 			$algo =~ tr/[a-z]/[A-Z]/;
-			$flags .= "-DOPENSSL_NO_$algo ";
-			$depflags .= "-DOPENSSL_NO_$algo ";
+			#$flags .= "-DOPENSSL_NO_$algo ";
+			#$depflags .= "-DOPENSSL_NO_$algo ";
 			$openssl_algorithm_defines .= "#define OPENSSL_NO_$algo\n";
 			if ($algo eq "RIJNDAEL")
 				{
 				push @skip, "aes";
-				$flags .= "-DOPENSSL_NO_AES ";
-				$depflags .= "-DOPENSSL_NO_AES ";
+				#$flags .= "-DOPENSSL_NO_AES ";
+				#$depflags .= "-DOPENSSL_NO_AES ";
 				$openssl_algorithm_defines .= "#define OPENSSL_NO_AES\n";
 				}
 			if ($algo eq "DES")
 				{
 				push @skip, "mdc2";
 				$options .= " no-mdc2";
-				$flags .= "-DOPENSSL_NO_MDC2 ";
-				$depflags .= "-DOPENSSL_NO_MDC2 ";
+				#$flags .= "-DOPENSSL_NO_MDC2 ";
+				#$depflags .= "-DOPENSSL_NO_MDC2 ";
 				$openssl_algorithm_defines .= "#define OPENSSL_NO_MDC2\n";
 				}
 			if ($algo eq "EC")
@@ -892,24 +892,24 @@ $no_tls1=1 if ($no_dh);
 if ($no_ssl2)
 	{
 	push @skip,"SSL2";
-	$flags .= "-DOPENSSL_NO_SSL2 ";
-	$depflags .= "-DOPENSSL_NO_SSL2 ";
+	#$flags .= "-DOPENSSL_NO_SSL2 ";
+	#$depflags .= "-DOPENSSL_NO_SSL2 ";
 	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL2\n";
 	}
 
 if ($no_ssl3)
 	{
 	push @skip,"SSL3";
-	$flags .= "-DOPENSSL_NO_SSL3 ";
-	$depflags .= "-DOPENSSL_NO_SSL3 ";
+	#$flags .= "-DOPENSSL_NO_SSL3 ";
+	#$depflags .= "-DOPENSSL_NO_SSL3 ";
 	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL3\n";
 	}
 
 if ($no_tls1)
 	{
 	push @skip,"TLS1";
-	$flags .= "-DOPENSSL_NO_TLS1 ";
-	$depflags .= "-DOPENSSL_NO_TLS1 ";
+	#$flags .= "-DOPENSSL_NO_TLS1 ";
+	#$depflags .= "-DOPENSSL_NO_TLS1 ";
 	$openssl_algorithm_defines .= "#define OPENSSL_NO_TLS1\n";
 	}
 
@@ -987,7 +987,7 @@ if ($no_krb5
 	|| !defined($withargs{"krb5-flavor"})
 	|| $withargs{"krb5-flavor"} eq "")
 	{
-	$cflags="-DOPENSSL_NO_KRB5 $cflags";
+	#$cflags="-DOPENSSL_NO_KRB5 $cflags";
 	$options.=" no-krb5" unless $no_krb5;
 	$openssl_algorithm_defines .= "#define OPENSSL_NO_KRB5\n";
 	}
@@ -1113,7 +1113,7 @@ if (!$no_shared)
 
 if ($threads)
 	{
-	$cflags=$thread_cflags;
+	#$cflags=$thread_cflags;
 	$openssl_thread_defines .= $thread_defines;
 	}
 
@@ -1141,18 +1141,18 @@ if (!$no_shared)
 
 if ($no_shared)
 	{
-	$cflags="-DOPENSSL_NO_DYNAMIC_ENGINE $cflags";
+	#$cflags="-DOPENSSL_NO_DYNAMIC_ENGINE $cflags";
 	$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
 	}
 else
 	{
-	$cflags="-DOPENSSL_NO_STATIC_ENGINE $cflags";
+	#$cflags="-DOPENSSL_NO_STATIC_ENGINE $cflags";
 	$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
 	}
 
 if ($sys_id ne "")
 	{
-	$cflags="-DOPENSSL_SYSNAME_$sys_id $cflags";
+	#$cflags="-DOPENSSL_SYSNAME_$sys_id $cflags";
 	$openssl_sys_defines="#define OPENSSL_SYSNAME_$sys_id\n";
 	}
 
