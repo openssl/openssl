@@ -73,7 +73,9 @@ extern "C" {
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 #ifdef REF_PRINT
 #undef REF_PRINT
-#define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
+#undef REF_PRINT2
+#define REF_PRINT(a,b)	REF_PRINT2(a,b,references)
+#define REF_PRINT2(a,b,r)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->r,a)
 #endif
 
 #ifndef DEVRANDOM

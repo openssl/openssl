@@ -421,7 +421,7 @@ int ENGINE_free(ENGINE *e)
 		}
 	i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
 #ifdef REF_PRINT
-	REF_PRINT("ENGINE",e);
+	REF_PRINT2("ENGINE",e,struct_ref);
 #endif
 	if (i > 0) return 1;
 #ifdef REF_CHECK
