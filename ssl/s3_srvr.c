@@ -125,7 +125,7 @@
 #include <openssl/krb5_asn.h>
 #endif
 #include <openssl/md5.h>
-#include "../fips/fips_locl.h"
+#include <openssl/fips.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);

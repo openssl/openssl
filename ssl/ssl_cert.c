@@ -129,7 +129,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include "ssl_locl.h"
-#include "../fips/fips_locl.h"
+#include <openssl/fips.h>
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{

@@ -456,15 +456,15 @@ s3_both.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 s3_both.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 s3_both.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h s3_both.c
 s3_both.o: ssl_locl.h
-s3_clnt.o: ../e_os.h ../fips/fips_locl.h ../include/openssl/aes.h
-s3_clnt.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-s3_clnt.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
-s3_clnt.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-s3_clnt.o: ../include/openssl/comp.h ../include/openssl/crypto.h
-s3_clnt.o: ../include/openssl/des.h ../include/openssl/des_old.h
-s3_clnt.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-s3_clnt.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-s3_clnt.o: ../include/openssl/evp.h ../include/openssl/idea.h
+s3_clnt.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+s3_clnt.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+s3_clnt.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+s3_clnt.o: ../include/openssl/cast.h ../include/openssl/comp.h
+s3_clnt.o: ../include/openssl/crypto.h ../include/openssl/des.h
+s3_clnt.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+s3_clnt.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+s3_clnt.o: ../include/openssl/err.h ../include/openssl/evp.h
+s3_clnt.o: ../include/openssl/fips.h ../include/openssl/idea.h
 s3_clnt.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
 s3_clnt.o: ../include/openssl/md2.h ../include/openssl/md4.h
 s3_clnt.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
@@ -582,15 +582,15 @@ s3_pkt.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_pkt.o: ../include/openssl/tls1.h ../include/openssl/ui.h
 s3_pkt.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 s3_pkt.o: ../include/openssl/x509_vfy.h s3_pkt.c ssl_locl.h
-s3_srvr.o: ../e_os.h ../fips/fips_locl.h ../include/openssl/aes.h
-s3_srvr.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-s3_srvr.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
-s3_srvr.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-s3_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
-s3_srvr.o: ../include/openssl/des.h ../include/openssl/des_old.h
-s3_srvr.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-s3_srvr.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-s3_srvr.o: ../include/openssl/evp.h ../include/openssl/idea.h
+s3_srvr.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+s3_srvr.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+s3_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+s3_srvr.o: ../include/openssl/cast.h ../include/openssl/comp.h
+s3_srvr.o: ../include/openssl/crypto.h ../include/openssl/des.h
+s3_srvr.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+s3_srvr.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+s3_srvr.o: ../include/openssl/err.h ../include/openssl/evp.h
+s3_srvr.o: ../include/openssl/fips.h ../include/openssl/idea.h
 s3_srvr.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
 s3_srvr.o: ../include/openssl/md2.h ../include/openssl/md4.h
 s3_srvr.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
@@ -659,15 +659,15 @@ ssl_asn1.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_asn1.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 ssl_asn1.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_asn1.c
 ssl_asn1.o: ssl_locl.h
-ssl_cert.o: ../e_os.h ../fips/fips_locl.h ../include/openssl/aes.h
-ssl_cert.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-ssl_cert.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
-ssl_cert.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-ssl_cert.o: ../include/openssl/comp.h ../include/openssl/conf.h
-ssl_cert.o: ../include/openssl/crypto.h ../include/openssl/des.h
-ssl_cert.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-ssl_cert.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-ssl_cert.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssl_cert.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+ssl_cert.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+ssl_cert.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+ssl_cert.o: ../include/openssl/cast.h ../include/openssl/comp.h
+ssl_cert.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ssl_cert.o: ../include/openssl/des.h ../include/openssl/des_old.h
+ssl_cert.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+ssl_cert.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+ssl_cert.o: ../include/openssl/evp.h ../include/openssl/fips.h
 ssl_cert.o: ../include/openssl/idea.h ../include/openssl/kssl.h
 ssl_cert.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 ssl_cert.o: ../include/openssl/md4.h ../include/openssl/md5.h
@@ -761,15 +761,15 @@ ssl_err2.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_err2.o: ../include/openssl/tls1.h ../include/openssl/ui.h
 ssl_err2.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 ssl_err2.o: ../include/openssl/x509_vfy.h ssl_err2.c
-ssl_lib.o: ../e_os.h ../fips/fips_locl.h ../include/openssl/aes.h
-ssl_lib.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-ssl_lib.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
-ssl_lib.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-ssl_lib.o: ../include/openssl/comp.h ../include/openssl/conf.h
-ssl_lib.o: ../include/openssl/crypto.h ../include/openssl/des.h
-ssl_lib.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-ssl_lib.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-ssl_lib.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssl_lib.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+ssl_lib.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+ssl_lib.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+ssl_lib.o: ../include/openssl/cast.h ../include/openssl/comp.h
+ssl_lib.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ssl_lib.o: ../include/openssl/des.h ../include/openssl/des_old.h
+ssl_lib.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+ssl_lib.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+ssl_lib.o: ../include/openssl/evp.h ../include/openssl/fips.h
 ssl_lib.o: ../include/openssl/idea.h ../include/openssl/kssl.h
 ssl_lib.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 ssl_lib.o: ../include/openssl/md4.h ../include/openssl/md5.h
@@ -915,15 +915,15 @@ t1_clnt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_clnt.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 t1_clnt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
 t1_clnt.o: t1_clnt.c
-t1_enc.o: ../e_os.h ../fips/fips_locl.h ../include/openssl/aes.h
-t1_enc.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-t1_enc.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
-t1_enc.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-t1_enc.o: ../include/openssl/comp.h ../include/openssl/crypto.h
-t1_enc.o: ../include/openssl/des.h ../include/openssl/des_old.h
-t1_enc.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-t1_enc.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-t1_enc.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+t1_enc.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+t1_enc.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+t1_enc.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+t1_enc.o: ../include/openssl/cast.h ../include/openssl/comp.h
+t1_enc.o: ../include/openssl/crypto.h ../include/openssl/des.h
+t1_enc.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+t1_enc.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+t1_enc.o: ../include/openssl/err.h ../include/openssl/evp.h
+t1_enc.o: ../include/openssl/fips.h ../include/openssl/hmac.h
 t1_enc.o: ../include/openssl/idea.h ../include/openssl/kssl.h
 t1_enc.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 t1_enc.o: ../include/openssl/md4.h ../include/openssl/md5.h
