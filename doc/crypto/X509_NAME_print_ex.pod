@@ -41,8 +41,8 @@ applications.
 Although there are a large number of possible flags for most purposes
 B<XN_FLAG_ONELINE>, B<XN_FLAG_MULTILINE> or B<XN_FLAG_RFC2253> will suffice.
 As noted on the L<ASN1_STRING_print_ex(3)|ASN1_STRING_print_ex(3)> manual page
-for UTF8 terminals the B<ASN1_STRFLAGS_ESC_MSB> should be unset: so for example
-B<XN_FLAG_ONELINE & ~ASN1_STRFLAGS_ESC_MSB> would be used.
+for UTF8 terminals the B<ASN1_STRFLGS_ESC_MSB> should be unset: so for example
+B<XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB> would be used.
 
 The complete set of the flags supported by X509_NAME_print_ex() is listed below.
 
