@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 127
-#define NUM_SN 98
-#define NUM_LN 125
-#define NUM_OBJ 99
+#define NUM_NID 140
+#define NUM_SN 111
+#define NUM_LN 136
+#define NUM_OBJ 112
 
-static unsigned char lvalues[614]={
+static unsigned char lvalues[726]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -166,6 +166,19 @@ static unsigned char lvalues[614]={
 0x29,0x01,0x01,0x85,0x1A,                    /* [600] OBJ_rle_compression */
 0x29,0x01,0x01,0x85,0x1A,                    /* [605] OBJ_zlib_compression */
 0x55,0x1D,0x25,                              /* [610] OBJ_ext_key_usage */
+0x2B,0x06,0x01,0x05,0x05,0x07,               /* [613] OBJ_id_pkix */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,          /* [619] OBJ_id_kp */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x01,     /* [626] OBJ_server_auth */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x02,     /* [634] OBJ_client_auth */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x03,     /* [642] OBJ_code_sign */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x04,     /* [650] OBJ_email_protect */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x08,     /* [658] OBJ_time_stamp */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x15,/* [666] OBJ_ms_code_ind */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x16,/* [676] OBJ_ms_code_com */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x01,/* [686] OBJ_ms_ctl_sign */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x03,/* [696] OBJ_ms_sgc */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x04,/* [706] OBJ_ms_efs */
+0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x04,0x01,/* [716] OBJ_ns_sgc */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -339,6 +352,26 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"ZLIB","zlib compression",NID_zlib_compression,5,&(lvalues[605]),0},
 {"extendedKeyUsage","X509v3 Extended Key Usage",NID_ext_key_usage,3,
 	&(lvalues[610]),0},
+{"PKIX","PKIX",NID_id_pkix,6,&(lvalues[613]),0},
+{"id-kp","id-kp",NID_id_kp,7,&(lvalues[619]),0},
+{"serverAuth","TLS Web Server Authentication",NID_server_auth,8,
+	&(lvalues[626]),0},
+{"clientAuth","TLS Web Client Authentication",NID_client_auth,8,
+	&(lvalues[634]),0},
+{"codeSigning","Code Signing",NID_code_sign,8,&(lvalues[642]),0},
+{"emailProtection","E-mail Protection",NID_email_protect,8,
+	&(lvalues[650]),0},
+{"timeStamping","Time Stamping",NID_time_stamp,8,&(lvalues[658]),0},
+{"msCodeInd","Microsoft Individual Code Signing",NID_ms_code_ind,10,
+	&(lvalues[666]),0},
+{"msCodeCom","Microsoft Commercial Code Signing",NID_ms_code_com,10,
+	&(lvalues[676]),0},
+{"msCTLSign","Microsoft Trust List Signing",NID_ms_ctl_sign,10,
+	&(lvalues[686]),0},
+{"msSGC","Microsoft Server Gated Crypto",NID_ms_sgc,10,&(lvalues[696]),0},
+{"msEFS","Microsoft Encrypted File System",NID_ms_efs,10,
+	&(lvalues[706]),0},
+{"nsSGC","Netscape Server Gated Crypto",NID_ns_sgc,9,&(lvalues[716]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -386,6 +419,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[17]),/* "O" */
 &(nid_objs[18]),/* "OU" */
+&(nid_objs[127]),/* "PKIX" */
 &(nid_objs[98]),/* "RC2-40-CBC" */
 &(nid_objs[37]),/* "RC2-CBC" */
 &(nid_objs[39]),/* "RC2-CFB" */
@@ -420,12 +454,21 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[90]),/* "authorityKeyIdentifier" */
 &(nid_objs[87]),/* "basicConstraints" */
 &(nid_objs[89]),/* "certificatePolicies" */
+&(nid_objs[130]),/* "clientAuth" */
+&(nid_objs[131]),/* "codeSigning" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
+&(nid_objs[128]),/* "id-kp" */
 &(nid_objs[86]),/* "issuerAltName" */
 &(nid_objs[83]),/* "keyUsage" */
 &(nid_objs[81]),/* "ld-ce" */
+&(nid_objs[136]),/* "msCTLSign" */
+&(nid_objs[135]),/* "msCodeCom" */
+&(nid_objs[134]),/* "msCodeInd" */
+&(nid_objs[138]),/* "msEFS" */
+&(nid_objs[137]),/* "msSGC" */
 &(nid_objs[72]),/* "nsBaseUrl" */
 &(nid_objs[76]),/* "nsCaPolicyUrl" */
 &(nid_objs[74]),/* "nsCaRevocationUrl" */
@@ -436,13 +479,23 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[59]),/* "nsDataType" */
 &(nid_objs[75]),/* "nsRenewalUrl" */
 &(nid_objs[73]),/* "nsRevocationUrl" */
+&(nid_objs[139]),/* "nsSGC" */
 &(nid_objs[77]),/* "nsSslServerName" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
+&(nid_objs[129]),/* "serverAuth" */
 &(nid_objs[85]),/* "subjectAltName" */
 &(nid_objs[82]),/* "subjectKeyIdentifier" */
+&(nid_objs[133]),/* "timeStamping" */
 };
 
 static ASN1_OBJECT *ln_objs[NUM_LN]={
+&(nid_objs[131]),/* "Code Signing" */
+&(nid_objs[132]),/* "E-mail Protection" */
+&(nid_objs[135]),/* "Microsoft Commercial Code Signing" */
+&(nid_objs[138]),/* "Microsoft Encrypted File System" */
+&(nid_objs[134]),/* "Microsoft Individual Code Signing" */
+&(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
+&(nid_objs[136]),/* "Microsoft Trust List Signing" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -455,6 +508,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[75]),/* "Netscape Renewal Url" */
 &(nid_objs[73]),/* "Netscape Revocation Url" */
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
+&(nid_objs[139]),/* "Netscape Server Gated Crypto" */
+&(nid_objs[130]),/* "TLS Web Client Authentication" */
+&(nid_objs[129]),/* "TLS Web Server Authentication" */
+&(nid_objs[133]),/* "Time Stamping" */
 &(nid_objs[11]),/* "X500" */
 &(nid_objs[12]),/* "X509" */
 &(nid_objs[90]),/* "X509v3 Authority Key Identifier" */
@@ -619,10 +676,12 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[115]),/* OBJ_sha1WithRSA                  1 3 14 3 2 29 */
 &(nid_objs[117]),/* OBJ_ripemd160                    1 3 36 3 2 1 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
+&(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
 &(nid_objs[119]),/* OBJ_ripemd160WithRSA             1 3 36 3 3 1 2 */
 &(nid_objs[ 2]),/* OBJ_pkcs                         1 2 840 113549 1 */
 &(nid_objs[116]),/* OBJ_dsa                          1 2 840 10040 4 1 */
 &(nid_objs[113]),/* OBJ_dsaWithSHA1                  1 2 840 10040 4 3 */
+&(nid_objs[128]),/* OBJ_id_kp                        1 3 6 1 5 5 7 3 */
 &(nid_objs[57]),/* OBJ_netscape                     2 16 840 1 113730 */
 &(nid_objs[27]),/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 &(nid_objs[20]),/* OBJ_pkcs7                        1 2 840 113549 1 7 */
@@ -633,6 +692,11 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
 &(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
+&(nid_objs[129]),/* OBJ_server_auth                  1 3 6 1 5 5 7 3 1 */
+&(nid_objs[130]),/* OBJ_client_auth                  1 3 6 1 5 5 7 3 2 */
+&(nid_objs[131]),/* OBJ_code_sign                    1 3 6 1 5 5 7 3 3 */
+&(nid_objs[132]),/* OBJ_email_protect                1 3 6 1 5 5 7 3 4 */
+&(nid_objs[133]),/* OBJ_time_stamp                   1 3 6 1 5 5 7 3 8 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
 &(nid_objs[59]),/* OBJ_netscape_data_type           2 16 840 1 113730 2 */
 &(nid_objs[108]),/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
@@ -670,5 +734,11 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[77]),/* OBJ_netscape_ssl_server_name     2 16 840 1 113730 1 12 */
 &(nid_objs[78]),/* OBJ_netscape_comment             2 16 840 1 113730 1 13 */
 &(nid_objs[79]),/* OBJ_netscape_cert_sequence       2 16 840 1 113730 2 5 */
+&(nid_objs[139]),/* OBJ_ns_sgc                       2 16 840 1 113730 4 1 */
+&(nid_objs[134]),/* OBJ_ms_code_ind                  1 3 6 1 4 1 311 2 1 21 */
+&(nid_objs[135]),/* OBJ_ms_code_com                  1 3 6 1 4 1 311 2 1 22 */
+&(nid_objs[136]),/* OBJ_ms_ctl_sign                  1 3 6 1 4 1 311 10 3 1 */
+&(nid_objs[137]),/* OBJ_ms_sgc                       1 3 6 1 4 1 311 10 3 3 */
+&(nid_objs[138]),/* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
 };
 

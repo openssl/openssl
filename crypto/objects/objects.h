@@ -670,6 +670,75 @@ extern "C" {
 #define NID_ext_key_usage		126
 #define OBJ_ext_key_usage		OBJ_ld_ce,37
 
+#define SN_id_pkix			"PKIX"
+#define NID_id_pkix			127
+#define OBJ_id_pkix			1L,3L,6L,1L,5L,5L,7L
+
+#define SN_id_kp			"id-kp"
+#define NID_id_kp			128
+#define OBJ_id_kp			OBJ_id_pkix,3L
+
+/* PKIX extended key usage OIDs */
+
+#define SN_server_auth			"serverAuth"
+#define LN_server_auth			"TLS Web Server Authentication"
+#define NID_server_auth			129
+#define OBJ_server_auth			OBJ_id_kp,1L
+
+#define SN_client_auth			"clientAuth"
+#define LN_client_auth			"TLS Web Client Authentication"
+#define NID_client_auth			130
+#define OBJ_client_auth			OBJ_id_kp,2L
+
+#define SN_code_sign			"codeSigning"
+#define LN_code_sign			"Code Signing"
+#define NID_code_sign			131
+#define OBJ_code_sign			OBJ_id_kp,3L
+
+#define SN_email_protect		"emailProtection"
+#define LN_email_protect		"E-mail Protection"
+#define NID_email_protect		132
+#define OBJ_email_protect		OBJ_id_kp,4L
+
+#define SN_time_stamp			"timeStamping"
+#define LN_time_stamp			"Time Stamping"
+#define NID_time_stamp			133
+#define OBJ_time_stamp			OBJ_id_kp,8L
+
+/* Additional extended key usage OIDs: Microsoft */
+
+#define SN_ms_code_ind			"msCodeInd"
+#define LN_ms_code_ind			"Microsoft Individual Code Signing"
+#define NID_ms_code_ind			134
+#define OBJ_ms_code_ind			1L,3L,6L,1L,4L,1L,311L,2L,1L,21L
+
+#define SN_ms_code_com			"msCodeCom"
+#define LN_ms_code_com			"Microsoft Commercial Code Signing"
+#define NID_ms_code_com			135
+#define OBJ_ms_code_com			1L,3L,6L,1L,4L,1L,311L,2L,1L,22L
+
+#define SN_ms_ctl_sign			"msCTLSign"
+#define LN_ms_ctl_sign			"Microsoft Trust List Signing"
+#define NID_ms_ctl_sign			136
+#define OBJ_ms_ctl_sign			1L,3L,6L,1L,4L,1L,311L,10L,3L,1L
+
+#define SN_ms_sgc			"msSGC"
+#define LN_ms_sgc			"Microsoft Server Gated Crypto"
+#define NID_ms_sgc			137
+#define OBJ_ms_sgc			1L,3L,6L,1L,4L,1L,311L,10L,3L,3L
+
+#define SN_ms_efs			"msEFS"
+#define LN_ms_efs			"Microsoft Encrypted File System"
+#define NID_ms_efs			138
+#define OBJ_ms_efs			1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
+
+/* Addidional usage: Netscape */
+
+#define SN_ns_sgc			"nsSGC"
+#define LN_ns_sgc			"Netscape Server Gated Crypto"
+#define NID_ns_sgc			139
+#define OBJ_ns_sgc			OBJ_netscape,4L,1L
+
 #include "bio.h"
 #include "asn1.h"
 
