@@ -59,7 +59,7 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
-#ifndef WIN16
+#ifndef NO_FP_API
 #include <stdio.h> /* FILE */
 #endif
 #include <openssl/opensslconf.h>
