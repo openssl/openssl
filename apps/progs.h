@@ -24,6 +24,7 @@ extern int pkcs7_main(int argc,char *argv[]);
 extern int crl2pkcs7_main(int argc,char *argv[]);
 extern int sess_id_main(int argc,char *argv[]);
 extern int ciphers_main(int argc,char *argv[]);
+extern int nseq_main(int argc,char *argv[]);
 #else
 extern int verify_main();
 extern int asn1parse_main();
@@ -50,6 +51,7 @@ extern int pkcs7_main();
 extern int crl2pkcs7_main();
 extern int sess_id_main();
 extern int ciphers_main();
+extern int nseq_main();
 #endif
 
 #ifdef SSLEAY_SRC
@@ -112,6 +114,7 @@ FUNCTION functions[] = {
 #if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(O_SSL3))
 	{FUNC_TYPE_GENERAL,"ciphers",ciphers_main},
 #endif
+	{FUNC_TYPE_GENERAL,"nseq",nseq_main},
 	{FUNC_TYPE_MD,"md2",dgst_main},
 	{FUNC_TYPE_MD,"md5",dgst_main},
 	{FUNC_TYPE_MD,"sha",dgst_main},
