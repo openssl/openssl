@@ -1,19 +1,7 @@
 NOTES, THOUGHTS, and EVERYTHING
 -------------------------------
 
-(1) Maybe ENGINE_get_struct_size() isn't such a good idea. All ENGINEs
-    should be allocated from within OpenSSL (rather than, for example,
-    a loaded DSO). Two reasons, (i) DSOs authors are likely to stash
-    the return value as an assumed constant and so everything will
-    break down horribly when OpenSSL is changed/expanded, (ii) with
-    the structure allocated within OpenSSL, we could handle the case
-    where a DSO *really* wants to close down and lick its wounds even
-    if there are still references because we could simply NULL out the
-    pointers in the structure. If I change this, I should also
-    remember to get rid of the parameter in ENGINE_new() as it would
-    serve no purpose and is likely to confuse.
-
-(2) Concurrency and locking ... I made a change to the ENGINE_free code
+(1) Concurrency and locking ... I made a change to the ENGINE_free code
     because I spotted a potential hold-up in proceedings (doing too
     much inside a lock including calling a callback), there may be
     other bits like this. What do the speed/optimisation freaks think
@@ -22,17 +10,25 @@ NOTES, THOUGHTS, and EVERYTHING
     solid, but this manipulation is mostly (de)initialisation, I would
     think that most run-time locking is purely in the ENGINE_init and
     ENGINE_finish calls that might be made when getting handles for
-    RSA (and friends') structures, and these would be mostly reference
+    RSA (and friends') structures. These would be mostly reference
     count operations as the functional references should always be 1
     or greater at run-time to prevent init/deinit thrashing.
 
-(3) Atalla isn't finished quite yet.
+(2) nCipher support, via the HWCryptoHook API, is now in the code.
+    Apparently this hasn't been tested too much yet, but it looks
+    good. :-) Atalla support has been added too, but shares a lot in
+    common with Ben's original hooks in bn_exp.c (although it has been
+    ENGINE-ified, and error handling wrapped around it) and it's also
+    had some low-volume testing, so it should be usable.
 
-(4) The DH stuff was added to the CryptoSwift code without testing
-    because it should work trivially and didn't involve adding more of
-    the cropped bits from Rainbow's headers back into the vendor_defns
-    stuff. (Also, randomness should be easy to add soon when I sort
-    the headers out a bit more which would give hw_cswift a full
-    suite).
+(3) Of more concern, we need to work out (a) how to put together usable
+    RAND_METHODs for units that just have one "get n or less random
+    bytes" function, (b) we also need to determine how to hook the code
+    in crypto/rand/ to use the ENGINE defaults in a way similar to what
+    has been done in crypto/rsa/, crypto/dsa/, etc.
 
-(5) Another make update is probably due ...
+(4) ENGINE should really grow to encompass more than 3 public key
+    algorithms and randomness gathering. The structure/data level of
+    the engine code is hidden from code outside the crypto/engine/
+    directory so change shouldn't be too viral. More important though
+    is how things should evolve ... this needs thought and discussion.
