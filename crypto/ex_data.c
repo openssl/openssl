@@ -101,7 +101,7 @@ int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long 
 	ret=idx;
 err:
 	MemCheck_on();
-	return(idx);
+	return(ret);
 	}
 
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
