@@ -123,16 +123,23 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-freebsd3"; exit 0
 	;;
 
-    FreeBSD:*:*:*486*)
-	echo "i486-whatever-freebsd"; exit 0
+    FreeBSD:*:*:*386*)
+        case `sysctl -n hw.model` in
+	    Pentium*)
+                echo "i586-whatever-freebsd"; exit 0
+                ;;
+            *)
+                echo "i386-whatever-freebsd"; exit 0
+                ;;
+            esac;
 	;;
 
     FreeBSD:*)
 	echo "${MACHINE}-whatever-freebsd"; exit 0
 	;;
 
-    NetBSD:*:*:*486*)
-	echo "i486-whatever-netbsd"; exit 0
+    NetBSD:*:*:*386*)
+        echo "`sysctl -n hw.model | sed 's,.*\(.\)86-class.*,i\186,'`-whateve\r-netbsd"; exit 0
 	;;
 
     NetBSD:*)
