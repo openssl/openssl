@@ -174,9 +174,13 @@ static int dh_test()
 
     ERR_clear_error();
     dh = DH_generate_parameters(256, 2, NULL, NULL);
-    if (dh)
-        return 1;
-    return 0;
+    if (!dh)
+	{
+	ERR_load_crypto_strings();
+        ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	return 0;
+	}
+    return 1;
     }
 
 static int Error;
@@ -226,9 +230,9 @@ int main(int argc,char **argv)
     /* Non-Approved cryptographic operation
     */
     printf("0. Non-Approved cryptographic operation test...\n");
-    printf("\ta. MD5...");
+    printf("\ta. Excluded algorithm (MD5)...");
     printf( md5_test() ? "successful\n" :  Fail("FAILED!\n") );
-    printf("\tb. D-H...");
+    printf("\tb. Included algorithm (D-H)...");
     printf( dh_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* Power-up self test failure
@@ -290,12 +294,12 @@ int main(int argc,char **argv)
     /* Non-Approved cryptographic operation
     */
     printf("8. Non-Approved cryptographic operation test...\n");
-    printf("\ta. MD5...");
+    printf("\ta. Excluded algorithm (MD5)...");
     printf( md5_test() ? Fail("passed INCORRECTLY!\n")
 	    : "failed as expected\n" );
-    printf("\tb. D-H...");
-    printf( dh_test() ? Fail("passed INCORRECTLY!\n")
-	    : "failed as expected\n" );
+    printf("\tb. Included algorithm (D-H)...");
+    printf( dh_test() ? "successful as expected\n"
+	    : Fail("failed INCORRECTLY!\n") );
 
     printf("\nAll tests completed with %d errors\n", Error);
     return 0;

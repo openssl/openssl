@@ -199,7 +199,6 @@ void ERR_load_DH_strings(void);
 
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
-#define DH_R_NOT_PERMITTED_IN_FIPS_MODE			 102
 #define DH_R_NO_PRIVATE_VALUE				 100
 
 #ifdef  __cplusplus

@@ -78,7 +78,6 @@ static ERR_STRING_DATA DH_str_functs[]=
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
 {DH_R_BAD_GENERATOR                      ,"bad generator"},
-{DH_R_NOT_PERMITTED_IN_FIPS_MODE         ,"not permitted in fips mode"},
 {DH_R_NO_PRIVATE_VALUE                   ,"no private value"},
 {0,NULL}
 	};
