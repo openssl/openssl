@@ -228,7 +228,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	iter = ASN1_INTEGER_get(kdf->iter);
 	PKCS5_PBKDF2_HMAC_SHA1(pass, passlen, salt, saltlen, iter, keylen, key);
 	EVP_CipherInit(ctx, NULL, key, NULL, en_de);
-	memset(key, 0, keylen);
+	OPENSSL_cleanse(key, keylen);
 	PBKDF2PARAM_free(kdf);
 	return 1;
 

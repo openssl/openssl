@@ -131,7 +131,7 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 		*siglen=i;
 
 	if(type != NID_md5_sha1) {
-		memset(s,0,(unsigned int)j+1);
+		OPENSSL_cleanse(s,(unsigned int)j+1);
 		OPENSSL_free(s);
 	}
 	return(ret);
@@ -214,7 +214,7 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 	}
 err:
 	if (sig != NULL) X509_SIG_free(sig);
-	memset(s,0,(unsigned int)siglen);
+	OPENSSL_cleanse(s,(unsigned int)siglen);
 	OPENSSL_free(s);
 	return(ret);
 	}

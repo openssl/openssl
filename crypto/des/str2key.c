@@ -88,7 +88,7 @@ void des_string_to_key(const char *str, des_cblock *key)
 	des_set_odd_parity(key);
 	des_set_key_unchecked(key,ks);
 	des_cbc_cksum((const unsigned char*)str,key,length,ks,key);
-	memset(ks,0,sizeof(ks));
+	OPENSSL_cleanse(ks,sizeof(ks));
 	des_set_odd_parity(key);
 	}
 
@@ -149,7 +149,7 @@ void des_string_to_2keys(const char *str, des_cblock *key1, des_cblock *key2)
 	des_cbc_cksum((const unsigned char*)str,key1,length,ks,key1);
 	des_set_key_unchecked(key2,ks);
 	des_cbc_cksum((const unsigned char*)str,key2,length,ks,key2);
-	memset(ks,0,sizeof(ks));
+	OPENSSL_cleanse(ks,sizeof(ks));
 	des_set_odd_parity(key1);
 	des_set_odd_parity(key2);
 	}

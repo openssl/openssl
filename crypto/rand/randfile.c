@@ -125,7 +125,7 @@ int RAND_load_file(const char *file, long bytes)
 			}
 		}
 	fclose(in);
-	memset(buf,0,BUFSIZE);
+	OPENSSL_cleanse(buf,BUFSIZE);
 err:
 	return(ret);
 	}
@@ -190,7 +190,7 @@ int RAND_write_file(const char *file)
 #endif /* VMS */
 
 	fclose(out);
-	memset(buf,0,BUFSIZE);
+	OPENSSL_cleanse(buf,BUFSIZE);
 err:
 	return (rand_err ? -1 : ret);
 	}

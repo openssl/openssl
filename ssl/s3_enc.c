@@ -174,7 +174,7 @@ static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 
 		km+=MD5_DIGEST_LENGTH;
 		}
-	memset(smd,0,SHA_DIGEST_LENGTH);
+	OPENSSL_cleanse(smd,SHA_DIGEST_LENGTH);
 	}
 
 int ssl3_change_cipher_state(SSL *s, int which)
@@ -318,8 +318,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	EVP_CipherInit(dd,c,key,iv,(which & SSL3_CC_WRITE));
 
-	memset(&(exp_key[0]),0,sizeof(exp_key));
-	memset(&(exp_iv[0]),0,sizeof(exp_iv));
+	OPENSSL_cleanse(&(exp_key[0]),sizeof(exp_key));
+	OPENSSL_cleanse(&(exp_iv[0]),sizeof(exp_iv));
 	return(1);
 err:
 	SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,ERR_R_MALLOC_FAILURE);
@@ -390,7 +390,7 @@ void ssl3_cleanup_key_block(SSL *s)
 	{
 	if (s->s3->tmp.key_block != NULL)
 		{
-		memset(s->s3->tmp.key_block,0,
+		OPENSSL_cleanse(s->s3->tmp.key_block,
 			s->s3->tmp.key_block_length);
 		OPENSSL_free(s->s3->tmp.key_block);
 		s->s3->tmp.key_block=NULL;

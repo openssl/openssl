@@ -158,7 +158,7 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 		}
 	HMAC_cleanup(&ctx);
 	HMAC_cleanup(&ctx_tmp);
-	memset(A1,0,sizeof(A1));
+	OPENSSL_cleanse(A1,sizeof(A1));
 	}
 
 static void tls1_PRF(const EVP_MD *md5, const EVP_MD *sha1,
@@ -372,10 +372,10 @@ printf("\niv=");
 printf("\n");
 #endif
 
-	memset(tmp1,0,sizeof(tmp1));
-	memset(tmp2,0,sizeof(tmp1));
-	memset(iv1,0,sizeof(iv1));
-	memset(iv2,0,sizeof(iv2));
+	OPENSSL_cleanse(tmp1,sizeof(tmp1));
+	OPENSSL_cleanse(tmp2,sizeof(tmp1));
+	OPENSSL_cleanse(iv1,sizeof(iv1));
+	OPENSSL_cleanse(iv2,sizeof(iv2));
 	return(1);
 err:
 	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,ERR_R_MALLOC_FAILURE);
@@ -426,7 +426,7 @@ printf("pre-master\n");
 { int z; for (z=0; z<s->session->master_key_length; z++) printf("%02X%c",s->session->master_key[z],((z+1)%16)?' ':'\n'); }
 #endif
 	tls1_generate_key_block(s,p1,p2,num);
-	memset(p2,0,num);
+	OPENSSL_cleanse(p2,num);
 	OPENSSL_free(p2);
 #ifdef TLS_DEBUG
 printf("\nkey block\n");

@@ -181,7 +181,7 @@ int i2d_RSA_NET(RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	}
 		
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
-	memset(buf,0,256);
+	OPENSSL_cleanse(buf,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_EncryptInit(&ctx,EVP_rc4(),key,NULL);
@@ -292,7 +292,7 @@ RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length,
 	}
 		
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
-	memset(buf,0,256);
+	OPENSSL_cleanse(buf,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_DecryptInit(&ctx,EVP_rc4(),key,NULL);

@@ -199,10 +199,10 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
-	memset(&ctx,0,sizeof(ctx));
+	OPENSSL_cleanse(&ctx,sizeof(ctx));
 	if (buf_in != NULL)
-		{ memset((char *)buf_in,0,(unsigned int)inl); OPENSSL_free(buf_in); }
+		{ OPENSSL_cleanse((char *)buf_in,(unsigned int)inl); OPENSSL_free(buf_in); }
 	if (buf_out != NULL)
-		{ memset((char *)buf_out,0,outll); OPENSSL_free(buf_out); }
+		{ OPENSSL_cleanse((char *)buf_out,outll); OPENSSL_free(buf_out); }
 	return(outl);
 	}

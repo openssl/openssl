@@ -100,7 +100,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	EVP_VerifyInit(&ctx,type);
 	EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl);
 
-	memset(buf_in,0,(unsigned int)inl);
+	OPENSSL_cleanse(buf_in,(unsigned int)inl);
 	OPENSSL_free(buf_in);
 
 	if (EVP_VerifyFinal(&ctx,(unsigned char *)signature->data,

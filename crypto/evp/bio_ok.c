@@ -208,7 +208,7 @@ static int ok_new(BIO *bi)
 static int ok_free(BIO *a)
 	{
 	if (a == NULL) return(0);
-	memset(a->ptr,0,sizeof(BIO_OK_CTX));
+	OPENSSL_cleanse(a->ptr,sizeof(BIO_OK_CTX));
 	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;

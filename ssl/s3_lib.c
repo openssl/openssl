@@ -732,7 +732,7 @@ void ssl3_free(SSL *s)
 #endif
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
-	memset(s->s3,0,sizeof *s->s3);
+	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
 	s->s3=NULL;
 	}

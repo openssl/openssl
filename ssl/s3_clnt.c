@@ -1461,7 +1461,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
 					tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
-			memset(tmp_buf,0,SSL_MAX_MASTER_KEY_LENGTH);
+			OPENSSL_cleanse(tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
 			}
 		else
 #endif
