@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- EVP_BytesToKey - password based encryption routine
+EVP_BytesToKey - password based encryption routine
 
 =head1 SYNOPSIS
 

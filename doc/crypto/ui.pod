@@ -5,7 +5,7 @@
 UI_new, UI_new_method, UI_free, UI_add_input_string, UI_dup_input_string,
 UI_add_verify_string, UI_dup_verify_string, UI_add_input_boolean,
 UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
-UI_add_error_string, UI_dup_error_string, UI_construct_prompt
+UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
 UI_add_user_data, UI_get0_user_data, UI_get0_result, UI_process,
 UI_ctrl, UI_set_default_method, UI_get_default_method, UI_get_method,
 UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface
