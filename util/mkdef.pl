@@ -54,6 +54,8 @@
 #   exclude.
 #
 
+my $debug=0;
+
 my $crypto_num= "util/libeay.num";
 my $ssl_num=    "util/ssleay.num";
 
@@ -72,8 +74,8 @@ my $NT=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
 
-my @known_platforms = ( "__FreeBSD__", "VMS", "WIN16", "WIN32",
-			"WINNT", "PERL5", "NeXT" );
+my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT" );
+my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "RIPEMD",
@@ -315,7 +317,8 @@ sub do_defs
 		open(IN,"<$file") || die "unable to open $file:$!\n";
 		my $line = "", my $def= "";
 		my %tag = (
-			(map { "OPENSSL_SYS_".$_ => 0 } @known_platforms),
+			(map { $_ => 0 } @known_platforms),
+			(map { "OPENSSL_SYS_".$_ => 0 } @known_ossl_platforms),
 			(map { "OPENSSL_NO_".$_ => 0 } @known_algorithms),
 			NOPROTO		=> 0,
 			PERL5		=> 0,
@@ -335,6 +338,8 @@ sub do_defs
 			}
 
 			if (/\\$/) {
+				chomp; # remove eol
+				chop; # remove ending backslash
 				$line = $_;
 				next;
 			}
@@ -347,70 +352,135 @@ sub do_defs
 
 			s/\/\*.*?\*\///gs;                   # ignore comments
 			s/{[^{}]*}//gs;                      # ignore {} blocks
-			#print STDERR "DEBUG: \$_=\"$_\"\n";
+			print STDERR "DEBUG: \$_=\"$_\"\n" if $debug;
 			if (/^\#\s*ifndef\s+(.*)/) {
+				push(@tag,"-");
 				push(@tag,$1);
 				$tag{$1}=-1;
+				print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 			} elsif (/^\#\s*if\s+!defined\(([^\)]+)\)/) {
-				push(@tag,$1);
-				$tag{$1}=-1;
+				push(@tag,"-");
+				if (/^\#\s*if\s+(!defined\(([^\)]+)\)(\s+\&\&\s+!defined\(([^\)]+)\))*)$/) {
+					my $tmp_1 = $1;
+					my $tmp_;
+					foreach $tmp_ (split '\&\&',$tmp_1) {
+						$tmp_ =~ /!defined\(([^\)]+)\)/;
+						print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
+						push(@tag,$1);
+						$tag{$1}=-1;
+					}
+				} else {
+					print STDERR "Warning: $file: complicated expression: $_" if $debug; # because it is O...
+					print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
+					push(@tag,$1);
+					$tag{$1}=-1;
+				}
 			} elsif (/^\#\s*ifdef\s+(.*)/) {
+				push(@tag,"-");
 				push(@tag,$1);
 				$tag{$1}=1;
+				print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 			} elsif (/^\#\s*if\s+defined\(([^\)]+)\)/) {
-				push(@tag,$1);
-				$tag{$1}=1;
+				push(@tag,"-");
+				if (/^\#\s*if\s+(defined\(([^\)]+)\)(\s+\|\|\s+defined\(([^\)]+)\))*)$/) {
+					my $tmp_1 = $1;
+					my $tmp_;
+					foreach $tmp_ (split '\|\|',$tmp_1) {
+						$tmp_ =~ /defined\(([^\)]+)\)/;
+						print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
+						push(@tag,$1);
+						$tag{$1}=1;
+					}
+				} else {
+					print STDERR "Warning: $file: complicated expression: $_\n" if $debug; # because it is O...
+					print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
+					push(@tag,$1);
+					$tag{$1}=1;
+				}
 			} elsif (/^\#\s*error\s+(\w+) is disabled\./) {
-				if ($tag[$#tag] eq "OPENSSL_NO_".$1) {
-					$tag{$tag[$#tag]}=2;
+				my $tag_i = $#tag;
+				while($tag[$tag_i] ne "-") {
+					if ($tag[$tag_i] eq "OPENSSL_NO_".$1) {
+						$tag{$tag[$tag_i]}=2;
+						print STDERR "DEBUG: $file: chaged tag $1 = 2\n" if $debug;
+					}
+					$tag_i--;
 				}
 			} elsif (/^\#\s*endif/) {
-				my $oldtag=$tag[$#tag];
-				#print STDERR "DEBUG: \$oldtag=\"$oldtag\"\n";
-				if ($tag{$tag[$#tag]}==2) {
-					$tag{$tag[$#tag]}=-1;
-				} else {
-					$tag{$tag[$#tag]}=0;
+				my $tag_i = $#tag;
+				while($tag[$tag_i] ne "-") {
+					my $t=$tag[$tag_i];
+					print STDERR "DEBUG: \$t=\"$t\"\n" if $debug;
+					if ($tag{$t}==2) {
+						$tag{$t}=-1;
+					} else {
+						$tag{$t}=0;
+					}
+					print STDERR "DEBUG: $file: changed tag ",$t," = ",$tag{$t},"\n" if $debug;
+					pop(@tag);
+					if ($t =~ /^OPENSSL_NO_([A-Z0-9_]+)$/) {
+						$t=$1;
+					} else {
+						$t="";
+					}
+					if ($t ne ""
+					    && !grep(/^$t$/, @known_algorithms)) {
+						$unknown_algorithms{$t} = 1;
+						#print STDERR "DEBUG: Added as unknown algorithm: $t\n" if $debug;
+					}
+					$tag_i--;
 				}
 				pop(@tag);
-				if ($oldtag =~ /^OPENSSL_NO_([A-Z0-9_]+)$/) {
-					$oldtag=$1;
-				} else {
-					$oldtag="";
-				}
-				if ($oldtag ne ""
-				    && !grep(/^$oldtag$/, @known_algorithms)) {
-					$unknown_algorithms{$oldtag} = 1;
-					#print STDERR "DEBUG: Added as unknown algorithm: $oldtag\n";
-				}
 			} elsif (/^\#\s*else/) {
-				my $t=$tag[$#tag];
-				$tag{$t}= -$tag{$t};
+				my $tag_i = $#tag;
+				while($tag[$tag_i] ne "-") {
+					my $t=$tag[$tag_i];
+					$tag{$t}= -$tag{$t};
+					print STDERR "DEBUG: $file: changed tag ",$t," = ",$tag{$t},"\n" if $debug;
+					$tag_i--;
+				}
 			} elsif (/^\#\s*if\s+1/) {
+				push(@tag,"-");
 				# Dummy tag
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=1;
+				print STDERR "DEBUG: $file: found 1\n" if $debug;
 			} elsif (/^\#\s*if\s+0/) {
+				push(@tag,"-");
 				# Dummy tag
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=-1;
+				print STDERR "DEBUG: $file: found 0\n" if $debug;
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking) {
 				my $s = $1;
-				my $a =
-				    $2.":".join(",",
-						grep(!/^$/,
-						     map { $tag{"OPENSSL_SYS_".$_} == 1 ?
-							       $_ : "" }
-						     @known_platforms));
-				$rename{$s} = $a;
+				my $a = $2;
+				my $a1 = join(",",
+					      grep(!/^$/,
+						   map { $tag{$_} == 1 ?
+							     $_ : "" }
+						   @known_platforms));
+				my $a2 = join(",",
+					      grep(!/^$/,
+						   map { $tag{"OPENSSL_SYS_".$_} == 1 ?
+							     $_ : "" }
+						   @known_ossl_platforms));
+				if ($a1 eq "") { $a1 = $a2; }
+				elsif ($a1 ne "" && $a2 ne "") { $a1 .= ",".$a2; }
+				$rename{$s} = $a.":".$a1;
+				print STDERR "DEBUG: $file: defined $s = $a\n" if $debug;
 			}
 			if (/^\#/) {
 				@current_platforms =
 				    grep(!/^$/,
-					 map { $tag{"OPENSSL_SYS_".$_} == 1 ? $_ :
-						   $tag{"OPENSSL_SYS_".$_} == -1 ? "!".$_  : "" }
+					 map { $tag{$_} == 1 ? $_ :
+						   $tag{$_} == -1 ? "!".$_  : "" }
 					 @known_platforms);
+				push @current_platforms
+				    , grep(!/^$/,
+					   map { $tag{"OPENSSL_SYS_".$_} == 1 ? $_ :
+						     $tag{"OPENSSL_SYS_".$_} == -1 ? "!".$_  : "" }
+					   @known_ossl_platforms);
 				@current_algorithms =
 				    grep(!/^$/,
 					 map { $tag{"OPENSSL_NO_".$_} == -1 ? $_ : "" }
@@ -597,26 +667,8 @@ sub do_defs
 
 	# Prune the returned symbols
 
-	$platform{"crypt"} .= ",!PERL5,!__FreeBSD__,!NeXT";
-
-        delete $syms{"SSL_add_dir_cert_subjects_to_stack"};
         delete $syms{"bn_dump1"};
-
-	$platform{"BIO_s_file_internal"} .= ",WIN16";
-	$platform{"BIO_new_file_internal"} .= ",WIN16";
-	$platform{"BIO_new_fp_internal"} .= ",WIN16";
-
-	$platform{"BIO_s_file"} .= ",!WIN16";
-	$platform{"BIO_new_file"} .= ",!WIN16";
-	$platform{"BIO_new_fp"} .= ",!WIN16";
-
 	$platform{"BIO_s_log"} .= ",!WIN32,!WIN16,!macintosh";
-
-	if(exists $syms{"ERR_load_CRYPTO_strings"}) {
-		$platform{"ERR_load_CRYPTO_strings"} .= ",!VMS,!WIN16";
-		$syms{"ERR_load_CRYPTOlib_strings"} = 1;
-		$platform{"ERR_load_CRYPTOlib_strings"} .= ",VMS,WIN16";
-	}
 
 	# Info we know about
 
@@ -687,7 +739,7 @@ sub maybe_add_info {
 			if (!defined($dummy) || $i ne $dummy) {
 				$nums{$s} = $n."\\".$i;
 				$new_info++;
-				#print STDERR "DEBUG: maybe_add_info for $s: \"$dummy\" => \"$i\"\n";
+				print STDERR "DEBUG: maybe_add_info for $s: \"$dummy\" => \"$i\"\n" if $debug;
 			}
 		}
 		$syms{sym} = 1;
@@ -698,7 +750,7 @@ sub maybe_add_info {
 		(my $n, my $i) = split /\\/, $nums{$sym};
 		if (!defined($syms{sym})) {
 			$new_info++;
-			#print STDERR "DEBUG: maybe_add_info for $sym: -> undefined\n";
+			print STDERR "DEBUG: maybe_add_info for $sym: -> undefined\n if $debug";
 		}
 	}
 	if ($new_info) {
@@ -939,7 +991,7 @@ sub rewrite_numbers
 	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
 	foreach $sym (@s) {
 		(my $n, my $i) = split /\\/, $nums{$sym};
-		#print STDERR "DEBUG: rewrite_numbers for sym = ",$sym,": i = ",$i,", n = ",$n,", rsym{sym} = ",$rsyms{$sym},"syms{sym} = ",$syms{$sym},"\n";
+		print STDERR "DEBUG: rewrite_numbers for sym = ",$sym,": i = ",$i,", n = ",$n,", rsym{sym} = ",$rsyms{$sym},"syms{sym} = ",$syms{$sym},"\n" if $debug;
 		next if defined($i) && $i =~ /^.*?:.*?:\w+\(\w+\)/;
 		next if defined($rsyms{$sym});
 		$i="NOEXIST::FUNCTION:"

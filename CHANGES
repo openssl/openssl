@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Modify mkdef.pl to recognise and parse prprocessor conditionals
+     of the form '#if defined(...) || defined(...) || ...' and
+     '#if !defined(...) && !defined(...) && ...'.  This also avoids
+     the growing number of special cases it was previously handling.
+     [Richard Levitte]
+
   *) Don't use getenv in library functions when run as setuid/setgid.
      New function OPENSSL_issetugid().
      [Ulf Moeller]
