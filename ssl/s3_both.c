@@ -256,6 +256,11 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 	return(l);
 	}
 
+/* Obtain handshake message of message type 'mt' (any if mt == -1),
+ * maximum acceptable body length 'max'.
+ * The first four bytes (msg_type and length) are read in state 'st1',
+ * the body is read in state 'stn'.
+ */
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	{
 	unsigned char *p;

@@ -299,26 +299,26 @@ again:
 			goto f_err;
 			}
 
-		/* now s->rstate == SSL_ST_READ_BODY; */
+		/* now s->rstate == SSL_ST_READ_BODY */
 		}
 
-	/* get and decode the data */
-	if (s->rstate == SSL_ST_READ_BODY)
+	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
+
+	if (rr->length > (s->packet_length-SSL3_RT_HEADER_LENGTH))
 		{
-		if (rr->length > (s->packet_length-SSL3_RT_HEADER_LENGTH))
-			{
-			i=rr->length;
-			n=ssl3_read_n(s,i,i,1);
-			if (n <= 0) return(n); /* error or non-blocking io */
-			}
-		s->rstate=SSL_ST_READ_HEADER;
+		/* now s->packet_length == SSL3_RT_HEADER_LENGTH */
+		i=rr->length;
+		n=ssl3_read_n(s,i,i,1);
+		if (n <= 0) return(n); /* error or non-blocking io */
+		/* now n == rr->length,
+		 * and s->packet_length == SSL3_RT_HEADER_LENGTH + rr->length */
 		}
 
-	/* At this point, we have the data in s->packet and there should be
-	 * s->packet_length bytes, we must not 'overrun' this buffer :-)
-	 * One of the following functions will copy the data from the
-	 * s->packet buffer */
+	s->rstate=SSL_ST_READ_HEADER; /* set state for later operations */
 
+	/* At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
+	 * and we have that many bytes in s->packet
+	 */
 	rr->input= &(s->packet[SSL3_RT_HEADER_LENGTH]);
 
 	/* ok, we can now read from 's->packet' data into 'rr'
@@ -327,9 +327,6 @@ again:
 	 * the decryption or by the decompression
 	 * When the data is 'copied' into the rr->data buffer,
 	 * rr->input will be pointed at the new buffer */ 
-
-	/* Set the state for the following operations */
-	s->rstate=SSL_ST_READ_HEADER;
 
 	/* We now have - encrypted [ MAC [ compressed [ plain ] ] ]
 	 * rr->length bytes of encrypted compressed stuff. */
@@ -371,7 +368,7 @@ printf("\n");
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
 			goto f_err;
 			}
-		/* check MAC for rr->input' */
+		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
 		if (rr->length < mac_size)
 			{
 			al=SSL_AD_DECODE_ERROR;
@@ -471,12 +468,12 @@ static int do_compress(SSL *ssl)
 	return(1);
 	}
 
-/* Call this to write data
+/* Call this to write data in records of type 'type'
  * It will return <= 0 if not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(SSL *s, int type, const void *_buf, int len)
+int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	{
-	const unsigned char *buf=_buf;
+	const unsigned char *buf=buf_;
 	unsigned int tot,n,nw;
 	int i;
 
@@ -800,7 +797,7 @@ start:
 				cb(s,SSL_CB_READ_ALERT,j);
 				}
 
-			if (i == 1)
+			if (i == 1) /* warning */
 				{
 				s->s3->warn_alert=n;
 				if (n == SSL_AD_CLOSE_NOTIFY)
@@ -809,7 +806,7 @@ start:
 					return(0);
 					}
 				}
-			else if (i == 2)
+			else if (i == 2) /* fatal */
 				{
 				char tmp[16];
 
@@ -940,7 +937,10 @@ start:
 				goto f_err;
 				}
 			}
+		/* not reached */
 		}
+
+	/* rr->type == type */
 
 	/* make sure that we are not getting application data when we
 	 * are doing a handshake for the first time */
@@ -1019,6 +1019,7 @@ static int do_change_cipher_spec(SSL *s)
 	return(1);
 	}
 
+/* send s->init_buf in records of type 'type' */
 int ssl3_do_write(SSL *s, int type)
 	{
 	int ret;

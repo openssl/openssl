@@ -595,7 +595,7 @@ struct ssl_st
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
-	/* These are the ones being used, the ones is SSL_SESSION are
+	/* These are the ones being used, the ones in SSL_SESSION are
 	 * the ones to be 'copied' into these ones */
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
@@ -1108,7 +1108,9 @@ int SSL_version(SSL *ssl);
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 	const char *CApath);
+#define SSL_get0_session SSL_get_session /* just peek at pointer */
 SSL_SESSION *SSL_get_session(SSL *ssl);
+SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a reference count */
 SSL_CTX *SSL_get_SSL_CTX(SSL *ssl);
 void SSL_set_info_callback(SSL *ssl,void (*cb)());
 void (*SSL_get_info_callback(SSL *ssl))();
