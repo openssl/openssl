@@ -1,4 +1,3 @@
-/* TODO */
 /* crypto/ec/ec_lib.c */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
@@ -54,4 +53,292 @@
  *
  */
 
+#include <openssl/err.h>
+
 #include "ec_lcl.h"
+
+
+/* functions for EC_GROUP objects */
+
+EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
+	{
+	EC_GROUP *ret;
+
+	if (meth == NULL)
+		{
+		ECerr(EC_F_EC_GROUP_NEW, ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+	if (meth->group_init == 0)
+		{
+		ECerr(EC_F_EC_GROUP_NEW, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return NULL;
+		}
+
+	ret = OPENSSL_malloc(sizeof *ret);
+	if (ret == NULL)
+		{
+		ECerr(EC_F_EC_GROUP_NEW, ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
+
+	ret->meth = meth;
+	
+	if (!meth->group_init(ret))
+		{
+		OPENSSL_free(ret);
+		return NULL;
+		}
+	
+	return ret;
+	}
+
+
+int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+	{
+	if (group->meth->group_set_curve_GFp == 0)
+		{
+		ECerr(EC_F_EC_GROUP_SET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	
+	return group->meth->group_set_curve_GFp(group, p, a, b, ctx);
+	}
+
+
+void EC_GROUP_free(EC_GROUP *group)
+	{
+	if (group->meth->group_finish != 0)
+		group->meth->group_finish(group);
+	OPENSSL_free(group);
+	}
+ 
+
+void EC_GROUP_clear_free(EC_GROUP *group)
+	{
+	if (group->meth->group_clear_finish != 0)
+		group->meth->group_clear_finish(group);
+	else if (group->meth != NULL && group->meth->group_finish != 0)
+		group->meth->group_finish(group);
+	OPENSSL_free(group);
+	}
+
+
+int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
+	{
+	if (dest->meth->group_copy == 0)
+		{
+		ECerr(EC_F_EC_GROUP_COPY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (dest->meth != src->meth)
+		{
+		ECerr(EC_F_EC_GROUP_COPY, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	
+	return dest->meth->group_copy(dest, src);
+	}
+
+
+int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor)
+	{
+	if (group->meth->group_set_generator == 0)
+		{
+		ECerr(EC_F_EC_GROUP_SET_GENERATOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_set_generator(group, generator, order, cofactor);
+	}
+
+
+/* TODO: 'get' functions for EC_GROUPs */
+
+
+
+/* functions for EC_POINT objects */
+
+EC_POINT *EC_POINT_new(const EC_GROUP *group)
+	{
+	EC_POINT *ret;
+
+	if (group == NULL)
+		{
+		ECerr(EC_F_EC_POINT_NEW, ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+	if (group->meth->point_init == 0)
+		{
+		ECerr(EC_F_EC_POINT_NEW, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return NULL;
+		}
+
+	ret = OPENSSL_malloc(sizeof *ret);
+	if (ret == NULL)
+		{
+		ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
+
+	ret->meth = group->meth;
+	
+	if (!ret->meth->point_init(ret))
+		{
+		OPENSSL_free(ret);
+		return NULL;
+		}
+	
+	return ret;
+	}
+
+
+void EC_POINT_free(EC_POINT *point)
+	{
+	if (point->meth->point_finish != 0)
+		point->meth->point_finish(point);
+	OPENSSL_free(point);
+	}
+ 
+
+void EC_POINT_clear_free(EC_POINT *point)
+	{
+	if (point->meth->point_clear_finish != 0)
+		point->meth->point_clear_finish(point);
+	else if (point->meth != NULL && point->meth->point_finish != 0)
+		point->meth->point_finish(point);
+	OPENSSL_free(point);
+	}
+
+
+int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
+	{
+	if (dest->meth->point_copy == 0)
+		{
+		ECerr(EC_F_EC_POINT_COPY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (dest->meth != src->meth)
+		{
+		ECerr(EC_F_EC_POINT_COPY, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	
+	return dest->meth->point_copy(dest, src);
+	}
+
+
+/* TODO: 'set' and 'get' functions for EC_POINTs */
+
+
+size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
+        unsigned char *buf, size_t len, BN_CTX *ctx)
+	{
+	if (group->meth->point2oct == 0)
+		{
+		ECerr(EC_F_EC_POINT_POINT2OCT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_POINT2OCT, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->point2oct(group, point, form, buf, len, ctx);
+	}
+
+
+int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
+        const unsigned char *buf, size_t len, BN_CTX *ctx)
+	{
+	if (group->meth->oct2point == 0)
+		{
+		ECerr(EC_F_EC_POINT_OCT2POINT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->oct2point(group, point, buf, len, ctx);
+	}
+
+
+int EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
+	{
+	if (group->meth->add == 0)
+		{
+		ECerr(EC_F_EC_POINT_ADD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if ((group->meth != r->meth) || (r->meth != a->meth) || (a->meth != b->meth))
+		{
+		ECerr(EC_F_EC_POINT_ADD, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->add(group, r, a, b, ctx);
+	}
+
+
+int EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx)
+	{
+	if (group->meth->dbl == 0)
+		{
+		ECerr(EC_F_EC_POINT_DBL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if ((group->meth != r->meth) || (r->meth != a->meth))
+		{
+		ECerr(EC_F_EC_POINT_DBL, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->dbl(group, r, a, ctx);
+	}
+
+
+int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
+	{
+	if (group->meth->is_at_infinity == 0)
+		{
+		ECerr(EC_F_EC_POINT_IS_AT_INFINITY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_IS_AT_INFINITY, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->is_at_infinity(group, point);
+	}
+
+
+int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+	{
+	if (group->meth->is_on_curve == 0)
+		{
+		ECerr(EC_F_EC_POINT_IS_ON_CURVE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_IS_ON_CURVE, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->is_on_curve(group, point, ctx);
+	}
+
+
+int EC_POINT_make_affine(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+	{
+	if (group->meth->make_affine == 0)
+		{
+		ECerr(EC_F_EC_POINT_MAKE_AFFINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_MAKE_AFFINE, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->make_affine(group, point, ctx);
+	}

@@ -104,6 +104,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *);
  */
 int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void EC_GROUP_free(EC_GROUP *);
+void EC_GROUP_clear_free(EC_GROUP *);
 int EC_GROUP_copy(EC_GROUP *, const EC_GROUP*);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
@@ -117,6 +118,7 @@ int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
+void EC_POINT_clear_free(EC_POINT *);
 int EC_POINT_copy(EC_POINT *, const EC_POINT *);
  
 /* TODO: 'set' and 'get' functions for EC_POINTs */
@@ -148,8 +150,24 @@ int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_EC_GROUP_CLEAR_FREE			 103
+#define EC_F_EC_GROUP_COPY				 102
+#define EC_F_EC_GROUP_FREE				 104
+#define EC_F_EC_GROUP_NEW				 100
+#define EC_F_EC_GROUP_SET_CURVE_GFP			 101
+#define EC_F_EC_GROUP_SET_GENERATOR			 106
+#define EC_F_EC_POINT_ADD				 107
+#define EC_F_EC_POINT_COPY				 108
+#define EC_F_EC_POINT_DBL				 109
+#define EC_F_EC_POINT_IS_AT_INFINITY			 110
+#define EC_F_EC_POINT_IS_ON_CURVE			 111
+#define EC_F_EC_POINT_MAKE_AFFINE			 112
+#define EC_F_EC_POINT_NEW				 105
+#define EC_F_EC_POINT_OCT2POINT				 113
+#define EC_F_EC_POINT_POINT2OCT				 114
 
 /* Reason codes. */
+#define EC_R_INCOMPATIBLE_OBJECTS			 100
 
 #ifdef  __cplusplus
 }

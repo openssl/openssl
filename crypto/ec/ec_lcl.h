@@ -64,11 +64,12 @@
  * so all this may change in future versions. */
 
 struct ec_method_st {
-	/* used by EC_GROUP_new, EC_GROUP_set_GFp, EC_GROUP_free, EC_GROUP_copy: */
+	/* used by EC_GROUP_new, EC_GROUP_set_curve_GFp, EC_GROUP_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
 	/* int (*group_set)(EC_GROUP *, .....); */
-	int (*group_set_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+	int (*group_set_curve_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	void (*group_finish)(EC_GROUP *);
+	void (*group_clear_finish)(EC_GROUP *);
 	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
 	/* used by EC_GROUP_set_generator: */
@@ -81,6 +82,7 @@ struct ec_method_st {
 	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
 	void (*point_finish)(EC_POINT *);
+	void (*point_clear_finish)(EC_POINT *);
 	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
 	/* TODO: 'set' and 'get' functions for EC_POINTs */
@@ -115,8 +117,11 @@ struct ec_method_st {
 
 
 struct ec_group_st {
-	EC_METHOD *meth;
+	const EC_METHOD *meth;
 
+	/* All members except 'meth' are handled by the method functions,
+	 * even if they appear generic */
+	
 	BIGNUM field; /* Field specification.
 	               * For curves over GF(p), this is the modulus. */
 	void *field_data; /* method-specific (e.g., Montgomery structure) */
@@ -138,7 +143,10 @@ struct ec_group_st {
 
 
 struct ec_point_st {
-	EC_METHOD *meth;
+	const EC_METHOD *meth;
+
+	/* All members except 'meth' are handled by the method functions,
+	 * even if they appear generic */
 
 	BIGNUM X;
 	BIGNUM Y;
