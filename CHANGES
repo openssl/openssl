@@ -766,7 +766,7 @@
   *) Undo Cygwin change.
      [Ulf Möller]
 
- Changes between 0.9.7e and 0.9.7f  [23 Mar 2005]
+ Changes between 0.9.7e and 0.9.7f  [22 Mar 2005]
 
   *) Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating
      server and client random values. Previously
@@ -799,6 +799,10 @@
 
   *) Prompt for pass phrases when appropriate for PKCS12 input format.
      [Steve Henson]
+
+  *) Back-port of selected performance improvements from development
+     branch, as well as improved support for PowerPC platforms.
+     [Andy Polyakov]
 
   *) Add lots of checks for memory allocation failure, error codes to indicate
      failure and freeing up memory if a failure occurs.
