@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix assembler for Alpha (tested only on DEC OSF not Linux or *BSD).  The
+     problem was that one of the replacement routines had not been working since
+     SSLeay releases.  For now the offending routine has been replaced with
+     non-optimised assembler.  Even so, this now gives around 95% performance
+     improvement for 1024 bit RSA signs.
+     [Mark Cox]
+
   *) Hack to fix PKCS#7 decryption when used with some unorthodox RC2 
      handling. Most clients have the effective key size in bits equal to
      the key length in bits: so a 40 bit RC2 key uses a 40 bit (5 byte) key.
