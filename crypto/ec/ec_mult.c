@@ -233,7 +233,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	wsize = OPENSSL_malloc(totalnum * sizeof wsize[0]);
 	wNAF_len = OPENSSL_malloc(totalnum * sizeof wNAF_len[0]);
-	wNAF = OPENSSL_malloc(totalnum * sizeof wNAF[0] + 1);
+	wNAF = OPENSSL_malloc((totalnum + 1) * sizeof wNAF[0]);
 	if (wNAF != NULL)
 		{
 		wNAF[0] = NULL; /* preliminary pivot */
