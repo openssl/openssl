@@ -5,6 +5,9 @@
 
  Changes between 0.9.01c and 0.9.1d
 
+  *) Autodetect FreeBSD3.
+     [Ben Laurie]
+
   *) Fix various bugs in Configure. This affects the following platforms:
      nextstep
      ncr-scde
