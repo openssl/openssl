@@ -97,6 +97,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *pkey = NULL;
 	RSA *rsa = NULL;
 	unsigned char *rsa_in = NULL, *rsa_out = NULL, pad;
+	char *passargin = NULL, *passin = NULL;
 	int rsa_inlen, rsa_outlen = 0;
 	int keysize;
 
@@ -124,6 +125,9 @@ int MAIN(int argc, char **argv)
 		} else if(!strcmp(*argv, "-inkey")) {
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
+		} else if (!strcmp(*argv,"-passin")) {
+			if (--argc < 1) badarg = 1;
+			passargin= *(++argv);
 		} else if (strcmp(*argv,"-keyform") == 0) {
 			if (--argc < 1) badarg = 1;
 			keyform=str2fmt(*(++argv));
@@ -169,6 +173,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
+	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+	}
 
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
@@ -176,7 +184,7 @@ int MAIN(int argc, char **argv)
 	switch(key_type) {
 		case KEY_PRIVKEY:
 		pkey = load_key(bio_err, keyfile, keyform, 0,
-			NULL, e, "Private Key");
+			passin, e, "Private Key");
 		break;
 
 		case KEY_PUBKEY:
@@ -290,6 +298,7 @@ int MAIN(int argc, char **argv)
 	BIO_free_all(out);
 	if(rsa_in) OPENSSL_free(rsa_in);
 	if(rsa_out) OPENSSL_free(rsa_out);
+	if(passin) OPENSSL_free(passin);
 	return ret;
 }
 
@@ -313,6 +322,7 @@ static void usage()
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+	BIO_printf (bio_err, "-passin arg    pass phrase source\n");
 #endif
 
 }
