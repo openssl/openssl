@@ -247,6 +247,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	}
 
 static int local_argc=0;
@@ -417,6 +418,7 @@ int MAIN(int argc, char *argv[])
 	int state=0;
 	SSL_METHOD *meth=NULL;
 	ENGINE *e=NULL;
+	char *inrand=NULL;
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
 	meth=SSLv23_server_method();
@@ -575,6 +577,11 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			engine_id= *(++argv);
 			}
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -591,7 +598,14 @@ bad:
 		goto end;
 		}
 
-	app_RAND_load_file(NULL, bio_err, 0);
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+		&& !RAND_status())
+		{
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		}
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	if (bio_s_out == NULL)
 		{
