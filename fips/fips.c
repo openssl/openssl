@@ -59,6 +59,10 @@
 
 #ifdef OPENSSL_FIPS
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 int FIPS_md5_allowed;
 int FIPS_selftest_fail;
 
