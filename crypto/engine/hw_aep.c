@@ -83,8 +83,8 @@ typedef int pid_t;
 
 #define FAIL_TO_SW 0x10101010
 
-static int aep_init();
-static int aep_finish();
+static int aep_init(void);
+static int aep_finish(void);
 
 static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR hConnection);
 static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection);
@@ -334,7 +334,7 @@ static t_AEP_Finalize          *p_AEP_Finalize        = NULL;
 static t_AEP_SetBNCallBacks    *p_AEP_SetBNCallBacks  = NULL;
 
 /* (de)initialisation functions. */
-static int aep_init()
+static int aep_init(void)
 {
   t_AEP_ModExp          *p1;
   t_AEP_ModExpCrt       *p2;
@@ -419,7 +419,7 @@ static int aep_init()
  
 }
 
-static int aep_finish()
+static int aep_finish(void)
 {
   int to_return = 0, in_use;
   AEP_RV rv;
