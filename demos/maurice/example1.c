@@ -72,7 +72,7 @@ void main_encrypt(void)
 
         pubKey[0] = ReadPublicKey(PUBFILE);
 
-	if(!pubKey)
+	if(!pubKey[0])
 	{
            fprintf(stderr,"Error: can't load public key");
            exit(1);
