@@ -245,7 +245,7 @@ static int ssl3_get_record(SSL *s)
 		extra=SSL3_RT_MAX_EXTRA;
 	else
 		extra=0;
-	if ((size_t)extra != (s->s3->rbuf.len - SSL3_RT_MAX_PACKET_SIZE))
+	if (extra != (s->s3->rbuf.len - SSL3_RT_MAX_PACKET_SIZE))
 		{
 		/* actually likely an application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER
 		 * set after ssl3_setup_buffers() was done */
@@ -605,7 +605,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			if (prefix_len <= 0)
 				goto err;
 
-			if (s->s3->wbuf.len < (size_t)prefix_len + SSL3_RT_MAX_PACKET_SIZE)
+			if (s->s3->wbuf.len < prefix_len + SSL3_RT_MAX_PACKET_SIZE)
 				{
 				/* insufficient space */
 				SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
