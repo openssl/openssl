@@ -59,10 +59,30 @@
 
 const EC_METHOD *EC_GFp_mont_method(void)
 	{
-	static const EC_METHOD ret =
-		{
-			0 /* XXX */
-		};
+	static const EC_METHOD ret = {
+		ec_GFp_simple_group_init,
+		ec_GFp_simple_group_set_curve_GFp,
+		ec_GFp_simple_group_finish,
+		ec_GFp_simple_group_clear_finish,
+		ec_GFp_simple_group_copy,
+		ec_GFp_simple_group_set_generator,
+		/* TODO: 'set' and 'get' functions for EC_GROUPs */
+		ec_GFp_simple_point_init,
+		ec_GFp_simple_point_finish,
+		ec_GFp_simple_point_clear_finish,
+		ec_GFp_simple_point_copy,
+		/* TODO: 'set' and 'get' functions for EC_POINTs */
+		ec_GFp_simple_point2oct,
+		ec_GFp_simple_oct2point,
+		ec_GFp_simple_add,
+		ec_GFp_simple_dbl,
+		ec_GFp_simple_is_at_infinity,
+		ec_GFp_simple_is_on_curve,
+		ec_GFp_simple_make_affine,
+		ec_GFp_mont_field_mult,
+		ec_GFp_mont_field_sqr,
+		ec_GFp_mont_field_encode,
+		ec_GFp_mont_field_decode };
 
 	return &ret;
 	}

@@ -1,4 +1,3 @@
-/* TODO */
 /* crypto/ec/ec_lcl.h */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
@@ -76,7 +75,7 @@ struct ec_method_st {
 	int (*group_set_generator)(EC_GROUP *, const EC_POINT *generator,
 	        const BIGNUM *order, const BIGNUM *cofactor);
 	
-	/* TODO: 'set' functions for EC_GROUPs */
+	/* TODO: 'set' and 'get' functions for EC_GROUPs */
 
 
 	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_copy: */
@@ -142,8 +141,6 @@ struct ec_group_st {
 
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
-
-	/* optional Lim/Lee precomputation table */
 } /* EC_GROUP */;
 
 
@@ -153,7 +150,6 @@ struct ec_group_st {
  * global ex_data-style index tables.
  * (Currently, we have one slot only, but is is possible to extend this
  * if necessary.) */
-
 int EC_GROUP_set_extra_data(EC_GROUP *, void *extra_data, void *(*extra_data_dup_func)(void *),
 	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
 void *EC_GROUP_get_extra_data(EC_GROUP *, void *(*extra_data_dup_func)(void *),
@@ -175,3 +171,52 @@ struct ec_point_st {
 	           * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
+
+
+
+/* method functions in ecp_smpl.c */
+int ec_GFp_simple_group_init(EC_GROUP *);
+int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+void ec_GFp_simple_group_finish(EC_GROUP *);
+void ec_GFp_simple_group_clear_finish(EC_GROUP *);
+int ec_GFp_simple_group_copy(EC_GROUP *, const EC_GROUP *);
+int ec_GFp_simple_group_set_generator(EC_GROUP *, const EC_POINT *generator,
+	const BIGNUM *order, const BIGNUM *cofactor);
+/* TODO: 'set' and 'get' functions for EC_GROUPs */
+int ec_GFp_simple_point_init(EC_POINT *);
+void ec_GFp_simple_point_finish(EC_POINT *);
+void ec_GFp_simple_point_clear_finish(EC_POINT *);
+int ec_GFp_simple_point_copy(EC_POINT *, const EC_POINT *);
+/* TODO: 'set' and 'get' functions for EC_POINTs */
+size_t ec_GFp_simple_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
+	unsigned char *buf, size_t len, BN_CTX *);
+int ec_GFp_simple_oct2point(const EC_GROUP *, EC_POINT *,
+	const unsigned char *buf, size_t len, BN_CTX *);
+int ec_GFp_simple_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
+int ec_GFp_simple_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
+int ec_GFp_simple_is_at_infinity(const EC_GROUP *, const EC_POINT *);
+int ec_GFp_simple_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int ec_GFp_simple_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int ec_GFp_simple_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+
+
+/* method functions in ecp_mont.c */
+int ec_GFp_mont_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_mont_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+
+
+/* method functions in ecp_recp.c */
+int ec_GFp_recp_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_recp_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_recp_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_recp_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+
+
+/* method functions in ecp_nist.c */
+int ec_GFp_nist_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_nist_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_nist_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_nist_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
