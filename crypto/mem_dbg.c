@@ -88,9 +88,9 @@ typedef struct app_mem_info_st
 /* For application-defined information (static C-string `info')
  * to be displayed in memory leak list.
  * Each thread has its own stack.  For applications, there is
- *   CRYPTO_add_info("...")     to push an entry,
- *   CRYPTO_remove_info()       to pop an entry,
- *   CRYPTO_remove_all_info()   to pop all entries.
+ *   CRYPTO_push_info("...")     to push an entry,
+ *   CRYPTO_pop_info()           to pop an entry,
+ *   CRYPTO_remove_all_info()    to pop all entries.
  */
 	{	
 	unsigned long thread;
@@ -249,7 +249,7 @@ static unsigned long app_info_hash(APP_INFO *a)
 	return(ret);
 	}
 
-static APP_INFO *remove_info()
+static APP_INFO *pop_info()
 	{
 	APP_INFO tmp;
 	APP_INFO *ret = NULL;
@@ -269,7 +269,7 @@ static APP_INFO *remove_info()
 #ifdef LEVITTE_DEBUG
 			if (ret->thread != tmp.thread)
 				{
-				fprintf(stderr, "remove_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
+				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
 					ret->thread, tmp.thread);
 				abort();
 				}
@@ -286,7 +286,7 @@ static APP_INFO *remove_info()
 	return(ret);
 	}
 
-int CRYPTO_add_info_(const char *info, const char *file, int line)
+int CRYPTO_push_info_(const char *info, const char *file, int line)
 	{
 	APP_INFO *ami, *amim;
 	int ret=0;
@@ -322,7 +322,7 @@ int CRYPTO_add_info_(const char *info, const char *file, int line)
 #ifdef LEVITTE_DEBUG
 			if (ami->thread != amim->thread)
 				{
-				fprintf(stderr, "CRYPTO_add_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
+				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
 					amim->thread, ami->thread);
 				abort();
 				}
@@ -336,7 +336,7 @@ int CRYPTO_add_info_(const char *info, const char *file, int line)
 	return(ret);
 	}
 
-int CRYPTO_remove_info(void)
+int CRYPTO_pop_info(void)
 	{
 	int ret=0;
 
@@ -344,7 +344,7 @@ int CRYPTO_remove_info(void)
 		{
 		MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
-		ret=(remove_info() != NULL);
+		ret=(pop_info() != NULL);
 
 		MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
 		}
@@ -359,7 +359,7 @@ int CRYPTO_remove_all_info(void)
 		{
 		MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 
-		while(remove_info() != NULL)
+		while(pop_info() != NULL)
 			ret++;
 
 		MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */

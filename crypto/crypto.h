@@ -302,10 +302,10 @@ void *CRYPTO_remalloc(void *addr,int num, char *file, int line);
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options();
 
-#define CRYPTO_add_info(info) \
-        CRYPTO_add_info_(info, __FILE__, __LINE__);
-int CRYPTO_add_info_(const char *info, const char *file, int line);
-int CRYPTO_remove_info(void);
+#define CRYPTO_push_info(info) \
+        CRYPTO_push_info_(info, __FILE__, __LINE__);
+int CRYPTO_push_info_(const char *info, const char *file, int line);
+int CRYPTO_pop_info(void);
 int CRYPTO_remove_all_info(void);
 
 /* The last argument has the following significance:

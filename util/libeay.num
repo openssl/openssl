@@ -2129,3 +2129,11 @@ PKCS7_simple_smimecap                   2153
 PKCS7_get_smimecap                      2154
 PKCS7_sign                              2155
 PKCS7_add_attrib_smimecap               2156
+CRYPTO_dbg_set_options                  2157
+CRYPTO_remove_all_info                  2158
+CRYPTO_get_mem_debug_functions          2159
+CRYPTO_is_mem_check_on                  2160
+CRYPTO_set_mem_debug_functions          2161
+CRYPTO_pop_info                         2162
+CRYPTO_push_info_                       2163
+CRYPTO_set_mem_debug_options            2164

@@ -237,8 +237,9 @@ end:
 	ERR_free_strings();
 
 #ifdef LEVITTE_DEBUG
-	CRYPTO_add_info("Just to make sure I get a memory leak I can see :-)");
+	CRYPTO_push_info("Just to make sure I get a memory leak I can see :-)");
 	(void)Malloc(1024);
+	CRYPTO_pop_info();
 #endif
 
 	CRYPTO_mem_leaks(bio_err);
