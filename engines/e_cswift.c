@@ -92,7 +92,7 @@
 static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);
 static int cswift_finish(ENGINE *e);
-static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 /* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -439,7 +439,7 @@ static int cswift_finish(ENGINE *e)
 	return 1;
 	}
 
-static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int initialised = ((cswift_dso == NULL) ? 0 : 1);
 	switch(cmd)

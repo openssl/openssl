@@ -69,7 +69,7 @@
 #define SUREWARE_LIB_NAME "sureware engine"
 #include "e_sureware_err.c"
 
-static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 static int surewarehk_destroy(ENGINE *e);
 static int surewarehk_init(ENGINE *e);
 static int surewarehk_finish(ENGINE *e);
@@ -368,7 +368,7 @@ static BIO *logstream = NULL;
  * called, the checking and error handling is probably down there. 
 */
 static int threadsafe=1;
-static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 {
 	int to_return = 1;
 

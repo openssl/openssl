@@ -88,7 +88,7 @@
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
-static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void)); 
 
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
@@ -648,7 +648,7 @@ static int hwcrhk_finish(ENGINE *e)
 	return to_return;
 	}
 
-static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int to_return = 1;
 

@@ -156,7 +156,7 @@ static int nuron_finish(ENGINE *e)
 	return 1;
 	}
 
-static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int initialised = ((pvDSOHandle == NULL) ? 0 : 1);
 	switch(cmd)

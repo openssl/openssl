@@ -78,7 +78,7 @@
 static int atalla_destroy(ENGINE *e);
 static int atalla_init(ENGINE *e);
 static int atalla_finish(ENGINE *e);
-static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 /* BIGNUM stuff */
 static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -406,7 +406,7 @@ static int atalla_finish(ENGINE *e)
 	return 1;
 	}
 
-static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int initialised = ((atalla_dso == NULL) ? 0 : 1);
 	switch(cmd)

@@ -97,7 +97,7 @@
 static int e_gmp_destroy(ENGINE *e);
 static int e_gmp_init(ENGINE *e);
 static int e_gmp_finish(ENGINE *e);
-static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
+static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void)); 
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
@@ -230,7 +230,7 @@ static int e_gmp_finish(ENGINE *e)
 	return 1;
 	}
 
-static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int to_return = 1;
 

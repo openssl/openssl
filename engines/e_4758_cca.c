@@ -76,7 +76,7 @@
 static int ibm_4758_cca_destroy(ENGINE *e);
 static int ibm_4758_cca_init(ENGINE *e);
 static int ibm_4758_cca_finish(ENGINE *e);
-static int ibm_4758_cca_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+static int ibm_4758_cca_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 /* rsa functions */
 /*---------------*/
@@ -343,7 +343,7 @@ static int ibm_4758_cca_finish(ENGINE *e)
 	return 1;
 	}
 
-static int ibm_4758_cca_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int ibm_4758_cca_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	int initialised = ((dso == NULL) ? 0 : 1);
 	switch(cmd)
