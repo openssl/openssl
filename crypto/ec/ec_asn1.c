@@ -394,7 +394,7 @@ err :	if (!ok)
 static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
                                               ECPARAMETERS *param)
 	{
-	int	ok=0, i;
+	int	ok=0;
 	size_t  len=0;
 	ECPARAMETERS   *ret=NULL;
 	BIGNUM	       *tmp=NULL;
@@ -455,15 +455,7 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 		goto err;
 		}
 
-	i = EC_GROUP_get_asn1_flag(group);
-	if (i | OPENSSL_EC_COMPRESSED)
-		form = POINT_CONVERSION_COMPRESSED;
-	else if (i | OPENSSL_EC_UNCOMPRESSED)
-		form = POINT_CONVERSION_UNCOMPRESSED;
-	else if (i | OPENSSL_EC_HYBRID)
-		form = POINT_CONVERSION_HYBRID;
-	else 
-		goto err;
+	form = EC_GROUP_get_point_conversion_form(group);
 
 	len = EC_POINT_point2oct(group, point, form, NULL, len, NULL);
 	if (len == 0)
@@ -556,9 +548,7 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group,
 			ECPARAMETERS_free(ret->value.parameters);
 		}
 
-	tmp = EC_GROUP_get_asn1_flag(group);
-
-	if (tmp & OPENSSL_EC_NAMED_CURVE)
+	if (EC_GROUP_get_asn1_flag(group))
 		{
 		/* use the asn1 OID to describe the
 		 * the elliptic curve parameters
@@ -581,7 +571,7 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group,
 				ok = 0;
 			}
 		}
-	else if (tmp & OPENSSL_EC_EXPLICIT)
+	else
 		{	
 		/* use the ECPARAMETERS structure */
 		ret->type = 1;
@@ -589,8 +579,6 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group,
 		     group, NULL)) == NULL)
 			ok = 0;
 		}
-	else
-		ok = 0;
 
 	if (!ok)
 		{
@@ -759,9 +747,7 @@ EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *params)
 			      EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
 			return NULL;
 			}
-		tmp = EC_GROUP_get_asn1_flag(ret);
-		tmp = (tmp & ~0x03) | OPENSSL_EC_NAMED_CURVE;
-		EC_GROUP_set_asn1_flag(ret, tmp);
+		EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_NAMED_CURVE);
 		}
 	else if (params->type == 1)
 		{ /* the parameters are given by a ECPARAMETERS
@@ -772,9 +758,7 @@ EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *params)
 			ECerr(EC_F_EC_ASN1_PKPARAMETERS2GROUP, ERR_R_EC_LIB);
 			return NULL;
 			}
-		tmp = EC_GROUP_get_asn1_flag(ret);
-		tmp = (tmp & ~0x03) | OPENSSL_EC_EXPLICIT;
-		EC_GROUP_set_asn1_flag(ret, tmp);
+		EC_GROUP_set_asn1_flag(ret, 0x0);
 		}
 	else if (params->type == 2)
 		{ /* implicitlyCA */

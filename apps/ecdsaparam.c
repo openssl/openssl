@@ -432,8 +432,7 @@ bad:
 		ecdsa->group = EC_GROUP_new_by_name(curve_type);
 		if (named_curve)
 			EC_GROUP_set_asn1_flag(ecdsa->group, 
-                                OPENSSL_EC_NAMED_CURVE |
-				(EC_GROUP_get_asn1_flag(ecdsa->group) & ~0x3));
+						OPENSSL_EC_NAMED_CURVE);
 	}
 	else if (informat == FORMAT_ASN1)
 		ecdsa = d2i_ECDSAParameters_bio(in,NULL);

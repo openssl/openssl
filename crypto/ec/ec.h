@@ -229,11 +229,7 @@ int EC_GROUP_precompute_mult(EC_GROUP *, BN_CTX *);
 
 
 /* ASN1 stuff */
-#define OPENSSL_EC_EXPLICIT	0x001
-#define OPENSSL_EC_NAMED_CURVE	0x002
-#define OPENSSL_EC_COMPRESSED	0x010
-#define OPENSSL_EC_UNCOMPRESSED	0x020
-#define OPENSSL_EC_HYBRID	0x040
+#define OPENSSL_EC_NAMED_CURVE	0x001
 
 typedef struct ec_parameters_st ECPARAMETERS;
 typedef struct ecpk_parameters_st ECPKPARAMETERS;
@@ -248,6 +244,9 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *, ECPKPARAMETERS *);
 
 void EC_GROUP_set_asn1_flag(EC_GROUP *, int flag);
 int EC_GROUP_get_asn1_flag(const EC_GROUP *);
+
+void EC_GROUP_set_point_conversion_form(EC_GROUP *, point_conversion_form_t);
+point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP *);
 
 EC_GROUP *d2i_ECParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECParameters(const EC_GROUP *, unsigned char **out);

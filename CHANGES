@@ -4,12 +4,20 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
-  *) Add 'nid' and 'asn1_flag' members to EC_GROUP, and functions
-          EC_GROUP_get_nid()
-          EC_GROUP_get_set_asn1_flag()
-          EC_GROUP_get_get_asn1_flag()
-     'nid' is an optional NID for named curves.  'asn1_flag'
-     determines the encoding to be used for ASN1 purposes.
+  *) Add 'asn1_flag' and 'asn1_form' member to EC_GROUP with access
+     functions
+          EC_GROUP_set_asn1_flag()
+          EC_GROUP_get_asn1_flag()
+          EC_GROUP_set_point_conversion_form()
+          EC_GROUP_get_point_conversion_form()
+     These control ASN1 encoding details:
+     - Curve are encoded explicitly unless asn1_flag has been set to
+       OPENSSL_EC_NAMED_CURVE.
+     - Points are encoded in compressed form by default; options for
+       asn1_for are as for point2oct, namely
+          POINT_CONVERSION_COMPRESSED
+          POINT_CONVERSION_UNCOMPRESSED
+          POINT_CONVERSION_HYBRID
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Add 'field_type' member to EC_METHOD, which holds the NID
@@ -69,8 +77,8 @@
      functions
           EC_GROUP_new_by_nid()
           EC_GROUP_new_by_name()
-     Also add a 'nid' field to EC_GROUP objects, which can be accessed
-     via
+     Also add a 'curve_name' member to EC_GROUP objects, which can be
+     accessed via
          EC_GROUP_set_nid()
          EC_GROUP_get_nid()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]

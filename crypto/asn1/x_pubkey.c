@@ -145,7 +145,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			goto err;
 			}
 
-		if ((EC_GROUP_get_asn1_flag(ecdsa->group) & OPENSSL_EC_NAMED_CURVE) 
+		if (EC_GROUP_get_asn1_flag(ecdsa->group)
                      && (nid = EC_GROUP_get_nid(ecdsa->group)))
 			{
 			/* just set the OID */
@@ -312,8 +312,8 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			if ((ecdsa->group = EC_GROUP_new_by_name(
                              OBJ_obj2nid(a->parameter->value.object))) == NULL)
 				goto err;
-			EC_GROUP_set_asn1_flag(ecdsa->group, OPENSSL_EC_NAMED_CURVE |
-                               (EC_GROUP_get_asn1_flag(ecdsa->group) & ~0x03));
+			EC_GROUP_set_asn1_flag(ecdsa->group, 
+						OPENSSL_EC_NAMED_CURVE);
 			}
 			/* the case implicitlyCA is currently not implemented */
 		ret->save_parameters = 1;

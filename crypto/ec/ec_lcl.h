@@ -144,8 +144,9 @@ struct ec_group_st {
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
 
-	int nid;       /* optional NID for named curve */
+	int curve_name;/* optional NID for named curve */
 	int asn1_flag; /* flag to control the asn1 encoding */
+	point_conversion_form_t asn1_form;
 
 	void *extra_data;
 	void *(*extra_data_dup_func)(void *);
