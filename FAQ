@@ -24,6 +24,7 @@ OpenSSL  -  Frequently Asked Questions
 * How can I create DSA certificates?
 * Why can't I make an SSL connection using a DSA certificate?
 * How can I remove the passphrase on a private key?
+* Why can't I use OpenSSL certificates with SSL client authentication?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -257,6 +258,37 @@ Firstly you should be really *really* sure you want to do this. Leaving
 a private key unencrypted is a major security risk. If you decide that
 you do have to do this check the EXAMPLES sections of the rsa(1) and
 dsa(1) manual pages.
+
+
+* Why can't I use OpenSSL certificates with SSL client authentication?
+
+What will typically happen is that when a server requests authentication
+it will either not include your certificate or tell you that you have
+no client certificates (Netscape) or present you with an empty list box
+(MSIE). The reason for this is that when a server requests a client
+certificate it includes a list of CAs names which it will accept. Browsers
+will only let you select certificates from the list on the grounds that
+there is little point presenting a certificate which the server will
+reject.
+
+The solution is to add the relevant CA certificate to your servers "trusted
+CA list". How you do this depends on the server sofware in uses. You can
+print out the servers list of acceptable CAs using the OpenSSL s_client tool:
+
+openssl s_client -connect www.some.host:443 -prexit
+
+if your server only requests certificates on certain URLs then you may need
+to manually issue an HTTP GET command to get the list when s_client connects:
+
+GET /some/page/needing/a/certificate.html
+
+If your CA does not appear in the list then this confirms the problem.
+
+
+* Why does my browser give a warning about a mismatched hostname?
+
+Browsers expect the server's hostname to match the value in the commonName
+(CN) field of the certificate. If it does not then you get a warning.
 
 
 [BUILD] =======================================================================
