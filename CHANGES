@@ -4,6 +4,18 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Change the "progress" mechanism used in key-generation and
+     primality testing to functions that take a new BN_GENCB pointer in
+     place of callback/argument pairs. The new API functions have "_ex"
+     postfixes and the older functions are reimplemented as wrappers for
+     the new ones. The OPENSSL_NO_DEPRECATED symbol can be used to hide
+     declarations of the old functions to help (graceful) attempts to
+     migrate to the new functions. Also, the new key-generation API
+     functions operate on a caller-supplied key-structure and return
+     success/failure rather than returning a key or NULL - this is to
+     help make "keygen" another member function of RSA_METHOD etc.
+     [Geoff Thorpe]
+
   *) Add the ASN.1 structures and functions for CertificatePair, which
      is defined as follows (according to X.509_4thEditionDraftV6.pdf):
 

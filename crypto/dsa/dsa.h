@@ -186,10 +186,20 @@ void *DSA_get_ex_data(DSA *d, int idx);
 DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+
+/* Deprecated version */
+#ifndef OPENSSL_NO_DEPRECATED
 DSA *	DSA_generate_parameters(int bits,
 		unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
 		(*callback)(int, int, void *),void *cb_arg);
+#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+
+/* New version */
+int	DSA_generate_parameters_ex(DSA *dsa, int bits,
+		unsigned char *seed,int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
 int	DSA_generate_key(DSA *a);
 int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);

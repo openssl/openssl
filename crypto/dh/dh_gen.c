@@ -56,6 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
+/* NB: These functions have been upgraded - the previous prototypes are in
+ * dh_depr.c as wrappers to these ones.
+ *  - Geoff
+ */
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -86,22 +91,22 @@
  * It's just as OK (and in some sense better) to use a generator of the
  * order-q subgroup.
  */
-DH *DH_generate_parameters(int prime_len, int generator,
-	     void (*callback)(int,int,void *), void *cb_arg)
+int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
 	{
-	BIGNUM *p=NULL,*t1,*t2;
-	DH *ret=NULL;
+	BIGNUM *t1,*t2;
 	int g,ok= -1;
 	BN_CTX *ctx=NULL;
 
-	ret=DH_new();
-	if (ret == NULL) goto err;
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);
 	t1 = BN_CTX_get(ctx);
 	t2 = BN_CTX_get(ctx);
 	if (t1 == NULL || t2 == NULL) goto err;
+
+	/* Make sure 'ret' has the necessary elements */
+	if(!ret->p && ((ret->p = BN_new()) == NULL)) goto err;
+	if(!ret->g && ((ret->g = BN_new()) == NULL)) goto err;
 	
 	if (generator <= 1)
 		{
@@ -141,11 +146,8 @@ DH *DH_generate_parameters(int prime_len, int generator,
 		g=generator;
 		}
 	
-	p=BN_generate_prime(NULL,prime_len,1,t1,t2,callback,cb_arg);
-	if (p == NULL) goto err;
-	if (callback != NULL) callback(3,0,cb_arg);
-	ret->p=p;
-	ret->g=BN_new();
+	if(!BN_generate_prime_ex(ret->p,prime_len,1,t1,t2,cb)) goto err;
+	if(!BN_GENCB_call(cb, 3, 0)) goto err;
 	if (!BN_set_word(ret->g,g)) goto err;
 	ok=1;
 err:
@@ -160,10 +162,5 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 		}
-	if (!ok && (ret != NULL))
-		{
-		DH_free(ret);
-		ret=NULL;
-		}
-	return(ret);
+	return ok;
 	}

@@ -1580,9 +1580,21 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	if (rsa_tmp == NULL)
 		{
+		rsa_tmp = RSA_new();
+		if(!rsa_tmp)
+			{
+			BIO_printf(bio_err, "Memory error...");
+			goto end;
+			}
 		BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 		(void)BIO_flush(bio_err);
-		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
+		if(!RSA_generate_key_ex(rsa_tmp,keylength,RSA_F4,NULL))
+			{
+			BIO_printf(bio_err, "Error generating key.", keylength);
+			RSA_free(rsa_tmp);
+			rsa_tmp = NULL;
+			}
+end:
 		BIO_printf(bio_err,"\n");
 		(void)BIO_flush(bio_err);
 		}

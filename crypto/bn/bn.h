@@ -287,6 +287,23 @@ typedef struct bn_recp_ctx_st
 	int flags;
 	} BN_RECP_CTX;
 
+/* Used for slow "generation" functions. */
+typedef struct bn_gencb_st BN_GENCB;
+struct bn_gencb_st
+	{
+	unsigned int ver;	/* To handle binary (in)compatibility */
+	void *arg;		/* callback-specific data */
+	union
+		{
+		/* if(ver==1) - handles old style callbacks */
+		void (*cb_1)(int, int, void *);
+		/* if(ver==2) - new callback style */
+		int (*cb_2)(int, int, BN_GENCB *);
+		};
+	};
+/* Wrapper function to make using BN_GENCB easier,  */
+int BN_GENCB_call(BN_GENCB *cb, int a, int b);
+
 #define BN_prime_checks 0 /* default: select number of iterations
 			     based on the size of the number */
 
@@ -431,6 +448,9 @@ BIGNUM *BN_mod_inverse(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
+
+/* Deprecated versions */
+#ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
 	const BIGNUM *add, const BIGNUM *rem,
 	void (*callback)(int,int,void *),void *cb_arg);
@@ -440,6 +460,14 @@ int	BN_is_prime(const BIGNUM *p,int nchecks,
 int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
 	void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
 	int do_trial_division);
+#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+
+/* Newer versions */
+int	BN_generate_prime_ex(BIGNUM *ret,int bits,int safe, const BIGNUM *add,
+		const BIGNUM *rem, BN_GENCB *cb);
+int	BN_is_prime_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx, BN_GENCB *cb);
+int	BN_is_prime_fasttest_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx,
+		int do_trial_division, BN_GENCB *cb);
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);

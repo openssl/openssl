@@ -165,8 +165,16 @@ int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DH_set_ex_data(DH *d, int idx, void *arg);
 void *DH_get_ex_data(DH *d, int idx);
+
+/* Deprecated version */
+#ifndef OPENSSL_NO_DEPRECATED
 DH *	DH_generate_parameters(int prime_len,int generator,
 		void (*callback)(int,int,void *),void *cb_arg);
+#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+
+/* New version */
+int	DH_generate_parameters_ex(DH *dh, int prime_len,int generator, BN_GENCB *cb);
+
 int	DH_check(const DH *dh,int *codes);
 int	DH_generate_key(DH *dh);
 int	DH_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh);

@@ -80,11 +80,9 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-DSA *DSA_generate_parameters(int bits,
+int DSA_generate_parameters_ex(DSA *ret, int bits,
 		unsigned char *seed_in, int seed_len,
-		int *counter_ret, unsigned long *h_ret,
-		void (*callback)(int, int, void *),
-		void *cb_arg)
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
 	int ok=0;
 	unsigned char seed[SHA_DIGEST_LENGTH];
@@ -98,7 +96,6 @@ DSA *DSA_generate_parameters(int bits,
 	int r=0;
 	BN_CTX *ctx=NULL,*ctx2=NULL,*ctx3=NULL;
 	unsigned int h=2;
-	DSA *ret=NULL;
 
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;
@@ -114,7 +111,6 @@ DSA *DSA_generate_parameters(int bits,
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	if ((ctx2=BN_CTX_new()) == NULL) goto err;
 	if ((ctx3=BN_CTX_new()) == NULL) goto err;
-	if ((ret=DSA_new()) == NULL) goto err;
 
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
@@ -137,7 +133,8 @@ DSA *DSA_generate_parameters(int bits,
 			int seed_is_random;
 
 			/* step 1 */
-			if (callback != NULL) callback(0,m++,cb_arg);
+			if(!BN_GENCB_call(cb, 0, m++))
+				goto err;
 
 			if (!seed_len)
 				{
@@ -170,7 +167,8 @@ DSA *DSA_generate_parameters(int bits,
 			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) goto err;
 
 			/* step 4 */
-			r = BN_is_prime_fasttest(q, DSS_prime_checks, callback, ctx3, cb_arg, seed_is_random);
+			r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx3,
+					seed_is_random, cb);
 			if (r > 0)
 				break;
 			if (r != 0)
@@ -180,8 +178,8 @@ DSA *DSA_generate_parameters(int bits,
 			/* step 5 */
 			}
 
-		if (callback != NULL) callback(2,0,cb_arg);
-		if (callback != NULL) callback(3,0,cb_arg);
+		if(!BN_GENCB_call(cb, 2, 0)) goto err;
+		if(!BN_GENCB_call(cb, 3, 0)) goto err;
 
 		/* step 6 */
 		counter=0;
@@ -192,8 +190,8 @@ DSA *DSA_generate_parameters(int bits,
 
 		for (;;)
 			{
-			if (callback != NULL && counter != 0)
-				callback(0,counter,cb_arg);
+			if ((counter != 0) && !BN_GENCB_call(cb, 0, counter))
+				goto err;
 
 			/* step 7 */
 			BN_zero(W);
@@ -231,7 +229,8 @@ DSA *DSA_generate_parameters(int bits,
 			if (BN_cmp(p,test) >= 0)
 				{
 				/* step 11 */
-				r = BN_is_prime_fasttest(p, DSS_prime_checks, callback, ctx3, cb_arg, 1);
+				r = BN_is_prime_fasttest_ex(p, DSS_prime_checks,
+						ctx3, 1, cb);
 				if (r > 0)
 						goto end; /* found it */
 				if (r != 0)
@@ -247,7 +246,8 @@ DSA *DSA_generate_parameters(int bits,
 			}
 		}
 end:
-	if (callback != NULL) callback(2,1,cb_arg);
+	if(!BN_GENCB_call(cb, 2, 1))
+		goto err;
 
 	/* We now need to generate g */
 	/* Set r0=(p-1)/q */
@@ -266,16 +266,16 @@ end:
 		h++;
 		}
 
-	if (callback != NULL) callback(3,1,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 1))
+		goto err;
 
 	ok=1;
 err:
-	if (!ok)
+	if (ok)
 		{
-		if (ret != NULL) DSA_free(ret);
-		}
-	else
-		{
+		if(ret->p) BN_free(ret->p);
+		if(ret->q) BN_free(ret->q);
+		if(ret->g) BN_free(ret->g);
 		ret->p=BN_dup(p);
 		ret->q=BN_dup(q);
 		ret->g=BN_dup(g);
@@ -291,6 +291,6 @@ err:
 		}
 	if (ctx3 != NULL) BN_CTX_free(ctx3);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
-	return(ok?ret:NULL);
+	return ok;
 	}
 #endif

@@ -69,6 +69,12 @@
  *
  */
 
+/* Until the key-gen callbacks are modified to use newer prototypes, we allow
+ * deprecated functions for openssl-internal code */
+#ifdef OPENSSL_NO_DEPRECATED
+#undef OPENSSL_NO_DEPRECATED
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -283,7 +289,7 @@ int test_builtin(BIO *out)
 	size_t		crv_len = 0, n = 0;
 	EC_KEY		*eckey = NULL, *wrong_eckey = NULL;
 	unsigned char	digest[20], wrong_digest[20];
-	unsigned char	*signature; 
+	unsigned char	*signature = NULL; 
 	unsigned int	sig_len;
 	int		nid, ret =  0;
 	

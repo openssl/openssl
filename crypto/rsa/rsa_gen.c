@@ -56,16 +56,20 @@
  * [including the GNU Public Licence.]
  */
 
+
+/* NB: these functions have been "upgraded", the deprecated versions (which are
+ * compatibility wrappers using these functions) are in rsa_depr.c.
+ * - Geoff
+ */
+
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
-RSA *RSA_generate_key(int bits, unsigned long e_value,
-	     void (*callback)(int,int,void *), void *cb_arg)
+int RSA_generate_key_ex(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
 	{
-	RSA *rsa=NULL;
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
 	int bitsp,bitsq,ok= -1,n=0,i;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
@@ -83,12 +87,16 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 
 	bitsp=(bits+1)/2;
 	bitsq=bits-bitsp;
-	rsa=RSA_new();
-	if (rsa == NULL) goto err;
 
-	/* set e */ 
-	rsa->e=BN_new();
-	if (rsa->e == NULL) goto err;
+	/* We need the RSA components non-NULL */
+	if(!rsa->n && ((rsa->n=BN_new()) == NULL)) goto err;
+	if(!rsa->d && ((rsa->d=BN_new()) == NULL)) goto err;
+	if(!rsa->e && ((rsa->e=BN_new()) == NULL)) goto err;
+	if(!rsa->p && ((rsa->p=BN_new()) == NULL)) goto err;
+	if(!rsa->q && ((rsa->q=BN_new()) == NULL)) goto err;
+	if(!rsa->dmp1 && ((rsa->dmp1=BN_new()) == NULL)) goto err;
+	if(!rsa->dmq1 && ((rsa->dmq1=BN_new()) == NULL)) goto err;
+	if(!rsa->iqmp && ((rsa->iqmp=BN_new()) == NULL)) goto err;
 
 #if 1
 	/* The problem is when building with 8, 16, or 32 BN_ULONG,
@@ -105,27 +113,29 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 	/* generate p and q */
 	for (;;)
 		{
-		rsa->p=BN_generate_prime(NULL,bitsp,0,NULL,NULL,callback,cb_arg);
-		if (rsa->p == NULL) goto err;
+		if(!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
+			goto err;
 		if (!BN_sub(r2,rsa->p,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
 		if (BN_is_one(r1)) break;
-		if (callback != NULL) callback(2,n++,cb_arg);
-		BN_free(rsa->p);
+		if(!BN_GENCB_call(cb, 2, n++))
+			goto err;
 		}
-	if (callback != NULL) callback(3,0,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 0))
+		goto err;
 	for (;;)
 		{
-		rsa->q=BN_generate_prime(NULL,bitsq,0,NULL,NULL,callback,cb_arg);
-		if (rsa->q == NULL) goto err;
+		if(!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+			goto err;
 		if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
 		if (BN_is_one(r1) && (BN_cmp(rsa->p,rsa->q) != 0))
 			break;
-		if (callback != NULL) callback(2,n++,cb_arg);
-		BN_free(rsa->q);
+		if(!BN_GENCB_call(cb, 2, n++))
+			goto err;
 		}
-	if (callback != NULL) callback(3,1,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 1))
+		goto err;
 	if (BN_cmp(rsa->p,rsa->q) < 0)
 		{
 		tmp=rsa->p;
@@ -134,8 +144,6 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 		}
 
 	/* calculate n */
-	rsa->n=BN_new();
-	if (rsa->n == NULL) goto err;
 	if (!BN_mul(rsa->n,rsa->p,rsa->q,ctx)) goto err;
 
 	/* calculate d */
@@ -185,13 +193,7 @@ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	BN_CTX_free(ctx2);
-	
-	if (!ok)
-		{
-		if (rsa != NULL) RSA_free(rsa);
-		return(NULL);
-		}
-	else
-		return(rsa);
+
+	return ok;
 	}
 
