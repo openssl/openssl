@@ -564,7 +564,14 @@ bad:
 	if (cm != NULL)
 		{
 		if (cm->type != NID_undef)
-			SSL_COMP_add_compression_method(comp, cm);
+			{
+			if (SSL_COMP_add_compression_method(comp, cm) != 0)
+				{
+				fprintf(stderr,
+					"Failed to add compression method\n");
+				ERR_print_errors_fp(stderr);
+				}
+			}
 		else
 			{
 			fprintf(stderr,
