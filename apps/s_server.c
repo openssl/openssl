@@ -105,6 +105,8 @@ static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
+static int generate_session_id(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(char *dhfile);
 static DH *get_dh512(void);
@@ -179,6 +181,7 @@ static int s_quiet=0;
 
 static int hack=0;
 static char *engine_id=NULL;
+static const char *session_id_prefix=NULL;
 
 #ifdef MONOLITH
 static void s_server_init(void)
@@ -248,6 +251,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+	BIO_printf(bio_err," -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	}
 
@@ -573,6 +577,11 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
+		else if (strcmp(*argv, "-id_prefix") == 0)
+			{
+			if (--argc < 1) goto bad;
+			session_id_prefix = *(++argv);
+			}
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -663,7 +672,22 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
-
+	if (session_id_prefix)
+		{
+		if(strlen(session_id_prefix) >= 32)
+			BIO_printf(bio_err,
+"warning: id_prefix is too long, only one new session will be possible\n");
+		else if(strlen(session_id_prefix) >= 16)
+			BIO_printf(bio_err,
+"warning: id_prefix is too long if you use SSLv2\n");
+		if(!SSL_CTX_set_generate_session_id(ctx, generate_session_id))
+			{
+			BIO_printf(bio_err,"error setting 'id_prefix'\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		BIO_printf(bio_err,"id_prefix '%s' set.\n", session_id_prefix);
+		}
 	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
@@ -1564,3 +1588,26 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	return(rsa_tmp);
 	}
 #endif
+
+#define MAX_SESSION_ID_ATTEMPTS 10
+static int generate_session_id(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len)
+	{
+	unsigned int count = 0;
+	do	{
+		RAND_pseudo_bytes(id, *id_len);
+		/* Prefix the session_id with the required prefix. NB: If our
+		 * prefix is too long, clip it - but there will be worse effects
+		 * anyway, eg. the server could only possibly create 1 session
+		 * ID (ie. the prefix!) so all future session negotiations will
+		 * fail due to conflicts. */
+		memcpy(id, session_id_prefix,
+			(strlen(session_id_prefix) < *id_len) ?
+			strlen(session_id_prefix) : *id_len);
+		}
+	while(SSL_CTX_has_matching_session_id(ssl->ctx, id, *id_len) &&
+		(++count < MAX_SESSION_ID_ATTEMPTS));
+	if(count >= MAX_SESSION_ID_ATTEMPTS)
+		return 0;
+	return 1;
+	}
