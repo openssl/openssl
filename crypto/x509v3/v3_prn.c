@@ -184,7 +184,7 @@ int X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts
 		j=X509_EXTENSION_get_critical(ex);
 		if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
 			return 0;
-		if(!X509V3_EXT_print(bp, ex, flag, 12))
+		if(!X509V3_EXT_print(bp, ex, flag, indent + 4))
 			{
 			BIO_printf(bp, "%*s", indent + 4, "");
 			M_ASN1_OCTET_STRING_print(bp,ex->value);
