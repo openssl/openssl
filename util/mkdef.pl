@@ -197,6 +197,7 @@ $crypto.=" crypto/objects/objects.h";
 $crypto.=" crypto/pem/pem.h";
 #$crypto.=" crypto/meth/meth.h";
 $crypto.=" crypto/asn1/asn1.h";
+$crypto.=" crypto/asn1/asn1t.h";
 $crypto.=" crypto/asn1/asn1_mac.h";
 $crypto.=" crypto/err/err.h";
 $crypto.=" crypto/pkcs7/pkcs7.h";
@@ -375,6 +376,14 @@ sub do_defs
 				next;
 			}
 			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				next;
+			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/) {
+				$syms{"d2i_$1"} = 1;
+				$syms{"i2d_$1"} = 1;
+				$syms{"$1_new"} = 1;
+				$syms{"$1_free"} = 1;
+				$syms{"$1_it"} = 1;
+				$kind{"$1_it"} = "VARIABLE";
 				next;
 			} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
@@ -675,7 +684,7 @@ sub print_test_file
 sub print_def_file
 {
 	(*OUT,my $name,*nums,my @symbols)=@_;
-	my $n = 1; my @e; my @r;
+	my $n = 1; my @e; my @r; my @v;
 
 	if ($W32)
 		{ $name.="32"; }
@@ -710,11 +719,14 @@ EOF
 
 	(@e)=grep(/^SSLeay\\.*?:.*?:FUNCTION/,@symbols);
 	(@r)=grep(/^\w+\\.*?:.*?:FUNCTION/ && !/^SSLeay\\.*?:.*?:FUNCTION/,@symbols);
-	@symbols=((sort @e),(sort @r));
+	(@v)=grep(/^\w+\\.*?:.*?:VARIABLE/,@symbols);
+	@symbols=((sort @e),(sort @r), (sort @v));
 
 
 	foreach $sym (@symbols) {
 		(my $s, my $i) = $sym =~ /^(.*?)\\(.*)$/;
+		my $v = 0;
+		$v = 1 if $sym=~ /^\w+\\.*?:.*?:VARIABLE/;
 		if (!defined($nums{$s})) {
 			printf STDERR "Warning: $s does not have a number assigned\n"
 					if(!$do_update);
@@ -765,7 +777,11 @@ EOF
 			    && (!@a || (!$no_rijndael || !grep(/^RIJNDAEL$/,@a)))
 			    && (!@a || (!$no_fp_api || !grep(/^FP_API$/,@a)))
 			    ) {
-				printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
+				if($v) {
+					printf OUT "    %s%-40s@%-8d DATA\n",($W32)?"":"_",$s,$n;
+				} else {
+					printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
+				}
 #			} else {
 #				print STDERR "DEBUG: \"$sym\" (@p):",
 #				" rsaref:", !!(!@p

@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make mkdef.pl parse some of the ASN1 macros and add apropriate
+     entries for variables.
+
   *) Add functionality to apps/openssl.c for detecting locking
      problems: As the program is single-threaded, all we have
      to do is register a locking callback using an array for
