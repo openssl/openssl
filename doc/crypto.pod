@@ -19,9 +19,9 @@ related to the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security
 
 openssl(1), ssl(3)
 
-=head1 AUTHORS
+=head1 HISTORY
 
-Ralf S. Engelschall
+The crypto(3) document appeared in OpenSSL 0.9.2
 
 =cut
 

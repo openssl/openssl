@@ -535,9 +535,9 @@ They are documented in the following:
 
 openssl(1), crypto(3)
 
-=head1 AUTHORS
+=head1 HISTORY
 
-Ralf S. Engelschall
+The ssl(3) document appeared in OpenSSL 0.9.2
 
 =cut
 

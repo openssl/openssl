@@ -124,9 +124,9 @@ connections from remote clients on I<port> speaking SSL/TLS.
 
 crypto(3), ssl(3)
 
-=head1 AUTHORS
+=head1 HISTORY
 
-Ralf S. Engelschall
+The openssl(3) document appeared in OpenSSL 0.9.2
 
 =cut
 
