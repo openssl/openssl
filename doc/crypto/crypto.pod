@@ -62,6 +62,22 @@ L<txt_db(3)|txt_db(3)>
 
 =back
 
+=head1 NOTES
+
+Some of the newer functions follow a naming convention using the numbers
+B<0> and B<1>. For example the functions:
+
+ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
+ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
+
+The B<0> version uses the supplied structure pointer directly
+in the parent and it will be freed up when the parent is freed.
+In the above example B<crl> would be freed but B<rev> would not.
+
+The B<1> function uses a copy of the supplied structure pointer
+(or in some cases increases its link count) in the parent and
+so both (B<x> and B<obj> above) should be freed up.
+
 =head1 SEE ALSO
 
 L<openssl(1)|openssl(1)>, L<ssl(3)|ssl(3)>
