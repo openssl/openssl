@@ -4,6 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Only add signing time to PKCS7 structures if it is not already
+     present.
+     [Steve Henson]
+
   *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
      OBJ_ld_ce should be OBJ_id_ce.
      Also some ip-pda OIDs in crypto/objects/objects.txt were
