@@ -368,7 +368,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES ,"unable to load ssl3 sha1 routines"},
 {SSL_R_UNEXPECTED_MESSAGE                ,"unexpected message"},
 {SSL_R_UNEXPECTED_RECORD                 ,"unexpected record"},
-{SSL_R_UNITIALIZED                       ,"unitialized"},
+{SSL_R_UNINITIALIZED                     ,"uninitialized"},
 {SSL_R_UNKNOWN_ALERT_TYPE                ,"unknown alert type"},
 {SSL_R_UNKNOWN_CERTIFICATE_TYPE          ,"unknown certificate type"},
 {SSL_R_UNKNOWN_CIPHER_RETURNED           ,"unknown cipher returned"},

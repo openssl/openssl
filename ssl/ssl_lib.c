@@ -617,7 +617,7 @@ int SSL_read(SSL *s,char *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
-		SSLerr(SSL_F_SSL_READ, SSL_R_UNITIALIZED);
+		SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
 		return -1;
 		}
 
@@ -642,7 +642,7 @@ int SSL_write(SSL *s,const char *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
-		SSLerr(SSL_F_SSL_WRITE, SSL_R_UNITIALIZED);
+		SSLerr(SSL_F_SSL_WRITE, SSL_R_UNINITIALIZED);
 		return -1;
 		}
 
@@ -659,7 +659,7 @@ int SSL_shutdown(SSL *s)
 	{
 	if (s->handshake_func == 0)
 		{
-		SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNITIALIZED);
+		SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
 		return -1;
 		}
 
