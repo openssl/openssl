@@ -11,6 +11,7 @@ require "x86asm.pl";
 &bn_div_words("bn_div_words");
 &bn_add_words("bn_add_words");
 &bn_sub_words("bn_sub_words");
+&bn_sub_part_words("bn_sub_part_words");
 
 &asm_finish();
 
@@ -300,7 +301,7 @@ sub bn_add_words
 		 &add($tmp1,$tmp2);
 		&adc($c,0);
 		 &dec($num) if ($i != 6);
-		&mov(&DWP($i*4,$r,"",0),$tmp1);	# *a
+		&mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
 		 &jz(&label("aw_end")) if ($i != 6);
 		}
 	&set_label("aw_end",0);
@@ -372,10 +373,220 @@ sub bn_sub_words
 		 &sub($tmp1,$tmp2);
 		&adc($c,0);
 		 &dec($num) if ($i != 6);
-		&mov(&DWP($i*4,$r,"",0),$tmp1);	# *a
+		&mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
 		 &jz(&label("aw_end")) if ($i != 6);
 		}
 	&set_label("aw_end",0);
+
+#	&mov("eax",$c);		# $c is "eax"
+
+	&function_end($name);
+	}
+
+sub bn_sub_part_words
+	{
+	local($name)=@_;
+
+	&function_begin($name,"");
+
+	&comment("");
+	$a="esi";
+	$b="edi";
+	$c="eax";
+	$r="ebx";
+	$tmp1="ecx";
+	$tmp2="edx";
+	$num="ebp";
+
+	&mov($r,&wparam(0));	# get r
+	 &mov($a,&wparam(1));	# get a
+	&mov($b,&wparam(2));	# get b
+	 &mov($num,&wparam(3));	# get num
+	&xor($c,$c);		# clear carry
+	 &and($num,0xfffffff8);	# num / 8
+
+	&jz(&label("aw_finish"));
+
+	&set_label("aw_loop",0);
+	for ($i=0; $i<8; $i++)
+		{
+		&comment("Round $i");
+
+		&mov($tmp1,&DWP($i*4,$a,"",0)); 	# *a
+		 &mov($tmp2,&DWP($i*4,$b,"",0)); 	# *b
+		&sub($tmp1,$c);
+		 &mov($c,0);
+		&adc($c,$c);
+		 &sub($tmp1,$tmp2);
+		&adc($c,0);
+		 &mov(&DWP($i*4,$r,"",0),$tmp1); 	# *r
+		}
+
+	&comment("");
+	&add($a,32);
+	 &add($b,32);
+	&add($r,32);
+	 &sub($num,8);
+	&jnz(&label("aw_loop"));
+
+	&set_label("aw_finish",0);
+	&mov($num,&wparam(3));	# get num
+	&and($num,7);
+	 &jz(&label("aw_end"));
+
+	for ($i=0; $i<7; $i++)
+		{
+		&comment("Tail Round $i");
+		&mov($tmp1,&DWP(0,$a,"",0));	# *a
+		 &mov($tmp2,&DWP(0,$b,"",0));# *b
+		&sub($tmp1,$c);
+		 &mov($c,0);
+		&adc($c,$c);
+		 &sub($tmp1,$tmp2);
+		&adc($c,0);
+		&mov(&DWP(0,$r,"",0),$tmp1);	# *r
+		&add($a, 4);
+		&add($b, 4);
+		&add($r, 4);
+		 &dec($num) if ($i != 6);
+		 &jz(&label("aw_end")) if ($i != 6);
+		}
+	&set_label("aw_end",0);
+
+	&cmp(&wparam(4),0);
+	&je(&label("pw_end"));
+
+	&mov($num,&wparam(3));	# get num
+
+	&mov($num,&wparam(4));	# get dl
+	&cmp($num,0);
+	&je(&label("pw_end")); # unnoetig
+	&jge(&label("pw_pos"));
+
+	&comment("pw_neg");
+	&mov($tmp2,0);
+	&sub($tmp2,$num);
+	&mov($num,$tmp2);
+	&and($num,0xfffffff8);	# num / 8
+	&jz(&label("pw_neg_finish"));
+
+	&set_label("pw_neg_loop",0);
+	for ($i=0; $i<8; $i++)
+	{
+	    &comment("dl<0 Round $i");
+
+	    &mov($tmp1,0);
+	    &mov($tmp2,&DWP($i*4,$b,"",0)); 	# *b
+	    &sub($tmp1,$c);
+	    &mov($c,0);
+	    &adc($c,$c);
+	    &sub($tmp1,$tmp2);
+	    &adc($c,0);
+	    &mov(&DWP($i*4,$r,"",0),$tmp1); 	# *r
+	}
+	    
+	&comment("");
+	&add($b,32);
+	&add($r,32);
+	&sub($num,8);
+	&jnz(&label("pw_neg_loop"));
+	    
+	&set_label("pw_neg_finish",0);
+	&mov($tmp2,&wparam(4));	# get dl
+	&mov($num,0);
+	&sub($num,$tmp2);
+	&and($num,7);
+	&jz(&label("pw_end"));
+	    
+	for ($i=0; $i<7; $i++)
+	{
+	    &comment("dl<0 Tail Round $i");
+	    &mov($tmp1,0);
+	    &mov($tmp2,&DWP($i*4,$b,"",0));# *b
+	    &sub($tmp1,$c);
+	    &mov($c,0);
+	    &adc($c,$c);
+	    &sub($tmp1,$tmp2);
+	    &adc($c,0);
+	    &dec($num) if ($i != 6);
+	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
+	    &jz(&label("pw_end")) if ($i != 6);
+	}
+
+	&jmp(&label("pw_end"));
+	
+	&set_label("pw_pos",0);
+	
+	&and($num,0xfffffff8);	# num / 8
+	&jz(&label("pw_pos_finish"));
+
+	&set_label("pw_pos_loop",0);
+
+	for ($i=0; $i<8; $i++)
+	{
+	    &comment("dl>0 Round $i");
+
+	    &mov($tmp1,&DWP($i*4,$a,"",0));	# *a
+	    &sub($tmp1,$c);
+	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
+	    &jnc(&label("pw_nc".$i));
+	}
+	    
+	&comment("");
+	&add($a,32);
+	&add($r,32);
+	&sub($num,8);
+	&jnz(&label("pw_pos_loop"));
+	    
+	&set_label("pw_pos_finish",0);
+	&mov($num,&wparam(4));	# get dl
+	&and($num,7);
+	&jz(&label("pw_end"));
+	    
+	for ($i=0; $i<7; $i++)
+	{
+	    &comment("dl>0 Tail Round $i");
+	    &mov($tmp1,&DWP($i*4,$a,"",0));	# *a
+	    &sub($tmp1,$c);
+	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
+	    &jnc(&label("pw_tail_nc".$i));
+	    &dec($num) if ($i != 6);
+	    &jz(&label("pw_end")) if ($i != 6);
+	}
+	&mov($c,1);
+	&jmp(&label("pw_end"));
+
+	&set_label("pw_nc_loop",0);
+	for ($i=0; $i<8; $i++)
+	{
+	    &mov($tmp1,&DWP($i*4,$a,"",0));	# *a
+	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
+	    &set_label("pw_nc".$i,0);
+	}
+	    
+	&comment("");
+	&add($a,32);
+	&add($r,32);
+	&sub($num,8);
+	&jnz(&label("pw_nc_loop"));
+	    
+	&mov($num,&wparam(4));	# get dl
+	&and($num,7);
+	&jz(&label("pw_nc_end"));
+	    
+	for ($i=0; $i<7; $i++)
+	{
+	    &mov($tmp1,&DWP($i*4,$a,"",0));	# *a
+	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
+	    &set_label("pw_tail_nc".$i,0);
+	    &dec($num) if ($i != 6);
+	    &jz(&label("pw_nc_end")) if ($i != 6);
+	}
+
+	&set_label("pw_nc_end",0);
+	&mov($c,0);
+
+	&set_label("pw_end",0);
 
 #	&mov("eax",$c);		# $c is "eax"
 

@@ -66,6 +66,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+#if defined(NO_ASM) || !defined(i386)
 /* Here follows specialised variants of bn_add_words() and
    bn_sub_words().  They have the property performing operations on
    arrays of different sizes.  The sizes of those arrays is expressed through
@@ -201,6 +202,7 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
 		}
 	return c;
 	}
+#endif
 
 BN_ULONG bn_add_part_words(BN_ULONG *r,
 	const BN_ULONG *a, const BN_ULONG *b,
