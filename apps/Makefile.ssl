@@ -13,7 +13,7 @@ OPENSSLDIR=	/usr/local/ssl
 MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
-PERL=/usr/local/bin/perl
+PERL= perl
 RM=		rm -f
 # KRB5 stuff
 KRB5_INCLUDES=
