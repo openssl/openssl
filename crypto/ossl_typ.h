@@ -162,4 +162,13 @@ typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
 #define DECLARE_PKCS12_STACK_OF(type) /* Nothing */
 #define IMPLEMENT_PKCS12_STACK_OF(type) /* Nothing */
 
+typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
+/* Callback types for crypto.h */
+typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
+					int idx, long argl, void *argp);
+
 #endif /* def HEADER_OPENSSL_TYPES_H */

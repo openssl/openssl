@@ -128,6 +128,7 @@
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
 #include <openssl/opensslv.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -151,6 +152,20 @@ extern "C" {
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
 #define SSLEAY_DIR		5
+
+/* Already declared in ossl_typ.h */
+#if 0
+typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
+/* Called when a new object is created */
+typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+/* Called when an object is free()ed */
+typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+/* Called when we need to dup an object */
+typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
+					int idx, long argl, void *argp);
+#endif
 
 /* A generic structure to pass assorted data in a expandable way */
 typedef struct openssl_item_st
@@ -265,21 +280,11 @@ typedef struct
 /* predec of the BIO type */
 typedef struct bio_st BIO_dummy;
 
-typedef struct crypto_ex_data_st
+struct crypto_ex_data_st
 	{
 	STACK *sk;
 	int dummy; /* gcc is screwing up this data structure :-( */
-	} CRYPTO_EX_DATA;
-
-/* Called when a new object is created */
-typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
-/* Called when an object is free()ed */
-typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
-/* Called when we need to dup an object */
-typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
-					int idx, long argl, void *argp);
+	};
 
 /* This stuff is basically class callback functions
  * The current classes are SSL_CTX, SSL, SSL_SESSION, and a few more */
