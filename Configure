@@ -104,7 +104,7 @@ my %table=(
 "debug-bodo",	"gcc:-DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT::$x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 "debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Wshadow -pipe::-D_REENTRANT::$x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"debug-levitte-linux-elf","gcc:-DRL_DEBUG -DREF_CHECK _DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -m486 -pedantic -ansi -Wall -Wshadow -Wtraditional -Wid-clash-31 -pipe::-D_REENTRANT:::",
+"debug-levitte-linux-elf","gcc:-DRL_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -m486 -pedantic -ansi -Wall -Wshadow -Wtraditional -Wid-clash-31 -pipe::-D_REENTRANT:::",
 "dist",		"cc:-O::(unknown):::::",
 
 # Basic configs that should work on any box
