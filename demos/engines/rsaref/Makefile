@@ -27,7 +27,7 @@ all:
 FORCE.install:
 install:	FORCE.install
 		cd install; \
-			make -f unix/makefile INCL='-I. -I/usr/include' CFLAGS='$(INCL) -O -c' RSAREFLIB=librsaref.a librsaref.a
+			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
 gnu:		install $(SHLIB).gnu
 tru64:		install $(SHLIB).tru64
