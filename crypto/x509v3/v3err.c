@@ -1,6 +1,6 @@
 /* crypto/x509v3/v3err.c */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -172,6 +172,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_POLICY_PATH_LENGTH             ,"policy path length"},
 {X509V3_R_POLICY_PATH_LENGTH_ALREADTY_DEFINED,"policy path length alreadty defined"},
 {X509V3_R_POLICY_SYNTAX_NOT_CURRENTLY_SUPPORTED,"policy syntax not currently supported"},
+{X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY,"policy when proxy language requires no policy"},
 {X509V3_R_SECTION_NOT_FOUND              ,"section not found"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS   ,"unable to get issuer details"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_KEYID     ,"unable to get issuer keyid"},

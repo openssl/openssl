@@ -227,8 +227,8 @@ mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem_dbg.o: mem_dbg.c
 o_dir.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_dir.o: LPdir_unix.c o_dir.c o_dir.h
-o_str.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_str.c
-o_str.o: o_str.h
+o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+o_str.o: o_str.c o_str.h
 o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c
 o_time.o: o_time.h
 tmdiff.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h

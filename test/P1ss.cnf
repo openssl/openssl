@@ -34,4 +34,4 @@ organizationName_value          = Dodgy Brothers
 basicConstraints=CA:FALSE
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer:always
-proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:1,policy:text:foo
+proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:1,policy:text:AB

@@ -42,4 +42,4 @@ proxyCertInfo=critical,@proxy_ext
 [ proxy_ext ]
 language=id-ppl-anyLanguage
 pathlen=0
-policy=text:bar
+policy=text:BC

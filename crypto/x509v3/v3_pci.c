@@ -273,6 +273,12 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
 		X509V3err(X509V3_F_R2I_PCI,X509V3_R_NO_PROXY_CERT_POLICY_LANGUAGE_DEFINED);
 		goto err;
 		}
+	i = OBJ_obj2nid(language);
+	if ((i == NID_Independent || i == NID_id_ppl_inheritAll) && policy)
+		{
+		X509V3err(X509V3_F_R2I_PCI,X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY);
+		goto err;
+		}
 
 	pci = PROXY_CERT_INFO_EXTENSION_new();
 	if (!pci)

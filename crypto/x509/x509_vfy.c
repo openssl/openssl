@@ -994,6 +994,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			goto end;
 
 		/* The last error (if any) is still in the error value */
+		ctx->current_issuer=xi;
 		ctx->current_cert=xs;
 		ok=(*cb)(1,ctx);
 		if (!ok) goto end;
