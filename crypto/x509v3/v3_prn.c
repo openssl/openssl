@@ -66,19 +66,19 @@
 
 /* Print out a name+value stack */
 
-void X509V3_EXT_val_prn(BIO *out, STACK *val, int indent, int ml)
+void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 {
 	int i;
 	CONF_VALUE *nval;
 	if(!val) return;
-	if(!ml || !sk_num(val)) {
+	if(!ml || !sk_CONF_VALUE_num(val)) {
 		BIO_printf(out, "%*s", indent, "");
-		if(!sk_num(val)) BIO_puts(out, "<EMPTY>\n");
+		if(!sk_CONF_VALUE_num(val)) BIO_puts(out, "<EMPTY>\n");
 	}
-	for(i = 0; i < sk_num(val); i++) {
+	for(i = 0; i < sk_CONF_VALUE_num(val); i++) {
 		if(ml) BIO_printf(out, "%*s", indent, "");
 		else if(i > 0) BIO_printf(out, ", ");
-		nval = (CONF_VALUE *)sk_value(val, i);
+		nval = sk_CONF_VALUE_value(val, i);
 		if(!nval->name) BIO_puts(out, nval->value);
 		else if(!nval->value) BIO_puts(out, nval->name);
 		else BIO_printf(out, "%s:%s", nval->name, nval->value);
@@ -93,7 +93,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 	char *ext_str = NULL, *value = NULL;
 	unsigned char *p;
 	X509V3_EXT_METHOD *method;	
-	STACK *nval = NULL;
+	STACK_OF(CONF_VALUE) *nval = NULL;
 	int ok = 1;
 	if(!(method = X509V3_EXT_get(ext))) return 0;
 	p = ext->value->data;
@@ -116,7 +116,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 	} else ok = 0;
 
 	err:
-		sk_pop_free(nval, X509V3_conf_free);
+		sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 		if(value) Free(value);
 		method->ext_free(ext_str);
 		return ok;

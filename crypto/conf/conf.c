@@ -134,7 +134,7 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 	CONF_VALUE *v=NULL,*vv,*tv;
 	CONF_VALUE *sv=NULL;
 	char *section=NULL,*buf;
-	STACK *section_sk=NULL,*ts;
+	STACK_OF(CONF_VALUE) *section_sk=NULL,*ts;
 	char *start,*psection,*pname;
 
 	if ((buff=BUF_MEM_new()) == NULL)
@@ -169,7 +169,7 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 					CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 		goto err;
 		}
-	section_sk=(STACK *)sv->value;
+	section_sk=(STACK_OF(CONF_VALUE) *)sv->value;
 
 	bufnum=0;
 	for (;;)
@@ -261,7 +261,7 @@ again:
 					CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 				goto err;
 				}
-			section_sk=(STACK *)sv->value;
+			section_sk=(STACK_OF(CONF_VALUE) *)sv->value;
 			continue;
 			}
 		else
@@ -295,7 +295,7 @@ again:
 			p++;
 			*p='\0';
 
-			if ((v=(CONF_VALUE *)Malloc(sizeof(CONF_VALUE))) == NULL)
+			if (!(v=(CONF_VALUE *)Malloc(sizeof(CONF_VALUE))))
 				{
 				CONFerr(CONF_F_CONF_LOAD_BIO,
 							ERR_R_MALLOC_FAILURE);
@@ -321,10 +321,10 @@ again:
 				if (tv == NULL)
 					{
 					CONFerr(CONF_F_CONF_LOAD_BIO,
-						CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+					   CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
 					goto err;
 					}
-				ts=(STACK *)tv->value;
+				ts=(STACK_OF(CONF_VALUE) *)tv->value;
 				}
 			else
 				{
@@ -332,7 +332,7 @@ again:
 				ts=section_sk;
 				}
 			v->section=tv->section;	
-			if (!sk_push(ts,(char *)v))
+			if (!sk_CONF_VALUE_push(ts,v))
 				{
 				CONFerr(CONF_F_CONF_LOAD_BIO,
 							ERR_R_MALLOC_FAILURE);
@@ -341,7 +341,7 @@ again:
 			vv=(CONF_VALUE *)lh_insert(ret,(char *)v);
 			if (vv != NULL)
 				{
-				sk_delete_ptr(ts,(char *)vv);
+				sk_CONF_VALUE_delete_ptr(ts,vv);
 				Free(vv->name);
 				Free(vv->value);
 				Free(vv);
@@ -411,13 +411,13 @@ static CONF_VALUE *get_section(LHASH *conf, char *section)
 	return(v);
 	}
 
-STACK *CONF_get_section(LHASH *conf, char *section)
+STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf, char *section)
 	{
 	CONF_VALUE *v;
 
 	v=get_section(conf,section);
 	if (v != NULL)
-		return((STACK *)v->value);
+		return((STACK_OF(CONF_VALUE) *)v->value);
 	else
 		return(NULL);
 	}
@@ -728,3 +728,5 @@ err:
 		}
 	return(v);
 	}
+
+IMPLEMENT_STACK_OF(CONF_VALUE)

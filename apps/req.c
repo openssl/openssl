@@ -823,7 +823,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	char buf[100];
 	int nid,min,max;
 	char *type,*def,*tmp,*value,*tmp_attr;
-	STACK *sk,*attr=NULL;
+	STACK_OF(CONF_VALUE) *sk, *attr=NULL;
 	CONF_VALUE *v;
 	
 	tmp=CONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
@@ -866,15 +866,15 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	/* setup version number */
 	if (!ASN1_INTEGER_set(ri->version,0L)) goto err; /* version 1 */
 
-	if (sk_num(sk))
+	if (sk_CONF_VALUE_num(sk))
 		{
 		i= -1;
 start:		for (;;)
 			{
 			i++;
-			if ((int)sk_num(sk) <= i) break;
+			if (sk_CONF_VALUE_num(sk) <= i) break;
 
-			v=(CONF_VALUE *)sk_value(sk,i);
+			v=sk_CONF_VALUE_value(sk,i);
 			p=q=NULL;
 			type=v->name;
 			if(!check_end(type,"_min") || !check_end(type,"_max") ||
@@ -918,7 +918,7 @@ start:		for (;;)
 
 		if (attribs)
 			{
-			if ((attr != NULL) && (sk_num(attr) > 0))
+			if ((attr != NULL) && (sk_CONF_VALUE_num(attr) > 0))
 				{
 				BIO_printf(bio_err,"\nPlease enter the following 'extra' attributes\n");
 				BIO_printf(bio_err,"to be sent with your certificate request\n");
@@ -928,10 +928,11 @@ start:		for (;;)
 start2:			for (;;)
 				{
 				i++;
-				if ((attr == NULL) || ((int)sk_num(attr) <= i))
+				if ((attr == NULL) ||
+					    (sk_CONF_VALUE_num(attr) <= i))
 					break;
 
-				v=(CONF_VALUE *)sk_value(attr,i);
+				v=sk_CONF_VALUE_value(attr,i);
 				type=v->name;
 				if ((nid=OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
@@ -1176,7 +1177,7 @@ static int check_end(char *str, char *end)
 static int add_oid_section(LHASH *conf)
 {	
 	char *p;
-	STACK *sktmp;
+	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *cnf;
 	int i;
 	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
@@ -1184,8 +1185,8 @@ static int add_oid_section(LHASH *conf)
 		BIO_printf(bio_err, "problem loading oid section %s\n", p);
 		return 0;
 	}
-	for(i = 0; i < sk_num(sktmp); i++) {
-		cnf = (CONF_VALUE *)sk_value(sktmp, i);
+	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
+		cnf = sk_CONF_VALUE_value(sktmp, i);
 		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
 			BIO_printf(bio_err, "problem creating object %s=%s\n",
 							 cnf->name, cnf->value);

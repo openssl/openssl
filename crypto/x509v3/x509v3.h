@@ -64,6 +64,7 @@ extern "C" {
 
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <openssl/conf.h>
 
 /* Forward reference */
 struct v3_ext_method;
@@ -75,8 +76,8 @@ typedef void * (*X509V3_EXT_NEW)();
 typedef void (*X509V3_EXT_FREE)();
 typedef char * (*X509V3_EXT_D2I)();
 typedef int (*X509V3_EXT_I2D)();
-typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK *extlist);
-typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
+typedef STACK_OF(CONF_VALUE) * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK_OF(CONF_VALUE) *extlist);
+typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK_OF(CONF_VALUE) *values);
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, void *ext);
 typedef void * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
 typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, void *ext, BIO *out, int indent);
@@ -109,9 +110,9 @@ void *usr_data;	/* Any extension specific data */
 
 typedef struct X509V3_CONF_METHOD_st {
 char * (*get_string)(void *db, char *section, char *value);
-STACK * (*get_section)(void *db, char *section);
+STACK_OF(CONF_VALUE) * (*get_section)(void *db, char *section);
 void (*free_string)(void *db, char * string);
-void (*free_section)(void *db, STACK *section);
+void (*free_section)(void *db, STACK_OF(CONF_VALUE) *section);
 } X509V3_CONF_METHOD;
 
 /* Context specific info */
@@ -286,7 +287,7 @@ int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp);
 GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp, long length);
 GENERAL_NAME *GENERAL_NAME_new(void);
 void GENERAL_NAME_free(GENERAL_NAME *a);
-STACK *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen, STACK *ret);
+STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen, STACK_OF(CONF_VALUE) *ret);
 
 int i2d_SXNET(SXNET *a, unsigned char **pp);
 SXNET *d2i_SXNET(SXNET **a, unsigned char **pp, long length);
@@ -320,8 +321,10 @@ STACK_OF(GENERAL_NAME) *GENERAL_NAMES_new(void);
 void GENERAL_NAMES_free(STACK_OF(GENERAL_NAME) *a);
 STACK_OF(GENERAL_NAME) *d2i_GENERAL_NAMES(STACK_OF(GENERAL_NAME) **a, unsigned char **pp, long length);
 int i2d_GENERAL_NAMES(STACK_OF(GENERAL_NAME) *a, unsigned char **pp);
-STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK_OF(GENERAL_NAME) *gen, STACK *extlist);
-STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
+		STACK_OF(GENERAL_NAME) *gen, STACK_OF(CONF_VALUE) *extlist);
+STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
@@ -381,24 +384,28 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, c
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
 int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509_CRL *crl);
-int X509V3_add_value_bool_nf(char *name, int asn1_bool, STACK **extlist);
+int X509V3_add_value_bool_nf(char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH *lhash);
 #endif
 
 char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section);
-STACK * X509V3_get_section(X509V3_CTX *ctx, char *section);
+STACK_OF(CONF_VALUE) * X509V3_get_section(X509V3_CTX *ctx, char *section);
 void X509V3_string_free(X509V3_CTX *ctx, char *str);
-void X509V3_section_free( X509V3_CTX *ctx, STACK *section);
+void X509V3_section_free( X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 				 X509_REQ *req, X509_CRL *crl, int flags);
 
-int X509V3_add_value(const char *name, const char *value, STACK **extlist);
+int X509V3_add_value(const char *name, const char *value,
+						STACK_OF(CONF_VALUE) **extlist);
 int X509V3_add_value_uchar(const char *name, const unsigned char *value,
-			   STACK **extlist);
-int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist);
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint, STACK **extlist);
+						STACK_OF(CONF_VALUE) **extlist);
+int X509V3_add_value_bool(const char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist);
+int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+						STACK_OF(CONF_VALUE) **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
 ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, char *value);
 char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
@@ -411,7 +418,7 @@ void X509V3_EXT_cleanup(void);
 X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
 X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
-STACK *X509V3_parse_list(char *line);
+STACK_OF(CONF_VALUE) *X509V3_parse_list(char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 
@@ -419,7 +426,8 @@ char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
 int name_cmp(const char *name, const char *cmp);
 
-void X509V3_EXT_val_prn(BIO *out, STACK *val, int indent, int ml);
+void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
+								 int ml);
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 

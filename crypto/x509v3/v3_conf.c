@@ -71,7 +71,7 @@ static int v3_check_generic(char **value);
 static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value);
 static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type);
 static char *conf_lhash_get_string(void *db, char *section, char *value);
-static STACK *conf_lhash_get_section(void *db, char *section);
+static STACK_OF(CONF_VALUE) *conf_lhash_get_section(void *db, char *section);
 static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 						 int crit, void *ext_struc);
 /* LHASH *conf:  Config file    */
@@ -115,7 +115,7 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 {
 	X509V3_EXT_METHOD *method;
 	X509_EXTENSION *ext;
-	STACK *nval;
+	STACK_OF(CONF_VALUE) *nval;
 	void *ext_struc;
 	if(ext_nid == NID_undef) {
 		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION_NAME);
@@ -135,7 +135,8 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 			return NULL;
 		}
 		ext_struc = method->v2i(method, ctx, nval);
-		if(*value != '@') sk_pop_free(nval, X509V3_conf_free);
+		if(*value != '@') sk_CONF_VALUE_pop_free(nval,
+							 X509V3_conf_free);
 		if(!ext_struc) return NULL;
 	} else if(method->s2i) {
 		if(!(ext_struc = method->s2i(method, ctx, value))) return NULL;
@@ -267,12 +268,12 @@ int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
 	     X509 *cert)
 {
 	X509_EXTENSION *ext;
-	STACK *nval;
+	STACK_OF(CONF_VALUE) *nval;
 	CONF_VALUE *val;	
 	int i;
 	if(!(nval = CONF_get_section(conf, section))) return 0;
-	for(i = 0; i < sk_num(nval); i++) {
-		val = (CONF_VALUE *)sk_value(nval, i);
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		val = sk_CONF_VALUE_value(nval, i);
 		if(!(ext = X509V3_EXT_conf(conf, ctx, val->name, val->value)))
 								return 0;
 		if(cert) X509_add_ext(cert, ext, -1);
@@ -287,12 +288,12 @@ int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
 	     X509_CRL *crl)
 {
 	X509_EXTENSION *ext;
-	STACK *nval;
+	STACK_OF(CONF_VALUE) *nval;
 	CONF_VALUE *val;	
 	int i;
 	if(!(nval = CONF_get_section(conf, section))) return 0;
-	for(i = 0; i < sk_num(nval); i++) {
-		val = (CONF_VALUE *)sk_value(nval, i);
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		val = sk_CONF_VALUE_value(nval, i);
 		if(!(ext = X509V3_EXT_conf(conf, ctx, val->name, val->value)))
 								return 0;
 		if(crl) X509_CRL_add_ext(crl, ext, -1);
@@ -310,7 +311,7 @@ char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
 	return NULL;
 }
 
-STACK * X509V3_get_section(X509V3_CTX *ctx, char *section)
+STACK_OF(CONF_VALUE) * X509V3_get_section(X509V3_CTX *ctx, char *section)
 {
 	if(ctx->db_meth->get_section)
 			return ctx->db_meth->get_section(ctx->db, section);
@@ -324,7 +325,7 @@ void X509V3_string_free(X509V3_CTX *ctx, char *str)
 			ctx->db_meth->free_string(ctx->db, str);
 }
 
-void X509V3_section_free(X509V3_CTX *ctx, STACK *section)
+void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section)
 {
 	if(!section) return;
 	if(ctx->db_meth->free_section)
@@ -336,7 +337,7 @@ static char *conf_lhash_get_string(void *db, char *section, char *value)
 	return CONF_get_string(db, section, value);
 }
 
-static STACK *conf_lhash_get_section(void *db, char *section)
+static STACK_OF(CONF_VALUE) *conf_lhash_get_section(void *db, char *section)
 {
 	return CONF_get_section(db, section);
 }

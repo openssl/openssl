@@ -182,23 +182,23 @@ static int index_name_cmp(char **a,char **b);
 static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-		   const EVP_MD *dgst,STACK *policy,TXT_DB *db,BIGNUM *serial,
-		   char *startdate,int days,int batch,char *ext_sect,
-		   LHASH *conf,int verbose);
+		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
+		   BIGNUM *serial, char *startdate,int days,int batch,
+		   char *ext_sect, LHASH *conf,int verbose);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-			const EVP_MD *dgst,STACK *policy,TXT_DB *db,
-			BIGNUM *serial,char *startdate,int days,int batch,
-			char *ext_sect, LHASH *conf,int verbose);
+			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
+			TXT_DB *db, BIGNUM *serial,char *startdate,int days,
+			int batch, char *ext_sect, LHASH *conf,int verbose);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
-			 const EVP_MD *dgst,STACK *policy,TXT_DB *db,
-			 BIGNUM *serial,char *startdate,int days,
+			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
+			 TXT_DB *db, BIGNUM *serial,char *startdate,int days,
 			 char *ext_sect,LHASH *conf,int verbose);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
-	STACK *policy, TXT_DB *db, BIGNUM *serial, char *startdate,
-	int days, int batch, int verbose, X509_REQ *req, char *ext_sect,
-	LHASH *conf);
+	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
+	char *startdate, int days, int batch, int verbose, X509_REQ *req,
+	char *ext_sect, LHASH *conf);
 static int do_revoke(X509 *x509, TXT_DB *db);
 static int check_time_format(char *str);
 static LHASH *conf;
@@ -252,7 +252,7 @@ int MAIN(int argc, char **argv)
 	int i,j;
 	long l;
 	const EVP_MD *dgst=NULL;
-	STACK *attribs=NULL;
+	STACK_OF(CONF_VALUE) *attribs=NULL;
 	STACK *cert_sk=NULL;
 	BIO *hex=NULL;
 #undef BSIZE
@@ -1324,9 +1324,9 @@ err:
 	}
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
-	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
-	     char *startdate, int days, int batch, char *ext_sect, LHASH *lconf,
-		 int verbose)
+	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
+	     BIGNUM *serial, char *startdate, int days, int batch,
+	     char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509_REQ *req=NULL;
 	BIO *in=NULL;
@@ -1383,10 +1383,9 @@ err:
 	}
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
-	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
-	     char *startdate, int days, int batch, char *ext_sect, LHASH *lconf,
-		 int verbose)
-
+	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
+	     BIGNUM *serial, char *startdate, int days, int batch,
+	     char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509 *req=NULL;
 	X509_REQ *rreq=NULL;
@@ -1447,8 +1446,9 @@ err:
 	}
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
-	     STACK *policy, TXT_DB *db, BIGNUM *serial, char *startdate, int days,
-	     int batch, int verbose, X509_REQ *req, char *ext_sect, LHASH *lconf)
+	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
+	     char *startdate, int days, int batch, int verbose, X509_REQ *req,
+	     char *ext_sect, LHASH *lconf)
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1562,9 +1562,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (CAname == NULL) goto err;
 	str=str2=NULL;
 
-	for (i=0; i<sk_num(policy); i++)
+	for (i=0; i<sk_CONF_VALUE_num(policy); i++)
 		{
-		cv=(CONF_VALUE *)sk_value(policy,i); /* get the object id */
+		cv=sk_CONF_VALUE_value(policy,i); /* get the object id */
 		if ((j=OBJ_txt2nid(cv->name)) == NID_undef)
 			{
 			BIO_printf(bio_err,"%s:unknown object type in 'policy' configuration\n",cv->name);
@@ -1904,10 +1904,11 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der)
 	}
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
-	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
-	     char *startdate, int days, char *ext_sect, LHASH *lconf, int verbose)
+	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
+	     BIGNUM *serial, char *startdate, int days, char *ext_sect,
+	     LHASH *lconf, int verbose)
 	{
-	STACK *sk=NULL;
+	STACK_OF(CONF_VALUE) *sk=NULL;
 	LHASH *parms=NULL;
 	X509_REQ *req=NULL;
 	CONF_VALUE *cv=NULL;
@@ -1936,7 +1937,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		}
 
 	sk=CONF_get_section(parms, "default");
-	if (sk_num(sk) == 0)
+	if (sk_CONF_VALUE_num(sk) == 0)
 		{
 		BIO_printf(bio_err, "no name/value pairs found in %s\n", infile);
 		CONF_free(parms);
@@ -1965,9 +1966,9 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	for (i = 0; ; i++)
 		{
-		if ((int)sk_num(sk) <= i) break;
+		if (sk_CONF_VALUE_num(sk) <= i) break;
 
-		cv=(CONF_VALUE *)sk_value(sk,i);
+		cv=sk_CONF_VALUE_value(sk,i);
 		type=cv->name;
 		buf=cv->value;
 
@@ -2089,7 +2090,7 @@ static int check_time_format(char *str)
 static int add_oid_section(LHASH *hconf)
 {	
 	char *p;
-	STACK *sktmp;
+	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *cnf;
 	int i;
 	if(!(p=CONF_get_string(hconf,NULL,"oid_section"))) return 1;
@@ -2097,8 +2098,8 @@ static int add_oid_section(LHASH *hconf)
 		BIO_printf(bio_err, "problem loading oid section %s\n", p);
 		return 0;
 	}
-	for(i = 0; i < sk_num(sktmp); i++) {
-		cnf = (CONF_VALUE *)sk_value(sktmp, i);
+	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
+		cnf = sk_CONF_VALUE_value(sktmp, i);
 		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
 			BIO_printf(bio_err, "problem creating object %s=%s\n",
 							 cnf->name, cnf->value);

@@ -68,18 +68,19 @@ static char *strip_spaces(char *name);
 
 /* Add a CONF_VALUE name value pair to stack */
 
-int X509V3_add_value(const char *name, const char *value, STACK **extlist)
+int X509V3_add_value(const char *name, const char *value,
+						STACK_OF(CONF_VALUE) **extlist)
 {
 	CONF_VALUE *vtmp = NULL;
 	char *tname = NULL, *tvalue = NULL;
 	if(name && !(tname = BUF_strdup(name))) goto err;
 	if(value && !(tvalue = BUF_strdup(value))) goto err;;
 	if(!(vtmp = (CONF_VALUE *)Malloc(sizeof(CONF_VALUE)))) goto err;
-	if(!*extlist && !(*extlist = sk_new(NULL))) goto err;
+	if(!*extlist && !(*extlist = sk_CONF_VALUE_new(NULL))) goto err;
 	vtmp->section = NULL;
 	vtmp->name = tname;
 	vtmp->value = tvalue;
-	if(!sk_push(*extlist, (char *)vtmp)) goto err;
+	if(!sk_CONF_VALUE_push(*extlist, vtmp)) goto err;
 	return 1;
 	err:
 	X509V3err(X509V3_F_X509V3_ADD_VALUE,ERR_R_MALLOC_FAILURE);
@@ -90,7 +91,7 @@ int X509V3_add_value(const char *name, const char *value, STACK **extlist)
 }
 
 int X509V3_add_value_uchar(const char *name, const unsigned char *value,
-			   STACK **extlist)
+			   STACK_OF(CONF_VALUE) **extlist)
     {
     return X509V3_add_value(name,(const char *)value,extlist);
     }
@@ -106,13 +107,15 @@ void X509V3_conf_free(CONF_VALUE *conf)
 	Free((char *)conf);
 }
 
-int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist)
+int X509V3_add_value_bool(const char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist)
 {
 	if(asn1_bool) return X509V3_add_value(name, "TRUE", extlist);
 	return X509V3_add_value(name, "FALSE", extlist);
 }
 
-int X509V3_add_value_bool_nf(char *name, int asn1_bool, STACK **extlist)
+int X509V3_add_value_bool_nf(char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist)
 {
 	if(asn1_bool) return X509V3_add_value(name, "TRUE", extlist);
 	return 1;
@@ -166,7 +169,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 }
 
 int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
-	     STACK **extlist)
+	     STACK_OF(CONF_VALUE) **extlist)
 {
 	char *strtmp;
 	int ret;
@@ -214,11 +217,11 @@ int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
 
 /*#define DEBUG*/
 
-STACK *X509V3_parse_list(char *line)
+STACK_OF(CONF_VALUE) *X509V3_parse_list(char *line)
 {
 	char *p, *q, c;
 	char *ntmp, *vtmp;
-	STACK *values = NULL;
+	STACK_OF(CONF_VALUE) *values = NULL;
 	char *linebuf;
 	int state;
 	/* We are going to modify the line so copy it first */
@@ -300,7 +303,7 @@ return values;
 
 err:
 Free(linebuf);
-sk_pop_free(values, X509V3_conf_free);
+sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
 return NULL;
 
 }

@@ -63,8 +63,10 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku, STACK *extlist);
+static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+						STACK_OF(CONF_VALUE) *nval);
+static STACK_OF(CONF_VALUE) *i2v_ext_ku(X509V3_EXT_METHOD *method,
+				STACK *eku, STACK_OF(CONF_VALUE) *extlist);
 X509V3_EXT_METHOD v3_ext_ku = {
 NID_ext_key_usage, 0,
 (X509V3_EXT_NEW)ext_ku_new,
@@ -103,8 +105,8 @@ STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length)
 
 
 
-static STACK *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku,
-	     STACK *ext_list)
+static STACK_OF(CONF_VALUE) *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku,
+	     STACK_OF(CONF_VALUE) *ext_list)
 {
 int i;
 ASN1_OBJECT *obj;
@@ -118,7 +120,7 @@ return ext_list;
 }
 
 static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-	     STACK *nval)
+						STACK_OF(CONF_VALUE) *nval)
 {
 STACK *extku;
 char *extval;
@@ -131,8 +133,8 @@ if(!(extku = sk_new(NULL))) {
 	return NULL;
 }
 
-for(i = 0; i < sk_num(nval); i++) {
-	val = (CONF_VALUE *)sk_value(nval, i);
+for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+	val = sk_CONF_VALUE_value(nval, i);
 	if(val->value) extval = val->value;
 	else extval = val->name;
 	if(!(objtmp = OBJ_txt2obj(extval, 0))) {

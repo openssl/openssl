@@ -64,8 +64,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons, STACK *extlist);
-static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
+static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons, STACK_OF(CONF_VALUE) *extlist);
+static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 
 X509V3_EXT_METHOD v3_bcons = {
 NID_basic_constraints, 0,
@@ -126,8 +126,8 @@ void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a)
 	Free ((char *)a);
 }
 
-static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
-	     BASIC_CONSTRAINTS *bcons, STACK *extlist)
+static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
+	     BASIC_CONSTRAINTS *bcons, STACK_OF(CONF_VALUE) *extlist)
 {
 	X509V3_add_value_bool("CA", bcons->ca, &extlist);
 	X509V3_add_value_int("pathlen", bcons->pathlen, &extlist);
@@ -135,7 +135,7 @@ static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
 }
 
 static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
-	     X509V3_CTX *ctx, STACK *values)
+	     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values)
 {
 	BASIC_CONSTRAINTS *bcons=NULL;
 	CONF_VALUE *val;
@@ -144,8 +144,8 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
 		X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	for(i = 0; i < sk_num(values); i++) {
-		val = (CONF_VALUE *)sk_value(values, i);
+	for(i = 0; i < sk_CONF_VALUE_num(values); i++) {
+		val = sk_CONF_VALUE_value(values, i);
 		if(!strcmp(val->name, "CA")) {
 			if(!X509V3_get_value_bool(val, &bcons->ca)) goto err;
 		} else if(!strcmp(val->name, "pathlen")) {
