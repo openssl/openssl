@@ -601,12 +601,16 @@ bad:
 		if ((x=X509_new()) == NULL) goto end;
 		ci=x->cert_info;
 
-		if (sno)
+		if (sno == NULL)
 			{
-			if (!X509_set_serialNumber(x, sno))
+			sno = ASN1_INTEGER_new();
+			if (!sno || !rand_serial(NULL, sno))
 				goto end;
 			}
-		else if (!ASN1_INTEGER_set(X509_get_serialNumber(x),0)) goto end;
+
+		if (!X509_set_serialNumber(x, sno)) 
+			goto end;
+
 		if (!X509_set_issuer_name(x,req->req_info->subject)) goto end;
 		if (!X509_set_subject_name(x,req->req_info->subject)) goto end;
 
