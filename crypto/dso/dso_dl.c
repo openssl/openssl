@@ -187,7 +187,7 @@ static void *dl_bind_var(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DL_BIND_VAR,DSO_R_NULL_HANDLE);
 		return(NULL);
 		}
-	if (shl_findsym(ptr, symname, TYPE_UNDEFINED, &sym) < 0)
+	if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0)
 		{
 		DSOerr(DSO_F_DL_BIND_VAR,DSO_R_SYM_FAILURE);
 		return(NULL);
@@ -216,7 +216,7 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DL_BIND_FUNC,DSO_R_NULL_HANDLE);
 		return(NULL);
 		}
-	if (shl_findsym(ptr, symname, TYPE_UNDEFINED, &sym) < 0)
+	if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0)
 		{
 		DSOerr(DSO_F_DL_BIND_FUNC,DSO_R_SYM_FAILURE);
 		return(NULL);
