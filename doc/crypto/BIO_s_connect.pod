@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_s_connect - connect BIO
+BIO_s_connect - connect BIO
 
 =head1 SYNOPSIS
 
