@@ -94,9 +94,10 @@ int MAIN(int argc, char **argv)
 	BIO *out = NULL;
 	int req_text = 0, resp_text = 0;
 	char *CAfile = NULL, *CApath = NULL;
-        char *VAfile = NULL;
 	X509_STORE *store = NULL;
-        STACK_OF(X509) *VAstore = NULL;
+	STACK_OF(X509) *sign_other = NULL, *verify_other = NULL;
+	char *sign_certfile = NULL, *verify_certfile = NULL;
+	unsigned long sign_flags = 0, verify_flags = 0;
 	int ret = 1;
 	int badarg = 0;
 	int i;
@@ -133,6 +134,22 @@ int MAIN(int argc, char **argv)
 			add_nonce = 2;
 		else if (!strcmp(*args, "-no_nonce"))
 			add_nonce = 0;
+		else if (!strcmp(*args, "-no_certs"))
+			sign_flags |= OCSP_NOCERTS;
+		else if (!strcmp(*args, "-no_signature_verify"))
+			verify_flags |= OCSP_NOSIGS;
+		else if (!strcmp(*args, "-no_cert_verify"))
+			verify_flags |= OCSP_NOVERIFY;
+		else if (!strcmp(*args, "-no_chain"))
+			verify_flags |= OCSP_NOCHAIN;
+		else if (!strcmp(*args, "-no_cert_checks"))
+			verify_flags |= OCSP_NOCHECKS;
+		else if (!strcmp(*args, "-no_explicit"))
+			verify_flags |= OCSP_NOEXPLICIT;
+		else if (!strcmp(*args, "-trust_other"))
+			verify_flags |= OCSP_TRUSTOTHER;
+		else if (!strcmp(*args, "-no_intern"))
+			verify_flags |= OCSP_NOINTERN;
 		else if (!strcmp(*args, "-text"))
 			{
 			req_text = 1;
@@ -174,7 +191,26 @@ int MAIN(int argc, char **argv)
 			if (args[1])
 				{
 				args++;
-				VAfile = *args;
+				verify_certfile = *args;
+				verify_flags |= OCSP_TRUSTOTHER;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args, "-sign_other"))
+			{
+			if (args[1])
+				{
+				args++;
+				sign_certfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args, "-verify_other"))
+			{
+			if (args[1])
+				{
+				args++;
+				verify_certfile = *args;
 				}
 			else badarg = 1;
 			}
@@ -282,27 +318,36 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "OCSP utility\n");
 		BIO_printf (bio_err, "Usage ocsp [options]\n");
 		BIO_printf (bio_err, "where options are\n");
-		BIO_printf (bio_err, "-out file     output filename\n");
-		BIO_printf (bio_err, "-issuer file  issuer certificate\n");
-		BIO_printf (bio_err, "-cert file    certificate to check\n");
-		BIO_printf (bio_err, "-serial n     serial number to check\n");
-		BIO_printf (bio_err, "-signer file  certificate to sign OCSP request with\n");
-		BIO_printf (bio_err, "-signkey file private key to sign OCSP request with\n");
-		BIO_printf (bio_err, "-req_text     print text form of request\n");
-		BIO_printf (bio_err, "-resp_text    print text form of response\n");
-		BIO_printf (bio_err, "-text         print text form of request and response\n");
-		BIO_printf (bio_err, "-reqout file  write DER encoded OCSP request to \"file\"\n");
-		BIO_printf (bio_err, "-respout file write DER encoded OCSP reponse to \"file\"\n");
-		BIO_printf (bio_err, "-reqin file   read DER encoded OCSP request from \"file\"\n");
-		BIO_printf (bio_err, "-respin file  read DER encoded OCSP reponse from \"file\"\n");
-		BIO_printf (bio_err, "-nonce        add OCSP nonce to request\n");
-		BIO_printf (bio_err, "-no_nonce     don't add OCSP nonce to request\n");
-		BIO_printf (bio_err, "-host host:n  send OCSP request to host on port n\n");
-		BIO_printf (bio_err, "-path         path to use in OCSP request\n");
-		BIO_printf (bio_err, "-CApath dir   trusted certificates directory\n");
-		BIO_printf (bio_err, "-CAfile file  trusted certificates file\n");
-		BIO_printf (bio_err, "-VAfile file  validator certificates file\n");
-		BIO_printf (bio_err, "-noverify     don't verify response\n");
+		BIO_printf (bio_err, "-out file          output filename\n");
+		BIO_printf (bio_err, "-issuer file       issuer certificate\n");
+		BIO_printf (bio_err, "-cert file         certificate to check\n");
+		BIO_printf (bio_err, "-serial n          serial number to check\n");
+		BIO_printf (bio_err, "-signer file       certificate to sign OCSP request with\n");
+		BIO_printf (bio_err, "-signkey file      private key to sign OCSP request with\n");
+		BIO_printf (bio_err, "-sign_certs file   additional certificates to include in signed request");
+		BIO_printf (bio_err, "-no_certs          don't include any certificates in signed request");
+		BIO_printf (bio_err, "-req_text          print text form of request\n");
+		BIO_printf (bio_err, "-resp_text         print text form of response\n");
+		BIO_printf (bio_err, "-text              print text form of request and response\n");
+		BIO_printf (bio_err, "-reqout file       write DER encoded OCSP request to \"file\"\n");
+		BIO_printf (bio_err, "-respout file      write DER encoded OCSP reponse to \"file\"\n");
+		BIO_printf (bio_err, "-reqin file        read DER encoded OCSP request from \"file\"\n");
+		BIO_printf (bio_err, "-respin file       read DER encoded OCSP reponse from \"file\"\n");
+		BIO_printf (bio_err, "-nonce             add OCSP nonce to request\n");
+		BIO_printf (bio_err, "-no_nonce          don't add OCSP nonce to request\n");
+		BIO_printf (bio_err, "-host host:n       send OCSP request to host on port n\n");
+		BIO_printf (bio_err, "-path              path to use in OCSP request\n");
+		BIO_printf (bio_err, "-CApath dir        trusted certificates directory\n");
+		BIO_printf (bio_err, "-CAfile file       trusted certificates file\n");
+		BIO_printf (bio_err, "-VAfile file       validator certificates file\n");
+		BIO_printf (bio_err, "-noverify          don't verify response at all\n");
+		BIO_printf (bio_err, "-verify_certs file additional certificates to search for signer");
+		BIO_printf (bio_err, "-trust_other       don't verify additional certificates");
+		BIO_printf (bio_err, "-no_intern         don't search certificates contained in response for signer");
+		BIO_printf (bio_err, "-no_sig_verify     don't check signature on response");
+		BIO_printf (bio_err, "-no_cert_verify    don't check signing certificate");
+		BIO_printf (bio_err, "-no_chain          don't chain verify response");
+		BIO_printf (bio_err, "-no_cert_checks    don't do additional checks on signing certificate");
 		goto end;
 		}
 
@@ -351,13 +396,18 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "Error loading signer certificate\n");
 			goto end;
 			}
+		if (sign_certfile)
+			{
+			sign_other = load_certs(bio_err, sign_certfile, FORMAT_PEM);
+			if (!sign_other) goto end;
+			}
 		key = load_key(bio_err, keyfile, FORMAT_PEM, NULL, NULL);
 		if (!key)
 			{
 			BIO_printf(bio_err, "Error loading signer private key\n");
 			goto end;
 			}
-		if (!OCSP_request_sign(req, signer, key, EVP_sha1(), NULL, 0))
+		if (!OCSP_request_sign(req, signer, key, EVP_sha1(), sign_other, sign_flags))
 			{
 			BIO_printf(bio_err, "Error signing OCSP request\n");
 			goto end;
@@ -449,8 +499,11 @@ int MAIN(int argc, char **argv)
 
 	store = setup_verify(bio_err, CAfile, CApath);
 	if(!store) goto end;
-
-        if (VAfile) VAstore = load_certs(bio_err, VAfile, FORMAT_PEM);
+	if (verify_certfile)
+		{
+		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM);
+		if (!verify_other) goto end;
+		}
 
 	bs = OCSP_response_get1_basic(resp);
 
@@ -468,7 +521,7 @@ int MAIN(int argc, char **argv)
 			goto end;
 			}
 
-		i = OCSP_basic_verify(bs, VAstore, store, OCSP_TRUSTOTHER);
+		i = OCSP_basic_verify(bs, verify_other, store, verify_flags);
                 if (i < 0) i = OCSP_basic_verify(bs, NULL, store, 0);
 
 		if(i <= 0)
@@ -490,7 +543,6 @@ end:
 	ERR_print_errors(bio_err);
 	X509_free(signer);
 	X509_STORE_free(store);
-        sk_X509_free(VAstore);
 	EVP_PKEY_free(key);
 	X509_free(issuer);
 	X509_free(cert);
@@ -501,6 +553,8 @@ end:
 	OCSP_BASICRESP_free(bs);
 	sk_free(reqnames);
 	sk_OCSP_CERTID_free(ids);
+	sk_X509_pop_free(sign_other, X509_free);
+	sk_X509_pop_free(verify_other, X509_free);
 
 	EXIT(ret);
 }
