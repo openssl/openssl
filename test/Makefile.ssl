@@ -124,8 +124,7 @@ apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
 
 SET_SO_PATHS=LIBPATH="`cd ..; pwd`"; LD_LIBRARY_PATH="$$LIBPATH"; DYLD_LIBRARY_PATH="$$LIBPATH"; SHLIB_PATH="$$LIBPATH"; \
-		if [ "$(PLATFORM)" = "DJGPP" ]; then PATH="$$LIBPATH\;$$PATH";  \
-		elif [ "$(PLATFORM)" = "Cygwin" ]; then PATH="$${LIBPATH}:$$PATH"; fi; \
+		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="$${LIBPATH}:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH
 
 alltests: \
