@@ -1020,7 +1020,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	{
 	X509 *peer=NULL;
 	char *p;
-	static char *space="                ";
+	static const char *space="                ";
 	char buf[BUFSIZ];
 	STACK_OF(X509) *sk;
 	STACK_OF(X509_NAME) *sk2;

@@ -283,7 +283,7 @@ long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
 void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 	{
-	char *str;
+	const char *str;
 	int w;
 
 	w=where& ~SSL_ST_MASK;
@@ -346,14 +346,14 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 
 		if (len > 0)
 			{
-			switch (((unsigned char*)buf)[0])
+			switch (((const unsigned char*)buf)[0])
 				{
 				case 0:
 					str_details1 = ", ERROR:";
 					str_details2 = " ???";
 					if (len >= 3)
 						{
-						unsigned err = (((unsigned char*)buf)[1]<<8) + ((unsigned char*)buf)[2];
+						unsigned err = (((const unsigned char*)buf)[1]<<8) + ((const unsigned char*)buf)[2];
 						
 						switch (err)
 							{
@@ -422,7 +422,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 			
 			if (len == 2)
 				{
-				switch (((unsigned char*)buf)[0])
+				switch (((const unsigned char*)buf)[0])
 					{
 				case 1:
 					str_details1 = ", warning";
@@ -433,7 +433,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 					}
 
 				str_details2 = " ???";
-				switch (((unsigned char*)buf)[1])
+				switch (((const unsigned char*)buf)[1])
 					{
 				case 0:
 					str_details2 = " close_notify";
@@ -514,7 +514,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 
 			if (len > 0)
 				{
-				switch (((unsigned char*)buf)[0])
+				switch (((const unsigned char*)buf)[0])
 					{
 				case 0:
 					str_details1 = ", HelloRequest";
@@ -567,7 +567,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 			{
 			if (i % 16 == 0 && i > 0)
 				BIO_printf(bio, "\n   ");
-			BIO_printf(bio, " %02x", ((unsigned char*)buf)[i]);
+			BIO_printf(bio, " %02x", ((const unsigned char*)buf)[i]);
 			}
 		if (i < len)
 			BIO_printf(bio, " ...");

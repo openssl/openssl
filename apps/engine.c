@@ -72,7 +72,7 @@
 #undef PROG
 #define PROG	engine_main
 
-static char *engine_usage[]={
+static const char *engine_usage[]={
 "usage: engine opts [engine ...]\n",
 " -v[v[v[v]]] - verbose mode, for each engine, list its 'control commands'\n",
 "               -vv will additionally display each command's description\n",

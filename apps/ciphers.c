@@ -69,7 +69,7 @@
 #undef PROG
 #define PROG	ciphers_main
 
-static char *ciphers_usage[]={
+static const char *ciphers_usage[]={
 "usage: ciphers args\n",
 " -v          - verbose mode, a textual listing of the ciphers in SSLeay\n",
 " -ssl2       - SSL2 mode\n",
@@ -84,7 +84,7 @@ int MAIN(int argc, char **argv)
 	{
 	int ret=1,i;
 	int verbose=0;
-	char **pp;
+	const char **pp;
 	const char *p;
 	int badops=0;
 	SSL_CTX *ctx=NULL;

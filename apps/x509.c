@@ -83,7 +83,7 @@
 #define	POSTFIX	".srl"
 #define DEF_DAYS	30
 
-static char *x509_usage[]={
+static const char *x509_usage[]={
 "usage: x509 args\n",
 " -inform arg     - input format - default PEM (one of DER, NET or PEM)\n",
 " -outform arg    - output format - default PEM (one of DER, NET or PEM)\n",
@@ -179,7 +179,7 @@ int MAIN(int argc, char **argv)
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
 	int pprint = 0;
-	char **pp;
+	const char **pp;
 	X509_STORE *ctx=NULL;
 	X509_REQ *rq=NULL;
 	int fingerprint=0;

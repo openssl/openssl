@@ -130,16 +130,16 @@ static int prompt_info(X509_REQ *req,
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
 				STACK_OF(CONF_VALUE) *attr, int attribs,
 				unsigned long chtype);
-static int add_attribute_object(X509_REQ *req, char *text,
-				char *def, char *value, int nid, int n_min,
+static int add_attribute_object(X509_REQ *req, char *text, const char *def,
+				char *value, int nid, int n_min,
 				int n_max, unsigned long chtype);
-static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
+static int add_DN_object(X509_NAME *n, char *text, const char *def, char *value,
 	int nid,int n_min,int n_max, unsigned long chtype, int mval);
 #ifndef OPENSSL_NO_RSA
 static int MS_CALLBACK req_cb(int p, int n, BN_GENCB *cb);
 #endif
 static int req_check_len(int len,int n_min,int n_max);
-static int check_end(char *str, char *end);
+static int check_end(const char *str, const char *end);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 #endif
@@ -1280,7 +1280,8 @@ static int prompt_info(X509_REQ *req,
 	char buf[100];
 	int nid, mval;
 	long n_min,n_max;
-	char *type,*def,*value;
+	char *type, *value;
+	const char *def;
 	CONF_VALUE *v;
 	X509_NAME *subj;
 	subj = X509_REQ_get_subject_name(req);
@@ -1506,7 +1507,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 	}
 
 
-static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
+static int add_DN_object(X509_NAME *n, char *text, const char *def, char *value,
 	     int nid, int n_min, int n_max, unsigned long chtype, int mval)
 	{
 	int i,ret=0;
@@ -1562,8 +1563,8 @@ err:
 	return(ret);
 	}
 
-static int add_attribute_object(X509_REQ *req, char *text,
-				char *def, char *value, int nid, int n_min,
+static int add_attribute_object(X509_REQ *req, char *text, const char *def,
+				char *value, int nid, int n_min,
 				int n_max, unsigned long chtype)
 	{
 	int i;
@@ -1660,10 +1661,10 @@ static int req_check_len(int len, int n_min, int n_max)
 	}
 
 /* Check if the end of a string matches 'end' */
-static int check_end(char *str, char *end)
+static int check_end(const char *str, const char *end)
 {
 	int elen, slen;	
-	char *tmp;
+	const char *tmp;
 	elen = strlen(end);
 	slen = strlen(str);
 	if(elen > slen) return 1;

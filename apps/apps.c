@@ -133,7 +133,7 @@
 #undef NON_MAIN
 
 typedef struct {
-	char *name;
+	const char *name;
 	unsigned long flag;
 	unsigned long mask;
 } NAME_EX_TBL;
@@ -1269,7 +1269,7 @@ static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_T
 	return 0;
 }
 
-void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
+void print_name(BIO *out, const char *title, X509_NAME *nm, unsigned long lflags)
 {
 	char *buf;
 	char mline = 0;
@@ -1774,7 +1774,7 @@ int index_index(CA_DB *db)
 	return 1;
 	}
 
-int save_index(char *dbfile, char *suffix, CA_DB *db)
+int save_index(const char *dbfile, const char *suffix, CA_DB *db)
 	{
 	char buf[3][BSIZE];
 	BIO *out = BIO_new(BIO_s_file());
@@ -1841,7 +1841,7 @@ int save_index(char *dbfile, char *suffix, CA_DB *db)
 	return 0;
 	}
 
-int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
+int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	{
 	char buf[5][BSIZE];
 	int i,j;
@@ -2281,7 +2281,8 @@ int args_verify(char ***pargs, int *pargc,
 
 	}
 
-static void nodes_print(BIO *out, char *name, STACK_OF(X509_POLICY_NODE) *nodes)
+static void nodes_print(BIO *out, const char *name,
+	STACK_OF(X509_POLICY_NODE) *nodes)
 	{
 	X509_POLICY_NODE *node;
 	int i;

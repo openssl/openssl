@@ -254,7 +254,7 @@ void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
-void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags);
+void print_name(BIO *out, const char *title, X509_NAME *nm, unsigned long lflags);
 #endif
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
@@ -280,7 +280,7 @@ char *make_config_name(void);
 
 /* Functions defined in ca.c and also used in ocsp.c */
 int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
-			ASN1_GENERALIZEDTIME **pinvtm, char *str);
+			ASN1_GENERALIZEDTIME **pinvtm, const char *str);
 
 #define DB_type         0
 #define DB_exp_date     1
@@ -310,8 +310,8 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix);
 int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
 CA_DB *load_index(char *dbfile, DB_ATTR *dbattr);
 int index_index(CA_DB *db);
-int save_index(char *dbfile, char *suffix, CA_DB *db);
-int rotate_index(char *dbfile, char *new_suffix, char *old_suffix);
+int save_index(const char *dbfile, const char *suffix, CA_DB *db);
+int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix);
 void free_index(CA_DB *db);
 int index_name_cmp(const char **a, const char **b);
 int parse_yesno(char *str, int def);

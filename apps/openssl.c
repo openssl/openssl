@@ -220,7 +220,8 @@ int main(int Argc, char *Argv[])
 #define PROG_NAME_SIZE	39
 	char pname[PROG_NAME_SIZE+1];
 	FUNCTION f,*fp;
-	MS_STATIC char *prompt,buf[1024];
+	MS_STATIC const char *prompt;
+	MS_STATIC char buf[1024];
 	char *to_free=NULL;
 	int n,i,ret=0;
 	int argc;
@@ -488,7 +489,7 @@ static LHASH *prog_init(void)
 	{
 	LHASH *ret;
 	FUNCTION *f;
-	int i;
+	size_t i;
 
 	/* Purely so it looks nice when the user hits ? */
 	for(i=0,f=functions ; f->name != NULL ; ++f,++i)
@@ -506,12 +507,12 @@ static LHASH *prog_init(void)
 /* static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b) */
 static int MS_CALLBACK cmp(const void *a_void, const void *b_void)
 	{
-	return(strncmp(((FUNCTION *)a_void)->name,
-			((FUNCTION *)b_void)->name,8));
+	return(strncmp(((const FUNCTION *)a_void)->name,
+			((const FUNCTION *)b_void)->name,8));
 	}
 
 /* static unsigned long MS_CALLBACK hash(FUNCTION *a) */
 static unsigned long MS_CALLBACK hash(const void *a_void)
 	{
-	return(lh_strhash(((FUNCTION *)a_void)->name));
+	return(lh_strhash(((const FUNCTION *)a_void)->name));
 	}

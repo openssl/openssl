@@ -87,7 +87,8 @@ int MAIN(int argc, char **argv)
 	int verify=0,noout=0,pubkey=0;
 	char *infile = NULL,*outfile = NULL,*prog;
 	char *passargin = NULL, *passin = NULL;
-	char *spkac = "SPKAC", *spksect = "default", *spkstr = NULL;
+	const char *spkac = "SPKAC", *spksect = "default";
+	char *spkstr = NULL;
 	char *challenge = NULL, *keyfile = NULL;
 	CONF *conf = NULL;
 	NETSCAPE_SPKI *spki = NULL;
@@ -200,7 +201,7 @@ bad:
 		}
 		spki = NETSCAPE_SPKI_new();
 		if(challenge) ASN1_STRING_set(spki->spkac->challenge,
-						 challenge, strlen(challenge));
+						 challenge, (int)strlen(challenge));
 		NETSCAPE_SPKI_set_pubkey(spki, pkey);
 		NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
 		spkstr = NETSCAPE_SPKI_b64_encode(spki);

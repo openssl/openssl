@@ -87,7 +87,7 @@ int MAIN(int argc, char **argv)
 	int operation = 0;
 	int ret = 0;
 	char **args;
-	char *inmode = "r", *outmode = "w";
+	const char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;

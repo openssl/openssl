@@ -239,7 +239,7 @@ extern int verify_depth;
 static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
-static char *s_cert_file=TEST_CERT,*s_key_file=NULL;
+static const char *s_cert_file=TEST_CERT,*s_key_file=NULL;
 static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 #ifdef FIONBIO
 static int s_nbio=0;
@@ -1281,7 +1281,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					}
 				if (buf[0] == 'P')
 					{
-					static char *str="Lets print some clear text\n";
+					static const char *str="Lets print some clear text\n";
 					BIO_write(SSL_get_wbio(con),str,strlen(str));
 					}
 				if (buf[0] == 'S')
@@ -1633,7 +1633,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			char *p;
 			X509 *peer;
 			STACK_OF(SSL_CIPHER) *sk;
-			static char *space="                          ";
+			static const char *space="                          ";
 
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
 			BIO_puts(io,"<HTML><BODY BGCOLOR=\"#ffffff\">\n");
@@ -1713,7 +1713,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			{
 			BIO *file;
 			char *p,*e;
-			static char *text="HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n";
+			static const char *text="HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n";
 
 			/* skip the '/' */
 			p= &(buf[5]);

@@ -143,7 +143,7 @@
 #define REV_KEY_COMPROMISE	3	/* Value is cert key compromise time */
 #define REV_CA_COMPROMISE	4	/* Value is CA key compromise time */
 
-static char *ca_usage[]={
+static const char *ca_usage[]={
 "usage: ca args\n",
 "\n",
 " -verbose        - Talk alot while doing things\n",
@@ -192,7 +192,7 @@ extern int EF_PROTECT_BELOW;
 extern int EF_ALIGNMENT;
 #endif
 
-static void lookup_fail(char *name,char *tag);
+static void lookup_fail(const char *name, const char *tag);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,CA_DB *db,
 		   BIGNUM *serial, char *subj, int multirdn, int email_dn, char *startdate,
@@ -225,7 +225,7 @@ static int get_certificate_status(const char *ser_status, CA_DB *db);
 static int do_updatedb(CA_DB *db);
 static int check_time_format(char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
-int make_revoked(X509_REVOKED *rev, char *str);
+int make_revoked(X509_REVOKED *rev, const char *str);
 int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
 static CONF *conf=NULL;
 static CONF *extconf=NULL;
@@ -300,7 +300,8 @@ int MAIN(int argc, char **argv)
 	X509_REVOKED *r=NULL;
 	ASN1_TIME *tmptm;
 	ASN1_INTEGER *tmpser;
-	char **pp,*p,*f;
+	char *p,*f;
+	const char **pp;
 	int i,j;
 	const EVP_MD *dgst=NULL;
 	STACK_OF(CONF_VALUE) *attribs=NULL;
@@ -857,7 +858,7 @@ bad:
 	/* Lets check some fields */
 	for (i=0; i<sk_num(db->db->data); i++)
 		{
-		pp=(char **)sk_value(db->db->data,i);
+		pp=(const char **)sk_value(db->db->data,i);
 		if ((pp[DB_type][0] != DB_TYPE_REV) &&
 			(pp[DB_rev_date][0] != '\0'))
 			{
@@ -1501,7 +1502,7 @@ err:
 	OPENSSL_EXIT(ret);
 	}
 
-static void lookup_fail(char *name, char *tag)
+static void lookup_fail(const char *name, const char *tag)
 	{
 	BIO_printf(bio_err,"variable lookup failed for %s::%s\n",name,tag);
 	}
@@ -1646,7 +1647,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	X509_NAME_ENTRY *tne,*push;
 	EVP_PKEY *pktmp;
 	int ok= -1,i,j,last,nid;
-	char *p;
+	const char *p;
 	CONF_VALUE *cv;
 	char *row[DB_NUMBER],**rrow=NULL,**irow=NULL;
 	char buf[25];
@@ -2654,7 +2655,7 @@ err:
 	return (cnt);
 	}
 
-static char *crl_reasons[] = {
+static const char *crl_reasons[] = {
 	/* CRL reason strings */
 	"unspecified",
 	"keyCompromise",
@@ -2682,7 +2683,8 @@ static char *crl_reasons[] = {
 
 char *make_revocation_str(int rev_type, char *rev_arg)
 	{
-	char *reason = NULL, *other = NULL, *str;
+	char *other = NULL, *str;
+	const char *reason = NULL;
 	ASN1_OBJECT *otmp;
 	ASN1_UTCTIME *revtm = NULL;
 	int i;
@@ -2776,7 +2778,7 @@ char *make_revocation_str(int rev_type, char *rev_arg)
  */
 
 
-int make_revoked(X509_REVOKED *rev, char *str)
+int make_revoked(X509_REVOKED *rev, const char *str)
 	{
 	char *tmp = NULL;
 	int reason_code = -1;
@@ -2869,7 +2871,7 @@ int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
 	return 1;
 	}
 
-int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_GENERALIZEDTIME **pinvtm, char *str)
+int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold, ASN1_GENERALIZEDTIME **pinvtm, const char *str)
 	{
 	char *tmp = NULL;
 	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
