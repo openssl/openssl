@@ -493,7 +493,7 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -D_DARWIN -DB_ENDIAN::-D_REENTRANT::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-O3 -D_DARWIN -DB_ENDIAN -fno-common::-D_REENTRANT::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### Sony NEWS-OS 4.x
 "newsos4-gcc","gcc:-O -DB_ENDIAN -DNEWS4::(unknown):-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
