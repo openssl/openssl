@@ -1248,7 +1248,7 @@ static int build_subject(X509_REQ *req, char *subject, unsigned long chtype, int
 	{
 	X509_NAME *n;
 
-	if (!(n = do_subject(subject, chtype, multirdn)))
+	if (!(n = parse_name(subject, chtype, multirdn)))
 		return 0;
 
 	if (!X509_REQ_set_subject_name(req, n))
