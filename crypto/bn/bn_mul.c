@@ -383,9 +383,10 @@ BN_ULONG bn_add_part_words(BN_ULONG *r,
  * a[1]*b[1]
  */
 void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
-	     BN_ULONG *t)
+	int dna, int dnb, BN_ULONG *t)
 	{
 	int n=n2/2,c1,c2;
+	int tna=n+dna, tnb=n+dnb;
 	unsigned int neg,zero;
 	BN_ULONG ln,lo,*p;
 
@@ -413,21 +414,21 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		return;
 		}
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
-	c1=bn_cmp_words(a,&(a[n]),n);
-	c2=bn_cmp_words(&(b[n]),b,n);
+	c1=bn_cmp_part_words(a,&(a[n]),tna,n-tna);
+	c2=bn_cmp_part_words(&(b[n]),b,tnb,tnb-n);
 	zero=neg=0;
 	switch (c1*3+c2)
 		{
 	case -4:
-		bn_sub_words(t,      &(a[n]),a,      n); /* - */
-		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		bn_sub_part_words(t,      &(a[n]),a,      tna,tna-n); /* - */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tnb,n-tnb); /* - */
 		break;
 	case -3:
 		zero=1;
 		break;
 	case -2:
-		bn_sub_words(t,      &(a[n]),a,      n); /* - */
-		bn_sub_words(&(t[n]),&(b[n]),b,      n); /* + */
+		bn_sub_part_words(t,      &(a[n]),a,      tna,tna-n); /* - */
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tnb,tnb-n); /* + */
 		neg=1;
 		break;
 	case -1:
@@ -436,16 +437,16 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		zero=1;
 		break;
 	case 2:
-		bn_sub_words(t,      a,      &(a[n]),n); /* + */
-		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		bn_sub_part_words(t,      a,      &(a[n]),tna,n-tna); /* + */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tnb,n-tnb); /* - */
 		neg=1;
 		break;
 	case 3:
 		zero=1;
 		break;
 	case 4:
-		bn_sub_words(t,      a,      &(a[n]),n);
-		bn_sub_words(&(t[n]),&(b[n]),b,      n);
+		bn_sub_part_words(t,      a,      &(a[n]),tna,n-tna);
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tnb,tnb-n);
 		break;
 		}
 
@@ -475,11 +476,11 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		{
 		p= &(t[n2*2]);
 		if (!zero)
-			bn_mul_recursive(&(t[n2]),t,&(t[n]),n,p);
+			bn_mul_recursive(&(t[n2]),t,&(t[n]),n,0,0,p);
 		else
 			memset(&(t[n2]),0,n2*sizeof(BN_ULONG));
-		bn_mul_recursive(r,a,b,n,p);
-		bn_mul_recursive(&(r[n2]),&(a[n]),&(b[n]),n,p);
+		bn_mul_recursive(r,a,b,n,0,0,p);
+		bn_mul_recursive(&(r[n2]),&(a[n]),&(b[n]),n,dna,dnb,p);
 		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0]), c1 is the sign
@@ -528,8 +529,8 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 
 /* n+tn is the word length
  * t needs to be n*4 is size, as does r */
-void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
-	     int n, BN_ULONG *t)
+void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
+	     int tna, int tnb, BN_ULONG *t)
 	{
 	int i,j,n2=n*2;
 	unsigned int c1,c2,neg,zero;
@@ -537,31 +538,30 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 
 # ifdef BN_COUNT
 	fprintf(stderr," bn_mul_part_recursive (%d+%d) * (%d+%d)\n",
-		tn, n,tn, n);
+		tna, n, tnb, n);
 # endif
 	if (n < 8)
 		{
-		i=tn+n;
-		bn_mul_normal(r,a,i,b,i);
+		bn_mul_normal(r,a,n+tna,b,n+tnb);
 		return;
 		}
 
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
-	c1=bn_cmp_part_words(a,&(a[n]),tn,n-tn);
-	c2=bn_cmp_part_words(&(b[n]),b,tn,tn-n);
+	c1=bn_cmp_part_words(a,&(a[n]),tna,n-tna);
+	c2=bn_cmp_part_words(&(b[n]),b,tnb,tnb-n);
 	zero=neg=0;
 	switch (c1*3+c2)
 		{
 	case -4:
-		bn_sub_part_words(t,      &(a[n]),a,      tn,tn-n); /* - */
-		bn_sub_part_words(&(t[n]),b,      &(b[n]),tn,n-tn); /* - */
+		bn_sub_part_words(t,      &(a[n]),a,      tna,tna-n); /* - */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tnb,n-tnb); /* - */
 		break;
 	case -3:
 		zero=1;
 		/* break; */
 	case -2:
-		bn_sub_part_words(t,      &(a[n]),a,      tn,tn-n); /* - */
-		bn_sub_part_words(&(t[n]),&(b[n]),b,      tn,tn-n); /* + */
+		bn_sub_part_words(t,      &(a[n]),a,      tna,tna-n); /* - */
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tnb,tnb-n); /* + */
 		neg=1;
 		break;
 	case -1:
@@ -570,16 +570,16 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		zero=1;
 		/* break; */
 	case 2:
-		bn_sub_part_words(t,      a,      &(a[n]),tn,n-tn); /* + */
-		bn_sub_part_words(&(t[n]),b,      &(b[n]),tn,n-tn); /* - */
+		bn_sub_part_words(t,      a,      &(a[n]),tna,n-tna); /* + */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tnb,n-tnb); /* - */
 		neg=1;
 		break;
 	case 3:
 		zero=1;
 		/* break; */
 	case 4:
-		bn_sub_part_words(t,      a,      &(a[n]),tn,n-tn);
-		bn_sub_part_words(&(t[n]),&(b[n]),b,      tn,tn-n);
+		bn_sub_part_words(t,      a,      &(a[n]),tna,n-tna);
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tnb,tnb-n);
 		break;
 		}
 		/* The zero case isn't yet implemented here. The speedup
@@ -598,54 +598,59 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		{
 		bn_mul_comba8(&(t[n2]),t,&(t[n]));
 		bn_mul_comba8(r,a,b);
-		bn_mul_normal(&(r[n2]),&(a[n]),tn,&(b[n]),tn);
-		memset(&(r[n2+tn*2]),0,sizeof(BN_ULONG)*(n2-tn*2));
+		bn_mul_normal(&(r[n2]),&(a[n]),tna,&(b[n]),tnb);
+		memset(&(r[n2+tna+tnb]),0,sizeof(BN_ULONG)*(n2-tna-tnb));
 		}
 	else
 		{
 		p= &(t[n2*2]);
-		bn_mul_recursive(&(t[n2]),t,&(t[n]),n,p);
-		bn_mul_recursive(r,a,b,n,p);
+		bn_mul_recursive(&(t[n2]),t,&(t[n]),n,0,0,p);
+		bn_mul_recursive(r,a,b,n,0,0,p);
 		i=n/2;
 		/* If there is only a bottom half to the number,
 		 * just do it */
-		j=tn-i;
+		if (tna > tnb)
+			j = tna - i;
+		else
+			j = tnb - i;
 		if (j == 0)
 			{
-			bn_mul_recursive(&(r[n2]),&(a[n]),&(b[n]),i,p);
+			bn_mul_recursive(&(r[n2]),&(a[n]),&(b[n]),
+				i,tna-i,tnb-i,p);
 			memset(&(r[n2+i*2]),0,sizeof(BN_ULONG)*(n2-i*2));
 			}
 		else if (j > 0) /* eg, n == 16, i == 8 and tn == 11 */
 				{
 				bn_mul_part_recursive(&(r[n2]),&(a[n]),&(b[n]),
-					j,i,p);
-				memset(&(r[n2+tn*2]),0,
-					sizeof(BN_ULONG)*(n2-tn*2));
+					i,tna-i,tnb-i,p);
+				memset(&(r[n2+tna+tnb]),0,
+					sizeof(BN_ULONG)*(n2-tna-tnb));
 				}
 		else /* (j < 0) eg, n == 16, i == 8 and tn == 5 */
 			{
 			memset(&(r[n2]),0,sizeof(BN_ULONG)*n2);
-			if (tn < BN_MUL_RECURSIVE_SIZE_NORMAL)
+			if (tna < BN_MUL_RECURSIVE_SIZE_NORMAL
+				&& tnb < BN_MUL_RECURSIVE_SIZE_NORMAL)
 				{
-				bn_mul_normal(&(r[n2]),&(a[n]),tn,&(b[n]),tn);
+				bn_mul_normal(&(r[n2]),&(a[n]),tna,&(b[n]),tnb);
 				}
 			else
 				{
 				for (;;)
 					{
 					i/=2;
-					if (i < tn)
+					if (i < tna && i < tnb)
 						{
 						bn_mul_part_recursive(&(r[n2]),
 							&(a[n]),&(b[n]),
-							tn-i,i,p);
+							i,tna-i,tnb-i,p);
 						break;
 						}
-					else if (i == tn)
+					else if (i <= tna && i <= tnb)
 						{
 						bn_mul_recursive(&(r[n2]),
 							&(a[n]),&(b[n]),
-							i,p);
+							i,tna-i,tnb-i,p);
 						break;
 						}
 					}
@@ -709,7 +714,7 @@ void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 	fprintf(stderr," bn_mul_low_recursive %d * %d\n",n2,n2);
 # endif
 
-	bn_mul_recursive(r,a,b,n,&(t[0]));
+	bn_mul_recursive(r,a,b,n,0,0,&(t[0]));
 	if (n >= BN_MUL_LOW_RECURSIVE_SIZE_NORMAL)
 		{
 		bn_mul_low_recursive(&(t[0]),&(a[0]),&(b[n]),n,&(t[n2]));
@@ -793,8 +798,8 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	else
 # endif
 		{
-		bn_mul_recursive(&(t[0]),&(r[0]),&(r[n]),n,&(t[n2]));
-		bn_mul_recursive(r,&(a[n]),&(b[n]),n,&(t[n2]));
+		bn_mul_recursive(&(t[0]),&(r[0]),&(r[n]),n,0,0,&(t[n2]));
+		bn_mul_recursive(r,&(a[n]),&(b[n]),n,0,0,&(t[n2]));
 		}
 
 	/* s0 == low(al*bl)
@@ -917,11 +922,11 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	}
 #endif /* BN_RECURSION */
 
-int BN_mul(BIGNUM *r, /* almost const */ const BIGNUM *a, /* almost const */ const BIGNUM *b, BN_CTX *ctx)
+int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
+	int ret=0;
 	int top,al,bl;
 	BIGNUM *rr;
-	int ret = 0;
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 	int i;
 #endif
@@ -929,7 +934,6 @@ int BN_mul(BIGNUM *r, /* almost const */ const BIGNUM *a, /* almost const */ con
 	BIGNUM *t;
 	int j,k;
 #endif
-	BIGNUM *free_a = NULL, *free_b = NULL;
 
 #ifdef BN_COUNT
 	fprintf(stderr,"BN_mul %d * %d\n",a->top,b->top);
@@ -985,6 +989,42 @@ int BN_mul(BIGNUM *r, /* almost const */ const BIGNUM *a, /* almost const */ con
 #ifdef BN_RECURSION
 	if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL))
 		{
+		if (i >= -1 && i <= 1)
+			{
+			int sav_j =0;
+			/* Find out the power of two lower or equal
+			   to the longest of the two numbers */
+			if (i >= 0)
+				{
+				j = BN_num_bits_word((BN_ULONG)al);
+				}
+			if (i == -1)
+				{
+				j = BN_num_bits_word((BN_ULONG)bl);
+				}
+			sav_j = j;
+			j = 1<<(j-1);
+			assert(j <= al || j <= bl);
+			k = j+j;
+			t = BN_CTX_get(ctx);
+			if (al > j || bl > j)
+				{
+				bn_wexpand(t,k*4);
+				bn_wexpand(rr,k*4);
+				bn_mul_part_recursive(rr->d,a->d,b->d,
+					j,al-j,bl-j,t->d);
+				}
+			else	/* al <= j || bl <= j */
+				{
+				bn_wexpand(t,k*2);
+				bn_wexpand(rr,k*2);
+				bn_mul_recursive(rr->d,a->d,b->d,
+					j,al-j,bl-j,t->d);
+				}
+			rr->top=top;
+			goto end;
+			}
+#if 0
 		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
 			BIGNUM *tmp_bn = (BIGNUM *)b;
@@ -1024,6 +1064,7 @@ int BN_mul(BIGNUM *r, /* almost const */ const BIGNUM *a, /* almost const */ con
 			rr->top=top;
 			goto end;
 			}
+#endif
 		}
 #endif /* BN_RECURSION */
 	if (bn_wexpand(rr,top) == NULL) goto err;
@@ -1037,8 +1078,6 @@ end:
 	if (r != rr) BN_copy(r,rr);
 	ret=1;
 err:
-	if (free_a) BN_free(free_a);
-	if (free_b) BN_free(free_b);
 	BN_CTX_end(ctx);
 	return(ret);
 	}
