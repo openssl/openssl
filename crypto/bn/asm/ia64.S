@@ -1,3 +1,4 @@
+.explicit
 .text
 .asciz	"ia64.S, Version 1.0"
 .asciz	"IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
@@ -297,6 +298,7 @@ bn_mul_words:
 	(p21)	xmpy.hu		f38=f37,f8
 	(p0)	nop.i		0x0		};;
 { .mii	(p26)	getf.sig	r32=f43			// high
+	.pred.rel	"mutex",p48,p52
 	(p48)	add		r38=r37,r33		// (p26)
 	(p52)	add		r38=r37,r33,1	}	// (p26)
 { .mfb	(p27)	st8		[r14]=r39,8
@@ -305,6 +307,7 @@ bn_mul_words:
 .L_bn_mul_words_cend:
 
 { .mii	nop.m		0x0
+.pred.rel	"mutex",p49,p53
 (p49)	add		r8=r34,r0
 (p53)	add		r8=r34,r0,1	}
 { .mfb	nop.m	0x0
@@ -402,6 +405,7 @@ bn_mul_add_words:
 	(p21)	xmpy.hu		f38=f37,f8
 	(p27)	add		r43=r43,r39	};;
 { .mii	(p26)	getf.sig	r32=f43			// high
+	.pred.rel	"mutex",p48,p52
 	(p48)	add		r38=r37,r33		// (p26)
 	(p52)	add		r38=r37,r33,1	}	// (p26)
 { .mfb	(p27)	cmp.ltu.unc	p56,p0=r43,r39
@@ -416,6 +420,7 @@ bn_mul_add_words:
 .L_bn_mul_add_words_cend:
 
 { .mii	nop.m		0x0
+.pred.rel	"mutex",p51,p55
 (p51)	add		r8=r36,r0
 (p55)	add		r8=r36,r0,1	}
 { .mfb	nop.m	0x0
