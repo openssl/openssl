@@ -75,10 +75,28 @@ static char *skip_dot(char *name)
 	return name;
 	}
 
+static STACK_OF(ENGINE) *initialized_engines = NULL;
+
+static int int_engine_init(ENGINE *e)
+	{
+	if (!ENGINE_init(e))
+		return 0;
+	if (!initialized_engines)
+		initialized_engines = sk_ENGINE_new_null();
+	if (!initialized_engines || !sk_ENGINE_push(initialized_engines, e))
+		{
+		ENGINE_finish(e);
+		return 0;
+		}
+	return 1;
+	}
+	
+
 int int_engine_configure(char *name, char *value, const CONF *cnf)
 	{
 	int i;
 	int ret = 0;
+	long do_init = -1;
 	STACK_OF(CONF_VALUE) *ecmds;
 	CONF_VALUE *ecmd;
 	char *ctrlname, *ctrlvalue;
@@ -140,7 +158,22 @@ int int_engine_configure(char *name, char *value, const CONF *cnf)
 		 	 */
 			if (!strcmp(ctrlvalue, "EMPTY"))
 				ctrlvalue = NULL;
-			if (!strcmp(ctrlname, "default_algorithms"))
+			else if (!strcmp(ctrlname, "init"))
+				{
+				if (!NCONF_get_number_e(cnf, value, "init", &do_init))
+					goto err;
+				if (do_init == 1)
+					{
+					if (!int_engine_init(e))
+						goto err;
+					}
+				else if (do_init != 0)
+					{
+					ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE, ENGINE_R_INVALID_INIT_VALUE);
+					goto err;
+					}
+				}
+			else if (!strcmp(ctrlname, "default_algorithms"))
 				{
 				if (!ENGINE_set_default_string(e, ctrlvalue))
 					goto err;
@@ -151,7 +184,10 @@ int int_engine_configure(char *name, char *value, const CONF *cnf)
 			}
 
 
+
 		}
+	if (e && (do_init == -1) && !int_engine_init(e))
+		goto err;
 	ret = 1;
 	err:
 	if (e)
@@ -188,7 +224,19 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
 	return 1;
 	}
 
+static void int_engine_module_finish(CONF_IMODULE *md)
+	{
+	ENGINE *e;
+	while ((e = sk_ENGINE_pop(initialized_engines)))
+		ENGINE_finish(e);
+	sk_ENGINE_free(initialized_engines);
+	initialized_engines = NULL;
+	}
+	
+
 void ENGINE_add_conf_module(void)
 	{
-	CONF_module_add("engines", int_engine_module_init, 0);
+	CONF_module_add("engines",
+			int_engine_module_init,
+			int_engine_module_finish);
 	}

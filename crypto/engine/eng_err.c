@@ -129,6 +129,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_INVALID_ARGUMENT               ,"invalid argument"},
 {ENGINE_R_INVALID_CMD_NAME               ,"invalid cmd name"},
 {ENGINE_R_INVALID_CMD_NUMBER             ,"invalid cmd number"},
+{ENGINE_R_INVALID_INIT_VALUE             ,"invalid init value"},
 {ENGINE_R_INVALID_STRING                 ,"invalid string"},
 {ENGINE_R_NOT_INITIALISED                ,"not initialised"},
 {ENGINE_R_NOT_LOADED                     ,"not loaded"},
