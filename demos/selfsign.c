@@ -102,7 +102,7 @@ int days;
 	else
 		x= *x509p;
 
-	rsa=RSA_generate_key(bits,RSA_F4,callback);
+	rsa=RSA_generate_key(bits,RSA_F4,callback,NULL);
 	if (!EVP_PKEY_assign_RSA(pk,rsa))
 		{
 		abort();

@@ -93,7 +93,7 @@ static BIO_METHOD methods_filep=
 	file_free,
 	};
 
-BIO *BIO_new_file(char *filename, char *mode)
+BIO *BIO_new_file(const char *filename, const char *mode)
 	{
 	BIO *ret;
 	FILE *file;

@@ -460,7 +460,7 @@ BIO *BIO_new_fp_internal(FILE *stream, int close_flag);
 #    define BIO_new_fp	BIO_new_fp_internal
 #  else /* FP_API */
 BIO_METHOD *BIO_s_file(void );
-BIO *BIO_new_file(char *filename, char *mode);
+BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 #    define BIO_s_file_internal		BIO_s_file
 #    define BIO_new_file_internal	BIO_new_file

@@ -641,8 +641,8 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
 			 int en_de);
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-				unsigned char *salt, int saltlen, int iter,
-					 int keylen, unsigned char *out);
+			   unsigned char *salt, int saltlen, int iter,
+			   int keylen, unsigned char *out);
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
 			 int en_de);

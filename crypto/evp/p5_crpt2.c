@@ -69,8 +69,8 @@
  */
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-				unsigned char *salt, int saltlen, int iter,
-					 int keylen, unsigned char *out)
+			   unsigned char *salt, int saltlen, int iter,
+			   int keylen, unsigned char *out)
 {
 	unsigned char digtmp[SHA_DIGEST_LENGTH], *p, itmp[4];
 	int cplen, j, k;

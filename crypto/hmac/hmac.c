@@ -60,7 +60,7 @@
 #include <string.h>
 #include <openssl/hmac.h>
 
-void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
+void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	       const EVP_MD *md)
 	{
 	int i,j,reset=0;
@@ -133,8 +133,9 @@ void HMAC_cleanup(HMAC_CTX *ctx)
 	memset(ctx,0,sizeof(HMAC_CTX));
 	}
 
-unsigned char *HMAC(const EVP_MD *evp_md, const unsigned char *key, int key_len,
-	     unsigned char *d, int n, unsigned char *md, unsigned int *md_len)
+unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
+		    unsigned char *d, int n, unsigned char *md,
+		    unsigned int *md_len)
 	{
 	HMAC_CTX c;
 	static unsigned char m[EVP_MAX_MD_SIZE];

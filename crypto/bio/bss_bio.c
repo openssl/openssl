@@ -187,7 +187,8 @@ static int bio_puts(BIO *bio, char *str)
 	return bio_write(bio, str, strlen(str));
 	}
 
-
+/* Until bio_make_pair is used, make a dummy function use it for -pedantic */
+void dummy() { bio_make_pair(NULL,NULL); }
 
 static int bio_make_pair(BIO *bio1, BIO *bio2)
 	{
