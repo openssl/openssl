@@ -246,7 +246,7 @@ extern int bn_limit_num_mont;   /* (1<<bn_limit_bits_mont) */
 BIGNUM *bn_expand2(BIGNUM *b, int bits);
 
 #ifdef X86_ASM
-void bn_add_words(BN_ULONG *r,BN_ULONG *a,int num);
+void bn_add_words(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int num);
 #endif
 
 #ifdef  __cplusplus
