@@ -13,11 +13,10 @@
       o CryptoSwift
       o Compaq Atalla
       o nCipher CHIL
+      o Nuron
 
   A number of things are still needed and are being worked on:
 
-      o An openssl utility command to handle or at least check available
-        engines.
       o A better way of handling the methods that are handled by the
         engines.
       o Documentation!
