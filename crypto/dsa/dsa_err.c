@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/dsa.h>
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_ERR is defined */
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
