@@ -24,6 +24,8 @@ PEX_LIBS=
 EX_LIBS= 
 EXE_EXT= 
 
+SHLIB_TARGET=
+
 CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile makeapps.com install.com
@@ -139,7 +141,11 @@ $(DLIBCRYPTO):
 
 $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(PROGRAM)
-	$(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" ] ; then \
+	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
 		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
 		export LD_LIBRARY_PATH SHLIB_PATH LIBPATH; \
