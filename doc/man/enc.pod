@@ -119,8 +119,9 @@ B<openssl enc -ciphername>.
 
 A password will be prompted for to derive the key and IV if necessary.
 
-The B<-salt> option should B<ALWAYS> be used unless you want compatability
-with previous versions of OpenSSL and SSLeay.
+The B<-salt> option should B<ALWAYS> be used if the key is being derived
+from a password unless you want compatability with previous versions of
+OpenSSL and SSLeay.
 
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason
