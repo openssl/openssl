@@ -122,11 +122,13 @@ The following B<modifying> options are available:
 
 =item SSL_OP_SINGLE_DH_USE
 
-Always create a new key when using temporary DH parameters.
+Always create a new key when using temporary DH parameters
+(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
 
 =item SSL_OP_EPHEMERAL_RSA
 
-Also use the temporary RSA key when doing RSA operations.
+Also use ephemeral (temporary) RSA key when doing RSA operations
+(see L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>).
 
 =item SSL_OP_CIPHER_SERVER_PREFERENCE
 
@@ -182,7 +184,9 @@ SSL_CTX_get_options() and SSL_get_options() return the current bitmask.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>
+L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
+L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>
 
 =head1 HISTORY
 
