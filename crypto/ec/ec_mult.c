@@ -60,7 +60,7 @@
 
 /* TODO: width-m NAFs */
 
-/* TODO: optional Lim-Lee precomputation for the generator */
+/* TODO: optional precomputation of multiples of the generator */
 
 
 #define EC_window_bits_for_scalar_size(b) \

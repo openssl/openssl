@@ -84,7 +84,7 @@ typedef struct ec_group_st
 	 -- field definition
 	 -- curve coefficients
 	 -- optional generator with associated information (order, cofactor)
-	 -- optional extra data (Lim/Lee precomputation table)
+	 -- optional extra data (TODO: precomputed table for fast computation of multiples of generator)
 	*/
 	EC_GROUP;
 
