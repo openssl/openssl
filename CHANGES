@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a salt to the key derivation routines in enc.c. This
+     forms the first 8 bytes of the encrypted file. Also add a
+     -S option to allow a salt to be input on the command line.
+     [Steve Henson]
+
   *) New function X509_cmp(). Oddly enough there wasn't a function
      to compare two certificates. We do this by working out the SHA1
      hash and comparing that. X509_cmp() will be needed by the trust

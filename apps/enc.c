@@ -65,6 +65,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/rand.h>
 #ifndef NO_MD5
 #include <openssl/md5.h>
 #endif
@@ -86,10 +87,11 @@ int MAIN(int argc, char **argv)
 	int bsize=BSIZE,verbose=0;
 	int ret=1,inl;
 	unsigned char key[24],iv[MD5_DIGEST_LENGTH];
+	unsigned char salt[PKCS5_SALT_LEN];
 	char *str=NULL;
-	char *hkey=NULL,*hiv=NULL;
+	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
 	int enc=1,printkey=0,i,base64=0;
-	int debug=0,olb64=0;
+	int debug=0,olb64=0,nosalt=1;
 	const EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
@@ -136,8 +138,11 @@ int MAIN(int argc, char **argv)
 			printkey=1;
 		else if	(strcmp(*argv,"-v") == 0)
 			verbose=1;
-		else if	((strcmp(*argv,"-debug") == 0) ||
-			 (strcmp(*argv,"-d") == 0))
+		else if	(strcmp(*argv,"-salt") == 0)
+			nosalt=0;
+		else if	(strcmp(*argv,"-nosalt") == 0)
+			nosalt=1;
+		else if	(strcmp(*argv,"-debug") == 0)
 			debug=1;
 		else if	(strcmp(*argv,"-P") == 0)
 			printkey=2;
@@ -193,6 +198,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			hkey= *(++argv);
+			}
+		else if (strcmp(*argv,"-S") == 0)
+			{
+			if (--argc < 1) goto bad;
+			hsalt= *(++argv);
 			}
 		else if (strcmp(*argv,"-iv") == 0)
 			{
@@ -386,11 +396,73 @@ bad:
 			}
 		}
 
+
+	if (outf == NULL)
+		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+	else
+		{
+		if (BIO_write_filename(out,outf) <= 0)
+			{
+			perror(outf);
+			goto end;
+			}
+		}
+
+	rbio=in;
+	wbio=out;
+
+	if (base64)
+		{
+		if ((b64=BIO_new(BIO_f_base64())) == NULL)
+			goto end;
+		if (debug)
+			{
+			BIO_set_callback(b64,BIO_debug_callback);
+			BIO_set_callback_arg(b64,bio_err);
+			}
+		if (olb64)
+			BIO_set_flags(b64,BIO_FLAGS_BASE64_NO_NL);
+		if (enc)
+			wbio=BIO_push(b64,wbio);
+		else
+			rbio=BIO_push(b64,rbio);
+		}
+
 	if (cipher != NULL)
 		{
 		if (str != NULL)
 			{
-			EVP_BytesToKey(cipher,EVP_md5(),NULL,
+			/* Salt handling: if encrypting generate a salt and
+			 * write to output BIO. If decrypting read salt from
+			 * input BIO.
+			 */
+			unsigned char *sptr;
+			if(nosalt) sptr = NULL;
+			else {
+				if(enc) {
+					if(hsalt) {
+						if(!set_hex(hsalt,salt,PKCS5_SALT_LEN)) {
+							BIO_printf(bio_err,
+								"invalid hex salt value\n");
+							goto end;
+						}
+					} else RAND_bytes(salt, PKCS5_SALT_LEN);
+					/* If -P option then don't bother writing */
+					if((printkey != 2) && (BIO_write(wbio,
+							(unsigned char *) salt,
+				    			PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
+						BIO_printf(bio_err,"error writing output file\n");
+						goto end;
+					}
+				} else if(BIO_read(rbio, (unsigned char *)salt,
+				    PKCS5_SALT_LEN) != PKCS5_SALT_LEN) {
+					BIO_printf(bio_err,"error reading input file\n");
+					goto end;
+				}
+				sptr = salt;
+			}
+
+			EVP_BytesToKey(cipher,EVP_md5(),sptr,
 				(unsigned char *)str,
 				strlen(str),1,key,iv);
 			/* zero the complete buffer or the string
@@ -424,6 +496,13 @@ bad:
 
 		if (printkey)
 			{
+			if (!nosalt)
+				{
+				printf("salt=");
+				for (i=0; i<PKCS5_SALT_LEN; i++)
+					printf("%02X",salt[i]);
+				printf("\n");
+				}
 			if (cipher->key_len > 0)
 				{
 				printf("key=");
@@ -444,38 +523,6 @@ bad:
 				goto end;
 				}
 			}
-		}
-
-
-	if (outf == NULL)
-		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_write_filename(out,outf) <= 0)
-			{
-			perror(outf);
-			goto end;
-			}
-		}
-
-	rbio=in;
-	wbio=out;
-
-	if (base64)
-		{
-		if ((b64=BIO_new(BIO_f_base64())) == NULL)
-			goto end;
-		if (debug)
-			{
-			BIO_set_callback(b64,BIO_debug_callback);
-			BIO_set_callback_arg(b64,bio_err);
-			}
-		if (olb64)
-			BIO_set_flags(b64,BIO_FLAGS_BASE64_NO_NL);
-		if (enc)
-			wbio=BIO_push(b64,wbio);
-		else
-			rbio=BIO_push(b64,rbio);
 		}
 
 	/* Only encrypt/decrypt as we write the file */

@@ -40,6 +40,18 @@ the input filename, standard input by default.
 
 the output filename, standard output by default.
 
+=item B<-salt>
+
+use a salt in the key derivation routines. This option should B<ALWAYS>
+be used unless compatability with previous versions of OpenSSL or SSLeay
+is required. This option is only present on OpenSSL versions 0.9.5 or
+above.
+
+=item B<-nosalt>
+
+don't use a salt in the key derivation routines. This is the default for
+compatability with previous versions of OpenSSL and SSLeay.
+
 =item B<-e>
 
 encrypt the input data: this is the default.
@@ -65,6 +77,11 @@ the password to derive the key from.
 =item B<-kfile filename>
 
 read the password to derive the key from the first line of B<filename>
+
+=item B<-S salt>
+
+the actual salt to use: this must be represented as a string comprised only
+of hex digits.
 
 =item B<-K key>
 
@@ -101,6 +118,16 @@ The program can be called either as B<openssl ciphername> or
 B<openssl enc -ciphername>.
 
 A password will be prompted for to derive the key and IV if necessary.
+
+The B<-salt> option should B<ALWAYS> be used unless you want compatability
+with previous versions of OpenSSL and SSLeay.
+
+Without the B<-salt> option it is possible to perform efficient dictionary
+attacks on the password and to attack stream cipher encrypted data. The reason
+for this is that without the salt the same password always generates the same
+encryption key. When the salt is being used the first eight bytes of the
+encrypted data are reserved for the salt: it is generated at random when
+encrypting a file and read from the encrypted file when it is decrypted.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
@@ -187,20 +214,20 @@ Decode the same file
 
 Encrypt a file using triple DES in CBC mode using a prompted password:
 
- openssl des3 -in file.txt -out file.des3 
+ openssl des3 -salt -in file.txt -out file.des3 
 
 Decrypt a file using a supplied password:
 
- openssl des3 -d -in file.des3 -out file.txt -k mypassword
+ openssl des3 -d -salt -in file.des3 -out file.txt -k mypassword
 
 Encrypt a file then base64 encode it (so it can be sent via mail for example)
 using Blowfish in CBC mode:
 
- openssl bf -a -in file.txt -out file.bf
+ openssl bf -a -salt -in file.txt -out file.bf
 
 Base64 decode a file then decrypt it:
 
- openssl bf -d -a -in file.bf -out file.txt
+ openssl bf -d -salt -a -in file.bf -out file.txt
 
 Decrypt some data using a supplied 40 bit RC4 key:
 
@@ -210,10 +237,7 @@ Decrypt some data using a supplied 40 bit RC4 key:
 
 The B<-A> option when used with large files doesn't work properly.
 
-The key derivation algorithm used is compatible with the SSLeay algorithm. It
-is not very good: it uses unsalted MD5.
-
-There should be an option to allow a salt or iteration count to be included.
+There should be an option to allow an iteration count to be included.
 
 Like the EVP library the B<enc> program only supports a fixed number of
 algorithms with certain parameters. So if, for example, you want to use RC2
