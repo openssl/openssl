@@ -23,14 +23,6 @@ BN_ASM=		bn_asm.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-# We let the C compiler driver to take care of .s files. This is done in
-# order to be excused from maintaining a separate set of architecture
-# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
-# gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
-AS=$(CC) -c
-ASFLAGS=$(CFLAGS)
-
 GENERAL=Makefile
 TEST=bntest.c exptest.c
 APPS=
@@ -73,22 +65,11 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # elf
-asm/bn86-elf.o: asm/bn86unix.cpp
-	$(CPP) -DELF -x c asm/bn86unix.cpp | as -o asm/bn86-elf.o
+asm/bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > bn86-elf.s)
 
-asm/co86-elf.o: asm/co86unix.cpp
-	$(CPP) -DELF -x c asm/co86unix.cpp | as -o asm/co86-elf.o
-
-# solaris
-asm/bn86-sol.o: asm/bn86unix.cpp
-	$(CC) -E -DSOL asm/bn86unix.cpp | sed 's/^#.*//' > asm/bn86-sol.s
-	as -o asm/bn86-sol.o asm/bn86-sol.s
-	rm -f asm/bn86-sol.s
-
-asm/co86-sol.o: asm/co86unix.cpp
-	$(CC) -E -DSOL asm/co86unix.cpp | sed 's/^#.*//' > asm/co86-sol.s
-	as -o asm/co86-sol.o asm/co86-sol.s
-	rm -f asm/co86-sol.s
+asm/co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > co86-elf.s)
 
 # a.out
 asm/bn86-out.o: asm/bn86unix.cpp
@@ -178,7 +159,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/co86unix.cpp asm/bn86unix.cpp *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
+	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -49,14 +49,8 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # elf
-asm/r586-elf.o: asm/r586unix.cpp
-	$(CPP) -DELF -x c asm/r586unix.cpp | as -o asm/r586-elf.o
-
-# solaris
-asm/r586-sol.o: asm/r586unix.cpp
-	$(CC) -E -DSOL asm/r586unix.cpp | sed 's/^#.*//' > asm/r586-sol.s
-	as -o asm/r586-sol.o asm/r586-sol.s
-	rm -f asm/r586-sol.s
+asm/r586-elf.s: asm/rc5-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) rc5-586.pl elf $(CFLAGS) > r586-elf.s)
 
 # a.out
 asm/r586-out.o: asm/r586unix.cpp
@@ -101,7 +95,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/r586unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/r586unix.cpp asm/*-elf.* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -18,9 +18,9 @@ sub main'asm_init
 	($type,$fn,$i386)=@_;
 	$filename=$fn;
 
-	$cpp=$sol=$aout=$win32=$gaswin=0;
+	$elf=$cpp=$sol=$aout=$win32=$gaswin=0;
 	if (	($type eq "elf"))
-		{ require "x86unix.pl"; }
+		{ $elf=1; require "x86unix.pl"; }
 	elsif (	($type eq "a.out"))
 		{ $aout=1; require "x86unix.pl"; }
 	elsif (	($type eq "gaswin"))
@@ -46,6 +46,9 @@ Pick one target type from
 EOF
 		exit(1);
 		}
+
+	$pic=0;
+	for (@ARGV) {	$pic=1 if (/\-[fK]PIC/i);	}
 
 	&asm_init_output();
 
@@ -91,7 +94,7 @@ $tmp
 #undef SIZE
 #undef TYPE
 #define SIZE(a,b)
-#define TYPE(a,b)
+#define TYPE(a,b)	.def a; .scl 2; .type 32; .endef
 #endif /* __CYGWIN || __DJGPP */
 #endif
 
