@@ -4,7 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *)
+  *) Initial DSO code added into libcrypto for letting OpenSSL (and
+     OpenSSL-based applications) load shared libraries and bind to
+     them in a portable way.
+     [Geoff Thorpe, with contributions from Richard Levitte]
 
  Changes between 0.9.5 and 0.9.5a  [1 Apr 2000]
 
