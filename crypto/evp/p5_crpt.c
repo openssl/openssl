@@ -85,16 +85,34 @@ EVP_PBE_alg_add(NID_pbeWithSHA1AndRC2_CBC, EVP_rc2_64_cbc(), EVP_sha1(),
 #endif
 }
 
-int PKCS5_PBE_keyivgen(const char *pass, int passlen, unsigned char *salt,
-			 int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md,
+int PKCS5_PBE_keyivgen(const char *pass, int passlen, ASN1_TYPE *param,
+			 EVP_CIPHER *cipher, EVP_MD *md,
 			 unsigned char *key, unsigned char *iv)
 {
 	EVP_MD_CTX ctx;
 	unsigned char md_tmp[EVP_MAX_MD_SIZE];
 	int i;
+	PBEPARAM *pbe;
+	int saltlen, iter;
+	unsigned char *salt, *pbuf;
+
+	/* Extract useful info from parameter */
+	pbuf = param->value.sequence->data;
+	if (!(pbe = d2i_PBEPARAM (NULL, &pbuf,
+					param->value.sequence->length))) {
+		EVPerr(EVP_F_EVP_PKCS5_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		return 0;
+	}
+
+	if (!pbe->iter) iter = 1;
+	else iter = ASN1_INTEGER_get (pbe->iter);
+	salt = pbe->salt->data;
+	saltlen = pbe->salt->length;
+
 	EVP_DigestInit (&ctx, md);
 	EVP_DigestUpdate (&ctx, pass, passlen);
 	EVP_DigestUpdate (&ctx, salt, saltlen);
+	PBEPARAM_free(pbe);
 	EVP_DigestFinal (&ctx, md_tmp, NULL);
 	for (i = 1; i < iter; i++) {
 		EVP_DigestInit(&ctx, md);

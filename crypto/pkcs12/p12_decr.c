@@ -82,7 +82,8 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 	}
 
 	/* Decrypt data */
-        if (!EVP_PBE_ALGOR_CipherInit (algor, pass, passlen, &ctx, en_de)) {
+        if (!EVP_PBE_CipherInit (algor->algorithm, pass, passlen,
+					 algor->parameter, &ctx, en_de)) {
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
 		return NULL;
 	}

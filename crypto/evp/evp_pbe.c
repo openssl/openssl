@@ -75,8 +75,7 @@ EVP_PBE_KEYGEN *keygen;
 } EVP_PBE_CTL;
 
 int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
-	     unsigned char *salt, int saltlen, int iter, EVP_CIPHER_CTX *ctx,
-	     int en_de)
+	     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
 
 	EVP_PBE_CTL *pbetmp, pbelu;
@@ -96,8 +95,8 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	}
 	if (passlen == -1) passlen = strlen(pass);
 	pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
-	i = (*pbetmp->keygen)(pass, passlen, salt, saltlen, iter,
-					 pbetmp->cipher, pbetmp->md, key, iv);
+	i = (*pbetmp->keygen)(pass, passlen, param, pbetmp->cipher,
+						 pbetmp->md, key, iv);
 	if (!i) {
 		EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_KEYGEN_FAILURE);
 		return 0;
@@ -105,39 +104,6 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	EVP_CipherInit (ctx, pbetmp->cipher, key, iv, en_de);
 	return 1;	
 }
-
-/* Setup a PBE algorithm but take most parameters from AlgorithmIdentifier */
-
-int EVP_PBE_ALGOR_CipherInit (X509_ALGOR *algor, const char *pass,
-			      int passlen, EVP_CIPHER_CTX *ctx, int en_de)
-{
-	PBEPARAM *pbe;
-	int saltlen, iter;
-	unsigned char *salt, *pbuf;
-
-	/* Extract useful info from algor */
-	pbuf = algor->parameter->value.sequence->data;
-	if (!(pbe = d2i_PBEPARAM (NULL, &pbuf,
-			 algor->parameter->value.sequence->length))) {
-		EVPerr(EVP_F_EVP_PBE_ALGOR_CIPHERINIT,EVP_R_DECODE_ERROR);
-		return 0;
-	}
-
-	if (!pbe->iter) iter = 1;
-	else iter = ASN1_INTEGER_get (pbe->iter);
-	salt = pbe->salt->data;
-	saltlen = pbe->salt->length;
-
-	if (!(EVP_PBE_CipherInit (algor->algorithm, pass, passlen, salt,
- 						saltlen, iter, ctx, en_de))) {
-		EVPerr(EVP_F_EVP_PBE_ALGOR_CIPHERINIT,EVP_R_EVP_PBE_CIPHERINIT_ERROR);
-		PBEPARAM_free(pbe);
-		return 0;
-	}
-	PBEPARAM_free(pbe);
-	return 1;
-}
-
 
 static int pbe_cmp (EVP_PBE_CTL **pbe1, EVP_PBE_CTL **pbe2)
 {

@@ -5,6 +5,17 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Rewrite the way password based encryption (PBE) is handled. It used to
+     assume that the ASN1 AlgorithmIdentifier parameter was a PBEParameter
+     structure. This was true for the PKCS#5 v1.5 and PKCS#12 PBE algorithms
+     but doesn't apply to PKCS#5 v2.0 where it can be something else. Now
+     the 'parameter' field of the AlgorithmIdentifier is passed to the
+     underlying key generation function so it must do its own ASN1 parsing.
+     This has also changed the EVP_PBE_CipherInit() function which now has a
+     'parameter' argument instead of literal salt and iteration count values
+     and the function EVP_PBE_ALGOR_CipherInit() has been deleted.
+     [Steve Henson]
+
   *) Support for PKCS#5 v1.5 compatible password based encryption algorithms
      and PKCS#8 functionality. New 'pkcs8' application linked to openssl.
      Needed to change the PEM_STRING_EVP_PKEY value which was just "PRIVATE
