@@ -646,23 +646,6 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 
-*** debug-irix-cc
-$cc           = cc
-$cflags       = -w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN
-$unistd       = 
-$thread_cflag = (unknown)
-$lflags       = 
-$bn_ops       = 
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-
 *** debug-linux-elf
 $cc           = gcc
 $cflags       = -DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
@@ -697,7 +680,7 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 
-*** debug-solaris-sparc-gcc
+*** debug-solaris-sparcv8-gcc
 $cc           = gcc
 $cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
 $unistd       = 
@@ -714,14 +697,14 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** debug-solaris-usparc-gcc
+*** debug-solaris-sparcv9-gcc
 $cc           = gcc
 $cflags       = -DREF_CHECK -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
-$bn_obj       = asm/sparcv8plus-gcc.o
+$bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -1005,7 +988,7 @@ $rc5_obj      =
 
 *** irix-gcc
 $cc           = gcc
-$cflags       = -O2 -DTERMIOS -DB_ENDIAN
+$cflags       = -O3 -DTERMIOS -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1022,7 +1005,7 @@ $rc5_obj      =
 
 *** irix-mips3-cc
 $cc           = cc
-$cflags       = -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -n32 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1039,12 +1022,12 @@ $rc5_obj      =
 
 *** irix-mips3-gcc
 $cc           = gcc
-$cflags       = -mips3 -O2 -DTERMIOS -DB_ENDIAN
+$cflags       = -mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
 $bn_ops       = MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT
-$bn_obj       = 
+$bn_obj       = asm/mips3.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -1056,7 +1039,24 @@ $rc5_obj      =
 
 *** irix64-mips4-cc
 $cc           = cc
-$cflags       = -64 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG
+$bn_obj       = asm/mips3.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** irix64-mips4-gcc
+$cc           = gcc
+$cflags       = -mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -1139,7 +1139,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** linux-sparc
+*** linux-sparcv7
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
@@ -1156,17 +1156,34 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** linux-sparc64
+*** linux-sparcv8
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mv8 -Wall
+$cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
-$bn_ops       = 
-$bn_obj       = 
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-sparcv9
+$cc           = gcc
+$cflags       = -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DULTRASPARC -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8plus.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv8plus.o
 $sha1_obj     = 
 $cast_obj     = 
 $rc4_obj      = 
@@ -1275,40 +1292,6 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** solaris-sparc-cc
-$cc           = cc
-$cflags       = -xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl
-$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR
-$bn_obj       = asm/sparcv8.o
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-
-*** solaris-sparc-gcc
-$cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = -lsocket -lnsl
-$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
-$bn_obj       = asm/sparcv8.o
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-
 *** solaris-sparc-sc3
 $cc           = cc
 $cflags       = -fast -O -Xa -DB_ENDIAN
@@ -1326,9 +1309,77 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** solaris-usparc-cc
+*** solaris-sparcv7-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W
+$cflags       = -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparcv7-gcc
+$cc           = gcc
+$cflags       = -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparcv8-cc
+$cc           = cc
+$cflags       = -xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparcv8-gcc
+$cc           = gcc
+$cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
+$bn_obj       = asm/sparcv8.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** solaris-sparcv9-cc
+$cc           = cc
+$cflags       = -xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
@@ -1343,14 +1394,14 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** solaris-usparc-gcc
+*** solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC
+$cflags       = -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
-$bn_obj       = asm/sparcv8plus-gcc.o
+$bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = asm/md5-sparcv8plus.o
@@ -1360,17 +1411,17 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** solaris-usparc-oldgcc
+*** solaris-sparcv9-gcc27
 $cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN -DULTRASPARC
+$cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG RC4_CHAR DES_UNROLL BF_PTR
-$bn_obj       = asm/sparcv8plus-gcc.o
+$bn_obj       = asm/sparcv8plus-gcc27.o
 $des_obj      = 
 $bf_obj       = 
-$md5_obj      = asm/md5-sparcv8plus.o
+$md5_obj      = asm/md5-sparcv8plus-gcc27.o
 $sha1_obj     = 
 $cast_obj     = 
 $rc4_obj      = 
@@ -1394,9 +1445,9 @@ $rc4_obj      = asm/rx86-sol.o
 $rmd160_obj   = asm/rm86-sol.o
 $rc5_obj      = asm/r586-sol.o
 
-*** solaris64-usparc-cc
+*** solaris64-sparcv9-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC
+$cflags       = -xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl
