@@ -11,6 +11,22 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add "ex_data" support to ENGINE so implementations can add state at a
+     per-structure level rather than having to store it globally.
+     [Geoff]
+
+  +) Make it possible for ENGINE structures to be copied when retrieved by
+     ENGINE_by_id() if the ENGINE specifies a new flag: ENGINE_FLAGS_BY_ID_COPY.
+     This causes the "original" ENGINE structure to act like a template,
+     analogous to the RSA vs. RSA_METHOD type of separation. Because of this
+     operational state can be localised to each ENGINE structure, despite the
+     fact they all share the same "methods". New ENGINE structures returned in
+     this case have no functional references and the return value is the single
+     structural reference. This matches the single structural reference returned
+     by ENGINE_by_id() normally, when it is incremented on the pre-existing
+     ENGINE structure.
+     [Geoff]
+
   +) Fix various bugs related to DSA S/MIME verification. Handle missing
      parameters in DSA public key structures and return an error in the
      DSA routines if parameters are absent.
