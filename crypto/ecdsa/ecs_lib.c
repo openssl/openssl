@@ -53,6 +53,7 @@
  *
  */
 
+#include <string.h>
 #include "ecdsa.h"
 #include <openssl/engine.h>
 

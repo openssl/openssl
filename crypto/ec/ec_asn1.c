@@ -53,6 +53,7 @@
  *
  */
 
+#include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
