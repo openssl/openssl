@@ -349,7 +349,7 @@ int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	resp_idx = OCSP_BASICRESP_get_ext_by_NID(bs, NID_id_pkix_OCSP_Nonce, -1);
 	/* If both absent its OK */
 	if((req_idx < 0) && (resp_idx < 0)) return 1;
-	if((req_idx < 0) && (resp_idx >= 0))
+	if((req_idx >= 0) && (resp_idx < 0))
 		{
 		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_NONCE_MISSING_IN_RESPONSE);
 		goto err;
