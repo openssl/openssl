@@ -123,7 +123,8 @@ engine_evp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 engine_evp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 engine_evp.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 engine_evp.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_evp.o: ../../include/openssl/evp.h ../../include/openssl/obj_mac.h
+engine_evp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+engine_evp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 engine_evp.o: ../../include/openssl/objects.h
 engine_evp.o: ../../include/openssl/opensslconf.h
 engine_evp.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h

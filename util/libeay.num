@@ -984,8 +984,8 @@ BIO_ghbn_ctrl                           1003	EXIST::FUNCTION:
 CRYPTO_free_ex_data                     1004	EXIST::FUNCTION:
 CRYPTO_get_ex_data                      1005	EXIST::FUNCTION:
 CRYPTO_set_ex_data                      1007	EXIST::FUNCTION:
-ERR_load_CRYPTO_strings                 1009	EXIST:!VMS,!WIN16:FUNCTION:
-ERR_load_CRYPTOlib_strings              1009	EXIST:VMS,WIN16:FUNCTION:
+ERR_load_CRYPTOlib_strings              1009	NOEXIST::FUNCTION:
+ERR_load_CRYPTO_strings                 1009	NOEXIST::FUNCTION:
 EVP_PKEY_bits                           1010	EXIST::FUNCTION:
 MD5_Transform                           1011	EXIST::FUNCTION:MD5
 SHA1_Transform                          1012	EXIST::FUNCTION:SHA,SHA1
@@ -2165,7 +2165,7 @@ OCSP_ONEREQ_get_ext                     2683	EXIST::FUNCTION:
 EC_POINT_method_of                      2684	EXIST::FUNCTION:
 CRYPTO_get_mem_ex_functions             2685	EXIST::FUNCTION:
 ENGINE_set_id                           2686	EXIST::FUNCTION:
-ERR_load_ENGINE_strings                 2687	EXIST::FUNCTION:
+ERR_load_ENGINE_strings                 2687	NOEXIST::FUNCTION:
 ASN1_item_i2d_bio                       2688	EXIST::FUNCTION:BIO
 OCSP_ONEREQ_get_ext_by_OBJ              2689	EXIST::FUNCTION:
 ASN1_primitive_new                      2690	EXIST::FUNCTION:
@@ -2650,10 +2650,13 @@ EVP_dev_crypto_rc4                      3098	EXIST::FUNCTION:DES
 ENGINE_load_ciphers                     3099	EXIST::FUNCTION:
 ENGINE_get_cipher_by_name               3100	EXIST::FUNCTION:
 ENGINE_cipher_num                       3101	EXIST::FUNCTION:
-DH_up_ref                               3102	EXIST::FUNCTION:DH
+DH_up_ref                               3102	NOEXIST::FUNCTION:
 RSA_up_ref                              3103	EXIST::FUNCTION:RSA
 EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
 CRYPTO_cleanup_all_ex_data              3105	EXIST::FUNCTION:
 CRYPTO_set_ex_data_implementation       3106	EXIST::FUNCTION:
 CRYPTO_ex_data_new_class                3107	EXIST::FUNCTION:
 CRYPTO_get_ex_data_implementation       3108	EXIST::FUNCTION:
+DH_up                                   3109	EXIST::FUNCTION:DH
+BN_pseudo_rand_range                    3110	EXIST::FUNCTION:
+ERR_unload_strings                      3111	EXIST::FUNCTION:

@@ -415,7 +415,8 @@ evp_test.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 evp_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 evp_test.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 evp_test.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
-evp_test.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
+evp_test.o: ../include/openssl/err.h ../include/openssl/evp.h
+evp_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 evp_test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 evp_test.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
 evp_test.o: ../include/openssl/rsa.h ../include/openssl/safestack.h

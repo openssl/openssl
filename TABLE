@@ -2208,6 +2208,29 @@ $shared_cflag = -fPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** linux-k6
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=k6 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** linux-m68k
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall
@@ -2277,6 +2300,29 @@ $shared_cflag =
 $shared_extension = 
 $ranlib       = 
 
+*** linux-pentium
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentium -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** linux-ppc
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
@@ -2294,6 +2340,29 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** linux-ppro
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentiumpro -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC

@@ -510,7 +510,18 @@ EOF
 	esac ;;
   arm*-*-linux2) OUT="linux-elf-arm" ;;
   s390-*-linux2) OUT="linux-s390" ;;
-  *-*-linux2) OUT="linux-elf" ;;
+  *-*-linux2) OUT="linux-elf"
+	if [ "$GCCVER" -gt 28 ]; then
+          if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
+            OUT="linux-pentium"
+          fi
+          if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
+            OUT="linux-ppro"
+          fi
+          if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
+            OUT="linux-k6"
+          fi
+        fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
