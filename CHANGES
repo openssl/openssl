@@ -1024,7 +1024,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      AES OIDs.
 
      Add TLS AES ciphersuites as described in the "AES Ciphersuites
-     for TLS" draft-ietf-tls-ciphersuite-03.txt. As these are not yet
+     for TLS" draft-ietf-tls-ciphersuite-06.txt. As these are not yet
      official, they are not enabled by default and are not even part
      of the "ALL" ciphersuite alias; for now, they must be explicitly
      requested by specifying the new "AESdraft" ciphersuite alias. If

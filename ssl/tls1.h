@@ -126,7 +126,7 @@ extern "C" {
 #define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA		"EXP1024-RC4-SHA"
 #define TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA	"EXP1024-DHE-DSS-RC4-SHA"
 #define TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA		"DHE-DSS-RC4-SHA"
-  /* AES ciphersuites from draft ietf-tls-ciphersuite-03.txt */
+  /* AES ciphersuites from draft-ietf-tls-ciphersuite-06.txt */
 #define TLS1_TXT_RSA_WITH_AES_128_SHA			"AESdraft128-SHA"
 #define TLS1_TXT_DH_DSS_WITH_AES_128_SHA		"DH-DSS-AESdraft128-SHA"
 #define TLS1_TXT_DH_RSA_WITH_AES_128_SHA		"DH-RSA-AESdraft128-SHA"
