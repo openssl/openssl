@@ -571,6 +571,7 @@ bad:
 #else
 		strncpy(buf[0],X509_get_default_cert_area(),
 			sizeof(buf[0])-2-sizeof(CONFIG_FILE));
+		buf[0][sizeof(buf[0])-2-sizeof(CONFIG_FILE)]='\0';
 		strcat(buf[0],"/");
 #endif
 		strcat(buf[0],CONFIG_FILE);
@@ -1277,6 +1278,7 @@ bad:
 			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_X509_num(cert_sk));
 
 			strncpy(buf[0],serialfile,BSIZE-4);
+			buf[0][BSIZE-4]='\0';
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[0],"-new");
@@ -1287,6 +1289,7 @@ bad:
 			if (!save_serial(buf[0],serial)) goto err;
 
 			strncpy(buf[1],dbfile,BSIZE-4);
+			buf[1][BSIZE-4]='\0';
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[1],"-new");
@@ -1317,6 +1320,7 @@ bad:
 			p=(char *)x->cert_info->serialNumber->data;
 			
 			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
+			buf[2][BSIZE-(j*2)-6]='\0';
 
 #ifndef OPENSSL_SYS_VMS
 			strcat(buf[2],"/");
@@ -1354,6 +1358,7 @@ bad:
 			{
 			/* Rename the database and the serial file */
 			strncpy(buf[2],serialfile,BSIZE-4);
+			buf[2][BSIZE-4]='\0';
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
@@ -1382,6 +1387,7 @@ bad:
 				}
 
 			strncpy(buf[2],dbfile,BSIZE-4);
+			buf[2][BSIZE-4]='\0';
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[2],"-old");
@@ -1549,6 +1555,7 @@ bad:
 			X509_free(revcert);
 
 			strncpy(buf[0],dbfile,BSIZE-4);
+			buf[0][BSIZE-4]='\0';
 #ifndef OPENSSL_SYS_VMS
 			strcat(buf[0],".new");
 #else
@@ -1563,6 +1570,7 @@ bad:
 			j=TXT_DB_write(out,db);
 			if (j <= 0) goto err;
 			strncpy(buf[1],dbfile,BSIZE-4);
+			buf[1][BSIZE-4]='\0';
 #ifndef OPENSSL_SYS_VMS
 			strcat(buf[1],".old");
 #else
