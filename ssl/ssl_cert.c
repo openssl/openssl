@@ -131,6 +131,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{
 	static int ssl_x509_store_ctx_idx= -1;
 
+	/* FIXME: should do locking */
 	if (ssl_x509_store_ctx_idx < 0)
 		{
 		ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
