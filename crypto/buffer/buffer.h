@@ -59,6 +59,8 @@
 #ifndef HEADER_BUFFER_H
 #define HEADER_BUFFER_H
 
+#include <openssl/ossl_typ.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -69,12 +71,15 @@ extern "C" {
 #include <sys/types.h>
 #endif
 
-typedef struct buf_mem_st
+/* Already declared in ossl_typ.h */
+/* typedef struct buf_mem_st BUF_MEM; */
+
+struct buf_mem_st
 	{
 	int length;	/* current number of bytes */
 	char *data;
 	int max;	/* size of buffer */
-	} BUF_MEM;
+	};
 
 BUF_MEM *BUF_MEM_new(void);
 void	BUF_MEM_free(BUF_MEM *a);

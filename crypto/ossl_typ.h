@@ -101,6 +101,18 @@ typedef int ASN1_NULL;
 #undef PKCS7_ISSUER_AND_SERIAL
 #endif
 
+#ifdef BIGNUM
+#undef BIGNUM
+#endif
+typedef struct bignum_st BIGNUM;
+typedef struct bignum_ctx BN_CTX;
+typedef struct bn_blinding_st BN_BLINDING;
+typedef struct bn_mont_ctx_st BN_MONT_CTX;
+typedef struct bn_recp_ctx_st BN_RECP_CTX;
+typedef struct bn_gencb_st BN_GENCB;
+
+typedef struct buf_mem_st BUF_MEM;
+
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct env_md_st EVP_MD;
