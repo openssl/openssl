@@ -81,7 +81,7 @@ int ENGINE_register_ciphers(ENGINE *e)
 		int num_nids = e->ciphers(e, NULL, &nids, 0);
 		if(num_nids > 0)
 			return engine_table_register(&cipher_table,
-					&engine_unregister_all_ciphers, e, nids,
+					engine_unregister_all_ciphers, e, nids,
 					num_nids, 0);
 		}
 	return 1;
@@ -103,7 +103,7 @@ int ENGINE_set_default_ciphers(ENGINE *e)
 		int num_nids = e->ciphers(e, NULL, &nids, 0);
 		if(num_nids > 0)
 			return engine_table_register(&cipher_table,
-					&engine_unregister_all_ciphers, e, nids,
+					engine_unregister_all_ciphers, e, nids,
 					num_nids, 1);
 		}
 	return 1;
