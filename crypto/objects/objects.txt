@@ -835,3 +835,150 @@ pilotAttributeType 53	:			: personalSignature
 pilotAttributeType 54	:			: dITRedirect
 pilotAttributeType 55	: audio
 pilotAttributeType 56	:			: documentPublisher
+
+2 23 42			: id-set		: Secure Electronic Transactions
+
+id-set 0		: set-ctype		: content types
+id-set 1		: set-msgExt		: message extensions
+id-set 3		: set-attr
+id-set 5		: set-policy
+id-set 7		: set-certExt		: certificate extensions
+id-set 8		: set-brand
+
+set-ctype 0		: setct-PANData
+set-ctype 1		: setct-PANToken
+set-ctype 2		: setct-PANOnly
+set-ctype 3		: setct-OIData
+set-ctype 4		: setct-PI
+set-ctype 5		: setct-PIData
+set-ctype 6		: setct-PIDataUnsigned
+set-ctype 7		: setct-HODInput
+set-ctype 8		: setct-AuthResBaggage
+set-ctype 9		: setct-AuthRevReqBaggage
+set-ctype 10		: setct-AuthRevResBaggage
+set-ctype 11		: setct-CapTokenSeq
+set-ctype 12		: setct-PInitResData
+set-ctype 13		: setct-PI-TBS
+set-ctype 14		: setct-PResData
+set-ctype 16		: setct-AuthReqTBS
+set-ctype 17		: setct-AuthResTBS
+set-ctype 18		: setct-AuthResTBSX
+set-ctype 19		: setct-AuthTokenTBS
+set-ctype 20		: setct-CapTokenData
+set-ctype 21		: setct-CapTokenTBS
+set-ctype 22		: setct-AcqCardCodeMsg
+set-ctype 23		: setct-AuthRevReqTBS
+set-ctype 24		: setct-AuthRevResData
+set-ctype 25		: setct-AuthRevResTBS
+set-ctype 26		: setct-CapReqTBS
+set-ctype 27		: setct-CapReqTBSX
+set-ctype 28		: setct-CapResData
+set-ctype 29		: setct-CapRevReqTBS
+set-ctype 30		: setct-CapRevReqTBSX
+set-ctype 31		: setct-CapRevResData
+set-ctype 32		: setct-CredReqTBS
+set-ctype 33		: setct-CredReqTBSX
+set-ctype 34		: setct-CredResData
+set-ctype 35		: setct-CredRevReqTBS
+set-ctype 36		: setct-CredRevReqTBSX
+set-ctype 37		: setct-CredRevResData
+set-ctype 38		: setct-PCertReqData
+set-ctype 39		: setct-PCertResTBS
+set-ctype 40		: setct-BatchAdminReqData
+set-ctype 41		: setct-BatchAdminResData
+set-ctype 42		: setct-CardCInitResTBS
+set-ctype 43		: setct-MeAqCInitResTBS
+set-ctype 44		: setct-RegFormResTBS
+set-ctype 45		: setct-CertReqData
+set-ctype 46		: setct-CertReqTBS
+set-ctype 47		: setct-CertResData
+set-ctype 48		: setct-CertInqReqTBS
+set-ctype 49		: setct-ErrorTBS
+set-ctype 50		: setct-PIDualSignedTBE
+set-ctype 51		: setct-PIUnsignedTBE
+set-ctype 52		: setct-AuthReqTBE
+set-ctype 53		: setct-AuthResTBE
+set-ctype 54		: setct-AuthResTBEX
+set-ctype 55		: setct-AuthTokenTBE
+set-ctype 56		: setct-CapTokenTBE
+set-ctype 57		: setct-CapTokenTBEX
+set-ctype 58		: setct-AcqCardCodeMsgTBE
+set-ctype 59		: setct-AuthRevReqTBE
+set-ctype 60		: setct-AuthRevResTBE
+set-ctype 61		: setct-AuthRevResTBEB
+set-ctype 62		: setct-CapReqTBE
+set-ctype 63		: setct-CapReqTBEX
+set-ctype 64		: setct-CapResTBE
+set-ctype 65		: setct-CapRevReqTBE
+set-ctype 66		: setct-CapRevReqTBEX
+set-ctype 67		: setct-CapRevResTBE
+set-ctype 68		: setct-CredReqTBE
+set-ctype 69		: setct-CredReqTBEX
+set-ctype 70		: setct-CredResTBE
+set-ctype 71		: setct-CredRevReqTBE
+set-ctype 72		: setct-CredRevReqTBEX
+set-ctype 73		: setct-CredRevResTBE
+set-ctype 74		: setct-BatchAdminReqTBE
+set-ctype 75		: setct-BatchAdminResTBE
+set-ctype 76		: setct-RegFormReqTBE
+set-ctype 77		: setct-CertReqTBE
+set-ctype 78		: setct-CertReqTBEX
+set-ctype 79		: setct-CertResTBE
+set-ctype 80		: setct-CRLNotificationTBS
+set-ctype 81		: setct-CRLNotificationResTBS
+set-ctype 82		: setct-BCIDistributionTBS
+
+set-msgExt 1		: setext-genCrypt	: generic cryptogram
+set-msgExt 3		: setext-miAuth		: merchant initiated auth
+set-msgExt 4		: setext-pinSecure
+set-msgExt 5		: setext-pinAny
+set-msgExt 7		: setext-track2
+set-msgExt 8		: setext-cv		: additional verification
+
+set-policy 0		: set-policy-root
+
+set-certExt 0		: setCext-hashedRoot
+set-certExt 1		: setCext-certType
+set-certExt 2		: setCext-merchData
+set-certExt 3		: setCext-cCertRequired
+set-certExt 4		: setCext-tunneling
+set-certExt 5		: setCext-setExt
+set-certExt 6		: setCext-setQualf
+set-certExt 7		: setCext-PGWYcapabilities
+set-certExt 8		: setCext-TokenIdentifier
+set-certExt 9		: setCext-Track2Data
+set-certExt 10		: setCext-TokenType
+set-certExt 11		: setCext-IssuerCapabilities
+
+set-attr 0		: setAttr-Cert
+set-attr 1		: setAttr-PGWYcap	: payment gateway capabilities
+set-attr 2		: setAttr-TokenType
+set-attr 3		: setAttr-IssCap	: issuer capabilities
+
+setAttr-Cert 0		: set-rootKeyThumb
+setAttr-Cert 1		: set-addPolicy
+
+setAttr-TokenType 1	: setAttr-Token-EMV
+setAttr-TokenType 2	: setAttr-Token-B0Prime
+
+setAttr-IssCap 3	: setAttr-IssCap-CVM
+setAttr-IssCap 4	: setAttr-IssCap-T2
+setAttr-IssCap 5	: setAttr-IssCap-Sig
+
+setAttr-IssCap-CVM 1	: setAttr-GenCryptgrm	: generate cryptogram
+setAttr-IssCap-T2 1	: setAttr-T2Enc		: encrypted track 2
+setAttr-IssCap-T2 2	: setAttr-T2cleartxt	: cleartext track 2
+
+setAttr-IssCap-Sig 1	: setAttr-TokICCsig	: ICC or token signature
+setAttr-IssCap-Sig 2	: setAttr-SecDevSig	: secure device signature
+
+set-brand 1		: set-brand-IATA-ATA
+set-brand 30		: set-brand-Diners
+set-brand 34		: set-brand-AmericanExpress
+set-brand 35		: set-brand-JCB
+set-brand 4		: set-brand-Visa
+set-brand 5		: set-brand-MasterCard
+set-brand 6011		: set-brand-Novus
+
+rsadsi 3 10		: DES-CDMF		: des-cdmf
+rsadsi 1 1 6		: rsaOAEPEncryptionSET
