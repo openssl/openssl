@@ -24,6 +24,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
 * Why does the OpenSSL compilation fail on Alpha True64 Unix?
+* Why does the OpenSSL compilation fail with "ar: command not found"?
 
 
 * Which is the current version of OpenSSL?
@@ -367,4 +368,21 @@ following:
 This will only compile sha_dgst.c with -O0, the rest with the optimization
 level chosen by the configuration process.  When the above is done, do the
 test and installation and you're set.
+
+
+* Why does the OpenSSL compilation fail with "ar: command not found"?
+
+Getting this message is quite usual on Solaris 2, because Sun has hidden
+away 'ar' and other development commands in directories that aren't in
+$PATH by default.  One of those directories is '/usr/ccs/bin'.  The
+quickest way to fix this is to do the following (it assumes you use sh
+or any sh-compatible shell):
+
+----- snip:start -----
+  PATH=${PATH}:/usr/ccs/bin; export PATH
+----- snip:end -----
+
+and then redo the compilation.  What you should really do is make sure
+'/usr/ccs/bin' is permanently in your $PATH, for example through your
+'.profile' (again, assuming you use a sh-compatible shell).
 
