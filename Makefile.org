@@ -488,8 +488,7 @@ install: all install_docs
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
 			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			(echo $$i | grep '\\.a$$' > /dev/null 2>&1) \
-			&& $(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 		fi \
 	done
