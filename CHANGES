@@ -7,6 +7,7 @@
   *) Fix PKCS#7 decode routines so they correctly update the length
      after reading an EOC for the EXPLICIT tag.
      [Steve Henson]
+     [This change does not apply to 0.9.7.]
 
   *) Fix bug in PKCS#12 key generation routines. This was triggered
      if a 3DES key was generated with a 0 initial byte. Include
