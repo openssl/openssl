@@ -73,4 +73,6 @@ L<EVP_OpenInit(3)|EVP_OpenInit(3)>
 
 =head1 HISTORY
 
+EVP_SealFinal() did not return a value before OpenSSL 0.9.7.
+
 =cut
