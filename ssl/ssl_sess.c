@@ -130,11 +130,45 @@ SSL_SESSION *SSL_SESSION_new(void)
 	return(ss);
 	}
 
+/* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1
+ * has 32 bytes (256 bits). As such, filling the ID with random gunk repeatedly
+ * until we have no conflict is going to complete in one iteration pretty much
+ * "most" of the time (btw: understatement). So, if it takes us 10 iterations
+ * and we still can't avoid a conflict - well that's a reasonable point to call
+ * it quits. Either the RAND code is broken or someone is trying to open roughly
+ * very close to 2^128 (or 2^256) SSL sessions to our server. How you might
+ * store that many sessions is perhaps a more interesting question ... */
+
+#define MAX_SESS_ID_ATTEMPTS 10
+static int def_generate_session_id(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len)
+{
+	unsigned int retry = 0;
+	do
+		RAND_pseudo_bytes(id, *id_len);
+	while(SSL_CTX_has_matching_session_id(ssl->ctx, id, *id_len) &&
+		(++retry < MAX_SESS_ID_ATTEMPTS));
+	if(retry < MAX_SESS_ID_ATTEMPTS)
+		return 1;
+	/* else - woops a session_id match */
+	/* XXX We should also check the external cache --
+	 * but the probability of a collision is negligible, and
+	 * we could not prevent the concurrent creation of sessions
+	 * with identical IDs since we currently don't have means
+	 * to atomically check whether a session ID already exists
+	 * and make a reservation for it if it does not
+	 * (this problem applies to the internal cache as well).
+	 */
+	return 0;
+}
+
 int ssl_get_new_session(SSL *s, int session)
 	{
 	/* This gets used by clients and servers. */
 
+	unsigned int tmp;
 	SSL_SESSION *ss=NULL;
+	GEN_SESSION_CB cb = def_generate_session_id;
 
 	if ((ss=SSL_SESSION_new()) == NULL) return(0);
 
@@ -173,25 +207,46 @@ int ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return(0);
 			}
-
-		for (;;)
+		/* Choose which callback will set the session ID */
+		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+		if(s->generate_session_id)
+			cb = s->generate_session_id;
+		else if(s->ctx->generate_session_id)
+			cb = s->ctx->generate_session_id;
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+		/* Choose a session ID */
+		tmp = ss->session_id_length;
+		if(!cb(s, ss->session_id, &tmp))
 			{
-			SSL_SESSION *r;
-
-			RAND_pseudo_bytes(ss->session_id,ss->session_id_length);
-			CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-			r=(SSL_SESSION *)lh_retrieve(s->ctx->sessions, ss);
-			CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
-			if (r == NULL) break;
-			/* else - woops a session_id match */
-			/* XXX We should also check the external cache --
-			 * but the probability of a collision is negligible, and
-			 * we could not prevent the concurrent creation of sessions
-			 * with identical IDs since we currently don't have means
-			 * to atomically check whether a session ID already exists
-			 * and make a reservation for it if it does not
-			 * (this problem applies to the internal cache as well).
-			 */
+			/* The callback failed */
+			SSLerr(SSL_F_SSL_GET_NEW_SESSION,
+				SSL_R_SSL_SESSION_ID_CALLBACK_FAILED);
+			SSL_SESSION_free(ss);
+			return(0);
+			}
+		/* Don't allow the callback to set the session length to zero.
+		 * nor set it higher than it was. */
+		if(!tmp || (tmp > ss->session_id_length))
+			{
+			/* The callback set an illegal length */
+			SSLerr(SSL_F_SSL_GET_NEW_SESSION,
+				SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH);
+			SSL_SESSION_free(ss);
+			return(0);
+			}
+		/* If the session length was shrunk and we're SSLv2, pad it */
+		if((tmp < ss->session_id_length) && (s->version == SSL2_VERSION))
+			memset(ss->session_id + tmp, 0, ss->session_id_length - tmp);
+		else
+			ss->session_id_length = tmp;
+		/* Finally, check for a conflict */
+		if(SSL_CTX_has_matching_session_id(s->ctx, ss->session_id,
+						ss->session_id_length))
+			{
+			SSLerr(SSL_F_SSL_GET_NEW_SESSION,
+				SSL_R_SSL_SESSION_ID_CONFLICT);
+			SSL_SESSION_free(ss);
+			return(0);
 			}
 		}
 	else

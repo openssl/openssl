@@ -391,6 +391,22 @@ typedef struct ssl_session_st
 
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
+/* This callback type is used inside SSL_CTX, SSL, and in the functions that set
+ * them. It is used to override the generation of SSL/TLS session IDs in a
+ * server. Return value should be zero on an error, non-zero to proceed. Also,
+ * callbacks should themselves check if the id they generate is unique otherwise
+ * the SSL handshake will fail with an error - callbacks can do this using the
+ * 'ssl' value they're passed by;
+ *      SSL_CTX_has_matching_session_id(ssl->ctx, id, *id_len)
+ * The length value passed in is set at the maximum size the session ID can be.
+ * In SSLv2 this is 16 bytes, whereas SSLv3/TLSv1 it is 32 bytes. The callback
+ * can alter this length to be less if desired, but under SSLv2 session IDs are
+ * supposed to be fixed at 16 bytes so the id will be padded after the callback
+ * returns in this case. It is also an error for the callback to set the size to
+ * zero. */
+typedef int (*GEN_SESSION_CB)(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len);
+
 typedef struct ssl_comp_st
 	{
 	int id;
@@ -485,6 +501,9 @@ struct ssl_ctx_st
 
 	int purpose;		/* Purpose setting */
 	int trust;		/* Trust setting */
+
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
 
 	/* Default password callback. */
 /**/	pem_password_cb *default_passwd_callback;
@@ -673,6 +692,9 @@ struct ssl_st
 
 	/* This can also be in the session once a session is established */
 	SSL_SESSION *session;
+
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
 
 	/* Used in SSL2 and SSL3 */
 	int verify_mode;	/* 0 don't care about verify failure.
@@ -1029,6 +1051,10 @@ int	i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
 int	SSL_set_session(SSL *to, SSL_SESSION *session);
 int	SSL_CTX_add_session(SSL_CTX *s, SSL_SESSION *c);
 int	SSL_CTX_remove_session(SSL_CTX *,SSL_SESSION *c);
+int	SSL_CTX_set_generate_session_id(SSL_CTX *, GEN_SESSION_CB);
+int	SSL_set_generate_session_id(SSL *, GEN_SESSION_CB);
+int	SSL_CTX_has_matching_session_id(const SSL_CTX *ctx, const unsigned char *id,
+					unsigned int id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,unsigned char **pp,long length);
 
 #ifdef HEADER_X509_H
@@ -1524,6 +1550,9 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION	 228
 #define SSL_R_SSL_HANDSHAKE_FAILURE			 229
 #define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS		 230
+#define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH		 1101
+#define SSL_R_SSL_SESSION_ID_CALLBACK_FAILED		 1102
+#define SSL_R_SSL_SESSION_ID_CONFLICT			 1103
 #define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG		 273
 #define SSL_R_SSL_SESSION_ID_IS_DIFFERENT		 231
 #define SSL_R_TLSV1_ALERT_ACCESS_DENIED			 1049

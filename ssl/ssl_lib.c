@@ -218,6 +218,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->verify_mode=ctx->verify_mode;
 	s->verify_depth=ctx->verify_depth;
 	s->verify_callback=ctx->default_verify_callback;
+	s->generate_session_id=ctx->generate_session_id;
 	s->purpose = ctx->purpose;
 	s->trust = ctx->trust;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
@@ -281,6 +282,41 @@ int SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
 
     return 1;
     }
+
+int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb)
+	{
+	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+	ctx->generate_session_id = cb;
+	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	return 1;
+	}
+
+int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
+	{
+	CRYPTO_w_lock(CRYPTO_LOCK_SSL);
+	ssl->generate_session_id = cb;
+	CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+	return 1;
+	}
+
+int SSL_CTX_has_matching_session_id(const SSL_CTX *ctx, const unsigned char *id,
+				unsigned int id_len)
+	{
+	/* A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
+	 * we can "construct" a session to give us the desired check - ie. to
+	 * find if there's a session in the hash table that would conflict with
+	 * any new session built out of this id/id_len and the ssl_version in
+	 * use by this SSL_CTX. */
+	SSL_SESSION r, *p;
+	r.ssl_version = ctx->method->version;
+	r.session_id_length = id_len;
+	memcpy(r.session_id, id, id_len);
+
+	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+	p = (SSL_SESSION *)lh_retrieve(ctx->sessions, &r);
+	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+	return (p != NULL);
+	}
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 {
@@ -1092,6 +1128,11 @@ unsigned long SSL_SESSION_hash(SSL_SESSION *a)
 	return(l);
 	}
 
+/* NB: If this function (or indeed the hash function which uses a sort of
+ * coarser function than this one) is changed, ensure
+ * SSL_CTX_has_matching_session_id() is checked accordingly. It relies on being
+ * able to construct an SSL_SESSION that will collide with any existing session
+ * with a matching session ID. */
 int SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b)
 	{
 	if (a->ssl_version != b->ssl_version)
@@ -1143,6 +1184,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->new_session_cb=NULL;
 	ret->remove_session_cb=NULL;
 	ret->get_session_cb=NULL;
+	ret->generate_session_id=NULL;
 
 	memset((char *)&ret->stats,0,sizeof(ret->stats));
 

@@ -208,3 +208,6 @@ kssl_ctx_free                           257	EXIST::FUNCTION:KRB5
 kssl_krb5_free_data_contents            258	EXIST::FUNCTION:KRB5
 print_krb5_data                         259	EXIST::FUNCTION:KRB5
 kssl_ctx_setstring                      260	EXIST::FUNCTION:KRB5
+SSL_CTX_has_matching_session_id         261	EXIST::FUNCTION:
+SSL_set_generate_session_id             262	EXIST::FUNCTION:
+SSL_CTX_set_generate_session_id         263	EXIST::FUNCTION:
