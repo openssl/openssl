@@ -155,7 +155,7 @@ extern "C" {
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 /* VC++ doesn't like the LL suffix */
 #define BN_MASK		(0xffffffffffffffffL)
 #else
