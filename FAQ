@@ -48,7 +48,7 @@ There is some documentation about certificate extensions and PKCS#12
 in doc/openssl.txt
 
 The original SSLeay documentation is included in OpenSSL as
-doc/ssleay.txt.  It may be useful when none of the other ressources
+doc/ssleay.txt.  It may be useful when none of the other resources
 help, but please note that it reflects the obsolete version SSLeay
 0.6.6.
 
@@ -106,7 +106,7 @@ perform potentially insecure encryption.
 
 * Why does the linker complain about undefined symbols?
 
-Maybe the compilation was interruped, and make doesn't notice that
+Maybe the compilation was interrupted, and make doesn't notice that
 something is missing.  Run "make clean; make".
 
 If you used ./Configure instead of ./config, make sure that you
