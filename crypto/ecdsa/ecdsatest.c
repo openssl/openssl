@@ -483,7 +483,7 @@ err:
 		BIO_printf(out, "\nECDSA test failed\n");
 	else 
 		BIO_printf(out, "\nECDSA test passed\n");
-	if (!ret)
+	if (ret)
 		ERR_print_errors(out);
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
