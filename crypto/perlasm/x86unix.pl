@@ -164,6 +164,8 @@ sub main'dec	{ &out1("decl",@_); }
 sub main'inc	{ &out1("incl",@_); }
 sub main'push	{ &out1("pushl",@_); $stack+=4; }
 sub main'pop	{ &out1("popl",@_); $stack-=4; }
+sub main'pushf	{ &out0("pushf"); $stack+=4; }
+sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
 sub main'call	{ &out1("call",$under.$_[0]); }
 sub main'ret	{ &out0("ret"); }
@@ -527,7 +529,7 @@ sub main'printf
 
 sub pushvars
 	{
-	&out0("pushf");
+	&main'pushf();
 	&main'push("edx");
 	&main'push("ecx");
 	&main'push("eax");
@@ -538,5 +540,5 @@ sub popvars
 	&main'pop("eax");
 	&main'pop("ecx");
 	&main'pop("edx");
-	&out0("popf");
+	&main'popf();
 	}
