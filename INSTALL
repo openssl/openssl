@@ -1,8 +1,7 @@
 Installing OpenSSL on Unix
 --------------------------
 
-[For instructions for compiling OpenSSL on Windows systems, see
-INSTALL.W32].
+[For instructions for compiling OpenSSL on Windows systems, see INSTALL.W32].
 
 To install OpenSSL, you will need:
 
@@ -23,7 +22,7 @@ If you want to just get on with it, do:
 
 This will build and install OpenSSL in the default location, which is
 /usr/local/ssl. If you want to install it anywhere else, do this
-after running ./Configure <system>:
+after running `sh config':
 
   perl util/ssldir.pl /new/install/path
 
