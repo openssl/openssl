@@ -29,7 +29,7 @@ RC4-MD5, but a re-connect tries to use DES-CBC-SHA.  So netscape, when
 doing a re-connect, always takes the first cipher in the cipher list.
 
 If we accept a netscape connection, demand a client cert, have a
-non-self-sighed CA which does not have it's CA in netscape, and the
+non-self-signed CA which does not have it's CA in netscape, and the
 browser has a cert, it will crash/hang.  Works for 3.x and 4.xbeta
 
 Netscape browsers do not really notice the server sending a
