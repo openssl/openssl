@@ -176,7 +176,7 @@ cversion.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 cversion.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
 cversion.o: ../include/openssl/stack.h ../include/openssl/symhacks.h buildinf.h
 cversion.o: cryptlib.h cversion.c
-ebcdic.o: ebcdic.c
+ebcdic.o: ../include/openssl/opensslconf.h ebcdic.c
 ex_data.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 ex_data.o: ../include/openssl/e_os2.h ../include/openssl/err.h

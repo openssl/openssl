@@ -1003,6 +1003,8 @@ int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 #define ASN1_F_D2I_PKCS7_SIGN_ENVELOPE			 209
 #define ASN1_F_D2I_PRIVATEKEY				 158
 #define ASN1_F_D2I_PUBLICKEY				 159
+#define ASN1_F_D2I_RSAPRIVATEKEY			 243
+#define ASN1_F_D2I_RSAPUBLICKEY				 244
 #define ASN1_F_D2I_X509					 210
 #define ASN1_F_D2I_X509_CINF				 211
 #define ASN1_F_D2I_X509_NAME				 160
@@ -1016,6 +1018,8 @@ int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 #define ASN1_F_I2D_NETSCAPE_RSA				 168
 #define ASN1_F_I2D_PRIVATEKEY				 169
 #define ASN1_F_I2D_PUBLICKEY				 170
+#define ASN1_F_I2D_RSAPRIVATEKEY			 245
+#define ASN1_F_I2D_RSAPUBLICKEY				 246
 #define ASN1_F_I2D_RSA_PUBKEY				 171
 #define ASN1_F_LONG_C2I					 172
 #define ASN1_F_OCSP_BASICRESP_NEW			 212
