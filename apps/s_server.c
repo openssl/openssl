@@ -140,10 +140,6 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include "s_apps.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
-#include <conio.h>
-#endif
-
 #ifdef OPENSSL_SYS_WINCE
 /* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
 #ifdef fileno
@@ -917,7 +913,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
-#ifdef OPENSSL_SYS_WINDOWS
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 	struct timeval tv;
 #endif
 
@@ -991,7 +987,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		if (!read_from_sslcon)
 			{
 			FD_ZERO(&readfds);
-#ifndef OPENSSL_SYS_WINDOWS
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
 			FD_SET(fileno(stdin),&readfds);
 #endif
 			FD_SET(s,&readfds);
@@ -1001,8 +997,8 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			 * the compiler: if you do have a cast then you can either
 			 * go for (int *) or (void *).
 			 */
-#ifdef OPENSSL_SYS_WINDOWS
-			/* Under Windows we can't select on stdin: only
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+                        /* Under DOS (non-djgpp) and Windows we can't select on stdin: only
 			 * on sockets. As a workaround we timeout the select every
 			 * second and check for any keypress. In a proper Windows
 			 * application we wouldn't do this because it is inefficient.
@@ -1263,7 +1259,13 @@ static int init_ssl_connection(SSL *con)
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
-
+#ifndef OPENSSL_NO_KRB5
+	if (con->kssl_ctx->client_princ != NULL)
+		{
+		BIO_printf(bio_s_out,"Kerberos peer principal is %s\n",
+			con->kssl_ctx->client_princ);
+		}
+#endif /* OPENSSL_NO_KRB5 */
 	return(1);
 	}
 

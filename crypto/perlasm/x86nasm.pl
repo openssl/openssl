@@ -152,7 +152,10 @@ sub main'jle	{ &out1("jle NEAR",@_); }
 sub main'jz	{ &out1("jz NEAR",@_); }
 sub main'jge	{ &out1("jge NEAR",@_); }
 sub main'jl	{ &out1("jl NEAR",@_); }
+sub main'ja	{ &out1("ja NEAR",@_); }
+sub main'jae	{ &out1("jae NEAR",@_); }
 sub main'jb	{ &out1("jb NEAR",@_); }
+sub main'jbe	{ &out1("jbe NEAR",@_); }
 sub main'jc	{ &out1("jc NEAR",@_); }
 sub main'jnc	{ &out1("jnc NEAR",@_); }
 sub main'jnz	{ &out1("jnz NEAR",@_); }
