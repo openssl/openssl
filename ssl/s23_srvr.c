@@ -189,9 +189,10 @@ end:
 int ssl23_get_client_hello(SSL *s)
 	{
 	char buf_space[11]; /* Request this many bytes in initial read.
-	                     * We can detect SSL 3.0/TLS 1.0 Client Hellos only
-	                     * when the following is in a single record
-	                     * (not guaranteed by protocol specs):
+	                     * We can detect SSL 3.0/TLS 1.0 Client Hellos
+	                     * ('type == 3') correctly only when the following
+	                     * is in a single record, which is not guaranteed by
+	                     * the protocol specification:
 	                     * Byte  Content
 	                     *  0     type            \
 	                     *  1/2   version          > record header
@@ -200,7 +201,6 @@ int ssl23_get_client_hello(SSL *s)
 	                     *  6-8   length           > Client Hello message
 	                     *  9/10  client_version  /
 	                     */
-/* XXX */
 	char *buf= &(buf_space[0]);
 	unsigned char *p,*d,*dd;
 	unsigned int i;
@@ -338,14 +338,23 @@ int ssl23_get_client_hello(SSL *s)
 		else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO) &&
-			 (p[9] == p[1]))
+			 ((p[3] == 0 && p[4] < 5 /* silly record length? */)
+				|| (p[9] == p[1])))
 			{
 			/*
 			 * SSLv3 or tls1 header
 			 */
 			
-			/* we must look at client_version inside the client hello: */
-			v[0]=p[9]; v[1]=p[10];
+			v[0]=p[1]; /* major version */
+			/* We must look at client_version inside the Client Hello message
+			 * to get the correct minor version: */
+			v[1]=p[10];
+			/* However if we have only a pathologically small fragment of the
+			 * Client Hello message, we simply use the version from the
+			 * record header -- this is incorrect but unlikely to fail in
+			 * practice */
+			if (p[3] == 0 && p[4] < 6)
+				v[1]=p[2];
 			if (v[1] >= TLS1_VERSION_MINOR)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))
