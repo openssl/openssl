@@ -151,6 +151,10 @@ extern "C" {
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
+
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
 #define SSL_FILETYPE_PEM	X509_FILETYPE_PEM
 

@@ -75,10 +75,6 @@
 #include "../crypto/bio/bss_file.c"
 #endif
 
-#if defined(NO_RSA) && !defined(NO_SSL2)
-#define NO_SSL2
-#endif
-
 #ifdef VMS
 #  define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
 #  define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"

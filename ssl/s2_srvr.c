@@ -56,12 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#include "ssl_locl.h"
+#ifndef NO_SSL2
 #include <stdio.h>
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
-#include "ssl_locl.h"
 #include <openssl/evp.h>
 
 static SSL_METHOD *ssl2_get_server_method(int ver);
@@ -966,7 +966,7 @@ static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,ERR_R_RSA_LIB);
 	return(i);
 	}
-#else /* !NO_RSA */
+#else /* !NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

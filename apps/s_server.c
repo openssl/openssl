@@ -94,10 +94,6 @@ typedef unsigned int u_int;
 #undef FIONBIO
 #endif
 
-#if defined(NO_RSA) && !defined(NO_SSL2)
-#define NO_SSL2
-#endif
-
 #ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif

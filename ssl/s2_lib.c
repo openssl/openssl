@@ -56,12 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#include "ssl_locl.h"
+#ifndef NO_SSL2
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/md5.h>
-#include "ssl_locl.h"
 
 static long ssl2_default_timeout(void );
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
@@ -421,7 +421,7 @@ int ssl2_shutdown(SSL *s)
 	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 	return(1);
 	}
-#else /* !NO_RSA */
+#else /* !NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

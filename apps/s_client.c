@@ -91,10 +91,6 @@ typedef unsigned int u_int;
 #undef FIONBIO
 #endif
 
-#if defined(NO_RSA) && !defined(NO_SSL2)
-#define NO_SSL2
-#endif
-
 #undef PROG
 #define PROG	s_client_main
 

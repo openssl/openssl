@@ -67,10 +67,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(NO_RSA) && !defined(NO_SSL2)
-#define NO_SSL2
-#endif
-
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif

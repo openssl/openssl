@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#include "ssl_locl.h"
+#ifndef NO_SSL2
 #include <stdio.h>
 #include <openssl/objects.h>
-#include "ssl_locl.h"
 
 static SSL_METHOD *ssl2_get_method(int ver);
 static SSL_METHOD *ssl2_get_method(int ver)
@@ -86,7 +86,7 @@ SSL_METHOD *SSLv2_method(void)
 		}
 	return(&SSLv2_data);
 	}
-#else /* !NO_RSA */
+#else /* !NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -56,12 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#include "ssl_locl.h"
+#ifndef NO_SSL2
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
-#include "ssl_locl.h"
 #include <openssl/evp.h>
 
 static SSL_METHOD *ssl2_get_client_method(int ver);
@@ -974,7 +974,7 @@ end:
 	EVP_PKEY_free(pkey);
 	return(i);
 	}
-#else /* !NO_RSA */
+#else /* !NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add missing #ifndefs that caused missing symbols when building libssl
+     as a shared library without RSA.  Use #ifndef NO_SSL2 instead of
+     NO_RSA in ssl/s2*.c. 
+     [Kris Kennaway <kris@hub.freebsd.org>, modified by Ulf Möller]
+
   *) Precautions against using the PRNG uninitialized: RAND_bytes() now
      has a return value which indicates the quality of the random data
      (1 = ok, 0 = not seeded).  Also an error is recorded on the thread's

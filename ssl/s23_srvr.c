@@ -67,8 +67,10 @@ static SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
 static SSL_METHOD *ssl23_get_server_method(int ver)
 	{
+#ifndef NO_SSL2
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
+#endif
 	if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());
 	else if (ver == TLS1_VERSION)
@@ -450,6 +452,10 @@ next_bit:
 
 	if (type == 1)
 		{
+#ifdef NO_SSL2
+		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNKNOWN_PROTOCOL);
+		goto err;
+#else
 		/* we are talking sslv2 */
 		/* we need to clean up the SSLv3/TLSv1 setup and put in the
 		 * sslv2 stuff. */
@@ -488,6 +494,7 @@ next_bit:
 
 		s->method=SSLv2_server_method();
 		s->handshake_func=s->method->ssl_accept;
+#endif
 		}
 
 	if ((type == 2) || (type == 3))
