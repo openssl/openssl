@@ -176,6 +176,8 @@ static int general_allocate_string(UI *ui, const char *prompt,
 			s->_.string_data.result_maxsize=maxsize;
 			s->_.string_data.test_buf=test_buf;
 			ret=sk_UI_STRING_push(ui->strings, s);
+			/* sk_push() returns 0 on error.  Let's addapt that */
+			if (ret <= 0) ret--;
 			}
 		else
 			free_string(s);
@@ -223,6 +225,9 @@ static int general_allocate_boolean(UI *ui,
 				s->_.boolean_data.ok_chars = ok_chars;
 				s->_.boolean_data.cancel_chars = cancel_chars;
 				ret=sk_UI_STRING_push(ui->strings, s);
+				/* sk_push() returns 0 on error.
+				   Let's addapt that */
+				if (ret <= 0) ret--;
 				}
 			else
 				free_string(s);
