@@ -453,7 +453,7 @@ err:
 static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	const RSA_METHOD *meth;
-	BIGNUM r1,m1;
+	BIGNUM r1,m1,vrfy;
 	int ret=0;
 	BN_CTX *ctx;
 
@@ -461,6 +461,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&m1);
 	BN_init(&r1);
+	BN_init(&vrfy);
 
 	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
 		{
@@ -541,10 +542,19 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	if (!BN_mul(&r1,r0,rsa->q,ctx)) goto err;
 	if (!BN_add(r0,&r1,&m1)) goto err;
 
+	if (rsa->e && rsa->n)
+		{
+		if (!rsa->meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,NULL)) goto err;
+		if (BN_cmp(I, &vrfy) != 0)
+			{
+			if (!rsa->meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
+			}
+		}
 	ret=1;
 err:
 	BN_clear_free(&m1);
 	BN_clear_free(&r1);
+	BN_clear_free(&vrfy);
 	BN_CTX_free(ctx);
 	return(ret);
 	}

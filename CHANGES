@@ -4,7 +4,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
-  *) MIPS assembler BIGNUM division bug fix.
+  *) Check the result of RSA-CRT (see D. Boneh, R. DeMillo, R. Lipton:
+     On the Importance of Eliminating Errors in Cryptographic
+	 Computations, J. Cryptology 14 (2001) 2, 101-119,
+	 http://theory.stanford.edu/~dabo/papers/faults.ps.gz).
+	 [Ulf Moeller]
+  
+  *) MIPS assembler BIGNUM division bug fix. 
      [Andy Polyakov]
 
   *) Fix bug in PKCS#12 key generation routines. This was triggered
