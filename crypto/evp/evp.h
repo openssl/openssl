@@ -59,6 +59,14 @@
 #ifndef HEADER_ENVELOPE_H
 #define HEADER_ENVELOPE_H
 
+#ifdef OPENSSL_ALGORITHM_DEFINES
+# include <openssl/opensslconf.h>
+#else
+# define OPENSSL_ALGORITHM_DEFINES
+# include <openssl/opensslconf.h>
+# undef OPENSSL_ALGORITHM_DEFINES
+#endif
+
 #ifndef NO_MD2
 #include <openssl/md2.h>
 #endif
