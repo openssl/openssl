@@ -83,7 +83,7 @@ if (open(TEST,">cctest.c")) {
 	print OUT "Compiler doesn't work.\n";
 	goto err;
     }
-    system("ar r cctest.a");
+    system("ar r cctest.a /dev/null");
     if (not -f "cctest.a") {
 	print OUT "Check your archive tool (ar).\n";
 	goto err;
