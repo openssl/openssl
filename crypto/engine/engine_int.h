@@ -59,13 +59,6 @@
 #ifndef HEADER_ENGINE_INT_H
 #define HEADER_ENGINE_INT_H
 
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-
 /* Take public definitions from engine.h */
 #include <openssl/engine.h>
 
