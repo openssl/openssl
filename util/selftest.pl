@@ -85,7 +85,7 @@ if (open(TEST,">cctest.c")) {
     }
     system("ar r cctest.a");
     if (not -f "cctest.a") {
-	print OUT "Check your linker (ar).\n";
+	print OUT "Check your archive tool (ar).\n";
 	goto err;
     }
 } else {
