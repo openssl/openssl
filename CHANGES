@@ -4,6 +4,10 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Fix for HMAC. It wasn't zeroing the rest of the block if the key length
+     was larger than the MD block size.      
+     [Steve Henson, pointed out by Yost William <YostW@tce.com>]
+
   *) Modernise PKCS12_parse() so it uses STACK_OF(X509) for its ca argument
      fix a leak when the ca argument was passed as NULL. Stop X509_PUBKEY_set()
      using the passed key: if the passed key was a private key the result

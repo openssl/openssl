@@ -88,9 +88,11 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 		else
 			{
 			memcpy(ctx->key,key,len);
-			memset(&(ctx->key[len]),0,sizeof(ctx->key)-len);
 			ctx->key_length=len;
 			}
+		if(ctx->key_length != HMAC_MAX_MD_CBLOCK)
+			memset(&ctx->key[ctx->key_length], 0,
+				HMAC_MAX_MD_CBLOCK - ctx->key_length);
 		}
 
 	if (reset)	
