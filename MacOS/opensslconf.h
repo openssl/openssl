@@ -112,6 +112,5 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #endif /* HEADER_DES_LOCL_H */
 
 #ifndef __POWERPC__
-#define SHA_XARRAY
+#define MD32_XARRAY
 #endif
-
