@@ -97,7 +97,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(X509) *encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
-	int flags = PKCS7_DETACHED;
+	int flags = PKCS7_DETACHED, store_flags = 0;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
@@ -150,6 +150,10 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))
 				flags |= PKCS7_NOSIGS;
+		else if (!strcmp (*args, "-crl_check"))
+				store_flags |= X509_V_FLAG_CRL_CHECK;
+		else if (!strcmp (*args, "-crl_check_all"))
+				store_flags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 		else if (!strcmp(*args,"-rand")) {
 			if (args[1]) {
 				args++;
@@ -304,6 +308,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
 		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
+		BIO_printf (bio_err, "-crl_check     check revocation status of signer's certificate using CRLs\n");
+		BIO_printf (bio_err, "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
 		BIO_printf (bio_err, "-engine e      use engine e, possibly a hardware device.\n");
 		BIO_printf (bio_err, "-passin arg    input file pass phrase source\n");
 		BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
@@ -447,7 +453,9 @@ int MAIN(int argc, char **argv)
 
 	if(operation == SMIME_VERIFY) {
 		if(!(store = setup_verify(bio_err, CAfile, CApath))) goto end;
+		X509_STORE_set_flags(store, store_flags);
 	}
+
 
 	ret = 3;
 

@@ -166,6 +166,7 @@ int MAIN(int argc, char **argv)
 	{
 	int off=0;
 	SSL *con=NULL,*con2=NULL;
+	X509_STORE *store = NULL;
 	int s,k,width,state=0;
 	char *cbuf=NULL,*sbuf=NULL;
 	int cbuf_len,cbuf_off;
@@ -181,7 +182,7 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
-	int prexit = 0;
+	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
 	char *inrand=NULL;
@@ -255,6 +256,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-crl_check") == 0)
+			vflags |= X509_V_FLAG_CRL_CHECK;
+		else if	(strcmp(*argv,"-crl_check_all") == 0)
+			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 		else if	(strcmp(*argv,"-prexit") == 0)
 			prexit=1;
 		else if	(strcmp(*argv,"-crlf") == 0)
@@ -436,6 +441,8 @@ bad:
 		/* goto end; */
 		}
 
+	store = SSL_CTX_get_cert_store(ctx);
+	X509_STORE_set_flags(store, vflags);
 
 	con=SSL_new(ctx);
 #ifndef OPENSSL_NO_KRB5

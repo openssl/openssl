@@ -185,8 +185,22 @@ X509_STORE *X509_STORE_new(void)
 	ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
 	ret->cache=1;
 	ret->get_cert_methods=sk_X509_LOOKUP_new_null();
-	ret->verify=NULL;
-	ret->verify_cb=NULL;
+	ret->verify=0;
+	ret->verify_cb=0;
+
+	ret->purpose = 0;
+	ret->trust = 0;
+
+	ret->flags = 0;
+
+	ret->get_issuer = 0;
+	ret->check_issued = 0;
+	ret->check_revocation = 0;
+	ret->get_crl = 0;
+	ret->check_crl = 0;
+	ret->cert_crl = 0;
+	ret->cleanup = 0;
+
 	memset(&ret->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	ret->references=1;
 	ret->depth=0;
@@ -524,6 +538,11 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 		}
 	return 0;
 }
+
+void X509_STORE_set_flags(X509_STORE *ctx, long flags)
+	{
+	ctx->flags |= flags;
+	}
 
 IMPLEMENT_STACK_OF(X509_LOOKUP)
 IMPLEMENT_STACK_OF(X509_OBJECT)

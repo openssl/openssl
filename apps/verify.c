@@ -287,10 +287,10 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X
 		ERR_print_errors(bio_err);
 		goto end;
 		}
+	X509_STORE_set_flags(ctx, vflags);
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
 	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
-	X509_STORE_CTX_set_flags(csc, vflags);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 

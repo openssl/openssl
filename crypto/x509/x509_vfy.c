@@ -112,7 +112,6 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 
 	cb=ctx->verify_cb;
-	if (cb == NULL) cb=null_callback;
 
 	/* first we make sure the chain we are going to build is
 	 * present and that the first entry is in place */
@@ -352,8 +351,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 	ctx->error = ret;
 	ctx->current_cert = x;
 	ctx->current_issuer = issuer;
-	if (ctx->verify_cb)
-		return ctx->verify_cb(0, ctx);
+	return ctx->verify_cb(0, ctx);
 	return 0;
 }
 
@@ -385,7 +383,6 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 	X509 *x;
 	int (*cb)();
 	cb=ctx->verify_cb;
-	if (cb == NULL) cb=null_callback;
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
@@ -427,7 +424,6 @@ static int check_trust(X509_STORE_CTX *ctx)
 	X509 *x;
 	int (*cb)();
 	cb=ctx->verify_cb;
-	if (cb == NULL) cb=null_callback;
 /* For now just check the last certificate in the chain */
 	i = sk_X509_num(ctx->chain) - 1;
 	x = sk_X509_value(ctx->chain, i);
@@ -479,8 +475,7 @@ static int check_cert(X509_STORE_CTX *ctx)
 	if(!ok)
 		{
 		ctx->error = X509_V_ERR_UNABLE_TO_GET_CRL;
-		if (ctx->verify_cb)
-			ok = ctx->verify_cb(0, ctx);
+		ok = ctx->verify_cb(0, ctx);
 		goto err;
 		}
 	ctx->current_crl = crl;
@@ -529,8 +524,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 		if(!ctx->check_issued(ctx, issuer, issuer))
 			{
 			ctx->error = X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER;
-			if(ctx->verify_cb)
-				ok = ctx->verify_cb(0, ctx);
+			ok = ctx->verify_cb(0, ctx);
 			if(!ok) goto err;
 			}
 		}
@@ -544,8 +538,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 		if(!ikey)
 			{
 			ctx->error=X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
-			if(ctx->verify_cb)
-				ok = ctx->verify_cb(0, ctx);
+			ok = ctx->verify_cb(0, ctx);
 			if (!ok) goto err;
 			}
 		else
@@ -554,8 +547,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 			if(X509_CRL_verify(crl, ikey) <= 0)
 				{
 				ctx->error=X509_V_ERR_CRL_SIGNATURE_FAILURE;
-				if(ctx->verify_cb)
-					ok = ctx->verify_cb(0, ctx);
+				ok = ctx->verify_cb(0, ctx);
 				if (!ok) goto err;
 				}
 			}
@@ -571,18 +563,14 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 	if (i == 0)
 		{
 		ctx->error=X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
-		ok= 0;
-		if(ctx->verify_cb)
-			ok = ctx->verify_cb(0, ctx);
+		ok = ctx->verify_cb(0, ctx);
 		if (!ok) goto err;
 		}
 
 	if (i > 0)
 		{
 		ctx->error=X509_V_ERR_CRL_NOT_YET_VALID;
-		ok= 0;
-		if(ctx->verify_cb)
-			ok = ctx->verify_cb(0, ctx);
+		ok = ctx->verify_cb(0, ctx);
 		if (!ok) goto err;
 		}
 
@@ -593,18 +581,14 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 		if (i == 0)
 			{
 			ctx->error=X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD;
-			ok= 0;
-			if(ctx->verify_cb)
-				ok = ctx->verify_cb(0, ctx);
+			ok = ctx->verify_cb(0, ctx);
 			if (!ok) goto err;
 			}
 
 		if (i < 0)
 			{
 			ctx->error=X509_V_ERR_CRL_HAS_EXPIRED;
-			ok= 0;
-			if(ctx->verify_cb)
-				ok = ctx->verify_cb(0, ctx);
+			ok = ctx->verify_cb(0, ctx);
 			if (!ok) goto err;
 			}
 		}
@@ -630,8 +614,7 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	 * this to handle entry extensions in V2 CRLs.
 	 */
 	ctx->error = X509_V_ERR_CERT_REVOKED;
-	if (ctx->verify_cb)
-		ok = ctx->verify_cb(0, ctx);
+	ok = ctx->verify_cb(0, ctx);
 	return ok;
 	}
 
@@ -644,7 +627,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	int (*cb)();
 
 	cb=ctx->verify_cb;
-	if (cb == NULL) cb=null_callback;
 
 	n=sk_X509_num(ctx->chain);
 	ctx->error_depth=n-1;
@@ -1041,8 +1023,8 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 			}
 		}
 
-	if (purpose) ctx->purpose = purpose;
-	if (trust) ctx->trust = trust;
+	if (purpose && !ctx->purpose) ctx->purpose = purpose;
+	if (trust && !ctx->trust) ctx->trust = trust;
 	return 1;
 }
 
@@ -1068,8 +1050,8 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->cert=x509;
 	ctx->untrusted=chain;
 	ctx->last_untrusted=0;
-	ctx->purpose=0;
-	ctx->trust=0;
+	ctx->purpose=store->purpose;
+	ctx->trust=store->trust;
 	ctx->check_time=0;
 	ctx->flags=0;
 	ctx->other_ctx=NULL;
@@ -1080,15 +1062,55 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->error_depth=0;
 	ctx->current_cert=NULL;
 	ctx->current_issuer=NULL;
-	ctx->check_issued = check_issued;
-	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
-	ctx->verify_cb = store->verify_cb;
-	ctx->verify = store->verify;
-	ctx->check_revocation = check_revocation;
-	ctx->get_crl = get_crl;
-	ctx->check_crl = check_crl;
-	ctx->cert_crl = cert_crl;
-	ctx->cleanup = 0;
+
+	/* Inherit callbacks and flags from X509_STORE if not set
+	 * use defaults.
+	 */
+
+	ctx->flags = store->flags;
+
+	if (store->check_issued)
+		ctx->check_issued = store->check_issued;
+	else
+		ctx->check_issued = check_issued;
+
+	if (store->get_issuer)
+		ctx->get_issuer = store->get_issuer;
+	else
+		ctx->get_issuer = X509_STORE_CTX_get1_issuer;
+
+	if (store->verify_cb)
+		ctx->verify_cb = store->verify_cb;
+	else
+		ctx->verify_cb = null_callback;
+
+	if (store->verify)
+		ctx->verify = store->verify;
+	else
+		ctx->verify = internal_verify;
+
+	if (store->check_revocation)
+		ctx->check_revocation = store->check_revocation;
+	else
+		ctx->check_revocation = check_revocation;
+
+	if (store->get_crl)
+		ctx->get_crl = store->get_crl;
+	else
+		ctx->get_crl = get_crl;
+
+	if (store->check_crl)
+		ctx->check_crl = store->check_crl;
+	else
+		ctx->check_crl = check_crl;
+
+	if (store->cert_crl)
+		ctx->cert_crl = store->cert_crl;
+	else
+		ctx->cert_crl = cert_crl;
+
+	ctx->cleanup = store->cleanup;
+
 	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));
 	}
 

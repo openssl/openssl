@@ -168,8 +168,24 @@ typedef struct x509_store_st
 
 	/* These are external lookup methods */
 	STACK_OF(X509_LOOKUP) *get_cert_methods;
+
+	/* The following fields are not used by X509_STORE but are
+         * inherited by X509_STORE_CTX when it is initialised.
+	 */
+
+	unsigned long flags;	/* Various verify flags */
+	int purpose;
+	int trust;
+	/* Callbacks for various operations */
 	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
+	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
+	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
+	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
+	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
@@ -308,6 +324,8 @@ void X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free_contents(X509_OBJECT *a);
 X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
+
+void X509_STORE_set_flags(X509_STORE *ctx, long flags);
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 

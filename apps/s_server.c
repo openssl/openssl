@@ -414,6 +414,8 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char *argv[])
 	{
+	X509_STORE *store = NULL;
+	int vflags = 0;
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
 	char *context = NULL;
@@ -517,6 +519,14 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
+			}
+		else if (strcmp(*argv,"-crl_check") == 0)
+			{
+			vflags |= X509_V_FLAG_CRL_CHECK;
+			}
+		else if (strcmp(*argv,"-crl_check") == 0)
+			{
+			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 			}
 		else if	(strcmp(*argv,"-serverpref") == 0)
 			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
@@ -721,6 +731,8 @@ bad:
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}
+	store = SSL_CTX_get_cert_store(ctx);
+	X509_STORE_set_flags(store, vflags);
 
 #ifndef OPENSSL_NO_DH
 	if (!no_dhe)
