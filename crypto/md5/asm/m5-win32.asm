@@ -8,15 +8,16 @@
         .386
 .model FLAT
 _TEXT	SEGMENT
-PUBLIC	_md5_block_x86
+PUBLIC	_md5_block_asm_host_order
 
-_md5_block_x86 PROC NEAR
+_md5_block_asm_host_order PROC NEAR
 	push	esi
 	push	edi
 	mov	edi,		DWORD PTR 12[esp]
 	mov	esi,		DWORD PTR 16[esp]
 	mov	ecx,		DWORD PTR 20[esp]
 	push	ebp
+	shl	ecx,		6
 	push	ebx
 	add	ecx,		esi
 	sub	ecx,		64
@@ -34,161 +35,161 @@ L000start:
 	xor	edi,		edx
 	and	edi,		ebx
 	lea	eax,		DWORD PTR 3614090360[ebp*1+eax]
-	mov	ebp,		DWORD PTR 4[esi]
 	xor	edi,		edx
 	add	eax,		edi
 	mov	edi,		ebx
 	rol	eax,		7
+	mov	ebp,		DWORD PTR 4[esi]
 	add	eax,		ebx
 	; R0 1
 	xor	edi,		ecx
 	and	edi,		eax
 	lea	edx,		DWORD PTR 3905402710[ebp*1+edx]
-	mov	ebp,		DWORD PTR 8[esi]
 	xor	edi,		ecx
 	add	edx,		edi
 	mov	edi,		eax
 	rol	edx,		12
+	mov	ebp,		DWORD PTR 8[esi]
 	add	edx,		eax
 	; R0 2
 	xor	edi,		ebx
 	and	edi,		edx
 	lea	ecx,		DWORD PTR 606105819[ebp*1+ecx]
-	mov	ebp,		DWORD PTR 12[esi]
 	xor	edi,		ebx
 	add	ecx,		edi
 	mov	edi,		edx
 	rol	ecx,		17
+	mov	ebp,		DWORD PTR 12[esi]
 	add	ecx,		edx
 	; R0 3
 	xor	edi,		eax
 	and	edi,		ecx
 	lea	ebx,		DWORD PTR 3250441966[ebp*1+ebx]
-	mov	ebp,		DWORD PTR 16[esi]
 	xor	edi,		eax
 	add	ebx,		edi
 	mov	edi,		ecx
 	rol	ebx,		22
+	mov	ebp,		DWORD PTR 16[esi]
 	add	ebx,		ecx
 	; R0 4
 	xor	edi,		edx
 	and	edi,		ebx
 	lea	eax,		DWORD PTR 4118548399[ebp*1+eax]
-	mov	ebp,		DWORD PTR 20[esi]
 	xor	edi,		edx
 	add	eax,		edi
 	mov	edi,		ebx
 	rol	eax,		7
+	mov	ebp,		DWORD PTR 20[esi]
 	add	eax,		ebx
 	; R0 5
 	xor	edi,		ecx
 	and	edi,		eax
 	lea	edx,		DWORD PTR 1200080426[ebp*1+edx]
-	mov	ebp,		DWORD PTR 24[esi]
 	xor	edi,		ecx
 	add	edx,		edi
 	mov	edi,		eax
 	rol	edx,		12
+	mov	ebp,		DWORD PTR 24[esi]
 	add	edx,		eax
 	; R0 6
 	xor	edi,		ebx
 	and	edi,		edx
 	lea	ecx,		DWORD PTR 2821735955[ebp*1+ecx]
-	mov	ebp,		DWORD PTR 28[esi]
 	xor	edi,		ebx
 	add	ecx,		edi
 	mov	edi,		edx
 	rol	ecx,		17
+	mov	ebp,		DWORD PTR 28[esi]
 	add	ecx,		edx
 	; R0 7
 	xor	edi,		eax
 	and	edi,		ecx
 	lea	ebx,		DWORD PTR 4249261313[ebp*1+ebx]
-	mov	ebp,		DWORD PTR 32[esi]
 	xor	edi,		eax
 	add	ebx,		edi
 	mov	edi,		ecx
 	rol	ebx,		22
+	mov	ebp,		DWORD PTR 32[esi]
 	add	ebx,		ecx
 	; R0 8
 	xor	edi,		edx
 	and	edi,		ebx
 	lea	eax,		DWORD PTR 1770035416[ebp*1+eax]
-	mov	ebp,		DWORD PTR 36[esi]
 	xor	edi,		edx
 	add	eax,		edi
 	mov	edi,		ebx
 	rol	eax,		7
+	mov	ebp,		DWORD PTR 36[esi]
 	add	eax,		ebx
 	; R0 9
 	xor	edi,		ecx
 	and	edi,		eax
 	lea	edx,		DWORD PTR 2336552879[ebp*1+edx]
-	mov	ebp,		DWORD PTR 40[esi]
 	xor	edi,		ecx
 	add	edx,		edi
 	mov	edi,		eax
 	rol	edx,		12
+	mov	ebp,		DWORD PTR 40[esi]
 	add	edx,		eax
 	; R0 10
 	xor	edi,		ebx
 	and	edi,		edx
 	lea	ecx,		DWORD PTR 4294925233[ebp*1+ecx]
-	mov	ebp,		DWORD PTR 44[esi]
 	xor	edi,		ebx
 	add	ecx,		edi
 	mov	edi,		edx
 	rol	ecx,		17
+	mov	ebp,		DWORD PTR 44[esi]
 	add	ecx,		edx
 	; R0 11
 	xor	edi,		eax
 	and	edi,		ecx
 	lea	ebx,		DWORD PTR 2304563134[ebp*1+ebx]
-	mov	ebp,		DWORD PTR 48[esi]
 	xor	edi,		eax
 	add	ebx,		edi
 	mov	edi,		ecx
 	rol	ebx,		22
+	mov	ebp,		DWORD PTR 48[esi]
 	add	ebx,		ecx
 	; R0 12
 	xor	edi,		edx
 	and	edi,		ebx
 	lea	eax,		DWORD PTR 1804603682[ebp*1+eax]
-	mov	ebp,		DWORD PTR 52[esi]
 	xor	edi,		edx
 	add	eax,		edi
 	mov	edi,		ebx
 	rol	eax,		7
+	mov	ebp,		DWORD PTR 52[esi]
 	add	eax,		ebx
 	; R0 13
 	xor	edi,		ecx
 	and	edi,		eax
 	lea	edx,		DWORD PTR 4254626195[ebp*1+edx]
-	mov	ebp,		DWORD PTR 56[esi]
 	xor	edi,		ecx
 	add	edx,		edi
 	mov	edi,		eax
 	rol	edx,		12
+	mov	ebp,		DWORD PTR 56[esi]
 	add	edx,		eax
 	; R0 14
 	xor	edi,		ebx
 	and	edi,		edx
 	lea	ecx,		DWORD PTR 2792965006[ebp*1+ecx]
-	mov	ebp,		DWORD PTR 60[esi]
 	xor	edi,		ebx
 	add	ecx,		edi
 	mov	edi,		edx
 	rol	ecx,		17
+	mov	ebp,		DWORD PTR 60[esi]
 	add	ecx,		edx
 	; R0 15
 	xor	edi,		eax
 	and	edi,		ecx
 	lea	ebx,		DWORD PTR 1236535329[ebp*1+ebx]
-	mov	ebp,		DWORD PTR 4[esi]
 	xor	edi,		eax
 	add	ebx,		edi
 	mov	edi,		ecx
 	rol	ebx,		22
+	mov	ebp,		DWORD PTR 4[esi]
 	add	ebx,		ecx
 	; 
 	; R1 section
@@ -359,8 +360,8 @@ L000start:
 	xor	edi,		ebx
 	lea	eax,		DWORD PTR 4294588738[ebp*1+eax]
 	add	eax,		edi
-	mov	ebp,		DWORD PTR 32[esi]
 	rol	eax,		4
+	mov	ebp,		DWORD PTR 32[esi]
 	mov	edi,		ebx
 	; R2 33
 	lea	edx,		DWORD PTR 2272392833[ebp*1+edx]
@@ -377,8 +378,8 @@ L000start:
 	xor	edi,		edx
 	lea	ecx,		DWORD PTR 1839030562[ebp*1+ecx]
 	add	ecx,		edi
-	mov	ebp,		DWORD PTR 56[esi]
 	rol	ecx,		16
+	mov	ebp,		DWORD PTR 56[esi]
 	mov	edi,		edx
 	; R2 35
 	lea	ebx,		DWORD PTR 4259657740[ebp*1+ebx]
@@ -395,8 +396,8 @@ L000start:
 	xor	edi,		ebx
 	lea	eax,		DWORD PTR 2763975236[ebp*1+eax]
 	add	eax,		edi
-	mov	ebp,		DWORD PTR 16[esi]
 	rol	eax,		4
+	mov	ebp,		DWORD PTR 16[esi]
 	mov	edi,		ebx
 	; R2 37
 	lea	edx,		DWORD PTR 1272893353[ebp*1+edx]
@@ -413,8 +414,8 @@ L000start:
 	xor	edi,		edx
 	lea	ecx,		DWORD PTR 4139469664[ebp*1+ecx]
 	add	ecx,		edi
-	mov	ebp,		DWORD PTR 40[esi]
 	rol	ecx,		16
+	mov	ebp,		DWORD PTR 40[esi]
 	mov	edi,		edx
 	; R2 39
 	lea	ebx,		DWORD PTR 3200236656[ebp*1+ebx]
@@ -431,8 +432,8 @@ L000start:
 	xor	edi,		ebx
 	lea	eax,		DWORD PTR 681279174[ebp*1+eax]
 	add	eax,		edi
-	mov	ebp,		DWORD PTR [esi]
 	rol	eax,		4
+	mov	ebp,		DWORD PTR [esi]
 	mov	edi,		ebx
 	; R2 41
 	lea	edx,		DWORD PTR 3936430074[ebp*1+edx]
@@ -449,8 +450,8 @@ L000start:
 	xor	edi,		edx
 	lea	ecx,		DWORD PTR 3572445317[ebp*1+ecx]
 	add	ecx,		edi
-	mov	ebp,		DWORD PTR 24[esi]
 	rol	ecx,		16
+	mov	ebp,		DWORD PTR 24[esi]
 	mov	edi,		edx
 	; R2 43
 	lea	ebx,		DWORD PTR 76029189[ebp*1+ebx]
@@ -467,8 +468,8 @@ L000start:
 	xor	edi,		ebx
 	lea	eax,		DWORD PTR 3654602809[ebp*1+eax]
 	add	eax,		edi
-	mov	ebp,		DWORD PTR 48[esi]
 	rol	eax,		4
+	mov	ebp,		DWORD PTR 48[esi]
 	mov	edi,		ebx
 	; R2 45
 	lea	edx,		DWORD PTR 3873151461[ebp*1+edx]
@@ -485,8 +486,8 @@ L000start:
 	xor	edi,		edx
 	lea	ecx,		DWORD PTR 530742520[ebp*1+ecx]
 	add	ecx,		edi
-	mov	ebp,		DWORD PTR 8[esi]
 	rol	ecx,		16
+	mov	ebp,		DWORD PTR 8[esi]
 	mov	edi,		edx
 	; R2 47
 	lea	ebx,		DWORD PTR 3299628645[ebp*1+ebx]
@@ -681,6 +682,6 @@ L000start:
 	pop	edi
 	pop	esi
 	ret
-_md5_block_x86 ENDP
+_md5_block_asm_host_order ENDP
 _TEXT	ENDS
 END
