@@ -499,10 +499,24 @@ bad:
 		BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n",number,bytes);
 	if (print_time)
 		{
+#ifdef CLOCKS_PER_SEC
+		/* "To determine the time in seconds, the value returned
+		 * by the clock function should be divided by the value
+		 * of the macro CLOCKS_PER_SEC."
+		 *                                       -- ISO/IEC 9899 */
 		BIO_printf(bio_stdout, "Approximate total server time: %6.2f s\n"
 			"Approximate total client time: %6.2f s\n",
 			(double)s_time/CLOCKS_PER_SEC,
 			(double)c_time/CLOCKS_PER_SEC);
+#else
+		/* "`CLOCKS_PER_SEC' undeclared (first use this function)"
+		 *                            -- cc on NeXTstep/OpenStep */
+		BIO_printf(bio_stdout,
+			"Approximate total server time: %6.2f units\n"
+			"Approximate total client time: %6.2f units\n",
+			(double)s_time,
+			(double)c_time);
+#endif
 		}
 
 	SSL_free(s_ssl);
