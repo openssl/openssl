@@ -60,7 +60,7 @@ foreach $file (@files)
 
 	while (<IN>)
 		{
-		if ((s/SSLeay \d\.\d.\d[^"]*(\"|\s)/SSLeay $ver $time\1/) ||
+		if ((s/(SSLeay|OpenTLS) \d\.\d.\d[^"]*(\"|\s)/\1 $ver $time\2/) ||
 			s/^(\#define\s+SSLEAY_VERSION_NUMBER\s+0x)[0-9a-zA-Z]+(.*)$/$1$xver$2/)
 			{
 			print STDERR " Done";
