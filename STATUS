@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/01/01 14:13:59 $
+  ______________                           $Date: 1999/01/01 15:58:14 $
 
   DEVELOPMENT STATE
 
@@ -19,6 +19,20 @@
 
   OPEN ISSUES
 
+    o  The apps/ dir should be cleaned up. 
+       Ralf proposes the following cleanup:
+       1. We rename the ssleay program to openssl.
+          => This way it's consistent with out project and
+             with the already started openssl(1) manpage, etc.
+       2. We no longer create such a lot of <command> links for
+          "openssl <command>". Instead we follow the "cvs" interface idea
+          where all <command>s are called as "cvs <command>".
+          => This no longer messes up the install dir with
+             symlinks and provides a single-one and consistent command line
+             interface. Additionally we can document it nicely with the single
+             already started openssl(1) manual page.
+       Status: Ralf +1
+
     o  The installation under "make install" produces a very
        installation layout: $prefix/certs and $prefix/private dirs.  That's
        not nice. Ralf suggests to move the two certs and private dirs either
@@ -29,6 +43,13 @@
                        moving it to $prefix/etc/. +0 for $prefix/lib/
                        and $prefix/share.
                Paul: why is it not nice?
+               Ralf: because it messes up the install dir when
+                     $prefix is not a dedicated area like /usr/local/ssl.
+                     When we move them to a standard subdir like
+                     etc/ lib/ or share/ we don't mess up things
+                     when $prefix is /usr or /usr/local, etc.
+                     Additionally it makes package vendors life
+                     easier....
 
     o  Support for Shared Libraries has to be added at least
        for the major Unix platforms. The details we can rip from the stuff
