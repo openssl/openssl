@@ -131,7 +131,7 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 	return(1);
 	}
 
-void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
+void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
 	{
 	if (ad->sk == NULL)
 		return(0);

@@ -281,7 +281,7 @@ unsigned long SSLeay(void);
 int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long argl, void *argp,
 	     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
-void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad,int idx);
+void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad,int idx);
 int CRYPTO_dup_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, CRYPTO_EX_DATA *to,
 	     CRYPTO_EX_DATA *from);
 void CRYPTO_free_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad);
