@@ -365,7 +365,7 @@ $! Copy a lot of files around.
 $!
 $ SOFTLINKS: 
 $!
-$! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
+$! Tell The User We Are Partly Rebuilding The [.APPS] Directory.
 $!
 $ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
 $!
@@ -396,6 +396,7 @@ $!
 $! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
 $!
 $ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
+$ COPY SYS$DISK:[.CRYPTO.SHA]SHA%%%T.C SYS$DISK:[.TEST]
 $ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
 $!
 $! Copy all the *TEST.C files from [.SSL...] into [.TEST]
