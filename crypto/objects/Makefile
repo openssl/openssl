@@ -49,6 +49,7 @@ obj_dat.h: obj_dat.pl obj_mac.h
 # objects.pl both reads and writes obj_mac.num
 obj_mac.h: objects.pl objects.txt obj_mac.num
 	$(PERL) objects.pl objects.txt obj_mac.num obj_mac.h
+	@sleep 1; touch obj_mac.h; sleep 1
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
