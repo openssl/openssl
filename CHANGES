@@ -4,6 +4,14 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add a function EC_GROUP_check_discriminant() (defined via
+     EC_METHOD) that verifies that the curve discriminant is non-zero.
+
+     Add a function EC_GROUP_check() that makes some sanity tests
+     on a EC_GROUP, its generator and order.  This includes
+     EC_GROUP_check_discriminant().
+     [Nils Larsch <nla@trustcenter.de>]
+
   *) Add ECDSA in new directory crypto/ecdsa/.
 
      Add applications 'openssl ecdsaparam' and 'openssl ecdsa'
@@ -40,6 +48,17 @@
          -) applies to 0.9.6a ... 0.9.6d only
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
+
+  *) Fix DH_generate_parameters() so that it works for 'non-standard'
+     generators, i.e. generators other than 2 and 5.  (Previously, the
+     code did not properly initialise the 'add' and 'rem' values to
+     BN_generate_prime().)
+
+     In the new general case, we do not insist that 'generator' is
+     actually a primitive root: This requirement is rather pointless;
+     a generator of the order-q subgroup is just as good, if not
+     better.
+     [Bodo Moeller]
 
   *) Map new X509 verification errors to alerts. Discovered and submitted by
      Tom Wu <tom@arcot.com>.
