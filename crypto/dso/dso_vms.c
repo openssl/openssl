@@ -59,11 +59,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#ifdef VMS
 #include <lib$routines.h>
 #include <libfisdef.h>
 #include <stsdef.h>
 #include <descrip.h>
 #include <starlet.h>
+#endif
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
