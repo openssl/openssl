@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Implement ssl23_peek (analogous to ssl23_read), which previously
+     did not exist.
+     [Bodo Moeller]
+
   *) Replace rdtsc with _emit statements for VC++ version 5.
      [Jeremy Cooper <jeremy@baymoo.org>]
 
