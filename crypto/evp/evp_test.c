@@ -73,7 +73,7 @@ static int convert(unsigned char *s)
 
     for(d=s ; *s ; s+=2,++d)
 	{
-	int n;
+	unsigned int n;
 
 	if(!s[1])
 	    {
