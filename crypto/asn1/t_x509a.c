@@ -83,12 +83,12 @@ int X509_trust_set_bit_asc(X509 *x, char *str, int value)
 	return 1;
 }
 
-int X509_notrust_set_bit_asc(X509 *x, char *str, int value)
+int X509_reject_set_bit_asc(X509 *x, char *str, int value)
 {
 	int bitnum;
 	bitnum = ASN1_BIT_STRING_num_asc(str, tbits);
 	if(bitnum < 0) return 0;
-	if(x) return X509_notrust_set_bit(x, bitnum, value);
+	if(x) return X509_reject_set_bit(x, bitnum, value);
 	return 1;
 }
 
@@ -102,9 +102,9 @@ int X509_CERT_AUX_print(BIO *out, X509_CERT_AUX *aux, int indent)
 		BIO_printf(out, "%*sTrusted for:\n", indent, "");
 		ASN1_BIT_STRING_name_print(out, aux->trust, tbits, indent + 2);
 	} else BIO_printf(out, "%*sNo Trust Settings\n", indent + 2, "");
-	if(aux->notrust) {
+	if(aux->reject) {
 		BIO_printf(out, "%*sUntrusted for:\n", indent, "");
-		ASN1_BIT_STRING_name_print(out, aux->notrust, tbits, indent + 2);
+		ASN1_BIT_STRING_name_print(out, aux->reject, tbits, indent + 2);
 	} else BIO_printf(out, "%*sNo Untrusted Settings\n", indent + 2, "");
 	if(aux->othertrust) {
 		first = 1;
@@ -119,15 +119,15 @@ int X509_CERT_AUX_print(BIO *out, X509_CERT_AUX *aux, int indent)
 		}
 		BIO_puts(out, "\n");
 	}
-	if(aux->othernotrust) {
+	if(aux->otherreject) {
 		first = 1;
 		BIO_printf(out, "%*sOther Untrusted Uses:\n%*s",
 						indent, "", indent + 2, "");
-		for(i = 0; i < sk_ASN1_OBJECT_num(aux->othernotrust); i++) {
+		for(i = 0; i < sk_ASN1_OBJECT_num(aux->otherreject); i++) {
 			if(!first) BIO_puts(out, ", ");
 			else first = 0;
 			OBJ_obj2txt(oidstr, 80,
-				sk_ASN1_OBJECT_value(aux->othernotrust, i), 0);
+				sk_ASN1_OBJECT_value(aux->otherreject, i), 0);
 			BIO_puts(out, oidstr);
 		}
 		BIO_puts(out, "\n");

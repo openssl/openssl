@@ -107,9 +107,9 @@ static char *x509_usage[]={
 " -noout          - no certificate output\n",
 " -trustout       - output a \"trusted\" certificate\n",
 " -clrtrust       - clear all trusted purposes\n",
-" -clrnotrust     - clear all untrusted purposes\n",
-" -addtrust arg   - mark certificate as trusted for a given purpose\n",
-" -addnotrust arg - mark certificate as not trusted for a given purpose\n",
+" -clrreject      - clear all rejected purposes\n",
+" -addtrust arg   - trust certificate for a given purpose\n",
+" -addreject arg  - reject certificate for a given purpose\n",
 " -setalias arg   - set certificate alias\n",
 " -days arg       - How long till expiry of a signed certificate - def 30 days\n",
 " -signkey arg    - self sign cert with arg\n",
@@ -122,7 +122,7 @@ static char *x509_usage[]={
 " -CAserial       - serial file\n",
 " -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
-" -md2/-md5/-sha1/-mdc2 - digest to do an RSA sign with\n",
+" -md2/-md5/-sha1/-mdc2 - digest to use\n",
 " -extfile        - configuration file with X509V3 extensions to add\n",
 " -extensions     - section from config file with X509V3 extensions to add\n",
 NULL
@@ -148,14 +148,14 @@ int MAIN(int argc, char **argv)
 	int i,num,badops=0;
 	BIO *out=NULL;
 	BIO *STDout=NULL;
-	STACK *trust = NULL, *notrust = NULL;
+	STACK *trust = NULL, *reject = NULL;
 	int informat,outformat,keyformat,CAformat,CAkeyformat;
 	char *infile=NULL,*outfile=NULL,*keyfile=NULL,*CAfile=NULL;
 	char *CAkeyfile=NULL,*CAserial=NULL;
 	char *alias=NULL, *trstr=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
-	int trustout=0,clrtrust=0,clrnotrust=0,aliasout=0;
+	int trustout=0,clrtrust=0,clrreject=0,aliasout=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
 	int pprint = 0;
@@ -289,17 +289,17 @@ int MAIN(int argc, char **argv)
 			sk_push(trust, trstr);
 			trustout = 1;
 			}
-		else if (strcmp(*argv,"-addnotrust") == 0)
+		else if (strcmp(*argv,"-addreject") == 0)
 			{
 			if (--argc < 1) goto bad;
 			trstr= *(++argv);
-			if(!X509_notrust_set_bit_asc(NULL, trstr, 0)) {
+			if(!X509_reject_set_bit_asc(NULL, trstr, 0)) {
 				BIO_printf(bio_err,
 					"Unknown trust value %s\n", trstr);
 				goto bad;
 			}
-			if(!notrust) notrust = sk_new_null();
-			sk_push(notrust, trstr);
+			if(!reject) reject = sk_new_null();
+			sk_push(reject, trstr);
 			trustout = 1;
 			}
 		else if (strcmp(*argv,"-setalias") == 0)
@@ -351,13 +351,13 @@ int MAIN(int argc, char **argv)
 			trustout= 1;
 		else if (strcmp(*argv,"-clrtrust") == 0)
 			clrtrust= ++num;
-		else if (strcmp(*argv,"-clrnotrust") == 0)
-			clrnotrust= ++num;
+		else if (strcmp(*argv,"-clrreject") == 0)
+			clrreject= ++num;
 		else if (strcmp(*argv,"-alias") == 0)
 			aliasout= ++num;
 		else if (strcmp(*argv,"-CAcreateserial") == 0)
 			CA_createserial= ++num;
-		else if ((md_alg=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
+		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */
 			digest=md_alg;
@@ -551,7 +551,7 @@ bad:
 	if(alias) X509_alias_set(x, (unsigned char *)alias, -1);
 
 	if(clrtrust) X509_trust_set_bit(x, -1, 0);
-	if(clrnotrust) X509_notrust_set_bit(x, -1, 0);
+	if(clrreject) X509_reject_set_bit(x, -1, 0);
 
 	if(trust) {
 		for(i = 0; i < sk_num(trust); i++) {
@@ -561,12 +561,12 @@ bad:
 		sk_free(trust);
 	}
 
-	if(notrust) {
-		for(i = 0; i < sk_num(notrust); i++) {
-			trstr = sk_value(notrust, i);
-			X509_notrust_set_bit_asc(x, trstr, 1);
+	if(reject) {
+		for(i = 0; i < sk_num(reject); i++) {
+			trstr = sk_value(reject, i);
+			X509_reject_set_bit_asc(x, trstr, 1);
 		}
-		sk_free(notrust);
+		sk_free(reject);
 	}
 
 	if (num)
@@ -732,12 +732,13 @@ bad:
 				unsigned int n;
 				unsigned char md[EVP_MAX_MD_SIZE];
 
-				if (!X509_digest(x,EVP_md5(),md,&n))
+				if (!X509_digest(x,digest,md,&n))
 					{
 					BIO_printf(bio_err,"out of memory\n");
 					goto end;
 					}
-				BIO_printf(STDout,"MD5 Fingerprint=");
+				BIO_printf(STDout,"%s Fingerprint=",
+						OBJ_nid2sn(EVP_MD_type(digest)));
 				for (j=0; j<(int)n; j++)
 					{
 					BIO_printf(STDout,"%02X%c",md[j],
@@ -801,7 +802,10 @@ bad:
 
 				BIO_printf(bio_err,"Generating certificate request\n");
 
-				rq=X509_to_X509_REQ(x,pk,EVP_md5());
+		                if (pk->type == EVP_PKEY_DSA)
+		                        digest=EVP_dss1();
+
+				rq=X509_to_X509_REQ(x,pk,digest);
 				EVP_PKEY_free(pk);
 				if (rq == NULL)
 					{

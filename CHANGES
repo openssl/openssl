@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fixes and enhancements to the 'x509' utility. It allowed a message
+     digest to be passed on the command line but it only used this
+     parameter when signing a certificate. Modified so all relevant
+     operations are affected by the digest parameter including the
+     -fingerprint and -x509toreq options. Also -x509toreq choked if a
+     DSA key was used because it didn't fix the digest.
+     [Steve Henson]
+
   *) Very preliminary certificate chain verify code. Currently just tests
      the untrusted certificates for consistency with the verify purpose
      (which is set when the X509_STORE_CTX structure is set up) and checks
@@ -12,7 +20,7 @@
      reject chains with invalid extensions whereas before it made no checks
      at all.
 
-     Still needs some trust checking code.
+     Preliminary untested trust code. 
 
      Also added X509_STORE_CTX_new() and X509_STORE_CTX_free() functions
      which should be used for version portability: especially since the

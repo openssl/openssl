@@ -29,9 +29,9 @@ B<openssl> B<x509>
 [B<-noout>]
 [B<-trustout>]
 [B<-clrtrust>]
-[B<-clrnotrust>]
+[B<-clrreject>]
 [B<-addtrust arg>]
-[B<-addnotrust arg>]
+[B<-addreject arg>]
 [B<-setalias arg>]
 [B<-days arg>]
 [B<-signkey filename>]
@@ -59,7 +59,7 @@ Since there are a large number of options they will split up into
 various sections.
 
 
-=head1 INPUT AND OUTPUT OPTIONS
+=head1 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
 
@@ -86,6 +86,14 @@ if this option is not specified.
 
 This specifies the output filename to write to or standard output by
 default.
+
+=item B<-md2|-md5|-sha1|-mdc2>
+
+the digest to use. This affects any signing or display option that uses a message
+digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options. If not
+specified then MD5 is used. If the key being used to sign with is a DSA key then
+this option has no effect: SHA1 is always used with DSA keys.
+
 
 =back
 
@@ -143,7 +151,7 @@ prints out the start and expiry dates of a certificate.
 
 =item B<-fingerprint>
 
-prints out the MD5 digest of the whole certificate.
+prints out the digest of the DER encoded version of the whole certificate.
 
 =item B<-C>
 
@@ -201,7 +209,7 @@ outputs the certificate alias, if any.
 
 clears all the permitted or trusted uses of the certificate.
 
-=item B<-clrnotrust>
+=item B<-clrreject>
 
 clears all the prohibited or untrusted uses of the certificate.
 
@@ -211,7 +219,7 @@ adds a trusted certificate use. Currently acceptable values
 are all (any purpose), sslclient (SSL client use), sslserver
 (SSL server use) email (S/MIME email) and objsign (Object signing).
 
-=item B<-addnotrust arg>
+=item B<-addreject arg>
 
 adds a prohibited use. It accepts the same values as the B<-addtrust>
 option.
@@ -311,11 +319,6 @@ with this option the CA serial number file is created if it does not exist:
 it will contain the serial number "01". Normally if the B<-CA> option is
 specified and the serial number file does not exist it is an error.
 
-=item B<-md2|-md5|-sha1|-mdc2>
-
-the digest to sign with. It affects all commands that sign a certificate
-or request.
-
 =item B<-extfile filename>
 
 file containing certificate extensions to use. If not specified then
@@ -339,10 +342,17 @@ Display the contents of a certificate:
 
 	openssl x509 -in cert.pem -noout -text
 
-Displa the certificate serial number:
+Display the certificate serial number:
 
 	openssl x509 -in cert.pem -noout -serial
 
+Display the certificate MD5 fingerprint:
+
+	openssl x509 -in cert.pem -noout -fingerprint
+
+Display the certificate SHA1 fingerprint:
+
+	openssl x509 -sha1 -in cert.pem -noout -fingerprint
 
 Convert a certificate from PEM to DER format:
 
@@ -383,6 +393,18 @@ it will also handle files containing:
  -----BEGIN X509 CERTIFICATE----
  -----END X509 CERTIFICATE----
 
+Trusted certificates have the lines
+
+ -----BEGIN TRUSTED CERTIFICATE----
+ -----END TRUSTED CERTIFICATE----
+
+The B<-fingerprint> option takes the digest of the DER encoded certificate.
+This is commonly called a "fingerprint". Because of the nature of message
+digests the fingerprint of a certificate is unique to that certificate and
+two certificates with the same fingerprint can be considered to be the same.
+
+The Netscape fingerprint uses MD5 whereas MSIE uses SHA1.
+
 =head1 BUGS
 
 The way DNs are printed is in a "historical SSLeay" format which doesn't
@@ -396,14 +418,13 @@ It is possible to produce invalid certificates or requests by specifying the
 wrong private key or using inconsistent options in some cases: these should
 be checked.
 
-There should be options to explicitly set such things are start and end
+There should be options to explicitly set such things as start and end
 dates rather than an offset from the current time.
 
 The code to implement the verify behaviour described in the B<TRUST SETTINGS>
 is currently being developed. It thus describes the intended behavior rather
 than the current behaviour. It is hoped that it will represent reality in
 OpenSSL 0.9.5 and later.
-
 
 =head1 SEE ALSO
 

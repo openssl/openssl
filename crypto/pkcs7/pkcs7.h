@@ -247,7 +247,7 @@ PKCS7_ISSUER_AND_SERIAL *d2i_PKCS7_ISSUER_AND_SERIAL(
 				unsigned char **pp, long length);
 
 #ifndef SSLEAY_MACROS
-int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,EVP_MD *type,
+int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
 #ifndef NO_FP_API
 PKCS7 *d2i_PKCS7_fp(FILE *fp,PKCS7 **p7);

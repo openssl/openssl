@@ -411,19 +411,19 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne)
 		(char *(*)())d2i_X509_NAME_ENTRY,(char *)ne));
 	}
 
-int X509_digest(X509 *data, EVP_MD *type, unsigned char *md,
+int X509_digest(X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
 	return(ASN1_digest((int (*)())i2d_X509,type,(char *)data,md,len));
 	}
 
-int X509_NAME_digest(X509_NAME *data, EVP_MD *type, unsigned char *md,
+int X509_NAME_digest(X509_NAME *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
 	return(ASN1_digest((int (*)())i2d_X509_NAME,type,(char *)data,md,len));
 	}
 
-int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data, EVP_MD *type,
+int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data, const EVP_MD *type,
 	     unsigned char *md, unsigned int *len)
 	{
 	return(ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,
