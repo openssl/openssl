@@ -179,7 +179,7 @@
  */
 #undef ROTATE
 #ifndef PEDANTIC
-# if defined(_MSC_VER)
+# if 0 /* defined(_MSC_VER) */
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
 #  if defined(__POWERPC__)
