@@ -335,7 +335,7 @@ if [ "$OUT" = solaris-usparc-gcc ]
 then
  if [ `echo "$GCCVER" | sed 's/.*version //;s/\.//;s/\..*//'` -lt 28 ]
  then
-  OUT=solaris-sparc-gcc
+  OUT=solaris-usparc-oldgcc
  fi
 fi
 
