@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6l and OpenSSL 0.9.6m:
+
+      o Security: fix null-pointer bug leading to crash
+
   Major changes between OpenSSL 0.9.6k and OpenSSL 0.9.6l:
 
       o Security: fix ASN1 bug leading to large recursion
