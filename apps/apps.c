@@ -1150,6 +1150,12 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 
         if (engine)
                 {
+		if(strcmp(engine, "auto") == 0)
+			{
+			BIO_printf(err,"enabling auto ENGINE support\n");
+			ENGINE_register_all_complete();
+			return NULL;
+			}
 		if((e = ENGINE_by_id(engine)) == NULL)
 			{
 			BIO_printf(err,"invalid engine \"%s\"\n", engine);
