@@ -356,14 +356,12 @@ install: all
 	@echo installing man 1
 	@for i in doc/openssl.pod doc/man/*.pod ; \
 	do pod2man --section=1 --date=`date +%Y-%m-%d` --center=OpenSSL \
-		 --release=$(VERSION) $$i > `echo $$i | sed \
-		 "s#.*/#$(INSTALL_PREFIX)$(INSTALLTOP)/man/man1/#;s/pod/1/"`; \
+		 --release=$(VERSION) $$i > $(INSTALL_PREFIX)$(INSTALLTOP)/man/man1/`basename $$i .pod`.1; \
 	done
 	@echo installing man 3
 	@for i in doc/crypto.pod doc/ssl.pod ; \
 	do pod2man --section=3 --date=`date +%Y-%m-%d` --center=OpenSSL \
-		 --release=$(VERSION) $$i > `echo $$i | sed \
-		 "s#.*/#$(INSTALL_PREFIX)$(INSTALLTOP)/man/man3/#;s/pod/3/"`; \
+		 --release=$(VERSION) $$i > $(INSTALL_PREFIX)$(INSTALLTOP)/man/man3/`basename $$i .pod`.3; \
 	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
