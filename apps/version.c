@@ -172,7 +172,19 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
-	if (version) printf("%s\n",SSLeay_version(SSLEAY_VERSION));
+	if (version)
+		{
+		if (SSLeay() == SSLEAY_VERSION_NUMBER)
+			{
+			printf("%s\n",SSLeay_version(SSLEAY_VERSION));
+			}
+		else
+			{
+			printf("%s (Library: %s)\n",
+				SSLEAY_VERSION_TEXT,
+				SSLeay_version(SSLEAY_VERSION));
+			}
+		}
 	if (date)    printf("%s\n",SSLeay_version(SSLEAY_BUILT_ON));
 	if (platform) printf("%s\n",SSLeay_version(SSLEAY_PLATFORM));
 	if (options) 
