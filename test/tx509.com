@@ -52,27 +52,27 @@ $	write sys$output "p -> p"
 $	'cmd' -in f.p -inform p -outform p -out ff.p3
 $	if $severity .ne. 1 then exit 3
 $
-$	difference/output=nl: fff.p f.p
+$	backup/compare fff.p f.p
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: fff.p ff.p1
+$	backup/compare fff.p ff.p1
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: fff.p ff.p2
+$	backup/compare fff.p ff.p2
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: fff.p ff.p3
-$	if $severity .ne. 1 then exit 3
-$
-$	difference/output=nl: f.n ff.n1
-$	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.n ff.n2
-$	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.n ff.n3
+$	backup/compare fff.p ff.p3
 $	if $severity .ne. 1 then exit 3
 $
-$	difference/output=nl: f.p ff.p1
+$	backup/compare f.n ff.n1
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.p ff.p2
+$	backup/compare f.n ff.n2
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.p ff.p3
+$	backup/compare f.n ff.n3
+$	if $severity .ne. 1 then exit 3
+$
+$	backup/compare f.p ff.p1
+$	if $severity .ne. 1 then exit 3
+$	backup/compare f.p ff.p2
+$	if $severity .ne. 1 then exit 3
+$	backup/compare f.p ff.p3
 $	if $severity .ne. 1 then exit 3
 $
 $	delete f.*;*,ff.*;*,fff.*;*
