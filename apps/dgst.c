@@ -93,6 +93,7 @@ int MAIN(int argc, char **argv)
 	char pname[PROG_NAME_SIZE];
 	int separator=0;
 	int debug=0;
+	int keyform=FORMAT_PEM;
 	const char *outfile = NULL, *keyfile = NULL;
 	const char *sigfile = NULL, *randfile = NULL;
 	char out_bin = -1, want_pub = 0, do_verify = 0;
@@ -157,6 +158,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) break;
 			sigfile=*(++argv);
 			}
+		else if (strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) break;
+			keyform=str2fmt(*(++argv));
+			}
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) break;
@@ -196,6 +202,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-sign   file    sign digest using private key in file\n");
 		BIO_printf(bio_err,"-verify file    verify a signature using public key in file\n");
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
+		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-binary         output in binary form\n");
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
@@ -280,20 +287,47 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
-	if(keyfile) {
-		BIO *keybio;
-		keybio = BIO_new_file(keyfile, "r");
-		if(!keybio) {
-			BIO_printf(bio_err, "Error opening key file %s\n",
-								keyfile);
-			ERR_print_errors(bio_err);
+	if(keyfile)
+		{
+		if (keyform == FORMAT_PEM)
+			{
+			BIO *keybio;
+			keybio = BIO_new_file(keyfile, "r");
+			if(!keybio)
+				{
+				BIO_printf(bio_err,
+					"Error opening key file %s\n",
+					keyfile);
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			if(want_pub) 
+				sigkey = PEM_read_bio_PUBKEY(keybio,
+					NULL, NULL, NULL);
+			else
+				sigkey = PEM_read_bio_PrivateKey(keybio,
+					NULL, NULL, NULL);
+			BIO_free(keybio);
+			}
+		else if (keyform == FORMAT_ENGINE)
+			{
+			if (!e)
+				{
+				BIO_printf(bio_err,"no engine specified\n");
+				goto end;
+				}
+			if (want_pub)
+				sigkey = ENGINE_load_public_key(e, keyfile, NULL);
+			else
+				sigkey = ENGINE_load_private_key(e, keyfile, NULL);
+			}
+		else
+			{
+			BIO_printf(bio_err,
+				"bad input format specified for key file\n");
 			goto end;
-		}
+			}
 		
-		if(want_pub) 
-			sigkey = PEM_read_bio_PUBKEY(keybio, NULL, NULL, NULL);
-		else sigkey = PEM_read_bio_PrivateKey(keybio, NULL, NULL, NULL);
-		BIO_free(keybio);
 		if(!sigkey) {
 			BIO_printf(bio_err, "Error reading key file %s\n",
 								keyfile);

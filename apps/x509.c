@@ -853,7 +853,7 @@ bad:
 				if (Upkey == NULL)
 					{
 					Upkey=load_key(bio_err,
-						keyfile,keyformat, passin);
+						keyfile,keyformat, passin, e);
 					if (Upkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -871,7 +871,8 @@ bad:
 				if (CAkeyfile != NULL)
 					{
 					CApkey=load_key(bio_err,
-						CAkeyfile,CAkeyformat, passin);
+						CAkeyfile,CAkeyformat, passin,
+						e);
 					if (CApkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -898,7 +899,7 @@ bad:
 				else
 					{
 					pk=load_key(bio_err,
-						keyfile,FORMAT_PEM, passin);
+						keyfile,FORMAT_PEM, passin, e);
 					if (pk == NULL) goto end;
 					}
 

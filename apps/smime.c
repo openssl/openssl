@@ -399,7 +399,7 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin))) {
+		if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin, NULL))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
 			ERR_print_errors(bio_err);
 			goto end;

@@ -153,7 +153,8 @@ static char *ca_usage[]={
 " -days arg       - number of days to certify the certificate for\n",
 " -md arg         - md to use, one of md2, md5, sha or sha1\n",
 " -policy arg     - The CA 'policy' to support\n",
-" -keyfile arg    - PEM private key file\n",
+" -keyfile arg    - private key file\n",
+" -keyform arg    - private key file format (PEM or ENGINE)\n",
 " -key arg        - key to decode the private key if it is encrypted\n",
 " -cert file      - The CA certificate\n",
 " -in file        - The input PEM encoded certificate request(s)\n",
@@ -236,6 +237,7 @@ int MAIN(int argc, char **argv)
 	char *policy=NULL;
 	char *keyfile=NULL;
 	char *certfile=NULL;
+	int keyform=FORMAT_PEM;
 	char *infile=NULL;
 	char *spkac_file=NULL;
 	char *ss_cert_file=NULL;
@@ -336,6 +338,11 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			keyfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keyform=str2fmt(*(++argv));
 			}
 		else if (strcmp(*argv,"-passin") == 0)
 			{
@@ -563,14 +570,31 @@ bad:
 		BIO_printf(bio_err,"Error getting password\n");
 		goto err;
 		}
-	if (BIO_read_filename(in,keyfile) <= 0)
+	if (keyform == FORMAT_ENGINE)
 		{
-		perror(keyfile);
-		BIO_printf(bio_err,"trying to load CA private key\n");
+		if (!e)
+			{
+			BIO_printf(bio_err,"no engine specified\n");
+			goto err;
+			}
+		pkey = ENGINE_load_private_key(e, keyfile, key);
+		}
+	else if (keyform == FORMAT_PEM)
+		{
+		if (BIO_read_filename(in,keyfile) <= 0)
+			{
+			perror(keyfile);
+			BIO_printf(bio_err,"trying to load CA private key\n");
+			goto err;
+			}
+		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,key);
+		}
+	else
+		{
+		BIO_printf(bio_err,"bad input format specified for key file\n");
 		goto err;
 		}
-		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,key);
-		if(key) memset(key,0,strlen(key));
+	if(key) memset(key,0,strlen(key));
 	if (pkey == NULL)
 		{
 		BIO_printf(bio_err,"unable to load CA private key\n");

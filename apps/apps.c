@@ -553,7 +553,7 @@ end:
 	return(x);
 	}
 
-EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass)
+EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -561,6 +561,14 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass)
 	if (file == NULL)
 		{
 		BIO_printf(err,"no keyfile specified\n");
+		goto end;
+		}
+	if (format == FORMAT_ENGINE)
+		{
+		if (!e)
+			BIO_printf(bio_err,"no engine specified\n");
+		else
+			pkey = ENGINE_load_private_key(e, file, pass);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
@@ -602,7 +610,7 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass)
 	return(pkey);
 	}
 
-EVP_PKEY *load_pubkey(BIO *err, char *file, int format)
+EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -610,6 +618,14 @@ EVP_PKEY *load_pubkey(BIO *err, char *file, int format)
 	if (file == NULL)
 		{
 		BIO_printf(err,"no keyfile specified\n");
+		goto end;
+		}
+	if (format == FORMAT_ENGINE)
+		{
+		if (!e)
+			BIO_printf(bio_err,"no engine specified\n");
+		else
+			pkey = ENGINE_load_public_key(e, file, NULL);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());

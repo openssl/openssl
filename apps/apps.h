@@ -67,6 +67,7 @@
 #include <openssl/x509.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
+#include <openssl/engine.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);
@@ -152,8 +153,8 @@ int set_name_ex(unsigned long *flags, const char *arg);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);
 X509 *load_cert(BIO *err, char *file, int format);
-EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass);
-EVP_PKEY *load_pubkey(BIO *err, char *file, int format);
+EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e);
+EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e);
 STACK_OF(X509) *load_certs(BIO *err, char *file, int format);
 
 #define FORMAT_UNDEF    0

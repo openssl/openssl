@@ -62,6 +62,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define RSA_SIGN 	1
 #define RSA_VERIFY 	2
@@ -82,8 +83,10 @@ int MAIN(int argc, char **);
 
 int MAIN(int argc, char **argv)
 {
+	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL;
+	char *engine = NULL;
 	char *keyfile = NULL;
 	char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM;
@@ -117,6 +120,9 @@ int MAIN(int argc, char **argv)
 		} else if(!strcmp(*argv, "-inkey")) {
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
+		} else if(!strcmp(*argv, "-engine")) {
+			if (--argc < 1) badarg = 1;
+			engine = *(++argv);
 		} else if(!strcmp(*argv, "-pubin")) {
 			key_type = KEY_PUBKEY;
 		} else if(!strcmp(*argv, "-certin")) {
@@ -151,16 +157,34 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
 	
 	switch(key_type) {
 		case KEY_PRIVKEY:
-		pkey = load_key(bio_err, keyfile, keyform, NULL);
+		pkey = load_key(bio_err, keyfile, keyform, NULL, e);
 		break;
 
 		case KEY_PUBKEY:
-		pkey = load_pubkey(bio_err, keyfile, keyform);
+		pkey = load_pubkey(bio_err, keyfile, keyform, e);
 		break;
 
 		case KEY_CERT:
