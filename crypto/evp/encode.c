@@ -323,8 +323,8 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			if (n > 0)
 				{
 				v=EVP_DecodeBlock(out,d,n);
-				if (v < 0) { rv=0; goto end; }
 				n=0;
+				if (v < 0) { rv=0; goto end; }
 				ret+=(v-eof);
 				}
 			else
