@@ -94,7 +94,7 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
 {3, "Data Encipherment", "dataEncipherment"},
 {4, "Key Agreement", "keyAgreement"},
 {5, "Certificate Sign", "keyCertSign"},
-{6, "CRL Sign", "cRLCertSign"},
+{6, "CRL Sign", "cRLSign"},
 {7, "Encipher Only", "encipherOnly"},
 {8, "Decipher Only", "decipherOnly"},
 {-1, NULL, NULL}

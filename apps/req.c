@@ -71,6 +71,7 @@
 #include "err.h"
 #include "asn1.h"
 #include "x509.h"
+#include "x509v3.h"
 #include "objects.h"
 #include "pem.h"
 
@@ -80,6 +81,7 @@
 #define KEYFILE		"default_keyfile"
 #define DISTINGUISHED_NAME	"distinguished_name"
 #define ATTRIBUTES	"attributes"
+#define V3_EXTENSIONS	"x509_extensions"
 
 #define DEFAULT_KEY_LENGTH	512
 #define MIN_KEY_LENGTH		384
@@ -147,6 +149,7 @@ char **argv;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
+	char *extensions = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
 	char *p;
@@ -357,6 +360,7 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+	X509V3_add_standard_extensions();
 
 #ifndef MONOLITH
 	/* Lets load up our environment a little */
@@ -426,6 +430,8 @@ bad:
 		if ((md_alg=EVP_get_digestbyname(p)) != NULL)
 			digest=md_alg;
 		}
+
+	extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
@@ -628,12 +634,11 @@ loop:
 		if (x509)
 			{
 			EVP_PKEY *tmppkey;
+			X509V3_CTX ext_ctx;
 			if ((x509ss=X509_new()) == NULL) goto end;
 
-			/* don't set the version number, for starters
-			 * the field is null and second, null is v0 
-			 * if (!ASN1_INTEGER_set(ci->version,0L)) goto end;
-			 */
+			/* Set version to V3 */
+			if(!X509_set_version(x509ss, 2)) goto end;
 			ASN1_INTEGER_set(X509_get_serialNumber(x509ss),0L);
 
 			X509_set_issuer_name(x509ss,
@@ -646,6 +651,16 @@ loop:
 			tmppkey = X509_REQ_get_pubkey(req);
 			X509_set_pubkey(x509ss,tmppkey);
 			EVP_PKEY_free(tmppkey);
+
+			/* Set up V3 context struct */
+
+			ext_ctx.issuer_cert = x509ss;
+			ext_ctx.subject_cert = x509ss;
+			ext_ctx.subject_req = NULL;
+
+			/* Add extensions */
+			if(extensions && !X509V3_EXT_add_conf(req_conf, 
+				 	&ext_ctx, extensions, x509ss)) goto end;
 
 			if (!(i=X509_sign(x509ss,pkey,digest)))
 				goto end;

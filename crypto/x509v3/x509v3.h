@@ -106,7 +106,7 @@ char *usr_data;	/* Any extension specific data */
 };
 
 /* Context specific info */
-struct v3_ctx_struct {
+struct v3_ext_ctx {
 X509 *issuer_cert;
 X509 *subject_cert;
 X509_REQ *subject_req;

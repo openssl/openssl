@@ -63,6 +63,7 @@ default_bits		= 1024
 default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 attributes		= req_attributes
+x509_extensions	= v3_ca	# The extentions to add to the cert
 
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
@@ -116,4 +117,12 @@ nsCertType			= 0x40
 #nsCertSequence
 #nsCertExt
 #nsDataType
+
+[ v3_ca]
+
+# Extensions for a typical CA
+
+basicConstraints = CA:true
+keyUsage = cRLSign, keyCertSign
+
 
