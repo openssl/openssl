@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1998/12/31 09:36:11 $
+  ______________                           $Date: 1998/12/31 12:14:27 $
 
   DEVELOPMENT STATE
 
@@ -15,15 +15,51 @@
 
     o  Ben is folding in his patches
 
-    o  Ralf has ported Stephen's pkcs12 program to OpenSSL (the 
-       ASN.1 stuff Eric recently changed :-( ), but needs some
-       help from Stephen at two source locations.
-  
-    o  Ralf is currently working on the final www.openssl.org
-       website. It'll use no longer frames and will be both look
-       perfect in Netscape 4.x _AND_ Lynx 2.7.x. 
-
   NEEDS PATCH
 
   OPEN ISSUES
 
+    o  The installation under "make install" produces a very
+       installation layout: $prefix/certs and $prefix/private dirs.  That's
+       not nice. Ralf suggests to move the two certs and private dirs either
+       to $prefix/etc/, $prefix/lib/ or $prefix/share. Alternatively
+       we could also not install the certs at all.
+
+       Status: Ralf +1 for both not installing the certs at all and
+                       moving it to $prefix/etc/. +0 for $prefix/lib/
+                       and $prefix/share.
+
+    o  Support for Shared Libraries has to be added at least
+       for the major Unix platforms. The details we can rip from the stuff
+       Ralf has done for the Apache src/Configure script. Ben wants the
+       solution to be really simple.
+
+       Status: Ralf will look how we can easily incorporate the
+               compiler PIC and linker DSO flags from Apache
+               into the OpenSSL Configure script.
+
+    o  The perl/ stuff needs a major overhaul. Currently it's
+       totally obsolete. Either we clean it up and enhance it to be up-to-date
+       with the C code or we also could replace it with the really nice
+       Net::SSLeay package we can find under
+       http://www.neuronio.pt/SSLeay.pm.html.  Ralf uses this package for a
+       longer time and it works fine and is a nice Perl module. Best would be
+       to convince the author to work for the OpenSSL project and create a
+       Net::OpenSSL or Crypt::OpenSSL package out of it and maintains it for
+       us.
+
+       Status: Ralf thinks we should both contact the author of Net::SSLeay
+               and look how much effort it is to bring Eric's perl/ stuff up
+               to date.
+
+    o  Ralf has ported Stephen's pkcs12 program to OpenSSL (the 
+       ASN.1 stuff Eric recently changed :-( ), but needs some help from
+       Stephen at two source locations.  Stephen itself also has ported his
+       internal pkcs12 0.53 version to OpenSSL, but thinks we still shouldn't
+       incorporate it into OpenSSL because it needs more cleanups. Ralf still
+       thinks pkcs12 should be incorporated better now than later because it's
+       nasty to not have it in the core - one always has to install it
+       manually and a lot of people use it. So, should we incorporate it?
+
+       Status: Ralf +1, Stephen -0
+  
