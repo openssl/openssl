@@ -5,6 +5,12 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.4 and OpenSSL 0.9.5:
+
+      o S/MIME support
+      o Documentation for the OpenSSL command line application
+      o 
+
   Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4:
 
       o Transparent support for PKCS#8 format private keys: these are used
