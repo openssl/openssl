@@ -85,6 +85,7 @@ static ENGINE *engine_list_tail = NULL;
  * is needed because the engine list may genuinely become empty during
  * use (so we can't use engine_list_head as an indicator for example. */
 static int engine_list_flag = 0;
+static int ENGINE_free_nolock(ENGINE *e);
 
 /* These static functions starting with a lower case "engine_" always
  * take place when CRYPTO_LOCK_ENGINE has been locked up. */
@@ -176,9 +177,7 @@ static int engine_list_remove(ENGINE *e)
 		engine_list_head = e->next;
 	if(engine_list_tail == e)
 		engine_list_tail = e->prev;
-	/* remove our structural reference. */
-	e->struct_ref--;
-	engine_ref_debug(e, 0, -1)
+	ENGINE_free_nolock(e);
 	return 1;
 	}
 
@@ -200,13 +199,7 @@ static int engine_internal_check(void)
 		toret = 0;
 	else
 		engine_list_flag = 1;
-#if 0
-	ENGINE_free(def_engine);
-#else
-	/* We can't ENGINE_free() because the lock's already held */
-	def_engine->struct_ref--;
-	engine_ref_debug(def_engine, 0, -1)
-#endif
+	ENGINE_free_nolock(def_engine);
 	return 1;
 	}
 
@@ -415,6 +408,32 @@ int ENGINE_free(ENGINE *e)
 		return 0;
 		}
 	i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
+	engine_ref_debug(e, 0, -1)
+	if (i > 0) return 1;
+#ifdef REF_CHECK
+	if (i < 0)
+		{
+		fprintf(stderr,"ENGINE_free, bad structural reference count\n");
+		abort();
+		}
+#endif
+	CRYPTO_free_ex_data(engine_ex_data_stack, e, &e->ex_data);
+	OPENSSL_free(e);
+	return 1;
+	}
+
+static int ENGINE_free_nolock(ENGINE *e)
+	{
+	int i;
+
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_FREE,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	
+	i=--e->struct_ref;
 	engine_ref_debug(e, 0, -1)
 	if (i > 0) return 1;
 #ifdef REF_CHECK
