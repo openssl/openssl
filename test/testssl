@@ -121,8 +121,12 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 #############################################################################
 
-echo test tls1 with 1024bit anonymous DH, multiple handshakes
-$ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time $extra || exit 1
+if ../apps/openssl no-dh; then
+  echo skipping anonymous DH tests
+else
+  echo test tls1 with 1024bit anonymous DH, multiple handshakes
+  $ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time $extra || exit 1
+fi
 
 if ../apps/openssl no-rsa; then
   echo skipping RSA tests
@@ -130,8 +134,12 @@ else
   echo test tls1 with 1024bit RSA, no DHE, multiple handshakes
   ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -num 10 -f -time $extra || exit 1
 
-  echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
-  ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
+  if ../apps/openssl no-dh; then
+    echo skipping RSA+DHE tests
+  else
+    echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
+    ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
+  fi
 fi
 
 exit 0
