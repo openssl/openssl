@@ -492,11 +492,6 @@ OPENSSL_EXTERN SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
-#ifdef OPENSSL_SYS_VMS
-#undef SSL_COMP_get_compression_methods
-#define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
-#endif
-
 
 SSL_METHOD *ssl_bad_method(int ver);
 SSL_METHOD *sslv2_base_method(void);
@@ -643,7 +638,6 @@ int ssl_ok(SSL *s);
 int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
 
 #endif

@@ -1490,10 +1490,10 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,
 #endif
 
 #ifndef OPENSSL_NO_COMP
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_method(void);
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
-void *SSL_COMP_get_compression_method(void);
+void *SSL_COMP_get_compression_methods(void);
 int SSL_COMP_add_compression_method(int id,char *cm);
 #endif
 

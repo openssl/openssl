@@ -163,6 +163,8 @@
 #define SSL_CTX_set_cert_verify_callback        SSL_CTX_set_cert_verify_cb
 #undef SSL_CTX_set_default_passwd_cb_userdata
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
+#undef SSL_COMP_get_compression_methods
+#define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
 
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
