@@ -15,6 +15,7 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
+ERRC=dsa_err
 GENERAL=Makefile
 TEST=dsatest.c
 APPS=

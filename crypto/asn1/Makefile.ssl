@@ -15,6 +15,7 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
+ERRC=asn1_err
 GENERAL=Makefile README
 TEST=
 APPS=
