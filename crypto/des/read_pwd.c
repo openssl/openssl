@@ -399,6 +399,12 @@ int verify;
 static void pushsig()
 	{
 	int i;
+#ifdef SIGACTION
+	struct sigaction sa;
+
+	memset(&sa,0,sizeof sa);
+	sa.sa_handler=recsig;
+#endif
 
 	for (i=1; i<NX509_SIG; i++)
 		{
@@ -411,7 +417,7 @@ static void pushsig()
 			continue;
 #endif
 #ifdef SIGACTION
-		sigaction(i,NULL,&savsig[i]);
+		sigaction(i,&sa,&savsig[i]);
 #else
 		savsig[i]=signal(i,recsig);
 #endif
