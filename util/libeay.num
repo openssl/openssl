@@ -1771,3 +1771,8 @@ PKCS5_PBKDF2_HMAC_SHA1                  1795
 PKCS5_v2_PBE_keyivgen                   1796
 PEM_write_bio_PKCS8PrivateKey           1797
 PEM_write_PKCS8PrivateKey               1798
+BIO_ctrl_get_read_request               1799
+BIO_ctrl_pending                        1800
+BIO_ctrl_wpending                       1801
+BIO_new_bio_pair                        1802
+BIO_ctrl_get_write_guarantee            1803
