@@ -980,7 +980,7 @@ BN_mul_word                             999	EXIST::FUNCTION:
 BN_sub_word                             1000	EXIST::FUNCTION:
 BN_dec2bn                               1001	EXIST::FUNCTION:
 BN_bn2dec                               1002	EXIST::FUNCTION:
-BIO_ghbn_ctrl                           1003	EXIST::FUNCTION:
+BIO_ghbn_ctrl                           1003	NOEXIST::FUNCTION:
 CRYPTO_free_ex_data                     1004	EXIST::FUNCTION:
 CRYPTO_get_ex_data                      1005	EXIST::FUNCTION:
 CRYPTO_set_ex_data                      1007	EXIST::FUNCTION:
@@ -2794,3 +2794,9 @@ d2i_ASN1_UNIVERSALSTRING                3235	EXIST::FUNCTION:
 EVP_des_ede3_ecb                        3236	EXIST::FUNCTION:DES
 X509_REQ_print_ex                       3237	EXIST::FUNCTION:BIO
 ENGINE_up_ref                           3238	EXIST::FUNCTION:
+BUF_MEM_grow_clean                      3239	EXIST::FUNCTION:
+CRYPTO_realloc_clean                    3240	EXIST::FUNCTION:
+BUF_strlcat                             3241	EXIST::FUNCTION:
+BIO_indent                              3242	EXIST::FUNCTION:
+BUF_strlcpy                             3243	EXIST::FUNCTION:
+OpenSSLDie                              3244	EXIST::FUNCTION:
