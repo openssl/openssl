@@ -572,6 +572,10 @@ void OPENSSL_cpuid_setup() {}
 #endif
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_DLL)
+#ifdef __CYGWIN__
+/* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
+#include <windows.h>
+#endif
 
 /* All we really need to do is remove the 'error' state when a thread
  * detaches */
