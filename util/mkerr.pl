@@ -128,20 +128,20 @@ while (($hdr, $lib) = each %libinc)
 	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
 	    next if(/typedef\W/);
-	    if (/\(\*(\w*)\([^\)]+/) {
+	    if (/\(\*(\w*)\([^\)]+\)(\s*__attribute__\(.*\)\s*)?$/) {
 		my $name = $1;
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;
-	    } elsif (/\w+\W+(\w+)\W*\(\s*\)$/s){
+	    } elsif (/\w+\W+(\w+)\W*\(\s*\)(\s*__attribute__\(.*\)\s*)?$/s){
 		# K&R C
 		next ;
-	    } elsif (/\w+\W+\w+\W*\(.*\)$/s) {
-		while (not /\(\)$/s) {
-		    s/[^\(\)]*\)$/\)/s;
-		    s/\([^\(\)]*\)\)$/\)/s;
+	    } elsif (/\w+\W+\w+\W*\(.*\)(\s*__attribute__\(.*\)\s*)?$/s) {
+		while (not /\(\)(\s*__attribute__\(.*\)\s*)?$/s) {
+		    s/[^\(\)]*\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
+		    s/\([^\(\)]*\)\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
 		}
 		s/\(void\)//;
-		/(\w+)\W*\(\)/s;
+		/(\w+(\{[0-9]+\})?)\W*\(\)/s;
 		my $name = $1;
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;

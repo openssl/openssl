@@ -833,14 +833,14 @@ sub do_defs
 			} elsif (/\(\*(\w*(\{[0-9]+\})?)\([^\)]+/) {
 				$s = $1;
 				print STDERR "DEBUG: found ANSI C function $s\n" if $debug;
-			} elsif (/\w+\W+(\w+)\W*\(\s*\)$/s) {
+			} elsif (/\w+\W+(\w+)\W*\(\s*\)(\s*__attribute__\(.*\)\s*)?$/s) {
 				# K&R C
 				print STDERR "DEBUG: found K&R C function $s\n" if $debug;
 				next;
-			} elsif (/\w+\W+\w+(\{[0-9]+\})?\W*\(.*\)$/s) {
-				while (not /\(\)$/s) {
-					s/[^\(\)]*\)$/\)/s;
-					s/\([^\(\)]*\)\)$/\)/s;
+			} elsif (/\w+\W+\w+(\{[0-9]+\})?\W*\(.*\)(\s*__attribute__\(.*\)\s*)?$/s) {
+				while (not /\(\)(\s*__attribute__\(.*\)\s*)?$/s) {
+					s/[^\(\)]*\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
+					s/\([^\(\)]*\)\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
 				}
 				s/\(void\)//;
 				/(\w+(\{[0-9]+\})?)\W*\(\)/s;
