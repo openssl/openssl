@@ -214,6 +214,7 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
 	s->s3->rbuf.offset = off + n;
 	s->s3->rbuf.left = newb - n;
 	s->packet_length += n;
+	s->rwstate=SSL_NOTHING;
 	return(n);
 	}
 
