@@ -7,6 +7,11 @@
 !
 !  June 8, 2000.
 !
+!  Version 2.0. 32/64-bit, PIC-ification, blended CPU adaptation
+!		by Andy Polyakov.
+!
+!  January 1, 2003.
+!
 !  Assembler version: Copyright Svend Olaf Mikkelsen.
 !
 !  Original C code: Copyright Eric A. Young.
@@ -27,9 +32,45 @@
 !  Assemble through gcc: gcc -c -mcpu=ultrasparc -o des_enc.o des_enc.S
 !
 !  Assemble through cc:  cc -c -xarch=v8plusa -o des_enc.o des_enc.S
+!
+!  Performance improvement according to './apps/openssl speed des'
+!
+!	32-bit build:
+!		23%  faster than cc-5.2 -xarch=v8plus -xO5
+!		115% faster than gcc-3.2.1 -m32 -mcpu=ultrasparc -O5
+!	64-bit build:
+!		50%  faster than cc-5.2 -xarch=v9 -xO5
+!		100% faster than gcc-3.2.1 -m64 -mcpu=ultrasparc -O5
+!
 
+.ident "des_enc.m4 2.0"
 
-.ident "des_enc.m4 1.0"
+#if defined(__SUNPRO_C) && defined(__sparcv9)
+# define ABI64  /* They've said -xarch=v9 at command line */
+#elif defined(__GNUC__) && defined(__arch64__)
+# define ABI64  /* They've said -m64 at command line */
+#endif
+
+#ifdef ABI64
+  .register	%g2,#scratch
+  .register	%g3,#scratch
+# define	FRAME	-192
+# define	BIAS	2047
+# define	LDPTR	ldx
+# define	STPTR	stx
+# define	ARG0	128
+# define	ARGSZ	8
+# ifndef OPENSSL_SYSNAME_ULTRASPARC
+# define OPENSSL_SYSNAME_ULTRASPARC
+# endif
+#else
+# define	FRAME	-96
+# define	BIAS	0
+# define	LDPTR	ld
+# define	STPTR	st
+# define	ARG0	68
+# define	ARGSZ	4
+#endif
 
 #define LOOPS 7
 
@@ -125,13 +166,13 @@ define(ip_macro, {
 	srl	$1, 16, local4
 	xor	$2, local1, $2
 
-	ifelse($9,1,{ld	KS3, in4},{})
+	ifelse($9,1,{LDPTR	KS3, in4},{})
 	xor	local4, $2, local4
-	sethi	%hi(des_SPtrans), global1 ! sbox addr
+	nop	!sethi	%hi(DES_SPtrans), global1 ! sbox addr
 
-	ifelse($9,1,{ld	KS2, in3},{})
+	ifelse($9,1,{LDPTR	KS2, in3},{})
 	and	local4, local2, local4
-	or	global1, %lo(des_SPtrans), global1   ! sbox addr
+	nop	!or	global1, %lo(DES_SPtrans), global1   ! sbox addr
 
 	sll	local4, 16, local1
 	xor	$2, local4, $2
@@ -260,7 +301,7 @@ define(rounds_macro, {
 	xor	$2, out0, local1
 
 	ld	[out2+284], local5        ! 0x0000FC00
-	ba,pt	%icc, $4
+	ba	$4
 	and	local1, 252, local1
 
 	.align 32
@@ -273,16 +314,16 @@ $4:
 	ld	[global1+local1], local1
 	xor	$2, out1, out1            ! 8642
 	xor	$2, out0, out0            ! 7531
-	fxor	%f0, %f0, %f0             ! fxor used for alignment
+	fmovs	%f0, %f0                  ! fxor used for alignment
 
 	srl	out1, 4, local0           ! rotate 4 right
 	and	out0, local5, local3      ! 3
-	fxor	%f0, %f0, %f0
+	fmovs	%f0, %f0
 
 	ld	[$5+$3*8], local7         ! key 7531 next round
 	srl	local3, 8, local3         ! 3
 	and	local0, 252, local2       ! 2
-	fxor	%f0, %f0, %f0
+	fmovs	%f0, %f0
 
 	ld	[global3+local3],local3   ! 3
 	sll	out1, 28, out1            ! rotate
@@ -380,7 +421,11 @@ $4:
 	xor	$2, local1, $2            ! 1 finished
 
 	xor	$2, local2, $2            ! 3 finished
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bne,pt	%icc, $4
+#else
+	bne	$4
+#endif
 	and	local4, 252, local1       ! sbox 1 next round
 
 ! two rounds more:
@@ -551,10 +596,10 @@ define(fp_macro, {
 	sethi	%hi(0x0f0f0f0f), local4
 	sll	local3, 2, local2
 
-	ifelse($4,1, {ld INPUT, local5})
+	ifelse($4,1, {LDPTR INPUT, local5})
 	xor	$1, local3, $1
 
-	ifelse($4,1, {ld OUTPUT, local7})
+	ifelse($4,1, {LDPTR OUTPUT, local7})
 	srl	$1, 16, local3
 	xor	$2, local2, $2
 	xor	local3, $2, local3
@@ -702,7 +747,7 @@ define(fp_ip_macro, {
 	sll	temp1, 4, temp2
 	xor	$1, temp1, $1
 
-	ifelse($5,1,{ld	KS2, in4})
+	ifelse($5,1,{LDPTR	KS2, in4})
 	sll	$4, 3, local2
 	xor	local4, temp2, $2
 
@@ -713,7 +758,7 @@ define(fp_ip_macro, {
 	srl	$3, 29, local0
 	ifelse($5,1,{add in4, 120, in4})
 
-	ifelse($5,1,{ld	KS1, in3})
+	ifelse($5,1,{LDPTR	KS1, in3})
 	srl	$4, 29, local7
 
 	or	local0, local5, $4
@@ -738,6 +783,7 @@ define(load_little_endian, {
 
 	! first in memory to rightmost in register
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -747,6 +793,7 @@ define(load_little_endian, {
 
 	ba,pt	%icc, $5a
 	lda	[$4] 0x88, $3
+#endif
 
 $5:
 	ldub	[$1+3], $2
@@ -799,6 +846,7 @@ define(load_little_endian_inc, {
 
 	! first in memory to rightmost in register
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -809,6 +857,7 @@ define(load_little_endian_inc, {
 	lda	[$1] 0x88, $3
 	ba,pt	%icc, $5a
 	add	$1, 4, $1
+#endif
 
 $5:
 	ldub	[$1+3], $2
@@ -863,17 +912,17 @@ define(load_n_bytes, {
 ! {load_n_bytes}
 ! $1 $2 $5 $6 $7 $8 $7 $8 $9
 
+$7.0:	call	.+8
 	sll	$2, 2, $6
 
-	sethi	%hi($7.jmp.table), $5
-	or	$5, %lo($7.jmp.table), $5
+	add	%o7,$7.jmp.table-$7.0,$5
 
 	add	$5, $6, $5
 	mov	0, $4
 
 	ld	[$5], $5
 
-	jmp	$5
+	jmp	%o7+$5
 	mov	0, $3
 
 $7.7:
@@ -901,20 +950,20 @@ $7.2:
 	or	$4, $5, $4
 $7.1:
 	ldub	[$1+0], $5
-	ba,pt	%icc, $8
+	ba	$8
 	or	$4, $5, $4
 
 	.align 4
 
 $7.jmp.table:
 	.word	0
-	.word	$7.1
-	.word	$7.2
-	.word	$7.3
-	.word	$7.4
-	.word	$7.5
-	.word	$7.6
-	.word	$7.7
+	.word	$7.1-$7.0
+	.word	$7.2-$7.0
+	.word	$7.3-$7.0
+	.word	$7.4-$7.0
+	.word	$7.5-$7.0
+	.word	$7.6-$7.0
+	.word	$7.7-$7.0
 })
 
 
@@ -932,6 +981,7 @@ define(store_little_endian, {
 
 	! rightmost in register to first in memory
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -941,6 +991,7 @@ define(store_little_endian, {
 
 	ba,pt	%icc, $5a
 	sta	$3, [$4] 0x88
+#endif
 
 $5:
 	and	$2, 255, $4
@@ -995,15 +1046,16 @@ define(store_n_bytes, {
 ! {store_n_bytes}
 ! $1 $2 $5 $6 $7 $8 $7 $8 $9
 
+$7.0:	call	.+8
 	sll	$2, 2, $6
 
-	sethi	%hi($7.jmp.table), $5
-	or	$5, %lo($7.jmp.table), $5
+	add	%o7,$7.jmp.table-$7.0,$5
 
 	add	$5, $6, $5
 
 	ld	[$5], $5
-	jmp	$5
+
+	jmp	%o7+$5
 	nop
 
 $7.7:
@@ -1032,7 +1084,7 @@ $7.1:
 	and	$4, 0xff, $5
 
 
-	ba,pt	%icc, $8
+	ba	$8
 	stub	$5, [$1]
 
 	.align 4
@@ -1040,13 +1092,13 @@ $7.1:
 $7.jmp.table:
 
 	.word	0
-	.word	$7.1
-	.word	$7.2
-	.word	$7.3
-	.word	$7.4
-	.word	$7.5
-	.word	$7.6
-	.word	$7.7
+	.word	$7.1-$7.0
+	.word	$7.2-$7.0
+	.word	$7.3-$7.0
+	.word	$7.4-$7.0
+	.word	$7.5-$7.0
+	.word	$7.6-$7.0
+	.word	$7.7-$7.0
 })
 
 
@@ -1089,9 +1141,311 @@ define(register_init, {
 
 })
 
-	.global .des_and
-.section	".rodata"
-	.align 8
+.section	".text"
+
+	.align 32
+
+.des_enc:
+
+	! key address in3
+	! loads key next encryption/decryption first round from [in4]
+
+	rounds_macro(in5, out5, 1, .des_enc.1, in3, in4, retl)
+
+
+	.align 32
+
+.des_dec:
+
+	! implemented with out5 as first parameter to avoid
+	! register exchange in ede modes
+
+	! key address in4
+	! loads key next encryption/decryption first round from [in3]
+
+	rounds_macro(out5, in5, -1, .des_dec.1, in4, in3, retl)
+
+
+
+! void DES_encrypt1(data, ks, enc)
+! *******************************
+
+	.align 32
+	.global DES_encrypt1
+	.type	 DES_encrypt1,#function
+
+DES_encrypt1:
+
+	save	%sp, FRAME, %sp
+
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
+
+	ld	[in0], in5                ! left
+	cmp	in2, 0                    ! enc
+
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
+	be,pn	%icc, .encrypt.dec        ! enc/dec
+#else
+	be	.encrypt.dec
+#endif
+	ld	[in0+4], out5             ! right
+
+	! parameter 6  1/2 for include encryption/decryption
+	! parameter 7  1 for move in1 to in3
+	! parameter 8  1 for move in3 to in4, 2 for move in4 to in3
+
+	ip_macro(in5, out5, in5, out5, in3, 0, 1, 1)
+
+	rounds_macro(in5, out5, 1, .des_encrypt1.1, in3, in4) ! in4 not used
+
+	fp_macro(in5, out5, 1)            ! 1 for store to [in0]
+
+	ret
+	restore
+
+.encrypt.dec:
+
+	add	in1, 120, in3             ! use last subkey for first round
+
+	! parameter 6  1/2 for include encryption/decryption
+	! parameter 7  1 for move in1 to in3
+	! parameter 8  1 for move in3 to in4, 2 for move in4 to in3
+
+	ip_macro(in5, out5, out5, in5, in4, 2, 0, 1) ! include dec,  ks in4
+
+	fp_macro(out5, in5, 1)            ! 1 for store to [in0]
+
+	ret
+	restore
+
+.DES_encrypt1.end:
+	.size	 DES_encrypt1,.DES_encrypt1.end-DES_encrypt1
+
+
+! void DES_encrypt2(data, ks, enc)
+!*********************************
+
+	! encrypts/decrypts without initial/final permutation
+
+	.align 32
+	.global DES_encrypt2
+	.type	 DES_encrypt2,#function
+
+DES_encrypt2:
+
+	save	%sp, FRAME, %sp
+
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
+
+	! Set sbox address 1 to 6 and rotate halfs 3 left
+	! Errors caught by destest? Yes. Still? *NO*
+
+	!sethi	%hi(DES_SPtrans), global1 ! address sbox 1
+
+	!or	global1, %lo(DES_SPtrans), global1  ! sbox 1
+
+	add	global1, 256, global2     ! sbox 2
+	add	global1, 512, global3     ! sbox 3
+
+	ld	[in0], out5               ! right
+	add	global1, 768, global4     ! sbox 4
+	add	global1, 1024, global5    ! sbox 5
+
+	ld	[in0+4], in5              ! left
+	add	global1, 1280, local6     ! sbox 6
+	add	global1, 1792, out3       ! sbox 8
+
+	! rotate
+
+	sll	in5, 3, local5
+	mov	in1, in3                  ! key address to in3
+
+	sll	out5, 3, local7
+	srl	in5, 29, in5
+
+	srl	out5, 29, out5
+	add	in5, local5, in5
+
+	add	out5, local7, out5
+	cmp	in2, 0
+
+	! we use our own stackframe
+
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
+	be,pn	%icc, .encrypt2.dec       ! decryption
+#else
+	be	.encrypt2.dec
+#endif
+	STPTR	in0, [%sp+BIAS+ARG0+0*ARGSZ]
+
+	ld	[in3], out0               ! key 7531 first round
+	mov	LOOPS, out4               ! loop counter
+
+	ld	[in3+4], out1             ! key 8642 first round
+	sethi	%hi(0x0000FC00), local5
+
+	call .des_enc
+	mov	in3, in4
+
+	! rotate
+	sll	in5, 29, in0
+	srl	in5, 3, in5
+	sll	out5, 29, in1
+	add	in5, in0, in5
+	srl	out5, 3, out5
+	LDPTR	[%sp+BIAS+ARG0+0*ARGSZ], in0
+	add	out5, in1, out5
+	st	in5, [in0]
+	st	out5, [in0+4]
+
+	ret
+	restore
+
+
+.encrypt2.dec:
+
+	add in3, 120, in4
+
+	ld	[in4], out0               ! key 7531 first round
+	mov	LOOPS, out4               ! loop counter
+
+	ld	[in4+4], out1             ! key 8642 first round
+	sethi	%hi(0x0000FC00), local5
+
+	mov	in5, local1               ! left expected in out5
+	mov	out5, in5
+
+	call .des_dec
+	mov	local1, out5
+
+.encrypt2.finish:
+
+	! rotate
+	sll	in5, 29, in0
+	srl	in5, 3, in5
+	sll	out5, 29, in1
+	add	in5, in0, in5
+	srl	out5, 3, out5
+	LDPTR	[%sp+BIAS+ARG0+0*ARGSZ], in0
+	add	out5, in1, out5
+	st	out5, [in0]
+	st	in5, [in0+4]
+
+	ret
+	restore
+
+.DES_encrypt2.end:
+	.size	 DES_encrypt2, .DES_encrypt2.end-DES_encrypt2
+
+
+! void DES_encrypt3(data, ks1, ks2, ks3)
+! **************************************
+
+	.align 32
+	.global DES_encrypt3
+	.type	 DES_encrypt3,#function
+
+DES_encrypt3:
+
+	save	%sp, FRAME, %sp
+	
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
+
+	ld	[in0], in5                ! left
+	add	in2, 120, in4             ! ks2
+
+	ld	[in0+4], out5             ! right
+	mov	in3, in2                  ! save ks3
+
+	! parameter 6  1/2 for include encryption/decryption
+	! parameter 7  1 for mov in1 to in3
+	! parameter 8  1 for mov in3 to in4
+	! parameter 9  1 for load ks3 and ks2 to in4 and in3
+
+	ip_macro(in5, out5, in5, out5, in3, 1, 1, 0, 0)
+
+	call	.des_dec
+	mov	in2, in3                  ! preload ks3
+
+	call	.des_enc
+	nop
+
+	fp_macro(in5, out5, 1)
+
+	ret
+	restore
+
+.DES_encrypt3.end:
+	.size	 DES_encrypt3,.DES_encrypt3.end-DES_encrypt3
+
+
+! void DES_decrypt3(data, ks1, ks2, ks3)
+! **************************************
+
+	.align 32
+	.global DES_decrypt3
+	.type	 DES_decrypt3,#function
+
+DES_decrypt3:
+
+	save	%sp, FRAME, %sp
+	
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
+
+	ld	[in0], in5                ! left
+	add	in3, 120, in4             ! ks3
+
+	ld	[in0+4], out5             ! right
+	mov	in2, in3                  ! ks2
+
+	! parameter 6  1/2 for include encryption/decryption
+	! parameter 7  1 for mov in1 to in3
+	! parameter 8  1 for mov in3 to in4
+	! parameter 9  1 for load ks3 and ks2 to in4 and in3
+
+	ip_macro(in5, out5, out5, in5, in4, 2, 0, 0, 0)
+
+	call	.des_enc
+	add	in1, 120, in4             ! preload ks1
+
+	call	.des_dec
+	nop
+
+	fp_macro(out5, in5, 1)
+
+	ret
+	restore
+
+.DES_decrypt3.end:
+	.size	 DES_decrypt3,.DES_decrypt3.end-DES_decrypt3
+
+! input:	out0	offset between .PIC.me.up and caller
+! output:	out0	pointer to .PIC.me.up
+!		out2	pointer to .des_and
+!		global1	pointer to DES_SPtrans
+	.align	32
+.PIC.me.up:
+	add	out0,%o7,out0			! pointer to .PIC.me.up
+
+#ifdef __PIC__
+	sethi	%hi(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
+	add	global1,out0,global1
+	add	out2,%lo(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
+	LDPTR	[out2+global1],global1
+#else
+	setn	DES_SPtrans,out2,global1	! synthetic instruction !
+#endif
+
+	retl
+	add	out0,.des_and-.PIC.me.up,out2
+
+	.align	256
 	.type	 .des_and,#object
 	.size	 .des_and,284
 
@@ -1146,309 +1500,45 @@ define(register_init, {
 	.word	LOOPS                     ! 280
 	.word	0x0000FC00                ! 284
 
-
-.section	".text"
-
-	.align 32
-
-.des_enc:
-
-	! key address in3
-	! loads key next encryption/decryption first round from [in4]
-
-	rounds_macro(in5, out5, 1, .des_enc.1, in3, in4, retl)
-
-
-	.align 32
-
-.des_dec:
-
-	! implemented with out5 as first parameter to avoid
-	! register exchange in ede modes
-
-	! key address in4
-	! loads key next encryption/decryption first round from [in3]
-
-	rounds_macro(out5, in5, -1, .des_dec.1, in4, in3, retl)
-
-
-
-! void des_encrypt(data, ks, enc)
-! *******************************
-
-	.align 32
-	.global des_encrypt
-	.type	 des_encrypt,#function
-
-des_encrypt:
-
-	save	%sp, -96, %sp
-
-	ld	[in0], in5                ! left
-	sethi	%hi(.des_and), out2       ! address constants
-	cmp	in2, 0                    ! enc
-
-	ld	[in0+4], out5             ! right
-	be,pn	%icc, .encrypt.dec        ! enc/dec
-	or	out2, %lo(.des_and), out2 ! address constants
-
-	! parameter 6  1/2 for include encryption/decryption
-	! parameter 7  1 for move in1 to in3
-	! parameter 8  1 for move in3 to in4, 2 for move in4 to in3
-
-	ip_macro(in5, out5, in5, out5, in3, 0, 1, 1)
-
-	rounds_macro(in5, out5, 1, .des_encrypt.1, in3, in4) ! in4 not used
-
-	fp_macro(in5, out5, 1)            ! 1 for store to [in0]
-
-	return	in7+8
-	nop
-
-.encrypt.dec:
-
-	add	in1, 120, in3             ! use last subkey for first round
-
-	! parameter 6  1/2 for include encryption/decryption
-	! parameter 7  1 for move in1 to in3
-	! parameter 8  1 for move in3 to in4, 2 for move in4 to in3
-
-	ip_macro(in5, out5, out5, in5, in4, 2, 0, 1) ! include dec,  ks in4
-
-	fp_macro(out5, in5, 1)            ! 1 for store to [in0]
-
-	return	in7+8
-	nop
-
-.des_encrypt.end:
-	.size	 des_encrypt,.des_encrypt.end-des_encrypt
-
-
-! void des_encrypt2(data, ks, enc)
-!*********************************
-
-	! encrypts/decrypts without initial/final permutation
-
-	.align 32
-	.global des_encrypt2
-	.type	 des_encrypt2,#function
-
-des_encrypt2:
-
-	save	%sp, -112, %sp
-
-	! Set sbox address 1 to 6 and rotate halfs 3 left
-	! Errors caught by destest? Yes. Still? *NO*
-
-	sethi	%hi(des_SPtrans), global1 ! address sbox 1
-	sethi	%hi(.des_and), out2       ! address constants
-
-	or	global1, %lo(des_SPtrans), global1  ! sbox 1
-	or	out2, %lo(.des_and), out2 ! adress constants
-
-	add	global1, 256, global2     ! sbox 2
-	add	global1, 512, global3     ! sbox 3
-
-	ld	[in0], out5               ! right
-	add	global1, 768, global4     ! sbox 4
-	add	global1, 1024, global5    ! sbox 5
-
-	ld	[in0+4], in5              ! left
-	add	global1, 1280, local6     ! sbox 6
-	add	global1, 1792, out3       ! sbox 8
-
-	! rotate
-
-	sll	in5, 3, local5
-	mov	in1, in3                  ! key address to in3
-
-	sll	out5, 3, local7
-	srl	in5, 29, in5
-
-	srl	out5, 29, out5
-	add	in5, local5, in5
-
-	add	out5, local7, out5
-	cmp	in2, 0
-
-	! we use our own stackframe
-
-	be,pn	%icc, .encrypt2.dec       ! decryption
-	st	in0, [%sp+68]
-
-	ld	[in3], out0               ! key 7531 first round
-	mov	LOOPS, out4               ! loop counter
-
-	ld	[in3+4], out1             ! key 8642 first round
-	sethi	%hi(0x0000FC00), local5
-
-	call .des_enc
-	mov	in3, in4
-
-	! rotate
-	sll	in5, 29, in0
-	srl	in5, 3, in5
-	sll	out5, 29, in1
-	add	in5, in0, in5
-	srl	out5, 3, out5
-	ld	[%sp+68], in0
-	add	out5, in1, out5
-	st	in5, [in0]
-	st	out5, [in0+4]
-
-	return	in7+8
-	nop
-
-
-.encrypt2.dec:
-
-	add in3, 120, in4
-
-	ld	[in4], out0               ! key 7531 first round
-	mov	LOOPS, out4               ! loop counter
-
-	ld	[in4+4], out1             ! key 8642 first round
-	sethi	%hi(0x0000FC00), local5
-
-	mov	in5, local1               ! left expected in out5
-	mov	out5, in5
-
-	call .des_dec
-	mov	local1, out5
-
-.encrypt2.finish:
-
-	! rotate
-	sll	in5, 29, in0
-	srl	in5, 3, in5
-	sll	out5, 29, in1
-	add	in5, in0, in5
-	srl	out5, 3, out5
-	ld	[%sp+68], in0
-	add	out5, in1, out5
-	st	out5, [in0]
-	st	in5, [in0+4]
-
-	return	in7+8
-	nop
-
-.des_encrypt2.end:
-	.size	 des_encrypt2, .des_encrypt2.end-des_encrypt2
-
-
-! void des_encrypt3(data, ks1, ks2, ks3)
-! **************************************
-
-	.align 32
-	.global des_encrypt3
-	.type	 des_encrypt3,#function
-
-des_encrypt3:
-
-	save	%sp, -96, %sp
-	
-	ld	[in0], in5                ! left
-	add	in2, 120, in4             ! ks2
-	sethi	%hi(.des_and), out2       ! address constants
-
-	ld	[in0+4], out5             ! right
-	mov	in3, in2                  ! save ks3
-	or	out2, %lo(.des_and), out2 ! address constants
-
-	! parameter 6  1/2 for include encryption/decryption
-	! parameter 7  1 for mov in1 to in3
-	! parameter 8  1 for mov in3 to in4
-	! parameter 9  1 for load ks3 and ks2 to in4 and in3
-
-	ip_macro(in5, out5, in5, out5, in3, 1, 1, 0, 0)
-
-	call	.des_dec
-	mov	in2, in3                  ! preload ks3
-
-	call	.des_enc
-	nop
-
-	fp_macro(in5, out5, 1)
-
-	return	in7+8
-	nop
-
-.des_encrypt3.end:
-	.size	 des_encrypt3,.des_encrypt3.end-des_encrypt3
-
-
-! void des_decrypt3(data, ks1, ks2, ks3)
-! **************************************
-
-	.align 32
-	.global des_decrypt3
-	.type	 des_decrypt3,#function
-
-des_decrypt3:
-
-	save	%sp, -96, %sp
-	
-	ld	[in0], in5                ! left
-	add	in3, 120, in4             ! ks3
-	sethi	%hi(.des_and), out2
-
-	ld	[in0+4], out5             ! right
-	mov	in2, in3                  ! ks2
-	or	out2, %lo(.des_and), out2
-
-	! parameter 6  1/2 for include encryption/decryption
-	! parameter 7  1 for mov in1 to in3
-	! parameter 8  1 for mov in3 to in4
-	! parameter 9  1 for load ks3 and ks2 to in4 and in3
-
-	ip_macro(in5, out5, out5, in5, in4, 2, 0, 0, 0)
-
-	call	.des_enc
-	add	in1, 120, in4             ! preload ks1
-
-	call	.des_dec
-	nop
-
-	fp_macro(out5, in5, 1)
-
-	return	in7+8
-	nop
-
-.des_decrypt3.end:
-	.size	 des_decrypt3,.des_decrypt3.end-des_decrypt3
-
-
-
-! void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
+! void DES_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 ! *****************************************************************
 
 
 	.align 32
-	.global des_ncbc_encrypt
-	.type	 des_ncbc_encrypt,#function
+	.global DES_ncbc_encrypt
+	.type	 DES_ncbc_encrypt,#function
 
-des_ncbc_encrypt:
+DES_ncbc_encrypt:
 
-	save	%sp, -96, %sp
+	save	%sp, FRAME, %sp
 	
-	define({INPUT}, { [%sp+68] })
-	define({OUTPUT}, { [%sp+72] })
-	define({IVEC}, { [%sp+84] })
+	define({INPUT},  { [%sp+BIAS+ARG0+0*ARGSZ] })
+	define({OUTPUT}, { [%sp+BIAS+ARG0+1*ARGSZ] })
+	define({IVEC},   { [%sp+BIAS+ARG0+4*ARGSZ] })
+
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
 
 	cmp	in5, 0                    ! enc   
 
-	sethi	%hi(.des_and), out2       ! address constants
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	be,pn	%icc, .ncbc.dec
-	st	in4, IVEC
+#else
+	be	.ncbc.dec
+#endif
+	STPTR	in4, IVEC
 
 	! addr  left  right  temp  label
 	load_little_endian(in4, in5, out5, local3, .LLE1)  ! iv
 
 	addcc	in2, -8, in2              ! bytes missing when first block done
 
-	mov	in3, in4                  ! schedule
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc, .ncbc.enc.seven.or.less
-	or	out2, %lo(.des_and), out2
+#else
+	bl	.ncbc.enc.seven.or.less
+#endif
+	mov	in3, in4                  ! schedule
 
 .ncbc.enc.next.block:
 
@@ -1471,7 +1561,11 @@ des_ncbc_encrypt:
 
 	rounds_macro(in5, out5, 1, .ncbc.enc.1, in3, in4) ! include encryption  ks in3
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc, .ncbc.enc.next.block_fp
+#else
+	bl	.ncbc.enc.next.block_fp
+#endif
 	add	in0, 8, in0               ! input address
 
 	! If 8 or more bytes are to be encrypted after this block,
@@ -1501,7 +1595,7 @@ des_ncbc_encrypt:
 	add	global1, 512, global3     ! address sbox 3 since register used
 	xor	global4, local1, out5     ! iv xor next block
 
-	ba,pt	%icc, .ncbc.enc.next.block_2
+	ba	.ncbc.enc.next.block_2
 	add	in1, 8, in1               ! output adress
 
 .ncbc.enc.next.block_fp:
@@ -1512,14 +1606,22 @@ des_ncbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bpos,pt	%icc, .ncbc.enc.next.block  ! also jumps if 0
+#else
+	bpos	.ncbc.enc.next.block
+#endif
 	add	in1, 8, in1
 
 .ncbc.enc.seven.or.less:
 
 	cmp	in2, -8
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	ble,pt	%icc, .ncbc.enc.finish
+#else
+	ble	.ncbc.enc.finish
+#endif
 	nop
 
 	add	in2, 8, local1            ! bytes to load
@@ -1532,25 +1634,28 @@ des_ncbc_encrypt:
 
 .ncbc.enc.finish:
 
-	ld	IVEC, local4
+	LDPTR	IVEC, local4
 	store_little_endian(local4, in5, out5, local5, .SLE2)  ! ivec
 
-	return	in7+8
-	nop
+	ret
+	restore
 
 
 .ncbc.dec:
 
-	st	in0, INPUT
+	STPTR	in0, INPUT
 	cmp	in2, 0                    ! length
 	add	in3, 120, in3
 
-	ld	IVEC, local7              ! ivec
+	LDPTR	IVEC, local7              ! ivec
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	ble,pn	%icc, .ncbc.dec.finish
+#else
+	ble	.ncbc.dec.finish
+#endif
 	mov	in3, in4                  ! schedule
 
-	st	in1, OUTPUT
-	or	out2, %lo(.des_and), out2 ! address constants low part
+	STPTR	in1, OUTPUT
 	mov	in0, local5               ! input
 
 	load_little_endian(local7, in0, in1, local3, .LLE3)   ! ivec
@@ -1571,7 +1676,11 @@ des_ncbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4           ! iv xor
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc, .ncbc.dec.seven.or.less
+#else
+	bl	.ncbc.dec.seven.or.less
+#endif
 	xor	in5, in1, global4         ! iv xor
 
 	! Load ivec next block now, since input and output address might be the same.
@@ -1580,23 +1689,27 @@ des_ncbc_encrypt:
 
 	store_little_endian(local7, out4, global4, local3, .SLE3)
 
-	st	local5, INPUT
+	STPTR	local5, INPUT
 	add	local7, 8, local7
 	addcc   in2, -8, in2
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bg,pt	%icc, .ncbc.dec.next.block
-	st	local7, OUTPUT
+#else
+	bg	.ncbc.dec.next.block
+#endif
+	STPTR	local7, OUTPUT
 
 
 .ncbc.dec.store.iv:
 
-	ld	IVEC, local4              ! ivec
+	LDPTR	IVEC, local4              ! ivec
 	store_little_endian(local4, in0, in1, local5, .SLE4)
 
 .ncbc.dec.finish:
 
-	return	in7+8
-	nop
+	ret
+	restore
 
 .ncbc.dec.seven.or.less:
 
@@ -1605,45 +1718,52 @@ des_ncbc_encrypt:
 	store_n_bytes(local7, in2, global4, out4, local3, local4, .SNB1, .ncbc.dec.store.iv)
 
 
-.des_ncbc_encrypt.end:
-	.size	 des_ncbc_encrypt, .des_ncbc_encrypt.end-des_ncbc_encrypt
+.DES_ncbc_encrypt.end:
+	.size	 DES_ncbc_encrypt, .DES_ncbc_encrypt.end-DES_ncbc_encrypt
 
 
-! void des_ede3_cbc_encrypt(input, output, lenght, ks1, ks2, ks3, ivec, enc)
+! void DES_ede3_cbc_encrypt(input, output, lenght, ks1, ks2, ks3, ivec, enc)
 ! **************************************************************************
 
 
 	.align 32
-	.global des_ede3_cbc_encrypt
-	.type	 des_ede3_cbc_encrypt,#function
+	.global DES_ede3_cbc_encrypt
+	.type	 DES_ede3_cbc_encrypt,#function
 
-des_ede3_cbc_encrypt:
+DES_ede3_cbc_encrypt:
 
-	save	%sp, -96, %sp
+	save	%sp, FRAME, %sp
 
-	define({LENGTH},{ [%sp+76] })
-	define({KS1}, { [%sp+80] })
-	define({KS2}, { [%sp+84] })
-	define({KS3}, { [%sp+88] })
+	define({KS1}, { [%sp+BIAS+ARG0+3*ARGSZ] })
+	define({KS2}, { [%sp+BIAS+ARG0+4*ARGSZ] })
+	define({KS3}, { [%sp+BIAS+ARG0+5*ARGSZ] })
 
-	ld	[%fp+96], local3          ! enc
-	sethi	%hi(.des_and), out2
+	call	.PIC.me.up
+	mov	.PIC.me.up-(.-4),out0
 
-	ld	[%fp+92], local4          ! ivec
-	or	out2, %lo(.des_and), out2
+	LDPTR	[%fp+BIAS+ARG0+7*ARGSZ], local3          ! enc
+	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	cmp	local3, 0                 ! enc
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	be,pn	%icc, .ede3.dec
-	st	in4, KS2
+#else
+	be	.ede3.dec
+#endif
+	STPTR	in4, KS2
 
-	st	in5, KS3
+	STPTR	in5, KS3
 
 	load_little_endian(local4, in5, out5, local3, .LLE6)  ! ivec
 
 	addcc	in2, -8, in2              ! bytes missing after next block
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc,  .ede3.enc.seven.or.less
-	st	in3, KS1
+#else
+	bl	.ede3.enc.seven.or.less
+#endif
+	STPTR	in3, KS1
 
 .ede3.enc.next.block:
 
@@ -1651,11 +1771,11 @@ des_ede3_cbc_encrypt:
 
 .ede3.enc.next.block_1:
 
-	ld	KS2, in4
+	LDPTR	KS2, in4
 	xor	in5, out4, in5            ! iv xor
 	xor	out5, global4, out5       ! iv xor
 
-	ld	KS1, in3
+	LDPTR	KS1, in3
 	add	in4, 120, in4             ! for decryption we use last subkey first
 	nop
 
@@ -1667,12 +1787,16 @@ des_ede3_cbc_encrypt:
 	nop
 
 	call .des_dec                     ! ks2 in4
-	ld	KS3, in3
+	LDPTR	KS3, in3
 
 	call .des_enc                     ! ks3 in3  compares in2 to 8
 	nop
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc, .ede3.enc.next.block_fp
+#else
+	bl	.ede3.enc.next.block_fp
+#endif
 	add	in0, 8, in0
 
 	! If 8 or more bytes are to be encrypted after this block,
@@ -1703,7 +1827,7 @@ des_ede3_cbc_encrypt:
 
 	ld	[in3+4], out1             ! key 8642
 	add	global1, 768, global4     ! address sbox 4
-	ba,pt	%icc, .ede3.enc.next.block_2
+	ba	.ede3.enc.next.block_2
 	add	in1, 8, in1
 
 .ede3.enc.next.block_fp:
@@ -1714,14 +1838,22 @@ des_ede3_cbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bpos,pt	%icc, .ede3.enc.next.block
+#else
+	bpos	.ede3.enc.next.block
+#endif
 	add	in1, 8, in1
 
 .ede3.enc.seven.or.less:
 
 	cmp	in2, -8
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	ble,pt	%icc, .ede3.enc.finish
+#else
+	ble	.ede3.enc.finish
+#endif
 	nop
 
 	add	in2, 8, local1            ! bytes to load
@@ -1731,29 +1863,32 @@ des_ede3_cbc_encrypt:
 
 .ede3.enc.finish:
 
-	ld	[%fp+92], local4          ! ivec
+	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	store_little_endian(local4, in5, out5, local5, .SLE6)  ! ivec
 
-	return	in7+8
-	nop
-
+	ret
+	restore
 
 .ede3.dec:
 
-	st	in0, INPUT
+	STPTR	in0, INPUT
 	add	in5, 120, in5
 
-	st	in1, OUTPUT
+	STPTR	in1, OUTPUT
 	mov	in0, local5
 	add	in3, 120, in3
 
-	st	in3, KS1
+	STPTR	in3, KS1
 	cmp	in2, 0
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	ble	%icc, .ede3.dec.finish
-	st	in5, KS3
+#else
+	ble	.ede3.dec.finish
+#endif
+	STPTR	in5, KS3
 
-	ld	[%fp+92], local7          ! iv
+	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local7          ! iv
 	load_little_endian(local7, in0, in1, local3, .LLE8)
 
 .ede3.dec.next.block:
@@ -1768,7 +1903,7 @@ des_ede3_cbc_encrypt:
 	ip_macro(in5, out5, out5, in5, in4, 2, 0, 0, 1) ! inc .des_dec ks3 in4
 
 	call .des_enc                     ! ks2 in3
-	ld	KS1, in4
+	LDPTR	KS1, in4
 
 	call .des_dec                     ! ks1 in4
 	nop
@@ -1779,30 +1914,37 @@ des_ede3_cbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bl,pn	%icc, .ede3.dec.seven.or.less
+#else
+	bl	.ede3.dec.seven.or.less
+#endif
 	xor	in5, in1, global4
 
 	load_little_endian_inc(local5, in0, in1, local3, .LLE10)   ! iv next block
 
 	store_little_endian(local7, out4, global4, local3, .SLE7)  ! block
 
-	st	local5, INPUT
+	STPTR	local5, INPUT
 	addcc   in2, -8, in2
 	add	local7, 8, local7
 
+#ifdef OPENSSL_SYSNAME_ULTRASPARC
 	bg,pt	%icc, .ede3.dec.next.block
-	st	local7, OUTPUT
+#else
+	bg	.ede3.dec.next.block
+#endif
+	STPTR	local7, OUTPUT
 
 .ede3.dec.store.iv:
 
-	ld	[%fp+92], local4          ! ivec
+	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	store_little_endian(local4, in0, in1, local5, .SLE8)  ! ivec
 
 .ede3.dec.finish:
 
-	return	in7+8
-	nop
-
+	ret
+	restore
 
 .ede3.dec.seven.or.less:
 
@@ -1811,5 +1953,5 @@ des_ede3_cbc_encrypt:
 	store_n_bytes(local7, in2, global4, out4, local3, local4, .SNB2, .ede3.dec.store.iv)
 
 
-.des_ede3_cbc_encrypt.end:
-	.size	 des_ede3_cbc_encrypt,.des_ede3_cbc_encrypt.end-des_ede3_cbc_encrypt
+.DES_ede3_cbc_encrypt.end:
+	.size	 DES_ede3_cbc_encrypt,.DES_ede3_cbc_encrypt.end-DES_ede3_cbc_encrypt
