@@ -74,9 +74,9 @@ a short name, a long name or numerical format.
 Encodes an ASN1 B<UTCTime> structure, the value should be in
 the format B<YYMMDDHHMMSSZ>. 
 
-=item B<GENERALIZETIME>, B<GEN>
+=item B<GENERALIZEDTIME>, B<GENTIME>
 
-Encodes an ASN1 B<GeneralizeTime> structure, the value should be in
+Encodes an ASN1 B<GeneralizedTime> structure, the value should be in
 the format B<YYYYMMDDHHMMSSZ>. 
 
 =item B<OCTETSTRING>, B<OCT>
