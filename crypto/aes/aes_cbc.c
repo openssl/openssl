@@ -63,7 +63,7 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 		     const unsigned long length, const AES_KEY *key,
 		     unsigned char *ivec, const int enc) {
 
-	int n;
+	unsigned long n;
 	unsigned long len = length;
 	unsigned char tmp[AES_BLOCK_SIZE];
 

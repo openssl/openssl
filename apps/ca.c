@@ -1336,7 +1336,7 @@ bad:
 			j=x->cert_info->serialNumber->length;
 			p=(char *)x->cert_info->serialNumber->data;
 			
-			if(strlen(outdir) >= (j ? BSIZE-j*2-6 : BSIZE-8))
+			if(strlen(outdir) >= (size_t)(j ? BSIZE-j*2-6 : BSIZE-8))
 				{
 				BIO_printf(bio_err,"certificate file name too long\n");
 				goto err;
