@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Avoid a race condition in s2_clnt.c (function get_server_hello) that
+     made it impossible to use the same SSL_SESSION data structure in
+     SSL2 clients in multiple threads.
+     [Bodo Moeller]
+
   *) The return value of RAND_load_file() no longer counts bytes obtained
      by stat().  RAND_load_file(..., -1) is new and uses the complete file
      to seed the PRNG (previously an explicit byte count was required).

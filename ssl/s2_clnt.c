@@ -435,26 +435,28 @@ static int get_server_hello(SSL *s)
 			return(-1);
 			}
 		s->session->cipher=sk_SSL_CIPHER_value(cl,i);
+
+
+		if (s->session->peer != NULL) /* can't happen*/
+			{
+			ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+			SSLerr(SSL_F_GET_SERVER_HELLO, SSL_R_INTERNAL_ERROR);
+			return(-1);
+			}
+
+		s->session->peer = s->session->sess_cert->peer_key->x509;
+		/* peer_key->x509 has been set by ssl2_set_certificate. */
+		CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
 		}
 
-	if (s->session->peer != NULL)
-		X509_free(s->session->peer);
-
-#if 0 /* What is all this meant to accomplish?? */
-	/* hmmm, can we have the problem of the other session with this
-	 * cert, Free's it before we increment the reference count. */
-	CRYPTO_w_lock(CRYPTO_LOCK_X509);
-	s->session->peer=s->session->sess_cert->key->x509;
-	/* Shouldn't do this: already locked */
-	/*CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);*/
-	s->session->peer->references++;
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-#else
-	s->session->peer = s->session->sess_cert->peer_key->x509;
-	/* peer_key->x509 has been set by ssl2_set_certificate. */
-	CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
-#endif
-
+	if (s->session->peer != s->session->sess_cert->peer_key->x509)
+		/* can't happen */
+		{
+		ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_SERVER_HELLO, SSL_R_INTERNAL_ERROR);
+		return(-1);
+		}
+		
 	s->s2->conn_id_length=s->s2->tmp.conn_id_length;
 	memcpy(s->s2->conn_id,p,s->s2->tmp.conn_id_length);
 	return(1);
