@@ -1,9 +1,9 @@
 /* pk7_smime.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,14 +97,6 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 			PKCS7_add_certificate(p7, sk_X509_value(certs, i));
 	}
 
-	if(!(p7bio = PKCS7_dataInit(p7, NULL))) {
-		PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-
-
-	SMIME_crlf_copy(data, p7bio, flags);
-
 	if(!(flags & PKCS7_NOATTR)) {
 		PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
 				V_ASN1_OBJECT, OBJ_nid2obj(NID_pkcs7_data));
@@ -132,6 +124,16 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
 		}
 	}
+
+	if (flags & PKCS7_PARTSIGN)
+		return p7;
+
+	if (!(p7bio = PKCS7_dataInit(p7, NULL))) {
+		PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
+	SMIME_crlf_copy(data, p7bio, flags);
 
 	if(flags & PKCS7_DETACHED)PKCS7_set_detached(p7, 1);
 

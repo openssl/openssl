@@ -1,9 +1,9 @@
 /* pk7_mime.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,7 @@ STACK_OF(MIME_PARAM) *params;		/* Zero or more parameters */
 DECLARE_STACK_OF(MIME_HEADER)
 IMPLEMENT_STACK_OF(MIME_HEADER)
 
+static int pkcs7_output_data(BIO *bio, BIO *data, PKCS7 *p7, int flags);
 static int B64_write_PKCS7(BIO *bio, PKCS7 *p7);
 static PKCS7 *B64_read_PKCS7(BIO *bio);
 static char * strip_ends(char *name);
@@ -150,7 +151,6 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
-	char linebuf[MAX_SMLEN];
 	char bound[33], c;
 	int i;
 	if((flags & PKCS7_DETACHED) && data) {
@@ -171,9 +171,9 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "This is an S/MIME signed message\n\n");
 		/* Now write out the first part */
 		BIO_printf(bio, "------%s\r\n", bound);
-		if(flags & PKCS7_TEXT) BIO_printf(bio, "Content-Type: text/plain\n\n");
-		while((i = BIO_read(data, linebuf, MAX_SMLEN)) > 0) 
-						BIO_write(bio, linebuf, i);
+
+		pkcs7_output_data(bio, data, p7, flags);
+
 		BIO_printf(bio, "\n------%s\n", bound);
 
 		/* Headers for signature */
@@ -194,6 +194,47 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 	BIO_printf(bio, "\n");
 	return 1;
 }
+
+/* Handle output of PKCS#7 data */
+
+
+static int pkcs7_output_data(BIO *out, BIO *data, PKCS7 *p7, int flags)
+	{
+	BIO *tmpbio, *p7bio;
+
+	if (!(flags & PKCS7_PARTSIGN))
+		{
+		SMIME_crlf_copy(data, out, flags);
+		return 1;
+		}
+
+	/* Partial sign operation */
+
+	/* Initialize sign operation */
+	p7bio = PKCS7_dataInit(p7, out);
+
+	/* Copy data across, computing digests etc */
+	SMIME_crlf_copy(data, p7bio, flags);
+
+	/* Must be detached */
+	PKCS7_set_detached(p7, 1);
+
+	/* Finalize signatures */
+	PKCS7_dataFinal(p7, p7bio);
+
+	/* Now remove any digests from output BIO */
+
+	while (1)
+		{
+		tmpbio = BIO_pop(p7bio);
+		if (tmpbio == out)
+			break;
+		BIO_free(tmpbio);
+		}
+
+	return 1;
+
+	}
 
 /* SMIME reader: handle multipart/signed and opaque signing.
  * in multipart case the content is placed in a memory BIO
@@ -314,7 +355,8 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 						BIO_write(out, linebuf, len);
 		return 1;
 	}
-	if(flags & PKCS7_TEXT) BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
+	if(flags & PKCS7_TEXT)
+		BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
 	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
 		eol = 0;
 		while(iscrlf(linebuf[len - 1])) {

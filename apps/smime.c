@@ -1,9 +1,9 @@
 /* smime.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -478,8 +478,14 @@ int MAIN(int argc, char **argv)
 	if(operation == SMIME_ENCRYPT) {
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
 	} else if(operation == SMIME_SIGN) {
+		/* If detached data and SMIME output enable partial
+		 * signing.
+		 */
+		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME))
+			flags |= PKCS7_PARTSIGN;
 		p7 = PKCS7_sign(signer, key, other, in, flags);
-		if (BIO_reset(in) != 0 && (flags & PKCS7_DETACHED)) {
+		/* Don't need to rewind for partial signing */
+		if (!(flags & PKCS7_PARTSIGN) && (BIO_reset(in) != 0)) {
 		  BIO_printf(bio_err, "Can't rewind input file\n");
 		  goto end;
 		}
