@@ -70,7 +70,7 @@ tests:
 fips_aesavs: fips_aesavs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_aesavs fips_aesavs.o ../../libcrypto.a
 
-fips_test: top
+fips_test: top fips_aesavs
 	find ../testvectors/aes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/aes/rsp
 	mkdir ../testvectors/aes/rsp
