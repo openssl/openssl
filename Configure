@@ -599,7 +599,6 @@ sub bad_target
 	my $j=0;
 	foreach my $i (sort keys %table)
 		{
-		next if /^b-/;
 		print STDERR "\n" if ($j++ % 4) == 0;
 		printf(STDERR "%-18s ",$i);
 		}
