@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
 	{

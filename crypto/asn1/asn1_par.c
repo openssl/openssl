@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,
 	int indent);

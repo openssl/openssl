@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 /* Based on a_int.c: equivalent ENUMERATED functions */
 

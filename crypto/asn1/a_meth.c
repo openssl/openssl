@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 static  ASN1_METHOD ia5string_meth={
 	(int (*)())	i2d_ASN1_IA5STRING,
