@@ -97,9 +97,9 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE*, const char*,
 static EVP_PKEY *ibm_4758_load_pubkey(ENGINE*, const char*,
 		UI_METHOD *ui_method, void *callback_data);
 
-static int getModulusAndExponent(const char *token, long *exponentLength,
-		char *exponent, long *modulusLength,
-		long *modulusFieldLength, char *modulus);
+static int getModulusAndExponent(const unsigned char *token, long *exponentLength,
+		unsigned char *exponent, long *modulusLength,
+		long *modulusFieldLength, unsigned char *modulus);
 #endif
 
 /* RAND number functions */
@@ -108,7 +108,7 @@ static int cca_get_random_bytes(unsigned char*, int );
 static int cca_random_status(void);
 
 static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-		int index,long argl, void *argp);
+		int idx,long argl, void *argp);
 
 /* Function pointers for CCA verbs */
 /*---------------------------------*/
@@ -359,8 +359,8 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 	{
 	RSA *rtmp = NULL;
 	EVP_PKEY *res = NULL;
-	char* keyToken = NULL;
-	char pubKeyToken[MAX_CCA_PKA_TOKEN_SIZE];
+	unsigned char* keyToken = NULL;
+	unsigned char pubKeyToken[MAX_CCA_PKA_TOKEN_SIZE];
 	long pubKeyTokenLength = MAX_CCA_PKA_TOKEN_SIZE;
 	long keyTokenLength = MAX_CCA_PKA_TOKEN_SIZE;
 	long returnCode;
@@ -369,12 +369,12 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 	long ruleArrayLength = 0;
 	unsigned char exitData[8];
 	unsigned char ruleArray[8];
-	char keyLabel[64];
+	unsigned char keyLabel[64];
 	long keyLabelLength = strlen(key_id);
-	char modulus[256];
+	unsigned char modulus[256];
 	long modulusFieldLength = sizeof(modulus);
 	long modulusLength = 0;
-	char exponent[256];
+	unsigned char exponent[256];
 	long exponentLength = sizeof(exponent);
 
 	if (keyLabelLength > sizeof(keyLabel))
@@ -453,7 +453,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 	{
 	RSA *rtmp = NULL;
 	EVP_PKEY *res = NULL;
-	char* keyToken = NULL;
+	unsigned char* keyToken = NULL;
 	long keyTokenLength = MAX_CCA_PKA_TOKEN_SIZE;
 	long returnCode;
 	long reasonCode;
@@ -461,12 +461,12 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 	long ruleArrayLength = 0;
 	unsigned char exitData[8];
 	unsigned char ruleArray[8];
-	char keyLabel[64];
+	unsigned char keyLabel[64];
 	long keyLabelLength = strlen(key_id);
-	char modulus[512];
+	unsigned char modulus[512];
 	long modulusFieldLength = sizeof(modulus);
 	long modulusLength = 0;
-	char exponent[512];
+	unsigned char exponent[512];
 	long exponentLength = sizeof(exponent);
 
 	if (keyLabelLength > sizeof(keyLabel))
@@ -598,7 +598,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 	unsigned char* keyToken = (unsigned char*)RSA_get_ex_data(rsa, hndidx);
 	long length = SSL_SIG_LEN;
 	long keyLength ;
-	char *hashBuffer = NULL;
+	unsigned char *hashBuffer = NULL;
 	X509_SIG sig;
 	ASN1_TYPE parameter;
 	X509_ALGOR algorithm;
@@ -656,7 +656,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 				return 0;
 				}
 
-			hashBuffer = (char*)m;
+			hashBuffer = (unsigned char *)m;
 			length = m_len;
 			break;
 		case NID_md5 :
@@ -719,7 +719,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 	long outputLength=256;
 	long outputBitLength;
 	long keyTokenLength;
-	char *hashBuffer = NULL;
+	unsigned char *hashBuffer = NULL;
 	unsigned char* keyToken = (unsigned char*)RSA_get_ex_data(rsa, hndidx);
 	long length = SSL_SIG_LEN;
 	long keyLength ;
@@ -779,7 +779,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 				CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 				return 0;
 				}
-			hashBuffer = (char*)m;
+			hashBuffer = (unsigned char*)m;
 			length = m_len;
 			break;
 		case NID_md5 :
@@ -830,9 +830,9 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 	return ((returnCode || reasonCode) ? 0 : 1);
 	}
 
-static int getModulusAndExponent(const char*token, long *exponentLength,
-		char *exponent, long *modulusLength, long *modulusFieldLength,
-		char *modulus)
+static int getModulusAndExponent(const unsigned char*token, long *exponentLength,
+		unsigned char *exponent, long *modulusLength, long *modulusFieldLength,
+		unsigned char *modulus)
 	{
 	unsigned long len;
 
@@ -898,34 +898,34 @@ static int cca_get_random_bytes(unsigned char* buf, int num)
 	long ret_code;
 	long reason_code;
 	long exit_data_length;
-	char exit_data[4];
-	char form[] = "RANDOM  ";
-	char random[8];
+	unsigned char exit_data[4];
+	unsigned char form[] = "RANDOM  ";
+	unsigned char rand_buf[8];
 
-	while(num >= sizeof(random))
+	while(num >= sizeof(rand_buf))
 		{
 		randomNumberGenerate(&ret_code, &reason_code, &exit_data_length,
-			exit_data, form, random);
+			exit_data, form, rand_buf);
 		if (ret_code)
 			return 0;
-		num -= sizeof(random);
-		memcpy(buf, random, sizeof(random));
-		buf += sizeof(random);
+		num -= sizeof(rand_buf);
+		memcpy(buf, rand_buf, sizeof(rand_buf));
+		buf += sizeof(rand_buf);
 		}
 
 	if (num)
 		{
 		randomNumberGenerate(&ret_code, &reason_code, NULL, NULL,
-			form, random);
+			form, rand_buf);
 		if (ret_code)
 			return 0;
-		memcpy(buf, random, num);
+		memcpy(buf, rand_buf, num);
 		}
 
 	return 1;
 	}
 
-static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int index,
+static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
 		long argl, void *argp)
 	{
 	if (item)
