@@ -645,6 +645,8 @@ int OBJ_create(char *oid, char *sn, char *ln)
 		return(0);
 		}
 	i=a2d_ASN1_OBJECT(buf,i,oid,-1);
+	if (i == 0)
+		goto err;
 	op=(ASN1_OBJECT *)ASN1_OBJECT_create(OBJ_new_nid(1),buf,i,sn,ln);
 	if (op == NULL) 
 		goto err;

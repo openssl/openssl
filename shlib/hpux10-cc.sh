@@ -20,7 +20,9 @@
 # WARNING: At high optimization levels, HP's ANSI-C compiler can chew up
 #          large amounts of memory and CPU time. Make sure to have at least
 #          128MB of RAM available and that your kernel is configured to allow
-#          at least 128MB data size (maxdsiz parameter).
+#          at least 128MB data size (maxdsiz parameter which can be obtained
+#          by multiplying 'echo maxdsiz/D | adb -k /stand/vmunix /dev/kmem'
+#          by 'getconf PAGE_SIZE').
 #          The installation process can take several hours, even on fast
 #          machines. +O4 optimization of the libcrypto.sl shared library may
 #          take 1 hour on a C200 (200MHz PA8200 CPU), +O3 compilation of
@@ -40,7 +42,7 @@ SITEFLAGS="+DAportable +w1"
 MYFLAGS="-D_REENTRANT +Oall $SITEFLAGS"
 
 # Configure for pic and build the static pic libraries
-perl5 Configure hpux-parisc-cc-o4 +z ${MYFLAGS}
+perl5 Configure no-shared hpux-parisc-cc-o4 +Z ${MYFLAGS}
 make clean
 make DIRS="crypto ssl"
 # Rename the static pic libs and build dynamic libraries from them
@@ -58,21 +60,21 @@ mkdir /usr/local
 mkdir /usr/local/ssl
 mkdir /usr/local/ssl/lib
 chmod 444 lib*_pic.a
-chmod 555 lib*.so.1
-cp -p lib*_pic.a lib*.so.1 /usr/local/ssl/lib
-(cd /usr/local/ssl/lib ; ln -sf libcrypto.so.1 libcrypto.sl ; ln -sf libssl.so.1 libssl.sl)
+chmod 555 lib*.sl.0.9.6d
+cp -p lib*_pic.a lib*.sl.0.9.6d /usr/local/ssl/lib
+(cd /usr/local/ssl/lib ; ln -sf libcrypto.sl.0.9.6d libcrypto.sl ; ln -sf libssl.sl.0.9.6d libssl.sl)
 
 # Reconfigure without pic to compile the executables. Unfortunately, while
 # performing this task we have to recompile the library components, even
 # though we use the already installed shared libs anyway.
 #
-perl5 Configure hpux-parisc-cc-o4 ${MYFLAGS}
+perl5 Configure no-shared hpux-parisc-cc-o4 ${MYFLAGS}
 
 make clean
 
 # Hack the Makefiles to pick up the dynamic libraries during linking
 #
-sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib -Wl,+b,\/usr\/local\/ssl\/lib:\/usr\/lib/' Makefile.ssl >xxx; mv xxx Makefile.ssl
+sed 's/^PEX_LIBS=.*$/PEX_LIBS=-L\/usr\/local\/ssl\/lib/' Makefile.ssl >xxx; mv xxx Makefile.ssl
 sed 's/-L\.\.//' apps/Makefile.ssl >xxx; mv xxx apps/Makefile.ssl
 sed 's/-L\.\.//' test/Makefile.ssl >xxx; mv xxx test/Makefile.ssl
 # Build the static libs and the executables in one make.
@@ -83,7 +85,7 @@ make install
 # Finally build the static libs with +O3. This time we only need the libraries,
 # once created, they are simply copied into place.
 #
-perl5 Configure hpux-parisc-cc ${MYFLAGS}
+perl5 Configure no-shared hpux-parisc-cc ${MYFLAGS}
 make clean
 make DIRS="crypto ssl"
 chmod 644 libcrypto.a libssl.a

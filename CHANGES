@@ -4,6 +4,30 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
+     an end-of-file condition would erronously be flagged, when the CRLF
+     was just at the end of a processed block. The bug was discovered when
+     processing data through a buffering memory BIO handing the data to a
+     BASE64-decoding BIO. Bug fund and patch submitted by Pavel Tsekov
+     <ptsekov@syntrex.com> and Nedelcho Stanev.
+     [Lutz Jaenicke]
+
+  *) Implement a countermeasure against a vulnerability recently found
+     in CBC ciphersuites in SSL 3.0/TLS 1.0: Send an empty fragment
+     before application data chunks to avoid the use of known IVs
+     with data potentially chosen by the attacker.
+     [Bodo Moeller]
+
+  *) Fix length checks in ssl3_get_client_hello().
+     [Bodo Moeller]
+
+  *) TLS/SSL library bugfix: use s->s3->in_read_app_data differently
+     to prevent ssl3_read_internal() from incorrectly assuming that
+     ssl3_read_bytes() found application data while handshake
+     processing was enabled when in fact s->s3->in_read_app_data was
+     merely automatically cleared during the initial handshake.
+     [Bodo Moeller; problem pointed out by Arne Ansper <arne@ats.cyber.ee>]
+
   *) Fix object definitions for Private and Enterprise: they were not
      recognized in their shortname (=lowercase) representation. Extend
      obj_dat.pl to issue an error when using undefined keywords instead
