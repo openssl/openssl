@@ -15,19 +15,19 @@ foreach $arg (@ARGV) {
 sub do_mkdir_p {
   local($dir) = @_;
 
-  $dir =~ s|/*$||;
+  $dir =~ s|/*\Z(?!\n)||s;
 
   if (-d $dir) {
     return;
   }
 
-  if ($dir =~ /\//) {
+  if ($dir =~ m|[^/]/|s) {
     local($parent) = $dir;
-    $parent =~ s|[^/]*$||;
+    $parent =~ s|[^/]*\Z(?!\n)||s;
 
     do_mkdir_p($parent);
   }
 
   mkdir($dir, 0777) || die "Cannot create directory $dir: $!\n";
-  print "created directory $dir\n";
+  print "created directory `$dir'\n";
 }
