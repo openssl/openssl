@@ -191,13 +191,13 @@ RSA *RSA_new_method(ENGINE *engine)
 	ret->blinding=NULL;
 	ret->bignum_data=NULL;
 	ret->flags=meth->flags;
+	CRYPTO_new_ex_data(rsa_meth,ret,&ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
+		CRYPTO_free_ex_data(rsa_meth, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(rsa_meth,ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -221,12 +221,12 @@ void RSA_free(RSA *r)
 		}
 #endif
 
-	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
-
 	meth = ENGINE_get_RSA(r->engine);
 	if (meth->finish != NULL)
 		meth->finish(r);
 	ENGINE_finish(r->engine);
+
+	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
 
 	if (r->n != NULL) BN_clear_free(r->n);
 	if (r->e != NULL) BN_clear_free(r->e);
