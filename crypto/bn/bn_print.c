@@ -321,7 +321,7 @@ end:
 #endif
 
 #ifdef BN_DEBUG
-void bn_dump1(FILE *o, const char *a, BN_ULONG *b,int n)
+void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n)
 	{
 	int i;
 	fprintf(o, "%s=", a);
