@@ -1,7 +1,7 @@
 %define libmaj 0
 %define libmin 9
 %define librel 6
-%define librev a
+%define librev c
 Release: 1
 
 %define openssldir /var/ssl
@@ -114,7 +114,7 @@ install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
 install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
 
 # Make backwards-compatibility symlink to ssleay
-ln -s /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
+ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -135,14 +135,15 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0750,root,root) %{openssldir}/private
 
 %files devel
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
-%defattr(0644,root,root,0755)
 %attr(0644,root,root) /usr/lib/*.a
 %attr(0644,root,root) /usr/include/openssl/*
 %attr(0644,root,root) /usr/man/man[3]/*
 
 %files doc
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 %doc doc
 
