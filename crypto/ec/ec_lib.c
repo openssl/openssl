@@ -53,6 +53,8 @@
  *
  */
 
+#include <string.h>
+
 #include <openssl/err.h>
 
 #include "ec_lcl.h"
@@ -120,7 +122,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 		group->meth->group_clear_finish(group);
 	else if (group->meth != NULL && group->meth->group_finish != 0)
 		group->meth->group_finish(group);
-	memset(point, 0, sizeof *group);
+	memset(group, 0, sizeof *group);
 	OPENSSL_free(group);
 	}
 
