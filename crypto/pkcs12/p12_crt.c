@@ -57,10 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pem.h>
-#include <err.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 PKCS12 *PKCS12_create(pass, name, pkey, cert, ca, nid_key, nid_cert, iter,

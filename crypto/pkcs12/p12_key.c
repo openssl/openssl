@@ -57,10 +57,7 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <err.h>
-#include <bn.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 

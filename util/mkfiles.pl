@@ -7,6 +7,7 @@
 # List of directories to process
 
 my @dirs = (
+".",
 "crypto",
 "crypto/md2",
 "crypto/md5",
@@ -40,6 +41,7 @@ my @dirs = (
 "crypto/conf",
 "crypto/txt_db",
 "crypto/pkcs7",
+"crypto/pkcs12",
 "crypto/comp",
 "ssl",
 "rsaref",
@@ -48,7 +50,6 @@ my @dirs = (
 "tools"
 );
 
-&files_dir (".", "Makefile.org");
 foreach (@dirs) {
 	&files_dir ($_, "Makefile.ssl");
 }

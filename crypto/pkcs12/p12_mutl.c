@@ -57,11 +57,9 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
-#include <hmac.h>
-#include <rand.h>
+#include "cryptlib.h"
+#include "hmac.h"
+#include "rand.h"
 #include "pkcs12.h"
 
 /* Generate a MAC */

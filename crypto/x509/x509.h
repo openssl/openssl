@@ -883,6 +883,7 @@ int EVP_PBE_ALGOR_CipherInit(X509_ALGOR *algor, unsigned char *pass,
 				 int passlen, EVP_CIPHER_CTX *ctx, int en_de);
 int EVP_PBE_alg_add(int nid, EVP_CIPHER *cipher, EVP_MD *md,
 						 EVP_PBE_KEYGEN *keygen);
+void EVP_PBE_cleanup(void);
 
 #else
 
@@ -1200,6 +1201,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken();
 int EVP_PBE_ALGOR_CipherInit();
 int EVP_PBE_alg_add();
 X509_ALGOR *PKCS5_pbe_set();
+void EVP_PBE_cleanup();
 
 #endif
 

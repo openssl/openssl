@@ -57,9 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* Add a local keyid to a safebag */

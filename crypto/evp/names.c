@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include "evp.h"
 #include "objects.h"
+#include "x509.h"
 
 int EVP_add_cipher(c)
 EVP_CIPHER *c;
@@ -117,4 +118,5 @@ void EVP_cleanup()
 	{
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
+	EVP_PBE_cleanup();
 	}

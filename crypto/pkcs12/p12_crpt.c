@@ -57,8 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* PKCS#12 specific PBE functions */

@@ -57,11 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pem.h>
-#include <err.h>
-#include <x509.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* Simplified PKCS#12 routines */

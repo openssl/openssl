@@ -174,3 +174,8 @@ EVP_PBE_KEYGEN *keygen;
 	sk_push (pbe_algs, (char *)pbe_tmp);
 	return 1;
 }
+
+void EVP_PBE_cleanup()
+{
+	sk_pop_free(pbe_algs, FreeFunc);
+}

@@ -57,10 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
-#include <rand.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* Initialise a PKCS12 structure to take data */

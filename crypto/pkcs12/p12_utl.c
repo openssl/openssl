@@ -57,10 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <bio.h>
-#include <err.h>
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* Cheap and nasty Unicode stuff */

@@ -83,7 +83,6 @@ char **argv;
 	int badarg = 0;
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 	ERR_load_crypto_strings();
-        SSLeay_add_all_algorithms();
 	args = argv + 1;
 	while (!badarg && *args && *args[0] == '-') {
 		if (!strcmp (*args, "-toseq")) toseq = 1;

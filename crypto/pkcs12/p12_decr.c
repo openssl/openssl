@@ -57,16 +57,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <objects.h>
-#include <pkcs7.h>
-#include <err.h>
-#include <crypto.h>
-#include <sha.h>
-#include <stack.h>
-#include <evp.h>
-#include <string.h>
-#include "hmac.h"
+#include "cryptlib.h"
 #include "pkcs12.h"
 
 /* Define this to dump decrypted output to files called DERnnn */

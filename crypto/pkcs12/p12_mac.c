@@ -57,9 +57,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <asn1_mac.h>
-#include <err.h>
+#include "cryptlib.h"
+#include "asn1_mac.h"
 #include "pkcs12.h"
 /*
  *ASN1err(ASN1_F_PKCS12_MAC_DATA_NEW,ASN1_R_DECODE_ERROR)

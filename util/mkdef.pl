@@ -73,6 +73,7 @@ $crypto.=" crypto/asn1/asn1.h";
 $crypto.=" crypto/asn1/asn1_mac.h";
 $crypto.=" crypto/err/err.h";
 $crypto.=" crypto/pkcs7/pkcs7.h";
+$crypto.=" crypto/pkcs12/pkcs12.h";
 $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
 $crypto.=" crypto/x509v3/x509v3.h";
