@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 562
-#define NUM_SN 560
-#define NUM_LN 560
-#define NUM_OBJ 534
+#define NUM_NID 568
+#define NUM_SN 566
+#define NUM_LN 566
+#define NUM_OBJ 540
 
-static unsigned char lvalues[4193]={
+static unsigned char lvalues[4218]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -602,6 +602,12 @@ static unsigned char lvalues[4193]={
 0x2B,0x81,0x04,0x00,0x25,                    /* [4177] OBJ_sect409r1 */
 0x2B,0x81,0x04,0x00,0x26,                    /* [4182] OBJ_sect571k1 */
 0x2B,0x81,0x04,0x00,0x27,                    /* [4187] OBJ_sect571r1 */
+0x67,0x2B,                                   /* [4192] OBJ_wap */
+0x67,0x2B,0x0D,                              /* [4194] OBJ_wap_wsg */
+0x67,0x2B,0x0D,0x04,0x01,                    /* [4197] OBJ_wap_wsg_idm_ecid_wtls1 */
+0x67,0x2B,0x0D,0x04,0x06,                    /* [4202] OBJ_wap_wsg_idm_ecid_wtls6 */
+0x67,0x2B,0x0D,0x04,0x08,                    /* [4207] OBJ_wap_wsg_idm_ecid_wtls8 */
+0x67,0x2B,0x0D,0x04,0x09,                    /* [4212] OBJ_wap_wsg_idm_ecid_wtls9 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1435,6 +1441,16 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"sect409r1","sect409r1",NID_sect409r1,5,&(lvalues[4177]),0},
 {"sect571k1","sect571k1",NID_sect571k1,5,&(lvalues[4182]),0},
 {"sect571r1","sect571r1",NID_sect571r1,5,&(lvalues[4187]),0},
+{"wap","wap",NID_wap,2,&(lvalues[4192]),0},
+{"wap-wsg","wap-wsg",NID_wap_wsg,3,&(lvalues[4194]),0},
+{"wap-wsg-idm-ecid-wtls1","wap-wsg-idm-ecid-wtls1",
+	NID_wap_wsg_idm_ecid_wtls1,5,&(lvalues[4197]),0},
+{"wap-wsg-idm-ecid-wtls6","wap-wsg-idm-ecid-wtls6",
+	NID_wap_wsg_idm_ecid_wtls6,5,&(lvalues[4202]),0},
+{"wap-wsg-idm-ecid-wtls8","wap-wsg-idm-ecid-wtls8",
+	NID_wap_wsg_idm_ecid_wtls8,5,&(lvalues[4207]),0},
+{"wap-wsg-idm-ecid-wtls9","wap-wsg-idm-ecid-wtls9",
+	NID_wap_wsg_idm_ecid_wtls9,5,&(lvalues[4212]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1996,6 +2012,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[49]),/* "unstructuredName" */
 &(nid_objs[465]),/* "userClass" */
 &(nid_objs[373]),/* "valid" */
+&(nid_objs[562]),/* "wap" */
+&(nid_objs[563]),/* "wap-wsg" */
+&(nid_objs[564]),/* "wap-wsg-idm-ecid-wtls1" */
+&(nid_objs[565]),/* "wap-wsg-idm-ecid-wtls6" */
+&(nid_objs[566]),/* "wap-wsg-idm-ecid-wtls8" */
+&(nid_objs[567]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
 };
@@ -2558,6 +2580,12 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[465]),/* "userClass" */
 &(nid_objs[458]),/* "userId" */
 &(nid_objs[373]),/* "valid" */
+&(nid_objs[562]),/* "wap" */
+&(nid_objs[563]),/* "wap-wsg" */
+&(nid_objs[564]),/* "wap-wsg-idm-ecid-wtls1" */
+&(nid_objs[565]),/* "wap-wsg-idm-ecid-wtls6" */
+&(nid_objs[566]),/* "wap-wsg-idm-ecid-wtls8" */
+&(nid_objs[567]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
 &(nid_objs[125]),/* "zlib compression" */
@@ -2572,14 +2600,15 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
-&(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[527]),/* OBJ_identified_organization      1 3 */
+&(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[393]),/* OBJ_joint_iso_ccitt              2 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[380]),/* OBJ_dod                          1 3 6 */
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[378]),/* OBJ_X500algorithms               2 5 8 */
 &(nid_objs[81]),/* OBJ_id_ce                        2 5 29 */
+&(nid_objs[562]),/* OBJ_wap                          2 23 43 */
 &(nid_objs[435]),/* OBJ_pss                          0 9 2342 */
 &(nid_objs[183]),/* OBJ_ISO_US                       1 2 840 */
 &(nid_objs[381]),/* OBJ_iana                         1 3 6 1 */
@@ -2619,6 +2648,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
 &(nid_objs[402]),/* OBJ_target_information           2 5 29 55 */
 &(nid_objs[403]),/* OBJ_no_rev_avail                 2 5 29 56 */
+&(nid_objs[563]),/* OBJ_wap_wsg                      2 23 43 13 */
 &(nid_objs[390]),/* OBJ_dcObject                      1466 344 */
 &(nid_objs[382]),/* OBJ_Directory                    1 3 6 1 1 */
 &(nid_objs[383]),/* OBJ_Management                   1 3 6 1 2 */
@@ -2681,6 +2711,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[559]),/* OBJ_sect409r1                    1 3 132 0 37 */
 &(nid_objs[560]),/* OBJ_sect571k1                    1 3 132 0 38 */
 &(nid_objs[561]),/* OBJ_sect571r1                    1 3 132 0 39 */
+&(nid_objs[564]),/* OBJ_wap_wsg_idm_ecid_wtls1       2 23 43 13 4 1 */
+&(nid_objs[565]),/* OBJ_wap_wsg_idm_ecid_wtls6       2 23 43 13 4 6 */
+&(nid_objs[566]),/* OBJ_wap_wsg_idm_ecid_wtls8       2 23 43 13 4 8 */
+&(nid_objs[567]),/* OBJ_wap_wsg_idm_ecid_wtls9       2 23 43 13 4 9 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */

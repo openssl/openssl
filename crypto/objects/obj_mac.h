@@ -95,6 +95,14 @@
 #define NID_certicom_arc		528
 #define OBJ_certicom_arc		OBJ_identified_organization,132L
 
+#define SN_wap		"wap"
+#define NID_wap		562
+#define OBJ_wap		OBJ_joint_iso_ccitt,23L,43L
+
+#define SN_wap_wsg		"wap-wsg"
+#define NID_wap_wsg		563
+#define OBJ_wap_wsg		OBJ_wap,13L
+
 #define SN_selected_attribute_types		"selected-attribute-types"
 #define LN_selected_attribute_types		"Selected Attribute Types"
 #define NID_selected_attribute_types		394
@@ -419,6 +427,24 @@
 #define SN_sect571r1		"sect571r1"
 #define NID_sect571r1		561
 #define OBJ_sect571r1		OBJ_secg_ellipticCurve,39L
+
+#define OBJ_wap_wsg_idm_ecid		OBJ_wap_wsg,4L
+
+#define SN_wap_wsg_idm_ecid_wtls1		"wap-wsg-idm-ecid-wtls1"
+#define NID_wap_wsg_idm_ecid_wtls1		564
+#define OBJ_wap_wsg_idm_ecid_wtls1		OBJ_wap_wsg_idm_ecid,1L
+
+#define SN_wap_wsg_idm_ecid_wtls6		"wap-wsg-idm-ecid-wtls6"
+#define NID_wap_wsg_idm_ecid_wtls6		565
+#define OBJ_wap_wsg_idm_ecid_wtls6		OBJ_wap_wsg_idm_ecid,6L
+
+#define SN_wap_wsg_idm_ecid_wtls8		"wap-wsg-idm-ecid-wtls8"
+#define NID_wap_wsg_idm_ecid_wtls8		566
+#define OBJ_wap_wsg_idm_ecid_wtls8		OBJ_wap_wsg_idm_ecid,8L
+
+#define SN_wap_wsg_idm_ecid_wtls9		"wap-wsg-idm-ecid-wtls9"
+#define NID_wap_wsg_idm_ecid_wtls9		567
+#define OBJ_wap_wsg_idm_ecid_wtls9		OBJ_wap_wsg_idm_ecid,9L
 
 #define SN_cast5_cbc		"CAST5-CBC"
 #define LN_cast5_cbc		"cast5-cbc"

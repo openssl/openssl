@@ -10,6 +10,9 @@ iso 3			: identified-organization
 
 identified-organization 132	: certicom-arc
 
+joint-iso-ccitt 23 43	: wap
+wap 13			: wap-wsg
+
 joint-iso-ccitt 5 1 5	: selected-attribute-types	: Selected Attribute Types
 
 selected-attribute-types 55	: clearance
@@ -68,12 +71,10 @@ X9-62_primeCurve 7	 	: prime256v1
 !global
 X9-62_id-ecSigType 1		: ecdsa-with-SHA1
 
-# the following AsnOId are from the document 
-# "SEC 2: Recommended Elliptic Curve Domain Parameters"
-# from the Standarts for Efficient Cryptography Group
-# ( for more informations see : http://www.secg.org )
+# SECG curve OIDs from "SEC 2: Recommended Elliptic Curve Domain Parameters"
+# (http://www.secg.org/)
 !Alias secg_ellipticCurve certicom-arc 0
-# secg prime curves oids
+# SECG prime curves OIDs
 secg-ellipticCurve 6		: secp112r1
 secg-ellipticCurve 7		: secp112r2
 secg-ellipticCurve 28		: secp128r1
@@ -89,7 +90,7 @@ secg-ellipticCurve 10		: secp256k1
 X9_62_prime256v1		: secp256r1
 secg-ellipticCurve 34		: secp384r1
 secg-ellipticCurve 35		: secp521r1
-# secg characteristic two curves oids
+# SECG characteristic two curves OIDs
 secg-ellipticCurve 4		: sect113r1
 secg-ellipticCurve 5		: sect113r2
 secg-ellipticCurve 22		: sect131r1
@@ -108,6 +109,14 @@ secg-ellipticCurve 36		: sect409k1
 secg-ellipticCurve 37		: sect409r1
 secg-ellipticCurve 38		: sect571k1
 secg-ellipticCurve 39		: sect571r1
+
+# WAP/TLS curve OIDs (http://www.wapforum.org/)
+!Alias wap-wsg-idm-ecid wap-wsg 4
+wap-wsg-idm-ecid 1	: wap-wsg-idm-ecid-wtls1
+wap-wsg-idm-ecid 6	: wap-wsg-idm-ecid-wtls6
+wap-wsg-idm-ecid 8	: wap-wsg-idm-ecid-wtls8
+wap-wsg-idm-ecid 9	: wap-wsg-idm-ecid-wtls9
+
 
 ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
 			: CAST5-ECB		: cast5-ecb
