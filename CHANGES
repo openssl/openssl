@@ -4,10 +4,6 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
-  *) The Alpha version of bn_mul_add_words could produce incorrect results.
-     Replace it with a CC-compiled version for the 0.9.6a release.
-     [Ulf Moeller]
-  
   *) Fix a memory leak in err.c: free err_data string if necessary.
      [Bodo Moeller]
 

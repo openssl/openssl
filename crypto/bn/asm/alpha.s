@@ -8,227 +8,103 @@
  # after 4 cycles have elapsed.  I've done modification to help
  # improve this.  Also, normally, a ld instruction will not be available
  # for about 3 cycles.
-
- # bn_mul_add_words was broken. For now replace it with a CC compiled version
 	.file	1 "bn_asm.c"
 	.set noat
 gcc2_compiled.:
 __gnu_compiled_c:
 	.text
-	.align 4
+	.align 3
 	.globl bn_mul_add_words
 	.ent bn_mul_add_words
-	.loc 1 142
-bn_mul_add_words:													   # 000142
-	.frame  $sp, 0, $26
+bn_mul_add_words:
+bn_mul_add_words..ng:
+	.frame $30,0,$26,0
 	.prologue 0
-	.loc 1 148
- #    143 	{
- #    144 	BN_ULONG c=0;
- #    145 	BN_ULONG bl,bh;
- #    146 
- #    147 	assert(num >= 0);
- #    148 	if (num <= 0) return((BN_ULONG)0);
-	bgt	$18, L$180												   # 000148
-	clr	$0
-	.loc 1 167
- #    149 
- #    150 	bl=LBITS(w);
- #    151 	bh=HBITS(w);
- #    152 
- #    153 	for (;;)
- #    154 		{
- #    155 		mul_add(rp[0],ap[0],bl,bh,c);
- #    156 		if (--num == 0) break;
- #    157 		mul_add(rp[1],ap[1],bl,bh,c);
- #    158 		if (--num == 0) break;
- #    159 		mul_add(rp[2],ap[2],bl,bh,c);
- #    160 		if (--num == 0) break;
- #    161 		mul_add(rp[3],ap[3],bl,bh,c);
- #    162 		if (--num == 0) break;
- #    163 		ap+=4;
- #    164 		rp+=4;
- #    165 		}
- #    166 	return(c);
- #    167 	} 
-	ret	($26)													   # 000167
-	unop
-	.loc 1 148
-L$180:															   # 000148
-	.loc 1 155
-	ldq	$2, ($17)												   # 000155
-	.loc 1 151
-	srl	$19, 32, $1												   # 000151
-	.loc 1 150
-	zapnot	$19, 15, $19												   # 000150
-	.loc 1 155
-	ldq	$22, ($16)												   # 000155
-	zapnot	$2, 15, $4
-	mov	1, $7
-	mulq	$1, $4, $5
-	.loc 1 156
-	subl	$18, 1, $18												   # 000156
-	.loc 1 155
-	srl	$2, 32, $3												   # 000155
-	sll	$7, 32, $7
-	mulq	$19, $3, $6
-	mulq	$1, $3, $3
-	addq	$5, $6, $5
-	nop
-	srl	$5, 32, $20
-	cmpule	$6, $5, $6
-	insll	$5, 4, $5
-	mulq	$19, $4, $4
-	addq	$3, $7, $8
-	cmoveq	$6, $8, $3
-	addq	$3, $20, $3
-	addq	$4, $5, $4
-	cmpult	$4, $5, $5
-	cmpult	$4, 0, $23
-	addq	$4, $22, $4
-	addq	$3, $5, $3
-	cmpult	$4, $22, $24
-	addq	$3, $23, $3
-	stq	$4, ($16)
-	addq	$3, $24, $0
-	.loc 1 156
-	beq	$18, L$183												   # 000156
-	unop
-	.loc 1 157
-L$184:															   # 000157
-	ldq	$27, 8($17)
-	ldq	$21, 8($16)
-	.loc 1 158
-	subl	$18, 1, $18												   # 000158
-	.loc 1 163
-	lda	$17, 32($17)												   # 000163
-	.loc 1 157
-	zapnot	$27, 15, $6												   # 000157
-	.loc 1 155
-	lda	$16, 32($16)												   # 000155
-	.loc 1 157
-	mulq	$1, $6, $8												   # 000157
-	extll	$27, 4, $2
-	mulq	$19, $2, $20
-	mulq	$1, $2, $2
-	addq	$8, $20, $8
-	unop
-	srl	$8, 32, $5
-	cmpule	$20, $8, $20
-	insll	$8, 4, $8
-	mulq	$19, $6, $6
-	addq	$2, $7, $22
-	cmoveq	$20, $22, $2
-	addq	$2, $5, $2
-	addq	$6, $8, $6
-	cmpult	$6, $8, $8
-	addq	$6, $0, $6
-	cmpult	$6, $0, $0
-	addq	$2, $8, $2
-	addq	$6, $21, $6
-	addq	$2, $0, $0
-	cmpult	$6, $21, $23
-	stq	$6, -24($16)
-	addq	$0, $23, $0
-	.loc 1 158
-	beq	$18, L$183												   # 000158
-	.loc 1 160
-	subl	$18, 1, $18												   # 000160
-	unop
-	.loc 1 159
-	ldq	$3, -16($17)												   # 000159
-	ldq	$21, -16($16)
-	zapnot	$3, 15, $27
-	mulq	$1, $27, $20
-	extll	$3, 4, $24
-	mulq	$19, $24, $22
-	mulq	$1, $24, $24
-	addq	$20, $22, $20
-	srl	$20, 32, $8
-	cmpule	$22, $20, $22
-	insll	$20, 4, $20
-	mulq	$19, $27, $27
-	addq	$24, $7, $5
-	cmoveq	$22, $5, $24
-	addq	$24, $8, $8
-	addq	$27, $20, $27
-	cmpult	$27, $20, $20
-	addq	$27, $0, $27
-	cmpult	$27, $0, $0
-	addq	$8, $20, $8
-	addq	$27, $21, $27
-	addq	$8, $0, $0
-	cmpult	$27, $21, $6
-	stq	$27, -16($16)
-	addq	$0, $6, $0
-	.loc 1 160
-	beq	$18, L$183												   # 000160
-	.loc 1 162
-	subl	$18, 1, $18												   # 000162
-	unop
-	.loc 1 161
-	ldq	$2, -8($17)												   # 000161
-	ldq	$21, -8($16)
-	zapnot	$2, 15, $3
-	mulq	$1, $3, $5
-	extll	$2, 4, $23
-	mulq	$19, $23, $22
-	mulq	$1, $23, $23
-	addq	$5, $22, $5
-	srl	$5, 32, $20
-	cmpule	$22, $5, $22
-	insll	$5, 4, $5
-	mulq	$19, $3, $3
-	addq	$23, $7, $24
-	cmoveq	$22, $24, $23
-	addq	$23, $20, $20
-	addq	$3, $5, $3
-	cmpult	$3, $5, $5
-	addq	$3, $0, $3
-	cmpult	$3, $0, $0
-	addq	$20, $5, $5
-	addq	$3, $21, $3
-	addq	$5, $0, $0
-	cmpult	$3, $21, $27
-	stq	$3, -8($16)
-	addq	$0, $27, $0
-	.loc 1 162
-	beq	$18, L$183												   # 000162
-	.loc 1 156
-	subl	$18, 1, $18												   # 000156
-	unop
-	.loc 1 155
-	ldq	$8, ($17)												   # 000155
-	ldq	$3, ($16)
-	zapnot	$8, 15, $2
-	mulq	$1, $2, $22
-	extll	$8, 4, $6
-	mulq	$19, $6, $24
-	mulq	$1, $6, $6
-	addq	$22, $24, $22
-	srl	$22, 32, $20
-	cmpule	$24, $22, $24
-	insll	$22, 4, $22
-	mulq	$19, $2, $2
-	addq	$6, $7, $23
-	cmoveq	$24, $23, $6
-	addq	$6, $20, $6
-	addq	$2, $22, $2
-	cmpult	$2, $22, $22
-	addq	$2, $0, $2
-	cmpult	$2, $0, $0
-	addq	$6, $22, $6
-	addq	$2, $3, $2
-	addq	$6, $0, $0
-	cmpult	$2, $3, $5
-	stq	$2, ($16)
-	addq	$0, $5, $0
-	.loc 1 156
-	bne	$18, L$184												   # 000156
-	.loc 1 165
-L$183:															   # 000165
-	.loc 1 167
-	ret	($26)													   # 000167
+	.align 5
+	subq	$18,4,$18
+	bis	$31,$31,$0
+	blt	$18,$43		# if we are -1, -2, -3 or -4 goto tail code
+	ldq	$20,0($17)	# 1 1
+	ldq	$1,0($16)	# 1 1
+	.align 3
+$42:
+	mulq	$20,$19,$5	# 1 2 1	######
+	ldq	$21,8($17)	# 2 1
+	ldq	$2,8($16)	# 2 1
+	umulh	$20,$19,$20	# 1 2	######
+	ldq	$27,16($17)	# 3 1
+	ldq	$3,16($16)	# 3 1
+	mulq	$21,$19,$6	# 2 2 1	######
+	 ldq	$28,24($17)	# 4 1
+	addq	$1,$5,$1	# 1 2 2
+	 ldq	$4,24($16)	# 4 1
+	umulh	$21,$19,$21	# 2 2	######
+	 cmpult	$1,$5,$22	# 1 2 3 1
+	addq	$20,$22,$20	# 1 3 1
+	 addq	$1,$0,$1	# 1 2 3 1
+	mulq	$27,$19,$7	# 3 2 1	######
+	 cmpult	$1,$0,$0	# 1 2 3 2
+	addq	$2,$6,$2	# 2 2 2
+	 addq	$20,$0,$0	# 1 3 2 
+	cmpult	$2,$6,$23	# 2 2 3 1
+	 addq	$21,$23,$21	# 2 3 1
+	umulh	$27,$19,$27	# 3 2	######
+	 addq	$2,$0,$2	# 2 2 3 1
+	cmpult	$2,$0,$0	# 2 2 3 2
+	 subq	$18,4,$18
+	mulq	$28,$19,$8	# 4 2 1	######
+	 addq	$21,$0,$0	# 2 3 2 
+	addq	$3,$7,$3	# 3 2 2
+	 addq	$16,32,$16
+	cmpult	$3,$7,$24	# 3 2 3 1
+	 stq	$1,-32($16)	# 1 2 4
+	umulh	$28,$19,$28	# 4 2	######
+	 addq	$27,$24,$27	# 3 3 1
+	addq	$3,$0,$3	# 3 2 3 1
+	 stq	$2,-24($16)	# 2 2 4
+	cmpult	$3,$0,$0	# 3 2 3 2
+	 stq	$3,-16($16)	# 3 2 4
+	addq	$4,$8,$4	# 4 2 2
+	 addq	$27,$0,$0	# 3 3 2 
+	cmpult	$4,$8,$25	# 4 2 3 1
+	 addq	$17,32,$17
+	addq	$28,$25,$28	# 4 3 1
+	 addq	$4,$0,$4	# 4 2 3 1
+	cmpult	$4,$0,$0	# 4 2 3 2
+	 stq	$4,-8($16)	# 4 2 4
+	addq	$28,$0,$0	# 4 3 2 
+	 blt	$18,$43
+
+	ldq	$20,0($17)	# 1 1
+	ldq	$1,0($16)	# 1 1
+
+	br	$42
+
+	.align 4
+$45:
+	ldq	$20,0($17)	# 4 1
+	ldq	$1,0($16)	# 4 1
+	mulq	$20,$19,$5	# 4 2 1
+	subq	$18,1,$18
+	addq	$16,8,$16
+	addq	$17,8,$17
+	umulh	$20,$19,$20	# 4 2
+	addq	$1,$5,$1	# 4 2 2
+	cmpult	$1,$5,$22	# 4 2 3 1
+	addq	$20,$22,$20	# 4 3 1
+	addq	$1,$0,$1	# 4 2 3 1
+	cmpult	$1,$0,$0	# 4 2 3 2
+	addq	$20,$0,$0	# 4 3 2 
+	stq	$1,-8($16)	# 4 2 4
+	bgt	$18,$45
+	ret	$31,($26),1	# else exit
+
+	.align 4
+$43:
+	addq	$18,4,$18
+	bgt	$18,$45		# goto tail code
+	ret	$31,($26),1	# else exit
+
 	.end bn_mul_add_words
 	.align 3
 	.globl bn_mul_words
@@ -3321,4 +3197,3 @@ bn_sqr_comba8..ng:
 	stq	$8,	120($16)
 	ret	$31,($26),1
 	.end bn_sqr_comba8
-
