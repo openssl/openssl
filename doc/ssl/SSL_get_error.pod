@@ -69,6 +69,17 @@ to read data.  This is mainly because TLS/SSL handshakes may occur at any
 time during the protocol (initiated by either the client or the server);
 SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
 
+=item SSL_ERROR_WANT_CONNECT
+
+The operation did not complete; the same TLS/SSL I/O function should be
+called again later. The underlying BIO was not connected yet to the peer
+and the call would block in connect(). The SSL function should be
+called again when the connection is established. This messages can only
+appear with a BIO_s_connect() BIO.
+In order to find out, when the connection has been successfully established,
+on many platforms select() or poll() for writing on the socket file descriptor
+can be used.
+
 =item SSL_ERROR_WANT_X509_LOOKUP
 
 The operation did not complete because an application callback set by
