@@ -184,17 +184,17 @@ int RAND_poll(void)
 	HWND h;
 
 	HMODULE advapi, kernel, user, netapi;
-	CRYPTACQUIRECONTEXT acquire;
-	CRYPTGENRANDOM gen;
-	CRYPTRELEASECONTEXT release;
-	NETSTATGET netstatget;
-	NETFREE netfree;
+	CRYPTACQUIRECONTEXT acquire = 0;
+	CRYPTGENRANDOM gen = 0;
+	CRYPTRELEASECONTEXT release = 0;
+	NETSTATGET netstatget = 0;
+	NETFREE netfree = 0;
 
 	/* load functions dynamically - not available on all systems */
-	advapi = GetModuleHandle("ADVAPI32.DLL");
-	kernel = GetModuleHandle("KERNEL32.DLL");
-	user = GetModuleHandle("USER32.DLL");
-	netapi = GetModuleHandle("NETAPI32.DLL");
+	advapi = LoadLibrary("ADVAPI32.DLL");
+	kernel = LoadLibrary("KERNEL32.DLL");
+	user = LoadLibrary("USER32.DLL");
+	netapi = LoadLibrary("NETAPI32.DLL");
 
 	if (netapi)
 		{
@@ -218,6 +218,9 @@ int RAND_poll(void)
 			}
 		}
 
+	if (netapi)
+		FreeLibrary(netapi);
+ 
 	/* Read Performance Statistics from NT/2000 registry */
 	/* The size of the performance data can vary from call to call */
 	/* so we must guess the size of the buffer to use and increase */
@@ -289,6 +292,9 @@ int RAND_poll(void)
 			}
 		}
 
+        if (advapi)
+		FreeLibrary(advapi);
+
 	/* timer data */
 	readtimer();
 	
@@ -347,6 +353,8 @@ int RAND_poll(void)
 			w = queue(QS_ALLEVENTS);
 			RAND_add(&w, sizeof(w), 0);
 			}
+
+		FreeLibrary(user);
 		}
 
 	/* Toolhelp32 snapshot: enumerate processes, threads, modules and heap
@@ -443,6 +451,8 @@ int RAND_poll(void)
 			
 			CloseHandle(handle);
 			}
+
+		FreeLibrary(kernel);
 		}
 
 #ifdef DEBUG
