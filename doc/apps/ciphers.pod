@@ -50,6 +50,8 @@ print a brief usage message.
 a cipher list to convert to a cipher preference list. If it is not included
 then the default cipher list will be used. The format is described below.
 
+=back
+
 =head1 CIPHER LIST FORMAT
 
 The cipher list consists of one or more I<cipher strings> separated by colons.
