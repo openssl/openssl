@@ -576,7 +576,7 @@ size_t BIO_ctrl_get_write_guarantee(BIO *bio)
 	return BIO_ctrl(bio, BIO_C_GET_WRITE_GUARANTEE, 0, NULL);
 	}
 
-size_t BIO_ctrl_read_request(BIO *bio)
+size_t BIO_ctrl_get_read_request(BIO *bio)
     {
 	return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
 	}
