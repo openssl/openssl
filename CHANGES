@@ -28,10 +28,13 @@
      session resumption is possible only in the first handshake.
      [Bodo Moeller]
 
-  *) Fix ssl3_accept (ssl/s3_srvr.c): Do not call ssl_init_wbio_buffer()
-     when just sending a HelloRequest as this could interfere with
-     application data writes (and is totally unnecessary).
-     [Bodo Moeller; bug pointed out by Eric Rescorla <ekr@rtfm.com>]
+  *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
+     should end in 'break', not 'goto end' which circuments various
+     cleanups.
+
+     Also avoid some overhead by not calling ssl_init_wbio_buffer()
+     before just sending a HelloRequest.
+     [Bodo Moeller]
 
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC

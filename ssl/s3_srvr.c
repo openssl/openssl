@@ -273,9 +273,7 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_HELLO_REQ_C:
 			s->state=SSL_ST_OK;
-			ret=1;
-			goto end;
-			/* break; */
+			break;
 
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
