@@ -293,8 +293,8 @@ errors:
 	perl util/mkerr.pl -recurse -write
 
 tar:
-	@gtar --no-recursion -cvf - \
-		`find * -depth -print | grep -v CVS | grep -v .cvsignore | grep -v STATUS | sort` |\
+	@tar --norecurse -cvf - \
+		`find * -depth \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS | sort` |\
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
 	      --prefix=openssl-$(VERSION) - |\
