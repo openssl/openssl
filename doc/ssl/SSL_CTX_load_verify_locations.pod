@@ -46,7 +46,7 @@ is performed in the ordering of the extension number, regardless of other
 properties of the certificates.
 Use the B<c_rehash> utility to create the necessary links.
 
-The certificates in B<CAfile> are only looked up when required, e.g. when
+The certificates in B<CApath> are only looked up when required, e.g. when
 building the certificate chain or when actually performing the verification
 of a peer certificate.
 
@@ -61,6 +61,9 @@ do not match, the next certificate will be tried. If a first certificate
 matching the parameters is found, the verification process will be performed;
 no other certificates for the same parameters will be searched in case of
 failure.
+
+When building its own certificate chain, an OpenSSL client/server will
+try to fill in missing certificates from B<CAfile>/B<CApath>.
 
 =head1 WARNINGS
 
