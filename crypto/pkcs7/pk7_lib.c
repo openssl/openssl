@@ -310,6 +310,12 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	else	
 		p7i->digest_alg->algorithm=OBJ_nid2obj(EVP_MD_type(dgst));
 
+	if (p7i->digest_alg->parameter != NULL)
+		ASN1_TYPE_free(p7i->digest_alg->parameter);
+	if ((p7i->digest_alg->parameter=ASN1_TYPE_new()) == NULL)
+		goto err;
+	p7i->digest_alg->parameter->type=V_ASN1_NULL;
+
 	p7i->digest_enc_alg->algorithm=OBJ_nid2obj(EVP_PKEY_type(pkey->type));
 
 	if (p7i->digest_enc_alg->parameter != NULL)

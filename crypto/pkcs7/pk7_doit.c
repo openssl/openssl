@@ -65,7 +65,6 @@
 static int add_attribute(STACK **sk, int nid, int atrtype, void *value);
 static ASN1_TYPE *get_attribute(STACK *sk, int nid);
 
-#if 1
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
 	int i,j;
@@ -364,6 +363,11 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 		if (rsk == NULL)
 			return(NULL);
 
+		/* FIXME: this assumes that the passed private key
+		 * corresponds to the first RecipientInfo. This in
+		 * general is not true
+		 */
+
 		ri=(PKCS7_RECIP_INFO *)sk_value(rsk,0);
 #if 0
 		X509_STORE_CTX_init(&s_ctx,xs,NULL,NULL);
@@ -458,7 +462,6 @@ err:
 		Free(tmp);
 	return(out);
 	}
-#endif
 
 int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	{
@@ -569,7 +572,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				EVP_DigestFinal(&ctx_tmp,md_data,&md_len);
 				digest=ASN1_OCTET_STRING_new();
 				ASN1_OCTET_STRING_set(digest,md_data,md_len);
-				PKCS7_add_signed_attribute(si,NID_pkcs9_messageDigest,
+				PKCS7_add_signed_attribute(si,
+					NID_pkcs9_messageDigest,
 					V_ASN1_OCTET_STRING,digest);
 
 				/* Now sign the mess */
@@ -798,7 +802,7 @@ static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 	ASN1_OBJECT *o;
 
 	o=OBJ_nid2obj(nid);
-	if (o == NULL) return(NULL);
+	if (!o || !sk) return(NULL);
 	for (i=0; i<sk_num(sk); i++)
 		{
 		xa=(X509_ATTRIBUTE *)sk_value(sk,i);
@@ -814,27 +818,11 @@ static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 	}
 
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk)
-	{
-	X509_ATTRIBUTE *attr;
+{
 	ASN1_TYPE *astype;
-	int i;
-	if (!sk || !sk_num(sk)) return NULL;
-	/* Search the attributes for a digest */
-	for (i = 0; i < sk_num(sk); i++)
-		{
-		attr = (X509_ATTRIBUTE *) sk_value(sk, i);
-		if (OBJ_obj2nid(attr->object) == NID_pkcs9_messageDigest)
-			{
-			if (!attr->set) return NULL;
-			if (!attr->value.set
-			    || !sk_ASN1_TYPE_num(attr->value.set) )
-			    return NULL;
-			astype = sk_ASN1_TYPE_value(attr->value.set, 0);
-			return astype->value.octet_string;
-			}
-		}
-	return NULL;
-	}
+	if(!(astype = get_attribute(sk, NID_pkcs9_messageDigest))) return NULL;
+	return astype->value.octet_string;
+}
 
 int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	{

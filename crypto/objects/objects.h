@@ -870,6 +870,11 @@ extern "C" {
 #define LN_rc2_64_cbc			"rc2-64-cbc"
 #define NID_rc2_64_cbc			166
 
+#define SN_SMIMECapabilities		"SMIME-CAPS"
+#define LN_SMIMECapabilities		"S/MIME Capabilities"
+#define NID_SMIMECapabilities		167
+#define OBJ_SMIMECapabilities		OBJ_id_pkcs9,15L
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 167
-#define NUM_SN 118
-#define NUM_LN 163
-#define NUM_OBJ 138
+#define NUM_NID 168
+#define NUM_SN 119
+#define NUM_LN 164
+#define NUM_OBJ 139
 
-static unsigned char lvalues[956]={
+static unsigned char lvalues[957]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -205,6 +205,7 @@ static unsigned char lvalues[956]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [931] OBJ_hmacWithSHA1 */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [939] OBJ_id_qt_cps */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [947] OBJ_id_qt_unotice */
+0x0F,                                        /* [955] OBJ_SMIMECapabilities */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -440,6 +441,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-qt-unotice","Policy Qualifier User Notice",NID_id_qt_unotice,8,
 	&(lvalues[947]),0},
 {"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
+{"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,1,
+	&(lvalues[955]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -515,6 +518,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[100]),/* "S" */
 &(nid_objs[41]),/* "SHA" */
 &(nid_objs[64]),/* "SHA1" */
+&(nid_objs[167]),/* "SMIME-CAPS" */
 &(nid_objs[105]),/* "SN" */
 &(nid_objs[16]),/* "ST" */
 &(nid_objs[143]),/* "SXNetID" */
@@ -590,6 +594,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[162]),/* "PBMAC1" */
 &(nid_objs[164]),/* "Policy Qualifier CPS" */
 &(nid_objs[165]),/* "Policy Qualifier User Notice" */
+&(nid_objs[167]),/* "S/MIME Capabilities" */
 &(nid_objs[143]),/* "Strong Extranet ID" */
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
@@ -731,6 +736,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
+&(nid_objs[167]),/* OBJ_SMIMECapabilities             15 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[81]),/* OBJ_ld_ce                        2 5 29 */

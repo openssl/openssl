@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/10 23:56:11 $
+  ______________                           $Date: 1999/05/11 00:52:39 $
 
   DEVELOPMENT STATE
 
@@ -37,9 +37,9 @@
     o Steve is currently working on (in no particular order):
         Proper (or at least usable) certificate chain verification.
         Documentation on X509 V3 extension code.
-        PKCS#12 code cleanup and enhancement.
 	PKCS #8 and PKCS#5 v2.0 support.
 	Private key, certificate and CRL API and implementation.
+	Checking and bugfixing PKCS#7 (S/MIME code).
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were
