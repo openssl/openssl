@@ -69,7 +69,7 @@
 
 EVP_CIPHER *enc;
 
-#define _ITER_ 1000
+#define _ITER_ 2048
 
 #define NOKEYS		0x1
 #define NOCERTS 	0x2
