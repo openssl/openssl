@@ -5,8 +5,12 @@
 
  Changes between 0.9.3a and 0.9.4
 
-  *) New configuration variant "bsdi-elf-gcc" (BSD/OS 4.x)
+  *) Additional typesafe stacks.
+     [Ben Laurie]
+
+  *) New configuration variant "bsdi-elf-gcc" (BSD/OS 4.x).
      [Bodo Moeller]
+
 
  Changes between 0.9.3 and 0.9.3a  [29 May 1999]
 
@@ -33,6 +37,7 @@
 
   *) Improvements for VMS support.
      [Richard Levitte]
+
 
  Changes between 0.9.2b and 0.9.3  [24 May 1999]
 
@@ -378,7 +383,7 @@
      [Ulf Möller]
 
   *) Tweaks to Configure
-     Niels Poppe <niels@netbox.org>
+     [Niels Poppe <niels@netbox.org>]
 
   *) Add support for PKCS#5 v2.0 ASN1 PBES2 structures. No other support,
      yet...

@@ -5,7 +5,7 @@
 perl util\mkfiles.pl >MINFO
 perl util\mk1mf.pl Mingw32 >ms\mingw32.mak
 perl util\mk1mf.pl Mingw32-files >ms\mingw32f.mak
-@rem DLL defintion files
+@rem DLL definition files
 perl util\mkdef.pl 32 libeay >ms\libeay32.def
 if errorlevel 1 goto end
 perl util\mkdef.pl 32 ssleay >ms\ssleay32.def

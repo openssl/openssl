@@ -45,7 +45,7 @@ foreach (@ARGV)
 	if (!&read_options && !defined($ops{$_}))
 		{
 		print STDERR "unknown option - $_\n";
-		print STDERR "usage: perl mk1mf.pl [system] [options]\n";
+		print STDERR "usage: perl mk1mf.pl [options] [system]\n";
 		print STDERR "\nwhere [system] can be one of the following\n";
 		foreach $i (sort keys %ops)
 		{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
