@@ -73,16 +73,6 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 
-#ifdef OPENSSL_SYS_VMS
-# include <builtins.h>
-# define alloca __ALLOCA
-#else
-# include <malloc.h>
-# ifdef _MSC_VER
-#  define alloca _alloca
-# endif
-#endif
-
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_PADLOCK
 
@@ -126,6 +116,13 @@ void ENGINE_load_padlock (void)
 }
 
 #ifdef COMPILE_HW_PADLOCK
+/* We do these includes here to avoid header problems on platforms that
+   do not have the VIA padlock anyway... */
+#include <malloc.h>
+#ifdef _MSC_VER
+# define alloca _alloca
+#endif
+
 /* Function for ENGINE detection and control */
 static int padlock_available(void);
 static int padlock_init(ENGINE *e);
