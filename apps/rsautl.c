@@ -270,7 +270,7 @@ static void usage()
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
 	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
 	BIO_printf(bio_err, "-raw            use no padding\n");
-	BIO_printf(bio_err, "-pkcs           use PKCS#1 v.15 padding (default)\n");
+	BIO_printf(bio_err, "-pkcs           use PKCS#1 v1.5 padding (default)\n");
 	BIO_printf(bio_err, "-oaep           use PKCS#1 OAEP\n");
 	BIO_printf(bio_err, "-sign           sign with private key\n");
 	BIO_printf(bio_err, "-verify         verify with public key\n");
