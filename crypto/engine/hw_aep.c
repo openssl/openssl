@@ -92,7 +92,7 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use);
 /* BIGNUM stuff */
 static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		       const BIGNUM *m, BN_CTX *ctx);
-static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
+static AEP_RV aep_mod_exp_crt(BIGNUM *r, BIGNUM *a,
 			      const BIGNUM *p, const BIGNUM *q,
 			      const BIGNUM *dmp1, const BIGNUM *dmq1,
 			      const BIGNUM *iqmp, BN_CTX *ctx);
@@ -535,7 +535,7 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
   return to_return;
 }
 
-static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
+static AEP_RV aep_mod_exp_crt(BIGNUM *r, BIGNUM *a,
 			      const BIGNUM *p, const BIGNUM *q ,
 			      const BIGNUM *dmp1,const BIGNUM *dmq1,
 			      const BIGNUM *iqmp, BN_CTX *ctx)
