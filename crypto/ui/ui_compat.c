@@ -57,9 +57,9 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/des.h>
-#include <openssl/ui.h>
+#include <openssl/ui_compat.h>
 
+#ifndef OPENSSL_NO_DES
 int des_read_password(des_cblock *key, const char *prompt, int verify)
 	{
 	int ok;
@@ -84,6 +84,7 @@ int des_read_2passwords(des_cblock *key1, des_cblock *key2, const char *prompt,
 	memset(buff,0,BUFSIZ);
 	return(ok);
 	}
+#endif
 
 int des_read_pw_string(char *buf,int length,const char *prompt,int verify)
 	{
