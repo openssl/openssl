@@ -131,6 +131,7 @@
 /* Default PKCS#5 iteration count */
 #define PKCS5_DEFAULT_ITER		2048
 
+#if 0
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
@@ -142,6 +143,7 @@
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+#endif /* 0 */
 
 #include <openssl/objects.h>
 
@@ -762,18 +764,24 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
+
 #ifndef OPENSSL_NO_RSA
-int 		EVP_PKEY_set1_RSA(EVP_PKEY *pkey,RSA *key);
-RSA *		EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
+struct rsa_st;
+int EVP_PKEY_set1_RSA(EVP_PKEY *pkey,struct rsa_st *key);
+struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
 #endif
 #ifndef OPENSSL_NO_DSA
-int 		EVP_PKEY_set1_DSA(EVP_PKEY *pkey,DSA *key);
-DSA *		EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
+struct dsa_st;
+int EVP_PKEY_set1_DSA(EVP_PKEY *pkey,struct dsa_st *key);
+struct dsa_st *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 #endif
 #ifndef OPENSSL_NO_DH
-int 		EVP_PKEY_set1_DH(EVP_PKEY *pkey,DH *key);
-DH *		EVP_PKEY_get1_DH(EVP_PKEY *pkey);
+struct dh_st;
+int EVP_PKEY_set1_DH(EVP_PKEY *pkey,struct dh_st *key);
+struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 #endif
+
+
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
 EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, unsigned char **pp,

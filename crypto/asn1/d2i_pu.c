@@ -62,6 +62,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/asn1.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 	     long length)

@@ -61,6 +61,8 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 	{

@@ -106,10 +106,9 @@ dsa_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 dsa_gen.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 dsa_gen.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 dsa_gen.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-dsa_gen.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-dsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-dsa_gen.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dsa_gen.o: ../cryptlib.h dsa_gen.c
+dsa_gen.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_gen.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_gen.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_gen.c
 dsa_key.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_key.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h

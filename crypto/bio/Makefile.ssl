@@ -113,36 +113,31 @@ b_sock.o: ../cryptlib.h b_sock.c
 bf_buff.o: ../../e_os.h ../../include/openssl/asn1.h
 bf_buff.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 bf_buff.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bf_buff.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 bf_buff.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bf_buff.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 bf_buff.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 bf_buff.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bf_buff.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-bf_buff.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bf_buff.o: ../cryptlib.h bf_buff.c
+bf_buff.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bf_buff.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_buff.c
 bf_nbio.o: ../../e_os.h ../../include/openssl/asn1.h
 bf_nbio.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 bf_nbio.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bf_nbio.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 bf_nbio.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bf_nbio.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 bf_nbio.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 bf_nbio.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bf_nbio.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-bf_nbio.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bf_nbio.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_nbio.c
+bf_nbio.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+bf_nbio.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+bf_nbio.o: ../cryptlib.h bf_nbio.c
 bf_null.o: ../../e_os.h ../../include/openssl/asn1.h
 bf_null.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 bf_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bf_null.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 bf_null.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bf_null.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 bf_null.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 bf_null.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bf_null.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-bf_null.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bf_null.o: ../cryptlib.h bf_null.c
+bf_null.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bf_null.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_null.c
 bio_cb.o: ../../e_os.h ../../include/openssl/bio.h
 bio_cb.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bio_cb.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
