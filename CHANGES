@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Fix 'openssl passwd -1'.
+     [Bodo Moeller]
+
   *) Change PKCS12_key_gen_asc() so it can cope with non null
      terminated strings whose length is passed in the passlen
      parameter, for example from PEM callbacks. This was done
