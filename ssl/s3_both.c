@@ -109,7 +109,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 	unsigned char *p;
 
 	/* the mac has already been generated when we received the
-	 * change cipher spec message and is in s->s3->tmp.in_dgst[12]
+	 * change cipher spec message and is in s->s3->tmp.finish_md
 	 */ 
 
 	n=ssl3_get_message(s,
