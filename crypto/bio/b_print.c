@@ -565,12 +565,12 @@ abs_val(LDOUBLE value)
 }
 
 static LDOUBLE
-pow10(int exp)
+pow10(int in_exp)
 {
     LDOUBLE result = 1;
-    while (exp) {
+    while (in_exp) {
         result *= 10;
-        exp--;
+        in_exp--;
     }
     return result;
 }

@@ -870,7 +870,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	{
 	int is_export,pkl,kl;
-	char *ver,*exp;
+	char *ver,*exp_str;
 	char *kx,*au,*enc,*mac;
 	unsigned long alg,alg2,alg_s;
 	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
@@ -882,7 +882,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	is_export=SSL_C_IS_EXPORT(cipher);
 	pkl=SSL_C_EXPORT_PKEYLENGTH(cipher);
 	kl=SSL_C_EXPORT_KEYLENGTH(cipher);
-	exp=is_export?" export":"";
+	exp_str=is_export?" export":"";
 
 	if (alg & SSL_SSLV2)
 		ver="SSLv2";
@@ -983,7 +983,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	else if (len < 128)
 		return("Buffer too small");
 
-	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp);
+	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp_str);
 	return(buf);
 	}
 
