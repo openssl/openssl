@@ -6,7 +6,7 @@
 
   *) Support for ASN1 "NULL" type. This could be handled before by using
      ASN1_TYPE but there wasn't any function that would try to read a NULL
-     and produce an error if it couldn't. For compatability we also have
+     and produce an error if it couldn't. For compatibility we also have
      ASN1_NULL_new() and ASN1_NULL_free() functions but these are faked and
      don't allocate anything because they don't need to.
      [Steve Henson]
@@ -165,7 +165,7 @@
      public keys in a format compatible with certificate
      SubjectPublicKeyInfo structures. Unfortunately there were already
      functions called *_PublicKey_* which used various odd formats so
-     these are retained for compatability: however the DSA variants were
+     these are retained for compatibility: however the DSA variants were
      never in a public release so they have been deleted. Changed dsa/rsa
      utilities to handle the new format: note no releases ever handled public
      keys so we should be OK.
@@ -176,7 +176,7 @@
      require various evil hacks to allow partial transparent handling and
      even then it doesn't work with DER formats. Given the option anything
      other than PKCS#8 should be dumped: but the other formats have to
-     stay in the name of compatability.
+     stay in the name of compatibility.
 
      With public keys and the benefit of hindsight one standard format 
      is used which works with EVP_PKEY, RSA or DSA structures: though
@@ -288,7 +288,7 @@
      functions. An X509_AUX function such as PEM_read_X509_AUX()
      can still read in a certificate file in the usual way but it
      will also read in any additional "auxiliary information". By
-     doing things this way a fair degree of compatability can be
+     doing things this way a fair degree of compatibility can be
      retained: existing certificates can have this information added
      using the new 'x509' options. 
 
@@ -351,7 +351,7 @@
 
      Use the random seed file in some applications that previously did not:
           ca,
-          dsaparam -genkey (which also ignored its `-rand' option), 
+          dsaparam -genkey (which also ignored its '-rand' option), 
           s_client,
           s_server,
           x509 (when signing).
@@ -360,9 +360,9 @@
      for RSA signatures we could do without one.
 
      gendh and gendsa (unlike genrsa) used to read only the first byte
-     of each file listed in the `-rand' option.  The function as previously
+     of each file listed in the '-rand' option.  The function as previously
      found in genrsa is now in app_rand.c and is used by all programs
-     that support `-rand'.
+     that support '-rand'.
      [Bodo Moeller]
 
   *) In RAND_write_file, use mode 0600 for creating files;
