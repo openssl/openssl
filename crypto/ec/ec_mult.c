@@ -767,8 +767,6 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 		if ((pre_comp = new_pre_comp = ec_pre_comp_new(group)) == NULL)
 			return 0;
 
-CRYPTO_push_info("ec_wNAF_precompute_mult");
-
 	generator = EC_GROUP_get0_generator(group);
 	if (generator == NULL)
 		{
@@ -909,8 +907,6 @@ CRYPTO_push_info("ec_wNAF_precompute_mult");
 
 	ret = 1;
  err:
-	CRYPTO_pop_info();
-
 	BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
