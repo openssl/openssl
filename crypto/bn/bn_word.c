@@ -87,7 +87,7 @@ BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w)
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
 	{
 	BN_ULONG ret = 0;
-	int i;
+	int i, j;
 
 	bn_check_top(a);
 	w &= BN_MASK2;
@@ -96,6 +96,12 @@ BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
 		/* actually this an error (division by zero) */
 		return 0;
 	if (a->top == 0)
+		return 0;
+
+	/* normalize input (so bn_div_words doesn't complain) */
+	j = BN_BITS2 - BN_num_bits_word(w);
+	w <<= j;
+	if (!BN_lshift(a, a, j))
 		return 0;
 
 	for (i=a->top-1; i>=0; i--)
@@ -109,6 +115,7 @@ BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
 		}
 	if ((a->top > 0) && (a->d[a->top-1] == 0))
 		a->top--;
+	ret >>= j;
 	bn_check_top(a);
 	return(ret);
 	}

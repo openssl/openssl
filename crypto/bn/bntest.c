@@ -98,6 +98,7 @@ int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_);
 int test_rshift1(BIO *bp);
 int test_rshift(BIO *bp,BN_CTX *ctx);
 int test_div(BIO *bp,BN_CTX *ctx);
+int test_div_word(BIO *bp);
 int test_div_recp(BIO *bp,BN_CTX *ctx);
 int test_mul(BIO *bp);
 int test_sqr(BIO *bp,BN_CTX *ctx);
@@ -219,6 +220,10 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_div");
 	if (!test_div(out,ctx)) goto err;
+	BIO_flush(out);
+
+	message(out,"BN_div_word");
+	if (!test_div_word(out)) goto err;
 	BIO_flush(out);
 
 	message(out,"BN_div_recp");
@@ -460,6 +465,62 @@ int test_div(BIO *bp, BN_CTX *ctx)
 	BN_free(&c);
 	BN_free(&d);
 	BN_free(&e);
+	return(1);
+	}
+
+int test_div_word(BIO *bp)
+	{
+	BIGNUM   a,b;
+	BN_ULONG r,s;
+	int i;
+
+	BN_init(&a);
+	BN_init(&b);
+
+	for (i=0; i<num0; i++)
+		{
+		do {
+			BN_bntest_rand(&a,512,-1,0);
+			BN_bntest_rand(&b,BN_BITS2,-1,0);
+			s = b.d[0];
+		} while (!s);
+
+		BN_copy(&b, &a);
+		r = BN_div_word(&b, s);
+
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," / ");
+				BIO_printf(bp,"%lX",s);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&b);
+			BIO_puts(bp,"\n");
+
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," % ");
+				BIO_printf(bp,"%lX",s);
+				BIO_puts(bp," - ");
+				}
+			BIO_printf(bp,"%lX",r);
+			BIO_puts(bp,"\n");
+			}
+		BN_mul_word(&b,s);
+		BN_add_word(&b,r);
+		BN_sub(&b,&a,&b);
+		if(!BN_is_zero(&b))
+		    {
+		    fprintf(stderr,"Division (word) test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(&a);
+	BN_free(&b);
 	return(1);
 	}
 
