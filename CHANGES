@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Bug fix: Montgomery multiplication could produce results with the
+     wrong sign.
+     [Ulf Möller]
+
   *) Add RPM specification openssl.spec and modify it to build three
      packages.  The default package contains applications, application
      documentation and run-time libraries.  The devel package contains
