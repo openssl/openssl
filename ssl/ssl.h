@@ -514,10 +514,12 @@ struct ssl_st
 	int in_handshake;
 	int (*handshake_func)();
 
-	/* Imagine that here's a boolean member "init"
-	 * that is switched as soon as handshake_func becomes
-	 * != 0 for the first time (which is why we don't actually
-	 * need it).
+	/* Imagine that here's a boolean member "init" that is
+	 * switched as soon as SSL_set_{accept/connect}_state
+	 * is called for the first time, so that "state" and
+	 * "handshake_func" are properly initialized.  But as
+	 * handshake_func is == 0 until then, we use this
+	 * test instead of an "init" member.
 	 */
 
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
