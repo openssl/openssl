@@ -137,9 +137,23 @@ int CRYPTO_mem_ctrl(int mode)
 		if (mh_mode & CRYPTO_MEM_CHECK_ON)
 			{
 			mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
-			if (disabling_thread != CRYPTO_thread_id())
+			if (disabling_thread != CRYPTO_thread_id()) /* otherwise we already have the MALLOC2 lock */
 				{
+				/* Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed while
+				 * we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock if
+				 * somebody else holds CRYPTO_LOCK_MALLOC2 (and cannot release it
+				 * because we block entry to this function).
+				 * Give them a chance, first, and then claim the locks in
+				 * appropriate order (long-time lock first).
+				 */
+				CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+				/* Note that after we have waited for CRYPTO_LOCK_MALLOC2
+				 * and CRYPTO_LOCK_MALLOC, we'll still be in the right
+				 * "case" and "if" branch because MemCheck_start and
+				 * MemCheck_stop may never be used while there are multiple
+				 * OpenSSL threads. */
 				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
+				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 				disabling_thread=CRYPTO_thread_id();
 				}
 			}
