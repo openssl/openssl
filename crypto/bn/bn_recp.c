@@ -181,16 +181,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 		{
 		if (j++ > 2)
 			{
-#if 0
-			/* work around some bug:
-			   -1CC0E177F93042B29D309839F8019DB93404D7A395F1E162
-			   5383BF622A20B17E1BAA999336988B82B93F5FB77B55B4B68
-			   9412000000000031 / 298EB5957DBFB8CBB2CC2A9F789D2B5
-			   fails, for example. */
-			ret=BN_div(dv,rem,m,&(recp->N),ctx);
-#else
 			BNerr(BN_F_BN_MOD_MUL_RECIPROCAL,BN_R_BAD_RECIPROCAL);
-#endif
 			goto err;
 			}
 		if (!BN_usub(r,r,&(recp->N))) goto err;
