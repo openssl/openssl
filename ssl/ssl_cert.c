@@ -452,19 +452,19 @@ static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,STACK_OF(X509_NAME)
 	*ca_list=list;
 	}
 
-STACK *SSL_dup_CA_list(STACK *sk)
+STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
 	{
 	int i;
-	STACK *ret;
+	STACK_OF(X509_NAME) *ret;
 	X509_NAME *name;
 
-	ret=sk_new_null();
-	for (i=0; i<sk_num(sk); i++)
+	ret=sk_X509_NAME_new_null();
+	for (i=0; i<sk_X509_NAME_num(sk); i++)
 		{
-		name=X509_NAME_dup((X509_NAME *)sk_value(sk,i));
-		if ((name == NULL) || !sk_push(ret,(char *)name))
+		name=X509_NAME_dup(sk_X509_NAME_value(sk,i));
+		if ((name == NULL) || !sk_X509_NAME_push(ret,name))
 			{
-			sk_pop_free(ret,X509_NAME_free);
+			sk_X509_NAME_pop_free(ret,X509_NAME_free);
 			return(NULL);
 			}
 		}
