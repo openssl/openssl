@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/26 22:25:04 $
+  ______________                           $Date: 2002/12/27 08:09:11 $
 
   DEVELOPMENT STATE
 
@@ -17,7 +17,6 @@
        VMS (>=6.0 on any platform, DEC C)		- ERROR
 							  (errors fixed
 							  PR: 407, 413)
-       Windows XP, with Kerberos 5			- ERROR
        Windows 2000 (Cygwin)				- ERROR
 							  (PR: 404)
        SCO OpenServer, Unixware?			- ERROR
