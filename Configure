@@ -546,7 +546,8 @@ else
 	{
 	$thread_cflags="-DTHREADS $thread_cflag $cflags";
 	$thread_defines .= "#define THREADS\n";
-	foreach my $def (split ' ',$thread_cflag)
+	my $def;
+	foreach $def (split ' ',$thread_cflag)
 		{
 		if ($def =~ s/^-D//)
 			{
