@@ -79,6 +79,7 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "s_apps.h"
 

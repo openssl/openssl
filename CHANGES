@@ -4,7 +4,14 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
-  *) Fix a memory leak in err.c: free err_data string if necessary.
+  *) Fix bug in PKCS#12 key generation routines. This was triggered
+     if a 3DES key was generated with a 0 initial byte. Include
+     PKCS12_BROKEN_KEYGEN compilation option to retain the old
+     (but broken) behaviour.
+     [Steve Henson]
+
+  *) Fix memory leaks in err.c: free err_data string if necessary;
+     don't write to the wrong index in ERR_set_error_data.
      [Bodo Moeller]
 
   *) Implement ssl23_peek (analogous to ssl23_read), which previously
@@ -188,6 +195,21 @@
 
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
+
+  *) Rework the system to generate shared libraries:
+
+     - Make note of the expected extension for the shared libraries and
+       if there is a need for symbolic links from for example libcrypto.so.0
+       to libcrypto.so.0.9.7.  There is extended info in Configure for
+       that.
+
+     - Make as few rebuilds of the shared libraries as possible.
+
+     - Still avoid linking the OpenSSL programs with the shared libraries.
+
+     - When installing, install the shared libraries separately from the
+       static ones.
+     [Richard Levitte]
 
   *) Fix SSL_CTX_set_read_ahead macro to actually use its argument.
 

@@ -194,7 +194,7 @@ err:
 	return (rand_err ? -1 : ret);
 	}
 
-const char *RAND_file_name(char *buf, int size)
+const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
 	char *ret=NULL;
@@ -211,7 +211,7 @@ const char *RAND_file_name(char *buf, int size)
 		{
 		if (OPENSSL_issetugid() == 0)
 			s=getenv("HOME");
-		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
+		if (s != NULL && ((int)(strlen(s)+strlen(RFILE)+2) < size))
 			{
 			strcpy(buf,s);
 #ifndef VMS

@@ -15,8 +15,8 @@ while(<STDIN>) {
     my ($file,$deps)=/^(.*): (.*)$/;
     next if !defined $deps;
     my @deps=split ' ',$deps;
-    @deps=grep(!/^\/usr\/include/,@deps);
-    @deps=grep(!/^\/usr\/lib\/gcc-lib/,@deps);
+    @deps=grep(!/^\//,@deps);
+    @deps=grep(!/^\\$/,@deps);
     push @{$files{$file}},@deps;
 }
 

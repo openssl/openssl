@@ -59,6 +59,8 @@
 #ifndef HEADER_RAND_H
 #define HEADER_RAND_H
 
+#include <stdlib.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -89,7 +91,7 @@ void RAND_seed(const void *buf,int num);
 void RAND_add(const void *buf,int num,double entropy);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
-const char *RAND_file_name(char *file,int num);
+const char *RAND_file_name(char *file,size_t num);
 int RAND_status(void);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path,int bytes);
