@@ -597,14 +597,14 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 /*		if (al == 4)
 			{
 			if (bn_wexpand(rr,8) == NULL) return(0);
-			r->top=8;
+			rr->top=8;
 			bn_mul_comba4(rr->d,a->d,b->d);
 			goto end;
 			}
 		else */ if (al == 8)
 			{
 			if (bn_wexpand(rr,16) == NULL) return(0);
-			r->top=16;
+			rr->top=16;
 			bn_mul_comba8(rr->d,a->d,b->d);
 			goto end;
 			}
