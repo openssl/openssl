@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix to uni2asc() to cope with zero length Unicode strings.
+     These are present in some PKCS#12 files.
+     [Steve Henson]
+
   *) Finish off removing the remaining LHASH function pointer casts.
      There should no longer be any prototype-casting required when using
      the LHASH abstraction, and any casts that remain are "bugs". See
