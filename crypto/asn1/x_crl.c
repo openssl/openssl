@@ -190,20 +190,17 @@ X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
 			}
 		}
 
-	if (ver >= 1)
+	if (ret->extensions != NULL)
 		{
-		if (ret->extensions != NULL)
-			{
-			while (sk_X509_EXTENSION_num(ret->extensions))
-				X509_EXTENSION_free(
-				sk_X509_EXTENSION_pop(ret->extensions));
-			}
-			
-		M_ASN1_D2I_get_EXP_set_opt_type(X509_EXTENSION,ret->extensions,
-						d2i_X509_EXTENSION,
-						X509_EXTENSION_free,0,
-						V_ASN1_SEQUENCE);
+		while (sk_X509_EXTENSION_num(ret->extensions))
+			X509_EXTENSION_free(
+			sk_X509_EXTENSION_pop(ret->extensions));
 		}
+		
+	M_ASN1_D2I_get_EXP_set_opt_type(X509_EXTENSION,ret->extensions,
+					d2i_X509_EXTENSION,
+					X509_EXTENSION_free,0,
+					V_ASN1_SEQUENCE);
 
 	M_ASN1_D2I_Finish(a,X509_CRL_INFO_free,ASN1_F_D2I_X509_CRL_INFO);
 	}

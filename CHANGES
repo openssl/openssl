@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add new -verify -CAfile and -CApath options to the crl program, these
+     will lookup a CRL issuers certificate and verify the signature in a
+     similar way to the verify program. Tidy up the crl program so it
+     no longer acesses structures directly. Make the ASN1 CRL parsing a bit
+     less strict. It will now permit CRL extensions even if it is not
+     a V2 CRL: this will allow it to tolerate some broken CRLs.
+     [Steve Henson]
+
   *) Initialize all non-automatic variables each time one of the openssl
      sub-programs is started (this is necessary as they may be started
      multiple times from the "OpenSSL>" prompt).
