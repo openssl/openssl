@@ -256,7 +256,7 @@ typedef struct x509_attributes_st
 		} value;
 	} X509_ATTRIBUTE;
 
-DECLARE_STACK_OF(X509_ATTRIBUTE);
+DECLARE_STACK_OF(X509_ATTRIBUTE)
 
 typedef struct private_key_st
 	{

@@ -224,8 +224,8 @@ typedef struct POLICYINFO_st {
 	STACK_OF(POLICYQUALINFO) *qualifiers;
 } POLICYINFO;
 
-DECLARE_STACK_OF(POLICYINFO);
-DECLARE_ASN1_SET_OF(POLICYINFO);
+DECLARE_STACK_OF(POLICYINFO)
+DECLARE_ASN1_SET_OF(POLICYINFO)
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
