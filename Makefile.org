@@ -261,7 +261,7 @@ linux-shared:
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
 		-Wl,--whole-archive lib$$i.a \
-		-Wl,--no-whole-archive $$libs -lc ) || exit 1; \
+		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
 	( set -x; \
 		ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -274,7 +274,7 @@ true64-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs -lc ) || exit 1; \
+		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
 	done
 
@@ -286,7 +286,7 @@ solaris-shared:
 		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-h lib$$i.so.${SHLIB_MAJOR} \
-		-z allextract lib$$i.a $$libs -lc ) || exit 1; \
+		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
 	ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		lib$$i.so.${SHLIB_MAJOR}; \
