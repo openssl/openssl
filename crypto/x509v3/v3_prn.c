@@ -66,28 +66,34 @@
 
 /* Print out a name+value stack */
 
-void X509V3_EXT_val_prn(out, val)
+void X509V3_EXT_val_prn(out, val, indent, ml)
 BIO *out;
 STACK *val;
+int indent;
+int ml;
 {
 	int i;
 	CONF_VALUE *nval;
 	if(!val) return;
+	if(!ml) BIO_printf(out, "%*s", indent, "");
 	for(i = 0; i < sk_num(val); i++) {
-		if(i > 0) BIO_printf(out, ", ");
+		if(ml) BIO_printf(out, "%*s", indent, "");
+		else if(i > 0) BIO_printf(out, ", ");
 		nval = (CONF_VALUE *)sk_value(val, i);
 		if(!nval->name) BIO_printf(out, "%s", nval->value);
 		else if(!nval->value) BIO_printf(out, "%s", nval->name);
 		else BIO_printf(out, "%s:%s", nval->name, nval->value);
+		if(ml) BIO_puts(out, "\n");
 	}
 }
 
 /* Main routine: print out a general extension */
 
-int X509V3_EXT_print(out, ext, flag)
+int X509V3_EXT_print(out, ext, flag, indent)
 BIO *out;
 X509_EXTENSION *ext;
 int flag;
+int indent;
 {
 	char *ext_str = NULL, *p, *value = NULL;
 	X509V3_EXT_METHOD *method;	
@@ -101,15 +107,16 @@ int flag;
 			ok = 0;
 			goto err;
 		}
-		BIO_printf(out, value);
+		BIO_printf(out, "%*s%s", indent, "", value);
 	} else if(method->i2v) {
 		if(!(nval = method->i2v(method, ext_str, NULL))) {
 			ok = 0;
 			goto err;
 		}
-		X509V3_EXT_val_prn(out, nval);
+		X509V3_EXT_val_prn(out, nval, indent,
+				 method->ext_flags & X509V3_EXT_MULTILINE);
 	} else if(method->i2r) {
-		if(!method->i2r(method, ext_str, out)) ok = 0;
+		if(!method->i2r(method, ext_str, out, indent)) ok = 0;
 	} else ok = 0;
 
 	err:
@@ -119,15 +126,16 @@ int flag;
 		return ok;
 }
 
-int X509V3_EXT_print_fp(fp, ext, flag)
+int X509V3_EXT_print_fp(fp, ext, flag, indent)
 FILE *fp;
 X509_EXTENSION *ext;
 int flag;
+int indent;
 {
 	BIO *bio_tmp;
 	int ret;
 	if(!(bio_tmp = BIO_new_fp(fp, BIO_NOCLOSE))) return 0;
-	ret = X509V3_EXT_print(bio_tmp, ext, flag);
+	ret = X509V3_EXT_print(bio_tmp, ext, flag, indent);
 	BIO_free(bio_tmp);
 	return ret;
 }

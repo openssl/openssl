@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 143
-#define NUM_SN 114
-#define NUM_LN 139
-#define NUM_OBJ 115
+#define NUM_NID 144
+#define NUM_SN 115
+#define NUM_LN 140
+#define NUM_OBJ 116
 
-static unsigned char lvalues[735]={
+static unsigned char lvalues[740]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -182,6 +182,7 @@ static unsigned char lvalues[735]={
 0x55,0x1D,0x1B,                              /* [725] OBJ_delta_crl */
 0x55,0x1D,0x15,                              /* [728] OBJ_crl_reason */
 0x55,0x1D,0x18,                              /* [731] OBJ_invalidity_date */
+0x2B,0x65,0x01,0x04,0x01,                    /* [734] OBJ_sxnet */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -380,6 +381,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"CRLReason","CRL Reason Code",NID_crl_reason,3,&(lvalues[728]),0},
 {"invalidityDate","Invalidity Date",NID_invalidity_date,3,
 	&(lvalues[731]),0},
+{"SXNetID","Strong Extranet ID",NID_sxnet,5,&(lvalues[734]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -456,6 +458,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[64]),/* "SHA1" */
 &(nid_objs[105]),/* "SN" */
 &(nid_objs[16]),/* "ST" */
+&(nid_objs[143]),/* "SXNetID" */
 &(nid_objs[106]),/* "T" */
 &(nid_objs[102]),/* "UID" */
 &(nid_objs[ 0]),/* "UNDEF" */
@@ -522,6 +525,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[73]),/* "Netscape Revocation Url" */
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
+&(nid_objs[143]),/* "Strong Extranet ID" */
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
 &(nid_objs[133]),/* "Time Stamping" */
@@ -692,6 +696,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[70]),/* OBJ_dsaWithSHA1_2                1 3 14 3 2 27 */
 &(nid_objs[115]),/* OBJ_sha1WithRSA                  1 3 14 3 2 29 */
 &(nid_objs[117]),/* OBJ_ripemd160                    1 3 36 3 2 1 */
+&(nid_objs[143]),/* OBJ_sxnet                        1 3 101 1 4 1 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
 &(nid_objs[119]),/* OBJ_ripemd160WithRSA             1 3 36 3 3 1 2 */

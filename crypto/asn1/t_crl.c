@@ -167,8 +167,10 @@ X509_EXTENSION *ex;
 	obj=X509_EXTENSION_get_object(ex);
 	i2a_ASN1_OBJECT(out,obj);
 	j=X509_EXTENSION_get_critical(ex);
-	BIO_printf(out, ": %s\n%16s", j ? "critical":"","");
-	if(!X509V3_EXT_print(out, ex, 0))
-				 ASN1_OCTET_STRING_print(out,ex->value);
+	BIO_printf(out, ": %s\n", j ? "critical":"","");
+	if(!X509V3_EXT_print(out, ex, 0, 16)) {
+		BIO_printf(out, "%16s", "");
+		ASN1_OCTET_STRING_print(out,ex->value);
+	}
 	BIO_write(out,"\n",1);
 }

@@ -95,7 +95,7 @@ char **argv;
 	for(i = 0; i < count; i++) {
 		ext = X509_get_ext(cert, i);
 		printf("%s\n", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
-		if(!X509V3_EXT_print_fp(stdout, ext, 0)) ERR_print_errors_fp(stderr);
+		if(!X509V3_EXT_print_fp(stdout, ext, 0, 0)) ERR_print_errors_fp(stderr);
 		printf("\n");
 		
 	}

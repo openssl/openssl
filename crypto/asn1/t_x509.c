@@ -201,42 +201,11 @@ X509 *x;
 			obj=X509_EXTENSION_get_object(ex);
 			i2a_ASN1_OBJECT(bp,obj);
 			j=X509_EXTENSION_get_critical(ex);
-			if (BIO_printf(bp,": %s\n%16s",j?"critical":"","") <= 0)
+			if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
 				goto err;
-#if 0
-			pack_type=X509v3_pack_type_by_OBJ(obj);
-			data_type=X509v3_data_type_by_OBJ(obj);
-			
-			if (pack_type == X509_EXT_PACK_STRING)
+			if(!X509V3_EXT_print(bp, ex, 0, 16))
 				{
-				if (X509v3_unpack_string(
-					&str,data_type,
-					X509_EXTENSION_get_data(ex)) == NULL)
-					{
-					/* hmm... */
-					goto err;
-					}
-				if (	(data_type == V_ASN1_IA5STRING) ||
-					(data_type == V_ASN1_PRINTABLESTRING) ||
-					(data_type == V_ASN1_T61STRING))
-					{
-					if (BIO_write(bp,(char *)str->data,
-							str->length) <= 0)
-						goto err;
-					}
-				else if (data_type == V_ASN1_BIT_STRING)
-					{
-					BIO_printf(bp,"0x");
-					for (j=0; j<str->length; j++)
-						{
-						BIO_printf(bp,"%02X",
-							str->data[j]);
-						}
-					}
-				}
-#endif
-			if(!X509V3_EXT_print(bp, ex, 0))
-				{
+				BIO_printf(bp, "%16s", "");
 				ASN1_OCTET_STRING_print(bp,ex->value);
 				}
 			if (BIO_write(bp,"\n",1) <= 0) goto err;

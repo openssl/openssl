@@ -79,7 +79,7 @@ typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, char *ext, STACK
 typedef char * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, char *ext);
 typedef char * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
-typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, char *ext, BIO *out);
+typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, char *ext, BIO *out, int indent);
 typedef char *(*X509V3_EXT_R2I)(struct v3_ext_method *method, char *db, char *value);
 
 /* V3 extension structure */
@@ -123,8 +123,9 @@ typedef struct v3_ext_method X509V3_EXT_METHOD;
 typedef struct v3_ext_ctx X509V3_CTX;
 
 /* ext_flags values */
-#define X509V3_EXT_DYNAMIC 0x1
-#define X509V3_EXT_CTX_DEP 0x2
+#define X509V3_EXT_DYNAMIC	0x1
+#define X509V3_EXT_CTX_DEP	0x2
+#define X509V3_EXT_MULTILINE	0x4
 
 typedef struct {
 int bitnum;
@@ -173,8 +174,17 @@ union {
 } d;
 } GENERAL_NAME;
 
+/* Strong extranet structures */
 
+typedef struct {
+	ASN1_INTEGER *version;
+	STACK /* SXNETID */ *ids;
+} SXNET;
 
+typedef struct {
+	ASN1_INTEGER *zone;
+	ASN1_OCTET_STRING *user;
+} SXNETID;
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
@@ -214,6 +224,16 @@ GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp, long length
 GENERAL_NAME *GENERAL_NAME_new(void);
 void GENERAL_NAME_free(GENERAL_NAME *a);
 STACK *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen, STACK *ret);
+
+int i2d_SXNET(SXNET *a, unsigned char **pp);
+SXNET *d2i_SXNET(SXNET **a, unsigned char **pp, long length);
+SXNET *SXNET_new(void);
+void SXNET_free(SXNET *a);
+
+int i2d_SXNETID(SXNETID *a, unsigned char **pp);
+SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length);
+SXNETID *SXNETID_new(void);
+void SXNETID_free(SXNETID *a);
 
 int i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **pp);
 AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp, long length);
@@ -272,8 +292,8 @@ char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
 int name_cmp(char *name, char *cmp);
 
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag);
-int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag);
+int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
+int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
 #else
 
@@ -289,6 +309,16 @@ GENERAL_NAME *GENERAL_NAME_new();
 void GENERAL_NAME_free();
 STACK *i2v_GENERAL_NAME();
 GENERAL_NAME *v2i_GENERAL_NAME();
+
+int i2d_SXNET();
+SXNET *d2i_SXNET();
+SXNET *SXNET_new();
+void SXNET_free();
+
+int i2d_SXNETID();
+SXNETID *d2i_SXNETID();
+SXNETID *SXNETID_new();
+void SXNETID_free();
 
 int i2d_AUTHORITY_KEYID();
 AUTHORITY_KEYID *d2i_AUTHORITY_KEYID();

@@ -75,7 +75,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID();
 #endif
 
 X509V3_EXT_METHOD v3_akey_id = {
-NID_authority_key_identifier, 0,
+NID_authority_key_identifier, X509V3_EXT_MULTILINE,
 (X509V3_EXT_NEW)AUTHORITY_KEYID_new,
 AUTHORITY_KEYID_free,
 (X509V3_EXT_D2I)d2i_AUTHORITY_KEYID,

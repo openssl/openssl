@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Add a new 'indent' option to some X509V3 extension code. Initial ASN1
+     and display support for Thawte strong extranet extension.
+     [Steve Henson]
+
   *) Add LinuxPPC support.
      [Jeff Dubrule <igor@pobox.org>]
 

@@ -63,7 +63,7 @@
 #include "x509v3.h"
 
 #ifndef NOPROTO
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out);
+static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
 /*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
 */
@@ -143,11 +143,13 @@ PKEY_USAGE_PERIOD *a;
 	Free ((char *)a);
 }
 
-static int i2r_PKEY_USAGE_PERIOD(method, usage, out)
+static int i2r_PKEY_USAGE_PERIOD(method, usage, out, indent)
 X509V3_EXT_METHOD *method;
 PKEY_USAGE_PERIOD *usage;
 BIO *out;
+int indent;
 {
+	BIO_printf(out, "%*s", indent, "");
 	if(usage->notBefore) {
 		BIO_write(out, "Not Before: ", 12);
 		ASN1_GENERALIZEDTIME_print(out, usage->notBefore);

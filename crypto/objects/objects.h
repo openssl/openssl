@@ -754,6 +754,11 @@ extern "C" {
 #define NID_invalidity_date		142
 #define OBJ_invalidity_date		OBJ_ld_ce,24L
 
+#define SN_sxnet			"SXNetID"
+#define LN_sxnet			"Strong Extranet ID"
+#define NID_sxnet			143
+#define OBJ_sxnet			1L,3L,101L,1L,4L,1L
+
 #include "bio.h"
 #include "asn1.h"
 
