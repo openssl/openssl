@@ -240,7 +240,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f .rnd tmp.bntest *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss log
+	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss log
 
 $(DLIBSSL):
 	(cd ../ssl; $(MAKE))
