@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/24 12:40:28 $
+  ______________                           $Date: 2000/03/24 15:08:04 $
 
   DEVELOPMENT STATE
 
@@ -22,6 +22,7 @@
                         solaris-sparcv9-gcc             - passed
                         Mingw32                         - passed
                         VMS/Alpha 7.1 w/ DEC C 5.6-003  - passed
+                        VMS/Alpha 7.2-1 w/ CPQ C 6.2-003- passed
 
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
