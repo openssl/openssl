@@ -59,7 +59,9 @@
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
+#endif
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_RSA
@@ -110,7 +112,9 @@ void ERR_load_crypto_strings(void)
 	ERR_load_ASN1_strings();
 	ERR_load_CONF_strings();
 	ERR_load_CRYPTO_strings();
+#ifndef OPENSSL_NO_EC
 	ERR_load_EC_strings();
+#endif
 	/* skip ERR_load_SSL_strings() because it is not in this library */
 	ERR_load_BIO_strings();
 	ERR_load_PKCS7_strings();	

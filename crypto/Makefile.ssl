@@ -74,7 +74,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making 'files' in crypto/$$i..."; \
+	(cd $$i && echo "making 'files' in crypto/$$i..." && \
 	$(MAKE) PERL='${PERL}' files ); \
 	done;
 
@@ -85,7 +85,7 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@for i in $(SDIRS); do \
-	(cd $$i; echo "making links in crypto/$$i..."; \
+	(cd $$i && echo "making links in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
 	done;
 
@@ -98,14 +98,14 @@ lib:	$(LIBOBJ)
 libs:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making libs in crypto/$$i..."; \
+	(cd $$i && echo "making libs in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
 	done;
 
 tests:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making tests in crypto/$$i..."; \
+	(cd $$i && echo "making tests in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
 	done;
 
@@ -117,14 +117,14 @@ install:
 	done;
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making install in crypto/$$i..."; \
+	(cd $$i && echo "making install in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}'  INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
 	done;
 
 lint:
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making lint in crypto/$$i..."; \
+	(cd $$i && echo "making lint in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' lint ); \
 	done;
 
@@ -134,7 +134,7 @@ depend:
 	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making depend in crypto/$$i..."; \
+	(cd $$i && echo "making depend in crypto/$$i..." && \
 	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' DEPFLAG='${DEPFLAG}' depend ); \
 	done;
 
@@ -142,7 +142,7 @@ clean:
 	rm -f buildinf.h *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making clean in crypto/$$i..."; \
+	(cd $$i && echo "making clean in crypto/$$i..." && \
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' clean ); \
 	done;
 
@@ -151,7 +151,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 	@for i in $(SDIRS) ;\
 	do \
-	(cd $$i; echo "making dclean in crypto/$$i..."; \
+	(cd $$i && echo "making dclean in crypto/$$i..." && \
 	$(MAKE) PERL='${PERL}' CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
 	done;
 

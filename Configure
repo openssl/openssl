@@ -879,7 +879,7 @@ while (<IN>)
 	if ($sdirs) {
 		my $dir;
 		foreach $dir (@skip) {
-			s/$dir//;
+			s/ $dir / /;
 			}
 		}
 	$sdirs = 0 unless /\\$/;
