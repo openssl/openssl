@@ -48,8 +48,11 @@ SHA1_Init(), SHA1_Update() and SHA1_Final() do not return values.
 
 =head1 CONFORMING TO
 
-US Federal Information Processing Standard FIPS 180 (Secure Hash
-Standard), ANSI X9.30
+SHA: US Federal Information Processing Standard FIPS PUB 180 (Secure Hash
+Standard),
+SHA-1: US Federal Information Processing Standard FIPS PUB 180-1 (Secure Hash
+Standard),
+ANSI X9.30
 
 =head1 SEE ALSO
 
