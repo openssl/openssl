@@ -4,6 +4,12 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
+     with the same message size as in ssl3_get_certificate_request().
+     Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
+     messages might inadvertently be reject as too long.
+     [Petr Lampa <lampa@fee.vutbr.cz>]
+
   *) Modified SSL library such that the verify_callback that has been set
      specificly for an SSL object with SSL_set_verify() is actually being
      used. Before the change, a verify_callback set with this function was
