@@ -167,7 +167,7 @@ sub main'sub	{ &out2("subl",@_); }
 sub main'sbb	{ &out2("sbbl",@_); }
 sub main'rotl	{ &out2("roll",@_); }
 sub main'rotr	{ &out2("rorl",@_); }
-sub main'exch	{ &out2("xchg",@_); }
+sub main'exch	{ &out2($_[0]=~/%[a-d][lh]/?"xchgb":"xchgl",@_); }
 sub main'cmp	{ &out2("cmpl",@_); }
 sub main'lea	{ &out2("leal",@_); }
 sub main'mul	{ &out1("mull",@_); }
@@ -208,7 +208,7 @@ sub main'leave	{ &out0("leave"); }
 sub main'cpuid	{ &out0(".byte\t0x0f,0xa2"); }
 sub main'rdtsc	{ &out0(".byte\t0x0f,0x31"); }
 sub main'halt	{ &out0("hlt"); }
-sub main'movz	{ &out2("movzb",@_); }
+sub main'movz	{ &out2("movzbl",@_); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
