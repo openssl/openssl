@@ -307,7 +307,7 @@ static int surewarehk_ctrl(int cmd, long i, void *p, void (*f)())
 			if (CRYPTO_add(&bio->references,1,CRYPTO_LOCK_BIO) > 1)
 				logstream = bio;
 			else
-				ENGINEerr(ENGINE_F_HWCRHK_CTRL,ENGINE_R_BIO_WAS_FREED);
+				ENGINEerr(ENGINE_F_SUREWAREHK_CTRL,ENGINE_R_BIO_WAS_FREED);
 		}
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
@@ -835,7 +835,6 @@ static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA
 {
 	int ret=0;
 	char *hptr=NULL;
-	unsigned char *to=NULL;
 	DSA_SIG *psign=NULL;
 	char msg[64]="ENGINE_dsa_do_sign";
 	if (!p_surewarehk_Dsa_Sign)
@@ -870,7 +869,7 @@ static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA
 	bn_fix_top(psign->s);
 
 err:	
-	if (to)
+	if (psign)
 	{
 		DSA_SIG_free(psign);
 		psign=NULL;
