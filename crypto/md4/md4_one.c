@@ -89,7 +89,7 @@ unsigned char *MD4(const unsigned char *d, unsigned long n, unsigned char *md)
 	}
 #endif
 	MD4_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
+	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
 	return(md);
 	}
 

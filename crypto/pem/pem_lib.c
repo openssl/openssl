@@ -343,7 +343,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		 * NOT taken from the BytesToKey function */
 		EVP_BytesToKey(enc,EVP_md5(),iv,kstr,klen,1,key,NULL);
 
-		if (kstr == (unsigned char *)buf) memset(buf,0,PEM_BUFSIZE);
+		if (kstr == (unsigned char *)buf) OPENSSL_cleanse(buf,PEM_BUFSIZE);
 
 		OPENSSL_assert(strlen(objstr)+23+2*enc->iv_len+13 <= sizeof buf);
 

@@ -201,7 +201,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 err:
 	if (buf != NULL)
 		{
-		memset(buf,0,bytes);
+		OPENSSL_cleanse(buf,bytes);
 		OPENSSL_free(buf);
 		}
 	return(ret);
