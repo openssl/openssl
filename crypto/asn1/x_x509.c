@@ -142,9 +142,10 @@ ASN1_METHOD *X509_asn1_meth(void)
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	x509_meth_num++;
-	return(CRYPTO_get_ex_new_index(x509_meth_num-1,
-		&x509_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(x509_meth_num, &x509_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (x509_meth_num++);
         }
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)

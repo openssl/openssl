@@ -251,9 +251,10 @@ void RSA_free(RSA *r)
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	rsa_meth_num++;
-	return(CRYPTO_get_ex_new_index(rsa_meth_num-1,
-		&rsa_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(rsa_meth_num, &rsa_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (rsa_meth_num++);
         }
 
 int RSA_set_ex_data(RSA *r, int idx, void *arg)

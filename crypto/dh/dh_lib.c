@@ -222,9 +222,10 @@ void DH_free(DH *r)
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	dh_meth_num++;
-	return(CRYPTO_get_ex_new_index(dh_meth_num-1,
-		&dh_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(dh_meth_num, &dh_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (dh_meth_num++);
         }
 
 int DH_set_ex_data(DH *d, int idx, void *arg)

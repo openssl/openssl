@@ -574,9 +574,10 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)())
 int UI_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	ui_meth_num++;
-	return(CRYPTO_get_ex_new_index(ui_meth_num-1,
-		&ui_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(ui_meth_num, &ui_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (ui_meth_num++);
         }
 
 int UI_set_ex_data(UI *r, int idx, void *arg)

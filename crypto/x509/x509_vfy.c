@@ -895,10 +895,10 @@ int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_fu
 	 * That function uses locking, so we don't (usually)
 	 * have to worry about locking here. For the whole cruel
 	 * truth, see crypto/ex_data.c */
-	x509_store_ctx_num++;
-	return CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
-		&x509_store_ctx_method,
-		argl,argp,new_func,dup_func,free_func);
+	if(CRYPTO_get_ex_new_index(x509_store_ctx_num, &x509_store_ctx_method,
+			argl, argp, new_func, dup_func, free_func) < 0)
+		return -1;
+	return (x509_store_ctx_num++);
 	}
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)

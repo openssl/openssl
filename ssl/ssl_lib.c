@@ -2051,9 +2051,10 @@ long SSL_get_verify_result(SSL *ssl)
 int SSL_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
 			 CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
-	ssl_meth_num++;
-	return(CRYPTO_get_ex_new_index(ssl_meth_num-1,
-		&ssl_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(ssl_meth_num, &ssl_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (ssl_meth_num++);
 	}
 
 int SSL_set_ex_data(SSL *s,int idx,void *arg)
@@ -2069,9 +2070,10 @@ void *SSL_get_ex_data(SSL *s,int idx)
 int SSL_CTX_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
 			     CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
-	ssl_ctx_meth_num++;
-	return(CRYPTO_get_ex_new_index(ssl_ctx_meth_num-1,
-		&ssl_ctx_meth,argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(ssl_ctx_meth_num, &ssl_ctx_meth, argl, argp,
+				new_func, dup_func, free_func) < 0)
+		return -1;
+	return (ssl_ctx_meth_num++);
 	}
 
 int SSL_CTX_set_ex_data(SSL_CTX *s,int idx,void *arg)

@@ -91,10 +91,10 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 int SSL_SESSION_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
-	ssl_session_num++;
-	return(CRYPTO_get_ex_new_index(ssl_session_num-1,
-		&ssl_session_meth,
-		argl,argp,new_func,dup_func,free_func));
+	if(CRYPTO_get_ex_new_index(ssl_session_num, &ssl_session_meth, argl,
+				argp, new_func, dup_func, free_func) < 0)
+		return -1;
+	return (ssl_session_num++);
 	}
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
