@@ -255,10 +255,10 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp"
 $ LIB_CONF = "conf,conf_err"
 $ LIB_TXT_DB = "txt_db"
-$ LIB_PKCS7 = "pk7_lib,pkcs7err,pk7_doit"
+$ LIB_PKCS7 = "pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,pk7_mime"
 $ LIB_PKCS12 = "p12_add,p12_attr,p12_bags,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_lib,p12_mac,p12_mutl,"+ -
-	"p12_sbag,p12_utl,pk12err"
+	"p12_sbag,p12_utl,p12_npas,pk12err"
 $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
 $!
