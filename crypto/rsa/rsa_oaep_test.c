@@ -191,7 +191,7 @@ int main()
     unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
     unsigned char ctext_ex[256];
     int plen;
-    int clen;
+    int clen = 0;
     int num;
 
     plen = sizeof(ptext_ex) - 1;
