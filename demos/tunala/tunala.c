@@ -69,8 +69,8 @@ typedef struct _tunala_world_t {
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		const char *dh_file, const char *dh_special, int ctx_options,
-		int out_state, int out_verify, int verify_mode,
+		const char *dh_file, const char *dh_special, int tmp_rsa,
+		int ctx_options, int out_state, int out_verify, int verify_mode,
 		unsigned int verify_depth);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
@@ -102,6 +102,7 @@ static int def_flipped = 0;
 static const char *def_cipher_list = NULL;
 static const char *def_dh_file = NULL;
 static const char *def_dh_special = NULL;
+static int def_tmp_rsa = 1;
 static int def_ctx_options = 0;
 static int def_verify_mode = 0;
 static unsigned int def_verify_depth = 10;
@@ -127,6 +128,7 @@ static const char *helpstring =
 " -cipher <list>         (specifies cipher list to use)\n"
 " -dh_file <path>        (a PEM file containing DH parameters to use)\n"
 " -dh_special <NULL|generate|standard> (see below: def=NULL)\n"
+" -no_tmp_rsa            (don't generate temporary RSA keys)\n"
 " -no_ssl2               (disable SSLv2)\n"
 " -no_ssl3               (disable SSLv3)\n"
 " -no_tls1               (disable TLSv1)\n"
@@ -306,6 +308,7 @@ int main(int argc, char *argv[])
 	const char *cipher_list = def_cipher_list;
 	const char *dh_file = def_dh_file;
 	const char *dh_special = def_dh_special;
+	int tmp_rsa = def_tmp_rsa;
 	int ctx_options = def_ctx_options;
 	int verify_mode = def_verify_mode;
 	unsigned int verify_depth = def_verify_depth;
@@ -427,6 +430,9 @@ next_arg:
 			if(!parse_dh_special(*argv, &dh_special))
 				return 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-no_tmp_rsa") == 0) {
+			tmp_rsa = 0;
+			goto next_arg;
 		} else if(strcmp(*argv, "-no_ssl2") == 0) {
 			ctx_options |= SSL_OP_NO_SSLv2;
 			goto next_arg;
@@ -487,7 +493,7 @@ next_arg:
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
 			cacert, cert, key, dcert, dkey, cipher_list, dh_file,
-			dh_special, ctx_options, out_state, out_verify,
+			dh_special, tmp_rsa, ctx_options, out_state, out_verify,
 			verify_mode, verify_depth)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
@@ -522,8 +528,13 @@ main_loop:
 	/* Now do the select */
 	switch(selector_select(&world.selector)) {
 	case -1:
-		fprintf(stderr, "selector_select returned a badness error.\n");
-		goto shouldnt_happen;
+		if(errno != EINTR) {
+			fprintf(stderr, "selector_select returned a "
+					"badness error.\n");
+			goto shouldnt_happen;
+		}
+		fprintf(stderr, "Warn, selector interrupted by a signal\n");
+		goto main_loop;
 	case 0:
 		fprintf(stderr, "Warn, selector_select returned 0 - signal?""?\n");
 		goto main_loop;
@@ -717,8 +728,8 @@ do_it:
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		const char *dh_file, const char *dh_special, int ctx_options,
-		int out_state, int out_verify, int verify_mode,
+		const char *dh_file, const char *dh_special, int tmp_rsa,
+		int ctx_options, int out_state, int out_verify, int verify_mode,
 		unsigned int verify_depth)
 {
 	SSL_CTX *ctx = NULL, *ret = NULL;
@@ -770,6 +781,9 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 	/* dcert and dkey */
 	if((dcert || dkey) && !ctx_set_cert(ctx, dcert, dkey))
 		goto err;
+	/* temporary RSA key generation */
+	if(tmp_rsa)
+		SSL_CTX_set_tmp_rsa_callback(ctx, cb_generate_tmp_rsa);
 
 	/* cipher_list */
 	if(cipher_list) {

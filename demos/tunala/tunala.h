@@ -149,6 +149,7 @@ int cb_ssl_verify(int ok, X509_STORE_CTX *ctx);
 void cb_ssl_verify_set_output(FILE *fp);
 void cb_ssl_verify_set_depth(unsigned int verify_depth);
 void cb_ssl_verify_set_level(unsigned int level);
+RSA *cb_generate_tmp_rsa(SSL *s, int is_export, int keylength);
 #endif /* !defined(NO_OPENSSL) */
 #endif /* !defined(OPENSSL_NO_BUFFER) */
 

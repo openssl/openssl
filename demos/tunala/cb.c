@@ -129,5 +129,15 @@ void cb_ssl_verify_set_level(unsigned int level)
 		cb_ssl_verify_level = level;
 }
 
+RSA *cb_generate_tmp_rsa(SSL *s, int is_export, int keylength)
+{
+	/* TODO: Perhaps make it so our global key can be generated on-the-fly
+	 * after certain intervals? */
+	static RSA *rsa_tmp = NULL;
+	if(!rsa_tmp)
+		rsa_tmp = RSA_generate_key(keylength, RSA_F4, NULL, NULL);
+	return rsa_tmp;
+}
+
 #endif /* !defined(NO_OPENSSL) */
 
