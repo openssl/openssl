@@ -4,6 +4,9 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Some of the ciphers missed the strength entry (SSL_LOW etc).
+     [Ben Laurie, Lutz Jaenicke]
+
   *) Fix bug in SSL_clear(): bad sessions were not removed (found by
      Yoram Zahavi <YoramZ@gilian.com>).
      [Lutz Jaenicke]
