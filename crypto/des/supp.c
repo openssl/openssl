@@ -87,13 +87,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: supp.c,v 1.4 1999/04/19 21:28:07 ulf Exp $
+ * $Id: supp.c,v 1.5 1999/05/16 12:25:45 bodo Exp $
  */
 
 #include <stdio.h>
 #include "des_locl.h"
 
-void des_cblock_print_file(const des_cblock cb, FILE *fp)
+void des_cblock_print_file(const_des_cblock *cb, FILE *fp)
 {
 	int i;
 	const unsigned int *p = (const unsigned int *)cb;

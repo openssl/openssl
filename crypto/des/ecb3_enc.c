@@ -58,12 +58,14 @@
 
 #include "des_locl.h"
 
-void des_ecb3_encrypt(const des_cblock in, des_cblock out,
+void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,
 	     des_key_schedule ks1, des_key_schedule ks2, des_key_schedule ks3,
 	     int enc)
 	{
 	register DES_LONG l0,l1;
 	DES_LONG ll[2];
+	const unsigned char *in = &(*input)[0];
+	unsigned char *out = &(*output)[0];
 
 	c2l(in,l0);
 	c2l(in,l1);

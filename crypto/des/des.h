@@ -77,8 +77,8 @@ extern "C" {
 #endif
 
 typedef unsigned char des_cblock[8];
-typedef unsigned char *des_cblocks; /* Unfortunately there's no way to say that
-				       we want a multiple of 8 */
+typedef const unsigned char const_des_cblock[8];
+
 typedef struct des_ks_struct
 	{
 	union	{
@@ -87,7 +87,9 @@ typedef struct des_ks_struct
 		 * 8 byte longs */
 		DES_LONG pad[2];
 		} ks;
-#undef _
+#if defined _
+# error "_ is defined, but some strange definition the DES library cannot handle that."
+#endif
 #define _	ks._
 	int weak_key;
 	} des_key_schedule[16];
@@ -143,25 +145,25 @@ OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
 OPENSSL_EXTERN int des_set_weak_key_flag; /* set the weak key flag */
 
 const char *des_options(void);
-void des_ecb3_encrypt(const des_cblock input, des_cblock output,
+void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,
 		      des_key_schedule ks1,des_key_schedule ks2,
 		      des_key_schedule ks3, int enc);
-DES_LONG des_cbc_cksum(const unsigned char *input,des_cblock output,
+DES_LONG des_cbc_cksum(const unsigned char *input,des_cblock *output,
 		       long length,des_key_schedule schedule,
-		       const des_cblock ivec);
+		       const_des_cblock *ivec);
 void des_cbc_encrypt(const unsigned char *input,unsigned char *output,
-		     long length,des_key_schedule schedule,des_cblock ivec,
+		     long length,des_key_schedule schedule,des_cblock *ivec,
 		     int enc);
 void des_ncbc_encrypt(const unsigned char *input,unsigned char *output,
-		      long length,des_key_schedule schedule,des_cblock ivec,
+		      long length,des_key_schedule schedule,des_cblock *ivec,
 		      int enc);
 void des_xcbc_encrypt(const unsigned char *input,unsigned char *output,
-		      long length,des_key_schedule schedule,des_cblock ivec,
-		      const des_cblock inw,const des_cblock outw,int enc);
+		      long length,des_key_schedule schedule,des_cblock *ivec,
+		      const_des_cblock *inw,const_des_cblock *outw,int enc);
 void des_cfb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
-		     long length,des_key_schedule schedule,des_cblock ivec,
+		     long length,des_key_schedule schedule,des_cblock *ivec,
 		     int enc);
-void des_ecb_encrypt(const des_cblock input,des_cblock output,
+void des_ecb_encrypt(const_des_cblock *input,des_cblock *output,
 		     des_key_schedule ks,int enc);
 void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
 void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
@@ -172,29 +174,29 @@ void des_decrypt3(DES_LONG *data, des_key_schedule ks1,
 void des_ede3_cbc_encrypt(const unsigned char *input,unsigned char *output, 
 			  long length,
 			  des_key_schedule ks1,des_key_schedule ks2,
-			  des_key_schedule ks3,des_cblock ivec,int enc);
+			  des_key_schedule ks3,des_cblock *ivec,int enc);
 void des_ede3_cbcm_encrypt(const unsigned char *in,unsigned char *out,
 			   long length,
 			   des_key_schedule ks1,des_key_schedule ks2,
 			   des_key_schedule ks3,
-			   des_cblock ivec1,des_cblock ivec2,
+			   des_cblock *ivec1,des_cblock *ivec2,
 			   int enc);
 void des_ede3_cfb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,des_key_schedule ks1,
 			    des_key_schedule ks2,des_key_schedule ks3,
-			    des_cblock ivec,int *num,int enc);
+			    des_cblock *ivec,int *num,int enc);
 void des_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,des_key_schedule ks1,
 			    des_key_schedule ks2,des_key_schedule ks3,
-			    des_cblock ivec,int *num);
+			    des_cblock *ivec,int *num);
 
-void des_xwhite_in2out(const des_cblock des_key,const des_cblock in_white,
-		       des_cblock out_white);
+void des_xwhite_in2out(const_des_cblock *des_key,const_des_cblock *in_white,
+		       des_cblock *out_white);
 
 int des_enc_read(int fd,void *buf,int len,des_key_schedule sched,
-		 des_cblock iv);
+		 des_cblock *iv);
 int des_enc_write(int fd,const void *buf,int len,des_key_schedule sched,
-		  des_cblock iv);
+		  des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
 #if defined(PERL5) || defined(__FreeBSD__)
 char *des_crypt(const char *buf,const char *salt);
@@ -208,33 +210,33 @@ char *crypt();
 #endif
 #endif
 void des_ofb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
-		     long length,des_key_schedule schedule,des_cblock ivec);
+		     long length,des_key_schedule schedule,des_cblock *ivec);
 void des_pcbc_encrypt(const unsigned char *input,unsigned char *output,
-		      long length,des_key_schedule schedule,des_cblock ivec,
+		      long length,des_key_schedule schedule,des_cblock *ivec,
 		      int enc);
-DES_LONG des_quad_cksum(const unsigned char *input,des_cblocks output,
-			long length,int out_count,des_cblock seed);
-void des_random_seed(des_cblock key);
-void des_random_key(des_cblock ret);
-int des_read_password(des_cblock key,const char *prompt,int verify);
-int des_read_2passwords(des_cblock key1,des_cblock key2,
+DES_LONG des_quad_cksum(const unsigned char *input,des_cblock output[],
+			long length,int out_count,des_cblock *seed);
+void des_random_seed(des_cblock *key);
+void des_random_key(des_cblock *ret);
+int des_read_password(des_cblock *key,const char *prompt,int verify);
+int des_read_2passwords(des_cblock *key1,des_cblock *key2,
 			const char *prompt,int verify);
 int des_read_pw_string(char *buf,int length,const char *prompt,int verify);
-void des_set_odd_parity(des_cblock key);
-int des_is_weak_key(const des_cblock key);
-int des_set_key(const des_cblock key,des_key_schedule schedule);
-int des_key_sched(const des_cblock key,des_key_schedule schedule);
-void des_string_to_key(const char *str,des_cblock key);
-void des_string_to_2keys(const char *str,des_cblock key1,des_cblock key2);
+void des_set_odd_parity(des_cblock *key);
+int des_is_weak_key(const_des_cblock *key);
+int des_set_key(const_des_cblock *key,des_key_schedule schedule);
+int des_key_sched(const_des_cblock *key,des_key_schedule schedule);
+void des_string_to_key(const char *str,des_cblock *key);
+void des_string_to_2keys(const char *str,des_cblock *key1,des_cblock *key2);
 void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
-		       des_key_schedule schedule,des_cblock ivec,int *num,
+		       des_key_schedule schedule,des_cblock *ivec,int *num,
 		       int enc);
 void des_ofb64_encrypt(const unsigned char *in,unsigned char *out,long length,
-		       des_key_schedule schedule,des_cblock ivec,int *num);
+		       des_key_schedule schedule,des_cblock *ivec,int *num);
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 
 /* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file(const des_cblock cb, FILE *fp);
+void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 
 #ifdef FreeBSD
 /* The following functions are not in the normal unix build or the

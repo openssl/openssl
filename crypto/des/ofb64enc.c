@@ -64,7 +64,7 @@
  */
 void des_ofb64_encrypt(register const unsigned char *in,
 	     register unsigned char *out, long length, des_key_schedule schedule,
-	     des_cblock ivec, int *num)
+	     des_cblock *ivec, int *num)
 	{
 	register DES_LONG v0,v1,t;
 	register int n= *num;
@@ -75,7 +75,7 @@ void des_ofb64_encrypt(register const unsigned char *in,
 	unsigned char *iv;
 	int save=0;
 
-	iv=ivec;
+	iv = &(*ivec)[0];
 	c2l(iv,v0);
 	c2l(iv,v1);
 	ti[0]=v0;
@@ -100,7 +100,7 @@ void des_ofb64_encrypt(register const unsigned char *in,
 		{
 		v0=ti[0];
 		v1=ti[1];
-		iv=ivec;
+		iv = &(*ivec)[0];
 		l2c(v0,iv);
 		l2c(v1,iv);
 		}

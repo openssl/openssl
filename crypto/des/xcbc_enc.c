@@ -79,11 +79,14 @@ static unsigned char desx_white_in2out[256]={
 0xA7,0x1C,0xC9,0x09,0x69,0x9A,0x83,0xCF,0x29,0x39,0xB9,0xE9,0x4C,0xFF,0x43,0xAB,
 	};
 
-void des_xwhite_in2out(const des_cblock key, const des_cblock in,
-	     des_cblock out)
+void des_xwhite_in2out(const_des_cblock *des_key, const_des_cblock *in_white,
+	     des_cblock *out_white)
 	{
 	int out0,out1;
 	int i;
+	const unsigned char *key = &(*des_key)[0];
+	const unsigned char *in = &(*in_white)[0];
+	unsigned char *out = &(*out_white)[0];
 
 	out[0]=out[1]=out[2]=out[3]=out[4]=out[5]=out[6]=out[7]=0;
 	out0=out1=0;
@@ -104,9 +107,9 @@ void des_xwhite_in2out(const des_cblock key, const des_cblock in,
 		}
 	}
 
-void des_xcbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-	     des_key_schedule schedule, des_cblock ivec, const des_cblock inw,
-	     const des_cblock outw, int enc)
+void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
+	    long length, des_key_schedule schedule, des_cblock *ivec,
+	    const_des_cblock *inw, const_des_cblock *outw, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
@@ -116,14 +119,14 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in2=inw;
+	in2 = &(*inw)[0];
 	c2l(in2,inW0);
 	c2l(in2,inW1);
-	in2=outw;
+	in2 = &(*outw)[0];
 	c2l(in2,outW0);
 	c2l(in2,outW1);
 
-	iv=ivec;
+	iv = &(*ivec)[0];
 
 	if (enc)
 		{
@@ -148,7 +151,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tout0=tin[0]^outW0; l2c(tout0,out);
 			tout1=tin[1]^outW1; l2c(tout1,out);
 			}
-		iv=ivec;
+		iv = &(*ivec)[0];
 		l2c(tout0,iv);
 		l2c(tout1,iv);
 		}
@@ -180,7 +183,7 @@ void des_xcbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			xor1=tin1;
 			}
 
-		iv=ivec;
+		iv = &(*ivec)[0];
 		l2c(xor0,iv);
 		l2c(xor1,iv);
 		}

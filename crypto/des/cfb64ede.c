@@ -65,7 +65,7 @@
 
 void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	     long length, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3, des_cblock ivec, int *num, int enc)
+	     des_key_schedule ks3, des_cblock *ivec, int *num, int enc)
 	{
 	register DES_LONG v0,v1;
 	register long l=length;
@@ -73,7 +73,7 @@ void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	DES_LONG ti[2];
 	unsigned char *iv,c,cc;
 
-	iv=ivec;
+	iv=&(*ivec)[0];
 	if (enc)
 		{
 		while (l--)
@@ -89,10 +89,10 @@ void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 				v0=ti[0];
 				v1=ti[1];
 
-				iv=ivec;
+				iv = &(*ivec)[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
-				iv=ivec;
+				iv = &(*ivec)[0];
 				}
 			c= *(in++)^iv[n];
 			*(out++)=c;
@@ -115,10 +115,10 @@ void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 				v0=ti[0];
 				v1=ti[1];
 
-				iv=ivec;
+				iv = &(*ivec)[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
-				iv=ivec;
+				iv = &(*ivec)[0];
 				}
 			cc= *(in++);
 			c=iv[n];

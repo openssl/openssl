@@ -73,7 +73,8 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 
 void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	     long length, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3, des_cblock ivec1, des_cblock ivec2, int enc)
+	     des_key_schedule ks3, des_cblock *ivec1, des_cblock *ivec2,
+	     int enc)
     {
     register DES_LONG tin0,tin1;
     register DES_LONG tout0,tout1,xor0,xor1,m0,m1;
@@ -81,8 +82,8 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
     DES_LONG tin[2];
     unsigned char *iv1,*iv2;
 
-    iv1=ivec1;
-    iv2=ivec2;
+    iv1 = &(*ivec1)[0];
+    iv2 = &(*ivec2)[0];
 
     if (enc)
 	{
@@ -125,11 +126,11 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    l2c(tout0,out);
 	    l2c(tout1,out);
 	    }
-	iv1=ivec1;
+	iv1=&(*ivec1)[0];
 	l2c(m0,iv1);
 	l2c(m1,iv1);
 
-	iv2=ivec2;
+	iv2=&(*ivec2)[0];
 	l2c(tout0,iv2);
 	l2c(tout1,iv2);
 	}
@@ -182,11 +183,11 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    xor1=t1;
 	    }
 
-	iv1=ivec1;
+	iv1=&(*ivec1)[0];
 	l2c(m0,iv1);
 	l2c(m1,iv1);
 
-	iv2=ivec2;
+	iv2=&(*ivec2)[0];
 	l2c(xor0,iv2);
 	l2c(xor1,iv2);
 	}
