@@ -67,7 +67,7 @@ struct ec_method_st {
 	/* used by EC_GROUP_new, EC_GROUP_set_GFp, EC_GROUP_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
 	/* int (*group_set)(EC_GROUP *, .....); */
-	int (*group_set_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+	int (*group_set_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	void (*group_finish)(EC_GROUP *);
 	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
@@ -86,7 +86,7 @@ struct ec_method_st {
 	/* TODO: 'set' and 'get' functions for EC_POINTs */
 
 	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
-	size_t (*point2oct)(const EC_GROUP *, EC_POINT *, point_conversion_form_t form,
+	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
 	        unsigned char *buf, size_t len, BN_CTX *);
 	int (*oct2point)(const EC_GROUP *, EC_POINT *,
 	        const unsigned char *buf, size_t len, BN_CTX *);
@@ -96,9 +96,9 @@ struct ec_method_st {
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 
 	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_make_affine */
-	int (*is_at_infinity)(const EC_GROUP *, EC_POINT *);
-	int (*is_on_curve)(const EC_GROUP *, EC_POINT *, BN_CTX *);
-	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+	int (*is_at_infinity)(const EC_GROUP *, const EC_POINT *);
+	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+	int (*make_affine)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 
 
 	/* internal functions */
