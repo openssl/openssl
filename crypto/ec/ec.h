@@ -133,7 +133,7 @@ int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 int EC_POINT_is_at_infinity(const EC_GROUP *, const EC_POINT *);
 int EC_POINT_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 
-int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
 
 
@@ -150,6 +150,7 @@ int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 
 /* Function codes. */
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 117
+#define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 118
 #define EC_F_EC_GROUP_CLEAR_FREE			 103
 #define EC_F_EC_GROUP_COPY				 102
 #define EC_F_EC_GROUP_FREE				 104

@@ -421,7 +421,7 @@ int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *c
 	}
 
 
-int EC_POINT_make_affine(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
+int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	{
 	if (group->meth->make_affine == 0)
 		{

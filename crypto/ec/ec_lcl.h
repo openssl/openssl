@@ -99,7 +99,7 @@ struct ec_method_st {
 	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_make_affine */
 	int (*is_at_infinity)(const EC_GROUP *, const EC_POINT *);
 	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-	int (*make_affine)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
 
 	/* internal functions */
@@ -134,7 +134,7 @@ struct ec_group_st {
 	              * or abused for all kinds of fields, not just GF(p).)
 	              * For characteristic  > 3,  the curve is defined
 	              * by a Weierstrass equation of the form
-	              *     Y^2 = X^3 + a*X + b.
+	              *     y^2 = x^3 + a*x + b.
 	              */
 	int a_is_minus3; /* enable optimized point arithmetics for special case */
 
@@ -197,7 +197,7 @@ int ec_GFp_simple_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC
 int ec_GFp_simple_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 int ec_GFp_simple_is_at_infinity(const EC_GROUP *, const EC_POINT *);
 int ec_GFp_simple_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-int ec_GFp_simple_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int ec_GFp_simple_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 
