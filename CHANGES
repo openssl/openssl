@@ -4,6 +4,10 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Let 'openssl req' fail if an argument to '-newkey' is not
+     recognized instead of using RSA as a default.
+     [Bodo Moeller]
+
   *) Add support for ECC-based ciphersuites from draft-ietf-tls-ecc-01.txt.
      As these are not official, they are not included in "ALL";
      the "ECCdraft" ciphersuite group alias can be used to select them.

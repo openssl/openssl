@@ -383,7 +383,9 @@ int MAIN(int argc, char **argv)
 				}
 			else
 #endif
-				pkey_type=TYPE_RSA;
+				{
+				goto bad;
+				}
 
 			newreq=1;
 			}
