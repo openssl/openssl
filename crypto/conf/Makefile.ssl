@@ -127,9 +127,9 @@ conf_mall.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mall.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 conf_mall.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 conf_mall.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_mall.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-conf_mall.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-conf_mall.o: ../cryptlib.h conf_mall.c
+conf_mall.o: ../../include/openssl/store.h ../../include/openssl/symhacks.h
+conf_mall.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
+conf_mall.o: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_mall.c
 conf_mod.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_mod.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 conf_mod.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
@@ -161,6 +161,6 @@ conf_sap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_sap.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 conf_sap.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 conf_sap.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_sap.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-conf_sap.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-conf_sap.o: ../cryptlib.h conf_sap.c
+conf_sap.o: ../../include/openssl/store.h ../../include/openssl/symhacks.h
+conf_sap.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
+conf_sap.o: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_sap.c
