@@ -17,7 +17,7 @@ SSL_CTX object pointed to by B<ctx> and frees up the allocated memory if the
 the reference count has reached 0.
 
 It also calls the free()ing procedures for indirectly affected items, if
-applicable: the session cacahe, the list of ciphers, the list of Client CAs,
+applicable: the session cache, the list of ciphers, the list of Client CAs,
 the certificates and keys.
 
 =head1 RETURN VALUES

@@ -20,7 +20,7 @@ internal session cache for B<ctx>.
 The sessions in the internal session cache are kept in an
 L<lhash(3)|lhash(3)> type database. It is possible to directly
 access this database e.g. for searching. In parallel, the sessions
-form a linked list which is maintained seperatly from the
+form a linked list which is maintained separately from the
 L<lhash(3)|lhash(3)> operations, so that the database must not be
 modified directly but by using the
 L<SSL_CTX_add_session(3)|SSL_CTX_add_session(3)> family of functions.

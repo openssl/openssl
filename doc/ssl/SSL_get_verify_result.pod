@@ -19,7 +19,7 @@ X509 certificate presented by the peer, if any.
 
 SSL_get_verify_result() can only return one error code while the verification
 of a certificate can fail because of many reasons at the same time. Only
-the last verification error that occured during the processing is available
+the last verification error that occurred during the processing is available
 from SSL_get_verify_result().
 
 The verification result is part of the established session and is restored
@@ -28,7 +28,7 @@ when a session is reused.
 =head1 BUGS
 
 If no peer certificate was presented, the returned result code is
-X509_V_OK. This is because no verification error occured, it does however
+X509_V_OK. This is because no verification error occurred, it does however
 not indicate success. SSL_get_verify_result() is only useful in connection
 with L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>.
 

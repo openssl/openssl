@@ -23,7 +23,7 @@ to check the verification state.
 
 The reference count of the X509 object is incremented by one, so that it
 will not be destroyed when the session containing the peer certificate is
-freed. The X509 object must be explicitely freed using X509_free().
+freed. The X509 object must be explicitly freed using X509_free().
 
 =head1 RETURN VALUES
 

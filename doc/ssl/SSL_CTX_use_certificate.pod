@@ -117,7 +117,7 @@ in the file to the certificate store. The other certificates are added
 to the store of chain certificates using
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>.
 There exists only one extra chain store, so that the same chain is appended
-to both types of certificates, RSA and DSA! If it is not intented to use
+to both types of certificates, RSA and DSA! If it is not intended to use
 both type of certificate at the same time, it is recommended to use the
 SSL_CTX_use_certificate_chain_file() instead of the
 SSL_CTX_use_certificate_file() function in order to allow the use of

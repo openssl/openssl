@@ -13,10 +13,10 @@ SSL_get_client_CA_list, SSL_CTX_get_client_CA_list - get list of client CAs
 
 =head1 DESCRIPTION
 
-SSL_CTX_get_client_CA_list() returns the list of client CAs explicitely set for
+SSL_CTX_get_client_CA_list() returns the list of client CAs explicitly set for
 B<ctx> using L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>.
 
-SSL_get_client_CA_list() returns the list of client CAs explicitely
+SSL_get_client_CA_list() returns the list of client CAs explicitly
 set for B<ssl> using SSL_set_client_CA_list() or B<ssl>'s SSL_CTX object with
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>, when in
 server mode. In client mode, SSL_get_client_CA_list returns the list of
@@ -34,12 +34,12 @@ values:
 
 =item STACK_OF(X509_NAMES)
 
-List of CA names explicitely set (for B<ctx> or in server mode) or send
+List of CA names explicitly set (for B<ctx> or in server mode) or send
 by the server (client mode).
 
 =item NULL
 
-No client CA list was explicitely set (for B<ctx> or in server mode) or
+No client CA list was explicitly set (for B<ctx> or in server mode) or
 the server did not send a list of CAs (client mode).
 
 =back

@@ -15,7 +15,7 @@ SSL_get_peer_cert_chain - get the X509 certificate chain of the peer
 SSL_get_peer_cert_chain() returns a pointer to STACKOF(X509) certificates
 forming the certificate chain of the peer. If called on the client side,
 the stack also contains the peer's certificate; if called on the server
-side, the peer's certificate must be obtained seperately using
+side, the peer's certificate must be obtained separately using
 L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>.
 If the peer did not present a certificate, NULL is returned.
 
