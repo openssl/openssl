@@ -114,9 +114,9 @@ rsa_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_lib.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 rsa_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 rsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rsa_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-rsa_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_lib.o: ../cryptlib.h
+rsa_lib.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+rsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_lib.o: ../../include/openssl/symhacks.h ../cryptlib.h
 rsa_none.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_none.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_none.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
