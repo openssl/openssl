@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c \
-	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c
+	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c
 LIBOBJ= rsa_eay.o rsa_gen.o rsa_lib.o rsa_sign.o rsa_saos.o rsa_err.o \
-	rsa_pk1.o rsa_ssl.o rsa_none.o rsa_oaep.o
+	rsa_pk1.o rsa_ssl.o rsa_none.o rsa_oaep.o rsa_chk.o
 
 SRC= $(LIBSRC)
 
@@ -80,6 +80,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+rsa_chk.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+rsa_chk.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
+rsa_chk.o: ../../include/openssl/stack.h
 rsa_eay.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_eay.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_eay.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h

@@ -4,6 +4,10 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) New function RSA_check_key and new openssl rsa option -check
+     for verifying the consistency of RSA keys.
+     [Ulf Moeller, Bodo Moeller]
+
   *) Various changes to make Win32 compile work: 
      1. Casts to avoid "loss of data" warnings in p5_crpt2.c
      2. Change unsigned int to int in b_dump.c to avoid "signed/unsigned

@@ -147,6 +147,7 @@ RSA *	RSA_new_method(RSA_METHOD *method);
 int	RSA_size(RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
+int	RSA_check_key(RSA *);
 	/* next 4 return -1 on error */
 int	RSA_public_encrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
@@ -248,6 +249,7 @@ char *RSA_get_ex_data(RSA *r, int idx);
 
 /* Function codes. */
 #define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_RSA_CHECK_KEY				 123
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
 #define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
 #define RSA_F_RSA_EAY_PUBLIC_DECRYPT			 103
@@ -284,11 +286,18 @@ char *RSA_get_ex_data(RSA *r, int idx);
 #define RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 110
 #define RSA_R_DATA_TOO_SMALL				 111
 #define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE		 122
+#define RSA_R_DE_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY		 112
+#define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
+#define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
+#define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
+#define RSA_R_N_DOES_NOT_EQUAL_PQ			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121
 #define RSA_R_PADDING_CHECK_FAILED			 114
+#define RSA_R_P_NOT_PRIME				 128
+#define RSA_R_Q_NOT_PRIME				 129
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117
