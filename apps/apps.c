@@ -1217,7 +1217,7 @@ static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_T
 
 void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 {
-	char buf[256];
+	char *buf;
 	char mline = 0;
 	int indent = 0;
 	if(title) BIO_puts(out, title);
@@ -1226,9 +1226,10 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 		indent = 4;
 	}
 	if(lflags == XN_FLAG_COMPAT) {
-		X509_NAME_oneline(nm,buf,256);
-		BIO_puts(out,buf);
+		buf = X509_NAME_oneline(nm, 0, 0);
+		BIO_puts(out, buf);
 		BIO_puts(out, "\n");
+		OPENSSL_free(buf);
 	} else {
 		if(mline) BIO_puts(out, "\n");
 		X509_NAME_print_ex(out, nm, indent, lflags);
