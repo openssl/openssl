@@ -195,7 +195,7 @@ int RAND_poll(void)
 			for (j=0;j<i;j++)
 				{
 				if (randomstats[j].st_ino==st->st_ino &&
-				    randomstats[j].st_dev!=st->st_dev)
+				    randomstats[j].st_dev==st->st_dev)
 					break;
 				}
 			if (j<i)		{ close(fd); continue; }
