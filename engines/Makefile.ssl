@@ -28,7 +28,7 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBNAMES= 4758_cca aep atalla cswift ncipher nuron sureware ubsec
-	
+
 LIBSRC=	e_4758_cca.c \
 	e_aep.c \
 	e_atalla.c \
