@@ -75,7 +75,7 @@ sub asm_finish_cpp
 #define TYPE(a,b)       .type   a,b
 #define SIZE(a,b)       .size   a,b
 
-#if defined(OUT) || defined(BSDI)
+#if defined(OUT) || (defined(BSDI) && !defined(ELF))
 $tmp
 #endif
 
@@ -84,7 +84,7 @@ $tmp
 #define ALIGN	4
 #endif
 
-#ifdef BSDI
+#if defined(BSDI) && !defined(ELF)
 #define OK              1
 #define ALIGN           4
 #undef SIZE
