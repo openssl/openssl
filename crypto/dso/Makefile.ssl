@@ -80,6 +80,12 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+dso_dl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+dso_dl.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
+dso_dl.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+dso_dl.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dso_dl.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+dso_dl.o: ../../include/openssl/stack.h ../cryptlib.h
 dso_dlfcn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_dlfcn.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_dlfcn.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
