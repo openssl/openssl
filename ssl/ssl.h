@@ -358,7 +358,7 @@ struct ssl_ctx_st
 	struct x509_store_st /* X509_STORE */ *cert_store;
 	struct lhash_st /* LHASH */ *sessions;	/* a set of SSL_SESSION's */
 	/* Most session-ids that will be cached, default is
-	 * SSL_SESSION_CACHE_SIZE_DEFAULT. 0 is unlimited. */
+	 * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited. */
 	unsigned long session_cache_size;
 	struct ssl_session_st *session_cache_head;
 	struct ssl_session_st *session_cache_tail;
