@@ -197,6 +197,11 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		break;
 
 	case NID_pkcs7_digest:
+		p7->type=obj;
+		if ((p7->d.digest=PKCS7_DIGEST_new())
+			== NULL) goto err;
+		ASN1_INTEGER_set(p7->d.digest->version,0);
+		break;
 	default:
 		PKCS7err(PKCS7_F_PKCS7_SET_TYPE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 		goto err;
