@@ -58,8 +58,6 @@
 
 #include "des_locl.h"
 
-/* Note that this is inconsistent with other DES functions, in that it doesn't
-   update ivec */
 void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     des_key_schedule schedule, des_cblock *ivec, int enc)
 	{
