@@ -284,3 +284,20 @@ void sk_free(STACK *st)
 	Free((char *)st);
 	}
 
+int sk_num(STACK *st)
+{
+	if(st == NULL) return -1;
+	return st->num;
+}
+
+char *sk_value(STACK *st, int i)
+{
+	if(st == NULL) return NULL;
+	return st->data[i];
+}
+
+char *sk_set(STACK *st, int i, char *value)
+{
+	if(st == NULL) return NULL;
+	return (st->data[i] = value);
+}

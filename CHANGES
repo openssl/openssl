@@ -10,6 +10,18 @@
                                    [23-Dec-1998] down below; but in later
                                    versions, these hyphens are gone.]
 
+  *) New functions sk_num, sk_value and sk_set to replace the previous macros.
+     These are required because of the typesafe stack would otherwise break 
+     existing code. If old code used a structure member which used to be STACK
+     and is now STACK_OF (for example cert in a PKCS7_SIGNED structure) with
+     sk_num or sk_value it would produce an error because the num, data members
+     are not present in STACK_OF. Now it just produces a warning. sk_set
+     replaces the old method of assigning a value to sk_value
+     (e.g. sk_value(x, i) = y) which the library used in a few cases. Any code
+     that does this will no longer work (and should use sk_set instead) but
+     this could be regarded as a "questionable" behaviour anyway.
+     [Steve Henson]
+
   *) Fix most of the other PKCS#7 bugs. The "experimental" code can now
      correctly handle encrypted S/MIME data.
      [Steve Henson]

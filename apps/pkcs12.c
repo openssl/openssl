@@ -69,7 +69,6 @@
 
 EVP_CIPHER *enc;
 
-#define _ITER_ 2048
 
 #define NOKEYS		0x1
 #define NOCERTS 	0x2
@@ -99,7 +98,7 @@ int MAIN(int argc, char **argv)
     int options = 0;
     int chain = 0;
     int badarg = 0;
-    int iter = _ITER_;
+    int iter = PKCS12_DEFAULT_ITER;
     int maciter = 1;
     int twopass = 0;
     int keytype = 0;
@@ -140,7 +139,8 @@ int MAIN(int argc, char **argv)
 #endif
 		else if (!strcmp (*args, "-des3")) enc = EVP_des_ede3_cbc();
 		else if (!strcmp (*args, "-noiter")) iter = 1;
-		else if (!strcmp (*args, "-maciter")) maciter = _ITER_;
+		else if (!strcmp (*args, "-maciter"))
+					 maciter = PKCS12_DEFAULT_ITER;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
 		else if (!strcmp (*args, "-inkey")) {
 		    if (args[1]) {

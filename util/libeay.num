@@ -1625,3 +1625,6 @@ EVP_CIPHER_type                         1649
 EVP_PBE_CipherInit                      1650
 X509V3_add_value_bool_nf                1651
 d2i_ASN1_UINTEGER                       1652
+sk_value                                1653
+sk_num                                  1654
+sk_set                                  1655

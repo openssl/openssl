@@ -73,10 +73,16 @@ typedef struct stack_st
 	int (*comp)();
 	} STACK;
 
-#define sk_num(sk)		((sk)->num)
-#define sk_value(sk,n)		((sk)->data[n])
 
 #define sk_new_null()	sk_new(NULL)
+
+#define M_sk_num(sk)		((sk)->num)
+#define M_sk_value(sk,n)	((sk)->data[n])
+
+int sk_num(STACK *);
+char *sk_value(STACK *, int);
+
+char *sk_set(STACK *, int, char *);
 
 STACK *sk_new(int (*cmp)());
 void sk_free(STACK *);

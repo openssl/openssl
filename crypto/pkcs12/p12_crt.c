@@ -77,7 +77,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	/* Set defaults */
 	if(!nid_cert) nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
 	if(!nid_key) nid_key = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-	if(!iter) iter = 2048;
+	if(!iter) iter = PKCS12_DEFAULT_ITER;
 	if(!mac_iter) mac_iter = 1;
 
 	if(!pkey || !cert) {

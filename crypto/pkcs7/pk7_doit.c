@@ -823,8 +823,8 @@ int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	p7si->auth_attr=sk_dup(sk);
 	for (i=0; i<sk_num(sk); i++)
 		{
-		if ((sk_value(p7si->auth_attr,i)=(char *)X509_ATTRIBUTE_dup(
-			(X509_ATTRIBUTE *)sk_value(sk,i))) == NULL)
+		if ((sk_set(p7si->auth_attr,i,(char *)X509_ATTRIBUTE_dup(
+			(X509_ATTRIBUTE *)sk_value(sk,i)))) == NULL)
 			return(0);
 		}
 	return(1);
@@ -839,8 +839,8 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	p7si->unauth_attr=sk_dup(sk);
 	for (i=0; i<sk_num(sk); i++)
 		{
-		if ((sk_value(p7si->unauth_attr,i)=(char *)X509_ATTRIBUTE_dup(
-			(X509_ATTRIBUTE *)sk_value(sk,i))) == NULL)
+		if ((sk_set(p7si->unauth_attr,i,(char *)X509_ATTRIBUTE_dup(
+			(X509_ATTRIBUTE *)sk_value(sk,i)))) == NULL)
 			return(0);
 		}
 	return(1);
@@ -880,7 +880,7 @@ new_attrib:
 				{
 				X509_ATTRIBUTE_free(attr);
 				attr=X509_ATTRIBUTE_create(nid,atrtype,value);
-				sk_value(*sk,i)=(char *)attr;
+				sk_set(*sk,i,(char *)attr);
 				goto end;
 				}
 			}

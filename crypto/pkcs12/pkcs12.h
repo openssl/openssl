@@ -70,6 +70,11 @@ extern "C" {
 #define PKCS12_IV_ID	2
 #define PKCS12_MAC_ID	3
 
+/* Default iteration count */
+#ifndef PKCS12_DEFAULT_ITER
+#define PKCS12_DEFAULT_ITER	2048
+#endif
+
 #define PKCS12_MAC_KEY_LENGTH 20
 
 #define PKCS12_SALT_LEN	8

@@ -92,11 +92,11 @@ STACK_OF(type) *sk_##type##_new_null() \
 void sk_##type##_free(STACK_OF(type) *sk) \
     { sk_free((STACK *)sk); } \
 int sk_##type##_num(const STACK_OF(type) *sk) \
-    { return sk_num((const STACK *)sk); } \
+    { return M_sk_num((const STACK *)sk); } \
 type *sk_##type##_value(const STACK_OF(type) *sk,int n) \
     { return (type *)sk_value((STACK *)sk,n); } \
 type *sk_##type##_set(STACK_OF(type) *sk,int n,type *v) \
-    { return (type *)(sk_value((STACK *)sk,n)=(char *)v); } \
+    { return (type *)(sk_set((STACK *)sk,n,(char *)v)); } \
 void sk_##type##_zero(STACK_OF(type) *sk) \
     { sk_zero((STACK *)sk); } \
 int sk_##type##_push(STACK_OF(type) *sk,type *v) \

@@ -97,7 +97,7 @@ int CRYPTO_get_ex_new_index(int idx, STACK **skp, long argl, char *argp,
 			goto err;
 			}
 		}
-	sk_value(*skp,idx)=(char *)a;
+	sk_set(*skp,idx, (char *)a);
 	ret=idx;
 err:
 	MemCheck_on();
@@ -127,7 +127,7 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, char *val)
 			}
 		i++;
 		}
-	sk_value(ad->sk,idx)=val;
+	sk_set(ad->sk,idx,val);
 	return(1);
 	}
 

@@ -56,11 +56,11 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 		MemCheck_on();
 		}
 	if (hash_func != NULL)
-		sk_value(names_hash,ret)=(char *)hash_func;
+		sk_set(names_hash,ret,(char *)hash_func);
 	if (cmp_func != NULL)
-		sk_value(names_cmp,ret)= (char *)cmp_func;
+		sk_set(names_cmp,ret,(char *)cmp_func);
 	if (free_func != NULL)
-		sk_value(names_free,ret)=(char *)free_func;
+		sk_set(names_free,ret,(char *)free_func);
 	return(ret);
 	}
 
