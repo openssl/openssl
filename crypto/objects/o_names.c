@@ -61,6 +61,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		{
 		MemCheck_off();
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
+		MemCheck_on();
+		if (!name_funcs) return(0);
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = (int (*)())strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
@@ -68,6 +70,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 					    * to Compaq C is not really
 					    * compatible with a function
 					    * pointer.  -- Richard Levitte*/
+		MemCheck_off();
 		sk_NAME_FUNCS_push(name_funcs_stack,name_funcs);
 		MemCheck_on();
 		}

@@ -621,7 +621,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				x=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,
 					   i2d_X509_ATTRIBUTE,
 					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-				pp=(unsigned char *)OPENSSL_malloc(x);
+				if (!(pp=(unsigned char *)OPENSSL_malloc(x))) goto err;
 				p=pp;
 				i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,
 				           i2d_X509_ATTRIBUTE,
@@ -817,7 +817,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		 */
 		i=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		pp=OPENSSL_malloc(i);
+		if (!(pp=OPENSSL_malloc(i))) goto err;
 		p=pp;
 		i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);

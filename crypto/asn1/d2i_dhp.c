@@ -87,6 +87,7 @@ DH *d2i_DHparams(DH **a, unsigned char **pp, long length)
 		}
 
 	M_ASN1_BIT_STRING_free(bs);
+	bs = NULL;
 
 	M_ASN1_D2I_Finish_2(a);
 

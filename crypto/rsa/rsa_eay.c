@@ -486,11 +486,11 @@ static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	int ret=0;
 	BN_CTX *ctx;
 
-	meth = ENGINE_get_RSA(rsa->engine);
-	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&m1);
 	BN_init(&r1);
 	BN_init(&vrfy);
+	meth = ENGINE_get_RSA(rsa->engine);
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
 	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
 		{

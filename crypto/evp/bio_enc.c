@@ -106,8 +106,8 @@ static int enc_new(BIO *bi)
 	BIO_ENC_CTX *ctx;
 
 	ctx=(BIO_ENC_CTX *)OPENSSL_malloc(sizeof(BIO_ENC_CTX));
-	EVP_CIPHER_CTX_init(&ctx->cipher);
 	if (ctx == NULL) return(0);
+	EVP_CIPHER_CTX_init(&ctx->cipher);
 
 	ctx->buf_len=0;
 	ctx->buf_off=0;

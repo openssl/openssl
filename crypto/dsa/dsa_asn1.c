@@ -84,6 +84,7 @@ DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, unsigned char **pp, long length)
 	if ((ret->s=BN_bin2bn(bs->data,bs->length,ret->s)) == NULL)
 		goto err_bn;
 	M_ASN1_BIT_STRING_free(bs);
+	bs = NULL;
 	M_ASN1_D2I_Finish_2(a);
 
 err_bn:
