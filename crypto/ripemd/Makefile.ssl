@@ -22,7 +22,7 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST=rmdtest.c
-APPS=rmd160.c
+APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=rmd_dgst.c rmd_one.c

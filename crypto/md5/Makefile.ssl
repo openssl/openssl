@@ -30,7 +30,7 @@ ASFLAGS=$(CFLAGS)
 
 GENERAL=Makefile
 TEST=md5test.c
-APPS=md5.c
+APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=md5_dgst.c md5_one.c
