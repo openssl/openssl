@@ -217,6 +217,7 @@ end:
 static int cb_exit(int ec)
 	{
 	EXIT(ec);
+	return(0);		/* To keep some compilers quiet */
 	}
 
 static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
