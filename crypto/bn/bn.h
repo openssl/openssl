@@ -404,9 +404,10 @@ int	BN_gcd(BIGNUM *r,BIGNUM *in_a,BIGNUM *in_b,BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *ret,BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
 		BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);
-int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
+int	BN_is_prime(const BIGNUM *p,int nchecks,
+		void (*callback)(int,int,void *),
 		BN_CTX *ctx,void *cb_arg);
-int	BN_is_prime_fasttest(BIGNUM *p,int nchecks,
+int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
 		void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
 		int do_trial_division);
 void	ERR_load_BN_strings(void );

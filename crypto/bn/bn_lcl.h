@@ -203,7 +203,7 @@ extern "C" {
 	BN_ULLONG t; \
 	t=(BN_ULLONG)(a)*(a); \
 	(r0)=Lw(t); \
-	(r1)=Hw(t); ]
+	(r1)=Hw(t); \
 	}
 
 #elif defined(BN_UMULT_HIGH)

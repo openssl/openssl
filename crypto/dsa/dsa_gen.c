@@ -167,10 +167,12 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 
 			/* step 4 */
 			r = BN_is_prime_fasttest(q, DSS_prime_checks, callback, ctx3, cb_arg, seed_is_random);
+			if (ctx3->tos)
+				goto err;
 			if (r > 0)
-					break;
+				break;
 			if (r != 0)
-					goto err;
+				goto err;
 
 			/* do a callback call */
 			/* step 5 */
