@@ -14,6 +14,23 @@
      functions operate on a caller-supplied key-structure and return
      success/failure rather than returning a key or NULL - this is to
      help make "keygen" another member function of RSA_METHOD etc.
+
+     Example for using the new callback interface:
+
+          int (*my_callback)(int a, int b, BN_GENCB *cb) = ...;
+          void *my_arg = ...;
+          BN_GENCB my_cb;
+
+          BN_GENCB_set(&my_cb, my_callback, my_arg);
+
+          return BN_is_prime_ex(some_bignum, BN_prime_checks, NULL, &cb);
+          /* For the meaning of a, b in calls to my_callback(), see the
+           * documentation of the function that calls the callback.
+           * cb will point to my_cb; my_arg can be retrieved as cb->arg.
+           * my_callback should return 1 if it wants BN_is_prime_ex()
+           * to continue, or 0 to stop.
+           */
+
      [Geoff Thorpe]
 
   *) Change the ZLIB compression method to be stateful, and make it
@@ -25,9 +42,9 @@
      is defined as follows (according to X.509_4thEditionDraftV6.pdf):
 
      CertificatePair ::= SEQUENCE {
-	forward		[0]	Certificate OPTIONAL,
-	reverse		[1]	Certificate OPTIONAL,
-	-- at least one of the pair shall be present -- }
+        forward		[0]	Certificate OPTIONAL,
+        reverse		[1]	Certificate OPTIONAL,
+        -- at least one of the pair shall be present -- }
 
      Also implement the PEM functions to read and write certificate
      pairs, and defined the PEM tag as "CERTIFICATE PAIR".
