@@ -357,7 +357,7 @@ $! Copy a lot of files around.
 $!
 $ SOFTLINKS: 
 $!
-$! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
+$! Tell The User We Are Partly Rebuilding The [.APPS] Directory.
 $!
 $ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
 $!
