@@ -223,27 +223,6 @@ static unsigned long app_info_hash(APP_INFO *a)
 	return(ret);
 	}
 
-static APP_INFO *free_info(APP_INFO *app_info)
-	{
-	APP_INFO *next;
-
-	if (app_info == NULL)
-		return NULL;
-
-	if (--(app_info->references) > 0)
-		return app_info;
-
-	app_info->references = 0;
-
-	next = app_info->next;
-	app_info->next = NULL;	/* Just to make sure */
-
-	Free(app_info);
-	if (next != app_info)
-		return free_info(next);
-	return NULL;
-	}
-		
 static APP_INFO *remove_info()
 	{
 	APP_INFO tmp;
@@ -255,6 +234,12 @@ static APP_INFO *remove_info()
 		if ((ret=(APP_INFO *)lh_delete(amih,(char *)&tmp)) != NULL)
 			{
 			APP_INFO *next=ret->next;
+
+			if (next != NULL)
+				{
+				next->references++;
+				lh_insert(amih,(char *)next);
+				}
 #ifdef LEVITTE_DEBUG
 			if (ret->thread != tmp.thread)
 				{
@@ -263,11 +248,13 @@ static APP_INFO *remove_info()
 				abort();
 				}
 #endif
-			if (next != NULL)
+			if (--(ret->references) <= 0)
 				{
-				lh_insert(amih,(char *)next);
+				ret->next = NULL;
+				if (next != NULL)
+					next->references--;
+				Free(ret);
 				}
-			free_info(ret);
 			}
 		}
 	return(ret);
