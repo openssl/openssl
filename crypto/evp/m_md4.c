@@ -66,7 +66,7 @@
 static EVP_MD md4_md=
 	{
 	NID_md4,
-	NULL,
+	0,
 	MD4_DIGEST_LENGTH,
 	MD4_Init,
 	MD4_Update,
