@@ -188,9 +188,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	COMP_METHOD *comp;
 	const EVP_MD *m;
 	MD5_CTX md;
-	int exp,n,i,j,k,cl;
+	int is_exp,n,i,j,k,cl;
 
-	exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
+	is_exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
 	if (s->s3->tmp.new_compression == NULL)
@@ -262,9 +262,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
 	cl=EVP_CIPHER_key_length(c);
-	j=exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-		 cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
+	j=is_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
+		    cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
+	/* Was j=(is_exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 		(which == SSL3_CHANGE_CIPHER_SERVER_READ))
@@ -292,7 +292,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		}
 
 	memcpy(mac_secret,ms,i);
-	if (exp)
+	if (is_exp)
 		{
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).

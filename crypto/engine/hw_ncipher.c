@@ -164,7 +164,7 @@ static RAND_METHOD hwcrhk_rand =
 	hwcrhk_rand_bytes,
 	NULL,
 	NULL,
-	hwcrhk_rand_bytes,
+	NULL,
 	hwcrhk_rand_status,
 	};
 
@@ -293,6 +293,7 @@ ENGINE *ENGINE_ncipher()
 	{
 	RSA_METHOD *meth1;
 	DH_METHOD *meth2;
+	const RAND_METHOD *meth3;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
@@ -311,6 +312,14 @@ ENGINE *ENGINE_ncipher()
 	meth2 = DH_OpenSSL();
 	hwcrhk_dh.generate_key = meth2->generate_key;
 	hwcrhk_dh.compute_key = meth2->compute_key;
+
+	/* Much the same for RAND */
+	meth3 = RAND_SSLeay();
+	hwcrhk_rand.seed = meth3->seed;
+	hwcrhk_rand.cleanup = meth3->cleanup;
+	hwcrhk_rand.add = meth3->add;
+	hwcrhk_rand.pseudorand = meth3->pseudorand;
+
 	return &engine_hwcrhk;
 	}
 
@@ -386,6 +395,8 @@ static int hwcrhk_init()
 	HWCryptoHook_RSAUnloadKey_t *p7;
 	HWCryptoHook_RandomBytes_t *p8;
 	HWCryptoHook_ModExpCRT_t *p9;
+	int rand_cnt;
+	RAND_METHOD *rand_method = RAND_SSLeay();
 
 	if(hwcrhk_dso != NULL)
 		{
@@ -466,6 +477,28 @@ static int hwcrhk_init()
 		hndidx = RSA_get_ex_new_index(0,
 			"nFast HWCryptoHook RSA key handle",
 			NULL, NULL, hwcrhk_ex_free);
+
+	/* Let's seed the OpenSSL pool with a bit of hardware randomness
+	   for a maximum of 32 rounds.  Beyond that, the OpenSSL random
+	   pool should be good, and if not, we assume something is seriously
+	   wrong with OpenSSL (for now, we let it be and let the user discover
+	   it through normal means.  That may need to change).  */
+	rand_cnt = 32;
+	do
+		{
+		unsigned char buf[8];
+
+		/* If something went wrong, it's OK to just return a fault.
+		   All that may happen is that the OpenSSL randomness pool
+		   is a bit more seeded, and that can't really be a bad thing,
+		   right?  */
+		if (!hwcrhk_rand.bytes(buf, sizeof(buf)))
+			goto err;
+
+		rand_method->seed(buf, sizeof(buf));
+		}
+	while(rand_cnt-- > 0 && rand_method->status());
+
 	return 1;
 err:
 	if(hwcrhk_dso)

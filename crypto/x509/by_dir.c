@@ -329,7 +329,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 				}
 			else
 				{
-				snprintf(b->data,"%s%c%08lx.%s%d",
+				sprintf(b->data,"%s%c%08lx.%s%d",
 					ctx->dirs[i],c,h,postfix,k);
 				}
 			k++;

@@ -63,7 +63,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef FLAT_INC
 #include "e_os.h"
+#else
+#include "../e_os.h"
+#endif
 
 #ifdef NO_BF
 int main(int argc, char *argv[])
