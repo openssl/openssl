@@ -695,7 +695,8 @@ bad:
 			else if (serial == i)
 				{
 				BIO_printf(STDout,"serial=");
-				i2a_ASN1_INTEGER(STDout,x->cert_info->serialNumber);
+				i2a_ASN1_INTEGER(STDout,
+					X509_get_serialNumber(x));
 				BIO_printf(STDout,"\n");
 				}
 			else if (email == i) 
