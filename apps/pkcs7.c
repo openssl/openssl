@@ -89,7 +89,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat;
 	char *infile,*outfile,*prog;
 	int print_certs=0,text=0,noout=0;
-	int ret=0;
+	int ret=1;
 	char *engine=NULL;
 
 	apps_startup();
