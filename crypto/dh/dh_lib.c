@@ -142,16 +142,21 @@ DH *DH_new_method(ENGINE *engine)
 		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(engine)
-		ret->engine = engine;
-	else
+
+	if (engine)
 		{
-		if((ret->engine=ENGINE_get_default_DH()) == NULL)
-			{
-			DHerr(DH_F_DH_NEW,ERR_LIB_ENGINE);
-			OPENSSL_free(ret);
-			return NULL;
-			}
+		if(ENGINE_init(engine))
+			ret->engine = engine;
+		else 
+			ret->engine = NULL;
+		}
+	else
+		ret->engine=ENGINE_get_default_DH();
+	if(ret->engine == NULL)
+		{
+		DHerr(DH_F_DH_NEW,ERR_LIB_ENGINE);
+		OPENSSL_free(ret);
+		return NULL;
 		}
 	meth = ENGINE_get_DH(ret->engine);
 	ret->pad=0;

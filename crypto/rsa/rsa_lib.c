@@ -162,17 +162,23 @@ RSA *RSA_new_method(ENGINE *engine)
 		return(NULL);
 		}
 
-	if (engine == NULL)
+	if (engine)
 		{
-		if((ret->engine=ENGINE_get_default_RSA()) == NULL)
-			{
-			RSAerr(RSA_F_RSA_NEW_METHOD,ERR_LIB_ENGINE);
-			OPENSSL_free(ret);
-			return NULL;
-			}
+		if(ENGINE_init(engine))
+			ret->engine = engine;
+		else 
+			ret->engine = NULL;
 		}
 	else
-		ret->engine=engine;
+		ret->engine=ENGINE_get_default_RSA();
+
+	if(ret->engine == NULL)
+		{
+		RSAerr(RSA_F_RSA_NEW_METHOD,ERR_LIB_ENGINE);
+		OPENSSL_free(ret);
+		return NULL;
+		}
+
 	meth = ENGINE_get_RSA(ret->engine);
 
 	ret->pad=0;

@@ -146,17 +146,24 @@ DSA *DSA_new_method(ENGINE *engine)
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(engine)
-		ret->engine = engine;
-	else
+
+	if (engine)
 		{
-		if((ret->engine=ENGINE_get_default_DSA()) == NULL)
-			{
-			DSAerr(DSA_F_DSA_NEW,ERR_LIB_ENGINE);
-			OPENSSL_free(ret);
-			return NULL;
-			}
+		if(ENGINE_init(engine))
+			ret->engine = engine;
+		else 
+			ret->engine = NULL;
 		}
+	else
+		ret->engine=ENGINE_get_default_DSA();
+
+	if(ret->engine == NULL)
+		{
+		DSAerr(DSA_F_DSA_NEW,ERR_LIB_ENGINE);
+		OPENSSL_free(ret);
+		return NULL;
+		}
+
 	meth = ENGINE_get_DSA(ret->engine);
 	ret->pad=0;
 	ret->version=0;
