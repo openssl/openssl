@@ -12,30 +12,26 @@
      call failed, free the DSA structure.
      [Bodo Moeller]
 
-  *) Add another call level for memory allocation routines, thereby
-     allowing memory allocation callbacks that can be given file
-     name and line number information.  The basic functionality
-     remains, as well as the original possibility to just replace
-     malloc(), realloc() and free().  The new functions that can be
-     registered help users provide variants of malloc(), realloc()
-     and free() that take two extra arguments, a const char* and an
-     int.  To register and find out the current settings for those
-     hooks, the following functions are provided:
+  *) Allowing defining memory allocation callbacks that will be given
+     file name and line number information in additional arguments
+     (a const char* and an int).  The basic functionality remains, as
+     well as the original possibility to just replace malloc(),
+     realloc() and free() by functions that do not know about these
+     additional arguments.  To register and find out the current
+     settings for extended allocation functions, the following
+     functions are provided:
 
 	CRYPTO_set_mem_ex_functions
 	CRYPTO_set_locked_mem_ex_functions
 	CRYPTO_get_mem_ex_functions
 	CRYPTO_get_locked_mem_ex_functions
 
-     They work the same way as the corresponding CRYPTO_set_mem_functions
-     and friends with one exception: giving NULL as arguments will restore
-     the internal hooks to internal routines and will still make the above
-     functions return 1 and not 0.
-
-     This functionality was created as a direct request to add the
-     possibility to interface with the Windows debugging routines
-     _malloc_dbg, _realloc_dbg and _free_dbg.
-     [Richard Levitte]
+     These work the same way as CRYPTO_set_mem_functions and friends.
+     CRYPTO_get_[locked_]mem_functions now writes 0 where such an
+     extended allocation function is enabled.
+     Similarly, CRYPTO_get_[locked_]mem_ex_functions writes 0 where
+     a conventional allocation function is enabled.
+     [Richard Levitte, Bodo Moeller]
 
   *) Fix to uni2asc() to cope with zero length Unicode strings.
      These are present in some PKCS#12 files.

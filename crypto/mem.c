@@ -70,28 +70,36 @@ static int allow_customize_debug = 1;/* exchanging memory-related functions at
                                       * problems when malloc/free pairs
                                       * don't match etc. */
 
-/* may be changed as long as `allow_customize' is set */
-static void *(*malloc_locked_func)(size_t)  = malloc;
-static void (*free_locked_func)(void *)     = free;
+
+
+/* the following pointers may be changed as long as 'allow_customize' is set */
+
 static void *(*malloc_func)(size_t)         = malloc;
+static void *default_malloc_ex(size_t num, const char *file, int line)
+	{ return malloc_func(num); }
+static void *(*malloc_ex_func)(size_t, const char *file, int line)
+        = default_malloc_ex;
+
 static void *(*realloc_func)(void *, size_t)= realloc;
+static void *default_realloc_ex(void *str, size_t num,
+        const char *file, int line)
+	{ return realloc_func(str,num); }
+static void *(*realloc_ex_func)(void *, size_t, const char *file, int line)
+        = default_realloc_ex;
+
 static void (*free_func)(void *)            = free;
 
-static void *crypto_i_malloc_ex(size_t, const char *file, int line);
-static void *crypto_i_realloc_ex(void *, size_t, const char *file, int line);
-static void crypto_i_free_ex(void *);
+static void *(*malloc_locked_func)(size_t)  = malloc;
+static void *default_malloc_locked_ex(size_t num, const char *file, int line)
+	{ return malloc_locked_func(num); }
 static void *(*malloc_locked_ex_func)(size_t, const char *file, int line)
-        = crypto_i_malloc_ex;
-static void (*free_locked_ex_func)(void *)
-        = crypto_i_free_ex;
-static void *(*malloc_ex_func)(size_t, const char *file, int line)
-        = crypto_i_malloc_ex;
-static void *(*realloc_ex_func)(void *, size_t, const char *file, int line)
-        = crypto_i_realloc_ex;
-static void (*free_ex_func)(void *)
-        = crypto_i_free_ex;
+        = default_malloc_locked_ex;
 
-/* may be changed as long as `allow_customize_debug' is set */
+static void (*free_locked_func)(void *)     = free;
+
+
+
+/* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
 #ifdef CRYPTO_MDEBUG
 /* use default functions from mem_dbg.c */
@@ -119,12 +127,12 @@ int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	{
 	if (!allow_customize)
 		return 0;
-	if ((m == NULL) || (r == NULL) || (f == NULL))
+	if ((m == 0) || (r == 0) || (f == 0))
 		return 0;
-	malloc_func=m;
-	realloc_func=r;
+	malloc_func=m; malloc_ex_func=default_malloc_ex;
+	realloc_func=r; realloc_ex_func=default_realloc_ex;
 	free_func=f;
-	malloc_locked_func=m;
+	malloc_locked_func=m; malloc_locked_ex_func=default_malloc_locked_ex;
 	free_locked_func=f;
 	return 1;
 	}
@@ -136,14 +144,13 @@ int CRYPTO_set_mem_ex_functions(
 	{
 	if (!allow_customize)
 		return 0;
-	if (m == NULL) m = crypto_i_malloc_ex;
-	if (r == NULL) r = crypto_i_realloc_ex;
-	if (f == NULL) f = crypto_i_free_ex;
-	malloc_ex_func=m;
-	realloc_ex_func=r;
-	free_ex_func=f;
-	malloc_locked_ex_func=m;
-	free_locked_ex_func=f;
+	if ((m == 0) || (r == 0) || (f == 0))
+		return 0;
+	malloc_func=0; malloc_ex_func=m;
+	realloc_func=0; realloc_ex_func=r;
+	free_func=f;
+	malloc_locked_func=0; malloc_locked_ex_func=m;
+	free_locked_func=f;
 	return 1;
 	}
 
@@ -153,7 +160,7 @@ int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 		return 0;
 	if ((m == NULL) || (f == NULL))
 		return 0;
-	malloc_locked_func=m;
+	malloc_locked_func=m; malloc_locked_ex_func=default_malloc_locked_ex;
 	free_locked_func=f;
 	return 1;
 	}
@@ -164,10 +171,10 @@ int CRYPTO_set_locked_mem_ex_functions(
 	{
 	if (!allow_customize)
 		return 0;
-	if (m == NULL) m = crypto_i_malloc_ex;
-	if (f == NULL) f = crypto_i_free_ex;
-	malloc_locked_ex_func=m;
-	free_locked_ex_func=f;
+	if ((m == NULL) || (f == NULL))
+		return 0;
+	malloc_locked_func=0; malloc_locked_ex_func=m;
+	free_func=f;
 	return 1;
 	}
 
@@ -187,6 +194,7 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 	return 1;
 	}
 
+
 void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
 	void (**f)(void *))
 	{
@@ -200,9 +208,11 @@ void CRYPTO_get_mem_ex_functions(
         void *(**r)(void *, size_t,const char *,int),
 	void (**f)(void *))
 	{
-	if (m != NULL) *m=malloc_ex_func;
-	if (r != NULL) *r=realloc_ex_func;
-	if (f != NULL) *f=free_ex_func;
+	if (m != NULL) *m = (malloc_ex_func != default_malloc_ex) ?
+	                    malloc_ex_func : 0;
+	if (r != NULL) *r = (realloc_ex_func != default_realloc_ex) ?
+	                    realloc_ex_func : 0;
+	if (f != NULL) *f=free_func;
 	}
 
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
@@ -215,8 +225,9 @@ void CRYPTO_get_locked_mem_ex_functions(
         void *(**m)(size_t,const char *,int),
         void (**f)(void *))
 	{
-	if (m != NULL) *m=malloc_locked_ex_func;
-	if (f != NULL) *f=free_locked_ex_func;
+	if (m != NULL) *m = (malloc_locked_ex_func != default_malloc_locked_ex) ?
+	                    malloc_locked_ex_func : 0;
+	if (f != NULL) *f=free_locked_func;
 	}
 
 void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
@@ -260,7 +271,7 @@ void CRYPTO_free_locked(void *str)
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
-	free_locked_ex_func(str);
+	free_locked_func(str);
 	if (free_debug_func != NULL)
 		free_debug_func(NULL, 1);
 	}
@@ -308,7 +319,7 @@ void CRYPTO_free(void *str)
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
-	free_ex_func(str);
+	free_func(str);
 	if (free_debug_func != NULL)
 		free_debug_func(NULL, 1);
 	}
@@ -332,20 +343,4 @@ long CRYPTO_get_mem_debug_options(void)
 	if (get_debug_options_func != NULL)
 		return get_debug_options_func();
 	return 0;
-	}
-
-static void *crypto_i_malloc_ex(size_t num, const char *file, int line)
-	{
-	return malloc_func(num);
-	}
-
-static void *crypto_i_realloc_ex(void *str, size_t num,
-        const char *file, int line)
-	{
-	return realloc_func(str,num);
-	}
-
-static void crypto_i_free_ex(void *str)
-	{
-	free_func(str);
 	}
