@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Get rid of redundant BN file bn_mulw.c, and rename bn_div64 to
+     bn_div_words in alpha.s.
+     [Hannes Reinecke <H.Reinecke@hw.ac.uk> and Ben Laurie]
+
   *) Make sure the RSA OAEP test is skipped under -DRSAref because
      OAEP isn't supported when OpenSSL is built with RSAref.
      [Ulf Moeller <ulf@fitug.de>]

@@ -1,7 +1,7 @@
  # DEC Alpha assember
- # The bn_div64 is actually gcc output but the other parts are hand done.
+ # The bn_div_words is actually gcc output but the other parts are hand done.
  # Thanks to tzeruch@ceddec.com for sending me the gcc output for
- # bn_div64.
+ # bn_div_words.
  # I've gone back and re-done most of routines.
  # The key thing to remeber for the 164 CPU is that while a
  # multiply operation takes 8 cycles, another one can only be issued
@@ -328,11 +328,11 @@ $900:
  #
 .text
 	.align 3
-	.globl bn_div64
-	.ent bn_div64
-bn_div64:
+	.globl bn_div_words
+	.ent bn_div_words
+bn_div_words:
 	ldgp $29,0($27)
-bn_div64..ng:
+bn_div_words..ng:
 	lda $30,-48($30)
 	.frame $30,48,$26,0
 	stq $26,0($30)
@@ -453,7 +453,7 @@ $136:
 	ldq $13,40($30)
 	addq $30,48,$30
 	ret $31,($26),1
-	.end bn_div64
+	.end bn_div_words
 
 	.set noat
 	.text
