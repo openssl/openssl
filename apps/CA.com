@@ -97,10 +97,18 @@ $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.certs]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.crl]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.newcerts]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.private]
+$
 $     OPEN   /WRITE ser_file 'CATOP']serial. 
 $     WRITE ser_file "01"
 $     CLOSE ser_file
 $     APPEND/NEW NL: 'CATOP']index.txt
+$
+$     ! The following is to make sure access() doesn't get confused.  It
+$     ! really needs one file in the directory to give correct answers...
+$     COPY NLA0: 'CATOP'.certs].;
+$     COPY NLA0: 'CATOP'.crl].;
+$     COPY NLA0: 'CATOP'.newcerts].;
+$     COPY NLA0: 'CATOP'.private].;
 $   ENDIF
 $!
 $   IF F$SEARCH(CATOP+".private"+CAKEY) .EQS. ""
