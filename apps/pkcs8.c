@@ -62,6 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
+#include <openssl/engine.h>
 
 #include "apps.h"
 #define PROG pkcs8_main
@@ -70,6 +71,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
+	ENGINE *e = NULL;
 	char **args, *infile = NULL, *outfile = NULL;
 	char *passargin = NULL, *passargout = NULL;
 	BIO *in = NULL, *out = NULL;
@@ -85,9 +87,13 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *pkey;
 	char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
 	int badarg = 0;
+	char *engine=NULL;
+
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
+
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
+
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 	args = argv + 1;
@@ -138,6 +144,11 @@ int MAIN(int argc, char **argv)
 			if (!args[1]) goto bad;
 			passargout= *(++args);
 			}
+		else if (strcmp(*args,"-engine") == 0)
+			{
+			if (!args[1]) goto bad;
+			engine= *(++args);
+			}
 		else if (!strcmp (*args, "-in")) {
 			if (args[1]) {
 				args++;
@@ -170,8 +181,27 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
 		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
+		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		return (1);
 	}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			return (1);
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			return (1);
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");

@@ -70,6 +70,7 @@
 #include <openssl/md5.h>
 #endif
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 int set_hex(char *in,unsigned char *out,int size);
 #undef SIZE
@@ -84,6 +85,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	static const char magic[]="Salted__";
 	char mbuf[8];	/* should be 1 smaller than magic */
 	char *strbuf=NULL;
@@ -101,6 +103,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  16
 	char pname[PROG_NAME_SIZE];
+	char *engine = NULL;
 
 	apps_startup();
 
@@ -140,6 +143,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			passarg= *(++argv);
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if	(strcmp(*argv,"-d") == 0)
 			enc=0;
@@ -241,6 +249,7 @@ bad:
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
+			BIO_printf(bio_err,"%-14s use engine e, possibly a hardware device.\n","-engine e");
 
 			BIO_printf(bio_err,"Cipher Types\n");
 			BIO_printf(bio_err,"des     : 56 bit key DES encryption\n");
@@ -312,6 +321,24 @@ bad:
 			}
 		argc--;
 		argv++;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	if (bufsize != NULL)

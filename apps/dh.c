@@ -69,6 +69,7 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dh_main
@@ -87,11 +88,12 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
-	char *infile,*outfile,*prog;
+	char *infile,*outfile,*prog,*engine;
 
 	apps_startup();
 
@@ -99,6 +101,7 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	engine=NULL;
 	infile=NULL;
 	outfile=NULL;
 	informat=FORMAT_PEM;
@@ -128,6 +131,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if (strcmp(*argv,"-check") == 0)
 			check=1;
@@ -160,10 +168,29 @@ bad:
 		BIO_printf(bio_err," -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());

@@ -69,6 +69,7 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dsaparam_main
@@ -90,11 +91,12 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
-	char *infile,*outfile,*prog,*inrand=NULL;
+	char *infile,*outfile,*prog,*inrand=NULL,*engine=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 

@@ -64,6 +64,7 @@
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG smime_main
@@ -81,6 +82,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
+	ENGINE *e = NULL;
 	int operation = 0;
 	int ret = 0;
 	char **args;
@@ -103,8 +105,9 @@ int MAIN(int argc, char **argv)
 	char *inrand = NULL;
 	int need_rand = 0;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-	args = argv + 1;
+	char *engine=NULL;
 
+	args = argv + 1;
 	ret = 1;
 
 	while (!badarg && *args && *args[0] == '-') {
@@ -153,6 +156,11 @@ int MAIN(int argc, char **argv)
 				inrand = *args;
 			} else badarg = 1;
 			need_rand = 1;
+		} else if (!strcmp(*args,"-engine")) {
+			if (args[1]) {
+				args++;
+				engine = *args;
+			} else badarg = 1;
 		} else if (!strcmp(*args,"-passin")) {
 			if (args[1]) {
 				args++;
@@ -290,12 +298,31 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
 		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
+		BIO_printf (bio_err, "-engine e      use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,  "               load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,  "               the random number generator\n");
 		BIO_printf (bio_err, "cert.pem       recipient certificate(s) for encryption\n");
 		goto end;
 	}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");

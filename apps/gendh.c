@@ -70,6 +70,7 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define DEFBITS	512
 #undef PROG
@@ -81,11 +82,13 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DH *dh=NULL;
 	int ret=1,num=DEFBITS;
 	int g=2;
 	char *outfile=NULL;
 	char *inrand=NULL;
+	char *engine=NULL;
 	BIO *out=NULL;
 
 	apps_startup();
@@ -110,6 +113,11 @@ int MAIN(int argc, char **argv)
 			g=3; */
 		else if (strcmp(*argv,"-5") == 0)
 			g=5;
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -125,15 +133,34 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"usage: gendh [args] [numbits]\n");
 		BIO_printf(bio_err," -out file - output the key to 'file\n");
-		BIO_printf(bio_err," -2    use 2 as the generator value\n");
-	/*	BIO_printf(bio_err," -3    use 3 as the generator value\n"); */
-		BIO_printf(bio_err," -5    use 5 as the generator value\n");
+		BIO_printf(bio_err," -2        - use 2 as the generator value\n");
+	/*	BIO_printf(bio_err," -3        - use 3 as the generator value\n"); */
+		BIO_printf(bio_err," -5        - use 5 as the generator value\n");
+		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
 		goto end;
 		}
 		
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
 		{

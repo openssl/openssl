@@ -58,6 +58,7 @@
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define RSA_SIGN 	1
 #define RSA_VERIFY 	2
@@ -78,6 +79,7 @@ int MAIN(int argc, char **);
 
 int MAIN(int argc, char **argv)
 {
+	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL;
 	char *keyfile = NULL;
@@ -91,6 +93,7 @@ int MAIN(int argc, char **argv)
 	unsigned char *rsa_in = NULL, *rsa_out = NULL, pad;
 	int rsa_inlen, rsa_outlen = 0;
 	int keysize;
+	char *engine=NULL;
 
 	int ret = 1;
 
@@ -113,6 +116,9 @@ int MAIN(int argc, char **argv)
 		} else if(!strcmp(*argv, "-inkey")) {
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
+		} else if(!strcmp(*argv, "-engine")) {
+			if (--argc < 1) badarg = 1;
+			engine = *(++argv);
 		} else if(!strcmp(*argv, "-pubin")) {
 			key_type = KEY_PUBKEY;
 		} else if(!strcmp(*argv, "-certin")) {
@@ -146,6 +152,24 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "A private key is needed for this operation\n");
 		goto end;
 	}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
@@ -268,6 +292,7 @@ static void usage()
 	BIO_printf(bio_err, "-inkey file     input key\n");
 	BIO_printf(bio_err, "-pubin          input is an RSA public\n");
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
+	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
 	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
 	BIO_printf(bio_err, "-raw            use no padding\n");
 	BIO_printf(bio_err, "-pkcs           use PKCS#1 v1.5 padding (default)\n");

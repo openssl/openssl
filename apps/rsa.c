@@ -68,6 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	rsa_main
@@ -90,6 +91,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,badops=0, sgckey=0;
@@ -100,6 +102,7 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
+	char *engine=NULL;
 	int modulus=0;
 
 	apps_startup();
@@ -148,6 +151,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
 		else if (strcmp(*argv,"-sgckey") == 0)
 			sgckey=1;
 		else if (strcmp(*argv,"-pubin") == 0)
@@ -195,10 +203,29 @@ bad:
 		BIO_printf(bio_err," -check          verify key consistency\n");
 		BIO_printf(bio_err," -pubin          expect a public key in input file\n");
 		BIO_printf(bio_err," -pubout         output a public key\n");
+		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
