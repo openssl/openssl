@@ -271,8 +271,10 @@ extern "C" {
 #      include <sys/types.h>
 #    endif
 #    ifdef NeXT
-#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP */
-#      define ssize_t long
+#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
+                         * (unless when compiling with -D_POSIX_SOURCE,
+                         * which doesn't work for us) */
+#      define ssize_t int /* ditto */
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
