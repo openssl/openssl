@@ -146,10 +146,10 @@
 
 
 /* Compute
- *      \sum scalars[i]*points[i]
- * where
+ *      \sum scalars[i]*points[i],
+ * also including
  *      scalar*generator
- * is included in the addition if scalar != NULL
+ * in the addition if scalar != NULL
  */
 int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
