@@ -57,17 +57,9 @@
  */
 
 #include <openssl/e_os2.h>
-/* The following defines enable the declaration of strdup(), which is an
-   extended function according to X/Open. */
-#ifdef OPENSSL_SYS_VMS_DECC
-# define _XOPEN_SOURCE_EXTENDED
-#endif
-#ifdef OPENSSL_SYS_UNIX
-/* # define _XOPEN_SOURCE */
-# define _XOPEN_SOURCE_EXTENDED	/* For Linux and probably anything GNU */
-#endif
 #include <stdio.h>
-#include <string.h>
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
@@ -205,9 +197,9 @@ int main(int argc, char *argv[])
 	for(loop = 0; loop < 512; loop++)
 		{
 		sprintf(buf, "id%i", loop);
-		id = strdup(buf);
+		id = BUF_strdup(buf);
 		sprintf(buf, "Fake engine type %i", loop);
-		name = strdup(buf);
+		name = BUF_strdup(buf);
 		if(((block[loop] = ENGINE_new()) == NULL) ||
 				!ENGINE_set_id(block[loop], id) ||
 				!ENGINE_set_name(block[loop], name))
@@ -242,8 +234,8 @@ cleanup_loop:
 		}
 	for(loop = 0; loop < 512; loop++)
 		{
-		free((char *)(ENGINE_get_id(block[loop])));
-		free((char *)(ENGINE_get_name(block[loop])));
+		OPENSSL_free((char *)(ENGINE_get_id(block[loop])));
+		OPENSSL_free((char *)(ENGINE_get_name(block[loop])));
 		}
 	printf("\nTests completed happily\n");
 	to_return = 0;
