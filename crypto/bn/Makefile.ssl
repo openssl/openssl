@@ -129,6 +129,13 @@ asm/pa-risc2W.o: asm/pa-risc2W.s
 asm/pa-risc2.o: asm/pa-risc2.s
 	/usr/ccs/bin/as -o asm/pa-risc2.o asm/pa-risc2.s
 
+# ppc - AIX, Linux, MacOS X...
+asm/linux_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+asm/linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
+asm/aix_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+asm/aix_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
+asm/osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
