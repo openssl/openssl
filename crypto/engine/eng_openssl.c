@@ -62,11 +62,13 @@
 #include "cryptlib.h"
 #include <openssl/engine.h>
 #include <openssl/dso.h>
+#include <openssl/pem.h>
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no
  * longer automatic in ENGINE_load_builtin_engines(). */
 #define TEST_ENG_OPENSSL_RC4
+#define TEST_ENG_OPENSSL_PKEY
 /* #define TEST_ENG_OPENSSL_RC4_OTHERS */
 #define TEST_ENG_OPENSSL_RC4_P_INIT
 /* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
@@ -85,6 +87,11 @@ static int openssl_digests(ENGINE *e, const EVP_MD **digest,
 				const int **nids, int nid);
 #endif
 
+#ifdef TEST_ENG_OPENSSL_PKEY
+static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data);
+#endif
+
 /* The constants used when creating the ENGINE */
 static const char *engine_openssl_id = "openssl";
 static const char *engine_openssl_name = "Software engine support";
@@ -95,6 +102,7 @@ static int bind_helper(ENGINE *e)
 	{
 	if(!ENGINE_set_id(e, engine_openssl_id)
 			|| !ENGINE_set_name(e, engine_openssl_name)
+#ifndef TEST_ENG_OPENSSL_NO_ALGORITHMS
 #ifndef OPENSSL_NO_RSA
 			|| !ENGINE_set_RSA(e, RSA_get_default_method())
 #endif
@@ -110,6 +118,10 @@ static int bind_helper(ENGINE *e)
 #endif
 #ifdef TEST_ENG_OPENSSL_SHA
 			|| !ENGINE_set_digests(e, openssl_digests)
+#endif
+#endif
+#ifdef TEST_ENG_OPENSSL_PKEY
+			|| !ENGINE_set_load_privkey_function(e, openssl_load_privkey)
 #endif
 			)
 		return 0;
@@ -315,5 +327,21 @@ static int openssl_digests(ENGINE *e, const EVP_MD **digest,
 		return 0;
 		}
 	return 1;
+	}
+#endif
+
+#ifdef TEST_ENG_OPENSSL_PKEY
+static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
+	{
+	BIO *in;
+	EVP_PKEY *key;
+	fprintf(stderr, "(TEST_ENG_OPENSSL_PKEY)Loading Private key %s\n", key_id);
+	in = BIO_new_file(key_id, "r");
+	if (!in)
+		return NULL;
+	key = PEM_read_bio_PrivateKey(in, NULL, 0, NULL);
+	BIO_free(in);
+	return key;
 	}
 #endif

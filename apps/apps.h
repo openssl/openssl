@@ -195,10 +195,10 @@ extern BIO *bio_err;
 		setup_ui_method(); } while(0)
 #  endif
 #  define apps_shutdown() \
-		do { destroy_ui_method(); EVP_cleanup(); \
-		ENGINE_cleanup(); CRYPTO_cleanup_all_ex_data(); \
-		ERR_remove_state(0); ERR_free_strings(); \
-		CONF_modules_unload(1); } while(0)
+		do { CONF_modules_unload(1); destroy_ui_method(); \
+		EVP_cleanup(); ENGINE_cleanup(); \
+		CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
+		ERR_free_strings(); } while(0)
 #endif
 
 typedef struct args_st

@@ -490,7 +490,7 @@ bad:
 		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
 		printf("\t\t{ DH_free(dh); return(NULL); }\n");
 		if (dh->length)
-			printf("\tdh->length = %d;\n", dh->length);
+			printf("\tdh->length = %ld;\n", dh->length);
 		printf("\treturn(dh);\n\t}\n");
 		OPENSSL_free(data);
 		}
