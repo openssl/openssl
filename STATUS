@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/07 20:03:42 $
+  ______________                           $Date: 2002/12/12 19:40:55 $
 
   DEVELOPMENT STATE
 
@@ -74,6 +74,7 @@
 	Attribute Certificate support
 	Certificate Pair support
 	Storage Engines (primarly an LDAP storage engine)
+	Certificate chain validation with full RFC 3280 compatibility
 
   NEEDS PATCH
 
