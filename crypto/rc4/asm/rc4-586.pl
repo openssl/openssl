@@ -68,13 +68,13 @@ sub RC4_loop
 	# &mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 0;
 
 	&add(	&LB($y),	&LB($tx));
-	 &inc(	&LB($x));			# NEXT ROUND
 	&mov(	$ty,		&DWP(0,$d,$y,4));
 	 # XXX
-	&mov(	&DWP(-4,$d,$x,4),$ty);			# AGI
+	&mov(	&DWP(0,$d,$x,4),$ty);
 	 &add(	$ty,		$tx);
 	&mov(	&DWP(0,$d,$y,4),$tx);
 	 &and(	$ty,		0xff);
+	 &inc(	&LB($x));			# NEXT ROUND
 	&mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 1; # NEXT ROUND
 	 &mov(	$ty,		&DWP(0,$d,$ty,4));
 
