@@ -4250,6 +4250,31 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
+*** vxworks-mipsle
+$cc           = ccmips
+$cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -DL_ENDIAN -EL -Wl,-EL -mips2 -mno-branch-likely -G 0 -fno-builtin -msoft-float -DCPU=MIPS32 -DMIPSEL -DNO_STRINGS_H -I$(WIND_BASE)/target/h
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = ranlibmips
+$arflags      = 
+
 *** vxworks-ppc405
 $cc           = ccppc
 $cflags       = -g -msoft-float -mlongcall -DCPU=PPC405 -I$(WIND_BASE)/target/h
@@ -4327,7 +4352,7 @@ $arflags      =
 
 *** vxworks-ppc860
 $cc           = ccppc
-$cflags       = -g -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I$(WIND_BASE)/target/h
+$cflags       = -nostdinc -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I$(WIND_BASE)/target/h
 $unistd       = 
 $thread_cflag = 
 $sys_id       = VXWORKS
