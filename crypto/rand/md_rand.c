@@ -56,6 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef MD_RAND_DEBUG
+# ifndef NDEBUG
+#   define NDEBUG
+# endif
+#endif
+
+#include <assert.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -158,18 +165,43 @@ static void ssleay_rand_cleanup(void)
 
 static void ssleay_rand_seed(const void *buf, int num)
 	{
-	int i,j,k,st_idx,st_num;
+	int i,j,k,st_idx;
+	long md_c[2];
+	unsigned char local_md[MD_DIGEST_LENGTH];
 	MD_CTX m;
 
 #ifdef NORAND
 	return;
 #endif
 
+	/*
+	 * (Based on doc/ssleay.txt, section rand.doc:)
+	 *
+	 * The input is chopped up into units of 16 bytes (or less for
+	 * the last block).  Each of these blocks is run through the MD5
+	 * message digest as follow:  The data passed to the MD5 digest
+	 * is the current 'md', the same number of bytes from the 'state'
+	 * (the location determined by in incremented looping index) as
+	 * the current 'block', the new key data 'block', and 'count'
+	 * (which is incremented after each use).
+	 * The result of this is kept in 'md' and also xored into the
+	 * 'state' at the same locations that were used as input into the MD5.
+	 */
+
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	st_idx=state_index;
-	st_num=state_num;
 
-	state_index=(state_index+num);
+	/* use our own copies of the counters so that even
+	 * if a concurrent thread seeds with exactly the
+	 * same data and uses the same subarray there's _some_
+	 * difference */
+	md_c[0] = md_count[0];
+	md_c[1] = md_count[1];
+
+	memcpy(local_md, md, sizeof md);
+
+	/* state_index <= state_num <= STATE_SIZE */
+	state_index += num;
 	if (state_index >= STATE_SIZE)
 		{
 		state_index%=STATE_SIZE;
@@ -180,6 +212,14 @@ static void ssleay_rand_seed(const void *buf, int num)
 		if (state_index > state_num)
 			state_num=state_index;
 		}
+	/* state_index <= state_num <= STATE_SIZE */
+
+	/* state[st_idx], ..., state[(st_idx + num - 1) % STATE_SIZE]
+	 * are what we will use now, but other threads may use them
+	 * as well */
+
+	md_count[1] += (num / MD_DIGEST_LENGTH) + (num % MD_DIGEST_LENGTH > 0);
+
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	for (i=0; i<num; i+=MD_DIGEST_LENGTH)
@@ -188,7 +228,7 @@ static void ssleay_rand_seed(const void *buf, int num)
 		j=(j > MD_DIGEST_LENGTH)?MD_DIGEST_LENGTH:j;
 
 		MD_Init(&m);
-		MD_Update(&m,md,MD_DIGEST_LENGTH);
+		MD_Update(&m,local_md,MD_DIGEST_LENGTH);
 		k=(st_idx+j)-STATE_SIZE;
 		if (k > 0)
 			{
@@ -199,31 +239,57 @@ static void ssleay_rand_seed(const void *buf, int num)
 			MD_Update(&m,&(state[st_idx]),j);
 			
 		MD_Update(&m,buf,j);
-		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
-		MD_Final(md,&m);
-		md_count[1]++;
+		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
+		MD_Final(local_md,&m);
+		md_c[1]++;
 
 		buf=(const char *)buf + j;
 
 		for (k=0; k<j; k++)
 			{
-			state[st_idx++]^=md[k];
+			/* Parallel threads may interfere with this,
+			 * but always each byte of the new state is
+			 * the XOR of some previous value of its
+			 * and local_md (itermediate values may be lost).
+			 * Alway using locking could hurt performance more
+			 * than necessary given that conflicts occur only
+			 * when the total seeding is longer than the random
+			 * state. */
+			state[st_idx++]^=local_md[k];
 			if (st_idx >= STATE_SIZE)
-				{
 				st_idx=0;
-				st_num=STATE_SIZE;
-				}
 			}
 		}
 	memset((char *)&m,0,sizeof(m));
+
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	/* Don't just copy back local_md into md -- this could mean that
+	 * other thread's seeding remains without effect (except for
+	 * the incremented counter).  By XORing it we keep at least as
+	 * much entropy as fits into md. */
+	for (k = 0; k < sizeof md; k++)
+		{
+		md[k] ^= local_md[k];
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	
+#ifndef THREADS	
+	assert(md_c[1] == md_count[1]);
+#endif
 	}
 
 static void ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	int i,j,k,st_num,st_idx;
+	long md_c[2];
+	unsigned char local_md[MD_DIGEST_LENGTH];
 	MD_CTX m;
 	static int init=1;
 	unsigned long l;
+#ifndef MSDOS
+	static pid_t prev_pid = 0;
+	pid_t curr_pid;
+#endif
 #ifdef DEVRANDOM
 	FILE *fh;
 #endif
@@ -238,6 +304,22 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 	}
 #endif
 
+	/*
+	 * (Based on doc/ssleay.txt, section rand.doc:)
+	 *
+	 * For each group of 8 bytes (or less), we do the following,
+	 *
+	 * Input into MD5, the top 8 bytes from 'md', the byte that are
+	 * to be overwritten by the random bytes and bytes from the
+	 * 'state' (incrementing looping index).  From this digest output
+	 * (which is kept in 'md'), the top (upto) 8 bytes are
+	 * returned to the caller and the bottom (upto) 8 bytes are xored
+	 * into the 'state'.
+	 * Finally, after we have finished 'num' random bytes for the
+	 * caller, 'count' (which is incremented) and the local and globl 'md'
+	 * are fed into MD5 and the results are kept in the global 'md'.
+	 */
+
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	if (init)
@@ -247,7 +329,8 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		 * just this */
 		RAND_seed(&m,sizeof(m));
 #ifndef MSDOS
-		l=getpid();
+		prev_pid = getpid();
+		l=prev_pid;
 		RAND_seed(&l,sizeof(l));
 		l=getuid();
 		RAND_seed(&l,sizeof(l));
@@ -284,12 +367,34 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		init=0;
 		}
 
+#ifndef MSDOS
+	/* make sure we have unique states when a program forks
+	 * (new with OpenSSL 0.9.5; for earlier versions, applications
+	 * must take care of this) */
+	curr_pid = getpid();
+	if (prev_pid != curr_pid)
+		{
+		prev_pid = curr_pid;
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+		RAND_seed(&curr_pid, sizeof curr_pid);
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+		}
+#endif
+
 	st_idx=state_index;
 	st_num=state_num;
+	md_c[0] = md_count[0];
+	md_c[1] = md_count[1];
+	memcpy(local_md, md, sizeof md);
+
 	state_index+=num;
 	if (state_index > state_num)
-		state_index=(state_index%state_num);
+		state_index %= state_num;
 
+	/* state[st_idx], ..., state[(st_idx + num - 1) % st_num]
+	 * are now ours (but other threads may use them too) */
+
+	md_count[0] += 1;
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
@@ -297,8 +402,8 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		j=(num >= MD_DIGEST_LENGTH/2)?MD_DIGEST_LENGTH/2:num;
 		num-=j;
 		MD_Init(&m);
-		MD_Update(&m,&(md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
-		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
+		MD_Update(&m,&(local_md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
+		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 #ifndef PURIFY
 		MD_Update(&m,buf,j); /* purify complains */
 #endif
@@ -310,22 +415,25 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 			}
 		else
 			MD_Update(&m,&(state[st_idx]),j);
-		MD_Final(md,&m);
+		MD_Final(local_md,&m);
 
 		for (i=0; i<j; i++)
 			{
+			state[st_idx++]^=local_md[i]; /* may compete with other threads */
+			*(buf++)=local_md[i+MD_DIGEST_LENGTH/2];
 			if (st_idx >= st_num)
 				st_idx=0;
-			state[st_idx++]^=md[i];
-			*(buf++)=md[i+MD_DIGEST_LENGTH/2];
 			}
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
-	md_count[0]++;
+	MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
+	MD_Update(&m,local_md,MD_DIGEST_LENGTH);
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
 	MD_Final(md,&m);
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+
 	memset(&m,0,sizeof(m));
 	}
 

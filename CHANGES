@@ -4,6 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Make crypto/rand/md_rand.c more robust:
+     - Detect fork() and assure unique random states.
+     - Make sure that concurrent threads access the global counter and
+       md serializably so that we never lose entropy in them
+       or use exactly the same state in multiple threads.
+       Access to the large state is not always serializable because
+       the additional locking could be a performance killer, and
+       md should be large enough anyway.
+     [Bodo Moeller]
+
   *) New file apps/app_rand.c with commonly needed functionality
      for handling the random seed file.
 

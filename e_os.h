@@ -246,6 +246,7 @@ extern "C" {
 #  else
      /* !defined VMS */
 #    include OPENSSL_UNISTD
+#    include <sys/types.h>
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
@@ -294,7 +295,6 @@ extern HINSTANCE _hInstance;
 
 #  else
 
-#    include <sys/types.h>
 #    ifndef VMS
 #      include <sys/param.h>
 #    endif
