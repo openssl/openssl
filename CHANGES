@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix EVP_CIPHER_mode macro.
+     ["Dan S. Camper" <dan@bti.net>]
+
   +) Change the AES code to follow the same name structure as all other
      symmetric ciphers, and behave the same way.  Move everything to
      the directory crypto/aes, thereby obsoleting crypto/rijndael.
