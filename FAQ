@@ -8,6 +8,7 @@ OpenSSL  -  Frequently Asked Questions
 * How can I contact the OpenSSL developers?
 * Where can I get a compiled version of OpenSSL?
 * Why aren't tools like 'autoconf' and 'libtool' used?
+* What is an 'engine' release?
 
 [LEGAL] Legal questions
 
@@ -121,6 +122,12 @@ A number of Linux and *BSD distributions include OpenSSL.
 autoconf will probably be used in future OpenSSL versions. If it was
 less Unix-centric, it might have been used much earlier.
 
+* What is an '-engine' version?
+
+With version 0.9.6 OpenSSL was extended to interface to external crypto
+hardware. This was realized in a special release '0.9.6-engine'. With
+version 0.9.7 the changes were merged into the main development line,
+so that the special release is no longer necessary.
 
 [LEGAL] =======================================================================
 
