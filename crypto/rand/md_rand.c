@@ -144,7 +144,7 @@ const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
-static void ssleay_rand_add(const void *buf, int num, int entropy);
+static void ssleay_rand_add(const void *buf, int num, int add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num);
 
 RAND_METHOD rand_ssleay_meth={
@@ -361,12 +361,12 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
 			{
 			unsigned char tmpbuf[ENTROPY_NEEDED];
-			int i;
+			int n;
 
-			i=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
+			n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
 			fclose(fh);
-			RAND_seed(tmpbuf,i);
-			memset(tmpbuf,0,i);
+			RAND_add(tmpbuf,sizeof tmpbuf,n);
+			memset(tmpbuf,0,n);
 			}
 #endif
 #ifdef PURIFY
