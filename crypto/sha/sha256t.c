@@ -74,10 +74,13 @@ int main ()
 
     EVP_MD_CTX_init (&evp);
     EVP_DigestInit_ex (&evp,EVP_sha256(),NULL);
-    for (i=0;i<1000000;i+=64)
+    for (i=0;i<1000000;i+=160)
 	EVP_DigestUpdate (&evp,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-				(1000000-i)<64?1000000-i:64);
+				(1000000-i)<160?1000000-i:160);
     EVP_DigestFinal_ex (&evp,md,NULL);
     EVP_MD_CTX_cleanup (&evp);
 
