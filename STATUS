@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/10/02 13:33:03 $
+  ______________                           $Date: 1999/10/07 16:58:08 $
 
   DEVELOPMENT STATE
 
@@ -20,6 +20,8 @@
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
     o OCSP patch, Massimiliano Pala (madwolf@openca.org)
+    o CA.pl patch (Damien Miller)
+    o FreeBSD 3.0 changes (Richard Levitte)
 
   IN PROGRESS
 
