@@ -103,7 +103,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -668,13 +668,10 @@ err:
 	}
  
 #ifndef OPENSSL_NO_RSA
-static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
-	BN_CTX *ctx;
 	int to_return = 0;
 
-	if((ctx = BN_CTX_new()) == NULL)
-		goto err;
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_RSA_MOD_EXP,CSWIFT_R_MISSING_KEY_COMPONENTS);
@@ -683,8 +680,6 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	to_return = cswift_mod_exp_crt(r0, I, rsa->p, rsa->q, rsa->dmp1,
 		rsa->dmq1, rsa->iqmp, ctx);
 err:
-	if(ctx)
-		BN_CTX_free(ctx);
 	return to_return;
 	}
 #endif

@@ -86,7 +86,7 @@ static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -502,9 +502,8 @@ err:
 	}
 
 #ifndef OPENSSL_NO_RSA
-static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
-	BN_CTX *ctx = NULL;
 	int to_return = 0;
 
 	if(!atalla_dso)
@@ -512,8 +511,6 @@ static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		ATALLAerr(ATALLA_F_ATALLA_RSA_MOD_EXP,ATALLA_R_NOT_LOADED);
 		goto err;
 		}
-	if((ctx = BN_CTX_new()) == NULL)
-		goto err;
 	if(!rsa->d || !rsa->n)
 		{
 		ATALLAerr(ATALLA_F_ATALLA_RSA_MOD_EXP,ATALLA_R_MISSING_KEY_COMPONENTS);
@@ -521,8 +518,6 @@ static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		}
 	to_return = atalla_mod_exp(r0, I, rsa->d, rsa->n, ctx);
 err:
-	if(ctx)
-		BN_CTX_free(ctx);
 	return to_return;
 	}
 #endif

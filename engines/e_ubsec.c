@@ -89,7 +89,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dp,
 			const BIGNUM *dq, const BIGNUM *qinv, BN_CTX *ctx);
 #ifndef OPENSSL_NO_RSA
-static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
 static int ubsec_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
@@ -590,13 +590,9 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 #ifndef OPENSSL_NO_RSA
-static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
-	BN_CTX *ctx;
 	int to_return = 0;
-
-	if((ctx = BN_CTX_new()) == NULL)
-		goto err;
 
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
@@ -612,11 +608,9 @@ static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	   * Do in software as hardware failed.
 	   */
 	   const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
-	   to_return = (*meth->rsa_mod_exp)(r0, I, rsa);
+	   to_return = (*meth->rsa_mod_exp)(r0, I, rsa, ctx);
 	}
 err:
-	if(ctx)
-		BN_CTX_free(ctx);
 	return to_return;
 	}
 #endif

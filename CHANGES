@@ -4,6 +4,10 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add a missing BN_CTX parameter to the 'rsa_mod_exp' callback in RSA_METHOD
+     to allow all RSA operations to function using a single BN_CTX.
+     [Geoff Thorpe]
+
   *) Preliminary support for certificate policy evaluation and checking. This
      is initially intended to pass the tests outlined in "Conformance Testing
      of Relying Party Client Certificate Path Processing Logic" v1.07.

@@ -106,7 +106,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r,const  BIGNUM *a, const BIGNUM *p,
 
 /* RSA stuff */
 #ifndef OPENSSL_NO_RSA
-static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
@@ -745,14 +745,10 @@ static int aep_rand_status(void)
 #endif
 
 #ifndef OPENSSL_NO_RSA
-static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
-	BN_CTX *ctx = NULL;
 	int to_return = 0;
 	AEP_RV rv = AEP_R_OK;
-
-	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
 
 	if (!aep_dso)
 		{
@@ -767,7 +763,7 @@ static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 		if (rv == FAIL_TO_SW){
 			const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
-			to_return = (*meth->rsa_mod_exp)(r0, I, rsa);
+			to_return = (*meth->rsa_mod_exp)(r0, I, rsa, ctx);
 			goto err;
 		}
 		else if (rv != AEP_R_OK)
@@ -790,8 +786,6 @@ static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	to_return = 1;
 
  err:
-	if(ctx)
-		BN_CTX_free(ctx);
 	return to_return;
 }
 #endif

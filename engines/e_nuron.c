@@ -192,9 +192,9 @@ static int nuron_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,
 	}
 
 #ifndef OPENSSL_NO_RSA
-static int nuron_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+static int nuron_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
-	return nuron_mod_exp(r0,I,rsa->d,rsa->n,NULL);
+	return nuron_mod_exp(r0,I,rsa->d,rsa->n,ctx);
 	}
 #endif
 

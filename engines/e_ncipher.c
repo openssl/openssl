@@ -102,7 +102,7 @@ static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa);
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -946,7 +946,7 @@ err:
 	}
 
 #ifndef OPENSSL_NO_RSA 
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
