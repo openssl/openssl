@@ -321,7 +321,7 @@ foreach (@ARGV)
 		$libs.= "-lRSAglue -lrsaref ";
 		$flags.= "-DRSAref ";
 		}
-	elsif (/^-/)
+	elsif (/^[-+]/)
 		{
 		if (/^-[lL](.*)$/)
 			{
