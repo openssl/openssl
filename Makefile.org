@@ -278,6 +278,24 @@ do_solaris-shared:
 	libs="$$libs -L. -l$$i"; \
 	done
 
+# This assumes that GNU utilities are *not* used
+do_hpux-shared:
+	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	done
+
+# This assumes that GNU utilities are *not* used
+do_hpux64-shared:
+	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	done
+
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."

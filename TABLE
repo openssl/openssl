@@ -1172,9 +1172,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-brokengcc
 $cc           = gcc
@@ -1193,9 +1193,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-cc
 $cc           = cc
@@ -1214,9 +1214,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-gcc
 $cc           = gcc
@@ -1235,9 +1235,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc-cc
 $cc           = cc
@@ -1256,9 +1256,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc-cc-o4
 $cc           = cc
@@ -1277,9 +1277,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc-gcc
 $cc           = gcc
@@ -1298,9 +1298,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc1_1-cc
 $cc           = cc
@@ -1319,9 +1319,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc2-cc
 $cc           = cc
@@ -1340,9 +1340,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-brokencc
 $cc           = cc
@@ -1361,9 +1361,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-brokengcc
 $cc           = gcc
@@ -1382,9 +1382,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-cc
 $cc           = cc
@@ -1403,9 +1403,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-gcc
 $cc           = gcc
@@ -1424,9 +1424,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux-shared
+$shared_cflag = -fPIC
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux64-parisc-cc
 $cc           = cc
@@ -1445,9 +1445,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux64-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux64-parisc2-cc
 $cc           = cc
@@ -1466,9 +1466,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$shared_target= hpux64-shared
+$shared_cflag = +Z
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-cc
 $cc           = cc

@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add the possibility to create shared libraries on HP-UX
+     [Richard Levitte]
+
   *) Fix for SHA1 assembly problem with MASM: it produces
      warnings about corrupt line number information when assembling
      with debugging information. This is caused by the overlapping
