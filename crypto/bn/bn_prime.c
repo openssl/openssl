@@ -204,6 +204,7 @@ int BN_is_prime_fasttest(BIGNUM *a, int checks,
 		if (!BN_pseudo_rand(check,BN_num_bits(a),0,0)) goto err;
 		if (BN_cmp(check, a) >= 0)
 			BN_sub(check, check, a);
+		if (BN_is_zero(check)) BN_one(check);
 		j=witness(check,a,ctx,ctx2,mont);
 		if (j == -1) goto err;
 		if (j)
