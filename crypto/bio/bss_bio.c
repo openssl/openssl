@@ -7,6 +7,10 @@
  * for which no specific BIO method is available.
  * See ssl/ssltest.c for some hints on how this can be used. */
 
+#ifndef BIO_PAIR_DEBUG
+# define NDEBUG
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

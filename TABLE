@@ -631,7 +631,7 @@ $rc5_obj      =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG -g -m486 -Wall
+$cflags       = -DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
