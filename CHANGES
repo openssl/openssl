@@ -3,9 +3,6 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
-  *) BN_bin2bn bugfix (off-by-one error).
-     [Bodo Moeller]
-
   *) Make BN_mod_inverse faster by explicitly handling small quotients
      in the Euclid loop. (Speed gain about 20% for small moduli [256 or
      512 bits], about 30% for larger ones [1024 or 2048 bits].)

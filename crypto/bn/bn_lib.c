@@ -585,7 +585,6 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 	return(1);
 	}
 
-/* ignore negative */
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	{
 	unsigned int i,m;
@@ -605,7 +604,8 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 		return(NULL);
 	i=((n-1)/BN_BYTES)+1;
 	m=((n-1)%(BN_BYTES));
-	ret->top=i-1;
+	ret->top=i;
+	ret->neg=0;
 	while (n-- > 0)
 		{
 		l=(l<<8L)| *(s++);
@@ -776,4 +776,3 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
 		}
 	return(0);
 	}
-
