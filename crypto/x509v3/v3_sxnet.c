@@ -307,7 +307,7 @@ ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone)
 		return NULL;
 	}
 	oct = SXNET_get_id_INTEGER(sx, izone);
-	ASN1_INTEGER_free(oct);
+	ASN1_INTEGER_free(izone);
 	return oct;
 }
 
@@ -321,7 +321,7 @@ ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 		return NULL;
 	}
 	oct = SXNET_get_id_INTEGER(sx, izone);
-	ASN1_INTEGER_free(oct);
+	ASN1_INTEGER_free(izone);
 	return oct;
 }
 
