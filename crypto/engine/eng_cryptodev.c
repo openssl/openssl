@@ -33,7 +33,8 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 
-#if (defined(__unix__) || defined(unix)) && !defined(USG)
+#if (defined(__unix__) || defined(unix)) && !defined(USG) && \
+	(defined(OpenBSD) || defined(__FreeBSD_version))
 #include <sys/param.h>
 # if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041)
 #  define HAVE_CRYPTODEV
