@@ -97,3 +97,4 @@ typedef int t_UBSEC_math_accelerate_ioctl(int fd, ubsec_MathCommand_t command,
 typedef int t_UBSEC_rng_ioctl(int fd, ubsec_RNGCommand_t command,
 	unsigned char *Result, int *Result_len);
 
+typedef int t_UBSEC_max_key_len_ioctl(int fd, int *max_key_len);
