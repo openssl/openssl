@@ -75,8 +75,8 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 	exit(1); \
 } while (0)
 
-
-void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
+#if 0
+static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	{
 	clock_t clck;
 	int i, j;
@@ -138,7 +138,7 @@ void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	BN_free(s);
 	BN_free(s0);
 	}
-
+#endif
 
 int main(int argc, char *argv[])
 	{	

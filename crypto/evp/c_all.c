@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 
 #undef OpenSSL_add_all_algorithms
+void OpenSSL_add_all_algorithms(void);
 
 void OpenSSL_add_all_algorithms(void)
 	{
