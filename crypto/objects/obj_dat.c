@@ -497,6 +497,17 @@ char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)())
 		else
 			return(p);
 		}
+#ifdef CHARSET_EBCDIC
+/* THIS IS A KLUDGE - Because the *_obj is sorted in ASCII order, and
+ * I don't have perl (yet), we revert to a *LINEAR* search
+ * when the object wasn't found in the binary search.
+ */
+	for (i=0; i<num; ++i) {
+		p= &(base[i*size]);
+		if ((*cmp)(key,p) == 0)
+			return p;
+	}
+#endif
 	return(NULL);
 	}
 

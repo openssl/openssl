@@ -68,8 +68,20 @@
 
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{
+#ifndef CHARSET_EBCDIC
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_UTCTIME,V_ASN1_UNIVERSAL));
+#else
+	/* KLUDGE! We convert to ascii before writing DER */
+	int len;
+	char tmp[24];
+	ASN1_STRING x = *(ASN1_STRING *)a;
+
+	len = x.length;
+	ebcdic2ascii(tmp, x.data, (len >= sizeof tmp) ? sizeof tmp : len);
+	x.data = tmp;
+	return i2d_ASN1_bytes(&x, pp, V_ASN1_UTCTIME,V_ASN1_UNIVERSAL);
+#endif
 	}
 
 
@@ -85,6 +97,9 @@ ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
 		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 		}
+#ifdef CHARSET_EBCDIC
+	ascii2ebcdic(ret->data, ret->data, ret->length);
+#endif
 	if (!ASN1_UTCTIME_check(ret))
 		{
 		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_INVALID_TIME_FORMAT);
@@ -238,5 +253,8 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 		ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
 	s->length=strlen(p);
 	s->type=V_ASN1_UTCTIME;
+#ifdef CHARSET_EBCDIC_not
+	ebcdic2ascii(s->data, s->data, s->length);
+#endif
 	return(s);
 	}

@@ -1,5 +1,13 @@
 /* NOCW */
 #include <stdio.h>
+#ifdef _OSD_POSIX
+#ifndef CHARSET_EBCDIC
+#define CHARSET_EBCDIC 1
+#endif
+#endif
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 /* This version of crypt has been developed from my MIT compatable
  * DES library.
@@ -67,7 +75,37 @@ char *crypt(const char *buf, const char *salt)
 	{
 	static char buff[14];
 
+#ifndef CHARSET_EBCDIC
 	return(des_fcrypt(buf,salt,buff));
+#else
+	char e_salt[2+1];
+	char e_buf[32+1];	/* replace 32 by 8 ? */
+	char *ret;
+
+	/* Copy at most 2 chars of salt */
+	if ((e_salt[0] = salt[0]) != '\0')
+	    e_salt[1] = salt[1];
+
+	/* Copy at most 32 chars of password */
+	strncpy (e_buf, buf, sizeof(e_buf));
+
+	/* Make sure we have a delimiter */
+	e_salt[sizeof(e_salt)-1] = e_buf[sizeof(e_buf)-1] = '\0';
+
+	/* Convert the e_salt to ASCII, as that's what des_fcrypt works on */
+	ebcdic2ascii(e_salt, e_salt, sizeof e_salt);
+
+	/* Convert the cleartext password to ASCII */
+	ebcdic2ascii(e_buf, e_buf, sizeof e_buf);
+
+	/* Encrypt it (from/to ASCII) */
+	ret = des_fcrypt(e_buf,e_salt,buff);
+
+	/* Convert the result back to EBCDIC */
+	ascii2ebcdic(ret, ret, strlen(ret));
+	
+	return ret;
+#endif
 	}
 
 
@@ -90,10 +128,17 @@ char *des_fcrypt(const char *buf, const char *salt, char *ret)
 	 * crypt to "*".  This was found when replacing the crypt in
 	 * our shared libraries.  People found that the disbled
 	 * accounts effectivly had no passwd :-(. */
+#ifndef CHARSET_EBCDIC
 	x=ret[0]=((salt[0] == '\0')?'A':salt[0]);
 	Eswap0=con_salt[x]<<2;
 	x=ret[1]=((salt[1] == '\0')?'A':salt[1]);
 	Eswap1=con_salt[x]<<6;
+#else
+	x=ret[0]=((salt[0] == '\0')?os_toascii['A']:salt[0]);
+	Eswap0=con_salt[x]<<2;
+	x=ret[1]=((salt[1] == '\0')?os_toascii['A']:salt[1]);
+	Eswap1=con_salt[x]<<6;
+#endif
 
 /* EAY
 r=strlen(buf);

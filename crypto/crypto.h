@@ -70,6 +70,10 @@ extern "C" {
 #include <openssl/stack.h>
 #include <openssl/opensslv.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 /* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used
  * in the MS world. */

@@ -69,6 +69,10 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/ripemd.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 char *test[]={
 	"",
 	"a",
@@ -104,6 +108,9 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
+#ifdef CHARSET_EBCDIC
+		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
+#endif
 		p=pt(RIPEMD160(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
 		if (strcmp(p,(char *)*R) != 0)
 			{

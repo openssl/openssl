@@ -5,6 +5,16 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) config now generates no-xxx options for missing ciphers.
+     [Ulf Möller]
+
+  *) Support the EBCDIC character set (work in progress).
+     File ebcdic.c not yet included because it has a different license.
+     [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>]
+
+  *) Support BS2000/OSD-POSIX.
+     [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>]
+
   *) Make callbacks for key generation use void * instead of char *.
      [Ben Laurie]
 

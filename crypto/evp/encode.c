@@ -60,8 +60,19 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 
+#ifndef CHARSET_EBCDIC
 #define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])
 #define conv_ascii2bin(a)	(data_ascii2bin[(a)&0x7f])
+#else
+/* We assume that PEM encoded files are EBCDIC files
+ * (i.e., printable text files). Convert them here while decoding.
+ * When encoding, output is EBCDIC (text) format again.
+ * (No need for conversion in the conv_bin2ascii macro, as the
+ * underlying textstring data_bin2ascii[] is already EBCDIC)
+ */
+#define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])
+#define conv_ascii2bin(a)	(data_ascii2bin[os_toascii[a]&0x7f])
+#endif
 
 /* 64 char lines
  * pad input with 0

@@ -71,6 +71,7 @@
 #define CONF_ALPHA_NUMERIC_PUNCT (CONF_ALPHA|CONF_NUMBER|CONF_UNDER| \
 					CONF_PUNCTUATION)
 
+#ifndef CHARSET_EBCDIC
 #define IS_COMMENT(a)		(CONF_COMMENT&(CONF_type[(a)&0x7f]))
 #define IS_EOF(a)		((a) == '\0')
 #define IS_ESC(a)		((a) == '\\')
@@ -80,6 +81,19 @@
 #define IS_ALPHA_NUMERIC_PUNCT(a) \
 				(CONF_type[(a)&0x7f]&CONF_ALPHA_NUMERIC_PUNCT)
 #define IS_QUOTE(a)		(CONF_type[(a)&0x7f]&CONF_QUOTE)
+
+#else /*CHARSET_EBCDIC*/
+
+#define IS_COMMENT(a)		(CONF_COMMENT&(CONF_type[os_toascii[a]&0x7f]))
+#define IS_EOF(a)		(os_toascii[a] == '\0')
+#define IS_ESC(a)		(os_toascii[a] == '\\')
+#define IS_NUMER(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_NUMBER)
+#define IS_WS(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_WS)
+#define IS_ALPHA_NUMERIC(a)	(CONF_type[os_toascii[a]&0x7f]&CONF_ALPHA_NUMERIC)
+#define IS_ALPHA_NUMERIC_PUNCT(a) \
+				(CONF_type[os_toascii[a]&0x7f]&CONF_ALPHA_NUMERIC_PUNCT)
+#define IS_QUOTE(a)		(CONF_type[os_toascii[a]&0x7f]&CONF_QUOTE)
+#endif /*CHARSET_EBCDIC*/
 
 static unsigned short CONF_type[128]={
 	0x008,0x000,0x000,0x000,0x000,0x000,0x000,0x000,

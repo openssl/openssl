@@ -69,6 +69,10 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/md2.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 char *test[]={
 	"",
 	"a",

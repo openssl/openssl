@@ -64,7 +64,10 @@
 
 void do_fp(FILE *f);
 void pt(unsigned char *md);
+#ifndef _OSD_POSIX
 int read(int, void *, unsigned int);
+#endif
+
 int main(int argc, char **argv)
 	{
 	int i,err=0;

@@ -95,6 +95,7 @@ int ASN1_PRINTABLE_type(unsigned char *s, int len)
 	while ((*s) && (len-- != 0))
 		{
 		c= *(s++);
+#ifndef CHARSET_EBCDIC
 		if (!(	((c >= 'a') && (c <= 'z')) ||
 			((c >= 'A') && (c <= 'Z')) ||
 			(c == ' ') ||
@@ -108,6 +109,13 @@ int ASN1_PRINTABLE_type(unsigned char *s, int len)
 			ia5=1;
 		if (c&0x80)
 			t61=1;
+#else
+		if (!isalnum(c) && (c != ' ') &&
+		    strchr("'()+,-./:=?", c) == NULL)
+			ia5=1;
+		if (os_toascii[c] & 0x80)
+			t61=1;
+#endif
 		}
 	if (t61) return(V_ASN1_T61STRING);
 	if (ia5) return(V_ASN1_IA5STRING);

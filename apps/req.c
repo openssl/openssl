@@ -1013,6 +1013,9 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	j=ASN1_PRINTABLE_type((unsigned char *)buf,-1);
 	if (req_fix_data(nid,&j,i,min,max) == 0)
 		goto err;
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, i);
+#endif
 	if ((ne=X509_NAME_ENTRY_create_by_NID(NULL,nid,j,(unsigned char *)buf,
 		strlen(buf)))
 		== NULL) goto err;

@@ -65,6 +65,18 @@
 
 int i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a, unsigned char **pp)
 	{
+#ifdef CHARSET_EBCDIC
+	/* KLUDGE! We convert to ascii before writing DER */
+	int len;
+	char tmp[24];
+	ASN1_STRING tmpstr = *(ASN1_STRING *)a;
+
+	len = tmpstr.length;
+	ebcdic2ascii(tmp, tmpstr.data, (len >= sizeof tmp) ? sizeof tmp : len);
+	tmpstr.data = tmp;
+
+	a = (ASN1_GENERALIZEDTIME *) &tmpstr;
+#endif
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_GENERALIZEDTIME,V_ASN1_UNIVERSAL));
 	}
@@ -82,6 +94,9 @@ ASN1_GENERALIZEDTIME *d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a,
 		ASN1err(ASN1_F_D2I_ASN1_GENERALIZEDTIME,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 		}
+#ifdef CHARSET_EBCDIC
+	ascii2ebcdic(ret->data, ret->data, ret->length);
+#endif
 	if (!ASN1_GENERALIZEDTIME_check(ret))
 		{
 		ASN1err(ASN1_F_D2I_ASN1_GENERALIZEDTIME,ASN1_R_INVALID_TIME_FORMAT);
@@ -202,5 +217,8 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 		ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
 	s->length=strlen(p);
 	s->type=V_ASN1_GENERALIZEDTIME;
+#ifdef CHARSET_EBCDIC_not
+	ebcdic2ascii(s->data, s->data, s->length);
+#endif
 	return(s);
 	}

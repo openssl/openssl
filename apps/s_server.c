@@ -235,6 +235,156 @@ static int local_argc=0;
 static char **local_argv;
 static int hack=0;
 
+#ifdef CHARSET_EBCDIC
+static int ebcdic_new(BIO *bi);
+static int ebcdic_free(BIO *a);
+static int ebcdic_read(BIO *b, char *out, int outl);
+static int ebcdic_write(BIO *b, char *in, int inl);
+static long ebcdic_ctrl(BIO *b, int cmd, long num, char *ptr);
+static int ebcdic_gets(BIO *bp, char *buf, int size);
+static int ebcdic_puts(BIO *bp, char *str);
+
+#define BIO_TYPE_EBCDIC_FILTER	(18|0x0200)
+static BIO_METHOD methods_ebcdic=
+	{
+	BIO_TYPE_EBCDIC_FILTER,
+	"EBCDIC/ASCII filter",
+	ebcdic_write,
+	ebcdic_read,
+	ebcdic_puts,
+	ebcdic_gets,
+	ebcdic_ctrl,
+	ebcdic_new,
+	ebcdic_free,
+	};
+
+typedef struct
+{
+	size_t	alloced;
+	char	buff[1];
+} EBCDIC_OUTBUFF;
+
+BIO_METHOD *BIO_f_ebcdic_filter()
+{
+	return(&methods_ebcdic);
+}
+
+static int ebcdic_new(BIO *bi)
+{
+	EBCDIC_OUTBUFF *wbuf;
+
+	wbuf = (EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+	wbuf->alloced = 1024;
+	wbuf->buff[0] = '\0';
+
+	bi->ptr=(char *)wbuf;
+	bi->init=1;
+	bi->flags=0;
+	return(1);
+}
+
+static int ebcdic_free(BIO *a)
+{
+	if (a == NULL) return(0);
+	if (a->ptr != NULL)
+		Free(a->ptr);
+	a->ptr=NULL;
+	a->init=0;
+	a->flags=0;
+	return(1);
+}
+	
+static int ebcdic_read(BIO *b, char *out, int outl)
+{
+	int ret=0;
+
+	if (out == NULL || outl == 0) return(0);
+	if (b->next_bio == NULL) return(0);
+
+	ret=BIO_read(b->next_bio,out,outl);
+	if (ret > 0)
+		ascii2ebcdic(out,out,ret);
+	return(ret);
+}
+
+static int ebcdic_write(BIO *b, char *in, int inl)
+{
+	EBCDIC_OUTBUFF *wbuf;
+	int ret=0;
+	int num;
+	unsigned char n;
+
+	if ((in == NULL) || (inl <= 0)) return(0);
+	if (b->next_bio == NULL) return(0);
+
+	wbuf=(EBCDIC_OUTBUFF *)b->ptr;
+
+	if (inl > (num = wbuf->alloced))
+	{
+		num = num + num;  /* double the size */
+		if (num < inl)
+			num = inl;
+		Free((char*)wbuf);
+		wbuf=(EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + num);
+
+		wbuf->alloced = num;
+		wbuf->buff[0] = '\0';
+
+		b->ptr=(char *)wbuf;
+	}
+
+	ebcdic2ascii(wbuf->buff, in, inl);
+
+	ret=BIO_write(b->next_bio, wbuf->buff, inl);
+
+	return(ret);
+}
+
+static long ebcdic_ctrl(BIO *b, int cmd, long num, char *ptr)
+{
+	long ret;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+	{
+	case BIO_CTRL_DUP:
+		ret=0L;
+		break;
+	default:
+		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+	}
+	return(ret);
+}
+
+static int ebcdic_gets(BIO *bp, char *buf, int size)
+{
+	int i, ret;
+	if (bp->next_bio == NULL) return(0);
+/*	return(BIO_gets(bp->next_bio,buf,size));*/
+	for (i=0; i<size-1; ++i)
+	{
+		ret = ebcdic_read(bp,&buf[i],1);
+		if (ret <= 0)
+			break;
+		else if (buf[i] == '\n')
+		{
+			++i;
+			break;
+		}
+	}
+	if (i < size)
+		buf[i] = '\0';
+	return (ret < 0 && i == 0) ? ret : i;
+}
+
+static int ebcdic_puts(BIO *bp, char *str)
+{
+	if (bp->next_bio == NULL) return(0);
+	return ebcdic_write(bp, str, strlen(str));
+}
+#endif
+
 int MAIN(int argc, char *argv[])
 	{
 	short port=PORT;
@@ -692,6 +842,9 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					print_stats(bio_s_out,SSL_get_SSL_CTX(con));
 					}
 				}
+#ifdef CHARSET_EBCDIC
+			ebcdic2ascii(buf,buf,i);
+#endif
 			l=k=0;
 			for (;;)
 				{
@@ -750,6 +903,9 @@ again:
 				switch (SSL_get_error(con,i))
 					{
 				case SSL_ERROR_NONE:
+#ifdef CHARSET_EBCDIC
+					ascii2ebcdic(buf,buf,i);
+#endif
 					write(fileno(stdout),buf,
 						(unsigned int)i);
 					if (SSL_pending(con)) goto again;
@@ -941,6 +1097,9 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	/* SSL_set_fd(con,s); */
 	BIO_set_ssl(ssl_bio,con,BIO_CLOSE);
 	BIO_push(io,ssl_bio);
+#ifdef CHARSET_EBCDIC
+	io = BIO_push(BIO_new(BIO_f_ebcdic_filter()),io);
+#endif
 
 	if (s_debug)
 		{
@@ -1010,7 +1169,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			static char *space="                          ";
 
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
-			BIO_puts(io,"<HTML><BODY BGCOLOR=ffffff>\n");
+			BIO_puts(io,"<HTML><BODY BGCOLOR=\"#ffffff\">\n");
 			BIO_puts(io,"<pre>\n");
 /*			BIO_puts(io,SSLeay_version(SSLEAY_VERSION));*/
 			BIO_puts(io,"\n");
@@ -1082,7 +1241,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			BIO_puts(io,"</BODY></HTML>\r\n\r\n");
 			break;
 			}
-		else if ((www == 2) && (strncmp("GET ",buf,4) == 0))
+		else if ((www == 2) && (strncmp("GET /",buf,5) == 0))
 			{
 			BIO *file;
 			char *p,*e;

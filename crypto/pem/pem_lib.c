@@ -286,6 +286,10 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 				PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,PEM_R_READ_KEY);
 				goto err;
 				}
+#ifdef CHARSET_EBCDIC
+			/* Convert the pass phrase from EBCDIC */
+			ebcdic2ascii(buf, buf, klen);
+#endif
 			kstr=(unsigned char *)buf;
 			}
 		RAND_seed(data,i);/* put in the RSA key. */
@@ -345,6 +349,11 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 		PEMerr(PEM_F_PEM_DO_HEADER,PEM_R_BAD_PASSWORD_READ);
 		return(0);
 		}
+#ifdef CHARSET_EBCDIC
+	/* Convert the pass phrase from EBCDIC */
+	ebcdic2ascii(buf, buf, klen);
+#endif
+
 	EVP_BytesToKey(cipher->cipher,EVP_md5(),&(cipher->iv[0]),
 		(unsigned char *)buf,klen,1,key,NULL);
 
@@ -394,9 +403,15 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 	for (;;)
 		{
 		c= *header;
+#ifndef CHARSET_EBCDIC
 		if (!(	((c >= 'A') && (c <= 'Z')) || (c == '-') ||
 			((c >= '0') && (c <= '9'))))
 			break;
+#else
+		if (!(	isupper(c) || (c == '-') ||
+			isdigit(c)))
+			break;
+#endif
 		header++;
 		}
 	*header='\0';

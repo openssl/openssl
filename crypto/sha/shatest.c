@@ -69,6 +69,10 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/sha.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 #define SHA_0 /* FIPS 180 */
 #undef  SHA_1 /* FIPS 180-1 */
 
@@ -105,6 +109,11 @@ int main(int argc, char *argv[])
 	SHA_CTX c;
 	unsigned char md[SHA_DIGEST_LENGTH];
 
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(test[0], test[0], strlen(test[0]));
+	ebcdic2ascii(test[1], test[1], strlen(test[1]));
+#endif
+
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
 	i=1;
@@ -125,6 +134,9 @@ int main(int argc, char *argv[])
 		}
 
 	memset(buf,'a',1000);
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, 1000);
+#endif /*CHARSET_EBCDIC*/
 	SHA_Init(&c);
 	for (i=0; i<1000; i++)
 		SHA_Update(&c,buf,1000);

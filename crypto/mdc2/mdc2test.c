@@ -73,6 +73,10 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/mdc2.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 static unsigned char pad1[16]={
 	0x42,0xE5,0x0C,0xD2,0x24,0xBA,0xCE,0xBA,
 	0x76,0x0B,0xDD,0x2B,0xD4,0x09,0x28,0x1A
@@ -90,6 +94,10 @@ int main(int argc, char *argv[])
 	int i;
 	MDC2_CTX c;
 	static char *text="Now is the time for all ";
+
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(text,text,strlen(text));
+#endif
 
 	MDC2_Init(&c);
 	MDC2_Update(&c,(unsigned char *)text,strlen(text));

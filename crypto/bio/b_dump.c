@@ -102,7 +102,13 @@ int BIO_dump(BIO *bio, const char *s, int len)
       if (((i*DUMP_WIDTH)+j)>=len)
 	break;
       ch=((unsigned char)*((char *)(s)+i*DUMP_WIDTH+j)) & 0xff;
+#ifndef CHARSET_EBCDIC
       sprintf(tmp,"%c",((ch>=' ')&&(ch<='~'))?ch:'.');
+#else
+      sprintf(tmp,"%c",((ch>=os_toascii[' '])&&(ch<=os_toascii['~']))
+	      ? os_toebcdic[ch]
+	      : '.');
+#endif
       strcat(buf,tmp);
     }
     strcat(buf,"\n");

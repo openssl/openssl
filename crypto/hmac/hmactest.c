@@ -69,6 +69,10 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/hmac.h>
 
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
 struct test_st
 	{
 	unsigned char key[16];
@@ -115,6 +119,13 @@ int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	char *p;
+
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(test[0].data, test[0].data, test[0].data_len);
+	ebcdic2ascii(test[1].data, test[1].data, test[1].data_len);
+	ebcdic2ascii(test[2].key,  test[2].key,  test[2].key_len);
+	ebcdic2ascii(test[2].data, test[2].data, test[2].data_len);
+#endif
 
 	for (i=0; i<4; i++)
 		{
