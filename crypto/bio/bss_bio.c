@@ -84,7 +84,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 /* VxWorks defines SSiZE_MAX with an empty value causing compile errors */
 #if defined(VXWORKS)
