@@ -20,6 +20,8 @@
       o Security fix: prevent Bleichenbacher's DSA attack.
       o Security fix: Zero the premaster secret after deriving the
         master secret in DH ciphersuites.
+      o Compatibility fix: the function des_encrypt() renamed to
+        des_encrypt1() to avoid clashes with some Unixen libc.
       o Bug fixes for Win32, HP/UX and Irix.
       o Bug fixes in BIGNUM, SSL, PKCS#7, PKCS#12, X.509, CONF and
         memory checking routines.
