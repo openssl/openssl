@@ -3,7 +3,12 @@
  _______________
 
 
- Changes between 0.9.2b and 0.9.3
+ Changes between 0.9.2b and 0.9.3  [XX May 1999]
+                                   [I suggest using the same format for the
+                                   date as in opensslv.h.  0.9.1c used
+                                   hyphens in the date, so I wrote
+                                   [23-Dec-1998] down below; but in later
+                                   versions, these hyphens are gone.]
 
   *) Reorganize and speed up MD5.
      [Andy Polyakov <appro@fy.chalmers.se>]
@@ -363,7 +368,8 @@
      so they no longer are missing under -DNOPROTO. 
      [Soren S. Jorvang <soren@t.dk>]
 
- Changes between 0.9.1c and 0.9.2b
+
+ Changes between 0.9.1c and 0.9.2b  [22 Mar 1999]
 
   *) Make SSL_get_peer_cert_chain() work in servers. Unfortunately, it still
      doesn't work when the session is reused. Coming soon!
@@ -1030,7 +1036,8 @@
   *) Generate Makefile.ssl from Makefile.org (to keep CVS happy).
      [Ben Laurie]
 
- Changes between 0.9.1b and 0.9.1c
+
+ Changes between 0.9.1b and 0.9.1c  [23-Dec-1998]
 
   *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and 
      changed SSLeay to OpenSSL in version strings.
@@ -1090,7 +1097,8 @@
      summer 1998.
      [The OpenSSL Project]
  
- Changes between 0.9.0b and 0.9.1b
+
+ Changes between 0.9.0b and 0.9.1b  [not released]
 
   *) Updated a few CA certificates under certs/
      [Eric A. Young]
