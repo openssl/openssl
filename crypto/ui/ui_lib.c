@@ -104,6 +104,8 @@ static void free_string(UI_STRING *uis)
 
 void UI_free(UI *ui)
 	{
+	if (ui == NULL)
+		return;
 	sk_UI_STRING_pop_free(ui->strings,free_string);
 	OPENSSL_free(ui);
 	}
@@ -172,7 +174,7 @@ int UI_dup_input_string(UI *ui, const char *prompt, int flags,
 			}
 		}
 	
-	return general_allocate_string(ui, prompt, 1,
+	return general_allocate_string(ui, prompt_copy, 1,
 		UIT_PROMPT, flags, result_buf, minsize, maxsize, NULL);
 	}
 
@@ -198,7 +200,7 @@ int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 			}
 		}
 	
-	return general_allocate_string(ui, prompt, 1,
+	return general_allocate_string(ui, prompt_copy, 1,
 		UIT_VERIFY, flags, result_buf, minsize, maxsize, test_buf);
 	}
 
@@ -222,7 +224,7 @@ int UI_dup_info_string(UI *ui, const char *text)
 			}
 		}
 
-	return general_allocate_string(ui, text, 1, UIT_INFO, 0, NULL, 0, 0,
+	return general_allocate_string(ui, text_copy, 1, UIT_INFO, 0, NULL, 0, 0,
 		NULL);
 	}
 
