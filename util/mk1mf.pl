@@ -100,7 +100,6 @@ $tmp_def="tmp";
 $mkdir="mkdir";
 
 ($ssl,$crypto)=("ssl","crypto");
-$RSAglue="RSAglue";
 $ranlib="echo ranlib";
 
 $cc=(defined($VARS{'CC'}))?$VARS{'CC'}:'cc';
@@ -226,6 +225,9 @@ $cflags.=" -DNO_ERR"  if $no_err;
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
+%shlib_ex_cflags=("SSL" => " -DOPENSSL_BUILD_SHLIBSSL",
+		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
+
 if ($msdos)
 	{
 	$banner ="\t\@echo Make sure you have run 'perl Configure $platform' in the\n";
@@ -318,7 +320,6 @@ ASM=$bin_dir$asm
 E_EXE=openssl
 SSL=$ssl
 CRYPTO=$crypto
-RSAGLUE=$RSAglue
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
@@ -337,14 +338,12 @@ INCL_D=\$(TMP_D)
 
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
-O_RSAGLUE= \$(LIB_D)$o$plib\$(RSAGLUE)$libp
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
 L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
 
 L_LIBS= \$(L_SSL) \$(L_CRYPTO)
-#L_LIBS= \$(O_SSL) \$(O_RSAGLUE) -lrsaref \$(O_CRYPTO)
 
 ######################################################
 # Don't touch anything below this point
@@ -354,7 +353,7 @@ INC=-I\$(INC_D) -I\$(INCL_D)
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
-LIBS_DEP=\$(O_CRYPTO) \$(O_RSAGLUE) \$(O_SSL)
+LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
 
 #############################################
 EOF
@@ -526,17 +525,9 @@ foreach (values %lib_nam)
 	$lib_obj=$lib_obj{$_};
 	local($slib)=$shlib;
 
-	$slib=0 if ($_ eq "RSAGLUE");
-
 	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
 		{
 		$rules.="\$(O_SSL):\n\n"; 
-		next;
-		}
-
-	if (($_ eq "RSAGLUE") && $no_rsa)
-		{
-		$rules.="\$(O_RSAGLUE):\n\n"; 
 		next;
 		}
 
@@ -592,7 +583,7 @@ foreach (values %lib_nam)
 		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
 		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
-	$lib=($slib)?" \$(SHLIB_CFLAGS)":" \$(LIB_CFLAGS)";
+	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
@@ -605,8 +596,6 @@ foreach (split(/\s+/,$test))
 	}
 
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
-$rules.= &do_lib_rule("\$(RSAGLUEOBJ)","\$(O_RSAGLUE)",$RSAglue,0,"")
-	unless $no_rsa;
 $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
