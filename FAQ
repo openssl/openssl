@@ -186,7 +186,7 @@ environment variable HOME is set, then the seeding file is $HOME/.rnd.
 If neither RANDFILE nor HOME is set, versions up to OpenSSL 0.9.6 will
 use file .rnd in the current directory while OpenSSL 0.9.6a uses no
 default seeding file at all.  OpenSSL 0.9.6b and later will behave
-similarly to 0.9.6a, but will use a default of "C:" for HOME on
+similarly to 0.9.6a, but will use a default of "C:\" for HOME on
 Windows systems if the environment variable has not been set.
 
 If the default seeding file does not exist or is too short, the "PRNG
