@@ -103,9 +103,6 @@ extern "C" {
 #ifdef WIN32
 #define get_last_sys_error()	GetLastError()
 #define clear_sys_error()	SetLastError(0)
-/* These are defined in wincrypt.h and can cause problems */
-#undef X509_NAME
-#undef PKCS7_SIGNER_INFO
 #if !defined(WINNT)
 #define WIN_CONSOLE_BUG
 #endif

@@ -86,6 +86,12 @@ extern "C" {
 
 #include <openssl/evp.h>
 
+
+#ifdef WIN32
+/* Under Win32 this is defined in wincrypt.h */
+#undef X509_NAME
+#endif
+
 #define X509_FILETYPE_PEM	1
 #define X509_FILETYPE_ASN1	2
 #define X509_FILETYPE_DEFAULT	3

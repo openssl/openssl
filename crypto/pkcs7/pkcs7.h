@@ -66,6 +66,11 @@ extern "C" {
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
+#ifdef WIN32
+/* Under Win32 this is defined in wincrypt.h */
+#undef PKCS7_ISSUER_AND_SERIAL
+#endif
+
 /*
 Encryption_ID		DES-CBC
 Digest_ID		MD5
