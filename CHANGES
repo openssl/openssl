@@ -113,6 +113,8 @@
      form for "surname", serialNumber has no short form.
      Use "mail" as the short name for "rfc822Mailbox" according to RFC2798;
      therefore remove "mail" short name for "internet 7".
+     The OID for unique identifiers in X509 certificates is
+     x500UniqueIdentifier, not uniqueIdentifier.
      Some more OID additions. (Michael Bell <michael.bell@rz.hu-berlin.de>)
      [Lutz Jaenicke]
 
