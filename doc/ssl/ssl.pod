@@ -163,7 +163,7 @@ Determine the number of bits in I<cipher>. Because of export crippled ciphers
 there are two bits: The bits the algorithm supports in general (stored to
 I<alg_bits>) and the bits which are actually used (the return value).
 
-=item char *B<SSL_CIPHER_get_name>(SSL_CIPHER *cipher);
+=item const char *B<SSL_CIPHER_get_name>(SSL_CIPHER *cipher);
 
 Return the internal name of I<cipher> as a string. These are the various
 strings defined by the I<SSL2_TXT_xxx>, I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
@@ -437,7 +437,7 @@ connection defined in the B<SSL> structure.
 
 =item X509 *B<SSL_get_certificate>(SSL *ssl);
 
-=item SSL_CIPHER *B<SSL_get_cipher>(SSL *ssl);
+=item const char *B<SSL_get_cipher>(SSL *ssl);
 
 =item int B<SSL_get_cipher_bits>(SSL *ssl, int *alg_bits);
 

@@ -40,7 +40,7 @@ if and only if B<ret E<gt> 0>.
 
 The SSL connection has been closed.  If the protocol version is SSL 3.0
 or TLS 1.0, this result code is returned only if a closure
-alerts has occurred in the protocol, i.e. if the connection has been
+alert has occurred in the protocol, i.e. if the connection has been
 closed cleanly.
 
 =item SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
