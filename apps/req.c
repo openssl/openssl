@@ -1022,6 +1022,7 @@ end:
 #ifndef OPENSSL_NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
+	apps_shutdown();
 	EXIT(ex);
 	}
 
