@@ -63,7 +63,7 @@
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens);
+static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
@@ -281,7 +281,10 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 		cnf = sk_CONF_VALUE_value(nval, i);
 		if(!name_cmp(cnf->name, "email") && cnf->value &&
 						!strcmp(cnf->value, "copy")) {
-			if(!copy_email(ctx, gens)) goto err;
+			if(!copy_email(ctx, gens, 0)) goto err;
+		} else if(!name_cmp(cnf->name, "email") && cnf->value &&
+						!strcmp(cnf->value, "move")) {
+			if(!copy_email(ctx, gens, 1)) goto err;
 		} else {
 			GENERAL_NAME *gen;
 			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
@@ -299,7 +302,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
  * GENERAL_NAMES
  */
 
-static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens)
+static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 {
 	X509_NAME *nm;
 	ASN1_IA5STRING *email = NULL;
@@ -321,6 +324,11 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 					 NID_pkcs9_emailAddress, i)) >= 0) {
 		ne = X509_NAME_get_entry(nm, i);
 		email = M_ASN1_IA5STRING_dup(X509_NAME_ENTRY_get_data(ne));
+                if (move_p)
+                        {
+                        X509_NAME_delete_entry(nm, i);
+                        i--;
+                        }
 		if(!email || !(gen = GENERAL_NAME_new())) {
 			X509V3err(X509V3_F_COPY_EMAIL,ERR_R_MALLOC_FAILURE);
 			goto err;
