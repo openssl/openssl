@@ -101,7 +101,7 @@ typedef struct SHAstate_st
 	SHA_LONG h0,h1,h2,h3,h4;
 	SHA_LONG Nl,Nh;
 	SHA_LONG data[SHA_LBLOCK];
-	int num;
+	unsigned int num;
 	} SHA_CTX;
 
 #ifndef OPENSSL_NO_SHA0
@@ -159,6 +159,9 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 #define SHA_LONG64 unsigned __int64
 #define U64(C)     C##UI64
+#elif defined(__arch64__)
+#define SHA_LONG64 unsigned long
+#define U64(C)     C##UL
 #else
 #define SHA_LONG64 unsigned long long
 #define U64(C)     C##ULL
