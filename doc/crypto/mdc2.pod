@@ -38,14 +38,15 @@ be hashed (B<len> bytes at B<data>).
 MDC2_Final() places the message digest in B<md>, which must have space
 for MDC2_DIGEST_LENGTH == 16 bytes of output, and erases the B<MDC2_CTX>.
 
+Applications should use the higher level functions
+L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling the
+hash functions directly.
+
 =head1 RETURN VALUES
 
 MDC2() returns a pointer to the hash value. 
 
 MDC2_Init(), MDC2_Update() and MDC2_Final() do not return values.
-
-Applications should use the higher level functions EVP_DigestInit(3) etc.
-instead of calling the hash functions directly.
 
 =head1 CONFORMING TO
 

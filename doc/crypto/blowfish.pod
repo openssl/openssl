@@ -90,8 +90,9 @@ None of the functions presented here return any value.
 
 =head1 NOTE
 
-Applications should use the higher level functions EVP_EncryptInit(3) etc.
-instead of calling the blowfish functions directly.
+Applications should use the higher level functions
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling the
+blowfish functions directly.
 
 =head1 SEE ALSO
 

@@ -39,8 +39,9 @@ RIPEMD160_Final() places the message digest in B<md>, which must have
 space for RIPEMD160_DIGEST_LENGTH == 20 bytes of output, and erases
 the B<RIPEMD160_CTX>.
 
-Applications should use the higher level functions EVP_DigestInit(3) etc.
-instead of calling the hash functions directly.
+Applications should use the higher level functions
+L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling the
+hash functions directly.
 
 =head1 RETURN VALUES
 
