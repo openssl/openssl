@@ -1081,6 +1081,9 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	SSL_COMP *comp;
 	STACK_OF(SSL_COMP) *sk;
 
+        if (cm == NULL || cm->type == NID_undef)
+                return 1;
+
 	MemCheck_off();
 	comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
 	comp->id=id;
