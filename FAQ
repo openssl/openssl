@@ -103,6 +103,11 @@ application you are using.  It is likely that it never worked
 correctly.  OpenSSL 0.9.5 makes the error visible by refusing to
 perform potentially insecure encryption.
 
+Most components of the openssl command line tool try to use the
+file $HOME/.rnd (or $RANDFILE, if this environment variable is set)
+for seeding the PRNG.  If this file does not exist or is too short,
+the "PRNG not seeded" error message may occur.
+
 
 * Why does the linker complain about undefined symbols?
 
