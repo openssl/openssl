@@ -471,6 +471,8 @@ ASN1_GENERALIZEDTIME *	d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a,unsigne
 
 int		i2d_ASN1_TIME(ASN1_TIME *a,unsigned char **pp);
 ASN1_TIME *	d2i_ASN1_TIME(ASN1_TIME **a,unsigned char **pp, long length);
+ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
+
 
   /* for the is_set parameter to i2d_ASN1_SET */
 #define IS_SEQUENCE	0

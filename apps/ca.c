@@ -1190,7 +1190,7 @@ err:
 	}
 
 static int certify(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,days,
-	batch,ext_sect,conf,verbose)
+		   batch,ext_sect,lconf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1203,7 +1203,7 @@ char *startdate;
 int days;
 int batch;
 char *ext_sect;
-LHASH *conf;
+LHASH *lconf;
 int verbose;
 	{
 	X509_REQ *req=NULL;
@@ -1252,7 +1252,7 @@ int verbose;
 		BIO_printf(bio_err,"Signature ok\n");
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
-		days,batch,verbose,req,ext_sect,conf);
+		days,batch,verbose,req,ext_sect,lconf);
 
 err:
 	if (req != NULL) X509_REQ_free(req);
@@ -1261,7 +1261,7 @@ err:
 	}
 
 static int certify_cert(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,
-	days, batch,ext_sect,conf,verbose)
+			days,batch,ext_sect,lconf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1274,7 +1274,7 @@ char *startdate;
 int days;
 int batch;
 char *ext_sect;
-LHASH *conf;
+LHASH *lconf;
 int verbose;
 	{
 	X509 *req=NULL;
@@ -1326,7 +1326,7 @@ int verbose;
 		goto err;
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
-		batch,verbose,rreq,ext_sect,conf);
+		batch,verbose,rreq,ext_sect,lconf);
 
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
@@ -1336,7 +1336,7 @@ err:
 	}
 
 static int do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
-	batch,verbose,req, ext_sect,conf)
+		   batch,verbose,req,ext_sect,lconf)
 X509 **xret;
 EVP_PKEY *pkey;
 X509 *x509;
@@ -1350,7 +1350,7 @@ int batch;
 int verbose;
 X509_REQ *req;
 char *ext_sect;
-LHASH *conf;
+LHASH *lconf;
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1687,7 +1687,7 @@ again2:
 		ctx.crl = NULL;
 		ctx.flags = 0;
 
-		if(!X509V3_EXT_add_conf(conf, &ctx, ext_sect, ret)) goto err;
+		if(!X509V3_EXT_add_conf(lconf, &ctx, ext_sect, ret)) goto err;
 
 		}
 
@@ -1811,7 +1811,7 @@ int output_der;
 	}
 
 static int certify_spkac(xret,infile,pkey,x509,dgst,policy,db,serial,
-	startdate,days,ext_sect,conf,verbose)
+			 startdate,days,ext_sect,lconf,verbose)
 X509 **xret;
 char *infile;
 EVP_PKEY *pkey;
@@ -1823,7 +1823,7 @@ BIGNUM *serial;
 char *startdate;
 int days;
 char *ext_sect;
-LHASH *conf;
+LHASH *lconf;
 int verbose;
 	{
 	STACK *sk=NULL;
@@ -1969,7 +1969,7 @@ int verbose;
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,
-		days,1,verbose,req,ext_sect,conf);
+		   days,1,verbose,req,ext_sect,lconf);
 err:
 	if (req != NULL) X509_REQ_free(req);
 	if (parms != NULL) CONF_free(parms);

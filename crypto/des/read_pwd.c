@@ -179,7 +179,7 @@ static jmp_buf save;
 int des_read_pw_string(buf, length, prompt, verify)
 char *buf;
 int length;
-char *prompt;
+const char *prompt;
 int verify;
 	{
 	char buff[BUFSIZ];

@@ -301,24 +301,21 @@ des_key_schedule ks3;
 
 #ifndef DES_DEFAULT_OPTIONS
 
-void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
+void des_ncbc_encrypt(in, out, length, schedule, ivec, enc)
+const unsigned char *in;
+unsigned char *out;
 long length;
 des_key_schedule schedule;
-des_cblock (*ivec);
+des_cblock ivec;
 int enc;
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
 	register long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 
 	if (enc)
 		{
@@ -343,7 +340,7 @@ int enc;
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2c(tout0,iv);
 		l2c(tout1,iv);
 		}
@@ -375,7 +372,7 @@ int enc;
 			xor1=tin1;
 			}
 
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2c(xor0,iv);
 		l2c(xor1,iv);
 		}
@@ -384,13 +381,13 @@ int enc;
 	}
 
 void des_ede3_cbc_encrypt(input, output, length, ks1, ks2, ks3, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
+const unsigned char *input;
+unsigned char *output;
 long length;
 des_key_schedule ks1;
 des_key_schedule ks2;
 des_key_schedule ks3;
-des_cblock (*ivec);
+des_cblock ivec;
 int enc;
 	{
 	register DES_LONG tin0,tin1;

@@ -135,27 +135,23 @@ unsigned int len;
 	register DES_LONG tin0,tin1;
 	register DES_LONG ttin0,ttin1;
 	DES_LONG d[2],dd[2];
-	unsigned char *h,*hh;
 	des_key_schedule k;
 	unsigned char *p;
 	unsigned int i;
-
-	h= c->h;
-	hh= c->hh;
 
 	for (i=0; i<len; i+=8)
 		{
 		c2l(in,tin0); d[0]=dd[0]=tin0;
 		c2l(in,tin1); d[1]=dd[1]=tin1;
-		h[0]=(h[0]&0x9f)|0x40;
-		hh[0]=(hh[0]&0x9f)|0x20;
+		c->h[0]=(c->h[0]&0x9f)|0x40;
+		c->hh[0]=(c->hh[0]&0x9f)|0x20;
 
-		des_set_odd_parity(h);
-		des_set_key(h,k);
+		des_set_odd_parity(c->h);
+		des_set_key(c->h,k);
 		des_encrypt(d,k,1);
 
-		des_set_odd_parity(hh);
-		des_set_key(hh,k);
+		des_set_odd_parity(c->hh);
+		des_set_key(c->hh,k);
 		des_encrypt(dd,k,1);
 
 		ttin0=tin0^dd[0];
@@ -163,10 +159,10 @@ unsigned int len;
 		tin0^=d[0];
 		tin1^=d[1];
 
-		p=h;
+		p=c->h;
 		l2c(tin0,p);
 		l2c(ttin1,p);
-		p=(unsigned char *)hh;
+		p=c->hh;
 		l2c(ttin0,p);
 		l2c(tin1,p);
 		}

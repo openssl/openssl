@@ -101,7 +101,7 @@ int enc;
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		des_set_key((des_cblock *)key,ctx->c.des_ks);
+		des_set_key(key,ctx->c.des_ks);
 	}
 
 static void des_ofb_cipher(ctx,out,in,inl)
@@ -110,9 +110,5 @@ unsigned char *out;
 unsigned char *in;
 unsigned int inl;
 	{
-	des_ofb64_encrypt(
-		in,out,
-		(long)inl, ctx->c.des_ks,
-		(des_cblock *)&(ctx->iv[0]),
-		&ctx->num);
+	des_ofb64_encrypt(in,out,inl,ctx->c.des_ks,&(ctx->iv[0]),&ctx->num);
 	}

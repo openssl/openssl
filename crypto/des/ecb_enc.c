@@ -103,8 +103,8 @@ char *des_options()
 		
 
 void des_ecb_encrypt(in, out, ks, enc)
-const unsigned char *in;
-unsigned char *out;
+const des_cblock in;
+des_cblock out;
 des_key_schedule ks;
 int enc;
 	{
