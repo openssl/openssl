@@ -9,13 +9,13 @@
      [Bodo Moeller; problem reported by Eric Day <eday@concentric.net>]
 
   *) In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
-     obtain lock CRYPTO_LOCK_RSA before creating BN_MONT_CTX
-     structures and setting rsa->_method_mod_{n,p,q}.
+     obtain lock CRYPTO_LOCK_RSA before setting rsa->_method_mod_{n,p,q}.
 
      (RSA objects have a reference count access to which is protected
      by CRYPTO_LOCK_RSA [see rsa_lib.c, s3_srvr.c, ssl_cert.c, ssl_rsa.c],
      so they are meant to be shared between threads.)
-     [patch submitted by "Reddie, Steven" <Steven.Reddie@ca.com>]
+     [Bodo Moeller, Geoff Thorpe; original patch submitted by
+     "Reddie, Steven" <Steven.Reddie@ca.com>]
 
   *) Make mkdef.pl parse some of the ASN1 macros and add apropriate
      entries for variables.
