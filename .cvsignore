@@ -1,3 +1,4 @@
+openssl.pc
 Makefile.ssl
 MINFO
 makefile.one
