@@ -259,13 +259,6 @@ typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
-/* The list of "engine" types is a static array of (const ENGINE*)
- * pointers (not dynamic because static is fine for now and we otherwise
- * have to hook an appropriate load/unload function in to initialise and
- * cleanup). */
-struct engine_st;
-typedef struct engine_st ENGINE;
-
 /* Generic function pointer */
 typedef int (*ENGINE_GEN_FUNC_PTR)();
 /* Generic function pointer taking no arguments */
