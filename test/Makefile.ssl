@@ -94,7 +94,7 @@ HEADER=	$(EXHEADER)
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
-	(cd ..; $(MAKE) DIRS=$(DIR) all)
+	(cd ..; $(MAKE) DIRS=$(DIR) TESTS=$(TESTS) all)
 
 all:	exe
 
