@@ -217,7 +217,7 @@ X509_NAME *X509_NAME_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_NAME);
-	if ((ret->entries=sk_X509_NAME_ENTRY_new(NULL)) == NULL)
+	if ((ret->entries=sk_X509_NAME_ENTRY_new_null()) == NULL)
 		{ c.line=__LINE__; goto err2; }
 	M_ASN1_New(ret->bytes,BUF_MEM_new);
 	ret->modified=1;
