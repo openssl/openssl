@@ -33,7 +33,8 @@
  Configuration Options
  ---------------------
 
- There are several options to ./config to customize the build:
+ There are several options to ./config (or ./Configure) to customize
+ the build:
 
   --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include/openssl.
 	        Configuration files used by OpenSSL will be in DIR/ssl
