@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1998/12/31 12:52:23 $
+  ______________                           $Date: 1999/01/01 14:13:59 $
 
   DEVELOPMENT STATE
 
@@ -28,6 +28,7 @@
        Status: Ralf +1 for both not installing the certs at all and
                        moving it to $prefix/etc/. +0 for $prefix/lib/
                        and $prefix/share.
+               Paul: why is it not nice?
 
     o  Support for Shared Libraries has to be added at least
        for the major Unix platforms. The details we can rip from the stuff
@@ -51,6 +52,7 @@
        Status: Ralf thinks we should both contact the author of Net::SSLeay
                and look how much effort it is to bring Eric's perl/ stuff up
                to date.
+               Paul +1
 
     o  Ralf has ported Stephen's pkcs12 program to OpenSSL (the 
        ASN.1 stuff Eric recently changed :-( ), but needs some help from
@@ -65,4 +67,3 @@
        change it for us when we want to incorporate the code.
 
        Status: Ralf +1, Stephen -0
-  
