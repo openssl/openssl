@@ -56,10 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_RC4
-
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_RC4
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/rc4.h>
