@@ -324,3 +324,14 @@ int app_init(long mesgwin)
 	return(1);
 	}
 #endif
+
+int MS_CALLBACK key_callback(char *buf, int len, int verify, void *key)
+	{
+	int i;
+
+	if (key == NULL) return(0);
+	i=strlen(key);
+	i=(i > len)?len:i;
+	memcpy(buf,key,i);
+	return(i);
+	}

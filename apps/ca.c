@@ -178,7 +178,6 @@ extern int EF_ALIGNMENT;
 
 static int add_oid_section(LHASH *conf);
 static void lookup_fail(char *name,char *tag);
-static int MS_CALLBACK key_callback(char *buf,int len,int verify,void *u);
 static unsigned long index_serial_hash(char **a);
 static int index_serial_cmp(char **a, char **b);
 static unsigned long index_name_hash(char **a);
@@ -209,7 +208,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 static int do_revoke(X509 *x509, TXT_DB *db);
 static int check_time_format(char *str);
 static LHASH *conf=NULL;
-static char *key=NULL;
 static char *section=NULL;
 
 static int preserve=0;
@@ -217,6 +215,7 @@ static int msie_hack=0;
 
 int MAIN(int argc, char **argv)
 	{
+	char *key=NULL;
 	int total=0;
 	int total_done=0;
 	int badops=0;
@@ -535,7 +534,7 @@ bad:
 		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL);
 	else
 		{
-		pkey=PEM_read_bio_PrivateKey(in,NULL,key_callback,NULL);
+		pkey=PEM_read_bio_PrivateKey(in,NULL,key_callback,key);
 		memset(key,0,strlen(key));
 		}
 	if (pkey == NULL)
@@ -1248,17 +1247,6 @@ err:
 static void lookup_fail(char *name, char *tag)
 	{
 	BIO_printf(bio_err,"variable lookup failed for %s::%s\n",name,tag);
-	}
-
-static int MS_CALLBACK key_callback(char *buf, int len, int verify, void *u)
-	{
-	int i;
-
-	if (key == NULL) return(0);
-	i=strlen(key);
-	i=(i > len)?len:i;
-	memcpy(buf,key,i);
-	return(i);
 	}
 
 static unsigned long index_serial_hash(char **a)

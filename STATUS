@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/10/30 19:09:01 $
+  ______________                           $Date: 1999/11/11 13:58:22 $
 
   DEVELOPMENT STATE
 
@@ -29,6 +29,7 @@
 	Private key, certificate and CRL API and implementation.
 	Checking and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
+	Documentation for the openssl utility.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were
@@ -60,10 +61,8 @@
 
   NEEDS PATCH
 
-    o  Arne Ansper: d2i_ASN1_bytes bug
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
-    o  NO_FP_API ("Andrija Antonijevic" <TheAntony@bigfoot.com>)
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
 

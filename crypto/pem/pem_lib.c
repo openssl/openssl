@@ -816,7 +816,7 @@ int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 		return ret;
 	}
 }
-
+#ifndef NO_FP_API
 int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 			      char *kstr, int klen, pem_password_cb *cb, void *u)
 {
@@ -830,3 +830,4 @@ int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 	BIO_free(bp);
 	return ret;
 }
+#endif

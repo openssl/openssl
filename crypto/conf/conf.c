@@ -86,28 +86,21 @@ const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;
 LHASH *CONF_load(LHASH *h, const char *file, long *line)
 	{
 	LHASH *ltmp;
-	FILE *in=NULL;
+	BIO *in=NULL;
 
-#ifdef VMS
-	in=fopen(file,"r");
-#else
-	in=fopen(file,"rb");
-#endif
+	in=BIO_new_file(file, "rb");
 	if (in == NULL)
 		{
-		SYSerr(SYS_F_FOPEN,get_last_sys_error());
-		ERR_set_error_data(BUF_strdup(file),
-			ERR_TXT_MALLOCED|ERR_TXT_STRING);
 		CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
 		return NULL;
 		}
 
-	ltmp = CONF_load_fp(h, in, line);
-	fclose(in);
+	ltmp = CONF_load_bio(h, in, line);
+	BIO_free(in);
 
 	return ltmp;
 }
-
+#ifndef NO_FP_API
 LHASH *CONF_load_fp(LHASH *h, FILE *in, long *line)
 {
 	BIO *btmp;
@@ -120,6 +113,7 @@ LHASH *CONF_load_fp(LHASH *h, FILE *in, long *line)
 	BIO_free(btmp);
 	return ltmp;
 }
+#endif
 
 LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 	{

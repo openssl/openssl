@@ -78,7 +78,9 @@ typedef struct
 DECLARE_STACK_OF(CONF_VALUE)
 
 LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
+#ifndef NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
+#endif
 LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline);
 STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section);
 char *CONF_get_string(LHASH *conf,char *group,char *name);
