@@ -22,6 +22,7 @@ B<openssl> B<s_client>
 [B<-state>]
 [B<-nbio>]
 [B<-crlf>]
+[B<-ign_eof>]
 [B<-quiet>]
 [B<-ssl2>]
 [B<-ssl3>]
@@ -122,9 +123,15 @@ turns on non-blocking I/O
 this option translated a line feed from the terminal into CR+LF as required
 by some servers.
 
+=item B<-ign_eof>
+
+inhibit shutting down the connection when end of file is reached in the
+input.
+
 =item B<-quiet>
 
-inhibit printing of session and certificate information.
+inhibit printing of session and certificate information.  This implicitely
+turns on B<-ign_eof> as well.
 
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
 
@@ -155,9 +162,10 @@ command for more information.
 
 If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
-server. If the line begins with an B<R> then the session will be
-renegotiated. If the line begins with a B<Q> the connection will be closed
-down.
+server. When used interactively (which means neither B<-quiet> nor B<-ign_eof>
+have been given), the session will be renegociated if the line begins with an
+B<R>, and if the line begins with a B<Q> or if end of file is reached, the
+connection will be closed down.
 
 =head1 NOTES
 

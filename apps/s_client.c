@@ -117,6 +117,7 @@ static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
+static int c_ign_eof=0;
 
 static void sc_usage(void)
 	{
@@ -143,6 +144,7 @@ static void sc_usage(void)
 #endif
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
+	BIO_printf(bio_err," -ign_eof      - ignore input eof (default when -quiet)\n");
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
@@ -192,6 +194,7 @@ int MAIN(int argc, char **argv)
 	apps_startup();
 	c_Pause=0;
 	c_quiet=0;
+	c_ign_eof=0;
 	c_debug=0;
 	c_showcerts=0;
 
@@ -249,7 +252,12 @@ int MAIN(int argc, char **argv)
 		else if	(strcmp(*argv,"-crlf") == 0)
 			crlf=1;
 		else if	(strcmp(*argv,"-quiet") == 0)
+			{
 			c_quiet=1;
+			c_ign_eof=1;
+			}
+		else if	(strcmp(*argv,"-ign_eof") == 0)
+			c_ign_eof=1;
 		else if	(strcmp(*argv,"-pause") == 0)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
@@ -711,13 +719,13 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			else
 				i=read(fileno(stdin),cbuf,BUFSIZZ);
 
-			if ((!c_quiet) && ((i <= 0) || (cbuf[0] == 'Q')))
+			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{
 				BIO_printf(bio_err,"DONE\n");
 				goto shut;
 				}
 
-			if ((!c_quiet) && (cbuf[0] == 'R'))
+			if ((!c_ign_eof) && (cbuf[0] == 'R'))
 				{
 				BIO_printf(bio_err,"RENEGOTIATING\n");
 				SSL_renegotiate(con);
