@@ -144,7 +144,6 @@ int ssl3_accept(SSL *s)
 			s->new_session=1;
 			/* s->state=SSL_ST_ACCEPT; */
 
-		case SSL3_ST_SR_MS_SGC:
 		case SSL_ST_BEFORE:
 		case SSL_ST_ACCEPT:
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
@@ -188,7 +187,7 @@ int ssl3_accept(SSL *s)
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
-				if(s->state != SSL3_ST_SR_MS_SGC) ssl3_init_finished_mac(s);
+				ssl3_init_finished_mac(s);
 				s->state=SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->stats.sess_accept++;
 				}
@@ -350,10 +349,12 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			/* Check for second client hello if MS SGC */
+			/* Check for second client hello (MS SGC) */
 			ret = ssl3_check_client_hello(s);
-			if(ret <= 0) goto end;
-			if(ret == 2) s->state = SSL3_ST_SR_MS_SGC;
+			if (ret <= 0)
+				goto end;
+			if (ret == 2)
+				s->state = SSL3_ST_SR_CLNT_HELLO_C;
 			else {
 				/* could be sent for a DH cert, even if we
 				 * have not asked for it :-) */

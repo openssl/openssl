@@ -292,7 +292,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			while (s->init_num < 4)
 				{
 				i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],
-					4-s->init_num);
+					4 - s->init_num);
 				if (i <= 0)
 					{
 					s->rwstate=SSL_READING;
@@ -307,11 +307,14 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 				if (p[0] == SSL3_MT_HELLO_REQUEST)
 					/* The server may always send 'Hello Request' messages --
 					 * we are doing a handshake anyway now, so ignore them
-					 * if their format is correct */
+					 * if their format is correct. Does not count for
+					 * 'Finished' MAC. */
 					if (p[1] == 0 && p[2] == 0 &&p[3] == 0)
 						skip_message = 1;
 			}
 		while (skip_message);
+
+		/* s->init_num == 4 */
 
 		if ((mt >= 0) && (*p != mt))
 			{
@@ -324,12 +327,13 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					(stn == SSL3_ST_SR_CERT_B))
 			{
 			/* At this point we have got an MS SGC second client
-			 * hello. We need to restart the mac and mac the data
-			 * currently received.
+			 * hello (maybe we should always allow the client to
+			 * start a new handshake?). We need to restart the mac.
 			 */
 			ssl3_init_finished_mac(s);
-			ssl3_finish_mac(s, p + s->init_num, i);
 			}
+
+		ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, 4);
 			
 		s->s3->tmp.message_type= *(p++);
 
@@ -366,6 +370,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		s->init_num += i;
 		n -= i;
 		}
+	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
 	*ok=1;
 	return s->init_num;
 f_err:

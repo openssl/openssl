@@ -507,9 +507,6 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 			return(i);
 			}
 
-		if (type == SSL3_RT_HANDSHAKE)
-			ssl3_finish_mac(s,&(buf[tot]),i);
-
 		if ((i == (int)n) ||
 			(type == SSL3_RT_APPLICATION_DATA &&
 			 (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
@@ -740,7 +737,6 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 		/* move any remaining fragment bytes: */
 		for (i = 0; i < s->s3->handshake_fragment_len; i++)
 			s->s3->handshake_fragment[i] = *src++;
-		ssl3_finish_mac(s, buf, n);
 		return n;
 	}
 
@@ -820,9 +816,6 @@ start:
 			s->rstate=SSL_ST_READ_HEADER;
 			rr->off=0;
 			}
-
-		if (type == SSL3_RT_HANDSHAKE)
-			ssl3_finish_mac(s,buf,n);
 		return(n);
 		}
 
@@ -1130,10 +1123,15 @@ int ssl3_do_write(SSL *s, int type)
 	int ret;
 
 	ret=ssl3_write_bytes(s,type,&s->init_buf->data[s->init_off],
-			     s->init_num);
+	                     s->init_num);
+	if (ret < 0) return(-1);
+	if (type == SSL3_RT_HANDSHAKE)
+		/* should not be done for 'Hello Request's, but in that case
+		 * we'll ignore the result anyway */
+		ssl3_finish_mac(s,&s->init_buf->data[s->init_off],ret);
+	
 	if (ret == s->init_num)
 		return(1);
-	if (ret < 0) return(-1);
 	s->init_off+=ret;
 	s->init_num-=ret;
 	return(0);

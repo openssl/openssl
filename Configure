@@ -422,7 +422,7 @@ foreach (@ARGV)
 	 	{
 		$no_asm=1;
 		$flags .= "-DNO_ASM ";
-		$openssl_algorithm_defines .= "#define NO_ASM\n";
+		$openssl_other_defines .= "#define NO_ASM\n";
 		}
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
