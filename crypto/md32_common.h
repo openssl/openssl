@@ -94,6 +94,8 @@
  *	in original (data) byte order, implemented externally (it
  *	actually is optional if data and host are of the same
  *	"endianess").
+ * HASH_MAKE_STRING
+ *	macro convering context variables to an ASCII hash string.
  *
  * Optional macros:
  *
@@ -178,7 +180,9 @@
 #undef ROTATE
 #ifndef PEDANTIC
 # if defined(_MSC_VER)
-#  define ROTATE(a,n)     _lrotl(a,n)
+#  define ROTATE(a,n)	_lrotl(a,n)
+# elif defined(__MWERKS__)
+#  define ROTATE(a,n)	__rol(a,n)
 # elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
@@ -581,10 +585,11 @@ void HASH_FINAL (unsigned char *md, HASH_CTX *c)
 #endif
 	HASH_BLOCK_HOST_ORDER (c,p,1);
 
-	l=c->A; HOST_l2c(l,md);
-	l=c->B; HOST_l2c(l,md);
-	l=c->C; HOST_l2c(l,md);
-	l=c->D; HOST_l2c(l,md);
+#ifndef HASH_MAKE_STRING
+#error "HASH_MAKE_STRING must be defined!"
+#else
+	HASH_MAKE_STRING(c,md);
+#endif
 
 	c->num=0;
 	/* clear stuff, HASH_BLOCK may be leaving some stuff on the stack

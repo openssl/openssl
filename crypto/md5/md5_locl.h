@@ -66,7 +66,7 @@
 #endif
 
 #ifdef MD5_ASM
-# if defined(__i386) || defined(_M_IX86)
+# if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)
 #  define md5_block_host_order md5_block_asm_host_order
 # elif defined(__sparc) && defined(ULTRASPARC)
    void md5_block_asm_data_order_aligned (MD5_CTX *c, const MD5_LONG *p,int num);
@@ -77,7 +77,7 @@
 void md5_block_host_order (MD5_CTX *c, const void *p,int num);
 void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 
-#if defined(__i386) || defined(_M_IX86)
+#if defined(__i386) || defined(_M_IX86) || defined(__INTEL__)
 /*
  * *_block_host_order is expected to handle aligned data while
  * *_block_data_order - unaligned. As algorithm and host (x86)
@@ -112,6 +112,13 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 #define HASH_UPDATE		MD5_Update
 #define HASH_TRANSFORM		MD5_Transform
 #define HASH_FINAL		MD5_Final
+#define	HASH_MAKE_STRING(c,s)	do {	\
+	unsigned long l;		\
+	l=(c)->A; HOST_l2c(l,(s));	\
+	l=(c)->B; HOST_l2c(l,(s));	\
+	l=(c)->C; HOST_l2c(l,(s));	\
+	l=(c)->D; HOST_l2c(l,(s));	\
+	} while (0)
 #define HASH_BLOCK_HOST_ORDER	md5_block_host_order
 #if !defined(L_ENDIAN) || defined(md5_block_data_order)
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
