@@ -206,6 +206,10 @@ static int engine_internal_check(void)
        if(!engine_list_add(ENGINE_sureware()))
                 return 0;
 #endif /* !NO_HW_SUREWARE */
+#ifndef NO_HW_UBSEC
+	if(!engine_list_add(ENGINE_ubsec()))
+		return 0;
+#endif /* !NO_HW_UBSEC */
 #endif /* !NO_HW */
 	engine_list_flag = 1;
 	return 1;

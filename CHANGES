@@ -4,6 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add support for Broadcom crypto accelerator cards, backported
+     from 0.9.7.
+     [Broadcom, Nalin Dahyabhai <nalin@redhat.com>, Mark Cox]
+
   *) Add support for SureWare crypto accelerator cards from 
      Baltimore Technologies.  (Use engine 'sureware')
      [Baltimore Technologies and Mark Cox]

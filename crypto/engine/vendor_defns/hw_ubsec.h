@@ -35,6 +35,10 @@
 #define UBSEC_MATH_MODREM 0x0010
 #define UBSEC_MATH_MODINV 0x0020
 
+/* RNG command types. */
+#define UBSEC_RNG_DIRECT  0x0001
+#define UBSEC_RNG_SHA1    0x0002
+
 typedef long ubsec_MathCommand_t;
 typedef long ubsec_RNGCommand_t;
 
@@ -96,4 +100,6 @@ typedef int t_UBSEC_math_accelerate_ioctl(int fd, ubsec_MathCommand_t command,
 
 typedef int t_UBSEC_rng_ioctl(int fd, ubsec_RNGCommand_t command,
 	unsigned char *Result, int *Result_len);
+
+typedef int t_UBSEC_max_key_len_ioctl(int fd, int *max_key_len);
 

@@ -161,6 +161,10 @@ ENGINE *ENGINE_aep();
 ENGINE *ENGINE_sureware();
 #endif /* !NO_HW_SUREWARE */
 
+#ifndef NO_HW_UBSEC
+/* Returns a structure of ubsec methods. */
+ENGINE *ENGINE_ubsec();
+#endif /* !NO_HW_UBSEC */
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus

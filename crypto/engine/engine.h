@@ -377,6 +377,16 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_SUREWAREHK_DH_GEN_KEY			 210
 #define ENGINE_F_SUREWAREHK_DSA_DO_SIGN			 211
 #define ENGINE_F_SUREWAREHK_MOD_EXP			 212
+#define ENGINE_F_UBSEC_CTRL				 176
+#define ENGINE_F_UBSEC_DSA_SIGN				 163
+#define ENGINE_F_UBSEC_DSA_VERIFY			 164
+#define ENGINE_F_UBSEC_FINISH				 165
+#define ENGINE_F_UBSEC_INIT				 166
+#define ENGINE_F_UBSEC_MOD_EXP				 167
+#define ENGINE_F_UBSEC_RSA_MOD_EXP			 168
+#define ENGINE_F_UBSEC_RSA_MOD_EXP_CRT			 169
+#define ENGINE_F_UBSEC_DH_COMPUTE_KEY                    171
+#define ENGINE_F_UBSEC_RNG_BYTES                         172
 
 /* Reason codes. */
 
