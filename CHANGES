@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
+ Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
   *) In util/mkerr.pl (which implements 'make errors'), preserve
      reason strings from the previous version of the .c file, as
