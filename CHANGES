@@ -4,6 +4,24 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a bunch of functions that should simplify the creation of 
+     X509_NAME structures. Now you should be able to do:
+     X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC, "Steve", -1, -1, 0);
+     and have it automatically work out the correct field type and fill in
+     the structures. The more adventurous can try:
+     X509_NAME_add_entry_by_txt(nm, field, MBSTRING_UTF8, str, -1, -1, 0);
+     and it will (hopefully) work out the correct multibyte encoding.
+     [Steve Henson]
+
+  *) Change the 'req' utility to use the new field handling and multibyte
+     copy routines. Before the DN field creation was handled in an ad hoc
+     way in req, ca, and x509 which was rather broken and didn't support
+     BMPStrings or UTF8Strings. Since some software doesn't implement
+     BMPStrings or UTF8Strings yet, they can be enabled using the config file
+     using the dirstring_type option. See the new comment in the default
+     openssl.cnf for more info.
+     [Steve Henson]
+
   *) Make crypto/rand/md_rand.c more robust:
      - Assure unique random numbers after fork().
      - Make sure that concurrent threads access the global counter and

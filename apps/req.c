@@ -82,6 +82,7 @@
 #define ATTRIBUTES	"attributes"
 #define V3_EXTENSIONS	"x509_extensions"
 #define REQ_EXTENSIONS	"req_extensions"
+#define DIRSTRING_TYPE	"dirstring_type"
 
 #define DEFAULT_KEY_LENGTH	512
 #define MIN_KEY_LENGTH		384
@@ -450,6 +451,13 @@ bad:
 			 "Error Loading extension section %s\n", extensions);
 			goto end;
 		}
+	}
+
+	p = CONF_get_string(req_conf, SECTION, DIRSTRING_TYPE);
+
+	if(p && !ASN1_STRING_set_default_mask_asc(p)) {
+		BIO_printf(bio_err, "Invalid DiretoryString setting %s", p);
+		goto end;
 	}
 
 	if(!req_exts)
@@ -883,6 +891,9 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 
 	ri=req->req_info;
 
+	/* setup version number */
+	if (!ASN1_INTEGER_set(ri->version,0L)) goto err; /* version 1 */
+
 	BIO_printf(bio_err,"You are about to be asked to enter information that will be incorporated\n");
 	BIO_printf(bio_err,"into your certificate request.\n");
 	BIO_printf(bio_err,"What you are about to enter is what is called a Distinguished Name or a DN.\n");
@@ -891,8 +902,6 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	BIO_printf(bio_err,"If you enter '.', the field will be left blank.\n");
 	BIO_printf(bio_err,"-----\n");
 
-	/* setup version number */
-	if (!ASN1_INTEGER_set(ri->version,0L)) goto err; /* version 1 */
 
 	if (sk_CONF_VALUE_num(sk))
 		{
@@ -1003,8 +1012,7 @@ err:
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	     int nid, int min, int max)
 	{
-	int i,j,ret=0;
-	X509_NAME_ENTRY *ne=NULL;
+	int i,ret=0;
 	MS_STATIC char buf[1024];
 
 	BIO_printf(bio_err,"%s [%s]:",text,def);
@@ -1039,21 +1047,13 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 		}
 	buf[--i]='\0';
 
-	j=ASN1_PRINTABLE_type((unsigned char *)buf,-1);
-	if (req_fix_data(nid,&j,i,min,max) == 0)
-		goto err;
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, i);
 #endif
-	if ((ne=X509_NAME_ENTRY_create_by_NID(NULL,nid,j,(unsigned char *)buf,
-		strlen(buf)))
-		== NULL) goto err;
-	if (!X509_NAME_add_entry(n,ne,X509_NAME_entry_count(n),0))
-		goto err;
-
+	if (!X509_NAME_add_entry_by_NID(n,nid, MBSTRING_ASC,
+				(unsigned char *) buf, -1,-1,0)) goto err;
 	ret=1;
 err:
-	if (ne != NULL) X509_NAME_ENTRY_free(ne);
 	return(ret);
 	}
 

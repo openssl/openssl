@@ -744,6 +744,7 @@ void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
 ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
 
 void ASN1_STRING_set_default_mask(unsigned long mask);
+int ASN1_STRING_set_default_mask_asc(char *p);
 unsigned long ASN1_STRING_get_default_mask(void);
 int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 					int inform, unsigned long mask);

@@ -1993,3 +1993,8 @@ EVP_PKEY_get_RSA                        2017
 EVP_PKEY_get_DH                         2018
 EVP_PKEY_get_DSA                        2019
 X509_PURPOSE_cleanup                    2020
+ASN1_STRING_set_default_mask_asc        2021
+X509_NAME_add_entry_by_txt              2022
+X509_NAME_add_entry_by_NID              2023
+X509_NAME_add_entry_by_OBJ              2024
+X509_NAME_ENTRY_create_by_txt           2025

@@ -171,6 +171,33 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 	return(ret);
 	}
 
+int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
+			unsigned char *bytes, int len, int loc, int set)
+{
+	X509_NAME_ENTRY *ne;
+	ne = X509_NAME_ENTRY_create_by_OBJ(NULL, obj, type, bytes, len);
+	if(!ne) return 0;
+	return X509_NAME_add_entry(name, ne, loc, set);
+}
+
+int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
+			unsigned char *bytes, int len, int loc, int set)
+{
+	X509_NAME_ENTRY *ne;
+	ne = X509_NAME_ENTRY_create_by_NID(NULL, nid, type, bytes, len);
+	if(!ne) return 0;
+	return X509_NAME_add_entry(name, ne, loc, set);
+}
+
+int X509_NAME_add_entry_by_txt(X509_NAME *name, char *field, int type,
+			unsigned char *bytes, int len, int loc, int set)
+{
+	X509_NAME_ENTRY *ne;
+	ne = X509_NAME_ENTRY_create_by_txt(NULL, field, type, bytes, len);
+	if(!ne) return 0;
+	return X509_NAME_add_entry(name, ne, loc, set);
+}
+
 /* if set is -1, append to previous set, 0 'a new one', and 1,
  * prepend to the guy we are about to stomp on. */
 int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
@@ -234,6 +261,21 @@ err:
 	if (new_name != NULL)
 		X509_NAME_ENTRY_free(new_name);
 	return(0);
+	}
+
+X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
+		char *field, int type, unsigned char *bytes, int len)
+	{
+	ASN1_OBJECT *obj;
+
+	obj=OBJ_txt2obj(field, 0);
+	if (obj == NULL)
+		{
+		X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_TXT,
+						X509_R_INVALID_FIELD_NAME);
+		return(NULL);
+		}
+	return(X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len));
 	}
 
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,

@@ -1691,8 +1691,7 @@ again2:
 
 			if (push != NULL)
 				{
-				if (!X509_NAME_add_entry(subject,push,
-					X509_NAME_entry_count(subject),0))
+				if (!X509_NAME_add_entry(subject,push, -1, 0))
 					{
 					if (push != NULL)
 						X509_NAME_ENTRY_free(push);
@@ -2053,8 +2052,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 			strlen(buf))) == NULL)
 			goto err;
 
-		if (!X509_NAME_add_entry(n,ne,X509_NAME_entry_count(n),0))
-			goto err;
+		if (!X509_NAME_add_entry(n,ne,-1, 0)) goto err;
 		}
 	if (spki == NULL)
 		{

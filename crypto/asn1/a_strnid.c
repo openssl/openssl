@@ -85,7 +85,7 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 					tbl->minsize, tbl->maxsize);
 	else ret = ASN1_mbstring_copy(out, in, inlen, inform, 0);
 	if(ret <= 0) return NULL;
-	return str;
+	return *out;
 }
 
 /* Now the tables and helper functions for the string table:

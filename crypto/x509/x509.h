@@ -859,8 +859,16 @@ X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 int 		X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne,
 			int loc, int set);
+int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
+			unsigned char *bytes, int len, int loc, int set);
+int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
+			unsigned char *bytes, int len, int loc, int set);
+X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
+		char *field, int type, unsigned char *bytes, int len);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
 			int type,unsigned char *bytes, int len);
+int X509_NAME_add_entry_by_txt(X509_NAME *name, char *field, int type,
+			unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 			ASN1_OBJECT *obj, int type,unsigned char *bytes,
 			int len);
@@ -979,6 +987,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 #define X509_F_X509_LOAD_CRL_FILE			 112
 #define X509_F_X509_NAME_ADD_ENTRY			 113
 #define X509_F_X509_NAME_ENTRY_CREATE_BY_NID		 114
+#define X509_F_X509_NAME_ENTRY_CREATE_BY_TXT		 131
 #define X509_F_X509_NAME_ENTRY_SET_OBJECT		 115
 #define X509_F_X509_NAME_ONELINE			 116
 #define X509_F_X509_NAME_PRINT				 117
@@ -1000,6 +1009,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 #define X509_R_CERT_ALREADY_IN_HASH_TABLE		 101
 #define X509_R_ERR_ASN1_LIB				 102
 #define X509_R_INVALID_DIRECTORY			 113
+#define X509_R_INVALID_FIELD_NAME			 119
 #define X509_R_KEY_TYPE_MISMATCH			 115
 #define X509_R_KEY_VALUES_MISMATCH			 116
 #define X509_R_LOADING_CERT_DIR				 103
