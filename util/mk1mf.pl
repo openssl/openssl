@@ -6,8 +6,17 @@
 #
 
 $INSTALLTOP="/usr/local/ssl";
+$OPTIONS="";
+$ssl_version="";
 
-$ssl_version="0.9.2b";
+open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+while(<IN>) {
+    $ssl_version=$1 if (/^VERSION=(.*)$/);
+    $options=$1 if (/^OPTIONS=(.*)$/);
+    $INSTALLTOP=$1 if (/^INSTALLTOP=(.*$)/);
+}
+
+die "Makefile.ssl is not the toplevel Makefile!\n" if $ssl_version eq "";
 
 $infile="MINFO";
 
@@ -32,53 +41,14 @@ $infile="MINFO";
 $platform="";
 foreach (@ARGV)
 	{
-	if    (/^no-rc2$/)	{ $no_rc2=1; }
-	elsif (/^no-rc4$/)	{ $no_rc4=1; }
-	elsif (/^no-rc5$/)	{ $no_rc5=1; }
-	elsif (/^no-idea$/)	{ $no_idea=1; }
-	elsif (/^no-des$/)	{ $no_des=1; }
-	elsif (/^no-bf$/)	{ $no_bf=1; }
-	elsif (/^no-cast$/)	{ $no_cast=1; }
-	elsif (/^no-md2$/)  	{ $no_md2=1; }
-	elsif (/^no-md5$/)	{ $no_md5=1; }
-	elsif (/^no-sha$/)	{ $no_sha=1; }
-	elsif (/^no-sha1$/)	{ $no_sha1=1; }
-	elsif (/^no-ripemd$/)	{ $no_ripemd=1; }
-	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
-	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
-	elsif (/^no-rsa$/)	{ $no_rsa=1; }
-	elsif (/^no-dsa$/)	{ $no_dsa=1; }
-	elsif (/^no-dh$/)	{ $no_dh=1; }
-	elsif (/^no-hmac$/)	{ $no_hmac=1; }
-	elsif (/^no-asm$/)	{ $no_asm=1; }
-	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
-	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
-	elsif (/^no-err$/)	{ $no_err=1; }
-	elsif (/^no-sock$/)	{ $no_sock=1; }
-
-	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
-				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1; }
-
-	elsif (/^rsaref$/)	{ $rsaref=1; }
-	elsif (/^gcc$/)		{ $gcc=1; }
-	elsif (/^debug$/)	{ $debug=1; }
-	elsif (/^shlib$/)	{ $shlib=1; }
-	elsif (/^dll$/)		{ $shlib=1; }
-	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
-	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
-	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
-		{ $c_flags.="$_ "; }
-	else
+	if (!&read_options && !defined($ops{$_}))
 		{
-		if (!defined($ops{$_}))
-			{
-			print STDERR "unknown option - $_\n";
-			print STDERR "usage: perl mk1mf.pl [system] [options]\n";
-			print STDERR "\nwhere [system] can be one of the following\n";
-			foreach $i (sort keys %ops)
-				{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
-			print STDERR <<"EOF";
+		print STDERR "unknown option - $_\n";
+		print STDERR "usage: perl mk1mf.pl [system] [options]\n";
+		print STDERR "\nwhere [system] can be one of the following\n";
+		foreach $i (sort keys %ops)
+		{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
+		print STDERR <<"EOF";
 and [options] can be one of
 	no-md2 no-md5 no-sha no-mdc2 no-ripemd  - Skip this digest
 	no-rc2 no-rc4 no-idea no-des no-bf no-cast - Skip this symetric cipher
@@ -101,10 +71,13 @@ TMP=tmpdir OUT=outdir SRC=srcdir BIN=binpath INC=header-outdir CC=C-compiler
 -<ex_cc_flags>					- extra 'cc' flags,
 						  added (MS), or replace (unix)
 EOF
-			exit(1);
-			}
-		$platform=$_;
+		exit(1);
 		}
+	$platform=$_;
+	}
+foreach (split / /, $OPTIONS)
+	{
+	print STDERR "unknown option - $_\n" if !&read_options;
 	}
 
 $no_mdc2=1 if ($no_des);
@@ -816,4 +789,47 @@ sub do_copy_rule
 		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \$(SRC_D)$o$_$pp $to${o}$n$pp\n\n";
 		}
 	return($ret);
+	}
+
+sub read_options
+	{
+	if    (/^no-rc2$/)	{ $no_rc2=1; }
+	elsif (/^no-rc4$/)	{ $no_rc4=1; }
+	elsif (/^no-rc5$/)	{ $no_rc5=1; }
+	elsif (/^no-idea$/)	{ $no_idea=1; }
+	elsif (/^no-des$/)	{ $no_des=1; }
+	elsif (/^no-bf$/)	{ $no_bf=1; }
+	elsif (/^no-cast$/)	{ $no_cast=1; }
+	elsif (/^no-md2$/)  	{ $no_md2=1; }
+	elsif (/^no-md5$/)	{ $no_md5=1; }
+	elsif (/^no-sha$/)	{ $no_sha=1; }
+	elsif (/^no-sha1$/)	{ $no_sha1=1; }
+	elsif (/^no-ripemd$/)	{ $no_ripemd=1; }
+	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
+	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
+	elsif (/^no-rsa$/)	{ $no_rsa=1; }
+	elsif (/^no-dsa$/)	{ $no_dsa=1; }
+	elsif (/^no-dh$/)	{ $no_dh=1; }
+	elsif (/^no-hmac$/)	{ $no_hmac=1; }
+	elsif (/^no-asm$/)	{ $no_asm=1; }
+	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
+	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
+	elsif (/^no-err$/)	{ $no_err=1; }
+	elsif (/^no-sock$/)	{ $no_sock=1; }
+
+	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
+				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
+				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1; }
+
+	elsif (/^rsaref$/)	{ $rsaref=1; }
+	elsif (/^gcc$/)		{ $gcc=1; }
+	elsif (/^debug$/)	{ $debug=1; }
+	elsif (/^shlib$/)	{ $shlib=1; }
+	elsif (/^dll$/)		{ $shlib=1; }
+	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
+	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
+	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
+		{ $c_flags.="$_ "; }
+	else { return(1); }
+	return(0);
 	}

@@ -82,7 +82,8 @@
 
  * Compile OpenSSL:
 
-   Run ms\mw.bat
+   > perl Configure Mingw32
+   > ms\mw.bat
 
    This will create the library and binaries in out.
 

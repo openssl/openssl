@@ -1,9 +1,6 @@
 @rem OpenSSL with Mingw32
 @rem --------------------
 
-perl Configure Mingw32
-if errorlevel 1 goto end
-
 @rem Makefile
 perl util\mkfiles.pl >MINFO
 perl util\mk1mf.pl Mingw32 >ms\mingw32.mak

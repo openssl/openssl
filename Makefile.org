@@ -6,6 +6,7 @@ VERSION=
 MAJOR=
 MINOR=
 PLATFORM=dist
+OPTIONS=
 # INSTALL_PREFIX is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.

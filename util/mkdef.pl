@@ -18,7 +18,14 @@ $W32=1;
 $NT=0;
 # Set this to make typesafe STACK definitions appear in DEF
 $safe_stack_def = 1;
-foreach (@ARGV)
+
+$options="";
+open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+while(<IN>) {
+    $options=$1 if (/^OPTIONS=(.*)$/);
+}
+
+foreach (@ARGV, split(/ /, $options))
 	{
 	$W32=1 if $_ eq "32";
 	$W32=0 if $_ eq "16";

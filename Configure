@@ -298,6 +298,7 @@ my $flags="";
 my $depflags="";
 my $libs="";
 my $target="";
+my $options="";
 foreach (@ARGV)
 	{
 	if (/^no-asm$/)
@@ -349,15 +350,17 @@ foreach (@ARGV)
 			exit(1);
 			}
 		}
-	elsif ($_ =~ /^([^:]+):(.+)$/) {
+	elsif ($_ =~ /^([^:]+):(.+)$/)
+		{
 		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
 		$target=$1;
-	}
+		}
 	else
 		{
 		die "target already defined - $target\n" if ($target ne "");
 		$target=$_;
 		}
+	$options .= $_ unless $_ eq $target;
 }
 
 &usage if (!defined($table{$target}));
@@ -477,6 +480,7 @@ while (<IN>)
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
+	s/^OPTIONS=.*$/OPTIONS=$options/;
 	s/^CC=.*$/CC= $cc/;
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
@@ -641,10 +645,7 @@ if($IsWindows) {
 	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
 	(system 'make depend') == 0 or exit $? if $depflags ne "";
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
-	&dofile("util/mk1mf.pl",$openssldir,
-				('^\$INSTALLTOP=','$INSTALLTOP="%s";',));
 }
-
 
 my $pwd;
 
@@ -730,7 +731,7 @@ sub dofile
 	my $f; my $p; my %m; my @a; my $k; my $ff;
 	($f,$p,%m)=@_;
 
-	open(IN,"<$f") || die "unable to open $f:$!\n";
+	open(IN,"<$f.in") || open(IN,"<$f") || die "unable to open $f:$!\n";
 	@a=<IN>;
 	close(IN);
 	foreach $k (keys %m)
@@ -741,6 +742,6 @@ sub dofile
 	open(OUT,">$ff.new") || die "unable to open $f:$!\n";
 	print OUT @a;
 	close(OUT);
-	rename($f,"$ff.bak") || die "unable to rename $f\n";
+	rename($f,"$ff.bak") || die "unable to rename $f\n" if -e $f;
 	rename("$ff.new",$f) || die "unable to rename $ff.new\n";
 	}
