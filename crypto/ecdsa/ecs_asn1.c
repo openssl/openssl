@@ -647,7 +647,7 @@ ECDSA 	*ECDSAPublicKey_set_octet_string(ECDSA **a, const unsigned char **in, lon
 		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
 		return 0;
 	}
-	ECDSA_set_conversion_form(ret, (point_conversion_form_t)*in[0]);
+	ECDSA_set_conversion_form(ret, (point_conversion_form_t)(*in[0] & ~0x01));
 	return ret;
 }
 

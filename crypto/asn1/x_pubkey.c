@@ -132,43 +132,55 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 #ifndef OPENSSL_NO_ECDSA
 	else if (pkey->type == EVP_PKEY_ECDSA)
 		{
+		int nid=0;
 		unsigned char *pp;
 		ECDSA *ecdsa;
 		
 		ecdsa = pkey->pkey.ecdsa;
 		ASN1_TYPE_free(a->parameter);
-		if ((i = i2d_ECDSAParameters(ecdsa, NULL)) == 0)
-			{
-			X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
-			goto err;
-			}
-		if ((p = (unsigned char *) OPENSSL_malloc(i)) == NULL)
-			{
-			X509err(X509_F_X509_PUBKEY_SET, ERR_R_MALLOC_FAILURE);
-			goto err;
-			}	
-		pp = p;
-		if (!i2d_ECDSAParameters(ecdsa, &pp))
-			{
-			X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
-			OPENSSL_free(p);
-			goto err;
-			}
+
 		if ((a->parameter = ASN1_TYPE_new()) == NULL)
 			{
 			X509err(X509_F_X509_PUBKEY_SET, ERR_R_ASN1_LIB);
 			OPENSSL_free(p);
 			goto err;
 			}
-		a->parameter->type = V_ASN1_SEQUENCE;
-		if ((a->parameter->value.sequence = ASN1_STRING_new()) == NULL)
+
+		if ((ECDSA_get_parameter_flags(ecdsa) & ECDSA_FLAG_NAMED_CURVE) && (nid = EC_GROUP_get_nid(ecdsa->group)))
 			{
-			X509err(X509_F_X509_PUBKEY_SET, ERR_R_ASN1_LIB);
-			OPENSSL_free(p);
-			goto err;
+			/* just set the OID */
+			a->parameter->type = V_ASN1_OBJECT;
+			a->parameter->value.object = OBJ_nid2obj(nid);
 			}
-		ASN1_STRING_set(a->parameter->value.sequence, p, i);
-		OPENSSL_free(p);
+		else /* explicit parameters */
+			{
+			if ((i = i2d_ECDSAParameters(ecdsa, NULL)) == 0)
+				{
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
+				goto err;
+				}
+			if ((p = (unsigned char *) OPENSSL_malloc(i)) == NULL)
+				{
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_MALLOC_FAILURE);
+				goto err;
+				}	
+			pp = p;
+			if (!i2d_ECDSAParameters(ecdsa, &pp))
+				{
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_ECDSA_LIB);
+				OPENSSL_free(p);
+				goto err;
+				}
+			a->parameter->type = V_ASN1_SEQUENCE;
+			if ((a->parameter->value.sequence = ASN1_STRING_new()) == NULL)
+				{
+				X509err(X509_F_X509_PUBKEY_SET, ERR_R_ASN1_LIB);
+				OPENSSL_free(p);
+				goto err;
+				}
+			ASN1_STRING_set(a->parameter->value.sequence, p, i);
+			OPENSSL_free(p);
+			}
 		}
 #endif
 	else if (1)
@@ -266,6 +278,9 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		{
 		if (a->parameter && (a->parameter->type == V_ASN1_SEQUENCE))
 			{
+			/* type == V_ASN1_SEQUENCE => we have explicit parameters
+                         * (e.g. parameters in the X9_62_EC_PARAMETERS-structure )
+			 */
 			if ((ret->pkey.ecdsa= ECDSA_new()) == NULL)
 				{
 				X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
@@ -279,6 +294,20 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 				goto err;
 				}
 			}
+		else if (a->parameter && (a->parameter->type == V_ASN1_OBJECT))
+			{
+			/* type == V_ASN1_OBJECT => the parameters are given
+			 * by an asn1 OID
+			 */
+			if (ret->pkey.ecdsa == NULL)
+				ret->pkey.ecdsa = ECDSA_new();
+			if (ret->pkey.ecdsa->group)
+				EC_GROUP_free(ret->pkey.ecdsa->group);
+			ret->pkey.ecdsa->parameter_flags |= ECDSA_FLAG_NAMED_CURVE;
+			if ((ret->pkey.ecdsa->group = EC_GROUP_new_by_name(OBJ_obj2nid(a->parameter->value.object))) == NULL)
+				goto err;
+			}
+			/* the case implicitlyCA is currently not implemented */
 		ret->save_parameters = 1;
 		}
 #endif
