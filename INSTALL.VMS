@@ -8,13 +8,43 @@ Intro:
 
 This file is divided in the following parts:
 
+  Checking the distribution	- Mandatory reading.
   Compilation			- Mandatory reading.
+  Logical names			- Mandatory reading.
   Test				- Mandatory reading.
   Installation			- Mandatory reading.
   Backward portability		- Read if it's an issue.
   Possible bugs or quirks	- A few warnings on things that
 				  may go wrong or may surprise you.
-  Report			- How to get in touch with me.
+  TODO				- Things that are to come.
+
+
+Checking the distribution:
+==========================
+
+There have been reports of places where the distribution didn't quite get
+through, for example if you've copied the tree from a NFS-mounted unix
+mount point.
+
+The easiest way to check if everything got through as it should is to check
+for oen of the following files:
+
+	[.CRYPTO]OPENSSLCONF.H_IN
+	[.CRYPTO]OPENSSLCONF_H.IN
+
+They should never exist both at once, but one of them should (preferably
+the first variant).  If you can't find any of those two, something went
+wrong.
+
+The best way to get a correct distribution is to download the gzipped tar
+file from ftp://ftp.openssl.org/source/, use GUNZIP to uncompress it and
+use VMSTAR to unpack the resulting tar file.
+
+GUNZIP is available in many places on the net.  One of the distribution
+points is the WKU software archive, ftp://ftp.wku.edu/vms/fileserv/ .
+
+VMSTAR is also available in many places on the net.  The recommended place
+to find information about it is http://www.free.lp.se/vmstar/ .
 
 
 Compilation:
