@@ -64,7 +64,26 @@ ASN1_INTEGER *ASN1_INTEGER_dup(ASN1_INTEGER *x)
 { return M_ASN1_INTEGER_dup(x);}
 
 int ASN1_INTEGER_cmp(ASN1_INTEGER *x, ASN1_INTEGER *y)
-{ return M_ASN1_INTEGER_cmp(x,y);}
+	{ 
+	int neg, ret;
+	/* Compare signs */
+	neg = x->type & V_ASN1_NEG;
+	if (neg != (y->type & V_ASN1_NEG))
+		{
+		if (neg)
+			return -1;
+		else
+			return 1;
+		}
+
+	ret = ASN1_STRING_cmp(x, y);
+
+	if (neg)
+		return -ret;
+	else
+		return ret;
+	}
+	
 
 /* 
  * This converts an ASN1 INTEGER into its content encoding.
