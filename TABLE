@@ -875,6 +875,31 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
+*** VC-CE
+$cc           = cl
+$cflags       = 
+$unistd       = 
+$thread_cflag = 
+$sys_id       = WINCE
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = win32
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
 *** VC-MSDOS
 $cc           = cl
 $cflags       = 
