@@ -56,6 +56,8 @@ EX_LIBS=
 AR=ar r
 RANLIB= ranlib
 PERL= perl
+TAR= tar
+TARFLAGS= --norecurse
 
 # Set BN_ASM to bn_asm.o if you want to use the C version
 BN_ASM= bn_asm.o
@@ -315,7 +317,7 @@ TABLE: Configure
 update: depend errors util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
 
 tar:
-	@tar --norecurse -cvf - \
+	@$(TAR) $(TARFLAGS) -cvf - \
 		`find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE | sort` |\
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
