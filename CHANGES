@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) A demo state-machine implementation was sponsored by
+     Nuron (http://www.nuron.com/) and is now available in
+     demos/state_machine.
+     [Ben Laurie]
+
   *) New options added to the 'dgst' utility for signature
      generation and verification.
      [Steve Henson]
