@@ -3139,3 +3139,8 @@ STORE_method_set_lock_store_function    3568	EXIST::FUNCTION:
 STORE_list_certificate_endp             3569	EXIST::FUNCTION:
 STORE_method_get_list_end_function      3570	EXIST::FUNCTION:
 STORE_new_method                        3571	EXIST::FUNCTION:
+STORE_modify_arbitrary                  3572	EXIST::FUNCTION:
+STORE_get_arbitrary                     3573	EXIST::FUNCTION:
+STORE_delete_arbitrary                  3574	EXIST::FUNCTION:
+STORE_store_arbitrary                   3575	EXIST::FUNCTION:
+STORE_new_engine                        3576	EXIST::FUNCTION:
