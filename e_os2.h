@@ -113,6 +113,21 @@ extern "C" {
 # endif
 #endif
 
+/* DLL settings.  This part is a bit tough, because it's up to the application
+   implementor how he or she will link the application, so it requires some
+   macro to be used. */
+#ifdef OPENSSL_SYS_WINDOWS
+# ifndef OPENSSL_OPT_WINDLL
+#  if defined(_WINDLL) /* This is used when building OpenSSL to indicate that
+                          DLL linkage should be used */
+#   define OPENSSL_OPT_WINDLL
+#  elif defined(_DLL) /* This one is used quite much in the VC++ header
+                         files */
+#   define OPENSSL_OPT_WINDLL
+#  endif
+# endif
+#endif
+
 /* -------------------------------- OpenVMS -------------------------------- */
 #if defined(__VMS) || defined(VMS) || defined(OPENSSL_SYSNAME_VMS)
 # undef OPENSSL_SYS_UNIX
@@ -189,7 +204,7 @@ extern "C" {
 # define OPENSSL_EXPORT globalref
 # define OPENSSL_IMPORT globalref
 # define OPENSSL_GLOBAL globaldef
-#elif defined(OPENSSL_SYS_WINDOWS)
+#elif defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
 # define OPENSSL_EXPORT extern _declspec(dllexport)
 # define OPENSSL_IMPORT extern _declspec(dllimport)
 # define OPENSSL_GLOBAL
