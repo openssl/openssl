@@ -65,12 +65,12 @@
  * byte.
  */
 void des_ofb_encrypt(in, out, numbits, length, schedule, ivec)
-unsigned char *in;
+const unsigned char *in;
 unsigned char *out;
 int numbits;
 long length;
 des_key_schedule schedule;
-des_cblock (*ivec);
+des_cblock ivec;
 	{
 	register DES_LONG d0,d1,vv0,vv1,v0,v1,n=(numbits+7)/8;
 	register DES_LONG mask0,mask1;
@@ -97,7 +97,7 @@ des_cblock (*ivec);
 		mask1=0x00000000L;
 		}
 
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 	c2l(iv,v0);
 	c2l(iv,v1);
 	ti[0]=v0;
@@ -131,7 +131,7 @@ des_cblock (*ivec);
 			v1=((v1>>num)|(vv0<<(32-num)))&0xffffffffL;
 			}
 		}
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 	l2c(v0,iv);
 	l2c(v1,iv);
 	v0=v1=d0=d1=ti[0]=ti[1]=vv0=vv1=0;

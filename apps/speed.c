@@ -601,9 +601,9 @@ char **argv;
 #endif
 
 #ifndef NO_DES
-	des_set_key((C_Block *)key,sch);
-	des_set_key((C_Block *)key2,sch2);
-	des_set_key((C_Block *)key3,sch3);
+	des_set_key(key,sch);
+	des_set_key(key2,sch2);
+	des_set_key(key3,sch3);
 #endif
 #ifndef NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
@@ -851,10 +851,8 @@ char **argv;
 			print_message(names[D_CBC_DES],c[D_CBC_DES][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_CBC_DES][j]); count++)
-				des_ncbc_encrypt((C_Block *)buf,
-					(C_Block *)buf,
-					(long)lengths[j],sch,
-					(C_Block *)&(iv[0]),DES_ENCRYPT);
+				des_ncbc_encrypt(buf,buf,lengths[j],sch,
+						 &(iv[0]),DES_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_DES],d);
@@ -869,10 +867,9 @@ char **argv;
 			print_message(names[D_EDE3_DES],c[D_EDE3_DES][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_EDE3_DES][j]); count++)
-				des_ede3_cbc_encrypt((C_Block *)buf,
-					(C_Block *)buf,
-					(long)lengths[j],sch,sch2,sch3,
-					(C_Block *)&(iv[0]),DES_ENCRYPT);
+				des_ede3_cbc_encrypt(buf,buf,lengths[j],
+						     sch,sch2,sch3,
+						     &(iv[0]),DES_ENCRYPT);
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_EDE3_DES],d);

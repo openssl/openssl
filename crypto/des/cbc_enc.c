@@ -58,24 +58,23 @@
 
 #include "des_locl.h"
 
-void des_cbc_encrypt(input, output, length, schedule, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
+/* Note that this is inconsistent with other DES functions, in that it doesn't
+   update ivec */
+void des_cbc_encrypt(in, out, length, schedule, ivec, enc)
+const unsigned char *in;
+unsigned char *out;
 long length;
 des_key_schedule schedule;
-des_cblock (*ivec);
+des_cblock ivec;
 int enc;
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
 	register long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 
 	if (enc)
 		{

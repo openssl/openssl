@@ -122,8 +122,8 @@ int enc;
 
 	if (key != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
+		des_set_key(key,ctx->c.des_ede.ks1);
+		des_set_key(&(key[8]),ctx->c.des_ede.ks2);
 		memcpy( (char *)ctx->c.des_ede.ks3,
 			(char *)ctx->c.des_ede.ks1,
 			sizeof(ctx->c.des_ede.ks1));
@@ -142,9 +142,9 @@ int enc;
 
 	if (key != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
-		des_set_key((des_cblock *)&(key[16]),ctx->c.des_ede.ks3);
+		des_set_key(key,ctx->c.des_ede.ks1);
+		des_set_key(&(key[8]),ctx->c.des_ede.ks2);
+		des_set_key(&(key[16]),ctx->c.des_ede.ks3);
 		}
 	}
 
@@ -154,10 +154,8 @@ unsigned char *out;
 unsigned char *in;
 unsigned int inl;
 	{
-	des_ede3_cbc_encrypt(
-		(des_cblock *)in,(des_cblock *)out,
-		(long)inl, ctx->c.des_ede.ks1,
+	des_ede3_cbc_encrypt(in,out,inl, ctx->c.des_ede.ks1,
 		ctx->c.des_ede.ks2,ctx->c.des_ede.ks3,
-		(des_cblock *)&(ctx->iv[0]),
+		&(ctx->iv[0]),
 		ctx->encrypt);
 	}

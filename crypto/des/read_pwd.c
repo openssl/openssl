@@ -209,7 +209,7 @@ int des_read_pw(buf, buff, size, prompt, verify)
 char *buf;
 char *buff;
 int size;
-char *prompt;
+const char *prompt;
 int verify;
 	{
 #ifdef VMS

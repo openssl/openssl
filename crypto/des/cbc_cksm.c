@@ -58,21 +58,16 @@
 
 #include "des_locl.h"
 
-DES_LONG des_cbc_cksum(input, output, length, schedule, ivec)
-des_cblock (*input);
-des_cblock (*output);
+DES_LONG des_cbc_cksum(in, out, length, schedule, iv)
+const unsigned char *in;
+des_cblock out;
 long length;
 des_key_schedule schedule;
-des_cblock (*ivec);
+des_cblock iv;
 	{
 	register DES_LONG tout0,tout1,tin0,tin1;
 	register long l=length;
 	DES_LONG tin[2];
-	unsigned char *in,*out,*iv;
-
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
 
 	c2l(iv,tout0);
 	c2l(iv,tout1);

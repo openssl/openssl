@@ -87,14 +87,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: supp.c,v 1.1.1.2 1998/12/21 10:55:04 rse Exp $
+ * $Id: supp.c,v 1.2 1999/02/13 18:52:21 ben Exp $
  */
 
 #include <stdio.h>
 #include "des_locl.h"
 
 void des_cblock_print_file(cb, fp)
-	des_cblock *cb;
+	const des_cblock cb;
 	FILE *fp;
 {
 	int i;

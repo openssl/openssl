@@ -65,7 +65,7 @@ Feedback Masking, by Coppersmith, Johnson and Matyas, (IBM and Certicom).
 
 #include "des_locl.h"
 
-void des_ede3_cbcm_encrypt(const unsigned char *input,unsigned char *output,
+void des_ede3_cbcm_encrypt(const unsigned char *in,unsigned char *out,
 			   long length,
 			   des_key_schedule ks1,des_key_schedule ks2,
 			   des_key_schedule ks3,
@@ -74,15 +74,12 @@ void des_ede3_cbcm_encrypt(const unsigned char *input,unsigned char *output,
     {
     register DES_LONG tin0,tin1;
     register DES_LONG tout0,tout1,xor0,xor1,m0,m1;
-    register unsigned char *in,*out;
     register long l=length;
     DES_LONG tin[2];
     unsigned char *iv1,*iv2;
 
-    in=(unsigned char *)input;
-    out=(unsigned char *)output;
-    iv1=(unsigned char *)ivec1;
-    iv2=(unsigned char *)ivec2;
+    iv1=ivec1;
+    iv2=ivec2;
 
     if (enc)
 	{
@@ -125,11 +122,11 @@ void des_ede3_cbcm_encrypt(const unsigned char *input,unsigned char *output,
 	    l2c(tout0,out);
 	    l2c(tout1,out);
 	    }
-	iv1=(unsigned char *)ivec1;
+	iv1=ivec1;
 	l2c(m0,iv1);
 	l2c(m1,iv1);
 
-	iv2=(unsigned char *)ivec2;
+	iv2=ivec2;
 	l2c(tout0,iv2);
 	l2c(tout1,iv2);
 	}
@@ -182,11 +179,11 @@ void des_ede3_cbcm_encrypt(const unsigned char *input,unsigned char *output,
 	    xor1=t1;
 	    }
 
-	iv1=(unsigned char *)ivec1;
+	iv1=ivec1;
 	l2c(m0,iv1);
 	l2c(m1,iv1);
 
-	iv2=(unsigned char *)ivec2;
+	iv2=ivec2;
 	l2c(xor0,iv2);
 	l2c(xor1,iv2);
 	}

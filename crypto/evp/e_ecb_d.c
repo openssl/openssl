@@ -96,7 +96,7 @@ unsigned char *iv;
 int enc;
 	{
 	if (key != NULL)
-		des_set_key((des_cblock *)key,ctx->c.des_ks);
+		des_set_key(key,ctx->c.des_ks);
 	}
 
 static void des_ecb_cipher(ctx,out,in,inl)
@@ -111,8 +111,6 @@ unsigned int inl;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
-		des_ecb_encrypt(
-			(des_cblock *)&(in[i]),(des_cblock *)&(out[i]),
-			ctx->c.des_ks,ctx->encrypt);
+		des_ecb_encrypt(&(in[i]),&(out[i]),ctx->c.des_ks,ctx->encrypt);
 		}
 	}

@@ -63,36 +63,36 @@
  * 64bit block we have used is contained in *num;
  */
 void des_ofb64_encrypt(in, out, length, schedule, ivec, num)
-register unsigned char *in;
+register const unsigned char *in;
 register unsigned char *out;
 long length;
 des_key_schedule schedule;
-des_cblock (*ivec);
+des_cblock ivec;
 int *num;
 	{
 	register DES_LONG v0,v1,t;
 	register int n= *num;
 	register long l=length;
 	des_cblock d;
-	register char *dp;
+	register unsigned char *dp;
 	DES_LONG ti[2];
 	unsigned char *iv;
 	int save=0;
 
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 	c2l(iv,v0);
 	c2l(iv,v1);
 	ti[0]=v0;
 	ti[1]=v1;
-	dp=(char *)d;
+	dp=d;
 	l2c(v0,dp);
 	l2c(v1,dp);
 	while (l--)
 		{
 		if (n == 0)
 			{
-			des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
-			dp=(char *)d;
+			des_encrypt(ti,schedule,DES_ENCRYPT);
+			dp=d;
 			t=ti[0]; l2c(t,dp);
 			t=ti[1]; l2c(t,dp);
 			save++;
@@ -104,7 +104,7 @@ int *num;
 		{
 		v0=ti[0];
 		v1=ti[1];
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2c(v0,iv);
 		l2c(v1,iv);
 		}

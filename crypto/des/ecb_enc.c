@@ -102,18 +102,15 @@ char *des_options()
 	}
 		
 
-void des_ecb_encrypt(input, output, ks, enc)
-des_cblock (*input);
-des_cblock (*output);
+void des_ecb_encrypt(in, out, ks, enc)
+const unsigned char *in;
+unsigned char *out;
 des_key_schedule ks;
 int enc;
 	{
 	register DES_LONG l;
-	register unsigned char *in,*out;
 	DES_LONG ll[2];
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
 	c2l(in,l); ll[0]=l;
 	c2l(in,l); ll[1]=l;
 	des_encrypt(ll,ks,enc);

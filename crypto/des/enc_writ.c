@@ -62,10 +62,10 @@
 
 int des_enc_write(fd, buf, len, sched, iv)
 int fd;
-char *buf;
+const char *buf;
 int len;
 des_key_schedule sched;
-des_cblock (*iv);
+des_cblock iv;
 	{
 #ifdef _LIBC
 	extern int srandom();
@@ -79,6 +79,7 @@ des_cblock (*iv);
 	static char *outbuf=NULL;
 	char shortbuf[8];
 	char *p;
+	const char *cp;
 	static int start=1;
 
 	if (outbuf == NULL)
@@ -117,7 +118,7 @@ des_cblock (*iv);
 	/* pad short strings */
 	if (len < 8)
 		{
-		p=shortbuf;
+		cp=shortbuf;
 		memcpy(shortbuf,buf,(unsigned int)len);
 		for (i=len; i<8; i++)
 			shortbuf[i]=random();
@@ -125,18 +126,16 @@ des_cblock (*iv);
 		}
 	else
 		{
-		p=buf;
+		cp=buf;
 		rnum=((len+7)/8*8); /* round up to nearest eight */
 		}
 
 	if (des_rw_mode & DES_PCBC_MODE)
-		des_pcbc_encrypt((des_cblock *)p,
-			(des_cblock *)&(outbuf[HDRSIZE]),
-			(long)((len<8)?8:len),sched,iv,DES_ENCRYPT); 
+		des_pcbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+				 DES_ENCRYPT); 
 	else
-		des_cbc_encrypt((des_cblock *)p,
-			(des_cblock *)&(outbuf[HDRSIZE]),
-			(long)((len<8)?8:len),sched,iv,DES_ENCRYPT); 
+		des_cbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+				DES_ENCRYPT); 
 
 	/* output */
 	outnum=(int)rnum+HDRSIZE;
