@@ -3,13 +3,15 @@
 # This script is used by test/Makefile.ssl to check whether a sane 'bc'
 # is installed.
 # ('make test_bn' should not try to run 'bc' if it does not exist or if
-# it is the broken SunOS 5.[78] bc, which fails the following test.)
+# it is a broken 'bc' version that is known to cause trouble.)
 #
 # If 'bc' works, we also test if it knows the 'print' command.
 #
 # In any case, output an appropriate command line for running (or not
 # running) bc.
 
+
+# Test for SunOS 5.[78] bc bug (or missing bc)
 if [ 0 != "`bc <<\EOF
 obase=16
 ibase=16
@@ -32,6 +34,7 @@ then
 fi
 
 
+# Test for SCO bc bug.
 if [ "0
 0" != "`bc <<\EOF
 obase=16
