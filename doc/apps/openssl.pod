@@ -83,9 +83,10 @@ CRL to PKCS#7 Conversion.
 
 Message Digest Calculation.
 
-=item L<B<dh>|dh(1)>
+=item B<dh>
 
-Diffie-Hellman Data Management.
+Diffie-Hellman Parameter Management.
+Obsoleted by L<B<dhparam>|dhparam(1)>.
 
 =item L<B<dsa>|dsa(1)>
 
@@ -103,9 +104,14 @@ Encoding with Ciphers.
 
 Error Number to Error String Conversion.
 
-=item L<B<gendh>|gendh(1)>
+=item LB<dhparam>|dhparam(1)>
+
+Generation and Management of Diffie-Hellman Parameters.
+
+=item B<gendh>
 
 Generation of Diffie-Hellman Parameters.
+Obsoleted by L<B<dhparam>|dhparam(1)>.
 
 =item L<B<gendsa>|gendsa(1)>
 
