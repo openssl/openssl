@@ -83,6 +83,9 @@
 #include "vendor_defns/hwcryptohook.h"
 #endif
 
+#define HWCRHK_LIB_NAME "hwcrhk engine"
+#include "hw_ncipher_err.c"
+
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
@@ -210,91 +213,6 @@ static RAND_METHOD hwcrhk_rand =
 	hwcrhk_rand_bytes,
 	hwcrhk_rand_status,
 	};
-
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in hwcrhk operation */
-#define HWCRHK_F_HWCRHK_INIT			100
-#define HWCRHK_F_HWCRHK_FINISH			101
-#define HWCRHK_F_HWCRHK_CTRL			102
-#define HWCRHK_F_HWCRHK_LOAD_PRIVKEY		103
-#define HWCRHK_F_HWCRHK_LOAD_PUBKEY		104
-#define HWCRHK_F_HWCRHK_MOD_EXP			105
-#define HWCRHK_F_HWCRHK_RSA_MOD_EXP		106
-#define HWCRHK_F_HWCRHK_RAND_BYTES		107
-#define HWCRHK_F_HWCRHK_GET_PASS		108
-#define HWCRHK_F_HWCRHK_INSERT_CARD		109
-/* Error reason codes */
-#define HWCRHK_R_ALREADY_LOADED			110
-#define HWCRHK_R_DSO_FAILURE			111
-#define HWCRHK_R_UNIT_FAILURE			112
-#define HWCRHK_R_NOT_LOADED			113
-#define HWCRHK_R_BIO_WAS_FREED			114
-#define HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED	115
-#define HWCRHK_R_NOT_INITIALISED		116
-#define HWCRHK_R_CHIL_ERROR			117
-#define HWCRHK_R_NO_KEY				118
-#define HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED 119
-#define HWCRHK_R_REQUEST_FALLBACK		120
-#define HWCRHK_R_REQUEST_FAILED			121
-#define HWCRHK_R_MISSING_KEY_COMPONENTS		122
-#define HWCRHK_R_NO_CALLBACK			123
-static ERR_STRING_DATA hwcrhk_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"hwcrhk engine code"},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_INIT,0),		"hwcrhk_init"},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_FINISH,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_CTRL,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_LOAD_PRIVKEY,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_LOAD_PUBKEY,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_MOD_EXP,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_RSA_MOD_EXP,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_RAND_BYTES,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_GET_PASS,0),				""},
-{ERR_PACK(0,HWCRHK_F_HWCRHK_INSERT_CARD,0),				""},
-/* Error reason codes */
-{HWCRHK_R_ALREADY_LOADED		,"already loaded"},
-{HWCRHK_R_DSO_FAILURE			,"DSO failure"},
-{HWCRHK_R_UNIT_FAILURE			,"unit failure"},
-{HWCRHK_R_NOT_LOADED			,"not loaded"},
-{HWCRHK_R_BIO_WAS_FREED			,"BIO was freed"},
-{HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
-{HWCRHK_R_NOT_INITIALISED		,"not initialised"},
-{HWCRHK_R_CHIL_ERROR			,"'chil' error"},
-{HWCRHK_R_NO_KEY			,"no key"},
-{HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED,"private key algorithms disabled"},
-{HWCRHK_R_REQUEST_FALLBACK		,"request fallback"},
-{HWCRHK_R_REQUEST_FAILED		,"request failed"},
-{HWCRHK_R_MISSING_KEY_COMPONENTS	,"missing key components"},
-{HWCRHK_R_NO_CALLBACK			,"no callback"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int hwcrhk_err_lib = -1;
-#define HWCRHKerr(f,r) ERR_PUT_error(hwcrhk_err_lib,(f),(r),__FILE__,__LINE__)
-static void hwcrhk_load_error_strings(void)
-	{
-	if(hwcrhk_err_lib < 0)
-		{
-		if((hwcrhk_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		hwcrhk_str_functs[0].error = ERR_PACK(hwcrhk_err_lib,0,0);
-		ERR_load_strings(hwcrhk_err_lib, hwcrhk_str_functs);
-		}
-	}
-static void hwcrhk_unload_error_strings(void)
-	{
-	if(hwcrhk_err_lib >= 0)
-		{
-		ERR_unload_strings(hwcrhk_err_lib, hwcrhk_str_functs);
-		hwcrhk_err_lib = -1;
-		}
-	}
-#else
-#define HWCRHKerr(f,r)					/* NOP */
-static void hwcrhk_load_error_strings(void) { }		/* NOP */
-static void hwcrhk_unload_error_strings(void) { }	/* NOP */
-#endif
 
 /* Constants used when creating the ENGINE */
 static const char *engine_hwcrhk_id = "chil";
@@ -449,7 +367,7 @@ static int bind_helper(ENGINE *e)
 #endif
 
 	/* Ensure the hwcrhk error handling is set up */
-	hwcrhk_load_error_strings();
+	ERR_load_HWCRHK_strings();
 	return 1;
 	}
 
@@ -551,7 +469,7 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 /* Destructor (complements the "ENGINE_ncipher()" constructor) */
 static int hwcrhk_destroy(ENGINE *e)
 	{
-	hwcrhk_unload_error_strings();
+	ERR_unload_HWCRHK_strings();
 	return 1;
 	}
 

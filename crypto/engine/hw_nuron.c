@@ -66,6 +66,9 @@
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_NURON
 
+#define NURON_LIB_NAME "nuron engine"
+#include "hw_nuron_err.c"
+
 static const char def_NURON_LIBNAME[] = "nuronssl";
 static const char *NURON_LIBNAME = def_NURON_LIBNAME;
 static const char *NURON_F1 = "nuron_mod_exp";
@@ -80,63 +83,6 @@ static const ENGINE_CMD_DEFN nuron_cmd_defns[] = {
 	{0, NULL, NULL, 0}
 	};
 
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in nuron operation */
-#define NURON_F_NURON_INIT			100
-#define NURON_F_NURON_FINISH			101
-#define NURON_F_NURON_CTRL			102
-#define NURON_F_NURON_MOD_EXP			103
-/* Error reason codes */
-#define NURON_R_ALREADY_LOADED			104
-#define NURON_R_DSO_NOT_FOUND			105
-#define NURON_R_DSO_FUNCTION_NOT_FOUND		106
-#define NURON_R_NOT_LOADED			107
-#define NURON_R_DSO_FAILURE			108
-#define NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	109
-static ERR_STRING_DATA nuron_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"nuron engine code"},
-{ERR_PACK(0,NURON_F_NURON_INIT,0),		"nuron_init"},
-{ERR_PACK(0,NURON_F_NURON_FINISH,0),		"nuron_finish"},
-{ERR_PACK(0,NURON_F_NURON_CTRL,0),		"nuron_ctrl"},
-{ERR_PACK(0,NURON_F_NURON_MOD_EXP,0),		"nuron_mod_exp"},
-/* Error reason codes */
-{NURON_R_ALREADY_LOADED			,"already loaded"},
-{NURON_R_DSO_NOT_FOUND			,"DSO not found"},
-{NURON_R_DSO_FUNCTION_NOT_FOUND		,"DSO function not found"},
-{NURON_R_NOT_LOADED			,"not loaded"},
-{NURON_R_DSO_FAILURE			,"DSO failure"},
-{NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int nuron_err_lib = -1;
-#define NURONerr(f,r) ERR_PUT_error(nuron_err_lib,(f),(r),__FILE__,__LINE__)
-static void nuron_load_error_strings(void)
-	{
-	if(nuron_err_lib < 0)
-		{
-		if((nuron_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		nuron_str_functs[0].error = ERR_PACK(nuron_err_lib,0,0);
-		ERR_load_strings(nuron_err_lib, nuron_str_functs);
-		}
-	}
-static void nuron_unload_error_strings(void)
-	{
-	if(nuron_err_lib >= 0)
-		{
-		ERR_unload_strings(nuron_err_lib, nuron_str_functs);
-		nuron_err_lib = -1;
-		}
-	}
-#else
-#define NURONerr(f,r)					/* NOP */
-static void nuron_load_error_strings(void) { }		/* NOP */
-static void nuron_unload_error_strings(void) { }	/* NOP */
-#endif
-
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
 
@@ -144,7 +90,7 @@ static DSO *pvDSOHandle = NULL;
 
 static int nuron_destroy(ENGINE *e)
 	{
-	nuron_unload_error_strings();
+	ERR_unload_NURON_strings();
 	return 1;
 	}
 
@@ -407,7 +353,7 @@ static int bind_helper(ENGINE *e)
 #endif
 
 	/* Ensure the nuron error handling is set up */
-	nuron_load_error_strings();
+	ERR_load_NURON_strings();
 	return 1;
 	}
 

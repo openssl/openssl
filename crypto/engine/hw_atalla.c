@@ -71,6 +71,9 @@
 #include "vendor_defns/atalla.h"
 #endif
 
+#define ATALLA_LIB_NAME "atalla engine"
+#include "hw_atalla_err.c"
+
 static int atalla_destroy(ENGINE *e);
 static int atalla_init(ENGINE *e);
 static int atalla_finish(ENGINE *e);
@@ -168,68 +171,6 @@ static DH_METHOD atalla_dh =
 	};
 #endif
 
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in atalla operation */
-#define ATALLA_F_ATALLA_INIT			100
-#define ATALLA_F_ATALLA_FINISH			101
-#define ATALLA_F_ATALLA_CTRL			102
-#define ATALLA_F_ATALLA_MOD_EXP			103
-#define ATALLA_F_ATALLA_RSA_MOD_EXP		104
-/* Error reason codes */
-#define ATALLA_R_ALREADY_LOADED			105
-#define ATALLA_R_NOT_LOADED			106
-#define ATALLA_R_UNIT_FAILURE			107
-#define ATALLA_R_CTRL_COMMAND_NOT_IMPLEMENTED	108
-#define ATALLA_R_BN_CTX_FULL			109
-#define ATALLA_R_BN_EXPAND_FAIL			110
-#define ATALLA_R_REQUEST_FAILED			111
-#define ATALLA_R_MISSING_KEY_COMPONENTS		112
-static ERR_STRING_DATA atalla_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"atalla engine code"},
-{ERR_PACK(0,ATALLA_F_ATALLA_INIT,0),		"atalla_init"},
-{ERR_PACK(0,ATALLA_F_ATALLA_FINISH,0),		"atalla_finish"},
-{ERR_PACK(0,ATALLA_F_ATALLA_CTRL,0),		"atalla_ctrl"},
-{ERR_PACK(0,ATALLA_F_ATALLA_MOD_EXP,0),		"atalla_mod_exp"},
-{ERR_PACK(0,ATALLA_F_ATALLA_RSA_MOD_EXP,0),"atalla_rsa_mod_exp"},
-{ATALLA_R_ALREADY_LOADED		,"already loaded"},
-{ATALLA_R_UNIT_FAILURE			,"unit failure"},
-{ATALLA_R_NOT_LOADED,			"not loaded"},
-{ATALLA_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"control command not implemented"},
-{ATALLA_R_BN_CTX_FULL			,"BN_CTX full"},
-{ATALLA_R_BN_EXPAND_FAIL		,"BN_expand failed"},
-{ATALLA_R_REQUEST_FAILED		,"request failed"},
-{ATALLA_R_MISSING_KEY_COMPONENTS	,"missing key components"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int atalla_err_lib = -1;
-#define ATALLAerr(f,r) ERR_PUT_error(atalla_err_lib,(f),(r),__FILE__,__LINE__)
-static void atalla_load_error_strings(void)
-	{
-	if (atalla_err_lib < 0)
-		{
-		if((atalla_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		atalla_str_functs[0].error = ERR_PACK(atalla_err_lib, 0, 0);
-		ERR_load_strings(atalla_err_lib,atalla_str_functs);
-		}
-	}
-static void atalla_unload_error_strings(void)
-	{
-	if (atalla_err_lib >= 0)
-		{
-		ERR_unload_strings(atalla_err_lib,atalla_str_functs);
-		atalla_err_lib = -1;
-		}
-	}
-#else
-#define ATALLAerr(f,r)					/* NOP */
-static void atalla_load_error_strings(void) { }		/* NOP */
-static void atalla_unload_error_strings(void) { }	/* NOP */
-#endif
-
 /* Constants used when creating the ENGINE */
 static const char *engine_atalla_id = "atalla";
 static const char *engine_atalla_name = "Atalla hardware engine support";
@@ -297,7 +238,7 @@ static int bind_helper(ENGINE *e)
 #endif
 
 	/* Ensure the atalla error handling is set up */
-	atalla_load_error_strings();
+	ERR_load_ATALLA_strings();
 	return 1;
 	}
 
@@ -357,7 +298,7 @@ static int atalla_destroy(ENGINE *e)
 	/* Unload the atalla error strings so any error state including our
 	 * functs or reasons won't lead to a segfault (they simply get displayed
 	 * without corresponding string data because none will be found). */
-	atalla_unload_error_strings();
+	ERR_unload_ATALLA_strings();
 	return 1;
 	}
 

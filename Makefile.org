@@ -608,6 +608,7 @@ tags:
 
 errors:
 	$(PERL) util/mkerr.pl -recurse -write
+	(cd crypto/engine; $(MAKE) PERL=$(PERL) errors)
 
 stacks:
 	$(PERL) util/mkstack.pl -write

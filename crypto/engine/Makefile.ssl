@@ -28,13 +28,13 @@ LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	tb_rsa.c tb_dsa.c tb_dh.c tb_rand.c tb_cipher.c tb_digest.c \
 	eng_openssl.c eng_dyn.c eng_cnf.c \
 	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c \
-	hw_openbsd_dev_crypto.c
+	hw_openbsd_dev_crypto.c #hw_aep.c hw_sureware.c
 LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
 	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
 	tb_rsa.o tb_dsa.o tb_dh.o tb_rand.o tb_cipher.o tb_digest.o \
 	eng_openssl.o eng_dyn.o eng_cnf.o \
 	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o \
-	hw_openbsd_dev_crypto.o
+	hw_openbsd_dev_crypto.o #hw_aep.o hw_sureware.o
 
 SRC= $(LIBSRC)
 
@@ -71,6 +71,10 @@ install:
 
 tags:
 	ctags $(SRC)
+
+errors:
+	$(PERL) $(TOP)/util/mkerr.pl -conf hw.ec \
+		-nostatic -staticloader -write hw_*.c; \
 
 tests:
 
@@ -243,7 +247,8 @@ hw_atalla.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hw_atalla.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_atalla.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_atalla.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-hw_atalla.o: ../cryptlib.h hw_atalla.c vendor_defns/atalla.h
+hw_atalla.o: ../cryptlib.h hw_atalla.c hw_atalla_err.c hw_atalla_err.h
+hw_atalla.o: vendor_defns/atalla.h
 hw_cswift.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_cswift.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_cswift.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -255,7 +260,8 @@ hw_cswift.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hw_cswift.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_cswift.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_cswift.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-hw_cswift.o: ../cryptlib.h hw_cswift.c vendor_defns/cswift.h
+hw_cswift.o: ../cryptlib.h hw_cswift.c hw_cswift_err.c hw_cswift_err.h
+hw_cswift.o: vendor_defns/cswift.h
 hw_ncipher.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ncipher.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_ncipher.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -272,7 +278,8 @@ hw_ncipher.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_ncipher.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 hw_ncipher.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 hw_ncipher.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-hw_ncipher.o: ../cryptlib.h hw_ncipher.c vendor_defns/hwcryptohook.h
+hw_ncipher.o: ../cryptlib.h hw_ncipher.c hw_ncipher_err.c hw_ncipher_err.h
+hw_ncipher.o: vendor_defns/hwcryptohook.h
 hw_nuron.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_nuron.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_nuron.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -284,7 +291,7 @@ hw_nuron.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hw_nuron.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_nuron.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_nuron.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-hw_nuron.o: ../cryptlib.h hw_nuron.c
+hw_nuron.o: ../cryptlib.h hw_nuron.c hw_nuron_err.c hw_nuron_err.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/asn1.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/conf.h
@@ -318,7 +325,8 @@ hw_ubsec.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hw_ubsec.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_ubsec.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_ubsec.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-hw_ubsec.o: ../cryptlib.h hw_ubsec.c vendor_defns/hw_ubsec.h
+hw_ubsec.o: ../cryptlib.h hw_ubsec.c hw_ubsec_err.c hw_ubsec_err.h
+hw_ubsec.o: vendor_defns/hw_ubsec.h
 tb_cipher.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 tb_cipher.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 tb_cipher.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h

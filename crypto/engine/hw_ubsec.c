@@ -73,6 +73,9 @@
 #include "vendor_defns/hw_ubsec.h"
 #endif
 
+#define UBSEC_LIB_NAME "ubsec engine"
+#include "hw_ubsec_err.c"
+
 #define FAIL_TO_SOFTWARE -15
 
 static int ubsec_destroy(ENGINE *e);
@@ -176,79 +179,6 @@ static DH_METHOD ubsec_dh =
 	};
 #endif
 
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in ubsec operation */
-#define UBSEC_F_UBSEC_INIT			100
-#define UBSEC_F_UBSEC_FINISH			101
-#define UBSEC_F_UBSEC_CTRL			102
-#define UBSEC_F_UBSEC_MOD_EXP			103
-#define UBSEC_F_UBSEC_RSA_MOD_EXP		104
-#define UBSEC_F_UBSEC_RSA_MOD_EXP_CRT		105
-#define UBSEC_F_UBSEC_DSA_SIGN			106
-#define UBSEC_F_UBSEC_DSA_VERIFY		107
-#define UBSEC_F_UBSEC_DH_COMPUTE_KEY		117
-/* Error reason codes */
-#define UBSEC_R_ALREADY_LOADED			108
-#define UBSEC_R_DSO_FAILURE			109
-#define UBSEC_R_UNIT_FAILURE			110
-#define UBSEC_R_NOT_LOADED			111
-#define UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED	112
-#define UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL	113
-#define UBSEC_R_BN_EXPAND_FAIL			114
-#define UBSEC_R_REQUEST_FAILED			115
-#define UBSEC_R_MISSING_KEY_COMPONENTS		116
-
-static ERR_STRING_DATA ubsec_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"ubsec engine code"},
-{ERR_PACK(0,UBSEC_F_UBSEC_INIT,0),		"ubsec_init"},
-{ERR_PACK(0,UBSEC_F_UBSEC_FINISH,0),		"ubsec_finish"},
-{ERR_PACK(0,UBSEC_F_UBSEC_CTRL,0),		"ubsec_ctrl"},
-{ERR_PACK(0,UBSEC_F_UBSEC_MOD_EXP,0),		"ubsec_mod_exp"},
-{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP,0),	"ubsec_rsa_mod_exp"},
-{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP_CRT,0),	"ubsec_rsa_mod_exp_crt"},
-{ERR_PACK(0,UBSEC_F_UBSEC_DSA_SIGN,0),		"ubsec_dsa_sign"},
-{ERR_PACK(0,UBSEC_F_UBSEC_DSA_VERIFY,0),	"ubsec_dsa_verify"},
-/* Error reason codes */
-{UBSEC_R_ALREADY_LOADED			,"already loaded"},
-{UBSEC_R_DSO_FAILURE			,"DSO failure"},
-{UBSEC_R_UNIT_FAILURE			,"unit failure"},
-{UBSEC_R_NOT_LOADED			,"not loaded"},
-{UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
-{UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL	,"size too large or too small"},
-{UBSEC_R_BN_EXPAND_FAIL			,"bn_expand fail"},
-{UBSEC_R_REQUEST_FAILED			,"request failed"},
-{UBSEC_R_MISSING_KEY_COMPONENTS		,"missing key components"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int ubsec_err_lib = -1;
-#define UBSECerr(f,r) ERR_PUT_error(ubsec_err_lib,(f),(r),__FILE__,__LINE__)
-static void ubsec_load_error_strings(void)
-	{
-	if(ubsec_err_lib < 0)
-		{
-		if((ubsec_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		ubsec_str_functs[0].error = ERR_PACK(ubsec_err_lib,0,0);
-		ERR_load_strings(ubsec_err_lib, ubsec_str_functs);
-		}
-	}
-static void ubsec_unload_error_strings(void)
-	{
-	if(ubsec_err_lib >= 0)
-		{
-		ERR_unload_strings(ubsec_err_lib, ubsec_str_functs);
-		ubsec_err_lib = -1;
-		}
-	}
-#else
-#define UBSECerr(f,r)					/* NOP */
-static void ubsec_load_error_strings(void) { }		/* NOP */
-static void ubsec_unload_error_strings(void) { }	/* NOP */
-#endif
-
 /* Constants used when creating the ENGINE */
 static const char *engine_ubsec_id = "ubsec";
 static const char *engine_ubsec_name = "UBSEC hardware engine support";
@@ -308,7 +238,7 @@ static int bind_helper(ENGINE *e)
 #endif
 
 	/* Ensure the ubsec error handling is set up */
-	ubsec_load_error_strings();
+	ERR_load_UBSEC_strings();
 	return 1;
 	}
 
@@ -398,7 +328,7 @@ static const char *UBSEC_F13 = "ubsec_max_key_len_ioctl";
 /* Destructor (complements the "ENGINE_ubsec()" constructor) */
 static int ubsec_destroy(ENGINE *e)
 	{
-	ubsec_unload_error_strings();
+	ERR_unload_UBSEC_strings();
 	return 1;
 	}
 

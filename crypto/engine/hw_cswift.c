@@ -83,6 +83,9 @@
 #include "vendor_defns/cswift.h"
 #endif
 
+#define CSWIFT_LIB_NAME "cswift engine"
+#include "hw_cswift_err.c"
+
 static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);
 static int cswift_finish(ENGINE *e);
@@ -180,77 +183,6 @@ static DH_METHOD cswift_dh =
 	};
 #endif
 
-#ifndef OPENSSL_NO_ERR
-/* Error function codes for use in cswift operation */
-#define CSWIFT_F_CSWIFT_INIT			100
-#define CSWIFT_F_CSWIFT_FINISH			101
-#define CSWIFT_F_CSWIFT_CTRL			102
-#define CSWIFT_F_CSWIFT_MOD_EXP			103
-#define CSWIFT_F_CSWIFT_MOD_EXP_CRT		104
-#define CSWIFT_F_CSWIFT_RSA_MOD_EXP		105
-#define CSWIFT_F_CSWIFT_DSA_SIGN		106
-#define CSWIFT_F_CSWIFT_DSA_VERIFY		107
-/* Error reason codes */
-#define CSWIFT_R_ALREADY_LOADED			108
-#define CSWIFT_R_NOT_LOADED			109
-#define CSWIFT_R_UNIT_FAILURE			110
-#define CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED	113
-#define CSWIFT_R_BN_CTX_FULL			115
-#define CSWIFT_R_BN_EXPAND_FAIL			116
-#define CSWIFT_R_BAD_KEY_SIZE			117
-#define CSWIFT_R_REQUEST_FAILED			118
-#define CSWIFT_R_MISSING_KEY_COMPONENTS		120
-static ERR_STRING_DATA cswift_str_functs[] =
-	{
-	/* This first element is changed to match the dynamic 'lib' number */
-{ERR_PACK(0,0,0),				"cswift engine code"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_INIT,0),		"cswift_init"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_FINISH,0),		"cswift_finish"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_CTRL,0),		"cswift_ctrl"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP,0),		"cswift_mod_exp"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP_CRT,0),	"cswift_mod_exp_crt"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_RSA_MOD_EXP,0),	"cswift_rsa_mod_exp"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_SIGN,0),	"cswift_dsa_sign"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_VERIFY,0),	"cswift_dsa_verify"},
-/* Error reason codes */
-{CSWIFT_R_ALREADY_LOADED		 ,"already loaded"},
-{CSWIFT_R_NOT_LOADED			 ,"not loaded"},
-{CSWIFT_R_UNIT_FAILURE			 ,"unit failure"},
-{CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED	 ,"ctrl command not implemented"},
-{CSWIFT_R_BN_CTX_FULL			 ,"BN_CTX full"},
-{CSWIFT_R_BN_EXPAND_FAIL		 ,"bn_expand fail"},
-{CSWIFT_R_BAD_KEY_SIZE			 ,"bad key size"},
-{CSWIFT_R_REQUEST_FAILED		 ,"request failed"},
-{CSWIFT_R_MISSING_KEY_COMPONENTS	 ,"missing key components"},
-{0,NULL}
-	};
-/* The library number we obtain dynamically from the ERR code */
-static int cswift_err_lib = -1;
-#define CSWIFTerr(f,r) ERR_PUT_error(cswift_err_lib,(f),(r),__FILE__,__LINE__)
-static void cswift_load_error_strings(void)
-	{
-	if(cswift_err_lib < 0)
-		{
-		if((cswift_err_lib = ERR_get_next_error_library()) <= 0)
-			return;
-		cswift_str_functs[0].error = ERR_PACK(cswift_err_lib,0,0);
-		ERR_load_strings(cswift_err_lib, cswift_str_functs);
-		}
-	}
-static void cswift_unload_error_strings(void)
-	{
-	if(cswift_err_lib >= 0)
-		{
-		ERR_unload_strings(cswift_err_lib, cswift_str_functs);
-		cswift_err_lib = -1;
-		}
-	}
-#else
-#define CSWIFTerr(f,r)					/* NOP */
-static void cswift_load_error_strings(void) { }		/* NOP */
-static void cswift_unload_error_strings(void) { }	/* NOP */
-#endif
-
 /* Constants used when creating the ENGINE */
 static const char *engine_cswift_id = "cswift";
 static const char *engine_cswift_name = "CryptoSwift hardware engine support";
@@ -306,7 +238,7 @@ static int bind_helper(ENGINE *e)
 #endif
 
 	/* Ensure the cswift error handling is set up */
-	cswift_load_error_strings();
+	ERR_load_CSWIFT_strings();
 	return 1;
 	}
 
@@ -381,7 +313,7 @@ static void release_context(SW_CONTEXT_HANDLE hac)
 /* Destructor (complements the "ENGINE_cswift()" constructor) */
 static int cswift_destroy(ENGINE *e)
 	{
-	cswift_unload_error_strings();
+	ERR_unload_CSWIFT_strings();
 	return 1;
 	}
 
