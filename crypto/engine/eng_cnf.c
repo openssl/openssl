@@ -118,6 +118,8 @@ int int_engine_configure(char *name, char *value, const CONF *cnf)
 				goto err;
 			if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", ctrlvalue, 0))
 				goto err;
+			if (!ENGINE_ctrl_cmd_string(e, "LIST_ADD", "2", 0))
+				goto err;
 			if (!ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0))
 				goto err;
 			}
