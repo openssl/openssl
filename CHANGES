@@ -4,6 +4,9 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add support for shared libraries under Irix.
+     [Albert Chin-A-Young <china@thewrittenword.com>]
+
   *) Add configuration option to build on Linux on both big-endian and
      little-endian MIPS.
      [Ralf Baechle <ralf@uni-koblenz.de>]
