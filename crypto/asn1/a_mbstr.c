@@ -72,54 +72,6 @@ static int cpy_univ(unsigned long value, void *arg);
 static int cpy_utf8(unsigned long value, void *arg);
 static int is_printable(unsigned long value);
 
-/* This is the default mask for the mbstring functions: it is designed
- * to be a "safe" DirectoryString. Netscape messenger crashes when it
- * receives a certificate containing a BMPString so by default we don't
- * use them unless we have to.
- */
-
-static long dirstring_mask = B_ASN1_PRINTABLESTRING
-				| B_ASN1_T61STRING | B_ASN1_BMPSTRING;
-
-void ASN1_STRING_set_default_mask(unsigned long mask)
-{
-	dirstring_mask = mask;
-}
-
-unsigned long ASN1_STRING_get_default_mask(void)
-{
-	return dirstring_mask;
-}
-
-/* This function sets the default to various "flavours" of configuration.
- * based on an ASCII string. Currently this is:
- * MASK:XXXX : a numerical mask value.
- * nobmp : Don't use BMPStrings (just Printable, T61).
- * pkix : PKIX recommendation in RFC2459.
- * utf8only : only use UTF8Strings (RFC2459 recommendation for 2004).
- * default:   the default value, Printable, T61, BMP.
- */
-
-int ASN1_STRING_set_default_mask_asc(char *p)
-{
-	unsigned long mask;
-	char *end;
-	if(!strncmp(p, "MASK:", 5)) {
-		if(!p[5]) return 0;
-		mask = strtoul(p + 5, &end, 0);
-		if(*end) return 0;
-	} else if(!strcmp(p, "nobmp"))
-			 mask = B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING;
-	else if(!strcmp(p, "pkix"))
-			mask = B_ASN1_PRINTABLESTRING | B_ASN1_BMPSTRING;
-	else if(!strcmp(p, "utf8only")) mask = B_ASN1_UTF8STRING;
-	else if(!strcmp(p, "default"))
-	    mask = B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | B_ASN1_BMPSTRING;
-	else return 0;
-	ASN1_STRING_set_default_mask(mask);
-	return 1;
-}
-
 /* These functions take a string in UTF8, ASCII or multibyte form and
  * a mask of permissible ASN1 string types. It then works out the minimal
  * type (using the order Printable < IA5 < T61 < BMP < Universal < UTF8)
@@ -147,7 +99,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	char strbuf[32];
 	int (*cpyfunc)(unsigned long,void *) = NULL;
 	if(len == -1) len = strlen((const char *)in);
-	if(!mask) mask = dirstring_mask;
+	if(!mask) mask = DIRSTRING_TYPE;
 
 	/* First do a string check and work out the number of characters */
 	switch(inform) {

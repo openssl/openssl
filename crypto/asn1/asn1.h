@@ -212,6 +212,9 @@ typedef struct asn1_string_st
 	} ASN1_STRING;
 
 #define STABLE_FLAGS_MALLOC	0x01
+#define STABLE_NO_MASK		0x02
+#define DIRSTRING_TYPE	\
+ (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_BMPSTRING|B_ASN1_UTF8STRING)
 
 typedef struct asn1_string_table_st {
 	int nid;

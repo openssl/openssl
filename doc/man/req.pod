@@ -146,7 +146,7 @@ will not be encrypted.
 
 this specifies the message digest to sign the request with. This
 overrides the digest algorithm specified in the configuration file.
-This option is ignore for DSA requests: they always use SHA1.
+This option is ignored for DSA requests: they always use SHA1.
 
 =item B<-config filename>
 
@@ -203,6 +203,13 @@ The options available are described in detail below.
 
 =over 4
 
+=item B<input_password output_password>
+
+The passwords for the input private key file (if present) and
+the output private key file (if one will be created). The
+command line options B<passin>, B<envpassin>, B<passout> and
+B<envpassout> override the configuration file values.
+
 =item B<default_bits>
 
 This specifies the default key size in bits. If not specified then
@@ -234,11 +241,11 @@ and long names are the same when this option is used.
 This specifies a filename in which random number seed information is
 placed and read from. It is used for private key generation.
 
-=item B<encrypt_rsa_key|encrypt_key>
+=item B<encrypt_key>
 
 If this is set to B<no> then if a private key is generated it is
 B<not> encrypted. This is equivalent to the B<-nodes> command line
-option.
+option. For compatability B<encrypt_rsai_key> is an equivalent option.
 
 =item B<default_md>
 
@@ -246,19 +253,19 @@ This option specifies the digest algorithm to use. Possible values
 include B<md5 sha1 mdc2>. If not present then MD5 is used. This
 option can be overridden on the command line.
 
-=item B<dirstring_type>
+=item B<string_mask>
 
-This option specifies which string types are permissible in a
-B<DirectoryString>. Most users will not need to change this option.
+This option masks out the use of certain string types in certain
+fields. Most users will not need to change this option.
 
 It can be set to several values B<default> which is also the default
 option uses PrintableStrings, T61Strings and BMPStrings if the 
 B<pkix> value is used then only PrintableStrings and BMPStrings will
 be used. This follows the PKIX recommendation in RFC2459. If the
 B<utf8only> option is used then only UTF8Strings will be used: this
-is the PKIX recommendation in RFC2459 after 2003. Finally the B<nobmp>
+is the PKIX recommendation in RFC2459 after 2003. Finally the B<nombstr>
 option just uses PrintableStrings and T61Strings: certain software has
-problems with BMPStrings.
+problems with BMPStrings and UTF8Strings: in particular Netscape.
 
 =item B<req_extensions>
 
@@ -277,8 +284,8 @@ is used. It can be overridden by the B<-extensions> command line switch.
 this specifies the section containing any request attributes: its format
 is the same as B<distinguished_name> described below. Typically these
 may contain the challengePassword or unstructuredName types. They are
-currently ignored by OpenSSLs request signing utilities but some CAs might want
-want them.
+currently ignored by OpenSSLs request signing utilities but some CAs
+might want them.
 
 =item B<distinguished_name>
 

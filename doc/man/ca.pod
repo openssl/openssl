@@ -448,7 +448,7 @@ from the request.
 
 It is not possible to certify two certificates with the same DN: this
 is a side effect of how the text database is indexed and it cannot easily
-be fixed without introducing other problems. Netscape apparently can use
+be fixed without introducing other problems. Some S/MIME clients can use
 two certificates with the same DN for separate signing and encryption
 keys.
 

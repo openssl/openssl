@@ -68,6 +68,53 @@ static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b);
 static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b);
 
+
+/* This is the global mask for the mbstring functions: this is use to
+ * mask out certain types (such as BMPString and UTF8String) because
+ * certain software (e.g. Netscape) has problems with them.
+ */
+
+static long global_mask = 0xFFFFFFFFL;
+
+void ASN1_STRING_set_default_mask(unsigned long mask)
+{
+	global_mask = mask;
+}
+
+unsigned long ASN1_STRING_get_default_mask(void)
+{
+	return global_mask;
+}
+
+/* This function sets the default to various "flavours" of configuration.
+ * based on an ASCII string. Currently this is:
+ * MASK:XXXX : a numerical mask value.
+ * nobmp : Don't use BMPStrings (just Printable, T61).
+ * pkix : PKIX recommendation in RFC2459.
+ * utf8only : only use UTF8Strings (RFC2459 recommendation for 2004).
+ * default:   the default value, Printable, T61, BMP.
+ */
+
+int ASN1_STRING_set_default_mask_asc(char *p)
+{
+	unsigned long mask;
+	char *end;
+	if(!strncmp(p, "MASK:", 5)) {
+		if(!p[5]) return 0;
+		mask = strtoul(p + 5, &end, 0);
+		if(*end) return 0;
+	} else if(!strcmp(p, "nombchar"))
+			 mask = ~(B_ASN1_BMPSTRING|B_ASN1_UTF8STRING);
+	else if(!strcmp(p, "pkix"))
+			mask = ~B_ASN1_T61STRING;
+	else if(!strcmp(p, "utf8only")) mask = B_ASN1_UTF8STRING;
+	else if(!strcmp(p, "default"))
+	    mask = 0xFFFFFFFFL;
+	else return 0;
+	ASN1_STRING_set_default_mask(mask);
+	return 1;
+}
+
 /* The following function generates an ASN1_STRING based on limits in a table.
  * Frequently the types and length of an ASN1_STRING are restricted by a 
  * corresponding OID. For example certificates and certificate requests.
@@ -78,12 +125,16 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 {
 	ASN1_STRING_TABLE *tbl;
 	ASN1_STRING *str = NULL;
+	unsigned long mask;
 	int ret;
 	if(!out) out = &str;
 	tbl = ASN1_STRING_TABLE_get(nid);
-	if(tbl) ret = ASN1_mbstring_ncopy(out, in, inlen, inform, tbl->mask,
+	if(tbl) {
+		mask = tbl->mask;
+		if(!(tbl->flags & STABLE_NO_MASK)) mask &= global_mask;
+		ret = ASN1_mbstring_ncopy(out, in, inlen, inform, tbl->mask,
 					tbl->minsize, tbl->maxsize);
-	else ret = ASN1_mbstring_copy(out, in, inlen, inform, 0);
+	} else ret = ASN1_mbstring_copy(out, in, inlen, inform, DIRSTRING_TYPE & global_mask);
 	if(ret <= 0) return NULL;
 	return *out;
 }
@@ -105,18 +156,18 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 /* This table must be kept in NID order */
 
 static ASN1_STRING_TABLE tbl_standard[] = {
-{NID_commonName,		1, ub_common_name, 0, 0},
-{NID_countryName,		2, 2, B_ASN1_PRINTABLESTRING, 0},
-{NID_localityName,		1, ub_locality_name, 0, 0},
-{NID_stateOrProvinceName,	1, ub_state_name, 0, 0},
-{NID_organizationName,		1, ub_organization_name, 0, 0},
-{NID_organizationalUnitName,	1, ub_organization_unit_name, 0, 0},
-{NID_pkcs9_emailAddress,	1, ub_email_address, B_ASN1_IA5STRING, 0},
-{NID_givenName,			1, ub_name, 0, 0},
-{NID_surname,			1, ub_name, 0, 0},
-{NID_initials,			1, ub_name, 0, 0},
-{NID_name,			1, ub_name, 0, 0},
-{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, 0},
+{NID_commonName,		1, ub_common_name, DIRSTRING_TYPE, 0},
+{NID_countryName,		2, 2, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
+{NID_localityName,		1, ub_locality_name, DIRSTRING_TYPE, 0},
+{NID_stateOrProvinceName,	1, ub_state_name, DIRSTRING_TYPE, 0},
+{NID_organizationName,		1, ub_organization_name, DIRSTRING_TYPE, 0},
+{NID_organizationalUnitName,	1, ub_organization_unit_name, DIRSTRING_TYPE, 0},
+{NID_pkcs9_emailAddress,	1, ub_email_address, B_ASN1_IA5STRING, STABLE_NO_MASK},
+{NID_givenName,			1, ub_name, DIRSTRING_TYPE, 0},
+{NID_surname,			1, ub_name, DIRSTRING_TYPE, 0},
+{NID_initials,			1, ub_name, DIRSTRING_TYPE, 0},
+{NID_name,			1, ub_name, DIRSTRING_TYPE, 0},
+{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
 };
 
 static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b)

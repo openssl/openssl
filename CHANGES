@@ -4,6 +4,31 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initial changes to the 'req' utility to allow request generation
+     automation. This will allow an application to just generate a template
+     file containing all the field values and have req construct the
+     request.
+
+     Initial support for X509_ATTRIBUTE handling. Stacks of these are
+     used all over the place including certificate requests and PKCS#7
+     structures. They are currently handled manually where necessary with
+     some primitive wrappers for PKCS#7. The new functions behave in a
+     manner analagous to the X509 extension functions: they allow
+     attributes to be looked up by NID and added.
+
+     Later something similar to the X509V3 code would be desirable to
+     automatically handle the encoding, decoding and printing of the
+     more complex types. The string types like challengePassword can
+     be handled by the string table fuctions.
+
+     Also modified the multi byte string table handling. Now there is
+     a 'global mask' which masks out certain types. The table itself
+     can use the flag STABLE_NO_MASK to ignore the mask setting: this
+     is useful when for example there is only one permissible type
+     (as in countryName) and using the mask might result in no valid
+     types at all.
+     [Steve Henson]
+
   *) Clean up 'Finished' handling, and add functions SSL_get_finished and
      SSL_get_peer_finished to allow applications to obtain the latest
      Finished messages sent to the peer or expected from the peer,

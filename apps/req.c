@@ -78,11 +78,12 @@
 
 #define BITS		"default_bits"
 #define KEYFILE		"default_keyfile"
+#define PROMPT		"prompt"
 #define DISTINGUISHED_NAME	"distinguished_name"
 #define ATTRIBUTES	"attributes"
 #define V3_EXTENSIONS	"x509_extensions"
 #define REQ_EXTENSIONS	"req_extensions"
-#define DIRSTRING_TYPE	"dirstring_type"
+#define STRING_MASK	"string_mask"
 
 #define DEFAULT_KEY_LENGTH	512
 #define MIN_KEY_LENGTH		384
@@ -109,6 +110,11 @@
  */
 
 static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,int attribs);
+static int prompt_info(X509_REQ *req,
+		STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
+		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs);
+static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
+				STACK_OF(CONF_VALUE) *attr, int attribs);
 static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
 				char *def, char *value, int nid, int min,
 				int max);
@@ -491,10 +497,10 @@ bad:
 	if(!passout)
 		passout = CONF_get_string(req_conf, SECTION, "output_password");
 
-	p = CONF_get_string(req_conf, SECTION, DIRSTRING_TYPE);
+	p = CONF_get_string(req_conf, SECTION, STRING_MASK);
 
 	if(p && !ASN1_STRING_set_default_mask_asc(p)) {
-		BIO_printf(bio_err, "Invalid DiretoryString setting %s", p);
+		BIO_printf(bio_err, "Invalid global string mask setting %s", p);
 		goto end;
 	}
 
@@ -892,46 +898,47 @@ end:
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	{
 	int ret=0,i;
-	char *p,*q;
-	X509_REQ_INFO *ri;
-	char buf[100];
-	int nid,min,max;
-	char *type,*def,*tmp,*value,*tmp_attr;
-	STACK_OF(CONF_VALUE) *sk, *attr=NULL;
-	CONF_VALUE *v;
-	
-	tmp=CONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
-	if (tmp == NULL)
+	char no_prompt = 0;
+	STACK_OF(CONF_VALUE) *dn_sk, *attr_sk = NULL;
+	char *tmp, *dn_sect,*attr_sect;
+
+	tmp=CONF_get_string(req_conf,SECTION,PROMPT);
+	if((tmp != NULL) && !strcmp(tmp, "no")) no_prompt = 1;
+
+	dn_sect=CONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
+	if (dn_sect == NULL)
 		{
 		BIO_printf(bio_err,"unable to find '%s' in config\n",
 			DISTINGUISHED_NAME);
 		goto err;
 		}
-	sk=CONF_get_section(req_conf,tmp);
-	if (sk == NULL)
+	dn_sk=CONF_get_section(req_conf,dn_sect);
+	if (dn_sk == NULL)
 		{
-		BIO_printf(bio_err,"unable to get '%s' section\n",tmp);
+		BIO_printf(bio_err,"unable to get '%s' section\n",dn_sect);
 		goto err;
 		}
 
-	tmp_attr=CONF_get_string(req_conf,SECTION,ATTRIBUTES);
-	if (tmp_attr == NULL)
-		attr=NULL;
+	attr_sect=CONF_get_string(req_conf,SECTION,ATTRIBUTES);
+	if (attr_sect == NULL)
+		attr_sk=NULL;
 	else
 		{
-		attr=CONF_get_section(req_conf,tmp_attr);
-		if (attr == NULL)
+		attr_sk=CONF_get_section(req_conf,attr_sect);
+		if (attr_sk == NULL)
 			{
-			BIO_printf(bio_err,"unable to get '%s' section\n",tmp_attr);
+			BIO_printf(bio_err,"unable to get '%s' section\n",attr_sect);
 			goto err;
 			}
 		}
 
-	ri=req->req_info;
-
 	/* setup version number */
-	if (!ASN1_INTEGER_set(ri->version,0L)) goto err; /* version 1 */
+	if (!X509_REQ_set_version(req,0L)) goto err; /* version 1 */
 
+	if(no_prompt) i = auto_info(req, dn_sk, attr_sk, attribs);
+	else i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs);
+	if(!i) goto err;
+#if 0
 	BIO_printf(bio_err,"You are about to be asked to enter information that will be incorporated\n");
 	BIO_printf(bio_err,"into your certificate request.\n");
 	BIO_printf(bio_err,"What you are about to enter is what is called a Distinguished Name or a DN.\n");
@@ -1039,13 +1046,227 @@ start2:			for (;;)
 		BIO_printf(bio_err,"No template, please set one up.\n");
 		goto err;
 		}
-
+#endif
 	X509_REQ_set_pubkey(req,pkey);
 
 	ret=1;
 err:
 	return(ret);
 	}
+
+
+static int prompt_info(X509_REQ *req,
+		STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
+		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs)
+	{
+	int i;
+	char *p,*q;
+	char buf[100];
+	int nid,min,max;
+	char *type,*def,*value;
+	CONF_VALUE *v;
+	X509_NAME *subj;
+	subj = X509_REQ_get_subject_name(req);
+	BIO_printf(bio_err,"You are about to be asked to enter information that will be incorporated\n");
+	BIO_printf(bio_err,"into your certificate request.\n");
+	BIO_printf(bio_err,"What you are about to enter is what is called a Distinguished Name or a DN.\n");
+	BIO_printf(bio_err,"There are quite a few fields but you can leave some blank\n");
+	BIO_printf(bio_err,"For some fields there will be a default value,\n");
+	BIO_printf(bio_err,"If you enter '.', the field will be left blank.\n");
+	BIO_printf(bio_err,"-----\n");
+
+
+	if (sk_CONF_VALUE_num(dn_sk))
+		{
+		i= -1;
+start:		for (;;)
+			{
+			i++;
+			if (sk_CONF_VALUE_num(dn_sk) <= i) break;
+
+			v=sk_CONF_VALUE_value(dn_sk,i);
+			p=q=NULL;
+			type=v->name;
+			if(!check_end(type,"_min") || !check_end(type,"_max") ||
+				!check_end(type,"_default") ||
+					 !check_end(type,"_value")) continue;
+			/* Skip past any leading X. X: X, etc to allow for
+			 * multiple instances 
+			 */
+			for(p = v->name; *p ; p++) 
+				if ((*p == ':') || (*p == ',') ||
+							 (*p == '.')) {
+					p++;
+					if(*p) type = p;
+					break;
+				}
+			/* If OBJ not recognised ignore it */
+			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
+			sprintf(buf,"%s_default",v->name);
+			if ((def=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+				def="";
+				
+			sprintf(buf,"%s_value",v->name);
+			if ((value=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+				value=NULL;
+
+			sprintf(buf,"%s_min",v->name);
+			min=(int)CONF_get_number(req_conf,dn_sect,buf);
+
+			sprintf(buf,"%s_max",v->name);
+			max=(int)CONF_get_number(req_conf,dn_sect,buf);
+
+			if (!add_DN_object(subj,v->value,def,value,nid,
+				min,max))
+				return 0;
+			}
+		if (X509_NAME_entry_count(subj) == 0)
+			{
+			BIO_printf(bio_err,"error, no objects specified in config file\n");
+			return 0;
+			}
+
+		if (attribs)
+			{
+			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0))
+				{
+				BIO_printf(bio_err,"\nPlease enter the following 'extra' attributes\n");
+				BIO_printf(bio_err,"to be sent with your certificate request\n");
+				}
+
+			i= -1;
+start2:			for (;;)
+				{
+				i++;
+				if ((attr_sk == NULL) ||
+					    (sk_CONF_VALUE_num(attr_sk) <= i))
+					break;
+
+				v=sk_CONF_VALUE_value(attr_sk,i);
+				type=v->name;
+				if ((nid=OBJ_txt2nid(type)) == NID_undef)
+					goto start2;
+
+				sprintf(buf,"%s_default",type);
+				if ((def=CONF_get_string(req_conf,attr_sect,buf))
+					== NULL)
+					def="";
+				
+				sprintf(buf,"%s_value",type);
+				if ((value=CONF_get_string(req_conf,attr_sect,buf))
+					== NULL)
+					value=NULL;
+
+				sprintf(buf,"%s_min",type);
+				min=(int)CONF_get_number(req_conf,attr_sect,buf);
+
+				sprintf(buf,"%s_max",type);
+				max=(int)CONF_get_number(req_conf,attr_sect,buf);
+
+				if (!add_attribute_object(req->req_info->attributes,
+					v->value,def,value,nid,min,max))
+					return 0;
+				}
+			}
+		}
+	else
+		{
+		BIO_printf(bio_err,"No template, please set one up.\n");
+		return 0;
+		}
+
+	return 1;
+
+	}
+
+static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
+			STACK_OF(CONF_VALUE) *attr_sk, int attribs)
+	{
+	int i;
+	char *p,*q;
+	char *type;
+	CONF_VALUE *v;
+	X509_NAME *subj;
+
+	subj = X509_REQ_get_subject_name(req);
+
+	for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++)
+		{
+		v=sk_CONF_VALUE_value(dn_sk,i);
+		p=q=NULL;
+		type=v->name;
+		/* Skip past any leading X. X: X, etc to allow for
+		 * multiple instances 
+		 */
+		for(p = v->name; *p ; p++) 
+			if ((*p == ':') || (*p == ',') || (*p == '.')) {
+				p++;
+				if(*p) type = p;
+				break;
+			}
+		if (!X509_NAME_add_entry_by_txt(subj,type, MBSTRING_ASC,
+				(unsigned char *) v->value,-1,-1,0)) return 0;
+
+		}
+
+		if (!X509_NAME_entry_count(subj))
+			{
+			BIO_printf(bio_err,"error, no objects specified in config file\n");
+			return 0;
+			}
+#if 0
+		if (attribs)
+			{
+			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0))
+				{
+				BIO_printf(bio_err,"\nPlease enter the following 'extra' attributes\n");
+				BIO_printf(bio_err,"to be sent with your certificate request\n");
+				}
+
+			i= -1;
+start2:			for (;;)
+				{
+				i++;
+				if ((attr_sk == NULL) ||
+					    (sk_CONF_VALUE_num(attr_sk) <= i))
+					break;
+
+				v=sk_CONF_VALUE_value(attr_sk,i);
+				type=v->name;
+				if ((nid=OBJ_txt2nid(type)) == NID_undef)
+					goto start2;
+
+				sprintf(buf,"%s_default",type);
+				if ((def=CONF_get_string(req_conf,attr_sect,buf))
+					== NULL)
+					def="";
+				
+				sprintf(buf,"%s_value",type);
+				if ((value=CONF_get_string(req_conf,attr_sect,buf))
+					== NULL)
+					value=NULL;
+
+				sprintf(buf,"%s_min",type);
+				min=(int)CONF_get_number(req_conf,attr_sect,buf);
+
+				sprintf(buf,"%s_max",type);
+				max=(int)CONF_get_number(req_conf,attr_sect,buf);
+
+				if (!add_attribute_object(ri->attributes,
+					v->value,def,value,nid,min,max))
+					return 0;
+				}
+			}
+		}
+	else
+		{
+		BIO_printf(bio_err,"No template, please set one up.\n");
+		return 0;
+		}
+#endif
+	return 1;
+	}
+
 
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	     int nid, int min, int max)
