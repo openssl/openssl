@@ -4,8 +4,19 @@
 
 TOP=$1
 shift
+MAKEDEPEND=$1
+shift
+if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
 cp Makefile.ssl Makefile.save
-makedepend -f Makefile.ssl $@
-perl $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+if [ "$MAKEDEPEND" = "gcc" ]; then
+    sed -e '/^# DO NOT DELETE.*/,$d' < Makefile.ssl > Makefile.tmp
+    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
+    gcc -M $@ >> Makefile.tmp
+    perl $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
+    #cat Makefile.tmp > Makefile.new
+else
+    ${MAKEDEPEND} -f Makefile.ssl $@
+    perl $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+fi
 mv Makefile.new Makefile.ssl

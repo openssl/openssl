@@ -11,13 +11,16 @@ while(<STDIN>) {
 
 my %files;
 
+my $thisfile="";
 while(<STDIN>) {
-    my ($file,$deps)=/^(.*): (.*)$/;
+    my ($dummy, $file,$deps)=/^((.*):)? (.*)$/;
+    $thisfile=$file if defined $file;
     next if !defined $deps;
     my @deps=split ' ',$deps;
     @deps=grep(!/^\/usr\/include/,@deps);
     @deps=grep(!/^\/usr\/lib\/gcc-lib/,@deps);
-    push @{$files{$file}},@deps;
+    @deps=grep(!/^\\$/,@deps);
+    push @{$files{$thisfile}},@deps;
 }
 
 my $file;
