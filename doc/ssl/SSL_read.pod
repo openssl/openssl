@@ -13,7 +13,11 @@ SSL_read - read bytes from a TLS/SSL connection.
 =head1 DESCRIPTION
 
 SSL_read() tries to read B<num> bytes from the specified B<ssl> into the
-buffer B<buf>. If necessary, SSL_read() will negotiate a TLS/SSL session, if
+buffer B<buf>.
+
+=head1 NOTES
+
+If necessary, SSL_read() will negotiate a TLS/SSL session, if
 not already explicitly performed by SSL_connect() or SSL_accept(). If the
 peer requests a re-negotiation, it will be performed transparently during
 the SSL_read() operation. The behaviour of SSL_read() depends on the
@@ -33,6 +37,12 @@ needs of SSL_read(). The action depends on the underlying BIO. When using a
 non-blocking socket, nothing is to be done, but select() can be used to check
 for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
+
+=head1 IMPORTANT
+
+When an SSL_read() operation has to be repeated because of
+B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
+with the same arguments.
 
 =head1 RETURN VALUES
 

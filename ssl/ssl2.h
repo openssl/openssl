@@ -133,7 +133,11 @@ extern "C" {
 
 /* Upper/Lower Bounds */
 #define SSL2_MAX_MASTER_KEY_LENGTH_IN_BITS	256
+#ifdef MPE
+#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	(unsigned int)29998
+#else
 #define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	(unsigned int)32767 
+#endif
 #define SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER	16383 /**/
 
 #define SSL2_CHALLENGE_LENGTH	16

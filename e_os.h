@@ -275,6 +275,9 @@ extern "C" {
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
+#    ifdef MPE
+#      define NO_SYS_PARAM_H
+#    endif
 #    ifdef OPENSSL_UNISTD
 #      include OPENSSL_UNISTD
 #    else
@@ -344,7 +347,9 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    include <sys/time.h> /* Needed under linux for FD_XXX */
+#    ifndef MPE
+#      include <sys/time.h> /* Needed under linux for FD_XXX */
+#    endif
 
 #    include <netdb.h>
 #    if defined(VMS) && !defined(__DECC)

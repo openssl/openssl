@@ -236,7 +236,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 				}
 			c->state=BIO_CONN_S_CONNECT;
 
-#ifdef SO_KEEPALIVE
+#if defined(SO_KEEPALIVE) && !defined(MPE)
 			i=1;
 			i=setsockopt(b->num,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 			if (i < 0)
