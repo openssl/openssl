@@ -495,7 +495,7 @@ install: all install_docs
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/engines \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/engines \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
