@@ -62,6 +62,7 @@
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/rand.h>
 #include <openssl/engine.h>
 
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
