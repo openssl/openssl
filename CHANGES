@@ -14,12 +14,17 @@
      to avoid a timing attack. Applications that don't want it can call
      RSA_blinding_off() or use the new flag RSA_FLAG_NO_BLINDING.
      They would be ill-advised to do so in most cases.
-     [Ben Laurie, Steve Henson, Geoff Thorpe]
+     [Ben Laurie, Steve Henson, Geoff Thorpe, Bodo Moeller]
 
   *) Change RSA blinding code so that it works when the PRNG is not
      seeded (in this case, the secret RSA exponent is abused as
      an unpredictable seed -- if it is not unpredictable, there
-     is no point in blinding anyway).
+     is no point in blinding anyway).  Make RSA blinding thread-safe
+     by remembering the creator's thread ID in rsa->blinding and
+     having all other threads use local one-time blinding factors
+     (this requires more computation than sharing rsa->blinding, but
+     avoids excessive locking; and if an RSA object is not shared
+     between threads, blinding will still be very fast).
      [Bodo Moeller]
 
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
