@@ -96,8 +96,6 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 	ret->nid = 0;	
 
-	ret->references = 1;
-
 	if (!meth->group_init(ret))
 		{
 		OPENSSL_free(ret);
@@ -110,12 +108,6 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 void EC_GROUP_free(EC_GROUP *group)
 	{
-	int i;
-
-	i = CRYPTO_add(&group->references, -1, CRYPTO_LOCK_EC);
-	if (i > 0)
-		return;
-	
 	if (group->meth->group_finish != 0)
 		group->meth->group_finish(group);
 
@@ -127,12 +119,6 @@ void EC_GROUP_free(EC_GROUP *group)
 
 void EC_GROUP_clear_free(EC_GROUP *group)
 	{
-	int i;
-
-	i = CRYPTO_add(&group->references, -1, CRYPTO_LOCK_EC);
-	if (i > 0)
-		return;
-
 	if (group->meth->group_clear_finish != 0)
 		group->meth->group_clear_finish(group);
 	else if (group->meth != NULL && group->meth->group_finish != 0)
@@ -314,14 +300,14 @@ void EC_GROUP_clear_free_extra_data(EC_GROUP *group)
 	}
 
 void EC_GROUP_set_nid(EC_GROUP *group, int nid)
-{
+	{
 	group->nid = nid;
-}
+	}
 
 int EC_GROUP_get_nid(const EC_GROUP *group)
-{
+	{
 	return group->nid;
-}
+	}
 
 
 

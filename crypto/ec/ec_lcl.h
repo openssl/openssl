@@ -166,7 +166,6 @@ struct ec_group_st {
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
 
-	int references;
 	int nid;
 
 	void *field_data1; /* method-specific (e.g., Montgomery structure) */
