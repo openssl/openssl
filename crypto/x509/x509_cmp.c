@@ -61,6 +61,7 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 int X509_issuer_and_serial_cmp(X509 *a, X509 *b)
 	{
@@ -135,6 +136,16 @@ unsigned long X509_subject_name_hash(X509 *x)
 	{
 	return(X509_NAME_hash(x->cert_info->subject));
 	}
+/* Compare two certificates: they must be identical for
+ * this to work.
+ */
+int X509_cmp(X509 *a, X509 *b)
+{
+	/* ensure hash is valid */
+	X509_check_purpose(a, -1, 0);
+	X509_check_purpose(b, -1, 0);
+	return memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+}
 
 int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
 	{

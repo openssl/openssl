@@ -269,6 +269,7 @@ typedef struct x509_st
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
+	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 	X509_CERT_AUX *aux;
 	} X509;
 
@@ -869,6 +870,7 @@ unsigned long	X509_issuer_name_hash(X509 *a);
 int		X509_subject_name_cmp(X509 *a,X509 *b);
 unsigned long	X509_subject_name_hash(X509 *x);
 
+int		X509_cmp (X509 *a, X509 *b);
 int		X509_NAME_cmp (X509_NAME *a, X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
 

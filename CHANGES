@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New function X509_cmp(). Oddly enough there wasn't a function
+     to compare two certificates. We do this by working out the SHA1
+     hash and comparing that. X509_cmp() will be needed by the trust
+     code.
+     [Steve Henson]
+
   *) Correctly increment the reference count in the SSL_SESSION pointer 
      returned from SSL_get_session().
      [Geoff Thorpe <geoff@eu.c2.net>]

@@ -103,12 +103,13 @@ int X509_check_purpose(X509 *x, int id, int ca)
 		x509v3_cache_extensions(x);
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 	}
+	if(id == -1) return 1;
 	idx = x509_purpose_get_idx(id);
 	if(idx == -1) return -1;
 	pt = sk_X509_PURPOSE_value(xptable, idx);
 	return pt->check_purpose(pt, x,ca);
 }
-			
+
 
 
 
@@ -199,6 +200,7 @@ static void x509v3_cache_extensions(X509 *x)
 	STACK_OF(ASN1_OBJECT) *extusage;
 	int i;
 	if(x->ex_flags & EXFLAG_SET) return;
+	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
 	/* Does subject name match issuer ? */
 	if(X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
 			 x->ex_flags |= EXFLAG_SS;
