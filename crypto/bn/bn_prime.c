@@ -142,6 +142,8 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 		{
 	case 1:
 		/* Deprecated-style callbacks */
+		if(!cb->cb.cb_1)
+			return 1;
 		cb->cb.cb_1(a, b, cb->arg);
 		return 1;
 	case 2:
