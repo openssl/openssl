@@ -693,14 +693,15 @@ EOF
 		} else {
 			(my $n, my $i) = split /\\/, $nums{$s};
 			my @p = split(/,/, ($i =~ /^.*?:(.*?):/,$1));
-			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n
-			    # It is very important to check NT before W32
-			    if ($NT && (!@p || (grep(/^WINNT$/,@p)
-						&& !grep(/^!WINNT$/,@p)))
-				|| $W32 && (!@p || (grep(/^WIN32$/,@p)
-						    && !grep(/^!WIN32$/,@p)))
-				|| $W16 && (!@p || (grep(/^WIN16$/,@p)
-						    && !grep(/^!WIN16$/,@p))));
+			# It is very important to check NT before W32
+			if (($NT && (!@p || (grep(/^WINNT$/,@p)
+					     || !grep(/^!WINNT$/,@p))))
+			    || ($W32 && (!@p || (grep(/^WIN32$/,@p)
+						 || !grep(/^!WIN32$/,@p))))
+			    || ($W16 && (!@p || (grep(/^WIN16$/,@p)
+						 || !grep(/^!WIN16$/,@p))))) {
+				printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
+			}
 		}
 	}
 	printf OUT "\n";
