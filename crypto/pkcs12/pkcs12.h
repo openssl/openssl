@@ -230,7 +230,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
 		   EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
 					 int saltlen, EVP_MD *md_type);
-unsigned char *asc2uni(const char *asc, unsigned char **uni, int *unilen);
+unsigned char *asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen);
 char *uni2asc(unsigned char *uni, int unilen);
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)

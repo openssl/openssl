@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change PKCS12_key_gen_asc() so it can cope with non null
+     terminated strings whose length is passed in the passlen
+     parameter, for example from PEM callbacks. This was done
+     by adding an extra length parameter to asc2uni().
+     [Steve Henson, reported by <oddissey@samsung.co.kr>]
+
   *) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
      parsed, outputed or printed in text form. Not complete yet:

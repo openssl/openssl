@@ -151,7 +151,7 @@ int PKCS12_add_friendlyname_asc (PKCS12_SAFEBAG *bag, const char *name,
 {
 	unsigned char *uniname;
 	int ret, unilen;
-	if (!asc2uni(name, &uniname, &unilen)) {
+	if (!asc2uni(name, namelen, &uniname, &unilen)) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_ASC,
 							ERR_R_MALLOC_FAILURE);
 		return 0;
