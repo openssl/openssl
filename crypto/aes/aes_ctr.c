@@ -59,7 +59,7 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-/* NOTE: CTR mode is big-endian.  The rest of the AES code
+/* NOTE: the IV/counter CTR mode is big-endian.  The rest of the AES code
  * is endian-neutral. */
 
 /* increment counter (128-bit int) by 1 */
@@ -67,61 +67,36 @@ static void AES_ctr128_inc(unsigned char *counter) {
 	unsigned long c;
 
 	/* Grab bottom dword of counter and increment */
-#ifdef L_ENDIAN
-	c = GETU32(counter +  0);
-	c++;
-	PUTU32(counter +  0, c);
-#else
 	c = GETU32(counter + 12);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter + 12, c);
-#endif
 
 	/* if no overflow, we're done */
 	if (c)
 		return;
 
 	/* Grab 1st dword of counter and increment */
-#ifdef L_ENDIAN
-	c = GETU32(counter +  4);
-	c++;
-	PUTU32(counter +  4, c);
-#else
 	c = GETU32(counter +  8);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  8, c);
-#endif
 
 	/* if no overflow, we're done */
 	if (c)
 		return;
 
 	/* Grab 2nd dword of counter and increment */
-#ifdef L_ENDIAN
-	c = GETU32(counter +  8);
-	c++;
-	PUTU32(counter +  8, c);
-#else
 	c = GETU32(counter +  4);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  4, c);
-#endif
 
 	/* if no overflow, we're done */
 	if (c)
 		return;
 
 	/* Grab top dword of counter and increment */
-#ifdef L_ENDIAN
-	c = GETU32(counter + 12);
-	c++;
-	PUTU32(counter + 12, c);
-#else
 	c = GETU32(counter +  0);
-	c++;
+	c++;	c &= 0xFFFFFFFF;
 	PUTU32(counter +  0, c);
-#endif
-
 }
 
 /* The input encrypted as though 128bit counter mode is being
