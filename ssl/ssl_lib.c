@@ -795,7 +795,10 @@ int SSL_shutdown(SSL *s)
 
 int SSL_renegotiate(SSL *s)
 	{
-	s->new_session=1;
+	if (s->new_session == 0)
+		{
+		s->new_session=1;
+		}
 	return(s->method->ssl_renegotiate(s));
 	}
 
