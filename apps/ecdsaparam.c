@@ -378,7 +378,7 @@ bad:
 	}
 	
 	if (C)
-	  {	/* TODO : characteristic two */
+	{	/* TODO : characteristic two */
 		int 	l, len, bits_p;
 		if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
 		    (tmp_3 = BN_new()) == NULL || (tmp_4 = BN_new()) == NULL ||
@@ -414,7 +414,7 @@ bad:
 			if ((i%12) == 0) printf("\n\t");
 			printf("0x%02X,",data[i]);
 		}
-		printf("\n\t};\n");
+		printf("\n\t};\n\n");
 
 		l = BN_bn2bin(tmp_2, data);
 		printf("static unsigned char ecdsa%d_a[]={",bits_p);
@@ -434,34 +434,34 @@ bad:
 		}
 		printf("\n\t};\n\n");
 
-		l = BN_bn2bin(tmp_3, data);
+		l = BN_bn2bin(tmp_4, data);
 		printf("static unsigned char ecdsa%d_x[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
 			printf("0x%02X,",data[i]);
 		}
-		printf("\n\t};\n\n");
+		printf("\n\t};\n");
 
-		l = BN_bn2bin(tmp_3, data);
+		l = BN_bn2bin(tmp_5, data);
 		printf("static unsigned char ecdsa%d_y[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
 			printf("0x%02X,",data[i]);
 		}
-		printf("\n\t};\n\n");
+		printf("\n\t};\n");
 
-		l = BN_bn2bin(tmp_3, data);
+		l = BN_bn2bin(tmp_6, data);
 		printf("static unsigned char ecdsa%d_o[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
 			printf("0x%02X,",data[i]);
 		}
-		printf("\n\t};\n\n");
+		printf("\n\t};\n");
 
-		l = BN_bn2bin(tmp_3, data);
+		l = BN_bn2bin(tmp_7, data);
 		printf("static unsigned char ecdsa%d_c[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
@@ -470,30 +470,34 @@ bad:
 		}
 		printf("\n\t};\n\n");
 
+		/* FIXME:
+		 * generated code should check for errors
+		 */
+
 		printf("ECDSA *get_ecdsa%d(void)\n\t{\n",bits_p);
 		printf("\tECDSA    *ecdsa=NULL;\n");
 		printf("\tEC_POINT *point=NULL;\n");
 		printf("\tBIGNUM   *tmp_1=NULL,*tmp_2=NULL,*tmp_3=NULL;\n\n");
 		printf("\tif ((ecdsa=ECDSA_new()) == NULL)\n");
-		printf("\t\treturn(NULL);\n");
-		printf("\t/* first : generate EC_GROUP-structure */\n");
+		printf("\t\treturn(NULL);\n\n");
+		printf("\t/* generate EC_GROUP structure */\n");
 		printf("\ttmp_1 = BN_bin2bn(ecdsa%d_p, sizeof(ecdsa%d_p), NULL);\n", bits_p, bits_p);
 		printf("\ttmp_2 = BN_bin2bn(ecdsa%d_a, sizeof(ecdsa%d_a), NULL);\n", bits_p, bits_p);
 		printf("\ttmp_3 = BN_bin2bn(ecdsa%d_b, sizeof(ecdsa%d_b), NULL);\n", bits_p, bits_p);
-		printf("\tecdsa->group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL);\n");
-		printf("\t/* second : set coordinates of the generating point */\n");
+		printf("\tecdsa->group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL);\n\n");
+		printf("\t/* build generator */\n");
 		printf("\tBN_bin2bn(ecdsa%d_x, sizeof(ecdsa%d_x), tmp_1);\n", bits_p, bits_p);
 		printf("\tBN_bin2bn(ecdsa%d_y, sizeof(ecdsa%d_y), tmp_2);\n", bits_p, bits_p);
 		printf("\tif ((point = EC_POINT_new(ecdsa->group)) == NULL)\n");
-		printf("\t{\n\t\tECDSA_free(ecdsa); BN_free(tmp_1); BN_free(tmp_2); BN_free(tmp_3);\n");
-		printf("\t\treturn(NULL);\n\t}\n");
+		printf("\t\t{\n\t\tECDSA_free(ecdsa); BN_free(tmp_1); BN_free(tmp_2); BN_free(tmp_3);\n");
+		printf("\t\treturn(NULL);\n\t\t}\n");
 		printf("\tEC_POINT_set_affine_coordinates_GFp(ecdsa->group, point, tmp_1, tmp_2, NULL);\n");
-		printf("\t/* and finally : insert the generating point and its order in the EC_GROUP-structure */\n");
+		printf("\t/* set generator, order and cofactor */\n");
 		printf("\tBN_bin2bn(ecdsa%d_o, sizeof(ecdsa%d_o), tmp_1);\n", bits_p, bits_p);
 		printf("\tBN_bin2bn(ecdsa%d_c, sizeof(ecdsa%d_c), tmp_2);\n", bits_p, bits_p);
 		printf("\tEC_GROUP_set_generator(ecdsa->group, point, tmp_1, tmp_2);\n");
 		printf("\tBN_free(tmp_1); BN_free(tmp_2); BN_free(tmp_3);\n");
-		printf("\tEC_POINT_free(point);\n");
+		printf("\tEC_POINT_free(point);\n\n");
 		printf("\treturn(ecdsa);\n\t}\n");
 	}
 
