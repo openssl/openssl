@@ -1826,3 +1826,10 @@ i2c_ASN1_BIT_STRING                     2422
 RAND_poll                               2423
 c2i_ASN1_INTEGER                        2424
 i2c_ASN1_INTEGER                        2425
+BIO_dump_indent                         2426
+ASN1_parse_dump                         2427
+c2i_ASN1_OBJECT                         2428
+X509_NAME_print_ex_fp                   2429
+ASN1_STRING_print_ex_fp                 2430
+X509_NAME_print_ex                      2431
+ASN1_STRING_print_ex                    2432

@@ -537,7 +537,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** alpha-gcc
@@ -557,7 +557,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** alpha164-cc
@@ -577,7 +577,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** bsdi-elf-gcc
@@ -877,8 +877,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
@@ -897,8 +897,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
@@ -917,8 +917,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
@@ -937,8 +937,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** debug-steve
 $cc           = gcc
@@ -1557,8 +1557,8 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 
 *** linux-elf-arm
 $cc           = gcc
@@ -1577,8 +1577,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 
 *** linux-ia64
 $cc           = gcc
@@ -1877,8 +1877,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv7-cc
 $cc           = cc
@@ -1897,8 +1897,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
@@ -1917,8 +1917,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv8-cc
 $cc           = cc
@@ -1937,8 +1937,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
@@ -1957,8 +1957,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv9-cc
 $cc           = cc
@@ -1977,8 +1977,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
@@ -1997,8 +1997,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
@@ -2017,8 +2017,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-x86-gcc
 $cc           = gcc
@@ -2037,8 +2037,8 @@ $rc4_obj      = asm/rx86-sol.o
 $rmd160_obj   = asm/rm86-sol.o
 $rc5_obj      = asm/r586-sol.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris64-sparcv9-cc
 $cc           = cc
@@ -2057,8 +2057,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** sunos-gcc
 $cc           = gcc
