@@ -277,6 +277,13 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			eof++;
 			}
 
+		if (v == B64_CR)
+			{
+			ln = 0;
+			if (exp_nl)
+				continue;
+			}
+
 		/* eoln */
 		if (v == B64_EOLN)
 			{

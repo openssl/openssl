@@ -1625,6 +1625,14 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx 2002]
 
+  *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
+     an end-of-file condition would erronously be flagged, when the CRLF
+     was just at the end of a processed block. The bug was discovered when
+     processing data through a buffering memory BIO handing the data to a
+     BASE64-decoding BIO. Bug fund and patch submitted by Pavel Tsekov
+     <ptsekov@syntrex.com> and Nedelcho Stanev.
+     [Lutz Jaenicke]
+
   *) Implement a countermeasure against a vulnerability recently found
      in CBC ciphersuites in SSL 3.0/TLS 1.0: Send an empty fragment
      before application data chunks to avoid the use of known IVs
