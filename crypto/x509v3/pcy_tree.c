@@ -589,7 +589,7 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
  * -2	User constrained policy set empty and requireExplicit true.
  */
 
-int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
+int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 			STACK_OF(X509) *certs,
 			STACK_OF(ASN1_OBJECT) *policy_oids,
 			unsigned int flags)
@@ -599,7 +599,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
 	STACK_OF(X509_POLICY_NODE) *nodes, *auth_nodes = NULL;
 	*ptree = NULL;
 
-	*explicit = 0;
+	*pexplicit_policy = 0;
 	ret = tree_init(&tree, certs, flags);
 
 
@@ -617,12 +617,12 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
 		/* Tree empty requireExplicit True: Error */
 
 		case 6:
-		*explicit = 1;
+		*pexplicit_policy = 1;
 		return -2;
 
 		/* Tree OK requireExplicit True: OK and continue */
 		case 5:
-		*explicit = 1;
+		*pexplicit_policy = 1;
 		break;
 
 		/* Tree OK: continue */
@@ -640,7 +640,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
 	if (ret == 2)
 		{
 		X509_policy_tree_free(tree);
-		if (*explicit)
+		if (*pexplicit_policy)
 			return -2;
 		else
 			return 1;
@@ -662,7 +662,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *explicit,
 	if (tree)
 		*ptree = tree;
 
-	if (*explicit)
+	if (*pexplicit_policy)
 		{
 		nodes = X509_policy_tree_get0_user_policies(tree);
 		if (sk_X509_POLICY_NODE_num(nodes) <= 0)
