@@ -111,7 +111,7 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 	int k,n=0,i,b,m=0;
 	int counter=0;
 	int r=0;
-	BN_CTX *ctx=NULL,*ctx2=NULL,*ctx3=NULL;
+	BN_CTX *ctx=NULL;
 	unsigned int h=2;
 
 	if (bits < 512) bits=512;
@@ -126,20 +126,18 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 		memcpy(seed,seed_in,seed_len);
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	if ((ctx2=BN_CTX_new()) == NULL) goto err;
-	if ((ctx3=BN_CTX_new()) == NULL) goto err;
 
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	BN_CTX_start(ctx2);
-	r0 = BN_CTX_get(ctx2);
-	g = BN_CTX_get(ctx2);
-	W = BN_CTX_get(ctx2);
-	q = BN_CTX_get(ctx2);
-	X = BN_CTX_get(ctx2);
-	c = BN_CTX_get(ctx2);
-	p = BN_CTX_get(ctx2);
-	test = BN_CTX_get(ctx2);
+	BN_CTX_start(ctx);
+	r0 = BN_CTX_get(ctx);
+	g = BN_CTX_get(ctx);
+	W = BN_CTX_get(ctx);
+	q = BN_CTX_get(ctx);
+	X = BN_CTX_get(ctx);
+	c = BN_CTX_get(ctx);
+	p = BN_CTX_get(ctx);
+	test = BN_CTX_get(ctx);
 
 	BN_lshift(test,BN_value_one(),bits-1);
 
@@ -184,7 +182,7 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) goto err;
 
 			/* step 4 */
-			r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx3,
+			r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
 					seed_is_random, cb);
 			if (r > 0)
 				break;
@@ -247,7 +245,7 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 				{
 				/* step 11 */
 				r = BN_is_prime_fasttest_ex(p, DSS_prime_checks,
-						ctx3, 1, cb);
+						ctx, 1, cb);
 				if (r > 0)
 						goto end; /* found it */
 				if (r != 0)
@@ -300,13 +298,11 @@ err:
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
 		}
-	if (ctx != NULL) BN_CTX_free(ctx);
-	if (ctx2 != NULL)
+	if(ctx)
 		{
-		BN_CTX_end(ctx2);
-		BN_CTX_free(ctx2);
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
 		}
-	if (ctx3 != NULL) BN_CTX_free(ctx3);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return ok;
 	}
