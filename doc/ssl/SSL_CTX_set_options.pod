@@ -106,7 +106,7 @@ All of the above bug workarounds.
 
 =back
 
-It is safe and recommended to use SSL_OP_ALL to enable the bug workaround
+It is safe and recommended to use B<SSL_OP_ALL> to enable the bug workaround
 options.
 
 The following B<modifying> options are available:
@@ -134,7 +134,7 @@ the DH parameters were not generated using "strong" primes
 (e.g. when using DSA-parameters, see L<dhparam(1)|dhparam(1)>).
 If "strong" primes were used, it is not strictly necessary to generate
 a new DH key during each handshake but it is also recommended.
-SSL_OP_SINGLE_DH_USE should therefore be enabled whenever
+B<SSL_OP_SINGLE_DH_USE> should therefore be enabled whenever
 temporary/ephemeral DH parameters are used.
 
 =item SSL_OP_EPHEMERAL_RSA
@@ -187,6 +187,12 @@ Do not use the SSLv3 protocol.
 
 Do not use the TLSv1 protocol.
 
+=item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+
+When performing renegotiation as a server, always start a new session
+(i.e., session resumption requests are only accepted in the initial
+handshake).  This option is not needed for clients.
+
 =back
 
 =head1 RETURN VALUES
@@ -205,10 +211,12 @@ L<dhparam(1)|dhparam(1)>
 
 =head1 HISTORY
 
-SSL_OP_CIPHER_SERVER_PREFERENCE has been added in OpenSSL 0.9.7.
+B<SSL_OP_CIPHER_SERVER_PREFERENCE> and
+B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> have been added in
+OpenSSL 0.9.7.
 
-SSL_OP_TLS_ROLLBACK_BUG has been added in OpenSSL 0.9.6 and was automatically
-enabled with SSL_OP_ALL. As of 0.9.7 it is no longer included in SSL_OP_ALL
+B<SSL_OP_TLS_ROLLBACK_BUG> has been added in OpenSSL 0.9.6 and was automatically
+enabled with B<SSL_OP_ALL>. As of 0.9.7, it is no longer included in B<SSL_OP_ALL>
 and must be explicitly set.
 
 =cut
