@@ -56,9 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifdef APPS_CRLF
-# include <assert.h>
-#endif
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -169,9 +167,7 @@ static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 static int s_nbio=0;
 #endif
 static int s_nbio_test=0;
-#ifdef APPS_CRLF /* won't be #ifdef'd in next release */
 int s_crlf=0;
-#endif
 static SSL_CTX *ctx=NULL;
 static int www=0;
 
@@ -219,9 +215,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif
 	BIO_printf(bio_err," -nbio_test    - test with the non-blocking test bio\n");
-#ifdef APPS_CRLF
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
-#endif
 	BIO_printf(bio_err," -debug        - Print more output\n");
 	BIO_printf(bio_err," -state        - Print the SSL states\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
@@ -525,10 +519,8 @@ int MAIN(int argc, char *argv[])
 			{ hack=1; }
 		else if	(strcmp(*argv,"-state") == 0)
 			{ state=1; }
-#ifdef APPS_CRLF
 		else if	(strcmp(*argv,"-crlf") == 0)
 			{ s_crlf=1; }
-#endif
 		else if	(strcmp(*argv,"-quiet") == 0)
 			{ s_quiet=1; }
 		else if	(strcmp(*argv,"-bugs") == 0)
@@ -813,7 +805,6 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		if (i <= 0) continue;
 		if (FD_ISSET(fileno(stdin),&readfds))
 			{
-#ifdef APPS_CRLF
 			if (s_crlf)
 				{
 				int j, lf_num;
@@ -837,7 +828,6 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				assert(lf_num == 0);
 				}
 			else
-#endif
 				i=read(fileno(stdin),buf,bufsize);
 			if (!s_quiet)
 				{
