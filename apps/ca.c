@@ -180,11 +180,11 @@ extern int EF_ALIGNMENT;
 #endif
 
 static void lookup_fail(char *name,char *tag);
-static unsigned long index_serial_hash(char **a);
-static int index_serial_cmp(char **a, char **b);
-static unsigned long index_name_hash(char **a);
+static unsigned long index_serial_hash(const char **a);
+static int index_serial_cmp(const char **a, const char **b);
+static unsigned long index_name_hash(const char **a);
 static int index_name_qual(char **a);
-static int index_name_cmp(char **a,char **b);
+static int index_name_cmp(const char **a,const char **b);
 static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
@@ -214,6 +214,12 @@ static char *section=NULL;
 
 static int preserve=0;
 static int msie_hack=0;
+
+static IMPLEMENT_LHASH_HASH_FN(index_serial_hash,const char **);
+static IMPLEMENT_LHASH_COMP_FN(index_serial_cmp,const char **);
+static IMPLEMENT_LHASH_HASH_FN(index_name_hash,const char **);
+static IMPLEMENT_LHASH_COMP_FN(index_name_cmp,const char **);
+
 
 int MAIN(int, char **);
 
@@ -754,16 +760,16 @@ bad:
 		}
 	
 	if (!TXT_DB_create_index(db, DB_serial, NULL,
-			(LHASH_HASH_FN_TYPE)index_serial_hash,
-			(LHASH_COMP_FN_TYPE)index_serial_cmp))
+			LHASH_HASH_FN(index_serial_hash),
+			LHASH_COMP_FN(index_serial_cmp)))
 		{
 		BIO_printf(bio_err,"error creating serial number index:(%ld,%ld,%ld)\n",db->error,db->arg1,db->arg2);
 		goto err;
 		}
 
 	if (!TXT_DB_create_index(db, DB_name, index_name_qual,
-			(LHASH_HASH_FN_TYPE)index_name_hash,
-			(LHASH_COMP_FN_TYPE)index_name_cmp))
+			LHASH_HASH_FN(index_name_hash),
+			LHASH_COMP_FN(index_name_cmp)))
 		{
 		BIO_printf(bio_err,"error creating name index:(%ld,%ld,%ld)\n",
 			db->error,db->arg1,db->arg2);
@@ -1328,31 +1334,31 @@ static void lookup_fail(char *name, char *tag)
 	BIO_printf(bio_err,"variable lookup failed for %s::%s\n",name,tag);
 	}
 
-static unsigned long index_serial_hash(char **a)
+static unsigned long index_serial_hash(const char **a)
 	{
-	char *n;
+	const char *n;
 
 	n=a[DB_serial];
 	while (*n == '0') n++;
 	return(lh_strhash(n));
 	}
 
-static int index_serial_cmp(char **a, char **b)
+static int index_serial_cmp(const char **a, const char **b)
 	{
-	char *aa,*bb;
+	const char *aa,*bb;
 
 	for (aa=a[DB_serial]; *aa == '0'; aa++);
 	for (bb=b[DB_serial]; *bb == '0'; bb++);
 	return(strcmp(aa,bb));
 	}
 
-static unsigned long index_name_hash(char **a)
+static unsigned long index_name_hash(const char **a)
 	{ return(lh_strhash(a[DB_name])); }
 
 static int index_name_qual(char **a)
 	{ return(a[0][0] == 'V'); }
 
-static int index_name_cmp(char **a, char **b)
+static int index_name_cmp(const char **a, const char **b)
 	{ return(strcmp(a[DB_name],
 	     b[DB_name])); }
 
@@ -2253,7 +2259,7 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 		goto err;
 
 		}
-	else if (index_name_cmp(row,rrow))
+	else if (index_name_cmp((const char **)row,(const char **)rrow))
 		{
 		BIO_printf(bio_err,"ERROR:name does not match %s\n",
 			   row[DB_name]);

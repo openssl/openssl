@@ -85,6 +85,9 @@ char *default_config_file=NULL;
 BIO *bio_err=NULL;
 #endif
 
+static IMPLEMENT_LHASH_HASH_FN(hash,FUNCTION *);
+static IMPLEMENT_LHASH_COMP_FN(cmp,FUNCTION *);
+
 int main(int Argc, char *Argv[])
 	{
 	ARGS arg;
@@ -351,8 +354,8 @@ static LHASH *prog_init(void)
 	    ;
 	qsort(functions,i,sizeof *functions,SortFnByName);
 
-	if ((ret=lh_new((LHASH_HASH_FN_TYPE)hash,
-			(LHASH_COMP_FN_TYPE)cmp)) == NULL)
+	if ((ret=lh_new(LHASH_HASH_FN(hash),
+			LHASH_COMP_FN(cmp))) == NULL)
 		return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
