@@ -163,9 +163,9 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 	BN_CTX *ctx;
 	int checks = BN_prime_checks_for_size(bits);
 
+	BN_init(&t);
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	BN_init(&t);
 loop: 
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
