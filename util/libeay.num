@@ -2652,3 +2652,4 @@ ENGINE_get_cipher_by_name               3100	EXIST::FUNCTION:
 ENGINE_cipher_num                       3101	EXIST::FUNCTION:
 DH_up                                   3102	EXIST::FUNCTION:DH
 RSA_up                                  3103	EXIST::FUNCTION:RSA
+EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
