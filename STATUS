@@ -1,10 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/07/04 20:56:08 $
+  ______________                           $Date: 2001/07/17 14:39:26 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.7:  Under development...
+    o  OpenSSL 0.9.6b: Released on July       9th, 2001
     o  OpenSSL 0.9.6a: Released on April      5th, 2001
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
@@ -18,6 +19,11 @@
   RELEASE SHOWSTOPPERS
 
   AVAILABLE PATCHES
+
+    o IA-64 (a.k.a. Intel Itanium) public-key operation performance 
+      patch for Linux is available for download at
+      http://www.openssl.org/~appro/096b.linux-ia64.diff. As URL
+      suggests the patch is relative to OpenSSL 0.9.6b.
 
   IN PROGRESS
 
