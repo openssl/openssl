@@ -11,7 +11,7 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
-  *) Enhance the general user interface with mechanisms for inner control
+  +) Enhance the general user interface with mechanisms for inner control
      and with pssibilities to have yes/no kind of prompts.
      [Richard Levitte]
 
