@@ -181,6 +181,9 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     QNX:*)
 	case "$VERSION" in
+	    425)
+		echo "${MACHINE}-qssl-qnx4"
+		;;
 	    423)
 		echo "${MACHINE}-qssl-qnx32"
 		;;

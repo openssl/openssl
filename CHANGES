@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New Configure entry and patches for compiling on QNX 4.
+     [Andreas Schneider <andreas@ds3.etech.fh-hamburg.de>]
+
   *) A demo state-machine implementation was sponsored by
      Nuron (http://www.nuron.com/) and is now available in
      demos/state_machine.

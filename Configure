@@ -89,6 +89,8 @@ my $x86_elf_asm="asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o:asm
 my $x86_out_asm="asm/bn86-out.o asm/co86-out.o:asm/dx86-out.o asm/yx86-out.o:asm/bx86-out.o:asm/mx86-out.o:asm/sx86-out.o:asm/cx86-out.o:asm/rx86-out.o:asm/rm86-out.o:asm/r586-out.o";
 my $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/bx86bsdi.o:asm/mx86bsdi.o:asm/sx86bsdi.o:asm/cx86bsdi.o:asm/rx86bsdi.o:asm/rm86bsdi.o:asm/r586bsdi.o";
 
+my $x86_omf_asm="asm/bn86-omf.o asm/co86-omf.o:asm/dx86-omf.o asm/yx86-omf.o:asm/bx86-omf.o:asm/mx86-omf.o:asm/sx86-omf.o:asm/cx86-omf.o:asm/rx86-omf.o:asm/rm86-omf.o:asm/r586-omf.o";
+
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
 # So the md5_locl.h file has an undef B_ENDIAN if sun is defined
 
@@ -293,6 +295,9 @@ my %table=(
 "nextstep3.3",	"cc:-O3 -Wall:<libc.h>:(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
 # NCR MP-RAS UNIX ver 02.03.01
 "ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
+
+# QNX 4
+"qnx4",	"cc:-DL_ENDIAN -DTERMIO::::${x86_gcc_des} ${x86_gcc_opts}:${x86_omf_asm}",
 
 # Linux on ARM
 "linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::::::::::dlfcn:linux-shared:-fPIC",

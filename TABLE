@@ -1800,6 +1800,26 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 
+*** qnx4
+$cc           = cc
+$cflags       = -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = 
+$lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-omf.o asm/co86-omf.o
+$des_obj      = asm/dx86-omf.o asm/yx86-omf.o
+$bf_obj       = asm/bx86-omf.o
+$md5_obj      = asm/mx86-omf.o
+$sha1_obj     = asm/sx86-omf.o
+$cast_obj     = asm/cx86-omf.o
+$rc4_obj      = asm/rx86-omf.o
+$rmd160_obj   = asm/rm86-omf.o
+$rc5_obj      = asm/r586-omf.o
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+
 *** rhapsody-ppc-cc
 $cc           = cc
 $cflags       = -O3 -DB_ENDIAN
