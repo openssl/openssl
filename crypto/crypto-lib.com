@@ -209,8 +209,12 @@ $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
-$ LIB_ENGINE = "engine_err,engine_lib,engine_list,engine_all,engine_openssl,"+ -
-	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec"
+$ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
+	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
+	"tb_rsa,tb_dsa,tb_dh,tb_rand,tb_cipher,tb_digest,"+ -
+	"eng_openssl,eng_dyn,"+ -
+	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec,"+ -
+	"hw_openssl_dev_crypto"
 $ LIB_RIJNDAEL = "rd_fst"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
@@ -251,7 +255,7 @@ $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
 	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
-	"x509_set,x509rset,x509_err,"+ -
+	"x509_set,x509cset,x509rset,x509_err,"+ -
 	"x509name,x509_v3,x509_ext,x509_att,"+ -
 	"x509type,x509_lu,x_all,x509_txt,"+ -
 	"x509_trs,by_file,by_dir"
