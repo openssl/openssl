@@ -1875,3 +1875,4 @@ OPENSSL_issetugid                       2465	EXIST::FUNCTION:
 BN_rand_range                           2466	EXIST::FUNCTION:
 BN_pseudo_rand_range                    2523	EXIST::FUNCTION:
 X509_STORE_CTX_set_verify_cb            2524	EXIST::FUNCTION:
+ERR_load_COMP_strings                   2525	EXIST::FUNCTION:

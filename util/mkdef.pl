@@ -293,8 +293,10 @@ sub do_defs
 			TRUE		=> 1,
 		);
 		my $symhacking = $file eq $symhacksfile;
+		my $begin_error_codes = 0;
 		while(<IN>) {
-			last if (/BEGIN ERROR CODES/);
+			$begin_error_codes = 1 if (/BEGIN ERROR CODES/);
+			last if ($begin_error_codes && /Error codes for /);
 			if ($line ne '') {
 				$_ = $line . $_;
 				$line = '';
