@@ -357,7 +357,7 @@ void CRYPTO_mem_leaks_fp(FILE *);
 #endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
 /* unsigned long order, char *file, int line, int num_bytes, char *addr */
-void CRYPTO_mem_leaks_cb(void (*cb)());
+void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *));
 
 void ERR_load_CRYPTO_strings(void);
 
