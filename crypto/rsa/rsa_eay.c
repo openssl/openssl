@@ -205,11 +205,12 @@ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	if (rsa->flags & RSA_FLAG_BLINDING)
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
-	if (	(rsa->p != NULL) &&
+	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
+		((rsa->p != NULL) &&
 		(rsa->q != NULL) &&
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
-		(rsa->iqmp != NULL))
+		(rsa->iqmp != NULL)) )
 		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{
@@ -278,11 +279,12 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
 	/* do the decrypt */
-	if (	(rsa->p != NULL) &&
+	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
+		((rsa->p != NULL) &&
 		(rsa->q != NULL) &&
 		(rsa->dmp1 != NULL) &&
 		(rsa->dmq1 != NULL) &&
-		(rsa->iqmp != NULL))
+		(rsa->iqmp != NULL)) )
 		{ if (!rsa->meth->rsa_mod_exp(&ret,&f,rsa)) goto err; }
 	else
 		{

@@ -108,7 +108,7 @@ struct rsa_st
 	BIGNUM *dmp1;
 	BIGNUM *dmq1;
 	BIGNUM *iqmp;
-	/* be carefull using this if the RSA structure is shared */
+	/* be careful using this if the RSA structure is shared */
 	CRYPTO_EX_DATA ex_data;
 	int references;
 	int flags;
@@ -133,6 +133,12 @@ struct rsa_st
 #define RSA_FLAG_CACHE_PRIVATE		0x04
 #define RSA_FLAG_BLINDING		0x08
 #define RSA_FLAG_THREAD_SAFE		0x10
+/* This flag means the private key operations will be handled by rsa_mod_exp
+ * and that they do not depend on the private key components being present:
+ * for example a key stored in external hardware. Without this flag bn_mod_exp
+ * gets called when private key components are absent.
+ */
+#define RSA_FLAG_EXT_PKEY		0x20
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2

@@ -4,6 +4,15 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
 
+  *) Added an extra RSA flag: RSA_FLAG_EXT_PKEY. Previously the rsa_mod_exp
+     method only got called if p,q,dmp1,dmq1,iqmp components were present,
+     otherwise bn_mod_exp was called. In the case of hardware keys for example
+     no private key components need be present and it might store extra data
+     in the RSA structure, which cannot be accessed from bn_mod_exp. By setting
+     RSA_FLAG_EXT_PKEY rsa_mod_exp will always be called for private key
+     operations.
+     [Steve Henson]
+
   *) Added support for SPARC Linux.
      [Andy Polyakov]
 
