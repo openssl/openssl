@@ -1,0 +1,93 @@
+=pod
+
+=head1 NAME
+
+	BIO_ctrl, BIO_callback_ctrl, BIO_ptr_ctrl, BIO_int_ctrl - BIO control operations
+
+=head1 SYNOPSIS
+
+ #include <openssl/bio.h>
+
+ long BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
+ long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long));
+ char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
+ long BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
+
+ int BIO_reset(BIO *b);
+ int BIO_flush(BIO *b);
+ int BIO_eof(BIO *b);
+ int BIO_set_close(BIO *b,long flag);
+ int BIO_get_close(BIO *b);
+ int BIO_pending(BIO *b);
+ int BIO_wpending(BIO *b);
+ size_t BIO_ctrl_pending(BIO *b);
+ size_t BIO_ctrl_wpending(BIO *b);
+
+ int BIO_get_info_callback(BIO *b,bio_info_cb **cbp);
+ int BIO_set_info_callback(BIO *b,bio_info_cb *cb);
+
+ typedef void bio_info_cb(BIO *b, int oper, const char *ptr, int arg1, long arg2, long arg3);
+
+=head1 DESCRIPTION
+
+BIO_ctrl(), BIO_callback_ctrl(), BIO_ptr_ctrl() and BIO_int_ctrl()
+are BIO "control" operations taking arguments of various types.
+These functions are not normally called directly, various macros
+are used instead. The standard macros are described below, macros
+specific to a particular type of BIO are described in the specific
+BIOs manual page as well as any special features of the standard
+calls.
+
+BIO_reset() typically reset a BIO to some initial state, in the case
+of file related BIOs for example it rewinds the file pointer.
+
+BIO_flush() normally writes out any internally buffered data, in some
+cases it is used to signal EOF and that no more data will be written.
+
+BIO_eof() returns 1 if the BIO has read EOF, the precise meaning of
+"EOF" varies according to the BIO type.
+
+BIO_set_close() sets the BIO B<b> close flag to B<flag>. B<flag> can
+take the value BIO_CLOSE or BIO_NOCLOSE. Typically BIO_CLOSE is used
+in a source/sink BIO to indicate that the underlying I/O stream should
+be closed when the BIO is freed.
+
+BIO_get_close() returns the BIOs close flag.
+
+BIO_pending(), BIO_ctrl_pending(), BIO_wpending() and BIO_ctrl_wpending()
+return the number of pending characterers in the BIOs read and write buffers.
+Not all BIOs support these calls. BIO_ctrl_pending() and BIO_ctrl_wpending()
+return a size_t type and are functions, BIO_pending() and BIO_wpending() are
+macros which call BIO_ctrl().
+
+=head1 RETURN VALUES
+
+BIO_reset() returns 1 fo success and 0 for failure.
+
+BIO_flush() returns 1 for success and 0 or -1 for failure.
+
+BIO_eof() returns 1 if EOF has been reached 0 otherwise.
+
+BIO_set_close() always returns 1.
+
+BIO_get_close() returns the close flag value: BIO_CLOSE or BIO_NOCLOSE.
+
+BIO_pending(), BIO_ctrl_pending(), BIO_wpending() and BIO_ctrl_wpending()
+return the amount of pending data.
+
+=head1 NOTES
+
+BIO_flush(), because it can write data may return 0 or -1 indicating
+that the call should be retried later in a similar manner to BIO_write(). 
+The BIO_should_retry() call should be used and appropriate action taken
+is the call fails.
+
+The return values of BIO_pending() and BIO_wpending() may not reliably
+determine the amount of pending data in all cases. For example in the
+case of a file BIO some data may be available in the FILE structures
+internal buffers but it is not possible to determine this in a
+portably way. For other types of BIO they may not be supported.
+
+=head1 SEE ALSO
+
+TBA
