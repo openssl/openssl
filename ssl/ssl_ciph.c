@@ -353,7 +353,7 @@ char *str;
 	mask|=SSL_kDHr|SSL_kDHd|SSL_kEDH|SSL_aDH;
 #endif
 
-#ifndef SSL_ALLOW_ENULL
+#ifdef SSL_FORBID_ENULL
 	mask|=SSL_eNULL;
 #endif
 
