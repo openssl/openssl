@@ -43,6 +43,13 @@ lib:	$(LIBOBJ)
 	- $(RANLIB) $(LIB)
 	@touch lib
 
+obj_dat.h: obj_dat.pl obj_mac.h
+	perl obj_dat.pl obj_mac.h obj_dat.h
+
+# objects.pl both reads and writes obj_mac.num
+obj_mac.h: objects.pl objects.txt obj_mac.num
+	perl objects.pl objects.txt obj_mac.num obj_mac.h
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 

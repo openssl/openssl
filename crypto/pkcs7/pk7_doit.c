@@ -558,11 +558,15 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				ASN1_UTCTIME *sign_time;
 				const EVP_MD *md_tmp;
 
-				/* Add signing time */
-				sign_time=X509_gmtime_adj(NULL,0);
-				PKCS7_add_signed_attribute(si,
-					NID_pkcs9_signingTime,
-					V_ASN1_UTCTIME,sign_time);
+				/* Add signing time if not already present */
+				if (!PKCS7_get_signed_attribute(si,
+							NID_pkcs9_signingTime))
+					{
+					sign_time=X509_gmtime_adj(NULL,0);
+					PKCS7_add_signed_attribute(si,
+						NID_pkcs9_signingTime,
+						V_ASN1_UTCTIME,sign_time);
+					}
 
 				/* Add digest */
 				md_tmp=EVP_MD_CTX_md(&ctx_tmp);

@@ -1,4 +1,3 @@
-Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -1562,6 +1561,28 @@ $shared_cflag = -fPIC
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** hpux-m68k-gcc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -O3
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** hpux-parisc-cc
 $cc           = cc
 $cflags       = +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
@@ -2404,6 +2425,28 @@ $cflags       = -DL_ENDIAN -DTERMIO
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** qnx6
+$cc           = cc
+$cflags       = -DL_ENDIAN -DTERMIOS
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lsocket
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 

@@ -1,4 +1,10 @@
-/* lib/obj/obj_mac.h */
+/* crypto/objects/obj_mac.h */
+
+/* THIS FILE IS GENERATED FROM objects.txt by objects.pl via the
+ * following command:
+ * perl objects.pl objects.txt obj_mac.num obj_mac.h
+ */
+
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -54,11 +60,6 @@
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- */
-
-/* THIS FILE IS GENERATED FROM objects.txt by objects.pl via the
- * following command:
- * perl objects.pl objects.txt obj_mac.num obj_mac.h
  */
 
 #define SN_undef			"UNDEF"
@@ -1256,21 +1257,17 @@
 #define NID_id_pda_placeOfBirth		349
 #define OBJ_id_pda_placeOfBirth		OBJ_id_pda,2L
 
-#define SN_id_pda_pseudonym		"id-pda-pseudonym"
-#define NID_id_pda_pseudonym		350
-#define OBJ_id_pda_pseudonym		OBJ_id_pda,3L
-
 #define SN_id_pda_gender		"id-pda-gender"
 #define NID_id_pda_gender		351
-#define OBJ_id_pda_gender		OBJ_id_pda,4L
+#define OBJ_id_pda_gender		OBJ_id_pda,3L
 
 #define SN_id_pda_countryOfCitizenship		"id-pda-countryOfCitizenship"
 #define NID_id_pda_countryOfCitizenship		352
-#define OBJ_id_pda_countryOfCitizenship		OBJ_id_pda,5L
+#define OBJ_id_pda_countryOfCitizenship		OBJ_id_pda,4L
 
 #define SN_id_pda_countryOfResidence		"id-pda-countryOfResidence"
 #define NID_id_pda_countryOfResidence		353
-#define OBJ_id_pda_countryOfResidence		OBJ_id_pda,6L
+#define OBJ_id_pda_countryOfResidence		OBJ_id_pda,5L
 
 #define SN_id_aca_authenticationInfo		"id-aca-authenticationInfo"
 #define NID_id_aca_authenticationInfo		354
@@ -1577,7 +1574,6 @@
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
 
-#define SN_uniqueIdentifier		"UID"
 #define LN_uniqueIdentifier		"uniqueIdentifier"
 #define NID_uniqueIdentifier		102
 #define OBJ_uniqueIdentifier		OBJ_X509,45L

@@ -4,6 +4,16 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Only add signing time to PKCS7 structures if it is not already
+     present.
+     [Steve Henson]
+
+  *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
+     OBJ_ld_ce should be OBJ_id_ce.
+     Also some ip-pda OIDs in crypto/objects/objects.txt were
+     incorrect (cf. RFC 3039).
+     [Matt Cooper, Frederic Giudicelli, Bodo Moeller]
+
   *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
      returns early because it has nothing to do.
      [Andy Schneider <andy.schneider@bjss.co.uk>]
