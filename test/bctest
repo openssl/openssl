@@ -4,6 +4,11 @@
 # is installed.
 # ('make test_bn' should not try to run 'bc' if it does not exist or if
 # it is the broken SunOS 5.[78] bc, which fails the following test.)
+#
+# If 'bc' works, we also test if it knows the 'print' command.
+#
+# In any case, output an appropriate command line for running (or not
+# running) bc.
 
 if [ 0 != "`bc <<\EOF
 obase=16
@@ -22,7 +27,18 @@ b=DCE91E7D120B983EA9A104B5A96D634DD644C37657B1C7860B45E6838999B3DCE5A555583C6\
 EOF`" ]
 then
   echo "bc does not work.  Consider installing GNU bc." >&2
+  echo "cat >/dev/null"
   exit 1
 else
+  # bc works, good.
+  # Now check if it knows the 'print' command.
+  if [ "OK" = "`bc 2>/dev/null <<\EOF
+print \"OK\"
+EOF`" ]
+  then
+    echo "bc"
+  else
+    echo "sed 's/print.*//' | bc"
+  fi
   exit 0
 fi
