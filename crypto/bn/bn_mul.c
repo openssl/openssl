@@ -57,8 +57,327 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
+
+/* Here follows specialised variants of bn_cmp_words(), bn_add_words() and
+   bn_sub_words().  They all have the property performing operations on
+   arrays of different sizes.  The sizes of those arrays is expressed through
+   cl, which is the common length ( basicall, min(len(a),len(b)) ), and dl,
+   which is the delta between the two lengths, calculated as len(a)-len(b).
+   All lengths are the number of BN_ULONGs...  For the operations that require
+   a result array as parameter, it must have the length cl+abs(dl).
+   These functions should probably end up in bn_asm.c as soon as there are
+   assembler counterparts for the systems that use assembler files.  */
+
+int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl)
+	{
+	if (dl < 0)		/* a < b */
+		return -1;
+	if (dl > 0)		/* a > b */
+		return 1;
+
+	return bn_cmp_words(a,b,cl);
+	}
+
+BN_ULONG bn_sub_part_words(BN_ULONG *r,
+	const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl)
+	{
+	BN_ULONG c, t;
+
+	assert(cl >= 0);
+	c = bn_sub_words(r, a, b, cl);
+
+	if (dl == 0)
+		return c;
+
+	r += cl;
+	a += cl;
+	b += cl;
+
+	if (dl < 0)
+		{
+#ifdef BN_COUNT
+		fprintf(stderr, "  bn_sub_part_words %d + %d (dl < 0, c = %d)\n", cl, dl, c);
+#endif
+		for (;;)
+			{
+			t = b[0];
+			r[0] = (-t-c)&BN_MASK2;
+			if (t != 0) c=1;
+			if (++dl >= 0) break;
+
+			t = b[1];
+			r[1] = (-t-c)&BN_MASK2;
+			if (t != 0) c=1;
+			if (++dl >= 0) break;
+
+			t = b[2];
+			r[2] = (-t-c)&BN_MASK2;
+			if (t != 0) c=1;
+			if (++dl >= 0) break;
+
+			t = b[3];
+			r[3] = (-t-c)&BN_MASK2;
+			if (t != 0) c=1;
+			if (++dl >= 0) break;
+
+			b += 4;
+			r += 4;
+			}
+		}
+	else
+		{
+		int save_dl = dl;
+#ifdef BN_COUNT
+		fprintf(stderr, "  bn_sub_part_words %d + %d (dl > 0, c = %d)\n", cl, dl, c);
+#endif
+		while(c)
+			{
+			t = a[0];
+			r[0] = (t-c)&BN_MASK2;
+			if (t != 0) c=0;
+			if (--dl <= 0) break;
+
+			t = a[1];
+			r[1] = (t-c)&BN_MASK2;
+			if (t != 0) c=0;
+			if (--dl <= 0) break;
+
+			t = a[2];
+			r[2] = (t-c)&BN_MASK2;
+			if (t != 0) c=0;
+			if (--dl <= 0) break;
+
+			t = a[3];
+			r[3] = (t-c)&BN_MASK2;
+			if (t != 0) c=0;
+			if (--dl <= 0) break;
+
+			save_dl = dl;
+			a += 4;
+			r += 4;
+			}
+		if (dl > 0)
+			{
+#ifdef BN_COUNT
+			fprintf(stderr, "  bn_sub_part_words %d + %d (dl > 0, c == 0)\n", cl, dl);
+#endif
+			if (save_dl > dl)
+				{
+				switch (save_dl - dl)
+					{
+				case 1:
+					r[1] = a[1];
+					if (--dl <= 0) break;
+				case 2:
+					r[2] = a[2];
+					if (--dl <= 0) break;
+				case 3:
+					r[3] = a[3];
+					if (--dl <= 0) break;
+					}
+				a += 4;
+				r += 4;
+				}
+			}
+		if (dl > 0)
+			{
+#ifdef BN_COUNT
+			fprintf(stderr, "  bn_sub_part_words %d + %d (dl > 0, copy)\n", cl, dl);
+#endif
+			for(;;)
+				{
+				r[0] = a[0];
+				if (--dl <= 0) break;
+				r[1] = a[1];
+				if (--dl <= 0) break;
+				r[2] = a[2];
+				if (--dl <= 0) break;
+				r[3] = a[3];
+				if (--dl <= 0) break;
+
+				a += 4;
+				r += 4;
+				}
+			}
+		}
+	return c;
+	}
+
+BN_ULONG bn_add_part_words(BN_ULONG *r,
+	const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl)
+	{
+	BN_ULONG c, l, t;
+
+	assert(cl >= 0);
+	c = bn_sub_words(r, a, b, cl);
+
+	if (dl == 0)
+		return c;
+
+	r += cl;
+	a += cl;
+	b += cl;
+
+	if (dl < 0)
+		{
+		int save_dl = dl;
+#ifdef BN_COUNT
+		fprintf(stderr, "  bn_add_part_words %d + %d (dl < 0, c = %d)\n", cl, dl, c);
+#endif
+		while (c)
+			{
+			l=(c+b[0])&BN_MASK2;
+			c=(l < c);
+			r[0]=l;
+			if (++dl >= 0) break;
+
+			l=(c+b[1])&BN_MASK2;
+			c=(l < c);
+			r[1]=l;
+			if (++dl >= 0) break;
+
+			l=(c+b[2])&BN_MASK2;
+			c=(l < c);
+			r[2]=l;
+			if (++dl >= 0) break;
+
+			l=(c+b[3])&BN_MASK2;
+			c=(l < c);
+			r[3]=l;
+			if (++dl >= 0) break;
+
+			save_dl = dl;
+			b+=4;
+			r+=4;
+			}
+		if (dl < 0)
+			{
+#ifdef BN_COUNT
+			fprintf(stderr, "  bn_add_part_words %d + %d (dl < 0, c == 0)\n", cl, dl);
+#endif
+			if (save_dl < dl)
+				{
+				switch (dl - save_dl)
+					{
+				case 1:
+					r[1] = b[1];
+					if (++dl >= 0) break;
+				case 2:
+					r[2] = b[2];
+					if (++dl >= 0) break;
+				case 3:
+					r[3] = b[3];
+					if (++dl >= 0) break;
+					}
+				b += 4;
+				r += 4;
+				}
+			}
+		if (dl < 0)
+			{
+#ifdef BN_COUNT
+			fprintf(stderr, "  bn_add_part_words %d + %d (dl < 0, copy)\n", cl, dl);
+#endif
+			for(;;)
+				{
+				r[0] = b[0];
+				if (++dl >= 0) break;
+				r[1] = b[1];
+				if (++dl >= 0) break;
+				r[2] = b[2];
+				if (++dl >= 0) break;
+				r[3] = b[3];
+				if (++dl >= 0) break;
+
+				b += 4;
+				r += 4;
+				}
+			}
+		}
+	else
+		{
+		int save_dl = dl;
+#ifdef BN_COUNT
+		fprintf(stderr, "  bn_add_part_words %d + %d (dl > 0)\n", cl, dl);
+#endif
+		while (c)
+			{
+			t=(a[0]+c)&BN_MASK2;
+			c=(t < c);
+			r[0]=t;
+			if (--dl <= 0) break;
+
+			t=(a[1]+c)&BN_MASK2;
+			c=(t < c);
+			r[1]=t;
+			if (--dl <= 0) break;
+
+			t=(a[2]+c)&BN_MASK2;
+			c=(t < c);
+			r[2]=t;
+			if (--dl <= 0) break;
+
+			t=(a[3]+c)&BN_MASK2;
+			c=(t < c);
+			r[3]=t;
+			if (--dl <= 0) break;
+
+			save_dl = dl;
+			a+=4;
+			r+=4;
+			}
+#ifdef BN_COUNT
+		fprintf(stderr, "  bn_add_part_words %d + %d (dl > 0, c == 0)\n", cl, dl);
+#endif
+		if (dl > 0)
+			{
+			if (save_dl > dl)
+				{
+				switch (save_dl - dl)
+					{
+				case 1:
+					r[1] = a[1];
+					if (--dl <= 0) break;
+				case 2:
+					r[2] = a[2];
+					if (--dl <= 0) break;
+				case 3:
+					r[3] = a[3];
+					if (--dl <= 0) break;
+					}
+				a += 4;
+				r += 4;
+				}
+			}
+		if (dl > 0)
+			{
+#ifdef BN_COUNT
+			fprintf(stderr, "  bn_add_part_words %d + %d (dl > 0, copy)\n", cl, dl);
+#endif
+			for(;;)
+				{
+				r[0] = a[0];
+				if (--dl <= 0) break;
+				r[1] = a[1];
+				if (--dl <= 0) break;
+				r[2] = a[2];
+				if (--dl <= 0) break;
+				r[3] = a[3];
+				if (--dl <= 0) break;
+
+				a += 4;
+				r += 4;
+				}
+			}
+		}
+	return c;
+	}
 
 #ifdef BN_RECURSION
 /* Karatsuba recursive multiplication algorithm
@@ -228,7 +547,8 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
-	fprintf(stderr," bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
+	fprintf(stderr," bn_mul_part_recursive (%d+%d) * (%d+%d)\n",
+		tn, n,tn, n);
 # endif
 	if (n < 8)
 		{
@@ -238,21 +558,21 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		}
 
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
-	c1=bn_cmp_words(a,&(a[n]),n);
-	c2=bn_cmp_words(&(b[n]),b,n);
+	c1=bn_cmp_part_words(a,&(a[n]),tn,n-tn);
+	c2=bn_cmp_part_words(&(b[n]),b,tn,tn-n);
 	zero=neg=0;
 	switch (c1*3+c2)
 		{
 	case -4:
-		bn_sub_words(t,      &(a[n]),a,      n); /* - */
-		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		bn_sub_part_words(t,      &(a[n]),a,      tn,tn-n); /* - */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tn,n-tn); /* - */
 		break;
 	case -3:
 		zero=1;
 		/* break; */
 	case -2:
-		bn_sub_words(t,      &(a[n]),a,      n); /* - */
-		bn_sub_words(&(t[n]),&(b[n]),b,      n); /* + */
+		bn_sub_part_words(t,      &(a[n]),a,      tn,tn-n); /* - */
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tn,tn-n); /* + */
 		neg=1;
 		break;
 	case -1:
@@ -261,16 +581,16 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		zero=1;
 		/* break; */
 	case 2:
-		bn_sub_words(t,      a,      &(a[n]),n); /* + */
-		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		bn_sub_part_words(t,      a,      &(a[n]),tn,n-tn); /* + */
+		bn_sub_part_words(&(t[n]),b,      &(b[n]),tn,n-tn); /* - */
 		neg=1;
 		break;
 	case 3:
 		zero=1;
 		/* break; */
 	case 4:
-		bn_sub_words(t,      a,      &(a[n]),n);
-		bn_sub_words(&(t[n]),&(b[n]),b,      n);
+		bn_sub_part_words(t,      a,      &(a[n]),tn,n-tn);
+		bn_sub_part_words(&(t[n]),&(b[n]),b,      tn,tn-n);
 		break;
 		}
 		/* The zero case isn't yet implemented here. The speedup
@@ -678,21 +998,19 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 		{
 		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
-			BIGNUM *tmp_bn = free_b;
-			b = free_b = bn_dup_expand(b,al);
-			free_b->d[bl]=0;
+			BIGNUM *tmp_bn = (BIGNUM *)b;
+			bn_wexpand(tmp_bn,al);
+			tmp_bn->d[bl]=0;
 			bl++;
 			i--;
-			if (tmp_bn) BN_free(tmp_bn);
 			}
 		else if (i == -1 && !BN_get_flags(a,BN_FLG_STATIC_DATA))
 			{
-			BIGNUM *tmp_bn = free_a;
-			a = free_a = bn_dup_expand(a,bl);
-			free_a->d[al]=0;
+			BIGNUM *tmp_bn = (BIGNUM *)a;
+			bn_wexpand(tmp_bn,bl);
+			tmp_bn->d[al]=0;
 			al++;
 			i++;
-			if (tmp_bn) BN_free(tmp_bn);
 			}
 		if (i == 0)
 			{
@@ -710,17 +1028,8 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 				}
 			else
 				{
-				BIGNUM *tmp_a = free_a,*tmp_b = free_b;
-				a = free_a = bn_dup_expand(a,k);
-				b = free_b = bn_dup_expand(b,k);
-				if (tmp_a) BN_free(tmp_a);
-				if (tmp_b) BN_free(tmp_b);
 				bn_wexpand(t,k*4);
 				bn_wexpand(rr,k*4);
-				for (i=free_a->top; i<k; i++)
-					free_a->d[i]=0;
-				for (i=free_b->top; i<k; i++)
-					free_b->d[i]=0;
 				bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
 				}
 			rr->top=top;
