@@ -1139,6 +1139,74 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
+*** linux-alpha+bwx-ccc
+$cc           = ccc
+$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = asm/alpha.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-alpha+bwx-gcc
+$cc           = gcc
+$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL
+$bn_obj       = asm/alpha.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-alpha-ccc
+$cc           = ccc
+$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = asm/alpha.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** linux-alpha-gcc
+$cc           = gcc
+$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL
+$bn_obj       = asm/alpha.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
 *** linux-aout
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall
