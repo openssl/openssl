@@ -289,9 +289,13 @@ foreach (@ARGV)
 			{
 			$flags.=$_." ";
 			}
+		elsif ($_ =~ /^-[fK](.*)$/)
+			{
+			$flags.=$_." ";
+			}
 		else
 			{
-			die "unknown options, only -Dxxx, -Lxxx and -lxxx supported\n";
+			die "unknown options, only -Dxxx, -Lxxx, -lxxx, -fxxx and -Kxxx are supported\n";
 			}
 		}
 	else
