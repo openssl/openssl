@@ -34,10 +34,12 @@ RAND_get_rand_method() returns a pointer to the current method.
         void (*cleanup)(void);
         void (*add)(const void *buf, int num, int entropy);
         int (*pseudorand)(unsigned char *buf, int num);
+	int (*status)(void);
  } RAND_METHOD;
 
 The components point to the implementation of RAND_seed(),
-RAND_bytes(), RAND_cleanup(), RAND_add() and RAND_pseudo_rand().
+RAND_bytes(), RAND_cleanup(), RAND_add(), RAND_pseudo_rand()
+and RAND_status().
 Each component may be NULL if the function is not implemented.
 
 =head1 RETURN VALUES
