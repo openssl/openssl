@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_seed, RAND_screen - add entropy to the PRNG
+RAND_add, RAND_seed, RAND_status, RAND_screen - add entropy to the PRNG
 
 =head1 SYNOPSIS
 
