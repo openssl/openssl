@@ -48,7 +48,7 @@ $des_enc_src="";
 $bf_enc_obj="";
 $bf_enc_src="";
 
-if (!$no_asm)
+if (!$no_asm && !$fips)
 	{
 	$bn_asm_obj="crypto/bn/asm/bn-os2$obj crypto/bn/asm/co-os2$obj";
 	$bn_asm_src="crypto/bn/asm/bn-os2.asm crypto/bn/asm/co-os2.asm";

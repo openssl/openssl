@@ -21,7 +21,7 @@ if ($debug)
 else
 	{ $cflags="-DL_ENDIAN -DDSO_WIN32 -fomit-frame-pointer -O3 -mcpu=i486 -Wall"; }
 
-if ($gaswin and !$no_asm)
+if ($gaswin and !$no_asm and !$fips)
 	{
         $bn_asm_obj='$(OBJ_D)\bn-win32.o';
         $bn_asm_src='crypto/bn/asm/bn-win32.s';

@@ -64,7 +64,7 @@ $lfile='';
 
 $asm='bcc -c -B -Tml';
 $afile='/o';
-if ($no_asm)
+if ($no_asm || $fips)
 	{
 	$bn_asm_obj='';
 	$bn_asm_src='';
