@@ -2,7 +2,14 @@
 
 =head1 NAME
 
-bn_internal - BIGNUM library internal functions
+bn_mul_words, bn_mul_add_words, bn_sqr_words, bn_div_words,
+bn_add_words, bn_sub_words, bn_mul_comba4, bn_mul_comba8,
+bn_sqr_comba4, bn_sqr_comba8, bn_cmp_words, bn_mul_normal,
+bn_mul_low_normal, bn_mul_recursive, bn_mul_part_recursive,
+bn_mul_low_recursive, bn_mul_high, bn_sqr_normal, bn_sqr_recursive,
+bn_expand, bn_wexpand, bn_expand2, bn_fix_top, bn_check_top,
+bn_print, bn_dump, bn_set_max, bn_set_high, bn_set_low - BIGNUM
+library internal functions
 
 =head1 SYNOPSIS
 
