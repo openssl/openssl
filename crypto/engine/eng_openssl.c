@@ -67,12 +67,10 @@
  * the application explicitly calls "ENGINE_load_openssl()" because this is no
  * longer automatic in ENGINE_load_builtin_engines(). */
 #define TEST_ENG_OPENSSL_RC4
-/* #define TEST_ENC_OPENSSL_RC4_FALLBACK */
 /* #define TEST_ENG_OPENSSL_RC4_OTHERS */
 #define TEST_ENG_OPENSSL_RC4_P_INIT
 /* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
 #define TEST_ENG_OPENSSL_SHA
-/* #define TEST_ENG_OPENSSL_SHA_FALLBACK */
 /* #define TEST_ENG_OPENSSL_SHA_OTHERS */
 /* #define TEST_ENG_OPENSSL_SHA_P_INIT */
 /* #define TEST_ENG_OPENSSL_SHA_P_UPDATE */
@@ -138,12 +136,8 @@ void ENGINE_load_openssl(void)
  * RC4 into this ENGINE. The result is that EVP_CIPHER operation for "rc4"
  * should under normal circumstances go via this support rather than the default
  * EVP support. There are other symbols to tweak the testing;
- *    TEST_ENC_OPENSSL_RC4_FALLBACK - declare support for "-1" so that all
- *        uncached cipher lookups check with this ENGINE (ie. it'll get asked
- *        about other ciphers, but hopefully not more than once for each nid).
  *    TEST_ENC_OPENSSL_RC4_OTHERS - print a one line message to stderr each time
- *        we're asked for a cipher we don't support (should only happen in
- *        combination with the "FALLBACK" case).
+ *        we're asked for a cipher we don't support (should not happen).
  *    TEST_ENG_OPENSSL_RC4_P_INIT - print a one line message to stderr each time
  *        the "init_key" handler is called.
  *    TEST_ENG_OPENSSL_RC4_P_CIPHER - ditto for the "cipher" handler.
@@ -151,13 +145,8 @@ void ENGINE_load_openssl(void)
 #include <openssl/evp.h>
 #include <openssl/rc4.h>
 #define TEST_RC4_KEY_SIZE		16
-#ifdef TEST_ENC_OPENSSL_RC4_FALLBACK
-static int test_cipher_nids[] = {-1};
-static int test_cipher_nids_number = 1;
-#else
 static int test_cipher_nids[] = {NID_rc4,NID_rc4_40};
 static int test_cipher_nids_number = 2;
-#endif
 typedef struct {
 	unsigned char key[TEST_RC4_KEY_SIZE];
 	RC4_KEY ks;
@@ -240,13 +229,8 @@ static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 /* Much the same sort of comment as for TEST_ENG_OPENSSL_RC4 */
 #include <openssl/evp.h>
 #include <openssl/sha.h>
-#ifdef TEST_ENC_OPENSSL_SHA_FALLBACK
-static int test_digest_nids[] = {-1};
-static int test_digest_nids_number = 1;
-#else
 static int test_digest_nids[] = {NID_sha1};
 static int test_digest_nids_number = 1;
-#endif
 static int test_sha1_init(EVP_MD_CTX *ctx)
 	{
 #ifdef TEST_ENG_OPENSSL_SHA_P_INIT
