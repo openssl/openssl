@@ -228,7 +228,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a
 	fi
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-L. -lcrypto' build-shared; \
+		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
@@ -260,39 +260,39 @@ build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
 
 do_bsd-gcc-shared: linux-shared
 do_linux-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
 do_tru64-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
 do_solaris-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
 do_irix-shared:
-	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
-	libs="$$libs -L. -l$$i"; \
+	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
