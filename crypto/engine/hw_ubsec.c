@@ -855,7 +855,7 @@ static int ubsec_dh_compute_key (unsigned char *key,const BIGNUM *pub_key,DH *dh
         if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0)
                 {
                 const DH_METHOD *meth;
-                ENGINEerr(UBSEC_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+                ENGINEerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
                 meth = DH_OpenSSL();
                 ret = meth->compute_key(key, pub_key, dh);
                 goto err;
@@ -869,7 +869,7 @@ static int ubsec_dh_compute_key (unsigned char *key,const BIGNUM *pub_key,DH *dh
                 {
                 /* Hardware's a no go, failover to software */
                 const DH_METHOD *meth;
-                ENGINEerr(UBSEC_F_UBSEC_DH_COMPUTE_KEY, ENGINE_R_REQUEST_FAILED);
+                ENGINEerr(UBSEC_F_UBSEC_DH_COMPUTE_KEY, UBSEC_R_REQUEST_FAILED);
                 p_UBSEC_ubsec_close(fd);
 
                 meth = DH_OpenSSL();
@@ -931,7 +931,7 @@ static int ubsec_dh_generate_key (DH *dh)
         if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0)
                 {
                 const DH_METHOD *meth;
-                ENGINEerr(UBSEC_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+                ENGINEerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
                 meth = DH_OpenSSL();
                 ret = meth->generate_key(dh);
                 goto err;
@@ -947,7 +947,7 @@ static int ubsec_dh_generate_key (DH *dh)
                 /* Hardware's a no go, failover to software */
                 const DH_METHOD *meth;
 
-                ENGINEerr(UBSEC_F_UBSEC_DH_COMPUTE_KEY, ENGINE_R_REQUEST_FAILED);
+                ENGINEerr(UBSEC_F_UBSEC_DH_COMPUTE_KEY, UBSEC_R_REQUEST_FAILED);
                 p_UBSEC_ubsec_close(fd);
 
                 meth = DH_OpenSSL();
@@ -979,7 +979,7 @@ static int ubsec_rand_bytes(unsigned char * buf,
         if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0)
                 {
                 const RAND_METHOD *meth;
-                ENGINEerr(UBSEC_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+                ENGINEerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
                 num = p_UBSEC_ubsec_bits_to_bytes(num);
                 meth = RAND_SSLeay();
                 meth->seed(buf, num);
@@ -997,7 +997,7 @@ static int ubsec_rand_bytes(unsigned char * buf,
                 /* Hardware's a no go, failover to software */
                 const RAND_METHOD *meth;
 
-                ENGINEerr(UBSEC_F_UBSEC_RNG_BYTES, ENGINE_R_REQUEST_FAILED);
+                ENGINEerr(UBSEC_F_UBSEC_RNG_BYTES, UBSEC_R_REQUEST_FAILED);
                 p_UBSEC_ubsec_close(fd);
 
                 num = p_UBSEC_ubsec_bits_to_bytes(num);
