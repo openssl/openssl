@@ -163,14 +163,21 @@ err:
 	return NULL;
 	}
 
-int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
+
+int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 	{
 	int ret;
 	ret = OBJ_cmp(a->hashAlgorithm->algorithm, b->hashAlgorithm->algorithm);
 	if (ret) return ret;
 	ret = ASN1_OCTET_STRING_cmp(a->issuerNameHash, b->issuerNameHash);
 	if (ret) return ret;
-	ret = ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
+	return ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
+	}
+
+int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
+	{
+	int ret;
+	ret = OCSP_id_issuer_cmp(a, b);
 	if (ret) return ret;
 	return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
 	}

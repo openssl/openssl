@@ -837,3 +837,32 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 	}
 }
 
+X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
+{
+	X509_STORE *store;
+	X509_LOOKUP *lookup;
+	if(!(store = X509_STORE_new())) goto end;
+	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_file());
+	if (lookup == NULL) goto end;
+	if (CAfile) {
+		if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM)) {
+			BIO_printf(bp, "Error loading file %s\n", CAfile);
+			goto end;
+		}
+	} else X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+		
+	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_hash_dir());
+	if (lookup == NULL) goto end;
+	if (CApath) {
+		if(!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM)) {
+			BIO_printf(bp, "Error loading directory %s\n", CApath);
+			goto end;
+		}
+	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+
+	ERR_clear_error();
+	return store;
+	end:
+	X509_STORE_free(store);
+	return NULL;
+}

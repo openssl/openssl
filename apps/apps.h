@@ -158,6 +158,7 @@ X509 *load_cert(BIO *err, char *file, int format);
 EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e);
 EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e);
 STACK_OF(X509) *load_certs(BIO *err, char *file, int format);
+X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

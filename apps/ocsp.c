@@ -82,14 +82,18 @@ int MAIN(int argc, char **argv)
 	int add_nonce = 1;
 	OCSP_REQUEST *req = NULL;
 	OCSP_RESPONSE *resp = NULL;
+	OCSP_BASICRESP *bs = NULL;
 	X509 *issuer = NULL, *cert = NULL;
 	X509 *signer = NULL;
 	EVP_PKEY *key = NULL;
 	BIO *cbio = NULL, *derbio = NULL;
 	BIO *out = NULL;
 	int req_text = 0, resp_text = 0;
+	char *CAfile = NULL, *CApath = NULL;
+	X509_STORE *store = NULL;
 	int ret = 1;
 	int badarg = 0;
+	int i;
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 	ERR_load_crypto_strings();
 	args = argv + 1;
@@ -150,6 +154,24 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				signfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-CAfile"))
+			{
+			if (args[1])
+				{
+				args++;
+				CAfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-CApath"))
+			{
+			if (args[1])
+				{
+				args++;
+				CApath = *args;
 				}
 			else badarg = 1;
 			}
@@ -386,11 +408,25 @@ int MAIN(int argc, char **argv)
 
 	if (resp_text) OCSP_RESPONSE_print(out, resp, 0);
 
+	store = setup_verify(bio_err, CAfile, CApath);
+	if(!store) goto end;
+
+	bs = OCSP_response_get1_basic(resp);
+
+	i = OCSP_basic_verify(bs, NULL, store, 0);
+
+	if(i <= 0)
+		{
+		BIO_printf(bio_err, "Response verify error (%d)\n", i);
+		ERR_print_errors(bio_err);
+		}
+
 	ret = 0;
 
 end:
 	ERR_print_errors(bio_err);
 	X509_free(signer);
+	X509_STORE_free(store);
 	EVP_PKEY_free(key);
 	X509_free(issuer);
 	X509_free(cert);
@@ -398,6 +434,7 @@ end:
 	BIO_free(out);
 	OCSP_REQUEST_free(req);
 	OCSP_RESPONSE_free(resp);
+	OCSP_BASICRESP_free(bs);
 
 	EXIT(ret);
 }

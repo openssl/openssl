@@ -87,6 +87,7 @@ static ERR_STRING_DATA OCSP_str_reasons[]=
 	{
 {OCSP_R_BAD_DATA                         ,"bad data"},
 {OCSP_R_BAD_TAG                          ,"bad tag"},
+{OCSP_R_CERTIFICATE_VERIFY_ERROR         ,"certificate verify error"},
 {OCSP_R_DIGEST_ERR                       ,"digest err"},
 {OCSP_R_FAILED_TO_OPEN                   ,"failed to open"},
 {OCSP_R_FAILED_TO_READ                   ,"failed to read"},
@@ -101,6 +102,7 @@ static ERR_STRING_DATA OCSP_str_reasons[]=
 {OCSP_R_NO_RESPONSE_DATA                 ,"no response data"},
 {OCSP_R_NO_SIGNATURE                     ,"no signature"},
 {OCSP_R_REVOKED_NO_TIME                  ,"revoked no time"},
+{OCSP_R_ROOT_CA_NOT_TRUSTED              ,"root ca not trusted"},
 {OCSP_R_SERVER_READ_ERROR                ,"server read error"},
 {OCSP_R_SERVER_RESPONSE_ERROR            ,"server response error"},
 {OCSP_R_SERVER_RESPONSE_PARSE_ERROR      ,"server response parse error"},

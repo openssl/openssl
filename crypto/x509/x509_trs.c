@@ -66,6 +66,7 @@ static int tr_cmp(const X509_TRUST * const *a,
 static void trtable_free(X509_TRUST *p);
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
+static int trust_1oid(X509_TRUST *trust, X509 *x, int flags);
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags);
 
 static int obj_trust(int id, X509 *x, int flags);
@@ -81,6 +82,7 @@ static X509_TRUST trstandard[] = {
 {X509_TRUST_SSL_CLIENT, 0, trust_1oidany, "SSL Client", NID_client_auth, NULL},
 {X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Client", NID_server_auth, NULL},
 {X509_TRUST_EMAIL, 0, trust_1oidany, "S/MIME email", NID_email_protect, NULL},
+{X509_TRUST_OCSP_SIGN, 0, trust_1oid, "OCSP responder", NID_OCSP_sign, NULL}
 };
 
 #define X509_TRUST_COUNT	(sizeof(trstandard)/sizeof(X509_TRUST))
@@ -233,6 +235,12 @@ static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 	 * we return trusted if it is self signed
 	 */
 	return trust_compat(trust, x, flags);
+}
+
+static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
+{
+	if(x->aux) return obj_trust(trust->arg1, x, flags);
+	return X509_TRUST_UNTRUSTED;
 }
 
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags)

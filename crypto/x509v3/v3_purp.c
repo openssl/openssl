@@ -61,7 +61,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 
-
 static void x509v3_cache_extensions(X509 *x);
 
 static int ca_check(const X509 *x);
@@ -74,6 +73,7 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x, int c
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x, int ca);
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca);
 static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca);
 
 static int xp_cmp(const X509_PURPOSE * const *a,
 		const X509_PURPOSE * const *b);
@@ -87,6 +87,7 @@ static X509_PURPOSE xstandard[] = {
 	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
 	{X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
 	{X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any", NULL},
+	{X509_PURPOSE_OCSP_HELPER, X509_TRUST_COMPAT, 0, ocsp_helper, "OCSP helper", "ocsphelper", NULL},
 };
 
 #define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
@@ -143,7 +144,6 @@ int X509_PURPOSE_get_by_sname(char *sname)
 	}
 	return -1;
 }
-
 
 int X509_PURPOSE_get_by_id(int purpose)
 {
@@ -320,6 +320,15 @@ static void x509v3_cache_extensions(X509 *x)
 				case NID_ms_sgc:
 				case NID_ns_sgc:
 				x->ex_xkusage |= XKU_SGC;
+				break;
+
+				case NID_OCSP_sign:
+				x->ex_xkusage |= XKU_OCSP_SIGN;
+				break;
+
+				case NID_time_stamp:
+				x->ex_xkusage |= XKU_TIMESTAMP;
+				break;
 			}
 		}
 		sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
@@ -467,6 +476,27 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca)
 		else return 0;
 	}
 	if(ku_reject(x, KU_CRL_SIGN)) return 0;
+	return 1;
+}
+
+/* OCSP helper: this is *not* a full OCSP check. It just checks that
+ * each CA is valid. Additional checks must be made on the chain.
+ */
+
+static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
+{
+	/* Must be a valid CA */
+	if(ca) {
+		int ca_ret;
+		ca_ret = ca_check(x);
+		if(ca_ret != 2) return ca_ret;
+		if(x->ex_flags & EXFLAG_NSCERT) {
+			if(x->ex_nscert & NS_ANY_CA) return ca_ret;
+			return 0;
+		}
+		return 0;
+	}
+	/* leaf certificate is checked in OCSP_verify() */
 	return 1;
 }
 

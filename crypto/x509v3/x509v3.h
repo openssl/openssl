@@ -342,12 +342,15 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 #define NS_SSL_CA		0x04
 #define NS_SMIME_CA		0x02
 #define NS_OBJSIGN_CA		0x01
+#define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 
 #define XKU_SSL_SERVER		0x1	
 #define XKU_SSL_CLIENT		0x2
 #define XKU_SMIME		0x4
 #define XKU_CODE_SIGN		0x8
 #define XKU_SGC			0x10
+#define XKU_OCSP_SIGN		0x20
+#define XKU_TIMESTAMP		0x40
 
 #define X509_PURPOSE_DYNAMIC	0x1
 #define X509_PURPOSE_DYNAMIC_NAME	0x2
@@ -370,9 +373,10 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_SMIME_ENCRYPT	5
 #define X509_PURPOSE_CRL_SIGN		6
 #define X509_PURPOSE_ANY		7
+#define X509_PURPOSE_OCSP_HELPER	8
 
 #define X509_PURPOSE_MIN		1
-#define X509_PURPOSE_MAX		7
+#define X509_PURPOSE_MAX		8
 
 /* Flags for X509V3_EXT_print() */
 

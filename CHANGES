@@ -3,6 +3,16 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Initial OCSP certificate verification added to OCSP_basic_verify()
+     and related routines. This uses the standard OpenSSL certificate
+     verify routines to perform initial checks (just CA validity) and
+     to obtain the certificate chain. Then additional checks will be
+     performed on the chain. Currently the root CA is checked to see
+     if it is explicitly trusted for OCSP signing. This is used to set
+     a root CA as a global signing root: that is any certificate that
+     chains to that CA is an acceptable OCSP signing certificate.
+     [Steve Henson]
+
   *) New '-extfile ...' option to 'openssl ca' for reading X.509v3
      extensions from a separate configuration file.
      As when reading extensions from the main configuration file,

@@ -68,7 +68,6 @@
 
 #undef PROG
 #define PROG smime_main
-static X509_STORE *setup_verify(char *CAfile, char *CApath);
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 
 #define SMIME_OP	0x10
@@ -431,7 +430,7 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(operation == SMIME_VERIFY) {
-		if(!(store = setup_verify(CAfile, CApath))) goto end;
+		if(!(store = setup_verify(bio_err, CAfile, CApath))) goto end;
 	}
 
 	ret = 3;
@@ -528,36 +527,6 @@ end:
 	BIO_free_all(out);
 	if(passin) OPENSSL_free(passin);
 	return (ret);
-}
-
-static X509_STORE *setup_verify(char *CAfile, char *CApath)
-{
-	X509_STORE *store;
-	X509_LOOKUP *lookup;
-	if(!(store = X509_STORE_new())) goto end;
-	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_file());
-	if (lookup == NULL) goto end;
-	if (CAfile) {
-		if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM)) {
-			BIO_printf(bio_err, "Error loading file %s\n", CAfile);
-			goto end;
-		}
-	} else X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
-		
-	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_hash_dir());
-	if (lookup == NULL) goto end;
-	if (CApath) {
-		if(!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM)) {
-			BIO_printf(bio_err, "Error loading directory %s\n", CApath);
-			goto end;
-		}
-	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
-
-	ERR_clear_error();
-	return store;
-	end:
-	X509_STORE_free(store);
-	return NULL;
 }
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers)

@@ -79,6 +79,12 @@ extern "C" {
 #define OCSP_NOCERTS			0x1
 #define OCSP_NOINTERN			0x2
 #define OCSP_NOSIGS			0x4
+#define OCSP_NOCHAIN			0x8
+#define OCSP_NOVERIFY			0x10
+#define OCSP_NOEXPLICIT			0x20
+#define OCSP_NOCASIGN			0x40
+#define OCSP_NODELEGATED		0x80
+#define OCSP_NOCHECKS			0x100
 
 /*   CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
@@ -434,6 +440,7 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 
 int OCSP_request_verify(OCSP_REQUEST *req, EVP_PKEY *pkey);
 
+int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 
 OCSP_BASICRESP *OCSP_basic_response_new(int tag,
@@ -565,6 +572,7 @@ void ERR_load_OCSP_strings(void);
 /* Reason codes. */
 #define OCSP_R_BAD_DATA					 108
 #define OCSP_R_BAD_TAG					 100
+#define OCSP_R_CERTIFICATE_VERIFY_ERROR			 126
 #define OCSP_R_DIGEST_ERR				 101
 #define OCSP_R_FAILED_TO_OPEN				 109
 #define OCSP_R_FAILED_TO_READ				 110
@@ -579,6 +587,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_NO_RESPONSE_DATA				 104
 #define OCSP_R_NO_SIGNATURE				 105
 #define OCSP_R_REVOKED_NO_TIME				 106
+#define OCSP_R_ROOT_CA_NOT_TRUSTED			 127
 #define OCSP_R_SERVER_READ_ERROR			 116
 #define OCSP_R_SERVER_RESPONSE_ERROR			 117
 #define OCSP_R_SERVER_RESPONSE_PARSE_ERROR		 118
