@@ -156,6 +156,27 @@ typedef struct _SW_LARGENUMBER {
                             /*   bytes in network (big endian) order  */
 } SW_LARGENUMBER;               
 
+#if defined(WIN32)
+    #include <windows.h>
+    typedef HANDLE          SW_OSHANDLE;          /* handle to kernel object */
+    #define SW_OS_INVALID_HANDLE  INVALID_HANDLE_VALUE
+    #define SW_CALLCONV _stdcall
+#elif defined(MAC)
+    /* async callback mechanisms */
+    /* swiftCallbackLevel */
+    #define SW_MAC_CALLBACK_LEVEL_NO         0		
+    #define SW_MAC_CALLBACK_LEVEL_HARDWARE   1	/* from the hardware ISR */
+    #define SW_MAC_CALLBACK_LEVEL_SECONDARY  2	/* as secondary ISR */
+    typedef int             SW_MAC_CALLBACK_LEVEL;
+    typedef int             SW_OSHANDLE;
+    #define SW_OS_INVALID_HANDLE  (-1)
+    #define SW_CALLCONV
+#else /* Unix variants */
+    typedef int             SW_OSHANDLE;          /* handle to driver */
+    #define SW_OS_INVALID_HANDLE  (-1)
+    #define SW_CALLCONV
+#endif 
+
 typedef struct _SW_CRT {
     SW_LARGENUMBER  p;      /* prime number p                         */
     SW_LARGENUMBER  q;      /* prime number q                         */
@@ -196,16 +217,16 @@ typedef SW_U32 SW_CONTEXT_HANDLE; /* opaque context handle */
 
 /* Now the OpenSSL bits, these function types are the for the function
  * pointers that will bound into the Rainbow shared libraries. */
-typedef SW_STATUS t_swAcquireAccContext(SW_CONTEXT_HANDLE *hac);
-typedef SW_STATUS t_swAttachKeyParam(SW_CONTEXT_HANDLE hac,
-				SW_PARAM *key_params);
-typedef SW_STATUS t_swSimpleRequest(SW_CONTEXT_HANDLE hac,
-				SW_COMMAND_CODE cmd,
-				SW_LARGENUMBER pin[],
-				SW_U32 pin_count,
-				SW_LARGENUMBER pout[],
-				SW_U32 pout_count);
-typedef SW_STATUS t_swReleaseAccContext(SW_CONTEXT_HANDLE hac);
+typedef SW_STATUS SW_CALLCONV t_swAcquireAccContext(SW_CONTEXT_HANDLE *hac);
+typedef SW_STATUS SW_CALLCONV t_swAttachKeyParam(SW_CONTEXT_HANDLE hac,
+                                                SW_PARAM *key_params);
+typedef SW_STATUS SW_CALLCONV t_swSimpleRequest(SW_CONTEXT_HANDLE hac,
+                                                SW_COMMAND_CODE cmd,
+                				SW_LARGENUMBER pin[],
+                                		SW_U32 pin_count,
+                                                SW_LARGENUMBER pout[],
+                				SW_U32 pout_count);
+typedef SW_STATUS SW_CALLCONV t_swReleaseAccContext(SW_CONTEXT_HANDLE hac);
 
 #ifdef __cplusplus
 }
