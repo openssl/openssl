@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-RSA_print, RSA_print_fp, DHparams_print, DHparams_print_fp, DSA_print,
-DSA_print_fp, DHparams_print, DHparams_print_fp - print cryptographic
-parameters
+RSA_print, RSA_print_fp,
+DSAparams_print, DSAparams_print_fp, DSA_print, DSA_print_fp,
+DHparams_print, DHparams_print_fp - print cryptographic parameters
 
 =head1 SYNOPSIS
 

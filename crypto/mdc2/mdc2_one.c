@@ -69,7 +69,7 @@ unsigned char *MDC2(const unsigned char *d, unsigned long n, unsigned char *md)
 	MDC2_Init(&c);
 	MDC2_Update(&c,d,n);
         MDC2_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
+	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
 	return(md);
 	}
 

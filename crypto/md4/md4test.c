@@ -60,6 +60,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../e_os.h"
+
 #ifdef NO_MD4
 int main(int argc, char *argv[])
 {
@@ -115,7 +117,7 @@ int main(int argc, char *argv[])
 		R++;
 		P++;
 		}
-	exit(err);
+	EXIT(err);
 	return(0);
 	}
 

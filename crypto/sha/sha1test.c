@@ -60,6 +60,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../e_os.h"
+
 #ifdef NO_SHA
 int main(int argc, char *argv[])
 {
@@ -152,7 +154,7 @@ int main(int argc, char *argv[])
 		}
 	else
 		printf("test 3 ok\n");
-	exit(err);
+	EXIT(err);
 	return(0);
 	}
 
