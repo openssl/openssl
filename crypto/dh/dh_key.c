@@ -135,10 +135,9 @@ static int generate_key(DH *dh)
 		}
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
 
-	l = dh->length ? dh->length : BN_num_bits(dh->p)-1; /* secret exponent length */
-
 	if (generate_new_key)
 		{
+		l = dh->length ? dh->length : BN_num_bits(dh->p)-1; /* secret exponent length */
 		if (!BN_rand(priv_key, l, 0, 0)) goto err;
 		}
 	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
