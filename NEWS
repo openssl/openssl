@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6h and OpenSSL 0.9.6i:
+
+      o Important security related bugfixes.
+
   Major changes between OpenSSL 0.9.6g and OpenSSL 0.9.6h:
 
       o New configuration targets for Tandem OSS and A/UX.
