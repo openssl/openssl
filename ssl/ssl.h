@@ -391,6 +391,12 @@ typedef struct ssl_session_st
 #define SSL_get_mode(ssl) \
         SSL_ctrl(ssl,SSL_CTRL_MODE,0,NULL)
 
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
+#define SSL_MAX_CERT_LIST_DEFAULT 1024*30 /* 30k max cert list :-) */
+#else
+#define SSL_MAX_CERT_LIST_DEFAULT 1024*100 /* 100k max cert list :-) */
+#endif
+
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
 /* This callback type is used inside SSL_CTX, SSL, and in the functions that set
@@ -427,6 +433,7 @@ struct ssl_ctx_st
 	SSL_METHOD *method;
 	unsigned long options;
 	unsigned long mode;
+	long max_cert_list;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
@@ -727,6 +734,7 @@ struct ssl_st
 	int references;
 	unsigned long options; /* protocol behaviour */
 	unsigned long mode; /* API behaviour */
+	long max_cert_list;
 	int first_packet;
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
@@ -918,7 +926,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SESS_TIMEOUTS			30
 #define SSL_CTRL_SESS_CACHE_FULL		31
 #define SSL_CTRL_OPTIONS			32
-#define SSL_CTRL_MODE			33
+#define SSL_CTRL_MODE				33
 
 #define SSL_CTRL_GET_READ_AHEAD			40
 #define SSL_CTRL_SET_READ_AHEAD			41
@@ -926,6 +934,9 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTRL_GET_SESS_CACHE_SIZE		43
 #define SSL_CTRL_SET_SESS_CACHE_MODE		44
 #define SSL_CTRL_GET_SESS_CACHE_MODE		45
+
+#define SSL_CTRL_GET_MAX_CERT_LIST		50
+#define SSL_CTRL_SET_MAX_CERT_LIST		51
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
@@ -1230,6 +1241,14 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_READ_AHEAD,0,NULL)
 #define SSL_CTX_set_read_ahead(ctx,m) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,m,NULL)
+#define SSL_CTX_get_max_cert_list(ctx) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_MAX_CERT_LIST,0,NULL)
+#define SSL_CTX_set_max_cert_list(ctx,m) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_CERT_LIST,m,NULL)
+#define SSL_get_max_cert_list(ssl) \
+	SSL_ctrl(ssl,SSL_CTRL_GET_MAX_CERT_LIST,0,NULL)
+#define SSL_set_max_cert_list(ssl,m) \
+	SSL_ctrl(ssl,SSL_CTRL_SET_MAX_CERT_LIST,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
 #ifndef OPENSSL_NO_RSA

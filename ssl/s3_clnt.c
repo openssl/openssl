@@ -695,11 +695,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		SSL3_ST_CR_CERT_A,
 		SSL3_ST_CR_CERT_B,
 		-1,
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-		1024*30, /* 30k max cert list :-) */
-#else
-		1024*100, /* 100k max cert list :-) */
-#endif
+		s->max_cert_list,
 		&ok);
 
 	if (!ok) return((int)n);
@@ -890,11 +886,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		SSL3_ST_CR_KEY_EXCH_A,
 		SSL3_ST_CR_KEY_EXCH_B,
 		-1,
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-		1024*30,  /* 30k max cert list :-) */
-#else
-		1024*100, /* 100k max cert list :-) */
-#endif
+		s->max_cert_list,
 		&ok);
 
 	if (!ok) return((int)n);
@@ -1196,11 +1188,7 @@ static int ssl3_get_certificate_request(SSL *s)
 		SSL3_ST_CR_CERT_REQ_A,
 		SSL3_ST_CR_CERT_REQ_B,
 		-1,
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-		1024*30,  /* 30k max cert list :-) */
-#else
-		1024*100, /* 100k max cert list :-) */
-#endif
+		s->max_cert_list,
 		&ok);
 
 	if (!ok) return((int)n);

@@ -12,6 +12,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Make maximum certificate chain size accepted from the peer application
+     settable (SSL*_get/set_max_cert_list()), as proposed by
+     "Douglas E. Engert" <deengert@anl.gov>.
+     [Lutz Jaenicke]
+
   +) Add support for shared libraries for Unixware-7 and support including
      shared libraries for OpenUNIX-8 (Boyd Lynn Gerber <gerberb@zenez.com>).
      [Lutz Jaenicke]

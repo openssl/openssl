@@ -234,6 +234,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	s->mode=ctx->mode;
+	s->max_cert_list=ctx->max_cert_list;
 	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
@@ -851,6 +852,12 @@ long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 		return(s->options|=larg);
 	case SSL_CTRL_MODE:
 		return(s->mode|=larg);
+	case SSL_CTRL_GET_MAX_CERT_LIST:
+		return(s->max_cert_list);
+	case SSL_CTRL_SET_MAX_CERT_LIST:
+		l=s->max_cert_list;
+		s->max_cert_list=larg;
+		return(l);
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
@@ -881,6 +888,12 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 	case SSL_CTRL_SET_READ_AHEAD:
 		l=ctx->read_ahead;
 		ctx->read_ahead=larg;
+		return(l);
+	case SSL_CTRL_GET_MAX_CERT_LIST:
+		return(ctx->max_cert_list);
+	case SSL_CTRL_SET_MAX_CERT_LIST:
+		l=ctx->max_cert_list;
+		ctx->max_cert_list=larg;
 		return(l);
 
 	case SSL_CTRL_SET_SESS_CACHE_SIZE:
@@ -1221,6 +1234,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->app_verify_callback=NULL;
 	ret->app_verify_arg=NULL;
 
+	ret->max_cert_list=SSL_MAX_CERT_LIST_DEFAULT;
 	ret->read_ahead=0;
 	ret->verify_mode=SSL_VERIFY_NONE;
 	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
@@ -1790,6 +1804,7 @@ SSL *SSL_dup(SSL *s)
 			s->sid_ctx, s->sid_ctx_length);
 		}
 
+	SSL_set_max_cert_list(ret,SSL_get_max_cert_list(s));
 	SSL_set_read_ahead(ret,SSL_get_read_ahead(s));
 	SSL_set_verify(ret,SSL_get_verify_mode(s),
 		SSL_get_verify_callback(s));

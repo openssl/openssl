@@ -550,11 +550,7 @@ static int ssl3_check_client_hello(SSL *s)
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
 		-1,
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-		1024*30, /* 30k max cert list :-) */
-#else
-		1024*100, /* 100k max cert list :-) */
-#endif
+		s->max_cert_list,
 		&ok);
 	if (!ok) return((int)n);
 	s->s3->tmp.reuse_message = 1;
@@ -1775,11 +1771,7 @@ static int ssl3_get_client_certificate(SSL *s)
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
 		-1,
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-		1024*30, /* 30k max cert list :-) */
-#else
-		1024*100, /* 100k max cert list :-) */
-#endif
+		s->max_cert_list,
 		&ok);
 
 	if (!ok) return((int)n);
