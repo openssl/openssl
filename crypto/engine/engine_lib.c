@@ -620,6 +620,8 @@ static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 		ret = engine_def_bn_mod_exp; break;
 	case ENGINE_TYPE_BN_MOD_EXP_CRT:
 		ret = engine_def_bn_mod_exp_crt; break;
+        default:
+                break;
 		}
 	/* Unforunately we can't do this work outside the lock with a
 	 * call to ENGINE_init() because that would leave a race
@@ -719,6 +721,8 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	case ENGINE_TYPE_BN_MOD_EXP_CRT:
 		old = engine_def_bn_mod_exp_crt;
 		engine_def_bn_mod_exp_crt = e; break;
+        default:
+                break;
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	/* If we've replaced a previous value, then we need to remove the
