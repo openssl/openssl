@@ -62,8 +62,8 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-int RSA_padding_add_none(unsigned char *to, int tlen, unsigned char *from,
-	     int flen)
+int RSA_padding_add_none(unsigned char *to, int tlen,
+	const unsigned char *from, int flen)
 	{
 	if (flen > tlen)
 		{
@@ -81,8 +81,8 @@ int RSA_padding_add_none(unsigned char *to, int tlen, unsigned char *from,
 	return(1);
 	}
 
-int RSA_padding_check_none(unsigned char *to, int tlen, unsigned char *from,
-	     int flen, int num)
+int RSA_padding_check_none(unsigned char *to, int tlen,
+	const unsigned char *from, int flen, int num)
 	{
 
 	if (flen > tlen)

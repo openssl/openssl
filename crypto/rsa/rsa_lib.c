@@ -66,7 +66,7 @@
 
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
-static RSA_METHOD *default_RSA_meth=NULL;
+static const RSA_METHOD *default_RSA_meth=NULL;
 static int rsa_meth_num=0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *rsa_meth=NULL;
 
@@ -75,7 +75,7 @@ RSA *RSA_new(void)
 	return(RSA_new_method(NULL));
 	}
 
-void RSA_set_default_openssl_method(RSA_METHOD *meth)
+void RSA_set_default_openssl_method(const RSA_METHOD *meth)
 	{
 	ENGINE *e;
 	/* We'll need to notify the "openssl" ENGINE of this
@@ -94,7 +94,7 @@ void RSA_set_default_openssl_method(RSA_METHOD *meth)
 		}
 	}
 
-RSA_METHOD *RSA_get_default_openssl_method(void)
+const RSA_METHOD *RSA_get_default_openssl_method(void)
 {
 	if (default_RSA_meth == NULL)
 		{
@@ -112,7 +112,7 @@ RSA_METHOD *RSA_get_default_openssl_method(void)
 	return default_RSA_meth;
 }
 
-RSA_METHOD *RSA_get_method(RSA *rsa)
+const RSA_METHOD *RSA_get_method(const RSA *rsa)
 {
 	return ENGINE_get_RSA(rsa->engine);
 }
@@ -131,7 +131,7 @@ RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
 int RSA_set_method(RSA *rsa, ENGINE *engine)
 {
 	ENGINE *mtmp;
-	RSA_METHOD *meth;
+	const RSA_METHOD *meth;
 	mtmp = rsa->engine;
 	meth = ENGINE_get_RSA(mtmp);
 	if (!ENGINE_init(engine))
@@ -152,7 +152,7 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 RSA *RSA_new_method(ENGINE *engine)
 #endif
 	{
-	RSA_METHOD *meth;
+	const RSA_METHOD *meth;
 	RSA *ret;
 
 	ret=(RSA *)OPENSSL_malloc(sizeof(RSA));
@@ -203,7 +203,7 @@ RSA *RSA_new_method(ENGINE *engine)
 
 void RSA_free(RSA *r)
 	{
-	RSA_METHOD *meth;
+	const RSA_METHOD *meth;
 	int i;
 
 	if (r == NULL) return;
@@ -254,45 +254,45 @@ int RSA_set_ex_data(RSA *r, int idx, void *arg)
 	return(CRYPTO_set_ex_data(&r->ex_data,idx,arg));
 	}
 
-void *RSA_get_ex_data(RSA *r, int idx)
+void *RSA_get_ex_data(const RSA *r, int idx)
 	{
 	return(CRYPTO_get_ex_data(&r->ex_data,idx));
 	}
 
-int RSA_size(RSA *r)
+int RSA_size(const RSA *r)
 	{
 	return(BN_num_bytes(r->n));
 	}
 
-int RSA_public_encrypt(int flen, unsigned char *from, unsigned char *to,
+int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
 	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_enc(flen,
 		from, to, rsa, padding));
 	}
 
-int RSA_private_encrypt(int flen, unsigned char *from, unsigned char *to,
+int RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
 	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_enc(flen,
 		from, to, rsa, padding));
 	}
 
-int RSA_private_decrypt(int flen, unsigned char *from, unsigned char *to,
+int RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
 	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_dec(flen,
 		from, to, rsa, padding));
 	}
 
-int RSA_public_decrypt(int flen, unsigned char *from, unsigned char *to,
+int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
 	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_dec(flen,
 		from, to, rsa, padding));
 	}
 
-int RSA_flags(RSA *r)
+int RSA_flags(const RSA *r)
 	{
 	return((r == NULL)?0:ENGINE_get_RSA(r->engine)->flags);
 	}

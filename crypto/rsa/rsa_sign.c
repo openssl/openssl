@@ -67,13 +67,14 @@
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH	36
 
-int RSA_sign(int type, unsigned char *m, unsigned int m_len,
+int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)
 	{
 	X509_SIG sig;
 	ASN1_TYPE parameter;
 	int i,j,ret=1;
-	unsigned char *p,*s = NULL;
+	unsigned char *p, *tmps = NULL;
+	const unsigned char *s = NULL;
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
@@ -105,7 +106,7 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 		sig.algor->parameter= &parameter;
 
 		sig.digest= &digest;
-		sig.digest->data=m;
+		sig.digest->data=(unsigned char *)m; /* TMP UGLY CAST */
 		sig.digest->length=m_len;
 
 		i=i2d_X509_SIG(&sig,NULL);
@@ -117,14 +118,15 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 	if(type != NID_md5_sha1) {
-		s=(unsigned char *)OPENSSL_malloc((unsigned int)j+1);
-		if (s == NULL)
+		tmps=(unsigned char *)OPENSSL_malloc((unsigned int)j+1);
+		if (tmps == NULL)
 			{
 			RSAerr(RSA_F_RSA_SIGN,ERR_R_MALLOC_FAILURE);
 			return(0);
 			}
-		p=s;
+		p=tmps;
 		i2d_X509_SIG(&sig,&p);
+		s=tmps;
 	}
 	i=RSA_private_encrypt(i,s,sigret,rsa,RSA_PKCS1_PADDING);
 	if (i <= 0)
@@ -133,13 +135,13 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 		*siglen=i;
 
 	if(type != NID_md5_sha1) {
-		memset(s,0,(unsigned int)j+1);
-		OPENSSL_free(s);
+		memset(tmps,0,(unsigned int)j+1);
+		OPENSSL_free(tmps);
 	}
 	return(ret);
 	}
 
-int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
+int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 	     unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
 	{
 	int i,ret=0,sigtype;

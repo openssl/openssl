@@ -53,7 +53,7 @@
 #include <openssl/rsa.h>
 
 
-int RSA_check_key(RSA *key)
+int RSA_check_key(const RSA *key)
 	{
 	BIGNUM *i, *j, *k, *l, *m;
 	BN_CTX *ctx;

@@ -62,8 +62,8 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen, unsigned char *from,
-	     int flen)
+int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+	const unsigned char *from, int flen)
 	{
 	int i,j;
 	unsigned char *p;
@@ -102,11 +102,11 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen, unsigned char *from,
 	return(1);
 	}
 
-int RSA_padding_check_SSLv23(unsigned char *to, int tlen, unsigned char *from,
-	     int flen, int num)
+int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
+	const unsigned char *from, int flen, int num)
 	{
 	int i,j,k;
-	unsigned char *p;
+	const unsigned char *p;
 
 	p=from;
 	if (flen < 10)

@@ -65,15 +65,15 @@
 
 #ifndef RSA_NULL
 
-static int RSA_eay_public_encrypt(int flen, unsigned char *from,
+static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_private_encrypt(int flen, unsigned char *from,
+static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_public_decrypt(int flen, unsigned char *from,
+static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_private_decrypt(int flen, unsigned char *from,
+static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *i, RSA *rsa);
+static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa);
 static int RSA_eay_init(RSA *rsa);
 static int RSA_eay_finish(RSA *rsa);
 static RSA_METHOD rsa_pkcs1_eay_meth={
@@ -95,7 +95,7 @@ RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	return(&rsa_pkcs1_eay_meth);
 	}
 
-static int RSA_eay_public_encrypt(int flen, unsigned char *from,
+static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	const RSA_METHOD *meth;
@@ -169,7 +169,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_encrypt(int flen, unsigned char *from,
+static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	const RSA_METHOD *meth;
@@ -247,7 +247,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_decrypt(int flen, unsigned char *from,
+static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	const RSA_METHOD *meth;
@@ -342,7 +342,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_public_decrypt(int flen, unsigned char *from,
+static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	const RSA_METHOD *meth;
@@ -416,7 +416,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	const RSA_METHOD *meth;
 	BIGNUM r1,m1;

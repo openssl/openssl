@@ -12,10 +12,12 @@
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 
-int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen);
+int MGF1(unsigned char *mask, long len,
+	const unsigned char *seed, long seedlen);
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
-	     unsigned char *from, int flen, unsigned char *param, int plen)
+	const unsigned char *from, int flen,
+	const unsigned char *param, int plen)
     {
     int i, emlen = tlen - 1;
     unsigned char *db, *seed;
@@ -71,11 +73,11 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
     }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
-	     unsigned char *from, int flen, int num, unsigned char *param,
-	     int plen)
+	const unsigned char *from, int flen, int num,
+	const unsigned char *param, int plen)
     {
     int i, dblen, mlen = -1;
-    unsigned char *maskeddb;
+    const unsigned char *maskeddb;
     int lzero;
     unsigned char *db, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
 
@@ -132,7 +134,8 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     return (mlen);
     }
 
-int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen)
+int MGF1(unsigned char *mask, long len,
+	const unsigned char *seed, long seedlen)
     {
     long i, outlen = 0;
     unsigned char cnt[4];
