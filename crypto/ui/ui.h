@@ -132,13 +132,13 @@ int UI_dup_error_string(UI *ui, const char *text);
 
 /* These are the possible flags.  They can be or'ed together. */
 /* Use to have echoing of input */
-#define UI_INPUT_FLAG_ECHO	0x01
-/* Use a default answer.  Where that answer is found is completely up
-   to the application, it might for example be in the user data set
+#define UI_INPUT_FLAG_ECHO		0x01
+/* Use a default password.  Where that password is found is completely
+   up to the application, it might for example be in the user data set
    with UI_add_user_data().  It is not recommended to have more than
    one input in each UI being marked with this flag, or the application
    might get confused. */
-#define UI_INPUT_FLAG_DEFAULT	0x02
+#define UI_INPUT_FLAG_DEFAULT_PWD	0x02
 
 /* The user of these routines may want to define flags of their own.  The core
    UI won't look at those, but will pass them on to the method routines.  They
