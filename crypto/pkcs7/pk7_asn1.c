@@ -108,8 +108,10 @@ ASN1_SEQUENCE_cb(PKCS7_SIGNER_INFO, si_cb) = {
 	ASN1_SIMPLE(PKCS7_SIGNER_INFO, version, ASN1_INTEGER),
 	ASN1_SIMPLE(PKCS7_SIGNER_INFO, issuer_and_serial, PKCS7_ISSUER_AND_SERIAL),
 	ASN1_SIMPLE(PKCS7_SIGNER_INFO, digest_alg, X509_ALGOR),
-	/* NB this should be a SET OF but we use a SEQUENCE OF so the original order
-	 * is retained when the structure is reencoded.
+	/* NB this should be a SET OF but we use a SEQUENCE OF so the
+	 * original order * is retained when the structure is reencoded.
+	 * Since the attributes are implicitly tagged this will not affect
+	 * the encoding.
 	 */
 	ASN1_IMP_SEQUENCE_OF_OPT(PKCS7_SIGNER_INFO, auth_attr, X509_ATTRIBUTE, 0),
 	ASN1_SIMPLE(PKCS7_SIGNER_INFO, digest_enc_alg, X509_ALGOR),
@@ -178,3 +180,22 @@ ASN1_SEQUENCE(PKCS7_DIGEST) = {
 } ASN1_SEQUENCE_END(PKCS7_DIGEST);
 
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7_DIGEST)
+
+/* Specials for authenticated attributes */
+
+/* When signing attributes we want to reorder them to match the sorted
+ * encoding.
+ */
+
+ASN1_ITEM_TEMPLATE(PKCS7_ATTR_SIGN) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_ORDER, 0, PKCS7_ATTRIBUTES, X509_ATTRIBUTE)
+ASN1_ITEM_TEMPLATE_END(PKCS7_ATTR_SIGN);
+
+/* When verifying attributes we need to use the received order. So 
+ * we use SEQUENCE OF and tag it to SET OF
+ */
+
+ASN1_ITEM_TEMPLATE(PKCS7_ATTR_VERIFY) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_UNIVERSAL,
+				V_ASN1_SET, PKCS7_ATTRIBUTES, X509_ATTRIBUTE)
+ASN1_ITEM_TEMPLATE_END(PKCS7_ATTR_VERIFY);

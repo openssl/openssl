@@ -471,8 +471,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	EVP_MD_CTX *mdc,ctx_tmp;
 	STACK_OF(X509_ATTRIBUTE) *sk;
 	STACK_OF(PKCS7_SIGNER_INFO) *si_sk=NULL;
-	unsigned char *p,*pp=NULL;
-	int x;
 	ASN1_OCTET_STRING *os=NULL;
 
 	i=OBJ_obj2nid(p7->type);
@@ -552,8 +550,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			 * attribute and only sign the attributes */
 			if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
 				{
-				unsigned char md_data[EVP_MAX_MD_SIZE];
-				unsigned int md_len;
+				unsigned char md_data[EVP_MAX_MD_SIZE], *abuf=NULL;
+				unsigned int md_len, alen;
 				ASN1_OCTET_STRING *digest;
 				ASN1_UTCTIME *sign_time;
 				const EVP_MD *md_tmp;
@@ -573,19 +571,13 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 					NID_pkcs9_messageDigest,
 					V_ASN1_OCTET_STRING,digest);
 
-				/* Now sign the mess */
+				/* Now sign the attributes */
 				EVP_SignInit(&ctx_tmp,md_tmp);
-				x=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,
-					   i2d_X509_ATTRIBUTE,
-					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-				pp=(unsigned char *)OPENSSL_malloc(x);
-				p=pp;
-				i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,
-				           i2d_X509_ATTRIBUTE,
-					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-				EVP_SignUpdate(&ctx_tmp,pp,x);
-				OPENSSL_free(pp);
-				pp=NULL;
+				alen = ASN1_item_i2d((ASN1_VALUE *)sk,&abuf,
+							&PKCS7_ATTR_SIGN_it);
+				if(!abuf) goto err;
+				EVP_SignUpdate(&ctx_tmp,abuf,alen);
+				OPENSSL_free(abuf);
 				}
 
 			if (si->pkey->type == EVP_PKEY_DSA)
@@ -627,9 +619,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			(unsigned char *)buf_mem->data,buf_mem->length);
 #endif
 		}
-	if (pp != NULL) OPENSSL_free(pp);
-	pp=NULL;
-
 	ret=1;
 err:
 	if (buf != NULL) BUF_MEM_free(buf);
@@ -691,7 +680,6 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 	{
 	ASN1_OCTET_STRING *os;
 	EVP_MD_CTX mdc_tmp,*mdc;
-	unsigned char *pp,*p;
 	int ret=0,i;
 	int md_type;
 	STACK_OF(X509_ATTRIBUTE) *sk;
@@ -736,8 +724,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 	sk=si->auth_attr;
 	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
 		{
-		unsigned char md_dat[EVP_MAX_MD_SIZE];
-                unsigned int md_len;
+		unsigned char md_dat[EVP_MAX_MD_SIZE], *abuf = NULL;
+                unsigned int md_len, alen;
 		ASN1_OCTET_STRING *message_digest;
 
 		EVP_DigestFinal(&mdc_tmp,md_dat,&md_len);
@@ -766,19 +754,12 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 			}
 
 		EVP_VerifyInit(&mdc_tmp,EVP_get_digestbynid(md_type));
-		/* Note: when forming the encoding of the attributes we
-		 * shouldn't reorder them or this will break the signature.
-		 * This is done by using the IS_SEQUENCE flag.
-		 */
-		i=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,i2d_X509_ATTRIBUTE,
-			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		pp=OPENSSL_malloc(i);
-		p=pp;
-		i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,i2d_X509_ATTRIBUTE,
-			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		EVP_VerifyUpdate(&mdc_tmp,pp,i);
 
-		OPENSSL_free(pp);
+		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
+						&PKCS7_ATTR_VERIFY_it);
+		EVP_VerifyUpdate(&mdc_tmp, abuf, alen);
+
+		OPENSSL_free(abuf);
 		}
 
 	os=si->enc_digest;

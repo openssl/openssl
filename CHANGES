@@ -3,6 +3,19 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix the PKCS#7 (S/MIME) code to work with new ASN1. Two new
+     ASN1_ITEM structures help with sign and verify. PKCS7_ATTR_SIGN
+     uses the special reorder version of SET OF to sort the attributes
+     and reorder them to match the encoded order. This resolves a long
+     standing problem: a verify on a PKCS7 structure just after signing
+     it used to fail because the attribute order did not match the
+     encoded order. PKCS7_ATTR_VERIFY does not reorder the attributes:
+     it uses the received order. This is necessary to tolerate some broken
+     software that does not order SET OF. This is handled by encoding
+     as a SEQUENCE OF but using implicit tagging (with UNIVERSAL class)
+     to produce the required SET OF.
+     [Steve Henson]
+
   *) Have mk1mf.pl generate the macros OPENSSL_BUILD_SHLIBCRYPTO and
      OPENSSL_BUILD_SHLIBSSL and use them appropriately in the header
      files to get correct declarations of the ASN.1 item variables.
