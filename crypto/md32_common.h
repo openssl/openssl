@@ -524,7 +524,7 @@ void HASH_TRANSFORM (HASH_CTX *c, unsigned char *data)
 #endif
 #endif
 #if defined(HASH_BLOCK_DATA_ORDER)
-	HASH_BLOCK_DATA_ORDER (c,(const unsigned char *)data,1);
+	HASH_BLOCK_DATA_ORDER (c,data,1);
 #endif
 	}
 
