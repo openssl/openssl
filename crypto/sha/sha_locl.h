@@ -166,9 +166,9 @@
 #undef Endian_Reverse32
 #if defined(WIN32)
 #define ROTATE(a,n)     _lrotl(a,n)
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && !defined(PEDANTIC)
 /* some inline assembler templates by <appro@fy.chalmers.se> */
-#if defined(__i386) && !defined(PEDANTIC)
+#if defined(__i386)
 #define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm ("roll %1,%0"	\
 				: "=r"(ret)		\
