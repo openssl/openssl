@@ -448,7 +448,7 @@ e_rc4.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 e_rc4.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 e_rc4.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 e_rc4.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-e_rc4.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_rc4.c
+e_rc4.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_rc4.c evp_locl.h
 e_rc5.o: ../../e_os.h ../../include/openssl/aes.h ../../include/openssl/asn1.h
 e_rc5.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 e_rc5.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
