@@ -1,6 +1,6 @@
 /* crypto/md32_common.h */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -456,7 +456,10 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 				{
 				ew=(c->num>>2);
 				ec=(c->num&0x03);
-				l=p[sw]; HOST_p_c2l(data,l,sc); p[sw++]=l;
+				if (sc)
+					l=p[sw];
+				HOST_p_c2l(data,l,sc);
+				p[sw++]=l;
 				for (; sw < ew; sw++)
 					{
 					HOST_c2l(data,l); p[sw]=l;

@@ -52,7 +52,6 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <string.h>
-#include <assert.h>
 #include <openssl/aes.h>
 #include "evp_locl.h"
 
