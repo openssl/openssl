@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/14 06:57:16 $
+  ______________                           $Date: 2001/03/14 07:00:57 $
 
   DEVELOPMENT STATE
 
@@ -23,6 +23,8 @@
 		Missing istructions in building script.
 	AIX 4.3					- FAILED [engine]
 		Needs -DDSO_DLFCN and -DHAVE_DLFCN_H to work.
+	Irix 6.5.11				- FAILED [presumed normal]
+		BN_sqr test fails.
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
