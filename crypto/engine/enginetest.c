@@ -234,8 +234,8 @@ cleanup_loop:
 		}
 	for(loop = 0; loop < 512; loop++)
 		{
-		OPENSSL_free((char *)(ENGINE_get_id(block[loop])));
-		OPENSSL_free((char *)(ENGINE_get_name(block[loop])));
+		OPENSSL_free(ENGINE_get_id(block[loop]));
+		OPENSSL_free(ENGINE_get_name(block[loop]));
 		}
 	printf("\nTests completed happily\n");
 	to_return = 0;
