@@ -4,6 +4,15 @@
 
  Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
 
+  *) In ssl3_get_client_hello() (ssl/s3_srvr.c), tolerate additional
+     extra data after the compression methods not only for TLS 1.0
+     but also for SSL 3.0 (as required by the specification).
+     [Bodo Moeller; problem pointed out by Matthias Loepfe]
+
+  *) Change X509_certificate_type() to mark the key as exported/exportable
+     when it's 512 *bits* long, not 512 bytes.
+     [Richard Levitte]
+
   *) Change AES_cbc_encrypt() so it outputs exact multiple of
      blocks during encryption.
      [Richard Levitte]
@@ -140,6 +149,9 @@
      [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
 
  Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
+
+  [NB: OpenSSL 0.9.6i and later 0.9.6 patch levels were released after
+  OpenSSL 0.9.7.]
 
   *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
      code (06) was taken as the first octet of the session ID and the last
@@ -1960,6 +1972,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Richard Levitte]
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
+
+  *) In ssl3_get_client_hello() (ssl/s3_srvr.c), tolerate additional
+     extra data after the compression methods not only for TLS 1.0
+     but also for SSL 3.0 (as required by the specification).
+     [Bodo Moeller; problem pointed out by Matthias Loepfe]
 
   *) Change X509_certificate_type() to mark the key as exported/exportable
      when it's 512 *bits* long, not 512 bytes.

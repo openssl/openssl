@@ -844,6 +844,9 @@ static int ssl3_get_client_hello(SSL *s)
 		}
 
 	/* TLS does not mind if there is extra stuff */
+#if 0   /* SSL 3.0 does not mind either, so we should disable this test
+         * (was enabled in 0.9.6d through 0.9.6j and 0.9.7 through 0.9.7b,
+         * in earlier SSLeay/OpenSSL releases this test existed but was buggy) */
 	if (s->version == SSL3_VERSION)
 		{
 		if (p < (d+n))
@@ -855,6 +858,7 @@ static int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		}
+#endif
 
 	/* Given s->session->ciphers and SSL_get_ciphers, we must
 	 * pick a cipher */
