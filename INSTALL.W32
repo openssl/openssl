@@ -149,7 +149,8 @@
 
  * Install CygWin32 (see http://sourceware.cygnus.com/cygwin)
 
- * Install Perl and ensure it is in the path
+ * Install Perl and ensure it is in the path (recent Cygwin perl or
+   ActivePerl)
 
  * Run the CygWin bash shell
 
