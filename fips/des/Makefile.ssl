@@ -70,7 +70,6 @@ tests:
 top_fips_desmovs:
 	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_desmovs sub_target)
 
-
 fips_desmovs: fips_desmovs.o ../../libcrypto.a
 	$(CC) $(CFLAGS) -o fips_desmovs fips_desmovs.o ../../libcrypto.a
 
@@ -78,6 +77,14 @@ fips_test: top_fips_desmovs
 	find ../testvectors/des/req -name '*.req' > testlist
 	-rm -rf ../testvectors/des/rsp
 	mkdir ../testvectors/des/rsp
+	./fips_desmovs -d testlist
+	find ../testvectors/des2/req -name '*.req' > testlist
+	-rm -rf ../testvectors/des2/rsp
+	mkdir ../testvectors/des2/rsp
+	./fips_desmovs -d testlist
+	find ../testvectors/des3/req -name '*.req' > testlist
+	-rm -rf ../testvectors/des3/rsp
+	mkdir ../testvectors/des3/rsp
 	./fips_desmovs -d testlist
 
 lint:

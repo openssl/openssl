@@ -59,10 +59,10 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	}
     if (ret)
 	{
-	if (akeysz != 64)
+	if (akeysz != 64 && akeysz != 192)
 	    {
 	    printf("Invalid key size: %d\n", akeysz);
-	    ret = 0;
+	    exit(1);
 	    }
 	else
 	    {
@@ -72,20 +72,38 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	    case 1064:
 		cipher=EVP_des_cbc();
 		break;
+	    case 1192:
+		cipher=EVP_des_ede3_cbc();
+		break;
 	    case 2064:
 		cipher=EVP_des_ecb();
+		break;
+	    case 2192:
+		cipher=EVP_des_ede3_ecb();
 		break;
 	    case 3064:
 		cipher=EVP_des_cfb64();
 		break;
+	    case 3192:
+		cipher=EVP_des_ede3_cfb64();
+		break;
 	    case 4064:
 		cipher=EVP_des_ofb();
+		break;
+	    case 4192:
+		cipher=EVP_des_ede3_ofb();
 		break;
 	    case 5064:
 		cipher=EVP_des_cfb1();
 		break;
+	    case 5192:
+		cipher=EVP_des_ede3_cfb1();
+		break;
 	    case 6064:
 		cipher=EVP_des_cfb8();
+		break;
+	    case 6192:
+		cipher=EVP_des_ede3_cfb8();
 		break;
 	    default:
 		printf("Didn't handle mode %d\n",kt);
@@ -312,7 +330,6 @@ int proc_file(char *rqfile)
     FILE *afp = NULL, *rfp = NULL;
     char ibuf[2048];
     int ilen, len, ret = 0;
-    char algo[8] = "";
     char amode[8] = "";
     char atest[100] = "";
     int akeysz=0;
@@ -353,18 +370,20 @@ int proc_file(char *rqfile)
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
 	ilen = strlen(ibuf);
-	//	printf("step=%d ibuf=%s",step,ibuf);
+	/*	printf("step=%d ibuf=%s",step,ibuf);*/
+	if(step == 3 && !strcmp(amode,"ECB"))
+	    {
+	    memset(iVec, 0, sizeof(iVec));
+	    step = (dir)? 4: 5;  /* no ivec for ECB */
+	    }
 	switch (step)
 	    {
 	case 0:  /* read preamble */
 	    if (ibuf[0] == '\n')
 		{ /* end of preamble */
-		if ((*algo == '\0') ||
-		    (*amode == '\0') ||
-		    (akeysz == 0))
+		if (*amode == '\0')
 		    {
-		    printf("Missing Algorithm, Mode or KeySize (%s/%s/%d)\n",
-			   algo,amode,akeysz);
+		    printf("Missing Mode\n");
 		    err = 1;
 		    }
 		else
@@ -382,7 +401,7 @@ int proc_file(char *rqfile)
 		{ /* process preamble */
 		char *xp, *pp = ibuf+2;
 		int n;
-		if (akeysz)
+		if(*amode)
 		    { /* insert current time & date */
 		    time_t rtim = time(0);
 		    fprintf(rfp, "# %s", ctime(&rtim));
@@ -391,14 +410,16 @@ int proc_file(char *rqfile)
 		    {
 		    fputs(ibuf, rfp);
 		    if(!strncmp(pp,"INVERSE ",8) || !strncmp(pp,"DES ",4)
+		       || !strncmp(pp,"TDES ",5)
 		       || !strncmp(pp,"PERMUTATION ",12)
 		       || !strncmp(pp,"SUBSTITUTION ",13)
 		       || !strncmp(pp,"VARIABLE ",9))
 			{
-			strcpy(algo, "DES");
 			/* get test type */
 			if(!strncmp(pp,"DES ",4))
 			    pp+=4;
+			else if(!strncmp(pp,"TDES ",5))
+			    pp+=5;
 			xp = strchr(pp, ' ');
 			n = xp-pp;
 			strncpy(atest, pp, n);
@@ -409,10 +430,8 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test = %s, Mode = %s\n", atest, amode);
+			printf("Test=%s, Mode=%s\n",atest,amode);
 			}
-		    else if(!strncmp(pp,"State :",7))
-			akeysz=64;
 		    }
 		}
 	    break;
@@ -450,29 +469,61 @@ int proc_file(char *rqfile)
 		break;
 	    if(!strncasecmp(ibuf,"COUNT = ",8))
 		break;
+	    if(!strncasecmp(ibuf,"COUNT=",6))
+		break;
+	    if(!strncasecmp(ibuf,"NumKeys = ",10))
+		break;
 	  
-	    if (strncasecmp(ibuf, "KEY = ", 6) != 0)
+	    if(!strncasecmp(ibuf,"KEY = ",6))
 		{
-		printf("Missing KEY\n");
-		err = 1;
-		}
-	    else
-		{
+		akeysz=64;
 		len = hex2bin((char*)ibuf+6, strlen(ibuf+6)-1, aKey);
 		if (len < 0)
 		    {
 		    printf("Invalid KEY\n");
-		    err =1;
+		    err=1;
 		    break;
 		    }
 		PrintValue("KEY", aKey, len);
-		if (strcmp(amode, "ECB") == 0)
+		++step;
+		}
+	    else if(!strncasecmp(ibuf,"KEYs = ",7))
+		{
+		akeysz=64*3;
+		len=hex2bin(ibuf+7,strlen(ibuf+7)-1,aKey);
+		if(len != 8)
 		    {
-		    memset(iVec, 0, sizeof(iVec));
-		    step = (dir)? 4: 5;  /* no ivec for ECB */
+		    printf("Invalid KEY\n");
+		    err=1;
+		    break;
 		    }
-		else
+		memcpy(aKey+8,aKey,8);
+		memcpy(aKey+16,aKey,8);
+		ibuf[4]='\0';
+		PrintValue("KEYs",aKey,len);
+		++step;
+		}
+	    else if(!strncasecmp(ibuf,"KEY",3))
+		{
+		int n=ibuf[3]-'1';
+
+		akeysz=64*3;
+		len=hex2bin(ibuf+7,strlen(ibuf+7)-1,aKey+n*8);
+		if(len != 8)
+		    {
+		    printf("Invalid KEY\n");
+		    err=1;
+		    break;
+		    }
+		ibuf[4]='\0';
+		PrintValue(ibuf,aKey,len);
+		if(n == 2)
 		    ++step;
+		}
+	    else
+		{
+		printf("Missing KEY\n");
+		err = 1;
 		}
 	    break;
 
