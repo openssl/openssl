@@ -23,10 +23,10 @@ SSL_set_cipher_list() sets the list of ciphers only for B<ssl>.
 
 =head1 NOTES
 
-The control string B<str> should be universally useable and not depend
+The control string B<str> should be universally usable and not depend
 on details of the library configuration (ciphers compiled in). Thus no
 syntax checking takes place. Items that are not recognized, because the
-corrensponding ciphers are not compiled in or because they are mistyped,
+corresponding ciphers are not compiled in or because they are mistyped,
 are simply ignored. Failure is only flagged if no ciphers could be collected
 at all.
 
