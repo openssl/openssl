@@ -1,6 +1,6 @@
 /* crypto/crypto.h */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -189,7 +189,8 @@ extern "C" {
 #define CRYPTO_LOCK_EC			33
 #define CRYPTO_LOCK_ECDH		34
 #define CRYPTO_LOCK_BN  		35
-#define CRYPTO_NUM_LOCKS		36
+#define CRYPTO_LOCK_EC_PRE_COMP		36
+#define CRYPTO_NUM_LOCKS		37
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

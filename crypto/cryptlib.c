@@ -1,6 +1,6 @@
 /* crypto/cryptlib.c */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -166,7 +166,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ec",
 	"ecdh",
 	"bn",
-#if CRYPTO_NUM_LOCKS != 36
+	"ec_pre_comp",
+#if CRYPTO_NUM_LOCKS != 37
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
