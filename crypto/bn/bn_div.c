@@ -63,7 +63,8 @@
 
 /* The old slow way */
 #if 0
-int BN_div(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
+int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+	   BN_CTX *ctx)
 	{
 	int i,nm,nd;
 	BIGNUM *D;
