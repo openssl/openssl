@@ -158,61 +158,35 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 
 /* This expects a single block of size nbits for both in and out. Note that
    it corrupts any extra bits in the last byte of out */
-/* Untested, once it is working, it will be optimised */
 void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 			    const int nbits,const AES_KEY *key,
 			    unsigned char *ivec,const int enc)
     {
-    int n;
+    int n,rem,num;
     unsigned char ovec[AES_BLOCK_SIZE*2];
 
-    assert(in && out && key && ivec);
-    if(enc)
-	{
+    if (nbits<=0 || nbits>128) return;
+
+	/* fill in the first half of the new IV with the current IV */
+	memcpy(ovec,ivec,AES_BLOCK_SIZE);
 	/* construct the new IV */
-	AES_encrypt(ivec,ovec,key);
-	/* encrypt the input */
-	for(n=0 ; n < (nbits+7)/8 ; ++n)
-	    out[n]=in[n]^ovec[n];
-	/* fill in the first half of the new IV with the current IV */
-	memcpy(ovec,ivec,AES_BLOCK_SIZE);
-	/* and put the ciphertext in the second half */
-	memcpy(ovec+AES_BLOCK_SIZE,out,(nbits+7)/8);
-	/* shift ovec left most of the bits... */
-	memmove(ovec,ovec+nbits/8,AES_BLOCK_SIZE+(nbits%8 ? 1 : 0));
-	/* now the remaining bits */
-	if(nbits%8 != 0)
+	AES_encrypt(ivec,ivec,key);
+	num = (nbits+7)/8;
+	if (enc)	/* encrypt the input */
+	    for(n=0 ; n < num ; ++n)
+		out[n] = (ovec[AES_BLOCK_SIZE+n] = in[n] ^ ivec[n]);
+	else		/* decrypt the input */
+	    for(n=0 ; n < num ; ++n)
+		out[n] = (ovec[AES_BLOCK_SIZE+n] = in[n]) ^ ivec[n];
+	/* shift ovec left... */
+	rem = nbits%8;
+	num = nbits/8;
+	if(rem==0)
+	    memcpy(ivec,ovec+num,AES_BLOCK_SIZE);
+	else
 	    for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-		{
-		ovec[n]<<=nbits%8;
-		ovec[n]|=ovec[n+1]>>(8-nbits%8);
-		}
-	/* finally, move it back into place */
-	memcpy(ivec,ovec,AES_BLOCK_SIZE);
-	}
-    else
-	{
-	/* construct the new IV in the first half of ovec */
-	AES_encrypt(ivec,ovec,key);
-	/* decrypt the input */
-	for(n=0 ; n < (nbits+7)/8 ; ++n)
-	    out[n]=in[n]^ovec[n];
-	/* fill in the first half of the new IV with the current IV */
-	memcpy(ovec,ivec,AES_BLOCK_SIZE);
-	/* append the ciphertext */
-	memcpy(ovec+AES_BLOCK_SIZE,in,(nbits+7)/8);
-	/* shift ovec left most of the bits... */
-	memmove(ovec,ovec+nbits/8,AES_BLOCK_SIZE+(nbits%8 ? 1 : 0));
-	/* now the remaining bits */
-	if(nbits%8 != 0)
-	    for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-		{
-		ovec[n]<<=nbits%8;
-		ovec[n]|=ovec[n+1]>>(8-nbits%8);
-		}
-	/* finally, move it back into place */
-	memcpy(ivec,ovec,AES_BLOCK_SIZE);
-	}
+		ivec[n] = ovec[n+num]<<rem | ovec[n+num+1]>>(8-rem);
+
     /* it is not necessary to cleanse ovec, since the IV is not secret */
     }
 
