@@ -4,7 +4,8 @@
 
  Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
 
-  *) 
+  *) Fix EVP_dsa_sha macro.
+     [Nils Larsch]
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
