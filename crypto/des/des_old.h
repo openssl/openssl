@@ -107,6 +107,78 @@ typedef struct des_ks_struct
 		} ks;
 	} des_key_schedule[16];
 
+/* Map all function names to _old_des_* form, so we avoid all clashes with
+   libdes */
+#define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
+	_old_des_ecb3_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_ecb3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
+	_old_des_ecb3_cbc_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_ecb3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
+	_old_des_ecb3_cfb64_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_ecb3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
+	_old_des_ecb3_ofb64_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_options()\
+	_old_des_options()
+#define des_cbc_cksum(i,o,l,k,iv)\
+	_old_des_cbc_cksum((i),(o),(l),(k),(iv))
+#define des_cbc_encrypt(i,o,l,k,iv,e)\
+	_old_des_cbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_ncbc_encrypt(i,o,l,k,iv,e)\
+	_old_des_ncbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_xcbc_encrypt(i,o,l,k,iv,inw,outw,e)\
+	_old_des_xcbc_encrypt((i),(o),(l),(k),(iv),(inw),(outw),(e))
+#define des_cfb_encrypt(i,o,l,k,iv,e)\
+	_old_des_cfb_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_ecb_encrypt(i,o,k,e)\
+	_old_des_ecb_encrypt((i),(o),(k),(e))
+#define des_encrypt(d,k,e)\
+	_old_des_encrypt((d),(k),(e))
+#define des_encrypt2(d,k,e)\
+	_old_des_encrypt2((d),(k),(e))
+#define des_encrypt3(d,k1,k2,k3)\
+	_old_des_encrypt3((d),(k1),(k2),(k3))
+#define des_decrypt3(d,k1,k2,k3)\
+	_old_des_decrypt3((d),(k1),(k2),(k3))
+#define des_des_xwhite_in2out(k,i,o)\
+	_old_des_des_xwhite_in2out((k),(i),(o))
+#define des_enc_read(f,b,l,k,iv)\
+	_old_des_enc_read((f),(b),(l),(k),(iv))
+#define des_enc_write(f,b,l,k,iv)\
+	_old_des_enc_write((f),(b),(l),(k),(iv))
+#define des_fcrypt(b,s,r)\
+	_old_des_fcrypt((b),(s),(r))
+#define des_crypt(b,s)\
+	_old_des_crypt((b),(s))
+#define crypt(b,s)\
+	_old_crypt((b),(s))
+#define des_ofb_encrypt(i,o,n,l,k,iv)\
+	_old_des_ofb_encrypt((i),(o),(n),(l),(k),(iv))
+#define des_pcbc_encrypt(i,o,l,k,iv,e)\
+	_old_des_pcbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_quad_cksum(i,o,l,c,s)\
+	_old_des_quad_cksum((i),(o),(l),(c),(s))
+#define des_random_seed(k);\
+	_old_des_random_seed((k));
+#define des_random_key(r);\
+	_old_des_random_key((r));
+#define des_set_odd_parity(k);\
+	_old_des_set_odd_parity((k));
+#define des_is_weak_key(k);\
+	_old_des_is_weak_key((k));
+#define des_set_key(k,ks)\
+	_old_des_set_key((k),(ks))
+#define des_key_sched(k,ks)\
+	_old_des_key_sched((k),(ks))
+#define des_string_to_key(s,k)\
+	_old_des_string_to_key((s),(k))
+#define des_string_to_2keys(s,k1,k2)\
+	_old_des_string_to_2keys((s),(k1),(k2))
+#define des_cfb64_encrypt(i,o,l,ks,iv,n,e)\
+	_old_des_cfb64_encrypt((i),(o),(l),(ks),(iv),(n),(e))
+#define des_ofb64_encrypt(i,o,l,ks,iv,n)\
+	_old_des_ofb64_encrypt((i),(o),(l),(ks),(iv),(n))
+		
+
 #define des_ecb2_encrypt(i,o,k1,k2,e) \
 	des_ecb3_encrypt((i),(o),(k1),(k2),(k1),(e))
 
@@ -122,68 +194,68 @@ typedef struct des_ks_struct
 #define des_check_key DES_check_key
 #define des_rw_mode DES_rw_mode
 
-const char *des_options(void);
-void des_ecb3_encrypt(des_cblock *input,des_cblock *output,
+const char *_old_des_options(void);
+void _old_des_ecb3_encrypt(des_cblock *input,des_cblock *output,
 	des_key_schedule ks1,des_key_schedule ks2,
 	des_key_schedule ks3, int enc);
-DES_LONG des_cbc_cksum(des_cblock *input,des_cblock *output,
+DES_LONG _old_des_cbc_cksum(des_cblock *input,des_cblock *output,
 	long length,des_key_schedule schedule,des_cblock *ivec);
-void des_cbc_encrypt(des_cblock *input,des_cblock *output,long length,
+void _old_des_cbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_ncbc_encrypt(des_cblock *input,des_cblock *output,long length,
+void _old_des_ncbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_xcbc_encrypt(des_cblock *input,des_cblock *output,long length,
+void _old_des_xcbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,
 	des_cblock *inw,des_cblock *outw,int enc);
-void des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
+void _old_des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
 	long length,des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_ecb_encrypt(des_cblock *input,des_cblock *output,
+void _old_des_ecb_encrypt(des_cblock *input,des_cblock *output,
 	des_key_schedule ks,int enc);
-void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
-void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
-void des_encrypt3(DES_LONG *data, des_key_schedule ks1,
+void _old_des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
+void _old_des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
+void _old_des_encrypt3(DES_LONG *data, des_key_schedule ks1,
 	des_key_schedule ks2, des_key_schedule ks3);
-void des_decrypt3(DES_LONG *data, des_key_schedule ks1,
+void _old_des_decrypt3(DES_LONG *data, des_key_schedule ks1,
 	des_key_schedule ks2, des_key_schedule ks3);
-void des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output, 
+void _old_des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output, 
 	long length, des_key_schedule ks1, des_key_schedule ks2, 
 	des_key_schedule ks3, des_cblock *ivec, int enc);
-void des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
+void _old_des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
 	long length, des_key_schedule ks1, des_key_schedule ks2,
 	des_key_schedule ks3, des_cblock *ivec, int *num, int enc);
-void des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
+void _old_des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
 	long length, des_key_schedule ks1, des_key_schedule ks2,
 	des_key_schedule ks3, des_cblock *ivec, int *num);
 
-void des_xwhite_in2out(des_cblock (*des_key), des_cblock (*in_white),
+void _old_des_xwhite_in2out(des_cblock (*des_key), des_cblock (*in_white),
 	des_cblock (*out_white));
 
-int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
+int _old_des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
-int des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
+int _old_des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
-char *des_fcrypt(const char *buf,const char *salt, char *ret);
-char *des_crypt(const char *buf,const char *salt);
+char *_old_des_fcrypt(const char *buf,const char *salt, char *ret);
+char *_old_des_crypt(const char *buf,const char *salt);
 #if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
-char *crypt(const char *buf,const char *salt);
+char *_old_crypt(const char *buf,const char *salt);
 #endif
-void des_ofb_encrypt(unsigned char *in,unsigned char *out,
+void _old_des_ofb_encrypt(unsigned char *in,unsigned char *out,
 	int numbits,long length,des_key_schedule schedule,des_cblock *ivec);
-void des_pcbc_encrypt(des_cblock *input,des_cblock *output,long length,
+void _old_des_pcbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,int enc);
-DES_LONG des_quad_cksum(des_cblock *input,des_cblock *output,
+DES_LONG _old_des_quad_cksum(des_cblock *input,des_cblock *output,
 	long length,int out_count,des_cblock *seed);
-void des_random_seed(des_cblock key);
-void des_random_key(des_cblock ret);
-void des_set_odd_parity(des_cblock *key);
-int des_is_weak_key(des_cblock *key);
-int des_set_key(des_cblock *key,des_key_schedule schedule);
-int des_key_sched(des_cblock *key,des_key_schedule schedule);
-void des_string_to_key(char *str,des_cblock *key);
-void des_string_to_2keys(char *str,des_cblock *key1,des_cblock *key2);
-void des_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
+void _old_des_random_seed(des_cblock key);
+void _old_des_random_key(des_cblock ret);
+void _old_des_set_odd_parity(des_cblock *key);
+int _old_des_is_weak_key(des_cblock *key);
+int _old_des_set_key(des_cblock *key,des_key_schedule schedule);
+int _old_des_key_sched(des_cblock *key,des_key_schedule schedule);
+void _old_des_string_to_key(char *str,des_cblock *key);
+void _old_des_string_to_2keys(char *str,des_cblock *key1,des_cblock *key2);
+void _old_des_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	des_key_schedule schedule, des_cblock *ivec, int *num, int enc);
-void des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
+void _old_des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	des_key_schedule schedule, des_cblock *ivec, int *num);
 
 /* The following definitions provide compatibility with the MIT Kerberos
