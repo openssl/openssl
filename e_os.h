@@ -85,7 +85,7 @@ extern "C" {
 /* set this to a comma-seperated list of 'egd' sockets to try out. These
  * sockets will be tried in the order listed in case accessing the device files
  * listed in DEVRANDOM did not return enough entropy. */
-#define DEVRANDOM_EGD "/etc/entropy","/var/run/egd-pool"
+#define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 #endif
 
 #if defined(__MWERKS__) && defined(macintosh)
