@@ -436,6 +436,12 @@ BIO *BIO_find_type(BIO *bio, int type)
 	return(NULL);
 	}
 
+BIO *BIO_next(BIO *b)
+	{
+	if(!b) return NULL;
+	return b->next_bio;
+	}
+
 void BIO_free_all(BIO *bio)
 	{
 	BIO *b;

@@ -534,7 +534,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				if (EVP_MD_CTX_type(mdc) == j)
 					break;
 				else
-					btmp=btmp->next_bio;
+					btmp=BIO_next(btmp);
 				}
 			
 			/* We now have the EVP_MD_CTX, lets do the
@@ -726,7 +726,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 			}
 		if (EVP_MD_CTX_type(mdc) == md_type)
 			break;
-		btmp=btmp->next_bio;	
+		btmp=BIO_next(btmp);
 		}
 
 	/* mdc is the digest ctx that we want, unless there are attributes,
