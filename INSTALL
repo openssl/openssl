@@ -119,6 +119,11 @@
      Include the output of "./config -t" and the OpenSSL version
      number in your message.
 
+     [If you encounter assembler error messages, try the "no-asm"
+     configuration option as an immediate fix.  Note that on Solaris x86
+     (not on Sparcs!) you may have to install the GNU assembler to use
+     OpenSSL assembler code -- /usr/ccs/bin/as won't do.]
+
   3. After a successful build, the libraries should be tested. Run:
 
        $ make test

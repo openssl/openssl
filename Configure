@@ -367,6 +367,14 @@ foreach (@ARGV)
 	$options .= $_ unless $_ eq $target;
 }
 
+if ($target eq "TABLE") {
+	foreach $target (sort keys %table) {
+		print_table_entry($target);
+	}
+	print "\n";
+	exit 0;
+}
+
 &usage if (!defined($table{$target}));
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
@@ -756,4 +764,33 @@ sub dofile
 	close(OUT);
 	rename($f,"$ff.bak") || die "unable to rename $f\n" if -e $f;
 	rename("$ff.new",$f) || die "unable to rename $ff.new\n";
+	}
+
+sub print_table_entry
+	{
+	my $target = shift;
+
+	(my $cc,my $cflags,my $thread_cflag,my $lflags,my $bn_ops,
+	my $bn_obj,my $des_obj,my $bf_obj,
+	$md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
+	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
+			
+	print <<EOF
+
+*** $target
+\$cc           = $cc
+\$cflags       = $cflags
+\$thread_cflag = $thread_cflag
+\$lflags       = $lflags
+\$bn_ops       = $bn_ops
+\$bn_obj       = $bn_obj
+\$des_obj      = $des_obj
+\$bf_obj       = $bf_obj
+\$md5_obj      = $md5_obj
+\$sha1_obj     = $sha1_obj
+\$cast_obj     = $cast_obj
+\$rc4_obj      = $rc4_obj
+\$rmd160_obj   = $rmd160_obj
+\$rc5_obj      = $rc5_obj
+EOF
 	}
