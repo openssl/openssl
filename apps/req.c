@@ -713,7 +713,6 @@ bad:
 	if (newreq && (pkey == NULL))
 		{
 		BN_GENCB cb;
-		BN_GENCB_set(&cb, req_cb, bio_err);
 		char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 		if (randfile == NULL)
 			ERR_clear_error();
@@ -740,6 +739,7 @@ bad:
 		if ((pkey=EVP_PKEY_new()) == NULL) goto end;
 
 #ifndef OPENSSL_NO_RSA
+		BN_GENCB_set(&cb, req_cb, bio_err);
 		if (pkey_type == TYPE_RSA)
 			{
 			RSA *rsa = RSA_new();
