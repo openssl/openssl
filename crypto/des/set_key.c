@@ -166,7 +166,7 @@ int des_set_key(const_des_cblock *key, des_key_schedule schedule)
 			return(-2);
 		}
 
-	k=(DES_LONG *)schedule;
+	k = &schedule->ks.deslong[0];
 	in = &(*key)[0];
 
 	c2l(in,c);
