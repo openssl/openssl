@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/06/04 16:23:15 $
+  ______________                           $Date: 2001/06/11 09:55:54 $
 
   DEVELOPMENT STATE
 
@@ -40,6 +40,8 @@
 	Constification
 
   NEEDS PATCH
+
+    o  engine_list.c memory leaks in 0.9.7-dev (built-in engines)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
