@@ -353,10 +353,10 @@ end:
 	ERR_remove_state(0);
 
 	EVP_cleanup();
-        ENGINE_cleanup();
-	
 	ERR_free_strings();
 	
+	ENGINE_cleanup();
+
 	apps_shutdown();
 
 	CRYPTO_mem_leaks(bio_err);
