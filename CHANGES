@@ -4,6 +4,13 @@
 
  Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
 
+  *) Bugfix: client side session caching did not work with external caching,
+     because the session->cipher setting was not restored when reloading
+     from the external cache. This problem was masked, when
+     SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG (part of SSL_OP_ALL) was set.
+     (Found by Steve Haslam <steve@araqnid.ddts.net>.)
+     [Lutz Jaenicke]
+
   *) Fix client_certificate (ssl/s2_clnt.c): The permissible total
      length of the REQUEST-CERTIFICATE message is 18 .. 34, not 17 .. 33.
      [Zeev Lieber <zeev-l@yahoo.com>]
