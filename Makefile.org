@@ -368,7 +368,7 @@ do_svr3-shared:
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
 		  for obj in `ar t lib$$i.a` ; do \
-		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+		    OBJS="$${OBJS} `grep /$$obj allobjs`" ; \
 		  done ; \
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
 			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -390,7 +390,7 @@ do_svr5-shared:
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
 		  for obj in `ar t lib$$i.a` ; do \
-		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+		    OBJS="$${OBJS} `grep /$$obj allobjs`" ; \
 		  done ; \
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
 			$${SHARE_FLAG} -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
