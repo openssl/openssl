@@ -60,7 +60,7 @@
 #define HEADER_RAND_H
 
 #include <stdlib.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -71,7 +71,7 @@
 #include <openssl/symhacks.h>
 
 #include <openssl/e_os2.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN

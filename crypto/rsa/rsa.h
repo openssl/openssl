@@ -66,7 +66,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef OPENSSL_NO_RSA
 #error RSA is disabled.

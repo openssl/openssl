@@ -68,7 +68,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
 

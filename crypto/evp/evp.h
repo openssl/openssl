@@ -67,7 +67,7 @@
 # undef OPENSSL_ALGORITHM_DEFINES
 #endif
 
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>

@@ -68,7 +68,7 @@
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/txt_db.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);

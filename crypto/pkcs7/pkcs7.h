@@ -64,7 +64,7 @@
 #include <openssl/e_os2.h>
 
 #include <openssl/symhacks.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -59,7 +59,7 @@
 #ifndef HEADER_ENGINE_H
 #define HEADER_ENGINE_H
 
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
@@ -74,7 +74,6 @@
 #include <openssl/ui.h>
 #include <openssl/symhacks.h>
 #include <openssl/err.h>
-#include <openssl/types.h>
 
 #ifdef  __cplusplus
 extern "C" {

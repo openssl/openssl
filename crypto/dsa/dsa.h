@@ -74,7 +74,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
