@@ -360,7 +360,8 @@ do_solaris-shared:
 		  set -x; ${CC} ${SHARED_LDFLAGS} -G -dy -z text \
 			-o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+			-Wl,-z,allextract lib$$i.a -Wl,-z,defaultextract \
+			$$libs ${EX_LIBS} -lc ) || exit 1; \
 		libs="$$libs -l$$i"; \
 		done; \
 	fi
