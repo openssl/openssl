@@ -14,7 +14,7 @@ require "x86asm.pl";
 $L="edi";
 $R="esi";
 
-&external_label("des_SPtrans");
+&external_label("DES_SPtrans");
 &fcrypt_body("fcrypt_body");
 &asm_finish();
 
@@ -22,7 +22,7 @@ sub fcrypt_body
 	{
 	local($name,$do_ip)=@_;
 
-	&function_begin($name,"EXTRN   _des_SPtrans:DWORD");
+	&function_begin($name,"EXTRN   _DES_SPtrans:DWORD");
 
 	&comment("");
 	&comment("Load the 2 words");
@@ -39,11 +39,11 @@ sub fcrypt_body
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT($i,$L,$R,$i*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i,$L,$R,$i*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 
 		&comment("");
 		&comment("Round ".sprintf("%d",$i+1));
-		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 		}
 	 &mov("ebx",	&swtmp(0));
 	&mov("eax",	$L);

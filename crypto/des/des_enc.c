@@ -62,7 +62,7 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)DES_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -75,7 +75,7 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	IP(r,l);
 	/* Things have been modified so that the initial rotate is
 	 * done outside the loop.  This required the
-	 * des_SPtrans values in sp.h to be rotated 1 bit to the right.
+	 * DES_SPtrans values in sp.h to be rotated 1 bit to the right.
 	 * One perl script later and things have a 5% speed up on a sparc2.
 	 * Thanks to Richard Outerbridge <71755.204@CompuServe.COM>
 	 * for pointing this out. */
@@ -160,7 +160,7 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)DES_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -172,7 +172,7 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 
 	/* Things have been modified so that the initial rotate is
 	 * done outside the loop.  This required the
-	 * des_SPtrans values in sp.h to be rotated 1 bit to the right.
+	 * DES_SPtrans values in sp.h to be rotated 1 bit to the right.
 	 * One perl script later and things have a 5% speed up on a sparc2.
 	 * Thanks to Richard Outerbridge <71755.204@CompuServe.COM>
 	 * for pointing this out. */
