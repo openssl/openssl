@@ -62,7 +62,7 @@ while(<IN>) {
 	next if($inside_block != 1);
 	$new_stackfile .= "/* This block of defines is updated by util/mkstack.pl, please do not touch! */";
 		
-	foreach $type_thing (@stacklst) {
+	foreach $type_thing (sort @stacklst) {
 		$new_stackfile .= <<EOF;
 
 #define sk_${type_thing}_new(st) SKM_sk_new($type_thing, (st))
@@ -86,7 +86,7 @@ while(<IN>) {
 #define sk_${type_thing}_sort(st) SKM_sk_sort($type_thing, (st))
 EOF
 	}
-	foreach $type_thing (@asn1setlst) {
+	foreach $type_thing (sort @asn1setlst) {
 		$new_stackfile .= <<EOF;
 
 #define d2i_ASN1_SET_OF_${type_thing}(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \\
@@ -99,7 +99,7 @@ EOF
 	SKM_ASN1_seq_unpack($type_thing, (buf), (len), (d2i_func), (free_func))
 EOF
 	}
-	foreach $type_thing (@p12stklst) {
+	foreach $type_thing (sort @p12stklst) {
 		$new_stackfile .= <<EOF;
 
 #define PKCS12_decrypt_d2i_${type_thing}(algor, d2i_func, free_func, pass, passlen, oct, seq) \\

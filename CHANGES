@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) mkstack.pl now sorts each macro group into lexical order.
+     Previously the output order depended on the order the files
+     appeared in the directory, resulting in needless rewriting
+     of safestack.h .
+     [Steve Henson]
+
   *) Patches to make OpenSSL compile under Win32 again. Mostly
      work arounds for the VC++ problem that it treats func() as
      func(void). Also stripped out the parts of mkdef.pl that
