@@ -484,6 +484,8 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	BN_clear_free(&f);
 	BN_clear_free(&ret);
+	if (local_blinding)
+		BN_BLINDING_free(blinding);
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
