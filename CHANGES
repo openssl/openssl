@@ -12,6 +12,13 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Give DH, DSA, and RSA types their own "**_up()" function to increment
+     reference counts. This performs normal REF_PRINT/REF_CHECK macros on
+     the operation, and provides a more encapsulated way for external code
+     (crypto/evp/ and ssl/) to do this. Also changed the evp and ssl code
+     to use these functions rather than manually incrementing the counts.
+     [Geoff Thorpe]
+
   *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
      This function was broken, as the check for a new client hello message
      to handle SGC did not allow these large messages.
