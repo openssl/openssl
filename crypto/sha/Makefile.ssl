@@ -104,8 +104,8 @@ clean:
 sha1_one.o: ../../include/openssl/sha.h
 sha1dgst.o: ../../include/openssl/opensslconf.h
 sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
-sha1dgst.o: sha_locl.h
+sha1dgst.o: ../md32_common.h sha_locl.h
 sha_dgst.o: ../../include/openssl/opensslconf.h
 sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
-sha_dgst.o: sha_locl.h
+sha_dgst.o: ../md32_common.h sha_locl.h
 sha_one.o: ../../include/openssl/sha.h

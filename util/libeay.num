@@ -1876,3 +1876,5 @@ NETSCAPE_SPKI_get_pubkey                1900
 NETSCAPE_SPKI_b64_decode                1901
 UTF8_putc                               1902
 UTF8_getc                               1903
+RSA_null_method                         1904
+ASN1_tag2str                            1905

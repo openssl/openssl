@@ -115,6 +115,13 @@ rsa_none.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 rsa_none.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_none.o: ../../include/openssl/rsa.h ../../include/openssl/stack.h
 rsa_none.o: ../cryptlib.h
+rsa_null.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_null.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+rsa_null.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+rsa_null.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+rsa_null.o: ../../include/openssl/rsa.h ../../include/openssl/stack.h
+rsa_null.o: ../cryptlib.h
 rsa_oaep.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_oaep.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_oaep.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h

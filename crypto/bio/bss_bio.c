@@ -400,7 +400,7 @@ static size_t bio_nwrite0(BIO *bio, char **buf)
 
 static size_t bio_nwrite(BIO *bio, char **buf, size_t num)
 	{
-	struct bio_bio_st *b=bio->ptr;
+	struct bio_bio_st *b;
 	size_t space;
 
 	space = bio_nwrite0(bio, buf);
@@ -408,6 +408,8 @@ static size_t bio_nwrite(BIO *bio, char **buf, size_t num)
 		num = space;
 	if (num <= 0)
 		return num;
+	b = bio->ptr;
+	assert(b != NULL);
 	b->len += num;
 	assert(b->len <= b->size);
 

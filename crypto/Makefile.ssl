@@ -126,7 +126,7 @@ lint:
 	done;
 
 depend:
-	if [ ! -e buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
+	if [ ! -f buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
 	$(MAKEDEPEND) $(INCLUDE) $(DEPFLAG) $(PROGS) $(LIBSRC)
 	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
 	@for i in $(SDIRS) ;\
