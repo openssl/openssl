@@ -70,7 +70,7 @@
 /* #define RFILE ".rand" - defined in ../../e_os.h */
 
 int RAND_load_file(file,bytes)
-char *file;
+const char *file;
 long bytes;
 	{
 	MS_STATIC unsigned char buf[BUFSIZE];
@@ -87,7 +87,7 @@ long bytes;
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);
 
-	in=fopen(file,"br");
+	in=fopen(file,"rb");
 	if (in == NULL) goto err;
 	for (;;)
 		{
@@ -107,7 +107,7 @@ err:
 	}
 
 int RAND_write_file(file)
-char *file;
+const char *file;
 	{
 	unsigned char buf[BUFSIZE];
 	int i,ret=0;

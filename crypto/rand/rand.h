@@ -83,8 +83,8 @@ RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
 void RAND_bytes( unsigned char *buf,int num);
 void RAND_seed( unsigned char *buf,int num);
-int  RAND_load_file(char *file,long max_bytes);
-int  RAND_write_file(char *file);
+int  RAND_load_file(const char *file,long max_bytes);
+int  RAND_write_file(const char *file);
 char *RAND_file_name(char *file,int num);
 #ifdef WINDOWS
 void RAND_screen(void);
