@@ -352,7 +352,7 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 	int i;
 
 	if ((ne == NULL) || ((bytes == NULL) && (len != 0))) return(0);
-	if(type & MBSTRING_FLAG) 
+	if((type > 0) && (type & MBSTRING_FLAG)) 
 		return ASN1_STRING_set_by_NID(&ne->value, bytes,
 						len, type,
 					OBJ_obj2nid(ne->object)) ? 1 : 0;
