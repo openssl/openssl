@@ -110,7 +110,7 @@ Content-Length: %d\r\n\r\n";
 	}
 	/* Parse the HTTP response. This will look like this:
 	 * "HTTP/1.0 200 OK". We need to obtain the numeric code and
-         * informational message.
+         * (optional) informational message.
 	 */
 
 	/* Skip to first white space (passed protocol info) */
@@ -138,13 +138,19 @@ Content-Length: %d\r\n\r\n";
 	if(*r) goto err;
 	/* Skip over any leading white space in message */
 	while(*q && isspace((unsigned char)*q))  q++;
-	if(!*q) goto err;
+	if(*q) {
 	/* Finally zap any trailing white space in message (include CRLF) */
 	/* We know q has a non white space character so this is OK */
-	for(r = q + strlen(q) - 1; isspace((unsigned char)*r); r--) *r = 0;
+		for(r = q + strlen(q) - 1; isspace((unsigned char)*r); r--) *r = 0;
+	}
 	if(retcode != 200) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_ERROR);
-		ERR_add_error_data(4, "Code=", p, ",Reason=", q);
+		if(!*q) { 
+			ERR_add_error_data(2, "Code=", p);
+		}
+		else {
+			ERR_add_error_data(4, "Code=", p, ",Reason=", q);
+		}
 		goto err;
 	}
 	/* Find blank line marking beginning of content */	
