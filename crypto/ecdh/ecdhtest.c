@@ -109,7 +109,10 @@ int main(int argc, char *argv[])
 #define MS_CALLBACK
 #endif
 
+#if 0
 static void MS_CALLBACK cb(int p, int n, void *arg);
+#endif
+
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
@@ -272,6 +275,7 @@ err:
 	return(ret);
 	}
 
+#if 0
 static void MS_CALLBACK cb(int p, int n, void *arg)
 	{
 	char c='*';
@@ -286,4 +290,5 @@ static void MS_CALLBACK cb(int p, int n, void *arg)
 	p=n;
 #endif
 	}
+#endif
 #endif
