@@ -61,7 +61,7 @@
 #else
 #define NUMPRIMES 54
 #endif
-static unsigned int primes[NUMPRIMES]=
+static const unsigned int primes[NUMPRIMES]=
 	{
 	   2,   3,   5,   7,  11,  13,  17,  19,
 	  23,  29,  31,  37,  41,  43,  47,  53,

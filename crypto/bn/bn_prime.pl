@@ -104,7 +104,7 @@ printf "#define NUMPRIMES %d\n",$num;
 printf "#else\n";
 printf "#define NUMPRIMES %d\n",$eight;
 printf "#endif\n";
-print "static unsigned int primes[NUMPRIMES]=\n\t{\n\t";
+print "static const unsigned int primes[NUMPRIMES]=\n\t{\n\t";
 $init=0;
 for ($i=0; $i <= $#primes; $i++)
 	{
