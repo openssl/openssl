@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/08 12:56:07 $
+  ______________                           $Date: 1999/03/08 21:56:46 $
 
   DEVELOPMENT STATE
 
@@ -8,6 +8,7 @@
        - No more feature commits, please. 
        - Commit bugfixes and cleanups only, please.
        - Already successfully tested platform:
+	 o  FreeBSD 2.2.7  Ben Laurie            OK
          o  FreeBSD 3.1    Ralf S. Engelschall   all silent
          o  Solaris 2.6    Ralf S. Engelschall   ctype-related warnings, test fails
 
