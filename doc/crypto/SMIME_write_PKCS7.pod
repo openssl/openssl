@@ -14,7 +14,7 @@ SMIME_write_PKCS7() adds the appropriate MIME headers to a PKCS#7
 structure to produce an S/MIME message.
 
 B<out> is the BIO to write the data to. B<p7> is the appropriate
-B<PKCS7> structure. If cleartext signing (B<multipart/signed) is
+B<PKCS7> structure. If cleartext signing (B<multipart/signed>) is
 being used then the signed data must be supplied in the B<data> 
 argument. B<flags> is an optional set of flags.
 
