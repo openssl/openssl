@@ -434,7 +434,17 @@ TODO: bug: pad  x  with leading zeros if necessary
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
+ Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
+
+  *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+     via timing by performing a MAC computation even if incorrrect
+     block cipher padding has been found.  This is a countermeasure
+     against active attacks where the attacker has to distinguish
+     between bad padding and a MAC verification error. (CAN-2003-0078)
+
+     [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
+     Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
+     Martin Vuagnoux (EPFL, Ilion)]
 
   *) Make the no-err option work as intended.  The intention with no-err
      is not to have the whole error stack handling routines removed from
@@ -2324,6 +2334,18 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
+
+ Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
+
+  *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
+     via timing by performing a MAC computation even if incorrrect
+     block cipher padding has been found.  This is a countermeasure
+     against active attacks where the attacker has to distinguish
+     between bad padding and a MAC verification error. (CAN-2003-0078)
+
+     [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
+     Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
+     Martin Vuagnoux (EPFL, Ilion)]
 
  Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
 
