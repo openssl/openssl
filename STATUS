@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/14 11:48:31 $
+  ______________                           $Date: 1999/05/14 11:50:46 $
 
   DEVELOPMENT STATE
 
@@ -72,8 +72,10 @@
     o  broken demos
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
-    o  Compilation warnings: ctype-related int vs. char
-	o  $(PERL) in */Makefile.ssl
+    o  [ Compilation warnings: ctype-related int vs. char ]
+       => now casts (unsigned char), maybe those arrays should have
+          members of that type rather than plain char.
+    o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
     o  dubious declaration of crypt() in des.h
 
