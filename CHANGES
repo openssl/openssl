@@ -77,6 +77,9 @@
  
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Improve diagnostics in file reading and command-line digests.
+     [Ben Laurie aided and abetted by Solar Designer <solar@openwall.com>]
+
   *) Add AES modes CFB and OFB to the object database.  Correct an
      error in AES-CFB decryption.
      [Richard Levitte]
