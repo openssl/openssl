@@ -165,7 +165,7 @@ $   type sys$input:/out=mar:
 	.TRANSFER routine
 	.MASK	routine
 	JMP	routine+2
-	.ENDM TRANSFER_ENTRY
+	.ENDM FTRANSFER_ENTRY
 ;
 ; Place entries in own program section.
 ;
@@ -179,8 +179,8 @@ $   type sys$input:/out=mar:
 ; Allocate extra storage at end of vector to allow for expansion.
 ;
 $   write mar "	.BLKB 32768-<.-",libvec,"_xfer>	; 64 pages total."
-$   libwriter := write_vax_vtransfer_entry
-$   gosub read_func_num
+$!   libwriter := write_vax_vtransfer_entry
+$!   gosub read_func_num
 $   write mar "	.END"
 $   close mar
 $   open/write opt 'libopt'
@@ -202,7 +202,7 @@ $   type sys$input:/out=opt:
 PSECT_ATTR=$CHAR_STRING_CONSTANTS,NOWRT
 $   libwrch   := opt
 $   libwriter := write_vax_psect_attr
-$   gosub read_var_num
+$   gosub read_func_num
 $   close opt
 $   macro/obj='libobj' 'libmar'
 $   link/map='libmap'/full/share='libgoal' 'libopt'/option
@@ -266,6 +266,7 @@ $             falsesum = falsesum + 1
 $         endif
 $         if plat_entry .eqs. "VMS" then truesum = truesum + 1
 $         if plat_entry .eqs. "!VMS" then falsesum = falsesum + 1
+$	  goto loop1
 $       endif
 $     endloop1:
 $!DEBUG!$     if info_platforms - "EXPORT_VAR_AS_FUNCTION" .nes. info_platforms
@@ -285,6 +286,7 @@ $       if alg_entry .nes. ","
 $       then
 $         if alg_entry .eqs. "KRB5" then goto loop ! Special for now
 $         if f$trnlnm("OPENSSL_NO_"+alg_entry) .nes. "" then goto loop
+$	  goto loop2
 $       endif
 $     endloop2:
 $     if info_platforms - "EXPORT_VAR_AS_FUNCTION" .nes. info_platforms
