@@ -686,7 +686,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 		if(nextupd)
 			{
 			BIO_puts(out, "\tNext Update: ");
-			ASN1_GENERALIZEDTIME_print(out, thisupd);
+			ASN1_GENERALIZEDTIME_print(out, nextupd);
 			BIO_puts(out, "\n");
 			}
 
