@@ -1001,7 +1001,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		case 128: enc="AES(128)"; break;
 		case 192: enc="AES(192)"; break;
 		case 256: enc="AES(256)"; break;
-		default: enc="AES(???)"; break;
+		default: enc="AES(??\?)"; break;
 			}
 		break;
 	default:
