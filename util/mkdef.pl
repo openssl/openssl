@@ -214,6 +214,11 @@ sub do_defs
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=1;
 				next;
+			} elsif (/^\#\s*if\s+0/) {
+				# Dummy tag
+				push(@tag,"TRUE");
+				$tag{"TRUE"}=-1;
+				next;
 			} elsif (/^\#/) {
 				next;
 			}
@@ -251,6 +256,7 @@ sub do_defs
 				$funcs{"PEM_read_bio_${1}"} = 1;
 				$funcs{"PEM_write_bio_${1}"} = 1;
 			} elsif ( 
+				($tag{'TRUE'} != -1) &&
 				($tag{'FreeBSD'} != 1) &&
 				($tag{'CONST_STRICT'} != 1) &&
 				(($W32 && ($tag{'WIN16'} != 1)) ||
