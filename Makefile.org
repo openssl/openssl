@@ -749,7 +749,7 @@ install: all install_docs
 					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
-					c=`echo $$i | sed 's/^lib\(.*\)/cyg\1-$(SHLIB_VERSION_NUMBER)/'`; \
+					c=`echo $$i | sed 's/^lib\(.*\)\.dll/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
