@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6i and 0.9.6j  [xx XXX 2003]
+ Changes between 0.9.6i and 0.9.6j  [10 Apr 2003]
 
   *) Countermeasure against the Klima-Pokorny-Rosa extension of
      Bleichbacher's attack on PKCS #1 v1.5 padding: treat
