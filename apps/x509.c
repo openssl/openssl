@@ -479,7 +479,7 @@ bad:
 
 	if (extfile)
 		{
-		long errorline;
+		long errorline = -1;
 		X509V3_CTX ctx2;
 		extconf = NCONF_new(NULL);
 		if (!NCONF_load(extconf, extfile,&errorline))
