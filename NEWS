@@ -8,7 +8,11 @@
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.7:
 
       o New library section OCSP.
-      o Complete haul-over of the ASN.1 library section.
+      o Complete rewrite of ASN1 code.
+      o CRL checking in verify code and openssl utility.
+      o Extension copying in 'ca' utility.
+      o Flexible display options in 'ca' utility.
+      o Provisional support for international characters with UTF8.
       o Support for external crypto devices ('engine') is no longer
         a separate distribution.
 
