@@ -246,6 +246,9 @@ my %misc_table = (
 "VC-NT", 	"96:60:152:40:4212:20:1"
 );
 
+my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
+	BC-16 CygWin32);
+
 my $no_asm=0;
 my $postfix="org";
 my $Makefile="Makefile.ssl";
@@ -321,6 +324,10 @@ if (!defined($table{$target}))
 	&bad_target;
 	exit(1);
 	}
+
+my $IsWindows=scalar grep /^$target$/,@WinTargets;
+
+print "IsWindows=$IsWindows\n";
 
 (my $cc,my $cflags,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
  $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
@@ -669,7 +676,7 @@ print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
 print "BF_PTR used\n" if $bf_ptr == 1; 
 print "BF_PTR2 used\n" if $bf_ptr == 2; 
 
-system 'make links';
+system 'make links' if !$IsWindows;
 
 exit(0);
 

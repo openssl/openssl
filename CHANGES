@@ -11,7 +11,7 @@
   *) Add config entry for Linux on MIPS.
      [John Tobey <jtobey@channel1.com>]
 
-  *) Make links whenever Configure is run.
+  *) Make links whenever Configure is run, unless we are on Windoze.
      [Ben Laurie]
 
   *) Permit extensions to be added to CRLs using crl_section in openssl.cnf.
