@@ -120,6 +120,7 @@
 #include <sys/times.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 
 int RAND_poll(void)
 {
