@@ -179,7 +179,7 @@ extern "C" {
 #define BIO_retry_type(a)		((a)->flags & BIO_FLAGS_RWS)
 #define BIO_should_retry(a)		((a)->flags & BIO_FLAGS_SHOULD_RETRY)
 
-/* The next two are used in conjunction with the
+/* The next three are used in conjunction with the
  * BIO_should_io_special() condition.  After this returns true,
  * BIO *BIO_get_retry_BIO(BIO *bio, int *reason); will walk the BIO 
  * stack and return the 'reason' for the special and the offending BIO.
@@ -188,6 +188,8 @@ extern "C" {
 #define BIO_RR_SSL_X509_LOOKUP		0x01
 /* Returned from the connect BIO when a connect would have blocked */
 #define BIO_RR_CONNECT			0x02
+/* Returned from the accept BIO when an accept would have blocked */
+#define BIO_RR_ACCEPT			0x03
 
 /* These are passed by the BIO callback */
 #define BIO_CB_FREE	0x01

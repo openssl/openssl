@@ -626,10 +626,13 @@ connection defined in the B<SSL> structure.
 L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>,
 L<SSL_accept(3)|SSL_accept(3)>, L<SSL_clear(3)|SSL_clear(3)>,
 L<SSL_connect(3)|SSL_connect(3)>,
+L<SSL_CIPHER_get_name(3)|SSL_CIPHER_get_name(3)>,
+L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>,
+L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
 L<SSL_get_ciphers(3)|SSL_get_ciphers(3)>,
 L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_get_fd(3)|SSL_get_fd(3)>,

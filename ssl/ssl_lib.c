@@ -1543,6 +1543,8 @@ int SSL_get_error(SSL *s,int i)
 			reason=BIO_get_retry_reason(bio);
 			if (reason == BIO_RR_CONNECT)
 				return(SSL_ERROR_WANT_CONNECT);
+			else if (reason == BIO_RR_ACCEPT)
+				return(SSL_ERROR_WANT_ACCEPT);
 			else
 				return(SSL_ERROR_SYSCALL); /* unknown */
 			}
@@ -1561,6 +1563,8 @@ int SSL_get_error(SSL *s,int i)
 			reason=BIO_get_retry_reason(bio);
 			if (reason == BIO_RR_CONNECT)
 				return(SSL_ERROR_WANT_CONNECT);
+			else if (reason == BIO_RR_ACCEPT)
+				return(SSL_ERROR_WANT_ACCEPT);
 			else
 				return(SSL_ERROR_SYSCALL);
 			}

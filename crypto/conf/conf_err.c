@@ -87,6 +87,8 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 {CONF_R_MISSING_EQUAL_SIGN               ,"missing equal sign"},
 {CONF_R_NO_CLOSE_BRACE                   ,"no close brace"},
 {CONF_R_NO_CONF                          ,"no conf"},
+{CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE  ,"no conf or environment variable"},
+{CONF_R_NO_SECTION                       ,"no section"},
 {CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
 {CONF_R_VARIABLE_HAS_NO_VALUE            ,"variable has no value"},
 {0,NULL}

@@ -206,6 +206,10 @@ static int ssl_read(BIO *b, char *out, int outl)
 		BIO_set_retry_special(b);
 		retry_reason=BIO_RR_SSL_X509_LOOKUP;
 		break;
+	case SSL_ERROR_WANT_ACCEPT:
+		BIO_set_retry_special(b);
+		retry_reason=BIO_RR_ACCEPT;
+		break;
 	case SSL_ERROR_WANT_CONNECT:
 		BIO_set_retry_special(b);
 		retry_reason=BIO_RR_CONNECT;

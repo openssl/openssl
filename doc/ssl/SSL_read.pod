@@ -61,7 +61,7 @@ The read operation was not successful, probably because no data was
 available. Call SSL_get_error() with the return value B<ret> to find out,
 whether an error occurred.
 
-=item -1
+=item E<lt>0
 
 The read operation was not successful, because either an error occurred
 or action must be taken by the calling process. Call SSL_get_error() with the

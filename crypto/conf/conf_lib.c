@@ -299,27 +299,46 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section)
 		return NULL;
 		}
 
+	if (section == NULL)
+		{
+		CONFerr(CONF_F_NCONF_GET_SECTION,CONF_R_NO_SECTION);
+		return NULL;
+		}
+
 	return _CONF_get_section_values(conf, section);
 	}
 
 char *NCONF_get_string(CONF *conf,char *group,char *name)
 	{
+	char *s = _CONF_get_string(conf, group, name);
+
+        /* Since we may get a value from an environment variable even
+           if conf is NULL, let's check the value first */
+        if (s) return s;
+
 	if (conf == NULL)
 		{
-		CONFerr(CONF_F_NCONF_GET_STRING,CONF_R_NO_CONF);
+		CONFerr(CONF_F_NCONF_GET_STRING,
+                        CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return NULL;
 		}
 
-	return _CONF_get_string(conf, group, name);
 	}
 
 long NCONF_get_number(CONF *conf,char *group,char *name)
 	{
+#if 0 /* As with _CONF_get_string(), we rely on the possibility of finding
+         an environment variable with a suitable name.  Unfortunately, there's
+         no way with the current API to see if we found one or not...
+         The meaning of this is that if a number is not found anywhere, it
+         will always default to 0. */
 	if (conf == NULL)
 		{
-		CONFerr(CONF_F_NCONF_GET_NUMBER,CONF_R_NO_CONF);
+		CONFerr(CONF_F_NCONF_GET_NUMBER,
+                        CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return 0;
 		}
+#endif
 	
 	return _CONF_get_number(conf, group, name);
 	}

@@ -92,7 +92,7 @@ BIO_do_accept() serves two functions. When it is first
 called, after the accept BIO has been setup, it will attempt
 to create the accept socket and bind an address to it. Second
 and subsequent calls to BIO_do_accept() will await an incoming
-connection.
+connection, or request a retry in non blocking mode.
 
 =head1 NOTES
 
@@ -129,6 +129,13 @@ perform I/O using the accept BIO itself. This is often undesirable
 however because the accept BIO will still accept additional incoming
 connections. This can be resolved by using BIO_pop() (see above)
 and freeing up the accept BIO after the initial connection.
+
+If the underlying accept socket is non blocking and BIO_do_accept() is
+called to await an incoming connection it is possible for
+BIO_should_io_special() with the reason BIO_RR_ACCEPT. If this happens
+then it is an indication that an accept attempt would block: the application
+should take appropriate action to wait until the underlying socket has
+accepted a connection and retry the call.
 
 =head1 RETURN VALUES
 

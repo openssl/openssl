@@ -236,8 +236,20 @@ again:
 			c->state=ACPT_S_OK;
 			goto again;
 			}
+		BIO_clear_retry_flags(b);
+		b->retry_reason=0;
 		i=BIO_accept(c->accept_sock,&(c->addr));
+
+		/* -2 return means we should retry */
+		if(i == -2)
+			{
+			BIO_set_retry_special(b);
+			b->retry_reason=BIO_RR_ACCEPT;
+			return -1;
+			}
+
 		if (i < 0) return(i);
+
 		bio=BIO_new_socket(i,BIO_CLOSE);
 		if (bio == NULL) goto err;
 
