@@ -179,8 +179,8 @@ union {
 } GENERAL_NAME;
 
 typedef struct ACCESS_DESCRIPTION_st {
-ASN1_OBJECT *method;
-GENERAL_NAME *location;
+	ASN1_OBJECT *method;
+	GENERAL_NAME *location;
 } ACCESS_DESCRIPTION;
 
 DECLARE_STACK_OF(GENERAL_NAME)
