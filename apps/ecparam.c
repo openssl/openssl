@@ -352,19 +352,33 @@ bad:
 
 	if (list_curves)
 		{
-		int counter=0;
+		EC_builtin_curve *curves = NULL;
+		size_t crv_len = 0;
+		size_t n = 0;
+		size_t len;
 
-		for (;;)
+		crv_len = EC_get_builtin_curves(NULL, 0);
+
+		curves = OPENSSL_malloc(sizeof(EC_builtin_curve) * crv_len);
+
+		if (curves == NULL)
+			goto end;
+
+		if (!EC_get_builtin_curves(curves, crv_len))
+			{
+			OPENSSL_free(curves);
+			goto end;
+			}
+
+		
+		for (n = 0; n < crv_len; n++)
 			{
 			const char *comment;
 			const char *sname;
-			int len, nid = ec_group_index2nid(counter++);
-			if (!nid)
-				break;
-			comment = EC_GROUP_get0_comment(nid);
-			sname   = OBJ_nid2sn(nid);
+			comment = curves[n].comment;
+			sname   = OBJ_nid2sn(curves[n].nid);
 			if (comment == NULL)
-				comment = "";
+				comment = "CURVE DESCRIPTION NOT AVAILABLE";
 			if (sname == NULL)
 				sname = "";
 
@@ -375,6 +389,7 @@ bad:
 				BIO_printf(out, "%s\n", comment);
 			} 
 
+		OPENSSL_free(curves);
 		ret = 0;
 		goto end;
 		}

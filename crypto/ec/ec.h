@@ -184,12 +184,16 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM
 
 /* EC_GROUP_new_by_nid() creates a EC_GROUP structure specified by a NID */
 EC_GROUP *EC_GROUP_new_by_nid(int nid);
-/* EC_GROUP_get0_comment() returns a pointer to the 'comment' field of 
- * ec_curve_data_st structure */
-const char *EC_GROUP_get0_comment(int nid);
-/* internal function : ec_group_index2nid() returns the NID of curve
- * with the given index i from the internal curve list */
-int ec_group_index2nid(int i);
+/* handling of internal curves */
+typedef struct { 
+	int nid;
+	const char *comment;
+	} EC_builtin_curve;
+/* EC_builtin_curves(EC_builtin_curve *r, size_t size) returns number 
+ * of all available curves or zero if a error occurred. 
+ * In case r ist not zero nitems EC_builtin_curve structures 
+ * are filled with the data of the first nitems internal groups */
+size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 
 
 /* EC_POINT functions */

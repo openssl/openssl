@@ -1207,19 +1207,20 @@ EC_GROUP *EC_GROUP_new_by_nid(int nid)
 	return ret;
 	}
 
-const char *EC_GROUP_get0_comment(int nid)
+size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 	{
-	size_t i;
+	size_t	i, min;
 
-	for (i=0; i<curve_list_length; i++)
-		if (curve_list[i].nid == nid)
-			return curve_list[i].data->comment;
-	return NULL;
-	}
+	if (r == NULL || nitems == 0)
+		return curve_list_length;
 
-int ec_group_index2nid(int i)
-	{
-	if (i >= curve_list_length || i < 0)
-		return 0;
-	return curve_list[i].nid;
+	min = nitems < curve_list_length ? nitems : curve_list_length;
+
+	for (i = 0; i < min; i++)
+		{
+		r[i].nid = curve_list[i].nid;
+		r[i].comment = curve_list[i].data->comment;
+		}
+
+	return curve_list_length;
 	}
