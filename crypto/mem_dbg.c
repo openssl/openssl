@@ -753,14 +753,14 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 /* NB: The prototypes have been typedef'd to CRYPTO_MEM_LEAK_CB inside crypto.h
  * If this code is restructured, remove the callback type if it is no longer
  * needed. -- Geoff Thorpe */
-static void cb_leak(MEM *m, CRYPTO_MEM_LEAK_CB *cb)
+static void cb_leak(MEM *m, CRYPTO_MEM_LEAK_CB **cb)
 	{
 	(**cb)(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, MEM *, CRYPTO_MEM_LEAK_CB *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, MEM *, CRYPTO_MEM_LEAK_CB **)
 
-void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB cb)
+void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
