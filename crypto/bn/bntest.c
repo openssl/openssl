@@ -165,68 +165,68 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_add");
 	if (!test_add(out)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_sub");
 	if (!test_sub(out)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_lshift1");
 	if (!test_lshift1(out)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_lshift (fixed)");
 	if (!test_lshift(out,ctx,BN_bin2bn(lst,sizeof(lst)-1,NULL)))
 	    goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_lshift");
 	if (!test_lshift(out,ctx,NULL)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_rshift1");
 	if (!test_rshift1(out)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_rshift");
 	if (!test_rshift(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_sqr");
 	if (!test_sqr(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_mul");
 	if (!test_mul(out)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_div");
 	if (!test_div(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_div_recp");
 	if (!test_div_recp(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_mod");
 	if (!test_mod(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_mod_mul");
 	if (!test_mod_mul(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_mont");
 	if (!test_mont(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_mod_exp");
 	if (!test_mod_exp(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	message(out,"BN_exp");
 	if (!test_exp(out,ctx)) goto err;
-	fflush(stdout);
+	BIO_flush(out);
 
 	BN_CTX_free(ctx);
 	BIO_free(out);
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 	exit(0);
 err:
 	BIO_puts(out,"1\n"); /* make sure bc fails if we are piping to it */
-	fflush(stdout);
+	BIO_flush(out);
 	ERR_load_crypto_strings();
 	ERR_print_errors_fp(stderr);
 	exit(1);
