@@ -54,6 +54,11 @@ The options descriptions will be divided into each purpose.
 
 specifies the configuration file to use.
 
+=item B<-name section>
+
+specifies the configuration file section to use (overrides
+B<default_ca> in the B<ca> section).
+
 =item B<-in filename>
 
 an input filename containing a single certificate request to be
@@ -202,8 +207,20 @@ that some software (for example Netscape) can't handle V2 CRLs.
 
 =head1 CONFIGURATION FILE OPTIONS
 
-The options for B<ca> are contained in the B<ca> section of the
-configuration file. Many of these are identical to command line
+The section of the configuration file containing options for B<ca>
+is found as follows: If the B<-name> command line option is used,
+then it names the section to be used. Otherwise the section to
+be used must be named in the B<default_ca> option of the B<ca> section
+of the configuration file (or in the default section of the
+configuration file). Besides B<default_ca>, the following options are
+read directly from the B<ca> section:
+ RANDFILE
+ preserve
+ msie_hack
+With the exception of B<RANDFILE>, this is probably a bug and may
+change in future releases.
+
+Many of the configuration file options are identical to command line
 options. Where the option is present in the configuration file
 and the command line the command line value is used. Where an
 option is described as mandatory then it must be present in
