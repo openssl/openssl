@@ -660,7 +660,13 @@ loop:
 
 			/* Add extensions */
 			if(extensions && !X509V3_EXT_add_conf(req_conf, 
-				 	&ext_ctx, extensions, x509ss)) goto end;
+				 	&ext_ctx, extensions, x509ss))
+			    {
+			    BIO_printf(bio_err,
+				       "Error Loading extension section %s\n",
+				       extensions);
+			    goto end;
+			    }
 
 			if (!(i=X509_sign(x509ss,pkey,digest)))
 				goto end;
