@@ -700,7 +700,7 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 	if (p12 == NULL)
 		{
 		BIO_printf(err, "Error loading PKCS12 file for %s\n", desc);	
-		goto err;
+		goto die;
 		}
 	/* See if an empty password will do */
 	if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0))
@@ -714,7 +714,7 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 			{
 			BIO_printf(err, "Passpharse callback error for %s\n",
 					desc);
-			goto err;
+			goto die;
 			}
 		if (len < PEM_BUFSIZE)
 			tpass[len] = 0;
@@ -722,12 +722,12 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 			{
 			BIO_printf(err,
 	"Mac verify error (wrong password?) in PKCS12 file for %s\n", desc);	
-			goto err;
+			goto die;
 			}
 		pass = tpass;
 		}
 	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
-	err:
+	die:
 	if (p12)
 		PKCS12_free(p12);
 	return ret;
