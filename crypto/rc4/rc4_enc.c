@@ -77,6 +77,10 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
         x=key->x;     
         y=key->y;     
         d=key->data; 
+#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+	/* see crypto/rc4/asm/rc4-ia64.S for further details... */
+	d=(RC4_INT *)(((size_t)(d+255))&~(sizeof(key->data)-1));
+#endif
 
 #if defined(RC4_CHUNK)
 	/*
