@@ -136,7 +136,7 @@ case SSL3_ST_CW_CERT_D:		str="SSLv3 write client certificate D"; break;
 case SSL3_ST_CW_KEY_EXCH_A:	str="SSLv3 write client key exchange A"; break;
 case SSL3_ST_CW_KEY_EXCH_B:	str="SSLv3 write client key exchange B"; break;
 case SSL3_ST_CW_CERT_VRFY_A:	str="SSLv3 write certificate verify A"; break;
-case SSL3_ST_CW_CERT_VRFY_B:	str="SSLv3 write certificate verify A"; break;
+case SSL3_ST_CW_CERT_VRFY_B:	str="SSLv3 write certificate verify B"; break;
 
 case SSL3_ST_CW_CHANGE_A:
 case SSL3_ST_SW_CHANGE_A:	str="SSLv3 write change cipher spec A"; break;
@@ -145,7 +145,7 @@ case SSL3_ST_SW_CHANGE_B:	str="SSLv3 write change cipher spec B"; break;
 case SSL3_ST_CW_FINISHED_A:	
 case SSL3_ST_SW_FINISHED_A:	str="SSLv3 write finished A"; break;
 case SSL3_ST_CW_FINISHED_B:	
-case SSL3_ST_SW_FINISHED_B:	str="SSLv3 write finished A"; break;
+case SSL3_ST_SW_FINISHED_B:	str="SSLv3 write finished B"; break;
 case SSL3_ST_CR_CHANGE_A:	
 case SSL3_ST_SR_CHANGE_A:	str="SSLv3 read change cipher spec A"; break;
 case SSL3_ST_CR_CHANGE_B:	
