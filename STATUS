@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/11/21 22:39:25 $
+  ______________                           $Date: 2002/12/05 21:51:57 $
 
   DEVELOPMENT STATE
 
@@ -9,6 +9,7 @@
     o  OpenSSL 0.9.7-beta3: Released on July 30th, 2002
     o  OpenSSL 0.9.7-beta2: Released on June 16th, 2002
     o  OpenSSL 0.9.7-beta1: Released on June  1st, 2002
+    o  OpenSSL 0.9.6h: Released on December   5th, 2002
     o  OpenSSL 0.9.6g: Released on August     9th, 2002
     o  OpenSSL 0.9.6f: Released on August     8th, 2002
     o  OpenSSL 0.9.6e: Released on July      30th, 2002
