@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add support for the Compaq Atalla crypto accelerator. If it is installed,
+     the support is automatically enabled. The resulting binaries will
+     autodetect the card and use it if present.
+     [Ben Laurie and Compaq Inc.]
+
   *) Work around for Netscape hang bug. This sends certificate request
      and server done in one record. Since this is perfectly legal in the
      SSL/TLS protocol it isn't a "bug" option and is on by default. See
