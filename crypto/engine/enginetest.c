@@ -64,7 +64,8 @@
 # define _XOPEN_SOURCE_EXTENDED
 #endif
 #ifdef OPENSSL_SYS_UNIX
-# define __USE_XOPEN_EXTENDED	/* For Linux and probably anything GNU */
+# define _XOPEN_SOURCE
+# define _XOPEN_SOURCE_EXTENDED	/* For Linux and probably anything GNU */
 #endif
 #include <string.h>
 #include <openssl/engine.h>
