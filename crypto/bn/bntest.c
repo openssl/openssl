@@ -925,7 +925,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		/* r := a^t mod b */
 		b->neg=0;
 		
-		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err; /* XXX should be BN_mod_exp_recp, but ..._recp triggers a bug that must be fixed */
+		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err;
 		b->neg=1;
 
 		if (BN_is_word(r, 1))
