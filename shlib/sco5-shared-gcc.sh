@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 
 major="0"
 minor="9.7b"
@@ -9,8 +9,8 @@ sh_slib=$slib.so.$major.$minor
 clib=libcrypto
 sh_clib=$clib.so.$major.$minor
 
-FLAGS="-O -DFILIO_H -Kalloca -Kthread"
-SHFLAGS="-Kpic -DPIC"
+FLAGS="-O3 -fomit-frame-pointer"
+SHFLAGS="-DPIC -fPIC"
 
 touch $sh_clib
 touch $sh_slib
@@ -24,7 +24,7 @@ do
 done
 
 echo linking $clib.so
-cc -G -o $sh_clib -h $sh_clib $OBJS -lnsl -lsocket
+gcc -G -o $sh_clib -h $sh_clib $OBJS -lnsl -lsocket
 
 rm -f $clib.so
 ln -s $sh_clib $clib.so
@@ -37,7 +37,7 @@ do
 done
 
 echo linking $slib.so
-cc -G -o $sh_slib -h $sh_slib $OBJS -L. -lcrypto
+gcc -G -o $sh_slib -h $sh_slib $OBJS -L. -lcrypto
 
 rm -f $slib.so
 ln -s $sh_slib $slib.so
