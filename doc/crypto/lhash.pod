@@ -47,7 +47,7 @@ per-variable casts before calling the type-specific callbacks written
 by the application author. These macros are defined as;
 
  #define DECLARE_LHASH_HASH_FN(f_name,o_type) \
-         unsigned long f_name##_LHASH_HASH(void *)
+         unsigned long f_name##_LHASH_HASH(void *);
  #define IMPLEMENT_LHASH_HASH_FN(f_name,o_type) \
          unsigned long f_name##_LHASH_HASH(void *arg) { \
                  o_type a = (o_type)arg; \
@@ -55,7 +55,7 @@ by the application author. These macros are defined as;
  #define LHASH_HASH_FN(f_name) f_name##_LHASH_HASH
 
  #define DECLARE_LHASH_COMP_FN(f_name,o_type) \
-         int f_name##_LHASH_COMP(void *, void *)
+         int f_name##_LHASH_COMP(void *, void *);
  #define IMPLEMENT_LHASH_COMP_FN(f_name,o_type) \
          int f_name##_LHASH_COMP(void *arg1, void *arg2) { \
                  o_type a = (o_type)arg1; \
