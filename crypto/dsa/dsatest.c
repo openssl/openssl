@@ -202,6 +202,7 @@ end:
 	if (!ret)
 		ERR_print_errors(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
+	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)

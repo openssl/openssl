@@ -619,6 +619,7 @@ int main(int argc, char *argv[])
 	if (P_521) EC_GROUP_free(P_521);
 
 	ENGINE_cleanup();
+	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_state(0);
 	CRYPTO_mem_leaks_fp(stderr);

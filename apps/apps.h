@@ -140,7 +140,7 @@ extern BIO *bio_err;
 		ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
 #  endif
 #  define apps_shutdown() \
-		destroy_ui_method()
+		do { destroy_ui_method(); CRYPTO_cleanup_all_ex_data(); } while(0)
 #endif
 
 typedef struct args_st

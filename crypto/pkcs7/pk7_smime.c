@@ -201,11 +201,20 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	if (!(flags & PKCS7_NOVERIFY)) for (k = 0; k < sk_X509_num(signers); k++) {
 		signer = sk_X509_value (signers, k);
 		if (!(flags & PKCS7_NOCHAIN)) {
-			X509_STORE_CTX_init(&cert_ctx, store, signer,
-							p7->d.sign->cert);
+			if(!X509_STORE_CTX_init(&cert_ctx, store, signer,
+							p7->d.sign->cert))
+				{
+				PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_X509_LIB);
+				sk_X509_free(signers);
+				return 0;
+				}
 			X509_STORE_CTX_set_purpose(&cert_ctx,
 						X509_PURPOSE_SMIME_SIGN);
-		} else X509_STORE_CTX_init (&cert_ctx, store, signer, NULL);
+		} else if(!X509_STORE_CTX_init (&cert_ctx, store, signer, NULL)) {
+			PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_X509_LIB);
+			sk_X509_free(signers);
+			return 0;
+		}
 		i = X509_verify_cert(&cert_ctx);
 		if (i <= 0) j = X509_STORE_CTX_get_error(&cert_ctx);
 		X509_STORE_CTX_cleanup(&cert_ctx);

@@ -714,6 +714,7 @@ end:
 	free_tmp_rsa();
 #endif
 	ENGINE_cleanup();
+	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_state(0);
 	EVP_cleanup();

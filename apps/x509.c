@@ -1128,7 +1128,11 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	EVP_PKEY_copy_parameters(upkey,pkey);
 	EVP_PKEY_free(upkey);
 
-	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
+	if(!X509_STORE_CTX_init(&xsc,ctx,x,NULL))
+		{
+		BIO_printf(bio_err,"Error initialising X509 store\n");
+		goto end;
+		}
 	if (sno) bs = sno;
 	else if (!(bs = load_serial(CAfile, serialfile, create)))
 		goto end;

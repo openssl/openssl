@@ -62,8 +62,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_meth=NULL;
-
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
 	X509_LOOKUP *ret;
@@ -202,7 +200,7 @@ X509_STORE *X509_STORE_new(void)
 	ret->cert_crl = 0;
 	ret->cleanup = 0;
 
-	memset(&ret->ex_data,0,sizeof(CRYPTO_EX_DATA));
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data);
 	ret->references=1;
 	ret->depth=0;
 	return ret;
@@ -245,7 +243,7 @@ void X509_STORE_free(X509_STORE *vfy)
 	sk_X509_LOOKUP_free(sk);
 	sk_X509_OBJECT_pop_free(vfy->objs, cleanup);
 
-	CRYPTO_free_ex_data(x509_store_meth,vfy,&vfy->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
 	OPENSSL_free(vfy);
 	}
 

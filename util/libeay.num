@@ -2653,3 +2653,7 @@ ENGINE_cipher_num                       3101	EXIST::FUNCTION:
 DH_up                                   3102	EXIST::FUNCTION:DH
 RSA_up                                  3103	EXIST::FUNCTION:RSA
 EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
+CRYPTO_cleanup_all_ex_data              3105	EXIST::FUNCTION:
+CRYPTO_set_ex_data_implementation       3106	EXIST::FUNCTION:
+CRYPTO_ex_data_new_class                3107	EXIST::FUNCTION:
+CRYPTO_get_ex_data_implementation       3108	EXIST::FUNCTION:

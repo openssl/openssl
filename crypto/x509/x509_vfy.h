@@ -332,7 +332,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void);
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
-void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
 			 X509 *x509, STACK_OF(X509) *chain);
 void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);

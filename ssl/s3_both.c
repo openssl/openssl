@@ -272,7 +272,11 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 		}
 	if (x != NULL)
 		{
-		X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL);
+		if(!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL))
+			{
+			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
+			return(0);
+			}
 
 		for (;;)
 			{

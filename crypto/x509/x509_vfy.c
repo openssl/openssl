@@ -80,9 +80,6 @@ static int check_cert(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_ctx_method=NULL;
-static int x509_store_ctx_num=0;
-
 
 static int null_callback(int ok, X509_STORE_CTX *e)
 	{
@@ -891,14 +888,9 @@ int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_fu
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
 	/* This function is (usually) called only once, by
-	 * SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c).
-	 * That function uses locking, so we don't (usually)
-	 * have to worry about locking here. For the whole cruel
-	 * truth, see crypto/ex_data.c */
-	if(CRYPTO_get_ex_new_index(x509_store_ctx_num, &x509_store_ctx_method,
-			argl, argp, new_func, dup_func, free_func) < 0)
-		return -1;
-	return (x509_store_ctx_num++);
+	 * SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c). */
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, argl, argp,
+			new_func, dup_func, free_func);
 	}
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
@@ -1032,7 +1024,12 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
 	X509_STORE_CTX *ctx;
 	ctx = (X509_STORE_CTX *)OPENSSL_malloc(sizeof(X509_STORE_CTX));
-	if (ctx) memset(ctx, 0, sizeof(X509_STORE_CTX));
+	if (!ctx)
+		{
+		X509err(X509_F_X509_STORE_CTX_NEW,ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
+	memset(ctx, 0, sizeof(X509_STORE_CTX));
 	return ctx;
 }
 
@@ -1042,7 +1039,7 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 	OPENSSL_free(ctx);
 }
 
-void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	     STACK_OF(X509) *chain)
 	{
 	ctx->ctx=store;
@@ -1111,7 +1108,18 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
 	ctx->cleanup = store->cleanup;
 
-	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));
+	/* This memset() can't make any sense anyway, so it's removed. As
+	 * X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we put a
+	 * corresponding "new" here and remove this bogus initialisation. */
+	/* memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA)); */
+	if(!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
+				&(ctx->ex_data)))
+		{
+		OPENSSL_free(ctx);
+		X509err(X509_F_X509_STORE_CTX_INIT,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	return 1;
 	}
 
 /* Set alternative lookup method: just a STACK of trusted certificates.
@@ -1132,7 +1140,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 		sk_X509_pop_free(ctx->chain,X509_free);
 		ctx->chain=NULL;
 		}
-	CRYPTO_free_ex_data(x509_store_ctx_method,ctx,&(ctx->ex_data));
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &(ctx->ex_data));
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	}
 

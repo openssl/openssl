@@ -67,8 +67,6 @@
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
 static const RSA_METHOD *default_RSA_meth=NULL;
-static int rsa_meth_num=0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *rsa_meth=NULL;
 
 RSA *RSA_new(void)
 	{
@@ -198,10 +196,10 @@ RSA *RSA_new_method(ENGINE *engine)
 	ret->blinding=NULL;
 	ret->bignum_data=NULL;
 	ret->flags=meth->flags;
-	CRYPTO_new_ex_data(rsa_meth,ret,&ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
-		CRYPTO_free_ex_data(rsa_meth, ret, &ret->ex_data);
+		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
@@ -233,7 +231,7 @@ void RSA_free(RSA *r)
 		meth->finish(r);
 	ENGINE_finish(r->engine);
 
-	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
 
 	if (r->n != NULL) BN_clear_free(r->n);
 	if (r->e != NULL) BN_clear_free(r->e);
@@ -267,10 +265,8 @@ int RSA_up(RSA *r)
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	if(CRYPTO_get_ex_new_index(rsa_meth_num, &rsa_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (rsa_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RSA, argl, argp,
+				new_func, dup_func, free_func);
         }
 
 int RSA_set_ex_data(RSA *r, int idx, void *arg)

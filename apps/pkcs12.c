@@ -810,6 +810,9 @@ int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 	STACK_OF(X509) *chn;
 	int i;
 
+	/* FIXME: Should really check the return status of X509_STORE_CTX_init
+	 * for an error, but how that fits into the return value of this
+	 * function is less obvious. */
 	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
 	if (X509_verify_cert(&store_ctx) <= 0) {
 		i = X509_STORE_CTX_get_error (&store_ctx);

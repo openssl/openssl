@@ -101,10 +101,16 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		}
 	if (!(flags & OCSP_NOVERIFY))
 		{
+		int init_res;
 		if(flags & OCSP_NOCHAIN)
-			X509_STORE_CTX_init(&ctx, st, signer, NULL);
+			init_res = X509_STORE_CTX_init(&ctx, st, signer, NULL);
 		else
-			X509_STORE_CTX_init(&ctx, st, signer, bs->certs);
+			init_res = X509_STORE_CTX_init(&ctx, st, signer, bs->certs);
+		if(!init_res)
+			{
+			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,ERR_R_X509_LIB);
+			goto end;
+			}
 
 		X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
 		ret = X509_verify_cert(&ctx);
@@ -389,10 +395,17 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *st
 		}
 	if (!(flags & OCSP_NOVERIFY))
 		{
+		int init_res;
 		if(flags & OCSP_NOCHAIN)
-			X509_STORE_CTX_init(&ctx, store, signer, NULL);
+			init_res = X509_STORE_CTX_init(&ctx, store, signer, NULL);
 		else
-			X509_STORE_CTX_init(&ctx, store, signer, req->optionalSignature->certs);
+			init_res = X509_STORE_CTX_init(&ctx, store, signer,
+					req->optionalSignature->certs);
+		if(!init_res)
+			{
+			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,ERR_R_X509_LIB);
+			return 0;
+			}
 
 		X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
 		X509_STORE_CTX_set_trust(&ctx, X509_TRUST_OCSP_REQUEST);

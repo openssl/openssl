@@ -307,6 +307,7 @@ int main(int argc, char *argv[])
 	RSA_free(key);
 	}
 
+    CRYPTO_cleanup_all_ex_data();
     ERR_remove_state(0);
 
     CRYPTO_mem_leaks_fp(stdout);

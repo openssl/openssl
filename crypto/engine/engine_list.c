@@ -61,14 +61,6 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-/* Weird "ex_data" handling. Some have suggested there's some problems with the
- * CRYPTO_EX_DATA code (or model), but for now I'm implementing it exactly as
- * it's done in crypto/rsa/. That way the usage and documentation of that can be
- * used to assist here, and any changes or fixes made there should similarly map
- * over here quite straightforwardly. */
-static int engine_ex_data_num = 0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *engine_ex_data_stack = NULL;
-
 /* The linked-list of pointers to engine types. engine_list_head
  * incorporates an implicit structural reference but engine_list_tail
  * does not - the latter is a computational niceity and only points
@@ -85,7 +77,7 @@ static ENGINE *engine_list_tail = NULL;
  * is needed because the engine list may genuinely become empty during
  * use (so we can't use engine_list_head as an indicator for example. */
 static int engine_list_flag = 0;
-static int ENGINE_free_nolock(ENGINE *e);
+static int ENGINE_free_util(ENGINE *e, int locked);
 
 /* These static functions starting with a lower case "engine_" always
  * take place when CRYPTO_LOCK_ENGINE has been locked up. */
@@ -177,7 +169,7 @@ static int engine_list_remove(ENGINE *e)
 		engine_list_head = e->next;
 	if(engine_list_tail == e)
 		engine_list_tail = e->prev;
-	ENGINE_free_nolock(e);
+	ENGINE_free_util(e, 0);
 	return 1;
 	}
 
@@ -199,7 +191,7 @@ static int engine_internal_check(void)
 		toret = 0;
 	else
 		engine_list_flag = 1;
-	ENGINE_free_nolock(def_engine);
+	ENGINE_free_util(def_engine, 0);
 	return 1;
 	}
 
@@ -393,11 +385,11 @@ ENGINE *ENGINE_new(void)
 	memset(ret, 0, sizeof(ENGINE));
 	ret->struct_ref = 1;
 	engine_ref_debug(ret, 0, 1)
-	CRYPTO_new_ex_data(engine_ex_data_stack, ret, &ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
 	return ret;
 	}
 
-int ENGINE_free(ENGINE *e)
+static int ENGINE_free_util(ENGINE *e, int locked)
 	{
 	int i;
 
@@ -407,7 +399,10 @@ int ENGINE_free(ENGINE *e)
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
+	if(locked)
+		i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
+	else
+		i = --e->struct_ref;
 	engine_ref_debug(e, 0, -1)
 	if (i > 0) return 1;
 #ifdef REF_CHECK
@@ -418,44 +413,21 @@ int ENGINE_free(ENGINE *e)
 		}
 #endif
 	sk_ENGINE_EVP_CIPHER_pop_free(e->ciphers,ENGINE_free_engine_cipher);
-	CRYPTO_free_ex_data(engine_ex_data_stack, e, &e->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
 	OPENSSL_free(e);
 	return 1;
 	}
 
-static int ENGINE_free_nolock(ENGINE *e)
+int ENGINE_free(ENGINE *e)
 	{
-	int i;
-
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_FREE,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
-	
-	i=--e->struct_ref;
-	engine_ref_debug(e, 0, -1)
-	if (i > 0) return 1;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"ENGINE_free, bad structural reference count\n");
-		abort();
-		}
-#endif
-	CRYPTO_free_ex_data(engine_ex_data_stack, e, &e->ex_data);
-	OPENSSL_free(e);
-	return 1;
+	return ENGINE_free_util(e, 1);
 	}
 
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
-	if(CRYPTO_get_ex_new_index(engine_ex_data_num, &engine_ex_data_stack,
-			argl, argp, new_func, dup_func, free_func) < 0)
-		return -1;
-	return (engine_ex_data_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, argl, argp,
+			new_func, dup_func, free_func);
 	}
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)

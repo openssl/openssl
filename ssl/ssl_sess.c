@@ -64,8 +64,6 @@
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
-static int ssl_session_num=0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_session_meth=NULL;
 
 SSL_SESSION *SSL_get_session(SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
@@ -91,10 +89,8 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 int SSL_SESSION_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
-	if(CRYPTO_get_ex_new_index(ssl_session_num, &ssl_session_meth, argl,
-				argp, new_func, dup_func, free_func) < 0)
-		return -1;
-	return (ssl_session_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_SESSION, argl, argp,
+			new_func, dup_func, free_func);
 	}
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
@@ -126,7 +122,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
-	CRYPTO_new_ex_data(ssl_session_meth,ss,&ss->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 	return(ss);
 	}
 
@@ -520,7 +516,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 		}
 #endif
 
-	CRYPTO_free_ex_data(ssl_session_meth,ss,&ss->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
 	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
 	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);

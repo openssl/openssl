@@ -235,7 +235,11 @@ bad:
 			X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 		ERR_clear_error();
 
-		X509_STORE_CTX_init(&ctx, store, NULL, NULL);
+		if(!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+			BIO_printf(bio_err,
+				"Error initialising X509 store\n");
+			goto end;
+		}
 
 		i = X509_STORE_get_by_subject(&ctx, X509_LU_X509, 
 					X509_CRL_get_issuer(x), &xobj);

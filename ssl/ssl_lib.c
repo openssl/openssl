@@ -71,11 +71,6 @@
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_meth=NULL;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_ctx_meth=NULL;
-static int ssl_meth_num=0;
-static int ssl_ctx_meth_num=0;
-
 OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
 	/* evil casts, but these functions are only called if there's a library bug */
 	(int (*)(SSL *,int))ssl_undefined_function,
@@ -242,7 +237,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
-	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
 	return(s);
 err:
@@ -372,7 +367,7 @@ void SSL_free(SSL *s)
 		}
 #endif
 
-	CRYPTO_free_ex_data(ssl_meth,(char *)s,&s->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
 	if (s->bbio != NULL)
 		{
@@ -1272,7 +1267,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	if ((ret->client_CA=sk_X509_NAME_new_null()) == NULL)
 		goto err;
 
-	CRYPTO_new_ex_data(ssl_ctx_meth,(char *)ret,&ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data);
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
@@ -1308,7 +1303,7 @@ void SSL_CTX_free(SSL_CTX *a)
 		abort(); /* ok */
 		}
 #endif
-	CRYPTO_free_ex_data(ssl_ctx_meth,(char *)a,&a->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
 
 	if (a->sessions != NULL)
 		{
@@ -1806,7 +1801,7 @@ SSL *SSL_dup(SSL *s)
 	ret->options=s->options;
 
 	/* copy app data, a little dangerous perhaps */
-	if (!CRYPTO_dup_ex_data(ssl_meth,&ret->ex_data,&s->ex_data))
+	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
 		goto err;
 
 	/* setup rbio, and wbio */
@@ -2051,10 +2046,8 @@ long SSL_get_verify_result(SSL *ssl)
 int SSL_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
 			 CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
-	if(CRYPTO_get_ex_new_index(ssl_meth_num, &ssl_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (ssl_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, argl, argp,
+				new_func, dup_func, free_func);
 	}
 
 int SSL_set_ex_data(SSL *s,int idx,void *arg)
@@ -2070,10 +2063,8 @@ void *SSL_get_ex_data(SSL *s,int idx)
 int SSL_CTX_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
 			     CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
-	if(CRYPTO_get_ex_new_index(ssl_ctx_meth_num, &ssl_ctx_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (ssl_ctx_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_CTX, argl, argp,
+				new_func, dup_func, free_func);
 	}
 
 int SSL_CTX_set_ex_data(SSL_CTX *s,int idx,void *arg)

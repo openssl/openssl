@@ -65,8 +65,6 @@
 const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static const DH_METHOD *default_DH_method = NULL;
-static int dh_meth_num = 0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dh_meth = NULL;
 
 void DH_set_default_openssl_method(const DH_METHOD *meth)
 {
@@ -174,10 +172,10 @@ DH *DH_new_method(ENGINE *engine)
 	ret->method_mont_p=NULL;
 	ret->references = 1;
 	ret->flags=meth->flags;
-	CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
-		CRYPTO_free_ex_data(dh_meth,ret,&ret->ex_data);
+		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
@@ -206,7 +204,7 @@ void DH_free(DH *r)
 	if(meth->finish) meth->finish(r);
 	ENGINE_finish(r->engine);
 
-	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
@@ -238,10 +236,8 @@ int DH_up(DH *r)
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	if(CRYPTO_get_ex_new_index(dh_meth_num, &dh_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (dh_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DH, argl, argp,
+				new_func, dup_func, free_func);
         }
 
 int DH_set_ex_data(DH *d, int idx, void *arg)

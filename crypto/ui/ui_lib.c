@@ -66,8 +66,6 @@
 IMPLEMENT_STACK_OF(UI_STRING_ST)
 
 static const UI_METHOD *default_UI_meth=NULL;
-static int ui_meth_num=0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ui_meth=NULL;
 
 UI *UI_new(void)
 	{
@@ -91,7 +89,7 @@ UI *UI_new_method(const UI_METHOD *method)
 
 	ret->strings=NULL;
 	ret->user_data=NULL;
-	CRYPTO_new_ex_data(ui_meth,ret,&ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
 	return ret;
 	}
 
@@ -119,6 +117,7 @@ void UI_free(UI *ui)
 	if (ui == NULL)
 		return;
 	sk_UI_STRING_pop_free(ui->strings,free_string);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI, ui, &ui->ex_data);
 	OPENSSL_free(ui);
 	}
 
@@ -574,10 +573,8 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)())
 int UI_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	if(CRYPTO_get_ex_new_index(ui_meth_num, &ui_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (ui_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI, argl, argp,
+				new_func, dup_func, free_func);
         }
 
 int UI_set_ex_data(UI *r, int idx, void *arg)

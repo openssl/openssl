@@ -68,8 +68,6 @@
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
 static const DSA_METHOD *default_DSA_method = NULL;
-static int dsa_meth_num = 0;
-static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dsa_meth = NULL;
 
 void DSA_set_default_openssl_method(const DSA_METHOD *meth)
 {
@@ -181,10 +179,10 @@ DSA *DSA_new_method(ENGINE *engine)
 
 	ret->references=1;
 	ret->flags=meth->flags;
-	CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
-		CRYPTO_free_ex_data(dsa_meth,ret,&ret->ex_data);
+		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
@@ -216,7 +214,7 @@ void DSA_free(DSA *r)
 	if(meth->finish) meth->finish(r);
 	ENGINE_finish(r->engine);
 
-	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->q != NULL) BN_clear_free(r->q);
@@ -266,10 +264,8 @@ int DSA_size(const DSA *r)
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
-	if(CRYPTO_get_ex_new_index(dsa_meth_num, &dsa_meth, argl, argp,
-				new_func, dup_func, free_func) < 0)
-		return -1;
-	return (dsa_meth_num++);
+	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, argl, argp,
+				new_func, dup_func, free_func);
         }
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
