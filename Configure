@@ -1532,7 +1532,6 @@ EOF
 		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
-	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
 	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
 	    # No path for Perl known ...
