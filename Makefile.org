@@ -664,7 +664,7 @@ install: all install_docs
 			(       echo installing $$i; \
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
 					c=`echo $$i | sed 's/^lib/cyg/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
