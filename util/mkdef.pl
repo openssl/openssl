@@ -32,6 +32,23 @@ foreach (@ARGV)
 	$do_crypto=1 if $_ eq "crypto";
 	$do_update=1 if $_ eq "update";
 	$rsaref=1 if $_ eq "rsaref";
+
+	if    (/^no-rc2$/)      { $no_rc2=1; }
+	elsif (/^no-rc4$/)      { $no_rc4=1; }
+	elsif (/^no-rc5$/)      { $no_rc5=1; }
+	elsif (/^no-idea$/)     { $no_idea=1; }
+	elsif (/^no-des$/)      { $no_des=1; }
+	elsif (/^no-bf$/)       { $no_bf=1; }
+	elsif (/^no-cast$/)     { $no_cast=1; }
+	elsif (/^no-md2$/)      { $no_md2=1; }
+	elsif (/^no-md5$/)      { $no_md5=1; }
+	elsif (/^no-sha$/)      { $no_sha=1; }
+	elsif (/^no-ripemd$/)   { $no_ripemd=1; }
+	elsif (/^no-mdc2$/)     { $no_mdc2=1; }
+	elsif (/^no-rsa$/)      { $no_rsa=1; }
+	elsif (/^no-dsa$/)      { $no_dsa=1; }
+	elsif (/^no-dh$/)       { $no_dh=1; }
+	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	}
 
 if (!$do_ssl && !$do_crypto)
@@ -48,23 +65,24 @@ $max_crypto = $max_num;
 $ssl="ssl/ssl.h";
 
 $crypto ="crypto/crypto.h";
-$crypto.=" crypto/des/des.h";
-$crypto.=" crypto/idea/idea.h";
-$crypto.=" crypto/rc4/rc4.h";
-$crypto.=" crypto/rc5/rc5.h";
-$crypto.=" crypto/rc2/rc2.h";
-$crypto.=" crypto/bf/blowfish.h";
-$crypto.=" crypto/cast/cast.h";
-$crypto.=" crypto/md2/md2.h";
-$crypto.=" crypto/md5/md5.h";
-$crypto.=" crypto/mdc2/mdc2.h";
-$crypto.=" crypto/sha/sha.h";
-$crypto.=" crypto/ripemd/ripemd.h";
+$crypto.=" crypto/des/des.h" unless $no_des;
+$crypto.=" crypto/idea/idea.h" unless $no_idea;
+$crypto.=" crypto/rc4/rc4.h" unless $no_rc4;
+$crypto.=" crypto/rc5/rc5.h" unless $no_rc5;
+$crypto.=" crypto/rc2/rc2.h" unless $no_rc2;
+$crypto.=" crypto/bf/blowfish.h" unless $no_bf;
+$crypto.=" crypto/cast/cast.h" unless $no_cast;
+$crypto.=" crypto/md2/md2.h" unless $no_md2;
+$crypto.=" crypto/md5/md5.h" unless $no_md5;
+$crypto.=" crypto/mdc2/mdc2.h" unless $no_mdc2;
+$crypto.=" crypto/sha/sha.h" unless $no_sha;
+$crypto.=" crypto/ripemd/ripemd.h" unless $no_ripemd;
 
 $crypto.=" crypto/bn/bn.h";
-$crypto.=" crypto/rsa/rsa.h";
-$crypto.=" crypto/dsa/dsa.h";
-$crypto.=" crypto/dh/dh.h";
+$crypto.=" crypto/rsa/rsa.h" unless $no_rsa;
+$crypto.=" crypto/dsa/dsa.h" unless $no_dsa;
+$crypto.=" crypto/dh/dh.h" unless $no_dh;
+$crypto.=" crypto/hmac/hmac.h" unless $no_hmac;
 
 $crypto.=" crypto/stack/stack.h";
 $crypto.=" crypto/buffer/buffer.h";
@@ -86,7 +104,6 @@ $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
 $crypto.=" crypto/x509v3/x509v3.h";
 $crypto.=" crypto/rand/rand.h";
-$crypto.=" crypto/hmac/hmac.h";
 $crypto.=" crypto/comp/comp.h";
 $crypto.=" crypto/tmdiff.h";
 
@@ -109,13 +126,13 @@ if($do_crypto == 1) {
 }
 
 } else {
-	my $err = 0;
-	$err += &print_def_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
+
+	&print_def_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
 		if $do_ssl == 1;
 
-	$err += &print_def_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
+	&print_def_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
 		if $do_crypto == 1;
-	exit($err);
+
 }
 
 
@@ -239,6 +256,18 @@ sub do_defs
 			s/^[\n\s]*//g;
 			s/[\n\s]*$//g;
 			next if(/typedef\W/);
+			next if(/EVP_bf/ and $no_bf);
+			next if(/EVP_cast/ and $no_cast);
+			next if(/EVP_des/ and $no_des);
+			next if(/EVP_dss/ and $no_dsa);
+			next if(/EVP_idea/ and $no_idea);
+			next if(/EVP_md2/ and $no_md2);
+			next if(/EVP_md5/ and $no_md5);
+			next if(/EVP_rc2/ and $no_rc2);
+			next if(/EVP_rc4/ and $no_rc4);
+			next if(/EVP_rc5/ and $no_rc5);
+			next if(/EVP_ripemd/ and $no_ripemd);
+			next if(/EVP_sha/ and $no_sha);
 			if (/\(\*(\w*)\([^\)]+/) {
 				$funcs{$1} = 1;
 			} elsif (/\w+\W+(\w+)\W*\(\s*\)$/s) {
@@ -290,7 +319,6 @@ sub print_def_file
 {
 	(*OUT,my $name,*nums,@functions)=@_;
 	my $n =1;
-	my $nodef=0;
 
 	if ($W32)
 		{ $name.="32"; }
@@ -330,17 +358,14 @@ EOF
 
 	foreach $func (@functions) {
 		if (!defined($nums{$func})) {
-		    if(!$do_update) {
-			printf STDERR "$func does not have a number assigned\n";
-			$nodef = 1;
-		    }
+			printf STDERR "$func does not have a number assigned\n"
+					if(!$do_update);
 		} else {
 			$n=$nums{$func};
 			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$func,$n;
 		}
 	}
 	printf OUT "\n";
-	return ($nodef);
 }
 
 sub load_numbers

@@ -43,12 +43,13 @@ foreach (@ARGV)
 	elsif (/^no-md5$/)	{ $no_md5=1; }
 	elsif (/^no-sha$/)	{ $no_sha=1; }
 	elsif (/^no-sha1$/)	{ $no_sha1=1; }
-	elsif (/^no-rmd160$/)	{ $no_rmd160=1; }
+	elsif (/^no-ripemd$/)	{ $no_ripemd=1; }
 	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
 	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
 	elsif (/^no-rsa$/)	{ $no_rsa=1; }
 	elsif (/^no-dsa$/)	{ $no_dsa=1; }
 	elsif (/^no-dh$/)	{ $no_dh=1; }
+	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-asm$/)	{ $no_asm=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
@@ -79,7 +80,7 @@ foreach (@ARGV)
 				{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
 			print STDERR <<"EOF";
 and [options] can be one of
-	no-md2 no-md5 no-sha no-sha1 no-mdc2 no-rmd160 - Skip this digest
+	no-md2 no-md5 no-sha no-mdc2 no-ripemd  - Skip this digest
 	no-rc2 no-rc4 no-idea no-des no-bf no-cast - Skip this symetric cipher
 	no-rc5
 	no-rsa no-dsa no-dh			- Skip this public key cipher
@@ -108,7 +109,7 @@ EOF
 
 $no_mdc2=1 if ($no_des);
 
-$no_ssl3=1 if ($no_md5 || $no_sha1);
+$no_ssl3=1 if ($no_md5 || $no_sha);
 $no_ssl3=1 if ($no_rsa && $no_dh);
 
 $no_ssl2=1 if ($no_md5 || $no_rsa);
