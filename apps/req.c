@@ -907,7 +907,7 @@ loop:
 			if ((x509ss=X509_new()) == NULL) goto end;
 
 			/* Set version to V3 */
-			if(!X509_set_version(x509ss, 2)) goto end;
+			if(extensions && !X509_set_version(x509ss, 2)) goto end;
 			if (serial)
 				{
 				if (!X509_set_serialNumber(x509ss, serial)) goto end;
