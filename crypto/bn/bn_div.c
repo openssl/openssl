@@ -282,6 +282,11 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			q=(BN_ULONG)(((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0);
 #else
 			q=bn_div_words(n0,n1,d0);
+#ifdef BN_DEBUG_LEVITTE
+			fprintf(stderr,"DEBUG: bn_div_words(0x%08X,0x%08X,0x%08\
+X) -> 0x%08X\n",
+				n0, n1, d0, q);
+#endif
 #endif
 
 #ifndef REMAINDER_IS_ALREADY_CALCULATED
@@ -306,6 +311,11 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			BN_ULONG t2l,t2h,ql,qh;
 
 			q=bn_div_words(n0,n1,d0);
+#ifdef BN_DEBUG_LEVITTE
+			fprintf(stderr,"DEBUG: bn_div_words(0x%08X,0x%08X,0x%08\
+X) -> 0x%08X\n",
+				n0, n1, d0, q);
+#endif
 #ifndef REMAINDER_IS_ALREADY_CALCULATED
 			rem=(n1-q*d0)&BN_MASK2;
 #endif
