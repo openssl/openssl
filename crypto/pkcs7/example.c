@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/pkcs7.h>
 #include <openssl/asn1_mac.h>
 
@@ -68,7 +69,7 @@ int get_signed_string(PKCS7_SIGNER_INFO *si, char *buf, int len)
 	return(0);
 	}
 
-static signed_seq2string_nid= -1;
+static int signed_seq2string_nid= -1;
 /* ########################################### */
 int add_signed_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 	{

@@ -57,6 +57,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
