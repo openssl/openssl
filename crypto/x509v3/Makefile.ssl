@@ -22,9 +22,9 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	v3_bcons.c v3_bitstr.c v3_conf.c v3_extku.c v3_ia5.c \
+LIBSRC=	v3_bcons.c v3_bitst.c v3_conf.c v3_extku.c v3_ia5.c \
 v3_lib.c v3_prn.c v3_utl.c v3err.c 
-LIBOBJ= v3_bcons.o v3_bitstr.o v3_conf.o v3_extku.o v3_ia5.o v3_lib.o \
+LIBOBJ= v3_bcons.o v3_bitst.o v3_conf.o v3_extku.o v3_ia5.o v3_lib.o \
 v3_prn.o v3_utl.o v3err.o
 
 SRC= $(LIBSRC)
@@ -98,17 +98,17 @@ v3_bcons.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 v3_bcons.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 v3_bcons.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
 v3_bcons.o: ../../include/x509_vfy.h x509v3.h
-v3_bitstr.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
-v3_bitstr.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
-v3_bitstr.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
-v3_bitstr.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
-v3_bitstr.o: ../../include/evp.h ../../include/idea.h ../../include/lhash.h
-v3_bitstr.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
-v3_bitstr.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
-v3_bitstr.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-v3_bitstr.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-v3_bitstr.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_bitstr.o: ../../include/x509_vfy.h x509v3.h
+v3_bitst.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+v3_bitst.o: ../../include/blowfish.h ../../include/bn.h ../../include/cast.h
+v3_bitst.o: ../../include/conf.h ../../include/crypto.h ../../include/des.h
+v3_bitst.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
+v3_bitst.o: ../../include/evp.h ../../include/idea.h ../../include/lhash.h
+v3_bitst.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+v3_bitst.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
+v3_bitst.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+v3_bitst.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+v3_bitst.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+v3_bitst.o: ../../include/x509_vfy.h x509v3.h
 v3_conf.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_conf.o: ../../include/bn.h ../../include/cast.h ../../include/conf.h
 v3_conf.o: ../../include/crypto.h ../../include/des.h ../../include/dh.h
