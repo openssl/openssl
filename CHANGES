@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
+     lines, recognice more "algorithms" that can be deselected, and make
+     it complain about algorithm deselection that isn't recognised.
+     [Richard Levitte]
+
   *) New ASN1 functions to handle sign, verify, digest, pack and
      unpack operations in terms of ASN1_ITEM. Modify existing wrappers
      to use new functions. Add NO_ASN1_OLD which can be set to remove

@@ -75,9 +75,16 @@ my $safe_stack_def = 0;
 my @known_platforms = ( "__FreeBSD__", "VMS", "WIN16", "WIN32",
 			"WINNT", "PERL5", "NeXT" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
-			 "CAST", "MD2", "MD4", "MD5", "SHA", "RIPEMD",
-			 "MDC2", "RSA", "DSA", "DH", "HMAC", "FP_API",
-			 "RIJNDAEL" );
+			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
+			 "RIPEMD",
+			 "MDC2", "RSA", "DSA", "DH", "HMAC", "RIJNDAEL",
+			 # Envelope "algorithms"
+			 "EVP", "X509", "ASN1_TYPEDEFS",
+			 # Helper "algorithms"
+			 "BIO", "COMP", "BUFFER", "LHASH", "STACK", "ERR",
+			 "LOCKING",
+			 # External "algorithms"
+			 "FP_API", "STDIO", "SOCK", "KRB5" );
 
 my $options="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
@@ -134,6 +141,15 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dh$/)       { $no_dh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-rijndael$/)	{ $no_rijndael=1; }
+	elsif (/^no-evp$/)	{ $no_evp=1; }
+	elsif (/^no-lhash$/)	{ $no_lhash=1; }
+	elsif (/^no-stack$/)	{ $no_stack=1; }
+	elsif (/^no-err$/)	{ $no_err=1; }
+	elsif (/^no-buffer$/)	{ $no_buffer=1; }
+	elsif (/^no-bio$/)	{ $no_bio=1; }
+	#elsif (/^no-locking$/)	{ $no_locking=1; }
+	elsif (/^no-comp$/)	{ $no_comp=1; }
+	elsif (/^no-dso$/)	{ $no_dso=1; }
 	}
 
 
@@ -159,6 +175,7 @@ $max_ssl = $max_num;
 $max_crypto = $max_num;
 
 my $ssl="ssl/ssl.h";
+$ssl.=" ssl/kssl.h";
 
 my $crypto ="crypto/crypto.h";
 $crypto.=" crypto/des/des.h" unless $no_des;
@@ -184,29 +201,29 @@ $crypto.=" crypto/dh/dh.h" unless $no_dh;
 $crypto.=" crypto/hmac/hmac.h" unless $no_hmac;
 
 $crypto.=" crypto/engine/engine.h";
-$crypto.=" crypto/stack/stack.h";
-$crypto.=" crypto/buffer/buffer.h";
-$crypto.=" crypto/bio/bio.h";
-$crypto.=" crypto/dso/dso.h";
-$crypto.=" crypto/lhash/lhash.h";
+$crypto.=" crypto/stack/stack.h" unless $no_stack;
+$crypto.=" crypto/buffer/buffer.h" unless $no_buffer;
+$crypto.=" crypto/bio/bio.h" unless $no_bio;
+$crypto.=" crypto/dso/dso.h" unless $no_dso;
+$crypto.=" crypto/lhash/lhash.h" unless $no_lhash;
 $crypto.=" crypto/conf/conf.h";
 $crypto.=" crypto/txt_db/txt_db.h";
 
-$crypto.=" crypto/evp/evp.h";
+$crypto.=" crypto/evp/evp.h" unless $no_evp;
 $crypto.=" crypto/objects/objects.h";
 $crypto.=" crypto/pem/pem.h";
 #$crypto.=" crypto/meth/meth.h";
 $crypto.=" crypto/asn1/asn1.h";
 $crypto.=" crypto/asn1/asn1t.h";
 $crypto.=" crypto/asn1/asn1_mac.h";
-$crypto.=" crypto/err/err.h";
+$crypto.=" crypto/err/err.h" unless $no_err;
 $crypto.=" crypto/pkcs7/pkcs7.h";
 $crypto.=" crypto/pkcs12/pkcs12.h";
 $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
 $crypto.=" crypto/x509v3/x509v3.h";
 $crypto.=" crypto/rand/rand.h";
-$crypto.=" crypto/comp/comp.h";
+$crypto.=" crypto/comp/comp.h" unless $no_comp;
 $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/tmdiff.h";
 
@@ -285,6 +302,7 @@ sub do_defs
 	my %algorithm;		# For anything undefined, we assume ""
 	my %rename;
 	my $cpp;
+	my %unknown_algorithms = ();
 
 	foreach $file (split(/\s+/,$symhacksfile." ".$files))
 		{
@@ -320,16 +338,17 @@ sub do_defs
 
 			s/\/\*.*?\*\///gs;                   # ignore comments
 			s/{[^{}]*}//gs;                      # ignore {} blocks
-			if (/^\#\s*ifndef (.*)/) {
+			#print STDERR "DEBUG: \$_=\"$_\"\n";
+			if (/^\#\s*ifndef\s+(.*)/) {
 				push(@tag,$1);
 				$tag{$1}=-1;
-			} elsif (/^\#\s*if !defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+!defined\(([^\)]+)\)/) {
 				push(@tag,$1);
 				$tag{$1}=-1;
-			} elsif (/^\#\s*ifdef (.*)/) {
+			} elsif (/^\#\s*ifdef\s+(.*)/) {
 				push(@tag,$1);
 				$tag{$1}=1;
-			} elsif (/^\#\s*if defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+defined\(([^\)]+)\)/) {
 				push(@tag,$1);
 				$tag{$1}=1;
 			} elsif (/^\#\s*error\s+(\w+) is disabled\./) {
@@ -337,12 +356,24 @@ sub do_defs
 					$tag{$tag[$#tag]}=2;
 				}
 			} elsif (/^\#\s*endif/) {
+				my $oldtag=$tag[$#tag];
+				#print STDERR "DEBUG: \$oldtag=\"$oldtag\"\n";
 				if ($tag{$tag[$#tag]}==2) {
 					$tag{$tag[$#tag]}=-1;
 				} else {
 					$tag{$tag[$#tag]}=0;
 				}
 				pop(@tag);
+				if ($oldtag =~ /^NO_([A-Z0-9_]+)$/) {
+					$oldtag=$1;
+				} else {
+					$oldtag="";
+				}
+				if ($oldtag ne ""
+				    && !grep(/^$oldtag$/, @known_algorithms)) {
+					$unknown_algorithms{$oldtag} = 1;
+					#print STDERR "DEBUG: Added as unknown algorithm: $oldtag\n";
+				}
 			} elsif (/^\#\s*else/) {
 				my $t=$tag[$#tag];
 				$tag{$t}= -$tag{$t};
@@ -581,6 +612,10 @@ sub do_defs
 					      $kind{$_},
 					      $algorithm{$_}) } keys %syms;
 
+	if (keys %unknown_algorithms) {
+		print STDERR "WARNING: mkdef.pl doesn't know the following algorithms:\n";
+		print STDERR "\t",join("\n\t",keys %unknown_algorithms),"\n";
+	}
 	return(@ret);
 }
 
