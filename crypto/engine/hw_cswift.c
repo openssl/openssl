@@ -696,7 +696,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	BIGNUM *dsa_g = NULL;
 	BIGNUM *dsa_key = NULL;
 	BIGNUM *argument = NULL;
-	int to_return = 0;	/* Expect failure */
+	int to_return = -1;
 	int acquired = 0;
 
 	if((ctx = BN_CTX_new()) == NULL)
