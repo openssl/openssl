@@ -684,14 +684,14 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RC4-40","rc4-40",NID_rc4_40,0,NULL},
 {"RC2-40-CBC","rc2-40-cbc",NID_rc2_40_cbc,0,NULL},
 {"G","givenName",NID_givenName,3,&(lvalues[535]),0},
-{"S","surname",NID_surname,3,&(lvalues[538]),0},
+{"SN","surname",NID_surname,3,&(lvalues[538]),0},
 {"I","initials",NID_initials,3,&(lvalues[541]),0},
 {"uniqueIdentifier","uniqueIdentifier",NID_uniqueIdentifier,3,
 	&(lvalues[544]),0},
 {"crlDistributionPoints","X509v3 CRL Distribution Points",
 	NID_crl_distribution_points,3,&(lvalues[547]),0},
 {"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[550]),0},
-{"SN","serialNumber",NID_serialNumber,3,&(lvalues[555]),0},
+{"serialNumber","serialNumber",NID_serialNumber,3,&(lvalues[555]),0},
 {"T","title",NID_title,3,&(lvalues[558]),0},
 {"D","description",NID_description,3,&(lvalues[561]),0},
 {"CAST5-CBC","cast5-cbc",NID_cast5_cbc,9,&(lvalues[564]),0},
@@ -1431,12 +1431,11 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[42]),/* "RSA-SHA" */
 &(nid_objs[65]),/* "RSA-SHA1" */
 &(nid_objs[115]),/* "RSA-SHA1-2" */
-&(nid_objs[100]),/* "S" */
 &(nid_objs[41]),/* "SHA" */
 &(nid_objs[64]),/* "SHA1" */
 &(nid_objs[188]),/* "SMIME" */
 &(nid_objs[167]),/* "SMIME-CAPS" */
-&(nid_objs[105]),/* "SN" */
+&(nid_objs[100]),/* "SN" */
 &(nid_objs[16]),/* "ST" */
 &(nid_objs[143]),/* "SXNetID" */
 &(nid_objs[106]),/* "T" */
@@ -1795,6 +1794,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[474]),/* "secretary" */
 &(nid_objs[386]),/* "security" */
 &(nid_objs[394]),/* "selected-attribute-types" */
+&(nid_objs[105]),/* "serialNumber" */
 &(nid_objs[129]),/* "serverAuth" */
 &(nid_objs[371]),/* "serviceLocator" */
 &(nid_objs[52]),/* "signingTime" */

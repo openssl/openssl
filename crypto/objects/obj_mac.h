@@ -1586,12 +1586,11 @@
 #define NID_commonName		13
 #define OBJ_commonName		OBJ_X509,3L
 
-#define SN_surname		"S"
+#define SN_surname		"SN"
 #define LN_surname		"surname"
 #define NID_surname		100
 #define OBJ_surname		OBJ_X509,4L
 
-#define SN_serialNumber		"SN"
 #define LN_serialNumber		"serialNumber"
 #define NID_serialNumber		105
 #define OBJ_serialNumber		OBJ_X509,5L
