@@ -401,3 +401,5 @@ role		400
 policy_constraints		401
 target_information		402
 no_rev_avail		403
+ms_smartcard_login		404
+ms_upn		405

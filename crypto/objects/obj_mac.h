@@ -780,6 +780,16 @@
 #define NID_ms_efs		138
 #define OBJ_ms_efs		1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
+#define SN_ms_smartcard_login		"msSmartcardLogin"
+#define LN_ms_smartcard_login		"Microsoft Smartcardlogin"
+#define NID_ms_smartcard_login		404
+#define OBJ_ms_smartcard_login		1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
+
+#define SN_ms_upn		"msUPN"
+#define LN_ms_upn		"Microsoft Universal Principal Name"
+#define NID_ms_upn		405
+#define OBJ_ms_upn		1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
+
 #define SN_idea_cbc		"IDEA-CBC"
 #define LN_idea_cbc		"idea-cbc"
 #define NID_idea_cbc		34
