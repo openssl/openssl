@@ -53,4 +53,7 @@ BN_zero(), BN_one() and BN_set_word() are available in all versions of
 SSLeay and OpenSSL. BN_value_one() and BN_get_word() were added in
 SSLeay 0.8.
 
+BN_value_one() was changed to return a true const BIGNUM * in OpenSSL
+0.9.7.
+
 =cut

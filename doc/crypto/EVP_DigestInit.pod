@@ -245,7 +245,12 @@ L<sha(3)|sha(3)>, L<dgst(1)|dgst(1)>
 EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal() are
 available in all versions of SSLeay and OpenSSL.
 
-EVP_DigestInit_ex(), EVP_DigestFinal_ex() and EVP_MD_CTX_copy_ex()
-were added in OpenSSL 0.9.7.
+EVP_MD_CTX_init(), EVP_MD_CTX_create(), EVP_MD_CTX_copy_ex(),
+EVP_MD_CTX_cleanup(), EVP_MD_CTX_destroy(), EVP_DigestInit_ex()
+and EVP_DigestFinal_ex() were added in OpenSSL 0.9.7.
+
+EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(),
+EVP_dss(), EVP_dss1(), EVP_mdc2() and EVP_ripemd160() were
+changed to return truely const EVP_MD * in OpenSSL 0.9.7.
 
 =cut
