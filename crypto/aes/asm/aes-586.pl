@@ -24,13 +24,19 @@
 # performance improvement [as you might recall]. As AES code is hungry
 # for scaling too, I [try to] avoid the latter by favoring off-by-2
 # shifts and masking the result with 0xFF<<2 instead of "boring" 0xFF.
+#
+# As was shown by Dean Gaudet <dean@arctic.org>, the above note turned
+# void. Performance improvement with off-by-2 shifts was observed on
+# intermediate implementation, which was spilling yet another register
+# to stack... Final offset*4 code below runs just a tad faster on P4,
+# but exhibits up to 10% improvement on other cores.
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"aes-586.pl",$ARGV[$#ARGV] eq "386");
 
-$small_footprint=1;	# $small_footprint=1 code is 5-9% slower, but
+$small_footprint=1;	# $small_footprint=1 code is 4-6% slower, but
 			# 5 times smaller! I default to compact code.
 $s0="eax";
 $s1="ebx";
@@ -41,25 +47,27 @@ sub encstep()
 { my ($i,$te,@s) = @_;
   my $tmp,$out;
 
-	if ($i==3)  {	$out=$s[0]; &mov ("edi",&DWP(12,"esp"));}
-	else        {	$out="esi"; &mov ($out,$s[0]);		}
-			&shr	($out,24-2);
-			&and	($out,0xFF<<2);
-			&mov	($out,&DWP(1024*0,$te,$out));
+	# lines marked with ## denote same $sN...
+	if ($i==3)  {	&mov	("edi",&DWP(12,"esp"));
+			&movz	($out=$s[0],&HB($s[0]));	}	##
+	else        {	&mov	($out="esi",$s[0]);
+			&shr	($out,24);			}
+			&mov	($out,&DWP(1024*0,$te,$out,4));
 
-	if ($i==3)  {	$tmp=$s[1];				}
-	else        {	$tmp="edi"; &mov ($tmp,$s[1]);		}
-			&shr	($tmp,16-2);
-			&and	($tmp,0xFF<<2);
-			&xor	($out,&DWP(1024*1,$te,$tmp));
+	if ($i==2)  {	&movz	($tmp="edi",&LB($s[1]));	}	##
+	else        {	$i==3?$tmp=$s[1]:&mov($tmp="edi",$s[1]);
+			&shr	($tmp,16);
+			&and	($tmp,0xFF);			}
+			&xor	($out,&DWP(1024*1,$te,$tmp,4));
 
 	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(0,"esp"));	}
 	else        {	$tmp="edi";				}
 			&movz	($tmp,&HB($s[2]));
 			&xor	($out,&DWP(1024*2,$te,$tmp,4));
+	if ($i==1)  {	&shr	($s[2],16);			}	##
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
-	else        {	$tmp="edi"; &mov ($tmp,$s[3]);		} 
+	else        {	&mov	($tmp="edi",$s[3]);		} 
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(1024*3,$te,$tmp,4));
 	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
@@ -70,30 +78,31 @@ sub enclast()
 { my ($i,$te,@s)=@_;
   my $tmp,$out;
 
-	if ($i==3)  {	$out=$s[0]; &mov ("edi",&DWP(12,"esp"));}
-	else        {	$out="esi"; &mov ($out,$s[0]);		}
-			&shr	($out,24-2);
-			&and	($out,0xFF<<2);
-			&mov	($out,&DWP(0,$te,$out));
+	if ($i==3)  {	&mov	("edi",&DWP(12,"esp"));
+			&movz	($out=$s[0],&HB($s[0]));	}	##
+	else        {	&mov	($out="esi",$s[0]);
+			&shr	($out,24);			}
+			&mov	($out,&DWP(0,$te,$out,4));
 			&and	($out,0xff000000);
 
-	if ($i==3)  {	$tmp=$s[1];				}
-	else        {	$tmp="edi"; &mov ($tmp,$s[1]);		}
-			&shr	($tmp,16-2);
-			&and	($tmp,0xFF<<2);
-			&mov	($tmp,&DWP(0,$te,$tmp));
+	if ($i==2)  {	&movz	($tmp="edi",&LB($s[1]));	}	##
+	else        {	$i==3?$tmp=$s[1]:&mov($tmp="edi",$s[1]);
+			&shr	($tmp,16);
+			&and	($tmp,0xFF);			}
+			&mov	($tmp,&DWP(0,$te,$tmp,4));
 			&and	($tmp,0x00ff0000);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(0,"esp"));	}
-	else        {	$tmp="edi"; 				}
+	else        {	$tmp="edi";				}
 			&movz	($tmp,&HB($s[2]));
 			&mov	($tmp,&DWP(0,$te,$tmp,4));
 			&and	($tmp,0x0000ff00);
+	if ($i==1)  {	&shr	($s[2],16);			}	##
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
-	else        {	$tmp="edi"; &mov ($tmp,$s[3]);		} 
+	else        {	&mov	($tmp="edi",$s[3]);		} 
 			&and	($tmp,0xFF);
 			&mov	($tmp,&DWP(0,$te,$tmp,4));
 			&and	($tmp,0x000000ff);
@@ -565,17 +574,18 @@ sub decstep()
 { my ($i,$td,@s) = @_;
   my $tmp,$out;
 
-	if ($i==3)  {	$out=$s[0]; &mov ("edi",&DWP(12,"esp"));}
-	else        {	$out="esi"; &mov ($out,$s[0]);		}
-			&shr	($out,24-2);
-			&and	($out,0xFF<<2);
-			&mov	($out,&DWP(1024*0,$td,$out));
+	if ($i==2)  {   &movz	($out="esi",&HB($s[0]));	}	##
+	elsif($i==3){	&mov	("edi",&DWP(12,"esp"));
+			&shr	($out=$s[0],24);		}
+	else        {	&mov	($out="esi",$s[0]);
+			&shr	($out,24);			}
+			&mov	($out,&DWP(1024*0,$td,$out,4));
 
-	if ($i==3)  {	$tmp=$s[1];				}
-	else        {	$tmp="edi"; &mov ($tmp,$s[1]);		}
-			&shr	($tmp,16-2);
-			&and	($tmp,0xFF<<2);
-			&xor	($out,&DWP(1024*1,$td,$tmp));
+	if ($i==3)  {	$tmp=$s[1];				}	##
+	else        {	&mov	($tmp="edi",$s[1]);
+			&shr	($tmp,16);			}
+			&and	($tmp,0xFF);
+			&xor	($out,&DWP(1024*1,$td,$tmp,4));
 
 	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],"esi");		}
 	else        {	$tmp="edi";				}
@@ -583,7 +593,8 @@ sub decstep()
 			&xor	($out,&DWP(1024*2,$td,$tmp,4));
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
-	else        {	$tmp="edi"; &mov ($tmp,$s[3]);		} 
+	else        {	&mov	($tmp="edi",$s[3]);		}
+	if ($i==1)  {	&shr	($s[3],16);			}	##
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(1024*3,$td,$tmp,4));
 	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
@@ -594,18 +605,19 @@ sub declast()
 { my ($i,$td,@s)=@_;
   my $tmp,$out;
 
-	if ($i==3)  {	$out=$s[0]; &mov ("edi",&DWP(12,"esp"));}
-	else        {	$out="esi"; &mov ($out,$s[0]);		}
-			&shr	($out,24-2);
-			&and	($out,0xFF<<2);
-			&mov	($out,&DWP(0,$td,$out));
+	if ($i==2)  {   &movz	($out="esi",&HB($s[0]));	}	##
+	elsif($i==3){	&mov	("edi",&DWP(12,"esp"));
+			&shr	($out=$s[0],24);		}
+	else        {	&mov	($out="esi",$s[0]);
+			&shr	($out,24);			}
+			&mov	($out,&DWP(0,$td,$out,4));
 			&and	($out,0xff000000);
 
-	if ($i==3)  {	$tmp=$s[1];				}
-	else        {	$tmp="edi"; &mov ($tmp,$s[1]);		}
-			&shr	($tmp,16-2);
-			&and	($tmp,0xFF<<2);
-			&mov	($tmp,&DWP(0,$td,$tmp));
+	if ($i==3)  {	$tmp=$s[1];				}	##
+	else        {	&mov	($tmp="edi",$s[1]);
+			&shr	($tmp,16);			}
+			&and	($tmp,0xFF);
+			&mov	($tmp,&DWP(0,$td,$tmp,4));
 			&and	($tmp,0x00ff0000);
 			&xor	($out,$tmp);
 
@@ -617,7 +629,8 @@ sub declast()
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
-	else        {	$tmp="edi"; &mov ($tmp,$s[3]);		} 
+	else        {	&mov	($tmp="edi",$s[3]);		}
+	if ($i==1)  {	&shr	($s[3],16);			}	##
 			&and	($tmp,0xFF);
 			&mov	($tmp,&DWP(0,$td,$tmp,4));
 			&and	($tmp,0x000000ff);
