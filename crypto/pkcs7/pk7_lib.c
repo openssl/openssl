@@ -250,7 +250,7 @@ PKCS7 *p7;
 X509 *x509;
 	{
 	int i;
-	STACK **sk;
+	STACK_OF(X509) **sk;
 
 	i=OBJ_obj2nid(p7->type);
 	switch (i)
@@ -267,9 +267,9 @@ X509 *x509;
 		}
 
 	if (*sk == NULL)
-		*sk=sk_new_null();
+		*sk=sk_X509_new_null();
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
-	sk_push(*sk,(char *)x509);
+	sk_X509_push(*sk,x509);
 	return(1);
 	}
 

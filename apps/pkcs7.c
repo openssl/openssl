@@ -223,7 +223,7 @@ bad:
 
 	if (print_certs)
 		{
-		STACK *certs=NULL;
+		STACK_OF(X509) *certs=NULL;
 		STACK *crls=NULL;
 
 		i=OBJ_obj2nid(p7->type);
@@ -245,9 +245,9 @@ bad:
 			{
 			X509 *x;
 
-			for (i=0; i<sk_num(certs); i++)
+			for (i=0; i<sk_X509_num(certs); i++)
 				{
-				x=(X509 *)sk_value(certs,i);
+				x=sk_X509_value(certs,i);
 
 				X509_NAME_oneline(X509_get_subject_name(x),
 					buf,256);

@@ -302,7 +302,7 @@ SSL *s;
 	unsigned char *buf;
 	unsigned char *p;
 	int i,j;
-	STACK *sk=NULL,*cl;
+	STACK_OF(SSL_CIPHER) *sk=NULL,*cl;
 
 	buf=(unsigned char *)s->init_buf->data;
 	p=buf;
@@ -411,7 +411,7 @@ SSL *s;
 
 		/* load the ciphers */
 		sk=ssl_bytes_to_cipher_list(s,p,s->s2->tmp.csl,
-			&s->session->ciphers);
+					    &s->session->ciphers);
 		p+=s->s2->tmp.csl;
 		if (sk == NULL)
 			{
@@ -420,7 +420,7 @@ SSL *s;
 			return(-1);
 			}
 
-		sk_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
+		sk_SSL_CIPHER_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
 
 		/* get the array of ciphers we will accept */
 		cl=ssl_get_ciphers_by_id(s);
@@ -430,19 +430,20 @@ SSL *s;
 		 * will check against the list we origionally sent and
 		 * for performance reasons we should not bother to match
 		 * the two lists up just to check. */
-		for (i=0; i<sk_num(cl); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(cl); i++)
 			{
-			if (sk_find(sk,sk_value(cl,i)) >= 0)
+			if (sk_SSL_CIPHER_find(sk,
+					       sk_SSL_CIPHER_value(cl,i)) >= 0)
 				break;
 			}
 
-		if (i >= sk_num(cl))
+		if (i >= sk_SSL_CIPHER_num(cl))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_NO_CIPHER_MATCH);
 			return(-1);
 			}
-		s->session->cipher=(SSL_CIPHER *)sk_value(cl,i);
+		s->session->cipher=sk_SSL_CIPHER_value(cl,i);
 		}
 
 	if ((s->session != NULL) && (s->session->peer != NULL))
@@ -894,7 +895,7 @@ int type;
 int len;
 unsigned char *data;
 	{
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 	EVP_PKEY *pkey=NULL;
 	CERT *c=NULL;
 	int i;
@@ -908,8 +909,7 @@ unsigned char *data;
 		goto err;
 		}
 
-	if (((sk=sk_new_null()) == NULL) ||
-		(!sk_push(sk,(char *)x509)))
+	if ((sk=sk_X509_new_null()) == NULL || !sk_X509_push(sk,x509))
 		{
 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -957,7 +957,7 @@ unsigned char *data;
 		goto err;
 	ret=1;
 err:
-	sk_free(sk);
+	sk_X509_free(sk);
 	X509_free(x509);
 	EVP_PKEY_free(pkey);
 	return(ret);

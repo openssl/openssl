@@ -89,9 +89,9 @@ err_all.o: ../../include/lhash.h ../../include/md2.h ../../include/md5.h
 err_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem2.h
 err_all.o: ../../include/pkcs12.h ../../include/pkcs7.h ../../include/rc2.h
 err_all.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-err_all.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-err_all.o: ../../include/x509.h ../../include/x509_vfy.h ../../include/x509v3.h
-err_all.o: ../crypto.h ../opensslv.h err.h
+err_all.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
+err_all.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+err_all.o: ../../include/x509v3.h ../crypto.h ../opensslv.h err.h
 err_prn.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 err_prn.o: ../../include/lhash.h ../../include/stack.h ../cryptlib.h
 err_prn.o: ../crypto.h ../opensslv.h err.h

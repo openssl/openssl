@@ -502,7 +502,7 @@ SSL *s;
 		DH_free(s->s3->tmp.dh);
 #endif
 	if (s->s3->tmp.ca_names != NULL)
-		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	memset(s->s3,0,sizeof(SSL3_CTX));
 	Free(s->s3);
 	s->s3=NULL;
@@ -515,7 +515,7 @@ SSL *s;
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
-		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 
 	if (s->s3->rrec.comp != NULL)
 		{
@@ -750,10 +750,10 @@ char *parg;
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
 			{
-			if ((ctx->extra_certs=sk_new_null()) == NULL)
+			if ((ctx->extra_certs=sk_X509_new_null()) == NULL)
 				return(0);
 			}
-		sk_push(ctx->extra_certs,(char *)parg);
+		sk_X509_push(ctx->extra_certs,(X509 *)parg);
 		break;
 
 	default:
@@ -832,7 +832,8 @@ int i;
 
 SSL_CIPHER *ssl3_choose_cipher(s,have,pref)
 SSL *s;
-STACK *have,*pref;
+STACK_OF(SSL_CIPHER) *have;
+STACK_OF(SSL_CIPHER) *pref;
 	{
 	SSL_CIPHER *c,*ret=NULL;
 	int i,j,ok;
@@ -845,7 +846,7 @@ STACK *have,*pref;
 	else
 		cert=s->ctx->default_cert;
 
-	sk_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
+	sk_SSL_CIPHER_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
 #ifdef CIPHER_DEBUG
 	printf("Have:\n");
@@ -856,9 +857,9 @@ STACK *have,*pref;
 	    }
 #endif
 
-	for (i=0; i<sk_num(have); i++)
+	for (i=0; i<sk_SSL_CIPHER_num(have); i++)
 		{
-		c=(SSL_CIPHER *)sk_value(have,i);
+		c=sk_SSL_CIPHER_value(have,i);
 
 		ssl_set_cert_masks(cert,s->ctx->default_cert,c);
 		mask=cert->mask;
@@ -884,10 +885,10 @@ STACK *have,*pref;
 
 		if (!ok) continue;
 	
-		j=sk_find(pref,(char *)c);
+		j=sk_SSL_CIPHER_find(pref,c);
 		if (j >= 0)
 			{
-			ret=(SSL_CIPHER *)sk_value(pref,j);
+			ret=sk_SSL_CIPHER_value(pref,j);
 			break;
 			}
 		}

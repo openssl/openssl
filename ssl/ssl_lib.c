@@ -145,13 +145,13 @@ int SSL_clear(SSL *s)
 /** Used to change an SSL_CTXs default SSL method type */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx,SSL_METHOD *meth)
 	{
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 
 	ctx->method=meth;
 
 	sk=ssl_create_cipher_list(ctx->method,&(ctx->cipher_list),
 		&(ctx->cipher_list_by_id),SSL_DEFAULT_CIPHER_LIST);
-	if ((sk == NULL) || (sk_num(sk) <= 0))
+	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0))
 		{
 		SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION,SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return(0);
@@ -270,8 +270,8 @@ void SSL_free(SSL *s)
 	if (s->init_buf != NULL) BUF_MEM_free(s->init_buf);
 
 	/* add extra stuff */
-	if (s->cipher_list != NULL) sk_free(s->cipher_list);
-	if (s->cipher_list_by_id != NULL) sk_free(s->cipher_list_by_id);
+	if (s->cipher_list != NULL) sk_SSL_CIPHER_free(s->cipher_list);
+	if (s->cipher_list_by_id != NULL) sk_SSL_CIPHER_free(s->cipher_list_by_id);
 
 	/* Make the next call work :-) */
 	if (s->session != NULL)
@@ -288,7 +288,7 @@ void SSL_free(SSL *s)
 	if (s->ctx) SSL_CTX_free(s->ctx);
 
 	if (s->client_CA != NULL)
-		sk_pop_free(s->client_CA,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
 
 	if (s->method != NULL) s->method->ssl_free(s);
 
@@ -460,9 +460,9 @@ X509 *SSL_get_peer_certificate(SSL *s)
 	return(r);
 	}
 
-STACK *SSL_get_peer_cert_chain(SSL *s)
+STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s)
 	{
-	STACK *r;
+	STACK_OF(X509) *r;
 	
 	if ((s == NULL) || (s->session == NULL) || (s->session->cert == NULL))
 		r=NULL;
@@ -705,7 +705,7 @@ int ssl_cipher_ptr_id_cmp(SSL_CIPHER **ap,SSL_CIPHER **bp)
 
 /** return a STACK of the ciphers available for the SSL and in order of
  * preference */
-STACK *SSL_get_ciphers(SSL *s)
+STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s)
 	{
 	if ((s != NULL) && (s->cipher_list != NULL))
 		{
@@ -721,7 +721,7 @@ STACK *SSL_get_ciphers(SSL *s)
 
 /** return a STACK of the ciphers available for the SSL and in order of
  * algorithm id */
-STACK *ssl_get_ciphers_by_id(SSL *s)
+STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
 	{
 	if ((s != NULL) && (s->cipher_list_by_id != NULL))
 		{
@@ -739,13 +739,13 @@ STACK *ssl_get_ciphers_by_id(SSL *s)
 char *SSL_get_cipher_list(SSL *s,int n)
 	{
 	SSL_CIPHER *c;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 
 	if (s == NULL) return(NULL);
 	sk=SSL_get_ciphers(s);
-	if ((sk == NULL) || (sk_num(sk) <= n))
+	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= n))
 		return(NULL);
-	c=(SSL_CIPHER *)sk_value(sk,n);
+	c=sk_SSL_CIPHER_value(sk,n);
 	if (c == NULL) return(NULL);
 	return(c->name);
 	}
@@ -753,7 +753,7 @@ char *SSL_get_cipher_list(SSL *s,int n)
 /** specify the ciphers to be used by defaut by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx,char *str)
 	{
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	
 	sk=ssl_create_cipher_list(ctx->method,&ctx->cipher_list,
 		&ctx->cipher_list_by_id,str);
@@ -764,7 +764,7 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx,char *str)
 /** specify the ciphers to be used by the SSL */
 int SSL_set_cipher_list(SSL *s,char *str)
 	{
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	
 	sk=ssl_create_cipher_list(s->ctx->method,&s->cipher_list,
 		&s->cipher_list_by_id,str);
@@ -776,7 +776,7 @@ int SSL_set_cipher_list(SSL *s,char *str)
 char *SSL_get_shared_ciphers(SSL *s,char *buf,int len)
 	{
 	char *p,*cp;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
 	int i;
 
@@ -786,11 +786,11 @@ char *SSL_get_shared_ciphers(SSL *s,char *buf,int len)
 
 	p=buf;
 	sk=s->session->ciphers;
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		/* Decrement for either the ':' or a '\0' */
 		len--;
-		c=(SSL_CIPHER *)sk_value(sk,i);
+		c=sk_SSL_CIPHER_value(sk,i);
 		for (cp=c->name; *cp; )
 			{
 			if (len-- == 0)
@@ -807,7 +807,7 @@ char *SSL_get_shared_ciphers(SSL *s,char *buf,int len)
 	return(buf);
 	}
 
-int ssl_cipher_list_to_bytes(SSL *s,STACK *sk,unsigned char *p)
+int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
@@ -816,19 +816,20 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK *sk,unsigned char *p)
 	if (sk == NULL) return(0);
 	q=p;
 
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
-		c=(SSL_CIPHER *)sk_value(sk,i);
+		c=sk_SSL_CIPHER_value(sk,i);
 		j=ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
 	return(p-q);
 	}
 
-STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp)
+STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
+					       STACK_OF(SSL_CIPHER) **skp)
 	{
 	SSL_CIPHER *c;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	int i,n;
 
 	n=ssl_put_cipher_by_char(s,NULL,NULL);
@@ -838,11 +839,11 @@ STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp)
 		return(NULL);
 		}
 	if ((skp == NULL) || (*skp == NULL))
-		sk=sk_new(NULL); /* change perhaps later */
+		sk=sk_SSL_CIPHER_new(NULL); /* change perhaps later */
 	else
 		{
 		sk= *skp;
-		sk_zero(sk);
+		sk_SSL_CIPHER_zero(sk);
 		}
 
 	for (i=0; i<num; i+=n)
@@ -851,7 +852,7 @@ STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp)
 		p+=n;
 		if (c != NULL)
 			{
-			if (!sk_push(sk,(char *)c))
+			if (!sk_SSL_CIPHER_push(sk,c))
 				{
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
 				goto err;
@@ -864,7 +865,7 @@ STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp)
 	return(sk);
 err:
 	if ((skp == NULL) || (*skp == NULL))
-		sk_free(sk);
+		sk_SSL_CIPHER_free(sk);
 	return(NULL);
 	}
 
@@ -958,7 +959,8 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ssl_create_cipher_list(ret->method,
 		&ret->cipher_list,&ret->cipher_list_by_id,
 		SSL_DEFAULT_CIPHER_LIST);
-	if ((ret->cipher_list == NULL) || (sk_num(ret->cipher_list) <= 0))
+	if (ret->cipher_list == NULL
+	    || sk_SSL_CIPHER_num(ret->cipher_list) <= 0)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_LIBRARY_HAS_NO_CIPHERS);
 		goto err2;
@@ -980,7 +982,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		goto err2;
 		}
 
-	if ((ret->client_CA=sk_new_null()) == NULL)
+	if ((ret->client_CA=sk_X509_NAME_new_null()) == NULL)
 		goto err;
 
 	CRYPTO_new_ex_data(ssl_ctx_meth,(char *)ret,&ret->ex_data);
@@ -995,6 +997,9 @@ err2:
 	if (ret != NULL) SSL_CTX_free(ret);
 	return(NULL);
 	}
+
+static void SSL_COMP_free(SSL_COMP *comp)
+    { Free(comp); }
 
 void SSL_CTX_free(SSL_CTX *a)
 	{
@@ -1024,17 +1029,17 @@ void SSL_CTX_free(SSL_CTX *a)
 	if (a->cert_store != NULL)
 		X509_STORE_free(a->cert_store);
 	if (a->cipher_list != NULL)
-		sk_free(a->cipher_list);
+		sk_SSL_CIPHER_free(a->cipher_list);
 	if (a->cipher_list_by_id != NULL)
-		sk_free(a->cipher_list_by_id);
+		sk_SSL_CIPHER_free(a->cipher_list_by_id);
 	if (a->default_cert != NULL)
 		ssl_cert_free(a->default_cert);
 	if (a->client_CA != NULL)
-		sk_pop_free(a->client_CA,X509_NAME_free);
+		sk_X509_NAME_pop_free(a->client_CA,X509_NAME_free);
 	if (a->extra_certs != NULL)
-		sk_pop_free(a->extra_certs,X509_free);
+		sk_X509_pop_free(a->extra_certs,X509_free);
 	if (a->comp_methods != NULL)
-		sk_pop_free(a->comp_methods,FreeFunc);
+		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
 	Free((char *)a);
 	}
 
@@ -1427,7 +1432,7 @@ char *SSL_get_version(SSL *s)
 
 SSL *SSL_dup(SSL *s)
         {
-	STACK *sk;
+	STACK_OF(X509_NAME) *sk;
 	X509_NAME *xn;
         SSL *ret;
 	int i;
@@ -1471,23 +1476,23 @@ SSL *SSL_dup(SSL *s)
 	/* dup the cipher_list and cipher_list_by_id stacks */
 	if (s->cipher_list != NULL)
 		{
-		if ((ret->cipher_list=sk_dup(s->cipher_list)) == NULL)
+		if ((ret->cipher_list=sk_SSL_CIPHER_dup(s->cipher_list)) == NULL)
 			goto err;
 		}
 	if (s->cipher_list_by_id != NULL)
-		if ((ret->cipher_list_by_id=sk_dup(s->cipher_list_by_id))
+		if ((ret->cipher_list_by_id=sk_SSL_CIPHER_dup(s->cipher_list_by_id))
 			== NULL)
 			goto err;
 
 	/* Dup the client_CA list */
 	if (s->client_CA != NULL)
 		{
-		if ((sk=sk_dup(s->client_CA)) == NULL) goto err;
+		if ((sk=sk_X509_NAME_dup(s->client_CA)) == NULL) goto err;
 		ret->client_CA=sk;
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_X509_NAME_num(sk); i++)
 			{
-			xn=(X509_NAME *)sk_value(sk,i);
-			if ((sk_value(sk,i)=(char *)X509_NAME_dup(xn)) == NULL)
+			xn=sk_X509_NAME_value(sk,i);
+			if (sk_X509_NAME_set(sk,i,X509_NAME_dup(xn)) == NULL)
 				{
 				X509_NAME_free(xn);
 				goto err;
@@ -1796,3 +1801,6 @@ void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int export,
 #if defined(_WINDLL) && defined(WIN16)
 #include "../crypto/bio/bss_file.c"
 #endif
+
+IMPLEMENT_STACK_OF(SSL_CIPHER)
+IMPLEMENT_STACK_OF(SSL_COMP)

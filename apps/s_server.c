@@ -998,7 +998,7 @@ char *context;
 			{
 			char *p;
 			X509 *peer;
-			STACK *sk;
+			STACK_OF(SSL_CIPHER) *sk;
 			static char *space="                          ";
 
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
@@ -1017,10 +1017,10 @@ char *context;
 			 * be done */
 			BIO_printf(io,"Ciphers supported in s_server binary\n");
 			sk=SSL_get_ciphers(con);
-			j=sk_num(sk);
+			j=sk_SSL_CIPHER_num(sk);
 			for (i=0; i<j; i++)
 				{
-				c=(SSL_CIPHER *)sk_value(sk,i);
+				c=sk_SSL_CIPHER_value(sk,i);
 				BIO_printf(io,"%-11s:%-25s",
 					SSL_CIPHER_get_version(c),
 					SSL_CIPHER_get_name(c));

@@ -531,11 +531,11 @@ SSL *s;
 		if (s->ctx->comp_methods == NULL)
 			j=0;
 		else
-			j=sk_num(s->ctx->comp_methods);
+			j=sk_SSL_COMP_num(s->ctx->comp_methods);
 		*(p++)=1+j;
 		for (i=0; i<j; i++)
 			{
-			comp=(SSL_COMP *)sk_value(s->ctx->comp_methods,i);
+			comp=sk_SSL_COMP_value(s->ctx->comp_methods,i);
 			*(p++)=comp->id;
 			}
 		*(p++)=0; /* Add the NULL method */
@@ -560,7 +560,7 @@ err:
 static int ssl3_get_server_hello(s)
 SSL *s;
 	{
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
 	unsigned char *p,*d;
 	int i,al,ok;
@@ -645,7 +645,7 @@ SSL *s;
 	p+=ssl_put_cipher_by_char(s,NULL,NULL);
 
 	sk=ssl_get_ciphers_by_id(s);
-	i=sk_find(sk,(char *)c);
+	i=sk_SSL_CIPHER_find(sk,c);
 	if (i < 0)
 		{
 		/* we did not say we would use this cipher */
@@ -707,7 +707,7 @@ SSL *s;
 	unsigned long n,nc,llen,l;
 	X509 *x=NULL;
 	unsigned char *p,*d,*q;
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 	CERT *c;
 	EVP_PKEY *pkey=NULL;
 
@@ -738,7 +738,7 @@ SSL *s;
 		}
 	d=p=(unsigned char *)s->init_buf->data;
 
-	if ((sk=sk_new_null()) == NULL)
+	if ((sk=sk_X509_new_null()) == NULL)
 		{
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -775,7 +775,7 @@ SSL *s;
 			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_CERT_LENGTH_MISMATCH);
 			goto f_err;
 			}
-		if (!sk_push(sk,(char *)x))
+		if (!sk_X509_push(sk,x))
 			{
 			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -800,7 +800,7 @@ SSL *s;
 	s->session->cert=c;
 
 	c->cert_chain=sk;
-	x=(X509 *)sk_value(sk,0);
+	x=sk_X509_value(sk,0);
 	sk=NULL;
 
 	pkey=X509_get_pubkey(x);
@@ -845,7 +845,7 @@ f_err:
 err:
 	EVP_PKEY_free(pkey);
 	X509_free(x);
-	sk_pop_free(sk,X509_free);
+	sk_X509_pop_free(sk,X509_free);
 	return(ret);
 	}
 
@@ -1151,7 +1151,7 @@ SSL *s;
 	unsigned int llen,ctype_num,i;
 	X509_NAME *xn=NULL;
 	unsigned char *p,*d,*q;
-	STACK *ca_sk=NULL;
+	STACK_OF(X509_NAME) *ca_sk=NULL;
 
 	n=ssl3_get_message(s,
 		SSL3_ST_CR_CERT_REQ_A,
@@ -1195,7 +1195,7 @@ SSL *s;
 
 	d=p=(unsigned char *)s->init_buf->data;
 
-	if ((ca_sk=sk_new(ca_dn_cmp)) == NULL)
+	if ((ca_sk=sk_X509_NAME_new(ca_dn_cmp)) == NULL)
 		{
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -1260,7 +1260,7 @@ fclose(out);
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_CA_DN_LENGTH_MISMATCH);
 			goto err;
 			}
-		if (!sk_push(ca_sk,(char *)xn))
+		if (!sk_X509_NAME_push(ca_sk,xn))
 			{
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -1280,13 +1280,13 @@ cont:
 	s->s3->tmp.cert_req=1;
 	s->s3->tmp.ctype_num=ctype_num;
 	if (s->s3->tmp.ca_names != NULL)
-		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	s->s3->tmp.ca_names=ca_sk;
 	ca_sk=NULL;
 
 	ret=1;
 err:
-	if (ca_sk != NULL) sk_pop_free(ca_sk,X509_NAME_free);
+	if (ca_sk != NULL) sk_X509_NAME_pop_free(ca_sk,X509_NAME_free);
 	return(ret);
 	}
 

@@ -5,6 +5,16 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Introduce type-safe ASN.1 SETs.
+     [Ben Laurie]
+
+  *) Introduce type-safe STACKs. This will almost certainly break lots of code
+     that links with OpenSSL (well at least cause lots of warnings), but fear
+     not: the conversion is trivial, and it eliminates loads of evil casts. A
+     few STACKed things have been converted already. Feel free to convert more.
+     In the fullness of time, I'll do away with the STACK type altogether.
+     [Ben Laurie]
+
   *) Add `openssl ca -revoke <certfile>' facility which revokes a certificate
      specified in <certfile> by updating the entry in the index.txt file.
      This way one no longer has to edit the index.txt file manually for

@@ -245,9 +245,9 @@ X509 *x;
 
 	/* Thawte special :-) */
 	if (s->ctx->extra_certs != NULL)
-	for (i=0; i<sk_num(s->ctx->extra_certs); i++)
+	for (i=0; i<sk_X509_num(s->ctx->extra_certs); i++)
 		{
-		x=(X509 *)sk_value(s->ctx->extra_certs,i);
+		x=sk_X509_value(s->ctx->extra_certs,i);
 		n=i2d_X509(x,NULL);
 		if (!BUF_MEM_grow(buf,(int)(n+l+3)))
 			{

@@ -305,8 +305,9 @@ bntest.o: ../include/err.h ../include/evp.h ../include/idea.h ../include/md2.h
 bntest.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
 bntest.o: ../include/opensslv.h ../include/pkcs7.h ../include/rand.h
 bntest.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
-bntest.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
-bntest.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h
+bntest.o: ../include/ripemd.h ../include/rsa.h ../include/safestack.h
+bntest.o: ../include/sha.h ../include/stack.h ../include/x509.h
+bntest.o: ../include/x509_vfy.h
 casttest.o: ../include/cast.h
 destest.o: ../include/des.h
 dhtest.o: ../include/bio.h ../include/bn.h ../include/crypto.h ../include/dh.h
@@ -335,7 +336,8 @@ rc4test.o: ../include/rc4.h
 rc5test.o: ../include/rc5.h
 rmdtest.o: ../include/ripemd.h
 rsa_oaep_test.o: ../include/bn.h ../include/crypto.h ../include/e_os.h
-rsa_oaep_test.o: ../include/opensslv.h ../include/rsa.h ../include/stack.h
+rsa_oaep_test.o: ../include/err.h ../include/opensslv.h ../include/rsa.h
+rsa_oaep_test.o: ../include/stack.h
 sha1test.o: ../include/sha.h
 shatest.o: ../include/sha.h
 ssltest.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
@@ -346,6 +348,7 @@ ssltest.o: ../include/idea.h ../include/lhash.h ../include/md2.h
 ssltest.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
 ssltest.o: ../include/opensslv.h ../include/pkcs7.h ../include/rc2.h
 ssltest.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
-ssltest.o: ../include/rsa.h ../include/sha.h ../include/ssl.h ../include/ssl2.h
-ssltest.o: ../include/ssl23.h ../include/ssl3.h ../include/stack.h
-ssltest.o: ../include/tls1.h ../include/x509.h ../include/x509_vfy.h
+ssltest.o: ../include/rsa.h ../include/safestack.h ../include/sha.h
+ssltest.o: ../include/ssl.h ../include/ssl2.h ../include/ssl23.h
+ssltest.o: ../include/ssl3.h ../include/stack.h ../include/tls1.h
+ssltest.o: ../include/x509.h ../include/x509_vfy.h

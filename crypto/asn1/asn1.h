@@ -485,6 +485,33 @@ STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(),
 			int ex_tag, int ex_class);
 
+#define DECLARE_ASN1_SET_OF(type) \
+int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
+			   int (*func)(type *,unsigned char **), int ex_tag, \
+			   int ex_class, int is_set); \
+STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
+				       long length, \
+				       type *(*func)(type **, \
+						     unsigned char **,long), \
+				       void (*free_func)(type *), \
+				       int ex_tag,int ex_class);
+
+#define IMPLEMENT_ASN1_SET_OF(type) \
+int i2d_ASN1_SET_OF_##type(STACK_OF(type) *a,unsigned char **pp, \
+			   int (*func)(type *,unsigned char **), int ex_tag, \
+			   int ex_class, int is_set) \
+    { return i2d_ASN1_SET((STACK *)a,pp,func,ex_tag,ex_class,is_set); } \
+STACK_OF(type) *d2i_ASN1_SET_OF_##type(STACK_OF(type) **a,unsigned char **pp, \
+				       long length, \
+				       type *(*func)(type **, \
+						     unsigned char **,long), \
+				       void (*free_func)(type *), \
+				       int ex_tag,int ex_class) \
+    { return (STACK_OF(type) *)d2i_ASN1_SET((STACK **)a,pp,length, \
+					    (char *(*)())func, \
+					    (void (*)())free_func, \
+					    ex_tag,ex_class); }
+
 #ifdef HEADER_BIO_H
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);

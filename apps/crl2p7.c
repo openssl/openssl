@@ -73,7 +73,7 @@
 #include "objects.h"
 
 #ifndef NOPROTO
-static int add_certs_from_file(STACK *stack, char *certfile);
+static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 #else
 static int add_certs_from_file();
 #endif
@@ -100,7 +100,7 @@ char **argv;
 	X509_CRL *crl=NULL;
 	STACK *certflst=NULL;
 	STACK *crl_stack=NULL;
-	STACK *cert_stack=NULL;
+	STACK_OF(X509) *cert_stack=NULL;
 	int ret=1,nocrl=0;
 
 	apps_startup();
@@ -228,7 +228,7 @@ bad:
 		crl=NULL; /* now part of p7 for Freeing */
 		}
 
-	if ((cert_stack=sk_new(NULL)) == NULL) goto end;
+	if ((cert_stack=sk_X509_new(NULL)) == NULL) goto end;
 	p7s->cert=cert_stack;
 
 	if(certflst) for(i = 0; i < sk_num(certflst); i++) {
@@ -289,7 +289,7 @@ end:
  *----------------------------------------------------------------------
  */
 static int add_certs_from_file(stack,certfile)
-STACK *stack;
+STACK_OF(X509) *stack;
 char *certfile;
 	{
 	struct stat st;
@@ -325,7 +325,7 @@ char *certfile;
 		xi=(X509_INFO *)sk_shift(sk);
 		if (xi->x509 != NULL)
 			{
-			sk_push(stack,(char *)xi->x509);
+			sk_X509_push(stack,xi->x509);
 			xi->x509=NULL;
 			count++;
 			}

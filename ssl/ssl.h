@@ -63,6 +63,8 @@
 extern "C" {
 #endif
 
+#include "safestack.h"
+
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
  * Version 1 - added the optional peer certificate
@@ -167,6 +169,8 @@ typedef struct ssl_cipher_st
 	unsigned long mask;		/* used for matching */
 	} SSL_CIPHER;
 
+DECLARE_STACK_OF(SSL_CIPHER)
+
 typedef struct ssl_st SSL;
 typedef struct ssl_ctx_st SSL_CTX;
 
@@ -254,7 +258,7 @@ typedef struct ssl_session_st
 					 * needs to be used to load
 					 * the 'cipher' structure */
 
-	STACK /* SSL_CIPHER */ *ciphers; /* shared ciphers? */
+	STACK_OF(SSL_CIPHER) *ciphers; /* shared ciphers? */
 
 	CRYPTO_EX_DATA ex_data; /* application specific data */
 
@@ -314,14 +318,16 @@ typedef struct ssl_comp_st
 #endif
 } SSL_COMP;
 
+DECLARE_STACK_OF(SSL_COMP)
+
 struct ssl_ctx_st
 	{
 	SSL_METHOD *method;
 	unsigned long options;
 
-	STACK /* SSL_CIPHER */ *cipher_list;
+	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
-	STACK /* SSL_CIPHER */ *cipher_list_by_id;
+	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct x509_store_st /* X509_STORE */ *cert_store;
 	struct lhash_st /* LHASH */ *sessions;	/* a set of SSL_SESSION's */
@@ -404,7 +410,7 @@ struct ssl_ctx_st
 /**/	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
 
 	/* what we put in client requests */
-	STACK *client_CA;
+	STACK_OF(X509_NAME) *client_CA;
 
 /**/	int quiet_shutdown;
 
@@ -414,8 +420,8 @@ struct ssl_ctx_st
 	EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
 	EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
 
-	STACK *extra_certs;
-        STACK *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+	STACK_OF(X509) *extra_certs;
+        STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -533,8 +539,8 @@ struct ssl_st
 	int hit;		/* reusing a previous session */
 
 	/* crypto */
-	STACK /* SSL_CIPHER */ *cipher_list;
-	STACK /* SSL_CIPHER */ *cipher_list_by_id;
+	STACK_OF(SSL_CIPHER) *cipher_list;
+	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	/* These are the ones being used, the ones is SSL_SESSION are
 	 * the ones to be 'copied' into these ones */
@@ -588,7 +594,7 @@ struct ssl_st
 	CRYPTO_EX_DATA ex_data;
 
 	/* for server side, keep the list of CA_dn we can use */
-	STACK /* X509_NAME */ *client_CA;
+	STACK_OF(X509_NAME) *client_CA;
 
 	int references;
 	unsigned long options;
@@ -868,7 +874,7 @@ int	SSL_use_certificate_file(SSL *ssl, char *file, int type);
 int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
-STACK * SSL_load_client_CA_file(char *file);
+STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK *stackCAs,
 					    const char *file);
 int	SSL_add_dir_cert_subjects_to_stack(STACK *stackCAs,
@@ -907,7 +913,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,unsigned char **pp,long length);
 X509 *	SSL_get_peer_certificate(SSL *s);
 #endif
 
-STACK *	SSL_get_peer_cert_chain(SSL *s);
+STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s);
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
@@ -961,7 +967,7 @@ SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
 SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
 
-STACK *SSL_get_ciphers(SSL *s);
+STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s);
 
 int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);
@@ -974,10 +980,10 @@ char *SSL_alert_type_string(int value);
 char *SSL_alert_desc_string_long(int value);
 char *SSL_alert_desc_string(int value);
 
-void SSL_set_client_CA_list(SSL *s, STACK *list);
-void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK *list);
-STACK *SSL_get_client_CA_list(SSL *s);
-STACK *SSL_CTX_get_client_CA_list(SSL_CTX *s);
+void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *list);
+void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *list);
+STACK_OF(X509_NAME) *SSL_get_client_CA_list(SSL *s);
+STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(SSL_CTX *s);
 int SSL_add_client_CA(SSL *ssl,X509 *x);
 int SSL_CTX_add_client_CA(SSL_CTX *ctx,X509 *x);
 

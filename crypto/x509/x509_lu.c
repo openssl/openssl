@@ -421,7 +421,7 @@ void X509_STORE_CTX_init(ctx,store,x509,chain)
 X509_STORE_CTX *ctx;
 X509_STORE *store;
 X509 *x509;
-STACK *chain;
+STACK_OF(X509) *chain;
 	{
 	ctx->ctx=store;
 	ctx->current_method=0;

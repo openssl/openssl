@@ -399,7 +399,7 @@ SSL_SESSION *ss;
 	memset(ss->session_id,0,SSL_MAX_SSL_SESSION_ID_LENGTH);
 	if (ss->cert != NULL) ssl_cert_free(ss->cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
-	if (ss->ciphers != NULL) sk_free(ss->ciphers);
+	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 	memset(ss,0,sizeof(*ss));
 	Free(ss);
 	}

@@ -143,7 +143,7 @@ void ssl_cert_free(CERT *c)
 #endif
 		}
 	if (c->cert_chain != NULL)
-		sk_pop_free(c->cert_chain,X509_free);
+		sk_X509_pop_free(c->cert_chain,X509_free);
 	Free(c);
 	}
 
@@ -174,16 +174,16 @@ int ssl_set_cert_type(CERT *c,int type)
 	return(1);
 	}
 
-int ssl_verify_cert_chain(SSL *s,STACK *sk)
+int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	{
 	X509 *x;
 	int i;
 	X509_STORE_CTX ctx;
 
-	if ((sk == NULL) || (sk_num(sk) == 0))
+	if ((sk == NULL) || (sk_X509_num(sk) == 0))
 		return(0);
 
-	x=(X509 *)sk_value(sk,0);
+	x=sk_X509_value(sk,0);
 	X509_STORE_CTX_init(&ctx,s->ctx->cert_store,x,sk);
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),
 		(char *)s);
@@ -207,10 +207,11 @@ int ssl_verify_cert_chain(SSL *s,STACK *sk)
 	return(i);
 	}
 
-static void set_client_CA_list(STACK **ca_list,STACK *list)
+static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
+			       STACK_OF(X509_NAME) *list)
 	{
 	if (*ca_list != NULL)
-		sk_pop_free(*ca_list,X509_NAME_free);
+		sk_X509_NAME_pop_free(*ca_list,X509_NAME_free);
 
 	*ca_list=list;
 	}
@@ -234,22 +235,22 @@ STACK *SSL_dup_CA_list(STACK *sk)
 	return(ret);
 	}
 
-void SSL_set_client_CA_list(SSL *s,STACK *list)
+void SSL_set_client_CA_list(SSL *s,STACK_OF(X509_NAME) *list)
 	{
 	set_client_CA_list(&(s->client_CA),list);
 	}
 
-void SSL_CTX_set_client_CA_list(SSL_CTX *ctx,STACK *list)
+void SSL_CTX_set_client_CA_list(SSL_CTX *ctx,STACK_OF(X509_NAME) *list)
 	{
 	set_client_CA_list(&(ctx->client_CA),list);
 	}
 
-STACK *SSL_CTX_get_client_CA_list(SSL_CTX *ctx)
+STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(SSL_CTX *ctx)
 	{
 	return(ctx->client_CA);
 	}
 
-STACK *SSL_get_client_CA_list(SSL *s)
+STACK_OF(X509_NAME) *SSL_get_client_CA_list(SSL *s)
 	{
 	if (s->type == SSL_ST_CONNECT)
 		{ /* we are in the client */
@@ -268,18 +269,18 @@ STACK *SSL_get_client_CA_list(SSL *s)
 		}
 	}
 
-static int add_client_CA(STACK **sk,X509 *x)
+static int add_client_CA(STACK_OF(X509_NAME) **sk,X509 *x)
 	{
 	X509_NAME *name;
 
 	if (x == NULL) return(0);
-	if ((*sk == NULL) && ((*sk=sk_new_null()) == NULL))
+	if ((*sk == NULL) && ((*sk=sk_X509_NAME_new_null()) == NULL))
 		return(0);
 		
 	if ((name=X509_NAME_dup(X509_get_subject_name(x))) == NULL)
 		return(0);
 
-	if (!sk_push(*sk,(char *)name))
+	if (!sk_X509_NAME_push(*sk,name))
 		{
 		X509_NAME_free(name);
 		return(0);
@@ -311,15 +312,15 @@ static int name_cmp(X509_NAME **a,X509_NAME **b)
  * \param file the file containing one or more certs.
  * \return a ::STACK containing the certs.
  */
-STACK *SSL_load_client_CA_file(char *file)
+STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 	{
 	BIO *in;
 	X509 *x=NULL;
 	X509_NAME *xn=NULL;
-	STACK *ret,*sk;
+	STACK_OF(X509_NAME) *ret,*sk;
 
-	ret=sk_new(NULL);
-	sk=sk_new(name_cmp);
+	ret=sk_X509_NAME_new(NULL);
+	sk=sk_X509_NAME_new(name_cmp);
 
 	in=BIO_new(BIO_s_file_internal());
 
@@ -340,22 +341,22 @@ STACK *SSL_load_client_CA_file(char *file)
 		/* check for duplicates */
 		xn=X509_NAME_dup(xn);
 		if (xn == NULL) goto err;
-		if (sk_find(sk,(char *)xn) >= 0)
+		if (sk_X509_NAME_find(sk,xn) >= 0)
 			X509_NAME_free(xn);
 		else
 			{
-			sk_push(sk,(char *)xn);
-			sk_push(ret,(char *)xn);
+			sk_X509_NAME_push(sk,xn);
+			sk_X509_NAME_push(ret,xn);
 			}
 		}
 
 	if (0)
 		{
 err:
-		if (ret != NULL) sk_pop_free(ret,X509_NAME_free);
+		if (ret != NULL) sk_X509_NAME_pop_free(ret,X509_NAME_free);
 		ret=NULL;
 		}
-	if (sk != NULL) sk_free(sk);
+	if (sk != NULL) sk_X509_NAME_free(sk);
 	if (in != NULL) BIO_free(in);
 	if (x != NULL) X509_free(x);
 	return(ret);

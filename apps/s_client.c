@@ -666,7 +666,8 @@ int full;
 	char *p;
 	static char *space="                ";
 	char buf[BUFSIZ];
-	STACK *sk;
+	STACK_OF(X509) *sk;
+	STACK_OF(X509_NAME) *sk2;
 	SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j,i;
@@ -677,16 +678,16 @@ int full;
 		if (sk != NULL)
 			{
 			BIO_printf(bio,"---\nCertificate chain\n");
-			for (i=0; i<sk_num(sk); i++)
+			for (i=0; i<sk_X509_num(sk); i++)
 				{
-				X509_NAME_oneline(X509_get_subject_name((X509 *)
-					sk_value(sk,i)),buf,BUFSIZ);
+				X509_NAME_oneline(X509_get_subject_name(
+					sk_X509_value(sk,i)),buf,BUFSIZ);
 				BIO_printf(bio,"%2d s:%s\n",i,buf);
-				X509_NAME_oneline(X509_get_issuer_name((X509 *)
-					sk_value(sk,i)),buf,BUFSIZ);
+				X509_NAME_oneline(X509_get_issuer_name(
+					sk_X509_value(sk,i)),buf,BUFSIZ);
 				BIO_printf(bio,"   i:%s\n",buf);
 				if (c_showcerts)
-					PEM_write_bio_X509(bio,(X509 *) sk_value(sk,i));
+					PEM_write_bio_X509(bio,sk_X509_value(sk,i));
 				}
 			}
 
@@ -707,13 +708,13 @@ int full;
 		else
 			BIO_printf(bio,"no peer certificate available\n");
 
-		sk=SSL_get_client_CA_list(s);
-		if ((sk != NULL) && (sk_num(sk) > 0))
+		sk2=SSL_get_client_CA_list(s);
+		if ((sk != NULL) && (sk_X509_NAME_num(sk2) > 0))
 			{
 			BIO_printf(bio,"---\nAcceptable client certificate CA names\n");
-			for (i=0; i<sk_num(sk); i++)
+			for (i=0; i<sk_X509_NAME_num(sk2); i++)
 				{
-				xn=(X509_NAME *)sk_value(sk,i);
+				xn=sk_X509_NAME_value(sk2,i);
 				X509_NAME_oneline(xn,buf,sizeof(buf));
 				BIO_write(bio,buf,strlen(buf));
 				BIO_write(bio,"\n",1);

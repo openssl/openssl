@@ -283,7 +283,7 @@ typedef struct cert_st
 	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
-	STACK *cert_chain;
+	STACK_OF(X509) *cert_chain;
 
 	int references;
 	} CERT;
@@ -359,20 +359,23 @@ int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session,int len);
 int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b);
 int ssl_cipher_ptr_id_cmp(SSL_CIPHER **ap,SSL_CIPHER **bp);
-STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp);
-int ssl_cipher_list_to_bytes(SSL *s,STACK *sk,unsigned char *p);
-STACK *ssl_create_cipher_list(SSL_METHOD *meth,STACK **pref,
-	STACK **sorted,char *str);
+STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
+					       STACK_OF(SSL_CIPHER) **skp);
+int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p);
+STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *meth,
+					     STACK_OF(SSL_CIPHER) **pref,
+					     STACK_OF(SSL_CIPHER) **sorted,
+					     char *str);
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(SSL_SESSION *s, EVP_CIPHER **enc, EVP_MD **md,
 	SSL_COMP **comp);
-int ssl_verify_cert_chain(SSL *s,STACK *sk);
+int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher);
-STACK *ssl_get_ciphers_by_id(SSL *s);
+STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 
 int ssl2_enc_init(SSL *s, int client);
@@ -432,7 +435,8 @@ void ssl3_finish_mac(SSL *s, unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
 int ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
-SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK *have,STACK *pref);
+SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK_OF(SSL_CIPHER) *have,
+			       STACK_OF(SSL_CIPHER) *pref);
 int	ssl3_setup_buffers(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
@@ -474,8 +478,8 @@ int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
-SSL_COMP *ssl3_comp_find(STACK *sk, int n);
-STACK *SSL_COMP_get_compression_methods(void);
+SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
 
 #else

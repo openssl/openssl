@@ -89,7 +89,7 @@ char **argv;
 	SSL *ssl=NULL;
 	char *ciphers=NULL;
 	SSL_METHOD *meth=NULL;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	char buf[512];
 	BIO *STDout=NULL;
 
@@ -167,10 +167,10 @@ char **argv;
 		{
 		sk=SSL_get_ciphers(ssl);
 
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 			{
 			BIO_puts(STDout,SSL_CIPHER_description(
-				(SSL_CIPHER *)sk_value(sk,i),
+				sk_SSL_CIPHER_value(sk,i),
 				buf,512));
 			}
 		}

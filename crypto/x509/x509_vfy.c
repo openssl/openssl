@@ -112,7 +112,7 @@ X509_STORE_CTX *ctx;
 	int depth,i,ok=0;
 	int num;
 	int (*cb)();
-	STACK *sktmp=NULL;
+	STACK_OF(X509) *sktmp=NULL;
 
 	if (ctx->cert == NULL)
 		{
@@ -138,7 +138,8 @@ X509_STORE_CTX *ctx;
 		}
 
 	/* We use a temporary so we can chop and hack at it */
-	if ((ctx->untrusted != NULL) && (sktmp=sk_dup(ctx->untrusted)) == NULL)
+	if (ctx->untrusted != NULL
+	    && (sktmp=sk_X509_dup(ctx->untrusted)) == NULL)
 		{
 		X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 		goto end;
@@ -171,7 +172,7 @@ X509_STORE_CTX *ctx;
 					goto end;
 					}
 				CRYPTO_add(&xtmp->references,1,CRYPTO_LOCK_X509);
-				sk_delete_ptr(sktmp,(char *)xtmp);
+				sk_X509_delete_ptr(sktmp,xtmp);
 				ctx->last_untrusted++;
 				x=xtmp;
 				num++;
@@ -290,7 +291,7 @@ X509_STORE_CTX *ctx;
 end:
 		X509_get_pubkey_parameters(NULL,ctx->chain);
 		}
-	if (sktmp != NULL) sk_free(sktmp);
+	if (sktmp != NULL) sk_X509_free(sktmp);
 	if (chain_ss != NULL) X509_free(chain_ss);
 	return(ok);
 	}
@@ -659,9 +660,11 @@ X509 *x;
 
 void X509_STORE_CTX_set_chain(ctx,sk)
 X509_STORE_CTX *ctx;
-STACK *sk;
+STACK_OF(X509) *sk;
 	{
 	ctx->untrusted=sk;
 	}
 
-
+IMPLEMENT_STACK_OF(X509)
+IMPLEMENT_ASN1_SET_OF(X509)
+IMPLEMENT_STACK_OF(X509_NAME)

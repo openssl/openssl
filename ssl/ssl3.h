@@ -331,7 +331,7 @@ typedef struct ssl3_ctx_st
 		int cert_req;
 		int ctype_num;
 		char ctype[SSL3_CT_NUMBER];
-		STACK *ca_names;
+		STACK_OF(X509_NAME) *ca_names;
 
 		int use_rsa_tmp;
 

@@ -555,7 +555,7 @@ SSL *s;
 	unsigned char *p,*d,*q;
 	SSL_CIPHER *c;
 	SSL_COMP *comp=NULL;
-	STACK *ciphers=NULL;
+	STACK_OF(SSL_CIPHER) *ciphers=NULL;
 
 	/* We do this so that we will respond with our native type.
 	 * If we are TLSv1 and we get SSLv3, we will respond with TLSv1,
@@ -643,9 +643,9 @@ SSL *s;
 #ifdef CIPHER_DEBUG
 		printf("client sent %d ciphers\n",sk_num(ciphers));
 #endif
-		for (i=0; i<sk_num(ciphers); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(ciphers); i++)
 			{
-			c=(SSL_CIPHER *)sk_value(ciphers,i);
+			c=sk_SSL_CIPHER_value(ciphers,i);
 #ifdef CIPHER_DEBUG
 			printf("client [%2d of %2d]:%s\n",
 				i,sk_num(ciphers),SSL_CIPHER_get_name(c));
@@ -658,11 +658,11 @@ SSL *s;
 			}
 		if (j == 0)
 			{
-			if ((s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_num(ciphers) == 1))
+			if ((s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1))
 				{
 				/* Very bad for multi-threading.... */
-				s->session->cipher=
-					(SSL_CIPHER *)sk_value(ciphers,0);
+				s->session->cipher=sk_SSL_CIPHER_value(ciphers,
+								       0);
 				}
 			else
 				{
@@ -700,10 +700,10 @@ SSL *s;
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
 
-		nn=sk_num(s->ctx->comp_methods);
+		nn=sk_SSL_COMP_num(s->ctx->comp_methods);
 		for (m=0; m<nn; m++)
 			{
-			comp=(SSL_COMP *)sk_value(s->ctx->comp_methods,m);
+			comp=sk_SSL_COMP_value(s->ctx->comp_methods,m);
 			v=comp->id;
 			for (o=0; o<i; o++)
 				{
@@ -741,7 +741,7 @@ SSL *s;
 		{
 		s->session->compress_meth=(comp == NULL)?0:comp->id;
 		if (s->session->ciphers != NULL)
-			sk_free(s->session->ciphers);
+			sk_SSL_CIPHER_free(s->session->ciphers);
 		s->session->ciphers=ciphers;
 		if (ciphers == NULL)
 			{
@@ -751,7 +751,7 @@ SSL *s;
 			}
 		ciphers=NULL;
 		c=ssl3_choose_cipher(s,s->session->ciphers,
-			ssl_get_ciphers_by_id(s));
+				     ssl_get_ciphers_by_id(s));
 
 		if (c == NULL)
 			{
@@ -765,16 +765,16 @@ SSL *s;
 		{
 		/* Session-id reuse */
 #ifdef REUSE_CIPHER_BUG
-		STACK *sk;
+		STACK_OF(SSL_CIPHER) *sk;
 		SSL_CIPHER *nc=NULL;
 		SSL_CIPHER *ec=NULL;
 
 		if (s->options & SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG)
 			{
 			sk=s->session->ciphers;
-			for (i=0; i<sk_num(sk); i++)
+			for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 				{
-				c=(SSL_CIPHER *)sk_value(sk,i);
+				c=sk_SSL_CIPHER_value(sk,i);
 				if (c->algorithms & SSL_eNULL)
 					nc=c;
 				if (SSL_C_IS_EXPORT(c))
@@ -810,7 +810,7 @@ f_err:
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
 		}
 err:
-	if (ciphers != NULL) sk_free(ciphers);
+	if (ciphers != NULL) sk_SSL_CIPHER_free(ciphers);
 	return(ret);
 	}
 
@@ -1136,7 +1136,7 @@ SSL *s;
 	{
 	unsigned char *p,*d;
 	int i,j,nl,off,n;
-	STACK *sk=NULL;
+	STACK_OF(X509_NAME) *sk=NULL;
 	X509_NAME *name;
 	BUF_MEM *buf;
 
@@ -1161,9 +1161,9 @@ SSL *s;
 		nl=0;
 		if (sk != NULL)
 			{
-			for (i=0; i<sk_num(sk); i++)
+			for (i=0; i<sk_X509_NAME_num(sk); i++)
 				{
-				name=(X509_NAME *)sk_value(sk,i);
+				name=sk_X509_NAME_value(sk,i);
 				j=i2d_X509_NAME(name,NULL);
 				if (!BUF_MEM_grow(buf,4+n+j+2))
 					{
@@ -1562,7 +1562,7 @@ SSL *s;
 	X509 *x=NULL;
 	unsigned long l,nc,llen,n;
 	unsigned char *p,*d,*q;
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 
 	n=ssl3_get_message(s,
 		SSL3_ST_SR_CERT_A,
@@ -1605,7 +1605,7 @@ SSL *s;
 		}
 	d=p=(unsigned char *)s->init_buf->data;
 
-	if ((sk=sk_new_null()) == NULL)
+	if ((sk=sk_X509_new_null()) == NULL)
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -1641,7 +1641,7 @@ SSL *s;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_CERT_LENGTH_MISMATCH);
 			goto f_err;
 			}
-		if (!sk_push(sk,(char *)x))
+		if (!sk_X509_push(sk,x))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -1650,7 +1650,7 @@ SSL *s;
 		nc+=l+3;
 		}
 
-	if (sk_num(sk) <= 0)
+	if (sk_X509_num(sk) <= 0)
 		{
 		/* TLS does not mind 0 certs returned */
 		if (s->version == SSL3_VERSION)
@@ -1682,7 +1682,7 @@ SSL *s;
 	/* This should not be needed */
 	if (s->session->peer != NULL)
 		X509_free(s->session->peer);
-	s->session->peer=(X509 *)sk_shift(sk);
+	s->session->peer=sk_X509_shift(sk);
 	s->session->cert->cert_chain=sk;
 	sk=NULL;
 
@@ -1694,7 +1694,7 @@ f_err:
 		}
 err:
 	if (x != NULL) X509_free(x);
-	if (sk != NULL) sk_pop_free(sk,X509_free);
+	if (sk != NULL) sk_X509_pop_free(sk,X509_free);
 	return(ret);
 	}
 

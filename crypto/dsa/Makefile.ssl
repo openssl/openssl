@@ -91,9 +91,10 @@ dsa_asn1.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
 dsa_asn1.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
 dsa_asn1.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 dsa_asn1.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-dsa_asn1.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
-dsa_asn1.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-dsa_asn1.o: ../cryptlib.h ../crypto.h ../opensslv.h dsa.h
+dsa_asn1.o: ../../include/ripemd.h ../../include/rsa.h
+dsa_asn1.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
+dsa_asn1.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+dsa_asn1.o: ../crypto.h ../opensslv.h dsa.h
 dsa_err.o: ../../include/bn.h ../../include/err.h dsa.h
 dsa_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dsa_gen.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
@@ -118,6 +119,6 @@ dsa_vrf.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
 dsa_vrf.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 dsa_vrf.o: ../../include/rand.h ../../include/rc2.h ../../include/rc4.h
 dsa_vrf.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-dsa_vrf.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-dsa_vrf.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-dsa_vrf.o: dsa.h
+dsa_vrf.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
+dsa_vrf.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+dsa_vrf.o: ../crypto.h ../opensslv.h dsa.h

@@ -87,7 +87,7 @@ $(ERRC).c: $(ERR).err
 dh_check.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dh_check.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
 dh_check.o: ../cryptlib.h ../crypto.h ../opensslv.h dh.h
-dh_err.o: ../../include/err.h dh.h
+dh_err.o: ../../include/bn.h ../../include/err.h dh.h
 dh_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dh_gen.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
 dh_gen.o: ../cryptlib.h ../crypto.h ../opensslv.h dh.h

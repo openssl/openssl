@@ -465,8 +465,8 @@ SSL *s;
 	{
 	int i,n;
 	unsigned char *p;
-	STACK *cs; /* a stack of SSL_CIPHERS */
-	STACK *cl; /* the ones we want to use */
+	STACK_OF(SSL_CIPHER) *cs; /* a stack of SSL_CIPHERS */
+	STACK_OF(SSL_CIPHER) *cl; /* the ones we want to use */
 	int z;
 
 	/* This is a bit of a hack to check for the correct packet
@@ -574,11 +574,11 @@ SSL *s;
 
 		cl=ssl_get_ciphers_by_id(s);
 
-		for (z=0; z<sk_num(cs); z++)
+		for (z=0; z<sk_SSL_CIPHER_num(cs); z++)
 			{
-			if (sk_find(cl,sk_value(cs,z)) < 0)
+			if (sk_SSL_CIPHER_find(cl,sk_SSL_CIPHER_value(cs,z)) < 0)
 				{
-				sk_delete(cs,z);
+				sk_SSL_CIPHER_delete(cs,z);
 				z--;
 				}
 			}
@@ -608,7 +608,7 @@ SSL *s;
 	{
 	unsigned char *p,*d;
 	int n,hit;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_SEND_SERVER_HELLO_A)
@@ -787,7 +787,7 @@ SSL *s;
 	unsigned char *ccd;
 	int i,j,ctype,ret= -1;
 	X509 *x509=NULL;
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 
 	ccd=s->s2->tmp.ccl;
 	if (s->state == SSL2_ST_SEND_REQUEST_CERTIFICATE_A)
@@ -876,7 +876,7 @@ SSL *s;
 		goto msg_end;
 		}
 
-	if (((sk=sk_new_null()) == NULL) || (!sk_push(sk,(char *)x509)))
+	if (((sk=sk_X509_new_null()) == NULL) || (!sk_X509_push(sk,x509)))
 		{
 		SSLerr(SSL_F_REQUEST_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto msg_end;
@@ -933,7 +933,7 @@ msg_end:
 		ssl2_return_error(s,SSL2_PE_BAD_CERTIFICATE);
 		}
 end:
-	sk_free(sk);
+	sk_X509_free(sk);
 	X509_free(x509);
 	return(ret);
 	}

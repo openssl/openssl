@@ -25,7 +25,7 @@ LIBOBJ=stack.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= stack.h
+EXHEADER= stack.h safestack.h
 HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)

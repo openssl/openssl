@@ -218,7 +218,7 @@ X509_NAME *x;
 
 /* Search a stack of X509 for a match */
 X509 *X509_find_by_issuer_and_serial(sk,name,serial)
-STACK *sk;
+STACK_OF(X509) *sk;
 X509_NAME *name;
 ASN1_INTEGER *serial;
 	{
@@ -230,9 +230,9 @@ ASN1_INTEGER *serial;
 	cinf.serialNumber=serial;
 	cinf.issuer=name;
 
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_num(sk); i++)
 		{
-		x509=(X509 *)sk_value(sk,i);
+		x509=sk_X509_value(sk,i);
 		if (X509_issuer_and_serial_cmp(x509,&x) == 0)
 			return(x509);
 		}
@@ -240,15 +240,15 @@ ASN1_INTEGER *serial;
 	}
 
 X509 *X509_find_by_subject(sk,name)
-STACK *sk;
+STACK_OF(X509) *sk;
 X509_NAME *name;
 	{
 	X509 *x509;
 	int i;
 
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_num(sk); i++)
 		{
-		x509=(X509 *)sk_value(sk,i);
+		x509=sk_X509_value(sk,i);
 		if (X509_NAME_cmp(X509_get_subject_name(x509),name) == 0)
 			return(x509);
 		}

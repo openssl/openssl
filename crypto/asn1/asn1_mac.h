@@ -180,6 +180,15 @@ err:\
 			tag,V_ASN1_CONTEXT_SPECIFIC); \
 		}
 
+#define M_ASN1_D2I_get_IMP_set_opt_type(type,b,func,free_func,tag) \
+	if ((c.slen != 0) && \
+		(M_ASN1_next == \
+		(V_ASN1_CONTEXT_SPECIFIC|V_ASN1_CONSTRUCTED|(tag))))\
+		{ \
+		M_ASN1_D2I_get_imp_set_type(type,b,func,free_func,\
+			tag,V_ASN1_CONTEXT_SPECIFIC); \
+		}
+
 #define M_ASN1_D2I_get_seq(r,func,free_func) \
 		M_ASN1_D2I_get_imp_set(r,func,free_func,\
 			V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
@@ -197,6 +206,13 @@ err:\
 	c.q=c.p; \
 	if (d2i_ASN1_SET(&(r),&c.p,c.slen,(char *(*)())func,\
 		(void (*)())free_func,a,b) == NULL) \
+		{ c.line=__LINE__; goto err; } \
+	c.slen-=(c.p-c.q);
+
+#define M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,a,b) \
+	c.q=c.p; \
+	if (d2i_ASN1_SET_OF_##type(&(r),&c.p,c.slen,func,free_func,a,b) \
+	    == NULL) \
 		{ c.line=__LINE__; goto err; } \
 	c.slen-=(c.p-c.q);
 
@@ -314,6 +330,12 @@ err:\
 			ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC, \
 					  IS_SEQUENCE);
 
+#define M_ASN1_I2D_len_IMP_SEQUENCE_opt_type(type,a,f,x) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			ret+=i2d_ASN1_SET_OF_##type(a,NULL,f,x, \
+						    V_ASN1_CONTEXT_SPECIFIC, \
+						    IS_SEQUENCE);
+
 #define M_ASN1_I2D_len_EXP_opt(a,f,mtag,v) \
 		if (a != NULL)\
 			{ \
@@ -370,6 +392,12 @@ err:\
 		if ((a != NULL) && (sk_num(a) != 0)) \
 			{ i2d_ASN1_SET(a,&p,f,x,V_ASN1_CONTEXT_SPECIFIC, \
 				       IS_SEQUENCE); }
+
+#define M_ASN1_I2D_put_IMP_SEQUENCE_opt_type(type,a,f,x) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			{ i2d_ASN1_SET_OF_##type(a,&p,f,x, \
+						 V_ASN1_CONTEXT_SPECIFIC, \
+						 IS_SEQUENCE); }
 
 #define M_ASN1_I2D_put_EXP_opt(a,f,tag,v) \
 		if (a != NULL) \

@@ -66,6 +66,7 @@ extern "C" {
 
 #include "stack.h"
 #include "asn1.h"
+#include "safestack.h"
 
 #ifndef NO_RSA
 #include "rsa.h"
@@ -155,6 +156,8 @@ typedef struct X509_name_st
 	unsigned long hash; /* Keep the hash around for lookups */
 	} X509_NAME;
 
+DECLARE_STACK_OF(X509_NAME)
+
 #define X509_EX_V_NETSCAPE_HACK		0x8000
 #define X509_EX_V_INIT			0x0001
 typedef struct X509_extension_st
@@ -227,6 +230,9 @@ typedef struct x509_st
 	int references;
 	char *name;
 	} X509;
+
+DECLARE_STACK_OF(X509)
+DECLARE_ASN1_SET_OF(X509)
 
 typedef struct X509_revoked_st
 	{
@@ -870,9 +876,9 @@ ASN1_STRING *	X509v3_unpack_string(ASN1_STRING **ex,int type,
 int		X509_verify_cert(X509_STORE_CTX *ctx);
 
 /* lookup a cert from a X509 STACK */
-X509 *X509_find_by_issuer_and_serial(STACK *sk,X509_NAME *name,
-                ASN1_INTEGER *serial);
-X509 *X509_find_by_subject(STACK *sk,X509_NAME *name);
+X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk,X509_NAME *name,
+				     ASN1_INTEGER *serial);
+X509 *X509_find_by_subject(STACK_OF(X509) *sk,X509_NAME *name);
 
 int i2d_PBEPARAM(PBEPARAM *a, unsigned char **pp);
 PBEPARAM *PBEPARAM_new(void);

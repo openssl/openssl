@@ -192,7 +192,7 @@ struct x509_store_state_st
 
 	/* The following are set by the caller */
 	X509 *cert;		/* The cert to check */
-	STACK *untrusted;	/* chain of X509s - untrusted - passed in */
+	STACK_OF(X509) *untrusted;	/* chain of X509s - untrusted - passed in */
 
 	/* The following is built up */
 	int depth;		/* how far to go looking up certs */
@@ -262,7 +262,7 @@ X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
 
 void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
-	X509 *x509, STACK *chain);
+			 X509 *x509, STACK_OF(X509) *chain);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
@@ -317,7 +317,7 @@ int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
 X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 STACK *	X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);
-void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK /* X509 */ *sk);
+void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK_OF(X509) *sk);
 
 #else
 
