@@ -612,7 +612,8 @@ static int client_hello(SSL *s)
 		s->s2->challenge_length=SSL2_CHALLENGE_LENGTH;
 		s2n(SSL2_CHALLENGE_LENGTH,p);		/* challenge length */
 		/*challenge id data*/
-		RAND_pseudo_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH);
+		if(RAND_pseudo_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH) <= 0)
+			return -1;
 		memcpy(d,s->s2->challenge,SSL2_CHALLENGE_LENGTH);
 		d+=SSL2_CHALLENGE_LENGTH;
 
@@ -660,7 +661,9 @@ static int client_master_key(SSL *s)
 			SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);
 			return -1;
 			}
-		if (i > 0) RAND_pseudo_bytes(sess->key_arg,i);
+		if (i > 0)
+			if(RAND_pseudo_bytes(sess->key_arg,i) <= 0)
+				return -1;
 
 		/* make a master key */
 		i=EVP_CIPHER_key_length(c);

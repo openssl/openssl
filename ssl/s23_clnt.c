@@ -235,7 +235,8 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE);
+		if(RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE) <= 0)
+		    return -1;
 
 		/* Do the message type and length last */
 		d= &(buf[2]);
@@ -296,7 +297,9 @@ static int ssl23_client_hello(SSL *s)
 			i=ch_len;
 		s2n(i,d);
 		memset(&(s->s3->client_random[0]),0,SSL3_RANDOM_SIZE);
-		RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
+		if(RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i) <= 0)
+			return -1;
+
 		memcpy(p,&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
 		p+=i;
 
