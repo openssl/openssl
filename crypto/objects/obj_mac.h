@@ -1475,14 +1475,14 @@
 #define NID_shaWithRSAEncryption		42
 #define OBJ_shaWithRSAEncryption		OBJ_algorithm,15L
 
-#define SN_des_ede		"DES-EDE"
-#define LN_des_ede		"des-ede"
-#define NID_des_ede		32
-#define OBJ_des_ede		OBJ_algorithm,17L
+#define SN_des_ede_ecb		"DES-EDE"
+#define LN_des_ede_ecb		"des-ede"
+#define NID_des_ede_ecb		32
+#define OBJ_des_ede_ecb		OBJ_algorithm,17L
 
-#define SN_des_ede3		"DES-EDE3"
-#define LN_des_ede3		"des-ede3"
-#define NID_des_ede3		33
+#define SN_des_ede3_ecb		"DES-EDE3"
+#define LN_des_ede3_ecb		"des-ede3"
+#define NID_des_ede3_ecb		33
 
 #define SN_des_ede_cbc		"DES-EDE-CBC"
 #define LN_des_ede_cbc		"des-ede-cbc"

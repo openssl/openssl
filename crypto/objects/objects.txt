@@ -486,7 +486,9 @@ algorithm 11		: rsaSignature
 algorithm 12		: DSA-old		: dsaEncryption-old
 algorithm 13		: DSA-SHA		: dsaWithSHA
 algorithm 15		: RSA-SHA		: shaWithRSAEncryption
+!Cname des-ede-ecb
 algorithm 17		: DES-EDE		: des-ede
+!Cname des-ede3-ecb
 			: DES-EDE3		: des-ede3
 			: DES-EDE-CBC		: des-ede-cbc
 !Cname des-ede-cfb64

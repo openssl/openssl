@@ -119,15 +119,12 @@ static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-#define NID_des_ede_ecb NID_des_ede
-
 BLOCK_CIPHER_defs(des_ede, des_ede, NID_des_ede, 8, 16, 8,
 			0, des_ede_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
 
-#define NID_des_ede3_ecb NID_des_ede3
 #define des_ede3_cfb_cipher des_ede_cfb_cipher
 #define des_ede3_ofb_cipher des_ede_ofb_cipher
 #define des_ede3_cbc_cipher des_ede_cbc_cipher

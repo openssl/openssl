@@ -454,6 +454,9 @@ struct evp_cipher_ctx_st
 #ifndef OPENSSL_NO_AES
 		RIJNDAEL_KEY rijndael;
 #endif
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+		struct session_op *dev_crypto;
+#endif
 		} c;
 	int final_used;
 	int block_mask;
@@ -674,6 +677,9 @@ const EVP_CIPHER *EVP_des_cbc(void);
 const EVP_CIPHER *EVP_des_ede_cbc(void);
 const EVP_CIPHER *EVP_des_ede3_cbc(void);
 const EVP_CIPHER *EVP_desx_cbc(void);
+# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+const EVP_CIPHER *EVP_dev_crypto_des_ede3_cbc(void);
+# endif
 #endif
 #ifndef OPENSSL_NO_RC4
 const EVP_CIPHER *EVP_rc4(void);

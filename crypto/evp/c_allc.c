@@ -82,7 +82,11 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_des_cbc,"DES");
 	EVP_add_cipher_alias(SN_des_cbc,"des");
 	EVP_add_cipher(EVP_des_ede_cbc());
+# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+	EVP_add_cipher(EVP_dev_crypto_des_ede3_cbc());
+# else
 	EVP_add_cipher(EVP_des_ede3_cbc());
+# endif
 	EVP_add_cipher_alias(SN_des_ede3_cbc,"DES3");
 	EVP_add_cipher_alias(SN_des_ede3_cbc,"des3");
 

@@ -99,7 +99,7 @@ static unsigned char lvalues[3792]={
 0x2B,0x0E,0x03,0x02,0x06,                    /* [187] OBJ_des_ecb */
 0x2B,0x0E,0x03,0x02,0x09,                    /* [192] OBJ_des_cfb64 */
 0x2B,0x0E,0x03,0x02,0x07,                    /* [197] OBJ_des_cbc */
-0x2B,0x0E,0x03,0x02,0x11,                    /* [202] OBJ_des_ede */
+0x2B,0x0E,0x03,0x02,0x11,                    /* [202] OBJ_des_ede_ecb */
 0x2B,0x06,0x01,0x04,0x01,0x81,0x3C,0x07,0x01,0x01,0x02,/* [207] OBJ_idea_cbc */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x02,     /* [218] OBJ_rc2_cbc */
 0x2B,0x0E,0x03,0x02,0x12,                    /* [226] OBJ_sha */
@@ -578,8 +578,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-ECB","des-ecb",NID_des_ecb,5,&(lvalues[187]),0},
 {"DES-CFB","des-cfb",NID_des_cfb64,5,&(lvalues[192]),0},
 {"DES-CBC","des-cbc",NID_des_cbc,5,&(lvalues[197]),0},
-{"DES-EDE","des-ede",NID_des_ede,5,&(lvalues[202]),0},
-{"DES-EDE3","des-ede3",NID_des_ede3,0,NULL},
+{"DES-EDE","des-ede",NID_des_ede_ecb,5,&(lvalues[202]),0},
+{"DES-EDE3","des-ede3",NID_des_ede3_ecb,0,NULL},
 {"IDEA-CBC","idea-cbc",NID_idea_cbc,11,&(lvalues[207]),0},
 {"IDEA-CFB","idea-cfb",NID_idea_cfb64,0,NULL},
 {"IDEA-ECB","idea-ecb",NID_idea_ecb,0,NULL},
@@ -2345,7 +2345,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[67]),/* OBJ_dsa_2                        1 3 14 3 2 12 */
 &(nid_objs[66]),/* OBJ_dsaWithSHA                   1 3 14 3 2 13 */
 &(nid_objs[42]),/* OBJ_shaWithRSAEncryption         1 3 14 3 2 15 */
-&(nid_objs[32]),/* OBJ_des_ede                      1 3 14 3 2 17 */
+&(nid_objs[32]),/* OBJ_des_ede_ecb                  1 3 14 3 2 17 */
 &(nid_objs[41]),/* OBJ_sha                          1 3 14 3 2 18 */
 &(nid_objs[64]),/* OBJ_sha1                         1 3 14 3 2 26 */
 &(nid_objs[70]),/* OBJ_dsaWithSHA1_2                1 3 14 3 2 27 */

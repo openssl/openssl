@@ -30,8 +30,8 @@ dhKeyAgreement		28
 des_ecb		29
 des_cfb64		30
 des_cbc		31
-des_ede		32
-des_ede3		33
+des_ede_ecb		32
+des_ede3_ecb		33
 idea_cbc		34
 idea_cfb64		35
 idea_ecb		36
