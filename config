@@ -344,13 +344,15 @@ fi
 if [ ".$PERL" = . ] ; then
 	for i in . `echo $PATH | sed 's/:/ /g'`; do
 		if [ -f "$i/perl" ] ; then
-			PERL="$i/perl"
-			break;
+			if "$i/perl" -e 'exit($]<5.0)'; then
+				PERL="$i/perl"
+				break;
+			fi;
 		fi;
 	done
 fi
 
-if $PERL -e 'exit($]>=5.0);' ; then
+if [ ".$PERL" = . ] ; then
 	echo "You need Perl 5."
 	exit 1
 fi

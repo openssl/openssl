@@ -731,7 +731,8 @@ sub which
 		{
 		if (-x "$path/$name")
 			{
-			return "$path/$name";
+			return "$path/$name" unless ($name eq "perl" and
+			 system("$path/$name -e " . '\'exit($]<5.0);\''));
 			}
 		}
 	}
