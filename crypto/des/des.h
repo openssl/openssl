@@ -93,10 +93,6 @@ typedef struct des_ks
 	 * 8 byte longs */
 	DES_LONG deslong[2];
 	} ks[16];
-#if OPENBSD_DEV_CRYPTO
-    struct session_op *session;
-    unsigned char key[8];
-#endif
     } des_key_schedule;
 
 #define DES_KEY_SZ 	(sizeof(des_cblock))
