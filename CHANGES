@@ -4,6 +4,10 @@
 
  Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
 
+  *) Don't impose a 16-byte length minimum on session IDs in ssl/s3_clnt.c
+     (the SSL 3.0 and TLS 1.0 specifications allow any length up to 32 bytes).
+     [Bodo Moeller]
+
   *) Fix race condition in SSLv3_client_method().
      [Bodo Moeller]
 

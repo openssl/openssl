@@ -632,13 +632,12 @@ static int ssl3_get_server_hello(SSL *s)
 	/* get the session-id */
 	j= *(p++);
 
-       if(j > sizeof s->session->session_id)
-               {
-               al=SSL_AD_ILLEGAL_PARAMETER;
-               SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-                      SSL_R_SSL3_SESSION_ID_TOO_LONG);
-               goto f_err;
-               }
+	if ((j > sizeof s->session->session_id) || (j > SSL3_SESSION_ID_SIZE))
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SSL3_SESSION_ID_TOO_LONG);
+		goto f_err;
+		}
 
 	if ((j != 0) && (j != SSL3_SESSION_ID_SIZE))
 		{
