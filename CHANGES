@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add the -HTTP option to s_server.  It is similar to -WWW, but requires
+     that the file contains a complete HTTP response.
+     [Richard Levitte]
+
   *) Add the ec directory to mkdef.pl and mkfiles.pl. In mkdef.pl
      change the def and num file printf format specifier from "%-40sXXX"
      to "%-39s XXX". The latter will always guarantee a space after the

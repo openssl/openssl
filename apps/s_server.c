@@ -250,6 +250,8 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+	BIO_printf(bio_err," -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+        BIO_printf(bio_err,"                 with the assumption it contains a complete HTTP response.\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 	BIO_printf(bio_err," -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
@@ -559,6 +561,8 @@ int MAIN(int argc, char *argv[])
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
 			{ www=2; }
+		else if	(strcmp(*argv,"-HTTP") == 0)
+			{ www=3; }
 		else if	(strcmp(*argv,"-no_ssl2") == 0)
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
@@ -1414,11 +1418,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			BIO_puts(io,"</BODY></HTML>\r\n\r\n");
 			break;
 			}
-		else if ((www == 2) && (strncmp("GET /",buf,5) == 0))
+		else if ((www == 2 || www == 3)
+                         && (strncmp("GET /",buf,5) == 0))
 			{
 			BIO *file;
 			char *p,*e;
-			static char *text="HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n";
+			static char *text="HTTP/1.0 200 ok\r\n"
+                                "Content-type: text/plain\r\n\r\n";
 
 			/* skip the '/' */
 			p= &(buf[5]);
@@ -1482,13 +1488,16 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			if (!s_quiet)
 				BIO_printf(bio_err,"FILE:%s\n",p);
 
-			i=strlen(p);
-			if (	((i > 5) && (strcmp(&(p[i-5]),".html") == 0)) ||
-				((i > 4) && (strcmp(&(p[i-4]),".php") == 0)) ||
-				((i > 4) && (strcmp(&(p[i-4]),".htm") == 0)))
-				BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
-			else
-				BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
+                        if (www == 2)
+                                {
+                                i=strlen(p);
+                                if (	((i > 5) && (strcmp(&(p[i-5]),".html") == 0)) ||
+                                        ((i > 4) && (strcmp(&(p[i-4]),".php") == 0)) ||
+                                        ((i > 4) && (strcmp(&(p[i-4]),".htm") == 0)))
+                                        BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
+                                else
+                                        BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
+                                }
 			/* send the file */
 			total_bytes=0;
 			for (;;)
