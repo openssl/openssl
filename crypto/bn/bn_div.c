@@ -202,7 +202,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		{
 		BN_ULONG q,l0;
 #ifdef BN_DIV3W
-		q=bn_div_3_words(wnump,d0,d1);
+		q=bn_div_3_words(wnump,d1,d0);
 #else
 
 #if !defined(NO_ASM) && !defined(PEDANTIC)
@@ -291,8 +291,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #endif
 		}
 #endif /* !BN_DIV3W */
-		wnum.d--; wnum.top++;
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
+		wnum.d--; wnum.top++;
 		tmp->d[div_n]=l0;
 		for (j=div_n+1; j>0; j--)
 			if (tmp->d[j-1]) break;

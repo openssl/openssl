@@ -395,32 +395,32 @@ LEAF(bn_add_words)
 
 .L_bn_add_words_loop:
 	ld	ta0,0(a2)
-	ld	t1,8(a1)
-	ld	ta1,8(a2)
-	ld	t2,16(a1)
-	ld	ta2,16(a2)
-	ld	t3,24(a1)
-	ld	ta3,24(a2)
-	daddu	ta0,t0
 	subu	a3,4
+	ld	t1,8(a1)
+	and	AT,a3,MINUS4
+	ld	t2,16(a1)
+	PTR_ADD	a2,32
+	ld	t3,24(a1)
+	PTR_ADD	a0,32
+	ld	ta1,-24(a2)
+	PTR_ADD	a1,32
+	ld	ta2,-16(a2)
+	ld	ta3,-8(a2)
+	daddu	ta0,t0
 	sltu	t8,ta0,t0
 	daddu	t0,ta0,v0
-	PTR_ADD	a0,32
 	sltu	v0,t0,ta0
 	sd	t0,-32(a0)
 	daddu	v0,t8
 
 	daddu	ta1,t1
-	PTR_ADD	a1,32
 	sltu	t9,ta1,t1
 	daddu	t1,ta1,v0
-	PTR_ADD	a2,32
 	sltu	v0,t1,ta1
 	sd	t1,-24(a0)
 	daddu	v0,t9
 
 	daddu	ta2,t2
-	and	AT,a3,MINUS4
 	sltu	t8,ta2,t2
 	daddu	t2,ta2,v0
 	sltu	v0,t2,ta2
@@ -495,25 +495,26 @@ LEAF(bn_sub_words)
 
 .L_bn_sub_words_loop:
 	ld	ta0,0(a2)
+	subu	a3,4
 	ld	t1,8(a1)
-	ld	ta1,8(a2)
+	and	AT,a3,MINUS4
 	ld	t2,16(a1)
-	ld	ta2,16(a2)
+	PTR_ADD	a2,32
 	ld	t3,24(a1)
-	ld	ta3,24(a2)
+	PTR_ADD	a0,32
+	ld	ta1,-24(a2)
+	PTR_ADD	a1,32
+	ld	ta2,-16(a2)
+	ld	ta3,-8(a2)
 	sltu	t8,t0,ta0
 	dsubu	t0,ta0
-	subu	a3,4
 	dsubu	ta0,t0,v0
-	and	AT,a3,MINUS4
-	sd	ta0,0(a0)
+	sd	ta0,-32(a0)
 	MOVNZ	(t0,v0,t8)
 
 	sltu	t9,t1,ta1
 	dsubu	t1,ta1
-	PTR_ADD	a0,32
 	dsubu	ta1,t1,v0
-	PTR_ADD	a1,32
 	sd	ta1,-24(a0)
 	MOVNZ	(t1,v0,t9)
 
@@ -521,7 +522,6 @@ LEAF(bn_sub_words)
 	sltu	t8,t2,ta2
 	dsubu	t2,ta2
 	dsubu	ta2,t2,v0
-	PTR_ADD	a2,32
 	sd	ta2,-16(a0)
 	MOVNZ	(t2,v0,t8)
 
@@ -573,6 +573,51 @@ LEAF(bn_sub_words)
 END(bn_sub_words)
 
 #undef	MINUS4
+
+.align 5
+LEAF(bn_div_3_words)
+	.set	reorder
+	move	a3,a0		/* we know that bn_div_words doesn't
+				 * touch a3, ta2, ta3 and preserves a2
+				 * so that we can save two arguments
+				 * and return address in registers
+				 * instead of stack:-)
+				 */
+	ld	a0,(a3)
+	move	ta2,a1
+	ld	a1,-8(a3)
+	move	ta3,ra
+	move	v1,zero
+	li	v0,-1
+	beq	a0,a2,.L_bn_div_3_words_skip_div
+	bal	bn_div_words
+	move	ra,ta3
+.L_bn_div_3_words_skip_div:
+	dmultu	ta2,v0
+	ld	t2,-16(a3)
+	move	ta0,zero
+	mfhi	t1
+	mflo	t0
+	sltu	t8,t1,v1
+.L_bn_div_3_words_inner_loop:
+	bnez	t8,.L_bn_div_3_words_inner_loop_done
+	sgeu	AT,t2,t0
+	seq	t9,t1,v1
+	and	AT,t9
+	sltu	t3,t0,ta2
+	daddu	v1,a2
+	dsubu	t1,t3
+	dsubu	t0,ta2
+	sltu	t8,t1,v1
+	sltu	ta0,v1,a2
+	or	t8,ta0
+	.set	noreorder
+	beqzl	AT,.L_bn_div_3_words_inner_loop
+	dsubu	v0,1
+	.set	reorder
+.L_bn_div_3_words_inner_loop_done:
+	jr	ra
+END(bn_div_3_words)
 
 .align	5
 LEAF(bn_div_words)
@@ -633,16 +678,16 @@ LEAF(bn_div_words)
 	seq	t8,HH,t1
 	sltu	AT,HH,t1
 	and	t2,t8
+	sltu	v0,t0,a2
 	or	AT,t2
 	.set	noreorder
 	beqz	AT,.L_bn_div_words_inner_loop1_done
-	sltu	t2,t0,a2
-	.set	reorder
-	dsubu	QT,1
+	dsubu	t1,v0
 	dsubu	t0,a2
-	dsubu	t1,t2
 	b	.L_bn_div_words_inner_loop1
-.L_bn_div_words_inner_loop1_done:	
+	dsubu	QT,1
+	.set	reorder
+.L_bn_div_words_inner_loop1_done:
 
 	dsll	a1,32
 	dsubu	a0,t3,t0
@@ -655,6 +700,7 @@ LEAF(bn_div_words)
 	ddivu	zero,a0,DH
 	mflo	QT
 .L_bn_div_words_skip_div2:
+#undef	DH
 	dmultu	a2,QT
 	dsll	t3,a0,32
 	dsrl	AT,a1,32
@@ -666,68 +712,25 @@ LEAF(bn_div_words)
 	seq	t8,HH,t1
 	sltu	AT,HH,t1
 	and	t2,t8
+	sltu	v1,t0,a2
 	or	AT,t2
 	.set	noreorder
 	beqz	AT,.L_bn_div_words_inner_loop2_done
-	sltu	t2,t0,a2
-	.set	reorder
-	dsubu	QT,1
+	dsubu	t1,v1
 	dsubu	t0,a2
-	dsubu	t1,t2
 	b	.L_bn_div_words_inner_loop2
+	dsubu	QT,1
+	.set	reorder
 .L_bn_div_words_inner_loop2_done:	
+#undef	HH
 
 	dsubu	a0,t3,t0
 	or	v0,QT
 	dsrl	v1,a0,t9	/* v1 contains remainder if anybody wants it */
 	dsrl	a2,t9		/* restore a2 */
 	jr	ra
-#undef	HH
-#undef	DH
 #undef	QT
 END(bn_div_words)
-
-.align 5
-LEAF(bn_div_3_words)
-	.set	reorder
-	move	a3,a0		/* we know that bn_div_words doesn't
-				 * touch a3, ta2, ta3 and preserves a2
-				 * so that we can save two arguments
-				 * and return address in registers
-				 * instead of stack:-)
-				 */
-	ld	a0,(a3)
-	move	ta2,a2
-	move	a2,a1
-	ld	a1,-8(a3)
-	move	ta3,ra
-	move	v1,zero
-	li	v0,-1
-	beq	a0,a2,.L_bn_div_3_words_skip_div
-	jal	bn_div_words
-	move	ra,ta3
-.L_bn_div_3_words_skip_div:
-	dmultu	ta2,v0
-	ld	t2,-16(a3)
-	mflo	t0
-	mfhi	t1
-.L_bn_div_3_words_inner_loop:
-	sgeu	AT,t2,t0
-	seq	t9,t1,v1
-	sltu	t8,t1,v1
-	and	AT,t9
-	or	AT,t8
-	bnez	AT,.L_bn_div_3_words_inner_loop_done
-	daddu	v1,a2
-	sltu	t3,t0,ta2
-	sltu	AT,v1,a2
-	dsubu	v0,1
-	dsubu	t0,ta2
-	dsubu	t1,t3
-	beqz	AT,.L_bn_div_3_words_inner_loop
-.L_bn_div_3_words_inner_loop_done:
-	jr	ra
-END(bn_div_3_words)
 
 #define	a_0	t0
 #define	a_1	t1
