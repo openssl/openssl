@@ -122,8 +122,9 @@ extern "C" {
 #define	CRYPTO_LOCK_DH			24
 #define	CRYPTO_LOCK_MALLOC2		25
 #define	CRYPTO_LOCK_DSO			26
-#define	CRYPTO_LOCK_ENGINE		27
-#define	CRYPTO_NUM_LOCKS		28
+#define	CRYPTO_LOCK_DYNLOCK		27
+#define	CRYPTO_LOCK_ENGINE		28
+#define	CRYPTO_NUM_LOCKS		29
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -150,6 +151,17 @@ extern "C" {
 #define CRYPTO_r_unlock(a)
 #define CRYPTO_add(a,b,c)	((*(a))+=(b))
 #endif
+
+/* Some applications as well as some parts of OpenSSL need to allocate
+   and deallocate locks in a dynamic fashion.  The following typedef
+   makes this possible in a type-safe manner.  */
+/* struct CRYPTO_dynlock_value has to be defined by the application. */
+typedef struct
+	{
+	int references;
+	struct CRYPTO_dynlock_value *data;
+	} CRYPTO_dynlock;
+
 
 /* The following can be used to detect memory leaks in the SSLeay library.
  * It used, it turns on malloc checking */
@@ -202,37 +214,6 @@ typedef struct crypto_ex_data_func_st
 	} CRYPTO_EX_DATA_FUNCS;
 
 DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_CRYPTO_EX_DATA_FUNCS_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_new_null() sk_new_null()
-	#define sk_CRYPTO_EX_DATA_FUNCS_free(a) sk_free(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_num(a) sk_num(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_value(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_value((a),(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_set(a,b,c) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_zero(a) sk_zero(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_push(a,b) sk_push((a),(char *)(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_unshift(a,b) sk_unshift((a),(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_find(a,b) sk_find((a), (char *)(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_delete(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_delete((a),(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_delete_ptr(a,b) ((CRYPTO_EX_DATA_FUNCS *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_CRYPTO_EX_DATA_FUNCS_set_cmp_func(a,b) ((int (*) \
-		(const CRYPTO_EX_DATA_FUNCS * const *,const CRYPTO_EX_DATA_FUNCS * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_CRYPTO_EX_DATA_FUNCS_dup(a) sk_dup(a)
-	#define sk_CRYPTO_EX_DATA_FUNCS_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_CRYPTO_EX_DATA_FUNCS_shift(a) ((CRYPTO_EX_DATA_FUNCS *)sk_shift(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_pop(a) ((CRYPTO_EX_DATA_FUNCS *)sk_pop(a))
-	#define sk_CRYPTO_EX_DATA_FUNCS_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
@@ -331,6 +312,17 @@ unsigned long CRYPTO_thread_id(void);
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
+void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(*dyn_create_function)
+	(char *file, int line));
+void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
+	(int mode, struct CRYPTO_dynlock_value *l,
+		const char *file, int line));
+void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
+	(struct CRYPTO_dynlock_value *l, const char *file, int line));
+void CRYPTO_set_dynlock_size(int dynlock_size);
+int CRYPTO_get_new_dynlockid(void);
+void CRYPTO_destroy_dynlockid(int i);
+struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
 
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
@@ -403,12 +395,15 @@ void ERR_load_CRYPTO_strings(void);
 
 /* Function codes. */
 #define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX		 100
+#define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID		 103
 #define CRYPTO_F_CRYPTO_GET_NEW_LOCKID			 101
 #define CRYPTO_F_CRYPTO_SET_EX_DATA			 102
 
 /* Reason codes. */
+#define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
 
 #ifdef  __cplusplus
 }
 #endif
 #endif
+

@@ -1,12 +1,15 @@
 TODO
 ----
 
-Get a fix on how the paths should be handled. For now, flags == 0
-and this is currently just passing strings directly onto the
-underlying system calls and letting them do what they want with
-the paths. However, it may be desirable to implement flags that
-control the way the loading is performed (or attempted), and I
-invisage that DSO_ctrl() will be used to control this.
+Find a way where name-translation can be done in a way that is
+sensitive to particular methods (ie. generic code could still do
+different path/filename substitutions on win32 to what it does on
+*nix) but doesn't assume some canonical form. Already one case
+exists where the "blah -> (libblah.so,blah.dll)" mapping doesn't
+suffice. I suspect a callback with an enumerated (or string?)
+parameter could be the way to go here ... DSO_ctrl the callback
+into place and it can be invoked to handle name translation with
+some clue to the calling code as to what kind of system it is.
 
 NOTES
 -----
@@ -18,5 +21,4 @@ according to their man page, prefer developers to move to that.
 I'll leave Richard's changes there as I guess dso_dl is needed
 for HPUX10.20.
 
-[G-T]
 

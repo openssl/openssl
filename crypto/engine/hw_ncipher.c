@@ -680,8 +680,6 @@ static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	OPENSSL_free(hptr);
 }
 
-#if 0 /* FIXME: We don't really have any support for dynamically allocated
-	 threads in OpenSSL. */
 /* Mutex calls: since the HWCryptoHook model closely follows the POSIX model
  * these just wrap the POSIX functions and add some logging.
  */

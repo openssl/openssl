@@ -49,7 +49,7 @@ my $to = join('/', @to_path);
 
 my $file;
 foreach $file (@files) {
-#    print "ln -s $to/$file $from/$file\n";
-    symlink("$to/$file", "$from/$file");
-    print $file . " => $from/$file\n";
+    my $err = "";
+    symlink("$to/$file", "$from/$file") or $err = " [$!]";
+    print $file . " => $from/$file$err\n";
 }

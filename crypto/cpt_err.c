@@ -67,6 +67,7 @@
 static ERR_STRING_DATA CRYPTO_str_functs[]=
 	{
 {ERR_PACK(0,CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,0),	"CRYPTO_get_ex_new_index"},
+{ERR_PACK(0,CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,0),	"CRYPTO_get_new_dynlockid"},
 {ERR_PACK(0,CRYPTO_F_CRYPTO_GET_NEW_LOCKID,0),	"CRYPTO_get_new_lockid"},
 {ERR_PACK(0,CRYPTO_F_CRYPTO_SET_EX_DATA,0),	"CRYPTO_set_ex_data"},
 {0,NULL}
@@ -74,6 +75,7 @@ static ERR_STRING_DATA CRYPTO_str_functs[]=
 
 static ERR_STRING_DATA CRYPTO_str_reasons[]=
 	{
+{CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK     ,"no dynlock create callback"},
 {0,NULL}
 	};
 

@@ -39,7 +39,8 @@
 				   (label . -)
 				   (arglist-cont-nonempty . +)
 				   (topmost-intro . -)
-				   (brace-list-close . +)
-				   (brace-list-intro . +)
+				   (brace-list-close . 0)
+				   (brace-list-intro . 0)
+				   (brace-list-open . +)
 				   ))))
 

@@ -14,6 +14,7 @@ B<openssl> B<rsa>
 [B<-passin arg>]
 [B<-out filename>]
 [B<-passout arg>]
+[B<-sgckey>]
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
@@ -42,9 +43,8 @@ This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
 The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. On input PKCS#8 format private
-keys are also accepted. The B<NET> form is a format compatible with older Netscape
-servers and MS IIS, this uses unsalted RC4 for its encryption. It is not very
-secure and so should only be used when necessary.
+keys are also accepted. The B<NET> form is a format is described in the B<NOTES>
+section.
 
 =item B<-outform DER|NET|PEM>
 
@@ -73,6 +73,11 @@ filename.
 
 the output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+
+=item B<-sgckey>
+
+use the modified NET algorithm used with some versions of Microsoft IIS and SGC
+keys.
 
 =item B<-des|-des3|-idea>
 
@@ -126,6 +131,18 @@ The PEM public key format uses the header and footer lines:
  -----BEGIN PUBLIC KEY-----
  -----END PUBLIC KEY-----
 
+The B<NET> form is a format compatible with older Netscape servers
+and Microsoft IIS .key files, this uses unsalted RC4 for its encryption.
+It is not very secure and so should only be used when necessary.
+
+Some newer version of IIS have additional data in the exported .key
+files. To use thse with the utility view the file with a binary editor
+and look for the string "private-key", then trace back to the byte
+sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
+from this point onwards to another file and use that as the input
+to the B<rsa> utility with the B<-inform NET> option. If you get
+an error after entering the password try the B<-sgckey> option.
+
 =head1 EXAMPLES
 
 To remove the pass phrase on an RSA private key:
@@ -147,6 +164,14 @@ To print out the components of a private key to standard output:
 To just output the public part of a private key:
 
  openssl rsa -in key.pem -pubout -out pubkey.pem
+
+=head1 BUGS
+
+The command line password arguments don't currently work with
+B<NET> format.
+
+There should be an option that automatically handles .key files,
+without having to manually edit them.
 
 =head1 SEE ALSO
 

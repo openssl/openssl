@@ -264,37 +264,6 @@ struct bio_st
 	};
 
 DECLARE_STACK_OF(BIO)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_BIO_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_BIO_new_null() sk_new_null()
-	#define sk_BIO_free(a) sk_free(a)
-	#define sk_BIO_num(a) sk_num(a)
-	#define sk_BIO_value(a,b) ((BIO *) \
-		sk_value((a),(b)))
-	#define sk_BIO_set(a,b,c) ((BIO *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_BIO_zero(a) sk_zero(a)
-	#define sk_BIO_push(a,b) sk_push((a),(char *)(b))
-	#define sk_BIO_unshift(a,b) sk_unshift((a),(b))
-	#define sk_BIO_find(a,b) sk_find((a), (char *)(b))
-	#define sk_BIO_delete(a,b) ((BIO *) \
-		sk_delete((a),(b)))
-	#define sk_BIO_delete_ptr(a,b) ((BIO *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_BIO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_BIO_set_cmp_func(a,b) ((int (*) \
-		(const BIO * const *,const BIO * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_BIO_dup(a) sk_dup(a)
-	#define sk_BIO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_BIO_shift(a) ((BIO *)sk_shift(a))
-	#define sk_BIO_pop(a) ((BIO *)sk_pop(a))
-	#define sk_BIO_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 
 typedef struct bio_f_buffer_ctx_struct
 	{

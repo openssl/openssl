@@ -248,37 +248,6 @@ typedef struct asn1_string_table_st {
 } ASN1_STRING_TABLE;
 
 DECLARE_STACK_OF(ASN1_STRING_TABLE)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_ASN1_STRING_TABLE_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_ASN1_STRING_TABLE_new_null() sk_new_null()
-	#define sk_ASN1_STRING_TABLE_free(a) sk_free(a)
-	#define sk_ASN1_STRING_TABLE_num(a) sk_num(a)
-	#define sk_ASN1_STRING_TABLE_value(a,b) ((ASN1_STRING_TABLE *) \
-		sk_value((a),(b)))
-	#define sk_ASN1_STRING_TABLE_set(a,b,c) ((ASN1_STRING_TABLE *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_ASN1_STRING_TABLE_zero(a) sk_zero(a)
-	#define sk_ASN1_STRING_TABLE_push(a,b) sk_push((a),(char *)(b))
-	#define sk_ASN1_STRING_TABLE_unshift(a,b) sk_unshift((a),(b))
-	#define sk_ASN1_STRING_TABLE_find(a,b) sk_find((a), (char *)(b))
-	#define sk_ASN1_STRING_TABLE_delete(a,b) ((ASN1_STRING_TABLE *) \
-		sk_delete((a),(b)))
-	#define sk_ASN1_STRING_TABLE_delete_ptr(a,b) ((ASN1_STRING_TABLE *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_ASN1_STRING_TABLE_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_ASN1_STRING_TABLE_set_cmp_func(a,b) ((int (*) \
-		(const ASN1_STRING_TABLE * const *,const ASN1_STRING_TABLE * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_ASN1_STRING_TABLE_dup(a) sk_dup(a)
-	#define sk_ASN1_STRING_TABLE_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_ASN1_STRING_TABLE_shift(a) ((ASN1_STRING_TABLE *)sk_shift(a))
-	#define sk_ASN1_STRING_TABLE_pop(a) ((ASN1_STRING_TABLE *)sk_pop(a))
-	#define sk_ASN1_STRING_TABLE_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 
 /* size limits: this stuff is taken straight from RFC2459 */
 
@@ -328,37 +297,6 @@ typedef struct asn1_string_st ASN1_UTF8STRING;
 typedef int ASN1_NULL;
 
 DECLARE_STACK_OF(ASN1_INTEGER)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_ASN1_INTEGER_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_ASN1_INTEGER_new_null() sk_new_null()
-	#define sk_ASN1_INTEGER_free(a) sk_free(a)
-	#define sk_ASN1_INTEGER_num(a) sk_num(a)
-	#define sk_ASN1_INTEGER_value(a,b) ((ASN1_INTEGER *) \
-		sk_value((a),(b)))
-	#define sk_ASN1_INTEGER_set(a,b,c) ((ASN1_INTEGER *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_ASN1_INTEGER_zero(a) sk_zero(a)
-	#define sk_ASN1_INTEGER_push(a,b) sk_push((a),(char *)(b))
-	#define sk_ASN1_INTEGER_unshift(a,b) sk_unshift((a),(b))
-	#define sk_ASN1_INTEGER_find(a,b) sk_find((a), (char *)(b))
-	#define sk_ASN1_INTEGER_delete(a,b) ((ASN1_INTEGER *) \
-		sk_delete((a),(b)))
-	#define sk_ASN1_INTEGER_delete_ptr(a,b) ((ASN1_INTEGER *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_ASN1_INTEGER_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_ASN1_INTEGER_set_cmp_func(a,b) ((int (*) \
-		(const ASN1_INTEGER * const *,const ASN1_INTEGER * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_ASN1_INTEGER_dup(a) sk_dup(a)
-	#define sk_ASN1_INTEGER_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_ASN1_INTEGER_shift(a) ((ASN1_INTEGER *)sk_shift(a))
-	#define sk_ASN1_INTEGER_pop(a) ((ASN1_INTEGER *)sk_pop(a))
-	#define sk_ASN1_INTEGER_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(ASN1_INTEGER)
 
 typedef struct asn1_type_st
@@ -390,37 +328,6 @@ typedef struct asn1_type_st
 	} ASN1_TYPE;
 
 DECLARE_STACK_OF(ASN1_TYPE)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_ASN1_TYPE_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_ASN1_TYPE_new_null() sk_new_null()
-	#define sk_ASN1_TYPE_free(a) sk_free(a)
-	#define sk_ASN1_TYPE_num(a) sk_num(a)
-	#define sk_ASN1_TYPE_value(a,b) ((ASN1_TYPE *) \
-		sk_value((a),(b)))
-	#define sk_ASN1_TYPE_set(a,b,c) ((ASN1_TYPE *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_ASN1_TYPE_zero(a) sk_zero(a)
-	#define sk_ASN1_TYPE_push(a,b) sk_push((a),(char *)(b))
-	#define sk_ASN1_TYPE_unshift(a,b) sk_unshift((a),(b))
-	#define sk_ASN1_TYPE_find(a,b) sk_find((a), (char *)(b))
-	#define sk_ASN1_TYPE_delete(a,b) ((ASN1_TYPE *) \
-		sk_delete((a),(b)))
-	#define sk_ASN1_TYPE_delete_ptr(a,b) ((ASN1_TYPE *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_ASN1_TYPE_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_ASN1_TYPE_set_cmp_func(a,b) ((int (*) \
-		(const ASN1_TYPE * const *,const ASN1_TYPE * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_ASN1_TYPE_dup(a) sk_dup(a)
-	#define sk_ASN1_TYPE_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_ASN1_TYPE_shift(a) ((ASN1_TYPE *)sk_shift(a))
-	#define sk_ASN1_TYPE_pop(a) ((ASN1_TYPE *)sk_pop(a))
-	#define sk_ASN1_TYPE_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(ASN1_TYPE)
 
 typedef struct asn1_method_st
@@ -642,37 +549,6 @@ ASN1_OBJECT *	d2i_ASN1_OBJECT(ASN1_OBJECT **a,unsigned char **pp,
 			long length);
 
 DECLARE_STACK_OF(ASN1_OBJECT)
-/* This block of defines is updated by a perl script, please do not touch! */
-#ifndef DEBUG_SAFESTACK
-	#define sk_ASN1_OBJECT_new(a) sk_new((int (*) \
-		(const char * const *, const char * const *))(a))
-	#define sk_ASN1_OBJECT_new_null() sk_new_null()
-	#define sk_ASN1_OBJECT_free(a) sk_free(a)
-	#define sk_ASN1_OBJECT_num(a) sk_num(a)
-	#define sk_ASN1_OBJECT_value(a,b) ((ASN1_OBJECT *) \
-		sk_value((a),(b)))
-	#define sk_ASN1_OBJECT_set(a,b,c) ((ASN1_OBJECT *) \
-		sk_set((a),(b),(char *)(c)))
-	#define sk_ASN1_OBJECT_zero(a) sk_zero(a)
-	#define sk_ASN1_OBJECT_push(a,b) sk_push((a),(char *)(b))
-	#define sk_ASN1_OBJECT_unshift(a,b) sk_unshift((a),(b))
-	#define sk_ASN1_OBJECT_find(a,b) sk_find((a), (char *)(b))
-	#define sk_ASN1_OBJECT_delete(a,b) ((ASN1_OBJECT *) \
-		sk_delete((a),(b)))
-	#define sk_ASN1_OBJECT_delete_ptr(a,b) ((ASN1_OBJECT *) \
-		sk_delete_ptr((a),(char *)(b)))
-	#define sk_ASN1_OBJECT_insert(a,b,c) sk_insert((a),(char *)(b),(c))
-	#define sk_ASN1_OBJECT_set_cmp_func(a,b) ((int (*) \
-		(const ASN1_OBJECT * const *,const ASN1_OBJECT * const *)) \
-		sk_set_cmp_func((a),(int (*) \
-		(const char * const *, const char * const *))(b)))
-	#define sk_ASN1_OBJECT_dup(a) sk_dup(a)
-	#define sk_ASN1_OBJECT_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
-	#define sk_ASN1_OBJECT_shift(a) ((ASN1_OBJECT *)sk_shift(a))
-	#define sk_ASN1_OBJECT_pop(a) ((ASN1_OBJECT *)sk_pop(a))
-	#define sk_ASN1_OBJECT_sort(a) sk_sort(a)
-#endif /* !DEBUG_SAFESTACK */
-/* End of perl script block, you may now edit :-) */
 DECLARE_ASN1_SET_OF(ASN1_OBJECT)
 
 ASN1_STRING *	ASN1_STRING_new(void);

@@ -76,7 +76,8 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 
 static int dlfcn_load(DSO *dso, const char *filename);
 static int dlfcn_unload(DSO *dso);
-static int dlfcn_bind(DSO *dso, const char *symname, void **symptr);
+static void *dlfcn_bind_var(DSO *dso, const char *symname);
+static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
 #if 0
 static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
 static int dlfcn_init(DSO *dso);
@@ -88,10 +89,12 @@ static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
 	dlfcn_load,
 	dlfcn_unload,
-	dlfcn_bind,
+	dlfcn_bind_var,
+	dlfcn_bind_func,
 /* For now, "unbind" doesn't exist */
 #if 0
-	NULL, /* unbind */
+	NULL, /* unbind_var */
+	NULL, /* unbind_func */
 #endif
 	dlfcn_ctrl,
 	NULL, /* init */
@@ -167,34 +170,63 @@ static int dlfcn_unload(DSO *dso)
 	return(1);
 	}
 
-static int dlfcn_bind(DSO *dso, const char *symname, void **symptr)
+static void *dlfcn_bind_var(DSO *dso, const char *symname)
 	{
 	void *ptr, *sym;
 
-	if((dso == NULL) || (symptr == NULL) || (symname == NULL))
+	if((dso == NULL) || (symname == NULL))
 		{
-		DSOerr(DSO_F_DLFCN_BIND,ERR_R_PASSED_NULL_PARAMETER);
-		return(0);
+		DSOerr(DSO_F_DLFCN_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
 		}
 	if(sk_num(dso->meth_data) < 1)
 		{
-		DSOerr(DSO_F_DLFCN_BIND,DSO_R_STACK_ERROR);
-		return(0);
+		DSOerr(DSO_F_DLFCN_BIND_VAR,DSO_R_STACK_ERROR);
+		return(NULL);
 		}
 	ptr = (void *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
-		DSOerr(DSO_F_DLFCN_BIND,DSO_R_NULL_HANDLE);
-		return(0);
+		DSOerr(DSO_F_DLFCN_BIND_VAR,DSO_R_NULL_HANDLE);
+		return(NULL);
 		}
 	sym = dlsym(ptr, symname);
 	if(sym == NULL)
 		{
-		DSOerr(DSO_F_DLFCN_BIND,DSO_R_SYM_FAILURE);
-		return(0);
+		DSOerr(DSO_F_DLFCN_BIND_VAR,DSO_R_SYM_FAILURE);
+		return(NULL);
 		}
-	*symptr = sym;
-	return(1);
+	return(sym);
+	}
+
+static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
+	{
+	void *ptr;
+	DSO_FUNC_TYPE sym;
+
+	if((dso == NULL) || (symname == NULL))
+		{
+		DSOerr(DSO_F_DLFCN_BIND_FUNC,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if(sk_num(dso->meth_data) < 1)
+		{
+		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_STACK_ERROR);
+		return(NULL);
+		}
+	ptr = (void *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	if(ptr == NULL)
+		{
+		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_NULL_HANDLE);
+		return(NULL);
+		}
+	sym = (DSO_FUNC_TYPE)dlsym(ptr, symname);
+	if(sym == NULL)
+		{
+		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_SYM_FAILURE);
+		return(NULL);
+		}
+	return(sym);
 	}
 
 static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg)

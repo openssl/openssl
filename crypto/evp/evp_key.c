@@ -116,7 +116,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md, unsigned char *salt,
 			EVP_DigestUpdate(&c,&(md_buf[0]),mds);
 		EVP_DigestUpdate(&c,data,datal);
 		if (salt != NULL)
-			EVP_DigestUpdate(&c,salt,8);
+			EVP_DigestUpdate(&c,salt,PKCS5_SALT_LEN);
 		EVP_DigestFinal(&c,&(md_buf[0]),&mds);
 
 		for (i=1; i<(unsigned int)count; i++)

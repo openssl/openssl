@@ -67,10 +67,12 @@ static DSO_METHOD dso_meth_null = {
 	"NULL shared library method",
 	NULL, /* load */
 	NULL, /* unload */
-	NULL, /* bind */
+	NULL, /* bind_var */
+	NULL, /* bind_func */
 /* For now, "unbind" doesn't exist */
 #if 0
-	NULL, /* unbind */
+	NULL, /* unbind_var */
+	NULL, /* unbind_func */
 #endif
 	NULL, /* ctrl */
 	NULL, /* init */

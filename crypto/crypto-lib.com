@@ -216,15 +216,10 @@ $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
-	"e_ecb_d,e_cbc_d,e_cfb_d,e_ofb_d,"+ -
-	"e_ecb_i,e_cbc_i,e_cfb_i,e_ofb_i,"+ -
-	"e_ecb_3d,e_cbc_3d,e_rc4,names,"+ -
-	"e_cfb_3d,e_ofb_3d,e_xcbc_d,"+ -
-	"e_ecb_r2,e_cbc_r2,e_cfb_r2,e_ofb_r2,"+ -
-	"e_ecb_bf,e_cbc_bf,e_cfb_bf,e_ofb_bf"
-$ LIB_EVP_2 = "e_ecb_c,e_cbc_c,e_cfb_c,e_ofb_c,"+ -
-	"e_ecb_r5,e_cbc_r5,e_cfb_r5,e_ofb_r5,"+ -
-	"m_null,m_md2,m_md5,m_sha,m_sha1,m_dss,m_dss1,m_mdc2,"+ -
+	"e_des,e_bf,e_idea,e_des3,"+ -
+	"e_rc4,names,"+ -
+	"e_xcbc_d,e_rc2,e_cast,e_rc5,"
+$ LIB_EVP_2 = "m_null,m_md2,m_md5,m_sha,m_sha1,m_dss,m_dss1,m_mdc2,"+ -
 	"m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
@@ -255,7 +250,7 @@ $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info"
-$ LIB_CONF = "conf,conf_err"
+$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,pk7_mime"
 $ LIB_PKCS12 = "p12_add,p12_attr,p12_bags,p12_crpt,p12_crt,p12_decr,"+ -
