@@ -389,6 +389,12 @@ the B<-selfsign> command line option.
 a text file containing the next serial number to use in hex. Mandatory.
 This file must be present and contain a valid serial number.
 
+=item B<crlnumber>
+
+a text file containing the next CRL number to use in hex. The crl number
+will be inserted in the CRLs only if this file exists. If this file is
+present, it must contain a valid CRL number.
+
 =item B<x509_extensions>
 
 the same as B<-extensions>.
