@@ -56,6 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+/* Until the key-gen callbacks are modified to use newer prototypes, we allow
+ * deprecated functions for openssl-internal code */
+#ifdef OPENSSL_NO_DEPRECATED
+#undef OPENSSL_NO_DEPRECATED
+#endif
+
 #ifndef OPENSSL_NO_DSA
 #include <assert.h>
 #include <stdio.h>
@@ -82,9 +88,23 @@
  * -C
  * -noout
  * -genkey
+ *  #ifdef GENCB_TEST
+ * -timebomb n  - interrupt keygen after <n> seconds
+ *  #endif
  */
 
-static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
+#ifdef GENCB_TEST
+
+static int stop_keygen_flag = 0;
+
+void timebomb_sigalarm(int foo)
+	{
+	stop_keygen_flag = 1;
+	}
+
+#endif
+
+static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *cb);
 
 int MAIN(int, char **);
 
@@ -99,6 +119,9 @@ int MAIN(int argc, char **argv)
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 	char *engine=NULL;
+#ifdef GENCB_TEST
+	int timebomb=0;
+#endif
 
 	apps_startup();
 
@@ -144,6 +167,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			engine = *(++argv);
 			}
+#ifdef GENCB_TEST
+		else if(strcmp(*argv, "-timebomb") == 0)
+			{
+			if (--argc < 1) goto bad;
+			timebomb = atoi(*(++argv));
+			}
+#endif
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
 		else if (strcmp(*argv,"-C") == 0)
@@ -192,6 +222,9 @@ bad:
 		BIO_printf(bio_err," -genkey       generate a DSA key\n");
 		BIO_printf(bio_err," -rand         files to use for random number input\n");
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#ifdef GENCB_TEST
+		BIO_printf(bio_err," -timebomb n   interrupt keygen after <n> seconds\n");
+#endif
 		BIO_printf(bio_err," number        number of bits to use for generating private key\n");
 		goto end;
 		}
@@ -247,10 +280,50 @@ bad:
 
 	if (numbits > 0)
 		{
+		BN_GENCB cb;
+		cb.ver = 2;
+		cb.cb_2 = dsa_cb;
+		cb.arg = bio_err;
+
 		assert(need_rand);
+		dsa = DSA_new();
+		if(!dsa)
+			{
+			BIO_printf(bio_err,"Error allocating DSA object\n");
+			goto end;
+			}
 		BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
 	        BIO_printf(bio_err,"This could take some time\n");
-	        dsa=DSA_generate_parameters(num,NULL,0,NULL,NULL, dsa_cb,bio_err);
+#ifdef GENCB_TEST
+		if(timebomb > 0)
+	{
+		struct sigaction act;
+		act.sa_handler = timebomb_sigalarm;
+		act.sa_flags = 0;
+		BIO_printf(bio_err,"(though I'll stop it if not done within %d secs)\n",
+				timebomb);
+		if(sigaction(SIGALRM, &act, NULL) != 0)
+			{
+			BIO_printf(bio_err,"Error, couldn't set SIGALRM handler\n");
+			goto end;
+			}
+		alarm(timebomb);
+	}
+#endif
+	        if(!DSA_generate_parameters_ex(dsa,num,NULL,0,NULL,NULL, &cb))
+			{
+#ifdef GENCB_TEST
+			if(stop_keygen_flag)
+				{
+				BIO_printf(bio_err,"DSA key generation time-stopped\n");
+				/* This is an asked-for behaviour! */
+				ret = 0;
+				goto end;
+				}
+#endif
+			BIO_printf(bio_err,"Error, DSA key generation failed\n");
+			goto end;
+			}
 		}
 	else if	(informat == FORMAT_ASN1)
 		dsa=d2i_DSAparams_bio(in,NULL);
@@ -375,7 +448,7 @@ end:
 	OPENSSL_EXIT(ret);
 	}
 
-static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
+static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 
@@ -383,10 +456,15 @@ static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(arg,&c,1);
-	(void)BIO_flush(arg);
+	BIO_write(cb->arg,&c,1);
+	(void)BIO_flush(cb->arg);
 #ifdef LINT
 	p=n;
 #endif
+#ifdef GENCB_TEST
+	if(stop_keygen_flag)
+		return 0;
+#endif
+	return 1;
 	}
 #endif
