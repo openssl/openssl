@@ -142,7 +142,7 @@ extern "C" {
 #endif
 
 #ifdef THIRTY_TWO_BIT
-#ifdef WIN32
+#if defined WIN32 && !defined __MINGW32__
 #define BN_ULLONG	unsigned _int64
 #else
 #define BN_ULLONG	unsigned long long
