@@ -262,7 +262,8 @@ static int usertime=1;
 
 static double Time_F(int s);
 static void print_message(const char *s,long num,int length);
-static void pkey_print_message(char *str,char *str2,long num,int bits,int sec);
+static void pkey_print_message(const char *str, const char *str2,
+	long num, int bits, int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
 #ifdef HAVE_FORK
 static int do_multi(int multi);
@@ -638,7 +639,7 @@ int MAIN(int argc, char **argv)
 	NID_sect409r1,
 	NID_sect571r1
 	}; 
-	static char * test_curves_names[EC_NUM] = 
+	static const char * test_curves_names[EC_NUM] = 
 	{
 	/* Prime Curves */
 	"secp160r1",
@@ -669,19 +670,19 @@ int MAIN(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_ECDSA
-        unsigned char ecdsasig[256];
-        unsigned int ecdsasiglen;
-        EC_KEY *ecdsa[EC_NUM];
-        long ecdsa_c[EC_NUM][2];
+	unsigned char ecdsasig[256];
+	unsigned int ecdsasiglen;
+	EC_KEY *ecdsa[EC_NUM];
+	long ecdsa_c[EC_NUM][2];
 #endif
 
 #ifndef OPENSSL_NO_ECDH
-        EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
-        unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
-        int secret_size_a, secret_size_b;
-        int ecdh_checks = 0;
-        int secret_idx = 0;
-        long ecdh_c[EC_NUM][2];
+	EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
+	unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
+	int secret_size_a, secret_size_b;
+	int ecdh_checks = 0;
+	int secret_idx = 0;
+	long ecdh_c[EC_NUM][2];
 #endif
 
 	int rsa_doit[RSA_NUM];
@@ -1258,10 +1259,10 @@ int MAIN(int argc, char **argv)
 	BIO_printf(bio_err,"First we calculate the approximate speed ...\n");
 	count=10;
 	do	{
-		long i;
+		long it;
 		count*=2;
 		Time_F(START);
-		for (i=count; i; i--)
+		for (it=count; it; it--)
 			DES_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
 				&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
@@ -1361,7 +1362,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ECDSA
 	ecdsa_c[R_EC_P160][0]=count/1000;
 	ecdsa_c[R_EC_P160][1]=count/1000/2;
-	for (i=R_EC_P224; i<=R_EC_P521; i++)
+	for (i=R_EC_P192; i<=R_EC_P521; i++)
 		{
 		ecdsa_c[i][0]=ecdsa_c[i-1][0]/2;
 		ecdsa_c[i][1]=ecdsa_c[i-1][1]/2;
@@ -1415,7 +1416,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ECDH
 	ecdh_c[R_EC_P160][0]=count/1000;
 	ecdh_c[R_EC_P160][1]=count/1000;
-	for (i=R_EC_P224; i<=R_EC_P521; i++)
+	for (i=R_EC_P192; i<=R_EC_P521; i++)
 		{
 		ecdh_c[i][0]=ecdh_c[i-1][0]/2;
 		ecdh_c[i][1]=ecdh_c[i-1][1]/2;
@@ -2089,13 +2090,13 @@ int MAIN(int argc, char **argv)
 							break;
 							}
 						}
-						d=Time_F(STOP);
+					d=Time_F(STOP);
 
-						BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
+					BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
 						"%ld %d bit ECDSA signs in %.2fs \n", 
 						count, test_curves_bits[j], d);
-						ecdsa_results[j][0]=d/(double)count;
-						rsa_count=count;
+					ecdsa_results[j][0]=d/(double)count;
+					rsa_count=count;
 					}
 
 				/* Perform ECDSA verification test */
@@ -2125,11 +2126,11 @@ int MAIN(int argc, char **argv)
 							break;
 							}
 						}
-						d=Time_F(STOP);
-						BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
+					d=Time_F(STOP);
+					BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
 							: "%ld %d bit ECDSA verify in %.2fs\n",
-						count, test_curves_bits[j], d);
-						ecdsa_results[j][1]=d/(double)count;
+					count, test_curves_bits[j], d);
+					ecdsa_results[j][1]=d/(double)count;
 					}
 
 				if (rsa_count <= 1) 
@@ -2486,8 +2487,8 @@ static void print_message(const char *s, long num, int length)
 #endif
 	}
 
-static void pkey_print_message(char *str, char *str2, long num, int bits,
-	     int tm)
+static void pkey_print_message(const char *str, const char *str2, long num,
+	int bits, int tm)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,mr ? "+DTP:%d:%s:%s:%d\n"
