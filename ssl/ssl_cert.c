@@ -106,10 +106,12 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#ifndef WIN32
-#ifndef VMS
+#if !defined(WIN32) && !defined(VSM) && !defined(NeXT)
 #include <dirent.h>
 #endif
+#ifdef NeXT
+#include <sys/dir.h>
+#define dirent direct
 #endif
 #include <openssl/objects.h>
 #include <openssl/bio.h>
