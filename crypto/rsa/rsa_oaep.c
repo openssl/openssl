@@ -77,14 +77,16 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     int i, dblen, mlen = -1;
     unsigned char *maskeddb;
     int lzero;
-    unsigned char *db, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
+    unsigned char *db = NULL, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
 
     if (--num < 2 * SHA_DIGEST_LENGTH + 1)
-	{
-	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
-	return (-1);
-	}
+	goto decoding_err;
 
+    lzero = num - flen;
+    if (lzero < 0)
+	goto decoding_err;
+    maskeddb = from - lzero + SHA_DIGEST_LENGTH;
+    
     dblen = num - SHA_DIGEST_LENGTH;
     db = OPENSSL_malloc(dblen);
     if (db == NULL)
@@ -93,9 +95,6 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	return (-1);
 	}
 
-    lzero = num - flen;
-    maskeddb = from - lzero + SHA_DIGEST_LENGTH;
-    
     MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen);
     for (i = lzero; i < SHA_DIGEST_LENGTH; i++)
 	seed[i] ^= from[i - lzero];
@@ -107,21 +106,20 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     SHA1(param, plen, phash);
 
     if (memcmp(db, phash, SHA_DIGEST_LENGTH) != 0)
-	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
+	goto decoding_err;
     else
 	{
 	for (i = SHA_DIGEST_LENGTH; i < dblen; i++)
 	    if (db[i] != 0x00)
 		break;
 	if (db[i] != 0x01 || i++ >= dblen)
-	    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP,
-		   RSA_R_OAEP_DECODING_ERROR);
+	  goto decoding_err;
 	else
 	    {
 	    mlen = dblen - i;
 	    if (tlen < mlen)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
 		mlen = -1;
 		}
 	    else
@@ -130,6 +128,13 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	}
     OPENSSL_free(db);
     return (mlen);
+
+decoding_err:
+    /* to avoid chosen ciphertext attacks, the error message should not reveal
+     * which kind of decoding error happened */
+    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
+    if (db != NULL) OPENSSL_free(db);
+    return -1;
     }
 
 int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen)

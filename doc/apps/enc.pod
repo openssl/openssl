@@ -96,12 +96,18 @@ of hex digits.
 =item B<-K key>
 
 the actual key to use: this must be represented as a string comprised only
-of hex digits.
+of hex digits. If only the key is specified, the IV must additionally specified
+using the B<-iv> option. When both a key and a password are specified, the
+key given with the B<-K> option will be used and the IV generated from the
+password will be taken. It probably does not make much sense to specify
+both key and password.
 
 =item B<-iv IV>
 
 the actual IV to use: this must be represented as a string comprised only
-of hex digits.
+of hex digits. When only the key is specified using the B<-K> option, the
+IV must explicitly be defined. When a password is being specified using
+one of the other options, the IV is generated from this password.
 
 =item B<-p>
 

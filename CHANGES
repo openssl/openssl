@@ -4,6 +4,32 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Fix crypto/bn/asm/mips3.s.
+     [Andy Polyakov]
+
+  *) When only the key is given to "enc", the IV is undefined. Print out
+     an error message in this case.
+     [Lutz Jaenicke]
+
+  *) Handle special case when X509_NAME is empty in X509 printing routines.
+     [Steve Henson]
+
+  *) In dsa_do_verify (crypto/dsa/dsa_ossl.c), verify that r and s are
+     positive and less than q.
+     [Bodo Moeller]
+
+  *) Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
+     used: it isn't thread safe and the add_lock_callback should handle
+     that itself.
+     [Paul Rose <Paul.Rose@bridge.com>]
+
+  *) Verify that incoming data obeys the block size in
+     ssl3_enc (ssl/s3_enc.c) and tls1_enc (ssl/t1_enc.c).
+     [Bodo Moeller]
+
+  *) Fix OAEP check.
+     [Ulf Möller, Bodo Möller]
+
   *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
      RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
      when fixing the server behaviour for backwards-compatible 'client

@@ -493,11 +493,12 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
 	{
 	int ret;
+	unsigned long err;
 
 	ret = RAND_bytes(buf, num);
 	if (ret == 0)
 		{
-		long err = ERR_peek_error();
+		err = ERR_peek_error();
 		if (ERR_GET_LIB(err) == ERR_LIB_RAND &&
 		    ERR_GET_REASON(err) == RAND_R_PRNG_NOT_SEEDED)
 			(void)ERR_get_error();

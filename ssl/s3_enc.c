@@ -356,7 +356,7 @@ int ssl3_enc(SSL *s, int send)
 	if ((s->session == NULL) || (ds == NULL) ||
 		(enc == NULL))
 		{
-		memcpy(rec->data,rec->input,rec->length);
+		memmove(rec->data,rec->input,rec->length);
 		rec->input=rec->data;
 		}
 	else
@@ -366,7 +366,6 @@ int ssl3_enc(SSL *s, int send)
 
 		/* COMPRESS */
 
-		/* This should be using (bs-1) and bs instead of 7 and 8 */
 		if ((bs != 1) && send)
 			{
 			i=bs-((int)l%bs);
@@ -376,12 +375,24 @@ int ssl3_enc(SSL *s, int send)
 			rec->length+=i;
 			rec->input[l-1]=(i-1);
 			}
-
+		
+		if (!send)
+			{
+			if (l == 0 || l%bs != 0)
+				{
+				SSLerr(SSL_F_SSL3_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPT_ERROR);
+				return(0);
+				}
+			}
+		
 		EVP_Cipher(ds,rec->data,rec->input,l);
 
 		if ((bs != 1) && !send)
 			{
 			i=rec->data[l-1]+1;
+			/* SSL 3.0 bounds the number of padding bytes by the block size;
+			 * padding bytes (except that last) are arbitrary */
 			if (i > bs)
 				{
 				SSLerr(SSL_F_SSL3_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
