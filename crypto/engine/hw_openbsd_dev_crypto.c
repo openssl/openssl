@@ -53,6 +53,12 @@
  *
  */
 
+#include <openssl/engine.h>
+#include <openssl/evp.h>
+#include "eng_int.h"
+/* Maybe this is needed? ... */
+#include "../evp/evp_locl.h"
+
 #ifndef OPENSSL_OPENBSD_DEV_CRYPTO
 
 void ENGINE_load_openbsd_dev_crypto(void)
@@ -66,14 +72,9 @@ void ENGINE_load_openbsd_dev_crypto(void)
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
 #include <assert.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
-#include "eng_int.h"
-/* Maybe this is needed? ... */
-#include "../evp/evp_locl.h"
 
 #include <crypto/cryptodev.h>
 
