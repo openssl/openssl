@@ -195,10 +195,11 @@ int ssl23_get_client_hello(SSL *s)
 	int type=0,use_sslv2_strong=0;
 	int v[2];
 
-	/* read the initial header */
-	v[0]=v[1]=0;
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{
+		/* read the initial header */
+		v[0]=v[1]=0;
+
 		if (!ssl3_setup_buffers(s)) goto err;
 
 		n=ssl23_read_bytes(s,7);
@@ -244,6 +245,7 @@ int ssl23_get_client_hello(SSL *s)
 					type=1;
 
 				if (s->options & SSL_OP_NON_EXPORT_FIRST)
+					/* not only confusing, but broken! */
 					{
 					STACK_OF(SSL_CIPHER) *sk;
 					SSL_CIPHER *c;
@@ -337,6 +339,8 @@ next_bit:
 		/* we have a SSLv3/TLSv1 in a SSLv2 header */
 		type=2;
 		p=s->packet;
+		v[0] = p[3];
+		v[1] = p[4];
 		n=((p[0]&0x7f)<<8)|p[1];
 		if (n > (1024*4))
 			{

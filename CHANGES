@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Bugfix: ssl23_get_client_hello did not work properly when called in
+     state SSL23_ST_SR_CLNT_HELLO_B, i.e. when the first 7 bytes of
+     a SSLv2-compatible client hello for SSLv3 or TLSv1 could be read,
+     but a retry condition occured while trying to read the rest.
+     [Bodo Moeller]
+
   *) The PKCS7_ENC_CONTENT_new() function was setting the content type as
      NID_pkcs7_encrypted by default: this was wrong since this should almost
      always be NID_pkcs7_data. Also modified the PKCS7_set_type() to handle
