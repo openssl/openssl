@@ -249,7 +249,7 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f, in
 #endif
 	{
 	ENGINE *ret = NULL;
-	ENGINE_PILE tmplate, *fnd;
+	ENGINE_PILE tmplate, *fnd=NULL;
 	int initres, loop = 0;
 
 	/* If 'engine_ciphers' is NULL, then it's absolutely *sure* that no
