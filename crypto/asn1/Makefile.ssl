@@ -254,6 +254,9 @@ a_type.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
 a_utctm.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_utctm.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
 a_utctm.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_utf8.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+a_utf8.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+a_utf8.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
 a_verify.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_verify.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_verify.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -264,6 +267,9 @@ a_verify.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_verify.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_verify.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
 a_verify.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_vis.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+a_vis.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+a_vis.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
 asn1_err.o: ../../include/bn.h ../../include/err.h ../../include/stack.h asn1.h
 asn1_lib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 asn1_lib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
