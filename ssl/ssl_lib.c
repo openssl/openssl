@@ -85,12 +85,17 @@ OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
 
 int SSL_clear(SSL *s)
 	{
-	int state;
 
 	if (s->method == NULL)
 		{
 		SSLerr(SSL_F_SSL_CLEAR,SSL_R_NO_METHOD_SPECIFIED);
 		return(0);
+		}
+
+	if (ssl_clear_bad_session(s))
+		{
+		SSL_SESSION_free(s->session);
+		s->session=NULL;
 		}
 
 	s->error=0;
@@ -110,7 +115,6 @@ int SSL_clear(SSL *s)
 		}
 #endif
 
-	state=s->state; /* Keep to check if we throw away the session-id */
 	s->type=0;
 
 	s->state=SSL_ST_BEFORE|((s->server)?SSL_ST_ACCEPT:SSL_ST_CONNECT);
@@ -130,12 +134,6 @@ int SSL_clear(SSL *s)
 		}
 
 	ssl_clear_cipher_ctx(s);
-
-	if (ssl_clear_bad_session(s))
-		{
-		SSL_SESSION_free(s->session);
-		s->session=NULL;
-		}
 
 	s->first_packet=0;
 
