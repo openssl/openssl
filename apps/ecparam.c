@@ -98,31 +98,28 @@
 #undef PROG
 #define PROG	ecparam_main
 
-/* -inform arg            - input format - default PEM (DER or PEM)
- * -outform arg           - output format - default PEM
- * -in arg                - input file  - default stdin
- * -out arg               - output file - default stdout
- * -noout
- * -text
- * -check                 - validate the ec parameters
- * -C
- * -noout
- * -name file             - use the ecparameters with 'short name' name
- * -list_curves           - prints a list of all currently available curve
- *                          'short names' and exits
- * -conv_form                  - specifies the point conversion form 
- *                          possible values: compressed
- *                                           uncompressed (default)
- *                                           hybrid
- * -param_enc             - specifies the way the ec parameters are encoded
- *                          in the asn1 der encoding
- *                          possilbe values: named_curve (default)
- *                                           explicit
- * -no_seed               - if 'explicit' parameters are choosen do not
- *                          use the seed
- * -genkey                - generates a ec private key
- * -rand file
- * -engine e              - use engine e, possible a hardware device
+/* -inform arg      - input format - default PEM (DER or PEM)
+ * -outform arg     - output format - default PEM
+ * -in  arg         - input file  - default stdin
+ * -out arg         - output file - default stdout
+ * -noout           - do not print the ec parameter
+ * -text            - print the ec parameters in text form
+ * -check           - validate the ec parameters
+ * -C               - print a 'C' function creating the parameters
+ * -name arg        - use the ec parameters with 'short name' name
+ * -list_curves     - prints a list of all currently available curve 'short names'
+ * -conv_form arg   - specifies the point conversion form 
+ *                  - possible values: compressed
+ *                                     uncompressed (default)
+ *                                     hybrid
+ * -param_enc arg   - specifies the way the ec parameters are encoded
+ *                    in the asn1 der encoding
+ *                    possible values: named_curve (default)
+ *                                     explicit
+ * -no_seed         - if 'explicit' parameters are choosen do not use the seed
+ * -genkey          - generate ec key
+ * -rand file       - files to use for random number input
+ * -engine e        - use engine e, possibly a hardware device
  */
 
 
@@ -264,52 +261,51 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err, "%s [options] <infile >outfile\n",prog);
 		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg             input format - "
+		BIO_printf(bio_err, " -inform arg       input format - "
 				"default PEM (DER or PEM)\n");
-		BIO_printf(bio_err, " -outform arg            output format - "
+		BIO_printf(bio_err, " -outform arg      output format - "
 				"default PEM\n");
-		BIO_printf(bio_err, " -in  arg                input file  - "
+		BIO_printf(bio_err, " -in  arg          input file  - "
 				"default stdin\n");
-		BIO_printf(bio_err, " -out arg                output file - "
+		BIO_printf(bio_err, " -out arg          output file - "
 				"default stdout\n");
-		BIO_printf(bio_err, " -noout                  do not print the "
+		BIO_printf(bio_err, " -noout            do not print the "
 				"ec parameter\n");
-		BIO_printf(bio_err, " -text                   print the ec "
+		BIO_printf(bio_err, " -text             print the ec "
 				"parameters in text form\n");
-		BIO_printf(bio_err, " -check                  validate the ec "
+		BIO_printf(bio_err, " -check            validate the ec "
 				"parameters\n");
-		BIO_printf(bio_err, " -C                      print a 'C' "
+		BIO_printf(bio_err, " -C                print a 'C' "
 				"function creating the parameters\n");
-		BIO_printf(bio_err, " -name arg               use the "
+		BIO_printf(bio_err, " -name arg         use the "
 				"ec parameters with 'short name' name\n");
-		BIO_printf(bio_err, " -list_curves            prints a list of "
-				"all currently available curve\n");
-		BIO_printf(bio_err, "                         'short names'\n");
-		BIO_printf(bio_err, " -conv_form arg          specifies the "
+		BIO_printf(bio_err, " -list_curves      prints a list of "
+				"all currently available curve 'short names'\n");
+		BIO_printf(bio_err, " -conv_form arg    specifies the "
 				"point conversion form \n");
-		BIO_printf(bio_err, "                         possible values:"
+		BIO_printf(bio_err, "                   possible values:"
 				" compressed\n");
-		BIO_printf(bio_err, "                                         "
+		BIO_printf(bio_err, "                                   "
 				" uncompressed (default)\n");
-		BIO_printf(bio_err, "                                         "
+		BIO_printf(bio_err, "                                   "
 				" hybrid\n");
-		BIO_printf(bio_err, " -param_enc arg          specifies the way"
+		BIO_printf(bio_err, " -param_enc arg    specifies the way"
 				" the ec parameters are encoded\n");
-		BIO_printf(bio_err, "                         in the asn1 der "
+		BIO_printf(bio_err, "                   in the asn1 der "
 				"encoding\n");
-		BIO_printf(bio_err, "                         possilbe values:"
+		BIO_printf(bio_err, "                   possible values:"
 				" named_curve (default)\n");
-		BIO_printf(bio_err,"                                      "
-				"    explicit\n");
-		BIO_printf(bio_err, " -no_seed                if 'explicit'"
-				" parameters are choosen do not\n");
-		BIO_printf(bio_err, "                         use the seed\n");
-		BIO_printf(bio_err, " -genkey                 generate ec"
+		BIO_printf(bio_err, "                                   "
+				" explicit\n");
+		BIO_printf(bio_err, " -no_seed          if 'explicit'"
+				" parameters are choosen do not"
+				" use the seed\n");
+		BIO_printf(bio_err, " -genkey           generate ec"
 				" key\n");
-		BIO_printf(bio_err, " -rand file              files to use for"
+		BIO_printf(bio_err, " -rand file        files to use for"
 				" random number input\n");
-		BIO_printf(bio_err, " -engine e               use engine e, "
-				"possible a hardware device\n");
+		BIO_printf(bio_err, " -engine e         use engine e, "
+				"possibly a hardware device\n");
 		goto end;
 		}
 
