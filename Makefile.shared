@@ -91,7 +91,7 @@ LINK_APP=	\
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
-    $$LDCMD $(LDFLAGS) $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
+    $$LDCMD $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
 
 LINK_SO=	\
   ( $(DEBUG);   \
@@ -99,7 +99,7 @@ LINK_SO=	\
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
-    $$SHAREDCMD $(SHARED_LDFLAGS) $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+    $$SHAREDCMD $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
   $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
 SYMLINK_SO=	\
@@ -141,10 +141,10 @@ DO_GNU_SO=$(CALC_VERSIONS); \
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
+	SHAREDFLAGS="$(CFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'
 DO_GNU_APP=LDCMD=$(CC);\
-	LDFLAGS="-Wl,-rpath,$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	APPNAME=$(APPNAME)
 
@@ -155,7 +155,7 @@ DO_GNU_APP=LDCMD=$(CC);\
 #else...
 link_app.:
 	LDCMD=$(CC); \
-	LDFLAGS=""; \
+	LDFLAGS="$(CFLAGS)"; \
 	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
 	$(LINK_APP)
@@ -175,7 +175,7 @@ link_o.bsd:
 	LIBDEPS=; \
 	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
 	NOALLSYMSFLAGS=; \
-	SHAREDFLAGS="-shared -nostdlib"; \
+	SHAREDFLAGS="$(CFLAGS) -shared -nostdlib"; \
 	SHAREDCMD=$(CC); \
 	fi; $(LINK_SO_O)
 link_a.bsd:
@@ -186,13 +186,13 @@ link_a.bsd:
 	LIBDEPS=; \
 	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
 	NOALLSYMSFLAGS=; \
-	SHAREDFLAGS="-shared -nostdlib"; \
+	SHAREDFLAGS="$(CFLAGS) -shared -nostdlib"; \
 	SHAREDCMD=$(CC); \
 	fi; $(LINK_SO_A)
 link_app.bsd:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
 	LDCMD=$(CC); \
-	LDFLAGS="-Wl,-rpath,$(LIBPATH)"; \
+	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBPATH)"; \
 	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
 	fi; $(LINK_APP)
@@ -205,7 +205,7 @@ link_o.darwin:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="-dynamiclib"; \
+	SHAREDFLAGS="$(CFLAGS) -dynamiclib"; \
 	SHAREDCMD='$(CC)'; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
@@ -221,7 +221,7 @@ link_a.darwin:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="-dynamiclib"; \
+	SHAREDFLAGS="$(CFLAGS) -dynamiclib"; \
 	SHAREDCMD='$(CC)'; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
@@ -232,7 +232,7 @@ link_a.darwin:
 	$(LINK_SO_A)
 link_app.darwin:
 	LDCMD=$(CC);\
-	LDFLAGS=""; \
+	LDFLAGS="$(CFLAGS)"; \
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	APPNAME="$(APPNAME)"; \
 	$(LINK_APP)
@@ -247,7 +247,7 @@ link_o.cygwin:
 	SHLIB_SOVER=-$(LIBVERSION); \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="-Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
+	SHAREDFLAGS="$(CFLAGS) -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
 	SHAREDCMD='${CC}'; \
 	$(LINK_SO_O)
 link_a.cygwin:
@@ -260,12 +260,12 @@ link_a.cygwin:
 	SHLIB_SOVER=; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="-Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
+	SHAREDFLAGS="$(CFLAGS) -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
 	SHAREDCMD='${CC}'; \
 	$(LINK_SO_A)
 link_app.cygwin:
 	LDCMD=$(CC);\
-	LDFLAGS=""; \
+	LDFLAGS="$(CFLAGS)"; \
 	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
 	$(LINK_APP)
@@ -286,7 +286,7 @@ link_o.alpha-osf1:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared"; \
+		SHAREDFLAGS="$(CFLAGS) -shared"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -309,7 +309,7 @@ link_a.alpha-osf1:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared"; \
+		SHAREDFLAGS="$(CFLAGS) -shared"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -321,7 +321,7 @@ link_app.alpha-osf1:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS=""; \
+		LDFLAGS="$(CFLAGS)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"
 	fi; \
@@ -345,7 +345,7 @@ link_o.tru64:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -msym -rpath $(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -368,7 +368,7 @@ link_a.tru64:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -msym -rpath $(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -380,7 +380,7 @@ link_app.tru64:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS="-rpath $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -404,7 +404,7 @@ link_o.tru64-rpath:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -msym -rpath $(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -427,7 +427,7 @@ link_a.tru64-rpath:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -msym -rpath $(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
@@ -439,7 +439,7 @@ link_app.tru64-rpath:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS="-rpath $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -457,7 +457,7 @@ link_o.solaris:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -473,7 +473,7 @@ link_a.solaris:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A)
@@ -482,7 +482,7 @@ link_app.solaris:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS="-R $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) -R $(LIBRPATH)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -499,7 +499,7 @@ link_o.svr3:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$(CFLAGS) -G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -513,7 +513,7 @@ link_a.svr3:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$(CFLAGS) -G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A_UNPACKED)
@@ -522,7 +522,7 @@ link_app.svr3:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS=""; \
+		LDFLAGS="$(CFLAGS)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -541,7 +541,7 @@ link_o.svr5:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$(CFLAGS) $${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -557,7 +557,7 @@ link_a.svr5:
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDFLAGS="$(CFLAGS) $${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A_UNPACKED)
@@ -566,7 +566,7 @@ link_app.svr5:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS=""; \
+		LDFLAGS="$(CFLAGS)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -584,7 +584,7 @@ link_o.irix:
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
-		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -600,7 +600,7 @@ link_a.irix:
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
-		SHAREDFLAGS="-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
+		SHAREDFLAGS="$(CFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-rpath,$(LIBRPATH)"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A)
@@ -609,7 +609,7 @@ link_app.irix:
 		$(DO_GNU_APP); \
 	else \
 		LDCMD=$(CC);\
-		LDFLAGS="-Wl,-rpath,$(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
 		APPNAME="$(APPNAME)"; \
 	fi; \
@@ -633,7 +633,7 @@ link_o.hpux:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDFLAGS="$(CFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD=$(CC); \
 	fi; \
 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
@@ -647,14 +647,14 @@ link_a.hpux:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDFLAGS="$(CFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
 	LDCMD=$(CC);\
-	LDFLAGS="-Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
 	LIBDEPS="$(LIBDEPS)"; \
 	APPNAME="$(APPNAME)"; \
 	fi; \
@@ -667,7 +667,7 @@ link_o.aix:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
+	SHAREDFLAGS='$(CFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_O)
 link_a.aix:
@@ -677,12 +677,12 @@ link_a.aix:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
+	SHAREDFLAGS='$(CFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE -blibpath:$(LIBRPATH)'; \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
 	LDCMD=$(CC);\
-	LDFLAGS="-blibpath:$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) -blibpath:$(LIBRPATH)"; \
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	APPNAME="$(APPNAME)"
 	$(LINK_APP)
@@ -694,7 +694,7 @@ link_o.reliantunix:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='-G'; \
+	SHAREDFLAGS='$(CFLAGS) -G'; \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_O)
 link_a.reliantunix:
@@ -704,12 +704,12 @@ link_a.reliantunix:
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='-G'; \
+	SHAREDFLAGS='$(CFLAGS) -G'; \
 	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_A_UNPACKED)
 link_app.reliantunix:
 	LDCMD=$(CC);\
-	LDFLAGS=""; \
+	LDFLAGS="$(CFLAGS)"; \
 	LIBDEPS="$(LIBDEPS) -lc"; \
 	APPNAME="$(APPNAME)"
 	$(LINK_APP)
