@@ -13,7 +13,7 @@ The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
 documented here.
 
-=head1 HEADERS
+=head1 HEADER FILES
 
 Currently the OpenSSL B<ssl> library provides the following C header files
 containing the prototypes for the data structures and and functions:
@@ -25,45 +25,164 @@ containing the prototypes for the data structures and and functions:
 That's the common header file for the SSL/TLS API.  Include it into your
 program to make the API of the B<ssl> library available. It internally
 includes both more private SSL headers and headers from the B<crypto> library.
+Whenever you need hard-core details on the internals of the SSL API, look
+inside this header file.
+
+=item B<ssl2.h>
+
+That's the sub header file dealing with the SSLv2 protocol only.
+I<Usually you don't have to include it explicitly because
+it's already included by ssl.h>.
+
+=item B<ssl3.h>
+
+That's the sub header file dealing with the SSLv3 protocol only.
+I<Usually you don't have to include it explicitly because
+it's already included by ssl.h>.
+
+=item B<ssl23.h>
+
+That's the sub header file dealing with the combined use of the SSLv2 and
+SSLv3 protocols.
+I<Usually you don't have to include it explicitly because
+it's already included by ssl.h>.
+
+=item B<tls1.h>
+
+That's the sub header file dealing with the TLSv1 protocol only.
+I<Usually you don't have to include it explicitly because
+it's already included by ssl.h>.
 
 =back
 
-=head1 STRUCTURES
+=head1 DATA STRUCTURES
 
-Currently the OpenSSL B<ssl> library functions deal with the following data
+Currently the OpenSSL B<ssl> library functions deals with the following data
 structures:
 
 =over 4
 
-=item B<SSL_CTX> (SSL Context)
-
-=item B<SSL> (SSL Connection)
-
-That's the SSL/TLS structure which is created by
-a server or client per established connection. 
-
 =item B<SSL_METHOD> (SSL Method)
+
+That's a dispatch structure describing the internal B<ssl> library
+methods/functions which implement the various protocol versions (SSLv1, SSLv2
+and TLSv1). It's needed to create an B<SSL_CTX>.
 
 =item B<SSL_CIPHER> (SSL Cipher)
 
+This structure holds the algorithm information for a particular cipher which
+are a core part of the SSL/TLS protocol. The available ciphers are configured
+on a B<SSL_CTX> basis and the actually used ones are then part of the
+B<SSL_SESSION>.
+
+=item B<SSL_CTX> (SSL Context)
+
+That's the global context structure which is created by a server or client
+once per program life-time and which holds mainly default values for the
+B<SSL> structures which are later created for the connections.
+
 =item B<SSL_SESSION> (SSL Session)
+
+This is a structure containing the current SSL session details for a
+connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
+
+=item B<SSL> (SSL Connection)
+
+That's the main SSL/TLS structure which is created by a server or client per
+established connection. This actually is the core structure in the SSL API.
+Under run-time the application usually deals with this structure which has
+links to mostly all other structures.
 
 =back
 
-=head1 FUNCTIONS
+=head1 API FUNCTIONS
 
 Currently the OpenSSL B<ssl> library exports 214 API functions.
 They are documented in the following:
+
+=head2 DEALING WITH PROTOCOL METHODS
+
+Here we document the various API functions which deal with the SSL/TLS
+protocol methods defined in B<SSL_METHOD> structures.
+
+=over 4
+
+=item SSL_METHOD *B<SSLv2_client_method>(void);
+
+Constructor for the SSLv2 SSL_METHOD structure for a dedicated client.
+
+=item SSL_METHOD *B<SSLv2_server_method>(void);
+
+Constructor for the SSLv2 SSL_METHOD structure for a dedicated server.
+
+=item SSL_METHOD *B<SSLv2_method>(void);
+
+Constructor for the SSLv2 SSL_METHOD structure for combined client and server.
+
+=item SSL_METHOD *B<SSLv3_client_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for a dedicated client.
+
+=item SSL_METHOD *B<SSLv3_server_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for a dedicated server.
+
+=item SSL_METHOD *B<SSLv3_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for combined client and server.
+
+=item SSL_METHOD *B<TLSv1_client_method>(void);
+
+Constructor for the TLSv1 SSL_METHOD structure for a dedicated client.
+
+=item SSL_METHOD *B<TLSv1_server_method>(void);
+
+Constructor for the TLSv1 SSL_METHOD structure for a dedicated server.
+
+=item SSL_METHOD *B<TLSv1_method>(void);
+
+Constructor for the TLSv1 SSL_METHOD structure for combined client and server.
+
+=back
+
+=head2 DEALING WITH CIPHERS
+
+Here we document the various API functions which deal with the SSL/TLS
+ciphers defined in B<SSL_CIPHER> structures.
 
 =over 4
 
 =item char *B<SSL_CIPHER_description>(SSL_CIPHER *cipher, char *buf, int len);
 
-=item int B<SSL_CIPHER_get_bits>(SSL_CIPHER *c, int *alg_bits);
+Write a string to I<buf> (with a maximum size of I<len>) containing a human
+readable description of I<cipher>. Returns I<buf>.
 
-=item char *B<SSL_CIPHER_get_name>(SSL_CIPHER *c);
+=item int B<SSL_CIPHER_get_bits>(SSL_CIPHER *cipher, int *alg_bits);
 
-=item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *c);
+Determine the number of bits in I<cipher>. Because of export crippled ciphers
+there are two bits: The bits the algorithm supports in general (stored to
+I<alg_bits>) and the bits which are actually used (the return value).
+
+=item char *B<SSL_CIPHER_get_name>(SSL_CIPHER *cipher);
+
+Return the internal name of I<cipher> as a string. These are the various
+strings defined by the I<SSL2_TXT_xxx>, I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
+definitions in the header files.
+
+=item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
+
+Returns a string like "C<TLSv1/SSLv3>" or "C<SSLv2>" which indicates the
+SSL/TLS protocol version to which I<cipher> belongs (i.e. where it was defined
+in the specification the first time).
+
+=back
+
+=head2 DEALING WITH PROTOCOL CONTEXTS
+
+Here we document the various API functions which deal with the SSL/TLS
+protocol context defined in the B<SSL_CTX> structure.
+
+=over 4
 
 =item int B<SSL_CTX_add_client_CA>(SSL_CTX *ctx, X509 *x);
 
@@ -213,6 +332,15 @@ They are documented in the following:
 
 =item int B<SSL_CTX_use_certificate_file>(SSL_CTX *ctx, char *file, int type);
 
+=back
+
+=head2 DEALING WITH SESSIONS
+
+Here we document the various API functions which deal with the SSL/TLS
+sessions defined in the B<SSL_SESSION> structures.
+
+=over 4
+
 =item int B<SSL_SESSION_cmp>(SSL_SESSION *a, SSL_SESSION *b);
 
 =item void B<SSL_SESSION_free>(SSL_SESSION *ss);
@@ -242,6 +370,15 @@ They are documented in the following:
 =item long B<SSL_SESSION_set_time>(SSL_SESSION *s, long t);
 
 =item long B<SSL_SESSION_set_timeout>(SSL_SESSION *s, long t);
+
+=back
+
+=head2 DEALING WITH CONNECTIONS
+
+Here we document the various API functions which deal with the SSL/TLS
+connection defined in the B<SSL> structure.
+
+=over 4
 
 =item int B<SSL_accept>(SSL *ssl);
 
@@ -462,24 +599,6 @@ They are documented in the following:
 =item int B<SSL_want_x509_lookup>(s);
 
 =item int B<SSL_write>(SSL *ssl, char *buf, int num);
-
-=item SSL_METHOD *B<SSLv2_client_method>(void);
-
-=item SSL_METHOD *B<SSLv2_method>(void);
-
-=item SSL_METHOD *B<SSLv2_server_method>(void);
-
-=item SSL_METHOD *B<SSLv3_client_method>(void);
-
-=item SSL_METHOD *B<SSLv3_method>(void);
-
-=item SSL_METHOD *B<SSLv3_server_method>(void);
-
-=item SSL_METHOD *B<TLSv1_client_method>(void);
-
-=item SSL_METHOD *B<TLSv1_method>(void);
-
-=item SSL_METHOD *B<TLSv1_server_method>(void);
 
 =back
 
