@@ -1457,6 +1457,7 @@ EOF
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne "" && $make_depend;
+	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or exit $?
 		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
