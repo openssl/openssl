@@ -88,11 +88,17 @@ CALC_VERSIONS=	\
 
 LINK_APP=	\
   ( $(DEBUG);   \
+    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done'`; \
+    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`
+    LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$LDCMD $(LDFLAGS) $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
 
 LINK_SO=	\
   ( $(DEBUG);   \
     nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
+    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done'`; \
+    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`
+    LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$SHAREDCMD $(SHARED_LDFLAGS) $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
   $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
@@ -122,7 +128,8 @@ LINK_SO_A_VIA_O=	\
   $(LINK_SO) && rm -f $(LIBNAME).o
 LINK_SO_A_UNPACKED=	\
   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
-  (cd $$UNPACKDIR; ar x ../lib$(LIBNAME).a) && cp $(LIBEXTRAS) $$UNPACKDIR && \
+  (cd $$UNPACKDIR; ar x ../lib$(LIBNAME).a) && \
+  ([ -z "$(LIBEXTRAS)" ] || cp $(LIBEXTRAS) $$UNPACKDIR) && \
   SHOBJECTS=$$UNPACKDIR/*.o; \
   $(LINK_SO) && rm -rf $$UNPACKDIR
 
@@ -457,11 +464,11 @@ link_o.svr3:
 	else \
 		$(CALC_VERSIONS); \
 		SHARE_FLAG='-G'; \
-		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
-		ALLSYMSFLAGS='-z allextract'; \
+		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
@@ -473,11 +480,11 @@ link_a.svr3:
 	else \
 		$(CALC_VERSIONS); \
 		SHARE_FLAG='-G'; \
-		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAGS='-shared'; \
+		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		LIBDEPS="$(LIBDEPS) -lc"; \
-		ALLSYMSFLAGS='-z allextract'; \
+		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$${SHARE_FLAG} -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
 		SHAREDCMD='$(CC)'; \
