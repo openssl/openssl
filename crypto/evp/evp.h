@@ -271,6 +271,8 @@ struct env_md_ctx_st
 
 #define EVP_MD_CTX_FLAG_ONESHOT		0x0001 /* digest update will be called
 						* once only */
+#define EVP_MD_CTX_FLAG_CLEANED		0x0002 /* context has already been
+						* cleaned */
 
 struct evp_cipher_st
 	{
@@ -457,6 +459,8 @@ EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
 #define EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+#define EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
+#define EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
 int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,

@@ -133,8 +133,10 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	return EVP_DigestInit_ex(ctx, type, NULL);
 	}
+
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
+	EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
 	 * the previous handle, re-querying for an ENGINE, and having a
@@ -202,7 +204,11 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	ret=ctx->digest->final(ctx,md);
 	if (size != NULL)
 		*size=ctx->digest->md_size;
-	/* FIXME: add a cleanup function to the ctx? */
+	if (ctx->digest->cleanup)
+		{
+		ctx->digest->cleanup(ctx);
+		EVP_MD_CTX_set_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+		}
 	memset(ctx->md_data,0,ctx->digest->ctx_size);
 	return ret;
 	}
@@ -264,7 +270,8 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
-	if (ctx->digest && ctx->digest->cleanup)
+	if (ctx->digest && ctx->digest->cleanup
+		&& !EVP_MD_CTX_test_flags(ctx,EVP_MD_CTX_FLAG_CLEANED))
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{
