@@ -210,8 +210,8 @@ sub header
 EOF
 
 	print "#include <stdio.h>\n";
-	print "#include \"err.h\"\n";
-	print "#include \"$header\"\n";
+	print "#include <openssl/err.h>\n";
+	print "#include <openssl/$header>\n";
 	print "\n/* BEGIN ERROR CODES */\n";
 	print "#ifndef NO_ERR\n";
 	}
