@@ -384,7 +384,7 @@ versions of OpenSSL.  However, to make CA certificate roll-over easier,
 it's recommended to use the value B<no>, especially if combined with
 the B<-selfsign> command line option.
 
-=item B<serialfile>
+=item B<serial>
 
 a text file containing the next serial number to use in hex. Mandatory.
 This file must be present and contain a valid serial number.
