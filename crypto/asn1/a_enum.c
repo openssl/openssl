@@ -219,6 +219,6 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
 		ASN1err(ASN1_F_ASN1_ENUMERATED_TO_BN,ASN1_R_BN_LIB);
-	if(ai->type == V_ASN1_NEG_ENUMERATED) bn->neg = 1;
+	else if(ai->type == V_ASN1_NEG_ENUMERATED) ret->neg = 1;
 	return(ret);
 	}
