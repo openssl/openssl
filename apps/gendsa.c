@@ -231,6 +231,7 @@ end:
 	if (out != NULL) BIO_free_all(out);
 	if (dsa != NULL) DSA_free(dsa);
 	if(passout) OPENSSL_free(passout);
+	apps_shutdown();
 	EXIT(ret);
 	}
 #endif

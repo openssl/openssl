@@ -242,6 +242,7 @@ err:
 	if(passout) OPENSSL_free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

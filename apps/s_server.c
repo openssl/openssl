@@ -799,6 +799,7 @@ end:
 		BIO_free(bio_s_out);
 		bio_s_out=NULL;
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}
 

@@ -443,7 +443,6 @@ int MAIN(int argc, char **argv)
 
 	if (tm_cipher == NULL ) {
 		fprintf( stderr, "No CIPHER specified\n" );
-/*		EXIT(1); */
 	}
 
 	if (!(perform & 1)) goto next;
@@ -610,6 +609,7 @@ end:
 		SSL_CTX_free(tm_ctx);
 		tm_ctx=NULL;
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}
 

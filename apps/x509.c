@@ -1009,6 +1009,7 @@ end:
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) OPENSSL_free(passin);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

@@ -575,6 +575,7 @@ end:
 	if (benc != NULL) BIO_free(benc);
 	if (b64 != NULL) BIO_free(b64);
 	if(pass) OPENSSL_free(pass);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

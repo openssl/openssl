@@ -1470,6 +1470,7 @@ end:
 		if (dsa_key[i] != NULL)
 			DSA_free(dsa_key[i]);
 #endif
+	apps_shutdown();
 	EXIT(mret);
 	}
 

@@ -364,6 +364,7 @@ end:
 		X509_STORE_CTX_cleanup(&ctx);
 		X509_STORE_free(store);
 	}
+	apps_shutdown();
 	EXIT(ret);
 	}
 

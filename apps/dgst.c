@@ -347,6 +347,7 @@ end:
 	EVP_PKEY_free(sigkey);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
+	apps_shutdown();
 	EXIT(err);
 	}
 

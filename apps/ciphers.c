@@ -202,6 +202,7 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (ssl != NULL) SSL_free(ssl);
 	if (STDout != NULL) BIO_free_all(STDout);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

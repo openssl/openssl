@@ -272,6 +272,7 @@ bad:
 end:
 	if (out != NULL) BIO_free_all(out);
 	if (x != NULL) SSL_SESSION_free(x);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

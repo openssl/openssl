@@ -163,7 +163,8 @@ bad:
 		BIO_printf(bio_err," -text         print full details of certificates\n");
 		BIO_printf(bio_err," -noout        don't output encoded data\n");
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
-		EXIT(1);
+		ret = 1;
+		goto end;
 		}
 
 	ERR_load_crypto_strings();
@@ -300,5 +301,6 @@ end:
 	if (p7 != NULL) PKCS7_free(p7);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
+	apps_shutdown();
 	EXIT(ret);
 	}

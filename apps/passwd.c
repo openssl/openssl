@@ -289,6 +289,7 @@ err:
 		BIO_free(in);
 	if (out)
 		BIO_free_all(out);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

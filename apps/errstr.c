@@ -121,5 +121,6 @@ int MAIN(int argc, char **argv)
 			ret++;
 			}
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}

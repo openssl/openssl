@@ -329,6 +329,7 @@ end:
 	if (at != NULL) ASN1_TYPE_free(at);
 	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
+	apps_shutdown();
 	EXIT(ret);
 	}
 

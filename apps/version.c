@@ -131,5 +131,6 @@ int MAIN(int argc, char **argv)
 	if (cflags)  printf("%s\n",SSLeay_version(SSLEAY_CFLAGS));
 	if (dir)  printf("%s\n",SSLeay_version(SSLEAY_DIR));
 end:
+	apps_shutdown();
 	EXIT(ret);
 	}

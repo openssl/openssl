@@ -803,6 +803,7 @@ end:
 		BIO_free(bio_c_out);
 		bio_c_out=NULL;
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}
 
