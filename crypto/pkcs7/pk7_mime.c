@@ -416,7 +416,7 @@ static STACK *mime_parse_hdr(BIO *bio)
 	headers = sk_new(mime_hdr_cmp);
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 	/* If whitespace at line start then continuation line */
-	if(mhdr && isspace(linebuf[0])) state = MIME_NAME;
+	if(mhdr && isspace((unsigned char)linebuf[0])) state = MIME_NAME;
 	else state = MIME_START;
 	ntmp = NULL;
 	/* Go through all characters */
@@ -520,7 +520,7 @@ static char *strip_start(char *name)
 			/* Else null string */
 			return NULL;
 		}
-		if(!isspace(c)) return p;
+		if(!isspace((unsigned char)c)) return p;
 	}
 	return NULL;
 }
@@ -538,7 +538,7 @@ static char *strip_end(char *name)
 			*p = 0;
 			return name;
 		}
-		if(isspace(c)) *p = 0;	
+		if(isspace((unsigned char)c)) *p = 0;	
 		else return name;
 	}
 	return NULL;

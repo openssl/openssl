@@ -592,9 +592,11 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 
 	amip=m->app_info;
 	ami_cnt=0;
-	if (amip)
-		ti=amip->thread;
-	while(amip && amip->thread == ti)
+	if (!amip)
+		return;
+	ti=amip->thread;
+	
+	do
 		{
 		int buf_len;
 		int info_len;
@@ -622,6 +624,8 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 
 		amip = amip->next;
 		}
+	while(amip && amip->thread == ti);
+		
 #ifdef LEVITTE_DEBUG
 	if (amip)
 		{

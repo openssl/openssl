@@ -2173,3 +2173,8 @@ X509_radd_attr                          2197
 X509_ATTRIBUTE_iget_data                2198
 X509_delete_attr                        2199
 X509_get_attr_by_OBJ                    2200
+RAND_add                                2201
+BIO_number_written                      2202
+BIO_number_read                         2203
+X509_STORE_CTX_rget_chain               2204
+ERR_load_RAND_strings                   2205

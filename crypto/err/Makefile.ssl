@@ -96,12 +96,13 @@ err_all.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
 err_all.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
 err_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 err_all.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
-err_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-err_all.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-err_all.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-err_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-err_all.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-err_all.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+err_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+err_all.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+err_all.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+err_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+err_all.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+err_all.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+err_all.o: ../../include/openssl/x509v3.h
 err_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 err_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 err_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

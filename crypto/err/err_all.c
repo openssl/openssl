@@ -80,6 +80,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
+#include <openssl/rand.h>
 #include <openssl/err.h>
 
 void ERR_load_crypto_strings(void)
