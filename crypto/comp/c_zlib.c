@@ -16,7 +16,9 @@ static COMP_METHOD zlib_method_nozlib={
 	NULL,
 	};
 
-#ifdef ZLIB
+#ifndef ZLIB
+#undef ZLIB_SHARED
+#else
 
 #include <zlib.h>
 
@@ -45,34 +47,45 @@ static COMP_METHOD zlib_method={
  * and we do not link to a .LIB file.
  */
 #if defined(WINDOWS) || defined(WIN32)
-#include <windows.h>
+# include <windows.h>
+
+# define Z_CALLCONV _stcall
+# define ZLIB_SHARED
+#else
+# define Z_CALLCONV
+#endif /* !(WINDOWS || WIN32) */
+
+#ifdef ZLIB_SHARED
+#include <openssl/dso.h>
 
 /* Prototypes for built in stubs */
-int stub_compress(Bytef *dest,uLongf *destLen,
+static int stub_compress(Bytef *dest,uLongf *destLen,
 	const Bytef *source, uLong sourceLen);
-int stub_inflateEnd(z_streamp strm);
-int stub_inflate(z_streamp strm, int flush);
-int stub_inflateInit_(z_streamp strm, const char * version, int stream_size);
+static int stub_inflateEnd(z_streamp strm);
+static int stub_inflate(z_streamp strm, int flush);
+static int stub_inflateInit_(z_streamp strm, const char * version,
+	int stream_size);
 
 /* Function pointers */
-typedef int (_stdcall *compress_ft)(Bytef *dest,uLongf *destLen,
+typedef int Z_CALLCONV (*compress_ft)(Bytef *dest,uLongf *destLen,
 	const Bytef *source, uLong sourceLen);
-typedef int (_stdcall *inflateEnd_ft)(z_streamp strm);
-typedef int (_stdcall *inflate_ft)(z_streamp strm, int flush);
-typedef int (_stdcall *inflateInit__ft)(z_streamp strm, const char * version,
-	int stream_size);
-static compress_ft p_compress=NULL;
-static inflateEnd_ft p_inflateEnd=NULL;
-static inflate_ft p_inflate=NULL;
-static inflate_Init__ft p_inflateInit_=NULL;
+typedef int Z_CALLCONV (*inflateEnd_ft)(z_streamp strm);
+typedef int Z_CALLCONV (*inflate_ft)(z_streamp strm, int flush);
+typedef int Z_CALLCONV (*inflateInit__ft)(z_streamp strm,
+	const char * version, int stream_size);
+static compress_ft	p_compress=NULL;
+static inflateEnd_ft	p_inflateEnd=NULL;
+static inflate_ft	p_inflate=NULL;
+static inflateInit__ft	p_inflateInit_=NULL;
 
 static int zlib_loaded = 0;     /* only attempt to init func pts once */
+static DSO *zlib_dso = NULL;
 
 #define compress                stub_compress
 #define inflateEnd              stub_inflateEnd
 #define inflate                 stub_inflate
 #define inflateInit_            stub_inflateInit_
-#endif /* WINDOWS || WIN32 */
+#endif /* ZLIB_SHARED */
 
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	     unsigned int olen, unsigned char *in, unsigned int ilen)
@@ -170,36 +183,41 @@ COMP_METHOD *COMP_zlib(void)
 	{
 	COMP_METHOD *meth = &zlib_method_nozlib;
 
-#ifdef ZLIB
-#if defined(WINDOWS) || defined(WIN32)
-	if (!zlib_method)
+#ifdef ZLIB_SHARED
+	if (!zlib_loaded)
 		{
+#if defined(WINDOWS) || defined(WIN32)
 		zlib_dso = DSO_load(NULL, "ZLIB", NULL, 0);
-		if (dso != NULL)
+#else
+		zlib_dso = DSO_load(NULL, "z", NULL, 0);
+#endif
+		if (zlib_dso != NULL)
 			{
-			(FARPROC) p_compress
-				= (compress_ft) DSO_bind_func(dso, "compress");
-			(FARPROC) p_inflateEnd
-				= (inflateEnd_ft) DSO_bind_func(dso, "inflateEnd");
-			(FARPROC) p_inflate
-				= (inflate_ft) DSO_bind_func(dso, "inflate");
-			(FARPROC) p_inflateInit_
-				= (inflateInit__ft) DSO_bind_func(dso, "inflateInit_");
+			p_compress
+				= (compress_ft) DSO_bind_func(zlib_dso,
+					"compress");
+			p_inflateEnd
+				= (inflateEnd_ft) DSO_bind_func(zlib_dso,
+					"inflateEnd");
+			p_inflate
+				= (inflate_ft) DSO_bind_func(zlib_dso,
+					"inflate");
+			p_inflateInit_
+				= (inflateInit__ft) DSO_bind_func(zlib_dso,
+					"inflateInit_");
 			zlib_loaded++;
 			meth = &zlib_method;
 			}
 		}
 
-#else
+#elif defined(ZLIB)
 	meth = &zlib_method;
-#endif
 #endif
 
 	return(meth);
 	}
 
-#ifdef ZLIB
-#if defined(WINDOWS) || defined(WIN32)
+#ifdef ZLIB_SHARED
 /* Stubs for each function to be dynamicly loaded */
 static int 
 stub_compress(Bytef *dest,uLongf *destLen,const Bytef *source, uLong sourceLen)
@@ -237,5 +255,4 @@ stub_inflateInit_(z_streamp strm, const char * version, int stream_size)
 		return(Z_MEM_ERROR);
 	}
 
-#endif /* WINDOWS || WIN32 */
-#endif /* ZLIB */
+#endif /* ZLIB_SHARED */
