@@ -2251,7 +2251,8 @@ X509_CRL_set_lastUpdate                 2764	EXIST::FUNCTION:
 OCSP_BASICRESP_free                     2765	EXIST::FUNCTION:
 OCSP_BASICRESP_add1_ext_i2d             2766	EXIST::FUNCTION:
 d2i_KRB5_AUTHENTBODY                    2767	EXIST::FUNCTION:
-CRYPTO_set_ex_data_implementation       2768	EXIST::FUNCTION:
+CRYPTO_set_ex_data_implementation       2768	EXIST:!VMS:FUNCTION:
+CRYPTO_set_ex_data_impl                 2768	EXIST:VMS:FUNCTION:
 KRB5_ENCDATA_new                        2769	EXIST::FUNCTION:
 DSO_up_ref                              2770	EXIST::FUNCTION:
 OCSP_crl_reason_str                     2771	EXIST::FUNCTION:
@@ -2597,7 +2598,8 @@ USERNOTICE_it                           3057	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 OCSP_REQINFO_new                        3058	EXIST::FUNCTION:
 ENGINE_set_default_DH                   3059	EXIST::FUNCTION:
 OCSP_BASICRESP_get_ext                  3060	EXIST::FUNCTION:
-CRYPTO_get_ex_data_implementation       3061	EXIST::FUNCTION:
+CRYPTO_get_ex_data_implementation       3061	EXIST:!VMS:FUNCTION:
+CRYPTO_get_ex_data_impl                 3061	EXIST:VMS:FUNCTION:
 ASN1_item_pack                          3062	EXIST::FUNCTION:
 i2d_KRB5_ENCDATA                        3063	EXIST::FUNCTION:
 X509_PURPOSE_set                        3064	EXIST::FUNCTION:
