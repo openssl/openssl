@@ -363,19 +363,30 @@
   +) Change all functions with names starting with des_ to be starting
      with DES_ instead.  Add wrappers that are compatible with libdes,
      but are named _ossl_old_des_*.  Finally, add macros that map the
-     des_* symbols to the corresponding _ossl_old_des_*.
+     des_* symbols to the corresponding _ossl_old_des_* if libdes
+     compatibility is desired.  If OpenSSL 0.9.6c compatibility is
+     desired, the des_* symbols will be mapped to DES_*, with one
+     exception.
 
-     All this is done because there are increasing clashes with libdes
-     and other DES libraries that are currently used by other projects.
-     The old libdes interface (including crypt()) is provided if
-     <openssl/des_old.h> is included.  For now, this automatically
-     happens in <openssl/des.h> unless OPENSSL_DISABLE_OLD_DES_SUPPORT is
-     defined.  Note that crypt() is no longer declared in <openssl/des.h>.
+     Since we provide two compatibility mappings, the user needs to
+     define the macro OPENSSL_DES_LIBDES_COMPATIBILITY if libdes
+     compatibility is desired.  The default (i.e., when that macro
+     isn't defined) is OpenSSL 0.9.6c compatibility.
+
+     There are also macros that enable and disable the support of old
+     des functions altogether.  Those are OPENSSL_ENABLE_OLD_DES_SUPPORT
+     and OPENSSL_DISABLE_OLD_DES_SUPPORT.  If none or both of those
+     are defined, the default will apply: to support the old des routines.
+
+     In either case, one must include openssl/des.h to get the correct
+     definitions.  Do not try to just include openssl/des_old.h, that
+     won't work.
 
      NOTE: This is a major break of an old API into a new one.  Software
      authors are encouraged to switch to the DES_ style functions.  Some
      time in the future, des_old.h and the libdes compatibility functions
-     will be completely removed.
+     will be disable (i.e. OPENSSL_DISABLE_OLD_DES_SUPPORT will be the
+     default), and then completely removed.
      [Richard Levitte]
 
   *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
