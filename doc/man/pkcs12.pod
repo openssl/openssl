@@ -42,7 +42,7 @@ B<-envpass pass>
 
 The B<pkcs12> command allows PKCS#12 files (sometimes referred to as
 PFX files) to be created and parsed. PKCS#12 files are used by several
-software programs including Netscape, MSIE and MS Outlook.
+programs including Netscape, MSIE and MS Outlook.
 
 =head1 COMMAND OPTIONS
 

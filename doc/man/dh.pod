@@ -1,0 +1,87 @@
+=pod
+
+=head1 NAME
+
+dh - DH parameter manipulation and generation
+
+=head1 SYNOPSIS
+
+B<openssl dh>
+[B<-inform DER|PEM>]
+[B<-outform DER|PEM>]
+[B<-in filename>]
+[B<-out filename>]
+[B<-noout>]
+[B<-text>]
+[B<-C>]
+
+=head1 DESCRIPTION
+
+This command is used to manipulate DH parameter files.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-inform DER|PEM>
+
+This specifies the input format. The B<DER> option uses an ASN1 DER encoded
+form compatible with the PKCS#3 DHparameter structure. The PEM form is the
+default format: it consists of the B<DER> format base64 encoded with
+additional header and footer lines.
+
+=item B<-outform DER|PEM>
+
+This specifies the output format, the options have the same meaning as the 
+B<-inform> option.
+
+=item B<-in filename>
+
+This specifies the input filename to read parameters from or standard input if
+this option is not specified.
+
+=item B<-out filename>
+
+This specifies the output filename parameters to. Standard output is used
+if this option is not present. The output filename should B<not> be the same
+as the input filename.
+
+=item B<-noout>
+
+this option inhibits the output of the encoded version of the parameters.
+
+=item B<-text>
+
+this option prints out the DH parameters in human readable form.
+
+=item B<-C>
+
+this option converts the parameters into C code. The parameters can then
+be loaded by calling the B<get_dhXXX()> function.
+
+=back
+
+=head1 NOTES
+
+PEM format DH parameters use the header and footer lines:
+
+ -----BEGIN DH PARAMETERS-----
+ -----END DH PARAMETERS-----
+
+OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
+DH.
+
+This program manipulates DH parameters not keys.
+
+=head1 BUGS
+
+This program is badly named: the B<rsa> and B<dsa> programs manipulate keys
+and not parameters.
+
+There should be a way to generate and manipulate DH keys.
+
+=head1 SEE ALSO
+
+dsaparam(1)
+
+=cut
