@@ -340,7 +340,7 @@ int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		}
 
 	/* This implementation is more efficient than the wNAF implementation for 2
-	 * or fewer points.  Use the ec_wNAF_mul implementation 3 or more points.
+	 * or fewer points.  Use the ec_wNAF_mul implementation for 3 or more points.
 	 */
 	if ((scalar && (num > 1)) || (num > 2))
 		{
