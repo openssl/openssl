@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_cipher_list, SSL_set_cipher_list 
-- choose list of available SSL_CIPHERs
+SSL_CTX_set_cipher_list, SSL_set_cipher_list - choose list of available SSL_CIPHERs
 
 =head1 SYNOPSIS
 
@@ -47,6 +46,7 @@ could be selected and 0 on complete failure.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_get_ciphers(3)|SSL_get_ciphers(3)>,
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
 L<ciphers(1)|ciphers(1)>
 
 =cut

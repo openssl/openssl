@@ -63,7 +63,10 @@ no other certificates for the same parameters will be searched in case of
 failure.
 
 When building its own certificate chain, an OpenSSL client/server will
-try to fill in missing certificates from B<CAfile>/B<CApath>.
+try to fill in missing certificates from B<CAfile>/B<CApath>, if the
+certificate chain was not explicitely specified (see
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>.
 
 =head1 WARNINGS
 
@@ -113,6 +116,9 @@ The operation succeeded.
 
 L<ssl(3)|ssl(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
-L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>
+L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+
 
 =cut
