@@ -412,13 +412,32 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 			if (BIO_write(bp, str, off) <= 0)
 				goto err;
 			}
-
+		/* print the 'short name' of the field type */
 		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(tmp_nid))
 			<= 0)
 			goto err;  
 
 		if (is_char_two)
 			{
+			/* print the 'short name' of the base type OID */
+			int basis_type = EC_GROUP_get_basis_type(x, NULL,
+				NULL, NULL);
+			if (basis_type == 0)
+				goto err;
+
+			if (off)
+				{
+				if (off > 128) off=128;
+				memset(str,' ',off);
+				if (BIO_write(bp, str, off) <= 0)
+					goto err;
+				}
+
+			if (BIO_printf(bp, "Basis Type: %s\n", 
+				OBJ_nid2sn(basis_type)) <= 0)
+				goto err;
+
+			/* print the polynomial */
 			if ((p != NULL) && !print(bp, "Polynomial:", p, buffer,
 				off))
 				goto err;
@@ -563,6 +582,13 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 		if (off > 128) off=128;
 		memset(str,' ',off);
 		if (BIO_write(bp,str,off) <= 0) return(0);
+		}
+
+	if (BN_is_zero(num))
+		{
+		if (BIO_printf(bp, "%s 0\n", number) <= 0)
+			return 0;
+		return 1;
 		}
 
 	if (BN_num_bytes(num) <= BN_BYTES)

@@ -1,4 +1,7 @@
 /* crypto/ec/ec_asn1.c */
+/*
+ * Written by Nils Larsch for the OpenSSL project.
+ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,7 +61,6 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
-#include <string.h>
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_fieldid_st {
@@ -67,15 +69,15 @@ typedef struct x9_62_fieldid_st {
         } X9_62_FIELDID;
 
 typedef struct x9_62_characteristic_two_st {
-	ASN1_INTEGER *m;
+	long m;
 	ASN1_OBJECT  *basis;
 	ASN1_TYPE    *parameters;
 	} X9_62_CHARACTERISTIC_TWO;
 
 typedef struct x9_62_pentanomial_st {
-	ASN1_INTEGER k1;
-	ASN1_INTEGER k2;
-	ASN1_INTEGER k3;
+	long k1;
+	long k2;
+	long k3;
 	} X9_62_PENTANOMIAL;
 
 typedef struct x9_62_curve_st {
@@ -85,7 +87,7 @@ typedef struct x9_62_curve_st {
         } X9_62_CURVE;
 
 typedef struct ec_parameters_st {
-        ASN1_INTEGER      *version;
+        long              version;
         X9_62_FIELDID     *fieldID;
         X9_62_CURVE       *curve;
         ASN1_OCTET_STRING *base;
@@ -104,7 +106,7 @@ struct ecpk_parameters_st {
 
 /* SEC1 ECPrivateKey */
 typedef struct ec_privatekey_st {
-	int               version;
+	long              version;
 	ASN1_OCTET_STRING *privateKey;
         ECPKPARAMETERS    *parameters;
 	ASN1_BIT_STRING   *publicKey;
@@ -122,7 +124,7 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(X9_62_FIELDID, X9_62_FIELDID)
 IMPLEMENT_ASN1_FUNCTIONS_const(X9_62_FIELDID)
 
 ASN1_SEQUENCE(X9_62_CHARACTERISTIC_TWO) = {
-	ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, m, ASN1_INTEGER),
+	ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, m, LONG),
 	ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, basis, ASN1_OBJECT),
 	ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, parameters, ASN1_ANY)
 } ASN1_SEQUENCE_END(X9_62_CHARACTERISTIC_TWO)
@@ -132,9 +134,9 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(X9_62_CHARACTERISTIC_TWO, X9_62_CHARACTERIST
 IMPLEMENT_ASN1_FUNCTIONS_const(X9_62_CHARACTERISTIC_TWO)
 
 ASN1_SEQUENCE(X9_62_PENTANOMIAL) = {
-	ASN1_SIMPLE(X9_62_PENTANOMIAL, k1, ASN1_INTEGER),
-	ASN1_SIMPLE(X9_62_PENTANOMIAL, k2, ASN1_INTEGER),
-	ASN1_SIMPLE(X9_62_PENTANOMIAL, k3, ASN1_INTEGER)
+	ASN1_SIMPLE(X9_62_PENTANOMIAL, k1, LONG),
+	ASN1_SIMPLE(X9_62_PENTANOMIAL, k2, LONG),
+	ASN1_SIMPLE(X9_62_PENTANOMIAL, k3, LONG)
 } ASN1_SEQUENCE_END(X9_62_PENTANOMIAL)
 
 DECLARE_ASN1_FUNCTIONS_const(X9_62_PENTANOMIAL)
@@ -152,7 +154,7 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(X9_62_CURVE, X9_62_CURVE)
 IMPLEMENT_ASN1_FUNCTIONS_const(X9_62_CURVE)
 
 ASN1_SEQUENCE(ECPARAMETERS) = {
-	ASN1_SIMPLE(ECPARAMETERS, version, ASN1_INTEGER),
+	ASN1_SIMPLE(ECPARAMETERS, version, LONG),
 	ASN1_SIMPLE(ECPARAMETERS, fieldID, X9_62_FIELDID),
 	ASN1_SIMPLE(ECPARAMETERS, curve, X9_62_CURVE),
 	ASN1_SIMPLE(ECPARAMETERS, base, ASN1_OCTET_STRING),
@@ -185,22 +187,42 @@ DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
 IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
 
-/* some internal functions */
+/* some declarations of internal function */
 
+/* ec_asn1_group2field() creates a X9_62_FIELDID object from a 
+ * EC_GROUP object */
 static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *, X9_62_FIELDID *);
+/* ec_asn1_group2curve() creates a X9_62_CURVE object from a 
+ * EC_GROUP object */
 static X9_62_CURVE *ec_asn1_group2curve(const EC_GROUP *, X9_62_CURVE *);
+/* ec_asn1_parameters2group() creates a EC_GROUP object from a
+ * ECPARAMETERS object */
 static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *); 
-static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *, 
-                                              ECPARAMETERS *);
-EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *); 
-ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *, ECPKPARAMETERS *);
+/* ec_asn1_group2parameters() creates a ECPARAMETERS object from a 
+ * EC_GROUP object */
+static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *,ECPARAMETERS *);
+/* ec_asn1_pkparameters2group() creates a EC_GROUP object from a
+ * ECPKPARAMETERS object */
+static EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *); 
+/* ec_asn1_group2pkparameters() creates a ECPKPARAMETERS object from a 
+ * EC_GROUP object */
+static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *, 
+	ECPKPARAMETERS *);
+
+
+/* the function definitions */
 
 static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group, 
                                           X9_62_FIELDID *field)
 	{
-	int           ok=0, nid;
-	X9_62_FIELDID *ret=NULL;
-	BIGNUM        *tmp=NULL;
+	int			ok=0, nid;
+	X9_62_FIELDID		*ret = NULL;
+	X9_62_CHARACTERISTIC_TWO *char_two = NULL;
+	X9_62_PENTANOMIAL	*penta = NULL;
+	BIGNUM			*tmp = NULL;
+	unsigned char		*buffer = NULL;
+	unsigned char		*pp;
+	size_t			buf_len = 0;
 	
 	if (field == NULL)
 		{
@@ -213,6 +235,7 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 	else
 		{	
 		ret = field;
+		/* clear the old values */
 		if (ret->fieldType != NULL)
 			ASN1_OBJECT_free(ret->fieldType);
 		if (ret->parameters != NULL)
@@ -220,12 +243,18 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 		}
 
 	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
-
+	/* set OID for the field */
 	if ((ret->fieldType = OBJ_nid2obj(nid)) == NULL)
 		{
 		ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_OBJ_LIB);
 		goto err;
 		}
+
+	if ((ret->parameters = ASN1_TYPE_new()) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 
 	if (nid == NID_X9_62_prime_field)
 		{
@@ -234,17 +263,14 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
-		if ((ret->parameters = ASN1_TYPE_new()) == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
+		/* the parameters are specified by the prime number p */
 		ret->parameters->type = V_ASN1_INTEGER;
 		if (!EC_GROUP_get_curve_GFp(group, tmp, NULL, NULL, NULL))
 			{
 			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_EC_LIB);
 			goto err;
 			}
+		/* set the prime number */
 		ret->parameters->value.integer = BN_to_ASN1_INTEGER(tmp, NULL);
 		if (ret->parameters->value.integer == NULL)
 			{
@@ -252,8 +278,99 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 			goto err;
 			}
 		}
-	else
-		goto err;
+	else	/* nid == NID_X9_62_characteristic_two_field */
+		{
+		int		field_type;
+		unsigned int	k1, k2, k3;
+
+		char_two = X9_62_CHARACTERISTIC_TWO_new();
+		if (char_two == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+	
+		char_two->m = (long)EC_GROUP_get_degree(group);
+
+		field_type = EC_GROUP_get_basis_type(group, &k1, &k2, &k3);
+
+		if (field_type == 0)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_EC_LIB);
+			goto err;
+			}
+		/* set base type OID */
+		if ((char_two->basis = OBJ_nid2obj(field_type)) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_OBJ_LIB);
+			goto err;
+			}
+
+		if (field_type == NID_X9_62_tpBasis)
+			{
+			char_two->parameters->type = V_ASN1_INTEGER;
+			char_two->parameters->value.integer = 
+				ASN1_INTEGER_new();
+			if (char_two->parameters->value.integer == NULL)
+				{
+				ECerr(EC_F_EC_ASN1_GROUP2FIELDID,
+					ERR_R_ASN1_LIB);
+				goto err;
+				}
+			if (!ASN1_INTEGER_set(char_two->parameters->value.integer, (long)k1))
+				{
+				ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS,
+					ERR_R_ASN1_LIB);
+				goto err;
+				}
+			}
+		else if (field_type == NID_X9_62_ppBasis)
+			{
+			penta = X9_62_PENTANOMIAL_new();
+			/* set k? values */
+			penta->k1 = (long)k1;
+			penta->k2 = (long)k2;
+			penta->k3 = (long)k3;
+			/* get the length of the encoded structure */
+			buf_len = i2d_X9_62_PENTANOMIAL(penta, NULL);
+			if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+				{
+				ECerr(EC_F_EC_ASN1_GROUP2FIELDID,
+					ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			pp = buffer;
+			i2d_X9_62_PENTANOMIAL(penta, &pp);
+			/* set the encoded pentanomial */
+			char_two->parameters->type=V_ASN1_SEQUENCE;
+			char_two->parameters->value.sequence=ASN1_STRING_new();
+			ASN1_STRING_set(char_two->parameters->value.sequence,
+				buffer, buf_len);
+
+			OPENSSL_free(buffer);
+			buffer = NULL;
+			}
+		else /* field_type == NID_X9_62_onBasis */
+			{
+			/* for ONB the parameters are (asn1) NULL */
+			char_two->parameters->type = V_ASN1_NULL;
+			}
+		/* encoded the X9_62_CHARACTERISTIC_TWO structure */
+		buf_len = i2d_X9_62_CHARACTERISTIC_TWO(char_two, NULL);
+
+		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		pp = buffer;
+		i2d_X9_62_CHARACTERISTIC_TWO(char_two, &pp);
+		/* set the encoded parameters */
+		ret->parameters->type = V_ASN1_SEQUENCE;
+		ret->parameters->value.sequence = ASN1_STRING_new();
+		ASN1_STRING_set(ret->parameters->value.sequence,
+				buffer, buf_len);
+		}
 
 	ok = 1;
 
@@ -265,6 +382,12 @@ err :	if (!ok)
 	}
 	if (tmp)
 		BN_free(tmp);
+	if (char_two)
+		X9_62_CHARACTERISTIC_TWO_free(char_two);
+	if (penta)
+		X9_62_PENTANOMIAL_free(penta);
+	if (buffer)
+		OPENSSL_free(buffer);
 	return(ret);
 }
 
@@ -317,57 +440,63 @@ static X9_62_CURVE *ec_asn1_group2curve(const EC_GROUP *group,
 			ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
 			goto err;
 			}
-
-		len_1 = (size_t)BN_num_bytes(tmp_1);
-		len_2 = (size_t)BN_num_bytes(tmp_2);
-
-		if (len_1 == 0)
+		}
+	else	/* nid == NID_X9_62_characteristic_two_field */
+		{
+		if (!EC_GROUP_get_curve_GF2m(group, NULL, tmp_1, tmp_2, NULL))
 			{
-			/* len_1 == 0 => a == 0 */
-			a_buf = &char_zero;
-			len_1 = 1;
-			}
-		else
-			{
-			if ((buffer_1 = OPENSSL_malloc(len_1)) == NULL)
-				{
-				ECerr(EC_F_EC_ASN1_GROUP2CURVE,
-				      ERR_R_MALLOC_FAILURE);
-				goto err;
-				}
-			if ( (len_1 = BN_bn2bin(tmp_1, buffer_1)) == 0)
-				{
-				ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_BN_LIB);
-				goto err;
-				}
-			a_buf = buffer_1;
-			}
-
-		if (len_2 == 0)
-			{
-			/* len_2 == 0 => b == 0 */
-			b_buf = &char_zero;
-			len_2 = 1;
-			}
-		else
-			{
-			if ((buffer_2 = OPENSSL_malloc(len_2)) == NULL)
-				{
-				ECerr(EC_F_EC_ASN1_GROUP2CURVE,
-				      ERR_R_MALLOC_FAILURE);
-				goto err;
-				}
-			if ( (len_2 = BN_bn2bin(tmp_2, buffer_2)) == 0)
-				{
-				ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_BN_LIB);
-				goto err;
-				}
-			b_buf = buffer_2;
+			ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
+			goto err;
 			}
 		}
-	else
-		goto err;
 
+	len_1 = (size_t)BN_num_bytes(tmp_1);
+	len_2 = (size_t)BN_num_bytes(tmp_2);
+
+	if (len_1 == 0)
+		{
+		/* len_1 == 0 => a == 0 */
+		a_buf = &char_zero;
+		len_1 = 1;
+		}
+	else
+		{
+		if ((buffer_1 = OPENSSL_malloc(len_1)) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2CURVE,
+			      ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		if ( (len_1 = BN_bn2bin(tmp_1, buffer_1)) == 0)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_BN_LIB);
+			goto err;
+			}
+		a_buf = buffer_1;
+		}
+
+	if (len_2 == 0)
+		{
+		/* len_2 == 0 => b == 0 */
+		b_buf = &char_zero;
+		len_2 = 1;
+		}
+	else
+		{
+		if ((buffer_2 = OPENSSL_malloc(len_2)) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2CURVE,
+			      ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		if ( (len_2 = BN_bn2bin(tmp_2, buffer_2)) == 0)
+			{
+			ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_BN_LIB);
+			goto err;
+			}
+		b_buf = buffer_2;
+		}
+	
 	/* set a and b */
 	if ((ret->a = M_ASN1_OCTET_STRING_new()) == NULL || 
 	    (ret->b = M_ASN1_OCTET_STRING_new()) == NULL )
@@ -399,11 +528,11 @@ static X9_62_CURVE *ec_asn1_group2curve(const EC_GROUP *group,
 	ok = 1;
 
 err :	if (!ok)
-	{
+		{
 		if (ret && !curve)
 			X9_62_CURVE_free(ret);
 		ret = NULL;
-	}
+		}
 	if (buffer_1)
 		OPENSSL_free(buffer_1);
 	if (buffer_2)
@@ -413,7 +542,7 @@ err :	if (!ok)
 	if (tmp_2)
 		BN_free(tmp_2);
 	return(ret);
-}
+	}
 
 static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
                                               ECPARAMETERS *param)
@@ -445,16 +574,7 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 		ret = param;
 
 	/* set the version (always one) */
-	if (ret->version == NULL && !(ret->version = ASN1_INTEGER_new()))
-		{
-		ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if (!ASN1_INTEGER_set(ret->version, (long)0x1))
-		{
-		ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_ASN1_LIB);
-		goto err;
-		}
+	ret->version = (long)0x1;
 
 	/* set the fieldID */
 	ret->fieldID = ec_asn1_group2field(group, ret->fieldID);
@@ -549,7 +669,7 @@ err :	if(!ok)
 	return(ret);
 	}
 
-ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group, 
+ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *group, 
                                            ECPKPARAMETERS *params)
 	{
 	int            ok = 1, tmp;
@@ -585,15 +705,8 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group,
 				ok = 0;
 			}
 		else
-			{
-			/* we have no nid => use the normal
-			 * ECPARAMETERS structure 
-			 */
-			ret->type = 1;
-			if ((ret->value.parameters = ec_asn1_group2parameters(
-			     group, NULL)) == NULL)
-				ok = 0;
-			}
+			/* we don't kmow the nid => ERROR */
+			ok = 0;
 		}
 	else
 		{	
@@ -614,10 +727,13 @@ ECPKPARAMETERS *EC_ASN1_group2pkparameters(const EC_GROUP *group,
 
 static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 	{
-	int	  ok=0, tmp;
-	EC_GROUP  *ret=NULL;
-	BIGNUM	  *p=NULL, *a=NULL, *b=NULL;
-	EC_POINT  *point=NULL;
+	int			ok = 0, tmp;
+	EC_GROUP		*ret = NULL;
+	BIGNUM			*p = NULL, *a = NULL, *b = NULL;
+	EC_POINT		*point=NULL;
+	X9_62_CHARACTERISTIC_TWO *char_two = NULL;
+	X9_62_PENTANOMIAL	*penta = NULL;
+	unsigned char		*pp;
 
 	if (!params->fieldID || !params->fieldID->fieldType || 
 	    !params->fieldID->parameters)
@@ -626,12 +742,126 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 		goto err;
 		}
 
+	/* now extract the curve parameters a and b */
+	if (!params->curve || !params->curve->a || 
+	    !params->curve->a->data || !params->curve->b ||
+	    !params->curve->b->data)
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
+		goto err;
+		}
+	a = BN_bin2bn(params->curve->a->data, params->curve->a->length, NULL);
+	if (a == NULL)
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_BN_LIB);
+		goto err;
+		}
+	b = BN_bin2bn(params->curve->b->data, params->curve->b->length, NULL);
+	if (b == NULL)
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_BN_LIB);
+		goto err;
+		}
+
+	/* get the field parameters */
 	tmp = OBJ_obj2nid(params->fieldID->fieldType);
 
 	if (tmp == NID_X9_62_characteristic_two_field)
 		{
-		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_NOT_IMPLEMENTED);
-		goto err;
+		ASN1_TYPE *parameters = params->fieldID->parameters;
+
+		if (parameters->type !=  V_ASN1_SEQUENCE)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
+			goto err;
+			}
+
+		if ((p = BN_new()) == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, 
+			      ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		/* extract the X9_62_CHARACTERISTIC_TWO object */
+		pp = M_ASN1_STRING_data(parameters->value.sequence);
+		char_two = d2i_X9_62_CHARACTERISTIC_TWO(NULL, 
+			(const unsigned char **) &pp,
+			M_ASN1_STRING_length(parameters->value.sequence));
+		if (char_two == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
+			goto err;
+			}
+		/* get the base type */
+		tmp = OBJ_obj2nid(char_two->basis);
+
+		if (tmp ==  NID_X9_62_tpBasis)
+			{
+			long tmp_long;
+
+			if (char_two->parameters->type != V_ASN1_INTEGER ||
+				char_two->parameters->value.integer == NULL)
+				{
+				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP,
+					EC_R_ASN1_ERROR);
+				goto err;
+				}
+
+			tmp_long = ASN1_INTEGER_get(char_two->parameters->value.integer);
+			/* create the polynomial */
+			if (!BN_set_bit(p, (int)char_two->m)) goto err;
+			if (!BN_set_bit(p, (int)tmp_long)) goto err;
+			if (!BN_set_bit(p, 0)) goto err;
+			}
+		else if (tmp == NID_X9_62_ppBasis)
+			{
+			if (char_two->parameters->type != V_ASN1_SEQUENCE ||
+				char_two->parameters->value.sequence == NULL)
+				{
+				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP,
+					EC_R_ASN1_ERROR);
+				goto err;
+				}
+			/* extract the pentanomial data */
+			pp = M_ASN1_STRING_data(
+				char_two->parameters->value.sequence);
+			penta = d2i_X9_62_PENTANOMIAL(NULL,
+				(const unsigned char **) &pp,
+				M_ASN1_STRING_length(
+				char_two->parameters->value.sequence));
+			if (penta == NULL)
+				{
+				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP,
+					ERR_R_ASN1_LIB);
+				goto err;
+				}
+			/* create the polynomial */
+			if (!BN_set_bit(p, (int)char_two->m)) goto err;
+			if (!BN_set_bit(p, (int)penta->k1)) goto err;
+			if (!BN_set_bit(p, (int)penta->k2)) goto err;
+			if (!BN_set_bit(p, (int)penta->k3)) goto err;
+			if (!BN_set_bit(p, 0)) goto err;
+			}
+		else if (tmp == NID_X9_62_onBasis)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP,
+				EC_R_NOT_IMPLEMENTED);
+			goto err;
+			}
+		else /* error */
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
+			goto err;
+			}
+
+		/* create the EC_GROUP structure */
+		ret = EC_GROUP_new_curve_GF2m(p, a, b, NULL);
+		if (ret == NULL)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
+			goto err;
+			}
 		}
 	else if (tmp == NID_X9_62_prime_field)
 		{
@@ -649,44 +879,16 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
 			goto err;
 			}
-		/* now extract the curve parameters a and b */
-		if (!params->curve || !params->curve->a || 
-		    !params->curve->a->data || !params->curve->b ||
-		    !params->curve->b->data)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
-			goto err;
-			}
-		a = BN_bin2bn(params->curve->a->data, 
-		              params->curve->a->length, NULL);
-		if (a == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_BN_LIB);
-			goto err;
-			}
-		b = BN_bin2bn(params->curve->b->data, params->curve->b->length, NULL);
-		if (b == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_BN_LIB);
-			goto err;
-			}
 		/* create the EC_GROUP structure */
-/* TODO */
 		ret = EC_GROUP_new_curve_GFp(p, a, b, NULL);
 		if (ret == NULL)
 			{
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
 			goto err;
 			}
-		/* create the generator */
-		if ((point = EC_POINT_new(ret)) == NULL) goto err;
-		}
-	else 
-		{
-		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_UNKNOWN_FIELD);
-		goto err;
 		}
 
+	/* extract seed (optional) */
 	if (params->curve->seed != NULL)
 		{
 		if (ret->seed != NULL)
@@ -702,6 +904,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 		ret->seed_len = params->curve->seed->length;
 		}
 
+	/* extract the order, cofactor and generator */
 	if (!params->order || !params->cofactor || !params->base ||
 	    !params->base->data)
 		{
@@ -709,6 +912,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 		goto err;
 		}
 
+	if ((point = EC_POINT_new(ret)) == NULL) goto err;
 
 	a = ASN1_INTEGER_to_BN(params->order, a);
 	b = ASN1_INTEGER_to_BN(params->cofactor, b);
@@ -752,10 +956,14 @@ err:	if (!ok)
 		BN_free(b);
 	if (point)	
 		EC_POINT_free(point);
+	if (char_two)
+		X9_62_CHARACTERISTIC_TWO_free(char_two);
+	if (penta)
+		X9_62_PENTANOMIAL_free(penta);
 	return(ret);
 }
 
-EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *params)
+EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 	{
 	EC_GROUP *ret=NULL;
 	int      tmp=0;
@@ -794,13 +1002,13 @@ EC_GROUP *EC_ASN1_pkparameters2group(const ECPKPARAMETERS *params)
 		return NULL;
 		}
 	else
-	{
+		{
 		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
 		return NULL;
-	}
+		}
 
 	return ret;
-}
+	}
 
 /* EC_GROUP <-> DER encoding of ECPKPARAMETERS */
 
@@ -816,7 +1024,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 		return NULL;
 		}
 	
-	if ((group = EC_ASN1_pkparameters2group(params)) == NULL)
+	if ((group = ec_asn1_pkparameters2group(params)) == NULL)
 		{
 		ECerr(EC_F_D2I_ECPKPARAMETERS, EC_R_PKPARAMETERS2GROUP_FAILURE);
 		return NULL; 
@@ -835,7 +1043,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 	{
 	int		ret=0;
-	ECPKPARAMETERS	*tmp = EC_ASN1_group2pkparameters(a, NULL);
+	ECPKPARAMETERS	*tmp = ec_asn1_group2pkparameters(a, NULL);
 	if (tmp == NULL)
 		{
 		ECerr(EC_F_I2D_ECPKPARAMETERS, EC_R_GROUP2PKPARAMETERS_FAILURE);
@@ -890,7 +1098,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		{
 		if (ret->group)
 			EC_GROUP_clear_free(ret->group);
-		ret->group = EC_ASN1_pkparameters2group(priv_key->parameters);
+		ret->group = ec_asn1_pkparameters2group(priv_key->parameters);
 		}
 
 	if (ret->group == NULL)
@@ -1001,7 +1209,7 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 
 	if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS))
 		{
-		if ((priv_key->parameters = EC_ASN1_group2pkparameters(
+		if ((priv_key->parameters = ec_asn1_group2pkparameters(
 			a->group, priv_key->parameters)) == NULL)
 			{
 			ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_EC_LIB);

@@ -191,6 +191,14 @@ const char *EC_GROUP_get0_comment(int nid);
  * with the given index i from the internal curve list */
 int ec_group_index2nid(int i);
 
+/* EC_GROUP_get_basis_type() returns the NID of the basis type
+ * used to represent the field elements (in case of a pentanomial or trinomial
+ * basis the coefficient are returned in the k? arguments) */
+int EC_GROUP_get_basis_type(const EC_GROUP *, unsigned int *k1,
+	unsigned int *k2, unsigned int *k3);
+
+
+/* EC_POINT functions */
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
