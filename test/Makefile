@@ -757,7 +757,7 @@ fips_randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 fips_randtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_randtest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_randtest.o: ../include/openssl/ui_compat.h fips_randtest.c
-fips_sha1test.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips_sha1test.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
 fips_sha1test.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 fips_sha1test.o: ../include/openssl/fips.h ../include/openssl/lhash.h
 fips_sha1test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h

@@ -202,8 +202,8 @@ mem_dbg.o: ../include/openssl/err.h ../include/openssl/lhash.h
 mem_dbg.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem_dbg.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 mem_dbg.o: ../include/openssl/symhacks.h cryptlib.h mem_dbg.c
-o_str.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_str.c
-o_str.o: o_str.h
+o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+o_str.o: o_str.c o_str.h
 o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c
 o_time.o: o_time.h
 tmdiff.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h

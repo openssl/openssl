@@ -107,5 +107,5 @@ fips_rsa_selftest.o: ../../include/openssl/opensslv.h
 fips_rsa_selftest.o: ../../include/openssl/ossl_typ.h
 fips_rsa_selftest.o: ../../include/openssl/rsa.h
 fips_rsa_selftest.o: ../../include/openssl/safestack.h
-fips_rsa_selftest.o: ../../include/openssl/stack.h
+fips_rsa_selftest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_rsa_selftest.o: ../../include/openssl/symhacks.h fips_rsa_selftest.c

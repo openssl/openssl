@@ -90,6 +90,7 @@ c_rle.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h c_rle.c
 c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_zlib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
 c_zlib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+c_zlib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 c_zlib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 c_zlib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 c_zlib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
