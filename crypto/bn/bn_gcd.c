@@ -379,9 +379,13 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		{
 		/* Y*a == 1  (mod |n|) */
 		if (BN_ucmp(Y,n) < 0)
+			{
 			if (!BN_copy(R,Y)) goto err;
+			}
 		else
+			{
 			if (!BN_nnmod(R,Y,n,ctx)) goto err;
+			}
 		}
 	else
 		{
@@ -394,4 +398,3 @@ err:
 	BN_CTX_end(ctx);
 	return(ret);
 	}
-
