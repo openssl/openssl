@@ -4,6 +4,12 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
+  *) IPv6 support for certificate extensions. The various extensions
+     which use the IP:a.b.c.d can now take IPv6 addresses using the
+     formats of RFC1884 2.2 . IPv6 addresses are now also displayed
+     correctly.
+     [Steve Henson]
+
   *) Added an ENGINE that implements RSA by performing private key
      exponentiations with the GMP library. The conversions to and from
      GMP's mpz_t format aren't optimised nor are any montgomery forms

@@ -1,9 +1,9 @@
 /* v3_utl.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +69,11 @@ static int sk_strcmp(const char * const *a, const char * const *b);
 static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens);
 static void str_free(void *str);
 static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
+
+static int ipv4_from_asc(unsigned char *v4, const char *in);
+static int ipv6_from_asc(unsigned char *v6, const char *in);
+static int ipv6_cb(const char *elem, int len, void *usr);
+static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
 /* Add a CONF_VALUE name value pair to stack */
 
@@ -534,3 +539,204 @@ void X509_email_free(STACK *sk)
 {
 	sk_pop_free(sk, str_free);
 }
+
+/* Convert IP addresses both IPv4 and IPv6 into an 
+ * OCTET STRING compatible with RFC3280.
+ */
+
+ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
+	{
+	unsigned char ipout[16];
+	ASN1_OCTET_STRING *ret;
+	int iplen;
+
+	/* If string contains a ':' assume IPv6 */
+
+	if (strchr(ipasc, ':'))
+		{
+		if (!ipv6_from_asc(ipout, ipasc))
+			return NULL;
+		iplen = 16;
+		}
+	else
+		{
+		if (!ipv4_from_asc(ipout, ipasc))
+			return NULL;
+		iplen = 4;
+		}
+
+	ret = ASN1_OCTET_STRING_new();
+	if (!ret)
+		return NULL;
+	if (!ASN1_OCTET_STRING_set(ret, ipout, iplen))
+		{
+		ASN1_OCTET_STRING_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+static int ipv4_from_asc(unsigned char *v4, const char *in)
+	{
+	int a0, a1, a2, a3;
+	if (sscanf(in, "%d.%d.%d.%d", &a0, &a1, &a2, &a3) != 4)
+		return 0;
+	if ((a0 < 0) || (a0 > 255) || (a1 < 0) || (a1 > 255)
+		|| (a2 < 0) || (a2 > 255) || (a3 < 0) || (a3 > 255))
+		return 0;
+	v4[0] = a0;
+	v4[1] = a1;
+	v4[2] = a2;
+	v4[3] = a3;
+	return 1;
+	}
+
+typedef struct {
+		/* Temporary store for IPV6 output */
+		unsigned char tmp[16];
+		/* Total number of bytes in tmp */
+		int total;
+		/* The position of a zero (corresponding to '::') */
+		int zero_pos;
+		/* Number of zeroes */
+		int zero_cnt;
+	} IPV6_STAT;
+
+
+static int ipv6_from_asc(unsigned char *v6, const char *in)
+	{
+	IPV6_STAT v6stat;
+	v6stat.total = 0;
+	v6stat.zero_pos = -1;
+	v6stat.zero_cnt = 0;
+	/* Treat the IPv6 representation as a list of values
+	 * separated by ':'. The presence of a '::' will parse
+ 	 * as one, two or three zero length elements.
+	 */
+	if (!CONF_parse_list(in, ':', 0, ipv6_cb, &v6stat))
+		return 0;
+
+	/* Now for some sanity checks */
+
+	if (v6stat.zero_pos == -1)
+		{
+		/* If no '::' must have exactly 16 bytes */
+		if (v6stat.total != 16)
+			return 0;
+		}
+	else 
+		{
+		/* If '::' must have less than 16 bytes */
+		if (v6stat.total == 16)
+			return 0;
+		/* More than three zeroes is an error */
+		if (v6stat.zero_cnt > 3)
+			return 0;
+		/* Can only have three zeroes if nothing else present */
+		else if (v6stat.zero_cnt == 3)
+			{
+			if (v6stat.total > 0)
+				return 0;
+			}
+		/* Can only have two zeroes if at start or end */
+		else if (v6stat.zero_cnt == 2)
+			{
+			if ((v6stat.zero_pos != 0)
+				&& (v6stat.zero_pos != v6stat.total))
+				return 0;
+			}
+		else 
+		/* Can only have one zero if *not* start or end */
+			{
+			if ((v6stat.zero_pos == 0)
+				|| (v6stat.zero_pos == v6stat.total))
+				return 0;
+			}
+		}
+
+	/* Format result */
+
+	/* Copy initial part */
+	if (v6stat.zero_pos > 0)
+		memcpy(v6, v6stat.tmp, v6stat.zero_pos);
+	/* Zero middle */
+	if (v6stat.total != 16)
+		memset(v6 + v6stat.zero_pos, 0, 16 - v6stat.total);
+	/* Copy final part */
+	if (v6stat.total != v6stat.zero_pos)
+		memcpy(v6 + v6stat.zero_pos + 16 - v6stat.total,
+			v6stat.tmp + v6stat.zero_pos,
+			v6stat.total - v6stat.zero_pos);
+
+	return 1;
+	}
+
+static int ipv6_cb(const char *elem, int len, void *usr)
+	{
+	IPV6_STAT *s = usr;
+	/* Error if 16 bytes written */
+	if (s->total == 16)
+		return 0;
+	if (len == 0)
+		{
+		/* Zero length element, corresponds to '::' */
+		if (s->zero_pos == -1)
+			s->zero_pos = s->total;
+		/* If we've already got a :: its an error */
+		else if (s->zero_pos != s->total)
+			return 0;
+		s->zero_cnt++;
+		}
+	else 
+		{
+		/* If more than 4 characters could be final a.b.c.d form */
+		if (len > 4)
+			{
+			/* Need at least 4 bytes left */
+			if (s->total > 12)
+				return 0;
+			/* Must be end of string */
+			if (elem[len])
+				return 0;
+			if (!ipv4_from_asc(s->tmp + s->total, elem))
+				return 0;
+			s->total += 4;
+			}
+		else
+			{
+			if (!ipv6_hex(s->tmp + s->total, elem, len))
+				return 0;
+			s->total += 2;
+			}
+		}
+	return 1;
+	}
+
+/* Convert a string of up to 4 hex digits into the corresponding
+ * IPv6 form.
+ */
+
+static int ipv6_hex(unsigned char *out, const char *in, int inlen)
+	{
+	unsigned char c;
+	unsigned int num = 0;
+	if (inlen > 4)
+		return 0;
+	while(inlen--)
+		{
+		c = *in++;
+		num <<= 4;
+		if ((c >= '0') && (c <= '9'))
+			num |= c - '0';
+		else if ((c >= 'A') && (c <= 'F'))
+			num |= c - 'A' + 10;
+		else if ((c >= 'a') && (c <= 'f'))
+			num |=  c - 'a' + 10;
+		else
+			return 0;
+		}
+	out[0] = num >> 8;
+	out[1] = num & 0xff;
+	return 1;
+	}
+
