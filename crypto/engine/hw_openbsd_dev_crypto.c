@@ -53,31 +53,31 @@
  *
  */
 
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include "engine_int.h"
 
-#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-
 static void load_ciphers(ENGINE *e)
-    {
-    ENGINE_add_cipher(e,EVP_dev_crypto_des_ede3_cbc());
-    ENGINE_add_cipher(e,EVP_dev_crypto_rc4());
-    }
+	{
+	ENGINE_add_cipher(e,EVP_dev_crypto_des_ede3_cbc());
+	ENGINE_add_cipher(e,EVP_dev_crypto_rc4());
+	}
 
 ENGINE *ENGINE_openbsd_dev_crypto(void)
-    {
-    ENGINE *engine=ENGINE_new();
-
-    if(!ENGINE_set_id(engine,"openbsd_dev_crypto")
-       || !ENGINE_set_name(engine,"OpenBSD /dev/crypto"))
 	{
-	ENGINE_free(engine);
-	return NULL;
+	ENGINE *engine=ENGINE_new();
+
+	if(!ENGINE_set_id(engine,"openbsd_dev_crypto") ||
+			!ENGINE_set_name(engine,"OpenBSD /dev/crypto"))
+		{
+		ENGINE_free(engine);
+		return NULL;
+		}
+	load_ciphers(engine);
+
+	return engine;
 	}
-    load_ciphers(engine);
 
-    return engine;
-    }
-
-#endif
+#endif /* defined(OPENSSL_OPENBSD_DEV_CRYPTO) */
