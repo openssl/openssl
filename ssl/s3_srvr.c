@@ -134,6 +134,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/dh.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_KRB5
 #include <openssl/krb5_asn.h>
 #endif

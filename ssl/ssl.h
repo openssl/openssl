@@ -178,9 +178,16 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
+#ifndef OPENSSL_NO_DEPRECATED
 #ifndef OPENSSL_NO_X509
 #include <openssl/x509.h>
 #endif
+#include <openssl/crypto.h>
+#include <openssl/lhash.h>
+#include <openssl/buffer.h>
+#endif
+#include <openssl/pem.h>
+
 #include <openssl/kssl.h>
 #include <openssl/safestack.h>
 #include <openssl/symhacks.h>
@@ -317,11 +324,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#include <openssl/crypto.h>
-#include <openssl/lhash.h>
-#include <openssl/buffer.h>
-#include <openssl/pem.h>
 
 #ifdef  __cplusplus
 extern "C" {

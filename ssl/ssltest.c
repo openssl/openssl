@@ -141,6 +141,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/bn.h>
 
 #define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
 				     on Compaq platforms (at least with DEC C).
