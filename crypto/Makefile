@@ -95,7 +95,9 @@ lib:	$(LIBOBJ)
 
 shared: buildinf.h lib subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
+	    if ! egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		(cd ..; $(MAKE) $(SHARED_LIB)); \
+	    fi \
 	fi
 
 libs:
