@@ -5,3 +5,6 @@
  ssleay.txt ...... Assembled documentation files of ancestor SSLeay [obsolete]
  openssl.txt ..... Assembled documentation files for OpenSSL [not final]
 
+ An archive of HTML documents for the SSLeay library is available from
+ http://www.columbia.edu/~ariel/ssleay/
+
