@@ -68,6 +68,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/stack.h>
+#include <openssl/objects.h>
 
 #undef MIN_NODES
 #define MIN_NODES	4
@@ -233,7 +234,7 @@ static int internal_find(STACK *st, char *data, int ret_val_options)
 	 * not (type *) pointers, but the *pointers* to (type *) pointers,
 	 * so we get our extra level of pointer dereferencing that way. */
 	comp_func=(int (*)(const void *,const void *))(st->comp);
-	r=(char **)OBJ_bsearch(&data,(char *)st->data,
+	r=(char **)OBJ_bsearch_ex((char *)&data,(char *)st->data,
 		st->num,sizeof(char *),comp_func,ret_val_options);
 	if (r == NULL) return(-1);
 	return((int)(r-st->data));
