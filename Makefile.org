@@ -274,6 +274,17 @@ DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
 	[ -n "$$my_ld" ] && \
 	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
 
+# For Darwin AKA Mac OS/X (dyld)
+do_darwin-shared: 
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x ; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
+		lib$$i.a $$libs -all_load -current_version ${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-compatibility_version ${SHLIB_MAJOR}.`echo ${SHLIB_MINOR} | cut -d. -f1` \
+		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
+	libs="$$libs -l`basename $$i${SHLIB_EXT} .dylib`"; \
+	echo "" ; \
+	done
+
 # This assumes that GNU utilities are *not* used
 do_alpha-osf1-shared:
 	if ${DETECT_GNU_LD}; then \

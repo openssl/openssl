@@ -193,7 +193,7 @@ char *des_crypt(const char *buf,const char *salt)
 	{
 	return DES_crypt(buf, salt);
 	}
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
+#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(_DARWIN)
 char *crypt(const char *buf,const char *salt)
 	{
 	return DES_crypt(buf, salt);
