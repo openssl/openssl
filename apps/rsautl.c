@@ -120,7 +120,7 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
 		} else if (strcmp(*argv,"-keyform") == 0) {
-			if (--argc < 1) goto bad;
+			if (--argc < 1) badarg = 1;
 			keyform=str2fmt(*(++argv));
 		} else if(!strcmp(*argv, "-engine")) {
 			if (--argc < 1) badarg = 1;
