@@ -1322,9 +1322,9 @@ $ranlib       =
 
 *** darwin-i386-cc
 $cc           = cc
-$cflags       = -O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN
+$cflags       = -O3 -fomit-frame-pointer -fno-common -DB_ENDIAN
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
@@ -1346,9 +1346,9 @@ $ranlib       =
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN
+$cflags       = -O3 -fomit-frame-pointer -fno-common -DB_ENDIAN
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
@@ -1538,7 +1538,7 @@ $ranlib       =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wtraditional -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1562,7 +1562,7 @@ $ranlib       =
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wtraditional -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3794,11 +3794,11 @@ $ranlib       =
 
 *** unixware-2.0
 $cc           = cc
-$cflags       = -DFILIO_H
+$cflags       = -DFILIO_H -DNO_STRINGS_H
 $unistd       = 
 $thread_cflag = -Kthread
 $sys_id       = 
-$lflags       = -lsocket -lnsl -lx
+$lflags       = -lsocket -lnsl -lresolv -lx
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
@@ -3818,11 +3818,11 @@ $ranlib       =
 
 *** unixware-2.0-pentium
 $cc           = cc
-$cflags       = -DFILIO_H -Kpentium
+$cflags       = -DFILIO_H -DNO_STRINGS_H -Kpentium
 $unistd       = 
 $thread_cflag = -Kthread
 $sys_id       = 
-$lflags       = -lsocket -lnsl -lx
+$lflags       = -lsocket -lnsl -lresolv -lx
 $bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
@@ -3846,7 +3846,7 @@ $cflags       = -O -DFILIO_H
 $unistd       = 
 $thread_cflag = -Kthread
 $sys_id       = 
-$lflags       = -lsocket -lnsl -lx
+$lflags       = -lsocket -lnsl -lresolv -lx
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
@@ -3870,7 +3870,7 @@ $cflags       = -O -DFILIO_H -Kp6
 $unistd       = 
 $thread_cflag = -Kthread
 $sys_id       = 
-$lflags       = -lsocket -lnsl -lx
+$lflags       = -lsocket -lnsl -lresolv -lx
 $bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
@@ -3894,7 +3894,7 @@ $cflags       = -O -DFILIO_H -Kpentium
 $unistd       = 
 $thread_cflag = -Kthread
 $sys_id       = 
-$lflags       = -lsocket -lnsl -lx
+$lflags       = -lsocket -lnsl -lresolv -lx
 $bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
