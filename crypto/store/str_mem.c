@@ -60,6 +60,22 @@
 #include <openssl/err.h>
 #include "str_locl.h"
 
+/* The memory store is currently highly experimental.  It's meant to become
+   a base store used by other stores for internal caching (for full caching
+   support, aging needs to be added).
+
+   The database use is meant to support as much attribute association as
+   possible, while providing for as small search ranges as possible.
+   This is currently provided for by sorting the entries by numbers that
+   are composed of bits set at the positions indicated by attribute type
+   codes.  This provides for ranges determined by the highest attribute
+   type code value.  A better idea might be to sort by values computed
+   from the range of attributes associated with the object (basically,
+   the difference between the highest and lowest attribute type code)
+   and it's distance from a base (basically, the lowest associated
+   attribute type code).
+*/
+
 struct mem_object_data_st
 	{
 	STORE_OBJECT *object;
@@ -70,8 +86,7 @@ struct mem_object_data_st
 struct mem_data_st
 	{
 	STACK *data;		/* A stack of mem_object_data_st,
-				   potentially sorted with a wrapper
-				   around STORE_ATTR_INFO_cmp(). */
+				   sorted with STORE_ATTR_INFO_compare(). */
 	unsigned int compute_components : 1; /* Currently unused, but can
 						be used to add attributes
 						from parts of the data. */
@@ -184,6 +199,14 @@ static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
 	STOREerr(STORE_F_MEM_DELETE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
 	}
+
+/* The list functions may be the hardest to nuderstand.  Basically,
+   mem_list_start compiles a stack of attribute info elements, and
+   puts that stack into the context to be returned.  mem_list_next
+   will then find the first matching element in the store, and then
+   walk all the way to the end of the store (since any combination
+   of attribute bits above the starting point may match the searched
+   for bit pattern...). */
 static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
 	OPENSSL_ITEM attributes[])
 	{
