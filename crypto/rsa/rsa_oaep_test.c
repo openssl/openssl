@@ -7,6 +7,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #ifdef NO_RSA
 int main(int argc, char *argv[])
 {
@@ -203,6 +204,8 @@ static int pad_unknown(void)
     return(0);
 }
 
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
 int main(int argc, char *argv[])
     {
     int err=0;
@@ -215,6 +218,8 @@ int main(int argc, char *argv[])
     int plen;
     int clen = 0;
     int num;
+
+    RAND_seed(rnd_seed, sizeof rnd_seed); /* or OAEP may fail */
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	
