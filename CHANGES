@@ -4,6 +4,11 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Compile clean with "-Wall -Wmissing-prototypes
+     -Wstrict-prototypes -Wmissing-declarations -Werror". Currently
+     DEBUG_SAFESTACK must also be set.
+     [Ben Laurie]
+
   *) Change ./Configure so that certain algorithms can be disabled by default.
      The new counterpiece to "no-xxx" is "enable-xxx".
 

@@ -102,7 +102,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	X509_VERIFY_PARAM *param = ctx->param;
 	int depth,i,ok=0;
 	int num;
-	int (*cb)();
+	int (*cb)(int ok,X509_STORE_CTX *ctx);
 	STACK_OF(X509) *sktmp=NULL;
 	if (ctx->cert == NULL)
 		{
@@ -388,7 +388,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 #else
 	int i, ok=0, must_be_ca;
 	X509 *x;
-	int (*cb)();
+	int (*cb)(int ok,X509_STORE_CTX *ctx);
 	int proxy_path_length = 0;
 	cb=ctx->verify_cb;
 
@@ -515,7 +515,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 #else
 	int i, ok;
 	X509 *x;
-	int (*cb)();
+	int (*cb)(int ok,X509_STORE_CTX *ctx);
 	cb=ctx->verify_cb;
 /* For now just check the last certificate in the chain */
 	i = sk_X509_num(ctx->chain) - 1;
@@ -925,7 +925,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	int ok=0,n;
 	X509 *xs,*xi;
 	EVP_PKEY *pkey=NULL;
-	int (*cb)();
+	int (*cb)(int ok,X509_STORE_CTX *ctx);
 
 	cb=ctx->verify_cb;
 

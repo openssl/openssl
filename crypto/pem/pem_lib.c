@@ -158,11 +158,12 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	}
 
 #ifndef OPENSSL_NO_FP_API
-char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
-	     pem_password_cb *cb, void *u)
+void *PEM_ASN1_read(void *(*d2i)(void **,const unsigned char **,long),
+		    const char *name, FILE *fp,void **x,pem_password_cb *cb,
+		    void *u)
 	{
         BIO *b;
-        char *ret;
+        void *ret;
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
@@ -260,9 +261,9 @@ err:
 	}
 
 #ifndef OPENSSL_NO_FP_API
-int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
-	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     pem_password_cb *callback, void *u)
+int PEM_ASN1_write(int (*i2d)(void *,unsigned char **), const char *name, FILE *fp,
+		   char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		   int klen, pem_password_cb *callback, void *u)
         {
         BIO *b;
         int ret;
@@ -279,9 +280,9 @@ int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
         }
 #endif
 
-int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
-	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     pem_password_cb *callback, void *u)
+int PEM_ASN1_write_bio(int (*i2d)(void *,unsigned char **), const char *name, BIO *bp,
+		       char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		       int klen, pem_password_cb *callback, void *u)
 	{
 	EVP_CIPHER_CTX ctx;
 	int dsize=0,i,j,ret=0;

@@ -241,7 +241,7 @@ bad:
 	if (!noout && !cert)
 		{
 		if 	(outformat == FORMAT_ASN1)
-			i=(int)i2d_SSL_SESSION_bio(out,x);
+			i=i2d_SSL_SESSION_bio(out,x);
 		else if (outformat == FORMAT_PEM)
 			i=PEM_write_bio_SSL_SESSION(out,x);
 		else	{

@@ -247,11 +247,19 @@ int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
 int	RSA_print(BIO *bp, const RSA *r,int offset);
 #endif
 
-int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey);
-RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length, int (*cb)(), int sgckey);
+int i2d_RSA_NET(const RSA *a, unsigned char **pp,
+		int (*cb)(char *buf, int len, const char *prompt, int verify),
+		int sgckey);
+RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
+		 int (*cb)(char *buf, int len, const char *prompt, int verify),
+		 int sgckey);
 
-int i2d_Netscape_RSA(const RSA *a, unsigned char **pp, int (*cb)());
-RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)());
+int i2d_Netscape_RSA(const RSA *a, unsigned char **pp,
+		     int (*cb)(char *buf, int len, const char *prompt,
+			       int verify));
+RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length,
+		      int (*cb)(char *buf, int len, const char *prompt,
+				int verify));
 
 /* The following 2 functions sign and verify a X509_SIG ASN1 object
  * inside PKCS#1 padded RSA encryption */

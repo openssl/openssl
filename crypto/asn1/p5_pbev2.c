@@ -164,7 +164,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 
 	if(!(pbe2->keyfunc->parameter = ASN1_TYPE_new())) goto merr;
 
-	if(!ASN1_pack_string(kdf, i2d_PBKDF2PARAM,
+	if(!ASN1_pack_string_of(PBKDF2PARAM, kdf, i2d_PBKDF2PARAM,
 			 &pbe2->keyfunc->parameter->value.sequence)) goto merr;
 	pbe2->keyfunc->parameter->type = V_ASN1_SEQUENCE;
 
@@ -180,7 +180,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 
 	/* Encode PBE2PARAM into parameter */
 
-	if(!ASN1_pack_string(pbe2, i2d_PBE2PARAM,
+	if(!ASN1_pack_string_of(PBE2PARAM, pbe2, i2d_PBE2PARAM,
 				 &ret->parameter->value.sequence)) goto merr;
 	ret->parameter->type = V_ASN1_SEQUENCE;
 

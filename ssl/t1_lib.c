@@ -101,7 +101,7 @@ static SSL_METHOD TLSv1_data= {
 	ssl_bad_method,
 	tls1_default_timeout,
 	&TLSv1_enc_data,
-	ssl_undefined_function,
+	ssl_undefined_void_function,
 	ssl3_callback_ctrl,
 	ssl3_ctx_callback_ctrl,
 	};

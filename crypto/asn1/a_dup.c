@@ -62,7 +62,8 @@
 
 #ifndef NO_OLD_ASN1
 
-char *ASN1_dup(int (*i2d)(), char *(*d2i)(), char *x)
+void *ASN1_dup(int (*i2d)(char *,void *), 
+	       char *(*d2i)(void *,unsigned char **,long), char *x)
 	{
 	unsigned char *b,*p;
 	long i;

@@ -401,7 +401,7 @@ static LHASH_NODE **getrn(LHASH *lh, const void *data, unsigned long *rhash)
 	{
 	LHASH_NODE **ret,*n1;
 	unsigned long hash,nn;
-	int (*cf)();
+	LHASH_COMP_FN_TYPE cf;
 
 	hash=(*(lh->hash))(data);
 	lh->num_hash_calls++;

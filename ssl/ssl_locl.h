@@ -523,6 +523,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,SSL_COMP **comp);
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
+int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
@@ -555,8 +556,8 @@ int	ssl2_shutdown(SSL *s);
 void	ssl2_clear(SSL *s);
 long	ssl2_ctrl(SSL *s,int cmd, long larg, void *parg);
 long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
-long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)());
-long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
+long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
+long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl2_pending(const SSL *s);
 
 SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
@@ -603,8 +604,8 @@ int	ssl3_shutdown(SSL *s);
 void	ssl3_clear(SSL *s);
 long	ssl3_ctrl(SSL *s,int cmd, long larg, void *parg);
 long	ssl3_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
-long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)());
-long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
+long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
+long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
 int ssl23_accept(SSL *s);
@@ -616,7 +617,7 @@ int tls1_new(SSL *s);
 void tls1_free(SSL *s);
 void tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s,int cmd, long larg, void *parg);
-long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)());
+long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 SSL_METHOD *tlsv1_base_method(void );
 
 int ssl_init_wbio_buffer(SSL *s, int push);

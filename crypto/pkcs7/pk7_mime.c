@@ -110,9 +110,6 @@ static void mime_hdr_free(MIME_HEADER *hdr);
 #define MAX_SMLEN 1024
 #define mime_debug(x) /* x */
 
-
-typedef void (*stkfree)();
-
 /* Base 64 read and write of PKCS#7 structure */
 
 static int B64_write_PKCS7(BIO *bio, PKCS7 *p7)

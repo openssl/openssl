@@ -541,7 +541,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
  * will be returned for SYSerr(), which always gets an errno
  * value and never one of those 'standard' reason codes. */
 
-static void build_SYS_str_reasons()
+static void build_SYS_str_reasons(void)
 	{
 	/* OPENSSL_malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];

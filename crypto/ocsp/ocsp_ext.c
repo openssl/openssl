@@ -265,8 +265,9 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 
 /* also CRL Entry Extensions */
 
-ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(), 
-				char *data, STACK_OF(ASN1_OBJECT) *sk)
+ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s,
+				int (*i2d)(void *,unsigned char **), 
+				void *data, STACK_OF(ASN1_OBJECT) *sk)
         {
 	int i;
 	unsigned char *p, *b = NULL;
@@ -274,18 +275,23 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(),
 	if (data)
 	        {
 		if ((i=i2d(data,NULL)) <= 0) goto err;
-		if (!(b=p=(unsigned char*)OPENSSL_malloc((unsigned int)i)))
+		if (!(b=p=OPENSSL_malloc((unsigned int)i)))
 			goto err;
 	        if (i2d(data, &p) <= 0) goto err;
 		}
 	else if (sk)
 	        {
-		if ((i=i2d_ASN1_SET_OF_ASN1_OBJECT(sk,NULL,i2d,V_ASN1_SEQUENCE,
-				   V_ASN1_UNIVERSAL,IS_SEQUENCE))<=0) goto err;
-		if (!(b=p=(unsigned char*)OPENSSL_malloc((unsigned int)i)))
+		if ((i=i2d_ASN1_SET_OF_ASN1_OBJECT(sk,NULL,
+						   (I2D_OF(ASN1_OBJECT))i2d,
+						   V_ASN1_SEQUENCE,
+						   V_ASN1_UNIVERSAL,
+						   IS_SEQUENCE))<=0) goto err;
+		if (!(b=p=OPENSSL_malloc((unsigned int)i)))
 			goto err;
-		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk,&p,i2d,V_ASN1_SEQUENCE,
-				 V_ASN1_UNIVERSAL,IS_SEQUENCE)<=0) goto err;
+		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk,&p,(I2D_OF(ASN1_OBJECT))i2d,
+						V_ASN1_SEQUENCE,
+						V_ASN1_UNIVERSAL,
+						IS_SEQUENCE)<=0) goto err;
 		}
 	else
 		{
@@ -439,7 +445,8 @@ X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
 		}
 	if (!(x = X509_EXTENSION_new())) goto err;
 	if (!(x->object = OBJ_nid2obj(NID_id_pkix_OCSP_CrlID))) goto err;
-	if (!(ASN1_STRING_encode(x->value,i2d_OCSP_CRLID,(char*)cid,NULL)))
+	if (!(ASN1_STRING_encode_of(OCSP_CRLID,x->value,i2d_OCSP_CRLID,cid,
+				    NULL)))
 	        goto err;
 	OCSP_CRLID_free(cid);
 	return x;
@@ -467,7 +474,8 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
 	if (!(x = X509_EXTENSION_new())) goto err;
 	if (!(x->object = OBJ_nid2obj(NID_id_pkix_OCSP_acceptableResponses)))
 		goto err;
-	if (!(ASN1_STRING_encode(x->value,i2d_ASN1_OBJECT,NULL,sk)))
+	if (!(ASN1_STRING_encode_of(ASN1_OBJECT,x->value,i2d_ASN1_OBJECT,NULL,
+				    sk)))
 	        goto err;
 	sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
 	return x;
@@ -487,8 +495,8 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char* tim)
 	if (!(ASN1_GENERALIZEDTIME_set_string(gt, tim))) goto err;
 	if (!(x = X509_EXTENSION_new())) goto err;
 	if (!(x->object=OBJ_nid2obj(NID_id_pkix_OCSP_archiveCutoff)))goto err;
-	if (!(ASN1_STRING_encode(x->value,i2d_ASN1_GENERALIZEDTIME,
-				 (char*)gt,NULL))) goto err;
+	if (!(ASN1_STRING_encode_of(ASN1_GENERALIZEDTIME,x->value,
+				    i2d_ASN1_GENERALIZEDTIME,gt,NULL))) goto err;
 	ASN1_GENERALIZEDTIME_free(gt);
 	return x;
 err:
@@ -526,8 +534,8 @@ X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 	if (!(x = X509_EXTENSION_new())) goto err;
 	if (!(x->object = OBJ_nid2obj(NID_id_pkix_OCSP_serviceLocator))) 
 	        goto err;
-	if (!(ASN1_STRING_encode(x->value, i2d_OCSP_SERVICELOC,
-				 (char*)sloc, NULL))) goto err;
+	if (!(ASN1_STRING_encode_of(OCSP_SERVICELOC,x->value,
+				    i2d_OCSP_SERVICELOC,sloc,NULL))) goto err;
 	OCSP_SERVICELOC_free(sloc);
 	return x;
 err:

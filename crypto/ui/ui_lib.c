@@ -545,7 +545,7 @@ int UI_process(UI *ui)
 	return ok;
 	}
 
-int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)())
+int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)(void))
 	{
 	if (ui == NULL)
 		{

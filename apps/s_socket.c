@@ -270,7 +270,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	return(1);
 	}
 
-int do_server(int port, int *ret, int (*cb)(), char *context)
+int do_server(int port, int *ret, int (*cb)(char *hostname, int s, unsigned char *context), char *context)
 	{
 	int sock;
 	char *name;

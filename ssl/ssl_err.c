@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -195,6 +195,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_PACK(0,SSL_F_SSL_SHUTDOWN,0),	"SSL_shutdown"},
 {ERR_PACK(0,SSL_F_SSL_UNDEFINED_CONST_FUNCTION,0),	"SSL_UNDEFINED_CONST_FUNCTION"},
 {ERR_PACK(0,SSL_F_SSL_UNDEFINED_FUNCTION,0),	"SSL_UNDEFINED_FUNCTION"},
+{ERR_PACK(0,SSL_F_SSL_UNDEFINED_VOID_FUNCTION,0),	"SSL_UNDEFINED_VOID_FUNCTION"},
 {ERR_PACK(0,SSL_F_SSL_USE_CERTIFICATE,0),	"SSL_use_certificate"},
 {ERR_PACK(0,SSL_F_SSL_USE_CERTIFICATE_ASN1,0),	"SSL_use_certificate_ASN1"},
 {ERR_PACK(0,SSL_F_SSL_USE_CERTIFICATE_FILE,0),	"SSL_use_certificate_file"},

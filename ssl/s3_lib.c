@@ -1391,7 +1391,7 @@ static SSL_METHOD SSLv3_data= {
 	ssl_bad_method,
 	ssl3_default_timeout,
 	&SSLv3_enc_data,
-	ssl_undefined_function,
+	ssl_undefined_void_function,
 	ssl3_callback_ctrl,
 	ssl3_ctx_callback_ctrl,
 	};
@@ -1680,7 +1680,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	return(ret);
 	}
 
-long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)())
+long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 	{
 	int ret=0;
 
@@ -1874,7 +1874,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	return(1);
 	}
 
-long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
+long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	{
 	CERT *cert;
 

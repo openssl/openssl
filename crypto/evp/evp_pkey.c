@@ -360,7 +360,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 
 		p8->pkeyalg->algorithm = OBJ_nid2obj(NID_rsaEncryption);
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
-		if (!ASN1_pack_string ((char *)pkey, i2d_PrivateKey,
+		if (!ASN1_pack_string_of (EVP_PKEY,pkey, i2d_PrivateKey,
 					 &p8->pkey->value.octet_string)) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			PKCS8_PRIV_KEY_INFO_free (p8);
@@ -458,7 +458,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		case PKCS8_OK:
 		case PKCS8_NO_OCTET:
 
-		if (!ASN1_pack_string((char *)prkey, i2d_ASN1_INTEGER,
+		if (!ASN1_pack_string_of(ASN1_INTEGER,prkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;

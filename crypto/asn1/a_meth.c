@@ -62,16 +62,16 @@
 #include <openssl/asn1.h>
 
 static  ASN1_METHOD ia5string_meth={
-	(int (*)())	i2d_ASN1_IA5STRING,
-	(char *(*)())	d2i_ASN1_IA5STRING,
-	(char *(*)())	ASN1_STRING_new,
-	(void (*)())	ASN1_STRING_free};
+	(I2D_OF(void))	i2d_ASN1_IA5STRING,
+	(D2I_OF(void))	d2i_ASN1_IA5STRING,
+	(void *(*)(void))ASN1_STRING_new,
+	(void (*)(void *))ASN1_STRING_free};
 
 static  ASN1_METHOD bit_string_meth={
-	(int (*)())	i2d_ASN1_BIT_STRING,
-	(char *(*)())	d2i_ASN1_BIT_STRING,
-	(char *(*)())	ASN1_STRING_new,
-	(void (*)())	ASN1_STRING_free};
+	(I2D_OF(void))	i2d_ASN1_BIT_STRING,
+	(D2I_OF(void))	d2i_ASN1_BIT_STRING,
+	(void *(*)(void))ASN1_STRING_new,
+	(void (*)(void *))ASN1_STRING_free};
 
 ASN1_METHOD *ASN1_IA5STRING_asn1_meth(void)
 	{

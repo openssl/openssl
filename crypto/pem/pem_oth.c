@@ -67,10 +67,12 @@
 
 /* Handle 'other' PEMs: not private keys */
 
-char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
-	     pem_password_cb *cb, void *u)
+void *PEM_ASN1_read_bio(void *(*d2i)(void **,const unsigned char **,long),
+			const char *name, BIO *bp, void **x,
+			pem_password_cb *cb, void *u)
 	{
-	unsigned char *p=NULL,*data=NULL;
+	const unsigned char *p=NULL;
+	unsigned char *data=NULL;
 	long len;
 	char *ret=NULL;
 

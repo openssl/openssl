@@ -85,7 +85,7 @@ static int SetBlobCmp(const void *elem1, const void *elem2 )
     }
 
 /* int is_set:  if TRUE, then sort the contents (i.e. it isn't a SEQUENCE)    */
-int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(), int ex_tag,
+int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(void *,unsigned char **), int ex_tag,
 	     int ex_class, int is_set)
 	{
 	int ret=0,r;
@@ -163,7 +163,8 @@ SetBlob
         }
 
 STACK *d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
-	     char *(*func)(), void (*free_func)(void *), int ex_tag, int ex_class)
+		    char *(*d2i)(void **,const unsigned char **,long),
+		    void (*free_func)(void *), int ex_tag, int ex_class)
 	{
 	ASN1_const_CTX c;
 	STACK *ret=NULL;
@@ -210,7 +211,9 @@ STACK *d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
 		char *s;
 
 		if (M_ASN1_D2I_end_sequence()) break;
-		if ((s=func(NULL,&c.p,c.slen,c.max-c.p)) == NULL)
+		/* XXX: This was called with 4 arguments, incorrectly, it seems
+		   if ((s=func(NULL,&c.p,c.slen,c.max-c.p)) == NULL) */
+		if ((s=d2i(NULL,&c.p,c.slen)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_ASN1_SET,ASN1_R_ERROR_PARSING_SET_ELEMENT);
 			asn1_add_error(*pp,(int)(c.q- *pp));

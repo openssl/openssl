@@ -83,10 +83,10 @@ ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a, const unsigned char **pp,
 
 	M_ASN1_D2I_Init();
         M_ASN1_D2I_start_sequence();
-        M_ASN1_D2I_get(ret->header,d2i_ASN1_OCTET_STRING);
+        M_ASN1_D2I_get(ASN1_OCTET_STRING,ret->header,d2i_ASN1_OCTET_STRING);
 	if (ret->meth != NULL)
 		{
-		M_ASN1_D2I_get(ret->data,ret->meth->d2i);
+		M_ASN1_D2I_get(void,ret->data,ret->meth->d2i);
 		}
 	else
 		{

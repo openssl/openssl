@@ -93,7 +93,7 @@ static SSL_METHOD SSLv23_data= {
 	ssl_bad_method,
 	ssl23_default_timeout,
 	&ssl3_undef_enc_method,
-	ssl_undefined_function,
+	ssl_undefined_void_function,
 	ssl3_callback_ctrl,
 	ssl3_ctx_callback_ctrl,
 	};

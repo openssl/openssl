@@ -171,8 +171,8 @@ typedef AEP_RV t_AEP_GenRandom(AEP_CONNECTION_HNDL hConnection,
 #endif
 
 typedef AEP_RV t_AEP_Initialize(AEP_VOID_PTR pInitArgs);
-typedef AEP_RV t_AEP_Finalize();
-typedef AEP_RV t_AEP_SetBNCallBacks(AEP_RV (*GetBigNumSizeFunc)(),
-				    AEP_RV (*MakeAEPBigNumFunc)(),
-				    AEP_RV (*ConverAEPBigNumFunc)());
+typedef AEP_RV t_AEP_Finalize(void);
+typedef AEP_RV t_AEP_SetBNCallBacks(AEP_RV (*GetBigNumSizeFunc)(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize),
+				    AEP_RV (*MakeAEPBigNumFunc)(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum),
+				    AEP_RV (*ConverAEPBigNumFunc)(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum));
 

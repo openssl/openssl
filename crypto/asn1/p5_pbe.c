@@ -106,7 +106,8 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
 	}
 
 	astype->type = V_ASN1_SEQUENCE;
-	if(!ASN1_pack_string(pbe, i2d_PBEPARAM, &astype->value.sequence)) {
+	if(!ASN1_pack_string_of(PBEPARAM, pbe, i2d_PBEPARAM,
+				&astype->value.sequence)) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}

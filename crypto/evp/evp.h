@@ -233,12 +233,22 @@ struct env_md_st
 	int (*cleanup)(EVP_MD_CTX *ctx);
 
 	/* FIXME: prototype these some day */
-	int (*sign)();
-	int (*verify)();
+	int (*sign)(int type, const unsigned char *m, unsigned int m_length,
+		    unsigned char *sigret, unsigned int *siglen, void *key);
+	int (*verify)(int type, const unsigned char *m, unsigned int m_length,
+		      const unsigned char *sigbuf, unsigned int siglen,
+		      void *key);
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
 	} /* EVP_MD */;
+
+typedef int evp_sign_method(int type,const unsigned char *m,
+			    unsigned int m_length,unsigned char *sigret,
+			    unsigned int *siglen, void *key);
+typedef int evp_verify_method(int type,const unsigned char *m,
+			    unsigned int m_length,const unsigned char *sigbuf,
+			    unsigned int siglen, void *key);
 
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
@@ -246,7 +256,8 @@ struct env_md_st
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
 #ifndef OPENSSL_NO_DSA
-#define EVP_PKEY_DSA_method	DSA_sign,DSA_verify, \
+#define EVP_PKEY_DSA_method	(evp_sign_method *)DSA_sign, \
+				(evp_verify_method *)DSA_verify, \
 				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
 					EVP_PKEY_DSA4,0}
 #else
@@ -254,14 +265,16 @@ struct env_md_st
 #endif
 
 #ifndef OPENSSL_NO_ECDSA
-#define EVP_PKEY_ECDSA_method   ECDSA_sign,ECDSA_verify, \
+#define EVP_PKEY_ECDSA_method   (evp_sign_method *)ECDSA_sign, \
+				(evp_verify_method *)ECDSA_verify, \
                                  {EVP_PKEY_EC,0,0,0}
 #else   
 #define EVP_PKEY_ECDSA_method   EVP_PKEY_NULL_method
 #endif
 
 #ifndef OPENSSL_NO_RSA
-#define EVP_PKEY_RSA_method	RSA_sign,RSA_verify, \
+#define EVP_PKEY_RSA_method	(evp_sign_method *)RSA_sign, \
+				(evp_verify_method *)RSA_verify, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
 #define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
 				RSA_sign_ASN1_OCTET_STRING, \

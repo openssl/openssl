@@ -211,7 +211,7 @@ int UI_process(UI *ui);
 /* Give a user interface parametrised control commands.  This can be used to
    send down an integer, a data pointer or a function pointer, as well as
    be used to get information from a UI. */
-int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)());
+int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)(void));
 
 /* The commands */
 /* Use UI_CONTROL_PRINT_ERRORS with the value 1 to have UI_process print the

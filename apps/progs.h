@@ -49,7 +49,7 @@ extern int ocsp_main(int argc,char *argv[]);
 typedef struct {
 	int type;
 	char *name;
-	int (*func)();
+	int (*func)(int argc,char *argv[]);
 	} FUNCTION;
 
 FUNCTION functions[] = {

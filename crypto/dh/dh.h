@@ -142,21 +142,13 @@ struct dh_st
    this for backward compatibility: */
 #define DH_CHECK_P_NOT_STRONG_PRIME	DH_CHECK_P_NOT_SAFE_PRIME
 
-#define DHparams_dup(x) (DH *)ASN1_dup((int (*)())i2d_DHparams, \
-		(char *(*)())d2i_DHparams,(char *)(x))
+#define DHparams_dup(x) ASN1_dup_of_const(DH,i2d_DHparams,d2i_DHparams,x)
 #define d2i_DHparams_fp(fp,x) (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
 		(char *(*)())d2i_DHparams,(fp),(unsigned char **)(x))
 #define i2d_DHparams_fp(fp,x) ASN1_i2d_fp(i2d_DHparams,(fp), \
 		(unsigned char *)(x))
-#define d2i_DHparams_bio(bp,x) (DH *)ASN1_d2i_bio((char *(*)())DH_new, \
-		(char *(*)())d2i_DHparams,(bp),(unsigned char **)(x))
-#ifdef  __cplusplus
-#define i2d_DHparams_bio(bp,x) ASN1_i2d_bio((int (*)())i2d_DHparams,(bp), \
-		(unsigned char *)(x))
-#else
-#define i2d_DHparams_bio(bp,x) ASN1_i2d_bio(i2d_DHparams,(bp), \
-		(unsigned char *)(x))
-#endif
+#define d2i_DHparams_bio(bp,x) ASN1_d2i_bio_of(DH,DH_new,d2i_DHparams,bp,x)
+#define i2d_DHparams_bio(bp,x) ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
 
 const DH_METHOD *DH_OpenSSL(void);
 

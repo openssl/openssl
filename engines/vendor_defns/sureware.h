@@ -47,7 +47,7 @@ extern SW_EXPORT SureWareHook_Init_t SureWareHook_Init;
 /*
 *	SureWare Finish function
 */
-typedef void SureWareHook_Finish_t();
+typedef void SureWareHook_Finish_t(void);
 extern SW_EXPORT SureWareHook_Finish_t SureWareHook_Finish;
 /*
 *	 PRE_CONDITION:

@@ -128,11 +128,13 @@ ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
-static ASN1_METHOD meth={
-	(int (*)())  i2d_X509,
-	(char *(*)())d2i_X509,
-	(char *(*)())X509_new,
-	(void (*)()) X509_free};
+static ASN1_METHOD meth=
+    {
+    (I2D_OF(void))  i2d_X509,
+    (D2I_OF(void)) d2i_X509,
+    (void *(*)(void))X509_new,
+    (void (*)(void *)) X509_free
+    };
 
 ASN1_METHOD *X509_asn1_meth(void)
 	{

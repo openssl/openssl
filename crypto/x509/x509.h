@@ -136,8 +136,8 @@ extern "C" {
 typedef struct X509_objects_st
 	{
 	int nid;
-	int (*a2i)();
-	int (*i2a)();
+	int (*a2i)(void);
+	int (*i2a)(void);
 	} X509_OBJECTS;
 
 struct X509_algor_st
@@ -966,15 +966,16 @@ X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
 char *		X509_NAME_oneline(X509_NAME *a,char *buf,int size);
 
-int ASN1_verify(int (*i2d)(), X509_ALGOR *algor1,
+int ASN1_verify(int (*i2d)(void *, unsigned char **), X509_ALGOR *algor1,
 	ASN1_BIT_STRING *signature,char *data,EVP_PKEY *pkey);
 
-int ASN1_digest(int (*i2d)(),const EVP_MD *type,char *data,
-	unsigned char *md,unsigned int *len);
+int ASN1_digest(int (*i2d)(void *, unsigned char **),
+		const EVP_MD *type,char *data,
+		unsigned char *md,unsigned int *len);
 
-int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
-	ASN1_BIT_STRING *signature,
-	char *data,EVP_PKEY *pkey, const EVP_MD *type);
+int ASN1_sign(int (*i2d)(void *, unsigned char **), X509_ALGOR *algor1,
+	      X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+	      char *data,EVP_PKEY *pkey, const EVP_MD *type);
 
 int ASN1_item_digest(const ASN1_ITEM *it,const EVP_MD *type,void *data,
 	unsigned char *md,unsigned int *len);

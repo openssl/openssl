@@ -386,9 +386,9 @@ typedef struct ssl_method_st
 	struct ssl_method_st *(*get_ssl_method)(int version);
 	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
-	int (*ssl_version)();
-	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)());
-	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)());
+	int (*ssl_version)(void);
+	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
+	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
 	} SSL_METHOD;
 
 /* Lets make this into an ASN.1 type structure as follows
@@ -819,7 +819,7 @@ struct ssl_st
 
 	/* true when we are actually in SSL_accept() or SSL_connect() */
 	int in_handshake;
-	int (*handshake_func)();
+	int (*handshake_func)(SSL *);
 
 	/* Imagine that here's a boolean member "init" that is
 	 * switched as soon as SSL_set_{accept/connect}_state
@@ -1050,21 +1050,16 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_set_timeout(a,b)	SSL_SESSION_set_timeout((a),(b))
 
 #if 1 /*SSLEAY_MACROS*/
-#define d2i_SSL_SESSION_bio(bp,s_id) (SSL_SESSION *)ASN1_d2i_bio( \
-	(char *(*)())SSL_SESSION_new,(char *(*)())d2i_SSL_SESSION, \
-	(bp),(unsigned char **)(s_id))
-#define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio(i2d_SSL_SESSION, \
-	bp,(unsigned char *)s_id)
+#define d2i_SSL_SESSION_bio(bp,s_id) ASN1_d2i_bio_of(SSL_SESSION,SSL_SESSION_new,d2i_SSL_SESSION,bp,s_id)
+#define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio_of(SSL_SESSION,i2d_SSL_SESSION,bp,s_id)
 #define PEM_read_SSL_SESSION(fp,x,cb,u) (SSL_SESSION *)PEM_ASN1_read( \
 	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,fp,(char **)x,cb,u)
-#define PEM_read_bio_SSL_SESSION(bp,x,cb,u) (SSL_SESSION *)PEM_ASN1_read_bio( \
-	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,(char **)x,cb,u)
+#define PEM_read_bio_SSL_SESSION(bp,x,cb,u) PEM_ASN1_read_bio_of(SSL_SESSION,d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,x,cb,u)
 #define PEM_write_SSL_SESSION(fp,x) \
 	PEM_ASN1_write((int (*)())i2d_SSL_SESSION, \
 		PEM_STRING_SSL_SESSION,fp, (char *)x, NULL,NULL,0,NULL,NULL)
 #define PEM_write_bio_SSL_SESSION(bp,x) \
-	PEM_ASN1_write_bio((int (*)())i2d_SSL_SESSION, \
-		PEM_STRING_SSL_SESSION,bp, (char *)x, NULL,NULL,0,NULL,NULL)
+	PEM_ASN1_write_bio_of(SSL_SESSION,i2d_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,x,NULL,NULL,0,NULL,NULL)
 #endif
 
 #define SSL_AD_REASON_OFFSET		1000
@@ -1290,7 +1285,7 @@ int	SSL_CTX_set_generate_session_id(SSL_CTX *, GEN_SESSION_CB);
 int	SSL_set_generate_session_id(SSL *, GEN_SESSION_CB);
 int	SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 					unsigned int id_len);
-SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,const unsigned char * const *pp,
+SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,const unsigned char **pp,
 			     long length);
 
 #ifdef HEADER_X509_H
@@ -1341,9 +1336,9 @@ int 	SSL_read(SSL *ssl,void *buf,int num);
 int 	SSL_peek(SSL *ssl,void *buf,int num);
 int 	SSL_write(SSL *ssl,const void *buf,int num);
 long	SSL_ctrl(SSL *ssl,int cmd, long larg, void *parg);
-long	SSL_callback_ctrl(SSL *, int, void (*)());
+long	SSL_callback_ctrl(SSL *, int, void (*)(void));
 long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, void *parg);
-long	SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)());
+long	SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));
 
 int	SSL_get_error(const SSL *s,int ret_code);
 const char *SSL_get_version(const SSL *s);
@@ -1645,6 +1640,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SHUTDOWN				 224
 #define SSL_F_SSL_UNDEFINED_CONST_FUNCTION		 243
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
+#define SSL_F_SSL_UNDEFINED_VOID_FUNCTION		 244
 #define SSL_F_SSL_USE_CERTIFICATE			 198
 #define SSL_F_SSL_USE_CERTIFICATE_ASN1			 199
 #define SSL_F_SSL_USE_CERTIFICATE_FILE			 200

@@ -88,12 +88,13 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pe
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
-	unsigned char *data=NULL,*p;
+	unsigned char *data=NULL;
+	const unsigned char *p;
 	long len,error=0;
 	int ok=0;
 	STACK_OF(X509_INFO) *ret=NULL;
 	unsigned int i,raw;
-	char *(*d2i)();
+	char *(*d2i)(void *,const unsigned char **,long);
 
 	if (sk == NULL)
 		{
@@ -125,7 +126,7 @@ start:
 		if (	(strcmp(name,PEM_STRING_X509) == 0) ||
 			(strcmp(name,PEM_STRING_X509_OLD) == 0))
 			{
-			d2i=(char *(*)())d2i_X509;
+			(D2I_OF(X509))d2i=d2i_X509;
 			if (xi->x509 != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -136,7 +137,7 @@ start:
 			}
 		else if ((strcmp(name,PEM_STRING_X509_TRUSTED) == 0))
 			{
-			d2i=(char *(*)())d2i_X509_AUX;
+			(D2I_OF(X509))d2i=d2i_X509_AUX;
 			if (xi->x509 != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -147,7 +148,7 @@ start:
 			}
 		else if (strcmp(name,PEM_STRING_X509_CRL) == 0)
 			{
-			d2i=(char *(*)())d2i_X509_CRL;
+			(D2I_OF(X509_CRL))d2i=d2i_X509_CRL;
 			if (xi->crl != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -160,7 +161,7 @@ start:
 #ifndef OPENSSL_NO_RSA
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
-			d2i=(char *(*)())d2i_RSAPrivateKey;
+			(D2I_OF(RSA))d2i=d2i_RSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -184,7 +185,7 @@ start:
 #ifndef OPENSSL_NO_DSA
 			if (strcmp(name,PEM_STRING_DSA) == 0)
 			{
-			d2i=(char *(*)())d2i_DSAPrivateKey;
+			(D2I_OF(RSA))d2i=d2i_DSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -208,7 +209,7 @@ start:
 #ifndef OPENSSL_NO_EC
  			if (strcmp(name,PEM_STRING_ECPRIVATEKEY) == 0)
  			{
- 				d2i=(char *(*)())d2i_ECPrivateKey;
+ 				(D2I_OF(EC_KEY))d2i=d2i_ECPrivateKey;
  				if (xi->x_pkey != NULL) 
  				{
  					if (!sk_X509_INFO_push(ret,xi)) goto err;

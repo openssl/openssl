@@ -225,9 +225,9 @@ RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
 
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
 	{
-	return((RSA *)ASN1_d2i_fp((char *(*)())
-		RSA_new,(char *(*)())d2i_RSA_PUBKEY, (fp),
-		(unsigned char **)(rsa)));
+	return ASN1_d2i_fp((void *(*)(void))
+			   RSA_new,(D2I_OF(void))d2i_RSA_PUBKEY, fp,
+			   (void **)rsa);
 	}
 
 int i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa)
@@ -237,7 +237,7 @@ int i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa)
 
 int i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa)
 	{
-	return(ASN1_i2d_fp(i2d_RSA_PUBKEY,fp,(unsigned char *)rsa));
+	return ASN1_i2d_fp((I2D_OF(void))i2d_RSA_PUBKEY,fp,rsa);
 	}
 #endif
 
@@ -259,9 +259,7 @@ RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
 	{
-	return((RSA *)ASN1_d2i_bio((char *(*)())
-		RSA_new,(char *(*)())d2i_RSA_PUBKEY, (bp),
-		(unsigned char **)(rsa)));
+	return ASN1_d2i_bio_of(RSA,RSA_new,d2i_RSA_PUBKEY,bp,rsa);
 	}
 
 int i2d_RSAPublicKey_bio(BIO *bp, RSA *rsa)
@@ -271,7 +269,7 @@ int i2d_RSAPublicKey_bio(BIO *bp, RSA *rsa)
 
 int i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa)
 	{
-	return(ASN1_i2d_bio(i2d_RSA_PUBKEY,bp,(unsigned char *)rsa));
+	return ASN1_i2d_bio_of(RSA,i2d_RSA_PUBKEY,bp,rsa);
 	}
 #endif
 
@@ -279,51 +277,44 @@ int i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa)
 #ifndef OPENSSL_NO_FP_API
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 	{
-	return((DSA *)ASN1_d2i_fp((char *(*)())
-		DSA_new,(char *(*)())d2i_DSAPrivateKey, (fp),
-		(unsigned char **)(dsa)));
+	return ASN1_d2i_fp_of(DSA,DSA_new,d2i_DSAPrivateKey,fp,dsa);
 	}
 
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 	{
-	return(ASN1_i2d_fp(i2d_DSAPrivateKey,fp,(unsigned char *)dsa));
+	return ASN1_i2d_fp_of_const(DSA,i2d_DSAPrivateKey,fp,dsa);
 	}
 
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
 	{
-	return((DSA *)ASN1_d2i_fp((char *(*)())
-		DSA_new,(char *(*)())d2i_DSA_PUBKEY, (fp),
-		(unsigned char **)(dsa)));
+	return ASN1_d2i_fp_of(DSA,DSA_new,d2i_DSA_PUBKEY,fp,dsa);
 	}
 
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa)
 	{
-	return(ASN1_i2d_fp(i2d_DSA_PUBKEY,fp,(unsigned char *)dsa));
+	return ASN1_i2d_fp_of(DSA,i2d_DSA_PUBKEY,fp,dsa);
 	}
 #endif
 
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 	{
-	return((DSA *)ASN1_d2i_bio((char *(*)())
-		DSA_new,(char *(*)())d2i_DSAPrivateKey, (bp),
-		(unsigned char **)(dsa)));
+	return ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAPrivateKey,bp,dsa
+);
 	}
 
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
 	{
-	return(ASN1_i2d_bio(i2d_DSAPrivateKey,bp,(unsigned char *)dsa));
+	return ASN1_i2d_bio_of_const(DSA,i2d_DSAPrivateKey,bp,dsa);
 	}
 
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
 	{
-	return((DSA *)ASN1_d2i_bio((char *(*)())
-		DSA_new,(char *(*)())d2i_DSA_PUBKEY, (bp),
-		(unsigned char **)(dsa)));
+	return ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSA_PUBKEY,bp,dsa);
 	}
 
 int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 	{
-	return(ASN1_i2d_bio(i2d_DSA_PUBKEY,bp,(unsigned char *)dsa));
+	return ASN1_i2d_bio_of(DSA,i2d_DSA_PUBKEY,bp,dsa);
 	}
 
 #endif
@@ -332,50 +323,42 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 #ifndef OPENSSL_NO_FP_API
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 	{
-	return((EC_KEY *)ASN1_d2i_fp((char *(*)())
-		EC_KEY_new,(char *(*)())d2i_EC_PUBKEY, (fp),
-		(unsigned char **)(eckey)));
+	return ASN1_d2i_fp_of(EC_KEY,EC_KEY_new,d2i_EC_PUBKEY,fp,eckey);
 	}
   
 int i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey)
 	{
-	return(ASN1_i2d_fp(i2d_EC_PUBKEY,fp,(unsigned char *)eckey));
+	return ASN1_i2d_fp_of(EC_KEY,i2d_EC_PUBKEY,fp,eckey);
 	}
 
 EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
 	{
-	return((EC_KEY *)ASN1_d2i_fp((char *(*)())
-		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (fp),
-		(unsigned char **)(eckey)));
+	return ASN1_d2i_fp_of(EC_KEY,EC_KEY_new,d2i_ECPrivateKey,fp,eckey);
 	}
   
 int i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey)
 	{
-	return(ASN1_i2d_fp(i2d_ECPrivateKey,fp,(unsigned char *)eckey));
+	return ASN1_i2d_fp_of(EC_KEY,i2d_ECPrivateKey,fp,eckey);
 	}
 #endif
 EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
 	{
-	return((EC_KEY *)ASN1_d2i_bio((char *(*)())
-		EC_KEY_new,(char *(*)())d2i_EC_PUBKEY, (bp),
-		(unsigned char **)(eckey)));
+	return ASN1_d2i_bio_of(EC_KEY,EC_KEY_new,d2i_EC_PUBKEY,bp,eckey);
 	}
   
 int i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *ecdsa)
 	{
-	return(ASN1_i2d_bio(i2d_EC_PUBKEY,bp,(unsigned char *)ecdsa));
+	return ASN1_i2d_bio_of(EC_KEY,i2d_EC_PUBKEY,bp,ecdsa);
 	}
 
 EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
 	{
-	return((EC_KEY *)ASN1_d2i_bio((char *(*)())
-		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (bp),
-		(unsigned char **)(eckey)));
+	return ASN1_d2i_bio_of(EC_KEY,EC_KEY_new,d2i_ECPrivateKey,bp,eckey);
 	}
   
 int i2d_ECPrivateKey_bio(BIO *bp, EC_KEY *eckey)
 	{
-	return(ASN1_i2d_bio(i2d_ECPrivateKey,bp,(unsigned char *)eckey));
+	return ASN1_i2d_bio_of(EC_KEY,i2d_ECPrivateKey,bp,eckey);
 	}
 #endif
 
@@ -424,40 +407,37 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data, const EVP_MD *
 #ifndef OPENSSL_NO_FP_API
 X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 	{
-	return((X509_SIG *)ASN1_d2i_fp((char *(*)())X509_SIG_new,
-		(char *(*)())d2i_X509_SIG, (fp),(unsigned char **)(p8)));
+	return ASN1_d2i_fp_of(X509_SIG,X509_SIG_new,d2i_X509_SIG,fp,p8);
 	}
 
 int i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
 	{
-	return(ASN1_i2d_fp(i2d_X509_SIG,fp,(unsigned char *)p8));
+	return ASN1_i2d_fp_of(X509_SIG,i2d_X509_SIG,fp,p8);
 	}
 #endif
 
 X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 	{
-	return((X509_SIG *)ASN1_d2i_bio((char *(*)())X509_SIG_new,
-		(char *(*)())d2i_X509_SIG, (bp),(unsigned char **)(p8)));
+	return ASN1_d2i_bio_of(X509_SIG,X509_SIG_new,d2i_X509_SIG,bp,p8);
 	}
 
 int i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
 	{
-	return(ASN1_i2d_bio(i2d_X509_SIG,bp,(unsigned char *)p8));
+	return ASN1_i2d_bio_of(X509_SIG,i2d_X509_SIG,bp,p8);
 	}
 
 #ifndef OPENSSL_NO_FP_API
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
 						 PKCS8_PRIV_KEY_INFO **p8inf)
 	{
-	return((PKCS8_PRIV_KEY_INFO *)ASN1_d2i_fp(
-		(char *(*)())PKCS8_PRIV_KEY_INFO_new,
-		(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (fp),
-				(unsigned char **)(p8inf)));
+	return ASN1_d2i_fp_of(PKCS8_PRIV_KEY_INFO,PKCS8_PRIV_KEY_INFO_new,
+			      d2i_PKCS8_PRIV_KEY_INFO,fp,p8inf);
 	}
 
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
 	{
-	return(ASN1_i2d_fp(i2d_PKCS8_PRIV_KEY_INFO,fp,(unsigned char *)p8inf));
+	return ASN1_i2d_fp_of(PKCS8_PRIV_KEY_INFO,i2d_PKCS8_PRIV_KEY_INFO,fp,
+			      p8inf);
 	}
 
 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
@@ -473,24 +453,22 @@ int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
 
 int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey)
 	{
-	return(ASN1_i2d_fp(i2d_PrivateKey,fp,(unsigned char *)pkey));
+	return ASN1_i2d_fp_of(EVP_PKEY,i2d_PrivateKey,fp,pkey);
 	}
 
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 {
-	return((EVP_PKEY *)ASN1_d2i_fp((char *(*)())EVP_PKEY_new,
-		(char *(*)())d2i_AutoPrivateKey, (fp),(unsigned char **)(a)));
+	return ASN1_d2i_fp_of(EVP_PKEY,EVP_PKEY_new,d2i_AutoPrivateKey,fp,a);
 }
 
 int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey)
 	{
-	return(ASN1_i2d_fp(i2d_PUBKEY,fp,(unsigned char *)pkey));
+	return ASN1_i2d_fp_of(EVP_PKEY,i2d_PUBKEY,fp,pkey);
 	}
 
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 {
-	return((EVP_PKEY *)ASN1_d2i_fp((char *(*)())EVP_PKEY_new,
-		(char *(*)())d2i_PUBKEY, (fp),(unsigned char **)(a)));
+	return ASN1_d2i_fp_of(EVP_PKEY,EVP_PKEY_new,d2i_PUBKEY,fp,a);
 }
 
 #endif
@@ -498,15 +476,14 @@ EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 						 PKCS8_PRIV_KEY_INFO **p8inf)
 	{
-	return((PKCS8_PRIV_KEY_INFO *)ASN1_d2i_bio(
-		(char *(*)())PKCS8_PRIV_KEY_INFO_new,
-		(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (bp),
-				(unsigned char **)(p8inf)));
+	return ASN1_d2i_bio_of(PKCS8_PRIV_KEY_INFO,PKCS8_PRIV_KEY_INFO_new,
+			    d2i_PKCS8_PRIV_KEY_INFO,bp,p8inf);
 	}
 
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
 	{
-	return(ASN1_i2d_bio(i2d_PKCS8_PRIV_KEY_INFO,bp,(unsigned char *)p8inf));
+	return ASN1_i2d_bio_of(PKCS8_PRIV_KEY_INFO,i2d_PKCS8_PRIV_KEY_INFO,bp,
+			       p8inf);
 	}
 
 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
@@ -522,22 +499,20 @@ int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
 
 int i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey)
 	{
-	return(ASN1_i2d_bio(i2d_PrivateKey,bp,(unsigned char *)pkey));
+	return ASN1_i2d_bio_of(EVP_PKEY,i2d_PrivateKey,bp,pkey);
 	}
 
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 	{
-	return((EVP_PKEY *)ASN1_d2i_bio((char *(*)())EVP_PKEY_new,
-		(char *(*)())d2i_AutoPrivateKey, (bp),(unsigned char **)(a)));
+	return ASN1_d2i_bio_of(EVP_PKEY,EVP_PKEY_new,d2i_AutoPrivateKey,bp,a);
 	}
 
 int i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey)
 	{
-	return(ASN1_i2d_bio(i2d_PUBKEY,bp,(unsigned char *)pkey));
+	return ASN1_i2d_bio_of(EVP_PKEY,i2d_PUBKEY,bp,pkey);
 	}
 
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
 	{
-	return((EVP_PKEY *)ASN1_d2i_bio((char *(*)())EVP_PKEY_new,
-		(char *(*)())d2i_PUBKEY, (bp),(unsigned char **)(a)));
+	return ASN1_d2i_bio_of(EVP_PKEY,EVP_PKEY_new,d2i_PUBKEY,bp,a);
 	}

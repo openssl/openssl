@@ -1038,8 +1038,7 @@ bad:
 		ah.data=(char *)x;
 		ah.meth=X509_asn1_meth();
 
-		/* no macro for this one yet */
-		i=ASN1_i2d_bio(i2d_ASN1_HEADER,out,(unsigned char *)&ah);
+		i=ASN1_i2d_bio_of(ASN1_HEADER,i2d_ASN1_HEADER,out,&ah);
 		}
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");

@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
-static void display_engine_list()
+static void display_engine_list(void)
 	{
 	ENGINE *h;
 	int loop;

@@ -465,9 +465,9 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_CTRL_GET_CALLBACK:
 		{
-		void (**fptr)();
+		void (**fptr)(const SSL *ssl,int type,int val);
 
-		fptr=(void (**)())ptr;
+		fptr=(void (**)(const SSL *ssl,int type,int val))ptr;
 		*fptr=SSL_get_info_callback(ssl);
 		}
 		break;
