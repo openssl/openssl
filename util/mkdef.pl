@@ -9,11 +9,16 @@
 $crypto_num="util/libeay.num";
 $ssl_num=   "util/ssleay.num";
 
-$NT=1;
+$W32=1;
+$NT=0;
 foreach (@ARGV)
 	{
-	$NT=1 if $_ eq "32";
-	$NT=0 if $_ eq "16";
+	$W32=1 if $_ eq "32";
+	$W32=0 if $_ eq "16";
+	if($_ eq "NT") {
+		$W32 = 1;
+		$NT = 1;
+	}
 	$do_ssl=1 if $_ eq "ssleay";
 	$do_ssl=1 if $_ eq "ssl";
 	$do_crypto=1 if $_ eq "libeay";
@@ -167,7 +172,7 @@ sub do_defs
 				$tag{$t}= -$tag{$t};
 				next;
 				}
-#printf STDERR "$_\n%2d %2d %2d %2d %2d $NT\n",
+#printf STDERR "$_\n%2d %2d %2d %2d %2d $W32\n",
 #$tag{'NOPROTO'},$tag{'FreeBSD'},$tag{'WIN16'},$tag{'PERL5'},$tag{'NO_FP_API'};
 
 			$t=undef;
@@ -175,14 +180,14 @@ sub do_defs
 				{ $t=&do_extern($name,$_); }
 			elsif (	($tag{'NOPROTO'} == 1) &&
 				($tag{'FreeBSD'} != 1) &&
-				(($NT && ($tag{'WIN16'} != 1)) ||
-				 (!$NT && ($tag{'WIN16'} != -1))) &&
+				(($W32 && ($tag{'WIN16'} != 1)) ||
+				 (!$W32 && ($tag{'WIN16'} != -1))) &&
 				($tag{'PERL5'} != 1) &&
 #				($tag{'_WINDLL'} != -1) &&
-				((!$NT && $tag{'_WINDLL'} != -1) ||
-				 ($NT && $tag{'_WINDLL'} != 1)) &&
-				((($tag{'NO_FP_API'} != 1) && $NT) ||
-				 (($tag{'NO_FP_API'} != -1) && !$NT)))
+				((!$W32 && $tag{'_WINDLL'} != -1) ||
+				 ($W32 && $tag{'_WINDLL'} != 1)) &&
+				((($tag{'NO_FP_API'} != 1) && $W32) ||
+				 (($tag{'NO_FP_API'} != -1) && !$W32)))
 				{ $t=&do_line($name,$_); }
 			else
 				{ $t=undef; }
@@ -216,24 +221,31 @@ sub do_line
 		{ return($1); }
 	elsif (/(SSL_get_info_callback)/)
 		{ return($1); }
-	elsif ((!$NT) && /(ERR_load_CRYPTO_strings)/)
+	elsif ((!$W32) && /(ERR_load_CRYPTO_strings)/)
 		{ return("ERR_load_CRYPTOlib_strings"); }
-	elsif (!$NT && /BIO_s_file/)
+	elsif (!$W32 && /BIO_s_file/)
 		{ return(undef); }
-	elsif (!$NT && /BIO_new_file/)
+	elsif (!$W32 && /BIO_new_file/)
 		{ return(undef); }
-	elsif (!$NT && /BIO_new_fp/)
+	elsif (!$W32 && /BIO_new_fp/)
 		{ return(undef); }
-	elsif ($NT && /BIO_s_file_internal/)
+	elsif ($W32 && /BIO_s_file_internal/)
 		{ return(undef); }
-	elsif ($NT && /BIO_new_file_internal/)
+	elsif ($W32 && /BIO_new_file_internal/)
 		{ return(undef); }
-	elsif ($NT && /BIO_new_fp_internal/)
+	elsif ($W32 && /BIO_new_fp_internal/)
+		{ return(undef); }
+        elsif (/SSL_add_cert_dir_to_stack/)
+		{ return(undef); }
+	elsif (!$NT && /BIO_s_log/)
 		{ return(undef); }
 	else
 		{
 		/\s\**(\S+)\s*\(/;
-		return($1);
+		$_ = $1;
+		tr/()*//d;
+#print STDERR "$1 : $_\n";
+		return($_);
 		}
 	}
 
@@ -251,7 +263,7 @@ sub print_def_file
 	local(*OUT,$name,*nums,@functions)=@_;
 	local($n)=1;
 
-	if ($NT)
+	if ($W32)
 		{ $name.="32"; }
 	else
 		{ $name.="16"; }
@@ -267,7 +279,7 @@ DESCRIPTION     'OpenSSL $name - http://www.openssl.org/'
 
 EOF
 
-	if (!$NT)
+	if (!$W32)
 		{
 		print <<"EOF";
 CODE            PRELOAD MOVEABLE
@@ -298,7 +310,7 @@ EOF
 		else
 			{
 			$n=$nums{$func};
-			printf OUT "    %s%-40s@%d\n",($NT)?"":"_",$func,$n;
+			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$func,$n;
 			}
 		}
 	printf OUT "\n";

@@ -7,12 +7,13 @@
 
 $INSTALLTOP="/usr/local/ssl";
 
-$ssl_version="0.8.2";
+$ssl_version="0.9.2";
 
 $infile="MINFO";
 
 %ops=(
-	"VC-WIN32",   "Microsoft Visual C++ 4.[01] - Windows NT [34].x",
+	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
 	"VC-WIN16",   "Alias for VC-W31-32",
 	"VC-W31-32",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 386+",
@@ -126,6 +127,8 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 
 # $bin_dir.=$o causes a core dump on my sparc :-(
 
+$NT=0;
+
 push(@INC,"util/pl","pl");
 if ($platform eq "VC-MSDOS")
 	{
@@ -147,6 +150,7 @@ elsif (($platform eq "VC-W31-32") || ($platform eq "VC-WIN16"))
 	}
 elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
+	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
 	}
 elsif ($platform eq "BC-NT")

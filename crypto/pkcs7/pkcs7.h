@@ -419,6 +419,8 @@ int PKCS7_add_crl();
 int PKCS7_content_new();
 int PKCS7_dataVerify();
 BIO *PKCS7_dataInit();
+int PKCS7_dataFinal();
+BIO *PKCS7_dataDecode();
 PKCS7_SIGNER_INFO *PKCS7_add_signature();
 X509 *PKCS7_cert_from_signer_info();
 STACK *PKCS7_get_signer_info();

@@ -62,6 +62,8 @@
 
 */
 
+#if !defined(WIN32) || defined(WINNT)
+
 #include <stdio.h>
 #include <errno.h>
 
@@ -242,3 +244,4 @@ static int xcloselog(BIO* bp)
 	return(1);
 }
 
+#endif

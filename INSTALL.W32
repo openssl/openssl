@@ -4,6 +4,10 @@ Heres a few comments about building OpenSSL in Windows environments. Most of
 this is tested on Win32 but it may also work in Win 3.1 with some modification.
 See the end of this file for Eric's original comments.
 
+Note: the default Win32 environment is to leave out any Windows NT specific
+features: (currently only BIO_s_log()) if you want NT specific features see
+the "Tweaks" section later.
+
 You will need perl for Win32 (which can be got from various sources) and Visual
 C++. 
 
@@ -72,6 +76,11 @@ Tweaks.
 There are various changes you can make to the Win32 compile environment. If you
 have the MASM assembler 'ml' then you can try the assembly language code. To
 do this remove the 'no-asm' part from do_ms.bat.
+
+If you want to enable the NT specific features of OpenSSL (currently only
+the logging BIO) follow the instructions above but call the batch file
+do_nt.bat instead of do_ms.bat. If you do this then you will no longer be able
+to run the OpenSSL binaries under Windows 95 or 98.
 
 You can also build a static version of the library using the Makefile ms\nt.mak
 

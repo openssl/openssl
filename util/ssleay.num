@@ -164,3 +164,6 @@ SSL_CTX_set_cert_store                  181
 SSL_want                                182
 SSL_library_init                        183
 SSL_COMP_add_compression_method         184
+SSL_add_cert_file_to_stack              185
+SSL_set_tmp_rsa_callback                186
+SSL_set_tmp_dh_callback                 187

@@ -58,7 +58,9 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <dirent.h>
+#endif
 #include "objects.h"
 #include "bio.h"
 #include "pem.h"
@@ -381,7 +383,7 @@ int SSL_add_cert_file_to_stack(STACK *stack,const char *file)
 
     in=BIO_new(BIO_s_file_internal());
 
-    if (ret == NULL || in == NULL)
+    if (in == NULL)
 	{
 	SSLerr(SSL_F_SSL_ADD_CERT_FILE_TO_STACK,ERR_R_MALLOC_FAILURE);
 	goto err;
@@ -429,6 +431,8 @@ err:
  * certs may have been added to \c stack.
  */
 
+#ifndef WIN32
+
 int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
     {
     DIR *d=opendir(dir);
@@ -458,3 +462,5 @@ int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
 
     return 1;
     }
+
+#endif

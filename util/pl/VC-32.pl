@@ -26,6 +26,7 @@ if ($debug)
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
+$cflags .= " -DWINNT" if $NT == 1;
 
 $obj='.obj';
 $ofile="/Fo";
