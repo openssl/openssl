@@ -307,7 +307,7 @@ static int bind_aep(ENGINE *e)
 #endif
 
 	/* Ensure the aep error handling is set up */
-	ERR_load_AEP_strings();
+	ERR_load_AEPHK_strings();
 
 	return 1;
 }
@@ -399,10 +399,11 @@ static int aep_init(ENGINE *e)
 	t_AEP_CloseConnection *p8;
 
 	int to_return = 0;
+	AEP_RV rv;
  
 	if(aep_dso != NULL)
 		{
-		AEPerr(AEP_F_AEP_INIT,AEP_R_ALREADY_LOADED);
+		AEPHKerr(AEPHK_F_AEP_INIT,AEPHK_R_ALREADY_LOADED);
 		goto err;
 		}
 	/* Attempt to load libaep.so. */
@@ -411,7 +412,7 @@ static int aep_init(ENGINE *e)
   
 	if(aep_dso == NULL)
 		{
-		AEPerr(AEP_F_AEP_INIT,AEP_R_NOT_LOADED);
+		AEPHKerr(AEPHK_F_AEP_INIT,AEPHK_R_NOT_LOADED);
 		goto err;
 		}
 
@@ -426,7 +427,7 @@ static int aep_init(ENGINE *e)
 		!(p7 = (t_AEP_SetBNCallBacks*) DSO_bind_func( aep_dso,AEP_F7))  ||
 		!(p8 = (t_AEP_CloseConnection*) DSO_bind_func( aep_dso,AEP_F8)))
 		{
-		AEPerr(AEP_F_AEP_INIT,AEP_R_NOT_LOADED);
+		AEPHKerr(AEPHK_F_AEP_INIT,AEPHK_R_NOT_LOADED);
 		goto err;
 		}
 
@@ -469,7 +470,7 @@ static int aep_init(ENGINE *e)
 /* Destructor (complements the "ENGINE_aep()" constructor) */
 static int aep_destroy(ENGINE *e)
 	{
-	ERR_unload_AEP_strings();
+	ERR_unload_AEPHK_strings();
 	return 1;
 	}
 
@@ -480,32 +481,32 @@ static int aep_finish(ENGINE *e)
 
 	if(aep_dso == NULL)
 		{
-		AEPerr(AEP_F_AEP_FINISH,AEP_R_NOT_LOADED);
+		AEPHKerr(AEPHK_F_AEP_FINISH,AEPHK_R_NOT_LOADED);
 		goto err;
 		}
 
 	rv = aep_close_all_connections(0, &in_use);
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_FINISH,AEP_R_CLOSE_HANDLES_FAILED);
+		AEPHKerr(AEPHK_F_AEP_FINISH,AEPHK_R_CLOSE_HANDLES_FAILED);
 		goto err;
 		}
 	if (in_use)
 		{
-		AEPerr(AEP_F_AEP_FINISH,AEP_R_CONNECTIONS_IN_USE);
+		AEPHKerr(AEPHK_F_AEP_FINISH,AEPHK_R_CONNECTIONS_IN_USE);
 		goto err;
 		}
 
 	rv = p_AEP_Finalize();
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_FINISH,AEP_R_FINALIZE_FAILED);
+		AEPHKerr(AEPHK_F_AEP_FINISH,AEPHK_R_FINALIZE_FAILED);
 		goto err;
 		}
 
 	if(!DSO_free(aep_dso))
 		{
-		AEPerr(AEP_F_AEP_FINISH,AEP_R_UNIT_FAILURE);
+		AEPHKerr(AEPHK_F_AEP_FINISH,AEPHK_R_UNIT_FAILURE);
 		goto err;
 		}
 
@@ -534,14 +535,14 @@ static int aep_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case AEP_CMD_SO_PATH:
 		if(p == NULL)
 			{
-			AEPerr(AEP_F_AEP_CTRL,
+			AEPHKerr(AEPHK_F_AEP_CTRL,
 				ERR_R_PASSED_NULL_PARAMETER);
 			return 0;
 			}
 		if(initialised)
 			{
-			AEPerr(AEP_F_AEP_CTRL,
-				AEP_R_ALREADY_LOADED);
+			AEPHKerr(AEPHK_F_AEP_CTRL,
+				AEPHK_R_ALREADY_LOADED);
 			return 0;
 			}
 		AEP_LIBNAME = (const char *)p;
@@ -549,7 +550,7 @@ static int aep_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	default:
 		break;
 		}
-	AEPerr(AEP_F_AEP_CTRL,AEP_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	AEPHKerr(AEPHK_F_AEP_CTRL,AEPHK_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 	return 0;
 	}
 
@@ -564,7 +565,7 @@ static int aep_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_get_connection(&hConnection);
 	if (rv != AEP_R_OK)
 		{     
-		AEPerr(AEP_F_AEP_MOD_EXP,AEP_R_GET_HANDLE_FAILED);
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP,AEPHK_R_GET_HANDLE_FAILED);
 		goto err;
 		}
 
@@ -573,7 +574,7 @@ static int aep_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 	if (rv !=  AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_MOD_EXP,AEP_R_MOD_EXP_FAILED);
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP,AEPHK_R_MOD_EXP_FAILED);
 		rv = aep_return_connection(hConnection);
 		goto err;
 		}
@@ -582,7 +583,7 @@ static int aep_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_return_connection(hConnection);
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_RAND,AEP_R_RETURN_CONNECTION_FAILED); 
+		AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_RETURN_CONNECTION_FAILED); 
 		goto err;
 		}
 
@@ -602,7 +603,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_get_connection(&hConnection);
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_MOD_EXP_CRT,AEP_R_GET_HANDLE_FAILED);
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP_CRT,AEPHK_R_GET_HANDLE_FAILED);
 		goto err;
 		}
 
@@ -611,7 +612,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		(void*)iqmp,(void*)r,NULL);
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_MOD_EXP_CRT,AEP_R_MOD_EXP_CRT_FAILED);
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP_CRT,AEPHK_R_MOD_EXP_CRT_FAILED);
 		rv = aep_return_connection(hConnection);
 		goto err;
 		}
@@ -620,7 +621,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_return_connection(hConnection);
 	if (rv != AEP_R_OK)
 		{
-		AEPerr(AEP_F_AEP_RAND,AEP_R_RETURN_CONNECTION_FAILED); 
+		AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_RETURN_CONNECTION_FAILED); 
 		goto err;
 		}
  
@@ -655,7 +656,7 @@ static int aep_rand(unsigned char *buf,int len )
 		rv = aep_get_connection(&hConnection);
 		if (rv !=  AEP_R_OK)
 			{ 
-			AEPerr(AEP_F_AEP_RAND,AEP_R_GET_HANDLE_FAILED);             
+			AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_GET_HANDLE_FAILED);             
 			goto err_nounlock;
 			}
 
@@ -664,7 +665,7 @@ static int aep_rand(unsigned char *buf,int len )
 			rv = p_AEP_GenRandom(hConnection, len, 2, buf, NULL);
 			if (rv !=  AEP_R_OK)
 				{  
-				AEPerr(AEP_F_AEP_RAND,AEP_R_GET_RANDOM_FAILED); 
+				AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_GET_RANDOM_FAILED); 
 				goto err_nounlock;
 				}
 			}
@@ -675,7 +676,7 @@ static int aep_rand(unsigned char *buf,int len )
 			rv = p_AEP_GenRandom(hConnection, RAND_BLK_SIZE, 2, &rand_block[0], NULL);
 			if (rv !=  AEP_R_OK)
 				{       
-				AEPerr(AEP_F_AEP_RAND,AEP_R_GET_RANDOM_FAILED); 
+				AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_GET_RANDOM_FAILED); 
 	      
 				goto err;
 				}
@@ -691,7 +692,7 @@ static int aep_rand(unsigned char *buf,int len )
 		rv = aep_return_connection(hConnection);
 		if (rv != AEP_R_OK)
 			{
-			AEPerr(AEP_F_AEP_RAND,AEP_R_RETURN_CONNECTION_FAILED); 
+			AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_RETURN_CONNECTION_FAILED); 
 	  
 			goto err_nounlock;
 			}
@@ -722,7 +723,7 @@ static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if (!aep_dso)
 		{
-		AEPerr(AEP_F_AEP_RSA_MOD_EXP,AEP_R_NOT_LOADED);
+		AEPHKerr(AEPHK_F_AEP_RSA_MOD_EXP,AEPHK_R_NOT_LOADED);
 		goto err;
 		}
 
@@ -737,7 +738,7 @@ static int aep_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		{
 		if (!rsa->d || !rsa->n)
 			{
-			AEPerr(AEP_F_AEP_RSA_MOD_EXP,AEP_R_MISSING_KEY_COMPONENTS);
+			AEPHKerr(AEPHK_F_AEP_RSA_MOD_EXP,AEPHK_R_MISSING_KEY_COMPONENTS);
 			goto err;
 			}
  
@@ -830,7 +831,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 
 		if (rv != AEP_R_OK)
 			{
-			AEPerr(AEP_F_AEP_INIT,AEP_R_INIT_FAILURE);
+			AEPHKerr(AEPHK_F_AEP_GET_CONNECTION,AEPHK_R_INIT_FAILURE);
 			recorded_pid = 0;
 			goto end;
 			}
@@ -841,7 +842,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 
 		if (rv != AEP_R_OK)
 			{
-			AEPerr(AEP_F_AEP_INIT,AEP_R_SETBNCALLBACK_FAILURE);
+			AEPHKerr(AEPHK_F_AEP_GET_CONNECTION,AEPHK_R_SETBNCALLBACK_FAILURE);
 			recorded_pid = 0;
 			goto end;
 			}
@@ -863,7 +864,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 
 		if (rv != AEP_R_OK)
 			{
-			AEPerr(AEP_F_AEP_INIT,AEP_R_UNIT_FAILURE);
+			AEPHKerr(AEPHK_F_AEP_GET_CONNECTION,AEPHK_R_UNIT_FAILURE);
 			recorded_pid = 0;
 			goto end;
 			}
@@ -893,7 +894,7 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 
 			if (rv != AEP_R_OK)
 				{	      
-				AEPerr(AEP_F_AEP_INIT,AEP_R_UNIT_FAILURE);
+				AEPHKerr(AEPHK_F_AEP_GET_CONNECTION,AEPHK_R_UNIT_FAILURE);
 				goto end;
 				}
 

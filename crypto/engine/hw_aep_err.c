@@ -64,93 +64,93 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
-static ERR_STRING_DATA AEP_str_functs[]=
+static ERR_STRING_DATA AEPHK_str_functs[]=
 	{
-{ERR_PACK(0,AEP_F_AEP_CTRL,0),	"AEP_CTRL"},
-{ERR_PACK(0,AEP_F_AEP_FINISH,0),	"AEP_FINISH"},
-{ERR_PACK(0,AEP_F_AEP_INIT,0),	"AEP_INIT"},
-{ERR_PACK(0,AEP_F_AEP_MOD_EXP,0),	"AEP_MOD_EXP"},
-{ERR_PACK(0,AEP_F_AEP_MOD_EXP_CRT,0),	"AEP_MOD_EXP_CRT"},
-{ERR_PACK(0,AEP_F_AEP_RAND,0),	"AEP_RAND"},
-{ERR_PACK(0,AEP_F_AEP_RSA_MOD_EXP,0),	"AEP_RSA_MOD_EXP"},
+{ERR_PACK(0,AEPHK_F_AEP_CTRL,0),	"AEP_CTRL"},
+{ERR_PACK(0,AEPHK_F_AEP_FINISH,0),	"AEP_FINISH"},
+{ERR_PACK(0,AEPHK_F_AEP_GET_CONNECTION,0),	"AEP_GET_CONNECTION"},
+{ERR_PACK(0,AEPHK_F_AEP_INIT,0),	"AEP_INIT"},
+{ERR_PACK(0,AEPHK_F_AEP_MOD_EXP,0),	"AEP_MOD_EXP"},
+{ERR_PACK(0,AEPHK_F_AEP_MOD_EXP_CRT,0),	"AEP_MOD_EXP_CRT"},
+{ERR_PACK(0,AEPHK_F_AEP_RAND,0),	"AEP_RAND"},
+{ERR_PACK(0,AEPHK_F_AEP_RSA_MOD_EXP,0),	"AEP_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
-static ERR_STRING_DATA AEP_str_reasons[]=
+static ERR_STRING_DATA AEPHK_str_reasons[]=
 	{
-{AEP_R_ALREADY_LOADED                    ,"already loaded"},
-{AEP_R_CLOSE_HANDLES_FAILED              ,"close handles failed"},
-{AEP_R_CONNECTIONS_IN_USE                ,"connections in use"},
-{AEP_R_CTRL_COMMAND_NOT_IMPLEMENTED      ,"ctrl command not implemented"},
-{AEP_R_FINALIZE_FAILED                   ,"finalize failed"},
-{AEP_R_GENERAL_ERROR                     ,"general error"},
-{AEP_R_GET_HANDLE_FAILED                 ,"get handle failed"},
-{AEP_R_GET_RANDOM_FAILED                 ,"get random failed"},
-{AEP_R_INIT_FAILURE                      ,"init failure"},
-{AEP_R_MISSING_KEY_COMPONENTS            ,"missing key components"},
-{AEP_R_MOD_EXP_CRT_FAILED                ,"mod exp crt failed"},
-{AEP_R_MOD_EXP_FAILED                    ,"mod exp failed"},
-{AEP_R_NOT_LOADED                        ,"not loaded"},
-{AEP_R_OK                                ,"ok"},
-{AEP_R_RETURN_CONNECTION_FAILED          ,"return connection failed"},
-{AEP_R_SETBNCALLBACK_FAILURE             ,"setbncallback failure"},
-{AEP_R_UNIT_FAILURE                      ,"unit failure"},
+{AEPHK_R_ALREADY_LOADED                  ,"already loaded"},
+{AEPHK_R_CLOSE_HANDLES_FAILED            ,"close handles failed"},
+{AEPHK_R_CONNECTIONS_IN_USE              ,"connections in use"},
+{AEPHK_R_CTRL_COMMAND_NOT_IMPLEMENTED    ,"ctrl command not implemented"},
+{AEPHK_R_FINALIZE_FAILED                 ,"finalize failed"},
+{AEPHK_R_GET_HANDLE_FAILED               ,"get handle failed"},
+{AEPHK_R_GET_RANDOM_FAILED               ,"get random failed"},
+{AEPHK_R_INIT_FAILURE                    ,"init failure"},
+{AEPHK_R_MISSING_KEY_COMPONENTS          ,"missing key components"},
+{AEPHK_R_MOD_EXP_CRT_FAILED              ,"mod exp crt failed"},
+{AEPHK_R_MOD_EXP_FAILED                  ,"mod exp failed"},
+{AEPHK_R_NOT_LOADED                      ,"not loaded"},
+{AEPHK_R_OK                              ,"ok"},
+{AEPHK_R_RETURN_CONNECTION_FAILED        ,"return connection failed"},
+{AEPHK_R_SETBNCALLBACK_FAILURE           ,"setbncallback failure"},
+{AEPHK_R_UNIT_FAILURE                    ,"unit failure"},
 {0,NULL}
 	};
 
 #endif
 
-#ifdef AEP_LIB_NAME
-static ERR_STRING_DATA AEP_lib_name[]=
+#ifdef AEPHK_LIB_NAME
+static ERR_STRING_DATA AEPHK_lib_name[]=
         {
-{0	,AEP_LIB_NAME},
+{0	,AEPHK_LIB_NAME},
 {0,NULL}
 	};
 #endif
 
 
-static int AEP_lib_error_code=0;
-static int AEP_error_init=1;
+static int AEPHK_lib_error_code=0;
+static int AEPHK_error_init=1;
 
-static void ERR_load_AEP_strings(void)
+static void ERR_load_AEPHK_strings(void)
 	{
-	if (AEP_lib_error_code == 0)
-		AEP_lib_error_code=ERR_get_next_error_library();
+	if (AEPHK_lib_error_code == 0)
+		AEPHK_lib_error_code=ERR_get_next_error_library();
 
-	if (AEP_error_init)
+	if (AEPHK_error_init)
 		{
-		AEP_error_init=0;
+		AEPHK_error_init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(AEP_lib_error_code,AEP_str_functs);
-		ERR_load_strings(AEP_lib_error_code,AEP_str_reasons);
+		ERR_load_strings(AEPHK_lib_error_code,AEPHK_str_functs);
+		ERR_load_strings(AEPHK_lib_error_code,AEPHK_str_reasons);
 #endif
 
-#ifdef AEP_LIB_NAME
-		AEP_lib_name->error = ERR_PACK(AEP_lib_error_code,0,0);
-		ERR_load_strings(0,AEP_lib_name);
+#ifdef AEPHK_LIB_NAME
+		AEPHK_lib_name->error = ERR_PACK(AEPHK_lib_error_code,0,0);
+		ERR_load_strings(0,AEPHK_lib_name);
 #endif
 		}
 	}
 
-static void ERR_unload_AEP_strings(void)
+static void ERR_unload_AEPHK_strings(void)
 	{
-	if (AEP_error_init == 0)
+	if (AEPHK_error_init == 0)
 		{
 #ifndef OPENSSL_NO_ERR
-		ERR_unload_strings(AEP_lib_error_code,AEP_str_functs);
-		ERR_unload_strings(AEP_lib_error_code,AEP_str_reasons);
+		ERR_unload_strings(AEPHK_lib_error_code,AEPHK_str_functs);
+		ERR_unload_strings(AEPHK_lib_error_code,AEPHK_str_reasons);
 #endif
 
-#ifdef AEP_LIB_NAME
-		ERR_unload_strings(0,AEP_lib_name);
+#ifdef AEPHK_LIB_NAME
+		ERR_unload_strings(0,AEPHK_lib_name);
 #endif
-		AEP_error_init=1;
+		AEPHK_error_init=1;
 		}
 	}
 
-static void ERR_AEP_error(int function, int reason, char *file, int line)
+static void ERR_AEPHK_error(int function, int reason, char *file, int line)
 	{
-	if (AEP_lib_error_code == 0)
-		AEP_lib_error_code=ERR_get_next_error_library();
-	ERR_PUT_error(AEP_lib_error_code,function,reason,file,line);
+	if (AEPHK_lib_error_code == 0)
+		AEPHK_lib_error_code=ERR_get_next_error_library();
+	ERR_PUT_error(AEPHK_lib_error_code,function,reason,file,line);
 	}

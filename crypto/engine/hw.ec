@@ -1,4 +1,4 @@
-L AEP		hw_aep_err.h			hw_aep_err.c
+L AEPHK		hw_aep_err.h			hw_aep_err.c
 L ATALLA	hw_atalla_err.h			hw_atalla_err.c
 L CSWIFT	hw_cswift_err.h			hw_cswift_err.c
 L HWCRHK	hw_ncipher_err.h		hw_ncipher_err.c
