@@ -40,7 +40,7 @@
      and with pssibilities to have yes/no kind of prompts.
      [Richard Levitte]
 
-  *) Change all calls to low level digest routines in the library and
+  +) Change all calls to low level digest routines in the library and
      applications to use EVP. Add missing calls to HMAC_cleanup() and
      don't assume HMAC_CTX can be copied using memcpy().
      [Verdon Walker <VWalker@novell.com>, Steve Henson]
@@ -176,6 +176,11 @@
      a window system and the like.
      [Richard Levitte]
 
+  *) Fix various bugs related to DSA S/MIME verification. Handle missing
+     parameters in DSA public key structures and return an error in the
+     DSA routines if parameters are absent.
+     [Steve Henson]
+
   *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
      in the current directory if neither $RANDFILE nor $HOME was set.
      RAND_file_name() in 0.9.6a returned NULL in this case.  This has
@@ -200,11 +205,6 @@
      by ENGINE_by_id() normally, when it is incremented on the pre-existing
      ENGINE structure.
      [Geoff]
-
-  *) Fix various bugs related to DSA S/MIME verification. Handle missing
-     parameters in DSA public key structures and return an error in the
-     DSA routines if parameters are absent.
-     [Steve Henson]
 
   +) Fix ASN1 decoder when decoding type ANY and V_ASN1_OTHER: since this
      needs to match any other type at all we need to manually clear the
@@ -658,6 +658,7 @@
 
   *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
      was empty.
+     [Steve Henson]
      [This change does not apply to 0.9.7.]
 
   *) Use the cached encoding of an X509_NAME structure rather than
