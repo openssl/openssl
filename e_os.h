@@ -87,6 +87,7 @@ extern "C" {
 #  ifndef MAC_OS_GUSI_SOURCE
 #    define MAC_OS_pre_X
 #    define NO_SYS_TYPES_H
+     typedef long ssize_t;
 #  endif
 #  define NO_SYS_PARAM_H
 #  define NO_CHMOD
