@@ -1,13 +1,18 @@
-#!/usr/local/bin/perl
+#!/usr/my/bin/perl -w
 #
 # generate a .def file
 #
 # It does this by parsing the header files and looking for the
-# non-prototyped functions.
+# prototyped functions: it then prunes the output.
 #
 
 $crypto_num="util/libeay.num";
 $ssl_num=   "util/ssleay.num";
+
+my $do_update = 0;
+my $do_crypto = 0;
+my $do_ssl = 0;
+$rsaref = 0;
 
 $W32=1;
 $NT=0;
@@ -26,11 +31,12 @@ foreach (@ARGV)
 	$do_crypto=1 if $_ eq "libeay";
 	$do_crypto=1 if $_ eq "crypto";
 	$do_update=1 if $_ eq "update";
+	$rsaref=1 if $_ eq "rsaref";
 	}
 
 if (!$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 ]\n";
+	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT ] [rsaref]\n";
 	exit(1);
 	}
 
@@ -84,11 +90,9 @@ $crypto.=" crypto/hmac/hmac.h";
 $crypto.=" crypto/comp/comp.h";
 $crypto.=" crypto/tmdiff.h";
 
-$match{'NOPROTO'}=1;
-$match2{'PERL5'}=1;
-
 @ssl_func = &do_defs("SSLEAY", $ssl);
 @crypto_func = &do_defs("LIBEAY", $crypto);
+
 
 if ($do_update) {
 
@@ -116,99 +120,103 @@ if($do_crypto == 1) {
 
 
 sub do_defs
-	{
-	local($name,$files)=@_;
-	local(@ret);
+{
+	my($name,$files)=@_;
+	my @ret;
+	my %funcs;
 
-	$off=-1;
 	foreach $file (split(/\s+/,$files))
 		{
-#		print STDERR "reading $file\n";
 		open(IN,"<$file") || die "unable to open $file:$!\n";
-		$depth=0;
-		$pr=-1;
-		@np="";
-		$/=undef;
-		$a=<IN>;
-		while (($i=index($a,"/*")) >= 0)
-			{
-			$j=index($a,"*/");
-			last unless ($j >= 0);
-			$a=substr($a,0,$i).substr($a,$j+2);
-		#	print "$i $j\n";
+
+		my $line = "", $def= "";
+		my %tag = (
+			FreeBSD		=> 0,
+			NOPROTO		=> 0,
+			WIN16		=> 0,
+			PERL5		=> 0,
+			_WINDLL		=> 0,
+			NO_FP_API	=> 0,
+			CONST_STRICT	=> 0,
+			TRUE		=> 1,
+		);
+		while(<IN>) {
+			last if (/BEGIN ERROR CODES/);
+			if ($line ne '') {
+				$_ = $line . $_;
+				$line = '';
 			}
-		foreach (split("\n",$a))
-			{
-			if (/^\#\s*ifndef (.*)/)
-				{
+
+			if (/\\$/) {
+				$line = $_;
+				next;
+			}
+
+	    		$cpp = 1 if /^#.*ifdef.*cplusplus/;
+			if ($cpp) {
+				$cpp = 0 if /^#.*endif/;
+				next;
+	    		}
+
+			s/\/\*.*?\*\///gs;                   # ignore comments
+			s/{[^{}]*}//gs;                      # ignore {} blocks
+			if (/^\#\s*ifndef (.*)/) {
 				push(@tag,$1);
 				$tag{$1}=-1;
 				next;
-				}
-			elsif (/^\#\s*if !defined\(([^\)]+)\)/)
-				{
+			} elsif (/^\#\s*if !defined\(([^\)]+)\)/) {
 				push(@tag,$1);
 				$tag{$1}=-1;
 				next;
-				}
-			elsif (/^\#\s*ifdef (.*)/)
-				{
+			} elsif (/^\#\s*ifdef (.*)/) {
 				push(@tag,$1);
 				$tag{$1}=1;
 				next;
-				}
-			elsif (/^\#\s*if defined(.*)/)
-				{
+			} elsif (/^\#\s*if defined(.*)/) {
 				push(@tag,$1);
 				$tag{$1}=1;
 				next;
-				}
-			elsif (/^\#\s*endif/)
-				{
+			} elsif (/^\#\s*endif/) {
 				$tag{$tag[$#tag]}=0;
 				pop(@tag);
 				next;
-				}
-			elsif (/^\#\s*else/)
-				{
-				$t=$tag[$#tag];
+			} elsif (/^\#\s*else/) {
+				my $t=$tag[$#tag];
 				$tag{$t}= -$tag{$t};
 				next;
-				}
-#printf STDERR "$_\n%2d %2d %2d %2d %2d $W32\n",
-#$tag{'NOPROTO'},$tag{'FreeBSD'},$tag{'WIN16'},$tag{'PERL5'},$tag{'NO_FP_API'};
-
-			$t=undef;
-			if (/^extern .*;$/)
-				{ $t=&do_extern($name,$_); }
-			elsif ($safe_stack_def &&
-				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/)
-				{
-				push(@ret,"sk_${1}_new");
-				push(@ret,"sk_${1}_new_null");
-				push(@ret,"sk_${1}_free");
-				push(@ret,"sk_${1}_num");
-				push(@ret,"sk_${1}_value");
-				push(@ret,"sk_${1}_set");
-				push(@ret,"sk_${1}_zero");
-				push(@ret,"sk_${1}_push");
-				push(@ret,"sk_${1}_pop");
-				push(@ret,"sk_${1}_find");
-				push(@ret,"sk_${1}_delete");
-				push(@ret,"sk_${1}_delete_ptr");
-				push(@ret,"sk_${1}_set_cmp_func");
-				push(@ret,"sk_${1}_dup");
-				push(@ret,"sk_${1}_pop_free");
-				push(@ret,"sk_${1}_shift");
-				}
-			elsif ($safe_stack_def &&
-				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/)
-				{
-				push(@ret,"d2i_ASN1_SET_OF_${1}");
-				push(@ret,"i2d_ASN1_SET_OF_${1}");
-				}
-			elsif (($tag{'NOPROTO'} == 1) &&
+			} elsif (/^\#\s*if\s+1/) {
+				# Dummy tag
+				push(@tag,"TRUE");
+				$tag{"TRUE"}=1;
+				next;
+			} elsif (/^\#/) {
+				next;
+			}
+			if ($safe_stack_def &&
+				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				$funcs{"sk_${1}_new"} = 1;
+				$funcs{"sk_${1}_new_null"} = 1;
+				$funcs{"sk_${1}_free"} = 1;
+				$funcs{"sk_${1}_num"} = 1;
+				$funcs{"sk_${1}_value"} = 1;
+				$funcs{"sk_${1}_set"} = 1;
+				$funcs{"sk_${1}_zero"} = 1;
+				$funcs{"sk_${1}_push"} = 1;
+				$funcs{"sk_${1}_pop"} = 1;
+				$funcs{"sk_${1}_find"} = 1;
+				$funcs{"sk_${1}_delete"} = 1;
+				$funcs{"sk_${1}_delete_ptr"} = 1;
+				$funcs{"sk_${1}_set_cmp_func"} = 1;
+				$funcs{"sk_${1}_dup"} = 1;
+				$funcs{"sk_${1}_pop_free"} = 1;
+				$funcs{"sk_${1}_shift"} = 1;
+			} elsif ($safe_stack_def &&
+				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
+				$funcs{"d2i_ASN1_SET_OF_${1}"} = 1;
+				$funcs{"i2d_ASN1_SET_OF_${1}"} = 1;
+			} elsif ( 
 				($tag{'FreeBSD'} != 1) &&
+				($tag{'CONST_STRICT'} != 1) &&
 				(($W32 && ($tag{'WIN16'} != 1)) ||
 				 (!$W32 && ($tag{'WIN16'} != -1))) &&
 				($tag{'PERL5'} != 1) &&
@@ -217,80 +225,71 @@ sub do_defs
 				 ($W32 && $tag{'_WINDLL'} != 1)) &&
 				((($tag{'NO_FP_API'} != 1) && $W32) ||
 				 (($tag{'NO_FP_API'} != -1) && !$W32)))
-				{ $t=&do_line($name,$_); }
-			else
-				{ $t=undef; }
-			if (($t ne undef) && (!$done{$name,$t}))
 				{
-				$done{$name,$t}++;
-				push(@ret,$t);
-#printf STDERR "one:$t\n" if $t =~ /BIO_/;
+					if (/{|\/\*/) { # }
+						$line = $_;
+					} else {
+						$def .= $_;
+					}
 				}
 			}
 		close(IN);
+
+		foreach (split /;/, $def) {
+			s/^[\n\s]*//g;
+			s/[\n\s]*$//g;
+			next if(/typedef\W/);
+			if (/\(\*(\w*)\([^\)]+/) {
+				$funcs{$1} = 1;
+			} elsif (/\w+\W+(\w+)\W*\(\s*\)$/s) {
+				# K&R C
+				next;
+			} elsif (/\w+\W+\w+\W*\(.*\)$/s) {
+				while (not /\(\)$/s) {
+					s/[^\(\)]*\)$/\)/s;
+					s/\([^\(\)]*\)\)$/\)/s;
+				}
+				s/\(void\)//;
+				/(\w+)\W*\(\)/s;
+				$funcs{$1} = 1;
+			} elsif (/\(/ and not (/=/)) {
+				print STDERR "File $file: cannot parse: $_;\n";
+			}
 		}
+	}
+
+	# Prune the returned functions
+
+        delete $funcs{"SSL_add_dir_cert_subjects_to_stack"};
+        delete $funcs{"des_crypt"};
+        delete $funcs{"RSA_PKCS1_RSAref"} unless $rsaref;
+
+	if($W32) {
+		delete $funcs{"BIO_s_file_internal"};
+		delete $funcs{"BIO_new_file_internal"};
+		delete $funcs{"BIO_new_fp_internal"};
+	} else {
+		if(exists $funcs{"ERR_load_CRYPTO_strings"}) {
+			delete $funcs{"ERR_load_CRYPTO_strings"};
+			$funcs{"ERR_load_CRYPTOlib_strings"} = 1;
+		}
+		delete $funcs{"BIO_s_file"};
+		delete $funcs{"BIO_new_file"};
+		delete $funcs{"BIO_new_fp"};
+	}
+	if (!$NT) {
+		delete $funcs{"BIO_s_log"};
+	}
+
+	push @ret, keys %funcs;
+
 	return(@ret);
-	}
-
-sub do_line
-	{
-	local($file,$_)=@_;
-	local($n);
-
-	return(undef) if /^$/;
-	return(undef) if /^\s/;
-#printf STDERR "two:$_\n" if $_ =~ /BIO_/;
-	if (/(CRYPTO_get_locking_callback)/)
-		{ return($1); }
-	elsif (/(CRYPTO_get_id_callback)/)
-		{ return($1); }
-	elsif (/(CRYPTO_get_add_lock_callback)/)
-		{ return($1); }
-	elsif (/(SSL_CTX_get_verify_callback)/)
-		{ return($1); }
-	elsif (/(SSL_get_info_callback)/)
-		{ return($1); }
-	elsif ((!$W32) && /(ERR_load_CRYPTO_strings)/)
-		{ return("ERR_load_CRYPTOlib_strings"); }
-	elsif (!$W32 && /BIO_s_file/)
-		{ return(undef); }
-	elsif (!$W32 && /BIO_new_file/)
-		{ return(undef); }
-	elsif (!$W32 && /BIO_new_fp/)
-		{ return(undef); }
-	elsif ($W32 && /BIO_s_file_internal/)
-		{ return(undef); }
-	elsif ($W32 && /BIO_new_file_internal/)
-		{ return(undef); }
-	elsif ($W32 && /BIO_new_fp_internal/)
-		{ return(undef); }
-        elsif (/SSL_add_dir_cert_subjects_to_stack/)
-		{ return(undef); }
-	elsif (!$NT && /BIO_s_log/)
-		{ return(undef); }
-	else
-		{
-		/\s\**(\S+)\s*\(/;
-		$_ = $1;
-		tr/()*//d;
-#print STDERR "$1 : $_\n";
-		return($_);
-		}
-	}
-
-sub do_extern
-	{
-	local($file,$_)=@_;
-	local($n);
-
-	/\s\**(\S+);$/;
-	return($1);
-	}
+}
 
 sub print_def_file
-	{
-	local(*OUT,$name,*nums,@functions)=@_;
-	local($n)=1;
+{
+	(*OUT,my $name,*nums,@functions)=@_;
+	my $n =1;
 
 	if ($W32)
 		{ $name.="32"; }
@@ -308,8 +307,7 @@ DESCRIPTION     'OpenSSL $name - http://www.openssl.org/'
 
 EOF
 
-	if (!$W32)
-		{
+	if (!$W32) {
 		print <<"EOF";
 CODE            PRELOAD MOVEABLE
 DATA            PRELOAD MOVEABLE SINGLE
@@ -320,7 +318,7 @@ HEAPSIZE	4096
 STACKSIZE	8192
 
 EOF
-		}
+	}
 
 	print "EXPORTS\n";
 
@@ -329,59 +327,52 @@ EOF
 	(@r)=grep(!/^SSLeay/,@functions);
 	@functions=((sort @e),(sort @r));
 
-	foreach $func (@functions)
-		{
-		if (!defined($nums{$func}))
-			{
+	foreach $func (@functions) {
+		if (!defined($nums{$func})) {
 			printf STDERR "$func does not have a number assigned\n"
 					if(!$do_update);
-			}
-		else
-			{
+		} else {
 			$n=$nums{$func};
 			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$func,$n;
-			}
 		}
-	printf OUT "\n";
 	}
+	printf OUT "\n";
+}
 
 sub load_numbers
-	{
-	local($name)=@_;
-	local($j,@a,%ret);
+{
+	my($name)=@_;
+	my(@a,%ret);
 
 	$max_num = 0;
 
 	open(IN,"<$name") || die "unable to open $name:$!\n";
-	while (<IN>)
-		{
+	while (<IN>) {
 		chop;
 		s/#.*$//;
 		next if /^\s*$/;
 		@a=split;
 		$ret{$a[0]}=$a[1];
 		$max_num = $a[1] if $a[1] > $max_num;
-		}
+	}
 	close(IN);
 	return(%ret);
-	}
+}
 
 sub update_numbers
-	{
-	local(*OUT,$name,*nums,$start_num, @functions)=@_;
+{
+	(*OUT,$name,*nums,my $start_num, my @functions)=@_;
 	my $new_funcs = 0;
 	print STDERR "Updating $name\n";
-	foreach $func (@functions)
-		{
-		if (!defined($nums{$func}))
-			{
+	foreach $func (@functions) {
+		if (!exists $nums{$func}) {
 			$new_funcs++;
 			printf OUT "%s%-40s%d\n","",$func, ++$start_num;
-			}
 		}
+	}
 	if($new_funcs) {
 		print STDERR "$new_funcs New Functions added\n";
 	} else {
 		print STDERR "No New Functions Added\n";
 	}
-	}
+}
