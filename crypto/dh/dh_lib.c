@@ -120,13 +120,13 @@ DH *DH_new_method(DH_METHOD *meth)
 	ret->method_mont_p=NULL;
 	ret->references = 1;
 	ret->flags=ret->meth->flags;
+	CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+		CRYPTO_free_ex_data(dh_meth,ret,&ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -147,9 +147,9 @@ void DH_free(DH *r)
 	}
 #endif
 
-	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
-
 	if(r->meth->finish) r->meth->finish(r);
+
+	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
