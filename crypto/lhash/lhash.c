@@ -455,7 +455,7 @@ unsigned long lh_strhash(const char *c)
 	return((ret>>16)^ret);
 	}
 
-unsigned long lh_num_items(LHASH *lh)
+unsigned long lh_num_items(const LHASH *lh)
 	{
 	return lh ? lh->num_items : 0;
 	}

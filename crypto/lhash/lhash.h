@@ -128,18 +128,18 @@ void *lh_retrieve(LHASH *lh, void *data);
     void lh_doall(LHASH *lh, void (*func)(/*void *b*/));
 void lh_doall_arg(LHASH *lh, void (*func)(/*void *a,void *b*/),void *arg);
 unsigned long lh_strhash(const char *c);
-unsigned long lh_num_items(LHASH *lh);
+unsigned long lh_num_items(const LHASH *lh);
 
 #ifndef NO_FP_API
-void lh_stats(LHASH *lh, FILE *out);
-void lh_node_stats(LHASH *lh, FILE *out);
-void lh_node_usage_stats(LHASH *lh, FILE *out);
+void lh_stats(const LHASH *lh, FILE *out);
+void lh_node_stats(const LHASH *lh, FILE *out);
+void lh_node_usage_stats(const LHASH *lh, FILE *out);
 #endif
 
 #ifndef NO_BIO
-void lh_stats_bio(LHASH *lh, BIO *out);
-void lh_node_stats_bio(LHASH *lh, BIO *out);
-void lh_node_usage_stats_bio(LHASH *lh, BIO *out);
+void lh_stats_bio(const LHASH *lh, BIO *out);
+void lh_node_stats_bio(const LHASH *lh, BIO *out);
+void lh_node_usage_stats_bio(const LHASH *lh, BIO *out);
 #endif
 #ifdef  __cplusplus
 }

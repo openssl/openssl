@@ -139,7 +139,7 @@ void lh_node_usage_stats(LHASH *lh, FILE *out)
 #else
 
 #ifndef NO_FP_API
-void lh_stats(LHASH *lh, FILE *fp)
+void lh_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -151,7 +151,7 @@ void lh_stats(LHASH *lh, FILE *fp)
 end:;
 	}
 
-void lh_node_stats(LHASH *lh, FILE *fp)
+void lh_node_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -163,7 +163,7 @@ void lh_node_stats(LHASH *lh, FILE *fp)
 end:;
 	}
 
-void lh_node_usage_stats(LHASH *lh, FILE *fp)
+void lh_node_usage_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -177,7 +177,7 @@ end:;
 
 #endif
 
-void lh_stats_bio(LHASH *lh, BIO *out)
+void lh_stats_bio(const LHASH *lh, BIO *out)
 	{
 	char buf[128];
 
@@ -225,7 +225,7 @@ void lh_stats_bio(LHASH *lh, BIO *out)
 #endif
 	}
 
-void lh_node_stats_bio(LHASH *lh, BIO *out)
+void lh_node_stats_bio(const LHASH *lh, BIO *out)
 	{
 	LHASH_NODE *n;
 	unsigned int i,num;
@@ -240,7 +240,7 @@ void lh_node_stats_bio(LHASH *lh, BIO *out)
 		}
 	}
 
-void lh_node_usage_stats_bio(LHASH *lh, BIO *out)
+void lh_node_usage_stats_bio(const LHASH *lh, BIO *out)
 	{
 	LHASH_NODE *n;
 	unsigned long num;
