@@ -115,7 +115,7 @@ static int prompt_info(X509_REQ *req,
 		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs);
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
 				STACK_OF(CONF_VALUE) *attr, int attribs);
-static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
+static int add_attribute_object(X509_REQ *req, char *text,
 				char *def, char *value, int nid, int min,
 				int max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
@@ -123,7 +123,7 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 #ifndef NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
-static int req_fix_data(int nid,int *type,int len,int min,int max);
+static int req_check_len(int len,int min,int max);
 static int check_end(char *str, char *end);
 static int add_oid_section(LHASH *conf);
 #ifndef MONOLITH
@@ -940,115 +940,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	if(no_prompt) i = auto_info(req, dn_sk, attr_sk, attribs);
 	else i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs);
 	if(!i) goto err;
-#if 0
-	BIO_printf(bio_err,"You are about to be asked to enter information that will be incorporated\n");
-	BIO_printf(bio_err,"into your certificate request.\n");
-	BIO_printf(bio_err,"What you are about to enter is what is called a Distinguished Name or a DN.\n");
-	BIO_printf(bio_err,"There are quite a few fields but you can leave some blank\n");
-	BIO_printf(bio_err,"For some fields there will be a default value,\n");
-	BIO_printf(bio_err,"If you enter '.', the field will be left blank.\n");
-	BIO_printf(bio_err,"-----\n");
 
-
-	if (sk_CONF_VALUE_num(sk))
-		{
-		i= -1;
-start:		for (;;)
-			{
-			i++;
-			if (sk_CONF_VALUE_num(sk) <= i) break;
-
-			v=sk_CONF_VALUE_value(sk,i);
-			p=q=NULL;
-			type=v->name;
-			if(!check_end(type,"_min") || !check_end(type,"_max") ||
-				!check_end(type,"_default") ||
-					 !check_end(type,"_value")) continue;
-			/* Skip past any leading X. X: X, etc to allow for
-			 * multiple instances 
-			 */
-			for(p = v->name; *p ; p++) 
-				if ((*p == ':') || (*p == ',') ||
-							 (*p == '.')) {
-					p++;
-					if(*p) type = p;
-					break;
-				}
-			/* If OBJ not recognised ignore it */
-			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
-			sprintf(buf,"%s_default",v->name);
-			if ((def=CONF_get_string(req_conf,tmp,buf)) == NULL)
-				def="";
-				
-			sprintf(buf,"%s_value",v->name);
-			if ((value=CONF_get_string(req_conf,tmp,buf)) == NULL)
-				value=NULL;
-
-			sprintf(buf,"%s_min",v->name);
-			min=(int)CONF_get_number(req_conf,tmp,buf);
-
-			sprintf(buf,"%s_max",v->name);
-			max=(int)CONF_get_number(req_conf,tmp,buf);
-
-			if (!add_DN_object(ri->subject,v->value,def,value,nid,
-				min,max))
-				goto err;
-			}
-		if (sk_X509_NAME_ENTRY_num(ri->subject->entries) == 0)
-			{
-			BIO_printf(bio_err,"error, no objects specified in config file\n");
-			goto err;
-			}
-
-		if (attribs)
-			{
-			if ((attr != NULL) && (sk_CONF_VALUE_num(attr) > 0))
-				{
-				BIO_printf(bio_err,"\nPlease enter the following 'extra' attributes\n");
-				BIO_printf(bio_err,"to be sent with your certificate request\n");
-				}
-
-			i= -1;
-start2:			for (;;)
-				{
-				i++;
-				if ((attr == NULL) ||
-					    (sk_CONF_VALUE_num(attr) <= i))
-					break;
-
-				v=sk_CONF_VALUE_value(attr,i);
-				type=v->name;
-				if ((nid=OBJ_txt2nid(type)) == NID_undef)
-					goto start2;
-
-				sprintf(buf,"%s_default",type);
-				if ((def=CONF_get_string(req_conf,tmp_attr,buf))
-					== NULL)
-					def="";
-				
-				sprintf(buf,"%s_value",type);
-				if ((value=CONF_get_string(req_conf,tmp_attr,buf))
-					== NULL)
-					value=NULL;
-
-				sprintf(buf,"%s_min",type);
-				min=(int)CONF_get_number(req_conf,tmp_attr,buf);
-
-				sprintf(buf,"%s_max",type);
-				max=(int)CONF_get_number(req_conf,tmp_attr,buf);
-
-				if (!add_attribute_object(ri->attributes,
-					v->value,def,value,nid,min,max))
-					goto err;
-				}
-			}
-		}
-	else
-		{
-		BIO_printf(bio_err,"No template, please set one up.\n");
-		goto err;
-		}
-#endif
 	X509_REQ_set_pubkey(req,pkey);
 
 	ret=1;
@@ -1165,7 +1057,7 @@ start2:			for (;;)
 				sprintf(buf,"%s_max",type);
 				max=(int)CONF_get_number(req_conf,attr_sect,buf);
 
-				if (!add_attribute_object(req->req_info->attributes,
+				if (!add_attribute_object(req,
 					v->value,def,value,nid,min,max))
 					return 0;
 				}
@@ -1216,56 +1108,15 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 			BIO_printf(bio_err,"error, no objects specified in config file\n");
 			return 0;
 			}
-#if 0
 		if (attribs)
 			{
-			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0))
+			for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++)
 				{
-				BIO_printf(bio_err,"\nPlease enter the following 'extra' attributes\n");
-				BIO_printf(bio_err,"to be sent with your certificate request\n");
-				}
-
-			i= -1;
-start2:			for (;;)
-				{
-				i++;
-				if ((attr_sk == NULL) ||
-					    (sk_CONF_VALUE_num(attr_sk) <= i))
-					break;
-
 				v=sk_CONF_VALUE_value(attr_sk,i);
-				type=v->name;
-				if ((nid=OBJ_txt2nid(type)) == NID_undef)
-					goto start2;
-
-				sprintf(buf,"%s_default",type);
-				if ((def=CONF_get_string(req_conf,attr_sect,buf))
-					== NULL)
-					def="";
-				
-				sprintf(buf,"%s_value",type);
-				if ((value=CONF_get_string(req_conf,attr_sect,buf))
-					== NULL)
-					value=NULL;
-
-				sprintf(buf,"%s_min",type);
-				min=(int)CONF_get_number(req_conf,attr_sect,buf);
-
-				sprintf(buf,"%s_max",type);
-				max=(int)CONF_get_number(req_conf,attr_sect,buf);
-
-				if (!add_attribute_object(ri->attributes,
-					v->value,def,value,nid,min,max))
-					return 0;
+				if(!X509_REQ_radd_attr_by_txt(req, v->name, MBSTRING_ASC,
+					(unsigned char *)v->value, -1)) return 0;
 				}
 			}
-		}
-	else
-		{
-		BIO_printf(bio_err,"No template, please set one up.\n");
-		return 0;
-		}
-#endif
 	return 1;
 	}
 
@@ -1275,7 +1126,7 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	{
 	int i,ret=0;
 	MS_STATIC char buf[1024];
-
+start:
 	BIO_printf(bio_err,"%s [%s]:",text,def);
 	(void)BIO_flush(bio_err);
 	if (value != NULL)
@@ -1311,7 +1162,7 @@ static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, i);
 #endif
-	if(!req_fix_data(-1, NULL, i, min, max)) goto err;
+	if(!req_check_len(i, min, max)) goto start;
 	if (!X509_NAME_add_entry_by_NID(n,nid, MBSTRING_ASC,
 				(unsigned char *) buf, -1,-1,0)) goto err;
 	ret=1;
@@ -1319,15 +1170,12 @@ err:
 	return(ret);
 	}
 
-static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
+static int add_attribute_object(X509_REQ *req, char *text,
 				char *def, char *value, int nid, int min,
 				int max)
 	{
-	int i,z;
-	X509_ATTRIBUTE *xa=NULL;
+	int i;
 	static char buf[1024];
-	ASN1_BIT_STRING *bs=NULL;
-	ASN1_TYPE *at=NULL;
 
 start:
 	BIO_printf(bio_err,"%s [%s]:",text,def);
@@ -1361,47 +1209,17 @@ start:
 		return(0);
 		}
 	buf[--i]='\0';
+	if(!req_check_len(i, min, max)) goto start;
 
-	/* add object plus value */
-	if ((xa=X509_ATTRIBUTE_new()) == NULL)
+	if(!X509_REQ_radd_attr_by_NID(req, nid, MBSTRING_ASC,
+					(unsigned char *)buf, -1)) {
+		BIO_printf(bio_err, "Error adding attribute\n");
+		ERR_print_errors(bio_err);
 		goto err;
-	if ((xa->value.set=sk_ASN1_TYPE_new_null()) == NULL)
-		goto err;
-	xa->set=1;
+	}
 
-	if (xa->object != NULL) ASN1_OBJECT_free(xa->object);
-	xa->object=OBJ_nid2obj(nid);
-
-	if ((bs=ASN1_BIT_STRING_new()) == NULL) goto err;
-
-	bs->type=ASN1_PRINTABLE_type((unsigned char *)buf,-1);
-
-	z=req_fix_data(nid,&bs->type,i,min,max);
-	if (z == 0)
-		{
-		if (value == NULL)
-			goto start;
-		else	goto err;
-		}
-
-	if (!ASN1_STRING_set(bs,(unsigned char *)buf,i))
-		{ BIO_printf(bio_err,"Malloc failure\n"); goto err; }
-
-	if ((at=ASN1_TYPE_new()) == NULL)
-		{ BIO_printf(bio_err,"Malloc failure\n"); goto err; }
-
-	ASN1_TYPE_set(at,bs->type,(char *)bs);
-	sk_ASN1_TYPE_push(xa->value.set,at);
-	bs=NULL;
-	at=NULL;
-	/* only one item per attribute */
-
-	if (!sk_X509_ATTRIBUTE_push(n,xa)) goto err;
 	return(1);
 err:
-	if (xa != NULL) X509_ATTRIBUTE_free(xa);
-	if (at != NULL) ASN1_TYPE_free(at);
-	if (bs != NULL) ASN1_BIT_STRING_free(bs);
 	return(0);
 	}
 
@@ -1422,26 +1240,8 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	}
 #endif
 
-static int req_fix_data(int nid, int *type, int len, int min, int max)
+static int req_check_len(int len, int min, int max)
 	{
-	if(type) {
-		if (nid == NID_pkcs9_emailAddress)
-			*type=V_ASN1_IA5STRING;
-		if ((nid == NID_commonName) && (*type == V_ASN1_IA5STRING))
-			*type=V_ASN1_T61STRING;
-		if ((nid == NID_pkcs9_challengePassword) &&
-			(*type == V_ASN1_IA5STRING))
-			*type=V_ASN1_T61STRING;
-
-		if ((nid == NID_pkcs9_unstructuredName) &&
-			(*type == V_ASN1_T61STRING))
-			{
-			BIO_printf(bio_err,"invalid characters in string, please re-enter the string\n");
-			return(0);
-			}
-		if (nid == NID_pkcs9_unstructuredName)
-			*type=V_ASN1_IA5STRING;
-	}
 	if (len < min)
 		{
 		BIO_printf(bio_err,"string is too short, it needs to be at least %d bytes long\n",min);

@@ -123,7 +123,6 @@ STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr(STACK_OF(X509_ATTRIBUTE) **x,
 					 X509_ATTRIBUTE *attr)
 {
 	X509_ATTRIBUTE *new_attr=NULL;
-	int n;
 	STACK_OF(X509_ATTRIBUTE) *sk=NULL;
 
 	if ((x != NULL) && (*x == NULL))
@@ -133,8 +132,6 @@ STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr(STACK_OF(X509_ATTRIBUTE) **x,
 		}
 	else
 		sk= *x;
-
-	n=sk_X509_ATTRIBUTE_num(sk);
 
 	if ((new_attr=X509_ATTRIBUTE_dup(attr)) == NULL)
 		goto err2;
@@ -247,6 +244,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
 		{
 		X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_TXT,
 						X509_R_INVALID_FIELD_NAME);
+		ERR_add_error_data(2, "name=", atrname);
 		return(NULL);
 		}
 	nattr = X509_ATTRIBUTE_create_by_OBJ(attr,obj,type,bytes,len);
@@ -273,7 +271,7 @@ int X509_ATTRIBUTE_rset_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int
 		stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
 						OBJ_obj2nid(attr->object));
 		if(!stmp) {
-			X509err(X509_F_X509_ATTRIBUTE_ISET_DATA, ERR_R_ASN1_LIB);
+			X509err(X509_F_X509_ATTRIBUTE_RSET_DATA, ERR_R_ASN1_LIB);
 			return 0;
 		}
 		atype = stmp->type;
@@ -286,10 +284,10 @@ int X509_ATTRIBUTE_rset_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
 	attr->set = 1;
-	ASN1_TYPE_set(ttmp, atype, data);
+	ASN1_TYPE_set(ttmp, atype, stmp);
 	return 1;
 	err:
-	X509err(X509_F_X509_ATTRIBUTE_ISET_DATA, ERR_R_MALLOC_FAILURE);
+	X509err(X509_F_X509_ATTRIBUTE_RSET_DATA, ERR_R_MALLOC_FAILURE);
 	return 0;
 }
 

@@ -142,14 +142,14 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		return -1;
 	}
 
-	if(minsize && (nchar < minsize)) {
+	if((minsize > 0) && (nchar < minsize)) {
 		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ASN1_R_STRING_TOO_SHORT);
 		sprintf(strbuf, "%ld", minsize);
 		ERR_add_error_data(2, "minsize=", strbuf);
 		return -1;
 	}
 
-	if(maxsize && (nchar > maxsize)) {
+	if((maxsize > 0) && (nchar > maxsize)) {
 		ASN1err(ASN1_F_ASN1_MBSTRING_COPY, ASN1_R_STRING_TOO_LONG);
 		sprintf(strbuf, "%ld", maxsize);
 		ERR_add_error_data(2, "maxsize=", strbuf);

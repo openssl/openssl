@@ -245,7 +245,7 @@ placed and read from. It is used for private key generation.
 
 If this is set to B<no> then if a private key is generated it is
 B<not> encrypted. This is equivalent to the B<-nodes> command line
-option. For compatibility B<encrypt_rsai_key> is an equivalent option.
+option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
 
@@ -279,24 +279,48 @@ this specifies the configuration file section containing a list of
 extensions to add to certificate generated when the B<-x509> switch
 is used. It can be overridden by the B<-extensions> command line switch.
 
+=item B<prompt>
+
+if set to the value B<no> this disables prompting of certificate fields
+and just takes values from the config file directly. It also changes the
+expected format of the B<distinguished_name> and B<attributes> sections.
+
 =item B<attributes>
 
 this specifies the section containing any request attributes: its format
-is the same as B<distinguished_name> described below. Typically these
-may contain the challengePassword or unstructuredName types. They are
-currently ignored by OpenSSL's request signing utilities but some CAs
-might want them.
+is the same as B<distinguished_name>. Typically these may contain the
+challengePassword or unstructuredName types. They are currently ignored
+by OpenSSL's request signing utilities but some CAs might want them.
 
 =item B<distinguished_name>
 
 This specifies the section containing the distinguished name fields to
-prompt for when generating a certificate or certificate request. This
-consists of lines of the form:
+prompt for when generating a certificate or certificate request. The format
+is described in the next section.
 
-	fieldName="prompt"
-	fieldName_default="default field value"
-	fieldName_min= 2
-	fieldName_max= 4
+=back
+
+=head1 DISTINGUISHED NAME AND ATTRIBUTE SECTION FORMAT
+
+There are two separate formats for the distinguished name and attribute
+sections. If the B<prompt> option is set to B<no> then these sections
+just consist of field names and values: for example,
+
+ CN=My Name
+ OU=My Organization
+ emailAddress=someone@somehere.org
+
+This allows external programs (e.g. GUI based) to generate a template file
+with all the field names and values and just pass it to B<req>. An example
+of this kind of configuration files is contained in the B<EXAMPLES> section.
+
+Alternatively if the B<prompt> option is absent or not set to B<no> the the
+file contains field prompting information. It consists of lines of the form:
+
+ fieldName="prompt"
+ fieldName_default="default field value"
+ fieldName_min= 2
+ fieldName_max= 4
 
 "fieldName" is the field name being used, for example commonName (or CN).
 The "prompt" string is used to ask the user to enter the relevant
@@ -312,7 +336,7 @@ two characters long and must fit in a PrintableString).
 
 Some fields (such as organizationName) can be used more than once
 in a DN. This presents a problem because configuration files will
-not recognise the same name occurring twice. To avoid this problem
+not recognize the same name occurring twice. To avoid this problem
 if the fieldName contains an some characters followed by a full stop
 they will be ignored. So for example a second organizationName can
 be input by calling it "1.organizationName".
@@ -328,7 +352,6 @@ Additional object identifiers can be defined with the B<oid_file> or
 B<oid_section> options in the configuration file. Any additional fields
 will be treated as though they were a DirectoryString.
 
-=back
 
 =head1 EXAMPLES
 
@@ -360,7 +383,7 @@ expansion:
  testoid1=1.2.3.5
  testoid2=${testoid1}.6
 
-Sample configuration file:
+Sample configuration file prompting for field values:
 
  [ req ]
  default_bits		= 1024
@@ -374,8 +397,8 @@ Sample configuration file:
  [ req_distinguished_name ]
  countryName			= Country Name (2 letter code)
  countryName_default		= AU
- countryName_min			= 2
- countryName_max			= 2
+ countryName_min		= 2
+ countryName_max		= 2
 
  localityName			= Locality Name (eg, city)
 
@@ -397,6 +420,32 @@ Sample configuration file:
  subjectKeyIdentifier=hash
  authorityKeyIdentifier=keyid:always,issuer:always
  basicConstraints = CA:true
+
+Sample configuration containing all field values:
+
+
+ RANDFILE		= $ENV::HOME/.rnd
+
+ [ req ]
+ default_bits		= 1024
+ default_keyfile 	= keyfile.pem
+ distinguished_name	= req_distinguished_name
+ attributes		= req_attributes
+ prompt			= no
+ output_password	= mypass
+
+ [ req_distinguished_name ]
+ C			= GB
+ ST			= Test State or Province
+ L			= Test Locality
+ O			= Organization Name
+ OU			= Organizational Unit Name
+ CN			= Common Name
+ emailAddress		= test@email.address
+
+ [ req_attributes ]
+ challengePassword		= A challenge password
+
 
 =head1 NOTES
 
@@ -469,18 +518,10 @@ accented characters in OpenSSL is to use a BMPString: unfortunately Netscape
 currently chokes on these. If you have to use accented characters with Netscape
 and MSIE then you currently need to use the invalid T61String form.
 
-The current prompting is not very friendly. It exits if you get the strings
-wrong and doesn't allow you to confirm what you've just entered. Other things
-like extensions in certificate requests are statically defined in the configuration
-file. Some of these: like an email address in subjectAltName should be input
-by the user.
-
-There should be a way to have a friendly front end (e.g. perl script or GUI)
-handle all user input and then just feed a "template" file into B<req> which
-then silently creates the request or certificate. This would also shift the
-responsibility for handling such problems as internationalisation of characters
-onto the front end: the template could then just expect valid UTF8 character
-strings for example.
+The current prompting is not very friendly. It doesn't allow you to confirm what
+you've just entered. Other things like extensions in certificate requests are
+statically defined in the configuration file. Some of these: like an email
+address in subjectAltName should be input by the user.
 
 =head1 SEE ALSO
 

@@ -330,7 +330,7 @@ destest.o: ../include/openssl/opensslconf.h
 dhtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-dhtest.o: ../include/openssl/stack.h
+dhtest.o: ../include/openssl/rand.h ../include/openssl/stack.h
 dsatest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dsatest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dsatest.o: ../include/openssl/dsa.h ../include/openssl/err.h
@@ -383,11 +383,12 @@ ssltest.o: ../include/openssl/md2.h ../include/openssl/md5.h
 ssltest.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
 ssltest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ssltest.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-ssltest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
-ssltest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-ssltest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-ssltest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-ssltest.o: ../include/openssl/stack.h ../include/openssl/tls1.h
-ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+ssltest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+ssltest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+ssltest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+ssltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ssltest.o: ../include/openssl/sha.h ../include/openssl/ssl.h
+ssltest.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+ssltest.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+ssltest.o: ../include/openssl/x509_vfy.h

@@ -765,9 +765,26 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
+*** debug-steve
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Wshadow -pipe
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+
 *** debug-ulf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -Wall  -pedantic -Wall -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 

@@ -283,6 +283,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 		{
 		X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_TXT,
 						X509_R_INVALID_FIELD_NAME);
+		ERR_add_error_data(2, "name=", field);
 		return(NULL);
 		}
 	nentry = X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len);

@@ -2178,3 +2178,17 @@ BIO_number_written                      2202
 BIO_number_read                         2203
 X509_STORE_CTX_rget_chain               2204
 ERR_load_RAND_strings                   2205
+RAND_pseudo_bytes                       2206
+X509_REQ_get_attr_by_NID                2207
+X509_REQ_get_attr                       2208
+X509_REQ_radd_attr_by_NID               2209
+X509_REQ_get_attr_by_OBJ                2210
+X509at_radd_attr_by_NID                 2211
+X509_REQ_radd_attr_by_OBJ               2212
+X509_REQ_get_attr_count                 2213
+X509_REQ_radd_attr                      2214
+X509_REQ_delete_attr                    2215
+X509at_radd_attr_by_OBJ                 2216
+X509_REQ_radd_attr_by_txt               2217
+X509_ATTRIBUTE_create_by_txt            2218
+X509at_radd_attr_by_txt                 2219

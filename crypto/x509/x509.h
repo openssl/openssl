@@ -905,6 +905,23 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req);
 int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 				int nid);
 int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts);
+int X509_REQ_get_attr_count(const X509_REQ *req);
+int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid,
+			  int lastpos);
+int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj,
+			  int lastpos);
+X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
+X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
+int X509_REQ_radd_attr(X509_REQ *req, X509_ATTRIBUTE *attr);
+int X509_REQ_radd_attr_by_OBJ(X509_REQ *req,
+			ASN1_OBJECT *obj, int type,
+			unsigned char *bytes, int len);
+int X509_REQ_radd_attr_by_NID(X509_REQ *req,
+			int nid, int type,
+			unsigned char *bytes, int len);
+int X509_REQ_radd_attr_by_txt(X509_REQ *req,
+			char *attrname, int type,
+			unsigned char *bytes, int len);
 
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
 
@@ -968,8 +985,8 @@ int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
 			ASN1_OBJECT *obj);
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			unsigned char *bytes, int len);
-ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
-ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
+ASN1_OBJECT *	X509_NAME_ENTRY_iget_object(X509_NAME_ENTRY *ne);
+ASN1_STRING *	X509_NAME_ENTRY_iget_data(X509_NAME_ENTRY *ne);
 
 int		X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
 int		X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,
@@ -1119,7 +1136,7 @@ int X509_TRUST_get_trust(X509_TRUST *xp);
 #define X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ		 137
 #define X509_F_X509_ATTRIBUTE_CREATE_BY_TXT		 140
 #define X509_F_X509_ATTRIBUTE_IGET_DATA			 139
-#define X509_F_X509_ATTRIBUTE_ISET_DATA			 138
+#define X509_F_X509_ATTRIBUTE_RSET_DATA			 138
 #define X509_F_X509_CHECK_PRIVATE_KEY			 128
 #define X509_F_X509_EXTENSION_CREATE_BY_NID		 108
 #define X509_F_X509_EXTENSION_CREATE_BY_OBJ		 109
