@@ -85,7 +85,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	X509_PUBKEY *pk;
 	X509_ALGOR *a;
 	ASN1_OBJECT *o;
-	unsigned char *s,*p;
+	unsigned char *s,*p = NULL;
 	int i;
 
 	if (x == NULL) return(0);
@@ -142,7 +142,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		if ((a->parameter = ASN1_TYPE_new()) == NULL)
 			{
 			X509err(X509_F_X509_PUBKEY_SET, ERR_R_ASN1_LIB);
-			OPENSSL_free(p);
 			goto err;
 			}
 
