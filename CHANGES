@@ -4,6 +4,9 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Handle special case when X509_NAME is empty in X509 printing routines.
+     [Steve Henson]
+
   *) In dsa_do_verify (crypto/dsa/dsa_ossl.c), verify that r and s are
      positive and less than q.
      [Bodo Moeller]
