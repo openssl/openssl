@@ -541,6 +541,7 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top,int bottom);
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
 #define BN_R_P_IS_NOT_PRIME				 112
+#define BN_R_TOO_LARGE					 114
 #define BN_R_TOO_MANY_ITERATIONS			 113
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109
 

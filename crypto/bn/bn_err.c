@@ -105,6 +105,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
 {BN_R_P_IS_NOT_PRIME                     ,"p is not prime"},
+{BN_R_TOO_LARGE                          ,"too large"},
 {BN_R_TOO_MANY_ITERATIONS                ,"too many iterations"},
 {BN_R_TOO_MANY_TEMPORARY_VARIABLES       ,"too many temporary variables"},
 {0,NULL}

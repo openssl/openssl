@@ -312,6 +312,12 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 	const BN_ULONG *B;
 	int i;
 
+	if (words > (INT_MAX/(4*BN_BITS2)))
+		{
+		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_TOO_LARGE);
+		return NULL;
+		}
+
 	bn_check_top(b);	
 	if (BN_get_flags(b,BN_FLG_STATIC_DATA))
 		{
