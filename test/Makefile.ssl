@@ -386,6 +386,12 @@ dsatest.o: ../include/openssl/err.h ../include/openssl/lhash.h
 dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dsatest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 dsatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h dsatest.c
+ectest.o: ../include/openssl/bio.h ../include/openssl/bn.h
+ectest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+ectest.o: ../include/openssl/ec.h ../include/openssl/err.h
+ectest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+ectest.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
+ectest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h ectest.c
 enginetest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 enginetest.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 enginetest.o: ../include/openssl/cast.h ../include/openssl/crypto.h
