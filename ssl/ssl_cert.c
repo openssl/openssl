@@ -792,36 +792,53 @@ err:
 
 #else /* OPENSSL_SYS_WIN32 */
 
+#if defined(_WIN32_WCE)
+# ifndef UNICODE
+#  error "WinCE comes in UNICODE flavor only..."
+# endif
+# if _WIN32_WCE<101 && !defined(OPENSSL_NO_MULTIBYTE)
+#  define OPENSSL_NO_MULTIBYTE
+# endif
+# ifndef  FindFirstFile
+#  define FindFirstFile FindFirstFileW
+# endif
+# ifndef  FindNextFile
+#  define FindNextFile FindNextFileW
+# endif
+#endif
+
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
 	{
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
-	int ret = 0;
-#ifdef OPENSSL_SYS_WINCE
-	WCHAR* wdir = NULL;
-#endif
+	int    ret = 0;
+	TCHAR *wdir = NULL;
+	size_t i,len_0 = strlen(dir)+1;	/* len_0 accounts for trailing 0 */
+	char   buf[1024],*slash;
+
+	if (len_0 > (sizeof(buf)-14))	/* 14 is just some value... */
+		{
+		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
+		return ret;
+		}
 
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-	
-#ifdef OPENSSL_SYS_WINCE
-	/* convert strings to UNICODE */
-	{
-		BOOL result = FALSE;
-		int i;
-		wdir = malloc((strlen(dir)+1)*2);
+
+	if (sizeof(TCHAR) != sizeof(char))
+		{
+		wdir = (TCHAR *)malloc(len_0*sizeof(TCHAR));
 		if (wdir == NULL)
 			goto err_noclose;
-		for (i=0; i<(int)strlen(dir)+1; i++)
-			wdir[i] = (short)dir[i];
-	}
+#ifndef OPENSSL_NO_MULTIBYTE
+		if (!MultiByteToWideChar(CP_ACP,0,dir,len_0,wdir,len_0))
 #endif
+			for (i=0;i<len_0;i++) wdir[i]=(TCHAR)dir[i];
 
-#ifdef OPENSSL_SYS_WINCE
-	hFind = FindFirstFile(wdir, &FindFileData);
-#else
-	hFind = FindFirstFile(dir, &FindFileData);
-#endif
+		hFind = FindFirstFile(wdir, &FindFileData);
+		}
+	else	hFind = FindFirstFile((const TCHAR *)dir, &FindFileData);
+
 	/* Note that a side effect is that the CAs will be sorted by name */
 	if(hFind == INVALID_HANDLE_VALUE)
 		{
@@ -830,25 +847,33 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
 		goto err_noclose;
 		}
-	
-	do 
-		{
-		char buf[1024];
-		int r;
-		
-#ifdef OPENSSL_SYS_WINCE
-		if(strlen(dir)+_tcslen(FindFileData.cFileName)+2 > sizeof buf)
-#else
-		if(strlen(dir)+strlen(FindFileData.cFileName)+2 > sizeof buf)
-#endif
+
+	strncpy(buf,dir,sizeof(buf));	/* strcpy is safe too... */
+	buf[len_0-1]='/';		/* no trailing zero!     */
+	slash=buf+len_0;
+
+	do	{
+		const TCHAR *fnam=FindFileData.cFileName;
+		size_t flen_0=_tcslen(fnam)+1;
+
+		if (flen_0 > (sizeof(buf)-len_0))
 			{
 			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
 			goto err;
 			}
-		
-		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,FindFileData.cFileName);
-		if (r <= 0 || r >= sizeof buf)
-			goto err;
+		/* else strcpy would be safe too... */
+
+		if (sizeof(TCHAR) != sizeof(char))
+			{
+#ifndef OPENSSL_NO_MULTIBYTE
+			if (!WideCharToMultiByte(CP_ACP,0,fnam,flen_0,
+						slash,sizeof(buf)-len_0,
+						NULL,0))
+#endif
+				for (i=0;i<flen_0;i++) slash[i]=(char)fnam[i];
+			}
+		else	strncpy(slash,(const char *)fnam,sizeof(buf)-len_0);
+
 		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
 			goto err;
 		}
@@ -858,10 +883,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 err:	
 	FindClose(hFind);
 err_noclose:
-#ifdef OPENSSL_SYS_WINCE
 	if (wdir != NULL)
 		free(wdir);
-#endif
+
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
