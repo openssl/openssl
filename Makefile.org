@@ -15,6 +15,11 @@ OPTIONS=
 CONFIGURE_ARGS=
 SHLIB_TARGET=
 
+# HERE indicates where this Makefile lives.  This can be used to indicate
+# where sub-Makefiles are expected to be.  Currently has very limited usage,
+# and should probably not be bothered with at all.
+HERE=.
+
 # INSTALL_PREFIX is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
@@ -728,7 +733,7 @@ install: all install_docs
 			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 		fi; \
 	done;
 	@if [ -n "$(SHARED_LIBS)" ]; then \
@@ -740,15 +745,15 @@ install: all install_docs
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
 					c=`echo $$i | sed 's/^lib\(.*\)/cyg\1-$(SHLIB_VERSION_NUMBER)/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
-					mv $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
 					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
-					mv $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
 				fi ); \
 			fi; \
 		done; \
