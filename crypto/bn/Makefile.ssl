@@ -210,6 +210,14 @@ bn_ctx.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_ctx.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 bn_ctx.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 bn_ctx.o: ../cryptlib.h bn_ctx.c bn_lcl.h
+bn_depr.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+bn_depr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+bn_depr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+bn_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bn_depr.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+bn_depr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+bn_depr.o: ../cryptlib.h bn_depr.c bn_lcl.h
 bn_div.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_div.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_div.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

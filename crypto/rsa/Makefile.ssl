@@ -101,6 +101,15 @@ rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_chk.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_chk.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_chk.o: rsa_chk.c
+rsa_depr.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_depr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_depr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_depr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+rsa_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rsa_depr.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+rsa_depr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rsa_depr.o: ../cryptlib.h rsa_depr.c
 rsa_eay.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_eay.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_eay.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
