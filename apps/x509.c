@@ -85,7 +85,7 @@
 static char *x509_usage[]={
 "usage: x509 args\n",
 " -inform arg     - input format - default PEM (one of DER, NET or PEM)\n",
-" -outform arg    - output format - default PEM (one of DER, NET or PEM\n",
+" -outform arg    - output format - default PEM (one of DER, NET or PEM)\n",
 " -keyform arg    - private key format - default PEM\n",
 " -CAform arg     - CA format - default PEM\n",
 " -CAkeyform arg  - CA key format - default PEM\n",
