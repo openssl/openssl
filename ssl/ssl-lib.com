@@ -314,7 +314,7 @@ $ WRITE SYS$OUTPUT "Creating SSL_TASK OSU HTTP SSL Engine."
 $!
 $! Compile The File.
 $!
-$ ON ERROR GOTO SSL_TASK_END
+$ ON ERROR THEN GOTO SSL_TASK_END
 $ CC5/OBJECT='OBJ_DIR'SSL_TASK.OBJ SYS$DISK:[]SSL_TASK.C
 $!
 $! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
