@@ -11,7 +11,7 @@
       o First support for new TLSv1 ciphers
       o Added a few new BIOs (syslog BIO, reliable BIO)
       o Extended support for DSA certificate/keys.
-      o Extended support for Certificate Signing Requests (CRL)
+      o Extended support for Certificate Signing Requests (CSR)
       o Initial support for X.509v3 extensions
       o Extended support for compression inside the SSL record layer
       o Overhauled Win32 builds
