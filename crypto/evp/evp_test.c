@@ -123,13 +123,15 @@ static unsigned char *ustrsep(char **p,const char *sep)
 static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		  const unsigned char *iv,int in,
 		  const unsigned char *plaintext,int pn,
-		  const unsigned char *ciphertext,int cn)
+		  const unsigned char *ciphertext,int cn,
+		  int encdec)
     {
     EVP_CIPHER_CTX ctx;
     unsigned char out[4096];
     int outl,outl2;
 
-    printf("Testing cipher %s\n",EVP_CIPHER_name(c));
+    printf("Testing cipher %s%s\n",EVP_CIPHER_name(c),
+	   (encdec == 1 ? "(encrypt)" : (encdec == 0 ? "(decrypt)" : "(encrypt/decrypt)")));
     hexdump(stdout,"Key",key,kn);
     if(in)
 	hexdump(stdout,"IV",iv,in);
@@ -143,70 +145,76 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	exit(5);
 	}
     EVP_CIPHER_CTX_init(&ctx);
-    if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,iv))
-	{
-	fprintf(stderr,"EncryptInit failed\n");
-	exit(10);
-	}
-    EVP_CIPHER_CTX_set_padding(&ctx,0);
+    if (encdec != 0)
+        {
+	if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,iv))
+	    {
+	    fprintf(stderr,"EncryptInit failed\n");
+	    exit(10);
+	    }
+	EVP_CIPHER_CTX_set_padding(&ctx,0);
 
-    if(!EVP_EncryptUpdate(&ctx,out,&outl,plaintext,pn))
-	{
-	fprintf(stderr,"Encrypt failed\n");
-	exit(6);
-	}
-    if(!EVP_EncryptFinal_ex(&ctx,out+outl,&outl2))
-	{
-	fprintf(stderr,"EncryptFinal failed\n");
-	exit(7);
-	}
+	if(!EVP_EncryptUpdate(&ctx,out,&outl,plaintext,pn))
+	    {
+	    fprintf(stderr,"Encrypt failed\n");
+	    exit(6);
+	    }
+	if(!EVP_EncryptFinal_ex(&ctx,out+outl,&outl2))
+	    {
+	    fprintf(stderr,"EncryptFinal failed\n");
+	    exit(7);
+	    }
 
-    if(outl+outl2 != cn)
-	{
-	fprintf(stderr,"Ciphertext length mismatch got %d expected %d\n",
-		outl+outl2,cn);
-	exit(8);
-	}
+	if(outl+outl2 != cn)
+	    {
+	    fprintf(stderr,"Ciphertext length mismatch got %d expected %d\n",
+		    outl+outl2,cn);
+	    exit(8);
+	    }
 
-    if(memcmp(out,ciphertext,cn))
-	{
-	fprintf(stderr,"Ciphertext mismatch\n");
-	hexdump(stderr,"Got",out,cn);
-	hexdump(stderr,"Expected",ciphertext,cn);
-	exit(9);
-	}
-
-    if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,iv))
-	{
-	fprintf(stderr,"DecryptInit failed\n");
-	exit(11);
-	}
-    EVP_CIPHER_CTX_set_padding(&ctx,0);
-
-    if(!EVP_DecryptUpdate(&ctx,out,&outl,ciphertext,pn))
-	{
-	fprintf(stderr,"Decrypt failed\n");
-	exit(6);
-	}
-    if(!EVP_DecryptFinal_ex(&ctx,out+outl,&outl2))
-	{
-	fprintf(stderr,"DecryptFinal failed\n");
-	exit(7);
+	if(memcmp(out,ciphertext,cn))
+	    {
+	    fprintf(stderr,"Ciphertext mismatch\n");
+	    hexdump(stderr,"Got",out,cn);
+	    hexdump(stderr,"Expected",ciphertext,cn);
+	    exit(9);
+	    }
 	}
 
-    if(outl+outl2 != cn)
-	{
-	fprintf(stderr,"Plaintext length mismatch got %d expected %d\n",
-		outl+outl2,cn);
-	exit(8);
-	}
+    if (encdec <= 0)
+        {
+	if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,iv))
+	    {
+	    fprintf(stderr,"DecryptInit failed\n");
+	    exit(11);
+	    }
+	EVP_CIPHER_CTX_set_padding(&ctx,0);
 
-    if(memcmp(out,plaintext,cn))
-	{
-	fprintf(stderr,"Plaintext mismatch\n");
-	hexdump(stderr,"Got",out,cn);
-	hexdump(stderr,"Expected",plaintext,cn);
-	exit(9);
+	if(!EVP_DecryptUpdate(&ctx,out,&outl,ciphertext,cn))
+	    {
+	    fprintf(stderr,"Decrypt failed\n");
+	    exit(6);
+	    }
+	if(!EVP_DecryptFinal_ex(&ctx,out+outl,&outl2))
+	    {
+	    fprintf(stderr,"DecryptFinal failed\n");
+	    exit(7);
+	    }
+
+	if(outl+outl2 != cn)
+	    {
+	    fprintf(stderr,"Plaintext length mismatch got %d expected %d\n",
+		    outl+outl2,cn);
+	    exit(8);
+	    }
+
+	if(memcmp(out,plaintext,cn))
+	    {
+	    fprintf(stderr,"Plaintext mismatch\n");
+	    hexdump(stderr,"Got",out,cn);
+	    hexdump(stderr,"Expected",plaintext,cn);
+	    exit(9);
+	    }
 	}
 
     EVP_CIPHER_CTX_cleanup(&ctx);
@@ -217,7 +225,8 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 static int test_cipher(const char *cipher,const unsigned char *key,int kn,
 		       const unsigned char *iv,int in,
 		       const unsigned char *plaintext,int pn,
-		       const unsigned char *ciphertext,int cn)
+		       const unsigned char *ciphertext,int cn,
+		       int encdec)
     {
     const EVP_CIPHER *c;
 
@@ -225,7 +234,7 @@ static int test_cipher(const char *cipher,const unsigned char *key,int kn,
     if(!c)
 	return 0;
 
-    test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
+    test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn,encdec);
 
     return 1;
     }
@@ -332,6 +341,7 @@ int main(int argc,char **argv)
 	char *p;
 	char *cipher;
 	unsigned char *iv,*key,*plaintext,*ciphertext;
+	int encdec;
 	int kn,in,pn,cn;
 
 	if(!fgets((char *)line,sizeof line,f))
@@ -343,14 +353,21 @@ int main(int argc,char **argv)
 	key=ustrsep(&p,":");
 	iv=ustrsep(&p,":");
 	plaintext=ustrsep(&p,":");
-	ciphertext=ustrsep(&p,"\n");
+	ciphertext=ustrsep(&p,":");
+	if (p[-1] == '\n') {
+	    p[-1] = '\0';
+	    encdec = -1;
+	} else {
+	    encdec = atoi(ustrsep(&p,"\n"));
+	}
+	      
 
 	kn=convert(key);
 	in=convert(iv);
 	pn=convert(plaintext);
 	cn=convert(ciphertext);
 
-	if(!test_cipher(cipher,key,kn,iv,in,plaintext,pn,ciphertext,cn)
+	if(!test_cipher(cipher,key,kn,iv,in,plaintext,pn,ciphertext,cn,encdec)
 	   && !test_digest(cipher,plaintext,pn,ciphertext,cn))
 	    {
 	    fprintf(stderr,"Can't find %s\n",cipher);
