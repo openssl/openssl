@@ -82,19 +82,29 @@
 static int cswift_init();
 static int cswift_finish();
 
+/* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
+/* RSA stuff */
 static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
+/* DSA stuff */
+static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa);
+static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
+				DSA_SIG *sig, DSA *dsa);
+
+/* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
 static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
 
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD cswift_rsa =
@@ -112,6 +122,21 @@ static RSA_METHOD cswift_rsa =
 	NULL,
 	NULL,
 	NULL
+	};
+
+/* Our internal DSA_METHOD that we provide pointers to */
+static DSA_METHOD cswift_dsa =
+	{
+	"CryptoSwift DSA method",
+	cswift_dsa_sign,
+	NULL, /* dsa_sign_setup */
+	cswift_dsa_verify,
+	NULL, /* dsa_mod_exp */
+	NULL, /* bn_mod_exp */
+	NULL, /* init */
+	NULL, /* finish */
+	0, /* flags */
+	NULL /* app_data */
 	};
 
 /* Our internal DH_METHOD that we provide pointers to */
@@ -133,7 +158,7 @@ static ENGINE engine_cswift =
 	"cswift",
 	"CryptoSwift hardware engine support",
 	&cswift_rsa,
-	NULL,
+	&cswift_dsa,
 	&cswift_dh,
 	NULL,
 	cswift_mod_exp,
@@ -374,22 +399,18 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
 			const BIGNUM *dmq1, const BIGNUM *iqmp, BN_CTX *ctx)
 	{
-	BIGNUM *rsa_p;
-	BIGNUM *rsa_q;
-	BIGNUM *rsa_dmp1;
-	BIGNUM *rsa_dmq1;
-	BIGNUM *rsa_iqmp;
-	BIGNUM *argument;
-	BIGNUM *result;
 	SW_LARGENUMBER arg, res;
 	SW_PARAM sw_param;
 	SW_CONTEXT_HANDLE hac;
-	int to_return, acquired;
- 
-	rsa_p = rsa_q = rsa_dmp1 = rsa_dmq1 = rsa_iqmp =
-		argument = result = NULL;
-	to_return = 0; /* expect failure */
-	acquired = 0;
+	BIGNUM *rsa_p = NULL;
+	BIGNUM *rsa_q = NULL;
+	BIGNUM *rsa_dmp1 = NULL;
+	BIGNUM *rsa_dmq1 = NULL;
+	BIGNUM *rsa_iqmp = NULL;
+	BIGNUM *argument = NULL;
+	BIGNUM *result = NULL;
+	int to_return = 0; /* expect failure */
+	int acquired = 0;
  
 	if(!get_context(&hac))
 		{
@@ -495,6 +516,116 @@ static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);
+	}
+
+static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+	{
+	SW_CONTEXT_HANDLE hac;
+	SW_PARAM sw_param;
+	SW_STATUS sw_status;
+	SW_LARGENUMBER arg, res;
+	unsigned char *ptr;
+	BN_CTX *ctx;
+	BIGNUM *dsa_p = NULL;
+	BIGNUM *dsa_q = NULL;
+	BIGNUM *dsa_g = NULL;
+	BIGNUM *dsa_key = NULL;
+	BIGNUM *result = NULL;
+	DSA_SIG *to_return = NULL;
+	int acquired = 0;
+
+	if((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	if(!get_context(&hac))
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_GET_HANDLE_FAILED);
+		goto err;
+		}
+	acquired = 1;
+	/* Prepare the params */
+	dsa_p = BN_CTX_get(ctx);
+	dsa_q = BN_CTX_get(ctx);
+	dsa_g = BN_CTX_get(ctx);
+	dsa_key = BN_CTX_get(ctx);
+	result = BN_CTX_get(ctx);
+	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !result)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_CTX_FULL);
+		goto err;
+		}
+	if(!bn_wexpand(dsa_p, dsa->p->top) ||
+			!bn_wexpand(dsa_q, dsa->q->top) ||
+			!bn_wexpand(dsa_g, dsa->g->top) ||
+			!bn_wexpand(dsa_key, dsa->priv_key->top) ||
+			!bn_wexpand(result, dsa->p->top))
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_EXPAND_FAIL);
+		goto err;
+		}
+	sw_param.type = SW_ALG_DSA;
+	sw_param.up.dsa.p.nbytes = BN_bn2bin(dsa->p,
+				(unsigned char *)dsa_p->d);
+	sw_param.up.dsa.p.value = (unsigned char *)dsa_p->d;
+	sw_param.up.dsa.q.nbytes = BN_bn2bin(dsa->q,
+				(unsigned char *)dsa_q->d);
+	sw_param.up.dsa.q.value = (unsigned char *)dsa_q->d;
+	sw_param.up.dsa.g.nbytes = BN_bn2bin(dsa->g,
+				(unsigned char *)dsa_g->d);
+	sw_param.up.dsa.g.value = (unsigned char *)dsa_g->d;
+	sw_param.up.dsa.key.nbytes = BN_bn2bin(dsa->priv_key,
+				(unsigned char *)dsa_key->d);
+	sw_param.up.dsa.key.value = (unsigned char *)dsa_key->d;
+	/* Attach the key params */
+	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_PROVIDE_PARAMETERS);
+		goto err;
+		}
+	/* Prepare the argument and response */
+	arg.nbytes = dlen;
+	arg.value = (unsigned char *)dgst;
+	res.nbytes = BN_num_bytes(dsa->p);
+	memset(result->d, 0, res.nbytes);
+	res.value = (unsigned char *)result->d;
+	/* Perform the operation */
+	sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_DSS_SIGN, &arg, 1,
+			&res, 1);
+	if(sw_status != SW_OK)
+		{
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		goto err;
+		}
+	/* Convert the response */
+	ptr = (unsigned char *)result->d;
+	if((to_return = DSA_SIG_new()) == NULL)
+		goto err;
+	to_return->r = BN_bin2bn((unsigned char *)result->d, 20, NULL);
+	to_return->s = BN_bin2bn((unsigned char *)result->d + 20, 20, NULL);
+
+err:
+	if(acquired)
+		release_context(hac);
+	if(dsa_p) ctx->tos--;
+	if(dsa_q) ctx->tos--;
+	if(dsa_g) ctx->tos--;
+	if(dsa_key) ctx->tos--;
+	if(result) ctx->tos--;
+	if(ctx)
+		BN_CTX_free(ctx);
+	return to_return;
+	}
+
+static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
+				DSA_SIG *sig, DSA *dsa)
+	{
+	DSA_METHOD *meth, *tmp_meth;
+	int ret;
+	meth = DSA_OpenSSL();
+	tmp_meth = ENGINE_get_DSA(dsa->handle);
+	ENGINE_set_DSA(dsa->handle, meth);
+	ret = DSA_do_verify(dgst, dgst_len, sig, dsa);
+	ENGINE_set_DSA(dsa->handle, tmp_meth);
+	return ret;
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */

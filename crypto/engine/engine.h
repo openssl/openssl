@@ -252,6 +252,7 @@ void ERR_load_ENGINE_strings(void);
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
+#define ENGINE_F_CSWIFT_DSA_SIGN			 133
 #define ENGINE_F_CSWIFT_FINISH				 100
 #define ENGINE_F_CSWIFT_INIT				 101
 #define ENGINE_F_CSWIFT_MOD_EXP				 102
