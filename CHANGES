@@ -4,7 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
-  *) Clean up 'Finished' handling.
+  *) Clean up 'Finished' handling, and add functions SSL_get_finished and
+     SSL_get_peer_finished to allow applications to obtain the latest
+     Finished messages sent to the peer or expected from the peer,
+     respectively.  (SSL_get_peer_finished is usually the Finished message
+     actually received from the peer, otherwise the protocol will be aborted.)
+
+     As the Finished message are message digests of the complete handshake
+     (with a total of 192 bits for TLS 1.0 and more for SSL 3.0), they can
+     be used for external authentication procedures when the authentication
+     provided by SSL/TLS is not desired or is not enough.
      [Bodo Moeller]
 
   *) Enhanced support for Alpha Linux is added. Now ./config checks if

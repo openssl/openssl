@@ -313,6 +313,7 @@ case SSL3_ST_SW_HELLO_REQ_C:			str="3WHR_C"; break;
 case SSL3_ST_SR_CLNT_HELLO_A:			str="3RCH_A"; break;
 case SSL3_ST_SR_CLNT_HELLO_B:			str="3RCH_B"; break;
 case SSL3_ST_SR_CLNT_HELLO_C:			str="3RCH_C"; break;
+case SSL3_ST_SR_MS_SGC:				str="3RMSSG"; break;
 case SSL3_ST_SW_SRVR_HELLO_A:			str="3WSH_A"; break;
 case SSL3_ST_SW_SRVR_HELLO_B:			str="3WSH_B"; break;
 case SSL3_ST_SW_CERT_A:				str="3WSC_A"; break;

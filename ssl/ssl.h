@@ -704,6 +704,13 @@ struct ssl_st
 #define SSL_ST_READ_BODY			0xF1
 #define SSL_ST_READ_DONE			0xF2
 
+/* Obtain latest Finished message
+ *   -- that we sent (SSL_get_finished)
+ *   -- that we expected from peer (SSL_get_peer_finished).
+ * Returns length (0 == no Finished so far), copies up to 'count' bytes. */
+size_t SSL_get_finished(SSL *s, void *buf, size_t count);
+size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
+
 /* use either SSL_VERIFY_NONE or SSL_VERIFY_PEER, the last 2 options
  * are 'ored' with SSL_VERIFY_PEER if they are desired */
 #define SSL_VERIFY_NONE			0x00
