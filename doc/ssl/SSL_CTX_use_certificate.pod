@@ -68,7 +68,9 @@ should be preferred.
 
 SSL_CTX_use_certificate_chain_file() loads a certificate chain from 
 B<file> into B<ctx>. The certificates must be in PEM format and must
-be sorted starting with the certificate to the highest level (root CA).
+be sorted starting with the subject's certificate (actual client or server
+certificate), followed by intermediate CA certificates if applicable, and
+ending at the highest level (root) CA.
 There is no corresponding function working on a single SSL object.
 
 SSL_CTX_use_PrivateKey() adds B<pkey> as private key to B<ctx>.
