@@ -1117,26 +1117,6 @@ static int do_change_cipher_spec(SSL *s)
 	return(1);
 	}
 
-/* send s->init_buf in records of type 'type' */
-int ssl3_do_write(SSL *s, int type)
-	{
-	int ret;
-
-	ret=ssl3_write_bytes(s,type,&s->init_buf->data[s->init_off],
-	                     s->init_num);
-	if (ret < 0) return(-1);
-	if (type == SSL3_RT_HANDSHAKE)
-		/* should not be done for 'Hello Request's, but in that case
-		 * we'll ignore the result anyway */
-		ssl3_finish_mac(s,&s->init_buf->data[s->init_off],ret);
-	
-	if (ret == s->init_num)
-		return(1);
-	s->init_off+=ret;
-	s->init_num-=ret;
-	return(0);
-	}
-
 void ssl3_send_alert(SSL *s, int level, int desc)
 	{
 	/* Map tls/ssl alert value to correct one */

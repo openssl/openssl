@@ -65,6 +65,26 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
+/* send s->init_buf in records of type 'type' */
+int ssl3_do_write(SSL *s, int type)
+	{
+	int ret;
+
+	ret=ssl3_write_bytes(s,type,&s->init_buf->data[s->init_off],
+	                     s->init_num);
+	if (ret < 0) return(-1);
+	if (type == SSL3_RT_HANDSHAKE)
+		/* should not be done for 'Hello Request's, but in that case
+		 * we'll ignore the result anyway */
+		ssl3_finish_mac(s,&s->init_buf->data[s->init_off],ret);
+	
+	if (ret == s->init_num)
+		return(1);
+	s->init_off+=ret;
+	s->init_num-=ret;
+	return(0);
+	}
+
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	{
 	unsigned char *p,*d;
