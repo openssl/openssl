@@ -316,7 +316,7 @@ static int dynamic_finish(ENGINE *e)
 	return 0;
 	}
 
-static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
 	dynamic_data_ctx *ctx = dynamic_get_data_ctx(e);
 	int initialised;
