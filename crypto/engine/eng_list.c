@@ -351,6 +351,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 ENGINE *ENGINE_by_id(const char *id)
 	{
 	ENGINE *iterator;
+	char *load_dir = NULL;
 	if(id == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -384,6 +385,7 @@ ENGINE *ENGINE_by_id(const char *id)
 			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
+#if 0
 	if(iterator == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -391,4 +393,26 @@ ENGINE *ENGINE_by_id(const char *id)
 		ERR_add_error_data(2, "id=", id);
 		}
 	return iterator;
+#else
+	/* EEK! Experimental code starts */
+	if(iterator) return iterator;
+#ifdef OPENSSL_SYS_VMS
+	if((load_dir = getenv("OPENSSL_ENGINES")) == 0) load_dir = "SSLROOT:[ENGINES]";
+#else
+	if((load_dir = getenv("OPENSSL_ENGINES")) == 0) load_dir = OPENSSLDIR "/engines";
+#endif
+	iterator = ENGINE_by_id("dynamic");
+	if(!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
+			!ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||
+			!ENGINE_ctrl_cmd_string(iterator, "DIR_ADD",
+				load_dir, 0) ||
+			!ENGINE_ctrl_cmd_string(iterator, "LOAD", NULL, 0))
+		goto notfound;
+	return iterator;
+notfound:
+	ENGINEerr(ENGINE_F_ENGINE_BY_ID,ENGINE_R_NO_SUCH_ENGINE);
+	ERR_add_error_data(2, "id=", id);
+	return NULL;
+	/* EEK! Experimental code ends */
+#endif
 	}
