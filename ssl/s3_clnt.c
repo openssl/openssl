@@ -814,8 +814,9 @@ f_err:
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
 		}
 err:
-	if (x != NULL) X509_free(x);
-	if (sk != NULL) sk_pop_free(sk,X509_free);
+	EVP_PKEY_free(pkey);
+	X509_free(x);
+	sk_pop_free(sk,X509_free);
 	return(ret);
 	}
 
@@ -1103,11 +1104,12 @@ SSL *s;
 			goto f_err;
 			}
 		}
-
+	EVP_PKEY_free(pkey);
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
+	EVP_PKEY_free(pkey);
 	return(-1);
 	}
 
@@ -1622,6 +1624,7 @@ SSL *s;
 	idx=c->cert_type;
 	pkey=X509_get_pubkey(c->pkeys[idx].x509);
 	i=X509_certificate_type(c->pkeys[idx].x509,pkey);
+	EVP_PKEY_free(pkey);
 
 	
 	/* Check that we have a certificate if we require one */

@@ -404,6 +404,7 @@ EVP_PKEY *pkey;
 		ret= -1;
 
 err:
+	if(!pkey) EVP_PKEY_free(pk);
 	return(ret);
 	}
 

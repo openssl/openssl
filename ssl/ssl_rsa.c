@@ -229,8 +229,10 @@ EVP_PKEY *pkey;
 
 	if (c->pkeys[i].x509 != NULL)
 		{
-		EVP_PKEY_copy_parameters(
-			X509_get_pubkey(c->pkeys[i].x509),pkey);
+		EVP_PKEY *pktmp;
+		pktmp =	X509_get_pubkey(c->pkeys[i].x509);
+		EVP_PKEY_copy_parameters(pktmp,pkey);
+		EVP_PKEY_free(pktmp);
 		ERR_clear_error();
 
 #ifndef NO_RSA
@@ -503,6 +505,7 @@ X509 *x;
 	if (i < 0)
 		{
 		SSLerr(SSL_F_SSL_SET_CERT,SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+		EVP_PKEY_free(pkey);
 		return(0);
 		}
 
@@ -549,6 +552,7 @@ X509 *x;
 	else
 		ok=1;
 
+	EVP_PKEY_free(pkey);
 	if (bad)
 		{
 		EVP_PKEY_free(c->pkeys[i].privatekey);

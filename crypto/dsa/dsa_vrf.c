@@ -91,7 +91,6 @@ DSA *dsa;
 	int ret = -1;
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
 	BN_init(&u1);
 	BN_init(&u2);

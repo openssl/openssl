@@ -1510,6 +1510,7 @@ f_err:
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
 		}
 end:
+	EVP_PKEY_free(pkey);
 	return(ret);
 	}
 

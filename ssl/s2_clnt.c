@@ -953,8 +953,9 @@ unsigned char *data;
 		goto err;
 	ret=1;
 err:
-	if (sk != NULL) sk_free(sk);
-	if (x509 != NULL) X509_free(x509);
+	sk_free(sk);
+	X509_free(x509);
+	EVP_PKEY_free(pkey);
 	return(ret);
 	}
 
@@ -985,6 +986,7 @@ int padding;
 	if (i < 0)
 		SSLerr(SSL_F_SSL_RSA_PUBLIC_ENCRYPT,ERR_R_RSA_LIB);
 end:
+	EVP_PKEY_free(pkey);
 	return(i);
 	}
 

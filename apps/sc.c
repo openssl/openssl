@@ -770,8 +770,12 @@ int full;
 		SSL_CIPHER_get_version(c),
 		SSL_CIPHER_get_name(c));
 	if (peer != NULL)
+	{
+		EVP_PKEY *pktmp;
 		BIO_printf(bio,"Server public key is %d bit\n",
-			EVP_PKEY_bits(X509_get_pubkey(peer)));
+							EVP_PKEY_bits(pktmp));
+		EVP_PKEY_free(pktmp);
+	}
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)

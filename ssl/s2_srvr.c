@@ -910,6 +910,7 @@ SSL *s;
 		pkey=X509_get_pubkey(x509);
 		if (pkey == NULL) goto end;
 		i=EVP_VerifyFinal(&ctx,p,s->s2->tmp.rlen,pkey);
+		EVP_PKEY_free(pkey);
 		memset(&ctx,0,sizeof(ctx));
 
 		if (i) 
@@ -933,8 +934,8 @@ msg_end:
 		ssl2_return_error(s,SSL2_PE_BAD_CERTIFICATE);
 		}
 end:
-	if (sk != NULL) sk_free(sk);
-	if (x509 != NULL) X509_free(x509);
+	sk_free(sk);
+	X509_free(x509);
 	return(ret);
 	}
 
