@@ -178,11 +178,11 @@ SSL_METHOD *SSLv3_client_method(void)
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv3_client_data,(char *)sslv3_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv3_client_data.ssl_connect=ssl3_connect;
 		SSLv3_client_data.get_ssl_method=ssl3_get_client_method;
+		init=0;
 		}
 	return(&SSLv3_client_data);
 	}
