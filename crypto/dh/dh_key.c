@@ -99,7 +99,6 @@ DH_METHOD *DH_OpenSSL(void)
 static int generate_key(DH *dh)
 	{
 	int ok=0;
-	unsigned int i;
 	BN_CTX ctx;
 	BN_MONT_CTX *mont;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
@@ -108,15 +107,11 @@ static int generate_key(DH *dh)
 
 	if (dh->priv_key == NULL)
 		{
-		i=dh->length;
-		if (i == 0)
-			{
-			/* Make the number p-1 bits long */
-			i=BN_num_bits(dh->p)-1;
-			}
 		priv_key=BN_new();
 		if (priv_key == NULL) goto err;
-		if (!BN_rand(priv_key,i,0,0)) goto err;
+		do
+			if (!BN_rand_range(priv_key, dh->p)) goto err;
+		while (BN_is_zero(priv_key));
 		}
 	else
 		priv_key=dh->priv_key;

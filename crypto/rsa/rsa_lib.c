@@ -272,7 +272,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 
 	BN_CTX_start(ctx);
 	A = BN_CTX_get(ctx);
-	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
+	if (!BN_rand_range(A,rsa->n)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
