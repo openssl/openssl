@@ -50,6 +50,11 @@
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_FIPS
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* Note that these are defined in crypto/cryptlib.c so they're
  * available even without -lfips.
  */
