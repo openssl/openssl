@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Honor the no-xxx Configure options when creating .DEF files.
+     [Ulf Möller]
+
   *) Add PKCS#10 attributes to field table: challengePassword, 
      unstructuredName and unstructuredAddress. These are taken from
      draft PKCS#9 v2.0 but are compatible with v1.2 provided no 
@@ -24,13 +27,13 @@
      used all over the place including certificate requests and PKCS#7
      structures. They are currently handled manually where necessary with
      some primitive wrappers for PKCS#7. The new functions behave in a
-     manner analagous to the X509 extension functions: they allow
+     manner analogous to the X509 extension functions: they allow
      attributes to be looked up by NID and added.
 
      Later something similar to the X509V3 code would be desirable to
      automatically handle the encoding, decoding and printing of the
      more complex types. The string types like challengePassword can
-     be handled by the string table fuctions.
+     be handled by the string table functions.
 
      Also modified the multi byte string table handling. Now there is
      a 'global mask' which masks out certain types. The table itself
@@ -54,7 +57,7 @@
 
   *) Enhanced support for Alpha Linux is added. Now ./config checks if
      the host supports BWX extension and if Compaq C is present on the
-     $PATH. Just exploiting of the BWX extention results in 20-30%
+     $PATH. Just exploiting of the BWX extension results in 20-30%
      performance kick for some algorithms, e.g. DES and RC4 to mention
      a couple. Compaq C in turn generates ~20% faster code for MD5 and
      SHA1.
@@ -161,7 +164,7 @@
        CRYPTO_get_mem_debug_functions()		[F]
        CRYPTO_dbg_set_options()			[F]
        CRYPTO_dbg_get_options()			[F]
-       CRYPTO_melloc_debug_init()		[M]
+       CRYPTO_malloc_debug_init()		[M]
 
      The memory debug functions are NULL by default, unless the library
      is compiled with CRYPTO_MDEBUG or friends is defined.  If someone
@@ -442,7 +445,7 @@
      the key length in bits: so a 40 bit RC2 key uses a 40 bit (5 byte) key.
      A few however don't do this and instead use the size of the decrypted key
      to determine the RC2 key length and the AlgorithmIdentifier to determine
-     the effective key length. In this case the effective key lenth can still
+     the effective key length. In this case the effective key length can still
      be 40 bits but the key length can be 168 bits for example. This is fixed
      by manually forcing an RC2 key into the EVP_PKEY structure because the
      EVP code can't currently handle unusual RC2 key sizes: it always assumes
@@ -611,7 +614,7 @@
   *) Add new -verify -CAfile and -CApath options to the crl program, these
      will lookup a CRL issuers certificate and verify the signature in a
      similar way to the verify program. Tidy up the crl program so it
-     no longer acesses structures directly. Make the ASN1 CRL parsing a bit
+     no longer accesses structures directly. Make the ASN1 CRL parsing a bit
      less strict. It will now permit CRL extensions even if it is not
      a V2 CRL: this will allow it to tolerate some broken CRLs.
      [Steve Henson]
@@ -705,7 +708,7 @@
      copies of the data and an O(n^2) reading algorithm. There is a new
      function BIO_new_mem_buf() which creates a read only memory BIO from
      an area of memory. Also modified the PKCS#7 routines to use read only
-     memory BIOSs.
+     memory BIOs.
      [Steve Henson]
 
   *) Bugfix: ssl23_get_client_hello did not work properly when called in

@@ -6,25 +6,33 @@
 # prototyped functions: it then prunes the output.
 #
 
-$crypto_num="util/libeay.num";
-$ssl_num=   "util/ssleay.num";
+my $crypto_num="util/libeay.num";
+my $ssl_num=   "util/ssleay.num";
 
 my $do_update = 0;
 my $do_crypto = 0;
 my $do_ssl = 0;
-$rsaref = 0;
+my $do_ctest = 0;
+my $rsaref = 0;
 
-$W32=1;
-$NT=0;
+my $W32=1;
+my $NT=0;
 # Set this to make typesafe STACK definitions appear in DEF
-$safe_stack_def = 1;
+my $safe_stack_def = 1;
 
-$options="";
+my $options="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
 while(<IN>) {
     $options=$1 if (/^OPTIONS=(.*)$/);
 }
 close(IN);
+
+# The following ciphers may be excluded (by Configure). This means functions
+# defined with ifndef(NO_XXX) are not included in the .def file, and everything
+# in directory xxx is ignored.
+my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
+my $no_cast; my $no_md2; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0;
 
 foreach (@ARGV, split(/ /, $options))
 	{
@@ -72,9 +80,9 @@ $max_ssl = $max_num;
 %crypto_list=&load_numbers($crypto_num);
 $max_crypto = $max_num;
 
-$ssl="ssl/ssl.h";
+my $ssl="ssl/ssl.h";
 
-$crypto ="crypto/crypto.h";
+my $crypto ="crypto/crypto.h";
 $crypto.=" crypto/des/des.h" unless $no_des;
 $crypto.=" crypto/idea/idea.h" unless $no_idea;
 $crypto.=" crypto/rc4/rc4.h" unless $no_rc4;
@@ -117,8 +125,8 @@ $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/comp/comp.h";
 $crypto.=" crypto/tmdiff.h";
 
-@ssl_func = &do_defs("SSLEAY", $ssl);
-@crypto_func = &do_defs("LIBEAY", $crypto);
+my @ssl_func = &do_defs("SSLEAY", $ssl);
+my @crypto_func = &do_defs("LIBEAY", $crypto);
 
 
 if ($do_update) {
@@ -168,14 +176,15 @@ EOF
 sub do_defs
 {
 	my($name,$files)=@_;
+	my $file;
 	my @ret;
 	my %funcs;
+	my $cpp;
 
 	foreach $file (split(/\s+/,$files))
 		{
 		open(IN,"<$file") || die "unable to open $file:$!\n";
-
-		my $line = "", $def= "";
+		my $line = "", my $def= "";
 		my %tag = (
 			FreeBSD		=> 0,
 			NOPROTO		=> 0,
@@ -185,6 +194,22 @@ sub do_defs
 			NO_FP_API	=> 0,
 			CONST_STRICT	=> 0,
 			TRUE		=> 1,
+			NO_RC2		=> 0,
+			NO_RC4		=> 0,
+			NO_RC5		=> 0,
+			NO_IDEA		=> 0,
+			NO_DES		=> 0,
+			NO_BF		=> 0,
+			NO_CAST		=> 0,
+			NO_MD2		=> 0,
+			NO_MD5		=> 0,
+			NO_SHA		=> 0,
+			NO_RIPEMD	=> 0,
+			NO_MDC2		=> 0,
+			NO_RSA		=> 0,
+			NO_DSA		=> 0,
+			NO_DH		=> 0,
+			NO_HMAC		=> 0,
 		);
 		while(<IN>) {
 			last if (/BEGIN ERROR CODES/);
@@ -276,7 +301,7 @@ sub do_defs
 				}
 				$funcs{"PEM_read_bio_${1}"} = 1;
 				$funcs{"PEM_write_bio_${1}"} = 1;
-			} elsif ( 
+			} elsif (
 				($tag{'TRUE'} != -1) &&
 				($tag{'FreeBSD'} != 1) &&
 				($tag{'CONST_STRICT'} != 1) &&
@@ -287,7 +312,23 @@ sub do_defs
 				((!$W32 && $tag{'_WINDLL'} != -1) ||
 				 ($W32 && $tag{'_WINDLL'} != 1)) &&
 				((($tag{'NO_FP_API'} != 1) && $W32) ||
-				 (($tag{'NO_FP_API'} != -1) && !$W32)))
+				 (($tag{'NO_FP_API'} != -1) && !$W32)) &&
+				($tag{'NO_RC2'} == 0  || !$no_rc2) &&
+				($tag{'NO_RC4'} == 0  || !$no_rc4) &&
+				($tag{'NO_RC5'} == 0  || !$no_rc5) &&
+				($tag{'NO_IDEA'} == 0 || !$no_idea) &&
+				($tag{'NO_DES'} == 0  || !$no_des) &&
+				($tag{'NO_BF'} == 0   || !$no_bf) &&
+				($tag{'NO_CAST'} == 0 || !$no_cast) &&
+				($tag{'NO_MD2'} == 0  || !$no_md2) &&
+				($tag{'NO_MD5'} == 0  || !$no_md5) &&
+				($tag{'NO_SHA'} == 0  || !$no_sha) &&
+				($tag{'NO_RIPEMD'} == 0 || !$no_ripemd) &&
+				($tag{'NO_MDC2'} == 0 || !$no_mdc2) &&
+				($tag{'NO_RSA'} == 0  || !$no_rsa) &&
+				($tag{'NO_DSA'} == 0  || !$no_dsa) &&
+				($tag{'NO_DH'} == 0   || !$no_dh) &&
+				($tag{'NO_HMAC'} == 0 || !$no_hmac))
 				{
 					if (/{|\/\*/) { # }
 						$line = $_;
@@ -363,8 +404,9 @@ sub do_defs
 
 sub print_test_file
 {
-	(*OUT,my $name,*nums,@functions)=@_;
-	my $n =1;
+	(*OUT,my $name,*nums,my @functions)=@_;
+	my $n = 1; my @e; my @r;
+	my $func;
 
 	(@e)=grep(/^SSLeay/,@functions);
 	(@r)=grep(!/^SSLeay/,@functions);
@@ -383,8 +425,8 @@ sub print_test_file
 
 sub print_def_file
 {
-	(*OUT,my $name,*nums,@functions)=@_;
-	my $n =1;
+	(*OUT,my $name,*nums,my @functions)=@_;
+	my $n = 1; my @e; my @r;
 
 	if ($W32)
 		{ $name.="32"; }
