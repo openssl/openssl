@@ -349,6 +349,9 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* Copies across all ENGINE methods and pointers. NB: This does *not* change
  * reference counts however. */
 int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
+/* Cleans the internal engine structure.  This should only be used when the
+ * application is about to exit. */
+void ENGINE_cleanup(void);
 
 /* These return values from within the ENGINE structure. These can be useful
  * with functional references as well as structural references - it depends

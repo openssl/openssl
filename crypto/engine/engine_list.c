@@ -376,6 +376,20 @@ int ENGINE_free(ENGINE *e)
 	return 1;
 	}
 
+void ENGINE_cleanup(void)
+        {
+        ENGINE *iterator = engine_list_head;
+
+        while(iterator != NULL)
+                {
+                ENGINE_remove(iterator);
+                ENGINE_free(iterator);
+                iterator = engine_list_head;
+                }
+        engine_list_flag = 0;
+        return;
+        }
+
 int ENGINE_set_id(ENGINE *e, const char *id)
 	{
 	if(id == NULL)
