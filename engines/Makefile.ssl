@@ -17,6 +17,9 @@ MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
+PEX_LIBS=
+EX_LIBS=
+ 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile engines.com install.com
@@ -68,7 +71,7 @@ libs:	$(LIBOBJ)
 		for l in $(LIBNAMES); do \
 			$(NEWMAKE) -f ../Makefile.shared \
 				CC="$(CC)" LIBNAME=$$l LIBEXTRAS=e_$$l.o \
-				LIBDEPS='-L.. -lcrypto' \
+				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
 		done; \
 	else \
