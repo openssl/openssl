@@ -76,7 +76,7 @@ EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
 
 /* Load a Netscape SPKI from a base64 encoded string */
 
-NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(char *str, int len)
+NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(const char *str, int len)
 {
 	unsigned char *spki_der, *p;
 	int spki_len;
@@ -86,7 +86,7 @@ NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(char *str, int len)
 		X509err(X509_F_NETSCAPE_SPKI_B64_DECODE, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	spki_len = EVP_DecodeBlock(spki_der, str, len);
+	spki_len = EVP_DecodeBlock(spki_der, (const unsigned char *)str, len);
 	if(spki_len < 0) {
 		X509err(X509_F_NETSCAPE_SPKI_B64_DECODE,
 						X509_R_BASE64_DECODE_ERROR);
@@ -115,7 +115,7 @@ char * NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
 	}
 	p = der_spki;
 	i2d_NETSCAPE_SPKI(spki, &p);
-	EVP_EncodeBlock(b64_str, der_spki, der_len);
+	EVP_EncodeBlock((unsigned char *)b64_str, der_spki, der_len);
 	Free(der_spki);
 	return b64_str;
 }

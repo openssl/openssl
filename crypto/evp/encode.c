@@ -185,7 +185,7 @@ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	*outl=ret;
 	}
 
-int EVP_EncodeBlock(unsigned char *t, unsigned char *f, int dlen)
+int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 	{
 	int i,ret=0;
 	unsigned long l;
@@ -337,7 +337,7 @@ end:
 	return(rv);
 	}
 
-int EVP_DecodeBlock(unsigned char *t, unsigned char *f, int n)
+int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 	{
 	int i,ret=0,a,b,c,d;
 	unsigned long l;

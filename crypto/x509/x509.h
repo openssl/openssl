@@ -552,7 +552,7 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
-NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(char *str, int len);
+NETSCAPE_SPKI * NETSCAPE_SPKI_b64_decode(const char *str, int len);
 char * NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *x);
 EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x);
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
