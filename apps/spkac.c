@@ -98,6 +98,9 @@ int MAIN(int argc, char **argv)
 
 	if (!bio_err) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	prog=argv[0];
 	argc--;
 	argv++;

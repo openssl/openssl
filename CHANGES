@@ -43,7 +43,19 @@
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
-  +) Move default behaviour to CONF_modules_load_file(). Is appname is NULL
+  +) Config modules support in openssl utility.
+
+     Most commands now load modules from the config file,
+     though in a few (such as version) this isn't done 
+     because it couldn't be used for anything.
+
+     In the case of ca and req the config file used is
+     the same as the utility itself: that is the -config
+     command line option can be used to specify an
+     alternative file.
+     [Steve Henson]
+
+  +) Move default behaviour from OPENSSL_config(). If appname is NULL
      use "openssl_conf" if filename is NULL use default openssl config file.
      [Steve Henson]
 

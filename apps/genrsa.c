@@ -99,6 +99,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto err;
 	if ((out=BIO_new(BIO_s_file())) == NULL)
 		{
 		BIO_printf(bio_err,"unable to create BIO for output\n");

@@ -191,6 +191,9 @@ int MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
 #ifdef OPENSSL_SYS_VMS
 	{

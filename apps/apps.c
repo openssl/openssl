@@ -1314,3 +1314,21 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 		}
         return e;
         }
+
+int load_config(BIO *err, CONF *cnf)
+	{
+	if (!cnf)
+		cnf = config;
+	if (!cnf)
+		return 1;
+
+	OPENSSL_load_builtin_modules();
+
+	if (CONF_modules_load(cnf, NULL, 0) <= 0)
+		{
+		BIO_printf(err, "Error configuring OpenSSL\n");
+		ERR_print_errors(err);
+		return 0;
+		}
+	return 1;
+	}

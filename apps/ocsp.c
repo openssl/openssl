@@ -145,6 +145,9 @@ int MAIN(int argc, char **argv)
 	int nmin = 0, ndays = -1;
 
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 	SSL_load_error_strings();
 	args = argv + 1;
 	reqnames = sk_new_null();

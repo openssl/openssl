@@ -127,6 +127,9 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	/* first check the program name */
 	program_name(argv[0],pname,PROG_NAME_SIZE);
 	if (strcmp(pname,"base64") == 0)

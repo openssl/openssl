@@ -196,7 +196,8 @@ extern BIO *bio_err;
 #  define apps_shutdown() \
 		do { destroy_ui_method(); EVP_cleanup(); \
 		ENGINE_cleanup(); CRYPTO_cleanup_all_ex_data(); \
-		ERR_remove_state(0); ERR_free_strings(); } while(0)
+		ERR_remove_state(0); ERR_free_strings(); \
+		CONF_modules_unload(1); } while(0)
 #endif
 
 typedef struct args_st
@@ -243,6 +244,8 @@ STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 ENGINE *setup_engine(BIO *err, const char *engine, int debug);
+
+int load_config(BIO *err, CONF *cnf);
 
 /* Functions defined in ca.c and also used in ocsp.c */
 int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,

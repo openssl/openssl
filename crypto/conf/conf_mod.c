@@ -130,9 +130,11 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 	int ret, i;
 
-	if (!cnf || !appname)
+	if (!cnf)
 		return 1;
 
+	if (appname == NULL)
+		appname = "openssl_conf";
 
 	vsection = NCONF_get_string(cnf, NULL, appname); 
 
@@ -178,8 +180,6 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 		}
 	else
 		file = (char *)filename;
-	if (appname == NULL)
-		appname = "openssl_conf";
 
 	if (NCONF_load(conf, file, NULL) <= 0)
 		{
@@ -422,6 +422,7 @@ void CONF_modules_unload(int all)
 	{
 	int i;
 	CONF_MODULE *md;
+	CONF_modules_finish();
 	/* unload modules in reverse order */
 	for (i = sk_CONF_MODULE_num(supported_modules) - 1; i >= 0; i--)
 		{

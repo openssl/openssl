@@ -90,6 +90,9 @@ int MAIN(int argc, char **argv)
 
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
 
@@ -347,6 +350,7 @@ int MAIN(int argc, char **argv)
 			return (1);
 	}
 
+	end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
 	BIO_free(in);
