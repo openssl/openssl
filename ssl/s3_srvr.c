@@ -816,7 +816,7 @@ static int ssl3_send_server_hello(SSL *s)
 		p=s->s3->server_random;
 		Time=time(NULL);			/* Time */
 		l2n(Time,p);
-		RAND_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
+		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
 
@@ -1292,7 +1292,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 				{
 				p[0]=(s->version>>8);
 				p[1]=(s->version & 0xff);
-				RAND_bytes(&(p[2]),SSL_MAX_MASTER_KEY_LENGTH-2);
+				RAND_pseudo_bytes(&(p[2]),SSL_MAX_MASTER_KEY_LENGTH-2);
 				i=SSL_MAX_MASTER_KEY_LENGTH;
 				}
 			/* else, an SSLeay bug, ssl only server, tls client */

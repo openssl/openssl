@@ -484,7 +484,7 @@ void doencryption(void)
 			if (feof(DES_IN))
 				{
 				for (i=7-rem; i>0; i--)
-					RAND_bytes(buf + l++, 1);
+					RAND_pseudo_bytes(buf + l++, 1);
 				buf[l++]=rem;
 				ex=1;
 				len+=rem;

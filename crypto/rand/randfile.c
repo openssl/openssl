@@ -118,7 +118,7 @@ err:
 int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
-	int i,ret=0;
+	int i,ret=0,err=0;
 	FILE *out = NULL;
 	int n;
 
@@ -156,7 +156,8 @@ int RAND_write_file(const char *file)
 		{
 		i=(n > BUFSIZE)?BUFSIZE:n;
 		n-=BUFSIZE;
-		RAND_bytes(buf,i);
+		if (RAND_bytes(buf,i) <= 0)
+			err=1;
 		i=fwrite(buf,1,i,out);
 		if (i <= 0)
 			{
@@ -169,7 +170,7 @@ int RAND_write_file(const char *file)
 	fclose(out);
 	memset(buf,0,BUFSIZE);
 err:
-	return(ret);
+	return(err ? -1 : ret);
 	}
 
 char *RAND_file_name(char *buf, int size)

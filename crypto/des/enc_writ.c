@@ -130,7 +130,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 		{
 		cp=shortbuf;
 		memcpy(shortbuf,buf,len);
-		RAND_bytes(shortbuf+len, 8-len);
+		RAND_pseudo_bytes(shortbuf+len, 8-len);
 		rnum=8;
 		}
 	else

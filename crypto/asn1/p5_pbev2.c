@@ -194,7 +194,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if(!(scheme->parameter = ASN1_TYPE_new())) goto merr;
 
 	/* Create random IV */
-	RAND_bytes(iv, EVP_CIPHER_iv_length(cipher));
+	RAND_pseudo_bytes(iv, EVP_CIPHER_iv_length(cipher));
 
 	/* Dummy cipherinit to just setup the IV */
 	EVP_CipherInit(&ctx, cipher, NULL, iv, 0);
@@ -212,7 +212,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if (!(osalt->data = Malloc (saltlen))) goto merr;
 	osalt->length = saltlen;
 	if (salt) memcpy (osalt->data, salt, saltlen);
-	else RAND_bytes (osalt->data, saltlen);
+	else if (RAND_bytes (osalt->data, saltlen) <= 0) goto merr;
 
 	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
 	if(!ASN1_INTEGER_set(kdf->iter, iter)) goto merr;

@@ -137,7 +137,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
 
 	BIO_clear_retry_flags(b);
 #if 0
-	RAND_bytes(&n,1);
+	RAND_pseudo_bytes(&n,1);
 	num=(n&0x07);
 
 	if (outl > num) outl=num;
@@ -178,7 +178,7 @@ static int nbiof_write(BIO *b, char *in, int inl)
 		}
 	else
 		{
-		RAND_bytes(&n,1);
+		RAND_pseudo_bytes(&n,1);
 		num=(n&7);
 		}
 

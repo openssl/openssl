@@ -515,7 +515,7 @@ static int client_hello(SSL *s)
 		s->s2->challenge_length=SSL2_CHALLENGE_LENGTH;
 		s2n(SSL2_CHALLENGE_LENGTH,p);		/* challenge length */
 		/*challenge id data*/
-		RAND_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH);
+		RAND_pseudo_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH);
 		memcpy(d,s->s2->challenge,SSL2_CHALLENGE_LENGTH);
 		d+=SSL2_CHALLENGE_LENGTH;
 
@@ -557,12 +557,19 @@ static int client_master_key(SSL *s)
 		/* make key_arg data */
 		i=EVP_CIPHER_iv_length(c);
 		sess->key_arg_length=i;
-		if (i > 0) RAND_bytes(sess->key_arg,i);
+		if (i > 0) RAND_pseudo_bytes(sess->key_arg,i);
 
 		/* make a master key */
 		i=EVP_CIPHER_key_length(c);
 		sess->master_key_length=i;
-		if (i > 0) RAND_bytes(sess->master_key,i);
+		if (i > 0)
+			{
+			if (RAND_bytes(sess->master_key,i) <= 0)
+				{
+				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+				goto err;
+				}
+			}
 
 		if (sess->cipher->algorithm2 & SSL2_CF_8_BYTE_ENC)
 			enc=8;

@@ -73,9 +73,10 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char **ek,
 	int i;
 	
 	if (npubk <= 0) return(0);
-	if (RAND_bytes(key,EVP_MAX_KEY_LENGTH) <= 0) return(0);
+	if (RAND_bytes(key,EVP_MAX_KEY_LENGTH) <= 0)
+		return(0);
 	if (type->iv_len > 0)
-		RAND_bytes(iv,type->iv_len);
+		RAND_pseudo_bytes(iv,type->iv_len);
 
 	EVP_CIPHER_CTX_init(ctx);
 	EVP_EncryptInit(ctx,type,key,iv);

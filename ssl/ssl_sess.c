@@ -184,7 +184,7 @@ int ssl_get_new_session(SSL *s, int session)
 			{
 			SSL_SESSION *r;
 
-			RAND_bytes(ss->session_id,ss->session_id_length);
+			RAND_pseudo_bytes(ss->session_id,ss->session_id_length);
 			CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 			r=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,
 				(char *)ss);

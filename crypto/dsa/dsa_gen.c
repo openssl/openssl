@@ -121,7 +121,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 			if (callback != NULL) callback(0,m++,cb_arg);
 
 			if (!seed_len)
-				RAND_bytes(seed,SHA_DIGEST_LENGTH);
+				RAND_pseudo_bytes(seed,SHA_DIGEST_LENGTH);
 			else
 				seed_len=0;
 

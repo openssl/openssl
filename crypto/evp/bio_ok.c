@@ -451,7 +451,7 @@ static void sig_out(BIO* b)
 	if(ctx->buf_len+ 2* md->digest->md_size > OK_BLOCK_SIZE) return;
 
 	EVP_DigestInit(md, md->digest);
-	RAND_bytes(&(md->md.base[0]), md->digest->md_size);
+	RAND_pseudo_bytes(&(md->md.base[0]), md->digest->md_size);
 	memcpy(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]), md->digest->md_size);
 	longswap(&(ctx->buf[ctx->buf_len]), md->digest->md_size);
 	ctx->buf_len+= md->digest->md_size;

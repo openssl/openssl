@@ -415,7 +415,7 @@ static int get_client_master_key(SSL *s)
 			i=ek;
 		else
 			i=EVP_CIPHER_key_length(c);
-		RAND_bytes(p,i);
+		RAND_pseudo_bytes(p,i);
 		}
 #else
 	if (i < 0)
@@ -680,7 +680,7 @@ static int server_hello(SSL *s)
 		/* make and send conn_id */
 		s2n(SSL2_CONNECTION_ID_LENGTH,p);	/* add conn_id length */
 		s->s2->conn_id_length=SSL2_CONNECTION_ID_LENGTH;
-		RAND_bytes(s->s2->conn_id,(int)s->s2->conn_id_length);
+		RAND_pseudo_bytes(s->s2->conn_id,(int)s->s2->conn_id_length);
 		memcpy(d,s->s2->conn_id,SSL2_CONNECTION_ID_LENGTH);
 		d+=SSL2_CONNECTION_ID_LENGTH;
 
@@ -798,7 +798,7 @@ static int request_certificate(SSL *s)
 		p=(unsigned char *)s->init_buf->data;
 		*(p++)=SSL2_MT_REQUEST_CERTIFICATE;
 		*(p++)=SSL2_AT_MD5_WITH_RSA_ENCRYPTION;
-		RAND_bytes(ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
+		RAND_pseudo_bytes(ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 		memcpy(p,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
 		s->state=SSL2_ST_SEND_REQUEST_CERTIFICATE_B;
