@@ -152,10 +152,10 @@ extern "C" {
 
 /* For use with ASN1_mbstring_copy() */
 #define MBSTRING_FLAG		0x1000
+#define MBSTRING_UTF8		(MBSTRING_FLAG)
 #define MBSTRING_ASC		(MBSTRING_FLAG|1)
 #define MBSTRING_BMP		(MBSTRING_FLAG|2)
-#define MBSTRING_UNIV		(MBSTRING_FLAG|3)
-#define MBSTRING_UTF8		(MBSTRING_FLAG|4)
+#define MBSTRING_UNIV		(MBSTRING_FLAG|4)
 
 struct X509_algor_st;
 
