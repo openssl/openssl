@@ -93,7 +93,7 @@ static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 static int ubsec_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 #ifndef OPENSSL_NO_DSA
-#if NOT_USED
+#ifdef NOT_USED
 static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 		BN_CTX *ctx, BN_MONT_CTX *in_mont);
@@ -113,7 +113,7 @@ static int ubsec_dh_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh)
 static int ubsec_dh_generate_key(DH *dh);
 #endif
 
-#if NOT_USED
+#ifdef NOT_USED
 static int ubsec_rand_bytes(unsigned char *buf, int num);
 static int ubsec_rand_status(void);
 #endif
@@ -663,7 +663,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 }
 
 #ifndef OPENSSL_NO_DSA
-#if NOT_USED
+#ifdef NOT_USED
 static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 		BN_CTX *ctx, BN_MONT_CTX *in_mont)
@@ -987,7 +987,7 @@ err:
         }
 #endif
 
-#if NOT_USED
+#ifdef NOT_USED
 static int ubsec_rand_bytes(unsigned char * buf,
                             int num)
         {
