@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7Ae and 0.9.7f  [XX xxx XXXX]
+ Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
   *) Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating
      server and client random values. Previously
