@@ -58,8 +58,13 @@
 
 #include <stdio.h>
 #include <openssl/e_os2.h>
+/* The following defines enable the declaration of strdup(), which is an
+   extended function according to X/Open. */
 #ifdef OPENSSL_SYS_VMS_DECC
 # define _XOPEN_SOURCE_EXTENDED
+#endif
+#ifdef OPENSSL_SYS_UNIX
+# define __USE_XOPEN_EXTENDED	/* For Linux and probably anything GNU */
 #endif
 #include <string.h>
 #include <openssl/engine.h>
