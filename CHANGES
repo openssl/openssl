@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Reformat the FAQ so the different questions and answers can be divided
+     i sections depending on the subject.
+     [Richard Levitte]
+
   *) Have the zlib compression code load ZLIB.DLL dynamically under
      Windows.
      [Richard Levitte]
