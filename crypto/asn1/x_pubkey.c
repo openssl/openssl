@@ -169,8 +169,8 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	long j;
 	int type;
 	unsigned char *p;
-	const unsigned char *cp;
 #ifndef OPENSSL_NO_DSA
+	const unsigned char *cp;
 	X509_ALGOR *a;
 #endif
 
