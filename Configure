@@ -390,7 +390,13 @@ foreach (@ARGV)
 		die "target already defined - $target\n" if ($target ne "");
 		$target=$_;
 		}
-	$options .= $_ unless $_ eq $target;
+	unless ($_ eq $target) {
+		if ($options eq "") {
+			$options = $_;
+		} else {
+			$options .= " ".$_;
+		}
+	}
 }
 
 if ($target eq "TABLE") {
