@@ -9,6 +9,10 @@ OpenSSL  -  Frequently Asked Questions
 * Why do I get a "PRNG not seeded" error message?
 * Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
+* I've compiled a program under Windows and it crashes: why?
+* Why do I get errors about unknown algorithms?
+* How do I create certificates or certificate requests?
+* Why can't I create certificate requests?
 * Why can't the OpenSSH configure script detect OpenSSL?
 
 
@@ -152,6 +156,40 @@ on how to obtain and install the free GNU C compiler.
 
 A number of Linux and *BSD distributions include OpenSSL.
 
+* I've compiled a program under Windows and it crashes: why?
+
+This is usually because you've missed the comment in INSTALL.W32. You
+must link with the multithreaded DLL version of the VC++ runtime library
+otherwise the conflict will cause a program to crash: typically on the
+first BIO related read or write operation.
+
+
+* Why do I get errors about unknown algorithms?
+
+This can happen under several circumstances such as reading in an
+encrypted private key or attempting to decrypt a PKCS#12 file. The cause
+is forgetting to load OpenSSL's table of algorithms with
+OpenSSL_add_all_algorithms(). See the manual page for more information.
+
+
+* How do I create certificates or certificate requests?
+
+Check out the CA.pl(1) manual page. This provides a simple wrapper round
+the 'req', 'verify', 'ca' and 'pkcs12' utilities. For finer control check
+out the manual pages for the individual utilities and the certificate
+extensions documentation (currently in doc/openssl.txt).
+
+
+* Why can't I create certificate requests?
+
+You typically get the error:
+
+	unable to find 'distinguished_name' in config
+	problems making Certificate Request
+
+This is because it can't find the configuration file. Check out the
+DIAGNOSTICS section of req(1) for more information.
+
 
 * Why can't the OpenSSH configure script detect OpenSSL?
 
@@ -192,4 +230,3 @@ applied to the OpenSSH distribution:
  	fi
  	LIBS="$LIBS -lcrypto"
 ----- snip:end -----
-
