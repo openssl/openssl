@@ -242,14 +242,8 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	if (a->type != b->type)
 		return -1;
 
-	/* XXXXX
-	   We should really check for != 0, but cmp_paramters doesn't compare EC
-	   groups, and I'm currently unsure how to handle that case...  Except for
-	   adding such functionality to cmp_parameters, but that would require
-	   things like EC_GROUP_cmp(), which I'm not currently ready to write.
-	   -- Richard Levitte */
-	if (EVP_PKEY_cmp_parameters(a, b) == 1)
-		return 1;
+	if (EVP_PKEY_cmp_parameters(a, b) == 0)
+		return 0;
 
 	switch (a->type)
 		{
