@@ -4,6 +4,7 @@ digest='-mdc2'
 reqcmd="../apps/openssl req"
 x509cmd="../apps/openssl x509 $digest"
 verifycmd="../apps/openssl verify"
+dummycnf="../apps/openssl.cnf"
 
 CAkey="keyCA.ss"
 CAcert="certCA.ss"
@@ -39,13 +40,13 @@ if [ $? != 0 ]; then
 	exit 1
 fi
 
-$reqcmd -verify -in $CAreq -noout
+$reqcmd -config $dummycnf -verify -in $CAreq -noout
 if [ $? != 0 ]; then
 	echo first generated request is invalid
 	exit 1
 fi
 
-$reqcmd -verify -in $CAreq2 -noout
+$reqcmd -config $dummycnf -verify -in $CAreq2 -noout
 if [ $? != 0 ]; then
 	echo second generated request is invalid
 	exit 1

@@ -3,7 +3,7 @@
 PATH=../apps:$PATH
 export PATH
 
-cmd='../apps/openssl req'
+cmd='../apps/openssl req -config ../apps/openssl.cnf'
 
 if [ "$1"x != "x" ]; then
 	t=$1

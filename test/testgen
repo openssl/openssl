@@ -21,7 +21,7 @@ echo problems creating request
 exit 1
 fi
 
-../apps/openssl req -verify -in testreq.pem -noout
+../apps/openssl req -config test.cnf -verify -in testreq.pem -noout
 if [ $? != 0 ]; then
 echo signature on req is wrong
 exit 1
