@@ -59,6 +59,14 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
+#ifdef OPENSSL_ALGORITHM_DEFINES
+# include <openssl/opensslconf.h>
+#else
+# define OPENSSL_ALGORITHM_DEFINES
+# include <openssl/opensslconf.h>
+# undef OPENSSL_ALGORITHM_DEFINES
+#endif
+
 #ifndef NO_COMP
 #include <openssl/comp.h>
 #endif
