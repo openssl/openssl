@@ -4,6 +4,10 @@
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Under Win32 gmtime() can return NULL: check return value in
+     OPENSSL_gmtime(). Add error code for case where gmtime() fails.
+     [Steve Henson]
+
   *) DSA routines: under certain error conditions uninitialized BN objects
      could be freed. Solution: make sure initialization is performed early
      enough. (Reported and fix supplied by Ivan D Nestlerode <nestler@MIT.EDU>,

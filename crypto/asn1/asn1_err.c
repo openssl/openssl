@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,6 +100,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_PACK(0,ASN1_F_ASN1_TEMPLATE_D2I,0),	"ASN1_TEMPLATE_D2I"},
 {ERR_PACK(0,ASN1_F_ASN1_TEMPLATE_EX_D2I,0),	"ASN1_TEMPLATE_EX_D2I"},
 {ERR_PACK(0,ASN1_F_ASN1_TEMPLATE_NEW,0),	"ASN1_TEMPLATE_NEW"},
+{ERR_PACK(0,ASN1_F_ASN1_TIME_SET,0),	"ASN1_TIME_set"},
 {ERR_PACK(0,ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,0),	"ASN1_TYPE_get_int_octetstring"},
 {ERR_PACK(0,ASN1_F_ASN1_TYPE_GET_OCTETSTRING,0),	"ASN1_TYPE_get_octetstring"},
 {ERR_PACK(0,ASN1_F_ASN1_UNPACK_STRING,0),	"ASN1_unpack_string"},
@@ -160,6 +161,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_DECODE_ERROR                     ,"decode error"},
 {ASN1_R_DECODING_ERROR                   ,"decoding error"},
 {ASN1_R_ENCODE_ERROR                     ,"encode error"},
+{ASN1_R_ERROR_GETTING_TIME               ,"error getting time"},
 {ASN1_R_ERROR_LOADING_SECTION            ,"error loading section"},
 {ASN1_R_ERROR_PARSING_SET_ELEMENT        ,"error parsing set element"},
 {ASN1_R_ERROR_SETTING_CIPHER_PARAMS      ,"error setting cipher params"},
