@@ -390,7 +390,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
 				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
 			if (password[0] != '\0')
 				{
-				UI_set_result(uis, password);
+				UI_set_result(ui, uis, password);
 				return 1;
 				}
 			}
@@ -462,8 +462,6 @@ int password_callback(char *buf, int bufsiz, int verify,
 	ui = UI_new_method(ui_method);
 	if (ui)
 		{
-		char errstring[80];
-		int errstring_added = 0;
 		int ok = 0;
 		char *buff = NULL;
 		int ui_flags = 0;
@@ -473,44 +471,32 @@ int password_callback(char *buf, int bufsiz, int verify,
 			cb_data->prompt_info);
 
 		ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
+		UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
 
 		if (ok >= 0)
-			ok = UI_add_input_string(ui,prompt,ui_flags,buf,0,BUFSIZ-1);
+			ok = UI_add_input_string(ui,prompt,ui_flags,buf,
+				PW_MIN_LENGTH,BUFSIZ-1);
 		if (ok >= 0 && verify)
 			{
 			buff = (char *)OPENSSL_malloc(bufsiz);
-			ok = UI_add_verify_string(ui,prompt,ui_flags,buff,0,BUFSIZ-1,
-				buf);
+			ok = UI_add_verify_string(ui,prompt,ui_flags,buff,
+				PW_MIN_LENGTH,BUFSIZ-1, buf);
 			}
 		if (ok >= 0)
-			for(;;)
+			do
 				{
-				res = 0;
-				ok=UI_process(ui);
-				if (ok < 0)
-					break;
-				res=strlen(buf);
-				if (res < PW_MIN_LENGTH)
-					{
-					if (errstring_added == 0)
-						{
-						BIO_snprintf(errstring,
-							sizeof(errstring),
-"phrase is too short, needs to be at least %d chars\n", PW_MIN_LENGTH);
-						UI_add_error_string(ui,
-							errstring);
-						}
-					errstring_added = 1;
-					}
-				else
-					break;
+				ok = UI_process(ui);
 				}
+			while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
+
 		if (buff)
 			{
-			memset(buf,0,(unsigned int)bufsiz);
+			memset(buff,0,(unsigned int)bufsiz);
 			OPENSSL_free(buff);
 			}
 
+		if (ok >= 0)
+			res = strlen(buf);
 		if (ok == -1)
 			{
 			BIO_printf(bio_err, "User interface error\n");
@@ -525,6 +511,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 			res = 0;
 			}
 		UI_free(ui);
+		OPENSSL_free(prompt);
 		}
 	return res;
 	}
