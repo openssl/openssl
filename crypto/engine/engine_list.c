@@ -193,6 +193,10 @@ static int engine_internal_check(void)
 	if(!engine_list_add(ENGINE_hwcrhk()))
 		return 0;
 #endif /* HW_CSWIFT */
+#ifdef HW_ATALLA
+	if(!engine_list_add(ENGINE_atalla()))
+		return 0;
+#endif /* HW_CSWIFT */
 	engine_list_flag = 1;
 	return 1;
 	}

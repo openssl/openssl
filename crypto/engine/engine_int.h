@@ -133,6 +133,11 @@ ENGINE *ENGINE_cswift();
 ENGINE *ENGINE_hwcrhk();
 #endif /* HW_NCIPHER */
 
+#ifdef HW_ATALLA
+/* Returns a structure of atalla methods. */
+ENGINE *ENGINE_atalla();
+#endif /* HW_ATALLA */
+
 #ifdef  __cplusplus
 }
 #endif

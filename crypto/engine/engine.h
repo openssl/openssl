@@ -252,6 +252,10 @@ void ERR_load_ENGINE_strings(void);
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
+#define ENGINE_F_ATALLA_FINISH				 135
+#define ENGINE_F_ATALLA_INIT				 136
+#define ENGINE_F_ATALLA_MOD_EXP				 137
+#define ENGINE_F_ATALLA_RSA_MOD_EXP			 138
 #define ENGINE_F_CSWIFT_DSA_SIGN			 133
 #define ENGINE_F_CSWIFT_DSA_VERIFY			 134
 #define ENGINE_F_CSWIFT_FINISH				 100
