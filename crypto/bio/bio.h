@@ -434,7 +434,7 @@ int BIO_read_filename(BIO *b,const char *name);
 #define BIO_set_ssl_renegotiate_bytes(b,num) \
 	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL);
 #define BIO_get_num_renegotiates(b) \
-	BIO_ctrl(b,BIO_C_SET_SSL_NUM_RENEGOTIATES,0,NULL);
+	BIO_ctrl(b,BIO_C_GET_SSL_NUM_RENEGOTIATES,0,NULL);
 #define BIO_set_ssl_renegotiate_timeout(b,seconds) \
 	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL);
 

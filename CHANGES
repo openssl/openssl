@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix buggy behaviour of BIO_get_num_renegotiates() and BIO_ctrl()
+     for BIO_C_GET_WRITE_BUF_SIZE ("Stephen Hinton" <shinton@netopia.com>).
+     [Lutz Jaenicke]
+
   *) Rework the configuration and shared library support for Tru64 Unix.
      The configuration part makes use of modern compiler features and
      still retains old compiler behavior for those that run older versions
