@@ -28,6 +28,7 @@ OpenSSL  -  Frequently Asked Questions
 * How can I remove the passphrase on a private key?
 * Why can't I use OpenSSL certificates with SSL client authentication?
 * Why does my browser give a warning about a mismatched hostname?
+* How do I install a CA certificate into a browser?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -321,6 +322,26 @@ If your CA does not appear in the list then this confirms the problem.
 
 Browsers expect the server's hostname to match the value in the commonName
 (CN) field of the certificate. If it does not then you get a warning.
+
+
+* How do I install a CA certificate into a browser?
+
+The usual way is to send the DER encoded certificate to the browser as
+MIME type application/x-x509-ca-cert, for example by clicking on an appropriate
+link. On MSIE certain extensions such as .der or .cacert may also work, or you
+can import the certificate using the certificate import wizard.
+
+You can convert a certificate to DER form using the command:
+
+openssl x509 -in ca.pem -outform DER -out ca.der
+
+Occasionally someone suggests using a command such as:
+
+openssl pkcs12 -export -out cacert.p12 -in cacert.pem -inkey cakey.pem
+
+DO NOT DO THIS! This command will give away your CAs private key and
+reduces its security to zero: allowing anyone to forge certificates in
+whatever name they choose.
 
 
 [BUILD] =======================================================================
