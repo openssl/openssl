@@ -304,6 +304,8 @@ void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
+void ENGINE_load_aep(void);
+void ENGINE_load_sureware(void);
 void ENGINE_load_openbsd_dev_crypto(void);
 void ENGINE_load_builtin_engines(void);
 
@@ -667,10 +669,6 @@ void ERR_load_ENGINE_strings(void);
 /* Reason codes. */
 #define ENGINE_R_ALREADY_LOADED				 100
 #define ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER		 133
-#define ENGINE_R_BIO_WAS_FREED				 121
-#define ENGINE_R_BN_CTX_FULL				 101
-#define ENGINE_R_BN_EXPAND_FAIL				 102
-#define ENGINE_R_CHIL_ERROR				 123
 #define ENGINE_R_CMD_NOT_EXECUTABLE			 134
 #define ENGINE_R_COMMAND_TAKES_INPUT			 135
 #define ENGINE_R_COMMAND_TAKES_NO_INPUT			 136
@@ -679,7 +677,6 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_DH_NOT_IMPLEMENTED			 139
 #define ENGINE_R_DSA_NOT_IMPLEMENTED			 140
 #define ENGINE_R_DSO_FAILURE				 104
-#define ENGINE_R_DSO_FUNCTION_NOT_FOUND			 131
 #define ENGINE_R_DSO_NOT_FOUND				 132
 #define ENGINE_R_ENGINES_SECTION_ERROR			 148
 #define ENGINE_R_ENGINE_IS_NOT_IN_LIST			 105
@@ -695,26 +692,18 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_INVALID_CMD_NAME			 137
 #define ENGINE_R_INVALID_CMD_NUMBER			 138
 #define ENGINE_R_INVALID_STRING				 150
-#define ENGINE_R_MISSING_KEY_COMPONENTS			 111
 #define ENGINE_R_NOT_INITIALISED			 117
 #define ENGINE_R_NOT_LOADED				 112
-#define ENGINE_R_NO_CALLBACK				 127
 #define ENGINE_R_NO_CONTROL_FUNCTION			 120
 #define ENGINE_R_NO_INDEX				 144
-#define ENGINE_R_NO_KEY					 124
 #define ENGINE_R_NO_LOAD_FUNCTION			 125
 #define ENGINE_R_NO_REFERENCE				 130
 #define ENGINE_R_NO_SUCH_ENGINE				 116
 #define ENGINE_R_NO_UNLOAD_FUNCTION			 126
-#define ENGINE_R_PRIVATE_KEY_ALGORITHMS_DISABLED	 142
 #define ENGINE_R_PROVIDE_PARAMETERS			 113
-#define ENGINE_R_REQUEST_FAILED				 114
-#define ENGINE_R_REQUEST_FALLBACK			 118
 #define ENGINE_R_RSA_NOT_IMPLEMENTED			 141
-#define ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 122
 #define ENGINE_R_UNIMPLEMENTED_CIPHER			 146
 #define ENGINE_R_UNIMPLEMENTED_DIGEST			 147
-#define ENGINE_R_UNIT_FAILURE				 115
 #define ENGINE_R_VERSION_INCOMPATIBILITY		 145
 
 #ifdef  __cplusplus
