@@ -321,7 +321,7 @@ The default filename consists of the CA certificate file base name with
 ".srl" appended. For example if the CA certificate file is called 
 "mycacert.pem" it expects to find a serial number file called "mycacert.srl".
 
-=item B<-CAcreateserial filename>
+=item B<-CAcreateserial>
 
 with this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
@@ -539,18 +539,18 @@ Set a certificate to be trusted for SSL client use and change set its alias to
 
 The PEM format uses the header and footer lines:
 
- -----BEGIN CERTIFICATE----
- -----END CERTIFICATE----
+ -----BEGIN CERTIFICATE-----
+ -----END CERTIFICATE-----
 
 it will also handle files containing:
 
- -----BEGIN X509 CERTIFICATE----
- -----END X509 CERTIFICATE----
+ -----BEGIN X509 CERTIFICATE-----
+ -----END X509 CERTIFICATE-----
 
 Trusted certificates have the lines
 
- -----BEGIN TRUSTED CERTIFICATE----
- -----END TRUSTED CERTIFICATE----
+ -----BEGIN TRUSTED CERTIFICATE-----
+ -----END TRUSTED CERTIFICATE-----
 
 The conversion to UTF8 format used with the name options assumes that
 T61Strings use the ISO8859-1 character set. This is wrong but Netscape

@@ -457,13 +457,13 @@ Sample configuration containing all field values:
 
 The header and footer lines in the B<PEM> format are normally:
 
- -----BEGIN CERTIFICATE REQUEST----
- -----END CERTIFICATE REQUEST----
+ -----BEGIN CERTIFICATE REQUEST-----
+ -----END CERTIFICATE REQUEST-----
 
 some software (some versions of Netscape certificate server) instead needs:
 
- -----BEGIN NEW CERTIFICATE REQUEST----
- -----END NEW CERTIFICATE REQUEST----
+ -----BEGIN NEW CERTIFICATE REQUEST-----
+ -----END NEW CERTIFICATE REQUEST-----
 
 which is produced with the B<-newhdr> option but is otherwise compatible.
 Either form is accepted transparently on input.
