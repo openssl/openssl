@@ -182,11 +182,16 @@ int BN_mul_word(BIGNUM *a, BN_ULONG w)
 	w&=BN_MASK2;
 	if (a->top)
 		{
-		ll=bn_mul_words(a->d,a->d,a->top,w);
-		if (ll)
+		if (w == 0)
+			BN_zero(a);
+		else
 			{
-			if (bn_wexpand(a,a->top+1) == NULL) return(0);
-			a->d[a->top++]=ll;
+			ll=bn_mul_words(a->d,a->d,a->top,w);
+			if (ll)
+				{
+				if (bn_wexpand(a,a->top+1) == NULL) return(0);
+				a->d[a->top++]=ll;
+				}
 			}
 		}
 	return(1);
