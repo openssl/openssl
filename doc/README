@@ -1,9 +1,9 @@
 
- openssl.pod ..... Documentation of OpenSSL `openssl' command
- crypto.pod ...... Documentation of OpenSSL crypto.h+libcrypto.a
- ssl.pod ......... Documentation of OpenSSL ssl.h+libssl.a
- ssleay.txt ...... Assembled documentation files of ancestor SSLeay [obsolete]
- openssl.txt ..... Assembled documentation files for OpenSSL [not final]
+ apps/openssl.pod .... Documentation of OpenSSL `openssl' command
+ crypto/crypto.pod ... Documentation of OpenSSL crypto.h+libcrypto.a
+ ssl/ssl.pod ......... Documentation of OpenSSL ssl.h+libssl.a
+ openssl.txt ......... Assembled documentation files for OpenSSL [not final]
+ ssleay.txt .......... Assembled documentation of ancestor SSLeay [obsolete]
 
  An archive of HTML documents for the SSLeay library is available from
  http://www.columbia.edu/~ariel/ssleay/
