@@ -1,4 +1,3 @@
-Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -2645,6 +2644,31 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= hpux64-shared
 $shared_cflag = +Z
+$shared_ldflag = 
+$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
+*** hpux64-parisc2-gcc
+$cc           = gcc
+$cflags       = -O3 -DB_ENDIAN -DMD32_XARRAY
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_obj       = asm/pa-risc2W.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= hpux64-shared
+$shared_cflag = -fpic
 $shared_ldflag = 
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
