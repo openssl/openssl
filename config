@@ -535,14 +535,14 @@ fi
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
 
-$PERL ./Configure 2>&1 | grep "$OUT-$CC" > /dev/null
+$PERL ./Configure LIST | grep "$OUT-$CC" > /dev/null
 if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
 
 OUT="$PREFIX$OUT"
 
-$PERL ./Configure 2>&1 | grep "$OUT" > /dev/null
+$PERL ./Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
   echo Configuring for $OUT
 

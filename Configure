@@ -507,6 +507,14 @@ if ($target eq "TABLE") {
 	exit 0;
 }
 
+if ($target eq "LIST") {
+	foreach (sort keys %table) {
+		print;
+		print "\n";
+	}
+	exit 0;
+}
+
 &usage if (!defined($table{$target}));
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
@@ -871,22 +879,33 @@ exit(0);
 sub usage
 	{
 	print STDERR $usage;
-	print STDERR "pick os/compiler from:";
+	print STDERR "\npick os/compiler from:\n";
 	my $j=0;
 	my $i;
+        my $k=0;
 	foreach $i (sort keys %table)
 		{
 		next if $i =~ /^debug/;
-		print STDERR "\n" if ($j++ % 4) == 0;
-		printf(STDERR "%-18s ",$i);
+		$k += length($i) + 1;
+		if ($k > 78)
+			{
+			print STDERR "\n";
+			$k=length($i);
+			}
+		print STDERR $i . " ";
 		}
 	foreach $i (sort keys %table)
 		{
 		next if $i !~ /^debug/;
-		print STDERR "\n" if ($j++ % 4) == 0;
-		printf(STDERR "%-18s ",$i);
+		$k += length($i) + 1;
+		if ($k > 78)
+			{
+			print STDERR "\n";
+			$k=length($i);
+			}
+		print STDERR $i . " ";
 		}
-	print STDERR "\n";
+	print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
 	exit(1);
 	}
 
