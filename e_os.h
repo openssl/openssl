@@ -160,6 +160,13 @@ extern "C" {
 #define closesocket(s)		MacSocket_close(s)
 #define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
 #define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
+#elif defined(VMS)
+#define get_last_socket_error() errno
+#define clear_socket_error()    errno=0
+#define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#define closesocket(s)          close(s)
+#define readsocket(s,b,n)       recv((s),(b),(n),0)
+#define writesocket(s,b,n)      send((s),(b),(n),0)
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
