@@ -93,7 +93,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
 	 * there's a chance that both threads will together take the count from
 	 * 2 to 0 without either calling finish(). */
 	e->funct_ref--;
-	engine_ref_debug(e, 1, -1)
+	engine_ref_debug(e, 1, -1);
 	if((e->funct_ref == 0) && e->finish)
 		{
 		if(unlock_for_handlers)
