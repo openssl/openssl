@@ -184,6 +184,18 @@ e_cswift.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 e_cswift.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_cswift.o: ../include/openssl/symhacks.h ../include/openssl/ui.h e_cswift.c
 e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
+e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_gmp.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_gmp.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+e_gmp.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+e_gmp.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+e_gmp.o: ../include/openssl/err.h ../include/openssl/lhash.h
+e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_gmp.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+e_gmp.o: ../include/openssl/ui.h e_gmp.c
 e_ncipher.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_ncipher.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_ncipher.o: ../include/openssl/crypto.h ../include/openssl/dh.h
