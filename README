@@ -173,11 +173,17 @@
  textual explanation of what your patch does.
 
  Note: For legal reasons, contributions from the US can be accepted only
- if a TSA notification and a copy of the patch is sent to crypt@bis.doc.gov;
- see http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
- and http://w3.access.gpo.gov/bis/ear/pdf/740.pdf (EAR Section 740.13(e)).
+ if a TSU notification and a copy of the patch are sent to crypt@bis.doc.gov
+ (formerly BXA) with a copy to the ENC Encryption Request Coordinator;
+ please take some time to look at
+    http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
+ and
+    http://w3.access.gpo.gov/bis/ear/pdf/740.pdf (EAR Section 740.13(e))
+ for the details. If "your encryption source code is too large to serve as
+ an email attachment", they are glad to receive it by fax instead; hope you
+ have a cheap long-distance plan.
 
- The preferred format for changes is "diff -u" output. You might
+ Our preferred format for changes is "diff -u" output. You might
  generate it like this:
 
  # cd openssl-work
