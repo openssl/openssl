@@ -975,13 +975,14 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 
 	if (buf == NULL)
 		{
-		buf=Malloc(128);
+		len=128;
+		buf=Malloc(len);
 		if (buf == NULL) return("Malloc Error");
 		}
 	else if (len < 128)
 		return("Buffer too small");
 
-	sprintf(buf,format,cipher->name,ver,kx,au,enc,mac,exp);
+	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp);
 	return(buf);
 	}
 
