@@ -75,6 +75,7 @@
  */
 
 #ifndef NOPROTO
+static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
 static int ssl3_send_server_hello(SSL *s);
 static int ssl3_send_server_key_exchange(SSL *s);
@@ -87,6 +88,7 @@ static int ssl3_send_hello_request(SSL *s);
 
 #else
 
+static SSL_METHOD *ssl3_get_server_method();
 static int ssl3_get_client_hello();
 static int ssl3_send_server_hello();
 static int ssl3_send_server_key_exchange();

@@ -74,6 +74,7 @@ SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SSL3_SESSION_ID_TOO_SHORT);
  */
 
 #ifndef NOPROTO
+static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
 static int ssl3_get_server_hello(SSL *s);
 static int ssl3_get_certificate_request(SSL *s);
@@ -86,6 +87,7 @@ static int ssl3_get_key_exchange(SSL *s);
 static int ssl3_get_server_certificate(SSL *s);
 static int ssl3_check_cert_and_algorithm(SSL *s);
 #else
+static SSL_METHOD *ssl3_get_client_method();
 static int ssl3_client_hello();
 static int ssl3_get_server_hello();
 static int ssl3_get_certificate_request();

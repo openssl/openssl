@@ -169,7 +169,12 @@ extern "C" {
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
+#ifdef WIN32
+/* VC++ doesn't like the LL suffix */
+#define BN_MASK		(0xffffffffffffffffL)
+#else
 #define BN_MASK		(0xffffffffffffffffLL)
+#endif
 #define BN_MASK2	(0xffffffffL)
 #define BN_MASK2l	(0xffff)
 #define BN_MASK2h1	(0xffff8000L)

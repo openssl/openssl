@@ -1043,7 +1043,11 @@ char *arg;
 void SSL_CTX_set_verify(ctx,mode,cb)
 SSL_CTX *ctx;
 int mode;
+#ifndef NOPROTO
+int (*cb)(int, X509_STORE_CTX *);
+#else
 int (*cb)();
+#endif
 	{
 	ctx->default_verify_mode=mode;
 	ctx->default_verify_callback=cb;

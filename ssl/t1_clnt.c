@@ -63,6 +63,12 @@
 #include "evp.h"
 #include "ssl_locl.h"
 
+#ifndef NOPROTO
+static SSL_METHOD *tls1_get_client_method(int ver);
+#else
+static SSL_METHOD *tls1_get_client_method();
+#endif
+
 static SSL_METHOD *tls1_get_client_method(ver)
 int ver;
 	{

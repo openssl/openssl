@@ -231,12 +231,12 @@ sub print_def_file
 
 	print OUT <<"EOF";
 ;
-; Definition file for the DDL version of the $name library from SSLeay
+; Definition file for the DLL version of the $name library from OpenSSL
 ;
 
 LIBRARY         $name
 
-DESCRIPTION     'SSLeay $name - eay\@cryptsoft.com'
+DESCRIPTION     'OpenSSL $name - http://www.openssl.org/'
 
 EOF
 
@@ -270,7 +270,7 @@ EOF
 		else
 			{
 			$n=$nums{$func};
-			printf OUT "    %s%-35s@%d\n",($NT)?"":"_",$func,$n;
+			printf OUT "    %s%-40s@%d\n",($NT)?"":"_",$func,$n;
 			}
 		}
 	printf OUT "\n";

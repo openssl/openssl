@@ -7,7 +7,7 @@ $crypto="libeay32";
 $RSAref="RSAref32";
 
 $o='\\';
-$cp='"copy /b nul+ "';	# Timestamps get stuffed otherwise
+$cp='copy nul+';	# Timestamps get stuffed otherwise
 $rm='del';
 
 # C compiler stuff

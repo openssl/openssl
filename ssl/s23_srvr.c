@@ -66,8 +66,10 @@
 #define BREAK break
 
 #ifndef NOPROTO
+static SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
 #else
+static SSL_METHOD *ssl23_get_server_method();
 int ssl23_get_client_hello();
 #endif
 

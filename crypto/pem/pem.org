@@ -501,6 +501,7 @@ EVP_PKEY *PEM_read_PrivateKey();
 PKCS7 *PEM_read_PKCS7();
 DH *PEM_read_DHparams();
 DSA *PEM_read_DSAparams();
+NETSCAPE_CERT_SEQUENCE *PEM_read_NETSCAPE_CERT_SEQUENCE();
 int PEM_write_X509();
 int PEM_write_X509_REQ();
 int PEM_write_X509_CRL();
@@ -511,6 +512,7 @@ int PEM_write_PrivateKey();
 int PEM_write_PKCS7();
 int PEM_write_DHparams();
 int PEM_write_DSAparams();
+int PEM_write_NETSCAPE_CERT_SEQUENCE();
 #endif
 
 X509 *PEM_read_bio_X509();
@@ -523,6 +525,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey();
 PKCS7 *PEM_read_bio_PKCS7();
 DH *PEM_read_bio_DHparams();
 DSA *PEM_read_bio_DSAparams();
+NETSCAPE_CERT_SEQUENCE *PEM_read_bio_NETSCAPE_CERT_SEQUENCE();
 int PEM_write_bio_X509();
 int PEM_write_bio_X509_REQ();
 int PEM_write_bio_X509_CRL();
@@ -533,6 +536,7 @@ int PEM_write_bio_PrivateKey();
 int PEM_write_bio_PKCS7();
 int PEM_write_bio_DHparams();
 int PEM_write_bio_DSAparams();
+int PEM_write_bio_NETSCAPE_CERT_SEQUENCE();
 
 #endif /* SSLEAY_MACROS */
 

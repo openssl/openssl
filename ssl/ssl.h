@@ -844,7 +844,7 @@ STACK *	SSL_get_peer_cert_chain(SSL *s);
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))();
-void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*callback)());
+void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx, int (*cb)(),char *arg);
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len);
