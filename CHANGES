@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function BN_mod_sqrt for computing square roots modulo a prime
+     (Tonelli-Shanks algorithm).
+     [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
+
   *) Store verify_result within SSL_SESSION also for client side to
      avoid potential security hole. (Re-used sessions on the client side
      always resulted in verify_result==X509_V_OK, not using the original
