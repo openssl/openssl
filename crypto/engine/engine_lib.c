@@ -136,7 +136,7 @@ static void engine_def_check(void)
 #ifndef OPENSSL_NO_RSA
 		engine_def_check_util(&engine_def_rsa, e);
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DSA
 		engine_def_check_util(&engine_def_dsa, e);
 #endif
 #ifndef OPENSSL_NO_DH

@@ -782,7 +782,7 @@ err:
 	}
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_DH
 static int ubsec_dh_compute_key (unsigned char *key,const BIGNUM *pub_key,DH *dh)
 	{
 	return 0;
