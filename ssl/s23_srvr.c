@@ -186,7 +186,7 @@ end:
 
 int ssl23_get_client_hello(SSL *s)
 	{
-	char buf_space[10];
+	char buf_space[11];
 	char *buf= &(buf_space[0]);
 	unsigned char *p,*d,*dd;
 	unsigned int i;
@@ -202,8 +202,8 @@ int ssl23_get_client_hello(SSL *s)
 
 		if (!ssl3_setup_buffers(s)) goto err;
 
-		n=ssl23_read_bytes(s,10);
-		if (n != 10) return(n); /* n == -1 || n == 0 */
+		n=ssl23_read_bytes(s,11);
+		if (n != 11) return(n); /* n == -1 || n == 0 */
 
 		p=s->packet;
 
@@ -324,13 +324,8 @@ int ssl23_get_client_hello(SSL *s)
 			 */
 			
 			/* we must look at client_version inside the client hello: */
-			n=ssl23_read_bytes(s,11);
-			/* restarts are no problem here, stay in initial state */
-			if (n != 11)
-				return(n); /* n == -1 || n == 0 */
-
 			v[0]=p[9]; v[1]=p[10];
-			if (p[2] >= TLS1_VERSION_MINOR)
+			if (v[1] >= TLS1_VERSION_MINOR)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))
 					{
