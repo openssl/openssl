@@ -169,6 +169,7 @@ static char *ca_usage[]={
 " -keyform arg    - private key file format (PEM or ENGINE)\n",
 " -key arg        - key to decode the private key if it is encrypted\n",
 " -cert file      - The CA certificate\n",
+" -selfsign       - sign a certificate with the key associated with it\n",
 " -in file        - The input PEM encoded certificate request(s)\n",
 " -out file       - Where to put the output file(s)\n",
 " -outdir dir     - Where to put output certificates\n",

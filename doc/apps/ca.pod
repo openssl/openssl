@@ -30,6 +30,7 @@ B<openssl> B<ca>
 [B<-key arg>]
 [B<-passin arg>]
 [B<-cert file>]
+[B<-selfsign>]
 [B<-in file>]
 [B<-out file>]
 [B<-notext>]
@@ -112,6 +113,20 @@ the private key to sign requests with.
 the password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
 the 'ps' utility) this option should be used with caution.
+
+=item B<-selfsign>
+
+indicates the issued certificates are to be signed with the key
+the certificate requests were signed with (given with B<-keyfile>).
+Cerificate requests signed with a different key are ignored.  If
+B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
+ignored.
+
+A consequence of using B<-selfsign> is that the self-signed
+certificate appears among the entries in the certificate database
+(see the configuration option B<database>), and uses the same
+serial number counter as all other certificates sign with the
+self-signed certificate.
 
 =item B<-passin arg>
 
@@ -358,6 +373,16 @@ the same as the B<-md> option. The message digest to use. Mandatory.
 
 the text database file to use. Mandatory. This file must be present
 though initially it will be empty.
+
+=item B<unique_subject>
+
+if the value B<yes> is given, the valid certificate entries in the
+database must have unique subjects.  if the value B<no> is given,
+several valid certificate entries may have the exact same subject.
+The default value is B<yes>, to be compatible with older (pre 0.9.8)
+versions of OpenSSL.  However, to make CA certificate roll-over easier,
+it's recommended to use the value B<no>, especially if combined with
+the B<-selfsign> command line option.
 
 =item B<serialfile>
 
