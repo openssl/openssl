@@ -641,7 +641,7 @@ char *parg;
 /* This function needs to check if the ciphers required are actually
  * available */
 SSL_CIPHER *ssl3_get_cipher_by_char(p)
-unsigned char *p;
+const unsigned char *p;
 	{
 	static int init=1;
 	static SSL_CIPHER *sorted[SSL3_NUM_CIPHERS];
@@ -674,7 +674,7 @@ unsigned char *p;
 	}
 
 int ssl3_put_cipher_by_char(c,p)
-SSL_CIPHER *c;
+const SSL_CIPHER *c;
 unsigned char *p;
 	{
 	long l;
@@ -840,7 +840,7 @@ SSL *s;
 
 int ssl3_write(s,buf,len)
 SSL *s;
-char *buf;
+const char *buf;
 int len;
 	{
 	int ret,n;

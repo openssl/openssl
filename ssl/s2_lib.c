@@ -320,7 +320,7 @@ char *parg;
 /* This function needs to check if the ciphers required are actually
  * available */
 SSL_CIPHER *ssl2_get_cipher_by_char(p)
-unsigned char *p;
+const unsigned char *p;
 	{
 	static int init=1;
 	static SSL_CIPHER *sorted[SSL2_NUM_CIPHERS];
@@ -354,7 +354,7 @@ unsigned char *p;
 	}
 
 int ssl2_put_cipher_by_char(c,p)
-SSL_CIPHER *c;
+const SSL_CIPHER *c;
 unsigned char *p;
 	{
 	long l;

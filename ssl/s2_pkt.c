@@ -70,8 +70,8 @@
 
 #ifndef NOPROTO
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
-static int do_ssl_write(SSL *s, char *buf, unsigned int len);
-static int write_pending(SSL *s, char *buf, unsigned int len);
+static int do_ssl_write(SSL *s, const char *buf, unsigned int len);
+static int write_pending(SSL *s, const char *buf, unsigned int len);
 static int ssl_mt_error(int n);
 #else
 static int read_n();
@@ -356,7 +356,7 @@ unsigned int extend;
 
 int ssl2_write(s, buf, len)
 SSL *s;
-char *buf;
+const char *buf;
 int len;
 	{
 	unsigned int n,tot;
@@ -405,7 +405,7 @@ int len;
 
 static int write_pending(s,buf,len)
 SSL *s;
-char *buf;
+const char *buf;
 unsigned int len;
 	{
 	int i;
@@ -453,7 +453,7 @@ unsigned int len;
 
 static int do_ssl_write(s, buf, len)
 SSL *s;
-char *buf;
+const char *buf;
 unsigned int len;
 	{
 	unsigned int j,k,olen,p,mac_size,bs;
