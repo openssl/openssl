@@ -112,6 +112,7 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_IGNORE_RETURN_CODES	0x2
 #define CONF_MFLAGS_SILENT		0x4
 #define CONF_MFLAGS_NO_DSO		0x8
+#define CONF_MFLAGS_IGNORE_MISSING_FILE	0x10
 
 int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf,LHASH *hash);
@@ -127,7 +128,7 @@ void CONF_free(LHASH *conf);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
 
-void OPENSSL_config(void);
+void OPENSSL_config(char *config_name);
 
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */

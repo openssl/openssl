@@ -170,7 +170,15 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 		goto err;
 
 	if (NCONF_load(conf, filename, NULL) <= 0)
+		{
+		if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
+		  (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE))
+			{
+			ERR_clear_error();
+			ret = 1;
+			}
 		goto err;
+		}
 
 	ret = CONF_modules_load(conf, appname, flags);
 
