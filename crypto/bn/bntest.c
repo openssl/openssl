@@ -267,9 +267,6 @@ int test_add(BIO *bp)
 		BN_bntest_rand(&b,450+i,0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<10000; j++)
-				BN_add(&c,&a,&b);
 		BN_add(&c,&a,&b);
 		if (bp != NULL)
 			{
@@ -324,9 +321,6 @@ int test_sub(BIO *bp)
 			a.neg=rand_neg();
 			b.neg=rand_neg();
 			}
-		if (bp == NULL)
-			for (j=0; j<10000; j++)
-				BN_sub(&c,&a,&b);
 		BN_sub(&c,&a,&b);
 		if (bp != NULL)
 			{
@@ -379,9 +373,6 @@ int test_div(BIO *bp, BN_CTX *ctx)
 			BN_bntest_rand(&b,50+3*(i-num1),0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_div(&d,&c,&a,&b,ctx);
 		BN_div(&d,&c,&a,&b,ctx);
 		if (bp != NULL)
 			{
@@ -450,9 +441,6 @@ int test_div_recp(BIO *bp, BN_CTX *ctx)
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		BN_RECP_CTX_set(&recp,&b,ctx);
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_div_recp(&d,&c,&a,&recp,ctx);
 		BN_div_recp(&d,&c,&a,&recp,ctx);
 		if (bp != NULL)
 			{
@@ -524,9 +512,6 @@ int test_mul(BIO *bp)
 			BN_bntest_rand(&b,i-num1,0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mul(&c,&a,&b,&ctx);
 		BN_mul(&c,&a,&b,&ctx);
 		if (bp != NULL)
 			{
@@ -572,9 +557,6 @@ int test_sqr(BIO *bp, BN_CTX *ctx)
 		{
 		BN_bntest_rand(&a,40+i*10,0,0);
 		a.neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_sqr(&c,&a,ctx);
 		BN_sqr(&c,&a,ctx);
 		if (bp != NULL)
 			{
@@ -638,9 +620,6 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 		BN_to_montgomery(&A,&a,mont,ctx);
 		BN_to_montgomery(&B,&b,mont,ctx);
 
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
 		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
 		BN_from_montgomery(&A,&c,mont,ctx);/**/
 		if (bp != NULL)
@@ -700,9 +679,6 @@ int test_mod(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b,450+i*10,0,0); /**/
 		a->neg=rand_neg();
 		b->neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mod(c,a,b,ctx);/**/
 		BN_mod(c,a,b,ctx);/**/
 		if (bp != NULL)
 			{
@@ -750,10 +726,6 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b,425+i*11,0,0); /**/
 		a->neg=rand_neg();
 		b->neg=rand_neg();
-	/*	if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mod_mul(d,a,b,c,ctx);*/ /**/
-
 		if (!BN_mod_mul(e,a,b,c,ctx))
 			{
 			unsigned long l;
