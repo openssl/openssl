@@ -91,6 +91,7 @@ int test_mod(BIO *bp,BN_CTX *ctx);
 int test_mod_mul(BIO *bp,BN_CTX *ctx);
 int test_mod_exp(BIO *bp,BN_CTX *ctx);
 int test_exp(BIO *bp,BN_CTX *ctx);
+int test_kron(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -226,6 +227,10 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_exp");
 	if (!test_exp(out,ctx)) goto err;
+	BIO_flush(out);
+
+	message(out,"BN_kronecker");
+	if (!test_kron(out,ctx)) goto err;
 	BIO_flush(out);
 
 	BN_CTX_free(ctx);
@@ -892,6 +897,12 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 	BN_free(d);
 	BN_free(e);
 	BN_free(one);
+	return(1);
+	}
+
+int test_kron(BIO *bp, BN_CTX *ctx)
+	{
+	/* XXX */
 	return(1);
 	}
 
