@@ -20,6 +20,13 @@ BN_ASM=		bn_asm.o
 #BN_ASM=	bn86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+
+# We let the C compiler driver to take care of .s files. This is done in
+# order to be excused from maintaining a separate set of architecture
+# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
+# gcc, then the driver will automatically translate it to -xarch=v8plus
+# and pass it down to assembler.
+AS=$(CC) -c
 ASFLAGS=$(CFLAGS)
 
 GENERAL=Makefile
@@ -112,13 +119,6 @@ asm/sparcv8plus.o: asm/sparcv8plus.S
 asm/sparcv8plus-gcc27.o: asm/sparcv8plus.S
 	$(CC) $(ASFLAGS) -E asm/sparcv8plus.S | \
 		/usr/ccs/bin/as -xarch=v8plus - -o asm/sparcv8plus-gcc27.o
-
-# MIPS 64 bit assember 
-asm/mips3.o: asm/mips3.s
-
-# MIPS 32 bit assember
-asm/mips1.o: asm/mips1.s
-	/usr/bin/as -O2 -o asm/mips1.o asm/mips1.s
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
