@@ -69,7 +69,9 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_PACK(0,FIPS_F_DSA_DO_SIGN,0),	"DSA_do_sign"},
 {ERR_PACK(0,FIPS_F_DSA_DO_VERIFY,0),	"DSA_do_verify"},
 {ERR_PACK(0,FIPS_F_DSA_GENERATE_PARAMETERS,0),	"DSA_generate_parameters"},
+{ERR_PACK(0,FIPS_F_FIPS_CHECK_DSA,0),	"FIPS_CHECK_DSA"},
 {ERR_PACK(0,FIPS_F_FIPS_CHECK_EXE,0),	"FIPS_CHECK_EXE"},
+{ERR_PACK(0,FIPS_F_FIPS_CHECK_RSA,0),	"FIPS_CHECK_RSA"},
 {ERR_PACK(0,FIPS_F_FIPS_DSA_CHECK,0),	"FIPS_dsa_check"},
 {ERR_PACK(0,FIPS_F_FIPS_MODE_SET,0),	"FIPS_mode_set"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_AES,0),	"FIPS_selftest_aes"},
@@ -92,6 +94,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {FIPS_R_FIPS_MODE_ALREADY_SET            ,"fips mode already set"},
 {FIPS_R_FIPS_SELFTEST_FAILED             ,"fips selftest failed"},
 {FIPS_R_NON_FIPS_METHOD                  ,"non fips method"},
+{FIPS_R_PAIRWISE_TEST_FAILED             ,"pairwise test failed"},
 {FIPS_R_SELFTEST_FAILED                  ,"selftest failed"},
 {0,NULL}
 	};

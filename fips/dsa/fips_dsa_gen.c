@@ -88,6 +88,21 @@
 
 #ifdef OPENSSL_FIPS
 
+static int fips_check_dsa(DSA *dsa)
+    {
+    static const unsigned char str1[]="12345678901234567890";
+    unsigned char sig[256];
+    unsigned int siglen;
+
+    DSA_sign(0, str1, 20, sig, &siglen, dsa);
+    if(DSA_verify(0, str1, 20, sig, siglen, dsa) != 1)
+	{
+	FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
+	return 0;
+	}
+    return 1;
+    }
+
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret,
@@ -309,6 +324,49 @@ err:
 	if (ctx3 != NULL) BN_CTX_free(ctx3);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
+	}
+
+int DSA_generate_key(DSA *dsa)
+	{
+	int ok=0;
+	BN_CTX *ctx=NULL;
+	BIGNUM *pub_key=NULL,*priv_key=NULL;
+
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
+
+	if (dsa->priv_key == NULL)
+		{
+		if ((priv_key=BN_new()) == NULL) goto err;
+		}
+	else
+		priv_key=dsa->priv_key;
+
+	do
+		if (!BN_rand_range(priv_key,dsa->q)) goto err;
+	while (BN_is_zero(priv_key));
+
+	if (dsa->pub_key == NULL)
+		{
+		if ((pub_key=BN_new()) == NULL) goto err;
+		}
+	else
+		pub_key=dsa->pub_key;
+
+	if (!BN_mod_exp(pub_key,dsa->g,priv_key,dsa->p,ctx)) goto err;
+
+	dsa->priv_key=priv_key;
+	dsa->pub_key=pub_key;
+
+	if(!fips_check_dsa(dsa))
+	    goto err;
+
+	ok=1;
+
+err:
+	if ((pub_key != NULL) && (dsa->pub_key == NULL)) BN_free(pub_key);
+	if ((priv_key != NULL) && (dsa->priv_key == NULL)) BN_free(priv_key);
+	if (ctx != NULL) BN_CTX_free(ctx);
+	return(ok);
 	}
 #endif
 

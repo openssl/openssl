@@ -83,7 +83,9 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_DSA_DO_SIGN				 111
 #define FIPS_F_DSA_DO_VERIFY				 112
 #define FIPS_F_DSA_GENERATE_PARAMETERS			 110
+#define FIPS_F_FIPS_CHECK_DSA				 116
 #define FIPS_F_FIPS_CHECK_EXE				 106
+#define FIPS_F_FIPS_CHECK_RSA				 115
 #define FIPS_F_FIPS_DSA_CHECK				 102
 #define FIPS_F_FIPS_MODE_SET				 105
 #define FIPS_F_FIPS_SELFTEST_AES			 104
@@ -103,6 +105,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_FIPS_MODE_ALREADY_SET			 102
 #define FIPS_R_FIPS_SELFTEST_FAILED			 106
 #define FIPS_R_NON_FIPS_METHOD				 100
+#define FIPS_R_PAIRWISE_TEST_FAILED			 107
 #define FIPS_R_SELFTEST_FAILED				 101
 
 #ifdef  __cplusplus
