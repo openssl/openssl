@@ -354,6 +354,22 @@ int WIN32_rename(char *from, char *to)
 	}
 #endif
 
+#ifdef OPENSSL_SYS_VMS
+int VMS_strcasecmp(const char *str1, const char *str2)
+	{
+	while (*str1 && *str2)
+		{
+		int res = toupper(*str1) - toupper(*str2);
+		if (res) return res < 0 ? -1 : 1;
+		}
+	if (*str1)
+		return 1;
+	if (*str2)
+		return -1;
+	return 0;
+	}
+#endif
+
 int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	{
 	int num,len,i;
