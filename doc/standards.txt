@@ -45,10 +45,6 @@ whole or at least great parts) in OpenSSL.
 2315 PKCS 7: Cryptographic Message Syntax Version 1.5. B. Kaliski.
      March 1998. (Format: TXT=69679 bytes) (Status: INFORMATIONAL)
 
-2437 PKCS #1: RSA Cryptography Specifications Version 2.0. B. Kaliski,
-     J. Staddon. October 1998. (Format: TXT=73529 bytes) (Obsoletes
-     RFC2313) (Status: INFORMATIONAL)
-
 PKCS#8: Private-Key Information Syntax Standard
 
 PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
@@ -86,6 +82,11 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
      Certificate Revocation List (CRL) Profile. R. Housley, W. Polk, W.
      Ford, D. Solo. April 2002. (Format: TXT=295556 bytes) (Obsoletes
      RFC2459) (Status: PROPOSED STANDARD)
+
+3447 Public-Key Cryptography Standards (PKCS) #1: RSA Cryptography
+     Specifications Version 2.1. J. Jonsson, B. Kaliski. February 2003.
+     (Format: TXT=143173 bytes) (Obsoletes RFC2437) (Status:           
+     INFORMATIONAL)                                         
 
 
 Related:
