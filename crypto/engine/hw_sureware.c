@@ -101,6 +101,7 @@ static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int index_,long argl, void *argp);
 #endif
 
+#ifndef OPENSSL_NO_RSA
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int surewarehk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
@@ -125,6 +126,9 @@ static RSA_METHOD surewarehk_rsa =
 	NULL, /* OpenSSL sign*/
 	NULL  /* OpenSSL verify*/
 	};
+#endif
+
+#ifndef OPENSSL_NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int surewarehk_modexp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
@@ -132,6 +136,7 @@ static int surewarehk_modexp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
 {
 	return surewarehk_modexp(r, a, p, m, ctx);
 }
+
 static DH_METHOD surewarehk_dh =
 	{
 	"SureWare DH method",
@@ -143,6 +148,8 @@ static DH_METHOD surewarehk_dh =
 	0,    /* flags*/
 	NULL 
 	};
+#endif
+
 static RAND_METHOD surewarehk_rand =
 	{
 	/* "SureWare RAND method", */
@@ -153,6 +160,8 @@ static RAND_METHOD surewarehk_rand =
 	surewarehk_rand_bytes,
 	NULL,/*rand_status*/
 	};
+
+#ifndef OPENSSL_NO_DSA
 /* DSA stuff */
 static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int surewarehk_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
@@ -187,6 +196,7 @@ static DSA_METHOD surewarehk_dsa =
 	0,
 	NULL,
 	};
+#endif
 
 static const char *engine_sureware_id = "sureware";
 static const char *engine_sureware_name = "SureWare hardware engine support";
@@ -197,9 +207,15 @@ static const char *engine_sureware_name = "SureWare hardware engine support";
  * (indeed - the lock will already be held by our caller!!!) */
 static int bind_sureware(ENGINE *e)
 {
+#ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DSA
 	const DSA_METHOD *meth2;
+#endif
+#ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth3;
+#endif
 
 	if(!ENGINE_set_id(e, engine_sureware_id) ||
 	   !ENGINE_set_name(e, engine_sureware_name) ||
@@ -221,6 +237,7 @@ static int bind_sureware(ENGINE *e)
 	   !ENGINE_set_load_pubkey_function(e, surewarehk_load_pubkey))
 	  return 0;
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -234,6 +251,9 @@ static int bind_sureware(ENGINE *e)
 		surewarehk_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
 		surewarehk_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
 	}
+#endif
+
+#ifndef OPENSSL_NO_DSA
 	/* Use the DSA_OpenSSL() method and just hook the mod_exp-ish
 	 * bits. */
 	meth2 = DSA_OpenSSL();
@@ -241,6 +261,9 @@ static int bind_sureware(ENGINE *e)
 	{
 		surewarehk_dsa.dsa_do_verify = meth2->dsa_do_verify;
 	}
+#endif
+
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth3 = DH_OpenSSL();
 	if (meth3)
@@ -248,6 +271,7 @@ static int bind_sureware(ENGINE *e)
 		surewarehk_dh.generate_key = meth3->generate_key;
 		surewarehk_dh.compute_key = meth3->compute_key;
 	}
+#endif
 
 	/* Ensure the sureware error handling is set up */
 	ERR_load_SUREWARE_strings();
@@ -296,8 +320,12 @@ void ENGINE_load_sureware(void)
  * operating with global locks, so this should be thread-safe
  * implicitly. */
 static DSO *surewarehk_dso = NULL;
+#ifndef OPENSSL_NO_RSA
 static int rsaHndidx = -1;	/* Index for KM handle.  Not really used yet. */
+#endif
+#ifndef OPENSSL_NO_DSA
 static int dsaHndidx = -1;	/* Index for KM handle.  Not really used yet. */
+#endif
 
 /* These are the function pointers that are (un)set when the library has
  * successfully (un)loaded. */
@@ -466,14 +494,19 @@ static int surewarehk_init(ENGINE *e)
 	surewarehk_load_privkey(e,NULL,NULL,NULL);
 
 	/* Everything's fine. */
+#ifndef OPENSSL_NO_RSA
 	if (rsaHndidx == -1)
 		rsaHndidx = RSA_get_ex_new_index(0,
 						"SureWareHook RSA key handle",
 						NULL, NULL, surewarehk_ex_free);
+#endif
+#ifndef OPENSSL_NO_DSA
 	if (dsaHndidx == -1)
 		dsaHndidx = DSA_get_ex_new_index(0,
 						"SureWareHook DSA key handle",
 						NULL, NULL, surewarehk_ex_free);
+#endif
+
 	return 1;
 err:
 	if(surewarehk_dso)
@@ -530,6 +563,7 @@ static int surewarehk_finish(ENGINE *e)
 	p_surewarehk_Mod_Exp = NULL;
 	return to_return;
 }
+
 static void surewarehk_error_handling(char *const msg,int func,int ret)
 {
 	switch (ret)
@@ -563,6 +597,7 @@ static void surewarehk_error_handling(char *const msg,int func,int ret)
 		}
 	}
 }
+
 static int surewarehk_rand_bytes(unsigned char *buf, int num)
 {
 	int ret=0;
@@ -593,15 +628,21 @@ static void surewarehk_rand_seed(const void *buf, int num)
 		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_RAND_SEED,ret);
 	}
 }
+
 static void surewarehk_rand_add(const void *buf, int num, double entropy)
 {
 	surewarehk_rand_seed(buf,num);
 }
+
 static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,unsigned long el,char keytype)
 {
 	EVP_PKEY *res = NULL;
+#ifndef OPENSSL_NO_RSA
 	RSA *rsatmp = NULL;
+#endif
+#ifndef OPENSSL_NO_DSA
 	DSA *dsatmp=NULL;
+#endif
 	char msg[64]="sureware_load_public";
 	int ret=0;
 	if(!p_surewarehk_Load_Rsa_Pubkey || !p_surewarehk_Load_Dsa_Pubkey)
@@ -611,6 +652,7 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 	}
 	switch (keytype)
 	{
+#ifndef OPENSSL_NO_RSA
 	case 1: /*RSA*/
 		/* set private external reference */
 		rsatmp = RSA_new_method(e);
@@ -641,6 +683,9 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		res = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(res, rsatmp);
 		break;
+#endif
+
+#ifndef OPENSSL_NO_DSA
 	case 2:/*DSA*/
 		/* set private/public external reference */
 		dsatmp = DSA_new_method(e);
@@ -688,6 +733,8 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		res = EVP_PKEY_new();
 		EVP_PKEY_assign_DSA(res, dsatmp);
 		break;
+#endif
+
 	default:
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
 		goto err;
@@ -696,12 +743,17 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
  err:
 	if (res)
 		EVP_PKEY_free(res);
+#ifndef OPENSSL_NO_RSA
 	if (rsatmp)
 		RSA_free(rsatmp);
+#endif
+#ifndef OPENSSL_NO_DSA
 	if (dsatmp)
 		DSA_free(dsatmp);
+#endif
 	return NULL;
 }
+
 static EVP_PKEY *surewarehk_load_privkey(ENGINE *e, const char *key_id,
 					 UI_METHOD *ui_method, void *callback_data)
 {
@@ -729,6 +781,7 @@ static EVP_PKEY *surewarehk_load_privkey(ENGINE *e, const char *key_id,
 	}
 	return res;
 }
+
 static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
 					 UI_METHOD *ui_method, void *callback_data)
 {
@@ -770,6 +823,7 @@ static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	else
 		p_surewarehk_Free((char *)item,0);
 }
+
 #if 0
 /* not currently used (bug?) */
 /* This cleans up an DH KM key (destroys the key into hardware), 
@@ -785,9 +839,11 @@ static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 		p_surewarehk_Free((char *)item,1);
 }
 #endif
+
 /*
 * return number of decrypted bytes
 */
+#ifndef OPENSSL_NO_RSA
 static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned char *to,
 			RSA *rsa,int padding)
 {
@@ -829,7 +885,7 @@ static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned c
 		memcpy(buf,to,tlen);/* transfert to into buf */
 		switch (padding) /* check padding in software */
 		{
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 		case RSA_PKCS1_OAEP_PADDING:
 			ret=RSA_padding_check_PKCS1_OAEP(to,tlen,(unsigned char *)buf,tlen,tlen,NULL,0);
 			break;
@@ -855,6 +911,7 @@ err:
 	}
 	return ret;
 }
+
 /*
 * Does what OpenSSL rsa_priv_enc does.
 */
@@ -888,6 +945,10 @@ static int surewarehk_rsa_sign(int flen,const unsigned char *from,unsigned char 
 	}
 	return ret==1 ? tlen : ret;
 }
+
+#endif
+
+#ifndef OPENSSL_NO_DSA
 /* DSA sign and verify */
 static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA *dsa)
 {
@@ -934,6 +995,8 @@ err:
 	}
 	return psign;
 }
+#endif
+
 static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			     const BIGNUM *m, BN_CTX *ctx)
 {
