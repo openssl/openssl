@@ -28,8 +28,6 @@ OPENSSLDIR=/usr/local/ssl
 # DEVRANDOM - Give this the value of the 'random device' if your OS supports
 #           one.  32 bytes will be read from this when the random
 #           number generator is initalised.
-# SSL_ALLOW_ADH - define if you want the server to be able to use the
-#           SSLv3 anon-DH ciphers.
 # SSL_FORBID_ENULL - define if you want the server to be not able to use the
 #           NULL encryption ciphers.
 #
