@@ -269,9 +269,8 @@ int main()
 				  RSA_PKCS1_OAEP_PADDING);
 	if (num != plen || memcmp(ptext, ptext_ex, num) != 0)
 	    {
-	    printf("OAEP decryption failed!\n");
+	    printf("OAEP decryption (encrypted data) failed!\n");
 	    err=1;
-	    goto next;
 	    }
   
 	if (memcmp(ctext, ctext_ex, num) == 0)
