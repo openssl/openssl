@@ -376,7 +376,7 @@ bad:
 	
 	if (C)
 	{	// TODO : characteristic two
-		int 	l, len, bits_p, bits_a, bits_b, bits_x, bits_y, bits_o, bits_c;
+		int 	l, len, bits_p;
 		if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
 		    (tmp_3 = BN_new()) == NULL || (tmp_4 = BN_new()) == NULL ||
 		    (tmp_5 = BN_new()) == NULL || (tmp_6 = BN_new()) == NULL ||
@@ -398,12 +398,6 @@ bad:
 		
 		len    = BN_num_bytes(tmp_1);
 		bits_p = BN_num_bits(tmp_1);
-		bits_a = BN_num_bits(tmp_2);
-		bits_b = BN_num_bits(tmp_3);
-		bits_x = BN_num_bits(tmp_4);
-		bits_y = BN_num_bits(tmp_5);
-		bits_o = BN_num_bits(tmp_6);
-		bits_c = BN_num_bits(tmp_7);
 		data=(unsigned char *)OPENSSL_malloc(len+20);
 		if (data == NULL)
 		{
@@ -438,7 +432,7 @@ bad:
 		printf("\n\t};\n\n");
 
 		l = BN_bn2bin(tmp_3, data);
-		printf("static unsigned char ecdsa%d_x[]={", bits_x);
+		printf("static unsigned char ecdsa%d_x[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
@@ -447,7 +441,7 @@ bad:
 		printf("\n\t};\n\n");
 
 		l = BN_bn2bin(tmp_3, data);
-		printf("static unsigned char ecdsa%d_y[]={", bits_y);
+		printf("static unsigned char ecdsa%d_y[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
@@ -456,7 +450,7 @@ bad:
 		printf("\n\t};\n\n");
 
 		l = BN_bn2bin(tmp_3, data);
-		printf("static unsigned char ecdsa%d_o[]={", bits_o);
+		printf("static unsigned char ecdsa%d_o[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
@@ -465,7 +459,7 @@ bad:
 		printf("\n\t};\n\n");
 
 		l = BN_bn2bin(tmp_3, data);
-		printf("static unsigned char ecdsa%d_c[]={", bits_c);
+		printf("static unsigned char ecdsa%d_c[]={", bits_p);
 		for (i=0; i<l; i++)
 		{
 			if ((i%12) == 0) printf("\n\t");
