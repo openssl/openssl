@@ -102,7 +102,7 @@ static int mime_param_cmp(const MIME_PARAM * const *a,
 static void mime_param_free(MIME_PARAM *param);
 static int mime_bound_check(char *line, int linelen, char *bound, int blen);
 static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret);
-static int iscrlf(char c);
+static int strip_eol(char *linebuf, int *plen);
 static MIME_HEADER *mime_hdr_find(STACK_OF(MIME_HEADER) *hdrs, char *name);
 static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name);
 static void mime_hdr_free(MIME_HEADER *hdr);
@@ -375,11 +375,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 	if(flags & PKCS7_TEXT)
 		BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
 	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
-		eol = 0;
-		while(len && iscrlf(linebuf[len - 1])) {
-			len--;
-			eol = 1;
-		}
+		eol = strip_eol(linebuf, &len);
 		if (len)
 			BIO_write(out, linebuf, len);
 		if(eol) BIO_write(out, "\r\n", 2);
@@ -445,11 +441,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 			return 1;
 		} else if(part) {
 			/* Strip CR+LF from linebuf */
-			next_eol = 0;
-			while(len && iscrlf(linebuf[len - 1])) {
-				next_eol = 1;
-				len--;
-			}
+			next_eol = strip_eol(linebuf, &len);
 			if(first) {
 				first = 0;
 				if(bpart) sk_BIO_push(parts, bpart);
@@ -461,12 +453,6 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 				BIO_write(bpart, linebuf, len);
 		}
 	}
-	return 0;
-}
-
-static int iscrlf(char c)
-{
-	if(c == '\r' || c == '\n') return 1;
 	return 0;
 }
 
@@ -750,3 +736,21 @@ static int mime_bound_check(char *line, int linelen, char *bound, int blen)
 	}
 	return 0;
 }
+
+static int strip_eol(char *linebuf, int *plen)
+	{
+	int len = *plen;
+	char *p, c;
+	int is_eol = 0;
+	p = linebuf + len - 1;
+	for (p = linebuf + len - 1; len > 0; len--, p--)
+		{
+		c = *p;
+		if (c == '\n')
+			is_eol = 1;
+		else if (c != '\r')
+			break;
+		}
+	*plen = len;
+	return is_eol;
+	}
