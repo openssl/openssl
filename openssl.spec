@@ -2,9 +2,6 @@
 %define libmin 9
 %define librel 6
 %define librev a
-%define libstatus beta3_dev
-%define fileversion %{libmaj}.%{libmin}.%{librel}%{librev}-beta3-dev
-%define rpmversion %{libmaj}.%{libmin}.%{librel}%{librev}_%{libstatus}
 Release: 1
 
 %define openssldir /var/ssl
@@ -12,8 +9,8 @@ Release: 1
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
 #Version: %{libmaj}.%{libmin}.%{librel}
-Version: %{rpmversion}
-Source0: ftp://ftp.openssl.org/source/%{name}-%{fileversion}.tar.gz
+Version: %{libmaj}.%{libmin}.%{librel}%{librev}
+Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 Copyright: Freely distributable
 Group: System Environment/Libraries
 Provides: SSL
@@ -82,7 +79,7 @@ documentation and POD files from which the man pages were produced.
 
 %prep
 
-%setup -n %{name}-%{fileversion}
+%setup -q
 
 %build 
 
@@ -99,7 +96,9 @@ perl util/perlpath.pl /usr/bin/perl
 %ifarch alpha
 ./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
 %endif
-LD_LIBRARY_PATH=`pwd` ( make && make rehash && make test )
+LD_LIBRARY_PATH=`pwd` make
+LD_LIBRARY_PATH=`pwd` make rehash
+LD_LIBRARY_PATH=`pwd` make test
 
 %install
 rm -rf $RPM_BUILD_ROOT
