@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) New command line and configuration option 'utf8' for the req command.
+     This allows field values to be specified as UTF8 strings.
+     [Steve Henson]
+
   +) Add -multi and -mr options to "openssl speed" - giving multiple parallel
      runs for the former and machine-readable output for the latter.
      [Ben Laurie]

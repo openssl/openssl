@@ -84,6 +84,7 @@
 #define V3_EXTENSIONS	"x509_extensions"
 #define REQ_EXTENSIONS	"req_extensions"
 #define STRING_MASK	"string_mask"
+#define UTF8_IN		"utf8"
 
 #define DEFAULT_KEY_LENGTH	512
 #define MIN_KEY_LENGTH		384
@@ -110,18 +111,21 @@
  *		  require.  This format is wrong
  */
 
-static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,char *dn,int attribs);
-static int build_subject(X509_REQ *req, char *subj);
+static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,char *dn,int attribs,
+		unsigned long chtype);
+static int build_subject(X509_REQ *req, char *subj, unsigned long chtype);
 static int prompt_info(X509_REQ *req,
 		STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs);
+		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs,
+		unsigned long chtype);
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
-				STACK_OF(CONF_VALUE) *attr, int attribs);
+				STACK_OF(CONF_VALUE) *attr, int attribs,
+				unsigned long chtype);
 static int add_attribute_object(X509_REQ *req, char *text,
 				char *def, char *value, int nid, int n_min,
-				int n_max);
+				int n_max, unsigned long chtype);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	int nid,int n_min,int n_max);
+	int nid,int n_min,int n_max, unsigned long chtype);
 #ifndef OPENSSL_NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
@@ -169,6 +173,7 @@ int MAIN(int argc, char **argv)
 	char *p;
 	char *subj = NULL;
 	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
+	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	MS_STATIC char config_name[256];
 #endif
@@ -338,6 +343,8 @@ int MAIN(int argc, char **argv)
 			noout=1;
 		else if (strcmp(*argv,"-verbose") == 0)
 			verbose=1;
+		else if (strcmp(*argv,"-utf8") == 0)
+			chtype = MBSTRING_UTF8;
 		else if (strcmp(*argv,"-nameopt") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -433,6 +440,7 @@ bad:
 		BIO_printf(bio_err,"                have been reported as requiring\n");
 		BIO_printf(bio_err," -extensions .. specify certificate extension section (override value in config file)\n");
 		BIO_printf(bio_err," -reqexts ..    specify request extension section (override value in config file)\n");
+		BIO_printf(bio_err," -utf8          input characters are UTF8 (default ASCII)\n");
 		goto end;
 		}
 
@@ -563,6 +571,16 @@ bad:
 		BIO_printf(bio_err, "Invalid global string mask setting %s\n", p);
 		goto end;
 	}
+
+	if (chtype != MBSTRING_UTF8)
+		{
+		p = NCONF_get_string(req_conf, SECTION, UTF8_IN);
+		if (!p)
+			ERR_clear_error();
+		else if (!strcmp(p, "yes"))
+			chtype = MBSTRING_UTF8;
+		}
+
 
 	if(!req_exts)
 		{
@@ -767,7 +785,7 @@ loop:
 				goto end;
 				}
 
-			i=make_REQ(req,pkey,subj,!x509);
+			i=make_REQ(req,pkey,subj,!x509, chtype);
 			subj=NULL; /* done processing '-subj' option */
 			if ((kludge > 0) && !sk_X509_ATTRIBUTE_num(req->req_info->attributes))
 				{
@@ -859,7 +877,7 @@ loop:
 			print_name(bio_err, "old subject=", X509_REQ_get_subject_name(req), nmflag);
 			}
 
-		if (build_subject(req, subj) == 0)
+		if (build_subject(req, subj, chtype) == 0)
 			{
 			BIO_printf(bio_err, "ERROR: cannot modify subject\n");
 			ex=1;
@@ -1027,7 +1045,8 @@ end:
 	EXIT(ex);
 	}
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs)
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,
+			unsigned long chtype)
 	{
 	int ret=0,i;
 	char no_prompt = 0;
@@ -1073,13 +1092,13 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs)
 	if (!X509_REQ_set_version(req,0L)) goto err; /* version 1 */
 
 	if (no_prompt) 
-		i = auto_info(req, dn_sk, attr_sk, attribs);
+		i = auto_info(req, dn_sk, attr_sk, attribs, chtype);
 	else 
 		{
 		if (subj)
-			i = build_subject(req, subj);
+			i = build_subject(req, subj, chtype);
 		else
-			i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs);
+			i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs, chtype);
 		}
 	if(!i) goto err;
 
@@ -1090,7 +1109,7 @@ err:
 	return(ret);
 	}
 
-static int build_subject(X509_REQ *req, char *subject)
+static int build_subject(X509_REQ *req, char *subject, unsigned long chtype)
 	{
 	X509_NAME *n = NULL;
 
@@ -1139,7 +1158,7 @@ static int build_subject(X509_REQ *req, char *subject)
 			continue;
 			}
 
-		if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC, (unsigned char*)ne_value, -1,-1,0))
+		if (!X509_NAME_add_entry_by_NID(n, nid, chtype, (unsigned char*)ne_value, -1,-1,0))
 			{
 			X509_NAME_free(n);
 			return 0;
@@ -1155,7 +1174,8 @@ static int build_subject(X509_REQ *req, char *subject)
 
 static int prompt_info(X509_REQ *req,
 		STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs)
+		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs,
+		unsigned long chtype)
 	{
 	int i;
 	char *p,*q;
@@ -1228,7 +1248,7 @@ start:		for (;;)
 				n_max = -1;
 
 			if (!add_DN_object(subj,v->value,def,value,nid,
-				n_min,n_max))
+				n_min,n_max, chtype))
 				return 0;
 			}
 		if (X509_NAME_entry_count(subj) == 0)
@@ -1284,7 +1304,7 @@ start2:			for (;;)
 					n_max = -1;
 
 				if (!add_attribute_object(req,
-					v->value,def,value,nid,n_min,n_max))
+					v->value,def,value,nid,n_min,n_max, chtype))
 					return 0;
 				}
 			}
@@ -1300,7 +1320,7 @@ start2:			for (;;)
 	}
 
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
-			STACK_OF(CONF_VALUE) *attr_sk, int attribs)
+			STACK_OF(CONF_VALUE) *attr_sk, int attribs, unsigned long chtype)
 	{
 	int i;
 	char *p,*q;
@@ -1328,7 +1348,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 				if(*p) type = p;
 				break;
 			}
-		if (!X509_NAME_add_entry_by_txt(subj,type, MBSTRING_ASC,
+		if (!X509_NAME_add_entry_by_txt(subj,type, chtype,
 				(unsigned char *) v->value,-1,-1,0)) return 0;
 
 		}
@@ -1343,7 +1363,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 			for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++)
 				{
 				v=sk_CONF_VALUE_value(attr_sk,i);
-				if(!X509_REQ_add1_attr_by_txt(req, v->name, MBSTRING_ASC,
+				if(!X509_REQ_add1_attr_by_txt(req, v->name, chtype,
 					(unsigned char *)v->value, -1)) return 0;
 				}
 			}
@@ -1352,7 +1372,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 
 
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
-	     int nid, int n_min, int n_max)
+	     int nid, int n_min, int n_max, unsigned long chtype)
 	{
 	int i,ret=0;
 	MS_STATIC char buf[1024];
@@ -1400,7 +1420,7 @@ start:
 	ebcdic2ascii(buf, buf, i);
 #endif
 	if(!req_check_len(i, n_min, n_max)) goto start;
-	if (!X509_NAME_add_entry_by_NID(n,nid, MBSTRING_ASC,
+	if (!X509_NAME_add_entry_by_NID(n,nid, chtype,
 				(unsigned char *) buf, -1,-1,0)) goto err;
 	ret=1;
 err:
@@ -1409,7 +1429,7 @@ err:
 
 static int add_attribute_object(X509_REQ *req, char *text,
 				char *def, char *value, int nid, int n_min,
-				int n_max)
+				int n_max, unsigned long chtype)
 	{
 	int i;
 	static char buf[1024];
@@ -1459,7 +1479,7 @@ start:
 #endif
 	if(!req_check_len(i, n_min, n_max)) goto start;
 
-	if(!X509_REQ_add1_attr_by_NID(req, nid, MBSTRING_ASC,
+	if(!X509_REQ_add1_attr_by_NID(req, nid, chtype,
 					(unsigned char *)buf, -1)) {
 		BIO_printf(bio_err, "Error adding attribute\n");
 		ERR_print_errors(bio_err);

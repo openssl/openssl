@@ -36,6 +36,7 @@ B<openssl> B<req>
 [B<-newhdr>]
 [B<-extensions section>]
 [B<-reqexts section>]
+[B<-utf8>]
 [B<-batch>]
 [B<-verbose>]
 
@@ -193,6 +194,13 @@ request extensions. This allows several different sections to
 be used in the same configuration file to specify requests for
 a variety of purposes.
 
+=item B<-utf8>
+
+this option causes field values to be interpreted as UTF8 strings, by 
+default they are interpreted as ASCII. This means that the field
+values, whether prompted from a terminal or obtained from a
+configuration file, must be valid UTF8 strings.
+
 =item B<-asn1-kludge>
 
 by default the B<req> command outputs certificate requests containing
@@ -316,6 +324,13 @@ is used. It can be overridden by the B<-extensions> command line switch.
 if set to the value B<no> this disables prompting of certificate fields
 and just takes values from the config file directly. It also changes the
 expected format of the B<distinguished_name> and B<attributes> sections.
+
+=item B<utf8>
+
+if set to the value B<yes> then field values to be interpreted as UTF8
+strings, by default they are interpreted as ASCII. This means that
+the field values, whether prompted from a terminal or obtained from a
+configuration file, must be valid UTF8 strings.
 
 =item B<attributes>
 
