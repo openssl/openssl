@@ -143,6 +143,10 @@ void DH_free(DH *r)
 	}
 #endif
 
+	CRYPTO_free_ex_data(dh_meth, (char *)r, &r->ex_data);
+
+	if(r->meth->finish) r->meth->finish(r);
+
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
