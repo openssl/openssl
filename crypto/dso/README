@@ -1,16 +1,3 @@
-TODO
-----
-
-Find a way where name-translation can be done in a way that is
-sensitive to particular methods (ie. generic code could still do
-different path/filename substitutions on win32 to what it does on
-*nix) but doesn't assume some canonical form. Already one case
-exists where the "blah -> (libblah.so,blah.dll)" mapping doesn't
-suffice. I suspect a callback with an enumerated (or string?)
-parameter could be the way to go here ... DSO_ctrl the callback
-into place and it can be invoked to handle name translation with
-some clue to the calling code as to what kind of system it is.
-
 NOTES
 -----
 
@@ -21,4 +8,15 @@ according to their man page, prefer developers to move to that.
 I'll leave Richard's changes there as I guess dso_dl is needed
 for HPUX10.20.
 
+There is now a callback scheme in place where filename conversion can
+(a) be turned off altogether through the use of the
+    DSO_FLAG_NO_NAME_TRANSLATION flag,
+(b) be handled by default using the default DSO_METHOD's converter
+(c) overriden per-DSO by setting the override callback
+(d) a mix of (b) and (c) - eg. implement an override callback that;
+    (i) checks if we're win32 (if(strstr(dso->meth->name, "win32")....)
+        and if so, convert "blah" into "blah32.dll" (the default is
+	otherwise to make it "blah.dll").
+    (ii) default to the normal behaviour - we're not on win32, eg.
+         finish with (return dso->meth->dso_name_converter(dso,NULL)).
 

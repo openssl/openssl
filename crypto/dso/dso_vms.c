@@ -78,7 +78,7 @@ DSO_METHOD *DSO_METHOD_vms(void)
 #else
 #pragma message disable DOLLARID
 
-static int vms_load(DSO *dso, const char *filename);
+static int vms_load(DSO *dso);
 static int vms_unload(DSO *dso);
 static void *vms_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname);
@@ -89,6 +89,7 @@ static int vms_init(DSO *dso);
 static int vms_finish(DSO *dso);
 static long vms_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
+static char *vms_name_converter(DSO *dso);
 
 static DSO_METHOD dso_meth_vms = {
 	"OpenSSL 'VMS' shared library method",
@@ -102,6 +103,7 @@ static DSO_METHOD dso_meth_vms = {
 	NULL, /* unbind_func */
 #endif
 	NULL, /* ctrl */
+	vms_name_converter,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -129,8 +131,9 @@ DSO_METHOD *DSO_METHOD_vms(void)
 	return(&dso_meth_vms);
 	}
 
-static int vms_load(DSO *dso, const char *filename)
+static int vms_load(DSO *dso)
 	{
+#if 0
 	DSO_VMS_INTERNAL *p;
 	const char *sp1, *sp2;	/* Search result */
 
@@ -208,6 +211,12 @@ static int vms_load(DSO *dso, const char *filename)
 		return(0);
 		}
 	return(1);
+#else
+	/* See the comments lower down in the vms_name_converter
+	 * "implementation" :-) */
+	please_break_compilation();
+	return(bother_richard);
+#endif
 	}
 
 /* Note that this doesn't actually unload the shared image, as there is no
@@ -342,6 +351,28 @@ static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
 	DSO_FUNC_TYPE sym = 0;
 	vms_bind_sym(dso, symname, (void **)&sym);
 	return sym;
+	}
+
+static char *vms_name_converter(DSO *dso)
+	{
+	/* Implementation note: on VMS is it preferable to do real conversions
+	 * here, or to actually have it performed in-line with the bind calls
+	 * (given that VMS never actually does a load except implicitly within
+	 * the bind functions). Another note: normally (eg. dlfcn), the
+	 * DSO_load call will either load, put the loaded filename into the DSO
+	 * (which marks it effectively as "read-only"), and return success - or
+	 * it will fail. VMS needs to work out what to do - otherwise DSO_load
+	 * will always succeed, but leave the DSO looking unloaded (because the
+	 * loaded_filename will be NULL still) and then real loading (and
+	 * setting of loaded_filename) will only happen during the first bind
+	 * call (which should have error checking anyway to prevent you calling
+	 * it on an "unloaded" DSO - thus giving VMS *serious* grief). Richard,
+	 * what do you think? Is it worth having DSO_load() try to find and pin
+	 * itself to a library file (and populate loaded_filename) even though
+	 * it's unecessary to actually do a load prior to the first bind call?
+	 * I leave it to you ... :-) */
+	deliberately_break_compilation_here();
+	return(1);
 	}
 
 #endif /* VMS */

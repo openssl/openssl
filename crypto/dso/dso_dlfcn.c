@@ -74,7 +74,7 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 /* Part of the hack in "dlfcn_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
-static int dlfcn_load(DSO *dso, const char *filename);
+static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
 static void *dlfcn_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
@@ -84,6 +84,7 @@ static int dlfcn_init(DSO *dso);
 static int dlfcn_finish(DSO *dso);
 static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
+static char *dlfcn_name_converter(DSO *dso, const char *filename);
 
 static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
@@ -97,6 +98,7 @@ static DSO_METHOD dso_meth_dlfcn = {
 	NULL, /* unbind_func */
 #endif
 	NULL, /* ctrl */
+	dlfcn_name_converter,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -130,41 +132,39 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
  * (i) the handle (void*) returned from dlopen().
  */
 
-static int dlfcn_load(DSO *dso, const char *filename)
+static int dlfcn_load(DSO *dso)
 	{
-	void *ptr;
-	char translated[DSO_MAX_TRANSLATED_SIZE];
-	int len;
+	void *ptr = NULL;
+	/* See applicable comments in dso_dl.c */
+	char *filename = DSO_convert_filename(dso, NULL);
 
-	/* NB: This is a hideous hack, but I'm not yet sure what
-	 * to replace it with. This attempts to convert any filename,
-	 * that looks like it has no path information, into a
-	 * translated form, e. "blah" -> "libblah.so" */
-	len = strlen(filename);
-	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
-			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
-			(strstr(filename, "/") == NULL))
+	if(filename == NULL)
 		{
-		sprintf(translated, "lib%s.so", filename);
-		ptr = dlopen(translated, DLOPEN_FLAG);
+		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_NO_FILENAME);
+		goto err;
 		}
-	else
-		{
-		ptr = dlopen(filename, DLOPEN_FLAG);
-		}
+	ptr = dlopen(filename, DLOPEN_FLAG);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_LOAD_FAILED);
-		return(0);
+		goto err;
 		}
 	if(!sk_push(dso->meth_data, (char *)ptr))
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_STACK_ERROR);
-		dlclose(ptr);
-		return(0);
+		goto err;
 		}
+	/* Success */
+	dso->loaded_filename = filename;
 	return(1);
-	}
+err:
+	/* Cleanup! */
+	if(filename != NULL)
+		OPENSSL_free(filename);
+	if(ptr != NULL)
+		dlclose(ptr);
+	return(0);
+}
 
 static int dlfcn_unload(DSO *dso)
 	{
@@ -247,6 +247,32 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		return(NULL);
 		}
 	return(sym);
+	}
+
+static char *dlfcn_name_converter(DSO *dso, const char *filename)
+	{
+	char *translated;
+	int len, transform;
+
+	len = strlen(filename);
+	transform = (strstr(filename, "/") == NULL);
+	if(transform)
+		/* We will convert this to "lib%s.so" */
+		translated = OPENSSL_malloc(len + 7);
+	else
+		/* We will simply duplicate filename */
+		translated = OPENSSL_malloc(len + 1);
+	if(translated == NULL)
+		{
+		DSOerr(DSO_F_DLFCN_NAME_CONVERTER,
+				DSO_R_NAME_TRANSLATION_FAILED);
+		return(NULL);
+		}
+	if(transform)
+		sprintf(translated, "lib%s.so", filename);
+	else
+		sprintf(translated, "%s", filename);
+	return(translated);
 	}
 
 #endif /* DSO_DLFCN */

@@ -70,15 +70,18 @@ extern "C" {
 #define DSO_CTRL_SET_FLAGS	2
 #define DSO_CTRL_OR_FLAGS	3
 
-/* These flags control the translation of file-names from canonical to
- * native. Eg. in the CryptoSwift support, the "dl" and "dlfcn"
- * methods will translate "swift" -> "libswift.so" whereas the "win32"
- * method will translate "swift" -> "swift.dll". NB: Until I can figure
- * out how to be more "conventional" with this, the methods will only
- * honour this flag if it looks like it was passed a file without any
- * path and if the filename is small enough.
- */
-#define DSO_FLAG_NAME_TRANSLATION 0x01
+/* By default, DSO_load() will translate the provided filename into a form
+ * typical for the platform (more specifically the DSO_METHOD) using the
+ * dso_name_converter function of the method. Eg. win32 will transform "blah"
+ * into "blah.dll", and dlfcn will transform it into "libblah.so". The
+ * behaviour can be overriden by setting the name_converter callback in the DSO
+ * object (using DSO_set_name_converter()). This callback could even utilise
+ * the DSO_METHOD's converter too if it only wants to override behaviour for
+ * one or two possible DSO methods. However, the following flag can be set in a
+ * DSO to prevent *any* native name-translation at all - eg. if the caller has
+ * prompted the user for a path to a driver library so the filename should be
+ * interpreted as-is. */
+#define DSO_FLAG_NO_NAME_TRANSLATION 0x01
 
 /* The following flag controls the translation of symbol names to upper
  * case.  This is currently only being implemented for OpenVMS.
@@ -90,11 +93,21 @@ typedef void (*DSO_FUNC_TYPE)(void);
 
 typedef struct dso_st DSO;
 
+/* The function prototype used for method functions (or caller-provided
+ * callbacks) that transform filenames. They are passed a DSO structure pointer
+ * (or NULL if they are to be used independantly of a DSO object) and a
+ * filename to transform. They should either return NULL (if there is an error
+ * condition) or a newly allocated string containing the transformed form that
+ * the caller will need to free with OPENSSL_free() when done. */
+typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
+
 typedef struct dso_meth_st
 	{
 	const char *name;
-	/* Loads a shared library */
-	int (*dso_load)(DSO *dso, const char *filename);
+	/* Loads a shared library, NB: new DSO_METHODs must ensure that a
+	 * successful load populates the loaded_filename field, and likewise a
+	 * successful unload OPENSSL_frees and NULLs it out. */
+	int (*dso_load)(DSO *dso);
 	/* Unloads a shared library */
 	int (*dso_unload)(DSO *dso);
 	/* Binds a variable */
@@ -117,6 +130,9 @@ typedef struct dso_meth_st
 	/* The generic (yuck) "ctrl()" function. NB: Negative return
 	 * values (rather than zero) indicate errors. */
 	long (*dso_ctrl)(DSO *dso, int cmd, long larg, void *parg);
+	/* The default DSO_METHOD-specific function for converting filenames to
+	 * a canonical native form. */
+	DSO_NAME_CONVERTER_FUNC dso_name_converter;
 
 	/* [De]Initialisation handlers. */
 	int (*init)(DSO *dso);
@@ -140,6 +156,23 @@ struct dso_st
 	/* For use by applications etc ... use this for your bits'n'pieces,
 	 * don't touch meth_data! */
 	CRYPTO_EX_DATA ex_data;
+	/* If this callback function pointer is set to non-NULL, then it will
+	 * be used on DSO_load() in place of meth->dso_name_converter. NB: This
+	 * should normally set using DSO_set_name_converter(). */
+	DSO_NAME_CONVERTER_FUNC name_converter;
+	/* This is populated with (a copy of) the platform-independant
+	 * filename used for this DSO. */
+	char *filename;
+	/* This is populated with (a copy of) the translated filename by which
+	 * the DSO was actually loaded. It is NULL iff the DSO is not currently
+	 * loaded. NB: This is here because the filename translation process
+	 * may involve a callback being invoked more than once not only to
+	 * convert to a platform-specific form, but also to try different
+	 * filenames in the process of trying to perform a load. As such, this
+	 * variable can be used to indicate (a) whether this DSO structure
+	 * corresponds to a loaded library or not, and (b) the filename with
+	 * which it was actually loaded. */
+	char *loaded_filename;
 	};
 
 
@@ -149,8 +182,35 @@ int	DSO_free(DSO *dso);
 int	DSO_flags(DSO *dso);
 int	DSO_up(DSO *dso);
 long	DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
+/* This function sets the DSO's name_converter callback. If it is non-NULL,
+ * then it will be used instead of the associated DSO_METHOD's function. If
+ * oldcb is non-NULL then it is set to the function pointer value being
+ * replaced. Return value is non-zero for success. */
+int	DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
+				DSO_NAME_CONVERTER_FUNC *oldcb);
+/* These functions can be used to get/set the platform-independant filename
+ * used for a DSO. NB: set will fail if the DSO is already loaded. */
+const char *DSO_get_filename(DSO *dso);
+int	DSO_set_filename(DSO *dso, const char *filename);
+/* This function will invoke the DSO's name_converter callback to translate a
+ * filename, or if the callback isn't set it will instead use the DSO_METHOD's
+ * converter. If "filename" is NULL, the "filename" in the DSO itself will be
+ * used. If the DSO_FLAG_NO_NAME_TRANSLATION flag is set, then the filename is
+ * simply duplicated. NB: This function is usually called from within a
+ * DSO_METHOD during the processing of a DSO_load() call, and is exposed so that
+ * caller-created DSO_METHODs can do the same thing. A non-NULL return value
+ * will need to be OPENSSL_free()'d. */
+char	*DSO_convert_filename(DSO *dso, const char *filename);
+/* If the DSO is currently loaded, this returns the filename that it was loaded
+ * under, otherwise it returns NULL. So it is also useful as a test as to
+ * whether the DSO is currently loaded. NB: This will not necessarily return
+ * the same value as DSO_convert_filename(dso, dso->filename), because the
+ * DSO_METHOD's load function may have tried a variety of filenames (with
+ * and/or without the aid of the converters) before settling on the one it
+ * actually loaded. */
+const char *DSO_get_loaded_filename(DSO *dso);
 
-void DSO_set_default_method(DSO_METHOD *meth);
+void	DSO_set_default_method(DSO_METHOD *meth);
 DSO_METHOD *DSO_get_default_method(void);
 DSO_METHOD *DSO_get_method(DSO *dso);
 DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
@@ -207,17 +267,24 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DLFCN_BIND_FUNC				 100
 #define DSO_F_DLFCN_BIND_VAR				 101
 #define DSO_F_DLFCN_LOAD				 102
+#define DSO_F_DLFCN_NAME_CONVERTER			 123
 #define DSO_F_DLFCN_UNLOAD				 103
 #define DSO_F_DL_BIND_FUNC				 104
 #define DSO_F_DL_BIND_VAR				 105
 #define DSO_F_DL_LOAD					 106
+#define DSO_F_DL_NAME_CONVERTER				 124
 #define DSO_F_DL_UNLOAD					 107
 #define DSO_F_DSO_BIND_FUNC				 108
 #define DSO_F_DSO_BIND_VAR				 109
+#define DSO_F_DSO_CONVERT_FILENAME			 126
 #define DSO_F_DSO_CTRL					 110
 #define DSO_F_DSO_FREE					 111
+#define DSO_F_DSO_GET_FILENAME				 127
+#define DSO_F_DSO_GET_LOADED_FILENAME			 128
 #define DSO_F_DSO_LOAD					 112
 #define DSO_F_DSO_NEW_METHOD				 113
+#define DSO_F_DSO_SET_FILENAME				 129
+#define DSO_F_DSO_SET_NAME_CONVERTER			 122
 #define DSO_F_DSO_UP					 114
 #define DSO_F_VMS_BIND_VAR				 115
 #define DSO_F_VMS_LOAD					 116
@@ -225,14 +292,19 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_WIN32_BIND_FUNC				 118
 #define DSO_F_WIN32_BIND_VAR				 119
 #define DSO_F_WIN32_LOAD				 120
+#define DSO_F_WIN32_NAME_CONVERTER			 125
 #define DSO_F_WIN32_UNLOAD				 121
 
 /* Reason codes. */
 #define DSO_R_CTRL_FAILED				 100
+#define DSO_R_DSO_ALREADY_LOADED			 110
 #define DSO_R_FILENAME_TOO_BIG				 101
 #define DSO_R_FINISH_FAILED				 102
 #define DSO_R_LOAD_FAILED				 103
+#define DSO_R_NAME_TRANSLATION_FAILED			 109
+#define DSO_R_NO_FILENAME				 111
 #define DSO_R_NULL_HANDLE				 104
+#define DSO_R_SET_FILENAME_FAILED			 112
 #define DSO_R_STACK_ERROR				 105
 #define DSO_R_SYM_FAILURE				 106
 #define DSO_R_UNLOAD_FAILED				 107

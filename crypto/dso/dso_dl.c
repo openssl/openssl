@@ -72,7 +72,7 @@ DSO_METHOD *DSO_METHOD_dl(void)
 /* Part of the hack in "dl_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
-static int dl_load(DSO *dso, const char *filename);
+static int dl_load(DSO *dso);
 static int dl_unload(DSO *dso);
 static void *dl_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname);
@@ -83,6 +83,7 @@ static int dl_init(DSO *dso);
 static int dl_finish(DSO *dso);
 static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
+static char *dl_name_converter(DSO *dso, const char *filename);
 
 static DSO_METHOD dso_meth_dl = {
 	"OpenSSL 'dl' shared library method",
@@ -96,6 +97,7 @@ static DSO_METHOD dso_meth_dl = {
 	NULL, /* unbind_func */
 #endif
 	NULL, /* ctrl */
+	dl_name_converter,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -111,35 +113,41 @@ DSO_METHOD *DSO_METHOD_dl(void)
  * type so the cast is safe.
  */
 
-static int dl_load(DSO *dso, const char *filename)
+static int dl_load(DSO *dso)
 	{
-	shl_t ptr;
-	char translated[DSO_MAX_TRANSLATED_SIZE];
-	int len;
+	shl_t ptr = NULL;
+	/* We don't do any fancy retries or anything, just take the method's
+	 * (or DSO's if it has the callback set) best translation of the
+	 * platform-independant filename and try once with that. */
+	char *filename= DSO_convert_filename(dso, NULL);
 
-	/* The same comment as in dlfcn_load applies here. bleurgh. */
-	len = strlen(filename);
-	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
-			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
-			(strstr(filename, "/") == NULL))
+	if(filename == NULL)
 		{
-		sprintf(translated, "lib%s.so", filename);
-		ptr = shl_load(translated, BIND_IMMEDIATE, NULL);
+		DSOerr(DSO_F_DL_LOAD,DSO_R_NO_FILENAME);
+		goto err;
 		}
-	else
-		ptr = shl_load(filename, BIND_IMMEDIATE, NULL);
+	ptr = shl_load(filename, BIND_IMMEDIATE, NULL);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DL_LOAD,DSO_R_LOAD_FAILED);
-		return(0);
+		goto err;
 		}
 	if(!sk_push(dso->meth_data, (char *)ptr))
 		{
 		DSOerr(DSO_F_DL_LOAD,DSO_R_STACK_ERROR);
-		shl_unload(ptr);
-		return(0);
+		goto err;
 		}
+	/* Success, stick the converted filename we've loaded under into the DSO
+	 * (it also serves as the indicator that we are currently loaded). */
+	dso->loaded_filename = filename;
 	return(1);
+err:
+	/* Cleanup! */
+	if(filename != NULL)
+		OPENSSL_free(filename);
+	if(ptr != NULL)
+		shl_unload(ptr);
+	return(0);
 	}
 
 static int dl_unload(DSO *dso)
@@ -222,6 +230,37 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 		return(NULL);
 		}
 	return((DSO_FUNC_TYPE)sym);
+	}
+
+/* This function is identical to the one in dso_dlfcn.c, but as it is highly
+ * unlikely that both the "dl" *and* "dlfcn" variants are being compiled at the
+ * same time, there's no great duplicating the code. Figuring out an elegant way
+ * to share one copy of the code would be more difficult and would not leave the
+ * implementations independant. */
+static char *dl_name_converter(DSO *dso, const char *filename)
+	{
+	char *translated;
+	int len, transform;
+
+	len = strlen(filename);
+	transform = (strstr(filename, "/") == NULL);
+	if(transform)
+		/* We will convert this to "lib%s.so" */
+		translated = OPENSSL_malloc(len + 7);
+	else
+		/* We will simply duplicate filename */
+		translated = OPENSSL_malloc(len + 1);
+	if(translated == NULL)
+		{
+		DSOerr(DSO_F_DL_NAME_CONVERTER,
+				DSO_R_NAME_TRANSLATION_FAILED); 
+		return(NULL);   
+		}
+	if(transform)
+		sprintf(translated, "lib%s.so", filename);
+	else
+		sprintf(translated, "%s", filename);
+	return(translated);
 	}
 
 #endif /* DSO_DL */
