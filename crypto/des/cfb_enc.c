@@ -58,6 +58,7 @@
 
 #include "e_os.h"
 #include "des_locl.h"
+#include <assert.h>
 
 /* The input and output are loaded in multiples of 8 bits.
  * What this means is that if you hame numbits=12 and length=2
@@ -73,12 +74,22 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 	{
 	register DES_LONG d0,d1,v0,v1;
 	register unsigned long l=length;
-	register int num=numbits,n=(numbits+7)/8,i;
+	register int num=numbits/8,n=(numbits+7)/8,i,rem=numbits%8;
 	DES_LONG ti[2];
 	unsigned char *iv;
+#ifndef L_ENDIAN
 	unsigned char ovec[16];
+#else
+	unsigned int  sh[4];
+	unsigned char *ovec=(unsigned char *)sh;
 
-	if (num > 64) return;
+	/* I kind of count that compiler optimizes away this assertioni,*/
+	assert (sizeof(sh[0])==4);	/* as this holds true for all,	*/
+					/* but 16-bit platforms...	*/
+					
+#endif
+
+	if (numbits<=0 || numbits > 64) return;
 	iv = &(*ivec)[0];
 	c2l(iv,v0);
 	c2l(iv,v1);
@@ -98,29 +109,34 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 			out+=n;
 			/* 30-08-94 - eay - changed because l>>32 and
 			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
+			if (numbits == 32)
 				{ v0=v1; v1=d0; }
-			else if (num == 64)
+			else if (numbits == 64)
 				{ v0=d0; v1=d1; }
 			else
 				{
+#ifndef L_ENDIAN
 				iv=&ovec[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
 				l2c(d0,iv);
 				l2c(d1,iv);
-				/* shift ovec left most of the bits... */
-				memmove(ovec,ovec+num/8,8+(num%8 ? 1 : 0));
-				/* now the remaining bits */
-				if(num%8 != 0)
+#else
+				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
+#endif
+				if (rem==0)
+					memcpy(ovec,ovec+num,8);
+				else
 					for(i=0 ; i < 8 ; ++i)
-						{
-						ovec[i]<<=num%8;
-						ovec[i]|=ovec[i+1]>>(8-num%8);
-						}
+						ovec[i]=ovec[i+num]<<rem |
+							ovec[i+num+1]>>(8-rem);
+#ifdef L_ENDIAN
+				v0=sh[0], v1=sh[1];
+#else
 				iv=&ovec[0];
 				c2l(iv,v0);
 				c2l(iv,v1);
+#endif
 				}
 			}
 		}
@@ -136,29 +152,34 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 			in+=n;
 			/* 30-08-94 - eay - changed because l>>32 and
 			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
+			if (numbits == 32)
 				{ v0=v1; v1=d0; }
-			else if (num == 64)
+			else if (numbits == 64)
 				{ v0=d0; v1=d1; }
 			else
 				{
+#ifndef L_ENDIAN
 				iv=&ovec[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
 				l2c(d0,iv);
 				l2c(d1,iv);
-				/* shift ovec left most of the bits... */
-				memmove(ovec,ovec+num/8,8+(num%8 ? 1 : 0));
-				/* now the remaining bits */
-				if(num%8 != 0)
+#else
+				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
+#endif
+				if (rem==0)
+					memcpy (ovec,ovec+num,8);
+				else
 					for(i=0 ; i < 8 ; ++i)
-						{
-						ovec[i]<<=num%8;
-						ovec[i]|=ovec[i+1]>>(8-num%8);
-						}
+						ovec[i]=ovec[i+num]<<rem |
+							ovec[i+num+1]>>(8-rem);
+#ifdef L_ENDIAN
+				v0=sh[0], v1=sh[1];
+#else
 				iv=&ovec[0];
 				c2l(iv,v0);
 				c2l(iv,v1);
+#endif
 				}
 			d0^=ti[0];
 			d1^=ti[1];

@@ -146,7 +146,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
+#if (defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)) || defined(__ICC)
 #define ROTATE_l32(a,n)     _lrotl(a,n)
 #define ROTATE_r32(a,n)     _lrotr(a,n)
 #elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)

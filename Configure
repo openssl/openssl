@@ -378,7 +378,7 @@ my %table=(
 
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
-"linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2 -no_cpprt::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-pentium",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentium -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ppro",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -1162,6 +1162,21 @@ else
 	{
 	#$cflags="-DOPENSSL_NO_STATIC_ENGINE $cflags";
 	$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
+	}
+
+# Compiler fix-ups
+if ($target =~ /icc$/)
+	{
+	my($iccver)=`$cc -V 2>&1`;
+	if ($iccver =~ /Version ([0-9]+)\./)	{ $iccver=$1; }
+	else					{ $iccver=0;  }
+	if ($iccver>=8)
+		{
+		# Eliminate unnecessary dependency from libirc.a. This is
+		# essential for shared library support, as otherwise
+		# apps/openssl can end up in endless loop upon startup...
+		$cflags.=" -Dmemcpy=__builtin_memcpy -Dmemset=__builtin_memset";
+		}
 	}
 
 if ($sys_id ne "")
