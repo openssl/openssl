@@ -786,7 +786,7 @@ int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
 
 	if (dl < 0)
 		{
-		for (i=-dl; i>0; i++)
+		for (i=-dl; i<0; i++)
 			{
 			if (b[n+i] != 0)
 				return -1; /* a < b */
