@@ -395,10 +395,12 @@ $! First, We Have To "Rebuild" The "[.TEST]" Directory, So Delete
 $! All The "C" Files That Are Currently There Now.
 $!
 $ DELETE SYS$DISK:[.TEST]*.C;*
+$ DELETE SYS$DISK:[.TEST]EVPTESTS.TXT;*
 $!
 $! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
 $!
 $ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
+$ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
 $!
 $! Copy all the *TEST.C files from [.SSL...] into [.TEST]
 $!
