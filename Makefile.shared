@@ -602,7 +602,7 @@ link_o.hpux:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDFLAGS="-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD=$(CC); \
 	fi; \
 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
@@ -615,7 +615,7 @@ link_a.hpux:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDFLAGS="-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
 	SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
