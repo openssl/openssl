@@ -119,7 +119,14 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     BSD/386:*:*:*486*|BSD/OS:*:*:*:*486*)
-	echo "i486-whatever-bsdi"; exit 0
+        case `/sbin/sysctl -n hw.model` in
+	    Pentium*)
+                echo "i586-whatever-bsd"; exit 0
+                ;;
+            *)
+                echo "i386-whatever-bsd"; exit 0
+                ;;
+            esac;
 	;;
 
     BSD/386:*|BSD/OS:*)
