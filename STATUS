@@ -1,11 +1,21 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/13 16:08:32 $
+  ______________                           $Date: 2001/03/13 21:39:34 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.6a: In development...
                        Beta 1 released on March 13th, 2001
+	HP-UX 10.20 (hpux-parisc-cc)		- PASSED [normal+engine]
+	HP-UX 10.20 (hpux-parisc-gcc)		- PASSED [normal+engine]
+	HP-UX 11.00 32bit (hpux-parisc-gcc)	- FAILED [engine]
+		"openssl speed rsa1024 -engine cswift" fails unless
+		libswift.sl is in $CWD, even if $SHLIB_PATH is defined.
+	Linux 2.2.17 SMP (linux-elf)		- PASSED [normal+engine]
+	Windows (VC-WIN32)			- FAILED [presumed normal]
+		Missing line in ms/32all.bat:
+			perl util\mkfiles.pl >MINFO
+		[CORRECTED]
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
