@@ -47,9 +47,10 @@ Encrypting user data directly with RSA is insecure.
 =back
 
 B<flen> must be less than RSA_size(B<rsa>) - 11 for the PKCS #1 v1.5
-based padding modes, and less than RSA_size(B<rsa>) - 41 for
-RSA_PKCS1_OAEP_PADDING. The random number generator must be seeded
-prior to calling RSA_public_encrypt().
+based padding modes, less than RSA_size(B<rsa>) - 41 for
+RSA_PKCS1_OAEP_PADDING and exactly RSA_size(B<rsa>) for RSA_NO_PADDING.
+The random number generator must be seeded prior to calling
+RSA_public_encrypt().
 
 RSA_private_decrypt() decrypts the B<flen> bytes at B<from> using the
 private key B<rsa> and stores the plaintext in B<to>. B<to> must point
