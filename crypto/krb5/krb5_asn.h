@@ -187,7 +187,7 @@ typedef struct	krb5_authorization_st
 	ASN1_OCTET_STRING		*addata;
 	}	KRB5_AUTHDATA;
 
-DECLARE_STACK_OF(KRB5_AUTHDATA);
+DECLARE_STACK_OF(KRB5_AUTHDATA)
 
 			
 /*	-- Unencrypted authenticator
