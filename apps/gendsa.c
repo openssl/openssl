@@ -108,10 +108,6 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-") == 0)
 			goto bad;
-		else if (dsaparams == NULL)
-			{
-			dsaparams= *argv;
-			}
 #ifndef NO_DES
 		else if (strcmp(*argv,"-des") == 0)
 			enc=EVP_des_cbc();
@@ -122,6 +118,10 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
+		else if (dsaparams == NULL)
+			{
+			dsaparams = *argv;
+			}
 		else
 			goto bad;
 		argv++;
