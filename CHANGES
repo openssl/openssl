@@ -4,6 +4,10 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) Don't let DSA_generate_key() enter an infinite loop if the random
+     number generation fails.
+     [Bodo Moeller]
+
   *) New 'rand' application for creating pseudo-random output.
      [Bodo Moeller]
 
