@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_read - write bytes to a TLS/SSL connection.
+SSL_write - write bytes to a TLS/SSL connection.
 
 =head1 SYNOPSIS
 
@@ -62,7 +62,7 @@ value B<ret> to find out, whether an error occurred.
 
 =item E<lt>0
 
-The read operation was not successful, because either an error occurred
+The write operation was not successful, because either an error occurred
 or action must be taken by the calling process. Call SSL_get_error() with the
 return value B<ret> to find out the reason.
 
