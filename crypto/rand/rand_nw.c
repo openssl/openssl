@@ -1,4 +1,4 @@
-/* crypto/rand/rand_win.c */
+/* crypto/rand/rand_nw.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,7 @@
 #if defined (OPENSSL_SYS_NETWARE)
 
 #if defined(NETWARE_LIBC)
-#include <nks\thread.h>
+#include <nks/thread.h>
 #endif
 
 extern long RunningProcess;
@@ -147,18 +147,23 @@ int RAND_poll(void)
 
    for( i=2; i<ENTROPY_NEEDED; i++)
    {
+#ifdef __MWERKS__
       asm 
       {
          rdtsc
          mov tsc, eax        
       }
+#else
+      asm volatile("rdtsc":"=A" (tsc));
+#endif
+
       RAND_add(&tsc, sizeof(tsc), 1);
 
       l = GetSuperHighResolutionTimer();
       RAND_add(&l, sizeof(l), 0);
 
 # if defined(NETWARE_LIBC)
-         NXThreadYield();
+      NXThreadYield();
 # else /* NETWARE_CLIB */
       ThreadSwitchWithDelay();
 # endif

@@ -60,10 +60,10 @@ if "%LIBC_BUILD%" == "Y" set IMPORTS=%TOOLS%\ndk\libc\imports
 if "%CLIB_BUILD%" == "Y" set IMPORTS=%TOOLS%\ndk\nwsdk\imports
 
 rem   Set PRELUDE to the absolute path of the prelude object to link with in
-rem   the Metrowerks NetWare PDK - NOTE: for Clib builds "nwpre.obj" is 
+rem   the Metrowerks NetWare PDK - NOTE: for Clib builds "clibpre.o" is 
 rem   recommended, for LibC NKS builds libcpre.o must be used
-if "%LIBC_BUILD%" == "Y" set PRELUDE=%TOOLS%\ndk\libc\imports\libcpre.o
-if "%CLIB_BUILD%" == "Y" set PRELUDE=%TOOLS%\codewar\pdk_21\novell support\metrowerks support\libraries\runtime\nwpre.obj
+if "%LIBC_BUILD%" == "Y" set PRELUDE=%IMPORTS%\libcpre.o
+if "%CLIB_BUILD%" == "Y" set PRELUDE=%IMPORTS%\clibpre.o
 
 
 if "%LIBC_BUILD%" == "Y" echo Enviroment configured for LibC build

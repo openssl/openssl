@@ -690,6 +690,16 @@ re_start:
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
+#elif defined(OPENSSL_SYS_NETWARE)
+			if(!write_tty) {
+				if(read_tty) {
+					tv.tv_sec = 1;
+					tv.tv_usec = 0;
+					i=select(width,(void *)&readfds,(void *)&writefds,
+						NULL,&tv);
+				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
+					NULL,NULL);
+			}
 #else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,NULL);

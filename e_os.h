@@ -181,6 +181,11 @@ extern "C" {
 #define closesocket(s)		    close(s)
 #define readsocket(s,b,n)	    read((s),(b),(n))
 #define writesocket(s,b,n)	    write((s),(char *)(b),(n))
+#elif defined(OPENSSL_SYS_NETWARE)
+#define get_last_socket_error()	WSAGetLastError()
+#define clear_socket_error()	WSASetLastError(0)
+#define readsocket(s,b,n)		recv((s),(b),(n),0)
+#define writesocket(s,b,n)		send((s),(b),(n),0)
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
