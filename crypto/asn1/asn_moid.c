@@ -87,9 +87,14 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 			}
 		}
 	return 1;
-}
+	}
+
+static void oid_module_finish(CONF_IMODULE *md)
+	{
+	OBJ_cleanup();
+	}
 
 void ASN1_add_oid_module(void)
 	{
-	CONF_module_add("oid_section", oid_module_init, 0);
+	CONF_module_add("oid_section", oid_module_init, oid_module_finish);
 	}
