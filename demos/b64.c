@@ -91,8 +91,8 @@ char **argv;
 	EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
-#define PROG_NAME_SIZE  16
-        char pname[PROG_NAME_SIZE];
+#define PROG_NAME_SIZE  39
+        char pname[PROG_NAME_SIZE+1];
 
 
 	apps_startup();
