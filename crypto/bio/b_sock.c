@@ -199,8 +199,12 @@ int BIO_sock_error(int sock)
 	int size;
 		 
 	size=sizeof(int);
-
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,&j,&size);
+	/* Note: under Windows the third parameter is of type (char *)
+	 * whereas under other systems it is (void *) if you don't have
+	 * a cast it will choke the compiler: if you do have a cast then
+	 * you can either go for (char *) or (void *).
+	 */
+	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(void *)&j,&size);
 	if (i < 0)
 		return(1);
 	else

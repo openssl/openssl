@@ -330,7 +330,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 
 #ifdef WINDOWS
 #include <windows.h>
-#include <rand.h>
+#include <openssl/rand.h>
 
 /*****************************************************************************
  * Initialisation function for the SSL random generator.  Takes the contents

@@ -334,6 +334,8 @@ foreach (@ARGV)
 
 &usage if (!defined($table{$target}));
 
+my $IsWindows=scalar grep /^$target$/,@WinTargets;
+
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $installprefix eq "");
 $installprefix=$openssldir if $installprefix eq "";
 
@@ -343,7 +345,6 @@ chop $installprefix if $installprefix =~ /\/$/;
 $openssldir=$installprefix . "/ssl" if $openssldir eq "";
 $openssldir=$installprefix . "/" . $openssldir if $openssldir !~ /^\//;
 
-my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
 print "IsWindows=$IsWindows\n";
 
@@ -548,18 +549,22 @@ if($IsWindows) {
 	open (OUT,">crypto/date.h") || die "Can't open date.h";
 	printf OUT "#define DATE \"%s\"\n", scalar gmtime();
 	close(OUT);
+} else {
+	(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
+	&dofile("util/mk1mf.pl",$openssldir,
+				('^\$INSTALLTOP=','$INSTALLTOP="%s";',));
 }
 
-if (!$IsWindows)
-	{
-	(system 'make -f Makefile.ssl links') == 0 or exit $?;
-	}
 
-&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
-&dofile("util/mk1mf.pl",$openssldir,('^\$INSTALLTOP=','$INSTALLTOP="%s";',));
+my $pwd;
 
-my $pwd=`pwd`;
-chop($pwd);
+if($IsWindows) {
+	$pwd="(include directory)";
+} else {
+	$pwd =`pwd`;
+	chop($pwd);
+}
 print <<EOF;
 
 NOTE: The OpenSSL header files have been moved from include/*.h
