@@ -561,7 +561,6 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_BN_EXPAND_FAIL);
 		return 0;
 	}
-	memset(r->d, 0, BN_num_bytes(m));
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
 		fd = 0;
