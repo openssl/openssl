@@ -67,7 +67,7 @@
 
 #ifndef NOPROTO
 static STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK *gen);
-static STACK *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
+/*static STACK *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);*/
 #endif
 
 X509V3_EXT_METHOD v3_alt[] = {
