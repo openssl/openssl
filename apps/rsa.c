@@ -288,7 +288,11 @@ bad:
 			}
 		}
 		
-	if (noout) goto end;
+	if (noout)
+		{
+		ret = 0;
+		goto end;
+		}
 	BIO_printf(bio_err,"writing RSA private key\n");
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_RSAPrivateKey_bio(out,rsa);
