@@ -23,8 +23,8 @@ TEST=fips_dsatest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_dsa_ossl.c
-LIBOBJ=fips_dsa_ossl.o
+LIBSRC=fips_dsa_ossl.c fips_dsa_gen.c
+LIBOBJ=fips_dsa_ossl.o fips_dsa_gen.o
 
 SRC= $(LIBSRC)
 
@@ -66,6 +66,21 @@ tags:
 	ctags $(SRC)
 
 tests:
+
+top_fips_dssvs:
+	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_dssvs sub_target)
+
+fips_dssvs: fips_dssvs.o ../../libcrypto.a
+	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o ../../libcrypto.a
+
+Q=../testvectors/dsa/req
+A=../testvectors/dsa/rsp
+
+fips_test: top_fips_dssvs
+	-rm -rf $A
+	mkdir $A
+	./fips_dssvs prime < $Q/prime.req > $A/prime.rsp
+	./fips_dssvs pqg < $Q/pqg.req > $A/pqg.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

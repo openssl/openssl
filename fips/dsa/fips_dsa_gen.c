@@ -73,14 +73,13 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
+//#include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-#ifndef FIPS
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret,
@@ -100,6 +99,7 @@ DSA *DSA_generate_parameters(int bits,
 	BN_CTX *ctx=NULL,*ctx2=NULL,*ctx3=NULL;
 	unsigned int h=2;
 	DSA *ret=NULL;
+	unsigned char *seed_out=seed_in;
 
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;
@@ -142,7 +142,8 @@ DSA *DSA_generate_parameters(int bits,
 
 			if (!seed_len)
 				{
-				RAND_pseudo_bytes(seed,SHA_DIGEST_LENGTH);
+				if(RAND_pseudo_bytes(seed,SHA_DIGEST_LENGTH) < 0)
+					goto err;
 				seed_is_random = 1;
 				}
 			else
@@ -280,7 +281,7 @@ err:
 		ret->p=BN_dup(p);
 		ret->q=BN_dup(q);
 		ret->g=BN_dup(g);
-		if ((m > 1) && (seed_in != NULL)) memcpy(seed_in,seed,20);
+		if(seed_out != NULL) memcpy(seed_out,seed,20);
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
 		}
@@ -294,6 +295,4 @@ err:
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
 	}
-#endif /* ndef FIPS */
-#endif /* ndef OPENSSL_NO_SHA */
-
+#endif
