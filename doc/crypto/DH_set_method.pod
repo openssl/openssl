@@ -8,6 +8,7 @@ DH_set_method, DH_new_method, DH_OpenSSL - select DH method
 =head1 SYNOPSIS
 
  #include <openssl/dh.h>
+ #include <openssl/engine.h>
 
  void DH_set_default_method(const DH_METHOD *meth);
 
@@ -15,7 +16,7 @@ DH_set_method, DH_new_method, DH_OpenSSL - select DH method
 
  int DH_set_method(DH *dh, const DH_METHOD *meth);
 
- DH *DH_new_method(DH_METHOD *meth);
+ DH *DH_new_method(ENGINE *engine);
 
  const DH_METHOD *DH_OpenSSL(void);
 
