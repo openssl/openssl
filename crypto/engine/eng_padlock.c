@@ -153,7 +153,8 @@ padlock_bind_helper(ENGINE *e)
 #endif
 
 	/* Generate a nice engine name with available features */
-	snprintf(padlock_name, sizeof(padlock_name), "VIA PadLock (%s, %s)", 
+	BIO_snprintf(padlock_name, sizeof(padlock_name),
+		"VIA PadLock (%s, %s)", 
 		 padlock_use_rng ? "RNG" : "no-RNG",
 		 padlock_use_ace ? "ACE" : "no-ACE");
 
@@ -646,7 +647,7 @@ static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids)/
 static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 				const unsigned char *iv, int enc);
 static int padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			      const unsigned char *in, unsigned int nbytes);
+			      const unsigned char *in, size_t nbytes);
 
 #define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +		\
 	( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )	)
