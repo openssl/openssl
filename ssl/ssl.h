@@ -564,7 +564,7 @@ struct ssl_ctx_st
 	void *default_passwd_callback_userdata;
 
 	/* get client cert callback */
-	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
+	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
 	CRYPTO_EX_DATA ex_data;
 
