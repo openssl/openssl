@@ -362,11 +362,11 @@ static int test(void)
 			printf("BF_encrypt error encrypting\n");
 			printf("got     :");
 			for (i=0; i<2; i++)
-				printf("%08lX ",data[i]);
+				printf("%08lX ",(unsigned long)data[i]);
 			printf("\n");
 			printf("expected:");
 			for (i=0; i<2; i++)
-				printf("%08lX ",bf_cipher[n][i]);
+				printf("%08lX ",(unsigned long)bf_cipher[n][i]);
 			err=1;
 			printf("\n");
 			}
@@ -377,11 +377,11 @@ static int test(void)
 			printf("BF_encrypt error decrypting\n");
 			printf("got     :");
 			for (i=0; i<2; i++)
-				printf("%08lX ",data[i]);
+				printf("%08lX ",(unsigned long)data[i]);
 			printf("\n");
 			printf("expected:");
 			for (i=0; i<2; i++)
-				printf("%08lX ",bf_plain[n][i]);
+				printf("%08lX ",(unsigned long)bf_plain[n][i]);
 			printf("\n");
 			err=1;
 			}

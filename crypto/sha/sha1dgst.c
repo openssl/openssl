@@ -82,7 +82,7 @@ char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 
 #ifndef NOPROTO
 #  ifdef SHA1_ASM
-     void sha1_block_x86(SHA_CTX *c, register unsigned long *p, int num);
+     void sha1_block_x86(SHA_CTX *c, register SHA_LONG *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
      void sha1_block(SHA_CTX *c, register SHA_LONG *p, int num);
