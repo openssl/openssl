@@ -668,13 +668,14 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * So additionally check whether the cipher name found
 			 * has the correct length. We can save a strlen() call:
 			 * just checking for the '\0' at the right place is
-			 * sufficient, we have to strncmp() anyway.
+			 * sufficient, we have to strncmp() anyway. (We cannot
+			 * use strcmp(), because buf is not '\0' terminated.)
 			 */
 			 j = found = 0;
 			 while (ca_list[j])
 				{
-				if ((ca_list[j]->name[buflen] == '\0') &&
-				    !strncmp(buf, ca_list[j]->name, buflen))
+				if (!strncmp(buf, ca_list[j]->name, buflen) &&
+				    (ca_list[j]->name[buflen] == '\0'))
 					{
 					found = 1;
 					break;
