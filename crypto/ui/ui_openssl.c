@@ -1,9 +1,9 @@
 /* crypto/ui/ui_openssl.c -*- mode:C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte (levitte@stacken.kth.se) and others
- * for the OpenSSL project 2000/2001.
+/* Written by Richard Levitte (richard@levitte.org) and others
+ * for the OpenSSL project 2001.
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
