@@ -64,16 +64,16 @@
 #include <openssl/objects.h>
 #include "evp_locl.h"
 
-static int cast_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	unsigned char *iv,int enc);
+static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			 const unsigned char *iv,int enc);
 
 IMPLEMENT_BLOCK_CIPHER(cast5, cast_ks, CAST, cast_ks, 
 			NID_cast5, 8, EVP_CAST5_KEY_SIZE, 8,
 			EVP_CIPH_VARIABLE_LENGTH, cast_init_key, NULL,
 			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 			
-static int cast_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	     unsigned char *iv, int enc)
+static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			 const unsigned char *iv, int enc)
 	{
 	CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;

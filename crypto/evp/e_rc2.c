@@ -64,8 +64,8 @@
 #include <openssl/objects.h>
 #include "evp_locl.h"
 
-static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	unsigned char *iv,int enc);
+static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			const unsigned char *iv,int enc);
 static int rc2_meth_to_magic(EVP_CIPHER_CTX *ctx);
 static int rc2_magic_to_meth(int i);
 static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
@@ -126,8 +126,8 @@ EVP_CIPHER *EVP_rc2_40_cbc(void)
 	return(&r2_40_cbc_cipher);
 	}
 	
-static int rc2_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	     unsigned char *iv, int enc)
+static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			const unsigned char *iv, int enc)
 	{
 	RC2_set_key(&(ctx->c.rc2.ks),EVP_CIPHER_CTX_key_length(ctx),
 			key,ctx->c.rc2.key_bits);

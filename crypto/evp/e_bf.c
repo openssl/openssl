@@ -63,15 +63,15 @@
 #include "evp_locl.h"
 #include <openssl/objects.h>
 
-static int bf_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	unsigned char *iv,int enc);
+static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		       const unsigned char *iv, int enc);
 
 IMPLEMENT_BLOCK_CIPHER(bf, bf_ks, BF, bf_ks, NID_bf, 8, 16, 8,
 			0, bf_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 	
-static int bf_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	     unsigned char *iv, int enc)
+static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		       const unsigned char *iv, int enc)
 	{
 	BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;

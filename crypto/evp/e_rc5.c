@@ -64,8 +64,8 @@
 #include <openssl/objects.h>
 #include "evp_locl.h"
 
-static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	unsigned char *iv,int enc);
+static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			       const unsigned char *iv,int enc);
 static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
 IMPLEMENT_BLOCK_CIPHER(rc5_32_12_16, rc5.ks, RC5_32, rc5, NID_rc5,
@@ -107,8 +107,8 @@ static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		}
 	}
 
-static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
-	     unsigned char *iv, int enc)
+static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+			       const unsigned char *iv, int enc)
 	{
 	RC5_32_set_key(&(ctx->c.rc5.ks),EVP_CIPHER_CTX_key_length(ctx),
 			key,ctx->c.rc5.rounds);

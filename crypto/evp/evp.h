@@ -328,8 +328,10 @@ struct evp_cipher_st
 	int key_len;		/* Default value for variable length ciphers */
 	int iv_len;
 	unsigned long flags;	/* Various flags */
-	int (*init)(EVP_CIPHER_CTX *, unsigned char *, unsigned char *, int);	/* init key */
-	int (*do_cipher)(EVP_CIPHER_CTX *, unsigned char *, unsigned char *, unsigned int);/* encrypt/decrypt data */
+	int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		    const unsigned char *iv, int enc);	/* init key */
+	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			 const unsigned char *in, unsigned int inl);/* encrypt/decrypt data */
 	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
 	int ctx_size;		/* how big the ctx needs to be */
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
