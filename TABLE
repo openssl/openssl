@@ -2417,10 +2417,10 @@ $ranlib       =
 
 *** linux-s390
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = BN_LLONG
 $bn_obj       = 
 $des_obj      = 
@@ -2431,11 +2431,11 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR),$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-s390x
@@ -2443,7 +2443,7 @@ $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG
 $bn_obj       = 
 $des_obj      = 
@@ -2454,7 +2454,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
+$dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
 $shared_ldflag = 
