@@ -232,7 +232,7 @@ extern SW_EXPORT SureWareHook_Dsa_Sign_t SureWareHook_Dsa_Sign;
 *	mlen,elen and dlen are all multiple of sizeof(unsigned long)
 */
 typedef int SureWareHook_Mod_Exp_t(char*const msg,int mlen,const unsigned long *mod,
-									int elen,const unsigned long *exp,
+									int elen,const unsigned long *exponent,
 									int dlen,unsigned long *data,
 									unsigned long *res);
 extern SW_EXPORT SureWareHook_Mod_Exp_t SureWareHook_Mod_Exp;
