@@ -1,10 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/01/10 16:25:12 $
+  ______________                           $Date: 2001/01/10 16:37:35 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.7:  Under development...
+    o  OpenSSL 0.9.6a: Bugfix release -- under development...
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
@@ -45,6 +46,15 @@
   NEEDS PATCH
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
+
+    o  #include <openssl/e_os.h> in exported header files is illegal since
+       e_os.h is suitable only for library-internal use
+
+    o  crypto/ex_data.c is not really thread-safe and so must be used
+       with care (e.g., extra locking where necessary, or don't call
+       CRYPTO_get_ex_new_index once multiple threads exist).
+       The current API is not suitable for everything that it pretends
+       to offer.
 
   OPEN ISSUES
 
