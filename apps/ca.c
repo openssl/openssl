@@ -131,6 +131,7 @@
 #define ENV_NAMEOPT		"name_opt"
 #define ENV_CERTOPT		"cert_opt"
 #define ENV_EXTCOPY		"copy_extensions"
+#define ENV_UNIQUE_SUBJECT	"unique_subject"
 
 #define ENV_DATABASE		"database"
 
@@ -638,28 +639,13 @@ bad:
 	app_RAND_load_file(randfile, bio_err, 0);
 
 	db_attr.unique_subject = 1;
-	p = NCONF_get_string(conf, section, "unique_subject");
+	p = NCONF_get_string(conf, section, ENV_UNIQUE_SUBJECT);
 	if (p)
 		{
 #ifdef RL_DEBUG
 		BIO_printf(bio_err, "DEBUG: unique_subject = \"%s\"\n", p);
 #endif
-		switch(*p)
-			{
-		case 'f': /* false */
-		case 'F': /* FALSE */
-		case 'n': /* no */
-		case 'N': /* NO */
-			db_attr.unique_subject = 0;
-			break;
-		case 't': /* true */
-		case 'T': /* TRUE */
-		case 'y': /* yes */
-		case 'Y': /* YES */
-		default:
-			db_attr.unique_subject = 1;
-			break;
-			}
+		db_attr.unique_subject = parse_yesno(p,1);
 		}
 #ifdef RL_DEBUG
 	else

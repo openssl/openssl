@@ -1707,22 +1707,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 #ifdef RL_DEBUG
 			BIO_printf(bio_err, "DEBUG[load_index]: unique_subject = \"%s\"\n", p);
 #endif
-			switch(*p)
-				{
-			case 'f': /* false */
-			case 'F': /* FALSE */
-			case 'n': /* no */
-			case 'N': /* NO */
-				retdb->attributes.unique_subject = 0;
-				break;
-			case 't': /* true */
-			case 'T': /* TRUE */
-			case 'y': /* yes */
-			case 'Y': /* YES */
-			default:
-				retdb->attributes.unique_subject = 1;
-				break;
-				}
+			retdb->attributes.unique_subject = parse_yesno(p,1);
 			}
 		}
 
@@ -1960,6 +1945,35 @@ void free_index(CA_DB *db)
 		if (db->db) TXT_DB_free(db->db);
 		OPENSSL_free(db);
 		}
+	}
+
+int parse_yesno(char *str, int def)
+	{
+	int ret = def;
+	if (str)
+		{
+		switch (*str)
+			{
+		case 'f': /* false */
+		case 'F': /* FALSE */
+		case 'n': /* no */
+		case 'N': /* NO */
+		case '0': /* 0 */
+			ret = 0;
+			break;
+		case 't': /* true */
+		case 'T': /* TRUE */
+		case 'y': /* yes */
+		case 'Y': /* YES */
+		case '1': /* 1 */
+			ret = 0;
+			break;
+		default:
+			ret = def;
+			break;
+			}
+		}
+	return ret;
 	}
 
 /*
