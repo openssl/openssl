@@ -146,6 +146,19 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 
 		if ((n < min[i]) || (n > max[i])) goto err;
 		}
+	/* Optional fractional seconds: decimal point followed by one
+	 * or more digits.
+	 */
+	if (a[o] == '.')
+		{
+		if (++o > l) goto err;
+		i = o;
+		while ((a[o] >= '0') && (a[o] <= '9') && (o <= l))
+			o++;
+		/* Must have at least one digit after decimal point */
+		if (i == o) goto err;
+		}
+
 	if (a[o] == 'Z')
 		o++;
 	else if ((a[o] == '+') || (a[o] == '-'))

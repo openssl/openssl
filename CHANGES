@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Change ASN1_GENERALIZEDTIME_check() to allow fractional seconds.
+     [Steve Henson]
+
   +) Change mkdef.pl to sort symbols that get the same entry number,
      and make sure the automatically generated functions ERR_load_*
      become part of libeay.num as well.
