@@ -181,7 +181,7 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 		/* Strictly speaking this is an illegal ENUMERATED but we
 		 * tolerate it.
 		 */
-		ret->type=V_ASN1_INTEGER;
+		ret->type=V_ASN1_ENUMERATED;
 	} else if (*p & 0x80) /* a negative number */
 		{
 		ret->type=V_ASN1_NEG_ENUMERATED;
