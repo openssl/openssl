@@ -249,6 +249,8 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 const char *ERR_lib_error_string(unsigned long e);
 const char *ERR_func_error_string(unsigned long e);
 const char *ERR_reason_error_string(unsigned long e);
+void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
+			 void *u);
 #ifndef OPENSSL_NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
 #endif
