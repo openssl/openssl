@@ -1667,6 +1667,13 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
+ Changes between 0.9.6e and 0.9.6f  [XX xxx XXXX]
+
+  *) Use proper error handling instead of 'assertions' in buffer
+     overflow checks added in 0.9.6e.  This prevents DoS (the
+     assertions could call abort()).
+     [Arne Ansper <arne@ats.cyber.ee>, Bodo Moeller]
+  
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Add various sanity checks to asn1_get_length() to reject

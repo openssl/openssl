@@ -96,7 +96,8 @@ int ssl2_enc_init(SSL *s, int client)
 	num=c->key_len;
 	s->s2->key_material_length=num*2;
 
-	ssl2_generate_key_material(s);
+	if (ssl2_generate_key_material(s) <= 0)
+		return 0;
 
 	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
