@@ -331,7 +331,7 @@ void do_mct(char *amode,
 		       || imode == CBC))
 		memcpy(text,old_iv,8);
 
-	    if(!dir && imode == CFB64)
+	    if(!dir && (imode == CFB1 || imode == CFB8 || imode == CFB64))
 		{
 		/* the test specifies using the output of the raw DES operation
 		   which we don't have, so reconstruct it... */
