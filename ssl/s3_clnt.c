@@ -147,7 +147,7 @@ int ssl3_connect(SSL *s)
 
 			if ((s->version & 0xff00 ) != 0x0300)
 				{
-				SSLerr(SSL_F_SSL3_CONNECT, SSL_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_SSL3_CONNECT, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
 				}
@@ -965,7 +965,7 @@ static int ssl3_get_key_exchange(SSL *s)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 			{
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		s->session->sess_cert->peer_rsa_tmp=rsa;
@@ -1133,7 +1133,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		else
 #endif
 			{
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		}
@@ -1142,7 +1142,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		/* still data left over */
 		if (!(alg & SSL_aNULL))
 			{
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		if (n != 0)
@@ -1380,7 +1380,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 					(pkey->type != EVP_PKEY_RSA) ||
 					(pkey->pkey.rsa == NULL))
 					{
-					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 					goto err;
 					}
 				rsa=pkey->pkey.rsa;
@@ -1549,7 +1549,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 		else
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		
@@ -1624,7 +1624,7 @@ static int ssl3_send_client_verify(SSL *s)
 		else
 #endif
 			{
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		*(d++)=SSL3_MT_CERTIFICATE_VERIFY;
@@ -1734,7 +1734,7 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 
 	if (sc == NULL)
 		{
-		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,ERR_R_INTERNAL_ERROR);
 		goto err;
 		}
 

@@ -267,7 +267,6 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_GOT_A_FIN_BEFORE_A_CCS            ,"got a fin before a ccs"},
 {SSL_R_HTTPS_PROXY_REQUEST               ,"https proxy request"},
 {SSL_R_HTTP_REQUEST                      ,"http request"},
-{SSL_R_INTERNAL_ERROR                    ,"internal error"},
 {SSL_R_INVALID_CHALLENGE_LENGTH          ,"invalid challenge length"},
 {SSL_R_INVALID_COMMAND                   ,"invalid command"},
 {SSL_R_INVALID_PURPOSE                   ,"invalid purpose"},

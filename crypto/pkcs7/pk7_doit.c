@@ -526,7 +526,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				BIO_get_md_ctx(btmp,&mdc);
 				if (mdc == NULL)
 					{
-					PKCS7err(PKCS7_F_PKCS7_DATASIGN,PKCS7_R_INTERNAL_ERROR);
+					PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_INTERNAL_ERROR);
 					goto err;
 					}
 				if (EVP_MD_CTX_type(mdc) == j)
@@ -709,7 +709,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 		if (mdc == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
-							PKCS7_R_INTERNAL_ERROR);
+							ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		if (EVP_MD_CTX_type(mdc) == md_type)

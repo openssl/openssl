@@ -158,7 +158,7 @@ int ssl3_accept(SSL *s)
 
 			if ((s->version>>8) != 3)
 				{
-				SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
 				return -1;
 				}
 			s->type=SSL_ST_ACCEPT;
@@ -1005,7 +1005,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			if (s->s3->tmp.dh != NULL)
 				{
 				DH_free(dh);
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, SSL_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 
@@ -1612,7 +1612,7 @@ static int ssl3_get_cert_verify(SSL *s)
 	else
 #endif
 		{
-		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_INTERNAL_ERROR);
 		al=SSL_AD_UNSUPPORTED_CERTIFICATE;
 		goto f_err;
 		}
@@ -1802,7 +1802,7 @@ int ssl3_send_server_certificate(SSL *s)
                                 & (SSL_MKEY_MASK|SSL_AUTH_MASK))
                         != (SSL_aKRB5|SSL_kKRB5))
 			{
-			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,ERR_R_INTERNAL_ERROR);
 			return(0);
 			}
 

@@ -1452,7 +1452,6 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_GOT_A_FIN_BEFORE_A_CCS			 154
 #define SSL_R_HTTPS_PROXY_REQUEST			 155
 #define SSL_R_HTTP_REQUEST				 156
-#define SSL_R_INTERNAL_ERROR				 157
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_PURPOSE				 278

@@ -170,7 +170,7 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
 	}
 	if (n > max) /* does not happen */
 		{
-		SSLerr(SSL_F_SSL3_READ_N,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_READ_N,ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
 
@@ -718,7 +718,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE) && type) ||
 	    (peek && (type != SSL3_RT_APPLICATION_DATA)))
 		{
-		SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
 
@@ -1069,7 +1069,7 @@ start:
 		 * of SSL3_RT_HANDSHAKE when s->in_handshake is set, but that
 		 * should not happen when type != rr->type */
 		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_READ_BYTES,ERR_R_INTERNAL_ERROR);
 		goto f_err;
 	case SSL3_RT_APPLICATION_DATA:
 		/* At this point, we were expecting handshake data,

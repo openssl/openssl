@@ -456,7 +456,7 @@ static int get_server_hello(SSL *s)
 		if (s->session->peer != NULL) /* can't happen*/
 			{
 			ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
-			SSLerr(SSL_F_GET_SERVER_HELLO, SSL_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
 			return(-1);
 			}
 
@@ -469,7 +469,7 @@ static int get_server_hello(SSL *s)
 		/* can't happen */
 		{
 		ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
-		SSLerr(SSL_F_GET_SERVER_HELLO, SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
 		return(-1);
 		}
 		

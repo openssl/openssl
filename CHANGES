@@ -3,6 +3,28 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Clean up crypto/err/err.h and change some error codes to avoid conflicts:
+
+     Previously ERR_R_FATAL was too small and coincided with ERR_LIB_PKCS7
+     (= ERR_R_PKCS7_LIB); it is now 64 instead of 32.
+
+     ASN1 error codes
+          ERR_R_NESTED_ASN1_ERROR
+          ...
+          ERR_R_MISSING_ASN1_EOS
+     were 4 .. 9, conflicting with
+          ERR_LIB_RSA (= ERR_R_RSA_LIB)
+          ...
+          ERR_LIB_PEM (= ERR_R_PEM_LIB).
+     They are now 58 .. 63 (i.e., just below ERR_R_FATAL).
+
+     Add new error code 'ERR_R_INTERNAL_ERROR'.
+     [Bodo Moeller]
+
+  *) Don't overuse locks in crypto/err/err.c: For data retrieval, CRYPTO_r_lock
+     suffices.
+     [Bodo Moeller]
+
   *) New option '-subj arg' for 'openssl req' and 'openssl ca'.  This
      sets the subject name for a new request or supersedes the
      subject name in a given request. Formats that can be parsed are

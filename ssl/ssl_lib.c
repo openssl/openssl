@@ -105,7 +105,7 @@ int SSL_clear(SSL *s)
 #else
 	if (s->new_session)
 		{
-		SSLerr(SSL_F_SSL_CLEAR,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_CLEAR,ERR_R_INTERNAL_ERROR);
 		return 0;
 		}
 #endif
@@ -1494,7 +1494,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		}
 	else /* if (kalg & SSL_aNULL) */
 		{
-		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
 	if (c->pkeys[i].x509 == NULL) return(NULL);
@@ -1523,7 +1523,7 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
 		}
 	else /* if (alg & SSL_aNULL) */
 		{
-		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
 	}

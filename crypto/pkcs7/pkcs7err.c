@@ -105,7 +105,6 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 {PKCS7_R_DIGEST_FAILURE                  ,"digest failure"},
 {PKCS7_R_ERROR_ADDING_RECIPIENT          ,"error adding recipient"},
 {PKCS7_R_ERROR_SETTING_CIPHER            ,"error setting cipher"},
-{PKCS7_R_INTERNAL_ERROR                  ,"internal error"},
 {PKCS7_R_INVALID_MIME_TYPE               ,"invalid mime type"},
 {PKCS7_R_INVALID_NULL_POINTER            ,"invalid null pointer"},
 {PKCS7_R_MIME_NO_CONTENT_TYPE            ,"mime no content type"},

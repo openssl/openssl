@@ -142,20 +142,18 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_SYS,0,0)		,"system library"},
 {ERR_PACK(ERR_LIB_BN,0,0)		,"bignum routines"},
 {ERR_PACK(ERR_LIB_RSA,0,0)		,"rsa routines"},
-{ERR_PACK(ERR_LIB_DSA,0,0)		,"dsa routines"},
 {ERR_PACK(ERR_LIB_DH,0,0)		,"Diffie-Hellman routines"},
 {ERR_PACK(ERR_LIB_EVP,0,0)		,"digital envelope routines"},
 {ERR_PACK(ERR_LIB_BUF,0,0)		,"memory buffer routines"},
-{ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
 {ERR_PACK(ERR_LIB_OBJ,0,0)		,"object identifier routines"},
 {ERR_PACK(ERR_LIB_PEM,0,0)		,"PEM routines"},
-{ERR_PACK(ERR_LIB_ASN1,0,0)		,"asn1 encoding routines"},
+{ERR_PACK(ERR_LIB_DSA,0,0)		,"dsa routines"},
 {ERR_PACK(ERR_LIB_X509,0,0)		,"x509 certificate routines"},
+{ERR_PACK(ERR_LIB_ASN1,0,0)		,"asn1 encoding routines"},
 {ERR_PACK(ERR_LIB_CONF,0,0)		,"configuration file routines"},
-{ERR_PACK(ERR_LIB_METH,0,0)		,"X509 lookup 'method' routines"},
+{ERR_PACK(ERR_LIB_CRYPTO,0,0)		,"common libcrypto routines"},
+{ERR_PACK(ERR_LIB_EC,0,0)		,"elliptic curve routines"},
 {ERR_PACK(ERR_LIB_SSL,0,0)		,"SSL routines"},
-{ERR_PACK(ERR_LIB_RSAREF,0,0)		,"RSAref routines"},
-{ERR_PACK(ERR_LIB_PROXY,0,0)		,"Proxy routines"},
 {ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
 {ERR_PACK(ERR_LIB_PKCS7,0,0)		,"PKCS7 routines"},
 {ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
@@ -164,7 +162,6 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
 {ERR_PACK(ERR_LIB_ENGINE,0,0)		,"engine routines"},
 {ERR_PACK(ERR_LIB_OCSP,0,0)		,"OCSP routines"},
-{ERR_PACK(ERR_LIB_EC,0,0)		,"EC routines"},
 {0,NULL},
 	};
 
@@ -187,36 +184,42 @@ static ERR_STRING_DATA ERR_str_functs[]=
 
 static ERR_STRING_DATA ERR_str_reasons[]=
 	{
-{ERR_R_FATAL                             ,"fatal"},
 {ERR_R_SYS_LIB				,"system lib"},
 {ERR_R_BN_LIB				,"BN lib"},
 {ERR_R_RSA_LIB				,"RSA lib"},
 {ERR_R_DH_LIB				,"DH lib"},
 {ERR_R_EVP_LIB				,"EVP lib"},
 {ERR_R_BUF_LIB				,"BUF lib"},
-{ERR_R_BIO_LIB				,"BIO lib"},
 {ERR_R_OBJ_LIB				,"OBJ lib"},
 {ERR_R_PEM_LIB				,"PEM lib"},
+{ERR_R_DSA_LIB				,"DSA lib"},
 {ERR_R_X509_LIB				,"X509 lib"},
-{ERR_R_METH_LIB				,"METH lib"},
 {ERR_R_ASN1_LIB				,"ASN1 lib"},
 {ERR_R_CONF_LIB				,"CONF lib"},
+{ERR_R_CRYPTO_LIB			,"CRYPTO lib"},
+{ERR_R_EC_LIB				,"EC lib"},
 {ERR_R_SSL_LIB				,"SSL lib"},
-{ERR_R_PROXY_LIB			,"PROXY lib"},
 {ERR_R_BIO_LIB				,"BIO lib"},
 {ERR_R_PKCS7_LIB			,"PKCS7 lib"},
+{ERR_R_X509V3_LIB			,"X509V3 lib"},
 {ERR_R_PKCS12_LIB			,"PKCS12 lib"},
-{ERR_R_MALLOC_FAILURE			,"Malloc failure"},
-{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a function you should not call"},
-{ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
+{ERR_R_RAND_LIB				,"RAND lib"},
+{ERR_R_DSO_LIB				,"DSO lib"},
+{ERR_R_ENGINE_LIB			,"ENGINE lib"},
+{ERR_R_OCSP_LIB				,"OCSP lib"},
+
 {ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
 {ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
 {ERR_R_BAD_GET_ASN1_OBJECT_CALL		,"bad get asn1 object call"},
 {ERR_R_EXPECTING_AN_ASN1_SEQUENCE	,"expecting an asn1 sequence"},
 {ERR_R_ASN1_LENGTH_MISMATCH		,"asn1 length mismatch"},
 {ERR_R_MISSING_ASN1_EOS			,"missing asn1 eos"},
-{ERR_R_DSO_LIB				,"DSO lib"},
-{ERR_R_ENGINE_LIB			,"ENGINE lib"},
+
+{ERR_R_FATAL                            ,"fatal"},
+{ERR_R_MALLOC_FAILURE			,"malloc failure"},
+{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a function you should not call"},
+{ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
+{ERR_R_INTERNAL_ERROR			,"internal error"},
 
 {0,NULL},
 	};
@@ -299,14 +302,6 @@ void ERR_load_ERR_strings(void)
 
 	if (init)
 		{
-		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-		if (init == 0)
-			{
-			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-			return;
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-
 #ifndef OPENSSL_NO_ERR
 		ERR_load_strings(0,ERR_str_libraries);
 		ERR_load_strings(0,ERR_str_reasons);
@@ -567,7 +562,7 @@ const char *ERR_lib_error_string(unsigned long e)
 
 	l=ERR_GET_LIB(e);
 
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -575,7 +570,7 @@ const char *ERR_lib_error_string(unsigned long e)
 		p=(ERR_STRING_DATA *)lh_retrieve(error_hash,&d);
 		}
 
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -588,7 +583,7 @@ const char *ERR_func_error_string(unsigned long e)
 	l=ERR_GET_LIB(e);
 	f=ERR_GET_FUNC(e);
 
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -596,7 +591,7 @@ const char *ERR_func_error_string(unsigned long e)
 		p=(ERR_STRING_DATA *)lh_retrieve(error_hash,&d);
 		}
 
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -609,7 +604,7 @@ const char *ERR_reason_error_string(unsigned long e)
 	l=ERR_GET_LIB(e);
 	r=ERR_GET_REASON(e);
 
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_lock(CRYPTO_LOCK_ERR_HASH);
 
 	if (error_hash != NULL)
 		{
@@ -622,7 +617,7 @@ const char *ERR_reason_error_string(unsigned long e)
 			}
 		}
 
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR_HASH);
 
 	return((p == NULL)?NULL:p->string);
 	}
@@ -692,13 +687,13 @@ ERR_STATE *ERR_get_state(void)
 
 	pid=(unsigned long)CRYPTO_thread_id();
 
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
 	if (thread_hash != NULL)
 		{
 		tmp.pid=pid;
 		ret=(ERR_STATE *)lh_retrieve(thread_hash,&tmp);
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)

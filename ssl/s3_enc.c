@@ -234,7 +234,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	if (n > s->s3->tmp.key_block_length)
 		{
-		SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,SSL_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,ERR_R_INTERNAL_ERROR);
 		goto err2;
 		}
 
