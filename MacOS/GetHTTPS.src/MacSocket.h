@@ -62,7 +62,7 @@ int MacSocket_recv(const int inSocketNum,void *outBuff,int outBuffLength,const B
 
 //	Call this to send data on a socket
 
-int MacSocket_send(const int inSocketNum,void *inBuff,int inBuffLength);
+int MacSocket_send(const int inSocketNum,const void *inBuff,int inBuffLength);
 
 
 //	If zero bytes were read in a call to MacSocket_recv(), it may be that the remote end has done a half-close
