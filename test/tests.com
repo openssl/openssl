@@ -225,6 +225,10 @@ $	    write sys$output "Generate and certify a test certificate via the 'ca' pro
 $	    @testca.com
 $	endif
 $	return
+$ test_engine: 
+$	write sys$output "test Rijndael"
+$	!mcr 'texe_dir''rdtest'
+$	return
 $
 $
 $ exit:
