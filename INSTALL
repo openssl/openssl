@@ -3,7 +3,8 @@
  ---------------------------------
 
  [See INSTALL.W32 for instructions for compiling OpenSSL on Windows systems,
-  and INSTALL.VMS for installing on OpenVMS systems.]
+  INSTALL.VMS for installing on OpenVMS systems, and INSTALL.MacOS for
+  installing on MacOS, but not MacOS X, systems.]
 
  To install OpenSSL, you will need:
 
