@@ -7,6 +7,11 @@ perl util\mk1mf.pl %OPTS% debug dll VC-WIN32 >d32dll.mak
 perl util\mk1mf.pl %OPTS% dll VC-WIN32 >32dll.mak
 
 nmake -f d32.mak
+@if errorlevel 1 goto end
 nmake -f 32.mak
+@if errorlevel 1 goto end
 nmake -f d32dll.mak
+@if errorlevel 1 goto end
 nmake -f 32dll.mak
+
+:end
