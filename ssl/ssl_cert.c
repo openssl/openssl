@@ -685,7 +685,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     /* Note that a side effect is that the CAs will be sorted by name */
     if(!d)
 	{
-	SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
+	SYSerr(SYS_F_OPENDIR, get_last_sys_error());
+	ERR_add_error_data(3, "opendir('", dir, "')");
+	SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
 	goto err;
 	}
 

@@ -116,6 +116,7 @@ static ERR_STRING_DATA ERR_str_functs[]=
 #ifdef WINDOWS
 	{ERR_PACK(0,SYS_F_WSASTARTUP,0),	"WSAstartup"},
 #endif
+	{ERR_PACK(0,SYS_F_OPENDIR,0),		"opendir"},
 	{0,NULL},
 	};
 
