@@ -98,6 +98,7 @@ int MAIN(int argc, char **argv)
 	BIO *bio_out=NULL;
 
 	apps_startup();
+	SSL_load_error_strings();
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -176,21 +177,17 @@ int MAIN(int argc, char **argv)
 				else
 					{
 					BIO_printf(bio_out, "unavailable");
+					ERR_clear_error();
 					}
 				}
 			BIO_printf(bio_out, "\n");
 			}
 		else
-			BIO_printf(bio_err, "Engine %s does not exist\n", id);
+			ERR_print_errors(bio_err);
 		}
 
 	ret=0;
-	if (0)
-		{
-err:
-		SSL_load_error_strings();
-		ERR_print_errors(bio_err);
-		}
+	ERR_print_errors(bio_err);
 end:
 	sk_pop_free(engines, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);

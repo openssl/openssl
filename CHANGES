@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Better error reporting in 'openssl engine'.
+     [Richard Levitte]
+
   *) Never call load_dh_param(NULL) in s_server.
      [Bodo Moeller]
 
