@@ -135,6 +135,10 @@
 #define CRYPTO_get_dynlock_destroy_callback     CRYPTO_get_dynlock_destroy_cb
 #undef CRYPTO_get_dynlock_create_callback
 #define CRYPTO_get_dynlock_create_callback      CRYPTO_get_dynlock_create_cb
+#undef CRYPTO_set_locked_mem_ex_functions
+#define CRYPTO_set_locked_mem_ex_functions      CRYPTO_set_locked_mem_ex_funcs
+#undef CRYPTO_get_locked_mem_ex_functions
+#define CRYPTO_get_locked_mem_ex_functions      CRYPTO_get_locked_mem_ex_funcs
 
 /* Hack some long SSL names */
 #undef SSL_CTX_set_default_verify_paths
@@ -158,6 +162,14 @@
 #undef ENGINE_set_default_BN_mod_exp_crt
 #define ENGINE_set_default_BN_mod_exp_crt	ENGINE_set_def_BN_mod_exp_crt
 
+/* Hack some long OCSP names */
+#undef OCSP_REQUEST_get_ext_by_critical
+#define OCSP_REQUEST_get_ext_by_critical        OCSP_REQUEST_get_ext_by_crit
+#undef OCSP_BASICRESP_get_ext_by_critical
+#define OCSP_BASICRESP_get_ext_by_critical      OCSP_BASICRESP_get_ext_by_crit
+#undef OCSP_SINGLERESP_get_ext_by_critical
+#define OCSP_SINGLERESP_get_ext_by_critical     OCSP_SINGLERESP_get_ext_by_crit
+
 #endif /* defined OPENSSL_SYS_VMS */
 
 
@@ -165,6 +177,8 @@
 #if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_VMS)
 #undef ERR_load_CRYPTO_strings
 #define ERR_load_CRYPTO_strings			ERR_load_CRYPTOlib_strings
+#undef OCSP_crlID_new
+#define OCSP_crlID_new                          OCSP_crlID2_new
 
 /* These functions do not seem to exist!  However, I'm paranoid...
    Original command in x509v3.h:
