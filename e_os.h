@@ -187,6 +187,7 @@ extern "C" {
 #define _O_TEXT O_TEXT
 #define _O_BINARY O_BINARY
 #define _int64 __int64
+#define _kbhit kbhit
 #endif
 
 #if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)

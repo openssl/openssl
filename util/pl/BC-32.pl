@@ -19,7 +19,7 @@ $out_def="out32";
 $tmp_def="tmp32";
 $inc_def="inc32";
 #enable max error messages, disable most common warnings
-$cflags="-DWIN32_LEAN_AND_MEAN -j255 -w-aus -w-par -w-inl  -c -tWC -tWM -DWINDOWS -DWIN32 -DL_ENDIAN ";
+$cflags="-DWIN32_LEAN_AND_MEAN -q -w-aus -w-par -w-inl  -c -tWC -tWM -DWINDOWS -DWIN32 -DL_ENDIAN ";
 if ($debug)
 {
     $cflags.="-Od -y -v -vi- -D_DEBUG";
