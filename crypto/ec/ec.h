@@ -72,6 +72,8 @@
 #ifndef HEADER_EC_H
 #define HEADER_EC_H
 
+#include <openssl/opensslconf.h>
+
 #ifdef OPENSSL_NO_EC
 #error EC is disabled.
 #endif
