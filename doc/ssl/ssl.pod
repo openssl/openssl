@@ -624,7 +624,16 @@ connection defined in the B<SSL> structure.
 =head1 SEE ALSO
 
 L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>,
-L<SSL_get_error(3)|SSL_get_error(3)>
+L<SSL_accept(3)|SSL_accept(3)>, L<SSL_clear(3)|SSL_clear(3)>,
+L<SSL_connect(3)|SSL_connect(3)>, L<SSL_free(3)|SSL_free(3)>,
+L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_get_fd(3)|SSL_get_fd(3)>,
+L<SSL_get_rbio(3)|SSL_get_rbio(3)>,
+L<SSL_get_session(3)|SSL_get_session(3)>, L<SSL_new(3)|SSL_new(3)>,
+L<SSL_read(3)|SSL_read(3)>, L<SSL_set_bio(3)|SSL_set_bio(3)>,
+L<SSL_set_fd(3)|SSL_set_fd(3)>,
+L<SSL_set_session(3)|SSL_set_session(3)>,
+L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_write(3)|SSL_write(3)>,
+L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
 
 =head1 HISTORY
 
