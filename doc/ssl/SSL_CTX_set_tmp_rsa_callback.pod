@@ -24,20 +24,24 @@ SSL_CTX_set_tmp_rsa_callback, SSL_CTX_set_tmp_rsa, SSL_CTX_need_tmp_rsa, SSL_set
 
 SSL_CTX_set_tmp_rsa_callback() sets the callback function for B<ctx> to be
 used when a temporary/ephemeral RSA key is required to B<tmp_rsa_callback>.
-The callback is inherited by all B<ssl> objects created from B<ctx>.
+The callback is inherited by all SSL objects newly created from B<ctx>
+with <SSL_new(3)|SSL_new(3)>. Already created SSL objects are not affected.
 
 SSL_CTX_set_tmp_rsa() sets the temporary/ephemeral RSA key to be used to be
-B<rsa>. The key is inherited by all B<ssl> objects created from B<ctx>.
+B<rsa>. The key is inherited by all SSL objects newly created from B<ctx>
+with <SSL_new(3)|SSL_new(3)>. Already created SSL objects are not affected.
 
-SSL_CTX_need_tmp_rsa() returns 1, if a temporay/ephemeral RSA key is needed,
-because a RSA key with a keysize larger than 512 bits is installed.
+SSL_CTX_need_tmp_rsa() returns 1, if a temporay/ephemeral RSA key is needed
+for RSA-based strength-limited 'exportable' ciphersuites because a RSA key
+with a keysize larger than 512 bits is installed.
 
 SSL_set_tmp_rsa_callback() sets the callback only for B<ssl>.
 
 SSL_set_tmp_rsa() sets the key only for B<ssl>.
 
 SSL_need_tmp_rsa() returns 1, if a temporay/ephemeral RSA key is needed,
-because a RSA key with a keysize larger than 512 bits is installed.
+for RSA-based strength-limited 'exportable' ciphersuites because a RSA key
+with a keysize larger than 512 bits is installed.
 
 These functions apply to SSL/TLS servers only.
 
@@ -48,32 +52,42 @@ can take place. In this case the session data are negotiated using the
 ephemeral/temporary RSA key and the RSA key supplied and certified
 by the certificate chain is only used for signing.
 
+Under previous export restrictions, ciphers with RSA keys shorter (512 bits)
+than the usual key length of 1024 bits were created. To use these ciphers
+with RSA keys of usual length, an ephemeral key exchange must be performed,
+as the normal (certified) key cannot be directly used.
+
 Using ephemeral RSA key exchange yields forward secrecy, as the connection
 can only be decrypted, when the RSA key is known. By generating a temporary
 RSA key inside the server application that is lost when the application
 is left, it becomes impossible for an attacker to decrypt past sessions,
 even if he gets hold of the normal (certified) RSA key, as this key was
-only used for signing. The downside is that creating a RSA key is
-computationally expensive. On OpenSSL servers ephemeral RSA key exchange
-is therefore disabled by default and must be explicitly enabled using the
-SSL_OP_EPHEMERAL_RSA option of
-L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>, except for certain
-export ciphers.
+used for signing only. The downside is that creating a RSA key is
+computationally expensive.
 
-Under previous export restrictions, ciphers with RSA keys shorter (512 bits)
-than the usual key length of 1024 bits were created. To use these ciphers
-with RSA keys of usual length, an ephemeral key exchange must be performed,
-as the normal (certified) key cannot be used.
+Additionally, the use of ephemeral RSA key exchange is only allowed in
+the TLS standard, when the RSA key can be used for signing only, that is
+for export ciphers. Using ephemeral RSA key exchange for other purposes
+violates the standard and can break interoperability with clients.
+It is therefore strongly recommended to not use ephemeral RSA key
+exchange and use EDH (Ephemeral Diffie-Hellman) key exchange instead
+in order to achieve forward secrecy (see
+L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
 
-An application my either directly specify the key or
-can supply the key via a callback function. The callback approach has
-the advantage, that the callback may generate the key only in case it is
-actually needed. As the generation of a RSA key is however costly, it
-will lead to a significant delay in the handshake procedure.
-Another advantage of the callback function is that it can supply keys
-of different size (e.g. for SSL_OP_EPHEMERAL_RSA usage) while the
-explicit setting of the key is only useful for key size of 512 bits
-to satisfy the export restricted ciphers and does give away key length
+On OpenSSL servers ephemeral RSA key exchange is therefore disabled by default
+and must be explicitly enabled  using the SSL_OP_EPHEMERAL_RSA option of
+L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>, violating the TLS/SSL
+standard. When ephemeral RSA key exchange is required for export ciphers,
+it will automatically be used without this option!
+
+An application may either directly specify the key or can supply the key via
+a callback function. The callback approach has the advantage, that the
+callback may generate the key only in case it is actually needed. As the
+generation of a RSA key is however costly, it will lead to a significant
+delay in the handshake procedure.  Another advantage of the callback function
+is that it can supply keys of different size (e.g. for SSL_OP_EPHEMERAL_RSA
+usage) while the explicit setting of the key is only useful for key size of
+512 bits to satisfy the export restricted ciphers and does give away key length
 if a longer key would be allowed.
 
 The B<tmp_rsa_callback> is called with the B<keylength> needed and
@@ -83,7 +97,7 @@ ephemeral RSA key exchange is performed with an export cipher.
 =head1 EXAMPLES
 
 Generate temporary RSA keys to prepare ephemeral RSA key exchange. As the
-generation of a RSA key costs a lot of computer time, it is saved for later
+generation of a RSA key costs a lot of computer time, they saved for later
 reuse. For demonstration purposes, two keys for 512 bits and 1024 bits
 respectively are generated.
 
@@ -91,19 +105,15 @@ respectively are generated.
  /* Set up ephemeral RSA stuff */
  RSA *rsa_512 = NULL;
  RSA *rsa_1024 = NULL;
- if (prepare_export_in_advance || always_use_ephemeral_rsa) {
-   rsa_512 = RSA_generate_key(512,RSA_F4,NULL,NULL);
-   if (rsa_512 == NULL)
+
+ rsa_512 = RSA_generate_key(512,RSA_F4,NULL,NULL);
+ if (rsa_512 == NULL)
      evaluate_error_queue();
- }
- if (always_use_ephemeral_rsa) {
-   /* Only spend the time to generate the key, if it will actually be
-      needed */
-   rsa_1024 = RSA_generate_key(1024,RSA_F4,NULL,NULL);
-   if (rsa_1024 == NULL)
-     evaluate_error_queue();
-   SSL_CTX_set_options(SSL_OP_EPHEMERAL_RSA);
- }
+
+ rsa_1024 = RSA_generate_key(1024,RSA_F4,NULL,NULL);
+ if (rsa_1024 == NULL)
+   evaluate_error_queue();
+
  ...
 
  RSA *tmp_rsa_callback(SSL *s, int is_export, int keylength)
@@ -114,8 +124,8 @@ respectively are generated.
     case 512:
       if (rsa_512)
         rsa_tmp = rsa_512;
-      else { /* generate on the fly */
-        rsa_tmp = RSA_generate_key(512,RSA_F4,NULL,NULL);
+      else { /* generate on the fly, should not happen in this example */
+        rsa_tmp = RSA_generate_key(keylength,RSA_F4,NULL,NULL);
         rsa_512 = rsa_tmp; /* Remember for later reuse */
       }
       break;
@@ -123,7 +133,7 @@ respectively are generated.
       if (rsa_1024)
         rsa_tmp=rsa_1024;
       else
-        this_should_never_happen_as_we_are_prepared();
+        should_not_happen_in_this_example();
       break;
     default:
       /* Generating a key on the fly is very costly, so use what is there */
@@ -150,6 +160,7 @@ RSA key is needed and 0 otherwise.
 
 L<ssl(3)|ssl(3)>, L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
 L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>,
-L<ciphers(1)|ciphers(1)>
+L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_new(3)|SSL_new(3)>, L<ciphers(1)|ciphers(1)>
 
 =cut
