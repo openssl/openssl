@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Finish off removing the remaining LHASH function pointer casts.
+     There should no longer be any prototype-casting required when using
+     the LHASH abstraction, and any casts that remain are "bugs".
+     [Geoff Thorpe]
+
   *) Change the Unix RAND_poll() variant to be able to poll several
      random devices and only read data for a small fragment of time
      to avoid hangs.  Also separate out the Unix variant to it's own

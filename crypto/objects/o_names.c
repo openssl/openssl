@@ -248,6 +248,8 @@ static void do_all_fn(const OBJ_NAME *name,struct doall *d)
 		d->fn(name,d->arg);
 	}
 
+static IMPLEMENT_LHASH_DOALL_ARG_FN(do_all_fn, const OBJ_NAME *, struct doall *)
+
 void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),void *arg)
 	{
 	struct doall d;
@@ -256,7 +258,7 @@ void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),void *arg)
 	d.fn=fn;
 	d.arg=arg;
 
-	lh_doall_arg(names_lh,(LHASH_DOALL_ARG_FN_TYPE)do_all_fn,&d);
+	lh_doall_arg(names_lh,LHASH_DOALL_ARG_FN(do_all_fn),&d);
 	}
 
 struct doall_sorted
@@ -316,6 +318,8 @@ static void names_lh_free(OBJ_NAME *onp)
 		}
 	}
 
+static IMPLEMENT_LHASH_DOALL_FN(names_lh_free, OBJ_NAME *)
+
 static void name_funcs_free(NAME_FUNCS *ptr)
 	{
 	OPENSSL_free(ptr);
@@ -331,7 +335,7 @@ void OBJ_NAME_cleanup(int type)
 	down_load=names_lh->down_load;
 	names_lh->down_load=0;
 
-	lh_doall(names_lh,(LHASH_DOALL_FN_TYPE)names_lh_free);
+	lh_doall(names_lh,LHASH_DOALL_FN(names_lh_free));
 	if (type < 0)
 		{
 		lh_free(names_lh);

@@ -70,6 +70,8 @@
 
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
 static void value_free_stack(CONF_VALUE *a,LHASH *conf);
+static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_hash, CONF_VALUE *, LHASH *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_stack, CONF_VALUE *, LHASH *)
 /* We don't use function pointer casting or wrapper functions - but cast each
  * callback parameter inside the callback functions. */
 /* static unsigned long hash(CONF_VALUE *v); */
@@ -198,13 +200,13 @@ void _CONF_free_data(CONF *conf)
 
 	conf->data->down_load=0; /* evil thing to make sure the 'OPENSSL_free()'
 				  * works as expected */
-	lh_doall_arg(conf->data, (LHASH_DOALL_ARG_FN_TYPE)value_free_hash,
+	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(value_free_hash),
 			conf->data);
 
 	/* We now have only 'section' entries in the hash table.
 	 * Due to problems with */
 
-	lh_doall_arg(conf->data, (LHASH_DOALL_ARG_FN_TYPE)value_free_stack,
+	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(value_free_stack),
 			conf->data);
 	lh_free(conf->data);
 	}

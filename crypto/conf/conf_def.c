@@ -710,9 +710,11 @@ static void dump_value(CONF_VALUE *a, BIO *out)
 		BIO_printf(out, "[[%s]]\n", a->section);
 	}
 
+static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE *, BIO *)
+
 static int def_dump(CONF *conf, BIO *out)
 	{
-	lh_doall_arg(conf->data, (LHASH_DOALL_ARG_FN_TYPE)dump_value, out);
+	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value), out);
 	return 1;
 	}
 

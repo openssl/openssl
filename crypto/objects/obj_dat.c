@@ -204,13 +204,17 @@ static void cleanup3(ADDED_OBJ *a)
 	OPENSSL_free(a);
 	}
 
+static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ *)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ *)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ *)
+
 void OBJ_cleanup(void)
 	{
 	if (added == NULL) return;
 	added->down_load=0;
-	lh_doall(added,(LHASH_DOALL_FN_TYPE)cleanup1); /* zero counters */
-	lh_doall(added,(LHASH_DOALL_FN_TYPE)cleanup2); /* set counters */
-	lh_doall(added,(LHASH_DOALL_FN_TYPE)cleanup3); /* free objects */
+	lh_doall(added,LHASH_DOALL_FN(cleanup1)); /* zero counters */
+	lh_doall(added,LHASH_DOALL_FN(cleanup2)); /* set counters */
+	lh_doall(added,LHASH_DOALL_FN(cleanup3)); /* free objects */
 	lh_free(added);
 	added=NULL;
 	}

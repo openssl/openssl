@@ -594,6 +594,8 @@ static void timeout(SSL_SESSION *s, TIMEOUT_PARAM *p)
 		}
 	}
 
+static IMPLEMENT_LHASH_DOALL_ARG_FN(timeout, SSL_SESSION *, TIMEOUT_PARAM *)
+
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	{
 	unsigned long i;
@@ -606,7 +608,7 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	i=tp.cache->down_load;
 	tp.cache->down_load=0;
-	lh_doall_arg(tp.cache, (LHASH_DOALL_ARG_FN_TYPE)timeout, &tp);
+	lh_doall_arg(tp.cache, LHASH_DOALL_ARG_FN(timeout), &tp);
 	tp.cache->down_load=i;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	}
