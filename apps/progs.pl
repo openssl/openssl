@@ -28,15 +28,15 @@ foreach (@ARGV)
 	push(@files,$_);
 	$str="\t{FUNC_TYPE_GENERAL,\"$_\",${_}_main},\n";
 	if (($_ =~ /^s_/) || ($_ =~ /^ciphers$/))
-		{ print "#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))\n${str}#endif\n"; } 
+		{ print "#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))\n${str}#endif\n"; } 
 	elsif ( ($_ =~ /^rsa$/) || ($_ =~ /^genrsa$/) || ($_ =~ /^rsautl$/)) 
-		{ print "#ifndef NO_RSA\n${str}#endif\n";  }
+		{ print "#ifndef OPENSSL_NO_RSA\n${str}#endif\n";  }
 	elsif ( ($_ =~ /^dsa$/) || ($_ =~ /^gendsa$/) || ($_ =~ /^dsaparam$/))
-		{ print "#ifndef NO_DSA\n${str}#endif\n"; }
+		{ print "#ifndef OPENSSL_NO_DSA\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^dh$/) || ($_ =~ /^gendh$/) || ($_ =~ /^dhparam$/))
-		{ print "#ifndef NO_DH\n${str}#endif\n"; }
+		{ print "#ifndef OPENSSL_NO_DH\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^pkcs12$/))
-		{ print "#if !defined(NO_DES) && !defined(NO_SHA1)\n${str}#endif\n"; }
+		{ print "#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)\n${str}#endif\n"; }
 	else
 		{ print $str; }
 	}
@@ -48,6 +48,7 @@ foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
 	}
 
 foreach (
+	"aes-129-ecb",
 	"base64",
 	"des", "des3", "desx", "idea", "rc4", "rc4-40",
 	"rc2", "bf", "cast", "rc5",
@@ -64,13 +65,13 @@ foreach (
 	push(@files,$_);
 
 	$t=sprintf("\t{FUNC_TYPE_CIPHER,\"%s\",enc_main},\n",$_);
-	if    ($_ =~ /des/)  { $t="#ifndef NO_DES\n${t}#endif\n"; }
-	elsif ($_ =~ /idea/) { $t="#ifndef NO_IDEA\n${t}#endif\n"; }
-	elsif ($_ =~ /rc4/)  { $t="#ifndef NO_RC4\n${t}#endif\n"; }
-	elsif ($_ =~ /rc2/)  { $t="#ifndef NO_RC2\n${t}#endif\n"; }
-	elsif ($_ =~ /bf/)   { $t="#ifndef NO_BF\n${t}#endif\n"; }
-	elsif ($_ =~ /cast/) { $t="#ifndef NO_CAST\n${t}#endif\n"; }
-	elsif ($_ =~ /rc5/)  { $t="#ifndef NO_RC5\n${t}#endif\n"; }
+	if    ($_ =~ /des/)  { $t="#ifndef OPENSSL_NO_DES\n${t}#endif\n"; }
+	elsif ($_ =~ /idea/) { $t="#ifndef OPENSSL_NO_IDEA\n${t}#endif\n"; }
+	elsif ($_ =~ /rc4/)  { $t="#ifndef OPENSSL_NO_RC4\n${t}#endif\n"; }
+	elsif ($_ =~ /rc2/)  { $t="#ifndef OPENSSL_NO_RC2\n${t}#endif\n"; }
+	elsif ($_ =~ /bf/)   { $t="#ifndef OPENSSL_NO_BF\n${t}#endif\n"; }
+	elsif ($_ =~ /cast/) { $t="#ifndef OPENSSL_NO_CAST\n${t}#endif\n"; }
+	elsif ($_ =~ /rc5/)  { $t="#ifndef OPENSSL_NO_RC5\n${t}#endif\n"; }
 	print $t;
 	}
 
