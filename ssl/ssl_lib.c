@@ -1396,6 +1396,15 @@ int SSL_get_error(SSL *s,int i)
 		if (BIO_should_read(bio))
 			return(SSL_ERROR_WANT_READ);
 		else if (BIO_should_write(bio))
+			/* This one doesn't make too much sense ... We never try
+			 * to write to the rbio, and an application program where
+			 * rbio and wbio are separate couldn't even know what it
+			 * should wait for.
+			 * However if we ever set s->rwstate incorrectly
+			 * (so that we have SSL_want_read(s) instead of
+			 * SSL_want_write(s)) and rbio and wbio *are* the same,
+			 * this test works around that bug; so it might be safer
+			 * to keep it. */
 			return(SSL_ERROR_WANT_WRITE);
 		else if (BIO_should_io_special(bio))
 			{
@@ -1413,6 +1422,7 @@ int SSL_get_error(SSL *s,int i)
 		if (BIO_should_write(bio))
 			return(SSL_ERROR_WANT_WRITE);
 		else if (BIO_should_read(bio))
+			/* See above (SSL_want_read(s) with BIO_should_write(bio)) */
 			return(SSL_ERROR_WANT_READ);
 		else if (BIO_should_io_special(bio))
 			{
