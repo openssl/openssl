@@ -78,7 +78,7 @@ extern "C" {
 
 #if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
 #define MD5_LONG unsigned long
-#elif defined(OENSSL_SYS_CRAY) || defined(__ILP64__)
+#elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
 #define MD5_LONG unsigned long
 #define MD5_LONG_LOG2 3
 /*
