@@ -249,14 +249,26 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 		if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate )
 								 return 1;
 		if (!(x509 = PKCS12_certbag2x509(bag))) return 0;
-		if(ckid) X509_keyid_set1(x509, ckid->data, ckid->length);
+		if(ckid)
+			{
+			if (!X509_keyid_set1(x509, ckid->data, ckid->length))
+				{
+				X509_free(x509);
+				return 0;
+				}
+			}
 		if(fname) {
-			int len;
+			int len, r;
 			unsigned char *data;
 			len = ASN1_STRING_to_UTF8(&data, fname);
 			if(len > 0) {
-				X509_alias_set1(x509, data, len);
+				r = X509_alias_set1(x509, data, len);
 				OPENSSL_free(data);
+				if (!r)
+					{
+					X509_free(x509);
+					return 0;
+					}
 			}
 		}
 

@@ -173,8 +173,9 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 		{
 		if (s != NULL)
 			{
-			ASN1_STRING_set((ASN1_STRING *)s,
-				(unsigned char *)str,t.length);
+			if (!ASN1_STRING_set((ASN1_STRING *)s,
+				(unsigned char *)str,t.length))
+				return 0;
 			s->type = V_ASN1_UTCTIME;
 			}
 		return(1);
@@ -203,7 +204,12 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	if ((p == NULL) || ((size_t)s->length < len))
 		{
 		p=OPENSSL_malloc(len);
-		if (p == NULL) return(NULL);
+		if (p == NULL)
+			{
+			ASN1err(ASN1_F_ASN1_UTCTIME_SET,ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+  		if (s->data != NULL)
 		if (s->data != NULL)
 			OPENSSL_free(s->data);
 		s->data=(unsigned char *)p;
