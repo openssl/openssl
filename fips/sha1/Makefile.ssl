@@ -19,7 +19,8 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= fips_sha1test.c sha1vectors.txt sha1hashes.txt
+TEST= fips_sha1test.c
+TESTDATA= sha1vectors.txt sha1hashes.txt
 APPS=
 EXE= fips_standalone_sha1
 
@@ -61,6 +62,7 @@ links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TESTDATA)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
