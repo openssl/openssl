@@ -557,7 +557,9 @@ static int ssl3_get_client_hello(SSL *s)
 			{ /* previous session */
 			s->hit=1;
 			}
-		else
+		else if (i == -1)
+			goto err;
+		else /* i == 0 */
 			{
 			if (!ssl_get_new_session(s,1))
 				goto err;

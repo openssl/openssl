@@ -188,18 +188,21 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	/* This is used only by servers. */
 
 	SSL_SESSION *ret=NULL,data;
+	int fatal = 0;
 
 	/* conn_init();*/
 	data.ssl_version=s->version;
 	data.session_id_length=len;
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
-		return(0);
+		goto err;
 	memcpy(data.session_id,session_id,len);
 
 	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		{
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,(char *)&data);
+		/* don't allow other threads to steal it: */
+		CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 		}
 
@@ -215,27 +218,52 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 			{
 			s->ctx->stats.sess_cb_hit++;
 
+			/* Increment reference count now if the session callback
+			 * asks us to do so (note that if the session structures
+			 * returned by the callback are shared between threads,
+			 * it must handle the reference count itself [i.e. copy == 0],
+			 * or things won't be thread-safe). */
+			if (copy)
+				CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
+
 			/* The following should not return 1, otherwise,
 			 * things are very strange */
 			SSL_CTX_add_session(s->ctx,ret);
-			/* auto free it (decrement reference count now) */
-			if (!copy)
-				SSL_SESSION_free(ret);
 			}
-		if (ret == NULL) return(0);
+		if (ret == NULL)
+			goto err;
 		}
+
+	/* Now ret is non-NULL, and we own one of its reference counts. */
 
 	if((s->verify_mode&SSL_VERIFY_PEER)
 	   && (!s->sid_ctx_length || ret->sid_ctx_length != s->sid_ctx_length
 	       || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length)))
 	    {
-		if (s->sid_ctx_length)
-			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
-		else
-			/* application should have used SSL[_CTX]_set_session_id_context */
+		/* We've found the session named by the client, but we don't
+		 * want to use it in this context. */
+		
+		if (s->sid_ctx_length == 0)
+			{
+			/* application should have used SSL[_CTX]_set_session_id_context
+			 * -- we could tolerate this and just pretend we never heard
+			 * of this session, but then applications could effectively
+			 * disable the session cache by accident without anyone noticing */
+
 			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
-	    return 0;
-	    }
+			fatal = 1;
+			goto err;
+			}
+		else
+			{
+#if 0 /* The client cannot always know when a session is not appropriate,
+	   * so we shouldn't generate an error message. */
+
+			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+#endif
+			goto err; /* treat like cache miss */
+			}
+		}
 
 	if (ret->cipher == NULL)
 		{
@@ -250,22 +278,25 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 		else 
 			ret->cipher=ssl_get_cipher_by_char(s,&(buf[1]));
 		if (ret->cipher == NULL)
-			return(0);
+			goto err;
 		}
+
+
+#if 0 /* This is way too late. */
 
 	/* If a thread got the session, then 'swaped', and another got
 	 * it and then due to a time-out decided to 'Free' it we could
 	 * be in trouble.  So I'll increment it now, then double decrement
 	 * later - am I speaking rubbish?. */
 	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
+#endif
 
 	if ((long)(ret->time+ret->timeout) < (long)time(NULL)) /* timeout */
 		{
 		s->ctx->stats.sess_timeout++;
 		/* remove it from the cache */
 		SSL_CTX_remove_session(s->ctx,ret);
-		SSL_SESSION_free(ret);		/* again to actually Free it */
-		return(0);
+		goto err;
 		}
 
 	s->ctx->stats.sess_hit++;
@@ -278,6 +309,14 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 		SSL_SESSION_free(s->session);
 	s->session=ret;
 	return(1);
+
+ err:
+	if (ret != NULL)
+		SSL_SESSION_free(ret);
+	if (fatal)
+		return -1;
+	else
+		return 0;
 	}
 
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
