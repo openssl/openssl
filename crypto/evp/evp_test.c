@@ -141,7 +141,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		c->key_len);
 	exit(5);
 	}
-
+    EVP_CIPHER_CTX_init(&ctx);
     if(!EVP_EncryptInit(&ctx,c,key,iv))
 	{
 	fprintf(stderr,"EncryptInit failed\n");
@@ -268,9 +268,10 @@ static int test_digest(const char *digest,
 	}
     if(!EVP_DigestFinal(&ctx,md,&mdn))
 	{
-	fprintf(stderr,"DigestUpdate failed\n");
+	fprintf(stderr,"DigestFinal failed\n");
 	exit(101);
 	}
+    EVP_MD_CTX_cleanup(&ctx);
 
     if(mdn != cn)
 	{
@@ -301,6 +302,9 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s <test file>\n",argv[0]);
 	exit(1);
 	}
+    CRYPTO_malloc_debug_init();
+    CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     szTestFile=argv[1];
 
@@ -347,6 +351,12 @@ int main(int argc,char **argv)
 	    }
 	}
 
+    ENGINE_cleanup();
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_remove_state(0);
+    ERR_free_strings();
+    CRYPTO_mem_leaks_fp(stderr);
 
     return 0;
     }
