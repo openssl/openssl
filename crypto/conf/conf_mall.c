@@ -96,7 +96,19 @@ void OPENSSL_config(void)
 		file=config_name;
                 }
 
-	CONF_modules_load_file(file, "openssl_config", CONF_MFLAGS_IGNORE_ERRORS);
+	if(CONF_modules_load_file(file, "openssl_config", 0) <= 0)
+		{
+		BIO *bio_err;
+
+		ERR_load_crypto_strings();
+		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
+			{
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_printf(bio_err,"Auto configuration failed\n");
+			ERR_print_errors(bio_err);
+			}
+		exit(1);
+		}
 
 	return;
 
