@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add a document (doc/standards.txt) that list all kinds of standards
+     and so on that are implemented in OpenSSL.
+     [Richard Levitte]
+
   *) Enhance c_rehash script. Old version would mishandle certificates
      with the same subject name hash and wouldn't handle CRLs at all.
      Added -fingerprint option to crl utility, to support new c_rehash
