@@ -348,11 +348,16 @@ X) -> 0x%08X\n",
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
 		wnum.d--; wnum.top++;
 		tmp->d[div_n]=l0;
+		/* XXX: Couldn't we replace this with;
+		 *    tmp->top = div_n;
+		 *    bn_fix_top(tmp);
+		 */
 		for (j=div_n+1; j>0; j--)
 			if (tmp->d[j-1]) break;
 		tmp->top=j;
 
 		j=wnum.top;
+		bn_fix_top(&wnum);
 		if (!BN_sub(&wnum,&wnum,tmp)) goto err;
 
 		snum->top=snum->top+wnum.top-j;
@@ -373,6 +378,7 @@ X) -> 0x%08X\n",
 		 * BN_rshift() will overwrite it.
 		 */
 		int neg = num->neg;
+		bn_fix_top(snum);
 		BN_rshift(rm,snum,norm_shift);
 		if (!BN_is_zero(rm))
 			rm->neg = neg;
