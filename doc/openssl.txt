@@ -320,7 +320,7 @@ Extended Key Usage.
 This extensions consists of a list of usages.
 
 These can either be object short names of the dotted numerical form of OIDs.
-While any OID can be used only certain values make sense. In partiular the
+While any OID can be used only certain values make sense. In particular the
 following PKIX, NS and MS values are meaningful:
 
 Value			Meaning
@@ -547,7 +547,7 @@ or CRL is due to be signed. Both return 0 on error on non zero for success.
 In each case 'conf' is the LHASH pointer of the configuration file to use
 and 'section' is the section containing the extension details.
 
-See the 'context functions' section for a description of the ctx paramater.
+See the 'context functions' section for a description of the ctx parameter.
 
 
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name,
@@ -694,7 +694,7 @@ The same as above but for an unsigned character value.
 int X509V3_add_value_bool(const char *name, int asn1_bool,
 						STACK_OF(CONF_VALUE) **extlist);
 
-This adds either "TRUE" or "FALSE" depending on the value of 'ans1_bool'
+This adds either "TRUE" or "FALSE" depending on the value of 'asn1_bool'
 
 int X509V3_add_value_bool_nf(char *name, int asn1_bool,
 						STACK_OF(CONF_VALUE) **extlist);
@@ -721,7 +721,7 @@ Multi value extensions are passed a STACK_OF(CONF_VALUE) name and value pairs
 or return a STACK_OF(CONF_VALUE).
 
 Raw extensions are just passed a BIO or a value and it is the extensions
-responsiblity to handle all the necessary printing.
+responsibility to handle all the necessary printing.
 
 There are two ways to add an extension. One is simply as an alias to an already
 existing extension. An alias is an extension that is identical in ASN1 structure
@@ -846,7 +846,7 @@ int i2r(struct v3_ext_method *method, void *ext, BIO *out, int indent);
 
 This function is passed the internal extension structure in the ext parameter
 and sends out a human readable version of the extension to out. The 'indent'
-paremeter should be noted to determine the necessary amount of indentation
+parameter should be noted to determine the necessary amount of indentation
 needed on the output.
 
 void * r2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
