@@ -56,11 +56,9 @@
  *
  */
 
-#define _XOPEN_SOURCE_EXTENDED	/* to get a proper declaration of strdup() */
-#define _XOPEN_SOURCE 500
-
 #include <stdio.h>
 #include <string.h>
+#include <openssl/buffer.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
@@ -198,9 +196,9 @@ int main(int argc, char *argv[])
 	for(loop = 0; loop < 512; loop++)
 		{
 		sprintf(buf, "id%i", loop);
-		id = strdup(buf);
+		id = BUF_strdup(buf);
 		sprintf(buf, "Fake engine type %i", loop);
-		name = strdup(buf);
+		name = BUF_strdup(buf);
 		if(((block[loop] = ENGINE_new()) == NULL) ||
 				!ENGINE_set_id(block[loop], id) ||
 				!ENGINE_set_name(block[loop], name))
