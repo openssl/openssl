@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Changed the LHASH code to use prototypes for callbacks, and created
+     macros to declare and implement thin (optionally static) functions
+     that provide type-safety and avoid function pointer casting for the
+     type-specific callbacks.
+     [Geoff Thorpe]
+
   *) Use better test patterns in bntest.
      [Ulf Möller]
 
