@@ -31,6 +31,7 @@
       o Memory leak detection now allows applications to add extra information
         via a per-thread stack
       o PRNG robustness improved
+      o BIGNUM library bug fixes
       o Enhanced support for Alpha Linux
       o Experimental MacOS support
 
