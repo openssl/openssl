@@ -32,14 +32,18 @@ $	IF F$PARSE("WRK_SSLALIB:") .EQS. "" THEN -
 $	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLINCLUDE:
 $
-$	SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
+$	SDIRS := ,-
+		 OBJECTS,-
+		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
 		 DES,RC2,RC4,RC5,IDEA,BF,CAST,-
 		 BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
-		 BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
+		 BUFFER,BIO,STACK,LHASH,RAND,ERR,-
 		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
-		 UI,KRB5
+		 UI,KRB5,-
+		 STORE
 $	EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,-
 		symhacks.h,ossl_typ.h
+$	EXHEADER_OBJECTS := objects.h,obj_mac.h
 $	EXHEADER_MD2 := md2.h
 $	EXHEADER_MD4 := md4.h
 $	EXHEADER_MD5 := md5.h
@@ -70,7 +74,6 @@ $	EXHEADER_STACK := stack.h,safestack.h
 $	EXHEADER_LHASH := lhash.h
 $	EXHEADER_RAND := rand.h
 $	EXHEADER_ERR := err.h
-$	EXHEADER_OBJECTS := objects.h,obj_mac.h
 $	EXHEADER_EVP := evp.h
 $	EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
 $	EXHEADER_PEM := pem.h,pem2.h
@@ -84,6 +87,8 @@ $	EXHEADER_COMP := comp.h
 $	EXHEADER_OCSP := ocsp.h
 $	EXHEADER_UI := ui.h,ui_compat.h
 $	EXHEADER_KRB5 := krb5_asn.h
+$!	EXHEADER_STORE := store.h,str_compat.h
+$	EXHEADER_STORE := store.h
 $	LIBS := LIBCRYPTO
 $
 $	VEXE_DIR := [-.VAX.EXE.CRYPTO]
