@@ -12,6 +12,12 @@
       o Support for external crypto devices ('engine') is no longer
         a separate distribution.
 
+  Changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
+
+      o Various SSL/TLS library bugfixes.
+      o BIGNUM library fixes.
+      o Fix potential multi-threading race conditions in the PRNG.
+
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
       o Security fix: PRNG improvements.
