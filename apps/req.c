@@ -685,16 +685,15 @@ loop:
 
 	if (newreq || x509)
 		{
-#ifndef NO_DSA
-		if (pkey->type == EVP_PKEY_DSA)
-			digest=EVP_dss1();
-#endif
-
 		if (pkey == NULL)
 			{
 			BIO_printf(bio_err,"you need to specify a private key\n");
 			goto end;
 			}
+#ifndef NO_DSA
+		if (pkey->type == EVP_PKEY_DSA)
+			digest=EVP_dss1();
+#endif
 		if (req == NULL)
 			{
 			req=X509_REQ_new();
