@@ -241,7 +241,7 @@ void CRYPTO_destroy_dynlockid(int i)
 			}
 		else
 #endif
-			if (--(pointer->references) <= 0)
+			if (pointer->references <= 0)
 				{
 				sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
 				}
@@ -396,16 +396,15 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 #endif
 	if (type < 0)
 		{
-		int i = -type - 1;
 		struct CRYPTO_dynlock_value *pointer
-			= CRYPTO_get_dynlock_value(i);
+			= CRYPTO_get_dynlock_value(type);
 
-		if (pointer)
+		if (pointer && dynlock_lock_callback)
 			{
 			dynlock_lock_callback(mode, pointer, file, line);
 			}
 
-		CRYPTO_destroy_dynlockid(i);
+		CRYPTO_destroy_dynlockid(type);
 		}
 	else
 		if (locking_callback != NULL)
