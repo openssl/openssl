@@ -93,6 +93,11 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
+	    OpenUNIX)
+		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x8" ]; then
+		    echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
+		fi
+		;;
 	    5)
 		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x7" ]; then
 		    echo "${MACHINE}-sco-unixware7"; exit 0
@@ -219,6 +224,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     OpenBSD:*)
 	echo "${MACHINE}-whatever-openbsd"; exit 0
+	;;
+
+    OpenUNIX:*)
+	echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
 	;;
 
     OSF1:*:*:*alpha*)
