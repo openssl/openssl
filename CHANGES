@@ -4,6 +4,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add initial documentation of the X509V3 functions.
+     [Steve Henson]
+
   *) Add a new pair of functions PEM_write_PKCS8PrivateKey() and 
      PEM_write_bio_PKCS8PrivateKey() that are equivalent to
      PEM_write_PrivateKey() and PEM_write_bio_PrivateKey() but use the more

@@ -450,6 +450,379 @@ but cannot be set. These include private key usage period, CRL number, and
 CRL reason.
 
 ==============================================================================
+		X509V3 Extension code: programmers guide
+==============================================================================
+
+The purpose of the extension code is twofold. It allows an extension to be
+created from a string or structure describing its contents and it prints out an
+extension in a human or machine readable form.
+
+1. Initialisation and cleanup.
+
+X509V3_add_standard_extensions();
+
+This function should be called before any other extension code. It adds support
+for some common PKIX and Netscape extensions. Additional custom extensions can
+be added as well (see later).
+
+void X509V3_EXT_cleanup(void);
+
+This function should be called last to cleanup the extension code. After this
+call no other extension calls should be made.
+
+2. Printing and parsing extensions.
+
+The simplest way to print out extensions is via the standard X509 printing
+routines: if you use the standard X509_print() function, the supported
+extensions will be printed out automatically.
+
+The following functions allow finer control over extension display:
+
+int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
+int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
+
+These two functions print out an individual extension to a BIO or FILE pointer.
+Currently the flag argument is unused and should be set to 0. The 'indent'
+argument is the number of spaces to indent each line.
+
+void *X509V3_EXT_d2i(X509_EXTENSION *ext);
+
+This function parses an extension and returns its internal structure. The
+precise structure you get back depends on the extension being parsed. If the
+extension if basicConstraints you will get back a pointer to a
+BASIC_CONSTRAINTS structure. Check out the source in crypto/x509v3 for more
+details about the structures returned. The returned structure should be freed
+after use using the relevant free function, BASIC_CONSTRAINTS_free() for 
+example.
+
+3. Generating extensions.
+
+An extension will typically be generated from a configuration file, or some
+other kind of configuration database.
+
+int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
+								 X509 *cert);
+int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
+								 X509_CRL *crl);
+
+These functions add all the extensions in the given section to the given
+certificate or CRL. They will normally be called just before the certificate
+or CRL is due to be signed. Both return 0 on error on non zero for success.
+
+In each case 'conf' is the LHASH pointer of the configuration file to use
+and 'section' is the section containing the extension details.
+
+See the 'context functions' section for a description of the ctx paramater.
+
+
+X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name,
+								 char *value);
+
+This function returns an extension based on a name and value pair, if the
+pair will not need to access other sections in a config file (or there is no
+config file) then the 'conf' parameter can be set to NULL.
+
+X509_EXTENSION *X509V3_EXT_conf_nid(char *conf, X509V3_CTX *ctx, int nid,
+								 char *value);
+
+This function creates an extension in the same way as X509V3_EXT_conf() but
+takes the NID of the extension rather than its name.
+
+For example to produce basicConstraints with the CA flag and a path length of
+10:
+
+x = X509V3_EXT_conf_nid(NULL, NULL, NID_basicConstraints, "CA:TRUE,pathlen:10");
+
+
+X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
+
+This function sets up an extension from its internal structure. The ext_nid
+parameter is the NID of the extension and 'crit' is the critical flag.
+
+4. Context functions.
+
+The following functions set and manipulate an extension context structure.
+The purpose of the extension context is to allow the extension code to
+access various structures relating to the "environment" of the certificate:
+for example the issuers certificate or the certificate request.
+
+void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
+                                 X509_REQ *req, X509_CRL *crl, int flags);
+
+This function sets up an X509V3_CTX structure with details of the certificate
+environment: specifically the issuers certificate, the subject certificate,
+the certificate request and the CRL: if these are not relevant or not
+available then they can be set to NULL. The 'flags' parameter should be set
+to zero.
+
+X509V3_set_ctx_test(ctx)
+
+This macro is used to set the 'ctx' structure to a 'test' value: this is to
+allow the syntax of an extension (or configuration file) to be tested.
+
+X509V3_set_ctx_nodb(ctx)
+
+This macro is used when no configuration database is present.
+
+void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH *lhash);
+
+This function is used to set the configuration database when it is an LHASH
+structure: typically a configuration file.
+
+The following functions are used to access a configuration database: they
+should only be used in RAW extensions.
+
+char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section);
+
+This function returns the value of the parameter "name" in "section", or NULL
+if there has been an error.
+
+void X509V3_string_free(X509V3_CTX *ctx, char *str);
+
+This function frees up the string returned by the above function.
+
+STACK * X509V3_get_section(X509V3_CTX *ctx, char *section);
+
+This function returns a whole section as a STACK of CONF_VALUE structures.
+
+void X509V3_section_free( X509V3_CTX *ctx, STACK *section);
+
+This function frees up the STACK returned by the above function.
+
+Note: it is possible to use the extension code with a custom configuration
+database. To do this the "db_meth" element of the X509V3_CTX structure should
+be set to an X509V3_CTX_METHOD structure. This structure contains the following
+function pointers:
+
+char * (*get_string)(void *db, char *section, char *value);
+STACK * (*get_section)(void *db, char *section);
+void (*free_string)(void *db, char * string);
+void (*free_section)(void *db, STACK *section);
+
+these will be called and passed the 'db' element in the X509V3_CTX structure
+to access the database. If a given function is not implemented or not required
+it can be set to NULL.
+
+5. String helper functions.
+
+There are several "i2s" and "s2i" functions that convert structures to and
+from ASCII strings. In all the "i2s" cases the returned string should be
+freed using Free() after use. Since some of these are part of other extension
+code they may take a 'method' parameter. Unless otherwise stated it can be
+safely set to NULL.
+
+char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct);
+
+This returns a hex string from an ASN1_OCTET_STRING.
+
+char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
+char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
+
+These return a string decimal representations of an ASN1_INTEGER and an
+ASN1_ENUMERATED type, respectively.
+
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
+                                                   X509V3_CTX *ctx, char *str);
+
+This converts an ASCII hex string to an ASN1_OCTET_STRING.
+
+ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, char *value);
+
+This converts a decimal ASCII string into an ASN1_INTEGER.
+
+6. Multi valued extension helper functions.
+
+The following functions can be used to manipulate STACKs of CONF_VALUE
+structures, as used by multi valued extensions.
+
+int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
+
+This function expects a boolean value in 'value' and sets 'asn1_bool' to
+it. That is it sets it to 0 for FALSE or 0xff for TRUE. The following
+strings are acceptable: "TRUE", "true", "Y", "y", "YES", "yes", "FALSE"
+"false", "N", "n", "NO" or "no".
+
+int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
+
+This accepts a decimal integer of arbitrary length and sets an ASN1_INTEGER.
+
+int X509V3_add_value(const char *name, const char *value, STACK **extlist);
+
+This simply adds a string name and value pair.
+
+int X509V3_add_value_uchar(const char *name, const unsigned char *value,
+                           STACK **extlist);
+
+The same as above but for an unsigned character value.
+
+int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist);
+
+This adds either "TRUE" or "FALSE" depending on the value of 'ans1_bool'
+
+int X509V3_add_value_bool_nf(char *name, int asn1_bool, STACK **extlist);
+
+This is the same as above except it adds nothing if asn1_bool is FALSE.
+
+int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint, STACK **extlist);
+
+This function adds the value of the ASN1_INTEGER in decimal form.
+
+7. Other helper functions.
+
+<to be added>
+
+ADDING CUSTOM EXTENSIONS.
+
+Currently there are three types of supported extensions. 
+
+String extensions are simple strings where the value is placed directly in the
+extensions, and the string returned is printed out.
+
+Multi value extensions are passed a STACK of name and value pairs or return
+such a STACK.
+
+Raw extensions are just passed a BIO or a value and it is the extensions
+responsiblity to handle all the necessary printing.
+
+There are two ways to add an extension. One is simply as an alias to an already
+existing extension. An alias is an extension that is identical in ASN1 structure
+to an existing extension but has a different OBJECT IDENTIFIER. This can be
+done by calling:
+
+int X509V3_EXT_add_alias(int nid_to, int nid_from);
+
+'nid_to' is the new extension NID and 'nid_from' is the already existing
+extension NID.
+
+Alternatively an extension can be written from scratch. This involves writing
+the ASN1 code to encode and decode the extension and functions to print out and
+generate the extension from strings. The relevant functions are then placed in
+a X509V3_EXT_METHOD structure and int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
+called.
+
+The X509V3_EXT_METHOD structure is described below.
+
+strut {
+int ext_nid;
+int ext_flags;
+X509V3_EXT_NEW ext_new;
+X509V3_EXT_FREE ext_free;
+X509V3_EXT_D2I d2i;
+X509V3_EXT_I2D i2d;
+X509V3_EXT_I2S i2s;
+X509V3_EXT_S2I s2i;
+X509V3_EXT_I2V i2v;
+X509V3_EXT_V2I v2i;
+X509V3_EXT_R2I r2i;
+X509V3_EXT_I2R i2r;
+
+void *usr_data;
+};
+
+The elements have the following meanings.
+
+ext_nid		is the NID of the object identifier of the extension.
+
+ext_flags	is set of flags. Currently the only external flag is
+		X509V3_EXT_MULTILINE which means a multi valued extensions
+		should be printed on separate lines.
+
+usr_data	is an extension specific pointer to any relevant data. This
+		allows extensions to share identical code but have different
+		uses. An example of this is the bit string extension which uses
+		usr_data to contain a list of the bit names.
+
+All the remaining elements are function pointers.
+
+ext_new		is a pointer to a function that allocates memory for the
+		extension ASN1 structure: for example ASN1_OBJECT_new().
+
+ext_free	is a pointer to a function that free up memory of the extension
+		ASN1 structure: for example ASN1_OBJECT_free().
+
+d2i		is the standard ASN1 function that converts a DER buffer into
+		the internal ASN1 structure: for example d2i_ASN1_IA5STRING().
+
+i2d		is the standard ASN1 function that converts the internal
+		structure into the DER representation: for example
+		i2d_ASN1_IA5STRING().
+
+The remaining functions are depend on the type of extension. One i2X and
+one X2i should be set and the rest set to NULL. The types set do not need
+to match up, for example the extension could be set using the multi valued
+v2i function and printed out using the raw i2r.
+
+All functions have the X509V3_EXT_METHOD passed to them in the 'method'
+parameter and an X509V3_CTX structure. Extension code can then access the
+parent structure via the 'method' parameter to for example make use of the value
+of usr_data. If the code needs to use detail relating to the request it can
+use the 'ctx' parameter.
+
+A note should be given here about the 'flags' member of the 'ctx' parameter.
+If it has the value CTX_TEST then the configuration syntax is being checked
+and no actual certificate or CRL exists. Therefore any attempt in the config
+file to access such information should silently succeed. If the syntax is OK
+then it should simply return a (possibly bogus) extension, otherwise it
+should return NULL.
+
+char *i2s(struct v3_ext_method *method, void *ext);
+
+This function takes the internal structure in the ext parameter and returns
+a Malloc'ed string representing its value.
+
+void * s2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+
+This function takes the string representation in the ext parameter and returns
+an allocated internal structure: ext_free() will be used on this internal
+structure after use.
+
+i2v and v2i handle a stack of CONF_VALUE structures:
+
+typedef struct
+{
+        char *section;
+        char *name;
+        char *value;
+} CONF_VALUE;
+
+Only the name and value members are currently used.
+
+STACK * i2v(struct v3_ext_method *method, void *ext);
+
+This function is passed the internal structure in the ext parameter and
+returns a STACK of CONF_VALUE structures. The values of name, value,
+section and the structure itself will be freed up with Free after use.
+Several helper functions are available to add values to this STACK.
+
+void * v2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
+
+This function takes a STACK of CONF_VALUE structures and should set the
+values of the external structure. This typically uses the name element to
+determine which structure element to set and the value element to determine
+what to set it to. Several helper functions are available for this
+purpose (see above).
+
+int i2r(struct v3_ext_method *method, void *ext, BIO *out, int indent);
+
+This function is passed the internal extension structure in the ext parameter
+and sends out a human readable version of the extension to out. The 'indent'
+paremeter should be noted to determine the necessary amount of indentation
+needed on the output.
+
+void * r2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+
+This is just passed the string representation of the extension. It is intended
+to be used for more elaborate extensions where the standard single and multi
+valued options are insufficient. They can use the 'ctx' parameter to parse the
+configuration database themselves. See the context functions section for details
+of how to do this.
+
+Note: although this type takes the same parameters as the "r2s" function there
+is a subtle difference. Whereas an "r2i" function can access a configuration
+database an "s2i" function MUST NOT. This is so the internal code can safely
+assume that an "s2i" function will work without a configuration database.
+
+==============================================================================
                             PKCS#12 Library
 ==============================================================================
 

@@ -71,16 +71,16 @@ struct v3_ext_ctx;
 
 /* Useful typedefs */
 
-typedef char * (*X509V3_EXT_NEW)();
+typedef void * (*X509V3_EXT_NEW)();
 typedef void (*X509V3_EXT_FREE)();
 typedef char * (*X509V3_EXT_D2I)();
 typedef int (*X509V3_EXT_I2D)();
-typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, char *ext, STACK *extlist);
-typedef char * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
-typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, char *ext);
-typedef char * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
-typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, char *ext, BIO *out, int indent);
-typedef char * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK *extlist);
+typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
+typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, void *ext);
+typedef void * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
+typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, void *ext, BIO *out, int indent);
+typedef void * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
 
 /* V3 extension structure */
 
