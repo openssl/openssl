@@ -187,7 +187,7 @@ certificates.
      * SSL_CTX_set_verify_depth() is by purpose set to "limit+1" so
      * that whenever the "depth>verify_depth" condition is met, we
      * have violated the limit and want to log this error condition.
-     * We must do it here, because the CHAIN_TO_LONG error would not
+     * We must do it here, because the CHAIN_TOO_LONG error would not
      * be found explicitly; only errors introduced by cutting off the
      * additional certificates would be logged.
      */
