@@ -53,6 +53,16 @@
  *
  */
 
+#ifndef OPENSSL_OPENBSD_DEV_CRYPTO
+
+void ENGINE_load_openbsd_dev_crypto(void)
+	{
+	/* This is a NOP unless OPENSSL_OPENBSD_DEV_CRYPTO is defined */
+	return;
+	}
+
+#else /* OPENSSL_OPENBSD_DEV_CRYPTO */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -64,16 +74,6 @@
 #include "eng_int.h"
 /* Maybe this is needed? ... */
 #include "../evp/evp_locl.h"
-
-#ifndef OPENSSL_OPENBSD_DEV_CRYPTO
-
-void ENGINE_load_openbsd_dev_crypto(void)
-	{
-	/* This is a NOP unless OPENSSL_OPENBSD_DEV_CRYPTO is defined */
-	return;
-	}
-
-#else /* OPENSSL_OPENBSD_DEV_CRYPTO */
 
 #include <crypto/cryptodev.h>
 
