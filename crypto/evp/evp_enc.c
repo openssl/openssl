@@ -78,8 +78,6 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if(enc && (enc != -1)) enc = 1;
 	if (cipher)
 		{
-		if(ctx->cipher)
-			EVP_CIPHER_CTX_cleanup(ctx);
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 		ctx->key_len = cipher->key_len;
@@ -219,7 +217,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,n,b,bl;
+	int i,n,b,bl,ret;
 
 	b=ctx->cipher->block_size;
 	if (b == 1)
@@ -230,6 +228,7 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	bl=ctx->buf_len;
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
 		{
+		EVP_CIPHER_CTX_cleanup(ctx);
 		if(bl)
 			{
 			EVPerr(EVP_F_EVP_ENCRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
@@ -238,12 +237,18 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		*outl = 0;
 		return 1;
 		}
+
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
-	if(!ctx->cipher->do_cipher(ctx,out,ctx->buf,b)) return 0;
-	*outl=b;
-	return 1;
+	ret=ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
+
+	EVP_CIPHER_CTX_cleanup(ctx);
+
+	if(ret)
+		*outl=b;
+
+	return ret;
 	}
 
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
