@@ -750,27 +750,31 @@ char
 	}
 
 
-/*	Given KRB5 enctype (basically DES or 3DES), return
+/*	Given KRB5 enctype (basically DES or 3DES),
+**	return closest match openssl EVP_ encryption algorithm.
+**	Return NULL for unknown or problematic (krb5_dk_encrypt) enctypes.
+**	Assume ENCTYPE_*_RAW (krb5_raw_encrypt) are OK.
 */
 EVP_CIPHER *
 kssl_map_enc(krb5_enctype enctype)
         {
 	switch (enctype)
 		{
+#if ! defined(KRB5_MIT_OLD11)
+					/*     cannot handle derived keys  */
+	case ENCTYPE_DES3_CBC_SHA1:		/*    EVP_des_ede3_cbc();  */
+	case ENCTYPE_DES_HMAC_SHA1:		/*    EVP_des_cbc();       */
+				return (EVP_CIPHER *) NULL;
+				break;
+#endif
 	case ENCTYPE_DES_CBC_CRC:
 	case ENCTYPE_DES_CBC_MD4:
 	case ENCTYPE_DES_CBC_MD5:
 	case ENCTYPE_DES_CBC_RAW:
-#if ! defined(KRB5_MIT_OLD11)
-	case ENCTYPE_DES_HMAC_SHA1:
-#endif
 				return (EVP_CIPHER *) EVP_des_cbc();
 				break;
 	case ENCTYPE_DES3_CBC_SHA:
 	case ENCTYPE_DES3_CBC_RAW:
-#if ! defined(KRB5_MIT_OLD11)
-	case ENCTYPE_DES3_CBC_SHA1:
-#endif
 				return (EVP_CIPHER *) EVP_des_ede3_cbc();
 				break;
 	default:                return (EVP_CIPHER *) NULL;
@@ -821,11 +825,17 @@ int 	kssl_test_confound(unsigned char *p)
 */
 int 	*populate_cksumlens(void)
 	{
-	int 		i, j, n = 0x0010+1;
+	int 		i, j, n;
 	static size_t 	*cklens = NULL;
 
+#ifdef KRB5_MIT_OLD11
+	n = krb5_max_cksum;
+#else
+	n = 0x0010;
+#endif	/* KRB5_MIT_OLD11 */
+ 
 #ifdef KRB5CHECKAUTH
-	if (!cklens && !(cklens = (size_t *) calloc(sizeof(int), n)))  return NULL;
+	if (!cklens && !(cklens = (size_t *) calloc(sizeof(int),n+1)))  return NULL;
 
 	for (i=0; i < n; i++)  {
 		if (!valid_cksumtype(i))  continue;	/*  array has holes  */
@@ -1812,6 +1822,35 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 	}
 #endif /* !OPENSSL_SYS_WINDOWS && !OPENSSL_SYS_WIN32 */
 
+
+/*  Given pointers to KerberosTime and struct tm structs, convert the
+**  KerberosTime string to struct tm.  Note that KerberosTime is a
+**  ASN1_GENERALIZEDTIME value, constrained to GMT with no fractional
+**  seconds as defined in RFC 1510.
+**  Return pointer to the (partially) filled in struct tm on success,
+**  return NULL on failure.
+*/
+struct tm	*k_gmtime(ASN1_GENERALIZEDTIME *ctime, struct tm *k_tm)
+	{
+	char 		c, *p;
+
+	if (!k_tm)  return NULL;
+	if (ctime == NULL  ||  ctime->length < 14)  return NULL;
+	if (ctime->data == NULL)  return NULL;
+
+	p = &ctime->data[14];
+
+	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_sec  = atoi(p);      *(p+2) = c;
+	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_min  = atoi(p);      *(p+2) = c;
+	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_hour = atoi(p);      *(p+2) = c;
+	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_mday = atoi(p);      *(p+2) = c;
+	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_mon  = atoi(p)-1;    *(p+2) = c;
+	c = *p;	 *p = '\0';  p -= 4;  k_tm->tm_year = atoi(p)-1900; *(p+4) = c;
+
+	return k_tm;
+	}
+
+
 /*  Helper function for kssl_validate_times().
 **  We need context->clockskew, but krb5_context is an opaque struct.
 **  So we try to sneek the clockskew out through the replay cache.
@@ -1892,8 +1931,10 @@ krb5_error_code  kssl_check_authent(
 	EVP_CIPHER_CTX		ciph_ctx;
 	EVP_CIPHER		*enc = NULL;
 	unsigned char		iv[EVP_MAX_IV_LENGTH];
-	unsigned char		*p, *unenc_authent, *tbuf = NULL;
+	unsigned char		*p, *unenc_authent;
 	int 			padl, outl, unencbufsize;
+	struct tm		tm_time, *tm_l, *tm_g;
+	time_t			now, tl, tg, tr, tz_offset;
 
 	*atimep = 0;
 	kssl_err_set(kssl_err, 0, "");
@@ -1941,9 +1982,29 @@ krb5_error_code  kssl_check_authent(
 	enc = kssl_map_enc(enctype);
 	memset(iv, 0, EVP_MAX_IV_LENGTH);       /* per RFC 1510 */
 
-	EVP_DecryptInit(&ciph_ctx, enc, kssl_ctx->key, iv);
-	EVP_DecryptUpdate(&ciph_ctx, unenc_authent, &outl,
-			dec_authent->cipher->data, dec_authent->cipher->length);
+	if (enc == NULL)
+		{
+		/*  Disable kssl_check_authent for ENCTYPE_DES3_CBC_SHA1.
+		**  This enctype indicates the authenticator was encrypted
+		**  using key-usage derived keys which openssl cannot decrypt.
+		*/
+		goto err;
+		}
+	if (!EVP_DecryptInit(&ciph_ctx, enc, kssl_ctx->key, iv))
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"EVP_DecryptInit error decrypting authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+	if (!EVP_DecryptUpdate(&ciph_ctx, unenc_authent, &outl,
+			dec_authent->cipher->data, dec_authent->cipher->length))
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"EVP_DecryptUpdate error decrypting authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
 	if (outl > unencbufsize)
 		{
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
@@ -1951,7 +2012,13 @@ krb5_error_code  kssl_check_authent(
 		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		goto err;
 		}
-	EVP_DecryptFinal(&ciph_ctx, &(unenc_authent[outl]), &padl);
+	if (!EVP_DecryptFinal(&ciph_ctx, &(unenc_authent[outl]), &padl))
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"EVP_DecryptFinal error decrypting authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
 	outl += padl;
 	if (outl > unencbufsize)
 		{
@@ -1985,64 +2052,27 @@ krb5_error_code  kssl_check_authent(
 		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 		goto err;
 		}
-	if ((tbuf = calloc(1, auth->ctime->length + 1)) == NULL)
-		{
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-			"Unable to allocate atime buffer.\n");
-		krb5rc = KRB5KRB_ERR_GENERIC;
-		goto err;
-		}
-	else	strncpy(tbuf, auth->ctime->data, auth->ctime->length);
-	
-	if ( auth->ctime->length >= 9 && auth->ctime->length <= 14  )  
-		/* tbuf == "%Y%m%d%H%M%S" */
-		{
-		struct tm		tm_time, *tm_l, *tm_g;
-		time_t			now, tl, tg, tr, tz_offset;
-		int                     i;
-		char                    *p = tbuf;
- 
-		memset(&tm_time,0,sizeof(struct tm));
-		for ( i=0; 
-		      i<4 && isdigit(*p);
-		      i++, p++ )
-			tm_time.tm_year = tm_time.tm_year*10 + (*p-'0');
-		for ( i=0; 
-		      i<2 && isdigit(*p) && tm_time.tm_mon <= 1; 
-		      i++, p++ )
-			tm_time.tm_mon = tm_time.tm_mon*10 + (*p-'0');
-		for ( i=0; 
-		      i<2 && isdigit(*p) && tm_time.tm_mday <= 3;
-		      i++, p++ )
-			tm_time.tm_mday = tm_time.tm_mday*10 + (*p-'0');
-		for ( i=0; 
-		      i<2 && isdigit(*p) && tm_time.tm_hour <= 2;
-		      i++, p++ )
-			tm_time.tm_hour = tm_time.tm_hour*10 + (*p-'0');
-		for ( i=0;
-		      i<2 && isdigit(*p) && tm_time.tm_min <= 6;
-		      i++, p++ )
-			tm_time.tm_min = tm_time.tm_min*10 + (*p-'0');
-		for ( i=0; 
-		      i<2 && isdigit(*p) && tm_time.tm_sec <= 6;
-		      i++, p++ )
-			tm_time.tm_sec = tm_time.tm_sec*10 + (*p-'0');
 
-		now  = time(&now);
-		tm_l = localtime(&now); 	tl = mktime(tm_l);
-		tm_g = gmtime(&now);		tg = mktime(tm_g);
-		tz_offset = tg - tl;
-		tr = mktime(&tm_time);
+	memset(&tm_time,0,sizeof(struct tm));
+	if (k_gmtime(auth->ctime, &tm_time)  &&
+		((tr = mktime(&tm_time)) != (time_t)(-1)))
+ 		{
+ 		now  = time(&now);
+ 		tm_l = localtime(&now); 	tl = mktime(tm_l);
+ 		tm_g = gmtime(&now);		tg = mktime(tm_g);
+ 		tz_offset = tg - tl;
 
-		if (tr != (time_t)(-1))
-			*atimep = mktime(&tm_time) - tz_offset;
-		}
+		*atimep = tr - tz_offset;
+ 		}
+
 #ifdef KSSL_DEBUG
-	printf("kssl_check_authent: client time %s = %d\n", tbuf, *atimep);
+	printf("kssl_check_authent: returns %d for client time ", *atimep);
+	if (auth && auth->ctime && auth->ctime->length && auth->ctime->data)
+		printf("%.*s\n", auth->ctime->length, auth->ctime->data);
+	else	printf("NULL\n");
 #endif	/* KSSL_DEBUG */
 
  err:
-	if (tbuf)		free(tbuf);
 	if (auth)		KRB5_AUTHENT_free((KRB5_AUTHENT *) auth);
 	if (dec_authent)	KRB5_ENCDATA_free(dec_authent);
 	if (unenc_authent)	free(unenc_authent);

@@ -1463,7 +1463,8 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		EVP_CIPHER_CTX		ciph_ctx;
 		EVP_CIPHER		*enc = NULL;
 		unsigned char		iv[EVP_MAX_IV_LENGTH];
-		unsigned char		pms[SSL_MAX_MASTER_KEY_LENGTH];
+		unsigned char		pms[SSL_MAX_MASTER_KEY_LENGTH
+						+ EVP_MAX_IV_LENGTH + 1];
 		int 			padl, outl = sizeof(pms);
 		krb5_timestamp		authtime = 0;
 		krb5_ticket_times	ttimes;
@@ -1537,16 +1538,31 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		enc = kssl_map_enc(kssl_ctx->enctype);
 		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
 
-		EVP_DecryptInit(&ciph_ctx,enc,kssl_ctx->key,iv);
-		EVP_DecryptUpdate(&ciph_ctx, pms,&outl,
-					enc_pms.data, enc_pms.length);
+		if (!EVP_DecryptInit(&ciph_ctx,enc,kssl_ctx->key,iv))
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DECRYPTION_FAILED);
+			goto err;
+			}
+		if (!EVP_DecryptUpdate(&ciph_ctx, pms,&outl,
+					enc_pms.data, enc_pms.length))
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DECRYPTION_FAILED);
+			goto err;
+			}
 		if (outl > SSL_MAX_MASTER_KEY_LENGTH)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				SSL_R_DATA_LENGTH_TOO_LONG);
 			goto err;
 			}
-		EVP_DecryptFinal(&ciph_ctx,&(pms[outl]),&padl);
+		if (!EVP_DecryptFinal(&ciph_ctx,&(pms[outl]),&padl))
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DECRYPTION_FAILED);
+			goto err;
+			}
 		outl += padl;
 		if (outl > SSL_MAX_MASTER_KEY_LENGTH)
 			{
