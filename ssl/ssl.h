@@ -746,10 +746,9 @@ typedef struct ssl_st
  * RSA *tmp_rsa_cb(SSL *ssl,int export)
  * DH *tmp_dh_cb(SSL *ssl,int export)
  */
-#define SSL_CTX_set_tmp_rsa_callback(ctx,cb) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb)
-#define SSL_CTX_set_tmp_dh_callback(ctx,dh) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh)
+void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
+				  RSA *(*cb)(SSL *ssl,int export));
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export));
 
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
