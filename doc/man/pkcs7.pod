@@ -12,6 +12,8 @@ B<openssl> B<pkcs7>
 [B<-in filename>]
 [B<-out filename>]
 [B<-print_certs>]
+[B<-text>]
+[B<-noout>]
 
 =head1 DESCRIPTION
 
