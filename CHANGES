@@ -669,7 +669,7 @@ yet to be integrated into this CVS branch:
      the config script, much like the NetBSD support.
      [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
 
- Changes between 0.9.6k and 0.9.7  [31 Dec 2002]
+ Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
 
   *) Fix session ID handling in SSLv2 client code: the SERVER FINISHED
      code (06) was taken as the first octet of the session ID and the last
@@ -2491,7 +2491,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
 
-  *) Change X509_cretificate_type() to mark the key as exported/exportable
+  *) Change X509_certificate_type() to mark the key as exported/exportable
      when it's 512 *bits* long, not 512 bytes.
      [Richard Levitte]
 
