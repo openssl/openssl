@@ -1267,7 +1267,7 @@ $ranlib       =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
+$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wstrict-prototypes -Wmissing-prototypes -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -ldl

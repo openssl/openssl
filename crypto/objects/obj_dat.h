@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 404
-#define NUM_SN 402
-#define NUM_LN 402
-#define NUM_OBJ 376
+#define NUM_NID 406
+#define NUM_SN 404
+#define NUM_LN 404
+#define NUM_OBJ 378
 
-static unsigned char lvalues[2951]={
+static unsigned char lvalues[2971]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -444,6 +444,8 @@ static unsigned char lvalues[2951]={
 0x55,0x1D,0x24,                              /* [2941] OBJ_policy_constraints */
 0x55,0x1D,0x37,                              /* [2944] OBJ_target_information */
 0x55,0x1D,0x38,                              /* [2947] OBJ_no_rev_avail */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x02,/* [2950] OBJ_ms_smartcard_login */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [2960] OBJ_ms_upn */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1075,6 +1077,10 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[2944]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
 	&(lvalues[2947]),0},
+{"msSmartcardLogin","Microsoft Smartcardlogin",NID_ms_smartcard_login,
+	10,&(lvalues[2950]),0},
+{"msUPN","Microsoft Universal Principal Name",NID_ms_upn,10,
+	&(lvalues[2960]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1417,6 +1423,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[138]),/* "msEFS" */
 &(nid_objs[171]),/* "msExtReq" */
 &(nid_objs[137]),/* "msSGC" */
+&(nid_objs[404]),/* "msSmartcardLogin" */
+&(nid_objs[405]),/* "msUPN" */
 &(nid_objs[173]),/* "name" */
 &(nid_objs[369]),/* "noCheck" */
 &(nid_objs[403]),/* "noRevAvail" */
@@ -1510,7 +1518,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[171]),/* "Microsoft Extension Request" */
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
 &(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
+&(nid_objs[404]),/* "Microsoft Smartcardlogin" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
+&(nid_objs[405]),/* "Microsoft Universal Principal Name" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -2196,6 +2206,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[136]),/* OBJ_ms_ctl_sign                  1 3 6 1 4 1 311 10 3 1 */
 &(nid_objs[137]),/* OBJ_ms_sgc                       1 3 6 1 4 1 311 10 3 3 */
 &(nid_objs[138]),/* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
+&(nid_objs[404]),/* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
+&(nid_objs[405]),/* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
 &(nid_objs[196]),/* OBJ_id_smime_mod_cms             1 2 840 113549 1 9 16 0 1 */
 &(nid_objs[197]),/* OBJ_id_smime_mod_ess             1 2 840 113549 1 9 16 0 2 */
 &(nid_objs[198]),/* OBJ_id_smime_mod_oid             1 2 840 113549 1 9 16 0 3 */
