@@ -287,8 +287,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 	static int init=1;
 	unsigned long l;
 #ifndef MSDOS
-	static pid_t prev_pid = 0;
-	pid_t curr_pid;
+	pid_t curr_pid = getpid();
 #endif
 #ifdef DEVRANDOM
 	FILE *fh;
@@ -329,8 +328,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		 * just this */
 		RAND_seed(&m,sizeof(m));
 #ifndef MSDOS
-		prev_pid = getpid();
-		l=prev_pid;
+		l=curr_pid;
 		RAND_seed(&l,sizeof(l));
 		l=getuid();
 		RAND_seed(&l,sizeof(l));
@@ -367,20 +365,6 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		init=0;
 		}
 
-#ifndef MSDOS
-	/* make sure we have unique states when a program forks
-	 * (new with OpenSSL 0.9.5; for earlier versions, applications
-	 * must take care of this) */
-	curr_pid = getpid();
-	if (prev_pid != curr_pid)
-		{
-		prev_pid = curr_pid;
-		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-		RAND_seed(&curr_pid, sizeof curr_pid);
-		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-		}
-#endif
-
 	st_idx=state_index;
 	st_num=state_num;
 	md_c[0] = md_count[0];
@@ -402,6 +386,13 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		j=(num >= MD_DIGEST_LENGTH/2)?MD_DIGEST_LENGTH/2:num;
 		num-=j;
 		MD_Init(&m);
+#ifndef MSDOS
+		if (curr_pid) /* just in the first iteration to save time */
+			{
+			MD_Update(&m,(unsigned char*)&curr_pid,sizeof curr_pid);
+			curr_pid = 0;
+			}
+#endif
 		MD_Update(&m,&(local_md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
 		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 #ifndef PURIFY

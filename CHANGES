@@ -5,7 +5,7 @@
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
   *) Make crypto/rand/md_rand.c more robust:
-     - Detect fork() and assure unique random states.
+     - Assure unique random numbers after fork().
      - Make sure that concurrent threads access the global counter and
        md serializably so that we never lose entropy in them
        or use exactly the same state in multiple threads.
