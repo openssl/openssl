@@ -179,14 +179,16 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	   BN_CTX *ctx)
 	{
-	int norm_shift,i,j,loop;
+	int norm_shift,i,loop;
 	BIGNUM *tmp,wnum,*snum,*sdiv,*res;
 	BN_ULONG *resp,*wnump;
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
-	bn_check_top(dv);
-	bn_check_top(rm);
+	if (dv)
+		bn_check_top(dv);
+	if (rm)
+		bn_check_top(rm);
 	bn_check_top(num);
 	bn_check_top(divisor);
 
@@ -224,15 +226,16 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	div_n=sdiv->top;
 	num_n=snum->top;
 	loop=num_n-div_n;
-
 	/* Lets setup a 'window' into snum
 	 * This is the part that corresponds to the current
 	 * 'area' being divided */
-	BN_init(&wnum);
-	wnum.flags = BN_FLG_STATIC_DATA; /* prevent accidental "expands" */
-	wnum.d=	 &(snum->d[loop]);
-	wnum.top= div_n;
-	wnum.dmax= snum->dmax - loop; /* so we don't step out of bounds */
+	wnum.neg   = 0;
+	wnum.d     = &(snum->d[loop]);
+	wnum.top   = div_n;
+#ifdef BN_DEBUG_RAND
+	/* only needed when BN_ucmp messes up the values between top and max */
+	wnum.dmax  = snum->dmax - loop; /* so we don't step out of bounds */
+#endif
 
 	/* Get the top 2 words of sdiv */
 	/* div_n=sdiv->top; */
@@ -251,22 +254,32 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	/* space for temp */
 	if (!bn_wexpand(tmp,(div_n+1))) goto err;
 
-	bn_correct_top(&wnum);
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
-		if (!BN_usub(&wnum,&wnum,sdiv)) goto err;
+#ifdef BN_DEBUG_RAND
+		/* If BN_DEBUG_RAND is defined BN_ucmp changes (via
+		 * bn_pollute) the const bignum arguments =>
+		 * clean the values between top and max again */
+		bn_clear_top2max(&wnum);
+#endif
+		bn_sub_words(wnum.d, wnum.d, sdiv->d, div_n);
 		*resp=1;
-		res->d[res->top-1]=1;
 		}
 	else
 		res->top--;
+	/* if res->top == 0 then clear the neg value otherwise decrease
+	 * the resp pointer */
 	if (res->top == 0)
 		res->neg = 0;
-	resp--;
+	else
+		resp--;
 
-	for (i=0; i<loop-1; i++)
+	for (i=0; i<loop-1; i++, wnump--, resp--)
 		{
 		BN_ULONG q,l0;
+		/* the first part of the loop uses the top two words of
+		 * snum and sdiv to calculate a BN_ULONG q such that
+		 * | wnum - sdiv * q | < sdiv */
 #if defined(BN_DIV3W) && !defined(OPENSSL_NO_ASM)
 		BN_ULONG bn_div_3_words(BN_ULONG*,BN_ULONG,BN_ULONG);
 		q=bn_div_3_words(wnump,d1,d0);
@@ -350,31 +363,26 @@ X) -> 0x%08X\n",
 #endif /* !BN_DIV3W */
 
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
-		wnum.d--; wnum.top++; wnum.dmax++;
 		tmp->d[div_n]=l0;
-		/* XXX: Couldn't we replace this with;
-		 *    tmp->top = div_n;
-		 *    bn_fix_top(tmp);
-		 */
-		for (j=div_n+1; j>0; j--)
-			if (tmp->d[j-1]) break;
-		tmp->top=j;
-
-		j=wnum.top;
-		bn_correct_top(&wnum);
-		if (!BN_sub(&wnum,&wnum,tmp)) goto err;
-
-		snum->top=snum->top+wnum.top-j;
-
-		if (wnum.neg)
+		wnum.d--;
+		/* ingore top values of the bignums just sub the two 
+		 * BN_ULONG arrays with bn_sub_words */
+		if (bn_sub_words(wnum.d, wnum.d, tmp->d, div_n+1))
 			{
+			/* Note: As we have considered only the leading
+			 * two BN_ULONGs in the calculation of q, sdiv * q
+			 * might be greater than wnum (but then (q-1) * sdiv
+			 * is less or equal than wnum)
+			 */
 			q--;
-			j=wnum.top;
-			if (!BN_add(&wnum,&wnum,sdiv)) goto err;
-			snum->top+=wnum.top-j;
+			if (bn_add_words(wnum.d, wnum.d, sdiv->d, div_n))
+				/* we can't have an overflow here (assuming
+				 * that q != 0, but if q == 0 then tmp is
+				 * zero anyway) */
+				(*wnump)++;
 			}
-		*(resp--)=q;
-		wnump--;
+		/* store part of the result */
+		*resp = q;
 		}
 	if (rm != NULL)
 		{
@@ -391,7 +399,8 @@ X) -> 0x%08X\n",
 	BN_CTX_end(ctx);
 	return(1);
 err:
-	bn_check_top(rm);
+	if (rm)
+		bn_check_top(rm);
 	BN_CTX_end(ctx);
 	return(0);
 	}
