@@ -108,11 +108,11 @@ static DH *get_dh512(void);
 /* static void s_server_init(void);*/
 
 #ifndef S_ISDIR
-#if defined(VMS) && !defined(__DECC)
-#define S_ISDIR(a)	(((a) & S_IFMT) == S_IFDIR)
-#else
-#define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
-#endif
+# if defined(_S_IFMT) && defined(_S_IFDIR)
+#  define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
+# else
+#  define S_ISDIR(a)	(((a) & S_IFMT) == S_IFDIR)
+# endif
 #endif
 
 #ifndef NO_DH
