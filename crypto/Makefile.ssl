@@ -37,7 +37,7 @@ LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o tmdiff.o cpt_err.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= crypto.h cryptall.h tmdiff.h opensslv.h opensslconf.h
+EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h
 HEADER=	cryptlib.h date.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -145,21 +145,26 @@ cpt_err.o: ../include/openssl/crypto.h ../include/openssl/err.h
 cpt_err.o: ../include/openssl/opensslv.h ../include/openssl/stack.h
 cryptlib.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 cryptlib.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
-cryptlib.o: ../include/openssl/err.h ../include/openssl/opensslv.h
-cryptlib.o: ../include/openssl/stack.h cryptlib.h
+cryptlib.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
+cryptlib.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+cryptlib.o: date.h
 cversion.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 cversion.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
-cversion.o: ../include/openssl/err.h ../include/openssl/opensslv.h
-cversion.o: ../include/openssl/stack.h cryptlib.h
+cversion.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
+cversion.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+cversion.o: date.h
 ex_data.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 ex_data.o: ../include/openssl/err.h ../include/openssl/lhash.h
-ex_data.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ex_data.o: ../include/openssl/stack.h cryptlib.h
 mem.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
-mem.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+mem.o: ../include/openssl/stack.h cryptlib.h
 tmdiff.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 tmdiff.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
-tmdiff.o: ../include/openssl/err.h ../include/openssl/opensslv.h
-tmdiff.o: ../include/openssl/stack.h ../include/openssl/tmdiff.h cryptlib.h
+tmdiff.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
+tmdiff.o: ../include/openssl/opensslv.h ../include/openssl/stack.h
+tmdiff.o: ../include/openssl/tmdiff.h cryptlib.h

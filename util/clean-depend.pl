@@ -16,6 +16,7 @@ while(<STDIN>) {
     next if !defined $deps;
     my @deps=split ' ',$deps;
     @deps=grep(!/^\/usr\/include/,@deps);
+    @deps=grep(!/^\/usr\/lib\/gcc-lib/,@deps);
     push @{$files{$file}},@deps;
 }
 

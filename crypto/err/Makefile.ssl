@@ -79,8 +79,8 @@ clean:
 err.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-err.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-err.o: ../cryptlib.h
+err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+err.o: ../../include/openssl/stack.h ../cryptlib.h
 err_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 err_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -102,5 +102,5 @@ err_all.o: ../../include/openssl/x509v3.h
 err_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 err_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 err_prn.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-err_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-err_prn.o: ../cryptlib.h
+err_prn.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+err_prn.o: ../../include/openssl/stack.h ../cryptlib.h
