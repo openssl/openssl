@@ -965,7 +965,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-	RAND_bytes(buf,36);
+	RAND_pseudo_bytes(buf,36);
 #ifndef NO_RSA
 	for (j=0; j<RSA_NUM; j++)
 		{
@@ -1026,7 +1026,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-	RAND_bytes(buf,20);
+	RAND_pseudo_bytes(buf,20);
 #ifndef NO_DSA
 	for (j=0; j<DSA_NUM; j++)
 		{

@@ -69,6 +69,7 @@ typedef struct rand_meth_st
 	int (*bytes)(unsigned char *buf, int num);
 	void (*cleanup)(void);
 	void (*add)(const void *buf, int num, int entropy);
+	int (*pseudorand)(unsigned char *buf, int num);
 	} RAND_METHOD;
 
 void RAND_set_rand_method(RAND_METHOD *meth);
@@ -76,6 +77,7 @@ RAND_METHOD *RAND_get_rand_method(void );
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
 int  RAND_bytes(unsigned char *buf,int num);
+int  RAND_pseudo_bytes(unsigned char *buf,int num);
 void RAND_seed(const void *buf,int num);
 void RAND_add(const void *buf,int num,int entropy);
 int  RAND_load_file(const char *file,long max_bytes);

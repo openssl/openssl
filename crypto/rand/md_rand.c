@@ -146,12 +146,14 @@ static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
 static void ssleay_rand_add(const void *buf, int num, int add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num);
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 
 RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
 	ssleay_rand_bytes,
 	ssleay_rand_cleanup,
 	ssleay_rand_add,
+	ssleay_rand_pseudo_bytes,
 	}; 
 
 RAND_METHOD *RAND_SSLeay(void)
@@ -447,6 +449,23 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		RANDerr(RAND_F_SSLEAY_RAND_BYTES,RAND_R_PRNG_NOT_SEEDED);
 		return(0);
 		}
+	}
+
+/* pseudo-random bytes that are guaranteed to be unique but not
+   unpredictable */
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
+	{
+	int ret, err;
+
+	ret = RAND_bytes(buf, num);
+	if (ret == 0)
+		{
+		err = ERR_peek_error();
+		if (ERR_GET_LIB(err) == ERR_LIB_RAND &&
+		    ERR_GET_REASON(err) == RAND_R_PRNG_NOT_SEEDED)
+			(void)ERR_get_error();
+		}
+	return (ret);
 	}
 
 #ifdef WINDOWS

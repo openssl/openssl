@@ -73,7 +73,7 @@ int main()
 	/*double d; */
 	long d;
 
-	RAND_bytes(buf,2500);
+	RAND_pseudo_bytes(buf,2500);
 
 	n1=0;
 	for (i=0; i<16; i++) n2[i]=0;

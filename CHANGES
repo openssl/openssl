@@ -7,11 +7,12 @@
   *) Precautions against using the PRNG uninitialized: RAND_bytes() now
      has a return value which indicates the quality of the random data
      (1 = ok, 0 = not seeded).  Also an error is recorded on the thread's
-     error queue.
+     error queue. New function RAND_pseudo_bytes() generates output that is
+     guaranteed to be unique but not unpredictable.
      (TO DO: always check the result of RAND_bytes when it is used in the
-     library, because leaving the error in the error queue but reporting
-     success in a function that uses RAND_bytes could confuse things
-     considerably.)
+     library, or use RAND_pseudo_bytes instead, because leaving the
+     error in the error queue but reporting success in a function that
+     uses RAND_bytes could confuse things considerably.)
      [Ulf Möller]
 
   *) Do more iterations of Rabin-Miller probable prime test (specifically,

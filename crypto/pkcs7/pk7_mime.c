@@ -149,7 +149,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 	if((flags & PKCS7_DETACHED) && data) {
 	/* We want multipart/signed */
 		/* Generate a random boundary */
-		RAND_bytes((unsigned char *)bound, 32);
+		RAND_pseudo_bytes((unsigned char *)bound, 32);
 		for(i = 0; i < 32; i++) {
 			c = bound[i] & 0xf;
 			if(c < 10) c += '0';
