@@ -114,16 +114,28 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 			return NULL;
 		logvalue[reslen] = '\0';
 
+		t = *timer;
+
+/* The following is extracted from the DEC C header time.h */
+/*
+**  Beginning in OpenVMS Version 7.0 mktime, time, ctime, strftime
+**  have two implementations.  One implementation is provided
+**  for compatibility and deals with time in terms of local time,
+**  the other __utc_* deals with time in terms of UTC.
+*/
+/* We use the same conditions as in said time.h to check if we should
+   assume that t contains local time (and should therefore be adjusted)
+   or UTC (and should therefore be left untouched). */
+#if __CRTL_VER < 70000000 || defined _VMS_V6_SOURCE
 		/* Get the numerical value of the equivalence string */
 		status = atoi(logvalue);
 
 		/* and use it to move time to GMT */
-		t = *timer - status;
+		t -= status;
+#endif
 
 		/* then convert the result to the time structure */
-#ifndef OPENSSL_THREADS
-		ts=(struct tm *)localtime(&t);
-#else
+
 		/* Since there was no gmtime_r() to do this stuff for us,
 		   we have to do it the hard way. */
 		{
@@ -198,7 +210,6 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 		result->tm_isdst = 0; /* There's no way to know... */
 
 		ts = result;
-#endif
 		}
 		}
 #endif
