@@ -116,7 +116,7 @@ DH *DH_new_method(ENGINE *engine)
 		{
 		if (!ENGINE_init(engine))
 			{
-			DSAerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+			DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
 			OPENSSL_free(ret);
 			return NULL;
 			}
