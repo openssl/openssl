@@ -1,11 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/02/28 20:51:38 $
+  ______________                           $Date: 1999/03/08 09:43:53 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.2:  Still under development. 
-                       Proposed freeze  time: Monday, March  8th 1999
+    o  OpenSSL 0.9.2:  Freezed:
+                       - No more feature commits, please. 
+                       - Commit bugfixes and cleanups only, please.
                        Proposed release time: Monday, March 15th 1999
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
@@ -42,10 +43,15 @@
            SSL_CTX_xxx() variants but on a per connection basis. That's needed
            to let us provide full-featured per-URL client verification in
            mod_ssl or Apache-SSL.
+           => It still dumps core, so I suspend this and investigate
+              again for OpenSSL 0.9.3.
         2. The perl/ stuff to make it really work the first time ;-)
+           => I'll investigate a few more hours for OpenSSL 0.9.2
         3. The new documentation set in PID format under doc/
+           => I'll investigate a few more hours for OpenSSL 0.9.2
         4. More cleanups to get rid of obsolete/old/ugly files in the
            source tree which are not really needed.
+           => Done all which were possible with my personal knowledge
 
     o Ben is currently working on:
 	1. Function Prototype Thought Police issues.
