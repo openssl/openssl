@@ -358,7 +358,7 @@ char *CONF_get_string(LHASH *conf, char *section, char *name)
 				if (p != NULL) return(p);
 				}
 			}
-		vv.section=BUF_strdup("default");
+		vv.section="default";
 		vv.name=name;
 		v=(CONF_VALUE *)lh_retrieve(conf,(char *)&vv);
 		if (v != NULL)
