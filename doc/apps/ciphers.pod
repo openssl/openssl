@@ -108,9 +108,19 @@ the default cipher list. This is determined at compile time and is normally
 B<ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH>. This must be the first cipher string
 specified.
 
+=item B<COMPLEMENTOFDEFAULT>
+
+the ciphers not enabled by default, currently being B<ADH>. This rule does not
+cover B<eNULL>, which is not included by B<ALL> and is therefore be handled by
+B<COMPLENETOFALL>.
+
 =item B<ALL>
 
 all ciphers suites except the B<eNULL> ciphers which must be explicitly enabled.
+
+=item B<COMPLEMENTOFALL>
+
+the cipher suites not enabled by B<ALL>, currently being B<eNULL>.
 
 =item B<HIGH>
 
@@ -339,8 +349,22 @@ Include only 3DES ciphers and then place RSA ciphers last:
 
  openssl ciphers -v '3DES:+RSA'
 
+Include all RC4 ciphers but leave out those without authentication:
+
+ openssl ciphers -v 'RC4:!COMPLEMENTOFDEFAULT'
+
+Include all chiphers with RSA authentication but leave out ciphers without
+encryption.
+
+ openssl ciphers -v 'RSA:!COMPLEMENTOFALL'
+
 =head1 SEE ALSO
 
 L<s_client(1)|s_client(1)>, L<s_server(1)|s_server(1)>, L<ssl(3)|ssl(3)>
+
+=head1 HISTORY
+
+The B<COMPLENTOFALL> and B<COMPLEMENTOFDEFAULT> selection options were
+added in version 0.9.7.
 
 =cut

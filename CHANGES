@@ -101,6 +101,11 @@
  
  Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
 
+  *) Add cipher selection rules COMPLEMENTOFALL and COMPLENENTOFDEFAULT
+     to allow version independent disabling of normally unselected ciphers,
+     which may be activated as a side-effect of selecting a single cipher.
+     [Lutz Jaenicke, Bodo Moeller]
+
   *) Add appropriate support for separate platform-dependent build
      directories.  The recommended way to make a platform-dependent
      build directory is the following (tested on Linux), maybe with
