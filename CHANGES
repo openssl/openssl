@@ -12,6 +12,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Rabin-Miller test analyses assume uniformly distributed witnesses,
+     so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
+     followed by modular reduction.
+     [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
+
+  *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
+     requivalent based on BN_pseudo_rand() instead of BN_rand().
+     [Bodo Moeller]
+
   +) Add a copy() function to EVP_MD.
      [Ben Laurie]
 
