@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Fix CPU detection on Irix 6.x.
+     [Kurt Hockenbury <khockenb@stevens-tech.edu> and
+      "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
   *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
      was empty.
      [Steve Henson]
