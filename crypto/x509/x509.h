@@ -375,7 +375,7 @@ typedef struct pkcs8_priv_key_info_st
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
         ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
-        STACK *attributes;
+        STACK_OF(X509_ATTRIBUTE) *attributes;
         } PKCS8_PRIV_KEY_INFO;
 
 #include <openssl/x509_vfy.h>

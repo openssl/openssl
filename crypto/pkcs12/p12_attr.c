@@ -135,11 +135,12 @@ int PKCS8_add_keyusage (PKCS8_PRIV_KEY_INFO *p8, int usage)
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,keyid);
 	attrib->set = 1;
-	if (!p8->attributes && !(p8->attributes = sk_new (NULL))) {
+	if (!p8->attributes
+	    && !(p8->attributes = sk_X509_ATTRIBUTE_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (p8->attributes, (char *)attrib);
+	sk_X509_ATTRIBUTE_push (p8->attributes, attrib);
 	return 1;
 }
 
