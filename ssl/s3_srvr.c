@@ -953,13 +953,16 @@ SSL *s;
 				}
 
 			s->s3->tmp.dh=dh;
-			if (((dhp->pub_key == NULL) ||
-			     (dhp->priv_key == NULL) ||
-			     (s->options & SSL_OP_SINGLE_DH_USE)) &&
-			    (!DH_generate_key(dh)))
+			if ((dhp->pub_key == NULL ||
+			     dhp->priv_key == NULL ||
+			     (s->options & SSL_OP_SINGLE_DH_USE)))
 				{
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_DH_LIB);
-				goto err;
+				if(!DH_generate_key(dh))
+				    {
+				    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+					   ERR_R_DH_LIB);
+				    goto err;
+				    }
 				}
 			else
 				{
