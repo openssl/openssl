@@ -384,9 +384,13 @@ sub do_defs
 				$variant_cnt{$s}++;
 				$a .= "{$variant_cnt{$s}}";
 			}
-			if (defined($variant{$s})) { $variant{$s} .= ";"; }
-			$variant{$s} = $a.":".$a1;
-			if (defined($k)) { $variant{$s} .= ":$k"; }
+			my $toadd = $a.":".$a1.(defined($k)?":".$k:"");
+			my $togrep = $s.'(\{[0-9]+\})?:'.$a1.(defined($k)?":".$k:"");
+			if (!grep(/^$togrep$/,
+				  split(/;/, defined($variant{$s})?$variant{$s}:""))) {
+				if (defined($variant{$s})) { $variant{$s} .= ";"; }
+				$variant{$s} .= $toadd;
+			}
 			print STDERR "DEBUG: make_variant: Exit with variant of ",$s," = ",$variant{$s},"\n" if $debug;
 		};
 
@@ -679,7 +683,6 @@ sub do_defs
 					&$make_variant("$1_it","$1_it",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
-					print STDERR "DEBUG: after make_variant: variant of $1_it = ",$variant{"$1_it"},"\n" if $debug;
 					next;
 				} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
@@ -751,7 +754,6 @@ sub do_defs
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
-					print STDERR "DEBUG: after make_variant: variant of $1_it = ",$variant{"$1_it"},"\n" if $debug;
 				} elsif ($tag{'CONST_STRICT'} != 1) {
 					if (/\{|\/\*|\([^\)]*$/) {
 						$line = $_;
@@ -831,15 +833,17 @@ sub do_defs
 			$algorithm{$s} .= ','.$a;
 
 			if (defined($variant{$s})) {
-				(my $r, my $p, my $k) = split(/:/,$variant{$s});
-				my $ip = join ',',map({ /^!(.*)$/ ? $1 : "!".$_ } split /,/, $p);
-				$syms{$r} = 1;
-				if (!defined($k)) { $k = $kind{$s}; }
-				$kind{$r} = $k."(".$s.")";
-				$algorithm{$r} = $algorithm{$s};
-				$platform{$r} = &reduce_platforms($platform{$s}.",".$p.",".$p);
-				$platform{$s} = &reduce_platforms($platform{$s}.','.$ip.','.$ip);
-				print STDERR "DEBUG: \$variant{\"$s\"} = ",$variant{$s},"; \$r = $r; \$p = ",$platform{$r},"; \$a = ",$algorithm{$r},"; \$kind = ",$kind{$r},"\n" if $debug;
+				foreach $v (split /;/,$variant{$s}) {
+					(my $r, my $p, my $k) = split(/:/,$v);
+					my $ip = join ',',map({ /^!(.*)$/ ? $1 : "!".$_ } split /,/, $p);
+					$syms{$r} = 1;
+					if (!defined($k)) { $k = $kind{$s}; }
+					$kind{$r} = $k."(".$s.")";
+					$algorithm{$r} = $algorithm{$s};
+					$platform{$r} = &reduce_platforms($platform{$s}.",".$p.",".$p);
+					$platform{$s} = &reduce_platforms($platform{$s}.','.$ip.','.$ip);
+					print STDERR "DEBUG: \$variant{\"$s\"} = ",$v,"; \$r = $r; \$p = ",$platform{$r},"; \$a = ",$algorithm{$r},"; \$kind = ",$kind{$r},"\n" if $debug;
+				}
 			}
 			print STDERR "DEBUG: \$s = $s; \$p = ",$platform{$s},"; \$a = ",$algorithm{$s},"; \$kind = ",$kind{$s},"\n" if $debug;
 		}
@@ -901,7 +905,7 @@ sub reduce_platforms
 
 	delete $p{""};
 
-	$ret = join(',',map { $p{$_} < 0 ? "!".$_ : $_ } keys %p);
+	$ret = join(',',sort(map { $p{$_} < 0 ? "!".$_ : $_ } keys %p));
 	print STDERR "DEBUG: Exiting reduce_platforms with \"$ret\"\n"
 	    if $debug;
 	return $ret;
