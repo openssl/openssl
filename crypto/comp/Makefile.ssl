@@ -83,25 +83,25 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_rle.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_rle.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-c_rle.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-c_rle.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_rle.o: ../../include/openssl/symhacks.h
+c_rle.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+c_rle.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+c_rle.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+c_rle.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+c_rle.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_zlib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_zlib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-c_zlib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-c_zlib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_zlib.o: ../../include/openssl/symhacks.h
+c_zlib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+c_zlib.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+c_zlib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
 comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/err.h
 comp_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslv.h
 comp_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 comp_err.o: ../../include/openssl/symhacks.h
 comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-comp_lib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-comp_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-comp_lib.o: ../../include/openssl/opensslconf.h
+comp_lib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+comp_lib.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+comp_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 comp_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
