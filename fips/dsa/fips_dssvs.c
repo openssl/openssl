@@ -2,6 +2,7 @@
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
+#include <openssl/sha.h>
 #include <string.h>
 
 int hex2bin(const char *in, unsigned char *out)
@@ -9,7 +10,7 @@ int hex2bin(const char *in, unsigned char *out)
     int n1, n2;
     unsigned char ch;
 
-    for (n1=0,n2=0 ; in[n1] ; )
+    for (n1=0,n2=0 ; in[n1] && in[n1] != '\n' ; )
 	{ /* first byte */
 	if ((in[n1] >= '0') && (in[n1] <= '9'))
 	    ch = in[n1++] - '0';
@@ -64,9 +65,8 @@ int bin2hex(const unsigned char *in,int len,char *out)
 void pv(const char *tag,const unsigned char *val,int len)
     {
     char obuf[2048];
-    int olen;
 
-    olen=bin2hex(val,len,obuf);
+    bin2hex(val,len,obuf);
     printf("%s = %s\n",tag,obuf);
     }
 
@@ -165,6 +165,47 @@ void keypair()
 	}
     }
 
+void siggen()
+    {
+    char buf[1024];
+    int nmod=0;
+    DSA *dsa=NULL;
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	if(!strncmp(buf,"[mod = ",7))
+	    {
+	    nmod=atoi(buf+7);
+	    printf("[mod = %d]\n\n",nmod);
+
+	    dsa=DSA_generate_parameters(nmod,NULL,0,NULL,NULL,NULL,NULL);
+	    pbn("P",dsa->p);
+	    pbn("Q",dsa->q);
+	    pbn("G",dsa->g);
+	    putc('\n',stdout);
+	    }
+	else if(!strncmp(buf,"Msg = ",6))
+	    {
+	    unsigned char msg[1024];
+	    unsigned char hash[20];
+	    int n;
+	    DSA_SIG *sig;
+
+	    n=hex2bin(buf+6,msg);
+	    pv("Msg",msg,n);
+
+	    DSA_generate_key(dsa);
+	    pbn("Y",dsa->pub_key);
+
+	    SHA1(msg,n,hash);
+	    sig=DSA_do_sign(hash,sizeof hash,dsa);
+	    pbn("R",sig->r);
+	    pbn("S",sig->s);
+	    putc('\n',stdout);
+	    }
+	}
+    }
+
 int main(int argc,char **argv)
     {
     if(argc != 2)
@@ -184,6 +225,8 @@ int main(int argc,char **argv)
 	pqg();
     else if(!strcmp(argv[1],"keypair"))
 	keypair();
+    else if(!strcmp(argv[1],"siggen"))
+	siggen();
     //    else if(!strcmp(argv[1],"versig"))
     //	versig();
     else

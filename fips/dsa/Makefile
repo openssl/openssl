@@ -80,7 +80,8 @@ fips_test: top_fips_dssvs
 	-rm -rf $A
 	mkdir $A
 #	./fips_dssvs pqg < $Q/PQGGen.req > $A/PQGGen.rsp
-	./fips_dssvs keypair < $Q/KeyPair.req > $A/KeyPair.rsp
+#	./fips_dssvs keypair < $Q/KeyPair.req > $A/KeyPair.rsp
+	./fips_dssvs siggen < $Q/SigGen.req > $A/SigGen.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
