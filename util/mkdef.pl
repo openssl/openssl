@@ -301,6 +301,18 @@ sub do_defs
 				}
 				$funcs{"PEM_read_bio_${1}"} = 1;
 				$funcs{"PEM_write_bio_${1}"} = 1;
+			} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
+				     /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
+				if($W32) {
+					$funcs{"PEM_write_${1}"} = 1;
+				}
+				$funcs{"PEM_write_bio_${1}"} = 1;
+			} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
+				     /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
+				if($W32) {
+					$funcs{"PEM_read_${1}"} = 1;
+				}
+				$funcs{"PEM_read_bio_${1}"} = 1;
 			} elsif (
 				($tag{'TRUE'} != -1) &&
 				($tag{'FreeBSD'} != 1) &&

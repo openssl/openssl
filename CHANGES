@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add some PEM_write_X509_REQ_NEW() functions and a command line
+     argument to 'req'. This is not because the function is newer or
+     better than others it just uses the work 'NEW' in the certificate
+     request header lines. Some software needs this.
+     [Steve Henson]
+
   *) Reorganise password command line arguments: now passwords can be
      obtained from various sources. Delete the PEM_cb function and make
      it the default behaviour: i.e. if the callback is NULL and the
