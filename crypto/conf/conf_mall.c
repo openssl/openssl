@@ -65,6 +65,8 @@
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 
+/* Load all OpenSSL builtin modules */
+
 void OPENSSL_load_builtin_modules(void)
 	{
 	/* Add builtin modules here */
@@ -72,42 +74,3 @@ void OPENSSL_load_builtin_modules(void)
 	ENGINE_add_conf_module();
 	}
 
-#if 0 /* not yet */
-/* This is the automatic configuration loader: it is called automatically by
- * OpenSSL when any of a number of standard initialisation functions are called,
- * unless this is overridden by calling OPENSSL_no_config()
- */
-#endif
-
-static int openssl_configured = 0;
-
-void OPENSSL_config(const char *config_name)
-	{
-	if (openssl_configured)
-		return;
-
-	OPENSSL_load_builtin_modules();
-
-	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, NULL,
-					CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
-		{
-		BIO *bio_err;
-		ERR_load_crypto_strings();
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			{
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-			BIO_printf(bio_err,"Auto configuration failed\n");
-			ERR_print_errors(bio_err);
-			BIO_free(bio_err);
-			}
-		exit(1);
-		}
-
-	return;
-	}
-
-void OPENSSL_no_config()
-	{
-	openssl_configured = 1;
-	}

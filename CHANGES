@@ -13,6 +13,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add and OPENSSL_LOAD_CONF define which will cause
+     OpenSSL_add_all_algorithms() to load the openssl.cnf config file.
+     This allows older applications to transparently support certain
+     OpenSSL features: such as crypto acceleration and dynamic ENGINE loading.
+     Two new functions OPENSSL_add_all_algorithms_noconf() which will never
+     load the config file and OPENSSL_add_all_algorithms_conf() which will
+     always load it have also been added.
+     [Steve Henson]
+
   +) Config modules support in openssl utility.
 
      Most commands now load modules from the config file,

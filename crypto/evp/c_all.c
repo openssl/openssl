@@ -60,8 +60,15 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 
+#undef OpenSSL_add_all_algorithms
+
 void OpenSSL_add_all_algorithms(void)
-{
+	{
+	OPENSSL_add_all_algorithms_noconf();
+	}
+
+void OPENSSL_add_all_algorithms_noconf(void)
+	{
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-}
+	}
