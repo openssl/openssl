@@ -497,11 +497,7 @@ int MAIN(int argc, char **argv)
 			doit[D_EVP]=1;
 			}
 		else if(argc > 0 && !strcmp(*argv,"-decrypt"))
-			{
-			argc--;
-			argv++;
 			decrypt=1;
-			}
 		else
 		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
 			{
