@@ -423,9 +423,13 @@ skip_arg_loop:
 			{
 			const char *name = ENGINE_get_name(e);
 			/* Do "id" first, then "name". Easier to auto-parse. */
-			BIO_printf(bio_out, "(%s) %s", id, name);
-			if (list_cap)
-				BIO_printf(bio_out, ":");
+			BIO_printf(bio_out, "(%s) %s\n", id, name);
+			util_do_cmds(e, pre_cmds, bio_out, indent);
+			if (strcmp(ENGINE_get_id(e), id) != 0)
+				{
+				BIO_printf(bio_out, "Loaded: (%s) %s\n",
+					ENGINE_get_id(e), ENGINE_get_name(e));
+				}
 			if (list_cap)
 				{
 				int cap_size = 256;
@@ -473,12 +477,10 @@ skip_ciphers:
 
 skip_digests:
 				if (cap_buf && (*cap_buf != '\0'))
-					BIO_printf(bio_out, " [%s]", cap_buf);
+					BIO_printf(bio_out, " [%s]\n", cap_buf);
 
 				OPENSSL_free(cap_buf);
 				}
-			BIO_printf(bio_out, "\n");
-			util_do_cmds(e, pre_cmds, bio_out, indent);
 			if(test_avail)
 				{
 				BIO_printf(bio_out, "%s", indent);
