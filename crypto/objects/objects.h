@@ -739,6 +739,21 @@ extern "C" {
 #define NID_ns_sgc			139
 #define OBJ_ns_sgc			OBJ_netscape,4L,1L
 
+#define SN_delta_crl			"deltaCRL"
+#define LN_delta_crl			"X509v3 Delta CRL Indicator"
+#define NID_delta_crl			140
+#define OBJ_delta_crl			OBJ_ld_ce,27L
+
+#define SN_crl_reason			"CRLReason"
+#define LN_crl_reason			"CRL Reason Code"
+#define NID_crl_reason			141
+#define OBJ_crl_reason			OBJ_ld_ce,21L
+
+#define SN_invalidity_date		"invalidityDate"
+#define LN_invalidity_date		"Invalidity Date"
+#define NID_invalidity_date		142
+#define OBJ_invalidity_date		OBJ_ld_ce,24L
+
 #include "bio.h"
 #include "asn1.h"
 

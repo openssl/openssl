@@ -1,4 +1,4 @@
-/* v3_bitst.c */
+/* t_crl.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -57,103 +57,117 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <pem.h>
-#include <asn1_mac.h>
-#include <err.h>
-#include <objects.h>
-#include <conf.h>
+#include "cryptlib.h"
+#include "buffer.h"
+#include "bn.h"
+#include "objects.h"
+#include "x509.h"
 #include "x509v3.h"
 
 #ifndef NOPROTO
-static ASN1_BIT_STRING *asn1_bit_string_new(void);
-static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits, STACK *extlist);
+static void ext_print(BIO *out, X509_EXTENSION *ex);
 #else
-static ASN1_BIT_STRING *asn1_bit_string_new();
-static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING();
-static STACK *i2v_ASN1_BIT_STRING();
+static void ext_print();
 #endif
 
-static BIT_STRING_BITNAME ns_cert_type_table[] = {
-{0, "SSL Client", "client"},
-{1, "SSL Server", "server"},
-{2, "S/MIME", "email"},
-{3, "Object Signing", "objsign"},
-{4, "Unused", "reserved"},
-{5, "SSL CA", "sslCA"},
-{6, "S/MIME CA", "emailCA"},
-{7, "Object Signing CA", "objCA"},
-{-1, NULL, NULL}
-};
+#ifndef NO_FP_API
+int X509_CRL_print_fp(fp,x)
+FILE *fp;
+X509_CRL *x;
+        {
+        BIO *b;
+        int ret;
 
-static BIT_STRING_BITNAME key_usage_type_table[] = {
-{0, "Digital Signature", "digitalSignature"},
-{1, "Non Repudiation", "nonRepudiation"},
-{2, "Key Encipherment", "keyEncipherment"},
-{3, "Data Encipherment", "dataEncipherment"},
-{4, "Key Agreement", "keyAgreement"},
-{5, "Certificate Sign", "keyCertSign"},
-{6, "CRL Sign", "cRLSign"},
-{7, "Encipher Only", "encipherOnly"},
-{8, "Decipher Only", "decipherOnly"},
-{-1, NULL, NULL}
-};
-
-
-
-X509V3_EXT_METHOD v3_nscert = EXT_BITSTRING(NID_netscape_cert_type, ns_cert_type_table);
-X509V3_EXT_METHOD v3_key_usage = EXT_BITSTRING(NID_key_usage, key_usage_type_table);
-
-static ASN1_BIT_STRING *asn1_bit_string_new()
-{
-	return ASN1_BIT_STRING_new();
-}
-
-static STACK *i2v_ASN1_BIT_STRING(method, bits, ret)
-X509V3_EXT_METHOD *method;
-ASN1_BIT_STRING *bits;
-STACK *ret;
-{
-	BIT_STRING_BITNAME *bnam;
-	for(bnam =(BIT_STRING_BITNAME *)method->usr_data; bnam->lname; bnam++) {
-		if(ASN1_BIT_STRING_get_bit(bits, bnam->bitnum)) 
-			X509V3_add_value(bnam->lname, NULL, &ret);
-	}
-	return ret;
-}
-	
-static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(method, ctx, nval)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *nval;
-{
-	CONF_VALUE *val;
-	ASN1_BIT_STRING *bs;
-	int i;
-	BIT_STRING_BITNAME *bnam;
-	if(!(bs = ASN1_BIT_STRING_new())) {
-		X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	for(i = 0; i < sk_num(nval); i++) {
-		val = (CONF_VALUE *)sk_value(nval, i);
-		for(bnam = (BIT_STRING_BITNAME *)method->usr_data; bnam->lname;
-								       bnam++) {
-			if(!strcmp(bnam->sname, val->name) ||
-				!strcmp(bnam->lname, val->name) ) {
-				ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1);
-				break;
-			}
+        if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		X509err(X509_F_X509_PRINT_FP,ERR_R_BUF_LIB);
+                return(0);
 		}
-		if(!bnam->lname) {
-			X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
-			X509V3_conf_err(val);
-			ASN1_BIT_STRING_free(bs);
-			return NULL;
-		}
-	}
-	return bs;
-}
-	
+        BIO_set_fp(b,fp,BIO_NOCLOSE);
+        ret=X509_CRL_print(b, x);
+        BIO_free(b);
+        return(ret);
+        }
+#endif
 
+void X509_CRL_print(out, x)
+BIO *out;
+X509_CRL *x;
+{
+	char buf[256];
+	unsigned char *s;
+	STACK *rev;
+	X509_REVOKED *r;
+	long l;
+	int i, j, n;
+
+	BIO_printf(out, "Certificate Revocation List (CRL):\n");
+	l = X509_CRL_get_version(x);
+	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l+1, l);
+	i = OBJ_obj2nid(x->sig_alg->algorithm);
+	BIO_printf(out, "%8sSignature Algorithm: %s\n", "",
+				 (i == NID_undef) ? "NONE" : OBJ_nid2ln(i));
+	X509_NAME_oneline(X509_CRL_get_issuer(x),buf,256);
+	BIO_printf(out,"%8sIssuer: %s\n","",buf);
+	BIO_printf(out,"%8sLast Update: ","");
+	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
+	BIO_printf(out,"\n%8sNext Update: ","");
+	if (X509_CRL_get_nextUpdate(x))
+		 ASN1_TIME_print(out,X509_CRL_get_nextUpdate(x));
+	else BIO_printf(out,"NONE");
+	BIO_printf(out,"\n");
+
+	n=X509_CRL_get_ext_count(x);
+	if (n > 0) {
+		BIO_printf(out,"%8sCRL extensions:\n","");
+		for (i=0; i<n; i++) ext_print(out, X509_CRL_get_ext(x, i));
+	}
+
+
+	rev = X509_CRL_get_REVOKED(x);
+
+	if(sk_num(rev)) BIO_printf(out, "Revoked Certificates:\n");
+	else BIO_printf(out, "No Revoked Certificates.\n");
+
+	for(i = 0; i < sk_num(rev); i++) {
+		r = (X509_REVOKED *) sk_value(rev, i);
+		BIO_printf(out,"    Serial Number: ");
+		i2a_ASN1_INTEGER(out,r->serialNumber);
+		BIO_printf(out,"\n        Revocation Date: ","");
+		ASN1_TIME_print(out,r->revocationDate);
+		BIO_printf(out,"\n");
+		for(j = 0; j < X509_REVOKED_get_ext_count(r); j++)
+				ext_print(out, X509_REVOKED_get_ext(r, j));
+	}
+
+	i=OBJ_obj2nid(x->sig_alg->algorithm);
+	BIO_printf(out,"    Signature Algorithm: %s",
+				(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
+
+	s = x->signature->data;
+	n = x->signature->length;
+	for (i=0; i<n; i++, s++)
+	{
+		if ((i%18) == 0) BIO_write(out,"\n        ",9);
+		BIO_printf(out,"%02x%s",*s, ((i+1) == n)?"":":");
+	}
+	BIO_write(out,"\n",1);
+
+
+}
+
+static void ext_print(out, ex)
+BIO *out;
+X509_EXTENSION *ex;
+{
+	ASN1_OBJECT *obj;
+	int j;
+	BIO_printf(out,"%12s","");
+	obj=X509_EXTENSION_get_object(ex);
+	i2a_ASN1_OBJECT(out,obj);
+	j=X509_EXTENSION_get_critical(ex);
+	BIO_printf(out, ": %s\n%16s", j ? "critical":"","");
+	if(!X509V3_EXT_print(out, ex, 0))
+				 ASN1_OCTET_STRING_print(out,ex->value);
+	BIO_write(out,"\n",1);
+}

@@ -250,6 +250,7 @@ int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
 int X509V3_add_value(char *name, char *value, STACK **extlist);
 int X509V3_add_value_bool(char *name, int asn1_bool, STACK **extlist);
 int X509V3_add_value_int( char *name, ASN1_INTEGER *aint, STACK **extlist);
+char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
 void X509V3_EXT_cleanup(void);
@@ -315,6 +316,7 @@ int X509V3_get_value_int();
 int X509V3_add_value();
 int X509V3_add_value_bool();
 int X509V3_add_value_int();
+char *i2s_ASN1_INTEGER();
 int X509V3_EXT_add();
 int X509V3_EXT_add_alias();
 void X509V3_EXT_cleanup();
@@ -338,6 +340,7 @@ int X509V3_EXT_print_fp();
 
 /* Function codes. */
 #define X509V3_F_HEX_TO_STRING				 111
+#define X509V3_F_I2S_ASN1_INTEGER			 120
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
 #define X509V3_F_S2I_ASN1_SKEY_ID			 114

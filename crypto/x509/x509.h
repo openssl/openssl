@@ -1,3 +1,4 @@
+
 /* crypto/x509/x509.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -487,6 +488,12 @@ typedef struct CBCParameter_st
 #define		X509_name_cmp(a,b)	X509_NAME_cmp((a),(b))
 #define		X509_get_signature_type(x) EVP_PKEY_type(OBJ_obj2nid((x)->sig_alg->algorithm))
 
+#define		X509_CRL_get_version(x) ASN1_INTEGER_get((x)->crl->version)
+#define 	X509_CRL_get_lastUpdate(x) ((x)->crl->lastUpdate)
+#define 	X509_CRL_get_nextUpdate(x) ((x)->crl->nextUpdate)
+#define		X509_CRL_get_issuer(x) ((x)->crl->issuer)
+#define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
+
 /* This one is only used so that a binary form can output, as in
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf) */
 #define 	X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
@@ -734,12 +741,14 @@ unsigned long	X509_NAME_hash(X509_NAME *x);
 int		X509_CRL_cmp(X509_CRL *a,X509_CRL *b);
 #ifndef NO_FP_API
 int		X509_print_fp(FILE *bp,X509 *x);
+int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 #endif
 
 #ifdef HEADER_BIO_H
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int		X509_print(BIO *bp,X509 *x);
+int		X509_CRL_print(BIO *bp,X509_CRL *x);
 int		X509_REQ_print(BIO *bp,X509_REQ *req);
 #endif
 
@@ -1049,11 +1058,13 @@ unsigned long	X509_NAME_hash();
 int		X509_CRL_cmp();
 #ifndef NO_FP_API
 int		X509_print_fp();
+int		X509_CRL_print_fp();
 int		X509_REQ_print_fp();
 #endif
 
 int		X509_NAME_print();
 int		X509_print();
+int		X509_CRL_print();
 int		X509_REQ_print();
 
 int 		X509_NAME_entry_count();

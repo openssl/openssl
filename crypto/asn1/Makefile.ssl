@@ -30,7 +30,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	d2i_r_pr.c i2d_r_pr.c d2i_r_pu.c i2d_r_pu.c \
 	d2i_s_pr.c i2d_s_pr.c d2i_s_pu.c i2d_s_pu.c \
 	d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
-	t_req.c t_x509.c t_pkey.c \
+	t_req.c t_x509.c t_crl.c t_pkey.c \
 	p7_i_s.c p7_signi.c p7_signd.c p7_recip.c p7_enc_c.c p7_evp.c \
 	p7_dgst.c p7_s_e.c p7_enc.c p7_lib.c \
 	f_int.c f_string.c i2d_dhp.c i2d_dsap.c d2i_dhp.c d2i_dsap.c n_pkey.c \
@@ -45,7 +45,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	d2i_r_pr.o i2d_r_pr.o d2i_r_pu.o i2d_r_pu.o \
 	d2i_s_pr.o i2d_s_pr.o d2i_s_pu.o i2d_s_pu.o \
 	d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
-	t_req.o t_x509.o t_pkey.o \
+	t_req.o t_x509.o t_crl.o t_pkey.o \
 	p7_i_s.o p7_signi.o p7_signd.o p7_recip.o p7_enc_c.o p7_evp.o \
 	p7_dgst.o p7_s_e.o p7_enc.o p7_lib.o \
 	f_int.o f_string.o i2d_dhp.o i2d_dsap.o d2i_dhp.o d2i_dsap.o n_pkey.o \

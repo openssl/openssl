@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 140
-#define NUM_SN 111
-#define NUM_LN 136
-#define NUM_OBJ 112
+#define NUM_NID 143
+#define NUM_SN 114
+#define NUM_LN 139
+#define NUM_OBJ 115
 
-static unsigned char lvalues[726]={
+static unsigned char lvalues[735]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -179,6 +179,9 @@ static unsigned char lvalues[726]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x03,/* [696] OBJ_ms_sgc */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x0A,0x03,0x04,/* [706] OBJ_ms_efs */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x04,0x01,/* [716] OBJ_ns_sgc */
+0x55,0x1D,0x1B,                              /* [725] OBJ_delta_crl */
+0x55,0x1D,0x15,                              /* [728] OBJ_crl_reason */
+0x55,0x1D,0x18,                              /* [731] OBJ_invalidity_date */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -372,6 +375,11 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"msEFS","Microsoft Encrypted File System",NID_ms_efs,10,
 	&(lvalues[706]),0},
 {"nsSGC","Netscape Server Gated Crypto",NID_ns_sgc,9,&(lvalues[716]),0},
+{"deltaCRL","X509v3 Delta CRL Indicator",NID_delta_crl,3,
+	&(lvalues[725]),0},
+{"CRLReason","CRL Reason Code",NID_crl_reason,3,&(lvalues[728]),0},
+{"invalidityDate","Invalidity Date",NID_invalidity_date,3,
+	&(lvalues[731]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -385,6 +393,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[109]),/* "CAST5-ECB" */
 &(nid_objs[111]),/* "CAST5-OFB" */
 &(nid_objs[13]),/* "CN" */
+&(nid_objs[141]),/* "CRLReason" */
 &(nid_objs[107]),/* "D" */
 &(nid_objs[31]),/* "DES-CBC" */
 &(nid_objs[30]),/* "DES-CFB" */
@@ -458,9 +467,11 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[131]),/* "codeSigning" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[140]),/* "deltaCRL" */
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
 &(nid_objs[128]),/* "id-kp" */
+&(nid_objs[142]),/* "invalidityDate" */
 &(nid_objs[86]),/* "issuerAltName" */
 &(nid_objs[83]),/* "keyUsage" */
 &(nid_objs[81]),/* "ld-ce" */
@@ -489,8 +500,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 };
 
 static ASN1_OBJECT *ln_objs[NUM_LN]={
+&(nid_objs[141]),/* "CRL Reason Code" */
 &(nid_objs[131]),/* "Code Signing" */
 &(nid_objs[132]),/* "E-mail Protection" */
+&(nid_objs[142]),/* "Invalidity Date" */
 &(nid_objs[135]),/* "Microsoft Commercial Code Signing" */
 &(nid_objs[138]),/* "Microsoft Encrypted File System" */
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
@@ -519,6 +532,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[103]),/* "X509v3 CRL Distribution Points" */
 &(nid_objs[88]),/* "X509v3 CRL Number" */
 &(nid_objs[89]),/* "X509v3 Certificate Policies" */
+&(nid_objs[140]),/* "X509v3 Delta CRL Indicator" */
 &(nid_objs[126]),/* "X509v3 Extended Key Usage" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
 &(nid_objs[83]),/* "X509v3 Key Usage" */
@@ -652,6 +666,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[86]),/* OBJ_issuer_alt_name              2 5 29 18 */
 &(nid_objs[87]),/* OBJ_basic_constraints            2 5 29 19 */
 &(nid_objs[88]),/* OBJ_crl_number                   2 5 29 20 */
+&(nid_objs[141]),/* OBJ_crl_reason                   2 5 29 21 */
+&(nid_objs[142]),/* OBJ_invalidity_date              2 5 29 24 */
+&(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
@@ -659,8 +676,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
-&(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
+&(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */

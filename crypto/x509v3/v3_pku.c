@@ -1,4 +1,4 @@
-/* v3_akey.c */
+/* v3_pku.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */

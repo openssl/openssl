@@ -133,19 +133,30 @@ STACK **extlist;
 	return 1;
 }
 
+char *i2s_ASN1_INTEGER(method, a)
+X509V3_EXT_METHOD *method;
+ASN1_INTEGER *a;
+{
+	BIGNUM *bntmp = NULL;
+	char *strtmp = NULL;
+	if(!a) return NULL;
+	if(!(bntmp = ASN1_INTEGER_to_BN(a, NULL)) ||
+	    !(strtmp = BN_bn2dec(bntmp)) )
+		X509V3err(X509V3_F_I2S_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
+	BN_free(bntmp);
+	return strtmp;
+}
+
 int X509V3_add_value_int(name, aint, extlist)
 char *name;
 ASN1_INTEGER *aint;
 STACK **extlist;
 {
-	BIGNUM *bntmp;
 	char *strtmp;
 	int ret;
 	if(!aint) return 1;
-	bntmp = ASN1_INTEGER_to_BN(aint, NULL);
-	strtmp = BN_bn2dec(bntmp);
+	if(!(strtmp = i2s_ASN1_INTEGER(NULL, aint))) return 0;
 	ret = X509V3_add_value(name, strtmp, extlist);
-	BN_free(bntmp);
 	Free(strtmp);
 	return ret;
 }
