@@ -79,7 +79,6 @@ EVP_CIPHER *enc;
 #define CACERTS		0x10
 
 int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
-int dump_cert_text (BIO *out, X509 *x);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
 int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options);
@@ -451,20 +450,6 @@ int MAIN(int argc, char **argv)
     end:
     BIO_free(out);
     EXIT(ret);
-}
-
-int dump_cert_text (BIO *out, X509 *x)
-{
-	char buf[256];
-	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
-	BIO_puts(out,"subject=");
-	BIO_puts(out,buf);
-
-	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
-	BIO_puts(out,"\nissuer= ");
-	BIO_puts(out,buf);
-	BIO_puts(out,"\n");
-        return 0;
 }
 
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,

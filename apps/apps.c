@@ -335,3 +335,17 @@ int MS_CALLBACK key_cb(char *buf, int len, int verify, void *key)
 	memcpy(buf,key,i);
 	return(i);
 	}
+
+int dump_cert_text (BIO *out, X509 *x)
+{
+	char buf[256];
+	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
+	BIO_puts(out,"subject=");
+	BIO_puts(out,buf);
+
+	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
+	BIO_puts(out,"\nissuer= ");
+	BIO_puts(out,buf);
+	BIO_puts(out,"\n");
+        return 0;
+}

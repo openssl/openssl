@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add options -text and -noout to pkcs7 utility and delets the
+     encryption options which never did anything. Update docs.
+     [Steve Henson]
+
   *) Add options to some of the utilities to allow the pass phrase
      to be included on either the command line (not recommended on
      OSes like Unix) or read from the environment. Update the

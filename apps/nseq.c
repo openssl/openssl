@@ -65,7 +65,6 @@
 #undef PROG
 #define PROG nseq_main
 
-static int dump_cert_text(BIO *out, X509 *x);
 
 int MAIN(int argc, char **argv)
 {
@@ -156,19 +155,5 @@ end:
 	NETSCAPE_CERT_SEQUENCE_free(seq);
 
 	EXIT(ret);
-}
-
-static int dump_cert_text(BIO *out, X509 *x)
-{
-	char buf[256];
-	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
-	BIO_puts(out,"subject=");
-	BIO_puts(out,buf);
-
-	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
-	BIO_puts(out,"\nissuer= ");
-	BIO_puts(out,buf);
-	BIO_puts(out,"\n");
-	return 0;
 }
 

@@ -47,6 +47,16 @@ default.
 prints out any certificates or CRLs contained in the file. They are
 preceded by their subject and issuer names in one line format.
 
+=item B<-text>
+
+prints out certificates details in full rather than just subject and
+issuer names.
+
+=item B<-noout>
+
+don't output the encoded version of the PKCS#7 structure (or certificates
+is B<-print_certs> is set).
+
 =back
 
 =head1 EXAMPLES
