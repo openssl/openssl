@@ -438,25 +438,29 @@ bad:
 			perror("Malloc");
 			goto end;
 			}
+		printf("#ifndef HEADER_DH_H\n"
+		       "#include <openssl/dh.h>\n"
+		       "#endif\n");
+		printf("DH *get_dh%d()\n\t{\n",bits);
+
 		l=BN_bn2bin(dh->p,data);
-		printf("static unsigned char dh%d_p[]={",bits);
+		printf("\tstatic unsigned char dh%d_p[]={",bits);
 		for (i=0; i<l; i++)
 			{
-			if ((i%12) == 0) printf("\n\t");
+			if ((i%12) == 0) printf("\n\t\t");
 			printf("0x%02X,",data[i]);
 			}
-		printf("\n\t};\n");
+		printf("\n\t\t};\n");
 
 		l=BN_bn2bin(dh->g,data);
-		printf("static unsigned char dh%d_g[]={",bits);
+		printf("\tstatic unsigned char dh%d_g[]={",bits);
 		for (i=0; i<l; i++)
 			{
-			if ((i%12) == 0) printf("\n\t");
+			if ((i%12) == 0) printf("\n\t\t");
 			printf("0x%02X,",data[i]);
 			}
-		printf("\n\t};\n\n");
+		printf("\n\t\t};\n");
 
-		printf("DH *get_dh%d()\n\t{\n",bits);
 		printf("\tDH *dh;\n\n");
 		printf("\tif ((dh=DH_new()) == NULL) return(NULL);\n");
 		printf("\tdh->p=BN_bin2bn(dh%d_p,sizeof(dh%d_p),NULL);\n",
