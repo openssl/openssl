@@ -72,7 +72,7 @@
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
-	BIGNUM *tmp,*tmp2;
+	BIGNUM *tmp;
 	int ret=0;
 
 	BN_CTX_start(ctx);

@@ -71,6 +71,7 @@ static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
 #define ENC_BLOCK_SIZE	(1024*4)
+#define BUF_OFFSET	8 /* XXX: why? */
 
 typedef struct enc_struct
 	{
@@ -80,7 +81,7 @@ typedef struct enc_struct
 	int finished;
 	int ok;			/* bad decrypt */
 	EVP_CIPHER_CTX cipher;
-	char buf[ENC_BLOCK_SIZE+10];
+	char buf[ENC_BLOCK_SIZE+BUF_OFFSET+2/*why?*/];
 	} BIO_ENC_CTX;
 
 static BIO_METHOD methods_enc=
@@ -172,7 +173,7 @@ static int enc_read(BIO *b, char *out, int outl)
 
 		/* read in at offset 8, read the EVP_Cipher
 		 * documentation about why */
-		i=BIO_read(b->next_bio,&(ctx->buf[8]),ENC_BLOCK_SIZE);
+		i=BIO_read(b->next_bio,&(ctx->buf[BUF_OFFSET]),ENC_BLOCK_SIZE);
 
 		if (i <= 0)
 			{
@@ -196,7 +197,7 @@ static int enc_read(BIO *b, char *out, int outl)
 			{
 			EVP_CipherUpdate(&(ctx->cipher),
 				(unsigned char *)ctx->buf,&ctx->buf_len,
-				(unsigned char *)&(ctx->buf[8]),i);
+				(unsigned char *)&(ctx->buf[BUF_OFFSET]),i);
 			ctx->cont=1;
 			/* Note: it is possible for EVP_CipherUpdate to
 			 * decrypt zero bytes because this is or looks like

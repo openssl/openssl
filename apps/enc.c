@@ -92,7 +92,7 @@ int MAIN(int argc, char **argv)
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
 	int ret=1,inl;
-	unsigned char key[24],iv[MD5_DIGEST_LENGTH];
+	unsigned char key[EVP_MAX_KEY_LENGTH],iv[EVP_MAX_IV_LENGTH];
 	unsigned char salt[PKCS5_SALT_LEN];
 	char *str=NULL, *passarg = NULL, *pass = NULL;
 	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
@@ -542,12 +542,12 @@ bad:
 			else
 				memset(str,0,strlen(str));
 			}
-		if ((hiv != NULL) && !set_hex(hiv,iv,8))
+		if ((hiv != NULL) && !set_hex(hiv,iv,sizeof iv))
 			{
 			BIO_printf(bio_err,"invalid hex iv value\n");
 			goto end;
 			}
-		if ((hkey != NULL) && !set_hex(hkey,key,24))
+		if ((hkey != NULL) && !set_hex(hkey,key,sizeof key))
 			{
 			BIO_printf(bio_err,"invalid hex key value\n");
 			goto end;

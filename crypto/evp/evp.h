@@ -121,6 +121,7 @@
 #define EVP_MAX_MD_SIZE			(16+20) /* The SSLv3 md5+sha1 type */
 #define EVP_MAX_KEY_LENGTH		32
 #define EVP_MAX_IV_LENGTH		16
+#define EVP_MAX_BLOCK_LENGTH		32
 
 #define PKCS5_SALT_LEN			8
 /* Default PKCS#5 iteration count */
@@ -396,7 +397,7 @@ struct evp_cipher_ctx_st
 
 	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
 	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
-	unsigned char buf[EVP_MAX_IV_LENGTH];	/* saved partial block */
+	unsigned char buf[EVP_MAX_BLOCK_LENGTH];/* saved partial block */
 	int num;				/* used by cfb/ofb mode */
 
 	void *app_data;		/* application stuff */
