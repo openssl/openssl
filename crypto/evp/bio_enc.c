@@ -271,7 +271,7 @@ static int enc_write(BIO *b, const char *in, int inl)
 			if (i <= 0)
 				{
 				BIO_copy_next_retry(b);
-				return(i);
+				return (ret == inl) ? i : ret - inl;
 				}
 			n-=i;
 			ctx->buf_off+=i;
@@ -325,10 +325,7 @@ again:
 			{
 			i=enc_write(b,NULL,0);
 			if (i < 0)
-				{
-				ret=i;
-				break;
-				}
+				return i;
 			}
 
 		if (!ctx->finished)
