@@ -75,8 +75,8 @@ static char *engine_usage[]={
 " -v          - verbose mode, a textual listing of the engines in OpenSSL\n",
 #if 0
 " -c          - for each engine, also list the capabilities\n",
-" -t          - for each engine, check that they are really available\n",
 #endif
+" -t          - for each engine, check that they are really available\n",
 NULL
 };
 
