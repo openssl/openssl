@@ -232,6 +232,16 @@
      a race condition if 0 is a valid thread ID.
      [Travis Vitek <vitek@roguewave.com>]
 
+  *) Add support for shared libraries under Irix.
+     [Albert Chin-A-Young <china@thewrittenword.com>]
+
+  *) Add configuration option to build on Linux on both big-endian and
+     little-endian MIPS.
+     [Ralf Baechle <ralf@uni-koblenz.de>]
+
+  *) Add the possibility to create shared libraries on HP-UX.
+     [Richard Levitte]
+
  Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
 
   *) Change ssleay_rand_bytes (crypto/rand/md_rand.c)
@@ -593,16 +603,6 @@
      the full version number and not just 0.  This should mark the
      shared libraries as not backward compatible.  Of course, this should
      be changed again when we can guarantee backward binary compatibility.
-     [Richard Levitte]
-
-  *) Add support for shared libraries under Irix.
-     [Albert Chin-A-Young <china@thewrittenword.com>]
-
-  *) Add configuration option to build on Linux on both big-endian and
-     little-endian MIPS.
-     [Ralf Baechle <ralf@uni-koblenz.de>]
-
-  *) Add the possibility to create shared libraries on HP-UX
      [Richard Levitte]
 
   *) Fix typo in get_cert_by_subject() in by_dir.c
