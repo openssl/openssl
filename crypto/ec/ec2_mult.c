@@ -79,7 +79,7 @@
  *     GF(2^m) without precomputation".
  * modified to not require precomputation of c=b^{2^{m-1}}.
  */
-static int Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
+static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
 	{
 	BIGNUM *t1;
 	int ret = 0;
@@ -110,7 +110,7 @@ static int Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
  *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
  *     GF(2^m) without precomputation".
  */
-static int Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1, 
+static int gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1, 
 	const BIGNUM *x2, const BIGNUM *z2, BN_CTX *ctx)
 	{
 	BIGNUM *t1, *t2;
@@ -138,9 +138,8 @@ static int Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
 	return ret;
 	}
 
-/* Compute the affine coordinates x2, y2=z2 for the point (x1/z1) and (x2/x2) in
- * Montgomery projective coordinates.
- * Uses algorithm Mxy in appendix of 
+/* Compute the x, y affine coordinates from the point (x1, z1) (x2, z2) 
+ * using Montgomery point multiplication algorithm Mxy() in appendix of 
  *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
  *     GF(2^m) without precomputation".
  * Returns:
@@ -148,7 +147,7 @@ static int Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
  *     1 if return value should be the point at infinity
  *     2 otherwise
  */
-static int Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1, 
+static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1, 
 	BIGNUM *z1, BIGNUM *x2, BIGNUM *z2, BN_CTX *ctx)
 	{
 	BIGNUM *t3, *t4, *t5;
@@ -213,7 +212,7 @@ static int Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *
  *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
  *     GF(2^m) without precomputation".
  */
-static int point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	const EC_POINT *point, BN_CTX *ctx)
 	{
 	BIGNUM *x1, *x2, *z1, *z2;
@@ -269,13 +268,13 @@ static int point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scal
 			{
 			if (scalar->d[i] & mask)
 				{
-				if (!Madd(group, &point->X, x1, z1, x2, z2, ctx)) goto err;
-				if (!Mdouble(group, x2, z2, ctx)) goto err;
+				if (!gf2m_Madd(group, &point->X, x1, z1, x2, z2, ctx)) goto err;
+				if (!gf2m_Mdouble(group, x2, z2, ctx)) goto err;
 				}
 			else
 				{
-				if (!Madd(group, &point->X, x2, z2, x1, z1, ctx)) goto err;
-				if (!Mdouble(group, x1, z1, ctx)) goto err;
+				if (!gf2m_Madd(group, &point->X, x2, z2, x1, z1, ctx)) goto err;
+				if (!gf2m_Mdouble(group, x1, z1, ctx)) goto err;
 				}
 			mask >>= 1;
 			}
@@ -284,7 +283,7 @@ static int point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scal
 		}
 
 	/* convert out of "projective" coordinates */
-	i = Mxy(group, &point->X, &point->Y, x1, z1, x2, z2, ctx);
+	i = gf2m_Mxy(group, &point->X, &point->Y, x1, z1, x2, z2, ctx);
 	if (i == 0) goto err;
 	else if (i == 1) 
 		{
@@ -312,7 +311,7 @@ static int point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scal
  *     scalar*group->generator + scalars[0]*points[0] + ... + scalars[num-1]*points[num-1]
  * gracefully ignoring NULL scalar values.
  */
-int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
@@ -341,7 +340,7 @@ int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	if (scalar)
 		{
-		if (!point_multiply(group, p, scalar, group->generator, ctx)) goto err;
+		if (!ec_GF2m_montgomery_point_multiply(group, p, scalar, group->generator, ctx)) goto err;
 		if (BN_get_sign(scalar)) 
 			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
@@ -349,7 +348,7 @@ int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	for (i = 0; i < num; i++)
 		{
-		if (!point_multiply(group, p, scalars[i], points[i], ctx)) goto err;
+		if (!ec_GF2m_montgomery_point_multiply(group, p, scalars[i], points[i], ctx)) goto err;
 		if (BN_get_sign(scalars[i]))
 			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
@@ -366,7 +365,7 @@ int ec_GF2m_mont_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 
 /* Precomputation for point multiplication. */	
-int ec_GF2m_mont_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	{
 	/* There is no precomputation to do for Montgomery scalar multiplication but
 	 * since this implementation falls back to the wNAF multiplication for more than
