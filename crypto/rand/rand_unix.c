@@ -236,3 +236,10 @@ int RAND_poll(void)
 }
 
 #endif
+
+#if defined(OPENSSL_SYS_VXWORKS)
+int RAND_poll(void)
+{
+    return 0;
+}
+#endif
