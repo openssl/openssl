@@ -330,7 +330,7 @@ most of them are set to 0 or NULL.
 Read a certificate in PEM format from a BIO:
 
  X509 *x;
- x = PEM_read_bio(bp, NULL, 0, NULL);
+ x = PEM_read_bio_X509(bp, NULL, 0, NULL);
  if (x == NULL)
 	{
 	/* Error */
@@ -459,12 +459,12 @@ returned by EVP_bytestokey().
 The PEM read routines in some versions of OpenSSL will not correctly reuse
 an existing structure. Therefore the following:
 
- PEM_read_bio(bp, &x, 0, NULL);
+ PEM_read_bio_X509(bp, &x, 0, NULL);
 
 where B<x> already contains a valid certificate, may not work, whereas: 
 
  X509_free(x);
- x = PEM_read_bio(bp, NULL, 0, NULL);
+ x = PEM_read_bio_X509(bp, NULL, 0, NULL);
 
 is guaranteed to work.
 

@@ -462,7 +462,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		if (i > 2) i=2;
 		l-=(long)(i*40);
 
-		sprintf(tbuf,"%d.%lu",i,l);
+		BIO_snprintf(tbuf,sizeof tbuf,"%d.%lu",i,l);
 		i=strlen(tbuf);
 		BUF_strlcpy(buf,tbuf,buf_len);
 		buf_len-=i;
@@ -473,7 +473,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		for (; idx<len; idx++) {
 			l|=p[idx]&0x7f;
 			if (!(p[idx] & 0x80)) {
-				sprintf(tbuf,".%lu",l);
+				BIO_snprintf(tbuf,sizeof tbuf,".%lu",l);
 				i=strlen(tbuf);
 				if (buf_len > 0)
 					BUF_strlcpy(buf,tbuf,buf_len);

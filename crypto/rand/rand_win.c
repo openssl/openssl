@@ -646,7 +646,7 @@ static void readtimer(void)
  * Created 960901 by Gertjan van Oosten, gertjan@West.NL, West Consulting B.V.
  *
  * Code adapted from
- * <URL:http://www.microsoft.com/kb/developr/win_dk/q97193.htm>;
+ * <URL:http://support.microsoft.com/default.aspx?scid=kb;[LN];97193>;
  * the original copyright message is:
  *
  *   (C) Copyright Microsoft Corp. 1993.  All rights reserved.

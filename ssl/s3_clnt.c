@@ -117,7 +117,6 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#include "cryptlib.h"
 #include "../fips/fips_locl.h"
 
 static SSL_METHOD *ssl3_get_client_method(int ver);

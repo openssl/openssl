@@ -249,15 +249,15 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (num & BIO_FP_APPEND)
 			{
 			if (num & BIO_FP_READ)
-				strcpy(p,"a+");
-			else	strcpy(p,"a");
+				BUF_strlcpy(p,"a+",sizeof p);
+			else	BUF_strlcpy(p,"a",sizeof p);
 			}
 		else if ((num & BIO_FP_READ) && (num & BIO_FP_WRITE))
-			strcpy(p,"r+");
+			BUF_strlcpy(p,"r+",sizeof p);
 		else if (num & BIO_FP_WRITE)
-			strcpy(p,"w");
+			BUF_strlcpy(p,"w",sizeof p);
 		else if (num & BIO_FP_READ)
-			strcpy(p,"r");
+			BUF_strlcpy(p,"r",sizeof p);
 		else
 			{
 			BIOerr(BIO_F_FILE_CTRL,BIO_R_BAD_FOPEN_MODE);

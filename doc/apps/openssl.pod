@@ -329,7 +329,8 @@ L<passwd(1)|passwd(1)>,
 L<pkcs12(1)|pkcs12(1)>, L<pkcs7(1)|pkcs7(1)>, L<pkcs8(1)|pkcs8(1)>,
 L<rand(1)|rand(1)>, L<req(1)|req(1)>, L<rsa(1)|rsa(1)>,
 L<rsautl(1)|rsautl(1)>, L<s_client(1)|s_client(1)>,
-L<s_server(1)|s_server(1)>, L<smime(1)|smime(1)>, L<spkac(1)|spkac(1)>,
+L<s_server(1)|s_server(1)>, L<s_time(1)|s_time(1)>,
+L<smime(1)|smime(1)>, L<spkac(1)|spkac(1)>,
 L<verify(1)|verify(1)>, L<version(1)|version(1)>, L<x509(1)|x509(1)>,
 L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)> 
 

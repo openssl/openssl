@@ -104,7 +104,12 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const A
 	long ltmp;
 	unsigned long utmp;
 	int clen, pad, i;
-	ltmp = *(long *)pval;
+	/* this exists to bypass broken gcc optimization */
+	char *cp = (char *)pval;
+
+	/* use memcpy, because we may not be long aligned */
+	memcpy(&ltmp, cp, sizeof(long));
+
 	if(ltmp == it->size) return -1;
 	/* Convert the long to positive: we subtract one if negative so
 	 * we can cleanly handle the padding if only the MSB of the leading
@@ -136,6 +141,7 @@ static int long_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, 
 	int neg, i;
 	long ltmp;
 	unsigned long utmp = 0;
+	char *cp = (char *)pval;
 	if(len > sizeof(long)) {
 		ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
 		return 0;
@@ -158,6 +164,6 @@ static int long_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, 
 		ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
 		return 0;
 	}
-	*(long *)pval = ltmp;
+	memcpy(cp, &ltmp, sizeof(long));
 	return 1;
 }

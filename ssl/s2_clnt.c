@@ -116,7 +116,6 @@
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#include "cryptlib.h"
 
 static SSL_METHOD *ssl2_get_client_method(int ver);
 static int get_server_finished(SSL *s);

@@ -139,9 +139,9 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 		}
 
 	if (x->d == NULL)
-		sprintf(str,"Modulus (%d bit):",BN_num_bits(x->n));
+		BIO_snprintf(str,sizeof str,"Modulus (%d bit):",BN_num_bits(x->n));
 	else
-		strcpy(str,"modulus:");
+		BUF_strlcpy(str,"modulus:",sizeof str);
 	if (!print(bp,str,x->n,m,off)) goto err;
 	s=(x->d == NULL)?"Exponent:":"publicExponent:";
 	if (!print(bp,s,x->e,m,off)) goto err;

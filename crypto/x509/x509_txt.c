@@ -148,7 +148,7 @@ const char *X509_verify_cert_error_string(long n)
 		return("unhandled critical extension");
 
 	default:
-		sprintf(buf,"error number %ld",n);
+		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);
 		}
 	}

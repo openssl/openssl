@@ -59,7 +59,6 @@
 #include "ssl_locl.h"
 #ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
-#include "cryptlib.h"
 
 int ssl2_enc_init(SSL *s, int client)
 	{

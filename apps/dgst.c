@@ -347,8 +347,9 @@ int MAIN(int argc, char **argv)
 				}
 			if(!out_bin)
 				{
-				tmp=tofree=OPENSSL_malloc(strlen(name)+strlen(argv[i])+5);
-				sprintf(tmp,"%s(%s)= ",name,argv[i]);
+				size_t len = strlen(name)+strlen(argv[i])+5;
+				tmp=tofree=OPENSSL_malloc(len);
+				BIO_snprintf(tmp,len,"%s(%s)= ",name,argv[i]);
 				}
 			else
 				tmp="";

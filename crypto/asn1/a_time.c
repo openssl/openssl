@@ -129,6 +129,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
 	{
 	ASN1_GENERALIZEDTIME *ret;
 	char *str;
+	int newlen;
 
 	if (!ASN1_TIME_check(t)) return NULL;
 
@@ -151,12 +152,14 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
 	/* grow the string */
 	if (!ASN1_STRING_set(ret, NULL, t->length + 2))
 		return NULL;
+	/* ASN1_STRING_set() allocated 'len + 1' bytes. */
+	newlen = t->length + 2 + 1;
 	str = (char *)ret->data;
 	/* Work out the century and prepend */
-	if (t->data[0] >= '5') strcpy(str, "19");
-	else strcpy(str, "20");
+	if (t->data[0] >= '5') BUF_strlcpy(str, "19", newlen);
+	else BUF_strlcpy(str, "20", newlen);
 
-	BUF_strlcat(str, (char *)t->data, t->length+3);	/* Include space for a '\0' */
+	BUF_strlcat(str, (char *)t->data, newlen);
 
 	return ret;
 	}
