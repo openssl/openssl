@@ -144,6 +144,8 @@
 
        certs           Initially empty, this is the default location
                        for certificate files.
+       man/man1        Manual pages for the 'openssl' command line tool
+       man/man3        Manual pages for the libraries (very incomplete)
        misc            Various scripts.
        private         Initially empty, this is the default location
                        for private key files.
