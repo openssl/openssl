@@ -2525,3 +2525,4 @@ X509_STORE_set_purpose                  2985	EXIST::FUNCTION:
 X509_STORE_set_trust                    2986	EXIST::FUNCTION:
 UI_get0_user_data                       2987	EXIST::FUNCTION:
 UI_add_user_data                        2988	EXIST::FUNCTION:
+PKCS12_add_CSPName_asc                  2989	EXIST::FUNCTION:
