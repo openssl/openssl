@@ -1750,3 +1750,20 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
+
+*** unixware-7
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
