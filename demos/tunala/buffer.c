@@ -5,12 +5,13 @@
 void buffer_init(buffer_t *buf)
 {
 	buf->used = 0;
+	buf->total_in = buf->total_out = 0;
 }
 
 void buffer_close(buffer_t *buf)
 {
-	/* Our data is static - nothing needs "release", just reset */
-	buffer_init(buf);
+	/* Our data is static - nothing needs "release", just reset it */
+	buf->used = 0;
 }
 
 /* Code these simple ones in compact form */
@@ -26,8 +27,16 @@ int buffer_empty(buffer_t *buf) {
 	return (buf->used == 0 ? 1 : 0); }
 int buffer_notempty(buffer_t *buf) {
 	return (buf->used > 0 ? 1 : 0); }
+unsigned long buffer_total_in(buffer_t *buf) {
+	return buf->total_in; }
+unsigned long buffer_total_out(buffer_t *buf) {
+	return buf->total_out; }
 
-unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
+/* These 3 static (internal) functions don't adjust the "total" variables as
+ * it's not sure when they're called how it should be interpreted. Only the
+ * higher-level "buffer_[to|from]_[fd|SSL|BIO]" functions should alter these
+ * values. */
+static unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
 		unsigned int size)
 {
 	unsigned int added = MAX_DATA_SIZE - buf->used;
@@ -37,10 +46,11 @@ unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
 		return 0;
 	memcpy(buf->data + buf->used, ptr, added);
 	buf->used += added;
+	buf->total_in += added;
 	return added;
 }
 
-unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
+static unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
 		unsigned int size)
 {
 	unsigned int taken = buf->used;
@@ -57,7 +67,7 @@ unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
 	return taken;
 }
 
-unsigned int buffer_tobuffer(buffer_t *to, buffer_t *from, int cap)
+static unsigned int buffer_tobuffer(buffer_t *to, buffer_t *from, int cap)
 {
 	unsigned int moved, tomove = from->used;
 	if((int)tomove > cap)
@@ -80,8 +90,10 @@ int buffer_from_fd(buffer_t *buf, int fd)
 		/* Shouldn't be called in this case! */
 		abort();
 	toread = read(fd, buf->data + buf->used, toread);
-	if(toread > 0)
+	if(toread > 0) {
 		buf->used += toread;
+		buf->total_in += toread;
+	}
 	return toread;
 }
 
@@ -92,8 +104,10 @@ int buffer_to_fd(buffer_t *buf, int fd)
 		/* Shouldn't be called in this case! */
 		abort();
 	towrite = write(fd, buf->data, towrite);
-	if(towrite > 0)
+	if(towrite > 0) {
 		buffer_takedata(buf, NULL, towrite);
+		buf->total_out += towrite;
+	}
 	return towrite;
 }
 
@@ -138,8 +152,10 @@ void buffer_from_SSL(buffer_t *buf, SSL *ssl)
 	if(!ssl || buffer_full(buf))
 		return;
 	ret = SSL_read(ssl, buf->data + buf->used, buffer_unused(buf));
-	if(ret > 0)
+	if(ret > 0) {
 		buf->used += ret;
+		buf->total_in += ret;
+	}
 	if(ret < 0)
 		int_ssl_check(ssl, ret);
 }
@@ -150,8 +166,10 @@ void buffer_to_SSL(buffer_t *buf, SSL *ssl)
 	if(!ssl || buffer_empty(buf))
 		return;
 	ret = SSL_write(ssl, buf->data, buf->used);
-	if(ret > 0)
+	if(ret > 0) {
 		buffer_takedata(buf, NULL, ret);
+		buf->total_out += ret;
+	}
 	if(ret < 0)
 		int_ssl_check(ssl, ret);
 }
@@ -162,8 +180,10 @@ void buffer_from_BIO(buffer_t *buf, BIO *bio)
 	if(!bio || buffer_full(buf))
 		return;
 	ret = BIO_read(bio, buf->data + buf->used, buffer_unused(buf));
-	if(ret > 0)
+	if(ret > 0) {
 		buf->used += ret;
+		buf->total_in += ret;
+	}
 }
 
 void buffer_to_BIO(buffer_t *buf, BIO *bio)
@@ -172,8 +192,10 @@ void buffer_to_BIO(buffer_t *buf, BIO *bio)
 	if(!bio || buffer_empty(buf))
 		return;
 	ret = BIO_write(bio, buf->data, buf->used);
-	if(ret > 0)
+	if(ret > 0) {
 		buffer_takedata(buf, NULL, ret);
+		buf->total_out += ret;
+	}
 }
 
 #endif /* !defined(NO_OPENSSL) */

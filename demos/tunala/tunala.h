@@ -41,6 +41,9 @@
 typedef struct _buffer_t {
 	unsigned char data[MAX_DATA_SIZE];
 	unsigned int used;
+	/* Statistical values - counts the total number of bytes read in and
+	 * read out (respectively) since "buffer_init()" */
+	unsigned long total_in, total_out;
 } buffer_t;
 
 /* Initialise a buffer structure before use */
@@ -59,7 +62,11 @@ int buffer_full(buffer_t *buf); /* Boolean, is it full? */
 int buffer_notfull(buffer_t *buf); /* Boolean, is it not full? */
 int buffer_empty(buffer_t *buf); /* Boolean, is it empty? */
 int buffer_notempty(buffer_t *buf); /* Boolean, is it not empty? */
+unsigned long buffer_total_in(buffer_t *buf); /* Total bytes written to buffer */
+unsigned long buffer_total_out(buffer_t *buf); /* Total bytes read from buffer */
 
+#if 0 /* Currently used only within buffer.c - better to expose only
+       * higher-level functions anyway */
 /* Add data to the tail of the buffer, returns the amount that was actually
  * added (so, you need to check if return value is less than size) */
 unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
@@ -76,6 +83,7 @@ unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
  * buffer. Return value is the amount moved. The amount moved can be restricted
  * to a maximum by specifying "cap" - setting it to -1 means no limit. */
 unsigned int buffer_tobuffer(buffer_t *to, buffer_t *from, int cap);
+#endif
 
 #ifndef NO_IP
 /* Read or write between a file-descriptor and a buffer */

@@ -137,8 +137,8 @@ Possible things include:
 
   * A few other things you can already do in s_client and s_server :-)
 
-  * Support (and control over) session resuming, particular when functioning as
-    an SSL client.
+  * Support (and control over) session resuming, particularly when functioning
+    as an SSL client.
 
 If you have a particular environment where this model might work to let you "do
 SSL" without having OpenSSL be aware of the transport, then you should find you
@@ -184,15 +184,17 @@ Here is an example of how to use "tunala" ...
 
 First, it's assumed that OpenSSL has already built, and that you are building
 inside the ./demos/tunala/ directory. If not - please correct the paths and
-flags inside the Makefile.
+flags inside the Makefile. Likewise, if you want to tweak the building, it's
+best to try and do so in the makefile (eg. removing the debug flags and adding
+optimisation flags).
 
 Secondly, this code so far has only ever been built and run on Linux - network
 specifics are more than likely to create little glitches on other unixen,
 particularly Solaris in my experience. If you're not on Linux, please read the
 code wherever compilation flares up and try to make the necessary changes -
 usually the man-page associated with the relevant function is enough (eg. all
-that AF_INET/PF_INET stuff, subtely different parameters to various IPv4-related
-functions like socket(), bind(), fcntl(), etc).
+that AF_INET/PF_INET stuff, subtlely different parameters to various
+IPv4-related functions like socket(), bind(), fcntl(), etc).
 
 Thirdly, if you are Win32, you probably need to do some *major* rewriting of
 ip.c to stand a hope in hell. Good luck, and please mail me the diff if you do
@@ -207,12 +209,12 @@ Rinse and repeat.
 Inside one console, try typing;
 
 (i)  ./tunala -listen localhost:8080 -proxy localhost:8081 -cacert CA.pem \
-              -cert A-client.pem
+              -cert A-client.pem -out_totals -v_peer -v_strict
 
 In another console, type;
 
 (ii) ./tunala -listen localhost:8081 -proxy localhost:23 -cacert CA.pem \
-              -cert A-server.pem -server 1
+              -cert A-server.pem -server 1 -out_totals -v_peer -v_strict
 
 Now if you open another console and "telnet localhost 8080", you should be
 tunneled through to the telnet service on your local machine. Feel free to

@@ -100,6 +100,7 @@ static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
 static int def_out_state = 0;
 static unsigned int def_out_verify = 0;
+static int def_out_totals = 0;
 static int def_verify_mode = 0;
 static unsigned int def_verify_depth = 10;
 
@@ -119,6 +120,7 @@ static const char *helpstring =
 " -cipher <list>         (specifies cipher list to use)\n"
 " -out_state             (prints SSL handshake states)\n"
 " -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
+" -out_totals            (prints out byte-totals when a tunnel closes)\n"
 " -v_peer                (verify the peer certificate)\n"
 " -v_strict              (do not continue if peer doesn't authenticate)\n"
 " -v_once                (no verification in renegotiates)\n"
@@ -208,6 +210,16 @@ static int parse_verify_depth(const char *s, unsigned int *verify_depth)
 	return 1;
 }
 
+/* Some fprintf format strings used when tunnels close */
+static const char *io_stats_client_dirty =
+"    SSL (network) traffic to/from server; %8lu bytes in, %8lu bytes out\n";
+static const char *io_stats_client_clean =
+"    tunnelled data to/from server;        %8lu bytes in, %8lu bytes out\n";
+static const char *io_stats_server_dirty =
+"    SSL (network) traffic to/from client; %8lu bytes in, %8lu bytes out\n";
+static const char *io_stats_server_clean =
+"    tunnelled data to/from client;        %8lu bytes in, %8lu bytes out\n";
+
 int main(int argc, char *argv[])
 {
 	unsigned int loop;
@@ -230,6 +242,7 @@ int main(int argc, char *argv[])
 	const char *cipher_list = def_cipher_list;
 	int out_state = def_out_state;
 	unsigned int out_verify = def_out_verify;
+	int out_totals = def_out_totals;
 	int verify_mode = def_verify_mode;
 	unsigned int verify_depth = def_verify_depth;
 
@@ -330,6 +343,9 @@ next_arg:
 			if(!parse_verify_level(*argv, &out_verify))
 				return 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-out_totals") == 0) {
+			out_totals = 1;
+			goto next_arg;
 		} else if(strcmp(*argv, "-v_peer") == 0) {
 			verify_mode |= SSL_VERIFY_PEER;
 			goto next_arg;
@@ -427,6 +443,27 @@ main_loop:
 			/* We're closing whether for reasons of an error or a
 			 * natural close. Don't increment loop or t_item because
 			 * the next item is moving to us! */
+			if(!out_totals)
+				goto skip_totals;
+			fprintf(stderr, "Tunnel closing, traffic stats follow\n");
+			/* Display the encrypted (over the network) stats */
+			fprintf(stderr, (server_mode ? io_stats_server_dirty :
+						io_stats_client_dirty),
+				buffer_total_in(state_machine_get_buffer(
+						&t_item->sm,SM_DIRTY_IN)),
+				buffer_total_out(state_machine_get_buffer(
+						&t_item->sm,SM_DIRTY_OUT)));
+			/* Display the local (tunnelled) stats. NB: Data we
+			 * *receive* is data sent *out* of the state_machine on
+			 * its 'clean' side. Hence the apparent back-to-front
+			 * OUT/IN mixup here :-) */
+			fprintf(stderr, (server_mode ? io_stats_server_clean :
+						io_stats_client_clean),
+				buffer_total_out(state_machine_get_buffer(
+						&t_item->sm,SM_CLEAN_OUT)),
+				buffer_total_in(state_machine_get_buffer(
+						&t_item->sm,SM_CLEAN_IN)));
+skip_totals:
 			tunala_world_del_item(&world, loop);
 			fprintf(stderr, "Info, tunnel closed, down to %d\n",
 					world.tunnels_used);
