@@ -25,6 +25,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/bn.h>                                                                                          
+#include <openssl/rand.h>                                                                                          
 #ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
     {
@@ -93,9 +94,9 @@ static int FIPS_dsa_test()
 	return 0;
     if (!DSA_generate_key(dsa))
 	return 0;
-    if ( DSA_sign(0,dgst,strlen(dgst),sig,&siglen,dsa) != 1 )
+    if ( DSA_sign(0,dgst,sizeof(dgst) - 1,sig,&siglen,dsa) != 1 )
 	return 0;
-    if ( DSA_verify(0,dgst,strlen(dgst),sig,siglen,dsa) != 1 )
+    if ( DSA_verify(0,dgst,sizeof(dgst) - 1,sig,siglen,dsa) != 1 )
 	return 0;
     DSA_free(dsa);
     return 1;
@@ -117,14 +118,14 @@ static int FIPS_rsa_test()
     if (!key)
 	return 0;
     n = RSA_size(key);
-    n = RSA_public_encrypt(strlen(input_ptext),input_ptext,ctext,key,RSA_PKCS1_PADDING);
+    n = RSA_public_encrypt(sizeof(input_ptext) - 1,input_ptext,ctext,key,RSA_PKCS1_PADDING);
     if (n < 0)
 	return 0;
     n = RSA_private_decrypt(n,ctext,ptext,key,RSA_PKCS1_PADDING);
     if (n < 0)
 	return 0;
     RSA_free(key);
-    if (memcmp(input_ptext,ptext,strlen(input_ptext)))
+    if (memcmp(input_ptext,ptext,sizeof(input_ptext) - 1))
         return 0;
     return 1;
     }
@@ -136,12 +137,12 @@ static int FIPS_sha1_test()
     {
     unsigned char digest[SHA_DIGEST_LENGTH] =
         { 0x11, 0xf1, 0x9a, 0x3a, 0xec, 0x1a, 0x1e, 0x8e, 0x65, 0xd4, 0x9a, 0x38, 0x0c, 0x8b, 0x1e, 0x2c, 0xe8, 0xb3, 0xc5, 0x18 };
-    char str[] = "etaonrishd";
+    unsigned char str[] = "etaonrishd";
 
     unsigned char md[SHA_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!SHA1(str,strlen(str),md)) return 0;
+    if (!SHA1(str,sizeof(str) - 1,md)) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -154,12 +155,12 @@ static int md5_test()
     {
     unsigned char digest[MD5_DIGEST_LENGTH] =
 	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
-    char str[] = "etaonrishd";
+    unsigned char str[] = "etaonrishd";
 
     unsigned char md[MD5_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!MD5(str,strlen(str),md))
+    if (!MD5(str,sizeof(str) - 1,md))
 	return 0;
     if (memcmp(md,digest,sizeof(md)))
 	return 0;
