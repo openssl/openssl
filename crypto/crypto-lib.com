@@ -211,7 +211,7 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio" ! + ",bss_log" for syslog
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
-$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err"
+$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
