@@ -241,7 +241,6 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 
 	if (init)
 		{
-		init=0;
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		/* put in some default random data, we need more than
 		 * just this */
@@ -281,6 +280,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		memset(md,0,MD_DIGEST_LENGTH);
 #endif
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+		init=0;
 		}
 
 	st_idx=state_index;

@@ -84,11 +84,11 @@ SSL_METHOD *TLSv1_client_method(void)
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&TLSv1_client_data,(char *)tlsv1_base_method(),
 			sizeof(SSL_METHOD));
 		TLSv1_client_data.ssl_connect=ssl3_connect;
 		TLSv1_client_data.get_ssl_method=tls1_get_client_method;
+		init=0;
 		}
 	return(&TLSv1_client_data);
 	}

@@ -316,7 +316,7 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 
 	if (init)
 		{
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 
 		for (i=0; i<SSL2_NUM_CIPHERS; i++)
 			sorted[i]= &(ssl2_ciphers[i]);
@@ -324,6 +324,9 @@ SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 		qsort(  (char *)sorted,
 			SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
 			FP_ICC ssl_cipher_ptr_id_cmp);
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+		init=0;
 		}
 
 	id=0x02000000L|((unsigned long)p[0]<<16L)|

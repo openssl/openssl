@@ -72,7 +72,6 @@ const char *des_options(void)
 		{
 		const char *ptr,*unroll,*risc,*size;
 
-		init=0;
 #ifdef DES_PTR
 		ptr="ptr";
 #else
@@ -98,6 +97,7 @@ const char *des_options(void)
 		else
 			size="long";
 		sprintf(buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,size);
+		init=0;
 		}
 	return(buf);
 	}

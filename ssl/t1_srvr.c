@@ -85,11 +85,11 @@ SSL_METHOD *TLSv1_server_method(void)
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&TLSv1_server_data,(char *)tlsv1_base_method(),
 			sizeof(SSL_METHOD));
 		TLSv1_server_data.ssl_accept=ssl3_accept;
 		TLSv1_server_data.get_ssl_method=tls1_get_server_method;
+		init=0;
 		}
 	return(&TLSv1_server_data);
 	}

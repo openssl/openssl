@@ -103,11 +103,11 @@ SSL_METHOD *SSLv2_client_method(void)
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv2_client_data,(char *)sslv2_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv2_client_data.ssl_connect=ssl2_connect;
 		SSLv2_client_data.get_ssl_method=ssl2_get_client_method;
+		init=0;
 		}
 	return(&SSLv2_client_data);
 	}

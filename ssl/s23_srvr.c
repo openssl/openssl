@@ -92,11 +92,11 @@ SSL_METHOD *SSLv23_server_method(void)
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv23_server_data,
 			(char *)sslv23_base_method(),sizeof(SSL_METHOD));
 		SSLv23_server_data.ssl_accept=ssl23_accept;
 		SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
+		init=0;
 		}
 	return(&SSLv23_server_data);
 	}
