@@ -505,7 +505,7 @@ bad:
 		SSL_CTX_set_cipher_list(ctx,cipher);
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 
-	SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(s_cert_file));
+	SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));
 
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	if (www)
@@ -645,7 +645,7 @@ int s;
 					/* strcpy(buf,"server side RE-NEGOTIATE\n"); */
 					}
 				if ((buf[0] == 'R') &&
-					((buf[1] == '\0') || (buf[1] == '\r')))
+					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
 					SSL_set_verify(con,
 						SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,NULL);
