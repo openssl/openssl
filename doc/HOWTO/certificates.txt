@@ -48,7 +48,7 @@ you have your own certificate authority, you may sign it yourself, or
 if you need a self-signed certificate (because you just want a test
 certificate or because you are setting up your own CA).
 
-The certificate is created like this:
+The certificate request is created like this:
 
   openssl req -new -key privkey.pem -out cert.csr
 
