@@ -204,15 +204,41 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #ifdef BN_DIV3W
 		q=bn_div_3_words(wnump,d0,d1);
 #else
-		BN_ULONG n0,n1,rem;
+
+#if !defined(NO_ASM)
+# if defined(__GNUC__) && __GNUC__>=2
+#  if defined(__i386)
+   /*
+    * There were two reasons for implementing this template:
+    * - GNU C generates a call to a function (__udivdi3 to be exact)
+    *   in reply to ((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0 (I fail to
+    *   understand why...);
+    * - divl doesn't only calculate quotient, but also leaves
+    *   remainder in %edx which we can definitely use here:-)
+    *
+    *					<appro@fy.chalmers.se>
+    */
+#  define bn_div_words(n0,n1,d0)		\
+	({  asm volatile (			\
+		"divl	%4"			\
+		: "=a"(q), "=d"(rem)		\
+		: "a"(n1), "d"(n0), "g"(d0)	\
+		: "cc");			\
+	    q;					\
+	})
+#  define REMINDER_IS_ALREADY_CALCULATED
+#  endif /* __<cpu> */
+# endif /* __GNUC__ */
+#endif /* NO_ASM */
+		BN_ULONG n0,n1,rem=0;
 
 		n0=wnump[0];
 		n1=wnump[-1];
 		if (n0 == d0)
 			q=BN_MASK2;
 		else
-#if defined(BN_LLONG) && defined(BN_DIV2W)
-			q=((((BN_ULLONG)n0)<<BN_BITS2)|n1)/((BN_ULLONG)d0);
+#if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
+			q=((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0;
 #else
 			q=bn_div_words(n0,n1,d0);
 #endif
@@ -220,13 +246,15 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #ifdef BN_LLONG
 		BN_ULLONG t2;
 
+#ifndef REMINDER_IS_ALREADY_CALCULATED
 		/*
 		 * rem doesn't have to be BN_ULLONG. The least we
 		 * know it's less that d0, isn't it?
 		 */
 		rem=(n1-q*d0)&BN_MASK2;
-
+#endif
 		t2=(BN_ULLONG)d1*q;
+
 		for (;;)
 			{
                         if (t2 <= ((((BN_ULLONG)rem)<<BN_BITS2)|wnump[-2]))
@@ -239,12 +267,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #else
 		BN_ULONG t2l,t2h,ql,qh;
 
+#ifndef REMINDER_IS_ALREADY_CALCULATED
 		/*
 		 * It's more than enough with the only multiplication.
 		 * See the comment above in BN_LLONG section...
 		 */
 		rem=(n1-q*d0)&BN_MASK2;
-
+#endif
 		t2l=LBITS(d1); t2h=HBITS(d1);
 		ql =LBITS(q);  qh =HBITS(q);
 		mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
@@ -261,7 +290,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			}
 #endif
 		}
-#endif /* BN_DIV3W */
+#endif /* !BN_DIV3W */
 		wnum.d--; wnum.top++;
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
 		tmp->d[div_n]=l0;
