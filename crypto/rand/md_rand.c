@@ -1,4 +1,4 @@
-/* crypto/rand/md_rand.c */
+* crypto/rand/md_rand.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -593,8 +593,8 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
                         dx=lastx-x;
                         dy=lasty-y;
                         if (dx != 0 && dy != 0 && dx-lastdx != 0 && dy-lastdy != 0)
-                                entropy += .2;
-                        lastx=x,lasty=y;
+                                add_entropy=.2;
+                        lastx=x, lasty=y;
                         lastdx=dx, lastdy=dy;
                         }
 		break;
