@@ -269,8 +269,6 @@ void SHA_Update(SHA_CTX *c, const register unsigned char *data,
 void SHA_Transform(SHA_CTX *c, unsigned char *b)
 	{
 	SHA_LONG p[SHA_LBLOCK];
-	SHA_LONG *q;
-	int i;
 
 #if SHA_LONG_LOG2==2
 #if defined(B_ENDIAN) || defined(SHA_ASM)
@@ -280,6 +278,9 @@ void SHA_Transform(SHA_CTX *c, unsigned char *b)
 #else
 	if (((unsigned long)b%sizeof(SHA_LONG)) == 0)
 		{
+		SHA_LONG *q;
+		int i;
+
 		q=p;
 		for (i=(SHA_LBLOCK/4); i; i--)
 			{
@@ -297,16 +298,21 @@ void SHA_Transform(SHA_CTX *c, unsigned char *b)
 #endif
 #endif
 #ifndef SHA_NO_TAIL_CODE /* defined above, see comment */
-	q=p;
-	for (i=(SHA_LBLOCK/4); i; i--)
 		{
-		SHA_LONG l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l; 
-		} 
-	sha_block(c,p,1);
+		SHA_LONG *q;
+		int i;
+
+		q=p;
+		for (i=(SHA_LBLOCK/4); i; i--)
+			{
+			SHA_LONG l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l; 
+			} 
+		sha_block(c,p,1);
+		}
 #endif
 	}
 
