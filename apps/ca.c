@@ -196,7 +196,9 @@ static char *ca_usage[]={
 " -extensions ..  - Extension section (override value in config file)\n",
 " -extfile file   - Configuration file with X509v3 extentions to add\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
+#ifndef OPENSSL_NO_ENGINE
 " -engine e       - use engine e, possibly a hardware device.\n",
+#endif
 " -status serial  - Shows certificate status given the serial number\n",
 " -updatedb       - Updates db for expired certificates\n",
 NULL
@@ -333,7 +335,9 @@ int MAIN(int argc, char **argv)
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
 	char *randfile=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
+#endif
 	char *tofree=NULL;
 
 #ifdef EFENCE
@@ -537,11 +541,13 @@ EF_ALIGNMENT=0;
 			rev_arg = *(++argv);
 			rev_type = REV_CA_COMPROMISE;
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else
 			{
 bad:
@@ -562,7 +568,9 @@ bad:
 
 	ERR_load_crypto_strings();
 
+#ifndef OPENSSL_NO_ENGINE
 	e = setup_engine(bio_err, engine, 0);
+#endif
 
 	/*****************************************************************/
 	tofree=NULL;

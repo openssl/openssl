@@ -76,7 +76,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	int i, r, ret = 1;
 	int badopt;
 	char *outfile = NULL;
@@ -84,7 +86,9 @@ int MAIN(int argc, char **argv)
 	int base64 = 0;
 	BIO *out = NULL;
 	int num = -1;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -106,6 +110,7 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(argv[i], "-engine") == 0)
 			{
 			if ((argv[i+1] != NULL) && (engine == NULL))
@@ -113,6 +118,7 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
+#endif
 		else if (strcmp(argv[i], "-rand") == 0)
 			{
 			if ((argv[i+1] != NULL) && (inrand == NULL))
@@ -150,13 +156,17 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "Usage: rand [options] num\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-out file             - write to file\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, "-engine e             - use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err, "-rand file%cfile%c... - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err, "-base64               - encode output\n");
 		goto err;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
 	if (inrand != NULL)

@@ -172,7 +172,9 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0,newhdr=0,subject=0,pubkey=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 	char *extensions = NULL;
 	char *req_exts = NULL;
 	const EVP_CIPHER *cipher=NULL;
@@ -220,11 +222,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			outformat=str2fmt(*(++argv));
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-key") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -488,7 +492,9 @@ bad:
 		BIO_printf(bio_err," -verify        verify signature on REQ\n");
 		BIO_printf(bio_err," -modulus       RSA modulus\n");
 		BIO_printf(bio_err," -nodes         don't encrypt the output key\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e      use engine e, possibly a hardware device\n");
+#endif
 		BIO_printf(bio_err," -subject       output the request's subject\n");
 		BIO_printf(bio_err," -passin        private key password source\n");
 		BIO_printf(bio_err," -key file      use the private key contained in file\n");
@@ -516,7 +522,7 @@ bad:
 		BIO_printf(bio_err," -extensions .. specify certificate extension section (override value in config file)\n");
 		BIO_printf(bio_err," -reqexts ..    specify request extension section (override value in config file)\n");
 		BIO_printf(bio_err," -utf8          input characters are UTF8 (default ASCII)\n");
-		BIO_printf(bio_err," -nameopt arg   - various certificate name options\n");
+		BIO_printf(bio_err," -nameopt arg    - various certificate name options\n");
 		BIO_printf(bio_err," -reqopt arg    - various request text options\n\n");
 		goto end;
 		}
@@ -680,7 +686,9 @@ bad:
 	if ((in == NULL) || (out == NULL))
 		goto end;
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (keyfile != NULL)
 		{

@@ -77,7 +77,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	DSA *dsa=NULL;
 	int ret=1;
 	char *outfile=NULL;
@@ -85,7 +87,9 @@ int MAIN(int argc, char **argv)
 	char *passargout = NULL, *passout = NULL;
 	BIO *out=NULL,*in=NULL;
 	const EVP_CIPHER *enc=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -111,11 +115,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -167,7 +173,9 @@ bad:
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
 #endif
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
@@ -176,7 +184,9 @@ bad:
 		goto end;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");

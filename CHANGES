@@ -406,6 +406,9 @@ TODO: bug: pad  x  with leading zeros if necessary
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Add the possibility to build without the ENGINE framework.
+     [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
+
   *) Under Win32 gmtime() can return NULL: check return value in
      OPENSSL_gmtime(). Add error code for case where gmtime() fails.
      [Steve Henson]

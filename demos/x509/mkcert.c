@@ -9,7 +9,9 @@
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
 int add_ext(X509 *cert, int nid, char *value);
@@ -35,7 +37,9 @@ int main(int argc, char **argv)
 	X509_free(x509);
 	EVP_PKEY_free(pkey);
 
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
 	CRYPTO_cleanup_all_ex_data();
 
 	CRYPTO_mem_leaks(bio_err);

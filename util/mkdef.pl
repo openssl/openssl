@@ -93,7 +93,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # External "algorithms"
 			 "FP_API", "STDIO", "SOCK", "KRB5",
 			 # Engines
-			 "STATIC_ENGINE",
+			 "STATIC_ENGINE", "ENGINE",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -111,7 +111,7 @@ my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
-my $no_ec; my $no_ecdsa; my $no_ecdh;
+my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine;
 my $no_fp_api; my $no_static_engine; my $no_deprecated;
 
 foreach (@ARGV, split(/ /, $options))
@@ -182,6 +182,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-comp$/)	{ $no_comp=1; }
 	elsif (/^no-dso$/)	{ $no_dso=1; }
 	elsif (/^no-krb5$/)	{ $no_krb5=1; }
+	elsif (/^no-engine$/)	{ $no_engine=1; }
 	}
 
 
@@ -243,7 +244,7 @@ $crypto.=" crypto/ecdsa/ecdsa.h" ; # unless $no_ecdsa;
 $crypto.=" crypto/ecdh/ecdh.h" ; # unless $no_ecdh;
 $crypto.=" crypto/hmac/hmac.h" ; # unless $no_hmac;
 
-$crypto.=" crypto/engine/engine.h";
+$crypto.=" crypto/engine/engine.h"; # unless $no_engine;
 $crypto.=" crypto/stack/stack.h" ; # unless $no_stack;
 $crypto.=" crypto/buffer/buffer.h" ; # unless $no_buffer;
 $crypto.=" crypto/bio/bio.h" ; # unless $no_bio;
@@ -1065,6 +1066,7 @@ sub is_valid
 			if ($keyword eq "COMP" && $no_comp) { return 0; }
 			if ($keyword eq "DSO" && $no_dso) { return 0; }
 			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
+			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
 			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }

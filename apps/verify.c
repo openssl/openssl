@@ -86,7 +86,9 @@ int MAIN(int argc, char **argv)
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
@@ -142,11 +144,13 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				trustfile= *(++argv);
 				}
+#ifndef OPENSSL_NO_ENGINE
 			else if (strcmp(*argv,"-engine") == 0)
 				{
 				if (--argc < 1) goto end;
 				engine= *(++argv);
 				}
+#endif
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
 			else if (strcmp(*argv,"-ignore_critical") == 0)
@@ -170,7 +174,9 @@ int MAIN(int argc, char **argv)
 			break;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
 	if (lookup == NULL) abort();
@@ -219,7 +225,11 @@ int MAIN(int argc, char **argv)
 	ret=0;
 end:
 	if (ret == 1) {
-		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check] [-engine e] cert1 cert2 ...\n");
+		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
+#ifndef OPENSSL_NO_ENGINE
+		BIO_printf(bio_err," [-engine e]");
+#endif
+		BIO_printf(bio_err," cert1 cert2 ...\n");
 		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;

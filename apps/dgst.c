@@ -100,7 +100,9 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
 	int siglen = 0;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -166,11 +168,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) break;
 			keyform=str2fmt(*(++argv));
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) break;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-hex") == 0)
 			out_bin = 0;
 		else if (strcmp(*argv,"-binary") == 0)
@@ -208,7 +212,9 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-binary         output in binary form\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
+#endif
 
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm (default)\n",
 			LN_md5,LN_md5);
@@ -228,7 +234,9 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	in=BIO_new(BIO_s_file());
 	bmd=BIO_new(BIO_f_md());

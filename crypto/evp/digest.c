@@ -113,7 +113,9 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
@@ -138,6 +140,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
 	EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+#ifndef OPENSSL_NO_ENGINE
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
 	 * the previous handle, re-querying for an ENGINE, and having a
@@ -183,7 +186,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		else
 			ctx->engine = NULL;
 		}
-	else if(!ctx->digest)
+	else
+#endif
+	if(!ctx->digest)
 		{
 		EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_NO_DIGEST_SET);
 		return 0;
@@ -196,7 +201,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		if (type->ctx_size)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 		}
+#ifndef OPENSSL_NO_ENGINE
 skip_to_init:
+#endif
 	return ctx->digest->init(ctx);
 	}
 
@@ -246,12 +253,14 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 		}
+#ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a digest context using an ENGINE */
 	if (in->engine && !ENGINE_init(in->engine))
 		{
 		EVPerr(EVP_F_EVP_MD_CTX_COPY,ERR_R_ENGINE_LIB);
 		return 0;
 		}
+#endif
 
 	EVP_MD_CTX_cleanup(out);
 	memcpy(out,in,sizeof *out);
@@ -304,10 +313,12 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		OPENSSL_cleanse(ctx->md_data,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
 		}
+#ifndef OPENSSL_NO_ENGINE
 	if(ctx->engine)
 		/* The EVP_MD we used belongs to an ENGINE, release the
 		 * functional reference we held for this reason. */
 		ENGINE_finish(ctx->engine);
+#endif
 	memset(ctx,'\0',sizeof *ctx);
 
 	return 1;

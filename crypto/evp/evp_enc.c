@@ -60,7 +60,9 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include "evp_locl.h"
 
 const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
@@ -91,6 +93,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			enc = 1;
 		ctx->encrypt = enc;
 		}
+#ifndef OPENSSL_NO_ENGINE
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
 	 * the previous handle, re-querying for an ENGINE, and having a
@@ -98,6 +101,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 	if (ctx->engine && ctx->cipher && (!cipher ||
 			(cipher && (cipher->nid == ctx->cipher->nid))))
 		goto skip_to_init;
+#endif
 	if (cipher)
 		{
 		/* Ensure a context left lying around from last time is cleared
@@ -107,6 +111,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 
 		/* Restore encrypt field: it is zeroed by cleanup */
 		ctx->encrypt = enc;
+#ifndef OPENSSL_NO_ENGINE
 		if(impl)
 			{
 			if (!ENGINE_init(impl))
@@ -140,6 +145,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			}
 		else
 			ctx->engine = NULL;
+#endif
 
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
@@ -159,7 +165,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_NO_CIPHER_SET);
 		return 0;
 		}
+#ifndef OPENSSL_NO_ENGINE
 skip_to_init:
+#endif
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	OPENSSL_assert(ctx->cipher->block_size == 1
 	    || ctx->cipher->block_size == 8
@@ -460,10 +468,12 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		}
 	if (c->cipher_data)
 		OPENSSL_free(c->cipher_data);
+#ifndef OPENSSL_NO_ENGINE
 	if (c->engine)
 		/* The EVP_CIPHER we used belongs to an ENGINE, release the
 		 * functional reference we held for this reason. */
 		ENGINE_finish(c->engine);
+#endif
 	memset(c,0,sizeof(EVP_CIPHER_CTX));
 	return 1;
 	}

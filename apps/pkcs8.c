@@ -85,7 +85,9 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *pkey=NULL;
 	char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
 	int badarg = 0;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	if (bio_err == NULL) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
@@ -145,11 +147,13 @@ int MAIN(int argc, char **argv)
 			if (!args[1]) goto bad;
 			passargout= *(++args);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*args,"-engine") == 0)
 			{
 			if (!args[1]) goto bad;
 			engine= *(++args);
 			}
+#endif
 		else if (!strcmp (*args, "-in")) {
 			if (args[1]) {
 				args++;
@@ -182,11 +186,15 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
 		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
+#endif
 		return (1);
 	}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");

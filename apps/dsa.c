@@ -90,7 +90,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	int ret=1;
 	DSA *dsa=NULL;
 	int i,badops=0;
@@ -98,7 +100,10 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,noout=0;
 	int pubin = 0, pubout = 0;
-	char *infile,*outfile,*prog,*engine;
+	char *infile,*outfile,*prog;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
@@ -112,7 +117,9 @@ int MAIN(int argc, char **argv)
 	if (!load_config(bio_err, NULL))
 		goto end;
 
+#ifndef OPENSSL_NO_ENGINE
 	engine=NULL;
+#endif
 	infile=NULL;
 	outfile=NULL;
 	informat=FORMAT_PEM;
@@ -153,11 +160,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -189,7 +198,9 @@ bad:
 		BIO_printf(bio_err," -passin arg     input file pass phrase source\n");
 		BIO_printf(bio_err," -out arg        output file\n");
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef OPENSSL_NO_IDEA
@@ -207,7 +218,9 @@ bad:
 
 	ERR_load_crypto_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");

@@ -86,7 +86,9 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 
 
 #include <openssl/ec.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
@@ -1227,7 +1229,9 @@ int main(int argc, char *argv[])
 	/* test the internal curves */
 	internal_curve_test();
 
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_state(0);

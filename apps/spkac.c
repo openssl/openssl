@@ -92,7 +92,9 @@ int MAIN(int argc, char **argv)
 	CONF *conf = NULL;
 	NETSCAPE_SPKI *spki = NULL;
 	EVP_PKEY *pkey = NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -141,11 +143,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			spksect= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-pubkey") == 0)
@@ -171,7 +175,9 @@ bad:
 		BIO_printf(bio_err," -noout         don't print SPKAC\n");
 		BIO_printf(bio_err," -pubkey        output public key\n");
 		BIO_printf(bio_err," -verify        verify SPKAC signature\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e      use engine e, possibly a hardware device.\n");
+#endif
 		goto end;
 		}
 
@@ -181,7 +187,9 @@ bad:
 		goto end;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(keyfile) {
 		pkey = load_key(bio_err,

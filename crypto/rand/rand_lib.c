@@ -60,19 +60,25 @@
 #include <time.h>
 #include "cryptlib.h"
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
+#ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref =NULL;
+#endif
 static const RAND_METHOD *default_RAND_meth = NULL;
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	if(funct_ref)
 		{
 		ENGINE_finish(funct_ref);
 		funct_ref = NULL;
 		}
+#endif
 	default_RAND_meth = meth;
 	return 1;
 	}
@@ -81,6 +87,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 	{
 	if (!default_RAND_meth)
 		{
+#ifndef OPENSSL_NO_ENGINE
 		ENGINE *e = ENGINE_get_default_RAND();
 		if(e)
 			{
@@ -94,11 +101,13 @@ const RAND_METHOD *RAND_get_rand_method(void)
 		if(e)
 			funct_ref = e;
 		else
+#endif
 			default_RAND_meth = RAND_SSLeay();
 		}
 	return default_RAND_meth;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
 int RAND_set_rand_engine(ENGINE *engine)
 	{
 	const RAND_METHOD *tmp_meth = NULL;
@@ -118,6 +127,7 @@ int RAND_set_rand_engine(ENGINE *engine)
 	funct_ref = engine;
 	return 1;
 	}
+#endif
 
 void RAND_cleanup(void)
 	{

@@ -100,7 +100,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	static const char magic[]="Salted__";
 	char mbuf[sizeof magic-1];
 	char *strbuf=NULL;
@@ -119,7 +121,9 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  39
 	char pname[PROG_NAME_SIZE+1];
+#ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
+#endif
 
 	apps_startup();
 
@@ -163,11 +167,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passarg= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if	(strcmp(*argv,"-d") == 0)
 			enc=0;
 		else if	(strcmp(*argv,"-p") == 0)
@@ -270,7 +276,9 @@ bad:
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
+#ifndef OPENSSL_NO_ENGINE
 			BIO_printf(bio_err,"%-14s use engine e, possibly a hardware device.\n","-engine e");
+#endif
 
 			BIO_printf(bio_err,"Cipher Types\n");
 			OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
@@ -284,7 +292,9 @@ bad:
 		argv++;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (bufsize != NULL)
 		{
