@@ -79,8 +79,8 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include "s_apps.h"
 
-#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
-			      and that isn't in VMS < 7.0 */
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
 
@@ -468,7 +468,7 @@ re_start:
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-			/* Note: under VMS with SOCKETSHR the third parameter
+			/* Note: under VMS with SOCKETSHR the second parameter
 			 * is currently of type (int *) whereas under other
 			 * systems it is (void *) if you don't have a cast it
 			 * will choke the compiler: if you do have a cast then

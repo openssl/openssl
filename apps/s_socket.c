@@ -78,12 +78,12 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include <openssl/ssl.h>
 
+#ifdef VMS
 #if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
 			      and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
-#ifdef VMS /* for vfork() */
-#include <processes.h>
+#include <processes.h> /* for vfork() */
 #endif
 
 static struct hostent *GetHostByName(char *name);
@@ -255,7 +255,9 @@ int nbio_init_client_ip(int *sock, unsigned char ip[4], int port)
 
 	if (*sock <= 0)
 		{
+#ifdef FIONBIO
 		unsigned long l=1;
+#endif
 
 		s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 		if (s == INVALID_SOCKET) { perror("socket"); return(0); }
@@ -387,7 +389,7 @@ redoit:
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);
-	/* Note: under VMS with SOCKETSHR the third parameter is currently
+	/* Note: under VMS with SOCKETSHR the fourth parameter is currently
 	 * of type (int *) whereas under other systems it is (void *) if
 	 * you don't have a cast it will choke the compiler: if you do
 	 * have a cast then you can either go for (int *) or (void *).

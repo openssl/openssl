@@ -83,8 +83,8 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
-#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
-			      and that isn't in VMS < 7.0 */
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
 
@@ -628,7 +628,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		FD_SET(fileno(stdin),&readfds);
 #endif
 		FD_SET(s,&readfds);
-		/* Note: under VMS with SOCKETSHR the third parameter is
+		/* Note: under VMS with SOCKETSHR the second parameter is
 		 * currently of type (int *) whereas under other systems
 		 * it is (void *) if you don't have a cast it will choke
 		 * the compiler: if you do have a cast then you can either

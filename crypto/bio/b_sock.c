@@ -596,7 +596,7 @@ int BIO_accept(int sock, char **addr)
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);
-	/* Note: under VMS with SOCKETSHR the third parameter is currently
+	/* Note: under VMS with SOCKETSHR the fourth parameter is currently
 	 * of type (int *) whereas under other systems it is (void *) if
 	 * you don't have a cast it will choke the compiler: if you do
 	 * have a cast then you can either go for (int *) or (void *).

@@ -70,8 +70,8 @@
 #define SOCKET_PROTOCOL IPPROTO_TCP
 #endif
 
-#if (__VMS_VER < 70000000) /* FIONBIO used as a switch to enable ioctl,
-			      and that isn't in VMS < 7.0 */
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
 
