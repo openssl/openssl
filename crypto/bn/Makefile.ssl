@@ -62,9 +62,6 @@ bn_prime.h: bn_prime.pl
 knuth: bn_knuth.c
 	cc -pg -I.. -I../../include bn_knuth.c -o knuth $(LIB) #../../../libefence.a
 
-bnbug: bnbug.c
-	cc -I.. -I../../include bnbug.c -o bnbug $(LIB)
-
 knuth.fast: bn_knuth.c
 	cc -pg -fast -I.. -I../../include bn_knuth.c -o knuth $(LIB) #../../../libefence.a
 
