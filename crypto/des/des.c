@@ -336,7 +336,7 @@ void usage(void)
 "             in conjunction with -[eEdD].",
 "-C[ckname] : generate a cbc_cksum as for -c but compatible with -[ED].",
 "-k key     : use key 'key'",
-"-h         : the key that is entered will be a hexidecimal number",
+"-h         : the key that is entered will be a hexadecimal number",
 "             that is used directly as the des key",
 "-u[uuname] : input file is uudecoded if -[dD] or output uuencoded data if -[eE]",
 "             (uuname is the filename to put in the uuencode header).",

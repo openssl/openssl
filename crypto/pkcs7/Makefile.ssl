@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/asn1/Makefile
+# SSLeay/crypto/pkcs7/Makefile
 #
 
 DIR=	pkcs7
@@ -37,7 +37,7 @@ top:
 
 test:
 
-all:	lib
+all:	lib testapps
 
 testapps: enc dec sign verify
 
