@@ -135,7 +135,7 @@ static int add_attribute_object(X509_REQ *req, char *text,
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int n_min,int n_max, unsigned long chtype, int mval);
 #ifndef OPENSSL_NO_RSA
-static void MS_CALLBACK req_cb(int p,int n,void *arg);
+static int MS_CALLBACK req_cb(int p, int n, BN_GENCB *cb);
 #endif
 static int req_check_len(int len,int n_min,int n_max);
 static int check_end(char *str, char *end);
@@ -712,6 +712,8 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
+		BN_GENCB cb;
+		BN_GENCB_set(&cb, req_cb, bio_err);
 		char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 		if (randfile == NULL)
 			ERR_clear_error();
@@ -740,10 +742,13 @@ bad:
 #ifndef OPENSSL_NO_RSA
 		if (pkey_type == TYPE_RSA)
 			{
-			if (!EVP_PKEY_assign_RSA(pkey,
-				RSA_generate_key(newkey,0x10001,
-					req_cb,bio_err)))
+			RSA *rsa = RSA_new();
+			if(!rsa || !RSA_generate_key_ex(rsa, newkey, 0x10001, &cb) ||
+					!EVP_PKEY_assign_RSA(pkey, rsa))
+				{
+				if(rsa) RSA_free(rsa);
 				goto end;
+				}
 			}
 		else
 #endif
@@ -1610,7 +1615,7 @@ err:
 	}
 
 #ifndef OPENSSL_NO_RSA
-static void MS_CALLBACK req_cb(int p, int n, void *arg)
+static int MS_CALLBACK req_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 
@@ -1618,11 +1623,12 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	(void)BIO_flush((BIO *)arg);
+	BIO_write(cb->arg,&c,1);
+	(void)BIO_flush(cb->arg);
 #ifdef LINT
 	p=n;
 #endif
+	return 1;
 	}
 #endif
 

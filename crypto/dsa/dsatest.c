@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 #define MS_CALLBACK
 #endif
 
-static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
+static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *arg);
 
 /* seed, out_p, out_q, out_g are taken from the updated Appendix 5 to
  * FIPS PUB 186 and also appear in Appendix 5 to FIPS PIB 186-1 */
@@ -135,6 +135,7 @@ static BIO *bio_err=NULL;
 
 int main(int argc, char **argv)
 	{
+	BN_GENCB cb;
 	DSA *dsa=NULL;
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
@@ -154,7 +155,10 @@ int main(int argc, char **argv)
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
 
-	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,bio_err);
+	BN_GENCB_set(&cb, dsa_cb, bio_err);
+	if(((dsa = DSA_new()) == NULL) || !DSA_generate_parameters_ex(dsa, 512,
+				seed, 20, &counter, &h, &cb))
+		goto end;
 
 	BIO_printf(bio_err,"seed\n");
 	for (i=0; i<20; i+=4)
@@ -221,13 +225,7 @@ end:
 	return(0);
 	}
 
-static int cb_exit(int ec)
-	{
-	EXIT(ec);
-	return(0);		/* To keep some compilers quiet */
-	}
-
-static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
+static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *arg)
 	{
 	char c='*';
 	static int ok=0,num=0;
@@ -236,13 +234,14 @@ static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	if (p == 1) c='+';
 	if (p == 2) { c='*'; ok++; }
 	if (p == 3) c='\n';
-	BIO_write(arg,&c,1);
-	(void)BIO_flush(arg);
+	BIO_write(arg->arg,&c,1);
+	(void)BIO_flush(arg->arg);
 
 	if (!ok && (p == 0) && (num > 1))
 		{
 		BIO_printf((BIO *)arg,"error in dsatest\n");
-		cb_exit(1);
+		return 0;
 		}
+	return 1;
 	}
 #endif

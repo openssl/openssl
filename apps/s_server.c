@@ -1785,7 +1785,12 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 			BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 			(void)BIO_flush(bio_err);
 			}
-		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
+		if(((rsa_tmp = RSA_new()) == NULL) || !RSA_generate_key_ex(
+					rsa_tmp, keylength,RSA_F4,NULL))
+			{
+			if(rsa_tmp) RSA_free(rsa_tmp);
+			rsa_tmp = NULL;
+			}
 		if (!s_quiet)
 			{
 			BIO_printf(bio_err,"\n");

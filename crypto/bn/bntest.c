@@ -1502,7 +1502,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx)
 	return ret;
 	}
 
-static void genprime_cb(int p, int n, void *arg)
+static int genprime_cb(int p, int n, BN_GENCB *arg)
 	{
 	char c='*';
 
@@ -1512,12 +1512,12 @@ static void genprime_cb(int p, int n, void *arg)
 	if (p == 3) c='\n';
 	putc(c, stderr);
 	fflush(stderr);
-	(void)n;
-	(void)arg;
+	return 1;
 	}
 
 int test_kron(BIO *bp, BN_CTX *ctx)
 	{
+	BN_GENCB cb;
 	BIGNUM *a,*b,*r,*t;
 	int i;
 	int legendre, kronecker;
@@ -1528,6 +1528,8 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	r = BN_new();
 	t = BN_new();
 	if (a == NULL || b == NULL || r == NULL || t == NULL) goto err;
+
+	BN_GENCB_set(&cb, genprime_cb, NULL);
 	
 	/* We test BN_kronecker(a, b, ctx) just for  b  odd (Jacobi symbol).
 	 * In this case we know that if  b  is prime, then BN_kronecker(a, b, ctx)
@@ -1538,7 +1540,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	 * don't want to test whether  b  is prime but whether BN_kronecker
 	 * works.) */
 
-	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
+	if (!BN_generate_prime_ex(b, 512, 0, NULL, NULL, &cb)) goto err;
 	b->neg = rand_neg();
 	putc('\n', stderr);
 
@@ -1606,6 +1608,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 
 int test_sqrt(BIO *bp, BN_CTX *ctx)
 	{
+	BN_GENCB cb;
 	BIGNUM *a,*p,*r;
 	int i, j;
 	int ret = 0;
@@ -1614,7 +1617,9 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 	p = BN_new();
 	r = BN_new();
 	if (a == NULL || p == NULL || r == NULL) goto err;
-	
+
+	BN_GENCB_set(&cb, genprime_cb, NULL);
+
 	for (i = 0; i < 16; i++)
 		{
 		if (i < 8)
@@ -1628,7 +1633,7 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 			if (!BN_set_word(a, 32)) goto err;
 			if (!BN_set_word(r, 2*i + 1)) goto err;
 		
-			if (!BN_generate_prime(p, 256, 0, a, r, genprime_cb, NULL)) goto err;
+			if (!BN_generate_prime_ex(p, 256, 0, a, r, &cb)) goto err;
 			putc('\n', stderr);
 			}
 		p->neg = rand_neg();

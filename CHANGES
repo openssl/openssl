@@ -5,7 +5,9 @@
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
   *) Ensure that deprecated functions do not get compiled when
-     OPENSSL_NO_DEPRECATED is defined.
+     OPENSSL_NO_DEPRECATED is defined. Some "openssl" subcommands and a few of
+     the self-tests were still using deprecated key-generation functions so
+     these have been updated also.
      [Geoff Thorpe]
 
   *) Reorganise PKCS#7 code to separate the digest location functionality

@@ -89,12 +89,13 @@ int main(int argc, char *argv[])
 #define MS_CALLBACK
 #endif
 
-static void MS_CALLBACK cb(int p, int n, void *arg);
+static int MS_CALLBACK cb(int p, int n, BN_GENCB *arg);
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int main(int argc, char *argv[])
 	{
+	BN_GENCB _cb;
 	DH *a;
 	DH *b=NULL;
 	char buf[12];
@@ -116,8 +117,10 @@ int main(int argc, char *argv[])
 	if (out == NULL) EXIT(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
-	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
-	if (a == NULL) goto err;
+	BN_GENCB_set(&_cb, &cb, out);
+	if(((a = DH_new()) == NULL) || !DH_generate_parameters_ex(a, 64,
+				DH_GENERATOR_5, &_cb))
+		goto err;
 
 	if (!DH_check(a, &i)) goto err;
 	if (i & DH_CHECK_P_NOT_PRIME)
@@ -201,7 +204,7 @@ err:
 	return(ret);
 	}
 
-static void MS_CALLBACK cb(int p, int n, void *arg)
+static int MS_CALLBACK cb(int p, int n, BN_GENCB *arg)
 	{
 	char c='*';
 
@@ -209,10 +212,11 @@ static void MS_CALLBACK cb(int p, int n, void *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	(void)BIO_flush((BIO *)arg);
+	BIO_write(arg->arg,&c,1);
+	(void)BIO_flush(arg->arg);
 #ifdef LINT
 	p=n;
 #endif
+	return 1;
 	}
 #endif

@@ -81,12 +81,13 @@
 #undef PROG
 #define PROG genrsa_main
 
-static void MS_CALLBACK genrsa_cb(int p, int n, void *arg);
+static int MS_CALLBACK genrsa_cb(int p, int n, BN_GENCB *cb);
 
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	BN_GENCB cb;
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
 #endif
@@ -105,6 +106,7 @@ int MAIN(int argc, char **argv)
 	BIO *out=NULL;
 
 	apps_startup();
+	BN_GENCB_set(&cb, genrsa_cb, bio_err);
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
@@ -239,7 +241,9 @@ bad:
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
-	rsa=RSA_generate_key(num,f4,genrsa_cb,bio_err);
+
+	if(((rsa = RSA_new()) == NULL) || !RSA_generate_key_ex(rsa, num, f4, &cb))
+		goto err;
 		
 	app_RAND_write_file(NULL, bio_err);
 
@@ -277,7 +281,7 @@ err:
 	OPENSSL_EXIT(ret);
 	}
 
-static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)
+static int MS_CALLBACK genrsa_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 
@@ -285,11 +289,12 @@ static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	(void)BIO_flush((BIO *)arg);
+	BIO_write(cb->arg,&c,1);
+	(void)BIO_flush(cb->arg);
 #ifdef LINT
 	p=n;
 #endif
+	return 1;
 	}
 #else /* !OPENSSL_NO_RSA */
 
