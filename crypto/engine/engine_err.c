@@ -125,7 +125,6 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_ENGINE_IS_NOT_IN_LIST          ,"engine is not in the list"},
 {ENGINE_R_FINISH_FAILED                  ,"finish failed"},
 {ENGINE_R_GET_HANDLE_FAILED              ,"could not obtain hardware handle"},
-{ENGINE_R_HWCRYPTOHOOK_REPORTS           ,"hwcryptohook reports"},
 {ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
 {ENGINE_R_INIT_FAILED                    ,"init failed"},
 {ENGINE_R_INTERNAL_LIST_ERROR            ,"internal list error"},
