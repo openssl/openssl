@@ -78,7 +78,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx);
 
 #define DYNAMIC_CMD_SO_PATH		ENGINE_CMD_BASE
 #define DYNAMIC_CMD_NO_VCHECK		(ENGINE_CMD_BASE + 1)
-#define DYNAMIC_CMD_ENGINE_ID		(ENGINE_CMD_BASE + 2)
+#define DYNAMIC_CMD_ID			(ENGINE_CMD_BASE + 2)
 #define DYNAMIC_CMD_LIST_ADD		(ENGINE_CMD_BASE + 3)
 #define DYNAMIC_CMD_LOAD		(ENGINE_CMD_BASE + 4)
 
@@ -94,8 +94,8 @@ static const ENGINE_CMD_DEFN dynamic_cmd_defns[] = {
 		"NO_VCHECK",
 		"Specifies to continue even if version checking fails (boolean)",
 		ENGINE_CMD_FLAG_NUMERIC},
-	{DYNAMIC_CMD_ENGINE_ID,
-		"ENGINE_ID",
+	{DYNAMIC_CMD_ID,
+		"ID",
 		"Specifies an ENGINE id name for loading",
 		ENGINE_CMD_FLAG_STRING},
 	{DYNAMIC_CMD_LIST_ADD,
@@ -315,7 +315,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case DYNAMIC_CMD_NO_VCHECK:
 		ctx->no_vcheck = ((i == 0) ? 0 : 1);
 		return 1;
-	case DYNAMIC_CMD_ENGINE_ID:
+	case DYNAMIC_CMD_ID:
 		/* a NULL 'p' or a string of zero-length is the same thing */
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
