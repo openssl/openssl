@@ -211,7 +211,7 @@ int FIPS_selftest_rsa()
     /* ...1)  using the same RSA key to encrypt the SHA-1 hash of a
      * plaintext value larger than the RSA key size
     */
-    if (RSA_size(key) >= strlen(original_ptext))
+    if (RSA_size(key) >= sizeof(original_ptext) - 1)
 	{
 	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
 	return 0;
@@ -219,7 +219,7 @@ int FIPS_selftest_rsa()
     /* ...2) then generate the SHA-1 digest of plaintext, and compare the
      * digest to the Known Answer (note here we duplicate the SHA-1 KAT)
      */
-    SHA1((unsigned char*)original_ptext,strlen(original_ptext),md);
+    SHA1(original_ptext,sizeof(original_ptext) - 1,md);
     if(memcmp(md,mdkat,SHA_DIGEST_LENGTH))
 	{
 	FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
