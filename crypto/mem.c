@@ -58,6 +58,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef CRYPTO_MDEBUG_TIME
+# include <time.h>	
+#endif
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
@@ -89,6 +92,9 @@ typedef struct mem_st
 	const char *file;
 	int line;
 	unsigned long order;
+#ifdef CRYPTO_MDEBUG_TIME
+	time_t time;
+#endif
 	} MEM;
 
 int CRYPTO_mem_ctrl(int mode)
@@ -238,6 +244,9 @@ void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 			m->order=order;
 			}
 		m->order=order++;
+#ifdef CRYPTO_MDEBUG_TIME
+		m->time=time(NULL);
+#endif
 		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
 			{
 			/* Not good, but don't sweat it */
@@ -322,8 +331,17 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 
 	if(m->addr == (char *)l->bio)
 	    return;
+#ifdef CRYPTO_MDEBUG_TIME
+	{
+	struct tm *lcl = localtime(&m->time);
+	sprintf(buf,"[%02d:%02d:%02d] %5lu file=%s, line=%d, number=%d, address=%08lX\n",
+		lcl->tm_hour,lcl->tm_min,lcl->tm_sec,
+		m->order,m->file,m->line,m->num,(unsigned long)m->addr);
+	}
+#else
 	sprintf(buf,"%5lu file=%s, line=%d, number=%d, address=%08lX\n",
 		m->order,m->file,m->line,m->num,(unsigned long)m->addr);
+#endif
 	BIO_puts(l->bio,buf);
 	l->chunks++;
 	l->bytes+=m->num;
