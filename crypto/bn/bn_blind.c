@@ -106,7 +106,7 @@ BN_CTX *ctx;
 
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
-		BNerr(BN_F_BN_BLINDING_UPDATE,BN_R_NOT_INITALISED);
+		BNerr(BN_F_BN_BLINDING_UPDATE,BN_R_NOT_INITIALIZED);
 		goto err;
 		}
 		
@@ -127,7 +127,7 @@ BN_CTX *ctx;
 
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
-		BNerr(BN_F_BN_BLINDING_CONVERT,BN_R_NOT_INITALISED);
+		BNerr(BN_F_BN_BLINDING_CONVERT,BN_R_NOT_INITIALIZED);
 		return(0);
 		}
 	return(BN_mod_mul(n,n,b->A,b->mod,ctx));
@@ -143,7 +143,7 @@ BN_CTX *ctx;
 	bn_check_top(n);
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
-		BNerr(BN_F_BN_BLINDING_INVERT,BN_R_NOT_INITALISED);
+		BNerr(BN_F_BN_BLINDING_INVERT,BN_R_NOT_INITIALIZED);
 		return(0);
 		}
 	if ((ret=BN_mod_mul(n,n,b->Ai,b->mod,ctx)) >= 0)

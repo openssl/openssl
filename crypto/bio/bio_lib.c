@@ -162,7 +162,7 @@ int outl;
 
 	if (!b->init)
 		{
-		BIOerr(BIO_F_BIO_READ,BIO_R_UNINITALISED);
+		BIOerr(BIO_F_BIO_READ,BIO_R_UNINITIALIZED);
 		return(-2);
 		}
 
@@ -200,7 +200,7 @@ int inl;
 
 	if (!b->init)
 		{
-		BIOerr(BIO_F_BIO_WRITE,BIO_R_UNINITALISED);
+		BIOerr(BIO_F_BIO_WRITE,BIO_R_UNINITIALIZED);
 		return(-2);
 		}
 
@@ -241,7 +241,7 @@ const char *in;
 
 	if (!b->init)
 		{
-		BIOerr(BIO_F_BIO_PUTS,BIO_R_UNINITALISED);
+		BIOerr(BIO_F_BIO_PUTS,BIO_R_UNINITIALIZED);
 		return(-2);
 		}
 
@@ -275,7 +275,7 @@ int inl;
 
 	if (!b->init)
 		{
-		BIOerr(BIO_F_BIO_GETS,BIO_R_UNINITALISED);
+		BIOerr(BIO_F_BIO_GETS,BIO_R_UNINITIALIZED);
 		return(-2);
 		}
 

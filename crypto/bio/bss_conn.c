@@ -159,7 +159,7 @@ BIO_CONNECT *c;
 			p=c->param_hostname;
 			if (p == NULL)
 				{
-				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_HOSTHNAME_SPECIFIED);
+				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_HOSTNAME_SPECIFIED);
 				goto exit_loop;
 				}
 			for ( ; *p != '\0'; p++)

@@ -91,7 +91,7 @@ unsigned int *size;
 int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in)
 {
     if ((in == NULL) || (in->digest == NULL)) {
-        EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITALISED);
+        EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
 	return 0;
     }
     memcpy((char *)out,(char *)in,in->digest->ctx_size);

@@ -91,7 +91,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_ENCODING_ERROR                     ,"encoding error"},
 {BN_R_EXPAND_ON_STATIC_BIGNUM_DATA       ,"expand on static bignum data"},
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
-{BN_R_NOT_INITALISED                     ,"not initalised"},
+{BN_R_NOT_INITIALIZED                     ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
 {0,NULL},
 	};

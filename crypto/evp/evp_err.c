@@ -92,7 +92,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_DIFFERENT_KEY_TYPES               ,"different key types"},
 {EVP_R_ENCODE_ERROR                      ,"encode error"},
 {EVP_R_EVP_PBE_CIPHERINIT_ERROR          ,"evp pbe cipherinit error"},
-{EVP_R_INPUT_NOT_INITALISED              ,"input not initalised"},
+{EVP_R_INPUT_NOT_INITIALIZED             ,"input not initialized"},
 {EVP_R_IV_TOO_LARGE                      ,"iv too large"},
 {EVP_R_KEYGEN_FAILURE                    ,"keygen failure"},
 {EVP_R_MISSING_PARMATERS                 ,"missing parmaters"},
