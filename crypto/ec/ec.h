@@ -64,6 +64,7 @@ extern "C" {
 #endif
 
 
+
 typedef enum {
 	POINT_CONVERSION_COMPRESSED = 2,
 	POINT_CONVERSION_UNCOMPRESSED = 4,
@@ -99,25 +100,35 @@ const EC_METHOD *EC_GFp_nist_method(void);
 EC_GROUP *EC_GROUP_new(const EC_METHOD *);
 /* We don't have types for field specifications and field elements in general.
  * Otherwise we would declare
- *     int EC_GROUP_set(EC_GROUP *, .....);
+ *     int EC_GROUP_set_curve(EC_GROUP *, .....);
  */
-int EC_GROUP_set_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b);
+int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void EC_GROUP_free(EC_GROUP *);
+int EC_GROUP_copy(EC_GROUP *, const EC_GROUP*);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
  * after choosing an appropriate EC_METHOD */
-EC_GROUP *EC_GROUP_new_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b);
+EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+
+int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
+
+/* TODO: 'get' functions for EC_GROUPs */
 
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
+int EC_POINT_copy(EC_POINT *, const EC_POINT *);
  
-int EC_POINT_add(const EC_GROUP *, EC_POINT *r, EC_POINT *a, EC_POINT *b);
-int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, EC_POINT *a);
+/* TODO: 'set' and 'get' functions for EC_POINTs */
 
-size_t EC_POINT_point2oct(const EC_GROUP *, EC_POINT *, unsigned char *buf,
-        size_t len, point_conversion_form_t form);
-int EC_POINT_oct2point(const EC_GROUP *, EC_POINT *, unsigned char *buf, size_t len);
+size_t EC_POINT_point2oct(const EC_GROUP *, EC_POINT *, point_conversion_form_t form,
+        unsigned char *buf, size_t len, BN_CTX *);
+int EC_POINT_oct2point(const EC_GROUP *, EC_POINT *,
+        const unsigned char *buf, size_t len, BN_CTX *);
+
+int EC_POINT_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
+int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
+
 
 
 /* TODO: scalar multiplication */

@@ -64,24 +64,36 @@
  * so all this may change in future versions. */
 
 struct ec_method_st {
-	/* used by EC_GROUP_new, EC_GROUP_set_GFp, EC_GROUP_free: */
+	/* used by EC_GROUP_new, EC_GROUP_set_GFp, EC_GROUP_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
 	/* int (*group_set)(EC_GROUP *, .....); */
-	int (*group_set_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b);
+	int (*group_set_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 	void (*group_finish)(EC_GROUP *);
+	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
-	/* used by EC_POINT_new, EC_POINT_free: */
+	/* used by EC_GROUP_set_generator: */
+	int (*group_set_generator)(EC_GROUP *, const EC_POINT *generator,
+	        const BIGNUM *order, const BIGNUM *cofactor);
+	
+	/* TODO: 'set' functions for EC_GROUPs */
+
+
+	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
 	void (*point_finish)(EC_POINT *);
+	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
-	/* used by EC_POINT_add, EC_POINT_dbl: */
-	int (*add)(const EC_GROUP *, EC_POINT *r, EC_POINT *a, EC_POINT *b);
-	int (*dbl)(const EC_GROUP *, EC_POINT *r, EC_POINT *a);
+	/* TODO: 'set' and 'get' functions for EC_POINTs */
 
 	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
-	size_t (*point2oct)(const EC_GROUP *, EC_POINT *, unsigned char *buf,
-	        size_t len, point_conversion_form_t form);
-	int (*oct2point)(const EC_GROUP *, EC_POINT *, unsigned char *buf, size_t len);
+	size_t (*point2oct)(const EC_GROUP *, EC_POINT *, point_conversion_form_t form,
+	        unsigned char *buf, size_t len, BN_CTX *);
+	int (*oct2point)(const EC_GROUP *, EC_POINT *,
+	        const unsigned char *buf, size_t len, BN_CTX *);
+
+	/* used by EC_POINT_add, EC_POINT_dbl: */
+	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
+	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 
 
 	/* internal functions */
@@ -89,8 +101,11 @@ struct ec_method_st {
 	/* 'field_mult' and 'field_sqr' can be used by 'add' and 'dbl' so that
 	 * the same implementations of point operations can be used with different
 	 * optimized implementations of expensive field operations: */
-	int (*field_mult)(const EC_GROUP *, BIGNUM *r, BIGNUM *a, BIGNUM *b);
-	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, BIGNUM *a);
+	int (*field_mult)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+
+	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. to Montgomery */
+	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. from Montgomery */
 } /* EC_METHOD */;
 
 
@@ -106,8 +121,10 @@ struct ec_group_st {
 	              * or abused for all kinds of fields, not just GF(p).) */
 	int a_is_minus3; /* enable optimized point arithmetics for special case */
 
-	/* TODO: optional generator with associated information (order, cofactor) */
-	/*       optional Lim/Lee precomputation table */
+	EC_POINT *generator; /* optional */
+	BIGNUM order, cofactor;
+
+	/* optional Lim/Lee precomputation table */
 } /* EC_GROUP */;
 
 
