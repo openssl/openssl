@@ -2842,3 +2842,8 @@ FIPS_selftest_sha1                      3283	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_rsa                       3284	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_corrupt_sha1                       3285	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_dsa_check                          3286	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_rand_seeded                        3287	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_rand_seed                          3288	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_set_prng_key                       3289	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_test_mode                          3290	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_rand_method                        3291	EXIST:OPENSSL_FIPS:FUNCTION:
