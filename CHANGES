@@ -54,8 +54,8 @@
      full. Fixed.
      [Ben Laurie (CHATS)]
 
-  *) Add assertions to prevent crypto functions from overflowing
-     internal buffers by having large block sizes, etc.
+  *) Add assertions to prevent user-supplied crypto functions from
+     overflowing internal buffers by having large block sizes, etc.
      [Ben Laurie (CHATS)]
 
   *) New OPENSSL_assert() macro (similar to assert(), but enabled
