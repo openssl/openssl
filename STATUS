@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/04/13 22:50:47 $
+  ______________                           $Date: 2002/04/25 06:29:31 $
 
   DEVELOPMENT STATE
 
@@ -61,6 +61,12 @@
 	OCSP
 
   NEEDS PATCH
+
+    o  parameters should be omitted (not NULL) with id-dsa-with-sha1 OID
+       in X.509 signatures
+
+    o  inappropriate AlgorithmIdentifier used in S/MIME signatures
+       (key type rather than not signature algorithm)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
