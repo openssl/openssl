@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_win.c,v 1.4 2004/07/20 21:15:55 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_win.c,v 1.5 2004/07/20 22:39:13 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -28,6 +28,12 @@
 #include <tchar.h>
 #ifndef LPDIR_H
 #include "LPdir.h"
+#endif
+
+/* It seems like WinCE doesn't always have the "normal" mapping
+   macros.  We're opting for the UNICODE ones. */
+#if defined(LP_SYS_WINCE) && !defined(FindFirstFile)
+# define FindFirstFile FindFirstFileW
 #endif
 
 struct LP_dir_context_st
@@ -61,18 +67,19 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       if (sizeof(TCHAR) != sizeof(char))
 	{
 	  TCHAR *wdir = NULL;
-	  size_t index = 0,len=strlen(direcory);
+	  size_t index = 0,len = strlen(direcory);
 
 	  wdir = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
 	  if (wdir == NULL)
 	    {
-	      errno = ENOMEM;
 	      free(*ctx);
+	      *ctx = NULL;
+	      errno = ENOMEM;
 	      return 0;
 	    }
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-	  if (!MultiByteToWideChar (CP_THREAD_ACP,0,directory,len,wdir,len+1))
+	  if (!MultiByteToWideChar(CP_ACP, 0, directory, len, wdir, len + 1))
 #endif
 	    for (index = 0; index < strlen(directory) + 1; index++)
 	      wdir[index] = (TCHAR)directory[index];
@@ -102,18 +109,18 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 
   if (sizeof(TCHAR) != sizeof(char))
     {
-      TCHAR *wdir=(*ctx)->ctx.cFileName;
-      size_t i,len;
+      TCHAR *wdir = (*ctx)->ctx.cFileName;
+      size_t index, len;
 
-      for (len=0;wdir[len] && len<(sizeof((*ctx)->entry_name)-1);)
+      for (len = 0; wdir[len] && len < (sizeof((*ctx)->entry_name) - 1);)
 	len++;
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-      if (!WideCharToMultiByte (CP_THREAD_ACP,0,wdir,len,
-				(*ctx)->entry_name,
-				sizeof((*ctx)->entry_name)-1,NULL,0))
+      if (!WideCharToMultiByte(CP_ACP, 0, wdir, len, (*ctx)->entry_name,
+			       sizeof((*ctx)->entry_name) - 1, NULL, 0))
 #endif
-	for (i=0;i<len;i++) (*ctx)->entry_name[i] = (char)wdir[i];
+	for (index = 0; index < len; index++)
+	  (*ctx)->entry_name[index] = (char)wdir[index];
     }
   else
     strncpy((*ctx)->entry_name, (*ctx)->ctx.cFileName,
@@ -130,6 +137,7 @@ int LP_find_file_end(LP_DIR_CTX **ctx)
     {
       FindClose((*ctx)->handle);
       free(*ctx);
+      *ctx = NULL;
       return 1;
     }
   errno = EINVAL;
