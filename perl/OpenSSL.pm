@@ -11,7 +11,7 @@ use DynaLoader;
 @ISA    = qw(Exporter DynaLoader);
 @EXPORT = qw();
 
-$VERSION = '0.92';
+$VERSION = '0.922';
 bootstrap OpenSSL;
 
 @OpenSSL::BN::ISA        = qw(OpenSSL::ERR);

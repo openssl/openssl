@@ -2,7 +2,7 @@
 ##  Makefile.PL -- Perl MakeMaker specification
 ##
 
-$V = '0.9.2';
+$V = '0.9.2b';
 print "Configuring companion Perl module for OpenSSL $V\n";
 
 use ExtUtils::MakeMaker;
