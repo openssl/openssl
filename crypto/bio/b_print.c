@@ -513,8 +513,8 @@ fmtint(
             (caps ? "0123456789ABCDEF" : "0123456789abcdef")
             [uvalue % (unsigned) base];
         uvalue = (uvalue / (unsigned) base);
-    } while (uvalue && (place < sizeof convert));
-    if (place == sizeof convert)
+    } while (uvalue && (place < (int)sizeof(convert)));
+    if (place == sizeof(convert))
         place--;
     convert[place] = 0;
 
@@ -643,7 +643,7 @@ fmtfp(
 
     if (fracpart >= pow10(max)) {
         intpart++;
-        fracpart -= (long)pow10(max);
+        fracpart -= pow10(max);
     }
 
     /* convert integer part */
@@ -652,7 +652,7 @@ fmtfp(
             (caps ? "0123456789ABCDEF"
               : "0123456789abcdef")[intpart % 10];
         intpart = (intpart / 10);
-    } while (intpart && (iplace < sizeof iplace));
+    } while (intpart && (iplace < (int)sizeof(iplace)));
     if (iplace == sizeof iplace)
         iplace--;
     iconvert[iplace] = 0;
