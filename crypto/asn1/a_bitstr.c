@@ -64,7 +64,7 @@ ASN1_BIT_STRING *ASN1_BIT_STRING_new(void)
 { return M_ASN1_BIT_STRING_new(); }
 
 void ASN1_BIT_STRING_free(ASN1_BIT_STRING *x)
-{ return M_ASN1_BIT_STRING_free(x); }
+{ M_ASN1_BIT_STRING_free(x); }
 
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 { return M_ASN1_BIT_STRING_set(x, d, len); }

@@ -64,7 +64,7 @@ ASN1_UTF8STRING *ASN1_UTF8STRING_new(void)
 { return M_ASN1_UTF8STRING_new();}
 
 void ASN1_UTF8STRING_free(ASN1_UTF8STRING *x)
-{ return M_ASN1_UTF8STRING_free(x);}
+{ M_ASN1_UTF8STRING_free(x);}
 
 int i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a, unsigned char **pp)
 	{

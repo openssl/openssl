@@ -64,7 +64,7 @@ ASN1_IA5STRING *ASN1_IA5STRING_new(void)
 { return M_ASN1_IA5STRING_new();}
 
 void ASN1_IA5STRING_free(ASN1_IA5STRING *x)
-{ return M_ASN1_IA5STRING_free(x);}
+{ M_ASN1_IA5STRING_free(x);}
 
 int i2d_ASN1_IA5STRING(ASN1_IA5STRING *a, unsigned char **pp)
 	{ return(M_i2d_ASN1_IA5STRING(a,pp)); }
@@ -77,7 +77,7 @@ ASN1_T61STRING *ASN1_T61STRING_new(void)
 { return M_ASN1_T61STRING_new();}
 
 void ASN1_T61STRING_free(ASN1_T61STRING *x)
-{ return M_ASN1_T61STRING_free(x);}
+{ M_ASN1_T61STRING_free(x);}
 
 ASN1_T61STRING *d2i_ASN1_T61STRING(ASN1_T61STRING **a, unsigned char **pp,
 	     long l)
@@ -87,7 +87,7 @@ ASN1_PRINTABLESTRING *ASN1_PRINTABLESTRING_new(void)
 { return M_ASN1_PRINTABLESTRING_new();}
 
 void ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *x)
-{ return M_ASN1_PRINTABLESTRING_free(x);}
+{ M_ASN1_PRINTABLESTRING_free(x);}
 
 ASN1_PRINTABLESTRING *d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a,
 	     unsigned char **pp, long l)
@@ -171,7 +171,7 @@ ASN1_STRING *DIRECTORYSTRING_new(void)
 { return M_DIRECTORYSTRING_new();}
 
 void DIRECTORYSTRING_free(ASN1_STRING *x)
-{ return M_DIRECTORYSTRING_free(x);}
+{ M_DIRECTORYSTRING_free(x);}
 
 int i2d_DIRECTORYSTRING(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_DIRECTORYSTRING(a,pp)); }
@@ -184,7 +184,7 @@ ASN1_STRING *DISPLAYTEXT_new(void)
 { return M_DISPLAYTEXT_new();}
 
 void DISPLAYTEXT_free(ASN1_STRING *x)
-{ return M_DISPLAYTEXT_free(x);}
+{ M_DISPLAYTEXT_free(x);}
 
 int i2d_DISPLAYTEXT(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_DISPLAYTEXT(a,pp)); }

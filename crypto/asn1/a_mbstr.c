@@ -87,8 +87,8 @@ int ASN1_mbstring_copy(ASN1_STRING **out, unsigned char *in, int len,
 	ASN1_STRING *dest;
 	unsigned char *p;
 	int nchar;
-	int (*cpyfunc)(unsigned long value, void *in) = NULL;
-	if(len == -1) len = strlen(in);
+	int (*cpyfunc)(unsigned long value, void *in_) = NULL;
+	if(len == -1) len = strlen((const char *)in);
 
 	/* First do a string check and work out the number of characters */
 	switch(inform) {

@@ -70,7 +70,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_new(void)
 { return M_ASN1_UTCTIME_new(); }
 
 void ASN1_UTCTIME_free(ASN1_UTCTIME *x)
-{ return M_ASN1_UTCTIME_free(x); }
+{ M_ASN1_UTCTIME_free(x); }
 
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{

@@ -64,7 +64,7 @@ ASN1_INTEGER *ASN1_INTEGER_new(void)
 { return M_ASN1_INTEGER_new();}
 
 void ASN1_INTEGER_free(ASN1_INTEGER *x)
-{ return M_ASN1_INTEGER_free(x);}
+{ M_ASN1_INTEGER_free(x);}
 
 ASN1_INTEGER *ASN1_INTEGER_dup(ASN1_INTEGER *x)
 { return M_ASN1_INTEGER_dup(x);}

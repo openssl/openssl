@@ -69,7 +69,7 @@ ASN1_ENUMERATED *ASN1_ENUMERATED_new(void)
 { return M_ASN1_ENUMERATED_new(); }
 
 void ASN1_ENUMERATED_free(ASN1_ENUMERATED *x)
-{ return M_ASN1_ENUMERATED_free(x); }
+{ M_ASN1_ENUMERATED_free(x); }
 
 int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	{
