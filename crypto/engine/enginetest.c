@@ -94,16 +94,16 @@ int main(int argc, char *argv[])
 	ERR_load_crypto_strings();
 
 	memset(block, 0, 512 * sizeof(ENGINE *));
-	if(((new_h1 = ENGINE_new(NULL)) == NULL) ||
+	if(((new_h1 = ENGINE_new()) == NULL) ||
 			!ENGINE_set_id(new_h1, "test_id0") ||
 			!ENGINE_set_name(new_h1, "First test item") ||
-			((new_h2 = ENGINE_new(NULL)) == NULL) ||
+			((new_h2 = ENGINE_new()) == NULL) ||
 			!ENGINE_set_id(new_h2, "test_id1") ||
 			!ENGINE_set_name(new_h2, "Second test item") ||
-			((new_h3 = ENGINE_new(NULL)) == NULL) ||
+			((new_h3 = ENGINE_new()) == NULL) ||
 			!ENGINE_set_id(new_h3, "test_id2") ||
 			!ENGINE_set_name(new_h3, "Third test item") ||
-			((new_h4 = ENGINE_new(NULL)) == NULL) ||
+			((new_h4 = ENGINE_new()) == NULL) ||
 			!ENGINE_set_id(new_h4, "test_id3") ||
 			!ENGINE_set_name(new_h4, "Fourth test item"))
 		{
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 		id = strdup(buf);
 		sprintf(buf, "Fake engine type %i", loop);
 		name = strdup(buf);
-		if(((block[loop] = ENGINE_new(NULL)) == NULL) ||
+		if(((block[loop] = ENGINE_new()) == NULL) ||
 				!ENGINE_set_id(block[loop], id) ||
 				!ENGINE_set_name(block[loop], name))
 			{
