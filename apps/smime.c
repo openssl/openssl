@@ -790,12 +790,12 @@ static void nodes_print(BIO *out, char *name, STACK_OF(X509_POLICY_NODE) *nodes)
 static void policies_print(BIO *out, X509_STORE_CTX *ctx)
 	{
 	X509_POLICY_TREE *tree;
-	int explicit;
+	int explicit_policy;
 	tree = X509_STORE_CTX_get0_policy_tree(ctx);
-	explicit = X509_STORE_CTX_get_explicit_policy(ctx);
+	explicit_policy = X509_STORE_CTX_get_explicit_policy(ctx);
 
 	BIO_printf(out, "Require explicit Policy: %s\n",
-				explicit ? "True" : "False");
+				explicit_policy ? "True" : "False");
 
 	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
