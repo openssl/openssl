@@ -94,7 +94,8 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=req LDFLAGS="$(CFLAG)" \
+		APPNAME=req CC="$(CC)" LDFLAGS="$(CFLAG)" \
+		SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 		OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
@@ -164,7 +165,8 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
 	$(NEWMAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(EXE) LDFLAGS="$(CFLAG)" \
+		APPNAME=$(EXE) CC="$(CC)" LDFLAGS="$(LDFLAG)" \
+		SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 		OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		LIBRPATH=$(INSTALLTOP)/lib \
