@@ -1,4 +1,4 @@
-.ident	"sparcv8.s, Version 1.2"
+.ident	"sparcv8.s, Version 1.3"
 .ident	"SPARC v8 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 /*
@@ -26,6 +26,7 @@
  *
  * 1.1	- new loop unrolling model(*);
  * 1.2	- made gas friendly;
+ * 1.3	- fixed problem with /usr/ccs/lib/cpp;
  *
  * (*)	see bn_asm.sparc.v8plus.S for details
  */
@@ -557,9 +558,9 @@ bn_sub_words:
 #define c_2	%o3
 #define c_3	%o4
 
-#define a(I)	[%i1+4*I]
-#define b(I)	[%i2+4*I]
-#define r(I)	[%i0+4*I]
+#define ap(I)	[%i1+4*I]
+#define bp(I)	[%i2+4*I]
+#define rp(I)	[%i0+4*I]
 
 #define	a_0	%l0
 #define	a_1	%l1
@@ -587,25 +588,25 @@ bn_sub_words:
  */
 bn_mul_comba8:
 	save	%sp,FRAME_SIZE,%sp
-	ld	a(0),a_0
-	ld	b(0),b_0
+	ld	ap(0),a_0
+	ld	bp(0),b_0
 	umul	a_0,b_0,c_1	!=!mul_add_c(a[0],b[0],c1,c2,c3);
-	ld	b(1),b_1
+	ld	bp(1),b_1
 	rd	%y,c_2
-	st	c_1,r(0)	!r[0]=c1;
+	st	c_1,rp(0)	!r[0]=c1;
 
 	umul	a_0,b_1,t_1	!=!mul_add_c(a[0],b[1],c2,c3,c1);
-	ld	a(1),a_1
+	ld	ap(1),a_1
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
 	addxcc	%g0,t_2,c_3	!=
 	addx	%g0,%g0,c_1
-	ld	a(2),a_2
+	ld	ap(2),a_2
 	umul	a_1,b_0,t_1	!mul_add_c(a[1],b[0],c2,c3,c1);
 	addcc	c_2,t_1,c_2	!=
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
-	st	c_2,r(1)	!r[1]=c2;
+	st	c_2,rp(1)	!r[1]=c2;
 	addx	c_1,%g0,c_1	!=
 
 	umul	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
@@ -613,19 +614,19 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!=
 	addx	%g0,%g0,c_2
-	ld	b(2),b_2
+	ld	bp(2),b_2
 	umul	a_1,b_1,t_1	!mul_add_c(a[1],b[1],c3,c1,c2);
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	ld	b(3),b_3
+	ld	bp(3),b_3
 	addx	c_2,%g0,c_2	!=
 	umul	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!=
 	addx	c_2,%g0,c_2
-	st	c_3,r(2)	!r[2]=c3;
+	st	c_3,rp(2)	!r[2]=c3;
 
 	umul	a_0,b_3,t_1	!mul_add_c(a[0],b[3],c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
@@ -637,19 +638,19 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	ld	a(3),a_3
+	ld	ap(3),a_3
 	umul	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2		!=
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3
-	ld	a(4),a_4
+	ld	ap(4),a_4
 	umul	a_3,b_0,t_1	!mul_add_c(a[3],b[0],c1,c2,c3);!=
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(3)	!r[3]=c1;
+	st	c_1,rp(3)	!r[3]=c1;
 
 	umul	a_4,b_0,t_1	!mul_add_c(a[4],b[0],c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -666,19 +667,19 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=
-	ld	b(4),b_4
+	ld	bp(4),b_4
 	umul	a_1,b_3,t_1	!mul_add_c(a[1],b[3],c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	ld	b(5),b_5
+	ld	bp(5),b_5
 	umul	a_0,b_4,t_1	!=!mul_add_c(a[0],b[4],c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=
-	st	c_2,r(4)	!r[4]=c2;
+	st	c_2,rp(4)	!r[4]=c2;
 
 	umul	a_0,b_5,t_1	!mul_add_c(a[0],b[5],c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -700,19 +701,19 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!=
 	addx	c_2,%g0,c_2
-	ld	a(5),a_5
+	ld	ap(5),a_5
 	umul	a_4,b_1,t_1	!mul_add_c(a[4],b[1],c3,c1,c2);
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	ld	a(6),a_6
+	ld	ap(6),a_6
 	addx	c_2,%g0,c_2	!=
 	umul	a_5,b_0,t_1	!mul_add_c(a[5],b[0],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!=
 	addx	c_2,%g0,c_2
-	st	c_3,r(5)	!r[5]=c3;
+	st	c_3,rp(5)	!r[5]=c3;
 
 	umul	a_6,b_0,t_1	!mul_add_c(a[6],b[0],c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
@@ -738,19 +739,19 @@ bn_mul_comba8:
 	addcc	c_1,t_1,c_1	!=
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
-	ld	b(6),b_6
+	ld	bp(6),b_6
 	addx	c_3,%g0,c_3	!=
 	umul	a_1,b_5,t_1	!mul_add_c(a[1],b[5],c1,c2,c3);
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2	!=
 	addx	c_3,%g0,c_3
-	ld	b(7),b_7
+	ld	bp(7),b_7
 	umul	a_0,b_6,t_1	!mul_add_c(a[0],b[6],c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
-	st	c_1,r(6)	!r[6]=c1;
+	st	c_1,rp(6)	!r[6]=c1;
 	addx	c_3,%g0,c_3	!=
 
 	umul	a_0,b_7,t_1	!mul_add_c(a[0],b[7],c2,c3,c1);
@@ -783,7 +784,7 @@ bn_mul_comba8:
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	ld	a(7),a_7
+	ld	ap(7),a_7
 	umul	a_6,b_1,t_1	!=!mul_add_c(a[6],b[1],c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
@@ -794,7 +795,7 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3	!=
 	addx	c_1,%g0,c_1
-	st	c_2,r(7)	!r[7]=c2;
+	st	c_2,rp(7)	!r[7]=c2;
 
 	umul	a_7,b_1,t_1	!mul_add_c(a[7],b[1],c3,c1,c2);
 	addcc	c_3,t_1,c_3	!=
@@ -831,7 +832,7 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!
 	addx	c_2,%g0,c_2
-	st	c_3,r(8)	!r[8]=c3;
+	st	c_3,rp(8)	!r[8]=c3;
 
 	umul	a_2,b_7,t_1	!mul_add_c(a[2],b[7],c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
@@ -863,7 +864,7 @@ bn_mul_comba8:
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(9)	!r[9]=c1;
+	st	c_1,rp(9)	!r[9]=c1;
 
 	umul	a_7,b_3,t_1	!mul_add_c(a[7],b[3],c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -890,7 +891,7 @@ bn_mul_comba8:
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	st	c_2,r(10)	!r[10]=c2;
+	st	c_2,rp(10)	!r[10]=c2;
 
 	umul	a_4,b_7,t_1	!=!mul_add_c(a[4],b[7],c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -911,7 +912,7 @@ bn_mul_comba8:
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(11)	!r[11]=c3;
+	st	c_3,rp(11)	!r[11]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_7,b_5,t_1	!mul_add_c(a[7],b[5],c1,c2,c3);
@@ -928,7 +929,7 @@ bn_mul_comba8:
 	addcc	c_1,t_1,c_1	!=
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
-	st	c_1,r(12)	!r[12]=c1;
+	st	c_1,rp(12)	!r[12]=c1;
 	addx	c_3,%g0,c_3	!=
 
 	umul	a_6,b_7,t_1	!mul_add_c(a[6],b[7],c2,c3,c1);
@@ -941,15 +942,15 @@ bn_mul_comba8:
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	st	c_2,r(13)	!r[13]=c2;
+	st	c_2,rp(13)	!r[13]=c2;
 
 	umul	a_7,b_7,t_1	!=!mul_add_c(a[7],b[7],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
 	nop			!=
-	st	c_3,r(14)	!r[14]=c3;
-	st	c_1,r(15)	!r[15]=c1;
+	st	c_3,rp(14)	!r[14]=c3;
+	st	c_1,rp(15)	!r[15]=c1;
 
 	ret
 	restore	%g0,%g0,%o0
@@ -966,45 +967,45 @@ bn_mul_comba8:
  */
 bn_mul_comba4:
 	save	%sp,FRAME_SIZE,%sp
-	ld	a(0),a_0
-	ld	b(0),b_0
+	ld	ap(0),a_0
+	ld	bp(0),b_0
 	umul	a_0,b_0,c_1	!=!mul_add_c(a[0],b[0],c1,c2,c3);
-	ld	b(1),b_1
+	ld	bp(1),b_1
 	rd	%y,c_2
-	st	c_1,r(0)	!r[0]=c1;
+	st	c_1,rp(0)	!r[0]=c1;
 
 	umul	a_0,b_1,t_1	!=!mul_add_c(a[0],b[1],c2,c3,c1);
-	ld	a(1),a_1
+	ld	ap(1),a_1
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2		!=
 	addxcc	%g0,t_2,c_3
 	addx	%g0,%g0,c_1
-	ld	a(2),a_2
+	ld	ap(2),a_2
 	umul	a_1,b_0,t_1	!=!mul_add_c(a[1],b[0],c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=
-	st	c_2,r(1)	!r[1]=c2;
+	st	c_2,rp(1)	!r[1]=c2;
 
 	umul	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2		!=
 	addxcc	c_1,t_2,c_1
 	addx	%g0,%g0,c_2
-	ld	b(2),b_2
+	ld	bp(2),b_2
 	umul	a_1,b_1,t_1	!=!mul_add_c(a[1],b[1],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
 	addx	c_2,%g0,c_2	!=
-	ld	b(3),b_3
+	ld	bp(3),b_3
 	umul	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2		!=
 	addxcc	c_1,t_2,c_1
 	addx	c_2,%g0,c_2
-	st	c_3,r(2)	!r[2]=c3;
+	st	c_3,rp(2)	!r[2]=c3;
 
 	umul	a_0,b_3,t_1	!=!mul_add_c(a[0],b[3],c1,c2,c3);
 	addcc	c_1,t_1,c_1
@@ -1016,7 +1017,7 @@ bn_mul_comba4:
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2	!=
 	addx	c_3,%g0,c_3
-	ld	a(3),a_3
+	ld	ap(3),a_3
 	umul	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
 	rd	%y,t_2
@@ -1027,7 +1028,7 @@ bn_mul_comba4:
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(3)	!r[3]=c1;
+	st	c_1,rp(3)	!r[3]=c1;
 
 	umul	a_3,b_1,t_1	!mul_add_c(a[3],b[1],c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -1044,7 +1045,7 @@ bn_mul_comba4:
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=
-	st	c_2,r(4)	!r[4]=c2;
+	st	c_2,rp(4)	!r[4]=c2;
 
 	umul	a_2,b_3,t_1	!mul_add_c(a[2],b[3],c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -1055,15 +1056,15 @@ bn_mul_comba4:
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(5)	!r[5]=c3;
+	st	c_3,rp(5)	!r[5]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_3,b_3,t_1	!mul_add_c(a[3],b[3],c1,c2,c3);
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2	!=
-	st	c_1,r(6)	!r[6]=c1;
-	st	c_2,r(7)	!r[7]=c2;
+	st	c_1,rp(6)	!r[6]=c1;
+	st	c_2,rp(7)	!r[7]=c2;
 	
 	ret
 	restore	%g0,%g0,%o0
@@ -1076,13 +1077,13 @@ bn_mul_comba4:
 .global bn_sqr_comba8
 bn_sqr_comba8:
 	save	%sp,FRAME_SIZE,%sp
-	ld	a(0),a_0
-	ld	a(1),a_1
+	ld	ap(0),a_0
+	ld	ap(1),a_1
 	umul	a_0,a_0,c_1	!=!sqr_add_c(a,0,c1,c2,c3);
 	rd	%y,c_2
-	st	c_1,r(0)	!r[0]=c1;
+	st	c_1,rp(0)	!r[0]=c1;
 
-	ld	a(2),a_2
+	ld	ap(2),a_2
 	umul	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
@@ -1090,7 +1091,7 @@ bn_sqr_comba8:
 	addx	%g0,%g0,c_1	!=
 	addcc	c_2,t_1,c_2
 	addxcc	c_3,t_2,c_3
-	st	c_2,r(1)	!r[1]=c2;
+	st	c_2,rp(1)	!r[1]=c2;
 	addx	c_1,%g0,c_1	!=
 
 	umul	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
@@ -1101,13 +1102,13 @@ bn_sqr_comba8:
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1
 	addx	c_2,%g0,c_2	!=
-	ld	a(3),a_3
+	ld	ap(3),a_3
 	umul	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2		!=
 	addxcc	c_1,t_2,c_1
 	addx	c_2,%g0,c_2
-	st	c_3,r(2)	!r[2]=c3;
+	st	c_3,rp(2)	!r[2]=c3;
 
 	umul	a_0,a_3,t_1	!=!sqr_add_c2(a,3,0,c1,c2,c3);
 	addcc	c_1,t_1,c_1
@@ -1116,7 +1117,7 @@ bn_sqr_comba8:
 	addx	%g0,%g0,c_3	!=
 	addcc	c_1,t_1,c_1
 	addxcc	c_2,t_2,c_2
-	ld	a(4),a_4
+	ld	ap(4),a_4
 	addx	c_3,%g0,c_3	!=
 	umul	a_1,a_2,t_1	!sqr_add_c2(a,2,1,c1,c2,c3);
 	addcc	c_1,t_1,c_1
@@ -1126,7 +1127,7 @@ bn_sqr_comba8:
 	addcc	c_1,t_1,c_1
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(3)	!r[3]=c1;
+	st	c_1,rp(3)	!r[3]=c1;
 
 	umul	a_4,a_0,t_1	!sqr_add_c2(a,4,0,c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -1144,12 +1145,12 @@ bn_sqr_comba8:
 	addcc	c_2,t_1,c_2
 	addxcc	c_3,t_2,c_3	!=
 	addx	c_1,%g0,c_1
-	ld	a(5),a_5
+	ld	ap(5),a_5
 	umul	a_2,a_2,t_1	!sqr_add_c(a,2,c2,c3,c1);
 	addcc	c_2,t_1,c_2	!=
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
-	st	c_2,r(4)	!r[4]=c2;
+	st	c_2,rp(4)	!r[4]=c2;
 	addx	c_1,%g0,c_1	!=
 
 	umul	a_0,a_5,t_1	!sqr_add_c2(a,5,0,c3,c1,c2);
@@ -1168,7 +1169,7 @@ bn_sqr_comba8:
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1
 	addx	c_2,%g0,c_2	!=
-	ld	a(6),a_6
+	ld	ap(6),a_6
 	umul	a_2,a_3,t_1	!sqr_add_c2(a,3,2,c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2		!=
@@ -1177,7 +1178,7 @@ bn_sqr_comba8:
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1	!=
 	addx	c_2,%g0,c_2
-	st	c_3,r(5)	!r[5]=c3;
+	st	c_3,rp(5)	!r[5]=c3;
 
 	umul	a_6,a_0,t_1	!sqr_add_c2(a,6,0,c1,c2,c3);
 	addcc	c_1,t_1,c_1	!=
@@ -1203,13 +1204,13 @@ bn_sqr_comba8:
 	addcc	c_1,t_1,c_1	!=
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3
-	ld	a(7),a_7
+	ld	ap(7),a_7
 	umul	a_3,a_3,t_1	!=!sqr_add_c(a,3,c1,c2,c3);
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(6)	!r[6]=c1;
+	st	c_1,rp(6)	!r[6]=c1;
 
 	umul	a_0,a_7,t_1	!sqr_add_c2(a,7,0,c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -1243,7 +1244,7 @@ bn_sqr_comba8:
 	addcc	c_2,t_1,c_2
 	addxcc	c_3,t_2,c_3	!=
 	addx	c_1,%g0,c_1
-	st	c_2,r(7)	!r[7]=c2;
+	st	c_2,rp(7)	!r[7]=c2;
 
 	umul	a_7,a_1,t_1	!sqr_add_c2(a,7,1,c3,c1,c2);
 	addcc	c_3,t_1,c_3	!=
@@ -1273,7 +1274,7 @@ bn_sqr_comba8:
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(8)	!r[8]=c3;
+	st	c_3,rp(8)	!r[8]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_2,a_7,t_1	!sqr_add_c2(a,7,2,c1,c2,c3);
@@ -1300,7 +1301,7 @@ bn_sqr_comba8:
 	addcc	c_1,t_1,c_1
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(9)	!r[9]=c1;
+	st	c_1,rp(9)	!r[9]=c1;
 
 	umul	a_7,a_3,t_1	!sqr_add_c2(a,7,3,c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -1323,7 +1324,7 @@ bn_sqr_comba8:
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	st	c_2,r(10)	!r[10]=c2;
+	st	c_2,rp(10)	!r[10]=c2;
 
 	umul	a_4,a_7,t_1	!=!sqr_add_c2(a,7,4,c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -1340,7 +1341,7 @@ bn_sqr_comba8:
 	addx	c_2,%g0,c_2	!=
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(11)	!r[11]=c3;
+	st	c_3,rp(11)	!r[11]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_7,a_5,t_1	!sqr_add_c2(a,7,5,c1,c2,c3);
@@ -1356,7 +1357,7 @@ bn_sqr_comba8:
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2	!=
 	addx	c_3,%g0,c_3
-	st	c_1,r(12)	!r[12]=c1;
+	st	c_1,rp(12)	!r[12]=c1;
 
 	umul	a_6,a_7,t_1	!sqr_add_c2(a,7,6,c2,c3,c1);
 	addcc	c_2,t_1,c_2	!=
@@ -1366,15 +1367,15 @@ bn_sqr_comba8:
 	addcc	c_2,t_1,c_2	!=
 	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
-	st	c_2,r(13)	!r[13]=c2;
+	st	c_2,rp(13)	!r[13]=c2;
 	addx	c_1,%g0,c_1	!=
 
 	umul	a_7,a_7,t_1	!sqr_add_c(a,7,c3,c1,c2);
 	addcc	c_3,t_1,c_3
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1	!=
-	st	c_3,r(14)	!r[14]=c3;
-	st	c_1,r(15)	!r[15]=c1;
+	st	c_3,rp(14)	!r[14]=c3;
+	st	c_1,rp(15)	!r[15]=c1;
 
 	ret
 	restore	%g0,%g0,%o0
@@ -1391,23 +1392,23 @@ bn_sqr_comba8:
  */
 bn_sqr_comba4:
 	save	%sp,FRAME_SIZE,%sp
-	ld	a(0),a_0
+	ld	ap(0),a_0
 	umul	a_0,a_0,c_1	!sqr_add_c(a,0,c1,c2,c3);
-	ld	a(1),a_1	!=
+	ld	ap(1),a_1	!=
 	rd	%y,c_2
-	st	c_1,r(0)	!r[0]=c1;
+	st	c_1,rp(0)	!r[0]=c1;
 
-	ld	a(1),a_1
+	ld	ap(1),a_1
 	umul	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
 	addxcc	%g0,t_2,c_3
 	addx	%g0,%g0,c_1	!=
-	ld	a(2),a_2
+	ld	ap(2),a_2
 	addcc	c_2,t_1,c_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=
-	st	c_2,r(1)	!r[1]=c2;
+	st	c_2,rp(1)	!r[1]=c2;
 
 	umul	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -1417,12 +1418,12 @@ bn_sqr_comba4:
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1	!=
 	addx	c_2,%g0,c_2
-	ld	a(3),a_3
+	ld	ap(3),a_3
 	umul	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
 	addcc	c_3,t_1,c_3	!=
 	rd	%y,t_2
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(2)	!r[2]=c3;
+	st	c_3,rp(2)	!r[2]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_0,a_3,t_1	!sqr_add_c2(a,3,0,c1,c2,c3);
@@ -1441,7 +1442,7 @@ bn_sqr_comba4:
 	addcc	c_1,t_1,c_1
 	addxcc	c_2,t_2,c_2
 	addx	c_3,%g0,c_3	!=
-	st	c_1,r(3)	!r[3]=c1;
+	st	c_1,rp(3)	!r[3]=c1;
 
 	umul	a_3,a_1,t_1	!sqr_add_c2(a,3,1,c2,c3,c1);
 	addcc	c_2,t_1,c_2
@@ -1456,7 +1457,7 @@ bn_sqr_comba4:
 	rd	%y,t_2		!=
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1
-	st	c_2,r(4)	!r[4]=c2;
+	st	c_2,rp(4)	!r[4]=c2;
 
 	umul	a_2,a_3,t_1	!=!sqr_add_c2(a,3,2,c3,c1,c2);
 	addcc	c_3,t_1,c_3
@@ -1465,15 +1466,15 @@ bn_sqr_comba4:
 	addx	%g0,%g0,c_2	!=
 	addcc	c_3,t_1,c_3
 	addxcc	c_1,t_2,c_1
-	st	c_3,r(5)	!r[5]=c3;
+	st	c_3,rp(5)	!r[5]=c3;
 	addx	c_2,%g0,c_2	!=
 
 	umul	a_3,a_3,t_1	!sqr_add_c(a,3,c1,c2,c3);
 	addcc	c_1,t_1,c_1
 	rd	%y,t_2
 	addxcc	c_2,t_2,c_2	!=
-	st	c_1,r(6)	!r[6]=c1;
-	st	c_2,r(7)	!r[7]=c2;
+	st	c_1,rp(6)	!r[6]=c1;
+	st	c_2,rp(7)	!r[7]=c2;
 	
 	ret
 	restore	%g0,%g0,%o0
