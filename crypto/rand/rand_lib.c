@@ -74,11 +74,12 @@ int RAND_set_rand_method(ENGINE *engine)
 	{
 	ENGINE *mtmp;
 	mtmp = rand_engine;
-	if (!ENGINE_init(engine))
+	if (engine && !ENGINE_init(engine))
 		return 0;
 	rand_engine = engine;
 	/* SHOULD ERROR CHECK THIS!!! */
-	ENGINE_finish(mtmp);
+	if(mtmp)
+		ENGINE_finish(mtmp);
 	return 1;
 	}
 #endif

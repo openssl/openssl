@@ -856,7 +856,8 @@ int ENGINE_clear_defaults(void)
 #endif
 			!ENGINE_set_default_RAND(NULL) ||
 			!ENGINE_set_default_BN_mod_exp(NULL) ||
-			!ENGINE_set_default_BN_mod_exp_crt(NULL))
+			!ENGINE_set_default_BN_mod_exp_crt(NULL) ||
+			!RAND_set_rand_method(NULL))
 		return 0;
 	return 1;
 	}
