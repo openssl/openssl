@@ -187,12 +187,12 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			ctx->engine = NULL;
 		}
 	else
-#endif
 	if(!ctx->digest)
 		{
 		EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_NO_DIGEST_SET);
 		return 0;
 		}
+#endif
 	if (ctx->digest != type)
 		{
 		if (ctx->digest && ctx->digest->ctx_size)
