@@ -124,6 +124,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
+	const EVP_MD *dgst=NULL;
 
 	apps_startup();
 
@@ -295,6 +296,14 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
+
+	if (dgst == NULL)
+		{
+		if (in_FIPS_mode)
+			dgst = EVP_sha1();
+		else
+			dgst = EVP_md5();
+		}
 
 	if (bufsize != NULL)
 		{
@@ -483,7 +492,7 @@ bad:
 				sptr = salt;
 			}
 
-			EVP_BytesToKey(cipher,EVP_md5(),sptr,
+			EVP_BytesToKey(cipher,dgst,sptr,
 				(unsigned char *)str,
 				strlen(str),1,key,iv);
 			/* zero the complete buffer or the string
