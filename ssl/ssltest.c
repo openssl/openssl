@@ -228,6 +228,7 @@ int main(int argc, char *argv[])
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
+	COMP_METHOD *cm;
 
 	verbose = 0;
 	debug = 0;
@@ -390,21 +391,18 @@ bad:
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	if (comp == COMP_ZLIB)
+	if (comp == COMP_ZLIB) cm = COMP_zlib();
+	if (comp == COMP_RLE) cm = COMP_rle();
+	if (cm != NULL)
 		{
-		COMP_METHOD *cm = COMP_zlib();
 		if (cm->type != NID_undef)
-			SSL_COMP_add_compression_method(COMP_ZLIB, cm);
+			SSL_COMP_add_compression_method(comp, cm);
 		else
-			fprintf(stderr, "Warning: zlib compression not supported\n");
-		}
-	if (comp == COMP_RLE)
-		{
-		COMP_METHOD *cm = COMP_rle();
-		if (cm->type != NID_undef)
-			SSL_COMP_add_compression_method(COMP_RLE, cm);
-		else
-			fprintf(stderr, "Warning: rle compression not supported\n");
+			fprintf(stderr,
+				"Warning: %s compression not supported\n",
+				(comp == COMP_RLE ? "rle" :
+					(comp == COMP_ZLIB ? "zlib" :
+						"unknown")));
 		}
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
