@@ -485,7 +485,6 @@ RSA_private_decrypt			490
 RSA_private_encrypt			491
 RSA_public_decrypt			492
 RSA_public_encrypt			493
-RSA_set_default_method			494
 RSA_sign				495
 RSA_sign_ASN1_OCTET_STRING		496
 RSA_size				497
@@ -1819,7 +1818,6 @@ d2i_ASN1_SET_OF_ASN1_OBJECT             1844
 PKCS7_signatureVerify                   1845
 RSA_set_method                          1846
 RSA_get_method                          1847
-RSA_get_default_method                  1848
 sk_CONF_VALUE_sort                      1849
 sk_X509_REVOKED_sort                    1850
 sk_X509_ATTRIBUTE_sort                  1851
@@ -1863,9 +1861,7 @@ DSA_new_method                          1888
 DH_new_method                           1889
 DH_OpenSSL                              1890
 DSA_get_ex_new_index                    1891
-DH_get_default_method                   1892
 DSA_set_ex_data                         1893
-DH_set_default_method                   1894
 DSA_get_ex_data                         1895
 X509V3_EXT_REQ_add_conf                 1896
 NETSCAPE_SPKI_print                     1897
@@ -2414,3 +2410,5 @@ ENGINE_set_id                           2439
 ENGINE_set_BN_mod_exp_crt               2440
 ENGINE_set_default_DH                   2441
 ENGINE_new                              2442
+DH_get_default_openssl_method           2443
+DH_set_default_openssl_method           2444
