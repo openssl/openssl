@@ -164,6 +164,8 @@ The email option include a special 'copy' value. This will automatically
 include and email addresses contained in the certificate subject name in
 the extension.
 
+The IP address used in the B<IP> options can be in either IPv4 or IPv6 format.
+
 The value of B<dirName> should point to a section containing the distinguished
 name to use as a set of name value pairs. Multi values AVAs can be formed by
 preceeding the name with a B<+> character.
@@ -175,6 +177,8 @@ ASN1_generate_nconf() format.
 Examples:
 
  subjectAltName=email:copy,email:my@other.address,URI:http://my.url.here/
+ subjectAltName=IP:192.168.7.1
+ subjectAltName=IP:13::17
  subjectAltName=email:my@other.address,RID:1.2.3.4
  subjectAltName=otherName:1.2.3.4;UTF8:some other identifier
 
@@ -283,6 +287,25 @@ Example:
 The B<ia5org> option changes the type of the I<organization> field. In RFC2459
 it can only be of type DisplayText. In RFC3280 IA5Strring is also permissible.
 Some software (for example some versions of MSIE) may require ia5org.
+
+=head2 Policy Constraints
+
+This is a multi-valued extension which consisting of the names
+B<requireExplicitPolicy> or B<inhibitPolicyMapping> and a non negative intger
+value. At least one component must be present.
+
+Example:
+
+ policyConstraints = requireExplicitPolicy:3
+
+
+=head2 Inhibit Any Policy
+
+This is a string extension whose value must be a non negative integer.
+
+Example:
+
+ inhibitAnyPolicy = 2
 
 
 =head1 DEPRECATED EXTENSIONS
