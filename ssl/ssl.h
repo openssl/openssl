@@ -1198,6 +1198,10 @@ int	SSL_CIPHER_get_bits(SSL_CIPHER *c,int *alg_bits);
 char *	SSL_CIPHER_get_version(SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(SSL_CIPHER *c);
 
+const COMP_METHOD *SSL_get_current_compression(SSL *s);
+const COMP_METHOD *SSL_get_current_expansion(SSL *s);
+const char *SSL_COMP_get_name(const COMP_METHOD *comp);
+
 int	SSL_get_fd(SSL *s);
 int	SSL_get_rfd(SSL *s);
 int	SSL_get_wfd(SSL *s);

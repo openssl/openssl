@@ -1204,3 +1204,11 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 		return(0);
 		}
 	}
+
+const char *SSL_COMP_get_name(const COMP_METHOD *comp)
+	{
+	if (comp)
+		return comp->name;
+	return NULL;
+	}
+

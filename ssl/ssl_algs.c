@@ -109,6 +109,12 @@ int SSL_library_init(void)
 	EVP_add_digest(EVP_sha());
 	EVP_add_digest(EVP_dss());
 #endif
+#ifndef OPENSSL_NO_COMP
+	/* This will initialise the built-in compression algorithms.
+	   The value returned is a STACK_OF(SSL_COMP), but that can
+	   be discarded safely */
+	(void)SSL_COMP_get_compression_methods();
+#endif
 	return(1);
 	}
 

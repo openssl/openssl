@@ -2207,6 +2207,20 @@ SSL_CIPHER *SSL_get_current_cipher(SSL *s)
 	return(NULL);
 	}
 
+const COMP_METHOD *SSL_get_current_compression(SSL *s)
+	{
+	if (s->compress != NULL)
+		return(s->compress->meth);
+	return(NULL);
+	}
+
+const COMP_METHOD *SSL_get_current_expansion(SSL *s)
+	{
+	if (s->expand != NULL)
+		return(s->expand->meth);
+	return(NULL);
+	}
+
 int ssl_init_wbio_buffer(SSL *s,int push)
 	{
 	BIO *bbio;
