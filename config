@@ -464,6 +464,10 @@ if [ "${SYSTEM}-${MACHINE}" = "Linux-alpha" ]; then
   fi
 fi
 
+if [ "${SYSTEM}" = "AIX" ]; then	# favor vendor cc over gcc
+    (cc) 2>&1 | grep -iv "command not found" > /dev/null && CC=cc
+fi
+
 CCVER=${CCVER:-0}
 
 # read the output of the embedded GuessOS 
