@@ -4,15 +4,18 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
-  *) For easily testing in shell scripts whether some command exists,
-     'openssl no-XXX' returns with exit code 0 iff the command XXX is
-     available.  'no-XXX' is printed in this case, 'XXX' otherwise
-     (i.e. when a command of this name exists).  In both cases,
+  *) For easily testing in shell scripts whether some command
+     'openssl XXX' exists, the new pseudo-command 'openssl no-XXX'
+     returns with exit code 0 iff a command of the given name is available.
+     'no-XXX' is printed in this case, 'XXX' otherwise.  In both cases,
      the output goes to stdout and nothing is printed to stderr.
      Additional arguments are always ignored.
 
      Since for each cipher there is a command of the same name,
      the 'no-cipher' compilation switches can be tested this way.
+
+     ('openssl no-XXX' is not able to detect pseudo-commands such
+     as 'quit', 'list-XXX-commands', or 'no-XXX' itself.)
      [Bodo Moeller]
 
   *) Update test suite so that 'make test' succeeds in 'no-rsa' configuration.
