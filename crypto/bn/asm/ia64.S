@@ -1,6 +1,6 @@
 .explicit
 .text
-.ident	"ia64.S, Version 1.1"
+.ident	"ia64.S, Version 1.2"
 .ident	"IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 //
@@ -149,12 +149,27 @@ bn_add_words:
 	brp.loop.imp	.L_bn_add_words_ctop,.L_bn_add_words_cend-16
 					}
 	.body
-{ .mib;	mov		r14=r32			// rp
+{ .mib;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r14=0,r32		// rp
+#else
+	mov		r14=r32			// rp
+#endif
 	mov		r9=pr		};;
-{ .mii;	mov		r15=r33			// ap
+{ .mii;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r15=0,r33		// ap
+#else
+	mov		r15=r33			// ap
+#endif
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
-{ .mib;	mov		r16=r34			// bp
+{ .mib;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r16=0,r34		// bp
+#else
+	mov		r16=r34			// bp
+#endif
 	mov		pr.rot=1<<16	};;
 
 .L_bn_add_words_ctop:
@@ -174,7 +189,7 @@ bn_add_words:
 
 { .mii;
 (p59)	add		r8=1,r8		// return value
-	mov		pr=r9,-1
+	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mbb;	nop.b		0x0
 	br.ret.sptk.many	b0	};;
@@ -202,12 +217,27 @@ bn_sub_words:
 	brp.loop.imp	.L_bn_sub_words_ctop,.L_bn_sub_words_cend-16
 					}
 	.body
-{ .mib;	mov		r14=r32			// rp
+{ .mib;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r14=0,r32		// rp
+#else
+	mov		r14=r32			// rp
+#endif
 	mov		r9=pr		};;
-{ .mii;	mov		r15=r33			// ap
+{ .mii;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r15=0,r33		// ap
+#else
+	mov		r15=r33			// ap
+#endif
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
-{ .mib;	mov		r16=r34			// bp
+{ .mib;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r16=0,r34		// bp
+#else
+	mov		r16=r34			// bp
+#endif
 	mov		pr.rot=1<<16	};;
 
 .L_bn_sub_words_ctop:
@@ -227,7 +257,7 @@ bn_sub_words:
 
 { .mii;
 (p59)	add		r8=1,r8		// return value
-	mov		pr=r9,-1
+	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mbb;	nop.b		0x0
 	br.ret.sptk.many	b0	};;
@@ -273,8 +303,14 @@ bn_mul_words:
 
 #ifndef XMA_TEMPTATION
 
-{ .mii;	mov		r14=r32	// rp
-	mov		r15=r33	// ap
+{ .mii;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r14=0,r32	// rp
+	addp4		r15=0,r33	// ap
+#else
+	mov		r14=r32		// rp
+	mov		r15=r33		// ap
+#endif
 	mov		ar.lc=r10	}
 { .mii;	mov		r39=0	// serves as r33 at first (p26)
 	mov		ar.ec=12	};;
@@ -344,7 +380,7 @@ bn_mul_words:
 #endif	// XMA_TEMPTATION
 
 { .mii;	nop.m		0x0
-	mov		pr=r9,-1
+	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mfb;	rum		1<<5		// clear um.mfh
 	nop.f		0x0
@@ -380,11 +416,21 @@ bn_mul_add_words:
 			// ------^----- serves as (p48) at first (p26)
 	brp.loop.imp	.L_bn_mul_add_words_ctop,.L_bn_mul_add_words_cend-16
 					}
-{ .mii;	mov		r14=r32	// rp
-	mov		r15=r33	// ap
+{ .mii;
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r14=0,r32	// rp
+	addp4		r15=0,r33	// ap
+#else
+	mov		r14=r32		// rp
+	mov		r15=r33		// ap
+#endif
 	mov		ar.lc=r10	}
 { .mii;	mov		r39=0	// serves as r33 at first (p26)
-	mov		r18=r32	// rp copy
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+	addp4		r18=0,r32	// rp copy
+#else
+	mov		r18=r32		// rp copy
+#endif
 	mov		ar.ec=14	};;
 
 // This loop spins in 3*(n+13) ticks on Itanium and should spin in
@@ -428,7 +474,7 @@ bn_mul_add_words:
 	nop.b	0x0			};;
 { .mii;
 (p59)	add		r8=1,r8
-	mov		pr=r9,-1
+	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mfb;	rum		1<<5		// clear um.mfh
 	nop.f		0x0
@@ -461,6 +507,10 @@ bn_sqr_words:
 	mov	r9=pr			};;
 
 	.body
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+{ .mii; addp4		r32=0,r32
+	addp4		r33=0,r33	};;
+#endif
 { .mib;
 	mov		pr.rot=1<<16
 	brp.loop.imp	.L_bn_sqr_words_ctop,.L_bn_sqr_words_cend-16
@@ -492,7 +542,7 @@ bn_sqr_words:
 .L_bn_sqr_words_cend:
 
 { .mii;	nop.m		0x0
-	mov		pr=r9,-1
+	mov		pr=r9,0x1ffff
 	mov		ar.lc=r3	}
 { .mfb;	rum		1<<5		// clear um.mfh
 	nop.f		0x0
@@ -526,7 +576,14 @@ bn_sqr_comba8:
 	.prologue
 	.fframe	0
 	.save	ar.pfs,r2
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
 { .mii;	alloc	r2=ar.pfs,2,1,0,0
+	addp4	r33=0,r33
+	addp4	r32=0,r32		};;
+{ .mii;
+#else
+{ .mii;	alloc	r2=ar.pfs,2,1,0,0
+#endif
 	mov	r34=r33
 	add	r14=8,r33		};;
 	.body
@@ -587,7 +644,14 @@ bn_mul_comba8:
 	.prologue
 	.fframe	0
 	.save	ar.pfs,r2
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
 { .mii;	alloc	r2=ar.pfs,3,0,0,0
+	addp4	r33=0,r33
+	addp4	r34=0,r34		};;
+{ .mii;	addp4	r32=0,r32
+#else
+{ .mii;	alloc   r2=ar.pfs,3,0,0,0
+#endif
 	add	r14=8,r33
 	add	r17=8,r34		}
 	.body
@@ -1138,7 +1202,14 @@ bn_sqr_comba4:
 	.prologue
 	.fframe	0
 	.save	ar.pfs,r2
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+{ .mii;	alloc   r2=ar.pfs,2,1,0,0
+	addp4	r32=0,r32
+	addp4	r33=0,r33		};;
+{ .mii;
+#else
 { .mii;	alloc	r2=ar.pfs,2,1,0,0
+#endif
 	mov	r34=r33
 	add	r14=8,r33		};;
 	.body
@@ -1164,7 +1235,14 @@ bn_mul_comba4:
 	.prologue
 	.fframe	0
 	.save	ar.pfs,r2
+#if defined(_HPUX_SOURCE) && defined(_ILP32)
+{ .mii;	alloc   r2=ar.pfs,3,0,0,0
+	addp4	r33=0,r33
+	addp4	r34=0,r34		};;
+{ .mii;	addp4	r32=0,r32
+#else
 { .mii;	alloc	r2=ar.pfs,3,0,0,0
+#endif
 	add	r14=8,r33
 	add	r17=8,r34		}
 	.body
@@ -1464,7 +1542,7 @@ bn_div_words:
 	or	r8=r8,r33
 	mov	ar.pfs=r2		};;
 { .mii;	shr.u	r9=H,I			// remainder if anybody wants it
-	mov	pr=r10,-1		}
+	mov	pr=r10,0x1ffff		}
 { .mfb;	br.ret.sptk.many	b0	};;
 
 // Unsigned 64 by 32 (well, by 64 for the moment) bit integer division
