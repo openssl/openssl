@@ -8,7 +8,7 @@
 
   * Perl 5
   * ANSI C compiler
-  * A supported Unix operating system
+  * a supported Unix operating system
 
  Quick Start
  -----------
@@ -68,22 +68,9 @@
      If your system is not available, you will have to edit the Configure
      program and add the correct configuration for your system.
 
-     Configure configures various files by converting an existing .org file
-     into the real file. If you edit any files, remember that if a
-     corresponding .org file exists them the next time you run ./Configure
-     your changes will be lost when the file gets re-created from the .org
-     file. The files that are created from .org files are:
-
-       Makefile.ssl
-       crypto/des/des.h
-       crypto/des/des_locl.h
-       crypto/md2/md2.h
-       crypto/rc4/rc4.h
-       crypto/rc4/rc4_enc.c
-       crypto/rc2/rc2.h
-       crypto/bf/bf_locl.h
-       crypto/idea/idea.h
-       crypto/bn/bn.h
+     Configure creates the Makefile.ssl from Makefile.org and defines
+     various macros in crypto/opensslconf.h (generated from
+     crypto/opensslconf.h.in).
 
   2. Set the install directory
 
