@@ -55,6 +55,10 @@
      to it. Application code that doesn't use this new function will still
      leak as before, but their memory debugging output will announce it now
      rather than letting it slide.
+
+     Besides the addition of CRYPTO_cleanup_all_ex_data(), another API change
+     induced by the "ex_data" overhaul is that X509_STORE_CTX_init() now
+     has a return value to indicate success or failure.
      [Geoff Thorpe]
 
   +) Make it possible to replace the underlying "ERR" functions such that the
