@@ -1,4 +1,4 @@
-/* apps/dgst.c */
+/* crypto/md4/md4.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,168 +57,71 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include "apps.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
+#include <openssl/md4.h>
 
-#undef BUFSIZE
-#define BUFSIZE	1024*8
+#define BUFSIZE	1024*16
 
-#undef PROG
-#define PROG	dgst_main
+void do_fp(FILE *f);
+void pt(unsigned char *md);
+#ifndef _OSD_POSIX
+int read(int, void *, unsigned int);
+#endif
 
-void do_fp(unsigned char *buf,BIO *f,int sep);
-
-int MAIN(int, char **);
-
-int MAIN(int argc, char **argv)
+int main(int argc, char **argv)
 	{
-	unsigned char *buf=NULL;
 	int i,err=0;
-	const EVP_MD *md=NULL,*m;
-	BIO *in=NULL,*inp;
-	BIO *bmd=NULL;
-	const char *name;
-#define PROG_NAME_SIZE  16
-	char pname[PROG_NAME_SIZE];
-	int separator=0;
-	int debug=0;
+	FILE *IN;
 
-	apps_startup();
-
-	if ((buf=(unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL)
+	if (argc == 1)
 		{
-		BIO_printf(bio_err,"out of memory\n");
-		goto end;
-		}
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	/* first check the program name */
-	program_name(argv[0],pname,PROG_NAME_SIZE);
-
-	md=EVP_get_digestbyname(pname);
-
-	argc--;
-	argv++;
-	while (argc > 0)
-		{
-		if ((*argv)[0] != '-') break;
-		if (strcmp(*argv,"-c") == 0)
-			separator=1;
-		else if (strcmp(*argv,"-d") == 0)
-			debug=1;
-		else if ((m=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
-			md=m;
-		else
-			break;
-		argc--;
-		argv++;
-		}
-
-	if (md == NULL)
-		md=EVP_md5();
-
-	if ((argc > 0) && (argv[0][0] == '-')) /* bad option */
-		{
-		BIO_printf(bio_err,"unknown option '%s'\n",*argv);
-		BIO_printf(bio_err,"options are\n");
-		BIO_printf(bio_err,"-c   to output the digest with separating colons\n");
-		BIO_printf(bio_err,"-d   to output debug info\n");
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm (default)\n",
-			LN_md5,LN_md5);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_md4,LN_md4);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_md2,LN_md2);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_sha1,LN_sha1);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_sha,LN_sha);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_mdc2,LN_mdc2);
-		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
-			LN_ripemd160,LN_ripemd160);
-		err=1;
-		goto end;
-		}
-	
-	in=BIO_new(BIO_s_file());
-	bmd=BIO_new(BIO_f_md());
-	if (debug)
-		{
-		BIO_set_callback(in,BIO_debug_callback);
-		/* needed for windows 3.1 */
-		BIO_set_callback_arg(in,bio_err);
-		}
-
-	if ((in == NULL) || (bmd == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-
-	/* we use md as a filter, reading from 'in' */
-	BIO_set_md(bmd,md);
-	inp=BIO_push(bmd,in);
-
-	if (argc == 0)
-		{
-		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-		do_fp(buf,inp,separator);
+		do_fp(stdin);
 		}
 	else
 		{
-		name=OBJ_nid2sn(md->type);
-		for (i=0; i<argc; i++)
+		for (i=1; i<argc; i++)
 			{
-			if (BIO_read_filename(in,argv[i]) <= 0)
+			IN=fopen(argv[i],"r");
+			if (IN == NULL)
 				{
 				perror(argv[i]);
 				err++;
 				continue;
 				}
-			printf("%s(%s)= ",name,argv[i]);
-			do_fp(buf,inp,separator);
-			(void)BIO_reset(bmd);
+			printf("MD4(%s)= ",argv[i]);
+			do_fp(IN);
+			fclose(IN);
 			}
 		}
-end:
-	if (buf != NULL)
-		{
-		memset(buf,0,BUFSIZE);
-		OPENSSL_free(buf);
-		}
-	if (in != NULL) BIO_free(in);
-	if (bmd != NULL) BIO_free(bmd);
-	EXIT(err);
+	exit(err);
 	}
 
-void do_fp(unsigned char *buf, BIO *bp, int sep)
+void do_fp(FILE *f)
 	{
-	int len;
+	MD4_CTX c;
+	unsigned char md[MD4_DIGEST_LENGTH];
+	int fd;
 	int i;
+	static unsigned char buf[BUFSIZE];
 
+	fd=fileno(f);
+	MD4_Init(&c);
 	for (;;)
 		{
-		i=BIO_read(bp,(char *)buf,BUFSIZE);
+		i=read(fd,buf,BUFSIZE);
 		if (i <= 0) break;
+		MD4_Update(&c,buf,(unsigned long)i);
 		}
-	len=BIO_gets(bp,(char *)buf,BUFSIZE);
+	MD4_Final(&(md[0]),&c);
+	pt(md);
+	}
 
-	for (i=0; i<len; i++)
-		{
-		if (sep && (i != 0))
-			putc(':',stdout);
-		printf("%02x",buf[i]);
-		}
+void pt(unsigned char *md)
+	{
+	int i;
+
+	for (i=0; i<MD4_DIGEST_LENGTH; i++)
+		printf("%02x",md[i]);
 	printf("\n");
 	}
 

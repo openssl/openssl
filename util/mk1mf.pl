@@ -52,7 +52,8 @@ foreach (@ARGV)
 		{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
 		print STDERR <<"EOF";
 and [options] can be one of
-	no-md2 no-md5 no-sha no-mdc2 no-ripemd  - Skip this digest
+	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
+	no-ripemd
 	no-rc2 no-rc4 no-idea no-des no-bf no-cast - Skip this symetric cipher
 	no-rc5
 	no-rsa no-dsa no-dh			- Skip this public key cipher
@@ -201,6 +202,7 @@ $cflags.=" -DNO_RC2"  if $no_rc2;
 $cflags.=" -DNO_RC4"  if $no_rc4;
 $cflags.=" -DNO_RC5"  if $no_rc5;
 $cflags.=" -DNO_MD2"  if $no_md2;
+$cflags.=" -DNO_MD4"  if $no_md4;
 $cflags.=" -DNO_MD5"  if $no_md5;
 $cflags.=" -DNO_SHA"  if $no_sha;
 $cflags.=" -DNO_SHA1" if $no_sha1;
@@ -666,6 +668,7 @@ sub var_add
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;
 
 	@a=grep(!/(^md2)|(_md2$)/,@a) if $no_md2;
+	@a=grep(!/(^md4)|(_md4$)/,@a) if $no_md4;
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
 	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_rmd160;
 
@@ -855,6 +858,7 @@ sub read_options
 	elsif (/^no-bf$/)	{ $no_bf=1; }
 	elsif (/^no-cast$/)	{ $no_cast=1; }
 	elsif (/^no-md2$/)  	{ $no_md2=1; }
+	elsif (/^no-md4$/)	{ $no_md4=1; }
 	elsif (/^no-md5$/)	{ $no_md5=1; }
 	elsif (/^no-sha$/)	{ $no_sha=1; }
 	elsif (/^no-sha1$/)	{ $no_sha1=1; }

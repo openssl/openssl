@@ -1833,3 +1833,9 @@ X509_NAME_print_ex_fp                   2429
 ASN1_STRING_print_ex_fp                 2430
 X509_NAME_print_ex                      2431
 ASN1_STRING_print_ex                    2432
+MD4                                     2433
+MD4_Transform                           2434
+MD4_Final                               2435
+MD4_Update                              2436
+MD4_Init                                2437
+EVP_md4                                 2438

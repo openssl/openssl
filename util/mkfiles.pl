@@ -10,6 +10,7 @@ my @dirs = (
 ".",
 "crypto",
 "crypto/md2",
+"crypto/md4",
 "crypto/md5",
 "crypto/sha",
 "crypto/mdc2",

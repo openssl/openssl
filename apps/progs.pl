@@ -41,7 +41,7 @@ foreach (@ARGV)
 		{ print $str; }
 	}
 
-foreach ("md2","md5","sha","sha1","mdc2","rmd160")
+foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
 	{
 	push(@files,$_);
 	printf "\t{FUNC_TYPE_MD,\"%s\",dgst_main},\n",$_;

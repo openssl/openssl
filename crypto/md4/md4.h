@@ -1,4 +1,4 @@
-/* crypto/evp/c_alld.c */
+/* crypto/md4/md4.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,48 +56,59 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/pkcs12.h>
-#include <openssl/objects.h>
+#ifndef HEADER_MD4_H
+#define HEADER_MD4_H
 
-void OpenSSL_add_all_digests(void)
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+#ifdef NO_MD4
+#error MD4 is disabled.
+#endif
+
+/*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! MD4_LONG has to be at least 32 bits wide. If it's wider, then !
+ * ! MD4_LONG_LOG2 has to be defined along.			   !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+
+#if defined(WIN16) || defined(__LP32__)
+#define MD4_LONG unsigned long
+#elif defined(_CRAY) || defined(__ILP64__)
+#define MD4_LONG unsigned long
+#define MD4_LONG_LOG2 3
+/*
+ * _CRAY note. I could declare short, but I have no idea what impact
+ * does it have on performance on none-T3E machines. I could declare
+ * int, but at least on C90 sizeof(int) can be chosen at compile time.
+ * So I've chosen long...
+ *					<appro@fy.chalmers.se>
+ */
+#else
+#define MD4_LONG unsigned int
+#endif
+
+#define MD4_CBLOCK	64
+#define MD4_LBLOCK	(MD4_CBLOCK/4)
+#define MD4_DIGEST_LENGTH 16
+
+typedef struct MD4state_st
 	{
-#ifndef NO_MD2
-	EVP_add_digest(EVP_md2());
+	MD4_LONG A,B,C,D;
+	MD4_LONG Nl,Nh;
+	MD4_LONG data[MD4_LBLOCK];
+	int num;
+	} MD4_CTX;
+
+void MD4_Init(MD4_CTX *c);
+void MD4_Update(MD4_CTX *c, const void *data, unsigned long len);
+void MD4_Final(unsigned char *md, MD4_CTX *c);
+unsigned char *MD4(const unsigned char *d, unsigned long n, unsigned char *md);
+void MD4_Transform(MD4_CTX *c, const unsigned char *b);
+#ifdef  __cplusplus
+}
 #endif
-#ifndef NO_MD4
-	EVP_add_digest(EVP_md4());
+
 #endif
-#ifndef NO_MD5
-	EVP_add_digest(EVP_md5());
-	EVP_add_digest_alias(SN_md5,"ssl2-md5");
-	EVP_add_digest_alias(SN_md5,"ssl3-md5");
-#endif
-#ifndef NO_SHA
-	EVP_add_digest(EVP_sha());
-#ifndef NO_DSA
-	EVP_add_digest(EVP_dss());
-#endif
-#endif
-#ifndef NO_SHA
-	EVP_add_digest(EVP_sha1());
-	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
-	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
-#ifndef NO_DSA
-	EVP_add_digest(EVP_dss1());
-	EVP_add_digest_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
-	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
-	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
-#endif
-#endif
-#if !defined(NO_MDC2) && !defined(NO_DES)
-	EVP_add_digest(EVP_mdc2());
-#endif
-#ifndef NO_RIPEMD
-	EVP_add_digest(EVP_ripemd160());
-	EVP_add_digest_alias(SN_ripemd160,"ripemd");
-	EVP_add_digest_alias(SN_ripemd160,"rmd160");
-#endif
-	}

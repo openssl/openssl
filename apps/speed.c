@@ -134,6 +134,9 @@
 #ifndef NO_MDC2
 #include <openssl/mdc2.h>
 #endif
+#ifndef NO_MD4
+#include <openssl/md4.h>
+#endif
 #ifndef NO_MD5
 #include <openssl/md5.h>
 #endif
@@ -309,7 +312,7 @@ int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
-#define ALGOR_NUM	14
+#define ALGOR_NUM	15
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -321,6 +324,9 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef NO_MDC2
 	unsigned char mdc2[MDC2_DIGEST_LENGTH];
+#endif
+#ifndef NO_MD4
+	unsigned char md4[MD4_DIGEST_LENGTH];
 #endif
 #ifndef NO_MD5
 	unsigned char md5[MD5_DIGEST_LENGTH];
@@ -363,23 +369,24 @@ int MAIN(int argc, char **argv)
 #endif
 #define	D_MD2		0
 #define	D_MDC2		1
-#define	D_MD5		2
-#define	D_HMAC		3
-#define	D_SHA1		4
-#define D_RMD160	5
-#define	D_RC4		6
-#define	D_CBC_DES	7
-#define	D_EDE3_DES	8
-#define	D_CBC_IDEA	9
-#define	D_CBC_RC2	10
-#define	D_CBC_RC5	11
-#define	D_CBC_BF	12
-#define	D_CBC_CAST	13
+#define	D_MD4		2
+#define	D_MD5		3
+#define	D_HMAC		4
+#define	D_SHA1		5
+#define D_RMD160	6
+#define	D_RC4		7
+#define	D_CBC_DES	8
+#define	D_EDE3_DES	9
+#define	D_CBC_IDEA	10
+#define	D_CBC_RC2	11
+#define	D_CBC_RC5	12
+#define	D_CBC_BF	13
+#define	D_CBC_CAST	14
 	double d,results[ALGOR_NUM][SIZE_NUM];
 	static int lengths[SIZE_NUM]={8,64,256,1024,8*1024};
 	long c[ALGOR_NUM][SIZE_NUM];
 	static char *names[ALGOR_NUM]={
-		"md2","mdc2","md5","hmac(md5)","sha1","rmd160","rc4",
+		"md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
 		"des cbc","des ede3","idea cbc",
 		"rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc"};
 #define	R_DSA_512	0
@@ -469,6 +476,10 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef NO_MDC2
 			if (strcmp(*argv,"mdc2") == 0) doit[D_MDC2]=1;
+		else
+#endif
+#ifndef NO_MD4
+			if (strcmp(*argv,"md4") == 0) doit[D_MD4]=1;
 		else
 #endif
 #ifndef NO_MD5
@@ -582,8 +593,34 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 			{
-			BIO_printf(bio_err,"bad option or value, pick one of\n");
-			BIO_printf(bio_err,"md2      mdc2	md5      hmac      sha1    rmd160\n");
+			BIO_printf(bio_err,"Error: bad option or value\n");
+			BIO_printf(bio_err,"\n");
+			BIO_printf(bio_err,"Available values:\n");
+#ifndef NO_MD2
+			BIO_printf(bio_err,"md2      ");
+#endif
+#ifndef NO_MDC2
+			BIO_printf(bio_err,"mdc2     ");
+#endif
+#ifndef NO_MD4
+			BIO_printf(bio_err,"md4      ");
+#endif
+#ifndef NO_MD5
+			BIO_printf(bio_err,"md5      ");
+#ifndef NO_HMAC
+			BIO_printf(bio_err,"hmac     ");
+#endif
+#endif
+#ifndef NO_SHA1
+			BIO_printf(bio_err,"sha1     ");
+#endif
+#ifndef NO_RIPEMD160
+			BIO_printf(bio_err,"rmd160");
+#endif
+#if !defined(NO_MD2) || !defined(NO_MDC2) || !defined(NO_MD4) || !defined(NO_MD5) || !defined(NO_SHA1) || !defined(NO_RIPEMD160)
+			BIO_printf(bio_err,"\n");
+#endif
+
 #ifndef NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
 #endif
@@ -596,24 +633,46 @@ int MAIN(int argc, char **argv)
 #ifndef NO_BF
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(NO_IDEA) && !defined(NO_RC2) && !defined(NO_BF) && !defined(NO_RC5)
+#if !defined(NO_IDEA) || !defined(NO_RC2) || !defined(NO_BF) || !defined(NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
+
 			BIO_printf(bio_err,"des-cbc  des-ede3 ");
 #ifndef NO_RC4
 			BIO_printf(bio_err,"rc4");
 #endif
+			BIO_printf(bio_err,"\n");
+
 #ifndef NO_RSA
-			BIO_printf(bio_err,"\nrsa512   rsa1024  rsa2048  rsa4096\n");
+			BIO_printf(bio_err,"rsa512   rsa1024  rsa2048  rsa4096\n");
 #endif
+
 #ifndef NO_DSA
-			BIO_printf(bio_err,"\ndsa512   dsa1024  dsa2048\n");
+			BIO_printf(bio_err,"dsa512   dsa1024  dsa2048\n");
 #endif
-			BIO_printf(bio_err,"idea     rc2      des      rsa    blowfish\n");
+
+#ifndef NO_IDEA
+			BIO_printf(bio_err,"idea     ");
+#endif
+#ifndef NO_RC2
+			BIO_printf(bio_err,"rc2      ");
+#endif
+#ifndef NO_DES
+			BIO_printf(bio_err,"des      ");
+#endif
+#ifndef NO_RSA
+			BIO_printf(bio_err,"rsa      ");
+#endif
+#ifndef NO_BF
+			BIO_printf(bio_err,"blowfish");
+#endif
+#if !defined(NO_IDEA) || !defined(NO_RC2) || !defined(NO_DES) || !defined(NO_RSA) || !defined(NO_BF)
 			BIO_printf(bio_err,"\n");
+#endif
+
 #ifdef TIMES
-			BIO_printf(bio_err,"Available options:\n");
 			BIO_printf(bio_err,"\n");
+			BIO_printf(bio_err,"Available options:\n");
 			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
 #endif
 			goto end;
@@ -713,6 +772,7 @@ int MAIN(int argc, char **argv)
 		} while (d <3);
 	c[D_MD2][0]=count/10;
 	c[D_MDC2][0]=count/10;
+	c[D_MD4][0]=count;
 	c[D_MD5][0]=count;
 	c[D_HMAC][0]=count;
 	c[D_SHA1][0]=count;
@@ -730,6 +790,7 @@ int MAIN(int argc, char **argv)
 		{
 		c[D_MD2][i]=c[D_MD2][0]*4*lengths[0]/lengths[i];
 		c[D_MDC2][i]=c[D_MDC2][0]*4*lengths[0]/lengths[i];
+		c[D_MD4][i]=c[D_MD4][0]*4*lengths[0]/lengths[i];
 		c[D_MD5][i]=c[D_MD5][0]*4*lengths[0]/lengths[i];
 		c[D_HMAC][i]=c[D_HMAC][0]*4*lengths[0]/lengths[i];
 		c[D_SHA1][i]=c[D_SHA1][0]*4*lengths[0]/lengths[i];
@@ -829,6 +890,23 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MDC2],d);
 			results[D_MDC2][j]=((double)count)/d*lengths[j];
+			}
+		}
+#endif
+
+#ifndef NO_MD4
+	if (doit[D_MD4])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_MD4],c[D_MD4][j],lengths[j]);
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(c[D_MD4][j]); count++)
+				MD4(&(buf[0]),(unsigned long)lengths[j],&(md4[0]));
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
+				count,names[D_MD4],d);
+			results[D_MD4][j]=((double)count)/d*lengths[j];
 			}
 		}
 #endif

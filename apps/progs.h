@@ -106,6 +106,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"smime",smime_main},
 	{FUNC_TYPE_GENERAL,"rand",rand_main},
 	{FUNC_TYPE_MD,"md2",dgst_main},
+	{FUNC_TYPE_MD,"md4",dgst_main},
 	{FUNC_TYPE_MD,"md5",dgst_main},
 	{FUNC_TYPE_MD,"sha",dgst_main},
 	{FUNC_TYPE_MD,"sha1",dgst_main},

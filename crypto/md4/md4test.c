@@ -1,4 +1,4 @@
-/* crypto/evp/c_alld.c */
+/* crypto/md4/md4test.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,47 +57,75 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/pkcs12.h>
-#include <openssl/objects.h>
+#include <string.h>
+#include <stdlib.h>
 
-void OpenSSL_add_all_digests(void)
+#ifdef NO_MD4
+int main(int argc, char *argv[])
+{
+    printf("No MD4 support\n");
+    return(0);
+}
+#else
+#include <openssl/md4.h>
+
+static char *test[]={
+	"",
+	"a",
+	"abc",
+	"message digest",
+	"abcdefghijklmnopqrstuvwxyz",
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+	NULL,
+	};
+
+static char *ret[]={
+"31d6cfe0d16ae931b73c59d7e0c089c0",
+"bde52cb31de33e46245e05fbdbd6fb24",
+"a448017aaf21d8525fc10ae87aa6729d",
+"d9130a8164549fe818874806e1c7014b",
+"d79e1c308aa5bbcdeea8ed63df412da9",
+"043f8582f241db351ce627e153e7f0e4",
+"e33b4ddc9c38f2199c3e7b164fcc0536",
+};
+
+static char *pt(unsigned char *md);
+int main(int argc, char *argv[])
 	{
-#ifndef NO_MD2
-	EVP_add_digest(EVP_md2());
-#endif
-#ifndef NO_MD4
-	EVP_add_digest(EVP_md4());
-#endif
-#ifndef NO_MD5
-	EVP_add_digest(EVP_md5());
-	EVP_add_digest_alias(SN_md5,"ssl2-md5");
-	EVP_add_digest_alias(SN_md5,"ssl3-md5");
-#endif
-#ifndef NO_SHA
-	EVP_add_digest(EVP_sha());
-#ifndef NO_DSA
-	EVP_add_digest(EVP_dss());
-#endif
-#endif
-#ifndef NO_SHA
-	EVP_add_digest(EVP_sha1());
-	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
-	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
-#ifndef NO_DSA
-	EVP_add_digest(EVP_dss1());
-	EVP_add_digest_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
-	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
-	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
-#endif
-#endif
-#if !defined(NO_MDC2) && !defined(NO_DES)
-	EVP_add_digest(EVP_mdc2());
-#endif
-#ifndef NO_RIPEMD
-	EVP_add_digest(EVP_ripemd160());
-	EVP_add_digest_alias(SN_ripemd160,"ripemd");
-	EVP_add_digest_alias(SN_ripemd160,"rmd160");
-#endif
+	int i,err=0;
+	unsigned char **P,**R;
+	char *p;
+
+	P=(unsigned char **)test;
+	R=(unsigned char **)ret;
+	i=1;
+	while (*P != NULL)
+		{
+		p=pt(MD4(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
+		if (strcmp(p,(char *)*R) != 0)
+			{
+			printf("error calculating MD4 on '%s'\n",*P);
+			printf("got %s instead of %s\n",p,*R);
+			err++;
+			}
+		else
+			printf("test %d ok\n",i);
+		i++;
+		R++;
+		P++;
+		}
+	exit(err);
+	return(0);
 	}
+
+static char *pt(unsigned char *md)
+	{
+	int i;
+	static char buf[80];
+
+	for (i=0; i<MD4_DIGEST_LENGTH; i++)
+		sprintf(&(buf[i*2]),"%02x",md[i]);
+	return(buf);
+	}
+#endif

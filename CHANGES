@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) MD4 implemented.
+     [Assar Westerlund <assar@assaris.sics.se>, Richard Levitte]
+
   *) Add the arguments -CAfile and -CApath to the pkcs12 utility.
      [Richard Levitte]
 

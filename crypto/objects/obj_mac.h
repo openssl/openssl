@@ -1290,13 +1290,13 @@
 #define NID_ad_ca_issuers		179
 #define OBJ_ad_ca_issuers		OBJ_id_ad,2L
 
-#define SN_ad_timeStamping		"timestamping"
-#define LN_ad_timeStamping		"Time Stamping"
+#define SN_ad_timeStamping		"ad_timestamping"
+#define LN_ad_timeStamping		"AD Time Stamping"
 #define NID_ad_timeStamping		363
 #define OBJ_ad_timeStamping		OBJ_id_ad,3L
 
-#define SN_ad_dvcs		"DVCS"
-#define LN_ad_dvcs		"dvcs"
+#define SN_ad_dvcs		"AD_DVCS"
+#define LN_ad_dvcs		"ad dvcs"
 #define NID_ad_dvcs		364
 #define OBJ_ad_dvcs		OBJ_id_ad,4L
 

@@ -993,8 +993,9 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[2695]),0},
 {"id-cct-PKIResponse","id-cct-PKIResponse",NID_id_cct_PKIResponse,8,
 	&(lvalues[2703]),0},
-{"timestamping","Time Stamping",NID_ad_timeStamping,8,&(lvalues[2711]),0},
-{"DVCS","dvcs",NID_ad_dvcs,8,&(lvalues[2719]),0},
+{"ad_timestamping","AD Time Stamping",NID_ad_timeStamping,8,
+	&(lvalues[2711]),0},
+{"AD_DVCS","ad dvcs",NID_ad_dvcs,8,&(lvalues[2719]),0},
 {"basicOCSPResponse","Basic OCSP Response",NID_id_pkix_OCSP_basic,9,
 	&(lvalues[2727]),0},
 {"Nonce","OCSP Nonce",NID_id_pkix_OCSP_Nonce,9,&(lvalues[2736]),0},
@@ -1019,6 +1020,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
+&(nid_objs[364]),/* "AD_DVCS" */
 &(nid_objs[91]),/* "BF-CBC" */
 &(nid_objs[93]),/* "BF-CFB" */
 &(nid_objs[92]),/* "BF-ECB" */
@@ -1051,7 +1053,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[70]),/* "DSA-SHA1-old" */
 &(nid_objs[67]),/* "DSA-old" */
 &(nid_objs[297]),/* "DVCS" */
-&(nid_objs[364]),/* "DVCS" */
 &(nid_objs[48]),/* "Email" */
 &(nid_objs[99]),/* "G" */
 &(nid_objs[101]),/* "I" */
@@ -1133,6 +1134,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[287]),/* "ac-auditEntity" */
 &(nid_objs[288]),/* "ac-targeting" */
 &(nid_objs[368]),/* "acceptableResponses" */
+&(nid_objs[363]),/* "ad_timestamping" */
 &(nid_objs[376]),/* "algorithm" */
 &(nid_objs[370]),/* "archiveCutoff" */
 &(nid_objs[177]),/* "authorityInfoAccess" */
@@ -1390,7 +1392,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[82]),/* "subjectKeyIdentifier" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[133]),/* "timeStamping" */
-&(nid_objs[363]),/* "timestamping" */
 &(nid_objs[375]),/* "trustRoot" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
@@ -1400,6 +1401,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 };
 
 static ASN1_OBJECT *ln_objs[NUM_LN]={
+&(nid_objs[363]),/* "AD Time Stamping" */
 &(nid_objs[368]),/* "Acceptable OCSP Responses" */
 &(nid_objs[177]),/* "Authority Information Access" */
 &(nid_objs[365]),/* "Basic OCSP Response" */
@@ -1454,7 +1456,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
 &(nid_objs[133]),/* "Time Stamping" */
-&(nid_objs[363]),/* "Time Stamping" */
 &(nid_objs[375]),/* "Trust Root" */
 &(nid_objs[12]),/* "X509" */
 &(nid_objs[90]),/* "X509v3 Authority Key Identifier" */
@@ -1475,6 +1476,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[289]),/* "aaControls" */
 &(nid_objs[287]),/* "ac-auditEntity" */
 &(nid_objs[288]),/* "ac-targeting" */
+&(nid_objs[364]),/* "ad dvcs" */
 &(nid_objs[376]),/* "algorithm" */
 &(nid_objs[91]),/* "bf-cbc" */
 &(nid_objs[93]),/* "bf-cfb" */
@@ -1514,7 +1516,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[66]),/* "dsaWithSHA" */
 &(nid_objs[113]),/* "dsaWithSHA1" */
 &(nid_objs[70]),/* "dsaWithSHA1-old" */
-&(nid_objs[364]),/* "dvcs" */
 &(nid_objs[297]),/* "dvcs" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */

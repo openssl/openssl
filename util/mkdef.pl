@@ -31,7 +31,8 @@ close(IN);
 # defined with ifndef(NO_XXX) are not included in the .def file, and everything
 # in directory xxx is ignored.
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
-my $no_cast; my $no_md2; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
+my $no_cast;
+my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0;
 
 foreach (@ARGV, split(/ /, $options))
@@ -59,6 +60,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-bf$/)       { $no_bf=1; }
 	elsif (/^no-cast$/)     { $no_cast=1; }
 	elsif (/^no-md2$/)      { $no_md2=1; }
+	elsif (/^no-md4$/)      { $no_md4=1; }
 	elsif (/^no-md5$/)      { $no_md5=1; }
 	elsif (/^no-sha$/)      { $no_sha=1; }
 	elsif (/^no-ripemd$/)   { $no_ripemd=1; }
@@ -92,6 +94,7 @@ $crypto.=" crypto/rc2/rc2.h" unless $no_rc2;
 $crypto.=" crypto/bf/blowfish.h" unless $no_bf;
 $crypto.=" crypto/cast/cast.h" unless $no_cast;
 $crypto.=" crypto/md2/md2.h" unless $no_md2;
+$crypto.=" crypto/md4/md4.h" unless $no_md4;
 $crypto.=" crypto/md5/md5.h" unless $no_md5;
 $crypto.=" crypto/mdc2/mdc2.h" unless $no_mdc2;
 $crypto.=" crypto/sha/sha.h" unless $no_sha;
@@ -204,6 +207,7 @@ sub do_defs
 			NO_BF		=> 0,
 			NO_CAST		=> 0,
 			NO_MD2		=> 0,
+			NO_MD4		=> 0,
 			NO_MD5		=> 0,
 			NO_SHA		=> 0,
 			NO_RIPEMD	=> 0,
@@ -322,6 +326,7 @@ sub do_defs
 				($tag{'NO_BF'} == 0   || !$no_bf) &&
 				($tag{'NO_CAST'} == 0 || !$no_cast) &&
 				($tag{'NO_MD2'} == 0  || !$no_md2) &&
+				($tag{'NO_MD4'} == 0  || !$no_md4) &&
 				($tag{'NO_MD5'} == 0  || !$no_md5) &&
 				($tag{'NO_SHA'} == 0  || !$no_sha) &&
 				($tag{'NO_RIPEMD'} == 0 || !$no_ripemd) &&
@@ -351,6 +356,7 @@ sub do_defs
 			next if(/EVP_dss/ and $no_dsa);
 			next if(/EVP_idea/ and $no_idea);
 			next if(/EVP_md2/ and $no_md2);
+			next if(/EVP_md4/ and $no_md4);
 			next if(/EVP_md5/ and $no_md5);
 			next if(/EVP_rc2/ and $no_rc2);
 			next if(/EVP_rc4/ and $no_rc4);
