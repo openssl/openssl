@@ -239,7 +239,7 @@ int main(int Argc, char *Argv[])
 	if(getenv("OPENSSL_FIPS")) {
 #if defined(_WIN32)
 		char filename[MAX_PATH] = "";
-		GetModuleFileName( NULL, filename, MAX_PATH) ;
+		GetModuleFileNameA( NULL, filename, MAX_PATH) ;
 		p = filename;
 #else
 		p = Argv[0];
