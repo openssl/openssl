@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <string.h>
 #include <limits.h>
 
 #ifdef FIPS

@@ -6,7 +6,7 @@ cd fips/sha1
 $S fips_sha1dgst.c fips_sha1_selftest.c fips_standalone_sha1.c fips_sha_locl.h fips_md32_common.h > standalone.sha1
 
 cd ..
-$S fips.c fips_err_wrapper.c fips.h fips_err.c > fingerprint.sha1
+$S fips.c fips_err_wrapper.c fips.h fips_err.h > fingerprint.sha1
 
 cd rand
 $S fips_rand.c fips_rand.h > fingerprint.sha1
