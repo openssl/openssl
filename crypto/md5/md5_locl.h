@@ -112,7 +112,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 #define HASH_TRANSFORM		MD5_Transform
 #define HASH_FINAL		MD5_Final
 #define HASH_BLOCK_HOST_ORDER	md5_block_host_order
-#if defined(B_ENDIAN) || defined(md5_block_data_order)
+#if !defined(L_ENDIAN) || defined(md5_block_data_order)
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
 /*
  * Little-endians (Intel and Alpha) feel better without this.
