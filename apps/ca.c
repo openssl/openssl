@@ -1581,6 +1581,10 @@ bad:
 #else
 			strcat(buf[1],"-old");
 #endif
+			BIO_free(in);
+			in = NULL;
+			BIO_free(out);
+			out = NULL;
 			if (rename(dbfile,buf[1]) < 0)
 				{
 				BIO_printf(bio_err,"unable to rename %s to %s\n", dbfile, buf[1]);
