@@ -95,7 +95,7 @@ int main(int argc,char **argv)
 		break;
 	    fgets(line+n-1,sizeof(line)-n+1,fp);
 	    n=strlen(line);
-	    //	    printf("line=%s\n",line);
+	    /*	    printf("line=%s\n",line); */
 	    assert(!feof(fp));
 	    }
 
@@ -113,8 +113,8 @@ int main(int argc,char **argv)
 	    }
 	assert(t == 0);
 	assert((bit%8) == 0);
-	//	dump(buf,bit/8);
-	//	putchar('\n');
+	/*	dump(buf,bit/8); */
+	/*	putchar('\n'); */
 	if(phase < 3)
 	    {
 	    SHA1(buf,bit/8,md);
