@@ -382,7 +382,7 @@ static void kc_should_retry_util(kc_exist_state *s, time_t retry)
 	if((*s == kc_error) || (*s == kc_absent))
 		{
 		time_t now = time(NULL);
-		if((now - retry) >= keyclient_retry_period)
+		if((now - retry) >= (time_t)keyclient_retry_period)
 			*s = kc_discover;
 		}
 	}
