@@ -239,22 +239,15 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 
 	n = BN_num_bits(range); /* n > 0 */
 
+	/* BN_is_bit_set(range, n - 1) always holds */
+
 	if (n == 1)
 		{
 		if (!BN_zero(r)) return 0;
 		}
-	else if (BN_is_bit_set(range, n - 2))
+	else if (!BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3))
 		{
-		do
-			{
-			/* range = 11..._2, so each iteration succeeds with probability >= .75 */
-			if (!bn_rand(r, n, -1, 0)) return 0;
-			}
-		while (BN_cmp(r, range) >= 0);
-		}
-	else
-		{
-		/* range = 10..._2,
+		/* range = 100..._2,
 		 * so  3*range (= 11..._2)  is exactly one bit longer than  range */
 		do
 			{
@@ -270,6 +263,15 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 				if (BN_cmp(r, range) >= 0)
 					if (!BN_sub(r, r, range)) return 0;
 				}
+			}
+		while (BN_cmp(r, range) >= 0);
+		}
+	else
+		{
+		do
+			{
+			/* range = 11..._2  or  range = 101..._2 */
+			if (!bn_rand(r, n, -1, 0)) return 0;
 			}
 		while (BN_cmp(r, range) >= 0);
 		}
