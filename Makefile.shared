@@ -114,6 +114,7 @@ DO_GNU=$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
 	LIBDEPS="$(LIBDEPS) -lc" \
+	ALLSYMSFLAGS='-Wl,--whole-archive' \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
 	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX" \
 	SHAREDCMD='$(CC)'
