@@ -568,6 +568,7 @@ void OCSP_add_standard_extension(void);
 #define OCSP_F_BASIC_RESPONSE_VERIFY			 101
 #define OCSP_F_CERT_ID_NEW				 102
 #define OCSP_F_CERT_STATUS_NEW				 103
+#define OCSP_F_D2I_OCSP_NONCE				 109
 #define OCSP_F_REQUEST_VERIFY				 104
 #define OCSP_F_RESPONSE_VERIFY				 105
 #define OCSP_F_S2I_OCSP_NONCE				 107
