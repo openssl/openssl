@@ -242,11 +242,9 @@ int RAND_poll(void)
 		{
 		GETCURSORINFO cursor;
 		GETFOREGROUNDWINDOW win;
-		GETQUEUESTATUS queue;
 
 		win = (GETFOREGROUNDWINDOW) GetProcAddress(user, "GetForegroundWindow");
 		cursor = (GETCURSORINFO) GetProcAddress(user, "GetCursorInfo");
-		queue = (GETQUEUESTATUS) GetProcAddress(user, "GetQueueStatus");
 
 		if (win)
 		{
@@ -262,13 +260,6 @@ int RAND_poll(void)
                         p->cbSize = sizeof(CURSORINFO);
 			if (cursor(p))
 			     RAND_add(p+sizeof(p->cbSize), p->cbSize-sizeof(p->cbSize), 0);
-			}
-
-		if (queue)
-			{
-			/* message queue status */
-			w = queue(QS_ALLEVENTS);
-			RAND_add(&w, sizeof(w), 0);
 			}
 		}
 
