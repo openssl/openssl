@@ -90,6 +90,7 @@ extern "C" {
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
 #if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
+#undef BN_DIV2W
 #define BN_DIV2W
 #endif
 
@@ -344,7 +345,7 @@ int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
-	       BN_CTX *ctx);
+	BN_CTX *ctx);
 int	BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, const BIGNUM *a,BN_CTX *ctx);
 BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w);
@@ -401,11 +402,11 @@ BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
 	const BIGNUM *add, const BIGNUM *rem,
 	void (*callback)(int,int,void *),void *cb_arg);
 int	BN_is_prime(const BIGNUM *p,int nchecks,
-		void (*callback)(int,int,void *),
-		BN_CTX *ctx,void *cb_arg);
+	void (*callback)(int,int,void *),
+	BN_CTX *ctx,void *cb_arg);
 int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
-		void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
-		int do_trial_division);
+	void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
+	int do_trial_division);
 void	ERR_load_BN_strings(void );
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
@@ -432,11 +433,11 @@ BN_RECP_CTX *BN_RECP_CTX_new(void);
 void	BN_RECP_CTX_free(BN_RECP_CTX *recp);
 int	BN_RECP_CTX_set(BN_RECP_CTX *recp,const BIGNUM *rdiv,BN_CTX *ctx);
 int	BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
-		BN_RECP_CTX *recp,BN_CTX *ctx);
+	BN_RECP_CTX *recp,BN_CTX *ctx);
 int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-			const BIGNUM *m, BN_CTX *ctx);
+	const BIGNUM *m, BN_CTX *ctx);
 int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
-		BN_RECP_CTX *recp, BN_CTX *ctx);
+	BN_RECP_CTX *recp, BN_CTX *ctx);
 
 /* library internal functions */
 
@@ -462,11 +463,9 @@ void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
 BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
-BN_ULONG bn_add_part_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num, int delta);
-BN_ULONG bn_sub_part_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num, int delta);
 
 #ifdef BN_DEBUG
-  void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
+void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
 # define bn_print(a) {fprintf(stderr, #a "="); BN_print_fp(stderr,a); \
    fprintf(stderr,"\n");}
 # define bn_dump(a,n) bn_dump1(stderr,#a,a,n);
