@@ -532,6 +532,7 @@ DECLARE_ASN1_FUNCTIONS(OCSP_CRLID)
 DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* a, unsigned long flags);
+int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags);
 
 int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 				X509_STORE *st, unsigned long flags);

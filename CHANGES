@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New OCSP utility. Allows OCSP requests to be generated or
+     read. The request can be sent to a responder and the output
+     parsed, outputed or printed in text form. Not complete yet:
+     still needs to check the OCSP response validity.
+     [Steve Henson]
+
   *) New subcommands for 'openssl ca':
      'openssl ca -status <serial>' prints the status of the cert with
      the given serial number (according to the index file).

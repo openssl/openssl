@@ -180,7 +180,7 @@ err:
 
 int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
         {
-	int i;
+	int i, ret = 0;
 	long l;
 	unsigned char *p;
 	OCSP_CERTID *cid = NULL;
@@ -209,7 +209,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 
 	p = ASN1_STRING_data(rb->response);
 	i = ASN1_STRING_length(rb->response);
-	if (!(d2i_OCSP_BASICRESP(&br, &p, i))) goto err;
+	if (!(br = OCSP_response_get1_basic(o))) goto err;
 	rd = br->tbsResponseData;
 	l=ASN1_INTEGER_get(rd->version);
 	if (BIO_printf(bp,"\n    Version: %lu (0x%lx)\n",
@@ -283,7 +283,8 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		PEM_write_bio_X509(bp,sk_X509_value(br->certs,i));
 		}
 
-	return 1;
+	ret = 1;
 err:
-	return 0;
+	OCSP_BASICRESP_free(br);
+	return ret;
 	}
