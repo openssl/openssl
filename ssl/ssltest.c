@@ -117,7 +117,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>

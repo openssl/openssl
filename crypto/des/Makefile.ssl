@@ -6,7 +6,7 @@ DIR=	des
 TOP=	../..
 CC=	cc
 CPP=	$(CC) -E
-INCLUDES=-I../../include
+INCLUDES=-I$(TOP) -I../../include
 CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
@@ -161,17 +161,17 @@ ecb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ecb_enc.o: des_locl.h ecb_enc.c spr.h
 ede_cbcm_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ede_cbcm_enc.o: ../../include/openssl/opensslconf.h des_locl.h ede_cbcm_enc.c
-enc_read.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-enc_read.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-enc_read.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+enc_read.o: ../../e_os.h ../../include/openssl/bio.h
+enc_read.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+enc_read.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 enc_read.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 enc_read.o: ../../include/openssl/opensslconf.h
 enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 enc_read.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 enc_read.o: ../cryptlib.h des_locl.h enc_read.c
-enc_writ.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-enc_writ.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-enc_writ.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+enc_writ.o: ../../e_os.h ../../include/openssl/bio.h
+enc_writ.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+enc_writ.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 enc_writ.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 enc_writ.o: ../../include/openssl/opensslconf.h
 enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
@@ -197,9 +197,9 @@ rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
 rand_key.o: rand_key.c
 read2pwd.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 read2pwd.o: ../../include/openssl/opensslconf.h des_locl.h read2pwd.c
-read_pwd.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-read_pwd.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-read_pwd.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+read_pwd.o: ../../e_os.h ../../include/openssl/bio.h
+read_pwd.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+read_pwd.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 read_pwd.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 read_pwd.o: ../../include/openssl/opensslconf.h
 read_pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h

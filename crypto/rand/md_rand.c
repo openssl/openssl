@@ -119,7 +119,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 #include <openssl/rand.h>
 #include "rand_lcl.h"

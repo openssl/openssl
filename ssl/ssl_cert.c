@@ -106,7 +106,7 @@
 
 #include <stdio.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif

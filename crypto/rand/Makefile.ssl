@@ -82,8 +82,8 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-md_rand.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+md_rand.o: ../../e_os.h ../../include/openssl/bio.h
+md_rand.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 md_rand.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 md_rand.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 md_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
@@ -97,11 +97,11 @@ rand_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rand_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rand_err.o: ../../include/openssl/symhacks.h rand_err.c
-rand_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-rand_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-rand_lib.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-rand_lib.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-rand_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+rand_lib.o: ../../e_os.h ../../include/openssl/asn1.h
+rand_lib.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+rand_lib.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+rand_lib.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+rand_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 rand_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
 rand_lib.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 rand_lib.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
@@ -115,23 +115,23 @@ rand_lib.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 rand_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rand_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 rand_lib.o: ../../include/openssl/symhacks.h rand_lib.c
-rand_unix.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-rand_unix.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+rand_unix.o: ../../e_os.h ../../include/openssl/bio.h
+rand_unix.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rand_unix.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rand_unix.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_unix.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rand_unix.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rand_unix.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rand_unix.o: ../cryptlib.h rand_lcl.h rand_unix.c
-rand_win.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-rand_win.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+rand_win.o: ../../e_os.h ../../include/openssl/bio.h
+rand_win.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rand_win.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rand_win.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_win.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rand_win.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rand_win.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rand_win.o: ../cryptlib.h rand_lcl.h rand_win.c
-randfile.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+randfile.o: ../../e_os.h ../../include/openssl/crypto.h
 randfile.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 randfile.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 randfile.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h

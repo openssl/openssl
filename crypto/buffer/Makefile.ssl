@@ -5,7 +5,7 @@
 DIR=	buffer
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I../../include
+INCLUDES= -I.. -I$(TOP) -I../../include
 CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
@@ -86,8 +86,8 @@ buf_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 buf_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 buf_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 buf_err.o: ../../include/openssl/symhacks.h buf_err.c
-buffer.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-buffer.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+buffer.o: ../../e_os.h ../../include/openssl/bio.h
+buffer.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 buffer.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buffer.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h

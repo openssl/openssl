@@ -116,7 +116,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 #include <openssl/buffer.h>
 #include <openssl/comp.h>

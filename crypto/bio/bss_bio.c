@@ -22,7 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 #ifndef SSIZE_MAX
 # define SSIZE_MAX INT_MAX
 #endif

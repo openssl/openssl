@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>

@@ -61,7 +61,7 @@
 #endif
 
 
-#include "openssl/e_os.h" /* OPENSSL_EXTERN */
+#include "e_os.h" /* OPENSSL_EXTERN */
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN

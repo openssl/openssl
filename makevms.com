@@ -410,7 +410,7 @@ $ IF F$PARSE("SYS$DISK:[.INCLUDE.OPENSSL]") .EQS. "" THEN -
 $!
 $! Copy All The ".H" Files From The Main Directory.
 $!
-$ EXHEADER := e_os.h,e_os2.h
+$ EXHEADER := e_os2.h
 $ COPY 'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
