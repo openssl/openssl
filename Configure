@@ -142,11 +142,26 @@ my %table=(
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::", # BN_LLONG does not work
+
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# If hpux-cc fails (e.g. during "make test"), try the next one; otherwise,
+# please report your OS and compiler version to the bugs@openssl.org
+# mailing list.
+"hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
+
 "hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# If hpux-gcc fails, try this one:
+"hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
+
 # HPUX 10.X config.  Supports threads.
 "hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# If hpux10-cc fails, try this one:
+"hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+
 "hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# If hpux10-gcc fails, try this one:
+"hpux10-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+
 # HPUX 11.X from www.globus.org.
 # Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
 "hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
