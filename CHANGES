@@ -4,6 +4,24 @@
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Allow an application to disable the automatic SSL chain building.
+     Before this a rather primitive chain build was always performed in
+     ssl3_output_cert_chain(): an application had no way to send the 
+     correct chain if the automatic operation produced an incorrect result.
+
+     Now the chain builder is disabled if either:
+
+     1. Extra certificates are added via SSL_CTX_add_extra_chain_cert().
+
+     2. The mode flag SSL_MODE_NO_AUTO_CHAIN is set.
+
+     The reasoning behind this is that an application would not want the
+     auto chain building to take place if extra chain certificates are
+     present and it might also want a means of sending no additional
+     certificates (for example the chain has two certificates and the
+     root is omitted).
+     [Steve Henson]
+
   *) Add the possibility to build without the ENGINE framework.
      [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
 

@@ -268,6 +268,13 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 	X509_STORE_CTX xs_ctx;
 	X509_OBJECT obj;
 
+	int no_chain;
+
+	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
+		no_chain = 1;
+	else
+		no_chain = 0;
+
 	/* TLSv1 sends a chain with nothing in it, instead of an alert */
 	buf=s->init_buf;
 	if (!BUF_MEM_grow_clean(buf,10))
@@ -277,7 +284,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 		}
 	if (x != NULL)
 		{
-		if(!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL))
+		if(!no_chain && !X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL))
 			{
 			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
 			return(0);
@@ -295,6 +302,10 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 			l2n3(n,p);
 			i2d_X509(x,&p);
 			l+=n+3;
+
+			if (no_chain)
+				break;
+
 			if (X509_NAME_cmp(X509_get_subject_name(x),
 				X509_get_issuer_name(x)) == 0) break;
 
@@ -306,8 +317,8 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 			 * ref count */
 			X509_free(x);
 			}
-
-		X509_STORE_CTX_cleanup(&xs_ctx);
+		if (!no_chain)
+			X509_STORE_CTX_cleanup(&xs_ctx);
 		}
 
 	/* Thawte special :-) */

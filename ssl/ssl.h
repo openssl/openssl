@@ -521,6 +521,8 @@ typedef struct ssl_session_st
 /* Never bother the application with retries if the transport
  * is blocking: */
 #define SSL_MODE_AUTO_RETRY 0x00000004L
+/* Don't attempt to automatically build certificate chain */
+#define SSL_MODE_NO_AUTO_CHAIN 0x00000008L
 
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
