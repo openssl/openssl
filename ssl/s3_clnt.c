@@ -117,6 +117,7 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 #include "ssl_locl.h"
+#include "cryptlib.h"
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
@@ -545,6 +546,7 @@ static int ssl3_client_hello(SSL *s)
 		*(p++)=i;
 		if (i != 0)
 			{
+			die(i <= sizeof s->session->session_id);
 			memcpy(p,s->session->session_id,i);
 			p+=i;
 			}
@@ -625,6 +627,14 @@ static int ssl3_get_server_hello(SSL *s)
 
 	/* get the session-id */
 	j= *(p++);
+
+       if(j > sizeof s->session->session_id)
+               {
+               al=SSL_AD_ILLEGAL_PARAMETER;
+               SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
+                      SSL_R_SSL3_SESSION_ID_TOO_LONG);
+               goto f_err;
+               }
 
 	if ((j != 0) && (j != SSL3_SESSION_ID_SIZE))
 		{

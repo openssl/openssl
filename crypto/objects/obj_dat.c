@@ -428,7 +428,7 @@ int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
 	unsigned long l;
 	unsigned char *p;
 	const char *s;
-	char tbuf[32];
+	char tbuf[DECIMAL_SIZE(i)+DECIMAL_SIZE(l)+2];
 
 	if (buf_len <= 0) return(0);
 

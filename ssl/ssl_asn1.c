@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "ssl_locl.h"
+#include "cryptlib.h"
 
 typedef struct ssl_session_asn1_st
 	{
@@ -275,6 +276,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 		os.length=i;
 
 	ret->session_id_length=os.length;
+	die(os.length <= sizeof ret->session_id);
 	memcpy(ret->session_id,os.data,os.length);
 
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
