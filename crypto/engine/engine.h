@@ -318,6 +318,7 @@ ENGINE *ENGINE_by_id(const char *id);
 /* Add all the built-in engines. */
 void ENGINE_load_openssl(void);
 void ENGINE_load_dynamic(void);
+#ifndef OPENSSL_NO_STATIC_ENGINE
 void ENGINE_load_cswift(void);
 void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
@@ -326,6 +327,7 @@ void ENGINE_load_ubsec(void);
 void ENGINE_load_aep(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_4758cca(void);
+#endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_builtin_engines(void);
 
