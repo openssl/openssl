@@ -1,3 +1,4 @@
+Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -1099,8 +1100,8 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= darwin-shared
 $shared_cflag = -fPIC
-$shared_ldflag = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
-$shared_extension = 
+$shared_ldflag = 
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 
 *** debug
@@ -1260,8 +1261,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$shared_extension = 
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** debug-linux-elf-noefence
@@ -2479,8 +2480,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$shared_extension = 
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** ncr-scde
@@ -2784,7 +2785,7 @@ $ranlib       =
 
 *** sco5-gcc-shared
 $cc           = gcc
-$cflags       = -O3 -DFILIO_H -fomit-frame-pointer
+$cflags       = -O3 -fomit-frame-pointer
 $unistd       = 
 $thread_cflag = 
 $lflags       = -lsocket -lresolv -lnsl
