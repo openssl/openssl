@@ -90,7 +90,8 @@ struct conf_method_st
 	int (MS_FAR *init)(CONF *conf);
 	int (MS_FAR *destroy)(CONF *conf);
 	int (MS_FAR *destroy_data)(CONF *conf);
-	int (MS_FAR *load)(CONF *conf, BIO *bp, long *eline);
+	int (MS_FAR *load)(CONF *conf, const char *name, long *eline);
+	int (MS_FAR *load_bio)(CONF *conf, BIO *bp, long *eline);
 	int (MS_FAR *dump)(CONF *conf, BIO *bp);
 	int (MS_FAR *is_number)(CONF *conf, char c);
 	int (MS_FAR *to_int)(CONF *conf, char c);
@@ -166,7 +167,9 @@ long NCONF_get_number(CONF *conf,char *group,char *name);
 #define CONF_F_NCONF_GET_NUMBER_E			 112
 #define CONF_F_NCONF_GET_SECTION			 108
 #define CONF_F_NCONF_GET_STRING				 109
+#define CONF_F_NCONF_LOAD				 113
 #define CONF_F_NCONF_LOAD_BIO				 110
+#define CONF_F_NCONF_LOAD_FP				 114
 #define CONF_F_NCONF_NEW				 111
 #define CONF_F_STR_COPY					 101
 

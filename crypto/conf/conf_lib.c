@@ -252,24 +252,13 @@ void NCONF_free_data(CONF *conf)
 
 int NCONF_load(CONF *conf, const char *file, long *eline)
 	{
-	int ret;
-	BIO *in=NULL;
-
-#ifdef VMS
-	in=BIO_new_file(file, "r");
-#else
-	in=BIO_new_file(file, "rb");
-#endif
-	if (in == NULL)
+	if (conf == NULL)
 		{
-		CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
+		CONFerr(CONF_F_NCONF_LOAD,CONF_R_NO_CONF);
 		return 0;
 		}
 
-	ret = NCONF_load_bio(conf, in, eline);
-	BIO_free(in);
-
-	return ret;
+	return conf->meth->load(conf, file, eline);
 	}
 
 #ifndef NO_FP_API
@@ -279,7 +268,7 @@ int NCONF_load_fp(CONF *conf, FILE *fp,long *eline)
 	int ret;
 	if(!(btmp = BIO_new_fp(fp, BIO_NOCLOSE)))
 		{
-		CONFerr(CONF_F_CONF_LOAD_FP,ERR_R_BUF_LIB);
+		CONFerr(CONF_F_NCONF_LOAD_FP,ERR_R_BUF_LIB);
 		return 0;
 		}
 	ret = NCONF_load_bio(conf, btmp, eline);
@@ -296,7 +285,7 @@ int NCONF_load_bio(CONF *conf, BIO *bp,long *eline)
 		return 0;
 		}
 
-	return conf->meth->load(conf, bp, eline);
+	return conf->meth->load_bio(conf, bp, eline);
 	}
 
 STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section)
