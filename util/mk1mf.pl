@@ -81,7 +81,7 @@ EOF
 		}
 	$platform=$_;
 	}
-foreach (split / /, $OPTIONS)
+foreach (grep(!/^$/, split(/ /, $OPTIONS)))
 	{
 	print STDERR "unknown option - $_\n" if !&read_options;
 	}
