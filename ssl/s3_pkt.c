@@ -167,6 +167,11 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (max > max_max)
 			max = max_max;
 	}
+	if (n > max) /* does not happen */
+		{
+		SSLerr(SSL_F_SSL3_READ_N,SSL_R_INTERNAL_ERROR);
+		return -1;
+		}
 
 	off = s->packet_length;
 	newb = s->s3->rbuf.left;
