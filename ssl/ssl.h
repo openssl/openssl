@@ -551,10 +551,11 @@ struct ssl_ctx_st
 #define SSL_SESS_CACHE_SERVER			0x0002
 #define SSL_SESS_CACHE_BOTH	(SSL_SESS_CACHE_CLIENT|SSL_SESS_CACHE_SERVER)
 #define SSL_SESS_CACHE_NO_AUTO_CLEAR		0x0080
-/* This one, when set, makes the server session-id lookup not look
- * in the cache.  If there is an application get_session callback
- * defined, this will still get called. */
+/* enough comments already ... see SSL_CTX_set_session_cache_mode(3) */
 #define SSL_SESS_CACHE_NO_INTERNAL_LOOKUP	0x0100
+#define SSL_SESS_CACHE_NO_INTERNAL_STORE	0x0200
+#define SSL_SESS_CACHE_NO_INTERNAL \
+	(SSL_SESS_CACHE_NO_INTERNAL_LOOKUP|SSL_SESS_CACHE_NO_INTERNAL_STORE)
 
   struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx);
 #define SSL_CTX_sess_number(ctx) \
