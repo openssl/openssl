@@ -130,7 +130,7 @@ ENGINE *ENGINE_cswift();
 #endif /* HW_CSWIFT */
 
 #ifdef HW_NCIPHER
-ENGINE *ENGINE_hwcrhk();
+ENGINE *ENGINE_ncipher();
 #endif /* HW_NCIPHER */
 
 #ifdef HW_ATALLA

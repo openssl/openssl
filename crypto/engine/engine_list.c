@@ -190,7 +190,7 @@ static int engine_internal_check(void)
 		return 0;
 #endif /* HW_CSWIFT */
 #ifdef HW_NCIPHER
-	if(!engine_list_add(ENGINE_hwcrhk()))
+	if(!engine_list_add(ENGINE_ncipher()))
 		return 0;
 #endif /* HW_CSWIFT */
 #ifdef HW_ATALLA
