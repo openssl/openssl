@@ -329,7 +329,7 @@ void do_mct(char *amode,
 	    /*	    DebugValue("iv",ctx.iv,8); */
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
-	    /*	    DebugValue("nk",nk,8); */
+	    /*	    DebugValue("nk",nk,24);*/
 	    if((dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
 			|| imode == CBC)) || imode == OFB)
 		memcpy(text,old_iv,8);
