@@ -12,7 +12,7 @@ SHA1, SHA1_Init, SHA1_Update, SHA1_Final - Secure Hash Algorithm
                   unsigned char *md);
 
  void SHA1_Init(SHA_CTX *c);
- void SHA1_Update(SHA_CTX *c, const unsigned char *data,
+ void SHA1_Update(SHA_CTX *c, const void *data,
                   unsigned long len);
  void SHA1_Final(unsigned char *md, SHA_CTX *c);
 

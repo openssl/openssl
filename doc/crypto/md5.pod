@@ -24,7 +24,7 @@ MD5_Final - MD2 and MD5 hash functions
                   unsigned char *md);
 
  void MD5_Init(MD5_CTX *c);
- void MD5_Update(MD5_CTX *c, const unsigned char *data,
+ void MD5_Update(MD5_CTX *c, const void *data,
                   unsigned long len);
  void MD5_Final(unsigned char *md, MD5_CTX *c);
 
