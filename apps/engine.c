@@ -520,13 +520,6 @@ skip_digests:
 
 	ret=0;
 end:
-#else
-
-# if PEDANTIC
-
-void *dummy=&dummy;
-
-# endif
 
 	ERR_print_errors(bio_err);
 	sk_pop_free(engines, identity);
@@ -536,4 +529,10 @@ void *dummy=&dummy;
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#else
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif
