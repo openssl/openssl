@@ -698,7 +698,7 @@ EOF
 	if   [ $CPU_VERSION -ge 768 ]; then	# IA-64 CPU
 	     echo "WARNING! 64-bit ABI is the default configured ABI on HP-UXi."
 	     echo "         If you wish to build 32-bit library, the you have to"
-	     echo "         invoke './Configure hpux-ia32-cc' *manually*."
+	     echo "         invoke './Configure hpux-ia64-cc' *manually*."
 	     if [ "$TEST" = "false" ]; then
 		echo "         You have about 5 seconds to press Ctrl-C to abort."
 		(stty -icanon min 0 time 50; read waste) < /dev/tty
