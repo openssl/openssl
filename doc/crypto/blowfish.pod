@@ -24,7 +24,7 @@ BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
 
  void BF_encrypt(BF_LONG *data,const BF_KEY *key);
  void BF_decrypt(BF_LONG *data,const BF_KEY *key);
- 
+
 =head1 DESCRIPTION
 
 This library implements the Blowfish cipher, which is invented and described
