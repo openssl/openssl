@@ -129,19 +129,19 @@ int STORE_method_set_list_end_function(STORE_METHOD *sm, STORE_END_OBJECT_FUNC_P
 	return 1;
 	}
 
-int STORE_method_set_update_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR update_f)
+int STORE_method_set_update_store_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR update_f)
 	{
 	sm->update_store = update_f;
 	return 1;
 	}
 
-int STORE_method_set_lock_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR lock_f)
+int STORE_method_set_lock_store_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR lock_f)
 	{
 	sm->lock_store = lock_f;
 	return 1;
 	}
 
-int STORE_method_set_unlock_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR unlock_f)
+int STORE_method_set_unlock_store_function(STORE_METHOD *sm, STORE_GENERIC_FUNC_PTR unlock_f)
 	{
 	sm->unlock_store = unlock_f;
 	return 1;
@@ -193,17 +193,17 @@ STORE_END_OBJECT_FUNC_PTR STORE_method_get_list_end_function(STORE_METHOD *sm)
 	return sm->list_object_end;
 	}
 
-STORE_GENERIC_FUNC_PTR STORE_method_get_update_function(STORE_METHOD *sm)
+STORE_GENERIC_FUNC_PTR STORE_method_get_update_store_function(STORE_METHOD *sm)
 	{
 	return sm->update_store;
 	}
 
-STORE_GENERIC_FUNC_PTR STORE_method_get_lock_function(STORE_METHOD *sm)
+STORE_GENERIC_FUNC_PTR STORE_method_get_lock_store_function(STORE_METHOD *sm)
 	{
 	return sm->lock_store;
 	}
 
-STORE_GENERIC_FUNC_PTR STORE_method_get_unlock_function(STORE_METHOD *sm)
+STORE_GENERIC_FUNC_PTR STORE_method_get_unlock_store_function(STORE_METHOD *sm)
 	{
 	return sm->unlock_store;
 	}
