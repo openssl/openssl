@@ -2784,3 +2784,11 @@ CONF_modules_free                       3226	EXIST::FUNCTION:
 NCONF_default                           3227	EXIST::FUNCTION:
 OPENSSL_no_config                       3228	EXIST::FUNCTION:
 NCONF_WIN32                             3229	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_new                3230	EXIST::FUNCTION:
+EVP_des_ede_ecb                         3231	EXIST::FUNCTION:DES
+i2d_ASN1_UNIVERSALSTRING                3232	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_free               3233	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_it                 3234	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_UNIVERSALSTRING_it                 3234	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+d2i_ASN1_UNIVERSALSTRING                3235	EXIST::FUNCTION:
+EVP_des_ede3_ecb                        3236	EXIST::FUNCTION:DES
