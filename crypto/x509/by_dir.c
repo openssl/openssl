@@ -302,9 +302,38 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		k=0;
 		for (;;)
 			{
-			BIO_snprintf(b->data,b->max,
-				     "%s/%08lx.%s%d",ctx->dirs[i],h,
-				     postfix,k);
+			char c = '/';
+#ifdef OPENSSL_SYS_VMS
+			char c = ctx->dirs[i][strlen(ctx->dirs[i])-1];
+			if (c != ':' && c != '>' && c != ']')
+				{
+				/* If no separator is present, we assume the
+				   directory specifier is a logical name, and
+				   add a colon.  We really should use better
+				   VMS routines for merging things like this,
+				   but this will do for now...
+				   -- Richard Levitte */
+				c = ':';
+				}
+			else
+				{
+				c = '\0';
+				}
+#endif
+			if (c == '\0')
+				{
+				/* This is special.  When c == '\0', no
+				   directory separator should be added. */
+				BIO_snprintf(b->data,b->max,
+					"%s%08lx.%s%d",ctx->dirs[i],h,
+					postfix,k);
+				}
+			else
+				{
+				BIO_snprintf(b->data,b->max,
+					"%s%c%08lx.%s%d",ctx->dirs[i],c,h,
+					postfix,k);
+				}
 			k++;
 			if (stat(b->data,&st) < 0)
 				break;
