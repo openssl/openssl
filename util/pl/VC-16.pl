@@ -61,7 +61,7 @@ if ($shlib)
 else
 	{ $mlflags=''; }
 
-$app_ex_obj="setargv.obj";
+$app_ex_obj="";
 
 $obj='.obj';
 $ofile="/Fo";
