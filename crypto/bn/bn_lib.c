@@ -341,6 +341,11 @@ void BN_CTX_free(BN_CTX *c)
 		Free(c);
 	}
 
+/* This is an internal function that should not be used in applications.
+ * It ensures that 'b' has enough room for a 'bits' bit number.  It is
+ * mostly used by the various BIGNUM routines.  If there is an error,
+ * NULL is returned. if not, 'b' is returned.
+ */
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
 	BN_ULONG *A,*a;

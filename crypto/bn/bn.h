@@ -330,11 +330,11 @@ int	BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int	BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
-int	BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b);
+int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	       BN_CTX *ctx);
-int	BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b,BN_CTX *ctx);
+int	BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, BIGNUM *a,BN_CTX *ctx);
 BN_ULONG BN_mod_word(BIGNUM *a, BN_ULONG w);
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w);

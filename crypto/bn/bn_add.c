@@ -61,9 +61,9 @@
 #include "bn_lcl.h"
 
 /* r can == a or b */
-int BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b)
+int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
-	BIGNUM *tmp;
+	const BIGNUM *tmp;
 
 	bn_check_top(a);
 	bn_check_top(b);

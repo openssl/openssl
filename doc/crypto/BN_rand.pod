@@ -1,0 +1,36 @@
+=pod
+
+=head1 NAME
+
+BN_rand - Generate pseudo-random number
+
+=head1 SYNOPSIS
+
+ #include <openssl/bn.h>
+
+ int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
+
+=head1 DESCRIPTION
+
+BN_rand() generates a cryptographically strong pseudo-random number of
+B<bits> bits in length and stores it in B<rnd>. If B<top> is true, the
+two most significant bits of the number will be set to 1, so that the
+product of two such random numbers will always have 2*B<bits> length.
+If B<bottom> is true, the number will be odd.
+
+The PRNG must be seeded prior to calling BN_rand().
+
+=head1 RETURN VALUES
+
+BN_rand() returns 1 on success, 0 on error.
+The error codes can be obtained by ERR_get_error(3).
+
+=head1 SEE ALSO
+
+bn(3), err(3), rand(3), RAND_add(), RAND_bytes()
+
+=head1 HISTORY
+
+BN_rand() is available in all versions of SSLeay and OpenSSL.
+
+=cut

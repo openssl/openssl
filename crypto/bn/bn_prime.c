@@ -225,8 +225,6 @@ err:
 	return(ret);
 	}
 
-#define RECP_MUL_MOD
-
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx, BN_CTX *ctx2,
 	     BN_MONT_CTX *mont)
 	{
@@ -408,18 +406,22 @@ err:
 	}
 
 #if 0
-static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
+
+#define RECP_MUL_MOD
+
+static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,
+		   BN_CTX *unused, BN_MONT_CTX *unused2)
 	{
-	int k,i,nb,ret= -1;
+	int k,i,ret= -1;
 	BIGNUM *d,*dd,*tmp;
-	BIGNUM *d1,*d2,*x,*n1,*inv;
+	BIGNUM *d1,*d2,*x,*n1;
+	BN_RECP_CTX recp;
 
 	d1= &(ctx->bn[ctx->tos]);
 	d2= &(ctx->bn[ctx->tos+1]);
 	x=  &(ctx->bn[ctx->tos+2]);
 	n1= &(ctx->bn[ctx->tos+3]);
-	inv=&(ctx->bn[ctx->tos+4]);
-	ctx->tos+=5;
+	ctx->tos+=4;
 
 	d=d1;
 	dd=d2;
@@ -429,8 +431,8 @@ static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 
 	/* i=BN_num_bits(n); */
 #ifdef RECP_MUL_MOD
-	nb=BN_reciprocal(inv,n,ctx); /**/
-	if (nb == -1) goto err;
+	BN_RECP_CTX_init(&recp);
+	if (BN_RECP_CTX_set(&recp,n,ctx) <= 0) goto err;
 #endif
 
 	for (i=k-1; i>=0; i--)
@@ -439,7 +441,7 @@ static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 #ifndef RECP_MUL_MOD
 		if (!BN_mod_mul(dd,d,d,n,ctx)) goto err;
 #else
-		if (!BN_mod_mul_reciprocal(dd,d,d,n,inv,nb,ctx)) goto err;
+		if (!BN_mod_mul_reciprocal(dd,d,d,&recp,ctx)) goto err;
 #endif
 		if (	BN_is_one(dd) &&
 			!BN_is_one(x) &&
@@ -453,7 +455,7 @@ static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 #ifndef RECP_MUL_MOD
 			if (!BN_mod_mul(d,dd,a,n,ctx)) goto err;
 #else
-			if (!BN_mod_mul_reciprocal(d,dd,a,n,inv,nb,ctx)) goto err; 
+			if (!BN_mod_mul_reciprocal(d,dd,a,&recp,ctx)) goto err; 
 #endif
 			}
 		else
@@ -468,7 +470,10 @@ static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 	else	i=1;
 	ret=i;
 err:
-	ctx->tos-=5;
+	ctx->tos-=4;
+#ifdef RECP_MUL_MOD
+	BN_RECP_CTX_free(&recp);
+#endif
 	return(ret);
 	}
 #endif
