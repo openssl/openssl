@@ -556,8 +556,14 @@ static int obj_cmp(const void *ap, const void *bp)
 const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
 	int (*cmp)(const void *, const void *))
 	{
+	return OBJ_bsearch_ex(key, base, num, size, cmp, 0);
+	}
+
+const char *OBJ_bsearch_ex(const char *key, const char *base, int num,
+	int size, int (*cmp)(const void *, const void *), int flags)
+	{
 	int l,h,i,c;
-	const char *p;
+	const char *p = NULL;
 
 	if (num == 0) return(NULL);
 	l=0;
@@ -572,20 +578,33 @@ const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
 		else if (c > 0)
 			l=i+1;
 		else
-			return(p);
+			break;
 		}
 #ifdef CHARSET_EBCDIC
 /* THIS IS A KLUDGE - Because the *_obj is sorted in ASCII order, and
  * I don't have perl (yet), we revert to a *LINEAR* search
  * when the object wasn't found in the binary search.
  */
-	for (i=0; i<num; ++i) {
-		p= &(base[i*size]);
-		if ((*cmp)(key,p) == 0)
-			return p;
-	}
+	if (c != 0)
+		{
+		for (i=0; i<num; ++i)
+			{
+			p= &(base[i*size]);
+			c = (*cmp)(key,p);
+			if (c == 0 || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
+				return p;
+			}
+		}
 #endif
-	return(NULL);
+	if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
+		p = NULL;
+	else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH))
+		{
+		while(i > 0 && (*cmp)(key,&(base[(i-1)*size])) == 0)
+			i--;
+		p = &(base[i*size]);
+		}
+	return(p);
 	}
 
 int OBJ_create_objects(BIO *in)

@@ -4,6 +4,21 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add the function OBJ_bsearch_ex() which works like OBJ_bsearch() but
+     takes an extra flags argument for optional functionality.  Currently,
+     the following flags are defined:
+
+	OBJ_BSEARCH_VALUE_ON_NOMATCH
+	This one gets OBJ_bsearch_ex() to return a pointer to the first
+	element where the comparing function returns a negative or zero
+	number.
+
+	OBJ_BSEARCH_FIRST_VALUE_ON_MATCH
+	This one gets OBJ_bsearch_ex() to return a pointer to the first
+	element where the comparing function returns zero.  This is useful
+	if there are more than one element where the comparing function
+	returns zero.
+
   *) Make it possible to create self-signed certificates with 'openssl ca'
      in such a way that the self-signed certificate becomes part of the
      CA database and uses the same mechanisms for serial number generation
