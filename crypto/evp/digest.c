@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -75,25 +128,15 @@ EVP_MD_CTX *EVP_MD_CTX_create(void)
 	return ctx;
 	}
 
-#ifdef CRYPTO_MDEBUG
-int EVP_DigestInit_dbg(EVP_MD_CTX *ctx, const EVP_MD *type,const char *file,
-		       int line)
-#else
 int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
-#endif
 	{
-	if(ctx->digest != type)
+	if (ctx->digest != type)
 		{
-		if(ctx->digest && ctx->digest->ctx_size)
+		if (ctx->digest && ctx->digest->ctx_size)
 			OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
-		if(type->ctx_size)
-#ifdef CRYPTO_MDEBUG
-			ctx->md_data=CRYPTO_malloc(type->ctx_size,file,line);
-#else
+		if (type->ctx_size)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
-#endif
-		}
 	return type->init(ctx);
 	}
 
@@ -116,30 +159,31 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	}
 
 int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
-{
-    if ((in == NULL) || (in->digest == NULL)) {
-        EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
-	return 0;
-    }
-
-    EVP_MD_CTX_cleanup(out);
-    memcpy(out,in,sizeof *out);
-
-    if(out->digest->ctx_size)
 	{
-	out->md_data=OPENSSL_malloc(out->digest->ctx_size);
-	memcpy(out->md_data,in->md_data,out->digest->ctx_size);
+	if ((in == NULL) || (in->digest == NULL))
+		{
+		EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
+		return 0;
+		}
+
+	EVP_MD_CTX_cleanup(out);
+	memcpy(out,in,sizeof *out);
+
+	if (out->digest->ctx_size)
+		{
+		out->md_data=OPENSSL_malloc(out->digest->ctx_size);
+		memcpy(out->md_data,in->md_data,out->digest->ctx_size);
+		}
+	
+	if (out->digest->copy)
+		return out->digest->copy(out,in);
+	
+	return 1;
 	}
-
-    if(out->digest->copy)
-	return out->digest->copy(out,in);
-
-    return 1;
-}
 
 int EVP_Digest(void *data, unsigned int count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type)
-{
+	{
 	EVP_MD_CTX ctx;
 	int ret;
 
@@ -151,7 +195,7 @@ int EVP_Digest(void *data, unsigned int count,
 	EVP_MD_CTX_cleanup(&ctx);
 
 	return ret;
-}
+	}
 
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 	{
@@ -165,9 +209,9 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
-	if(ctx->digest && ctx->digest->cleanup)
+	if (ctx->digest && ctx->digest->cleanup)
 		ctx->digest->cleanup(ctx);
-	if(ctx->digest && ctx->digest->ctx_size && ctx->md_data)
+	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{
 		memset(ctx->md_data,0,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
