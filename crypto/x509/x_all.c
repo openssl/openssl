@@ -115,21 +115,17 @@ int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_dup(X509_ATTRIBUTE *xa)
 	{
-	return((X509_ATTRIBUTE *)ASN1_dup((int (*)())i2d_X509_ATTRIBUTE,
-		(char *(*)())d2i_X509_ATTRIBUTE,(char *)xa));
+	return ASN1_item_dup(&X509_ATTRIBUTE_it,xa);
 	}
 
 X509 *X509_dup(X509 *x509)
 	{
-	return((X509 *)ASN1_dup((int (*)())i2d_X509,
-		(char *(*)())d2i_X509,(char *)x509));
+	return ASN1_item_dup(&X509_it,x509);
 	}
 
 X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex)
 	{
-	return((X509_EXTENSION *)ASN1_dup(
-		(int (*)())i2d_X509_EXTENSION,
-		(char *(*)())d2i_X509_EXTENSION,(char *)ex));
+	return ASN1_item_dup(&X509_EXTENSION_it,ex);
 	}
 
 #ifndef NO_FP_API
@@ -158,8 +154,7 @@ int i2d_X509_bio(BIO *bp, X509 *x509)
 
 X509_CRL *X509_CRL_dup(X509_CRL *crl)
 	{
-	return((X509_CRL *)ASN1_dup((int (*)())i2d_X509_CRL,
-		(char *(*)())d2i_X509_CRL,(char *)crl));
+	return ASN1_item_dup(&X509_CRL_it, crl);
 	}
 
 #ifndef NO_FP_API
@@ -190,8 +185,7 @@ int i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl)
 
 PKCS7 *PKCS7_dup(PKCS7 *p7)
 	{
-	return((PKCS7 *)ASN1_dup((int (*)())i2d_PKCS7,
-		(char *(*)())d2i_PKCS7,(char *)p7));
+	return ASN1_item_dup(&PKCS7_it, p7);
 	}
 
 #ifndef NO_FP_API
@@ -222,8 +216,7 @@ int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7)
 
 X509_REQ *X509_REQ_dup(X509_REQ *req)
 	{
-	return((X509_REQ *)ASN1_dup((int (*)())i2d_X509_REQ,
-		(char *(*)())d2i_X509_REQ,(char *)req));
+	return ASN1_item_dup(&X509_REQ_it, req);
 	}
 
 #ifndef NO_FP_API
@@ -255,14 +248,12 @@ int i2d_X509_REQ_bio(BIO *bp, X509_REQ *req)
 #ifndef NO_RSA
 RSA *RSAPublicKey_dup(RSA *rsa)
 	{
-	return((RSA *)ASN1_dup((int (*)())i2d_RSAPublicKey,
-		(char *(*)())d2i_RSAPublicKey,(char *)rsa));
+	return ASN1_item_dup(&RSAPublicKey_it, rsa);
 	}
 
 RSA *RSAPrivateKey_dup(RSA *rsa)
 	{
-	return((RSA *)ASN1_dup((int (*)())i2d_RSAPrivateKey,
-		(char *(*)())d2i_RSAPrivateKey,(char *)rsa));
+	return ASN1_item_dup(&RSAPrivateKey_it, rsa);
 	}
 
 #ifndef NO_FP_API
@@ -395,20 +386,17 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn)
 	{
-	return((X509_ALGOR *)ASN1_dup((int (*)())i2d_X509_ALGOR,
-	(char *(*)())d2i_X509_ALGOR,(char *)xn));
+	return ASN1_item_dup(&X509_ALGOR_it, xn);
 	}
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn)
 	{
-	return((X509_NAME *)ASN1_dup((int (*)())i2d_X509_NAME,
-		(char *(*)())d2i_X509_NAME,(char *)xn));
+	return ASN1_item_dup(&X509_NAME_it, xn);
 	}
 
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne)
 	{
-	return((X509_NAME_ENTRY *)ASN1_dup((int (*)())i2d_X509_NAME_ENTRY,
-		(char *(*)())d2i_X509_NAME_ENTRY,(char *)ne));
+	return ASN1_item_dup(&X509_NAME_ENTRY_it, ne);
 	}
 
 int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,

@@ -419,9 +419,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
 
 	X509_ALGOR_free(p7i->key_enc_algor);
-	p7i->key_enc_algor=(X509_ALGOR *)ASN1_dup(i2d_X509_ALGOR,
-		(char *(*)())d2i_X509_ALGOR,
-		(char *)x509->cert_info->key->algor);
+	p7i->key_enc_algor= X509_ALGOR_dup(x509->cert_info->key->algor);
 
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
 	p7i->cert=x509;

@@ -59,6 +59,8 @@
 #ifndef HEADER_RSA_H
 #define HEADER_RSA_H
 
+#include <openssl/asn1.h>
+
 #ifndef NO_BIO
 #include <openssl/bio.h>
 #endif
@@ -222,10 +224,9 @@ const RSA_METHOD *RSA_null_method(void);
 
 void	ERR_load_RSA_strings(void );
 
-RSA *	d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length);
-int	i2d_RSAPublicKey(const RSA *a, unsigned char **pp);
-RSA *	d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length);
-int 	i2d_RSAPrivateKey(const RSA *a, unsigned char **pp);
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
+
 #ifndef NO_FP_API
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
 #endif
