@@ -2141,10 +2141,14 @@ int WIN32_rename(char *from, char *to)
 	}
 #endif
 
-int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
+int args_verify(char ***pargs, int *pargc,
+			int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 	{
 	ASN1_OBJECT *otmp = NULL;
 	unsigned long flags = 0;
+	int i;
+	int purpose = 0;
+	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
 	if (!strcmp(arg, "-policy"))
 		{
@@ -2158,6 +2162,27 @@ int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 				BIO_printf(err, "Invalid Policy \"%s\"\n",
 									argn);
 				*badarg = 1;
+				}
+			}
+		(*pargs)++;
+		}
+	else if (strcmp(arg,"-purpose") == 0)
+		{
+		X509_PURPOSE *xptmp;
+		if (!argn)
+			*badarg = 1;
+		else
+			{
+			i = X509_PURPOSE_get_by_sname(argn);
+			if(i < 0)
+				{
+				BIO_printf(err, "unrecognized purpose\n");
+				*badarg = 1;
+				}
+			else
+				{
+				xptmp = X509_PURPOSE_get0(i);
+				purpose = X509_PURPOSE_get_id(xptmp);
 				}
 			}
 		(*pargs)++;
@@ -2186,13 +2211,13 @@ int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 		if (*pm)
 			X509_VERIFY_PARAM_free(*pm);
 		*pm = NULL;
-		return 1;
+		goto end;
 		}
 
 	if (!*pm && !(*pm = X509_VERIFY_PARAM_new()))
 		{
 		*badarg = 1;
-		return 1;
+		goto end;
 		}
 
 	if (otmp)
@@ -2200,8 +2225,56 @@ int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 	if (flags)
 		X509_VERIFY_PARAM_set_flags(*pm, flags);
 
+	if (purpose)
+		X509_VERIFY_PARAM_set_purpose(*pm, purpose);
+
+	end:
+
 	(*pargs)++;
+
+	if (pargc)
+		*pargc -= *pargs - oldargs;
 
 	return 1;
 
+	}
+
+static void nodes_print(BIO *out, char *name, STACK_OF(X509_POLICY_NODE) *nodes)
+	{
+	X509_POLICY_NODE *node;
+	int i;
+	BIO_printf(out, "%s Policies:", name);
+	if (nodes)
+		{
+		BIO_puts(out, "\n");
+		for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++)
+			{
+			node = sk_X509_POLICY_NODE_value(nodes, i);
+			X509_POLICY_NODE_print(out, node, 2);
+			}
+		}
+	else
+		BIO_puts(out, " <empty>\n");
+	}
+
+void policies_print(BIO *out, X509_STORE_CTX *ctx)
+	{
+	X509_POLICY_TREE *tree;
+	int explicit_policy;
+	int free_out = 0;
+	if (out == NULL)
+		{
+		out = BIO_new_fp(stderr, BIO_NOCLOSE);
+		free_out = 1;
+		}
+	tree = X509_STORE_CTX_get0_policy_tree(ctx);
+	explicit_policy = X509_STORE_CTX_get_explicit_policy(ctx);
+
+	BIO_printf(out, "Require explicit Policy: %s\n",
+				explicit_policy ? "True" : "False");
+
+	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
+	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
+	if (free_out)
+		BIO_free(out);
 	}

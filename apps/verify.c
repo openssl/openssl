@@ -79,13 +79,14 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
-	int i,ret=1;
+	int i,ret=1, badarg = 0;
 	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
 	char *untfile = NULL, *trustfile = NULL;
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
+	X509_VERIFY_PARAM *vpm = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -121,18 +122,12 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				CAfile= *(++argv);
 				}
-			else if (strcmp(*argv,"-purpose") == 0)
+			else if (args_verify(&argv, &argc, &badarg, bio_err,
+									&vpm))
 				{
-				X509_PURPOSE *xptmp;
-				if (argc-- < 1) goto end;
-				i = X509_PURPOSE_get_by_sname(*(++argv));
-				if(i < 0)
-					{
-					BIO_printf(bio_err, "unrecognized purpose\n");
+				if (badarg)
 					goto end;
-					}
-				xptmp = X509_PURPOSE_get0(i);
-				purpose = X509_PURPOSE_get_id(xptmp);
+				continue;
 				}
 			else if (strcmp(*argv,"-untrusted") == 0)
 				{
@@ -153,14 +148,6 @@ int MAIN(int argc, char **argv)
 #endif
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
-			else if (strcmp(*argv,"-ignore_critical") == 0)
-				vflags |= X509_V_FLAG_IGNORE_CRITICAL;
-			else if (strcmp(*argv,"-issuer_checks") == 0)
-				vflags |= X509_V_FLAG_CB_ISSUER_CHECK;
-			else if (strcmp(*argv,"-crl_check") == 0)
-				vflags |= X509_V_FLAG_CRL_CHECK;
-			else if (strcmp(*argv,"-crl_check_all") == 0)
-				vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 			else if (strcmp(*argv,"-verbose") == 0)
 				v_verbose=1;
 			else if (argv[0][0] == '-')
@@ -177,6 +164,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
+
+	if (vpm)
+		X509_STORE_set1_param(cert_ctx, vpm);
 
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
 	if (lookup == NULL) abort();
@@ -238,6 +228,7 @@ end:
 								X509_PURPOSE_get0_name(ptmp));
 		}
 	}
+	if (vpm) X509_VERIFY_PARAM_free(vpm);
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
@@ -339,10 +330,13 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 
 	if (!ok)
 		{
-		X509_NAME_oneline(
+		if (ctx->current_cert)
+			{
+			X509_NAME_oneline(
 				X509_get_subject_name(ctx->current_cert),buf,
 				sizeof buf);
-		printf("%s\n",buf);
+			printf("%s\n",buf);
+			}
 		printf("error %d at %d depth lookup:%s\n",ctx->error,
 			ctx->error_depth,
 			X509_verify_cert_error_string(ctx->error));
@@ -360,7 +354,14 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		if (ctx->error == X509_V_ERR_CRL_HAS_EXPIRED) ok=1;
 		if (ctx->error == X509_V_ERR_CRL_NOT_YET_VALID) ok=1;
 		if (ctx->error == X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION) ok=1;
+
+		if (ctx->error == X509_V_ERR_NO_EXPLICIT_POLICY)
+			policies_print(NULL, ctx);
+		return ok;
+
 		}
+	if ((ctx->error == X509_V_OK) && (ok == 2))
+		policies_print(NULL, ctx);
 	if (!v_verbose)
 		ERR_clear_error();
 	return(ok);

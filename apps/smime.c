@@ -365,7 +365,7 @@ int MAIN(int argc, char **argv)
 			else
 				badarg = 1;
 			}
-		else if (args_verify(&args, &badarg, bio_err, &vpm))
+		else if (args_verify(&args, NULL, &badarg, bio_err, &vpm))
 			continue;
 		else
 			badarg = 1;
@@ -769,43 +769,10 @@ static int save_certs(char *signerfile, STACK_OF(X509) *signers)
 	}
 	
 
-static void nodes_print(BIO *out, char *name, STACK_OF(X509_POLICY_NODE) *nodes)
-	{
-	X509_POLICY_NODE *node;
-	int i;
-	BIO_printf(out, "%s Policies:", name);
-	if (nodes)
-		{
-		BIO_puts(out, "\n");
-		for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++)
-			{
-			node = sk_X509_POLICY_NODE_value(nodes, i);
-			X509_POLICY_NODE_print(out, node, 2);
-			}
-		}
-	else
-		BIO_puts(out, " <empty>\n");
-	}
-
-static void policies_print(BIO *out, X509_STORE_CTX *ctx)
-	{
-	X509_POLICY_TREE *tree;
-	int explicit_policy;
-	tree = X509_STORE_CTX_get0_policy_tree(ctx);
-	explicit_policy = X509_STORE_CTX_get_explicit_policy(ctx);
-
-	BIO_printf(out, "Require explicit Policy: %s\n",
-				explicit_policy ? "True" : "False");
-
-	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
-	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
-	}
-
 /* Minimal callback just to output policy info (if any) */
 
 static int smime_cb(int ok, X509_STORE_CTX *ctx)
 	{
-	BIO *out;
 	int error;
 
 	error = X509_STORE_CTX_get_error(ctx);
@@ -814,11 +781,7 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx)
 		&& ((error != X509_V_OK) || (ok != 2)))
 		return ok;
 
-	out = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-	policies_print(out, ctx);
-
-	BIO_free(out);
+	policies_print(NULL, ctx);
 
 	return ok;
 
