@@ -119,6 +119,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
@@ -140,16 +141,6 @@ static void block_in(BIO* b);
 #define OK_BLOCK_BLOCK	4
 #define IOBS		(OK_BLOCK_SIZE+ OK_BLOCK_BLOCK+ 3*EVP_MAX_MD_SIZE)
 #define WELLKNOWN "The quick brown fox jumped over the lazy dog's back."
-
-#ifndef L_ENDIAN
-#define swapem(x) \
-	((unsigned long int)((((unsigned long int)(x) & 0x000000ffU) << 24) | \
-			     (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
-			     (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
-			     (((unsigned long int)(x) & 0xff000000U) >> 24)))
-#else
-#define swapem(x) (x)
-#endif
 
 typedef struct ok_struct
 	{
@@ -448,16 +439,18 @@ static long ok_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	return(ret);
 	}
 
-static void longswap(void *_ptr, int len)
-{
-#ifndef L_ENDIAN
-	int i;
-	char *ptr=_ptr;
+static void longswap(void *_ptr, size_t len)
+{	const union { long one; char little; } is_endian = {1};
 
-	for(i= 0;i < len;i+= 4){
-		*((unsigned long *)&(ptr[i]))= swapem(*((unsigned long *)&(ptr[i])));
+	if (is_endian.little) {
+		size_t i;
+		unsigned char *p=_ptr,c;
+
+		for(i= 0;i < len;i+= 4) {
+			c=p[0],p[0]=p[3],p[3]=c;
+			c=p[1],p[1]=p[2],p[2]=c;
+		}
 	}
-#endif
 }
 
 static void sig_out(BIO* b)
@@ -533,9 +526,10 @@ static void block_out(BIO* b)
 	md=&ctx->md;
 
 	tl= ctx->buf_len- OK_BLOCK_BLOCK;
-	tl= swapem(tl);
-	memcpy(ctx->buf, &tl, OK_BLOCK_BLOCK);
-	tl= swapem(tl);
+	ctx->buf[0]=(unsigned char)(tl>>24);
+	ctx->buf[1]=(unsigned char)(tl>>16);
+	ctx->buf[2]=(unsigned char)(tl>>8);
+	ctx->buf[3]=(unsigned char)(tl);
 	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
 	EVP_DigestFinal_ex(md, &(ctx->buf[ctx->buf_len]), NULL);
 	ctx->buf_len+= md->digest->md_size;
@@ -546,14 +540,18 @@ static void block_in(BIO* b)
 	{
 	BIO_OK_CTX *ctx;
 	EVP_MD_CTX *md;
-	long tl= 0;
+	unsigned long tl= 0;
 	unsigned char tmp[EVP_MAX_MD_SIZE];
 
 	ctx=b->ptr;
 	md=&ctx->md;
 
-	memcpy(&tl, ctx->buf, OK_BLOCK_BLOCK);
-	tl= swapem(tl);
+	assert(sizeof(tl)>=OK_BLOCK_BLOCK);	/* always true */
+	tl =ctx->buf[0]; tl<<=8;
+	tl|=ctx->buf[1]; tl<<=8;
+	tl|=ctx->buf[2]; tl<<=8;
+	tl|=ctx->buf[3];
+
 	if (ctx->buf_len < tl+ OK_BLOCK_BLOCK+ md->digest->md_size) return;
  
 	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
