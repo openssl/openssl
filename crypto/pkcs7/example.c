@@ -25,7 +25,7 @@ ASN1_UTCTIME *get_signed_time(PKCS7_SIGNER_INFO *si)
 	return NULL;
 	}
 	
-static signed_string_nid= -1;
+static int signed_string_nid= -1;
 
 void add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
 	{
