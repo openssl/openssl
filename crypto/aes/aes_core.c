@@ -53,6 +53,20 @@ Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01, 01, 01, 01];
 */
 
+#ifdef AES_ASM
+extern const u32 AES_Te[5][256];
+#define Te0 AES_Te[0]
+#define Te1 AES_Te[1]
+#define Te2 AES_Te[2]
+#define Te3 AES_Te[3]
+#define Te4 AES_Te[4]
+extern const u32 AES_Td[5][256];
+#define Td0 AES_Td[0]
+#define Td1 AES_Td[1]
+#define Td2 AES_Td[2]
+#define Td3 AES_Td[3]
+#define Td4 AES_Td[4]
+#else
 static const u32 Te0[256] = {
     0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
     0xfff2f20dU, 0xd66b6bbdU, 0xde6f6fb1U, 0x91c5c554U,
@@ -715,6 +729,7 @@ static const u32 Td4[256] = {
     0xe1e1e1e1U, 0x69696969U, 0x14141414U, 0x63636363U,
     0x55555555U, 0x21212121U, 0x0c0c0c0cU, 0x7d7d7d7dU,
 };
+#endif
 static const u32 rcon[] = {
 	0x01000000, 0x02000000, 0x04000000, 0x08000000,
 	0x10000000, 0x20000000, 0x40000000, 0x80000000,

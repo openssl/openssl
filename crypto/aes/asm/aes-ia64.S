@@ -83,7 +83,7 @@ AES_encrypt:
 	mov	r44=r33			// save 2nd arg
 	mov	twenty4=24	}
 { .mmi;	ld4	r23=[r41],8
-	addl	te0=@ltoff(Te0#),gp
+	addl	te0=@ltoff(AES_Te#),gp
 	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
 { .mmi;	ld8	te0=[te0]
 	ld4	r35=[r35]		// AES_KEY->rounds
@@ -130,7 +130,7 @@ AES_encrypt:
 	mov	maskff=0xff	}//;;
 { .mmi;	ld1	r30=[r42]
 	ld1	r31=[r43]
-	addl	te0=@ltoff(Te0#),gp	};;	// that was close...
+	addl	te0=@ltoff(AES_Te#),gp	};;	// that was close...
 
 { .mii;	ld8	te0=[te0]
 	dep	r19=r16,r19,24,8	//;;
@@ -339,7 +339,7 @@ while(<>) {
 
 	s/AES_encrypt/AES_decrypt/g;
 	s/\.Le_/.Ld_/g;
-	s/Te0#/Td0#/g;
+	s/AES_Te#/AES_Td#/g;
 
 	print;
 
@@ -598,8 +598,9 @@ AES_decrypt:
 
 // leave it in .text segment...
 .align	64
-.type	Te0#,@object
-Te0:	data4	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
+.global	AES_Te#
+.type	AES_Te#,@object
+AES_Te:	data4	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
 	data4	0xfff2f20d, 0xd66b6bbd, 0xde6f6fb1, 0x91c5c554
 	data4	0x60303050, 0x02010103, 0xce6767a9, 0x562b2b7d
 	data4	0xe7fefe19, 0xb5d7d762, 0x4dababe6, 0xec76769a
@@ -923,11 +924,12 @@ Te0:	data4	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
 	data4	0xbfbfbfbf, 0xe6e6e6e6, 0x42424242, 0x68686868
 	data4	0x41414141, 0x99999999, 0x2d2d2d2d, 0x0f0f0f0f
 	data4	0xb0b0b0b0, 0x54545454, 0xbbbbbbbb, 0x16161616
-.size	Te0#,5*256*4	// HP-UX assembler fails to ".-Te0#"
+.size	AES_Te#,5*256*4	// HP-UX assembler fails to ".-AES_Te#"
 
 .align	64
-.type	Td0#,@object
-Td0:	data4	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
+.global	AES_Te#
+.type	AES_Td#,@object
+AES_Td:	data4	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
 	data4	0x3bab6bcb, 0x1f9d45f1, 0xacfa58ab, 0x4be30393
 	data4	0x2030fa55, 0xad766df6, 0x88cc7691, 0xf5024c25
 	data4	0x4fe5d7fc, 0xc52acbd7, 0x26354480, 0xb562a38f
@@ -1251,4 +1253,4 @@ Td0:	data4	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
 	data4	0xbabababa, 0x77777777, 0xd6d6d6d6, 0x26262626
 	data4	0xe1e1e1e1, 0x69696969, 0x14141414, 0x63636363
 	data4	0x55555555, 0x21212121, 0x0c0c0c0c, 0x7d7d7d7d
-.size	Td0#,5*256*4	// HP-UX assembler fails to ".-Td0#"
+.size	AES_Td#,5*256*4	// HP-UX assembler fails to ".-AES_Td#"
