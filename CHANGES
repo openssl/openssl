@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
 
+  *) Countermeasure against the Klima-Pokorny-Rosa extension of
+     Bleichbacher's attack on PKCS #1 v1.5 padding: treat
+     a protocol version number mismatch like a decryption error
+     in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
+     [Bodo Moeller]
+
   *) Turn on RSA blinding by default in the default implementation
      to avoid a timing attack. Applications that don't want it can call
      RSA_blinding_off() or use the new flag RSA_FLAG_NO_BLINDING.
