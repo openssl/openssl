@@ -280,10 +280,10 @@ DECLARE_ASN1_SET_OF(X509)
 /* This is used for a table of trust checking functions */
 
 typedef struct x509_trust_st {
-	int trust_id;
-	int trust_flags;
+	int trust;
+	int flags;
 	int (*check_trust)(struct x509_trust_st *, X509 *, int);
-	char *trust_name;
+	char *name;
 	int arg1;
 	void *arg2;
 } X509_TRUST;
@@ -297,6 +297,11 @@ DECLARE_STACK_OF(X509_TRUST)
 #define X509_TRUST_SSL_SERVER	3
 #define X509_TRUST_EMAIL	4
 #define X509_TRUST_OBJECT_SIGN	5
+
+/* Keep these up to date! */
+#define X509_TRUST_MIN		1
+#define X509_TRUST_MAX		5
+
 
 /* trust_flags values */
 #define	X509_TRUST_DYNAMIC 	1
@@ -1015,8 +1020,6 @@ int		X509_EXTENSION_set_data(X509_EXTENSION *ex,
 ASN1_OBJECT *	X509_EXTENSION_get_object(X509_EXTENSION *ex);
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
 int		X509_EXTENSION_get_critical(X509_EXTENSION *ex);
-void		X509_init(void);
-void		X509_cleanup(void);
 
 int		X509_verify_cert(X509_STORE_CTX *ctx);
 
@@ -1059,10 +1062,10 @@ int X509_check_trust(X509 *x, int id, int flags);
 int X509_TRUST_get_count(void);
 X509_TRUST * X509_TRUST_iget(int idx);
 int X509_TRUST_get_by_id(int id);
-int X509_TRUST_add(X509_TRUST *xp);
+int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
+					char *name, int arg1, void *arg2);
 void X509_TRUST_cleanup(void);
-void X509_TRUST_add_standard(void);
-int X509_TRUST_get_id(X509_TRUST *xp);
+int X509_TRUST_get_flags(X509_TRUST *xp);
 char *X509_TRUST_iget_name(X509_TRUST *xp);
 int X509_TRUST_get_trust(X509_TRUST *xp);
 

@@ -1120,12 +1120,6 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
 
-	/* Initialise X509 tables: otherwise some certificate operations
-	 * wont work. This is a non op if called more than once.
-	 */
-
-	X509_init();
-
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);

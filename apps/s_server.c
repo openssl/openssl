@@ -718,7 +718,6 @@ bad:
 	ret=0;
 end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
-	X509_cleanup();
 	if (bio_s_out != NULL)
 		{
 		BIO_free(bio_s_out);

@@ -265,24 +265,3 @@ int X509_EXTENSION_get_critical(X509_EXTENSION *ex)
 	if (ex == NULL) return(0);
 	return(ex->critical);
 	}
-
-/* Initialisation routine: used to initialise the X509 and X509v3 tables */
-
-static int init_done = 0;
-
-void X509_init(void)
-{
-	if(init_done) return;
-	X509V3_add_standard_extensions();
-	X509_PURPOSE_add_standard();
-	X509_TRUST_add_standard();
-	init_done = 1;
-}
-
-void X509_cleanup(void)
-{
-	X509V3_EXT_cleanup();
-	X509_PURPOSE_cleanup();
-	X509_TRUST_cleanup();
-	init_done = 0;
-}

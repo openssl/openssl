@@ -84,7 +84,6 @@ int MAIN(int argc, char **argv)
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 
-	X509_init();
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
 	X509_STORE_set_verify_cb_func(cert_ctx,cb);
@@ -196,7 +195,6 @@ end:
 	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
-	X509_cleanup();
 	EXIT(ret);
 	}
 

@@ -740,7 +740,6 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); Free(cbuf); }
 	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); Free(sbuf); }
-	X509_cleanup();
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);

@@ -67,14 +67,20 @@ static void trtable_free(X509_TRUST *p);
 static int trust_1bit(X509_TRUST *trust, X509 *x, int flags);
 static int trust_any(X509_TRUST *trust, X509 *x, int flags);
 
+/* WARNING: the following table should be kept in order of trust
+ * and without any gaps so we can just subtract the minimum trust
+ * value to get an index into the table
+ */
+
 static X509_TRUST trstandard[] = {
 {X509_TRUST_ANY, 0, trust_any, "Any", 0, NULL},
 {X509_TRUST_SSL_CLIENT, 0, trust_1bit, "SSL Client", X509_TRUST_BIT_SSL_CLIENT, NULL},
 {X509_TRUST_SSL_SERVER, 0, trust_1bit, "SSL Client", X509_TRUST_BIT_SSL_SERVER, NULL},
 {X509_TRUST_EMAIL, 0, trust_1bit, "S/MIME email", X509_TRUST_BIT_EMAIL, NULL},
 {X509_TRUST_OBJECT_SIGN, 0, trust_1bit, "Object Signing", X509_TRUST_BIT_OBJECT_SIGN, NULL},
-{0, 0, NULL, NULL, 0, NULL}
 };
+
+#define X509_TRUST_COUNT	(sizeof(trstandard)/sizeof(X509_TRUST))
 
 IMPLEMENT_STACK_OF(X509_TRUST)
 
@@ -82,57 +88,89 @@ static STACK_OF(X509_TRUST) *trtable = NULL;
 
 static int tr_cmp(X509_TRUST **a, X509_TRUST **b)
 {
-	return (*a)->trust_id - (*b)->trust_id;
+	return (*a)->trust - (*b)->trust;
 }
 
 int X509_check_trust(X509 *x, int id, int flags)
 {
-	int idx;
 	X509_TRUST *pt;
+	int idx;
 	if(id == -1) return 1;
-	idx = X509_TRUST_get_by_id(id);
-	if(idx == -1) return -1;
-	pt = sk_X509_TRUST_value(trtable, idx);
+	if(!(idx = X509_TRUST_get_by_id(id))) return 0;
+	pt = X509_TRUST_iget(idx);
 	return pt->check_trust(pt, x, flags);
 }
 
 int X509_TRUST_get_count(void)
 {
-	return sk_X509_TRUST_num(trtable);
+	if(!trtable) return X509_TRUST_COUNT;
+	return sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
 }
 
 X509_TRUST * X509_TRUST_iget(int idx)
 {
-	return sk_X509_TRUST_value(trtable, idx);
+	if(idx < 0) return NULL;
+	if(idx < X509_TRUST_COUNT) return trstandard + idx;
+	return sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
 }
 
 int X509_TRUST_get_by_id(int id)
 {
 	X509_TRUST tmp;
-	tmp.trust_id = id;
+	int idx;
+	if((id >= X509_TRUST_MIN) && (id <= X509_TRUST_MAX))
+				 return id - X509_TRUST_MIN;
+	tmp.trust = id;
 	if(!trtable) return -1;
-	return sk_X509_TRUST_find(trtable, &tmp);
+	idx = sk_X509_TRUST_find(trtable, &tmp);
+	if(idx == -1) return -1;
+	return idx + X509_TRUST_COUNT;
 }
 
-int X509_TRUST_add(X509_TRUST *xp)
+int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
+					char *name, int arg1, void *arg2)
 {
 	int idx;
-	if(!trtable)
-		{
-		trtable = sk_X509_TRUST_new(tr_cmp);
-		if (!trtable) 
-			{
+	X509_TRUST *trtmp;
+	/* This is set according to what we change: application can't set it */
+	flags &= ~X509_TRUST_DYNAMIC;
+	/* This will always be set for application modified trust entries */
+	flags |= X509_TRUST_DYNAMIC_NAME;
+	/* Get existing entry if any */
+	idx = X509_TRUST_get_by_id(id);
+	/* Need a new entry */
+	if(idx == -1) {
+		if(!(trtmp = Malloc(sizeof(X509_TRUST)))) {
 			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
-			}
 		}
-			
-	idx = X509_TRUST_get_by_id(xp->trust_id);
-	if(idx != -1) {
-		trtable_free(sk_X509_TRUST_value(trtable, idx));
-		sk_X509_TRUST_set(trtable, idx, xp);
-	} else {
-		if (!sk_X509_TRUST_push(trtable, xp)) {
+		trtmp->flags = X509_TRUST_DYNAMIC;
+	} else trtmp = X509_TRUST_iget(idx);
+
+	/* Free existing name if dynamic */
+	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) Free(trtmp->name);
+	/* dup supplied name */
+	if(!(trtmp->name = BUF_strdup(name))) {
+		X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	/* Keep the dynamic flag of existing entry */
+	trtmp->flags &= X509_TRUST_DYNAMIC;
+	/* Set all other flags */
+	trtmp->flags |= flags;
+
+	trtmp->trust = id;
+	trtmp->check_trust = ck;
+	trtmp->arg1 = arg1;
+	trtmp->arg2 = arg2;
+
+	/* If its a new entry manage the dynamic table */
+	if(idx == -1) {
+		if(!trtable && !(trtable = sk_X509_TRUST_new(tr_cmp))) {
+			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+		if (!sk_X509_TRUST_push(trtable, trtmp)) {
 			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
@@ -143,40 +181,35 @@ int X509_TRUST_add(X509_TRUST *xp)
 static void trtable_free(X509_TRUST *p)
 	{
 	if(!p) return;
-	if (p->trust_flags & X509_TRUST_DYNAMIC) 
+	if (p->flags & X509_TRUST_DYNAMIC) 
 		{
-		if (p->trust_flags & X509_TRUST_DYNAMIC_NAME)
-			Free(p->trust_name);
+		if (p->flags & X509_TRUST_DYNAMIC_NAME)
+			Free(p->name);
 		Free(p);
 		}
 	}
 
 void X509_TRUST_cleanup(void)
 {
+	int i;
+	for(i = 0; i < X509_TRUST_COUNT; i++) trtable_free(trstandard + i);
 	sk_X509_TRUST_pop_free(trtable, trtable_free);
 	trtable = NULL;
 }
 
-void X509_TRUST_add_standard(void)
+int X509_TRUST_get_flags(X509_TRUST *xp)
 {
-	X509_TRUST *xp;
-	for(xp = trstandard; xp->trust_name; xp++)
-		X509_TRUST_add(xp);
-}
-
-int X509_TRUST_get_id(X509_TRUST *xp)
-{
-	return xp->trust_id;
+	return xp->flags;
 }
 
 char *X509_TRUST_iget_name(X509_TRUST *xp)
 {
-	return xp->trust_name;
+	return xp->name;
 }
 
 int X509_TRUST_get_trust(X509_TRUST *xp)
 {
-	return xp->trust_id;
+	return xp->trust;
 }
 
 static int trust_1bit(X509_TRUST *trust, X509 *x, int flags)

@@ -91,7 +91,7 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 &v3_info,
 };
 
-/* Number of standard extensions: keep up to date */
+/* Number of standard extensions */
 
-#define STANDARD_EXTENSION_COUNT 22
+#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
 

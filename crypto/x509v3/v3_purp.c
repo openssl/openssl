@@ -82,8 +82,9 @@ static X509_PURPOSE xstandard[] = {
 	{X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign, "S/MIME signing", "smimesign", NULL},
 	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
 	{X509_PURPOSE_CRL_SIGN, X509_TRUST_ANY, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
-	{-1, 0, 0, NULL, NULL, NULL, NULL}
 };
+
+#define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
 
 IMPLEMENT_STACK_OF(X509_PURPOSE)
 
@@ -100,7 +101,6 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	X509_PURPOSE *pt;
 	if(!(x->ex_flags & EXFLAG_SET)) {
 		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		X509_init();
 		x509v3_cache_extensions(x);
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 	}
@@ -108,25 +108,28 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	idx = X509_PURPOSE_get_by_id(id);
 	if(idx == -1) return -1;
 	pt = sk_X509_PURPOSE_value(xptable, idx);
-	return pt->check_purpose(pt, x,ca);
+	return pt->check_purpose(pt, x, ca);
 }
 
 int X509_PURPOSE_get_count(void)
 {
-	return sk_X509_PURPOSE_num(xptable);
+	if(!xptable) return X509_PURPOSE_COUNT;
+	return sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
 }
 
 X509_PURPOSE * X509_PURPOSE_iget(int idx)
 {
-	return sk_X509_PURPOSE_value(xptable, idx);
+	if(idx < 0) return NULL;
+	if(idx < X509_PURPOSE_COUNT) return xstandard + idx;
+	return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
 int X509_PURPOSE_get_by_sname(char *sname)
 {
 	int i;
 	X509_PURPOSE *xptmp;
-	for(i = 0; i < sk_X509_PURPOSE_num(xptable); i++) {
-		xptmp = sk_X509_PURPOSE_value(xptable, i);
+	for(i = 0; i < X509_PURPOSE_get_count(); i++) {
+		xptmp = X509_PURPOSE_iget(i);
 		if(!strcmp(xptmp->sname, sname)) return i;
 	}
 	return -1;
@@ -136,30 +139,66 @@ int X509_PURPOSE_get_by_sname(char *sname)
 int X509_PURPOSE_get_by_id(int purpose)
 {
 	X509_PURPOSE tmp;
+	int idx;
+	if((purpose >= X509_PURPOSE_MIN) && (purpose <= X509_PURPOSE_MAX))
+		return purpose - X509_PURPOSE_MIN;
 	tmp.purpose = purpose;
 	if(!xptable) return -1;
-	return sk_X509_PURPOSE_find(xptable, &tmp);
+	idx = sk_X509_PURPOSE_find(xptable, &tmp);
+	if(idx == -1) return -1;
+	return idx + X509_PURPOSE_COUNT;
 }
 
-int X509_PURPOSE_add(X509_PURPOSE *xp)
+int X509_PURPOSE_add(int id, int trust, int flags,
+			int (*ck)(X509_PURPOSE *, X509 *, int),
+					char *name, char *sname, void *arg)
 {
 	int idx;
-	if(!xptable)
-		{
-		xptable = sk_X509_PURPOSE_new(xp_cmp);
-		if (!xptable) 
-			{
+	X509_PURPOSE *ptmp;
+	/* This is set according to what we change: application can't set it */
+	flags &= ~X509_PURPOSE_DYNAMIC;
+	/* This will always be set for application modified trust entries */
+	flags |= X509_PURPOSE_DYNAMIC_NAME;
+	/* Get existing entry if any */
+	idx = X509_PURPOSE_get_by_id(id);
+	/* Need a new entry */
+	if(idx == -1) {
+		if(!(ptmp = Malloc(sizeof(X509_PURPOSE)))) {
 			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
-			}
 		}
-			
-	idx = X509_PURPOSE_get_by_id(xp->purpose);
-	if(idx != -1) {
-		xptable_free(sk_X509_PURPOSE_value(xptable, idx));
-		sk_X509_PURPOSE_set(xptable, idx, xp);
-	} else {
-		if (!sk_X509_PURPOSE_push(xptable, xp)) {
+		ptmp->flags = X509_PURPOSE_DYNAMIC;
+	} else ptmp = X509_PURPOSE_iget(idx);
+
+	/* Free existing name if dynamic */
+	if(ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
+		Free(ptmp->name);
+		Free(ptmp->sname);
+	}
+	/* dup supplied name */
+	ptmp->name = BUF_strdup(name);
+	ptmp->sname = BUF_strdup(sname);
+	if(!ptmp->name || !ptmp->sname) {
+		X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	/* Keep the dynamic flag of existing entry */
+	ptmp->flags &= X509_PURPOSE_DYNAMIC;
+	/* Set all other flags */
+	ptmp->flags |= flags;
+
+	ptmp->purpose = id;
+	ptmp->trust = trust;
+	ptmp->check_purpose = ck;
+	ptmp->usr_data = arg;
+
+	/* If its a new entry manage the dynamic table */
+	if(idx == -1) {
+		if(!xptable && !(xptable = sk_X509_PURPOSE_new(xp_cmp))) {
+			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+		if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
 			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
@@ -182,14 +221,10 @@ static void xptable_free(X509_PURPOSE *p)
 
 void X509_PURPOSE_cleanup(void)
 {
+	int i;
 	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
+	for(i = 0; i < X509_PURPOSE_COUNT; i++) xptable_free(xstandard + i);
 	xptable = NULL;
-}
-
-void X509_PURPOSE_add_standard(void)
-{
-	X509_PURPOSE *xp;
-	for(xp = xstandard; xp->name; xp++) X509_PURPOSE_add(xp);
 }
 
 int X509_PURPOSE_get_id(X509_PURPOSE *xp)

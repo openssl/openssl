@@ -773,7 +773,6 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
 ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, 
 		const unsigned char *in, int inlen, int inform, int nid);
-int ASN1_STRING_TABLE_add_standard(void);
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid);
 void ASN1_STRING_TABLE_cleanup(void);
 
@@ -812,7 +811,6 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_F_ASN1_SIGN				 114
 #define ASN1_F_ASN1_STRING_NEW				 115
 #define ASN1_F_ASN1_STRING_TABLE_ADD			 283
-#define ASN1_F_ASN1_STRING_TABLE_ADD_STANDARD		 284
 #define ASN1_F_ASN1_STRING_TYPE_NEW			 116
 #define ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING		 117
 #define ASN1_F_ASN1_TYPE_GET_OCTETSTRING		 118
@@ -824,7 +822,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_F_BASIC_CONSTRAINTS_NEW			 226
 #define ASN1_F_BN_TO_ASN1_ENUMERATED			 234
 #define ASN1_F_BN_TO_ASN1_INTEGER			 122
-#define ASN1_F_D2I_ACCESS_DESCRIPTION			 292
+#define ASN1_F_D2I_ACCESS_DESCRIPTION			 284
 #define ASN1_F_D2I_ASN1_BIT_STRING			 123
 #define ASN1_F_D2I_ASN1_BMPSTRING			 124
 #define ASN1_F_D2I_ASN1_BOOLEAN				 125

@@ -345,6 +345,9 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_SMIME_ENCRYPT	5
 #define X509_PURPOSE_CRL_SIGN		6
 
+#define X509_PURPOSE_MIN		1
+#define X509_PURPOSE_MAX		6
+
 DECLARE_STACK_OF(X509_PURPOSE)
 
 void ERR_load_X509V3_strings(void);
@@ -532,7 +535,9 @@ int X509_PURPOSE_get_count(void);
 X509_PURPOSE * X509_PURPOSE_iget(int idx);
 int X509_PURPOSE_get_by_sname(char *sname);
 int X509_PURPOSE_get_by_id(int id);
-int X509_PURPOSE_add(X509_PURPOSE *xp);
+int X509_PURPOSE_add(int id, int trust, int flags,
+			int (*ck)(X509_PURPOSE *, X509 *, int),
+				char *name, char *sname, void *arg);
 char *X509_PURPOSE_iget_name(X509_PURPOSE *xp);
 char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(X509_PURPOSE *xp);

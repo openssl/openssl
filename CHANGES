@@ -4,6 +4,18 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Modify X509_TRUST and X509_PURPOSE so it also uses a static and
+     dynamic mix. In both cases the ids can be used as an index into the
+     table. Also modified the X509_TRUST_add() and X509_PURPOSE_add()
+     functions so they accept a list of the field values and the
+     application doesn't need to directly manipulate the X509_TRUST
+     structure.
+     [Steve Henson]
+
+  *) Modify the ASN1_STRING_TABLE stuff so it also uses bsearch and doesn't
+     need initialising.
+     [Steve Henson]
+
   *) Modify the way the V3 extension code looks up extensions. This now
      works in a similar way to the object code: we have some "standard"
      extensions in a static table which is searched with OBJ_bsearch()

@@ -66,6 +66,7 @@
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b);
+static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b);
 
 /* The following function generates an ASN1_STRING based on limits in a table.
  * Frequently the types and length of an ASN1_STRING are restricted by a 
@@ -79,7 +80,6 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 	ASN1_STRING *str = NULL;
 	int ret;
 	if(!out) out = &str;
-	if(!stable) ASN1_STRING_TABLE_add_standard();
 	tbl = ASN1_STRING_TABLE_get(nid);
 	if(tbl) ret = ASN1_mbstring_ncopy(out, in, inlen, inform, tbl->mask,
 					tbl->minsize, tbl->maxsize);
@@ -102,53 +102,45 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 #define ub_title			64
 #define ub_email_address		128
 
+/* This table must be kept in NID order */
+
 static ASN1_STRING_TABLE tbl_standard[] = {
-{NID_name,			1, ub_name, 0, 0},
-{NID_surname,			1, ub_name, 0, 0},
-{NID_givenName,			1, ub_name, 0, 0},
-{NID_initials,			1, ub_name, 0, 0},
 {NID_commonName,		1, ub_common_name, 0, 0},
+{NID_countryName,		2, 2, B_ASN1_PRINTABLESTRING, 0},
 {NID_localityName,		1, ub_locality_name, 0, 0},
 {NID_stateOrProvinceName,	1, ub_state_name, 0, 0},
 {NID_organizationName,		1, ub_organization_name, 0, 0},
 {NID_organizationalUnitName,	1, ub_organization_unit_name, 0, 0},
-{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, 0},
-{NID_countryName,		2, 2, B_ASN1_PRINTABLESTRING, 0},
 {NID_pkcs9_emailAddress,	1, ub_email_address, B_ASN1_IA5STRING, 0},
-{NID_undef, 0, 0, 0, 0}
+{NID_givenName,			1, ub_name, 0, 0},
+{NID_surname,			1, ub_name, 0, 0},
+{NID_initials,			1, ub_name, 0, 0},
+{NID_name,			1, ub_name, 0, 0},
+{NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, 0},
 };
-
-int ASN1_STRING_TABLE_add_standard(void)
-{
-	static int done = 0;
-	ASN1_STRING_TABLE *tmp;
-	if(done) return 1;
-	if(!stable) stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
-	if(!stable) {
-		ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD_STANDARD,
-						ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	for(tmp = tbl_standard; tmp->nid != NID_undef; tmp++) {
-		if(!sk_ASN1_STRING_TABLE_push(stable, tmp)) {
-			ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD_STANDARD,
-							ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
-	return 1;
-}
 
 static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b)
 {
 	return (*a)->nid - (*b)->nid;
 }
 
+static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b)
+{
+	return a->nid - b->nid;
+}
+
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
 	int idx;
+	ASN1_STRING_TABLE *ttmp;
 	ASN1_STRING_TABLE fnd;
 	fnd.nid = nid;
+	ttmp = (ASN1_STRING_TABLE *) OBJ_bsearch((char *)&fnd,
+					(char *)tbl_standard, 
+			sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE),
+			sizeof(ASN1_STRING_TABLE), (int(*)())table_cmp);
+	if(ttmp) return ttmp;
+	if(!stable) return NULL;
 	idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
 	if(idx < 0) return NULL;
 	return sk_ASN1_STRING_TABLE_value(stable, idx);
@@ -160,6 +152,7 @@ int ASN1_STRING_TABLE_add(int nid,
 {
 	ASN1_STRING_TABLE *tmp;
 	char new_nid = 0;
+	flags &= ~STABLE_FLAGS_MALLOC;
 	if(!stable) stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
 	if(!stable) {
 		ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD, ERR_R_MALLOC_FAILURE);
@@ -172,14 +165,13 @@ int ASN1_STRING_TABLE_add(int nid,
 							ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		tmp->flags = STABLE_FLAGS_MALLOC;
+		tmp->flags = flags | STABLE_FLAGS_MALLOC;
 		tmp->nid = nid;
 		new_nid = 1;
-	}
+	} else tmp->flags = (tmp->flags & STABLE_FLAGS_MALLOC) | flags;
 	if(minsize != -1) tmp->minsize = minsize;
 	if(maxsize != -1) tmp->maxsize = maxsize;
 	tmp->mask = mask;
-	tmp->flags = flags & ~STABLE_FLAGS_MALLOC;
 	if(new_nid) sk_ASN1_STRING_TABLE_push(stable, tmp);
 	return 1;
 }
