@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [fips] [debug] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [[no-]fips] [debug] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -140,7 +140,7 @@ my %table=(
 "debug-ben-openbsd-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
 "debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -Wall -Wshadow -Werror -pipe::(unknown)::::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown)::::::",
-"debug-ben-fips-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DFIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
+"debug-ben-fips-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_FIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT:::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
@@ -743,6 +743,8 @@ PROCESS_ARGS:
 			{ $no_ssl3 = 1; }
 		elsif (/^no-tls1?$/)
 			{ $no_tls1 = 1; }
+		elsif (/^no-fips$/)
+			{ $fips = 0; }
 		elsif (/^no-(.+)$/)
 			{
 			my $algo=$1;
@@ -811,7 +813,6 @@ PROCESS_ARGS:
 		elsif (/^fips$/)
 			{
 			$fips=1;
-			$openssl_other_defines.="#define OPENSSL_FIPS\n";
 		        }
 		elsif (/^debug$/)
 			{
@@ -1155,6 +1156,7 @@ $bn_obj = $bn_asm unless $bn_obj ne "";
 if ($fips)
 	{
 	$des_obj=$sha1_obj="";
+	$openssl_other_defines.="#define OPENSSL_FIPS\n";
 	}
 $des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
 my $fips_des_obj='asm/fips-dx86-elf.o';
