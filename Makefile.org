@@ -1,6 +1,6 @@
 #
 # Makefile for all the SSL related library routines and utilities
-VERSION = 0.9.1c
+VERSION = 0.9.2
 PLATFORM=FreeBSD
 #
 # make install will install:
