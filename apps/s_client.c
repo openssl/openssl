@@ -256,7 +256,7 @@ int MAIN(int argc, char **argv)
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
 #endif
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 	struct timeval tv;
 #endif
 
@@ -640,7 +640,7 @@ re_start:
 
 		if (!ssl_pending)
 			{
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
@@ -770,7 +770,7 @@ re_start:
 				goto shut;
 				}
 			}
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 		/* Assume Windows/DOS can always write */
 		else if (!ssl_pending && write_tty)
 #else
@@ -857,6 +857,8 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #else
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #endif
+#elif defined (OPENSSL_SYS_NETWARE)
+        else if (_kbhit())
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif

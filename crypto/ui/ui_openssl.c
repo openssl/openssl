@@ -202,6 +202,12 @@
 #undef SGTTY
 #endif
 
+#if defined(OPENSSL_SYS_NETWARE)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
+#endif
+
 #ifdef TERMIOS
 # include <termios.h>
 # define TTY_STRUCT		struct termios
@@ -250,7 +256,7 @@ struct IOSB {
 	typedef int sig_atomic_t;
 #endif
 
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(MAC_OS_GUSI_SOURCE)
+#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
 /*
  * This one needs work. As a matter of fact the code is unoperational
  * and this is only a trick to get it compiled.
@@ -463,7 +469,7 @@ static int open_console(UI *ui)
 	CRYPTO_w_lock(CRYPTO_LOCK_UI);
 	is_a_tty = 1;
 
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_VXWORKS)
+#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)
 	tty_in=stdin;
 	tty_out=stderr;
 #else

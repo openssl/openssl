@@ -197,9 +197,9 @@ err:
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);
-	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
-	CRYPTO_mem_leaks_fp(stderr);
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
 	EXIT(ret);
 	return(ret);
 	}

@@ -197,6 +197,9 @@ int main(int argc, char *argv[])
 			}
 		}
 	printf("done\n");
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
 	EXIT(err);
 	return(0);
 	}

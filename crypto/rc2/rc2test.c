@@ -205,6 +205,9 @@ int main(int argc, char *argv[])
 		printf("ok\n");
 #endif
 
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
 	EXIT(err);
 	return(err);
 	}

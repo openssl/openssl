@@ -83,7 +83,7 @@
 #    else
 #      include <unixlib.h>
 #    endif
-#  elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS)
+#  elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_NETWARE)
 #    include <sys/file.h>
 #  endif
 #endif

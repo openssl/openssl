@@ -250,7 +250,7 @@ int str2fmt(char *s)
 		return(FORMAT_UNDEF);
 	}
 
-#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_NETWARE)
 void program_name(char *in, char *out, int size)
 	{
 	int i,n;
@@ -269,12 +269,23 @@ void program_name(char *in, char *out, int size)
 	if (p == NULL)
 		p=in;
 	n=strlen(p);
+
+#if defined(OPENSSL_SYS_NETWARE)
+   /* strip off trailing .nlm if present. */
+   if ((n > 4) && (p[n-4] == '.') &&
+      ((p[n-3] == 'n') || (p[n-3] == 'N')) &&
+      ((p[n-2] == 'l') || (p[n-2] == 'L')) &&
+      ((p[n-1] == 'm') || (p[n-1] == 'M')))
+      n-=4;
+#else
 	/* strip off trailing .exe if present. */
 	if ((n > 4) && (p[n-4] == '.') &&
 		((p[n-3] == 'e') || (p[n-3] == 'E')) &&
 		((p[n-2] == 'x') || (p[n-2] == 'X')) &&
 		((p[n-1] == 'e') || (p[n-1] == 'E')))
 		n-=4;
+#endif
+
 	if (n > size-1)
 		n=size-1;
 

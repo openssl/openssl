@@ -821,6 +821,9 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		printf("fast crypt error, %s should be yA1Rp/1hZXIJk\n",str);
 		err=1;
 		}
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
 	printf("\n");
 	return(err);
 	}

@@ -85,7 +85,7 @@
 #include OPENSSL_UNISTD
 #endif
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
+#if !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -105,7 +105,7 @@
 #undef TIMES
 #endif
 
-#if !defined(TIMES) && !defined(OPENSSL_SYS_VXWORKS)
+#if !defined(TIMES) && !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_NETWARE)
 #include <sys/timeb.h>
 #endif
 
@@ -384,6 +384,20 @@ static double tm_Time_F(int s)
 		ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
 		return((ret == 0.0)?1e-6:ret);
 	}
+#elif defined(OPENSSL_SYS_NETWARE)
+    static clock_t tstart,tend;
+
+    if (s == START)
+    {
+        tstart=clock();
+        return(0);
+    }
+    else
+    {
+        tend=clock();
+        ret=(double)((double)(tend)-(double)(tstart));
+        return((ret < 0.001)?0.001:ret);
+    }
 #elif defined(OPENSSL_SYS_VXWORKS)
         {
 	static unsigned long tick_start, tick_end;

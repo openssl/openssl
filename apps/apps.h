@@ -162,7 +162,9 @@ extern BIO *bio_err;
 
 #endif
 
+#ifndef OPENSSL_SYS_NETWARE
 #include <signal.h>
+#endif
 
 #ifdef SIGPIPE
 #define do_pipe_sig()	signal(SIGPIPE,SIG_IGN)

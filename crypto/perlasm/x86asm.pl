@@ -18,7 +18,7 @@ sub main'asm_init
 	($type,$fn,$i386)=@_;
 	$filename=$fn;
 
-	$elf=$cpp=$sol=$aout=$win32=$gaswin=0;
+	$elf=$cpp=$sol=$aout=$win32=$gaswin=$netware=0;
 	if (	($type eq "elf"))
 		{ $elf=1; require "x86unix.pl"; }
 	elsif (	($type eq "a.out"))
@@ -33,6 +33,10 @@ sub main'asm_init
 		{ $win32=1; require "x86ms.pl"; }
 	elsif (	($type eq "win32n"))
 		{ $win32=1; require "x86nasm.pl"; }
+	elsif (	($type eq "nw-nasm"))
+		{ $netware=1; require "x86nasm_nw.pl"; }
+	elsif (	($type eq "nw-mwasm"))
+		{ $netware=1; require "x86mwasm_nw.pl"; }
 	else
 		{
 		print STDERR <<"EOF";
@@ -43,6 +47,8 @@ Pick one target type from
 	cpp	- format so x86unix.cpp can be used
 	win32	- Windows 95/Windows NT
 	win32n	- Windows 95/Windows NT NASM format
+	nw-nasm - NetWare NASM format
+	nw-mwasm- NetWare Metrowerks Assembler
 EOF
 		exit(1);
 		}

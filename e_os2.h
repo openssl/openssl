@@ -76,6 +76,12 @@ extern "C" {
 # define OPENSSL_SYS_MACINTOSH_CLASSIC
 #endif
 
+/* ----------------------- NetWare ----------------------------------------- */
+#if defined(NETWARE) || defined(OPENSSL_SYSNAME_NETWARE)
+# undef OPENSSL_SYS_UNIX
+# define OPENSSL_SYS_NETWARE
+#endif
+
 /* ---------------------- Microsoft operating systems ---------------------- */
 
 /* The 16 bit environments are pretty straightforward */

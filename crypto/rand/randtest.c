@@ -211,6 +211,9 @@ int main()
 	printf("test 4 done\n");
  err:
 	err=((err)?1:0);
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
 	EXIT(err);
 	return(err);
 	}

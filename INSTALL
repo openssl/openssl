@@ -2,8 +2,10 @@
  INSTALLATION ON THE UNIX PLATFORM
  ---------------------------------
 
- [Installation on DOS (with djgpp), Windows, OpenVMS and MacOS (before MacOS X)
-  is described in INSTALL.DJGPP, INSTALL.W32, INSTALL.VMS and INSTALL.MacOS.
+ [Installation on DOS (with djgpp), Windows, OpenVMS, MacOS (before MacOS X)
+  and NetWare is described in INSTALL.DJGPP, INSTALL.W32, INSTALL.VMS,
+  INSTALL.MacOS and INSTALL.NW.
+  
   This document describes installation on operating systems in the Unix
   family.]
 

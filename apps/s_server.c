@@ -124,11 +124,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+
 #include <sys/stat.h>
 #include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
+#endif
+
+#if !defined(OPENSSL_SYS_NETWARE)  /* conflicts with winsock2 stuff on netware */
+#include <sys/types.h>
 #endif
 
 /* With IPv6, it looks like Digital has mixed up the proper order of
@@ -997,7 +1001,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 	struct timeval tv;
 #endif
 
@@ -1071,7 +1075,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		if (!read_from_sslcon)
 			{
 			FD_ZERO(&readfds);
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
 			FD_SET(fileno(stdin),&readfds);
 #endif
 			FD_SET(s,&readfds);
@@ -1081,7 +1085,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			 * the compiler: if you do have a cast then you can either
 			 * go for (int *) or (void *).
 			 */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
                         /* Under DOS (non-djgpp) and Windows we can't select on stdin: only
 			 * on sockets. As a workaround we timeout the select every
 			 * second and check for any keypress. In a proper Windows
@@ -1501,7 +1505,9 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
+#if defined(OPENSSL_SYS_NETWARE)
+            delay(1000);
+#elif !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
 				sleep(1);
 #endif
 				continue;

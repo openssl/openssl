@@ -218,6 +218,13 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			_setmode(fd,_O_TEXT);
 		else
 			_setmode(fd,_O_BINARY);
+#elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
+         /* Under CLib there are differences in file modes
+         */
+		if (num & BIO_FP_TEXT)
+			_setmode(fileno((FILE *)ptr),O_TEXT);
+		else
+			_setmode(fileno((FILE *)ptr),O_BINARY);
 #elif defined(OPENSSL_SYS_MSDOS)
 		{
 		int fd = fileno((FILE*)ptr);
@@ -270,7 +277,13 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		else
 			strcat(p,"t");
 #endif
-		fp=fopen(ptr,p);
+#if defined(OPENSSL_SYS_NETWARE)
+		if (!(num & BIO_FP_TEXT))
+			strcat(p,"b");
+		else
+			strcat(p,"t");
+#endif
+fp=fopen(ptr,p);
 		if (fp == NULL)
 			{
 			SYSerr(SYS_F_FOPEN,get_last_sys_error());

@@ -181,6 +181,9 @@ int main(int argc, char *argv[])
 err:
 	ERR_load_crypto_strings();
 	ERR_print_errors(out);
+#ifdef OPENSSL_SYS_NETWARE
+    printf("ERROR\n");
+#endif
 	EXIT(1);
 	return(1);
 	}

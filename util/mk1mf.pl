@@ -39,6 +39,8 @@ $infile="MINFO";
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
 	"OS2-EMX", "EMX GCC OS/2",
+	"netware-clib", "CodeWarrior for NetWare - CLib",
+	"netware-libc", "CodeWarrior for NetWare - LibC",
 	"default","cc under unix",
 	);
 
@@ -69,6 +71,8 @@ and [options] can be one of
 	no-engine				- No engine
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
+	nw-nasm					- Use NASM x86 asm for NetWare
+	nw-mwasm					- Use Metrowerks x86 asm for NetWare
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
@@ -197,6 +201,11 @@ elsif ($platform eq "OS2-EMX")
 	{
 	$wc=1;
 	require 'OS2-EMX.pl';
+	}
+elsif (($platform eq "netware-clib") || ($platform eq "netware-libc"))
+	{
+   $LIBC=1 if $platform eq "netware-libc";
+	require 'netware.pl';
 	}
 else
 	{
@@ -928,6 +937,8 @@ sub read_options
 	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-asm$/)	{ $no_asm=1; }
 	elsif (/^nasm$/)	{ $nasm=1; }
+	elsif (/^nw-nasm$/)	{ $nw_nasm=1; }
+	elsif (/^nw-mwasm$/)	{ $nw_mwasm=1; }
 	elsif (/^gaswin$/)	{ $gaswin=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }

@@ -1,4 +1,4 @@
-/* crypto/rand/rand_unix.c */
+/* crypto/rand/rand_win.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,139 +108,64 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#include <stdio.h>
 
-#define USE_SOCKETS
-#include "e_os.h"
 #include "cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)) 
+#if defined (OPENSSL_SYS_NETWARE)
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/times.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <time.h>
+#if defined(NETWARE_LIBC)
+#include <nks\thread.h>
+#endif
 
+extern long RunningProcess;
+
+   /* the FAQ indicates we need to provide at least 20 bytes (160 bits) of seed
+   */
 int RAND_poll(void)
 {
-	unsigned long l;
-	pid_t curr_pid = getpid();
-#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
-	unsigned char tmpbuf[ENTROPY_NEEDED];
-	int n = 0;
-#endif
-#ifdef DEVRANDOM
-	static const char *randomfiles[] = { DEVRANDOM, NULL };
-	const char **randomfile = NULL;
-	int fd;
-#endif
-#ifdef DEVRANDOM_EGD
-	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
-	const char **egdsocket = NULL;
-#endif
+   unsigned long l;
+   unsigned long tsc;
+   int i; 
 
-#ifdef DEVRANDOM
-	/* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
-	 * have this. Use /dev/urandom if you can as /dev/random may block
-	 * if it runs out of random entries.  */
+      /* There are several options to gather miscellaneous data
+       * but for now we will loop checking the time stamp counter (rdtsc) and
+       * the SuperHighResolutionTimer.  Each iteration will collect 8 bytes
+       * of data but it is treated as only 1 byte of entropy.  The call to
+       * ThreadSwitchWithDelay() will introduce additional variability into
+       * the data returned by rdtsc.
+       *
+       * Applications can agument the seed material by adding additional
+       * stuff with RAND_add() and should probably do so.
+      */
+   l = GetProcessSwitchCount();
+   RAND_add(&l,sizeof(l),1);
+   
+   l=RunningProcess;
+   RAND_add(&l,sizeof(l),1);
 
-	for (randomfile = randomfiles; *randomfile && n < ENTROPY_NEEDED; randomfile++)
-		{
-		if ((fd = open(*randomfile, O_RDONLY|O_NONBLOCK
-#ifdef O_NOCTTY /* If it happens to be a TTY (god forbid), do not make it
-		   our controlling tty */
-			|O_NOCTTY
-#endif
-#ifdef O_NOFOLLOW /* Fail if the file is a symbolic link */
-			|O_NOFOLLOW
-#endif
-			)) >= 0)
-			{
-			struct timeval t = { 0, 10*1000 }; /* Spend 10ms on
-							      each file. */
-			int r;
-			fd_set fset;
+   for( i=2; i<ENTROPY_NEEDED; i++)
+   {
+      asm 
+      {
+         rdtsc
+         mov tsc, eax        
+      }
+      RAND_add(&tsc, sizeof(tsc), 1);
 
-			do
-				{
-				FD_ZERO(&fset);
-				FD_SET(fd, &fset);
-				r = -1;
+      l = GetSuperHighResolutionTimer();
+      RAND_add(&l, sizeof(l), 0);
 
-				if (select(fd+1,&fset,NULL,NULL,&t) < 0)
-					t.tv_usec=0;
-				else if (FD_ISSET(fd, &fset))
-					{
-					r=read(fd,(unsigned char *)tmpbuf+n,
-					       ENTROPY_NEEDED-n);
-					if (r > 0)
-						n += r;
-					}
+# if defined(NETWARE_LIBC)
+         NXThreadYield();
+# else /* NETWARE_CLIB */
+      ThreadSwitchWithDelay();
+# endif
+   }
 
-				/* Some Unixen will update t, some
-				   won't.  For those who won't, give
-				   up here, otherwise, we will do
-				   this once again for the remaining
-				   time. */
-				if (t.tv_usec == 10*1000)
-					t.tv_usec=0;
-				}
-			while ((r > 0 || (errno == EINTR || errno == EAGAIN))
-				&& t.tv_usec != 0 && n < ENTROPY_NEEDED);
-
-			close(fd);
-			}
-		}
-#endif
-
-#ifdef DEVRANDOM_EGD
-	/* Use an EGD socket to read entropy from an EGD or PRNGD entropy
-	 * collecting daemon. */
-
-	for (egdsocket = egdsockets; *egdsocket && n < ENTROPY_NEEDED; egdsocket++)
-		{
-		int r;
-
-		r = RAND_query_egd_bytes(*egdsocket, (unsigned char *)tmpbuf+n,
-					 ENTROPY_NEEDED-n);
-		if (r > 0)
-			n += r;
-		}
-#endif
-
-#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
-	if (n > 0)
-		{
-		RAND_add(tmpbuf,sizeof tmpbuf,n);
-		OPENSSL_cleanse(tmpbuf,n);
-		}
-#endif
-
-	/* put in some default random data, we need more than just this */
-	l=curr_pid;
-	RAND_add(&l,sizeof(l),0);
-	l=getuid();
-	RAND_add(&l,sizeof(l),0);
-
-	l=time(NULL);
-	RAND_add(&l,sizeof(l),0);
-
-#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
-	return 1;
-#else
-	return 0;
-#endif
+   return 1;
 }
 
-#endif
+#endif 
 
-#if defined(OPENSSL_SYS_VXWORKS)
-int RAND_poll(void)
-{
-    return 0;
-}
-#endif

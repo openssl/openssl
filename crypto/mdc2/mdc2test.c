@@ -140,6 +140,9 @@ int main(int argc, char *argv[])
 		printf("pad2 - ok\n");
 
 	EVP_MD_CTX_cleanup(&c);
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
 	EXIT(ret);
 	return(ret);
 	}

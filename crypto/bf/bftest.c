@@ -278,6 +278,9 @@ int main(int argc, char *argv[])
 	else
 		ret=test();
 
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
 	EXIT(ret);
 	return(0);
 	}

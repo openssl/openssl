@@ -157,6 +157,10 @@ int main(int argc, char *argv[])
 		}
 	else
 		printf("test 3 ok\n");
+
+#ifdef OPENSSL_SYS_NETWARE
+    if (err) printf("ERROR: %d\n", err);
+#endif
 	EXIT(err);
 	EVP_MD_CTX_cleanup(&c);
 	return(0);

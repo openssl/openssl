@@ -321,6 +321,26 @@ extern "C" {
                                      __VMS_EXIT |= 0x10000000; \
 				     exit(__VMS_EXIT); } while(0)
 #    define NO_SYS_PARAM_H
+
+#  elif defined(OPENSSL_SYS_NETWARE)
+#    include <fcntl.h>
+#    include <unistd.h>
+#    define NO_SYS_TYPES_H
+#    undef  DEVRANDOM
+#    ifdef NETWARE_CLIB
+#      define getpid GetThreadID
+#    endif
+#    define NO_SYSLOG
+#    define _setmode setmode
+#    define _kbhit kbhit
+#    define _O_TEXT O_TEXT
+#    define _O_BINARY O_BINARY
+#    define OPENSSL_CONF   "openssl.cnf"
+#    define SSLEAY_CONF    OPENSSL_CONF
+#    define RFILE    ".rnd"
+#    define LIST_SEPARATOR_CHAR ';'
+#    define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
+
 #  else
      /* !defined VMS */
 #    ifdef OPENSSL_SYS_MPE
@@ -392,6 +412,19 @@ extern HINSTANCE _hInstance;
 #    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
 #    define SHUTDOWN(fd)		MacSocket_close(fd)
 #    define SHUTDOWN2(fd)		MacSocket_close(fd)
+
+#  elif defined(OPENSSL_SYS_NETWARE)
+         /* NetWare uses the WinSock2 interfaces
+         */
+#      if defined(NETWARE_CLIB)
+#        include <ws2nlm.h>
+#      elif defined(NETWARE_LIBC)
+#        include <novsock2.h>
+#      endif
+#      define SSLeay_Write(a,b,c)   send((a),(b),(c),0)
+#      define SSLeay_Read(a,b,c) recv((a),(b),(c),0)
+#      define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
+#      define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
 #  else
 
@@ -519,6 +552,9 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #  define strcasecmp OPENSSL_strcasecmp
 #  define strncasecmp OPENSSL_strncasecmp
 #elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
+#  define strcasecmp stricmp
+#  define strncasecmp strnicmp
+#elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
 #  define strcasecmp stricmp
 #  define strncasecmp strnicmp
 #else

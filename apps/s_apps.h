@@ -108,8 +108,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
+#if !defined(OPENSSL_SYS_NETWARE)  /* conflicts with winsock2 stuff on netware */
 #include <sys/types.h>
+#endif
 #include <openssl/opensslconf.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)

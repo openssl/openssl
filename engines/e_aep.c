@@ -852,7 +852,11 @@ static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 
+#ifndef NETWARE_CLIB
 	curr_pid = getpid();
+#else
+	curr_pid = GetThreadID();
+#endif
 
 	/*Check if this is the first time this is being called from the current
 	  process*/

@@ -88,7 +88,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
+
 #include <string.h>
 #include <math.h>
 #include "apps.h"
@@ -104,6 +104,10 @@
 #include OPENSSL_UNISTD
 #endif
 
+#ifndef OPENSSL_SYS_NETWARE
+#include <signal.h>
+#endif
+
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(OPENSSL_SYS_MACOSX)
 # define USE_TOD
 #elif !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
@@ -111,6 +115,12 @@
 #endif
 #if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(OPENSSL_SYS_MPE) && !defined(__NetBSD__) && !defined(OPENSSL_SYS_VXWORKS) /* FIXME */
 # define TIMEB
+#endif
+
+#if defined(OPENSSL_SYS_NETWARE)
+#undef TIMES
+#undef TIMEB
+#include <time.h>
 #endif
 
 #ifndef _IRIX
@@ -137,7 +147,7 @@
 #include <sys/timeb.h>
 #endif
 
-#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD) && !defined(OPENSSL_SYS_VXWORKS)
+#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD) && !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_NETWARE)
 #error "It seems neither struct tms nor struct timeb is supported in this platform!"
 #endif
 
@@ -236,7 +246,7 @@
 # endif
 #endif
 
-#if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2)
+#if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2) && !defined(OPENSSL_SYS_NETWARE)
 # define HAVE_FORK 1
 #endif
 
@@ -297,6 +307,32 @@ static SIGRETTYPE sig_done(int sig)
 
 #define START	0
 #define STOP	1
+
+#if defined(OPENSSL_SYS_NETWARE)
+
+   /* for NetWare the best we can do is use clock() which returns the
+    * time, in hundredths of a second, since the NLM began executing
+   */
+static double Time_F(int s)
+	{
+	double ret;
+
+   static clock_t tstart,tend;
+
+   if (s == START)
+   {
+      tstart=clock();
+      return(0);
+   }
+   else
+   {
+      tend=clock();
+      ret=(double)((double)(tend)-(double)(tstart));
+      return((ret < 0.001)?0.001:ret);
+   }
+   }
+
+#else
 
 static double Time_F(int s)
 	{
@@ -406,6 +442,7 @@ static double Time_F(int s)
 # endif
 #endif
 	}
+#endif /* if defined(OPENSSL_SYS_NETWARE) */
 
 
 static const int KDF1_SHA1_len = 20;
