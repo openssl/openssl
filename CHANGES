@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change bctest to avoid here-documents inside command substitution
+     (workaround for FreeBSD /bin/sh bug).
+     [Bodo Moeller]
+
   *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
      with des_encrypt() defined on some operating systems, like Solaris
      and UnixWare.
