@@ -310,7 +310,9 @@ int main(int argc,char **argv)
     OpenSSL_add_all_digests();
     /* Load all compiled-in ENGINEs */
     ENGINE_load_builtin_engines();
+#if 0
     OPENSSL_config();
+#endif
     /* Register all available ENGINE implementations of ciphers and digests.
      * This could perhaps be changed to "ENGINE_register_all_complete()"? */
     ENGINE_register_all_ciphers();
