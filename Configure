@@ -1170,7 +1170,8 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 	}
 
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
-open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
+unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
+open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
 print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
 my $sdirs=0;
 while (<IN>)
@@ -1244,6 +1245,8 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
+rename($Makefile,"$Makefile.bak") || die "unable to rename $Makefile\n" if -e $Makefile;
+rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
@@ -1314,7 +1317,8 @@ foreach (sort split(/\s+/,$bn_ops))
 	}
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
-open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
+unlink("crypto/opensslconf.h.new") || die "unable to remove old crypto/opensslconf.h.new:$!\n" if -e "crypto/opensslconf.h.new";
+open(OUT,'>crypto/opensslconf.h.new') || die "unable to create crypto/opensslconf.h.new:$!\n";
 print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
 
@@ -1408,6 +1412,8 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
+rename("crypto/opensslconf.h","crypto/opensslconf.h.bak") || die "unable to rename crypto/opensslconf.h\n" if -e "crypto/opensslconf.h";
+rename("crypto/opensslconf.h.new","crypto/opensslconf.h") || die "unable to rename crypto/opensslconf.h.new\n";
 
 
 # Fix the date
