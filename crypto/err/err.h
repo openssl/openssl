@@ -130,6 +130,7 @@ typedef struct err_state_st
 #define ERR_LIB_ENGINE		38
 #define ERR_LIB_OCSP            39
 #define ERR_LIB_UI              40
+#define ERR_LIB_COMP            41
 
 #define ERR_LIB_USER		128
 
