@@ -340,7 +340,7 @@ static void *vms_bind_var(DSO *dso, const char *symname)
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
 	{
 	DSO_FUNC_TYPE sym = 0;
-	vms_bind_sym(dso, symname, &sym);
+	vms_bind_sym(dso, symname, (void **)&sym);
 	return sym;
 	}
 
