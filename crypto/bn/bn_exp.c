@@ -205,6 +205,8 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		if (a->top == 1 && !a->neg)
 			{
 			BN_ULONG A = a->d[0];
+			if (m->top == 1)
+				A %= m->d[0]; /* make sure that A is reduced */
 			ret=BN_mod_exp_mont_word(r,A,p,m,ctx,NULL);
 			}
 		else
@@ -235,8 +237,13 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 	if (bits == 0)
 		{
-		BN_one(r);
-		return(1);
+		ret = BN_one(r);
+		return ret;
+		}
+	if (BN_is_zero(a))
+		{
+		ret = BN_zero(r);
+		return ret;
 		}
 
 	BN_CTX_start(ctx);
@@ -355,8 +362,13 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bits=BN_num_bits(p);
 	if (bits == 0)
 		{
-		BN_one(rr);
-		return(1);
+		ret = BN_one(rr);
+		return ret;
+		}
+	if (BN_is_zero(a))
+		{
+		ret = BN_zero(rr);
+		return ret;
 		}
 	BN_CTX_start(ctx);
 	d = BN_CTX_get(ctx);
@@ -500,9 +512,15 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	bits = BN_num_bits(p);
 	if (bits == 0)
 		{
-		BN_one(rr);
-		return(1);
+		ret = BN_one(rr);
+		return ret;
 		}
+	if (a == 0)
+		{
+		ret = BN_zero(rr);
+		return ret;
+		}
+
 	BN_CTX_start(ctx);
 	d = BN_CTX_get(ctx);
 	r = BN_CTX_get(ctx);
@@ -611,8 +629,13 @@ int BN_mod_exp_simple(BIGNUM *r,
 
 	if (bits == 0)
 		{
-		BN_one(r);
-		return(1);
+		ret = BN_one(r);
+		return ret;
+		}
+	if (BN_is_zero(a))
+		{
+		ret = BN_one(r);
+		return ret;
 		}
 
 	BN_CTX_start(ctx);

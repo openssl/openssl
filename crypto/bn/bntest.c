@@ -92,6 +92,7 @@ int test_mod_mul(BIO *bp,BN_CTX *ctx);
 int test_mod_exp(BIO *bp,BN_CTX *ctx);
 int test_exp(BIO *bp,BN_CTX *ctx);
 int test_kron(BIO *bp,BN_CTX *ctx);
+int test_sqrt(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -231,6 +232,10 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_kronecker");
 	if (!test_kron(out,ctx)) goto err;
+	BIO_flush(out);
+
+	message(out,"BN_mod_sqrt");
+	if (!test_sqrt(out,ctx)) goto err;
 	BIO_flush(out);
 
 	BN_CTX_free(ctx);
@@ -940,11 +945,6 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 
 	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
 	putc('\n', stderr);
-	if (1 != BN_is_prime(b, 10, NULL, ctx, NULL))
-		{
-		fprintf(stderr, "BN_is_prime failed\n");
-		goto err;
-		}
 
 	for (i = 0; i < num0; i++)
 		{
@@ -994,6 +994,78 @@ int test_kron(BIO *bp, BN_CTX *ctx)
  err:
 	if (a != NULL) BN_free(a);
 	if (b != NULL) BN_free(b);
+	if (r != NULL) BN_free(r);
+	return ret;
+	}
+
+int test_sqrt(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM *a,*p,*r;
+	int i, j;
+	int ret = 0;
+
+	a = BN_new();
+	p = BN_new();
+	r = BN_new();
+	if (a == NULL || p == NULL || r == NULL) goto err;
+	
+	for (i = 0; i < 16; i++)
+		{
+		if (i < 8)
+			{
+			unsigned primes[8] = { 2, 3, 7, 11, 13, 17, 19 };
+			
+			if (!BN_set_word(p, primes[i])) goto err;
+			}
+		else
+			{
+			if (!BN_set_word(a, 32)) goto err;
+			if (!BN_set_word(r, 2*i + 1)) goto err;
+		
+			if (!BN_generate_prime(p, 256, 0, a, r, genprime_cb, NULL)) goto err;
+			putc('\n', stderr);
+			}
+
+		for (j = 0; j < num2; j++)
+			{
+			/* construct 'a' such that it is a square modulo p,
+			 * but in general not a proper square and not reduced modulo p */
+			if (!BN_rand(r, 256, 0, 3)) goto err;
+			if (!BN_nnmod(r, r, p, ctx)) goto err;
+			if (!BN_mod_sqr(r, r, p, ctx)) goto err;
+			if (!BN_rand(a, 256, 0, 3)) goto err;
+			if (!BN_nnmod(a, a, p, ctx)) goto err;
+			if (!BN_mod_sqr(a, a, p, ctx)) goto err;
+			if (!BN_mul(a, a, r, ctx)) goto err;
+
+			if (!BN_mod_sqrt(r, a, p, ctx)) goto err;
+			if (!BN_mod_sqr(r, r, p, ctx)) goto err;
+
+			if (!BN_nnmod(a, a, p, ctx)) goto err;
+
+			if (BN_cmp(a, r) != 0)
+				{
+				fprintf(stderr, "BN_mod_sqrt failed: a = ");
+				BN_print_fp(stderr, a);
+				fprintf(stderr, ", r = ");
+				BN_print_fp(stderr, r);
+				fprintf(stderr, ", p = ");
+				BN_print_fp(stderr, p);
+				fprintf(stderr, "\n");
+				goto err;
+				}
+
+			putc('.', stderr);
+			fflush(stderr);
+			}
+		
+		putc('\n', stderr);
+		fflush(stderr);
+		}
+	ret = 1;
+ err:
+	if (a != NULL) BN_free(a);
+	if (p != NULL) BN_free(p);
 	if (r != NULL) BN_free(r);
 	return ret;
 	}

@@ -1,5 +1,3 @@
-/* totally untested */
-
 /* crypto/bn/bn_kron.c */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.

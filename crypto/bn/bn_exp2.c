@@ -141,9 +141,15 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	bits2=BN_num_bits(p2);
 	if ((bits1 == 0) && (bits2 == 0))
 		{
-		BN_one(rr);
-		return(1);
+		ret = BN_one(rr);
+		return ret;
 		}
+	if (BN_is_zero(a1) || BN_is_zero(a2))
+		{
+		ret = BN_zero(rr);
+		return ret;
+		}
+	
 	bits=(bits1 > bits2)?bits1:bits2;
 
 	BN_CTX_start(ctx);

@@ -238,7 +238,7 @@ typedef struct bignum_st
 	} BIGNUM;
 
 /* Used for temp variables */
-#define BN_CTX_NUM	16
+#define BN_CTX_NUM	20
 #define BN_CTX_NUM_POS	12
 typedef struct bignum_ctx
 	{
@@ -357,6 +357,7 @@ int	BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m, BN_
 int	BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m);
 int	BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	const BIGNUM *m, BN_CTX *ctx);
+int	BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 int	BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 int	BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m);
 int	BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx);
@@ -413,6 +414,8 @@ int 	BN_dec2bn(BIGNUM **a, const char *str);
 int	BN_gcd(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx);
 int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
+	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
+BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
 	const BIGNUM *add, const BIGNUM *rem,
@@ -517,6 +520,7 @@ void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
 #define BN_F_BN_MOD_INVERSE				 110
 #define BN_F_BN_MOD_LSHIFT_QUICK			 119
 #define BN_F_BN_MOD_MUL_RECIPROCAL			 111
+#define BN_F_BN_MOD_SQRT				 121
 #define BN_F_BN_MPI2BN					 112
 #define BN_F_BN_NEW					 113
 #define BN_F_BN_RAND					 114
@@ -531,8 +535,11 @@ void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
 #define BN_R_EXPAND_ON_STATIC_BIGNUM_DATA		 105
 #define BN_R_INPUT_NOT_REDUCED				 110
 #define BN_R_INVALID_LENGTH				 106
+#define BN_R_NOT_A_SQUARE				 111
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
+#define BN_R_P_IS_NOT_PRIME				 112
+#define BN_R_TOO_MANY_ITERATIONS			 113
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109
 
 #ifdef  __cplusplus

@@ -83,6 +83,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_MOD_INVERSE,0),	"BN_mod_inverse"},
 {ERR_PACK(0,BN_F_BN_MOD_LSHIFT_QUICK,0),	"BN_mod_lshift_quick"},
 {ERR_PACK(0,BN_F_BN_MOD_MUL_RECIPROCAL,0),	"BN_mod_mul_reciprocal"},
+{ERR_PACK(0,BN_F_BN_MOD_SQRT,0),	"BN_mod_sqrt"},
 {ERR_PACK(0,BN_F_BN_MPI2BN,0),	"BN_mpi2bn"},
 {ERR_PACK(0,BN_F_BN_NEW,0),	"BN_new"},
 {ERR_PACK(0,BN_F_BN_RAND,0),	"BN_rand"},
@@ -100,8 +101,11 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_EXPAND_ON_STATIC_BIGNUM_DATA       ,"expand on static bignum data"},
 {BN_R_INPUT_NOT_REDUCED                  ,"input not reduced"},
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
+{BN_R_NOT_A_SQUARE                       ,"not a square"},
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
+{BN_R_P_IS_NOT_PRIME                     ,"p is not prime"},
+{BN_R_TOO_MANY_ITERATIONS                ,"too many iterations"},
 {BN_R_TOO_MANY_TEMPORARY_VARIABLES       ,"too many temporary variables"},
 {0,NULL}
 	};
