@@ -209,6 +209,7 @@
 #endif
 #include <openssl/x509.h>
 #ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
 #include "./testdsa.h"
 #endif
 #ifndef OPENSSL_NO_ECDSA

@@ -125,6 +125,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/rsa.h>
 
 #define NON_MAIN
 #include "apps.h"

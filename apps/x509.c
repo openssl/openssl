@@ -73,6 +73,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 #undef PROG
 #define PROG x509_main
