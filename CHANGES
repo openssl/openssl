@@ -4,7 +4,13 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) EVP cipher enhancment. Add hooks for extra EVP features. This will allow
+  *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
+     the handshake is continued after ssl_verify_cert_chain();
+     otherwise, if SSL_VERIFY_NONE is set, remaining error codes
+     can lead to 'unexplainable' connection aborts later.
+     [Bodo Moeller; problem tracked down by Lutz Jaenicke]
+
+  *) EVP cipher enhancement. Add hooks for extra EVP features. This will allow
      various cipher parameters to be set in the EVP interface. Initially
      support added for variable key length ciphers via the
      EVP_CIPHER_CTX_set_key_length() function. Other cipher specific
