@@ -276,13 +276,13 @@ bad:
 				LN_bf_cfb64, LN_bf_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","bf", LN_bf_cbc);
 #endif
-#ifndef NO_BF
+#ifndef NO_CAST
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_cast5_ecb, LN_cast5_cbc,
 				LN_cast5_cfb64, LN_cast5_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","cast", LN_cast5_cbc);
 #endif
-#ifndef NO_BF
+#ifndef NO_RC5
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_rc5_ecb, LN_rc5_cbc,
 				LN_rc5_cfb64, LN_rc5_ofb64);
