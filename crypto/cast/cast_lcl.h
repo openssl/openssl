@@ -151,7 +151,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(WIN32)
+#if defined(WIN32) && defined(_MSC_VER)
 #define ROTL(a,n)     (_lrotl(a,n))
 #else
 #define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))

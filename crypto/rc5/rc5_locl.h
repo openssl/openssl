@@ -146,7 +146,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(WIN32)
+#if defined(WIN32) && defined(_MSC_VER)
 #define ROTATE_l32(a,n)     _lrotl(a,n)
 #define ROTATE_r32(a,n)     _lrotr(a,n)
 #else

@@ -155,7 +155,7 @@
 				} \
 			}
 
-#if defined(WIN32)
+#if defined(WIN32) && defined(_MSC_VER)
 #define	ROTATE(a,n)	(_lrotr(a,n))
 #else
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))
