@@ -56,9 +56,9 @@
  */
 
 #include <openssl/err.h>
+#include <openssl/symhacks.h>
 
 #include "ec_lcl.h"
-
 
 const EC_METHOD *EC_GFp_simple_method(void)
 	{
