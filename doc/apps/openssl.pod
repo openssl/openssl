@@ -121,6 +121,10 @@ Generation of DSA Parameters.
 
 Generation of RSA Parameters.
 
+=item L<B<ocsp>|ocsp(1)>
+
+Online Certificate Status Protocol utility.
+
 =item L<B<passwd>|passwd(1)>
 
 Generation of hashed passwords.
