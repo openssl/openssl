@@ -353,8 +353,8 @@ TODO: bug: pad  x  with leading zeros if necessary
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
   *) The hw_ncipher.c engine requires dynamic locks.  Unfortunately, it
-     seems that in spite of existing for more than a year, no application
-     author has done anything to provide the necessary callbacks, which
+     seems that in spite of existing for more than a year, many application
+     author have done nothing to provide the necessary callbacks, which
      means that this particular engine will not work properly anywhere.
      This is a very unfortunate situation which forces us, in the name
      of usability, to give the hw_ncipher.c a static lock, which is part
