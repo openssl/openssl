@@ -8,6 +8,12 @@
      with "OPENSSL_" to avoid conflicts with other packages and by making
      sure e_os2.h will cover all platform-specific cases together with
      opensslconf.h.
+     Additionally, it is now possible to define configuration/platform-
+     specific names (called "system identities").  In the C code, these
+     are prefixed with "OPENSSL_SYSNAME_".  e_os2.h will create another
+     macro with the name beginning with "OPENSSL_SYS_", which is determined
+     from "OPENSSL_SYSNAME_*" or compiler-specific macros depending on
+     what is available.
      [Richard Levitte]
 
   *) New option -set_serial to 'req' and 'x509' this allows the serial
