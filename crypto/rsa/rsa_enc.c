@@ -531,7 +531,8 @@ RSA *rsa;
 err:
 	if (m1 != NULL) BN_free(m1);
 	if (r1 != NULL) BN_free(r1);
-	BN_CTX_free(ctx);
+	if(ctx != NULL)
+	    BN_CTX_free(ctx);
 	return(ret);
 	}
 
