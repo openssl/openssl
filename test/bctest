@@ -12,13 +12,13 @@
 
 
 IFS=:
-try_path=true
+try_without_dir=true
 # First we try "bc", then "$dir/bc" for each item in $PATH.
 for dir in dummy:$PATH; do
-    if [ "$try_path" = true ]; then
+    if [ "$try_without_dir" = true ]; then
       # first iteration
       bc=bc
-      try_path=false
+      try_without_dir=false
     else
       # second and later iterations
       bc="$dir/bc"

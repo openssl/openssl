@@ -254,7 +254,8 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		while (!BN_is_zero(B))
 			{
 			/*
-			 *      0 < B < A <= |n|,
+			 *      0 < B < |n|,
+			 *      0 < A <= |n|,
 			 * (1) -sign*X*a  ==  B   (mod |n|),
 			 * (2)  sign*Y*a  ==  A   (mod |n|)
 			 */
@@ -299,13 +300,16 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 				}
 
 			
-			/* We still have (1) and (2), but  A  may no longer be larger than  B.
+			/* We still have (1) and (2).
 			 * Both  A  and  B  are odd.
 			 * The following computations ensure that
 			 *
-			 *      0 =< B < A = |n|,
+			 *     0 <= B < |n|,
+			 *      0 < A < |n|,
 			 * (1) -sign*X*a  ==  B   (mod |n|),
-			 * (2)  sign*Y*a  ==  A   (mod |n|)
+			 * (2)  sign*Y*a  ==  A   (mod |n|),
+			 *
+			 * and that either  A  or  B  is even in the next iteration.
 			 */
 			if (BN_ucmp(B, A) >= 0)
 				{
