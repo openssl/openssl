@@ -284,9 +284,18 @@ void do_mct(char *amode,
 	int n;
 	EVP_CIPHER_CTX ctx;
 	unsigned char old_iv[8];
+	int kp=akeysz/64;
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
-	OutputValue("KEY",akey,akeysz/8,rfp,0);
+	if(kp == 1)
+	    OutputValue("KEY",akey,8,rfp,0);
+	else
+	    for(n=0 ; n < kp ; ++n)
+		{
+		fprintf(rfp,"KEY%d",n+1);
+		OutputValue("",akey+n*8,8,rfp,0);
+		}
+
 	if(imode != ECB)
 	    OutputValue("IV",ivec,8,rfp,0);
 	OutputValue(t_tag[dir^1],text,len,rfp,imode == CFB1);
