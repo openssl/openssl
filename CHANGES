@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initialize all non-automatic variables each time one of the openssl
+     sub-programs is started (this is necessary as they may be started
+     multiple times from the "OpenSSL>" prompt).
+     [Lennart Bang, Bodo Moeller]
+
   *) Preliminary compilation option RSA_NULL which disables RSA crypto without
      removing all other RSA functionality (this is what NO_RSA does). This
      is so (for example) those in the US can disable those operations covered

@@ -248,15 +248,6 @@ static int parseArgs(int argc, char **argv)
 
     verify_depth=0;
     verify_error=X509_V_OK;
-#ifdef FIONBIO
-    t_nbio=0;
-#endif
-
-	apps_startup();
-	s_time_init();
-
-	if (bio_err == NULL)
-		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
     argc--;
     argv++;
@@ -410,6 +401,12 @@ int MAIN(int argc, char **argv)
 	int ret=1,i;
 	MS_STATIC char buf[1024*8];
 	int ver;
+
+	apps_startup();
+	s_time_init();
+
+	if (bio_err == NULL)
+		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
 	s_time_meth=SSLv23_client_method();

@@ -344,6 +344,7 @@ int MAIN(int argc, char **argv)
 	int pr_header=0;
 
 	apps_startup();
+	memset(results, 0, sizeof(results));
 #ifndef NO_DSA
 	memset(dsa_key,0,sizeof(dsa_key));
 #endif

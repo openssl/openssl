@@ -76,26 +76,26 @@ int main(int argc, char *argv[])
 #define SHA_0 /* FIPS 180 */
 #undef  SHA_1 /* FIPS 180-1 */
 
-char *test[]={
+static char *test[]={
 	"abc",
 	"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 	NULL,
 	};
 
 #ifdef SHA_0
-char *ret[]={
+static char *ret[]={
 	"0164b8a914cd2a5e74c4f7ff082c4d97f1edf880",
 	"d2516ee1acfa5baf33dfc1c471e438449ef134c8",
 	};
-char *bigret=
+static char *bigret=
 	"3232affa48628a26653b5aaa44541fd90d690603";
 #endif
 #ifdef SHA_1
-char *ret[]={
+static char *ret[]={
 	"a9993e364706816aba3e25717850c26c9cd0d89d",
 	"84983e441c3bd26ebaae4aa1f95129e5e54670f1",
 	};
-char *bigret=
+static char *bigret=
 	"34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 #endif
 

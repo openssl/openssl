@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 #include <openssl/ebcdic.h>
 #endif
 
-struct test_st
+static struct test_st
 	{
 	unsigned char key[16];
 	int key_len;

@@ -85,15 +85,15 @@
 #  define TEST_CLIENT_CERT "../apps/client.pem"
 #endif
 
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 #endif
 #ifndef NO_DH
 static DH *get_dh512(void);
 #endif
-BIO *bio_err=NULL;
-BIO *bio_stdout=NULL;
+static BIO *bio_err=NULL;
+static BIO *bio_stdout=NULL;
 
 static char *cipher=NULL;
 int verbose=0;
@@ -1104,7 +1104,7 @@ err:
 	return(ret);
 	}
 
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
+static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char *s,buf[256];
 
