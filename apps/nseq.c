@@ -123,7 +123,7 @@ int MAIN(int argc, char **argv)
 
 	if (toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
-		seq->certs = sk_X509_new(NULL);
+		seq->certs = sk_X509_new_null();
 		while((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL))) 
 		    sk_X509_push(seq->certs,x509);
 

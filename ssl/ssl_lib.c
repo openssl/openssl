@@ -1036,7 +1036,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 		return(NULL);
 		}
 	if ((skp == NULL) || (*skp == NULL))
-		sk=sk_SSL_CIPHER_new(NULL); /* change perhaps later */
+		sk=sk_SSL_CIPHER_new_null(); /* change perhaps later */
 	else
 		{
 		sk= *skp;

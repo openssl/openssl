@@ -129,7 +129,7 @@ ASN1_OBJECT *objtmp;
 CONF_VALUE *val;
 int i;
 
-if(!(extku = sk_ASN1_OBJECT_new(NULL))) {
+if(!(extku = sk_ASN1_OBJECT_new_null())) {
 	X509V3err(X509V3_F_V2I_EXT_KU,ERR_R_MALLOC_FAILURE);
 	return NULL;
 }

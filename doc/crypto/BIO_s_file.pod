@@ -28,6 +28,23 @@ BIO_s_file() returns the BIO file method. As its name implies it
 is a wrapper round the stdio FILE structure and it is a
 source/sink BIO.
 
+Calls to BIO_read() and BIO_write() read and write data to the
+underlying stream. BIO_gets() and BIO_puts() are supported on file BIOs.
+
+BIO_flush() on a file BIO calls the fflush() function on the wrapped
+stream.
+
+BIO_reset() attempts to change the file pointer to the start of file
+using fseek(stream, 0, 0).
+
+BIO_seek() sets the file pointer to position B<ofs> from start of file
+using lseek(stream, ofs, 0).
+
+BIO_eof() calls feof().
+
+Setting the BIO_CLOSE flag calls fclose() on the stream when the BIO
+is freed.
+
 BIO_new_file() creates a new file BIO with mode B<mode> the meaning
 of B<mode> is the same as the stdio function fopen(). The BIO_CLOSE
 flag is set on the returned BIO.
@@ -42,25 +59,16 @@ meaning as in BIO_new_fp(), it is a macro.
 
 BIO_get_fp() retrieves the fp of a file BIO, it is a macro.
 
+BIO_seek() is a macro that sets the position pointer to B<offset> bytes
+from the start of file.
+
+BIO_tell() returns the value of the position pointer.
+
 BIO_read_filename(), BIO_write_filename(), BIO_append_filename() and
 BIO_rw_filename() set the file BIO B<b> to use file B<name> for
 reading, writing, append or read write respectively.
 
 =head1 NOTES
-
-Calls to BIO_read() and BIO_write() read and write data to the
-underlying stream. BIO_gets() and BIO_puts() are supported on file BIOs.
-
-BIO_flush() on a file BIO calls the fflush() function on the wrapped
-stream.
-
-BIO_reset() on a file BIO calls fseek() to reset the position indicator
-to the start of the file.
-
-BIO_eof() calls feof().
-
-Setting the BIO_CLOSE flag calls fclose() on the stream when the BIO
-is freed.
 
 When wrapping stdout, stdin or stderr the underlying stream should not
 normally be closed so the BIO_NOCLOSE flag should be set.
@@ -110,6 +118,11 @@ occurred.
 
 BIO_set_fp() and BIO_get_fp() return 1 for success or 0 for failure
 (although the current implementation never return 0).
+
+BIO_seek() returns the same value as the underlying fseek() function:
+0 for success or -1 for failure.
+
+BIO_tell() returns the current file position.
 
 BIO_read_filename(), BIO_write_filename(),  BIO_append_filename() and
 BIO_rw_filename() return 1 for success or 0 for failure.

@@ -169,6 +169,12 @@ typedef BOOL (WINAPI *PROCESS32)(HANDLE, LPPROCESSENTRY32);
 typedef BOOL (WINAPI *THREAD32)(HANDLE, LPTHREADENTRY32);
 typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 
+#include <lmcons.h>
+#include <lmstats.h>
+typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
+        (LMSTR, LMSTR, DWORD, DWORD, LPBYTE*);
+typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
+
 int RAND_poll(void)
 {
 	MEMORYSTATUS m;
@@ -177,15 +183,71 @@ int RAND_poll(void)
 	DWORD w;
 	HWND h;
 
-	HMODULE advapi, kernel, user;
+	HMODULE advapi, kernel, user, netapi;
 	CRYPTACQUIRECONTEXT acquire;
 	CRYPTGENRANDOM gen;
 	CRYPTRELEASECONTEXT release;
+	NETSTATGET netstatget;
+	NETFREE netfree;
 
 	/* load functions dynamically - not available on all systems */
 	advapi = GetModuleHandle("ADVAPI32.DLL");
 	kernel = GetModuleHandle("KERNEL32.DLL");
 	user = GetModuleHandle("USER32.DLL");
+	netapi = GetModuleHandle("NETAPI32.DLL");
+
+	if (netapi)
+		{
+		netstatget = (NETSTATGET) GetProcAddress(netapi,"NetStatisticsGet");
+		netfree = (NETFREE) GetProcAddress(netapi,"NetApiBufferFree");
+		}
+
+	if (netstatget && netfree)
+		{
+		LPBYTE outbuf;
+		/* NetStatisticsGet() is a Unicode only function */
+		if (netstatget(NULL, L"LanmanWorkstation", 0, 0, &outbuf) == 0)
+			{
+			RAND_add(outbuf, sizeof(STAT_WORKSTATION_0), 0);
+			netfree(outbuf);
+			}
+		if (netstatget(NULL, L"LanmanServer", 0, 0, &outbuf) == 0)
+			{
+			RAND_add(outbuf, sizeof(STAT_SERVER_0), 0);
+			netfree(outbuf);
+			}
+		}
+
+	/* Read Performance Statistics from NT/2000 registry */
+	/* The size of the performance data can vary from call to call */
+	/* so we must guess the size of the buffer to use and increase */
+	/* its size if we get an ERROR_MORE_DATA return instead of     */
+	/* ERROR_SUCCESS.                                              */
+	{
+	LONG   rc=ERROR_MORE_DATA;
+	char * buf=NULL;
+	DWORD bufsz=0;
+	DWORD length;
+
+	while (rc == ERROR_MORE_DATA)
+		{
+		buf = realloc(buf,bufsz+8192);
+		if (!buf)
+			break;
+		bufsz += 8192;
+
+		length = bufsz;
+		rc = RegQueryValueEx(HKEY_PERFORMANCE_DATA, "Global",
+			NULL, NULL, buf, &length);
+		}
+	if (rc == ERROR_SUCCESS)
+		{
+		RAND_add(&length, sizeof(length), 0);
+		RAND_add(buf, length, 0);
+		}
+	if ( buf )
+		free(buf);
+	}
 
 	if (advapi)
 		{
@@ -255,17 +317,29 @@ int RAND_poll(void)
 			RAND_add(&h, sizeof(h), 0);
 		}
 
-#if 0
+		if (cursor)
+			{
+			/* unfortunately, its not safe to call GetCursorInfo()
+			 * on NT4 even though it exists in SP3 (or SP6) and
+			 * higher.
+			 */
+			OSVERSIONINFO osverinfo ;
+			osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+			GetVersionEx( &osverinfo ) ;
+
+			if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+				osverinfo.dwMajorVersion < 5)
+				cursor = 0;
+			}
+
 		if (cursor)
 			{
 			/* cursor position */
-                        PCURSORINFO p = (PCURSORINFO) buf;
-                        p->cbSize = sizeof(CURSORINFO);
-			if (cursor(p))
-				RAND_add(p+sizeof(p->cbSize),
-					p->cbSize-sizeof(p->cbSize), 0);
+			CURSORINFO ci;
+			ci.cbSize = sizeof(CURSORINFO);
+			if (cursor(&ci))
+				RAND_add(&ci, ci.cbSize, 0);
 			}
-#endif
 
 		if (queue)
 			{
@@ -277,7 +351,7 @@ int RAND_poll(void)
 
 	/* Toolhelp32 snapshot: enumerate processes, threads, modules and heap
 	 * http://msdn.microsoft.com/library/psdk/winbase/toolhelp_5pfd.htm
-	 * (Win 9x only, not available on NT)
+	 * (Win 9x and 2000 only, not available on NT)
 	 *
 	 * This seeding method was proposed in Peter Gutmann, Software
 	 * Generation of Practically Strong Random Numbers,

@@ -88,7 +88,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if(!X509_check_private_key(cert, pkey)) return NULL;
 
-	if(!(bags = sk_PKCS12_SAFEBAG_new (NULL))) {
+	if(!(bags = sk_PKCS12_SAFEBAG_new_null ())) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -123,7 +123,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if (!authsafe) return NULL;
 
-	if(!(safes = sk_PKCS7_new (NULL))
+	if(!(safes = sk_PKCS7_new_null ())
 	   || !sk_PKCS7_push(safes, authsafe)) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -137,7 +137,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name && !PKCS12_add_friendlyname (bag, name, -1)) return NULL;
 	if(!PKCS12_add_localkeyid (bag, keyid, keyidlen)) return NULL;
-	if(!(bags = sk_PKCS12_SAFEBAG_new(NULL))
+	if(!(bags = sk_PKCS12_SAFEBAG_new_null())
 	   || !sk_PKCS12_SAFEBAG_push (bags, bag)) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;

@@ -799,7 +799,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * Allocate new "cipherstack" for the result, return with error
 	 * if we cannot get one.
 	 */
-	if ((cipherstack = sk_SSL_CIPHER_new(NULL)) == NULL)
+	if ((cipherstack = sk_SSL_CIPHER_new_null()) == NULL)
 		{
 		OPENSSL_free(list);
 		return(NULL);

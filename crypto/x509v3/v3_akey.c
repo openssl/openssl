@@ -224,7 +224,7 @@ if((issuer && !ikeyid) || (issuer == 2)) {
 if(!(akeyid = AUTHORITY_KEYID_new())) goto err;
 
 if(isname) {
-	if(!(gens = sk_GENERAL_NAME_new(NULL)) || !(gen = GENERAL_NAME_new())
+	if(!(gens = sk_GENERAL_NAME_new_null()) || !(gen = GENERAL_NAME_new())
 		|| !sk_GENERAL_NAME_push(gens, gen)) {
 		X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,ERR_R_MALLOC_FAILURE);
 		goto err;

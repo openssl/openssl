@@ -909,7 +909,7 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 
 	if (*sk == NULL)
 		{
-		*sk = sk_X509_ATTRIBUTE_new(NULL);
+		*sk = sk_X509_ATTRIBUTE_new_null();
 new_attrib:
 		attr=X509_ATTRIBUTE_create(nid,atrtype,value);
 		sk_X509_ATTRIBUTE_push(*sk,attr);
