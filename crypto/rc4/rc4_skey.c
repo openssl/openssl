@@ -85,7 +85,7 @@ const char *RC4_options(void)
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4_set_key(RC4_KEY *key, int len, register unsigned char *data)
+void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 	{
         register RC4_INT tmp;
         register int id1,id2;

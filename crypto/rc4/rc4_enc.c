@@ -67,7 +67,7 @@
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4(RC4_KEY *key, unsigned long len, unsigned char *indata,
+void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 	     unsigned char *outdata)
 	{
         register RC4_INT *d;
