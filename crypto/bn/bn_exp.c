@@ -692,7 +692,10 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		{
 		BN_set_word(t, a);
 		if (BN_mod_exp_atalla(rr, t, p, m))
+			{
+			BN_CTX_end(ctx);
 			return 1;
+			}
 		}
 /* If it fails, try the other methods */
 #endif
