@@ -159,3 +159,25 @@ ASN1_UNIVERSALSTRING *s;
 	return(1);
 	}
 
+
+int i2d_DIRECTORYSTRING(a,pp)
+ASN1_STRING *a;
+unsigned char **pp;
+	{ return(M_i2d_DIRECTORYSTRING(a,pp)); }
+
+ASN1_STRING *d2i_DIRECTORYSTRING(a,pp,l)
+ASN1_STRING **a;
+unsigned char **pp;
+long l;
+	{ return(M_d2i_DIRECTORYSTRING(a,pp,l)); }
+
+int i2d_DISPLAYTEXT(a,pp)
+ASN1_STRING *a;
+unsigned char **pp;
+	{ return(M_i2d_DISPLAYTEXT(a,pp)); }
+
+ASN1_STRING *d2i_DISPLAYTEXT(a,pp,l)
+ASN1_STRING **a;
+unsigned char **pp;
+long l;
+	{ return(M_d2i_DISPLAYTEXT(a,pp,l)); }

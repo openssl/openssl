@@ -197,6 +197,35 @@ typedef struct SXNET_st {
 	STACK_OF(SXNETID) *ids;
 } SXNET;
 
+typedef struct NOTICEREF_st {
+	ASN1_STRING *organization;
+	STACK *noticenos;
+} NOTICEREF;
+
+typedef struct USERNOTICE_st {
+	NOTICEREF *notref;
+	ASN1_STRING *exptext;
+} USERNOTICE;
+
+typedef struct POLICYQUALINFO_st {
+	ASN1_OBJECT *pqualid;
+	union {
+		ASN1_IA5STRING *cpsuri;
+		USERNOTICE *usernotice;
+		ASN1_TYPE *other;
+	} d;
+} POLICYQUALINFO;
+
+DECLARE_STACK_OF(POLICYQUALINFO)
+
+typedef struct POLICYINFO_st {
+	ASN1_OBJECT *policyid;
+	STACK_OF(POLICYQUALINFO) qualifiers;
+} POLICYINFO;
+
+DECLARE_STACK_OF(POLICYINFO);
+DECLARE_ASN1_SET_OF(POLICYINFO);
+
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
 

@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 164
-#define NUM_SN 115
-#define NUM_LN 160
-#define NUM_OBJ 136
+#define NUM_NID 166
+#define NUM_SN 117
+#define NUM_LN 162
+#define NUM_OBJ 138
 
-static unsigned char lvalues[940]={
+static unsigned char lvalues[956]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -203,6 +203,8 @@ static unsigned char lvalues[940]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0D,/* [913] OBJ_pbes2 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0E,/* [922] OBJ_pbmac1 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [931] OBJ_hmacWithSHA1 */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [939] OBJ_id_qt_cps */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [947] OBJ_id_qt_unotice */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -434,6 +436,9 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"PBES2","PBES2",NID_pbes2,9,&(lvalues[913]),0},
 {"PBMAC1","PBMAC1",NID_pbmac1,9,&(lvalues[922]),0},
 {"hmacWithSHA1","hmacWithSHA1",NID_hmacWithSHA1,8,&(lvalues[931]),0},
+{"id-qt-cps","Policy Qualifier CPS",NID_id_qt_cps,8,&(lvalues[939]),0},
+{"id-qt-unotice","Policy Qualifier User Notice",NID_id_qt_unotice,8,
+	&(lvalues[947]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -526,6 +531,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
 &(nid_objs[128]),/* "id-kp" */
+&(nid_objs[164]),/* "id-qt-cps" */
+&(nid_objs[165]),/* "id-qt-unotice" */
 &(nid_objs[142]),/* "invalidityDate" */
 &(nid_objs[86]),/* "issuerAltName" */
 &(nid_objs[83]),/* "keyUsage" */
@@ -579,6 +586,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
 &(nid_objs[161]),/* "PBES2" */
 &(nid_objs[162]),/* "PBMAC1" */
+&(nid_objs[164]),/* "Policy Qualifier CPS" */
+&(nid_objs[165]),/* "Policy Qualifier User Notice" */
 &(nid_objs[143]),/* "Strong Extranet ID" */
 &(nid_objs[130]),/* "TLS Web Client Authentication" */
 &(nid_objs[129]),/* "TLS Web Server Authentication" */
@@ -752,8 +761,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
-&(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
+&(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */
@@ -787,6 +796,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
 &(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
+&(nid_objs[164]),/* OBJ_id_qt_cps                    1 3 6 1 5 5 7 2 1 */
+&(nid_objs[165]),/* OBJ_id_qt_unotice                1 3 6 1 5 5 7 2 2 */
 &(nid_objs[129]),/* OBJ_server_auth                  1 3 6 1 5 5 7 3 1 */
 &(nid_objs[130]),/* OBJ_client_auth                  1 3 6 1 5 5 7 3 2 */
 &(nid_objs[131]),/* OBJ_code_sign                    1 3 6 1 5 5 7 3 3 */

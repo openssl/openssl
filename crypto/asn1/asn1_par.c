@@ -141,8 +141,8 @@ int indent;
 		p="GENERALIZEDTIME";
 	else if (tag == V_ASN1_GRAPHICSTRING)
 		p="GRAPHICSTRING";
-	else if (tag == V_ASN1_ISO64STRING)
-		p="ISO64STRING";
+	else if (tag == V_ASN1_VISIBLESTRING)
+		p="VISIBLESTRING";
 	else if (tag == V_ASN1_GENERALSTRING)
 		p="GENERALSTRING";
 	else if (tag == V_ASN1_UNIVERSALSTRING)
@@ -269,6 +269,7 @@ int indent;
 			if (	(tag == V_ASN1_PRINTABLESTRING) ||
 				(tag == V_ASN1_T61STRING) ||
 				(tag == V_ASN1_IA5STRING) ||
+				(tag == V_ASN1_VISIBLESTRING) ||
 				(tag == V_ASN1_UTCTIME) ||
 				(tag == V_ASN1_GENERALIZEDTIME))
 				{

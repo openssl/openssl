@@ -854,6 +854,18 @@ extern "C" {
 #define NID_hmacWithSHA1	163
 #define OBJ_hmacWithSHA1	OBJ_rsadsi,2L,7L
 
+/* Policy Qualifier Ids */
+
+#define LN_id_qt_cps		"Policy Qualifier CPS"
+#define SN_id_qt_cps		"id-qt-cps"
+#define NID_id_qt_cps		164
+#define OBJ_id_qt_cps		OBJ_id_pkix,2L,1L
+
+#define LN_id_qt_unotice	"Policy Qualifier User Notice"
+#define SN_id_qt_unotice	"id-qt-unotice"
+#define NID_id_qt_unotice	165
+#define OBJ_id_qt_unotice	OBJ_id_pkix,2L,2L
+
 #include "bio.h"
 #include "asn1.h"
 

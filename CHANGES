@@ -9,7 +9,8 @@
      return a const string when you are expecting an allocated buffer.
      [Ben Laurie]
 
-  *) Add support for ASN1 types UTF8String and VISIBLESTRING.
+  *) Add support for ASN1 types UTF8String and VISIBLESTRING, also the CHOICE
+     types DirectoryString and DisplayText.
      [Steve Henson]
 
   *) Add code to allow r2i extensions to access the configuration database,
