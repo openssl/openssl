@@ -802,9 +802,12 @@
      [Geoff Thorpe]
 
   +) Add automatic query of EGD sockets in RAND_poll() for the unix variant.
-     If an EGD or PRNGD is running and enough entropy is returned, automatic
-     seeding like with /dev/[u]random will be performed.
-     Positions tried are: /etc/entropy, /var/run/egd-pool.
+     If /dev/[u]random devices are not available or do not return enough
+     entropy, EGD style sockets (served by EGD or PRNGD) will automatically
+     be queried.
+     The locations /var/run/egd-pool, /dev/egd-pool, /etc/egd-pool, and
+     /etc/entropy will be queried once each in this sequence, quering stops
+     when enough entropy was collected without querying more sockets.
      [Lutz Jaenicke]
 
   +) Change the Unix RAND_poll() variant to be able to poll several
