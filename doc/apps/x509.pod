@@ -152,7 +152,7 @@ outputs the issuer name.
 option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the B<NAME OPTIONS> section for more information.
+set multiple options. See the B<SUBJECT AND ISSUER NAME OPTIONS> section for more information.
 
 =item B<-email>
 
@@ -362,7 +362,7 @@ specified then the extensions should either be contained in the unnamed
 
 =back
 
-=head1 NAME OPTIONS
+=head1 SUBJECT AND ISSUER NAME OPTIONS
 
 The B<nameopt> command line switch determines how the subject and issuer
 names are displayed. If no B<nameopt> switch is present the default "oneline"
