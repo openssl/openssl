@@ -96,21 +96,21 @@ static int rsaref_digest_nids[] =
 /*****************************************************************************
  * DES functions
  **/
-int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
-int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-int cipher_des_cbc_clean(EVP_CIPHER_CTX *);
-int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_des_cbc_clean(EVP_CIPHER_CTX *);
+static int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
-int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *);
-int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *);
+static int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
-int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-int cipher_desx_cbc_clean(EVP_CIPHER_CTX *);
+static int cipher_desx_cbc_clean(EVP_CIPHER_CTX *);
 
 /*****************************************************************************
  * Our DES ciphers
@@ -403,7 +403,7 @@ static int rsaref_private_decrypt(int len, const unsigned char *from, unsigned c
 
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPrivateDecrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPrivateDecrypt(to,(unsigned int *)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_DECRYPT,i);
 		outlen= -1;
@@ -426,7 +426,7 @@ static int rsaref_private_encrypt(int len, const unsigned char *from, unsigned c
 	}
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPrivateEncrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPrivateEncrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_ENCRYPT,i);
 		outlen= -1;
@@ -444,7 +444,7 @@ static int rsaref_public_decrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicDecrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPublicDecrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_DECRYPT,i);
 		outlen= -1;
@@ -481,7 +481,7 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicEncrypt(to,&(unsigned int)outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
+	if ((i=RSAPublicEncrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT,i);
 		outlen= -1;
@@ -553,13 +553,13 @@ static int rsaref_digests(ENGINE *e, const EVP_MD **digest,
  **/
 #undef data
 #define data(ctx) ((DES_CBC_CTX *)(ctx)->cipher_data)
-int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	DES_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv, enc);
 	return 1;
 	}
-int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
 	int ret = DES_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
@@ -575,7 +575,7 @@ int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	return !ret;
 	}
-int cipher_des_cbc_clean(EVP_CIPHER_CTX *ctx)
+static int cipher_des_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
 	return 1;
@@ -583,14 +583,14 @@ int cipher_des_cbc_clean(EVP_CIPHER_CTX *ctx)
 
 #undef data
 #define data(ctx) ((DES3_CBC_CTX *)(ctx)->cipher_data)
-int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	DES3_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
 		enc);
 	return 1;
 	}
-int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
 	int ret = DES3_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
@@ -606,7 +606,7 @@ int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	return !ret;
 	}
-int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *ctx)
+static int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
 	return 1;
@@ -614,14 +614,14 @@ int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *ctx)
 
 #undef data
 #define data(ctx) ((DESX_CBC_CTX *)(ctx)->cipher_data)
-int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	DESX_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
 		enc);
 	return 1;
 	}
-int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
 	int ret = DESX_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
@@ -637,7 +637,7 @@ int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	return !ret;
 	}
-int cipher_desx_cbc_clean(EVP_CIPHER_CTX *ctx)
+static int cipher_desx_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
 	return 1;
