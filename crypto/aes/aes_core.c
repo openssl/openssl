@@ -59,13 +59,6 @@ extern const u32 AES_Te[5][256];
 #define Te1 AES_Te[1]
 #define Te2 AES_Te[2]
 #define Te3 AES_Te[3]
-#define Te4 AES_Te[4]
-extern const u32 AES_Td[5][256];
-#define Td0 AES_Td[0]
-#define Td1 AES_Td[1]
-#define Td2 AES_Td[2]
-#define Td3 AES_Td[3]
-#define Td4 AES_Td[4]
 #else
 static const u32 Te0[256] = {
     0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
@@ -266,7 +259,6 @@ static const u32 Te2[256] = {
     0xb0cb7bb0U, 0x54fca854U, 0xbbd66dbbU, 0x163a2c16U,
 };
 static const u32 Te3[256] = {
-
     0x6363a5c6U, 0x7c7c84f8U, 0x777799eeU, 0x7b7b8df6U,
     0xf2f20dffU, 0x6b6bbdd6U, 0x6f6fb1deU, 0xc5c55491U,
     0x30305060U, 0x01010302U, 0x6767a9ceU, 0x2b2b7d56U,
@@ -332,6 +324,7 @@ static const u32 Te3[256] = {
     0x4141c382U, 0x9999b029U, 0x2d2d775aU, 0x0f0f111eU,
     0xb0b0cb7bU, 0x5454fca8U, 0xbbbbd66dU, 0x16163a2cU,
 };
+#endif
 static const u32 Te4[256] = {
     0x63636363U, 0x7c7c7c7cU, 0x77777777U, 0x7b7b7b7bU,
     0xf2f2f2f2U, 0x6b6b6b6bU, 0x6f6f6f6fU, 0xc5c5c5c5U,
@@ -398,6 +391,14 @@ static const u32 Te4[256] = {
     0x41414141U, 0x99999999U, 0x2d2d2d2dU, 0x0f0f0f0fU,
     0xb0b0b0b0U, 0x54545454U, 0xbbbbbbbbU, 0x16161616U,
 };
+
+#ifdef AES_ASM
+extern const u32 AES_Td[5][256];
+#define Td0 AES_Td[0]
+#define Td1 AES_Td[1]
+#define Td2 AES_Td[2]
+#define Td3 AES_Td[3]
+#else
 static const u32 Td0[256] = {
     0x51f4a750U, 0x7e416553U, 0x1a17a4c3U, 0x3a275e96U,
     0x3bab6bcbU, 0x1f9d45f1U, 0xacfa58abU, 0x4be30393U,
@@ -551,7 +552,6 @@ static const u32 Td2[256] = {
     0xf4cd65daU, 0xbed50605U, 0x621fd134U, 0xfe8ac4a6U,
     0x539d342eU, 0x55a0a2f3U, 0xe132058aU, 0xeb75a4f6U,
     0xec390b83U, 0xefaa4060U, 0x9f065e71U, 0x1051bd6eU,
-
     0x8af93e21U, 0x063d96ddU, 0x05aedd3eU, 0xbd464de6U,
     0x8db59154U, 0x5d0571c4U, 0xd46f0406U, 0x15ff6050U,
     0xfb241998U, 0xe997d6bdU, 0x43cc8940U, 0x9e7767d9U,
@@ -663,6 +663,7 @@ static const u32 Td3[256] = {
     0xa8017139U, 0x0cb3de08U, 0xb4e49cd8U, 0x56c19064U,
     0xcb84617bU, 0x32b670d5U, 0x6c5c7448U, 0xb85742d0U,
 };
+#endif
 static const u32 Td4[256] = {
     0x52525252U, 0x09090909U, 0x6a6a6a6aU, 0xd5d5d5d5U,
     0x30303030U, 0x36363636U, 0xa5a5a5a5U, 0x38383838U,
@@ -729,7 +730,6 @@ static const u32 Td4[256] = {
     0xe1e1e1e1U, 0x69696969U, 0x14141414U, 0x63636363U,
     0x55555555U, 0x21212121U, 0x0c0c0c0cU, 0x7d7d7d7dU,
 };
-#endif
 static const u32 rcon[] = {
 	0x01000000, 0x02000000, 0x04000000, 0x08000000,
 	0x10000000, 0x20000000, 0x40000000, 0x80000000,

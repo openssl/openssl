@@ -71,7 +71,11 @@
 # define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 #endif
 
+#ifdef AES_LONG
 typedef unsigned long u32;
+#else
+typedef unsigned int u32;
+#endif
 typedef unsigned short u16;
 typedef unsigned char u8;
 
