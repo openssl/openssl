@@ -61,12 +61,12 @@
  * perl obj_dat.pl obj_mac.h obj_dat.h
  */
 
-#define NUM_NID 503
-#define NUM_SN 501
-#define NUM_LN 501
-#define NUM_OBJ 475
+#define NUM_NID 504
+#define NUM_SN 502
+#define NUM_LN 502
+#define NUM_OBJ 476
 
-static unsigned char lvalues[3836]={
+static unsigned char lvalues[3845]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -542,6 +542,7 @@ static unsigned char lvalues[3836]={
 0x55,0x1D,0x24,                              /* [3826] OBJ_policy_constraints */
 0x55,0x1D,0x37,                              /* [3829] OBJ_target_information */
 0x55,0x1D,0x38,                              /* [3832] OBJ_no_rev_avail */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [3835] OBJ_md4WithRSAEncryption */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1313,6 +1314,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[3829]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
 	&(lvalues[3832]),0},
+{"RSA-MD4","md4WithRSAEncryption",NID_md4WithRSAEncryption,9,
+	&(lvalues[3835]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1421,6 +1424,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[124]),/* "RLE" */
 &(nid_objs[19]),/* "RSA" */
 &(nid_objs[ 7]),/* "RSA-MD2" */
+&(nid_objs[503]),/* "RSA-MD4" */
 &(nid_objs[ 8]),/* "RSA-MD5" */
 &(nid_objs[96]),/* "RSA-MDC2" */
 &(nid_objs[104]),/* "RSA-NP-MD5" */
@@ -2197,6 +2201,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[ 3]),/* "md2" */
 &(nid_objs[ 7]),/* "md2WithRSAEncryption" */
 &(nid_objs[257]),/* "md4" */
+&(nid_objs[503]),/* "md4WithRSAEncryption" */
 &(nid_objs[ 4]),/* "md5" */
 &(nid_objs[114]),/* "md5-sha1" */
 &(nid_objs[104]),/* "md5WithRSA" */
@@ -2571,6 +2576,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[112]),/* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
 &(nid_objs[ 6]),/* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
 &(nid_objs[ 7]),/* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
+&(nid_objs[503]),/* OBJ_md4WithRSAEncryption         1 2 840 113549 1 1 3 */
 &(nid_objs[ 8]),/* OBJ_md5WithRSAEncryption         1 2 840 113549 1 1 4 */
 &(nid_objs[65]),/* OBJ_sha1WithRSAEncryption        1 2 840 113549 1 1 5 */
 &(nid_objs[28]),/* OBJ_dhKeyAgreement               1 2 840 113549 1 3 1 */

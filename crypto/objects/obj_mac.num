@@ -500,3 +500,4 @@ role		499
 policy_constraints		500
 target_information		501
 no_rev_avail		502
+md4WithRSAEncryption		503
