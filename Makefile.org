@@ -529,7 +529,7 @@ install: all install_docs
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
 			$(NEWMAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 	fi
-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkginfo
+	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
