@@ -43,6 +43,10 @@
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix bug in SSL_clear(): bad sessions were not removed (found by
+     Yoram Zahavi <YoramZ@gilian.com>).
+     [Lutz Jaenicke]
+
   +) Add and OPENSSL_LOAD_CONF define which will cause
      OpenSSL_add_all_algorithms() to load the openssl.cnf config file.
      This allows older applications to transparently support certain
