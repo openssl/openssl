@@ -307,9 +307,13 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	     const EVP_MD *dgst)
 	{
+	int nid;
 	char is_dsa;
-	if (pkey->type == EVP_PKEY_DSA || pkey->type == EVP_PKEY_ECDSA) is_dsa = 1;
-	else is_dsa = 0;
+
+	if (pkey->type == EVP_PKEY_DSA || pkey->type == EVP_PKEY_ECDSA)
+		is_dsa = 1;
+	else
+		is_dsa = 0;
 	/* We now need to add another PKCS7_SIGNER_INFO entry */
 	ASN1_INTEGER_set(p7i->version,1);
 	X509_NAME_set(&p7i->issuer_and_serial->issuer,
@@ -336,16 +340,38 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 		goto err;
 	p7i->digest_alg->parameter->type=V_ASN1_NULL;
 
-	p7i->digest_enc_alg->algorithm=OBJ_nid2obj(EVP_PKEY_type(pkey->type));
-
 	if (p7i->digest_enc_alg->parameter != NULL)
 		ASN1_TYPE_free(p7i->digest_enc_alg->parameter);
-	if(is_dsa) p7i->digest_enc_alg->parameter = NULL;
-	else {
+	nid = EVP_PKEY_type(pkey->type);
+	if (nid == EVP_PKEY_RSA)
+		{
+		p7i->digest_enc_alg->algorithm=OBJ_nid2obj(NID_rsaEncryption);
 		if (!(p7i->digest_enc_alg->parameter=ASN1_TYPE_new()))
 			goto err;
 		p7i->digest_enc_alg->parameter->type=V_ASN1_NULL;
-	}
+		}
+	else if (nid == EVP_PKEY_DSA)
+		{
+#if 1
+		/* use 'dsaEncryption' OID for compatibility with other software
+		 * (PKCS #7 v1.5 does specify how to handle DSA) ... */
+		p7i->digest_enc_alg->algorithm=OBJ_nid2obj(NID_dsa);
+#else
+		/* ... although the 'dsaWithSHA1' OID (as required by RFC 2630 for CMS)
+		 * would make more sense. */
+		p7i->digest_enc_alg->algorithm=OBJ_nid2obj(NID_dsaWithSHA1);
+#endif
+		p7i->digest_enc_alg->parameter = NULL; /* special case for DSA: omit 'parameter'! */
+		}
+	else if (nid == EVP_PKEY_ECDSA)
+		{
+		p7i->digest_enc_alg->algorithm=OBJ_nid2obj(NID_ecdsa_with_SHA1);
+		if (!(p7i->digest_enc_alg->parameter=ASN1_TYPE_new()))
+			goto err;
+		p7i->digest_enc_alg->parameter->type=V_ASN1_NULL;
+		}
+	else
+		return(0);
 
 	return(1);
 err:
