@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function X509V3_add1_i2d(). This automatically encodes and
+     adds an extension. Its behaviour can be customised with various
+     flags to append, replace or delete. Various wrappers added for
+     certifcates and CRLs.
+     [Steve Henson]
+
   *) Fix to avoid calling the underlying ASN1 print routine when
      an extension cannot be parsed. Correct a typo in the
      OCSP_SERVICELOC extension. Tidy up print OCSP format.

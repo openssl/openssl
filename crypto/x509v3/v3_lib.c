@@ -213,7 +213,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	}
 	if(found_ex) {
 		/* Found it */
-		if(crit) *crit = found_ex->critical;
+		if(crit) *crit = X509_EXTENSION_get_critical(found_ex);
 		return X509V3_EXT_d2i(found_ex);
 	}
 
@@ -221,6 +221,80 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	if(idx) *idx = -1;
 	if(crit) *crit = -1;
 	return NULL;
+}
+
+/* This function is a general extension append, replace and delete utility.
+ * The precise operation is governed by the 'flags' value. The 'crit' and
+ * 'value' arguments (if relevant) are the extensions internal structure.
+ */
+
+int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value,
+					int crit, unsigned long flags)
+{
+	int extidx = -1;
+	int errcode;
+	X509_EXTENSION *ext, *extmp;
+	unsigned long ext_op = flags & X509V3_ADD_OP_MASK;
+
+	/* If appending we don't care if it exists, otherwise
+	 * look for existing extension.
+	 */
+	if(ext_op != X509V3_ADD_APPEND)
+		extidx = X509v3_get_ext_by_NID(x, nid, -1);
+
+	/* See if extension exists */
+	if(extidx >= 0) {
+		/* If keep existing, nothing to do */
+		if(ext_op == X509V3_ADD_KEEP_EXISTING)
+			return 1;
+		/* If default then its an error */
+		if(ext_op == X509V3_ADD_DEFAULT) {
+			errcode = X509V3_R_EXTENSION_EXISTS;
+			goto err;
+		}
+		/* If delete, just delete it */
+		if(ext_op == X509V3_ADD_DELETE) {
+			if(!sk_X509_EXTENSION_delete(x, extidx)) return -1;
+			return 1;
+		}
+	} else {
+		/* If replace existing or delete, error since 
+		 * extension must exist
+		 */
+		if((ext_op == X509V3_ADD_REPLACE_EXISTING) ||
+		   (ext_op == X509V3_ADD_DELETE)) {
+			errcode = X509V3_R_EXTENSION_NOT_FOUND;
+			goto err;
+		}
+	}
+
+	/* If we get this far then we have to create an extension:
+	 * could have some flags for alternative encoding schemes...
+	 */
+
+	ext = X509V3_EXT_i2d(nid, crit, value);
+
+	if(!ext) {
+		X509V3err(X509V3_F_X509V3_ADD_I2D, X509V3_R_ERROR_CREATING_EXTENSION);
+		return -1;
+	}
+
+	/* If extension exists replace it.. */
+	if(extidx >= 0) {
+		extmp = sk_X509_EXTENSION_value(x, extidx);
+		X509_EXTENSION_free(extmp);
+		if(!sk_X509_EXTENSION_set(x, extidx, ext)) return -1;
+		return 1;
+	}
+
+	if(!sk_X509_EXTENSION_push(x, ext)) return -1;
+
+	return 1;
+
+	err:
+	if(!(flags & X509V3_ADD_SILENT))
+		X509V3err(X509V3_F_X509V3_ADD_I2D, errcode);
+	return 0;
 }
 
 IMPLEMENT_STACK_OF(X509V3_EXT_METHOD)

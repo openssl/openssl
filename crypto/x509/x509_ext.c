@@ -101,6 +101,12 @@ void *X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx)
 	return X509V3_get_d2i(x->crl->extensions, nid, crit, idx);
 }
 
+int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
+							unsigned long flags)
+{
+	return X509V3_add1_i2d(x->crl->extensions, nid, value, crit, flags);
+}
+
 int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc)
 	{
 	return(X509v3_add_ext(&(x->crl->extensions),ex,loc) != NULL);
@@ -146,6 +152,13 @@ void *X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx)
 	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
 }
 
+int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
+							unsigned long flags)
+{
+	return X509V3_add1_i2d(x->cert_info->extensions, nid, value, crit,
+							flags);
+}
+
 int X509_REVOKED_get_ext_count(X509_REVOKED *x)
 	{
 	return(X509v3_get_ext_count(x->extensions));
@@ -185,6 +198,12 @@ int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc)
 void *X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->extensions, nid, crit, idx);
+}
+
+int X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
+							unsigned long flags)
+{
+	return X509V3_add1_i2d(x->extensions, nid, value, crit, flags);
 }
 
 IMPLEMENT_STACK_OF(X509_EXTENSION)

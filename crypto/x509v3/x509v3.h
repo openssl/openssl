@@ -386,6 +386,17 @@ typedef struct x509_purpose_st {
 /* BIO_dump unknown extensions */
 #define X509V3_EXT_DUMP_UNKNOWN		(3L << 16)
 
+/* Flags for X509V3_add1_i2d */
+
+#define X509V3_ADD_OP_MASK		0xfL
+#define X509V3_ADD_DEFAULT		0L
+#define X509V3_ADD_APPEND		1L
+#define X509V3_ADD_REPLACE		2L
+#define X509V3_ADD_REPLACE_EXISTING	3L
+#define X509V3_ADD_KEEP_EXISTING	4L
+#define X509V3_ADD_DELETE		5L
+#define X509V3_ADD_SILENT		0x10
+
 DECLARE_STACK_OF(X509_PURPOSE)
 
 void ERR_load_X509V3_strings(void);
@@ -487,7 +498,9 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);
 void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx);
 
+
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
+int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) *x, int nid, void *value, int crit, unsigned long flags);
 
 char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
@@ -560,6 +573,7 @@ void X509_email_free(STACK *sk);
 #define X509V3_F_V2I_GENERAL_NAME			 117
 #define X509V3_F_V2I_GENERAL_NAMES			 118
 #define X509V3_F_V3_GENERIC_EXTENSION			 116
+#define X509V3_F_X509V3_ADD_I2D				 140
 #define X509V3_F_X509V3_ADD_VALUE			 105
 #define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_EXT_ADD_ALIAS			 106
@@ -576,8 +590,10 @@ void X509_email_free(STACK *sk);
 #define X509V3_R_BN_TO_ASN1_INTEGER_ERROR		 101
 #define X509V3_R_DUPLICATE_ZONE_ID			 133
 #define X509V3_R_ERROR_CONVERTING_ZONE			 131
+#define X509V3_R_ERROR_CREATING_EXTENSION		 144
 #define X509V3_R_ERROR_IN_EXTENSION			 128
 #define X509V3_R_EXPECTED_A_SECTION_NAME		 137
+#define X509V3_R_EXTENSION_EXISTS			 145
 #define X509V3_R_EXTENSION_NAME_ERROR			 115
 #define X509V3_R_EXTENSION_NOT_FOUND			 102
 #define X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED	 103
