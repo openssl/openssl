@@ -280,7 +280,7 @@ static void popsig(void);
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
-static int read_string_inner(UI *ui, UI_STRING *uis, int echo);
+static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
 
 static int read_string(UI *ui, UI_STRING *uis);
 static int write_string(UI *ui, UI_STRING *uis);
@@ -313,12 +313,12 @@ static int write_string(UI *ui, UI_STRING *uis)
 	{
 	switch (UI_get_string_type(uis))
 		{
-	case UIT_VERIFY:
-	case UIT_PROMPT:
-		break;
-	default:
+	case UIT_ERROR:
+	case UIT_INFO:
 		fputs(UI_get0_output_string(uis), tty_out);
 		fflush(tty_out);
+		break;
+	default:
 		break;
 		}
 	return 1;
@@ -330,17 +330,23 @@ static int read_string(UI *ui, UI_STRING *uis)
 
 	switch (UI_get_string_type(uis))
 		{
+	case UIT_BOOLEAN:
+		fputs(UI_get0_output_string(uis), tty_out);
+		fputs(UI_get0_action_string(uis), tty_out);
+		fflush(tty_out);
+		return read_string_inner(ui, uis,
+			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO, 0);
 	case UIT_PROMPT:
 		fputs(UI_get0_output_string(uis), tty_out);
 		fflush(tty_out);
 		return read_string_inner(ui, uis,
-			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO);
+			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO, 1);
 	case UIT_VERIFY:
 		fprintf(tty_out,"Verifying - %s",
 			UI_get0_output_string(uis));
 		fflush(tty_out);
 		if ((ok = read_string_inner(ui, uis,
-			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO)) <= 0)
+			UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO, 1)) <= 0)
 			return ok;
 		if (strcmp(UI_get0_result_string(uis),
 			UI_get0_test_string(uis)) != 0)
@@ -368,12 +374,13 @@ static void read_till_nl(FILE *in)
 		} while (strchr(buf,'\n') == NULL);
 	}
 
-static int read_string_inner(UI *ui, UI_STRING *uis, int echo)
+static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 	{
 	static int ps;
 	int ok;
-	char *result = OPENSSL_malloc(BUFSIZ);
+	char result[BUFSIZ];
 	int maxsize = BUFSIZ-1;
+	char *p;
 
 #ifndef OPENSSL_SYS_WIN16
 	if ((ok = setjmp(save)))
@@ -390,28 +397,26 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo)
 	if (!echo) noecho_console(ui);
 	ps=2;
 
-	while (!ok)
-		{
-		char *p;
-
-		result[0]='\0';
+	result[0]='\0';
 #ifdef OPENSSL_SYS_MSDOS
-		if (!echo)
-			noecho_fgets(result,maxsize,tty_in);
-		else
-			fgets(result,maxsize,tty_in);
-#else
+	if (!echo)
+		noecho_fgets(result,maxsize,tty_in);
+	else
 		fgets(result,maxsize,tty_in);
+#else
+	fgets(result,maxsize,tty_in);
 #endif
-		if (feof(tty_in)) goto error;
-		if (ferror(tty_in)) goto error;
-		if ((p=(char *)strchr(result,'\n')) != NULL)
+	if (feof(tty_in)) goto error;
+	if (ferror(tty_in)) goto error;
+	if ((p=(char *)strchr(result,'\n')) != NULL)
+		{
+		if (strip_nl)
 			*p='\0';
-		else
-			read_till_nl(tty_in);
-		if (UI_set_result(uis, result) >= 0)
-			ok=1;
 		}
+	else
+		read_till_nl(tty_in);
+	if (UI_set_result(ui, uis, result) >= 0)
+		ok=1;
 
 error:
 	if (!echo) fprintf(tty_out,"\n");
@@ -421,11 +426,10 @@ error:
 	if (ps >= 1)
 		popsig();
 #else
-	memset(result,0,BUFSIZ);
 	ok=1;
 #endif
 
-	OPENSSL_free(result);
+	memset(result,0,BUFSIZ);
 	return ok;
 	}
 
