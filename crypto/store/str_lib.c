@@ -258,7 +258,7 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[],
 	return x;
 	}
 
-int store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
+int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
@@ -445,11 +445,7 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
 	REF_PRINT("EVP_PKEY",data);
 #endif
 	pkey = object->data.key;
-	STORE_OBJECT_free(object);
-	return pkey;
-	}
-
-int store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+	STORE_OBJECT_free(object);TORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
@@ -625,7 +621,7 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
 	return pkey;
 	}
 
-int store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+int STORE_store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
@@ -827,7 +823,7 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[],
 	return crl;
 	}
 
-int store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
+int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
@@ -950,7 +946,7 @@ int STORE_list_crl_endp(STORE *s, void *handle)
 	return 1;
 	}
 
-int store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
+int STORE_store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
@@ -1021,7 +1017,7 @@ int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[],
 	return 1;
 	}
 
-int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
+int STORE_store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
