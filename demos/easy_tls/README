@@ -53,9 +53,10 @@ easy_tls - generic SSL/TLS proxy
      'T' multiple times.  I have no idea why you would want to though.
 
 
-This code is rather old.  When I find time I will look if it still
-compiles, and update code comments.  The least you will have to do to
-use the sample program 'test' is change the Makefile.
+This code is rather old.  When I find time I will update anything that
+should be changed, and improve code comments.  To compile the sample
+program 'test' on platforms other then Linux or Solaris, you will have
+to edit the Makefile.
 
 As noted above, easy_tls.c will be changed to become a library one
 day, which means that future revisions will not be fully compatible to

@@ -1,5 +1,5 @@
 # Makefile for easy-tls example application (rudimentary client and server)
-# $Id: Makefile,v 1.1 2001/09/17 19:06:56 bodo Exp $
+# $Id: Makefile,v 1.2 2001/09/18 09:15:40 bodo Exp $
 
 SOLARIS_CFLAGS=-Wall -pedantic -g -O2
 SOLARIS_LIBS=-lxnet
@@ -22,7 +22,7 @@ all: test TAGS
 # For adapting this Makefile to a different system, only the following
 # definitions should need customizing:
 
-OPENSSLDIR=$(HOME)/openssl/openssl
+OPENSSLDIR=../..
 CC=gcc
 
 SYSCFLAGS=whatever
