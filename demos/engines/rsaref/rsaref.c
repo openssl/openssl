@@ -426,7 +426,7 @@ static int rsaref_private_encrypt(int len, const unsigned char *from, unsigned c
 	}
 	if (!RSAref_Private_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPrivateEncrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPrivateEncrypt(to,(unsigned int *)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PRIVATE_ENCRYPT,i);
 		outlen= -1;
@@ -444,7 +444,7 @@ static int rsaref_public_decrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicDecrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
+	if ((i=RSAPublicDecrypt(to,(unsigned int *)&outlen,(unsigned char *)from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_DECRYPT,i);
 		outlen= -1;
@@ -481,7 +481,7 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 
 	if (!RSAref_Public_eay2ref(rsa,&RSAkey))
 		goto err;
-	if ((i=RSAPublicEncrypt(to,(unsigned int)&outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
+	if ((i=RSAPublicEncrypt(to,(unsigned int *)&outlen,(unsigned char *)from,len,&RSAkey,&rnd)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT,i);
 		outlen= -1;
