@@ -331,6 +331,7 @@ static char *strip_spaces(char *name)
 
 /* Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
  * hex representation
+ * @@@ (Contents of buffer are always kept in ASCII, also on EBCDIC machines)
  */
 
 char *hex_to_string(unsigned char *buffer, long len)
@@ -351,6 +352,10 @@ char *hex_to_string(unsigned char *buffer, long len)
 		*q++ = ':';
 	}
 	q[-1] = 0;
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(tmp, tmp, q - tmp - 1);
+#endif
+
 	return tmp;
 }
 
@@ -369,8 +374,14 @@ unsigned char *string_to_hex(char *str, long *len)
 	if(!(hexbuf = OPENSSL_malloc(strlen(str) >> 1))) goto err;
 	for(p = (unsigned char *)str, q = hexbuf; *p;) {
 		ch = *p++;
+#ifdef CHARSET_EBCDIC
+		ch = os_toebcdic[ch];
+#endif
 		if(ch == ':') continue;
 		cl = *p++;
+#ifdef CHARSET_EBCDIC
+		cl = os_toebcdic[cl];
+#endif
 		if(!cl) {
 			X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ODD_NUMBER_OF_DIGITS);
 			OPENSSL_free(hexbuf);

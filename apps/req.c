@@ -1099,7 +1099,11 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 		 * multiple instances 
 		 */
 		for(p = v->name; *p ; p++) 
+#ifndef CHARSET_EBCDIC
 			if ((*p == ':') || (*p == ',') || (*p == '.')) {
+#else
+			if ((*p == os_toascii[':']) || (*p == os_toascii[',']) || (*p == os_toascii['.'])) {
+#endif
 				p++;
 				if(*p) type = p;
 				break;
@@ -1215,6 +1219,9 @@ start:
 		return(0);
 		}
 	buf[--i]='\0';
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, i);
+#endif
 	if(!req_check_len(i, min, max)) goto start;
 
 	if(!X509_REQ_add1_attr_by_NID(req, nid, MBSTRING_ASC,

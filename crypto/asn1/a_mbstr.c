@@ -385,9 +385,16 @@ static int is_printable(unsigned long value)
 	/* Note: we can't use 'isalnum' because certain accented 
 	 * characters may count as alphanumeric in some environments.
 	 */
+#ifndef CHARSET_EBCDIC
 	if((ch >= 'a') && (ch <= 'z')) return 1;
 	if((ch >= 'A') && (ch <= 'Z')) return 1;
 	if((ch >= '0') && (ch <= '9')) return 1;
 	if ((ch == ' ') || strchr("'()+,-./:=?", ch)) return 1;
+#else /*CHARSET_EBCDIC*/
+	if((ch >= os_toascii['a']) && (ch <= os_toascii['z'])) return 1;
+	if((ch >= os_toascii['A']) && (ch <= os_toascii['Z'])) return 1;
+	if((ch >= os_toascii['0']) && (ch <= os_toascii['9'])) return 1;
+	if ((ch == os_toascii[' ']) || strchr("'()+,-./:=?", os_toebcdic[ch])) return 1;
+#endif /*CHARSET_EBCDIC*/
 	return 0;
 }

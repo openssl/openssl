@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add a few more EBCDIC conditionals that make `req' and `x509'
+     work better on such systems.
+     [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>]
+
   *) Add two demo programs for PKCS12_parse() and PKCS12_create().
      Update PKCS12_parse() so it copies the friendlyName and the
      keyid to the certificates aux info.
