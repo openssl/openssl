@@ -107,19 +107,15 @@ my %table=(
 "solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
 "debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
 
-# DO NOT use /xO[34] on sparc with SC3.0. 
-# It is broken, and will not pass the tests
-"solaris-sparc-cc","cc:-fast -O -Xa -DB_ENDIAN:-D_REENTRANT:\
-	-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
-# SC4.0 is ok, better than gcc, except for the bignum stuff.
+# DO NOT use /xO[34] on sparc with SC3.0.  It is broken, and will not pass the tests
+"solaris-sparc-cc","cc:-fast -O -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
+# SC4 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # -fast slows things like DES down quite a lot
-"solaris-sparc-sc4","cc:-xO5 -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
-"solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO2 -DB_ENDIAN:\
-	-D_REENTRANT:-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-#"solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
-#	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
+# Don't use -xtarget=ultra with SC4.2. It is broken, and will break exptest.
+# SC5.0 with the compiler common patch works.
+"solaris-sparc-sc4","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
+"solaris-usparc-sc4","cc:-xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
+"solaris-usparc-sc5","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
 
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST:(unknown)::DES_UNROLL:::",
