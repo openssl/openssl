@@ -833,6 +833,10 @@ $! Time To RETURN.
 $!
 $ RETURN
 $!
+$! Check The User's Options.
+$!
+$ CHECK_OPTIONS:
+$!
 $! Check To See If P1 Is Blank.
 $!
 $ IF (P1.EQS."ALL")
@@ -885,10 +889,6 @@ $!
 $! End The P1 Check.
 $!
 $ ENDIF
-$!
-$! Check The User's Options.
-$!
-$ CHECK_OPTIONS:
 $!
 $! Check To See If P2 Is Blank.
 $!
