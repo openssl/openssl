@@ -319,3 +319,13 @@ const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e)
 	{
 	return e->cmd_defns;
 	}
+
+/* eng_lib.o is pretty much linked into anything that touches ENGINE already, so
+ * put the "static_state" hack here. */
+
+static int internal_static_hack = 0;
+
+void *ENGINE_get_static_state(void)
+	{
+	return &internal_static_hack;
+	}

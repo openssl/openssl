@@ -500,6 +500,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 	 * engine.h, much of this would be simplified if each area of code
 	 * provided its own "summary" structure of all related callbacks. It
 	 * would also increase opaqueness. */
+	fns.static_state = ENGINE_get_static_state();
 	fns.err_fns = ERR_get_implementation();
 	fns.ex_data_fns = CRYPTO_get_ex_data_implementation();
 	CRYPTO_get_mem_functions(&fns.mem_fns.malloc_cb,
