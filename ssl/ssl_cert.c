@@ -116,19 +116,7 @@
 # include <sys/types.h>
 #endif
 
-#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) && !defined(NeXT) && !defined(MAC_OS_pre_X)
-#include <dirent.h>
-#endif
-
-#if defined(WIN32)
-#include <windows.h>
-#endif
-
-#ifdef NeXT
-#include <sys/dir.h>
-#define dirent direct
-#endif
-
+#include "o_dir.h"
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
@@ -761,131 +749,52 @@ err:
  * certs may have been added to \c stack.
  */
 
-#ifndef OPENSSL_SYS_WIN32
-#ifndef OPENSSL_SYS_VMS		/* XXXX This may be fixed in the future */
-#ifndef OPENSSL_SYS_MACINTOSH_CLASSIC /* XXXXX: Better scheme needed! */
-
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
 	{
-	DIR *d;
-	struct dirent *dstruct;
+	OPENSSL_DIR_CTX *d = NULL;
+	const char *filename;
 	int ret = 0;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-	d = opendir(dir);
 
 	/* Note that a side effect is that the CAs will be sorted by name */
-	if(!d)
-		{
-		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-		ERR_add_error_data(3, "opendir('", dir, "')");
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err;
-		}
-	
-	while((dstruct=readdir(d)))
+
+	while((filename = OPENSSL_DIR_read(&d, dir)))
 		{
 		char buf[1024];
 		int r;
-		
-		if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
+
+		if(strlen(dir)+strlen(filename)+2 > sizeof buf)
 			{
 			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
 			goto err;
 			}
-		
-		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,dstruct->d_name);
+
+#ifdef OPENSSL_SYS_VMS
+		r = BIO_snprintf(buf,sizeof buf,"%s%s",dir,filename);
+#else
+		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,filename);
+#endif
 		if (r <= 0 || r >= (int)sizeof(buf))
 			goto err;
 		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
 			goto err;
 		}
-	ret = 1;
 
-err:	
-	if (d) closedir(d);
-	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
-	return ret;
-	}
-
-#endif
-#endif
-
-#else /* OPENSSL_SYS_WIN32 */
-
-int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-				       const char *dir)
-	{
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
-	int ret = 0;
-#ifdef OPENSSL_SYS_WINCE
-	WCHAR* wdir = NULL;
-#endif
-
-	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-	
-#ifdef OPENSSL_SYS_WINCE
-	/* convert strings to UNICODE */
-	{
-		BOOL result = FALSE;
-		int i;
-		wdir = malloc((strlen(dir)+1)*2);
-		if (wdir == NULL)
-			goto err_noclose;
-		for (i=0; i<(int)strlen(dir)+1; i++)
-			wdir[i] = (short)dir[i];
-	}
-#endif
-
-#ifdef OPENSSL_SYS_WINCE
-	hFind = FindFirstFile(wdir, &FindFileData);
-#else
-	hFind = FindFirstFile(dir, &FindFileData);
-#endif
-	/* Note that a side effect is that the CAs will be sorted by name */
-	if(hFind == INVALID_HANDLE_VALUE)
+	if (errno)
 		{
 		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-		ERR_add_error_data(3, "opendir('", dir, "')");
+		ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err_noclose;
+		goto err;
 		}
-	
-	do 
-		{
-		char buf[1024];
-		int r;
-		
-#ifdef OPENSSL_SYS_WINCE
-		if(strlen(dir)+_tcslen(FindFileData.cFileName)+2 > sizeof buf)
-#else
-		if(strlen(dir)+strlen(FindFileData.cFileName)+2 > sizeof buf)
-#endif
-			{
-			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
-			goto err;
-			}
-		
-		r = BIO_snprintf(buf,sizeof buf,"%s/%s",dir,FindFileData.cFileName);
-		if (r <= 0 || r >= sizeof buf)
-			goto err;
-		if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
-			goto err;
-		}
-	while (FindNextFile(hFind, &FindFileData) != FALSE);
+
 	ret = 1;
 
 err:
-	FindClose(hFind);
-err_noclose:
-#ifdef OPENSSL_SYS_WINCE
-	if (wdir != NULL)
-		free(wdir);
-#endif
+	if (d) OPENSSL_DIR_end(&d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
 
-#endif
