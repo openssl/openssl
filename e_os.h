@@ -548,7 +548,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #  define strncasecmp _strnicmp
 #elif defined(OPENSSL_SYS_VMS)
 /* VMS below version 7.0 doesn't have strcasecmp() */
-#  include <openssl/o_str.h>
+#  include "o_str.h"
 #  define strcasecmp OPENSSL_strcasecmp
 #  define strncasecmp OPENSSL_strncasecmp
 #elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
