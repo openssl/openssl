@@ -4,6 +4,11 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
+     Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
+     when writing a 32767 byte record.
+     [Bodo Moeller; problem reported by Eric Day <eday@concentric.net>]
+
   *) rand_win.c fix for Borland C.
      [Ulf Möller]
  
