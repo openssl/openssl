@@ -47,6 +47,17 @@
  *
  */
 
+#ifdef OPENSSL_FIPS
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* FIPS 140 allows MD5 to be used during certain parts of TLS */
 void FIPS_allow_md5(int onoff);
 extern int FIPS_md5_allowed;
+
+#ifdef  __cplusplus
+}
+#endif
+#endif
