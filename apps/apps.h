@@ -144,8 +144,10 @@ int WIN32_rename(char *oldname,char *newname);
 #define MAIN(a,v)	main(a,v)
 
 #ifndef NON_MAIN
+CONF *config=NULL;
 BIO *bio_err=NULL;
 #else
+extern CONF *config;
 extern BIO *bio_err;
 #endif
 

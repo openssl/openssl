@@ -139,11 +139,11 @@ static unsigned long MS_CALLBACK hash(const void *a_void);
 static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-CONF *config=NULL;
 char *default_config_file=NULL;
 
 /* Make sure there is only one when MONOLITH is defined */
 #ifdef MONOLITH
+CONF *config=NULL;
 BIO *bio_err=NULL;
 #endif
 
