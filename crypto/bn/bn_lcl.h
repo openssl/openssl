@@ -86,7 +86,7 @@ extern "C" {
 #endif
 #endif
 
-#if !defined(NO_ASM) && !defined(PEDANTIC)
+#if !defined(NO_ASM) && !defined(NO_INLINE_ASM) && !defined(PEDANTIC)
 /*
  * BN_UMULT_HIGH section.
  *
