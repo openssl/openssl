@@ -153,7 +153,7 @@ static int md_write(BIO *b, const char *in, int inl)
 		{
 		if (ret > 0)
 			{
-			EVP_DigestUpdate(ctx,(unsigned char *)in,
+			EVP_DigestUpdate(ctx,(const unsigned char *)in,
 				(unsigned int)ret);
 			}
 		}

@@ -95,7 +95,7 @@ static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     const unsigned char *in, unsigned int inl)
 	{
 	if (in != out)
-		memcpy((char *)out,(char *)in,(int)inl);
+		memcpy((char *)out,(const char *)in,(size_t)inl);
 	return 1;
 	}
 
