@@ -559,14 +559,17 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 
 static int ssleay_rand_status(void)
 	{
+	int ret;
+
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	if (!initialized)
 		ssleay_rand_initialize();
+	ret = entropy >= ENTROPY_NEEDED;
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-	return (entropy >= ENTROPY_NEEDED);
+	return ret;
 	}
 
 #ifdef WINDOWS
