@@ -305,7 +305,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 		if ((cid->issuerNameHash->length != mdlen) ||
 		   (cid->issuerKeyHash->length != mdlen))
 			return 0;
-		iname = X509_get_issuer_name(cert);
+		iname = X509_get_subject_name(cert);
 		if (!X509_NAME_digest(iname, dgst, md, NULL))
 			return -1;
 		if (memcmp(md, cid->issuerNameHash->data, mdlen))
