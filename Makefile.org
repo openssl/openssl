@@ -253,7 +253,7 @@ dclean:
 	done;
 
 rehash:
-	@(PATH="`pwd`/apps:${PATH}"; sh tools/c_rehash certs)
+	@(OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
 
 test:   tests
 
