@@ -16,6 +16,7 @@
 
       o Various SSL/TLS library bugfixes.
       o BIGNUM library fixes.
+      o Add crypto accelerator support for AEP, Baltimore SureWare
 
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
