@@ -1,9 +1,7 @@
 #!/usr/local/bin/perl
 
 # Normal is the
-# ripemd160_block_x86(MD5_CTX *c, ULONG *X);
-# version, non-normal is the
-# ripemd160_block_x86(MD5_CTX *c, ULONG *X,int blocks);
+# ripemd160_block_asm_host_order(RIPEMD160_CTX *c, ULONG *X,int blocks);
 
 $normal=0;
 
@@ -12,13 +10,13 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-$A="eax";
-$B="ebx";
-$C="ecx";
-$D="edx";
+$A="ecx";
+$B="esi";
+$C="edi";
+$D="ebx";
 $E="ebp";
-$tmp1="esi";
-$tmp2="edi";
+$tmp1="eax";
+$tmp2="edx";
 
 $KL1=0x5A827999;
 $KL2=0x6ED9EBA1;
@@ -58,13 +56,13 @@ $KR3=0x7A6D76E9;
 	 8, 5,12, 9,12, 5,14, 6, 8,13, 6, 5,15,13,11,11,
  	);
 
-&ripemd160_block("ripemd160_block_x86");
+&ripemd160_block("ripemd160_block_asm_host_order");
 &asm_finish();
 
 sub Xv
 	{
 	local($n)=@_;
-	return(&swtmp($n+1));
+	return(&swtmp($n));
 	# tmp on stack
 	}
 
@@ -82,7 +80,7 @@ sub RIP1
 	&comment($p++);
 	if ($p & 1)
 		{
-	 &mov($tmp1,	$c) if $o == -1;
+	 #&mov($tmp1,	$c) if $o == -1;
 	&xor($tmp1,	$d) if $o == -1;
 	 &mov($tmp2,	&Xv($pos));
 	&xor($tmp1,	$b);
@@ -290,7 +288,7 @@ sub RIP5
 	&rotl($c,	10);
 	&lea($a,	&DWP($K,$a,$tmp1,1));
 	 &sub($tmp2,	&Np($d)) if $o <= 0;
-	 &mov(&swtmp(1+16),	$A) if $o == 1;
+	 &mov(&swtmp(16),	$A) if $o == 1;
 	 &mov($tmp1,	&Np($d)) if $o == 2;
 	&rotl($a,	$s);
 	&add($a,	$e);
@@ -310,19 +308,25 @@ sub ripemd160_block
 	# D 	12
 	# E 	16
 
+	&mov($tmp2,	&wparam(0));
+	 &mov($tmp1,	&wparam(1));
 	&push("esi");
-	 &mov($C,	&wparam(2));
+	 &mov($A,	&DWP( 0,$tmp2,"",0));
 	&push("edi");
-	 &mov($tmp1,	&wparam(1)); # edi
+	 &mov($B,	&DWP( 4,$tmp2,"",0));
 	&push("ebp");
-	 &add($C,	$tmp1); # offset we end at
+	 &mov($C,	&DWP( 8,$tmp2,"",0));
 	&push("ebx");
-	 &sub($C,	64);
-	&stack_push(16+5+1);
-	 # XXX
-
-	&mov(&swtmp(0),	$C);
-	 &mov($tmp2,	&wparam(0)); # Done at end of loop
+	 &stack_push(16+5+6);
+			  # Special comment about the figure of 6.
+			  # Idea is to pad the current frame so
+			  # that the top of the stack gets fairly
+			  # aligned. Well, as you realize it would
+			  # always depend on how the frame below is
+			  # aligned. The good news are that gcc-2.95
+			  # and later does keep first argument at
+			  # least double-wise aligned.
+			  #			<appro@fy.chalmers.se>
 
 	&set_label("start") unless $normal;
 	&comment("");
@@ -332,16 +336,12 @@ sub ripemd160_block
 
 	for ($z=0; $z<16; $z+=2)
 		{
-		&mov($A,		&DWP( $z*4,$tmp1,"",0));
-		 &mov($B,		&DWP( ($z+1)*4,$tmp1,"",0));
-		&mov(&swtmp(1+$z),	$A);
-		 &mov(&swtmp(1+$z+1),	$B);
+		&mov($D,		&DWP( $z*4,$tmp1,"",0));
+		 &mov($E,		&DWP( ($z+1)*4,$tmp1,"",0));
+		&mov(&swtmp($z),	$D);
+		 &mov(&swtmp($z+1),	$E);
 		}
-	&add($tmp1,	64);
-	 &mov($A,	&DWP( 0,$tmp2,"",0));
-	&mov(&wparam(1),$tmp1);
-	 &mov($B,	&DWP( 4,$tmp2,"",0));
-	&mov($C,	&DWP( 8,$tmp2,"",0));
+	&mov($tmp1,	$C);
 	 &mov($D,	&DWP(12,$tmp2,"",0));
 	&mov($E,	&DWP(16,$tmp2,"",0));
 
@@ -431,14 +431,14 @@ sub ripemd160_block
 	&RIP5($B,$C,$D,$E,$A,$wl[79],$sl[79],$KL4,1);
 
 	# &mov($tmp2,	&wparam(0)); # moved into last RIP5
-	# &mov(&swtmp(1+16),	$A);
+	# &mov(&swtmp(16),	$A);
 	 &mov($A,	&DWP( 0,$tmp2,"",0));
-	&mov(&swtmp(1+17),	$B);
-	 &mov(&swtmp(1+18),	$C);
+	&mov(&swtmp(16+1),	$B);
+	 &mov(&swtmp(16+2),	$C);
 	&mov($B,	&DWP( 4,$tmp2,"",0));
-	 &mov(&swtmp(1+19),	$D);
+	 &mov(&swtmp(16+3),	$D);
 	&mov($C,	&DWP( 8,$tmp2,"",0));
-	 &mov(&swtmp(1+20),	$E);
+	 &mov(&swtmp(16+4),	$E);
 	&mov($D,	&DWP(12,$tmp2,"",0));
 	 &mov($E,	&DWP(16,$tmp2,"",0));
 
@@ -531,46 +531,54 @@ sub ripemd160_block
 
 	 &mov($tmp1,	&DWP( 4,$tmp2,"",0));	# ctx->B
  	&add($D,	$tmp1);	
-	 &mov($tmp1,	&swtmp(1+18));		# $c
+	 &mov($tmp1,	&swtmp(16+2));		# $c
 	&add($D,	$tmp1);
 
 	 &mov($tmp1,	&DWP( 8,$tmp2,"",0));	# ctx->C
 	&add($E,	$tmp1);	
-	 &mov($tmp1,	&swtmp(1+19));		# $d
+	 &mov($tmp1,	&swtmp(16+3));		# $d
 	&add($E,	$tmp1);
 
 	 &mov($tmp1,	&DWP(12,$tmp2,"",0));	# ctx->D
 	&add($A,	$tmp1);	
-	 &mov($tmp1,	&swtmp(1+20));		# $e
+	 &mov($tmp1,	&swtmp(16+4));		# $e
 	&add($A,	$tmp1);
 
 
 	 &mov($tmp1,	&DWP(16,$tmp2,"",0));	# ctx->E
 	&add($B,	$tmp1);	
-	 &mov($tmp1,	&swtmp(1+16));		# $a
+	 &mov($tmp1,	&swtmp(16+0));		# $a
 	&add($B,	$tmp1);
 
 	 &mov($tmp1,	&DWP( 0,$tmp2,"",0));	# ctx->A
 	&add($C,	$tmp1);	
-	 &mov($tmp1,	&swtmp(1+17));		# $b
+	 &mov($tmp1,	&swtmp(16+1));		# $b
 	&add($C,	$tmp1);
+
+	 &mov($tmp1,	&wparam(2));
 
 	&mov(&DWP( 0,$tmp2,"",0),	$D);
 	 &mov(&DWP( 4,$tmp2,"",0),	$E);
 	&mov(&DWP( 8,$tmp2,"",0),	$A);
-	 &mov(&DWP(12,$tmp2,"",0),	$B);
-	&mov(&DWP(16,$tmp2,"",0),	$C);
+	 &sub($tmp1,1);
+	&mov(&DWP(12,$tmp2,"",0),	$B);
+	 &mov(&DWP(16,$tmp2,"",0),	$C);
 
-	&mov($tmp2,		&swtmp(0));
-	 &mov($tmp1,		&wparam(1));
+	&jle(&label("get_out"));
 
-	&cmp($tmp2,$tmp1);
-	 &mov($tmp2,	&wparam(0));
+	&mov(&wparam(2),$tmp1);
+	 &mov($C,	$A);
+	&mov($tmp1,	&wparam(1));
+	 &mov($A,	$D);
+	&add($tmp1,	64);
+	 &mov($B,	$E);
+	&mov(&wparam(1),$tmp1);
 
-	# XXX
-	 &jge(&label("start"));
+	&jmp(&label("start"));
 
-	&stack_pop(16+5+1);
+	&set_label("get_out");
+
+	&stack_pop(16+5+6);
 
 	&pop("ebx");
 	&pop("ebp");
