@@ -11,7 +11,7 @@
                                    versions, these hyphens are gone.]
 
   *) Change type of various DES function arguments from des_cblock
-     (which means, in function argument declarartions, pointer to char)
+     (which means, in function argument declarations, pointer to char)
      to des_cblock * (meaning pointer to array with 8 char elements),
      which allows the compiler to do more typechecking; it was like
      that back in SSLeay, but with lots of ugly casts.
