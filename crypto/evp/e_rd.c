@@ -55,8 +55,8 @@
 
 static EVP_CIPHER rd_cipher[3][3];
 
-static anSizes[]={16,24,32};
-static anNIDs[3][3]=
+static int anSizes[]={16,24,32};
+static int anNIDs[3][3]=
     {
     { NID_rijndael_ecb_k128_b128,NID_rijndael_ecb_k192_b128,NID_rijndael_ecb_k256_b128 },
     { NID_rijndael_ecb_k128_b192,NID_rijndael_ecb_k192_b192,NID_rijndael_ecb_k256_b192 },

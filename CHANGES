@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix for SHA1 assembly problem with MASM: it produces
+     warnings about corrupt line number information when assembling
+     with debugging information. This is caused by the overlapping
+     of two sections.
+     [Bernd Matthes <mainbug@celocom.de>, Steve Henson]
+
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
 
