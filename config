@@ -137,24 +137,23 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-bsdi"; exit 0
 	;;
 
-    FreeBSD:3*:*:*)
-	echo "${MACHINE}-whatever-freebsd3"; exit 0
-	;;
-
-    FreeBSD:*:*:*386*)
-        case `sysctl -n hw.model` in
-	    Pentium*)
-                echo "i586-whatever-freebsd"; exit 0
-                ;;
-            *)
-                echo "i386-whatever-freebsd"; exit 0
-                ;;
-            esac;
-	;;
-
     FreeBSD:*)
-	echo "${MACHINE}-whatever-freebsd"; exit 0
-	;;
+        VERS=`echo ${RELEASE} | sed -e 's/[-(].*//'`
+        MACH=`sysctl -n hw.model`
+        ARCH='whatever'
+        case ${MACH} in
+           *386*       ) MACH="i386"     ;;
+           *486*       ) MACH="i486"     ;;
+           Pentium\ II*) MACH="i686"     ;;
+           Pentium*    ) MACH="i586"     ;;
+           Alpha*      ) MACH="alpha"    ;;
+           *           ) MACH="$MACHINE" ;;
+        esac
+        case ${MACH} in
+           i[0-9]86 ) ARCH="pc" ;;
+        esac
+        echo "${MACH}-${ARCH}-freebsd${VERS}"; exit 0
+        ;;
 
     NetBSD:*:*:*386*)
         echo "`sysctl -n hw.model | sed 's,.*\(.\)86-class.*,i\186,'`-whateve\r-netbsd"; exit 0
@@ -402,9 +401,9 @@ case "$GUESSOS" in
   sun4*-sun-solaris2)	OUT="solaris-sparcv7-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
-  alpha*-*-freebsd3) OUT="FreeBSD-alpha" ;;
-  *-freebsd3) OUT="FreeBSD-elf" ;;
-  *-freebsd) OUT="FreeBSD" ;;
+  alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
+  *-freebsd[3-9]*) OUT="FreeBSD-elf" ;;
+  *-freebsd[1-2]*) OUT="FreeBSD" ;;
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
   sun3*-*-netbsd) OUT="NetBSD-m68" ;;
   *-*-netbsd) OUT="NetBSD-sparc" ;;
