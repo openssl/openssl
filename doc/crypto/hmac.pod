@@ -96,4 +96,7 @@ L<sha(3)|sha(3)>, L<evp(3)|evp(3)>
 HMAC(), HMAC_Init(), HMAC_Update(), HMAC_Final() and HMAC_cleanup()
 are available since SSLeay 0.9.0.
 
+HMAC_CTX_init(), HMAC_Init_ex() and HMAC_CTX_cleanup() are available
+since OpenSSL 0.9.7.
+
 =cut

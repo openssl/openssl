@@ -91,6 +91,6 @@ L<sha(3)|sha(3)>, L<dgst(1)|dgst(1)>
 EVP_SignInit(), EVP_SignUpdate() and EVP_SignFinal() are
 available in all versions of SSLeay and OpenSSL.
 
-EVP_SignInit_ex() was added in OpenSSL 0.9.7
+EVP_SignInit_ex() was added in OpenSSL 0.9.7.
 
 =cut

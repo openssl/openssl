@@ -501,4 +501,9 @@ L<evp(3)|evp(3)>
 
 =head1 HISTORY
 
+EVP_CIPHER_CTX_init(), EVP_EncryptInit_ex(), EVP_EncryptFinal_ex(),
+EVP_DecryptInit_ex(), EVP_DecryptFinal_ex(), EVP_CipherInit_ex(),
+EVP_CipherFinal_ex() and EVP_CIPHER_CTX_set_padding() appeared in
+OpenSSL 0.9.7.
+
 =cut
