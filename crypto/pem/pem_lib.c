@@ -366,8 +366,11 @@ err:
 	memset(iv,0,sizeof(iv));
 	memset((char *)&ctx,0,sizeof(ctx));
 	memset(buf,0,PEM_BUFSIZE);
-	memset(data,0,(unsigned int)dsize);
-	OPENSSL_free(data);
+	if (data != NULL)
+		{
+		memset(data,0,(unsigned int)dsize);
+		OPENSSL_free(data);
+		}
 	return(ret);
 	}
 
