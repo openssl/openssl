@@ -70,6 +70,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../e_os.h"
+
 #ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c" 
 #endif
@@ -298,7 +301,7 @@ int main(int argc, char *argv[])
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	out=BIO_new(BIO_s_file());
-	if (out == NULL) exit(1);
+	if (out == NULL) EXIT(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
@@ -330,7 +333,7 @@ err:
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
 	CRYPTO_mem_leaks_fp(stderr);
-	exit(ret);
+	EXIT(ret);
 	return(ret);
 	}
 

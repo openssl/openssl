@@ -60,6 +60,8 @@
 #include <stdlib.h>
 #include <openssl/rand.h>
 
+#include "../e_os.h"
+
 /* some FIPS 140-1 random number test */
 /* some simple tests */
 
@@ -209,6 +211,6 @@ int main()
 	printf("test 4 done\n");
  err:
 	err=((err)?1:0);
-	exit(err);
+	EXIT(err);
 	return(err);
 	}

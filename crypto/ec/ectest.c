@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 	fflush(stdout); \
 	fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
 	ERR_print_errors_fp(stderr); \
-	exit(1); \
+	EXIT(1); \
 } while (0)
 
 void prime_field_tests(void);

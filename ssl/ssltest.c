@@ -564,7 +564,7 @@ bad:
 			"the test anyway (and\n-d to see what happens), "
 			"or add one of -ssl2, -ssl3, -tls1, -reuse\n"
 			"to avoid protocol mismatch.\n");
-		exit(1);
+		EXIT(1);
 		}
 
 	if (print_time)
