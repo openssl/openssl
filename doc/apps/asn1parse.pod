@@ -123,7 +123,7 @@ C<1.2.3.4	shortName	A long name>
 
 =head1 BUGS
 
-There should be options to change the format of input lines. The output of some
+There should be options to change the format of output lines. The output of some
 ASN.1 types is not well handled (if at all).
 
 =cut
