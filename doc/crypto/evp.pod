@@ -10,7 +10,7 @@ evp - high-level cryptographic functions
 
 =head1 DESCRIPTION
 
-The EVP library provided a high-level interface to cryptographic
+The EVP library provides a high-level interface to cryptographic
 functions.
 
 B<EVP_Seal>I<...> and B<EVP_Open>I<...> provide public key encryption
