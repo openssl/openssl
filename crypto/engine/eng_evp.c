@@ -55,7 +55,7 @@
 
 #include <openssl/engine.h>
 #include <openssl/evp.h>
-#include "engine_int.h"
+#include "eng_int.h"
 #include <string.h>
 
 int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c)

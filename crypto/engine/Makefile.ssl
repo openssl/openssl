@@ -23,12 +23,12 @@ TEST= enginetest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= engine_err.c engine_lib.c engine_list.c engine_all.c engine_openssl.c \
-	engine_dyn.c engine_evp.c \
+LIBSRC= eng_err.c eng_lib.c eng_list.c eng_all.c eng_openssl.c \
+	eng_dyn.c eng_evp.c \
 	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c \
 	hw_openbsd_dev_crypto.c
-LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_all.o engine_openssl.o \
-	engine_dyn.o engine_evp.o \
+LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_all.o eng_openssl.o \
+	eng_dyn.o eng_evp.o \
 	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o \
 	hw_openbsd_dev_crypto.o
 
@@ -85,91 +85,86 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-engine_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-engine_all.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-engine_all.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_all.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_all.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-engine_all.o: ../../include/openssl/opensslconf.h
-engine_all.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_all.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_all.o: engine_all.c engine_int.h
-engine_dyn.o: ../../e_os.h ../../include/openssl/asn1.h
-engine_dyn.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-engine_dyn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-engine_dyn.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_dyn.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-engine_dyn.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-engine_dyn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-engine_dyn.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_dyn.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_dyn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_dyn.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_dyn.o: ../cryptlib.h engine_dyn.c engine_int.h
-engine_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-engine_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-engine_err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_err.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-engine_err.o: ../../include/openssl/opensslconf.h
-engine_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_err.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_err.o: engine_err.c
-engine_evp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-engine_evp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-engine_evp.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_evp.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_evp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-engine_evp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-engine_evp.o: ../../include/openssl/objects.h
-engine_evp.o: ../../include/openssl/opensslconf.h
-engine_evp.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_evp.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_evp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_evp.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_evp.o: engine_evp.c engine_int.h
-engine_lib.o: ../../e_os.h ../../include/openssl/asn1.h
-engine_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-engine_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-engine_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-engine_lib.o: ../../include/openssl/opensslconf.h
-engine_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_lib.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_lib.o: ../cryptlib.h engine_int.h engine_lib.c
-engine_list.o: ../../e_os.h ../../include/openssl/asn1.h
-engine_list.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-engine_list.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-engine_list.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_list.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_list.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-engine_list.o: ../../include/openssl/opensslconf.h
-engine_list.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_list.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_list.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-engine_list.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_list.o: ../cryptlib.h engine_int.h engine_list.c
-engine_openssl.o: ../../e_os.h ../../include/openssl/asn1.h
-engine_openssl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-engine_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-engine_openssl.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_openssl.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-engine_openssl.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-engine_openssl.o: ../../include/openssl/lhash.h
-engine_openssl.o: ../../include/openssl/opensslconf.h
-engine_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-engine_openssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-engine_openssl.o: ../../include/openssl/stack.h
-engine_openssl.o: ../../include/openssl/symhacks.h
-engine_openssl.o: ../../include/openssl/types.h ../../include/openssl/ui.h
-engine_openssl.o: ../cryptlib.h engine_openssl.c
+eng_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+eng_all.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+eng_all.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_all.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+eng_all.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+eng_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+eng_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+eng_all.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+eng_all.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+eng_all.o: ../../include/openssl/ui.h eng_all.c eng_int.h
+eng_dyn.o: ../../e_os.h ../../include/openssl/asn1.h
+eng_dyn.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+eng_dyn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eng_dyn.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_dyn.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+eng_dyn.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+eng_dyn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+eng_dyn.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+eng_dyn.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_dyn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+eng_dyn.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+eng_dyn.o: ../cryptlib.h eng_dyn.c eng_int.h
+eng_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+eng_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+eng_err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_err.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+eng_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+eng_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+eng_err.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+eng_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+eng_err.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+eng_err.o: ../../include/openssl/ui.h eng_err.c
+eng_evp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+eng_evp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+eng_evp.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_evp.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+eng_evp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+eng_evp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+eng_evp.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+eng_evp.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+eng_evp.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_evp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+eng_evp.o: ../../include/openssl/types.h ../../include/openssl/ui.h eng_evp.c
+eng_evp.o: eng_int.h
+eng_lib.o: ../../e_os.h ../../include/openssl/asn1.h
+eng_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+eng_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eng_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+eng_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+eng_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+eng_lib.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+eng_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+eng_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+eng_lib.o: ../../include/openssl/ui.h ../cryptlib.h eng_int.h eng_lib.c
+eng_list.o: ../../e_os.h ../../include/openssl/asn1.h
+eng_list.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+eng_list.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eng_list.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_list.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+eng_list.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+eng_list.o: ../../include/openssl/opensslconf.h
+eng_list.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+eng_list.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_list.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+eng_list.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+eng_list.o: ../cryptlib.h eng_int.h eng_list.c
+eng_openssl.o: ../../e_os.h ../../include/openssl/asn1.h
+eng_openssl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+eng_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eng_openssl.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+eng_openssl.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+eng_openssl.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+eng_openssl.o: ../../include/openssl/lhash.h
+eng_openssl.o: ../../include/openssl/opensslconf.h
+eng_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+eng_openssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_openssl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+eng_openssl.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+eng_openssl.o: ../cryptlib.h eng_openssl.c
 hw_atalla.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_atalla.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_atalla.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

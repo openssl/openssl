@@ -58,7 +58,7 @@
 
 #include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "engine_int.h"
+#include "eng_int.h"
 #include <openssl/engine.h>
 
 /* The linked-list of pointers to engine types. engine_list_head

@@ -58,7 +58,7 @@
 
 #include <openssl/err.h>
 #include <openssl/engine.h>
-#include "engine_int.h"
+#include "eng_int.h"
 
 static int engine_add(ENGINE *e)
 	{

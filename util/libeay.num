@@ -2627,7 +2627,7 @@ HMAC_CTX_init                           3075	EXIST::FUNCTION:HMAC
 HMAC_CTX_cleanup                        3076	EXIST::FUNCTION:HMAC
 EVP_MD_CTX_cleanup                      3077	EXIST::FUNCTION:
 EVP_MD_CTX_destroy                      3078	EXIST::FUNCTION:
-des_release_key                         3079	EXIST::FUNCTION:DES
+des_release_key                         3079	NOEXIST::FUNCTION:
 ENGINE_load_openbsd_dev_crypto          3080	EXIST::FUNCTION:
 ENGINE_add_all_evp                      3081	NOEXIST::FUNCTION:
 ENGINE_add_evp_cipher                   3082	NOEXIST::FUNCTION:
@@ -2659,3 +2659,5 @@ CRYPTO_ex_data_new_class                3107	EXIST::FUNCTION:
 CRYPTO_get_ex_data_implementation       3108	EXIST::FUNCTION:
 BN_pseudo_rand_range                    3109	EXIST::FUNCTION:
 ERR_unload_strings                      3110	EXIST::FUNCTION:
+ENGINE_set_destroy_function             3111	EXIST::FUNCTION:
+ENGINE_get_destroy_function             3112	EXIST::FUNCTION:
