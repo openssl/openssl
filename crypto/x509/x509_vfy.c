@@ -607,12 +607,12 @@ void (*free_func)();
 int X509_STORE_CTX_set_ex_data(ctx,idx,data)
 X509_STORE_CTX *ctx;
 int idx;
-char *data;
+void *data;
 	{
 	return(CRYPTO_set_ex_data(&ctx->ex_data,idx,data));
 	}
 
-char *X509_STORE_CTX_get_ex_data(ctx,idx)
+void *X509_STORE_CTX_get_ex_data(ctx,idx)
 X509_STORE_CTX *ctx;
 int idx;
 	{

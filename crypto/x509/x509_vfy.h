@@ -309,8 +309,8 @@ int	X509_STORE_set_default_paths(X509_STORE *ctx);
 
 int X509_STORE_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
-int	X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx,int idx,char *data);
-char *	X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx,int idx);
+int	X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx,int idx,void *data);
+void *	X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx,int idx);
 int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
 int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
@@ -370,7 +370,7 @@ int	X509_STORE_set_default_paths();
 
 int X509_STORE_CTX_get_ex_new_index();
 int	X509_STORE_CTX_set_ex_data();
-char *	X509_STORE_CTX_get_ex_data();
+void *	X509_STORE_CTX_get_ex_data();
 int	X509_STORE_CTX_get_error();
 void	X509_STORE_CTX_set_error();
 int	X509_STORE_CTX_get_error_depth();
