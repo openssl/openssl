@@ -112,6 +112,14 @@
 #include <sys/types.h>
 #include <openssl/opensslconf.h>
 
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#include <conio.h>
+#endif
+
+#ifdef OPENSSL_SYS_MSDOS
+#define _kbhit kbhit
+#endif
+
 #if defined(OPENSSL_SYS_VMS) && !defined(FD_SET)
 /* VAX C does not defined fd_set and friends, but it's actually quite simple */
 /* These definitions are borrowed from SOCKETSHR.	/Richard Levitte */

@@ -136,10 +136,6 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include "s_apps.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
-#include <conio.h>
-#endif
-
 #ifdef OPENSSL_SYS_WINCE
 /* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
 #ifdef fileno
@@ -260,7 +256,7 @@ int MAIN(int argc, char **argv)
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
 #endif
-#ifdef OPENSSL_SYS_WINDOWS
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 	struct timeval tv;
 #endif
 
@@ -644,7 +640,7 @@ re_start:
 
 		if (!ssl_pending)
 			{
-#ifndef OPENSSL_SYS_WINDOWS
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
@@ -671,8 +667,8 @@ re_start:
 			 * will choke the compiler: if you do have a cast then
 			 * you can either go for (int *) or (void *).
 			 */
-#ifdef OPENSSL_SYS_WINDOWS
-			/* Under Windows we make the assumption that we can
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+                        /* Under Windows/DOS we make the assumption that we can
 			 * always write to the tty: therefore if we need to
 			 * write to the tty we just fall through. Otherwise
 			 * we timeout the select every second and see if there
@@ -686,7 +682,7 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
-#ifdef OPENSSL_SYS_WINCE
+#if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
 					if(!i && (!_kbhit() || !read_tty) ) continue;
 #else
 					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
@@ -855,8 +851,8 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				}
 			}
 
-#ifdef OPENSSL_SYS_WINDOWS
-#ifdef OPENSSL_SYS_WINCE
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
 		else if (_kbhit())
 #else
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
