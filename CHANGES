@@ -4,9 +4,8 @@
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
   *) Make BN_mod_inverse faster by explicitly handling small quotients
-     in the Euclid loop instead of always using BN_div.
-     (Speed gain about 20% for small moduli [256 or 512 bits], about
-     30% for larger ones [1024 or 2048 bits].)
+     in the Euclid loop. (Speed gain about 20% for small moduli [256 or
+     512 bits], about 30% for larger ones [1024 or 2048 bits].)
      [Bodo Moeller]
 
   *) Disable ssl2_peek and ssl3_peek (i.e., both implementations

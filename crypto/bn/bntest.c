@@ -900,8 +900,32 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 	return(1);
 	}
 
+static void genprime_cb(int p, int n, void *arg)
+	{
+	char c='*';
+
+	if (p == 0) c='.';
+	if (p == 1) c='+';
+	if (p == 2) c='*';
+	if (p == 3) c='\n';
+	putc(c, stderr);
+	fflush(stderr);
+	(void)n;
+	(void)arg;
+	}
+
 int test_kron(BIO *bp, BN_CTX *ctx)
 	{
+	BIGNUM *a,*b,*r;
+	int i;
+	int legendre, kronecker;
+	int ret = 0;
+
+	a = BN_new();
+	b = BN_new();
+	r = BN_new();
+	if (a == NULL || b == NULL || r == NULL) goto err;
+	
 	/* We test BN_kronecker(a, b, ctx) just for  b  odd (Jacobi symbol).
 	 * In this case we know that if  b  is prime, then BN_kronecker(a, b, ctx)
 	 * is congruent to $a^{(b-1)/2}$, modulo $b$ (Legendre symbol).
@@ -911,9 +935,61 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	 * don't want to test whether  b  is prime but whether BN_kronecker
 	 * works.) */
 
-	/* XXX */
+	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
+	putc('\n', stderr);
+	if (1 != BN_is_prime(b, 10, NULL, ctx, NULL))
+		{
+		fprintf(stderr, "BN_is_prime failed\n");
+		goto err;
+		}
 
-	return(1);
+	for (i = 0; i < num0; i++)
+		{
+		if (!BN_rand(a, 512, 0, 0)) goto err;
+		if (!BN_nnmod(a, a, b, ctx)) goto err;
+		
+		/* r := (b-1)/2  (note that b is odd) */
+		if (!BN_copy(r, b)) goto err;
+		if (!BN_sub_word(r, 1)) goto err;
+		if (!BN_rshift1(r, r)) goto err;
+		/* r := a^r mod b */
+		if (!BN_mod_exp(r, a, r, b, ctx)) goto err;
+
+		if (BN_is_word(r, 1))
+			legendre = 1;
+		else
+			{
+			if (!BN_add_word(r, 1)) goto err;
+			if (0 != BN_cmp(r, b))
+				{
+				fprintf(stderr, "Legendre symbol computation failed\n");
+				goto err;
+				}
+			legendre = -1;
+			}
+
+		kronecker = BN_kronecker(a, b, ctx);
+		if (kronecker < -1) goto err;
+		
+		if (legendre != kronecker)
+			{
+			fprintf(stderr, "legendre != kronecker; a = ");
+			BN_print_fp(stderr, a);
+			fprintf(stderr, ", a = ");
+			BN_print_fp(stderr, b);
+			fprintf(stderr, "\n");
+			goto err;
+			}
+
+		fprintf(stderr, "ok\n");
+		}
+
+	ret = 1;
+ err:
+	if (a != NULL) BN_free(a);
+	if (b != NULL) BN_free(b);
+	if (r != NULL) BN_free(r);
+	return ret;
 	}
 
 int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
