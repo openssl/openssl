@@ -136,13 +136,8 @@ static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest,
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
 			 int create,int days, LHASH *conf, char *section);
-static int efunc(X509_PURPOSE *pt, void *arg);
+static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
-
-typedef struct {
-BIO *bio;
-X509 *cert;
-} X509_PPRINT;
 
 int MAIN(int argc, char **argv)
 	{
@@ -609,11 +604,14 @@ bad:
 				}
 			else if (pprint == i)
 				{
-				X509_PPRINT ptmp;
-				ptmp.bio = STDout;
-				ptmp.cert = x;
+				X509_PURPOSE *ptmp;
+				int j;
 				BIO_printf(STDout, "Certificate purposes:\n");
-				X509_PURPOSE_enum(efunc, &ptmp);
+				for(j = 0; j < X509_PURPOSE_get_count(); j++)
+					{
+					ptmp = X509_PURPOSE_iget(j);
+					purpose_print(STDout, x, ptmp);
+					}
 				}
 			else
 				if (modulus == i)
@@ -1227,20 +1225,18 @@ err:
 	return(0);
 	}
 
-static int efunc(X509_PURPOSE *pt, void *arg)
+static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 {
-	X509_PPRINT *ptmp;
 	int id, i, idret;
 	char *pname;
-	ptmp = arg;
 	id = X509_PURPOSE_get_id(pt);
-	pname = X509_PURPOSE_get_name(pt);
+	pname = X509_PURPOSE_iget_name(pt);
 	for(i = 0; i < 2; i++) {
-		idret = X509_check_purpose(ptmp->cert, id, i);
-		BIO_printf(ptmp->bio, "%s%s : ", pname, i ? " CA" : ""); 
-		if(idret == 1) BIO_printf(ptmp->bio, "Yes\n");
-		else if (idret == 0) BIO_printf(ptmp->bio, "No\n");
-		else BIO_printf(ptmp->bio, "Yes (WARNING code=%d)\n", idret);
+		idret = X509_check_purpose(cert, id, i);
+		BIO_printf(bio, "%s%s : ", pname, i ? " CA" : ""); 
+		if(idret == 1) BIO_printf(bio, "Yes\n");
+		else if (idret == 0) BIO_printf(bio, "No\n");
+		else BIO_printf(bio, "Yes (WARNING code=%d)\n", idret);
 	}
 	return 1;
 }

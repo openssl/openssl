@@ -66,11 +66,11 @@
  */
 
 static BIT_STRING_BITNAME tbits[] = {
-{X509_TRUST_ALL, "All Purposes", "all"},
-{X509_TRUST_SSL_CLIENT, "SSL client", "sslclient"},
-{X509_TRUST_SSL_SERVER, "SSL server", "sslserver"},
-{X509_TRUST_EMAIL, "S/MIME email", "email"},
-{X509_TRUST_OBJECT_SIGN, "Object Signing", "objsign"},
+{X509_TRUST_BIT_ALL, "All Purposes", "all"},
+{X509_TRUST_BIT_SSL_CLIENT, "SSL client", "sslclient"},
+{X509_TRUST_BIT_SSL_SERVER, "SSL server", "sslserver"},
+{X509_TRUST_BIT_EMAIL, "S/MIME email", "email"},
+{X509_TRUST_BIT_OBJECT_SIGN, "Object Signing", "objsign"},
 {-1, NULL, NULL}
 };
 

@@ -76,8 +76,8 @@ typedef struct stack_st
 
 #define sk_new_null()	sk_new(NULL)
 
-#define M_sk_num(sk)		((sk)->num)
-#define M_sk_value(sk,n)	((sk)->data[n])
+#define M_sk_num(sk)		((sk) ? (sk)->num:-1)
+#define M_sk_value(sk,n)	((sk) ? (sk)->data[n] : NULL)
 
 int sk_num(STACK *);
 char *sk_value(STACK *, int);

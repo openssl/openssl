@@ -383,7 +383,10 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
 
 X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
-	return (X509_STORE_CTX *)Malloc(sizeof(X509_STORE_CTX));
+	X509_STORE_CTX *ctx;
+	ctx = (X509_STORE_CTX *)Malloc(sizeof(X509_STORE_CTX));
+	if(ctx) memset(ctx, 0, sizeof(X509_STORE_CTX));
+	return ctx;
 }
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)

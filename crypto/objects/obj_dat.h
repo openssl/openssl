@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 180
+#define NUM_NID 181
 #define NUM_SN 128
-#define NUM_LN 174
-#define NUM_OBJ 151
+#define NUM_LN 175
+#define NUM_OBJ 152
 
-static unsigned char lvalues[1049]={
+static unsigned char lvalues[1057]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -218,6 +218,7 @@ static unsigned char lvalues[1049]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1024] OBJ_info_access */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1032] OBJ_ad_OCSP */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1040] OBJ_ad_ca_issuers */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x09,     /* [1048] OBJ_OCSP_sign */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -471,6 +472,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	8,&(lvalues[1024]),0},
 {"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1032]),0},
 {"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1040]),0},
+{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1048]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -631,6 +633,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[73]),/* "Netscape Revocation Url" */
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
+&(nid_objs[180]),/* "OCSP Signing" */
 &(nid_objs[178]),/* "OCSP" */
 &(nid_objs[161]),/* "PBES2" */
 &(nid_objs[69]),/* "PBKDF2" */
@@ -864,6 +867,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[131]),/* OBJ_code_sign                    1 3 6 1 5 5 7 3 3 */
 &(nid_objs[132]),/* OBJ_email_protect                1 3 6 1 5 5 7 3 4 */
 &(nid_objs[133]),/* OBJ_time_stamp                   1 3 6 1 5 5 7 3 8 */
+&(nid_objs[180]),/* OBJ_OCSP_sign                    1 3 6 1 5 5 7 3 9 */
 &(nid_objs[178]),/* OBJ_ad_OCSP                      1 3 6 1 5 5 7 48 1 */
 &(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */

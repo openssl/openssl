@@ -287,13 +287,14 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
 	X509 *ucert = NULL;
-	STACK_OF(X509) *certs;
+	STACK_OF(X509) *certs=NULL;
 	char *catmp;
 	int i;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
 	unsigned int keyidlen = 0;
 	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, NULL);
 	if (!inkey) (void) BIO_reset(in);
+	else BIO_free(inkey);
 	if (!key) {
 		BIO_printf (bio_err, "Error loading private key\n");
 		ERR_print_errors(bio_err);
@@ -364,7 +365,7 @@ int MAIN(int argc, char **argv)
 				PKCS12_add_friendlyname(bag, catmp, -1);
 		sk_push(bags, (char *)bag);
 	}
-
+	sk_X509_pop_free(certs, X509_free);
 	if (canames) sk_free(canames);
 
 	if(!noprompt &&

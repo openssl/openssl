@@ -63,22 +63,29 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
 #undef PROG
 #define PROG	verify_main
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx,char *file);
+static int check(X509_STORE *ctx,char *file, STACK_OF(X509)*other, int purpose);
+static STACK_OF(X509) *load_untrusted(char *file);
 static int v_verbose=0;
 
 int MAIN(int argc, char **argv)
 	{
 	int i,ret=1;
+	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
+	char *untfile = NULL;
+	STACK_OF(X509) *untrusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 
+	X509_PURPOSE_add_standard();
+	X509V3_add_standard_extensions();
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
 	X509_STORE_set_verify_cb_func(cert_ctx,cb);
@@ -106,6 +113,24 @@ int MAIN(int argc, char **argv)
 				{
 				if (argc-- < 1) goto end;
 				CAfile= *(++argv);
+				}
+			else if (strcmp(*argv,"-purpose") == 0)
+				{
+				X509_PURPOSE *xptmp;
+				if (argc-- < 1) goto end;
+				i = X509_PURPOSE_get_by_sname(*(++argv));
+				if(i < 0)
+					{
+					BIO_printf(bio_err, "unrecognised purpose\n");
+					goto end;
+					}
+				xptmp = X509_PURPOSE_iget(i);
+				purpose = X509_PURPOSE_get_id(xptmp);
+				}
+			else if (strcmp(*argv,"-untrusted") == 0)
+				{
+				if (argc-- < 1) goto end;
+				untfile= *(++argv);
 				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
@@ -144,26 +169,45 @@ int MAIN(int argc, char **argv)
 		}
 	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 
-
 	ERR_clear_error();
-	if (argc < 1) check(cert_ctx,NULL);
+
+	if(untfile) {
+		if(!(untrusted = load_untrusted(untfile))) {
+			BIO_printf(bio_err, "Error loading untrusted file %s\n", untfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if (argc < 1) check(cert_ctx, NULL, untrusted, purpose);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i]);
+			check(cert_ctx,argv[i], untrusted, purpose);
 	ret=0;
 end:
-	if (ret == 1)
+	if (ret == 1) {
 		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] cert1 cert2 ...\n");
+		BIO_printf(bio_err,"recognised usages:\n");
+		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
+			X509_PURPOSE *ptmp;
+			ptmp = X509_PURPOSE_iget(i);
+			BIO_printf(bio_err, "\t%-10s\t%s\n", X509_PURPOSE_iget_sname(ptmp),
+								X509_PURPOSE_iget_name(ptmp));
+		}
+	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
+	sk_X509_pop_free(untrusted, X509_free);
+	X509V3_EXT_cleanup();
+	X509_PURPOSE_cleanup();
 	EXIT(ret);
 	}
 
-static int check(X509_STORE *ctx, char *file)
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpose)
 	{
 	X509 *x=NULL;
 	BIO *in=NULL;
 	int i=0,ret=0;
-	X509_STORE_CTX csc;
+	X509_STORE_CTX *csc;
 
 	in=BIO_new(BIO_s_file());
 	if (in == NULL)
@@ -193,9 +237,16 @@ static int check(X509_STORE *ctx, char *file)
 		}
 	fprintf(stdout,"%s: ",(file == NULL)?"stdin":file);
 
-	X509_STORE_CTX_init(&csc,ctx,x,NULL);
-	i=X509_verify_cert(&csc);
-	X509_STORE_CTX_cleanup(&csc);
+	csc = X509_STORE_CTX_new();
+	if (csc == NULL)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+	X509_STORE_CTX_init(csc,ctx,x,uchain);
+	if(purpose >= 0) X509_STORE_CTX_chain_purpose(csc, purpose);
+	i=X509_verify_cert(csc);
+	X509_STORE_CTX_free(csc);
 
 	ret=0;
 end:
@@ -209,6 +260,52 @@ end:
 	if (x != NULL) X509_free(x);
 	if (in != NULL) BIO_free(in);
 
+	return(ret);
+	}
+
+static STACK_OF(X509) *load_untrusted(char *certfile)
+{
+	STACK_OF(X509_INFO) *sk=NULL;
+	STACK_OF(X509) *stack=NULL, *ret=NULL;
+	BIO *in=NULL;
+	X509_INFO *xi;
+
+	if(!(stack = sk_X509_new_null())) {
+		BIO_printf(bio_err,"memory allocation failure\n");
+		goto end;
+	}
+
+	if(!(in=BIO_new_file(certfile, "r"))) {
+		BIO_printf(bio_err,"error opening the file, %s\n",certfile);
+		goto end;
+	}
+
+	/* This loads from a file, a stack of x509/crl/pkey sets */
+	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+		BIO_printf(bio_err,"error reading the file, %s\n",certfile);
+		goto end;
+	}
+
+	/* scan over it and pull out the certs */
+	while (sk_X509_INFO_num(sk))
+		{
+		xi=sk_X509_INFO_shift(sk);
+		if (xi->x509 != NULL)
+			{
+			sk_X509_push(stack,xi->x509);
+			xi->x509=NULL;
+			}
+		X509_INFO_free(xi);
+		}
+	if(!sk_X509_num(stack)) {
+		BIO_printf(bio_err,"no certificates in file, %s\n",certfile);
+		sk_X509_free(stack);
+		goto end;
+	}
+	ret=stack;
+end:
+	BIO_free(in);
+	sk_X509_INFO_free(sk);
 	return(ret);
 	}
 
@@ -229,6 +326,11 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		 * ok if they are self signed. But we should still warn
 		 * the user.
  		 */
+		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
+		/* Continue after extension errors too */
+		if (ctx->error == X509_V_ERR_INVALID_CA) ok=1;
+		if (ctx->error == X509_V_ERR_PATH_LENGTH_EXCEEDED) ok=1;
+		if (ctx->error == X509_V_ERR_INVALID_PURPOSE) ok=1;
 		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
 		}
 	if (!v_verbose)

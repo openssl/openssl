@@ -238,11 +238,12 @@ typedef struct x509_cinf_st
 
 /* Bit values for trust/notrust */
 
-#define X509_TRUST_ALL			0
-#define X509_TRUST_SSL_CLIENT		1
-#define X509_TRUST_SSL_SERVER		2
-#define X509_TRUST_EMAIL		3
-#define X509_TRUST_OBJECT_SIGN		4
+#define X509_TRUST_BIT_ALL			0
+#define X509_TRUST_BIT_SSL_CLIENT		1
+#define X509_TRUST_BIT_SSL_SERVER		2
+#define X509_TRUST_BIT_EMAIL			3
+#define X509_TRUST_BIT_OBJECT_SIGN		4
+
 
 typedef struct x509_cert_aux_st
 	{
@@ -275,6 +276,24 @@ typedef struct x509_st
 
 DECLARE_STACK_OF(X509)
 DECLARE_ASN1_SET_OF(X509)
+
+/* This is used for a table of trust checking functions */
+
+typedef struct x509_trust_st {
+	int trust_id;
+	int trust_flags;
+	int (*check_trust)(struct x509_trust_st *, X509 *, int);
+	char *trust_name;
+	int trust_bit;
+	void *usr_data;
+} X509_TRUST;
+
+/* X509 trust ids */
+
+#define X509_TRUST_ANY		1
+#define X509_TRUST_SSL_CLIENT	2
+#define X509_TRUST_SSL_SERVER	3
+#define X509_TRUST_EMAIL	4
 
 typedef struct X509_revoked_st
 	{

@@ -727,11 +727,12 @@ spkac.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h progs.h
 verify.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 verify.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 verify.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-verify.o: ../include/openssl/crypto.h ../include/openssl/des.h
-verify.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-verify.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
-verify.o: ../include/openssl/err.h ../include/openssl/evp.h
-verify.o: ../include/openssl/idea.h ../include/openssl/md2.h
+verify.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+verify.o: ../include/openssl/des.h ../include/openssl/dh.h
+verify.o: ../include/openssl/dsa.h ../include/openssl/e_os.h
+verify.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+verify.o: ../include/openssl/evp.h ../include/openssl/idea.h
+verify.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 verify.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 verify.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 verify.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
@@ -740,8 +741,8 @@ verify.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 verify.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 verify.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 verify.o: ../include/openssl/sha.h ../include/openssl/stack.h
-verify.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
-verify.o: progs.h
+verify.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+verify.o: ../include/openssl/x509v3.h apps.h progs.h
 version.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 version.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 version.o: ../include/openssl/buffer.h ../include/openssl/cast.h

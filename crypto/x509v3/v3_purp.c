@@ -61,7 +61,6 @@
 #include <openssl/x509v3.h>
 
 
-static int x509_purpose_get_idx(int id);
 static void x509v3_cache_extensions(X509 *x);
 
 static int ca_check(X509 *x);
@@ -74,15 +73,16 @@ static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca);
 
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b);
+static void xptable_free(X509_PURPOSE *p);
 
 static X509_PURPOSE xstandard[] = {
-	{1, 0, check_purpose_ssl_client, "SSL client", /* NULL */},
-	{2, 0, check_purpose_ssl_server, "SSL server", /* NULL */},
-	{3, 0, check_purpose_ns_ssl_server, "Netscape SSL server", /* NULL */},
-	{4, 0, check_purpose_smime_sign, "S/MIME signing", /* NULL */},
-	{5, 0, check_purpose_smime_encrypt, "S/MIME encryption", /* NULL */},
-	{6, 0, check_purpose_crl_sign, "CRL signing", /* NULL */},
-	{-1, 0, NULL, NULL, /* NULL */}
+	{X509_PURPOSE_SSL_CLIENT, X509_TRUST_SSL_CLIENT, 0, check_purpose_ssl_client, "SSL client", "sslclient", NULL},
+	{X509_PURPOSE_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ssl_server, "SSL server", "sslserver", NULL},
+	{X509_PURPOSE_NS_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ns_ssl_server, "Netscape SSL server", "nssslserver", NULL},
+	{X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign, "S/MIME signing", "smimesign", NULL},
+	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
+	{X509_PURPOSE_CRL_SIGN, X509_TRUST_ANY, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
+	{-1, 0, 0, NULL, NULL, NULL, NULL}
 };
 
 IMPLEMENT_STACK_OF(X509_PURPOSE)
@@ -104,16 +104,35 @@ int X509_check_purpose(X509 *x, int id, int ca)
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 	}
 	if(id == -1) return 1;
-	idx = x509_purpose_get_idx(id);
+	idx = X509_PURPOSE_get_by_id(id);
 	if(idx == -1) return -1;
 	pt = sk_X509_PURPOSE_value(xptable, idx);
 	return pt->check_purpose(pt, x,ca);
 }
 
+int X509_PURPOSE_get_count(void)
+{
+	return sk_X509_PURPOSE_num(xptable);
+}
+
+X509_PURPOSE * X509_PURPOSE_iget(int idx)
+{
+	return sk_X509_PURPOSE_value(xptable, idx);
+}
+
+int X509_PURPOSE_get_by_sname(char *sname)
+{
+	int i;
+	X509_PURPOSE *xptmp;
+	for(i = 0; i < sk_X509_PURPOSE_num(xptable); i++) {
+		xptmp = sk_X509_PURPOSE_value(xptable, i);
+		if(!strcmp(xptmp->purpose_sname, sname)) return i;
+	}
+	return -1;
+}
 
 
-
-static int x509_purpose_get_idx(int id)
+int X509_PURPOSE_get_by_id(int id)
 {
 	X509_PURPOSE tmp;
 	tmp.purpose_id = id;
@@ -134,24 +153,28 @@ int X509_PURPOSE_add(X509_PURPOSE *xp)
 			}
 		}
 			
-	idx = x509_purpose_get_idx(xp->purpose_id);
-	if(idx != -1)
+	idx = X509_PURPOSE_get_by_id(xp->purpose_id);
+	if(idx != -1) {
+		xptable_free(sk_X509_PURPOSE_value(xptable, idx));
 		sk_X509_PURPOSE_set(xptable, idx, xp);
-	else
-		if (!sk_X509_PURPOSE_push(xptable, xp))
-			{
+	} else {
+		if (!sk_X509_PURPOSE_push(xptable, xp)) {
 			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
-			}
+		}
+	}
 	return 1;
 }
 
 static void xptable_free(X509_PURPOSE *p)
 	{
+	if(!p) return;
 	if (p->purpose_flags & X509_PURPOSE_DYNAMIC) 
 		{
-		if (p->purpose_flags & X509_PURPOSE_DYNAMIC_NAME)
+		if (p->purpose_flags & X509_PURPOSE_DYNAMIC_NAME) {
 			Free(p->purpose_name);
+			Free(p->purpose_sname);
+		}
 		Free(p);
 		}
 	}
@@ -169,27 +192,24 @@ void X509_PURPOSE_add_standard(void)
 		X509_PURPOSE_add(xp);
 }
 
-int X509_PURPOSE_enum(int (*efunc)(X509_PURPOSE *, void *), void *usr)
-{
-	int i;
-	X509_PURPOSE *xp;
-	if(!xptable) return 0;
-	for(i = 0; i < sk_X509_PURPOSE_num(xptable); i++) {
-		xp = sk_X509_PURPOSE_value(xptable, i);
-		if(!efunc(xp, usr)) return i;
-	}
-	return i;
-}
-
-
 int X509_PURPOSE_get_id(X509_PURPOSE *xp)
 {
 	return xp->purpose_id;
 }
 
-char *X509_PURPOSE_get_name(X509_PURPOSE *xp)
+char *X509_PURPOSE_iget_name(X509_PURPOSE *xp)
 {
 	return xp->purpose_name;
+}
+
+char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp)
+{
+	return xp->purpose_sname;
+}
+
+int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
+{
+	return xp->trust_id;
 }
 
 static void x509v3_cache_extensions(X509 *x)
