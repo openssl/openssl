@@ -128,6 +128,14 @@ Always create a new key when using temporary DH parameters.
 
 Also use the temporary RSA key when doing RSA operations.
 
+=item SSL_OP_CIPHER_SERVER_PREFERENCE
+
+When choosing a cipher, use the server's preferences instead of the client
+preferences. When not set, the SSL server will always follow the clients
+preferences. When set, the SSLv3/TLSv1 server will choose following its
+own preferences. Because of the different procotol, for SSLv2 the server
+will send his list of preferences to the client and the client chooses.
+
 =item SSL_OP_PKCS1_CHECK_1
 
 ...
@@ -177,6 +185,8 @@ SSL_CTX_get_options() and SSL_get_options() return the current bitmask.
 L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>
 
 =head1 HISTORY
+
+SSL_OP_CIPHER_SERVER_PREFERENCE has been added in OpenSSL 0.9.7.
 
 SSL_OP_TLS_ROLLBACK_BUG has been added in OpenSSL 0.9.6.
 
