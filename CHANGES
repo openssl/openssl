@@ -4,6 +4,12 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Extend ASN1 oid configuration module. It now additionally accepts the
+     syntax:
+
+     shortName = some long name, 1.2.3.4
+     [Steve Henson]
+
   *) Reimplemented the BN_CTX implementation. There is now no more static
      limitation on the number of variables it can handle nor the depth of the
      "stack" handling for BN_CTX_start()/BN_CTX_end() pairs. The stack

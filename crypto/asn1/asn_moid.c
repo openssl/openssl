@@ -3,7 +3,7 @@
  * project 2001.
  */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2001-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
@@ -64,6 +65,8 @@
 #include <openssl/x509.h>
 
 /* Simple ASN1 OID module: add all objects in a given section */
+
+static int do_create(char *value, char *name);
 
 static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 	{
@@ -80,7 +83,7 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++)
 		{
 		oval = sk_CONF_VALUE_value(sktmp, i);
-		if(OBJ_create(oval->value, oval->name, oval->name) == NID_undef)
+		if(!do_create(oval->value, oval->name))
 			{
 			ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ADDING_OBJECT);
 			return 0;
@@ -98,3 +101,60 @@ void ASN1_add_oid_module(void)
 	{
 	CONF_module_add("oid_section", oid_module_init, oid_module_finish);
 	}
+
+/* Create an OID based on a name value pair. Accept two formats.
+ * shortname = 1.2.3.4
+ * shortname = some long name, 1.2.3.4
+ */
+
+
+static int do_create(char *value, char *name)
+	{
+	int nid;
+	ASN1_OBJECT *oid;
+	char *ln, *ostr, *p, *lntmp;
+	p = strrchr(value, ',');
+	if (!p)
+		{
+		ln = name;
+		ostr = value;
+		}
+	else
+		{
+		ln = NULL;
+		ostr = p + 1;
+		if (!*ostr)
+			return 0;
+		while(isspace((unsigned char)*ostr)) ostr++;
+		}
+
+	nid = OBJ_create(ostr, name, ln);
+
+	if (nid == NID_undef)
+		return 0;
+
+	if (p)
+		{
+		ln = value;
+		while(isspace((unsigned char)*ln)) ln++;
+		p--;
+		while(isspace((unsigned char)*p))
+			{
+			if (p == ln)
+				return 0;
+			p--;
+			}
+		p++;
+		lntmp = OPENSSL_malloc((p - ln) + 1);
+		if (lntmp == NULL)
+			return 0;
+		memcpy(lntmp, ln, p - ln);
+		lntmp[p - ln + 1] = 0;
+		oid = OBJ_nid2obj(nid);
+		oid->ln = lntmp;
+		}
+
+	return 1;
+	}
+		
+		
