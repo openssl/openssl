@@ -97,7 +97,7 @@
 
 static int stop_keygen_flag = 0;
 
-void timebomb_sigalarm(int foo)
+static void timebomb_sigalarm(int foo)
 	{
 	stop_keygen_flag = 1;
 	}
