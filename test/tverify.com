@@ -15,12 +15,15 @@ $	f = f$search("[-.certs]*.pem")
 $	if f .nes. "" .and. f .nes. old_f
 $	then
 $	    certs = certs + " [-.certs]" + f$parse(f,,,"NAME") + ".pem"
-$	    if f$length(certs) .lt. 180 then goto loop_certs2
 $	    c := YES
+$	    if f$length(certs) .lt. 180 then goto loop_certs2
 $	endif
 $	certs = certs - " "
 $
-$	mcr 'exe_dir'openssl verify "-CAfile" certs.tmp 'certs'
-$	if c then goto loop_certs
+$	if c
+$	then
+$	    mcr 'exe_dir'openssl verify "-CAfile" certs.tmp 'certs'
+$	    goto loop_certs
+$	endif
 $
 $	delete certs.tmp;*
