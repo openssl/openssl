@@ -115,6 +115,7 @@ static char *x509_usage[]={
 " -C              - print out C code forms\n",
 " -md2/-md5/-sha1/-mdc2 - digest to do an RSA sign with\n",
 " -extfile        - configuration file with X509V3 extensions to add\n",
+" -extensions     - section from config file with X509V3 extensions to add\n",
 NULL
 };
 
@@ -217,6 +218,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			extfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-extensions") == 0)
+			{
+			if (--argc < 1) goto bad;
+			extsect= *(++argv);
 			}
 		else if (strcmp(*argv,"-in") == 0)
 			{
@@ -335,7 +341,7 @@ bad:
 							,errorline,extfile);
 			goto end;
 		}
-		if(!(extsect = CONF_get_string(extconf, "default",
+		if(!extsect && !(extsect = CONF_get_string(extconf, "default",
 					 "extensions"))) extsect = "default";
 		X509V3_set_ctx_test(&ctx2);
 		X509V3_set_conf_lhash(&ctx2, extconf);

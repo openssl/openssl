@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Allow the config file extension section to be overwritten on the
+     command line. Based on an original idea from Massimiliano Pala
+     <madwolf@comune.modena.it>. The new option is called -extensions
+     and can be applied to ca, req and x509. Also -reqexts to override
+     the request extensions in req and -crlexts to override the crl extensions
+     in ca.
+     [Steve Henson]
+
   *) Add new feature to the SPKAC handling in ca.  Now you can include
      the same field multiple times by preceding it by "XXXX." for example:
      1.OU="Unit name 1"

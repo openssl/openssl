@@ -310,8 +310,17 @@ int MAIN(int argc, char **argv)
 			/* ok */
 			digest=md_alg;
 			}
+		else if (strcmp(*argv,"-extensions") == 0)
+			{
+			if (--argc < 1) goto bad;
+			extensions = *(++argv);
+			}
+		else if (strcmp(*argv,"-reqexts") == 0)
+			{
+			if (--argc < 1) goto bad;
+			req_exts = *(++argv);
+			}
 		else
-
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
 			badops=1;
@@ -349,6 +358,8 @@ bad:
 		BIO_printf(bio_err," -asn1-kludge   Output the 'request' in a format that is wrong but some CA's\n");
 		BIO_printf(bio_err,"                have been reported as requiring\n");
 		BIO_printf(bio_err,"                [ It is now always turned on but can be turned off with -no-asn1-kludge ]\n");
+		BIO_printf(bio_err," -extensions .. specify certificate extension section (override value in config file)\n");
+		BIO_printf(bio_err," -reqexts ..    specify request extension section (override value in config file)\n");
 		goto end;
 		}
 
@@ -427,7 +438,8 @@ bad:
 			digest=md_alg;
 		}
 
-	extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
+	if(!extensions)
+		extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
 	if(extensions) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;
@@ -440,7 +452,8 @@ bad:
 		}
 	}
 
-	req_exts = CONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+	if(!req_exts)
+		req_exts = CONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
 	if(req_exts) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;

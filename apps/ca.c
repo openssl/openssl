@@ -163,6 +163,8 @@ static char *ca_usage[]={
 " -batch          - Don't ask questions\n",
 " -msie_hack      - msie modifications to handle all those universal strings\n",
 " -revoke file    - Revoke a certificate (given in file)\n",
+" -extensions ..  - Extension section (override value in config file)\n",
+" -crlexts ..     - CRL extension section (override value in config file)\n",
 NULL
 };
 
@@ -392,6 +394,16 @@ EF_ALIGNMENT=0;
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
 			dorevoke=1;
+			}
+		else if (strcmp(*argv,"-extensions") == 0)
+			{
+			if (--argc < 1) goto bad;
+			extensions= *(++argv);
+			}
+		else if (strcmp(*argv,"-crlexts") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_ext= *(++argv);
 			}
 		else
 			{
@@ -720,8 +732,8 @@ bad:
 			lookup_fail(section,ENV_SERIAL);
 			goto err;
 			}
-
-		extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
+		if(!extensions)
+			extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
 		if(extensions) {
 			/* Check syntax of file */
 			X509V3_CTX ctx;
@@ -1031,7 +1043,7 @@ bad:
 	/*****************************************************************/
 	if (gencrl)
 		{
-		crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
+		if(!crl_ext) crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
 		if(crl_ext) {
 			/* Check syntax of file */
 			X509V3_CTX ctx;
