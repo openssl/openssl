@@ -64,7 +64,7 @@ static SSL_METHOD *ssl23_get_method(int ver);
 static SSL_METHOD *ssl23_get_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
-		return(SSLv23_method());
+		return(SSLv2_method());
 	else if (ver == SSL3_VERSION)
 		return(SSLv3_method());
 	else if (ver == TLS1_VERSION)
