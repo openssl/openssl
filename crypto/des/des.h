@@ -86,7 +86,7 @@ typedef /* const */ unsigned char const_des_cblock[8];
 typedef struct des_ks_struct
 	{
 	union	{
-		des_cblock _;
+		des_cblock cblock;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
 		DES_LONG deslong[2];
