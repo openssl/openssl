@@ -50,7 +50,7 @@ DHTEST=		dhtest
 DSATEST=	dsatest
 METHTEST=	methtest
 SSLTEST=	ssltest
-RSATEST=	rsa_oaep_test
+RSATEST=	rsa_test
 
 EXE=	$(BNTEST) $(IDEATEST) $(MD2TEST)  $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
@@ -364,11 +364,11 @@ rc2test.o: ../include/openssl/opensslconf.h ../include/openssl/rc2.h
 rc4test.o: ../include/openssl/opensslconf.h ../include/openssl/rc4.h
 rc5test.o: ../include/openssl/rc5.h
 rmdtest.o: ../include/openssl/ripemd.h
-rsa_oaep_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-rsa_oaep_test.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
-rsa_oaep_test.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
-rsa_oaep_test.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
-rsa_oaep_test.o: ../include/openssl/rsa.h ../include/openssl/stack.h
+rsa_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+rsa_test.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+rsa_test.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
+rsa_test.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
+rsa_test.o: ../include/openssl/rsa.h ../include/openssl/stack.h
 sha1test.o: ../include/openssl/sha.h
 shatest.o: ../include/openssl/sha.h
 ssltest.o: ../include/openssl/asn1.h ../include/openssl/bio.h

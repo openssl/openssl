@@ -48,7 +48,7 @@ $	DHTEST :=	dhtest
 $	DSATEST :=	dsatest
 $	METHTEST :=	methtest
 $	SSLTEST :=	ssltest
-$	RSATEST :=	rsa_oaep_test
+$	RSATEST :=	rsa_test
 $
 $	tests_i = 0
 $ loop_tests:

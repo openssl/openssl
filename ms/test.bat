@@ -7,8 +7,8 @@ set OPENSSL_CONF=..\apps\openssl.cnf
 
 rem run this from inside the bin directory
 
-echo rsa_oaep_test
-rsa_oaep_test
+echo rsa_test
+rsa_test
 if errorlevel 1 goto done
 
 echo destest
