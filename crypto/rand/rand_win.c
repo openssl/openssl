@@ -130,14 +130,27 @@
 static void readtimer(void);
 static void readscreen(void);
 
-/* It appears like PCURSORINFO is only defined when WINVER is 0x0500 and up,
-   which currently only happens on Win2000.  Unfortunately, that is a typedef,
-   so it's a little bit difficult to detect properly.  On the other hand, the
-   macro CURSOR_SHOWING is defined within the same conditional, so it can be
-   use to detect the absence of PCURSORINFO. */
+/* It appears like CURSORINFO, PCURSORINFO and LPCURSORINFO are only defined
+   when WINVER is 0x0500 and up, which currently only happens on Win2000.
+   Unfortunately, those are typedefs, so they're a little bit difficult to
+   detect properly.  On the other hand, the macro CURSOR_SHOWING is defined
+   within the same conditional, so it can be use to detect the absence of said
+   typedefs. */
+
 #ifndef CURSOR_SHOWING
-typedef void *PCURSORINFO;
-#endif
+/*
+ * Information about the global cursor.
+ */
+typedef struct tagCURSORINFO
+{
+    DWORD   cbSize;
+    DWORD   flags;
+    HCURSOR hCursor;
+    POINT   ptScreenPos;
+} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
+
+#define CURSOR_SHOWING     0x00000001
+#endif /* CURSOR_SHOWING */
 
 typedef BOOL (WINAPI *CRYPTACQUIRECONTEXT)(HCRYPTPROV *, LPCTSTR, LPCTSTR,
 				    DWORD, DWORD);
@@ -245,8 +258,10 @@ int RAND_poll(void)
 		if (cursor)
 			{
 			/* cursor position */
-			cursor((PCURSORINFO)buf);
-			RAND_add(buf, sizeof(buf), 0);
+                        PCURSORINFO p = (PCURSORINFO) buf;
+                        p->cbSize = sizeof(CURSORINFO);
+			if (cursor(p))
+			     RAND_add(p+sizeof(p->cbSize), p->cbSize-sizeof(p->cbSize), 0);
 			}
 
 		if (queue)
