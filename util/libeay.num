@@ -2840,3 +2840,4 @@ FIPS_rand_check                         3281	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_md5_allowed                        3282	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_mode                               3283	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_failed                    3284	EXIST:OPENSSL_FIPS:FUNCTION:
+sk_is_sorted                            3285	EXIST::FUNCTION:

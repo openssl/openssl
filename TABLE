@@ -2002,12 +2002,12 @@ $arflags      =
 
 *** debug-steve
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
-$lflags       = -rdynamic -ldl
-$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$lflags       = -ldl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = asm/bn86-elf.o asm/co86-elf.o
 $des_obj      = asm/dx86-elf.o asm/yx86-elf.o
 $bf_obj       = asm/bx86-elf.o
