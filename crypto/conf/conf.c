@@ -70,7 +70,7 @@
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
 static void value_free_stack(CONF_VALUE *a,LHASH *conf);
 static unsigned long hash(CONF_VALUE *v);
-static int cmp(CONF_VALUE *a,CONF_VALUE *b);
+static int cmp_conf(CONF_VALUE *a,CONF_VALUE *b);
 static char *eat_ws(char *p);
 static char *eat_alpha_numeric(char *p);
 static void clear_comments(char *p);
@@ -153,7 +153,7 @@ LHASH *CONF_load_bio(LHASH *h, BIO *in, long *line)
 
 	if (h == NULL)
 		{
-		if ((ret=lh_new(hash,cmp)) == NULL)
+		if ((ret=lh_new(hash,cmp_conf)) == NULL)
 			{
 			CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -653,7 +653,7 @@ static unsigned long hash(CONF_VALUE *v)
 	return((lh_strhash(v->section)<<2)^lh_strhash(v->name));
 	}
 
-static int cmp(CONF_VALUE *a, CONF_VALUE *b)
+static int cmp_conf(CONF_VALUE *a, CONF_VALUE *b)
 	{
 	int i;
 
