@@ -278,14 +278,10 @@ static int parse_verify_depth(const char *s, unsigned int *verify_depth)
 }
 
 /* Some fprintf format strings used when tunnels close */
-static const char *io_stats_client_dirty =
-"    SSL (network) traffic to/from server; %8lu bytes in, %8lu bytes out\n";
-static const char *io_stats_client_clean =
-"    tunnelled data to/from server;        %8lu bytes in, %8lu bytes out\n";
-static const char *io_stats_server_dirty =
-"    SSL (network) traffic to/from client; %8lu bytes in, %8lu bytes out\n";
-static const char *io_stats_server_clean =
-"    tunnelled data to/from client;        %8lu bytes in, %8lu bytes out\n";
+static const char *io_stats_dirty =
+"    SSL traffic;   %8lu bytes in, %8lu bytes out\n";
+static const char *io_stats_clean =
+"    clear traffic; %8lu bytes in, %8lu bytes out\n";
 
 int main(int argc, char *argv[])
 {
@@ -560,8 +556,7 @@ main_loop:
 				goto skip_totals;
 			fprintf(stderr, "Tunnel closing, traffic stats follow\n");
 			/* Display the encrypted (over the network) stats */
-			fprintf(stderr, (server_mode ? io_stats_server_dirty :
-						io_stats_client_dirty),
+			fprintf(stderr, io_stats_dirty,
 				buffer_total_in(state_machine_get_buffer(
 						&t_item->sm,SM_DIRTY_IN)),
 				buffer_total_out(state_machine_get_buffer(
@@ -570,8 +565,7 @@ main_loop:
 			 * *receive* is data sent *out* of the state_machine on
 			 * its 'clean' side. Hence the apparent back-to-front
 			 * OUT/IN mixup here :-) */
-			fprintf(stderr, (server_mode ? io_stats_server_clean :
-						io_stats_client_clean),
+			fprintf(stderr, io_stats_clean,
 				buffer_total_out(state_machine_get_buffer(
 						&t_item->sm,SM_CLEAN_OUT)),
 				buffer_total_in(state_machine_get_buffer(
