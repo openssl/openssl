@@ -795,8 +795,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		err=1;
 		}
 	printf("\n");
-	exit(err);
-	return(err); /* Never reached, but keeps compilers happy */
+	return(err);
 	}
 
 static char *pt(unsigned char *p)
