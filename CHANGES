@@ -3,6 +3,15 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make X509_time_adj() cope with the new behaviour of ASN1_TIME_new().
+     Previously it initialised the 'type' argument to V_ASN1_UTCTIME which
+     effectively meant GeneralizedTime would never be used. Now it
+     is initialised to -1 but X509_time_adj() now has to check the value
+     and use ASN1_TIME_set() if the value is not V_ASN1_UTCTIME or
+     V_ASN1_GENERALIZEDTIME, without this it always uses GeneralizedTime.
+     [Steve Henson, reported by Kenneth R. Robinette
+				<support@securenetterm.com>]
+
   *) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
      result in a zero length in the ASN1_INTEGER structure which was
      not consistent with the structure when d2i_ASN1_INTEGER() was used
