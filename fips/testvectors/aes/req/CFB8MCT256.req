@@ -1,0 +1,20 @@
+# CAVS 2.0
+# Config info for OpenSSL
+# AESVS MCT test data for CFB8
+# State : Encrypt and Decrypt
+# Key Length : 256
+# Tue Jun 24 02:40:51 PM
+
+[ENCRYPT]
+
+COUNT = 0
+KEY = e2cff9d5a4c1bff43872a984e49dd53958c702e6ec76f64e2a9e1e388c5c75c1
+IV = e6f6c3a2376502064a0ad5867b31dbbd
+PLAINTEXT = 86
+
+[DECRYPT]
+
+COUNT = 0
+KEY = d04ea36839196cce09e78f01da761fdbee900e93723d968f0437d879749ec495
+IV = ed522d1f687f616082a91612b8380bf1
+CIPHERTEXT = c7

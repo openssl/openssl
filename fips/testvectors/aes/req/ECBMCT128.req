@@ -1,0 +1,18 @@
+# CAVS 2.0
+# Config info for OpenSSL
+# AESVS MCT test data for ECB
+# State : Encrypt and Decrypt
+# Key Length : 128
+# Tue Jun 24 02:39:36 PM
+
+[ENCRYPT]
+
+COUNT = 0
+KEY = 4c353d8b61cd31b8f8ea707e689b9b80
+PLAINTEXT = 13c7d0fc8ec0e301031bebddd3c001d5
+
+[DECRYPT]
+
+COUNT = 0
+KEY = 7f3d441ac86021f81504d14f162b2247
+CIPHERTEXT = a74d7b40f7f01a08e979a151ba42d162
