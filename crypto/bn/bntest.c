@@ -234,7 +234,8 @@ int main(int argc, char *argv[])
 /**/
 	exit(0);
 err:
-	BIO_puts(out,"1\n"); /* make sure bc fails if we are piping to it */
+	BIO_puts(out,"1\n"); /* make sure the Perl script fed by bc notices
+	                      * the failure, see test_bn in test/Makefile.ssl*/
 	BIO_flush(out);
 	ERR_load_crypto_strings();
 	ERR_print_errors_fp(stderr);
