@@ -414,6 +414,7 @@ do_solaris-shared:
 		  set -x; ${CC} ${SHARED_LDFLAGS} -G -dy -z text \
 			-o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-Wl,-Bsymbolic \
 			$${MINUSZ}allextract lib$$i.a $${MINUSZ}defaultextract \
 			$$libs ${EX_LIBS} -lc ) || exit 1; \
 		libs="-l$$i $$libs"; \
