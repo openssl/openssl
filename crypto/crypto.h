@@ -59,8 +59,6 @@
 #ifndef HEADER_CRYPTO_H
 #define HEADER_CRYPTO_H
 
-#include <stdlib.h>
-
 #ifndef NO_FP_API
 #include <stdio.h>
 #endif
