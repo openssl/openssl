@@ -77,11 +77,11 @@ static unsigned long MS_CALLBACK hash(FUNCTION *a);
 static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-LHASH *config=NULL;
 char *default_config_file=NULL;
 
 /* Make sure there is only one when MONOLITH is defined */
 #ifdef MONOLITH
+LHASH *config=NULL;
 BIO *bio_err=NULL;
 #endif
 

@@ -92,8 +92,10 @@ int WIN32_rename(char *oldname,char *newname);
 #define MAIN(a,v)	main(a,v)
 
 #ifndef NON_MAIN
+LHASH *config=NULL;
 BIO *bio_err=NULL;
 #else
+extern LHASH *config;
 extern BIO *bio_err;
 #endif
 

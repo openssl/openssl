@@ -100,7 +100,8 @@ sub check_file {
 
 sub link_hash_cert {
 		my $fname = $_[0];
-		my ($hash, $fprint) = `$openssl x509 -hash -fingerprint -noout -in $fname`;
+		$fname =~ s/'/'\\''/g;
+		my ($hash, $fprint) = `$openssl x509 -hash -fingerprint -noout -in '$fname'`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;

@@ -82,7 +82,8 @@
  There are various changes you can make to the Win32 compile environment. By
  default the library is not compiled with debugging symbols. If you add 'debug'
  to the mk1mf.pl lines in the do_* batch file then debugging symbols will be
- compiled in.
+ compiled in. Note that mk1mf.pl expects the platform to be the last argument
+ on the command line, so 'debug' must appear before that, as all other options.
 
  The default Win32 environment is to leave out any Windows NT specific
  features.

@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 #ifndef NO_DH
 			dhe1024=1;
 #else
-			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n");
 #endif
 			}
 		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
 #ifndef NO_DH
 			dhe1024dsa=1;
 #else
-			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n");
 #endif
 			}
 		else if	(strcmp(*argv,"-no_dhe") == 0)
