@@ -1005,6 +1005,8 @@ print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
 
 print OUT "/* OpenSSL was configured with the following options: */\n";
+my $openssl_algorithm_defines_trans = $openssl_algorithm_defines;
+$openssl_algorithm_defines_trans =~ s/^\s*#\s*define\s+OPENSSL_(.*)/# if defined(OPENSSL_$1) \&\& !defined($1)\n#  define $1\n# endif/mg;
 $openssl_algorithm_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 $openssl_algorithm_defines = "   /* no ciphers excluded */\n" if $openssl_algorithm_defines eq "";
 $openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
@@ -1014,6 +1016,14 @@ print OUT $openssl_sys_defines;
 print OUT $openssl_algorithm_defines;
 print OUT $openssl_thread_defines;
 print OUT $openssl_other_defines,"\n";
+
+print OUT "/* The OPENSSL_NO_* macros are also defined as NO_* if the application\n";
+print OUT "   asks for it.  This is a transient feature that is provided for those\n";
+print OUT "   who haven't had the time to do the appropriate changes in their\n";
+print OUT "   applications.  */\n";
+print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n";
+print OUT $openssl_algorithm_defines_trans;
+print OUT "#endif\n\n";
 
 while (<IN>)
 	{
