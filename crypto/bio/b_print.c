@@ -569,7 +569,7 @@ pow10(int exp)
 }
 
 static long
-round(LDOUBLE value)
+roundv(LDOUBLE value)
 {
     long intpart;
     intpart = (long) value;
@@ -621,7 +621,7 @@ fmtfp(
 
     /* we "cheat" by converting the fractional part to integer by
        multiplying by a factor of 10 */
-    fracpart = round((pow10(max)) * (ufvalue - intpart));
+    fracpart = roundv((pow10(max)) * (ufvalue - intpart));
 
     if (fracpart >= pow10(max)) {
         intpart++;
