@@ -207,6 +207,11 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
 		err = deflate(&state->ostream, Z_SYNC_FLUSH);
 	if (err != Z_OK)
 		return -1;
+#ifdef DEBUG_ZLIB
+	fprintf(stderr,"compress(%4d)->%4d %s\n",
+		ilen,olen - state->ostream.avail_out,
+		(ilen != olen - state->ostream.avail_out)?"zlib":"clear");
+#endif
 	return olen - state->ostream.avail_out;
 	}
 
@@ -230,6 +235,11 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 		err = inflate(&state->istream, Z_SYNC_FLUSH);
 	if (err != Z_OK)
 		return -1;
+#ifdef DEBUG_ZLIB
+	fprintf(stderr,"expand(%4d)->%4d %s\n",
+		ilen,olen - state->istream.avail_out,
+		(ilen != olen - state->istream.avail_out)?"zlib":"clear");
+#endif
 	return olen - state->istream.avail_out;
 	}
 
