@@ -165,6 +165,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			OPENSSL_free (I);
 			BN_free (Ij);
 			BN_free (Bpl1);
+			EVP_MD_CTX_cleanup(&ctx);
 #ifdef DEBUG_KEYGEN
 			fprintf(stderr, "Output KEY (length %d)\n", tmpn);
 			h__dump(tmpout, tmpn);
@@ -195,7 +196,6 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			} else BN_bn2bin (Ij, I + j);
 		}
 	}
-	EVP_MD_CTX_cleanup(&ctx);
 }
 #ifdef DEBUG_KEYGEN
 void h__dump (unsigned char *p, int len)
