@@ -4,23 +4,23 @@
 # on the command line.
 #
 
-if [ "$SSLEAY"x = "x" -o ! -x "$SSLEAY" ]; then
-	SSLEAY='ssleay'
-	export SSLEAY
+if [ "$OPENSSL"x = "x" -o ! -x "$OPENSSL" ]; then
+	OPENSSL='openssl'
+	export OPENSSL
 fi
 DIR=/usr/local/ssl
 PATH=$DIR/bin:$PATH
 
-if [ ! -f "$SSLEAY" ]; then
+if [ ! -f "$OPENSSL" ]; then
     found=0
     for dir in . `echo $PATH | sed -e 's/:/ /g'`; do
-        if [ -f "$dir/$SSLEAY" ]; then
+        if [ -f "$dir/$OPENSSL" ]; then
             found=1
             break
         fi
     done
     if [ $found = 0 ]; then
-        echo "c_rehash: rehashing skipped ('ssleay' program still not available)" 1>&2
+        echo "c_rehash: rehashing skipped ('openssl' program still not available)" 1>&2
         exit 0
     fi
 fi
@@ -44,7 +44,7 @@ do
     for i in *.pem
     do
       if [ $i != '*.pem' ]; then
-        h=`$SSLEAY x509 -hash -noout -in $i`
+        h=`$OPENSSL x509 -hash -noout -in $i`
 	if [ "x$h" = "x" ]; then
 	  echo $i does not contain a certificate
 	else

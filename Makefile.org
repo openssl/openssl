@@ -237,7 +237,7 @@ links:
 	(cd $$i && echo "making links in $$i..." && \
 	$(MAKE) SDIRS='${SDIRS}' links ) || exit 1; \
 	done;
-	@(SSLEAY="`pwd`/apps/openssl"; export SSLEAY; sh tools/c_rehash certs)
+	@(OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
 
 dclean:
 	/bin/rm -f *.bak
