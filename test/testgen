@@ -17,7 +17,7 @@ echo "generating certificate request"
 
 echo "string to make the random number generator think it has entropy" >> ./.rnd
 
-if ../apps/openssl no-rsa; then
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
   req_new='-newkey dsa:../apps/dsa512.pem'
 else
   req_new='-new'
@@ -29,13 +29,13 @@ echo "This could take some time."
 
 rm -f testkey.pem testreq.pem
 
-../apps/openssl req -config test.cnf $req_new -out testreq.pem
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf $req_new -out testreq.pem
 if [ $? != 0 ]; then
 echo problems creating request
 exit 1
 fi
 
-../apps/openssl req -config test.cnf -verify -in testreq.pem -noout
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf -verify -in testreq.pem -noout
 if [ $? != 0 ]; then
 echo signature on req is wrong
 exit 1

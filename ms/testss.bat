@@ -4,7 +4,7 @@ rem set ssleay=..\out\ssleay
 set ssleay=%1
 
 set reqcmd=%ssleay% req
-set x509cmd=%ssleay% x509
+set x509cmd=%ssleay% x509 -sha1
 set verifycmd=%ssleay% verify
 
 set CAkey=keyCA.ss

@@ -1,13 +1,6 @@
 #!/bin/sh
 
-if test "$OSTYPE" = msdosdjgpp; then
-    PATH=../apps\;$PATH
-else
-    PATH=../apps:$PATH
-fi
-export PATH
-
-cmd='../apps/openssl sess_id'
+cmd='../util/shlib_wrap.sh ../apps/openssl sess_id'
 
 if [ "$1"x != "x" ]; then
 	t=$1

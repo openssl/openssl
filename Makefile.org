@@ -402,20 +402,9 @@ dclean:
 
 rehash: rehash.time
 rehash.time: certs
-	@(OPENSSL="`pwd`/apps/openssl$(EXE_EXT)"; OPENSSL_DEBUG_MEMORY=on; \
+	@(OPENSSL="`pwd`/util/opensslwrap.sh"; \
+	  OPENSSL_DEBUG_MEMORY=on; \
 	  export OPENSSL OPENSSL_DEBUG_MEMORY; \
-	  if [ -n "$(SHARED_LIBS)" ]; then \
-	    LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
-	    DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
-	    SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
-	    LIBPATH="`pwd`:$$LIBPATH"; \
-	    if [ "$(PLATFORM)" = "Cygwin" ]; then \
-	      PATH="`pwd`:$$PATH"; \
-	    fi; \
-	    LD_PRELOAD="`pwd`/libssl.so `pwd`/libcrypto.so"; \
-	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-	    export LD_PRELOAD; \
-	  fi; \
 	  $(PERL) tools/c_rehash certs)
 	touch rehash.time
 
@@ -423,18 +412,8 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
-	@if [ -n "$(SHARED_LIBS)" ]; then \
-	  LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
-	  DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
-	  SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
-	  LIBPATH="`pwd`:$$LIBPATH"; \
-	  if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
-	  LD_PRELOAD="`pwd`/libssl.so `pwd`/libcrypto.so"; \
-	  export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-	  export LD_PRELOAD; \
-	fi; \
-	apps/openssl version -a
+	$(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
+	util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl
