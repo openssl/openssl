@@ -673,6 +673,10 @@ sub do_defs
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
 					next;
+				} elsif (/^\s*DECLARE_ASN1_ALLOC_FUNCTIONS\s*\(\s*(\w*)\s*\)/) {
+					$def .= "int $1_free(void);";
+					$def .= "int $1_new(void);";
+					next;
 				} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$2(void);";
 					$def .= "int i2d_$2(void);";

@@ -264,14 +264,15 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 #define DECLARE_ASN1_FUNCTIONS(type) DECLARE_ASN1_FUNCTIONS_name(type, type)
 
+#define DECLARE_ASN1_ALLOC_FUNCTIONS(type) \
+	DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, type)
+
 #define DECLARE_ASN1_FUNCTIONS_name(type, name) \
-	type *name##_new(void); \
-	void name##_free(type *a); \
+	DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name)
 
 #define DECLARE_ASN1_FUNCTIONS_fname(type, itname, name) \
-	type *name##_new(void); \
-	void name##_free(type *a); \
+	DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
@@ -291,6 +292,9 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	name *name##_new(void); \
 	void name##_free(name *a);
 
+#define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
+	type *name##_new(void); \
+	void name##_free(type *a);
 
 /* The following macros and typedefs allow an ASN1_ITEM
  * to be embedded in a structure and referenced. Since

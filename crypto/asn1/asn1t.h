@@ -775,6 +775,9 @@ typedef struct ASN1_AUX_st {
 #define IMPLEMENT_ASN1_FUNCTIONS_ENCODE_name(stname, itname) \
 			IMPLEMENT_ASN1_FUNCTIONS_ENCODE_fname(stname, itname, itname)
 
+#define IMPLEMENT_ASN1_ALLOC_FUNCTIONS(stname) \
+		IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, stname, stname)
+
 #define IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname) \
 	stname *fname##_new(void) \
 	{ \
