@@ -205,6 +205,8 @@ STACK_OF(X509_POLICY_NODE) *policy_node_cmp_new(void);
 
 void policy_cache_init(void);
 
+void policy_cache_free(X509_POLICY_CACHE *cache);
+
 X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 					const ASN1_OBJECT *id);
 
