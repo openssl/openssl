@@ -208,10 +208,13 @@ int ssl2_connect(SSL *s)
 			if (!BUF_MEM_grow(buf,
 				SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 				{
+				if (buf == s->init_buf)
+					buf=NULL;
 				ret= -1;
 				goto end;
 				}
 			s->init_buf=buf;
+			buf=NULL;
 			s->init_num=0;
 			s->state=SSL2_ST_SEND_CLIENT_HELLO_A;
 			s->ctx->stats.sess_connect++;
@@ -338,6 +341,8 @@ int ssl2_connect(SSL *s)
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL) 
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
