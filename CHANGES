@@ -201,15 +201,15 @@
      [Bodo Moeller]
 
   +) Change all functions with names starting with des_ to be starting
-     with DES_ instead.  This because there are increasing clashes with
-     libdes and other des libraries that are currently used by other
-     projects.  The old libdes interface is provided, as well as crypt(),
-     if openssl/des_old.h is included.  Note that crypt() is no longer
-     declared in openssl/des.h.
-     In order to maintain compatibility with current applications using
-     libcrypto, the old libdes interface is still provided, as long as
-     OPENSSL_NO_OLD_DES_SUPPORT is not defined, by automatically including
-     openssl/des_old.h. 
+     with DES_ instead.  Add wrappers that are compatible with libdes,
+     but are named _old_des_*.  Finally, add macros that map the des_*
+     symbols to the corresponding _old_des_*.
+
+     All this is done because there are increasing clashes with libdes
+     and other des libraries that are currently used by other projects.
+     For now, the old libdes interface is provided, as well as crypt(),
+     unless OPENSSL_NO_OLD_DES_SUPPORT is defined, or if openssl/des_old.h
+     is included.  Note that crypt() is no longer declared in openssl/des.h.
 
      NOTE: This is a major break of an old API into a new one.  Software
      authors are encouraged to switch to the DES_ style functions.  Some
