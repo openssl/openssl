@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/07 23:37:33 $
+  ______________                           $Date: 1999/04/08 17:10:25 $
 
   DEVELOPMENT STATE
 
@@ -22,6 +22,8 @@
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
     o MingW support (niklas@canit.se)
+    o SPARC v9, SPARC v8 assembler implementations of bn_asm.c
+      (appro@fy.chalmers.se)
 
   IN PROGRESS
 
@@ -140,6 +142,10 @@
       > machine, kernel 2.0.36 and 2.2.1, redhat 5.2 latest, gcc and egcs , no
       > go.  I also noticed the even with -DNO_IDEA, _DNO_RC2, etc. the make
       > still goes into those subdirectories and 'makes'.
+
+    o The "exported" header files should not use #include "foo.h", but
+      #include <foo.h> or even better #include <ssl/foo.h> or
+      #include <openssl/foo.h> in order to avoid filename clashes.
 
   WISHES
 
