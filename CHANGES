@@ -3,6 +3,40 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Introduce the possibility to access global variables through
+     functions on platform were that's the best way to handle exporting
+     global variables in shared libraries.  To enable this functionality,
+     one must configure with "EXPORT_VAR_AS_FN" or defined the C macro
+     "OPENSSL_EXPORT_VAR_AS_FUNCTION" in crypto/opensslconf.h (the latter
+     is normally done by Configure or something similar).
+
+     To implement a global variable, use the macro OPENSSL_IMPLEMENT_GLOBAL
+     in the source file (foo.c) like this:
+
+	OPENSSL_IMPLEMENT_GLOBAL(int,foo)=1;
+	OPENSSL_IMPLEMENT_GLOBAL(double,bar);
+
+     To declare a global variable, use the macros OPENSSL_DECLARE_GLOBAL
+     and OPENSSL_GLOBAL_REF in the header file (foo.h) like this:
+
+	OPENSSL_DECLARE_GLOBAL(int,foo);
+	#define foo OPENSSL_GLOBAL_REF(foo)
+	OPENSSL_DECLARE_GLOBAL(double,bar);
+	#define bar OPENSSL_GLOBAL_REF(bar)
+
+     The #defines are very important, and therefore so is including the
+     header file everywere where the defined globals are used.
+
+     The macro OPENSSL_EXPORT_VAR_AS_FUNCTION also affects the definition
+     of ASN.1 items, but that structure is a bt different.
+
+     The largest change is in util/mkdef.pl which has been enhanced with
+     better and easier to understand logic to choose which symbols should
+     go into the Windows .def files as well as a number of fixes and code
+     cleanup (among others, algorithm keywords are now sorted
+     lexicographically to avoid constant rewrites).
+     [Richard Levitte]
+
   *) In copy_email() check for >= 0 as a return value for
      X509_NAME_get_index_by_NID() since 0 is a valid index.
      [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]

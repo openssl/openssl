@@ -200,6 +200,28 @@ extern "C" {
 #endif
 #define OPENSSL_EXTERN OPENSSL_IMPORT
 
+/* Macros to allow global variables to be reached through function calls when
+   required (if a shared library version requvres it, for example.
+   The way it's done allows definitions like this:
+
+	// in foobar.c
+	OPENSSL_IMPLEMENT_GLOBAL(int,foobar) = 0;
+	// in foobar.h
+	OPENSSL_DECLARE_GLOBAL(int,foobar);
+	#define foobar OPENSSL_GLOBAL_REF(foobar)
+*/
+#ifdef OPENSSL_EXPORT_VAR_AS_FUNCTION
+# define OPENSSL_IMPLEMENT_GLOBAL(type,name) extern static type _hide_##name; \
+        type *_shadow_##name(void) { static type local_var; return &local_var; } \
+        static type _hide_##name
+# define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
+# define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
+#else
+# define OPENSSL_IMPLEMENT_GLOBAL(type,name) OPENSSL_GLOBAL type _shadow_##name
+# define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
+# define OPENSSL_GLOBAL_REF(name) _shadow_##name
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

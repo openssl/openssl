@@ -21,7 +21,7 @@ SSL_CTX_use_PrivateKey_ASN1             23	EXIST::FUNCTION:
 SSL_CTX_use_PrivateKey_file             24	EXIST::FUNCTION:STDIO
 SSL_CTX_use_RSAPrivateKey               25	EXIST::FUNCTION:RSA
 SSL_CTX_use_RSAPrivateKey_ASN1          26	EXIST::FUNCTION:RSA
-SSL_CTX_use_RSAPrivateKey_file          27	EXIST::FUNCTION:STDIO,RSA
+SSL_CTX_use_RSAPrivateKey_file          27	EXIST::FUNCTION:RSA,STDIO
 SSL_CTX_use_certificate                 28	EXIST::FUNCTION:
 SSL_CTX_use_certificate_ASN1            29	EXIST::FUNCTION:
 SSL_CTX_use_certificate_file            30	EXIST::FUNCTION:STDIO
@@ -89,7 +89,7 @@ SSL_use_PrivateKey_ASN1                 100	EXIST::FUNCTION:
 SSL_use_PrivateKey_file                 101	EXIST::FUNCTION:STDIO
 SSL_use_RSAPrivateKey                   102	EXIST::FUNCTION:RSA
 SSL_use_RSAPrivateKey_ASN1              103	EXIST::FUNCTION:RSA
-SSL_use_RSAPrivateKey_file              104	EXIST::FUNCTION:STDIO,RSA
+SSL_use_RSAPrivateKey_file              104	EXIST::FUNCTION:RSA,STDIO
 SSL_use_certificate                     105	EXIST::FUNCTION:
 SSL_use_certificate_ASN1                106	EXIST::FUNCTION:
 SSL_use_certificate_file                107	EXIST::FUNCTION:STDIO
@@ -208,7 +208,7 @@ kssl_ctx_free                           257	EXIST::FUNCTION:KRB5
 kssl_krb5_free_data_contents            258	EXIST::FUNCTION:KRB5
 print_krb5_data                         259	EXIST::FUNCTION:KRB5
 kssl_ctx_setstring                      260	EXIST::FUNCTION:KRB5
-SSL_CTX_has_matching_session_id         261	EXIST::FUNCTION:
+SSL_CTX_has_matching_session_id         261	NOEXIST::FUNCTION:
 SSL_set_generate_session_id             262	EXIST::FUNCTION:
 SSL_CTX_set_generate_session_id         263	EXIST::FUNCTION:
 SSL_has_matching_session_id             264	EXIST::FUNCTION:

@@ -968,6 +968,7 @@ my $rc4_chunk=0;
 my $bf_ptr=0;
 my @type=("char","short","int","long");
 my ($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0);
+my $export_var_as_fn=0;
 
 my $des_int;
 
@@ -997,6 +998,7 @@ foreach (sort split(/\s+/,$bn_ops))
 	($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0) if /THIRTY_TWO_BIT/;
 	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,1,0) if /SIXTEEN_BIT/;
 	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,0,1) if /EIGHT_BIT/;
+	$export_var_as_fn=1 if /EXPORT_VAR_AS_FN/;
 	}
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
@@ -1029,6 +1031,11 @@ while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
 		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
+		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
+			if $export_var_as_fn;
+		  printf OUT "#%s OPENSSL_EXPORT_VAR_AS_FUNCTION\n",
+			($export_var_as_fn)?"define":"undef"; }
 	elsif	(/^#define\s+OPENSSL_UNISTD/)
 		{
 		$unistd = "<unistd.h>" if $unistd eq "";

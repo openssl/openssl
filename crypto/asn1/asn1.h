@@ -357,7 +357,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
  *
  */
 
-#ifndef ASN1_ITEM_FUNCTIONS
+#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 /* ASN1_ITEM pointer exported type */
 typedef const ASN1_ITEM ASN1_ITEM_EXP;

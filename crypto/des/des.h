@@ -116,8 +116,10 @@ typedef struct des_ks_struct
 #define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-OPENSSL_EXTERN int des_check_key;	/* defaults to false */
-OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+OPENSSL_DECLARE_GLOBAL(int,des_check_key);	/* defaults to false */
+#define des_check_key OPENSSL_GLOBAL_REF(des_check_key)
+OPENSSL_DECLARE_GLOBAL(int,des_rw_mode);	/* defaults to DES_PCBC_MODE */
+#define des_rw_mode OPENSSL_GLOBAL_REF(des_rw_mode)
 
 const char *des_options(void);
 void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,

@@ -74,7 +74,7 @@ extern "C" {
 #endif
 
 
-#ifndef ASN1_ITEM_FUNCTIONS
+#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
 #define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)(iptr))
@@ -287,7 +287,7 @@ extern "C" {
 
 /* Any defined by macros: the field used is in the table itself */
 
-#ifndef ASN1_ITEM_FUNCTIONS
+#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 #define ASN1_ADB_OBJECT(tblname) { ASN1_TFLG_ADB_OID, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
 #define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
 #else
@@ -358,7 +358,7 @@ extern "C" {
 #define ASN1_ADB(name) \
 	const static ASN1_ADB_TABLE name##_adbtbl[] 
 
-#ifndef ASN1_ITEM_FUNCTIONS
+#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 #define ASN1_ADB_END(name, flags, field, app_table, def, none) \
 	;\
