@@ -720,6 +720,11 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		p=SSL_get_shared_ciphers(s,buf,BUFSIZ);
 		if (p != NULL)
 			{
+			/* This works only for SSL 2.  In later protocol
+			 * versions, the client does not know what other
+			 * ciphers (in addition to the one to be used
+			 * in the current connection) the server supports. */
+
 			BIO_printf(bio,"---\nCiphers common between both SSL endpoints:\n");
 			j=i=0;
 			while (*p)
