@@ -41,7 +41,9 @@ if and only if B<ret E<gt> 0>.
 The SSL connection has been closed.  If the protocol version is SSL 3.0
 or TLS 1.0, this result code is returned only if a closure
 alert has occurred in the protocol, i.e. if the connection has been
-closed cleanly.
+closed cleanly. Note that in this case B<SSL_ERROR_ZERO_RETURN>
+does not necessarily indicate that the underlying transport
+has been closed.
 
 =item SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
