@@ -20,8 +20,6 @@ RSA_new_method - select RSA method
 
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
- RSA_METHOD *RSA_PKCS1_RSAref(void);
-
  RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(const RSA *rsa);
