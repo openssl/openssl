@@ -123,6 +123,13 @@ a public key.
 
 =back
 
+=head1 NOTES
+
+The PEM private key format uses the header and footer lines:
+
+ -----BEGIN RSA PRIVATE KEY-----
+ -----END RSA PRIVATE KEY-----
+
 =head1 EXAMPLES
 
 To remove the pass phrase on an RSA private key:

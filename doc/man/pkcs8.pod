@@ -93,6 +93,17 @@ B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
 
 =head1 NOTES
 
+The encrypted form of a PEM encode PKCS#8 files uses the following
+headers and footers:
+
+ -----BEGIN ENCRYPTED PRIVATE KEY-----
+ -----END ENCRYPTED PRIVATE KEY-----
+
+The unencrypted form uses:
+
+ -----BEGIN PRIVATE KEY-----
+ -----END PRIVATE KEY-----
+
 Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
 counts are more secure that those encrypted using the traditional
 SSLeay compatible formats. So if additional security is considered

@@ -371,6 +371,18 @@ Set a certificate to be trusted for SSL client use and change set its alias to
 	openssl x509 -in cert.pem -addtrust sslclient \
 		-alias "Steve's Class 1 CA" -out trust.pem
 
+=head1 NOTES
+
+The PEM format uses the header and footer lines:
+
+ -----BEGIN CERTIFICATE----
+ -----END CERTIFICATE----
+
+it will also handle files containing:
+
+ -----BEGIN X509 CERTIFICATE----
+ -----END X509 CERTIFICATE----
+
 =head1 BUGS
 
 The way DNs are printed is in a "historical SSLeay" format which doesn't

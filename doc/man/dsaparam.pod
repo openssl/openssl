@@ -82,6 +82,11 @@ the input file (if any) is ignored.
 
 =head1 NOTES
 
+PEM format DSA parameters use the header and footer lines:
+
+ -----BEGIN DSA PARAMETERS-----
+ -----END DSA PARAMETERS-----
+
 DSA parameter generation is a slow process and as a result the same set of
 DSA parameters is often used to generate several distinct keys.
 
