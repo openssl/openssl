@@ -144,11 +144,6 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		ret = BN_one(rr);
 		return ret;
 		}
-	if (BN_is_zero(a1) || BN_is_zero(a2))
-		{
-		ret = BN_zero(rr);
-		return ret;
-		}
 	
 	bits=(bits1 > bits2)?bits1:bits2;
 
@@ -173,7 +168,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	 */
 	BN_init(&val1[0]);
 	ts1=1;
-	if (BN_ucmp(a1,m) >= 0)
+	if (a1->neg || BN_ucmp(a1,m) >= 0)
 		{
 		if (!BN_mod(&(val1[0]),a1,m,ctx))
 			goto err;
@@ -181,6 +176,12 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		}
 	else
 		a_mod_m = a1;
+	if (BN_is_zero(&(val1[0])))
+		{
+		ret = BN_zero(rr);
+		goto err;
+		}
+
 	if (!BN_to_montgomery(&(val1[0]),a_mod_m,mont,ctx)) goto err;
 	if (window1 > 1)
 		{
@@ -202,7 +203,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	 */
 	BN_init(&val2[0]);
 	ts2=1;
-	if (BN_ucmp(a2,m) >= 0)
+	if (a2->neg || BN_ucmp(a2,m) >= 0)
 		{
 		if (!BN_mod(&(val2[0]),a2,m,ctx))
 			goto err;
@@ -210,6 +211,11 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		}
 	else
 		a_mod_m = a2;
+	if (BN_is_zero(&(val2[0])))
+		{
+		ret = BN_zero(rr);
+		goto err;
+		}
 	if (!BN_to_montgomery(&(val2[0]),a_mod_m,mont,ctx)) goto err;
 	if (window2 > 1)
 		{
