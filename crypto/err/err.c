@@ -218,6 +218,7 @@ struct st_ERR_FNS
 	void (*cb_err_del)(void);
 	ERR_STRING_DATA *(*cb_err_get_item)(const ERR_STRING_DATA *);
 	ERR_STRING_DATA *(*cb_err_set_item)(ERR_STRING_DATA *);
+	ERR_STRING_DATA *(*cb_err_del_item)(ERR_STRING_DATA *);
 	/* Works on the "thread_hash" error-state table */
 	LHASH *(*cb_thread_get)(void);
 	ERR_STATE *(*cb_thread_get_item)(const ERR_STATE *);
@@ -232,6 +233,7 @@ static LHASH *int_err_get(void);
 static void int_err_del(void);
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
 static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *);
+static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *);
 static LHASH *int_thread_get(void);
 static ERR_STATE *int_thread_get_item(const ERR_STATE *);
 static ERR_STATE *int_thread_set_item(ERR_STATE *);
@@ -244,6 +246,7 @@ static const ERR_FNS err_defaults =
 	int_err_del,
 	int_err_get_item,
 	int_err_set_item,
+	int_err_del_item,
 	int_thread_get,
 	int_thread_get_item,
 	int_thread_set_item,
@@ -365,6 +368,19 @@ static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *d)
 		return NULL;
 	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
 	p = (ERR_STRING_DATA *)lh_insert(hash, d);
+	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+	return p;
+	}
+static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
+	{
+	ERR_STRING_DATA *p;
+	LHASH *hash;
+	err_fns_check();
+	hash = ERRFN(err_get)();
+	if(!hash)
+		return NULL;
+	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+	p = (ERR_STRING_DATA *)lh_delete(hash, d);
 	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
 	return p;
 	}
@@ -541,6 +557,16 @@ void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 		{
 		str->error|=ERR_PACK(lib,0,0);
 		ERRFN(err_set_item)(str);
+		str++;
+		}
+	}
+
+void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
+	{
+	while(str->error)
+		{
+		str->error|=ERR_PACK(lib,0,0);
+		ERRFN(err_del_item)(str);
 		str++;
 		}
 	}
