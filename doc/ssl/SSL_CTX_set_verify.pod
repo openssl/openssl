@@ -165,20 +165,37 @@ are printed on request.
 The example is realized for a server that does allow but not require client
 certificates.
 
+The example makes use of the ex_data technique to store application data
+into/retrieve application data from the SSL structure
+(see L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>,
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
+
  ...
- int verbose_mode;
- int verify_depth;
- int always_continue;
+ typedef struct {
+   int verbose_mode;
+   int verify_depth;
+   int always_continue;
+ } mydata_t;
+ int mydata_index;
  ...
  static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
  {
     char    buf[256];
     X509   *err_cert;
     int     err, depth;
+    SSL    *ssl;
+    mydata_t *mydata;
 
     err_cert = X509_STORE_CTX_get_current_cert(ctx);
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
+
+    /*
+     * Retrieve the pointer to the SSL of the connection currently treated
+     * and the application specific data stored into the SSL object.
+     */
+    ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+    mydata = SSL_get_ex_data(ssl, mydata_index);
 
     X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
 
@@ -191,7 +208,7 @@ certificates.
      * be found explicitly; only errors introduced by cutting off the
      * additional certificates would be logged.
      */
-    if (depth > verify_depth) {
+    if (depth > mydata->verify_depth) {
         preverify_ok = 0;
         err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         X509_STORE_CTX_set_error(ctx, err);
@@ -200,7 +217,7 @@ certificates.
         printf("verify error:num=%d:%s:depth=%d:%s\n", err,
                  X509_verify_cert_error_string(err), depth, buf);
     }
-    else if (verbose_mode)
+    else if (mydata->verbose_mode)
     {
         printf("depth=%d:%s\n", depth, buf);
     }
@@ -215,11 +232,18 @@ certificates.
       printf("issuer= %s\n", buf);
     }
 
-    if (always_continue)
+    if (mydata->always_continue)
       return 1;
     else
       return preverify_ok;
  }
+ ...
+
+ mydata_t mydata;
+
+ ...
+ mydata_index = SSL_get_ex_new_index(0, "mydata index", NULL, NULL, NULL);
+
  ...
  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
                     verify_callback);
@@ -229,6 +253,13 @@ certificates.
   * an appropriate error in the logfile.
   */
  SSL_CTX_set_verify_depth(verify_depth + 1);
+
+ /*
+  * Set up the SSL specific data into "mydata" and store it into th SSL
+  * structure.
+  */
+ mydata.verify_depth = verify_depth; ...
+ SSL_set_ex_data(ssl, mydata_index, &mydata);
 					     
  ...
  SSL_accept(ssl);	/* check of success left out for clarity */
@@ -246,6 +277,8 @@ L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>,
 L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
 L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>,
-L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>
+L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>,
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
+L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>
 
 =cut
