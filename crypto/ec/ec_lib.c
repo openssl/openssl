@@ -316,6 +316,8 @@ int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 		ECerr(EC_F_EC_POINT_COPY, EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 		}
+	if (dest == src)
+		return 1;
 	return dest->meth->point_copy(dest, src);
 	}
 
