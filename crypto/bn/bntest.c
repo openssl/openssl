@@ -212,6 +212,7 @@ int main(int argc, char *argv[])
 /**/
 	exit(0);
 err:
+	BIO_puts(out,"1\n"); /* make sure bc fails if we are piping to it */
 	ERR_load_crypto_strings();
 	ERR_print_errors(out);
 	exit(1);
