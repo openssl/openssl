@@ -76,12 +76,19 @@ SSL_METHOD *SSLv3_method(void)
 
 	if (init)
 		{
-		memcpy((char *)&SSLv3_data,(char *)sslv3_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv3_data.ssl_connect=ssl3_connect;
-		SSLv3_data.ssl_accept=ssl3_accept;
-		SSLv3_data.get_ssl_method=ssl3_get_method;
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+		
+		if (init)
+			{
+			memcpy((char *)&SSLv3_data,(char *)sslv3_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv3_data.ssl_connect=ssl3_connect;
+			SSLv3_data.ssl_accept=ssl3_accept;
+			SSLv3_data.get_ssl_method=ssl3_get_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv3_data);
 	}
