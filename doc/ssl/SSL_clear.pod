@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_clear - Reset SSL to allow another connection
+SSL_clear - reset SSL object to allow another connection
 
 =head1 SYNOPSIS
 
@@ -12,9 +12,9 @@ SSL_clear - Reset SSL to allow another connection
 
 =head1 DESCRIPTION
 
-Reset the B<ssl> to allow another connection. All settings (method, ciphers,
-BIOs) are kept. A completely negotiated SSL_SESSION is not freed but left
-untouched for the underlying SSL_CTX.
+Reset B<ssl> to allow another connection. All settings (method, ciphers,
+BIOs) are kept. A completely negotiated B<SSL_SESSION> is not freed but left
+untouched for the underlying B<SSL_CTX>.
 
 =head1 RETURN VALUES
 
@@ -29,7 +29,7 @@ find out the reason.
 
 =item 1
 
-The SSL_clear() operation was successfull.
+The SSL_clear() operation was successful.
 
 =back
 

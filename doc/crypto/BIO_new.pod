@@ -40,7 +40,7 @@ BIO_free_all() and BIO_vfree() do not return values.
 =head1 NOTES
 
 Some BIOs (such as memory BIOs) can be used immediately after calling
-BIO_new(). Others (such as file BIOs) need some additional initialisation,
+BIO_new(). Others (such as file BIOs) need some additional initialization,
 and frequently a utility function exists to create and initialize such BIOs.
 
 If BIO_free() is called on a BIO chain it will only free one BIO resulting

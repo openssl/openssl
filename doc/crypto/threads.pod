@@ -106,7 +106,7 @@ CRYPTO_lock() is used to lock and unlock the locks.  mode is a bitfield
 describing what should be done with the lock.  n is the number of the
 lock as returned from CRYPTO_get_new_dynlockid().  mode can be combined
 from the following values.  These values are pairwise exclusive, with
-undefined behavior if misused (for example, CRYPTO_READ and CRYPTO_WRITE
+undefined behaviour if misused (for example, CRYPTO_READ and CRYPTO_WRITE
 should not be used together):
 
 	CRYPTO_LOCK	0x01

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_rbio - Get BIO linked to an SSL
+SSL_get_rbio - get BIO linked to an SSL object
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ The following return values can occur:
 
 =item NULL
 
-No BIO was connected to the SSL
+No BIO was connected to the SSL object
 
 =item Any other pointer
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_session - Retrieve SSL session data
+SSL_get_session - retrieve TLS/SSL session data
 
 =head1 SYNOPSIS
 
@@ -14,15 +14,15 @@ SSL_get_session - Retrieve SSL session data
 
 =head1 DESCRIPTION
 
-SSL_get_session() returns a pointer to the SSL session actually used in
-B<ssl>. The reference count of the SSL session is not incremented, so
+SSL_get_session() returns a pointer to the B<SSL_SESSION> actually used in
+B<ssl>. The reference count of the B<SSL_SESSION> is not incremented, so
 that the pointer can become invalid when the B<ssl> is freed and
 SSL_SESSION_free() is implicitly called.
 
 SSL_get0_session() is the same as SSL_get_session().
 
 SSL_get1_session() is the same as SSL_get_session(), but the reference
-count of the SSL session is incremented by one.
+count of the B<SSL_SESSION> is incremented by one.
 
 =head1 RETURN VALUES
 

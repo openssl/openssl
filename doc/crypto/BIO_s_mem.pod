@@ -87,9 +87,7 @@ There should be a way to "rewind" a read write BIO without destroying
 its contents.
 
 The copying operation should not occur after every small read of a large BIO
-to improve efficieny.
-
-There shoy
+to improve efficiency.
 
 =head1 EXAMPLE
 

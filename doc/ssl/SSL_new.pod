@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_new - Create a new SSL structure for a connection
+SSL_new - create a new SSL structure for a connection
 
 =head1 SYNOPSIS
 
@@ -12,10 +12,10 @@ SSL_new - Create a new SSL structure for a connection
 
 =head1 DESCRIPTION
 
-SSL_new() creates a new B<SSL> structure which is needed to hold the data
-for a SSL connection. The new SSL inherits the settings of the underlying
-context B<ctx>: connection method (SSLv2/v3/TLSv1), options, verification
-settings, timeout settings.
+SSL_new() creates a new B<SSL> structure which is needed to hold the
+data for a TLS/SSL connection. The new structure inherits the settings
+of the underlying context B<ctx>: connection method (SSLv2/v3/TLSv1),
+options, verification settings, timeout settings.
 
 =head1 RETURN VALUES
 
@@ -25,10 +25,10 @@ The following return values can occur:
 
 =item NULL
 
-The creation of a new SSL failed. Check the error stack to find out the
-reason.
+The creation of a new SSL structure failed. Check the error stack to
+find out the reason.
 
-=item Pointer to an SSL
+=item Pointer to an SSL structure
 
 The return value points to an allocated SSL structure.
 

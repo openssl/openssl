@@ -28,20 +28,6 @@ BIO_s_file() returns the BIO file method. As its name implies it
 is a wrapper round the stdio FILE structure and it is a
 source/sink BIO.
 
-Calls to BIO_read() and BIO_write() read and write data to the
-underlying stream. BIO_gets() and BIO_puts() are supported on file BIOs.
-
-BIO_flush() on a file BIO calls the fflush() function on the wrapped
-stream.
-
-BIO_reset() on a file BIO calls fseek() to reset the position indicator
-to the start of the file.
-
-BIO_eof() calls feof().
-
-Setting the BIO_CLOSE flag calls fclose() on the stream when the BIO
-is freed.
-
 BIO_new_file() creates a new file BIO with mode B<mode> the meaning
 of B<mode> is the same as the stdio function fopen(). The BIO_CLOSE
 flag is set on the returned BIO.
@@ -61,6 +47,20 @@ BIO_rw_filename() set the file BIO B<b> to use file B<name> for
 reading, writing, append or read write respectively.
 
 =head1 NOTES
+
+Calls to BIO_read() and BIO_write() read and write data to the
+underlying stream. BIO_gets() and BIO_puts() are supported on file BIOs.
+
+BIO_flush() on a file BIO calls the fflush() function on the wrapped
+stream.
+
+BIO_reset() on a file BIO calls fseek() to reset the position indicator
+to the start of the file.
+
+BIO_eof() calls feof().
+
+Setting the BIO_CLOSE flag calls fclose() on the stream when the BIO
+is freed.
 
 When wrapping stdout, stdin or stderr the underlying stream should not
 normally be closed so the BIO_NOCLOSE flag should be set.
@@ -116,4 +116,9 @@ BIO_rw_filename() return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
-L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>, TBA
+L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>,
+L<BIO_reset(3)|BIO_reset(3)>, L<BIO_flush(3)|BIO_flush(3)>,
+L<BIO_read(3)|BIO_read(3)>,
+L<BIO_write(3)|BIO_write(3)>, L<BIO_puts(3)|BIO_puts(3)>,
+L<BIO_gets(3)|BIO_gets(3)>, L<BIO_printf(3)|BIO_printf(3)>,
+L<BIO_set_close(3)|BIO_set_close(3)>, L<BIO_get_close(3)|BIO_get_close(3)>
