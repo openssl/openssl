@@ -236,7 +236,7 @@ static int v3_check_critical(char **value)
 static int v3_check_generic(char **value)
 {
 	char *p = *value;
-	if ((strlen(p) < 4) || strncmp(p, "DER:,", 4)) return 0;
+	if ((strlen(p) < 4) || strncmp(p, "DER:", 4)) return 0;
 	p+=4;
 	while (isspace((unsigned char)*p)) p++;
 	*value = p;
