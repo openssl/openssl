@@ -577,7 +577,7 @@ int main(int argc, char *argv[])
 	}
 
 
-#if 1
+#if 0
 	timings(P_192, 0, ctx);
 	timings(P_192, 1, ctx);
 	timings(P_224, 0, ctx);
