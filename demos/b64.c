@@ -83,7 +83,6 @@ char **argv;
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
 	int ret=1,inl;
-	unsigned char key[24],iv[MD5_DIGEST_LENGTH];
 	char *str=NULL;
 	char *hkey=NULL,*hiv=NULL;
 	int enc=1,printkey=0,i,base64=0;
@@ -92,7 +91,6 @@ char **argv;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  39
-        char pname[PROG_NAME_SIZE+1];
 
 
 	apps_startup();

@@ -334,6 +334,7 @@ int MAIN(int argc, char **argv)
 	MS_STATIC char buf[3][BSIZE];
 	char *randfile=NULL;
 	char *engine = NULL;
+	char *tofree=NULL;
 
 #ifdef EFENCE
 EF_PROTECT_FREE=1;
@@ -561,25 +562,26 @@ bad:
 
 	ERR_load_crypto_strings();
 
-        e = setup_engine(bio_err, engine, 0);
+	e = setup_engine(bio_err, engine, 0);
 
 	/*****************************************************************/
+	tofree=NULL;
 	if (configfile == NULL) configfile = getenv("OPENSSL_CONF");
 	if (configfile == NULL) configfile = getenv("SSLEAY_CONF");
 	if (configfile == NULL)
 		{
-		/* We will just use 'buf[0]' as a temporary buffer.  */
+		const char *s=X509_get_default_cert_area();
+
 #ifdef OPENSSL_SYS_VMS
-		strncpy(buf[0],X509_get_default_cert_area(),
-			sizeof(buf[0])-1-sizeof(CONFIG_FILE));
+		tofree=OPENSSL_malloc(strlen(s)+sizeof(CONFIG_FILE));
+		strcpy(tofree,s);
 #else
-		strncpy(buf[0],X509_get_default_cert_area(),
-			sizeof(buf[0])-2-sizeof(CONFIG_FILE));
-		buf[0][sizeof(buf[0])-2-sizeof(CONFIG_FILE)]='\0';
-		strcat(buf[0],"/");
+		tofree=OPENSSL_malloc(strlen(s)+sizeof(CONFIG_FILE)+1);
+		strcpy(tofree,s);
+		strcat(tofree,"/");
 #endif
-		strcat(buf[0],CONFIG_FILE);
-		configfile=buf[0];
+		strcat(tofree,CONFIG_FILE);
+		configfile=tofree;
 		}
 
 	BIO_printf(bio_err,"Using configuration from %s\n",configfile);
@@ -594,6 +596,8 @@ bad:
 				,errorline,configfile);
 		goto err;
 		}
+	if(tofree)
+		OPENSSL_free(tofree);
 
 	if (!load_config(bio_err, conf))
 		goto err;
@@ -1286,8 +1290,13 @@ bad:
 
 			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_X509_num(cert_sk));
 
-			strncpy(buf[0],serialfile,BSIZE-4);
-			buf[0][BSIZE-4]='\0';
+			if(strlen(serialfile) > BSIZE-5 || strlen(dbfile) > BSIZE-5)
+				{
+				BIO_printf(bio_err,"file name too long\n");
+				goto err;
+				}
+
+			strcpy(buf[0],serialfile);
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[0],"-new");
@@ -1297,8 +1306,7 @@ bad:
 
 			if (!save_serial(buf[0],serial)) goto err;
 
-			strncpy(buf[1],dbfile,BSIZE-4);
-			buf[1][BSIZE-4]='\0';
+			strcpy(buf[1],dbfile);
 
 #ifdef OPENSSL_SYS_VMS
 			strcat(buf[1],"-new");
@@ -1328,8 +1336,13 @@ bad:
 			j=x->cert_info->serialNumber->length;
 			p=(char *)x->cert_info->serialNumber->data;
 			
-			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
-			buf[2][BSIZE-(j*2)-6]='\0';
+			if(strlen(outdir) >= (j ? BSIZE-j*2-6 : BSIZE-8))
+				{
+				BIO_printf(bio_err,"certificate file name too long\n");
+				goto err;
+				}
+
+			strcpy(buf[2],outdir);
 
 #ifndef OPENSSL_SYS_VMS
 			strcat(buf[2],"/");
@@ -1568,8 +1581,13 @@ bad:
 			if (j <= 0) goto err;
 			X509_free(revcert);
 
-			strncpy(buf[0],dbfile,BSIZE-4);
-			buf[0][BSIZE-4]='\0';
+			if(strlen(dbfile) > BSIZE-5)
+				{
+				BIO_printf(bio_err,"filename too long\n");
+				goto err;
+				}
+
+			strcpy(buf[0],dbfile);
 #ifndef OPENSSL_SYS_VMS
 			strcat(buf[0],".new");
 #else
@@ -1613,6 +1631,8 @@ bad:
 	/*****************************************************************/
 	ret=0;
 err:
+	if(tofree)
+		OPENSSL_free(tofree);
 	BIO_free_all(Cout);
 	BIO_free_all(Sout);
 	BIO_free_all(out);

@@ -2368,7 +2368,7 @@ static char *sstrsep(char **string, const char *delim)
     if (**string == 0)
         return NULL;
 
-    memset(isdelim, 0, 256);
+    memset(isdelim, 0, sizeof isdelim);
     isdelim[0] = 1;
 
     while (*delim)

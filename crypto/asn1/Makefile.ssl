@@ -288,14 +288,15 @@ a_sign.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 a_sign.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 a_sign.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
 a_sign.o: ../../include/openssl/x509_vfy.h ../cryptlib.h a_sign.c
-a_strex.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-a_strex.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-a_strex.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-a_strex.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-a_strex.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-a_strex.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-a_strex.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-a_strex.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+a_strex.o: ../../e_os.h ../../include/openssl/aes.h
+a_strex.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+a_strex.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+a_strex.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+a_strex.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+a_strex.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+a_strex.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+a_strex.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+a_strex.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
 a_strex.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
 a_strex.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
 a_strex.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
@@ -309,7 +310,7 @@ a_strex.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 a_strex.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_strex.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 a_strex.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-a_strex.o: a_strex.c charmap.h
+a_strex.o: ../cryptlib.h a_strex.c charmap.h
 a_strnid.o: ../../e_os.h ../../include/openssl/asn1.h
 a_strnid.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 a_strnid.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -383,6 +384,30 @@ asn1_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 asn1_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 asn1_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 asn1_err.o: ../../include/openssl/symhacks.h asn1_err.c
+asn1_gen.o: ../../e_os.h ../../include/openssl/aes.h
+asn1_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+asn1_gen.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+asn1_gen.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+asn1_gen.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+asn1_gen.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+asn1_gen.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+asn1_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+asn1_gen.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+asn1_gen.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+asn1_gen.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+asn1_gen.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+asn1_gen.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+asn1_gen.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+asn1_gen.o: ../../include/openssl/opensslconf.h
+asn1_gen.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+asn1_gen.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+asn1_gen.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+asn1_gen.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+asn1_gen.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+asn1_gen.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+asn1_gen.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+asn1_gen.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+asn1_gen.o: ../../include/openssl/x509v3.h ../cryptlib.h asn1_gen.c
 asn1_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 asn1_lib.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
 asn1_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

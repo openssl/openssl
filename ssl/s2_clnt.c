@@ -871,7 +871,7 @@ static int client_certificate(SSL *s)
 		EVP_MD_CTX_init(&ctx);
 		EVP_SignInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_SignUpdate(&ctx,s->s2->key_material,
-			(unsigned int)s->s2->key_material_length);
+			       s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
 		n=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
 		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
@@ -945,7 +945,7 @@ static int get_server_verify(SSL *s)
 		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* SERVER-VERIFY */
 	p += 1;
 
-	if (memcmp(p,s->s2->challenge,(unsigned int)s->s2->challenge_length) != 0)
+	if (memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_CHALLENGE_IS_DIFFERENT);

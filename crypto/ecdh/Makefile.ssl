@@ -80,12 +80,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-ech_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ech_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-ech_err.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ech_err.o: ../../include/openssl/ecdh.h ../../include/openssl/err.h
-ech_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ech_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+ech_err.o: ../../include/openssl/e_os2.h ../../include/openssl/ecdh.h
+ech_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+ech_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ech_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ech_err.o: ../../include/openssl/symhacks.h ech_err.c
 ech_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

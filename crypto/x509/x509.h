@@ -503,10 +503,12 @@ typedef struct Netscape_certificate_sequence
 	STACK_OF(X509) *certs;
 	} NETSCAPE_CERT_SEQUENCE;
 
+/* Unused (and iv length is wrong)
 typedef struct CBCParameter_st
 	{
 	unsigned char iv[8];
 	} CBC_PARAM;
+*/
 
 /* Password based encryption structure */
 

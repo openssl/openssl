@@ -671,6 +671,7 @@ static int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
 		}
+
 	if (j != 0 && j == s->session->session_id_length
 	    && memcmp(p,s->session->session_id,j) == 0)
 	    {
@@ -1619,16 +1620,16 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				
 			tmp_buf[0]=s->client_version>>8;
 			tmp_buf[1]=s->client_version&0xff;
-			if (RAND_bytes(&(tmp_buf[2]),SSL_MAX_MASTER_KEY_LENGTH-2) <= 0)
+			if (RAND_bytes(&(tmp_buf[2]),sizeof tmp_buf-2) <= 0)
 					goto err;
 
-			s->session->master_key_length=SSL_MAX_MASTER_KEY_LENGTH;
+			s->session->master_key_length=sizeof tmp_buf;
 
 			q=p;
 			/* Fix buf for TLS and beyond */
 			if (s->version > SSL3_VERSION)
 				p+=2;
-			n=RSA_public_encrypt(SSL_MAX_MASTER_KEY_LENGTH,
+			n=RSA_public_encrypt(sizeof tmp_buf,
 				tmp_buf,p,rsa,RSA_PKCS1_PADDING);
 #ifdef PKCS1_CHECK
 			if (s->options & SSL_OP_PKCS1_CHECK_1) p[1]++;
@@ -1650,8 +1651,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			s->session->master_key_length=
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
-			memset(tmp_buf,0,SSL_MAX_MASTER_KEY_LENGTH);
+					tmp_buf,sizeof tmp_buf);
+			memset(tmp_buf,0,sizeof tmp_buf);
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
@@ -1747,7 +1748,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				n+=2;
 				}
  
-			if (RAND_bytes(tmp_buf,SSL_MAX_MASTER_KEY_LENGTH) <= 0)
+			if (RAND_bytes(tmp_buf,sizeof tmp_buf) <= 0)
 			    goto err;
 
 			/*  20010420 VRS.  Tried it this way; failed.
@@ -1757,11 +1758,11 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			**	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
 			*/
 
-			memset(iv, 0, EVP_MAX_IV_LENGTH);  /* per RFC 1510 */
+			memset(iv, 0, sizeof iv);  /* per RFC 1510 */
 			EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,
 				kssl_ctx->key,iv);
 			EVP_EncryptUpdate(&ciph_ctx,epms,&outl,tmp_buf,
-				SSL_MAX_MASTER_KEY_LENGTH);
+				sizeof tmp_buf);
 			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
 			if (outl > sizeof epms)
@@ -1780,9 +1781,9 @@ static int ssl3_send_client_key_exchange(SSL *s)
                         s->session->master_key_length=
                                 s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					tmp_buf, SSL_MAX_MASTER_KEY_LENGTH);
+					tmp_buf, sizeof tmp_buf);
 
-			memset(tmp_buf, 0, SSL_MAX_MASTER_KEY_LENGTH);
+			memset(tmp_buf, 0, sizeof tmp_buf);
 			memset(epms, 0, outl);
                         }
 #endif

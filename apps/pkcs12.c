@@ -388,7 +388,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("read MAC password");
 #endif
-	if(EVP_read_pw_string (macpass, 50, "Enter MAC Password:", export_cert))
+	if(EVP_read_pw_string (macpass, sizeof macpass, "Enter MAC Password:", export_cert))
 	{
     	    BIO_printf (bio_err, "Can't read Password\n");
     	    goto end;
@@ -597,7 +597,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("read import password");
 #endif
-    if(!noprompt && EVP_read_pw_string(pass, 50, "Enter Import Password:", 0)) {
+    if(!noprompt && EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:", 0)) {
 	BIO_printf (bio_err, "Can't read Password\n");
 	goto end;
     }

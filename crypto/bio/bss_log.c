@@ -274,7 +274,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	LPCSTR lpszStrings[2];
 	WORD evtype= EVENTLOG_ERROR_TYPE;
 	int pid = _getpid();
-	char pidbuf[20];
+	char pidbuf[DECIMAL_SIZE(pid)+4];
 
 	switch (priority)
 		{

@@ -770,10 +770,11 @@ bad:
 				int y,z;
 
 				X509_NAME_oneline(X509_get_subject_name(x),
-					buf,256);
+					buf,sizeof buf);
 				BIO_printf(STDout,"/* subject:%s */\n",buf);
 				m=X509_NAME_oneline(
-					X509_get_issuer_name(x),buf,256);
+					X509_get_issuer_name(x),buf,
+					sizeof buf);
 				BIO_printf(STDout,"/* issuer :%s */\n",buf);
 
 				z=i2d_X509(x,NULL);
@@ -1086,7 +1087,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 		}
 	else 
 		{
-		if (!a2i_ASN1_INTEGER(io,bs,buf2,1024))
+		if (!a2i_ASN1_INTEGER(io,bs,buf2,sizeof buf2))
 			{
 			BIO_printf(bio_err,"unable to load serial number from %s\n",buf);
 			ERR_print_errors(bio_err);

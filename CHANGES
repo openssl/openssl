@@ -315,6 +315,91 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Introduce safe string copy and catenation functions
+     (BUF_strlcpy() and BUF_strlcat()).
+     [Ben Laurie (CHATS) and Richard Levitte]
+
+  *) Avoid using fixed-size buffers for one-line DNs.
+     [Ben Laurie (CHATS)]
+
+  *) Add BUF_MEM_grow_clean() to avoid information leakage when
+     resizing buffers containing secrets, and use where appropriate.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid using fixed size buffers for configuration file location.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid filename truncation for various CA files.
+     [Ben Laurie (CHATS)]
+
+  *) Use sizeof in preference to magic numbers.
+     [Ben Laurie (CHATS)]
+
+  *) Avoid filename truncation in cert requests.
+     [Ben Laurie (CHATS)]
+
+  *) New OPENSSL_assert() macro (similar to assert(), but enabled
+     unconditionally).
+     [Ben Laurie (CHATS)]
+
+  *) Add assertions to check for (supposedly impossible) buffer
+     overflows.
+     [Ben Laurie (CHATS)]
+
+  *) Don't cache truncated DNS entries in the local cache (this could
+     potentially lead to a spoofing attack).
+     [Ben Laurie (CHATS)]
+
+  *) Fix various buffers to be large enough for hex/decimal
+     representations in a platform independent manner.
+     [Ben Laurie (CHATS)]
+
+  *) Add CRYPTO_realloc_clean() to avoid information leakage when
+     resizing buffers containing secrets, and use where appropriate.
+     [Ben Laurie (CHATS)]
+
+  *) Add BIO_indent() to avoid much slightly worrying code to do
+     indents.
+     [Ben Laurie (CHATS)]
+
+  *) Convert sprintf()/BIO_puts() to BIO_printf().
+     [Ben Laurie (CHATS)]
+
+  *) buffer_gets() could terminate with the buffer only half
+     full. Fixed.
+     [Ben Laurie (CHATS)]
+
+  *) Add assertions to prevent user-supplied crypto functions from
+     overflowing internal buffers by having large block sizes, etc.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused copy of key in RC4.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and incorrectly sized buffers for IV in pem.h.
+     [Ben Laurie (CHATS)]
+
+  *) Fix off-by-one error in EGD path.
+     [Ben Laurie (CHATS)]
+
+  *) If RANDFILE path is too long, ignore instead of truncating.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and incorrectly sized X.509 structure
+     CBCParameter.
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and dangerous function knumber().
+     [Ben Laurie (CHATS)]
+
+  *) Eliminate unused and dangerous structure, KSSL_ERR.
+     [Ben Laurie (CHATS)]
+
+  *) Protect against overlong session ID context length in an encoded
+     session object. Since these are local, this does not appear to be
+     exploitable.
+     [Ben Laurie (CHATS)]
+
   *) Change from security patch (see 0.9.6e below) that did not affect
      the 0.9.6 release series:
 

@@ -166,7 +166,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			{
 			want-=(len-off);
 
-			if (!BUF_MEM_grow(b,len+want))
+			if (!BUF_MEM_grow_clean(b,len+want))
 				{
 				ASN1err(ASN1_F_ASN1_D2I_BIO,ERR_R_MALLOC_FAILURE);
 				goto err;
@@ -221,7 +221,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			if (want > (len-off))
 				{
 				want-=(len-off);
-				if (!BUF_MEM_grow(b,len+want))
+				if (!BUF_MEM_grow_clean(b,len+want))
 					{
 					ASN1err(ASN1_F_ASN1_D2I_BIO,ERR_R_MALLOC_FAILURE);
 					goto err;

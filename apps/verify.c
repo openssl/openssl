@@ -330,7 +330,8 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 	if (!ok)
 		{
 		X509_NAME_oneline(
-				X509_get_subject_name(ctx->current_cert),buf,256);
+				X509_get_subject_name(ctx->current_cert),buf,
+				sizeof buf);
 		printf("%s\n",buf);
 		printf("error %d at %d depth lookup:%s\n",ctx->error,
 			ctx->error_depth,

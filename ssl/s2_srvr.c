@@ -876,7 +876,7 @@ static int get_client_finished(SSL *s)
 	if (s->msg_callback)
 		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-FINISHED */
 	p += 1;
-	if (memcmp(p,s->s2->conn_id,(unsigned int)s->s2->conn_id_length) != 0)
+	if (memcmp(p,s->s2->conn_id,s->s2->conn_id_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_FINISHED,SSL_R_CONNECTION_ID_IS_DIFFERENT);
@@ -1076,7 +1076,7 @@ static int request_certificate(SSL *s)
 		EVP_MD_CTX_init(&ctx);
 		EVP_VerifyInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_VerifyUpdate(&ctx,s->s2->key_material,
-			(unsigned int)s->s2->key_material_length);
+				 s->s2->key_material_length);
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
 		i=i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);

@@ -190,6 +190,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		goto err;
 	}
 	keylen = EVP_CIPHER_CTX_key_length(ctx);
+	OPENSSL_assert(keylen <= sizeof key);
 
 	/* Now decode key derivation function */
 

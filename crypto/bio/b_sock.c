@@ -83,6 +83,7 @@
 static int wsa_init_done=0;
 #endif
 
+#if 0
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
 
@@ -93,6 +94,7 @@ static struct ghbn_cache_st
 	struct hostent *ent;
 	unsigned long order;
 	} ghbn_cache[GHBN_NUM];
+#endif
 
 static int get_ip(const char *str,unsigned char *ip);
 #if 0
@@ -230,6 +232,7 @@ int BIO_sock_error(int sock)
 		return(j);
 	}
 
+#if 0
 long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 	{
 	int i;
@@ -267,6 +270,7 @@ long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 		}
 	return(1);
 	}
+#endif
 
 #if 0
 static struct hostent *ghbn_dup(struct hostent *a)

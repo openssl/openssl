@@ -73,6 +73,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include "../crypto/cryptlib.h"
 
 #define SECTION		"req"
 
@@ -180,7 +181,7 @@ int MAIN(int argc, char **argv)
 	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
-	MS_STATIC char config_name[256];
+	char *to_free;
 	long errline;
 #endif
 
@@ -527,14 +528,7 @@ bad:
 	if (p == NULL)
 		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
-		{
-		strcpy(config_name,X509_get_default_cert_area());
-#ifndef OPENSSL_SYS_VMS
-		strcat(config_name,"/");
-#endif
-		strcat(config_name,OPENSSL_CONF);
-		p=config_name;
-		}
+		p=to_free=make_config_name();
 	default_config_file=p;
 	config=NCONF_new(NULL);
 	i=NCONF_load(config, p, &errline);
@@ -1131,6 +1125,10 @@ loop:
 		}
 	ex=0;
 end:
+#ifndef MONOLITH
+	if(to_free)
+		OPENSSL_free(to_free);
+#endif
 	if (ex)
 		{
 		ERR_print_errors(bio_err);
@@ -1293,13 +1291,19 @@ start:		for (;;)
 				}
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
+
+			if(strlen(v->name) > sizeof buf-9)
+			   {
+			   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
+			   return 0;
+			   }
+
 			sprintf(buf,"%s_default",v->name);
 			if ((def=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				def="";
 				}
-				
 			sprintf(buf,"%s_value",v->name);
 			if ((value=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
@@ -1345,6 +1349,12 @@ start2:			for (;;)
 				type=v->name;
 				if ((nid=OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
+
+				if(strlen(v->name) > sizeof buf-9)
+				   {
+				   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
+				   return 0;
+				   }
 
 				sprintf(buf,"%s_default",type);
 				if ((def=NCONF_get_string(req_conf,attr_sect,buf))
@@ -1449,6 +1459,7 @@ start:
 	(void)BIO_flush(bio_err);
 	if(value != NULL)
 		{
+		OPENSSL_assert(strlen(value) < sizeof buf-2);
 		strcpy(buf,value);
 		strcat(buf,"\n");
 		BIO_printf(bio_err,"%s\n",value);
@@ -1458,7 +1469,7 @@ start:
 		buf[0]='\0';
 		if (!batch)
 			{
-			fgets(buf,1024,stdin);
+			fgets(buf,sizeof buf,stdin);
 			}
 		else
 			{
@@ -1507,6 +1518,7 @@ start:
 	(void)BIO_flush(bio_err);
 	if (value != NULL)
 		{
+		OPENSSL_assert(strlen(value) < sizeof buf-2);
 		strcpy(buf,value);
 		strcat(buf,"\n");
 		BIO_printf(bio_err,"%s\n",value);
@@ -1516,7 +1528,7 @@ start:
 		buf[0]='\0';
 		if (!batch)
 			{
-			fgets(buf,1024,stdin);
+			fgets(buf,sizeof buf,stdin);
 			}
 		else
 			{

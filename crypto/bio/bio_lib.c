@@ -272,6 +272,18 @@ int BIO_gets(BIO *b, char *in, int inl)
 	return(i);
 	}
 
+int BIO_indent(BIO *b,int indent,int max)
+	{
+	if(indent < 0)
+		indent=0;
+	if(indent > max)
+		indent=max;
+	while(indent--)
+		if(BIO_puts(b," ") != 1)
+			return 0;
+	return 1;
+	}
+
 long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
 	{
 	int i;

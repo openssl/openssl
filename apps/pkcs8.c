@@ -244,7 +244,7 @@ int MAIN(int argc, char **argv)
 			if(passout) p8pass = passout;
 			else {
 				p8pass = pass;
-				if (EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1))
+				if (EVP_read_pw_string(pass, sizeof pass, "Enter Encryption Password:", 1))
 					return (1);
 			}
 			app_RAND_load_file(NULL, bio_err, 0);
@@ -302,7 +302,7 @@ int MAIN(int argc, char **argv)
 		if(passin) p8pass = passin;
 		else {
 			p8pass = pass;
-			EVP_read_pw_string(pass, 50, "Enter Password:", 0);
+			EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
 		}
 		p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
 		X509_SIG_free(p8);

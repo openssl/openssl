@@ -165,6 +165,7 @@ static int b64_read(BIO *b, char *out, int outl)
 		{
 		i=ctx->buf_len-ctx->buf_off;
 		if (i > outl) i=outl;
+		OPENSSL_assert(ctx->buf_off+i < sizeof ctx->buf);
 		memcpy(out,&(ctx->buf[ctx->buf_off]),i);
 		ret=i;
 		out+=i;

@@ -62,6 +62,7 @@
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #include "ui_locl.h"
+#include "cryptlib.h"
 
 IMPLEMENT_STACK_OF(UI_STRING_ST)
 
@@ -831,8 +832,8 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 	case UIT_PROMPT:
 	case UIT_VERIFY:
 		{
-		char number1[20];
-		char number2[20];
+		char number1[DECIMAL_SIZE(uis->_.string_data.result_minsize)+1];
+		char number2[DECIMAL_SIZE(uis->_.string_data.result_maxsize)+1];
 
 		BIO_snprintf(number1, sizeof(number1), "%d",
 			uis->_.string_data.result_minsize);

@@ -337,8 +337,7 @@ void program_name(char *in, char *out, int size)
 		p++;
 	else
 		p=in;
-	strncpy(out,p,size-1);
-	out[size-1]='\0';
+	BUF_strlcpy(out,p,size);
 	}
 #endif
 #endif
@@ -447,16 +446,20 @@ int app_init(long mesgwin)
 
 int dump_cert_text (BIO *out, X509 *x)
 {
-	char buf[256];
-	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
-	BIO_puts(out,"subject=");
-	BIO_puts(out,buf);
+	char *p;
 
-	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
-	BIO_puts(out,"\nissuer= ");
-	BIO_puts(out,buf);
+	p=X509_NAME_oneline(X509_get_subject_name(x),NULL,0);
+	BIO_puts(out,"subject=");
+	BIO_puts(out,p);
+	OPENSSL_free(p);
+
+	p=X509_NAME_oneline(X509_get_issuer_name(x),NULL,0);
+	BIO_puts(out,"\nissuer=");
+	BIO_puts(out,p);
 	BIO_puts(out,"\n");
-        return 0;
+	OPENSSL_free(p);
+
+	return 0;
 }
 
 static int ui_open(UI *ui)
@@ -978,7 +981,7 @@ load_netscape_key(BIO *err, BIO *key, const char *file,
 		goto error;
 	for (;;)
 		{
-		if (!BUF_MEM_grow(buf,size+1024*10))
+		if (!BUF_MEM_grow_clean(buf,size+1024*10))
 			goto error;
 		i = BIO_read(key, &(buf->data[size]), 1024*10);
 		size += i;
@@ -1253,6 +1256,7 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 	char *buf;
 	char mline = 0;
 	int indent = 0;
+
 	if(title) BIO_puts(out, title);
 	if((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 		mline = 1;
@@ -1373,4 +1377,19 @@ int load_config(BIO *err, CONF *cnf)
 		return 0;
 		}
 	return 1;
+	}
+
+char *make_config_name()
+	{
+	const char *t=X509_get_default_cert_area();
+	char *p;
+
+	p=OPENSSL_malloc(strlen(t)+strlen(OPENSSL_CONF)+2);
+	strcpy(p,t);
+#ifndef OPENSSL_SYS_VMS
+	strcat(p,"/");
+#endif
+	strcat(p,OPENSSL_CONF);
+
+	return p;
 	}

@@ -754,10 +754,16 @@ bad:
 #ifndef OPENSSL_NO_KRB5
 	if (c_ssl  &&  c_ssl->kssl_ctx)
                 {
-                char	localhost[257];
+                char	localhost[MAXHOSTNAMELEN+2];
 
-		if (gethostname(localhost, 256) == 0)
+		if (gethostname(localhost, sizeof localhost-1) == 0)
                         {
+			localhost[sizeof localhost-1]='\0';
+			if(strlen(localhost) == sizeof localhost-1)
+				{
+				BIO_printf(bio_err,"localhost name too long\n");
+				got end;
+				}
 			kssl_ctx_setstring(c_ssl->kssl_ctx, KSSL_SERVER,
                                 localhost);
 			}
@@ -1518,7 +1524,8 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char *s,buf[256];
 
-	s=X509_NAME_oneline(X509_get_subject_name(ctx->current_cert),buf,256);
+	s=X509_NAME_oneline(X509_get_subject_name(ctx->current_cert),buf,
+			    sizeof buf);
 	if (s != NULL)
 		{
 		if (ok)

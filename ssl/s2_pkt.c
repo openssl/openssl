@@ -113,6 +113,7 @@
 #ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <errno.h>
+#include "cryptlib.h"
 #define USE_SOCKETS
 
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
@@ -247,6 +248,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 		else
 			{
 			mac_size=EVP_MD_size(s->read_hash);
+			OPENSSL_assert(mac_size <= MAX_MAC_SIZE);
 			s->s2->mac_data=p;
 			s->s2->ract_data= &p[mac_size];
 			if (s->s2->padding + mac_size > s->s2->rlength)

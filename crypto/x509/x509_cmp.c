@@ -82,13 +82,14 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 	unsigned long ret=0;
 	EVP_MD_CTX ctx;
 	unsigned char md[16];
-	char str[256];
+	char *f;
 
 	EVP_MD_CTX_init(&ctx);
-	X509_NAME_oneline(a->cert_info->issuer,str,256);
-	ret=strlen(str);
+	f=X509_NAME_oneline(a->cert_info->issuer,NULL,0);
+	ret=strlen(f);
 	EVP_DigestInit_ex(&ctx, EVP_md5(), NULL);
-	EVP_DigestUpdate(&ctx,(unsigned char *)str,ret);
+	EVP_DigestUpdate(&ctx,(unsigned char *)f,ret);
+	OPENSSL_free(f);
 	EVP_DigestUpdate(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
 		(unsigned long)a->cert_info->serialNumber->length);
 	EVP_DigestFinal_ex(&ctx,&(md[0]),NULL);

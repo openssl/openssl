@@ -258,7 +258,7 @@ int doit(io_channel chan, SSL_CTX *s_ctx )
 {
     int status, length, link_state;
      struct rpc_msg msg;
-	static char cbuf[200],sbuf[200];
+
 	SSL *s_ssl=NULL;
 	BIO *c_to_s=NULL;
 	BIO *s_to_c=NULL;

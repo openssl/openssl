@@ -86,31 +86,32 @@ conf_api.o: ../../e_os.h ../../include/openssl/bio.h
 conf_api.o: ../../include/openssl/conf.h ../../include/openssl/conf_api.h
 conf_api.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 conf_api.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-conf_api.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-conf_api.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-conf_api.o: conf_api.c
+conf_api.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+conf_api.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+conf_api.o: ../../include/openssl/symhacks.h conf_api.c
 conf_def.o: ../../e_os.h ../../include/openssl/bio.h
 conf_def.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 conf_def.o: ../../include/openssl/conf_api.h ../../include/openssl/crypto.h
 conf_def.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 conf_def.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-conf_def.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-conf_def.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-conf_def.o: ../cryptlib.h conf_def.c conf_def.h
+conf_def.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+conf_def.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+conf_def.o: ../../include/openssl/symhacks.h ../cryptlib.h conf_def.c
+conf_def.o: conf_def.h
 conf_err.o: ../../include/openssl/bio.h ../../include/openssl/conf.h
 conf_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 conf_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 conf_err.o: ../../include/openssl/opensslconf.h
-conf_err.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-conf_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-conf_err.o: conf_err.c
+conf_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+conf_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+conf_err.o: ../../include/openssl/symhacks.h conf_err.c
 conf_lib.o: ../../include/openssl/bio.h ../../include/openssl/conf.h
 conf_lib.o: ../../include/openssl/conf_api.h ../../include/openssl/crypto.h
 conf_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 conf_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-conf_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-conf_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-conf_lib.o: conf_lib.c
+conf_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+conf_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+conf_lib.o: ../../include/openssl/symhacks.h conf_lib.c
 conf_mall.o: ../../e_os.h ../../include/openssl/aes.h
 conf_mall.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 conf_mall.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h

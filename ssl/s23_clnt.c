@@ -370,7 +370,7 @@ static int ssl23_get_server_hello(SSL *s)
 
 		if (s->s3 != NULL) ssl3_free(s);
 
-		if (!BUF_MEM_grow(s->init_buf,
+		if (!BUF_MEM_grow_clean(s->init_buf,
 			SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 			{
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,ERR_R_BUF_LIB);

@@ -1349,7 +1349,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			kn=0;
 			}
 
-		if (!BUF_MEM_grow(buf,n+4+kn))
+		if (!BUF_MEM_grow_clean(buf,n+4+kn))
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
 			goto err;
@@ -1522,7 +1522,7 @@ static int ssl3_send_certificate_request(SSL *s)
 				{
 				name=sk_X509_NAME_value(sk,i);
 				j=i2d_X509_NAME(name,NULL);
-				if (!BUF_MEM_grow(buf,4+n+j+2))
+				if (!BUF_MEM_grow_clean(buf,4+n+j+2))
 					{
 					SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,ERR_R_BUF_LIB);
 					goto err;
@@ -1883,7 +1883,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
                 if (enc == NULL)
                     goto err;
 
-		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
+		memset(iv, 0, sizeof iv);	/* per RFC 1510 */
 
 		if (!EVP_DecryptInit_ex(&ciph_ctx,enc,NULL,kssl_ctx->key,iv))
 			{

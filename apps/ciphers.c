@@ -187,7 +187,7 @@ int MAIN(int argc, char **argv)
 			{
 			BIO_puts(STDout,SSL_CIPHER_description(
 				sk_SSL_CIPHER_value(sk,i),
-				buf,512));
+				buf,sizeof buf));
 			}
 		}
 

@@ -528,9 +528,9 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
-	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
-	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);
-	memset(ss->session_id,0,SSL_MAX_SSL_SESSION_ID_LENGTH);
+	memset(ss->key_arg,0,sizeof ss->key_arg);
+	memset(ss->master_key,0,sizeof ss->master_key);
+	memset(ss->session_id,0,sizeof ss->session_id);
 	if (ss->sess_cert != NULL) ssl_sess_cert_free(ss->sess_cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);

@@ -275,7 +275,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 
 	/* TLSv1 sends a chain with nothing in it, instead of an alert */
 	buf=s->init_buf;
-	if (!BUF_MEM_grow(buf,(int)(10)))
+	if (!BUF_MEM_grow_clean(buf,10))
 		{
 		SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 		return(0);
@@ -291,7 +291,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 		for (;;)
 			{
 			n=i2d_X509(x,NULL);
-			if (!BUF_MEM_grow(buf,(int)(n+l+3)))
+			if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
 				{
 				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 				return(0);
@@ -321,7 +321,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 		{
 		x=sk_X509_value(s->ctx->extra_certs,i);
 		n=i2d_X509(x,NULL);
-		if (!BUF_MEM_grow(buf,(int)(n+l+3)))
+		if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
 			{
 			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 			return(0);
@@ -444,7 +444,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 			}
-		if (l && !BUF_MEM_grow(s->init_buf,(int)l+4))
+		if (l && !BUF_MEM_grow_clean(s->init_buf,(int)l+4))
 			{
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,ERR_R_BUF_LIB);
 			goto err;

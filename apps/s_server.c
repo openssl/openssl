@@ -1306,14 +1306,14 @@ static int init_ssl_connection(SSL *con)
 		{
 		BIO_printf(bio_s_out,"Client certificate\n");
 		PEM_write_bio_X509(bio_s_out,peer);
-		X509_NAME_oneline(X509_get_subject_name(peer),buf,BUFSIZ);
+		X509_NAME_oneline(X509_get_subject_name(peer),buf,sizeof buf);
 		BIO_printf(bio_s_out,"subject=%s\n",buf);
-		X509_NAME_oneline(X509_get_issuer_name(peer),buf,BUFSIZ);
+		X509_NAME_oneline(X509_get_issuer_name(peer),buf,sizeof buf);
 		BIO_printf(bio_s_out,"issuer=%s\n",buf);
 		X509_free(peer);
 		}
 
-	if (SSL_get_shared_ciphers(con,buf,BUFSIZ) != NULL)
+	if (SSL_get_shared_ciphers(con,buf,sizeof buf) != NULL)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");

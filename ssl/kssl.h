@@ -110,12 +110,13 @@ typedef unsigned char krb5_octet;
 #define	KSSL_CLOCKSKEW	300;
 #endif
 
+/* Unused
 #define	KSSL_ERR_MAX	255
 typedef struct kssl_err_st  {
 	int  reason;
 	char text[KSSL_ERR_MAX+1];
 	} KSSL_ERR;
-
+*/
 
 /*	Context for passing
 **		(1) Kerberos session key to SSL, and

@@ -118,9 +118,9 @@ const char *MD2_options(void)
 int MD2_Init(MD2_CTX *c)
 	{
 	c->num=0;
-	memset(c->state,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->cksm,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->data,0,MD2_BLOCK);
+	memset(c->state,0,sizeof c->state);
+	memset(c->cksm,0,sizeof c->cksm);
+	memset(c->data,0,sizeof c->data);
 	return 1;
 	}
 

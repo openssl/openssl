@@ -305,10 +305,32 @@ void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 
 	if (str == NULL)
 		return CRYPTO_malloc(num, file, line);
-
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);
 	ret = realloc_ex_func(str,num,file,line);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
+#endif
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, ret, num, file, line, 1);
+
+	return ret;
+	}
+
+void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
+			   int line)
+	{
+	void *ret = NULL;
+
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, NULL, num, file, line, 0);
+	ret=malloc_ex_func(num,file,line);
+	if(ret)
+		memcpy(ret,str,old_len);
+	memset(str,'\0',old_len);
+	free_func(str);
 #ifdef LEVITTE_DEBUG_MEM
 	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
 #endif
@@ -336,7 +358,6 @@ void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 	a=(char *)OPENSSL_malloc(num);
 	return(a);
 	}
-
 
 void CRYPTO_set_mem_debug_options(long bits)
 	{

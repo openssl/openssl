@@ -285,7 +285,7 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_CTX *c)
 			goto err;
 			}
 
-		if (!BUF_MEM_grow(&b,num+os->length))
+		if (!BUF_MEM_grow_clean(&b,num+os->length))
 			{
 			c->error=ERR_R_BUF_LIB;
 			goto err;

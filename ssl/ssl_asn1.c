@@ -299,6 +299,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 		os.length = sizeof ret->session_id;
 
 	ret->session_id_length=os.length;
+	OPENSSL_assert(os.length <= sizeof ret->session_id);
 	memcpy(ret->session_id,os.data,os.length);
 
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
@@ -370,9 +371,15 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	if(os.data != NULL)
 	    {
 	    if (os.length > SSL_MAX_SID_CTX_LENGTH)
+		{
+		ret->sid_ctx_length=os.length;
 		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_BAD_LENGTH);
-	    ret->sid_ctx_length=os.length;
-	    memcpy(ret->sid_ctx,os.data,os.length);
+		}
+	    else
+		{
+		ret->sid_ctx_length=os.length;
+		memcpy(ret->sid_ctx,os.data,os.length);
+		}
 	    OPENSSL_free(os.data); os.data=NULL; os.length=0;
 	    }
 	else

@@ -124,7 +124,7 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	unsigned int j;
 	HMAC_CTX ctx;
 	HMAC_CTX ctx_tmp;
-	unsigned char A1[HMAC_MAX_MD_CBLOCK];
+	unsigned char A1[EVP_MAX_MD_SIZE];
 	unsigned int A1_len;
 	
 	chunk=EVP_MD_size(md);
@@ -683,10 +683,10 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
 
 	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(q-buf),
 		s->session->master_key,s->session->master_key_length,
-		out,buf2,12);
+		out,buf2,sizeof buf2);
 	EVP_MD_CTX_cleanup(&ctx);
 
-	return((int)12);
+	return sizeof buf2;
 	}
 
 int tls1_mac(SSL *ssl, unsigned char *md, int send)
@@ -773,7 +773,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		s->s3->server_random,SSL3_RANDOM_SIZE);
 	tls1_PRF(s->ctx->md5,s->ctx->sha1,
 		buf,TLS_MD_MASTER_SECRET_CONST_SIZE+SSL3_RANDOM_SIZE*2,p,len,
-		s->session->master_key,buff,SSL3_MASTER_SECRET_SIZE);
+		s->session->master_key,buff,sizeof buff);
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret() complete\n");
 #endif	/* KSSL_DEBUG */
