@@ -1349,7 +1349,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			BIO *file;
 			char *p,*e;
 			static char *text="HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n";
-			int prev_slash;
 
 			/* skip the '/' */
 			p= &(buf[5]);
