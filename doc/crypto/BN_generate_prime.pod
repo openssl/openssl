@@ -55,7 +55,7 @@ The prime number generation has a negligible error probability.
 
 BN_is_prime() tests if the number B<a> is prime. This is done by
 performing a Miller-Rabin probabilistic primality test with B<checks>
-iterations. If B<checks == BN_prime_check>, it uses the minimal number
+iterations. If B<checks == BN_prime_check>, it uses a number
 of iterations that yields a false positive rate of at most 2^-80 for
 random input.
 

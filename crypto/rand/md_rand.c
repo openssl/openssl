@@ -186,7 +186,7 @@ static void ssleay_rand_add(const void *buf, int num, int add)
 	/*
 	 * (Based on the rand(3) manpage)
 	 *
-	 * The input is chopped up into units of 16 bytes (or less for
+	 * The input is chopped up into units of 20 bytes (or less for
 	 * the last block).  Each of these blocks is run through the hash
 	 * function as follows:  The data passed to the hash function
 	 * is the current 'md', the same number of bytes from the 'state'
@@ -324,13 +324,15 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	/*
 	 * (Based on the rand(3) manpage:)
 	 *
-	 * For each group of 8 bytes (or less), we do the following:
+	 * For each group of 10 bytes (or less), we do the following:
 	 *
-	 * Input into the hash function the top 8 bytes from 'md', the bytes
-	 * that are to be overwritten by the random bytes, and bytes from the
+	 * Input into the hash function the top 10 bytes from the
+	 * local 'md' (which is initialized from the global 'md'
+	 * before any bytes are generated), the bytes that are
+	 * to be overwritten by the random bytes, and bytes from the
 	 * 'state' (incrementing looping index).  From this digest output
-	 * (which is kept in 'md'), the top (upto) 8 bytes are
-	 * returned to the caller and the bottom (upto) 8 bytes are xored
+	 * (which is kept in 'md'), the top (up to) 10 bytes are
+	 * returned to the caller and the bottom (up to) 10 bytes are xored
 	 * into the 'state'.
 	 * Finally, after we have finished 'num' random bytes for the
 	 * caller, 'count' (which is incremented) and the local and global 'md'
