@@ -5,6 +5,10 @@
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
   *) Constify the ENGINE code as a result of BIGNUM constification.
+     Also constify the RSA code and most things related to it.  In a
+     few places, most notable in the depth of the ASN.1 code, ugly
+     casts back to non-const were required (to be solved at a later
+     time)
      [Richard Levitte]
 
   *) Make it so the openssl application has all engines loaded by default.
