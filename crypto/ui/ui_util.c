@@ -55,9 +55,6 @@
 
 #include <string.h>
 #include <openssl/ui.h>
-#ifdef OPENSSL_SYS_WINCE
-#include <stdio_extras.h>	/* BUFSIZ */
-#endif
 
 int UI_UTIL_read_pw_string(char *buf,int length,const char *prompt,int verify)
 	{

@@ -12,8 +12,8 @@ $rm='del';
 
 # C compiler stuff
 $cc='$(CC)';
-$cflags=' /W3 /WX /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -D$(TARGETCPU) -D_$(TARGETCPU)_ -DUNDER_CE=300 -D_WIN32_CE=300 -DWIN32_PLATFORM_PSPC -DUNICODE -D_UNICODE -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
-$lflags='/nologo /subsystem:windowsce,3.00 /machine:$(TARGETCPU) /opt:ref';
+$cflags=' /W3 /WX /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo $(WCETARGETDEFS) -DUNICODE -D_UNICODE -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
+$lflags='/nologo /subsystem:windowsce,$(WCELDVERSION) /machine:$(WCELDMACHINE) /opt:ref';
 $mlflags='';
 
 $out_def='out32_$(TARGETCPU)';
@@ -36,8 +36,7 @@ $efile="/out:";
 $exep='.exe';
 if ($no_sock)
 	{ $ex_libs=""; }
-else	{ $ex_libs='winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib'; }
-#else	{ $ex_libs='winsock.lib coredll.lib $(WCECOMPAT)/lib/wcecompatex.lib'; }
+else	{ $ex_libs='winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib $(WCELDFLAGS)'; }
 
 # static library stuff
 $mklib='lib';

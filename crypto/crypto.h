@@ -63,9 +63,6 @@
 
 #ifndef OPENSSL_NO_FP_API
 #include <stdio.h>
-#ifdef OPENSSL_SYS_WINCE
-#include <stdio_extras.h>
-#endif
 #endif
 
 #include <openssl/stack.h>
