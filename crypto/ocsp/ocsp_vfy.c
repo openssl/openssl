@@ -144,7 +144,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 			}
 		ret = 1;
 		}
-		
+
 
 
 	end:
@@ -344,7 +344,7 @@ static int ocsp_check_delegated(X509 *x, int flags)
 	}
 
 /* Verify an OCSP request. This is fortunately much easier than OCSP
- * request verify. Just find the signers certificate and verify it
+ * response verify. Just find the signers certificate and verify it
  * against a given trust value.
  */
 
