@@ -73,15 +73,16 @@ static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-static int probable_prime_dh_strong(BIGNUM *rnd, int bits,
+static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int strong, BIGNUM *add,
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	     BIGNUM *rem, void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
 	int i,j,c1=0;
 	BN_CTX *ctx;
+	int checks = BN_prime_checks(bits);
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -100,9 +101,9 @@ loop:
 		}
 	else
 		{
-		if (strong)
+		if (safe)
 			{
-			if (!probable_prime_dh_strong(rnd,bits,add,rem,ctx))
+			if (!probable_prime_dh_safe(rnd,bits,add,rem,ctx))
 				 goto err;
 			}
 		else
@@ -114,21 +115,21 @@ loop:
 	/* if (BN_mod_word(rnd,(BN_ULONG)3) == 1) goto loop; */
 	if (callback != NULL) callback(0,c1++,cb_arg);
 
-	if (!strong)
+	if (!safe)
 		{
-		i=BN_is_prime(rnd,BN_prime_checks,callback,ctx,cb_arg);
+		i=BN_is_prime(rnd,checks,callback,ctx,cb_arg);
 		if (i == -1) goto err;
 		if (i == 0) goto loop;
 		}
 	else
 		{
-		/* for a strong prime generation,
+		/* for "safe prime" generation,
 		 * check that (p-1)/2 is prime.
 		 * Since a prime is odd, We just
 		 * need to divide by 2 */
 		if (!BN_rshift1(&t,rnd)) goto err;
 
-		for (i=0; i<BN_prime_checks; i++)
+		for (i=0; i<checks; i++)
 			{
 			j=BN_is_prime(rnd,1,callback,ctx,cb_arg);
 			if (j == -1) goto err;
@@ -139,7 +140,7 @@ loop:
 			if (j == 0) goto loop;
 
 			if (callback != NULL) callback(2,c1-1,cb_arg);
-			/* We have a strong prime test pass */
+			/* We have a safe prime test pass */
 			}
 		}
 	/* we have a prime :-) */
@@ -331,7 +332,7 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_strong(BIGNUM *p, int bits, BIGNUM *padd,
+static int probable_prime_dh_safe(BIGNUM *p, int bits, BIGNUM *padd,
 	     BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;

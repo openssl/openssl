@@ -102,12 +102,12 @@ int DH_check(DH *dh, int *ret)
 	else
 		*ret|=DH_UNABLE_TO_CHECK_GENERATOR;
 
-	if (!BN_is_prime(dh->p,BN_prime_checks,NULL,ctx,NULL))
+	if (!BN_is_prime(dh->p,BN_prime_checks(BN_num_bits(dh->p)),NULL,ctx,NULL))
 		*ret|=DH_CHECK_P_NOT_PRIME;
 	else
 		{
 		if (!BN_rshift1(q,dh->p)) goto err;
-		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx,NULL))
+		if (!BN_is_prime(q,BN_prime_checks(BN_num_bits(q)),NULL,ctx,NULL))
 			*ret|=DH_CHECK_P_NOT_STRONG_PRIME;
 		}
 	ok=1;

@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Do more iterations of Rabin-Miller probable prime test (specifically,
+     3 for 1024-bit primes, 6 for 512-bit primes, 12 for 256-bit primes
+     instead of only 2 for all lengths; see BN_prime_checks definition
+     in crypto/bn/bn.h for the complete table).  This guarantees a
+     false-positive rate of at most 2^-80 (actually less because we are
+     additionally doing trial division) for random input.
+     [Bodo Moeller]
+
   *) Rewrite ssl3_read_n (ssl/s3_pkt.c) avoiding a couple of bugs.
      [Bodo Moeller]
 

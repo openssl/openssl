@@ -283,7 +283,23 @@ typedef struct bn_recp_ctx_st
 #define BN_to_montgomery(r,a,mont,ctx)	BN_mod_mul_montgomery(\
 	r,a,&((mont)->RR),(mont),ctx)
 
-#define BN_prime_checks		(5)
+/* number of Miller-Rabin iterations for an error rate  of less than 2^-80
+ * for random 'b'-bit input, b >= 100 (taken from table 4.4 in the Handbook
+ * of Applied Cryptography [Menezes, van Oorschot, Vanstone; CRC Press 1996];
+ * original paper: Damgaard, Landrock, Pomerance: Average case error estimates
+ * for the strong probable prime test. -- Math. Comp. 61 (1993) 177-194) */
+#define BN_prime_checks(b) ((b) >= 1300 ?  2 : \
+                            (b) >=  850 ?  3 : \
+                            (b) >=  650 ?  4 : \
+                            (b) >=  550 ?  5 : \
+                            (b) >=  450 ?  6 : \
+                            (b) >=  400 ?  7 : \
+                            (b) >=  350 ?  8 : \
+                            (b) >=  300 ?  9 : \
+                            (b) >=  250 ? 12 : \
+                            (b) >=  200 ? 15 : \
+                            (b) >=  150 ? 18 : \
+                            /* b >= 100 */ 27)
 
 #define BN_num_bytes(a)	((BN_num_bits(a)+7)/8)
 #define BN_is_word(a,w)	(((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w)))
@@ -381,7 +397,7 @@ int 	BN_hex2bn(BIGNUM **a, const char *str);
 int 	BN_dec2bn(BIGNUM **a, const char *str);
 int	BN_gcd(BIGNUM *r,BIGNUM *in_a,BIGNUM *in_b,BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *ret,BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
-BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int strong,BIGNUM *add,
+BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
 		BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);
 int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
 		BN_CTX *ctx,void *cb_arg);

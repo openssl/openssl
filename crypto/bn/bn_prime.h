@@ -55,6 +55,7 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
 #ifndef EIGHT_BIT
 #define NUMPRIMES 2048
 #else
