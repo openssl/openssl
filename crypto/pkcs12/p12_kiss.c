@@ -75,44 +75,49 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	     STACK **ca)
 {
 
-/* Check for NULL PKCS12 structure */
+	/* Check for NULL PKCS12 structure */
 
-if(!p12) {
-	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_INVALID_NULL_PKCS12_POINTER);
-	return 0;
-}
-
-/* Allocate stack for ca certificates if needed */
-if ((ca != NULL) && (*ca == NULL)) {
-	if (!(*ca = sk_new(NULL))) {
-		PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
+	if(!p12)
+		{
+		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_INVALID_NULL_PKCS12_POINTER);
 		return 0;
-	}
-}
+		}
 
-if(pkey) *pkey = NULL;
-if(cert) *cert = NULL;
+	/* Allocate stack for ca certificates if needed */
+	if ((ca != NULL) && (*ca == NULL))
+		{
+		if (!(*ca = sk_new(NULL)))
+			{
+			PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
 
-/* Check the mac */
+	if(pkey) *pkey = NULL;
+	if(cert) *cert = NULL;
 
-if (!PKCS12_verify_mac (p12, pass, -1)) {
-	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
-	goto err;
-}
+	/* Check the mac */
 
-if (!parse_pk12 (p12, pass, -1, pkey, cert, ca)) {
-	PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_PARSE_ERROR);
-	goto err;
-}
+	if (!PKCS12_verify_mac (p12, pass, -1))
+		{
+		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
+		goto err;
+		}
 
-return 1;
+	if (!parse_pk12 (p12, pass, -1, pkey, cert, ca))
+		{
+		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_PARSE_ERROR);
+		goto err;
+		}
 
-err:
+	return 1;
 
-if (pkey && *pkey) EVP_PKEY_free (*pkey);
-if (cert && *cert) X509_free (*cert);
-if (ca) sk_pop_free (*ca, X509_free);
-return 0;
+ err:
+
+	if (pkey && *pkey) EVP_PKEY_free (*pkey);
+	if (cert && *cert) X509_free (*cert);
+	if (ca) sk_pop_free (*ca, X509_free);
+	return 0;
 
 }
 
