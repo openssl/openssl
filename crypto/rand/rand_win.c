@@ -570,7 +570,7 @@ static void readtimer(void)
 	DWORD w;
 	LARGE_INTEGER l;
 	static int have_perfc = 1;
-#ifndef __GNUC__
+#ifdef _MSC_VER
 	static int have_tsc = 1;
 	DWORD cyclecount;
 
