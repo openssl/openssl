@@ -206,7 +206,10 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		break;
 
 		case V_ASN1_BOOLEAN:
-		*(ASN1_BOOLEAN *)pval = it->size;
+		if (it)
+			*(ASN1_BOOLEAN *)pval = it->size;
+		else
+			*(ASN1_BOOLEAN *)pval = -1;
 		return;
 
 		case V_ASN1_NULL:
