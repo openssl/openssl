@@ -1,76 +1,71 @@
-Installing OpenSSL on Unix
---------------------------
 
-[For instructions for compiling OpenSSL on Windows systems, see INSTALL.W32].
+ INSTALLATION ON THE UNIX PLATFORM
+ ---------------------------------
 
-To install OpenSSL, you will need:
+ [For instructions for compiling OpenSSL on Windows systems, see INSTALL.W32].
+
+ To install OpenSSL, you will need:
 
   * Perl
   * C compiler
-  * A supported operating system
+  * A supported Unix operating system
 
-Quick Start
------------
+ Quick Start
+ -----------
 
-If you want to just get on with it, do:
+ If you want to just get on with it, do:
 
-  sh config                      [if this fails, go to step 1b below]
-  make
-  make rehash
-  make test
-  make install
+  $ ./config                  [if this fails, go to step 1b below]
+  $ make
+  $ make rehash
+  $ make test
+  $ make install
 
-This will build and install OpenSSL in the default location, which is
-/usr/local/ssl. If you want to install it anywhere else, do this
-after running `sh config':
+ This will build and install OpenSSL in the default location, which is (for
+ historical reasons) /usr/local/ssl. If you want to install it anywhere else,
+ do this after running `sh config':
 
-  perl util/ssldir.pl /new/install/path
+  $ perl util/ssldir.pl /new/install/path
 
-If anything goes wrong, follow the detailed instructions below. If
-your operating system is not (yet) supported by OpenSSL, see the
-section on porting to a new system.
+ If anything goes wrong, follow the detailed instructions below. If your
+ operating system is not (yet) supported by OpenSSL, see the section on
+ porting to a new system.
 
-Installation in Detail
-----------------------
+ Installation in Detail
+ ----------------------
 
- 1a. Configure OpenSSL for your operation system automatically
+ 1a. Configure OpenSSL for your operation system automatically:
 
-     Run
+       $ ./config
 
-       sh config
-
-     This guesses at your operating system (and compiler, if
-     necessary) and configures OpenSSL based on this guess. Check the
-     first line of output to see if it guessed correctly. If it did
-     not get it correct or you want to use a different compiler then
-     go to step 1b. Otherwise go to step 2.
+     This guesses at your operating system (and compiler, if necessary) and
+     configures OpenSSL based on this guess. Check the first line of output to
+     see if it guessed correctly. If it did not get it correct or you want to
+     use a different compiler then go to step 1b. Otherwise go to step 2.
 
  1b. Configure OpenSSL for your operating system manually
 
-     OpenSSL knows about a range of different operating system, hardware
-     and compiler combinations. To see the ones it knows about, run
+     OpenSSL knows about a range of different operating system, hardware and
+     compiler combinations. To see the ones it knows about, run
 
-       ./Configure
+       $ ./Configure
 
-     Pick a suitable name from the list that matches your system. For
-     most operating systems there is a choice between using "cc" or
-     "gcc".
+     Pick a suitable name from the list that matches your system. For most
+     operating systems there is a choice between using "cc" or "gcc".  When
+     you have identified your system (and if necessary compiler) use this name
+     as the argument to ./Configure. For example, a "linux-elf" user would
+     run:
 
-     When you have identified your system (and if necessary compiler)
-     use this name as the argument to ./Configure. For example, a
-     "linux-elf" user would run:
-
-       ./Configure linux-elf
+       $ ./Configure linux-elf
 
      If your system is not available, you will have to edit the Configure
      program and add the correct configuration for your system.
 
-     Configure configures various files by converting an existing .org
-     file into the real file. If you edit any files, remember that if
-     a corresponding .org file exists them the next time you run
-     ./Configure your changes will be lost when the file gets
-     re-created from the .org file. The files that are created from
-     .org files are:
+     Configure configures various files by converting an existing .org file
+     into the real file. If you edit any files, remember that if a
+     corresponding .org file exists them the next time you run ./Configure
+     your changes will be lost when the file gets re-created from the .org
+     file. The files that are created from .org files are:
 
        Makefile.ssl
        crypto/des/des.h
@@ -85,71 +80,56 @@ Installation in Detail
 
   2. Set the install directory
 
-     If the install directory will be the default of /usr/local/ssl,
-     skip to the next stage. Otherwise, run
+     If the install directory will be the default of /usr/local/ssl, skip to
+     the next stage. Otherwise, run
 
-       perl util/ssldir.pl /new/install/path
+        $ perl util/ssldir.pl /new/install/path
 
-     This configures the installation location into the "install"
-     target of the top-level Makefile, and also updates some defines
-     in an include file so that the default certificate directory is
-     under the proper installation directory. It also updates a few
-     utility files used in the build process.
+     This configures the installation location into the "install" target of
+     the top-level Makefile, and also updates some defines in an include file
+     so that the default certificate directory is under the proper
+     installation directory. It also updates a few utility files used in the
+     build process.
 
-  3. Build OpenSSL
+  3. Build OpenSSL by running:
 
-     Now run
+       $ make
 
-       make
+     This will build the OpenSSL libraries (libcrypto.a and libssl.a) and the
+     OpenSSL binary ("openssl"). The libraries will be built in the top-level
+     directory, and the binary will be in the "apps" directory.
 
-     This will build the OpenSSL libraries (libcrypto.a and libssl.a)
-     and the OpenSSL binary ("openssl"). The libraries will be built
-     in the top-level directory, and the binary will be in the "apps"
-     directory.
+  4. After a successful build, the libraries should be tested. Run:
 
-  4. After a successful build, the libraries should be tested. Run
+       $ make rehash
+       $ make test
 
-       make rehash
-       make test
-
-     (The first line makes the test certificates in the "certs"
-     directory accessable via an hash name, which is required for some
-     of the tests).
+     (The first line makes the test certificates in the "certs" directory
+     accessable via an hash name, which is required for some of the tests).
 
   5. If everything tests ok, install OpenSSL with
 
-       make install
+       $ make install
 
-     This will create the installation directory (if it does not
-     exist) and then create the following subdirectories:
+     This will create the installation directory (if it does not exist) and
+     then create the following subdirectories:
 
-       bin            Contains the openssl binary and a few other utility
-                      programs. It also contains symbolic links so
-                      that openssl commands can be accessed directly
-                      (e.g. so that "s_client" can be used instead of
-                      "openssl s_client").
-       certs          Initially empty, this is the default location
-                      for certificate files.
+       bin            Contains the openssl binary and a few other 
+                      utility programs. 
        include        Contains the header files needed if you want to
                       compile programs with libcrypto or libssl.
        lib            Contains the library files themselves and the
                       OpenSSL configuration file "openssl.cnf".
+       certs          Initially empty, this is the default location
+                      for certificate files.
        private        Initially empty, this is the default location
                       for private key files.
 
-----------------------------------------------------------------------
 
-Additional Compilation Notes
-----------------------------
-
-These notes come from SSLeay 0.9.1 and cover some more advanced
-facilities (such as building a single makefile for use on Windows
-systems).
-
-
-# Installation of SSLeay.
-# It depends on perl for a few bits but those steps can be skipped and
-# the top level makefile edited by hand
+--------------------------------------------------------------------------------
+The orignal Unix build instructions from SSLeay follow. 
+Note: some of this may be out of date and no longer applicable
+--------------------------------------------------------------------------------
 
 # When bringing the SSLeay distribution back from the evil intel world
 # of Windows NT, do the following to make it nice again under unix :-)

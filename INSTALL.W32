@@ -1,97 +1,104 @@
-Building OpenSSL under Win32.
+ 
+ INSTALLATION ON THE WIN32 PLATFORM
+ ----------------------------------
 
-Heres a few comments about building OpenSSL in Windows environments. Most of
-this is tested on Win32 but it may also work in Win 3.1 with some modification.
-See the end of this file for Eric's original comments.
+ Heres a few comments about building OpenSSL in Windows environments. Most of
+ this is tested on Win32 but it may also work in Win 3.1 with some
+ modification.  See the end of this file for Eric's original comments.
 
-Note: the default Win32 environment is to leave out any Windows NT specific
-features: (currently only BIO_s_log()) if you want NT specific features see
-the "Tweaks" section later.
+ Note: the default Win32 environment is to leave out any Windows NT specific
+ features: (currently only BIO_s_log()) if you want NT specific features see
+ the "Tweaks" section later.
 
-You will need perl for Win32 (which can be got from various sources) and Visual
-C++. 
+ You will need perl for Win32 (which can be got from various sources) and
+ Visual C++. 
 
-If you are compiling from a tarball or a CVS snapshot then the Win32 files may
-well be not up to date. This may mean that some "tweaking" is required to get
-it all to work. See the trouble shooting section later on for if (when?) it
-goes wrong.
+ If you are compiling from a tarball or a CVS snapshot then the Win32 files
+ may well be not up to date. This may mean that some "tweaking" is required to
+ get it all to work. See the trouble shooting section later on for if (when?)
+ it goes wrong.
 
-Firstly you should run Configure:
+ Firstly you should run Configure:
 
-perl Configure VC-WIN32
+ > perl Configure VC-WIN32
 
-Then rebuild the Win32 Makefiles and friends:
+ Then rebuild the Win32 Makefiles and friends:
 
-ms\do_ms
+ > ms\do_ms
 
-if you get errors about things not having numbers assigned then check the
-troubleshooting section: you probably wont be able to compile it as it stands.
+ If you get errors about things not having numbers assigned then check the
+ troubleshooting section: you probably wont be able to compile it as it
+ stands.
 
-then from the VC++ environment at a prompt do:
+ Then from the VC++ environment at a prompt do:
 
-nmake -f ms\ntdll.mak
+ > nmake -f ms\ntdll.mak
 
-If all is well it should compile and you will have some DLLs and executables
-in out32dll. If you want to try the tests then cd to out32dll and run ..\ms\test
+ If all is well it should compile and you will have some DLLs and executables
+ in out32dll. If you want to try the tests then do:
+ 
+ > cd out32dll
+ > ..\ms\test
 
-Troubleshooting.
+ Troubleshooting
+ ---------------
 
-Since the Win32 build is only occasionally tested it may not always compile
-cleanly.
+ Since the Win32 build is only occasionally tested it may not always compile
+ cleanly.  If you get an error about functions not having numbers assigned
+ when you run ms\do_ms then this means the Win32 ordinal files are not up to
+ date. You can do:
 
-If you get an error about functions not having numbers assigned when you
-run ms\do_ms then this means the Win32 ordinal files are not up to date. You
-can do:
+ > perl util\mkdef.pl crypto ssl update
 
-perl util\mkdef.pl crypto ssl update
+ then ms\do_ms should not give a warning any more. However the numbers that
+ get assigned by this technique may not match those that eventually get
+ assigned in the CVS tree: so anything linked against this version of the
+ library may need to be recompiled.
 
-then ms\do_ms should not give a warning any more. However the numbers that get
-assigned by this technique may not match those that eventually get assigned
-in the CVS tree: so anything linked against this version of the library
-may need to be recompiled.
+ If you get errors about unresolved externals then this means that either you
+ didn't read the note above about functions not having numbers assigned or
+ someone forgot to add a function to the header file.
 
-If you get errors about unresolved externals then this means that either you
-didn't read the note above about functions not having numbers assigned or
-someone forgot to add a function to the header file.
+ In this latter case check out the header file to see if the function is
+ defined in the header file: it should be defined twice: once with ANSI
+ prototypes and once without. If its missing from the non ASNI section then
+ add an entry for it: check that ms\do_ms now reports missing numbers and
+ update the numbers as above.
 
-In this latter case check out the header file to see if the function is defined
-in the header file: it should be defined twice: once with ANSI prototypes and
-once without. If its missing from the non ASNI section then add an entry for
-it: check that ms\do_ms now reports missing numbers and update the numbers as
-above.
+ If you get warnings in the code then the compilation will halt.
 
-If you get warnings in the code then the compilation will halt.
+ The default Makefile for Win32 halts whenever any warnings occur. Since VC++
+ has its own ideas about warnings which don't always match up to other
+ environments this can happen. The best fix is to edit the file with the
+ warning in and fix it. Alternatively you can turn off the halt on warnings by
+ editing the CFLAG line in the Makefile and deleting the /WX option.
 
-The default Makefile for Win32 halts whenever any warnings occur. Since VC++
-has its own ideas about warnings which don't always match up to other
-environments this can happen. The best fix is to edit the file with the warning
-in and fix it. Alternatively you can turn off the halt on warnings by editing
-the CFLAG line in the Makefile and deleting the /WX option.
+ You might get compilation errors. Again you will have to fix these or report
+ them.
 
-You might get compilation errors. Again you will have to fix these or
-report them.
+ One final comment about compiling applications linked to the OpenSSL library.
+ If you don't use the multithreaded DLL runtime library (/MD option) your
+ program will almost certainly crash: see the original SSLeay description
+ below for more details.
 
-One final comment about compiling applications linked to the OpenSSL library.
-If you don't use the multithreaded DLL runtime library (/MD option) your
-program will almost certainly crash: see the original SSLeay description below
-for more details.
+ Tweaks
+ ------
 
-Tweaks.
+ There are various changes you can make to the Win32 compile environment. If
+ you have the MASM assembler 'ml' then you can try the assembly language code.
+ To do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug'
+ here to make a debugging version of the library.
 
-There are various changes you can make to the Win32 compile environment. If you
-have the MASM assembler 'ml' then you can try the assembly language code. To
-do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug' here
-to make a debugging version of the library.
+ If you want to enable the NT specific features of OpenSSL (currently only the
+ logging BIO) follow the instructions above but call the batch file do_nt.bat
+ instead of do_ms.bat.
 
-If you want to enable the NT specific features of OpenSSL (currently only
-the logging BIO) follow the instructions above but call the batch file
-do_nt.bat instead of do_ms.bat.
-
-You can also build a static version of the library using the Makefile ms\nt.mak
+ You can also build a static version of the library using the Makefile
+ ms\nt.mak
 
 --------------------------------------------------------------------------------
-The orignal Windows build instructions from SSLeay follow. Note: some of this
-may be out of date and no longer applicable
+The orignal Windows build instructions from SSLeay follow. 
+Note: some of this may be out of date and no longer applicable
 --------------------------------------------------------------------------------
 
 The Microsoft World.
