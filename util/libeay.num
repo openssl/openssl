@@ -1844,3 +1844,9 @@ sk_DIST_POINT_sort                      1868
 RSA_check_key                           1869
 OBJ_obj2txt                             1870
 DSA_dup_DH                              1871
+X509_REQ_get_extensions                 1872
+X509_REQ_set_extension_nids             1873
+BIO_nwrite                              1874
+X509_REQ_extension_nid                  1875
+BIO_nread                               1876
+X509_REQ_get_extesion_nids              1877

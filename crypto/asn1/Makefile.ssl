@@ -160,11 +160,13 @@ a_digest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 a_digest.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
 a_digest.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
 a_digest.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-a_digest.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
-a_digest.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-a_digest.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-a_digest.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-a_digest.o: ../../include/openssl/stack.h ../cryptlib.h
+a_digest.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+a_digest.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+a_digest.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+a_digest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+a_digest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+a_digest.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+a_digest.o: ../cryptlib.h
 a_dup.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 a_dup.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 a_dup.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -816,11 +818,12 @@ t_pkey.o: ../../include/openssl/stack.h ../cryptlib.h
 t_req.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_req.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 t_req.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-t_req.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-t_req.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-t_req.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-t_req.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-t_req.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+t_req.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+t_req.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+t_req.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+t_req.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+t_req.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+t_req.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
 t_req.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
 t_req.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 t_req.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
@@ -829,7 +832,7 @@ t_req.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 t_req.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 t_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_req.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-t_req.o: ../cryptlib.h
+t_req.o: ../../include/openssl/x509v3.h ../cryptlib.h
 t_x509.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_x509.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 t_x509.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

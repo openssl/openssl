@@ -325,6 +325,10 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_GET_WRITE_GUARANTEE		140
 #define BIO_C_GET_READ_REQUEST			141
 #define BIO_C_SHUTDOWN_WR			142
+#define BIO_C_NREAD0				143
+#define BIO_C_NREAD				144
+#define BIO_C_NWRITE0				145
+#define BIO_C_NWRITE				146
 
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
@@ -462,8 +466,6 @@ size_t BIO_ctrl_wpending(BIO *b);
 size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
 
-
-
 #ifdef NO_STDIO
 #define NO_FP_API
 #endif
@@ -509,6 +511,11 @@ BIO *	BIO_find_type(BIO *b,int bio_type);
 BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
 int	BIO_get_retry_reason(BIO *bio);
 BIO *	BIO_dup_chain(BIO *in);
+
+int BIO_nread0(BIO *bio, char **buf);
+int BIO_nread(BIO *bio, char **buf, int num);
+int BIO_nwrite0(BIO *bio, char **buf);
+int BIO_nwrite(BIO *bio, char **buf, int num);
 
 #ifndef WIN16
 long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
@@ -597,6 +604,10 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_F_BIO_MAKE_PAIR				 121
 #define BIO_F_BIO_NEW					 108
 #define BIO_F_BIO_NEW_FILE				 109
+#define BIO_F_BIO_NREAD					 123
+#define BIO_F_BIO_NREAD0				 124
+#define BIO_F_BIO_NWRITE				 125
+#define BIO_F_BIO_NWRITE0				 122
 #define BIO_F_BIO_PUTS					 110
 #define BIO_F_BIO_READ					 111
 #define BIO_F_BIO_SOCK_INIT				 112
