@@ -665,6 +665,11 @@ extern "C" {
 #define NID_zlib_compression		125
 #define OBJ_zlib_compression		1L,1L,1L,1L,666L.2L
 
+#define SN_ext_key_usage		"extendedKeyUsage"
+#define LN_ext_key_usage		"X509v3 Extended Key Usage"
+#define NID_ext_key_usage		126
+#define OBJ_ext_key_usage		OBJ_ld_ce,37
+
 #include "bio.h"
 #include "asn1.h"
 
