@@ -12,6 +12,19 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
+     reveal whether illegal block cipher padding was found or a MAC
+     verification error occured.  (Neither SSLerr() codes nor alerts
+     are directly visible to potential attackers, but the information
+     may leak via logfiles.)
+
+     Similar changes are not required for the SSL 2.0 implementation
+     because the number of padding bytes is sent in clear for SSL 2.0,
+     and the extra bytes are just ignored.  However ssl/s2_pkt.c
+     failed to verify that the purported number of padding bytes is in
+     the legal range.
+     [Bodo Moeller]
+
   +) Add some demos for certificate and certificate request creation.
      [Steve Henson]
 

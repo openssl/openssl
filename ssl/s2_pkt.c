@@ -130,7 +130,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	unsigned char mac[MAX_MAC_SIZE];
 	unsigned char *p;
 	int i;
-	unsigned int mac_size=0;
+	unsigned int mac_size;
 
  ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
@@ -235,17 +235,25 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 		/* Data portion */
 		if (s->s2->clear_text)
 			{
+			mac_size = 0;
 			s->s2->mac_data=p;
 			s->s2->ract_data=p;
-			s->s2->pad_data=NULL;
+			if (s->s2->padding)
+				{
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_ILLEGAL_PADDING);
+				return(-1);
+				}
 			}
 		else
 			{
 			mac_size=EVP_MD_size(s->read_hash);
 			s->s2->mac_data=p;
 			s->s2->ract_data= &p[mac_size];
-			s->s2->pad_data= &p[mac_size+
-				s->s2->rlength-s->s2->padding];
+			if (s->s2->padding + mac_size > s->s2->rlength)
+				{
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_ILLEGAL_PADDING);
+				return(-1);
+				}
 			}
 
 		s->s2->ract_data_length=s->s2->rlength;
@@ -593,10 +601,8 @@ static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 	s->s2->wact_data= &(s->s2->wbuf[3+mac_size]);
 	/* we copy the data into s->s2->wbuf */
 	memcpy(s->s2->wact_data,buf,len);
-#ifdef PURIFY
 	if (p)
-		memset(&(s->s2->wact_data[len]),0,p);
-#endif
+		memset(&(s->s2->wact_data[len]),0,p); /* arbitrary padding */
 
 	if (!s->s2->clear_text)
 		{
