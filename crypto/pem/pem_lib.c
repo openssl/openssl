@@ -217,7 +217,7 @@ err:
 #ifndef NO_FP_API
 int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
 	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
-	     int (*callback)())
+	     pem_password_cb *callback)
         {
         BIO *b;
         int ret;
@@ -325,7 +325,7 @@ err:
 	}
 
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
-	     int (*callback)())
+	     pem_password_cb *callback)
 	{
 	int i,j,o,klen;
 	long len;

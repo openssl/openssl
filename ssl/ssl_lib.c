@@ -1126,7 +1126,7 @@ void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 	ctx->default_passwd_callback=cb;
 	}
 
-void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx,int (*cb)(),char *arg)
+void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,int (*cb)(),char *arg)
 	{
 	ctx->app_verify_callback=cb;
 	ctx->app_verify_arg=arg;

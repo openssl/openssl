@@ -281,7 +281,7 @@ bad:
 
 	if (length == 0) length=(unsigned int)num;
 	if(derout) {
-		if(BIO_write(derout, str + offset, length) != length) {
+		if(BIO_write(derout, str + offset, length) != (int)length) {
 			BIO_printf(bio_err, "Error writing output\n");
 			ERR_print_errors(bio_err);
 			goto end;
