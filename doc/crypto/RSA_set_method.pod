@@ -3,7 +3,7 @@
 =head1 NAME
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
-RSA_get_method, RSA_PKCS1_SSLeay, RSA_PKCS1_RSAref,
+RSA_get_method, RSA_PKCS1_SSLeay,
 RSA_null_method, RSA_flags, RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
@@ -21,8 +21,6 @@ RSA_null_method, RSA_flags, RSA_new_method - select RSA method
 
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
- RSA_METHOD *RSA_PKCS1_RSAref(void);
-
  RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(RSA *rsa);
@@ -35,17 +33,8 @@ An B<RSA_METHOD> specifies the functions that OpenSSL uses for RSA
 operations. By modifying the method, alternative implementations
 such as hardware accelerators may be used.
 
-Initially, the default is to use the OpenSSL internal implementation,
-unless OpenSSL was configured with the C<rsaref> or C<-DRSA_NULL>
-options. RSA_PKCS1_SSLeay() returns a pointer to that method.
-
-RSA_PKCS1_RSAref() returns a pointer to a method that uses the RSAref
-library. This is the default method in the C<rsaref> configuration;
-the function is not available in other configurations.
-RSA_null_method() returns a pointer to a method that does not support
-the RSA transformation. It is the default if OpenSSL is compiled with
-C<-DRSA_NULL>. These methods may be useful in the USA because of a
-patent on the RSA cryptosystem.
+Initially, the default is to use the OpenSSL internal implementation.
+RSA_PKCS1_SSLeay() returns a pointer to that method.
 
 RSA_set_default_openssl_method() makes B<meth> the default method for all B<RSA>
 structures created later. B<NB:> This is true only whilst the default engine
@@ -132,9 +121,8 @@ the default engine for RSA operations is used.
 
 =head1 RETURN VALUES
 
-RSA_PKCS1_SSLeay(), RSA_PKCS1_RSAref(), RSA_PKCS1_null_method(),
-RSA_get_default_openssl_method() and RSA_get_method() return pointers to
-the respective RSA_METHODs.
+RSA_PKCS1_SSLeay(), RSA_PKCS1_null_method(), RSA_get_default_openssl_method()
+and RSA_get_method() return pointers to the respective RSA_METHODs.
 
 RSA_set_default_openssl_method() returns no value.
 

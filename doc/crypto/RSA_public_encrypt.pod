@@ -74,10 +74,6 @@ SSL, PKCS #1 v2.0
 
 L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>, L<RSA_size(3)|RSA_size(3)>
 
-=head1 NOTES
-
-The L<RSA_PKCS1_RSAref(3)|RSA_PKCS1_RSAref(3)> method supports only the RSA_PKCS1_PADDING mode.
-
 =head1 HISTORY
 
 The B<padding> argument was added in SSLeay 0.8. RSA_NO_PADDING is

@@ -43,9 +43,6 @@
   --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
                 the library files and binaries are also installed there.
 
-  rsaref        Build with RSADSI's RSAREF toolkit (this assumes that
-                librsaref.a is in the library search path).
-
   no-threads    Don't try to build with support for multi-threaded
                 applications.
 

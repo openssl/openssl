@@ -37,7 +37,6 @@ rsa - RSA public key cryptosystem
  int RSA_set_method(RSA *rsa, ENGINE *engine);
  RSA_METHOD *RSA_get_method(RSA *rsa);
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
- RSA_METHOD *RSA_PKCS1_RSAref(void);
  RSA_METHOD *RSA_null_method(void);
  int RSA_flags(RSA *rsa);
  RSA *RSA_new_method(ENGINE *engine);

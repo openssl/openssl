@@ -64,7 +64,7 @@
 #ifndef NO_RSA
 #include <openssl/rsa.h>
 #endif
-#ifdef RSAref
+#if 0 /* was: #ifdef RSAref */
 #include <openssl/rsaref.h>
 #endif
 #ifndef NO_DH
@@ -98,7 +98,7 @@ void ERR_load_crypto_strings(void)
 	ERR_load_BIO_strings();
 	ERR_load_CONF_strings();
 #ifndef NO_RSA
-#ifdef RSAref
+#if 0 /* was: #ifdef RSAref */
 	ERR_load_RSAREF_strings();
 #else
 	ERR_load_RSA_strings();

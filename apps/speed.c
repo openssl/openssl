@@ -547,7 +547,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #ifndef NO_RSA
-#ifdef RSAref
+#if 0 /* was: #ifdef RSAref */
 			if (strcmp(*argv,"rsaref") == 0) 
 			{
 			RSA_set_default_openssl_method(RSA_PKCS1_RSAref());

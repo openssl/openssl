@@ -20,7 +20,6 @@ L CONF		crypto/conf/conf.h		crypto/conf/conf_err.c
 #L PROXY		crypto/proxy/proxy.h		crypto/proxy/proxy_err.c
 L PKCS7		crypto/pkcs7/pkcs7.h		crypto/pkcs7/pkcs7err.c
 L PKCS12	crypto/pkcs12/pkcs12.h		crypto/pkcs12/pk12err.c
-L RSAREF	rsaref/rsaref.h			rsaref/rsar_err.c
 L SSL		ssl/ssl.h			ssl/ssl_err.c
 L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
 L RAND		crypto/rand/rand.h		crypto/rand/rand_err.c

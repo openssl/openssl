@@ -103,7 +103,7 @@ foreach (@ARGV, split(/ /, $options))
 		$NT = 1;
 	}
 	$VMS=1 if $_ eq "VMS";
-	$rsaref=1 if $_ eq "rsaref";
+	#$rsaref=1 if $_ eq "rsaref";
 
 	$do_ssl=1 if $_ eq "ssleay";
 	$do_ssl=1 if $_ eq "ssl";
@@ -147,7 +147,7 @@ if ($W16) {
 
 if (!$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT ] [rsaref]\n";
+	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT ]\n";
 	exit(1);
 	}
 

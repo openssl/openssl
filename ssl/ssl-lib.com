@@ -647,6 +647,7 @@ $ ENDIF
 $!
 $! Check To See If P2 Is Blank.
 $!
+$ p2 = "NORSAREF"
 $ IF (P2.EQS."NORSAREF")
 $ THEN
 $!

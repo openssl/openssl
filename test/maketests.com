@@ -514,6 +514,7 @@ $ CHECK_OPTIONS:
 $!
 $! Check To See If P1 Is Blank.
 $!
+$ P1 = "NORSAREF"
 $ IF (P1.EQS."NORSAREF")
 $ THEN
 $!

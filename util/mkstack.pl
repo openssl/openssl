@@ -21,7 +21,7 @@ while (@ARGV) {
 }
 
 
-@source = (<crypto/*.[ch]>, <crypto/*/*.[ch]>, <rsaref/*.[ch]>, <ssl/*.[ch]>);
+@source = (<crypto/*.[ch]>, <crypto/*/*.[ch]>, <ssl/*.[ch]>);
 foreach $file (@source) {
 	next if -l $file;
 

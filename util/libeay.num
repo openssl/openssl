@@ -2044,3 +2044,9 @@ d2i_OCSP_SIGNATURE                      2632	EXIST::FUNCTION:
 X509_ocspid_print                       2633	EXIST::FUNCTION:
 OCSP_request_verify                     2634	EXIST::FUNCTION:
 i2d_OCSP_REQUEST                        2635	EXIST::FUNCTION:
+ENGINE_load_chil                        2636	EXIST::FUNCTION:
+ENGINE_load_cswift                      2637	EXIST::FUNCTION:
+ENGINE_load_builtin_engines             2638	EXIST::FUNCTION:
+bn_dup_expand                           2639	EXIST::FUNCTION:
+ENGINE_load_nuron                       2640	EXIST::FUNCTION:
+ENGINE_load_atalla                      2641	EXIST::FUNCTION:

@@ -80,6 +80,26 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+engine_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+engine_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+engine_all.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+engine_all.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+engine_all.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+engine_all.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+engine_all.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+engine_all.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+engine_all.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+engine_all.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+engine_all.o: ../../include/openssl/objects.h
+engine_all.o: ../../include/openssl/opensslconf.h
+engine_all.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+engine_all.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+engine_all.o: ../../include/openssl/rc5.h
+engine_all.o: ../../include/openssl/rijndael-alg-fst.h
+engine_all.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
+engine_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+engine_all.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+engine_all.o: ../../include/openssl/symhacks.h engine_int.h
 engine_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 engine_err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 engine_err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h

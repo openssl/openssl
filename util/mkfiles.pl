@@ -48,7 +48,6 @@ my @dirs = (
 "crypto/engine",
 "crypto/ocsp",
 "ssl",
-"rsaref",
 "apps",
 "test",
 "tools"

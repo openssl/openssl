@@ -109,9 +109,9 @@ for x in $RPM_BUILD_ROOT/usr/man/man*/*
 	do mv ${x} ${x}ssl
 done
 
-# Install RSAref stuff
-install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
-install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
+## Install RSAref stuff
+#install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
+#install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
 
 # Make backwards-compatibility symlink to ssleay
 ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay

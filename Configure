@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -28,7 +28,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #               are always compiled but return NULL if the hardware
 #               support isn't compiled.
 # no-hw         do not compile support for any crypto hardware.
-# rsaref        use RSAref
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
@@ -564,9 +563,9 @@ PROCESS_ARGS:
 			{ $processor=386; }
 		elsif (/^rsaref$/)
 			{
-			$libs.= "-lRSAglue -lrsaref ";
-			$flags.= "-DRSAref ";
-			$openssl_other_defines .= "#define RSAref\n";
+			# No RSAref support any more since it's not needed.
+			# The check for the option is there so scripts aren't
+			# broken
 			}
 		elsif (/^[-+]/)
 			{

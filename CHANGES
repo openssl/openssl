@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Remove all references to RSAref, since there's no more need for it.
+     [Richard Levitte]
+
   *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
      The previous value, 12, was not always sufficient for BN_mod_exp().
      [Bodo Moeller]

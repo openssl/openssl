@@ -38,7 +38,7 @@ while (@ARGV) {
 }
 
 if($recurse) {
-	@source = (<crypto/*.c>, <crypto/*/*.c>, <rsaref/*.c>, <ssl/*.c>);
+	@source = (<crypto/*.c>, <crypto/*/*.c>, <ssl/*.c>);
 } else {
 	@source = @ARGV;
 }

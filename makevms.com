@@ -425,8 +425,8 @@ $ LOOP_SDIRS_END:
 $!
 $! Copy All The ".H" Files From The [.RSAREF] Directory.
 $!
-$ EXHEADER := rsaref.h
-$ COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
+$! EXHEADER := rsaref.h
+$! COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
@@ -473,6 +473,9 @@ $!
 $! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE Library.
 $!
 $ RSAREF:
+$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "RSAref glue library not built, since it's no longer needed"
+$ RETURN
 $!
 $! Tell The User What We Are Doing.
 $!
@@ -648,7 +651,6 @@ $     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO]OPENSSLCONF.H fi
 $     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
-$     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
 $     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
@@ -677,6 +679,7 @@ $ ENDIF
 $!
 $! Check To See If P2 Is Blank.
 $!
+$ P2 = "NORSAREF"
 $ IF (P2.EQS."NORSAREF")
 $ THEN
 $!
