@@ -117,6 +117,13 @@
 
 #include <openssl/e_os2.h>
 
+#define _POSIX_C_SOURCE 1
+#include <signal.h>
+#include <stdio.h>
+#undef _POSIX_C_SOURCE
+#include <string.h>
+#include <errno.h>
+
 #if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
 # ifdef OPENSSL_UNISTD
 #  include OPENSSL_UNISTD
@@ -145,10 +152,6 @@
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "ui_locl.h"
 #include "cryptlib.h"
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
 
 #ifdef OPENSSL_SYS_VMS		/* prototypes for sys$whatever */
 # include <starlet.h>
@@ -476,7 +479,7 @@ static int open_console(UI *ui)
 #endif
 
 #if defined(TTY_get) && !defined(OPENSSL_SYS_VMS)
-	if (TTY_get(fileno(tty_in),&tty_orig) == -1)
+ 	if (TTY_get(fileno(tty_in),&tty_orig) == -1)
 		{
 #ifdef ENOTTY
 		if (errno == ENOTTY)
