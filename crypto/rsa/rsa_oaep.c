@@ -111,6 +111,11 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	}
 
     lzero = num - flen;
+    if (lzero < 0)
+    {
+    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
+    return (-1);
+    }
     maskeddb = from - lzero + SHA_DIGEST_LENGTH;
     
     MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen);
