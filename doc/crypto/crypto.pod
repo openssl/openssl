@@ -46,7 +46,8 @@ L<sha(3)|sha(3)>
 
 =item AUXILIARY FUNCTIONS
 
-L<err(3)|err(3)>, L<threads(3)|threads(3)>, L<rand(3)|rand(3)>
+L<err(3)|err(3)>, L<threads(3)|threads(3)>, L<rand(3)|rand(3)>,
+L<OPENSSL_VERSION_NUMBER(3)|OPENSSL_VERSION_NUMBER(3)>
 
 =item INPUT/OUTPUT, DATA ENCODING
 

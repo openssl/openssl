@@ -7,6 +7,36 @@
   *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
+  *) Add the configuration target linux-s390x.
+     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
+
+  *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
+     ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag
+     variable as an indication that a ClientHello message has been
+     received.  As the flag value will be lost between multiple
+     invocations of ssl3_accept when using non-blocking I/O, the
+     function may not be aware that a handshake has actually taken
+     place, thus preventing a new session from being added to the
+     session cache.
+
+     To avoid this problem, we now set s->new_session to 2 instead of
+     using a local variable.
+     [Lutz Jaenicke, Bodo Moeller]
+
+  *) Bugfix: Return -1 from ssl3_get_server_done (ssl3/s3_clnt.c)
+     if the SSL_R_LENGTH_MISMATCH error is detected.
+     [Geoff Thorpe, Bodo Moeller]
+
+  *) New 'shared_ldflag' column in Configure platform table.
+     [Richard Levitte]
+
+  *) Fix EVP_CIPHER_mode macro.
+     ["Dan S. Camper" <dan@bti.net>]
+
+  *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
+     type, we must throw them away by setting rr->length to 0.
+     [D P Chang <dpc@qualys.com>]
+
  Changes between 0.9.6b and 0.9.6c  [21 dec 2001]
 
   *) Fix BN_rand_range bug pointed out by Dominikus Scherkl

@@ -2,11 +2,14 @@
  INSTALLATION ON THE WIN32 PLATFORM
  ----------------------------------
 
- Heres a few comments about building OpenSSL in Windows environments. Most of
- this is tested on Win32 but it may also work in Win 3.1 with some
+ Heres a few comments about building OpenSSL in Windows environments.  Most
+ of this is tested on Win32 but it may also work in Win 3.1 with some
  modification.
 
- You need Perl for Win32 (available from http://www.activestate.com/ActivePerl)
+ You need Perl for Win32.  Unless you will build on CygWin32, you will need
+ ActiveState Perl, available from http://www.activestate.com/ActivePerl.
+ For CygWin32 users, there's more info in the CygWin32 section.
+
  and one of the following C compilers:
 
   * Visual C++
@@ -149,7 +152,9 @@
 
  * Install CygWin32 (see http://sourceware.cygnus.com/cygwin)
 
- * Install Perl and ensure it is in the path
+ * Install Perl and ensure it is in the path (recent Cygwin perl 
+   (version 5.6.1-2 of the latter has been reported to work) or
+   ActivePerl)
 
  * Run the CygWin bash shell
 
@@ -183,8 +188,9 @@
  Installation
  ------------
 
- There's currently no real installation procedure for Win32.  There are,
- however, some suggestions:
+ If you used the CygWin procedure above, you have already installed and
+ can skip this section.  For all other procedures, there's currently no real
+ installation procedure for Win32.  There are, however, some suggestions:
 
     - do nothing.  The include files are found in the inc32/ subdirectory,
       all binaries are found in out32dll/ or out32/ depending if you built

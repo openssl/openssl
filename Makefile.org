@@ -183,6 +183,7 @@ SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
 SHARED_LIBS_LINK_EXTS=
+SHARED_LDFLAGS=
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -255,7 +256,8 @@ do_bsd-gcc-shared: do_gnu-shared
 do_linux-shared: do_gnu-shared
 do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	( set -x; ${CC} ${SHARED_LDFLAGS} \
+		-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
@@ -269,13 +271,25 @@ DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
 	[ -n "$$my_ld" ] && \
 	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
 
+# For Darwin AKA Mac OS/X (dyld)
+do_darwin-shared: 
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x ; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
+		lib$$i.a $$libs -all_load -current_version ${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-compatibility_version ${SHLIB_MAJOR}.`echo ${SHLIB_MINOR} | cut -d. -f1` \
+		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
+	libs="$$libs -l`basename $$i${SHLIB_EXT} .dylib`"; \
+	echo "" ; \
+	done
+
 # This assumes that GNU utilities are *not* used
 do_alpha-osf1-shared:
 	if ${DETECT_GNU_LD}; then \
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC}  -shared -o lib$$i.so \
+		( set -x; ${CC} ${SHARED_LDFLAGS} \
+			-shared -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -290,7 +304,8 @@ do_tru64-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+		( set -x; ${CC} ${SHARED_LDFLAGS} \
+			-shared -msym -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -305,7 +320,8 @@ do_tru64-shared-rpath:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+		( set -x; ${CC} ${SHARED_LDFLAGS} \
+			-shared -msym -o lib$$i.so \
 			-rpath  ${INSTALLTOP}/lib \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
 			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
@@ -321,7 +337,8 @@ do_solaris-shared:
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		  set -x; ${CC} ${SHARED_LDFLAGS} \
+			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -340,7 +357,8 @@ do_svr5-shared:
 		  for obj in `ar t lib$$i.a` ; do \
 		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
 		  done ; \
-		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		  set -x; ${CC} ${SHARED_LDFLAGS} \
+			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -353,7 +371,8 @@ do_irix-shared:
 		$(MAKE) do_gnu-shared; \
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		( set -x; ${CC} ${SHARED_LDFLAGS} \
+			-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -363,7 +382,8 @@ do_irix-shared:
 # This assumes that GNU utilities are *not* used
 do_hpux-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld +vnocompatwarnings \
+	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
+		+vnocompatwarnings \
 		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Fl lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
@@ -373,7 +393,8 @@ do_hpux-shared:
 # This assumes that GNU utilities are *not* used
 do_hpux64-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld -b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
+		-b -z -o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+forceload lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
@@ -409,7 +430,7 @@ do_hpux64-shared:
 #  HP/UX-64bit: /usr/ccs/bin/ld
 #  AIX:		$(CC)
 ALLSYMSFLAG=-bnogc
-SHAREDFLAGS=-G -bE:lib$$i.exp -bM:SRE
+SHAREDFLAGS=${SHARED_LDFLAGS} -G -bE:lib$$i.exp -bM:SRE
 SHAREDCMD=$(CC)
 do_aix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \

@@ -203,7 +203,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 	if (s == NULL)
 		return(NULL);
 
-#if defined(THREADS) && !defined(WIN32)
+#if defined(THREADS) && !defined(WIN32) && ! defined(_DARWIN)
 	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 	ts=&data;
 #else

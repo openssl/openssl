@@ -27,7 +27,7 @@ BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
 
 =head1 DESCRIPTION
 
-This library implements the Blowfish cipher, which is invented and described
+This library implements the Blowfish cipher, which was invented and described
 by Counterpane (see http://www.counterpane.com/blowfish.html ).
 
 Blowfish is a block cipher that operates on 64 bit (8 byte) blocks of data.
@@ -57,7 +57,7 @@ for the same message.  B<ivec> may be initialized with anything, but the
 recipient needs to know what it was initialized with, or it won't be able
 to decrypt.  Some programs and protocols simplify this, like SSH, where
 B<ivec> is simply initialized to zero.
-BF_cbc_encrypt() operates of data that is a multiple of 8 bytes long, while
+BF_cbc_encrypt() operates on data that is a multiple of 8 bytes long, while
 BF_cfb64_encrypt() and BF_ofb64_encrypt() are used to encrypt an variable
 number of bytes (the amount does not have to be an exact multiple of 8).  The
 purpose of the latter two is to simulate stream ciphers, and therefore, they

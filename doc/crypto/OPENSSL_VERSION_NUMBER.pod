@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, SSLeay SSLeay_version - get OpenSSL version number
+OPENSSL_VERSION_NUMBER, SSLeay, SSLeay_version - get OpenSSL version number
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@ OPENSSL_VERSION_NUMBER, SSLeay SSLeay_version - get OpenSSL version number
 
  #include <openssl/crypto.h>
  long SSLeay(void);
- char *SSLeay_version(int t);
+ const char *SSLeay_version(int t);
 
 =head1 DESCRIPTION
 
@@ -55,20 +55,27 @@ SSLeay_version() returns different strings depending on B<t>:
 =over 4
 
 =item SSLEAY_VERSION
+
 The text variant of the version number and the release date.  For example,
 "OpenSSL 0.9.5a 1 Apr 2000".
 
 =item SSLEAY_CFLAGS
-The flags given to the C compiler when compiling OpenSSL are returned in a
-string.
+
+The compiler flags set for the compilation process in the form
+"compiler: ..."  if available or "compiler: information not available"
+otherwise.
+
+=item SSLEAY_BUILT_ON
+
+The date of the build process in the form "built on: ..." if available
+or "built on: date not available" otherwise.
 
 =item SSLEAY_PLATFORM
-The platform name used when OpenSSL was configured is returned.
+
+The "Configure" target of the library build in the form "platform: ..."
+if available or "platform: information not available" otherwise.
 
 =back
-
-If the data request isn't available, a text saying that the information is
-not available is returned.
 
 For an unknown B<t>, the text "not available" is returned.
 

@@ -82,7 +82,7 @@
 #include "wintext.h"
 #endif
 
-#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
+#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC)) || defined (_DARWIN)
 #define TIMES
 #endif
 

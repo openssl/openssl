@@ -503,8 +503,29 @@ EOF
 	sun4d)	OUT="linux-sparcv8" ;;
 	*)	OUT="linux-sparcv7" ;;
 	esac ;;
+  parisc-*-linux2)
+        CPUARCH=`awk '/cpu family/{print substr($5,1,3)}' /proc/cpuinfo`
+	CPUSCHEDULE=`awk '/^cpu.[ 	]: PA/{print substr($3,3)}' /proc/cpuinfo`
+
+	# ??TODO ??  Model transformations
+	# 0. CPU Architecture for the 1.1 processor has letter suffixes. We strip that off
+	#    assuming no further arch. identification will ever be used by GCC.
+	# 1. I'm most concerned about whether is a 7300LC is closer to a 7100 versus a 7100LC.
+	# 2. The variant 64-bit processors cause concern should GCC support explicit schedulers
+	#    for these chips in the future.
+	#         PA7300LC -> 7100LC (1.1)
+	#         PA8200   -> 8000   (2.0)
+	#         PA8500   -> 8000   (2.0)
+	#         PA8600   -> 8000   (2.0)
+
+	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8?00/8000/'`
+	# Finish Model transformations
+
+	options="$options -mschedule=$CPUSCHEDULE -march=$CPUARCH"
+	OUT="linux-parisc" ;;
   arm*-*-linux2) OUT="linux-elf-arm" ;;
   s390-*-linux2) OUT="linux-s390" ;;
+  s390x-*-linux?) OUT="linux-s390x" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
