@@ -130,6 +130,10 @@
 
 #include <openssl/rand.h>
 
+#ifdef BN_DEBUG
+# define PREDICT
+#endif
+
 /* #define NORAND	1 */
 /* #define PREDICT	1 */
 
@@ -140,6 +144,10 @@ static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 static double entropy=0;
 static int initialized=0;
+
+#ifdef PREDICT
+int rand_predictable=0;
+#endif
 
 const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
@@ -306,6 +314,10 @@ static void ssleay_rand_initialize(void)
 	FILE *fh;
 #endif
 
+#ifdef NORAND
+	return;
+#endif
+
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	/* put in some default random data, we need more than just this */
 #ifndef GETPID_IS_MEANINGLESS
@@ -354,13 +366,14 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 #endif
 
 #ifdef PREDICT
-	{
-	static unsigned char val=0;
+	if (rand_predictable)
+		{
+		static unsigned char val=0;
 
-	for (i=0; i<num; i++)
-		buf[i]=val++;
-	return(1);
-	}
+		for (i=0; i<num; i++)
+			buf[i]=val++;
+		return(1);
+		}
 #endif
 
 	/*

@@ -97,7 +97,7 @@ int RAND_egd(const char *path)
 	buf[1] = 255;
 	write(fd, buf, 2);
 	if (read(fd, buf, 1) != 1) goto err;
-    if (buf[0] == 0) goto err;
+	if (buf[0] == 0) goto err;
 	num = read(fd, buf, 255);
 	if (num < 1) goto err;
 	RAND_seed(buf, num);
