@@ -165,9 +165,9 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		}
 		bound[32] = 0;
 		BIO_printf(bio, "MIME-Version: 1.0\n");
-		BIO_printf(bio, "Content-Type: multipart/signed ; ");
-		BIO_printf(bio, "protocol=\"application/x-pkcs7-signature\" ; ");
-		BIO_printf(bio, "micalg=sha1 ; boundary=\"----%s\"\n\n", bound);
+		BIO_printf(bio, "Content-Type: multipart/signed;");
+		BIO_printf(bio, " protocol=\"application/x-pkcs7-signature\";");
+		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"\n\n", bound);
 		BIO_printf(bio, "This is an S/MIME signed message\n\n");
 		/* Now write out the first part */
 		BIO_printf(bio, "------%s\n", bound);
