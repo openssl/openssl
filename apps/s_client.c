@@ -104,7 +104,7 @@ static int c_quiet=0;
 
 static void sc_usage()
 	{
-	BIO_printf(bio_err,"usage: client args\n");
+	BIO_printf(bio_err,"usage: s_client args\n");
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -host host     - use -connect instead\n");
 	BIO_printf(bio_err," -port port     - use -connect instead\n");

@@ -59,7 +59,7 @@
 #define NO_SHUTDOWN
 
 /*-----------------------------------------
-   cntime - SSL client connection timer program
+   s_time - SSL client connection timer program
    Written and donated by Larry Streepy <streepy@healthcare.com>
   -----------------------------------------*/
 
@@ -230,7 +230,7 @@ static void s_time_usage()
 -CAfile arg   - PEM format file of CA's\n\
 -cipher       - prefered cipher to use, play with 'openssl ciphers'\n\n";
 
-	printf( "usage: client <args>\n\n" );
+	printf( "usage: s_time <args>\n\n" );
 
 	printf("-connect host:port - host:port to connect to (default is %s)\n",SSL_CONNECT_NAME);
 #ifdef FIONBIO
