@@ -66,9 +66,13 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA UI_str_functs[]=
 	{
+{ERR_PACK(0,UI_F_GENERAL_ALLOCATE_BOOLEAN,0),	"GENERAL_ALLOCATE_BOOLEAN"},
+{ERR_PACK(0,UI_F_GENERAL_ALLOCATE_PROMPT,0),	"GENERAL_ALLOCATE_PROMPT"},
 {ERR_PACK(0,UI_F_GENERAL_ALLOCATE_STRING,0),	"GENERAL_ALLOCATE_STRING"},
+{ERR_PACK(0,UI_F_UI_CTRL,0),	"UI_ctrl"},
 {ERR_PACK(0,UI_F_UI_DUP_ERROR_STRING,0),	"UI_dup_error_string"},
 {ERR_PACK(0,UI_F_UI_DUP_INFO_STRING,0),	"UI_dup_info_string"},
+{ERR_PACK(0,UI_F_UI_DUP_INPUT_BOOLEAN,0),	"UI_dup_input_boolean"},
 {ERR_PACK(0,UI_F_UI_DUP_INPUT_STRING,0),	"UI_dup_input_string"},
 {ERR_PACK(0,UI_F_UI_DUP_VERIFY_STRING,0),	"UI_dup_verify_string"},
 {ERR_PACK(0,UI_F_UI_GET0_RESULT,0),	"UI_get0_result"},
@@ -79,10 +83,13 @@ static ERR_STRING_DATA UI_str_functs[]=
 
 static ERR_STRING_DATA UI_str_reasons[]=
 	{
+{UI_R_COMMON_OK_AND_CANCEL_CHARACTERS    ,"common ok and cancel characters"},
 {UI_R_INDEX_TOO_LARGE                    ,"index too large"},
 {UI_R_INDEX_TOO_SMALL                    ,"index too small"},
+{UI_R_NO_RESULT_BUFFER                   ,"no result buffer"},
 {UI_R_RESULT_TOO_LARGE                   ,"result too large"},
 {UI_R_RESULT_TOO_SMALL                   ,"result too small"},
+{UI_R_UNKNOWN_CONTROL_COMMAND            ,"unknown control command"},
 {0,NULL}
 	};
 
