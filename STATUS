@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/04/01 15:18:35 $
+  ______________                           $Date: 2001/04/02 14:39:20 $
 
   DEVELOPMENT STATE
 
@@ -69,6 +69,12 @@
 	BSDi 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
 	HP-UX 10.20, w/ ANSI-C and w/ gcc	- PASSED [normal+engine]
 	Irix					- PASSED [presumed normal]
+	OpenVMS/Alpha 7.2-1 w/ UCX 5.1, CC 6.4	- PASSED [normal]
+		There's a small warning about ebcdic.c being empty
+		[CORRECTED]
+	OpenVMS/VAX 7.2-1 w/ UCX 5.1, CC 6.4	- PASSED [normal]
+		There's a small warning about ebcdic.c being empty
+		[CORRECTED]
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
