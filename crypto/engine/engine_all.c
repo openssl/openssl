@@ -106,6 +106,15 @@ void ENGINE_load_nuron(void)
 #endif /* !NO_HW */
 	}
 
+void ENGINE_load_ubsec(void)
+	{
+#ifndef NO_HW
+#ifndef NO_HW_UBSEC
+	engine_add(ENGINE_ubsec());
+#endif /* !NO_HW_UBSEC */
+#endif /* !NO_HW */
+	}
+
 void ENGINE_load_builtin_engines(void)
 	{
 	static int done=0;
@@ -117,4 +126,5 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_chil();
 	ENGINE_load_atalla();
 	ENGINE_load_nuron();
+	ENGINE_load_ubsec();
 	}

@@ -159,6 +159,7 @@ void ENGINE_load_cswift(void);
 void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_nuron(void);
+void ENGINE_load_ubsec(void);
 void ENGINE_load_builtin_engines(void);
 
 /* These functions are useful for manufacturing new ENGINE
@@ -369,6 +370,13 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_NURON_FINISH				 157
 #define ENGINE_F_NURON_INIT				 156
 #define ENGINE_F_NURON_MOD_EXP				 158
+#define ENGINE_F_UBSEC_DSA_SIGN				 163
+#define ENGINE_F_UBSEC_DSA_VERIFY			 164
+#define ENGINE_F_UBSEC_FINISH				 165
+#define ENGINE_F_UBSEC_INIT				 166
+#define ENGINE_F_UBSEC_MOD_EXP				 167
+#define ENGINE_F_UBSEC_RSA_MOD_EXP			 168
+#define ENGINE_F_UBSEC_RSA_MOD_EXP_CRT			 169
 
 /* Reason codes. */
 #define ENGINE_R_ALREADY_LOADED				 100

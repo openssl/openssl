@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= engine_err.c engine_lib.c engine_list.c engine_all.c engine_openssl.c \
-	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c
+	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c
 LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_all.o engine_openssl.o \
-	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o
+	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o
 
 SRC= $(LIBSRC)
 
@@ -265,3 +265,24 @@ hw_nuron.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hw_nuron.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_nuron.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 hw_nuron.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
+hw_ubsec.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+hw_ubsec.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+hw_ubsec.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+hw_ubsec.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+hw_ubsec.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+hw_ubsec.o: ../../include/openssl/dso.h ../../include/openssl/e_os.h
+hw_ubsec.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+hw_ubsec.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+hw_ubsec.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+hw_ubsec.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+hw_ubsec.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+hw_ubsec.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+hw_ubsec.o: ../../include/openssl/opensslconf.h
+hw_ubsec.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+hw_ubsec.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+hw_ubsec.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
+hw_ubsec.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
+hw_ubsec.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+hw_ubsec.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+hw_ubsec.o: ../../include/openssl/symhacks.h ../cryptlib.h engine_int.h
+hw_ubsec.o: vendor_defns/hw_ubsec.h

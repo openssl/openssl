@@ -135,6 +135,10 @@ ENGINE *ENGINE_atalla();
 ENGINE *ENGINE_nuron();
 #endif /* !NO_HW_NURON */
 
+#ifndef NO_HW_UBSEC
+ENGINE *ENGINE_ubsec();
+#endif /* !NO_HW_UBSEC */
+
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus
