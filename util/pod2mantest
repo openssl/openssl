@@ -47,7 +47,7 @@ done
 echo "No working pod2man found.  Consider installing a new version." >&2
 if [ "$1" = ignore ]; then
   echo "As a workaround, we'll use a bundled old copy of pod2man.pl." >&2
-  echo "util/pod2man.pl"
+  echo "../../util/pod2man.pl"
   exit 0
 fi
 exit 1
