@@ -41,6 +41,7 @@ $REQ="openssl req $SSLEAY_CONFIG";
 $CA="openssl ca $SSLEAY_CONFIG";
 $VERIFY="openssl verify";
 $X509="openssl x509";
+$PKCS12="openssl pkcs12";
 
 $CATOP="./demoCA";
 $CAKEY="cakey.pem";
@@ -99,6 +100,14 @@ foreach (@ARGV) {
 		    $RET=$?;
 		}
 	    }
+	} elsif (/^-pkcs12$/) {
+	    my $cname = $ARGV[1];
+	    $cname = "My Certificate" unless defined $cname;
+	    system ("$PKCS12 -in newcert.pem -inkey newreq.pem " .
+			"-certfile ${CATOP}/$CACERT -out newcert.p12 " .
+			"-export -name \"$cname\"");
+	    $RET=$?;
+	    exit $RET;
 	} elsif (/^-xsign$/) {
 	    system ("$CA -policy policy_anything -infiles newreq.pem");
 	    $RET=$?;

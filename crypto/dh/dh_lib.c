@@ -113,6 +113,11 @@ DH *DH_new_method(DH_METHOD *meth)
 	ret->length=0;
 	ret->pub_key=NULL;
 	ret->priv_key=NULL;
+	ret->q=NULL;
+	ret->j=NULL;
+	ret->seed = NULL;
+	ret->seedlen = 0;
+	ret->counter = NULL;
 	ret->method_mont_p=NULL;
 	ret->references = 1;
 	ret->flags=ret->meth->flags;
@@ -149,6 +154,10 @@ void DH_free(DH *r)
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
+	if (r->q != NULL) BN_clear_free(r->q);
+	if (r->j != NULL) BN_clear_free(r->j);
+	if (r->seed) Free(r->seed);
+	if (r->counter != NULL) BN_clear_free(r->counter);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	Free(r);

@@ -7,9 +7,27 @@
 
   Major changes between OpenSSL 0.9.4 and OpenSSL 0.9.5:
 
-      o S/MIME support
+      o S/MIME support in new 'smime' command
       o Documentation for the OpenSSL command line application
-      o 
+      o Automation of 'req' application
+      o Fixes to make s_client, s_server work under Windows
+      o Support for multiple fieldnames in SPKACs
+      o New SPKAC command line utilty and associated library functions
+      o Options to allow passwords to be passed on command line or environment
+      o New public key PEM format and options to handle it
+      o Many other fixes and enhancements to command line utilities
+      o Usable certificate chain verification
+      o Certificate purpose checking
+      o Certificate trust settings
+      o Support of authority information access extension
+      o Extensions in certificate requests
+      o Simplified X509 name and attribute routines
+      o Initial incomplete support for international character sets
+      o New DH_METHOD, DSA_METHOD and enhanced RSA_METHOD
+      o Read only memory BIOs and simplified creation function
+      o TLS/SSL code now "tolerates" MS SGC
+      o RSA_NULL option that removes RSA patent code but keeps other
+        RSA functionality
 
   Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4:
 

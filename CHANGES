@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) New -pkcs12 option to CA.pl script to write out a PKCS#12 file.
+     [Steve Henson]
+
   *) Use BN_prime_checks_size(BN_num_bits(w)) rounds of Miller-Rabin when
      generating DSA primes.
      [Ulf Möller]

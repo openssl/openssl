@@ -106,7 +106,7 @@ struct dh_st
 	/* Place holders if we want to do X9.42 DH */
 	BIGNUM *q;
 	BIGNUM *j;
-	unsigned *seed;
+	unsigned char *seed;
 	int seedlen;
 	BIGNUM *counter;
 
