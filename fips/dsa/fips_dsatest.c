@@ -62,7 +62,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "../e_os.h"
+#include "e_os.h"
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>

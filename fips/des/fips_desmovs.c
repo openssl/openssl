@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
-#include "../e_os.h"
+#include "e_os.h"
 
 /*#define AES_BLOCK_SIZE 16*/
 

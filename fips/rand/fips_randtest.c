@@ -108,7 +108,7 @@
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
 
-#include "../e_os.h"
+#include "e_os.h"
 
 #ifndef FIPS
 int main(int argc, char *argv[])
