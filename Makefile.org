@@ -281,7 +281,8 @@ do_tru64-shared:
 # This assumes that GNU utilities are *not* used
 do_solaris-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
