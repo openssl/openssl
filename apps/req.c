@@ -366,7 +366,7 @@ bad:
 
 	ERR_load_crypto_strings();
 
-#ifndef MONOLITH
+#ifndef MONOLITH /* else this has happened in openssl.c (global `config') */
 	/* Lets load up our environment a little */
 	p=getenv("OPENSSL_CONF");
 	if (p == NULL)
@@ -380,7 +380,7 @@ bad:
 		strcat(config_name,OPENSSL_CONF);
 		p=config_name;
 		}
-        default_config_file=p;
+	default_config_file=p;
 	config=CONF_load(config,p,NULL);
 #endif
 
