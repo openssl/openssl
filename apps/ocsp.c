@@ -547,6 +547,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-no_cert_verify    don't check signing certificate\n");
 		BIO_printf (bio_err, "-no_chain          don't chain verify response\n");
 		BIO_printf (bio_err, "-no_cert_checks    don't do additional checks on signing certificate\n");
+		BIO_printf (bio_err, "-port num		 port to run responder on\n");
 		BIO_printf (bio_err, "-index file	 certificate status index file\n");
 		BIO_printf (bio_err, "-CA file		 CA certificate\n");
 		BIO_printf (bio_err, "-rsigner file	 responder certificate to sign requests with\n");
@@ -594,6 +595,32 @@ int MAIN(int argc, char **argv)
 		if (!acbio)
 			goto end;
 		}
+
+	if (rsignfile && !rdb)
+		{
+		if (!rkeyfile) rkeyfile = rsignfile;
+		rsigner = load_cert(bio_err, rsignfile, FORMAT_PEM,
+			NULL, e, "responder certificate");
+		if (!rsigner)
+			{
+			BIO_printf(bio_err, "Error loading responder certificate\n");
+			goto end;
+			}
+		rca_cert = load_cert(bio_err, rca_filename, FORMAT_PEM,
+			NULL, e, "CA certificate");
+		if (rcertfile)
+			{
+			rother = load_certs(bio_err, sign_certfile, FORMAT_PEM,
+				NULL, e, "responder other certificates");
+			if (!sign_other) goto end;
+			}
+		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, NULL, NULL,
+			"responder private key");
+		if (!rkey)
+			goto end;
+		}
+	if(acbio)
+		BIO_printf(bio_err, "Waiting for OCSP client connections...\n");
 
 	redo_accept:
 
@@ -645,30 +672,6 @@ int MAIN(int argc, char **argv)
 		}
 
 	if (req_text && req) OCSP_REQUEST_print(out, req, 0);
-
-	if (rsignfile && !rdb)
-		{
-		if (!rkeyfile) rkeyfile = rsignfile;
-		rsigner = load_cert(bio_err, rsignfile, FORMAT_PEM,
-			NULL, e, "responder certificate");
-		if (!rsigner)
-			{
-			BIO_printf(bio_err, "Error loading responder certificate\n");
-			goto end;
-			}
-		rca_cert = load_cert(bio_err, rca_filename, FORMAT_PEM,
-			NULL, e, "CA certificate");
-		if (rcertfile)
-			{
-			rother = load_certs(bio_err, sign_certfile, FORMAT_PEM,
-				NULL, e, "responder other certificates");
-			if (!sign_other) goto end;
-			}
-		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, NULL, NULL,
-			"responder private key");
-		if (!rkey)
-			goto end;
-		}
 
 	if (ridx_filename && (!rkey || !rsigner || !rca_cert))
 		{
@@ -1128,7 +1131,6 @@ static BIO *init_responder(char *port)
 			ERR_print_errors(bio_err);
 			goto err;
 		}
-	BIO_printf(bio_err, "Waiting for OCSP client connections...\n");
 
 	return acbio;
 
