@@ -1020,6 +1020,8 @@ else
 	$withargs{"krb5-include"} = "-I".$withargs{"krb5-dir"}."/include"
 		if $withargs{"krb5-include"} eq "" &&
 		   $withargs{"krb5-dir"} ne "";
+
+	$libs.=$withargs{"krb5-lib"}." " if $withargs{"krb5-lib"} ne "";
 	}
 
 # The DSO code currently always implements all functions so that no
@@ -1238,7 +1240,6 @@ while (<IN>)
 	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
 	s/^PERL=.*/PERL= $perl/;
 	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
-	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
 	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
@@ -1286,8 +1287,6 @@ print "ARFLAGS       =$arflags\n";
 print "PERL          =$perl\n";
 print "KRB5_INCLUDES =",$withargs{"krb5-include"},"\n"
 	if $withargs{"krb5-include"} ne "";
-print "LIBKRB5       =",$withargs{"krb5-lib"},"\n"
-	if $withargs{"krb5-lib"} ne "";
 
 my $des_ptr=0;
 my $des_risc1=0;
