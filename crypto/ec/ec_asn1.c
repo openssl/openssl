@@ -1437,7 +1437,8 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 
 int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 	{
-        size_t  buf_len=0;
+        size_t buf_len=0;
+	int new_buffer = 0;
 
         if (a == NULL) 
 		{
@@ -1453,11 +1454,14 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 		return buf_len;
 
 	if (*out == NULL)
+		{
 		if ((*out = OPENSSL_malloc(buf_len)) == NULL)
 			{
 			ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
+		new_buffer = 1;
+		}
         if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
 				*out, buf_len, NULL))
 		{
@@ -1466,6 +1470,7 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 		*out = NULL;
 		return 0;
 		}
-	*out += buf_len;
+	if (!new_buffer)
+		*out += buf_len;
 	return buf_len;
 	}
