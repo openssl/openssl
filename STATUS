@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/01/11 13:33:10 $
+  ______________                           $Date: 2001/01/12 14:06:26 $
 
   DEVELOPMENT STATE
 
@@ -49,6 +49,9 @@
 
     o  #include <openssl/e_os.h> in exported header files is illegal since
        e_os.h is suitable only for library-internal use
+
+    o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
+       or an error is reported
 
   OPEN ISSUES
 
