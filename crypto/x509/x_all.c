@@ -133,7 +133,7 @@ X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex)
 	}
 
 #ifndef NO_FP_API
-X509 *d2i_X509_fp(FILE *fp, X509 *x509)
+X509 *d2i_X509_fp(FILE *fp, X509 **x509)
 	{
 	return((X509 *)ASN1_d2i_fp((char *(*)())X509_new,
 		(char *(*)())d2i_X509, (fp),(unsigned char **)(x509)));
@@ -145,7 +145,7 @@ int i2d_X509_fp(FILE *fp, X509 *x509)
 	}
 #endif
 
-X509 *d2i_X509_bio(BIO *bp, X509 *x509)
+X509 *d2i_X509_bio(BIO *bp, X509 **x509)
 	{
 	return((X509 *)ASN1_d2i_bio((char *(*)())X509_new,
 		(char *(*)())d2i_X509, (bp),(unsigned char **)(x509)));
@@ -163,7 +163,7 @@ X509_CRL *X509_CRL_dup(X509_CRL *crl)
 	}
 
 #ifndef NO_FP_API
-X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL *crl)
+X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
 	{
 	return((X509_CRL *)ASN1_d2i_fp((char *(*)())
 		X509_CRL_new,(char *(*)())d2i_X509_CRL, (fp),
@@ -176,7 +176,7 @@ int i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl)
 	}
 #endif
 
-X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL *crl)
+X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
 	{
 	return((X509_CRL *)ASN1_d2i_bio((char *(*)())
 		X509_CRL_new,(char *(*)())d2i_X509_CRL, (bp),
@@ -195,7 +195,7 @@ PKCS7 *PKCS7_dup(PKCS7 *p7)
 	}
 
 #ifndef NO_FP_API
-PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 *p7)
+PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 	{
 	return((PKCS7 *)ASN1_d2i_fp((char *(*)())
 		PKCS7_new,(char *(*)())d2i_PKCS7, (fp),
@@ -208,7 +208,7 @@ int i2d_PKCS7_fp(FILE *fp, PKCS7 *p7)
 	}
 #endif
 
-PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 *p7)
+PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 	{
 	return((PKCS7 *)ASN1_d2i_bio((char *(*)())
 		PKCS7_new,(char *(*)())d2i_PKCS7, (bp),
@@ -227,7 +227,7 @@ X509_REQ *X509_REQ_dup(X509_REQ *req)
 	}
 
 #ifndef NO_FP_API
-X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ *req)
+X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
 	{
 	return((X509_REQ *)ASN1_d2i_fp((char *(*)())
 		X509_REQ_new, (char *(*)())d2i_X509_REQ, (fp),
@@ -240,7 +240,7 @@ int i2d_X509_REQ_fp(FILE *fp, X509_REQ *req)
 	}
 #endif
 
-X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ *req)
+X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
 	{
 	return((X509_REQ *)ASN1_d2i_bio((char *(*)())
 		X509_REQ_new, (char *(*)())d2i_X509_REQ, (bp),
@@ -266,7 +266,7 @@ RSA *RSAPrivateKey_dup(RSA *rsa)
 	}
 
 #ifndef NO_FP_API
-RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA *rsa)
+RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 	{
 	return((RSA *)ASN1_d2i_fp((char *(*)())
 		RSA_new,(char *(*)())d2i_RSAPrivateKey, (fp),
@@ -278,7 +278,7 @@ int i2d_RSAPrivateKey_fp(FILE *fp, RSA *rsa)
 	return(ASN1_i2d_fp(i2d_RSAPrivateKey,fp,(unsigned char *)rsa));
 	}
 
-RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA *rsa)
+RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
 	{
 	return((RSA *)ASN1_d2i_fp((char *(*)())
 		RSA_new,(char *(*)())d2i_RSAPublicKey, (fp),
@@ -291,7 +291,7 @@ int i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa)
 	}
 #endif
 
-RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA *rsa)
+RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 	{
 	return((RSA *)ASN1_d2i_bio((char *(*)())
 		RSA_new,(char *(*)())d2i_RSAPrivateKey, (bp),
@@ -303,7 +303,7 @@ int i2d_RSAPrivateKey_bio(BIO *bp, RSA *rsa)
 	return(ASN1_i2d_bio(i2d_RSAPrivateKey,bp,(unsigned char *)rsa));
 	}
 
-RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA *rsa)
+RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 	{
 	return((RSA *)ASN1_d2i_bio((char *(*)())
 		RSA_new,(char *(*)())d2i_RSAPublicKey, (bp),
@@ -318,7 +318,7 @@ int i2d_RSAPublicKey_bio(BIO *bp, RSA *rsa)
 
 #ifndef NO_DSA
 #ifndef NO_FP_API
-DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
+DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 	{
 	return((DSA *)ASN1_d2i_fp((char *(*)())
 		DSA_new,(char *(*)())d2i_DSAPrivateKey, (fp),
@@ -331,7 +331,7 @@ int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 	}
 #endif
 
-DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
+DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 	{
 	return((DSA *)ASN1_d2i_bio((char *(*)())
 		DSA_new,(char *(*)())d2i_DSAPrivateKey, (bp),

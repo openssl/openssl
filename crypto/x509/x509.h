@@ -551,39 +551,39 @@ int X509_NAME_digest(X509_NAME *data,EVP_MD *type,
 #endif
 
 #ifndef NO_FP_API
-X509 *d2i_X509_fp(FILE *fp, X509 *x509);
+X509 *d2i_X509_fp(FILE *fp, X509 **x509);
 int i2d_X509_fp(FILE *fp,X509 *x509);
-X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL *crl);
+X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL **crl);
 int i2d_X509_CRL_fp(FILE *fp,X509_CRL *crl);
-X509_REQ *d2i_X509_REQ_fp(FILE *fp,X509_REQ *req);
+X509_REQ *d2i_X509_REQ_fp(FILE *fp,X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp,X509_REQ *req);
 #ifndef NO_RSA
-RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
+RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
-RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA *rsa);
+RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 #endif
 #ifndef NO_DSA
-DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 #endif
 #endif
 
 #ifdef HEADER_BIO_H
-X509 *d2i_X509_bio(BIO *bp,X509 *x509);
+X509 *d2i_X509_bio(BIO *bp,X509 **x509);
 int i2d_X509_bio(BIO *bp,X509 *x509);
-X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL *crl);
+X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL **crl);
 int i2d_X509_CRL_bio(BIO *bp,X509_CRL *crl);
-X509_REQ *d2i_X509_REQ_bio(BIO *bp,X509_REQ *req);
+X509_REQ *d2i_X509_REQ_bio(BIO *bp,X509_REQ **req);
 int i2d_X509_REQ_bio(BIO *bp,X509_REQ *req);
 #ifndef NO_RSA
-RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
+RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
-RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA *rsa);
+RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 #endif
 #ifndef NO_DSA
-DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
 #endif
 #endif
