@@ -16,6 +16,12 @@
      always reject numbers >= n.
      [Bodo Moeller]
 
+  *) In crypto/rand/md_rand.c, use a new short-time lock CRYPTO_LOCK_RAND2
+     to synchronize access to 'locking_thread'.  This is necessary on
+     systems where access to 'locking_thread' (an 'unsigned long'
+     variable) is not atomic.
+     [Bodo Moeller]
+
   *) In crypto/rand/md_rand.c, set 'locking_thread' to current thread's ID
      *before* setting the 'crypto_lock_rand' flag.  The previous code had
      a race condition if 0 is a valid thread ID.
