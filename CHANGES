@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Support threads on FreeBSD-elf in Configure.
+     [Richard Levitte]
+
   *) Add the possibility to create shared libraries on HP-UX
      [Richard Levitte]
 
