@@ -63,6 +63,9 @@
 
 #include "openssl/e_os.h"
 
+#ifdef VMS
+#include <unixio.h>
+#endif
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
@@ -71,8 +74,8 @@
 #else
 # include <sys/stat.h>
 #endif
-#include OPENSSL_UNISTD
 
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
 
 #undef BUFSIZE
@@ -135,9 +138,15 @@ int RAND_write_file(const char *file)
 	/* Under VMS, fopen(file, "wb") will create a new version of the
 	   same file.  This is not good, so let's try updating an existing
 	   one, and create file only if it doesn't already exist. */
+	/* At the same time, if we just update a file, we also need to
+	   truncate it, and unfortunately, ftruncate() and truncate() do
+	   not exist everywhere.  All that remains is to delete old versions
+	   of the random data file (done at the end). */
+#if 0
 	out=fopen(file,"rb+");
 	if (out == NULL && errno != ENOENT)
 		goto err;
+#endif
 #endif
 
 	if (out == NULL)
@@ -175,8 +184,28 @@ int RAND_write_file(const char *file)
 #ifdef VMS
 	/* We may have updated an existing file using mode "rb+",
 	 * now remove any old extra bytes */
+#if 0
 	if (ret > 0)
 		ftruncate(fileno(out), ret);
+#else
+	/* Try to delete older versions of the file, until there aren't
+	   any */
+	{
+	char *tmpf;
+
+	tmpf = Malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
+	if (tmpf)
+		{
+		strcpy(tmpf, file);
+		strcat(tmpf, ";-1");
+		while(delete(tmpf) == 0)
+			;
+		rename(file,";1"); /* Make sure it's version 1, or we
+				      will reach the limit (32767) at
+				      some point... */
+		}
+	}
+#endif
 #endif
 
 	fclose(out);
