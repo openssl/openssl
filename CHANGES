@@ -4,6 +4,22 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Changes to X509_ATTRIBUTE utilities. These have been renamed from
+     X509_*() to X509at_*() on the grounds that they don't handle X509
+     structures and behave in an analagous way to the X509v3 functions:
+     they shouldn't be called directly but wrapper functions should be used
+     instead.
+
+     So we also now have some wrapper functions that call the X509at functions
+     when passed certificate requests. (TO DO: similar things can be done with
+     PKCS#7 signed and unsigned attributes, PKCS#12 attributes and a few other
+     things. Some of these need some d2i or i2d and print functionality
+     because they handle more complex structures. Also need to modify things
+     like 'req' so it actually calls this stuff instead of the evil hacks it
+     currently uses.)
+
+     [Steve Henson]
+
   *) Add missing #ifndefs that caused missing symbols when building libssl
      as a shared library without RSA.  Use #ifndef NO_SSL2 instead of
      NO_RSA in ssl/s2*.c. 
