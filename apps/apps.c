@@ -490,7 +490,7 @@ static int ui_close(UI *ui)
 	{
 	return UI_method_get_closer(UI_OpenSSL())(ui);
 	}
-int setup_ui_method()
+int setup_ui_method(void)
 	{
 	ui_method = UI_create_method("OpenSSL application user interface");
 	UI_method_set_opener(ui_method, ui_open);
@@ -499,7 +499,7 @@ int setup_ui_method()
 	UI_method_set_closer(ui_method, ui_close);
 	return 0;
 	}
-void destroy_ui_method()
+void destroy_ui_method(void)
 	{
 	if(ui_method)
 		{
@@ -1263,7 +1263,7 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
 }
 
 /* Try to load an engine in a shareable library */
-ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
+static ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
 	{
 	ENGINE *e = ENGINE_by_id("dynamic");
 	if (e)
