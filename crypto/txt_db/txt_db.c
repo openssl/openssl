@@ -158,7 +158,7 @@ int num;
 		if ((n != num) || (*f != '\0'))
 			{
 #if !defined(NO_STDIO) && !defined(WIN16)	/* temporaty fix :-( */
-			fprintf(stderr,"wrong number of fields on line %ld\n",ln);
+			fprintf(stderr,"wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",ln,num,n,f);
 #endif
 			er=2;
 			goto err;
