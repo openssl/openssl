@@ -28,9 +28,9 @@ $	backup/compare 'test' 'test'-clear
 $	if $severity .ne. 1 then exit 3
 $	delete 'test'-cipher;*,'test'-clear;*
 $
-$	define/user sys$output 'test'-cipher-commands
+$	define/user sys$output 'test'-cipher-commands.
 $	'cmd' list-cipher-commands
-$	open/read f 'test'-cipher-commands
+$	open/read f 'test'-cipher-commands.
 $ loop_cipher_commands:
 $	read/end=loop_cipher_commands_end f i
 $	write sys$output i
@@ -56,5 +56,5 @@ $
 $	goto loop_cipher_commands
 $ loop_cipher_commands_end:
 $	close f
-$	delete 'test'-cipher-commands;*
+$	delete 'test'-cipher-commands.;*
 $	delete 'test';*
