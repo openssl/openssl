@@ -950,7 +950,7 @@ static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
 	}
 
 /* Goo to handle building as a dynamic engine */
-#ifdef ENGINE_DYNAMIC_SUPPORT 
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE 
 static int bind_fn(ENGINE *e, const char *id)
 	{
 	if(id && (strcmp(id, engine_4758_cca_id) != 0))
@@ -961,7 +961,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	}       
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
-#endif /* ENGINE_DYNAMIC_SUPPORT */
+#endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 
 #endif /* !OPENSSL_NO_HW_4758_CCA */
 #endif /* !OPENSSL_NO_HW */

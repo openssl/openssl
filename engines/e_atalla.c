@@ -575,7 +575,7 @@ static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
  * shared-library. */
-#ifdef ENGINE_DYNAMIC_SUPPORT
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_fn(ENGINE *e, const char *id)
 	{
 	if(id && (strcmp(id, engine_atalla_id) != 0))
@@ -586,7 +586,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
-#endif /* ENGINE_DYNAMIC_SUPPORT */
+#endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 
 #endif /* !OPENSSL_NO_HW_ATALLA */
 #endif /* !OPENSSL_NO_HW */

@@ -278,7 +278,7 @@ static int bind_sureware(ENGINE *e)
 	return 1;
 }
 
-#ifdef ENGINE_DYNAMIC_SUPPORT
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 	{
 	if(id && (strcmp(id, engine_sureware_id) != 0))

@@ -1117,6 +1117,12 @@ else
 	$no_shared = 1;
 	}
 
+if ($no_shared)
+	{
+	$cflags="-DOPENSSL_NO_DYNAMIC_ENGINE $cflags";
+	$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
+	}
+
 if ($sys_id ne "")
 	{
 	$cflags="-DOPENSSL_SYSNAME_$sys_id $cflags";
