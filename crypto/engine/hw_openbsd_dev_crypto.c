@@ -62,6 +62,8 @@ static void *dummy=&dummy;
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
+#include <assert.h>
 #include <sys/ioctl.h>
 #include <crypto/cryptodev.h>
 #include <openssl/engine.h>
@@ -78,8 +80,8 @@ static int dev_crypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 static int dev_crypto_digests(ENGINE *e, const EVP_MD **digest,
 				const int **nids, int nid);
 
-static const char *dev_crypto_id = "openbsd_dev_crypto";
-static const char *dev_crypto_name = "OpenBSD /dev/crypto";
+static const char dev_crypto_id[] = "openbsd_dev_crypto";
+static const char dev_crypto_name[] = "OpenBSD /dev/crypto";
 
 static ENGINE *engine_openbsd_dev_crypto(void)
 	{
@@ -176,6 +178,7 @@ static int dev_crypto_init(session_op *ses)
 
 static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     {
+    fprintf(stderr,"cleanup %d\n",CDATA(ctx)->ses);
     if(ioctl(fd,CIOCFSESSION,&CDATA(ctx)->ses) == -1)
 	err("CIOCFSESSION failed");
 
@@ -325,11 +328,13 @@ static int dev_crypto_init_digest(MD_DATA *md_data,int mac)
 	err("CIOCGSESSION failed");
 	return 0;
 	}
+    fprintf(stderr,"opened %d\n",md_data->sess.ses);
     return 1;
     }
 
 static int dev_crypto_cleanup_digest(MD_DATA *md_data)
     {
+    fprintf(stderr,"cleanup %d\n",md_data->sess.ses);
     if (ioctl(fd,CIOCFSESSION,&md_data->sess.ses) == -1)
 	{
 	err("CIOCFSESSION failed");
