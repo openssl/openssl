@@ -784,6 +784,12 @@ int SSL_read(SSL *s,char *buf,int num)
 
 int SSL_peek(SSL *s,char *buf,int num)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
+		return -1;
+		}
+
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
 		{
 		return(0);
