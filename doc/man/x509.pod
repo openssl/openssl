@@ -117,8 +117,8 @@ outputs the certificate serial number.
 
 =item B<-hash>
 
-outputs the "hash" of the certificate issuer name. This is used in OpenSSL to
-form an index to allow certificates in a directory to be lookup up by issuer
+outputs the "hash" of the certificate subject name. This is used in OpenSSL to
+form an index to allow certificates in a directory to be looked up by subject
 name.
 
 =item B<-subject>
