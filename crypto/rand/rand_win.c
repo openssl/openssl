@@ -583,7 +583,7 @@ static void readtimer(void)
 	  __try {
 	    __asm {
 	      _emit 0x0f
-	      _emix 0x31
+	      _emit 0x31
 	      mov cyclecount, eax
 	      }
 	    RAND_add(&cyclecount, sizeof(cyclecount), 1);
