@@ -226,7 +226,7 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	BN_MONT_CTX *mont = NULL;
 	const BIGNUM *A = NULL;
 
-	if (BN_cmp(a, BN_value_one) <= 0)
+	if (BN_cmp(a, BN_value_one()) <= 0)
 		return 0;
 	
 	if (checks == BN_prime_checks)
