@@ -169,8 +169,9 @@ int     BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	}
 #endif
 
-/* random number r: min <= r < min+range */
-int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
+
+/* random number r:  0 <= r < range */
+int	BN_rand_range(BIGNUM *r, BIGNUM *range)
 	{
 	int n;
 
@@ -217,10 +218,5 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
 		while (BN_cmp(r, range) >= 0);
 		}
 
-	if (min != NULL)
-		{
-		if (!BN_add(r, r, min)) return 0;
-		}
-	
 	return 1;
 	}

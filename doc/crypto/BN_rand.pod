@@ -12,7 +12,7 @@ BN_rand, BN_pseudo_rand - generate pseudo-random number
 
  int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
- int BN_rand_range(BIGNUM *rnd, BIGNUM *min, BIGNUM *range);
+ int BN_rand_range(BIGNUM *rnd, BIGNUM *range);
 
 =head1 DESCRIPTION
 
@@ -28,8 +28,7 @@ non-cryptographic purposes and for certain purposes in cryptographic
 protocols, but usually not for key generation etc.
 
 BN_rand_range() generates a cryptographically strong pseudo-random
-number B<rnd> in the range B<min> E<lt>= B<rnd> E<lt> B<min> + B<range>.
-B<min> may be NULL, in that case 0 E<lt>= B<rnd> E<lt> B<range>.
+number B<rnd> in the range 0 <lt>= B<rnd> E<lt> B<range>.
 
 The PRNG must be seeded prior to calling BN_rand() or BN_rand_range().
 
