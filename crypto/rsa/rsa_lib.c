@@ -343,7 +343,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
 		{
 		/* if PRNG is not properly seeded, resort to secret exponent as unpredictable seed */
-		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0);
+		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0.0);
 		if (!BN_pseudo_rand_range(A,rsa->n)) goto err;
 		}
 	else

@@ -233,19 +233,19 @@ int RAND_poll(void)
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	if (n > 0)
 		{
-		RAND_add(tmpbuf,sizeof tmpbuf,n);
+		RAND_add(tmpbuf,sizeof tmpbuf,(float)n);
 		OPENSSL_cleanse(tmpbuf,n);
 		}
 #endif
 
 	/* put in some default random data, we need more than just this */
 	l=curr_pid;
-	RAND_add(&l,sizeof(l),0);
+	RAND_add(&l,sizeof(l),0.0);
 	l=getuid();
-	RAND_add(&l,sizeof(l),0);
+	RAND_add(&l,sizeof(l),0.0);
 
 	l=time(NULL);
-	RAND_add(&l,sizeof(l),0);
+	RAND_add(&l,sizeof(l),0.0);
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;
