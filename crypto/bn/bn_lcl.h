@@ -86,6 +86,54 @@ extern "C" {
 #endif
 #endif
 
+#if !defined(NO_ASM) && !defined(PEDANTIC)
+/*
+ * BN_UMULT_HIGH section.
+ *
+ * No, I'm not trying to overwhelm you when stating that the
+ * product of N-bit numbers is 2*N bits wide:-) No, I don't expect
+ * you to be impressed when I say that if the compiler doesn't
+ * support 2*N integer type, then you have to replace every N*N
+ * multiplication with 4 (N/2)*(N/2) accompanied by some shifts
+ * and additions which unavoidably results in severe performance
+ * penalties. Of course provided that the hardware is capable of
+ * producing 2*N result... That's when you normally start
+ * considering assembler implementation. However! It should be
+ * pointed out that some CPUs (most notably Alpha, PowerPC and
+ * upcoming IA-64 family:-) provide *separate* instruction
+ * calculating the upper half of the product placing the result
+ * into a general purpose register. Now *if* the compiler supports
+ * inline assembler, then it's not impossible to implement the
+ * "bignum" routines (and have the compiler optimize 'em)
+ * exhibiting "native" performance in C. That's what BN_UMULT_HIGH
+ * macro is about:-)
+ *
+ *					<appro@fy.chalmers.se>
+ */
+# if defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
+#  if defined(__DECC)
+#   include <c_asm.h>
+#   define BN_UMULT_HIGH(a,b)	(BN_ULONG)asm("umulh %a0,%a1,%v0",(a),(b))
+#  elif defined(__GNUC__)
+#   define BN_UMULT_HIGH(a,b)	({	\
+	register BN_ULONG ret;		\
+	asm ("umulh	%1,%2,%0"	\
+	     : "=r"(ret)		\
+	     : "r"(a), "r"(b));		\
+	ret;			})
+#  endif	/* compiler */
+# elif defined(_ARCH_PPC) && defined(__64BIT__) && defined(SIXTY_FOUR_BIT_LONG)
+#  if defined(__GNUC__)
+#   define BN_UMULT_HIGH(a,b)	({	\
+	register BN_ULONG ret;		\
+	asm ("mulhdu	%0,%1,%2"	\
+	     : "=r"(ret)		\
+	     : "r"(a), "r"(b));		\
+	ret;			})
+#  endif	/* compiler */
+# endif		/* cpu */
+#endif		/* NO_ASM */
+
 /*************************************************************
  * Using the long long type
  */
@@ -149,6 +197,43 @@ extern "C" {
 	t=(BN_ULLONG)w * (a) + (c); \
 	(r)= Lw(t); \
 	(c)= Hw(t); \
+	}
+
+#define sqr(r0,r1,a) { \
+	BN_ULLONG t; \
+	t=(BN_ULLONG)(a)*(a); \
+	(r0)=Lw(t); \
+	(r1)=Hw(t); ]
+	}
+
+#elif defined(BN_UMULT_HIGH)
+#define mul_add(r,a,w,c) {		\
+	BN_ULONG high,low,ret,tmp=(a);	\
+	ret =  (r);			\
+	high=  BN_UMULT_HIGH(w,tmp);	\
+	ret += (c);			\
+	low =  (w) * tmp;		\
+	(c) =  (ret<(c))?1:0;		\
+	(c) += high;			\
+	ret += low;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define mul(r,a,w,c)	{		\
+	BN_ULONG high,low,ret,ta=(a);	\
+	low =  (w) * ta;		\
+	high=  BN_UMULT_HIGH(w,ta);	\
+	ret =  low + (c);		\
+	(c) =  high;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define sqr(r0,r1,a)	{		\
+	BN_ULONG tmp=(a);		\
+	(r0) = tmp * tmp;		\
+	(r1) = BN_UMULT_HIGH(tmp,tmp);	\
 	}
 
 #else

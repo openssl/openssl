@@ -280,9 +280,14 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		 */
 		rem=(n1-q*d0)&BN_MASK2;
 #endif
+#ifdef BN_UMULT_HIGH
+		t2l = d1 * q;
+		t2h = BN_UMULT_HIGH(d1,q);
+#else
 		t2l=LBITS(d1); t2h=HBITS(d1);
 		ql =LBITS(q);  qh =HBITS(q);
 		mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
+#endif
 
 		for (;;)
 			{
