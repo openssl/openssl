@@ -93,14 +93,13 @@ rsa_asn1.o: ../../include/openssl/opensslconf.h
 rsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 rsa_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rsa_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_asn1.c
-rsa_chk.o: ../../e_os.h ../../include/openssl/asn1.h
-rsa_chk.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-rsa_chk.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rsa_chk.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-rsa_chk.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rsa_chk.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-rsa_chk.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_chk.o: rsa_chk.c
+rsa_chk.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+rsa_chk.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+rsa_chk.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_chk.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
+rsa_chk.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_chk.o: ../../include/openssl/symhacks.h rsa_chk.c
 rsa_eay.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_eay.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 rsa_eay.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -120,14 +119,13 @@ rsa_eay.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 rsa_eay.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_eay.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 rsa_eay.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_eay.c
-rsa_err.o: ../../e_os.h ../../include/openssl/asn1.h
-rsa_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-rsa_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rsa_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-rsa_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rsa_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-rsa_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_err.o: rsa_err.c
+rsa_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+rsa_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+rsa_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+rsa_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
+rsa_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_err.o: ../../include/openssl/symhacks.h rsa_err.c
 rsa_gen.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

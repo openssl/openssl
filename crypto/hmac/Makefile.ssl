@@ -80,7 +80,7 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+hmac.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hmac.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 hmac.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/des.h ../../include/openssl/dh.h

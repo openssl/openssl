@@ -379,7 +379,7 @@ dsatest.o: ../include/openssl/err.h ../include/openssl/lhash.h
 dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dsatest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 dsatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h dsatest.c
-enginetest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+enginetest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 enginetest.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 enginetest.o: ../include/openssl/cast.h ../include/openssl/crypto.h
 enginetest.o: ../include/openssl/des.h ../include/openssl/dh.h
@@ -403,7 +403,7 @@ exptest.o: ../include/openssl/err.h ../include/openssl/lhash.h
 exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 exptest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 exptest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h exptest.c
-hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+hmactest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 hmactest.o: ../include/openssl/cast.h ../include/openssl/crypto.h
 hmactest.o: ../include/openssl/des.h ../include/openssl/dh.h

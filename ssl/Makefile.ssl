@@ -99,7 +99,7 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bio_ssl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+bio_ssl.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 bio_ssl.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 bio_ssl.o: ../include/openssl/buffer.h ../include/openssl/cast.h
 bio_ssl.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -638,7 +638,7 @@ ssl_ciph.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 ssl_ciph.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_ciph.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_ciph.o: ../include/openssl/x509_vfy.h ssl_ciph.c ssl_locl.h
-ssl_err.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+ssl_err.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 ssl_err.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 ssl_err.o: ../include/openssl/buffer.h ../include/openssl/cast.h
 ssl_err.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -661,7 +661,7 @@ ssl_err.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 ssl_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_err.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_err.o: ../include/openssl/x509_vfy.h ssl_err.c
-ssl_err2.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+ssl_err2.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 ssl_err2.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 ssl_err2.o: ../include/openssl/buffer.h ../include/openssl/cast.h
 ssl_err2.o: ../include/openssl/comp.h ../include/openssl/crypto.h
