@@ -479,7 +479,7 @@ open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:
 while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
-		{ print OUT "#define OPENSSLDIR $openssldir\n"; }
+		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
 		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT/)
