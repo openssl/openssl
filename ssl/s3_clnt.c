@@ -1889,7 +1889,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				 *
 				 * if ((s->cert->key->privatekey != NULL) &&
 				 *     (s->cert->key->privatekey->type ==
-				 *      EVP_PKEY_ECC) && ...)
+				 *      EVP_PKEY_EC) && ...)
 				 * ecdh_clnt_cert = 1;
 				 */
 				}
