@@ -305,7 +305,7 @@ my %table=(
 "unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread:-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # IBM's AIX.
-"aix-cc",   "cc:-O -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
+"aix-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown)::BN_LLONG RC4_CHAR:::",
 "aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
 
 #
