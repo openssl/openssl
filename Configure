@@ -229,8 +229,8 @@ my %table=(
 "CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
-"ultrix","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::::::",
-"ultrix-gcc","cc:-O3 -DL_ENDIAN::::::",
+"ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::::::",
+"ultrix-gcc","gcc:-O3 -DL_ENDIAN::::::",
 # K&R C is no longer supported; you need gcc on old Ultrix installations
 ##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::::::",
 
@@ -391,6 +391,23 @@ if ($rmd160_obj =~ /\.o$/)
 	$cflags.=" -DRMD160_ASM";
 	}
 
+my $version = "unknown";
+my $major = "unknown";
+my $minor = "unknown";
+
+open(IN,'<crypto/opensslv.h') || die "unable to read opensslv.h:$!\n";
+while (<IN>)
+	{
+	$version=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
+	}
+close(IN);
+
+if ($version =~ /(^[0-9]*)\.([\0-9\.]*)/)
+	{
+	$major=$1;
+	$minor=$2;
+	}
+
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
 open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
 my $sdirs=0;
@@ -405,6 +422,9 @@ while (<IN>)
 			s/$dir//;
 			}
 		}
+	s/^VERSION=.*/VERSION=$version/;
+	s/^MAJOR=.*/MAJOR=$major/;
+	s/^MINOR=.*/MINOR=$minor/;
 	s/^INSTALLTOP=.*$/INSTALLTOP=$installprefix/;
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;

@@ -2,7 +2,9 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION = 0.9.2b
+VERSION=
+MAJOR=
+MINOR=
 PLATFORM=dist
 INSTALLTOP=/usr/local/ssl
 
@@ -136,6 +138,8 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 #RMD160_ASM_OBJ= asm/rm86bsdi.o       # bsdi
 
 DIRS=   crypto ssl rsaref apps test tools
+SHLIBDIRS= crypto ssl
+
 # dirs in crypto to build
 SDIRS=  \
 	md2 md5 sha mdc2 hmac ripemd \
@@ -177,6 +181,23 @@ sub_all:
 	do \
 	(cd $$i && echo "making all in $$i..." && \
 	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	done;
+
+linux-shared:
+	for i in ${SHLIBDIRS}; do \
+	rm -f lib$$i.a lib$$i.so \
+		lib$$i.so.${MAJOR} lib$$i.so.${MAJOR}.${MINOR}; \
+	${MAKE} CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='-fPIC ${CFLAG}' SDIRS='${SDIRS}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' DIRS=$$i clean all || exit 1; \
+	( set -x; ${CC}  -shared -o lib$$i.so.${MAJOR}.${MINOR} \
+		-Wl,-S,-soname=lib$$i.so.${MAJOR} \
+		-Wl,--whole-archive lib$$i.a \
+		-Wl,--no-whole-archive -lc ) || exit 1; \
+	rm -f lib$$i.a; make -C $$i clean || exit 1 ;\
+	done;
+	@set -x; \
+	for i in ${SHLIBDIRS}; do \
+	ln -s lib$$i.so.${MAJOR}.${MINOR} lib$$i.so.${MAJOR}; \
+	ln -s lib$$i.so.${MAJOR} lib$$i.so; \
 	done;
 
 Makefile.ssl: Makefile.org
