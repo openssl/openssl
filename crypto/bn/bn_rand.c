@@ -127,10 +127,10 @@ err:
 
 int     BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	{
-	return bnrand(1, rnd, bits, top, bottom);
+	return bnrand(0, rnd, bits, top, bottom);
 	}
 
 int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	{
-	return bnrand(0, rnd, bits, top, bottom);
+	return bnrand(1, rnd, bits, top, bottom);
 	}

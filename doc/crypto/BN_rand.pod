@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_rand, BN_rand_pseudo - Generate pseudo-random number
+BN_rand, BN_pseudo_rand - Generate pseudo-random number
 
 =head1 SYNOPSIS
 
