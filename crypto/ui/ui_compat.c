@@ -1,4 +1,5 @@
-/* crypto/ui/ui_compat.c */ /* This was previously crypto/des/read2pwd.c */
+/* crypto/ui/ui_compat.c -*- mode:C; c-file-style: "eay" -*- */
+/* This was previously crypto/des/read2pwd.c and partly crypto/des/read_pwd.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,15 +64,9 @@ int des_read_password(des_cblock *key, const char *prompt, int verify)
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];
-	UI *ui;
 
-	ui = UI_new();
-	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
-	if (verify)
-		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
-	if ((ok=UI_process(ui)) == 0)
+	if ((ok=des_read_pw(buf,buff,BUFSIZ,prompt,verify)) == 0)
 		des_string_to_key(buf,key);
-	UI_free(ui);
 	memset(buf,0,BUFSIZ);
 	memset(buff,0,BUFSIZ);
 	return(ok);
@@ -82,16 +77,33 @@ int des_read_2passwords(des_cblock *key1, des_cblock *key2, const char *prompt,
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];
+
+	if ((ok=des_read_pw(buf,buff,BUFSIZ,prompt,verify)) == 0)
+		des_string_to_2keys(buf,key1,key2);
+	memset(buf,0,BUFSIZ);
+	memset(buff,0,BUFSIZ);
+	return(ok);
+	}
+
+int des_read_pw_string(char *buf,int length,const char *prompt,int verify)
+	{
+	char buff[BUFSIZ];
+	int ret;
+
+	ret=des_read_pw(buf,buff,(length>BUFSIZ)?BUFSIZ:length,prompt,verify);
+	memset(buff,0,BUFSIZ);
+	return(ret);
+	}
+
+int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify)
+	{
 	UI *ui;
 
 	ui = UI_new();
 	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
 	if (verify)
 		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
-	if ((ok=UI_process(ui)) == 0)
-		des_string_to_2keys(buf,key1,key2);
+	ok=UI_process(ui);
 	UI_free(ui);
-	memset(buf,0,BUFSIZ);
-	memset(buff,0,BUFSIZ);
 	return(ok);
 	}

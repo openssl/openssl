@@ -32,7 +32,7 @@ LIBOBJ= ui_err.o ui_lib.o ui_openssl.o $(COMPATOBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= ui.h
+EXHEADER= ui.h ui_compat.h
 HEADER=	$(EXHEADER) ui_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
