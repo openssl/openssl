@@ -1,0 +1,132 @@
+
+=pod
+
+=head1 NAME
+
+openssl - OpenSSL command line tool
+
+=head1 SYNOPSIS
+
+B<openssl>
+I<command>
+[ I<command_opts> ]
+[ I<command_args> ]
+
+=head1 DESCRIPTION
+
+OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL
+v2/v3) and Transport Layer Security (TLS v1) network protocols and related
+cryptography standards required by them.
+
+The B<openssl> program is a command line tool for using the various
+cryptography functions of OpenSSL's B<crypto> library from the shell. 
+It can be used for 
+
+ o  Creation of RSA, DH and DSA key parameters
+ o  Creattion of X.509 certificates, CSRs and CRLs 
+ o  Calculation of Message Digests
+ o  Encryption and Decryption with Ciphers
+ o  SSL/TLS Client and Server Tests
+
+=head1 COMMAND SUMMARY
+
+The B<openssl> program provides a rich variety of commands (I<command> in the
+SYNOPSIS above), each of which often has a wealth of options and arguments
+(I<command_opts> and I<command_args> in the SYNOPSIS).
+
+=over 10
+
+=item B<s_client>
+
+This implements a generic SSL/TLS client which can establish a transparent
+connection to a remote server speaking SSL/TLS. It's intended for testing
+purposes only and provides only rudimentary interface functionality but
+internally uses mostly all functionality of the OpenSSL B<ssl> library.
+
+=item B<s_server>
+
+This implements a generic SSL/TLS server which accepts connections from remote
+clients speaking SSL/TLS. It's intended for testing purposes only and provides
+only rudimentary interface functionality but internally uses mostly all
+functionality of the OpenSSL B<ssl> library.  It provides both an own command
+line oriented protocol for testing SSL functions and a simple HTTP response
+facility to emulate an SSL/TLS-aware webserver.
+
+=back
+
+=head1 DETAILED COMMAND DESCRIPTION
+
+The following is a detailed description of every B<openssl> I<command>.
+
+=over 4
+
+=item B<openssl> B<s_client>
+[B<-connect> I<host>B<:>I<port>]
+[B<-verify> I<arg>]
+[B<-cert> I<arg>]
+[B<-key> I<arg>]
+[B<-CApath> I<arg>]
+[B<-CAfile> I<arg>]
+[B<-reconnect>]
+[B<-pause>]
+[B<-debug>]
+[B<-nbio_test>]
+[B<-state>]
+[B<-nbio>]
+[B<-quiet>]
+[B<-ssl2>]
+[B<-ssl3>]
+[B<-tls1>]
+[B<-no_ssl2>]
+[B<-no_ssl3>]
+[B<-no_tls1>]
+[B<-bugs>]
+[B<-cipher>]
+
+The B<s_client> command implements a generic SSL/TLS client which can
+establish a transparent connection to a remote I<host> and I<port> speaking
+SSL/TLS. 
+
+=item B<openssl> B<s_server>
+[B<-accept> I<port>]
+[B<-verify> I<arg>]
+[B<-Verify> I<arg>]
+[B<-cert> I<arg>]
+[B<-key> I<arg>]
+[B<-nbio>]
+[B<-nbio_test>]
+[B<-debug>]
+[B<-state>]
+[B<-CApath> I<arg>]
+[B<-CAfile> I<arg>]
+[B<-nocert>]
+[B<-cipher> I<arg>]
+[B<-quiet>]
+[B<-no_tmp_rsa>]
+[B<-ssl2>]
+[B<-ssl3>]
+[B<-tls1>]
+[B<-no_ssl2>]
+[B<-no_ssl3>]
+[B<-no_tls1>]
+[B<-bugs>]
+[B<-www>]
+[B<-WWW>]
+
+The B<s_server> command implements a generic SSL/TLS server which accepts
+connections from remote clients on I<port> speaking SSL/TLS.
+
+=back
+
+...
+
+=head1 SEE ALSO
+
+crypto(3), ssl(3)
+
+=head1 AUTHORS
+
+Ralf S. Engelschall
+
+=cut
+
