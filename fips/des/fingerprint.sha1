@@ -1,2 +1,3 @@
 SHA1(fips_des_enc.c)= a4b88bb16782604a298d74de04a8b3bc3a204c5a
+SHA1(fips_des_selftest.c)= 5638ae4d50be6110d9efbaa5e7e19c7e04c9940d
 SHA1(fips_des_locl.h)= 5e5128f074485e72d6fdee00d22d46a694bd5abe

@@ -53,15 +53,25 @@
 
 #ifdef FIPS
 
-void FIPS_mode_set(int onoff)
+int FIPS_selftest()
+    {
+    return FIPS_selftest_sha1()
+	&& FIPS_selftest_aes()
+	&& FIPS_selftest_des();
+    }
+
+int FIPS_mode_set(int onoff)
     {
     FIPS_mode=onoff;
     if(onoff)
 	{
 	FIPS_rand_check=&rand_fips_meth;
 	RAND_set_rand_method(&rand_fips_meth);
+	return FIPS_selftest();
 	}
+    return 1;
     }
+
 
 #if 0
 /* here just to cause error codes to exist */

@@ -23,8 +23,8 @@ TEST=fips_aesavs.c fips_aes_data
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_aes_core.c
-LIBOBJ=fips_aes_core.o
+LIBSRC=fips_aes_core.c fips_aes_selftest.c
+LIBOBJ=fips_aes_core.o fips_aes_selftest.o
 
 SRC= $(LIBSRC)
 

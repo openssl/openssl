@@ -1,2 +1,3 @@
 SHA1(fips_aes_core.c)= 5298df7807877eed470a1ee5f8331fc0876689da
+SHA1(fips_aes_selftest.c)= fb848010c088adbbfaf719ca77c91e8ae0932ce0
 SHA1(fips_aes_locl.h)= a3c01d9a4f9d5211e9e785852f6f1a2febfd73b6
