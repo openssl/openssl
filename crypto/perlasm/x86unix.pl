@@ -90,7 +90,12 @@ sub main'DWP
 	$reg2="$regs{$reg2}" if defined($regs{$reg2});
 	$ret.=$addr if ($addr ne "") && ($addr ne 0);
 	if ($reg2 ne "")
-		{ $ret.="($reg1,$reg2,$idx)"; }
+		{
+		if($idx ne "")
+		    { $ret.="($reg1,$reg2,$idx)"; }
+		else
+		    { $ret.="($reg1,$reg2)"; }
+	        }
 	else
 		{ $ret.="($reg1)" }
 	return($ret);

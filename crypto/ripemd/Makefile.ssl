@@ -61,7 +61,7 @@ asm/rm86-out.o: asm/rm86unix.cpp
 asm/rm86bsdi.o: asm/rm86unix.cpp
 	$(CPP) -DBSDI asm/rm86unix.cpp | sed 's/ :/:/' | as -o asm/rm86bsdi.o
 
-asm/rm86unix.cpp:
+asm/rm86unix.cpp: asm/rmd-586.pl
 	(cd asm; perl rmd-586.pl cpp >rm86unix.cpp)
 
 files:
