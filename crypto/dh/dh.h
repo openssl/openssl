@@ -63,10 +63,8 @@
 extern "C" {
 #endif
 
-#ifndef HEADER_BN_H
-#define BIGNUM 		char
-#endif
-
+#include "bn.h"
+	
 #define DH_FLAG_CACHE_MONT_P	0x01
 
 typedef struct dh_st
