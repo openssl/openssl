@@ -326,6 +326,8 @@ X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
 
 void X509_STORE_set_flags(X509_STORE *ctx, long flags);
+int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
+int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 

@@ -333,42 +333,22 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 {
-	if(X509_PURPOSE_get_by_id(purpose) == -1) {
-		SSLerr(SSL_F_SSL_CTX_SET_PURPOSE, SSL_R_INVALID_PURPOSE);
-		return 0;
-	}
-	s->purpose = purpose;
-	return 1;
+	return X509_PURPOSE_set(&s->purpose, purpose);
 }
 
 int SSL_set_purpose(SSL *s, int purpose)
 {
-	if(X509_PURPOSE_get_by_id(purpose) == -1) {
-		SSLerr(SSL_F_SSL_SET_PURPOSE, SSL_R_INVALID_PURPOSE);
-		return 0;
-	}
-	s->purpose = purpose;
-	return 1;
+	return X509_PURPOSE_set(&s->purpose, purpose);
 }
-	
+
 int SSL_CTX_set_trust(SSL_CTX *s, int trust)
 {
-	if(X509_TRUST_get_by_id(trust) == -1) {
-		SSLerr(SSL_F_SSL_CTX_SET_TRUST, SSL_R_INVALID_TRUST);
-		return 0;
-	}
-	s->trust = trust;
-	return 1;
+	return X509_TRUST_set(&s->trust, trust);
 }
 
 int SSL_set_trust(SSL *s, int trust)
 {
-	if(X509_TRUST_get_by_id(trust) == -1) {
-		SSLerr(SSL_F_SSL_SET_TRUST, SSL_R_INVALID_TRUST);
-		return 0;
-	}
-	s->trust = trust;
-	return 1;
+	return X509_TRUST_set(&s->trust, trust);
 }
 
 void SSL_free(SSL *s)

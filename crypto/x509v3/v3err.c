@@ -107,6 +107,7 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 {ERR_PACK(0,X509V3_F_X509V3_GET_VALUE_BOOL,0),	"X509V3_get_value_bool"},
 {ERR_PACK(0,X509V3_F_X509V3_PARSE_LIST,0),	"X509V3_parse_list"},
 {ERR_PACK(0,X509V3_F_X509_PURPOSE_ADD,0),	"X509_PURPOSE_add"},
+{ERR_PACK(0,X509V3_F_X509_PURPOSE_SET,0),	"X509_PURPOSE_set"},
 {0,NULL}
 	};
 
@@ -138,6 +139,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_INVALID_OBJECT_IDENTIFIER      ,"invalid object identifier"},
 {X509V3_R_INVALID_OPTION                 ,"invalid option"},
 {X509V3_R_INVALID_POLICY_IDENTIFIER      ,"invalid policy identifier"},
+{X509V3_R_INVALID_PURPOSE                ,"invalid purpose"},
 {X509V3_R_INVALID_SECTION                ,"invalid section"},
 {X509V3_R_INVALID_SYNTAX                 ,"invalid syntax"},
 {X509V3_R_ISSUER_DECODE_ERROR            ,"issuer decode error"},

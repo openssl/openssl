@@ -121,6 +121,16 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	return pt->check_purpose(pt, x, ca);
 }
 
+int X509_PURPOSE_set(int *p, int purpose)
+{
+	if(X509_PURPOSE_get_by_id(purpose) == -1) {
+		X509V3err(X509V3_F_X509_PURPOSE_SET, X509V3_R_INVALID_PURPOSE);
+		return 0;
+	}
+	*p = purpose;
+	return 1;
+}
+
 int X509_PURPOSE_get_count(void)
 {
 	if(!xptable) return X509_PURPOSE_COUNT;

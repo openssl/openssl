@@ -11,6 +11,11 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) New functions X509_PURPOSE_set() and X509_TRUST_set() to handle
+     setting of purpose and trust fields. New X509_STORE trust and
+     purpose functions and tidy up setting in other SSL functions.
+     [Steve Henson]
+
   +) Add copies of X509_STORE_CTX fields and callbacks to X509_STORE
      structure. These are inherited by X509_STORE_CTX when it is 
      initialised. This allows various defaults to be set in the

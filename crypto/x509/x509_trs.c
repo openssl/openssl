@@ -144,6 +144,16 @@ int X509_TRUST_get_by_id(int id)
 	return idx + X509_TRUST_COUNT;
 }
 
+int X509_TRUST_set(int *t, int trust)
+{
+	if(X509_TRUST_get_by_id(trust) == -1) {
+		X509err(X509_F_X509_TRUST_SET, X509_R_INVALID_TRUST);
+		return 0;
+	}
+	*t = trust;
+	return 1;
+}
+
 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 					char *name, int arg1, void *arg2)
 {

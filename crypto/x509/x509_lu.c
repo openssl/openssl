@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_meth=NULL;
 
@@ -542,6 +543,16 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 void X509_STORE_set_flags(X509_STORE *ctx, long flags)
 	{
 	ctx->flags |= flags;
+	}
+
+int X509_STORE_set_purpose(X509_STORE *ctx, int purpose)
+	{
+	return X509_PURPOSE_set(&ctx->purpose, purpose);
+	}
+
+int X509_STORE_set_trust(X509_STORE *ctx, int trust)
+	{
+	return X509_TRUST_set(&ctx->trust, trust);
 	}
 
 IMPLEMENT_STACK_OF(X509_LOOKUP)

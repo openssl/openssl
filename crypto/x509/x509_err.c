@@ -103,6 +103,7 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_PACK(0,X509_F_X509_STORE_CTX_PURPOSE_INHERIT,0),	"X509_STORE_CTX_purpose_inherit"},
 {ERR_PACK(0,X509_F_X509_TO_X509_REQ,0),	"X509_to_X509_REQ"},
 {ERR_PACK(0,X509_F_X509_TRUST_ADD,0),	"X509_TRUST_add"},
+{ERR_PACK(0,X509_F_X509_TRUST_SET,0),	"X509_TRUST_set"},
 {ERR_PACK(0,X509_F_X509_VERIFY_CERT,0),	"X509_verify_cert"},
 {0,NULL}
 	};
@@ -116,6 +117,7 @@ static ERR_STRING_DATA X509_str_reasons[]=
 {X509_R_ERR_ASN1_LIB                     ,"err asn1 lib"},
 {X509_R_INVALID_DIRECTORY                ,"invalid directory"},
 {X509_R_INVALID_FIELD_NAME               ,"invalid field name"},
+{X509_R_INVALID_TRUST                    ,"invalid trust"},
 {X509_R_KEY_TYPE_MISMATCH                ,"key type mismatch"},
 {X509_R_KEY_VALUES_MISMATCH              ,"key values mismatch"},
 {X509_R_LOADING_CERT_DIR                 ,"loading cert dir"},
