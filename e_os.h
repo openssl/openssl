@@ -194,6 +194,10 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
+#  ifdef __MINGW32__
+#    define ssize_t long
+#  endif
+
 #  if defined (__BORLANDC__)
 #    define _setmode setmode
 #    define _O_TEXT O_TEXT
@@ -268,6 +272,7 @@ extern "C" {
 #    endif
 #    ifdef NeXT
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP */
+#      define ssize_t long
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
