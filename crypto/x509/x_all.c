@@ -417,6 +417,18 @@ int X509_digest(X509 *data, const EVP_MD *type, unsigned char *md,
 	return(ASN1_digest((int (*)())i2d_X509,type,(char *)data,md,len));
 	}
 
+int X509_CRL_digest(X509_CRL *data, const EVP_MD *type, unsigned char *md,
+	     unsigned int *len)
+	{
+	return(ASN1_digest((int (*)())i2d_X509_CRL,type,(char *)data,md,len));
+	}
+
+int X509_REQ_digest(X509_REQ *data, const EVP_MD *type, unsigned char *md,
+	     unsigned int *len)
+	{
+	return(ASN1_digest((int (*)())i2d_X509_REQ,type,(char *)data,md,len));
+	}
+
 int X509_NAME_digest(X509_NAME *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{

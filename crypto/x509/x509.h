@@ -660,6 +660,8 @@ int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_digest(X509 *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
+int X509_CRL_digest(X509_CRL *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
+int X509_REQ_digest(X509_REQ *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
 int X509_NAME_digest(X509_NAME *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
 #endif

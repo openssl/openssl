@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Enhance c_rehash script. Old version would mishandle certificates
+     with the same subject name hash and wouldn't handle CRLs at all.
+     Added -fingerprint option to crl utility, to support new c_rehash
+     features.
+     [Steve Henson]
+
   *) Eliminate non-ANSI declarations in crypto.h and stack.h.
 	 [Ulf Möller]
 

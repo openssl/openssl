@@ -104,6 +104,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat;
 	char *infile=NULL,*outfile=NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
+	int fingerprint = 0;
 	char **pp,buf[256];
 	X509_STORE *store = NULL;
 	X509_STORE_CTX ctx;
@@ -111,6 +112,7 @@ int MAIN(int argc, char **argv)
 	X509_OBJECT xobj;
 	EVP_PKEY *pkey;
 	int do_ver = 0;
+	const EVP_MD *md_alg,*digest=EVP_md5();
 
 	apps_startup();
 
@@ -183,6 +185,13 @@ int MAIN(int argc, char **argv)
 			nextupdate= ++num;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
+		else if (strcmp(*argv,"-fingerprint") == 0)
+			fingerprint= ++num;
+		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
+			{
+			/* ok */
+			digest=md_alg;
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -273,6 +282,26 @@ bad:
 				else
 					BIO_printf(bio_out,"NONE");
 				BIO_printf(bio_out,"\n");
+				}
+			if (fingerprint == i)
+				{
+				int j;
+				unsigned int n;
+				unsigned char md[EVP_MAX_MD_SIZE];
+
+				if (!X509_CRL_digest(x,digest,md,&n))
+					{
+					BIO_printf(bio_err,"out of memory\n");
+					goto end;
+					}
+				BIO_printf(bio_out,"%s Fingerprint=",
+						OBJ_nid2sn(EVP_MD_type(digest)));
+				for (j=0; j<(int)n; j++)
+					{
+					BIO_printf(bio_out,"%02X%c",md[j],
+						(j+1 == (int)n)
+						?'\n':':');
+					}
 				}
 			}
 		}
