@@ -216,7 +216,7 @@ $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
-	"tb_rsa,tb_dsa,tb_dh,tb_rand,tb_cipher,tb_digest,"+ -
+	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_rand,tb_cipher,tb_digest,tb_ecdh"+ -
 	"eng_openssl,eng_dyn,eng_cnf,"+ -
 	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec,"+ -
 	"hw_openbsd_dev_crypto,hw_aep,hw_sureware,hw_4758_cca"
@@ -234,12 +234,12 @@ $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
+$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
 	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
 $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
-	"m_dss,m_dss1,m_mdc2,m_ripemd,"+ -
+	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
