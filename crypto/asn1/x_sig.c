@@ -61,8 +61,8 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_SIG,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_SIG_NEW,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_SIG,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_SIG_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_X509_SIG(a,pp)
@@ -99,6 +99,7 @@ long length;
 X509_SIG *X509_SIG_new()
 	{
 	X509_SIG *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_SIG);
 	M_ASN1_New(ret->algor,X509_ALGOR_new);

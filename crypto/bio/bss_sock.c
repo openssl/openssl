@@ -189,11 +189,7 @@ BIO *a;
 			{
 #ifndef BIO_FD
 			shutdown(a->num,2);
-# ifdef WINDOWS
 			closesocket(a->num);
-# else
-			close(a->num);
-# endif
 #else			/* BIO_FD */
 			close(a->num);
 #endif
@@ -218,9 +214,9 @@ int outl;
 
 	if (out != NULL)
 		{
-#if defined(WINDOWS) && !defined(BIO_FD)
+#ifndef BIO_FD
 		clear_socket_error();
-		ret=recv(b->num,out,outl,0);
+		ret=readsocket(b->num,out,outl);
 #else
 		clear_sys_error();
 		ret=read(b->num,out,outl);
@@ -250,9 +246,9 @@ int inl;
 	{
 	int ret;
 	
-#if defined(WINDOWS) && !defined(BIO_FD)
+#ifndef BIO_FD
 	clear_socket_error();
-	ret=send(b->num,in,inl,0);
+	ret=writesocket(b->num,in,inl);
 #else
 	clear_sys_error();
 	ret=write(b->num,in,inl);
@@ -286,14 +282,21 @@ char *ptr;
 	switch (cmd)
 		{
 	case BIO_CTRL_RESET:
+		num=0;
+	case BIO_C_FILE_SEEK:
 #ifdef BIO_FD
-		ret=(long)lseek(b->num,0,0);
+		ret=(long)lseek(b->num,num,0);
 #else
 		ret=0;
 #endif
 		break;
+	case BIO_C_FILE_TELL:
 	case BIO_CTRL_INFO:
+#ifdef BIO_FD
+		ret=(long)lseek(b->num,0,1);
+#else
 		ret=0;
+#endif
 		break;
 	case BIO_C_SET_FD:
 #ifndef BIO_FD
@@ -328,7 +331,6 @@ char *ptr;
 	case BIO_CTRL_DUP:
 	case BIO_CTRL_FLUSH:
 		ret=1;
-		break;
 		break;
 	default:
 		ret=0;
@@ -377,7 +379,7 @@ int i;
 
 	if ((i == 0) || (i == -1))
 		{
-#if !defined(BIO_FD) && defined(WINDOWS)
+#ifndef BIO_FD
 		err=get_last_socket_error();
 #else
 		err=get_last_sys_error();
@@ -411,8 +413,10 @@ int err;
 	case WSAEWOULDBLOCK:
 # endif
 
-# if defined(WSAENOTCONN)
+# if 0 /* This appears to always be an error */
+#  if defined(WSAENOTCONN)
 	case WSAENOTCONN:
+#  endif
 # endif
 #endif
 
@@ -452,7 +456,7 @@ int err;
 	case EALREADY:
 #endif
 		return(1);
-		break;
+		/* break; */
 	default:
 		break;
 		}

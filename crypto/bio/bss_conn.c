@@ -81,13 +81,12 @@ typedef struct bio_connect_st
 	int nbio;
 
 	unsigned char ip[4];
-	short port;
+	unsigned short port;
 
 	struct sockaddr_in them;
 
 	/* int socket; this will be kept in bio->num so that it is
 	 * compatable with the bss_sock bio */ 
-	int error;
 
 	/* called when the connection is initially made
 	 *  callback(BIO,state,ret);  The callback should return
@@ -187,7 +186,7 @@ BIO_CONNECT *c;
 					}
 				}
 
-			if (p == NULL)
+			if (c->param_port == NULL)
 				{
 				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_PORT_SPECIFIED);
 				ERR_add_error_data(2,"host=",c->param_hostname);
@@ -203,7 +202,12 @@ BIO_CONNECT *c;
 			break;
 
 		case BIO_CONN_S_GET_PORT:
-			if (BIO_get_port(c->param_port,&c->port) <= 0)
+			if (c->param_port == NULL)
+				{
+				abort();
+				goto exit_loop;
+				}
+			else if (BIO_get_port(c->param_port,&c->port) <= 0)
 				goto exit_loop;
 			c->state=BIO_CONN_S_CREATE_SOCKET;
 			break;
@@ -235,12 +239,9 @@ BIO_CONNECT *c;
 			break;
 
 		case BIO_CONN_S_NBIO:
-#ifdef FIONBIO
 			if (c->nbio)
 				{
-				l=1;
-				ret=BIO_socket_ioctl(b->num,FIONBIO,&l);
-				if (ret < 0)
+				if (!BIO_socket_nbio(b->num,1))
 					{
 					BIOerr(BIO_F_CONN_STATE,BIO_R_ERROR_SETTING_NBIO);
 					ERR_add_error_data(4,"host=",
@@ -249,7 +250,6 @@ BIO_CONNECT *c;
 					goto exit_loop;
 					}
 				}
-#endif
 			c->state=BIO_CONN_S_CONNECT;
 
 #ifdef SO_KEEPALIVE
@@ -326,12 +326,10 @@ BIO_CONNECT *c;
 			}
 		}
 
-	if (1)
-		{
+	/* Loop does not exit */
 exit_loop:
-		if (cb != NULL)
-			ret=cb((BIO *)b,c->state,ret);
-		}
+	if (cb != NULL)
+		ret=cb((BIO *)b,c->state,ret);
 end:
 	return(ret);
 	}
@@ -353,7 +351,6 @@ BIO_CONNECT *BIO_CONNECT_new()
 	ret->ip[3]=0;
 	ret->port=0;
 	memset((char *)&ret->them,0,sizeof(ret->them));
-	ret->error=0;
 	return(ret);
 	}
 
@@ -395,11 +392,7 @@ BIO *bio;
 		/* Only do a shutdown if things were established */
 		if (c->state == BIO_CONN_S_OK)
 			shutdown(bio->num,2);
-# ifdef WINDOWS
 		closesocket(bio->num);
-# else
-		close(bio->num);
-# endif
 		bio->num=INVALID_SOCKET;
 		}
 	}
@@ -442,11 +435,7 @@ int outl;
 	if (out != NULL)
 		{
 		clear_socket_error();
-#if defined(WINDOWS)
-		ret=recv(b->num,out,outl,0);
-#else
-		ret=read(b->num,out,outl);
-#endif
+		ret=readsocket(b->num,out,outl);
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
 			{
@@ -473,11 +462,7 @@ int inl;
 		}
 
 	clear_socket_error();
-#if defined(WINDOWS)
-	ret=send(b->num,in,inl,0);
-#else
-	ret=write(b->num,in,inl);
-#endif
+	ret=writesocket(b->num,in,inl);
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{
@@ -559,9 +544,26 @@ char *ptr;
 				data->param_port=BUF_strdup(ptr);
 				}
 			else if (num == 2)
-				memcpy(data->ip,ptr,4);
+				{
+				char buf[16];
+
+				sprintf(buf,"%d.%d.%d.%d",
+					ptr[0],ptr[1],ptr[2],ptr[3]);
+				if (data->param_hostname != NULL)
+					Free(data->param_hostname);
+				data->param_hostname=BUF_strdup(buf);
+				memcpy(&(data->ip[0]),ptr,4);
+				}
 			else if (num == 3)
+				{
+				char buf[16];
+
+				sprintf(buf,"%d",*(int *)ptr);
+				if (data->param_port != NULL)
+					Free(data->param_port);
+				data->param_port=BUF_strdup(buf);
 				data->port= *(int *)ptr;
+				}
 			}
 		break;
 	case BIO_C_SET_NBIO:

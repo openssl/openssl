@@ -1,6 +1,8 @@
 @echo=off
 
-set test=..\ms
+set test=p:\work\ssleay\ms
+set opath=%PATH%
+PATH=%1;%PATH%
 
 rem run this from inside the bin directory
 
@@ -132,3 +134,4 @@ goto end
 :done
 echo problems.....
 :end
+PATH=%opath%

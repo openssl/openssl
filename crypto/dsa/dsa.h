@@ -71,6 +71,8 @@ extern "C" {
 
 #include "bn.h"
 
+#define DSA_FLAG_CACHE_MONT_P	0x01
+
 typedef struct dsa_st
 	{
 	/* This first variable is used to pick up errors where
@@ -87,6 +89,10 @@ typedef struct dsa_st
 
 	BIGNUM *kinv;	/* Signing pre-calc */
 	BIGNUM *r;	/* Signing pre-calc */
+
+	int flags;
+	/* Normally used to cache montgomery values */
+	char *method_mont_p;
 
 	int references;
 	} DSA;

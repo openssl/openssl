@@ -102,7 +102,7 @@ apps:
 	@(cd ../apps; $(MAKE)  CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' all)
 
 test_des:
-	#./$(DESTEST)
+	./$(DESTEST)
 
 test_idea:
 	./$(IDEATEST)

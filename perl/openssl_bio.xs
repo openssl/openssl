@@ -25,7 +25,7 @@ int ret;
 		SAVETMPS;
 
 		PUSHMARK(sp);
-		XPUSHs(me);
+		XPUSHs(sv_2mortal(newSViv(me)));
 		XPUSHs(sv_2mortal(newSViv(state)));
 		XPUSHs(sv_2mortal(newSViv(cmd)));
 		if ((state == BIO_CB_READ) || (state == BIO_CB_WRITE))
@@ -60,7 +60,8 @@ int ret;
 int boot_bio()
 	{
 	p5_bio_ex_bio_ptr=
-		BIO_get_ex_new_index(0,"SSLeay::BIO",ex_new,NULL,ex_cleanup);
+		BIO_get_ex_new_index(0,"SSLeay::BIO",ex_new,NULL,
+			ex_cleanup);
 	p5_bio_ex_bio_callback=	
 		BIO_get_ex_new_index(0,"bio_callback",NULL,NULL,
 			ex_cleanup);
@@ -97,9 +98,8 @@ p5_BIO_new_buffer_ssl_connect(...)
 			}
 		EXTEND(sp,1);
 		bio=BIO_new_buffer_ssl_connect(ctx);
-		arg=new_ref("SSLeay::BIO",(char *)bio,0);
+		arg=(SV *)BIO_get_ex_data(bio,p5_bio_ex_bio_ptr);
 		PUSHs(arg);
-		BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
 
 void
 p5_BIO_new_ssl_connect(...)
@@ -124,9 +124,8 @@ p5_BIO_new_ssl_connect(...)
 			}
 		EXTEND(sp,1);
 		bio=BIO_new_ssl_connect(ctx);
-		arg=new_ref("SSLeay::BIO",(char *)bio,0);
+		arg=(SV *)BIO_get_ex_data(bio,p5_bio_ex_bio_ptr);
 		PUSHs(arg);
-		BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
 
 void
 p5_BIO_new(...)
@@ -154,16 +153,15 @@ p5_BIO_new(...)
 			bio=BIO_new(BIO_f_buffer());
 		else
 			croak("unknown BIO type");
-		arg=new_ref("SSLeay::BIO",(char *)bio,0);
+		arg=(SV *)BIO_get_ex_data(bio,p5_bio_ex_bio_ptr);
 		PUSHs(arg);
-		BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
 
 int
 p5_BIO_hostname(bio,name)
 	BIO *bio;
 	char *name;
 	CODE:
-		RETVAL=BIO_set_hostname(bio,name);
+		RETVAL=BIO_set_conn_hostname(bio,name);
 	OUTPUT:
 		RETVAL
 
@@ -218,18 +216,20 @@ p5_BIO_pop(b)
 			if (arg == NULL)
 				{
 				arg=new_ref("SSLeay::BIO",(char *)bio,0);
-				PUSHs(arg);
 				BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
+				PUSHs(arg);
 				}
 			else
 				{
 				/* it was pushed in */
 				SvREFCNT_inc(arg);
 				PUSHs(arg);
+#if 0 		/* This does not need to be done. */
 				if (bio->references < 1)
 					abort();
 				/* decrement the reference count */
 				BIO_free(bio);
+#endif
 				}
 			}
 
@@ -253,7 +253,7 @@ p5_BIO_sysread(bio,in,num, ...)
 			if (offset < 0)
 				{
 				if (-offset > olen)
-					croad("Offset outside string");
+					croak("Offset outside string");
 				offset+=olen;
 				}
 			}
@@ -356,8 +356,9 @@ p5_BIO_next_bio(b)
 			if (arg == NULL)
 				{
 				arg=new_ref("SSLeay::BIO",(char *)bio,0);
-				PUSHs(arg);
 				BIO_set_ex_data(bio,p5_bio_ex_bio_ptr,(char *)arg);
+				bio->references++;
+				PUSHs(arg);
 				}
 			else
 				{
@@ -398,6 +399,7 @@ p5_BIO_set_callback(bio,cb,...)
 		arg=sv_mortalcopy(ST(1));
 		SvREFCNT_inc(arg);
 		BIO_set_ex_data(bio,p5_bio_ex_bio_callback,(char *)arg);
+		printf("%08lx < bio_ptr\n",BIO_get_ex_data(bio,p5_bio_ex_bio_ptr));
 		BIO_set_callback(bio,p5_bio_callback);
 
 void

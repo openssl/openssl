@@ -392,6 +392,29 @@ bad:
 			}
 		}
 
+	if (req_conf != NULL)
+		{
+		p=CONF_get_string(req_conf,NULL,"oid_file");
+		if (p != NULL)
+			{
+			BIO *oid_bio;
+
+			oid_bio=BIO_new_file(p,"r");
+			if (oid_bio == NULL) 
+				{
+				/*
+				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
+				ERR_print_errors(bio_err);
+				*/
+				}
+			else
+				{
+				OBJ_create_objects(oid_bio);
+				BIO_free(oid_bio);
+				}
+			}
+		}
+
 	if ((md_alg == NULL) &&
 		((p=CONF_get_string(req_conf,SECTION,"default_md")) != NULL))
 		{

@@ -60,161 +60,208 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+#define MONT_WORD
+
 int BN_mod_mul_montgomery(r,a,b,mont,ctx)
 BIGNUM *r,*a,*b;
 BN_MONT_CTX *mont;
 BN_CTX *ctx;
 	{
-	BIGNUM *tmp;
+	BIGNUM *tmp,*tmp2;
 
-        tmp=ctx->bn[ctx->tos++];
+        tmp= &(ctx->bn[ctx->tos]);
+        tmp2= &(ctx->bn[ctx->tos]);
+	ctx->tos+=2;
+
+	bn_check_top(tmp);
+	bn_check_top(tmp2);
 
 	if (a == b)
 		{
+#if 0
+		bn_wexpand(tmp,a->top*2);
+		bn_wexpand(tmp2,a->top*4);
+		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);
+		tmp->top=a->top*2;
+		if (tmp->d[tmp->top-1] == 0)
+			tmp->top--;
+#else
 		if (!BN_sqr(tmp,a,ctx)) goto err;
+#endif
 		}
 	else
 		{
-		if (!BN_mul(tmp,a,b)) goto err;
+		if (!BN_mul(tmp,a,b,ctx)) goto err;
 		}
 	/* reduce from aRR to aR */
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
-	ctx->tos--;
+	ctx->tos-=2;
 	return(1);
 err:
 	return(0);
 	}
 
-#define MONT_WORD
-
-#ifdef MONT_WORD
 int BN_from_montgomery(ret,a,mont,ctx)
 BIGNUM *ret;
 BIGNUM *a;
 BN_MONT_CTX *mont;
 BN_CTX *ctx;
 	{
-	BIGNUM *n,*t1,*r;
-	BN_ULONG *ap,*np,*rp,n0,v;
-	int al,nl,max,i,x,ri;
-	int retn=0;
+#ifdef BN_RECURSION
+	if (mont->use_word)
+#endif
+		{
+		BIGNUM *n,*r;
+		BN_ULONG *ap,*np,*rp,n0,v,*nrp;
+		int al,nl,max,i,x,ri;
+		int retn=0;
 
-	t1=ctx->bn[ctx->tos];
-	r=ctx->bn[ctx->tos+1];
+		r= &(ctx->bn[ctx->tos]);
 
-	if (!BN_copy(r,a)) goto err;
-	n=mont->N;
+		if (!BN_copy(r,a)) goto err1;
+		n= &(mont->N);
 
-	ap=a->d;
-	/* mont->ri is the size of mont->N in bits/words */
-	al=ri=mont->ri/BN_BITS2;
+		ap=a->d;
+		/* mont->ri is the size of mont->N in bits/words */
+		al=ri=mont->ri/BN_BITS2;
 
-	nl=n->top;
-	if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
+		nl=n->top;
+		if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
 
-	max=(nl+al+1); /* allow for overflow (no?) XXX */
-	if (bn_wexpand(r,max) == NULL) goto err;
-	if (bn_wexpand(ret,max) == NULL) goto err;
+		max=(nl+al+1); /* allow for overflow (no?) XXX */
+		if (bn_wexpand(r,max) == NULL) goto err1;
+		if (bn_wexpand(ret,max) == NULL) goto err1;
 
-	r->neg=a->neg^n->neg;
-	np=n->d;
-	rp=r->d;
+		r->neg=a->neg^n->neg;
+		np=n->d;
+		rp=r->d;
+		nrp= &(r->d[nl]);
 
-	/* clear the top words of T */
+		/* clear the top words of T */
 #if 1
-	for (i=r->top; i<max; i++) /* memset? XXX */
-		r->d[i]=0;
+		for (i=r->top; i<max; i++) /* memset? XXX */
+			r->d[i]=0;
 #else
-	memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); 
+		memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); 
 #endif
 
-	r->top=max;
-	n0=mont->n0;
+		r->top=max;
+		n0=mont->n0;
 
-	for (i=0; i<nl; i++)
-		{
-#if 0
-		int x1,x2;
-
-		if (i+4 > nl)
+#ifdef BN_COUNT
+printf("word BN_from_montgomery %d * %d\n",nl,nl);
+#endif
+		for (i=0; i<nl; i++)
 			{
-			x2=nl;
-			x1=0;
+			v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
+			nrp++;
+			rp++;
+			if (((nrp[-1]+=v)&BN_MASK2) >= v)
+				continue;
+			else
+				{
+				if (((++nrp[0])&BN_MASK2) != 0) continue;
+				if (((++nrp[1])&BN_MASK2) != 0) continue;
+				for (x=2; (((++nrp[x])&BN_MASK2) == 0); x++) ;
+				}
 			}
+		bn_fix_top(r);
+
+		/* mont->ri will be a multiple of the word size */
+#if 0
+		BN_rshift(ret,r,mont->ri);
+#else
+		x=ri;
+		rp=ret->d;
+		ap= &(r->d[x]);
+		if (r->top < x)
+			al=0;
 		else
+			al=r->top-x;
+		ret->top=al;
+		al-=4;
+		for (i=0; i<al; i+=4)
 			{
-			x2=i+4;
-			x1=nl-x2;
+			BN_ULONG t1,t2,t3,t4;
+
+			t1=ap[i+0];
+			t2=ap[i+1];
+			t3=ap[i+2];
+			t4=ap[i+3];
+			rp[i+0]=t1;
+			rp[i+1]=t2;
+			rp[i+2]=t3;
+			rp[i+3]=t4;
 			}
-		v=bn_mul_add_words(&(rp[x1]),&(np[x1]),x2,(rp[x1]*n0)&BN_MASK2);
-#else
-		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
+		al+=4;
+		for (; i<al; i++)
+			rp[i]=ap[i];
 #endif
 
-		if (((rp[nl]+=v)&BN_MASK2) < v)
+		if (BN_ucmp(ret, &(mont->N)) >= 0)
 			{
-			for (x=(nl+1); (((++rp[x])&BN_MASK2) == 0); x++)
-				;
+			BN_usub(ret,ret,&(mont->N)); /* XXX */
 			}
-		rp++;
+		retn=1;
+err1:
+		return(retn);
 		}
-	while (r->d[r->top-1] == 0)
-		r->top--;
-
-	/* mont->ri will be a multiple of the word size */
-#if 0
-	BN_rshift(ret,r,mont->ri);
-#else
-	ap=r->d;
-	rp=ret->d;
-	x=ri;
-	al=r->top-x;
-	for (i=0; i<al; i++)
+#ifdef BN_RECURSION
+	else /* bignum version */ 
 		{
-		rp[i]=ap[i+x];
-		}
-	ret->top=al;
+		BIGNUM *t1,*t2,*t3;
+		int j,i;
+
+#ifdef BN_COUNT
+printf("number BN_from_montgomery\n");
 #endif
 
-	if (BN_ucmp(ret,mont->N) >= 0)
-		{
-		bn_qsub(ret,ret,mont->N); /* XXX */
+		t1= &(ctx->bn[ctx->tos]);
+		t2= &(ctx->bn[ctx->tos+1]);
+		t3= &(ctx->bn[ctx->tos+2]);
+
+		i=mont->Ni.top;
+		bn_wexpand(ret,i); /* perhaps only i*2 */
+		bn_wexpand(t1,i*4); /* perhaps only i*2 */
+		bn_wexpand(t2,i*2); /* perhaps only i   */
+
+		bn_mul_low_recursive(t2->d,a->d,mont->Ni.d,i,t1->d);
+
+		BN_zero(t3);
+		BN_set_bit(t3,mont->N.top*BN_BITS2);
+		bn_sub_words(t3->d,t3->d,a->d,i);
+		bn_mul_high(ret->d,t2->d,mont->N.d,t3->d,i,t1->d);
+
+		/* hmm... if a is between i and 2*i, things are bad */
+		if (a->top > i)
+			{
+			j=bn_add_words(ret->d,ret->d,&(a->d[i]),i);
+			if (j) /* overflow */
+				bn_sub_words(ret->d,ret->d,mont->N.d,i);
+			}
+		ret->top=i;
+		bn_fix_top(ret);
+		if (a->d[0])
+			BN_add_word(ret,1); /* Always? */
+		else	/* Very very rare */
+			{
+			for (i=1; i<mont->N.top-1; i++)
+				{
+				if (a->d[i])
+					{
+					BN_add_word(ret,1); /* Always? */
+					break;
+					}
+				}
+			}
+
+		if (BN_ucmp(ret,&(mont->N)) >= 0)
+			BN_usub(ret,ret,&(mont->N));
+
+		return(1);
 		}
-	retn=1;
-err:
-	return(retn);
-	}
-#else
-int BN_from_montgomery(r,a,mont,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BN_MONT_CTX *mont;
-BN_CTX *ctx;
-	{
-	BIGNUM *t1,*t2;
-
-	t1=ctx->bn[ctx->tos];
-	t2=ctx->bn[ctx->tos+1];
-
-	if (!BN_copy(t1,a)) goto err;
-	/* can cheat */
-	BN_mask_bits(t1,mont->ri);
-
-	if (!BN_mul(t2,t1,mont->Ni)) goto err;
-	BN_mask_bits(t2,mont->ri);
-
-	if (!BN_mul(t1,t2,mont->N)) goto err;
-	if (!BN_add(t2,a,t1)) goto err;
-	BN_rshift(r,t2,mont->ri);
-
-	if (BN_ucmp(r,mont->N) >= 0)
-		bn_qsub(r,r,mont->N);
-
-	return(1);
-err:
-	return(0);
-	}
 #endif
+	}
 
 BN_MONT_CTX *BN_MONT_CTX_new()
 	{
@@ -222,25 +269,31 @@ BN_MONT_CTX *BN_MONT_CTX_new()
 
 	if ((ret=(BN_MONT_CTX *)Malloc(sizeof(BN_MONT_CTX))) == NULL)
 		return(NULL);
-	ret->ri=0;
-	ret->RR=BN_new();
-	ret->N=BN_new();
-	ret->Ni=NULL;
-	if ((ret->RR == NULL) || (ret->N == NULL))
-		{
-		BN_MONT_CTX_free(ret);
-		return(NULL);
-		}
+
+	BN_MONT_CTX_init(ret);
+	ret->flags=BN_FLG_MALLOCED;
 	return(ret);
+	}
+
+void BN_MONT_CTX_init(ctx)
+BN_MONT_CTX *ctx;
+	{
+	ctx->use_word=0;
+	ctx->ri=0;
+	BN_init(&(ctx->RR));
+	BN_init(&(ctx->N));
+	BN_init(&(ctx->Ni));
+	ctx->flags=0;
 	}
 
 void BN_MONT_CTX_free(mont)
 BN_MONT_CTX *mont;
 	{
-	if (mont->RR != NULL) BN_free(mont->RR);
-	if (mont->N != NULL) BN_free(mont->N);
-	if (mont->Ni != NULL) BN_free(mont->Ni);
-	Free(mont);
+	BN_free(&(mont->RR));
+	BN_free(&(mont->N));
+	BN_free(&(mont->Ni));
+	if (mont->flags & BN_FLG_MALLOCED)
+		Free(mont);
 	}
 
 int BN_MONT_CTX_set(mont,mod,ctx)
@@ -248,59 +301,109 @@ BN_MONT_CTX *mont;
 BIGNUM *mod;
 BN_CTX *ctx;
 	{
-	BIGNUM *Ri=NULL,*R=NULL;
+	BIGNUM Ri,*R;
 
-	if (mont->RR == NULL) mont->RR=BN_new();
-	if (mont->N == NULL)  mont->N=BN_new();
+	BN_init(&Ri);
+	R= &(mont->RR);					/* grab RR as a temp */
+	BN_copy(&(mont->N),mod);			/* Set N */
 
-	R=mont->RR;					/* grab RR as a temp */
-	BN_copy(mont->N,mod);				/* Set N */
+#ifdef BN_RECURSION
+	if (mont->N.top < BN_MONT_CTX_SET_SIZE_WORD)
+#endif
+		{
+		BIGNUM tmod;
+		BN_ULONG buf[2];
 
-#ifdef MONT_WORD
-{
-	BIGNUM tmod;
-	BN_ULONG buf[2];
-	/* int z; */
+		mont->use_word=1;
 
-	mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
-	BN_lshift(R,BN_value_one(),BN_BITS2);		/* R */
-	/* I was bad, this modification of a passed variable was
-	 * breaking the multithreaded stuff :-(
-	 * z=mod->top;
-	 * mod->top=1; */
+		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
+		BN_zero(R);
+		BN_set_bit(R,BN_BITS2);
+		/* I was bad, this modification of a passed variable was
+		 * breaking the multithreaded stuff :-(
+		 * z=mod->top;
+		 * mod->top=1; */
 
-	buf[0]=mod->d[0];
-	buf[1]=0;
-	tmod.d=buf;
-	tmod.top=1;
-	tmod.max=mod->max;
-	tmod.neg=mod->neg;
+		buf[0]=mod->d[0];
+		buf[1]=0;
+		tmod.d=buf;
+		tmod.top=1;
+		tmod.max=mod->max;
+		tmod.neg=mod->neg;
 
-	if ((Ri=BN_mod_inverse(R,&tmod,ctx)) == NULL) goto err; /* Ri */
-	BN_lshift(Ri,Ri,BN_BITS2);			/* R*Ri */
-	bn_qsub(Ri,Ri,BN_value_one());			/* R*Ri - 1 */
-	BN_div(Ri,NULL,Ri,&tmod,ctx);
-	mont->n0=Ri->d[0];
-	BN_free(Ri);
-	/* mod->top=z; */
-}
+		if ((BN_mod_inverse(&Ri,R,&tmod,ctx)) == NULL)
+			goto err;
+		BN_lshift(&Ri,&Ri,BN_BITS2);			/* R*Ri */
+		if (!BN_is_zero(&Ri))
+			{
+#if 1
+			BN_sub_word(&Ri,1);
 #else
-	mont->ri=BN_num_bits(mod);
-	BN_lshift(R,BN_value_one(),mont->ri);			/* R */
-	if ((Ri=BN_mod_inverse(R,mod,ctx)) == NULL) goto err;	/* Ri */
-	BN_lshift(Ri,Ri,mont->ri);				/* R*Ri */
-	bn_qsub(Ri,Ri,BN_value_one());				/* R*Ri - 1 */
-	BN_div(Ri,NULL,Ri,mod,ctx);
-	if (mont->Ni != NULL) BN_free(mont->Ni);
-	mont->Ni=Ri;					/* Ni=(R*Ri-1)/N */
+			BN_usub(&Ri,&Ri,BN_value_one());	/* R*Ri - 1 */
+#endif
+			}
+		else
+			{
+			/* This is not common..., 1 in BN_MASK2,
+			 * It happens when buf[0] was == 1.  So for 8 bit,
+			 * this is 1/256, 16bit, 1 in 2^16 etc.
+			 */
+			BN_set_word(&Ri,BN_MASK2);
+			}
+		BN_div(&Ri,NULL,&Ri,&tmod,ctx);
+		mont->n0=Ri.d[0];
+		BN_free(&Ri);
+		/* mod->top=z; */
+		}
+#ifdef BN_RECURSION
+	else
+		{
+		mont->use_word=0;
+		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
+#if 1
+		BN_zero(R);
+		BN_set_bit(R,mont->ri);
+#else
+		BN_lshift(R,BN_value_one(),mont->ri);	/* R */
+#endif
+		if ((BN_mod_inverse(&Ri,R,mod,ctx)) == NULL)
+			goto err;
+		BN_lshift(&Ri,&Ri,mont->ri);		/* R*Ri */
+#if 1
+		BN_sub_word(&Ri,1);
+#else
+		BN_usub(&Ri,&Ri,BN_value_one());	/* R*Ri - 1 */
+#endif
+		BN_div(&(mont->Ni),NULL,&Ri,mod,ctx);
+		BN_free(&Ri);
+		}
 #endif
 
 	/* setup RR for conversions */
+#if 1
+	BN_zero(&(mont->RR));
+	BN_set_bit(&(mont->RR),mont->ri*2);
+#else
 	BN_lshift(mont->RR,BN_value_one(),mont->ri*2);
-	BN_mod(mont->RR,mont->RR,mont->N,ctx);
+#endif
+	BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx);
 
 	return(1);
 err:
 	return(0);
+	}
+
+BN_MONT_CTX *BN_MONT_CTX_copy(to, from)
+BN_MONT_CTX *to, *from;
+	{
+	if (to == from) return(to);
+
+	BN_copy(&(to->RR),&(from->RR));
+	BN_copy(&(to->N),&(from->N));
+	BN_copy(&(to->Ni),&(from->Ni));
+	to->use_word=from->use_word;
+	to->ri=from->ri;
+	to->n0=from->n0;
+	return(to);
 	}
 

@@ -62,8 +62,8 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_PKCS7_SIGNER_INFO_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_SIGNER_INFO,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_PKCS7_SIGNER_INFO_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_PKCS7_SIGNER_INFO,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_PKCS7_SIGNER_INFO(a,pp)
@@ -105,10 +105,12 @@ long length;
 	M_ASN1_D2I_get(ret->version,d2i_ASN1_INTEGER);
 	M_ASN1_D2I_get(ret->issuer_and_serial,d2i_PKCS7_ISSUER_AND_SERIAL);
 	M_ASN1_D2I_get(ret->digest_alg,d2i_X509_ALGOR);
-	M_ASN1_D2I_get_IMP_set_opt(ret->auth_attr,d2i_X509_ATTRIBUTE,0);
+	M_ASN1_D2I_get_IMP_set_opt(ret->auth_attr,d2i_X509_ATTRIBUTE,
+		X509_ATTRIBUTE_free,0);
 	M_ASN1_D2I_get(ret->digest_enc_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->enc_digest,d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_get_IMP_set_opt(ret->unauth_attr,d2i_X509_ATTRIBUTE,1);
+	M_ASN1_D2I_get_IMP_set_opt(ret->unauth_attr,d2i_X509_ATTRIBUTE,
+		X509_ATTRIBUTE_free,1);
 
 	M_ASN1_D2I_Finish(a,PKCS7_SIGNER_INFO_free,
 		ASN1_F_D2I_PKCS7_SIGNER_INFO);
@@ -117,6 +119,7 @@ long length;
 PKCS7_SIGNER_INFO *PKCS7_SIGNER_INFO_new()
 	{
 	PKCS7_SIGNER_INFO *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_SIGNER_INFO);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);

@@ -87,8 +87,8 @@ void ERR_load_DSA_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_DSA,DSA_str_functs);

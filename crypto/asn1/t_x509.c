@@ -158,6 +158,11 @@ X509 *x;
 		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
 
 	pkey=X509_get_pubkey(x);
+	if (pkey == NULL)
+		{
+		BIO_printf(bp,"%12sUnable to load Public Key\n","");
+		}
+	else
 #ifndef NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -175,7 +180,7 @@ X509 *x;
 		}
 	else
 #endif
-		BIO_printf(bp,"%12sDSA Public Key:\n","");
+		BIO_printf(bp,"%12sUnknown Public Key:\n","");
 
 	n=X509_get_ext_count(x);
 	if (n > 0)

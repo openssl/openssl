@@ -88,6 +88,7 @@ We need a message digest of some type
 #define MD_Init(a)		MD5_Init(a)
 #define MD_Update(a,b,c)	MD5_Update(a,b,c)
 #define	MD_Final(a,b)		MD5_Final(a,b)
+#define	MD(a,b,c)		MD5(a,b,c)
 #elif defined(USE_SHA1_RAND)
 #include "sha.h"
 #define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
@@ -95,6 +96,7 @@ We need a message digest of some type
 #define MD_Init(a)		SHA1_Init(a)
 #define MD_Update(a,b,c)	SHA1_Update(a,b,c)
 #define	MD_Final(a,b)		SHA1_Final(a,b)
+#define	MD(a,b,c)		SHA1(a,b,c)
 #elif defined(USE_MDC2_RAND)
 #include "mdc2.h"
 #define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
@@ -102,6 +104,7 @@ We need a message digest of some type
 #define MD_Init(a)		MDC2_Init(a)
 #define MD_Update(a,b,c)	MDC2_Update(a,b,c)
 #define	MD_Final(a,b)		MDC2_Final(a,b)
+#define	MD(a,b,c)		MDC2(a,b,c)
 #elif defined(USE_MD2_RAND)
 #include "md2.h"
 #define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
@@ -109,31 +112,48 @@ We need a message digest of some type
 #define MD_Init(a)		MD2_Init(a)
 #define MD_Update(a,b,c)	MD2_Update(a,b,c)
 #define	MD_Final(a,b)		MD2_Final(a,b)
+#define	MD(a,b,c)		MD2(a,b,c)
 #endif
 
 #include "rand.h"
 
-/*#define NORAND	1 */
-/*#define PREDICT	1 */
+/* #define NORAND	1 */
+/* #define PREDICT	1 */
 
 #define STATE_SIZE	1023
 static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
-static int md_count=0;
+static long md_count[2]={0,0};
 
-char *RAND_version="RAND part of SSLeay 0.9.0b 29-Jun-1998";
+char *RAND_version="RAND part of SSLeay 0.9.1a 06-Jul-1998";
 
-void RAND_cleanup()
+static void ssleay_rand_cleanup(void);
+static void ssleay_rand_seed(unsigned char *buf, int num);
+static void ssleay_rand_bytes(unsigned char *buf, int num);
+
+RAND_METHOD rand_ssleay={
+	ssleay_rand_seed,
+	ssleay_rand_bytes,
+	ssleay_rand_cleanup,
+	}; 
+
+RAND_METHOD *RAND_SSLeay()
+	{
+	return(&rand_ssleay);
+	}
+
+static void ssleay_rand_cleanup()
 	{
 	memset(state,0,sizeof(state));
 	state_num=0;
 	state_index=0;
 	memset(md,0,MD_DIGEST_LENGTH);
-	md_count=0;
+	md_count[0]=0;
+	md_count[1]=0;
 	}
 
-void RAND_seed(buf,num)
+static void ssleay_rand_seed(buf,num)
 unsigned char *buf;
 int num;
 	{
@@ -178,7 +198,9 @@ int num;
 			MD_Update(&m,&(state[st_idx]),j);
 			
 		MD_Update(&m,buf,j);
+		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
 		MD_Final(md,&m);
+		md_count[1]++;
 
 		buf+=j;
 
@@ -195,7 +217,7 @@ int num;
 	memset((char *)&m,0,sizeof(m));
 	}
 
-void RAND_bytes(buf,num)
+static void ssleay_rand_bytes(buf,num)
 unsigned char *buf;
 int num;
 	{
@@ -277,6 +299,7 @@ int num;
 		num-=j;
 		MD_Init(&m);
 		MD_Update(&m,&(md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
+		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
 #ifndef PURIFY
 		MD_Update(&m,buf,j); /* purify complains */
 #endif
@@ -300,7 +323,8 @@ int num;
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,(unsigned char *)&md_count,sizeof(md_count)); md_count++;
+	MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
+	md_count[0]++;
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
 	MD_Final(md,&m);
 	memset(&m,0,sizeof(m));
@@ -385,7 +409,7 @@ void RAND_screen(void)
 	GetBitmapBits(hBitmap, size, bmbits);
 
 	/* Get the MD5 of the bitmap */
-	MD5(bmbits,size,md);
+	MD(bmbits,size,md);
 
 	/* Seed the random generator with the MD5 digest */
 	RAND_seed(md, MD_DIGEST_LENGTH);

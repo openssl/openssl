@@ -67,30 +67,84 @@ BIGNUM *r;
 BIGNUM *a;
 BN_CTX *ctx;
 	{
-	int i,j,max,al;
+	int max,al;
 	BIGNUM *tmp;
-	BN_ULONG *ap,*rp;
 
-	tmp=ctx->bn[ctx->tos];
+#ifdef BN_COUNT
+printf("BN_sqr %d * %d\n",a->top,a->top);
+#endif
+	bn_check_top(a);
+	tmp= &(ctx->bn[ctx->tos]);
 
 	al=a->top;
-	if (al == 0)
+	if (al <= 0)
 		{
 		r->top=0;
 		return(1);
 		}
 
-	max=(al*2);
-	if (bn_wexpand(r,1+max) == NULL) return(0);
-	if (bn_wexpand(tmp,1+max) == NULL) return(0);
+	max=(al+al);
+	if (bn_wexpand(r,max+1) == NULL) return(0);
 
 	r->neg=0;
+	if (al == 4)
+		{
+#ifndef BN_SQR_COMBA
+		BN_ULONG t[8];
+		bn_sqr_normal(r->d,a->d,4,t);
+#else
+		bn_sqr_comba4(r->d,a->d);
+#endif
+		}
+	else if (al == 8)
+		{
+#ifndef BN_SQR_COMBA
+		BN_ULONG t[16];
+		bn_sqr_normal(r->d,a->d,8,t);
+#else
+		bn_sqr_comba8(r->d,a->d);
+#endif
+		}
+	else 
+		{
+#if defined(BN_RECURSION)
+		if (al < BN_SQR_RECURSIVE_SIZE_NORMAL)
+			{
+			BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL*2];
+			bn_sqr_normal(r->d,a->d,al,t);
+			}
+		else
+			{
+			if (bn_wexpand(tmp,2*max+1) == NULL) return(0);
+			bn_sqr_recursive(r->d,a->d,al,tmp->d);
+			}
+#else
+		if (bn_wexpand(tmp,max) == NULL) return(0);
+		bn_sqr_normal(r->d,a->d,al,tmp->d);
+#endif
+		}
 
-	ap=a->d;
-	rp=r->d;
+	r->top=max;
+	if ((max > 0) && (r->d[max-1] == 0)) r->top--;
+	return(1);
+	}
+
+/* tmp must have 2*n words */
+void bn_sqr_normal(r, a, n, tmp)
+BN_ULONG *r;
+BN_ULONG *a;
+int n;
+BN_ULONG *tmp;
+	{
+	int i,j,max;
+	BN_ULONG *ap,*rp;
+
+	max=n*2;
+	ap=a;
+	rp=r;
 	rp[0]=rp[max-1]=0;
 	rp++;
-	j=al;
+	j=n;
 
 	if (--j > 0)
 		{
@@ -99,7 +153,7 @@ BN_CTX *ctx;
 		rp+=2;
 		}
 
-	for (i=2; i<al; i++)
+	for (i=n-2; i>0; i--)
 		{
 		j--;
 		ap++;
@@ -107,16 +161,115 @@ BN_CTX *ctx;
 		rp+=2;
 		}
 
-	bn_add_words(r->d,r->d,r->d,max);
+	bn_add_words(r,r,r,max);
 
 	/* There will not be a carry */
 
-	bn_sqr_words(tmp->d,a->d,al);
+	bn_sqr_words(tmp,a,n);
 
-	bn_add_words(r->d,r->d,tmp->d,max);
-
-	r->top=max;
-	if (r->d[max-1] == 0) r->top--;
-	return(1);
+	bn_add_words(r,r,tmp,max);
 	}
 
+#ifdef BN_RECURSION
+/* r is 2*n words in size,
+ * a and b are both n words in size.
+ * n must be a power of 2.
+ * We multiply and return the result.
+ * t must be 2*n words in size
+ * We calulate
+ * a[0]*b[0]
+ * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
+ * a[1]*b[1]
+ */
+void bn_sqr_recursive(r,a,n2,t)
+BN_ULONG *r,*a;
+int n2;
+BN_ULONG *t;
+	{
+	int n=n2/2;
+	int zero,c1;
+	BN_ULONG ln,lo,*p;
+
+#ifdef BN_COUNT
+printf(" bn_sqr_recursive %d * %d\n",n2,n2);
+#endif
+	if (n2 == 4)
+		{
+#ifndef BN_SQR_COMBA
+		bn_sqr_normal(r,a,4,t);
+#else
+		bn_sqr_comba4(r,a);
+#endif
+		return;
+		}
+	else if (n2 == 8)
+		{
+#ifndef BN_SQR_COMBA
+		bn_sqr_normal(r,a,8,t);
+#else
+		bn_sqr_comba8(r,a);
+#endif
+		return;
+		}
+	if (n2 < BN_SQR_RECURSIVE_SIZE_NORMAL)
+		{
+		bn_sqr_normal(r,a,n2,t);
+		return;
+		}
+	/* r=(a[0]-a[1])*(a[1]-a[0]) */
+	c1=bn_cmp_words(a,&(a[n]),n);
+	zero=0;
+	if (c1 > 0)
+		bn_sub_words(t,a,&(a[n]),n);
+	else if (c1 < 0)
+		bn_sub_words(t,&(a[n]),a,n);
+	else
+		zero=1;
+
+	/* The result will always be negative unless it is zero */
+	p= &(t[n2*2]);
+
+	if (!zero)
+		bn_sqr_recursive(&(t[n2]),t,n,p);
+	else
+		memset(&(t[n2]),0,n*sizeof(BN_ULONG));
+	bn_sqr_recursive(r,a,n,p);
+	bn_sqr_recursive(&(r[n2]),&(a[n]),n,p);
+
+	/* t[32] holds (a[0]-a[1])*(a[1]-a[0]), it is negative or zero
+	 * r[10] holds (a[0]*b[0])
+	 * r[32] holds (b[1]*b[1])
+	 */
+
+	c1=bn_add_words(t,r,&(r[n2]),n2);
+
+	/* t[32] is negative */
+	c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+
+	/* t[32] holds (a[0]-a[1])*(a[1]-a[0])+(a[0]*a[0])+(a[1]*a[1])
+	 * r[10] holds (a[0]*a[0])
+	 * r[32] holds (a[1]*a[1])
+	 * c1 holds the carry bits
+	 */
+	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	if (c1)
+		{
+		p= &(r[n+n2]);
+		lo= *p;
+		ln=(lo+c1)&BN_MASK2;
+		*p=ln;
+
+		/* The overflow will stop before we over write
+		 * words we should not overwrite */
+		if (ln < (BN_ULONG)c1)
+			{
+			do	{
+				p++;
+				lo= *p;
+				ln=(lo+1)&BN_MASK2;
+				*p=ln;
+				} while (ln == 0);
+			}
+		}
+	}
+#endif

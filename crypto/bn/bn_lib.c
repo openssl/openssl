@@ -60,7 +60,68 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-char *BN_version="Big Number part of SSLeay 0.9.0b 29-Jun-1998";
+char *BN_version="Big Number part of SSLeay 0.9.1a 06-Jul-1998";
+
+/* For a 32 bit machine
+ * 2 -   4 ==  128
+ * 3 -   8 ==  256
+ * 4 -  16 ==  512
+ * 5 -  32 == 1024
+ * 6 -  64 == 2048
+ * 7 - 128 == 4096
+ * 8 - 256 == 8192
+ */
+int bn_limit_bits=0;
+int bn_limit_num=8;        /* (1<<bn_limit_bits) */
+int bn_limit_bits_low=0;
+int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
+int bn_limit_bits_high=0;
+int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
+int bn_limit_bits_mont=0;
+int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
+
+void BN_set_params(mult,high,low,mont)
+int mult,high,low,mont;
+	{
+	if (mult >= 0)
+		{
+		if (mult > (sizeof(int)*8)-1)
+			mult=sizeof(int)*8-1;
+		bn_limit_bits=mult;
+		bn_limit_num=1<<mult;
+		}
+	if (high >= 0)
+		{
+		if (high > (sizeof(int)*8)-1)
+			high=sizeof(int)*8-1;
+		bn_limit_bits_high=high;
+		bn_limit_num_high=1<<high;
+		}
+	if (low >= 0)
+		{
+		if (low > (sizeof(int)*8)-1)
+			low=sizeof(int)*8-1;
+		bn_limit_bits_low=low;
+		bn_limit_num_low=1<<low;
+		}
+	if (mont >= 0)
+		{
+		if (mont > (sizeof(int)*8)-1)
+			mont=sizeof(int)*8-1;
+		bn_limit_bits_mont=mont;
+		bn_limit_num_mont=1<<mont;
+		}
+	}
+
+int BN_get_params(which)
+int which;
+	{
+	if      (which == 0) return(bn_limit_bits);
+	else if (which == 1) return(bn_limit_bits_high);
+	else if (which == 2) return(bn_limit_bits_low);
+	else if (which == 3) return(bn_limit_bits_mont);
+	else return(0);
+	}
 
 BIGNUM *BN_value_one()
 	{
@@ -111,24 +172,24 @@ BN_ULONG l;
 		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 		};
 
-#ifdef SIXTY_FOUR_BIT_LONG
+#if defined(SIXTY_FOUR_BIT_LONG)
 	if (l & 0xffffffff00000000L)
 		{
 		if (l & 0xffff000000000000L)
 			{
 			if (l & 0xff00000000000000L)
 				{
-				return(bits[l>>56]+56);
+				return(bits[(int)(l>>56)]+56);
 				}
-			else	return(bits[l>>48]+48);
+			else	return(bits[(int)(l>>48)]+48);
 			}
 		else
 			{
 			if (l & 0x0000ff0000000000L)
 				{
-				return(bits[l>>40]+40);
+				return(bits[(int)(l>>40)]+40);
 				}
-			else	return(bits[l>>32]+32);
+			else	return(bits[(int)(l>>32)]+32);
 			}
 		}
 	else
@@ -140,17 +201,17 @@ BN_ULONG l;
 			{
 			if (l & 0xff00000000000000LL)
 				{
-				return(bits[l>>56]+56);
+				return(bits[(int)(l>>56)]+56);
 				}
-			else	return(bits[l>>48]+48);
+			else	return(bits[(int)(l>>48)]+48);
 			}
 		else
 			{
 			if (l & 0x0000ff0000000000LL)
 				{
-				return(bits[l>>40]+40);
+				return(bits[(int)(l>>40)]+40);
 				}
-			else	return(bits[l>>32]+32);
+			else	return(bits[(int)(l>>32)]+32);
 			}
 		}
 	else
@@ -161,18 +222,18 @@ BN_ULONG l;
 		if (l & 0xffff0000L)
 			{
 			if (l & 0xff000000L)
-				return(bits[l>>24L]+24);
-			else	return(bits[l>>16L]+16);
+				return(bits[(int)(l>>24L)]+24);
+			else	return(bits[(int)(l>>16L)]+16);
 			}
 		else
 #endif
 			{
 #if defined(SIXTEEN_BIT) || defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 			if (l & 0xff00L)
-				return(bits[l>>8]+8);
+				return(bits[(int)(l>>8)]+8);
 			else	
 #endif
-				return(bits[l   ]  );
+				return(bits[(int)(l   )]  );
 			}
 		}
 	}
@@ -182,6 +243,8 @@ BIGNUM *a;
 	{
 	BN_ULONG l;
 	int i;
+
+	bn_check_top(a);
 
 	if (a->top == 0) return(0);
 	l=a->d[a->top-1];
@@ -199,74 +262,78 @@ BIGNUM *a;
 void BN_clear_free(a)
 BIGNUM *a;
 	{
+	int i;
+
 	if (a == NULL) return;
 	if (a->d != NULL)
 		{
 		memset(a->d,0,a->max*sizeof(a->d[0]));
-		Free(a->d);
+		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+			Free(a->d);
 		}
+	i=BN_get_flags(a,BN_FLG_MALLOCED);
 	memset(a,0,sizeof(BIGNUM));
-	Free(a);
+	if (i)
+		Free(a);
 	}
 
 void BN_free(a)
 BIGNUM *a;
 	{
 	if (a == NULL) return;
-	if (a->d != NULL) Free(a->d);
-	Free(a);
+	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+		Free(a->d);
+	a->flags|=BN_FLG_FREE; /* REMOVE? */
+	if (a->flags & BN_FLG_MALLOCED)
+		Free(a);
+	}
+
+void BN_init(a)
+BIGNUM *a;
+	{
+	memset(a,0,sizeof(BIGNUM));
 	}
 
 BIGNUM *BN_new()
 	{
 	BIGNUM *ret;
-	BN_ULONG *p;
 
-	ret=(BIGNUM *)Malloc(sizeof(BIGNUM));
-	if (ret == NULL) goto err;
+	if ((ret=(BIGNUM *)Malloc(sizeof(BIGNUM))) == NULL)
+		{
+		BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+	ret->flags=BN_FLG_MALLOCED;
 	ret->top=0;
 	ret->neg=0;
-	ret->max=(BN_DEFAULT_BITS/BN_BITS2);
-	p=(BN_ULONG *)Malloc(sizeof(BN_ULONG)*(ret->max+1));
-	if (p == NULL) goto err;
-	ret->d=p;
-
-	memset(p,0,(ret->max+1)*sizeof(p[0]));
+	ret->max=0;
+	ret->d=NULL;
 	return(ret);
-err:
-	BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
-	return(NULL);
 	}
+
 
 BN_CTX *BN_CTX_new()
 	{
 	BN_CTX *ret;
-	BIGNUM *n;
-	int i,j;
 
 	ret=(BN_CTX *)Malloc(sizeof(BN_CTX));
-	if (ret == NULL) goto err2;
-
-	for (i=0; i<BN_CTX_NUM; i++)
+	if (ret == NULL)
 		{
-		n=BN_new();
-		if (n == NULL) goto err;
-		ret->bn[i]=n;
+		BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
 		}
 
-	/* There is actually an extra one, this is for debugging my
-	 * stuff */
-	ret->bn[BN_CTX_NUM]=NULL;
-
-	ret->tos=0;
+	BN_CTX_init(ret);
+	ret->flags=BN_FLG_MALLOCED;
 	return(ret);
-err:
-	for (j=0; j<i; j++)
-		BN_free(ret->bn[j]);
-	Free(ret);
-err2:
-	BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
-	return(NULL);
+	}
+
+void BN_CTX_init(ctx)
+BN_CTX *ctx;
+	{
+	memset(ctx,0,sizeof(BN_CTX));
+	ctx->tos=0;
+	ctx->flags=0;
 	}
 
 void BN_CTX_free(c)
@@ -275,26 +342,98 @@ BN_CTX *c;
 	int i;
 
 	for (i=0; i<BN_CTX_NUM; i++)
-		BN_clear_free(c->bn[i]);
-	Free(c);
+		BN_clear_free(&(c->bn[i]));
+	if (c->flags & BN_FLG_MALLOCED)
+		Free(c);
 	}
 
 BIGNUM *bn_expand2(b, words)
 BIGNUM *b;
 int words;
 	{
-	BN_ULONG *p;
+	BN_ULONG *A,*B,*a;
+	int i,j;
+
+	bn_check_top(b);
 
 	if (words > b->max)
 		{
-		p=(BN_ULONG *)Realloc(b->d,sizeof(BN_ULONG)*(words+1));
-		if (p == NULL)
+		bn_check_top(b);	
+		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
+			{
+			BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+			return(NULL);
+			}
+		a=A=(BN_ULONG *)Malloc(sizeof(BN_ULONG)*(words+1));
+		if (A == NULL)
 			{
 			BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		b->d=p;
-		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG));
+memset(A,0x5c,sizeof(BN_ULONG)*(words+1));
+#if 1
+		B=b->d;
+		if (B != NULL)
+			{
+			for (i=b->top&(~7); i>0; i-=8)
+				{
+				A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
+				A[4]=B[4]; A[5]=B[5]; A[6]=B[6]; A[7]=B[7];
+				A+=8;
+				B+=8;
+				}
+			switch (b->top&7)
+				{
+			case 7:
+				A[6]=B[6];
+			case 6:
+				A[5]=B[5];
+			case 5:
+				A[4]=B[4];
+			case 4:
+				A[3]=B[3];
+			case 3:
+				A[2]=B[2];
+			case 2:
+				A[1]=B[1];
+			case 1:
+				A[0]=B[0];
+			case 0:
+				/* I need the 'case 0' entry for utrix cc.
+				 * If the optimiser is turned on, it does the
+				 * switch table by doing
+				 * a=top&7
+				 * a--;
+				 * goto jump_table[a];
+				 * If top is 0, this makes us jump to 0xffffffc 
+				 * which is rather bad :-(.
+				 * eric 23-Apr-1998
+				 */
+				;
+				}
+			B= &(b->d[b->top]);
+			j=b->max-8;
+			for (i=b->top; i<j; i+=8)
+				{
+				B[0]=0; B[1]=0; B[2]=0; B[3]=0;
+				B[4]=0; B[5]=0; B[6]=0; B[7]=0;
+				B+=8;
+				}
+			for (j+=8; i<j; i++)
+				{
+				B[0]=0;
+				B++;
+				}
+#else
+			memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
+#endif
+		
+/*		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG)); */
+/*	{ int i; for (i=b->max; i<words+1; i++) p[i]=i;} */
+			Free(b->d);
+			}
+
+		b->d=a;
 		b->max=words;
 		}
 	return(b);
@@ -304,6 +443,8 @@ BIGNUM *BN_dup(a)
 BIGNUM *a;
 	{
 	BIGNUM *r;
+
+	bn_check_top(a);
 
 	r=BN_new();
 	if (r == NULL) return(NULL);
@@ -316,6 +457,8 @@ BIGNUM *b;
 	{
 	int i;
 	BN_ULONG *A,*B;
+
+	bn_check_top(b);
 
 	if (a == b) return(a);
 	if (bn_wexpand(a,b->top) == NULL) return(NULL);
@@ -352,6 +495,18 @@ BIGNUM *b;
 		A[1]=B[1];
 	case 1:
 		A[0]=B[0];
+        case 0:
+		/* I need the 'case 0' entry for utrix cc.
+		 * If the optimiser is turned on, it does the
+		 * switch table by doing
+		 * a=top&7
+		 * a--;
+		 * goto jump_table[a];
+		 * If top is 0, this makes us jump to 0xffffffc which is
+		 * rather bad :-(.
+		 * eric 23-Apr-1998
+		 */
+		;
 		}
 #else
 	memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
@@ -359,7 +514,7 @@ BIGNUM *b;
 
 /*	memset(&(a->d[b->top]),0,sizeof(a->d[0])*(a->max-b->top));*/
 	a->top=b->top;
-	if (a->top == 0)
+	if ((a->top == 0) && (a->d != NULL))
 		a->d[0]=0;
 	a->neg=b->neg;
 	return(a);
@@ -368,24 +523,21 @@ BIGNUM *b;
 void BN_clear(a)
 BIGNUM *a;
 	{
-	memset(a->d,0,a->max*sizeof(a->d[0]));
+	if (a->d != NULL)
+		memset(a->d,0,a->max*sizeof(a->d[0]));
 	a->top=0;
 	a->neg=0;
 	}
 
-unsigned long BN_get_word(a)
+BN_ULONG BN_get_word(a)
 BIGNUM *a;
 	{
 	int i,n;
-	unsigned long ret=0;
+	BN_ULONG ret=0;
 
 	n=BN_num_bytes(a);
-	if (n > sizeof(unsigned long))
-#ifdef SIXTY_FOUR_BIT_LONG
+	if (n > sizeof(BN_ULONG))
 		return(BN_MASK2);
-#else
-		return(0xFFFFFFFFL);
-#endif
 	for (i=a->top-1; i>=0; i--)
 		{
 #ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
@@ -399,12 +551,12 @@ BIGNUM *a;
 
 int BN_set_word(a,w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 	int i,n;
-	if (bn_expand(a,sizeof(unsigned long)*8) == NULL) return(0);
+	if (bn_expand(a,sizeof(BN_ULONG)*8) == NULL) return(0);
 
-	n=sizeof(unsigned long)/BN_BYTES;
+	n=sizeof(BN_ULONG)/BN_BYTES;
 	a->neg=0;
 	a->top=0;
 	a->d[0]=(BN_ULONG)w&BN_MASK2;
@@ -488,6 +640,9 @@ BIGNUM *b;
 	int i;
 	BN_ULONG t1,t2,*ap,*bp;
 
+	bn_check_top(a);
+	bn_check_top(b);
+
 	i=a->top-b->top;
 	if (i != 0) return(i);
 	ap=a->d;
@@ -519,6 +674,10 @@ BIGNUM *b;
 		else
 			return(0);
 		}
+
+	bn_check_top(a);
+	bn_check_top(b);
+
 	if (a->neg != b->neg)
 		{
 		if (a->neg)
@@ -545,13 +704,15 @@ int BN_set_bit(a, n)
 BIGNUM *a;
 int n;
 	{
-	int i,j;
+	int i,j,k;
 
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
 	if (a->top <= i)
 		{
-		if (bn_expand(a,n) == NULL) return(0);
+		if (bn_wexpand(a,i+1) == NULL) return(0);
+		for(k=a->top; k<i+1; k++)
+			a->d[k]=0;
 		a->top=i+1;
 		}
 
@@ -570,6 +731,7 @@ int n;
 	if (a->top <= i) return(0);
 
 	a->d[i]&=(~(1L<<j));
+	bn_fix_top(a);
 	return(1);
 	}
 
@@ -601,11 +763,27 @@ int n;
 		{
 		a->top=w+1;
 		a->d[w]&= ~(BN_MASK2<<b);
-		while ((w >= 0) && (a->d[w] == 0))
-			{
-			a->top--;
-			w--;
-			}
 		}
+	bn_fix_top(a);
 	return(1);
 	}
+
+int bn_cmp_words(a,b,n)
+BN_ULONG *a,*b;
+int n;
+	{
+	int i;
+	BN_ULONG aa,bb;
+
+	aa=a[n-1];
+	bb=b[n-1];
+	if (aa != bb) return((aa > bb)?1:-1);
+	for (i=n-2; i>=0; i--)
+		{
+		aa=a[i];
+		bb=b[i];
+		if (aa != bb) return((aa > bb)?1:-1);
+		}
+	return(0);
+	}
+

@@ -64,7 +64,7 @@
 #include "dsa.h"
 #include "asn1.h"
 
-char *DSA_version="\0DSA part of SSLeay 0.9.0b 29-Jun-1998";
+char *DSA_version="\0DSA part of SSLeay 0.9.1a 06-Jul-1998";
 
 DSA *DSA_new()
 	{
@@ -82,12 +82,14 @@ DSA *DSA_new()
 	ret->p=NULL;
 	ret->q=NULL;
 	ret->g=NULL;
+	ret->flags=DSA_FLAG_CACHE_MONT_P;
 
 	ret->pub_key=NULL;
 	ret->priv_key=NULL;
 
 	ret->kinv=NULL;
 	ret->r=NULL;
+	ret->method_mont_p=NULL;
 
 	ret->references=1;
 	return(ret);
@@ -120,6 +122,8 @@ DSA *r;
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	if (r->kinv != NULL) BN_clear_free(r->kinv);
 	if (r->r != NULL) BN_clear_free(r->r);
+	if (r->method_mont_p != NULL)
+		BN_MONT_CTX_free((BN_MONT_CTX *)r->method_mont_p);
 	Free(r);
 	}
 

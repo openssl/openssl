@@ -89,11 +89,12 @@ int ex_class;
 	return(r);
 	}
 
-STACK *d2i_ASN1_SET(a,pp,length,func,ex_tag,ex_class)
+STACK *d2i_ASN1_SET(a,pp,length,func,free_func,ex_tag,ex_class)
 STACK **a;
 unsigned char **pp;
 long length;
 char *(*func)();
+void (*free_func)();
 int ex_tag;
 int ex_class;
 	{
@@ -136,14 +137,25 @@ int ex_class;
 		char *s;
 
 		if (M_ASN1_D2I_end_sequence()) break;
-		if ((s=func(NULL,&c.p,c.slen,c.max-c.p)) == NULL) goto err;
+		if ((s=func(NULL,&c.p,c.slen,c.max-c.p)) == NULL)
+			{
+			ASN1err(ASN1_F_D2I_ASN1_SET,ASN1_R_ERROR_PARSING_SET_ELEMENT);
+			asn1_add_error(*pp,(int)(c.q- *pp));
+			goto err;
+			}
 		if (!sk_push(ret,s)) goto err;
 		}
 	if (a != NULL) (*a)=ret;
 	*pp=c.p;
 	return(ret);
 err:
-	if ((ret != NULL) && ((a == NULL) || (*a != ret))) sk_free(ret);
+	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+		{
+		if (free_func != NULL)
+			sk_pop_free(ret,free_func);
+		else
+			sk_free(ret);
+		}
 	return(NULL);
 	}
 

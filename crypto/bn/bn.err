@@ -16,12 +16,15 @@
 #define BN_F_BN_MPI2BN					 112
 #define BN_F_BN_NEW					 113
 #define BN_F_BN_RAND					 114
+#define BN_F_BN_USUB					 115
 
 /* Reason codes. */
-#define BN_R_BAD_RECIPROCAL				 100
-#define BN_R_CALLED_WITH_EVEN_MODULUS			 101
-#define BN_R_DIV_BY_ZERO				 102
-#define BN_R_ENCODING_ERROR				 103
-#define BN_R_INVALID_LENGTH				 104
-#define BN_R_NOT_INITALISED				 105
-#define BN_R_NO_INVERSE					 106
+#define BN_R_ARG2_LT_ARG3				 100
+#define BN_R_BAD_RECIPROCAL				 101
+#define BN_R_CALLED_WITH_EVEN_MODULUS			 102
+#define BN_R_DIV_BY_ZERO				 103
+#define BN_R_ENCODING_ERROR				 104
+#define BN_R_EXPAND_ON_STATIC_BIGNUM_DATA		 105
+#define BN_R_INVALID_LENGTH				 106
+#define BN_R_NOT_INITALISED				 107
+#define BN_R_NO_INVERSE					 108

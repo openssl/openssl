@@ -102,11 +102,14 @@ typedef struct rsa_st
 	int references;
 	int flags;
 
-	/* Normally used to cached montgomery values */
+	/* Normally used to cache montgomery values */
 	char *method_mod_n;
 	char *method_mod_p;
 	char *method_mod_q;
 
+	/* all BIGNUM values are actually in the following data, if it is not
+	 * NULL */
+	char *bignum_data;
 	BN_BLINDING *blinding;
 	} RSA;
 
@@ -114,6 +117,7 @@ typedef struct rsa_st
 #define RSA_F4	0x10001L
 
 #define RSA_METHOD_FLAG_NO_CHECK	0x01 /* don't check pub/private match */
+
 #define RSA_FLAG_CACHE_PUBLIC		0x02
 #define RSA_FLAG_CACHE_PRIVATE		0x04
 #define RSA_FLAG_BLINDING		0x08
@@ -146,6 +150,9 @@ void	RSA_free (RSA *r);
 int	RSA_flags(RSA *r);
 
 void RSA_set_default_method(RSA_METHOD *meth);
+
+/* This function needs the memory locking malloc callbacks to be installed */
+int RSA_memory_lock(RSA *r);
 
 /* If you have RSAref compiled in. */
 RSA_METHOD *RSA_PKCS1_RSAref(void);
@@ -193,19 +200,19 @@ void RSA_blinding_off(RSA *rsa);
 int RSA_padding_add_PKCS1_type_1(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_PKCS1_type_1(unsigned char *to,int tlen,
-	unsigned char *f,int fl);
+	unsigned char *f,int fl,int rsa_len);
 int RSA_padding_add_PKCS1_type_2(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_PKCS1_type_2(unsigned char *to,int tlen,
-	unsigned char *f,int fl);
+	unsigned char *f,int fl,int rsa_len);
 int RSA_padding_add_SSLv23(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_SSLv23(unsigned char *to,int tlen,
-	unsigned char *f,int fl);
+	unsigned char *f,int fl,int rsa_len);
 int RSA_padding_add_none(unsigned char *to,int tlen,
 	unsigned char *f,int fl);
 int RSA_padding_check_none(unsigned char *to,int tlen,
-	unsigned char *f,int fl);
+	unsigned char *f,int fl,int rsa_len);
 
 int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
@@ -227,6 +234,7 @@ void	RSA_free ();
 int	RSA_flags();
 
 void RSA_set_default_method();
+int RSA_memory_lock();
 
 /* RSA_METHOD *RSA_PKCS1_RSAref(); */
 RSA_METHOD *RSA_PKCS1_SSLeay();
@@ -274,26 +282,27 @@ char *RSA_get_ex_data();
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
-#define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 100
-#define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 101
-#define RSA_F_RSA_EAY_PUBLIC_DECRYPT			 102
-#define RSA_F_RSA_EAY_PUBLIC_ENCRYPT			 103
-#define RSA_F_RSA_GENERATE_KEY				 104
-#define RSA_F_RSA_NEW_METHOD				 105
-#define RSA_F_RSA_PADDING_ADD_NONE			 106
-#define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 107
-#define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 108
-#define RSA_F_RSA_PADDING_ADD_SSLV23			 109
-#define RSA_F_RSA_PADDING_CHECK_NONE			 110
-#define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 111
-#define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 112
-#define RSA_F_RSA_PADDING_CHECK_SSLV23			 113
-#define RSA_F_RSA_PRINT					 114
-#define RSA_F_RSA_PRINT_FP				 115
-#define RSA_F_RSA_SIGN					 116
-#define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 117
-#define RSA_F_RSA_VERIFY				 118
-#define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 119
+#define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
+#define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
+#define RSA_F_RSA_EAY_PUBLIC_DECRYPT			 103
+#define RSA_F_RSA_EAY_PUBLIC_ENCRYPT			 104
+#define RSA_F_RSA_GENERATE_KEY				 105
+#define RSA_F_RSA_NEW_METHOD				 106
+#define RSA_F_RSA_PADDING_ADD_NONE			 107
+#define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
+#define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
+#define RSA_F_RSA_PADDING_ADD_SSLV23			 110
+#define RSA_F_RSA_PADDING_CHECK_NONE			 111
+#define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
+#define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
+#define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
+#define RSA_F_RSA_PRINT					 115
+#define RSA_F_RSA_PRINT_FP				 116
+#define RSA_F_RSA_SIGN					 117
+#define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
+#define RSA_F_RSA_VERIFY				 119
+#define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100

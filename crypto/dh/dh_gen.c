@@ -97,8 +97,8 @@ char *cb_arg;
 	ret=DH_new();
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	t1=ctx->bn[0];
-	t2=ctx->bn[1];
+	t1= &(ctx->bn[0]);
+	t2= &(ctx->bn[1]);
 	ctx->tos=2;
 	
 	if (generator == DH_GENERATOR_2)
@@ -126,7 +126,7 @@ char *cb_arg;
 	else
 		g=generator;
 	
-	p=BN_generate_prime(prime_len,1,t1,t2,callback,cb_arg);
+	p=BN_generate_prime(NULL,prime_len,1,t1,t2,callback,cb_arg);
 	if (p == NULL) goto err;
 	if (callback != NULL) callback(3,0,cb_arg);
 	ret->p=p;

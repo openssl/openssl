@@ -110,10 +110,16 @@ extern "C" {
 #ifdef WINDOWS
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
+#define readsocket(s,b,n)	recv((s),(b),(n),0)
+#define writesocket(s,b,n)	send((s),(b),(n),0)
+#define EADDRINUSE		WSAEADDRINUSE
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
 #define ioctlsocket(a,b,c)	ioctl(a,b,c)
+#define closesocket(s)		close(s)
+#define readsocket(s,b,n)	read((s),(b),(n))
+#define writesocket(s,b,n)	write((s),(b),(n))
 #endif
 
 #ifdef WIN16
@@ -251,7 +257,7 @@ extern HINSTANCE _hInstance;
 #    define SSLeay_Write(a,b,c)    write((a),(b),(c))
 #    define SHUTDOWN(fd)    { shutdown((fd),0); close((fd)); }
 #    define SHUTDOWN2(fd)   { shutdown((fd),2); close((fd)); }
-#    define INVALID_SOCKET	-1
+#    define INVALID_SOCKET	(-1)
 #  endif
 #endif
 

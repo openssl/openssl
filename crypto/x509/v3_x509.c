@@ -174,6 +174,7 @@ unsigned int use;
 				key_usage_data[i].name);
 			first=0;
 			}
+		break;
 		}
 	return(1);
 	}

@@ -93,9 +93,9 @@ static CONF_VALUE *new_section();
 static CONF_VALUE *get_section();
 #endif
 
-#define scan_esc(p)	((*(++p) == '\0')?(p):(++p))
+#define scan_esc(p)	((((p)[1] == '\0')?(p++):(p+=2)),p)
 
-char *CONF_version="CONF part of SSLeay 0.9.0b 29-Jun-1998";
+char *CONF_version="CONF part of SSLeay 0.9.1a 06-Jul-1998";
 
 LHASH *CONF_load(h,file,line)
 LHASH *h;
@@ -105,10 +105,12 @@ long *line;
 	LHASH *ret=NULL;
 	FILE *in=NULL;
 #define BUFSIZE	512
+	char btmp[16];
 	int bufnum=0,i,ii;
 	BUF_MEM *buff=NULL;
 	char *s,*p,*end;
-	int again,n,eline=0;
+	int again,n;
+	long eline=0;
 	CONF_VALUE *v=NULL,*vv,*tv;
 	CONF_VALUE *sv=NULL;
 	char *section=NULL,*buf;
@@ -219,12 +221,21 @@ long *line;
 		if (IS_EOF(*s)) continue; /* blank line */
 		if (*s == '[')
 			{
+			char *ss;
+
 			s++;
 			start=eat_ws(s);
-			end=eat_alpha_numeric(start);
+			ss=start;
+again:
+			end=eat_alpha_numeric(ss);
 			p=eat_ws(end);
 			if (*p != ']')
 				{
+				if (*p != '\0')
+					{
+					ss=p;
+					goto again;
+					}
 				CONFerr(CONF_F_CONF_LOAD,CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
 				goto err;
 				}
@@ -328,6 +339,8 @@ err:
 	if (buff != NULL) BUF_MEM_free(buff);
 	if (section != NULL) Free(section);
 	if (line != NULL) *line=eline;
+	sprintf(btmp,"%ld",eline);
+	ERR_add_error_data(2,"line ",btmp);
 	if (in != NULL) fclose(in);
 	if ((h != ret) && (ret != NULL)) CONF_free(ret);
 	if (v != NULL)

@@ -150,9 +150,11 @@ unsigned int len;
 		(*h)[0]=((*h)[0]&0x9f)|0x40;
 		(*hh)[0]=((*hh)[0]&0x9f)|0x20;
 
+		des_set_odd_parity(h);
 		des_set_key(h,k);
 		des_encrypt((DES_LONG *)d,k,1);
 
+		des_set_odd_parity(hh);
 		des_set_key(hh,k);
 		des_encrypt((DES_LONG *)dd,k,1);
 

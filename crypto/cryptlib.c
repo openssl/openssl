@@ -120,10 +120,11 @@ char *name;
 	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
 #endif
 
-	if (app_locks == NULL)
-		if ((app_locks=sk_new_null()) == NULL)
-			CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
-			return(0);
+	if ((app_locks == NULL) && ((app_locks=sk_new_null()) == NULL))
+		{
+		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
 	if ((str=BUF_strdup(name)) == NULL)
 		return(0);
 	i=sk_push(app_locks,str);

@@ -66,6 +66,7 @@
 #include "e_os.h"
 
 #include "buffer.h"
+#include "comp.h"
 #include "bio.h"
 #include "crypto.h"
 #include "evp.h"
@@ -74,6 +75,7 @@
 #include "err.h"
 #include "ssl.h"
 
+#define PKCS1_CHECK
 
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
@@ -126,18 +128,18 @@
 				} \
 			}
 
-#define n2s(c,s)	(s =((unsigned int)(*((c)++)))<< 8, \
-			 s|=((unsigned int)(*((c)++))))
-#define s2n(s,c)	(*((c)++)=(unsigned char)(((s)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((s)    )&0xff))
+#define n2s(c,s)	((s=(((unsigned int)(c[0]))<< 8)| \
+			    (((unsigned int)(c[1]))    )),c+=2)
+#define s2n(s,c)	((c[0]=(unsigned char)(((s)>> 8)&0xff), \
+			  c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
 
-#define n2l3(c,l)	(l =((unsigned long)(*((c)++)))<<16, \
-			 l|=((unsigned long)(*((c)++)))<< 8, \
-			 l|=((unsigned long)(*((c)++))))
+#define n2l3(c,l)	((l =(((unsigned long)(c[0]))<<16)| \
+			     (((unsigned long)(c[1]))<< 8)| \
+			     (((unsigned long)(c[2]))    )),c+=3)
 
-#define l2n3(l,c)	(*((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
+#define l2n3(l,c)	((c[0]=(unsigned char)(((l)>>16)&0xff), \
+			  c[1]=(unsigned char)(((l)>> 8)&0xff), \
+			  c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
 
 /* LOCAL STUFF */
 
@@ -313,6 +315,14 @@ typedef struct ssl3_enc_method
 	int (*alert_value)();
 	} SSL3_ENC_METHOD;
 
+/* Used for holding the relevent compression methods loaded into SSL_CTX */
+typedef struct ssl3_comp_st
+	{
+	int comp_id;	/* The identifer byte for this compression type */
+	char *name;	/* Text name used for the compression type */
+	COMP_METHOD *method; /* The method :-) */
+	} SSL3_COMP;
+
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl2_ciphers[];
 extern SSL_CIPHER ssl3_ciphers[];
@@ -431,7 +441,6 @@ void tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s,int cmd, long larg, char *parg);
 SSL_METHOD *tlsv1_base_method(void );
 
-
 int ssl_init_wbio_buffer(SSL *s, int push);
 
 int tls1_change_cipher_state(SSL *s, int which);
@@ -445,6 +454,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);
 int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
+int ssl_ok(SSL *s);
 
 
 #else
@@ -556,3 +566,19 @@ int ssl_init_wbio_buffer();
 #endif
 
 #endif
+int ssl3_cert_verify_mac();
+int ssl3_alert_code();
+int tls1_new();
+void tls1_free();
+void tls1_clear();
+long tls1_ctrl();
+SSL_METHOD *tlsv1_base_method();
+int tls1_change_cipher_state();
+int tls1_setup_key_block();
+int tls1_enc();
+int tls1_final_finish_mac();
+int tls1_cert_verify_mac();
+int tls1_mac();
+int tls1_generate_master_secret();
+int tls1_alert_code();
+int ssl_ok();

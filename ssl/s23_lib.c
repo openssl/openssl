@@ -78,7 +78,7 @@ static int ssl23_put_cipher_by_char();
 static SSL_CIPHER *ssl23_get_cipher_by_char();
 #endif
 
-char *SSL23_version_str="SSLv2/3 compatablity part of SSLeay 0.7.0 30-Jan-1997";
+char *SSL23_version_str="SSLv2/3 compatablity part of SSLeay 0.9.1a 06-Jul-1998";
 
 static SSL_METHOD SSLv23_data= {
 	TLS1_VERSION,
@@ -92,6 +92,7 @@ static SSL_METHOD SSLv23_data= {
 	ssl23_write,
 	ssl_undefined_function,
 	ssl_undefined_function,
+	ssl_ok,
 	ssl3_ctrl,
 	ssl3_ctx_ctrl,
 	ssl23_get_cipher_by_char,

@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "rand.h"
@@ -86,7 +87,7 @@ long bytes;
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);
 
-	in=fopen(file,"r");
+	in=fopen(file,"br");
 	if (in == NULL) goto err;
 	for (;;)
 		{

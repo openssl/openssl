@@ -61,225 +61,60 @@
 #include "evp.h"
 #include "objects.h"
 
-typedef struct aliases_st {
-	char *alias;
-	/* This must be the last field becaue I will allocate things
-	 * so they go off the end of it */
-	char name[4];
-	} ALIASES;
-
-static STACK /* ALIASES */ *aliases=NULL;
-static STACK /* EVP_CIPHERS */ *ciphers=NULL;
-static STACK /* EVP_MD */ *digests=NULL;
-
-static int cipher_nid_cmp(a,b)
-EVP_CIPHER **a,**b;
-	{ return((*a)->nid - (*b)->nid); }
-
-static int digest_type_cmp(a,b)
-EVP_MD **a,**b;
-	{ return((*a)->pkey_type - (*b)->pkey_type); }
-
 int EVP_add_cipher(c)
 EVP_CIPHER *c;
 	{
-	int i;
+	int r;
 
-	if (ciphers == NULL)
-		{
-		ciphers=sk_new(cipher_nid_cmp);
-		if (ciphers == NULL) return(0);
-		}
-	if ((i=sk_find(ciphers,(char *)c)) >= 0)
-		{
-		if (sk_value(ciphers,i) == (char *)c)
-			return(1);
-		sk_delete(ciphers,i);
-		}
-	return(sk_push(ciphers,(char *)c));
+	r=OBJ_NAME_add(OBJ_nid2sn(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+	if (r == 0) return(0);
+	r=OBJ_NAME_add(OBJ_nid2ln(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+	return(r);
 	}
 
 int EVP_add_digest(md)
 EVP_MD *md;
 	{
-	int i;
-	char *n;
+	int r;
+	char *name;
 
-	if (digests == NULL)
-		{
-		digests=sk_new(digest_type_cmp);
-		if (digests == NULL) return(0);
-		}
-	if ((i=sk_find(digests,(char *)md)) >= 0)
-		{
-		if (sk_value(digests,i) == (char *)md)
-			return(1);
-		sk_delete(digests,i);
-		}
+	name=OBJ_nid2sn(md->type);
+	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(char *)md);
+	if (r == 0) return(0);
+	r=OBJ_NAME_add(OBJ_nid2ln(md->type),OBJ_NAME_TYPE_MD_METH,(char *)md);
+	if (r == 0) return(0);
+
 	if (md->type != md->pkey_type)
 		{
-		n=OBJ_nid2sn(md->pkey_type);
-		EVP_add_alias(n,OBJ_nid2sn(md->type));
-		EVP_add_alias(n,OBJ_nid2ln(md->type));
+		r=OBJ_NAME_add(OBJ_nid2sn(md->pkey_type),
+			OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS,name);
+		if (r == 0) return(0);
+		r=OBJ_NAME_add(OBJ_nid2ln(md->pkey_type),
+			OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS,name);
 		}
-	sk_push(digests,(char *)md);
-	return(1);
-	}
-
-static int alias_cmp(a,b)
-ALIASES **a,**b;
-	{
-	return(strcmp((*a)->alias,(*b)->alias));
-	}
-
-int EVP_add_alias(name,aname)
-char *name;
-char *aname;
-	{
-	int l1,l2,i;
-	ALIASES *a;
-	char *p;
-
-	if ((name == NULL) || (aname == NULL)) return(0);
-	l1=strlen(name)+1;
-	l2=strlen(aname)+1;
-	i=sizeof(ALIASES)+l1+l2;
-	if ((a=(ALIASES *)Malloc(i)) == NULL)
-		return(0);
-	strcpy(a->name,name);
-	p= &(a->name[l1]);
-	strcpy(p,aname);
-	a->alias=p;
-
-	if (aliases == NULL)
-		{
-		aliases=sk_new(alias_cmp);
-		if (aliases == NULL) goto err;
-		}
-
-	if ((i=sk_find(aliases,(char *)a)) >= 0)
-		{
-		Free(sk_delete(aliases,i));
-		}
-	if (!sk_push(aliases,(char *)a)) goto err;
-	return(1);
-err:
-	return(0);
-	}
-
-int EVP_delete_alias(name)
-char *name;
-	{
-	ALIASES a;
-	int i;
-
-	if (aliases != NULL)
-		{
-		a.alias=name;
-		if ((i=sk_find(aliases,(char *)&a)) >= 0)
-			{
-			Free(sk_delete(aliases,i));
-			return(1);
-			}
-		}
-	return(0);
+	return(r);
 	}
 
 EVP_CIPHER *EVP_get_cipherbyname(name)
 char *name;
 	{
-	int nid,num=6,i;
-	EVP_CIPHER c,*cp;
-	ALIASES a,*ap;
+	EVP_CIPHER *cp;
 
-	if (ciphers == NULL) return(NULL);
-	for (;;)
-		{
-		if (num-- <= 0) return(NULL);
-		if (aliases != NULL)
-			{
-			a.alias=name;
-			i=sk_find(aliases,(char *)&a);
-			if (i >= 0)
-				{
-				ap=(ALIASES *)sk_value(aliases,i);
-				name=ap->name;
-				continue;
-				}
-			}
-
-		nid=OBJ_txt2nid(name);
-		if (nid == NID_undef) return(NULL);
-		c.nid=nid;
-		i=sk_find(ciphers,(char *)&c);
-		if (i >= 0)
-			{
-			cp=(EVP_CIPHER *)sk_value(ciphers,i);
-			return(cp);
-			}
-		else
-			return(NULL);
-		}
+	cp=(EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
+	return(cp);
 	}
 
 EVP_MD *EVP_get_digestbyname(name)
 char *name;
 	{
-	int nid,num=6,i;
-	EVP_MD c,*cp;
-	ALIASES a,*ap;
+	EVP_MD *cp;
 
-	if (digests == NULL) return(NULL);
-
-	for (;;)
-		{
-		if (num-- <= 0) return(NULL);
-
-		if (aliases != NULL)
-			{
-			a.alias=name;
-			i=sk_find(aliases,(char *)&a);
-			if (i >= 0)
-				{
-				ap=(ALIASES *)sk_value(aliases,i);
-				name=ap->name;
-				continue;
-				}
-			}
-
-		nid=OBJ_txt2nid(name);
-		if (nid == NID_undef) return(NULL);
-		c.pkey_type=nid;
-		i=sk_find(digests,(char *)&c);
-		if (i >= 0)
-			{
-			cp=(EVP_MD *)sk_value(digests,i);
-			return(cp);
-			}
-		else
-			return(NULL);
-		}
+	cp=(EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
+	return(cp);
 	}
 
 void EVP_cleanup()
 	{
-	int i;
-
-	if (aliases != NULL)
-		{
-		for (i=0; i<sk_num(aliases); i++)
-			Free(sk_value(aliases,i));
-		sk_free(aliases);
-		aliases=NULL;
-		}
-	if (ciphers != NULL)
-		{
-		sk_free(ciphers);
-		ciphers=NULL;
-		}
-	if (digests != NULL)
-		{
-		sk_free(digests);
-		digests=NULL;
-		}
+	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
+	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
 	}

@@ -208,7 +208,7 @@ typedef struct ssl3_record_st
 /*r */	unsigned int off;	/* read/write offset into 'buf' */
 /*rw*/	unsigned char *data;	/* pointer to the record data */
 /*rw*/	unsigned char *input;	/* where the decode bytes are */
-/*rw*/	unsigned char *comp;	/* only used with decompression */
+/*r */	unsigned char *comp;	/* only used with decompression - malloc()ed */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -219,10 +219,6 @@ typedef struct ssl3_buffer_st
 /*rw*/	int offset;		/* where to 'copy from' */
 /*rw*/	unsigned char *buf;	/* SSL3_RT_MAX_PACKET_SIZE bytes */
 	} SSL3_BUFFER;
-
-typedef struct ssl3_compression_st {
-	int nothing;
-	} SSL3_COMPRESSION;
 
 #define SSL3_CT_RSA_SIGN			1
 #define SSL3_CT_DSS_SIGN			2
@@ -236,7 +232,7 @@ typedef struct ssl3_compression_st {
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define SSL3_FLAGS_DELAY_CLIENT_FINISHED	0x0002
 #define SSL3_FLAGS_POP_BUFFER			0x0004
-#define	TLS1_FLAGS_TLS_PADDING_BUG		0x0008
+#define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 
 #if 0
 #define AD_CLOSE_NOTIFY			0
@@ -344,7 +340,11 @@ typedef struct ssl3_ctx_st
 
 		EVP_CIPHER *new_sym_enc;
 		EVP_MD *new_hash;
-		SSL_COMPRESSION *new_compression;
+#ifdef HEADER_COMP_H
+		COMP_METHOD *new_compression;
+#else
+		char *new_compression;
+#endif
 		int cert_request;
 		} tmp;
 	} SSL3_CTX;

@@ -154,8 +154,10 @@ RSA *rsa;
 
 	p=s;
 	sig=d2i_X509_SIG(NULL,&p,(long)i);
+
 	if (sig == NULL) goto err;
 	sigtype=OBJ_obj2nid(sig->algor->algorithm);
+
 
 #ifdef RSA_DEBUG
 	/* put a backward compatability flag in EAY */

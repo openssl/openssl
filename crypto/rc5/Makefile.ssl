@@ -61,7 +61,7 @@ asm/r586-out.o: asm/r586unix.cpp
 
 # bsdi
 asm/r586bsdi.o: asm/r586unix.cpp
-	$(CPP) -DBSDI asm/r586unix.cpp | as -o asm/r586bsdi.o
+	$(CPP) -DBSDI asm/r586unix.cpp | sed 's/ :/:/' | as -o asm/r586bsdi.o
 
 asm/r586unix.cpp:
 	(cd asm; perl rc5-586.pl cpp >r586unix.cpp)
@@ -72,7 +72,7 @@ files:
 links:
 	/bin/rm -f Makefile
 	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/point.sh ../../doc/rc5.doc rc5.doc ;
+	# $(TOP)/util/point.sh ../../doc/rc5.doc rc5.doc ;
 	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
 	$(TOP)/util/mklink.sh ../../test $(TEST)
 	$(TOP)/util/mklink.sh ../../apps $(APPS)

@@ -77,14 +77,18 @@ unsigned int *siglen;	/* out */
 DSA *dsa;
 	{
 	BIGNUM *kinv=NULL,*r=NULL;
-	BIGNUM *m=NULL;
-	BIGNUM *xr=NULL,*s=NULL;
+	BIGNUM m;
+	BIGNUM xr,s;
 	BN_CTX *ctx=NULL;
 	unsigned char *p;
 	int i,len=0,ret=0,reason=ERR_R_BN_LIB;
         ASN1_INTEGER rbs,sbs;
 	MS_STATIC unsigned char rbuf[50]; /* assuming r is 20 bytes +extra */
 	MS_STATIC unsigned char sbuf[50]; /* assuming s is 20 bytes +extra */
+
+	BN_init(&m);
+	BN_init(&xr);
+	BN_init(&s);
 
 	i=BN_num_bytes(dsa->q); /* should be 20 */
 	if ((dlen > i) || (dlen > 50))
@@ -108,17 +112,14 @@ DSA *dsa;
 		dsa->r=NULL;
 		}
 
-	m=BN_new();
-	xr=BN_new();
-	s=BN_new();
-	if (m == NULL || xr == NULL || s == NULL) goto err;
-
-	if (BN_bin2bn(dgst,dlen,m) == NULL) goto err;
+	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
 
 	/* Compute  s = inv(k) (m + xr) mod q */
-	if (!BN_mul(xr, dsa->priv_key, r)) goto err;	/* s = xr */
-	if (!BN_add(s, xr, m)) goto err;		/* s = m + xr */
-	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
+	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
+	if (!BN_add(&s, &xr, &m)) goto err;		/* s = m + xr */
+	if (BN_cmp(&s,dsa->q) > 0)
+		BN_sub(&s,&s,dsa->q);
+	if (!BN_mod_mul(&s,&s,kinv,dsa->q,ctx)) goto err;
 
 	/*
 	 * Now create a ASN.1 sequence of the integers R and S.
@@ -128,7 +129,7 @@ DSA *dsa;
 	rbs.type = V_ASN1_INTEGER;
 	sbs.type = V_ASN1_INTEGER;
 	rbs.length=BN_bn2bin(r,rbs.data);
-	sbs.length=BN_bn2bin(s,sbs.data);
+	sbs.length=BN_bn2bin(&s,sbs.data);
 
 	len =i2d_ASN1_INTEGER(&rbs,NULL);
 	len+=i2d_ASN1_INTEGER(&sbs,NULL);
@@ -147,9 +148,9 @@ err:
 	if (r != NULL) BN_clear_free(r);
 #endif
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (m != NULL) BN_clear_free(m);
-	if (xr != NULL) BN_clear_free(xr);
-	if (s != NULL) BN_clear_free(s);
+	BN_clear_free(&m);
+	BN_clear_free(&xr);
+	BN_clear_free(&s);
 	return(ret);
 	}
 
@@ -160,7 +161,7 @@ BIGNUM **kinvp;
 BIGNUM **rp;
 	{
 	BN_CTX *ctx;
-	BIGNUM *k=NULL,*kinv=NULL,*r=NULL;
+	BIGNUM k,*kinv=NULL,*r=NULL;
 	int ret=0;
 
 	if (ctx_in == NULL)
@@ -170,29 +171,33 @@ BIGNUM **rp;
 	else
 		ctx=ctx_in;
 
-	r=BN_new();
-	k=BN_new();
-	if ((r == NULL) || (k == NULL))
-		goto err;
+	BN_init(&k);
+	if ((r=BN_new()) == NULL) goto err;
 	kinv=NULL;
-
-	if (r == NULL) goto err;
 
 	/* Get random k */
 	for (;;)
 		{
-		if (!BN_rand(k, BN_num_bits(dsa->q), 1, 0)) goto err;
-		if (BN_cmp(k,dsa->q) >= 0)
-			BN_sub(k,k,dsa->q);
-		if (!BN_is_zero(k)) break;
+		if (!BN_rand(&k, BN_num_bits(dsa->q), 1, 0)) goto err;
+		if (BN_cmp(&k,dsa->q) >= 0)
+			BN_sub(&k,&k,dsa->q);
+		if (!BN_is_zero(&k)) break;
+		}
+
+	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+		{
+		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
+				dsa->p,ctx)) goto err;
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	if (!BN_mod_exp(r,dsa->g,k,dsa->p,ctx)) goto err;
+	if (!BN_mod_exp_mont(r,dsa->g,&k,dsa->p,ctx,
+		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
 	/* Compute  part of 's = inv(k) (m + xr) mod q' */
-	if ((kinv=BN_mod_inverse(k,dsa->q,ctx)) == NULL) goto err;
+	if ((kinv=BN_mod_inverse(NULL,&k,dsa->q,ctx)) == NULL) goto err;
 
 	if (*kinvp != NULL) BN_clear_free(*kinvp);
 	*kinvp=kinv;
@@ -208,8 +213,8 @@ err:
 		if (r != NULL) BN_clear_free(r);
 		}
 	if (ctx_in == NULL) BN_CTX_free(ctx);
-	if (k != NULL) BN_clear_free(k);
 	if (kinv != NULL) BN_clear_free(kinv);
+	BN_clear_free(&k);
 	return(ret);
 	}
 

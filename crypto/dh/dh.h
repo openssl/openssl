@@ -67,6 +67,8 @@ extern "C" {
 #define BIGNUM 		char
 #endif
 
+#define DH_FLAG_CACHE_MONT_P	0x01
+
 typedef struct dh_st
 	{
 	/* This first argument is used to pick up errors when
@@ -78,6 +80,9 @@ typedef struct dh_st
 	int length; /* optional */
 	BIGNUM *pub_key;	/* y */
 	BIGNUM *priv_key;	/* x */
+
+	int flags;
+	char *method_mont_p;
 	} DH;
 
 #define DH_GENERATOR_2		2

@@ -62,8 +62,8 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_NEW,ASN1_R_BAD_GET_OBJECT);
+ * ASN1err(ASN1_F_D2I_X509,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_NEW,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
  */
 
 static ASN1_METHOD meth={
@@ -117,6 +117,7 @@ ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
 X509 *X509_new()
 	{
 	X509 *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509);
 	ret->references=1;
@@ -149,9 +150,11 @@ X509 *a;
 		}
 #endif
 
+	/* CRYPTO_free_ex_data(bio_meth,(char *)a,&a->ex_data); */
 	X509_CINF_free(a->cert_info);
 	X509_ALGOR_free(a->sig_alg);
 	ASN1_BIT_STRING_free(a->signature);
+
 	if (a->name != NULL) Free(a->name);
 	Free((char *)a);
 	}

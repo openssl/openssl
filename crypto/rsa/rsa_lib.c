@@ -63,7 +63,7 @@
 #include "bn.h"
 #include "rsa.h"
 
-char *RSA_version="RSA part of SSLeay 0.9.0b 29-Jun-1998";
+char *RSA_version="RSA part of SSLeay 0.9.1a 06-Jul-1998";
 
 static RSA_METHOD *default_RSA_meth=NULL;
 static int rsa_meth_num=0;
@@ -120,13 +120,15 @@ RSA_METHOD *meth;
 	ret->method_mod_p=NULL;
 	ret->method_mod_q=NULL;
 	ret->blinding=NULL;
+	ret->bignum_data=NULL;
 	ret->flags=ret->meth->flags;
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
 		Free(ret);
 		ret=NULL;
 		}
-	CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
+	else
+		CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -164,6 +166,7 @@ RSA *r;
 	if (r->dmq1 != NULL) BN_clear_free(r->dmq1);
 	if (r->iqmp != NULL) BN_clear_free(r->iqmp);
 	if (r->blinding != NULL) BN_BLINDING_free(r->blinding);
+	if (r->bignum_data != NULL) Free_locked(r->bignum_data);
 	Free(r);
 	}
 
@@ -275,10 +278,10 @@ BN_CTX *p_ctx;
 	if (rsa->blinding != NULL)
 		BN_BLINDING_free(rsa->blinding);
 
-	A=ctx->bn[0];
+	A= &(ctx->bn[0]);
 	ctx->tos++;
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
-	if ((Ai=BN_mod_inverse(A,rsa->n,ctx)) == NULL) goto err;
+	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,
 		(char *)rsa->method_mod_n)) goto err;
@@ -290,5 +293,51 @@ BN_CTX *p_ctx;
 err:
 	if (ctx != p_ctx) BN_CTX_free(ctx);
 	return(ret);
+	}
+
+int RSA_memory_lock(r)
+RSA *r;
+	{
+	int i,j,k,off;
+	char *p;
+	BIGNUM *bn,**t[6],*b;
+	BN_ULONG *ul;
+
+	if (r->d == NULL) return(1);
+	t[0]= &r->d;
+	t[1]= &r->p;
+	t[2]= &r->q;
+	t[3]= &r->dmp1;
+	t[4]= &r->dmq1;
+	t[5]= &r->iqmp;
+	k=sizeof(BIGNUM)*6;
+	off=k/sizeof(BN_ULONG)+1;
+	j=1;
+	for (i=0; i<6; i++)
+		j+= (*t[i])->top;
+	if ((p=Malloc_locked((off+j)*sizeof(BN_ULONG))) == NULL)
+		{
+		RSAerr(RSA_F_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
+	bn=(BIGNUM *)p;
+	ul=(BN_ULONG *)&(p[off]);
+	for (i=0; i<6; i++)
+		{
+		b= *(t[i]);
+		*(t[i])= &(bn[i]);
+		memcpy((char *)&(bn[i]),(char *)b,sizeof(BIGNUM));
+		bn[i].flags=BN_FLG_STATIC_DATA;
+		bn[i].d=ul;
+		memcpy((char *)ul,b->d,sizeof(BN_ULONG)*b->top);
+		ul+=b->top;
+		BN_clear_free(b);
+		}
+	
+	/* I should fix this so it can still be done */
+	r->flags&= ~(RSA_FLAG_CACHE_PRIVATE|RSA_FLAG_CACHE_PUBLIC);
+
+	r->bignum_data=p;
+	return(1);
 	}
 

@@ -119,16 +119,16 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
    there's no way to tell at compile time what it is you're running on */
  
 #if defined( sun )		/* Newer Sparc's */
-  #define DES_PTR
-  #define DES_RISC1
-  #define DES_UNROLL
+#  define DES_PTR
+#  define DES_RISC1
+#  define DES_UNROLL
 #elif defined( __ultrix )	/* Older MIPS */
-  #define DES_PTR
-  #define DES_RISC2
-  #define DES_UNROLL
+#  define DES_PTR
+#  define DES_RISC2
+#  define DES_UNROLL
 #elif defined( __osf1__ )	/* Alpha */
-  #define DES_PTR
-  #define DES_RISC2
+#  define DES_PTR
+#  define DES_RISC2
 #elif defined ( _AIX )		/* RS6000 */
   /* Unknown */
 #elif defined( __hpux )		/* HP-PA */
@@ -136,15 +136,15 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #elif defined( __aux )		/* 68K */
   /* Unknown */
 #elif defined( __dgux )		/* 88K (but P6 in latest boxes) */
-  #define DES_UNROLL
+#  define DES_UNROLL
 #elif defined( __sgi )		/* Newer MIPS */
-  #define DES_PTR
-  #define DES_RISC2
-  #define DES_UNROLL
+#  define DES_PTR
+#  define DES_RISC2
+#  define DES_UNROLL
 #elif defined( i386 )		/* x86 boxes, should be gcc */
-  #define DES_PTR
-  #define DES_RISC1
-  #define DES_UNROLL
+#  define DES_PTR
+#  define DES_RISC1
+#  define DES_UNROLL
 #endif /* Systems-specific speed defines */
 #endif
 

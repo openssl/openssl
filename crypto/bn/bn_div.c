@@ -72,6 +72,8 @@ BN_CTX *ctx;
 	int i,nm,nd;
 	BIGNUM *D;
 
+	bn_check_top(m);
+	bn_check_top(d);
 	if (BN_is_zero(d))
 		{
 		BNerr(BN_F_BN_DIV,BN_R_DIV_BY_ZERO);
@@ -86,9 +88,9 @@ BN_CTX *ctx;
 		return(1);
 		}
 
-	D=ctx->bn[ctx->tos];
-	if (dv == NULL) dv=ctx->bn[ctx->tos+1];
-	if (rem == NULL) rem=ctx->bn[ctx->tos+2];
+	D= &(ctx->bn[ctx->tos]);
+	if (dv == NULL) dv= &(ctx->bn[ctx->tos+1]);
+	if (rem == NULL) rem= &(ctx->bn[ctx->tos+2]);
 
 	nd=BN_num_bits(d);
 	nm=BN_num_bits(m);
@@ -98,6 +100,7 @@ BN_CTX *ctx;
 	/* The next 2 are needed so we can do a dv->d[0]|=1 later
 	 * since BN_lshift1 will only work once there is a value :-) */
 	BN_zero(dv);
+	bn_wexpand(dv,1);
 	dv->top=1;
 
 	if (!BN_lshift(D,D,nm-nd)) return(0);
@@ -107,7 +110,7 @@ BN_CTX *ctx;
 		if (BN_ucmp(rem,D) >= 0)
 			{
 			dv->d[0]|=1;
-			bn_qsub(rem,rem,D);
+			if (!BN_usub(rem,rem,D)) return(0);
 			}
 /* CAN IMPROVE (and have now :=) */
 		if (!BN_rshift1(D,D)) return(0);
@@ -132,6 +135,9 @@ BN_CTX *ctx;
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
+	bn_check_top(num);
+	bn_check_top(divisor);
+
 	if (BN_is_zero(divisor))
 		{
 		BNerr(BN_F_BN_DIV,BN_R_DIV_BY_ZERO);
@@ -146,12 +152,12 @@ BN_CTX *ctx;
 		return(1);
 		}
 
-	tmp=ctx->bn[ctx->tos]; 
+	tmp= &(ctx->bn[ctx->tos]);
 	tmp->neg=0;
-	snum=ctx->bn[ctx->tos+1];
-	sdiv=ctx->bn[ctx->tos+2];
+	snum= &(ctx->bn[ctx->tos+1]);
+	sdiv= &(ctx->bn[ctx->tos+2]);
 	if (dv == NULL)
-		res=ctx->bn[ctx->tos+3];
+		res= &(ctx->bn[ctx->tos+3]);
 	else	res=dv;
 
 	/* First we normalise the numbers */
@@ -168,10 +174,10 @@ BN_CTX *ctx;
 	/* Lets setup a 'window' into snum
 	 * This is the part that corresponds to the current
 	 * 'area' being divided */
+	BN_init(&wnum);
 	wnum.d=	 &(snum->d[loop]);
 	wnum.top= div_n;
-	wnum.max= snum->max; /* a bit of a lie */
-	wnum.neg= 0;
+	wnum.max= snum->max+1; /* a bit of a lie */
 
 	/* Get the top 2 words of sdiv */
 	/* i=sdiv->top; */
@@ -183,8 +189,8 @@ BN_CTX *ctx;
 
 	/* Setup to 'res' */
 	res->neg= (num->neg^divisor->neg);
-	res->top=loop;
 	if (!bn_wexpand(res,(loop+1))) goto err;
+	res->top=loop;
 	resp= &(res->d[loop-1]);
 
 	/* space for temp */
@@ -192,7 +198,7 @@ BN_CTX *ctx;
 
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
-		bn_qsub(&wnum,&wnum,sdiv);
+		if (!BN_usub(&wnum,&wnum,sdiv)) goto err;
 		*resp=1;
 		res->d[res->top-1]=1;
 		}
@@ -211,7 +217,7 @@ BN_CTX *ctx;
 		if (n0 == d0)
 			q=BN_MASK2;
 		else
-			q=bn_div64(n0,n1,d0);
+			q=bn_div_words(n0,n1,d0);
 		{
 #ifdef BN_LLONG
 		BN_ULLONG t1,t2,rem;
@@ -284,3 +290,39 @@ err:
 	}
 
 #endif
+
+/* rem != m */
+int BN_mod(rem, m, d,ctx)
+BIGNUM *rem;
+BIGNUM *m;
+BIGNUM *d;
+BN_CTX *ctx;
+	{
+#if 0 /* The old slow way */
+	int i,nm,nd;
+	BIGNUM *dv;
+
+	if (BN_ucmp(m,d) < 0)
+		return((BN_copy(rem,m) == NULL)?0:1);
+
+	dv= &(ctx->bn[ctx->tos]);
+
+	if (!BN_copy(rem,m)) return(0);
+
+	nm=BN_num_bits(rem);
+	nd=BN_num_bits(d);
+	if (!BN_lshift(dv,d,nm-nd)) return(0);
+	for (i=nm-nd; i>=0; i--)
+		{
+		if (BN_cmp(rem,dv) >= 0)
+			{
+			if (!BN_sub(rem,rem,dv)) return(0);
+			}
+		if (!BN_rshift1(dv,dv)) return(0);
+		}
+	return(1);
+#else
+	return(BN_div(NULL,rem,m,d,ctx));
+#endif
+	}
+

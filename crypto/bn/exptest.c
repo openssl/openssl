@@ -79,6 +79,8 @@ char *argv[];
 	unsigned char c;
 	BIGNUM *r_mont,*r_recp,*a,*b,*m;
 
+	ERR_load_BN_strings();
+
 	ctx=BN_CTX_new();
 	if (ctx == NULL) exit(1);
 	r_mont=BN_new();
@@ -114,11 +116,19 @@ char *argv[];
 
 		ret=BN_mod_exp_mont(r_mont,a,b,m,ctx,NULL);
 		if (ret <= 0)
-			{ printf("BN_mod_exp_mont() problems\n"); exit(1); }
+			{
+			printf("BN_mod_exp_mont() problems\n");
+			ERR_print_errors(out);
+			exit(1);
+			}
 
 		ret=BN_mod_exp_recp(r_recp,a,b,m,ctx);
 		if (ret <= 0)
-			{ printf("BN_mod_exp_recp() problems\n"); exit(1); }
+			{
+			printf("BN_mod_exp_recp() problems\n");
+			ERR_print_errors(out);
+			exit(1);
+			}
 		
 		if (BN_cmp(r_mont,r_recp) != 0)
 			{
@@ -137,6 +147,7 @@ char *argv[];
 			fflush(stdout);
 			}
 		}
+	CRYPTO_mem_leaks(out);
 	printf(" done\n");
 	exit(0);
 err:

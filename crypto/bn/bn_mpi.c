@@ -103,7 +103,7 @@ BIGNUM *a;
 		BNerr(BN_F_BN_MPI2BN,BN_R_INVALID_LENGTH);
 		return(NULL);
 		}
-	len=(d[0]<<24)|(d[1]<<16)|(d[2]<<8)|d[3];
+	len=((long)d[0]<<24)|((long)d[1]<<16)|((int)d[2]<<8)|(int)d[3];
 	if ((len+4) != n)
 		{
 		BNerr(BN_F_BN_MPI2BN,BN_R_ENCODING_ERROR);

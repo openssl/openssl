@@ -61,8 +61,8 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_CINF,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_CINF_NEW,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_CINF,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_CINF_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_X509_CINF(a,pp)
@@ -140,7 +140,7 @@ long length;
 		if (ret->subjectUID != NULL)
 			{
 			ASN1_BIT_STRING_free(ret->subjectUID);
-			ret->issuerUID=NULL;
+			ret->subjectUID=NULL;
 			}
 		M_ASN1_D2I_get_IMP_opt(ret->issuerUID,d2i_ASN1_BIT_STRING,  1,
 			V_ASN1_BIT_STRING);
@@ -153,8 +153,8 @@ long length;
 			while (sk_num(ret->extensions))
 				X509_EXTENSION_free((X509_EXTENSION *)
 					sk_pop(ret->extensions));
-		M_ASN1_D2I_get_EXP_set_opt(ret->extensions,d2i_X509_EXTENSION,3,
-			V_ASN1_SEQUENCE);
+		M_ASN1_D2I_get_EXP_set_opt(ret->extensions,d2i_X509_EXTENSION,
+			X509_EXTENSION_free,3,V_ASN1_SEQUENCE);
 		}
 	M_ASN1_D2I_Finish(a,X509_CINF_free,ASN1_F_D2I_X509_CINF);
 	}
@@ -162,6 +162,7 @@ long length;
 X509_CINF *X509_CINF_new()
 	{
 	X509_CINF *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_CINF);
 	ret->version=NULL;

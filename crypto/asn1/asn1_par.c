@@ -266,7 +266,8 @@ int indent;
 			if (	(tag == V_ASN1_PRINTABLESTRING) ||
 				(tag == V_ASN1_T61STRING) ||
 				(tag == V_ASN1_IA5STRING) ||
-				(tag == V_ASN1_UTCTIME))
+				(tag == V_ASN1_UTCTIME) ||
+				(tag == V_ASN1_GENERALIZEDTIME))
 				{
 				if (BIO_write(bp,":",1) <= 0) goto end;
 				if ((len > 0) &&

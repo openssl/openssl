@@ -62,6 +62,18 @@
 #include "pem.h"
 #include "ssl_locl.h"
 
+int SSL_get_ex_data_X509_STORE_CTX_idx()
+	{
+	static int ssl_x509_store_ctx_idx= -1;
+
+	if (ssl_x509_store_ctx_idx < 0)
+		{
+		ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
+			0,"SSL for verifiy callback",NULL,NULL,NULL);
+		}
+	return(ssl_x509_store_ctx_idx);
+	}
+
 CERT *ssl_cert_new()
 	{
 	CERT *ret;
@@ -150,15 +162,24 @@ STACK *sk;
 
 	x=(X509 *)sk_value(sk,0);
 	X509_STORE_CTX_init(&ctx,s->ctx->cert_store,x,sk);
-	X509_STORE_CTX_set_app_data(&ctx,(char *)s);
+	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),
+		(char *)s);
 
 	if (s->ctx->app_verify_callback != NULL)
 		i=s->ctx->app_verify_callback(&ctx);
 	else
+		{
+#ifndef NO_X509_VERIFY
 		i=X509_verify_cert(&ctx);
+#else
+		i=0;
+		ctx.error=X509_V_ERR_APPLICATION_VERIFICATION;
+		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,SSL_R_NO_VERIFY_CALLBACK);
+#endif
+		}
 
-	X509_STORE_CTX_cleanup(&ctx);
 	s->verify_result=ctx.error;
+	X509_STORE_CTX_cleanup(&ctx);
 
 	return(i);
 	}

@@ -6,11 +6,11 @@ F_TEXT	SEGMENT  WORD USE16 PUBLIC 'CODE'
 F_TEXT	ENDS
 _DATA	SEGMENT  WORD USE16 PUBLIC 'DATA'
 _DATA	ENDS
-CONST	SEGMENT  WORD USE16 PUBLIC 'CONST'
-CONST	ENDS
+_CONST	SEGMENT  WORD USE16 PUBLIC 'CONST'
+_CONST	ENDS
 _BSS	SEGMENT  WORD USE16 PUBLIC 'BSS'
 _BSS	ENDS
-DGROUP	GROUP	CONST, _BSS, _DATA
+DGROUP	GROUP	_CONST, _BSS, _DATA
 	ASSUME DS: DGROUP, SS: DGROUP
 F_TEXT      SEGMENT
 	ASSUME	CS: F_TEXT
@@ -89,7 +89,7 @@ $L555:
 	mov	bp,WORD PTR [bp+26]	; load num
 	and	bp,3
 	dec	bp
-	js	$L547
+	js	$L547m
 
 	mov	eax,ecx
 	mul	DWORD PTR es:[bx]	; w* *a
@@ -100,7 +100,7 @@ $L555:
 	mov	DWORD PTR ds:[di],eax
 	mov	esi,edx
 	dec	bp
-	js	$L547			; Note that we are now testing for -1
+	js	$L547m			; Note that we are now testing for -1
 	;
 	mov	eax,ecx
 	mul	DWORD PTR es:[bx+4]	; w* *a
@@ -111,7 +111,7 @@ $L555:
 	mov	DWORD PTR ds:[di+4],eax
 	mov	esi,edx
 	dec	bp
-	js	$L547
+	js	$L547m
 	;
 	mov	eax,ecx
 	mul	DWORD PTR es:[bx+8]	; w* *a
@@ -121,7 +121,7 @@ $L555:
 	adc	edx,0
 	mov	DWORD PTR ds:[di+8],eax
 	mov	esi,edx
-$L547:
+$L547m:
 	mov	eax,esi
 	mov	edx,esi
 	shr	edx,16
@@ -315,37 +315,35 @@ _bn_add_words	PROC FAR
 ;	ap = 22
 ;	rp = 18
 	xor	esi,esi			;c=0;
+	mov	bx,WORD PTR [bp+18]	; load low r
 	mov	si,WORD PTR [bp+22]	; load a
 	mov	es,WORD PTR [bp+24]	; load a
 	mov	di,WORD PTR [bp+26]	; load b
 	mov	ds,WORD PTR [bp+28]	; load b
 
 	mov	dx,WORD PTR [bp+30]	; load num
-	dec	dx
-	js	$L547
 	xor	ecx,ecx
+	dec	dx
+	js	$L547a
 
 $L5477:
-	xor	ebx,ebx
 	mov	eax,DWORD PTR es:[si]	; *a
 	add	eax,ecx
-	adc	ebx,0
+	mov	ecx,0
+	adc	ecx,0
 	add	si,4			; a++
 	add	eax,DWORD PTR ds:[di]	; + *b
-	mov	ecx,ebx
 	adc	ecx,0
-	add	di,4
-	mov	bx,WORD PTR [bp+18]
 	mov	ds,WORD PTR [bp+20]
+	add	di,4
 	mov	DWORD PTR ds:[bx],eax
-	add	bx,4
 	mov	ds,WORD PTR [bp+28]
-	mov	WORD PTR [bp+18],bx
+	add	bx,4
 	dec	dx
-	js	$L547			; Note that we are now testing for -1
+	js	$L547a			; Note that we are now testing for -1
 	jmp	$L5477
 	;
-$L547:
+$L547a:
 	mov	eax,ecx
 	mov	edx,ecx
 	shr	edx,16

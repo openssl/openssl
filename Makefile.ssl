@@ -1,6 +1,7 @@
 #
 # Makefile for all the SSL related library routines and utilities
-VERSION = 0.9.0a
+VERSION = 0.9.1b
+PLATFORM=debug
 #
 # make install will install:
 #   libraries into $INSTALLTOP/lib
@@ -57,29 +58,31 @@ VERSION = 0.9.0a
 # MD5_ASM needs to be defined to use the x86 assembler for MD5
 # SHA1_ASM needs to be defined to use the x86 assembler for SHA1
 # RMD160_ASM needs to be defined to use the x86 assembler for RIPEMD160
+# Do not define B_ENDIAN or L_ENDIAN if 'unsigned long' == 8.  It must
+# equal 4.
+# PKCS1_CHECK - pkcs1 tests.
 
-
-CC= cc
-#CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DMD5_ASM -DSHA1_ASM -DRMD160_ASM
-CFLAG= -O -DNOPROTO
+CC= gcc
+#CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
+CFLAG= -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
 PEX_LIBS= -L. -L.. -L../.. -L../../..
-EX_LIBS= 
+EX_LIBS= -lefence
 AR=ar r
 
-# Set BN_MULW to bn_mulw.o if you want to use the C version
-BN_MULW= bn_mulw.o
-#BN_MULW= bn_mulw.o
-#BN_MULW= asm/bn86-elf.o        # elf, linux-elf
-#BN_MULW= asm/bn86-sol.o        # solaris
-#BN_MULW= asm/bn86-out.o        # a.out, FreeBSD
-#BN_MULW= asm/bn86bsdi.o        # bsdi
-#BN_MULW= asm/alpha.o           # DEC Alpha
-#BN_MULW= asm/pa-risc2.o        # HP-UX PA-RISC
-#BN_MULW= asm/r3000.o           # SGI MIPS cpu
-#BN_MULW= asm/sparc.o           # Sun solaris/SunOS
-#BN_MULW= asm/bn-win32.o                # Windows 95/NT
-#BN_MULW= asm/x86w16.o          # 16 bit code for Windows 3.1/DOS
-#BN_MULW= asm/x86w32.o          # 32 bit code for Windows 3.1
+# Set BN_ASM to bn_asm.o if you want to use the C version
+BN_ASM= bn_asm.o
+#BN_ASM= bn_asm.o
+#BN_ASM= asm/bn86-elf.o	# elf, linux-elf
+#BN_ASM= asm/bn86-sol.o # solaris
+#BN_ASM= asm/bn86-out.o # a.out, FreeBSD
+#BN_ASM= asm/bn86bsdi.o # bsdi
+#BN_ASM= asm/alpha.o    # DEC Alpha
+#BN_ASM= asm/pa-risc2.o # HP-UX PA-RISC
+#BN_ASM= asm/r3000.o    # SGI MIPS cpu
+#BN_ASM= asm/sparc.o    # Sun solaris/SunOS
+#BN_ASM= asm/bn-win32.o # Windows 95/NT
+#BN_ASM= asm/x86w16.o   # 16 bit code for Windows 3.1/DOS
+#BN_ASM= asm/x86w32.o   # 32 bit code for Windows 3.1
 
 # Set DES_ENC to des_enc.o if you want to use the C version
 #There are 4 x86 assember options.
@@ -154,7 +157,7 @@ SDIRS=  \
 	des rc2 rc4 rc5 idea bf cast \
 	bn rsa dsa dh \
 	buffer bio stack lhash rand err objects \
-	evp pem asn1 x509 conf txt_db pkcs7
+	evp pem asn1 x509 conf txt_db pkcs7 comp
 
 # If you change the INSTALLTOP, make sure to also change the values
 # in crypto/location.h
@@ -169,8 +172,9 @@ SHELL=/bin/sh
 
 TOP=    .
 ONEDIRS=out tmp
-EDIRS=  times doc bugs util include certs ms shlib mt demos perl dep
-MISC=   COPYRIGHT Configure HISTORY.066 INSTALL Makefile.ssl Makefile \
+EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep
+MISC=   COPYRIGHT Configure HISTORY.090	HISTORY.066 INSTALL Makefile.ssl \
+	Makefile \
 	README TODO HISTORY README.066 README.080 README.090 \
 	VERSION PROBLEMS MINFO makefile.one e_os.h \
 	MICROSOFT makevms.com config PATENTS
@@ -189,15 +193,18 @@ all:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "making $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_MULW='${BN_MULW}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' all ); \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' all ); \
 	done;
 
 sub_all:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "making $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_MULW='${BN_MULW}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ); \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ); \
 	done;
+
+libclean:
+	/bin/rm *.a */lib */*/lib
 
 clean:
 	/bin/rm -f shlib/*.o *.o core a.out fluff *.map
@@ -253,7 +260,7 @@ test:   tests
 
 tests:
 	(cd test; echo "testing $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_MULW='${BN_MULW}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' tests );
+	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' tests );
 	@apps/ssleay version -a
 
 depend:

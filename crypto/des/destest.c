@@ -72,6 +72,10 @@
 #include <string.h>
 #include "des.h"
 
+#if defined(PERL5) || defined(__FreeBSD__)
+#define crypt(c,s) (des_crypt((c),(s)))
+#endif
+
 /* tisk tisk - the test keys don't all have odd parity :-( */
 /* test data */
 #define NUM_TESTS 34
@@ -660,17 +664,20 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	printf("Doing quad_cksum\n");
 	cs=quad_cksum((C_Block *)cbc_data,(C_Block *)qret,
 		(long)strlen(cbc_data),2,(C_Block *)cbc_iv);
+
+	{ /* Big-endian fix */
+	static DES_LONG l=1;
+	static unsigned char *c=(unsigned char *)&l;
+	DES_LONG ll;
+
 	j=sizeof(lqret[0])-4;
 	for (i=0; i<4; i++)
 		{
 		lqret[i]=0;
 		memcpy(&(lqret[i]),&(qret[i][0]),4);
-		if (j > 0) lqret[i]=lqret[i]>>(j*8); /* For Cray */
+		if (!c[0] && (j > 0))
+			lqret[i]=lqret[i]>>(j*8); /* For Cray */
 		}
-	{ /* Big-endian fix */
-	static DES_LONG l=1;
-	static unsigned char *c=(unsigned char *)&l;
-	DES_LONG ll;
 
 	if (!c[0])
 		{

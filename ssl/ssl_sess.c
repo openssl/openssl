@@ -69,7 +69,7 @@ static void SSL_SESSION_list_remove();
 static void SSL_SESSION_list_add();
 #endif
 
-static ssl_session_num=0;
+static int ssl_session_num=0;
 static STACK *ssl_session_meth=NULL;
 
 SSL_SESSION *SSL_get_session(ssl)

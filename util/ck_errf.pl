@@ -40,5 +40,6 @@ foreach $file (@ARGV)
 	#		print "$func:$1\n";
 			}
 		}
+	close(IN);
         }
 

@@ -66,18 +66,18 @@ $asm='bcc -c -B -Tml';
 $afile='/o';
 if ($no_asm)
 	{
-	$bn_mulw_obj='';
-	$bn_mulw_src='';
+	$bn_asm_obj='';
+	$bn_asm_src='';
 	}
 elsif ($asmbits == 32)
 	{
-	$bn_mulw_obj='crypto\bn\asm\x86w32.obj';
-	$bn_mulw_src='crypto\bn\asm\x86w32.asm';
+	$bn_asm_obj='crypto\bn\asm\x86w32.obj';
+	$bn_asm_src='crypto\bn\asm\x86w32.asm';
 	}
 else
 	{
-	$bn_mulw_obj='crypto\bn\asm\x86w16.obj';
-	$bn_mulw_src='crypto\bn\asm\x86w16.asm';
+	$bn_asm_obj='crypto\bn\asm\x86w16.obj';
+	$bn_asm_src='crypto\bn\asm\x86w16.asm';
 	}
 
 sub do_lib_rule

@@ -60,7 +60,7 @@
 #include "spr.h"
 
 char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-char *DES_version="DES part of SSLeay 0.9.0b 29-Jun-1998";
+char *DES_version="DES part of SSLeay 0.9.1a 06-Jul-1998";
 
 char *des_options()
 	{

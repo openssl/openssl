@@ -86,8 +86,8 @@ void ERR_load_${type}_strings()
 	if (${type}_lib_error_code == 0)
 		${type}_lib_error_code=ERR_get_next_error_library();
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 $str
 		}
@@ -113,8 +113,8 @@ void ERR_load_${type}_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 $str
 		}

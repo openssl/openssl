@@ -62,8 +62,8 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_EXTENSION,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_EXTENSION_NEW,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_EXTENSION,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_EXTENSION_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_X509_EXTENSION(a,pp)
@@ -130,9 +130,10 @@ long length;
 X509_EXTENSION *X509_EXTENSION_new()
 	{
 	X509_EXTENSION *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_EXTENSION);
-	M_ASN1_New(ret->object,ASN1_OBJECT_new);
+	ret->object=OBJ_nid2obj(NID_undef);
 	M_ASN1_New(ret->value,ASN1_OCTET_STRING_new);
 	ret->critical=0;
 	ret->netscape_hack=0;

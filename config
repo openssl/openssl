@@ -4,6 +4,9 @@
 #          which then automatically runs Configure from SSLeay after
 #	   mapping the Apache names for OSs into SSLeay names
 #
+# 29-May-97 eay		Added no-asm option
+# 27-May-97 eay		Alpha linux mods
+# ??-May-97 eay		IRIX mods
 # 16-Sep-97 tjh		first cut of merged version
 #
 # Tim Hudson
@@ -29,7 +32,6 @@ MACHINE=`(uname -m) 2>/dev/null` || MACHINE="unknown"
 RELEASE=`(uname -r) 2>/dev/null` || RELEASE="unknown"
 SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
 VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
-
 
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
@@ -252,7 +254,27 @@ do
 case "$i" in 
 -d*) PREFIX="debug-";;
 -v*) VERBOSE="true";;
--n*|-t*) TEST="true";;
+-t*) TEST="true";;
+-h*) cat <<EOF
+usage: config [options]
+ -d	Add a debug- prefix to machine choice.
+ -v	Verbose mode.
+ -t	Test mode, do not run the Configure perl script.
+ -h	This help.
+
+Any other text will be passed to ther Configure perl script.
+Usefull options include
+ no-asm Build with no assember code.
+ -Dxxx	Add xxx define to compilation.
+ -Lxxx	Add xxx library include path to build.
+ -lxxx	Add xxx library to build.
+
+eg, to build using RSAref, without assember, building to allow anon-DH
+ciphers and null encryption ciphers,
+ config no-asm -DRSAref -DSSL_ALLOW_ADH -DSSL_ALLOW_ENULL -lrsaref
+EOF
+;;
+*) options=$options" $i" ;;
 esac
 done
 
@@ -276,6 +298,7 @@ fi
 # script above so we end up with values in vars but that would take
 # more time that I want to waste at the moment
 case "$GUESSOS" in
+  alpha-*-linux2) OUT="alpha-gcc" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux) OUT="linux-aout" ;;
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
@@ -285,11 +308,15 @@ case "$GUESSOS" in
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
   sun3*-*-netbsd) OUT="NetBSD-m68" ;;
   *-*-netbsd) OUT="NetBSD-sparc" ;;
-  *-*-osf) OUT="alpha-$CC" ;;
+  *86*-*-openbsd) OUT="OpenBSD-x86" ;;
+  alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
+  pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
+  *-*-openbsd) OUT="OpenBSD" ;;
+  *-*-osf) OUT="alpha-cc" ;;
   *-*-unixware*) OUT="unixware-2.0" ;;
   *-sni-sysv4) OUT="SINIX" ;;
+  *-hpux*) OUT="hpux-$CC" ;;
   # these are all covered by the catchall below
-  # *-hpux) OUT="hpux-$CC" ;;
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
@@ -302,7 +329,7 @@ fi
 # run Configure to check to see if we need to specify the 
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
-./Configure 2>&1 | grep '$OUT-$CC' > /dev/null
+perl ./Configure 2>&1 | grep "$OUT-$CC" > /dev/null
 if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
@@ -315,9 +342,9 @@ OUT="$PREFIX$OUT"
 echo Configuring for $OUT
 
 if [ "$TEST" = "true" ]; then
-  echo ./Configure $OUT
+  echo ./Configure $OUT $options
 else
-  ./Configure $OUT
+  perl ./Configure $OUT $options
 fi
 
 )

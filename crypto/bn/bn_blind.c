@@ -67,8 +67,14 @@ BIGNUM *mod;
 	{
 	BN_BLINDING *ret=NULL;
 
+	bn_check_top(Ai);
+	bn_check_top(mod);
+
 	if ((ret=(BN_BLINDING *)Malloc(sizeof(BN_BLINDING))) == NULL)
+		{
 		BNerr(BN_F_BN_BLINDING_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
 	memset(ret,0,sizeof(BN_BLINDING));
 	if ((ret->A=BN_new()) == NULL) goto err;
 	if ((ret->Ai=BN_new()) == NULL) goto err;
@@ -78,7 +84,7 @@ BIGNUM *mod;
 	return(ret);
 err:
 	if (ret != NULL) BN_BLINDING_free(ret);
-	return(ret);
+	return(NULL);
 	}
 
 void BN_BLINDING_free(r)
@@ -114,6 +120,8 @@ BIGNUM *n;
 BN_BLINDING *b;
 BN_CTX *ctx;
 	{
+	bn_check_top(n);
+
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
 		BNerr(BN_F_BN_BLINDING_CONVERT,BN_R_NOT_INITALISED);
@@ -128,6 +136,8 @@ BN_BLINDING *b;
 BN_CTX *ctx;
 	{
 	int ret;
+
+	bn_check_top(n);
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
 		BNerr(BN_F_BN_BLINDING_INVERT,BN_R_NOT_INITALISED);

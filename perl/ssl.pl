@@ -6,11 +6,11 @@ use SSLeay;
 
 $ssl_ctx=SSL::CTX->new("SSLv3");
 
-$ssl_ctx->set_options("-info_callback" =>
-	sub	{
-		print STDERR $_[0]->state()."\n";
-		}
-	);
+#$ssl_ctx->set_options("-info_callback" =>
+#	sub	{
+#		print STDERR $_[0]->state()."\n";
+#		}
+#	);
 
 $conn="localhost:4433";
 $conn=$ARGV[0] if $#ARGV >= 0;

@@ -78,15 +78,18 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_MPI2BN,0),	"BN_mpi2bn"},
 {ERR_PACK(0,BN_F_BN_NEW,0),	"BN_new"},
 {ERR_PACK(0,BN_F_BN_RAND,0),	"BN_rand"},
+{ERR_PACK(0,BN_F_BN_USUB,0),	"BN_usub"},
 {0,NULL},
 	};
 
 static ERR_STRING_DATA BN_str_reasons[]=
 	{
+{BN_R_ARG2_LT_ARG3                       ,"arg2 lt arg3"},
 {BN_R_BAD_RECIPROCAL                     ,"bad reciprocal"},
 {BN_R_CALLED_WITH_EVEN_MODULUS           ,"called with even modulus"},
 {BN_R_DIV_BY_ZERO                        ,"div by zero"},
 {BN_R_ENCODING_ERROR                     ,"encoding error"},
+{BN_R_EXPAND_ON_STATIC_BIGNUM_DATA       ,"expand on static bignum data"},
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
 {BN_R_NOT_INITALISED                     ,"not initalised"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
@@ -99,8 +102,8 @@ void ERR_load_BN_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_BN,BN_str_functs);

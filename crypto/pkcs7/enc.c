@@ -73,10 +73,10 @@ char *argv[];
 	BIO *data,*p7bio;
 	char buf[1024*4];
 	int i,j;
-	int nodetach=0;
+	int nodetach=1;
 
 	EVP_add_digest(EVP_sha1());
-	EVP_add_cipher(EVP_des_cbc());
+	EVP_add_cipher(EVP_des_ede3_cbc());
 
 	data=BIO_new(BIO_s_file());
 again:
@@ -105,7 +105,7 @@ again:
 	 
 	if (PKCS7_add_signature(p7,x509,pkey,EVP_sha1()) == NULL) goto err;
 
-	if (!PKCS7_set_cipher(p7,EVP_des_cbc())) goto err;
+	if (!PKCS7_set_cipher(p7,EVP_des_ede3_cbc())) goto err;
 	if (PKCS7_add_recipient(p7,x509) == NULL) goto err;
 
 	/* we may want to add more */
@@ -129,7 +129,7 @@ again:
 		}
 	BIO_flush(p7bio);
 
-	if (!PKCS7_dataSign(p7,p7bio)) goto err;
+	if (!PKCS7_dataFinal(p7,p7bio)) goto err;
 	BIO_free(p7bio);
 
 	PEM_write_PKCS7(stdout,p7);

@@ -62,8 +62,8 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_PKCS7_ENVELOPE_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_ENVELOPE,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_PKCS7_ENVELOPE_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_PKCS7_ENVELOPE,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_PKCS7_ENVELOPE(a,pp)
@@ -95,7 +95,8 @@ long length;
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->version,d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get_set(ret->recipientinfo,d2i_PKCS7_RECIP_INFO);
+	M_ASN1_D2I_get_set(ret->recipientinfo,d2i_PKCS7_RECIP_INFO,
+		PKCS7_RECIP_INFO_free);
 	M_ASN1_D2I_get(ret->enc_data,d2i_PKCS7_ENC_CONTENT);
 
 	M_ASN1_D2I_Finish(a,PKCS7_ENVELOPE_free,ASN1_F_D2I_PKCS7_ENVELOPE);
@@ -104,6 +105,7 @@ long length;
 PKCS7_ENVELOPE *PKCS7_ENVELOPE_new()
 	{
 	PKCS7_ENVELOPE *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_ENVELOPE);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);

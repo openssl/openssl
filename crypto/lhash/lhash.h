@@ -102,9 +102,15 @@ typedef struct lhash_st
 	unsigned long num_retrieve;
 	unsigned long num_retrieve_miss;
 	unsigned long num_hash_comps;
+
+	int error;
 	} LHASH;
 
 #define LH_LOAD_MULT	256
+
+/* Indicates a malloc() error in the last call, this is only bad
+ * in lh_insert(). */
+#define lh_error(lh)	((lh)->error)
 
 #ifndef NOPROTO
 LHASH *lh_new(unsigned long (*h)(), int (*c)());

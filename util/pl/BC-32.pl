@@ -55,13 +55,13 @@ $asm='ml /Cp /c /Cx';
 $afile='/Fo';
 if ($noasm)
 	{
-	$bn_mulw_obj='';
-	$bn_mulw_src='';
+	$bn_asm_obj='';
+	$bn_asm_src='';
 	}
 else
 	{
-	$bn_mulw_obj='crypto\bn\asm\x86b32.obj';
-	$bn_mulw_src='crypto\bn\asm\x86m32.asm';
+	$bn_asm_obj='crypto\bn\asm\x86b32.obj';
+	$bn_asm_src='crypto\bn\asm\x86m32.asm';
 	}
 
 sub do_lib_rule

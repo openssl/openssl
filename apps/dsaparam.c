@@ -80,6 +80,7 @@
  * -text
  * -C
  * -noout
+ * -genkey
  */
 
 #ifndef NOPROTO
@@ -97,7 +98,7 @@ char **argv;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog,*inrand=NULL;
-	int numbits= -1,num;
+	int numbits= -1,num,genkey=0;
 	char buffer[200],*randfile=NULL;
 
 	apps_startup();
@@ -140,6 +141,8 @@ char **argv;
 			text=1;
 		else if (strcmp(*argv,"-C") == 0)
 			C=1;
+		else if (strcmp(*argv,"-genkey") == 0)
+			genkey=1;
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -314,6 +317,22 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 			}
+		}
+	if (genkey)
+		{
+		DSA *dsakey;
+
+		if ((dsakey=DSAparams_dup(dsa)) == NULL) goto end;
+		if (!DSA_generate_key(dsakey)) goto end;
+		if 	(outformat == FORMAT_ASN1)
+			i=i2d_DSAPrivateKey_bio(out,dsakey);
+		else if (outformat == FORMAT_PEM)
+			i=PEM_write_bio_DSAPrivateKey(out,dsakey,NULL,NULL,0,NULL);
+		else	{
+			BIO_printf(bio_err,"bad output format specified for outfile\n");
+			goto end;
+			}
+		DSA_free(dsakey);
 		}
 	ret=0;
 end:

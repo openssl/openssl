@@ -65,6 +65,7 @@ static ERR_STRING_DATA BIO_str_functs[]=
 	{
 {ERR_PACK(0,BIO_F_ACPT_STATE,0),	"ACPT_STATE"},
 {ERR_PACK(0,BIO_F_BIO_ACCEPT,0),	"BIO_accept"},
+{ERR_PACK(0,BIO_F_BIO_BER_GET_HEADER,0),	"BIO_BER_GET_HEADER"},
 {ERR_PACK(0,BIO_F_BIO_CTRL,0),	"BIO_ctrl"},
 {ERR_PACK(0,BIO_F_BIO_GETS,0),	"BIO_gets"},
 {ERR_PACK(0,BIO_F_BIO_GET_ACCEPT_SOCKET,0),	"BIO_get_accept_socket"},
@@ -80,6 +81,7 @@ static ERR_STRING_DATA BIO_str_functs[]=
 {ERR_PACK(0,BIO_F_CONN_STATE,0),	"CONN_STATE"},
 {ERR_PACK(0,BIO_F_FILE_CTRL,0),	"FILE_CTRL"},
 {ERR_PACK(0,BIO_F_MEM_WRITE,0),	"MEM_WRITE"},
+{ERR_PACK(0,BIO_F_SOCKS4A_STATE,0),	"SOCKS4A_STATE"},
 {ERR_PACK(0,BIO_F_SSL_NEW,0),	"SSL_NEW"},
 {ERR_PACK(0,BIO_F_WSASTARTUP,0),	"WSASTARTUP"},
 {0,NULL},
@@ -103,6 +105,11 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_NO_PORT_DEFINED                   ,"no port defined"},
 {BIO_R_NO_PORT_SPECIFIED                 ,"no port specified"},
 {BIO_R_NULL_PARAMETER                    ,"null parameter"},
+{BIO_R_SOCKS_ID_AND_IDENT_DID_NOT_MATCH  ,"socks id and ident did not match"},
+{BIO_R_SOCKS_REJECTED_CONNECTION         ,"socks rejected connection"},
+{BIO_R_SOCKS_UNABLE_TO_TALK_TO_IDENT_SERVER,"socks unable to talk to ident server"},
+{BIO_R_SOCKS_UNKNOWN_ERROR               ,"socks unknown error"},
+{BIO_R_TAG_MISMATCH                      ,"tag mismatch"},
 {BIO_R_UNABLE_TO_BIND_SOCKET             ,"unable to bind socket"},
 {BIO_R_UNABLE_TO_CREATE_SOCKET           ,"unable to create socket"},
 {BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
@@ -118,8 +125,8 @@ void ERR_load_BIO_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_BIO,BIO_str_functs);

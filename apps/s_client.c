@@ -131,7 +131,7 @@ static void sc_usage()
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'ssleay ciphers'\n");
-	BIO_printf(bio_err,"                 command to se what is available\n");
+	BIO_printf(bio_err,"                 command to see what is available\n");
 
 	}
 
@@ -551,7 +551,15 @@ re_start:
 #ifdef RENEG
 { static int iiii; if (++iiii == 52) { SSL_renegotiate(con); iiii=0; } }
 #endif
+#if 1
 			k=SSL_read(con,sbuf,1024 /* BUFSIZZ */ );
+#else
+/* Demo for pending and peek :-) */
+			k=SSL_read(con,sbuf,16);
+{ char zbuf[10240]; 
+printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240));
+}
+#endif
 
 			switch (SSL_get_error(con,k))
 				{
@@ -588,7 +596,7 @@ re_start:
 			case SSL_ERROR_SSL:
 				ERR_print_errors(bio_err);
 				goto shut;
-				break;
+				/* break; */
 				}
 			}
 
@@ -658,7 +666,7 @@ int full;
 		sk=SSL_get_peer_cert_chain(s);
 		if (sk != NULL)
 			{
-			BIO_printf(bio,"---\nCertficate chain\n");
+			BIO_printf(bio,"---\nCertificate chain\n");
 			for (i=0; i<sk_num(sk); i++)
 				{
 				X509_NAME_oneline(X509_get_subject_name((X509 *)

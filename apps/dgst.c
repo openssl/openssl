@@ -146,6 +146,8 @@ char **argv;
 			LN_sha,LN_sha);
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_mdc2,LN_mdc2);
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
+			LN_ripemd160,LN_ripemd160);
 		err=1;
 		goto end;
 		}

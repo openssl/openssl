@@ -122,101 +122,6 @@ extern "C" {
 #define B_ASN1_BMPSTRING	0x0800
 #define B_ASN1_UNKNOWN		0x1000
 
-#ifndef DEBUG
-
-#define ASN1_INTEGER		ASN1_STRING
-#define ASN1_BIT_STRING		ASN1_STRING
-#define ASN1_OCTET_STRING	ASN1_STRING
-#define ASN1_PRINTABLESTRING	ASN1_STRING
-#define ASN1_T61STRING		ASN1_STRING
-#define ASN1_IA5STRING		ASN1_STRING
-#define ASN1_UTCTIME		ASN1_STRING
-#define ASN1_GENERALIZEDTIME	ASN1_STRING
-#define ASN1_GENERALSTRING	ASN1_STRING
-#define ASN1_UNIVERSALSTRING	ASN1_STRING
-#define ASN1_BMPSTRING		ASN1_STRING
-
-#else
-
-typedef struct asn1_integer_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_INTEGER;
-
-typedef struct asn1_bit_string_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_BIT_STRING;
-
-typedef struct asn1_octet_string_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_OCTET_STRING;
-
-typedef struct asn1_printablestring_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_PRINTABLESTRING;
-
-typedef struct asn1_t61string_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_T61STRING;
-
-typedef struct asn1_ia5string_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_IA5STRING;
-
-typedef struct asn1_generalstring_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_GENERALSTRING;
-
-typedef struct asn1_universalstring_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_UNIVERSALSTRING;
-
-typedef struct asn1_bmpstring_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_BMPSTRING;
-
-typedef struct asn1_utctime_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_UTCTIME;
-
-typedef struct asn1_generalizedtime_st
-	{
-	int length;
-	int type;
-	unsigned char *data;
-	} ASN1_GENERALIZEDTIME;
-
-#endif
-
 typedef struct asn1_ctx_st
 	{
 	unsigned char *p;/* work char pointer */
@@ -229,6 +134,7 @@ typedef struct asn1_ctx_st
 	unsigned char *max; /* largest value of p alowed */
 	unsigned char *q;/* temporary variable */
 	unsigned char **pp;/* variable */
+	int line;	/* used in error processing */
 	} ASN1_CTX;
 
 /* These are used internally in the ASN1_OBJECT to keep track of
@@ -246,13 +152,45 @@ typedef struct asn1_object_st
 	int flags;	/* Should we free this one */
 	} ASN1_OBJECT;
 
+#define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
 /* This is the base type that holds just about everything :-) */
 typedef struct asn1_string_st
 	{
 	int length;
 	int type;
 	unsigned char *data;
+	/* The value of the following field depends on the type being
+	 * held.  It is mostly being used for BIT_STRING so if the
+	 * input data has a non-zero 'unused bits' value, it will be
+	 * handled correctly */
+	long flags;
 	} ASN1_STRING;
+
+#ifndef DEBUG
+#define ASN1_INTEGER		ASN1_STRING
+#define ASN1_BIT_STRING		ASN1_STRING
+#define ASN1_OCTET_STRING	ASN1_STRING
+#define ASN1_PRINTABLESTRING	ASN1_STRING
+#define ASN1_T61STRING		ASN1_STRING
+#define ASN1_IA5STRING		ASN1_STRING
+#define ASN1_UTCTIME		ASN1_STRING
+#define ASN1_GENERALIZEDTIME	ASN1_STRING
+#define ASN1_GENERALSTRING	ASN1_STRING
+#define ASN1_UNIVERSALSTRING	ASN1_STRING
+#define ASN1_BMPSTRING		ASN1_STRING
+#else
+typedef struct asn1_string_st ASN1_INTEGER;
+typedef struct asn1_string_st ASN1_BIT_STRING;
+typedef struct asn1_string_st ASN1_OCTET_STRING;
+typedef struct asn1_string_st ASN1_PRINTABLESTRING;
+typedef struct asn1_string_st ASN1_T61STRING;
+typedef struct asn1_string_st ASN1_IA5STRING;
+typedef struct asn1_string_st ASN1_GENERALSTRING;
+typedef struct asn1_string_st ASN1_UNIVERSALSTRING;
+typedef struct asn1_string_st ASN1_BMPSTRING;
+typedef struct asn1_string_st ASN1_UTCTIME;
+typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
+#endif
 
 typedef struct asn1_type_st
 	{
@@ -472,6 +410,10 @@ int		i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a,unsigned char **pp);
 ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a,
 			unsigned char **pp,long length);
 
+int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp);
+ASN1_BMPSTRING *d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, unsigned char **pp,
+	long length);
+
 int i2d_ASN1_PRINTABLE(ASN1_STRING *a,unsigned char **pp);
 ASN1_STRING *d2i_ASN1_PRINTABLE(ASN1_STRING **a,
 	unsigned char **pp, long l);
@@ -491,7 +433,8 @@ ASN1_UTCTIME *	d2i_ASN1_UTCTIME(ASN1_UTCTIME **a,unsigned char **pp,
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
 			int (*func)(), int ex_tag, int ex_class);
 STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
-			char *(*func)(), int ex_tag, int ex_class);
+			char *(*func)(), void (*free_func)(),
+			int ex_tag, int ex_class);
 
 #ifdef HEADER_BIO_H
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
@@ -666,6 +609,9 @@ int ASN1_TYPE_get_octetstring();
 int ASN1_TYPE_set_int_octetstring();
 int ASN1_TYPE_get_int_octetstring();
 
+int i2d_ASN1_BMPSTRING();
+ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
+
 #endif
 
 /* BEGIN ERROR CODES */
@@ -797,60 +743,56 @@ int ASN1_TYPE_get_int_octetstring();
 
 /* Reason codes. */
 #define ASN1_R_BAD_CLASS				 100
-#define ASN1_R_BAD_GET_OBJECT				 101
-#define ASN1_R_BAD_OBJECT_HEADER			 102
-#define ASN1_R_BAD_PASSWORD_READ			 103
-#define ASN1_R_BAD_PKCS7_CONTENT			 104
-#define ASN1_R_BAD_PKCS7_TYPE				 105
-#define ASN1_R_BAD_TAG					 106
-#define ASN1_R_BAD_TYPE					 107
-#define ASN1_R_BN_LIB					 108
-#define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 109
-#define ASN1_R_BUFFER_TOO_SMALL				 110
-#define ASN1_R_DATA_IS_WRONG				 111
-#define ASN1_R_DECODING_ERROR				 112
-#define ASN1_R_ERROR_STACK				 113
-#define ASN1_R_EXPECTING_AN_INTEGER			 114
-#define ASN1_R_EXPECTING_AN_OBJECT			 115
-#define ASN1_R_EXPECTING_AN_OCTET_STRING		 116
-#define ASN1_R_EXPECTING_A_BIT_STRING			 117
-#define ASN1_R_EXPECTING_A_BOOLEAN			 118
-#define ASN1_R_EXPECTING_A_SEQUENCE			 119
-#define ASN1_R_EXPECTING_A_UTCTIME			 120
-#define ASN1_R_FIRST_NUM_TOO_LARGE			 121
-#define ASN1_R_HEADER_TOO_LONG				 122
-#define ASN1_R_INVALID_DIGIT				 123
-#define ASN1_R_INVALID_SEPARATOR			 124
-#define ASN1_R_INVALID_TIME_FORMAT			 125
-#define ASN1_R_IV_TOO_LARGE				 126
-#define ASN1_R_LENGTH_ERROR				 127
-#define ASN1_R_LENGTH_MISMATCH				 128
-#define ASN1_R_MISSING_EOS				 129
-#define ASN1_R_MISSING_SECOND_NUMBER			 130
-#define ASN1_R_NON_HEX_CHARACTERS			 131
-#define ASN1_R_NOT_ENOUGH_DATA				 132
-#define ASN1_R_ODD_NUMBER_OF_CHARS			 133
-#define ASN1_R_PARSING					 134
-#define ASN1_R_PRIVATE_KEY_HEADER_MISSING		 135
-#define ASN1_R_SECOND_NUMBER_TOO_LARGE			 136
-#define ASN1_R_SHORT_LINE				 137
-#define ASN1_R_STRING_TOO_SHORT				 138
-#define ASN1_R_TAG_VALUE_TOO_HIGH			 139
-#define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 140
-#define ASN1_R_TOO_LONG					 141
-#define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 142
-#define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 143
-#define ASN1_R_UNKNOWN_ATTRIBUTE_TYPE			 144
-#define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 145
-#define ASN1_R_UNKNOWN_OBJECT_TYPE			 146
-#define ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE			 147
-#define ASN1_R_UNSUPPORTED_CIPHER			 148
-#define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 149
-#define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE		 150
-#define ASN1_R_UTCTIME_TOO_LONG				 151
-#define ASN1_R_WRONG_PRINTABLE_TYPE			 152
-#define ASN1_R_WRONG_TAG				 153
-#define ASN1_R_WRONG_TYPE				 154
+#define ASN1_R_BAD_OBJECT_HEADER			 101
+#define ASN1_R_BAD_PASSWORD_READ			 102
+#define ASN1_R_BAD_PKCS7_CONTENT			 103
+#define ASN1_R_BAD_PKCS7_TYPE				 104
+#define ASN1_R_BAD_TAG					 105
+#define ASN1_R_BAD_TYPE					 106
+#define ASN1_R_BN_LIB					 107
+#define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 108
+#define ASN1_R_BUFFER_TOO_SMALL				 109
+#define ASN1_R_DATA_IS_WRONG				 110
+#define ASN1_R_DECODING_ERROR				 111
+#define ASN1_R_ERROR_PARSING_SET_ELEMENT		 112
+#define ASN1_R_EXPECTING_AN_INTEGER			 113
+#define ASN1_R_EXPECTING_AN_OBJECT			 114
+#define ASN1_R_EXPECTING_AN_OCTET_STRING		 115
+#define ASN1_R_EXPECTING_A_BIT_STRING			 116
+#define ASN1_R_EXPECTING_A_BOOLEAN			 117
+#define ASN1_R_EXPECTING_A_UTCTIME			 118
+#define ASN1_R_FIRST_NUM_TOO_LARGE			 119
+#define ASN1_R_HEADER_TOO_LONG				 120
+#define ASN1_R_INVALID_DIGIT				 121
+#define ASN1_R_INVALID_SEPARATOR			 122
+#define ASN1_R_INVALID_TIME_FORMAT			 123
+#define ASN1_R_IV_TOO_LARGE				 124
+#define ASN1_R_LENGTH_ERROR				 125
+#define ASN1_R_MISSING_SECOND_NUMBER			 126
+#define ASN1_R_NON_HEX_CHARACTERS			 127
+#define ASN1_R_NOT_ENOUGH_DATA				 128
+#define ASN1_R_ODD_NUMBER_OF_CHARS			 129
+#define ASN1_R_PARSING					 130
+#define ASN1_R_PRIVATE_KEY_HEADER_MISSING		 131
+#define ASN1_R_SECOND_NUMBER_TOO_LARGE			 132
+#define ASN1_R_SHORT_LINE				 133
+#define ASN1_R_STRING_TOO_SHORT				 134
+#define ASN1_R_TAG_VALUE_TOO_HIGH			 135
+#define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 136
+#define ASN1_R_TOO_LONG					 137
+#define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 138
+#define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 139
+#define ASN1_R_UNKNOWN_ATTRIBUTE_TYPE			 140
+#define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 141
+#define ASN1_R_UNKNOWN_OBJECT_TYPE			 142
+#define ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE			 143
+#define ASN1_R_UNSUPPORTED_CIPHER			 144
+#define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 145
+#define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE		 146
+#define ASN1_R_UTCTIME_TOO_LONG				 147
+#define ASN1_R_WRONG_PRINTABLE_TYPE			 148
+#define ASN1_R_WRONG_TAG				 149
+#define ASN1_R_WRONG_TYPE				 150
  
 #ifdef  __cplusplus
 }

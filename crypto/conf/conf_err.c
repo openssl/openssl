@@ -84,8 +84,8 @@ void ERR_load_CONF_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_CONF,CONF_str_functs);

@@ -431,6 +431,29 @@ bad:
 			}
 		}
 
+	if (conf != NULL)
+		{
+		p=CONF_get_string(conf,NULL,"oid_file");
+		if (p != NULL)
+			{
+			BIO *oid_bio;
+
+			oid_bio=BIO_new_file(p,"r");
+			if (oid_bio == NULL) 
+				{
+				/*
+				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
+				ERR_print_errors(bio_err);
+				*/
+				}
+			else
+				{
+				OBJ_create_objects(oid_bio);
+				BIO_free(oid_bio);
+				}
+			}
+		}
+
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
 	Sout=BIO_new(BIO_s_file());
@@ -487,6 +510,12 @@ bad:
 	if (x509 == NULL)
 		{
 		BIO_printf(bio_err,"unable to load CA certificate\n");
+		goto err;
+		}
+
+	if (!X509_check_private_key(x509,pkey))
+		{
+		BIO_printf(bio_err,"CA certificate and CA private key do not match\n");
 		goto err;
 		}
 
@@ -700,7 +729,7 @@ bad:
 			}
 		if (verbose)
 			{
-			if ((f=BN_bn2ascii(serial)) == NULL) goto err;
+			if ((f=BN_bn2hex(serial)) == NULL) goto err;
 			BIO_printf(bio_err,"next serial number is %s\n",f);
 			Free(f);
 			}
@@ -1273,7 +1302,7 @@ int verbose;
 	if (i == 0)
 		{
 		ok=0;
-		BIO_printf(bio_err,"Signature did not match the certificate request\n");
+		BIO_printf(bio_err,"Signature did not match the certificate\n");
 		goto err;
 		}
 	else
@@ -1530,7 +1559,7 @@ again2:
 		BIO_printf(bio_err,"The subject name apears to be ok, checking data base for clashes\n");
 
 	row[DB_name]=X509_NAME_oneline(subject,NULL,0);
-	row[DB_serial]=BN_bn2ascii(serial);
+	row[DB_serial]=BN_bn2hex(serial);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
 		BIO_printf(bio_err,"Malloc failure\n");
@@ -1660,6 +1689,8 @@ again2:
 			goto err;
 			}
 		}
+
+	if (pkey->type == EVP_PKEY_DSA) dgst=EVP_dss1();
 
 #ifndef NO_DSA
         pktmp=X509_get_pubkey(ret);
@@ -2022,7 +2053,7 @@ char *sec;
 		default:
 			BIO_printf(bio_err,"Don't know how to pack extension %s\n",cv->name);
 			goto err;
-			break;
+			/* break; */
 			}
 
 		if ((x=X509_EXTENSION_create_by_NID(NULL,nid,0,str)) == NULL)

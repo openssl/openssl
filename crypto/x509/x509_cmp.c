@@ -255,3 +255,47 @@ X509_NAME *name;
 	return(NULL);
 	}
 
+EVP_PKEY *X509_get_pubkey(x)
+X509 *x;
+	{
+	if ((x == NULL) || (x->cert_info == NULL))
+		return(NULL);
+	return(X509_PUBKEY_get(x->cert_info->key));
+	}
+
+int X509_check_private_key(x,k)
+X509 *x;
+EVP_PKEY *k;
+	{
+	EVP_PKEY *xk=NULL;
+	int ok=0;
+
+	xk=X509_get_pubkey(x);
+	if (xk->type != k->type) goto err;
+	switch (k->type)
+		{
+#ifndef NO_RSA
+	case EVP_PKEY_RSA:
+		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0) goto err;
+		if (BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0) goto err;
+		break;
+#endif
+#ifndef NO_DSA
+	case EVP_PKEY_DSA:
+		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
+			goto err;
+		break;
+#endif
+#ifndef NO_DH
+	case EVP_PKEY_DH:
+		/* No idea */
+		goto err;
+#endif
+	default:
+		goto err;
+		}
+
+	ok=1;
+err:
+	return(ok);
+	}

@@ -229,6 +229,10 @@ EVP_PKEY *pkey;
 
 	if (c->pkeys[i].x509 != NULL)
 		{
+		EVP_PKEY_copy_parameters(
+			X509_get_pubkey(c->pkeys[i].x509),pkey);
+		ERR_clear_error();
+
 #ifndef NO_RSA
 		/* Don't check the public/private key, this is mostly
 		 * for smart cards. */
@@ -504,6 +508,19 @@ X509 *x;
 
 	if (c->pkeys[i].privatekey != NULL)
 		{
+		EVP_PKEY_copy_parameters(pkey,c->pkeys[i].privatekey);
+		ERR_clear_error();
+
+#ifndef NO_RSA
+		/* Don't check the public/private key, this is mostly
+		 * for smart cards. */
+		if ((c->pkeys[i].privatekey->type == EVP_PKEY_RSA) &&
+			(RSA_flags(c->pkeys[i].privatekey->pkey.rsa) &
+			 RSA_METHOD_FLAG_NO_CHECK))
+			 ok=1;
+		else
+#endif
+		{
 		if (!X509_check_private_key(x,c->pkeys[i].privatekey))
 			{
 			if ((i == SSL_PKEY_DH_RSA) || (i == SSL_PKEY_DH_DSA))
@@ -527,6 +544,7 @@ X509 *x;
 			}
 		else
 			ok=1;
+		} /* NO_RSA */
 		}
 	else
 		ok=1;

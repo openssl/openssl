@@ -166,7 +166,7 @@ SSL *s;
 			ret=ssl23_get_client_hello(s);
 			if (ret >= 0) cb=NULL;
 			goto end;
-			break;
+			/* break; */
 
 		default:
 			SSLerr(SSL_F_SSL23_ACCEPT,SSL_R_UNKNOWN_STATE);
@@ -237,9 +237,15 @@ SSL *s;
 						{
 						s->state=SSL23_ST_SR_CLNT_HELLO_B;
 						}
+					else if (!(s->options & SSL_OP_NO_SSLv2))
+						{
+						type=1;
+						}
 					}
 				else if (!(s->options & SSL_OP_NO_SSLv3))
 					s->state=SSL23_ST_SR_CLNT_HELLO_B;
+				else if (!(s->options & SSL_OP_NO_SSLv2))
+					type=1;
 
 				if (s->options & SSL_OP_NON_EXPORT_FIRST)
 					{
@@ -313,15 +319,15 @@ SSL *s;
 			else if (!(s->options & SSL_OP_NO_SSLv3))
 				type=3;
 			}
-		else if ((strncmp("GET ", p,4) == 0) ||
-			 (strncmp("POST ",p,5) == 0) ||
-			 (strncmp("HEAD ",p,5) == 0) ||
-			 (strncmp("PUT ", p,4) == 0))
+		else if ((strncmp("GET ", (char *)p,4) == 0) ||
+			 (strncmp("POST ",(char *)p,5) == 0) ||
+			 (strncmp("HEAD ",(char *)p,5) == 0) ||
+			 (strncmp("PUT ", (char *)p,4) == 0))
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTP_REQUEST);
 			goto err;
 			}
-		else if (strncmp("CONNECT",p,7) == 0)
+		else if (strncmp("CONNECT",(char *)p,7) == 0)
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTPS_PROXY_REQUEST);
 			goto err;
@@ -387,7 +393,7 @@ next_bit:
 			}
 		s2n(j,dd);
 
-		/* compression */
+		/* COMPRESSION */
 		*(d++)=1;
 		*(d++)=0;
 		

@@ -90,6 +90,7 @@ typedef struct des_ks_struct
 		} ks;
 #undef _
 #define _	ks._
+	int weak_key;
 	} des_key_schedule[16];
 
 #define DES_KEY_SZ 	(sizeof(des_cblock))
@@ -140,6 +141,7 @@ typedef des_key_schedule bit_64;
 
 extern int des_check_key;	/* defaults to false */
 extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+extern int des_set_weak_key_flag; /* set the weak key flag */
 
 /* The next line is used to disable full ANSI prototypes, if your
  * compiler has problems with the prototypes, make sure this line always

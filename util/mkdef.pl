@@ -67,6 +67,8 @@ $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
 $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/hmac/hmac.h";
+$crypto.=" crypto/comp/comp.h";
+$crypto.=" crypto/tmdiff.h";
 
 $match{'NOPROTO'}=1;
 $match2{'PERL5'}=1;

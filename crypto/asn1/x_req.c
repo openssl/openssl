@@ -62,10 +62,10 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_REQ,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_X509_REQ_INFO,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_INFO_NEW,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_REQ,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_REQ_INFO,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_REQ_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_REQ_INFO_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_X509_REQ_INFO(a,pp)
@@ -141,7 +141,8 @@ long length;
 		ret->req_kludge=1;
 	else
 		{
-		M_ASN1_D2I_get_IMP_set(ret->attributes,d2i_X509_ATTRIBUTE,0);
+		M_ASN1_D2I_get_IMP_set(ret->attributes,d2i_X509_ATTRIBUTE,
+			X509_ATTRIBUTE_free,0);
 		}
 
 	M_ASN1_D2I_Finish(a,X509_REQ_INFO_free,ASN1_F_D2I_X509_REQ_INFO);
@@ -150,6 +151,7 @@ long length;
 X509_REQ_INFO *X509_REQ_INFO_new()
 	{
 	X509_REQ_INFO *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_REQ_INFO);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);
@@ -208,6 +210,7 @@ long length;
 X509_REQ *X509_REQ_new()
 	{
 	X509_REQ *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_REQ);
 	ret->references=1;

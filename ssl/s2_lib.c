@@ -62,14 +62,12 @@
 #include "ssl_locl.h"
 
 #ifndef NOPROTO
-static int ssl2_ok(SSL *s);
 static long ssl2_default_timeout(void );
 #else
-static int ssl2_ok();
 static long ssl2_default_timeout();
 #endif
 
-char *ssl2_version_str="SSLv2 part of SSLeay 0.9.0b 29-Jun-1998";
+char *ssl2_version_str="SSLv2 part of SSLeay 0.9.1a 06-Jul-1998";
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
@@ -184,7 +182,8 @@ static SSL_METHOD SSLv2_data= {
 	ssl2_peek,
 	ssl2_write,
 	ssl2_shutdown,
-	ssl2_ok,
+	ssl_ok,	/* NULL - renegotiate */
+	ssl_ok,	/* NULL - check renegotiate */
 	ssl2_ctrl,	/* local */
 	ssl2_ctx_ctrl,	/* local */
 	ssl2_get_cipher_by_char,
@@ -427,12 +426,6 @@ SSL *s;
 		s->error=error-i;
 	/* else
 		s->error=0; */
-	}
-
-static int ssl2_ok(s)
-SSL *s;
-	{
-	return(1);
 	}
 
 int ssl2_shutdown(s)

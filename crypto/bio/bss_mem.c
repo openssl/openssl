@@ -92,6 +92,9 @@ static BIO_METHOD mem_method=
 	mem_free,
 	};
 
+/* bio->num is used to hold the value to return on 'empty', if it is
+ * 0, should_retry is not set */
+
 BIO_METHOD *BIO_s_mem()
 	{
 	return(&mem_method);
@@ -106,7 +109,7 @@ BIO *bi;
 		return(0);
 	bi->shutdown=1;
 	bi->init=1;
-	bi->num=0;
+	bi->num= -1;
 	bi->ptr=(char *)b;
 	return(1);
 	}
@@ -151,8 +154,9 @@ int outl;
 		}
 	else if (bm->length == 0)
 		{
-		BIO_set_retry_read(b);
-		ret= -1;
+		if (b->num != 0)
+			BIO_set_retry_read(b);
+		ret= b->num;
 		}
 	return(ret);
 	}
@@ -203,6 +207,9 @@ char *ptr;
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)(bm->length == 0);
+		break;
+	case BIO_C_SET_BUF_MEM_EOF_RETURN:
+		b->num=(int)num;
 		break;
 	case BIO_CTRL_INFO:
 		ret=(long)bm->length;

@@ -118,6 +118,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_MD,"sha",dgst_main},
 	{FUNC_TYPE_MD,"sha1",dgst_main},
 	{FUNC_TYPE_MD,"mdc2",dgst_main},
+	{FUNC_TYPE_MD,"rmd160",dgst_main},
 	{FUNC_TYPE_CIPHER,"base64",enc_main},
 #ifndef NO_DES
 	{FUNC_TYPE_CIPHER,"des",enc_main},

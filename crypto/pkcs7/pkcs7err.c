@@ -74,21 +74,27 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_CIPHER,0),	"PKCS7_set_cipher"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_CONTENT,0),	"PKCS7_set_content"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_TYPE,0),	"PKCS7_set_type"},
+{ERR_PACK(0,PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,0),	"PKCS7_SIGNENVELOPEDECRYPT"},
 {0,NULL},
 	};
 
 static ERR_STRING_DATA PKCS7_str_reasons[]=
 	{
+{PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH   ,"decrypted key is wrong length"},
+{PKCS7_R_DIGEST_FAILURE                  ,"digest failure"},
 {PKCS7_R_INTERNAL_ERROR                  ,"internal error"},
+{PKCS7_R_MISSING_CERIPEND_INFO           ,"missing ceripend info"},
 {PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE,"operation not supported on this type"},
 {PKCS7_R_SIGNATURE_FAILURE               ,"signature failure"},
 {PKCS7_R_UNABLE_TO_FIND_CERTIFICATE      ,"unable to find certificate"},
 {PKCS7_R_UNABLE_TO_FIND_MEM_BIO          ,"unable to find mem bio"},
 {PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST   ,"unable to find message digest"},
 {PKCS7_R_UNKNOWN_DIGEST_TYPE             ,"unknown digest type"},
+{PKCS7_R_UNKNOWN_OPERATION               ,"unknown operation"},
 {PKCS7_R_UNSUPPORTED_CIPHER_TYPE         ,"unsupported cipher type"},
 {PKCS7_R_UNSUPPORTED_CONTENT_TYPE        ,"unsupported content type"},
 {PKCS7_R_WRONG_CONTENT_TYPE              ,"wrong content type"},
+{PKCS7_R_WRONG_PKCS7_TYPE                ,"wrong pkcs7 type"},
 {0,NULL},
 	};
 
@@ -98,8 +104,8 @@ void ERR_load_PKCS7_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_PKCS7,PKCS7_str_functs);

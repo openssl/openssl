@@ -62,8 +62,8 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_PKCS7_ENC_CONTENT_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_ENC_CONTENT,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_PKCS7_ENC_CONTENT_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_PKCS7_ENC_CONTENT,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_PKCS7_ENC_CONTENT(a,pp)
@@ -106,9 +106,11 @@ long length;
 PKCS7_ENC_CONTENT *PKCS7_ENC_CONTENT_new()
 	{
 	PKCS7_ENC_CONTENT *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_ENC_CONTENT);
-	M_ASN1_New(ret->content_type,ASN1_OBJECT_new);
+	/* M_ASN1_New(ret->content_type,ASN1_OBJECT_new); */
+	ret->content_type=OBJ_nid2obj(NID_pkcs7_encrypted);
 	M_ASN1_New(ret->algorithm,X509_ALGOR_new);
 	ret->enc_data=NULL;
 	return(ret);

@@ -95,7 +95,6 @@ unsigned char *outdata;
 #define RC4_LOOP(a,b,i)	LOOP(a[i],b[i])
 #endif
 
-	i= -(int)len;
 	i=(int)(len>>3L);
 	if (i)
 		{

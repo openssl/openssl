@@ -56,6 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+/* A nice addition from Dr Stephen Henson <shenson@bigfoot.com> to 
+ * add the -strparse option which parses nested binarary structures
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,11 +68,6 @@
 #include "evp.h"
 #include "x509.h"
 #include "pem.h"
-
-#define FORMAT_UNDEF	0
-#define FORMAT_ASN1	1
-#define FORMAT_TEXT	2
-#define FORMAT_PEM	3
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -in arg	- input file - default stdin
@@ -85,13 +84,16 @@ int MAIN(argc, argv)
 int argc;
 char **argv;
 	{
-	int i,badops=0,offset=0,ret=1;
+	int i,badops=0,offset=0,ret=1,j;
 	unsigned int length=0;
-	long num;
+	long num,tmplen;
 	BIO *in=NULL,*out=NULL,*b64=NULL;
 	int informat,indent=0;
 	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL;
+	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
+	STACK *osk=NULL;
+	ASN1_TYPE *at=NULL;
 
 	informat=FORMAT_PEM;
 
@@ -104,6 +106,11 @@ char **argv;
 	prog=argv[0];
 	argc--;
 	argv++;
+	if ((osk=sk_new_null()) == NULL)
+		{
+		BIO_printf(bio_err,"Malloc failure\n");
+		goto end;
+		}
 	while (argc >= 1)
 		{
 		if 	(strcmp(*argv,"-inform") == 0)
@@ -136,6 +143,11 @@ char **argv;
 			length= atoi(*(++argv));
 			if (length == 0) goto bad;
 			}
+		else if (strcmp(*argv,"-strparse") == 0)
+			{
+			if (--argc < 1) goto bad;
+			sk_push(osk,*(++argv));
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -157,6 +169,9 @@ bad:
 		BIO_printf(bio_err," -length arg   lenth of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
 		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
+		BIO_printf(bio_err," -strparse offset\n");
+		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
+		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
 		goto end;
 		}
 
@@ -218,6 +233,36 @@ bad:
 		}
 	str=buf->data;
 
+	/* If any structs to parse go through in sequence */
+
+	if (sk_num(osk))
+		{
+		tmpbuf=(unsigned char *)str;
+		tmplen=num;
+		for (i=0; i<sk_num(osk); i++)
+			{
+			j=atoi(sk_value(osk,i));
+			if (j == 0)
+				{
+				BIO_printf(bio_err,"'%s' is an invalid number\n",sk_value(osk,i));
+				continue;
+				}
+			tmpbuf+=j;
+			tmplen-=j;
+			if (d2i_ASN1_TYPE(&at,&tmpbuf,tmplen) == NULL)
+				{
+				BIO_printf(bio_err,"Error parsing structure\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			/* hmm... this is a little evil but it works */
+			tmpbuf=at->value.asn1_string->data;
+			tmplen=at->value.asn1_string->length;
+			}
+		str=(char *)tmpbuf;
+		num=tmplen;
+		}
+
 	if (length == 0) length=(unsigned int)num;
 	if (!ASN1_parse(out,(unsigned char *)&(str[offset]),length,indent))
 		{
@@ -232,6 +277,8 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	if (buf != NULL) BUF_MEM_free(buf);
+	if (at != NULL) ASN1_TYPE_free(at);
+	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
 	EXIT(ret);
 	}

@@ -21,11 +21,12 @@ $infile="MINFO";
 	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
 	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
 	"linux-elf","Linux elf",
+	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
 	"default","cc under unix",
 	);
 
-$type="";
+$platform="";
 foreach (@ARGV)
 	{
 	if    (/^no-rc2$/)	{ $no_rc2=1; }
@@ -53,7 +54,7 @@ foreach (@ARGV)
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=1; }
+				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1; }
 
 	elsif (/^rsaref$/)	{ $rsaref=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
@@ -98,7 +99,7 @@ TMP=tmpdir OUT=outdir SRC=srcdir BIN=binpath INC=header-outdir CC=C-compiler
 EOF
 			exit(1);
 			}
-		$type=$_;
+		$platform=$_;
 		}
 	}
 
@@ -126,59 +127,65 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 # $bin_dir.=$o causes a core dump on my sparc :-(
 
 push(@INC,"util/pl","pl");
-if ($type eq "VC-MSDOS")
+if ($platform eq "VC-MSDOS")
 	{
 	$asmbits=16;
 	$msdos=1;
 	require 'VC-16.pl';
 	}
-elsif ($type eq "VC-W31-16")
+elsif ($platform eq "VC-W31-16")
 	{
 	$asmbits=16;
 	$msdos=1; $win16=1;
 	require 'VC-16.pl';
 	}
-elsif (($type eq "VC-W31-32") || ($type eq "VC-WIN16"))
+elsif (($platform eq "VC-W31-32") || ($platform eq "VC-WIN16"))
 	{
 	$asmbits=32;
 	$msdos=1; $win16=1;
 	require 'VC-16.pl';
 	}
-elsif (($type eq "VC-WIN32") || ($type eq "VC-NT"))
+elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	require 'VC-32.pl';
 	}
-elsif ($type eq "BC-NT")
+elsif ($platform eq "BC-NT")
 	{
 	$bc=1;
 	require 'BC-32.pl';
 	}
-elsif ($type eq "BC-W31")
+elsif ($platform eq "BC-W31")
 	{
 	$bc=1;
 	$msdos=1; $w16=1;
 	require 'BC-16.pl';
 	}
-elsif ($type eq "BC-Q16")
+elsif ($platform eq "BC-Q16")
 	{
 	$msdos=1; $w16=1; $shlib=0; $qw=1;
 	require 'BC-16.pl';
 	}
-elsif ($type eq "BC-MSDOS")
+elsif ($platform eq "BC-MSDOS")
 	{
 	$asmbits=16;
 	$msdos=1;
 	require 'BC-16.pl';
 	}
-elsif ($type eq "FreeBSD")
+elsif ($platform eq "FreeBSD")
 	{
 	require 'unix.pl';
 	$cflags='-DTERMIO -D_ANSI_SOURCE -O2 -fomit-frame-pointer';
 	}
-elsif ($type eq "linux-elf")
+elsif ($platform eq "linux-elf")
 	{
 	require "unix.pl";
 	require "linux.pl";
+	$unix=1;
+	}
+elsif ($platform eq "ultrix-mips")
+	{
+	require "unix.pl";
+	require "ultrix.pl";
 	$unix=1;
 	}
 else
@@ -230,7 +237,7 @@ if ($ranlib ne "")
 
 if ($msdos)
 	{
-	$banner ="\t\@echo Make sure you have run 'perl Configure $type' in the\n";
+	$banner ="\t\@echo Make sure you have run 'perl Configure $platform' in the\n";
 	$banner.="\t\@echo top level directory, if you don't have perl, you will\n";
 	$banner.="\t\@echo need to probably edit crypto/bn/bn.h, check the\n";
 	$banner.="\t\@echo documentation for details.\n";
@@ -258,6 +265,7 @@ $defs= <<"EOF";
 INSTALLTOP=$INSTALLTOP
 
 # Set your compiler options
+PLATFORM=$platform
 CC=$bin_dir${cc}
 CFLAG=$cflags
 APP_CFLAG=$app_cflag
@@ -275,12 +283,10 @@ SRC_D=$src_dir
 LINK=$link
 LFLAGS=$lflags
 
-BN_MULW_OBJ=$bn_mulw_obj
-BN_MULW_SRC=$bn_mulw_src
+BN_ASM_OBJ=$bn_asm_obj
+BN_ASM_SRC=$bn_asm_src
 DES_ENC_OBJ=$des_enc_obj
 DES_ENC_SRC=$des_enc_src
-DES_CRYPT_OBJ=$des_crypt_obj
-DES_CRYPT_SRC=$des_crypt_src
 BF_ENC_OBJ=$bf_enc_obj
 BF_ENC_SRC=$bf_enc_src
 CAST_ENC_OBJ=$cast_enc_obj
@@ -496,10 +502,10 @@ foreach (values %lib_nam)
 		next;
 		}
 
-	if (($bn_mulw_obj ne "") && ($_ eq "CRYPTO"))
+	if (($bn_asm_obj ne "") && ($_ eq "CRYPTO"))
 		{
-		$lib_obj =~ s/\s\S*\/bn_mulw\S*/ \$(BN_MULW_OBJ)/;
-		$rules.=&do_asm_rule($bn_mulw_obj,$bn_mulw_src);
+		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
+		$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
 		}
 	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
@@ -615,6 +621,7 @@ sub var_add
 
 	@a=grep(!/(^md2)|(_md2$)/,@a) if $no_md2;
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
+	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_rmd160;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
 	@a=grep(!/(^p_open$)|(^p_seal$)/,@a) if $no_rsa;
@@ -677,7 +684,7 @@ sub do_defs
 		if (($_ =~ /bss_file/) && ($postfix eq ".h"))
 			{ $pf=".c"; }
 		else	{ $pf=$postfix; }
-		if ($_ =~ /BN_MULW/)	{ $t="$_ "; }
+		if ($_ =~ /BN_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /DES_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /BF_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
@@ -704,23 +711,6 @@ sub bname
 	return($ret);
 	}
 
-# do a rule for each file that says 'copy' to new direcory on change
-sub do_copy_rule
-	{
-	local($to,$files,$p)=@_;
-	local($ret,$_,$n,$pp);
-	
-	$files =~ s/\//$o/g if $o ne '/';
-	foreach (split(/\s+/,$files))
-		{
-		$n=&bname($_);
-		if ($n =~ /bss_file/)
-			{ $pp=".c"; }
-		else	{ $pp=$p; }
-		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \$(SRC_D)$o$_$pp $to${o}$n$pp\n\n";
-		}
-	return($ret);
-	}
 
 ##############################################################
 # do a rule for each file that says 'compile' to new direcory
@@ -747,7 +737,7 @@ sub cc_compile_target
 	local($ret);
 	
 	# EAY EAY
-	$ex_flags.=' -DCFLAGS="\"$(CC) $(CFLAG)\""' if ($source =~ /cversion/);
+	$ex_flags.=' -DCFLAGS="\"$(CC) $(CFLAG)\"" -DPLATFORM="\"$(PLATFORM)\""' if ($source =~ /cversion/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";
@@ -791,3 +781,20 @@ sub do_shlib_rule
 	return($ret);
 	}
 
+# do a rule for each file that says 'copy' to new direcory on change
+sub do_copy_rule
+	{
+	local($to,$files,$p)=@_;
+	local($ret,$_,$n,$pp);
+	
+	$files =~ s/\//$o/g if $o ne '/';
+	foreach (split(/\s+/,$files))
+		{
+		$n=&bname($_);
+		if ($n =~ /bss_file/)
+			{ $pp=".c"; }
+		else	{ $pp=$p; }
+		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \$(SRC_D)$o$_$pp $to${o}$n$pp\n\n";
+		}
+	return($ret);
+	}

@@ -241,6 +241,7 @@ end:
 	ERR_remove_state(0);
 
 	EVP_cleanup();
+	ERR_free_strings();
 
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)

@@ -94,7 +94,8 @@ struct tms {
 #include <sys/timeb.h>
 #endif
 
-#ifdef sun
+#if defined(sun) || defined(__ultrix)
+#define _POSIX_SOURCE
 #include <limits.h>
 #include <sys/param.h>
 #endif
@@ -180,15 +181,14 @@ int argc;
 char **argv;
 	{
 	BN_CTX *ctx;
-	BIGNUM *a,*b,*c,*r;
+	BIGNUM a,b,c;
 
 	ctx=BN_CTX_new();
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
-	r=BN_new();
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
 
-	do_mul(a,b,c,ctx);
+	do_mul(&a,&b,&c,ctx);
 	}
 
 void do_mul(r,a,b,ctx)
@@ -211,7 +211,7 @@ BN_CTX *ctx;
 			BN_rand(b,sizes[j],1,0);
 			Time_F(START);
 			for (k=0; k<num; k++)
-				BN_mul(r,b,a);
+				BN_mul(r,b,a,ctx);
 			tm=Time_F(STOP);
 			printf("mul %4d x %4d -> %8.3fms\n",sizes[i],sizes[j],tm*1000.0/num);
 			}

@@ -68,7 +68,7 @@
 #include "des.h"
 #endif
 
-char *PEM_version="PEM part of SSLeay 0.9.0b 29-Jun-1998";
+char *PEM_version="PEM part of SSLeay 0.9.1a 06-Jul-1998";
 
 #define MIN_LENGTH	4
 

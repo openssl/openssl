@@ -63,6 +63,7 @@
 #ifndef NO_ERR
 static ERR_STRING_DATA RSA_str_functs[]=
 	{
+{ERR_PACK(0,RSA_F_MEMORY_LOCK,0),	"MEMORY_LOCK"},
 {ERR_PACK(0,RSA_F_RSA_EAY_PRIVATE_DECRYPT,0),	"RSA_EAY_PRIVATE_DECRYPT"},
 {ERR_PACK(0,RSA_F_RSA_EAY_PRIVATE_ENCRYPT,0),	"RSA_EAY_PRIVATE_ENCRYPT"},
 {ERR_PACK(0,RSA_F_RSA_EAY_PUBLIC_DECRYPT,0),	"RSA_EAY_PUBLIC_DECRYPT"},
@@ -117,8 +118,8 @@ void ERR_load_RSA_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_RSA,RSA_str_functs);

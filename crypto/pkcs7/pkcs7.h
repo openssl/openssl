@@ -199,7 +199,12 @@ typedef struct pkcs7_st
 #define PKCS7_OP_SET_DETACHED_SIGNATURE	1
 #define PKCS7_OP_GET_DETACHED_SIGNATURE	2
 
+#define PKCS7_get_signed_attributes(si)	((si)->auth_attr)
+#define PKCS7_get_attributes(si)	((si)->unauth_attr)
+
 #define PKCS7_type_is_signed(a) (OBJ_obj2nid((a)->type) == NID_pkcs7_signed)
+#define PKCS7_type_is_signedAndEnveloped(a) \
+		(OBJ_obj2nid((a)->type) == NID_pkcs7_signedAndEnveloped)
 #define PKCS7_type_is_data(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_data)
 
 #define PKCS7_set_detached(p,v) \
@@ -208,10 +213,11 @@ typedef struct pkcs7_st
 		PKCS7_ctrl(p,PKCS7_OP_GET_DETACHED_SIGNATURE,0,NULL)
 
 #ifdef SSLEAY_MACROS
-
+#ifndef PKCS7_ISSUER_AND_SERIAL_digest
 #define PKCS7_ISSUER_AND_SERIAL_digest(data,type,md,len) \
         ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,\
 	                (char *)data,md,len)
+#endif
 #endif
 
 
@@ -314,12 +320,13 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *p7i);
 int PKCS7_add_certificate(PKCS7 *p7, X509 *x509);
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *x509);
 int PKCS7_content_new(PKCS7 *p7, int nid);
-int PKCS7_dataSign(PKCS7 *p7, BIO *bio);
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
 	BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si); 
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio);
-/*int PKCS7_DataFinal(PKCS7 *p7, BIO *bio); */
+int PKCS7_dataFinal(PKCS7 *p7, BIO *bio);
+BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509_STORE *xs);
+
 
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
 	EVP_PKEY *pkey, EVP_MD *dgst);
@@ -331,6 +338,16 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
 int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher);
 
+PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
+ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk);
+int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si,int nid,int type,
+	char *data);
+int PKCS7_add_attribute (PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
+	char *value);
+ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid);
+ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid);
+int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
+int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
 
 
 #else
@@ -400,7 +417,6 @@ int PKCS7_add_signer();
 int PKCS7_add_certificate();
 int PKCS7_add_crl();
 int PKCS7_content_new();
-int PKCS7_dataSign();
 int PKCS7_dataVerify();
 BIO *PKCS7_dataInit();
 PKCS7_SIGNER_INFO *PKCS7_add_signature();
@@ -412,7 +428,17 @@ int PKCS7_add_recipient_info();
 int PKCS7_RECIP_INFO_set();
 int PKCS7_set_cipher();
 
+PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial();
+ASN1_OCTET_STRING *PKCS7_digest_from_attributes();
+int PKCS7_add_signed_attribute();
+int PKCS7_add_attribute();
+ASN1_TYPE *PKCS7_get_attribute();
+ASN1_TYPE *PKCS7_get_signed_attribute();
+void PKCS7_set_signed_attributes();
+void PKCS7_set_attributes();
+
 #endif
+
 
 /* BEGIN ERROR CODES */
 /* Error codes for the PKCS7 functions. */
@@ -429,18 +455,24 @@ int PKCS7_set_cipher();
 #define PKCS7_F_PKCS7_SET_CIPHER			 108
 #define PKCS7_F_PKCS7_SET_CONTENT			 109
 #define PKCS7_F_PKCS7_SET_TYPE				 110
+#define PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT		 111
 
 /* Reason codes. */
-#define PKCS7_R_INTERNAL_ERROR				 100
-#define PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE	 101
-#define PKCS7_R_SIGNATURE_FAILURE			 102
-#define PKCS7_R_UNABLE_TO_FIND_CERTIFICATE		 103
-#define PKCS7_R_UNABLE_TO_FIND_MEM_BIO			 104
-#define PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST		 105
-#define PKCS7_R_UNKNOWN_DIGEST_TYPE			 106
-#define PKCS7_R_UNSUPPORTED_CIPHER_TYPE			 107
-#define PKCS7_R_UNSUPPORTED_CONTENT_TYPE		 108
-#define PKCS7_R_WRONG_CONTENT_TYPE			 109
+#define PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH		 100
+#define PKCS7_R_DIGEST_FAILURE				 101
+#define PKCS7_R_INTERNAL_ERROR				 102
+#define PKCS7_R_MISSING_CERIPEND_INFO			 103
+#define PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE	 104
+#define PKCS7_R_SIGNATURE_FAILURE			 105
+#define PKCS7_R_UNABLE_TO_FIND_CERTIFICATE		 106
+#define PKCS7_R_UNABLE_TO_FIND_MEM_BIO			 107
+#define PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST		 108
+#define PKCS7_R_UNKNOWN_DIGEST_TYPE			 109
+#define PKCS7_R_UNKNOWN_OPERATION			 110
+#define PKCS7_R_UNSUPPORTED_CIPHER_TYPE			 111
+#define PKCS7_R_UNSUPPORTED_CONTENT_TYPE		 112
+#define PKCS7_R_WRONG_CONTENT_TYPE			 113
+#define PKCS7_R_WRONG_PKCS7_TYPE			 114
  
 #ifdef  __cplusplus
 }

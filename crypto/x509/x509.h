@@ -355,6 +355,9 @@ typedef struct CBCParameter_st
 
 #define X509_dup(x509) (X509 *)ASN1_dup((int (*)())i2d_X509, \
 		(char *(*)())d2i_X509,(char *)x509)
+#define X509_ATTRIBUTE_dup(xa) (X509_ATTRIBUTE *)ASN1_dup(\
+		(int (*)())i2d_X509_ATTRIBUTE, \
+		(char *(*)())d2i_X509_ATTRIBUTE,(char *)xa)
 #define X509_EXTENSION_dup(ex) (X509_EXTENSION *)ASN1_dup( \
 		(int (*)())i2d_X509_EXTENSION, \
 		(char *(*)())d2i_X509_EXTENSION,(char *)ex)
@@ -442,6 +445,9 @@ typedef struct CBCParameter_st
 #define i2d_DSAPrivateKey_bio(bp,dsa) ASN1_i2d_bio(i2d_DSAPrivateKey,bp, \
 		(unsigned char *)dsa)
 
+#define X509_ALGOR_dup(xn) (X509_ALGOR *)ASN1_dup((int (*)())i2d_X509_ALGOR,\
+		(char *(*)())d2i_X509_ALGOR,(char *)xn)
+
 #define X509_NAME_dup(xn) (X509_NAME *)ASN1_dup((int (*)())i2d_X509_NAME, \
 		(char *(*)())d2i_X509_NAME,(char *)xn)
 #define X509_NAME_ENTRY_dup(ne) (X509_NAME_ENTRY *)ASN1_dup( \
@@ -453,9 +459,11 @@ typedef struct CBCParameter_st
 	ASN1_digest((int (*)())i2d_X509,type,(char *)data,md,len)
 #define X509_NAME_digest(data,type,md,len) \
 	ASN1_digest((int (*)())i2d_X509_NAME,type,(char *)data,md,len)
+#ifndef PKCS7_ISSUER_AND_SERIAL_digest
 #define PKCS7_ISSUER_AND_SERIAL_digest(data,type,md,len) \
 	ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,\
 		(char *)data,md,len)
+#endif
 #endif
 
 #define X509_EXT_PACK_UNKNOWN	1
@@ -528,9 +536,11 @@ int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 #endif
 
 X509 *X509_dup(X509 *x509);
+X509_ATTRIBUTE *X509_ATTRIBUTE_dup(X509_ATTRIBUTE *xa);
 X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex);
 X509_CRL *X509_CRL_dup(X509_CRL *crl);
 X509_REQ *X509_REQ_dup(X509_REQ *req);
+X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
 RSA *RSAPublicKey_dup(RSA *rsa);
@@ -595,6 +605,8 @@ void		X509_ATTRIBUTE_free(X509_ATTRIBUTE *a);
 int		i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a,unsigned char **pp);
 X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a,unsigned char **pp,
 			long length);
+X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, char *value);
+
 
 X509_EXTENSION *X509_EXTENSION_new(void );
 void		X509_EXTENSION_free(X509_EXTENSION *a);
@@ -852,6 +864,7 @@ RSA *d2i_RSAPublicKey_bio();
 int i2d_RSAPublicKey_bio();
 
 X509 *X509_dup();
+X509_ATTRIBUTE *X509_ATTRIBUTE_dup();
 X509_EXTENSION *X509_EXTENSION_dup();
 X509_CRL *X509_CRL_dup();
 X509_REQ *X509_REQ_dup();
@@ -913,6 +926,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_new();
 void		X509_ATTRIBUTE_free();
 int		i2d_X509_ATTRIBUTE();
 X509_ATTRIBUTE *d2i_X509_ATTRIBUTE();
+X509_ATTRIBUTE *X509_ATTRIBUTE_create();
 
 X509_EXTENSION *X509_EXTENSION_new();
 void		X509_EXTENSION_free();

@@ -62,7 +62,7 @@
 
 BN_ULONG BN_mod_word(a, w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 #ifndef BN_LLONG
 	BN_ULONG ret=0;
@@ -75,8 +75,8 @@ unsigned long w;
 	for (i=a->top-1; i>=0; i--)
 		{
 #ifndef BN_LLONG
-		ret=((ret<<BN_BITS4)|((a->d[i]>>BN_BITS4)&BN_MASK2l))%(unsigned long)w;
-		ret=((ret<<BN_BITS4)|(a->d[i]&BN_MASK2l))%(unsigned long)w;
+		ret=((ret<<BN_BITS4)|((a->d[i]>>BN_BITS4)&BN_MASK2l))%w;
+		ret=((ret<<BN_BITS4)|(a->d[i]&BN_MASK2l))%w;
 #else
 		ret=(BN_ULLONG)(((ret<<(BN_ULLONG)BN_BITS2)|a->d[i])%
 			(BN_ULLONG)w);
@@ -87,7 +87,7 @@ unsigned long w;
 
 BN_ULONG BN_div_word(a, w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 	BN_ULONG ret;
 	int i;
@@ -100,18 +100,18 @@ unsigned long w;
 		BN_ULONG l,d;
 		
 		l=a->d[i];
-		d=bn_div64(ret,l,w);
+		d=bn_div_words(ret,l,w);
 		ret=(l-((d*w)&BN_MASK2))&BN_MASK2;
 		a->d[i]=d;
 		}
-	if (a->d[a->top-1] == 0)
+	if ((a->top > 0) && (a->d[a->top-1] == 0))
 		a->top--;
 	return(ret);
 	}
 
 int BN_add_word(a, w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 	BN_ULONG l;
 	int i;
@@ -144,7 +144,7 @@ unsigned long w;
 
 int BN_sub_word(a, w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 	int i;
 
@@ -185,7 +185,7 @@ unsigned long w;
 
 int BN_mul_word(a,w)
 BIGNUM *a;
-unsigned long w;
+BN_ULONG w;
 	{
 	BN_ULONG ll;
 
@@ -199,6 +199,6 @@ unsigned long w;
 			a->d[a->top++]=ll;
 			}
 		}
-	return(0);
+	return(1);
 	}
 

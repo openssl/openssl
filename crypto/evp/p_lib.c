@@ -90,6 +90,8 @@ EVP_PKEY *pkey;
 int EVP_PKEY_size(pkey)
 EVP_PKEY *pkey;
 	{
+	if (pkey == NULL)
+		return(0);
 #ifndef NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		return(RSA_size(pkey->pkey.rsa));

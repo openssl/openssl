@@ -66,6 +66,7 @@ extern "C" {
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
+#define OBJ_undef			0L
 
 #define SN_Algorithm			"Algorithm"
 #define LN_algorithm			"algorithm"
@@ -389,7 +390,7 @@ extern "C" {
 #define OBJ_pbeWithSHA1AndRC4		OBJ_pkcs,5L,12L 
 
 #define SN_dsaWithSHA1_2		"DSA-SHA1-old"
-#define LN_dsaWithSHA1_2		"dsaWithSHA1"
+#define LN_dsaWithSHA1_2		"dsaWithSHA1-old"
 #define NID_dsaWithSHA1_2		70
 /* Got this one from 'sdn706r20.pdf' which is actually an NSA document :-) */
 #define OBJ_dsaWithSHA1_2		OBJ_algorithm,27L
@@ -654,12 +655,48 @@ extern "C" {
 #define LN_rc5_ofb64			"rc5-ofb"
 #define NID_rc5_ofb64			123
 
+#define SN_rle_compression		"RLE"
+#define LN_rle_compression		"run length compression"
+#define NID_rle_compression		124
+#define OBJ_rle_compression		1L,1L,1L,1L,666L.1L
+
+#define SN_zlib_compression		"ZLIB"
+#define LN_zlib_compression		"zlib compression"
+#define NID_zlib_compression		125
+#define OBJ_zlib_compression		1L,1L,1L,1L,666L.2L
+
 #include "bio.h"
 #include "asn1.h"
+
+#define	OBJ_NAME_TYPE_UNDEF		0x00
+#define	OBJ_NAME_TYPE_MD_METH		0x01
+#define	OBJ_NAME_TYPE_CIPHER_METH	0x02
+#define	OBJ_NAME_TYPE_PKEY_METH		0x03
+#define	OBJ_NAME_TYPE_COMP_METH		0x04
+#define	OBJ_NAME_TYPE_NUM		0x05
+
+#define	OBJ_NAME_ALIAS		0x8000
+
+
+typedef struct obj_name_st
+	{
+	int type;
+	int alias;
+	char *name;
+	char *data;
+	} OBJ_NAME;
 
 #define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
 
 #ifndef NOPROTO
+
+int OBJ_NAME_init(void);
+int OBJ_NAME_new_index(unsigned long (*hash_func)(),int (*cmp_func)(),
+	void (*free_func)());
+char *OBJ_NAME_get(char *name,int type);
+int OBJ_NAME_add(char *name,int type,char *data);
+int OBJ_NAME_remove(char *name,int type);
+void OBJ_NAME_cleanup(int type); /* -1 for everything */
 
 ASN1_OBJECT *	OBJ_dup(ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_nid2obj(int n);
@@ -681,6 +718,13 @@ void		OBJ_cleanup(void );
 int		OBJ_create_objects(BIO *in);
 
 #else
+
+int OBJ_NAME_init();
+int OBJ_NAME_new_index();
+char *OBJ_NAME_get();
+int OBJ_NAME_add();
+int OBJ_NAME_remove();
+void OBJ_NAME_cleanup();
 
 ASN1_OBJECT *	OBJ_dup();
 ASN1_OBJECT *	OBJ_nid2obj();

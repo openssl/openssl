@@ -91,6 +91,7 @@ long length;
 	if (ret->cipher.cipher == NULL)
 		{
 		c.error=ASN1_R_UNSUPPORTED_CIPHER;
+		c.line=__LINE__;
 		goto err;
 		}
 	if (ret->enc_algor->parameter->type == V_ASN1_OCTET_STRING) 
@@ -99,6 +100,7 @@ long length;
 		if (i > EVP_MAX_IV_LENGTH)
 			{
 			c.error=ASN1_R_IV_TOO_LARGE;
+			c.line=__LINE__;
 			goto err;
 			}
 		memcpy(ret->cipher.iv,
@@ -112,6 +114,7 @@ long length;
 X509_PKEY *X509_PKEY_new()
 	{
 	X509_PKEY *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_PKEY);
 	ret->version=0;

@@ -79,6 +79,18 @@
  * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED);
  * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN);
  * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECRYPTION_FAILED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_RECORD_OVERFLOW);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_UNKNOWN_CA);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_ACCESS_DENIED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECODE_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECRYPT_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_EXPORT_RESTRICION);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_PROTOCOL_VERSION);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_INTERNAL_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_USER_CANCLED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_NO_RENEGOTIATION);
  */
 
 #ifndef NOPROTO
@@ -213,7 +225,6 @@ int extend;
 static int ssl3_get_record(s)
 SSL *s;
 	{
-	char tmp_buf[512];
 	int ssl_major,ssl_minor,al;
 	int n,i,ret= -1;
 	SSL3_BUFFER *rb;
@@ -331,7 +342,6 @@ again:
 
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
-	memcpy(tmp_buf,rr->input,(rr->length > 512)?512:rr->length);
 
 	if (!s->method->ssl3_enc->enc(s,0))
 		{
@@ -340,7 +350,7 @@ again:
 		}
 #ifdef TLS_DEBUG
 printf("dec %d\n",rr->length);
-{ int z; for (z=0; z<rr->length; z++) printf("%02X%c",rr->data[z],((z+1)%16)?' ':'\n'); }
+{ unsigned int z; for (z=0; z<rr->length; z++) printf("%02X%c",rr->data[z],((z+1)%16)?' ':'\n'); }
 printf("\n");
 #endif
 	/* r->length is now the compressed data plus mac */
@@ -378,7 +388,7 @@ printf("\n");
 		}
 
 	/* r->length is now just compressed */
-	if ((sess != NULL) && (sess->read_compression != NULL))
+	if (s->expand != NULL)
 		{
 		if (rr->length > 
 			(unsigned int)SSL3_RT_MAX_COMPRESSED_LENGTH+extra)
@@ -427,12 +437,37 @@ err:
 static int do_uncompress(ssl)
 SSL *ssl;
 	{
+	int i;
+	SSL3_RECORD *rr;
+
+	rr= &(ssl->s3->rrec);
+	i=COMP_expand_block(ssl->expand,rr->comp,
+		SSL3_RT_MAX_PLAIN_LENGTH,rr->data,(int)rr->length);
+	if (i < 0)
+		return(0);
+	else
+		rr->length=i;
+	rr->data=rr->comp;
+
 	return(1);
 	}
 
 static int do_compress(ssl)
 SSL *ssl;
 	{
+	int i;
+	SSL3_RECORD *wr;
+
+	wr= &(ssl->s3->wrec);
+	i=COMP_compress_block(ssl->compress,wr->data,
+		SSL3_RT_MAX_COMPRESSED_LENGTH,
+		wr->input,(int)wr->length);
+	if (i < 0)
+		return(0);
+	else
+		wr->length=i;
+
+	wr->input=wr->data;
 	return(1);
 	}
 
@@ -552,7 +587,7 @@ unsigned int len;
 	 * wr->data */
 
 	/* first we compress */
-	if ((sess != NULL) && (sess->write_compression != NULL))
+	if (s->compress != NULL)
 		{
 		if (!do_compress(s))
 			{
@@ -786,7 +821,8 @@ start:
 
 				s->rwstate=SSL_NOTHING;
 				s->s3->fatal_alert=n;
-				SSLerr(SSL_F_SSL3_READ_BYTES,1000+n);
+				SSLerr(SSL_F_SSL3_READ_BYTES,
+					SSL_AD_REASON_OFFSET+n);
 				sprintf(tmp,"%d",n);
 				ERR_add_error_data(2,"SSL alert number ",tmp);
 				s->shutdown|=SSL_RECEIVED_SHUTDOWN;

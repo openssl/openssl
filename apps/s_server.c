@@ -136,7 +136,8 @@ static DH *get_dh512()
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
 #undef BUFSIZZ
-#define BUFSIZZ	8*1024
+#define BUFSIZZ	16*1024
+static int bufsize=32;
 static int accept_socket= -1;
 
 #define TEST_CERT	"server.pem"
@@ -562,7 +563,7 @@ int s;
 	SSL *con=NULL;
 	BIO *sbio;
 
-	if ((buf=Malloc(BUFSIZZ)) == NULL)
+	if ((buf=Malloc(bufsize)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto err;
@@ -614,7 +615,7 @@ int s;
 		if (i <= 0) continue;
 		if (FD_ISSET(fileno(stdin),&readfds))
 			{
-			i=read(fileno(stdin),buf,128/*BUFSIZZ*/);
+			i=read(fileno(stdin),buf,bufsize);
 			if (!s_quiet)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
@@ -641,7 +642,7 @@ int s;
 					printf("SSL_do_handshake -> %d\n",i);
 					i=0; /*13; */
 					continue;
-					strcpy(buf,"server side RE-NEGOTIATE\n");
+					/* strcpy(buf,"server side RE-NEGOTIATE\n"); */
 					}
 				if ((buf[0] == 'R') &&
 					((buf[1] == '\0') || (buf[1] == '\r')))
@@ -653,7 +654,7 @@ int s;
 					printf("SSL_do_handshake -> %d\n",i);
 					i=0; /* 13; */
 					continue;
-					strcpy(buf,"server side RE-NEGOTIATE asking for client cert\n");
+					/* strcpy(buf,"server side RE-NEGOTIATE asking for client cert\n"); */
 					}
 				if (buf[0] == 'P')
 					{
@@ -688,7 +689,7 @@ int s;
 					ERR_print_errors(bio_err);
 					ret=1;
 					goto err;
-					break;
+					/* break; */
 				case SSL_ERROR_ZERO_RETURN:
 					BIO_printf(bio_s_out,"DONE\n");
 					ret=1;
@@ -718,12 +719,14 @@ int s;
 				}
 			else
 				{
-				i=SSL_read(con,(char *)buf,128 /*BUFSIZZ */);
+again:	
+				i=SSL_read(con,(char *)buf,bufsize);
 				switch (SSL_get_error(con,i))
 					{
 				case SSL_ERROR_NONE:
 					write(fileno(stdout),buf,
 						(unsigned int)i);
+					if (SSL_pending(con)) goto again;
 					break;
 				case SSL_ERROR_WANT_WRITE:
 				case SSL_ERROR_WANT_READ:
@@ -755,7 +758,7 @@ err:
 	BIO_printf(bio_s_out,"CONNECTION CLOSED\n");
 	if (buf != NULL)
 		{
-		memset(buf,0,BUFSIZZ);
+		memset(buf,0,bufsize);
 		Free(buf);
 		}
 	if (ret >= 0)
@@ -820,6 +823,10 @@ SSL *con;
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
 	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
+	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
+		TLS1_FLAGS_TLS_PADDING_BUG)
+		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
+
 	return(1);
 	}
 
@@ -865,7 +872,7 @@ static int www_body(hostname, s)
 char *hostname;
 int s;
 	{
-	char buf[1024];
+	char *buf=NULL;
 	int ret=1;
 	int i,j,k,blank,dot;
 	struct stat st_buf;
@@ -874,6 +881,8 @@ int s;
 	BIO *io,*ssl_bio,*sbio;
 	long total_bytes;
 
+	buf=Malloc(bufsize);
+	if (buf == NULL) return(0);
 	io=BIO_new(BIO_f_buffer());
 	ssl_bio=BIO_new(BIO_f_ssl());
 	if ((io == NULL) || (ssl_bio == NULL)) goto err;
@@ -891,7 +900,7 @@ int s;
 #endif
 
 	/* lets make the output buffer a reasonable size */
-	if (!BIO_set_write_buffer_size(io,253 /*16*1024*/)) goto err;
+	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=(SSL *)SSL_new(ctx)) == NULL) goto err;
 
@@ -937,14 +946,14 @@ int s;
 			case SSL_ERROR_ZERO_RETURN:
 				ret=1;
 				goto err;
-				break;
+				/* break; */
 				}
 
 			SSL_renegotiate(con);
 			SSL_write(con,NULL,0);
 			}
 
-		i=BIO_gets(io,buf,sizeof(buf)-1);
+		i=BIO_gets(io,buf,bufsize-1);
 		if (i < 0) /* error */
 			{
 			if (!BIO_should_retry(io))
@@ -1004,7 +1013,7 @@ int s;
 					BIO_puts(io,"\n");
 				}
 			BIO_puts(io,"\n");
-			p=SSL_get_shared_ciphers(con,buf,sizeof(buf));
+			p=SSL_get_shared_ciphers(con,buf,bufsize);
 			if (p != NULL)
 				{
 				BIO_printf(io,"---\nCiphers common between both SSL end points:\n");
@@ -1129,9 +1138,10 @@ int s;
 			total_bytes=0;
 			for (;;)
 				{
-				i=BIO_read(file,buf,1024);
+				i=BIO_read(file,buf,bufsize);
 				if (i <= 0) break;
 
+#ifdef RENEG
 				total_bytes+=i;
 				fprintf(stderr,"%d\n",i);
 				if (total_bytes > 3*1024)
@@ -1140,6 +1150,7 @@ int s;
 					fprintf(stderr,"RENEGOTIATE\n");
 					SSL_renegotiate(con);
 					}
+#endif
 
 				for (j=0; j<i; )
 					{
@@ -1194,6 +1205,7 @@ err:
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
+	if (buf != NULL) Free(buf);
 	if (io != NULL) BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return(ret);
