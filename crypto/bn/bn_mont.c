@@ -69,7 +69,7 @@
 
 #define MONT_WORD /* use the faster word-based algorithm */
 
-int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
+int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
 	BIGNUM *tmp,*tmp2;

@@ -608,7 +608,7 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	}
 #endif /* BN_RECURSION */
 
-int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
 	int top,al,bl;
 	BIGNUM *rr;
@@ -620,6 +620,7 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	BIGNUM *t;
 	int j,k;
 #endif
+	BIGNUM *free_a = NULL, *free_b = NULL;
 
 #ifdef BN_COUNT
 	printf("BN_mul %d * %d\n",a->top,b->top);
@@ -677,17 +678,21 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 		{
 		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
-			bn_wexpand(b,al);
-			b->d[bl]=0;
+			BIGNUM *tmp_bn = free_b;
+			b = free_b = bn_dup_expand(b,al);
+			free_b->d[bl]=0;
 			bl++;
 			i--;
+			if (tmp_bn) BN_free(tmp_bn);
 			}
 		else if (i == -1 && !BN_get_flags(a,BN_FLG_STATIC_DATA))
 			{
-			bn_wexpand(a,bl);
-			a->d[al]=0;
+			BIGNUM *tmp_bn = free_a;
+			a = free_a = bn_dup_expand(a,bl);
+			free_a->d[al]=0;
 			al++;
 			i++;
+			if (tmp_bn) BN_free(tmp_bn);
 			}
 		if (i == 0)
 			{
@@ -705,14 +710,17 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 				}
 			else
 				{
-				bn_wexpand(a,k);
-				bn_wexpand(b,k);
+				BIGNUM *tmp_a = free_a,*tmp_b = free_b;
+				a = free_a = bn_dup_expand(a,k);
+				b = free_b = bn_dup_expand(b,k);
+				if (tmp_a) BN_free(tmp_a);
+				if (tmp_b) BN_free(tmp_b);
 				bn_wexpand(t,k*4);
 				bn_wexpand(rr,k*4);
-				for (i=a->top; i<k; i++)
-					a->d[i]=0;
-				for (i=b->top; i<k; i++)
-					b->d[i]=0;
+				for (i=free_a->top; i<k; i++)
+					free_a->d[i]=0;
+				for (i=free_b->top; i<k; i++)
+					free_b->d[i]=0;
 				bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
 				}
 			rr->top=top;
@@ -731,6 +739,8 @@ end:
 	if (r != rr) BN_copy(r,rr);
 	ret=1;
 err:
+	if (free_a) BN_free(free_a);
+	if (free_b) BN_free(free_b);
 	BN_CTX_end(ctx);
 	return(ret);
 	}

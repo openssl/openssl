@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Constify the BIGNUM routines a little more.
+     [Richard Levitte]
+
   *) Make sure that shared libraries get the internal name engine with
      the full version number and not just 0.  This should mark the
      shared libraries as not backward compatible.  Of course, this should

@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-int BN_lshift1(BIGNUM *r, BIGNUM *a)
+int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 	{
 	register BN_ULONG *ap,*rp,t,c;
 	int i;
@@ -92,7 +92,7 @@ int BN_lshift1(BIGNUM *r, BIGNUM *a)
 	return(1);
 	}
 
-int BN_rshift1(BIGNUM *r, BIGNUM *a)
+int BN_rshift1(BIGNUM *r, const BIGNUM *a)
 	{
 	BN_ULONG *ap,*rp,t,c;
 	int i;
@@ -153,7 +153,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 	return(1);
 	}
 
-int BN_rshift(BIGNUM *r, BIGNUM *a, int n)
+int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 	{
 	int i,j,nw,lb,rb;
 	BN_ULONG *t,*f;

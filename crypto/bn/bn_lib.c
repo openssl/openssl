@@ -304,42 +304,35 @@ BIGNUM *BN_new(void)
 	return(ret);
 	}
 
-/* This is an internal function that should not be used in applications.
- * It ensures that 'b' has enough room for a 'words' word number number.
- * It is mostly used by the various BIGNUM routines. If there is an error,
- * NULL is returned. If not, 'b' is returned. */
-
-BIGNUM *bn_expand2(BIGNUM *b, int words)
+/* This is used both by bn_expand2() and bn_dup_expand() */
+/* The caller MUST check that words > b->dmax before calling this */
+static BN_ULONG *internal_bn_expand(const BIGNUM *b, int words)
 	{
-	BN_ULONG *A,*a;
+	BN_ULONG *A,*a = NULL;
 	const BN_ULONG *B;
 	int i;
 
-	bn_check_top(b);
-
-	if (words > b->dmax)
+	bn_check_top(b);	
+	if (BN_get_flags(b,BN_FLG_STATIC_DATA))
 		{
-		bn_check_top(b);	
-		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
-			{
-			BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
-			return(NULL);
-			}
-		a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*(words+1));
-		if (A == NULL)
-			{
-			BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
-			return(NULL);
-			}
+		BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+		return(NULL);
+		}
+	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*(words+1));
+	if (A == NULL)
+		{
+		BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
 #if 1
-		B=b->d;
-		/* Check if the previous number needs to be copied */
-		if (B != NULL)
-			{
+	B=b->d;
+	/* Check if the previous number needs to be copied */
+	if (B != NULL)
+		{
 #if 0
-			/* This lot is an unrolled loop to copy b->top 
-			 * BN_ULONGs from B to A
-			 */
+		/* This lot is an unrolled loop to copy b->top 
+		 * BN_ULONGs from B to A
+		 */
 /*
  * I have nothing against unrolling but it's usually done for
  * several reasons, namely:
@@ -363,94 +356,145 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
  *
  *					<appro@fy.chalmers.se>
  */
-			for (i=b->top&(~7); i>0; i-=8)
-				{
-				A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
-				A[4]=B[4]; A[5]=B[5]; A[6]=B[6]; A[7]=B[7];
-				A+=8;
-				B+=8;
-				}
-			switch (b->top&7)
-				{
-			case 7:
-				A[6]=B[6];
-			case 6:
-				A[5]=B[5];
-			case 5:
-				A[4]=B[4];
-			case 4:
-				A[3]=B[3];
-			case 3:
-				A[2]=B[2];
-			case 2:
-				A[1]=B[1];
-			case 1:
-				A[0]=B[0];
-			case 0:
-				/* I need the 'case 0' entry for utrix cc.
-				 * If the optimizer is turned on, it does the
-				 * switch table by doing
-				 * a=top&7
-				 * a--;
-				 * goto jump_table[a];
-				 * If top is 0, this makes us jump to 0xffffffc 
-				 * which is rather bad :-(.
-				 * eric 23-Apr-1998
-				 */
-				;
-				}
-#else
-			for (i=b->top>>2; i>0; i--,A+=4,B+=4)
-				{
-				/*
-				 * The fact that the loop is unrolled
-				 * 4-wise is a tribute to Intel. It's
-				 * the one that doesn't have enough
-				 * registers to accomodate more data.
-				 * I'd unroll it 8-wise otherwise:-)
-				 *
-				 *		<appro@fy.chalmers.se>
-				 */
-				BN_ULONG a0,a1,a2,a3;
-				a0=B[0]; a1=B[1]; a2=B[2]; a3=B[3];
-				A[0]=a0; A[1]=a1; A[2]=a2; A[3]=a3;
-				}
-			switch (b->top&3)
-				{
-				case 3:	A[2]=B[2];
-				case 2:	A[1]=B[1];
-				case 1:	A[0]=B[0];
-				case 0:	; /* ultrix cc workaround, see above */
-				}
-#endif
-			OPENSSL_free(b->d);
-			}
-
-		b->d=a;
-		b->dmax=words;
-
-		/* Now need to zero any data between b->top and b->max */
-
-		A= &(b->d[b->top]);
-		for (i=(b->dmax - b->top)>>3; i>0; i--,A+=8)
+		for (i=b->top&(~7); i>0; i-=8)
 			{
-			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
-			A[4]=0; A[5]=0; A[6]=0; A[7]=0;
+			A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
+			A[4]=B[4]; A[5]=B[5]; A[6]=B[6]; A[7]=B[7];
+			A+=8;
+			B+=8;
 			}
-		for (i=(b->dmax - b->top)&7; i>0; i--,A++)
-			A[0]=0;
+		switch (b->top&7)
+			{
+		case 7:
+			A[6]=B[6];
+		case 6:
+			A[5]=B[5];
+		case 5:
+			A[4]=B[4];
+		case 4:
+			A[3]=B[3];
+		case 3:
+			A[2]=B[2];
+		case 2:
+			A[1]=B[1];
+		case 1:
+			A[0]=B[0];
+		case 0:
+			/* I need the 'case 0' entry for utrix cc.
+			 * If the optimizer is turned on, it does the
+			 * switch table by doing
+			 * a=top&7
+			 * a--;
+			 * goto jump_table[a];
+			 * If top is 0, this makes us jump to 0xffffffc 
+			 * which is rather bad :-(.
+			 * eric 23-Apr-1998
+			 */
+			;
+			}
 #else
-			memset(A,0,sizeof(BN_ULONG)*(words+1));
-			memcpy(A,b->d,sizeof(b->d[0])*b->top);
-			b->d=a;
-			b->max=words;
+		for (i=b->top>>2; i>0; i--,A+=4,B+=4)
+			{
+			/*
+			 * The fact that the loop is unrolled
+			 * 4-wise is a tribute to Intel. It's
+			 * the one that doesn't have enough
+			 * registers to accomodate more data.
+			 * I'd unroll it 8-wise otherwise:-)
+			 *
+			 *		<appro@fy.chalmers.se>
+			 */
+			BN_ULONG a0,a1,a2,a3;
+			a0=B[0]; a1=B[1]; a2=B[2]; a3=B[3];
+			A[0]=a0; A[1]=a1; A[2]=a2; A[3]=a3;
+			}
+		switch (b->top&3)
+			{
+		case 3:	A[2]=B[2];
+		case 2:	A[1]=B[1];
+		case 1:	A[0]=B[0];
+		case 0:	; /* ultrix cc workaround, see above */
+			}
+#endif
+		}
+
+	/* Now need to zero any data between b->top and b->max */
+
+	A= &(a[b->top]);
+	for (i=(words - b->top)>>3; i>0; i--,A+=8)
+		{
+		A[0]=0; A[1]=0; A[2]=0; A[3]=0;
+		A[4]=0; A[5]=0; A[6]=0; A[7]=0;
+		}
+	for (i=(words - b->top)&7; i>0; i--,A++)
+		A[0]=0;
+#else
+	memset(A,0,sizeof(BN_ULONG)*(words+1));
+	memcpy(A,b->d,sizeof(b->d[0])*b->top);
 #endif
 		
-/*		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG)); */
-/*	{ int i; for (i=b->max; i<words+1; i++) p[i]=i;} */
+	return(a);
+	}
 
+/* This is an internal function that can be used instead of bn_expand2()
+ * when there is a need to copy BIGNUMs instead of only expanding the
+ * data part, while still expanding them.
+ * Especially useful when needing to expand BIGNUMs that are declared
+ * 'const' and should therefore not be changed.
+ * The reason to use this instead of a BN_dup() followed by a bn_expand2()
+ * is memory allocation overhead.  A BN_dup() followed by a bn_expand2()
+ * will allocate new memory for the BIGNUM data twice, and free it once,
+ * while bn_dup_expand() makes sure allocation is made only once.
+ */
+
+BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
+	{
+	BIGNUM *r = NULL;
+
+	if (words > b->dmax)
+		{
+		BN_ULONG *a = internal_bn_expand(b, words);
+
+		if (a)
+			{
+			r = BN_new();
+			r->top = b->top;
+			r->dmax = words;
+			r->neg = b->neg;
+			r->d = a;
+			}
+		/* Otherwise, there was an error in allocation in
+		   internal_bn_expand(), and NULL should be returned */
 		}
-	return(b);
+	else
+		{
+		r = BN_dup(b);
+		}
+
+	return r;
+	}
+
+/* This is an internal function that should not be used in applications.
+ * It ensures that 'b' has enough room for a 'words' word number number.
+ * It is mostly used by the various BIGNUM routines. If there is an error,
+ * NULL is returned. If not, 'b' is returned. */
+
+BIGNUM *bn_expand2(BIGNUM *b, int words)
+	{
+	if (words > b->dmax)
+		{
+		BN_ULONG *a = internal_bn_expand(b, words);
+
+		if (a)
+			{
+			OPENSSL_free(b->d);
+			b->d=a;
+			b->dmax=words;
+			}
+		else
+			b = NULL;
+		}
+	return b;
 	}
 
 BIGNUM *BN_dup(const BIGNUM *a)
@@ -513,7 +557,7 @@ void BN_clear(BIGNUM *a)
 	a->neg=0;
 	}
 
-BN_ULONG BN_get_word(BIGNUM *a)
+BN_ULONG BN_get_word(const BIGNUM *a)
 	{
 	int i,n;
 	BN_ULONG ret=0;

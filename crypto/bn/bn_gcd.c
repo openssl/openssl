@@ -144,7 +144,8 @@ err:
 	}
 
 /* solves ax == 1 (mod n) */
-BIGNUM *BN_mod_inverse(BIGNUM *in, BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+BIGNUM *BN_mod_inverse(BIGNUM *in,
+	const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	{
 	BIGNUM *A,*B,*X,*Y,*M,*D,*R=NULL;
 	BIGNUM *T,*ret=NULL;

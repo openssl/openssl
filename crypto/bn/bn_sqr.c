@@ -62,11 +62,11 @@
 
 /* r must not be a */
 /* I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96 */
-int BN_sqr(BIGNUM *r, BIGNUM *a, BN_CTX *ctx)
+int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	{
 	int max,al;
 	int ret = 0;
-	BIGNUM *tmp,*rr;
+	BIGNUM *tmp,*rr,*free_a = NULL;
 
 #ifdef BN_COUNT
 printf("BN_sqr %d * %d\n",a->top,a->top);
@@ -124,8 +124,10 @@ printf("BN_sqr %d * %d\n",a->top,a->top);
 			k=j+j;
 			if (al == j)
 				{
-				if (bn_wexpand(a,k*2) == NULL) goto err;
+				BIGNUM *tmp_bn = free_a;
+				if ((a = free_a = bn_dup_expand(a,k*2)) == NULL) goto err;
 				if (bn_wexpand(tmp,k*2) == NULL) goto err;
+				if (tmp_bn) BN_free(tmp_bn);
 				bn_sqr_recursive(rr->d,a->d,al,tmp->d);
 				}
 			else
@@ -145,6 +147,7 @@ printf("BN_sqr %d * %d\n",a->top,a->top);
 	if (rr != r) BN_copy(r,rr);
 	ret = 1;
  err:
+	if (free_a) BN_free(free_a);
 	BN_CTX_end(ctx);
 	return(ret);
 	}

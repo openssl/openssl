@@ -772,6 +772,7 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 		if(!BN_is_zero(b))
 		    {
 		    fprintf(stderr,"Modulo multiply test failed!\n");
+		    ERR_print_errors_fp(stderr);
 		    return 0;
 		    }
 		}

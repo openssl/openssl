@@ -100,11 +100,12 @@ int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	return(1);
 	}
 
-int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_RECP_CTX *recp,
-	     BN_CTX *ctx)
+int BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
+	BN_RECP_CTX *recp, BN_CTX *ctx)
 	{
 	int ret=0;
 	BIGNUM *a;
+	const BIGNUM *ca;
 
 	BN_CTX_start(ctx);
 	if ((a = BN_CTX_get(ctx)) == NULL) goto err;
@@ -114,19 +115,20 @@ int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_RECP_CTX *recp,
 			{ if (!BN_sqr(a,x,ctx)) goto err; }
 		else
 			{ if (!BN_mul(a,x,y,ctx)) goto err; }
+		ca = a;
 		}
 	else
-		a=x; /* Just do the mod */
+		ca=x; /* Just do the mod */
 
-	BN_div_recp(NULL,r,a,recp,ctx);
+	BN_div_recp(NULL,r,ca,recp,ctx);
 	ret=1;
 err:
 	BN_CTX_end(ctx);
 	return(ret);
 	}
 
-int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
-	     BN_CTX *ctx)
+int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
+	BN_RECP_CTX *recp, BN_CTX *ctx)
 	{
 	int i,j,ret=0;
 	BIGNUM *a,*b,*d,*r;
@@ -201,7 +203,7 @@ err:
  * We actually calculate with an extra word of precision, so
  * we can do faster division if the remainder is not required.
  */
-int BN_reciprocal(BIGNUM *r, BIGNUM *m, int len, BN_CTX *ctx)
+int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	{
 	int ret= -1;
 	BIGNUM t;

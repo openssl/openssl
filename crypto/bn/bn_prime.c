@@ -125,12 +125,13 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
-	     BIGNUM *rem, void (*callback)(int,int,void *), void *cb_arg)
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
+	const BIGNUM *add, const BIGNUM *rem,
+	void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
@@ -376,8 +377,8 @@ again:
 	return(1);
 	}
 
-static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
-	     BN_CTX *ctx)
+static int probable_prime_dh(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
@@ -413,8 +414,8 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_safe(BIGNUM *p, int bits, BIGNUM *padd,
-	     BIGNUM *rem, BN_CTX *ctx)
+static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
+	const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1,*qadd,*q;

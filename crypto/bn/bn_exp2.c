@@ -115,13 +115,14 @@
 
 #define TABLE_SIZE	32
 
-int BN_mod_exp2_mont(BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
-	     BIGNUM *p2, BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
+int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
+	const BIGNUM *a2, const BIGNUM *p2, const BIGNUM *m,
+	BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,j,bits,b,bits1,bits2,ret=0,wpos1,wpos2,window1,window2,wvalue1,wvalue2;
 	int r_is_one=1,ts1=0,ts2=0;
 	BIGNUM *d,*r;
-	BIGNUM *a_mod_m;
+	const BIGNUM *a_mod_m;
 	BIGNUM val1[TABLE_SIZE], val2[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
