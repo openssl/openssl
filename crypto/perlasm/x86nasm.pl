@@ -58,6 +58,11 @@ sub main'DWP
 	&get_mem("DWORD",@_);
 	}
 
+sub main'QWP
+	{
+	&get_mem("QWORD",@_);
+	}
+
 sub main'BC
 	{
 	return "BYTE @_";
@@ -169,6 +174,25 @@ sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'test	{ &out2("test",@_); }
+sub main'bt	{ &out2("bt",@_); }
+sub main'leave	{ &out0("leave"); }
+
+# SSE2
+sub main'emms	{ &out0("emms"); }
+sub main'movd	{ &out2("movd",@_); }
+sub main'movq	{ &out2("movq",@_); }
+sub main'movdqu	{ &out2("movdqu",@_); }
+sub main'movdqa	{ &out2("movdqa",@_); }
+sub main'movdq2q{ &out2("movdq2q",@_); }
+sub main'movq2dq{ &out2("movq2dq",@_); }
+sub main'paddq	{ &out2("paddq",@_); }
+sub main'pmuludq{ &out2("pmuludq",@_); }
+sub main'psrlq	{ &out2("psrlq",@_); }
+sub main'psllq	{ &out2("psllq",@_); }
+sub main'pxor	{ &out2("pxor",@_); }
+sub main'por	{ &out2("por",@_); }
+sub main'pand	{ &out2("pand",@_); }
 
 sub out2
 	{
@@ -336,7 +360,12 @@ sub main'set_label
 
 sub main'data_word
 	{
-	push(@out,"\tDD\t$_[0]\n");
+	push(@out,"\tDD\t".join(',',@_)."\n");
+	}
+
+sub main'align
+	{
+	push(@out,"\tALIGN\t$_[0]\n");
 	}
 
 sub out1p

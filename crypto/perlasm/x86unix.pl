@@ -51,6 +51,24 @@ if ($main'cpp)
 	'edi',	'%edi',
 	'ebp',	'%ebp',
 	'esp',	'%esp',
+
+	'mm0',	'%mm0',
+	'mm1',	'%mm1',
+	'mm2',	'%mm2',
+	'mm3',	'%mm3',
+	'mm4',	'%mm4',
+	'mm5',	'%mm5',
+	'mm6',	'%mm6',
+	'mm7',	'%mm7',
+
+	'xmm0',	'%xmm0',
+	'xmm1',	'%xmm1',
+	'xmm2',	'%xmm2',
+	'xmm3',	'%xmm3',
+	'xmm4',	'%xmm4',
+	'xmm5',	'%xmm5',
+	'xmm6',	'%xmm6',
+	'xmm7',	'%xmm7',
 	);
 
 %reg_val=(
@@ -95,6 +113,11 @@ sub main'DWP
 	elsif ($reg1 ne "")
 		{ $ret.="($reg1)" }
 	return($ret);
+	}
+
+sub main'QWP
+	{
+	return(&main'DWP(@_));
 	}
 
 sub main'BP
@@ -173,6 +196,25 @@ sub main'not	{ &out1("notl",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'test	{ &out2("testl",@_); }
+sub main'bt	{ &out2("btl",@_); }
+sub main'leave	{ &out0("leave"); }
+
+# SSE2
+sub main'emms	{ &out0("emms"); }
+sub main'movd	{ &out2("movd",@_); }
+sub main'movq	{ &out2("movq",@_); }
+sub main'movdqu	{ &out2("movdqu",@_); }
+sub main'movdqa	{ &out2("movdqa",@_); }
+sub main'movdq2q{ &out2("movdq2q",@_); }
+sub main'movq2dq{ &out2("movq2dq",@_); }
+sub main'paddq	{ &out2("paddq",@_); }
+sub main'pmuludq{ &out2("pmuludq",@_); }
+sub main'psrlq	{ &out2("psrlq",@_); }
+sub main'psllq	{ &out2("psllq",@_); }
+sub main'pxor	{ &out2("pxor",@_); }
+sub main'por	{ &out2("por",@_); }
+sub main'pand	{ &out2("pand",@_); }
 
 # The bswapl instruction is new for the 486. Emulate if i386.
 sub main'bswap
@@ -388,7 +430,7 @@ sub main'function_end_B
         elsif ($main'gaswin)
                 { push(@out,"\t.align 4\n"); }
 	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
-	push(@out,".ident	\"desasm.pl\"\n");
+	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
 	}
@@ -466,6 +508,48 @@ sub main'set_label
 
 sub main'file_end
 	{
+	# try to detect if SSE2 or MMX extensions were used on ELF platform...
+	if ($main'elf && grep {/%[x]*mm[0-7]/i} @out) {
+		local($tmp);
+
+		push (@out,"\n.comm\t".$under."OPENSSL_ia32cap,8,4\n");
+
+		push (@out,".section\t.init\n");
+		# One can argue that it's wasteful to craft every
+		# SSE/MMX module with this snippet... Well, it's 72
+		# bytes long and for the moment we have two modules.
+		# Let's argue when we have 7 modules or so...
+		&main'picmeup("edx","OPENSSL_ia32cap");
+		$tmp=<<___;
+		cmpl	\$0,(%edx)
+		jne	1f
+		movl	\$1,(%edx)
+		pushf
+		popl	%eax
+		movl	%eax,%ecx
+		xorl	\$1<<21,%eax
+		pushl	%eax
+		popf
+		pushf
+		popl	%eax
+		xorl	%ecx,%eax
+		bt	\$21,%eax
+		jnc	1f
+		pushl	%edi
+		pushl	%ebx
+		movl	%edx,%edi
+		movl	\$1,%eax
+		cpuid
+		orl	\$1,%edx
+		movl	%edx,0(%edi)
+		movl	%ecx,4(%edi)
+		popl	%ebx
+		popl	%edi
+	1:
+___
+		push (@out,$tmp);
+	}
+
 	if ($const ne "")
 		{
 		push(@out,".section .rodata\n");
@@ -476,7 +560,12 @@ sub main'file_end
 
 sub main'data_word
 	{
-	push(@out,"\t.long $_[0]\n");
+	push(@out,"\t.long\t".join(',',@_)."\n");
+	}
+
+sub main'align
+	{
+	push(@out,".align $_[0]\n");
 	}
 
 # debug output functions: puts, putx, printf
@@ -558,7 +647,7 @@ sub main'picmeup
 		{
 		local($tmp)=<<___;
 #if (defined(ELF) || defined(SOL)) && defined(PIC)
-	.align	8
+	.align	4
 	call	1f
 1:	popl	$regs{$dst}
 	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
@@ -571,7 +660,7 @@ ___
 		}
 	elsif ($main'pic && ($main'elf || $main'aout))
 		{
-		push(@out,"\t.align\t8\n");
+		push(@out,"\t.align\t4\n");
 		&main'call(&main'label("PIC_me_up"));
 		&main'set_label("PIC_me_up");
 		&main'blindpop($dst);
