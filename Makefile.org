@@ -173,7 +173,7 @@ LIBKRB5=
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
 SHLIB_MARK=
 
-DIRS=   fips crypto ssl $(SHLIB_MARK) apps test tools
+DIRS=   fips crypto ssl $(SHLIB_MARK) sigs apps test tools
 SHLIBDIRS= fips crypto ssl
 
 # dirs in crypto to build
@@ -222,9 +222,10 @@ HEADER=         e_os.h
 # When we're prepared to use shared libraries in the programs we link here
 # we might remove 'clean-shared' from the targets to perform at this stage
 
-all: Makefile.ssl sub_all openssl.pc sigs
+all: Makefile.ssl sub_all openssl.pc
 
-sigs:
+sigs:	$(SIGS)
+libcrypto.sha1: libcrypto.a
 	fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.sha1
 
 sub_all:
