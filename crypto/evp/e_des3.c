@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
+#ifndef OPENSSL_NO_DES
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "evp_locl.h"
@@ -85,7 +85,7 @@ static int des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
 	BLOCK_CIPHER_ecb_loop()
-		DES_ecb3_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i), 
+		DES_ecb3_encrypt(in + i,out + i, 
 				 &data(ctx)->ks1, &data(ctx)->ks2,
 				 &data(ctx)->ks3,
 				 ctx->encrypt);
@@ -121,7 +121,7 @@ static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ede_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
 	DES_ede3_cfb64_encrypt(in, out, (long)inl, 
@@ -130,13 +130,42 @@ static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
+/* Although we have a CFB-r implementation for 3-DES, it doesn't pack the right
+   way, so wrap it here */
+static int des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, unsigned int inl)
+    {
+    unsigned int n;
+    unsigned char c[1],d[1];
+
+    for(n=0 ; n < inl ; ++n)
+	{
+	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
+	DES_ede3_cfb_encrypt(c,d,1,1,
+			     &data(ctx)->ks1,&data(ctx)->ks2,&data(ctx)->ks3,
+			     (DES_cblock *)ctx->iv,ctx->encrypt);
+	out[n/8]=(out[n/8]&~(0x80 >> (n%8)))|((d[0]&0x80) >> (n%8));
+	}
+
+    return 1;
+    }
+
+static int des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, unsigned int inl)
+    {
+    DES_ede3_cfb_encrypt(in,out,8,inl,
+			 &data(ctx)->ks1,&data(ctx)->ks2,&data(ctx)->ks3,
+			 (DES_cblock *)ctx->iv,ctx->encrypt);
+    return 1;
+    }
+
 BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 			0, des_ede_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
 
-#define des_ede3_cfb_cipher des_ede_cfb_cipher
+#define des_ede3_cfb64_cipher des_ede_cfb64_cipher
 #define des_ede3_ofb_cipher des_ede_ofb_cipher
 #define des_ede3_cbc_cipher des_ede_cbc_cipher
 #define des_ede3_ecb_cipher des_ede_ecb_cipher
@@ -146,6 +175,16 @@ BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
+
+BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,1,0,
+		     des_ede3_init_key,NULL,
+		     EVP_CIPHER_set_asn1_iv,
+		     EVP_CIPHER_get_asn1_iv,NULL)
+
+BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,8,0,
+		     des_ede3_init_key,NULL,
+		     EVP_CIPHER_set_asn1_iv,
+		     EVP_CIPHER_get_asn1_iv,NULL)
 
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			    const unsigned char *iv, int enc)
