@@ -7,7 +7,7 @@ SSL - OpenSSL SSL/TLS library
 
 =head1 SYNOPSIS
 
-=head1 OVERVIEW
+=head1 DESCRIPTION
 
 The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
