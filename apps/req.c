@@ -567,13 +567,16 @@ bad:
 	else
 		{
 		req_conf=config;
-		if( verbose )
-			BIO_printf(bio_err,"Using configuration from %s\n",
-			default_config_file);
+
 		if (req_conf == NULL)
 			{
-			BIO_printf(bio_err,"Unable to load config info\n");
+			BIO_printf(bio_err,"Unable to load config info from %s\n", default_config_file);
+			if (newreq)
+				goto end;
 			}
+		else if( verbose )
+			BIO_printf(bio_err,"Using configuration from %s\n",
+			default_config_file);
 		}
 
 	if (req_conf != NULL)
