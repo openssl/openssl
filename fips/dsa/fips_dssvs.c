@@ -267,7 +267,7 @@ void sigver()
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
 	    printf("Result = %c\n",DSA_do_verify(hash,sizeof hash,sig,dsa)
-		   ? 'T' : 'F');
+		   ? 'P' : 'F');
 	    putc('\n',stdout);
 	    }
 	}
