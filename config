@@ -201,8 +201,8 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-unknown-ultrix"; exit 0
 	;;
 
-    SINIX*)
-	echo "${MACHINE}-sni-sysv4"; exit 0
+    SINIX*|ReliantUNIX*)
+	echo "${MACHINE}-siemens-sysv4"; exit 0
 	;;
 
     machten:*)
@@ -322,7 +322,8 @@ case "$GUESSOS" in
   *-*-openbsd) OUT="OpenBSD" ;;
   *-*-osf) OUT="alpha-cc" ;;
   *-*-unixware*) OUT="unixware-2.0" ;;
-  *-sni-sysv4) OUT="SINIX" ;;
+  RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
+  *-siemens-sysv4) OUT="SINIX" ;;
   # these are all covered by the catchall below
   # *-hpux*) OUT="hpux-$CC" ;;
   # *-aix) OUT="aix-$CC" ;;

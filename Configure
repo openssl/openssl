@@ -221,7 +221,10 @@ my %table=(
 # SCO cc.
 "sco5-cc",  "cc::(unknown):-lsocket:$x86_gcc_des ${x86_gcc_opts}:::", # des options?
 
-# Sinix RM400
+# Sinix/ReliantUNIX RM400
+# NOTE: The CDS++ Compiler up to V2.0Bsomething has the IRIX_CC_BUG optimizer problem. Better use -g  */
+"ReliantUNIX","cc:-KPIC -g -DSNI -DTERMIOS -DB_ENDIAN:-Kthread:-lsocket -lnsl -lc -L/usr/ucblib -lucb:BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
+"SINIX","cc:-O -DSNI:(unknown):-lsocket -lnsl -lc -L/usr/ucblib -lucb:RC4_INDEX RC4_CHAR:::",
 "SINIX-N","/usr/ucb/cc:-O2 -misaligned:(unknown):-lucb:RC4_INDEX RC4_CHAR:::",
 
 # Windows NT, Microsoft Visual C++ 4.0
@@ -452,7 +455,7 @@ while (<IN>)
 	}
 close(IN);
 
-if ($version =~ /(^[0-9]*)\.([\0-9\.]*)/)
+if ($version =~ /(^[0-9]*)\.([0-9\.]*)/)
 	{
 	$major=$1;
 	$minor=$2;
