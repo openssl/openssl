@@ -72,9 +72,19 @@
 
 static char *engine_usage[]={
 "usage: engine opts [engine ...]\n",
-" -v          - verbose mode, a textual listing of the engines in OpenSSL\n",
+" -v[v[v]]    - verbose mode, for each engine, list its 'control commands'\n",
+"               -vv will additionally display each command's description\n",
+"               -vvv will also add the input flags for each command\n",
 " -c          - for each engine, also list the capabilities\n",
 " -t          - for each engine, check that they are really available\n",
+" -pre <cmd>  - runs command 'cmd' against the ENGINE before any attempts\n",
+"               to load it (if -t is used)\n",
+" -post <cmd> - runs command 'cmd' against the ENGINE after loading it\n",
+"               (only used if -t is also provided)\n",
+" NB: -pre and -post will be applied to all ENGINEs supplied on the command\n",
+" line, or all supported ENGINEs if none are specified.\n",
+" Eg. '-pre \"SO_PATH:/lib/libdriver.so\"' calls command \"SO_PATH\" with\n",
+" argument \"/lib/libdriver.so\".\n",
 NULL
 };
 
@@ -115,6 +125,197 @@ static int append_buf(char **buf, char *s, int *size, int step)
 	return 1;
 	}
 
+static int util_flags(BIO *bio_out, unsigned int flags, const char *indent)
+	{
+	int started = 0, err = 0;
+	/* Indent before displaying input flags */
+	BIO_printf(bio_out, "%s%s(input flags): ", indent, indent);
+	if(flags == 0)
+		{
+		BIO_printf(bio_out, "<no flags>\n");
+		return 1;
+		}
+	if(flags & ENGINE_CMD_FLAG_NUMERIC)
+		{
+		BIO_printf(bio_out, "NUMERIC");
+		started = 1;
+		}
+	/* Now we check that no combinations of the mutually exclusive NUMERIC,
+	 * STRING, and NO_INPUT flags have been used. Future flags that can be
+	 * OR'd together with these would need to added after these to preserve
+	 * the testing logic. */
+	if(flags & ENGINE_CMD_FLAG_STRING)
+		{
+		if(started)
+			{
+			BIO_printf(bio_out, "|");
+			err = 1;
+			}
+		BIO_printf(bio_out, "STRING");
+		started = 1;
+		}
+	if(flags & ENGINE_CMD_FLAG_NO_INPUT)
+		{
+		if(started)
+			{
+			BIO_printf(bio_out, "|");
+			err = 1;
+			}
+		BIO_printf(bio_out, "NO_INPUT");
+		started = 1;
+		}
+	/* Check for unknown flags */
+	flags = flags & ~ENGINE_CMD_FLAG_NUMERIC &
+			~ENGINE_CMD_FLAG_STRING &
+			~ENGINE_CMD_FLAG_NO_INPUT;
+	if(flags)
+		{
+		if(started) BIO_printf(bio_out, "|");
+		BIO_printf(bio_out, "<0x%04X>", flags);
+		}
+	if(err)
+		BIO_printf(bio_out, "  <illegal flags!>");
+	BIO_printf(bio_out, "\n");
+	return 1;
+	}
+
+static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent)
+	{
+	static const int line_wrap = 78;
+	int num;
+	char *name = NULL;
+	char *desc = NULL;
+	int flags;
+	int xpos = 0;
+	STACK *cmds = sk_new_null();
+
+	if(!cmds)
+		goto err;
+	if(!ENGINE_ctrl(e, ENGINE_CTRL_HAS_CTRL_FUNCTION, 0, NULL, NULL) ||
+			((num = ENGINE_ctrl(e, ENGINE_CTRL_GET_FIRST_CMD_TYPE,
+					0, NULL, NULL)) <= 0))
+		{
+#if 0
+		BIO_printf(bio_out, "%s<no control commands>\n", indent);
+#endif
+		return 1;
+		}
+	do {
+		int len;
+		/* Get the command name */
+		if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_LEN_FROM_CMD, num,
+					NULL, NULL)) <= 0)
+			goto err;
+		if((name = OPENSSL_malloc(len + 1)) == NULL)
+			goto err;
+		if(ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_FROM_CMD, num, name,
+					NULL) <= 0)
+			goto err;
+		/* Get the command description */
+		if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_LEN_FROM_CMD, num,
+					NULL, NULL)) < 0)
+			goto err;
+		if(len > 0)
+			{
+			if((desc = OPENSSL_malloc(len + 1)) == NULL)
+				goto err;
+			if(ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_FROM_CMD, num, desc,
+						NULL) <= 0)
+				goto err;
+			}
+		/* Get the command input flags */
+		if((flags = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, num,
+					NULL, NULL)) < 0)
+			goto err;
+		/* Now decide on the output */
+		if(xpos == 0)
+			/* Do an indent */
+			xpos = BIO_printf(bio_out, indent);
+		else
+			/* Otherwise prepend a ", " */
+			xpos += BIO_printf(bio_out, ", ");
+		if(verbose == 1)
+			{
+			/* We're just listing names, comma-delimited */
+			if((xpos > strlen(indent)) &&
+					(xpos + strlen(name) > line_wrap))
+				{
+				BIO_printf(bio_out, "\n");
+				xpos = BIO_printf(bio_out, indent);
+				}
+			xpos += BIO_printf(bio_out, "%s", name);
+			}
+		else
+			{
+			/* We're listing names plus descriptions */
+			BIO_printf(bio_out, "%s: %s\n", name,
+				(desc == NULL) ? "<no description>" : desc);
+			/* ... and sometimes input flags */
+			if((verbose == 3) && !util_flags(bio_out, flags,
+							indent))
+				goto err;
+			xpos = 0;
+			}
+		OPENSSL_free(name); name = NULL;
+		if(desc) { OPENSSL_free(desc); desc = NULL; }
+		/* Move to the next command */
+		num = ENGINE_ctrl(e, ENGINE_CTRL_GET_NEXT_CMD_TYPE,
+					num, NULL, NULL);
+		} while(num > 0);
+	if(xpos > 0)
+		BIO_printf(bio_out, "\n");
+	return 1;
+err:
+	if(cmds) sk_pop_free(cmds, identity);
+	if(name) OPENSSL_free(name);
+	if(desc) OPENSSL_free(desc);
+	return 0;
+	}
+
+static void util_do_cmds(ENGINE *e, STACK *cmds, BIO *bio_out, const char *indent)
+	{
+	int loop, res, num = sk_num(cmds);
+	if(num < 0)
+		{
+		BIO_printf(bio_out, "[Error]: internal stack error\n");
+		return;
+		}
+	for(loop = 0; loop < num; loop++)
+		{
+		char buf[256];
+		const char *cmd, *arg;
+		cmd = sk_value(cmds, loop);
+		res = 1; /* assume success */
+		/* Check if this command has no ":arg" */
+		if((arg = strstr(cmd, ":")) == NULL)
+			{
+			if(!ENGINE_ctrl_cmd_string(e, cmd, NULL, 0))
+				res = 0;
+			}
+		else
+			{
+			if((int)(arg - cmd) > 254)
+				{
+				BIO_printf(bio_out,"[Error]: command name too long\n");
+				return;
+				}
+			memcpy(buf, cmd, (int)(arg - cmd));
+			buf[arg-cmd] = '\0';
+			arg++; /* Move past the ":" */
+			/* Call the command with the argument */
+			if(!ENGINE_ctrl_cmd_string(e, buf, arg, 0))
+				res = 0;
+			}
+		if(res)
+			BIO_printf(bio_out, "[Success]: %s\n", cmd);
+		else
+			{
+			BIO_printf(bio_out, "[Failure]: %s\n", cmd);
+			ERR_print_errors(bio_out);
+			}
+		}
+	}
+
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
@@ -124,8 +325,11 @@ int MAIN(int argc, char **argv)
 	int verbose=0, list_cap=0, test_avail=0;
 	ENGINE *e;
 	STACK *engines = sk_new_null();
-	int badops=0;
+	STACK *pre_cmds = sk_new_null();
+	STACK *post_cmds = sk_new_null();
+	int badops=1;
 	BIO *bio_out=NULL;
+	const char *indent = "     ";
 
 	apps_startup();
 	SSL_load_error_strings();
@@ -144,25 +348,38 @@ int MAIN(int argc, char **argv)
 	argv++;
 	while (argc >= 1)
 		{
-		if (strcmp(*argv,"-v") == 0)
-			verbose=1;
+		if (strncmp(*argv,"-v",2) == 0)
+			{
+			if(strspn(*argv + 1, "v") < strlen(*argv + 1))
+				goto skip_arg_loop;
+			if((verbose=strlen(*argv + 1)) > 3)
+				goto skip_arg_loop;
+			}
 		else if (strcmp(*argv,"-c") == 0)
 			list_cap=1;
 		else if (strcmp(*argv,"-t") == 0)
 			test_avail=1;
+		else if (strcmp(*argv,"-pre") == 0)
+			{
+			argc--; argv++;
+			sk_push(pre_cmds,*argv);
+			}
+		else if (strcmp(*argv,"-post") == 0)
+			{
+			argc--; argv++;
+			sk_push(post_cmds,*argv);
+			}
 		else if ((strncmp(*argv,"-h",2) == 0) ||
-			 (strcmp(*argv,"-?") == 0))
-			{
-			badops=1;
-			break;
-			}
+				(strcmp(*argv,"-?") == 0))
+			goto skip_arg_loop;
 		else
-			{
 			sk_push(engines,*argv);
-			}
 		argc--;
 		argv++;
 		}
+	/* Looks like everything went OK */
+	badops = 0;
+skip_arg_loop:
 
 	if (badops)
 		{
@@ -185,22 +402,10 @@ int MAIN(int argc, char **argv)
 		if ((e = ENGINE_by_id(id)) != NULL)
 			{
 			const char *name = ENGINE_get_name(e);
-			BIO_printf(bio_out, "%s (%s)", name, id);
-			if (list_cap || test_avail)
+			/* Do "id" first, then "name". Easier to auto-parse. */
+			BIO_printf(bio_out, "(%s) %s", id, name);
+			if (list_cap)
 				BIO_printf(bio_out, ":");
-			if (test_avail)
-				{
-				if (ENGINE_init(e))
-					{
-					BIO_printf(bio_out, " available");
-					ENGINE_finish(e);
-					}
-				else
-					{
-					BIO_printf(bio_out, " unavailable");
-					ERR_clear_error();
-					}
-				}
 			if (list_cap)
 				{
 				int cap_size = 256;
@@ -223,12 +428,32 @@ int MAIN(int argc, char **argv)
 						&cap_size, 256))
 					goto end;
 
-				if (*cap_buf != '\0')
+				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]", cap_buf);
 
 				OPENSSL_free(cap_buf);
 				}
 			BIO_printf(bio_out, "\n");
+			util_do_cmds(e, pre_cmds, bio_out, indent);
+			if(test_avail)
+				{
+				BIO_printf(bio_out, "%s", indent);
+				if (ENGINE_init(e))
+					{
+					BIO_printf(bio_out, "[ available ]\n");
+					util_do_cmds(e, post_cmds, bio_out, indent);
+					ENGINE_finish(e);
+					}
+				else
+					{
+					BIO_printf(bio_out, "[ unavailable ]\n");
+					ERR_print_errors_fp(stdout);
+					ERR_clear_error();
+					}
+				}
+			if((verbose > 0) && !util_verbose(e, verbose, bio_out, indent))
+				goto end;
+			ENGINE_free(e);
 			}
 		else
 			ERR_print_errors(bio_err);
@@ -238,6 +463,8 @@ int MAIN(int argc, char **argv)
 end:
 	ERR_print_errors(bio_err);
 	sk_pop_free(engines, identity);
+	sk_pop_free(pre_cmds, identity);
+	sk_pop_free(post_cmds, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	EXIT(ret);
 	}
