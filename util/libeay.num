@@ -2996,3 +2996,6 @@ BN_generate_prime_ex                    3430	EXIST::FUNCTION:
 DH_generate_parameters_ex               3431	EXIST::FUNCTION:DH
 BN_is_prime_fasttest_ex                 3432	EXIST::FUNCTION:
 ENGINE_load_gmp                         3433	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+a2i_IPADDRESS                           3434	EXIST::FUNCTION:
+ENGINE_setup_bsd_cryptodev              3435	EXIST:__FreeBSD__:FUNCTION:ENGINE
+EC_GROUP_have_precompute_mult           3436	EXIST::FUNCTION:EC
