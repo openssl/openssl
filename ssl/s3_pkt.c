@@ -470,7 +470,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *_buf, int len)
 
 		if ((i == (int)n) ||
 			(type == SSL3_RT_APPLICATION_DATA &&
-			(s->mode | SSL_MODE_ENABLE_PARTIAL_WRITE)))
+			 (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
 			{
 			return(tot+i);
 			}

@@ -392,7 +392,7 @@ int ssl2_write(SSL *s, const void *_buf, int len)
 			return(i);
 			}
 		if ((i == (int)n) ||
-			(s->mode | SSL_MODE_ENABLE_PARTIAL_WRITE))
+			(s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))
 			{
 			return(tot+i);
 			}
