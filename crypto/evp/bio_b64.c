@@ -184,7 +184,9 @@ static int b64_read(BIO *b, char *out, int outl)
 	ret_code=0;
 	while (outl > 0)
 		{
-		if (ctx->cont <= 0) break;
+
+		if (ctx->cont <= 0)
+			break;
 
 		i=BIO_read(b->next_bio,&(ctx->tmp[ctx->tmp_len]),
 			B64_BLOCK_SIZE-ctx->tmp_len);
@@ -195,11 +197,21 @@ static int b64_read(BIO *b, char *out, int outl)
 
 			/* Should be continue next time we are called? */
 			if (!BIO_should_retry(b->next_bio))
+				{
 				ctx->cont=i;
-			/* else we should continue when called again */
-			break;
+				/* If buffer empty break */
+				if(ctx->tmp_len == 0)
+					break;
+				/* Fall through and process what we have */
+				else
+					i = 0;
+				}
+			/* else we retry and add more data to buffer */
+			else
+				break;
 			}
 		i+=ctx->tmp_len;
+		ctx->tmp_len = i;
 
 		/* We need to scan, a line at a time until we
 		 * have a valid line if we are starting. */
@@ -255,8 +267,12 @@ static int b64_read(BIO *b, char *out, int outl)
 				 * reading until a new line. */
 				if (p == (unsigned char *)&(ctx->tmp[0]))
 					{
-					ctx->tmp_nl=1;
-					ctx->tmp_len=0;
+					/* Check buffer full */
+					if (i == B64_BLOCK_SIZE)
+						{
+						ctx->tmp_nl=1;
+						ctx->tmp_len=0;
+						}
 					}
 				else if (p != q) /* finished on a '\n' */
 					{
@@ -271,6 +287,11 @@ static int b64_read(BIO *b, char *out, int outl)
 			else
 				ctx->tmp_len=0;
 			}
+		/* If buffer isn't full and we can retry then
+		 * restart to read in more data.
+		 */
+		else if ((i < B64_BLOCK_SIZE) && (ctx->cont > 0))
+			continue;
 
 		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
 			{
@@ -310,8 +331,8 @@ static int b64_read(BIO *b, char *out, int outl)
 			i=EVP_DecodeUpdate(&(ctx->base64),
 				(unsigned char *)ctx->buf,&ctx->buf_len,
 				(unsigned char *)ctx->tmp,i);
+			ctx->tmp_len = 0;
 			}
-		ctx->cont=i;
 		ctx->buf_off=0;
 		if (i < 0)
 			{
@@ -484,10 +505,7 @@ again:
 			{
 			i=b64_write(b,NULL,0);
 			if (i < 0)
-				{
-				ret=i;
-				break;
-				}
+				return i;
 			}
 		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
 			{

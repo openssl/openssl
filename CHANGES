@@ -4,6 +4,13 @@
 
  Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
 
+  *) Various fixes to base64 BIO and non blocking I/O. On write 
+     flushes were not handled properly if the BIO retried. On read
+     data was not being buffered properly and had various logic bugs.
+     This also affects blocking I/O when the data being decoded is a
+     certain size.
+     [Steve Henson]
+
   *) Various S/MIME bugfixes and compatibility changes:
      output correct application/pkcs7 MIME type if
      PKCS7_NOOLDMIMETYPE is set. Tolerate some broken signatures.
