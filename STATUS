@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 15:58:09 $
+  ______________                           $Date: 2000/02/27 16:11:06 $
 
   DEVELOPMENT STATE
 
@@ -18,6 +18,7 @@
                        0.9.5beta2 is available.
                          FreeBSD 3.0-RELEASE  - test passed
                          OpenVMS V7.1/Alpha   - test passed
+                         OpenVMS V7.1/VAX     - test failed on BN (config prob)
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
