@@ -158,6 +158,7 @@ bad:
 		goto end;
 		}
 	BIO_free(in);
+	in = NULL;
 		
 	out=BIO_new(BIO_s_file());
 	if (out == NULL) goto end;
@@ -193,6 +194,7 @@ bad:
 end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
+	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free(out);
 	if (dsa != NULL) DSA_free(dsa);
 	EXIT(ret);
