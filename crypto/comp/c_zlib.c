@@ -208,11 +208,11 @@ COMP_METHOD *COMP_zlib(void)
 				= (inflateInit__ft) DSO_bind_func(zlib_dso,
 					"inflateInit_");
 			zlib_loaded++;
-			meth = &zlib_method;
 			}
 		}
 
-#elif defined(ZLIB)
+#endif
+#if defined(ZLIB) || defined(ZLIB_SHARED)
 	meth = &zlib_method;
 #endif
 
