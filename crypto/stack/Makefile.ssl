@@ -79,8 +79,8 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-stack.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-stack.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+stack.o: ../../e_os.h ../../include/openssl/bio.h
+stack.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 stack.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 stack.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 stack.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h

@@ -86,9 +86,9 @@ conf_api.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 conf_api.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 conf_api.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 conf_api.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-conf_def.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-conf_def.o: ../../include/openssl/conf.h ../../include/openssl/conf_api.h
-conf_def.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+conf_def.o: ../../e_os.h ../../include/openssl/bio.h
+conf_def.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+conf_def.o: ../../include/openssl/conf_api.h ../../include/openssl/crypto.h
 conf_def.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 conf_def.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 conf_def.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h

@@ -108,8 +108,8 @@ rand_lib.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 rand_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rand_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 rand_lib.o: ../../include/openssl/symhacks.h
-rand_win.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-rand_win.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+rand_win.o: ../../e_os.h ../../include/openssl/bio.h
+rand_win.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rand_win.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rand_win.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rand_win.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
