@@ -85,27 +85,23 @@ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 	}
 
 #ifndef OPENSSL_NO_FP_API
-static int print_fp(const char *str, size_t len, FILE *fp)
+static int print_fp(const char *str, size_t len, void *fp)
 	{
-	return fprintf(fp, "%s", str);
+	return fprintf((FILE *)fp, "%s", str);
 	}
 void ERR_print_errors_fp(FILE *fp)
 	{
-	ERR_print_errors_cb(
-		(int (*)(const char *, size_t, void *))print_fp,
-		(void *)fp);
+	ERR_print_errors_cb(print_fp, fp);
 	}
 #endif
 
-static int print_bio(const char *str, size_t len, BIO *bp)
+static int print_bio(const char *str, size_t len, void *bp)
 	{
-	return BIO_write(bp, str, len);
+	return BIO_write((BIO *)bp, str, len);
 	}
 void ERR_print_errors(BIO *bp)
 	{
-	ERR_print_errors_cb(
-		(int (*)(const char *, size_t, void *))print_bio,
-		(void *)bp);
+	ERR_print_errors_cb(print_bio, bp);
 	}
 
 	
