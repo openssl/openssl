@@ -62,8 +62,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static int add_attribute(STACK **sk, int nid, int atrtype, void *value);
-static ASN1_TYPE *get_attribute(STACK *sk, int nid);
+static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
+			 void *value);
+static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid);
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
@@ -462,7 +463,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	BUF_MEM *buf=NULL;
 	PKCS7_SIGNER_INFO *si;
 	EVP_MD_CTX *mdc,ctx_tmp;
-	STACK *sk,*si_sk=NULL;
+	STACK_OF(X509_ATTRIBUTE) *sk;
+	STACK *si_sk=NULL;
 	unsigned char *p,*pp=NULL;
 	int x;
 	ASN1_OCTET_STRING *os=NULL;
@@ -543,7 +545,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 			/* If there are attributes, we add the digest
 			 * attribute and only sign the attributes */
-			if ((sk != NULL) && (sk_num(sk) != 0))
+			if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
 				{
 				unsigned char md_data[EVP_MAX_MD_SIZE];
 				unsigned int md_len;
@@ -568,12 +570,14 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 				/* Now sign the mess */
 				EVP_SignInit(&ctx_tmp,md_tmp);
-				x=i2d_ASN1_SET(sk,NULL,i2d_X509_ATTRIBUTE,
-					V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
+				x=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,
+					   i2d_X509_ATTRIBUTE,
+					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 				pp=(unsigned char *)Malloc(x);
 				p=pp;
-				i2d_ASN1_SET(sk,&p,i2d_X509_ATTRIBUTE,
-					V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
+				i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,
+				           i2d_X509_ATTRIBUTE,
+					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 				EVP_SignUpdate(&ctx_tmp,pp,x);
 				Free(pp);
 				pp=NULL;
@@ -628,7 +632,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	PKCS7_ISSUER_AND_SERIAL *ias;
 	int ret=0,i;
 	int md_type;
-	STACK *sk;
+	STACK_OF(X509_ATTRIBUTE) *sk;
 	STACK_OF(X509) *cert;
 	BIO *btmp;
 	X509 *x509;
@@ -697,7 +701,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	memcpy(&mdc_tmp,mdc,sizeof(mdc_tmp));
 
 	sk=si->auth_attr;
-	if ((sk != NULL) && (sk_num(sk) != 0))
+	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
 		{
 		unsigned char md_dat[EVP_MAX_MD_SIZE];
                 unsigned int md_len;
@@ -731,11 +735,11 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		 * shouldn't reorder them or this will break the signature.
 		 * This is done by using the IS_SEQUENCE flag.
 		 */
-		i=i2d_ASN1_SET(sk,NULL,i2d_X509_ATTRIBUTE,
+		i=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		pp=(unsigned char *)Malloc(i);
+		pp=Malloc(i);
 		p=pp;
-		i2d_ASN1_SET(sk,&p,i2d_X509_ATTRIBUTE,
+		i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
 		EVP_VerifyUpdate(&mdc_tmp,pp,i);
 
@@ -785,7 +789,7 @@ ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid)
 	return(get_attribute(si->unauth_attr,nid));
 	}
 
-static ASN1_TYPE *get_attribute(STACK *sk, int nid)
+static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 	{
 	int i;
 	X509_ATTRIBUTE *xa;
@@ -793,9 +797,9 @@ static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 
 	o=OBJ_nid2obj(nid);
 	if (!o || !sk) return(NULL);
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 		{
-		xa=(X509_ATTRIBUTE *)sk_value(sk,i);
+		xa=sk_X509_ATTRIBUTE_value(sk,i);
 		if (OBJ_cmp(xa->object,o) == 0)
 			{
 			if (xa->set && sk_ASN1_TYPE_num(xa->value.set))
@@ -807,40 +811,44 @@ static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 	return(NULL);
 	}
 
-ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk)
+ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 {
 	ASN1_TYPE *astype;
 	if(!(astype = get_attribute(sk, NID_pkcs9_messageDigest))) return NULL;
 	return astype->value.octet_string;
 }
 
-int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
+int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
+				STACK_OF(X509_ATTRIBUTE) *sk)
 	{
 	int i;
 
 	if (p7si->auth_attr != NULL)
-		sk_pop_free(p7si->auth_attr,X509_ATTRIBUTE_free);
-	p7si->auth_attr=sk_dup(sk);
-	for (i=0; i<sk_num(sk); i++)
+		sk_X509_ATTRIBUTE_pop_free(p7si->auth_attr,X509_ATTRIBUTE_free);
+	p7si->auth_attr=sk_X509_ATTRIBUTE_dup(sk);
+	for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 		{
-		if ((sk_set(p7si->auth_attr,i,(char *)X509_ATTRIBUTE_dup(
-			(X509_ATTRIBUTE *)sk_value(sk,i)))) == NULL)
+		if ((sk_X509_ATTRIBUTE_set(p7si->auth_attr,i,
+			X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value(sk,i))))
+		    == NULL)
 			return(0);
 		}
 	return(1);
 	}
 
-int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
+int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK_OF(X509_ATTRIBUTE) *sk)
 	{
 	int i;
 
 	if (p7si->unauth_attr != NULL)
-		sk_pop_free(p7si->unauth_attr,X509_ATTRIBUTE_free);
-	p7si->unauth_attr=sk_dup(sk);
-	for (i=0; i<sk_num(sk); i++)
+		sk_X509_ATTRIBUTE_pop_free(p7si->unauth_attr,
+					   X509_ATTRIBUTE_free);
+	p7si->unauth_attr=sk_X509_ATTRIBUTE_dup(sk);
+	for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 		{
-		if ((sk_set(p7si->unauth_attr,i,(char *)X509_ATTRIBUTE_dup(
-			(X509_ATTRIBUTE *)sk_value(sk,i)))) == NULL)
+		if ((sk_X509_ATTRIBUTE_set(p7si->unauth_attr,i,
+                        X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value(sk,i))))
+		    == NULL)
 			return(0);
 		}
 	return(1);
@@ -858,29 +866,30 @@ int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
 	return(add_attribute(&(p7si->unauth_attr),nid,atrtype,value));
 	}
 
-static int add_attribute(STACK **sk, int nid, int atrtype, void *value)
+static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
+			 void *value)
 	{
 	X509_ATTRIBUTE *attr=NULL;
 
 	if (*sk == NULL)
 		{
-		*sk = sk_new(NULL);
+		*sk = sk_X509_ATTRIBUTE_new(NULL);
 new_attrib:
 		attr=X509_ATTRIBUTE_create(nid,atrtype,value);
-		sk_push(*sk,(char *)attr);
+		sk_X509_ATTRIBUTE_push(*sk,attr);
 		}
 	else
 		{
 		int i;
 
-		for (i=0; i<sk_num(*sk); i++)
+		for (i=0; i<sk_X509_ATTRIBUTE_num(*sk); i++)
 			{
-			attr=(X509_ATTRIBUTE *)sk_value(*sk,i);
+			attr=sk_X509_ATTRIBUTE_value(*sk,i);
 			if (OBJ_obj2nid(attr->object) == nid)
 				{
 				X509_ATTRIBUTE_free(attr);
 				attr=X509_ATTRIBUTE_create(nid,atrtype,value);
-				sk_set(*sk,i,(char *)attr);
+				sk_X509_ATTRIBUTE_set(*sk,i,attr);
 				goto end;
 				}
 			}

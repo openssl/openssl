@@ -89,10 +89,10 @@ typedef struct pkcs7_signer_info_st
 	ASN1_INTEGER 			*version;	/* version 1 */
 	PKCS7_ISSUER_AND_SERIAL		*issuer_and_serial;
 	X509_ALGOR			*digest_alg;
-	STACK /* X509_ATTRIBUTE */	*auth_attr;	/* [ 0 ] */
+	STACK_OF(X509_ATTRIBUTE)	*auth_attr;	/* [ 0 ] */
 	X509_ALGOR			*digest_enc_alg;
 	ASN1_OCTET_STRING		*enc_digest;
-	STACK /* X509_ATTRIBUTE */	*unauth_attr;	/* [ 1 ] */
+	STACK_OF(X509_ATTRIBUTE)	*unauth_attr;	/* [ 1 ] */
 
 	/* The private key to sign with */
 	EVP_PKEY			*pkey;
@@ -344,15 +344,16 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
 int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher);
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
-ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk);
+ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk);
 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si,int nid,int type,
 	void *data);
 int PKCS7_add_attribute (PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
 	void *value);
 ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid);
 ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid);
-int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
-int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
+int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
+				STACK_OF(X509_ATTRIBUTE) *sk);
+int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,STACK_OF(X509_ATTRIBUTE) *sk);
 
 
 
