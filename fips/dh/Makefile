@@ -54,12 +54,13 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
-# some shells don't like empty lists
-# 	@for i in $(EXHEADER) ; \
-# 	do  \
-# 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-# 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-# 	done;
+	@if test -n "$(EXHEADER)"; then \
+	  for i in $(EXHEADER) ; \
+	  do  \
+	    (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	    chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	  done; \
+	fi
 
 tags:
 	ctags $(SRC)
