@@ -1505,7 +1505,7 @@ char *SSL_get_version(SSL *s)
 	}
 
 SSL *SSL_dup(SSL *s)
-        {
+	{
 	STACK_OF(X509_NAME) *sk;
 	X509_NAME *xn;
         SSL *ret;
@@ -1514,8 +1514,31 @@ SSL *SSL_dup(SSL *s)
 	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL)
 	    return(NULL);
 			  
-	/* This copies version, session-id, SSL_METHOD and 'cert' */
-	SSL_copy_session_id(ret,s);
+	if (s->session != NULL)
+		{
+		/* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
+		SSL_copy_session_id(ret,s);
+		}
+	else
+		{
+		/* No session has been established yet, so we have to expect
+		 * that s->cert or ret->cert will be changed later --
+		 * they should not both point to the same object,
+		 * and thus we can't use SSL_copy_session_id. */
+
+		ret->method = s->method;
+		ret->method->ssl_new(ret);
+
+		if (s->cert != NULL)
+			{
+			ret->cert = ssl_cert_dup(s->cert);
+			if (ret->cert == NULL)
+				goto err;
+			}
+				
+		SSL_set_session_id_context(ret,
+			s->sid_ctx, s->sid_ctx_length);
+		}
 
 	SSL_set_read_ahead(ret,SSL_get_read_ahead(s));
 	SSL_set_verify(ret,SSL_get_verify_mode(s),
@@ -1591,18 +1614,18 @@ err:
 
 void ssl_clear_cipher_ctx(SSL *s)
 	{
-        if (s->enc_read_ctx != NULL)
-                {
-                EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
-                Free(s->enc_read_ctx);
-                s->enc_read_ctx=NULL;
-                }
-        if (s->enc_write_ctx != NULL)
-                {
-                EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
-                Free(s->enc_write_ctx);
-                s->enc_write_ctx=NULL;
-                }
+	if (s->enc_read_ctx != NULL)
+		{
+		EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
+		Free(s->enc_read_ctx);
+		s->enc_read_ctx=NULL;
+		}
+	if (s->enc_write_ctx != NULL)
+		{
+		EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
+		Free(s->enc_write_ctx);
+		s->enc_write_ctx=NULL;
+		}
 	if (s->expand != NULL)
 		{
 		COMP_CTX_free(s->expand);
