@@ -134,7 +134,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	HPUXVER=`echo ${RELEASE}|sed -e 's/[^.]*.[0B]*//'`
 	case "$HPUXVER" in
 	    1[0-9].*)	# HPUX 10 and 11 targets are unified
-		echo "${MACHINE}-hp-hpux10"; exit 0
+		echo "${MACHINE}-hp-hpux1x"; exit 0
 		;;
 	    *)
 		echo "${MACHINE}-hp-hpux"; exit 0
@@ -410,9 +410,10 @@ if [ "$SYSTEM" = "HP-UX" ];then
   GCC_BITS="32"
   if [ $GCCVER -ge 30 ]; then
     # PA64 support only came in with gcc 3.0.x.
-    # We look for the preprocessor symbol __LP64__ indicating
-    # 64bit bit long and pointer.  sizeof(int) == 32 on HPUX64.
-    if gcc -v -E -x c /dev/null 2>&1 | grep __LP64__ > /dev/null; then
+    # We check if the preprocessor symbol __LP64__ is defined...
+    if echo "__LP64__" | gcc -v -E -x c - 2>/dev/null | grep "^__LP64__" 2>&1 > /dev/null; then
+      : # __LP64__ has slipped through, it therefore is not defined
+    else
       GCC_BITS="64"
     fi
   fi
