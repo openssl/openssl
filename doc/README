@@ -1,0 +1,6 @@
+
+ openssl.pod ..... Documentation of OpenSSL `openssl' command
+ crypto.pod ...... Documentation of OpenSSL crypto.h+libcrypto.a
+ ssl.pod ......... Documentation of OpenSSL ssl.h+libssl.a
+ ssleay.txt ...... Assembled documentation files of ancestor SSLeay [obsolete}
+
