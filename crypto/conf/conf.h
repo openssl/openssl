@@ -106,7 +106,6 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section);
 char *CONF_get_string(LHASH *conf,char *group,char *name);
 long CONF_get_number(LHASH *conf,char *group,char *name);
 void CONF_free(LHASH *conf);
-void CONF_dump(LHASH *conf, BIO *out);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
 void ERR_load_CONF_strings(void );

@@ -291,10 +291,5 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 		}
 #undef g2
 
-	return timegm(&tm)-offset*60; /* FIXME: timegm is non-standard,
-	                               * typically we only have mktime (which
-	                               * interprets the struct tm according to
-	                               * the current time zone setting).
-	                               * Also time_t is inappropriate for general
-	                               * UTC times because it may a 32 bit type. */
+	return mktime(&tm)-offset*60;
 	}

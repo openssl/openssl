@@ -61,20 +61,22 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER n_cipher=
 	{
 	NID_undef,
 	1,0,0,
+	0,
 	null_init_key,
 	null_cipher,
 	NULL,
 	0,
 	NULL,
 	NULL,
+	NULL
 	};
 
 EVP_CIPHER *EVP_enc_null(void)
@@ -82,16 +84,18 @@ EVP_CIPHER *EVP_enc_null(void)
 	return(&n_cipher);
 	}
 
-static void null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	memset(&(ctx->c),0,sizeof(ctx->c));
+	return 1;
 	}
 
-static void null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	if (in != out)
 		memcpy((char *)out,(char *)in,(int)inl);
+	return 1;
 	}
 

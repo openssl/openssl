@@ -764,6 +764,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 		goto f_err; 
 		}
+	ERR_clear_error(); /* but we keep s->verify_result */
 
 	sc=ssl_sess_cert_new();
 	if (sc == NULL) goto err;

@@ -265,13 +265,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
-#ifndef NO_RC2
-	char is_rc2 = 0;
-#endif
-/*	EVP_PKEY *pkey; */
-#if 0
-	X509_STORE_CTX s_ctx;
-#endif
 
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
@@ -310,16 +303,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	default:
 		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
-		}
-
-	if(EVP_CIPHER_nid(evp_cipher) == NID_rc2_cbc)
-		{
-#ifndef NO_RC2		
-		is_rc2 = 1; 
-#else
-		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
-		goto err;
-#endif
 		}
 
 	/* We will be checking the signature */
@@ -413,24 +396,18 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			return(NULL);
 
 		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
-			/* HACK: some S/MIME clients don't use the same key
+			/* Some S/MIME clients don't use the same key
 			 * and effective key length. The key length is
 			 * determined by the size of the decrypted RSA key.
-			 * So we hack things to manually set the RC2 key
-			 * because we currently can't do this with the EVP
-			 * interface.
 			 */
-#ifndef NO_RC2		
-			if(is_rc2) RC2_set_key(&(evp_ctx->c.rc2_ks),jj, tmp,
-					EVP_CIPHER_CTX_key_length(evp_ctx)*8);
-			else
-#endif
+			if(!EVP_CIPHER_CTX_set_key_length(evp_ctx, jj))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
 				goto err;
 				}
-		} else EVP_CipherInit(evp_ctx,NULL,tmp,NULL,0);
+		} 
+		EVP_CipherInit(evp_ctx,NULL,tmp,NULL,0);
 
 		memset(tmp,0,jj);
 

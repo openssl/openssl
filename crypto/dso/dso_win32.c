@@ -119,8 +119,8 @@ static int win32_load(DSO *dso, const char *filename)
 	len = strlen(filename);
 	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
 			(len + 4 < DSO_MAX_TRANSLATED_SIZE) &&
-			(strstr(filename, "/") == NULL)
-			(strstr(filename, "\\") == NULL)
+			(strstr(filename, "/") == NULL) &&
+			(strstr(filename, "\\") == NULL) &&
 			(strstr(filename, ":") == NULL))
 		{
 		sprintf(translated, "%s.dll", filename);
@@ -211,7 +211,7 @@ static int win32_bind(DSO *dso, const char *symname, void **symptr)
 	return(1);
 	}
 
-static int win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
+static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
         {
         if(dso == NULL)
                 {

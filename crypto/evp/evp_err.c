@@ -67,6 +67,8 @@
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
+{ERR_PACK(0,EVP_F_EVP_CIPHERINIT,0),	"EVP_CipherInit"},
+{ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,0),	"EVP_CIPHER_CTX_set_key_length"},
 {ERR_PACK(0,EVP_F_EVP_DECRYPTFINAL,0),	"EVP_DecryptFinal"},
 {ERR_PACK(0,EVP_F_EVP_MD_CTX_COPY,0),	"EVP_MD_CTX_copy"},
 {ERR_PACK(0,EVP_F_EVP_OPENINIT,0),	"EVP_OpenInit"},
@@ -104,9 +106,11 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_EXPECTING_A_DH_KEY                ,"expecting a dh key"},
 {EVP_R_EXPECTING_A_DSA_KEY               ,"expecting a dsa key"},
 {EVP_R_INPUT_NOT_INITIALIZED             ,"input not initialized"},
+{EVP_R_INVALID_KEY_LENGTH                ,"invalid key length"},
 {EVP_R_IV_TOO_LARGE                      ,"iv too large"},
 {EVP_R_KEYGEN_FAILURE                    ,"keygen failure"},
 {EVP_R_MISSING_PARAMETERS                ,"missing parameters"},
+{EVP_R_NO_CIPHER_SET                     ,"no cipher set"},
 {EVP_R_NO_DSA_PARAMETERS                 ,"no dsa parameters"},
 {EVP_R_NO_SIGN_FUNCTION_CONFIGURED       ,"no sign function configured"},
 {EVP_R_NO_VERIFY_FUNCTION_CONFIGURED     ,"no verify function configured"},

@@ -920,6 +920,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 		goto err;
 		}
+	ERR_clear_error(); /* but we keep s->verify_result */
 
 	/* server's cert for this session */
 	sc=ssl_sess_cert_new();
