@@ -12,6 +12,17 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Make it possible to replace the underlying "ERR" functions such that the
+     global state (2 LHASH tables and 2 locks) is only used by the "default"
+     implementation. This change also adds two functions to "get" and "set"
+     the implementation prior to it being automatically set the first time
+     any other ERR function takes place. Ie. an application can call "get",
+     pass the return value to a module it has just loaded, and that module
+     can call its own "set" function using that value. This means the
+     module's "ERR" operations will use (and modify) the error state in the
+     application and not in its own statically linked copy of OpenSSL code.
+     [Geoff Thorpe]
+
   +) Give DH, DSA, and RSA types their own "**_up()" function to increment
      reference counts. This performs normal REF_PRINT/REF_CHECK macros on
      the operation, and provides a more encapsulated way for external code
