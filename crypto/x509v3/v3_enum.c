@@ -97,7 +97,7 @@ ASN1_ENUMERATED *e;
 	long strval;
 	strval = ASN1_ENUMERATED_get(e);
 	for(enam =(ENUMERATED_NAMES *)method->usr_data; enam->lname; enam++) {
-		if(strval == enam->bitnum) return str_dup(enam->lname);
+		if(strval == enam->bitnum) return BUF_strdup(enam->lname);
 	}
 	return i2s_ASN1_ENUMERATED(method, e);
 }

@@ -237,7 +237,6 @@ int i2d_ext_ku(STACK *a, unsigned char **pp);
 STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
 void ext_ku_free(STACK *a);
 STACK *ext_ku_new(void);
-char *str_dup(char *val);
 
 #ifdef HEADER_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_VALUE *cnf);
@@ -307,8 +306,6 @@ int i2d_ext_ku();
 STACK *d2i_ext_ku();
 void ext_ku_free();
 STACK *ext_ku_new();
-
-char *str_dup();
 
 #ifdef HEADER_CONF_H
 void X509V3_conf_free();

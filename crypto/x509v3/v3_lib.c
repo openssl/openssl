@@ -64,7 +64,7 @@
 
 static STACK *ext_list = NULL;
 
-static ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
+static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(ext)

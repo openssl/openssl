@@ -66,15 +66,6 @@
 
 static char *strip_spaces(char *name);
 
-char *str_dup(str)
-char *str;
-{
-	char *tmp;
-	if(!(tmp = Malloc(strlen(str) + 1))) return NULL;
-	strcpy(tmp, str);
-	return tmp;
-}
-
 /* Add a CONF_VALUE name value pair to stack */
 
 int X509V3_add_value(name, value, extlist)
@@ -84,8 +75,8 @@ STACK **extlist;
 {
 	CONF_VALUE *vtmp = NULL;
 	char *tname = NULL, *tvalue = NULL;
-	if(name && !(tname = str_dup(name))) goto err;
-	if(value && !(tvalue = str_dup(value))) goto err;;
+	if(name && !(tname = BUF_strdup(name))) goto err;
+	if(value && !(tvalue = BUF_strdup(value))) goto err;;
 	if(!(vtmp = (CONF_VALUE *)Malloc(sizeof(CONF_VALUE)))) goto err;
 	if(!*extlist && !(*extlist = sk_new(NULL))) goto err;
 	vtmp->section = NULL;
@@ -237,7 +228,7 @@ char *line;
 	char *linebuf;
 	int state;
 	/* We are going to modify the line so copy it first */
-	linebuf = str_dup(line);
+	linebuf = BUF_strdup(line);
 	state = HDR_NAME;
 	ntmp = NULL;
 	/* Go through all characters */
