@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6e and 0.9.6f  [XX xxx XXXX]
+ Changes between 0.9.6e and 0.9.6f  [8 Aug 2002]
 
   *) Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
      and get fix the header length calculation.
