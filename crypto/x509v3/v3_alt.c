@@ -149,6 +149,60 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 	return ret;
 }
 
+int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
+{
+	char oline[256];
+	unsigned char *p;
+	switch (gen->type)
+	{
+		case GEN_OTHERNAME:
+		BIO_printf(out, "othername:<unsupported>");
+		break;
+
+		case GEN_X400:
+		BIO_printf(out, "X400Name:<unsupported>");
+		break;
+
+		case GEN_EDIPARTY:
+		/* Maybe fix this: it is supported now */
+		BIO_printf(out, "EdiPartyName:<unsupported>");
+		break;
+
+		case GEN_EMAIL:
+		BIO_printf(out, "email:%s",gen->d.ia5->data);
+		break;
+
+		case GEN_DNS:
+		BIO_printf(out, "DNS:%s",gen->d.ia5->data);
+		break;
+
+		case GEN_URI:
+		BIO_printf(out, "URI:%s",gen->d.ia5->data);
+		break;
+
+		case GEN_DIRNAME:
+		X509_NAME_oneline(gen->d.dirn, oline, 256);
+		BIO_printf(out, "DirName:%s",oline);
+		break;
+
+		case GEN_IPADD:
+		p = gen->d.ip->data;
+		/* BUG: doesn't support IPV6 */
+		if(gen->d.ip->length != 4) {
+			BIO_printf(out,"IP Address:<invalid>");
+			break;
+		}
+		BIO_printf(out, "IP Address:%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+		break;
+
+		case GEN_RID:
+		BIO_printf(out, "Registered ID");
+		i2a_ASN1_OBJECT(out, gen->d.rid);
+		break;
+	}
+	return 1;
+}
+
 static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {

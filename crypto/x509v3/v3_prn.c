@@ -147,6 +147,39 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 		return ok;
 }
 
+int X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent)
+{
+	int i, j;
+
+	if(sk_X509_EXTENSION_num(exts) <= 0) return 1;
+
+	if(title) 
+		{
+		BIO_printf(bp,"%*s%s:\n",indent, "", title);
+		indent += 4;
+		}
+
+	for (i=0; i<sk_X509_EXTENSION_num(exts); i++)
+		{
+		ASN1_OBJECT *obj;
+		X509_EXTENSION *ex;
+		ex=sk_X509_EXTENSION_value(exts, i);
+		if (BIO_printf(bp,"%*s",indent, "") <= 0) return 0;
+		obj=X509_EXTENSION_get_object(ex);
+		i2a_ASN1_OBJECT(bp,obj);
+		j=X509_EXTENSION_get_critical(ex);
+		if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
+			return 0;
+		if(!X509V3_EXT_print(bp, ex, flag, 12))
+			{
+			BIO_printf(bp, "%*s", indent + 4, "");
+			M_ASN1_OCTET_STRING_print(bp,ex->value);
+			}
+		if (BIO_write(bp,"\n",1) <= 0) return 0;
+		}
+	return 1;
+}
+
 static int unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent, int supported)
 {
 	switch(flag & X509V3_EXT_UNKNOWN_MASK) {

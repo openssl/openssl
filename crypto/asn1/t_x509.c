@@ -101,14 +101,13 @@ int X509_print(BIO *bp, X509 *x)
 int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	{
 	long l;
-	int ret=0,i,j,n;
+	int ret=0,i;
 	char *m=NULL,mlch = ' ';
 	int nmindent = 0;
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
 	const char *neg;
-	X509_EXTENSION *ex;
 	ASN1_STRING *str=NULL;
 
 	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
@@ -228,31 +227,9 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		EVP_PKEY_free(pkey);
 		}
 
-	if (cflag & X509_FLAG_NO_EXTENSIONS)
-		n = 0;
-	else
-		n=X509_get_ext_count(x);
-	if (n > 0)
-		{
-		BIO_printf(bp,"%8sX509v3 extensions:\n","");
-		for (i=0; i<n; i++)
-			{
-			ASN1_OBJECT *obj;
-			ex=X509_get_ext(x,i);
-			if (BIO_printf(bp,"%12s","") <= 0) goto err;
-			obj=X509_EXTENSION_get_object(ex);
-			i2a_ASN1_OBJECT(bp,obj);
-			j=X509_EXTENSION_get_critical(ex);
-			if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
-				goto err;
-			if(!X509V3_EXT_print(bp, ex, cflag, 16))
-				{
-				BIO_printf(bp, "%16s", "");
-				M_ASN1_OCTET_STRING_print(bp,ex->value);
-				}
-			if (BIO_write(bp,"\n",1) <= 0) goto err;
-			}
-		}
+	if (!(cflag & X509_FLAG_NO_EXTENSIONS))
+		X509V3_extensions_print(bp, "X509v3 extensions",
+					ci->extensions, cflag, 8);
 
 	if(!(cflag & X509_FLAG_NO_SIGDUMP))
 		{

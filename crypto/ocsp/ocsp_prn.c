@@ -1,9 +1,14 @@
-/* t_crl.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
- */
+/* ocsp_cid.c */
+/* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
+ * project. */
+
+/* History:
+   This file was originally part of ocsp.c and was transfered to Richard
+   Levitte from CertCo by Kathy Weinhold in mid-spring 2000 to be included
+   in OpenSSL or released as a patch kit. */
+
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -20,12 +25,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
+ *    openssl-core@openssl.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -34,7 +39,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -56,78 +61,65 @@
  *
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ocsp.h>
 #include <openssl/x509.h>
-#include <openssl/x509v3.h>
 
-#ifndef NO_FP_API
-int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
+int OCSP_CERTID_print(BIO *bp, OCSP_CERTID* a, int indent)
         {
-        BIO *b;
-        int ret;
-
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-		{
-		X509err(X509_F_X509_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
-		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=X509_CRL_print(b, x);
-        BIO_free(b);
-        return(ret);
-        }
-#endif
-
-int X509_CRL_print(BIO *out, X509_CRL *x)
-{
-	char buf[256];
-	STACK_OF(X509_REVOKED) *rev;
-	X509_REVOKED *r;
-	long l;
-	int i, n;
-
-	BIO_printf(out, "Certificate Revocation List (CRL):\n");
-	l = X509_CRL_get_version(x);
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l+1, l);
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
-	BIO_printf(out, "%8sSignature Algorithm: %s\n", "",
-				 (i == NID_undef) ? "NONE" : OBJ_nid2ln(i));
-	X509_NAME_oneline(X509_CRL_get_issuer(x),buf,256);
-	BIO_printf(out,"%8sIssuer: %s\n","",buf);
-	BIO_printf(out,"%8sLast Update: ","");
-	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
-	BIO_printf(out,"\n%8sNext Update: ","");
-	if (X509_CRL_get_nextUpdate(x))
-		 ASN1_TIME_print(out,X509_CRL_get_nextUpdate(x));
-	else BIO_printf(out,"NONE");
-	BIO_printf(out,"\n");
-
-	n=X509_CRL_get_ext_count(x);
-	X509V3_extensions_print(out, "CRL extensions",
-						x->crl->extensions, 0, 8);
-
-	rev = X509_CRL_get_REVOKED(x);
-
-	if(sk_X509_REVOKED_num(rev))
-	    BIO_printf(out, "Revoked Certificates:\n");
-	else BIO_printf(out, "No Revoked Certificates.\n");
-
-	for(i = 0; i < sk_X509_REVOKED_num(rev); i++) {
-		r = sk_X509_REVOKED_value(rev, i);
-		BIO_printf(out,"    Serial Number: ");
-		i2a_ASN1_INTEGER(out,r->serialNumber);
-		BIO_printf(out,"\n        Revocation Date: ","");
-		ASN1_TIME_print(out,r->revocationDate);
-		BIO_printf(out,"\n");
-		X509V3_extensions_print(out, "CRL entry extensions",
-						r->extensions, 0, 8);
-	}
-	X509_signature_print(out, x->sig_alg, x->signature);
-
+	BIO_printf(bp, "%*sCertificate ID:\n", indent, "");
+	indent += 2;
+	BIO_printf(bp, "%*sHash Algorithm: ", indent, "");
+	i2a_ASN1_OBJECT(bp, a->hashAlgorithm->algorithm);
+	BIO_printf(bp, "\n%*sIssuer Name Hash: ", indent, "");
+	i2a_ASN1_STRING(bp, a->issuerNameHash, V_ASN1_OCTET_STRING);
+	BIO_printf(bp, "\n%*sIssuer Key Hash: ", indent, "");
+	i2a_ASN1_STRING(bp, a->issuerKeyHash, V_ASN1_OCTET_STRING);
+	BIO_printf(bp, "\n%*sSerial Number: ", indent, "");
+	i2a_ASN1_INTEGER(bp, a->serialNumber);
+	BIO_printf(bp, "\n");
 	return 1;
+	}
 
-}
+int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
+        {
+	int i;
+	long l;
+	OCSP_CERTID* cid = NULL;
+	OCSP_ONEREQ *one = NULL;
+	OCSP_REQINFO *inf = o->tbsRequest;
+	OCSP_SIGNATURE *sig = o->optionalSignature;
+
+	if (BIO_write(bp,"OCSP Request Data:\n",19) <= 0) goto err;
+	l=ASN1_INTEGER_get(inf->version);
+	if (BIO_printf(bp,"%4sVersion: %lu (0x%lx)","",l+1,l) <= 0) goto err;
+	if (inf->requestorName != NULL)
+	        {
+		if (BIO_write(bp,"\n    Requestor Name: ",21) <= 0) 
+		        goto err;
+		GENERAL_NAME_print(bp, inf->requestorName);
+		}
+	if (BIO_write(bp,"\n    Requestor List:\n",21) <= 0) goto err;
+	for (i = 0; i < sk_OCSP_ONEREQ_num(inf->requestList); i++)
+	        {
+		if (!sk_OCSP_ONEREQ_value(inf->requestList, i)) continue;
+		one = sk_OCSP_ONEREQ_value(inf->requestList, i);
+		cid = one->reqCert;
+		OCSP_CERTID_print(bp, cid, 8);
+		if (!X509V3_extensions_print(bp,
+					"OCSP Request Single Extensions",
+					one->singleRequestExtensions, flags, 4))
+							goto err;
+		}
+	if (!X509V3_extensions_print(bp, "OCSP Request Extensions",
+			inf->requestExtensions, flags, 4))
+							goto err;
+	if (sig)
+	        {
+		X509_signature_print(bp, sig->signatureAlgorithm, sig->signature);
+		}
+	return 1;
+err:
+	return 0;
+	}

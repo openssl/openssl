@@ -510,7 +510,7 @@ void OCSP_REQUEST_free(OCSP_REQUEST *a);
 int i2d_OCSP_REQUEST(OCSP_REQUEST *a, unsigned char **pp);
 OCSP_REQUEST *d2i_OCSP_REQUEST(OCSP_REQUEST **a, unsigned char **pp, long length);
 int i2a_OCSP_REQUEST(BIO *bp, OCSP_REQUEST* a);
-int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* a);
+int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* a, unsigned long flags);
 
 OCSP_SIGNATURE *OCSP_SIGNATURE_new(void);
 void OCSP_SIGNATURE_free(OCSP_SIGNATURE *a);
