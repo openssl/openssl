@@ -164,34 +164,34 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 			bound[i] = c;
 		}
 		bound[32] = 0;
-		BIO_printf(bio, "MIME-Version: 1.0\n");
+		BIO_printf(bio, "MIME-Version: 1.0\r\n");
 		BIO_printf(bio, "Content-Type: multipart/signed;");
 		BIO_printf(bio, " protocol=\"application/x-pkcs7-signature\";");
-		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"\n\n", bound);
+		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"\r\n\r\n", bound);
 		BIO_printf(bio, "This is an S/MIME signed message\n\n");
 		/* Now write out the first part */
-		BIO_printf(bio, "------%s\n", bound);
-		if(flags & PKCS7_TEXT) BIO_printf(bio, "Content-Type: text/plain\n\n");
+		BIO_printf(bio, "------%s\r\n", bound);
+		if(flags & PKCS7_TEXT) BIO_printf(bio, "Content-Type: text/plain\r\n\r\n");
 		while((i = BIO_read(data, linebuf, MAX_SMLEN)) > 0) 
 						BIO_write(bio, linebuf, i);
-		BIO_printf(bio, "\n------%s\n", bound);
+		BIO_printf(bio, "\r\n------%s\r\n", bound);
 
 		/* Headers for signature */
 
-		BIO_printf(bio, "Content-Type: application/x-pkcs7-signature; name=\"smime.p7s\"\n");
-		BIO_printf(bio, "Content-Transfer-Encoding: base64\n");
-		BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7s\"\n\n");
+		BIO_printf(bio, "Content-Type: application/x-pkcs7-signature; name=\"smime.p7s\"\r\n");
+		BIO_printf(bio, "Content-Transfer-Encoding: base64\r\n");
+		BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7s\"\r\n\r\n");
 		B64_write_PKCS7(bio, p7);
-		BIO_printf(bio,"\n------%s--\n\n", bound);
+		BIO_printf(bio,"\r\n------%s--\r\n\r\n", bound);
 		return 1;
 	}
 	/* MIME headers */
-	BIO_printf(bio, "MIME-Version: 1.0\n");
-	BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Type: application/x-pkcs7-mime; name=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Transfer-Encoding: base64\n\n");
+	BIO_printf(bio, "MIME-Version: 1.0\r\n");
+	BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7m\"\r\n");
+	BIO_printf(bio, "Content-Type: application/x-pkcs7-mime; name=\"smime.p7m\"\r\n");
+	BIO_printf(bio, "Content-Transfer-Encoding: base64\r\n\r\n");
 	B64_write_PKCS7(bio, p7);
-	BIO_printf(bio, "\n");
+	BIO_printf(bio, "\r\n");
 	return 1;
 }
 
