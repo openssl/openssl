@@ -674,6 +674,23 @@ speed.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 speed.o: ../include/openssl/sha.h ../include/openssl/stack.h
 speed.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ./testdsa.h
 speed.o: ./testrsa.h apps.h progs.h
+spkac.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+spkac.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+spkac.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+spkac.o: ../include/openssl/crypto.h ../include/openssl/des.h
+spkac.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+spkac.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+spkac.o: ../include/openssl/err.h ../include/openssl/evp.h
+spkac.o: ../include/openssl/idea.h ../include/openssl/md2.h
+spkac.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+spkac.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+spkac.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+spkac.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+spkac.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+spkac.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+spkac.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+spkac.o: ../include/openssl/sha.h ../include/openssl/stack.h
+spkac.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h progs.h
 verify.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 verify.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 verify.o: ../include/openssl/buffer.h ../include/openssl/cast.h

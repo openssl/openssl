@@ -1878,3 +1878,4 @@ UTF8_putc                               1902
 UTF8_getc                               1903
 RSA_null_method                         1904
 ASN1_tag2str                            1905
+BIO_ctrl_reset_read_request             1906
