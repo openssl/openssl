@@ -549,10 +549,6 @@ bad:
 
 	ERR_load_crypto_strings();
 
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
-
 	/*****************************************************************/
 	tofree=NULL;
 	if (configfile == NULL) configfile = getenv("OPENSSL_CONF");
@@ -596,6 +592,10 @@ bad:
 
 	if (!load_config(bio_err, conf))
 		goto err;
+
+#ifndef OPENSSL_NO_ENGINE
+	e = setup_engine(bio_err, engine, 0);
+#endif
 
 	/* Lets get the config section we are using */
 	if (section == NULL)
