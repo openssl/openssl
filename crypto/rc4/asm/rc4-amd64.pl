@@ -181,7 +181,7 @@ $code.=<<___;
 
 .align	16
 .LRC4_CHAR:
-	inc	$XX#b
+	add	\$1,$XX#b
 	movzb	`&PTR("BYTE:[$dat+$XX]")`,$TX#d
 	add	$TX#b,$YY#b
 	movzb	`&PTR("BYTE:[$dat+$YY]")`,$TY#d
@@ -191,9 +191,9 @@ $code.=<<___;
 	movzb	`&PTR("BYTE:[$dat+$TY]")`,$TY#d
 	xorb	`&PTR("BYTE:[$inp]")`,$TY#b
 	movb	$TY#b,`&PTR("BYTE:[$out]")`
-	inc	$inp
-	inc	$out
-	dec	$len
+	lea	1($inp),$inp
+	lea	1($out),$out
+	sub	\$1,$len
 	jnz	.LRC4_CHAR
 	jmp	.Lexit
 ___
