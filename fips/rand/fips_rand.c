@@ -51,11 +51,17 @@
  * This is a FIPS approved PRNG, ANSI X9.31 A.2.4.
  */
 
+#include "e_os.h"
+
+/* If we don't define _XOPEN_SOURCE_EXTENDED, struct timeval won't
+   be defined and gettimeofday() won't be declared with strict compilers
+   like DEC C in ANSI C mode.  */
+#define _XOPEN_SOURCE_EXTENDED
+
 #include <openssl/des.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/fips_rand.h>
-#include "e_os.h"
 #ifndef OPENSSL_SYS_WIN32
 #include <sys/time.h>
 #endif
