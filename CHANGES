@@ -4,6 +4,9 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Deprecate BN_[get|set]_params() functions (they were ignored internally).
+     [Geoff Thorpe]
+
   *) New FIPS 180-2 algorithms, SHA-224/-256/-384/-512 are implemented.
      [Andy Polyakov and a number of other people]
 

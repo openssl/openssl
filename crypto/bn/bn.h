@@ -539,8 +539,10 @@ int BN_BLINDING_update(BN_BLINDING *b,BN_CTX *ctx);
 int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *r, BN_CTX *ctx);
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_DEPRECATED
 void BN_set_params(int mul,int high,int low,int mont);
 int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
+#endif
 
 void	BN_RECP_CTX_init(BN_RECP_CTX *recp);
 BN_RECP_CTX *BN_RECP_CTX_new(void);

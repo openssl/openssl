@@ -69,6 +69,8 @@
 
 const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
 
+/* This stuff appears to be completely unused, so is deprecated */
+#ifndef OPENSSL_NO_DEPRECATED
 /* For a 32 bit machine
  * 2 -   4 ==  128
  * 3 -   8 ==  256
@@ -127,6 +129,7 @@ int BN_get_params(int which)
 	else if (which == 3) return(bn_limit_bits_mont);
 	else return(0);
 	}
+#endif
 
 const BIGNUM *BN_value_one(void)
 	{

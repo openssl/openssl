@@ -1221,8 +1221,8 @@ BIO_f_reliable                          1244	EXIST::FUNCTION:BIO
 PKCS7_dataFinal                         1245	EXIST::FUNCTION:
 PKCS7_dataDecode                        1246	EXIST::FUNCTION:
 X509V3_EXT_CRL_add_conf                 1247	EXIST::FUNCTION:
-BN_set_params                           1248	EXIST::FUNCTION:
-BN_get_params                           1249	EXIST::FUNCTION:
+BN_set_params                           1248	EXIST::FUNCTION:DEPRECATED
+BN_get_params                           1249	EXIST::FUNCTION:DEPRECATED
 BIO_get_ex_num                          1250	NOEXIST::FUNCTION:
 BIO_set_ex_free_func                    1251	NOEXIST::FUNCTION:
 EVP_ripemd160                           1252	EXIST::FUNCTION:RIPEMD
@@ -3227,3 +3227,7 @@ SHA384_Init                             3629	EXIST::FUNCTION:SHA,SHA512
 SHA384_Final                            3630	EXIST::FUNCTION:SHA,SHA512
 SHA384                                  3631	EXIST::FUNCTION:SHA,SHA512
 SHA256_Update                           3632	EXIST::FUNCTION:SHA,SHA256
+EVP_sha384                              3633	EXIST::FUNCTION:SHA,SHA512
+EVP_sha512                              3634	EXIST::FUNCTION:SHA,SHA512
+EVP_sha224                              3635	EXIST::FUNCTION:SHA,SHA256
+EVP_sha256                              3636	EXIST::FUNCTION:SHA,SHA256
