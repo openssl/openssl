@@ -88,7 +88,7 @@ CALC_VERSIONS=	\
 
 LINK_APP=	\
   ( $(DEBUG);   \
-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done`; \
+    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$LDCMD $(LDFLAGS) $$LDFLAGS -o $$APPNAME $(OBJECTS) $$LIBDEPS )
@@ -96,7 +96,7 @@ LINK_APP=	\
 LINK_SO=	\
   ( $(DEBUG);   \
     nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq | while read d; do echo -n $${d}:; done`; \
+    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $$SHAREDCMD $(SHARED_LDFLAGS) $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
@@ -457,8 +457,47 @@ link_app.solaris:
 	$(LINK_APP)
 
 # OpenServer 5 native compilers used
-# UnixWare 7 and OpenUNIX 8 native compilers used
 link_o.svr3:
+	@ if ${DETECT_GNU_LD}; then \
+		$(DO_GNU_SO); \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so; \
+		SHLIB_SUFFIX=; \
+		LIBDEPS="$(LIBDEPS) -lc"; \
+		ALLSYMSFLAGS=''; \
+		NOALLSYMSFLAGS=''; \
+		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDCMD='$(CC)'; \
+	fi; \
+	$(LINK_SO_O)
+link_a.svr3:
+	@ if ${DETECT_GNU_LD}; then \
+		$(DO_GNU_SO); \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so; \
+		SHLIB_SUFFIX=; \
+		LIBDEPS="$(LIBDEPS) -lc"; \
+		ALLSYMSFLAGS=''; \
+		NOALLSYMSFLAGS=''; \
+		SHAREDFLAGS="-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+		SHAREDCMD='$(CC)'; \
+	fi; \
+	$(LINK_SO_A_UNPACKED)
+link_app.svr3:
+	@ if ${DETECT_GNU_LD}; then \
+		$(DO_GNU_APP); \
+	else \
+		LDCMD=$(CC);\
+		LDFLAGS=""; \
+		LIBDEPS="$(LIBDEPS) -lc"; \
+		APPNAME="$(APPNAME)"; \
+	fi; \
+	$(LINK_APP)
+
+# UnixWare 7 and OpenUNIX 8 native compilers used
+link_o.svr5:
 	@ if ${DETECT_GNU_LD}; then \
 		$(DO_GNU_SO); \
 	else \
@@ -474,7 +513,7 @@ link_o.svr3:
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
-link_a.svr3:
+link_a.svr5:
 	@ if ${DETECT_GNU_LD}; then \
 		$(DO_GNU_SO); \
 	else \
@@ -490,7 +529,7 @@ link_a.svr3:
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A_UNPACKED)
-link_app.svr3:
+link_app.svr5:
 	@ if ${DETECT_GNU_LD}; then \
 		$(DO_GNU_APP); \
 	else \
@@ -667,7 +706,7 @@ link_app.reliantunix:
 	$(LINK_APP)
 
 # Targets to build symbolic links when needed
-symlink.gnu symlink.solaris symlink.svr3 symlink.irix \
+symlink.gnu symlink.solaris symlink.svr3 symlink.svr5 symlink.irix \
 symlink.aix symlink.reliantunix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
@@ -717,10 +756,10 @@ link_o.svr3-shared: link_o.svr3
 link_a.svr3-shared: link_a.svr3
 link_app.svr3-shared: link_app.svr3
 symlink.svr3-shared: symlink.svr3
-link_o.svr5-shared: link_o.svr3
-link_a.svr5-shared: link_a.svr3
-link_app.svr5-shared: link_app.svr3
-symlink.svr5-shared: symlink.svr3
+link_o.svr5-shared: link_o.svr5
+link_a.svr5-shared: link_a.svr5
+link_app.svr5-shared: link_app.svr5
+symlink.svr5-shared: symlink.svr5
 link_o.irix-shared: link_o.irix
 link_a.irix-shared: link_a.irix
 link_app.irix-shared: link_app.irix
