@@ -144,11 +144,19 @@
      512 bits], about 30% for larger ones [1024 or 2048 bits].)
      [Bodo Moeller]
 
-  *) Disable ssl2_peek and ssl3_peek (i.e., both implementations
-     of SSL_peek) because they both are completely broken.
-     For fixing this, the internal read functions now have an additional
-     'peek' parameter, but the actual peek functionality has not
-     yet been implemented.
+  *) Fix ssl3_pending: If the record in s->s3->rrec is not of type
+     SSL3_RT_APPLICATION_DATA, return 0.
+     [Bodo Moeller]
+
+  *) Fix SSL_peek:
+     Both ssl2_peek and ssl3_peek, which were totally broken in earlier
+     releases, have been re-implemented by renaming the previous
+     implementations of ssl2_read and ssl3_read to ssl2_read_internal
+     and ssl3_read_internal, respectively, and adding 'peek' parameters
+     to them.  The new ssl[23]_{read,peek} functions are calls to
+     ssl[23]_read_internal with the 'peek' flag set appropriately.
+     A 'peek' parameter has also been added to ssl3_read_bytes, which
+     does the actual work for ssl3_read_internal.
      [Bodo Moeller]
 
   *) New function BN_kronecker.

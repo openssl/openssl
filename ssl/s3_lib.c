@@ -782,8 +782,7 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 
 int ssl3_pending(SSL *s)
 	{
-	/* The problem is that it may not be the correct record type */
-	return(s->s3->rrec.length); /* FIXME */
+	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ? s->s3->rrec.length : 0;
 	}
 
 int ssl3_new(SSL *s)

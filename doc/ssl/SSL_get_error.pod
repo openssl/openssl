@@ -14,8 +14,8 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
 SSL_get_error() returns a result code (suitable for the C "switch"
 statement) for a preceding call to SSL_connect(), SSL_accept(),
-SSL_read(), or SSL_write() on B<ssl>.  The value returned by that
-TLS/SSL I/O function must be passed to SSL_get_error() in parameter
+SSL_read(), SSL_peek(), or SSL_write() on B<ssl>.  The value returned by
+that TLS/SSL I/O function must be passed to SSL_get_error() in parameter
 B<ret>.
 
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
@@ -64,10 +64,10 @@ TLS/SSL I/O function should be retried.
 
 Caveat: Any TLS/SSL I/O function can lead to either of
 B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>.  In particular,
-SSL_read() may want to write data and SSL_write() may want to read
-data.  This is mainly because TLS/SSL handshakes may occur at any time
-during the protocol (initiated by either the client or the server);
-SSL_read() and SSL_write() will handle any pending handshakes.
+SSL_read() or SSL_peek() may want to write data and SSL_write() may want
+to read data.  This is mainly because TLS/SSL handshakes may occur at any
+time during the protocol (initiated by either the client or the server);
+SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
 
 =item SSL_ERROR_WANT_X509_LOOKUP
 

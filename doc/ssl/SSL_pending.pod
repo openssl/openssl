@@ -33,8 +33,8 @@ I<read_ahead> flag is set, additional protocol bytes may have been
 read containing more TLS/SSL records; these are ignored by
 SSL_pending().
 
-SSL_pending() does not check if the record type of pending data is
-application data.
+Up to OpenSSL 0.9.6, SSL_pending() does not check if the record type
+of pending data is application data.
 
 =head1 SEE ALSO
 
