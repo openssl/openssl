@@ -73,7 +73,7 @@ main()
 		exit(1);
 		}
 
-	lh_doall(conf,print_conf);
+	lh_doall(conf,(LHASH_DOALL_FN_TYPE)print_conf);
 	}
 
 

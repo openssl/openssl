@@ -302,7 +302,8 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 			}
 		if (amih == NULL)
 			{
-			if ((amih=lh_new(app_info_hash,app_info_cmp)) == NULL)
+			if ((amih=lh_new((LHASH_HASH_FN_TYPE)app_info_hash,
+					(LHASH_COMP_FN_TYPE)app_info_cmp)) == NULL)
 				{
 				OPENSSL_free(ami);
 				ret=0;
@@ -394,7 +395,8 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				}
 			if (mh == NULL)
 				{
-				if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
+				if ((mh=lh_new((LHASH_HASH_FN_TYPE)mem_hash,
+					(LHASH_COMP_FN_TYPE)mem_cmp)) == NULL)
 					{
 					OPENSSL_free(addr);
 					OPENSSL_free(m);
@@ -647,7 +649,8 @@ void CRYPTO_mem_leaks(BIO *b)
 	ml.chunks=0;
 	MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 	if (mh != NULL)
-		lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
+		lh_doall_arg(mh, (LHASH_DOALL_ARG_FN_TYPE)print_leak,
+				(char *)&ml);
 	if (ml.chunks != 0)
 		{
 		sprintf(buf,"%ld bytes leaked in %d chunks\n",
@@ -725,6 +728,6 @@ void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void 
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_doall_arg(mh,(void (*)())cb_leak,(void *)&cb);
+	lh_doall_arg(mh, (LHASH_DOALL_ARG_FN_TYPE)cb_leak,(void *)&cb);
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}

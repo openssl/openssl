@@ -96,7 +96,7 @@ TXT_DB *TXT_DB_read(char *in, int num);
 long TXT_DB_write(char *out, TXT_DB *db);
 #endif
 int TXT_DB_create_index(TXT_DB *db,int field,int (*qual)(),
-	 unsigned long (*hash)(),int (*cmp)());
+		LHASH_HASH_FN_TYPE hash, LHASH_COMP_FN_TYPE cmp);
 void TXT_DB_free(TXT_DB *db);
 char **TXT_DB_get_by_index(TXT_DB *db, int idx, char **value);
 int TXT_DB_insert(TXT_DB *db,char **value);

@@ -1164,7 +1164,8 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->default_passwd_callback_userdata=NULL;
 	ret->client_cert_cb=NULL;
 
-	ret->sessions=lh_new(SSL_SESSION_hash,SSL_SESSION_cmp);
+	ret->sessions=lh_new((LHASH_HASH_FN_TYPE)SSL_SESSION_hash,
+			(LHASH_COMP_FN_TYPE)SSL_SESSION_cmp);
 	if (ret->sessions == NULL) goto err;
 	ret->cert_store=X509_STORE_new();
 	if (ret->cert_store == NULL) goto err;

@@ -753,15 +753,17 @@ bad:
 		BIO_printf(bio_err,"generating index\n");
 		}
 	
-	if (!TXT_DB_create_index(db,DB_serial,NULL,index_serial_hash,
-		index_serial_cmp))
+	if (!TXT_DB_create_index(db, DB_serial, NULL,
+			(LHASH_HASH_FN_TYPE)index_serial_hash,
+			(LHASH_COMP_FN_TYPE)index_serial_cmp))
 		{
 		BIO_printf(bio_err,"error creating serial number index:(%ld,%ld,%ld)\n",db->error,db->arg1,db->arg2);
 		goto err;
 		}
 
-	if (!TXT_DB_create_index(db,DB_name,index_name_qual,index_name_hash,
-		index_name_cmp))
+	if (!TXT_DB_create_index(db, DB_name, index_name_qual,
+			(LHASH_HASH_FN_TYPE)index_name_hash,
+			(LHASH_COMP_FN_TYPE)index_name_cmp))
 		{
 		BIO_printf(bio_err,"error creating name index:(%ld,%ld,%ld)\n",
 			db->error,db->arg1,db->arg2);

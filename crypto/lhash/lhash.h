@@ -84,11 +84,16 @@ typedef struct lhash_node_st
 #endif
 	} LHASH_NODE;
 
+typedef int (*LHASH_COMP_FN_TYPE)(void *, void *);
+typedef unsigned long (*LHASH_HASH_FN_TYPE)(void *);
+typedef void (*LHASH_DOALL_FN_TYPE)(void *);
+typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
+
 typedef struct lhash_st
 	{
 	LHASH_NODE **b;
-	int (*comp)();
-	unsigned long (*hash)();
+	LHASH_COMP_FN_TYPE comp;
+	LHASH_HASH_FN_TYPE hash;
 	unsigned int num_nodes;
 	unsigned int num_alloc_nodes;
 	unsigned int p;
@@ -120,13 +125,13 @@ typedef struct lhash_st
  * in lh_insert(). */
 #define lh_error(lh)	((lh)->error)
 
-LHASH *lh_new(unsigned long (*h)(/* void *a */), int (*c)(/* void *a,void *b */));
+LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
 void lh_free(LHASH *lh);
 void *lh_insert(LHASH *lh, void *data);
 void *lh_delete(LHASH *lh, void *data);
 void *lh_retrieve(LHASH *lh, void *data);
-    void lh_doall(LHASH *lh, void (*func)(/*void *b*/));
-void lh_doall_arg(LHASH *lh, void (*func)(/*void *a,void *b*/),void *arg);
+void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func);
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const LHASH *lh);
 

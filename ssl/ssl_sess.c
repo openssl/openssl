@@ -606,7 +606,7 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	i=tp.cache->down_load;
 	tp.cache->down_load=0;
-	lh_doall_arg(tp.cache,(void (*)())timeout,&tp);
+	lh_doall_arg(tp.cache, (LHASH_DOALL_ARG_FN_TYPE)timeout, &tp);
 	tp.cache->down_load=i;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	}

@@ -31,7 +31,8 @@ int OBJ_NAME_init(void)
 	{
 	if (names_lh != NULL) return(1);
 	MemCheck_off();
-	names_lh=lh_new(obj_name_hash,obj_name_cmp);
+	names_lh=lh_new((LHASH_HASH_FN_TYPE)obj_name_hash,
+			(LHASH_COMP_FN_TYPE)obj_name_cmp);
 	MemCheck_on();
 	return(names_lh != NULL);
 	}
@@ -245,7 +246,7 @@ void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),void *arg)
 	d.fn=fn;
 	d.arg=arg;
 
-	lh_doall_arg(names_lh,do_all_fn,&d);
+	lh_doall_arg(names_lh,(LHASH_DOALL_ARG_FN_TYPE)do_all_fn,&d);
 	}
 
 struct doall_sorted
@@ -320,7 +321,7 @@ void OBJ_NAME_cleanup(int type)
 	down_load=names_lh->down_load;
 	names_lh->down_load=0;
 
-	lh_doall(names_lh,names_lh_free);
+	lh_doall(names_lh,(LHASH_DOALL_FN_TYPE)names_lh_free);
 	if (type < 0)
 		{
 		lh_free(names_lh);

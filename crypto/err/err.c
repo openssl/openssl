@@ -316,7 +316,8 @@ void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 	if (error_hash == NULL)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
-		error_hash=lh_new(err_hash,err_cmp);
+		error_hash=lh_new((LHASH_HASH_FN_TYPE)err_hash,
+				(LHASH_COMP_FN_TYPE)err_cmp);
 		if (error_hash == NULL)
 			{
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
@@ -706,7 +707,8 @@ ERR_STATE *ERR_get_state(void)
 		/* no entry yet in thread_hash for current thread -
 		 * thus, it may have changed since we last looked at it */
 		if (thread_hash == NULL)
-			thread_hash = lh_new(pid_hash, pid_cmp);
+			thread_hash = lh_new((LHASH_HASH_FN_TYPE)pid_hash,
+					(LHASH_COMP_FN_TYPE)pid_cmp);
 		if (thread_hash == NULL)
 			thread_state_exists = 0; /* allocation error */
 		else

@@ -111,7 +111,7 @@ static void expand(LHASH *lh);
 static void contract(LHASH *lh);
 static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash);
 
-LHASH *lh_new(unsigned long (*h)(), int (*c)())
+LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 	{
 	LHASH *ret;
 	int i;
@@ -122,8 +122,8 @@ LHASH *lh_new(unsigned long (*h)(), int (*c)())
 		goto err1;
 	for (i=0; i<MIN_NODES; i++)
 		ret->b[i]=NULL;
-	ret->comp=((c == NULL)?(int (*)())strcmp:c);
-	ret->hash=((h == NULL)?(unsigned long (*)())lh_strhash:h);
+	ret->comp=((c == NULL)?(LHASH_COMP_FN_TYPE)strcmp:c);
+	ret->hash=((h == NULL)?(LHASH_HASH_FN_TYPE)lh_strhash:h);
 	ret->num_nodes=MIN_NODES/2;
 	ret->num_alloc_nodes=MIN_NODES;
 	ret->p=0;
@@ -267,12 +267,19 @@ void *lh_retrieve(LHASH *lh, void *data)
 	return(ret);
 	}
 
-void lh_doall(LHASH *lh, void (*func)())
+void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
 	{
-	lh_doall_arg(lh,func,NULL);
+	/* Yikes that's bad - we're accepting a function that accepts 2
+	 * parameters (albeit we have to waive type-safety here) and then
+	 * forcibly calling that callback with *3* parameters leaving the 3rd
+	 * NULL. Obviously this "works" otherwise it wouldn't have survived so
+	 * long, but is it "good"??
+	 * FIXME: Use an internal function from this and the "_arg" version that
+	 * doesn't assume the ability to mutate function prototypes so badly. */
+	lh_doall_arg(lh, (LHASH_DOALL_ARG_FN_TYPE)func, NULL);
 	}
 
-void lh_doall_arg(LHASH *lh, void (*func)(), void *arg)
+void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -312,7 +319,7 @@ static void expand(LHASH *lh)
 #ifndef NO_HASH_COMP
 		hash=np->hash;
 #else
-		hash=(*(lh->hash))(np->data);
+		hash=lh->hash(np->data);
 		lh->num_hash_calls++;
 #endif
 		if ((hash%nni) != p)
@@ -415,7 +422,7 @@ static LHASH_NODE **getrn(LHASH *lh, void *data, unsigned long *rhash)
 			}
 #endif
 		lh->num_comp_calls++;
-		if ((*cf)(n1->data,data) == 0)
+		if(cf(n1->data,data) == 0)
 			break;
 		ret= &(n1->next);
 		}

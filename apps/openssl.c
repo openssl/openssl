@@ -351,7 +351,9 @@ static LHASH *prog_init(void)
 	    ;
 	qsort(functions,i,sizeof *functions,SortFnByName);
 
-	if ((ret=lh_new(hash,cmp)) == NULL) return(NULL);
+	if ((ret=lh_new((LHASH_HASH_FN_TYPE)hash,
+			(LHASH_COMP_FN_TYPE)cmp)) == NULL)
+		return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
 		lh_insert(ret,f);

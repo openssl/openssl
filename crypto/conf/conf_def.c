@@ -712,7 +712,7 @@ static void dump_value(CONF_VALUE *a, BIO *out)
 
 static int def_dump(CONF *conf, BIO *out)
 	{
-	lh_doall_arg(conf->data, (void (*)())dump_value, out);
+	lh_doall_arg(conf->data, (LHASH_DOALL_ARG_FN_TYPE)dump_value, out);
 	return 1;
 	}
 
