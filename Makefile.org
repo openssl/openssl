@@ -334,11 +334,18 @@ do_cygwin-shared:
 	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
-	( set -x; ${CC}  -shared -o cyg$$i-$(SHLIB_VERSION_NUMBER).dll \
+	shlib=cyg$${i}-$(SHLIB_VERSION_NUMBER).dll; \
+	[ "$(PLATFORM)" = "mingw" ] && shlib=$${i}eay32.dll; \
+	[ -f apps/$$shlib ] && rm apps/$$shlib; \
+	[ -f test/$$shlib ] && rm test/$$shlib; \
+	base=;  [ $$i = "crypto" ] && base=-Wl,--image-base,0xFE00000; \
+	( set -x; ${CC} ${SHARED_LDFLAGS} \
+		-shared $$base -o $$shlib \
 		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--out-implib,lib$$i.dll.a \
-		-Wl,--no-whole-archive $$libs ) || exit 1; \
+		-Wl,--no-whole-archive $$libs ${EX_LIBS} ) || exit 1; \
+	cp -p $$shlib apps/; cp -p $$shlib test/; \
 	libs="-l$$i $$libs"; \
 	done
 
