@@ -1026,9 +1026,8 @@ static int ssl3_send_server_key_exchange(SSL *s)
 					q+=i;
 					j+=i;
 					}
-				i=RSA_private_encrypt(j,md_buf,&(p[2]),
-					pkey->pkey.rsa,RSA_PKCS1_PADDING);
-				if (i <= 0)
+				if (RSA_sign(NID_md5_sha1, md_buf, j,
+					&(p[2]), &i, pkey->pkey.rsa) <= 0)
 					{
 					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_RSA);
 					goto err;
@@ -1449,16 +1448,16 @@ static int ssl3_get_cert_verify(SSL *s)
 #ifndef NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA)
 		{
-		i=RSA_public_decrypt(i,p,p,pkey->pkey.rsa,RSA_PKCS1_PADDING);
+		i=RSA_verify(NID_md5_sha1, s->s3->tmp.finish_md,
+			MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH, p, i, 
+							pkey->pkey.rsa);
 		if (i < 0)
 			{
 			al=SSL_AD_DECRYPT_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_BAD_RSA_DECRYPT);
 			goto f_err;
 			}
-		if ((i != (MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH)) ||
-			memcmp(&(s->s3->tmp.finish_md[0]),p,
-				MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH))
+		if (i == 0)
 			{
 			al=SSL_AD_DECRYPT_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_BAD_RSA_SIGNATURE);

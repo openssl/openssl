@@ -1053,15 +1053,15 @@ static int ssl3_get_key_exchange(SSL *s)
 				q+=i;
 				j+=i;
 				}
-			i=RSA_public_decrypt((int)n,p,p,pkey->pkey.rsa,
-				RSA_PKCS1_PADDING);
-			if (i <= 0)
+			i=RSA_verify(NID_md5_sha1, md_buf, j, p, n,
+								pkey->pkey.rsa);
+			if (i < 0)
 				{
 				al=SSL_AD_DECRYPT_ERROR;
 				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_RSA_DECRYPT);
 				goto f_err;
 				}
-			if ((j != i) || (memcmp(p,md_buf,i) != 0))
+			if (i == 0)
 				{
 				/* bad signature */
 				al=SSL_AD_DECRYPT_ERROR;
@@ -1481,11 +1481,9 @@ static int ssl3_send_client_verify(SSL *s)
 			{
 			s->method->ssl3_enc->cert_verify_mac(s,
 				&(s->s3->finish_dgst1),&(data[0]));
-			i=RSA_private_encrypt(
-				MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
-				data,&(p[2]),pkey->pkey.rsa,
-				RSA_PKCS1_PADDING);
-			if (i <= 0)
+			if (RSA_sign(NID_md5_sha1, data,
+					 MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
+					&(p[2]), &i, pkey->pkey.rsa) <= 0 )
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_RSA_LIB);
 				goto err;

@@ -91,6 +91,18 @@ typedef struct rsa_meth_st
 	int (*finish)(RSA *rsa);	/* called at free */
 	int flags;			/* RSA_METHOD_FLAG_* things */
 	char *app_data;			/* may be needed! */
+/* New sign and verify functions: some libraries don't allow arbitrary data
+ * to be signed/verified: this allows them to be used. Note: for this to work
+ * the RSA_public_decrypt() and RSA_private_encrypt() should *NOT* be used
+ * RSA_sign(), RSA_verify() should be used instead. Note: for backwards
+ * compatability this functionality is only enabled if the RSA_FLAG_SIGN_VER
+ * option is set in 'flags'.
+ */
+	int (*rsa_sign)(int type, unsigned char *m, unsigned int m_len,
+             unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+	int (*rsa_verify)(int dtype, unsigned char *m, unsigned int m_len,
+             unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+
 	} RSA_METHOD;
 
 struct rsa_st
@@ -139,6 +151,10 @@ struct rsa_st
  * gets called when private key components are absent.
  */
 #define RSA_FLAG_EXT_PKEY		0x20
+
+/* This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify functions.
+ */
+#define RSA_FLAG_SIGN_VER		0x40
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
@@ -299,6 +315,7 @@ char *RSA_get_ex_data(RSA *r, int idx);
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
+#define RSA_R_INVALID_MESSAGE_LENGTH			 131
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113

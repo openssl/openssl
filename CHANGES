@@ -4,6 +4,17 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Enhance RSA_METHOD structure. Now there are two extra methods, rsa_sign
+     and rsa_verify. When the RSA_FLAGS_SIGN_VER option is set these functions
+     will be called when RSA_sign() and RSA_verify() are used. This is useful
+     if rsa_pub_dec() and rsa_priv_enc() equivalents are not available.
+     For this to work properly RSA_public_decrypt() and RSA_private_encrypt()
+     should *not* be used: RSA_sign() and RSA_verify() must be used instead.
+     This necessitated the support of an extra signature type NID_md5_sha1
+     for SSL signatures and modifications to the SSL library to use it instead
+     of calling RSA_public_decrypt() and RSA_private_encrypt().
+     [Steve Henson]
+
   *) Add new -verify -CAfile and -CApath options to the crl program, these
      will lookup a CRL issuers certificate and verify the signature in a
      similar way to the verify program. Tidy up the crl program so it
