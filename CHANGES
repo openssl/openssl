@@ -4,6 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Fix ssl3_get_message (ssl/s3_both.c) to handle message fragmentation
+     correctly.
+     [Bodo Moeller]
+
   *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
      client receives HelloRequest while in a handshake.
      [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
