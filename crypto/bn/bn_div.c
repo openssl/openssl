@@ -216,10 +216,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		t1=((BN_ULLONG)n0<<BN_BITS2)|n1;
 		for (;;)
 			{
-			t2=(BN_ULLONG)d1*q;
 			rem=t1-(BN_ULLONG)q*d0;
-			if ((rem>>BN_BITS2) ||
-				(t2 <= ((BN_ULLONG)(rem<<BN_BITS2)+wnump[-2])))
+			t2=(BN_ULLONG)d1*q;
+                        if ((rem>>BN_BITS2) ||
+				(t2 <= ((rem<<BN_BITS2)|wnump[-2])))
 				break;
 			q--;
 			}
