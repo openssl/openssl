@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
+ Changes between 0.9.6g and 0.9.6h  [21 Dec 2002]
 
   *) New function OPENSSL_cleanse(), which is used to cleanse a section of
      memory from it's contents.  This is done with a counter that will
