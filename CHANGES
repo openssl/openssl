@@ -4,7 +4,8 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
-  *)
+  *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
+     [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
  Changes between 0.9.6b and 0.9.6c  [21 dec 2001]
 
