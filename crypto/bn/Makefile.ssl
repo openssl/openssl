@@ -138,6 +138,8 @@ asm/ia64-cpp.o:	asm/ia64.S
 	$(CC) $(ASFLAGS) -c -o asm/ia64-cpp.o /tmp/ia64.$$$$.s;	\
 	rm -f /tmp/ia64.$$$$.s
 
+asm/x86_64-gcc.o: asm/x86_64-gcc.c
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 

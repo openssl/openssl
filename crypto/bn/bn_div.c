@@ -150,6 +150,20 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	    q;					\
 	})
 #  define REMAINDER_IS_ALREADY_CALCULATED
+#  elif defined(__x86_64) && defined(SIXTY_FOUR_BIT_LONG)
+   /*
+    * Same story here, but it's 128-bit by 64-bit division. Wow!
+    *					<appro@fy.chalmers.se>
+    */
+#  define bn_div_words(n0,n1,d0)		\
+	({  asm volatile (			\
+		"divq	%4"			\
+		: "=a"(q), "=d"(rem)		\
+		: "a"(n1), "d"(n0), "g"(d0)	\
+		: "cc");			\
+	    q;					\
+	})
+#  define REMAINDER_IS_ALREADY_CALCULATED
 #  endif /* __<cpu> */
 # endif /* __GNUC__ */
 #endif /* OPENSSL_NO_ASM */
@@ -296,7 +310,9 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			rem=(n1-q*d0)&BN_MASK2;
 #endif
 
-#ifdef BN_UMULT_HIGH
+#if defined(BN_UMULT_LOHI)
+			BN_UMULT_LOHI(t2l,t2h,d1,q);
+#elif defined(BN_UMULT_HIGH)
 			t2l = d1 * q;
 			t2h = BN_UMULT_HIGH(d1,q);
 #else

@@ -86,21 +86,7 @@ int MD5_Init(MD5_CTX *c)
 void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 	{
 	const MD5_LONG *X=data;
-	register unsigned long A,B,C,D;
-	/*
-	 * In case you wonder why A-D are declared as long and not
-	 * as MD5_LONG. Doing so results in slight performance
-	 * boost on LP64 architectures. The catch is we don't
-	 * really care if 32 MSBs of a 64-bit register get polluted
-	 * with eventual overflows as we *save* only 32 LSBs in
-	 * *either* case. Now declaring 'em long excuses the compiler
-	 * from keeping 32 MSBs zeroed resulting in 13% performance
-	 * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
-	 * Well, to be honest it should say that this *prevents* 
-	 * performance degradation.
-	 *
-	 *				<appro@fy.chalmers.se>
-	 */
+	register unsigned MD32_REG_T A,B,C,D;
 
 	A=c->A;
 	B=c->B;
@@ -193,25 +179,11 @@ void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
 	{
 	const unsigned char *data=data_;
-	register unsigned long A,B,C,D,l;
-	/*
-	 * In case you wonder why A-D are declared as long and not
-	 * as MD5_LONG. Doing so results in slight performance
-	 * boost on LP64 architectures. The catch is we don't
-	 * really care if 32 MSBs of a 64-bit register get polluted
-	 * with eventual overflows as we *save* only 32 LSBs in
-	 * *either* case. Now declaring 'em long excuses the compiler
-	 * from keeping 32 MSBs zeroed resulting in 13% performance
-	 * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
-	 * Well, to be honest it should say that this *prevents* 
-	 * performance degradation.
-	 *
-	 *				<appro@fy.chalmers.se>
-	 */
+	register unsigned MD32_REG_T A,B,C,D,l;
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */
-	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
-			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
+	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+				XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 # define X(i)	XX##i
 #else
 	MD5_LONG XX[MD5_LBLOCK];
