@@ -224,12 +224,13 @@ int main(int argc, char *argv[])
 	verbose = 0;
 	debug = 0;
 	cipher = 0;
-	
+
+	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);	
+
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
-	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
 
 	argc--;
