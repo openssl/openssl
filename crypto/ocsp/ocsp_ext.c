@@ -83,7 +83,7 @@
 /* also CRL Entry Extensions */
 
 ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(), 
-				char *data, STACK *sk)
+				char *data, STACK_OF(ASN1_OBJECT) *sk)
         {
 	int i;
 	unsigned char *p, *b = NULL;
@@ -97,11 +97,11 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(),
 		}
 	else if (sk)
 	        {
-		if ((i=i2d_ASN1_SET(sk,NULL,i2d,V_ASN1_SEQUENCE,
+		if ((i=i2d_ASN1_SET_OF_ASN1_OBJECT(sk,NULL,i2d,V_ASN1_SEQUENCE,
 				   V_ASN1_UNIVERSAL,IS_SEQUENCE))<=0) goto err;
 		if (!(b=p=(unsigned char*)OPENSSL_malloc((unsigned int)i)))
 			goto err;
-		if (i2d_ASN1_SET(sk,&p,i2d,V_ASN1_SEQUENCE,
+		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk,&p,i2d,V_ASN1_SEQUENCE,
 				 V_ASN1_UNIVERSAL,IS_SEQUENCE)<=0) goto err;
 		}
 	else
@@ -171,11 +171,12 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
 	STACK_OF(ASN1_OBJECT) *sk = NULL;
 	ASN1_OBJECT *o = NULL;
         X509_EXTENSION *x = NULL;
-	if (!(sk = sk_new(NULL))) goto err;
+
+	if (!(sk = sk_ASN1_OBJECT_new(NULL))) goto err;
 	while (oids && *oids)
 	        {
 		if ((nid=OBJ_txt2nid(*oids))!=NID_undef&&(o=OBJ_nid2obj(nid))) 
-		        sk_push(sk, (char*) o);
+		        sk_ASN1_OBJECT_push(sk, o);
 		oids++;
 		}
 	if (!(x = X509_EXTENSION_new())) goto err;
@@ -298,15 +299,15 @@ int OCSP_extension_print(BIO *bp,
 				      ind, "") <= 0)
 			        goto err;
 		        p = x->value->data;
-		        if (!(d2i_ASN1_SET(&sk, &p, x->value->length, 
-					   (char *(*)())d2i_ASN1_OBJECT, 
-					   (void (*)(void *))ASN1_OBJECT_free,
+		        if (!(d2i_ASN1_SET_OF_ASN1_OBJECT(&sk, &p, x->value->length, 
+					   d2i_ASN1_OBJECT, 
+					   ASN1_OBJECT_free,
 					   V_ASN1_SEQUENCE, 
 					   V_ASN1_UNIVERSAL)))
 			        goto err;
-			for (i = 0; i < sk_num(sk); i++)
+			for (i = 0; i < sk_ASN1_OBJECT_num(sk); i++)
 			        {
-		                j=OBJ_obj2nid((ASN1_OBJECT*)sk->data[i]);
+		                j=OBJ_obj2nid(sk_ASN1_OBJECT_value(sk,i));
 		                if (BIO_printf(bp," %s ",
 					       (j == NID_undef)?"UNKNOWN":
 					                   OBJ_nid2ln(j)) <= 0)

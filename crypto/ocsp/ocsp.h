@@ -430,7 +430,7 @@ OCSP_RESPONSE *OCSP_response_new(int status,
 				 char *data);
 
 ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, int (*i2d)(), 
-				char *data, STACK *sk);
+				char *data, STACK_OF(ASN1_OBJECT) *sk);
 
 X509_EXTENSION *OCSP_nonce_new(void *p, unsigned int len);
 
