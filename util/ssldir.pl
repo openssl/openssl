@@ -23,7 +23,7 @@ $#ARGV == 0 || die "usage: ssldir.pl /new/path\n";
 	);
 
 %mk1mf=(
-	'^$INSTALLTOP=','$INSTALLTOP="%s";',
+	'^\$INSTALLTOP=','$INSTALLTOP="%s";',
 	);
 
 &dofile("crypto/cryptlib.h",$ARGV[0],%cryptlib);
