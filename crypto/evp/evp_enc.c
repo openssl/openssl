@@ -100,7 +100,15 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		 * ENGINE and EVP_CIPHER could be used). */
 		if(ctx->engine)
 			ENGINE_finish(ctx->engine);
-		if(!impl)
+		if(impl)
+			{
+			if (!ENGINE_init(impl))
+				{
+				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
+				return 0;
+				}
+			}
+		else
 			/* Ask if an ENGINE is reserved for this job */
 			impl = ENGINE_get_cipher_engine(cipher->nid);
 		if(impl)

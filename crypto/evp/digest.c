@@ -152,7 +152,15 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		 * ENGINE and EVP_MD could be used). */
 		if(ctx->engine)
 			ENGINE_finish(ctx->engine);
-		if(!impl)
+		if(impl)
+			{
+			if (!ENGINE_init(impl))
+				{
+				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_INITIALIZATION_ERROR);
+				return 0;
+				}
+			}
+		else
 			/* Ask if an ENGINE is reserved for this job */
 			impl = ENGINE_get_digest_engine(type->type);
 		if(impl)
