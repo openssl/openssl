@@ -420,6 +420,12 @@ bad:
 
 
 	con=SSL_new(ctx);
+#ifndef NO_KRB5
+	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
+                {
+                kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVER, host);
+		}
+#endif	/* NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 
 re_start:

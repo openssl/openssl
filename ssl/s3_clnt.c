@@ -65,6 +65,10 @@
 #include <openssl/evp.h>
 #include "ssl_locl.h"
 
+#ifndef NO_KRB5
+#include "kssl.h"
+#endif
+
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
 static int ssl3_get_server_hello(SSL *s);
@@ -687,6 +691,7 @@ static int ssl3_get_server_certificate(SSL *s)
 	STACK_OF(X509) *sk=NULL;
 	SESS_CERT *sc;
 	EVP_PKEY *pkey=NULL;
+        int need_cert = 1; /* VRS: 0=> will allow null cert if auth == KRB5 */
 
 	n=ssl3_get_message(s,
 		SSL3_ST_CR_CERT_A,
@@ -782,10 +787,23 @@ static int ssl3_get_server_certificate(SSL *s)
 	 * certificate, which we don't include in s3_srvr.c */
 	x=sk_X509_value(sk,0);
 	sk=NULL;
+ 	/* VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end */
 
 	pkey=X509_get_pubkey(x);
 
-	if ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey))
+        /* VRS: allow null cert if auth == KRB5 */
+        need_cert =
+                ((s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+                        == (SSL_aKRB5|SSL_kKRB5))? 0: 1;
+
+#ifdef KSSL_DEBUG
+	printf("pkey,x = %p, %p\n", pkey,x);
+	printf("ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x,pkey));
+	printf("cipher, alg, nc = %s, %lx, %d\n", s->s3->tmp.new_cipher->name,
+                s->s3->tmp.new_cipher->algorithms, need_cert);
+#endif    /* KSSL_DEBUG */
+
+	if (need_cert  &&  ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey)))
 		{
 		x=NULL;
 		al=SSL3_AL_FATAL;
@@ -794,7 +812,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		}
 
 	i=ssl_cert_type(x,pkey);
-	if (i < 0)
+	if (need_cert && i < 0)
 		{
 		x=NULL;
 		al=SSL3_AL_FATAL;
@@ -802,19 +820,31 @@ static int ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 		}
 
-	sc->peer_cert_type=i;
-	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-	if (sc->peer_pkeys[i].x509 != NULL) /* Why would this ever happen?
-										 * We just created sc a couple of
-										 * lines ago. */
-		X509_free(sc->peer_pkeys[i].x509);
-	sc->peer_pkeys[i].x509=x;
-	sc->peer_key= &(sc->peer_pkeys[i]);
+        if (need_cert)
+                {
+                sc->peer_cert_type=i;
+                CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
+                /* Why would the following ever happen?
+                 * We just created sc a couple of lines ago. */
+                if (sc->peer_pkeys[i].x509 != NULL)
+                        X509_free(sc->peer_pkeys[i].x509);
+                sc->peer_pkeys[i].x509=x;
+                sc->peer_key= &(sc->peer_pkeys[i]);
 
-	if (s->session->peer != NULL)
-		X509_free(s->session->peer);
-	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-	s->session->peer=x;
+                if (s->session->peer != NULL)
+                        X509_free(s->session->peer);
+                CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
+                s->session->peer=x;
+                }
+        else
+                {
+                sc->peer_cert_type=i;
+                sc->peer_key= NULL;
+
+                if (s->session->peer != NULL)
+                        X509_free(s->session->peer);
+                s->session->peer=NULL;
+                }
 	s->session->verify_result = s->verify_result;
 
 	x=NULL;
@@ -1322,6 +1352,9 @@ static int ssl3_send_client_key_exchange(SSL *s)
 	unsigned char *q;
 	EVP_PKEY *pkey=NULL;
 #endif
+#ifndef NO_KRB5
+        KSSL_ERR kssl_err;
+#endif /* NO_KRB5 */
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A)
 		{
@@ -1330,8 +1363,10 @@ static int ssl3_send_client_key_exchange(SSL *s)
 
 		l=s->s3->tmp.new_cipher->algorithms;
 
+                /* Fool emacs indentation */
+                if (0) {}
 #ifndef NO_RSA
-		if (l & SSL_kRSA)
+		else if (l & SSL_kRSA)
 			{
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
@@ -1388,10 +1423,75 @@ static int ssl3_send_client_key_exchange(SSL *s)
 					tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
 			memset(tmp_buf,0,SSL_MAX_MASTER_KEY_LENGTH);
 			}
-		else
+#endif
+#ifndef NO_KRB5
+		else if (l & SSL_kKRB5)
+                        {
+                        krb5_error_code	krb5rc;
+                        KSSL_CTX	*kssl_ctx = s->kssl_ctx;
+                        krb5_data	krb5_ap_req;
+
+#ifdef KSSL_DEBUG
+                        printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
+                                l, SSL_kKRB5);
+#endif	/* KSSL_DEBUG */
+
+                        /*
+                        **	Tried to send random tmp_buf[] as PMS in Kerberos ticket
+                        **	by passing  krb5_mk_req_extended(ctx,authctx,opts, tmp_buf, ...)
+                        **	but: I can't retrieve the PMS on the other side!  There is
+                        **	some indication in the krb5 source that this is only used
+                        **	to generate a checksum.  OTOH, the Tung book shows data
+                        **	("GET widget01.txt") being passed in krb5_mk_req_extended()
+                        **	by way of krb5_sendauth().  I don't get it.
+                        **	Until Kerberos goes 3DES, the big PMS secret would only be
+                        **	encrypted in 1-DES anyway.  So losing the PMS shouldn't be
+                        **	a big deal.
+                        */
+                        krb5rc = kssl_cget_tkt(kssl_ctx, &krb5_ap_req,
+                                &kssl_err);
+#ifdef KSSL_DEBUG
+                        {
+                        printf("kssl_cget_tkt rtn %d\n", krb5rc);
+                        kssl_ctx_show(kssl_ctx);
+                        if (krb5rc && kssl_err.text)
+                                printf("kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
+                        }
+#endif	/* KSSL_DEBUG */
+
+                        if (krb5rc)
+                                {
+                                ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
+                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, kssl_err.reason);
+                                goto err;
+                                }
+
+                        /*	Send ticket (copy to *p, set n = length)
+                         */
+                        n = krb5_ap_req.length;
+                        memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+                        if (krb5_ap_req.data)  
+                                kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+
+                        /*	19991013 VRS -	3DES is kind of bogus here,
+                        **	at least until Kerberos supports 3DES.  The only
+                        **	real secret is the 8-byte Kerberos session key;
+                        **	the other key material ((s->) client_random, server_random)
+                        **	could be sniffed.  Mixing in these nonces should help
+                        **	protect against replay attacks, however.
+                        **
+                        **	Alternate code for Kerberos Purists:
+                        **
+                        **	memcpy(s->session->master_key, kssl_ctx->key, kssl_ctx->length);
+                        **	s->session->master_key_length = kssl_ctx->length;
+                        */
+                        s->session->master_key_length=
+                                s->method->ssl3_enc->generate_master_secret(s,
+                                        s->session->master_key,	kssl_ctx->key,kssl_ctx->length);
+                        }
 #endif
 #ifndef NO_DH
-		if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 
@@ -1445,8 +1545,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 
 			/* perhaps clean things up a bit EAY EAY EAY EAY*/
 			}
-		else
 #endif
+		else
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
@@ -1641,7 +1741,7 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	algs=s->s3->tmp.new_cipher->algorithms;
 
 	/* we don't have a certificate */
-	if (algs & (SSL_aDH|SSL_aNULL))
+	if (algs & (SSL_aDH|SSL_aNULL|SSL_aKRB5))
 		return(1);
 
 #ifndef NO_RSA

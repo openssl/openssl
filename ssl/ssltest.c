@@ -74,6 +74,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifdef WINDOWS
+#include <winsock.h>
 #include "../crypto/bio/bss_file.c"
 #endif
 
@@ -516,6 +517,19 @@ bad:
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
+
+#ifndef NO_KRB5
+	if (c_ssl  &&  c_ssl->kssl_ctx)
+                {
+                char	localhost[257];
+
+		if (gethostname(localhost, 256) == 0)
+                        {
+			kssl_ctx_setstring(c_ssl->kssl_ctx, KSSL_SERVER,
+                                localhost);
+			}
+		}
+#endif    /* NO_KRB5  */
 
 	for (i=0; i<number; i++)
 		{

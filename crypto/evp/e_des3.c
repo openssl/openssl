@@ -93,6 +93,17 @@ static int des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
+#ifdef KSSL_DEBUG
+	{
+        int i;
+        char *cp;
+	printf("des_ede_cbc_cipher(ctx=%lx, buflen=%d)\n", ctx, ctx->buf_len);
+	printf("\t iv= ");
+        for(i=0;i<8;i++)
+                printf("%02X",ctx->iv[i]);
+	printf("\n");
+	}
+#endif    /* KSSL_DEBUG */
 	des_ede3_cbc_encrypt(in, out, (long)inl,
 			ctx->c.des_ede.ks1, ctx->c.des_ede.ks2, ctx->c.des_ede.ks3,
  								(des_cblock *)ctx->iv, ctx->encrypt);
@@ -145,6 +156,16 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			     const unsigned char *iv, int enc)
 	{
 	des_cblock *deskey = (des_cblock *)key;
+#ifdef KSSL_DEBUG
+	{
+        int i;
+        printf("des_ede3_init_key(ctx=%lx)\n", ctx);
+	printf("\tKEY= ");
+        for(i=0;i<24;i++) printf("%02X",key[i]); printf("\n");
+	printf("\t IV= ");
+        for(i=0;i<8;i++) printf("%02X",iv[i]); printf("\n");
+	}
+#endif	/* KSSL_DEBUG */
 
 	des_set_key_unchecked(&deskey[0],ctx->c.des_ede.ks1);
 	des_set_key_unchecked(&deskey[1],ctx->c.des_ede.ks2);

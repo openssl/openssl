@@ -473,6 +473,95 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
+#ifndef NO_KRB5
+/* The Kerberos ciphers
+** 20000107 VRS: And the first shall be last,
+** in hopes of avoiding the lynx ssl renegotiation problem.
+*/
+/* Cipher 21 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_40_CBC_SHA,
+	SSL3_CK_KRB5_DES_40_CBC_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_SHA1   |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 22 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_40_CBC_MD5,
+	SSL3_CK_KRB5_DES_40_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 23 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_64_CBC_SHA,
+	SSL3_CK_KRB5_DES_64_CBC_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_SHA1   |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_LOW,
+	0,
+	56,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 24 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_64_CBC_MD5,
+	SSL3_CK_KRB5_DES_64_CBC_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_DES|SSL_MD5    |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_LOW,
+	0,
+	56,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 25 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_192_CBC3_SHA,
+	SSL3_CK_KRB5_DES_192_CBC3_SHA,
+	SSL_kKRB5|SSL_aKRB5|  SSL_3DES|SSL_SHA1  |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	112,
+	168,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+/* Cipher 26 VRS */
+	{
+	1,
+	SSL3_TXT_KRB5_DES_192_CBC3_MD5,
+	SSL3_CK_KRB5_DES_192_CBC3_MD5,
+	SSL_kKRB5|SSL_aKRB5|  SSL_3DES|SSL_MD5   |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	112,
+	168,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+#endif	/* NO_KRB5 */
 #if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
 	/* New TLS Export CipherSuites */
 	/* Cipher 60 */
@@ -1076,10 +1165,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 	sk_SSL_CIPHER_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
 #ifdef CIPHER_DEBUG
-	printf("Have:\n");
-	for(i=0 ; i < sk_num(pref) ; ++i)
+        printf("Have %d from %p:\n", sk_SSL_CIPHER_num(pref), pref);
+        for(i=0 ; i < sk_SSL_CIPHER_num(pref) ; ++i)
 	    {
-	    c=(SSL_CIPHER *)sk_value(pref,i);
+	    c=sk_SSL_CIPHER_value(pref,i);
 	    printf("%p:%s\n",c,c->name);
 	    }
 #endif
@@ -1092,6 +1181,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 		mask=cert->mask;
 		emask=cert->export_mask;
 			
+#ifdef KSSL_DEBUG
+		printf("ssl3_choose_cipher %d alg= %lx\n", i,c->algorithms);
+#endif    /* KSSL_DEBUG */
+
 		alg=c->algorithms&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 		if (SSL_C_IS_EXPORT(c))
 			{

@@ -70,6 +70,10 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
+#ifndef NO_KRB5
+#include "kssl.h"
+#endif /* NO_KRB5 */
+
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
 static int ssl3_check_client_hello(SSL *s);
@@ -262,7 +266,11 @@ int ssl3_accept(SSL *s)
 
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
-			if (s->options & SSL_OP_EPHEMERAL_RSA)
+			if ((s->options & SSL_OP_EPHEMERAL_RSA)
+#ifndef NO_KRB5
+				&& !(l & SSL_KRB5)
+#endif /* NO_KRB5 */
+				)
 				s->s3->tmp.use_rsa_tmp=1;
 			else
 				s->s3->tmp.use_rsa_tmp=0;
@@ -1257,6 +1265,9 @@ static int ssl3_get_client_key_exchange(SSL *s)
 	BIGNUM *pub=NULL;
 	DH *dh_srvr;
 #endif
+#ifndef NO_KRB5
+        KSSL_ERR kssl_err;
+#endif /* NO_KRB5 */
 
 	n=ssl3_get_message(s,
 		SSL3_ST_SR_KEY_EXCH_A,
@@ -1417,6 +1428,53 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		}
 	else
 #endif
+#ifndef NO_KRB5
+        if (l & SSL_kKRB5)
+                {
+                krb5_error_code	krb5rc;
+                KSSL_CTX	*kssl_ctx = s->kssl_ctx;
+
+                if (!kssl_ctx)  kssl_ctx = kssl_ctx_new();
+                if ((krb5rc = kssl_sget_tkt(kssl_ctx,
+                        s->init_buf->data, s->init_buf->length,
+                        &kssl_err)) != 0)
+                        {
+#ifdef KSSL_DEBUG
+                        printf("kssl_sget_tkt rtn %d [%d]\n",
+                                krb5rc, kssl_err.reason);
+                        if (kssl_err.text)
+                                printf("kssl_err text= %s\n", kssl_err.text);
+#endif	/* KSSL_DEBUG */
+                        SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                                kssl_err.reason);
+                        goto err;
+                        }
+
+#ifdef KSSL_DEBUG
+                kssl_ctx_show(kssl_ctx);
+#endif	/* KSSL_DEBUG */
+
+                /*	19991013 VRS -	3DES is kind of bogus here,
+                **	at least until Kerberos supports 3DES.  The only
+                **	real secret is the 8-byte Kerberos session key;
+                **	the other key material (client_random, server_random)
+                **	could be sniffed.  Nonces may help against replays though.
+                **
+                **	Alternate code for Kerberos Purists:
+                **
+                **	memcpy(s->session->master_key,	kssl_ctx->key, kssl_ctx->length);
+                **	s->session->master_key_length = kssl_ctx->length;
+                */
+                s->session->master_key_length=
+                        s->method->ssl3_enc->generate_master_secret(s,
+                                s->session->master_key, kssl_ctx->key, kssl_ctx->length);
+                /*	Was doing kssl_ctx_free() here, but it caused problems for apache.
+                **	kssl_ctx = kssl_ctx_free(kssl_ctx);
+                **	if (s->kssl_ctx)  s->kssl_ctx = NULL;
+                */
+                }
+	else
+#endif	/* NO_KRB5 */
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_UNKNOWN_CIPHER_TYPE);
@@ -1737,7 +1795,11 @@ int ssl3_send_server_certificate(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_A)
 		{
 		x=ssl_get_server_send_cert(s);
-		if (x == NULL)
+		if (x == NULL &&
+                        /* VRS: allow null cert if auth == KRB5 */
+                        (s->s3->tmp.new_cipher->algorithms
+                                & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+                        != (SSL_aKRB5|SSL_kKRB5))
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,SSL_R_INTERNAL_ERROR);
 			return(0);

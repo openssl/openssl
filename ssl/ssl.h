@@ -68,6 +68,9 @@
 #ifndef NO_X509
 #include <openssl/x509.h>
 #endif
+#ifndef NO_KRB5
+#include <openssl/kssl.h>
+#endif
 #include <openssl/safestack.h>
 
 #ifdef  __cplusplus
@@ -92,6 +95,15 @@ extern "C" {
 #define SSL_TXT_DES_192_EDE3_CBC_WITH_MD5 SSL2_TXT_DES_192_EDE3_CBC_WITH_MD5	
 #define SSL_TXT_DES_192_EDE3_CBC_WITH_SHA SSL2_TXT_DES_192_EDE3_CBC_WITH_SHA	
 
+/*    VRS Additional Kerberos5 entries
+ */
+#define SSL_TXT_KRB5_DES_40_CBC_SHA   SSL3_TXT_KRB5_DES_40_CBC_SHA
+#define SSL_TXT_KRB5_DES_40_CBC_MD5   SSL3_TXT_KRB5_DES_40_CBC_MD5
+#define SSL_TXT_KRB5_DES_64_CBC_SHA   SSL3_TXT_KRB5_DES_64_CBC_SHA
+#define SSL_TXT_KRB5_DES_64_CBC_MD5   SSL3_TXT_KRB5_DES_64_CBC_MD5
+#define SSL_TXT_KRB5_DES_192_CBC3_SHA SSL3_TXT_KRB5_DES_192_CBC3_SHA
+#define SSL_TXT_KRB5_DES_192_CBC3_MD5 SSL3_TXT_KRB5_DES_192_CBC3_MD5
+
 #define SSL_MAX_SSL_SESSION_ID_LENGTH		32
 #define SSL_MAX_SID_CTX_LENGTH			32
 
@@ -111,6 +123,10 @@ extern "C" {
 #define	SSL_TXT_aNULL		"aNULL"
 #define	SSL_TXT_eNULL		"eNULL"
 #define	SSL_TXT_NULL		"NULL"
+
+#define SSL_TXT_kKRB5     	"kKRB5"
+#define SSL_TXT_aKRB5     	"aKRB5"
+#define SSL_TXT_KRB5      	"KRB5"
 
 #define SSL_TXT_kRSA		"kRSA"
 #define SSL_TXT_kDHr		"kDHr"
@@ -654,6 +670,10 @@ struct ssl_st
 
 	int error;		/* error bytes to be written */
 	int error_code;		/* actual code */
+
+#ifndef NO_KRB5
+	KSSL_CTX *kssl_ctx;     /* Kerberos 5 context */
+#endif	/* NO_KRB5 */
 
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()

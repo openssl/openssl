@@ -191,6 +191,10 @@ SSL *SSL_new(SSL_CTX *ctx)
 	if (s == NULL) goto err;
 	memset(s,0,sizeof(SSL));
 
+#ifndef	NO_KRB5
+	s->kssl_ctx = kssl_ctx_new();
+#endif	/* NO_KRB5 */
+
 	if (ctx->cert != NULL)
 		{
 		/* Earlier library versions used to copy the pointer to
@@ -1383,6 +1387,11 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	mask|=SSL_aNULL;
 	emask|=SSL_aNULL;
 
+#ifndef NO_KRB5
+	mask|=SSL_kKRB5|SSL_aKRB5;
+	emask|=SSL_kKRB5|SSL_aKRB5;
+#endif
+
 	c->mask=mask;
 	c->export_mask=emask;
 	c->valid=1;
@@ -1414,6 +1423,11 @@ X509 *ssl_get_server_send_cert(SSL *s)
 			i=SSL_PKEY_RSA_SIGN;
 		else
 			i=SSL_PKEY_RSA_ENC;
+		}
+	else if (kalg & SSL_aKRB5)
+		{
+		/* VRS something else here? */
+		return(NULL);
 		}
 	else /* if (kalg & SSL_aNULL) */
 		{

@@ -821,6 +821,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (con == NULL) {
 		con=SSL_new(ctx);
+#ifndef NO_KRB5
+		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+                        {
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+                        }
+#endif	/* NO_KRB5 */
 		if(context)
 		      SSL_set_session_id_context(con, context,
 						 strlen((char *)context));

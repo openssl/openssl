@@ -73,6 +73,15 @@
 extern "C" {
 #endif
 
+/*
+**	Depending on which KRB5 implementation used, some types from
+**	the other may be missing.  Resolve that here and now
+*/
+#ifdef KRB5_HEIMDAL
+typedef unsigned char krb5_octet;
+#define FAR
+#endif
+
 /*	Uncomment this to debug kssl problems or
 **	to trace usage of the Kerberos session key
 **
@@ -106,6 +115,7 @@ typedef struct kssl_ctx_st
 	char *service_host;	/*	C	    input, REQUIRED         */
 	char *client_princ;	/*	S	    output from krb5 ticket */
 	char *keytab_file;	/*      S	    NULL (/etc/krb5.keytab) */
+	char *cred_cache;	/*	C	    NULL (default)          */
 	krb5_enctype enctype;
 	int length;
 	krb5_octet FAR *key;
@@ -121,6 +131,7 @@ typedef struct kssl_ctx_st
 #define KSSL_NOMEM	2
 
 
+/* Private (internal to OpenSSL) */
 void print_krb5_data(char *label, krb5_data *kdata);
 void print_krb5_authdata(char *label, krb5_authdata **adata);
 void print_krb5_keyblock(char *label, krb5_keyblock *keyblk);
@@ -129,20 +140,20 @@ char *kstring(char *string);
 char *knumber(int len, krb5_octet *contents);
 
 
-void kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text);
-
+/* Public (for use by applications that use OpenSSL with Kerberos 5 support */
+krb5_error_code kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text);
 KSSL_CTX *kssl_ctx_new(void);
 KSSL_CTX *kssl_ctx_free(KSSL_CTX *kssl_ctx);
 void kssl_ctx_show(KSSL_CTX *kssl_ctx);
-krb5_error_code kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session);
-krb5_error_code kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text);
 krb5_error_code kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
         krb5_data *realm, krb5_data *entity);
-
 krb5_error_code	kssl_cget_tkt(KSSL_CTX *kssl_ctx,  krb5_data *ap_req,
         KSSL_ERR *kssl_err);
 krb5_error_code	kssl_sget_tkt(KSSL_CTX *kssl_ctx,  char *msg, int msglen,
         KSSL_ERR *kssl_err);
+krb5_error_code kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session);
+void	kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text);
+void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data);
 
 #ifdef  __cplusplus
 }

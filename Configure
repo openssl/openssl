@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [no-threads] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx=vvv] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -22,6 +22,16 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # --install_prefix  Additional prefix for package builders (empty by
 #               default).  This needn't be set in advance, you can
 #               just as well use "make INSTALL_PREFIX=/whatever install".
+#
+# --with-krb5-dir  Declare where Kerberos 5 lives.  The libraries are expected
+#		to live in the subdirectory lib/ and the header files in
+#		include/.
+# --with-krb5-lib  Declare where the Kerberos 5 libraries live.
+#		(Default: KRB5_DIR/lib)
+# --with-krb5-include  Declare where the Kerberos 5 header files live.
+#		(Default: KRB5_DIR/include)
+# --with-krb5-flavor  Declare what flavor of Kerberos 5 is used.  Currently
+#		supported values are "MIT" and "Heimdal".
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -35,6 +45,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
+# no-krb5       do not compile in any KRB5 library or code.
 # 386           generate 80386 code
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through 
@@ -423,6 +434,7 @@ my $openssldir="";
 my $install_prefix="";
 my $no_threads=0;
 my $no_shared=1;
+my $no_krb5=0;
 my $threads=0;
 my $no_asm=0;
 my $no_dso=0;
@@ -465,6 +477,7 @@ my $libs;
 my $target;
 my $options;
 my $symlink;
+my %withargs=();
 
 my @argvcopy=@ARGV;
 my $argvstring="";
@@ -509,6 +522,8 @@ PROCESS_ARGS:
 			}
 		elsif (/^no-dso$/)
 			{ $no_dso=1; }
+		elsif (/^no-krb5$/)
+			{ $no_krb5=1; }
 		elsif (/^no-threads$/)
 			{ $no_threads=1; }
 		elsif (/^threads$/)
@@ -589,6 +604,10 @@ PROCESS_ARGS:
 				{
 				$install_prefix=$1;
 				}
+			elsif (/^--with-krb5-(dir|lib|include|flavor)=(.*)$/)
+				{
+				$withargs{"krb5-".$1}=$2;
+				}
 			else
 				{
 				print STDERR $usage;
@@ -652,6 +671,38 @@ print "IsWindows=$IsWindows\n";
  $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag,my $shared_extension)=
 	split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
+
+# Kerberos settings.  The flavor must be provided from outside, either through
+# the script "config" or manually.
+if ($no_krb5
+	|| !defined($withargs{"krb5-flavor"})
+	|| $withargs{"krb5-flavor"} eq "")
+	{
+	$cflags="-DNO_KRB5 $cflags";
+	}
+else
+	{
+	if ($withargs{"krb5-flavor"} =~ /^[Hh]eimdal$/)
+		{
+		$withargs{"krb5-dir"} = "/usr/heimdal"
+			if $withargs{"krb5-dir"} eq "";
+		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
+			"/lib -lgssapi -lkrb5 -lcom_err"
+			if $withargs{"krb5-lib"} eq "";
+		$cflags="-DKRB5_HEIMDAL $cflags";
+		}
+	if ($withargs{"krb5-flavor"} =~ /^[Mm][Ii][Tt]$/)
+		{
+		$withargs{"krb5-dir"} = "/usr/kerberos"
+			if $withargs{"krb5-dir"} eq "";
+		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
+			"/lib -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto"
+			if $withargs{"krb5-lib"} eq "";
+		$cflags="-DKRB5_MIT $cflags";
+		}
+	$withargs{"krb5-include"} = "-I".$withargs{"krb5-dir"}."/include"
+		if $withargs{"krb5-include"} eq "" && $withargs{"krb5-dir"} ne "";
+	}
 
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
@@ -845,6 +896,8 @@ while (<IN>)
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;
 	s/^PERL=.*/PERL= $perl/;
+	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
+	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
 	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
@@ -878,6 +931,10 @@ print "RMD160_OBJ_ASM=$rmd160_obj\n";
 print "PROCESSOR     =$processor\n";
 print "RANLIB        =$ranlib\n";
 print "PERL          =$perl\n";
+print "KRB5_INCLUDES =",$withargs{"krb5-include"},"\n"
+	if $withargs{"krb5-include"} ne "";
+print "LIBKRB5       =",$withargs{"krb5-lib"},"\n"
+	if $withargs{"krb5-lib"} ne "";
 
 my $des_ptr=0;
 my $des_risc1=0;
