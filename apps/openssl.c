@@ -228,7 +228,13 @@ int main(int Argc, char *Argv[])
 	arg.count=0;
 
 	if (getenv("OPENSSL_DEBUG_MEMORY") != NULL)
-		CRYPTO_malloc_debug_init();
+		{
+		if (!(0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))
+			{
+			CRYPTO_malloc_debug_init();
+			CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+			}
+		}
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 #if 0
