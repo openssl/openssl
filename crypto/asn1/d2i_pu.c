@@ -113,7 +113,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_ECDSA
 	case EVP_PKEY_ECDSA:
-		if ((ret->pkey.ecdsa = d2i_ECDSAPublicKey(&(ret->pkey.ecdsa), 
+		if ((ret->pkey.ecdsa = ECDSAPublicKey_set_octet_string(&(ret->pkey.ecdsa), 
 			(const unsigned char **)pp, length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);

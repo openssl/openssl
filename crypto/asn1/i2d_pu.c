@@ -85,7 +85,7 @@ int i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
 #endif
 #ifndef OPENSSL_NO_ECDSA
 	case EVP_PKEY_ECDSA:
-		return(i2d_ECDSAPublicKey(a->pkey.ecdsa, pp));
+		return(ECDSAPublicKey_get_octet_string(a->pkey.ecdsa, pp));
 #endif
 	default:
 		ASN1err(ASN1_F_I2D_PUBLICKEY,ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);

@@ -177,7 +177,7 @@ ECDSA *ECDSA_new_method(ENGINE *engine)
 	}
 
 	ret->version = 1;
-	ret->write_params=1;
+	ret->conversion_form = ECDSA_get_default_conversion_form();
 	ret->group = NULL;
 
 	ret->pub_key = NULL;
@@ -309,4 +309,26 @@ void ECDSA_set_parameter_flags(ECDSA *ecdsa, int flag)
 int ECDSA_get_parameter_flags(const ECDSA *ecdsa)
 {
 	return ecdsa->parameter_flags;
+}
+
+void	ECDSA_set_conversion_form(ECDSA *ecdsa, const point_conversion_form_t form)
+{
+	if (ecdsa) ecdsa->conversion_form = form;
+}
+
+point_conversion_form_t ECDSA_get_conversion_form(const ECDSA *ecdsa)
+{
+	return ecdsa ? ecdsa->conversion_form : 0;
+}
+
+static point_conversion_form_t default_conversion_form = POINT_CONVERSION_COMPRESSED;
+
+void	ECDSA_set_default_conversion_form(const point_conversion_form_t form)
+{
+	default_conversion_form = form;
+}
+
+point_conversion_form_t ECDSA_get_default_conversion_form(void)
+{
+	return default_conversion_form;
 }

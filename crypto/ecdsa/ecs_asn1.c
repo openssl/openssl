@@ -59,8 +59,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
-static point_conversion_form_t POINT_CONVERSION_FORM = POINT_CONVERSION_COMPRESSED;
-
 ASN1_SEQUENCE(ECDSA_SIG) = {
 	ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
 	ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
@@ -121,19 +119,6 @@ DECLARE_ASN1_FUNCTIONS_const(ECDSAPrivateKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSAPrivateKey, ecdsaPrivateKey)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(ECDSAPrivateKey, ECDSAPrivateKey, ECDSAPrivateKey)
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSAPrivateKey, ECDSAPrivateKey, ecdsaPrivateKey)
-
-ASN1_SEQUENCE(ecdsa_pub_internal) = {
-	ASN1_SIMPLE(ECDSAPrivateKey, pub_key, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(ECDSAPrivateKey, parameters, EC_PARAMETERS),
-} ASN1_SEQUENCE_END_name(ECDSAPrivateKey, ecdsa_pub_internal)
-
-ASN1_CHOICE(ECDSAPublicKey) = {
-	ASN1_SIMPLE(ECDSAPrivateKey, pub_key, ASN1_OCTET_STRING),
-	ASN1_EX_COMBINE(0, 0, ecdsa_pub_internal)
-} ASN1_CHOICE_END_selector(ECDSAPrivateKey, ECDSAPublicKey, write_params)
-
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSAPrivateKey, ecdsaPublicKey)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSAPrivateKey, ECDSAPublicKey, ecdsaPublicKey)
 
 
 X9_62_FIELDID 	*ECDSA_get_X9_62_FIELDID(const ECDSA *ecdsa, X9_62_FIELDID *field)
@@ -583,7 +568,6 @@ ECDSA 	*d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len)
 	if ((ret = ECDSA_ecparameters2ecdsa(priv_key->parameters, NULL)) == NULL)
 		OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSA_GET_FAILURE)
 	ret->version = priv_key->version;
-	ret->write_params = priv_key->write_params;
 	if (priv_key->priv_key)
 	{
 		if ((ret->priv_key = BN_dup(priv_key->priv_key)) == NULL)
@@ -641,85 +625,58 @@ err:	if (!ok)
 }
 
 
-ECDSA 	*d2i_ECDSAPublicKey(ECDSA **a, const unsigned char **in, long len)
+ECDSA 	*ECDSAPublicKey_set_octet_string(ECDSA **a, const unsigned char **in, long len)
 {
-	int reason=ERR_R_BN_LIB, ok=0, ecdsa_new=1;
 	ECDSA *ret=NULL;
-	ECDSAPrivateKey *priv_key=NULL;
 
-	if (a && *a)
+	if (a == NULL || (*a) == NULL || (*a)->group == NULL)
 	{
-		ecdsa_new = 0;
-		ret = *a;
+		/* sorry, but a EC_GROUP-structur is necessary
+                 * to set the public key */
+		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ECDSA_R_MISSING_PARAMETERS);
+		return 0;
 	}
-	else if ((ret = ECDSA_new()) == NULL)
-		OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE); 
-	if ((priv_key = ECDSAPrivateKey_new()) == NULL)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSAPRIVATEKEY_NEW_FAILURE)
-	if ((priv_key = d2i_ecdsaPublicKey(&priv_key, in, len)) == NULL)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_D2I_ECDSA_PRIVATEKEY_FAILURE)
-	if (priv_key->write_params == 0)
+	ret = *a;
+	if (ret->pub_key == NULL && (ret->pub_key = EC_POINT_new(ret->group)) == NULL)
 	{
-		if (ecdsa_new || !ret->group)
-			OPENSSL_ECDSA_ABORT(ECDSA_R_MISSING_PARAMETERS)
-		if (ret->pub_key == NULL && (ret->pub_key = EC_POINT_new(ret->group)) == NULL)
-			OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
-		if (!EC_POINT_oct2point(ret->group, ret->pub_key, priv_key->pub_key->data,
-					priv_key->pub_key->length, NULL))
-			OPENSSL_ECDSA_ABORT(ERR_R_EC_LIB)
+		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+		return 0;
 	}
-	else if (priv_key->write_params == 1)
+	if (!EC_POINT_oct2point(ret->group, ret->pub_key, *in, len, NULL))
 	{
-		if ((ret = ECDSA_ecparameters2ecdsa(priv_key->parameters, ret)) == NULL)
-			OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSA_GET_FAILURE)
-		if (ret->pub_key == NULL && (ret->pub_key = EC_POINT_new(ret->group)) == NULL)
-			OPENSSL_ECDSA_ABORT(ERR_R_EC_LIB)
-		if (!EC_POINT_oct2point(ret->group, ret->pub_key, priv_key->pub_key->data, 
-				priv_key->pub_key->length, NULL))
-			OPENSSL_ECDSA_ABORT(ERR_R_EC_LIB)
+		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, ERR_R_EC_LIB);
+		return 0;
 	}
-	else	OPENSSL_ECDSA_ABORT(ECDSA_R_UNEXPECTED_PARAMETER)
-	ret->write_params = 1;
-	ok = 1;
-err :	if (!ok)
-	{
-		if (ret && ecdsa_new) ECDSA_free(ret);
-		ret = NULL;
-		ECDSAerr(ECDSA_F_D2I_ECDSAPRIVATEKEY, reason);
-	}
-	if (priv_key)	ECDSAPrivateKey_free(priv_key);
-	return(ret);
+	ECDSA_set_conversion_form(ret, (point_conversion_form_t)*in[0]);
+	return ret;
 }
 
-int 	i2d_ECDSAPublicKey(ECDSA *a, unsigned char **out)
+int 	ECDSAPublicKey_get_octet_string(ECDSA *a, unsigned char **out)
 {
-        int 	ret=0, reason=ERR_R_EC_LIB, ok=0;
-        unsigned char   *buffer=NULL;
-        size_t          buf_len=0;
-        ECDSAPrivateKey *priv_key=NULL;
+        size_t  buf_len=0;
 
         if (a == NULL) 
-		OPENSSL_ECDSA_ABORT(ECDSA_R_MISSING_PARAMETERS)
-        if ((priv_key = ECDSAPrivateKey_new()) == NULL) 
-		OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSAPRIVATEKEY_NEW_FAILURE)
-        if ((priv_key->parameters = ECDSA_get_EC_PARAMETERS(a, priv_key->parameters)) == NULL)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSA_GET_X9_62_EC_PARAMETERS_FAILURE)
-        priv_key->version = a->version;
-        priv_key->write_params = a->write_params;
-        buf_len = EC_POINT_point2oct(a->group, a->pub_key, POINT_CONVERSION_FORM, NULL, 0, NULL);
-        if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL)
-		OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
-        if (!EC_POINT_point2oct(a->group, a->pub_key, POINT_CONVERSION_FORM,
-	 		        buffer, buf_len, NULL)) goto err;
-        if (!M_ASN1_OCTET_STRING_set(priv_key->pub_key, buffer, buf_len))
-		OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
-        if ((ret = i2d_ecdsaPublicKey(priv_key, out)) == 0)
-		OPENSSL_ECDSA_ABORT(ECDSA_R_I2D_ECDSA_PUBLICKEY)
-	ok = 1;
-
-err:    if (!ok)
-		ECDSAerr(ECDSA_F_I2D_ECDSAPUBLICKEY, reason);
-	if (buffer)   OPENSSL_free(buffer);
-        if (priv_key) ECDSAPrivateKey_free(priv_key);
-        return(ok?ret:0);
+	{
+		ECDSAerr(ECDSA_F_I2D_ECDSAPUBLICKEY, ECDSA_R_MISSING_PARAMETERS);
+		return 0;
+	}
+        buf_len = EC_POINT_point2oct(a->group, a->pub_key, ECDSA_get_conversion_form(a), NULL, 0, NULL);
+	if (out == NULL || buf_len == 0)
+	/* out == NULL => just return the length of the octet string */
+		return buf_len;
+	if (*out == NULL)
+		if ((*out = OPENSSL_malloc(buf_len)) == NULL)
+		{
+			ECDSAerr(ECDSA_F_I2D_ECDSAPUBLICKEY, ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+        if (!EC_POINT_point2oct(a->group, a->pub_key, ECDSA_get_conversion_form(a),
+				*out, buf_len, NULL))
+	{
+		ECDSAerr(ECDSA_F_I2D_ECDSAPUBLICKEY, ERR_R_EC_LIB);
+		OPENSSL_free(*out);
+		*out = NULL;
+		return 0;
+	}
+	return buf_len;
 }

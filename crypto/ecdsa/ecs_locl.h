@@ -96,7 +96,6 @@ typedef struct ec_parameters {
 
 typedef struct ecdsa_priv_key_st {
         int               version;
-        int               write_params;
         EC_PARAMETERS	  *parameters;
 	ASN1_OBJECT	  *named_curve;
         ASN1_OCTET_STRING *pub_key;

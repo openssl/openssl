@@ -99,7 +99,7 @@ typedef struct ecdsa_method
 struct ecdsa_st
 {
 	int version;
-	int write_params;
+	point_conversion_form_t conversion_form;
 
 	EC_GROUP *group;
 
@@ -164,6 +164,15 @@ int	ECDSA_print_fp(FILE *fp, const ECDSA *x, int off);
 void 	ECDSA_set_parameter_flags(ECDSA *, int);
 int	ECDSA_get_parameter_flags(const ECDSA*);
 
+/* The ECDSA_{set|get}_conversion_type() functions set/get the
+ * conversion form for ec-points (see ec.h) in a ECDSA-structure */
+void	ECDSA_set_conversion_form(ECDSA *, const point_conversion_form_t);
+point_conversion_form_t ECDSA_get_conversion_form(const ECDSA *);
+/* The ECDSA_{set|get}_default_conversion_form() functions set/get the 
+ * default conversion form */
+void	ECDSA_set_default_conversion_form(const point_conversion_form_t);
+point_conversion_form_t ECDSA_get_default_conversion_form(void);
+
 /* the basic de- and encode functions ( see ecs_asn1.c ) */
 ECDSA   *d2i_ECDSAParameters(ECDSA **a, const unsigned char **in, long len);
 int     i2d_ECDSAParameters(ECDSA *a, unsigned char **out);
@@ -171,8 +180,14 @@ int     i2d_ECDSAParameters(ECDSA *a, unsigned char **out);
 ECDSA   *d2i_ECDSAPrivateKey(ECDSA **a, const unsigned char **in, long len);
 int     i2d_ECDSAPrivateKey(ECDSA *a, unsigned char **out);
 
-ECDSA   *d2i_ECDSAPublicKey(ECDSA **a, const unsigned char **in, long len);
-int     i2d_ECDSAPublicKey(ECDSA *a, unsigned char **out);
+/* ECDSAPublicKey_set_octet_string() sets the public key in the ECDSA-structure.
+ * (*a) must be a pointer to a ECDSA-structure with (*a)->group not zero 
+ * (e.g. a ECDSA-structure with a valid EC_GROUP-structure) */
+ECDSA 	*ECDSAPublicKey_set_octet_string(ECDSA **a, const unsigned char **in, long len);
+/* ECDSAPublicKey_get_octet_string() returns the length of the octet string encoding
+ * of the public key. If out != NULL then the function returns in *out 
+ * a pointer to the octet string */
+int 	ECDSAPublicKey_get_octet_string(ECDSA *a, unsigned char **out);
 
 
 #define ECDSAParameters_dup(x) (ECDSA *)ASN1_dup((int (*)())i2d_ECDSAParameters, \

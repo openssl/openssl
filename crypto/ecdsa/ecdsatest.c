@@ -390,23 +390,6 @@ int main(void)
 	OPENSSL_free(buffer);
 	buffer = NULL;
 
-	/* i2d_ - d2i_ECDSAPublicKey() */
-
-	BIO_printf(bio_err, "\nTesting i2d_ - d2i_ECDSAPublicKey \n");
-	buf_len = i2d_ECDSAPublicKey(ecdsa, NULL);
-	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL) goto err;
-	pp = buffer;
-	if (!i2d_ECDSAPublicKey(ecdsa, &pp)) goto err;
-	pp = buffer;
-	if ((ret_ecdsa = d2i_ECDSAPublicKey(&ret_ecdsa , (const unsigned char**)&pp, 
-			buf_len)) == NULL) goto err;
-	ECDSA_print(bio_err, ret_ecdsa, 0);
-	if (ecdsa_cmp(ecdsa, ret_ecdsa)) goto err;
-	OPENSSL_free(buffer);
-	buffer = NULL;
-	ECDSA_free(ret_ecdsa);
-	ret_ecdsa = NULL;	
-	
 	/* X509_PUBKEY_set() &  X509_PUBKEY_get() */	
 
 	BIO_printf(bio_err, "\nTesting X509_PUBKEY_{get,set}            : ");

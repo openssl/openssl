@@ -136,7 +136,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		ECDSA *ecdsa;
 		
 		ecdsa = pkey->pkey.ecdsa;
-		ecdsa->write_params=0;
 		ASN1_TYPE_free(a->parameter);
 		if ((i = i2d_ECDSAParameters(ecdsa, NULL)) == 0)
 			{
@@ -272,7 +271,6 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 				X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			ret->pkey.ecdsa->write_params = 0;
 			cp = p = a->parameter->value.sequence->data;
 			j = a->parameter->value.sequence->length;
 			if (!d2i_ECDSAParameters(&ret->pkey.ecdsa, &cp, (long)j))

@@ -585,11 +585,11 @@ static int ecdsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_EC_LIB);
 			return 0;
 		}
-		len = EC_POINT_point2oct(pkey->pkey.ecdsa->group, point, POINT_CONVERSION_COMPRESSED,
+		len = EC_POINT_point2oct(pkey->pkey.ecdsa->group, point, ECDSA_get_conversion_form(pkey->pkey.ecdsa),
 				         NULL, 0, NULL);
 		p = OPENSSL_malloc(len);
 		if (!len || !p || !EC_POINT_point2oct(pkey->pkey.ecdsa->group, point,
-			POINT_CONVERSION_COMPRESSED, p, len, NULL))
+			ECDSA_get_conversion_form(pkey->pkey.ecdsa), p, len, NULL))
 		{
 			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_EC_LIB);
 			OPENSSL_free(p);

@@ -237,7 +237,8 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 	unsigned char *buffer=NULL;
 	int     i, buf_len=0, ret=0, reason=ERR_R_BIO_LIB;
 	BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL,
-		*tmp_4=NULL, *tmp_5=NULL;
+		*tmp_4=NULL, *tmp_5=NULL, *tmp_6=NULL,
+		*tmp_7=NULL;
 	BN_CTX  *ctx=NULL;
 	EC_POINT *point=NULL;
  
@@ -249,7 +250,8 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 		goto err;
 		}
 	if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
-		(tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
+		(tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL ||
+		(tmp_6 = BN_new()) == NULL || (tmp_7 = BN_new()) == NULL)
 		{
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
@@ -264,7 +266,12 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
-	if ((buf_len = EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx)) == 0)
+	if (!EC_GROUP_get_order(x->group, tmp_6, NULL) || !EC_GROUP_get_cofactor(x->group, tmp_7, NULL))
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+	if ((buf_len = EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), NULL, 0, ctx)) == 0)
 		{
 		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
 		goto err;
@@ -274,14 +281,14 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
 		}
-	if (!EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, 
+	if (!EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), 
 				buffer, buf_len, ctx)) goto err;
 	if ((tmp_4 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
 		{
 		reason = ERR_R_BN_LIB;
 		goto err;
 		}
-	if ((i = EC_POINT_point2oct(x->group, x->pub_key, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx)) == 0)
+	if ((i = EC_POINT_point2oct(x->group, x->pub_key, ECDSA_get_conversion_form(x), NULL, 0, ctx)) == 0)
 		{
 		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
 		goto err;
@@ -292,7 +299,7 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 		buf_len = i;
 		goto err;
 		}
-	if (!EC_POINT_point2oct(x->group, x->pub_key, POINT_CONVERSION_COMPRESSED, 
+	if (!EC_POINT_point2oct(x->group, x->pub_key, ECDSA_get_conversion_form(x), 
 				buffer, buf_len, ctx))
 		{
 		reason = ERR_R_EC_LIB;
@@ -330,6 +337,8 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 	if ((tmp_2 != NULL) && !print(bp, "A:   ", tmp_2, buffer, off)) goto err;
 	if ((tmp_3 != NULL) && !print(bp, "B:   ", tmp_3, buffer, off)) goto err;
 	if ((tmp_4 != NULL) && !print(bp, "Gen: ", tmp_4, buffer, off)) goto err;
+	if ((tmp_6 != NULL) && !print(bp, "Order: ", tmp_6, buffer, off)) goto err;
+	if ((tmp_7 != NULL) && !print(bp, "Cofactor: ", tmp_7, buffer, off)) goto err;
 	ret=1;
 err:
 	if (!ret)
@@ -339,6 +348,8 @@ err:
 	if (tmp_3) BN_free(tmp_3);
 	if (tmp_4) BN_free(tmp_4);
 	if (tmp_5) BN_free(tmp_5);
+	if (tmp_6) BN_free(tmp_6);
+	if (tmp_7) BN_free(tmp_7);
 	if (ctx)   BN_CTX_free(ctx);
 	if (buffer != NULL) OPENSSL_free(buffer);
 	return(ret);
@@ -541,13 +552,13 @@ int ECDSAParameters_print(BIO *bp, const ECDSA *x)
 	if ((point = EC_GROUP_get0_generator(x->group)) == NULL) goto err;
 	if (!EC_GROUP_get_order(x->group, tmp_5, ctx)) goto err;
 	if (!EC_GROUP_get_cofactor(x->group, tmp_6, ctx)) goto err;	
-	buf_len = EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx);
+	buf_len = EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), NULL, 0, ctx);
 	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL)
 	{
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
 	}
-	if (!EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, buffer, buf_len, ctx))
+	if (!EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), buffer, buf_len, ctx))
 	{
 		reason = ERR_R_EC_LIB;
 		goto err;
