@@ -5,6 +5,12 @@
 
  Changes between 0.9.1c and 0.9.1d
 
+  *) Merged the various old/obsolete SSLeay documentation files (doc/xxx.doc)
+     into a single doc/ssleay.txt bundle. This way the information is still
+     preserved but no longer messes up this directory. Now it's new room for
+     the new set of documenation files.
+     [Ralf S. Engelschall]
+
   *) SETs were incorrectly DER encoded. This was a major pain, because they
      shared code with SEQUENCEs, which aren't coded the same. This means that
      almost everything to do with SETs or SEQUENCEs has either changed name or
