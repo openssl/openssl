@@ -80,14 +80,15 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa = NULL;
 	ASN1_TYPE *t1, *t2;
+	ASN1_INTEGER *privkey;
 	STACK_OF(ASN1_TYPE) *ndsa = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
 	EC_KEY *eckey = NULL;
+	const unsigned char *p_tmp;
 #endif
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 	ASN1_TYPE    *param = NULL;	
-	ASN1_INTEGER *privkey;
 	BN_CTX *ctx = NULL;
 	int plen;
 #endif
@@ -221,11 +222,8 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #endif
 #ifndef OPENSSL_NO_EC
 		case NID_X9_62_id_ecPublicKey:
-		if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen)))
-		{
-			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
-			goto ecerr;
-		}
+		p_tmp = p;
+		/* extract the ec parameters */
 		param = p8->pkeyalg->parameter;
 
 		if (!param || ((param->type != V_ASN1_SEQUENCE) &&
@@ -269,35 +267,40 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		}
 
 		/* We have parameters now set private key */
-		if (!(eckey->priv_key = ASN1_INTEGER_to_BN(privkey, NULL)))
+		if (!d2i_ECPrivateKey(&eckey, &p_tmp, pkeylen))
 		{
-			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_BN_DECODE_ERROR);
+			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto ecerr;
 		}
-		/* Calculate public key */
-		if ((eckey->pub_key = EC_POINT_new(eckey->group)) == NULL)
+
+		/* calculate public key (if necessary) */
+		if (!eckey->pub_key)
 		{
-			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-			goto ecerr;
-		}
-		if (!EC_POINT_copy(eckey->pub_key, 
-			EC_GROUP_get0_generator(eckey->group)))
-		{
-			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-			goto ecerr;
-		}
-		if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
-			eckey->priv_key, NULL, NULL, ctx))
-		{
-			EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
-			goto ecerr;
+			/* the public key was not included in the SEC1 private
+			 * key => calculate the public key */
+			eckey->pub_key = EC_POINT_new(eckey->group);
+			if (!eckey->pub_key)
+			{
+				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+				goto ecerr;
+			}
+			if (!EC_POINT_copy(eckey->pub_key, 
+				EC_GROUP_get0_generator(eckey->group)))
+			{
+				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+				goto ecerr;
+			}
+			if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
+				eckey->priv_key, NULL, NULL, ctx))
+			{
+				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+				goto ecerr;
+			}
 		}
 
 		EVP_PKEY_assign_EC_KEY(pkey, eckey);
 		if (ctx)
 			BN_CTX_free(ctx);
-		if (privkey)
-			ASN1_INTEGER_free(privkey);
 		break;
 ecerr:
 		if (ctx)
@@ -526,7 +529,8 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	EC_KEY		*eckey;
 	ASN1_INTEGER	*prkey = NULL;
 	unsigned char	*p, *pp;
-	int 		nid;
+	int 		nid, i, ret = 0;
+	unsigned int    tmp_flags;
 
 	if (pkey->pkey.eckey == NULL || pkey->pkey.eckey->group == NULL)
 	{
@@ -564,7 +568,6 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	}
 	else	/* explicit parameters */
 	{
-		int i;
 		if ((i = i2d_ECParameters(eckey, NULL)) == 0)
 		{
 			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
@@ -595,35 +598,58 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	}
 
 	/* set the private key */
-	if ((prkey = BN_to_ASN1_INTEGER(pkey->pkey.eckey->priv_key, NULL)) 
-		== NULL)
+
+	/* do not include the parameters in the SEC1 private key
+	 * see PKCS#11 12.11 */
+	tmp_flags  = pkey->pkey.eckey->enc_flag;
+	pkey->pkey.eckey->enc_flag |= EC_PKEY_NO_PARAMETERS;
+	i = i2d_ECPrivateKey(pkey->pkey.eckey, NULL);
+	if (!i)
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
+		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		return 0;
 	}
+	p = (unsigned char *) OPENSSL_malloc(i);
+	if (!p)
+	{
+		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	pp = p;
+	if (!i2d_ECPrivateKey(pkey->pkey.eckey, &pp))
+	{
+		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+		OPENSSL_free(p);
+		return 0;
+	}
+	/* restore old encoding flags */
+	pkey->pkey.eckey->enc_flag = tmp_flags;
 
 	switch(p8->broken) {
 
 		case PKCS8_OK:
-		if (!ASN1_pack_string((char *)prkey, i2d_ASN1_INTEGER,
-					 &p8->pkey->value.octet_string)) 
+		p8->pkey->value.octet_string = ASN1_OCTET_STRING_new();
+		if (!p8->pkey->value.octet_string ||
+		    !M_ASN1_OCTET_STRING_set(p8->pkey->value.octet_string,
+		    (const void *)p, i))
+
 		{
 			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-			M_ASN1_INTEGER_free(prkey);
-			return 0;
 		}
-
-		ASN1_INTEGER_free(prkey);
-
+		else
+			ret = 1;
 		break;
 		case PKCS8_NO_OCTET:		/* RSA specific */
 		case PKCS8_NS_DB:		/* DSA specific */
 		case PKCS8_EMBEDDED_PARAM:	/* DSA specific */
 		default:
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
-			return 0;
-
 	}
-	return 1;
+	OPENSSL_cleanse(p, (size_t)i);
+	OPENSSL_free(p);
+	return ret;
 }
 #endif
