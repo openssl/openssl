@@ -98,3 +98,34 @@ config-line. './Configure aix43-cc shared' is working, but not
 libraries. It's possible to build 64-bit shared libraries by running
 'env OBJECT_MODE=64 make', but we need more elegant solution. Preferably one
 supporting even gcc shared builds. See RT#463 for background information.
+
+* Problems building shared libraries on SCO OpenServer Release 5.0.6
+  with gcc 2.95.3
+
+The symptoms appear when running the test suite, more specifically
+test/ectest, with the following result:
+
+OSSL_LIBPATH="`cd ..; pwd`"; LD_LIBRARY_PATH="$OSSL_LIBPATH:$LD_LIBRARY_PATH"; DYLD_LIBRARY_PATH="$OSSL_LIBPATH:$DYLD_LIBRARY_PATH"; SHLIB_PATH="$OSSL_LIBPATH:$SHLIB_PATH"; LIBPATH="$OSSL_LIBPATH:$LIBPATH"; if [ "debug-sco5-gcc" = "Cygwin" ]; then PATH="${LIBPATH}:$PATH"; fi; export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; ./ectest
+ectest.c:186: ABORT
+
+The cause of the problem seems to be that isxdigit(), called from
+BN_hex2bn(), returns 0 on a perfectly legitimate hex digit.  Further
+investigation shows that any of the isxxx() macros return 0 on any
+input.  A direct look in the information array that the isxxx() use,
+called __ctype, shows that it contains all zeroes...
+
+Taking a look at the newly created libcrypto.so with nm, one can see
+that the variable __ctype is defined in libcrypto's .bss (which
+explains why it is filled with zeroes):
+
+$ nm -Pg libcrypto.so | grep __ctype
+__ctype B 0011659c
+__ctype2 U         
+
+Curiously, __ctype2 is undefined, in spite of being declared in
+/usr/include/ctype.h in exactly the same way as __ctype.
+
+Any information helping to solve this issue would be deeply
+appreciated.
+
+NOTE: building non-shared doesn't come with this problem.
