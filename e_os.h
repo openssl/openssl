@@ -275,9 +275,6 @@ extern "C" {
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
-#    ifdef MPE
-#      define NO_SYS_PARAM_H
-#    endif
 #    ifdef OPENSSL_UNISTD
 #      include OPENSSL_UNISTD
 #    else
@@ -286,15 +283,11 @@ extern "C" {
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
-#    if defined(NeXT) || defined(NEWS4)
+#    ifdef NeXT
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
                          * (unless when compiling with -D_POSIX_SOURCE,
                          * which doesn't work for us) */
 #      define ssize_t int /* ditto */
-#    endif
-#    ifdef NEWS4 /* setvbuf is missing on mips-sony-bsd */
-#      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
-       typedef unsigned long clock_t;
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
@@ -347,9 +340,7 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    ifndef MPE
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
-#    endif
+#    include <sys/time.h> /* Needed under linux for FD_XXX */
 
 #    include <netdb.h>
 #    if defined(VMS) && !defined(__DECC)

@@ -899,21 +899,19 @@ start:
 					return(-1);
 					}
 
-				if (!(s->mode & SSL_MODE_AUTO_RETRY))
+				if (s->s3->rbuf.left == 0) /* no read-ahead left? */
 					{
-					if (s->s3->rbuf.left == 0) /* no read-ahead left? */
-						{
-						BIO *bio;
-						/* In the case where we try to read application data,
-						 * but we trigger an SSL handshake, we return -1 with
-						 * the retry option set.  Otherwise renegotiation may
-						 * cause nasty problems in the blocking world */
-						s->rwstate=SSL_READING;
-						bio=SSL_get_rbio(s);
-						BIO_clear_retry_flags(bio);
-						BIO_set_retry_read(bio);
-						return(-1);
-						}
+					BIO *bio;
+					/* In the case where we try to read application data
+					 * the first time, but we trigger an SSL handshake, we
+					 * return -1 with the retry option set.  I do this
+					 * otherwise renegotiation can cause nasty problems 
+					 * in the blocking world */ /* ? */
+					s->rwstate=SSL_READING;
+					bio=SSL_get_rbio(s);
+					BIO_clear_retry_flags(bio);
+					BIO_set_retry_read(bio);
+					return(-1);
 					}
 				}
 			}
@@ -1024,21 +1022,19 @@ start:
 			return(-1);
 			}
 
-		if (!(s->mode & SSL_MODE_AUTO_RETRY))
+		if (s->s3->rbuf.left == 0) /* no read-ahead left? */
 			{
-			if (s->s3->rbuf.left == 0) /* no read-ahead left? */
-				{
-				BIO *bio;
-				/* In the case where we try to read application data,
-				 * but we trigger an SSL handshake, we return -1 with
-				 * the retry option set.  Otherwise renegotiation may
-				 * cause nasty problems in the blocking world */
-				s->rwstate=SSL_READING;
-				bio=SSL_get_rbio(s);
-				BIO_clear_retry_flags(bio);
-				BIO_set_retry_read(bio);
-				return(-1);
-				}
+			BIO *bio;
+			/* In the case where we try to read application data
+			 * the first time, but we trigger an SSL handshake, we
+			 * return -1 with the retry option set.  I do this
+			 * otherwise renegotiation can cause nasty problems 
+			 * in the blocking world */ /* ? */
+			s->rwstate=SSL_READING;
+			bio=SSL_get_rbio(s);
+			BIO_clear_retry_flags(bio);
+			BIO_set_retry_read(bio);
+			return(-1);
 			}
 		goto start;
 		}

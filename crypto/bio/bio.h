@@ -91,7 +91,6 @@ extern "C" {
 #define BIO_TYPE_NULL_FILTER	(17|0x0200)
 #define BIO_TYPE_BER		(18|0x0200)		/* BER -> bin filter */
 #define BIO_TYPE_BIO		(19|0x0400)		/* (half a) BIO pair */
-#define BIO_TYPE_LINEBUFFER	(20|0x0200)		/* filter */
 
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
@@ -475,7 +474,6 @@ size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_get_write_buf_size(b,size) (size_t)BIO_ctrl(b,BIO_C_GET_WRITE_BUF_SIZE,size,NULL)
 #define BIO_make_bio_pair(b1,b2)   (int)BIO_ctrl(b1,BIO_C_MAKE_BIO_PAIR,0,b2)
 #define BIO_destroy_bio_pair(b)    (int)BIO_ctrl(b,BIO_C_DESTROY_BIO_PAIR,0,NULL)
-#define BIO_shutdown_wr(b) (int)BIO_ctrl(b, BIO_C_SHUTDOWN_WR, 0, NULL)
 /* macros with inappropriate type -- but ...pending macros use int too: */
 #define BIO_get_write_guarantee(b) (int)BIO_ctrl(b,BIO_C_GET_WRITE_GUARANTEE,0,NULL)
 #define BIO_get_read_request(b)    (int)BIO_ctrl(b,BIO_C_GET_READ_REQUEST,0,NULL)
@@ -555,9 +553,6 @@ BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
 BIO_METHOD *BIO_f_buffer(void);
-#ifdef VMS
-BIO_METHOD *BIO_f_linebuffer(void);
-#endif
 BIO_METHOD *BIO_f_nbio_test(void);
 /* BIO_METHOD *BIO_f_ber(void); */
 
@@ -644,7 +639,6 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args);
 #define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
-#define BIO_F_LINEBUFFER_CTRL				 129
 #define BIO_F_MEM_READ					 128
 #define BIO_F_MEM_WRITE					 117
 #define BIO_F_SSL_NEW					 118

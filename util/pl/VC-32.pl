@@ -12,7 +12,7 @@ $rm='del';
 
 # C compiler stuff
 $cc='cl';
-$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
+$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN';
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
@@ -22,7 +22,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG -DDSO_WIN32";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
@@ -112,8 +112,7 @@ sub do_lib_rule
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
-		$ex =' advapi32.lib';
-		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
+		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs\n<<\n";
 		}
 	else
 		{

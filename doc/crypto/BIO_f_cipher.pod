@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_f_cipher, BIO_set_cipher, BIO_get_cipher_status, BIO_get_cipher_ctx - cipher BIO filter
+	BIO_f_cipher - cipher BIO
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ is a BIO_ctrl() macro which can be called to determine whether the
 decryption operation was successful.
 
 BIO_get_cipher_ctx() is a BIO_ctrl() macro which retrieves the internal
-BIO cipher context. The retrieved context can be used in conjunction
+BIO cipher context. The retrieved context can be used in conjustion
 with the standard cipher routines to set it up. This is useful when
 BIO_set_cipher() is not flexible enough for the applications needs.
 

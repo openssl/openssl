@@ -196,15 +196,7 @@ bad:
 		}
 
 	if (outfile == NULL)
-		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
-		{
-		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-		out = BIO_push(tmpbio, out);
-		}
-#endif
-		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -288,6 +280,6 @@ bad:
 end:
 	if (p7 != NULL) PKCS7_free(p7);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free_all(out);
+	if (out != NULL) BIO_free(out);
 	EXIT(ret);
 	}

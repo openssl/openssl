@@ -212,20 +212,11 @@ my %table=(
 #   crypto/sha/sha_lcl.h.
 #					<appro@fy.chalmers.se>
 #
-#!#"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
+"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # Since there is mention of this in shlib/hpux10-cc.sh
 "hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W:::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
-"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn",
-
-# More attempts at unified 10.X and 11.X targets for HP C compiler.
-#
-# Chris Ruemmler <ruemmler@cup.hp.com>
-# Kevin Steves <ks@hp.se>
-"hpux-parisc-cc","cc:+O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT:-ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl",
-"hpux-parisc2-cc","cc:+DA2.0 +DS2.0 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldld:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2.o:::::::::dl",
-"hpux64-parisc2-cc","cc:+DD64 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn",
-"hpux-parisc1_1-cc","cc:+DA1.1 +DS1.1 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl",
+"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT:-ldld:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
@@ -256,16 +247,13 @@ my %table=(
 #"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
 # Use unified settings above instead.
 
-#### HP MPE/iX http://jazz.external.hp.com/src/openssl/
-"MPE/iX-gcc", "gcc:-D_ENDIAN -DBN_DIV2W -O3 -DMPE -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB::(unknown):-L/SYSLOG/PUB -lsyslog -lsocket -lcurses:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
 "alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:asm/alpha.o:::::::::dlfcn:true64-shared",
 "alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn:true64-shared",
 "alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn:true64-shared",
-"FreeBSD-alpha","gcc:-DTERMIOS -O -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:::",
+"FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:::",
 
 #### Alpha Linux with GNU C and Compaq C setups
 # Special notes:
@@ -291,8 +279,8 @@ my %table=(
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
 "linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC",
-"debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
-"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 "linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
 "linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
@@ -371,24 +359,24 @@ my %table=(
 
 # Windows NT, Microsoft Visual C++ 4.0
 
-"VC-NT","cl:::::BN_LLONG RC4_INDEX ${x86_gcc_opts}::::::::::win32",
-"VC-WIN32","cl:::::BN_LLONG RC4_INDEX ${x86_gcc_opts}::::::::::win32",
+"VC-NT","cl:::::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
+"VC-WIN32","cl:::::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
 "VC-WIN16","cl:::(unknown)::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
 "VC-W31-16","cl:::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 "VC-W31-32","cl:::::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
 "VC-MSDOS","cl:::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # Borland C++ 4.5
-"BC-32","bcc32:::::BN_LLONG DES_PTR RC4_INDEX::::::::::win32",
+"BC-32","bcc32:::::BN_LLONG DES_PTR RC4_INDEX:::",
 "BC-16","bcc:::(unknown)::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # Mingw32
 # (Note: the real CFLAGS for Windows builds are defined by util/mk1mf.pl
 # and its library files in util/pl/*)
-"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:",
 
 # CygWin32
-"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
@@ -404,9 +392,6 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-
-##### Sony NEWS-OS 4.x
-"newsos4-gcc","gcc:-O -DB_ENDIAN -DNEWS4::(unknown):-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
 
 );
 

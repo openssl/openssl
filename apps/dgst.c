@@ -74,7 +74,7 @@
 #define PROG	dgst_main
 
 void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
-		EVP_PKEY *key, unsigned char *sigin, int siglen);
+		EVP_PKEY *key, unsigned char *sigin, unsigned int siglen);
 
 int MAIN(int, char **);
 
@@ -96,7 +96,7 @@ int MAIN(int argc, char **argv)
 	char out_bin = -1, want_pub = 0, do_verify = 0;
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
-	int siglen = 0;
+	unsigned int siglen = 0;
 
 	apps_startup();
 
@@ -236,15 +236,7 @@ int MAIN(int argc, char **argv)
 		if(out_bin)
 			out = BIO_new_file(outfile, "wb");
 		else    out = BIO_new_file(outfile, "w");
-	} else {
-		out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
-		{
-		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-		out = BIO_push(tmpbio, out);
-		}
-#endif
-	}
+	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
 	if(!out) {
 		BIO_printf(bio_err, "Error opening output file %s\n", 
@@ -331,7 +323,7 @@ end:
 		OPENSSL_free(buf);
 		}
 	if (in != NULL) BIO_free(in);
-	BIO_free_all(out);
+	BIO_free(out);
 	EVP_PKEY_free(sigkey);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
@@ -339,7 +331,7 @@ end:
 	}
 
 void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
-			EVP_PKEY *key, unsigned char *sigin, int siglen)
+			EVP_PKEY *key, unsigned char *sigin, unsigned int siglen)
 	{
 	int len;
 	int i;
@@ -353,7 +345,7 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, char binout,
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		i = EVP_VerifyFinal(ctx, sigin, (unsigned int)siglen, key); 
+		i = EVP_VerifyFinal(ctx, sigin, siglen, key); 
 		if(i > 0) BIO_printf(out, "Verified OK\n");
 		else if(i == 0) BIO_printf(out, "Verification Failure\n");
 		else

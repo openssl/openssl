@@ -197,7 +197,7 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp (*args, "-caname")) {
 		    if (args[1]) {
 			args++;	
-			if (!canames) canames = sk_new_null();
+			if (!canames) canames = sk_new(NULL);
 			sk_push(canames, *args);
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-in")) {
@@ -350,15 +350,8 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("write files");
 #endif
 
-    if (!outfile) {
-	out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
-	{
-	    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	    out = BIO_push(tmpbio, out);
-	}
-#endif
-    } else out = BIO_new_file(outfile, "wb");
+    if (!outfile) out = BIO_new_fp(stdout, BIO_NOCLOSE);
+    else out = BIO_new_file(outfile, "wb");
     if (!out) {
 	BIO_printf(bio_err, "Error opening output file %s\n",
 						outfile ? outfile : "<stdout>");
@@ -411,7 +404,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from input");
 #endif
 
-	certs = sk_X509_new_null();
+	certs = sk_X509_new(NULL);
 
 	/* Load in all certs in input file */
 	if(!cert_load(in, certs)) {
@@ -443,7 +436,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from certfile");
 #endif
 
-	bags = sk_PKCS12_SAFEBAG_new_null ();
+	bags = sk_PKCS12_SAFEBAG_new (NULL);
 
 	/* Add any more certificates asked for */
 	if (certsin) {
@@ -534,7 +527,7 @@ int MAIN(int argc, char **argv)
 		goto export_end;
 	}
 
-	safes = sk_PKCS7_new_null ();
+	safes = sk_PKCS7_new (NULL);
 	sk_PKCS7_push (safes, authsafe);
 
 #ifdef CRYPTO_MDEBUG
@@ -550,7 +543,7 @@ int MAIN(int argc, char **argv)
 	p8 = NULL;
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
-	bags = sk_PKCS12_SAFEBAG_new_null();
+	bags = sk_PKCS12_SAFEBAG_new(NULL);
 	sk_PKCS12_SAFEBAG_push (bags, bag);
 
 #ifdef CRYPTO_MDEBUG
@@ -664,7 +657,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_remove_all_info();
 #endif
     BIO_free(in);
-    BIO_free_all(out);
+    BIO_free(out);
     if (canames) sk_free(canames);
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
@@ -887,14 +880,14 @@ int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name)
 				break;
 
 				case V_ASN1_OCTET_STRING:
-				hex_prin(out, av->value.octet_string->data,
-					av->value.octet_string->length);
+				hex_prin(out, av->value.bit_string->data,
+					av->value.bit_string->length);
 				BIO_printf(out, "\n");	
 				break;
 
 				case V_ASN1_BIT_STRING:
-				hex_prin(out, av->value.bit_string->data,
-					av->value.bit_string->length);
+				hex_prin(out, av->value.octet_string->data,
+					av->value.octet_string->length);
 				BIO_printf(out, "\n");	
 				break;
 

@@ -40,14 +40,7 @@
 #   symbol name replacements for platforms where the names are too long for the
 #   compiler or linker, or if the systems is case insensitive and there is a
 #   clash.  This script assumes those redefinitions are place in the file
-#   crypto/symhacks.h.
-#   The semantics for the platforms list is a bit complicated.  The rule of
-#   thumb is that the list is exclusive, but it seems to mean different things.
-#   So, if the list is all negatives (like "!VMS,!WIN16"), the symbol exists
-#   on all platforms except those listed.  If the list is all positives (like
-#   "VMS,WIN16"), the symbol exists only on those platforms and nowhere else.
-#   The combination of positives and negatives will act as if the positives
-#   weren't there.
+#   crypto/idhacks.h.
 # - "kind" is "FUNCTION" or "VARIABLE".  The meaning of that is obvious.
 # - "algorithms" is a comma-separated list of algorithm names.  This helps
 #   exclude symbols that are part of an algorithm that some user wants to
@@ -103,8 +96,6 @@ foreach (@ARGV, split(/ /, $options))
 		$NT = 1;
 	}
 	$VMS=1 if $_ eq "VMS";
-	$rsaref=1 if $_ eq "rsaref";
-
 	$do_ssl=1 if $_ eq "ssleay";
 	$do_ssl=1 if $_ eq "ssl";
 	$do_crypto=1 if $_ eq "libeay";
@@ -113,6 +104,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
+	$rsaref=1 if $_ eq "rsaref";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
 	if    (/^no-rc2$/)      { $no_rc2=1; }
@@ -622,9 +614,6 @@ sub maybe_add_info {
 	}
 	if ($new_info) {
 		print STDERR "$new_info old symbols got an info update\n";
-		if (!$do_rewrite) {
-			print STDERR "You should do a rewrite to fix this.\n";
-		}
 	} else {
 		print STDERR "No old symbols needed info update\n";
 	}
@@ -703,49 +692,15 @@ EOF
 					if(!$do_update);
 		} else {
 			(my $n, my $i) = split /\\/, $nums{$s};
-			my %pf = ();
 			my @p = split(/,/, ($i =~ /^.*?:(.*?):/,$1));
-			# @p_purged must contain hardware platforms only
-			my @p_purged = ();
-			foreach $ptmp (@p) {
-				next if $ptmp =~ /^!?RSAREF$/;
-				push @p_purged, $ptmp;
-			}
-			my $negatives = !!grep(/^!/,@p);
-			# It is very important to check NT before W32
-			if ((($NT && (!@p_purged
-				      || (!$negatives && grep(/^WINNT$/,@p))
-				      || ($negatives && !grep(/^!WINNT$/,@p))))
-			     || ($W32 && (!@p_purged
-					  || (!$negatives && grep(/^WIN32$/,@p))
-					  || ($negatives && !grep(/^!WIN32$/,@p))))
-			     || ($W16 && (!@p_purged
-					  || (!$negatives && grep(/^WIN16$/,@p))
-					  || ($negatives && !grep(/^!WIN16$/,@p)))))
-			    && (!@p
-				|| (!$negatives
-				    && ($rsaref || !grep(/^RSAREF$/,@p)))
-				|| ($negatives
-				    && (!$rsaref || !grep(/^!RSAREF$/,@p))))) {
-				printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n;
-#			} else {
-#				print STDERR "DEBUG: \"$sym\" (@p):",
-#				" rsaref:", !!(!@p
-#					       || (!$negatives
-#						   && ($rsaref || !grep(/^RSAREF$/,@p)))
-#					       || ($negatives
-#						   && (!$rsaref || !grep(/^!RSAREF$/,@p))))?1:0,
-#				" 16:", !!($W16 && (!@p_purged
-#						    || (!$negatives && grep(/^WIN16$/,@p))
-#						    || ($negatives && !grep(/^!WIN16$/,@p)))),
-#				" 32:", !!($W32 && (!@p_purged
-#						    || (!$negatives && grep(/^WIN32$/,@p))
-#						    || ($negatives && !grep(/^!WIN32$/,@p)))),
-#				" NT:", !!($NT && (!@p_purged
-#						   || (!$negatives && grep(/^WINNT$/,@p))
-#						   || ($negatives && !grep(/^!WINNT$/,@p)))),
-#				"\n";
-			}
+			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s,$n
+			    # It is very important to check NT before W32
+			    if ($NT && (!@p || (grep(/^WINNT$/,@p)
+						&& !grep(/^!WINNT$/,@p)))
+				|| $W32 && (!@p || (grep(/^WIN32$/,@p)
+						    && !grep(/^!WIN32$/,@p)))
+				|| $W16 && (!@p || (grep(/^WIN16$/,@p)
+						    && !grep(/^!WIN16$/,@p))));
 		}
 	}
 	printf OUT "\n";
@@ -867,7 +822,7 @@ sub update_numbers
 			$new_syms++;
 			printf OUT "%s%-40s%d\t%s\n","",$s, ++$start_num,$i;
 			if (exists $r{$s}) {
-				($s, $i) = split /\\/,$r{$s};
+				($s, $i) = split /\\/,$r{$sym};
 				printf OUT "%s%-40s%d\t%s\n","",$s, $start_num,$i;
 			}
 		}

@@ -220,7 +220,7 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 
 STACK_OF(GENERAL_NAME) *GENERAL_NAMES_new()
 {
-	return sk_GENERAL_NAME_new_null();
+	return sk_GENERAL_NAME_new(NULL);
 }
 
 void GENERAL_NAMES_free(STACK_OF(GENERAL_NAME) *a)

@@ -660,7 +660,7 @@ STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 
 	if      (format == FORMAT_PEM)
 		{
-		othercerts = sk_X509_new_null();
+		othercerts = sk_X509_new(NULL);
 		if(!othercerts)
 			{
 			sk_X509_free(othercerts);

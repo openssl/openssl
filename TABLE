@@ -36,7 +36,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = win32
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 
@@ -76,7 +76,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = win32
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 
@@ -102,7 +102,7 @@ $shared_cflag =
 
 *** FreeBSD-alpha
 $cc           = gcc
-$cflags       = -DTERMIOS -O -fomit-frame-pointer
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -140,26 +140,6 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 
-*** MPE/iX-gcc
-$cc           = gcc
-$cflags       = -D_ENDIAN -DBN_DIV2W -O3 -DMPE -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB
-$unistd       = 
-$thread_cflag = (unknown)
-$lflags       = -L/SYSLOG/PUB -lsyslog -lsocket -lcurses
-$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-
 *** Mingw32
 $cc           = gcc
 $cflags       = -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
@@ -176,7 +156,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = win32
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 
@@ -416,7 +396,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = win32
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 
@@ -496,7 +476,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = win32
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 
@@ -825,7 +805,7 @@ $cc           = gcc
 $cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -lefence -ldl
+$lflags       = -lefence
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = asm/bn86-elf.o asm/co86-elf.o
 $des_obj      = asm/dx86-elf.o asm/yx86-elf.o
@@ -845,7 +825,7 @@ $cc           = gcc
 $cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldl
+$lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = asm/bn86-elf.o asm/co86-elf.o
 $des_obj      = asm/dx86-elf.o asm/yx86-elf.o
@@ -1182,11 +1162,11 @@ $shared_cflag =
 
 *** hpux-parisc-cc
 $cc           = cc
-$cflags       = +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
+$cflags       = -Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
 $unistd       = 
-$thread_cflag = -D_REENTRANT
+$thread_cflag = 
 $lflags       = -ldld
-$bn_ops       = MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -1228,46 +1208,6 @@ $thread_cflag =
 $lflags       = -ldld
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-
-*** hpux-parisc1_1-cc
-$cc           = cc
-$cflags       = +DA1.1 +DS1.1 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = -ldld
-$bn_ops       = MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = dl
-$shared_target= 
-$shared_cflag = 
-
-*** hpux-parisc2-cc
-$cc           = cc
-$cflags       = +DA2.0 +DS2.0 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = -ldld
-$bn_ops       = SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
-$bn_obj       = asm/pa-risc2.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -1365,7 +1305,7 @@ $cc           = cc
 $cflags       = -Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = -ldl
+$lflags       = -ldld
 $bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
 $bn_obj       = 
 $des_obj      = 
@@ -1376,27 +1316,7 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
-
-*** hpux64-parisc2-cc
-$cc           = cc
-$cflags       = +DD64 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = -ldl
-$bn_ops       = SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT
-$bn_obj       = asm/pa-risc2W.o
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = dlfcn
+$dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
 
@@ -1807,26 +1727,6 @@ $unistd       =
 $thread_cflag = (unknown)
 $lflags       = -lsocket -lnsl
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-
-*** newsos4-gcc
-$cc           = gcc
-$cflags       = -O -DB_ENDIAN -DNEWS4
-$unistd       = 
-$thread_cflag = (unknown)
-$lflags       = -lmld -liberty
-$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 

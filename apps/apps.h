@@ -66,7 +66,6 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/lhash.h>
-#include <openssl/conf.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);
@@ -100,6 +99,7 @@ extern BIO *bio_err;
 #else
 
 #define MAIN(a,v)	PROG(a,v)
+#include <openssl/conf.h>
 extern LHASH *config;
 extern char *default_config_file;
 extern BIO *bio_err;

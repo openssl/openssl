@@ -71,10 +71,6 @@ fi
 # Now we simply scan though... In most cases, the SYSTEM info is enough
 #
 case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
-    MPE/iX:*)
-	MACHINE=`echo "$MACHINE" | sed -e 's/-/_/g'`
-	echo "parisc-hp-MPE/iX"; exit 0
-	;;
     A/UX:*)
 	echo "m68k-apple-aux3"; exit 0
 	;;
@@ -249,10 +245,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     ConvexOS:*:11.0:*)
 	echo "${MACHINE}-v11-${SYSTEM}"; exit 0;
-	;;
-
-    NEWS-OS:4.*)
-	echo "mips-sony-newsos4"; exit 0;
 	;;
 
 esac
@@ -478,7 +470,6 @@ case "$GUESSOS" in
   # these are all covered by the catchall below
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
-  mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 

@@ -2,109 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
-
-  *) In ssl23_get_client_hello, generate an error message when faced
-     with an initial SSL 3.0/TLS record that is too small to contain the
-     first two bytes of the ClientHello message, i.e. client_version.
-     (Note that this is a pathologic case that probably has never happened
-     in real life.)  The previous approach was to use the version number
-     from the record header as a substitute; but our protocol choice
-     should not depend on that one because it is not authenticated
-     by the Finished messages.
-     [Bodo Moeller]
-
-  *) More robust randomness gathering functions for Windows.
-     [Jeffrey Altman <jaltman@columbia.edu>]
-
-  *) For compatibility reasons if the flag X509_V_FLAG_ISSUER_CHECK is
-     not set then we don't setup the error code for issuer check errors
-     to avoid possibly overwriting other errors which the callback does
-     handle. If an application does set the flag then we assume it knows
-     what it is doing and can handle the new informational codes
-     appropriately.
-     [Steve Henson]
-
-  *) Fix for a nasty bug in ASN1_TYPE handling. ASN1_TYPE is used for
-     a general "ANY" type, as such it should be able to decode anything
-     including tagged types. However it didn't check the class so it would
-     wrongly interpret tagged types in the same way as their universal
-     counterpart and unknown types were just rejected. Changed so that the
-     tagged and unknown types are handled in the same way as a SEQUENCE:
-     that is the encoding is stored intact. There is also a new type
-     "V_ASN1_OTHER" which is used when the class is not universal, in this
-     case we have no idea what the actual type is so we just lump them all
-     together.
-     [Steve Henson]
-
-  *) On VMS, stdout may very well lead to a file that is written to
-     in a record-oriented fashion.  That means that every write() will
-     write a separate record, which will be read separately by the
-     programs trying to read from it.  This can be very confusing.
-
-     The solution is to put a BIO filter in the way that will buffer
-     text until a linefeed is reached, and then write everything a
-     line at a time, so every record written will be an actual line,
-     not chunks of lines and not (usually doesn't happen, but I've
-     seen it once) several lines in one record.  BIO_f_linebuffer() is
-     the answer.
-
-     Currently, it's a VMS-only method, because that's where it has
-     been tested well enough.
-     [Richard Levitte]
-
-  *) Remove 'optimized' squaring variant in BN_mod_mul_montgomery,
-     it can return incorrect results.
-     (Note: The buggy variant was not enabled in OpenSSL 0.9.5a,
-     but it was in 0.9.6-beta[12].)
-     [Bodo Moeller]
-
-  *) Disable the check for content being present when verifying detached
-     signatures in pk7_smime.c. Some versions of Netscape (wrongly)
-     include zero length content when signing messages.
-     [Steve Henson]
-
-  *) New BIO_shutdown_wr macro, which invokes the BIO_C_SHUTDOWN_WR
-     BIO_ctrl (for BIO pairs).
-     [Bodo Möller]
-
-  *) Add DSO method for VMS.
-     [Richard Levitte]
-
-  *) Bug fix: Montgomery multiplication could produce results with the
-     wrong sign.
-     [Ulf Möller]
-
-  *) Add RPM specification openssl.spec and modify it to build three
-     packages.  The default package contains applications, application
-     documentation and run-time libraries.  The devel package contains
-     include files, static libraries and function documentation.  The
-     doc package contains the contents of the doc directory.  The original
-     openssl.spec was provided by Damien Miller <djm@mindrot.org>.
-     [Richard Levitte]
-     
-  *) Add a large number of documentation files for many SSL routines.
-     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>]
-
-  *) Add a configuration entry for Sony News 4.
-     [NAKAJI Hiroyuki <nakaji@tutrp.tut.ac.jp>]
-
-  *) Don't set the two most significant bits to one when generating a
-     random number < q in the DSA library.
-     [Ulf Möller]
-
-  *) New SSL API mode 'SSL_MODE_AUTO_RETRY'.  This disables the default
-     behaviour that SSL_read may result in SSL_ERROR_WANT_READ (even if
-     the underlying transport is blocking) if a handshake took place.
-     (The default behaviour is needed by applications such as s_client
-     and s_server that use select() to determine when to use SSL_read;
-     but for applications that know in advance when to expect data, it
-     just makes things more complicated.)
-     [Bodo Moeller]
-
-  *) Add RAND_egd_bytes(), which gives control over the number of bytes read
-     from EGD.
-     [Ben Laurie]
+ Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
   *) Add a few more EBCDIC conditionals that make `req' and `x509'
      work better on such systems.
@@ -300,7 +198,7 @@
      [Steve Henson]
 
   *) Changes needed for Tandem NSK.
-     [Scott Uroff <scott@xypro.com>]
+     [Scott Uroff scott@xypro.com]
 
   *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
      RSA_padding_check_SSLv23(), special padding was never detected

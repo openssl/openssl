@@ -348,21 +348,16 @@ int ssl23_get_client_hello(SSL *s)
 			 * SSLv3 or tls1 header
 			 */
 			
-			v[0]=p[1]; /* major version (= SSL3_VERSION_MAJOR) */
+			v[0]=p[1]; /* major version */
 			/* We must look at client_version inside the Client Hello message
-			 * to get the correct minor version.
-			 * However if we have only a pathologically small fragment of the
-			 * Client Hello message, this would be difficult, we'd have
-			 * to read at least one additional record to find out.
-			 * This doesn't usually happen in real life, so we just complain
-			 * for now.
-			 */
+			 * to get the correct minor version: */
+			v[1]=p[10];
+			/* However if we have only a pathologically small fragment of the
+			 * Client Hello message, we simply use the version from the
+			 * record header -- this is incorrect but unlikely to fail in
+			 * practice */
 			if (p[3] == 0 && p[4] < 6)
-				{
-				SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_TOO_SMALL);
-				goto err;
-				}
-			v[1]=p[10]; /* minor version according to client_version */
+				v[1]=p[2];
 			if (v[1] >= TLS1_VERSION_MINOR)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))

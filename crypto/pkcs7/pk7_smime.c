@@ -111,7 +111,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		/* Add SMIMECapabilities */
 		if(!(flags & PKCS7_NOSMIMECAP))
 		{
-		if(!(smcap = sk_X509_ALGOR_new_null())) {
+		if(!(smcap = sk_X509_ALGOR_new(NULL))) {
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
@@ -172,17 +172,12 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 		PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_NO_CONTENT);
 		return 0;
 	}
-#if 0
-	/* NB: this test commented out because some versions of Netscape
-	 * illegally include zero length content when signing data.
-	 */
 
 	/* Check for data and content: two sets of data */
 	if(!PKCS7_get_detached(p7) && indata) {
 				PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_CONTENT_AND_DATA_PRESENT);
 		return 0;
 	}
-#endif
 
 	sinfos = PKCS7_get_signer_info(p7);
 
@@ -290,7 +285,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
 		return NULL;
 	}
-	if(!(signers = sk_X509_new_null())) {
+	if(!(signers = sk_X509_new(NULL))) {
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

@@ -335,9 +335,6 @@ typedef struct ssl_session_st
  * the misconception that non-blocking SSL_write() behaves like
  * non-blocking write(): */
 #define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002L
-/* Never bother the application with retries if the transport
- * is blocking: */
-#define SSL_MODE_AUTO_RETRY 0x00000004L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -1471,7 +1468,6 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_READ_WRONG_PACKET_TYPE			 212
 #define SSL_R_RECORD_LENGTH_MISMATCH			 213
 #define SSL_R_RECORD_TOO_LARGE				 214
-#define SSL_R_RECORD_TOO_SMALL				 1093
 #define SSL_R_REQUIRED_CIPHER_MISSING			 215
 #define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 216
 #define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 217
