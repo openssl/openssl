@@ -108,6 +108,15 @@ typedef void DH_METHOD;
  * control commands on behalf of the ENGINE using their "cmd_defns" data. */
 #define ENGINE_FLAGS_MANUAL_CMD_CTRL	(int)0x0002
 
+/* This flag is for ENGINEs who return new duplicate structures when found via
+ * "ENGINE_by_id()". When an ENGINE must store state (eg. if ENGINE_ctrl()
+ * commands are called in sequence as part of some stateful process like
+ * key-generation setup and execution), it can set this flag - then each attempt
+ * to obtain the ENGINE will result in it being copied into a new structure.
+ * Normally, ENGINEs don't declare this flag so ENGINE_by_id() just increments
+ * the existing ENGINE's structural reference count. */
+#define ENGINE_FLAGS_BY_ID_COPY		(int)0x0004
+
 /* ENGINEs can support their own command types, and these flags are used in
  * ENGINE_CTRL_GET_CMD_FLAGS to indicate to the caller what kind of input each
  * command expects. Currently only numeric and string input is supported. If a
@@ -349,6 +358,11 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* Copies across all ENGINE methods and pointers. NB: This does *not* change
  * reference counts however. */
 int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
+/* These functions (and the "get" function lower down) allow control over any
+ * per-structure ENGINE data. */
+int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 /* Cleans the internal engine structure.  This should only be used when the
  * application is about to exit. */
 void ENGINE_cleanup(void);
@@ -372,6 +386,7 @@ ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
+void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
 /* FUNCTIONAL functions. These functions deal with ENGINE structures
  * that have (or will) be initialised for use. Broadly speaking, the

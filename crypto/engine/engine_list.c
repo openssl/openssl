@@ -61,6 +61,14 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
+/* Weird "ex_data" handling. Some have suggested there's some problems with the
+ * CRYPTO_EX_DATA code (or model), but for now I'm implementing it exactly as
+ * it's done in crypto/rsa/. That way the usage and documentation of that can be
+ * used to assist here, and any changes or fixes made there should similarly map
+ * over here quite straightforwardly. */
+static int engine_ex_data_num = 0;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *engine_ex_data_stack = NULL;
+
 /* The linked-list of pointers to engine types. engine_list_head
  * incorporates an implicit structural reference but engine_list_tail
  * does not - the latter is a computational niceity and only points
@@ -308,7 +316,7 @@ int ENGINE_remove(ENGINE *e)
 
 ENGINE *ENGINE_by_id(const char *id)
 	{
-	ENGINE *iterator = NULL;
+	ENGINE *iterator = NULL, *cp = NULL;
 	if(id == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -325,8 +333,24 @@ ENGINE *ENGINE_by_id(const char *id)
 		while(iterator && (strcmp(id, iterator->id) != 0))
 			iterator = iterator->next;
 		if(iterator)
-			/* We need to return a structural reference */
-			iterator->struct_ref++;
+			{
+			/* We need to return a structural reference. If this is
+			 * a "dynamic" ENGINE type, make a duplicate - otherwise
+			 * increment the existing ENGINE's reference count. */
+			if(iterator->flags & ENGINE_FLAGS_BY_ID_COPY)
+				{
+				cp = ENGINE_new();
+				if(!cp)
+					iterator = NULL;
+				else
+					{
+					ENGINE_cpy(cp, iterator);
+					iterator = cp;
+					}
+				}
+			else
+				iterator->struct_ref++;
+			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	if(iterator == NULL)
@@ -347,6 +371,7 @@ ENGINE *ENGINE_new(void)
 		}
 	memset(ret, 0, sizeof(ENGINE));
 	ret->struct_ref = 1;
+	CRYPTO_new_ex_data(engine_ex_data_stack, ret, &ret->ex_data);
 	return ret;
 	}
 
@@ -372,8 +397,28 @@ int ENGINE_free(ENGINE *e)
 		abort();
 		}
 #endif
+	CRYPTO_free_ex_data(engine_ex_data_stack, e, &e->ex_data);
 	OPENSSL_free(e);
 	return 1;
+	}
+
+int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+	{
+	engine_ex_data_num++;
+	return(CRYPTO_get_ex_new_index(engine_ex_data_num - 1,
+			&engine_ex_data_stack, argl, argp,
+			new_func, dup_func, free_func));
+	}
+
+int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
+	{
+	return(CRYPTO_set_ex_data(&e->ex_data, idx, arg));
+	}
+
+void *ENGINE_get_ex_data(const ENGINE *e, int idx)
+	{
+	return(CRYPTO_get_ex_data(&e->ex_data, idx));
 	}
 
 void ENGINE_cleanup(void)

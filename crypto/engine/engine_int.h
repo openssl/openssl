@@ -96,6 +96,8 @@ struct engine_st
 	 * simply to cope with (de)allocation of this structure. Hence,
 	 * running_ref <= struct_ref at all times. */
 	int funct_ref;
+	/* A place to store per-key data */
+	CRYPTO_EX_DATA ex_data;
 	/* Used to maintain the linked-list of engines. */
 	struct engine_st *prev;
 	struct engine_st *next;
