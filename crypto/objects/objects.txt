@@ -610,7 +610,6 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 
 X500 4			: X509
 X509 3			: CN			: commonName
-!Cname surname
 X509 4			: SN			: surname
 X509 5			: 			: serialNumber
 X509 6			: C			: countryName
