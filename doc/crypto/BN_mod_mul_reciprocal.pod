@@ -16,6 +16,9 @@ reciprocal
 
  int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *m, BN_CTX *ctx);
 
+ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *a, BN_RECP_CTX *recp,
+        BN_CTX *ctx);
+
  int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *a, BIGNUM *b,
         BN_RECP_CTX *recp, BN_CTX *ctx);
 
@@ -33,9 +36,13 @@ BN_RECP_CTX_init() initializes an existing uninitialized B<BN_RECP>.
 BN_RECP_CTX_free() frees the components of the B<BN_RECP>, and, if it
 was created by BN_RECP_CTX_new(), also the structure itself.
 
-BN_RECP_CTX_set() computes 1/B<m> and shifts it left by
-BN_num_bits(B<m>)+1 to make it an integer. The result and the
-number of bits it was shifted left are stored in B<recp>.
+BN_RECP_CTX_set() stores B<m> in B<recp> and sets it up for computing
+1/B<m> and shifting it left by BN_num_bits(B<m>)+1 to make it an
+integer. The result and the number of bits it was shifted left will
+later be stored in B<recp>.
+
+BN_div_recp() divides B<a> by B<m> using B<recp>. It places the quotient
+in B<dv> and the remainder in B<rem>.
 
 The B<BN_RECP_CTX> structure is defined as follows:
 

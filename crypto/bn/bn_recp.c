@@ -158,6 +158,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 	 *
 	 */
 	i=BN_num_bits(m);
+	if (i%2) i--;
 
 	j=recp->num_bits*2;
 	if (j > i)

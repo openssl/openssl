@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Bug fix for BN_div_recp() for numerators with an even number of
+     bits.
+     [Ulf Möller]
+
+  *) More tests in bntest.c, and changed test_bn output.
+     [Ulf Möller]
+
   *) ./config recognizes MacOS X now.
      [Andy Polyakov]
 

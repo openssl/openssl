@@ -119,7 +119,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
 		if (!ctx->too_many)
 			{
 			BNerr(BN_F_BN_CTX_GET,BN_R_TOO_MANY_TEMPORARY_VARIABLES);
-			/* disable error code until SSL_CTX_end is called: */
+			/* disable error code until BN_CTX_end is called: */
 			ctx->too_many = 1;
 			}
 		return NULL;

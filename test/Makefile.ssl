@@ -13,6 +13,7 @@ INSTALLTOP=	/usr/local/ssl
 MAKEFILE=	Makefile.ssl
 MAKE=		make -f $(MAKEFILE)
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+PERL=		perl
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
@@ -180,14 +181,10 @@ test_pkcs7:
 
 test_bn:
 	@echo starting big number library test, could take a while...
-# This *should* work:
-#	@(./$(BNTEST)|bc) | awk '{ \
-# Some broken bc's treat the pipe as a terminal :-(
-# By using a temporary file, errors detected by awk may be farther away from
-# the test that caused them; but even with the pipe there'd be some distance.
-	@(./$(BNTEST) >tmp.bntest; echo quit >>tmp.bntest; bc tmp.bntest) | awk '{ \
-if ($$0 != "0") {print "error"; exit(1); } \
-if (((NR+1)%64) == 0) print NR+1," tests done"; }'
+	@./$(BNTEST) >tmp.bntest
+	@echo quit >>tmp.bntest
+	@echo "running bc"
+	@bc tmp.bntest 2>&1 | $(PERL) -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} print STDERR "."; $$i++;} print STDERR "\n$$i tests passed\n"'
 	@echo 'test a^b%c implementations'
 	./$(EXPTEST)
 
