@@ -168,13 +168,15 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
     assert(in && out && key && ivec);
     if(enc)
 	{
-	/* construct the new IV in the second half of ovec */
-	AES_encrypt(ivec,ovec+AES_BLOCK_SIZE,key);
+	/* construct the new IV */
+	AES_encrypt(ivec,ovec,key);
 	/* encrypt the input */
 	for(n=0 ; n < (nbits+7)/8 ; ++n)
-	    out[n]=in[n]^ovec[n+AES_BLOCK_SIZE];
+	    out[n]=in[n]^ovec[n];
 	/* fill in the first half of the new IV with the current IV */
 	memcpy(ovec,ivec,AES_BLOCK_SIZE);
+	/* and put the ciphertext in the second half */
+	memcpy(ovec+AES_BLOCK_SIZE,out,(nbits+7)/8);
 	/* shift ovec left most of the bits... */
 	memmove(ovec,ovec+nbits/8,AES_BLOCK_SIZE+(nbits%8 ? 1 : 0));
 	/* now the remaining bits */
@@ -213,7 +215,7 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
     /* it is not necessary to cleanse ovec, since the IV is not secret */
     }
 
-/* N.B. This expects the input to be packed, LS bit first */
+/* N.B. This expects the input to be packed, MS bit first */
 void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 		      const unsigned long length, const AES_KEY *key,
 		      unsigned char *ivec, int *num, const int enc)
@@ -223,11 +225,12 @@ void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
     assert(in && out && key && ivec && num);
     assert(*num == 0);
 
+    memset(out,0,(length+7)/8);
     for(n=0 ; n < length ; ++n)
 	{
-	c[0]=!!(in[n/8]&(1 << (n%8)));
+	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
 	AES_cfbr_encrypt_block(c,d,1,key,ivec,enc);
-	out[n/8]=(out[n/8]&~(1 << (n%8)))|((d[0]&1) << (n%8));
+	out[n/8]=(out[n/8]&~(1 << (7-n%8)))|((d[0]&0x80) >> (n%8));
 	}
     }
 
