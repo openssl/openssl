@@ -1218,7 +1218,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"private","Private",NID_Private,4,&(lvalues[2844]),0},
 {"security","Security",NID_Security,4,&(lvalues[2848]),0},
 {"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2852]),0},
-{"mail","Mail",NID_Mail,4,&(lvalues[2856]),0},
+{"Mail","Mail",NID_Mail,4,&(lvalues[2856]),0},
 {"enterprises","Enterprises",NID_Enterprises,5,&(lvalues[2860]),0},
 {"dcobject","dcObject",NID_dcObject,9,&(lvalues[2865]),0},
 {"DC","domainComponent",NID_domainComponent,10,&(lvalues[2874]),0},
@@ -1318,7 +1318,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"UID","userId",NID_userId,10,&(lvalues[3393]),0},
 {"textEncodedORAddress","textEncodedORAddress",
 	NID_textEncodedORAddress,10,&(lvalues[3403]),0},
-{"rfc822Mailbox","rfc822Mailbox",NID_rfc822Mailbox,10,&(lvalues[3413]),0},
+{"mail","rfc822Mailbox",NID_rfc822Mailbox,10,&(lvalues[3413]),0},
 {"info","info",NID_info,10,&(lvalues[3423]),0},
 {"favouriteDrink","favouriteDrink",NID_favouriteDrink,10,
 	&(lvalues[3433]),0},
@@ -1530,6 +1530,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[ 4]),/* "MD5" */
 &(nid_objs[114]),/* "MD5-SHA1" */
 &(nid_objs[95]),/* "MDC2" */
+&(nid_objs[388]),/* "Mail" */
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[366]),/* "Nonce" */
 &(nid_objs[17]),/* "O" */
@@ -1876,7 +1877,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[476]),/* "lastModifiedTime" */
 &(nid_objs[157]),/* "localKeyID" */
 &(nid_objs[480]),/* "mXRecord" */
-&(nid_objs[388]),/* "mail" */
+&(nid_objs[460]),/* "mail" */
 &(nid_objs[493]),/* "mailPreferenceOption" */
 &(nid_objs[467]),/* "manager" */
 &(nid_objs[182]),/* "member-body" */
@@ -1956,7 +1957,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[457]),/* "qualityLabelledData" */
 &(nid_objs[450]),/* "rFC822localPart" */
-&(nid_objs[460]),/* "rfc822Mailbox" */
 &(nid_objs[400]),/* "role" */
 &(nid_objs[448]),/* "room" */
 &(nid_objs[463]),/* "roomNumber" */
