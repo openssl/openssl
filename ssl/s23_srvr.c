@@ -365,12 +365,11 @@ int ssl23_get_client_hello(SSL *s)
 			goto err;
 			}
 
-		/* record header: version ... */
-		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
-		*(d++) = v[1];
+		/* record header: msg_type ... */
+		*(d++) = SSL3_MT_CLIENT_HELLO;
 		/* ... and length (actual value will be written later) */
-		d_len = d++;
-		d++;
+		d_len = d;
+		d += 3;
 
 		/* client_version */
 		*(d++) = SSL3_VERSION_MAJOR; /* == v[0] */
@@ -404,7 +403,7 @@ int ssl23_get_client_hello(SSL *s)
 		*(d++)=0;
 		
 		i=(d-(unsigned char *)s->init_buf->data);
-		s2n(i, d_len);
+		l2n3((long)i, d_len);
 
 		/* get the data reused from the init_buf */
 		s->s3->tmp.reuse_message=1;
