@@ -87,6 +87,6 @@ int ECDH_compute_key(unsigned char *key, const EC_POINT *pub_key, EC_KEY *eckey)
 {
 	ECDH_DATA *ecdh = ecdh_check(eckey);
 	if (ecdh == NULL)
-		return NULL;
+		return 0;
 	return ecdh->meth->compute_key(key, pub_key, eckey);
 }
