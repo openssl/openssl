@@ -192,7 +192,7 @@ B<-showcerts> option can be used to show the whole chain.
 =head1 BUGS
 
 Because this program has a lot of options and also because some of
-the techniques used are rather old the C source of s_client is rather
+the techniques used are rather old, the C source of s_client is rather
 hard to read and not a model of how things should be done. A typical
 SSL client program would be much simpler.
 
