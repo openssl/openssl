@@ -91,7 +91,9 @@ const char *RAND_file_name(char *file,int num);
 int RAND_status(void);
 int RAND_egd(const char *path);
 #if defined(WINDOWS) || defined(WIN32)
+#include <windows.h>
 void RAND_screen(void);
+int RAND_event(UINT, WPARAM, LPARAM);
 #endif
 void	ERR_load_RAND_strings(void);
 

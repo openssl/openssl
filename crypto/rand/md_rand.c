@@ -568,6 +568,47 @@ static int ssleay_rand_status(void)
 #include <windows.h>
 #include <openssl/rand.h>
 
+int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
+        {
+        double add_entropy=0;
+        SYSTEMTIME t;
+
+        switch (iMsg)
+                {
+        case WM_KEYDOWN:
+                        {
+                        static WPARAM key;
+                        if (key != wParam)
+                                add_entropy = 0.05;
+                        key = wParam;
+                        }
+                        break;
+	case WM_MOUSEMOVE:
+                        {
+                        static int lastx,lasty,lastdx,lastdy;
+                        int x,y,dx,dy;
+
+                        x=LOWORD(lParam);
+                        y=HIWORD(lParam);
+                        dx=lastx-x;
+                        dy=lasty-y;
+                        if (dx != 0 && dy != 0 && dx-lastdx != 0 && dy-lastdy != 0)
+                                entropy += .2;
+                        lastx=x,lasty=y;
+                        lastdx=dx, lastdy=dy;
+                        }
+		break;
+		}
+
+        GetSystemTime(&t);
+        RAND_add(&iMsg, sizeof(iMsg), add_entropy);
+	RAND_add(&wParam, sizeof(wParam), 0);
+	RAND_add(&lParam, sizeof(lParam), 0);
+        RAND_add(&t, sizeof(t), 0);
+
+	return (RAND_status());
+	}
+
 /*****************************************************************************
  * Initialisation function for the SSL random generator.  Takes the contents
  * of the screen as random seed.
