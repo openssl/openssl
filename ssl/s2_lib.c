@@ -330,7 +330,7 @@ void ssl2_clear(SSL *s)
 	s->packet_length=0;
 	}
 
-long ssl2_ctrl(SSL *s, int cmd, long larg, char *parg)
+long ssl2_ctrl(SSL *s, int cmd, long larg, void *parg)
 	{
 	int ret=0;
 
@@ -350,7 +350,7 @@ long ssl2_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	return(0);
 	}
 
-long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
+long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	{
 	return(0);
 	}

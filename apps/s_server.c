@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <assert.h>
 #include <stdio.h>
@@ -177,6 +230,7 @@ static int www=0;
 
 static BIO *bio_s_out=NULL;
 static int s_debug=0;
+static int s_msg=0;
 static int s_quiet=0;
 
 static int hack=0;
@@ -202,6 +256,7 @@ static void s_server_init(void)
 
 	bio_s_out=NULL;
 	s_debug=0;
+	s_msg=0;
 	s_quiet=0;
 	hack=0;
 	engine_id=NULL;
@@ -230,6 +285,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -nbio_test    - test with the non-blocking test bio\n");
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err," -debug        - Print more output\n");
+	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -state        - Print the SSL states\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
@@ -553,6 +609,8 @@ int MAIN(int argc, char *argv[])
 			}
 		else if	(strcmp(*argv,"-debug") == 0)
 			{ s_debug=1; }
+		else if	(strcmp(*argv,"-msg") == 0)
+			{ s_msg=1; }
 		else if	(strcmp(*argv,"-hack") == 0)
 			{ hack=1; }
 		else if	(strcmp(*argv,"-state") == 0)
@@ -633,7 +691,7 @@ bad:
 
 	if (bio_s_out == NULL)
 		{
-		if (s_quiet && !s_debug)
+		if (s_quiet && !s_debug && !s_msg)
 			{
 			bio_s_out=BIO_new(BIO_s_null());
 			}
@@ -891,6 +949,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_cb);
 		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		}
+	if (s_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
 	width=s+1;
@@ -1283,6 +1346,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_cb);
 		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		}
+	if (s_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
 	blank=0;

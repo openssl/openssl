@@ -119,7 +119,7 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-/* send s->init_buf in records of type 'type' */
+/* send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or SSL3_RT_CHANGE_CIPHER_SPEC) */
 int ssl3_do_write(SSL *s, int type)
 	{
 	int ret;
@@ -133,7 +133,11 @@ int ssl3_do_write(SSL *s, int type)
 		ssl3_finish_mac(s,(unsigned char *)&s->init_buf->data[s->init_off],ret);
 	
 	if (ret == s->init_num)
+		{
+		if (s->msg_callback)
+			s->msg_callback(1, s->version, type, s->init_buf->data, (size_t)s->init_num, s, s->msg_callback_arg);
 		return(1);
+		}
 	s->init_off+=ret;
 	s->init_num-=ret;
 	return(0);
@@ -393,8 +397,10 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 						{
 						s->init_num = 0;
 						skip_message = 1;
+
+						if (s->msg_callback)
+							s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, 4, s, s->msg_callback_arg);
 						}
-			
 			}
 		while (skip_message);
 
@@ -461,6 +467,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		n -= i;
 		}
 	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data, (size_t)s->init_num + 4, s, s->msg_callback_arg);
 	*ok=1;
 	return s->init_num;
 f_err:

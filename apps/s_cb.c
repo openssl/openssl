@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,3 +289,200 @@ void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret)
 		}
 	}
 
+
+void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
+	{
+	BIO *bio = arg;
+	const char *str_write_p, *str_version, *str_content_type = "", *str_details1 = "", *str_details2= "";
+	
+	str_write_p = write_p ? ">>>" : "<<<";
+
+	switch (version)
+		{
+	case SSL2_VERSION:
+		str_version = "SSL 2.0";
+		break;
+	case SSL3_VERSION:
+		str_version = "SSL 3.0 ";
+		break;
+	case TLS1_VERSION:
+		str_version = "TLS 1.0 ";
+		break;
+	default:
+		str_version = "???";
+		}
+
+	if (version == SSL3_VERSION || version == TLS1_VERSION)
+		{
+		switch (content_type)
+			{
+		case 20:
+			str_content_type = "ChangeCipherSpec";
+			break;
+		case 21:
+			str_content_type = "Alert";
+			break;
+		case 22:
+			str_content_type = "Handshake";
+			break;
+			}
+
+		if (content_type == 21) /* Alert */
+			{
+			str_details1 = ", ???";
+			
+			if (len == 2)
+				{
+				switch (((unsigned char*)buf)[0])
+					{
+				case 1:
+					str_details1 = ", warning";
+					break;
+				case 2:
+					str_details1 = ", fatal";
+					break;
+					}
+
+				str_details2 = " ???";
+				switch (((unsigned char*)buf)[1])
+					{
+				case 0:
+					str_details2 = " close_notify";
+					break;
+				case 10:
+					str_details2 = " unexpected_message";
+					break;
+				case 20:
+					str_details2 = " bad_record_mac";
+					break;
+				case 21:
+					str_details2 = " decryption_failed";
+					break;
+				case 22:
+					str_details2 = " record_overflow";
+					break;
+				case 30:
+					str_details2 = " decompression_failure";
+					break;
+				case 40:
+					str_details2 = " handshake_failure";
+					break;
+				case 42:
+					str_details2 = " bad_certificate";
+					break;
+				case 43:
+					str_details2 = " unsupported_certificate";
+					break;
+				case 44:
+					str_details2 = " certificate_revoked";
+					break;
+				case 45:
+					str_details2 = " certificate_expired";
+					break;
+				case 46:
+					str_details2 = " certificate_unknown";
+					break;
+				case 47:
+					str_details2 = " illegal_parameter";
+					break;
+				case 48:
+					str_details2 = " unknown_ca";
+					break;
+				case 49:
+					str_details2 = " access_denied";
+					break;
+				case 50:
+					str_details2 = " decode_error";
+					break;
+				case 51:
+					str_details2 = " decrypt_error";
+					break;
+				case 60:
+					str_details2 = " export_restriction";
+					break;
+				case 70:
+					str_details2 = " protocol_version";
+					break;
+				case 71:
+					str_details2 = " insufficient_security";
+					break;
+				case 80:
+					str_details2 = " internal_error";
+					break;
+				case 90:
+					str_details2 = " user_canceled";
+					break;
+				case 100:
+					str_details2 = " no_renegotiation";
+					break;
+					}
+				}
+			}
+		
+		if (content_type == 22) /* Handshake */
+			{
+			str_details1 = "???";
+
+			if (len > 0)
+				{
+				switch (((unsigned char*)buf)[0])
+					{
+				case 0:
+					str_details1 = ", HelloRequest";
+					break;
+				case 1:
+					str_details1 = ", ClientHello";
+					break;
+				case 2:
+					str_details1 = ", ServerHello";
+					break;
+				case 11:
+					str_details1 = ", Certificate";
+					break;
+				case 12:
+					str_details1 = ", ServerKeyExchange";
+					break;
+				case 13:
+					str_details1 = ", CertificateRequest";
+					break;
+				case 14:
+					str_details1 = ", ServerHelloDone";
+					break;
+				case 15:
+					str_details1 = ", CertificateVerify";
+					break;
+				case 16:
+					str_details1 = ", ClientKeyExchange";
+					break;
+				case 20:
+					str_details1 = ", Finished";
+					break;
+					}
+				}
+			}
+		}
+
+	BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version, str_content_type, (unsigned long)len, str_details1, str_details2);
+
+	if (len > 0)
+		{
+		size_t num, i;
+		
+		BIO_printf(bio, "   ");
+		num = len;
+#if 0
+		if (num > 16)
+			num = 16;
+#endif
+		for (i = 0; i < num; i++)
+			{
+			if (i % 16 == 0 && i > 0)
+				BIO_printf(bio, "\n   ");
+			BIO_printf(bio, " %02x", ((unsigned char*)buf)[i]);
+			}
+		if (i < len)
+			BIO_printf(bio, " ...");
+		BIO_printf(bio, "\n");
+		}
+	BIO_flush(bio);
+	}

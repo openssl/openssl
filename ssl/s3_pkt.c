@@ -911,6 +911,9 @@ start:
 			goto err;
 			}
 
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->s3->handshake_fragment, 4, s, s->msg_callback_arg);
+
 		if (SSL_is_init_finished(s) &&
 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 			!s->s3->renegotiate)
@@ -955,6 +958,9 @@ start:
 		int alert_descr = s->s3->alert_fragment[1];
 
 		s->s3->alert_fragment_len = 0;
+
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, SSL3_RT_ALERT, s->s3->alert_fragment, 2, s, s->msg_callback_arg);
 
 		if (s->info_callback != NULL)
 			cb=s->info_callback;
@@ -1019,6 +1025,10 @@ start:
 			}
 
 		rr->length=0;
+
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1, s, s->msg_callback_arg);
+
 		s->s3->change_cipher_spec=1;
 		if (!do_change_cipher_spec(s))
 			goto err;
@@ -1177,6 +1187,8 @@ void ssl3_send_alert(SSL *s, int level, int desc)
 	{
 	/* Map tls/ssl alert value to correct one */
 	desc=s->method->ssl3_enc->alert_value(desc);
+	if (s->version == SSL3_VERSION && desc == SSL_AD_PROTOCOL_VERSION)
+		desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have protocol_version alerts */
 	if (desc < 0) return;
 	/* If a fatal one, remove from cache */
 	if ((level == 2) && (s->session != NULL))
@@ -1209,6 +1221,9 @@ int ssl3_dispatch_alert(SSL *s)
 		 * we will not worry too much. */
 		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
+
+		if (s->msg_callback)
+			s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3->send_alert, 2, s, s->msg_callback_arg);
 
 		if (s->info_callback != NULL)
 			cb=s->info_callback;

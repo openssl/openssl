@@ -283,8 +283,8 @@ typedef struct ssl_method_st
 	int (*ssl_shutdown)(SSL *s);
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);
-	long (*ssl_ctrl)(SSL *s,int cmd,long larg,char *parg);
-	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,char *parg);
+	long (*ssl_ctrl)(SSL *s,int cmd,long larg,void *parg);
+	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,void *parg);
 	SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
 	int (*put_cipher_by_char)(const SSL_CIPHER *cipher,unsigned char *ptr);
 	int (*ssl_pending)(SSL *s);
@@ -428,22 +428,30 @@ typedef struct ssl_session_st
  * they cannot be used to clear bits. */
 
 #define SSL_CTX_set_options(ctx,op) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,op,NULL)
+	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
 #define SSL_CTX_get_options(ctx) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_OPTIONS,0,NULL)
+	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_set_options(ssl,op) \
-	SSL_ctrl(ssl,SSL_CTRL_OPTIONS,op,NULL)
+	SSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
 #define SSL_get_options(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_OPTIONS,0,NULL)
+        SSL_ctrl((ssl),SSL_CTRL_OPTIONS,0,NULL)
 
 #define SSL_CTX_set_mode(ctx,op) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_MODE,op,NULL)
+	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,(op),NULL)
 #define SSL_CTX_get_mode(ctx) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_MODE,0,NULL)
+	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,0,NULL)
 #define SSL_set_mode(ssl,op) \
-	SSL_ctrl(ssl,SSL_CTRL_MODE,op,NULL)
+	SSL_ctrl((ssl),SSL_CTRL_MODE,(op),NULL)
 #define SSL_get_mode(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_MODE,0,NULL)
+        SSL_ctrl((ssl),SSL_CTRL_MODE,0,NULL)
+
+
+void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
+void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
+#define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
+#define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
+
+
 
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
 #define SSL_MAX_CERT_LIST_DEFAULT 1024*30 /* 30k max cert list :-) */
@@ -586,7 +594,7 @@ struct ssl_ctx_st
 	int read_ahead;
 
 	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void (*msg_callback)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg);
 	void *msg_callback_arg;
 
 	int verify_mode;
@@ -732,7 +740,7 @@ struct ssl_st
 	               	 	 * (for non-blocking reads) */
 
 	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void (*msg_callback)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg);
 	void *msg_callback_arg;
 
 	int hit;		/* reusing a previous session */
@@ -1205,9 +1213,9 @@ int 	SSL_connect(SSL *ssl);
 int 	SSL_read(SSL *ssl,void *buf,int num);
 int 	SSL_peek(SSL *ssl,void *buf,int num);
 int 	SSL_write(SSL *ssl,const void *buf,int num);
-long	SSL_ctrl(SSL *ssl,int cmd, long larg, char *parg);
+long	SSL_ctrl(SSL *ssl,int cmd, long larg, void *parg);
 long	SSL_callback_ctrl(SSL *, int, void (*)());
-long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, char *parg);
+long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, void *parg);
 long	SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)());
 
 int	SSL_get_error(SSL *s,int ret_code);

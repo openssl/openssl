@@ -670,6 +670,18 @@ static int ssl3_get_client_hello(SSL *s)
 	s->client_version=(((int)p[0])<<8)|(int)p[1];
 	p+=2;
 
+	if (s->client_version < s->version)
+		{
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
+		if ((s->client_version>>8) == SSL3_VERSION_MAJOR) 
+			{
+			/* similar to ssl3_get_record, send alert using remote version number */
+			s->version = s->client_version;
+			}
+		al = SSL_AD_PROTOCOL_VERSION;
+		goto f_err;
+		}
+
 	/* load the client random */
 	memcpy(s->s3->client_random,p,SSL3_RANDOM_SIZE);
 	p+=SSL3_RANDOM_SIZE;

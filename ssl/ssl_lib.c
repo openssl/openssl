@@ -902,7 +902,7 @@ int SSL_renegotiate_pending(SSL *s)
 	return (s->new_session != 0);
 	}
 
-long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
+long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 	{
 	long l;
 
@@ -939,7 +939,7 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	switch(cmd)
 		{
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		s->msg_callback = (void (*)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		s->msg_callback = (void (*)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))(fp);
 		return 1;
 		
 	default:
@@ -952,7 +952,7 @@ struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx)
 	return ctx->sessions;
 	}
 
-long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
+long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,void *parg)
 	{
 	long l;
 
@@ -1027,7 +1027,7 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 	switch(cmd)
 		{
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		ctx->msg_callback = (void (*)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		ctx->msg_callback = (void (*)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))(fp);
 		return 1;
 
 	default:
@@ -2263,16 +2263,28 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
 #ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
-    {
-    SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
-    }
+	{
+	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
+	}
 
 void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 						int keylength))
-    {
-    SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
-    }
+	{
+	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
+	}
 #endif
+
+
+void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
+	{
+	SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_MSG_CALLBACK, (void (*)())cb);
+	}
+void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
+	{
+	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)())cb);
+	}
+
+
 
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"

@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <assert.h>
 #include <stdio.h>
@@ -113,6 +166,7 @@ static int c_nbio=0;
 #endif
 static int c_Pause=0;
 static int c_debug=0;
+static int c_msg=0;
 static int c_showcerts=0;
 
 static void sc_usage(void);
@@ -139,6 +193,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
 	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
+	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
 #ifdef FIONBIO
@@ -205,6 +260,7 @@ int MAIN(int argc, char **argv)
 	c_quiet=0;
 	c_ign_eof=0;
 	c_debug=0;
+	c_msg=0;
 	c_showcerts=0;
 
 	if (bio_err == NULL)
@@ -275,6 +331,8 @@ int MAIN(int argc, char **argv)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+		else if	(strcmp(*argv,"-msg") == 0)
+			c_msg=1;
 		else if	(strcmp(*argv,"-showcerts") == 0)
 			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
@@ -368,7 +426,7 @@ bad:
 
 	if (bio_c_out == NULL)
 		{
-		if (c_quiet)
+		if (c_quiet && !c_debug && !c_msg)
 			{
 			bio_c_out=BIO_new(BIO_s_null());
 			}
@@ -470,6 +528,11 @@ re_start:
 		con->debug=1;
 		BIO_set_callback(sbio,bio_dump_cb);
 		BIO_set_callback_arg(sbio,bio_c_out);
+		}
+	if (c_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_c_out);
 		}
 
 	SSL_set_bio(con,sbio,sbio);

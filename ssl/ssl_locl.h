@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -530,8 +530,8 @@ int	ssl2_peek(SSL *s, void *buf, int len);
 int	ssl2_write(SSL *s, const void *buf, int len);
 int	ssl2_shutdown(SSL *s);
 void	ssl2_clear(SSL *s);
-long	ssl2_ctrl(SSL *s,int cmd, long larg, char *parg);
-long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, char *parg);
+long	ssl2_ctrl(SSL *s,int cmd, long larg, void *parg);
+long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
 long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)());
 long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
 int	ssl2_pending(SSL *s);
@@ -578,8 +578,8 @@ int	ssl3_peek(SSL *s, void *buf, int len);
 int	ssl3_write(SSL *s, const void *buf, int len);
 int	ssl3_shutdown(SSL *s);
 void	ssl3_clear(SSL *s);
-long	ssl3_ctrl(SSL *s,int cmd, long larg, char *parg);
-long	ssl3_ctx_ctrl(SSL_CTX *s,int cmd, long larg, char *parg);
+long	ssl3_ctrl(SSL *s,int cmd, long larg, void *parg);
+long	ssl3_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
 long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)());
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)());
 int	ssl3_pending(SSL *s);
@@ -592,7 +592,7 @@ int ssl23_write_bytes(SSL *s);
 int tls1_new(SSL *s);
 void tls1_free(SSL *s);
 void tls1_clear(SSL *s);
-long tls1_ctrl(SSL *s,int cmd, long larg, char *parg);
+long tls1_ctrl(SSL *s,int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)());
 SSL_METHOD *tlsv1_base_method(void );
 

@@ -8,10 +8,10 @@ SSL_CTX_ctrl, SSL_CTX_callback_ctrl, SSL_ctrl, SSL_callback_ctrl - internal hand
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg);
+ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
  long SSL_CTX_callback_ctrl(SSL_CTX *, int cmd, void (*fp)());
 
- long SSL_ctrl(SSL *ssl, int cmd, long larg, char *parg);
+ long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
  long SSL_callback_ctrl(SSL *, int cmd, void (*fp)());
 
 =head1 DESCRIPTION
