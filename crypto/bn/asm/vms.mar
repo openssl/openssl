@@ -187,11 +187,8 @@ n=12 ;(AP)	n	by value (input)
 ; view, i.e. when the highest bit is set), dividing the dividend by
 ; 2 isn't enough, it needs to be divided by 4.  Furthermore, the
 ; divisor needs to be divided by 2 (unsigned) as well, to avoid more
-; problems with the sign.  In this case, the divisor is so large,
-; from an unsigned point of view, that the dropped lowest bit is
-; insignificant for the operation, and therefore doesn't need
-; bothering with.  The remainder might end up incorrect, bit that's
-; adjusted at the end of the routine anyway.
+; problems with the sign.  In this case, a little extra fiddling with
+; the remainder is required.
 ;
 ; So, the simplest way to handle this is always to divide the dividend
 ; by 4, and to divide the divisor by 2 if it's highest bit is set.
@@ -213,9 +210,19 @@ n=12 ;(AP)	n	by value (input)
 ; if (q < 0) q = -q		# I doubt this is necessary any more
 ;
 ; r'    = r >> 30
-; if (d' > 0) q = q << 1
+; if (d' >= 0) q = q << 1
 ; q     = q << 1
 ; r     = (r << 2) + l'
+;
+; if (d' < 0)
+;   {
+;     [r',r] = [r',r] - q
+;     while ([r',r] < 0)
+;       {
+;         [r',r] = [r',r] + d
+;         q = q - 1
+;       }
+;   }
 ;
 ; while ([r',r] >= d)
 ;   {
@@ -278,13 +285,26 @@ d=12 ;(AP)	d	by value (input)
 	bicl3	#^X00000003,r3,r3
 	addl	r5,r3		; r = r + l'
 
+	tstl	r7
+	bgeq	5$
+	bitl	#1,r7
+	beql	5$		; if d < 0 && d & 1
+	subl	r2,r3		;   [r',r] = [r',r] - q
+	sbwc	#0,r6
+45$:
+	bgeq	5$		;   while r < 0
+	decl	r2		;     q = q - 1
+	addl	r7,r3		;     [r',r] = [r',r] + d
+	adwc	#0,r6
+	brb	45$
+
 5$:
 	tstl	r6
 	bneq	6$
 	cmpl	r3,r7
 	blssu	42$		; while [r',r] >= d'
 6$:
-	subl	r7,r3		;   r = r - d
+	subl	r7,r3		;   [r',r] = [r',r] - d
 	sbwc	#0,r6
 	incl	r2		;   q = q + 1
 	brb	5$	
