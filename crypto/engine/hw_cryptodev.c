@@ -46,6 +46,18 @@ ENGINE_load_cryptodev(void)
 
 #include <sys/types.h>
 #include <sys/param.h>
+
+#if OpenBSD < 200112
+
+void
+ENGINE_load_cryptodev(void)
+{
+	/* This is a NOP unless we have release 3.0 (released december 2001) */
+	return;
+}
+
+#else /* OpenBSD 3.0 or above */
+
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -1114,4 +1126,5 @@ ENGINE_load_cryptodev(void)
 	ERR_clear_error();
 }
 
+#endif /* OpenBSD 3.0 or above */
 #endif /* __OpenBSD__ */
