@@ -61,8 +61,9 @@
 
 #include <stdio.h>
 #include <assert.h>
+
 #include "cryptlib.h"
-#include <openssl/bn.h>
+#include "bn_lcl.h"
 
 
 BN_CTX *BN_CTX_new(void)
@@ -83,6 +84,7 @@ BN_CTX *BN_CTX_new(void)
 
 void BN_CTX_init(BN_CTX *ctx)
 	{
+#if 0 /* explicit version */
 	int i;
 	ctx->tos = 0;
 	ctx->flags = 0;
@@ -90,6 +92,9 @@ void BN_CTX_init(BN_CTX *ctx)
 	ctx->too_many = 0;
 	for (i = 0; i < BN_CTX_NUM; i++)
 		BN_init(&(ctx->bn[i]));
+#else
+	memset(ctx, 0, sizeof *ctx);
+#endif
 	}
 
 void BN_CTX_free(BN_CTX *ctx)

@@ -485,9 +485,11 @@ int test_mul(BIO *bp)
 	{
 	BIGNUM a,b,c,d,e;
 	int i;
-	BN_CTX ctx;
+	BN_CTX *ctx;
 
-	BN_CTX_init(&ctx);
+	ctx = BN_CTX_new();
+	if (ctx == NULL) exit(1);
+	
 	BN_init(&a);
 	BN_init(&b);
 	BN_init(&c);
@@ -505,7 +507,7 @@ int test_mul(BIO *bp)
 			BN_bntest_rand(&b,i-num1,0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
-		BN_mul(&c,&a,&b,&ctx);
+		BN_mul(&c,&a,&b,ctx);
 		if (bp != NULL)
 			{
 			if (!results)
@@ -518,7 +520,7 @@ int test_mul(BIO *bp)
 			BN_print(bp,&c);
 			BIO_puts(bp,"\n");
 			}
-		BN_div(&d,&e,&c,&a,&ctx);
+		BN_div(&d,&e,&c,&a,ctx);
 		BN_sub(&d,&d,&b);
 		if(!BN_is_zero(&d) || !BN_is_zero(&e))
 		    {
@@ -531,7 +533,7 @@ int test_mul(BIO *bp)
 	BN_free(&c);
 	BN_free(&d);
 	BN_free(&e);
-	BN_CTX_free(&ctx);
+	BN_CTX_free(ctx);
 	return(1);
 	}
 

@@ -358,11 +358,12 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	modulus = BN_CTX_get(ctx);
 	exponent = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!modulus || !exponent || !argument || !result)
+	if(!result)
 		{
 		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_BN_CTX_FULL);
 		goto err;
@@ -421,10 +422,7 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 err:
 	if(acquired)
 		release_context(hac);
-	if(modulus) ctx->tos--;
-	if(exponent) ctx->tos--;
-	if(argument) ctx->tos--;
-	if(result) ctx->tos--;
+	BN_CTX_end(ctx);
 	return to_return;
 	}
 
@@ -454,6 +452,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	rsa_p = BN_CTX_get(ctx);
 	rsa_q = BN_CTX_get(ctx);
 	rsa_dmp1 = BN_CTX_get(ctx);
@@ -461,8 +460,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rsa_iqmp = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!rsa_p || !rsa_q || !rsa_dmp1 || !rsa_dmq1 || !rsa_iqmp ||
-			!argument || !result)
+	if(!result)
 		{
 		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_BN_CTX_FULL);
 		goto err;
@@ -532,13 +530,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 err:
 	if(acquired)
 		release_context(hac);
-	if(rsa_p) ctx->tos--;
-	if(rsa_q) ctx->tos--;
-	if(rsa_dmp1) ctx->tos--;
-	if(rsa_dmq1) ctx->tos--;
-	if(rsa_iqmp) ctx->tos--;
-	if(argument) ctx->tos--;
-	if(result) ctx->tos--;
+	BN_CTX_end(ctx);
 	return to_return;
 	}
  
@@ -594,12 +586,13 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	dsa_p = BN_CTX_get(ctx);
 	dsa_q = BN_CTX_get(ctx);
 	dsa_g = BN_CTX_get(ctx);
 	dsa_key = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !result)
+	if(!result)
 		{
 		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_CTX_FULL);
 		goto err;
@@ -672,13 +665,11 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 err:
 	if(acquired)
 		release_context(hac);
-	if(dsa_p) ctx->tos--;
-	if(dsa_q) ctx->tos--;
-	if(dsa_g) ctx->tos--;
-	if(dsa_key) ctx->tos--;
-	if(result) ctx->tos--;
 	if(ctx)
+		{
+		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
+		}
 	return to_return;
 	}
 
@@ -708,12 +699,13 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	dsa_p = BN_CTX_get(ctx);
 	dsa_q = BN_CTX_get(ctx);
 	dsa_g = BN_CTX_get(ctx);
 	dsa_key = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
-	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !argument)
+	if(!argument)
 		{
 		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_CTX_FULL);
 		goto err;
@@ -786,13 +778,11 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 err:
 	if(acquired)
 		release_context(hac);
-	if(dsa_p) ctx->tos--;
-	if(dsa_q) ctx->tos--;
-	if(dsa_g) ctx->tos--;
-	if(dsa_key) ctx->tos--;
-	if(argument) ctx->tos--;
 	if(ctx)
+		{
+		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
+		}
 	return to_return;
 	}
 

@@ -318,11 +318,12 @@ static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		goto err;
 	}
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	modulus = BN_CTX_get(ctx);
 	exponent = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!modulus || !exponent || !argument || !result)
+	if (!result)
 	{
 		ENGINEerr(ENGINE_F_ATALLA_MOD_EXP,ENGINE_R_BN_CTX_FULL);
 		goto err;
@@ -360,10 +361,7 @@ static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	BN_bin2bn((unsigned char *)result->d, numbytes, r);
 	to_return = 1;
 err:
-	if(modulus) ctx->tos--;
-	if(exponent) ctx->tos--;
-	if(argument) ctx->tos--;
-	if(result) ctx->tos--;
+	BN_CTX_end(ctx);
 	return to_return;
 	}
 

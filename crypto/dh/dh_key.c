@@ -101,11 +101,12 @@ const DH_METHOD *DH_OpenSSL(void)
 static int generate_key(DH *dh)
 	{
 	int ok=0;
-	BN_CTX ctx;
+	BN_CTX *ctx;
 	BN_MONT_CTX *mont;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
-	BN_CTX_init(&ctx);
+	ctx = BN_CTX_new();
+	if (ctx == NULL) goto err;
 
 	if (dh->priv_key == NULL)
 		{
@@ -130,12 +131,12 @@ static int generate_key(DH *dh)
 		{
 		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
 			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,&ctx)) goto err;
+				dh->p,ctx)) goto err;
 		}
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
 
 	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
-				priv_key,dh->p,&ctx,mont))
+				priv_key,dh->p,ctx,mont))
 		goto err;
 		
 	dh->pub_key=pub_key;
@@ -147,20 +148,21 @@ err:
 
 	if ((pub_key != NULL)  && (dh->pub_key == NULL))  BN_free(pub_key);
 	if ((priv_key != NULL) && (dh->priv_key == NULL)) BN_free(priv_key);
-	BN_CTX_free(&ctx);
+	BN_CTX_free(ctx);
 	return(ok);
 	}
 
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
-	BN_CTX ctx;
+	BN_CTX *ctx;
 	BN_MONT_CTX *mont;
 	BIGNUM *tmp;
 	int ret= -1;
 
-	BN_CTX_init(&ctx);
-	BN_CTX_start(&ctx);
-	tmp = BN_CTX_get(&ctx);
+	ctx = BN_CTX_new();
+	if (ctx == NULL) goto err;
+	BN_CTX_start(ctx);
+	tmp = BN_CTX_get(ctx);
 	
 	if (dh->priv_key == NULL)
 		{
@@ -171,12 +173,12 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		{
 		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
 			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,&ctx)) goto err;
+				dh->p,ctx)) goto err;
 		}
 
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
 	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, tmp, pub_key,
-				dh->priv_key,dh->p,&ctx,mont))
+				dh->priv_key,dh->p,ctx,mont))
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
@@ -184,8 +186,8 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
 	ret=BN_bn2bin(tmp,key);
 err:
-	BN_CTX_end(&ctx);
-	BN_CTX_free(&ctx);
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	return(ret);
 	}
 

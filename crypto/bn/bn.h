@@ -238,18 +238,8 @@ typedef struct bignum_st
 	int flags;
 	} BIGNUM;
 
-/* Used for temp variables */
-#define BN_CTX_NUM	20
-#define BN_CTX_NUM_POS	12
-typedef struct bignum_ctx
-	{
-	int tos;
-	BIGNUM bn[BN_CTX_NUM];
-	int flags;
-	int depth;
-	int pos[BN_CTX_NUM_POS];
-	int too_many;
-	} BN_CTX;
+/* Used for temp variables (declaration hidden in bn_lcl.h) */
+typedef struct bignum_ctx BN_CTX;
 
 typedef struct bn_blinding_st
 	{

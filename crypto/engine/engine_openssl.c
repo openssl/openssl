@@ -129,6 +129,7 @@ static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	BN_init(&r1);
 	/* BN_mul() cannot accept const BIGNUMs so I use the BN_CTX
 	 * to duplicate what I need. <sigh> */
+	BN_CTX_start(bn_ctx);
 	if ((temp_bn = BN_CTX_get(bn_ctx)) == NULL) goto err;
 	if (!BN_copy(temp_bn, iqmp)) goto err;
  
@@ -166,8 +167,7 @@ static int openssl_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 err:
 	BN_clear_free(&m1);
 	BN_clear_free(&r1);
-	if (temp_bn)
-		bn_ctx->tos--;
+	BN_CTX_end(ctx);
 	if (!ctx)
 		BN_CTX_free(bn_ctx);
 	return(ret);

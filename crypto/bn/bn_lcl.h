@@ -119,6 +119,20 @@ extern "C" {
 #endif
 
 
+/* Used for temp variables */
+#define BN_CTX_NUM	24
+#define BN_CTX_NUM_POS	12
+struct bignum_ctx
+	{
+	int tos;
+	BIGNUM bn[BN_CTX_NUM];
+	int flags;
+	int depth;
+	int pos[BN_CTX_NUM_POS];
+	int too_many;
+	} /* BN_CTX */;
+
+
 /*
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
  *
