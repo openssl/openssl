@@ -691,10 +691,9 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 		return(NULL);
 	}
 
-/* The problem is that it may not be the correct record type */
 int ssl3_pending(SSL *s)
 	{
-	return(s->s3->rrec.length);
+	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ? s->s3->rrec.length : 0;
 	}
 
 int ssl3_new(SSL *s)

@@ -14,8 +14,8 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
 SSL_get_error() returns a result code (suitable for the C "switch"
 statement) for a preceding call to SSL_connect(), SSL_accept(),
-SSL_read(), or SSL_write() on B<ssl>.  The value returned by that
-TLS/SSL I/O function must be passed to SSL_get_error() in parameter
+SSL_read(), SSL_peek(), or SSL_write() on B<ssl>.  The value returned by
+that TLS/SSL I/O function must be passed to SSL_get_error() in parameter
 B<ret>.
 
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
@@ -48,16 +48,26 @@ has been closed.
 =item SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
 The operation did not complete; the same TLS/SSL I/O function should be
-called again later.  There will be protocol progress if, by then, the
-underlying B<BIO> has data available for reading (if the result code is
-B<SSL_ERROR_WANT_READ>) or allows writing data (B<SSL_ERROR_WANT_WRITE>). 
-For socket B<BIO>s (e.g. when SSL_set_fd() was used) this means that
-select() or poll() on the underlying socket can be used to find out
-when the TLS/SSL I/O function should be retried.
+called again later.  If, by then, the underlying B<BIO> has data
+available for reading (if the result code is B<SSL_ERROR_WANT_READ>)
+or allows writing data (B<SSL_ERROR_WANT_WRITE>), then some TLS/SSL
+protocol progress will take place, i.e. at least part of an TLS/SSL
+record will be read or written.  Note that the retry may again lead to
+a B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE> condition.
+There is no fixed upper limit for the number of iterations that
+may be necessary until progress becomes visible at application
+protocol level.
+
+For socket B<BIO>s (e.g. when SSL_set_fd() was used), select() or
+poll() on the underlying socket can be used to find out when the
+TLS/SSL I/O function should be retried.
 
 Caveat: Any TLS/SSL I/O function can lead to either of
-B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>, i.e. SSL_read()
-may want to write data and SSL_write() may want to read data.
+B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>.  In particular,
+SSL_read() or SSL_peek() may want to write data and SSL_write() may want
+to read data.  This is mainly because TLS/SSL handshakes may occur at any
+time during the protocol (initiated by either the client or the server);
+SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
 
 =item SSL_ERROR_WANT_X509_LOOKUP
 
