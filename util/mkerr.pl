@@ -284,8 +284,14 @@ EOF
 
 	# Rewrite the C source file containing the error details.
 
-	$hfile =~ /([^\/]+)$/;
-	my $hincf = $1;
+	my $hincf;
+	if($static) {
+		$hfile =~ /([^\/]+)$/;
+		$hincf = "<openssl/$1>";
+	} else {
+		$hincf = "\"$hfile\"";
+	}
+
 
 	open (OUT,">$cfile") || die "Can't open $cfile for writing";
 
@@ -351,7 +357,7 @@ EOF
 
 #include <stdio.h>
 #include <openssl/err.h>
-#include <openssl/$hincf>
+#include $hincf
 
 /* BEGIN ERROR CODES */
 #ifndef NO_ERR

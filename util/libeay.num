@@ -1817,3 +1817,4 @@ sk_ASN1_OBJECT_zero                     1841
 sk_ASN1_OBJECT_insert                   1842
 sk_ASN1_OBJECT_push                     1843
 d2i_ASN1_SET_OF_ASN1_OBJECT             1844
+PKCS7_signatureVerify                   1845

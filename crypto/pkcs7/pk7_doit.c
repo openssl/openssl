@@ -626,18 +626,10 @@ err:
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	     PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 	{
-/*	PKCS7_SIGNED *s; */
-	ASN1_OCTET_STRING *os;
-	EVP_MD_CTX mdc_tmp,*mdc;
-	unsigned char *pp,*p;
 	PKCS7_ISSUER_AND_SERIAL *ias;
 	int ret=0,i;
-	int md_type;
-	STACK_OF(X509_ATTRIBUTE) *sk;
 	STACK_OF(X509) *cert;
-	BIO *btmp;
 	X509 *x509;
-	EVP_PKEY *pkey;
 
 	if (PKCS7_type_is_signed(p7))
 		{
@@ -674,7 +666,30 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		}
 	X509_STORE_CTX_cleanup(ctx);
 
-	/* So we like 'x509', lets check the signature. */
+	return PKCS7_signatureVerify(bio, p7, si, x509);
+	err:
+	return ret;
+	}
+
+int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
+								X509 *x509)
+	{
+	ASN1_OCTET_STRING *os;
+	EVP_MD_CTX mdc_tmp,*mdc;
+	unsigned char *pp,*p;
+	int ret=0,i;
+	int md_type;
+	STACK_OF(X509_ATTRIBUTE) *sk;
+	BIO *btmp;
+	EVP_PKEY *pkey;
+
+	if (!PKCS7_type_is_signed(p7) && 
+				!PKCS7_type_is_signedAndEnveloped(p7)) {
+		PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+						PKCS7_R_WRONG_PKCS7_TYPE);
+		goto err;
+	}
+
 	md_type=OBJ_obj2nid(si->digest_alg->algorithm);
 
 	btmp=bio;
@@ -683,13 +698,15 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		if ((btmp == NULL) ||
 			((btmp=BIO_find_type(btmp,BIO_TYPE_MD)) == NULL))
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+					PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
 			goto err;
 			}
 		BIO_get_md_ctx(btmp,&mdc);
 		if (mdc == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_INTERNAL_ERROR);
+			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+							PKCS7_R_INTERNAL_ERROR);
 			goto err;
 			}
 		if (EVP_MD_type(EVP_MD_CTX_type(mdc)) == md_type)
@@ -712,7 +729,8 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		message_digest=PKCS7_digest_from_attributes(sk);
 		if (!message_digest)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+					PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
 			goto err;
 			}
 		if ((message_digest->length != (int)md_len) ||
@@ -726,7 +744,8 @@ for (ii=0; ii<message_digest->length; ii++)
 for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 }
 #endif
-			PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_DIGEST_FAILURE);
+			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+							PKCS7_R_DIGEST_FAILURE);
 			ret= -1;
 			goto err;
 			}
@@ -755,7 +774,8 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 	EVP_PKEY_free(pkey);
 	if (i <= 0)
 		{
-		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_SIGNATURE_FAILURE);
+		PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
+						PKCS7_R_SIGNATURE_FAILURE);
 		ret= -1;
 		goto err;
 		}

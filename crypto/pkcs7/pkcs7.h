@@ -333,6 +333,8 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *x509);
 int PKCS7_content_new(PKCS7 *p7, int nid);
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
 	BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si); 
+int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
+								X509 *x509);
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio);
 int PKCS7_dataFinal(PKCS7 *p7, BIO *bio);
@@ -383,6 +385,7 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,STACK_OF(X509_ATTRIBUTE) *sk);
 #define PKCS7_F_PKCS7_SET_CIPHER			 108
 #define PKCS7_F_PKCS7_SET_CONTENT			 109
 #define PKCS7_F_PKCS7_SET_TYPE				 110
+#define PKCS7_F_PKCS7_SIGNATUREVERIFY			 113
 
 /* Reason codes. */
 #define PKCS7_R_CIPHER_NOT_INITIALIZED			 116

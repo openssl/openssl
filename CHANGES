@@ -4,6 +4,14 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add a new function PKCS7_signatureVerify. This allows the verification
+     of a PKCS#7 signature but with the signing certificate passed to the
+     function itself. This contrasts with PKCS7_dataVerify which assumes the
+     certificate is present in the PKCS#7 structure. This isn't always the
+     case: certificates can be omitted from a PKCS#7 structure and be
+     distributed by "out of band" means (such as a certificate database).
+     [Steve Henson]
+
   *) Complete the PEM_* macros with DECLARE_PEM versions to replace the
      function prototypes in pem.h, also change util/mkdef.pl to add the
      necessary function names. 
