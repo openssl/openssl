@@ -27,12 +27,12 @@
   *) Avoid filename truncation in cert requests.
      [Ben Laurie (CHATS)]
 
-  *) New OPENSSL_assert() macro (similar to assert(), but enabled
-     unconditionally).
-     [Ben Laurie (CHATS)]
-
   *) Add assertions to check for (supposedly impossible) buffer
      overflows.
+     [Ben Laurie (CHATS)]
+
+  *) New OPENSSL_assert() macro (similar to assert(), but enabled
+     unconditionally).
      [Ben Laurie (CHATS)]
 
   *) Don't cache truncated DNS entries in the local cache (this could
