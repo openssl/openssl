@@ -539,7 +539,9 @@ const char *CRYPTO_get_lock_name(int type)
 		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+	defined(__INTEL__) || \
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
 
 unsigned long  OPENSSL_ia32cap_P=0;
 unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
