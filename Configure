@@ -638,6 +638,12 @@ PROCESS_ARGS:
 			$flags .= "-DOPENSSL_NO_$algo ";
 			$depflags .= "-DOPENSSL_NO_$algo ";
 			$openssl_algorithm_defines .= "#define OPENSSL_NO_$algo\n";
+			if ($algo eq "RIJNDAEL")
+				{
+				$flags .= "-DOPENSSL_NO_AES ";
+				$depflags .= "-DOPENSSL_NO_AES ";
+				$openssl_algorithm_defines .= "#define OPENSSL_NO_AES\n";
+				}
 			if ($algo eq "DES")
 				{
 				push @skip, "mdc2";
