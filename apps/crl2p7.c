@@ -98,6 +98,7 @@ char **argv;
 	PKCS7 *p7 = NULL;
 	PKCS7_SIGNED *p7s = NULL;
 	X509_CRL *crl=NULL;
+	STACK *certflst=NULL;
 	STACK *crl_stack=NULL;
 	STACK *cert_stack=NULL;
 	int ret=1,nocrl=0;
@@ -112,7 +113,6 @@ char **argv;
 	outfile=NULL;
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
-	certfile=NULL;
 
 	prog=argv[0];
 	argc--;
@@ -146,7 +146,8 @@ char **argv;
 		else if (strcmp(*argv,"-certfile") == 0)
 			{
 			if (--argc < 1) goto bad;
-			certfile= *(++argv);
+			if(!certflst) certflst = sk_new(NULL);
+			sk_push(certflst,*(++argv));
 			}
 		else
 			{
@@ -165,9 +166,10 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg    input format - one of DER TXT PEM\n");
 		BIO_printf(bio_err," -outform arg   output format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg        inout file\n");
+		BIO_printf(bio_err," -in arg        input file\n");
 		BIO_printf(bio_err," -out arg       output file\n");
 		BIO_printf(bio_err," -certfile arg  certificates file of chain to a trusted CA\n");
+		BIO_printf(bio_err,"                (can be used more than once)\n");
 		BIO_printf(bio_err," -nocrl         no crl to load, just certs from '-certfile'\n");
 		EXIT(1);
 		}
@@ -229,15 +231,17 @@ bad:
 	if ((cert_stack=sk_new(NULL)) == NULL) goto end;
 	p7s->cert=cert_stack;
 
-	if (certfile != NULL) 
-		{
+	if(certflst) for(i = 0; i < sk_num(certflst); i++) {
+		certfile = sk_value(certflst, i);
 		if (add_certs_from_file(cert_stack,certfile) < 0)
 			{
-			BIO_printf(bio_err,"error loading certificates\n");
+			BIO_printf(bio_err, "error loading certificates\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
-		}
+	}
+
+	sk_free(certflst);
 
 	if (outfile == NULL)
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
@@ -297,19 +301,23 @@ char *certfile;
 
 	if ((stat(certfile,&st) != 0))
 		{
-		BIO_printf(bio_err,"unable to file the file, %s\n",certfile);
+		BIO_printf(bio_err,"unable to load the file, %s\n",certfile);
 		goto end;
 		}
 
 	in=BIO_new(BIO_s_file());
 	if ((in == NULL) || (BIO_read_filename(in,certfile) <= 0))
 		{
+		BIO_printf(bio_err,"error opening the file, %s\n",certfile);
 		goto end;
 		}
 
 	/* This loads from a file, a stack of x509/crl/pkey sets */
 	sk=PEM_X509_INFO_read_bio(in,NULL,NULL);
-	if (sk == NULL) goto end;
+	if (sk == NULL) {
+		BIO_printf(bio_err,"error reading the file, %s\n",certfile);
+		goto end;
+	}
 
 	/* scan over it and pull out the CRL's */
 	while (sk_num(sk))

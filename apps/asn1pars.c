@@ -164,7 +164,7 @@ bad:
 		BIO_printf(bio_err,"%s [options] <infile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -offset arg   offset into file\n");
 		BIO_printf(bio_err," -length arg   lenth of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");

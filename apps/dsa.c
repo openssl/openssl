@@ -154,7 +154,7 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER NET PEM\n");
 		BIO_printf(bio_err," -outform arg  output format - one of DER NET PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -des          encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3         encrypt PEM output with ede cbc des using 168 bit key\n");
