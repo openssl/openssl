@@ -629,7 +629,7 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 #ifdef LEVITTE_DEBUG
 	if (amip)
 		{
-		fprintf(stderr, "Thread switch detected i backtrace!!!!\n");
+		fprintf(stderr, "Thread switch detected in backtrace!!!!\n");
 		abort();
 		}
 #endif
