@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix for SSL server purpose checking. Server checking was
+     rejecting certificates which had extended key usage present
+     but no ssl client purpose.
+     [Steve Henson, reported by Rene Grosser <grosser@hisolutions.com>]
+
   *) Make PKCS#12 code work with no password. The PKCS#12 spec
      is a little unclear about how a blank password is handled.
      Since the password in encoded as a BMPString with terminating

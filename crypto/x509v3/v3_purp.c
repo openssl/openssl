@@ -64,6 +64,7 @@
 static void x509v3_cache_extensions(X509 *x);
 
 static int ca_check(X509 *x);
+static int check_ssl_ca(X509 *x);
 static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_ns_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
@@ -356,22 +357,26 @@ static int ca_check(X509 *x)
 	}
 }
 
+/* Check SSL CA: common checks for SSL client and server */
+static int check_ssl_ca(X509 *x)
+{
+	int ca_ret;
+	ca_ret = ca_check(x);
+	if(!ca_ret) return 0;
+	/* check nsCertType if present */
+	if(x->ex_flags & EXFLAG_NSCERT) {
+		if(x->ex_nscert & NS_SSL_CA) return ca_ret;
+		return 0;
+	}
+	if(ca_ret != 2) return ca_ret;
+	else return 0;
+}
+	
 
 static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_CLIENT)) return 0;
-	if(ca) {
-		int ca_ret;
-		ca_ret = ca_check(x);
-		if(!ca_ret) return 0;
-		/* check nsCertType if present */
-		if(x->ex_flags & EXFLAG_NSCERT) {
-			if(x->ex_nscert & NS_SSL_CA) return ca_ret;
-			return 0;
-		}
-		if(ca_ret != 2) return ca_ret;
-		else return 0;
-	}
+	if(ca) return check_ssl_ca(x);
 	/* We need to do digital signatures with it */
 	if(ku_reject(x,KU_DIGITAL_SIGNATURE)) return 0;
 	/* nsCertType if present should allow SSL client use */	
@@ -382,8 +387,7 @@ static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
 static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_SERVER|XKU_SGC)) return 0;
-	/* Otherwise same as SSL client for a CA */
-	if(ca) return check_purpose_ssl_client(xp, x, 1);
+	if(ca) return check_ssl_ca(x);
 
 	if(ns_reject(x, NS_SSL_SERVER)) return 0;
 	/* Now as for keyUsage: we'll at least need to sign OR encipher */
