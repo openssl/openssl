@@ -523,9 +523,7 @@ end:
 #else
 
 # if PEDANTIC
-
-void *dummy=&dummy;
-
+static void *dummy=&dummy;
 # endif
 
 #endif
