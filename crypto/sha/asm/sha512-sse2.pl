@@ -21,11 +21,11 @@
 # Throughput performance in MBps (larger is better):
 #
 #		2.4GHz P4	1.4GHz AMD32	1.4GHz AMD64(*)
-# SHA256/gcc(*)	39		42		59
+# SHA256/gcc(*)	54		43		59
 # SHA512/gcc	17		23		92
 # SHA512/sse2	54(**)		55(**)
 # SHA512/icc	26		28
-# SHA256/icc(*)	64		54
+# SHA256/icc(*)	65		54
 #
 # (*)	AMD64 and SHA256 numbers are presented mostly for amusement or
 #	reference purposes.
