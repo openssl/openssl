@@ -63,9 +63,9 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	libs
+all:	lib
 
-libs:	$(LIBOBJ)
+lib:	$(LIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
@@ -78,7 +78,7 @@ libs:	$(LIBOBJ)
 		$(AR) $(LIB) $(LIBOBJ); \
 		$(RANLIB) $(LIB) || echo Never mind.; \
 	fi; \
-	touch libs
+	touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
