@@ -125,7 +125,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		}
 	}
 
-	if (flags & PKCS7_PARTSIGN)
+	if (flags & PKCS7_STREAM)
 		return p7;
 
 	if (!(p7bio = PKCS7_dataInit(p7, NULL))) {

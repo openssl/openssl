@@ -494,7 +494,10 @@ static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out, const A
 	if(out) {
 		if(usetag) ASN1_put_object(out, ndef, len, tag, aclass);
 		asn1_ex_i2c(pval, *out, &utype, it);
-		*out += len;
+		if (ndef)
+			ASN1_put_eoc(out);
+		else
+			*out += len;
 	}
 
 	if(usetag) return ASN1_object_size(ndef, len, tag);
@@ -598,7 +601,6 @@ int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype, const ASN1_
 				{
 				strtmp->data = cout;
 				strtmp->length = 0;
-				ASN1_put_eoc(&cout);
 				}
 			/* Special return code */
 			return -2;

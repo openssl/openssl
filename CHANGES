@@ -18,7 +18,7 @@
      cleartext signing (multipart/signed type) is effectively streaming
      and the signed data does not need to be all held in memory.
 
-     This is done with a new flag PKCS7_PARTSIGN. When this flag is set
+     This is done with a new flag PKCS7_STREAM. When this flag is set
      PKCS7_sign() only initializes the PKCS7 structure and the actual signing
      is done after the data is output (and digests calculated) in
      SMIME_write_PKCS7().

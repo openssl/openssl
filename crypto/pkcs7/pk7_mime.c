@@ -202,7 +202,7 @@ static int pkcs7_output_data(BIO *out, BIO *data, PKCS7 *p7, int flags)
 	{
 	BIO *tmpbio, *p7bio;
 
-	if (!(flags & PKCS7_PARTSIGN))
+	if (!(flags & PKCS7_STREAM))
 		{
 		SMIME_crlf_copy(data, out, flags);
 		return 1;
