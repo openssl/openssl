@@ -355,7 +355,8 @@ int MAIN(int argc, char **argv)
 	/* we use md as a filter, reading from 'in' */
 	if (!BIO_set_md(bmd,md))
 		{
-		BIO_printf(bio_err, "Error setting digest %s\n", pname);
+		BIO_printf(bio_err, "Error setting digest %s\n",
+							EVP_MD_name(md));
 		ERR_print_errors(bio_err);
 		goto end;
 		}

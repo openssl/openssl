@@ -490,6 +490,9 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 #define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
+#define EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+#define EVP_CIPHER_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
+#define EVP_CIPHER_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
 #define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)

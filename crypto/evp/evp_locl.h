@@ -241,6 +241,7 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 #define CAST_set_key	private_CAST_set_key
 #define RC5_32_set_key	private_RC5_32_set_key
 #define BF_set_key	private_BF_set_key
+#define idea_set_encrypt_key private_idea_set_encrypt_key
 
 #define MD5_Init	private_MD5_Init
 #define MD4_Init	private_MD4_Init

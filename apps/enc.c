@@ -118,6 +118,7 @@ int MAIN(int argc, char **argv)
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0,nosalt=0;
 	const EVP_CIPHER *cipher=NULL,*c;
+	EVP_CIPHER_CTX *ctx = NULL;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  39
@@ -126,6 +127,7 @@ int MAIN(int argc, char **argv)
 	char *engine = NULL;
 #endif
 	const EVP_MD *dgst=NULL;
+	int non_fips_allow = 0;
 
 	apps_startup();
 
@@ -260,6 +262,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			md= *(++argv);
 			}
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow = 1;
 		else if	((argv[0][0] == '-') &&
 			((c=EVP_get_cipherbyname(&(argv[0][1]))) != NULL))
 			{
@@ -539,13 +543,43 @@ bad:
 
 		if ((benc=BIO_new(BIO_f_cipher())) == NULL)
 			goto end;
-		BIO_set_cipher(benc,cipher,key,iv,enc);
-		if (nopad)
+
+		/* Since we may be changing parameters work on the encryption
+		 * context rather than calling BIO_set_cipher().
+		 */
+
+		BIO_get_cipher_ctx(benc, &ctx);
+		if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))
 			{
-			EVP_CIPHER_CTX *ctx;
-			BIO_get_cipher_ctx(benc, &ctx);
-			EVP_CIPHER_CTX_set_padding(ctx, 0);
+			BIO_printf(bio_err, "Error setting cipher %s\n",
+					EVP_CIPHER_name(cipher));
+			ERR_print_errors(bio_err);
+			goto end;
 			}
+
+		if (non_fips_allow)
+			EVP_CIPHER_CTX_set_flags(ctx,
+				EVP_CIPH_FLAG_NON_FIPS_ALLOW);
+
+		if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
+			{
+			BIO_printf(bio_err, "Error setting cipher %s\n",
+					EVP_CIPHER_name(cipher));
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
+		if (nopad)
+			EVP_CIPHER_CTX_set_padding(ctx, 0);
+
+		if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
+			{
+			BIO_printf(bio_err, "Error setting cipher %s\n",
+					EVP_CIPHER_name(cipher));
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
 		if (debug)
 			{
 			BIO_set_callback(benc,BIO_debug_callback);
