@@ -4,6 +4,14 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) For compatibility reasons if the flag X509_V_FLAG_ISSUER_CHECK is
+     not set then we don't setup the error code for issuer check errors
+     to avoid possibly overwriting other errors which the callback does
+     handle. If an application does set the flag then we assume it knows
+     what it is doing and can handle the new informational codes
+     appropriately.
+     [Steve Henson]
+
   *) Fix for a nasty bug in ASN1_TYPE handling. ASN1_TYPE is used for
      a general "ANY" type, as such it should be able to decode anything
      including tagged types. However it didn't check the class so it would

@@ -325,7 +325,7 @@ Send encrypted mail using triple DES:
 Sign and encrypt mail:
 
  openssl smime -sign -in ml.txt -signer my.pem -text \
-	| openssl -encrypt -out mail.msg \
+	| openssl smime -encrypt -out mail.msg \
 	-from steve@openssl.org -to someone@somewhere \
 	-subject "Signed and Encrypted message" -des3 user.pem
 

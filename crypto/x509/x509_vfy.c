@@ -339,16 +339,15 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 	ret = X509_check_issued(issuer, x);
 	if (ret == X509_V_OK)
 		return 1;
-	else
-		{
-		ctx->error = ret;
-		ctx->current_cert = x;
-		ctx->current_issuer = issuer;
-		if ((ctx->flags & X509_V_FLAG_CB_ISSUER_CHECK) && ctx->verify_cb)
-			return ctx->verify_cb(0, ctx);
-		else
-			return 0;
-		}
+	/* If we haven't asked for issuer errors don't set ctx */
+	if (!(ctx->flags & X509_V_FLAG_CB_ISSUER_CHECK))
+		return 0;
+
+	ctx->error = ret;
+	ctx->current_cert = x;
+	ctx->current_issuer = issuer;
+	if (ctx->verify_cb)
+		return ctx->verify_cb(0, ctx);
 	return 0;
 }
 
