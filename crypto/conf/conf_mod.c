@@ -197,7 +197,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 	md = module_find(name);
 
 	/* Module not found: try to load DSO */
-	if (!md)
+	if (!md && !(flags & CONF_MFLAGS_NO_DSO))
 		md = module_load_dso(cnf, name, value, flags);
 
 	if (!md)
