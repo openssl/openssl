@@ -92,7 +92,8 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		ERR_add_error_data(2, "TYPE=", obj_tmp);
 		return 0;
 	}
-	if (passlen == -1) passlen = strlen(pass);
+	if(!pass) passlen = 0;
+	else if (passlen == -1) passlen = strlen(pass);
 	pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
 	i = (*pbetmp->keygen)(ctx, pass, passlen, param, pbetmp->cipher,
 						 pbetmp->md, en_de);

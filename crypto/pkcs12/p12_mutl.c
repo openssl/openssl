@@ -106,10 +106,7 @@ int PKCS12_verify_mac (PKCS12 *p12, const char *pass, int passlen)
 		return 0;
 	}
 	if ((maclen != (unsigned int)p12->mac->dinfo->digest->length)
-	|| memcmp (mac, p12->mac->dinfo->digest->data, maclen)) {
-		PKCS12err(PKCS12_F_VERIFY_MAC,PKCS12_R_MAC_VERIFY_ERROR);
-		return 0;
-	}
+	|| memcmp (mac, p12->mac->dinfo->digest->data, maclen)) return 0;
 	return 1;
 }
 

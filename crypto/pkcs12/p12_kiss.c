@@ -106,11 +106,23 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 	/* Check the mac */
 
-	if (!PKCS12_verify_mac (p12, pass, -1))
-		{
+	/* If password is zero length or NULL then try verifying both cases
+	 * to determine which password is correct. The reason for this is that
+	 * under PKCS#12 password based encryption no password and a zero length
+	 * password are two different things...
+	 */
+
+	if(!pass || !*pass) {
+		if(PKCS12_verify_mac(p12, NULL, 0)) pass = NULL;
+		else if(PKCS12_verify_mac(p12, "", 0)) pass = "";
+		else {
+			PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
+			goto err;
+		}
+	} else if (!PKCS12_verify_mac(p12, pass, -1)) {
 		PKCS12err(PKCS12_F_PKCS12_PARSE,PKCS12_R_MAC_VERIFY_FAILURE);
 		goto err;
-		}
+	}
 
 	if (!parse_pk12 (p12, pass, -1, pkey, cert, ca))
 		{

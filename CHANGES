@@ -4,6 +4,19 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Make PKCS#12 code work with no password. The PKCS#12 spec
+     is a little unclear about how a blank password is handled.
+     Since the password in encoded as a BMPString with terminating
+     double NULL a zero length password would end up as just the
+     double NULL. However no password at all is different and is
+     handled differently in the PKCS#12 key generation code. NS
+     treats a blank password as zero length. MSIE treats it as no
+     password on export: but it will try both on import. We now do
+     the same: PKCS12_parse() tries zero length and no password if
+     the password is set to "" or NULL (NULL is now a valid password:
+     it wasn't before) as does the pkcs12 application.
+     [Steve Henson]
+
   *) Bugfixes in apps/x509.c: Avoid a memory leak; and don't use
      perror when PEM_read_bio_X509_REQ fails, the error message must
      be obtained from the error queue.

@@ -125,6 +125,9 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	salt = pbe->salt->data;
 	saltlen = pbe->salt->length;
 
+	if(!pass) passlen = 0;
+	else if(passlen == -1) passlen = strlen(pass);
+
 	EVP_DigestInit (&ctx, md);
 	EVP_DigestUpdate (&ctx, pass, passlen);
 	EVP_DigestUpdate (&ctx, salt, saltlen);

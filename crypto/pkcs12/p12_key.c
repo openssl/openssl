@@ -74,25 +74,30 @@ void h__dump (unsigned char *p, int len);
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc (const char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
 	     int saltlen, int id, int iter, int n, unsigned char *out,
 	     const EVP_MD *md_type)
 {
 	int ret;
 	unsigned char *unipass;
 	int uniplen;
-	if (!asc2uni (pass, &unipass, &uniplen)) {
+	if(!pass) {
+		unipass = NULL;
+		uniplen = 0;
+	} else if (!asc2uni(pass, &unipass, &uniplen)) {
 		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	ret = PKCS12_key_gen_uni (unipass, uniplen, salt, saltlen,
+	ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
 						 id, iter, n, out, md_type);
-	memset(unipass, 0, uniplen);	/* Clear password from memory */
-	Free(unipass);
+	if(unipass) {
+		memset(unipass, 0, uniplen);	/* Clear password from memory */
+		Free(unipass);
+	}
 	return ret;
 }
 
-int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	     int saltlen, int id, int iter, int n, unsigned char *out,
 	     const EVP_MD *md_type)
 {
@@ -106,10 +111,12 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 	int tmpn = n;
 #endif
 
+#if 0
 	if (!pass) {
 		PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
+#endif
 
 #ifdef  DEBUG_KEYGEN
 	fprintf(stderr, "KEYGEN DEBUG\n");
@@ -125,7 +132,8 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 	Ai = Malloc (u);
 	B = Malloc (v + 1);
 	Slen = v * ((saltlen+v-1)/v);
-	Plen = v * ((passlen+v-1)/v);
+	if(passlen) Plen = v * ((passlen+v-1)/v);
+	else Plen = 0;
 	Ilen = Slen + Plen;
 	I = Malloc (Ilen);
 	Ij = BN_new();

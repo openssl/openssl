@@ -528,11 +528,16 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("verify MAC");
 #endif
-	if (!PKCS12_verify_mac (p12, mpass, -1)) {
+	/* If we enter empty password try no password first */
+	if(!macpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
+		/* If mac and crypto pass the same set it to NULL too */
+		if(!twopass) cpass = NULL;
+	} else if (!PKCS12_verify_mac(p12, mpass, -1)) {
 	    BIO_printf (bio_err, "Mac verify error: invalid password?\n");
 	    ERR_print_errors (bio_err);
 	    goto end;
-	} else BIO_printf (bio_err, "MAC verified OK\n");
+	}
+	BIO_printf (bio_err, "MAC verified OK\n");
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
 #endif
@@ -549,9 +554,9 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
 #endif
-    PKCS12_free(p12);
     ret = 0;
     end:
+    PKCS12_free(p12);
     if(export_cert || inrand) app_RAND_write_file(NULL, bio_err);
 #ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();

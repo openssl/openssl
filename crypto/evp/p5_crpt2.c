@@ -86,7 +86,8 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 	HMAC_CTX hctx;
 	p = out;
 	tkeylen = keylen;
-	if(passlen == -1) passlen = strlen(pass);
+	if(!pass) passlen = 0;
+	else if(passlen == -1) passlen = strlen(pass);
 	while(tkeylen) {
 		if(tkeylen > SHA_DIGEST_LENGTH) cplen = SHA_DIGEST_LENGTH;
 		else cplen = tkeylen;

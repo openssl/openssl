@@ -16,8 +16,10 @@ OpenSSL  -  Frequently Asked Questions
 * How do I create certificates or certificate requests?
 * Why can't I create certificate requests?
 * Why does <SSL program> fail with a certificate verify error?
+* Why can I only use weak ciphers when I connect to a server using OpenSSL?
 * How can I create DSA certificates?
 * Why can't I make an SSL connection using a DSA certificate?
+* How can I remove the passphrase on a private key?
 * Why can't the OpenSSH configure script detect OpenSSL?
 
 
@@ -232,6 +234,13 @@ or file and the relevant program configured to read it. The OpenSSL program
 the verify(1) program manual page for more information.
 
 
+* Why can I only use weak ciphers when I connect to a server using OpenSSL?
+
+This is almost certainly because you are using an old "export grade" browser
+which only supports weak encryption. Upgrade your browser to support 128 bit
+ciphers.
+
+
 * How can I create DSA certificates?
 
 Check the CA.pl(1) manual page for a DSA certificate example.
@@ -242,11 +251,19 @@ Check the CA.pl(1) manual page for a DSA certificate example.
 Typically you'll see a message saying there are no shared ciphers when
 the same setup works fine with an RSA certificate. There are two possible
 causes. The client may not support connections to DSA servers most web
-browsers only support connections to servers supporting RSA cipher suites.
-The other cause is that a set of DH parameters has not been supplied to
-the server. DH parameters can be created with the dhparam(1) command and
-loaded using the SSL_CTX_set_tmp_dh() for example: check the source to
-s_server in apps/s_server.c for an example.
+browsers (including Netscape and MSIE) only support connections to servers
+supporting RSA cipher suites. The other cause is that a set of DH parameters
+has not been supplied to the server. DH parameters can be created with the
+dhparam(1) command and loaded using the SSL_CTX_set_tmp_dh() for example:
+check the source to s_server in apps/s_server.c for an example.
+
+
+* How can I remove the passphrase on a private key?
+
+Firstly you should be really *really* sure you want to do this. Leaving
+a private key unencrypted is a major security risk. If you decide that
+you do have to do this check the EXAMPLES sections of the rsa(1) and
+dsa(1) manual pages.
 
 
 * Why can't the OpenSSH configure script detect OpenSSL?
