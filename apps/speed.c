@@ -280,7 +280,7 @@ static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
   "des cbc","des ede3","idea cbc",
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
-  "aes-128 cbc","aes-192 cbc","aes-256 cbc","evp","sha-256","sha-512"};
+  "aes-128 cbc","aes-192 cbc","aes-256 cbc","evp","sha256","sha512"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
@@ -875,9 +875,9 @@ int MAIN(int argc, char **argv)
 							doit[D_SHA256]=1,
 							doit[D_SHA512]=1;
 		else
-			if (strcmp(*argv,"sha-256") == 0) doit[D_SHA256]=1;
+			if (strcmp(*argv,"sha256") == 0) doit[D_SHA256]=1;
 		else
-			if (strcmp(*argv,"sha-512") == 0) doit[D_SHA512]=1;
+			if (strcmp(*argv,"sha512") == 0) doit[D_SHA512]=1;
 		else
 #endif
 #ifndef OPENSSL_NO_RIPEMD
@@ -1059,8 +1059,8 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_SHA1
 			BIO_printf(bio_err,"sha1     ");
-			BIO_printf(bio_err,"sha-256  ");
-			BIO_printf(bio_err,"sha-512  ");
+			BIO_printf(bio_err,"sha256  ");
+			BIO_printf(bio_err,"sha512  ");
 #endif
 #ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err,"rmd160");
