@@ -36,7 +36,7 @@ NULL, a new B<BIGNUM> is created.
 BN_bn2hex() and BN_bn2dec() return printable strings containing the
 hexadecimal and decimal encoding of B<a> respectively. For negative
 numbers, the string is prefaced with a leading '-'. The string must be
-Free()d later.
+freed later using OPENSSL_free().
 
 BN_hex2bn() converts the string B<str> containing a hexadecimal number
 to a B<BIGNUM> and stores it in **B<bn>. If *B<bn> is NULL, a new

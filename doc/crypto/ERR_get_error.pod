@@ -41,7 +41,7 @@ the error occurred in *B<file> and *B<line>, unless these are B<NULL>.
 ERR_get_error_line_data() and ERR_peek_error_line_data() store
 additional data and flags associated with the error code in *B<data>
 and *B<flags>, unless these are B<NULL>. *B<data> contains a string
-if *B<flags>&B<ERR_TXT_STRING>. If it has been allocated by Malloc(),
+if *B<flags>&B<ERR_TXT_STRING>. If it has been allocated by OPENSSL_malloc(),
 *B<flags>&B<ERR_TXT_MALLOCED> is true.
 
 =head1 RETURN VALUES

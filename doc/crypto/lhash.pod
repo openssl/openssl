@@ -102,7 +102,7 @@ The following description is based on the SSLeay documentation:
 The B<lhash> library implements a hash table described in the
 I<Communications of the ACM> in 1991.  What makes this hash table
 different is that as the table fills, the hash table is increased (or
-decreased) in size via Realloc().  When a 'resize' is done, instead of
+decreased) in size via OPENSSL_realloc().  When a 'resize' is done, instead of
 all hashes being redistributed over twice as many 'buckets', one
 bucket is split.  So when an 'expand' is done, there is only a minimal
 cost to redistribute some values.  Subsequent inserts will cause more
