@@ -85,7 +85,7 @@ sub do_lib_rule
 	($Name=$name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";
-	$ret.="\t\$(RM) $target\n";
+	$ret.="\tif exist $target \$(RM) $target\n";
 	$ret.="\t\$(MKLIB) $target \$(${Name}OBJ)\n";
 	$ret.="\t\$(RANLIB) $target\n\n";
 	}
