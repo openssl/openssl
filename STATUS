@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/02/20 16:50:53 $
+  ______________                           $Date: 1999/02/21 12:33:58 $
 
   DEVELOPMENT STATE
 
@@ -13,15 +13,22 @@
 
   AVAILABLE PATCHES
 
+    o Solaris AS error (kenji@miyake.org)
+    o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
+    o s3_lib.c - export clients (levitte@stacken.kth.se)
+    o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
+    o MingW support (niklas@canit.se)
+    o crypto/des/enc_read.c bugfix (mike@cs.mun.ca)
+
   IN PROGRESS
 
     o Steve is currently working on:
-	X509 V3 extension code including:
-	1. Support for the more common PKIX extensions.
-	2. Proper (or at least usable) certificate chain verification.
-	3. Support in standard applications (req, x509, ca).
-	4. Documentation on how all the above works.
-	Next on the list is probably PKCS#12 integration.
+        X509 V3 extension code including:
+        1. Support for the more common PKIX extensions.
+        2. Proper (or at least usable) certificate chain verification.
+        3. Support in standard applications (req, x509, ca).
+        4. Documentation on how all the above works.
+        Next on the list is probably PKCS#12 integration.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were
@@ -39,6 +46,10 @@
         3. The new documentation set in PID format under doc/
         4. More cleanups to get rid of obsolete/old/ugly files in the
            source tree which are not really needed.
+
+    o Ben is currently working on:
+      Integration of the "send a correct CA list for SSLCACertificatePath"
+      from Apache-SSL/mod_ssl.
 
   NEEDS PATCH
 
@@ -113,6 +124,15 @@
       don't work unless the key length matches the fixed value (some vendors
       use a key length decided by the size of the RSA encrypted key and expect
       RC2 to adapt).
+
+    o Properly initialize the PRNG in the absence of /dev/random.
+
+    o > NO_RSA (ejs@bfd.com)
+      > ./Configure -DNO_IDEA -DNO_RC5 -DNO_RC4 -DNO_RC2 -DNO_RSA -DNO_ERR linux-elf
+      > I tried for a whole day to do this and could not get it to work.  Linux
+      > machine, kernel 2.0.36 and 2.2.1, redhat 5.2 latest, gcc and egcs , no
+      > go.  I also noticed the even with -DNO_IDEA, _DNO_RC2, etc. the make
+      > still goes into those subdirectories and 'makes'.
 
   WISHES
 
