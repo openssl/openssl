@@ -75,6 +75,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
+
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	     BIGNUM *rem, void (*callback)(int,int,void *), void *cb_arg)
 	{

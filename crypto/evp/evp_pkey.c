@@ -267,8 +267,8 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 		return NULL;
 	}
 	p8->pkey->type = V_ASN1_OCTET_STRING;
-	RAND_seed (p8->pkey->value.octet_string->data,
-					 p8->pkey->value.octet_string->length);
+	RAND_add(p8->pkey->value.octet_string->data,
+		 p8->pkey->value.octet_string->length, 0);
 	return p8;
 }
 

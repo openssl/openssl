@@ -116,5 +116,6 @@ void ERR_load_crypto_strings(void)
 	ERR_load_CRYPTO_strings();
 	ERR_load_PKCS7_strings();
 	ERR_load_PKCS12_strings();
+	ERR_load_RAND_strings();
 #endif
 	}

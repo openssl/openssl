@@ -81,9 +81,10 @@ int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 
 	/* make a random number and set the top and bottom bits */
 	time(&tim);
-	RAND_seed(&tim,sizeof(tim));
+	RAND_add(&tim,sizeof(tim),0);
 
-	RAND_bytes(buf,(int)bytes);
+	if (RAND_bytes(buf,(int)bytes) <= 0)
+		goto err;
 	if (top)
 		{
 		if (bit == 0)

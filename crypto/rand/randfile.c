@@ -91,7 +91,7 @@ int RAND_load_file(const char *file, long bytes)
 
 	i=stat(file,&sb);
 	/* If the state fails, put some crap in anyway */
-	RAND_seed(&sb,sizeof(sb));
+	RAND_add(&sb,sizeof(sb),0);
 	ret+=sizeof(sb);
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);
@@ -104,7 +104,7 @@ int RAND_load_file(const char *file, long bytes)
 		i=fread(buf,1,n,in);
 		if (i <= 0) break;
 		/* even if n != i, use the full array */
-		RAND_seed(buf,n);
+		RAND_add(buf,n,i);
 		ret+=i;
 		bytes-=n;
 		if (bytes <= 0) break;

@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Precautions against using the PRNG uninitialized: RAND_bytes() now
+     has a return value which indicated the quality of the random data
+     (1 = ok, 0 = not seeded).
+     [Ulf Möller]
+
   *) Do more iterations of Rabin-Miller probable prime test (specifically,
      3 for 1024-bit primes, 6 for 512-bit primes, 12 for 256-bit primes
      instead of only 2 for all lengths; see BN_prime_checks definition

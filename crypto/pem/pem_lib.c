@@ -378,7 +378,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 #endif
 			kstr=(unsigned char *)buf;
 			}
-		RAND_seed(data,i);/* put in the RSA key. */
+		RAND_add(data,i,0);/* put in the RSA key. */
 		RAND_bytes(iv,8);	/* Generate a salt */
 		/* The 'iv' is used as the iv and as a salt.  It is
 		 * NOT taken from the BytesToKey function */

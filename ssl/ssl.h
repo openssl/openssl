@@ -1311,7 +1311,6 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
 #define SSL_R_BAD_CHECKSUM				 104
-#define SSL_R_BAD_HELLO_REQUEST			 	 105
 #define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK		 106
 #define SSL_R_BAD_DECOMPRESSION				 107
 #define SSL_R_BAD_DH_G_LENGTH				 108
@@ -1319,6 +1318,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_BAD_DH_P_LENGTH				 110
 #define SSL_R_BAD_DIGEST_LENGTH				 111
 #define SSL_R_BAD_DSA_SIGNATURE				 112
+#define SSL_R_BAD_HELLO_REQUEST				 105
 #define SSL_R_BAD_LENGTH				 271
 #define SSL_R_BAD_MAC_DECODE				 113
 #define SSL_R_BAD_MESSAGE_TYPE				 114

@@ -50,7 +50,8 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	   emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
     db[emlen - flen - SHA_DIGEST_LENGTH - 1] = 0x01;
     memcpy(db + emlen - flen - SHA_DIGEST_LENGTH, from, (unsigned int) flen);
-    RAND_bytes(seed, SHA_DIGEST_LENGTH);
+    if (RAND_bytes(seed, SHA_DIGEST_LENGTH) <= 0)
+    	return (0);
 #ifdef PKCS_TESTVECT
     memcpy(seed,
 	   "\xaa\xfd\x12\xf6\x59\xca\xe6\x34\x89\xb4\x79\xe5\x07\x6d\xde\xc2\xf0\x6c\xb5\x8f",

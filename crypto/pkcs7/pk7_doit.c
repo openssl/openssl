@@ -161,7 +161,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		BIO_get_cipher_ctx(btmp, &ctx);
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
-		RAND_bytes(key,keylen);
+		if (RAND_bytes(key,keylen) <= 0)
+			goto err;
 		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
 		if (ivlen > 0) RAND_bytes(iv,ivlen);
 		EVP_CipherInit(ctx, evp_cipher, key, iv, 1);

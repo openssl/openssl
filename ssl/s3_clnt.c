@@ -110,7 +110,7 @@ int ssl3_connect(SSL *s)
 	int ret= -1;
 	int new_state,state,skip=0;;
 
-	RAND_seed(&Time,sizeof(Time));
+	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
 	clear_sys_error();
 

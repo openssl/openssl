@@ -109,7 +109,7 @@ int ssl2_accept(SSL *s)
 	void (*cb)()=NULL;
 	int new_state,state;
 
-	RAND_seed(&l,sizeof(l));
+	RAND_add(&l,sizeof(l),0);
 	ERR_clear_error();
 	clear_sys_error();
 

@@ -56,6 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
+#define ENTROPY_NEEDED 32  /* require 128 bits of randomness */
+
 #ifndef MD_RAND_DEBUG
 # ifndef NDEBUG
 #   define NDEBUG
@@ -70,6 +72,7 @@
 #include "openssl/e_os.h"
 
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
 #if !defined(NO_SHA) && !defined(NO_SHA1)
@@ -135,17 +138,20 @@ static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
+static int entropy=0;
 
 const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
-static void ssleay_rand_bytes(unsigned char *buf, int num);
+static void ssleay_rand_add(const void *buf, int num, int entropy);
+static int ssleay_rand_bytes(unsigned char *buf, int num);
 
 RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
 	ssleay_rand_bytes,
 	ssleay_rand_cleanup,
+	ssleay_rand_add,
 	}; 
 
 RAND_METHOD *RAND_SSLeay(void)
@@ -161,9 +167,10 @@ static void ssleay_rand_cleanup(void)
 	memset(md,0,MD_DIGEST_LENGTH);
 	md_count[0]=0;
 	md_count[1]=0;
+	entropy=0;
 	}
 
-static void ssleay_rand_seed(const void *buf, int num)
+static void ssleay_rand_add(const void *buf, int num, int add)
 	{
 	int i,j,k,st_idx;
 	long md_c[2];
@@ -276,11 +283,18 @@ static void ssleay_rand_seed(const void *buf, int num)
 #ifndef THREADS	
 	assert(md_c[1] == md_count[1]);
 #endif
+	entropy += add;
 	}
 
-static void ssleay_rand_bytes(unsigned char *buf, int num)
+static void ssleay_rand_seed(const void *buf, int num)
+	{
+	ssleay_rand_add(buf, num, num);
+	}
+
+static int ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	int i,j,k,st_num,st_idx;
+	int ok;
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
 	MD_CTX m;
@@ -299,7 +313,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 
 	for (i=0; i<num; i++)
 		buf[i]=val++;
-	return;
+	return(1);
 	}
 #endif
 
@@ -326,15 +340,15 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		/* put in some default random data, we need more than
 		 * just this */
-		RAND_seed(&m,sizeof(m));
+		RAND_add(&m,sizeof(m),0);
 #ifndef GETPID_IS_MEANINGLESS
 		l=curr_pid;
-		RAND_seed(&l,sizeof(l));
+		RAND_add(&l,sizeof(l),0);
 		l=getuid();
-		RAND_seed(&l,sizeof(l));
+		RAND_add(&l,sizeof(l),0);
 #endif
 		l=time(NULL);
-		RAND_seed(&l,sizeof(l));
+		RAND_add(&l,sizeof(l),0);
 
 #ifdef DEVRANDOM
 		/* 
@@ -364,6 +378,8 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 		init=0;
 		}
+
+	ok = (entropy >= ENTROPY_NEEDED);
 
 	st_idx=state_index;
 	st_num=state_num;
@@ -426,6 +442,13 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	memset(&m,0,sizeof(m));
+	if (ok)
+		return(1);
+	else
+		{
+		RANDerr(RAND_F_SSLEAY_RAND_BYTES,RAND_R_PRNG_NOT_SEEDED);
+		return(0);
+		}
 	}
 
 #ifdef WINDOWS

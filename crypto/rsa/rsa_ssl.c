@@ -82,12 +82,14 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen, unsigned char *from,
 	/* pad out with non-zero random data */
 	j=tlen-3-8-flen;
 
-	RAND_bytes(p,j);
+	if (RAND_bytes(p,j) <= 0)
+		return(0);
 	for (i=0; i<j; i++)
 		{
 		if (*p == '\0')
 			do	{
-				RAND_bytes(p,1);
+				if (RAND_bytes(p,1) <= 0)
+					return(0);
 				} while (*p == '\0');
 		p++;
 		}

@@ -122,6 +122,7 @@ typedef struct err_state_st
 #define ERR_LIB_PKCS7		33
 #define ERR_LIB_X509V3		34
 #define ERR_LIB_PKCS12		35
+#define ERR_LIB_RAND		36
 
 #define ERR_LIB_USER		128
 
@@ -149,6 +150,7 @@ typedef struct err_state_st
 #define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),ERR_file_name,__LINE__)
 #define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),ERR_file_name,__LINE__)
 #define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,(f),(r),ERR_file_name,__LINE__)
+#define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
