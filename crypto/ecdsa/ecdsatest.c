@@ -124,7 +124,7 @@ int change_rand(void)
 	fake_rand.status  = old_rand->status;
 	/* use own random function */
 	fake_rand.bytes      = fbytes;
-	fake_rand.pseudorand = fbytes;
+	fake_rand.pseudorand = old_rand->bytes;
 	/* set new RAND_METHOD */
 	if (!RAND_set_rand_method(&fake_rand))
 		return 0;
@@ -471,9 +471,7 @@ int main(void)
 	RAND_seed(rnd_seed, sizeof(rnd_seed));
 
 	/* the tests */
-#ifndef BN_DEBUG_RAND
 	if (!x9_62_tests(out))  goto err;
-#endif
 	if (!test_builtin(out)) goto err;
 	
 	ret = 1;
