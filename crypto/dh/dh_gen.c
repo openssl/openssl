@@ -82,7 +82,10 @@
  * Since DH should be using a safe prime (both p and q are prime),
  * this generator function can take a very very long time to run.
  */
-
+/* Actually there is no reason to insist that 'generator' be a generator.
+ * It's just as OK (and in some sense better) to use a generator of the
+ * order-q subgroup.
+ */
 DH *DH_generate_parameters(int prime_len, int generator,
 	     void (*callback)(int,int,void *), void *cb_arg)
 	{
@@ -100,30 +103,43 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	t2 = BN_CTX_get(ctx);
 	if (t1 == NULL || t2 == NULL) goto err;
 	
+	if (generator <= 1)
+		{
+		DHerr(DH_F_DH_GENERATE_PARAMETERS, DH_R_BAD_GENERATOR);
+		goto err;
+		}
 	if (generator == DH_GENERATOR_2)
 		{
-		BN_set_word(t1,24);
-		BN_set_word(t2,11);
+		if (!BN_set_word(t1,24)) goto err;
+		if (!BN_set_word(t2,11)) goto err;
 		g=2;
 		}
-#ifdef undef  /* does not work for safe primes */
+#if 0 /* does not work for safe primes */
 	else if (generator == DH_GENERATOR_3)
 		{
-		BN_set_word(t1,12);
-		BN_set_word(t2,5);
+		if (!BN_set_word(t1,12)) goto err;
+		if (!BN_set_word(t2,5)) goto err;
 		g=3;
 		}
 #endif
 	else if (generator == DH_GENERATOR_5)
 		{
-		BN_set_word(t1,10);
-		BN_set_word(t2,3);
+		if (!BN_set_word(t1,10)) goto err;
+		if (!BN_set_word(t2,3)) goto err;
 		/* BN_set_word(t3,7); just have to miss
 		 * out on these ones :-( */
 		g=5;
 		}
 	else
+		{
+		/* in the general case, don't worry if 'generator' is a
+		 * generator or not: since we are using safe primes,
+		 * it will generate either an order-q or an order-2q group,
+		 * which both is OK */
+		if (!BN_set_word(t1,2)) goto err;
+		if (!BN_set_word(t2,1)) goto err;
 		g=generator;
+		}
 	
 	p=BN_generate_prime(NULL,prime_len,1,t1,t2,callback,cb_arg);
 	if (p == NULL) goto err;
