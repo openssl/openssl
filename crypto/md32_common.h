@@ -410,21 +410,21 @@
  * Time for some action:-)
  */
 
-int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	{
 	const unsigned char *data=data_;
 	register HASH_LONG * p;
-	register unsigned long l;
+	register HASH_LONG l;
 	int sw,sc,ew,ec;
 
 	if (len==0) return 1;
 
-	l=(c->Nl+(len<<3))&0xffffffffL;
+	l=(c->Nl+(((HASH_LONG)len)<<3))&0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(len>>29);
+	c->Nh+=(len>>29);	/* might cause compiler warning on 16-bit */
 	c->Nl=l;
 
 	if (c->num != 0)

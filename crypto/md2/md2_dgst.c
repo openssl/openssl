@@ -125,7 +125,7 @@ int MD2_Init(MD2_CTX *c)
 	return 1;
 	}
 
-int MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len)
+int MD2_Update(MD2_CTX *c, const unsigned char *data, size_t len)
 	{
 	register UCHAR *p;
 
@@ -145,7 +145,7 @@ int MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len)
 			}
 		else
 			{
-			memcpy(&(p[c->num]),data,(int)len);
+			memcpy(&(p[c->num]),data,len);
 			/* data+=len; */
 			c->num+=(int)len;
 			return 1;
@@ -159,7 +159,7 @@ int MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len)
 		data+=MD2_BLOCK;
 		len-=MD2_BLOCK;
 		}
-	memcpy(p,data,(int)len);
+	memcpy(p,data,len);
 	c->num=(int)len;
 	return 1;
 	}

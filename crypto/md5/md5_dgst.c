@@ -83,7 +83,7 @@ int MD5_Init(MD5_CTX *c)
 	}
 
 #ifndef md5_block_host_order
-void md5_block_host_order (MD5_CTX *c, const void *data, int num)
+void md5_block_host_order (MD5_CTX *c, const void *data, size_t num)
 	{
 	const MD5_LONG *X=data;
 	register unsigned MD32_REG_T A,B,C,D;
@@ -176,7 +176,7 @@ void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 #ifdef X
 #undef X
 #endif
-void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
+void md5_block_data_order (MD5_CTX *c, const void *data_, size_t num)
 	{
 	const unsigned char *data=data_;
 	register unsigned MD32_REG_T A,B,C,D,l;

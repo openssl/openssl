@@ -227,7 +227,7 @@ struct env_md_st
 	int md_size;
 	unsigned long flags;
 	int (*init)(EVP_MD_CTX *ctx);
-	int (*update)(EVP_MD_CTX *ctx,const void *data,unsigned long count);
+	int (*update)(EVP_MD_CTX *ctx,const void *data,size_t count);
 	int (*final)(EVP_MD_CTX *ctx,unsigned char *md);
 	int (*copy)(EVP_MD_CTX *to,const EVP_MD_CTX *from);
 	int (*cleanup)(EVP_MD_CTX *ctx);
@@ -490,9 +490,9 @@ int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);
 #define EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
 int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
-			 unsigned int cnt);
+			 size_t cnt);
 int	EVP_DigestFinal_ex(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
-int	EVP_Digest(const void *data, unsigned int count,
+int	EVP_Digest(const void *data, size_t count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
 
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  

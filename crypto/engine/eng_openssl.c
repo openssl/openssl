@@ -305,7 +305,7 @@ static int test_sha1_init(EVP_MD_CTX *ctx)
 #endif
 	return SHA1_Init(ctx->md_data);
 	}
-static int test_sha1_update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+static int test_sha1_update(EVP_MD_CTX *ctx,const void *data,size_t count)
 	{
 #ifdef TEST_ENG_OPENSSL_SHA_P_UPDATE
 	fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_update() called\n");

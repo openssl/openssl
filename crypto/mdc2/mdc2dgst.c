@@ -74,7 +74,7 @@
 			*((c)++)=(unsigned char)(((l)>>16L)&0xff), \
 			*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
-static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len);
+static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len);
 int MDC2_Init(MDC2_CTX *c)
 	{
 	c->num=0;
@@ -84,9 +84,9 @@ int MDC2_Init(MDC2_CTX *c)
 	return 1;
 	}
 
-int MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
+int MDC2_Update(MDC2_CTX *c, const unsigned char *in, size_t len)
 	{
-	int i,j;
+	size_t i,j;
 
 	i=c->num;
 	if (i != 0)
@@ -94,7 +94,7 @@ int MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 		if (i+len < MDC2_BLOCK)
 			{
 			/* partial block */
-			memcpy(&(c->data[i]),in,(int)len);
+			memcpy(&(c->data[i]),in,len);
 			c->num+=(int)len;
 			return 1;
 			}
@@ -109,25 +109,25 @@ int MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 			mdc2_body(c,&(c->data[0]),MDC2_BLOCK);
 			}
 		}
-	i=(int)(len&(unsigned long)~(MDC2_BLOCK-1));
+	i=len&~((size_t)MDC2_BLOCK-1);
 	if (i > 0) mdc2_body(c,in,i);
-	j=(int)len-i;
+	j=len-i;
 	if (j > 0)
 		{
 		memcpy(&(c->data[0]),&(in[i]),j);
-		c->num=j;
+		c->num=(int)j;
 		}
 	return 1;
 	}
 
-static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
+static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG ttin0,ttin1;
 	DES_LONG d[2],dd[2];
 	DES_key_schedule k;
 	unsigned char *p;
-	unsigned int i;
+	size_t i;
 
 	for (i=0; i<len; i+=8)
 		{

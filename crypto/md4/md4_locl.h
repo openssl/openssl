@@ -65,8 +65,8 @@
 #define MD4_LONG_LOG2 2 /* default to 32 bits */
 #endif
 
-void md4_block_host_order (MD4_CTX *c, const void *p,int num);
-void md4_block_data_order (MD4_CTX *c, const void *p,int num);
+void md4_block_host_order (MD4_CTX *c, const void *p,size_t num);
+void md4_block_data_order (MD4_CTX *c, const void *p,size_t num);
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
 /*
