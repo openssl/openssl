@@ -59,6 +59,10 @@
 #ifndef HEADER_RSAREF_H
 #define HEADER_RSAREF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+ 
 #ifndef NO_RSA
 #include <openssl/rsa.h>
 
