@@ -113,9 +113,8 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_EC
 	case EVP_PKEY_EC:
-		if ((ret->pkey.eckey = ECPublicKey_set_octet_string(
-			&(ret->pkey.eckey), (const unsigned char **)pp, 
-			length)) == NULL)
+		if ((ret->pkey.eckey = o2i_ECPublicKey(&(ret->pkey.eckey),
+			(const unsigned char **)pp, length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
 			goto err;

@@ -319,16 +319,16 @@ int EC_KEY_generate_key(EC_KEY *);
 /* EC_KEY_check_key() */
 int EC_KEY_check_key(const EC_KEY *);
 
-/* de- and encode functions for the SEC1 ECPrivateKey */
+/* de- and encoding functions for SEC1 ECPrivateKey */
 EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len);
 int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out);
-/* de- and encode functions for the elliptic curve parameters */
+/* de- and encoding functions for EC parameters */
 EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len);
 int i2d_ECParameters(EC_KEY *a, unsigned char **out);
-
-EC_KEY *ECPublicKey_set_octet_string(EC_KEY **a, const unsigned char **in, 
-					long len);
-int ECPublicKey_get_octet_string(EC_KEY *a, unsigned char **out);
+/* de- and encoding functions for EC public key
+ * (octet string, not DER -- hence 'o2i' and 'i2o') */
+EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len);
+int i2o_ECPublicKey(EC_KEY *a, unsigned char **out);
 
 #ifndef OPENSSL_NO_BIO
 int	ECParameters_print(BIO *bp, const EC_KEY *x);
@@ -359,8 +359,6 @@ void ERR_load_EC_strings(void);
 #define EC_F_ECPARAMETERS_PRINT_FP			 148
 #define EC_F_ECPKPARAMETERS_PRINT			 149
 #define EC_F_ECPKPARAMETERS_PRINT_FP			 150
-#define EC_F_ECPUBLICKEY_GET_OCTET			 151
-#define EC_F_ECPUBLICKEY_SET_OCTET			 152
 #define EC_F_ECP_NIST_MOD_192				 203
 #define EC_F_ECP_NIST_MOD_224				 204
 #define EC_F_ECP_NIST_MOD_256				 205
@@ -455,6 +453,8 @@ void ERR_load_EC_strings(void);
 #define EC_F_I2D_ECPARAMETERS				 190
 #define EC_F_I2D_ECPKPARAMETERS				 191
 #define EC_F_I2D_ECPRIVATEKEY				 192
+#define EC_F_I2O_ECPUBLICKEY				 151
+#define EC_F_O2I_ECPUBLICKEY				 152
 
 /* Reason codes. */
 #define EC_R_ASN1_ERROR					 115

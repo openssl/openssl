@@ -2871,7 +2871,7 @@ BN_GF2m_mod_mul                         3309	EXIST::FUNCTION:
 EC_GROUP_set_seed                       3310	EXIST::FUNCTION:EC
 EC_GROUP_get_curve_GF2m                 3311	EXIST::FUNCTION:EC
 PEM_read_X509_CERT_PAIR                 3312	EXIST:!WIN16:FUNCTION:
-ECPublicKey_set_octet_string            3313	EXIST::FUNCTION:EC
+o2i_ECPublicKey                         3313	EXIST::FUNCTION:EC
 ECDSA_get_ex_data                       3314	EXIST::FUNCTION:ECDSA
 BN_GF2m_mod                             3315	EXIST::FUNCTION:
 EC_GROUP_get_seed_len                   3316	EXIST::FUNCTION:EC
@@ -2891,7 +2891,7 @@ BN_GF2m_mod_sqrt                        3328	EXIST::FUNCTION:
 ECDH_set_default_method                 3329	EXIST::FUNCTION:ECDH
 EC_KEY_generate_key                     3330	EXIST::FUNCTION:EC
 BN_GF2m_arr2poly                        3331	EXIST::FUNCTION:
-ECPublicKey_get_octet_string            3332	EXIST::FUNCTION:EC
+i2o_ECPublicKey                         3332	EXIST::FUNCTION:EC
 EC_GROUP_check                          3333	EXIST::FUNCTION:EC
 d2i_ECPrivateKey_bio                    3334	EXIST::FUNCTION:BIO,EC
 d2i_ECPrivateKey                        3335	EXIST::FUNCTION:EC

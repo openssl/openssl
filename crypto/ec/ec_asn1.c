@@ -1406,8 +1406,7 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
 	return ret;
 	}
 
-EC_KEY *ECPublicKey_set_octet_string(EC_KEY **a, const unsigned char **in, 
-					long len)
+EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 	{
 	EC_KEY *ret=NULL;
 
@@ -1415,33 +1414,34 @@ EC_KEY *ECPublicKey_set_octet_string(EC_KEY **a, const unsigned char **in,
 		{
 		/* sorry, but a EC_GROUP-structur is necessary
                  * to set the public key */
-		ECerr(EC_F_ECPUBLICKEY_SET_OCTET, ERR_R_PASSED_NULL_PARAMETER);
+		ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
 	ret = *a;
 	if (ret->pub_key == NULL && 
 		(ret->pub_key = EC_POINT_new(ret->group)) == NULL)
 		{
-		ECerr(EC_F_ECPUBLICKEY_SET_OCTET, ERR_R_MALLOC_FAILURE);
+		ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	if (!EC_POINT_oct2point(ret->group, ret->pub_key, *in, len, NULL))
 		{
-		ECerr(EC_F_ECPUBLICKEY_SET_OCTET, ERR_R_EC_LIB);
+		ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_EC_LIB);
 		return 0;
 		}
 	/* save the point conversion form */
 	ret->conv_form = (point_conversion_form_t)(*in[0] & ~0x01);
+	*in += len;
 	return ret;
 	}
 
-int ECPublicKey_get_octet_string(EC_KEY *a, unsigned char **out)
+int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 	{
         size_t  buf_len=0;
 
         if (a == NULL) 
 		{
-		ECerr(EC_F_ECPUBLICKEY_GET_OCTET, ERR_R_PASSED_NULL_PARAMETER);
+		ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
 
@@ -1455,17 +1455,17 @@ int ECPublicKey_get_octet_string(EC_KEY *a, unsigned char **out)
 	if (*out == NULL)
 		if ((*out = OPENSSL_malloc(buf_len)) == NULL)
 			{
-			ECerr(EC_F_ECPUBLICKEY_GET_OCTET, 
-				ERR_R_MALLOC_FAILURE);
+			ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
         if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
 				*out, buf_len, NULL))
 		{
-		ECerr(EC_F_ECPUBLICKEY_GET_OCTET, ERR_R_EC_LIB);
+		ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_EC_LIB);
 		OPENSSL_free(*out);
 		*out = NULL;
 		return 0;
 		}
+	*out += buf_len;
 	return buf_len;
 	}
