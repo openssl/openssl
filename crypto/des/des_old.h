@@ -72,8 +72,8 @@
  *
  */
 
-#ifndef HEADER_DES_COMP_H
-#define HEADER_DES_COMP_H
+#ifndef HEADER_DES_OLD_H
+#define HEADER_DES_OLD_H
 
 #ifdef OPENSSL_NO_DES
 #error DES is disabled.
@@ -85,7 +85,6 @@
 
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
-#include <openssl/des.h>
 #include <openssl/symhacks.h>
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO

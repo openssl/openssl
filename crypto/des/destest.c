@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
+#include <openssl/des.h>
 #include <openssl/des_old.h>
 
 #if defined(PERL5) || defined(__FreeBSD__)
