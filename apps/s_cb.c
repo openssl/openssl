@@ -312,6 +312,67 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 		str_version = "???";
 		}
 
+	if (version == SSL2_VERSION)
+		{
+		str_details1 = "???";
+
+		if (len > 0)
+			{
+			switch (((unsigned char*)buf)[0])
+				{
+				case 0:
+					str_details1 = ", ERROR:";
+					str_details2 = " ???";
+					if (len >= 3)
+						{
+						unsigned err = (((unsigned char*)buf)[1]<<8) + ((unsigned char*)buf)[2];
+						
+						switch (err)
+							{
+						case 0x0001:
+							str_details2 = " NO-CIPHER-ERROR";
+							break;
+						case 0x0002:
+							str_details2 = " NO-CERTIFICATE-ERROR";
+							break;
+						case 0x0004:
+							str_details2 = " BAD-CERTIFICATE-ERROR";
+							break;
+						case 0x0006:
+							str_details2 = " UNSUPPORTED-CERTIFICATE-TYPE-ERROR";
+							break;
+							}
+						}
+
+					break;
+				case 1:
+					str_details1 = ", CLIENT-HELLO";
+					break;
+				case 2:
+					str_details1 = ", CLIENT-MASTER-KEY";
+					break;
+				case 3:
+					str_details1 = ", CLIENT-FINISHED";
+					break;
+				case 4:
+					str_details1 = ", SERVER-HELLO";
+					break;
+				case 5:
+					str_details1 = ", SERVER-VERIFY";
+					break;
+				case 6:
+					str_details1 = ", SERVER-FINISHED";
+					break;
+				case 7:
+					str_details1 = ", REQUEST-CERTIFICATE";
+					break;
+				case 8:
+					str_details1 = ", CLIENT-CERTIFICATE";
+					break;
+				}
+			}
+		}
+
 	if (version == SSL3_VERSION || version == TLS1_VERSION)
 		{
 		switch (content_type)
