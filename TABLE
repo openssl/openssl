@@ -1,3 +1,4 @@
+Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -1769,6 +1770,30 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** debug-steve-linux-pseudo64
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -mcpu=i486 -Wall -Werror -Wshadow -pipe
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -rdynamic -ldl
+$bn_ops       = SIXTY_FOUR_BIT
+$bn_obj       = 
+$des_obj      = dlfcn
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 $shared_ldflag = 
