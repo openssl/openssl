@@ -204,8 +204,8 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 	ret=1;
 err:
 	BN_CTX_end(ctx);
-	if(dv) bn_fix_top(dv);
-	if(rem) bn_fix_top(rem);
+	if(dv) bn_check_top(dv);
+	if(rem) bn_check_top(rem);
 	return(ret);
 	} 
 
