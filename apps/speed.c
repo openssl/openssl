@@ -1215,6 +1215,7 @@ int MAIN(int argc, char **argv)
 			names[D_EVP]=OBJ_nid2ln(evp->nid);
 			print_message(names[D_EVP],save_count,
 						  lengths[j]);
+			EVP_CIPHER_CTX_init(&ctx);
 			if(decrypt)
 				EVP_DecryptInit_ex(&ctx,evp,NULL,key16,iv);
 			else
@@ -1232,6 +1233,7 @@ int MAIN(int argc, char **argv)
 			else
 				EVP_EncryptFinal_ex(&ctx,buf,&outl);
 			d=Time_F(STOP,usertime);
+			EVP_CIPHER_CTX_cleanup(&ctx);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 					   count,names[D_EVP],d);
 			results[D_EVP][j]=((double)count)/d*lengths[j];
