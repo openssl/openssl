@@ -954,6 +954,7 @@ static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
 static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
 	{
 	int count;
+	AEP_RV rv = AEP_R_OK;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 
@@ -962,21 +963,24 @@ static AEP_RV aep_close_connection(AEP_CONNECTION_HNDL hConnection)
 		{
 		if (aep_app_conn_table[count].conn_hndl == hConnection)
 			{
+			rv = p_AEP_CloseConnection(aep_app_conn_table[count].conn_hndl);
+			if (rv != AEP_R_OK)
+				goto end;
 			aep_app_conn_table[count].conn_state = NotConnected;
-			close(aep_app_conn_table[count].conn_hndl);
+			aep_app_conn_table[count].conn_hndl  = 0;
 			break;
 			}
 		}
 
+ end:
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-
-	return AEP_R_OK;
+	return rv;
 	}
 
 static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 	{
 	int count;
-	AEP_RV rv;
+	AEP_RV rv = AEP_R_OK;
 
 	*in_use = 0;
 	if (use_engine_lock) CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
@@ -987,7 +991,7 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 		case Connected:
 			rv = p_AEP_CloseConnection(aep_app_conn_table[count].conn_hndl);
 			if (rv != AEP_R_OK)
-				return rv;
+				goto end;
 			aep_app_conn_table[count].conn_state = NotConnected;
 			aep_app_conn_table[count].conn_hndl  = 0;
 			break;
@@ -998,8 +1002,9 @@ static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
 			break;
 			}
 		}
+ end:
 	if (use_engine_lock) CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	return AEP_R_OK;
+	return rv;
 	}
 
 /*BigNum call back functions, used to convert OpenSSL bignums into AEP bignums.
