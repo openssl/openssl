@@ -65,7 +65,7 @@
 
 struct ec_method_st {
 	/* used by EC_METHOD_get_field_type: */
-        int field_type; /* a NID */
+	int field_type; /* a NID */
 
 	/* used by EC_GROUP_new, EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
