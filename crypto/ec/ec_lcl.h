@@ -202,6 +202,9 @@ int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX
 
 
 /* method functions in ecp_mont.c */
+int ec_GFp_mont_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+void ec_GFp_mont_group_finish(EC_GROUP *);
+void ec_GFp_mont_group_clear_finish(EC_GROUP *);
 int ec_GFp_mont_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_mont_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
@@ -209,6 +212,9 @@ int ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CT
 
 
 /* method functions in ecp_recp.c */
+int ec_GFp_recp_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+void ec_GFp_recp_group_finish(EC_GROUP *);
+void ec_GFp_recp_group_clear_finish(EC_GROUP *);
 int ec_GFp_recp_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_recp_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_recp_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
@@ -216,6 +222,9 @@ int ec_GFp_recp_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CT
 
 
 /* method functions in ecp_nist.c */
+int ec_GFp_nist_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+void ec_GFp_nist_group_finish(EC_GROUP *);
+void ec_GFp_nist_group_clear_finish(EC_GROUP *);
 int ec_GFp_nist_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_nist_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_nist_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);

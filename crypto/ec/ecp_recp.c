@@ -61,9 +61,9 @@ const EC_METHOD *EC_GFp_recp_method(void)
 	{
 	static const EC_METHOD ret = {
 		ec_GFp_simple_group_init,
-		ec_GFp_simple_group_set_curve_GFp,
-		ec_GFp_simple_group_finish,
-		ec_GFp_simple_group_clear_finish,
+		ec_GFp_recp_group_set_curve_GFp,
+		ec_GFp_recp_group_finish,
+		ec_GFp_recp_group_clear_finish,
 		ec_GFp_simple_group_copy,
 		ec_GFp_simple_group_set_generator,
 		/* TODO: 'set' and 'get' functions for EC_GROUPs */

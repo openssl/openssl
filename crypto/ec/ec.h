@@ -112,7 +112,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
 
-/* TODO: 'get' functions for EC_GROUPs */
+/* TODO: 'set' and 'get' functions for EC_GROUPs */
 
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);

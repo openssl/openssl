@@ -181,7 +181,7 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 	}
 
 
-/* TODO: 'get' functions for EC_GROUPs */
+/* TODO: 'set' and 'get' functions for EC_GROUPs */
 
 
 /* this has 'package' visibility */
