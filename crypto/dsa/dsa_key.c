@@ -84,7 +84,8 @@ int DSA_generate_key(DSA *dsa)
 	i=BN_num_bits(dsa->q);
 	for (;;)
 		{
-		BN_rand(priv_key,i,1,0);
+		if (!BN_rand(priv_key,i,1,0))
+			goto err;
 		if (BN_cmp(priv_key,dsa->q) >= 0)
 			BN_sub(priv_key,priv_key,dsa->q);
 		if (!BN_is_zero(priv_key)) break;
