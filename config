@@ -310,13 +310,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	exit 0
 	;;
 
-    *"CRAY T3E")
-       echo "t3e-cray-unicosmk"; exit 0;
-       ;;
-
-    *CRAY*)
-       echo "t90-cray-unicos"; exit 0;
-       ;;
 esac
 
 #
@@ -598,8 +591,6 @@ EOF
   mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
   *-*-cygwin) OUT="Cygwin" ;;
-  t3e-cray-unicosmk) OUT="cray-t3e" ;;
-  t90-cray-unicos) OUT="cray-t90-cc" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
