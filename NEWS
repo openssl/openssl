@@ -5,6 +5,12 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
+
+      o Various SSL/TLS library bugfixes.
+      o BIGNUM library fixes.
+      o Fix potential multi-threading race conditions in the PRNG.
+
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
       o Security fix: PRNG improvements.
