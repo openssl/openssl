@@ -1005,13 +1005,13 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	return 0;
 	}
 
-static void hwcrhk_log_message(void *logstream, const char *message)
+static void hwcrhk_log_message(void *_logstream, const char *message)
 	{
 	BIO *lstream = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_BIO);
-	if (logstream)
-		lstream=*(BIO **)logstream;
+	if (_logstream)
+		lstream=*(BIO **)_logstream;
 	if (lstream)
 		{
 		BIO_write(lstream, message, strlen(message));
