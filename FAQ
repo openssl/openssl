@@ -1,12 +1,24 @@
 OpenSSL  -  Frequently Asked Questions
 --------------------------------------
 
+* Which is the current version of OpenSSL?
 * Where is the documentation?
 * How can I contact the OpenSSL developers?
 * Do I need patent licenses to use OpenSSL?
 * Is OpenSSL thread-safe?
 * Why do I get a "PRNG not seeded" error message?
+* Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
+
+
+* Which is the current version of OpenSSL?
+
+The current version is available from <URL: http://www.openssl.org>.
+OpenSSL 0.9.4 was released on August 9th, 1999.
+
+In addition to the current stable release, you can also access daily
+snapshots of the OpenSSL development version at <URL:
+ftp://ftp.openssl.org/snapshot/>, or get it by anonymous CVS access.
 
 
 * Where is the documentation?
@@ -87,6 +99,19 @@ randomness.  If this error occurs, please contact the author of the
 application you are using.  It is likely that it never worked
 correctly.  OpenSSL 0.9.5 makes the error visible by refusing to
 perform potentially insecure encryption.
+
+
+* Why does the linker complain about undefined symbols?
+
+Maybe the compilation was interruped, and make doesn't notice that
+something is missing.  Run "make clean; make".
+
+If you used ./Configure instead of ./config, make sure that you
+selected the right target.  File formats may differ slightly between
+OS versions (for example sparcv8/sparcv9, or a.out/elf).
+
+If that doesn't help, you may want to try using the current snapshot.
+If the problem persists, please submit a bug report.
 
 
 * Where can I get a compiled version of OpenSSL?
