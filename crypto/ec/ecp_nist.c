@@ -1,4 +1,3 @@
-/* TODO */
 /* crypto/ec/ecp_nist.c */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
@@ -64,7 +63,7 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_nist_group_set_curve_GFp,
 		ec_GFp_nist_group_finish,
 		ec_GFp_nist_group_clear_finish,
-		ec_GFp_simple_group_copy,
+		ec_GFp_nist_group_copy,
 		ec_GFp_simple_group_set_generator,
 		/* TODO: 'set' and 'get' functions for EC_GROUPs */
 		ec_GFp_simple_point_init,
@@ -79,10 +78,52 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_is_at_infinity,
 		ec_GFp_simple_is_on_curve,
 		ec_GFp_simple_make_affine,
-		ec_GFp_nist_field_mult,
+		ec_GFp_nist_field_mul,
 		ec_GFp_nist_field_sqr,
 		ec_GFp_nist_field_encode,
 		ec_GFp_nist_field_decode };
 
 	return &ret;
 	}
+
+
+int ec_GFp_nist_group_init(EC_GROUP *group)
+	{
+	int ok;
+
+	ok = ec_GFp_simple_group_init(group);
+	group->field_data = NULL;
+	return ok;
+	}
+
+
+int ec_GFp_nist_group_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+/* TODO */
+
+
+void ec_GFp_nist_group_finish(EC_GROUP *group);
+/* TODO */
+
+
+void ec_GFp_nist_group_clear_finish(EC_GROUP *group);
+/* TODO */
+
+
+int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src);
+/* TODO */
+
+
+int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+/* TODO */
+
+
+int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
+/* TODO */
+
+
+int ec_GFp_nist_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
+/* TODO */
+
+
+int ec_GFp_nist_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
+/* TODO */

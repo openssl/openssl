@@ -149,6 +149,7 @@ int EC_POINT_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 117
 #define EC_F_EC_GROUP_CLEAR_FREE			 103
 #define EC_F_EC_GROUP_COPY				 102
 #define EC_F_EC_GROUP_FREE				 104

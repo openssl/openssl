@@ -104,10 +104,10 @@ struct ec_method_st {
 
 	/* internal functions */
 
-	/* 'field_mult' and 'field_sqr' can be used by 'add' and 'dbl' so that
+	/* 'field_mul' and 'field_sqr' can be used by 'add' and 'dbl' so that
 	 * the same implementations of point operations can be used with different
 	 * optimized implementations of expensive field operations: */
-	int (*field_mult)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+	int (*field_mul)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 
 	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. to Montgomery */
@@ -128,7 +128,6 @@ struct ec_group_st {
 	
 	BIGNUM field; /* Field specification.
 	               * For curves over GF(p), this is the modulus. */
-	void *field_data; /* method-specific (e.g., Montgomery structure) */
 
 	BIGNUM a, b; /* Curve coefficients.
 	              * (Here the assumption is that BIGNUMs can be used
@@ -141,6 +140,8 @@ struct ec_group_st {
 
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
+
+	void *field_data; /* method-specific (e.g., Montgomery structure) */
 } /* EC_GROUP */;
 
 
@@ -197,7 +198,7 @@ int ec_GFp_simple_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *
 int ec_GFp_simple_is_at_infinity(const EC_GROUP *, const EC_POINT *);
 int ec_GFp_simple_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 int ec_GFp_simple_make_affine(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-int ec_GFp_simple_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 
 
@@ -206,7 +207,8 @@ int ec_GFp_mont_group_init(EC_GROUP *);
 int ec_GFp_mont_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void ec_GFp_mont_group_finish(EC_GROUP *);
 void ec_GFp_mont_group_clear_finish(EC_GROUP *);
-int ec_GFp_mont_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_mont_group_copy(EC_GROUP *, const EC_GROUP *);
+int ec_GFp_mont_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_mont_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
@@ -217,7 +219,8 @@ int ec_GFp_recp_group_init(EC_GROUP *);
 int ec_GFp_recp_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void ec_GFp_recp_group_finish(EC_GROUP *);
 void ec_GFp_recp_group_clear_finish(EC_GROUP *);
-int ec_GFp_recp_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_recp_group_copy(EC_GROUP *, const EC_GROUP *);
+int ec_GFp_recp_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_recp_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_recp_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_recp_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
@@ -228,7 +231,8 @@ int ec_GFp_nist_group_init(EC_GROUP *);
 int ec_GFp_nist_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 void ec_GFp_nist_group_finish(EC_GROUP *);
 void ec_GFp_nist_group_clear_finish(EC_GROUP *);
-int ec_GFp_nist_field_mult(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int ec_GFp_nist_group_copy(EC_GROUP *, const EC_GROUP *);
+int ec_GFp_nist_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_nist_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_nist_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_nist_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
