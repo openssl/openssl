@@ -218,7 +218,7 @@ int main()
 	long d;
 
 	ERR_load_crypto_strings();
-	RAND_set_rand_method(&rand_fips_meth);
+	RAND_set_rand_method(FIPS_rand_method());
 
 	run_test(&t1);
 	run_test(&t2);

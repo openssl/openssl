@@ -156,8 +156,8 @@ int FIPS_mode_set(int onoff,const char *path)
 	    }
 
 	/* now switch into FIPS mode */
-	FIPS_rand_check=&rand_fips_meth;
-	RAND_set_rand_method(&rand_fips_meth);
+	FIPS_rand_check=FIPS_rand_method();
+	RAND_set_rand_method(FIPS_rand_method());
 	if(FIPS_selftest())
 	    FIPS_mode=1;
 	else

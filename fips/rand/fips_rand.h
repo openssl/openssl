@@ -47,7 +47,16 @@
  *
  */
 
+#ifndef HEADER_FIPS_RAND_H
+#define HEADER_FIPS_RAND_H
+
 #include "des.h"
+
+#ifdef OPENSSL_FIPS
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8]);
 void FIPS_test_mode(int test,const unsigned char faketime[8]);
@@ -55,4 +64,10 @@ void FIPS_rand_seed(const void *buf, int num);
 /* NB: this returns true if _partially_ seeded */
 int FIPS_rand_seeded(void);
 
-extern RAND_METHOD rand_fips_meth;
+RAND_METHOD *FIPS_rand_method(void);
+
+#ifdef  __cplusplus
+}
+#endif
+#endif
+#endif

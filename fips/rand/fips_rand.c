@@ -99,6 +99,11 @@ RAND_METHOD rand_fips_meth=
 
 static int second;
 
+RAND_METHOD *FIPS_rand_method(void)
+{
+  return &rand_fips_meth;
+}
+
 void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8])
     {
     memcpy(&key1,k1,sizeof key1);
