@@ -107,10 +107,15 @@ void EC_GROUP_free(EC_GROUP *);
 void EC_GROUP_clear_free(EC_GROUP *);
 int EC_GROUP_copy(EC_GROUP *, const EC_GROUP *);
 
+const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
+
+int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
+EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
+int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
+int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
+
 void EC_GROUP_set_nid(EC_GROUP *, int);
 int EC_GROUP_get_nid(const EC_GROUP *);
-
-const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
 
 
 /* We don't have types for field specifications and field elements in general.
@@ -119,11 +124,6 @@ const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
  */
 int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
-
-int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
-EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
-int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
-int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 /* EC_GROUP_check() returns 1 if 'group' defines a valid group, 0 otherwise */
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);

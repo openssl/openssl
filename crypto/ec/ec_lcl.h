@@ -73,15 +73,6 @@ struct ec_method_st {
 	int (*group_set_curve_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 	int (*group_get_curve_GFp)(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
-	/* used by EC_GROUP_set_generator, EC_GROUP_get0_generator,
-	 * EC_GROUP_get_order, EC_GROUP_get_cofactor:
-	 */
-	int (*group_set_generator)(EC_GROUP *, const EC_POINT *generator,
-	        const BIGNUM *order, const BIGNUM *cofactor);
-	EC_POINT *(*group_get0_generator)(const EC_GROUP *);
-	int (*group_get_order)(const EC_GROUP *, BIGNUM *order, BN_CTX *);
-	int (*group_get_cofactor)(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
-
 	/* used by EC_GROUP_check: */
 	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
@@ -146,16 +137,24 @@ struct ec_method_st {
 struct ec_group_st {
 	const EC_METHOD *meth;
 
+	EC_POINT *generator; /* optional */
+	BIGNUM order, cofactor;
+
+	int nid; /* optional NID for named curve */
+
 	void *extra_data;
 	void *(*extra_data_dup_func)(void *);
 	void (*extra_data_free_func)(void *);
 	void (*extra_data_clear_free_func)(void *);
 
-	/* All members except 'meth' and 'extra_data...' are handled by
-	 * the method functions, even if they appear generic */
+	/* The following members are handled by the method functions,
+	 * even if they appear generic */
 	
 	BIGNUM field; /* Field specification.
-	               * For curves over GF(p), this is the modulus. */
+	               * For curves over GF(p), this is the modulus;
+	               * for curves over GF(2^m), this is the 
+	               * irreducible polynomial defining the field.
+	               */
 
 	BIGNUM a, b; /* Curve coefficients.
 	              * (Here the assumption is that BIGNUMs can be used
@@ -163,13 +162,12 @@ struct ec_group_st {
 	              * For characteristic  > 3,  the curve is defined
 	              * by a Weierstrass equation of the form
 	              *     y^2 = x^3 + a*x + b.
+	              * For characteristic  2,  the curve is defined by
+	              * an equation of the form
+	              *     y^2 + x*y = x^3 + a*x^2 + b.
 	              */
+
 	int a_is_minus3; /* enable optimized point arithmetics for special case */
-
-	EC_POINT *generator; /* optional */
-	BIGNUM order, cofactor;
-
-	int nid;
 
 	void *field_data1; /* method-specific (e.g., Montgomery structure) */
 	void *field_data2; /* method-specific */
@@ -213,11 +211,6 @@ void ec_GFp_simple_group_clear_finish(EC_GROUP *);
 int ec_GFp_simple_group_copy(EC_GROUP *, const EC_GROUP *);
 int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_group_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
-int ec_GFp_simple_group_set_generator(EC_GROUP *, const EC_POINT *generator,
-	const BIGNUM *order, const BIGNUM *cofactor);
-EC_POINT *ec_GFp_simple_group_get0_generator(const EC_GROUP *);
-int ec_GFp_simple_group_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
-int ec_GFp_simple_group_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 int ec_GFp_simple_group_check_discriminant(const EC_GROUP *, BN_CTX *);
 int ec_GFp_simple_point_init(EC_POINT *);
 void ec_GFp_simple_point_finish(EC_POINT *);

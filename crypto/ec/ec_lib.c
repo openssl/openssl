@@ -94,6 +94,10 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 	ret->extra_data_free_func = 0;
 	ret->extra_data_clear_free_func = 0;
 
+	ret->generator = NULL;
+	BN_init(&ret->order);
+	BN_init(&ret->cofactor);
+
 	ret->nid = 0;	
 
 	if (!meth->group_init(ret))
@@ -113,6 +117,11 @@ void EC_GROUP_free(EC_GROUP *group)
 
 	EC_GROUP_free_extra_data(group);
 
+	if (group->generator != NULL)
+		EC_POINT_free(group->generator);
+	BN_free(&group->order);
+	BN_free(&group->cofactor);
+
 	OPENSSL_free(group);
 	}
  
@@ -125,6 +134,11 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 		group->meth->group_finish(group);
 
 	EC_GROUP_clear_free_extra_data(group);
+
+	if (group->generator != NULL)
+		EC_POINT_clear_free(group->generator);
+	BN_clear_free(&group->order);
+	BN_clear_free(&group->cofactor);
 
 	memset(group, 0, sizeof *group);
 	OPENSSL_free(group);
@@ -161,6 +175,30 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 		dest->extra_data_clear_free_func = src->extra_data_clear_free_func;
 		}
 
+	if (src->generator != NULL)
+		{
+		if (dest->generator == NULL)
+			{
+			dest->generator = EC_POINT_new(dest);
+			if (dest->generator == NULL) return 0;
+			}
+		if (!EC_POINT_copy(dest->generator, src->generator)) return 0;
+		}
+	else
+		{
+		/* src->generator == NULL */
+		if (dest->generator != NULL)
+			{
+			EC_POINT_clear_free(dest->generator);
+			dest->generator = NULL;
+			}
+		}
+
+	if (!BN_copy(&dest->order, &src->order)) return 0;
+	if (!BN_copy(&dest->cofactor, &src->cofactor)) return 0;
+
+	dest->nid = src->nid;
+
 	return dest->meth->group_copy(dest, src);
 	}
 
@@ -168,6 +206,71 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group)
 	{
 	return group->meth;
+	}
+
+
+int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor)
+	{
+	if (generator == NULL)
+		{
+		ECerr(EC_F_EC_GROUP_SET_GENERATOR, ERR_R_PASSED_NULL_PARAMETER);
+		return 0   ;
+		}
+
+	if (group->generator == NULL)
+		{
+		group->generator = EC_POINT_new(group);
+		if (group->generator == NULL) return 0;
+		}
+	if (!EC_POINT_copy(group->generator, generator)) return 0;
+
+	if (order != NULL)
+		{ if (!BN_copy(&group->order, order)) return 0; }	
+	else
+		{ if (!BN_zero(&group->order)) return 0; }	
+
+	if (cofactor != NULL)
+		{ if (!BN_copy(&group->cofactor, cofactor)) return 0; }	
+	else
+		{ if (!BN_zero(&group->cofactor)) return 0; }	
+
+	return 1;
+	}
+
+
+EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group)
+	{
+	return group->generator;
+	}
+
+
+int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
+	{
+	if (!BN_copy(order, &group->order))
+		return 0;
+
+	return !BN_is_zero(order);
+	}
+
+
+int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
+	{
+	if (!BN_copy(cofactor, &group->cofactor))
+		return 0;
+
+	return !BN_is_zero(&group->cofactor);
+	}
+
+
+void EC_GROUP_set_nid(EC_GROUP *group, int nid)
+	{
+	group->nid = nid;
+	}
+
+
+int EC_GROUP_get_nid(const EC_GROUP *group)
+	{
+	return group->nid;
 	}
 
 
@@ -193,50 +296,6 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *
 	}
 
 
-int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor)
-	{
-	if (group->meth->group_set_generator == 0)
-		{
-		ECerr(EC_F_EC_GROUP_SET_GENERATOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-		}
-	return group->meth->group_set_generator(group, generator, order, cofactor);
-	}
-
-
-EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group)
-	{
-	if (group->meth->group_get0_generator == 0)
-		{
-		ECerr(EC_F_EC_GROUP_GET0_GENERATOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-		}
-	return group->meth->group_get0_generator(group);
-	}
-
-
-int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
-	{
-	if (group->meth->group_get_order == 0)
-		{
-		ECerr(EC_F_EC_GROUP_GET_ORDER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-		}
-	return group->meth->group_get_order(group, order, ctx);
-	}
-
-
-int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
-	{
-	if (group->meth->group_get_cofactor == 0)
-		{
-		ECerr(EC_F_EC_GROUP_GET_COFACTOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
-		}
-	return group->meth->group_get_cofactor(group, cofactor, ctx);
-	}
-
-
 int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	{
 	if (group->meth->group_check_discriminant == 0)
@@ -245,18 +304,6 @@ int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 		return 0;
 		}
 	return group->meth->group_check_discriminant(group, ctx);
-	}
-
-
-void EC_GROUP_set_nid(EC_GROUP *group, int nid)
-	{
-	group->nid = nid;
-	}
-
-
-int EC_GROUP_get_nid(const EC_GROUP *group)
-	{
-	return group->nid;
 	}
 
 

@@ -69,10 +69,6 @@ const EC_METHOD *EC_GFp_simple_method(void)
 		ec_GFp_simple_group_copy,
 		ec_GFp_simple_group_set_curve_GFp,
 		ec_GFp_simple_group_get_curve_GFp,
-		ec_GFp_simple_group_set_generator,
-		ec_GFp_simple_group_get0_generator,
-		ec_GFp_simple_group_get_order,
-		ec_GFp_simple_group_get_cofactor,
 		ec_GFp_simple_group_check_discriminant,
 		ec_GFp_simple_point_init,
 		ec_GFp_simple_point_finish,
@@ -110,9 +106,6 @@ int ec_GFp_simple_group_init(EC_GROUP *group)
 	BN_init(&group->a);
 	BN_init(&group->b);
 	group->a_is_minus3 = 0;
-	group->generator = NULL;
-	BN_init(&group->order);
-	BN_init(&group->cofactor);
 	return 1;
 	}
 
@@ -122,10 +115,6 @@ void ec_GFp_simple_group_finish(EC_GROUP *group)
 	BN_free(&group->field);
 	BN_free(&group->a);
 	BN_free(&group->b);
-	if (group->generator != NULL)
-		EC_POINT_free(group->generator);
-	BN_free(&group->order);
-	BN_free(&group->cofactor);
 	}
 
 
@@ -134,13 +123,6 @@ void ec_GFp_simple_group_clear_finish(EC_GROUP *group)
 	BN_clear_free(&group->field);
 	BN_clear_free(&group->a);
 	BN_clear_free(&group->b);
-	if (group->generator != NULL)
-		{
-		EC_POINT_clear_free(group->generator);
-		group->generator = NULL;
-		}
-	BN_clear_free(&group->order);
-	BN_clear_free(&group->cofactor);
 	}
 
 
@@ -151,28 +133,6 @@ int ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	if (!BN_copy(&dest->b, &src->b)) return 0;
 
 	dest->a_is_minus3 = src->a_is_minus3;
-
-	if (src->generator != NULL)
-		{
-		if (dest->generator == NULL)
-			{
-			dest->generator = EC_POINT_new(dest);
-			if (dest->generator == NULL) return 0;
-			}
-		if (!EC_POINT_copy(dest->generator, src->generator)) return 0;
-		}
-	else
-		{
-		/* src->generator == NULL */
-		if (dest->generator != NULL)
-			{
-			EC_POINT_clear_free(dest->generator);
-			dest->generator = NULL;
-			}
-		}
-
-	if (!BN_copy(&dest->order, &src->order)) return 0;
-	if (!BN_copy(&dest->cofactor, &src->cofactor)) return 0;
 
 	return 1;
 	}
@@ -281,61 +241,6 @@ int ec_GFp_simple_group_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *
 	if (new_ctx)
 		BN_CTX_free(new_ctx);
 	return ret;
-	}
-
-
-
-int ec_GFp_simple_group_set_generator(EC_GROUP *group, const EC_POINT *generator,
-	const BIGNUM *order, const BIGNUM *cofactor)
-	{
-	if (generator == NULL)
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR, ERR_R_PASSED_NULL_PARAMETER);
-		return 0   ;
-		}
-
-	if (group->generator == NULL)
-		{
-		group->generator = EC_POINT_new(group);
-		if (group->generator == NULL) return 0;
-		}
-	if (!EC_POINT_copy(group->generator, generator)) return 0;
-
-	if (order != NULL)
-		{ if (!BN_copy(&group->order, order)) return 0; }	
-	else
-		{ if (!BN_zero(&group->order)) return 0; }	
-
-	if (cofactor != NULL)
-		{ if (!BN_copy(&group->cofactor, cofactor)) return 0; }	
-	else
-		{ if (!BN_zero(&group->cofactor)) return 0; }	
-
-	return 1;
-	}
-
-
-EC_POINT *ec_GFp_simple_group_get0_generator(const EC_GROUP *group)
-	{
-	return group->generator;
-	}
-
-
-int ec_GFp_simple_group_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
-	{
-	if (!BN_copy(order, &group->order))
-		return 0;
-
-	return !BN_is_zero(&group->order);
-	}
-
-
-int ec_GFp_simple_group_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
-	{
-	if (!BN_copy(cofactor, &group->cofactor))
-		return 0;
-
-	return !BN_is_zero(&group->cofactor);
 	}
 
 
