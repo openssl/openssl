@@ -97,7 +97,7 @@
      [Steve Henson]
 
   *) Fix a horrible bug in enc_read() in crypto/evp/bio_enc.c: if the first
-     dataread consists of only the final block it would not decrypted because
+     data read consists of only the final block it would not decrypted because
      EVP_CipherUpdate() would correctly report zero bytes had been decrypted.
      A misplaced 'break' also meant the decrypted final block might not be
      copied until the next read.
