@@ -31,7 +31,9 @@
      division before starting the Rabin-Miller test and has
      an additional BN_CTX * argument (whereas BN_is_prime always
      has to allocate at least one BN_CTX).
-     [Bodo Moeller]    
+     'callback(1, -1, cb_arg)' is called when a number has passed the
+     trial division stage.
+     [Bodo Moeller]
 
   *) Fix for bug in CRL encoding. The validity dates weren't being handled
      as ASN1_TIME.

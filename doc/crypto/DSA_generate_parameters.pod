@@ -42,9 +42,11 @@ When a candidate for q is generated, B<callback(0, m++, cb_arg)> is called
 
 =item *
 
-While a candidate for q is tested, B<callback(1, i, cb_arg)>
-is called in the outer loop of the Miller-Rabin primality tests
-(once for each witness that confirms that the candidate may be prime).
+When a candidate for q has passed a test by trial division,
+B<callback(1, -1, cb_arg)> is called.
+While a candidate for q is tested by Miller-Rabin primality tests,
+B<callback(1, i, cb_arg)> is called in the outer loop
+(once for each witness that confirms that the candidate may be prime);
 i is the loop counter (starting at 0).
 
 =item *
@@ -59,8 +61,10 @@ B<callback(0, counter, cb_arg)> is called.
 
 =item *
 
-While a candidate for p is tested, B<callback(1, j++, cb_arg)>
-is called in the outer loop of the Miller-Rabin primality test
+When a candidate for p has passed the test by trial division,
+B<callback(1, -1 , cb_arg)> is called.
+While it is tested by the Miller-Rabin primality test,
+B<callback(1, i, cb_arg)> is called in the outer loop
 (once for each witness that confirms that the candidate may be prime).
 i is the loop counter (starting at 0).
 

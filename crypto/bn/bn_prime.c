@@ -173,9 +173,12 @@ int BN_is_prime_fasttest(BIGNUM *a, int checks,
 	if (!BN_is_odd(a))
 		return(0);
 	if (do_trial_division)
+		{
 		for (i = 1; i < NUMPRIMES; i++)
 			if (BN_mod_word(a, primes[i]) == 0) 
 				return 0;
+		if (callback != NULL) callback(1,-1,cb_arg);
+		}
 
 	if (ctx_passed != NULL)
 		ctx=ctx_passed;
