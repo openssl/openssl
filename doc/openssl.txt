@@ -355,6 +355,24 @@ that would not make sense. It does support an additional issuer:copy option
 that will copy all the subject alternative name values from the issuer 
 certificate (if possible).
 
+Example:
+
+issuserAltName = issuer:copy
+
+Authority Info Access.
+
+The authority information access extension gives details about how to access
+certain information relating to the CA. Its syntax is accessOID;location
+where 'location' has the same syntax as subject alternative name (except
+that email:copy is not supported). accessOID can be any valid OID but only
+certain values are meaningful for example OCSP and caIssuers. OCSP gives the
+location of an OCSP responder: this is used by Netscape PSM and other software.
+
+Example:
+
+authorityInfoAccess = OCSP;URI:http://ocsp.my.host/
+authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
+
 CRL distribution points.
 
 This is a multi-valued extension that supports all the literal options of
