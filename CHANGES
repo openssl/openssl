@@ -12,9 +12,14 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Make BUF_MEM_grow() behaviour more consistent: Initialise to zero
+     additional bytes when new memory had to be allocated, not just
+     when reusing an existing buffer.
+     [Bodo Moeller]
+
   *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
      instead.  BIO_gethostbyname() does not know what timeouts are
-     appropriate, so entries would stay in cache even when they hade
+     appropriate, so entries would stay in cache even when they have
      become invalid.
      [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
 
