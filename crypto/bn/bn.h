@@ -262,8 +262,9 @@ typedef struct bn_mont_ctx_st
 	int ri;        /* number of bits in R */
 	BIGNUM RR;     /* used to convert to montgomery form */
 	BIGNUM N;      /* The modulus */
-	BIGNUM Ni;     /* The inverse of N (bignum form) */
-	BN_ULONG n0;   /* The inverse of N in word form */
+	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
+	                * (Ni is only stored for bignum algorithm) */
+	BN_ULONG n0;   /* least significant word of Ni */
 	int flags;
 	} BN_MONT_CTX;
 

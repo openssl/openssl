@@ -304,7 +304,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 			BN_sub_word(&Ri,1);
 		else /* if N mod word size == 1 */
 			BN_set_word(&Ri,BN_MASK2);  /* Ri-- (mod word size) */
-		BN_div(&Ri,NULL,&Ri,&tmod,ctx);	  	 /* Ni = (R*Ri-1)/N */
+		BN_div(&Ri,NULL,&Ri,&tmod,ctx);	/* Ni = (R*Ri-1)/N,
+		                                 * keep only list significant word: */
 		mont->n0=Ri.d[0];
 		BN_free(&Ri);
 		}
