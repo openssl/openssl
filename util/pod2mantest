@@ -11,7 +11,7 @@
 
 
 IFS=:
-try_without_dir=true
+try_without_dir=false
 # First we try "pod2man", then "$dir/pod2man" for each item in $PATH.
 for dir in dummy:$PATH; do
     if [ "$try_without_dir" = true ]; then

@@ -96,10 +96,34 @@ int RSA_print(BIO *bp, RSA *x, int off)
 	char str[128];
 	const char *s;
 	unsigned char *m=NULL;
-	int i,ret=0;
+	int ret=0;
+	size_t buf_len=0, i;
 
-	i=RSA_size(x);
-	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
+	if (x->n)
+		buf_len = (size_t)BN_num_bytes(x->n);
+	if (x->e)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->e)))
+			buf_len = i;
+	if (x->d)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->d)))
+			buf_len = i;
+	if (x->p)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->p)))
+			buf_len = i;
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->dmp1)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->dmp1)))
+			buf_len = i;
+	if (x->dmq1)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->dmq1)))
+			buf_len = i;
+	if (x->iqmp)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->iqmp)))
+			buf_len = i;
+
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		RSAerr(RSA_F_RSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -161,22 +185,25 @@ int DSA_print(BIO *bp, DSA *x, int off)
 	{
 	char str[128];
 	unsigned char *m=NULL;
-	int i,ret=0;
-	BIGNUM *bn=NULL;
+	int ret=0;
+	size_t buf_len=0,i;
 
-	if (x->p != NULL)
-		bn=x->p;
-	else if (x->priv_key != NULL)
-		bn=x->priv_key;
-	else if (x->pub_key != NULL)
-		bn=x->pub_key;
-		
-	/* larger than needed but what the hell :-) */
-	if (bn != NULL)
-		i=BN_num_bytes(bn)*2;
-	else
-		i=256;
-	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	if (x->priv_key)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->priv_key)))
+			buf_len = i;
+	if (x->pub_key)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->pub_key)))
+			buf_len = i;
+
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -281,10 +308,15 @@ int DHparams_print_fp(FILE *fp, DH *x)
 int DHparams_print(BIO *bp, DH *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,i,ret=0;
+	int reason=ERR_R_BUF_LIB,ret=0;
+	size_t buf_len=0, i;
 
-	i=BN_num_bytes(x->p);
-	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -334,10 +366,18 @@ int DSAparams_print_fp(FILE *fp, DSA *x)
 int DSAparams_print(BIO *bp, DSA *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,i,ret=0;
+	int reason=ERR_R_BUF_LIB,ret=0;
+	size_t buf_len=0, i;
 
-	i=BN_num_bytes(x->p);
-	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
