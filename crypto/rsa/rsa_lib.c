@@ -130,8 +130,17 @@ RSA *RSA_new_method(ENGINE *engine)
 		}
 
 	ret->meth = RSA_get_default_method();
-	ret->engine = engine;
-	if(!ret->engine)
+	if (engine)
+		{
+		if (!ENGINE_init(engine))
+			{
+			RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+			OPENSSL_free(ret);
+			return NULL;
+			}
+		ret->engine = engine;
+		}
+	else
 		ret->engine = ENGINE_get_default_RSA();
 	if(ret->engine)
 		{
@@ -166,6 +175,8 @@ RSA *RSA_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;

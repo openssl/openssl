@@ -230,7 +230,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSAPARAMS_PRINT_FP			 101
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
-#define DSA_F_DSA_NEW					 103
+#define DSA_F_DSA_NEW_METHOD				 103
 #define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
 #define DSA_F_DSA_SIGN					 106

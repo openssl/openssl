@@ -195,7 +195,7 @@ void ERR_load_DH_strings(void);
 #define DH_F_DH_COMPUTE_KEY				 102
 #define DH_F_DH_GENERATE_KEY				 103
 #define DH_F_DH_GENERATE_PARAMETERS			 104
-#define DH_F_DH_NEW					 105
+#define DH_F_DH_NEW_METHOD				 105
 
 /* Reason codes. */
 #define DH_R_NO_PRIVATE_VALUE				 100

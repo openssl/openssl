@@ -107,20 +107,29 @@ DH *DH_new_method(ENGINE *engine)
 	ret=(DH *)OPENSSL_malloc(sizeof(DH));
 	if (ret == NULL)
 		{
-		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
+		DHerr(DH_F_DH_NEW_METHOD,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
 
 	ret->meth = DH_get_default_method();
-	ret->engine = engine;
-	if(!ret->engine)
+	if (engine)
+		{
+		if (!ENGINE_init(engine))
+			{
+			DSAerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+			OPENSSL_free(ret);
+			return NULL;
+			}
+		ret->engine = engine;
+		}
+	else
 		ret->engine = ENGINE_get_default_DH();
 	if(ret->engine)
 		{
 		ret->meth = ENGINE_get_DH(ret->engine);
 		if(!ret->meth)
 			{
-			DHerr(DH_F_DH_NEW,ERR_R_ENGINE_LIB);
+			DHerr(DH_F_DH_NEW_METHOD,ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			OPENSSL_free(ret);
 			return NULL;
@@ -145,6 +154,8 @@ DH *DH_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
