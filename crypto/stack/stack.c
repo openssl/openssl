@@ -279,7 +279,7 @@ void sk_free(STACK *st)
 	Free(st);
 	}
 
-int sk_num(STACK *st)
+int sk_num(const STACK *st)
 {
 	if(st == NULL) return -1;
 	return st->num;
