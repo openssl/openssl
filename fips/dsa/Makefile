@@ -79,8 +79,8 @@ A=../testvectors/dsa/rsp
 fips_test: top_fips_dssvs
 	-rm -rf $A
 	mkdir $A
-#	./fips_dssvs prime < $Q/prime.req > $A/prime.rsp
-	./fips_dssvs pqg < $Q/PQGGen.req > $A/PQGGen.rsp
+#	./fips_dssvs pqg < $Q/PQGGen.req > $A/PQGGen.rsp
+	./fips_dssvs keypair < $Q/KeyPair.req > $A/KeyPair.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

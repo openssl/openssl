@@ -61,13 +61,18 @@ int bin2hex(const unsigned char *in,int len,char *out)
     return n2;
     }
 
-void pv(char *tag,const unsigned char *val,int len)
+void pv(const char *tag,const unsigned char *val,int len)
     {
     char obuf[2048];
     int olen;
 
     olen=bin2hex(val,len,obuf);
-    printf("%s = %s\n", tag,obuf);
+    printf("%s = %s\n",tag,obuf);
+    }
+
+void pbn(const char *tag,const BIGNUM *val)
+    {
+    printf("%s = %s\n",tag,BN_bn2hex(val));
     }
 
 void primes()
@@ -123,7 +128,40 @@ void pqg()
 	    }
 	else
 	    fputs(buf,stdout);
+	}
+    }
 
+void keypair()
+    {
+    char buf[1024];
+    int nmod=0;
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	if(!strncmp(buf,"[mod = ",7))
+	    nmod=atoi(buf+7);
+	else if(!strncmp(buf,"N = ",4))
+	    {
+	    DSA *dsa;
+	    int n=atoi(buf+4);
+
+	    printf("[mod = %d]\n\n",nmod);
+
+	    dsa=DSA_generate_parameters(nmod,NULL,0,NULL,NULL,NULL,NULL);
+	    pbn("P",dsa->p);
+	    pbn("Q",dsa->q);
+	    pbn("G",dsa->g);
+	    putc('\n',stdout);
+
+	    while(n--)
+		{
+		DSA_generate_key(dsa);
+
+		pbn("X",dsa->priv_key);
+		pbn("Y",dsa->pub_key);
+		putc('\n',stdout);
+		}
+	    }
 	}
     }
 
@@ -144,6 +182,8 @@ int main(int argc,char **argv)
 	primes();
     else if(!strcmp(argv[1],"pqg"))
 	pqg();
+    else if(!strcmp(argv[1],"keypair"))
+	keypair();
     //    else if(!strcmp(argv[1],"versig"))
     //	versig();
     else
