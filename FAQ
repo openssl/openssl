@@ -44,7 +44,7 @@ OpenSSL  -  Frequently Asked Questions
 * What is special about OpenSSL on Redhat?
 * Why does the OpenSSL compilation fail on MacOS X?
 * Why does the OpenSSL test suite fail on MacOS X?
-* Why does the OpenSSL test suite fail in BN_sqr test?
+* Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -553,15 +553,16 @@ libraries you just built.
 Look in the file PROBLEMS for a more detailed explanation and for possible
 solutions.
 
-* Why does the OpenSSL test suite fail in BN_sqr test?
+* Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 
 Failure in BN_sqr test is most likely caused by a failure to configure the
-toolkit for current platform. Run ./config -t and ./apps/openssl version -p.
-Do these platform identifiers match? If they don't, then you most likely
-failed to run ./config and you're hereby advised to do so before filing a
-bug report. If it's ./config itself that fails to run, the it's most
-likely problem with your local environment and you should turn to your
-system administrator (or similar).
+toolkit for current platform or lack of support for the platform in question.
+Run './config -t' and './apps/openssl version -p'. Do these platform
+identifiers match? If they don't, then you most likely failed to run
+./config and you're hereby advised to do so before filing a bug report.
+If ./config itself fails to run, then it's most likely problem with your
+local environment and you should turn to your system administrator (or
+similar).
 
 [PROG] ========================================================================
 
