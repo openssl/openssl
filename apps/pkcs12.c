@@ -814,8 +814,9 @@ int alg_print (BIO *x, X509_ALGOR *alg)
 	unsigned char *p;
 	p = alg->parameter->value.sequence->data;
 	pbe = d2i_PBEPARAM (NULL, &p, alg->parameter->value.sequence->length);
-	BIO_printf (bio_err, "%s, Iteration %d\n", 
-	OBJ_nid2ln(OBJ_obj2nid(alg->algorithm)), ASN1_INTEGER_get(pbe->iter));
+	BIO_printf (bio_err, "%s, Iteration %ld\n", 
+		OBJ_nid2ln(OBJ_obj2nid(alg->algorithm)),
+		ASN1_INTEGER_get(pbe->iter));
 	PBEPARAM_free (pbe);
 	return 0;
 }

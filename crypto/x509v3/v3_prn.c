@@ -182,7 +182,7 @@ int X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts
 		obj=X509_EXTENSION_get_object(ex);
 		i2a_ASN1_OBJECT(bp,obj);
 		j=X509_EXTENSION_get_critical(ex);
-		if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
+		if (BIO_printf(bp,": %s\n",j?"critical":"") <= 0)
 			return 0;
 		if(!X509V3_EXT_print(bp, ex, flag, 12))
 			{

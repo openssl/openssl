@@ -254,7 +254,7 @@ get_next:
 				obj=X509_EXTENSION_get_object(ex);
 				i2a_ASN1_OBJECT(bp,obj);
 				j=X509_EXTENSION_get_critical(ex);
-				if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
+				if (BIO_printf(bp,": %s\n",j?"critical":"") <= 0)
 					goto err;
 				if(!X509V3_EXT_print(bp, ex, 0, 16))
 					{

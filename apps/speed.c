@@ -2382,8 +2382,8 @@ static void pkey_print_message(char *str, char *str2, long num, int bits,
 
 static void print_result(int alg,int run_no,int count,double time_used)
 	{
-	BIO_printf(bio_err,mr ? "+R:%ld:%s:%f\n"
-		   : "%ld %s's in %.2fs\n",count,names[alg],time_used);
+	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
+		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
 	}
 

@@ -121,7 +121,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 		r = sk_X509_REVOKED_value(rev, i);
 		BIO_printf(out,"    Serial Number: ");
 		i2a_ASN1_INTEGER(out,r->serialNumber);
-		BIO_printf(out,"\n        Revocation Date: ","");
+		BIO_printf(out,"\n        Revocation Date: ");
 		ASN1_TIME_print(out,r->revocationDate);
 		BIO_printf(out,"\n");
 		X509V3_extensions_print(out, "CRL entry extensions",

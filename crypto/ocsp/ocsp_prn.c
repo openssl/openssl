@@ -194,7 +194,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 
 	if (BIO_puts(bp,"OCSP Response Data:\n") <= 0) goto err;
 	l=ASN1_ENUMERATED_get(o->responseStatus);
-	if (BIO_printf(bp,"    OCSP Response Status: %s (0x%x)\n",
+	if (BIO_printf(bp,"    OCSP Response Status: %s (0x%lx)\n",
 		       OCSP_response_status_str(l), l) <= 0) goto err;
 	if (rb == NULL) return 1;
         if (BIO_puts(bp,"    Response Type: ") <= 0)
@@ -252,7 +252,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 			        {
 				l=ASN1_ENUMERATED_get(rev->revocationReason);
 				if (BIO_printf(bp, 
-					 "\n    Revocation Reason: %s (0x%x)",
+					 "\n    Revocation Reason: %s (0x%lx)",
 					       OCSP_crl_reason_str(l), l) <= 0)
 				        goto err;
 				}

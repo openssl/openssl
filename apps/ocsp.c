@@ -781,7 +781,7 @@ int MAIN(int argc, char **argv)
 
 	if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
 		{
-		BIO_printf(out, "Responder Error: %s (%ld)\n",
+		BIO_printf(out, "Responder Error: %s (%d)\n",
 				OCSP_response_status_str(i), i);
 		ret = 0;
 		goto end;
@@ -845,7 +845,7 @@ int MAIN(int argc, char **argv)
 
 		if(i <= 0)
 			{
-			BIO_printf(bio_err, "Response Verify Failure\n", i);
+			BIO_printf(bio_err, "Response Verify Failure\n");
 			ERR_print_errors(bio_err);
 			}
 		else

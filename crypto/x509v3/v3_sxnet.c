@@ -109,7 +109,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 	SXNETID *id;
 	int i;
 	v = ASN1_INTEGER_get(sx->version);
-	BIO_printf(out, "%*sVersion: %d (0x%X)", indent, "", v + 1, v);
+	BIO_printf(out, "%*sVersion: %ld (0x%lX)", indent, "", v + 1, v);
 	for(i = 0; i < sk_SXNETID_num(sx->ids); i++) {
 		id = sk_SXNETID_value(sx->ids, i);
 		tmp = i2s_ASN1_INTEGER(NULL, id->zone);

@@ -2096,7 +2096,7 @@ again2:
 
 	BIO_printf(bio_err,"Certificate is to be certified until ");
 	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
-	if (days) BIO_printf(bio_err," (%d days)",days);
+	if (days) BIO_printf(bio_err," (%ld days)",days);
 	BIO_printf(bio_err, "\n");
 
 	if (!batch)

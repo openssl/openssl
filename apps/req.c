@@ -728,10 +728,10 @@ bad:
 		if (newkey < MIN_KEY_LENGTH && (pkey_type == TYPE_RSA || pkey_type == TYPE_DSA))
 			{
 			BIO_printf(bio_err,"private key length is too short,\n");
-			BIO_printf(bio_err,"it needs to be at least %d bits, not %d\n",MIN_KEY_LENGTH,newkey);
+			BIO_printf(bio_err,"it needs to be at least %d bits, not %ld\n",MIN_KEY_LENGTH,newkey);
 			goto end;
 			}
-		BIO_printf(bio_err,"Generating a %d bit %s private key\n",
+		BIO_printf(bio_err,"Generating a %ld bit %s private key\n",
 			newkey,(pkey_type == TYPE_RSA)?"RSA":
 			(pkey_type == TYPE_DSA)?"DSA":"EC");
 

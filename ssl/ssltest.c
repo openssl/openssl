@@ -1597,7 +1597,7 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 		(void)BIO_flush(bio_err);
 		if(!RSA_generate_key_ex(rsa_tmp,keylength,RSA_F4,NULL))
 			{
-			BIO_printf(bio_err, "Error generating key.", keylength);
+			BIO_printf(bio_err, "Error generating key.");
 			RSA_free(rsa_tmp);
 			rsa_tmp = NULL;
 			}
