@@ -451,7 +451,8 @@ static int hwcrhk_finish()
 		goto err;
 		}
  err:
-	logstream = NULL;
+	if (logstream)
+		BIO_free(logstream);
 	hwcrhk_dso = NULL;
 	p_hwcrhk_Init = NULL;
 	p_hwcrhk_Finish = NULL;
@@ -470,7 +471,15 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 	switch(cmd)
 		{
 	case ENGINE_CTRL_SET_LOGSTREAM:
-		logstream = (BIO *)p;
+		if (logstream)
+			{
+			BIO_free(logstream);
+			logstream = NULL;
+			}
+		if (CRYPTO_add(&bio->references,1,CRYPTO_LOCK_BIO) > 1)
+			logstream = (BIO *)p;
+		else
+			ENGINEerr(ENGINE_F_HWCRHK_CTRL,ENGINE_R_BIO_WAS_FREED);
 		break;
 	default:
 		ENGINEerr(ENGINE_F_HWCRHK_CTRL,
@@ -748,10 +757,15 @@ static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex *mt)
 static void log_message(void *logstream, const char *message)
 	{
 	BIO *lstream = NULL;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_BIO);
 	if (logstream)
 		lstream=*(BIO **)logstream;
 	if (lstream)
+		{
 		BIO_write(lstream, message, strlen(message));
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}
 
 #endif /* HW_NCIPHER */
