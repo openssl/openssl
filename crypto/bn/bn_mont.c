@@ -56,6 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+/*
+ * Details about Montgomery multiplication algorithms can be found at:
+ * http://www.ece.orst.edu/ISL/Publications.html
+ * http://www.ece.orst.edu/ISL/Koc/papers/j37acmon.pdf
+ */
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
