@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_ECDH		
 			named_curve = *(++argv);
 #else
-			fprintf(stderr,"ignoring -named_curve, since I'm compiled without ECDH\n"
+			fprintf(stderr,"ignoring -named_curve, since I'm compiled without ECDH\n");
 			++argv;
 #endif
 			}
