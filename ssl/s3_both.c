@@ -584,7 +584,7 @@ int ssl3_setup_buffers(SSL *s)
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;
-		s->s3->rbuf.len = len;
+		s->s3->rbuf_len = len;
 		}
 
 	if (s->s3->wbuf.buf == NULL)
@@ -594,7 +594,7 @@ int ssl3_setup_buffers(SSL *s)
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->wbuf.buf = p;
-		s->s3->wbuf.len = len;
+		s->s3->wbuf_len = len;
 		}
 	s->packet= &(s->s3->rbuf.buf[0]);
 	return(1);

@@ -252,19 +252,13 @@ typedef struct ssl3_record_st
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 	} SSL3_RECORD;
 
-/* 'dummy' variant for binary compatibility ... */
-typedef struct dummy_ssl3_buffer_st
-	{
-	unsigned char *buf;     /* at least SSL3_RT_MAX_PACKET_SIZE bytes,
-	                         * see ssl3_setup_buffers() */
-	int offset;             /* where to 'copy from' */
-	int left;               /* how many bytes left */
-	} DUMMY_SSL3_BUFFER;
 typedef struct ssl3_buffer_st
 	{
 	unsigned char *buf;     /* at least SSL3_RT_MAX_PACKET_SIZE bytes,
 	                         * see ssl3_setup_buffers() */
+#if 0 /* put directly into SSL3_STATE for best possible binary compatibility within 0.9.6 series */
 	size_t len;             /* buffer size */
+#endif
 	int offset;             /* where to 'copy from' */
 	int left;               /* how many bytes left */
 	} SSL3_BUFFER;
@@ -296,11 +290,8 @@ typedef struct ssl3_state_st
 	unsigned char server_random[SSL3_RANDOM_SIZE];
 	unsigned char client_random[SSL3_RANDOM_SIZE];
 
-	/* dummies for best possible binary compatibility within 0.9.6 series
-	 * (indexes to other struct members should remain unchanged);
-	 * real 'rbuf' and 'wbuf' are added at the end of this struct */
-	DUMMY_SSL3_BUFFER dummy_rbuf;
-	DUMMY_SSL3_BUFFER dummy_wbuf;
+	SSL3_BUFFER rbuf;	/* read IO goes into here */
+	SSL3_BUFFER wbuf;	/* write IO goes into here */
 
 	SSL3_RECORD rrec;	/* each decoded record goes in here */
 	SSL3_RECORD wrec;	/* goes out from here */
@@ -390,8 +381,8 @@ typedef struct ssl3_state_st
 	int need_empty_fragments;
 	int empty_fragment_done;
 
-	SSL3_BUFFER rbuf;	/* read IO goes into here */
-	SSL3_BUFFER wbuf;	/* write IO goes into here */
+	size_t rbuf_len;	/* substitute for rbuf.len */
+	size_t wbuf_len;	/* substitute for wbuf.len */
 
 	} SSL3_STATE;
 

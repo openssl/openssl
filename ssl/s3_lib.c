@@ -758,14 +758,14 @@ void ssl3_clear(SSL *s)
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
-	rlen = s->s3->rbuf.len;
-	wlen = s->s3->wbuf.len;
+	rlen = s->s3->rbuf_len;
+	wlen = s->s3->wbuf_len;
 
 	memset(s->s3,0,sizeof *s->s3);
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;
-	s->s3->rbuf.len = rlen;
-	s->s3->wbuf.len = wlen;
+	s->s3->rbuf_len = rlen;
+	s->s3->wbuf_len = wlen;
 
 	ssl_free_wbio_buffer(s);
 
