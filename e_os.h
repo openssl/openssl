@@ -250,7 +250,7 @@ extern "C" {
 #    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
 #    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
 #  else
-#    define EXIT(n) return(n)
+#    define EXIT(n) exit(n)
 #  endif
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
