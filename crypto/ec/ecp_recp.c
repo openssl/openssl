@@ -119,7 +119,8 @@ int ec_GFp_recp_group_init(EC_GROUP *group)
 	return ok;
 	}
 
-
+/* Avoid "redundant redeclaration" warnings */
+#if 0
 int ec_GFp_recp_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 /* TODO */
 
@@ -142,3 +143,4 @@ int ec_GFp_recp_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, con
 
 int ec_GFp_recp_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
 /* TODO */
+#endif
