@@ -13,8 +13,9 @@
      the "shared" options was given to ./Configure or ./config.
      Otherwise, they are inserted in libcrypto.a.
      /usr/local/ssl/engines is the default directory for dynamic
-     engines, but that can be overriden with the environment
-     variable OPENSSL_ENGINES.
+     engines, but that can be overriden at configure time through
+     the usual use of --prefix and/or --openssldir, and at run
+     time with the environment variable OPENSSL_ENGINES.
      [Geoff Thorpe and Richard Levitte]
 
   *) Add Makefile.shared, a helper makefile to build shared
