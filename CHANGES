@@ -4,6 +4,10 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Improved PowerPC platform support. Most notably BIGNUM assembler
+     implementation contributed by IBM.
+     [Suresh Chari, Peter Waltenberg, Andy Polyakov]
+
   *) The new 'RSA_generate_key_ex' function now takes a BIGNUM for the public
      exponent rather than 'unsigned long'. There is a corresponding change to
      the new 'rsa_keygen' element of the RSA_METHOD structure.
