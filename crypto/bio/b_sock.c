@@ -494,16 +494,16 @@ static int get_ip(const char *str, unsigned char ip[4])
 			{
 			ok=1;
 			tmp[num]=tmp[num]*10+c-'0';
-			if (tmp[num] > 255) return(-1);
+			if (tmp[num] > 255) return(0);
 			}
 		else if (c == '.')
 			{
 			if (!ok) return(-1);
-			if (num == 3) break;
+			if (num == 3) return(0);
 			num++;
 			ok=0;
 			}
-		else if ((num == 3) && ok)
+		else if (c == '\0' && (num == 3) && ok)
 			break;
 		else
 			return(0);
