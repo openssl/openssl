@@ -74,7 +74,7 @@ tags:
 
 errors:
 	$(PERL) $(TOP)/util/mkerr.pl -conf hw.ec \
-		-nostatic -staticloader -write hw_*.c; \
+		-nostatic -staticloader -write hw_*.c;
 
 tests:
 
