@@ -444,6 +444,7 @@ bad:
 				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
 				ERR_print_errors(bio_err);
 				*/
+				ERR_clear_error();
 				}
 			else
 				{
