@@ -113,7 +113,8 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	{
 	EC_KEY *a=NULL;
 	EC_KEY *b=NULL;
-	BIGNUM *x=NULL, *y=NULL;
+	BIGNUM *x_a=NULL, *y_a=NULL,
+	       *x_b=NULL, *y_b=NULL;
 	char buf[12];
 	unsigned char *abuf=NULL,*bbuf=NULL;
 	int i,alen,blen,aout,bout,ret=0;
@@ -124,51 +125,71 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	if ((b=EC_KEY_new()) == NULL) goto err;
 	b->group = a->group;
 
-	if ((x=BN_new()) == NULL) goto err;
-	if ((y=BN_new()) == NULL) goto err;
+	if ((x_a=BN_new()) == NULL) goto err;
+	if ((y_a=BN_new()) == NULL) goto err;
+	if ((x_b=BN_new()) == NULL) goto err;
+	if ((y_b=BN_new()) == NULL) goto err;
 
 	BIO_puts(out,"Testing key generation with ");
 	BIO_puts(out,text);
+#ifdef NOISY
 	BIO_puts(out,"\n");
+#else
+	BIO_flush(out);
+#endif
 
 	if (!EC_KEY_generate_key(a)) goto err;
+	
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(a->group)) == NID_X9_62_prime_field) 
+		{
+		if (!EC_POINT_get_affine_coordinates_GFp(a->group, a->pub_key, x_a, y_a, ctx)) goto err;
+		}
+	else
+		{
+		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, a->pub_key, x_a, y_a, ctx)) goto err;
+		}
+#ifdef NOISY
 	BIO_puts(out,"  pri 1=");
 	BN_print(out,a->priv_key);
 	BIO_puts(out,"\n  pub 1=");
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(a->group)) == NID_X9_62_prime_field) 
+	BN_print(out,x_a);
+	BIO_puts(out,",");
+	BN_print(out,y_a);
+	BIO_puts(out,"\n");
+#else
+	BIO_printf(out," .");
+	BIO_flush(out);
+#endif
+
+	if (!EC_KEY_generate_key(b)) goto err;
+
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(b->group)) == NID_X9_62_prime_field) 
 		{
-		if (!EC_POINT_get_affine_coordinates_GFp(a->group, a->pub_key, x, y, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GFp(b->group, b->pub_key, x_b, y_b, ctx)) goto err;
 		}
 	else
 		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, a->pub_key, x, y, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, b->pub_key, x_b, y_b, ctx)) goto err;
 		}
-	BN_print(out,x);
-	BIO_puts(out,",");
-	BN_print(out,y);
-	BIO_puts(out,"\n");
 
-	if (!EC_KEY_generate_key(b)) goto err;
+#ifdef NOISY
 	BIO_puts(out,"  pri 2=");
 	BN_print(out,b->priv_key);
 	BIO_puts(out,"\n  pub 2=");
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(b->group)) == NID_X9_62_prime_field) 
-		{
-		if (!EC_POINT_get_affine_coordinates_GFp(b->group, b->pub_key, x, y, ctx)) goto err;
-		}
-	else
-		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, b->pub_key, x, y, ctx)) goto err;
-		}
-	BN_print(out,x);
+	BN_print(out,x_b);
 	BIO_puts(out,",");
-	BN_print(out,y);
+	BN_print(out,y_b);
 	BIO_puts(out,"\n");
+#else
+	BIO_printf(out,".");
+	BIO_flush(out);
+#endif
 
 	alen=ECDH_size(a);
 	abuf=(unsigned char *)OPENSSL_malloc(alen);
 	aout=ECDH_compute_key(abuf,b->pub_key,a);
 
+#ifdef NOISY
 	BIO_puts(out,"  key1 =");
 	for (i=0; i<aout; i++)
 		{
@@ -176,11 +197,16 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 		BIO_puts(out,buf);
 		}
 	BIO_puts(out,"\n");
+#else
+	BIO_printf(out,".");
+	BIO_flush(out);
+#endif
 
 	blen=ECDH_size(b);
 	bbuf=(unsigned char *)OPENSSL_malloc(blen);
 	bout=ECDH_compute_key(bbuf,a->pub_key,b);
 
+#ifdef NOISY
 	BIO_puts(out,"  key2 =");
 	for (i=0; i<bout; i++)
 		{
@@ -188,20 +214,66 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 		BIO_puts(out,buf);
 		}
 	BIO_puts(out,"\n");
+#else
+	BIO_printf(out,".");
+	BIO_flush(out);
+#endif
+
 	if ((aout < 4) || (bout != aout) || (memcmp(abuf,bbuf,aout) != 0))
 		{
+#ifndef NOISY
+		BIO_printf(out, "failed\n\n");
+		BIO_printf(out, "key a:\n");
+		BIO_printf(out, "private key: ");
+		BN_print(out, a->priv_key);
+		BIO_printf(out, "\n");
+		BIO_printf(out, "public key (x,y): ");
+		BN_print(out, x_a);
+		BIO_printf(out, ",");
+		BN_print(out, y_a);
+		BIO_printf(out, "\nkey b:\n");
+		BIO_printf(out, "private key: ");
+		BN_print(out, b->priv_key);
+		BIO_printf(out, "\n");
+		BIO_printf(out, "public key (x,y): ");
+		BN_print(out, x_b);
+		BIO_printf(out, ",");
+		BN_print(out, y_b);
+		BIO_printf(out, "\n");
+		BIO_printf(out, "generated key a: ");
+		for (i=0; i<bout; i++)
+			{
+			sprintf(buf, "%02X", bbuf[i]);
+			BIO_puts(out, buf);
+			}
+		BIO_printf(out, "\n");
+		BIO_printf(out, "generated key b: ");
+		for (i=0; i<aout; i++)
+			{
+			sprintf(buf, "%02X", abuf[i]);
+			BIO_puts(out,buf);
+			}
+		BIO_printf(out, "\n");
+#endif
 		fprintf(stderr,"Error in ECDH routines\n");
 		ret=0;
 		}
 	else
+		{
+#ifndef NOISY
+		BIO_printf(out, "ok\n");
+#endif
 		ret=1;
+		}
 err:
 	ERR_print_errors_fp(stderr);
 
 	if (abuf != NULL) OPENSSL_free(abuf);
 	if (bbuf != NULL) OPENSSL_free(bbuf);
-	if (x) BN_free(x);
-	if (y) BN_free(y);
+	if (x_a) BN_free(x_a);
+	if (y_a) BN_free(y_a);
+	if (x_b) BN_free(x_b);
+	if (y_b) BN_free(y_b);
 	if (a->group) EC_GROUP_free(a->group);
 	a->group = b->group = NULL;
 	if (b) EC_KEY_free(b);
