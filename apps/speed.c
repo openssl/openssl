@@ -740,7 +740,10 @@ int MAIN(int argc, char **argv)
 	if (j == 0)
 		{
 		for (i=0; i<ALGOR_NUM; i++)
-			doit[i]=1;
+			{
+			if (i != D_EVP)
+				doit[i]=1;
+			}
 		for (i=0; i<RSA_NUM; i++)
 			rsa_doit[i]=1;
 		for (i=0; i<DSA_NUM; i++)
