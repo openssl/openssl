@@ -629,7 +629,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	}
 
 /* ignore negative */
-int BN_bn2bin(BIGNUM *a, unsigned char *to)
+int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 	{
 	int n,i;
 	BN_ULONG l;

@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-int BN_bn2mpi(BIGNUM *a, unsigned char *d)
+int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
 	{
 	int bits;
 	int num=0;

@@ -66,6 +66,8 @@
 static ERR_STRING_DATA CONF_str_functs[]=
 	{
 {ERR_PACK(0,CONF_F_CONF_LOAD,0),	"CONF_load"},
+{ERR_PACK(0,CONF_F_CONF_LOAD_BIO,0),	"CONF_load_bio"},
+{ERR_PACK(0,CONF_F_CONF_LOAD_FP,0),	"CONF_load_fp"},
 {ERR_PACK(0,CONF_F_STR_COPY,0),	"STR_COPY"},
 {0,NULL}
 	};

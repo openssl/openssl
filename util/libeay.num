@@ -1777,3 +1777,5 @@ BIO_ctrl_wpending                       1801
 BIO_new_bio_pair                        1802
 BIO_ctrl_get_write_guarantee            1803
 CRYPTO_num_locks                        1804
+CONF_load_bio                           1805
+CONF_load_fp                            1806

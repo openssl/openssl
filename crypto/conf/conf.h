@@ -63,8 +63,9 @@
 extern "C" {
 #endif
 
-#include <openssl/stack.h>
+#include <openssl/bio.h>
 #include <openssl/lhash.h>
+#include <openssl/stack.h>
 
 typedef struct
 	{
@@ -74,7 +75,9 @@ typedef struct
 	} CONF_VALUE;
 
 
-LHASH *CONF_load(LHASH *conf,char *file,long *eline);
+LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
+LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
+LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline);
 STACK *CONF_get_section(LHASH *conf,char *section);
 char *CONF_get_string(LHASH *conf,char *group,char *name);
 long CONF_get_number(LHASH *conf,char *group,char *name);
@@ -90,6 +93,8 @@ void ERR_load_CONF_strings(void );
 
 /* Function codes. */
 #define CONF_F_CONF_LOAD				 100
+#define CONF_F_CONF_LOAD_BIO				 102
+#define CONF_F_CONF_LOAD_FP				 103
 #define CONF_F_STR_COPY					 101
 
 /* Reason codes. */
