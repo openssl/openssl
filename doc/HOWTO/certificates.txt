@@ -71,13 +71,11 @@ received.
 If you don't want to deal with another certificate authority, or just
 want to create a test certificate for yourself, or are setting up a
 certificate authority of your own, you may want to make the requested
-certificate a self-signed one.  If you have created a certificate
-request as shown above, you can sign it using the 'openssl x509'
-command, for example like this (to create a self-signed CA
-certificate):
+certificate a self-signed one.  This is similar to creating a
+certificate request, but creates a certificate instead of a
+certificate request (1095 is 3 years):
 
-  openssl x509 -req -in cert.csr -extfile openssl.cnf -extensions v3_ca \
-	  -signkey privkey.pem -out cacert.pem -trustout
+  openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 
 
 5. What to do with the certificate
