@@ -64,6 +64,7 @@
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/pkcs12.h>
 #ifndef NO_DES
 #include <openssl/des.h>
 #endif
@@ -71,6 +72,7 @@
 const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
+#define PEM_BUFSIZE	1024
 
 static int def_callback(char *buf, int num, int w);
 static int load_iv(unsigned char **fromp,unsigned char *to, int num);
@@ -183,10 +185,14 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
 			((strcmp(nm,PEM_STRING_DSA) == 0) &&
 			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
+			((strcmp(nm,PEM_STRING_PKCS8) == 0) &&
+			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
+			((strcmp(nm,PEM_STRING_PKCS8INF) == 0) &&
+			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
 			((strcmp(nm,PEM_STRING_X509_OLD) == 0) &&
 			 (strcmp(name,PEM_STRING_X509) == 0)) ||
 			((strcmp(nm,PEM_STRING_X509_REQ_OLD) == 0) &&
-			 (strcmp(name,PEM_STRING_X509_REQ) == 0))
+			 (strcmp(name,PEM_STRING_X509_REQ) == 0)) 
 			)
 			break;
 		Free(nm);
@@ -196,15 +202,39 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 	if (!PEM_get_EVP_CIPHER_INFO(header,&cipher)) goto err;
 	if (!PEM_do_header(&cipher,data,&len,cb)) goto err;
 	p=data;
-	if (strcmp(name,PEM_STRING_EVP_PKEY) == 0)
-		{
+	if (strcmp(name,PEM_STRING_EVP_PKEY) == 0) {
 		if (strcmp(nm,PEM_STRING_RSA) == 0)
 			ret=d2i(EVP_PKEY_RSA,x,&p,len);
 		else if (strcmp(nm,PEM_STRING_DSA) == 0)
 			ret=d2i(EVP_PKEY_DSA,x,&p,len);
+		else if (strcmp(nm,PEM_STRING_PKCS8INF) == 0) {
+			PKCS8_PRIV_KEY_INFO *p8inf;
+			p8inf=d2i_PKCS8_PRIV_KEY_INFO(
+					(PKCS8_PRIV_KEY_INFO **) x, &p, len);
+			ret = (char *)EVP_PKCS82PKEY(p8inf);
+			PKCS8_PRIV_KEY_INFO_free(p8inf);
+		} else if (strcmp(nm,PEM_STRING_PKCS8) == 0) {
+			PKCS8_PRIV_KEY_INFO *p8inf;
+			X509_SIG *p8;
+			int klen;
+			char psbuf[PEM_BUFSIZE];
+			p8 = d2i_X509_SIG((X509_SIG **)x, &p, len);
+			if(!p8) goto p8err;
+			if (cb) klen=cb(psbuf,PEM_BUFSIZE,0);
+			else klen=def_callback(psbuf,PEM_BUFSIZE,0);
+			if (klen <= 0) {
+				PEMerr(PEM_F_PEM_ASN1_READ_BIO,
+						PEM_R_BAD_PASSWORD_READ);
+				goto err;
+			}
+			p8inf = M_PKCS8_decrypt(p8, psbuf, klen);
+			X509_SIG_free(p8);
+			if(!p8inf) goto p8err;
+			ret = (char *)EVP_PKCS82PKEY(p8inf);
+			PKCS8_PRIV_KEY_INFO_free(p8inf);
 		}
-	else	
-		ret=d2i(x,&p,len);
+	} else	ret=d2i(x,&p,len);
+p8err:
 	if (ret == NULL)
 		PEMerr(PEM_F_PEM_ASN1_READ_BIO,ERR_R_ASN1_LIB);
 err:
@@ -242,7 +272,6 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 	int dsize=0,i,j,ret=0;
 	unsigned char *p,*data=NULL;
 	const char *objstr=NULL;
-#define PEM_BUFSIZE	1024
 	char buf[PEM_BUFSIZE];
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	unsigned char iv[EVP_MAX_IV_LENGTH];
