@@ -192,7 +192,7 @@ static int def_load(CONF *conf, const char *name, long *line)
 #endif
 	if (in == NULL)
 		{
-		if(ERR_GET_REASON(ERR_peek_top_error()) == BIO_R_NO_SUCH_FILE)
+		if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE)
 			CONFerr(CONF_F_CONF_LOAD,CONF_R_NO_SUCH_FILE);
 		else
 			CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);

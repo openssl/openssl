@@ -318,7 +318,7 @@ static int err_cmp(const void *a_void, const void *b_void);
 static unsigned long pid_hash(const void *pid_void);
 /* static int pid_cmp(ERR_STATE *a,ERR_STATE *pid); */
 static int pid_cmp(const void *a_void,const void *pid_void);
-static unsigned long get_error_values(int inc,const char **file,int *line,
+static unsigned long get_error_values(int inc,int top,const char **file,int *line,
 				      const char **data,int *flags);
 
 /* The internal functions used in the "err_defaults" implementation */
@@ -666,35 +666,37 @@ void ERR_clear_error(void)
 
 
 unsigned long ERR_get_error(void)
-	{ return(get_error_values(1,NULL,NULL,NULL,NULL)); }
+	{ return(get_error_values(1,0,NULL,NULL,NULL,NULL)); }
 
 unsigned long ERR_get_error_line(const char **file,
 	     int *line)
-	{ return(get_error_values(1,file,line,NULL,NULL)); }
+	{ return(get_error_values(1,0,file,line,NULL,NULL)); }
 
 unsigned long ERR_get_error_line_data(const char **file, int *line,
 	     const char **data, int *flags)
-	{ return(get_error_values(1,file,line,data,flags)); }
+	{ return(get_error_values(1,0,file,line,data,flags)); }
 
 unsigned long ERR_peek_error(void)
-	{ return(get_error_values(0,NULL,NULL,NULL,NULL)); }
+	{ return(get_error_values(0,0,NULL,NULL,NULL,NULL)); }
 
-unsigned long ERR_peek_top_error(void)
-	{
-	ERR_STATE *es=ERR_get_state();
+unsigned long ERR_peek_last_error(void)
+	{ return(get_error_values(0,1,NULL,NULL,NULL,NULL)); }
 
-	return es->err_buffer[es->top];
-	}
+unsigned long ERR_peek_error_line(const char **file, int *line)
+	{ return(get_error_values(0,0,file,line,NULL,NULL)); }
 
-unsigned long ERR_peek_error_line(const char **file,
-	     int *line)
-	{ return(get_error_values(0,file,line,NULL,NULL)); }
+unsigned long ERR_peek_last_error_line(const char **file, int *line)
+	{ return(get_error_values(0,1,file,line,NULL,NULL)); }
 
 unsigned long ERR_peek_error_line_data(const char **file, int *line,
 	     const char **data, int *flags)
-	{ return(get_error_values(0,file,line,data,flags)); }
+	{ return(get_error_values(0,0,file,line,data,flags)); }
 
-static unsigned long get_error_values(int inc, const char **file, int *line,
+unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
+	     const char **data, int *flags)
+	{ return(get_error_values(0,1,file,line,data,flags)); }
+
+static unsigned long get_error_values(int inc, int top, const char **file, int *line,
 	     const char **data, int *flags)
 	{	
 	int i=0;
@@ -703,8 +705,21 @@ static unsigned long get_error_values(int inc, const char **file, int *line,
 
 	es=ERR_get_state();
 
+	if (inc && top)
+		{
+		if (file) *file = "";
+		if (line) *line = 0;
+		if (data) *data = "";
+		if (flags) *flags = 0;
+			
+		return ERR_R_INTERNAL_ERROR;
+		}
+
 	if (es->bottom == es->top) return 0;
-	i=(es->bottom+1)%ERR_NUM_ERRORS;
+	if (top)
+		i=(es->bottom+1)%ERR_NUM_ERRORS; /* last error */
+	else
+		i=(es->bottom+1)%ERR_NUM_ERRORS; /* first error */
 
 	ret=es->err_buffer[i];
 	if (inc)

@@ -238,14 +238,17 @@ typedef struct ERR_string_data_st
 void ERR_put_error(int lib, int func,int reason,const char *file,int line);
 void ERR_set_error_data(char *data,int flags);
 
-unsigned long ERR_get_error(void );
+unsigned long ERR_get_error(void);
 unsigned long ERR_get_error_line(const char **file,int *line);
 unsigned long ERR_get_error_line_data(const char **file,int *line,
 				      const char **data, int *flags);
-unsigned long ERR_peek_error(void );
-unsigned long ERR_peek_top_error(void);
+unsigned long ERR_peek_last_error(void);
+unsigned long ERR_peek_error(void);
 unsigned long ERR_peek_error_line(const char **file,int *line);
+unsigned long ERR_peek_last_error_line(const char **file,int *line);
 unsigned long ERR_peek_error_line_data(const char **file,int *line,
+				       const char **data,int *flags);
+unsigned long ERR_peek_last_error_line_data(const char **file,int *line,
 				       const char **data,int *flags);
 void ERR_clear_error(void );
 char *ERR_error_string(unsigned long e,char *buf);

@@ -66,7 +66,7 @@
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
-#ifndef OPENSSL_NO_OLD_DES_SUPPORT
+#ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
 # include <openssl/des_old.h>
 #endif
 

@@ -2749,7 +2749,10 @@ CONF_imodule_get_flags                  3195	EXIST::FUNCTION:
 CONF_imodule_get_module                 3196	EXIST::FUNCTION:
 CONF_modules_load                       3197	EXIST::FUNCTION:
 CONF_imodule_get_name                   3198	EXIST::FUNCTION:
-ERR_peek_top_error                      3199	EXIST::FUNCTION:
+ERR_peek_top_error                      3199	NOEXIST::FUNCTION:
 CONF_imodule_get_usr_data               3200	EXIST::FUNCTION:
 CONF_imodule_set_flags                  3201	EXIST::FUNCTION:
 ENGINE_add_conf_module                  3202	EXIST::FUNCTION:
+ERR_peek_last_error_line                3203	EXIST::FUNCTION:
+ERR_peek_last_error_line_data           3204	EXIST::FUNCTION:
+ERR_peek_last_error                     3205	EXIST::FUNCTION:

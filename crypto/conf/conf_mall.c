@@ -72,16 +72,18 @@ void OPENSSL_load_builtin_modules(void)
 	ENGINE_add_conf_module();
 	}
 
+#if 0 /* not yet */
 /* This is the automatic configuration loader: it is called automatically by
  * OpenSSL when any of a number of standard initialisation functions are called,
  * unless this is overridden by calling OPENSSL_no_config()
  */
+#endif
 
 static int openssl_configured = 0;
 
 void OPENSSL_config(void)
 	{
-	int ret;
+	int err_exit = 0;
 	char *file;
 	if (openssl_configured)
 		return;
@@ -92,10 +94,17 @@ void OPENSSL_config(void)
 	if (!file)
 		return;
 
-	ret=CONF_modules_load_file(file, "openssl_config", 0) <= 0
-	  && ERR_GET_REASON(ERR_peek_top_error()) != CONF_R_NO_SUCH_FILE;
+	ERR_clear_error();
+	if (CONF_modules_load_file(file, "openssl_config", 0) <= 0)
+		{
+		if (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE)
+			ERR_clear_error();
+		else
+			err_exit = 1;
+		}
+
 	OPENSSL_free(file);
-	if (ret)
+	if (err_exit)
 		{
 		BIO *bio_err;
 		ERR_load_crypto_strings();
@@ -109,7 +118,6 @@ void OPENSSL_config(void)
 		}
 
 	return;
-
 	}
 
 void OPENSSL_no_config()
