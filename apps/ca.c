@@ -144,7 +144,7 @@ static char *ca_usage[]={
 " -ss_cert file   - File contains a self signed cert to sign\n",
 " -preserveDN     - Don't re-order the DN\n",
 " -batch	  - Don't ask questions\n",
-" -msie_hack	  - msie modifications to handle all thos universal strings\n",
+" -msie_hack	  - msie modifications to handle all those universal strings\n",
 NULL
 };
 
