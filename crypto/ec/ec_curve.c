@@ -103,7 +103,7 @@ static const EC_CURVE_DATA _EC_NIST_PRIME_192 = {
 	"07192b95ffc8da78631011ed6b24cdd573f977a11e794811",
 	"FFFFFFFFFFFFFFFFFFFFFFFF99DEF836146BC9B1B4D22831",1,
 	_EC_NIST_PRIME_192_SEED, 20,
-	"192 bit prime curve from the X9.62 draft"
+	"192 bit prime curve from X9.62 and SECG"
 	};
 
 static const unsigned char _EC_NIST_PRIME_224_SEED[] = {
@@ -175,7 +175,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_192V2 = {
 	"6574d11d69b6ec7a672bb82a083df2f2b0847de970b2de15",
 	"FFFFFFFFFFFFFFFFFFFFFFFE5FB1A724DC80418648D8DD31",1,
 	_EC_X9_62_PRIME_192V2_SEED, 20,
-	"192 bit prime curve from the X9.62 draft"
+	"192 bit prime curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_192V3_SEED[] = {
@@ -190,7 +190,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_192V3 = {
 	"38a90f22637337334b49dcb66a6dc8f9978aca7648a943b0",
 	"FFFFFFFFFFFFFFFFFFFFFFFF7A62D031C83F4294F640EC13",1,
 	_EC_X9_62_PRIME_192V3_SEED, 20,
-	"192 bit prime curve from the X9.62 draft"
+	"192 bit prime curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V1_SEED[] = {
@@ -205,7 +205,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V1 = {
 	"7debe8e4e90a5dae6e4054ca530ba04654b36818ce226b39fccb7b02f1ae",
 	"7FFFFFFFFFFFFFFFFFFFFFFF7FFFFF9E5E9A9F5D9071FBD1522688909D0B",1,
 	_EC_X9_62_PRIME_239V1_SEED, 20,
-	"239 bit prime curve from the X9.62 draft"
+	"239 bit prime curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V2_SEED[] = {
@@ -220,7 +220,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V2 = {
 	"5b0125e4dbea0ec7206da0fc01d9b081329fb555de6ef460237dff8be4ba",
 	"7FFFFFFFFFFFFFFFFFFFFFFF800000CFA7E8594377D414C03821BC582063",1,
 	_EC_X9_62_PRIME_239V2_SEED, 20,
-	"239 bit prime curve from the X9.62 draft"
+	"239 bit prime curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_239V3_SEED[] = {
@@ -235,7 +235,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_239V3 = {
 	"1607e6898f390c06bc1d552bad226f3b6fcfe48b6e818499af18e3ed6cf3",
 	"7FFFFFFFFFFFFFFFFFFFFFFF7FFFFF975DEB41B3A6057C3C432146526551",1,
 	_EC_X9_62_PRIME_239V3_SEED, 20,
-	"239 bit prime curve from the X9.62 draft"
+	"239 bit prime curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_PRIME_256V1_SEED[] = {
@@ -250,7 +250,7 @@ static const EC_CURVE_DATA _EC_X9_62_PRIME_256V1 = {
 	"4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5",
 	"FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551",1,
 	_EC_X9_62_PRIME_256V1_SEED, 20,
-	"256 bit prime curve from the X9.62 draft"
+	"256 bit prime curve from X9.62 and SECG"
 	};
 /* the secg prime curves (minus the nist and x9.62 prime curves) */
 static const unsigned char _EC_SECG_PRIME_112R1_SEED[] = {
@@ -733,7 +733,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V1 = {
 	"01EC23211B5966ADEA1D3F87F7EA5848AEF0B7CA9F",
 	"0400000000000000000001E60FC8821CC74DAEAFC1", 2,
 	_EC_X9_62_CHAR2_163V1_SEED, 20,
-	"163 bit binary curve from the X9.62 draft"
+	"163 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_163V2_SEED[] = {
@@ -748,7 +748,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V2 = {
 	"079F684DDF6684C5CD258B3890021B2386DFD19FC5",
 	"03FFFFFFFFFFFFFFFFFFFDF64DE1151ADBB78F10A7", 2,
 	_EC_X9_62_CHAR2_163V2_SEED, 20,
-	"163 bit binary curve from the X9.62 draft"
+	"163 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_163V3_SEED[] = {
@@ -763,7 +763,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_163V3 = {
 	"05B935590C155E17EA48EB3FF3718B893DF59A05D0",
 	"03FFFFFFFFFFFFFFFFFFFE1AEE140F110AFF961309", 2,
 	_EC_X9_62_CHAR2_163V3_SEED, 20,
-	"163 bit binary curve from the X9.62 draft"
+	"163 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_176V1 = {
@@ -775,7 +775,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_176V1 = {
 	"6FA4539C2DADDDD6BAB5167D61B436E1D92BB16A562C",
 	"00010092537397ECA4F6145799D62B0A19CE06FE26AD", 0xFF6E,
 	NULL, 0,
-	"176 bit binary curve from the X9.62 draft"
+	"176 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V1_SEED[] = {
@@ -790,7 +790,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V1 = {
 	"765BE73433B3F95E332932E70EA245CA2418EA0EF98018FB",
 	"40000000000000000000000004A20E90C39067C893BBB9A5", 2,
 	_EC_X9_62_CHAR2_191V1_SEED, 20,
-	"191 bit binary curve from the X9.62 draft"
+	"191 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V2_SEED[] = {
@@ -805,7 +805,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V2 = {
 	"17434386626D14F3DBF01760D9213A3E1CF37AEC437D668A",
 	"20000000000000000000000050508CB89F652824E06B8173", 4,
 	_EC_X9_62_CHAR2_191V2_SEED, 20,
-	"191 bit binary curve from the X9.62 draft"
+	"191 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_191V3_SEED[] = {
@@ -820,7 +820,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_191V3 = {
 	"545A39176196575D985999366E6AD34CE0A77CD7127B06BE",
 	"155555555555555555555555610C0B196812BFB6288A3EA3", 6,
 	_EC_X9_62_CHAR2_191V3_SEED, 20,
-	"191 bit binary curve from the X9.62 draft"
+	"191 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_208W1 = {
@@ -832,7 +832,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_208W1 = {
 	"0F55B51A06E78E9AC38A035FF520D8B01781BEB1A6BB08617DE3",
 	"000101BAF95C9723C57B6C21DA2EFF2D5ED588BDD5717E212F9D", 0xFE48,
 	NULL, 0,
-	"208 bit binary curve from the X9.62 draft"
+	"208 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V1_SEED[] = {
@@ -847,7 +847,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V1 = {
 	"61D8EE5077C33FECF6F1A16B268DE469C3C7744EA9A971649FC7A9616305",
 	"2000000000000000000000000000000F4D42FFE1492A4993F1CAD666E447", 4,
 	_EC_X9_62_CHAR2_239V1_SEED, 20,
-	"239 bit binary curve from the X9.62 draft"
+	"239 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V2_SEED[] = {
@@ -862,7 +862,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V2 = {
 	"5667334C45AFF3B5A03BAD9DD75E2C71A99362567D5453F7FA6E227EC833",
 	"1555555555555555555555555555553C6F2885259C31E3FCDF154624522D", 6,
 	_EC_X9_62_CHAR2_239V2_SEED, 20,
-	"239 bit binary curve from the X9.62 draft"
+	"239 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_239V3_SEED[] = {
@@ -877,7 +877,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_239V3 = {
 	"2E5A0EAF6E5E1305B9004DCE5C0ED7FE59A35608F33837C816D80B79F461",
 	"0CCCCCCCCCCCCCCCCCCCCCCCCCCCCCAC4912D2D9DF903EF9888B8A0E4CFF", 0xA,
 	_EC_X9_62_CHAR2_239V3_SEED, 20,
-	"239 bit binary curve from the X9.62 draft"
+	"239 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_272W1 = {
@@ -891,7 +891,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_272W1 = {
 	"000100FAF51354E0E39E4892DF6E319C72C8161603FA45AA7B998A167B8F1E629521",
 	0xFF06,
 	NULL, 0,
-	"272 bit binary curve from the X9.62 draft"
+	"272 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_304W1 = {
@@ -909,7 +909,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_304W1 = {
 	"000101D556572AABAC800101D556572AABAC8001022D5C91DD173F8FB561DA6899164"
 	"443051D", 0xFE2E,
 	NULL, 0,
-	"304 bit binary curve from the X9.62 draft"
+	"304 bit binary curve from X9.62"
 	};
 
 static const unsigned char _EC_X9_62_CHAR2_359V1_SEED[] = {
@@ -930,7 +930,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_359V1 = {
 	"01AF286BCA1AF286BCA1AF286BCA1AF286BCA1AF286BC9FB8F6B85C556892C20A7EB9"
 	"64FE7719E74F490758D3B", 0x4C,
 	_EC_X9_62_CHAR2_359V1_SEED, 20,
-	"359 bit binary curve from the X9.62 draft"
+	"359 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_368W1 = {
@@ -948,7 +948,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_368W1 = {
 	"00010090512DA9AF72B08349D98A5DD4C7B0532ECA51CE03E2D10F3B7AC579BD87E90"
 	"9AE40A6F131E9CFCE5BD967", 0xFF70,
 	NULL, 0,
-	"368 bit binary curve from the X9.62 draft"
+	"368 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_X9_62_CHAR2_431R1 = {
@@ -966,7 +966,7 @@ static const EC_CURVE_DATA _EC_X9_62_CHAR2_431R1 = {
 	"0340340340340340340340340340340340340340340340340340340323C313FAB5058"
 	"9703B5EC68D3587FEC60D161CC149C1AD4A91", 0x2760,
 	NULL, 0,
-	"431 bit binary curve from the X9.62 draft"
+	"431 bit binary curve from X9.62"
 	};
 
 static const EC_CURVE_DATA _EC_WTLS_1 = {
@@ -996,14 +996,16 @@ static const ec_list_element curve_list[] = {
 	{ NID_secp160k1, &_EC_SECG_PRIME_160K1},
 	{ NID_secp160r1, &_EC_SECG_PRIME_160R1},
 	{ NID_secp160r2, &_EC_SECG_PRIME_160R2},
+	/* SECG secp192r1 is the same as X9.62 prime192v1 and hence omitted */
 	{ NID_secp192k1, &_EC_SECG_PRIME_192K1},
 	{ NID_secp224k1, &_EC_SECG_PRIME_224K1},
 	{ NID_secp224r1, &_EC_NIST_PRIME_224},
 	{ NID_secp256k1, &_EC_SECG_PRIME_256K1},
+	/* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
 	{ NID_secp384r1, &_EC_NIST_PRIME_384},
 	{ NID_secp521r1, &_EC_NIST_PRIME_521},
 	/* X9.62 curves */
-	{ NID_X9_62_prime192v1,  &_EC_NIST_PRIME_192},
+	{ NID_X9_62_prime192v1, &_EC_NIST_PRIME_192},
 	{ NID_X9_62_prime192v2, &_EC_X9_62_PRIME_192V2},
 	{ NID_X9_62_prime192v3, &_EC_X9_62_PRIME_192V3},
 	{ NID_X9_62_prime239v1, &_EC_X9_62_PRIME_239V1},

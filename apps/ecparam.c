@@ -383,7 +383,26 @@ bad:
 
 	if (curve_name != NULL)
 		{
-		int nid = OBJ_sn2nid(curve_name);
+		int nid;
+
+		/* workaround for the SECG curve names secp192r1
+		 * and secp256r1 (which are the same as the curves
+		 * prime192v1 and prime256v1 defined in X9.62)
+		 */
+		if (!strcmp(curve_name, "secp192r1"))
+			{
+			BIO_printf(bio_err, "using curve name prime192v1 "
+				"instead of secp192r1\n");
+			nid = NID_X9_62_prime192v1;
+			}
+		else if (!strcmp(curve_name, "secp256r1"))
+			{
+			BIO_printf(bio_err, "using curve name prime256v1 "
+				"instead of secp256r1\n");
+			nid = NID_X9_62_prime256v1;
+			}
+		else
+			nid = OBJ_sn2nid(curve_name);
 	
 		if (nid == 0)
 			{

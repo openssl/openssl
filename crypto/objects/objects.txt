@@ -83,9 +83,13 @@ secg-ellipticCurve 9		: secp160k1
 secg-ellipticCurve 8		: secp160r1
 secg-ellipticCurve 30		: secp160r2
 secg-ellipticCurve 31		: secp192k1
+# NOTE: the curve secp192r1 is the same as prime192v1 defined above
+#       and is therefore omitted
 secg-ellipticCurve 32		: secp224k1
 secg-ellipticCurve 33		: secp224r1
 secg-ellipticCurve 10		: secp256k1
+# NOTE: the curve secp256r1 is the same as prime256v1 defined above
+#       and is therefore omitted
 secg-ellipticCurve 34		: secp384r1
 secg-ellipticCurve 35		: secp521r1
 # SECG characteristic two curves OIDs
