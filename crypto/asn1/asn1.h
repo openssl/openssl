@@ -488,7 +488,7 @@ void		ASN1_TYPE_free(ASN1_TYPE *a);
 int		i2d_ASN1_TYPE(ASN1_TYPE *a,unsigned char **pp);
 ASN1_TYPE *	d2i_ASN1_TYPE(ASN1_TYPE **a,unsigned char **pp,long length);
 int ASN1_TYPE_get(ASN1_TYPE *a);
-void ASN1_TYPE_set(ASN1_TYPE *a, int type, char *value);
+void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
 
 ASN1_OBJECT *	ASN1_OBJECT_new(void );
 void		ASN1_OBJECT_free(ASN1_OBJECT *a);

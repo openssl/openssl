@@ -117,7 +117,7 @@ X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, unsigned char **pp,
 	M_ASN1_D2I_Finish(a,X509_ATTRIBUTE_free,ASN1_F_D2I_X509_ATTRIBUTE);
 	}
 
-X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, char *value)
+X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 	{
 	X509_ATTRIBUTE *ret=NULL;
 	ASN1_TYPE *val=NULL;

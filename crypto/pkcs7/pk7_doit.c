@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static int add_attribute(STACK **sk, int nid, int atrtype, char *value);
+static int add_attribute(STACK **sk, int nid, int atrtype, void *value);
 static ASN1_TYPE *get_attribute(STACK *sk, int nid);
 
 #if 1
@@ -567,7 +567,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				sign_time=X509_gmtime_adj(NULL,0);
 				PKCS7_add_signed_attribute(si,
 					NID_pkcs9_signingTime,
-					V_ASN1_UTCTIME,(char *)sign_time);
+					V_ASN1_UTCTIME,sign_time);
 
 				/* Add digest */
 				md_tmp=EVP_MD_CTX_type(&ctx_tmp);
@@ -575,7 +575,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				digest=ASN1_OCTET_STRING_new();
 				ASN1_OCTET_STRING_set(digest,md_data,md_len);
 				PKCS7_add_signed_attribute(si,NID_pkcs9_messageDigest,
-					V_ASN1_OCTET_STRING,(char *)digest);
+					V_ASN1_OCTET_STRING,digest);
 
 				/* Now sign the mess */
 				EVP_SignInit(&ctx_tmp,md_tmp);
@@ -874,18 +874,18 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	}
 
 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
-	     char *value)
+	     void *value)
 	{
 	return(add_attribute(&(p7si->auth_attr),nid,atrtype,value));
 	}
 
 int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
-	     char *value)
+	     void *value)
 	{
 	return(add_attribute(&(p7si->unauth_attr),nid,atrtype,value));
 	}
 
-static int add_attribute(STACK **sk, int nid, int atrtype, char *value)
+static int add_attribute(STACK **sk, int nid, int atrtype, void *value)
 	{
 	X509_ATTRIBUTE *attr=NULL;
 

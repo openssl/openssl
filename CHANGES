@@ -5,6 +5,12 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) New function X509V3_EXT_i2d() to create an X509_EXTENSION structure
+     from the internal representation. Various PKCS#7 fixes: remove some
+     evil casts and set the enc_dig_alg field properly based on the signing
+     key type.
+     [Steve Henson]
+
   *) Allow PKCS#12 password to be set from the command line or the
      environment. Let 'ca' get its config file name from the environment
      variables "OPENSSL_CONF" or "SSLEAY_CONF" (for consistency with 'req'

@@ -72,6 +72,8 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid, in
 static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type);
 static char *conf_lhash_get_string(void *db, char *section, char *value);
 static STACK *conf_lhash_get_section(void *db, char *section);
+static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
+						 int crit, void *ext_struc);
 /* LHASH *conf:  Config file    */
 /* char *name:  Name    */
 /* char *value:  Value    */
@@ -111,13 +113,10 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 	     int crit, char *value)
 {
-	X509_EXTENSION *ext = NULL;
 	X509V3_EXT_METHOD *method;
+	X509_EXTENSION *ext;
 	STACK *nval;
-	char *ext_struc;
-	unsigned char *ext_der, *p;
-	int ext_len;
-	ASN1_OCTET_STRING *ext_oct;
+	void *ext_struc;
 	if(ext_nid == NID_undef) {
 		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION_NAME);
 		return NULL;
@@ -152,21 +151,50 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 		return NULL;
 	}
 
-	/* We've now got the internal representation: convert to DER */
+	ext  = do_ext_i2d(method, ext_nid, crit, ext_struc);
+	method->ext_free(ext_struc);
+	return ext;
+
+}
+
+static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
+						 int crit, void *ext_struc)
+{
+	unsigned char *ext_der, *p;
+	int ext_len;
+	ASN1_OCTET_STRING *ext_oct;
+	X509_EXTENSION *ext;
+	/* Convert internal representation to DER */
 	ext_len = method->i2d(ext_struc, NULL);
-	ext_der = Malloc(ext_len);
+	if(!(ext_der = Malloc(ext_len))) goto merr;
 	p = ext_der;
 	method->i2d(ext_struc, &p);
-	method->ext_free(ext_struc);
-	ext_oct = ASN1_OCTET_STRING_new();
+	if(!(ext_oct = ASN1_OCTET_STRING_new())) goto merr;
 	ext_oct->data = ext_der;
 	ext_oct->length = ext_len;
 	
 	ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
+	if(!ext) goto merr;
 	ASN1_OCTET_STRING_free(ext_oct);
 
 	return ext;
 
+	merr:
+	X509V3err(X509V3_F_DO_EXT_I2D,ERR_R_MALLOC_FAILURE);
+	return NULL;
+
+}
+
+/* Given an internal structure, nid and critical flag create an extension */
+
+X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc)
+{
+	X509V3_EXT_METHOD *method;
+	if(!(method = X509V3_EXT_get_nid(ext_nid))) {
+		X509V3err(X509V3_F_X509V3_EXT_I2D,X509V3_R_UNKNOWN_EXTENSION);
+		return NULL;
+	}
+	return do_ext_i2d(method, ext_nid, crit, ext_struc);
 }
 
 /* Check the extension string for critical flag */

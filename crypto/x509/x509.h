@@ -655,7 +655,7 @@ void		X509_ATTRIBUTE_free(X509_ATTRIBUTE *a);
 int		i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a,unsigned char **pp);
 X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a,unsigned char **pp,
 			long length);
-X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, char *value);
+X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value);
 
 
 X509_EXTENSION *X509_EXTENSION_new(void );

@@ -104,7 +104,7 @@ X509V3_EXT_V2I v2i;
 X509V3_EXT_I2R i2r;
 X509V3_EXT_R2I r2i;
 
-char *usr_data;	/* Any extension specific data */
+void *usr_data;	/* Any extension specific data */
 };
 
 typedef struct X509V3_CONF_METHOD_st {
@@ -411,6 +411,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK *X509V3_parse_list(char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);
+X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 
 char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
@@ -430,6 +431,7 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 #define X509V3_F_COPY_EMAIL				 122
 #define X509V3_F_COPY_ISSUER				 123
 #define X509V3_F_DO_EXT_CONF				 124
+#define X509V3_F_DO_EXT_I2D				 135
 #define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
 #define X509V3_F_I2S_ASN1_INTEGER			 120
@@ -460,6 +462,7 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 #define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_EXT_ADD_ALIAS			 106
 #define X509V3_F_X509V3_EXT_CONF			 107
+#define X509V3_F_X509V3_EXT_I2D				 136
 #define X509V3_F_X509V3_GET_VALUE_BOOL			 110
 #define X509V3_F_X509V3_PARSE_LIST			 109
 

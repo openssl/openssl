@@ -67,7 +67,7 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 
 	if ((os=ASN1_OCTET_STRING_new()) == NULL) return(0);
 	if (!ASN1_OCTET_STRING_set(os,data,len)) return(0);
-	ASN1_TYPE_set(a,V_ASN1_OCTET_STRING,(char *)os);
+	ASN1_TYPE_set(a,V_ASN1_OCTET_STRING,os);
 	return(1);
 	}
 
@@ -124,7 +124,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
 	  i2d_ASN1_INTEGER(&in,&p);
 	M_i2d_ASN1_OCTET_STRING(&os,&p);
 
-	ASN1_TYPE_set(a,V_ASN1_SEQUENCE,(char *)osp);
+	ASN1_TYPE_set(a,V_ASN1_SEQUENCE,osp);
 	return(1);
 	}
 

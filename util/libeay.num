@@ -1618,3 +1618,4 @@ sk_X509_EXTENSION_delete                1642
 sk_X509_EXTENSION_shift                 1643
 sk_X509_EXTENSION_push                  1644
 sk_X509_NAME_ENTRY_find                 1645
+X509V3_EXT_i2d                          1646

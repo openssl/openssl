@@ -293,7 +293,7 @@ int ASN1_TYPE_get(ASN1_TYPE *a)
 		return(0);
 	}
 
-void ASN1_TYPE_set(ASN1_TYPE *a, int type, char *value)
+void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value)
 	{
 	if (a->value.ptr != NULL)
 		ASN1_TYPE_component_free(a);

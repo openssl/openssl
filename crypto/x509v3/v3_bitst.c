@@ -103,7 +103,7 @@ static STACK *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 	     ASN1_BIT_STRING *bits, STACK *ret)
 {
 	BIT_STRING_BITNAME *bnam;
-	for(bnam =(BIT_STRING_BITNAME *)method->usr_data; bnam->lname; bnam++) {
+	for(bnam =method->usr_data; bnam->lname; bnam++) {
 		if(ASN1_BIT_STRING_get_bit(bits, bnam->bitnum)) 
 			X509V3_add_value(bnam->lname, NULL, &ret);
 	}
@@ -123,7 +123,7 @@ static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 	}
 	for(i = 0; i < sk_num(nval); i++) {
 		val = (CONF_VALUE *)sk_value(nval, i);
-		for(bnam = (BIT_STRING_BITNAME *)method->usr_data; bnam->lname;
+		for(bnam = method->usr_data; bnam->lname;
 								       bnam++) {
 			if(!strcmp(bnam->sname, val->name) ||
 				!strcmp(bnam->lname, val->name) ) {
