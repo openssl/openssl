@@ -300,7 +300,7 @@ int ssl2_read(SSL *s, void *buf, int len)
 	return ssl2_read_internal(s, buf, len, 0);
 	}
 
-int ssl2_peek(SSL *s, char *buf, int len)
+int ssl2_peek(SSL *s, void *buf, int len)
 	{
 	return ssl2_read_internal(s, buf, len, 1);
 	}

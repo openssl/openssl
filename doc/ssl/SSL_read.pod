@@ -8,7 +8,7 @@ SSL_read - read bytes from a TLS/SSL connection.
 
  #include <openssl/ssl.h>
 
- int SSL_read(SSL *ssl, char *buf, int num);
+ int SSL_read(SSL *ssl, void *buf, int num);
 
 =head1 DESCRIPTION
 
