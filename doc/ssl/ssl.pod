@@ -657,6 +657,7 @@ L<SSL_CTX_get_ex_new_index(3)|SSL_CTX_get_ex_new_index(3)>,
 L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
 L<SSL_CTX_sess_set_cache_size(3)|SSL_CTX_sess_set_cache_size(3)>,
 L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_sessions(3)|SSL_CTX_sessions(3)>,
