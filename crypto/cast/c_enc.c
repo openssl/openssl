@@ -123,15 +123,15 @@ void CAST_decrypt(CAST_LONG *data, CAST_KEY *key)
 	data[0]=r&0xffffffffL;
 	}
 
-void CAST_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
-	     CAST_KEY *ks, unsigned char *iv, int encrypt)
+void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     CAST_KEY *ks, unsigned char *iv, int _encrypt)
 	{
 	register CAST_LONG tin0,tin1;
 	register CAST_LONG tout0,tout1,xor0,xor1;
 	register long l=length;
 	CAST_LONG tin[2];
 
-	if (encrypt)
+	if (_encrypt)
 		{
 		n2l(iv,tout0);
 		n2l(iv,tout1);
