@@ -4,6 +4,15 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix SSL 2.0 rollback checking: The previous implementation of the
+     test was never triggered due to an off-by-one error in
+     RSA_padding_check_SSLv23().
+     In s23_clnt.c, don't use special rollback-attack detection padding
+     (RSA_SSLV23_PADDING) if SSL 2.0 is the only protocol enabled in the
+     client; similarly, in s23_srvr.c, don't do the rollback check if
+     SSL 2.0 is the only protocol enabled in the server.
+     [Bodo Moeller]
+
   *) Make it possible to get hexdumps of unprintable data with 'openssl
      asn1parse'.  By implication, the functions ASN1_parse_dump() and
      BIO_dump_indent() are added.
