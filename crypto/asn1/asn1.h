@@ -379,7 +379,7 @@ typedef struct asn1_header_st
 		(ASN1_PRINTABLESTRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_PRINTABLESTRING)
 
-#define ASN1_T61STRING_new()	(ASN1_T61STRING_STRING *)\
+#define ASN1_T61STRING_new()	(ASN1_T61STRING *)\
 		ASN1_STRING_type_new(V_ASN1_T61STRING)
 #define ASN1_T61STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
 #define M_i2d_ASN1_T61STRING(a,pp) \
@@ -658,6 +658,7 @@ int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
 int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
 #endif
+const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert/key */
 int i2d_ASN1_HEADER(ASN1_HEADER *a,unsigned char **pp);

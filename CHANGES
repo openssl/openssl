@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New function ANS1_tag2str() to convert an ASN1 tag to a descriptive
+     ASCII string. This was handled independently in various places before.
+     [Steve Henson]
+
   *) New functions UTF8_getc() and UTF8_putc() that parse and generate
      UTF8 strings a character at a time.
      [Steve Henson]
