@@ -313,6 +313,7 @@ void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_aep(void);
 void ENGINE_load_sureware(void);
+void ENGINE_load_4758cca(void);
 void ENGINE_load_openbsd_dev_crypto(void);
 void ENGINE_load_builtin_engines(void);
 
