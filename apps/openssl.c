@@ -147,7 +147,7 @@ int main(int Argc, char *Argv[])
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
-		strcat(config_name,"/lib/");
+		strcat(config_name,"/");
 		strcat(config_name,OPENSSL_CONF);
 		p=config_name;
 		}
