@@ -164,8 +164,8 @@
 
 /* There is really no standard for this, so let's assign some tentative
    numbers.  In any case, these numbers are only for this test */
-#define COMP_RLE	1
-#define COMP_ZLIB	2
+#define COMP_RLE	255
+#define COMP_ZLIB	1
 
 static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef OPENSSL_NO_RSA
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
 	SSL_METHOD *meth=NULL;
 	SSL *c_ssl,*s_ssl;
 	int number=1,reuse=0;
-	long bytes=1L;
+	long bytes=256L;
 #ifndef OPENSSL_NO_DH
 	DH *dh;
 	int dhe1024 = 0, dhe1024dsa = 0;
@@ -387,6 +387,7 @@ int main(int argc, char *argv[])
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
 	COMP_METHOD *cm = NULL;
+	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 
 	verbose = 0;
 	debug = 0;
@@ -612,6 +613,19 @@ bad:
 			ERR_print_errors_fp(stderr);
 			}
 		}
+	ssl_comp_methods = SSL_COMP_get_compression_methods();
+	fprintf(stderr, "Available compression methods:\n");
+	{
+	int i, n = sk_SSL_COMP_num(ssl_comp_methods);
+	if (n == 0)
+		fprintf(stderr, "  NONE\n");
+	else
+		for (i = 0; i < n; i++)
+			{
+			SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, i);
+			fprintf(stderr, "  %d: %s\n", c->id, c->name);
+			}
+	}
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	if (ssl2)

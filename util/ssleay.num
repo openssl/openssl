@@ -218,3 +218,4 @@ SSL_set_msg_callback                    267	EXIST::FUNCTION:
 SSL_set_tmp_ecdh_callback               268	EXIST::FUNCTION:ECDH
 SSL_CTX_set_tmp_ecdh_callback           269	EXIST::FUNCTION:ECDH
 SSL_SESSION_get_id                      270	EXIST::FUNCTION:
+SSL_COMP_get_compression_method         271	EXIST::FUNCTION:COMP

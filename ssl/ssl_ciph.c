@@ -1182,7 +1182,15 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	comp->id=id;
 	comp->method=cm;
 	load_builtin_compressions();
-	if ((ssl_comp_methods == NULL)
+	if (ssl_comp_methods
+		&& !sk_SSL_COMP_find(ssl_comp_methods,comp))
+		{
+		OPENSSL_free(comp);
+		MemCheck_on();
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,SSL_R_DUPLICATE_COMPRESSION_ID);
+		return(1);
+		}
+	else if ((ssl_comp_methods == NULL)
 		|| !sk_SSL_COMP_push(ssl_comp_methods,comp))
 		{
 		OPENSSL_free(comp);

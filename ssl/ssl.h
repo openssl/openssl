@@ -1485,8 +1485,10 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,
 #endif
 
 #ifndef OPENSSL_NO_COMP
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_method(void);
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
+void *SSL_COMP_get_compression_method(void);
 int SSL_COMP_add_compression_method(int id,char *cm);
 #endif
 
@@ -1701,6 +1703,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC	 1109
 #define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 148
 #define SSL_R_DIGEST_CHECK_FAILED			 149
+#define SSL_R_DUPLICATE_COMPRESSION_ID			 1121
 #define SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER		 1119
 #define SSL_R_ENCRYPTED_LENGTH_TOO_LONG			 150
 #define SSL_R_ERROR_GENERATING_TMP_RSA_KEY		 1092
