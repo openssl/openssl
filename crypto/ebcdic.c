@@ -211,7 +211,8 @@ ascii2ebcdic(void *dest, const void *srce, size_t count)
 }
 
 #else /*CHARSET_EBCDIC*/
-#ifdef PEDANTIC
+#include <openssl/opensslconf.h>
+#if defined(PEDANTIC) || defined(OPENSSL_SYS_VMS)
 static void *dummy=&dummy;
 #endif
 #endif
