@@ -82,6 +82,8 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
 #if defined(__FreeBSD__)
 # define USE_TOD
@@ -196,7 +198,7 @@
 int run=0;
 
 static double Time_F(int s, int usertime);
-static void print_message(char *s,long num,int length);
+static void print_message(const char *s,long num,int length);
 static void pkey_print_message(char *str,char *str2,long num,int bits,int sec);
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
@@ -314,11 +316,11 @@ int MAIN(int argc, char **argv)
 	ENGINE *e;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
-#define ALGOR_NUM	15
+#define ALGOR_NUM	16
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
-	long count,rsa_count;
+	long count,rsa_count,save_count=0;
 	int i,j,k;
 	unsigned rsa_num;
 #ifndef NO_MD2
@@ -384,10 +386,11 @@ int MAIN(int argc, char **argv)
 #define	D_CBC_RC5	12
 #define	D_CBC_BF	13
 #define	D_CBC_CAST	14
+#define D_EVP		15
 	double d,results[ALGOR_NUM][SIZE_NUM];
 	static int lengths[SIZE_NUM]={8,64,256,1024,8*1024};
 	long c[ALGOR_NUM][SIZE_NUM];
-	static char *names[ALGOR_NUM]={
+	static const char *names[ALGOR_NUM]={
 		"md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
 		"des cbc","des ede3","idea cbc",
 		"rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc"};
@@ -420,6 +423,7 @@ int MAIN(int argc, char **argv)
 	int doit[ALGOR_NUM];
 	int pr_header=0;
 	int usertime=1;
+	const EVP_CIPHER *evp=NULL;
 
 #ifndef TIMES
 	usertime=-1;
@@ -472,6 +476,23 @@ int MAIN(int argc, char **argv)
 		{
 		if	((argc > 0) && (strcmp(*argv,"-elapsed") == 0))
 			usertime = 0;
+		else if	((argc > 0) && (strcmp(*argv,"-evp") == 0))
+			{
+			argc--;
+			argv++;
+			if(argc == 0)
+				{
+				BIO_printf(bio_err,"no EVP given\n");
+				goto end;
+				}
+			evp=EVP_get_cipherbyname(*argv);
+			if(!evp)
+				{
+				BIO_printf(bio_err,"%s is an unknown cipher\n",*argv);
+				goto end;
+				}
+			doit[D_EVP]=1;
+			}
 		else
 		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
 			{
@@ -804,6 +825,7 @@ int MAIN(int argc, char **argv)
 				&(sch[0]),DES_ENCRYPT);
 		d=Time_F(STOP,usertime);
 		} while (d <3);
+	save_count=count;
 	c[D_MD2][0]=count/10;
 	c[D_MDC2][0]=count/10;
 	c[D_MD4][0]=count;
@@ -1160,6 +1182,28 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
+	if (doit[D_EVP])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			EVP_CIPHER_CTX ctx;
+			int outl;
+
+			names[D_EVP]=OBJ_nid2ln(evp->nid);
+			print_message(names[D_EVP],save_count,
+						  lengths[j]);
+			EVP_EncryptInit(&ctx,evp,key16,iv);
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
+			    EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
+			EVP_EncryptFinal(&ctx,buf,&outl);
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
+					   count,names[D_EVP],d);
+			results[D_EVP][j]=((double)count)/d*lengths[j];
+			}
+		}
+
 	RAND_pseudo_bytes(buf,36);
 #ifndef NO_RSA
 	for (j=0; j<RSA_NUM; j++)
@@ -1429,7 +1473,7 @@ end:
 	EXIT(mret);
 	}
 
-static void print_message(char *s, long num, int length)
+static void print_message(const char *s, long num, int length)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,"Doing %s for %ds on %d size blocks: ",s,SECONDS,length);

@@ -71,6 +71,7 @@
 #endif
 #include <openssl/pem.h>
 #include <openssl/engine.h>
+#include <ctype.h>
 
 int set_hex(char *in,unsigned char *out,int size);
 #undef SIZE
@@ -80,6 +81,24 @@ int set_hex(char *in,unsigned char *out,int size);
 #define SIZE	(512)
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
+
+void show_ciphers(const OBJ_NAME *name,void *bio_)
+	{
+	BIO *bio=bio_;
+	static int n;
+
+	if(!islower(*name->name))
+		return;
+
+	BIO_printf(bio,"-%-25s",name->name);
+	if(++n == 3)
+		{
+		BIO_printf(bio,"\n");
+		n=0;
+		}
+	else
+		BIO_printf(bio," ");
+	}
 
 int MAIN(int, char **);
 
@@ -252,76 +271,11 @@ bad:
 			BIO_printf(bio_err,"%-14s use engine e, possibly a hardware device.\n","-engine e");
 
 			BIO_printf(bio_err,"Cipher Types\n");
-			BIO_printf(bio_err,"des     : 56 bit key DES encryption\n");
-			BIO_printf(bio_err,"des_ede :112 bit key ede DES encryption\n");
-			BIO_printf(bio_err,"des_ede3:168 bit key ede DES encryption\n");
-#ifndef NO_IDEA
-			BIO_printf(bio_err,"idea    :128 bit key IDEA encryption\n");
-#endif
-#ifndef NO_RC4
-			BIO_printf(bio_err,"rc2     :128 bit key RC2 encryption\n");
-#endif
-#ifndef NO_BF
-			BIO_printf(bio_err,"bf      :128 bit key Blowfish encryption\n");
-#endif
-#ifndef NO_RC4
-			BIO_printf(bio_err," -%-5s :128 bit key RC4 encryption\n",
-				LN_rc4);
-#endif
+			OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
+					       show_ciphers,
+					       bio_err);
+			BIO_printf(bio_err,"\n");
 
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_des_ecb,LN_des_cbc,
-				LN_des_cfb64,LN_des_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n",
-				"des", LN_des_cbc);
-
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_des_ede,LN_des_ede_cbc,
-				LN_des_ede_cfb64,LN_des_ede_ofb64);
-			BIO_printf(bio_err," -desx -none\n");
-
-
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_des_ede3,LN_des_ede3_cbc,
-				LN_des_ede3_cfb64,LN_des_ede3_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n",
-				"des3", LN_des_ede3_cbc);
-
-#ifndef NO_IDEA
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_idea_ecb, LN_idea_cbc,
-				LN_idea_cfb64, LN_idea_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n","idea",LN_idea_cbc);
-#endif
-#ifndef NO_RC2
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_rc2_ecb, LN_rc2_cbc,
-				LN_rc2_cfb64, LN_rc2_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n","rc2", LN_rc2_cbc);
-#endif
-#ifndef NO_BF
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_bf_ecb, LN_bf_cbc,
-				LN_bf_cfb64, LN_bf_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n","bf", LN_bf_cbc);
-#endif
-#ifndef NO_CAST
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_cast5_ecb, LN_cast5_cbc,
-				LN_cast5_cfb64, LN_cast5_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n","cast", LN_cast5_cbc);
-#endif
-#ifndef NO_RC5
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
-				LN_rc5_ecb, LN_rc5_cbc,
-				LN_rc5_cfb64, LN_rc5_ofb64);
-			BIO_printf(bio_err," -%-4s (%s)\n","rc5", LN_rc5_cbc);
-#endif
-#ifndef NO_RIJNDAEL
-			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s\n",
-				   LN_rijndael_ecb_k128_b128,"","","","");
-#endif
-			
 			goto end;
 			}
 		argc--;

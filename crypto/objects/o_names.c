@@ -14,9 +14,9 @@ static int names_type_num=OBJ_NAME_TYPE_NUM;
 
 typedef struct name_funcs_st
 	{
-	unsigned long (*hash_func)();
-	int (*cmp_func)();
-	void (*free_func)();
+	unsigned long (*hash_func)(const char *name);
+	int (*cmp_func)(const char *a,const char *b);
+	void (*free_func)(const char *, int, const char *);
 	} NAME_FUNCS;
 
 DECLARE_STACK_OF(NAME_FUNCS)
@@ -37,7 +37,7 @@ int OBJ_NAME_init(void)
 	}
 
 int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
-	int (*cmp_func)(const void *, const void *),
+	int (*cmp_func)(const char *, const char *),
 	void (*free_func)(const char *, int, const char *))
 	{
 	int ret;
@@ -62,12 +62,12 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		MemCheck_off();
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
 		name_funcs->hash_func = lh_strhash;
-		name_funcs->cmp_func = (int (*)())strcmp;
+		name_funcs->cmp_func = strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
-					    * ((void *)0), which according
-					    * to Compaq C is not really
-					    * compatible with a function
-					    * pointer.  -- Richard Levitte*/
+						* ((void *)0), which according
+						* to Compaq C is not really
+						* compatible with a function
+						* pointer.	-- Richard Levitte*/
 		sk_NAME_FUNCS_push(name_funcs_stack,name_funcs);
 		MemCheck_on();
 		}
@@ -132,7 +132,7 @@ const char *OBJ_NAME_get(const char *name, int type)
 	on.type=type;
 
 	for (;;)
-		{
+	{
 		ret=(OBJ_NAME *)lh_retrieve(names_lh,&on);
 		if (ret == NULL) return(NULL);
 		if ((ret->alias) && !alias)
@@ -224,12 +224,80 @@ int OBJ_NAME_remove(const char *name, int type)
 		return(0);
 	}
 
+struct doall
+	{
+	int type;
+	void (*fn)(const OBJ_NAME *,void *arg);
+	void *arg;
+	};
+
+static void do_all_fn(const OBJ_NAME *name,struct doall *d)
+	{
+	if(name->type == d->type)
+		d->fn(name,d->arg);
+	}
+
+void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),void *arg)
+	{
+	struct doall d;
+
+	d.type=type;
+	d.fn=fn;
+	d.arg=arg;
+
+	lh_doall_arg(names_lh,do_all_fn,&d);
+	}
+
+struct doall_sorted
+	{
+	int type;
+	int n;
+	const OBJ_NAME **names;
+	};
+
+static void do_all_sorted_fn(const OBJ_NAME *name,void *d_)
+	{
+	struct doall_sorted *d=d_;
+
+	if(name->type != d->type)
+		return;
+
+	d->names[d->n++]=name;
+	}
+
+static int do_all_sorted_cmp(const void *n1_,const void *n2_)
+	{
+	const OBJ_NAME * const *n1=n1_;
+	const OBJ_NAME * const *n2=n2_;
+
+	return strcmp((*n1)->name,(*n2)->name);
+	}
+
+void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
+				void *arg)
+	{
+	struct doall_sorted d;
+	int n;
+
+	d.type=type;
+	d.names=OPENSSL_malloc(lh_num_items(names_lh)*sizeof *d.names);
+	d.n=0;
+	OBJ_NAME_do_all(type,do_all_sorted_fn,&d);
+
+	qsort(d.names,d.n,sizeof *d.names,do_all_sorted_cmp);
+
+	for(n=0 ; n < d.n ; ++n)
+		fn(d.names[n],arg);
+
+	OPENSSL_free(d.names);
+	}
+
 static int free_type;
 
 static void names_lh_free(OBJ_NAME *onp, int type)
 {
 	if(onp == NULL)
-	    return;
+		return;
 
 	if ((free_type < 0) || (free_type == onp->type))
 		{
