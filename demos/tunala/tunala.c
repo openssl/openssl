@@ -99,7 +99,7 @@ static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
 static int def_out_state = 0;
-static int def_out_verify = 0;
+static unsigned int def_out_verify = 0;
 static int def_verify_mode = 0;
 static unsigned int def_verify_depth = 10;
 
@@ -118,7 +118,7 @@ static const char *helpstring =
 " -server <0|1>          (default = 0, ie. an SSL client)\n"
 " -cipher <list>         (specifies cipher list to use)\n"
 " -out_state             (prints SSL handshake states)\n"
-" -out_verify            (prints certificate verification states)\n"
+" -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
 " -v_peer                (verify the peer certificate)\n"
 " -v_strict              (do not continue if peer doesn't authenticate)\n"
 " -v_once                (no verification in renegotiates)\n"
@@ -180,6 +180,20 @@ static int parse_server_mode(const char *s, int *servermode)
 	return 1;
 }
 
+static int parse_verify_level(const char *s, unsigned int *verify_level)
+{
+	unsigned long l;
+	char *temp;
+	l = strtoul(s, &temp, 10);
+	if((temp == s) || (*temp != '\0') || (l > 3)) {
+		fprintf(stderr, "Error, '%s' is an invalid value for "
+				"out_verify\n", s);
+		return 0;
+	}
+	*verify_level = (unsigned int)l;
+	return 1;
+}
+
 static int parse_verify_depth(const char *s, unsigned int *verify_depth)
 {
 	unsigned long l;
@@ -215,7 +229,7 @@ int main(int argc, char *argv[])
 	int server_mode = def_server_mode;
 	const char *cipher_list = def_cipher_list;
 	int out_state = def_out_state;
-	int out_verify = def_out_verify;
+	unsigned int out_verify = def_out_verify;
 	int verify_mode = def_verify_mode;
 	unsigned int verify_depth = def_verify_depth;
 
@@ -310,7 +324,11 @@ next_arg:
 			out_state = 1;
 			goto next_arg;
 		} else if(strcmp(*argv, "-out_verify") == 0) {
-			out_verify = 1;
+			if(argc < 2)
+				return usage("-out_verify requires an argument", 0);
+			argc--; argv++;
+			if(!parse_verify_level(*argv, &out_verify))
+				return 1;
 			goto next_arg;
 		} else if(strcmp(*argv, "-v_peer") == 0) {
 			verify_mode |= SSL_VERIFY_PEER;
@@ -570,8 +588,10 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		cb_ssl_info_set_output(stderr);
 
 	/* out_verify */
-	if(out_verify)
+	if(out_verify > 0) {
 		cb_ssl_verify_set_output(stderr);
+		cb_ssl_verify_set_level(out_verify);
+	}
 
 	/* verify_depth */
 	cb_ssl_verify_set_depth(verify_depth);
@@ -857,7 +877,7 @@ static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item)
 			return 0;
 	}
 	if((item->dirty_read == -1) || (item->dirty_send == -1)) {
-		if(state_machine_close_dirty(&item->sm))
+		if(!state_machine_close_dirty(&item->sm))
 			return 0;
 	}
 	return 1;
