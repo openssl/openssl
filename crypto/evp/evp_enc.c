@@ -85,7 +85,14 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
-	if(enc && (enc != -1)) enc = 1;
+	if (enc == -1)
+		enc = ctx->encrypt;
+	else
+		{
+		if (enc)
+			enc = 1;
+		ctx->encrypt = enc;
+		}
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
 	 * the previous handle, re-querying for an ENGINE, and having a
@@ -184,7 +191,6 @@ skip_to_init:
 	if(key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
 		if(!ctx->cipher->init(ctx,key,iv,enc)) return 0;
 	}
-	if(enc != -1) ctx->encrypt=enc;
 	ctx->buf_len=0;
 	ctx->final_used=0;
 	ctx->block_mask=ctx->cipher->block_size-1;
