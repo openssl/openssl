@@ -88,9 +88,13 @@ int SSL_library_init(void)
 #ifndef NO_SHA
 	EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
 	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
+	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
 #endif
 #if !defined(NO_SHA) && !defined(NO_DSA)
 	EVP_add_digest(EVP_dss1()); /* DSA with sha1 */
+	EVP_add_digest_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
+	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
+	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
 
 	/* If you want support for phased out ciphers, add the following */
