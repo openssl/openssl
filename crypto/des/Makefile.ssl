@@ -192,8 +192,11 @@ qud_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h
 rand_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
-read2pwd.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-read2pwd.o: ../../include/openssl/opensslconf.h des_locl.h
+read2pwd.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+read2pwd.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+read2pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+read2pwd.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+read2pwd.o: des_locl.h
 read_pwd.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 read_pwd.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 read_pwd.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
@@ -206,7 +209,10 @@ rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
 set_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 set_key.o: ../../include/openssl/opensslconf.h des_locl.h
-str2key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-str2key.o: ../../include/openssl/opensslconf.h des_locl.h
+str2key.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+str2key.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+str2key.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+str2key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+str2key.o: des_locl.h
 xcbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 xcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h

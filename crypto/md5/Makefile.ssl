@@ -131,4 +131,6 @@ clean:
 
 md5_dgst.o: ../../include/openssl/md5.h ../../include/openssl/opensslconf.h
 md5_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md5_locl.h
-md5_one.o: ../../include/openssl/md5.h
+md5_one.o: ../../include/openssl/crypto.h ../../include/openssl/md5.h
+md5_one.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+md5_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
