@@ -335,6 +335,11 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) In asn1_d2i_read_bio() repeatedly call BIO_read() until all content
+     octets have been read, EOF or an error occurs. Without this change
+     some truncated ASN1 structures will not produce an error.
+     [Steve Henson]
+
   *) Disable Heimdal support, since it hasn't been fully implemented.
      Still give the possibility to force the use of Heimdal, but with
      warnings and a request that patches get sent to openssl-dev.
