@@ -54,4 +54,6 @@ for all available algorithms.
 If any options are given, B<speed> tests those algorithms, otherwise all of
 the above are tested.
 
+=back
+
 =cut
