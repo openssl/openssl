@@ -421,4 +421,4 @@ int ASN1_STRING_type(ASN1_STRING *x)
 { return M_ASN1_STRING_type(x); }
 
 unsigned char * ASN1_STRING_data(ASN1_STRING *x)
-{ return ASN1_STRING_data(x); }
+{ return M_ASN1_STRING_data(x); }

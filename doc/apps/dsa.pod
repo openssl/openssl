@@ -10,11 +10,9 @@ B<openssl> B<dsa>
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
-[B<-passin password>]
-[B<-envpassin var>]
+[B<-passin arg>]
 [B<-out filename>]
-[B<-passout password>]
-[B<-envpassout var>]
+[B<-passout arg>]
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
@@ -58,14 +56,10 @@ This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin password>
+=item B<-passin arg>
 
-the input file password. Since certain utilities like "ps" make the command line
-visible this option should be used with caution.
-
-=item B<-envpassin var>
-
-read the input file password from the environment variable B<var>.
+the input file password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-out filename>
 
@@ -74,14 +68,10 @@ is not specified. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout password>
+=item B<-passout arg>
 
-the output file password. Since certain utilities like "ps" make the command line
-visible this option should be used with caution.
-
-=item B<-envpassout var>
-
-read the output file password from the environment variable B<var>.
+the output file password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-des|-des3|-idea>
 

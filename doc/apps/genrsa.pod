@@ -8,8 +8,7 @@ genrsa - generate an RSA private key
 
 B<openssl> B<genrsa>
 [B<-out filename>]
-[B<-passout password>]
-[B<-envpassout var>]
+[B<-passout arg>]
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
@@ -31,21 +30,17 @@ The B<genrsa> command generates an RSA private key.
 the output filename. If this argument is not specified then standard output is
 used.  
 
-=item B<-passout password>
+=item B<-passout arg>
 
-the output file password. Since certain utilities like "ps" make the command line
-visible this option should be used with caution.
-
-=item B<-envpassout var>
-
-read the output file password from the environment variable B<var>.
+the output file password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-des|-des3|-idea>
 
 These options encrypt the private key with the DES, triple DES, or the 
 IDEA ciphers respectively before outputting it. If none of these options is
 specified no encryption is used. If encryption is used a pass phrase is prompted
-for if it is not supplied via the B<-passout> or B<-envpassout> arguments.
+for if it is not supplied via the B<-passout> argument.
 
 =item B<-F4|-3>
 
@@ -69,9 +64,10 @@ specified. The default is 512.
 
 RSA private key generation essentially involves the generation of two prime
 numbers. When generating a private key various symbols will be output to
-indicate the progress of the generation. A B<.> represents each number tested.
-A B<+> means a number has passed a single primality test. A newline means that
-the number has passed all the prime tests (currently set to 5 single tests).
+indicate the progress of the generation. A B<.> represents each number which
+has passed an initial sieve test, B<+> means a number has passed a single
+round of the Miller-Rabin primality test. A newline means that the number has
+passed all the prime tests (the actual number depends on the key size).
 
 Because key generation is a random process the time taken to generate a key
 may vary somewhat.

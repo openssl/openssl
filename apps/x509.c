@@ -92,8 +92,7 @@ static char *x509_usage[]={
 " -CAkeyform arg  - CA key format - default PEM\n",
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
-" -passin arg     - private key password\n",
-" -envpassin arg  - read private key password from environment variable \"arg\"\n",
+" -passin arg     - private key password source\n",
 " -serial         - print serial number value\n",
 " -hash           - print hash value\n",
 " -subject        - print subject DN\n",
@@ -171,7 +170,7 @@ int MAIN(int argc, char **argv)
 	char buf[256];
 	const EVP_MD *md_alg,*digest=EVP_md5();
 	LHASH *extconf = NULL;
-	char *extsect = NULL, *extfile = NULL, *passin = NULL;
+	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
 
 	reqfile=0;
@@ -240,18 +239,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-passin") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passin= *(++argv);
-			}
-		else if (strcmp(*argv,"-envpassin") == 0)
-			{
-			if (--argc < 1) goto bad;
-				if(!(passin= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
+			passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-extfile") == 0)
 			{
@@ -403,6 +391,11 @@ bad:
 		app_RAND_load_file(NULL, bio_err, 0);
 
 	ERR_load_crypto_strings();
+
+	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+	}
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{
@@ -882,6 +875,7 @@ end:
 	X509_REQ_free(rq);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
+	if(passin) Free(passin);
 	EXIT(ret);
 	}
 
@@ -1101,7 +1095,7 @@ static EVP_PKEY *load_key(char *file, int format, char *passin)
 #endif
 		if (format == FORMAT_PEM)
 		{
-		pkey=PEM_read_bio_PrivateKey(key,NULL,PEM_cb,passin);
+		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,passin);
 		}
 	else
 		{

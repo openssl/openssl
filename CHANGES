@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Reorganise password command line arguments: now passwords can be
+     obtained from various sources. Delete the PEM_cb function and make
+     it the default behaviour: i.e. if the callback is NULL and the
+     usrdata argument is not NULL interpret it as a null terminated pass
+     phrase. If usrdata and the callback are NULL then the pass phrase
+     is prompted for as usual.
+     [Steve Henson]
+
   *) Add support for the Compaq Atalla crypto accelerator. If it is installed,
      the support is automatically enabled. The resulting binaries will
      autodetect the card and use it if present.

@@ -101,7 +101,8 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int flags = PKCS7_DETACHED;
 	char *to = NULL, *from = NULL, *subject = NULL;
-	char *CAfile = NULL, *CApath = NULL, *passin = NULL;
+	char *CAfile = NULL, *CApath = NULL;
+	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
 	args = argv + 1;
@@ -155,17 +156,7 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp(*args,"-passin")) {
 			if (args[1]) {
 				args++;
-				passin = *args;
-			} else badarg = 1;
-		} else if (!strcmp(*argv,"-envpassin")) {
-			if (args[1]) {
-				args++;
-				if(!(passin= getenv(*args))) {
-					BIO_printf(bio_err,
-					 "Can't read environment variable %s\n",
-								*args);
-					badarg = 1;
-				}
+				passargin = *args;
 			} else badarg = 1;
 		} else if (!strcmp (*args, "-to")) {
 			if (args[1]) {
@@ -285,6 +276,11 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,  "               load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,  "               the random number generator\n");
 		BIO_printf (bio_err, "cert.pem       recipient certificate(s) for encryption\n");
+		goto end;
+	}
+
+	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
 
@@ -536,6 +532,7 @@ end:
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free(out);
+	if(passin) Free(passin);
 	return (ret);
 }
 
@@ -554,7 +551,7 @@ static EVP_PKEY *load_key(char *file, char *pass)
 	BIO *in;
 	EVP_PKEY *key;
 	if(!(in = BIO_new_file(file, "r"))) return NULL;
-	key = PEM_read_bio_PrivateKey(in, NULL,PEM_cb,pass);
+	key = PEM_read_bio_PrivateKey(in, NULL,NULL,pass);
 	BIO_free(in);
 	return key;
 }

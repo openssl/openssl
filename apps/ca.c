@@ -533,7 +533,7 @@ bad:
 		BIO_printf(bio_err,"trying to load CA private key\n");
 		goto err;
 		}
-		pkey=PEM_read_bio_PrivateKey(in,NULL,PEM_cb,key);
+		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,key);
 		if(key) memset(key,0,strlen(key));
 	if (pkey == NULL)
 		{

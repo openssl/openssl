@@ -82,7 +82,8 @@ int MAIN(int argc, char **argv)
 	int i,badops=0, ret = 1;
 	BIO *in = NULL,*out = NULL, *key = NULL;
 	int verify=0,noout=0,pubkey=0;
-	char *infile = NULL,*outfile = NULL,*prog, *passin = NULL;
+	char *infile = NULL,*outfile = NULL,*prog;
+	char *passargin = NULL, *passin = NULL;
 	char *spkac = "SPKAC", *spksect = "default", *spkstr = NULL;
 	char *challenge = NULL, *keyfile = NULL;
 	LHASH *conf = NULL;
@@ -111,18 +112,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-passin") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passin= *(++argv);
-			}
-		else if (strcmp(*argv,"-envpassin") == 0)
-			{
-			if (--argc < 1) goto bad;
-				if(!(passin= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
+			passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-key") == 0)
 			{
@@ -163,8 +153,7 @@ bad:
 		BIO_printf(bio_err," -in arg        input file\n");
 		BIO_printf(bio_err," -out arg       output file\n");
 		BIO_printf(bio_err," -key arg       create SPKAC using private key\n");
-		BIO_printf(bio_err," -passin arg    input file pass phrase\n");
-		BIO_printf(bio_err," -envpassin arg environment variable containing input file pass phrase\n");
+		BIO_printf(bio_err," -passin arg    input file pass phrase source\n");
 		BIO_printf(bio_err," -challenge arg challenge string\n");
 		BIO_printf(bio_err," -spkac arg     alternative SPKAC name\n");
 		BIO_printf(bio_err," -noout         don't print SPKAC\n");
@@ -174,6 +163,10 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+	}
 
 	if(keyfile) {
 		if(strcmp(keyfile, "-")) key = BIO_new_file(keyfile, "r");
@@ -183,7 +176,7 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		pkey = PEM_read_bio_PrivateKey(key, NULL, PEM_cb, passin);
+		pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, passin);
 		if(!pkey) {
 			BIO_printf(bio_err, "Error reading private key\n");
 			ERR_print_errors(bio_err);
@@ -276,5 +269,6 @@ end:
 	BIO_free(out);
 	BIO_free(key);
 	EVP_PKEY_free(pkey);
+	if(passin) Free(passin);
 	EXIT(ret);
 	}

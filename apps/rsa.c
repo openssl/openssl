@@ -98,6 +98,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,text=0,check=0,noout=0;
 	int pubin = 0, pubout = 0;
 	char *infile,*outfile,*prog;
+	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
 
@@ -140,34 +141,12 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-passin") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passin= *(++argv);
-			}
-		else if (strcmp(*argv,"-envpassin") == 0)
-			{
-			if (--argc < 1) goto bad;
-				if(!(passin= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
-			}
-		else if (strcmp(*argv,"-envpassout") == 0)
-			{
-			if (--argc < 1) goto bad;
-				if(!(passout= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
+			passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passout= *(++argv);
+			passargout= *(++argv);
 			}
 		else if (strcmp(*argv,"-pubin") == 0)
 			pubin=1;
@@ -199,12 +178,10 @@ bad:
 		BIO_printf(bio_err," -inform arg     input format - one of DER NET PEM\n");
 		BIO_printf(bio_err," -outform arg    output format - one of DER NET PEM\n");
 		BIO_printf(bio_err," -in arg         input file\n");
-		BIO_printf(bio_err," -passin arg     input file pass phrase\n");
-		BIO_printf(bio_err," -envpassin arg  environment variable containing input file pass phrase\n");
+		BIO_printf(bio_err," -passin arg     input file pass phrase source\n");
 		BIO_printf(bio_err," -in arg         input file\n");
 		BIO_printf(bio_err," -out arg        output file\n");
-		BIO_printf(bio_err," -passout arg    output file pass phrase\n");
-		BIO_printf(bio_err," -envpassout arg environment variable containing output file pass phrase\n");
+		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef NO_IDEA
@@ -220,6 +197,11 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+
+	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+		BIO_printf(bio_err, "Error getting passwords\n");
+		goto end;
+	}
 
 	if(check && pubin) {
 		BIO_printf(bio_err, "Only private keys can be checked\n");
@@ -279,7 +261,7 @@ bad:
 #endif
 	else if (informat == FORMAT_PEM) {
 		if(pubin) rsa=PEM_read_bio_RSA_PUBKEY(in,NULL,NULL,NULL);
-		else rsa=PEM_read_bio_RSAPrivateKey(in,NULL, PEM_cb,passin);
+		else rsa=PEM_read_bio_RSAPrivateKey(in,NULL, NULL,passin);
 	}
 	else
 		{
@@ -379,7 +361,7 @@ bad:
 		if(pubout || pubin)
 		    i=PEM_write_bio_RSA_PUBKEY(out,rsa);
 		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
-						enc,NULL,0,PEM_cb,passout);
+						enc,NULL,0,NULL,passout);
 	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
@@ -392,9 +374,11 @@ bad:
 	else
 		ret=0;
 end:
-	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
-	if (rsa != NULL) RSA_free(rsa);
+	if(in != NULL) BIO_free(in);
+	if(out != NULL) BIO_free(out);
+	if(rsa != NULL) RSA_free(rsa);
+	if(passin) Free(passin);
+	if(passout) Free(passout);
 	EXIT(ret);
 	}
 #else /* !NO_RSA */

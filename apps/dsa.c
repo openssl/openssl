@@ -95,6 +95,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,text=0,noout=0;
 	int pubin = 0, pubout = 0;
 	char *infile,*outfile,*prog;
+	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
 
@@ -137,34 +138,12 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-passin") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passin= *(++argv);
-			}
-		else if (strcmp(*argv,"-envpassin") == 0)
-			{
-			if (--argc < 1) goto bad;
-			if(!(passin= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
-			}
-		else if (strcmp(*argv,"-envpassout") == 0)
-			{
-			if (--argc < 1) goto bad;
-			if(!(passout= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badops = 1;
-				}
+			passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passout= *(++argv);
+			passargout= *(++argv);
 			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
@@ -194,11 +173,9 @@ bad:
 		BIO_printf(bio_err," -inform arg     input format - DER or PEM\n");
 		BIO_printf(bio_err," -outform arg    output format - DER or PEM\n");
 		BIO_printf(bio_err," -in arg         input file\n");
-		BIO_printf(bio_err," -passin arg     input file pass phrase\n");
-		BIO_printf(bio_err," -envpassin arg  environment variable containing input file pass phrase\n");
+		BIO_printf(bio_err," -passin arg     input file pass phrase source\n");
 		BIO_printf(bio_err," -out arg        output file\n");
-		BIO_printf(bio_err," -passout arg    output file pass phrase\n");
-		BIO_printf(bio_err," -envpassout arg environment variable containing output file pass phrase\n");
+		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef NO_IDEA
@@ -211,6 +188,11 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+
+	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+		BIO_printf(bio_err, "Error getting passwords\n");
+		goto end;
+	}
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
@@ -237,7 +219,7 @@ bad:
 		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
 	} else if (informat == FORMAT_PEM) {
 		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
-		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,PEM_cb,passin);
+		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,passin);
 	} else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -285,7 +267,7 @@ bad:
 		if(pubin || pubout)
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
-							NULL,0,PEM_cb, passout);
+							NULL,0,NULL, passout);
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
@@ -298,9 +280,11 @@ bad:
 	else
 		ret=0;
 end:
-	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
-	if (dsa != NULL) DSA_free(dsa);
+	if(in != NULL) BIO_free(in);
+	if(out != NULL) BIO_free(out);
+	if(dsa != NULL) DSA_free(dsa);
+	if(passin) Free(passin);
+	if(passout) Free(passout);
 	EXIT(ret);
 	}
 #endif

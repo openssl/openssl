@@ -325,6 +325,7 @@ int app_init(long mesgwin)
 	}
 #endif
 
+
 int dump_cert_text (BIO *out, X509 *x)
 {
 	char buf[256];
@@ -337,4 +338,79 @@ int dump_cert_text (BIO *out, X509 *x)
 	BIO_puts(out,buf);
 	BIO_puts(out,"\n");
         return 0;
+}
+
+static char *app_get_pass(BIO *err, char *arg, int keepbio);
+
+int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2)
+{
+	int same;
+	if(!arg2 || !arg1 || strcmp(arg1, arg2)) same = 0;
+	else same = 1;
+	if(arg1) {
+		*pass1 = app_get_pass(err, arg1, same);
+		if(!*pass1) return 0;
+	} else if(pass1) *pass1 = NULL;
+	if(arg2) {
+		*pass2 = app_get_pass(err, arg2, same ? 2 : 0);
+		if(!*pass2) return 0;
+	} else if(pass2) *pass2 = NULL;
+	return 1;
+}
+
+static char *app_get_pass(BIO *err, char *arg, int keepbio)
+{
+	char *tmp, tpass[APP_PASS_LEN];
+	static BIO *pwdbio = NULL;
+	int i;
+	if(!strncmp(arg, "pass:", 5)) return BUF_strdup(arg + 5);
+	if(!strncmp(arg, "env:", 4)) {
+		tmp = getenv(arg + 4);
+		if(!tmp) {
+			BIO_printf(err, "Can't read environment variable %s\n", arg + 4);
+			return NULL;
+		}
+		return BUF_strdup(tmp);
+	}
+	if(!keepbio || !pwdbio) {
+		if(!strncmp(arg, "file:", 5)) {
+			pwdbio = BIO_new_file(arg + 5, "r");
+			if(!pwdbio) {
+				BIO_printf(err, "Can't open file %s\n", arg + 5);
+				return NULL;
+			}
+		} else if(!strncmp(arg, "fd:", 3)) {
+			BIO *btmp;
+			i = atoi(arg + 3);
+			if(i >= 0) pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
+			if((i < 0) || !pwdbio) {
+				BIO_printf(err, "Can't access file descriptor %s\n", arg + 3);
+				return NULL;
+			}
+			/* Can't do BIO_gets on an fd BIO so add a buffering BIO */
+			btmp = BIO_new(BIO_f_buffer());
+			pwdbio = BIO_push(btmp, pwdbio);
+		} else if(!strcmp(arg, "stdin")) {
+			pwdbio = BIO_new_fp(stdin, BIO_NOCLOSE);
+			if(!pwdbio) {
+				BIO_printf(err, "Can't open BIO for stdin\n");
+				return NULL;
+			}
+		} else {
+			BIO_printf(err, "Invalid password argument \"%s\"\n", arg);
+			return NULL;
+		}
+	}
+	i = BIO_gets(pwdbio, tpass, APP_PASS_LEN);
+	if(keepbio != 1) {
+		BIO_free_all(pwdbio);
+		pwdbio = NULL;
+	}
+	if(i <= 0) {
+		BIO_printf(err, "Error reading password from BIO\n");
+		return NULL;
+	}
+	tmp = strchr(tpass, '\n');
+	if(tmp) *tmp = 0;
+	return BUF_strdup(tpass);
 }

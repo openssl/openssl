@@ -145,10 +145,13 @@ int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 #endif
+int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2
 #define FORMAT_PEM      3
 #define FORMAT_NETSCAPE 4
+
+#define APP_PASS_LEN	1024
 
 #endif

@@ -71,6 +71,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 {
 	char **args, *infile = NULL, *outfile = NULL;
+	char *passargin = NULL, *passargout = NULL;
 	BIO *in = NULL, *out = NULL;
 	int topk8 = 0;
 	int pbe_nid = -1;
@@ -130,34 +131,12 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp(*args,"-passin"))
 			{
 			if (!args[1]) goto bad;
-			passin= *(++args);
-			}
-		else if (!strcmp(*args,"-envpassin"))
-			{
-			if (!args[1]) goto bad;
-			if(!(passin= getenv(*(++args))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*args);
-				badarg = 1;
-				}
-			}
-		else if (strcmp(*args,"-envpassout") == 0)
-			{
-			if (!args[1]) goto bad;
-			if(!(passout= getenv(*(++args))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*args);
-				badarg = 1;
-				}
+			passargin= *(++args);
 			}
 		else if (!strcmp(*args,"-passout"))
 			{
 			if (!args[1]) goto bad;
-			passout= *(++args);
+			passargout= *(++args);
 			}
 		else if (!strcmp (*args, "-in")) {
 			if (args[1]) {
@@ -179,12 +158,10 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-in file        input file\n");
 		BIO_printf(bio_err, "-inform X       input format (DER or PEM)\n");
-		BIO_printf(bio_err, "-passin arg     input file pass phrase\n");
-		BIO_printf(bio_err, "-envpassin arg  environment variable containing input file pass phrase\n");
+		BIO_printf(bio_err, "-passin arg     input file pass phrase source\n");
 		BIO_printf(bio_err, "-outform X      output format (DER or PEM)\n");
 		BIO_printf(bio_err, "-out file       output file\n");
-		BIO_printf(bio_err, "-passout arg    output file pass phrase\n");
-		BIO_printf(bio_err, "-envpassout arg environment variable containing outut file pass phrase\n");
+		BIO_printf(bio_err, "-passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err, "-topk8          output PKCS8 file\n");
 		BIO_printf(bio_err, "-nooct          use (nonstandard) no octet format\n");
 		BIO_printf(bio_err, "-embed          use (nonstandard) embedded DSA parameters format\n");
@@ -193,6 +170,11 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
 		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
+		return (1);
+	}
+
+	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+		BIO_printf(bio_err, "Error getting passwords\n");
 		return (1);
 	}
 
@@ -216,7 +198,7 @@ int MAIN(int argc, char **argv)
 
 	if (topk8) {
 		if(informat == FORMAT_PEM)
-			pkey = PEM_read_bio_PrivateKey(in, NULL, PEM_cb, passin);
+			pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, passin);
 		else if(informat == FORMAT_ASN1)
 			pkey = d2i_PrivateKey_bio(in, NULL);
 		else {
@@ -339,7 +321,7 @@ int MAIN(int argc, char **argv)
 	
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	if(outformat == FORMAT_PEM) 
-		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, PEM_cb, passout);
+		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
 	else if(outformat == FORMAT_ASN1)
 		i2d_PrivateKey_bio(out, pkey);
 	else {
@@ -350,6 +332,8 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY_free(pkey);
 	BIO_free(out);
 	BIO_free(in);
+	if(passin) Free(passin);
+	if(passout) Free(passout);
 
 	return (0);
 }

@@ -10,8 +10,7 @@ B<openssl> B<spkac>
 [B<-in filename>]
 [B<-out filename>]
 [B<-key keyfile>]
-[B<-passin password>]
-[B<-envpassin var>]
+[B<-passin arg>]
 [B<-challenge string>]
 [B<-pubkey>]
 [B<-spkac spkacname>]
@@ -48,14 +47,8 @@ present.
 
 =item B<-passin password>
 
-the private key file password. Since certain utilities like "ps" make the
-command line visible this option should be used with caution. Ignored if
-the B<-key> argument is not used.
-
-=item B<-envpassin var>
-
-read the private key file password from the environment variable B<var>.
-Ignored if the B<-key> argument is not used.
+the input file password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-challenge string>
 

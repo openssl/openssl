@@ -601,9 +601,6 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, vo
 
 int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 			      char *kstr,int klen, pem_password_cb *cd, void *u);
-#ifdef MS_CALLBACK
-int MS_CALLBACK PEM_cb(char *buf, int len, int verify, void *key);
-#endif
 
 #endif /* SSLEAY_MACROS */
 

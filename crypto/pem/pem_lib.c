@@ -85,7 +85,7 @@ static int do_pk8pkey_fp(FILE *bp, EVP_PKEY *x, int isder,
 				char *kstr, int klen,
 				pem_password_cb *cb, void *u);
 
-static int def_callback(char *buf, int num, int w, void *userdata)
+static int def_callback(char *buf, int num, int w, void *key)
 	{
 #ifdef NO_FP_API
 	/* We should not ever call the default callback routine from
@@ -95,6 +95,12 @@ static int def_callback(char *buf, int num, int w, void *userdata)
 #else
 	int i,j;
 	const char *prompt;
+	if(key) {
+		i=strlen(key);
+		i=(i > num)?num:i;
+		memcpy(buf,key,i);
+		return(i);
+	}
 
 	prompt=EVP_get_pw_prompt();
 	if (prompt == NULL)
@@ -120,22 +126,6 @@ static int def_callback(char *buf, int num, int w, void *userdata)
 	return(j);
 #endif
 	}
-
-/* This is a generic callback. If the user data is not NULL it is assumed 
- * to be a null terminated password. Otherwise the default password callback
- * is called.
- */
-
-
-int MS_CALLBACK PEM_cb(char *buf, int len, int verify, void *key)
-{
-	int i;
-	if (key == NULL) return def_callback(buf, len, verify, key);
-	i=strlen(key);
-	i=(i > len)?len:i;
-	memcpy(buf,key,i);
-	return(i);
-}
 
 void PEM_proc_type(char *buf, int type)
 	{

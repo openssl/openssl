@@ -113,6 +113,7 @@ int MAIN(int argc, char **argv)
     int noprompt = 0;
     STACK *canames = NULL;
     char *cpass = NULL, *mpass = NULL;
+    char *passargin = NULL, *passargout = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL;
     char *inrand = NULL;
 
@@ -210,46 +211,17 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp(*args,"-passin")) {
 		    if (args[1]) {
 			args++;	
-			passin = *args;
-		    } else badarg = 1;
-		} else if (!strcmp(*args,"-envpassin")) {
-		    if (args[1]) {
-			args++;	
-			if(!(passin= getenv(*args))) {
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*args);
-				badarg = 1;
-			}
-		    } else badarg = 1;
-		} else if (!strcmp(*args,"-envpassout")) {
-		    if (args[1]) {
-			args++;	
-			if(!(passout= getenv(*args))) {
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*args);
-				badarg = 1;
-			}
+			passargin = *args;
 		    } else badarg = 1;
 		} else if (!strcmp(*args,"-passout")) {
 		    if (args[1]) {
 			args++;	
-			passout = *args;
-		    } else badarg = 1;
-		} else if (!strcmp (*args, "-envpass")) {
-		    if (args[1]) {
-			args++;	
-			if(!(cpass = getenv(*args))) {
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n", *args);
-				goto end;
-			}
+			passargout = *args;
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-password")) {
 		    if (args[1]) {
 			args++;	
-			cpass = *args;
+			passarg = *args;
 		    	noprompt = 1;
 		    } else badarg = 1;
 		} else badarg = 1;
@@ -290,16 +262,23 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-keypbe alg   specify private key PBE algorithm (default 3DES)\n");
 	BIO_printf (bio_err, "-keyex        set MS key exchange type\n");
 	BIO_printf (bio_err, "-keysig       set MS key signature type\n");
-	BIO_printf (bio_err, "-password p   set import/export password (NOT RECOMMENDED)\n");
-	BIO_printf (bio_err, "-envpass p    set import/export password from environment\n");
-	BIO_printf (bio_err, "-passin p     input file pass phrase\n");
-	BIO_printf (bio_err, "-envpassin p  environment variable containing input file pass phrase\n");
-	BIO_printf (bio_err, "-passout p    output file pass phrase\n");
-	BIO_printf (bio_err, "-envpassout p environment variable containing output file pass phrase\n");
+	BIO_printf (bio_err, "-password p   set import/export password source\n");
+	BIO_printf (bio_err, "-passin p     input file pass phrase source\n");
+	BIO_printf (bio_err, "-passout p    output file pass phrase source\n");
 	BIO_printf(bio_err,  "-rand file:file:...\n");
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;
+    }
+
+    if(passarg) {
+	if(export_cert) passargout = passarg;
+	else passargin = passarg;
+    }
+
+    if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+	BIO_printf(bio_err, "Error getting passwords\n");
+	goto end;
     }
 
     if(!cpass) {
@@ -395,7 +374,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_push_info("process -export_cert");
 #endif
-	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, PEM_cb, passin);
+	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, passin);
 	if (!inkey) (void) BIO_reset(in);
 	else BIO_free(inkey);
 	if (!key) {
@@ -579,6 +558,8 @@ int MAIN(int argc, char **argv)
 #endif
     BIO_free(in);
     BIO_free(out);
+    if(passin) Free(passin);
+    if(passout) Free(passout);
     EXIT(ret);
 }
 
@@ -643,7 +624,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		p8 = bag->value.keybag;
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, PEM_cb, pempass);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, pempass);
 		EVP_PKEY_free(pkey);
 	break;
 
@@ -659,7 +640,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, PEM_cb, pempass);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, pempass);
 		EVP_PKEY_free(pkey);
 	break;
 

@@ -87,7 +87,7 @@ int MAIN(int argc, char **argv)
 	EVP_CIPHER *enc=NULL;
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
-	char *passout = NULL;
+	char *passargout = NULL, *passout = NULL;
 	char *inrand=NULL;
 	BIO *out=NULL;
 
@@ -131,21 +131,10 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
-		else if (strcmp(*argv,"-envpassout") == 0)
-			{
-			if (--argc < 1) goto bad;
-				if(!(passout= getenv(*(++argv))))
-				{
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				goto bad;
-				}
-			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{
 			if (--argc < 1) goto bad;
-			passout= *(++argv);
+			passargout= *(++argv);
 			}
 		else
 			break;
@@ -162,8 +151,7 @@ bad:
 		BIO_printf(bio_err," -idea           encrypt the generated key with IDEA in cbc mode\n");
 #endif
 		BIO_printf(bio_err," -out file       output the key to 'file\n");
-		BIO_printf(bio_err," -passout arg    output file pass phrase\n");
-		BIO_printf(bio_err," -envpassout arg environment variable containing output file pass phrase\n");
+		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -f4             use F4 (0x10001) for the E value\n");
 		BIO_printf(bio_err," -3              use 3 for the E value\n");
 		BIO_printf(bio_err," -rand file:file:...\n");
@@ -173,6 +161,12 @@ bad:
 		}
 		
 	ERR_load_crypto_strings();
+
+	if(!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
+		BIO_printf(bio_err, "Error getting password\n");
+		goto err;
+	}
+
 	if (outfile == NULL)
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
 	else
@@ -212,13 +206,14 @@ bad:
 		l+=rsa->e->d[i];
 		}
 	BIO_printf(bio_err,"e is %ld (0x%lX)\n",l,l);
-	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,PEM_cb, passout))
+	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL, passout))
 		goto err;
 
 	ret=0;
 err:
 	if (rsa != NULL) RSA_free(rsa);
 	if (out != NULL) BIO_free(out);
+	if(passout) Free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	EXIT(ret);

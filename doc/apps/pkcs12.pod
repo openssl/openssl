@@ -35,12 +35,9 @@ B<openssl> B<pkcs12>
 [B<-keypbe>]
 [B<-keyex>]
 [B<-keysig>]
-[B<-password password>]
-[B<-envpass var>]
-[B<-passin password>]
-[B<-envpassin var>]
-[B<-passout password>]
-[B<-envpassout var>]
+[B<-password arg>]
+[B<-passin arg>]
+[B<-passout arg>]
 [B<-rand file(s)>]
 
 =head1 DESCRIPTION
@@ -69,23 +66,17 @@ by default.
 The filename to write certificates and private keys to, standard output by default.
 They are all written in PEM format.
 
-=item B<-pass password>, B<-passin password>
+=item B<-pass arg>, B<-passin arg>
 
-the PKCS#12 file (i.e. input file) password. Since certain utilities like "ps" make
-the command line visible this option should be used with caution.
+the PKCS#12 file (i.e. input file) password source. For more information about the
+format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+L<openssl(1)|openssl(1)>.
 
-=item B<-envpass var>, B<-envpassin password>
+=item B<-passout arg>
 
-read the PKCS#12 file password from the environment variable B<var>.
-
-=item B<-passout password>
-
-pass phrase to encrypt any outputed private keys with. Since certain utilities like
-"ps" make the command line visible this option should be used with caution.
-
-=item B<-envpass var>, B<-envpassin password>
-
-read the outputed private keys file password from the environment variable B<var>.
+pass phrase source to encrypt any outputed private keys with. For more information
+about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+L<openssl(1)|openssl(1)>.
 
 =item B<-noout>
 
@@ -183,23 +174,17 @@ used multiple times to specify names for all certificates in the order they
 appear. Netscape ignores friendly names on other certificates whereas MSIE
 displays them.
 
-=item B<-pass password>, B<-passout password>
+=item B<-pass arg>, B<-passout arg>
 
-the PKCS#12 file (i.e. output file) password. Since certain utilities like "ps"
-make the command line visible this option should be used with caution.
-
-=item B<-envpass var>, B<-envpassout var>
-
-read the PKCS#12 file password from the environment variable B<var>.
+the PKCS#12 file (i.e. output file) password source. For more information about
+the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+L<openssl(1)|openssl(1)>.
 
 =item B<-passin password>
 
-pass phrase to decrypt the input private key with. Since certain utilities like
-"ps" make the command line visible this option should be used with caution.
-
-=item B<-envpassin password>
-
-read the input private key file password from the environment variable B<var>.
+pass phrase source to decrypt any input private keys with. For more information
+about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+L<openssl(1)|openssl(1)>.
 
 =item B<-chain>
 
