@@ -219,7 +219,7 @@ int MAIN(int argc, char **argv)
 		}
 		BIO_free(in);
 		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
-			BIO_printf(bio_err, "Error converting key\n", outfile);
+			BIO_printf(bio_err, "Error converting key\n");
 			ERR_print_errors(bio_err);
 			return (1);
 		}
@@ -243,8 +243,7 @@ int MAIN(int argc, char **argv)
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
 					p8pass, strlen(p8pass),
 					NULL, 0, iter, p8inf))) {
-				BIO_printf(bio_err, "Error encrypting key\n",
-								 outfile);
+				BIO_printf(bio_err, "Error encrypting key\n");
 				ERR_print_errors(bio_err);
 				return (1);
 			}
@@ -287,7 +286,7 @@ int MAIN(int argc, char **argv)
 		}
 
 		if (!p8) {
-			BIO_printf (bio_err, "Error reading key\n", outfile);
+			BIO_printf (bio_err, "Error reading key\n");
 			ERR_print_errors(bio_err);
 			return (1);
 		}
@@ -301,13 +300,13 @@ int MAIN(int argc, char **argv)
 	}
 
 	if (!p8inf) {
-		BIO_printf(bio_err, "Error decrypting key\n", outfile);
+		BIO_printf(bio_err, "Error decrypting key\n");
 		ERR_print_errors(bio_err);
 		return (1);
 	}
 
 	if (!(pkey = EVP_PKCS82PKEY(p8inf))) {
-		BIO_printf(bio_err, "Error converting key\n", outfile);
+		BIO_printf(bio_err, "Error converting key\n");
 		ERR_print_errors(bio_err);
 		return (1);
 	}
