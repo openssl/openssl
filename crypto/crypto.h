@@ -90,6 +90,7 @@ extern "C" {
 #define SSLEAY_CFLAGS		2
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
+#define SSLEAY_DIR		5
 
 /* When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
