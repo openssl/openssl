@@ -116,7 +116,6 @@
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#include "cryptlib.h"
 
 static SSL_METHOD *ssl2_get_server_method(int ver);
 static int get_client_master_key(SSL *s);

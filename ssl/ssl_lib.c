@@ -121,7 +121,6 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
-#include "cryptlib.h"
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 

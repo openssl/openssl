@@ -113,7 +113,6 @@
 #ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <errno.h>
-#include "cryptlib.h"
 #define USE_SOCKETS
 
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
