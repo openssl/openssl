@@ -96,6 +96,10 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int 
 
 	if(!combine) *pval = NULL;
 
+#ifdef CRYPTO_MDEBUG
+	if(it->sname) CRYPTO_push_info(it->sname);
+#endif
+
 	switch(it->itype) {
 
 		case ASN1_ITYPE_EXTERN:
@@ -166,15 +170,24 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int 
 				goto auxerr;
 		break;
 	}
+#ifdef CRYPTO_MDEBUG
+	if(it->sname) CRYPTO_pop_info();
+#endif
 	return 1;
 
 	memerr:
 	ASN1err(ASN1_F_ASN1_ITEM_NEW, ERR_R_MALLOC_FAILURE);
+#ifdef CRYPTO_MDEBUG
+	if(it->sname) CRYPTO_pop_info();
+#endif
 	return 0;
 
 	auxerr:
 	ASN1err(ASN1_F_ASN1_ITEM_NEW, ASN1_R_AUX_ERROR);
 	ASN1_item_ex_free(pval, it);
+#ifdef CRYPTO_MDEBUG
+	if(it->sname) CRYPTO_pop_info();
+#endif
 	return 0;
 
 }
@@ -216,6 +229,7 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
 	const ASN1_ITEM *it = tt->item;
+	int ret;
 	if(tt->flags & ASN1_TFLG_OPTIONAL) {
 		asn1_template_clear(pval, tt);
 		return 1;
@@ -226,19 +240,29 @@ int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 		*pval = NULL;
 		return 1;
 	}
+#ifdef CRYPTO_MDEBUG
+	if(tt->field_name) CRYPTO_push_info(tt->field_name);
+#endif
 	/* If SET OF or SEQUENCE OF, its a STACK */
 	if(tt->flags & ASN1_TFLG_SK_MASK) {
 		STACK_OF(ASN1_VALUE) *skval;
 		skval = sk_ASN1_VALUE_new_null();
 		if(!skval) {
 			ASN1err(ASN1_F_ASN1_TEMPLATE_NEW, ERR_R_MALLOC_FAILURE);
-			return 0;
+			ret = 0;
+			goto done;
 		}
 		*pval = (ASN1_VALUE *)skval;
-		return 1;
+		ret = 1;
+		goto done;
 	}
 	/* Otherwise pass it back to the item routine */
-	return asn1_item_ex_combine_new(pval, it, tt->flags & ASN1_TFLG_COMBINE);
+	ret = asn1_item_ex_combine_new(pval, it, tt->flags & ASN1_TFLG_COMBINE);
+	done:
+#ifdef CRYPTO_MDEBUG
+	if(it->sname) CRYPTO_pop_info();
+#endif
+	return ret;
 }
 
 void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)

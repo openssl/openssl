@@ -2,7 +2,18 @@
  _______________
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
- 
+
+  *) In PKCS7_set_type() initialise content_type in PKCS7_ENC_CONTENT
+     to data. This was previously part of the PKCS7 ASN1 code. This
+     was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
+     [Steve Henson, reported by Kenneth R. Robinette
+				<support@securenetterm.com>]
+
+  *) Add CRYPTO_push_info() and CRYPTO_pop_info() calls to new ASN1
+     routines: without these tracing memory leaks is very painful.
+     Fix leaks in PKCS12 and PKCS7 routines.
+     [Steve Henson]
+
   *) Fix for Irix with NO_ASM.
      ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
 
