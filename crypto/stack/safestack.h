@@ -1486,6 +1486,27 @@ STACK_OF(type) \
 #define sk_X509_TRUST_pop(st) SKM_sk_pop(X509_TRUST, (st))
 #define sk_X509_TRUST_sort(st) SKM_sk_sort(X509_TRUST, (st))
 
+#define sk_X509_VERIFY_PARAM_new(st) SKM_sk_new(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_new_null() SKM_sk_new_null(X509_VERIFY_PARAM)
+#define sk_X509_VERIFY_PARAM_free(st) SKM_sk_free(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_num(st) SKM_sk_num(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_value(st, i) SKM_sk_value(X509_VERIFY_PARAM, (st), (i))
+#define sk_X509_VERIFY_PARAM_set(st, i, val) SKM_sk_set(X509_VERIFY_PARAM, (st), (i), (val))
+#define sk_X509_VERIFY_PARAM_zero(st) SKM_sk_zero(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_push(st, val) SKM_sk_push(X509_VERIFY_PARAM, (st), (val))
+#define sk_X509_VERIFY_PARAM_unshift(st, val) SKM_sk_unshift(X509_VERIFY_PARAM, (st), (val))
+#define sk_X509_VERIFY_PARAM_find(st, val) SKM_sk_find(X509_VERIFY_PARAM, (st), (val))
+#define sk_X509_VERIFY_PARAM_find_ex(st, val) SKM_sk_find_ex(X509_VERIFY_PARAM, (st), (val))
+#define sk_X509_VERIFY_PARAM_delete(st, i) SKM_sk_delete(X509_VERIFY_PARAM, (st), (i))
+#define sk_X509_VERIFY_PARAM_delete_ptr(st, ptr) SKM_sk_delete_ptr(X509_VERIFY_PARAM, (st), (ptr))
+#define sk_X509_VERIFY_PARAM_insert(st, val, i) SKM_sk_insert(X509_VERIFY_PARAM, (st), (val), (i))
+#define sk_X509_VERIFY_PARAM_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(X509_VERIFY_PARAM, (st), (cmp))
+#define sk_X509_VERIFY_PARAM_dup(st) SKM_sk_dup(X509_VERIFY_PARAM, st)
+#define sk_X509_VERIFY_PARAM_pop_free(st, free_func) SKM_sk_pop_free(X509_VERIFY_PARAM, (st), (free_func))
+#define sk_X509_VERIFY_PARAM_shift(st) SKM_sk_shift(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_pop(st) SKM_sk_pop(X509_VERIFY_PARAM, (st))
+#define sk_X509_VERIFY_PARAM_sort(st) SKM_sk_sort(X509_VERIFY_PARAM, (st))
+
 #define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
 	SKM_ASN1_SET_OF_d2i(ACCESS_DESCRIPTION, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
 #define i2d_ASN1_SET_OF_ACCESS_DESCRIPTION(st, pp, i2d_func, ex_tag, ex_class, is_set) \

@@ -276,14 +276,23 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->msg_callback=ctx->msg_callback;
 	s->msg_callback_arg=ctx->msg_callback_arg;
 	s->verify_mode=ctx->verify_mode;
+#if 0
 	s->verify_depth=ctx->verify_depth;
+#endif
 	s->sid_ctx_length=ctx->sid_ctx_length;
 	OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
 	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_callback=ctx->default_verify_callback;
 	s->generate_session_id=ctx->generate_session_id;
+
+	s->param = X509_VERIFY_PARAM_new();
+	if (!s->param)
+		goto err;
+	X509_VERIFY_PARAM_inherit(s->param, ctx->param);
+#if 0
 	s->purpose = ctx->purpose;
 	s->trust = ctx->trust;
+#endif
 	s->quiet_shutdown=ctx->quiet_shutdown;
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
@@ -397,22 +406,22 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 	{
-	return X509_PURPOSE_set(&s->purpose, purpose);
+	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
 	}
 
 int SSL_set_purpose(SSL *s, int purpose)
 	{
-	return X509_PURPOSE_set(&s->purpose, purpose);
+	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
 	}
 
 int SSL_CTX_set_trust(SSL_CTX *s, int trust)
 	{
-	return X509_TRUST_set(&s->trust, trust);
+	return X509_VERIFY_PARAM_set_trust(s->param, trust);
 	}
 
 int SSL_set_trust(SSL *s, int trust)
 	{
-	return X509_TRUST_set(&s->trust, trust);
+	return X509_VERIFY_PARAM_set_trust(s->param, trust);
 	}
 
 void SSL_free(SSL *s)
@@ -434,6 +443,9 @@ void SSL_free(SSL *s)
 		abort(); /* ok */
 		}
 #endif
+
+	if (s->param)
+		X509_VERIFY_PARAM_free(s->param);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
@@ -647,7 +659,7 @@ int SSL_get_verify_mode(SSL *s)
 
 int SSL_get_verify_depth(SSL *s)
 	{
-	return(s->verify_depth);
+	return X509_VERIFY_PARAM_get_depth(s->param);
 	}
 
 int (*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *)
@@ -662,7 +674,7 @@ int SSL_CTX_get_verify_mode(SSL_CTX *ctx)
 
 int SSL_CTX_get_verify_depth(SSL_CTX *ctx)
 	{
-	return(ctx->verify_depth);
+	return X509_VERIFY_PARAM_get_depth(ctx->param);
 	}
 
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *)
@@ -680,7 +692,7 @@ void SSL_set_verify(SSL *s,int mode,
 
 void SSL_set_verify_depth(SSL *s,int depth)
 	{
-	s->verify_depth=depth;
+	X509_VERIFY_PARAM_set_depth(s->param, depth);
 	}
 
 void SSL_set_read_ahead(SSL *s,int yes)
@@ -1345,7 +1357,9 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->msg_callback=0;
 	ret->msg_callback_arg=NULL;
 	ret->verify_mode=SSL_VERIFY_NONE;
+#if 0
 	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
+#endif
 	ret->sid_ctx_length=0;
 	ret->default_verify_callback=NULL;
 	if ((ret->cert=ssl_cert_new()) == NULL)
@@ -1370,6 +1384,10 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_LIBRARY_HAS_NO_CIPHERS);
 		goto err2;
 		}
+
+	ret->param = X509_VERIFY_PARAM_new();
+	if (!ret->param)
+		goto err;
 
 	if ((ret->rsa_md5=EVP_get_digestbyname("ssl2-md5")) == NULL)
 		{
@@ -1426,6 +1444,9 @@ void SSL_CTX_free(SSL_CTX *a)
 		abort(); /* ok */
 		}
 #endif
+
+	if (a->param)
+		X509_VERIFY_PARAM_free(a->param);
 
 	/*
 	 * Free internal session cache. However: the remove_cb() may reference
@@ -1489,7 +1510,7 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
 	{
-	ctx->verify_depth=depth;
+	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 	}
 
 void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
@@ -2117,8 +2138,8 @@ SSL *SSL_dup(SSL *s)
 	ret->rstate=s->rstate;
 	ret->init_num = 0; /* would have to copy ret->init_buf, ret->init_msg, ret->init_num, ret->init_off */
 	ret->hit=s->hit;
-	ret->purpose=s->purpose;
-	ret->trust=s->trust;
+
+	X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
 	/* dup the cipher_list and cipher_list_by_id stacks */
 	if (s->cipher_list != NULL)

@@ -3,7 +3,7 @@
  * project.
  */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,10 +64,13 @@
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #undef PROG
 #define PROG smime_main
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
+static int smime_cb(int ok, X509_STORE_CTX *ctx);
 
 #define SMIME_OP	0x10
 #define SMIME_ENCRYPT	(1 | SMIME_OP)
@@ -96,7 +99,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(X509) *encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
-	int flags = PKCS7_DETACHED, store_flags = 0;
+	int flags = PKCS7_DETACHED;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
@@ -107,6 +110,8 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
+
+	X509_VERIFY_PARAM *vpm = NULL;
 
 	args = argv + 1;
 	ret = 1;
@@ -172,10 +177,6 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_NOOLDMIMETYPE;
 		else if (!strcmp (*args, "-crlfeol"))
 				flags |= PKCS7_CRLFEOL;
-		else if (!strcmp (*args, "-crl_check"))
-				store_flags |= X509_V_FLAG_CRL_CHECK;
-		else if (!strcmp (*args, "-crl_check_all"))
-				store_flags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 		else if (!strcmp(*args,"-rand")) {
 			if (args[1]) {
 				args++;
@@ -269,9 +270,13 @@ int MAIN(int argc, char **argv)
 				args++;
 				contfile = *args;
 			} else badarg = 1;
-		} else badarg = 1;
+		} else if (args_verify(&args, &badarg, bio_err, &vpm))
+			continue;
+		else
+			badarg = 1;
 		args++;
 	}
+
 
 	if(operation == SMIME_SIGN) {
 		if(!signerfile) {
@@ -473,7 +478,9 @@ int MAIN(int argc, char **argv)
 
 	if(operation == SMIME_VERIFY) {
 		if(!(store = setup_verify(bio_err, CAfile, CApath))) goto end;
-		X509_STORE_set_flags(store, store_flags);
+		X509_STORE_set_verify_cb_func(store, smime_cb);
+		if (vpm)
+			X509_STORE_set1_param(store, vpm);
 	}
 
 
@@ -569,6 +576,8 @@ end:
 	if(ret) ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);
@@ -595,3 +604,58 @@ static int save_certs(char *signerfile, STACK_OF(X509) *signers)
 	return 1;
 }
 	
+
+static void nodes_print(BIO *out, char *name, STACK_OF(X509_POLICY_NODE) *nodes)
+	{
+	X509_POLICY_NODE *node;
+	int i;
+	BIO_printf(out, "%s Policies:", name);
+	if (nodes)
+		{
+		BIO_puts(out, "\n");
+		for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++)
+			{
+			node = sk_X509_POLICY_NODE_value(nodes, i);
+			X509_POLICY_NODE_print(out, node, 2);
+			}
+		}
+	else
+		BIO_puts(out, " <empty>\n");
+	}
+
+static void policies_print(BIO *out, X509_STORE_CTX *ctx)
+	{
+	X509_POLICY_TREE *tree;
+	int explicit;
+	tree = X509_STORE_CTX_get0_policy_tree(ctx);
+	explicit = X509_STORE_CTX_get_explicit_policy(ctx);
+
+	BIO_printf(out, "Require explicit Policy: %s\n",
+				explicit ? "True" : "False");
+
+	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
+	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
+	}
+
+/* Minimal callback just to output policy info (if any) */
+
+static int smime_cb(int ok, X509_STORE_CTX *ctx)
+	{
+	BIO *out;
+	int error;
+
+	error = X509_STORE_CTX_get_error(ctx);
+
+	if ((error != X509_V_ERR_NO_EXPLICIT_POLICY)
+		&& ((error != X509_V_OK) || (ok != 2)))
+		return ok;
+
+	out = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	policies_print(out, ctx);
+
+	BIO_free(out);
+
+	return ok;
+
+	}

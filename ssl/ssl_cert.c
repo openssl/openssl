@@ -483,20 +483,22 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,ERR_R_X509_LIB);
 		return(0);
 		}
+	if (s->param)
+		X509_VERIFY_PARAM_inherit(X509_STORE_CTX_get0_param(&ctx),
+						s->param);
+#if 0
 	if (SSL_get_verify_depth(s) >= 0)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
+#endif
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),s);
 
-	/* We need to set the verify purpose. The purpose can be determined by
+	/* We need to inherit the verify parameters. These can be determined by
 	 * the context: if its a server it will verify SSL client certificates
 	 * or vice versa.
 	 */
-	if (s->server)
-		i = X509_PURPOSE_SSL_CLIENT;
-	else
-		i = X509_PURPOSE_SSL_SERVER;
 
-	X509_STORE_CTX_purpose_inherit(&ctx, i, s->purpose, s->trust);
+	X509_STORE_CTX_set_default(&ctx,
+				s->server ? "ssl_client" : "ssl_server");
 
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);

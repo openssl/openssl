@@ -77,6 +77,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
+static int check_policy(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
@@ -97,11 +98,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	{
 	X509 *x,*xtmp,*chain_ss=NULL;
 	X509_NAME *xn;
+	int bad_chain = 0;
+	X509_VERIFY_PARAM *param = ctx->param;
 	int depth,i,ok=0;
 	int num;
 	int (*cb)();
 	STACK_OF(X509) *sktmp=NULL;
-
 	if (ctx->cert == NULL)
 		{
 		X509err(X509_F_X509_VERIFY_CERT,X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
@@ -134,7 +136,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 	num=sk_X509_num(ctx->chain);
 	x=sk_X509_value(ctx->chain,num-1);
-	depth=ctx->depth;
+	depth=param->depth;
 
 
 	for (;;)
@@ -201,6 +203,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 				ctx->current_cert=x;
 				ctx->error_depth=i-1;
 				if (ok == 1) X509_free(xtmp);
+				bad_chain = 1;
 				ok=cb(0,ctx);
 				if (!ok) goto end;
 				}
@@ -276,18 +279,19 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 			}
 
 		ctx->error_depth=num-1;
+		bad_chain = 1;
 		ok=cb(0,ctx);
 		if (!ok) goto end;
 		}
 
 	/* We have the chain complete: now we need to check its purpose */
-	if (ctx->purpose > 0) ok = check_chain_purpose(ctx);
+	if (param->purpose > 0) ok = check_chain_purpose(ctx);
 
 	if (!ok) goto end;
 
 	/* The chain extensions are OK: check trust */
 
-	if (ctx->trust > 0) ok = check_trust(ctx);
+	if (param->trust > 0) ok = check_trust(ctx);
 
 	if (!ok) goto end;
 
@@ -301,11 +305,17 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	ok = ctx->check_revocation(ctx);
 	if(!ok) goto end;
 
-	/* At this point, we have a chain and just need to verify it */
+	/* At this point, we have a chain and need to verify it */
 	if (ctx->verify != NULL)
 		ok=ctx->verify(ctx);
 	else
 		ok=internal_verify(ctx);
+	if(!ok) goto end;
+
+	/* If we get this far evaluate policies */
+	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
+		ok = ctx->check_policy(ctx);
+	if(!ok) goto end;
 	if (0)
 		{
 end:
@@ -342,7 +352,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 	if (ret == X509_V_OK)
 		return 1;
 	/* If we haven't asked for issuer errors don't set ctx */
-	if (!(ctx->flags & X509_V_FLAG_CB_ISSUER_CHECK))
+	if (!(ctx->param->flags & X509_V_FLAG_CB_ISSUER_CHECK))
 		return 0;
 
 	ctx->error = ret;
@@ -385,7 +395,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 		{
 		int ret;
 		x = sk_X509_value(ctx->chain, i);
-		if (!(ctx->flags & X509_V_FLAG_IGNORE_CRITICAL)
+		if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
 			&& (x->ex_flags & EXFLAG_CRITICAL))
 			{
 			ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
@@ -394,9 +404,9 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
-		ret = X509_check_purpose(x, ctx->purpose, i);
+		ret = X509_check_purpose(x, ctx->param->purpose, i);
 		if ((ret == 0)
-			 || ((ctx->flags & X509_V_FLAG_X509_STRICT)
+			 || ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
 				&& (ret != 1)))
 			{
 			if (i)
@@ -437,7 +447,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 /* For now just check the last certificate in the chain */
 	i = sk_X509_num(ctx->chain) - 1;
 	x = sk_X509_value(ctx->chain, i);
-	ok = X509_check_trust(x, ctx->trust, 0);
+	ok = X509_check_trust(x, ctx->param->trust, 0);
 	if (ok == X509_TRUST_TRUSTED)
 		return 1;
 	ctx->error_depth = i;
@@ -454,9 +464,9 @@ static int check_trust(X509_STORE_CTX *ctx)
 static int check_revocation(X509_STORE_CTX *ctx)
 	{
 	int i, last, ok;
-	if (!(ctx->flags & X509_V_FLAG_CRL_CHECK))
+	if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK))
 		return 1;
-	if (ctx->flags & X509_V_FLAG_CRL_CHECK_ALL)
+	if (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL)
 		last = sk_X509_num(ctx->chain) - 1;
 	else
 		last = 0;
@@ -506,8 +516,8 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 	time_t *ptime;
 	int i;
 	ctx->current_crl = crl;
-	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->check_time;
+	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->param->check_time;
 	else
 		ptime = NULL;
 
@@ -707,7 +717,7 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 		if (!ok) return 0;
 		}
 
-	if (ctx->flags & X509_V_FLAG_IGNORE_CRITICAL)
+	if (ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
 		return 1;
 
 	/* See if we have any critical CRL extensions: since we
@@ -734,13 +744,60 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	return 1;
 	}
 
+static int check_policy(X509_STORE_CTX *ctx)
+	{
+	int ret;
+	ret = X509_policy_check(&ctx->tree, &ctx->explicit, ctx->chain,
+				ctx->param->policies, ctx->param->flags);
+	if (ret == 0)
+		{
+		X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	/* Invalid or inconsistent extensions */
+	if (ret == -1)
+		{
+		/* Locate certificates with bad extensions and notify
+		 * callback.
+		 */
+		X509 *x;
+		int i;
+		for (i = 1; i < sk_X509_num(ctx->chain); i++)
+			{
+			x = sk_X509_value(ctx->chain, i);
+			if (!(x->ex_flags & EXFLAG_INVALID_POLICY))
+				continue;
+			ctx->current_cert = x;
+			ctx->error = X509_V_ERR_INVALID_POLICY_EXTENSION;
+			ret = ctx->verify_cb(0, ctx);
+			}
+		return 1;
+		}
+	if (ret == -2)
+		{
+		ctx->current_cert = NULL;
+		ctx->error = X509_V_ERR_NO_EXPLICIT_POLICY;
+		return ctx->verify_cb(0, ctx);
+		}
+
+	if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY)
+		{
+		ctx->current_cert = NULL;
+		ctx->error = X509_V_OK;
+		if (!ctx->verify_cb(2, ctx))
+			return 0;
+		}
+
+	return 1;
+	}
+
 static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 	{
 	time_t *ptime;
 	int i;
 
-	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->check_time;
+	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->param->check_time;
 	else
 		ptime = NULL;
 
@@ -1151,8 +1208,8 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 			}
 		}
 
-	if (purpose && !ctx->purpose) ctx->purpose = purpose;
-	if (trust && !ctx->trust) ctx->trust = trust;
+	if (purpose && !ctx->param->purpose) ctx->param->purpose = purpose;
+	if (trust && !ctx->param->trust) ctx->param->trust = trust;
 	return 1;
 }
 
@@ -1178,20 +1235,30 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	     STACK_OF(X509) *chain)
 	{
+	int ret = 1;
 	ctx->ctx=store;
 	ctx->current_method=0;
 	ctx->cert=x509;
 	ctx->untrusted=chain;
+	ctx->crls = NULL;
 	ctx->last_untrusted=0;
-	ctx->check_time=0;
 	ctx->other_ctx=NULL;
 	ctx->valid=0;
 	ctx->chain=NULL;
-	ctx->depth=9;
 	ctx->error=0;
+	ctx->explicit=0;
 	ctx->error_depth=0;
 	ctx->current_cert=NULL;
 	ctx->current_issuer=NULL;
+	ctx->tree = NULL;
+
+	ctx->param = X509_VERIFY_PARAM_new();
+
+	if (!ctx->param)
+		{
+		X509err(X509_F_X509_STORE_CTX_INIT,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 
 	/* Inherit callbacks and flags from X509_STORE if not set
 	 * use defaults.
@@ -1199,18 +1266,26 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
 
 	if (store)
+		ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
+	else
+		ctx->param->flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
+
+	if (store)
 		{
-		ctx->purpose=store->purpose;
-		ctx->trust=store->trust;
-		ctx->flags = store->flags;
+		ctx->verify_cb = store->verify_cb;
 		ctx->cleanup = store->cleanup;
 		}
 	else
-		{
-		ctx->purpose = 0;
-		ctx->trust = 0;
-		ctx->flags = 0;
 		ctx->cleanup = 0;
+
+	if (ret)
+		ret = X509_VERIFY_PARAM_inherit(ctx->param,
+					X509_VERIFY_PARAM_lookup("default"));
+
+	if (ret == 0)
+		{
+		X509err(X509_F_X509_STORE_CTX_INIT,ERR_R_MALLOC_FAILURE);
+		return 0;
 		}
 
 	if (store && store->check_issued)
@@ -1253,6 +1328,8 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	else
 		ctx->cert_crl = cert_crl;
 
+	ctx->check_policy = check_policy;
+
 
 	/* This memset() can't make any sense anyway, so it's removed. As
 	 * X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we put a
@@ -1281,6 +1358,9 @@ void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	{
 	if (ctx->cleanup) ctx->cleanup(ctx);
+	X509_VERIFY_PARAM_free(ctx->param);
+	if (ctx->tree)
+		X509_policy_tree_free(ctx->tree);
 	if (ctx->chain != NULL)
 		{
 		sk_X509_pop_free(ctx->chain,X509_free);
@@ -1290,21 +1370,56 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	}
 
-void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags)
+void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth)
 	{
-	ctx->flags |= flags;
+	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 	}
 
-void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t)
+void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags)
 	{
-	ctx->check_time = t;
-	ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
+	X509_VERIFY_PARAM_set_flags(ctx->param, flags);
+	}
+
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags, time_t t)
+	{
+	X509_VERIFY_PARAM_set_time(ctx->param, t);
 	}
 
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *))
 	{
 	ctx->verify_cb=verify_cb;
+	}
+
+X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
+	{
+	return ctx->tree;
+	}
+
+int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
+	{
+	return ctx->explicit;
+	}
+
+int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
+	{
+	const X509_VERIFY_PARAM *param;
+	param = X509_VERIFY_PARAM_lookup(name);
+	if (!param)
+		return 0;
+	return X509_VERIFY_PARAM_inherit(ctx->param, param);
+	}
+
+X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx)
+	{
+	return ctx->param;
+	}
+
+void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
+	{
+	if (ctx->param)
+		X509_VERIFY_PARAM_free(ctx->param);
+	ctx->param = param;
 	}
 
 IMPLEMENT_STACK_OF(X509)

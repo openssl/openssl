@@ -153,6 +153,15 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION:
 		return("unhandled critical CRL extension");
 
+	case X509_V_ERR_INVALID_EXTENSION:
+		return("invalid or inconsistent certificate extension");
+
+	case X509_V_ERR_INVALID_POLICY_EXTENSION:
+		return("invalid or inconsistent certificate policy extension");
+
+	case X509_V_ERR_NO_EXPLICIT_POLICY:
+		return("no explicit policy");
+
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);

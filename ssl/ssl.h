@@ -711,7 +711,6 @@ struct ssl_ctx_st
 	void *msg_callback_arg;
 
 	int verify_mode;
-	int verify_depth;
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx); /* called 'verify_callback' in the SSL */
@@ -719,8 +718,12 @@ struct ssl_ctx_st
 	/* Default generate session ID callback. */
 	GEN_SESSION_CB generate_session_id;
 
+	X509_VERIFY_PARAM *param;
+
+#if 0
 	int purpose;		/* Purpose setting */
 	int trust;		/* Trust setting */
+#endif
 
 	int quiet_shutdown;
 	};
@@ -861,8 +864,12 @@ struct ssl_st
 
 	int hit;		/* reusing a previous session */
 
+	X509_VERIFY_PARAM *param;
+
+#if 0
 	int purpose;		/* Purpose setting */
 	int trust;		/* Trust setting */
+#endif
 
 	/* crypto */
 	STACK_OF(SSL_CIPHER) *cipher_list;
@@ -907,7 +914,6 @@ struct ssl_st
 	/* Used in SSL2 and SSL3 */
 	int verify_mode;	/* 0 don't care about verify failure.
 				 * 1 fail if verify fails */
-	int verify_depth;
 	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
 
 	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */

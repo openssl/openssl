@@ -317,6 +317,7 @@ int index_name_cmp(const char **a, const char **b);
 int parse_yesno(char *str, int def);
 
 X509_NAME *parse_name(char *str, long chtype, int multirdn);
+int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

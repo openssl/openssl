@@ -2140,3 +2140,68 @@ int WIN32_rename(char *from, char *to)
 #endif
 	}
 #endif
+
+int args_verify(char ***pargs, int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
+	{
+	ASN1_OBJECT *otmp = NULL;
+	unsigned long flags = 0;
+	char *arg = **pargs, *argn = (*pargs)[1];
+	if (!strcmp(arg, "-policy"))
+		{
+		if (!argn)
+			*badarg = 1;
+		else
+			{
+			otmp = OBJ_txt2obj(argn, 0);
+			if (!otmp)
+				{
+				BIO_printf(err, "Invalid Policy \"%s\"\n",
+									argn);
+				*badarg = 1;
+				}
+			}
+		(*pargs)++;
+		}
+	else if (!strcmp(arg, "-ignore_critical"))
+		flags |= X509_V_FLAG_IGNORE_CRITICAL;
+	else if (!strcmp(arg, "-issuer_checks"))
+		flags |= X509_V_FLAG_CB_ISSUER_CHECK;
+	else if (!strcmp(arg, "-crl_check"))
+		flags |=  X509_V_FLAG_CRL_CHECK;
+	else if (!strcmp(arg, "-crl_check_all"))
+		flags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
+	else if (!strcmp(arg, "-policy_check"))
+		flags |= X509_V_FLAG_POLICY_CHECK;
+	else if (!strcmp(arg, "-explicit_policy"))
+		flags |= X509_V_FLAG_EXPLICIT_POLICY;
+	else if (!strcmp(arg, "-x509_strict"))
+		flags |= X509_V_FLAG_X509_STRICT;
+	else if (!strcmp(arg, "-policy_print"))
+		flags |= X509_V_FLAG_NOTIFY_POLICY;
+	else
+		return 0;
+
+	if (*badarg)
+		{
+		if (*pm)
+			X509_VERIFY_PARAM_free(*pm);
+		*pm = NULL;
+		return 1;
+		}
+
+	if (!*pm && !(*pm = X509_VERIFY_PARAM_new()))
+		{
+		*badarg = 1;
+		return 1;
+		}
+
+	if (otmp)
+		X509_VERIFY_PARAM_add0_policy(*pm, otmp);
+	if (flags)
+		X509_VERIFY_PARAM_set_flags(*pm, flags);
+
+	(*pargs)++;
+
+	return 1;
+
+	}

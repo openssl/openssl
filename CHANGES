@@ -4,6 +4,14 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) New structure X509_VERIFY_PARAM which combines current verify parameters,
+     update associated structures and add various utility functions.
+
+     Add new policy related verify parameters, include policy checking in 
+     standard verify code. Enhance 'smime' application with extra parameters
+     to support policy checking and print out.
+     [Steve Henson]
+
   *) Add a new engine to support VIA PadLock ACE extensions in the VIA C3
      Nehemiah processors. These extensions support AES encryption in hardware
      as well as RNG (though RNG support is currently disabled).
