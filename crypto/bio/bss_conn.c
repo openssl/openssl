@@ -56,13 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_SOCK
-
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
 #include <openssl/bio.h>
+
+#ifndef OPENSSL_NO_SOCK
 
 #ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
