@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
@@ -287,6 +288,9 @@ int MAIN(int argc, char **argv)
 			goto end;
 #endif
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("load encryption certificates");
+#endif		
 		encerts = sk_X509_new_null();
 		while (*args) {
 			if(!(cert = load_cert(*args))) {
@@ -297,29 +301,50 @@ int MAIN(int argc, char **argv)
 			cert = NULL;
 			args++;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
 	if(signerfile && (operation == SMIME_SIGN)) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("load signer certificate");
+#endif		
 		if(!(signer = load_cert(signerfile))) {
 			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
 	if(certfile) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("load other certfiles");
+#endif		
 		if(!(other = load_certs(certfile))) {
 			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
 	if(recipfile && (operation == SMIME_DECRYPT)) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("load recipient certificate");
+#endif		
 		if(!(recip = load_cert(recipfile))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
 	if(operation == SMIME_DECRYPT) {
@@ -329,13 +354,22 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("load keyfile");
+#endif		
 		if(!(key = load_key(keyfile, passin))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_push_info("open input files");
+#endif		
 	if (infile) {
 		if (!(in = BIO_new_file(infile, inmode))) {
 			BIO_printf (bio_err,
@@ -343,7 +377,13 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	} else in = BIO_new_fp(stdin, BIO_NOCLOSE);
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+#endif		
 
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_push_info("open output files");
+#endif		
 	if (outfile) {
 		if (!(out = BIO_new_file(outfile, outmode))) {
 			BIO_printf (bio_err,
@@ -351,22 +391,50 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+#endif		
 
-	if(operation == SMIME_VERIFY)
+	if(operation == SMIME_VERIFY) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("setup_verify");
+#endif		
 		if(!(store = setup_verify(CAfile, CApath))) goto end;
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
+	}
 
 	ret = 3;
 
 	if(operation == SMIME_ENCRYPT) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("PKCS7_encrypt");
+#endif		
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	} else if(operation == SMIME_SIGN) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("PKCS7_sign");
+#endif		
 		p7 = PKCS7_sign(signer, key, other, in, flags);
 		BIO_reset(in);
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	} else {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("SMIME_read_PKCS7");
+#endif		
 		if(!(p7 = SMIME_read_PKCS7(in, &indata))) {
 			BIO_printf(bio_err, "Error reading S/MIME message\n");
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	}
 
 	if(!p7) {
@@ -376,25 +444,45 @@ int MAIN(int argc, char **argv)
 
 	ret = 4;
 	if(operation == SMIME_DECRYPT) {
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("PKCS7_decrypt");
+#endif		
 		if(!PKCS7_decrypt(p7, key, recip, out, flags)) {
 			BIO_printf(bio_err, "Error decrypting PKCS#7 structure\n");
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 	} else if(operation == SMIME_VERIFY) {
 		STACK_OF(X509) *signers;
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_push_info("PKCS7_verify");
+#endif		
 		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
 			BIO_printf(bio_err, "Verification Successful\n");
 		} else {
 			BIO_printf(bio_err, "Verification Failure\n");
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+		CRYPTO_push_info("PKCS7_iget_signers");
+#endif		
 		signers = PKCS7_iget_signers(p7, other, flags);
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+		CRYPTO_push_info("save_certs");
+#endif		
 		if(!save_certs(signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
 								signerfile);
 			ret = 5;
 			goto end;
 		}
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_pop_info();
+#endif		
 		sk_X509_free(signers);
 	} else if(operation == SMIME_PK7OUT) {
 		PEM_write_bio_PKCS7(out, p7);
@@ -406,6 +494,9 @@ int MAIN(int argc, char **argv)
 	}
 	ret = 0;
 end:
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_remove_all_info();
+#endif
 	if(ret) ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);
@@ -468,9 +559,20 @@ static X509_STORE *setup_verify(char *CAfile, char *CApath)
 {
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_push_info("X509_STORE_new");
+#endif	
 	if(!(store = X509_STORE_new())) goto end;
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+	CRYPTO_push_info("X509_STORE_add_lookup(...file)");
+#endif	
 	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_file());
 	if (lookup == NULL) goto end;
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+	CRYPTO_push_info("X509_LOOKUP_load_file");
+#endif	
 	if (CAfile) {
 		if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM)) {
 			BIO_printf(bio_err, "Error loading file %s\n", CAfile);
@@ -478,14 +580,25 @@ static X509_STORE *setup_verify(char *CAfile, char *CApath)
 		}
 	} else X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
 		
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+	CRYPTO_push_info("X509_STORE_add_lookup(...hash_dir)");
+#endif	
 	lookup=X509_STORE_add_lookup(store,X509_LOOKUP_hash_dir());
 	if (lookup == NULL) goto end;
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+	CRYPTO_push_info("X509_LOOKUP_add_dir");
+#endif	
 	if (CApath) {
 		if(!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM)) {
 			BIO_printf(bio_err, "Error loading directory %s\n", CApath);
 			goto end;
 		}
 	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+#ifdef CRYPTO_MDEBUG
+	CRYPTO_pop_info();
+#endif	
 
 	ERR_clear_error();
 	return store;
