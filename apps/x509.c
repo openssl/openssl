@@ -498,8 +498,15 @@ bad:
 							,errorline,extfile);
 			goto end;
 			}
-		if (!extsect && !(extsect = CONF_get_string(extconf, "default",
-					 "extensions"))) extsect = "default";
+		if (!extsect)
+			{
+			extsect = CONF_get_string(extconf, "default", "extensions");
+			if (!extsect)
+				{
+				ERR_clear_error();
+				extsect = "default";
+				}
+			}
 		X509V3_set_ctx_test(&ctx2);
 		X509V3_set_conf_lhash(&ctx2, extconf);
 		if (!X509V3_EXT_add_conf(extconf, &ctx2, extsect, NULL))

@@ -442,7 +442,11 @@ int add_oid_section(BIO *err, LHASH *conf)
 	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
+	if(!(p=CONF_get_string(conf,NULL,"oid_section")))
+		{
+		ERR_clear_error();
+		return 1;
+		}
 	if(!(sktmp = CONF_get_section(conf, p))) {
 		BIO_printf(err, "problem loading oid section %s\n", p);
 		return 0;

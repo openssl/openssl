@@ -463,6 +463,8 @@ bad:
 	if (req_conf != NULL)
 		{
 		p=CONF_get_string(req_conf,NULL,"oid_file");
+		if (p == NULL)
+			ERR_clear_error();
 		if (p != NULL)
 			{
 			BIO *oid_bio;
@@ -482,18 +484,27 @@ bad:
 				}
 			}
 		}
-		if(!add_oid_section(bio_err, req_conf)) goto end;
+	if(!add_oid_section(bio_err, req_conf)) goto end;
 
-	if ((md_alg == NULL) &&
-		((p=CONF_get_string(req_conf,SECTION,"default_md")) != NULL))
+	if (md_alg == NULL)
 		{
-		if ((md_alg=EVP_get_digestbyname(p)) != NULL)
-			digest=md_alg;
+		p=CONF_get_string(req_conf,SECTION,"default_md");
+		if (p == NULL)
+			ERR_clear_error();
+		if (p != NULL)
+			{
+			if ((md_alg=EVP_get_digestbyname(p)) != NULL)
+				digest=md_alg;
+			}
 		}
 
-	if(!extensions)
+	if (!extensions)
+		{
 		extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
-	if(extensions) {
+		if (!extensions)
+			ERR_clear_error();
+		}
+	if (extensions) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;
 		X509V3_set_ctx_test(&ctx);
@@ -506,12 +517,22 @@ bad:
 	}
 
 	if(!passin)
+		{
 		passin = CONF_get_string(req_conf, SECTION, "input_password");
-
+		if (!passin)
+			ERR_clear_error();
+		}
+	
 	if(!passout)
+		{
 		passout = CONF_get_string(req_conf, SECTION, "output_password");
+		if (!passout)
+			ERR_clear_error();
+		}
 
 	p = CONF_get_string(req_conf, SECTION, STRING_MASK);
+	if (!p)
+		ERR_clear_error();
 
 	if(p && !ASN1_STRING_set_default_mask_asc(p)) {
 		BIO_printf(bio_err, "Invalid global string mask setting %s\n", p);
@@ -519,7 +540,11 @@ bad:
 	}
 
 	if(!req_exts)
+		{
 		req_exts = CONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+		if (!req_exts)
+			ERR_clear_error();
+		}
 	if(req_exts) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;
@@ -597,6 +622,8 @@ bad:
                 if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)
 			{
 			char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+			if (randfile == NULL)
+				ERR_clear_error();
 			app_RAND_load_file(randfile, bio_err, 0);
                 	}
 		}
@@ -604,6 +631,8 @@ bad:
 	if (newreq && (pkey == NULL))
 		{
 		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+		if (randfile == NULL)
+			ERR_clear_error();
 		app_RAND_load_file(randfile, bio_err, 0);
 		if (inrand)
 			app_RAND_load_files(inrand);
@@ -650,8 +679,12 @@ bad:
 		if (pkey == NULL) goto end;
 
 		if (keyout == NULL)
+			{
 			keyout=CONF_get_string(req_conf,SECTION,KEYFILE);
-
+			if (keyout == NULL)
+				ERR_clear_error();
+			}
+		
 		if (keyout == NULL)
 			{
 			BIO_printf(bio_err,"writing new private key to stdout\n");
@@ -675,7 +708,12 @@ bad:
 
 		p=CONF_get_string(req_conf,SECTION,"encrypt_rsa_key");
 		if (p == NULL)
+			{
+			ERR_clear_error();
 			p=CONF_get_string(req_conf,SECTION,"encrypt_key");
+			if (p == NULL)
+				ERR_clear_error();
+			}
 		if ((p != NULL) && (strcmp(p,"no") == 0))
 			cipher=NULL;
 		if (nodes) cipher=NULL;
@@ -983,6 +1021,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	char *tmp, *dn_sect,*attr_sect;
 
 	tmp=CONF_get_string(req_conf,SECTION,PROMPT);
+	if (tmp == NULL)
+		ERR_clear_error();
 	if((tmp != NULL) && !strcmp(tmp, "no")) no_prompt = 1;
 
 	dn_sect=CONF_get_string(req_conf,SECTION,DISTINGUISHED_NAME);
@@ -1001,7 +1041,10 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 
 	attr_sect=CONF_get_string(req_conf,SECTION,ATTRIBUTES);
 	if (attr_sect == NULL)
+		{
+		ERR_clear_error();		
 		attr_sk=NULL;
+		}
 	else
 		{
 		attr_sk=CONF_get_section(req_conf,attr_sect);
@@ -1076,11 +1119,17 @@ start:		for (;;)
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
 			sprintf(buf,"%s_default",v->name);
 			if ((def=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+				{
+				ERR_clear_error();
 				def="";
+				}
 				
 			sprintf(buf,"%s_value",v->name);
 			if ((value=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
+				{
+				ERR_clear_error();
 				value=NULL;
+				}
 
 			sprintf(buf,"%s_min",v->name);
 			min=(int)CONF_get_number(req_conf,dn_sect,buf);
@@ -1122,12 +1171,19 @@ start2:			for (;;)
 				sprintf(buf,"%s_default",type);
 				if ((def=CONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
+					{
+					ERR_clear_error();
 					def="";
+					}
+				
 				
 				sprintf(buf,"%s_value",type);
 				if ((value=CONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
+					{
+					ERR_clear_error();
 					value=NULL;
+					}
 
 				sprintf(buf,"%s_min",type);
 				min=(int)CONF_get_number(req_conf,attr_sect,buf);

@@ -523,6 +523,8 @@ bad:
 	if (conf != NULL)
 		{
 		p=CONF_get_string(conf,NULL,"oid_file");
+		if (p == NULL)
+			ERR_clear_error();
 		if (p != NULL)
 			{
 			BIO *oid_bio;
@@ -550,6 +552,8 @@ bad:
 		}
 
 	randfile = CONF_get_string(conf, BASE_SECTION, "RANDFILE");
+	if (randfile == NULL)
+		ERR_clear_error();
 	app_RAND_load_file(randfile, bio_err, 0);
 	
 	in=BIO_new(BIO_s_file());
@@ -635,9 +639,13 @@ bad:
 		}
 
 	f=CONF_get_string(conf,BASE_SECTION,ENV_PRESERVE);
+	if (f == NULL)
+		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		preserve=1;
 	f=CONF_get_string(conf,BASE_SECTION,ENV_MSIE_HACK);
+	if (f == NULL)
+		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		msie_hack=1;
 
@@ -831,26 +839,34 @@ bad:
 			lookup_fail(section,ENV_SERIAL);
 			goto err;
 			}
-		if(!extensions)
+		if (!extensions)
+			{
 			extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
-		if(extensions) {
+			if (!extensions)
+				ERR_clear_error();
+			}
+		if (extensions)
+			{
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
 			X509V3_set_conf_lhash(&ctx, conf);
-			if(!X509V3_EXT_add_conf(conf, &ctx, extensions, NULL)) {
+			if (!X509V3_EXT_add_conf(conf, &ctx, extensions, NULL))
+				{
 				BIO_printf(bio_err,
 				 "Error Loading extension section %s\n",
 								 extensions);
 				ret = 1;
 				goto err;
+				}
 			}
-		}
 
 		if (startdate == NULL)
 			{
 			startdate=CONF_get_string(conf,section,
 				ENV_DEFAULT_STARTDATE);
+			if (startdate == NULL)
+				ERR_clear_error();
 			}
 		if (startdate && !ASN1_UTCTIME_set_string(NULL,startdate))
 			{
@@ -863,6 +879,8 @@ bad:
 			{
 			enddate=CONF_get_string(conf,section,
 				ENV_DEFAULT_ENDDATE);
+			if (enddate == NULL)
+				ERR_clear_error();
 			}
 		if (enddate && !ASN1_UTCTIME_set_string(NULL,enddate))
 			{
@@ -1142,20 +1160,27 @@ bad:
 	/*****************************************************************/
 	if (gencrl)
 		{
-		if(!crl_ext) crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
-		if(crl_ext) {
+		if (!crl_ext)
+			{
+			crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
+			if (!crl_ext)
+				ERR_clear_error();
+			}
+		if (crl_ext)
+			{
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
 			X509V3_set_conf_lhash(&ctx, conf);
-			if(!X509V3_EXT_add_conf(conf, &ctx, crl_ext, NULL)) {
+			if(!X509V3_EXT_add_conf(conf, &ctx, crl_ext, NULL))
+				{
 				BIO_printf(bio_err,
 				 "Error Loading CRL extension section %s\n",
 								 crl_ext);
 				ret = 1;
 				goto err;
+				}
 			}
-		}
 		if ((hex=BIO_new(BIO_s_mem())) == NULL) goto err;
 
 		if (!crldays && !crlhours)
