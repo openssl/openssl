@@ -71,6 +71,8 @@
 #include <openssl/objects.h>
 
 static int null_callback(int ok,X509_STORE_CTX *e);
+static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
 static int check_chain_purpose(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
@@ -85,13 +87,13 @@ static STACK *x509_store_method=NULL;
 
 static int null_callback(int ok, X509_STORE_CTX *e)
 	{
-	return(ok);
+	return ok;
 	}
 
 #if 0
 static int x509_subject_cmp(X509 **a, X509 **b)
 	{
-	return(X509_subject_name_cmp(*a,*b));
+	return X509_subject_name_cmp(*a,*b);
 	}
 #endif
 
@@ -99,7 +101,6 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	{
 	X509 *x,*xtmp,*chain_ss=NULL;
 	X509_NAME *xn;
-	X509_OBJECT obj;
 	int depth,i,ok=0;
 	int num;
 	int (*cb)();
@@ -108,10 +109,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	if (ctx->cert == NULL)
 		{
 		X509err(X509_F_X509_VERIFY_CERT,X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
-		return(-1);
+		return -1;
 		}
 
-	cb=ctx->ctx->verify_cb;
+	cb=ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 
 	/* first we make sure the chain we are going to build is
@@ -152,13 +153,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
-		if (X509_NAME_cmp(X509_get_subject_name(x),xn) == 0)
-			break;
+		if (ctx->check_issued(ctx, x,x)) break;
 
 		/* If we were passed a cert chain, use it first */
 		if (ctx->untrusted != NULL)
 			{
-			xtmp=X509_find_by_subject(sktmp,xn);
+			xtmp=find_issuer(ctx, sktmp,x);
 			if (xtmp != NULL)
 				{
 				if (!sk_X509_push(ctx->chain,xtmp))
@@ -183,11 +183,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	 * certificates.  We now need to add at least one trusted one,
 	 * if possible, otherwise we complain. */
 
+	/* Examine last certificate in chain and see if it
+ 	 * is self signed.
+ 	 */
+
 	i=sk_X509_num(ctx->chain);
 	x=sk_X509_value(ctx->chain,i-1);
 	xn = X509_get_subject_name(x);
-	if (X509_NAME_cmp(xn,X509_get_issuer_name(x))
-		== 0)
+	if (ctx->check_issued(ctx, x, x))
 		{
 		/* we have a self signed certificate */
 		if (sk_X509_num(ctx->chain) == 1)
@@ -196,13 +199,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 			 * we can find it in the store. We must have an exact
 			 * match to avoid possible impersonation.
 			 */
-			ok=X509_STORE_get_by_subject(ctx,X509_LU_X509,xn,&obj);
-			if ((ok != X509_LU_X509) || X509_cmp(x, obj.data.x509)) 
+			ok = ctx->get_issuer(&xtmp, ctx, x);
+			if ((ok <= 0) || X509_cmp(x, xtmp)) 
 				{
 				ctx->error=X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
 				ctx->current_cert=x;
 				ctx->error_depth=i-1;
-				if(ok == X509_LU_X509) X509_OBJECT_free_contents(&obj);
+				if (ok == 1) X509_free(xtmp);
 				ok=cb(0,ctx);
 				if (!ok) goto end;
 				}
@@ -212,14 +215,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 				 * so we get any trust settings.
 				 */
 				X509_free(x);
-				x = obj.data.x509;
+				x = xtmp;
 				sk_X509_set(ctx->chain, i - 1, x);
 				ctx->last_untrusted=0;
 				}
 			}
 		else
 			{
-			/* worry more about this one elsewhere */
+			/* extract and save self signed certificate for later use */
 			chain_ss=sk_X509_pop(ctx->chain);
 			ctx->last_untrusted--;
 			num--;
@@ -235,41 +238,30 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
-		if (X509_NAME_cmp(X509_get_subject_name(x),xn) == 0)
-			break;
+		if (ctx->check_issued(ctx,x,x)) break;
 
-		ok=X509_STORE_get_by_subject(ctx,X509_LU_X509,xn,&obj);
-		if (ok != X509_LU_X509)
+		ok = ctx->get_issuer(&xtmp, ctx, x);
+
+		if (ok < 0) return ok;
+		if (ok == 0) break;
+
+		x = xtmp;
+		if (!sk_X509_push(ctx->chain,x))
 			{
-			if (ok == X509_LU_RETRY)
-				{
-				X509_OBJECT_free_contents(&obj);
-				X509err(X509_F_X509_VERIFY_CERT,X509_R_SHOULD_RETRY);
-				return(ok);
-				}
-			else if (ok != X509_LU_FAIL)
-				{
-				X509_OBJECT_free_contents(&obj);
-				/* not good :-(, break anyway */
-				return(ok);
-				}
-			break;
-			}
-		x=obj.data.x509;
-		if (!sk_X509_push(ctx->chain,obj.data.x509))
-			{
-			X509_OBJECT_free_contents(&obj);
+			X509_free(xtmp);
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
-			return(0);
+			return 0;
 			}
 		num++;
 		}
 
 	/* we now have our chain, lets check it... */
 	xn=X509_get_issuer_name(x);
-	if (X509_NAME_cmp(X509_get_subject_name(x),xn) != 0)
+
+	/* Is last certificate looked up self signed? */
+	if (!ctx->check_issued(ctx,x,x))
 		{
-		if ((chain_ss == NULL) || (X509_NAME_cmp(X509_get_subject_name(chain_ss),xn) != 0))
+		if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss))
 			{
 			if (ctx->last_untrusted >= num)
 				ctx->error=X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
@@ -294,22 +286,22 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 
 	/* We have the chain complete: now we need to check its purpose */
-	if(ctx->purpose > 0) ok = check_chain_purpose(ctx);
+	if (ctx->purpose > 0) ok = check_chain_purpose(ctx);
 
-	if(!ok) goto end;
+	if (!ok) goto end;
 
 	/* The chain extensions are OK: check trust */
 
-	if(ctx->trust > 0) ok = check_trust(ctx);
+	if (ctx->trust > 0) ok = check_trust(ctx);
 
-	if(!ok) goto end;
+	if (!ok) goto end;
 
 	/* We may as well copy down any DSA parameters that are required */
 	X509_get_pubkey_parameters(NULL,ctx->chain);
 
 	/* At this point, we have a chain and just need to verify it */
-	if (ctx->ctx->verify != NULL)
-		ok=ctx->ctx->verify(ctx);
+	if (ctx->verify != NULL)
+		ok=ctx->verify(ctx);
 	else
 		ok=internal_verify(ctx);
 	if (0)
@@ -319,8 +311,61 @@ end:
 		}
 	if (sktmp != NULL) sk_X509_free(sktmp);
 	if (chain_ss != NULL) X509_free(chain_ss);
-	return(ok);
+	return ok;
 	}
+
+
+/* Given a STACK_OF(X509) find the issuer of cert (if any)
+ */
+
+static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
+{
+	int i;
+	X509 *issuer;
+	for (i = 0; i < sk_X509_num(sk); i++)
+		{
+		issuer = sk_X509_value(sk, i);
+		if (ctx->check_issued(ctx, x, issuer))
+			return issuer;
+		}
+	return NULL;
+}
+
+/* Given a possible certificate and issuer check them */
+
+static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
+{
+	int ret;
+	ret = X509_check_issued(issuer, x);
+	if (ret == X509_V_OK)
+		return 1;
+	else
+		{
+		ctx->error = ret;
+		ctx->current_cert = x;
+		ctx->current_issuer = issuer;
+		if ((ctx->flags & X509_V_FLAG_CB_ISSUER_CHECK) && ctx->verify_cb)
+			return ctx->verify_cb(0, ctx);
+		else
+			return 0;
+		}
+	return 0;
+}
+
+/* Alternative lookup method: look from a STACK stored in other_ctx */
+
+static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+{
+	*issuer = find_issuer(ctx, ctx->other_ctx, x);
+	if (*issuer)
+		{
+		CRYPTO_add(&(*issuer)->references,1,CRYPTO_LOCK_X509);
+		return 1;
+		}
+	else
+		return 0;
+}
+	
 
 /* Check a certificate chains extensions for consistency
  * with the supplied purpose
@@ -334,32 +379,37 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 	int i, ok=0;
 	X509 *x;
 	int (*cb)();
-	cb=ctx->ctx->verify_cb;
+	cb=ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 	/* Check all untrusted certificates */
-	for(i = 0; i < ctx->last_untrusted; i++) {
+	for (i = 0; i < ctx->last_untrusted; i++)
+		{
 		x = sk_X509_value(ctx->chain, i);
-		if(!X509_check_purpose(x, ctx->purpose, i)) {
-			if(i) ctx->error = X509_V_ERR_INVALID_CA;
-			else ctx->error = X509_V_ERR_INVALID_PURPOSE;
+		if (!X509_check_purpose(x, ctx->purpose, i))
+			{
+			if (i)
+				ctx->error = X509_V_ERR_INVALID_CA;
+			else
+				ctx->error = X509_V_ERR_INVALID_PURPOSE;
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok=cb(0,ctx);
-			if(!ok) goto end;
-		}
+			if (!ok) goto end;
+			}
 		/* Check pathlen */
-		if((i > 1) && (x->ex_pathlen != -1)
-					&& (i > (x->ex_pathlen + 1))) {
+		if ((i > 1) && (x->ex_pathlen != -1)
+			   && (i > (x->ex_pathlen + 1)))
+			{
 			ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok=cb(0,ctx);
-			if(!ok) goto end;
+			if (!ok) goto end;
+			}
 		}
-	}
 	ok = 1;
-	end:
-	return(ok);
+ end:
+	return ok;
 #endif
 }
 
@@ -371,19 +421,22 @@ static int check_trust(X509_STORE_CTX *ctx)
 	int i, ok;
 	X509 *x;
 	int (*cb)();
-	cb=ctx->ctx->verify_cb;
+	cb=ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 /* For now just check the last certificate in the chain */
 	i = sk_X509_num(ctx->chain) - 1;
 	x = sk_X509_value(ctx->chain, i);
 	ok = X509_check_trust(x, ctx->trust, 0);
-	if(ok == X509_TRUST_TRUSTED) return 1;
+	if (ok == X509_TRUST_TRUSTED)
+		return 1;
 	ctx->error_depth = sk_X509_num(ctx->chain) - 1;
 	ctx->current_cert = x;
-	if(ok == X509_TRUST_REJECTED) ctx->error = X509_V_ERR_CERT_REJECTED;
-	else ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+	if (ok == X509_TRUST_REJECTED)
+		ctx->error = X509_V_ERR_CERT_REJECTED;
+	else
+		ctx->error = X509_V_ERR_CERT_UNTRUSTED;
 	ok = cb(0, ctx);
-	return(ok);
+	return ok;
 #endif
 }
 
@@ -392,17 +445,21 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	int i,ok=0,n;
 	X509 *xs,*xi;
 	EVP_PKEY *pkey=NULL;
+	time_t *ptime;
 	int (*cb)();
 
-	cb=ctx->ctx->verify_cb;
+	cb=ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 
 	n=sk_X509_num(ctx->chain);
 	ctx->error_depth=n-1;
 	n--;
 	xi=sk_X509_value(ctx->chain,n);
-	if (X509_NAME_cmp(X509_get_subject_name(xi),
-		X509_get_issuer_name(xi)) == 0)
+	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->check_time;
+	else
+		ptime = NULL;
+	if (ctx->check_issued(ctx, xi, xi))
 		xs=xi;
 	else
 		{
@@ -448,7 +505,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			EVP_PKEY_free(pkey);
 			pkey=NULL;
 
-			i=X509_cmp_current_time(X509_get_notBefore(xs));
+			i=X509_cmp_time(X509_get_notBefore(xs), ptime);
 			if (i == 0)
 				{
 				ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
@@ -466,7 +523,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			xs->valid=1;
 			}
 
-		i=X509_cmp_current_time(X509_get_notAfter(xs));
+		i=X509_cmp_time(X509_get_notAfter(xs), ptime);
 		if (i == 0)
 			{
 			ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
@@ -499,10 +556,15 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		}
 	ok=1;
 end:
-	return(ok);
+	return ok;
 	}
 
 int X509_cmp_current_time(ASN1_TIME *ctm)
+{
+	return X509_cmp_time(ctm, NULL);
+}
+
+int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	{
 	char *str;
 	ASN1_TIME atm;
@@ -513,17 +575,20 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 	p=buff1;
 	i=ctm->length;
 	str=(char *)ctm->data;
-	if(ctm->type == V_ASN1_UTCTIME) {
-		if ((i < 11) || (i > 17)) return(0);
+	if (ctm->type == V_ASN1_UTCTIME)
+		{
+		if ((i < 11) || (i > 17)) return 0;
 		memcpy(p,str,10);
 		p+=10;
 		str+=10;
-	} else {
-		if(i < 13) return 0;
+		}
+	else
+		{
+		if (i < 13) return 0;
 		memcpy(p,str,12);
 		p+=12;
 		str+=12;
-	}
+		}
 
 	if ((*str == 'Z') || (*str == '-') || (*str == '+'))
 		{ *(p++)='0'; *(p++)='0'; }
@@ -532,13 +597,13 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 		*(p++)= *(str++);
 		*(p++)= *(str++);
 		/* Skip any fractional seconds... */
-		if(*str == '.')
+		if (*str == '.')
 			{
 			str++;
-			while((*str >= '0') && (*str <= '9')) str++;
+			while ((*str >= '0') && (*str <= '9')) str++;
 			}
-
-	}
+		
+		}
 	*(p++)='Z';
 	*(p++)='\0';
 
@@ -547,7 +612,7 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 	else
 		{
 		if ((*str != '+') && (str[5] != '-'))
-			return(0);
+			return 0;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
 		if (*str == '-')
@@ -557,32 +622,40 @@ int X509_cmp_current_time(ASN1_TIME *ctm)
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	X509_gmtime_adj(&atm,-offset*60);
+	X509_time_adj(&atm,-offset*60, cmp_time);
 
-	if(ctm->type == V_ASN1_UTCTIME)
+	if (ctm->type == V_ASN1_UTCTIME)
 		{
 		i=(buff1[0]-'0')*10+(buff1[1]-'0');
 		if (i < 50) i+=100; /* cf. RFC 2459 */
 		j=(buff2[0]-'0')*10+(buff2[1]-'0');
 		if (j < 50) j+=100;
 
-		if (i < j) return (-1);
-		if (i > j) return (1);
+		if (i < j) return -1;
+		if (i > j) return 1;
 		}
 	i=strcmp(buff1,buff2);
 	if (i == 0) /* wait a second then return younger :-) */
-		return(-1);
+		return -1;
 	else
-		return(i);
+		return i;
 	}
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
+{
+	return X509_time_adj(s, adj, NULL);
+}
+
+ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *in_tm)
 	{
 	time_t t;
 
-	time(&t);
+	if (in_tm) t = *in_tm;
+	else time(&t);
+
 	t+=adj;
-	if(s->type == V_ASN1_UTCTIME) return(ASN1_UTCTIME_set(s,t));
+	if (!s) return ASN1_TIME_set(s, t);
+	if (s->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_set(s,t);
 	return ASN1_GENERALIZEDTIME_set(s, t);
 	}
 
@@ -591,7 +664,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	EVP_PKEY *ktmp=NULL,*ktmp2;
 	int i,j;
 
-	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return(1);
+	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return 1;
 
 	for (i=0; i<sk_X509_num(chain); i++)
 		{
@@ -599,7 +672,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 		if (ktmp == NULL)
 			{
 			X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
-			return(0);
+			return 0;
 			}
 		if (!EVP_PKEY_missing_parameters(ktmp))
 			break;
@@ -612,7 +685,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	if (ktmp == NULL)
 		{
 		X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
-		return(0);
+		return 0;
 		}
 
 	/* first, populate the other certs */
@@ -625,101 +698,31 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	
 	if (pkey != NULL) EVP_PKEY_copy_parameters(pkey,ktmp);
 	EVP_PKEY_free(ktmp);
-	return(1);
-	}
-
-int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
-	{
-	X509_OBJECT *obj,*r;
-	int ret=1;
-
-	if (x == NULL) return(0);
-	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
-	if (obj == NULL)
-		{
-		X509err(X509_F_X509_STORE_ADD_CERT,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	obj->type=X509_LU_X509;
-	obj->data.x509=x;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-
-	X509_OBJECT_up_ref_count(obj);
-
-	r=(X509_OBJECT *)lh_insert(ctx->certs,obj);
-	if (r != NULL)
-		{ /* oops, put it back */
-		lh_delete(ctx->certs,obj);
-		X509_OBJECT_free_contents(obj);
-		OPENSSL_free(obj);
-		lh_insert(ctx->certs,r);
-		X509err(X509_F_X509_STORE_ADD_CERT,X509_R_CERT_ALREADY_IN_HASH_TABLE);
-		ret=0;
-		}
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-	return(ret);	
-	}
-
-int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
-	{
-	X509_OBJECT *obj,*r;
-	int ret=1;
-
-	if (x == NULL) return(0);
-	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
-	if (obj == NULL)
-		{
-		X509err(X509_F_X509_STORE_ADD_CRL,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	obj->type=X509_LU_CRL;
-	obj->data.crl=x;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-
-	X509_OBJECT_up_ref_count(obj);
-
-	r=(X509_OBJECT *)lh_insert(ctx->certs,obj);
-	if (r != NULL)
-		{ /* oops, put it back */
-		lh_delete(ctx->certs,obj);
-		X509_OBJECT_free_contents(obj);
-		OPENSSL_free(obj);
-		lh_insert(ctx->certs,r);
-		X509err(X509_F_X509_STORE_ADD_CRL,X509_R_CERT_ALREADY_IN_HASH_TABLE);
-		ret=0;
-		}
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-	return(ret);	
+	return 1;
 	}
 
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
         x509_store_ctx_num++;
-        return(CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
+        return CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
 		&x509_store_ctx_method,
-                argl,argp,new_func,dup_func,free_func));
+                argl,argp,new_func,dup_func,free_func);
         }
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
 	{
-	return(CRYPTO_set_ex_data(&ctx->ex_data,idx,data));
+	return CRYPTO_set_ex_data(&ctx->ex_data,idx,data);
 	}
 
 void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx)
 	{
-	return(CRYPTO_get_ex_data(&ctx->ex_data,idx));
+	return CRYPTO_get_ex_data(&ctx->ex_data,idx);
 	}
 
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
 	{
-	return(ctx->error);
+	return ctx->error;
 	}
 
 void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
@@ -729,17 +732,17 @@ void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
 
 int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
 	{
-	return(ctx->error_depth);
+	return ctx->error_depth;
 	}
 
 X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	{
-	return(ctx->current_cert);
+	return ctx->current_cert;
 	}
 
 STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 	{
-	return(ctx->chain);
+	return ctx->chain;
 	}
 
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
@@ -747,12 +750,13 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 	int i;
 	X509 *x;
 	STACK_OF(X509) *chain;
-	if(!ctx->chain || !(chain = sk_X509_dup(ctx->chain))) return NULL;
-	for(i = 0; i < sk_X509_num(chain); i++) {
+	if (!ctx->chain || !(chain = sk_X509_dup(ctx->chain))) return NULL;
+	for (i = 0; i < sk_X509_num(chain); i++)
+		{
 		x = sk_X509_value(chain, i);
 		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-	}
-	return(chain);
+		}
+	return chain;
 	}
 
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
@@ -790,43 +794,123 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 {
 	int idx;
 	/* If purpose not set use default */
-	if(!purpose) purpose = def_purpose;
+	if (!purpose) purpose = def_purpose;
 	/* If we have a purpose then check it is valid */
-	if(purpose) {
+	if (purpose)
+		{
 		X509_PURPOSE *ptmp;
 		idx = X509_PURPOSE_get_by_id(purpose);
-		if(idx == -1) {
+		if (idx == -1)
+			{
 			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
 						X509_R_UNKNOWN_PURPOSE_ID);
 			return 0;
-		}
+			}
 		ptmp = X509_PURPOSE_get0(idx);
-		if(ptmp->trust == X509_TRUST_DEFAULT) {
+		if (ptmp->trust == X509_TRUST_DEFAULT)
+			{
 			idx = X509_PURPOSE_get_by_id(def_purpose);
-			if(idx == -1) {
+			if (idx == -1)
+				{
 				X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
 						X509_R_UNKNOWN_PURPOSE_ID);
 				return 0;
-			}
+				}
 			ptmp = X509_PURPOSE_get0(idx);
-		}
+			}
 		/* If trust not set then get from purpose default */
-		if(!trust) trust = ptmp->trust;
-	}
-	if(trust) {
+		if (!trust) trust = ptmp->trust;
+		}
+	if (trust)
+		{
 		idx = X509_TRUST_get_by_id(trust);
-		if(idx == -1) {
+		if (idx == -1)
+			{
 			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
 						X509_R_UNKNOWN_TRUST_ID);
 			return 0;
+			}
 		}
-	}
 
-	if(purpose) ctx->purpose = purpose;
-	if(trust) ctx->trust = trust;
+	if (purpose) ctx->purpose = purpose;
+	if (trust) ctx->trust = trust;
 	return 1;
 }
 
+X509_STORE_CTX *X509_STORE_CTX_new(void)
+{
+	X509_STORE_CTX *ctx;
+	ctx = (X509_STORE_CTX *)OPENSSL_malloc(sizeof(X509_STORE_CTX));
+	if (ctx) memset(ctx, 0, sizeof(X509_STORE_CTX));
+	return ctx;
+}
+
+void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
+{
+	X509_STORE_CTX_cleanup(ctx);
+	OPENSSL_free(ctx);
+}
+
+void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+	     STACK_OF(X509) *chain)
+	{
+	ctx->ctx=store;
+	ctx->current_method=0;
+	ctx->cert=x509;
+	ctx->untrusted=chain;
+	ctx->last_untrusted=0;
+	ctx->purpose=0;
+	ctx->trust=0;
+	ctx->check_time=0;
+	ctx->flags=0;
+	ctx->other_ctx=NULL;
+	ctx->valid=0;
+	ctx->chain=NULL;
+	ctx->depth=9;
+	ctx->error=0;
+	ctx->error_depth=0;
+	ctx->current_cert=NULL;
+	ctx->current_issuer=NULL;
+	ctx->check_issued = check_issued;
+	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
+	ctx->verify_cb = store->verify_cb;
+	ctx->verify = store->verify;
+	ctx->cleanup = 0;
+	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));
+	}
+
+/* Set alternative lookup method: just a STACK of trusted certificates.
+ * This avoids X509_STORE nastiness where it isn't needed.
+ */
+
+void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	ctx->other_ctx = sk;
+	ctx->get_issuer = get_issuer_sk;
+}
+
+void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
+	{
+	if (ctx->cleanup) ctx->cleanup(ctx);
+	if (ctx->chain != NULL)
+		{
+		sk_X509_pop_free(ctx->chain,X509_free);
+		ctx->chain=NULL;
+		}
+	CRYPTO_free_ex_data(x509_store_ctx_method,ctx,&(ctx->ex_data));
+	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
+	}
+
+void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, long flags)
+	{
+	ctx->flags |= flags;
+	}
+
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t)
+	{
+	ctx->check_time = t;
+	ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
+	}
 
 IMPLEMENT_STACK_OF(X509)
 IMPLEMENT_ASN1_SET_OF(X509)

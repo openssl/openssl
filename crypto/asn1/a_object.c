@@ -65,11 +65,12 @@
 int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	{
 	unsigned char *p;
+	int objsize;
 
 	if ((a == NULL) || (a->data == NULL)) return(0);
 
-	if (pp == NULL)
-		return(ASN1_object_size(0,a->length,V_ASN1_OBJECT));
+	objsize = ASN1_object_size(0,a->length,V_ASN1_OBJECT);
+	if (pp == NULL) return objsize;
 
 	p= *pp;
 	ASN1_put_object(&p,0,a->length,V_ASN1_OBJECT,V_ASN1_UNIVERSAL);
@@ -77,7 +78,7 @@ int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	p+=a->length;
 
 	*pp=p;
-	return(a->length);
+	return(objsize);
 	}
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)

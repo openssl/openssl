@@ -101,6 +101,8 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
+	if (getenv("OPENSSL_DEBUG_MEMORY") != NULL)
+		CRYPTO_malloc_debug_init();
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	apps_startup();

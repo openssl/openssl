@@ -182,6 +182,7 @@ static void ssleay_rand_cleanup(void)
 	md_count[0]=0;
 	md_count[1]=0;
 	entropy=0;
+	initialized=0;
 	}
 
 static void ssleay_rand_add(const void *buf, int num, double add)

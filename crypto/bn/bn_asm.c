@@ -227,7 +227,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 
 #else
 
-/* Divide h-l by d and return the result. */
+/* Divide h,l by d and return the result. */
 /* I need to test this some more :-( */
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	{
@@ -237,13 +237,8 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	if (d == 0) return(BN_MASK2);
 
 	i=BN_num_bits_word(d);
-	if ((i != BN_BITS2) && (h > (BN_ULONG)1<<i))
-		{
-#if !defined(NO_STDIO) && !defined(WIN16)
-		fprintf(stderr,"Division would overflow (%d)\n",i);
-#endif
-		abort();
-		}
+	assert((i == BN_BITS2) || (h > (BN_ULONG)1<<i));
+
 	i=BN_BITS2-i;
 	if (h >= d) h-=d;
 

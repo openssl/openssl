@@ -23,6 +23,7 @@ B<openssl> B<ca>
 [B<-policy arg>]
 [B<-keyfile arg>]
 [B<-key arg>]
+[B<-passin arg>]
 [B<-cert file>]
 [B<-in file>]
 [B<-out file>]
@@ -99,6 +100,10 @@ the password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
 the 'ps' utility) this option should be used with caution.
 
+=item B<-passin arg>
+
+the key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 =item B<-verbose>
 
 this prints extra details about the operations being performed.
@@ -341,6 +346,10 @@ demoCA/index.txt.
 Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
+
+Sign a certificate request, using CA extensions:
+
+ openssl ca -in req.pem -extensions v3_ca -out newcert.pem
 
 Generate a CRL
 

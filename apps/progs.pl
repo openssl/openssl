@@ -29,7 +29,7 @@ foreach (@ARGV)
 	$str="\t{FUNC_TYPE_GENERAL,\"$_\",${_}_main},\n";
 	if (($_ =~ /^s_/) || ($_ =~ /^ciphers$/))
 		{ print "#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(NO_SSL3))\n${str}#endif\n"; } 
-	elsif ( ($_ =~ /^rsa$/) || ($_ =~ /^genrsa$/) ) 
+	elsif ( ($_ =~ /^rsa$/) || ($_ =~ /^genrsa$/) || ($_ =~ /^rsautl$/)) 
 		{ print "#ifndef NO_RSA\n${str}#endif\n";  }
 	elsif ( ($_ =~ /^dsa$/) || ($_ =~ /^gendsa$/) || ($_ =~ /^dsaparam$/))
 		{ print "#ifndef NO_DSA\n${str}#endif\n"; }
@@ -41,7 +41,7 @@ foreach (@ARGV)
 		{ print $str; }
 	}
 
-foreach ("md2","md5","sha","sha1","mdc2","rmd160")
+foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
 	{
 	push(@files,$_);
 	printf "\t{FUNC_TYPE_MD,\"%s\",dgst_main},\n",$_;

@@ -86,6 +86,8 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 		return NULL;
 	}
 
+	if(!X509_check_private_key(cert, pkey)) return NULL;
+
 	if(!(bags = sk_PKCS12_SAFEBAG_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;

@@ -59,11 +59,7 @@
 #ifndef HEADER_X509_H
 #define HEADER_X509_H
 
-#ifdef VMS
-#undef X509_REVOKED_get_ext_by_critical
-#define X509_REVOKED_get_ext_by_critical X509_REVOKED_get_ext_by_critic
-#endif
-
+#include <openssl/symhacks.h>
 #ifndef NO_BUFFER
 #include <openssl/buffer.h>
 #endif
@@ -213,6 +209,8 @@ DECLARE_ASN1_SET_OF(X509_ATTRIBUTE)
 
 typedef struct X509_req_info_st
 	{
+	unsigned char *asn1;
+	int length;
 	ASN1_INTEGER *version;
 	X509_NAME *subject;
 	X509_PUBKEY *pubkey;
@@ -273,6 +271,8 @@ typedef struct x509_st
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
+	ASN1_OCTET_STRING *skid;
+	struct AUTHORITY_KEYID_st *akid;
 #ifndef NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
@@ -744,6 +744,8 @@ int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key);
 int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
+int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey);
+EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a);
 #endif
 
 #ifndef NO_BIO
@@ -775,6 +777,8 @@ int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key);
 int i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
+int i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey);
+EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a);
 #endif
 
 X509 *X509_dup(X509 *x509);
@@ -792,7 +796,9 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 
 #endif /* !SSLEAY_MACROS */
 
+int		X509_cmp_time(ASN1_TIME *s, time_t *t);
 int		X509_cmp_current_time(ASN1_TIME *s);
+ASN1_TIME *	X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
 ASN1_TIME *	X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *	X509_get_default_cert_area(void );

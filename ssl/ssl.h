@@ -553,7 +553,7 @@ struct ssl_st
 #ifndef NO_BIO
 	BIO *rbio; /* used by SSL_read */
 	BIO *wbio; /* used by SSL_write */
-	BIO *bbio; /* used during session-id reuse to concatinate
+	BIO *bbio; /* used during session-id reuse to concatenate
 		    * messages */
 #else
 	char *rbio; /* used by SSL_read */

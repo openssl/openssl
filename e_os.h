@@ -363,6 +363,10 @@ extern HINSTANCE _hInstance;
 #      include <sys/select.h>
 #    endif
 
+#    ifdef __QNX__
+#      include <sys/select.h>
+#    endif
+
 #    if defined(sun)
 #      include <sys/filio.h>
 #    else

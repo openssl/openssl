@@ -531,9 +531,7 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
 #ifndef SSLEAY_MACROS
 
-#ifdef VMS
-#include <openssl/vms_idhacks.h>
-#endif
+#include <openssl/symhacks.h>
 
 DECLARE_PEM_rw(X509, X509)
 

@@ -40,8 +40,9 @@ L<x509(3)|x509(3)>, L<x509v3(3)|x509v3(3)>
 
 =item AUTHENTICATION CODES, HASH FUNCTIONS
 
-L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>, L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>,
-L<ripemd(3)|ripemd(3)>, L<sha(3)|sha(3)> 
+L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>, L<md4(3)|md4(3)>,
+L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
+L<sha(3)|sha(3)>
 
 =item AUXILIARY FUNCTIONS
 

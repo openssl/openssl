@@ -59,8 +59,10 @@
 
 bn_div_words_abort(int i)
 {
+#ifdef BN_DEBUG
 #if !defined(NO_STDIO) && !defined(WIN16)
 	fprintf(stderr,"Division would overflow (%d)\n",i);
 #endif
 	abort();
+#endif
 }

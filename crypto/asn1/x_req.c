@@ -65,6 +65,14 @@ int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
+	if(a->asn1) {
+		if(pp) {
+			memcpy(*pp, a->asn1, a->length);
+			*pp += a->length;
+		}
+		return a->length;
+	}
+
 	M_ASN1_I2D_len(a->version,		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(a->subject,		i2d_X509_NAME);
 	M_ASN1_I2D_len(a->pubkey,		i2d_X509_PUBKEY);
@@ -152,6 +160,7 @@ X509_REQ_INFO *X509_REQ_INFO_new(void)
 	M_ASN1_New(ret->pubkey,X509_PUBKEY_new);
 	M_ASN1_New(ret->attributes,sk_X509_ATTRIBUTE_new_null);
 	ret->req_kludge=0;
+	ret->asn1 = NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_REQ_INFO_NEW);
 	}
@@ -159,6 +168,7 @@ X509_REQ_INFO *X509_REQ_INFO_new(void)
 void X509_REQ_INFO_free(X509_REQ_INFO *a)
 	{
 	if (a == NULL) return;
+	if(a->asn1) OPENSSL_free(a->asn1);
 	M_ASN1_INTEGER_free(a->version);
 	X509_NAME_free(a->subject);
 	X509_PUBKEY_free(a->pubkey);
@@ -189,6 +199,17 @@ X509_REQ *d2i_X509_REQ(X509_REQ **a, unsigned char **pp, long length)
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->req_info,d2i_X509_REQ_INFO);
+
+	/* Keep a copy of the original encoding for signature checking */
+	ret->req_info->length = c.p - c.q;
+	if(!(ret->req_info->asn1 = OPENSSL_malloc(ret->req_info->length))) {
+		c.line=__LINE__;
+		c.error = ERR_R_MALLOC_FAILURE;
+		goto err;
+	}
+
+	memcpy(ret->req_info->asn1, c.q, ret->req_info->length);
+
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->signature,d2i_ASN1_BIT_STRING);
 	M_ASN1_D2I_Finish(a,X509_REQ_free,ASN1_F_D2I_X509_REQ);

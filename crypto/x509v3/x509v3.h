@@ -532,6 +532,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
 int X509_check_purpose(X509 *x, int id, int ca);
+int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_PURPOSE_get_count(void);
 X509_PURPOSE * X509_PURPOSE_get0(int idx);
 int X509_PURPOSE_get_by_sname(char *sname);

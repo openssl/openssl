@@ -70,7 +70,7 @@
 #define PROG	verify_main
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx,char *file, STACK_OF(X509)*other, int purpose);
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose);
 static STACK_OF(X509) *load_untrusted(char *file);
 static int v_verbose=0;
 
@@ -81,8 +81,8 @@ int MAIN(int argc, char **argv)
 	int i,ret=1;
 	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
-	char *untfile = NULL;
-	STACK_OF(X509) *untrusted = NULL;
+	char *untfile = NULL, *trustfile = NULL;
+	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 
@@ -132,6 +132,11 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				untfile= *(++argv);
 				}
+			else if (strcmp(*argv,"-trusted") == 0)
+				{
+				if (argc-- < 1) goto end;
+				trustfile= *(++argv);
+				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
 			else if (strcmp(*argv,"-verbose") == 0)
@@ -179,10 +184,18 @@ int MAIN(int argc, char **argv)
 		}
 	}
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, purpose);
+	if(trustfile) {
+		if(!(trusted = load_untrusted(trustfile))) {
+			BIO_printf(bio_err, "Error loading untrusted file %s\n", trustfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, purpose);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, purpose);
+			check(cert_ctx,argv[i], untrusted, trusted, purpose);
 	ret=0;
 end:
 	if (ret == 1) {
@@ -197,10 +210,11 @@ end:
 	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
+	sk_X509_pop_free(trusted, X509_free);
 	EXIT(ret);
 	}
 
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpose)
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose)
 	{
 	X509 *x=NULL;
 	BIO *in=NULL;
@@ -242,6 +256,7 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpos
 		goto end;
 		}
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
+	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);

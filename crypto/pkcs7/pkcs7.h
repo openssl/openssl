@@ -210,6 +210,9 @@ typedef struct pkcs7_st
 
 		/* NID_pkcs7_encrypted */
 		PKCS7_ENCRYPT *encrypted;
+
+		/* Anything else */
+		ASN1_TYPE *other;
 		} d;
 	} PKCS7;
 
@@ -244,15 +247,16 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 
 /* S/MIME related flags */
 
-#define PKCS7_TEXT	0x1
-#define PKCS7_NOCERTS	0x2
-#define PKCS7_NOSIGS	0x4
-#define PKCS7_NOCHAIN	0x8
-#define PKCS7_NOINTERN	0x10
-#define PKCS7_NOVERIFY	0x20
-#define PKCS7_DETACHED	0x40
-#define PKCS7_BINARY	0x80
-#define PKCS7_NOATTR	0x100
+#define PKCS7_TEXT		0x1
+#define PKCS7_NOCERTS		0x2
+#define PKCS7_NOSIGS		0x4
+#define PKCS7_NOCHAIN		0x8
+#define PKCS7_NOINTERN		0x10
+#define PKCS7_NOVERIFY		0x20
+#define PKCS7_DETACHED		0x40
+#define PKCS7_BINARY		0x80
+#define PKCS7_NOATTR		0x100
+#define	PKCS7_NOSMIMECAP	0x200
 
 /* Flags: for compatibility with older code */
 

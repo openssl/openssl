@@ -67,6 +67,9 @@ void OpenSSL_add_all_digests(void)
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
 #endif
+#ifndef NO_MD4
+	EVP_add_digest(EVP_md4());
+#endif
 #ifndef NO_MD5
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest_alias(SN_md5,"ssl2-md5");

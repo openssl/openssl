@@ -91,6 +91,7 @@ static ERR_STRING_DATA BIO_str_functs[]=
 {ERR_PACK(0,BIO_F_CONN_CTRL,0),	"CONN_CTRL"},
 {ERR_PACK(0,BIO_F_CONN_STATE,0),	"CONN_STATE"},
 {ERR_PACK(0,BIO_F_FILE_CTRL,0),	"FILE_CTRL"},
+{ERR_PACK(0,BIO_F_MEM_READ,0),	"MEM_READ"},
 {ERR_PACK(0,BIO_F_MEM_WRITE,0),	"MEM_WRITE"},
 {ERR_PACK(0,BIO_F_SSL_NEW,0),	"SSL_new"},
 {ERR_PACK(0,BIO_F_WSASTARTUP,0),	"WSASTARTUP"},
@@ -104,6 +105,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_BAD_HOSTNAME_LOOKUP               ,"bad hostname lookup"},
 {BIO_R_BROKEN_PIPE                       ,"broken pipe"},
 {BIO_R_CONNECT_ERROR                     ,"connect error"},
+{BIO_R_EOF_ON_MEMORY_BIO                 ,"EOF on memory BIO"},
 {BIO_R_ERROR_SETTING_NBIO                ,"error setting nbio"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
@@ -124,8 +126,8 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
 {BIO_R_UNINITIALIZED                     ,"uninitialized"},
 {BIO_R_UNSUPPORTED_METHOD                ,"unsupported method"},
-{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only bio"},
-{BIO_R_WSASTARTUP                        ,"wsastartup"},
+{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only BIO"},
+{BIO_R_WSASTARTUP                        ,"WSAStartup"},
 {0,NULL}
 	};
 

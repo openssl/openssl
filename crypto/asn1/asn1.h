@@ -655,7 +655,10 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a,unsigned char **pp,
 int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
+int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
+#if 0
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+#endif
 
 int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
@@ -808,6 +811,8 @@ char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 #endif
+
+int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
 #ifndef NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);

@@ -216,7 +216,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	char *key=NULL;
+	char *key=NULL,*passargin=NULL;
 	int total=0;
 	int total_done=0;
 	int badops=0;
@@ -332,6 +332,11 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			keyfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-passin") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-key") == 0)
 			{
@@ -524,6 +529,11 @@ bad:
 		section,ENV_PRIVATE_KEY)) == NULL))
 		{
 		lookup_fail(section,ENV_PRIVATE_KEY);
+		goto err;
+		}
+	if(!key && !app_passwd(bio_err, passargin, NULL, &key, NULL))
+		{
+		BIO_printf(bio_err,"Error getting password\n");
 		goto err;
 		}
 	if (BIO_read_filename(in,keyfile) <= 0)

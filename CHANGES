@@ -4,6 +4,189 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Major change in util/mkdef.pl to include extra information
+     about each symbol, as well as presentig variables as well
+     as functions.  This change means that there's n more need
+     to rebuild the .num files when some algorithms are excluded.
+     [Richard Levitte]
+
+  *) Allow the verify time to be set by an application,
+     rather than always using the current time.
+     [Steve Henson]
+  
+  *) Phase 2 verify code reorganisation. The certificate
+     verify code now looks up an issuer certificate by a
+     number of criteria: subject name, authority key id
+     and key usage. It also verifies self signed certificates
+     by the same criteria. The main comparison function is
+     X509_check_issued() which performs these checks.
+ 
+     Lot of changes were necessary in order to support this
+     without completely rewriting the lookup code.
+ 
+     Authority and subject key identifier are now cached.
+ 
+     The LHASH 'certs' is X509_STORE has now been replaced
+     by a STACK_OF(X509_OBJECT). This is mainly because an
+     LHASH can't store or retrieve multiple objects with
+     the same hash value.
+
+     As a result various functions (which were all internal
+     use only) have changed to handle the new X509_STORE
+     structure. This will break anything that messed round
+     with X509_STORE internally.
+ 
+     The functions X509_STORE_add_cert() now checks for an
+     exact match, rather than just subject name.
+ 
+     The X509_STORE API doesn't directly support the retrieval
+     of multiple certificates matching a given criteria, however
+     this can be worked round by performing a lookup first
+     (which will fill the cache with candidate certificates)
+     and then examining the cache for matches. This is probably
+     the best we can do without throwing out X509_LOOKUP
+     entirely (maybe later...).
+ 
+     The X509_VERIFY_CTX structure has been enhanced considerably.
+ 
+     All certificate lookup operations now go via a get_issuer()
+     callback. Although this currently uses an X509_STORE it
+     can be replaced by custom lookups. This is a simple way
+     to bypass the X509_STORE hackery necessary to make this
+     work and makes it possible to use more efficient techniques
+     in future. A very simple version which uses a simple
+     STACK for its trusted certificate store is also provided
+     using X509_STORE_CTX_trusted_stack().
+ 
+     The verify_cb() and verify() callbacks now have equivalents
+     in the X509_STORE_CTX structure.
+ 
+     X509_STORE_CTX also has a 'flags' field which can be used
+     to customise the verify behaviour.
+     [Steve Henson]
+ 
+  *) Add new PKCS#7 signing option PKCS7_NOSMIMECAP which 
+     excludes S/MIME capabilities.
+     [Steve Henson]
+
+  *) When a certificate request is read in keep a copy of the
+     original encoding of the signed data and use it when outputing
+     again. Signatures then use the original encoding rather than
+     a decoded, encoded version which may cause problems if the
+     request is improperly encoded.
+     [Steve Henson]
+
+  *) For consistency with other BIO_puts implementations, call
+     buffer_write(b, ...) directly in buffer_puts instead of calling
+     BIO_write(b, ...).
+
+     In BIO_puts, increment b->num_write as in BIO_write.
+     [Peter.Sylvester@EdelWeb.fr]
+
+  *) Fix BN_mul_word for the case where the word is 0. (We have to use
+     BN_zero, we may not return a BIGNUM with an array consisting of
+     words set to zero.)
+     [Bodo Moeller]
+
+  *) Avoid calling abort() from within the library when problems are
+     detected, except if preprocessor symbols have been defined
+     (such as REF_CHECK, BN_DEBUG etc.).
+     [Bodo Moeller]
+
+  *) New openssl application 'rsautl'. This utility can be
+     used for low level RSA operations. DER public key
+     BIO/fp routines also added.
+     [Steve Henson]
+
+  *) New Configure entry and patches for compiling on QNX 4.
+     [Andreas Schneider <andreas@ds3.etech.fh-hamburg.de>]
+
+  *) A demo state-machine implementation was sponsored by
+     Nuron (http://www.nuron.com/) and is now available in
+     demos/state_machine.
+     [Ben Laurie]
+
+  *) New options added to the 'dgst' utility for signature
+     generation and verification.
+     [Steve Henson]
+
+  *) Unrecognized PKCS#7 content types are now handled via a
+     catch all ASN1_TYPE structure. This allows unsupported
+     types to be stored as a "blob" and an application can
+     encode and decode it manually.
+     [Steve Henson]
+
+  *) Fix various signed/unsigned issues to make a_strex.c
+     compile under VC++.
+     [Oscar Jacobsson <oscar.jacobsson@celocom.com>]
+
+  *) ASN1 fixes. i2d_ASN1_OBJECT was not returning the correct
+     length if passed a buffer. ASN1_INTEGER_to_BN failed
+     if passed a NULL BN and its argument was negative.
+     [Steve Henson, pointed out by Sven Heiberg <sven@tartu.cyber.ee>]
+
+  *) Modification to PKCS#7 encoding routines to output definite
+     length encoding. Since currently the whole structures are in
+     memory there's not real point in using indefinite length 
+     constructed encoding. However if OpenSSL is compiled with
+     the flag PKCS7_INDEFINITE_ENCODING the old form is used.
+     [Steve Henson]
+
+  *) Added BIO_vprintf() and BIO_vsnprintf().
+     [Richard Levitte]
+
+  *) Added more prefixes to parse for in the the strings written
+     through a logging bio, to cover all the levels that are available
+     through syslog.  The prefixes are now:
+
+	PANIC, EMERG, EMR	=>	LOG_EMERG
+	ALERT, ALR		=>	LOG_ALERT
+	CRIT, CRI		=>	LOG_CRIT
+	ERROR, ERR		=>	LOG_ERR
+	WARNING, WARN, WAR	=>	LOG_WARNING
+	NOTICE, NOTE, NOT	=>	LOG_NOTICE
+	INFO, INF		=>	LOG_INFO
+	DEBUG, DBG		=>	LOG_DEBUG
+
+     and as before, if none of those prefixes are present at the
+     beginning of the string, LOG_ERR is chosen.
+
+     On Win32, the LOG_* levels are mapped according to this:
+
+	LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR	=> EVENTLOG_ERROR_TYPE
+	LOG_WARNING				=> EVENTLOG_WARNING_TYPE
+	LOG_NOTICE, LOG_INFO, LOG_DEBUG		=> EVENTLOG_INFORMATION_TYPE
+
+     [Richard Levitte]
+
+  *) Made it possible to reconfigure with just the configuration
+     argument "reconf" or "reconfigure".  The command line arguments
+     are stored in Makefile.ssl in the variable CONFIGURE_ARGS,
+     and are retrieved from there when reconfiguring.
+     [Richard Levitte]
+
+  *) MD4 implemented.
+     [Assar Westerlund <assar@sics.se>, Richard Levitte]
+
+  *) Add the arguments -CAfile and -CApath to the pkcs12 utility.
+     [Richard Levitte]
+
+  *) The obj_dat.pl script was messing up the sorting of object
+     names. The reason was that it compared the quoted version
+     of strings as a result "OCSP" > "OCSP Signing" because
+     " > SPACE. Changed script to store unquoted versions of
+     names and add quotes on output. It was also omitting some
+     names from the lookup table if they were given a default
+     value (that is if SN is missing it is given the same
+     value as LN and vice versa), these are now added on the
+     grounds that if an object has a name we should be able to
+     look it up. Finally added warning output when duplicate
+     short or long names are found.
+     [Steve Henson]
+
+  *) Changes needed for Tandem NSK.
+     [Scott Uroff scott@xypro.com]
+
   *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
      RSA_padding_check_SSLv23(), special padding was never detected
      and thus the SSL 3.0/TLS 1.0 countermeasure against protocol

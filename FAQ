@@ -86,12 +86,6 @@ offer legal advice.
 You can configure OpenSSL so as not to use RC5 and IDEA by using
  ./config no-rc5 no-idea
 
-Until the RSA patent expires, U.S. users may want to use
- ./config no-rc5 no-idea no-rsa
-
-Please note that you will *not* be able to communicate with most of
-the popular web browsers without RSA support.
-
 
 * Is OpenSSL thread-safe?
 

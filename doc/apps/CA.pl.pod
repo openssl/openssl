@@ -72,6 +72,13 @@ to be in the file "newreq.pem". The new certificate is written to the file
 "newcert.pem" except in the case of the B<-xsign> option when it is written
 to standard output.
 
+
+=item B<-signCA>
+
+this option is the same as the B<-signreq> option except it uses the configuration
+file section B<v3_ca> and so makes the signed request a valid CA certificate. This
+is useful when creating intermediate CA from a root CA.
+
 =item B<-signcert>
 
 this option is the same as B<-sign> except it expects a self signed certificate

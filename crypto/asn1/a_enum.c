@@ -79,7 +79,7 @@ int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	len = i2c_ASN1_INTEGER(a, NULL);	
 	ret=ASN1_object_size(0,len,V_ASN1_ENUMERATED);
 	if(pp) {
-		ASN1_put_object(pp,0,ret,V_ASN1_ENUMERATED,V_ASN1_UNIVERSAL);
+		ASN1_put_object(pp,0,len,V_ASN1_ENUMERATED,V_ASN1_UNIVERSAL);
 		i2c_ASN1_INTEGER(a, pp);	
 	}
 	return ret;
@@ -219,6 +219,6 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
 		ASN1err(ASN1_F_ASN1_ENUMERATED_TO_BN,ASN1_R_BN_LIB);
-	if(ai->type == V_ASN1_NEG_ENUMERATED) bn->neg = 1;
+	else if(ai->type == V_ASN1_NEG_ENUMERATED) ret->neg = 1;
 	return(ret);
 	}

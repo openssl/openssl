@@ -382,7 +382,7 @@ and a space character at the beginning or end of a string.
 
 =item B<esc_ctrl>
 
-escape and control characters. That is those with ASCII values less than
+escape control characters. That is those with ASCII values less than
 0x20 (space) and the delete (0x7f) character. They are escaped using the
 RFC2253 \XX notation (where XX are two hex digits representing the
 character value).
@@ -456,7 +456,7 @@ indents the fields by four characters.
 =item B<dn_rev>
 
 reverse the fields of the DN. This is required by RFC2253. As a side
-effect this also reveress the order of multiple AVAs but this is
+effect this also reverses the order of multiple AVAs but this is
 permissible.
 
 =item B<nofname>, B<sname>, B<lname>, B<oid>
@@ -519,13 +519,13 @@ Convert a certificate to a certificate request:
 Convert a certificate request into a self signed certificate using
 extensions for a CA:
 
- openssl x509 -req -in careq.pem -config openssl.cnf -extensions v3_ca \
+ openssl x509 -req -in careq.pem -extfile openssl.cnf -extensions v3_ca \
 	-signkey key.pem -out cacert.pem
 
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
 
- openssl x509 -req -in req.pem -config openssl.cnf -extensions v3_usr \
+ openssl x509 -req -in req.pem -extfile openssl.cnf -extensions v3_usr \
 	-CA cacert.pem -CAkey key.pem -CAcreateserial
 
 

@@ -141,6 +141,8 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_NOATTR;
 		else if (!strcmp (*args, "-nodetach")) 
 				flags &= ~PKCS7_DETACHED;
+		else if (!strcmp (*args, "-nosmimecap"))
+				flags |= PKCS7_NOSMIMECAP;
 		else if (!strcmp (*args, "-binary"))
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))

@@ -152,6 +152,7 @@ int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);
 X509 *load_cert(BIO *err, char *file, int format);
 EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass);
+EVP_PKEY *load_pubkey(BIO *err, char *file, int format);
 STACK_OF(X509) *load_certs(BIO *err, char *file, int format);
 
 #define FORMAT_UNDEF    0

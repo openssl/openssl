@@ -73,6 +73,9 @@
 #ifndef NO_MD2
 #include <openssl/md2.h>
 #endif
+#ifndef NO_MD4
+#include <openssl/md4.h>
+#endif
 #ifndef NO_MD5
 #include <openssl/md5.h>
 #endif
@@ -308,6 +311,9 @@ typedef struct env_md_ctx_st
 #endif
 #ifndef NO_MD5
 		MD5_CTX md5;
+#endif
+#ifndef NO_MD4
+		MD4_CTX md4;
 #endif
 #ifndef NO_RIPEMD
 		RIPEMD160_CTX ripemd160;
@@ -607,6 +613,7 @@ void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,unsigned char *k,
 
 EVP_MD *EVP_md_null(void);
 EVP_MD *EVP_md2(void);
+EVP_MD *EVP_md4(void);
 EVP_MD *EVP_md5(void);
 EVP_MD *EVP_sha(void);
 EVP_MD *EVP_sha1(void);

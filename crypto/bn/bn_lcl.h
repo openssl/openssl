@@ -228,7 +228,7 @@ extern "C" {
 /* This is used for internal error checking and is not normally used */
 #ifdef BN_DEBUG
 # include <assert.h>
-# define bn_check_top(a) assert ((a)->top >= 0 && (a)->top <= (a)->max);
+# define bn_check_top(a) assert ((a)->top >= 0 && (a)->top <= (a)->dmax);
 #else
 # define bn_check_top(a)
 #endif

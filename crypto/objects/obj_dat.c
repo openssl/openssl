@@ -134,7 +134,8 @@ static unsigned long add_hash(ADDED_OBJ *ca)
 		ret=a->nid;
 		break;
 	default:
-		abort();
+		/* abort(); */
+		return 0;
 		}
 	ret&=0x3fffffffL;
 	ret|=ca->type<<30L;
@@ -167,7 +168,8 @@ static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 	case ADDED_NID:
 		return(a->nid-b->nid);
 	default:
-		abort();
+		/* abort(); */
+		return 0;
 		}
 	return(1); /* should not get here */
 	}

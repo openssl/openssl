@@ -482,7 +482,7 @@ $shared_cflag =
 
 *** aix-cc
 $cc           = cc
-$cflags       = -O -DAIX -DB_ENDIAN
+$cflags       = -O -DAIX -DB_ENDIAN -qmaxmem=16384
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -537,7 +537,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** alpha-gcc
@@ -557,7 +557,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** alpha164-cc
@@ -577,7 +577,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= true64-shared
 $shared_cflag = 
 
 *** bsdi-elf-gcc
@@ -682,7 +682,7 @@ $shared_cflag =
 
 *** debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = -lefence
@@ -702,7 +702,7 @@ $shared_cflag =
 
 *** debug-ben
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -722,7 +722,7 @@ $shared_cflag =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -742,7 +742,7 @@ $shared_cflag =
 
 *** debug-ben-strict
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -762,7 +762,7 @@ $shared_cflag =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -DBIO_PAIR_DEBUG -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -m486 -pedantic -Wshadow -Wall
+$cflags       = -DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DBIO_PAIR_DEBUG -g -m486 -pedantic -Wshadow -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -782,7 +782,7 @@ $shared_cflag =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
+$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -ldl
@@ -802,7 +802,7 @@ $shared_cflag =
 
 *** debug-linux-elf
 $cc           = gcc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lefence
@@ -822,7 +822,7 @@ $shared_cflag =
 
 *** debug-linux-elf-noefence
 $cc           = gcc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -862,7 +862,7 @@ $shared_cflag =
 
 *** debug-solaris-sparcv8-cc
 $cc           = cc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl -ldl
@@ -877,12 +877,12 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl -ldl
@@ -897,12 +897,12 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl -ldl
@@ -917,12 +917,12 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl -ldl
@@ -937,12 +937,12 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** debug-steve
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -pedantic -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -962,7 +962,7 @@ $shared_cflag =
 
 *** debug-ulf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -1557,8 +1557,8 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 
 *** linux-elf-arm
 $cc           = gcc
@@ -1577,8 +1577,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 
 *** linux-ia64
 $cc           = gcc
@@ -1800,6 +1800,26 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 
+*** qnx4
+$cc           = cc
+$cflags       = -DL_ENDIAN -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+
 *** rhapsody-ppc-cc
 $cc           = cc
 $cflags       = -O3 -DB_ENDIAN
@@ -1877,8 +1897,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv7-cc
 $cc           = cc
@@ -1897,8 +1917,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
@@ -1917,8 +1937,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv8-cc
 $cc           = cc
@@ -1937,8 +1957,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
@@ -1957,8 +1977,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv9-cc
 $cc           = cc
@@ -1977,8 +1997,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
@@ -1997,8 +2017,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
@@ -2017,8 +2037,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris-x86-gcc
 $cc           = gcc
@@ -2037,8 +2057,8 @@ $rc4_obj      = asm/rx86-sol.o
 $rmd160_obj   = asm/rm86-sol.o
 $rc5_obj      = asm/r586-sol.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
 
 *** solaris64-sparcv9-cc
 $cc           = cc
@@ -2057,8 +2077,8 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
 
 *** sunos-gcc
 $cc           = gcc

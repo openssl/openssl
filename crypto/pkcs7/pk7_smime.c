@@ -109,6 +109,8 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
 				V_ASN1_OBJECT, OBJ_nid2obj(NID_pkcs7_data));
 		/* Add SMIMECapabilities */
+		if(!(flags & PKCS7_NOSMIMECAP))
+		{
 		if(!(smcap = sk_X509_ALGOR_new(NULL))) {
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
 			return NULL;
@@ -128,6 +130,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 #endif
 		PKCS7_add_attrib_smimecap (si, smcap);
 		sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+		}
 	}
 
 	if(flags & PKCS7_DETACHED)PKCS7_set_detached(p7, 1);

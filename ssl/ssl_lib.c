@@ -58,6 +58,8 @@
  * [including the GNU Public Licence.]
  */
 
+
+#include <assert.h>
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
@@ -1844,19 +1846,16 @@ int ssl_init_wbio_buffer(SSL *s,int push)
 
 void ssl_free_wbio_buffer(SSL *s)
 	{
-	BIO *under;
-
 	if (s->bbio == NULL) return;
 
 	if (s->bbio == s->wbio)
 		{
 		/* remove buffering */
-		under=BIO_pop(s->wbio);
-		if (under != NULL)
-			s->wbio=under;
-		else
-			abort(); /* ok */
-		}
+		s->wbio=BIO_pop(s->wbio);
+#ifdef REF_CHECK /* not the usual REF_CHECK, but this avoids adding one more preprocessor symbol */
+		assert(s->wbio != NULL);
+#endif	
+	}
 	BIO_free(s->bbio);
 	s->bbio=NULL;
 	}

@@ -233,7 +233,7 @@ typedef struct bignum_st
 	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */
 	int top;	/* Index of last used d +1. */
 	/* The next are internal book keeping for bn_expand. */
-	int max;	/* Size of the d array. */
+	int dmax;	/* Size of the d array. */
 	int neg;	/* one if the number is negative */
 	int flags;
 	} BIGNUM;
@@ -435,9 +435,9 @@ int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m,
 
 /* library internal functions */
 
-#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->max)?\
+#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
 	(a):bn_expand2((a),(bits)/BN_BITS2+1))
-#define bn_wexpand(a,words) (((words) <= (a)->max)?(a):bn_expand2((a),(words)))
+#define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 
 #define bn_fix_top(a) \

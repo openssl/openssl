@@ -81,13 +81,17 @@ DES_LONG des_quad_cksum(const unsigned char *input, des_cblock output[],
 	long l;
 	const unsigned char *cp;
 #ifdef _CRAY
-	short *lp;
+	struct lp_st { int a:32; int b:32; } *lp;
 #else
 	DES_LONG *lp;
 #endif
 
 	if (out_count < 1) out_count=1;
+#ifdef _CRAY
+	lp = (struct lp_st *) &(output[0])[0];
+#else
 	lp = (DES_LONG *) &(output[0])[0];
+#endif
 
 	z0=Q_B0((*seed)[0])|Q_B1((*seed)[1])|Q_B2((*seed)[2])|Q_B3((*seed)[3]);
 	z1=Q_B0((*seed)[4])|Q_B1((*seed)[5])|Q_B2((*seed)[6])|Q_B3((*seed)[7]);
@@ -120,8 +124,14 @@ DES_LONG des_quad_cksum(const unsigned char *input, des_cblock output[],
 			{
 			/* The MIT library assumes that the checksum is
 			 * composed of 2*out_count 32 bit ints */
+#ifdef _CRAY
+			(*lp).a = z0;
+			(*lp).b = z1;
+			lp++;
+#else
 			*lp++ = z0;
 			*lp++ = z1;
+#endif
 			}
 		}
 	return(z0);

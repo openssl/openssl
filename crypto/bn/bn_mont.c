@@ -157,7 +157,22 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 #endif
 	for (i=0; i<nl; i++)
 		{
+#ifdef __TANDEM
+                {
+                   long long t1;
+                   long long t2;
+                   long long t3;
+                   t1 = rp[0] * (n0 & 0177777);
+                   t2 = 037777600000l;
+                   t2 = n0 & t2;
+                   t3 = rp[0] & 0177777;
+                   t2 = (t3 * t2) & BN_MASK2;
+                   t1 = t1 + t2;
+                   v=bn_mul_add_words(rp,np,nl,(BN_ULONG) t1);
+                }
+#else
 		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
+#endif
 		nrp++;
 		rp++;
 		if (((nrp[-1]+=v)&BN_MASK2) >= v)
@@ -284,7 +299,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		buf[1]=0;
 		tmod.d=buf;
 		tmod.top=1;
-		tmod.max=2;
+		tmod.dmax=2;
 		tmod.neg=mod->neg;
 							/* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,&tmod,ctx)) == NULL)
