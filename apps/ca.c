@@ -76,8 +76,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 
-#include <dmalloc.h>
-
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp
 #else
