@@ -204,7 +204,7 @@ struct x509_lookup_st
 	char *method_data;		/* method data */
 
 	X509_STORE *store_ctx;	/* who owns us */
-	};
+	} /* X509_LOOKUP */;
 
 /* This is a used when verifying cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
@@ -248,7 +248,7 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	X509_CRL *current_crl;	/* current CRL */
 
 	CRYPTO_EX_DATA ex_data;
-	};
+	} /* X509_STORE_CTX */;
 
 #define X509_STORE_CTX_set_depth(ctx,d)       ((ctx)->depth=(d))
 

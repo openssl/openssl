@@ -277,7 +277,7 @@ struct evp_cipher_st
 	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
 	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
 	void *app_data;		/* Application data */
-	};
+	} /* EVP_CIPHER */;
 
 /* Values for cipher flags */
 
@@ -335,7 +335,7 @@ struct evp_cipher_ctx_st
 	int final_used;
 	int block_mask;
 	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
-	};
+	} /* EVP_CIPHER_CTX */;
 
 typedef struct evp_Encode_Ctx_st
 	{
