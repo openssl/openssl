@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/24 15:19:07 $
+  ______________                           $Date: 2000/03/24 16:10:33 $
 
   DEVELOPMENT STATE
 
@@ -34,7 +34,7 @@
                         Solaris-x86 2.6 w/ gcc 2.7.2.3  - passed
                         Solaris-x86 2.7 w/ gcc 2.7.2.3  - passed
                         True64 Unix w/ gcc 2.7.2.3      - passed
-                        Win32-NASM                      - passed
+                        Win32 w/ VC++ 5 & NASM 0.98     - passed
 
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
