@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Make it possible to unload ranges of ERR strings with a new
+     "ERR_unload_strings" function.
+     [Geoff Thorpe]
+
   *) Rabin-Miller test analyses assume uniformly distributed witnesses,
      so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
      followed by modular reduction.
