@@ -1718,6 +1718,10 @@ SSL *SSL_dup(SSL *s)
 
 		if (s->cert != NULL)
 			{
+			if (ret->cert != NULL)
+				{
+				ssl_cert_free(ret->cert);
+				}
 			ret->cert = ssl_cert_dup(s->cert);
 			if (ret->cert == NULL)
 				goto err;
