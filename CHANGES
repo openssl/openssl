@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix typo in get_cert_by_subject() in by_dir.c
+     [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
+
   *) Rework the system to generate shared libraries:
 
      - Make note of the expected extension for the shared libraries and
