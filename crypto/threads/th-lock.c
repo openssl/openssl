@@ -80,7 +80,7 @@
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include <openssl/e_os.h>
+#include "../../e_os.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
