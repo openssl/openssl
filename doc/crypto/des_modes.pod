@@ -47,6 +47,8 @@ An error will only affect one ciphertext block.
 =head2 Cipher Block Chaining Mode (CBC)
 
 Normally, this is found as the function I<algorithm>_cbc_encrypt().
+Be aware that des_cbc_encrypt() is not really DES CBC (it does
+not update the IV); use des_ncbc_encrypt() instead.
 
 =over 2
 
