@@ -120,6 +120,24 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_MD,"sha1",dgst_main},
 	{FUNC_TYPE_MD,"mdc2",dgst_main},
 	{FUNC_TYPE_MD,"rmd160",dgst_main},
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-128-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-128-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-192-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-192-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-256-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_AES
+	{FUNC_TYPE_CIPHER,"aes-256-ecb",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"base64",enc_main},
 #ifndef OPENSSL_NO_DES
 	{FUNC_TYPE_CIPHER,"des",enc_main},

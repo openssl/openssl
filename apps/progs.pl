@@ -48,7 +48,9 @@ foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
 	}
 
 foreach (
-	"aes-129-ecb",
+	"aes-128-cbc", "aes-128-ecb",
+	"aes-192-cbc", "aes-192-ecb",
+	"aes-256-cbc", "aes-256-ecb",
 	"base64",
 	"des", "des3", "desx", "idea", "rc4", "rc4-40",
 	"rc2", "bf", "cast", "rc5",
@@ -66,6 +68,7 @@ foreach (
 
 	$t=sprintf("\t{FUNC_TYPE_CIPHER,\"%s\",enc_main},\n",$_);
 	if    ($_ =~ /des/)  { $t="#ifndef OPENSSL_NO_DES\n${t}#endif\n"; }
+	elsif ($_ =~ /aes/)  { $t="#ifndef OPENSSL_NO_AES\n${t}#endif\n"; }
 	elsif ($_ =~ /idea/) { $t="#ifndef OPENSSL_NO_IDEA\n${t}#endif\n"; }
 	elsif ($_ =~ /rc4/)  { $t="#ifndef OPENSSL_NO_RC4\n${t}#endif\n"; }
 	elsif ($_ =~ /rc2/)  { $t="#ifndef OPENSSL_NO_RC2\n${t}#endif\n"; }
