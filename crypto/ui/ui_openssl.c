@@ -436,9 +436,14 @@ static int open_console(UI *ui)
 	tty_in=stdin;
 	tty_out=stderr;
 #else
-	if ((tty_in=fopen("/dev/tty","r")) == NULL)
+#  ifdef OPENSSL_SYS_MSDOS
+#    define DEV_TTY "con"
+#  else
+#    define DEV_TTY "/dev/tty"
+#  endif
+	if ((tty_in=fopen(DEV_TTY,"r")) == NULL)
 		tty_in=stdin;
-	if ((tty_out=fopen("/dev/tty","w")) == NULL)
+	if ((tty_out=fopen(DEV_TTY,"w")) == NULL)
 		tty_out=stderr;
 #endif
 
