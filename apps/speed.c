@@ -897,6 +897,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
+#ifndef OPENSSL_NO_DSA
 	dsa_c[R_DSA_512][0]=count/1000;
 	dsa_c[R_DSA_512][1]=count/1000/2;
 	for (i=1; i<DSA_NUM; i++)
@@ -914,6 +915,7 @@ int MAIN(int argc, char **argv)
 				}
 			}				
 		}
+#endif
 
 #define COND(d)	(count < (d))
 #define COUNT(d) (d)
