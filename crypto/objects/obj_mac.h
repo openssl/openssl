@@ -328,10 +328,6 @@
 #define NID_secp192k1		536
 #define OBJ_secp192k1		OBJ_secg_ellipticCurve,31L
 
-#define SN_secp192r1		"secp192r1"
-#define NID_secp192r1		537
-#define OBJ_secp192r1		OBJ_X9_62_prime192v1
-
 #define SN_secp224k1		"secp224k1"
 #define NID_secp224k1		538
 #define OBJ_secp224k1		OBJ_secg_ellipticCurve,32L
@@ -343,10 +339,6 @@
 #define SN_secp256k1		"secp256k1"
 #define NID_secp256k1		540
 #define OBJ_secp256k1		OBJ_secg_ellipticCurve,10L
-
-#define SN_secp256r1		"secp256r1"
-#define NID_secp256r1		541
-#define OBJ_secp256r1		OBJ_X9_62_prime256v1
 
 #define SN_secp384r1		"secp384r1"
 #define NID_secp384r1		542

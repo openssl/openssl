@@ -63,11 +63,11 @@
  */
 
 #define NUM_NID 568
-#define NUM_SN 566
-#define NUM_LN 566
-#define NUM_OBJ 540
+#define NUM_SN 564
+#define NUM_LN 564
+#define NUM_OBJ 538
 
-static unsigned char lvalues[4228]={
+static unsigned char lvalues[4226]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -577,37 +577,35 @@ static unsigned char lvalues[4228]={
 0x2B,0x81,0x04,0x00,0x08,                    /* [4070] OBJ_secp160r1 */
 0x2B,0x81,0x04,0x00,0x1E,                    /* [4075] OBJ_secp160r2 */
 0x2B,0x81,0x04,0x00,0x1F,                    /* [4080] OBJ_secp192k1 */
-0x00,                                        /* [4085] OBJ_secp192r1 */
-0x2B,0x81,0x04,0x00,0x20,                    /* [4086] OBJ_secp224k1 */
-0x2B,0x81,0x04,0x00,0x21,                    /* [4091] OBJ_secp224r1 */
-0x2B,0x81,0x04,0x00,0x0A,                    /* [4096] OBJ_secp256k1 */
-0x00,                                        /* [4101] OBJ_secp256r1 */
-0x2B,0x81,0x04,0x00,0x22,                    /* [4102] OBJ_secp384r1 */
-0x2B,0x81,0x04,0x00,0x23,                    /* [4107] OBJ_secp521r1 */
-0x2B,0x81,0x04,0x00,0x04,                    /* [4112] OBJ_sect113r1 */
-0x2B,0x81,0x04,0x00,0x05,                    /* [4117] OBJ_sect113r2 */
-0x2B,0x81,0x04,0x00,0x16,                    /* [4122] OBJ_sect131r1 */
-0x2B,0x81,0x04,0x00,0x17,                    /* [4127] OBJ_sect131r2 */
-0x2B,0x81,0x04,0x00,0x01,                    /* [4132] OBJ_sect163k1 */
-0x2B,0x81,0x04,0x00,0x02,                    /* [4137] OBJ_sect163r1 */
-0x2B,0x81,0x04,0x00,0x0F,                    /* [4142] OBJ_sect163r2 */
-0x2B,0x81,0x04,0x00,0x18,                    /* [4147] OBJ_sect193r1 */
-0x2B,0x81,0x04,0x00,0x19,                    /* [4152] OBJ_sect193r2 */
-0x2B,0x81,0x04,0x00,0x1A,                    /* [4157] OBJ_sect233k1 */
-0x2B,0x81,0x04,0x00,0x1B,                    /* [4162] OBJ_sect233r1 */
-0x2B,0x81,0x04,0x00,0x03,                    /* [4167] OBJ_sect239k1 */
-0x2B,0x81,0x04,0x00,0x10,                    /* [4172] OBJ_sect283k1 */
-0x2B,0x81,0x04,0x00,0x11,                    /* [4177] OBJ_sect283r1 */
-0x2B,0x81,0x04,0x00,0x24,                    /* [4182] OBJ_sect409k1 */
-0x2B,0x81,0x04,0x00,0x25,                    /* [4187] OBJ_sect409r1 */
-0x2B,0x81,0x04,0x00,0x26,                    /* [4192] OBJ_sect571k1 */
-0x2B,0x81,0x04,0x00,0x27,                    /* [4197] OBJ_sect571r1 */
-0x67,0x2B,                                   /* [4202] OBJ_wap */
-0x67,0x2B,0x0D,                              /* [4204] OBJ_wap_wsg */
-0x67,0x2B,0x0D,0x04,0x01,                    /* [4207] OBJ_wap_wsg_idm_ecid_wtls1 */
-0x67,0x2B,0x0D,0x04,0x06,                    /* [4212] OBJ_wap_wsg_idm_ecid_wtls6 */
-0x67,0x2B,0x0D,0x04,0x08,                    /* [4217] OBJ_wap_wsg_idm_ecid_wtls8 */
-0x67,0x2B,0x0D,0x04,0x09,                    /* [4222] OBJ_wap_wsg_idm_ecid_wtls9 */
+0x2B,0x81,0x04,0x00,0x20,                    /* [4085] OBJ_secp224k1 */
+0x2B,0x81,0x04,0x00,0x21,                    /* [4090] OBJ_secp224r1 */
+0x2B,0x81,0x04,0x00,0x0A,                    /* [4095] OBJ_secp256k1 */
+0x2B,0x81,0x04,0x00,0x22,                    /* [4100] OBJ_secp384r1 */
+0x2B,0x81,0x04,0x00,0x23,                    /* [4105] OBJ_secp521r1 */
+0x2B,0x81,0x04,0x00,0x04,                    /* [4110] OBJ_sect113r1 */
+0x2B,0x81,0x04,0x00,0x05,                    /* [4115] OBJ_sect113r2 */
+0x2B,0x81,0x04,0x00,0x16,                    /* [4120] OBJ_sect131r1 */
+0x2B,0x81,0x04,0x00,0x17,                    /* [4125] OBJ_sect131r2 */
+0x2B,0x81,0x04,0x00,0x01,                    /* [4130] OBJ_sect163k1 */
+0x2B,0x81,0x04,0x00,0x02,                    /* [4135] OBJ_sect163r1 */
+0x2B,0x81,0x04,0x00,0x0F,                    /* [4140] OBJ_sect163r2 */
+0x2B,0x81,0x04,0x00,0x18,                    /* [4145] OBJ_sect193r1 */
+0x2B,0x81,0x04,0x00,0x19,                    /* [4150] OBJ_sect193r2 */
+0x2B,0x81,0x04,0x00,0x1A,                    /* [4155] OBJ_sect233k1 */
+0x2B,0x81,0x04,0x00,0x1B,                    /* [4160] OBJ_sect233r1 */
+0x2B,0x81,0x04,0x00,0x03,                    /* [4165] OBJ_sect239k1 */
+0x2B,0x81,0x04,0x00,0x10,                    /* [4170] OBJ_sect283k1 */
+0x2B,0x81,0x04,0x00,0x11,                    /* [4175] OBJ_sect283r1 */
+0x2B,0x81,0x04,0x00,0x24,                    /* [4180] OBJ_sect409k1 */
+0x2B,0x81,0x04,0x00,0x25,                    /* [4185] OBJ_sect409r1 */
+0x2B,0x81,0x04,0x00,0x26,                    /* [4190] OBJ_sect571k1 */
+0x2B,0x81,0x04,0x00,0x27,                    /* [4195] OBJ_sect571r1 */
+0x67,0x2B,                                   /* [4200] OBJ_wap */
+0x67,0x2B,0x0D,                              /* [4202] OBJ_wap_wsg */
+0x67,0x2B,0x0D,0x04,0x01,                    /* [4205] OBJ_wap_wsg_idm_ecid_wtls1 */
+0x67,0x2B,0x0D,0x04,0x06,                    /* [4210] OBJ_wap_wsg_idm_ecid_wtls6 */
+0x67,0x2B,0x0D,0x04,0x08,                    /* [4215] OBJ_wap_wsg_idm_ecid_wtls8 */
+0x67,0x2B,0x0D,0x04,0x09,                    /* [4220] OBJ_wap_wsg_idm_ecid_wtls9 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1416,41 +1414,41 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"secp160r1","secp160r1",NID_secp160r1,5,&(lvalues[4070]),0},
 {"secp160r2","secp160r2",NID_secp160r2,5,&(lvalues[4075]),0},
 {"secp192k1","secp192k1",NID_secp192k1,5,&(lvalues[4080]),0},
-{"secp192r1","secp192r1",NID_secp192r1,1,&(lvalues[4085]),0},
-{"secp224k1","secp224k1",NID_secp224k1,5,&(lvalues[4086]),0},
-{"secp224r1","secp224r1",NID_secp224r1,5,&(lvalues[4091]),0},
-{"secp256k1","secp256k1",NID_secp256k1,5,&(lvalues[4096]),0},
-{"secp256r1","secp256r1",NID_secp256r1,1,&(lvalues[4101]),0},
-{"secp384r1","secp384r1",NID_secp384r1,5,&(lvalues[4102]),0},
-{"secp521r1","secp521r1",NID_secp521r1,5,&(lvalues[4107]),0},
-{"sect113r1","sect113r1",NID_sect113r1,5,&(lvalues[4112]),0},
-{"sect113r2","sect113r2",NID_sect113r2,5,&(lvalues[4117]),0},
-{"sect131r1","sect131r1",NID_sect131r1,5,&(lvalues[4122]),0},
-{"sect131r2","sect131r2",NID_sect131r2,5,&(lvalues[4127]),0},
-{"sect163k1","sect163k1",NID_sect163k1,5,&(lvalues[4132]),0},
-{"sect163r1","sect163r1",NID_sect163r1,5,&(lvalues[4137]),0},
-{"sect163r2","sect163r2",NID_sect163r2,5,&(lvalues[4142]),0},
-{"sect193r1","sect193r1",NID_sect193r1,5,&(lvalues[4147]),0},
-{"sect193r2","sect193r2",NID_sect193r2,5,&(lvalues[4152]),0},
-{"sect233k1","sect233k1",NID_sect233k1,5,&(lvalues[4157]),0},
-{"sect233r1","sect233r1",NID_sect233r1,5,&(lvalues[4162]),0},
-{"sect239k1","sect239k1",NID_sect239k1,5,&(lvalues[4167]),0},
-{"sect283k1","sect283k1",NID_sect283k1,5,&(lvalues[4172]),0},
-{"sect283r1","sect283r1",NID_sect283r1,5,&(lvalues[4177]),0},
-{"sect409k1","sect409k1",NID_sect409k1,5,&(lvalues[4182]),0},
-{"sect409r1","sect409r1",NID_sect409r1,5,&(lvalues[4187]),0},
-{"sect571k1","sect571k1",NID_sect571k1,5,&(lvalues[4192]),0},
-{"sect571r1","sect571r1",NID_sect571r1,5,&(lvalues[4197]),0},
-{"wap","wap",NID_wap,2,&(lvalues[4202]),0},
-{"wap-wsg","wap-wsg",NID_wap_wsg,3,&(lvalues[4204]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{"secp224k1","secp224k1",NID_secp224k1,5,&(lvalues[4085]),0},
+{"secp224r1","secp224r1",NID_secp224r1,5,&(lvalues[4090]),0},
+{"secp256k1","secp256k1",NID_secp256k1,5,&(lvalues[4095]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{"secp384r1","secp384r1",NID_secp384r1,5,&(lvalues[4100]),0},
+{"secp521r1","secp521r1",NID_secp521r1,5,&(lvalues[4105]),0},
+{"sect113r1","sect113r1",NID_sect113r1,5,&(lvalues[4110]),0},
+{"sect113r2","sect113r2",NID_sect113r2,5,&(lvalues[4115]),0},
+{"sect131r1","sect131r1",NID_sect131r1,5,&(lvalues[4120]),0},
+{"sect131r2","sect131r2",NID_sect131r2,5,&(lvalues[4125]),0},
+{"sect163k1","sect163k1",NID_sect163k1,5,&(lvalues[4130]),0},
+{"sect163r1","sect163r1",NID_sect163r1,5,&(lvalues[4135]),0},
+{"sect163r2","sect163r2",NID_sect163r2,5,&(lvalues[4140]),0},
+{"sect193r1","sect193r1",NID_sect193r1,5,&(lvalues[4145]),0},
+{"sect193r2","sect193r2",NID_sect193r2,5,&(lvalues[4150]),0},
+{"sect233k1","sect233k1",NID_sect233k1,5,&(lvalues[4155]),0},
+{"sect233r1","sect233r1",NID_sect233r1,5,&(lvalues[4160]),0},
+{"sect239k1","sect239k1",NID_sect239k1,5,&(lvalues[4165]),0},
+{"sect283k1","sect283k1",NID_sect283k1,5,&(lvalues[4170]),0},
+{"sect283r1","sect283r1",NID_sect283r1,5,&(lvalues[4175]),0},
+{"sect409k1","sect409k1",NID_sect409k1,5,&(lvalues[4180]),0},
+{"sect409r1","sect409r1",NID_sect409r1,5,&(lvalues[4185]),0},
+{"sect571k1","sect571k1",NID_sect571k1,5,&(lvalues[4190]),0},
+{"sect571r1","sect571r1",NID_sect571r1,5,&(lvalues[4195]),0},
+{"wap","wap",NID_wap,2,&(lvalues[4200]),0},
+{"wap-wsg","wap-wsg",NID_wap_wsg,3,&(lvalues[4202]),0},
 {"wap-wsg-idm-ecid-wtls1","wap-wsg-idm-ecid-wtls1",
-	NID_wap_wsg_idm_ecid_wtls1,5,&(lvalues[4207]),0},
+	NID_wap_wsg_idm_ecid_wtls1,5,&(lvalues[4205]),0},
 {"wap-wsg-idm-ecid-wtls6","wap-wsg-idm-ecid-wtls6",
-	NID_wap_wsg_idm_ecid_wtls6,5,&(lvalues[4212]),0},
+	NID_wap_wsg_idm_ecid_wtls6,5,&(lvalues[4210]),0},
 {"wap-wsg-idm-ecid-wtls8","wap-wsg-idm-ecid-wtls8",
-	NID_wap_wsg_idm_ecid_wtls8,5,&(lvalues[4217]),0},
+	NID_wap_wsg_idm_ecid_wtls8,5,&(lvalues[4215]),0},
 {"wap-wsg-idm-ecid-wtls9","wap-wsg-idm-ecid-wtls9",
-	NID_wap_wsg_idm_ecid_wtls9,5,&(lvalues[4222]),0},
+	NID_wap_wsg_idm_ecid_wtls9,5,&(lvalues[4220]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1959,11 +1957,9 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[534]),/* "secp160r1" */
 &(nid_objs[535]),/* "secp160r2" */
 &(nid_objs[536]),/* "secp192k1" */
-&(nid_objs[537]),/* "secp192r1" */
 &(nid_objs[538]),/* "secp224k1" */
 &(nid_objs[539]),/* "secp224r1" */
 &(nid_objs[540]),/* "secp256k1" */
-&(nid_objs[541]),/* "secp256r1" */
 &(nid_objs[542]),/* "secp384r1" */
 &(nid_objs[543]),/* "secp521r1" */
 &(nid_objs[154]),/* "secretBag" */
@@ -2528,11 +2524,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[534]),/* "secp160r1" */
 &(nid_objs[535]),/* "secp160r2" */
 &(nid_objs[536]),/* "secp192k1" */
-&(nid_objs[537]),/* "secp192r1" */
 &(nid_objs[538]),/* "secp224k1" */
 &(nid_objs[539]),/* "secp224r1" */
 &(nid_objs[540]),/* "secp256k1" */
-&(nid_objs[541]),/* "secp256r1" */
 &(nid_objs[542]),/* "secp384r1" */
 &(nid_objs[543]),/* "secp521r1" */
 &(nid_objs[154]),/* "secretBag" */
@@ -2593,9 +2587,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[541]),/* OBJ_secp256r1                    OBJ_X9_62_prime256v1 */
 &(nid_objs[404]),/* OBJ_ccitt                        0 */
-&(nid_objs[537]),/* OBJ_secp192r1                    OBJ_X9_62_prime192v1 */
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */

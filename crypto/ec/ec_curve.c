@@ -276,8 +276,7 @@ EC_GROUP *EC_GROUP_new_by_name(int name)
 		ret = ec_group_new_GFp_from_hex(_EC_GROUP_NIST_PRIME_521);
 		break;
 	/* x9.62 prime curves */
-	case EC_GROUP_NIST_PRIME_192: /* EC_GROUP_NIST_PRIME_192 == EC_GROUP_SECG_PRIME_192R1 */
-	case EC_GROUP_X9_62_PRIME_192V1:
+	case EC_GROUP_X9_62_PRIME_192V1: /* == EC_GROUP_NIST_PRIME_192 == EC_GROUP_SECG_PRIME_192R1 */
 		ret = ec_group_new_GFp_from_hex(_EC_GROUP_NIST_PRIME_192);
 		break;
 
@@ -301,8 +300,7 @@ EC_GROUP *EC_GROUP_new_by_name(int name)
 		ret = ec_group_new_GFp_from_hex(_EC_GROUP_X9_62_PRIME_239V3);
 		break;
 
-	case EC_GROUP_NIST_PRIME_256: /* EC_GROUP_NIST_PRIME_256 == EC_GROUP_SECG_PRIME_256R1 */
-	case EC_GROUP_X9_62_PRIME_256V1:
+	case EC_GROUP_X9_62_PRIME_256V1: /* == EC_GROUP_NIST_PRIME_256 == EC_GROUP_SECG_PRIME_256R1 */
 		ret = ec_group_new_GFp_from_hex(_EC_GROUP_X9_62_PRIME_256V1);
 		break;
 	/* the remaining secg curves */
