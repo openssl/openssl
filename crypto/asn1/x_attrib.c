@@ -84,7 +84,7 @@ int i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **pp)
 
 		ret+=i2d_ASN1_OBJECT(a->object,p);
 		if (a->set)
-			ret+=i2d_ASN1_SET(a->value.set,p,i2d_ASN1_TYPE,
+			ret+=i2d_ASN1_SET_OF_ASN1_TYPE(a->value.set,p,i2d_ASN1_TYPE,
 				V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 		else
 			ret+=i2d_ASN1_TYPE(a->value.single,p);
@@ -105,7 +105,8 @@ X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, unsigned char **pp,
 		(M_ASN1_next == (V_ASN1_CONSTRUCTED|V_ASN1_UNIVERSAL|V_ASN1_SET)))
 		{
 		ret->set=1;
-		M_ASN1_D2I_get_set(ret->value.set,d2i_ASN1_TYPE,ASN1_TYPE_free);
+		M_ASN1_D2I_get_set_type(ASN1_TYPE,ret->value.set,d2i_ASN1_TYPE,
+					ASN1_TYPE_free);
 		}
 	else
 		{
@@ -125,9 +126,9 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, char *value)
 		return(NULL);
 	ret->object=OBJ_nid2obj(nid);
 	ret->set=1;
-	if ((ret->value.set=sk_new_null()) == NULL) goto err;
+	if ((ret->value.set=sk_ASN1_TYPE_new_null()) == NULL) goto err;
 	if ((val=ASN1_TYPE_new()) == NULL) goto err;
-	if (!sk_push(ret->value.set,(char *)val)) goto err;
+	if (!sk_ASN1_TYPE_push(ret->value.set,val)) goto err;
 
 	ASN1_TYPE_set(val,atrtype,value);
 	return(ret);
@@ -155,7 +156,7 @@ void X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
 	if (a->set)
-		sk_pop_free(a->value.set,ASN1_TYPE_free);
+		sk_ASN1_TYPE_pop_free(a->value.set,ASN1_TYPE_free);
 	else
 		ASN1_TYPE_free(a->value.single);
 	Free((char *)a);

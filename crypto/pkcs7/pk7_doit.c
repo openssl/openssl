@@ -809,8 +809,8 @@ static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 		xa=(X509_ATTRIBUTE *)sk_value(sk,i);
 		if (OBJ_cmp(xa->object,o) == 0)
 			{
-			if (xa->set && sk_num(xa->value.set))
-				return((ASN1_TYPE *)sk_value(xa->value.set,0));
+			if (xa->set && sk_ASN1_TYPE_num(xa->value.set))
+				return(sk_ASN1_TYPE_value(xa->value.set,0));
 			else
 				return(NULL);
 			}
@@ -831,9 +831,10 @@ ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk)
 		if (OBJ_obj2nid(attr->object) == NID_pkcs9_messageDigest)
 			{
 			if (!attr->set) return NULL;
-			if (!attr->value.set ||
-				 !sk_num (attr->value.set) ) return NULL;
-			astype = (ASN1_TYPE *) sk_value(attr->value.set, 0);
+			if (!attr->value.set
+			    || !sk_ASN1_TYPE_num(attr->value.set) )
+			    return NULL;
+			astype = sk_ASN1_TYPE_value(attr->value.set, 0);
 			return astype->value.octet_string;
 			}
 		}

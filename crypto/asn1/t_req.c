@@ -168,9 +168,9 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 			if (a->set)
 				{
 				ii=0;
-				count=sk_num(a->value.set);
+				count=sk_ASN1_TYPE_num(a->value.set);
 get_next:
-				at=(ASN1_TYPE *)sk_value(a->value.set,ii);
+				at=sk_ASN1_TYPE_value(a->value.set,ii);
 				type=at->type;
 				bs=at->value.asn1_string;
 				}

@@ -174,7 +174,7 @@ typedef struct x509_attributes_st
 	int set; /* 1 for a set, 0 for a single item (which is wrong) */
 	union	{
 		char		*ptr;
-/* 1 */		STACK /* ASN1_TYPE */ *set;
+/* 1 */		STACK_OF(ASN1_TYPE) *set;
 /* 0 */		ASN1_TYPE	*single;
 		} value;
 	} X509_ATTRIBUTE;

@@ -1069,7 +1069,7 @@ start:
 	/* add object plus value */
 	if ((xa=X509_ATTRIBUTE_new()) == NULL)
 		goto err;
-	if ((xa->value.set=sk_new_null()) == NULL)
+	if ((xa->value.set=sk_ASN1_TYPE_new_null()) == NULL)
 		goto err;
 	xa->set=1;
 
@@ -1095,7 +1095,7 @@ start:
 		{ BIO_printf(bio_err,"Malloc failure\n"); goto err; }
 
 	ASN1_TYPE_set(at,bs->type,(char *)bs);
-	sk_push(xa->value.set,(char *)at);
+	sk_ASN1_TYPE_push(xa->value.set,at);
 	bs=NULL;
 	at=NULL;
 	/* only one item per attribute */

@@ -87,11 +87,11 @@ int PKCS12_add_localkeyid (PKCS12_SAFEBAG *bag, unsigned char *name,
 		return 0;
 	}
 	attrib->object = OBJ_nid2obj(NID_localKeyID);
-	if (!(attrib->value.set = sk_new(NULL))) {
+	if (!(attrib->value.set = sk_ASN1_TYPE_new(NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (attrib->value.set, (char *)keyid);
+	sk_ASN1_TYPE_push (attrib->value.set,keyid);
 	attrib->set = 1;
 	if (!bag->attrib && !(bag->attrib = sk_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
@@ -129,11 +129,11 @@ int PKCS8_add_keyusage (PKCS8_PRIV_KEY_INFO *p8, int usage)
 		return 0;
 	}
 	attrib->object = OBJ_nid2obj(NID_key_usage);
-	if (!(attrib->value.set = sk_new(NULL))) {
+	if (!(attrib->value.set = sk_ASN1_TYPE_new(NULL))) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (attrib->value.set, (char *)keyid);
+	sk_ASN1_TYPE_push (attrib->value.set,keyid);
 	attrib->set = 1;
 	if (!p8->attributes && !(p8->attributes = sk_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
@@ -194,12 +194,12 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 		return 0;
 	}
 	attrib->object = OBJ_nid2obj(NID_friendlyName);
-	if (!(attrib->value.set = sk_new(NULL))) {
+	if (!(attrib->value.set = sk_ASN1_TYPE_new(NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME,
 							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (attrib->value.set, (char *)fname);
+	sk_ASN1_TYPE_push (attrib->value.set,fname);
 	attrib->set = 1;
 	if (!bag->attrib && !(bag->attrib = sk_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
@@ -218,9 +218,8 @@ ASN1_TYPE *PKCS12_get_attr_gen (STACK *attrs, int attr_nid)
 	for (i = 0; i < sk_num (attrs); i++) {
 		attrib = (X509_ATTRIBUTE *) sk_value (attrs, i);
 		if (OBJ_obj2nid (attrib->object) == attr_nid) {
-			if (sk_num (attrib->value.set))
-				return (ASN1_TYPE *)
-					 sk_value (attrib->value.set, 0);
+			if (sk_ASN1_TYPE_num (attrib->value.set))
+			    return sk_ASN1_TYPE_value(attrib->value.set, 0);
 			else return NULL;
 		}
 	}
