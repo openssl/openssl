@@ -113,7 +113,7 @@ extern BIO *bio_err;
 #define do_pipe_sig()
 #endif
 
-#if defined(MONOLITH)
+#if defined(MONOLITH) && !defined(OPENSSL_C)
 #  define apps_startup()	do_pipe_sig()
 #else
 #  if defined(MSDOS) || defined(WIN16) || defined(WIN32)

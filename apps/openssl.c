@@ -71,6 +71,7 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
+#define OPENSSL_C /* tells apps.h to use complete apps_startup() */
 #include "apps.h"
 #include "progs.h"
 #include "s_apps.h"
