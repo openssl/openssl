@@ -66,7 +66,7 @@ foreach (
 	elsif ($_ =~ /idea/) { $t="#ifndef NO_IDEA\n${t}#endif\n"; }
 	elsif ($_ =~ /rc4/)  { $t="#ifndef NO_RC4\n${t}#endif\n"; }
 	elsif ($_ =~ /rc2/)  { $t="#ifndef NO_RC2\n${t}#endif\n"; }
-	elsif ($_ =~ /bf/)   { $t="#ifndef NO_BLOWFISH\n${t}#endif\n"; }
+	elsif ($_ =~ /bf/)   { $t="#ifndef NO_BF\n${t}#endif\n"; }
 	elsif ($_ =~ /cast/) { $t="#ifndef NO_CAST\n${t}#endif\n"; }
 	elsif ($_ =~ /rc5/)  { $t="#ifndef NO_RC5\n${t}#endif\n"; }
 	print $t;

@@ -121,7 +121,7 @@ void SSLeay_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_rc2_cbc,"rc2");
 #endif
 
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	EVP_add_cipher(EVP_bf_ecb());
 	EVP_add_cipher(EVP_bf_cfb());
 	EVP_add_cipher(EVP_bf_ofb());
@@ -169,7 +169,7 @@ void SSLeay_add_all_digests(void)
 	EVP_add_digest(EVP_dss());
 #endif
 #endif
-#ifndef NO_SHA1
+#ifndef NO_SHA
 	EVP_add_digest(EVP_sha1());
 	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
 	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
@@ -183,7 +183,7 @@ void SSLeay_add_all_digests(void)
 #if !defined(NO_MDC2) && !defined(NO_DES)
 	EVP_add_digest(EVP_mdc2());
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 	EVP_add_digest(EVP_ripemd160());
 	EVP_add_digest_alias(SN_ripemd160,"ripemd");
 	EVP_add_digest_alias(SN_ripemd160,"rmd160");

@@ -56,8 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_BLOWFISH
-
+#ifndef NO_BF
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>

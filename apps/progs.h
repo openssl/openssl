@@ -115,7 +115,7 @@ FUNCTION functions[] = {
 #ifndef NO_RC2
 	{FUNC_TYPE_CIPHER,"rc2",enc_main},
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf",enc_main},
 #endif
 #ifndef NO_CAST
@@ -184,16 +184,16 @@ FUNCTION functions[] = {
 #ifndef NO_RC2
 	{FUNC_TYPE_CIPHER,"rc2-ofb",enc_main},
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf-cbc",enc_main},
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf-ecb",enc_main},
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf-cfb",enc_main},
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf-ofb",enc_main},
 #endif
 #ifndef NO_CAST

@@ -361,7 +361,7 @@
 #include "evp/e_ecb_r2.c"
 #include "evp/e_ofb_r2.c"
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 #include "evp/e_cbc_bf.c"
 #include "evp/e_cfb_bf.c"
 #include "evp/e_ecb_bf.c"
@@ -403,7 +403,7 @@
 #endif
 
 #ifdef CRYPTO_BLOWFISH_SUBSET
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 #include "bf/bf_cfb64.c"
 #include "bf/bf_ecb.c"
 #ifndef BF_ASM
@@ -505,6 +505,7 @@
 #endif
 #endif
 
+#ifndef NO_SHA
 #ifdef CRYPTO_SHA1_SUBSET
 #ifndef NO_SHA1
 #include "sha/sha1_one.c"
@@ -515,14 +516,15 @@
 #endif
 
 #ifdef CRYPTO_SHA_SUBSET
-#ifndef NO_SHA
+#ifndef NO_SHA0
 #include "evp/m_dss.c"
 #include "sha/sha_dgst.c"
 #include "sha/sha_one.c"
 #include "evp/m_sha.c"
 #endif
 #endif
-
+#endif
+ 
 #ifdef CRYPTO_STACK_SUBSET
 #include "stack/stack.c"
 #endif

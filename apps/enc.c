@@ -232,7 +232,7 @@ bad:
 #ifndef NO_RC4
 			BIO_printf(bio_err,"rc2     :128 bit key RC2 encryption\n");
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err,"bf      :128 bit key BlowFish encryption\n");
 #endif
 #ifndef NO_RC4
@@ -270,19 +270,19 @@ bad:
 				LN_rc2_cfb64, LN_rc2_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","rc2", LN_rc2_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_bf_ecb, LN_bf_cbc,
 				LN_bf_cfb64, LN_bf_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","bf", LN_bf_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_cast5_ecb, LN_cast5_cbc,
 				LN_cast5_cfb64, LN_cast5_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","cast", LN_cast5_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_rc5_ecb, LN_rc5_cbc,
 				LN_rc5_cfb64, LN_rc5_ofb64);
