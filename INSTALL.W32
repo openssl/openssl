@@ -6,24 +6,24 @@
  this is tested on Win32 but it may also work in Win 3.1 with some
  modification.  See the end of this file for Eric's original comments.
 
- Note: the default Win32 environment is to leave out any Windows NT specific
- features: (currently only BIO_s_log()) if you want NT specific features see
- the "Tweaks" section later.
+ You will Perl for Win32 (available from http://activestate.com/ActivePerl)
+ and one of the following C compilers:
 
- You will need perl for Win32 (which can be got from various sources) and
- Visual C++. 
+  * Visual C++
+  * Borland C
+  * GNU C (Mingw32 or Cygwin32)
 
  If you are compiling from a tarball or a CVS snapshot then the Win32 files
  may well be not up to date. This may mean that some "tweaking" is required to
  get it all to work. See the trouble shooting section later on for if (when?)
  it goes wrong.
 
- Firstly you should run Configure:
+ Visual C++
+ ----------
+
+ Firstly you should run Configure and build the Win32 Makefiles:
 
  > perl Configure VC-WIN32
-
- Then rebuild the Win32 Makefiles and friends:
-
  > ms\do_ms
 
  If you get errors about things not having numbers assigned then check the
@@ -39,6 +39,74 @@
  
  > cd out32dll
  > ..\ms\test
+
+ Tweaks:
+
+ There are various changes you can make to the Win32 compile environment. If
+ you have the MASM assembler 'ml' then you can try the assembly language code.
+ To do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug'
+ here to make a debugging version of the library.
+
+ The default Win32 environment is to leave out any Windows NT specific
+ features.
+
+ If you want to enable the NT specific features of OpenSSL (currently only the
+ logging BIO) follow the instructions above but call the batch file do_nt.bat
+ instead of do_ms.bat.
+
+ You can also build a static version of the library using the Makefile
+ ms\nt.mak
+
+ Borland C++ builder 3 and 4
+ ---------------------------
+
+ * Setup PATH. First must be GNU make then bcb4/bin 
+
+ * Run ms\bcb4.bat
+
+ * Run make:
+   > make -f bcb.mak
+
+ GNU C (Mingw32)
+ ---------------
+
+ To build OpenSSL, you need the Mingw32 package and GNU make.
+
+ Mingw32 is available from <ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/
+ mingw32/egcs-1.1.2/egcs-1.1.2-mingw32.zip>. GNU make is at
+ <ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/binaries/
+ make-3.76.1.zip>. Install both of them in C:\egcs-1.1.2 and run
+ C:\egcs-1.1.2\mingw32.bat to set the PATH.
+
+ * Cofigure OpenSSL:
+
+   > perl Configure Mingw32
+   > perl util\mkfiles.pl >MINFO
+   > perl util\mk1mf.pl Mingw32 >ms\mingw32.mak
+
+ * If you don't have the GNU file utilities (cp, rm, etc.) installed,
+   an additional step is required:
+
+   > perl util\mk1mf.pl VC-WIN32 no-asm >ms\nt.mak
+   > make -f ms/nt.mak
+
+   This will end with an error message. If you don't like that, install
+   the file utilities. :)
+
+ * Compile the library:
+   > make -f ms/mingw32.mak
+
+   You can now try the tests:
+
+   > cd out
+   > ..\ms\test
+
+ * Build the OpenSSL DLLs:
+
+   > perl util\mkdef.pl 32 libeay > ms\libeay32.def
+   > perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
+
+   [to be done]
 
  Troubleshooting
  ---------------
@@ -83,18 +151,6 @@
 
  Tweaks
  ------
-
- There are various changes you can make to the Win32 compile environment. If
- you have the MASM assembler 'ml' then you can try the assembly language code.
- To do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug'
- here to make a debugging version of the library.
-
- If you want to enable the NT specific features of OpenSSL (currently only the
- logging BIO) follow the instructions above but call the batch file do_nt.bat
- instead of do_ms.bat.
-
- You can also build a static version of the library using the Makefile
- ms\nt.mak
 
 --------------------------------------------------------------------------------
 The orignal Windows build instructions from SSLeay follow. 

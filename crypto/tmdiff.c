@@ -183,7 +183,11 @@ double ms_time_diff(char *ap, char *bp)
 #else
 # ifdef WIN32
 	{
+#ifdef __GNUC__
+	signed long long la,lb;
+#else
 	signed _int64 la,lb;
+#endif
 	la=a->ms_win32.dwHighDateTime;
 	lb=b->ms_win32.dwHighDateTime;
 	la<<=32;

@@ -18,7 +18,8 @@ $infile="MINFO";
 	"VC-WIN16",   "Alias for VC-W31-32",
 	"VC-W31-32",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 386+",
 	"VC-MSDOS","Microsoft Visual C++ 1.52 - MSDOS",
-	"BC-NT",   "Borland C++ 4.5 - Windows NT  - PROBABLY NOT WORKING",
+	"Mingw32", "GNU C++ - Windows NT or 9x",
+	"BC-NT",   "Borland C++ 4.5 - Windows NT",
 	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
 	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
 	"linux-elf","Linux elf",
@@ -152,6 +153,10 @@ elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
+	}
+elsif ($platform eq "Mingw32")
+	{
+	require 'Mingw32.pl';
 	}
 elsif ($platform eq "BC-NT")
 	{
@@ -346,8 +351,8 @@ O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
 O_RSAGLUE= \$(LIB_D)$o$plib\$(RSAGLUE)$libp
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
-L_SSL=     \$(LIB_D)$o\$(SSL)$libp
-L_CRYPTO=  \$(LIB_D)$o\$(CRYPTO)$libp
+L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
+L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
 
 L_LIBS= \$(L_SSL) \$(L_CRYPTO)
 #L_LIBS= \$(O_SSL) \$(O_RSAGLUE) -lrsaref \$(O_CRYPTO)
@@ -384,7 +389,7 @@ $banner
 	\$(MKDIR) \$(LIB_D)
 
 \$(INCO_D): \$(INC_D)
-	\$(MKDIR) \$(INC_D)${o}openssl
+	\$(MKDIR) \$(INCO_D)
 
 \$(INC_D):
 	\$(MKDIR) \$(INC_D)
@@ -744,7 +749,7 @@ sub cc_compile_target
 	local($ret);
 	
 	# EAY EAY
-	$ex_flags.=' -DCFLAGS="\"$(CC) $(CFLAG)\"" -DPLATFORM="\"$(PLATFORM)\""' if ($source =~ /cversion/);
+	$ex_flags.=' -DCFLAGS="\"$(CC) $(CFLAG)\"" -DPLATFORM="\"$(PLATFORM)\""' if ($source =~ /cversion/ and $dcflags ne 'n');
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";

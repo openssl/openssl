@@ -150,8 +150,6 @@ extern "C" {
 
 #endif
 
-#define strncasecmp(a,b,c)	strnicmp((a),(b),(c))
-
 #  ifdef WINDOWS
 #    include <windows.h>
 #    include <stddef.h>
@@ -161,6 +159,13 @@ extern "C" {
 #  endif
 #  include <io.h>
 #  include <fcntl.h>
+
+#if defined (__BORLANDC__)
+#define _setmode setmode
+#define _O_TEXT O_TEXT
+#define _O_BINARY O_BINARY
+#define _int64 __int64
+#endif
 
 #if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
 #  define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }

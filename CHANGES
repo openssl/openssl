@@ -5,6 +5,12 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Support Borland C++ builder.
+     [Janez Jere <jj@void.si>, modified by Ulf Möller]
+
+  *) Support Mingw32.
+     [Ulf Möller]
+
   *) SHA-1 cleanups and performance enhancements.
      [Andy Polyakov <appro@fy.chalmers.se>]
 

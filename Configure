@@ -239,6 +239,7 @@ my %table=(
 
 # CygWin32
 "CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown):BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN:(unknown)::::::",
@@ -255,7 +256,7 @@ my %table=(
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
-	BC-16 CygWin32);
+	BC-16 CygWin32 Mingw32);
 
 my $prefix="";
 my $openssldir="";
@@ -634,6 +635,7 @@ if($IsWindows) {
 	open (OUT,">crypto/date.h") || die "Can't open date.h";
 	printf OUT "#define DATE \"%s\"\n", scalar gmtime();
 	close(OUT);
+	system "perl crypto/objects/obj_dat.pl <crypto/objects/objects.h >crypto/objects/obj_dat.h";
 } else {
 	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
 	(system 'make depend') == 0 or exit $? if $depflags ne "";
