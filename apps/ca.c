@@ -206,7 +206,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	X509_REQ *req, char *ext_sect, LHASH *conf);
 static int do_revoke(X509 *x509, TXT_DB *db);
 static int check_time_format(char *str);
-static LHASH *conf;
+static LHASH *conf=NULL;
 static char *key=NULL;
 static char *section=NULL;
 
@@ -273,6 +273,7 @@ EF_ALIGNMENT=0;
 
 	apps_startup();
 
+	conf = NULL;
 	key = NULL;
 	section = NULL;
 
