@@ -512,6 +512,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	STACK_OF(PKCS7_SIGNER_INFO) *si_sk=NULL;
 	ASN1_OCTET_STRING *os=NULL;
 
+	EVP_MD_CTX_init(&ctx_tmp);
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
 
@@ -576,7 +577,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
-			EVP_MD_CTX_init(&ctx_tmp);
 			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
 			if (!BUF_MEM_grow(buf,EVP_PKEY_size(si->pkey)))
 				{
