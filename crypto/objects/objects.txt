@@ -12,6 +12,32 @@ X9-57 4			: X9cm			: X9.57 CM ?
 X9cm 1			: DSA			: dsaEncryption
 X9cm 3			: DSA-SHA1		: dsaWithSHA1
 
+
+ISO-US 10045		: ansi-X9-62		: ANSI X9.62
+!module X9-62
+!Alias id-fieldType ansi-X9-62 1
+X9-62_id-fieldType 1		: prime-field
+X9-62_id-fieldType 2		: characteristic-two-field
+# ... characteristic-two-field OID subtree
+!Alias id-publicKeyType ansi-X9-62 2
+X9-62_id-publicKeyType 1	: id-ecPublicKey
+!Alias ellipticCurve ansi-X9-62 3
+!Alias c-TwoCurve X9-62_ellipticCurve 0
+# ... characteristic 2 curve OIDs
+!Alias primeCurve X9-62_ellipticCurve 1
+X9-62_primeCurve 1	 	: prime192v1
+X9-62_primeCurve 2	 	: prime192v2
+X9-62_primeCurve 3	 	: prime192v3
+X9-62_primeCurve 4	 	: prime239v1
+X9-62_primeCurve 5	 	: prime239v2
+X9-62_primeCurve 6	 	: prime239v3
+X9-62_primeCurve 7	 	: prime256v1
+!Alias id-ecSigType ansi-X9-62 4
+!global
+X9-62_id-ecSigType 1		: ecdsa-with-SHA1
+
+
+
 ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
 			: CAST5-ECB		: cast5-ecb
 !Cname cast5-cfb64

@@ -106,6 +106,67 @@
 #define NID_dsaWithSHA1		113
 #define OBJ_dsaWithSHA1		OBJ_X9cm,3L
 
+#define SN_ansi_X9_62		"ansi-X9-62"
+#define LN_ansi_X9_62		"ANSI X9.62"
+#define NID_ansi_X9_62		480
+#define OBJ_ansi_X9_62		OBJ_ISO_US,10045L
+
+#define OBJ_X9_62_id_fieldType		OBJ_ansi_X9_62,1L
+
+#define SN_X9_62_prime_field		"prime-field"
+#define NID_X9_62_prime_field		481
+#define OBJ_X9_62_prime_field		OBJ_X9_62_id_fieldType,1L
+
+#define SN_X9_62_characteristic_two_field		"characteristic-two-field"
+#define NID_X9_62_characteristic_two_field		482
+#define OBJ_X9_62_characteristic_two_field		OBJ_X9_62_id_fieldType,2L
+
+#define OBJ_X9_62_id_publicKeyType		OBJ_ansi_X9_62,2L
+
+#define SN_X9_62_id_ecPublicKey		"id-ecPublicKey"
+#define NID_X9_62_id_ecPublicKey		483
+#define OBJ_X9_62_id_ecPublicKey		OBJ_X9_62_id_publicKeyType,1L
+
+#define OBJ_X9_62_ellipticCurve		OBJ_ansi_X9_62,3L
+
+#define OBJ_X9_62_c_TwoCurve		OBJ_X9_62_ellipticCurve,0L
+
+#define OBJ_X9_62_primeCurve		OBJ_X9_62_ellipticCurve,1L
+
+#define SN_X9_62_prime192v1		"prime192v1"
+#define NID_X9_62_prime192v1		484
+#define OBJ_X9_62_prime192v1		OBJ_X9_62_primeCurve,1L
+
+#define SN_X9_62_prime192v2		"prime192v2"
+#define NID_X9_62_prime192v2		485
+#define OBJ_X9_62_prime192v2		OBJ_X9_62_primeCurve,2L
+
+#define SN_X9_62_prime192v3		"prime192v3"
+#define NID_X9_62_prime192v3		486
+#define OBJ_X9_62_prime192v3		OBJ_X9_62_primeCurve,3L
+
+#define SN_X9_62_prime239v1		"prime239v1"
+#define NID_X9_62_prime239v1		487
+#define OBJ_X9_62_prime239v1		OBJ_X9_62_primeCurve,4L
+
+#define SN_X9_62_prime239v2		"prime239v2"
+#define NID_X9_62_prime239v2		488
+#define OBJ_X9_62_prime239v2		OBJ_X9_62_primeCurve,5L
+
+#define SN_X9_62_prime239v3		"prime239v3"
+#define NID_X9_62_prime239v3		489
+#define OBJ_X9_62_prime239v3		OBJ_X9_62_primeCurve,6L
+
+#define SN_X9_62_prime256v1		"prime256v1"
+#define NID_X9_62_prime256v1		490
+#define OBJ_X9_62_prime256v1		OBJ_X9_62_primeCurve,7L
+
+#define OBJ_X9_62_id_ecSigType		OBJ_ansi_X9_62,4L
+
+#define SN_ecdsa_with_SHA1		"ecdsa-with-SHA1"
+#define NID_ecdsa_with_SHA1		491
+#define OBJ_ecdsa_with_SHA1		OBJ_X9_62_id_ecSigType,1L
+
 #define SN_cast5_cbc		"CAST5-CBC"
 #define LN_cast5_cbc		"cast5-cbc"
 #define NID_cast5_cbc		108

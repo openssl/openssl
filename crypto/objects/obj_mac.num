@@ -477,3 +477,15 @@ personalSignature		476
 dITRedirect		477
 audio		478
 documentPublisher		479
+ansi_X9_62		480
+X9_62_prime_field		481
+X9_62_characteristic_two_field		482
+X9_62_id_ecPublicKey		483
+X9_62_prime192v1		484
+X9_62_prime192v2		485
+X9_62_prime192v3		486
+X9_62_prime239v1		487
+X9_62_prime239v2		488
+X9_62_prime239v3		489
+X9_62_prime256v1		490
+ecdsa_with_SHA1		491

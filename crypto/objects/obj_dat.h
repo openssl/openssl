@@ -61,12 +61,12 @@
  * perl obj_dat.pl obj_mac.h obj_dat.h
  */
 
-#define NUM_NID 480
-#define NUM_SN 478
-#define NUM_LN 478
-#define NUM_OBJ 452
+#define NUM_NID 492
+#define NUM_SN 490
+#define NUM_LN 490
+#define NUM_OBJ 464
 
-static unsigned char lvalues[3694]={
+static unsigned char lvalues[3783]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -519,6 +519,18 @@ static unsigned char lvalues[3694]={
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x36,/* [3663] OBJ_dITRedirect */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x37,/* [3673] OBJ_audio */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x38,/* [3683] OBJ_documentPublisher */
+0x2A,0x86,0x48,0xCE,0x3D,                    /* [3693] OBJ_ansi_X9_62 */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x01,          /* [3698] OBJ_X9_62_prime_field */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,          /* [3705] OBJ_X9_62_characteristic_two_field */
+0x2A,0x86,0x48,0xCE,0x3D,0x02,0x01,          /* [3712] OBJ_X9_62_id_ecPublicKey */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x01,     /* [3719] OBJ_X9_62_prime192v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x02,     /* [3727] OBJ_X9_62_prime192v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x03,     /* [3735] OBJ_X9_62_prime192v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x04,     /* [3743] OBJ_X9_62_prime239v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x05,     /* [3751] OBJ_X9_62_prime239v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x06,     /* [3759] OBJ_X9_62_prime239v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x01,0x07,     /* [3767] OBJ_X9_62_prime256v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x01,          /* [3775] OBJ_ecdsa_with_SHA1 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1257,6 +1269,21 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"audio","audio",NID_audio,10,&(lvalues[3673]),0},
 {"documentPublisher","documentPublisher",NID_documentPublisher,10,
 	&(lvalues[3683]),0},
+{"ansi-X9-62","ANSI X9.62",NID_ansi_X9_62,5,&(lvalues[3693]),0},
+{"prime-field","prime-field",NID_X9_62_prime_field,7,&(lvalues[3698]),0},
+{"characteristic-two-field","characteristic-two-field",
+	NID_X9_62_characteristic_two_field,7,&(lvalues[3705]),0},
+{"id-ecPublicKey","id-ecPublicKey",NID_X9_62_id_ecPublicKey,7,
+	&(lvalues[3712]),0},
+{"prime192v1","prime192v1",NID_X9_62_prime192v1,8,&(lvalues[3719]),0},
+{"prime192v2","prime192v2",NID_X9_62_prime192v2,8,&(lvalues[3727]),0},
+{"prime192v3","prime192v3",NID_X9_62_prime192v3,8,&(lvalues[3735]),0},
+{"prime239v1","prime239v1",NID_X9_62_prime239v1,8,&(lvalues[3743]),0},
+{"prime239v2","prime239v2",NID_X9_62_prime239v2,8,&(lvalues[3751]),0},
+{"prime239v3","prime239v3",NID_X9_62_prime239v3,8,&(lvalues[3759]),0},
+{"prime256v1","prime256v1",NID_X9_62_prime256v1,8,&(lvalues[3767]),0},
+{"ecdsa-with-SHA1","ecdsa-with-SHA1",NID_ecdsa_with_SHA1,7,
+	&(lvalues[3775]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1395,6 +1422,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[423]),/* "account" */
 &(nid_objs[363]),/* "ad_timestamping" */
 &(nid_objs[376]),/* "algorithm" */
+&(nid_objs[480]),/* "ansi-X9-62" */
 &(nid_objs[370]),/* "archiveCutoff" */
 &(nid_objs[461]),/* "associatedDomain" */
 &(nid_objs[462]),/* "associatedName" */
@@ -1411,6 +1439,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[89]),/* "certificatePolicies" */
 &(nid_objs[54]),/* "challengePassword" */
+&(nid_objs[482]),/* "characteristic-two-field" */
 &(nid_objs[130]),/* "clientAuth" */
 &(nid_objs[131]),/* "codeSigning" */
 &(nid_objs[50]),/* "contentType" */
@@ -1437,6 +1466,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[447]),/* "documentVersion" */
 &(nid_objs[392]),/* "domain" */
 &(nid_objs[429]),/* "domainRelatedObject" */
+&(nid_objs[491]),/* "ecdsa-with-SHA1" */
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[389]),/* "enterprises" */
 &(nid_objs[384]),/* "experimental" */
@@ -1495,6 +1525,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[332]),/* "id-cmc-senderNonce" */
 &(nid_objs[327]),/* "id-cmc-statusInfo" */
 &(nid_objs[331]),/* "id-cmc-transactionId" */
+&(nid_objs[483]),/* "id-ecPublicKey" */
 &(nid_objs[260]),/* "id-it" */
 &(nid_objs[302]),/* "id-it-caKeyUpdateInfo" */
 &(nid_objs[298]),/* "id-it-caProtEncCert" */
@@ -1695,6 +1726,14 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[481]),/* "prime-field" */
+&(nid_objs[484]),/* "prime192v1" */
+&(nid_objs[485]),/* "prime192v2" */
+&(nid_objs[486]),/* "prime192v3" */
+&(nid_objs[487]),/* "prime239v1" */
+&(nid_objs[488]),/* "prime239v2" */
+&(nid_objs[489]),/* "prime239v3" */
+&(nid_objs[490]),/* "prime256v1" */
 &(nid_objs[385]),/* "private" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
 &(nid_objs[412]),/* "pss" */
@@ -1742,6 +1781,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 
 static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[363]),/* "AD Time Stamping" */
+&(nid_objs[480]),/* "ANSI X9.62" */
 &(nid_objs[368]),/* "Acceptable OCSP Responses" */
 &(nid_objs[177]),/* "Authority Information Access" */
 &(nid_objs[365]),/* "Basic OCSP Response" */
@@ -1863,6 +1903,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[410]),/* "ccitt" */
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[54]),/* "challengePassword" */
+&(nid_objs[482]),/* "characteristic-two-field" */
 &(nid_objs[13]),/* "commonName" */
 &(nid_objs[50]),/* "contentType" */
 &(nid_objs[53]),/* "countersignature" */
@@ -1908,6 +1949,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[113]),/* "dsaWithSHA1" */
 &(nid_objs[70]),/* "dsaWithSHA1-old" */
 &(nid_objs[297]),/* "dvcs" */
+&(nid_objs[491]),/* "ecdsa-with-SHA1" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
 &(nid_objs[439]),/* "favouriteDrink" */
@@ -1959,6 +2001,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[332]),/* "id-cmc-senderNonce" */
 &(nid_objs[327]),/* "id-cmc-statusInfo" */
 &(nid_objs[331]),/* "id-cmc-transactionId" */
+&(nid_objs[483]),/* "id-ecPublicKey" */
 &(nid_objs[260]),/* "id-it" */
 &(nid_objs[302]),/* "id-it-caKeyUpdateInfo" */
 &(nid_objs[298]),/* "id-it-caProtEncCert" */
@@ -2159,6 +2202,14 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[481]),/* "prime-field" */
+&(nid_objs[484]),/* "prime192v1" */
+&(nid_objs[485]),/* "prime192v2" */
+&(nid_objs[486]),/* "prime192v3" */
+&(nid_objs[487]),/* "prime239v1" */
+&(nid_objs[488]),/* "prime239v2" */
+&(nid_objs[489]),/* "prime239v3" */
+&(nid_objs[490]),/* "prime256v1" */
 &(nid_objs[412]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[434]),/* "qualityLabelledData" */
@@ -2280,6 +2331,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
 &(nid_objs[184]),/* OBJ_X9_57                        1 2 840 10040 */
+&(nid_objs[480]),/* OBJ_ansi_X9_62                   1 2 840 10045 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */
@@ -2309,6 +2361,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[409]),/* OBJ_hold_instruction_reject      1 2 840 10040 2 3 */
 &(nid_objs[116]),/* OBJ_dsa                          1 2 840 10040 4 1 */
 &(nid_objs[113]),/* OBJ_dsaWithSHA1                  1 2 840 10040 4 3 */
+&(nid_objs[481]),/* OBJ_X9_62_prime_field            1 2 840 10045 1 1 */
+&(nid_objs[482]),/* OBJ_X9_62_characteristic_two_field 1 2 840 10045 1 2 */
+&(nid_objs[483]),/* OBJ_X9_62_id_ecPublicKey         1 2 840 10045 2 1 */
+&(nid_objs[491]),/* OBJ_ecdsa_with_SHA1              1 2 840 10045 4 1 */
 &(nid_objs[258]),/* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
 &(nid_objs[175]),/* OBJ_id_pe                        1 3 6 1 5 5 7 1 */
 &(nid_objs[259]),/* OBJ_id_qt                        1 3 6 1 5 5 7 2 */
@@ -2338,6 +2394,13 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
 &(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
+&(nid_objs[484]),/* OBJ_X9_62_prime192v1             1 2 840 10045 3 1 1 */
+&(nid_objs[485]),/* OBJ_X9_62_prime192v2             1 2 840 10045 3 1 2 */
+&(nid_objs[486]),/* OBJ_X9_62_prime192v3             1 2 840 10045 3 1 3 */
+&(nid_objs[487]),/* OBJ_X9_62_prime239v1             1 2 840 10045 3 1 4 */
+&(nid_objs[488]),/* OBJ_X9_62_prime239v2             1 2 840 10045 3 1 5 */
+&(nid_objs[489]),/* OBJ_X9_62_prime239v3             1 2 840 10045 3 1 6 */
+&(nid_objs[490]),/* OBJ_X9_62_prime256v1             1 2 840 10045 3 1 7 */
 &(nid_objs[269]),/* OBJ_id_pkix1_explicit_88         1 3 6 1 5 5 7 0 1 */
 &(nid_objs[270]),/* OBJ_id_pkix1_implicit_88         1 3 6 1 5 5 7 0 2 */
 &(nid_objs[271]),/* OBJ_id_pkix1_explicit_93         1 3 6 1 5 5 7 0 3 */
