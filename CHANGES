@@ -761,7 +761,12 @@
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
+ Changes between 0.9.7f and 0.9.7g  [XX xxx xxxx]
+
+  *) Undo Cygwin change.
+     [Ulf Möller]
+
+ Changes between 0.9.7e and 0.9.7f  [23 Mar 2005]
 
   *) Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating
      server and client random values. Previously

@@ -113,13 +113,17 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN32_CYGWIN)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 #include <windows.h>
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
 #endif
 #include <wincrypt.h>
 #include <tlhelp32.h>
+
+/* Limit the time spent walking through the heap, processes, threads and modules to
+   a maximum of 1000 miliseconds each, unless CryptoGenRandom failed */
+#define MAXDELAY 1000
 
 /* Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
@@ -192,6 +196,7 @@ int RAND_poll(void)
 	BYTE buf[64];
 	DWORD w;
 	HWND h;
+	int good = 0;
 
 	HMODULE advapi, kernel, user, netapi;
 	CRYPTACQUIRECONTEXTW acquire = 0;
@@ -362,6 +367,7 @@ int RAND_poll(void)
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
 				RAND_add(buf, sizeof(buf), 0);
+				good = 1;
 #if 0
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
@@ -375,6 +381,7 @@ int RAND_poll(void)
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
 				RAND_add(buf, sizeof(buf), sizeof(buf));
+				good = 1;
 #if 0
 				printf("randomness from PROV_INTEL_SEC\n");
 #endif
@@ -464,6 +471,7 @@ int RAND_poll(void)
 		PROCESSENTRY32 p;
 		THREADENTRY32 t;
 		MODULEENTRY32 m;
+		DWORD stoptime = 0;
 
 		snap = (CREATETOOLHELP32SNAPSHOT)
 			GetProcAddress(kernel, "CreateToolhelp32Snapshot");
@@ -495,6 +503,7 @@ int RAND_poll(void)
                          * of entropy.
                          */
 			hlist.dwSize = sizeof(HEAPLIST32);		
+			if (good) stoptime = GetTickCount() + MAXDELAY;
 			if (heaplist_first(handle, &hlist))
 				do
 					{
@@ -512,18 +521,20 @@ int RAND_poll(void)
 							&& --entrycnt > 0);
 						}
 					} while (heaplist_next(handle,
-						&hlist));
-			
+						&hlist) && GetTickCount() < stoptime);
+
 			/* process walking */
                         /* PROCESSENTRY32 contains 9 fields that will change
                          * with each entry.  Consider each field a source of
                          * 1 byte of entropy.
                          */
 			p.dwSize = sizeof(PROCESSENTRY32);
+		
+			if (good) stoptime = GetTickCount() + MAXDELAY;
 			if (process_first(handle, &p))
 				do
 					RAND_add(&p, p.dwSize, 9);
-				while (process_next(handle, &p));
+				while (process_next(handle, &p) && GetTickCount() < stoptime);
 
 			/* thread walking */
                         /* THREADENTRY32 contains 6 fields that will change
@@ -531,10 +542,11 @@ int RAND_poll(void)
                          * 1 byte of entropy.
                          */
 			t.dwSize = sizeof(THREADENTRY32);
+			if (good) stoptime = GetTickCount() + MAXDELAY;
 			if (thread_first(handle, &t))
 				do
 					RAND_add(&t, t.dwSize, 6);
-				while (thread_next(handle, &t));
+				while (thread_next(handle, &t) && GetTickCount() < stoptime);
 
 			/* module walking */
                         /* MODULEENTRY32 contains 9 fields that will change
@@ -542,14 +554,16 @@ int RAND_poll(void)
                          * 1 byte of entropy.
                          */
 			m.dwSize = sizeof(MODULEENTRY32);
+			if (good) stoptime = GetTickCount() + MAXDELAY;
 			if (module_first(handle, &m))
 				do
 					RAND_add(&m, m.dwSize, 9);
-				while (module_next(handle, &m));
+				while (module_next(handle, &m) && GetTickCount < stoptime);
 			if (close_snap)
 				close_snap(handle);
 			else
 				CloseHandle(handle);
+
 			}
 
 		FreeLibrary(kernel);
