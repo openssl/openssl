@@ -56,7 +56,7 @@
       o Bug fixes for Win32, HP/UX and Irix.
       o Bug fixes in BIGNUM, SSL, PKCS#7, PKCS#12, X.509, CONF and
         memory checking routines.
-      o Bug fixes for RSA operations in threaded enviroments.
+      o Bug fixes for RSA operations in threaded environments.
       o Bug fixes in misc. openssl applications.
       o Remove a few potential memory leaks.
       o Add tighter checks of BIGNUM routines.
