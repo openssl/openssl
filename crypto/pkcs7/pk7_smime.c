@@ -153,7 +153,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	PKCS7_SIGNER_INFO *si;
 	X509_STORE_CTX cert_ctx;
 	char buf[4096];
-	int i, j=0, k;
+	int i, j=0, k, ret = 0;
 	BIO *p7bio;
 	BIO *tmpout;
 
@@ -258,18 +258,15 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 		}
 	}
 
-	sk_X509_free(signers);
-	if(indata) BIO_pop(p7bio);
-	BIO_free_all(p7bio);
-
-	return 1;
+	ret = 1;
 
 	err:
 
+	if(indata) BIO_pop(p7bio);
+	BIO_free_all(p7bio);
 	sk_X509_free(signers);
-	BIO_free(p7bio);
 
-	return 0;
+	return ret;
 }
 
 STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)

@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Avoid coredump with unsupported or invalid public keys by checking if
+     X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
+     PKCS7_verify() fails with non detached data.
+     [Steve Henson]
+
   *) Change OCSP_cert_to_id() to tolerate a NULL subject certificate and
      OCSP_cert_id_new() a NULL serialNumber. This allows a partial certificate
      ID to be generated from the issuer certificate alone which can then be
