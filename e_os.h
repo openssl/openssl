@@ -556,6 +556,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #  include "o_str.h"
 #  define strcasecmp OPENSSL_strcasecmp
 #  define strncasecmp OPENSSL_strncasecmp
+#  define OPENSSL_IMPLEMENTS_strncasecmp
 #elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
 #  define strcasecmp stricmp
 #  define strncasecmp strnicmp

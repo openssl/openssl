@@ -60,12 +60,9 @@
 #include <e_os.h>
 #include "o_str.h"
 
-#undef strncasecmp
-#undef strcasecmp
-
 int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
 	{
-#if defined(OPENSSL_SYS_VMS)
+#if defined(OPENSSL_IMPLEMENTS_strncasecmp)
 	while (*str1 && *str2 && n)
 		{
 		int res = toupper(*str1) - toupper(*str2);
@@ -81,18 +78,17 @@ int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
 	if (*str2)
 		return -1;
 	return 0;
-#elif defined(OPENSSL_SYS_WINDOWS)
-	return _strnicmp(str1, str2, n);
 #else
+	/* Recursion hazard warning! Whenever strncasecmp is #defined as
+	 * OPENSSL_strncasecmp, OPENSSL_IMPLEMENTS_strncasecmp must be
+	 * defined as well. */
 	return strncasecmp(str1, str2, n);
 #endif
 	}
 int OPENSSL_strcasecmp(const char *str1, const char *str2)
 	{
-#if defined(OPENSSL_SYS_VMS)
+#if defined(OPENSSL_IMPLEMENTS_strncasecmp)
 	return OPENSSL_strncasecmp(str1, str2, (size_t)-1);
-#elif defined(OPENSSL_SYS_WINDOWS)
-	return _stricmp(str1, str2);
 #else
 	return strcasecmp(str1, str2);
 #endif
