@@ -156,11 +156,11 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 	ASN1_INTEGER *aint;
 	int isneg, ishex;
 	int ret;
-	bn = BN_new();
 	if (!value) {
 		X509V3err(X509V3_F_S2I_ASN1_INTEGER,X509V3_R_INVALID_NULL_VALUE);
 		return 0;
 	}
+	bn = BN_new();
 	if (value[0] == '-') {
 		value++;
 		isneg = 1;
@@ -174,7 +174,8 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 	if (ishex) ret = BN_hex2bn(&bn, value);
 	else ret = BN_dec2bn(&bn, value);
 
-	if (!ret) {
+	if (!ret || value[ret]) {
+		BN_free(bn);
 		X509V3err(X509V3_F_S2I_ASN1_INTEGER,X509V3_R_BN_DEC2BN_ERROR);
 		return 0;
 	}
