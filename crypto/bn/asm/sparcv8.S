@@ -1,4 +1,4 @@
-.ident	"sparcv8.s, Version 1.3"
+.ident	"sparcv8.s, Version 1.4"
 .ident	"SPARC v8 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 /*
@@ -27,6 +27,7 @@
  * 1.1	- new loop unrolling model(*);
  * 1.2	- made gas friendly;
  * 1.3	- fixed problem with /usr/ccs/lib/cpp;
+ * 1.4	- some retunes;
  *
  * (*)	see bn_asm.sparc.v8plus.S for details
  */
@@ -55,49 +56,38 @@ bn_mul_add_words:
 	bz	.L_bn_mul_add_words_tail
 	clr	%o5
 
-	umul	%o3,%g2,%g2
-	ld	[%o0],%o4
-	rd	%y,%g1
-	addcc	%o4,%g2,%o4
-	ld	[%o1+4],%g3
-	addx	%g1,0,%o5
-	ba	.L_bn_mul_add_words_warm_loop
-	st	%o4,[%o0]
-
 .L_bn_mul_add_words_loop:
 	ld	[%o0],%o4
+	ld	[%o1+4],%g3
 	umul	%o3,%g2,%g2
 	rd	%y,%g1
 	addcc	%o4,%o5,%o4
-	ld	[%o1+4],%g3
 	addx	%g1,0,%g1
 	addcc	%o4,%g2,%o4
-	nop
-	addx	%g1,0,%o5
 	st	%o4,[%o0]
+	addx	%g1,0,%o5
 
-.L_bn_mul_add_words_warm_loop:
 	ld	[%o0+4],%o4
+	ld	[%o1+8],%g2
 	umul	%o3,%g3,%g3
 	dec	4,%o2
 	rd	%y,%g1
 	addcc	%o4,%o5,%o4
-	ld	[%o1+8],%g2
 	addx	%g1,0,%g1
 	addcc	%o4,%g3,%o4
-	addx	%g1,0,%o5
 	st	%o4,[%o0+4]
+	addx	%g1,0,%o5
 
 	ld	[%o0+8],%o4
+	ld	[%o1+12],%g3
 	umul	%o3,%g2,%g2
 	inc	16,%o1
 	rd	%y,%g1
 	addcc	%o4,%o5,%o4
-	ld	[%o1-4],%g3
 	addx	%g1,0,%g1
 	addcc	%o4,%g2,%o4
-	addx	%g1,0,%o5
 	st	%o4,[%o0+8]
+	addx	%g1,0,%o5
 
 	ld	[%o0+12],%o4
 	umul	%o3,%g3,%g3
@@ -106,8 +96,8 @@ bn_mul_add_words:
 	addcc	%o4,%o5,%o4
 	addx	%g1,0,%g1
 	addcc	%o4,%g3,%o4
-	addx	%g1,0,%o5
 	st	%o4,[%o0-4]
+	addx	%g1,0,%o5
 	andcc	%o2,-4,%g0
 	bnz,a	.L_bn_mul_add_words_loop
 	ld	[%o1],%g2
@@ -133,11 +123,10 @@ bn_mul_add_words:
 	st	%o4,[%o0]
 
 	ld	[%o1+4],%g2
-	umul	%o3,%g2,%g2
 	ld	[%o0+4],%o4
+	umul	%o3,%g2,%g2
 	rd	%y,%g1
 	addcc	%o4,%o5,%o4
-	nop
 	addx	%g1,0,%g1
 	addcc	%o4,%g2,%o4
 	addx	%g1,0,%o5
@@ -146,8 +135,8 @@ bn_mul_add_words:
 	st	%o4,[%o0+4]
 
 	ld	[%o1+8],%g2
-	umul	%o3,%g2,%g2
 	ld	[%o0+8],%o4
+	umul	%o3,%g2,%g2
 	rd	%y,%g1
 	addcc	%o4,%o5,%o4
 	addx	%g1,0,%g1
@@ -374,47 +363,40 @@ bn_add_words:
 	andcc	%o3,-4,%g0
 	bz	.L_bn_add_words_tail
 	clr	%g1
-	ld	[%o2],%o5
-	dec	4,%o3
-	addcc	%o5,%o4,%o5
-	nop
-	st	%o5,[%o0]
-	ba	.L_bn_add_words_warm_loop
-	ld	[%o1+4],%o4
-	nop
+	ba	.L_bn_add_words_warn_loop
+	addcc	%g0,0,%g0	! clear carry flag
 
 .L_bn_add_words_loop:
 	ld	[%o1],%o4
-	dec	4,%o3
+.L_bn_add_words_warn_loop:
 	ld	[%o2],%o5
+	ld	[%o1+4],%g3
+	ld	[%o2+4],%g4
+	dec	4,%o3
 	addxcc	%o5,%o4,%o5
 	st	%o5,[%o0]
 
-	ld	[%o1+4],%o4
-.L_bn_add_words_warm_loop:
+	ld	[%o1+8],%o4
+	ld	[%o2+8],%o5
 	inc	16,%o1
-	ld	[%o2+4],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0+4]
+	addxcc	%g3,%g4,%g3
+	st	%g3,[%o0+4]
 	
-	ld	[%o1-8],%o4
+	ld	[%o1-4],%g3
+	ld	[%o2+12],%g4
 	inc	16,%o2
-	ld	[%o2-8],%o5
 	addxcc	%o5,%o4,%o5
 	st	%o5,[%o0+8]
 
-	ld	[%o1-4],%o4
 	inc	16,%o0
-	ld	[%o2-4],%o5
-	addxcc	%o5,%o4,%o5
-	st	%o5,[%o0-4]
+	addxcc	%g3,%g4,%g3
+	st	%g3,[%o0-4]
 	addx	%g0,0,%g1
 	andcc	%o3,-4,%g0
 	bnz,a	.L_bn_add_words_loop
 	addcc	%g1,-1,%g0
 
 	tst	%o3
-	nop
 	bnz,a	.L_bn_add_words_tail
 	ld	[%o1],%o4
 .L_bn_add_words_return:
@@ -429,7 +411,6 @@ bn_add_words:
 	deccc	%o3
 	bz	.L_bn_add_words_return
 	st	%o5,[%o0]
-	nop
 
 	ld	[%o1+4],%o4
 	addcc	%g1,-1,%g0
@@ -470,40 +451,34 @@ bn_sub_words:
 	andcc	%o3,-4,%g0
 	bz	.L_bn_sub_words_tail
 	clr	%g1
-	ld	[%o2],%o5
-	dec	4,%o3
-	subcc	%o4,%o5,%o5
-	nop
-	st	%o5,[%o0]
 	ba	.L_bn_sub_words_warm_loop
-	ld	[%o1+4],%o4
-	nop
+	addcc	%g0,0,%g0	! clear carry flag
 
 .L_bn_sub_words_loop:
 	ld	[%o1],%o4
-	dec	4,%o3
+.L_bn_sub_words_warm_loop:
 	ld	[%o2],%o5
+	ld	[%o1+4],%g3
+	ld	[%o2+4],%g4
+	dec	4,%o3
 	subxcc	%o4,%o5,%o5
 	st	%o5,[%o0]
 
-	ld	[%o1+4],%o4
-.L_bn_sub_words_warm_loop:
+	ld	[%o1+8],%o4
+	ld	[%o2+8],%o5
 	inc	16,%o1
-	ld	[%o2+4],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0+4]
+	subxcc	%g3,%g4,%g4
+	st	%g4,[%o0+4]
 	
-	ld	[%o1-8],%o4
+	ld	[%o1-4],%g3
+	ld	[%o2+12],%g4
 	inc	16,%o2
-	ld	[%o2-8],%o5
 	subxcc	%o4,%o5,%o5
 	st	%o5,[%o0+8]
 
-	ld	[%o1-4],%o4
 	inc	16,%o0
-	ld	[%o2-4],%o5
-	subxcc	%o4,%o5,%o5
-	st	%o5,[%o0-4]
+	subxcc	%g3,%g4,%g4
+	st	%g4,[%o0-4]
 	addx	%g0,0,%g1
 	andcc	%o3,-4,%g0
 	bnz,a	.L_bn_sub_words_loop
@@ -1365,7 +1340,6 @@ bn_sqr_comba8:
 	addxcc	c_3,t_2,c_3
 	addx	%g0,%g0,c_1
 	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
 	addxcc	c_3,t_2,c_3
 	st	c_2,rp(13)	!r[13]=c2;
 	addx	c_1,%g0,c_1	!=
@@ -1398,13 +1372,12 @@ bn_sqr_comba4:
 	rd	%y,c_2
 	st	c_1,rp(0)	!r[0]=c1;
 
-	ld	ap(1),a_1
+	ld	ap(2),a_2
 	umul	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
 	addcc	c_2,t_1,c_2
 	rd	%y,t_2
 	addxcc	%g0,t_2,c_3
 	addx	%g0,%g0,c_1	!=
-	ld	ap(2),a_2
 	addcc	c_2,t_1,c_2
 	addxcc	c_3,t_2,c_3
 	addx	c_1,%g0,c_1	!=

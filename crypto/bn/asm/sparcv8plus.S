@@ -1,5 +1,5 @@
-.ident	"sparcv8plus.s, Version 1.3"
-.ident	"SPARC v8 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
+.ident	"sparcv8plus.s, Version 1.4"
+.ident	"SPARC v9 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 /*
  * ====================================================================
@@ -35,7 +35,7 @@
  *
  *    Quick-n-dirty way to fuse the module into the library.
  *    Provided that the library is already configured and built
- *    (in 0.9.2 case with no_asm option):
+ *    (in 0.9.2 case with no-asm option):
  *
  *	# cd crypto/bn
  *	# cp /some/place/bn_asm.sparc.v8plus.S .
@@ -119,6 +119,10 @@
  *	- updates to documentation concerning v9;
  *	- new performance comparison matrix;
  * 1.3	- fixed problem with /usr/ccs/lib/cpp;
+ * 1.4	- native V9 bn_*_comba[48] implementation (15% more efficient)
+ *	  resulting in slight overall performance kick;
+ *	- some retunes;
+ *	- support for GNU as added;
  *
  * (*)	Originally unrolled loop looked like this:
  *	    for (;;) {
@@ -140,6 +144,11 @@
  *	    }
  */
 
+/*
+ * GNU assembler can't stand stuw:-(
+ */
+#define stuw st
+
 .section	".text",#alloc,#execinstr
 .file		"bn_asm.sparc.v8plus.S"
 
@@ -159,47 +168,47 @@ bn_mul_add_words:
 	clr	%o0
 
 .L_bn_mul_add_words_proceed:
-	clruw	%o3
+	srl	%o3,%g0,%o3	! clruw	%o3
 	andcc	%o2,-4,%g0
 	bz,pn	%icc,.L_bn_mul_add_words_tail
 	clr	%o5
 
 .L_bn_mul_add_words_loop:	! wow! 32 aligned!
-	lduw	[%o0],%o4
-	mulx	%o3,%g2,%g2
-	add	%o4,%o5,%o4
-	add	%o4,%g2,%o4
+	lduw	[%o0],%g1
 	lduw	[%o1+4],%g3
+	mulx	%o3,%g2,%g2
+	add	%g1,%o5,%o4
 	nop
+	add	%o4,%g2,%o4
 	stuw	%o4,[%o0]
 	srlx	%o4,32,%o5
 
-	lduw	[%o0+4],%o4
-	mulx	%o3,%g3,%g3
-	dec	4,%o2
-	add	%o4,%o5,%o4
+	lduw	[%o0+4],%g1
 	lduw	[%o1+8],%g2
+	mulx	%o3,%g3,%g3
+	add	%g1,%o5,%o4
+	dec	4,%o2
 	add	%o4,%g3,%o4
 	stuw	%o4,[%o0+4]
 	srlx	%o4,32,%o5
 
-	lduw	[%o0+8],%o4
+	lduw	[%o0+8],%g1
+	lduw	[%o1+12],%g3
 	mulx	%o3,%g2,%g2
+	add	%g1,%o5,%o4
 	inc	16,%o1
-	add	%o4,%o5,%o4
-	lduw	[%o1-4],%g3
 	add	%o4,%g2,%o4
 	stuw	%o4,[%o0+8]
 	srlx	%o4,32,%o5
 
-	lduw	[%o0+12],%o4
+	lduw	[%o0+12],%g1
 	mulx	%o3,%g3,%g3
-	add	%o4,%o5,%o4
+	add	%g1,%o5,%o4
 	inc	16,%o0
 	add	%o4,%g3,%o4
-	srlx	%o4,32,%o5
-	stuw	%o4,[%o0-4]
 	andcc	%o2,-4,%g0
+	stuw	%o4,[%o0-4]
+	srlx	%o4,32,%o5
 	bnz,a,pt	%icc,.L_bn_mul_add_words_loop
 	lduw	[%o1],%g2
 
@@ -210,9 +219,9 @@ bn_mul_add_words:
 	mov	%o5,%o0
 
 .L_bn_mul_add_words_tail:
-	lduw	[%o0],%o4
+	lduw	[%o0],%g1
 	mulx	%o3,%g2,%g2
-	add	%o4,%o5,%o4
+	add	%g1,%o5,%o4
 	dec	%o2
 	add	%o4,%g2,%o4
 	srlx	%o4,32,%o5
@@ -220,9 +229,9 @@ bn_mul_add_words:
 	stuw	%o4,[%o0]
 
 	lduw	[%o1+4],%g2
+	lduw	[%o0+4],%g1
 	mulx	%o3,%g2,%g2
-	lduw	[%o0+4],%o4
-	add	%o4,%o5,%o4
+	add	%g1,%o5,%o4
 	dec	%o2
 	add	%o4,%g2,%o4
 	srlx	%o4,32,%o5
@@ -230,9 +239,9 @@ bn_mul_add_words:
 	stuw	%o4,[%o0+4]
 
 	lduw	[%o1+8],%g2
+	lduw	[%o0+8],%g1
 	mulx	%o3,%g2,%g2
-	lduw	[%o0+8],%o4
-	add	%o4,%o5,%o4
+	add	%g1,%o5,%o4
 	add	%o4,%g2,%o4
 	stuw	%o4,[%o0+8]
 	retl
@@ -257,7 +266,7 @@ bn_mul_words:
 	clr	%o0
 
 .L_bn_mul_words_proceeed:
-	clruw	%o3
+	srl	%o3,%g0,%o3	! clruw	%o3
 	andcc	%o2,-4,%g0
 	bz,pn	%icc,.L_bn_mul_words_tail
 	clr	%o5
@@ -265,34 +274,34 @@ bn_mul_words:
 .L_bn_mul_words_loop:		! wow! 32 aligned!
 	lduw	[%o1+4],%g3
 	mulx	%o3,%g2,%g2
-	add	%g2,%o5,%g2
+	add	%g2,%o5,%o4
 	nop
-	srlx	%g2,32,%o5
-	stuw	%g2,[%o0]
+	stuw	%o4,[%o0]
+	srlx	%o4,32,%o5
 
 	lduw	[%o1+8],%g2
 	mulx	%o3,%g3,%g3
-	add	%g3,%o5,%g3
+	add	%g3,%o5,%o4
 	dec	4,%o2
-	stuw	%g3,[%o0+4]
-	srlx	%g3,32,%o5
+	stuw	%o4,[%o0+4]
+	srlx	%o4,32,%o5
 
 	lduw	[%o1+12],%g3
 	mulx	%o3,%g2,%g2
-	add	%g2,%o5,%g2
+	add	%g2,%o5,%o4
 	inc	16,%o1
-	stuw	%g2,[%o0+8]
-	srlx	%g2,32,%o5
+	stuw	%o4,[%o0+8]
+	srlx	%o4,32,%o5
 
 	mulx	%o3,%g3,%g3
+	add	%g3,%o5,%o4
 	inc	16,%o0
-	add	%g3,%o5,%g3
-	nop
-	stuw	%g3,[%o0-4]
-	srlx	%g3,32,%o5
+	stuw	%o4,[%o0-4]
+	srlx	%o4,32,%o5
 	andcc	%o2,-4,%g0
 	bnz,a,pt	%icc,.L_bn_mul_words_loop
 	lduw	[%o1],%g2
+	nop
 	nop
 
 	brnz,a,pn	%o2,.L_bn_mul_words_tail
@@ -303,26 +312,26 @@ bn_mul_words:
 
 .L_bn_mul_words_tail:
 	mulx	%o3,%g2,%g2
-	add	%g2,%o5,%g2
+	add	%g2,%o5,%o4
 	dec	%o2
-	srlx	%g2,32,%o5
+	srlx	%o4,32,%o5
 	brz,pt	%o2,.L_bn_mul_words_return
-	stuw	%g2,[%o0]
+	stuw	%o4,[%o0]
 
 	lduw	[%o1+4],%g2
 	mulx	%o3,%g2,%g2
-	add	%g2,%o5,%g2
+	add	%g2,%o5,%o4
 	dec	%o2
-	srlx	%g2,32,%o5
+	srlx	%o4,32,%o5
 	brz,pt	%o2,.L_bn_mul_words_return
-	stuw	%g2,[%o0+4]
+	stuw	%o4,[%o0+4]
 
 	lduw	[%o1+8],%g2
 	mulx	%o3,%g2,%g2
-	add	%g2,%o5,%g2
-	stuw	%g2,[%o0+8]
+	add	%g2,%o5,%o4
+	stuw	%o4,[%o0+8]
 	retl
-	srlx	%g2,32,%o0
+	srlx	%o4,32,%o0
 
 .type	bn_mul_words,#function
 .size	bn_mul_words,(.-bn_mul_words)
@@ -359,7 +368,6 @@ bn_sqr_words:
 	dec	4,%o2
 	stuw	%o4,[%o0+8]
 	srlx	%o4,32,%o5
-	nop
 	stuw	%o5,[%o0+12]
 
 	lduw	[%o1+12],%g3
@@ -423,7 +431,7 @@ bn_div_words:
 	or	%o0,%o1,%o0
 	udivx	%o0,%o2,%o0
 	retl
-	clruw	%o0
+	srl	%o0,%g0,%o0	! clruw	%o0
 
 .type	bn_div_words,#function
 .size	bn_div_words,(.-bn_div_words)
@@ -447,41 +455,28 @@ bn_add_words:
 	bz,pn	%icc,.L_bn_add_words_tail
 	addcc	%g0,0,%g0	! clear carry flag
 	nop
-	lduw	[%o2],%o5
-	dec	4,%o3
-	addcc	%o5,%o4,%o5
-	nop
-	stuw	%o5,[%o0]
-	ba	.L_bn_add_words_warm_loop
-	lduw	[%o1+4],%o4
-	nop
 
 .L_bn_add_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
 	lduw	[%o2],%o5
-	nop
+	lduw	[%o1+4],%g1
+	lduw	[%o2+4],%g2
+	lduw	[%o1+8],%g3
+	lduw	[%o2+8],%g4
 	addccc	%o5,%o4,%o5
 	stuw	%o5,[%o0]
 
-	lduw	[%o1+4],%o4
-.L_bn_add_words_warm_loop:
+	lduw	[%o1+12],%o4
+	lduw	[%o2+12],%o5
 	inc	16,%o1
-	nop
-	lduw	[%o2+4],%o5
-	addccc	%o5,%o4,%o5
-	stuw	%o5,[%o0+4]
-	nop
+	addccc	%g1,%g2,%g1
+	stuw	%g1,[%o0+4]
 	
-	lduw	[%o1-8],%o4
 	inc	16,%o2
-	lduw	[%o2-8],%o5
-	addccc	%o5,%o4,%o5
-	stuw	%o5,[%o0+8]
+	addccc	%g3,%g4,%g3
+	stuw	%g3,[%o0+8]
 
-	lduw	[%o1-4],%o4
 	inc	16,%o0
-	nop
-	lduw	[%o2-4],%o5
 	addccc	%o5,%o4,%o5
 	stuw	%o5,[%o0-4]
 	and	%o3,-4,%g1
@@ -496,7 +491,7 @@ bn_add_words:
 	movcs	%icc,1,%o0
 	nop
 
-.L_bn_add_words_tail:		! wow! 32 aligned!
+.L_bn_add_words_tail:
 	lduw	[%o2],%o5
 	dec	%o3
 	addccc	%o5,%o4,%o5
@@ -505,16 +500,14 @@ bn_add_words:
 
 	lduw	[%o1+4],%o4
 	lduw	[%o2+4],%o5
-	addccc	%o5,%o4,%o5
 	dec	%o3
+	addccc	%o5,%o4,%o5
 	brz,pt	%o3,.L_bn_add_words_return
 	stuw	%o5,[%o0+4]
-	nop
 
 	lduw	[%o1+8],%o4
 	lduw	[%o2+8],%o5
 	addccc	%o5,%o4,%o5
-	nop
 	stuw	%o5,[%o0+8]
 	clr	%o0
 	retl
@@ -540,41 +533,28 @@ bn_sub_words:
 	bz,pn	%icc,.L_bn_sub_words_tail
 	addcc	%g0,0,%g0	! clear carry flag
 	nop
-	lduw	[%o2],%o5
-	dec	4,%o3
-	subcc	%o4,%o5,%o5
-	nop
-	stuw	%o5,[%o0]
-	ba	.L_bn_sub_words_warm_loop
-	lduw	[%o1+4],%o4
-	nop
 
 .L_bn_sub_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
 	lduw	[%o2],%o5
-	nop
+	lduw	[%o1+4],%g1
+	lduw	[%o2+4],%g2
+	lduw	[%o1+8],%g3
+	lduw	[%o2+8],%g4
 	subccc	%o4,%o5,%o5
 	stuw	%o5,[%o0]
 
-	lduw	[%o1+4],%o4
-.L_bn_sub_words_warm_loop:
+	lduw	[%o1+12],%o4
+	lduw	[%o2+12],%o5
 	inc	16,%o1
-	nop
-	lduw	[%o2+4],%o5
-	subccc	%o4,%o5,%o5
-	stuw	%o5,[%o0+4]
-	nop
-	
-	lduw	[%o1-8],%o4
-	inc	16,%o2
-	lduw	[%o2-8],%o5
-	subccc	%o4,%o5,%o5
-	stuw	%o5,[%o0+8]
+	subccc	%g1,%g2,%g2
+	stuw	%g2,[%o0+4]
 
-	lduw	[%o1-4],%o4
+	inc	16,%o2
+	subccc	%g3,%g4,%g4
+	stuw	%g4,[%o0+8]
+
 	inc	16,%o0
-	nop
-	lduw	[%o2-4],%o5
 	subccc	%o4,%o5,%o5
 	stuw	%o5,[%o0-4]
 	and	%o3,-4,%g1
@@ -598,16 +578,14 @@ bn_sub_words:
 
 	lduw	[%o1+4],%o4
 	lduw	[%o2+4],%o5
-	subccc	%o4,%o5,%o5
 	dec	%o3
+	subccc	%o4,%o5,%o5
 	brz,pt	%o3,.L_bn_sub_words_return
 	stuw	%o5,[%o0+4]
-	nop
 
 	lduw	[%o1+8],%o4
 	lduw	[%o2+8],%o5
 	subccc	%o4,%o5,%o5
-	nop
 	stuw	%o5,[%o0+8]
 	clr	%o0
 	retl
@@ -617,16 +595,14 @@ bn_sub_words:
 .size	bn_sub_words,(.-bn_sub_words)
 
 /*
- * The following code is pure SPARC V8! Trouble is that it's not feasible
- * to implement the mumbo-jumbo in less "V9" instructions:-( At least not
- * under 32-bit kernel. The reason is that you'd have to shuffle registers
- * all the time as only few (well, 10:-) are fully (i.e. all 64 bits)
- * preserved by kernel during context switch. But even under 64-bit kernel
- * you won't gain much because in the lack of "add with extended carry"
- * instruction you'd have to issue 'clr %rx; movcs %xcc,1,%rx;
- * add %rd,%rx,%rd' sequence in place of 'addxcc %rx,%ry,%rx;
- * addx %rz,%g0,%rz' pair in 32-bit case. Well, 'bpcs,a %xcc,.+8; inc %rd'
- * is another alternative...
+ * Code below depends on the fact that upper parts of the %l0-%l7
+ * and %i0-%i7 are zeroed by kernel after context switch. In
+ * previous versions this comment stated that "the trouble is that
+ * it's not feasible to implement the mumbo-jumbo in less V9
+ * instructions:-(" which apparently isn't true thanks to
+ * 'bcs,a %xcc,.+8; inc %rd' pair. But the performance improvement
+ * results not from the shorter code, but from elimination of
+ * multicycle none-pairable 'rd %y,%rd' instructions.
  *
  *							Andy.
  */
@@ -638,9 +614,8 @@ bn_sub_words:
  */
 #define t_1	%o0
 #define	t_2	%o1
-#define c_1	%o2
-#define c_2	%o3
-#define c_3	%o4
+#define c_12	%o2
+#define c_3	%o3
 
 #define ap(I)	[%i1+4*I]
 #define bp(I)	[%i2+4*I]
@@ -658,10 +633,10 @@ bn_sub_words:
 #define	b_0	%i3
 #define	b_1	%i4
 #define	b_2	%i5
-#define	b_3	%o5
-#define	b_4	%g1
-#define	b_5	%g2
-#define	b_6	%g3
+#define	b_3	%o4
+#define	b_4	%o5
+#define	b_5	%o7
+#define	b_6	%g1
 #define	b_7	%g4
 
 .align	32
@@ -672,372 +647,349 @@ bn_sub_words:
  */
 bn_mul_comba8:
 	save	%sp,FRAME_SIZE,%sp
-	ld	ap(0),a_0
-	ld	bp(0),b_0
-	umul	a_0,b_0,c_1	!=!mul_add_c(a[0],b[0],c1,c2,c3);
-	ld	bp(1),b_1
-	rd	%y,c_2
-	st	c_1,rp(0)	!r[0]=c1;
+	mov	1,t_2
+	lduw	ap(0),a_0
+	sllx	t_2,32,t_2
+	lduw	bp(0),b_0	!=
+	lduw	bp(1),b_1
+	mulx	a_0,b_0,t_1	!mul_add_c(a[0],b[0],c1,c2,c3);
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(0)	!=!r[0]=c1;
 
-	umul	a_0,b_1,t_1	!=!mul_add_c(a[0],b[1],c2,c3,c1);
-	ld	ap(1),a_1
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	%g0,t_2,c_3	!=
-	addx	%g0,%g0,c_1
-	ld	ap(2),a_2
-	umul	a_1,b_0,t_1	!mul_add_c(a[1],b[0],c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	st	c_2,rp(1)	!r[1]=c2;
-	addx	c_1,%g0,c_1	!=
+	lduw	ap(1),a_1
+	mulx	a_0,b_1,t_1	!mul_add_c(a[0],b[1],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3		!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(2),a_2
+	mulx	a_1,b_0,t_1	!=!mul_add_c(a[1],b[0],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(1)	!r[1]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	%g0,%g0,c_2
-	ld	bp(2),b_2
-	umul	a_1,b_1,t_1	!mul_add_c(a[1],b[1],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	ld	bp(3),b_3
-	addx	c_2,%g0,c_2	!=
-	umul	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	st	c_3,rp(2)	!r[2]=c3;
+	mulx	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
+	addcc	c_12,t_1,c_12	!=
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	bp(2),b_2	!=
+	mulx	a_1,b_1,t_1	!mul_add_c(a[1],b[1],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	lduw	bp(3),b_3
+	mulx	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(2)	!r[2]=c3;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_0,b_3,t_1	!mul_add_c(a[0],b[3],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3
-	umul	a_1,b_2,t_1	!=!mul_add_c(a[1],b[2],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	ld	ap(3),a_3
-	umul	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2		!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	ld	ap(4),a_4
-	umul	a_3,b_0,t_1	!mul_add_c(a[3],b[0],c1,c2,c3);!=
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(3)	!r[3]=c1;
+	mulx	a_0,b_3,t_1	!mul_add_c(a[0],b[3],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_1,b_2,t_1	!=!mul_add_c(a[1],b[2],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	lduw	ap(3),a_3
+	mulx	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
+	addcc	c_12,t_1,c_12	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(4),a_4
+	mulx	a_3,b_0,t_1	!=!mul_add_c(a[3],b[0],c1,c2,c3);!=
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(3)	!r[3]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_4,b_0,t_1	!mul_add_c(a[4],b[0],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	umul	a_3,b_1,t_1	!mul_add_c(a[3],b[1],c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	umul	a_2,b_2,t_1	!=!mul_add_c(a[2],b[2],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	ld	bp(4),b_4
-	umul	a_1,b_3,t_1	!mul_add_c(a[1],b[3],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	ld	bp(5),b_5
-	umul	a_0,b_4,t_1	!=!mul_add_c(a[0],b[4],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	st	c_2,rp(4)	!r[4]=c2;
+	mulx	a_4,b_0,t_1	!mul_add_c(a[4],b[0],c2,c3,c1);
+	addcc	c_12,t_1,c_12	!=
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,b_1,t_1	!=!mul_add_c(a[3],b[1],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_2,b_2,t_1	!=!mul_add_c(a[2],b[2],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	bp(4),b_4	!=
+	mulx	a_1,b_3,t_1	!mul_add_c(a[1],b[3],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	lduw	bp(5),b_5
+	mulx	a_0,b_4,t_1	!mul_add_c(a[0],b[4],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(4)	!r[4]=c2;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_0,b_5,t_1	!mul_add_c(a[0],b[5],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	umul	a_1,b_4,t_1	!mul_add_c(a[1],b[4],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_2,b_3,t_1	!=!mul_add_c(a[2],b[3],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	umul	a_3,b_2,t_1	!mul_add_c(a[3],b[2],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	ld	ap(5),a_5
-	umul	a_4,b_1,t_1	!mul_add_c(a[4],b[1],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	ld	ap(6),a_6
-	addx	c_2,%g0,c_2	!=
-	umul	a_5,b_0,t_1	!mul_add_c(a[5],b[0],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	st	c_3,rp(5)	!r[5]=c3;
+	mulx	a_0,b_5,t_1	!mul_add_c(a[0],b[5],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_1,b_4,t_1	!mul_add_c(a[1],b[4],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_2,b_3,t_1	!mul_add_c(a[2],b[3],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_3,b_2,t_1	!mul_add_c(a[3],b[2],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	lduw	ap(5),a_5
+	mulx	a_4,b_1,t_1	!mul_add_c(a[4],b[1],c3,c1,c2);
+	addcc	c_12,t_1,c_12	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(6),a_6
+	mulx	a_5,b_0,t_1	!=!mul_add_c(a[5],b[0],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(5)	!r[5]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_6,b_0,t_1	!mul_add_c(a[6],b[0],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3
-	umul	a_5,b_1,t_1	!=!mul_add_c(a[5],b[1],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_4,b_2,t_1	!mul_add_c(a[4],b[2],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	umul	a_3,b_3,t_1	!mul_add_c(a[3],b[3],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2		!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_2,b_4,t_1	!mul_add_c(a[2],b[4],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	ld	bp(6),b_6
-	addx	c_3,%g0,c_3	!=
-	umul	a_1,b_5,t_1	!mul_add_c(a[1],b[5],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	ld	bp(7),b_7
-	umul	a_0,b_6,t_1	!mul_add_c(a[0],b[6],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	st	c_1,rp(6)	!r[6]=c1;
-	addx	c_3,%g0,c_3	!=
+	mulx	a_6,b_0,t_1	!mul_add_c(a[6],b[0],c1,c2,c3);
+	addcc	c_12,t_1,c_12	!=
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_5,b_1,t_1	!=!mul_add_c(a[5],b[1],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_4,b_2,t_1	!=!mul_add_c(a[4],b[2],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,b_3,t_1	!=!mul_add_c(a[3],b[3],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_2,b_4,t_1	!=!mul_add_c(a[2],b[4],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	bp(6),b_6	!=
+	mulx	a_1,b_5,t_1	!mul_add_c(a[1],b[5],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	lduw	bp(7),b_7
+	mulx	a_0,b_6,t_1	!mul_add_c(a[0],b[6],c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(6)	!r[6]=c1;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_0,b_7,t_1	!mul_add_c(a[0],b[7],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	%g0,%g0,c_1
-	umul	a_1,b_6,t_1	!mul_add_c(a[1],b[6],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	umul	a_2,b_5,t_1	!mul_add_c(a[2],b[5],c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	umul	a_3,b_4,t_1	!=!mul_add_c(a[3],b[4],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	umul	a_4,b_3,t_1	!mul_add_c(a[4],b[3],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_5,b_2,t_1	!mul_add_c(a[5],b[2],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	ld	ap(7),a_7
-	umul	a_6,b_1,t_1	!=!mul_add_c(a[6],b[1],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	umul	a_7,b_0,t_1	!mul_add_c(a[7],b[0],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	st	c_2,rp(7)	!r[7]=c2;
+	mulx	a_0,b_7,t_1	!mul_add_c(a[0],b[7],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_1,b_6,t_1	!mul_add_c(a[1],b[6],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_2,b_5,t_1	!mul_add_c(a[2],b[5],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_3,b_4,t_1	!mul_add_c(a[3],b[4],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_4,b_3,t_1	!mul_add_c(a[4],b[3],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_5,b_2,t_1	!mul_add_c(a[5],b[2],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	lduw	ap(7),a_7
+	mulx	a_6,b_1,t_1	!=!mul_add_c(a[6],b[1],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_7,b_0,t_1	!=!mul_add_c(a[7],b[0],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(7)	!r[7]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_7,b_1,t_1	!mul_add_c(a[7],b[1],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	umul	a_6,b_2,t_1	!=!mul_add_c(a[6],b[2],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	umul	a_5,b_3,t_1	!mul_add_c(a[5],b[3],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	umul	a_4,b_4,t_1	!mul_add_c(a[4],b[4],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_3,b_5,t_1	!mul_add_c(a[3],b[5],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_2,b_6,t_1	!=!mul_add_c(a[2],b[6],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	umul	a_1,b_7,t_1	!mul_add_c(a[1],b[7],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!
-	addx	c_2,%g0,c_2
-	st	c_3,rp(8)	!r[8]=c3;
+	mulx	a_7,b_1,t_1	!=!mul_add_c(a[7],b[1],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_6,b_2,t_1	!mul_add_c(a[6],b[2],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_5,b_3,t_1	!mul_add_c(a[5],b[3],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_4,b_4,t_1	!mul_add_c(a[4],b[4],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_3,b_5,t_1	!mul_add_c(a[3],b[5],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_2,b_6,t_1	!mul_add_c(a[2],b[6],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_1,b_7,t_1	!mul_add_c(a[1],b[7],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(8)	!r[8]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_2,b_7,t_1	!mul_add_c(a[2],b[7],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3
-	umul	a_3,b_6,t_1	!=!mul_add_c(a[3],b[6],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_4,b_5,t_1	!mul_add_c(a[4],b[5],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	umul	a_5,b_4,t_1	!mul_add_c(a[5],b[4],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2		!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_6,b_3,t_1	!mul_add_c(a[6],b[3],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_7,b_2,t_1	!=!mul_add_c(a[7],b[2],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(9)	!r[9]=c1;
+	mulx	a_2,b_7,t_1	!=!mul_add_c(a[2],b[7],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	mulx	a_3,b_6,t_1	!mul_add_c(a[3],b[6],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_4,b_5,t_1	!mul_add_c(a[4],b[5],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_5,b_4,t_1	!mul_add_c(a[5],b[4],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_6,b_3,t_1	!mul_add_c(a[6],b[3],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_7,b_2,t_1	!mul_add_c(a[7],b[2],c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(9)	!r[9]=c1;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_7,b_3,t_1	!mul_add_c(a[7],b[3],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	umul	a_6,b_4,t_1	!mul_add_c(a[6],b[4],c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	umul	a_5,b_5,t_1	!=!mul_add_c(a[5],b[5],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	umul	a_4,b_6,t_1	!mul_add_c(a[4],b[6],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_3,b_7,t_1	!mul_add_c(a[3],b[7],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	st	c_2,rp(10)	!r[10]=c2;
+	mulx	a_7,b_3,t_1	!mul_add_c(a[7],b[3],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_6,b_4,t_1	!mul_add_c(a[6],b[4],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_5,b_5,t_1	!mul_add_c(a[5],b[5],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_4,b_6,t_1	!mul_add_c(a[4],b[6],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_3,b_7,t_1	!mul_add_c(a[3],b[7],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(10)	!r[10]=c2;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_4,b_7,t_1	!=!mul_add_c(a[4],b[7],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2	!=
-	umul	a_5,b_6,t_1	!mul_add_c(a[5],b[6],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	umul	a_6,b_5,t_1	!mul_add_c(a[6],b[5],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_7,b_4,t_1	!mul_add_c(a[7],b[4],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(11)	!r[11]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_4,b_7,t_1	!mul_add_c(a[4],b[7],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_5,b_6,t_1	!mul_add_c(a[5],b[6],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_6,b_5,t_1	!mul_add_c(a[6],b[5],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_7,b_4,t_1	!mul_add_c(a[7],b[4],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(11)	!r[11]=c3;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_7,b_5,t_1	!mul_add_c(a[7],b[5],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	%g0,%g0,c_3
-	umul	a_6,b_6,t_1	!mul_add_c(a[6],b[6],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2		!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_5,b_7,t_1	!mul_add_c(a[5],b[7],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	st	c_1,rp(12)	!r[12]=c1;
-	addx	c_3,%g0,c_3	!=
+	mulx	a_7,b_5,t_1	!mul_add_c(a[7],b[5],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_6,b_6,t_1	!mul_add_c(a[6],b[6],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_5,b_7,t_1	!mul_add_c(a[5],b[7],c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(12)	!r[12]=c1;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_6,b_7,t_1	!mul_add_c(a[6],b[7],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	%g0,%g0,c_1
-	umul	a_7,b_6,t_1	!mul_add_c(a[7],b[6],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	st	c_2,rp(13)	!r[13]=c2;
+	mulx	a_6,b_7,t_1	!mul_add_c(a[6],b[7],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_7,b_6,t_1	!mul_add_c(a[7],b[6],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	st	t_1,rp(13)	!r[13]=c2;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_7,b_7,t_1	!=!mul_add_c(a[7],b[7],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	nop			!=
-	st	c_3,rp(14)	!r[14]=c3;
-	st	c_1,rp(15)	!r[15]=c1;
+	mulx	a_7,b_7,t_1	!mul_add_c(a[7],b[7],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(14)	!r[14]=c3;
+	stuw	c_12,rp(15)	!r[15]=c1;
 
 	ret
-	restore	%g0,%g0,%o0
+	restore	%g0,%g0,%o0	!=
 
 .type	bn_mul_comba8,#function
 .size	bn_mul_comba8,(.-bn_mul_comba8)
@@ -1051,104 +1003,106 @@ bn_mul_comba8:
  */
 bn_mul_comba4:
 	save	%sp,FRAME_SIZE,%sp
-	ld	ap(0),a_0
-	ld	bp(0),b_0
-	umul	a_0,b_0,c_1	!=!mul_add_c(a[0],b[0],c1,c2,c3);
-	ld	bp(1),b_1
-	rd	%y,c_2
-	st	c_1,rp(0)	!r[0]=c1;
+	lduw	ap(0),a_0
+	mov	1,t_2
+	lduw	bp(0),b_0
+	sllx	t_2,32,t_2	!=
+	lduw	bp(1),b_1
+	mulx	a_0,b_0,t_1	!mul_add_c(a[0],b[0],c1,c2,c3);
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(0)	!=!r[0]=c1;
 
-	umul	a_0,b_1,t_1	!=!mul_add_c(a[0],b[1],c2,c3,c1);
-	ld	ap(1),a_1
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	%g0,t_2,c_3
-	addx	%g0,%g0,c_1
-	ld	ap(2),a_2
-	umul	a_1,b_0,t_1	!=!mul_add_c(a[1],b[0],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	st	c_2,rp(1)	!r[1]=c2;
+	lduw	ap(1),a_1
+	mulx	a_0,b_1,t_1	!mul_add_c(a[0],b[1],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3		!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(2),a_2
+	mulx	a_1,b_0,t_1	!=!mul_add_c(a[1],b[0],c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(1)	!r[1]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	ld	bp(2),b_2
-	umul	a_1,b_1,t_1	!=!mul_add_c(a[1],b[1],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	ld	bp(3),b_3
-	umul	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	st	c_3,rp(2)	!r[2]=c3;
+	mulx	a_2,b_0,t_1	!mul_add_c(a[2],b[0],c3,c1,c2);
+	addcc	c_12,t_1,c_12	!=
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	bp(2),b_2	!=
+	mulx	a_1,b_1,t_1	!mul_add_c(a[1],b[1],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3	!=
+	lduw	bp(3),b_3
+	mulx	a_0,b_2,t_1	!mul_add_c(a[0],b[2],c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(2)	!r[2]=c3;
+	or	c_12,c_3,c_12	!=
 
-	umul	a_0,b_3,t_1	!=!mul_add_c(a[0],b[3],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3	!=
-	umul	a_1,b_2,t_1	!mul_add_c(a[1],b[2],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	ld	ap(3),a_3
-	umul	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_3,b_0,t_1	!=!mul_add_c(a[3],b[0],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(3)	!r[3]=c1;
+	mulx	a_0,b_3,t_1	!mul_add_c(a[0],b[3],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	mulx	a_1,b_2,t_1	!mul_add_c(a[1],b[2],c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8	!=
+	add	c_3,t_2,c_3
+	lduw	ap(3),a_3
+	mulx	a_2,b_1,t_1	!mul_add_c(a[2],b[1],c1,c2,c3);
+	addcc	c_12,t_1,c_12	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,b_0,t_1	!mul_add_c(a[3],b[0],c1,c2,c3);!=
+	addcc	c_12,t_1,t_1	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(3)	!=!r[3]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_3,b_1,t_1	!mul_add_c(a[3],b[1],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	umul	a_2,b_2,t_1	!mul_add_c(a[2],b[2],c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	umul	a_1,b_3,t_1	!=!mul_add_c(a[1],b[3],c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	st	c_2,rp(4)	!r[4]=c2;
+	mulx	a_3,b_1,t_1	!mul_add_c(a[3],b[1],c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3		!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_2,b_2,t_1	!mul_add_c(a[2],b[2],c2,c3,c1);
+	addcc	c_12,t_1,c_12	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_1,b_3,t_1	!mul_add_c(a[1],b[3],c2,c3,c1);
+	addcc	c_12,t_1,t_1	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(4)	!=!r[4]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,b_3,t_1	!mul_add_c(a[2],b[3],c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	umul	a_3,b_2,t_1	!mul_add_c(a[3],b[2],c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(5)	!r[5]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_2,b_3,t_1	!mul_add_c(a[2],b[3],c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3		!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,b_2,t_1	!mul_add_c(a[3],b[2],c3,c1,c2);
+	addcc	c_12,t_1,t_1	!=
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(5)	!=!r[5]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_3,b_3,t_1	!mul_add_c(a[3],b[3],c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	st	c_1,rp(6)	!r[6]=c1;
-	st	c_2,rp(7)	!r[7]=c2;
+	mulx	a_3,b_3,t_1	!mul_add_c(a[3],b[3],c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	srlx	t_1,32,c_12	!=
+	stuw	t_1,rp(6)	!r[6]=c1;
+	stuw	c_12,rp(7)	!r[7]=c2;
 	
 	ret
 	restore	%g0,%g0,%o0
@@ -1161,305 +1115,310 @@ bn_mul_comba4:
 .global bn_sqr_comba8
 bn_sqr_comba8:
 	save	%sp,FRAME_SIZE,%sp
-	ld	ap(0),a_0
-	ld	ap(1),a_1
-	umul	a_0,a_0,c_1	!=!sqr_add_c(a,0,c1,c2,c3);
-	rd	%y,c_2
-	st	c_1,rp(0)	!r[0]=c1;
+	mov	1,t_2
+	lduw	ap(0),a_0
+	sllx	t_2,32,t_2
+	lduw	ap(1),a_1
+	mulx	a_0,a_0,t_1	!sqr_add_c(a,0,c1,c2,c3);
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(0)	!r[0]=c1;
 
-	ld	ap(2),a_2
-	umul	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	%g0,t_2,c_3
-	addx	%g0,%g0,c_1	!=
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3
-	st	c_2,rp(1)	!r[1]=c2;
-	addx	c_1,%g0,c_1	!=
+	lduw	ap(2),a_2
+	mulx	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(1)	!r[1]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	%g0,%g0,c_2
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	ld	ap(3),a_3
-	umul	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	st	c_3,rp(2)	!r[2]=c3;
+	mulx	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(3),a_3
+	mulx	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(2)	!r[2]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_0,a_3,t_1	!=!sqr_add_c2(a,3,0,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3	!=
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	ld	ap(4),a_4
-	addx	c_3,%g0,c_3	!=
-	umul	a_1,a_2,t_1	!sqr_add_c2(a,2,1,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(3)	!r[3]=c1;
+	mulx	a_0,a_3,t_1	!sqr_add_c2(a,3,0,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(4),a_4
+	mulx	a_1,a_2,t_1	!sqr_add_c2(a,2,1,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	st	t_1,rp(3)	!r[3]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_4,a_0,t_1	!sqr_add_c2(a,4,0,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_3,a_1,t_1	!sqr_add_c2(a,3,1,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	ld	ap(5),a_5
-	umul	a_2,a_2,t_1	!sqr_add_c(a,2,c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	st	c_2,rp(4)	!r[4]=c2;
-	addx	c_1,%g0,c_1	!=
+	mulx	a_4,a_0,t_1	!sqr_add_c2(a,4,0,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,a_1,t_1	!sqr_add_c2(a,3,1,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(5),a_5
+	mulx	a_2,a_2,t_1	!sqr_add_c(a,2,c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(4)	!r[4]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_0,a_5,t_1	!sqr_add_c2(a,5,0,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	%g0,%g0,c_2
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	umul	a_1,a_4,t_1	!sqr_add_c2(a,4,1,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	ld	ap(6),a_6
-	umul	a_2,a_3,t_1	!sqr_add_c2(a,3,2,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	st	c_3,rp(5)	!r[5]=c3;
+	mulx	a_0,a_5,t_1	!sqr_add_c2(a,5,0,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_1,a_4,t_1	!sqr_add_c2(a,4,1,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(6),a_6
+	mulx	a_2,a_3,t_1	!sqr_add_c2(a,3,2,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(5)	!r[5]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_6,a_0,t_1	!sqr_add_c2(a,6,0,c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	%g0,%g0,c_3
-	addcc	c_1,t_1,c_1	!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_5,a_1,t_1	!sqr_add_c2(a,5,1,c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1	!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	umul	a_4,a_2,t_1	!sqr_add_c2(a,4,2,c1,c2,c3);
-	addcc	c_1,t_1,c_1	!=
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1	!=
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3
-	ld	ap(7),a_7
-	umul	a_3,a_3,t_1	!=!sqr_add_c(a,3,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(6)	!r[6]=c1;
+	mulx	a_6,a_0,t_1	!sqr_add_c2(a,6,0,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_5,a_1,t_1	!sqr_add_c2(a,5,1,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_4,a_2,t_1	!sqr_add_c2(a,4,2,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(7),a_7
+	mulx	a_3,a_3,t_1	!=!sqr_add_c(a,3,c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(6)	!r[6]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_0,a_7,t_1	!sqr_add_c2(a,7,0,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_1,a_6,t_1	!sqr_add_c2(a,6,1,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_2,a_5,t_1	!sqr_add_c2(a,5,2,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_3,a_4,t_1	!sqr_add_c2(a,4,3,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	st	c_2,rp(7)	!r[7]=c2;
+	mulx	a_0,a_7,t_1	!sqr_add_c2(a,7,0,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_1,a_6,t_1	!sqr_add_c2(a,6,1,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_2,a_5,t_1	!sqr_add_c2(a,5,2,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,a_4,t_1	!sqr_add_c2(a,4,3,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(7)	!r[7]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_7,a_1,t_1	!sqr_add_c2(a,7,1,c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	addcc	c_3,t_1,c_3	!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_6,a_2,t_1	!sqr_add_c2(a,6,2,c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	addcc	c_3,t_1,c_3	!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_5,a_3,t_1	!sqr_add_c2(a,5,3,c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	addcc	c_3,t_1,c_3	!=
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_4,a_4,t_1	!sqr_add_c(a,4,c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(8)	!r[8]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_7,a_1,t_1	!sqr_add_c2(a,7,1,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_6,a_2,t_1	!sqr_add_c2(a,6,2,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_5,a_3,t_1	!sqr_add_c2(a,5,3,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_4,a_4,t_1	!sqr_add_c(a,4,c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(8)	!r[8]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_2,a_7,t_1	!sqr_add_c2(a,7,2,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	%g0,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_3,a_6,t_1	!sqr_add_c2(a,6,3,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_4,a_5,t_1	!sqr_add_c2(a,5,4,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(9)	!r[9]=c1;
+	mulx	a_2,a_7,t_1	!sqr_add_c2(a,7,2,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_3,a_6,t_1	!sqr_add_c2(a,6,3,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_4,a_5,t_1	!sqr_add_c2(a,5,4,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(9)	!r[9]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_7,a_3,t_1	!sqr_add_c2(a,7,3,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_6,a_4,t_1	!sqr_add_c2(a,6,4,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_5,a_5,t_1	!sqr_add_c(a,5,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	st	c_2,rp(10)	!r[10]=c2;
+	mulx	a_7,a_3,t_1	!sqr_add_c2(a,7,3,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_6,a_4,t_1	!sqr_add_c2(a,6,4,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_5,a_5,t_1	!sqr_add_c(a,5,c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(10)	!r[10]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_4,a_7,t_1	!=!sqr_add_c2(a,7,4,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2	!=
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2
-	umul	a_5,a_6,t_1	!=!sqr_add_c2(a,6,5,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	c_2,%g0,c_2	!=
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(11)	!r[11]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_4,a_7,t_1	!sqr_add_c2(a,7,4,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_5,a_6,t_1	!sqr_add_c2(a,6,5,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(11)	!r[11]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_7,a_5,t_1	!sqr_add_c2(a,7,5,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	%g0,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_6,a_6,t_1	!sqr_add_c(a,6,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	st	c_1,rp(12)	!r[12]=c1;
+	mulx	a_7,a_5,t_1	!sqr_add_c2(a,7,5,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_6,a_6,t_1	!sqr_add_c(a,6,c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(12)	!r[12]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_6,a_7,t_1	!sqr_add_c2(a,7,6,c2,c3,c1);
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	addcc	c_2,t_1,c_2	!=
-	rd	%y,t_2
-	addxcc	c_3,t_2,c_3
-	st	c_2,rp(13)	!r[13]=c2;
-	addx	c_1,%g0,c_1	!=
+	mulx	a_6,a_7,t_1	!sqr_add_c2(a,7,6,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(13)	!r[13]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_7,a_7,t_1	!sqr_add_c(a,7,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1	!=
-	st	c_3,rp(14)	!r[14]=c3;
-	st	c_1,rp(15)	!r[15]=c1;
+	mulx	a_7,a_7,t_1	!sqr_add_c(a,7,c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(14)	!r[14]=c3;
+	stuw	c_12,rp(15)	!r[15]=c1;
 
 	ret
 	restore	%g0,%g0,%o0
@@ -1476,89 +1435,96 @@ bn_sqr_comba8:
  */
 bn_sqr_comba4:
 	save	%sp,FRAME_SIZE,%sp
-	ld	ap(0),a_0
-	umul	a_0,a_0,c_1	!sqr_add_c(a,0,c1,c2,c3);
-	ld	ap(1),a_1	!=
-	rd	%y,c_2
-	st	c_1,rp(0)	!r[0]=c1;
+	mov	1,t_2
+	lduw	ap(0),a_0
+	sllx	t_2,32,t_2
+	lduw	ap(1),a_1
+	mulx	a_0,a_0,t_1	!sqr_add_c(a,0,c1,c2,c3);
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(0)	!r[0]=c1;
 
-	ld	ap(1),a_1
-	umul	a_0,a_1,t_1	!=!sqr_add_c2(a,1,0,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2
-	addxcc	%g0,t_2,c_3
-	addx	%g0,%g0,c_1	!=
-	ld	ap(2),a_2
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1	!=
-	st	c_2,rp(1)	!r[1]=c2;
+	lduw	ap(2),a_2
+	mulx	a_0,a_1,t_1	!sqr_add_c2(a,1,0,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(1)	!r[1]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2		!=
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1	!=
-	addx	c_2,%g0,c_2
-	ld	ap(3),a_3
-	umul	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
-	addcc	c_3,t_1,c_3	!=
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(2)	!r[2]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_2,a_0,t_1	!sqr_add_c2(a,2,0,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	lduw	ap(3),a_3
+	mulx	a_1,a_1,t_1	!sqr_add_c(a,1,c3,c1,c2);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(2)	!r[2]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_0,a_3,t_1	!sqr_add_c2(a,3,0,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	%g0,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	umul	a_1,a_2,t_1	!sqr_add_c2(a,2,1,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	addx	c_3,%g0,c_3
-	addcc	c_1,t_1,c_1
-	addxcc	c_2,t_2,c_2
-	addx	c_3,%g0,c_3	!=
-	st	c_1,rp(3)	!r[3]=c1;
+	mulx	a_0,a_3,t_1	!sqr_add_c2(a,3,0,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_1,a_2,t_1	!sqr_add_c2(a,2,1,c1,c2,c3);
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(3)	!r[3]=c1;
+	or	c_12,c_3,c_12
 
-	umul	a_3,a_1,t_1	!sqr_add_c2(a,3,1,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	%g0,%g0,c_1
-	addcc	c_2,t_1,c_2
-	addxcc	c_3,t_2,c_3	!=
-	addx	c_1,%g0,c_1
-	umul	a_2,a_2,t_1	!sqr_add_c(a,2,c2,c3,c1);
-	addcc	c_2,t_1,c_2
-	rd	%y,t_2		!=
-	addxcc	c_3,t_2,c_3
-	addx	c_1,%g0,c_1
-	st	c_2,rp(4)	!r[4]=c2;
+	mulx	a_3,a_1,t_1	!sqr_add_c2(a,3,1,c2,c3,c1);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,c_12
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	mulx	a_2,a_2,t_1	!sqr_add_c(a,2,c2,c3,c1);
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(4)	!r[4]=c2;
+	or	c_12,c_3,c_12
 
-	umul	a_2,a_3,t_1	!=!sqr_add_c2(a,3,2,c3,c1,c2);
-	addcc	c_3,t_1,c_3
-	rd	%y,t_2
-	addxcc	c_1,t_2,c_1
-	addx	%g0,%g0,c_2	!=
-	addcc	c_3,t_1,c_3
-	addxcc	c_1,t_2,c_1
-	st	c_3,rp(5)	!r[5]=c3;
-	addx	c_2,%g0,c_2	!=
+	mulx	a_2,a_3,t_1	!sqr_add_c2(a,3,2,c3,c1,c2);
+	addcc	c_12,t_1,c_12
+	clr	c_3
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	addcc	c_12,t_1,t_1
+	bcs,a	%xcc,.+8
+	add	c_3,t_2,c_3
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(5)	!r[5]=c3;
+	or	c_12,c_3,c_12
 
-	umul	a_3,a_3,t_1	!sqr_add_c(a,3,c1,c2,c3);
-	addcc	c_1,t_1,c_1
-	rd	%y,t_2
-	addxcc	c_2,t_2,c_2	!=
-	st	c_1,rp(6)	!r[6]=c1;
-	st	c_2,rp(7)	!r[7]=c2;
+	mulx	a_3,a_3,t_1	!sqr_add_c(a,3,c1,c2,c3);
+	addcc	c_12,t_1,t_1
+	srlx	t_1,32,c_12
+	stuw	t_1,rp(6)	!r[6]=c1;
+	stuw	c_12,rp(7)	!r[7]=c2;
 	
 	ret
 	restore	%g0,%g0,%o0
