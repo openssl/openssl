@@ -4,11 +4,16 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
-  *) New function PKCS7_set0_type_other() this initializes a PKCS7 
-     structure of type "other".
+  *) Reorganise PKCS#7 code to separate the digest location functionality
+     into PKCS7_find_digest(), digest addtion into PKCS7_bio_add_digest().
+     New function PKCS7_set_digest() to set the digest type for PKCS#7
+     digestedData type. Add additional code to correctly generate the
+     digestedData type and add support for this type in PKCS7 initialization
+     functions.
      [Steve Henson]
 
-  *) Correctly initialize digested data content type in PKCS7_set_type().
+  *) New function PKCS7_set0_type_other() this initializes a PKCS7 
+     structure of type "other".
      [Steve Henson]
 
   *) Fix prime generation loop in crypto/bn/bn_prime.pl by making

@@ -1,6 +1,6 @@
 /* crypto/pkcs7/pkcs7err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,11 +68,13 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 	{
 {ERR_PACK(0,PKCS7_F_B64_READ_PKCS7,0),	"B64_READ_PKCS7"},
 {ERR_PACK(0,PKCS7_F_B64_WRITE_PKCS7,0),	"B64_WRITE_PKCS7"},
+{ERR_PACK(0,PKCS7_F_FIND_DIGEST,0),	"FIND_DIGEST"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,0),	"PKCS7_add_attrib_smimecap"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_CERTIFICATE,0),	"PKCS7_add_certificate"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_CRL,0),	"PKCS7_add_crl"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_RECIPIENT_INFO,0),	"PKCS7_add_recipient_info"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_SIGNER,0),	"PKCS7_add_signer"},
+{ERR_PACK(0,PKCS7_F_PKCS7_BIO_ADD_DIGEST,0),	"PKCS7_BIO_ADD_DIGEST"},
 {ERR_PACK(0,PKCS7_F_PKCS7_CTRL,0),	"PKCS7_ctrl"},
 {ERR_PACK(0,PKCS7_F_PKCS7_DATADECODE,0),	"PKCS7_dataDecode"},
 {ERR_PACK(0,PKCS7_F_PKCS7_DATAINIT,0),	"PKCS7_dataInit"},
@@ -83,6 +85,7 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_PACK(0,PKCS7_F_PKCS7_GET0_SIGNERS,0),	"PKCS7_get0_signers"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_CIPHER,0),	"PKCS7_set_cipher"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_CONTENT,0),	"PKCS7_set_content"},
+{ERR_PACK(0,PKCS7_F_PKCS7_SET_DIGEST,0),	"PKCS7_set_digest"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_TYPE,0),	"PKCS7_set_type"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SIGN,0),	"PKCS7_sign"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SIGNATUREVERIFY,0),	"PKCS7_signatureVerify"},

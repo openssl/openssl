@@ -233,6 +233,8 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 		(OBJ_obj2nid((a)->type) == NID_pkcs7_signedAndEnveloped)
 #define PKCS7_type_is_data(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_data)
 
+#define PKCS7_type_is_digest(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_digest)
+
 #define PKCS7_set_detached(p,v) \
 		PKCS7_ctrl(p,PKCS7_OP_SET_DETACHED_SIGNATURE,v,NULL)
 #define PKCS7_get_detached(p) \
@@ -329,6 +331,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
 	EVP_PKEY *pkey, const EVP_MD *dgst);
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
+int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md);
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7);
 
 PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
@@ -379,11 +382,13 @@ void ERR_load_PKCS7_strings(void);
 /* Function codes. */
 #define PKCS7_F_B64_READ_PKCS7				 120
 #define PKCS7_F_B64_WRITE_PKCS7				 121
+#define PKCS7_F_FIND_DIGEST				 127
 #define PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP		 118
 #define PKCS7_F_PKCS7_ADD_CERTIFICATE			 100
 #define PKCS7_F_PKCS7_ADD_CRL				 101
 #define PKCS7_F_PKCS7_ADD_RECIPIENT_INFO		 102
 #define PKCS7_F_PKCS7_ADD_SIGNER			 103
+#define PKCS7_F_PKCS7_BIO_ADD_DIGEST			 125
 #define PKCS7_F_PKCS7_CTRL				 104
 #define PKCS7_F_PKCS7_DATADECODE			 112
 #define PKCS7_F_PKCS7_DATAINIT				 105
@@ -394,6 +399,7 @@ void ERR_load_PKCS7_strings(void);
 #define PKCS7_F_PKCS7_GET0_SIGNERS			 124
 #define PKCS7_F_PKCS7_SET_CIPHER			 108
 #define PKCS7_F_PKCS7_SET_CONTENT			 109
+#define PKCS7_F_PKCS7_SET_DIGEST			 126
 #define PKCS7_F_PKCS7_SET_TYPE				 110
 #define PKCS7_F_PKCS7_SIGN				 116
 #define PKCS7_F_PKCS7_SIGNATUREVERIFY			 113

@@ -138,6 +138,10 @@ int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data)
 		p7->d.sign->contents=p7_data;
 		break;
 	case NID_pkcs7_digest:
+		if (p7->d.digest->contents != NULL)
+			PKCS7_free(p7->d.digest->contents);
+		p7->d.digest->contents=p7_data;
+		break;
 	case NID_pkcs7_data:
 	case NID_pkcs7_enveloped:
 	case NID_pkcs7_signedAndEnveloped:
@@ -408,6 +412,24 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 	return(si);
 err:
 	return(NULL);
+	}
+
+int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
+	{
+	if (PKCS7_type_is_digest(p7))
+		{
+		if(!(p7->d.digest->md->parameter = ASN1_TYPE_new()))
+			{
+			PKCS7err(PKCS7_F_PKCS7_SET_DIGEST,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		p7->d.digest->md->parameter->type = V_ASN1_NULL;
+		p7->d.digest->md->algorithm = OBJ_nid2obj(EVP_MD_nid(md));
+		return 1;
+		}
+		
+	PKCS7err(PKCS7_F_PKCS7_SET_DIGEST,PKCS7_R_WRONG_CONTENT_TYPE);
+	return 1;
 	}
 
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
