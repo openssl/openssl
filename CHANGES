@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
+ Changes between 0.9.4 and 0.9.5  [28 Feb 2000]
 
   *) In bntest.c don't call BN_rand with zero bits argument.
      [Steve Henson, pointed out by Andrew W. Gray <agray@iconsinc.com>]
