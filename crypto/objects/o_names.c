@@ -305,7 +305,7 @@ void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 
 static int free_type;
 
-static void names_lh_free(OBJ_NAME *onp, int type)
+static void names_lh_free(OBJ_NAME *onp)
 {
 	if(onp == NULL)
 		return;
