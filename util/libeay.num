@@ -1818,3 +1818,6 @@ sk_ASN1_OBJECT_insert                   1842
 sk_ASN1_OBJECT_push                     1843
 d2i_ASN1_SET_OF_ASN1_OBJECT             1844
 PKCS7_signatureVerify                   1845
+RSA_set_method                          1846
+RSA_get_method                          1847
+RSA_get_default_method                  1848

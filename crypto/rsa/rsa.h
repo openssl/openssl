@@ -161,6 +161,9 @@ void	RSA_free (RSA *r);
 int	RSA_flags(RSA *r);
 
 void RSA_set_default_method(RSA_METHOD *meth);
+RSA_METHOD *RSA_get_default_method(void);
+RSA_METHOD *RSA_get_method(RSA *rsa);
+RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
 
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);

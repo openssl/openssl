@@ -4,6 +4,11 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) New functions RSA_get_default_method(), RSA_set_method() and
+     RSA_get_method(). These allows replacement of RSA_METHODs without having
+     to mess around with the internals of an RSA structure.
+     [Steve Henson]
+
   *) Fix memory leaks in DSA_do_sign and DSA_is_prime.
      Also really enable memory leak checks in openssl.c and in some
      test programs.

@@ -79,6 +79,26 @@ void RSA_set_default_method(RSA_METHOD *meth)
 	default_RSA_meth=meth;
 	}
 
+RSA_METHOD *RSA_get_default_method(void)
+{
+	return default_RSA_meth;
+}
+
+RSA_METHOD *RSA_get_method(RSA *rsa)
+{
+	return rsa->meth;
+}
+
+RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
+{
+	RSA_METHOD *mtmp;
+	mtmp = rsa->meth;
+	if (mtmp->finish) mtmp->finish(rsa);
+	rsa->meth = meth;
+	if (meth->init) meth->init(rsa);
+	return mtmp;
+}
+
 RSA *RSA_new_method(RSA_METHOD *meth)
 	{
 	RSA *ret;
