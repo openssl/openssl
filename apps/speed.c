@@ -739,7 +739,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_RSA
 	for (i=0; i<RSA_NUM; i++)
 		{
-		unsigned char *p;
+		const unsigned char *p;
 
 		p=rsa_data[i];
 		rsa_key[i]=d2i_RSAPrivateKey(NULL,&p,rsa_data_length[i]);

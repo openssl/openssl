@@ -265,7 +265,7 @@ bad:
 	else if (informat == FORMAT_NETSCAPE)
 		{
 		BUF_MEM *buf=NULL;
-		unsigned char *p;
+		const unsigned char *p;
 		int size=0;
 
 		buf=BUF_MEM_new();

@@ -303,7 +303,7 @@ end:
 int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len)
 	{
 	int ret;
-	unsigned char *p;
+	const unsigned char *p;
 	RSA *rsa;
 
 	p=d;
@@ -641,7 +641,7 @@ end:
 int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len)
 	{
 	int ret;
-	unsigned char *p;
+	const unsigned char *p;
 	RSA *rsa;
 
 	p=d;
