@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-char *lh_version="lhash part of OpenSSL 0.9.1c 23-Dec-1998";
+char *lh_version="lhash part of OpenSSL 0.9.2 31-Dec-1998";
 
 /* Code for dynamic hash table routines
  * Author - Eric Young v 2.0

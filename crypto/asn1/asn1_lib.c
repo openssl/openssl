@@ -69,7 +69,7 @@ static int asn1_get_length();
 static void asn1_put_length();
 #endif
 
-char *ASN1_version="ASN.1 part of OpenSSL 0.9.1c 23-Dec-1998";
+char *ASN1_version="ASN.1 part of OpenSSL 0.9.2 31-Dec-1998";
 
 int ASN1_check_infinite_end(p,len)
 unsigned char **p;

@@ -60,7 +60,7 @@
 #include "spr.h"
 
 char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-char *DES_version="DES part of OpenSSL 0.9.1c 23-Dec-1998";
+char *DES_version="DES part of OpenSSL 0.9.2 31-Dec-1998";
 
 char *des_options()
 	{

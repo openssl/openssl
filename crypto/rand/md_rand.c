@@ -126,7 +126,7 @@ static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 
-char *RAND_version="RAND part of OpenSSL 0.9.1c 23-Dec-1998";
+char *RAND_version="RAND part of OpenSSL 0.9.2 31-Dec-1998";
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(unsigned char *buf, int num);
