@@ -99,6 +99,8 @@ UI *UI_new_method(const UI_METHOD *method)
 		ret->meth=method;
 
 	ret->strings=NULL;
+	ret->user_data=NULL;
+	ret->ex_data=NULL;
 	return ret;
 	}
 
