@@ -112,7 +112,7 @@ extern "C" {
 /* Macros to aid ASN1 template writing */
 
 #define ASN1_ITEM_TEMPLATE(tname) \
-	const static ASN1_TEMPLATE tname##_item_tt 
+	static const ASN1_TEMPLATE tname##_item_tt 
 
 #define ASN1_ITEM_TEMPLATE_END(tname) \
 	;\
@@ -150,7 +150,7 @@ extern "C" {
  */
 
 #define ASN1_SEQUENCE(tname) \
-	const static ASN1_TEMPLATE tname##_seq_tt[] 
+	static const ASN1_TEMPLATE tname##_seq_tt[] 
 
 #define ASN1_SEQUENCE_END(stname) ASN1_SEQUENCE_END_name(stname, stname)
 
@@ -170,19 +170,19 @@ extern "C" {
 	ASN1_SEQUENCE(tname)
 
 #define ASN1_SEQUENCE_cb(tname, cb) \
-	const static ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
+	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_SEQUENCE(tname)
 
 #define ASN1_BROKEN_SEQUENCE(tname) \
-	const static ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
+	static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
 	ASN1_SEQUENCE(tname)
 
 #define ASN1_SEQUENCE_ref(tname, cb, lck) \
-	const static ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
+	static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
 	ASN1_SEQUENCE(tname)
 
 #define ASN1_SEQUENCE_enc(tname, enc, cb) \
-	const static ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_ENCODING, 0, 0, cb, offsetof(tname, enc)}; \
+	static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_ENCODING, 0, 0, cb, offsetof(tname, enc)}; \
 	ASN1_SEQUENCE(tname)
 
 #define ASN1_NDEF_SEQUENCE_END(tname) \
@@ -239,10 +239,10 @@ extern "C" {
  */
 
 #define ASN1_CHOICE(tname) \
-	const static ASN1_TEMPLATE tname##_ch_tt[] 
+	static const ASN1_TEMPLATE tname##_ch_tt[] 
 
 #define ASN1_CHOICE_cb(tname, cb) \
-	const static ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
+	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_CHOICE(tname)
 
 #define ASN1_CHOICE_END(stname) ASN1_CHOICE_END_name(stname, stname)
@@ -375,13 +375,13 @@ extern "C" {
 /* Macros for the ASN1_ADB structure */
 
 #define ASN1_ADB(name) \
-	const static ASN1_ADB_TABLE name##_adbtbl[] 
+	static const ASN1_ADB_TABLE name##_adbtbl[] 
 
 #ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 #define ASN1_ADB_END(name, flags, field, app_table, def, none) \
 	;\
-	const static ASN1_ADB name##_adb = {\
+	static const ASN1_ADB name##_adb = {\
 		flags,\
 		offsetof(name, field),\
 		app_table,\
@@ -395,9 +395,9 @@ extern "C" {
 
 #define ASN1_ADB_END(name, flags, field, app_table, def, none) \
 	;\
-	const static ASN1_ITEM *name##_adb(void) \
+	static const ASN1_ITEM *name##_adb(void) \
 	{ \
-	const static ASN1_ADB internal_adb = \
+	static const ASN1_ADB internal_adb = \
 		{\
 		flags,\
 		offsetof(name, field),\
@@ -416,7 +416,7 @@ extern "C" {
 #define ADB_ENTRY(val, template) {val, template}
 
 #define ASN1_ADB_TEMPLATE(name) \
-	const static ASN1_TEMPLATE name##_tt 
+	static const ASN1_TEMPLATE name##_tt 
 
 /* This is the ASN1 template structure that defines
  * a wrapper round the actual type. It determines the
