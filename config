@@ -663,8 +663,8 @@ EOF
   hppa*-*-openbsd) OUT="OpenBSD-hppa" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
-  *-*-osf) OUT="alphaold-cc" ;;
-  *-*-tru64) OUT="alpha-cc" ;;
+  *-*-osf) OUT="osf1-alpha-cc" ;;
+  *-*-tru64) OUT="tru64-alpha-cc" ;;
   *-*-OpenUNIX*)
 	if [ "$CC" = "gcc" ]; then
 	  OUT="OpenUNIX-8-gcc" 
@@ -781,9 +781,10 @@ esac
 # gcc < 2.8 does not support -mcpu=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
-  echo "WARNING! Do consider upgrading to gcc-2.8 or later."
+  echo "WARNING! Falling down to 'solaris-sparcv8-gcc'."
+  echo "         Upgrade to gcc-2.8 or later."
   sleep 5
-  OUT=solaris-sparcv9-gcc27
+  OUT=solaris-sparcv8-gcc
 fi
 if [ "$OUT" = "linux-sparcv9" -a $GCCVER -lt 28 ]
 then

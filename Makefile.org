@@ -108,6 +108,8 @@ DES_ENC= asm/dx86-out.o asm/yx86-out.o
 #DES_ENC= asm/dx86-out.o asm/yx86-out.o # a.out, FreeBSD
 #DES_ENC= asm/dx86bsdi.o asm/yx86bsdi.o # bsdi
 
+AES_ASM_OBJ=
+
 # Set BF_ENC to bf_enc.o if you want to use the C version
 #There are 4 x86 assember options.
 BF_ENC= asm/bx86-out.o
@@ -217,10 +219,28 @@ HEADER=         e_os.h
 
 all: Makefile.ssl build_all openssl.pc
 
+BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
+		SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}'	\
+		CC='${CC}' CFLAG='${CFLAG}' 			\
+		AS='${AS}' ASFLAG='${ASFLAG}' 			\
+		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
+		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
+		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
+		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
+		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
+		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
+		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
+		AES_ASM_OBJ='${AES_ASM_OBJ}'			\
+		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
+		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
+		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
+		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
+		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'
+
 BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	if [ -d "$$dir" ]; then \
 		(cd $$dir && echo "making $$target in $$dir..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' SHARED_LDFLAGS='${SHARED_LDFLAGS}' LIBRPATH='$(INSTALLTOP)/lib' $$target ) || exit 1; \
+		$(MAKE) $(BUILDENV) $$target ) || exit 1; \
 	else \
 		$(MAKE) $$dir; \
 	fi; fi
@@ -252,6 +272,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a
 		$(MAKE) SHLIBDIRS=crypto build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
+		exit 1; \
 	fi
 
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
@@ -259,6 +280,7 @@ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
+		exit 1; \
 	fi
 
 clean-shared:
@@ -292,8 +314,7 @@ do_$(SHLIB_TARGET):
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
 		$(NEWMAKE) -f Makefile.shared \
-			CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
-			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			$(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
@@ -363,7 +384,7 @@ links:
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' TESTS='${TESTS}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
+	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
 	rm -f *.bak
@@ -392,7 +413,7 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' TESTS='${TESTS}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
+	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
 	@LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 	DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
 	SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
@@ -491,7 +512,7 @@ dist:
 	@$(MAKE) TAR='${TAR}' TARFLAGS='${TARFLAGS}' tar
 
 dist_pem_h:
-	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
+	(cd crypto/pem; $(MAKE) $(BUILDENV) pem.h; $(MAKE) clean)
 
 install: all install_docs install_sw
 
@@ -513,7 +534,7 @@ install_sw:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i; echo "installing $$i..."; \
-		$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' RANLIB='${RANLIB}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' install ); \
+		$(MAKE) $(BUILDENV) INSTALL_PREFIX='${INSTALL_PREFIX}' OPENSSLDIR='${OPENSSLDIR}' install ); \
 	fi; \
 	done
 	@set -e; for i in $(LIBS) ;\
