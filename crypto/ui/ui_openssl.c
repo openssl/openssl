@@ -550,7 +550,7 @@ static int echo_console(UI *ui)
 
 static int close_console(UI *ui)
 	{
-	if (tty_in != stderr) fclose(tty_in);
+	if (tty_in != stdin) fclose(tty_in);
 	if (tty_out != stderr) fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
 	status = sys$dassgn(channel);
