@@ -127,7 +127,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
 	{
 	NBIO_TEST *nt;
 	int ret=0;
-#if 0
+#if 1
 	int num;
 	unsigned char n;
 #endif
@@ -137,7 +137,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
 	nt=(NBIO_TEST *)b->ptr;
 
 	BIO_clear_retry_flags(b);
-#if 0
+#if 1
 	RAND_pseudo_bytes(&n,1);
 	num=(n&0x07);
 
