@@ -117,7 +117,7 @@ int RAND_poll(void)
 	 * However, view the information as only half trustable.
 	 */
 	pid = -1;			/* search context */
-	while ((status = SYS$GETJPIW(8, &pid,  0, item, iosb, 0, 0))
+	while ((status = sys$getjpiw(0, &pid,  0, item, iosb, 0, 0))
 		!= SS$_NOMOREPROC)
 		{
 		if (status == SS$_NORMAL)
@@ -125,7 +125,7 @@ int RAND_poll(void)
 			RAND_add(data_buffer, total_length, total_length/2);
 			}
 		}
-	SYS$GETTIM(iosb);
+	sys$gettim(iosb);
 	RAND_add((unsigned char *)iosb, sizeof(iosb), sizeof(iosb)/2);
 	return 1;
 }
