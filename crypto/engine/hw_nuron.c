@@ -93,7 +93,6 @@ static const ENGINE_CMD_DEFN nuron_cmd_defns[] = {
 #define NURON_R_NOT_LOADED			107
 #define NURON_R_DSO_FAILURE			108
 #define NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	109
-#define NURON_R_NOT_LOADED			110
 static ERR_STRING_DATA nuron_str_functs[] =
 	{
 	/* This first element is changed to match the dynamic 'lib' number */
