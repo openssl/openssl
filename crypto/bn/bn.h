@@ -68,7 +68,7 @@
 extern "C" {
 #endif
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #undef BN_LLONG /* experimental, so far... */
 #endif
 
