@@ -68,17 +68,12 @@ extern "C" {
 #endif
 
 #ifdef _KERBEROS_DES_H
-#error kerberos/des.h and openssl/des.h
+#error <openssl/des.h> replaces <kerberos/des.h>.
 #endif
 
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
-
-#ifdef VMS
-#undef des_init_random_number_generator
-#define des_init_random_number_generator des_init_random_num_generator
-#endif
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];
@@ -91,7 +86,7 @@ typedef /* const */ unsigned char const_des_cblock[8];
 typedef struct des_ks_struct
 	{
 	union	{
-		des_cblock cblock;
+		des_cblock _;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
 		DES_LONG deslong[2];
@@ -119,30 +114,6 @@ typedef struct des_ks_struct
 
 #define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
-
-#ifdef KERBEROS
-#define ENCRYPT DES_ENCRYPT
-#define DECRYPT DES_DECRYPT
-#endif
-
-#define KEY_SZ DES_KEY_SZ
-#define string_to_key des_string_to_key
-#define read_pw_string des_read_pw_string
-#define random_key des_random_key
-#define pcbc_encrypt des_pcbc_encrypt
-#define set_key des_set_key
-#define key_sched des_key_sched
-#define ecb_encrypt des_ecb_encrypt
-#define cbc_encrypt des_cbc_encrypt
-#define ncbc_encrypt des_ncbc_encrypt
-#define xcbc_encrypt des_xcbc_encrypt
-#define cbc_cksum des_cbc_cksum
-#define quad_cksum des_quad_cksum
-
-/* For compatibility with the MIT lib - eay 20/05/92 */
-typedef des_key_schedule bit_64;
-#define des_fixup_key_parity des_set_odd_parity
-#define des_check_key_parity check_parity
 
 OPENSSL_EXTERN int des_check_key;	/* defaults to false */
 OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
@@ -236,16 +207,40 @@ int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 /* Extra functions from Mark Murray <mark@grondar.za> */
 void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 
-#ifdef FreeBSD
-/* The following functions are not in the normal unix build or the
- * SSLeay build.  When using the SSLeay build, use RAND_seed()
- * and RAND_bytes() instead. */
-int des_new_random_key(des_cblock *key);
-void des_init_random_number_generator(des_cblock *key);
-void des_set_random_generator_seed(des_cblock *key);
-void des_set_sequence_number(des_cblock new_sequence_number);
-void des_generate_random_block(des_cblock *block);
+/* The following definitions provide compatibility with the MIT Kerberos
+ * library. The des_key_schedule structure is not binary compatible. */
+
+#define _KERBEROS_DES_H
+
+#define KRBDES_ENCRYPT DES_ENCRYPT
+#define KRBDES_DECRYPT DES_DECRYPT
+
+#ifdef KERBEROS
+#  define ENCRYPT DES_ENCRYPT
+#  define DECRYPT DES_DECRYPT
 #endif
+
+#ifndef NCOMPAT
+#  define C_Block des_cblock
+#  define Key_schedule des_key_schedule
+#  define KEY_SZ DES_KEY_SZ
+#  define string_to_key des_string_to_key
+#  define read_pw_string des_read_pw_string
+#  define random_key des_random_key
+#  define pcbc_encrypt des_pcbc_encrypt
+#  define set_key des_set_key
+#  define key_sched des_key_sched
+#  define ecb_encrypt des_ecb_encrypt
+#  define cbc_encrypt des_cbc_encrypt
+#  define ncbc_encrypt des_ncbc_encrypt
+#  define xcbc_encrypt des_xcbc_encrypt
+#  define cbc_cksum des_cbc_cksum
+#  define quad_cksum des_quad_cksum
+#endif
+
+typedef des_key_schedule bit_64;
+#define des_fixup_key_parity des_set_odd_parity
+#define des_check_key_parity check_parity
 
 #ifdef  __cplusplus
 }
