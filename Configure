@@ -1159,11 +1159,12 @@ if ($fips)
 $des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
 my $fips_des_obj='asm/fips-dx86-elf.o';
 $fips_des_obj=$fips_des_enc unless $processor eq '386';
+my $fips_sha1_obj='asm/sx86-elf.o' if $processor eq '386';
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
 $rc5_obj=$rc5_enc	unless ($rc5_obj =~ /\.o$/);
-if ($sha1_obj =~ /\.o$/)
+if ($sha1_obj =~ /\.o$/ || $fips_sha1_obj =~ /\.o$/)
 	{
 #	$sha1_obj=$sha1_enc;
 	$cflags.=" -DSHA1_ASM";
@@ -1264,6 +1265,7 @@ while (<IN>)
 	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
 	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
+	s/^FIPS_SHA1_ASM_OBJ=.*$/FIPS_SHA1_ASM_OBJ= $fips_sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;

@@ -25,7 +25,7 @@ EXE= fips_standalone_sha1
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c
-LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o
+LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o $(FIPS_SHA1_ASM_OBJ)
 
 SRC= $(LIBSRC) fips_standalone_sha1.c
 
@@ -52,7 +52,7 @@ lib:	$(LIBOBJ)
 
 fips_standalone_sha1: fips_standalone_sha1.o fips_sha1dgst.o
 	$(CC) -o fips_standalone_sha1 $(CFLAGS) fips_standalone_sha1.o \
-	fips_sha1dgst.o
+	fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
