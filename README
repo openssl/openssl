@@ -57,7 +57,7 @@
             There is no limit on the number of bits.
         DSA encryption/decryption/generation.
             There is no limit on the number of bits.
-        Diffie-Hellman key-exchange/key generation.  
+        Diffie-Hellman key-exchange/key generation.
             There is no limit on the number of bits.
 
      X.509v3 certificates
