@@ -114,13 +114,13 @@ strip usr/bin/*.exe usr/bin/*.dll
 # Runtime package
 find etc usr/bin usr/doc usr/ssl/certs usr/ssl/man/man[157] usr/ssl/misc \
      usr/ssl/openssl.cnf usr/ssl/private -empty -o \! -type d |
-tar cjfT openssl2-${VERSION}-${SUBVERSION}.tar.bz2 -
+tar cjfT openssl-${VERSION}-${SUBVERSION}.tar.bz2 -
 # Development package
 find usr/include usr/lib usr/ssl/man/man3 -empty -o \! -type d |
-tar cjfT openssl2-devel-${VERSION}-${SUBVERSION}.tar.bz2 -
+tar cjfT openssl-devel-${VERSION}-${SUBVERSION}.tar.bz2 -
 
-ls -l openssl2-${VERSION}-${SUBVERSION}.tar.bz2
-ls -l openssl2-devel-${VERSION}-${SUBVERSION}.tar.bz2
+ls -l openssl-${VERSION}-${SUBVERSION}.tar.bz2
+ls -l openssl-devel-${VERSION}-${SUBVERSION}.tar.bz2
 
 cleanup
 
