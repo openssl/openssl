@@ -321,6 +321,12 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define I2D_OF(type) int (*)(type *,unsigned char **)
 #define I2D_OF_const(type) int (*)(const type *,unsigned char **)
 
+#define TYPEDEF_D2I_OF(type) typedef type *d2i_of_##type(type **,const unsigned char **,long)
+#define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(type *,unsigned char **)
+#define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
+
+TYPEDEF_D2I2D_OF(void);
+
 /* The following macros and typedefs allow an ASN1_ITEM
  * to be embedded in a structure and referenced. Since
  * the ASN1_ITEM pointers need to be globally accessible
@@ -512,8 +518,8 @@ DECLARE_ASN1_SET_OF(ASN1_TYPE)
 
 typedef struct asn1_method_st
 	{
-	int (*i2d)(void *, unsigned char **);
-	void *(*d2i)(void **,const unsigned char **,long);
+	i2d_of_void *i2d;
+	d2i_of_void *d2i;
 	void *(*create)(void);
 	void (*destroy)(void *);
 	} ASN1_METHOD;
@@ -836,11 +842,9 @@ int ASN1_TIME_check(ASN1_TIME *t);
 ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
 
 int i2d_ASN1_SET(STACK *a, unsigned char **pp,
-		 int (*func)(void *,unsigned char **), int ex_tag, int ex_class,
-		 int is_set);
+		 i2d_of_void *i2d, int ex_tag, int ex_class, int is_set);
 STACK *	d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
-		     char *(*func)(void **,const unsigned char **,long),
-		     void (*free_func)(void *),
+		     d2i_of_void *d2i, void (*free_func)(void *),
 		     int ex_tag, int ex_class);
 
 #ifndef OPENSSL_NO_BIO
@@ -895,8 +899,7 @@ int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
 /* Used to implement other functions */
-void *ASN1_dup(int (*i2d)(char *,void *), 
-	       char *(*d2i)(void *,unsigned char **,long), char *x);
+void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, char *x);
 #define ASN1_dup_of(type,i2d,d2i,x) \
 	((type *(*)(I2D_OF(type),D2I_OF(type),type *))ASN1_dup)(i2d,d2i,x)
 #define ASN1_dup_of_const(type,i2d,d2i,x) \
@@ -905,14 +908,11 @@ void *ASN1_dup(int (*i2d)(char *,void *),
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 
 #ifndef OPENSSL_NO_FP_API
-void *ASN1_d2i_fp(void *(*xnew)(void),
-		  void *(*d2i)(void **,const unsigned char **,long), FILE *in,
-		  void **x);
+void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 #define ASN1_d2i_fp_of(type,xnew,d2i,in,x) \
 	((type *(*)(type *(*)(void),D2I_OF(type),FILE *,type **))ASN1_d2i_fp)(xnew,d2i,in,x)
 void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x);
-int ASN1_i2d_fp(int (*i2d)(void *, unsigned char **),FILE *out,
-		void *x);
+int ASN1_i2d_fp(i2d_of_void *i2d,FILE *out,void *x);
 #define ASN1_i2d_fp_of(type,i2d,out,x) \
 	((int (*)(I2D_OF(type),FILE *,type *))ASN1_i2d_fp)(i2d,out,x)
 #define ASN1_i2d_fp_of_const(type,i2d,out,x) \
@@ -924,17 +924,11 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
 #ifndef OPENSSL_NO_BIO
-char *ASN1_d2i_bio(void *(*xnew)(void),
-		   void *(*d2i)(void **,const unsigned char **,long), BIO *in,
-		   void **x);
+void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x);
 #define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
 	((type *(*)(type *(*)(void),D2I_OF(type),BIO *,type **))ASN1_d2i_bio)(xnew,d2i,in,x)
-char *ASN1_d2i_bio(void *(*xnew)(void),
-		   void *(*d2i)(void **,const unsigned char **,long), BIO *in,
-		   void **x);
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
-int ASN1_i2d_bio(int (*i2d)(void *, unsigned char **),BIO *out,
-		 unsigned char *x);
+int ASN1_i2d_bio(i2d_of_void *i2d,BIO *out, unsigned char *x);
 #define ASN1_i2d_bio_of(type,i2d,out,x) \
 	((int (*)(I2D_OF(type),BIO *,type *))ASN1_i2d_bio)(i2d,out,x)
 #define ASN1_i2d_bio_of_const(type,i2d,out,x) \
@@ -974,15 +968,12 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 	unsigned char *data, int max_len);
 
 STACK *ASN1_seq_unpack(const unsigned char *buf, int len,
-		       char *(*d2i)(void **,const unsigned char **,long),
-		       void (*free_func)(void *));
-unsigned char *ASN1_seq_pack(STACK *safes,
-			     int (*i2d)(void *, unsigned char **),
+		       d2i_of_void *d2i, void (*free_func)(void *));
+unsigned char *ASN1_seq_pack(STACK *safes, i2d_of_void *i2d,
 			     unsigned char **buf, int *len );
-void *ASN1_unpack_string(ASN1_STRING *oct,
-			 void *(*d2i)(void *,const unsigned char **,long));
+void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);
 void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
-ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(void *, unsigned char **),
+ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d,
 			      ASN1_OCTET_STRING **oct);
 #define ASN1_pack_string_of(type,obj,i2d,oct) \
 	((ASN1_STRING *(*)(type *,I2D_OF(type),ASN1_OCTET_STRING **))ASN1_pack_string)(obj,i2d,oct)

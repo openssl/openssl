@@ -66,9 +66,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
 #ifndef NO_OLD_ASN1
 #ifndef OPENSSL_NO_FP_API
 
-void *ASN1_d2i_fp(void *(*xnew)(void),
-		  void *(*d2i)(void **,const unsigned char **,long), FILE *in,
-		  void **x)
+void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x)
         {
         BIO *b;
         void *ret;
@@ -85,9 +83,7 @@ void *ASN1_d2i_fp(void *(*xnew)(void),
         }
 #endif
 
-char *ASN1_d2i_bio(void *(*xnew)(void),
-		   void *(*d2i)(void **,const unsigned char **,long), BIO *in,
-		   void **x)
+void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x)
 	{
 	BUF_MEM *b = NULL;
 	const unsigned char *p;

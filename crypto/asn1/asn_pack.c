@@ -67,8 +67,7 @@
 /* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
 
 STACK *ASN1_seq_unpack(const unsigned char *buf, int len,
-		       char *(*d2i)(void **,const unsigned char **,long),
-		       void (*free_func)(void *))
+		       d2i_of_void *d2i,void (*free_func)(void *))
 {
     STACK *sk;
     const unsigned char *pbuf;
@@ -107,8 +106,7 @@ unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(void *,unsigned char **),
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-void *ASN1_unpack_string (ASN1_STRING *oct,
-			  void *(*d2i)(void *,const unsigned char **,long))
+void *ASN1_unpack_string (ASN1_STRING *oct, d2i_of_void *d2i)
 {
 	const unsigned char *p;
 	char *ret;

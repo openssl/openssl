@@ -85,8 +85,8 @@ static int SetBlobCmp(const void *elem1, const void *elem2 )
     }
 
 /* int is_set:  if TRUE, then sort the contents (i.e. it isn't a SEQUENCE)    */
-int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(void *,unsigned char **), int ex_tag,
-	     int ex_class, int is_set)
+int i2d_ASN1_SET(STACK *a, unsigned char **pp, i2d_of_void *i2d, int ex_tag,
+		 int ex_class, int is_set)
 	{
 	int ret=0,r;
 	int i;
@@ -97,7 +97,7 @@ int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(void *,unsigned char 
 
 	if (a == NULL) return(0);
 	for (i=sk_num(a)-1; i>=0; i--)
-		ret+=func(sk_value(a,i),NULL);
+		ret+=i2d(sk_value(a,i),NULL);
 	r=ASN1_object_size(1,ret,ex_tag);
 	if (pp == NULL) return(r);
 
@@ -111,7 +111,7 @@ int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(void *,unsigned char 
 	if(!is_set || (sk_num(a) < 2))
 		{
 		for (i=0; i<sk_num(a); i++)
-                	func(sk_value(a,i),&p);
+                	i2d(sk_value(a,i),&p);
 
 		*pp=p;
 		return(r);
@@ -129,7 +129,7 @@ int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(void *,unsigned char 
         for (i=0; i<sk_num(a); i++)
 	        {
                 rgSetBlob[i].pbData = p;  /* catch each set encode blob */
-                func(sk_value(a,i),&p);
+                i2d(sk_value(a,i),&p);
                 rgSetBlob[i].cbData = p - rgSetBlob[i].pbData; /* Length of this
 SetBlob
 */
@@ -163,8 +163,8 @@ SetBlob
         }
 
 STACK *d2i_ASN1_SET(STACK **a, const unsigned char **pp, long length,
-		    char *(*d2i)(void **,const unsigned char **,long),
-		    void (*free_func)(void *), int ex_tag, int ex_class)
+		    d2i_of_void *d2i, void (*free_func)(void *), int ex_tag,
+		    int ex_class)
 	{
 	ASN1_const_CTX c;
 	STACK *ret=NULL;
