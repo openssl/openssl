@@ -219,6 +219,8 @@ int ENGINE_finish(ENGINE *e)
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 	const char *passphrase)
 	{
+	EVP_PKEY *pkey;
+
 	if(e == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
@@ -239,12 +241,21 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 		return 0;
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	return e->load_privkey(key_id, passphrase);
+	pkey = e->load_privkey(key_id, passphrase);
+	if (!pkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+		return 0;
+		}
+	return pkey;
 	}
 
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 	const char *passphrase)
 	{
+	EVP_PKEY *pkey;
+
 	if(e == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
@@ -265,7 +276,14 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 		return 0;
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	return e->load_pubkey(key_id, passphrase);
+	pkey = e->load_pubkey(key_id, passphrase);
+	if (!pkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+		return 0;
+		}
+	return pkey;
 	}
 
 /* Initialise a engine type for use (or up its functional reference count

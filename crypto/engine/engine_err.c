@@ -140,6 +140,8 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
 {ENGINE_R_DSO_FAILURE                    ,"DSO failure"},
 {ENGINE_R_ENGINE_IS_NOT_IN_LIST          ,"engine is not in the list"},
+{ENGINE_R_FAILED_LOADING_PRIVATE_KEY     ,"failed loading private key"},
+{ENGINE_R_FAILED_LOADING_PUBLIC_KEY      ,"failed loading public key"},
 {ENGINE_R_FINISH_FAILED                  ,"finish failed"},
 {ENGINE_R_GET_HANDLE_FAILED              ,"could not obtain hardware handle"},
 {ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
