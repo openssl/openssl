@@ -2047,6 +2047,7 @@ SSL *SSL_dup(SSL *s)
 		 * they should not both point to the same object,
 		 * and thus we can't use SSL_copy_session_id. */
 
+		ret->method->ssl_free(ret);
 		ret->method = s->method;
 		ret->method->ssl_new(ret);
 
