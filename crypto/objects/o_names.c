@@ -67,8 +67,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		{
 		MemCheck_off();
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
-		name_funcs->hash_func = (LHASH_HASH_FN_TYPE)lh_strhash;
-		name_funcs->cmp_func = (LHASH_COMP_FN_TYPE)strcmp;
+		name_funcs->hash_func = lh_strhash;
+		name_funcs->cmp_func = strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
 						* ((void *)0), which according
 						* to Compaq C is not really
@@ -100,8 +100,8 @@ static int obj_name_cmp(const void *a_void, const void *b_void)
 		if ((name_funcs_stack != NULL)
 			&& (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 			{
-			ret=sk_NAME_FUNCS_value(name_funcs_stack,a->type)
-				->cmp_func(a->name,b->name);
+			ret=sk_NAME_FUNCS_value(name_funcs_stack,
+				a->type)->cmp_func(a->name,b->name);
 			}
 		else
 			ret=strcmp(a->name,b->name);
@@ -117,8 +117,8 @@ static unsigned long obj_name_hash(const void *a_void)
 
 	if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 		{
-		ret=sk_NAME_FUNCS_value(name_funcs_stack,a->type)
-			->hash_func(a->name);
+		ret=sk_NAME_FUNCS_value(name_funcs_stack,
+			a->type)->hash_func(a->name);
 		}
 	else
 		{
@@ -190,8 +190,8 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 			 * function should get three arguments...
 			 * -- Richard Levitte
 			 */
-			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
-				->free_func(ret->name,ret->type,ret->data);
+			sk_NAME_FUNCS_value(name_funcs_stack,
+				ret->type)->free_func(ret->name,ret->type,ret->data);
 			}
 		OPENSSL_free(ret);
 		}
@@ -225,8 +225,8 @@ int OBJ_NAME_remove(const char *name, int type)
 			 * function should get three arguments...
 			 * -- Richard Levitte
 			 */
-			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
-				->free_func(ret->name,ret->type,ret->data);
+			sk_NAME_FUNCS_value(name_funcs_stack,
+				ret->type)->free_func(ret->name,ret->type,ret->data);
 			}
 		OPENSSL_free(ret);
 		return(1);
