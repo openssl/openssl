@@ -68,25 +68,24 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
-static int rsa_builtin_keygen(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb);
+static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
 
 /* NB: this wrapper would normally be placed in rsa_lib.c and the static
  * implementation would probably be in rsa_eay.c. Nonetheless, is kept here so
  * that we don't introduce a new linker dependency. Eg. any application that
  * wasn't previously linking object code related to key-generation won't have to
  * now just because key-generation is part of RSA_METHOD. */
-int RSA_generate_key_ex(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
+int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	{
 	if(rsa->meth->rsa_keygen)
 		return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
 	return rsa_builtin_keygen(rsa, bits, e_value, cb);
 	}
 
-static int rsa_builtin_keygen(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
+static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	{
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
 	int bitsp,bitsq,ok= -1,n=0;
-	unsigned int i;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 
 	ctx=BN_CTX_new();
@@ -113,17 +112,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, unsigned long e_value, BN_GENC
 	if(!rsa->dmq1 && ((rsa->dmq1=BN_new()) == NULL)) goto err;
 	if(!rsa->iqmp && ((rsa->iqmp=BN_new()) == NULL)) goto err;
 
-#if 1
-	/* The problem is when building with 8, 16, or 32 BN_ULONG,
-	 * unsigned long can be larger */
-	for (i=0; i<sizeof(unsigned long)*8; i++)
-		{
-		if (e_value & (1UL<<i))
-			BN_set_bit(rsa->e,i);
-		}
-#else
-	if (!BN_set_word(rsa->e,e_value)) goto err;
-#endif
+	BN_copy(rsa->e, e_value);
 
 	/* generate p and q */
 	for (;;)

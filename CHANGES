@@ -4,6 +4,11 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) The new 'RSA_generate_key_ex' function now takes a BIGNUM for the public
+     exponent rather than 'unsigned long'. There is a corresponding change to
+     the new 'rsa_keygen' element of the RSA_METHOD structure.
+     [Jelte Jansen, Geoff Thorpe]
+
   *) Reduce the chances of duplicate issuer name and serial numbers (in
      violation of RFC3280) using the OpenSSL certificate creation utilities. 
      This is done by creating a random 64 bit value for the initial serial

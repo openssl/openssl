@@ -62,23 +62,39 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
+#ifdef OPENSSL_NO_DEPRECATED
+
 static void *dummy=&dummy;
 
-#ifndef OPENSSL_NO_DEPRECATED
+#else
+
 RSA *RSA_generate_key(int bits, unsigned long e_value,
 	     void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BN_GENCB cb;
-	RSA *rsa;
+	int i;
+	RSA *rsa = RSA_new();
+	BIGNUM *e = BN_new();
 
-	if((rsa=RSA_new()) == NULL)
-		return 0;
+	if(!rsa || !e) goto err;
+
+	/* The problem is when building with 8, 16, or 32 BN_ULONG,
+	 * unsigned long can be larger */
+	for (i=0; i<sizeof(unsigned long)*8; i++)
+		{
+		if (e_value & (1UL<<i))
+			BN_set_bit(e,i);
+		}
 
 	BN_GENCB_set_old(&cb, callback, cb_arg);
 
-	if(RSA_generate_key_ex(rsa, bits, e_value, &cb))
+	if(RSA_generate_key_ex(rsa, bits, e, &cb)) {
+		BN_free(e);
 		return rsa;
-	RSA_free(rsa);
+	}
+err:
+	if(e) BN_free(e);
+	if(rsa) RSA_free(rsa);
 	return 0;
 	}
 #endif

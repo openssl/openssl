@@ -1782,17 +1782,20 @@ err:
 #ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
+	BIGNUM *bn = NULL;
 	static RSA *rsa_tmp=NULL;
 
-	if (rsa_tmp == NULL)
+	if (!rsa_tmp && ((bn = BN_new()) == NULL))
+		BIO_printf(bio_err,"Allocation error in generating RSA key\n");
+	if (!rsa_tmp && bn)
 		{
 		if (!s_quiet)
 			{
 			BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 			(void)BIO_flush(bio_err);
 			}
-		if(((rsa_tmp = RSA_new()) == NULL) || !RSA_generate_key_ex(
-					rsa_tmp, keylength,RSA_F4,NULL))
+		if(!BN_set_word(bn, RSA_F4) || ((rsa_tmp = RSA_new()) == NULL) ||
+				!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL))
 			{
 			if(rsa_tmp) RSA_free(rsa_tmp);
 			rsa_tmp = NULL;
@@ -1802,6 +1805,7 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 			BIO_printf(bio_err,"\n");
 			(void)BIO_flush(bio_err);
 			}
+		BN_free(bn);
 		}
 	return(rsa_tmp);
 	}

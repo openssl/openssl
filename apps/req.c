@@ -748,12 +748,16 @@ bad:
 		if (pkey_type == TYPE_RSA)
 			{
 			RSA *rsa = RSA_new();
-			if(!rsa || !RSA_generate_key_ex(rsa, newkey, 0x10001, &cb) ||
+			BIGNUM *bn = BN_new();
+			if(!bn || !rsa || !BN_set_word(bn, 0x10001) ||
+					!RSA_generate_key_ex(rsa, newkey, bn, &cb) ||
 					!EVP_PKEY_assign_RSA(pkey, rsa))
 				{
+				if(bn) BN_free(bn);
 				if(rsa) RSA_free(rsa);
 				goto end;
 				}
+			BN_free(bn);
 			}
 		else
 #endif
