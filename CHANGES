@@ -57,7 +57,8 @@
      value is 0.
      [Richard Levitte]
 
-  *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
+  *) [In 0.9.6c-engine release:]
+     Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
   *) Add the configuration target linux-s390x.
