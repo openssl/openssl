@@ -1438,6 +1438,8 @@ while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
 		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+	elsif	(/^#define\s+ENGINESDIR/)
+		{ print OUT "#define ENGINESDIR \"$prefix/lib/engines\"\n"; }
 	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
 		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
 			if $export_var_as_fn;

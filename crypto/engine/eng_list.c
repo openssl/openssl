@@ -397,7 +397,7 @@ ENGINE *ENGINE_by_id(const char *id)
 #ifdef OPENSSL_SYS_VMS
 	if((load_dir = getenv("OPENSSL_ENGINES")) == 0) load_dir = "SSLROOT:[ENGINES]";
 #else
-	if((load_dir = getenv("OPENSSL_ENGINES")) == 0) load_dir = OPENSSLDIR "/engines";
+	if((load_dir = getenv("OPENSSL_ENGINES")) == 0) load_dir = ENGINESDIR;
 #endif
 	iterator = ENGINE_by_id("dynamic");
 	if(!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||

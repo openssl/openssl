@@ -5,6 +5,7 @@
 
 #if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
+#define ENGINESDIR "/usr/local/lib/engines"
 #define OPENSSLDIR "/usr/local/ssl"
 #endif
 #endif

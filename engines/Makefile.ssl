@@ -99,9 +99,9 @@ install:
 		set -e; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
-			  cp lib$$l.so $(INSTALL_PREFIX)$(OPENSSLDIR)/engines/lib$$l.so.new; \
-			  chmod 555 $(INSTALL_PREFIX)$(OPENSSLDIR)/engines/lib$$l.so.new; \
-			  mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/engines/lib$$l.so.new $(INSTALL_PREFIX)$(OPENSSLDIR)/engines/lib$$l.so ); \
+			  cp lib$$l.so $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so ); \
 		done; \
 	fi
 
