@@ -60,7 +60,16 @@
 
 /* most of this code has been pilfered from my libdes speed.c program */
 
-#define BASENUM	5000
+#define BASENUM	10000
+#define NUM_START 0
+
+
+/* determine timings for modexp, gcd, or modular inverse */
+#define TEST_EXP
+#undef TEST_GCD
+#undef TEST_INV
+
+
 #undef PROG
 #define PROG bnspeed_main
 
@@ -161,10 +170,29 @@ static double Time_F(int s)
 #endif
 	}
 
-#define NUM_SIZES	6
-static int sizes[NUM_SIZES]={256,512,1024,2048,4096,8192};
-static int mul_c[NUM_SIZES]={8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
+#define NUM_SIZES	7
+#if NUM_START > NUM_SIZES
+#   error "NUM_START > NUM_SIZES"
+#endif
+static int sizes[NUM_SIZES]={128,256,512,1024,2048,4096,8192};
+static int mul_c[NUM_SIZES]={8*8*8*8*8*8,8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
 /*static int sizes[NUM_SIZES]={59,179,299,419,539}; */
+
+#define RAND_SEED(string) { const char str[] = string; RAND_seed(string, sizeof string); }
+
+static void genprime_cb(int p, int n, void *arg)
+	{
+	char c='*';
+
+	if (p == 0) c='.';
+	if (p == 1) c='+';
+	if (p == 2) c='*';
+	if (p == 3) c='\n';
+	putc(c, stderr);
+	fflush(stderr);
+	(void)n;
+	(void)arg;
+	}
 
 void do_mul_exp(BIGNUM *r,BIGNUM *a,BIGNUM *b,BIGNUM *c,BN_CTX *ctx); 
 
@@ -179,6 +207,10 @@ int main(int argc, char **argv)
 	c=BN_new();
 	r=BN_new();
 
+	while (!RAND_status())
+		/* not enough bits */
+		RAND_SEED("I demand a manual recount!");
+
 	do_mul_exp(r,a,b,c,ctx);
 	}
 
@@ -188,23 +220,61 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	double tm;
 	long num;
 
+#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_INV) != 1
+#  error "choose one test"
+#endif
+
+#ifdef TEST_INV
+#  define C_PRIME
+#endif
+
 	num=BASENUM;
-	for (i=0; i<NUM_SIZES; i++)
+	for (i=NUM_START; i<NUM_SIZES; i++)
 		{
-		BN_pseudo_rand(a,sizes[i],1,0);
-		BN_pseudo_rand(b,sizes[i],1,0);
-		BN_pseudo_rand(c,sizes[i],1,1);
-		BN_mod(a,a,c,ctx);
-		BN_mod(b,b,c,ctx);
+#ifdef C_PRIME
+		if (!BN_generate_prime(c,sizes[i],0,NULL,NULL,genprime_cb,NULL)) goto err;
+		putc('\n', stderr);
+		fflush(stderr);
+#endif
 
 		Time_F(START);
 		for (k=0; k<num; k++)
-			BN_mod_exp(r,a,b,c,ctx);
+			{
+			if (k%50 == 0) /* Average over num/50 different choices of random numbers. */
+				{
+				if (!BN_pseudo_rand(a,sizes[i],1,0)) goto err;
+				if (!BN_pseudo_rand(b,sizes[i],1,0)) goto err;
+#ifndef C_PRIME
+				if (!BN_pseudo_rand(c,sizes[i],1,1)) goto err;
+#endif
+				}
+#if defined(TEST_EXP)
+			if (!BN_mod_exp(r,a,b,c,ctx)) goto err;
+#elif defined(TEST_GCD)
+			if (!BN_gcd(r,a,b,ctx)) goto err;
+			if (!BN_gcd(r,b,c,ctx)) goto err;
+			if (!BN_gcd(r,b,c,ctx)) goto err;
+#else /* TEST_INV */
+			if (!BN_mod_inverse(r,a,c,ctx)) goto err;
+			if (!BN_mod_inverse(r,b,c,ctx)) goto err;
+#endif
+			}
 		tm=Time_F(STOP);
-		printf("mul %4d ^ %4d %% %d -> %8.3fms %5.1f\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num);
+		printf(
+#if defined(TEST_EXP)
+			"modexp %4d ^ %4d %% %4d"
+#elif defined(TEST_GCD)
+			"3*gcd %4d %4d %4d"
+#else /* TEST_INV */
+			"2*inv %4d %4d mod %4d"
+#endif
+			" -> %8.3fms %5.1f (%d)\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num, num);
 		num/=7;
 		if (num <= 0) num=1;
 		}
+	return;
 
+ err:
+	ERR_print_errors_fp(stderr);
 	}
 

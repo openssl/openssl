@@ -376,7 +376,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	BN_init(&val[0]);
 	ts=1;
-	if (!a->neg && BN_ucmp(a,m) >= 0)
+	if (a->neg || BN_ucmp(a,m) >= 0)
 		{
 		if (!BN_nnmod(&(val[0]),a,m,ctx))
 			goto err;
