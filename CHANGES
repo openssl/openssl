@@ -2,51 +2,21 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
+ Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
-     OpenSSL 0.9.6a/0.9.6b/0.9.6c (bugfix releases, 5 Apr 2001, 9 July 2001
-     and 21 Dec 2001) and OpenSSL 0.9.7 were developed in parallel, based
-     on OpenSSL 0.9.6.  
+     OpenSSL 0.9.6a/0.9.6b/0.9.6c/0.9.6d (bugfix releases, 5 Apr 2001,
+     9 July 2001, 21 Dec 2001, XX xxx 2002) and OpenSSL 0.9.7 were developed
+     in parallel, based on OpenSSL 0.9.6.  
 
      Change log entries are tagged as follows:
-         -) applies to 0.9.6a/0.9.6b/0.9.6c only
-         *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
+         -) applies to 0.9.6a/0.9.6b/0.9.6c/0.9.6d only
+         *) applies to 0.9.6a/0.9.6b/0.9.6c/0.9.6d and 0.9.7
          +) applies to 0.9.7 only
-
-  *) Fix object definitions for Private and Enterprise: they were not
-     recognized in their shortname (=lowercase) representation. Extend
-     obj_dat.pl to issue an error when using undefined keywords instead
-     of silently ignoring the problem (Svenning Sorensen
-     <sss@sss.dnsalias.net>).
-     [Lutz Jaenicke]
 
   +) Make object definitions compliant to LDAP (RFC2256): SN is the short
      form for "surname", serialNumber has no short form (Michael Bell
      <michael.bell@rz.hu-berlin.de>).
      [Lutu Jaenicke]
-
-  *) Fix DH_generate_parameters() so that it works for 'non-standard'
-     generators, i.e. generators other than 2 and 5.  (Previously, the
-     code did not properly initialise the 'add' and 'rem' values to
-     BN_generate_prime().)
-
-     In the new general case, we do not insist that 'generator' is
-     actually a primitive root: This requirement is rather pointless;
-     a generator of the order-q subgroup is just as good, if not
-     better.
-     [Bodo Moeller]
-
-  *) Map new X509 verification errors to alerts. Discovered and submitted by
-     Tom Wu <tom@arcot.com>.
-     [Lutz Jaenicke]
-
-  *) Fix ssl3_pending() (ssl/s3_lib.c) to prevent SSL_pending() from
-     returning non-zero before the data has been completely received
-     when using non-blocking I/O.
-     [Bodo Moeller; problem pointed out by John Hughes]
-
-  *) Some of the ciphers missed the strength entry (SSL_LOW etc).
-     [Ben Laurie, Lutz Jaenicke]
 
   +) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized 
@@ -74,10 +44,6 @@
 
   +) Added the '4758cca' ENGINE to support IBM 4758 cards.
      [Maurice Gittens <maurice@gittens.nl>, touchups by Geoff Thorpe]
-
-  *) Fix bug in SSL_clear(): bad sessions were not removed (found by
-     Yoram Zahavi <YoramZ@gilian.com>).
-     [Lutz Jaenicke]
 
   +) Add and OPENSSL_LOAD_CONF define which will cause
      OpenSSL_add_all_algorithms() to load the openssl.cnf config file.
@@ -113,21 +79,6 @@
      and move code to CONF_modules_load_file().
      [Steve Henson]
 
-  *) Add information about CygWin 1.3 and on, and preserve proper
-     configuration for the versions before that.
-     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
-
-  *) Make removal from session cache (SSL_CTX_remove_session()) more robust:
-     check whether we deal with a copy of a session and do not delete from
-     the cache in this case. Problem reported by "Izhar Shoshani Levi"
-     <izhar@checkpoint.com>.
-     [Lutz Jaenicke]
-
-  *) Do not store session data into the internal session cache, if it
-     is never intended to be looked up (SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
-     flag is set). Proposed by Aslam <aslam@funk.com>.
-     [Lutz Jaenicke]
-
   +) Support for crypto accelerator cards from Accelerated Encryption
      Processing, www.aep.ie.  (Use engine 'aep')
      The support was copied from 0.9.6c [engine] and adapted/corrected
@@ -140,19 +91,12 @@
      to work with the new engine framework.
      [Richard Levitte]
 
-  *) Have ASN1_BIT_STRING_set_bit() really clear a bit when the requested
-     value is 0.
-     [Richard Levitte]
-
   +) Have the CHIL engine fork-safe (as defined by nCipher) and actually
      make the newer ENGINE framework commands for the CHIL engine work.
      [Toomas Kiisk <vix@cyber.ee> and Richard Levitte]
 
   +) Make it possible to produce shared libraries on ReliantUNIX.
      [Robert Dahlem <Robert.Dahlem@ffm2.siemens.de> via Richard Levitte]
-
-  *) Add the configuration target linux-s390x.
-     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
 
   +) Add the configuration target debug-linux-ppro.
      Make 'openssl rsa' use the general key loading routines
@@ -161,7 +105,7 @@
      FORMAT_IISSGC.
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
-  *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
+ *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
   +) Add -keyform to rsautl, and document -engine.
@@ -193,83 +137,26 @@
   +) Prelminary ENGINE config module.
      [Steve Henson]
 
-  *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
-     ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag
-     variable as an indication that a ClientHello message has been
-     received.  As the flag value will be lost between multiple
-     invocations of ssl3_accept when using non-blocking I/O, the
-     function may not be aware that a handshake has actually taken
-     place, thus preventing a new session from being added to the
-     session cache.
-
-     To avoid this problem, we now set s->new_session to 2 instead of
-     using a local variable.
-     [Lutz Jaenicke, Bodo Moeller]
-
-  *) Bugfix: Return -1 from ssl3_get_server_done (ssl3/s3_clnt.c)
-     if the SSL_R_LENGTH_MISMATCH error is detected.
-     [Geoff Thorpe, Bodo Moeller]
-
   +) New experimental application configuration code.
      [Steve Henson]
-
-  *) New 'shared_ldflag' column in Configure platform table.
-     [Richard Levitte]
-
-  *) Fix EVP_CIPHER_mode macro.
-     ["Dan S. Camper" <dan@bti.net>]
 
   +) Change the AES code to follow the same name structure as all other
      symmetric ciphers, and behave the same way.  Move everything to
      the directory crypto/aes, thereby obsoleting crypto/rijndael.
      [Stephen Sprunk <stephen@sprunk.org> and Richard Levitte]
 
-  *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
-     type, we must throw them away by setting rr->length to 0.
-     [D P Chang <dpc@qualys.com>]
-
   -) OpenSSL 0.9.6c released [21 dec 2001]
 
   +) SECURITY: remove unsafe setjmp/signal interaction from ui_openssl.c.
      [Ben Laurie and Theo de Raadt]
 
-  *) Fix BN_rand_range bug pointed out by Dominikus Scherkl
-     <Dominikus.Scherkl@biodata.com>.  (The previous implementation
-     worked incorrectly for those cases where  range = 10..._2  and
-     3*range  is two bits longer than  range.)
-     [Bodo Moeller]
-
-  *) Only add signing time to PKCS7 structures if it is not already
-     present.
-     [Steve Henson]
-
-  *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
-     OBJ_ld_ce should be OBJ_id_ce.
-     Also some ip-pda OIDs in crypto/objects/objects.txt were
-     incorrect (cf. RFC 3039).
-     [Matt Cooper, Frederic Giudicelli, Bodo Moeller]
-
   +) Add option to output public keys in req command.
      [Massimiliano Pala madwolf@openca.org]
-
-  *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
-     returns early because it has nothing to do.
-     [Andy Schneider <andy.schneider@bjss.co.uk>]
-
-  *) [In 0.9.6c-engine and 0.9.7 release:]
-     Fix mutex callback return values in crypto/engine/hw_ncipher.c.
-     [Andy Schneider <andy.schneider@bjss.co.uk>]
 
   -) [In 0.9.6c-engine release:]
      Add support for Cryptographic Appliance's keyserver technology.
      (Use engine 'keyclient')
      [Cryptographic Appliances and Geoff Thorpe]
-
-  *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
-     is called via tools/c89.sh because arguments have to be
-     rearranged (all '-L' options must appear before the first object
-     modules).
-     [Richard Shapiro <rshapiro@abinitio.com>]
 
   +) Use wNAFs in EC_POINTs_mul() for improved efficiency
      (up to about 10% better than before for P-192 and P-224).
@@ -289,9 +176,6 @@
      Add support for crypto accelerator cards from Accelerated
      Encryption Processing, www.aep.ie.  (Use engine 'aep')
      [AEP Inc. and Mark Cox]
-
-  *) Add a configuration entry for gcc on UnixWare.
-     [Gary Benson <gbenson@redhat.com>]
 
   +) New functions/macros
 
@@ -320,11 +204,6 @@
      to enable a callback that displays all protocol messages.
      [Bodo Moeller]
 
-  *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
-     messages are stored in a single piece (fixed-length part and
-     variable-length part combined) and fix various bugs found on the way.
-     [Bodo Moeller]
-
   +) Change the shared library support so shared libraries are built as
      soon as the corresponding static library is finished, and thereby get
      openssl and the test programs linked against the shared library.
@@ -343,12 +222,6 @@
      when reusing an existing buffer.
      [Bodo Moeller]
 
-  *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
-     instead.  BIO_gethostbyname() does not know what timeouts are
-     appropriate, so entries would stay in cache even when they have
-     become invalid.
-     [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
-
   +) New command line and configuration option 'utf8' for the req command.
      This allows field values to be specified as UTF8 strings.
      [Steve Henson]
@@ -362,15 +235,6 @@
      extension only).  The new configuration file option 'email_in_dn = no'
      has the same effect.
      [Massimiliano Pala madwolf@openca.org]
-
-  *) Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
-     faced with a pathologically small ClientHello fragment that does
-     not contain client_version: Instead of aborting with an error,
-     simply choose the highest available protocol version (i.e.,
-     TLS 1.0 unless it is disabled).  In practice, ClientHello
-     messages are never sent like this, but this change gives us
-     strictly correct behaviour at least for TLS.
-     [Bodo Moeller]
 
   +) Change all functions with names starting with des_ to be starting
      with DES_ instead.  Add wrappers that are compatible with libdes,
@@ -401,11 +265,6 @@
      default), and then completely removed.
      [Richard Levitte]
 
-  *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
-     never resets s->method to s->ctx->method when called from within
-     one of the SSL handshake functions.
-     [Bodo Moeller; problem pointed out by Niko Baric]
-
   +) Test for certificates which contain unsupported critical extensions.
      If such a certificate is found during a verify operation it is 
      rejected by default: this behaviour can be overridden by either
@@ -414,14 +273,6 @@
      X509_supported_extension() has also been added which returns 1 if a
      particular extension is supported.
      [Steve Henson]
-
-  *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
-     (sent using the client's version number) if client_version is
-     smaller than the protocol version in use.  Also change
-     ssl23_get_client_hello (ssl/s23_srvr.c) to select TLS 1.0 if
-     the client demanded SSL 3.0 but only TLS 1.0 is enabled; then
-     the client will at least see that alert.
-     [Bodo Moeller]
 
   +) Modify the behaviour of EVP cipher functions in similar way to digests
      to retain compatibility with existing code.
@@ -443,10 +294,6 @@
   +) Change ssl3_get_message (ssl/s3_both.c) and the functions using it
      so that complete 'Handshake' protocol structures are kept in memory
      instead of overwriting 'msg_type' and 'length' with 'body' data.
-     [Bodo Moeller]
-
-  *) Fix ssl3_get_message (ssl/s3_both.c) to handle message fragmentation
-     correctly.
      [Bodo Moeller]
 
   +) Add an implementation of SSL_add_dir_cert_subjects_to_stack for Win32.
@@ -482,10 +329,6 @@
      become part of libeay.num as well.
      [Richard Levitte]
 
-  *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
-     client receives HelloRequest while in a handshake.
-     [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
-
   +) New function SSL_renegotiate_pending().  This returns true once
      renegotiation has been requested (either SSL_renegotiate() call
      or HelloRequest/ClientHello receveived from the peer) and becomes
@@ -502,29 +345,6 @@
      session resumption is possible only in the first handshake.
      [Bodo Moeller]
 
-  *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
-     should end in 'break', not 'goto end' which circuments various
-     cleanups done in state SSL_ST_OK.   But session related stuff
-     must be disabled for SSL_ST_OK in the case that we just sent a
-     HelloRequest.
-
-     Also avoid some overhead by not calling ssl_init_wbio_buffer()
-     before just sending a HelloRequest.
-     [Bodo Moeller, Eric Rescorla <ekr@rtfm.com>]
-
-  *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
-     reveal whether illegal block cipher padding was found or a MAC
-     verification error occured.  (Neither SSLerr() codes nor alerts
-     are directly visible to potential attackers, but the information
-     may leak via logfiles.)
-
-     Similar changes are not required for the SSL 2.0 implementation
-     because the number of padding bytes is sent in clear for SSL 2.0,
-     and the extra bytes are just ignored.  However ssl/s2_pkt.c
-     failed to verify that the purported number of padding bytes is in
-     the legal range.
-     [Bodo Moeller]
-
   +) Add some demos for certificate and certificate request creation.
      [Steve Henson]
 
@@ -536,17 +356,6 @@
   +) Add support for shared libraries for Unixware-7
      (Boyd Lynn Gerber <gerberb@zenez.com>).
      [Lutz Jaenicke]
-
-  *) Add OpenUNIX-8 support including shared libraries
-     (Boyd Lynn Gerber <gerberb@zenez.com>).
-     [Lutz Jaenicke]
-
-  *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
-     'wristwatch attack' using huge encoding parameters (cf.
-     James H. Manger's CRYPTO 2001 paper).  Note that the
-     RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
-     encoding parameters and hence was not vulnerable.
-     [Bodo Moeller]
 
   +) Add a "destroy" handler to ENGINEs that allows structural cleanup to
      be done prior to destruction. Use this to unload error strings from
@@ -572,21 +381,9 @@
      (ie. how to use it, how to build "dynamic"-loadable ENGINEs, etc).
      [Geoff Thorpe]
 
-  *) BN_sqr() bug fix.
-     [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
-
   +) Make it possible to unload ranges of ERR strings with a new
      "ERR_unload_strings" function.
      [Geoff Thorpe]
-
-  *) Rabin-Miller test analyses assume uniformly distributed witnesses,
-     so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
-     followed by modular reduction.
-     [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
-
-  *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
-     equivalent based on BN_pseudo_rand() instead of BN_rand().
-     [Bodo Moeller]
 
   +) Add a copy() function to EVP_MD.
      [Ben Laurie]
@@ -644,15 +441,6 @@
      Also rename "DSO_up()" function to more descriptive "DSO_up_ref()".
      [Geoff Thorpe]
 
-  *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
-     This function was broken, as the check for a new client hello message
-     to handle SGC did not allow these large messages.
-     (Tracked down by "Douglas E. Engert" <deengert@anl.gov>.)
-     [Lutz Jaenicke]
-
-  *) Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
-     [Lutz Jaenicke]
-
   +) Add EVP test program.
      [Ben Laurie]
 
@@ -665,25 +453,6 @@
      These allow a CRL to be built without having to access X509_CRL fields
      directly. Modify 'ca' application to use new functions.
      [Steve Henson]
-
-  *) Fix buggy behaviour of BIO_get_num_renegotiates() and BIO_ctrl()
-     for BIO_C_GET_WRITE_BUF_SIZE ("Stephen Hinton" <shinton@netopia.com>).
-     [Lutz Jaenicke]
-
-  *) Rework the configuration and shared library support for Tru64 Unix.
-     The configuration part makes use of modern compiler features and
-     still retains old compiler behavior for those that run older versions
-     of the OS.  The shared library support part includes a variant that
-     uses the RPATH feature, and is available through the special
-     configuration target "alpha-cc-rpath", which will never be selected
-     automatically.
-     [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
-
-  *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
-     with the same message size as in ssl3_get_certificate_request().
-     Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
-     messages might inadvertently be reject as too long.
-     [Petr Lampa <lampa@fee.vutbr.cz>]
 
   +) Move SSL_OP_TLS_ROLLBACK_BUG out of the SSL_OP_ALL list of recommended
      bug workarounds. Rollback attack detection is a security feature.
@@ -722,17 +491,6 @@
      (Note that a later change renames 'des_...' into 'DES_...'.)
      [Ben Laurie]
 
-  *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
-     [Andy Polyakov]
-
-  *) Modified SSL library such that the verify_callback that has been set
-     specificly for an SSL object with SSL_set_verify() is actually being
-     used. Before the change, a verify_callback set with this function was
-     ignored and the verify_callback() set in the SSL_CTX at the time of
-     the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
-     to allow the necessary settings.
-     [Lutz Jaenicke]
-
   +) Initial reduction of linker bloat: the use of some functions, such as
      PEM causes large amounts of unused functions to be linked in due to
      poor organisation. For example pem_all.c contains every PEM function
@@ -740,55 +498,6 @@
      ASN1 code. Grouping together similar functions and splitting unrelated
      functions prevents this.
      [Steve Henson]
-
-  *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
-     explicitly to NULL, as at least on Solaris 8 this seems not always to be
-     done automatically (in contradiction to the requirements of the C
-     standard). This made problems when used from OpenSSH.
-     [Lutz Jaenicke]
-
-  *) In OpenSSL 0.9.6a and 0.9.6b, crypto/dh/dh_key.c ignored
-     dh->length and always used
-
-          BN_rand_range(priv_key, dh->p).
-
-     BN_rand_range() is not necessary for Diffie-Hellman, and this
-     specific range makes Diffie-Hellman unnecessarily inefficient if
-     dh->length (recommended exponent length) is much smaller than the
-     length of dh->p.  We could use BN_rand_range() if the order of
-     the subgroup was stored in the DH structure, but we only have
-     dh->length.
-
-     So switch back to
-
-          BN_rand(priv_key, l, ...)
-
-     where 'l' is dh->length if this is defined, or BN_num_bits(dh->p)-1
-     otherwise.
-     [Bodo Moeller]
-
-  *) In
-
-          RSA_eay_public_encrypt
-          RSA_eay_private_decrypt
-          RSA_eay_private_encrypt (signing)
-          RSA_eay_public_decrypt (signature verification)
-
-     (default implementations for RSA_public_encrypt,
-     RSA_private_decrypt, RSA_private_encrypt, RSA_public_decrypt),
-     always reject numbers >= n.
-     [Bodo Moeller]
-
-  *) In crypto/rand/md_rand.c, use a new short-time lock CRYPTO_LOCK_RAND2
-     to synchronize access to 'locking_thread'.  This is necessary on
-     systems where access to 'locking_thread' (an 'unsigned long'
-     variable) is not atomic.
-     [Bodo Moeller]
-
-  *) In crypto/rand/md_rand.c, set 'locking_thread' to current thread's ID
-     *before* setting the 'crypto_lock_rand' flag.  The previous code had
-     a race condition if 0 is a valid thread ID.
-     [Travis Vitek <vitek@roguewave.com>]
 
   +) Cleanup of EVP macros.
      [Ben Laurie]
@@ -826,43 +535,8 @@
      parameters (and 'speed' generating keys each time).
      [Geoff Thorpe]
 
-  *) Add support for shared libraries under Irix.
-     [Albert Chin-A-Young <china@thewrittenword.com>]
-
-  *) Add configuration option to build on Linux on both big-endian and
-     little-endian MIPS.
-     [Ralf Baechle <ralf@uni-koblenz.de>]
-
-  *) Add the possibility to create shared libraries on HP-UX.
-     [Richard Levitte]
-
   -) OpenSSL 0.9.6b released [9 July 2001]
 
-  *) Change ssleay_rand_bytes (crypto/rand/md_rand.c)
-     to avoid a SSLeay/OpenSSL PRNG weakness pointed out by
-     Markku-Juhani O. Saarinen <markku-juhani.saarinen@nokia.com>:
-     PRNG state recovery was possible based on the output of
-     one PRNG request appropriately sized to gain knowledge on
-     'md' followed by enough consecutive 1-byte PRNG requests
-     to traverse all of 'state'.
-
-     1. When updating 'md_local' (the current thread's copy of 'md')
-        during PRNG output generation, hash all of the previous
-        'md_local' value, not just the half used for PRNG output.
-
-     2. Make the number of bytes from 'state' included into the hash
-        independent from the number of PRNG bytes requested.
-
-     The first measure alone would be sufficient to avoid
-     Markku-Juhani's attack.  (Actually it had never occurred
-     to me that the half of 'md_local' used for chaining was the
-     half from which PRNG output bytes were taken -- I had always
-     assumed that the secret half would be used.)  The second
-     measure makes sure that additional data from 'state' is never
-     mixed into 'md_local' in small portions; this heuristically
-     further strengthens the PRNG.
-     [Bodo Moeller]
-  
   +) Speed up EVP routines.
      Before:
 encrypt
@@ -881,13 +555,6 @@ decrypt
 des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Ben Laurie]
 
-  *) Fix crypto/bn/asm/mips3.s.
-     [Andy Polyakov]
-
-  *) When only the key is given to "enc", the IV is undefined. Print out
-     an error message in this case.
-     [Lutz Jaenicke]
-
   +) Added the OS2-EMX target.
      ["Brian Havard" <brianh@kheldar.apana.org.au> and Richard Levitte]
 
@@ -898,13 +565,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      retained (in particular wrt extensions) without having to duplicate the
      code. New function X509V3_add_ext_nconf_sk to add extensions to a stack.
      [Steve Henson]
-
-  *) Handle special case when X509_NAME is empty in X509 printing routines.
-     [Steve Henson]
-
-  *) In dsa_do_verify (crypto/dsa/dsa_ossl.c), verify that r and s are
-     positive and less than q.
-     [Bodo Moeller]
 
   +) Enhance the general user interface with mechanisms for inner control
      and with possibilities to have yes/no kind of prompts.
@@ -930,42 +590,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      and interrupts/cancellations.
      [Richard Levitte]
 
-  *) Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
-     used: it isn't thread safe and the add_lock_callback should handle
-     that itself.
-     [Paul Rose <Paul.Rose@bridge.com>]
-
-  *) Verify that incoming data obeys the block size in
-     ssl3_enc (ssl/s3_enc.c) and tls1_enc (ssl/t1_enc.c).
-     [Bodo Moeller]
-
   +) Tidy up PKCS#12 attribute handling. Add support for the CSP name
      attribute in PKCS#12 files, add new -CSP option to pkcs12 utility.
      [Steve Henson]
-
-  *) Fix OAEP check.
-     [Ulf Möller, Bodo Möller]
-
-  *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
-     RSA encryption was accidentally removed in s3_srvr.c in OpenSSL 0.9.5
-     when fixing the server behaviour for backwards-compatible 'client
-     hello' messages.  (Note that the attack is impractical against
-     SSL 3.0 and TLS 1.0 anyway because length and version checking
-     means that the probability of guessing a valid ciphertext is
-     around 2^-40; see section 5 in Bleichenbacher's CRYPTO '98
-     paper.)
-
-     Before 0.9.5, the countermeasure (hide the error by generating a
-     random 'decryption result') did not work properly because
-     ERR_clear_error() was missing, meaning that SSL_get_error() would
-     detect the supposedly ignored error.
-
-     Both problems are now fixed.
-     [Bodo Moeller]
-
-  *) In crypto/bio/bf_buff.c, increase DEFAULT_BUFFER_SIZE to 4096
-     (previously it was 1024).
-     [Bodo Moeller]
 
   +) Fix a memory leak in 'sk_dup()' in the case reallocation fails. (Also
      tidy up some unnecessarily weird code in 'sk_new()').
@@ -975,13 +602,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      callback (pem_password_cb) as all other routines that need this
      kind of callback.
      [Richard Levitte]
-
-  *) Fix for compatibility mode trust settings: ignore trust settings
-     unless some valid trust or reject settings are present.
-     [Steve Henson]
-
-  *) Fix for blowfish EVP: its a variable length cipher.
-     [Steve Henson]
 
   +) Increase ENTROPY_NEEDED to 32 bytes, as Rijndael can operate with
      256 bit (=32 byte) keys. Of course seeding with more entropy bytes
@@ -1045,20 +665,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      section as well as provide for prompting through dialog boxes in
      a window system and the like.
      [Richard Levitte]
-
-  *) Fix various bugs related to DSA S/MIME verification. Handle missing
-     parameters in DSA public key structures and return an error in the
-     DSA routines if parameters are absent.
-     [Steve Henson]
-
-  *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
-     in the current directory if neither $RANDFILE nor $HOME was set.
-     RAND_file_name() in 0.9.6a returned NULL in this case.  This has
-     caused some confusion to Windows users who haven't defined $HOME.
-     Thus RAND_file_name() is changed again: e_os.h can define a
-     DEFAULT_HOME, which will be used if $HOME is not set.
-     For Windows, we use "C:"; on other platforms, we still require
-     environment variables.
 
   +) Add "ex_data" support to ENGINE so implementations can add state at a
      per-structure level rather than having to store it globally.
@@ -1145,19 +751,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        ctrl(), key-load functions, etc) to take an (ENGINE*) parameter.
      [Geoff]
 
-  *) Move 'if (!initialized) RAND_poll()' into regions protected by
-     CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
-     having multiple threads call RAND_poll() concurrently.
-     [Bodo Moeller]
-
-  *) In crypto/rand/md_rand.c, replace 'add_do_not_lock' flag by a
-     combination of a flag and a thread ID variable.
-     Otherwise while one thread is in ssleay_rand_bytes (which sets the
-     flag), *other* threads can enter ssleay_add_bytes without obeying
-     the CRYPTO_LOCK_RAND lock (and may even illegally release the lock
-     that they do not hold after the first thread unsets add_do_not_lock).
-     [Bodo Moeller]
-
   +) Implement binary inversion algorithm for BN_mod_inverse in addition
      to the algorithm using long division.  The binary algorithm can be
      used only if the modulus is odd.  On 32-bit systems, it is faster
@@ -1168,21 +761,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      for moduli up to 2048 bits.
      [Bodo Moeller]
 
-  *) Change bctest again: '-x' expressions are not available in all
-     versions of 'test'.
-     [Bodo Moeller]
-
   -) OpenSSL 0.9.6a released [5 Apr 2001]
-
-  *) Fix a couple of memory leaks in PKCS7_dataDecode()
-     [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
-
-  *) Change Configure and Makefiles to provide EXE_EXT, which will contain
-     the default extension for executables, if any.  Also, make the perl
-     scripts that use symlink() to test if it really exists and use "cp"
-     if it doesn't.  All this made OpenSSL compilable and installable in
-     CygWin.
-     [Richard Levitte]
 
   +) Rewrite CHOICE field setting in ASN1_item_ex_d2i(). The old code
      could not support the combine flag in choice fields.
@@ -1194,43 +773,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson, reported by shige@FreeBSD.org]
      [This change does not apply to 0.9.7.]
 
-  *) Change bctest to avoid here-documents inside command substitution
-     (workaround for FreeBSD /bin/sh bug).
-     For compatibility with Ultrix, avoid shell functions (introduced
-     in the bctest version that searches along $PATH).
-     [Bodo Moeller]
-
-  *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
-     with des_encrypt() defined on some operating systems, like Solaris
-     and UnixWare.
-     [Richard Levitte]
-
-  *) Check the result of RSA-CRT (see D. Boneh, R. DeMillo, R. Lipton:
-     On the Importance of Eliminating Errors in Cryptographic
-     Computations, J. Cryptology 14 (2001) 2, 101-119,
-     http://theory.stanford.edu/~dabo/papers/faults.ps.gz).
-     [Ulf Moeller]
-  
-  *) MIPS assembler BIGNUM division bug fix. 
-     [Andy Polyakov]
-
-  *) Disabled incorrect Alpha assembler code.
-     [Richard Levitte]
-
   -) Fix PKCS#7 decode routines so they correctly update the length
      after reading an EOC for the EXPLICIT tag.
      [Steve Henson]
      [This change does not apply to 0.9.7.]
-
-  *) Fix bug in PKCS#12 key generation routines. This was triggered
-     if a 3DES key was generated with a 0 initial byte. Include
-     PKCS12_BROKEN_KEYGEN compilation option to retain the old
-     (but broken) behaviour.
-     [Steve Henson]
-
-  *) Enhance bctest to search for a working bc along $PATH and print
-     it when found.
-     [Tim Rice <tim@multitalents.net> via Richard Levitte]
 
   +) Add a 'copy_extensions' option to the 'ca' utility. This copies
      extensions from a certificate request to the certificate.
@@ -1244,10 +790,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      multicharacter strings properly, omitted fields not in the policy
      and couldn't display additional details such as extensions.
      [Steve Henson]
-
-  *) Fix memory leaks in err.c: free err_data string if necessary;
-     don't write to the wrong index in ERR_set_error_data.
-     [Bodo Moeller]
 
   +) Function EC_POINTs_mul for multiple scalar multiplication
      of an arbitrary number of elliptic curve points
@@ -1302,13 +844,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      pointers.
      [Steve Henson]
 
-  *) Implement ssl23_peek (analogous to ssl23_read), which previously
-     did not exist.
-     [Bodo Moeller]
-
-  *) Replace rdtsc with _emit statements for VC++ version 5.
-     [Jeremy Cooper <jeremy@baymoo.org>]
-
   +) Hide BN_CTX structure details in bn_lcl.h instead of publishing them
      in <openssl/bn.h>.  Also further increase BN_CTX_NUM to 32.
      [Bodo Moeller]
@@ -1350,9 +885,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      Add options '-batch' and '-verbose' to 'openssl req'.
      [Massimiliano Pala <madwolf@hackmasters.net>]
 
-  *) Make it possible to reuse SSLv2 sessions.
-     [Richard Levitte]
-
   +) Introduce the possibility to access global variables through
      functions on platform were that's the best way to handle exporting
      global variables in shared libraries.  To enable this functionality,
@@ -1387,10 +919,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      lexicographically to avoid constant rewrites).
      [Richard Levitte]
 
-  *) In copy_email() check for >= 0 as a return value for
-     X509_NAME_get_index_by_NID() since 0 is a valid index.
-     [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
-
   +) In BN_div() keep a copy of the sign of 'num' before writing the
      result to 'rm' because if rm==num the value will be overwritten
      and produce the wrong result if 'num' is negative: this caused
@@ -1416,11 +944,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   +) If signature or public key algorithm is unrecognized print out its
      OID rather that just UNKNOWN.
-     [Steve Henson]
-
-  *) Avoid coredump with unsupported or invalid public keys by checking if
-     X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
-     PKCS7_verify() fails with non detached data.
      [Steve Henson]
 
   +) Change OCSP_cert_to_id() to tolerate a NULL subject certificate and
@@ -1456,10 +979,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      the growing number of special cases it was previously handling.
      [Richard Levitte]
 
-  *) Don't use getenv in library functions when run as setuid/setgid.
-     New function OPENSSL_issetugid().
-     [Ulf Moeller]
-
   +) Make all configuration macros available for application by making
      sure they are available in opensslconf.h, by giving them names starting
      with "OPENSSL_" to avoid conflicts with other packages and by making
@@ -1480,26 +999,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      auto incremented.
      [Steve Henson]
 
-  *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
-     due to incorrect handling of multi-threading:
-
-     1. Fix timing glitch in the MemCheck_off() portion of CRYPTO_mem_ctrl().
-
-     2. Fix logical glitch in is_MemCheck_on() aka CRYPTO_is_mem_check_on().
-
-     3. Count how many times MemCheck_off() has been called so that
-        nested use can be treated correctly.  This also avoids 
-        inband-signalling in the previous code (which relied on the
-        assumption that thread ID 0 is impossible).
-     [Bodo Moeller]
-
   +) New options to 'ca' utility to support V2 CRL entry extensions.
      Currently CRL reason, invalidity date and hold instruction are
      supported. Add new CRL extensions to V3 code and some new objects.
      [Steve Henson]
-
-  *) Add "-rand" option also to s_client and s_server.
-     [Lutz Jaenicke]
 
   +) New function EVP_CIPHER_CTX_set_padding() this is used to
      disable standard block padding (aka PKCS#5 padding) in the EVP
@@ -1510,10 +1013,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   +) Initial (incomplete) OCSP SSL support.
      [Steve Henson]
-
-  *) Fix CPU detection on Irix 6.x.
-     [Kurt Hockenbury <khockenb@stevens-tech.edu> and
-      "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
 
   +) New function OCSP_parse_url(). This splits up a URL into its host,
      port and path components: primarily to parse OCSP URLs. New -url
@@ -1529,15 +1028,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      the request is nonce-less.
      [Steve Henson]
 
-  *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
+  -) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
      was empty.
      [Steve Henson]
      [This change does not apply to 0.9.7.]
-
-  *) Use the cached encoding of an X509_NAME structure rather than
-     copying it. This is apparently the reason for the libsafe "errors"
-     but the code is actually correct.
-     [Steve Henson]
 
   +) Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
      skipped when using openssl x509 multiple times on a single input file,
@@ -1570,30 +1064,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      signature against.
      [Richard Levitte]
 
-  *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
-     Bleichenbacher's DSA attack.
-     Extend BN_[pseudo_]rand: As before, top=1 forces the highest two bits
-     to be set and top=0 forces the highest bit to be set; top=-1 is new
-     and leaves the highest bit random.
-     [Ulf Moeller, Bodo Moeller]
-
   +) Update Rijndael code to version 3.0 and change EVP AES ciphers to
      handle the new API. Currently only ECB, CBC modes supported. Add new
      AES OIDs. Add TLS AES ciphersuites as described in the "AES Ciphersuites
      for TLS" draft-ietf-tls-ciphersuite-03.txt.
      [Ben Laurie, Steve Henson]
-
-  *) In the NCONF_...-based implementations for CONF_... queries
-     (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
-     a temporary CONF structure with the data component set to NULL
-     (which gives segmentation faults in lh_retrieve).
-     Instead, use NULL for the CONF pointer in CONF_get_string and
-     CONF_get_number (which may use environment variables) and directly
-     return NULL from CONF_get_section.
-     [Bodo Moeller]
-
-  *) Fix potential buffer overrun for EBCDIC.
-     [Ulf Moeller]
 
   +) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.
@@ -1618,17 +1093,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      contents: this is used in various key identifiers. 
      [Steve Henson]
 
-  *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
-     keyUsage if basicConstraints absent for a CA.
-     [Steve Henson]
-
-  *) Make SMIME_write_PKCS7() write mail header values with a format that
-     is more generally accepted (no spaces before the semicolon), since
-     some programs can't parse those values properly otherwise.  Also make
-     sure BIO's that break lines after each write do not create invalid
-     headers.
-     [Richard Levitte]
-
   +) Make sk_sort() tolerate a NULL argument.
      [Steve Henson reported by Massimiliano Pala <madwolf@comune.modena.it>]
 
@@ -1643,10 +1107,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
      [This change does not apply to 0.9.7.]
 
-  *) Zero the premaster secret after deriving the master secret in
-     DH ciphersuites.
-     [Steve Henson]
-
   +) In PKCS7_set_type() initialise content_type in PKCS7_ENC_CONTENT
      to data. This was previously part of the PKCS7 ASN1 code. This
      was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
@@ -1657,19 +1117,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      routines: without these tracing memory leaks is very painful.
      Fix leaks in PKCS12 and PKCS7 routines.
      [Steve Henson]
-
-  *) Add some EVP_add_digest_alias registrations (as found in
-     OpenSSL_add_all_digests()) to SSL_library_init()
-     aka OpenSSL_add_ssl_algorithms().  This provides improved
-     compatibility with peers using X.509 certificates
-     with unconventional AlgorithmIdentifier OIDs.
-     [Bodo Moeller]
-
-  *) Fix for Irix with NO_ASM.
-     ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
-
-  *) ./config script fixes.
-     [Ulf Moeller, Richard Levitte]
 
   +) Make X509_time_adj() cope with the new behaviour of ASN1_TIME_new().
      Previously it initialised the 'type' argument to V_ASN1_UTCTIME which
@@ -1687,9 +1134,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to cope with hex and negative integers. Fix bug in i2a_ASN1_INTEGER()
      where it did not print out a minus for negative ASN1_INTEGER.
      [Steve Henson]
-
-  *) Fix 'openssl passwd -1'.
-     [Bodo Moeller]
 
   +) Add summary printout to ocsp utility. The various functions which
      convert status values to strings have been renamed to:
@@ -1726,12 +1170,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      section to use.
      [Massimiliano Pala <madwolf@comune.modena.it>]
 
-  *) Change PKCS12_key_gen_asc() so it can cope with non null
-     terminated strings whose length is passed in the passlen
-     parameter, for example from PEM callbacks. This was done
-     by adding an extra length parameter to asc2uni().
-     [Steve Henson, reported by <oddissey@samsung.co.kr>]
-
   +) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
      parsed, outputed or printed in text form. Not complete yet:
@@ -1763,10 +1201,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to 'openssl version', and is also included in 'openssl version -a'.
      [Bodo Moeller]
 
-  *) Fix C code generated by 'openssl dsaparam -C': If a BN_bin2bn
-     call failed, free the DSA structure.
-     [Bodo Moeller]
-
   +) Allowing defining memory allocation callbacks that will be given
      file name and line number information in additional arguments
      (a const char* and an int).  The basic functionality remains, as
@@ -1787,10 +1221,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      Similarly, CRYPTO_get_[locked_]mem_ex_functions writes 0 where
      a conventional allocation function is enabled.
      [Richard Levitte, Bodo Moeller]
-
-  *) Fix to uni2asc() to cope with zero length Unicode strings.
-     These are present in some PKCS#12 files.
-     [Steve Henson]
 
   +) Finish off removing the remaining LHASH function pointer casts.
      There should no longer be any prototype-casting required when using
@@ -1916,26 +1346,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      OCSP_SERVICELOC extension. Tidy up print OCSP format.
      [Steve Henson]
 
-  *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
-     Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
-     when writing a 32767 byte record.
-     [Bodo Moeller; problem reported by Eric Day <eday@concentric.net>]
-
-  *) In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
-     obtain lock CRYPTO_LOCK_RSA before setting rsa->_method_mod_{n,p,q}.
-
-     (RSA objects have a reference count access to which is protected
-     by CRYPTO_LOCK_RSA [see rsa_lib.c, s3_srvr.c, ssl_cert.c, ssl_rsa.c],
-     so they are meant to be shared between threads.)
-     [Bodo Moeller, Geoff Thorpe; original patch submitted by
-     "Reddie, Steven" <Steven.Reddie@ca.com>]
-
   +) Make mkdef.pl parse some of the ASN1 macros and add apropriate
      entries for variables.
      [Steve Henson]
-
-  *) Fix a deadlock in CRYPTO_mem_leaks().
-     [Bodo Moeller]
 
   +) Add functionality to apps/openssl.c for detecting locking
      problems: As the program is single-threaded, all we have
@@ -2007,19 +1420,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      type-specific callbacks.
      [Geoff Thorpe]
 
-  *) Use better test patterns in bntest.
-     [Ulf Möller]
-
   +) Added Kerberos Cipher Suites to be used with TLS, as written in
      RFC 2712.
      [Veers Staats <staatsvr@asc.hpc.mil>,
       Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte]
-
-  *) rand_win.c fix for Borland C.
-     [Ulf Möller]
- 
-  *) BN_rshift bugfix for n == 0.
-     [Bodo Moeller]
 
   +) Reformat the FAQ so the different questions and answers can be divided
      in sections depending on the subject.
@@ -2035,35 +1439,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      be handled deterministically).
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
-  *) Add a 'bctest' script that checks for some known 'bc' bugs
-     so that 'make test' does not abort just because 'bc' is broken.
-     [Bodo Moeller]
-
-  *) Store verify_result within SSL_SESSION also for client side to
-     avoid potential security hole. (Re-used sessions on the client side
-     always resulted in verify_result==X509_V_OK, not using the original
-     result of the server certificate verification.)
-     [Lutz Jaenicke]
-
   +) Make BN_mod_inverse faster by explicitly handling small quotients
      in the Euclid loop. (Speed gain about 20% for small moduli [256 or
      512 bits], about 30% for larger ones [1024 or 2048 bits].)
-     [Bodo Moeller]
-
-  *) Fix ssl3_pending: If the record in s->s3->rrec is not of type
-     SSL3_RT_APPLICATION_DATA, return 0.
-     Similarly, change ssl2_pending to return 0 if SSL_in_init(s) is true.
-     [Bodo Moeller]
-
-  *) Fix SSL_peek:
-     Both ssl2_peek and ssl3_peek, which were totally broken in earlier
-     releases, have been re-implemented by renaming the previous
-     implementations of ssl2_read and ssl3_read to ssl2_read_internal
-     and ssl3_read_internal, respectively, and adding 'peek' parameters
-     to them.  The new ssl[23]_{read,peek} functions are calls to
-     ssl[23]_read_internal with the 'peek' flag set appropriately.
-     A 'peek' parameter has also been added to ssl3_read_bytes, which
-     does the actual work for ssl3_read_internal.
      [Bodo Moeller]
 
   +) New function BN_kronecker.
@@ -2087,12 +1465,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      it exists mostly for use in the implementations of BN_is_zero(),
      BN_is_one(), and BN_is_word().
      [Bodo Moeller]
-
-  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
-     the method-specific "init()" handler. Also clean up ex_data after
-     calling the method-specific "finish()" handler. Previously, this was
-     happening the other way round.
-     [Geoff Thorpe]
 
   +) New function BN_swap.
      [Bodo Moeller]
@@ -2157,10 +1529,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   +) Remove all references to RSAref, since there's no more need for it.
      [Richard Levitte]
 
-  *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
-     The previous value, 12, was not always sufficient for BN_mod_exp().
-     [Bodo Moeller]
-
   +) Make DSO load along a path given through an environment variable
      (SHLIB_PATH) with shl_load().
      [Richard Levitte]
@@ -2176,12 +1544,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Richard Levitte]
 
   +) Constify the BIGNUM routines a little more.
-     [Richard Levitte]
-
-  *) Make sure that shared libraries get the internal name engine with
-     the full version number and not just 0.  This should mark the
-     shared libraries as not backward compatible.  Of course, this should
-     be changed again when we can guarantee backward binary compatibility.
      [Richard Levitte]
 
   +) Add the following functions:
@@ -2262,24 +1624,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      LDAP server.
      [Richard Levitte]
 
-  *) Fix typo in get_cert_by_subject() in by_dir.c
-     [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
-
-  *) Rework the system to generate shared libraries:
-
-     - Make note of the expected extension for the shared libraries and
-       if there is a need for symbolic links from for example libcrypto.so.0
-       to libcrypto.so.0.9.7.  There is extended info in Configure for
-       that.
-
-     - Make as few rebuilds of the shared libraries as possible.
-
-     - Still avoid linking the OpenSSL programs with the shared libraries.
-
-     - When installing, install the shared libraries separately from the
-       static ones.
-     [Richard Levitte]
-
   +) Fix for non blocking accept BIOs. Added new I/O special reason
      BIO_RR_ACCEPT to cover this case. Previously use of accept BIOs
      with non blocking I/O was not possible because no retry code was
@@ -2298,6 +1642,716 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   +) Clean old EAY MD5 hack from e_os.h.
+     [Richard Levitte]
+
+ Changes between 0.9.6c and 0.9.6d  [XX xxx 2002]
+
+  *) Fix object definitions for Private and Enterprise: they were not
+     recognized in their shortname (=lowercase) representation. Extend
+     obj_dat.pl to issue an error when using undefined keywords instead
+     of silently ignoring the problem (Svenning Sorensen
+     <sss@sss.dnsalias.net>).
+     [Lutz Jaenicke]
+
+  *) Fix DH_generate_parameters() so that it works for 'non-standard'
+     generators, i.e. generators other than 2 and 5.  (Previously, the
+     code did not properly initialise the 'add' and 'rem' values to
+     BN_generate_prime().)
+
+     In the new general case, we do not insist that 'generator' is
+     actually a primitive root: This requirement is rather pointless;
+     a generator of the order-q subgroup is just as good, if not
+     better.
+     [Bodo Moeller]
+ 
+  *) Map new X509 verification errors to alerts. Discovered and submitted by
+     Tom Wu <tom@arcot.com>.
+     [Lutz Jaenicke]
+
+  *) Fix ssl3_pending() (ssl/s3_lib.c) to prevent SSL_pending() from
+     returning non-zero before the data has been completely received
+     when using non-blocking I/O.
+     [Bodo Moeller; problem pointed out by John Hughes]
+
+  *) Some of the ciphers missed the strength entry (SSL_LOW etc).
+     [Ben Laurie, Lutz Jaenicke]
+
+  *) Fix bug in SSL_clear(): bad sessions were not removed (found by
+     Yoram Zahavi <YoramZ@gilian.com>).
+     [Lutz Jaenicke]
+
+  *) Add information about CygWin 1.3 and on, and preserve proper
+     configuration for the versions before that.
+     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
+
+  *) Make removal from session cache (SSL_CTX_remove_session()) more robust:
+     check whether we deal with a copy of a session and do not delete from
+     the cache in this case. Problem reported by "Izhar Shoshani Levi"
+     <izhar@checkpoint.com>.
+     [Lutz Jaenicke]
+
+  *) Do not store session data into the internal session cache, if it
+     is never intended to be looked up (SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
+     flag is set). Proposed by Aslam <aslam@funk.com>.
+     [Lutz Jaenicke]
+
+  *) Have ASN1_BIT_STRING_set_bit() really clear a bit when the requested
+     value is 0.
+     [Richard Levitte]
+
+  *) Add the configuration target linux-s390x.
+     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
+
+  *) [In 0.9.6d-engine release:]
+     Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
+     [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
+
+  *) The earlier bugfix for the SSL3_ST_SW_HELLO_REQ_C case of
+     ssl3_accept (ssl/s3_srvr.c) incorrectly used a local flag
+     variable as an indication that a ClientHello message has been
+     received.  As the flag value will be lost between multiple
+     invocations of ssl3_accept when using non-blocking I/O, the
+     function may not be aware that a handshake has actually taken
+     place, thus preventing a new session from being added to the
+     session cache.
+
+     To avoid this problem, we now set s->new_session to 2 instead of
+     using a local variable.
+     [Lutz Jaenicke, Bodo Moeller]
+
+  *) Bugfix: Return -1 from ssl3_get_server_done (ssl3/s3_clnt.c)
+     if the SSL_R_LENGTH_MISMATCH error is detected.
+     [Geoff Thorpe, Bodo Moeller]
+
+  *) New 'shared_ldflag' column in Configure platform table.
+     [Richard Levitte]
+
+  *) Fix EVP_CIPHER_mode macro.
+     ["Dan S. Camper" <dan@bti.net>]
+
+  *) Fix ssl3_read_bytes (ssl/s3_pkt.c): To ignore messages of unknown
+     type, we must throw them away by setting rr->length to 0.
+     [D P Chang <dpc@qualys.com>]
+
+ Changes between 0.9.6b and 0.9.6c  [21 dec 2001]
+
+  *) Fix BN_rand_range bug pointed out by Dominikus Scherkl
+     <Dominikus.Scherkl@biodata.com>.  (The previous implementation
+     worked incorrectly for those cases where  range = 10..._2  and
+     3*range  is two bits longer than  range.)
+     [Bodo Moeller]
+
+  *) Only add signing time to PKCS7 structures if it is not already
+     present.
+     [Steve Henson]
+
+  *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
+     OBJ_ld_ce should be OBJ_id_ce.
+     Also some ip-pda OIDs in crypto/objects/objects.txt were
+     incorrect (cf. RFC 3039).
+     [Matt Cooper, Frederic Giudicelli, Bodo Moeller]
+
+  *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
+     returns early because it has nothing to do.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) [In 0.9.6c-engine release:]
+     Fix mutex callback return values in crypto/engine/hw_ncipher.c.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) [In 0.9.6c-engine release:]
+     Add support for Cryptographic Appliance's keyserver technology.
+     (Use engine 'keyclient')
+     [Cryptographic Appliances and Geoff Thorpe]
+
+  *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
+     is called via tools/c89.sh because arguments have to be
+     rearranged (all '-L' options must appear before the first object
+     modules).
+     [Richard Shapiro <rshapiro@abinitio.com>]
+
+  *) [In 0.9.6c-engine release:]
+     Add support for Broadcom crypto accelerator cards, backported
+     from 0.9.7.
+     [Broadcom, Nalin Dahyabhai <nalin@redhat.com>, Mark Cox]
+
+  *) [In 0.9.6c-engine release:]
+     Add support for SureWare crypto accelerator cards from 
+     Baltimore Technologies.  (Use engine 'sureware')
+     [Baltimore Technologies and Mark Cox]
+
+  *) [In 0.9.6c-engine release:]
+     Add support for crypto accelerator cards from Accelerated
+     Encryption Processing, www.aep.ie.  (Use engine 'aep')
+     [AEP Inc. and Mark Cox]
+
+  *) Add a configuration entry for gcc on UnixWare.
+     [Gary Benson <gbenson@redhat.com>]
+
+  *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part combined) and fix various bugs found on the way.
+     [Bodo Moeller]
+
+  *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
+     instead.  BIO_gethostbyname() does not know what timeouts are
+     appropriate, so entries would stay in cache even when they have
+     become invalid.
+     [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
+
+  *) Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
+     faced with a pathologically small ClientHello fragment that does
+     not contain client_version: Instead of aborting with an error,
+     simply choose the highest available protocol version (i.e.,
+     TLS 1.0 unless it is disabled).  In practice, ClientHello
+     messages are never sent like this, but this change gives us
+     strictly correct behaviour at least for TLS.
+     [Bodo Moeller]
+
+  *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
+     never resets s->method to s->ctx->method when called from within
+     one of the SSL handshake functions.
+     [Bodo Moeller; problem pointed out by Niko Baric]
+
+  *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
+     (sent using the client's version number) if client_version is
+     smaller than the protocol version in use.  Also change
+     ssl23_get_client_hello (ssl/s23_srvr.c) to select TLS 1.0 if
+     the client demanded SSL 3.0 but only TLS 1.0 is enabled; then
+     the client will at least see that alert.
+     [Bodo Moeller]
+
+  *) Fix ssl3_get_message (ssl/s3_both.c) to handle message fragmentation
+     correctly.
+     [Bodo Moeller]
+
+  *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
+     client receives HelloRequest while in a handshake.
+     [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
+     should end in 'break', not 'goto end' which circuments various
+     cleanups done in state SSL_ST_OK.   But session related stuff
+     must be disabled for SSL_ST_OK in the case that we just sent a
+     HelloRequest.
+
+     Also avoid some overhead by not calling ssl_init_wbio_buffer()
+     before just sending a HelloRequest.
+     [Bodo Moeller, Eric Rescorla <ekr@rtfm.com>]
+
+  *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
+     reveal whether illegal block cipher padding was found or a MAC
+     verification error occured.  (Neither SSLerr() codes nor alerts
+     are directly visible to potential attackers, but the information
+     may leak via logfiles.)
+
+     Similar changes are not required for the SSL 2.0 implementation
+     because the number of padding bytes is sent in clear for SSL 2.0,
+     and the extra bytes are just ignored.  However ssl/s2_pkt.c
+     failed to verify that the purported number of padding bytes is in
+     the legal range.
+     [Bodo Moeller]
+
+  *) Add OpenUNIX-8 support including shared libraries
+     (Boyd Lynn Gerber <gerberb@zenez.com>).
+     [Lutz Jaenicke]
+
+  *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
+     'wristwatch attack' using huge encoding parameters (cf.
+     James H. Manger's CRYPTO 2001 paper).  Note that the
+     RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
+     encoding parameters and hence was not vulnerable.
+     [Bodo Moeller]
+
+  *) BN_sqr() bug fix.
+     [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
+
+  *) Rabin-Miller test analyses assume uniformly distributed witnesses,
+     so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
+     followed by modular reduction.
+     [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
+
+  *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
+     equivalent based on BN_pseudo_rand() instead of BN_rand().
+     [Bodo Moeller]
+
+  *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
+     This function was broken, as the check for a new client hello message
+     to handle SGC did not allow these large messages.
+     (Tracked down by "Douglas E. Engert" <deengert@anl.gov>.)
+     [Lutz Jaenicke]
+
+  *) Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
+     [Lutz Jaenicke]
+
+  *) Fix buggy behaviour of BIO_get_num_renegotiates() and BIO_ctrl()
+     for BIO_C_GET_WRITE_BUF_SIZE ("Stephen Hinton" <shinton@netopia.com>).
+     [Lutz Jaenicke]
+
+  *) Rework the configuration and shared library support for Tru64 Unix.
+     The configuration part makes use of modern compiler features and
+     still retains old compiler behavior for those that run older versions
+     of the OS.  The shared library support part includes a variant that
+     uses the RPATH feature, and is available through the special
+     configuration target "alpha-cc-rpath", which will never be selected
+     automatically.
+     [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
+
+  *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
+     with the same message size as in ssl3_get_certificate_request().
+     Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
+     messages might inadvertently be reject as too long.
+     [Petr Lampa <lampa@fee.vutbr.cz>]
+
+  *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
+     [Andy Polyakov]
+
+  *) Modified SSL library such that the verify_callback that has been set
+     specificly for an SSL object with SSL_set_verify() is actually being
+     used. Before the change, a verify_callback set with this function was
+     ignored and the verify_callback() set in the SSL_CTX at the time of
+     the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
+     to allow the necessary settings.
+     [Lutz Jaenicke]
+
+  *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
+     explicitly to NULL, as at least on Solaris 8 this seems not always to be
+     done automatically (in contradiction to the requirements of the C
+     standard). This made problems when used from OpenSSH.
+     [Lutz Jaenicke]
+
+  *) In OpenSSL 0.9.6a and 0.9.6b, crypto/dh/dh_key.c ignored
+     dh->length and always used
+
+          BN_rand_range(priv_key, dh->p).
+
+     BN_rand_range() is not necessary for Diffie-Hellman, and this
+     specific range makes Diffie-Hellman unnecessarily inefficient if
+     dh->length (recommended exponent length) is much smaller than the
+     length of dh->p.  We could use BN_rand_range() if the order of
+     the subgroup was stored in the DH structure, but we only have
+     dh->length.
+
+     So switch back to
+
+          BN_rand(priv_key, l, ...)
+
+     where 'l' is dh->length if this is defined, or BN_num_bits(dh->p)-1
+     otherwise.
+     [Bodo Moeller]
+
+  *) In
+
+          RSA_eay_public_encrypt
+          RSA_eay_private_decrypt
+          RSA_eay_private_encrypt (signing)
+          RSA_eay_public_decrypt (signature verification)
+
+     (default implementations for RSA_public_encrypt,
+     RSA_private_decrypt, RSA_private_encrypt, RSA_public_decrypt),
+     always reject numbers >= n.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, use a new short-time lock CRYPTO_LOCK_RAND2
+     to synchronize access to 'locking_thread'.  This is necessary on
+     systems where access to 'locking_thread' (an 'unsigned long'
+     variable) is not atomic.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, set 'locking_thread' to current thread's ID
+     *before* setting the 'crypto_lock_rand' flag.  The previous code had
+     a race condition if 0 is a valid thread ID.
+     [Travis Vitek <vitek@roguewave.com>]
+
+  *) Add support for shared libraries under Irix.
+     [Albert Chin-A-Young <china@thewrittenword.com>]
+
+  *) Add configuration option to build on Linux on both big-endian and
+     little-endian MIPS.
+     [Ralf Baechle <ralf@uni-koblenz.de>]
+
+  *) Add the possibility to create shared libraries on HP-UX.
+     [Richard Levitte]
+
+ Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
+
+  *) Change ssleay_rand_bytes (crypto/rand/md_rand.c)
+     to avoid a SSLeay/OpenSSL PRNG weakness pointed out by
+     Markku-Juhani O. Saarinen <markku-juhani.saarinen@nokia.com>:
+     PRNG state recovery was possible based on the output of
+     one PRNG request appropriately sized to gain knowledge on
+     'md' followed by enough consecutive 1-byte PRNG requests
+     to traverse all of 'state'.
+
+     1. When updating 'md_local' (the current thread's copy of 'md')
+        during PRNG output generation, hash all of the previous
+        'md_local' value, not just the half used for PRNG output.
+
+     2. Make the number of bytes from 'state' included into the hash
+        independent from the number of PRNG bytes requested.
+
+     The first measure alone would be sufficient to avoid
+     Markku-Juhani's attack.  (Actually it had never occurred
+     to me that the half of 'md_local' used for chaining was the
+     half from which PRNG output bytes were taken -- I had always
+     assumed that the secret half would be used.)  The second
+     measure makes sure that additional data from 'state' is never
+     mixed into 'md_local' in small portions; this heuristically
+     further strengthens the PRNG.
+     [Bodo Moeller]
+
+  *) Fix crypto/bn/asm/mips3.s.
+     [Andy Polyakov]
+
+  *) When only the key is given to "enc", the IV is undefined. Print out
+     an error message in this case.
+     [Lutz Jaenicke]
+
+  *) Handle special case when X509_NAME is empty in X509 printing routines.
+     [Steve Henson]
+
+  *) In dsa_do_verify (crypto/dsa/dsa_ossl.c), verify that r and s are
+     positive and less than q.
+     [Bodo Moeller]
+
+  *) Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
+     used: it isn't thread safe and the add_lock_callback should handle
+     that itself.
+     [Paul Rose <Paul.Rose@bridge.com>]
+
+  *) Verify that incoming data obeys the block size in
+     ssl3_enc (ssl/s3_enc.c) and tls1_enc (ssl/t1_enc.c).
+     [Bodo Moeller]
+
+  *) Fix OAEP check.
+     [Ulf Möller, Bodo Möller]
+
+  *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
+     RSA encryption was accidentally removed in s3_srvr.c in OpenSSL 0.9.5
+     when fixing the server behaviour for backwards-compatible 'client
+     hello' messages.  (Note that the attack is impractical against
+     SSL 3.0 and TLS 1.0 anyway because length and version checking
+     means that the probability of guessing a valid ciphertext is
+     around 2^-40; see section 5 in Bleichenbacher's CRYPTO '98
+     paper.)
+
+     Before 0.9.5, the countermeasure (hide the error by generating a
+     random 'decryption result') did not work properly because
+     ERR_clear_error() was missing, meaning that SSL_get_error() would
+     detect the supposedly ignored error.
+
+     Both problems are now fixed.
+     [Bodo Moeller]
+
+  *) In crypto/bio/bf_buff.c, increase DEFAULT_BUFFER_SIZE to 4096
+     (previously it was 1024).
+     [Bodo Moeller]
+
+  *) Fix for compatibility mode trust settings: ignore trust settings
+     unless some valid trust or reject settings are present.
+     [Steve Henson]
+
+  *) Fix for blowfish EVP: its a variable length cipher.
+     [Steve Henson]
+
+  *) Fix various bugs related to DSA S/MIME verification. Handle missing
+     parameters in DSA public key structures and return an error in the
+     DSA routines if parameters are absent.
+     [Steve Henson]
+
+  *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
+     in the current directory if neither $RANDFILE nor $HOME was set.
+     RAND_file_name() in 0.9.6a returned NULL in this case.  This has
+     caused some confusion to Windows users who haven't defined $HOME.
+     Thus RAND_file_name() is changed again: e_os.h can define a
+     DEFAULT_HOME, which will be used if $HOME is not set.
+     For Windows, we use "C:"; on other platforms, we still require
+     environment variables.
+
+  *) Move 'if (!initialized) RAND_poll()' into regions protected by
+     CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
+     having multiple threads call RAND_poll() concurrently.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, replace 'add_do_not_lock' flag by a
+     combination of a flag and a thread ID variable.
+     Otherwise while one thread is in ssleay_rand_bytes (which sets the
+     flag), *other* threads can enter ssleay_add_bytes without obeying
+     the CRYPTO_LOCK_RAND lock (and may even illegally release the lock
+     that they do not hold after the first thread unsets add_do_not_lock).
+     [Bodo Moeller]
+
+  *) Change bctest again: '-x' expressions are not available in all
+     versions of 'test'.
+     [Bodo Moeller]
+
+ Changes between 0.9.6 and 0.9.6a  [5 Apr 2001]
+
+  *) Fix a couple of memory leaks in PKCS7_dataDecode()
+     [Steve Henson, reported by Heyun Zheng <hzheng@atdsprint.com>]
+
+  *) Change Configure and Makefiles to provide EXE_EXT, which will contain
+     the default extension for executables, if any.  Also, make the perl
+     scripts that use symlink() to test if it really exists and use "cp"
+     if it doesn't.  All this made OpenSSL compilable and installable in
+     CygWin.
+     [Richard Levitte]
+
+  *) Fix for asn1_GetSequence() for indefinite length constructed data.
+     If SEQUENCE is length is indefinite just set c->slen to the total
+     amount of data available.
+     [Steve Henson, reported by shige@FreeBSD.org]
+     [This change does not apply to 0.9.7.]
+
+  *) Change bctest to avoid here-documents inside command substitution
+     (workaround for FreeBSD /bin/sh bug).
+     For compatibility with Ultrix, avoid shell functions (introduced
+     in the bctest version that searches along $PATH).
+     [Bodo Moeller]
+
+  *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
+     with des_encrypt() defined on some operating systems, like Solaris
+     and UnixWare.
+     [Richard Levitte]
+
+  *) Check the result of RSA-CRT (see D. Boneh, R. DeMillo, R. Lipton:
+     On the Importance of Eliminating Errors in Cryptographic
+     Computations, J. Cryptology 14 (2001) 2, 101-119,
+     http://theory.stanford.edu/~dabo/papers/faults.ps.gz).
+     [Ulf Moeller]
+  
+  *) MIPS assembler BIGNUM division bug fix. 
+     [Andy Polyakov]
+
+  *) Disabled incorrect Alpha assembler code.
+     [Richard Levitte]
+
+  *) Fix PKCS#7 decode routines so they correctly update the length
+     after reading an EOC for the EXPLICIT tag.
+     [Steve Henson]
+     [This change does not apply to 0.9.7.]
+
+  *) Fix bug in PKCS#12 key generation routines. This was triggered
+     if a 3DES key was generated with a 0 initial byte. Include
+     PKCS12_BROKEN_KEYGEN compilation option to retain the old
+     (but broken) behaviour.
+     [Steve Henson]
+
+  *) Enhance bctest to search for a working bc along $PATH and print
+     it when found.
+     [Tim Rice <tim@multitalents.net> via Richard Levitte]
+
+  *) Fix memory leaks in err.c: free err_data string if necessary;
+     don't write to the wrong index in ERR_set_error_data.
+     [Bodo Moeller]
+
+  *) Implement ssl23_peek (analogous to ssl23_read), which previously
+     did not exist.
+     [Bodo Moeller]
+
+  *) Replace rdtsc with _emit statements for VC++ version 5.
+     [Jeremy Cooper <jeremy@baymoo.org>]
+
+  *) Make it possible to reuse SSLv2 sessions.
+     [Richard Levitte]
+
+  *) In copy_email() check for >= 0 as a return value for
+     X509_NAME_get_index_by_NID() since 0 is a valid index.
+     [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
+
+  *) Avoid coredump with unsupported or invalid public keys by checking if
+     X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
+     PKCS7_verify() fails with non detached data.
+     [Steve Henson]
+
+  *) Don't use getenv in library functions when run as setuid/setgid.
+     New function OPENSSL_issetugid().
+     [Ulf Moeller]
+
+  *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
+     due to incorrect handling of multi-threading:
+
+     1. Fix timing glitch in the MemCheck_off() portion of CRYPTO_mem_ctrl().
+
+     2. Fix logical glitch in is_MemCheck_on() aka CRYPTO_is_mem_check_on().
+
+     3. Count how many times MemCheck_off() has been called so that
+        nested use can be treated correctly.  This also avoids 
+        inband-signalling in the previous code (which relied on the
+        assumption that thread ID 0 is impossible).
+     [Bodo Moeller]
+
+  *) Add "-rand" option also to s_client and s_server.
+     [Lutz Jaenicke]
+
+  *) Fix CPU detection on Irix 6.x.
+     [Kurt Hockenbury <khockenb@stevens-tech.edu> and
+      "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
+  *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
+     was empty.
+     [Steve Henson]
+     [This change does not apply to 0.9.7.]
+
+  *) Use the cached encoding of an X509_NAME structure rather than
+     copying it. This is apparently the reason for the libsafe "errors"
+     but the code is actually correct.
+     [Steve Henson]
+
+  *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
+     Bleichenbacher's DSA attack.
+     Extend BN_[pseudo_]rand: As before, top=1 forces the highest two bits
+     to be set and top=0 forces the highest bit to be set; top=-1 is new
+     and leaves the highest bit random.
+     [Ulf Moeller, Bodo Moeller]
+
+  *) In the NCONF_...-based implementations for CONF_... queries
+     (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
+     a temporary CONF structure with the data component set to NULL
+     (which gives segmentation faults in lh_retrieve).
+     Instead, use NULL for the CONF pointer in CONF_get_string and
+     CONF_get_number (which may use environment variables) and directly
+     return NULL from CONF_get_section.
+     [Bodo Moeller]
+
+  *) Fix potential buffer overrun for EBCDIC.
+     [Ulf Moeller]
+
+  *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
+     keyUsage if basicConstraints absent for a CA.
+     [Steve Henson]
+
+  *) Make SMIME_write_PKCS7() write mail header values with a format that
+     is more generally accepted (no spaces before the semicolon), since
+     some programs can't parse those values properly otherwise.  Also make
+     sure BIO's that break lines after each write do not create invalid
+     headers.
+     [Richard Levitte]
+
+  *) Make the CRL encoding routines work with empty SEQUENCE OF. The
+     macros previously used would not encode an empty SEQUENCE OF
+     and break the signature.
+     [Steve Henson]
+     [This change does not apply to 0.9.7.]
+
+  *) Zero the premaster secret after deriving the master secret in
+     DH ciphersuites.
+     [Steve Henson]
+
+  *) Add some EVP_add_digest_alias registrations (as found in
+     OpenSSL_add_all_digests()) to SSL_library_init()
+     aka OpenSSL_add_ssl_algorithms().  This provides improved
+     compatibility with peers using X.509 certificates
+     with unconventional AlgorithmIdentifier OIDs.
+     [Bodo Moeller]
+
+  *) Fix for Irix with NO_ASM.
+     ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
+  *) ./config script fixes.
+     [Ulf Moeller, Richard Levitte]
+
+  *) Fix 'openssl passwd -1'.
+     [Bodo Moeller]
+
+  *) Change PKCS12_key_gen_asc() so it can cope with non null
+     terminated strings whose length is passed in the passlen
+     parameter, for example from PEM callbacks. This was done
+     by adding an extra length parameter to asc2uni().
+     [Steve Henson, reported by <oddissey@samsung.co.kr>]
+
+  *) Fix C code generated by 'openssl dsaparam -C': If a BN_bin2bn
+     call failed, free the DSA structure.
+     [Bodo Moeller]
+
+  *) Fix to uni2asc() to cope with zero length Unicode strings.
+     These are present in some PKCS#12 files.
+     [Steve Henson]
+
+  *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
+     Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
+     when writing a 32767 byte record.
+     [Bodo Moeller; problem reported by Eric Day <eday@concentric.net>]
+
+  *) In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
+     obtain lock CRYPTO_LOCK_RSA before setting rsa->_method_mod_{n,p,q}.
+
+     (RSA objects have a reference count access to which is protected
+     by CRYPTO_LOCK_RSA [see rsa_lib.c, s3_srvr.c, ssl_cert.c, ssl_rsa.c],
+     so they are meant to be shared between threads.)
+     [Bodo Moeller, Geoff Thorpe; original patch submitted by
+     "Reddie, Steven" <Steven.Reddie@ca.com>]
+
+  *) Fix a deadlock in CRYPTO_mem_leaks().
+     [Bodo Moeller]
+
+  *) Use better test patterns in bntest.
+     [Ulf Möller]
+
+  *) rand_win.c fix for Borland C.
+     [Ulf Möller]
+ 
+  *) BN_rshift bugfix for n == 0.
+     [Bodo Moeller]
+
+  *) Add a 'bctest' script that checks for some known 'bc' bugs
+     so that 'make test' does not abort just because 'bc' is broken.
+     [Bodo Moeller]
+
+  *) Store verify_result within SSL_SESSION also for client side to
+     avoid potential security hole. (Re-used sessions on the client side
+     always resulted in verify_result==X509_V_OK, not using the original
+     result of the server certificate verification.)
+     [Lutz Jaenicke]
+
+  *) Fix ssl3_pending: If the record in s->s3->rrec is not of type
+     SSL3_RT_APPLICATION_DATA, return 0.
+     Similarly, change ssl2_pending to return 0 if SSL_in_init(s) is true.
+     [Bodo Moeller]
+
+  *) Fix SSL_peek:
+     Both ssl2_peek and ssl3_peek, which were totally broken in earlier
+     releases, have been re-implemented by renaming the previous
+     implementations of ssl2_read and ssl3_read to ssl2_read_internal
+     and ssl3_read_internal, respectively, and adding 'peek' parameters
+     to them.  The new ssl[23]_{read,peek} functions are calls to
+     ssl[23]_read_internal with the 'peek' flag set appropriately.
+     A 'peek' parameter has also been added to ssl3_read_bytes, which
+     does the actual work for ssl3_read_internal.
+     [Bodo Moeller]
+
+  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
+     the method-specific "init()" handler. Also clean up ex_data after
+     calling the method-specific "finish()" handler. Previously, this was
+     happening the other way round.
+     [Geoff Thorpe]
+
+  *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
+     The previous value, 12, was not always sufficient for BN_mod_exp().
+     [Bodo Moeller]
+
+  *) Make sure that shared libraries get the internal name engine with
+     the full version number and not just 0.  This should mark the
+     shared libraries as not backward compatible.  Of course, this should
+     be changed again when we can guarantee backward binary compatibility.
+     [Richard Levitte]
+
+  *) Fix typo in get_cert_by_subject() in by_dir.c
+     [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
+
+  *) Rework the system to generate shared libraries:
+
+     - Make note of the expected extension for the shared libraries and
+       if there is a need for symbolic links from for example libcrypto.so.0
+       to libcrypto.so.0.9.7.  There is extended info in Configure for
+       that.
+
+     - Make as few rebuilds of the shared libraries as possible.
+
+     - Still avoid linking the OpenSSL programs with the shared libraries.
+
+     - When installing, install the shared libraries separately from the
+       static ones.
      [Richard Levitte]
 
   *) Fix SSL_CTX_set_read_ahead macro to actually use its argument.
