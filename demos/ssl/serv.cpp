@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "rsa.h"       /* SSLeay stuff */
+#include <openssl/rsa.h>       /* SSLeay stuff */
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
