@@ -78,7 +78,7 @@ my %table=(
 # A few of my development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall:-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:-lefence::::",
-"debug-rse","gcc:-DTERMIOS -DL_ENDIAN -DREF_CHECK -DCRYPTO_MDEBUG -g -ggdb3 -Wall:::::",
+"debug-rse","gcc:-DTERMIOS -DL_ENDIAN -O -g -ggdb3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "dist",		"cc:-O -DNOPROTO::::",
 
 # Basic configs that should work on any box
@@ -210,6 +210,9 @@ my %table=(
 # Borland C++ 4.5
 "BC-32","bcc32:::DES_PTR RC4_INDEX:::",
 "BC-16","bcc:::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+
+# CygWin32
+"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
 # Our old Ultrix box :-). -O2 breaks some of the bignum stuff (now fixed,
 # it is a compiler bug, look in bug/ultrixcc.c for example code.
