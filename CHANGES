@@ -338,10 +338,6 @@ TODO: bug: pad  x  with leading zeros if necessary
   *) Avoid filename truncation in cert requests.
      [Ben Laurie (CHATS)]
 
-  *) New OPENSSL_assert() macro (similar to assert(), but enabled
-     unconditionally).
-     [Ben Laurie (CHATS)]
-
   *) Add assertions to check for (supposedly impossible) buffer
      overflows.
      [Ben Laurie (CHATS)]
@@ -371,6 +367,10 @@ TODO: bug: pad  x  with leading zeros if necessary
 
   *) Add assertions to prevent user-supplied crypto functions from
      overflowing internal buffers by having large block sizes, etc.
+     [Ben Laurie (CHATS)]
+
+  *) New OPENSSL_assert() macro (similar to assert(), but enabled
+     unconditionally).
      [Ben Laurie (CHATS)]
 
   *) Eliminate unused copy of key in RC4.
