@@ -2237,7 +2237,7 @@ X509_CRL_set_version                    2750	EXIST::FUNCTION:
 BN_mod_sub                              2751	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext_by_NID          2752	EXIST::FUNCTION:
 ENGINE_get_ex_new_index                 2753	EXIST::FUNCTION:
-rijndaelKeySetupDec                     2754	EXIST::FUNCTION:
+rijndaelKeySetupDec                     2754	NOEXIST::FUNCTION:
 OCSP_REQUEST_free                       2755	EXIST::FUNCTION:
 OCSP_REQUEST_add1_ext_i2d               2756	EXIST::FUNCTION:
 X509_VAL_it                             2757	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2396,7 +2396,7 @@ OCSP_REVOKEDINFO_new                    2887	EXIST::FUNCTION:
 i2d_OCSP_CERTSTATUS                     2888	EXIST::FUNCTION:
 OCSP_basic_add1_nonce                   2889	EXIST::FUNCTION:
 ASN1_item_ex_d2i                        2890	EXIST::FUNCTION:
-rijndaelEncrypt                         2891	EXIST::FUNCTION:
+rijndaelEncrypt                         2891	NOEXIST::FUNCTION:
 BN_mod_lshift1_quick                    2892	EXIST::FUNCTION:
 UI_set_method                           2893	EXIST::FUNCTION:
 OCSP_id_get0_info                       2894	EXIST::FUNCTION:
@@ -2406,7 +2406,7 @@ KRB5_ENCDATA_free                       2897	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext_by_OBJ          2898	EXIST::FUNCTION:
 OCSP_cert_to_id                         2899	EXIST::FUNCTION:
 OCSP_RESPID_new                         2900	EXIST::FUNCTION:
-rijndaelDecrypt                         2901	EXIST::FUNCTION:
+rijndaelDecrypt                         2901	NOEXIST::FUNCTION:
 OCSP_RESPDATA_it                        2902	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 OCSP_RESPDATA_it                        2902	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 d2i_OCSP_RESPDATA                       2903	EXIST::FUNCTION:
@@ -2492,7 +2492,7 @@ i2d_KRB5_TKTBODY                        2967	EXIST::FUNCTION:
 EC_POINT_clear_free                     2968	EXIST::FUNCTION:EC
 asn1_enc_init                           2969	EXIST::FUNCTION:
 UI_get_result_maxsize                   2970	EXIST::FUNCTION:
-rijndaelKeySetupEnc                     2971	EXIST::FUNCTION:
+rijndaelKeySetupEnc                     2971	NOEXIST::FUNCTION:
 OCSP_CERTID_new                         2972	EXIST::FUNCTION:
 UI_method_get_closer                    2973	EXIST::FUNCTION:
 d2i_KRB5_ENCDATA                        2974	EXIST::FUNCTION:
@@ -2772,3 +2772,10 @@ odes_xcbc_encrypt                       3185	EXIST:VMS,WIN16:FUNCTION:DES
 des_ecb_encrypt                         3186	EXIST:!VMS,!WIN16:FUNCTION:DES
 odes_ecb_encrypt                        3186	EXIST:VMS,WIN16:FUNCTION:DES
 HMAC_Init_ex                            3187	EXIST::FUNCTION:HMAC
+AES_ecb_encrypt                         3188	EXIST::FUNCTION:AES
+AES_set_encrypt_key                     3189	EXIST::FUNCTION:AES
+AES_encrypt                             3190	EXIST::FUNCTION:AES
+AES_decrypt                             3191	EXIST::FUNCTION:AES
+AES_options                             3192	EXIST::FUNCTION:AES
+AES_set_decrypt_key                     3193	EXIST::FUNCTION:AES
+AES_cbc_encrypt                         3194	EXIST::FUNCTION:AES
