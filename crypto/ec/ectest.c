@@ -323,6 +323,7 @@ int main(int argc, char *argv[])
 	if (0 != BN_cmp(y, z)) ABORT;
 	
 	fprintf(stdout, "verify group order ... ");
+	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
@@ -357,6 +358,7 @@ int main(int argc, char *argv[])
 	if (0 != BN_cmp(y, z)) ABORT;
 	
 	fprintf(stdout, "verify group order ... ");
+	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
@@ -392,6 +394,7 @@ int main(int argc, char *argv[])
 	if (0 != BN_cmp(y, z)) ABORT;
 	
 	fprintf(stdout, "verify group order ... ");
+	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
@@ -432,6 +435,7 @@ int main(int argc, char *argv[])
 	if (0 != BN_cmp(y, z)) ABORT;
 	
 	fprintf(stdout, "verify group order ... ");
+	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
@@ -478,6 +482,7 @@ int main(int argc, char *argv[])
 	if (0 != BN_cmp(y, z)) ABORT;
 	
 	fprintf(stdout, "verify group order ... ");
+	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
@@ -515,6 +520,7 @@ int main(int argc, char *argv[])
 		scalars[1] = y;
 
 		fprintf(stdout, "simultaneous multiplication ... ");
+		fflush(stdout);
 
 		/* z is still the group order */
 		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
