@@ -84,7 +84,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	int i,badops=0, ret = 1;
-	BIO *in = NULL,*out = NULL, *key = NULL;
+	BIO *in = NULL,*out = NULL;
 	int verify=0,noout=0,pubkey=0;
 	char *infile = NULL,*outfile = NULL,*prog;
 	char *passargin = NULL, *passin = NULL;
@@ -182,17 +182,10 @@ bad:
         e = setup_engine(bio_err, engine, 0);
 
 	if(keyfile) {
-		if(strcmp(keyfile, "-")) key = BIO_new_file(keyfile, "r");
-		else key = BIO_new_fp(stdin, BIO_NOCLOSE);
-		if(!key) {
-			BIO_printf(bio_err, "Error opening key file\n");
-			ERR_print_errors(bio_err);
-			goto end;
-		}
-		pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, passin);
+		pkey = load_key(bio_err,
+				strcmp(keyfile, "-") ? keyfile : NULL,
+				FORMAT_PEM, passin, e, "private key");
 		if(!pkey) {
-			BIO_printf(bio_err, "Error reading private key\n");
-			ERR_print_errors(bio_err);
 			goto end;
 		}
 		spki = NETSCAPE_SPKI_new();
@@ -296,8 +289,8 @@ end:
 	NETSCAPE_SPKI_free(spki);
 	BIO_free(in);
 	BIO_free_all(out);
-	BIO_free(key);
 	EVP_PKEY_free(pkey);
 	if(passin) OPENSSL_free(passin);
+	apps_shutdown();
 	EXIT(ret);
 	}

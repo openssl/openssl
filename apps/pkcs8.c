@@ -217,21 +217,13 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 	}
-	if (topk8) {
-		if(informat == FORMAT_PEM)
-			pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, passin);
-		else if(informat == FORMAT_ASN1)
-			pkey = d2i_PrivateKey_bio(in, NULL);
-		else {
-			BIO_printf(bio_err, "Bad format specified for key\n");
-			return (1);
-		}
+	if (topk8)
+		{
+		BIO_free(in); /* Not needed in this section */
+		pkey = load_key(bio_err, infile, informat, passin, e, "key");
 		if (!pkey) {
-			BIO_printf(bio_err, "Error reading key\n", outfile);
-			ERR_print_errors(bio_err);
 			return (1);
 		}
-		BIO_free(in);
 		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
 			BIO_printf(bio_err, "Error converting key\n", outfile);
 			ERR_print_errors(bio_err);

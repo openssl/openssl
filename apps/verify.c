@@ -71,7 +71,7 @@
 #define PROG	verify_main
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose);
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose, ENGINE *e);
 static STACK_OF(X509) *load_untrusted(char *file);
 static int v_verbose=0, vflags = 0;
 
@@ -208,10 +208,10 @@ int MAIN(int argc, char **argv)
 		}
 	}
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, purpose);
+	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, purpose, e);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, trusted, purpose);
+			check(cert_ctx,argv[i], untrusted, trusted, purpose, e);
 	ret=0;
 end:
 	if (ret == 1) {
@@ -227,42 +227,19 @@ end:
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
+	apps_shutdown();
 	EXIT(ret);
 	}
 
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose)
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose, ENGINE *e)
 	{
 	X509 *x=NULL;
-	BIO *in=NULL;
 	int i=0,ret=0;
 	X509_STORE_CTX *csc;
 
-	in=BIO_new(BIO_s_file());
-	if (in == NULL)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-
-	if (file == NULL)
-		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_read_filename(in,file) <= 0)
-			{
-			perror(file);
-			goto end;
-			}
-		}
-
-	x=PEM_read_bio_X509(in,NULL,NULL,NULL);
+	x = load_cert(bio_err, file, FORMAT_PEM, NULL, e, "certificate file");
 	if (x == NULL)
-		{
-		fprintf(stdout,"%s: unable to load certificate file\n",
-			(file == NULL)?"stdin":file);
-		ERR_print_errors(bio_err);
 		goto end;
-		}
 	fprintf(stdout,"%s: ",(file == NULL)?"stdin":file);
 
 	csc = X509_STORE_CTX_new();
@@ -288,7 +265,6 @@ end:
 	else
 		ERR_print_errors(bio_err);
 	if (x != NULL) X509_free(x);
-	if (in != NULL) BIO_free(in);
 
 	return(ret);
 	}
