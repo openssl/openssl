@@ -126,6 +126,7 @@
 #include <openssl/engine.h>
 #endif
 #include <openssl/rsa.h>
+#include <openssl/bn.h>
 
 #define NON_MAIN
 #include "apps.h"

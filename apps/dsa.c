@@ -68,6 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
 
 #undef PROG
 #define PROG	dsa_main

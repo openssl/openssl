@@ -115,6 +115,7 @@
 #include "apps.h"
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_MD2
 # include <openssl/md2.h>
 #endif

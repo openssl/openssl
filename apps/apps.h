@@ -114,9 +114,7 @@
 
 #include "e_os.h"
 
-#include <openssl/buffer.h>
 #include <openssl/bio.h>
-#include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>

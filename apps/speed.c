@@ -157,6 +157,7 @@
 #include <sys/param.h>
 #endif
 
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
