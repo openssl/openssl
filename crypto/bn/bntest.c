@@ -733,7 +733,8 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	BN_rand(c,1024,0,0); /**/
 	for (i=0; i<num0; i++)
 		{
-		BN_rand(b,425+i*10,0,0); /**/
+		BN_rand(a,475+i*10,0,0); /**/
+		BN_rand(b,425+i*11,0,0); /**/
 		a->neg=rand_neg();
 		b->neg=rand_neg();
 	/*	if (bp == NULL)
