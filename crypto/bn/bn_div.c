@@ -238,7 +238,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 			q=BN_MASK2;
 		else
 #if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
-			q=((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0;
+			q=(BN_ULONG)(((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0);
 #else
 			q=bn_div_words(n0,n1,d0);
 #endif
