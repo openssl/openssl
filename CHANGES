@@ -5,6 +5,12 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Add `openssl ca -revoke <certfile>' facility which revokes a certificate
+     specified in <certfile> by updating the entry in the index.txt file.
+     This way one no longer has to edit the index.txt file manually for
+     revoking a certificate. The -revoke option does the gory details now.
+     [Massimiliano Pala <madwolf@openca.org>, Ralf S. Engelschall]
+
   *) Fix `openssl crl -noout -text' combination where `-noout' killed the
      `-text' option at all and this way the `-noout -text' combination was
      inconsistent in `openssl crl' with the friends in `openssl x509|rsa|dsa'.
