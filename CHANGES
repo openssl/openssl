@@ -2,9 +2,16 @@
  _______________
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
-
+ 
   *) Fix for Irix with NO_ASM.
      ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
+  *) Add some EVP_add_digest_alias registrations (as found in
+     OpenSSL_add_all_digests()), to SSL_library_init()
+     aka OpenSSL_add_ssl_algorithms().  This provides improved
+     compatibility with peers using X.509 certificates
+     with unconventional AlgorithmIdentifier OIDs.
+     [Bodo Moeller]
 
   *) ./config script fixes.
      [Ulf Moeller, Richard Levitte]
