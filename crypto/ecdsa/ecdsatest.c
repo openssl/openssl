@@ -330,17 +330,25 @@ int main(void)
 	double		time_d;
 	EVP_MD_CTX	*md_ctx=NULL;
 	
+	/* enable memory leak checking unless explicitly disabled */
+	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
+		{
+		CRYPTO_malloc_debug_init();
+		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+		}
+	else
+		{
+		/* OPENSSL_DEBUG_MEMORY=off */
+		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
+		}
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-	RAND_seed(rnd_seed, sizeof(rnd_seed));
+	ERR_load_crypto_strings();
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr, BIO_NOCLOSE);
 
-	CRYPTO_malloc_debug_init();
-	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-	ERR_load_crypto_strings();
+	RAND_seed(rnd_seed, sizeof(rnd_seed));
 
 	if ((ecdsa = ECDSA_new()) == NULL)   goto err;
 

@@ -156,7 +156,12 @@ int main(int argc, char *argv[])
 	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
 		{
 		CRYPTO_malloc_debug_init();
-		CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+		}
+	else
+		{
+		/* OPENSSL_DEBUG_MEMORY=off */
+		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
 		}
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	ERR_load_crypto_strings();
