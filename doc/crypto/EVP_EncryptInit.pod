@@ -243,7 +243,7 @@ EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for fail
 EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 
 EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
-EVP_CipherFinal_ex() returns 1 for a decryption failure or 1 for success.
+EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
 EVP_CIPHER_CTX_cleanup() returns 1 for success and 0 for failure.
 
