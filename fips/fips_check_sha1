@@ -3,5 +3,5 @@
 FP=$1
 shift
 
-$TOP/fips/sha1/fips_standalone_sha1 $@ | diff $FP -
+$TOP/fips/sha1/fips_standalone_sha1 $@ | diff -u $FP -
 
