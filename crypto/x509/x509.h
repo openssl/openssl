@@ -847,10 +847,6 @@ int		X509_EXTENSION_set_data(X509_EXTENSION *ex,
 ASN1_OBJECT *	X509_EXTENSION_get_object(X509_EXTENSION *ex);
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
 int		X509_EXTENSION_get_critical(X509_EXTENSION *ex);
-ASN1_OCTET_STRING *X509v3_pack_string(ASN1_OCTET_STRING **ex,int type,
-			unsigned char *bytes, int len);
-ASN1_STRING *	X509v3_unpack_string(ASN1_STRING **ex,int type,
-			ASN1_OCTET_STRING *os);
 
 int		X509_verify_cert(X509_STORE_CTX *ctx);
 
@@ -1179,8 +1175,6 @@ int		X509_EXTENSION_set_data();
 ASN1_OBJECT *	X509_EXTENSION_get_object();
 ASN1_OCTET_STRING *X509_EXTENSION_get_data();
 int		X509_EXTENSION_get_critical();
-ASN1_OCTET_STRING *X509v3_pack_string();
-ASN1_STRING *	X509v3_unpack_string();
 
 int		X509_verify_cert();
 char *          X509_verify_cert_error_string();

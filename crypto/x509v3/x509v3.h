@@ -148,11 +148,6 @@ int ca;
 ASN1_INTEGER *pathlen;
 } BASIC_CONSTRAINTS;
 
-typedef struct AUTHORITY_KEYID_st {
-ASN1_OCTET_STRING *keyid;
-STACK *issuer;
-ASN1_INTEGER *serial;
-} AUTHORITY_KEYID;
 
 typedef struct PKEY_USAGE_PERIOD_st {
 ASN1_GENERALIZEDTIME *notBefore;
@@ -181,6 +176,15 @@ union {
 	ASN1_TYPE *other; /* otherName, ediPartyName, x400Address */
 } d;
 } GENERAL_NAME;
+
+DECLARE_STACK_OF(GENERAL_NAME)
+DECLARE_ASN1_SET_OF(GENERAL_NAME)
+
+typedef struct AUTHORITY_KEYID_st {
+ASN1_OCTET_STRING *keyid;
+STACK_OF(GENERAL_NAME) *issuer;
+ASN1_INTEGER *serial;
+} AUTHORITY_KEYID;
 
 /* Strong extranet structures */
 
@@ -298,12 +302,12 @@ PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a, unsigned char **
 PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new(void);
 void PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a);
 
-STACK *GENERAL_NAMES_new(void);
-void GENERAL_NAMES_free(STACK *a);
-STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length);
-int i2d_GENERAL_NAMES(STACK *a, unsigned char **pp);
-STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK *gen, STACK *extlist);
-STACK *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+STACK_OF(GENERAL_NAME) *GENERAL_NAMES_new(void);
+void GENERAL_NAMES_free(STACK_OF(GENERAL_NAME) *a);
+STACK_OF(GENERAL_NAME) *d2i_GENERAL_NAMES(STACK_OF(GENERAL_NAME) **a, unsigned char **pp, long length);
+int i2d_GENERAL_NAMES(STACK_OF(GENERAL_NAME) *a, unsigned char **pp);
+STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK_OF(GENERAL_NAME) *gen, STACK *extlist);
+STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
@@ -373,7 +377,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
 X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK *X509V3_parse_list(char *line);
-char *X509V3_EXT_d2i(X509_EXTENSION *ext);
+void *X509V3_EXT_d2i(X509_EXTENSION *ext);
 
 char *hex_to_string(unsigned char *buffer, long len);
 unsigned char *string_to_hex(char *str, long *len);
@@ -495,7 +499,7 @@ X509V3_EXT_METHOD *X509V3_EXT_get();
 X509V3_EXT_METHOD *X509V3_EXT_get_nid();
 int X509V3_add_standard_extensions();
 STACK *X509V3_parse_list();
-char *X509V3_EXT_d2i();
+void *X509V3_EXT_d2i();
 
 char *hex_to_string();
 unsigned char *string_to_hex();

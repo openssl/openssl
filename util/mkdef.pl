@@ -192,7 +192,7 @@ sub do_defs
 				push(@ret,"sk_${1}_set");
 				push(@ret,"sk_${1}_zero");
 				push(@ret,"sk_${1}_push");
-			#	push(@ret,"sk_${1}_pop");
+				push(@ret,"sk_${1}_pop");
 				push(@ret,"sk_${1}_find");
 				push(@ret,"sk_${1}_delete");
 				push(@ret,"sk_${1}_delete_ptr");

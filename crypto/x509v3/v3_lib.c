@@ -164,7 +164,7 @@ int X509V3_add_standard_extensions(void)
 
 /* Return an extension internal structure */
 
-char *X509V3_EXT_d2i(X509_EXTENSION *ext)
+void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 {
 	X509V3_EXT_METHOD *method;
 	unsigned char *p;

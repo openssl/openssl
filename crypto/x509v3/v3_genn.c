@@ -118,7 +118,7 @@ int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp)
 	return ret;
 }
 
-GENERAL_NAME *GENERAL_NAME_new(void)
+GENERAL_NAME *GENERAL_NAME_new()
 {
 	GENERAL_NAME *ret=NULL;
 	ASN1_CTX c;
@@ -130,7 +130,7 @@ GENERAL_NAME *GENERAL_NAME_new(void)
 }
 
 GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp,
-	     long length)
+								 long length)
 {
 	unsigned char _tmp;
 	M_ASN1_D2I_vars(a,GENERAL_NAME *,GENERAL_NAME_new);
@@ -214,24 +214,29 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
  * an explicit functions.
  */
 
-STACK *GENERAL_NAMES_new(void)
+STACK_OF(GENERAL_NAME) *GENERAL_NAMES_new()
 {
-	return sk_new(NULL);
+	return sk_GENERAL_NAME_new(NULL);
 }
 
-void GENERAL_NAMES_free(STACK *a)
+void GENERAL_NAMES_free(STACK_OF(GENERAL_NAME) *a)
 {
-	sk_pop_free(a, GENERAL_NAME_free);
+	sk_GENERAL_NAME_pop_free(a, GENERAL_NAME_free);
 }
 
-STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length)
+STACK_OF(GENERAL_NAME) *d2i_GENERAL_NAMES(STACK_OF(GENERAL_NAME) **a,
+					 unsigned char **pp, long length)
 {
-return d2i_ASN1_SET(a, pp, length, (char *(*)())d2i_GENERAL_NAME,
+return d2i_ASN1_SET_OF_GENERAL_NAME(a, pp, length, d2i_GENERAL_NAME,
 			 GENERAL_NAME_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 }
 
-int i2d_GENERAL_NAMES(STACK *a, unsigned char **pp)
+int i2d_GENERAL_NAMES(STACK_OF(GENERAL_NAME) *a, unsigned char **pp)
 {
-return i2d_ASN1_SET(a, pp, i2d_GENERAL_NAME, V_ASN1_SEQUENCE,
+return i2d_ASN1_SET_OF_GENERAL_NAME(a, pp, i2d_GENERAL_NAME, V_ASN1_SEQUENCE,
 						 V_ASN1_UNIVERSAL, IS_SEQUENCE);
 }
+
+IMPLEMENT_STACK_OF(GENERAL_NAME)
+IMPLEMENT_ASN1_SET_OF(GENERAL_NAME)
+

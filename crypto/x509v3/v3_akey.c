@@ -141,7 +141,7 @@ void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 {
 	if (a == NULL) return;
 	ASN1_OCTET_STRING_free(a->keyid);
-	sk_pop_free(a->issuer, GENERAL_NAME_free);
+	sk_GENERAL_NAME_pop_free(a->issuer, GENERAL_NAME_free);
 	ASN1_INTEGER_free (a->serial);
 	Free ((char *)a);
 }
@@ -182,7 +182,7 @@ int i;
 CONF_VALUE *cnf;
 ASN1_OCTET_STRING *ikeyid = NULL;
 X509_NAME *isname = NULL;
-STACK * gens = NULL;
+STACK_OF(GENERAL_NAME) * gens = NULL;
 GENERAL_NAME *gen = NULL;
 ASN1_INTEGER *serial = NULL;
 X509_EXTENSION *ext;
@@ -216,7 +216,7 @@ cert = ctx->issuer_cert;
 if(keyid) {
 	i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
 	if((i >= 0)  && (ext = X509_get_ext(cert, i)))
-			ikeyid = (ASN1_OCTET_STRING *) X509V3_EXT_d2i(ext);
+						 ikeyid = X509V3_EXT_d2i(ext);
 	if(keyid==2 && !ikeyid) {
 		X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
 		return NULL;
@@ -235,8 +235,8 @@ if((issuer && !ikeyid) || (issuer == 2)) {
 if(!(akeyid = AUTHORITY_KEYID_new())) goto err;
 
 if(isname) {
-	if(!(gens = sk_new(NULL)) || !(gen = GENERAL_NAME_new())
-		|| !sk_push(gens, (char *)gen)) {
+	if(!(gens = sk_GENERAL_NAME_new(NULL)) || !(gen = GENERAL_NAME_new())
+		|| !sk_GENERAL_NAME_push(gens, gen)) {
 		X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
