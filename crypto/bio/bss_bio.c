@@ -45,16 +45,20 @@ BIO_METHOD *BIO_s_bio(void)
 struct bio_bio_st
 {
 	BIO *peer;     /* NULL if buf == NULL.
-					* If peer != NULL, then peer->ptr is also a bio_bio_st,
-					* and its "peer" member points back to us.
-					* peer != NULL iff init != 0 in the BIO. */
+	                * If peer != NULL, then peer->ptr is also a bio_bio_st,
+	                * and its "peer" member points back to us.
+	                * peer != NULL iff init != 0 in the BIO. */
 	
 	/* This is for what we write (i.e. reading uses peer's struct): */
-	int closed;    /* valid iff peer != NULL */
-	size_t len;    /* valid iff buf != NULL; 0 if peer == NULL */
-	size_t offset; /* valid iff buf != NULL; 0 if len == 0 */
+	int closed;     /* valid iff peer != NULL */
+	size_t len;     /* valid iff buf != NULL; 0 if peer == NULL */
+	size_t offset;  /* valid iff buf != NULL; 0 if len == 0 */
 	size_t size;
-	char *buf;     /* "size" elements (if != NULL) */
+	char *buf;      /* "size" elements (if != NULL) */
+
+	size_t request; /* valid iff peer != NULL; 0 if len != 0;
+	                 * otherwise set by peer to number of bytes
+	                 * it (unsuccesfully) tried to read. */
 };
 
 static int bio_new(BIO *bio)
@@ -124,6 +128,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr)
 		/* - make pair */
 		/* - destroy pair */
 		/* - get number of bytes that the next write will accept */
+		/* - get number of bytes requested by peer */
 		/* - send "close" */
 
 	case BIO_CTRL_RESET:
@@ -164,6 +169,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr)
 
 	case BIO_CTRL_DUP:
 		/* XXX */
+		ret = 1;
+		break;
 
 	case BIO_CTRL_FLUSH:
 		ret = 1;
@@ -223,7 +230,11 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 		}
 	
 	b1->peer = bio2;
+	b1->closed = 0;
+	b1->request = 0;
 	b2->peer = bio1;
+	b2->closed = 0;
+	b2->request = 0;
 
 	bio1->init = 1;
 	bio2->init = 1;
