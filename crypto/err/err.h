@@ -75,12 +75,6 @@
 extern "C" {
 #endif
 
-/* The following is a bit of a trick to help the object files only contain
- * the 'name of the file' string once.  Since 'err.h' is protected by the
- * HEADER_ERR_H stuff, this should be included only once per file. */
-
-#define ERR_file_name	__FILE__
-
 #ifndef OPENSSL_NO_ERR
 #define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,d,e)
 #else
@@ -138,29 +132,29 @@ typedef struct err_state_st
 
 #define ERR_LIB_USER		128
 
-#define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,(f),(r),ERR_file_name,__LINE__)
-#define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,(f),(r),ERR_file_name,__LINE__)
-#define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,(f),(r),ERR_file_name,__LINE__)
-#define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,(f),(r),ERR_file_name,__LINE__)
-#define EVPerr(f,r)  ERR_PUT_error(ERR_LIB_EVP,(f),(r),ERR_file_name,__LINE__)
-#define BUFerr(f,r)  ERR_PUT_error(ERR_LIB_BUF,(f),(r),ERR_file_name,__LINE__)
-#define OBJerr(f,r)  ERR_PUT_error(ERR_LIB_OBJ,(f),(r),ERR_file_name,__LINE__)
-#define PEMerr(f,r)  ERR_PUT_error(ERR_LIB_PEM,(f),(r),ERR_file_name,__LINE__)
-#define DSAerr(f,r)  ERR_PUT_error(ERR_LIB_DSA,(f),(r),ERR_file_name,__LINE__)
-#define X509err(f,r) ERR_PUT_error(ERR_LIB_X509,(f),(r),ERR_file_name,__LINE__)
-#define ASN1err(f,r) ERR_PUT_error(ERR_LIB_ASN1,(f),(r),ERR_file_name,__LINE__)
-#define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,(f),(r),ERR_file_name,__LINE__)
-#define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,(f),(r),ERR_file_name,__LINE__)
-#define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,(f),(r),ERR_file_name,__LINE__)
-#define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),ERR_file_name,__LINE__)
-#define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,(f),(r),ERR_file_name,__LINE__)
-#define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),ERR_file_name,__LINE__)
-#define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),ERR_file_name,__LINE__)
-#define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,(f),(r),ERR_file_name,__LINE__)
-#define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,(f),(r),ERR_file_name,__LINE__)
-#define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,(f),(r),ERR_file_name,__LINE__)
-#define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,(f),(r),ERR_file_name,__LINE__)
-#define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,(f),(r),ERR_file_name,__LINE__)
+#define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,(f),(r),__FILE__,__LINE__)
+#define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,(f),(r),__FILE__,__LINE__)
+#define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,(f),(r),__FILE__,__LINE__)
+#define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,(f),(r),__FILE__,__LINE__)
+#define EVPerr(f,r)  ERR_PUT_error(ERR_LIB_EVP,(f),(r),__FILE__,__LINE__)
+#define BUFerr(f,r)  ERR_PUT_error(ERR_LIB_BUF,(f),(r),__FILE__,__LINE__)
+#define OBJerr(f,r)  ERR_PUT_error(ERR_LIB_OBJ,(f),(r),__FILE__,__LINE__)
+#define PEMerr(f,r)  ERR_PUT_error(ERR_LIB_PEM,(f),(r),__FILE__,__LINE__)
+#define DSAerr(f,r)  ERR_PUT_error(ERR_LIB_DSA,(f),(r),__FILE__,__LINE__)
+#define X509err(f,r) ERR_PUT_error(ERR_LIB_X509,(f),(r),__FILE__,__LINE__)
+#define ASN1err(f,r) ERR_PUT_error(ERR_LIB_ASN1,(f),(r),__FILE__,__LINE__)
+#define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,(f),(r),__FILE__,__LINE__)
+#define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,(f),(r),__FILE__,__LINE__)
+#define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,(f),(r),__FILE__,__LINE__)
+#define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),__FILE__,__LINE__)
+#define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,(f),(r),__FILE__,__LINE__)
+#define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),__FILE__,__LINE__)
+#define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),__FILE__,__LINE__)
+#define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,(f),(r),__FILE__,__LINE__)
+#define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,(f),(r),__FILE__,__LINE__)
+#define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,(f),(r),__FILE__,__LINE__)
+#define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,(f),(r),__FILE__,__LINE__)
+#define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,(f),(r),__FILE__,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */

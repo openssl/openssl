@@ -70,7 +70,7 @@ extern "C" {
 #endif 
 
 #define ASN1_MAC_H_err(f,r,line) \
-	ERR_PUT_error(ASN1_MAC_ERR_LIB,(f),(r),ERR_file_name,(line))
+	ERR_PUT_error(ASN1_MAC_ERR_LIB,(f),(r),__FILE__,(line))
 
 #define M_ASN1_D2I_vars(a,type,func) \
 	ASN1_CTX c; \
