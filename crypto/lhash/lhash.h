@@ -121,7 +121,7 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
 #define IMPLEMENT_LHASH_DOALL_FN(f_name,o_type) \
 	void f_name##_LHASH_DOALL(const void *arg) { \
 		o_type a = (o_type)arg; \
-		return f_name(a); }
+		f_name(a); }
 #define LHASH_DOALL_FN(f_name) f_name##_LHASH_DOALL
 
 /* Fourth: "doall_arg" functions */
@@ -131,7 +131,7 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
 	void f_name##_LHASH_DOALL_ARG(const void *arg1, const void *arg2) { \
 		o_type a = (o_type)arg1; \
 		a_type b = (a_type)arg2; \
-		return f_name(a,b); }
+		f_name(a,b); }
 #define LHASH_DOALL_ARG_FN(f_name) f_name##_LHASH_DOALL_ARG
 
 typedef struct lhash_st
