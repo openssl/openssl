@@ -206,14 +206,22 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 	int i;
 	OCSP_RESPID *rid;
 
-	if(!(flags & OCSP_NOCERTS) && !OCSP_basic_add1_cert(brsp, signer))
-		goto err;
-
-	for (i = 0; i < sk_X509_num(certs); i++)
+	if (!X509_check_private_key(signer, key))
 		{
-		X509 *tmpcert = sk_X509_value(certs, i);
-		if(!OCSP_basic_add1_cert(brsp, tmpcert))
+		OCSPerr(OCSP_F_OCSP_BASIC_SIGN, OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+		goto err;
+		}
+
+	if(!(flags & OCSP_NOCERTS))
+		{
+		if(!OCSP_basic_add1_cert(brsp, signer))
+			goto err;
+		for (i = 0; i < sk_X509_num(certs); i++)
+			{
+			X509 *tmpcert = sk_X509_value(certs, i);
+			if(!OCSP_basic_add1_cert(brsp, tmpcert))
 				goto err;
+			}
 		}
 
 	rid = brsp->tbsResponseData->responderId;

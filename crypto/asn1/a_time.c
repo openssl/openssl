@@ -149,9 +149,9 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 	/* grow the string */
 	if (!ASN1_STRING_set(ret, NULL, t->length + 2))
 		return NULL;
+	str = (char *)ret->data;
 	/* Work out the century and prepend */
-	str = (char *)t->data;
-	if (*str >= '5') strcpy(str, "19");
+	if (t->data[0] >= '5') strcpy(str, "19");
 	else strcpy(str, "20");
 
 	strcat(str, (char *)t->data);

@@ -148,22 +148,31 @@ int OCSP_request_sign(OCSP_REQUEST   *req,
 	OCSP_SIGNATURE *sig;
 	X509 *x;
 
-	if (signer &&
-		!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
+	if (!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
 			goto err;
 
 	if (!(req->optionalSignature = sig = OCSP_SIGNATURE_new())) goto err;
 	if (!dgst) dgst = EVP_sha1();
-	if (key && !OCSP_REQUEST_sign(req, key, dgst)) goto err;
+	if (key)
+		{
+		if (!X509_check_private_key(signer, key))
+			{
+			OCSPerr(OCSP_F_OCSP_REQUEST_SIGN, OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+			goto err;
+			}
+		if (!OCSP_REQUEST_sign(req, key, dgst)) goto err;
+		}
+
 	if (!(flags & OCSP_NOCERTS))
 		{
-		if (!OCSP_request_add1_cert(req, signer)) goto err;
-	        for (i = 0; i < sk_X509_num(certs); i++)
+		if(!OCSP_request_add1_cert(req, signer)) goto err;
+		for (i = 0; i < sk_X509_num(certs); i++)
 			{
 			x = sk_X509_value(certs, i);
 			if (!OCSP_request_add1_cert(req, x)) goto err;
 			}
 		}
+
 	return 1;
 err:
 	OCSP_SIGNATURE_free(req->optionalSignature);
