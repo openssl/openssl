@@ -275,7 +275,6 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 	{
-	char str[128];
 	unsigned char *buffer=NULL;
 	size_t	buf_len=0, i;
 	int     ret=0, reason=ERR_R_BIO_LIB;
@@ -301,14 +300,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		/* the curve parameter are given by an asn1 OID */
 		int nid;
 
-		if (off)
-			{
-			if (off > 128)
-				off=128;
-			memset(str, ' ', off);
-			if (BIO_write(bp, str, off) <= 0)
-				goto err;
-			}
+		if (!BIO_indent(bp, off, 128))
+			goto err;
 
 		nid = EC_GROUP_get_nid(x);
 		if (nid == 0)
@@ -396,13 +389,10 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 			reason = ERR_R_MALLOC_FAILURE;
 			goto err;
 			}
-		if (off)
-			{
-			if (off > 128) off=128;
-			memset(str,' ',off);
-			if (BIO_write(bp, str, off) <= 0)
-				goto err;
-			}
+
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+
 		/* print the 'short name' of the field type */
 		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(tmp_nid))
 			<= 0)
@@ -415,13 +405,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 			if (basis_type == 0)
 				goto err;
 
-			if (off)
-				{
-				if (off > 128) off=128;
-				memset(str,' ',off);
-				if (BIO_write(bp, str, off) <= 0)
-					goto err;
-				}
+			if (!BIO_indent(bp, off, 128))
+				goto err;
 
 			if (BIO_printf(bp, "Basis Type: %s\n", 
 				OBJ_nid2sn(basis_type)) <= 0)
@@ -491,7 +476,6 @@ err:
 
 int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	{
-	char str[128];
 	unsigned char *buffer=NULL;
 	size_t	buf_len=0, i;
 	int     ret=0, reason=ERR_R_BIO_LIB;
@@ -524,14 +508,11 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
 		}
-	if (off)
-		{
-		if (off > 128) off=128;
-		memset(str,' ',off);
-		}
+
 	if (x->priv_key != NULL)
 		{
-		if (off && (BIO_write(bp, str, off) <= 0)) goto err;
+		if (!BIO_indent(bp, off, 128))
+			goto err;
 		if (BIO_printf(bp, "Private-Key: (%d bit)\n", 
 			BN_num_bits(x->priv_key)) <= 0) goto err;
 		}
