@@ -83,6 +83,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+/* die_unless is intended to work like assert, except that it happens
+   always, even if NDEBUG is defined. Use assert as a stopgap. */
+
+#define die_unless(x)	assert(x)
+
 typedef struct
     {
     SSL_CTX *pCtx;
@@ -111,20 +116,20 @@ SSLStateMachine *SSLStateMachine_new(const char *szCertificateFile,
     SSLStateMachine *pMachine=malloc(sizeof *pMachine);
     int n;
 
-    assert(pMachine);
+    die_unless(pMachine);
 
     pMachine->pCtx=SSL_CTX_new(SSLv23_server_method());
-    assert(pMachine->pCtx);
+    die_unless(pMachine->pCtx);
 
     n=SSL_CTX_use_certificate_file(pMachine->pCtx,szCertificateFile,
 				   SSL_FILETYPE_PEM);
-    assert(n > 0);
+    die_unless(n > 0);
 
     n=SSL_CTX_use_PrivateKey_file(pMachine->pCtx,szKeyFile,SSL_FILETYPE_PEM);
-    assert(n > 0);
+    die_unless(n > 0);
 
     pMachine->pSSL=SSL_new(pMachine->pCtx);
-    assert(pMachine->pSSL);
+    die_unless(pMachine->pSSL);
 
     pMachine->pbioRead=BIO_new(BIO_s_mem());
     /* Set EOF to return 0 (-1 is the default) */
