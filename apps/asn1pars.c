@@ -85,9 +85,9 @@ int MAIN(int argc, char **argv)
 	int i,badops=0,offset=0,ret=1,j;
 	unsigned int length=0;
 	long num,tmplen;
-	BIO *in=NULL,*out=NULL,*b64=NULL;
+	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
 	int informat,indent=0;
-	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
 	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
 	STACK *osk=NULL;
@@ -120,6 +120,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
+			}
+		else if (strcmp(*argv,"-out") == 0)
+			{
+			if (--argc < 1) goto bad;
+			derfile= *(++argv);
 			}
 		else if (strcmp(*argv,"-i") == 0)
 			{
@@ -170,6 +175,7 @@ bad:
 		BIO_printf(bio_err," -strparse offset\n");
 		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
 		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
+		BIO_printf(bio_err," -out filename output DER encoding to file\n");
 		goto end;
 		}
 
@@ -206,6 +212,14 @@ bad:
 			}
 		}
 
+	if (derfile) {
+		if(!(derout = BIO_new_file(derfile, "wb"))) {
+			BIO_printf(bio_err,"problems opening %s\n",derfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
 	if ((buf=BUF_MEM_new()) == NULL) goto end;
 	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
 
@@ -239,6 +253,7 @@ bad:
 		tmplen=num;
 		for (i=0; i<sk_num(osk); i++)
 			{
+			ASN1_TYPE *atmp;
 			j=atoi(sk_value(osk,i));
 			if (j == 0)
 				{
@@ -247,7 +262,10 @@ bad:
 				}
 			tmpbuf+=j;
 			tmplen-=j;
-			if (d2i_ASN1_TYPE(&at,&tmpbuf,tmplen) == NULL)
+			atmp = at;
+			at = d2i_ASN1_TYPE(NULL,&tmpbuf,tmplen);
+			ASN1_TYPE_free(atmp);
+			if(!at)
 				{
 				BIO_printf(bio_err,"Error parsing structure\n");
 				ERR_print_errors(bio_err);
@@ -262,6 +280,13 @@ bad:
 		}
 
 	if (length == 0) length=(unsigned int)num;
+	if(derout) {
+		if(BIO_write(derout, str + offset, length) != length) {
+			BIO_printf(bio_err, "Error writing output\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
 	if (!ASN1_parse(out,(unsigned char *)&(str[offset]),length,indent))
 		{
 		ERR_print_errors(bio_err);
@@ -269,6 +294,7 @@ bad:
 		}
 	ret=0;
 end:
+	BIO_free(derout);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free(out);
 	if (b64 != NULL) BIO_free(b64);
