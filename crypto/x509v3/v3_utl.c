@@ -58,6 +58,7 @@
 /* X509 v3 extension utilities */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <pem.h>
 #include <conf.h>
@@ -392,4 +393,21 @@ long *len;
 	X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
 
+}
+
+/* V2I name comparison function: returns zero if 'name' matches
+ * cmp or cmp.*
+ */
+
+int name_cmp(name, cmp)
+char *name;
+char *cmp;
+{
+	int len, ret;
+	char c;
+	len = strlen(cmp);
+	if((ret = strncmp(name, cmp, len))) return ret;
+	c = name[len];
+	if(!c || (c=='.')) return 0;
+	return 1;
 }

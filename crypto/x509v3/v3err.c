@@ -72,6 +72,8 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 {ERR_PACK(0,X509V3_F_V2I_ASN1_BIT_STRING,0),	"V2I_ASN1_BIT_STRING"},
 {ERR_PACK(0,X509V3_F_V2I_BASIC_CONSTRAINTS,0),	"V2I_BASIC_CONSTRAINTS"},
 {ERR_PACK(0,X509V3_F_V2I_EXT_KU,0),	"V2I_EXT_KU"},
+{ERR_PACK(0,X509V3_F_V2I_GENERAL_NAME,0),	"v2i_GENERAL_NAME"},
+{ERR_PACK(0,X509V3_F_V2I_GENERAL_NAMES,0),	"v2i_GENERAL_NAMES"},
 {ERR_PACK(0,X509V3_F_V3_GENERIC_EXTENSION,0),	"V3_GENERIC_EXTENSION"},
 {ERR_PACK(0,X509V3_F_X509V3_ADD_EXT,0),	"X509V3_ADD_EXT"},
 {ERR_PACK(0,X509V3_F_X509V3_ADD_VALUE,0),	"X509V3_add_value"},
@@ -85,6 +87,8 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 
 static ERR_STRING_DATA X509V3_str_reasons[]=
 	{
+{X509V3_R_BAD_IP_ADDRESS                 ,"bad ip address"},
+{X509V3_R_BAD_OBJECT                     ,"bad object"},
 {X509V3_R_BN_DEC2BN_ERROR                ,"bn dec2bn error"},
 {X509V3_R_BN_TO_ASN1_INTEGER_ERROR       ,"bn to asn1 integer error"},
 {X509V3_R_EXTENSION_NAME_ERROR           ,"extension name error"},
@@ -102,6 +106,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_NO_PUBLIC_KEY                  ,"no public key"},
 {X509V3_R_ODD_NUMBER_OF_DIGITS           ,"odd number of digits"},
 {X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT    ,"unknown bit string argument"},
+{X509V3_R_UNSUPPORTED_OPTION             ,"unsupported option"},
 {0,NULL},
 	};
 

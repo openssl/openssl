@@ -73,7 +73,7 @@ GENERAL_NAMES_free,
 i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-(X509V3_EXT_V2I)NULL /*v2i_GENERAL_NAMES*/,
+(X509V3_EXT_V2I)v2i_GENERAL_NAMES,
 NULL, NULL},
 { NID_issuer_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
@@ -82,7 +82,7 @@ GENERAL_NAMES_free,
 i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
-(X509V3_EXT_V2I)NULL /*v2i_GENERAL_NAMES*/,
+(X509V3_EXT_V2I)v2i_GENERAL_NAMES,
 NULL, NULL},
 EXT_END
 };
@@ -94,49 +94,167 @@ STACK *ret;
 {
 	int i;
 	GENERAL_NAME *gen;
-	char oline[256];
 	for(i = 0; i < sk_num(gens); i++) {
 		gen = (GENERAL_NAME *)sk_value(gens, i);
-		switch (gen->type)
-		{
-                case GEN_OTHERNAME:
-		X509V3_add_value("othername","<unsupported>", &ret);
-		break;
-
-                case GEN_X400:
-		X509V3_add_value("X400Name","<unsupported>", &ret);
-		break;
-
-                case GEN_EDIPARTY:
-		X509V3_add_value("EdiPartyName","<unsupported>", &ret);
-                break;
-
-                case GEN_EMAIL:
-		X509V3_add_value("email",gen->d.ia5->data, &ret);
-		break;
-
-                case GEN_DNS:
-		X509V3_add_value("DNS",gen->d.ia5->data, &ret);
-		break;
-
-                case GEN_URI:
-		X509V3_add_value("URI",gen->d.ia5->data, &ret);
-                break;
-
-                case GEN_DIRNAME:
-		X509_NAME_oneline(gen->d.dirn, oline, 256);
-		X509V3_add_value("DirName",oline, &ret);
-                break;
-
-                case GEN_IPADD:
-		X509V3_add_value("IP Address","<unsupported>", &ret);
-                break;
-
-                case GEN_RID:
-		X509V3_add_value("Registered ID","<unsupported>", &ret);
-                break;
-		}
+		ret = i2v_GENERAL_NAME(method, gen, ret);
 	}
 	return ret;
 }
 
+STACK *i2v_GENERAL_NAME(method, gen, ret)
+X509V3_EXT_METHOD *method;
+GENERAL_NAME *gen;
+STACK *ret;
+{
+	char oline[256];
+	unsigned char *p;
+	switch (gen->type)
+	{
+		case GEN_OTHERNAME:
+		X509V3_add_value("othername","<unsupported>", &ret);
+		break;
+
+		case GEN_X400:
+		X509V3_add_value("X400Name","<unsupported>", &ret);
+		break;
+
+		case GEN_EDIPARTY:
+		X509V3_add_value("EdiPartyName","<unsupported>", &ret);
+		break;
+
+		case GEN_EMAIL:
+		X509V3_add_value("email",gen->d.ia5->data, &ret);
+		break;
+
+		case GEN_DNS:
+		X509V3_add_value("DNS",gen->d.ia5->data, &ret);
+		break;
+
+		case GEN_URI:
+		X509V3_add_value("URI",gen->d.ia5->data, &ret);
+		break;
+
+		case GEN_DIRNAME:
+		X509_NAME_oneline(gen->d.dirn, oline, 256);
+		X509V3_add_value("DirName",oline, &ret);
+		break;
+
+		case GEN_IPADD:
+		p = gen->d.ip->data;
+		/* BUG: doesn't support IPV6 */
+		if(gen->d.ip->length != 4) {
+			X509V3_add_value("IP Address","<invalid>", &ret);
+			break;
+		}
+		sprintf(oline, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+		X509V3_add_value("IP Address",oline, &ret);
+		break;
+
+		case GEN_RID:
+		i2t_ASN1_OBJECT(oline, 256, gen->d.rid);
+		X509V3_add_value("Registered ID",oline, &ret);
+		break;
+	}
+	return ret;
+}
+
+STACK *v2i_GENERAL_NAMES(method, ctx, nval)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+STACK *nval;
+{
+	GENERAL_NAME *gen;
+	STACK *gens = NULL;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(gens = sk_new(NULL))) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	for(i = 0; i < sk_num(nval); i++) {
+		cnf = (CONF_VALUE *)sk_value(nval, i);
+		if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf))) goto err; 
+		sk_push(gens, (char *)gen);
+	}
+	return gens;
+	err:
+	sk_pop_free(gens, GENERAL_NAME_free);
+	return NULL;
+}
+
+GENERAL_NAME *v2i_GENERAL_NAME(method, ctx, cnf)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+CONF_VALUE *cnf;
+{
+char is_string = 0;
+int type;
+GENERAL_NAME *gen = NULL;
+
+char *name, *value;
+
+name = cnf->name;
+value = cnf->value;
+
+if(!(gen = GENERAL_NAME_new())) {
+	X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
+	return NULL;
+}
+
+if(!name_cmp(name, "email")) {
+	is_string = 1;
+	type = GEN_EMAIL;
+} else if(!name_cmp(name, "URI")) {
+	is_string = 1;
+	type = GEN_URI;
+} else if(!name_cmp(name, "DNS")) {
+	is_string = 1;
+	type = GEN_DNS;
+} else if(!name_cmp(name, "RID")) {
+	ASN1_OBJECT *obj;
+	if(!(obj = OBJ_txt2obj(value,0))) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_BAD_OBJECT);
+		ERR_add_error_data(2, "value=", value);
+		goto err;
+	}
+	gen->d.rid = obj;
+	type = GEN_RID;
+} else if(!name_cmp(name, "IP")) {
+	int i1,i2,i3,i4;
+	unsigned char ip[4];
+	if((sscanf(value, "%d.%d.%d.%d",&i1,&i2,&i3,&i4) != 4) ||
+	    (i1 < 0) || (i1 > 255) || (i2 < 0) || (i2 > 255) ||
+	    (i3 < 0) || (i3 > 255) || (i4 < 0) || (i4 > 255) ) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_BAD_IP_ADDRESS);
+		ERR_add_error_data(2, "value=", value);
+		goto err;
+	}
+	ip[0] = i1; ip[1] = i2 ; ip[2] = i3 ; ip[3] = i4;
+	if(!(gen->d.ip = ASN1_OCTET_STRING_new()) ||
+		!ASN1_STRING_set(gen->d.ip, ip, 4)) {
+			X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
+			goto err;
+	}
+	type = GEN_IPADD;
+} else {
+	X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_UNSUPPORTED_OPTION);
+	ERR_add_error_data(2, "name=", name);
+	goto err;
+}
+
+if(is_string) {
+	if(!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
+		      !ASN1_STRING_set(gen->d.ia5, value, strlen(value))) {
+		X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+}
+
+gen->type = type;
+
+return gen;
+
+err:
+GENERAL_NAME_free(gen);
+return NULL;
+}
