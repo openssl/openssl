@@ -185,7 +185,9 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
 		return i;
 		
 		case ASN1_ITYPE_NDEF_SEQUENCE:
-//fprintf(stderr, "NDEF sequence from %s flags %d\n", it->sname, aclass & ASN1_TFLG_NDEF);
+#if 0
+fprintf(stderr, "NDEF sequence from %s flags %d\n", it->sname, aclass & ASN1_TFLG_NDEF);
+#endif
 		/* Use indefinite length constructed if requested */
 		if (aclass & ASN1_TFLG_NDEF) ndef = 2;
 		/* fall through */
