@@ -1,12 +1,18 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/08 10:19:48 $
+  ______________                           $Date: 1999/08/08 10:25:50 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.4:  Under development...
+    o  OpenSSL 0.9.4:  In preparation for release!
                        Proposed code freeze:  August, 2nd 1999
                        Proposed release date: August, 9th 1999
+                       Tarball Rolling is proposed to be done
+                       by Ralf on dev.openssl.org at 09.08.1999, 14:00 CET
+
+       At least three OpenSSL developers should give their +1 vote
+       for OpenSSL 0.9.4 before the tarball should be actually rolled:
+           Votes: Ralf +1
 
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
     o  OpenSSL 0.9.3:  Released on May      25th, 1999
