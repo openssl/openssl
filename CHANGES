@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add the arguments -CAfile and -CApath to the pkcs12 utility.
+     [Richard Levitte]
+
   *) The obj_dat.pl script was messing up the sorting of object
      names. The reason was that it compared the quoted version
      of strings as a result "OCSP" > "OCSP Signing" because

@@ -78,7 +78,7 @@ EVP_CIPHER *enc;
 #define CLCERTS		0x8
 #define CACERTS		0x10
 
-int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
+int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options, char *pempass);
 int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
 			  int passlen, int options, char *pempass);
@@ -117,6 +117,7 @@ int MAIN(int argc, char **argv)
     char *passargin = NULL, *passargout = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL;
     char *inrand = NULL;
+    char *CApath = NULL, *CAfile = NULL;
 
     apps_startup();
 
@@ -225,6 +226,16 @@ int MAIN(int argc, char **argv)
 			passarg = *args;
 		    	noprompt = 1;
 		    } else badarg = 1;
+		} else if (!strcmp(*args,"-CApath")) {
+		    if (args[1]) {
+			args++;	
+			CApath = *args;
+		    } else badarg = 1;
+		} else if (!strcmp(*args,"-CAfile")) {
+		    if (args[1]) {
+			args++;	
+			CAfile = *args;
+		    } else badarg = 1;
 		} else badarg = 1;
 
 	} else badarg = 1;
@@ -238,6 +249,8 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-chain        add certificate chain\n");
 	BIO_printf (bio_err, "-inkey file   private key if not infile\n");
 	BIO_printf (bio_err, "-certfile f   add all certs in f\n");
+	BIO_printf (bio_err, "-CApath arg   - PEM format directory of CA's\n");
+	BIO_printf (bio_err, "-CAfile arg   - PEM format file of CA's\n");
 	BIO_printf (bio_err, "-name \"name\"  use name as friendly name\n");
 	BIO_printf (bio_err, "-caname \"nm\"  use nm as CA friendly name (can be used more than once).\n");
 	BIO_printf (bio_err, "-in  infile   input filename\n");
@@ -423,7 +436,16 @@ int MAIN(int argc, char **argv)
 	if (chain) {
         	int vret;
 		STACK_OF(X509) *chain2;
-		vret = get_cert_chain (ucert, &chain2);
+		X509_STORE *store = X509_STORE_new();
+		if (!store)
+			{
+			BIO_printf (bio_err, "Memory allocation error\n");
+			goto end;
+			}
+		if (!X509_STORE_load_locations(store, CAfile, CApath))
+			X509_STORE_set_default_paths (store);
+
+		vret = get_cert_chain (ucert, store, &chain2);
 		if (vret) {
 			BIO_printf (bio_err, "Error %s getting chain.\n",
 					X509_verify_cert_error_string(vret));
@@ -496,8 +518,6 @@ int MAIN(int argc, char **argv)
 
 	i2d_PKCS12_bio (out, p12);
 
-	PKCS12_free(p12);
-
 	ret = 0;
 
 #ifdef CRYPTO_MDEBUG
@@ -557,8 +577,8 @@ int MAIN(int argc, char **argv)
     CRYPTO_pop_info();
 #endif
     ret = 0;
-    end:
-    PKCS12_free(p12);
+ end:
+    if (p12) PKCS12_free(p12);
     if(export_cert || inrand) app_RAND_write_file(NULL, bio_err);
 #ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
@@ -690,15 +710,12 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
 /* Hope this is OK .... */
 
-int get_cert_chain (X509 *cert, STACK_OF(X509) **chain)
+int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 {
-	X509_STORE *store;
 	X509_STORE_CTX store_ctx;
 	STACK_OF(X509) *chn;
 	int i;
 
-	store = X509_STORE_new ();
-	X509_STORE_set_default_paths (store);
 	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
 	if (X509_verify_cert(&store_ctx) <= 0) {
 		i = X509_STORE_CTX_get_error (&store_ctx);
