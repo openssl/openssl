@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
 		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
 		scalars[1] = y;
 
-		fprintf(stdout, "simultaneous multiplication ... ");
+		fprintf(stdout, "simultaneous multiplication ...");
 		fflush(stdout);
 
 		/* z is still the group order */
@@ -528,7 +528,22 @@ int main(int argc, char *argv[])
 		if (0 != EC_POINT_cmp(group, P, R, ctx)) ABORT;
 		if (0 != EC_POINT_cmp(group, R, Q, ctx)) ABORT;
 
-		fprintf(stdout, "ok\n\n");
+		fprintf(stdout, ".");
+		fflush(stdout);
+
+		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
+		if (!BN_copy(z, y)) ABORT;
+		z->neg = 1;
+
+		points[0] = Q;
+		points[1] = Q;
+		scalars[0] = y;
+		scalars[1] = z;
+
+		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
+		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+		fprintf(stdout, " ok\n\n");
 	}
 
 

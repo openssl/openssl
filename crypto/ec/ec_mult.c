@@ -187,10 +187,18 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, BIGNUM *scalar,
 		if (i < num)
 			{
 			if (!EC_POINT_copy(val_sub[i][0], points[i])) goto err;
+			if (scalars[i]->neg)
+				{
+				if (!EC_POINT_invert(group, val_sub[i][0], ctx)) goto err;
+				}
 			}
 		else
 			{
 			if (!EC_POINT_copy(val_sub[i][0], generator)) goto err;
+			if (scalar->neg)
+				{
+				if (!EC_POINT_invert(group, val_sub[i][0], ctx)) goto err;
+				}
 			}
 
 		if (wsize[i] > 1)
