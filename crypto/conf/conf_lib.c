@@ -382,8 +382,9 @@ int NCONF_dump_bio(const CONF *conf, BIO *out)
 	return conf->meth->dump(conf, out);
 	}
 
+
 /* This function should be avoided */
-#undef NCONF_get_number
+#if 0
 long NCONF_get_number(CONF *conf,char *group,char *name)
 	{
 	int status;
@@ -397,4 +398,4 @@ long NCONF_get_number(CONF *conf,char *group,char *name)
 		}
 	return ret;
 	}
-
+#endif

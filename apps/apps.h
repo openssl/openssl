@@ -134,10 +134,6 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
                                        * (see e_os.h).  The string is
                                        * destroyed! */
 
-#ifdef OPENSSL_NO_STDIO
-BIO_METHOD *BIO_s_file();
-#endif
-
 #ifdef OPENSSL_SYS_WIN32
 #define rename(from,to) WIN32_rename((from),(to))
 int WIN32_rename(char *oldname,char *newname);
@@ -217,8 +213,8 @@ typedef struct pw_cb_data
 int password_callback(char *buf, int bufsiz, int verify,
 	PW_CB_DATA *cb_data);
 
-int setup_ui_method();
-void destroy_ui_method();
+int setup_ui_method(void);
+void destroy_ui_method(void);
 
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);

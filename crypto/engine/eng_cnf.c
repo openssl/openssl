@@ -92,7 +92,7 @@ static int int_engine_init(ENGINE *e)
 	}
 	
 
-int int_engine_configure(char *name, char *value, const CONF *cnf)
+static int int_engine_configure(char *name, char *value, const CONF *cnf)
 	{
 	int i;
 	int ret = 0;

@@ -78,7 +78,7 @@ int set_hex(char *in,unsigned char *out,int size);
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
 
-void show_ciphers(const OBJ_NAME *name,void *bio_)
+static void show_ciphers(const OBJ_NAME *name,void *bio_)
 	{
 	BIO *bio=bio_;
 	static int n;

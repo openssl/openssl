@@ -84,7 +84,7 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 
 /* Set default algorithms using a string */
 
-int int_def_cb(const char *alg, int len, void *arg)
+static int int_def_cb(const char *alg, int len, void *arg)
 	{
 	unsigned int *pflags = arg;
 	if (!strncmp(alg, "ALL", len))

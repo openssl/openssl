@@ -77,8 +77,8 @@
 /* Three IO functions for sending data to memory, a BIO and
  * and a FILE pointer.
  */
-
-int send_mem_chars(void *arg, const void *buf, int len)
+#if 0				/* never used */
+static int send_mem_chars(void *arg, const void *buf, int len)
 {
 	unsigned char **out = arg;
 	if(!out) return 1;
@@ -86,15 +86,16 @@ int send_mem_chars(void *arg, const void *buf, int len)
 	*out += len;
 	return 1;
 }
+#endif
 
-int send_bio_chars(void *arg, const void *buf, int len)
+static int send_bio_chars(void *arg, const void *buf, int len)
 {
 	if(!arg) return 1;
 	if(BIO_write(arg, buf, len) != len) return 0;
 	return 1;
 }
 
-int send_fp_chars(void *arg, const void *buf, int len)
+static int send_fp_chars(void *arg, const void *buf, int len)
 {
 	if(!arg) return 1;
 	if(fwrite(buf, 1, len, arg) != (unsigned int)len) return 0;
@@ -240,7 +241,7 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf, int buflen
  * #01234 format.
  */
 
-int do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING *str)
+static int do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING *str)
 {
 	/* Placing the ASN1_STRING in a temp ASN1_TYPE allows
 	 * the DER encoding to readily obtained

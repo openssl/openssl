@@ -129,6 +129,7 @@ int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
 
 void OPENSSL_config(const char *config_name);
+void OPENSSL_no_config(void);
 
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */
@@ -141,10 +142,10 @@ struct conf_st
 	};
 
 CONF *NCONF_new(CONF_METHOD *meth);
-CONF_METHOD *NCONF_default();
-CONF_METHOD *NCONF_WIN32();
+CONF_METHOD *NCONF_default(void);
+CONF_METHOD *NCONF_WIN32(void);
 #if 0 /* Just to give you an idea of what I have in mind */
-CONF_METHOD *NCONF_XML();
+CONF_METHOD *NCONF_XML(void);
 #endif
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
@@ -176,6 +177,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 			   unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
+void CONF_modules_free(void);
 int CONF_module_add(const char *name, conf_init_func *ifunc,
 		    conf_finish_func *ffunc);
 
