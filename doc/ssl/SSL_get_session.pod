@@ -40,6 +40,12 @@ If the data is to be kept, SSL_get1_session() will increment the reference
 count and the session will stay in memory until explicitly freed with
 L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>, regardless of its state.
 
+SSL_SESSION objects keep internal link information about the session cache
+list, when being inserted into one SSL_CTX object's session cache.
+One SSL_SESSION object, regardless of its reference count, must therefore
+only be used with one SSL_CTX object (and the SSL objects created
+from this SSL_CTX object).
+
 =head1 RETURN VALUES
 
 The following return values can occur:
