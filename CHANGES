@@ -18,7 +18,8 @@
      3*range  is two bits longer than  range.)
      [Bodo Moeller]
 
-  *) Only add signing time to PKCS7 structures if it is not already present.
+  *) Only add signing time to PKCS7 structures if it is not already
+     present.
      [Steve Henson]
 
   *) Fix crypto/objects/objects.h: "ld-ce" should be "id-ce",
@@ -337,7 +338,7 @@
   *) BN_sqr() bug fix.
      [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
 
-  *) Make it possible to unload ranges of ERR strings with a new
+  +) Make it possible to unload ranges of ERR strings with a new
      "ERR_unload_strings" function.
      [Geoff Thorpe]
 
@@ -570,6 +571,16 @@
      values for each of the key sizes rather than having just
      parameters (and 'speed' generating keys each time).
      [Geoff Thorpe]
+
+  *) Add support for shared libraries under Irix.
+     [Albert Chin-A-Young <china@thewrittenword.com>]
+
+  *) Add configuration option to build on Linux on both big-endian and
+     little-endian MIPS.
+     [Ralf Baechle <ralf@uni-koblenz.de>]
+
+  *) Add the possibility to create shared libraries on HP-UX.
+     [Richard Levitte]
 
   -) OpenSSL 0.9.6b released [9 July 2001]
 
@@ -1950,16 +1961,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      identity, and test if they are actually available.
      [Richard Levitte]
 
-  *) Add support for shared libraries under Irix.
-     [Albert Chin-A-Young <china@thewrittenword.com>]
-
   +) Improve RPM specification file by forcing symbolic linking and making
      sure the installed documentation is also owned by root.root.
      [Damien Miller <djm@mindrot.org>]
-
-  *) Add configuration option to build on Linux on both big-endian and
-     little-endian MIPS.
-     [Ralf Baechle <ralf@uni-koblenz.de>]
 
   +) Give the OpenSSL applications more possibilities to make use of
      keys (public as well as private) handled by engines.
@@ -1985,9 +1989,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Geoff Thorpe]
 
   +) Support threads on FreeBSD-elf in Configure.
-     [Richard Levitte]
-
-  *) Add the possibility to create shared libraries on HP-UX
      [Richard Levitte]
 
   +) Fix for SHA1 assembly problem with MASM: it produces
