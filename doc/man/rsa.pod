@@ -44,7 +44,7 @@ This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
 The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. On input PKCS#8 format private
-keys are also accepted.The B<NET> form is a format compatible with older Netscape
+keys are also accepted. The B<NET> form is a format compatible with older Netscape
 servers and MS IIS, this uses unsalted RC4 for its encryption. It is not very
 secure and so should only be used when necessary.
 
